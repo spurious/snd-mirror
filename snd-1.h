@@ -436,6 +436,10 @@ void view_files_dialog_help(snd_state *ss);
 void stats_dialog_help(snd_state *ss);
 void ssnd_help(snd_state *ss, char *subject, ...);
 
+#if HAVE_GUILE
+  void g_init_help(SCM local_doc);
+  SCM g_help(SCM text, int widget_wid);
+#endif
 
 
 /* -------- snd-menu.c -------- */
@@ -531,12 +535,6 @@ char *filename_completer(char *text);
 char *srate_completer(char *text);
 char *info_completer(char *text);
 char *complete_listener_text(char *old_text, int end, int *try_completion, char **to_file_text);
-#if HAVE_GUILE
-  void g_init_completions(SCM local_doc);
-  #ifdef SCM_MODULE_OBARRAY
-    SCM g_help(SCM text);
-  #endif
-#endif
 
 
 /* -------- snd-print.c -------- */
@@ -732,6 +730,7 @@ char *added_transform_name(int type);
 /* -------- snd-scm.c, snd-noscm.c -------- */
 
 #if HAVE_GUILE
+  SCM snd_set_object_property(SCM obj, SCM key, SCM val);
   SCM parse_proc(char *buf);
   int ignore_mus_error(int type, char *msg);
   void g_initialize_gh(snd_state *ss);
@@ -1174,6 +1173,9 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt);
 char *listener_prompt_with_cr(snd_state *ss);
 int check_balance(char *expr, int start, int end);
 void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form);
+#if HAVE_GUILE
+  void g_init_listener(SCM local_doc);
+#endif
 
 
 /* -------- snd-mix.c -------- */

@@ -172,9 +172,26 @@ void g_init_errors(SCM local_doc)
   DEFINE_PROC(gh_new_procedure1_0(S_snd_error, g_snd_error), H_snd_error);
   DEFINE_PROC(gh_new_procedure1_0(S_snd_warning, g_snd_warning), H_snd_warning);
 
-  mus_error_hook = MAKE_HOOK(S_mus_error_hook, 2);           /* arg = error-type error-message */
-  snd_error_hook = MAKE_HOOK(S_snd_error_hook, 1);           /* arg = error-message */
-  snd_warning_hook = MAKE_HOOK(S_snd_warning_hook, 1);       /* arg = error-message */
+  #define H_mus_error_hook S_mus_error_hook " (error-type error-message) is called upon mus_error. \
+If it returns #t, Snd ignores the error (it assumes you've handled it via the hook)."
+
+  #define H_snd_error_hook S_snd_error_hook " (error-message) is called upon snd_error. \
+If it returns #t, Snd flushes the error (it assumes you've reported it via the hook:\n\
+  (add-hook! snd-error-hook\n\
+    (lambda (msg) (play \"bong.snd\") #f))"
+
+  #define H_snd_warning_hook S_snd_warning_hook " (warning-message) is called upon snd_warning. \
+If it returns #t, Snd flushes the warning (it assumes you've reported it via the hook):\n\
+  (define without-warnings\n\
+    (lambda (thunk)\n\
+      (define no-warning (lambda (msg) #t))\n\
+      (add-hook! snd-warning-hook no-warning)\n\
+      (thunk)\n\
+      (remove-hook! snd-warning-hook no-warning)))"
+
+  mus_error_hook =   MAKE_HOOK(S_mus_error_hook, 2, H_mus_error_hook);     /* arg = error-type error-message */
+  snd_error_hook =   MAKE_HOOK(S_snd_error_hook, 1, H_snd_error_hook);     /* arg = error-message */
+  snd_warning_hook = MAKE_HOOK(S_snd_warning_hook, 1, H_snd_warning_hook); /* arg = error-message */
 }
 
 #endif

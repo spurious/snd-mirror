@@ -52,7 +52,7 @@ static Float get_scrollbar(Widget w, int val, int scrollbar_max)
   int size;
   if (val == 0) return(0.0);
   XtVaGetValues(w, XmNsliderSize, &size, NULL);
-  return((Float)val/(Float)(scrollbar_max-size));
+  return((Float)val / (Float)(scrollbar_max-size));
 }
 
 static void sy_changed(int value, chan_info *cp)

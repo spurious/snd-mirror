@@ -175,7 +175,7 @@ static int prime (int num)
   if ((num%2) == 1)
     {
       lim = (int)(sqrt(num));
-      for (i = 3; i < lim; i+=2)
+      for (i = 3; i < lim; i += 2)
 	{
 	  if ((num%i) == 0) return(0);
 	}
@@ -895,7 +895,7 @@ static Float *sample_linear_env(env *e, int order)
   data = (Float *)CALLOC(order, sizeof(Float));
   last_x = e->data[(e->pts - 1) * 2];
   step = 2 * last_x / ((Float)order - 1);
-  for (i = 0, x = 0.0; i < order/2; i++, x+=step) 
+  for (i = 0, x = 0.0; i < order/2; i++, x += step) 
     data[i] = list_interp(x, e->data, e->pts);
   for (j = order/2-1, i = order/2; (i < order) && (j >= 0); i++, j--) 
     data[i] = data[j];
@@ -1620,7 +1620,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  /* sp->amp is current UI value, dp->cur_amp is current local value */
 		  amp = dp->cur_amp;
 		  incr = (sp->amp - amp) / (Float)(frames);
-		  for (j = 0; j < frames; j++, amp+=incr) 
+		  for (j = 0; j < frames; j++, amp += incr) 
 		    buf[j] += MUS_FLOAT_TO_SAMPLE(next_sample_to_float(dp->chn_fd) * amp);
 		  dp->cur_amp = amp;
 		  break;
@@ -1635,7 +1635,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  sincr = (sp->srate * sp->play_direction - sr) / (Float)(frames);
 		  if ((sr != 0.0) || (sincr != 0.0))
 		    {
-		      for (j = 0; j < frames; j++, amp+=incr, sr+=sincr) 
+		      for (j = 0; j < frames; j++, amp += incr, sr += sincr) 
 			buf[j] += MUS_FLOAT_TO_SAMPLE(amp * speed(dp, sr));
 		    }
 		  dp->cur_srate = sr;
@@ -1663,7 +1663,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		    {
 		      ex = dp->cur_exp;
 		      exincr = (sp->expand - ex) / (Float)(frames);
-		      for (j = 0; j < frames; j++, amp+=incr, sr+=sincr, ind+=indincr, ex+=exincr, rev+=revincr) 
+		      for (j = 0; j < frames; j++, amp += incr, sr += sincr, ind += indincr, ex += exincr, rev += revincr) 
 			{
 			  fval = expand(dp, sr, ex);
 			  if (sp->contrasting) fval = contrast(dp, amp, ind, fval); else fval *= amp;
@@ -1677,7 +1677,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		    {
 		      if (dp->filtering)
 			{
-			  for (j = 0; j < frames; j++, amp+=incr, sr+=sincr, ind+=indincr, rev+=revincr) 
+			  for (j = 0; j < frames; j++, amp += incr, sr += sincr, ind += indincr, rev += revincr) 
 			    {
 			      fval = speed(dp, sr);
 			      if (sp->contrasting) fval = contrast(dp, amp, ind, fval); else fval *= amp;
@@ -1690,7 +1690,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 			{
 			  if (sp->contrasting)
 			    {
-			      for (j = 0; j < frames; j++, amp+=incr, sr+=sincr, ind+=indincr, rev+=revincr) 
+			      for (j = 0; j < frames; j++, amp += incr, sr += sincr, ind += indincr, rev += revincr) 
 				{
 				  fval = contrast(dp, amp, ind, speed(dp, sr));
 				  if (dp->reverbing) revin[j] += fval * rev;
@@ -1701,7 +1701,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 			    {
 			      if (dp->never_sped)
 				{
-				  for (j = 0; j < frames; j++, amp+=incr, rev+=revincr) 
+				  for (j = 0; j < frames; j++, amp += incr, rev += revincr) 
 				    {
 				      fval = amp * next_sample_to_float(dp->chn_fd);
 				      revin[j] += fval * rev;
@@ -1710,7 +1710,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 				}
 			      else
 				{
-				  for (j = 0; j < frames; j++, amp+=incr, sr+=sincr, rev+=revincr) 
+				  for (j = 0; j < frames; j++, amp += incr, sr += sincr, rev += revincr) 
 				    {
 				      fval = amp * speed(dp, sr);
 				      revin[j] += fval * rev;
@@ -2573,9 +2573,9 @@ static int bool_int_or_zero(SCM n) {if (SCM_TRUE_P(n)) return(1); else return(TO
 
 static SCM g_play(SCM samp_n, SCM snd_n, SCM chn_n, SCM syncd, SCM end_n) 
 {
-  #define H_play "(" S_play " &optional (start 0) snd chn sync end) plays snd or snd's channel chn starting at start.\n\
-   'start' can also be a filename: (" S_play " \"oboe.snd\").  If 'sync' is true, all sounds syncd to snd are played.\n\
-   if 'end' is not given, it plays to the end of the sound."
+  #define H_play "(" S_play " &optional (start 0) snd chn sync end) plays snd or snd's channel chn starting at start. \
+'start' can also be a filename: (" S_play " \"oboe.snd\").  If 'sync' is true, all sounds syncd to snd are played. \
+if 'end' is not given, it plays to the end of the sound."
 
   return(g_play_1(samp_n, snd_n, chn_n, TRUE, bool_int_or_zero(syncd), end_n));
 }
@@ -2594,8 +2594,8 @@ static SCM g_play_selection(SCM wait)
 
 static SCM g_play_and_wait(SCM samp_n, SCM snd_n, SCM chn_n, SCM syncd, SCM end_n) 
 {
-  #define H_play_and_wait "(" S_play_and_wait " &optional (start 0) snd chn end) plays snd or snd's channel chn starting at start\n\
-   and waiting for the play to complete before returning.  'start' can also be a filename: (" S_play_and_wait " \"oboe.snd\")"
+  #define H_play_and_wait "(" S_play_and_wait " &optional (start 0) snd chn end) plays snd or snd's channel chn starting at start \
+and waiting for the play to complete before returning.  'start' can also be a filename: (" S_play_and_wait " \"oboe.snd\")"
 
   return(g_play_1(samp_n, snd_n, chn_n, FALSE, bool_int_or_zero(syncd), end_n));
 }
@@ -2815,11 +2815,18 @@ void g_init_dac(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_stop_player,    SCM_FNC g_stop_player, 1, 0, 0),    H_stop_player);
   DEFINE_PROC(gh_new_procedure(S_playerQ,        SCM_FNC g_player_p, 1, 0, 0),       H_playerQ);
 
-  stop_playing_hook = MAKE_HOOK(S_stop_playing_hook, 1);                     /* arg = sound */
-  stop_playing_channel_hook = MAKE_HOOK(S_stop_playing_channel_hook, 2);     /* args = sound channel */
-  stop_playing_region_hook = MAKE_HOOK(S_stop_playing_region_hook, 1);       /* arg = region number */
-  start_playing_hook = MAKE_HOOK(S_start_playing_hook, 1);                   /* arg = sound */
-  play_hook = MAKE_HOOK(S_play_hook, 1);                                     /* args = size */
+  #define H_stop_playing_hook S_stop_playing_hook " (snd) is called when a sound finishes playing."
+  #define H_stop_playing_channel_hook S_stop_playing_channel_hook " (snd chn) is called when a channel finishes playing."
+  #define H_stop_playing_region_hook S_stop_playing_region_hook " (reg) is called when a region finishes playing."
+  #define H_play_hook S_play_hook " (samps) is called each time a buffer is sent to the DAC."
+  #define H_start_playing_hook S_start_playing_hook " (snd) is called when a play request is triggered. \
+If it returns #t, the sound is not played."
+
+  stop_playing_hook =         MAKE_HOOK(S_stop_playing_hook, 1, H_stop_playing_hook);                 /* arg = sound */
+  stop_playing_channel_hook = MAKE_HOOK(S_stop_playing_channel_hook, 2, H_stop_playing_channel_hook); /* args = sound channel */
+  stop_playing_region_hook =  MAKE_HOOK(S_stop_playing_region_hook, 1, H_stop_playing_region_hook);   /* arg = region number */
+  start_playing_hook =        MAKE_HOOK(S_start_playing_hook, 1, H_start_playing_hook);               /* arg = sound */
+  play_hook =                 MAKE_HOOK(S_play_hook, 1, H_play_hook);                                 /* args = size */
 
   init_rev_funcs(local_doc);
 

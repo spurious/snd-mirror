@@ -193,41 +193,9 @@ static void help_help_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 #if (!HAVE_HTML)
-static char* word_wrap(char *text, int widget_len)
-{
-  char *new_text;
-  int new_len, old_len, i, j, line_len = 0, desired_len;
-  old_len = snd_strlen(text);
-  new_len = old_len + 32;
-  new_text = (char *)CALLOC(new_len, sizeof(char));
-  desired_len = widget_len / 10;
-  for (i = 0, j = 0; i < old_len; i++)
-    {
-      if ((text[i] == '\n') || (text[i] == ' '))
-	{
-	  if (line_len >= desired_len)
-	    {
-	      new_text[j++] = '\n';
-	      line_len = 0;
-	    }
-	  else
-	    {
-	      new_text[j++] = ' ';
-	      line_len++;
-	    }
-	}
-      else
-	{
-	  new_text[j++] = text[i];
-	  line_len++;
-	}
-    }
-  return(new_text);
-}
-
 static void hit_help(Widget w, XtPointer context, XtPointer info) 
 {
-  char *new_text = NULL, *selection;
+  char *selection;
   selection = XmTextGetSelection(w);
   if (selection)
     {
@@ -235,15 +203,12 @@ static void hit_help(Widget w, XtPointer context, XtPointer info)
 #ifdef SCM_MODULE_OBARRAY
       {
 	SCM help_text;
-	help_text = g_help(TO_SCM_STRING(selection));
+	help_text = g_help(TO_SCM_STRING(selection),
+			   widget_width(w));
 	if (gh_string_p(help_text))
-	  {
-	    snd_help(get_global_state(),
-		     selection,
-		     new_text = word_wrap(SCM_STRING_CHARS(help_text),
-					  widget_width(w)));
-	    if (new_text) FREE(new_text);
-	  }
+	  snd_help(get_global_state(),
+		   selection,
+		   SCM_STRING_CHARS(help_text));
       }
 #endif
       XtFree(selection);

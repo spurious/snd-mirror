@@ -1,20 +1,5 @@
 #include "snd.h"
 
-#if HAVE_DIRENT_H
-  #include <dirent.h>
-#else
-  #define dirent direct
-  #if HAVE_SYS_NDIR_H
-    #include <sys/ndir.h>
-  #endif
-  #if HAVE_SYS_DIR_H
-    #include <sys/dir.h>
-  #endif
-  #if HAVE_NDIR_H
-    #include <ndir.h>
-  #endif
-#endif
-
 enum {NOGRAPH, WAVE, FFT_AXIS, LISP, FFT_MAIN};    /* for marks, regions, mouse click detection */
 
 #if HAVE_GUILE
@@ -5905,6 +5890,21 @@ void goto_graph(chan_info *cp)
     }
 }
 
+#if HAVE_DIRENT_H
+  #include <dirent.h>
+#else
+  #define dirent direct
+  #if HAVE_SYS_NDIR_H
+    #include <sys/ndir.h>
+  #endif
+  #if HAVE_SYS_DIR_H
+    #include <sys/dir.h>
+  #endif
+  #if HAVE_NDIR_H
+    #include <ndir.h>
+  #endif
+#endif
+
 void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 {
   snd_state *ss;
@@ -6413,33 +6413,32 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 		  if (mk) draw_mark(cp, cp->axis, mk);
 		}
 	      else delete_mark_samp(cp->cursor, cp);
-	      if ((keysym == snd_K_M) && ((cp->sound)->syncing != 0))
+	      if ((keysym == snd_K_M) && 
+		  ((cp->sound)->syncing != 0))
 		{
 		  sync_num = mark_sync_max() + 1; 
 		  if (mk) set_mark_sync(mk, sync_num);
 		  si = snd_sync(cp->state, (cp->sound)->syncing);
 		  for (i = 0; i < si->chans; i++) 
-		    {
-		      if (cp != si->cps[i])
-			{
-			  if (count > 0)
-			    {
-			      mk = add_mark(cp->cursor, NULL, si->cps[i]);
-			      if (mk)
-				{
-				  set_mark_sync(mk, sync_num);
-				  draw_mark(si->cps[i], (si->cps[i])->axis, mk);
-				}
-			    }
-			  else delete_mark_samp(cp->cursor, si->cps[i]);
-			}
-		    }
+		    if (cp != si->cps[i])
+		      {
+			if (count > 0)
+			  {
+			    mk = add_mark(cp->cursor, NULL, si->cps[i]);
+			    if (mk)
+			      {
+				set_mark_sync(mk, sync_num);
+				draw_mark(si->cps[i], (si->cps[i])->axis, mk);
+			      }
+			  }
+			else delete_mark_samp(cp->cursor, si->cps[i]);
+		      }
 		  si = free_sync_info(si);
 		}
 	      break;
 	    case snd_K_N: case snd_K_n: 
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_move(cp, count*cp->line_size); 
+	      redisplay = cursor_move(cp, count * cp->line_size); 
 	      break;
 	    case snd_K_O: case snd_K_o: 
 	      cp->cursor_on = 1; 
@@ -6447,7 +6446,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_P: case snd_K_p: 
 	      cp->cursor_on = 1; 
-	      redisplay = cursor_move(cp, -count*cp->line_size); 
+	      redisplay = cursor_move(cp, -count * cp->line_size); 
 	      break;
 	    case snd_K_Q: case snd_K_q: 
 	      play_channel(cp, cp->cursor, NO_END_SPECIFIED, TRUE); 
@@ -6457,12 +6456,14 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_R: case snd_K_r: 
 	      cp->cursor_on = 1; 
 	      redisplay = cursor_search(cp, -count); 
-	      searching = 1; cursor_searching = 1; 
+	      searching = 1; 
+	      cursor_searching = 1; 
 	      break;
 	    case snd_K_S: case snd_K_s: 
 	      cp->cursor_on = 1; 
 	      redisplay = cursor_search(cp, count); 
-	      searching = 1; cursor_searching = 1; 
+	      searching = 1; 
+	      cursor_searching = 1; 
 	      break;
 	    case snd_K_T: case snd_K_t: 
 	      stop_playing_sound(sp); 
@@ -6489,7 +6490,11 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_X: case snd_K_x: 
 	      extended_mode = 1; 
-	      if (got_count) {ext_count = count; got_count = 0;}
+	      if (got_count) 
+		{
+		  ext_count = count; 
+		  got_count = 0;
+		}
 	      break;
 	    case snd_K_Y: case snd_K_y: 
 	      paste_region(count, cp, "C-y"); 
@@ -6515,7 +6520,8 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_5: case snd_K_6: case snd_K_7: case snd_K_8: case snd_K_9: 
 	      counting = 1;
 	      number_buffer[number_ctr] = (char)('0' + keysym - snd_K_0); 
-	      if (number_ctr < (NUMBER_BUFFER_SIZE-2)) number_ctr++; 
+	      if (number_ctr < (NUMBER_BUFFER_SIZE-2)) 
+		number_ctr++; 
 	      /* there is also the bare-number case below */
 	      break;
 	    case snd_K_space: 
@@ -6551,46 +6557,46 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 #if HAVE_ARROW_KEYS
 	    case snd_keypad_Left: 
 	    case snd_keypad_4: 
-	      set_spectro_y_angle(ss, spectro_y_angle(ss)-1.0);
+	      set_spectro_y_angle(ss, spectro_y_angle(ss) - 1.0);
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 	    case snd_keypad_Right: 
 	    case snd_keypad_6: 
-	      set_spectro_y_angle(ss, spectro_y_angle(ss)+1.0);
+	      set_spectro_y_angle(ss, spectro_y_angle(ss) + 1.0);
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 	    case snd_keypad_Down: 
 	    case snd_keypad_2: 
-	      set_spectro_x_angle(ss, spectro_x_angle(ss)-1.0);
+	      set_spectro_x_angle(ss, spectro_x_angle(ss) - 1.0);
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 	    case snd_keypad_Up: 
 	    case snd_keypad_8: 
-	      set_spectro_x_angle(ss, spectro_x_angle(ss)+1.0);
+	      set_spectro_x_angle(ss, spectro_x_angle(ss) + 1.0);
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 #else
 	    case snd_keypad_4: 
-	      set_spectro_y_angle(ss, spectro_y_angle(ss)-1.0);
+	      set_spectro_y_angle(ss, spectro_y_angle(ss) - 1.0);
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 	    case snd_keypad_6: 
-	      set_spectro_y_angle(ss, spectro_y_angle(ss)+1.0);
+	      set_spectro_y_angle(ss, spectro_y_angle(ss) + 1.0);
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 	    case snd_keypad_2:
-	      set_spectro_x_angle(ss, spectro_x_angle(ss)-1.0);
+	      set_spectro_x_angle(ss, spectro_x_angle(ss) - 1.0);
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 	    case snd_keypad_8: 
-	      set_spectro_x_angle(ss, spectro_x_angle(ss)+1.0);
+	      set_spectro_x_angle(ss, spectro_x_angle(ss) + 1.0);
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
@@ -6607,12 +6613,32 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	  extended_mode = 0;
 	  switch (keysym)
 	    {
-	    case snd_K_A: case snd_K_a: get_amp_expression(sp, ext_count, 0); searching = 1; redisplay = CURSOR_IN_VIEW; break;
-	    case snd_K_B: case snd_K_b: redisplay = set_window_bounds(cp, ext_count); break;
-	    case snd_K_C: case snd_K_c: sound_hide_ctrls(sp); break;
-	    case snd_K_D: case snd_K_d: redisplay = prompt(sp, "eps file:", NULL); sp->printing = ext_count; searching = 1; break;
-	    case snd_K_E: case snd_K_e: redisplay = prompt(sp, "macro name:", NULL); sp->filing = MACRO_FILING; searching = 1; break;
-	    case snd_K_F: case snd_K_f: redisplay = prompt(sp, "file:", NULL); sp->filing = INPUT_FILING; searching = 1; break;
+	    case snd_K_A: case snd_K_a: 
+	      get_amp_expression(sp, ext_count, 0);
+	      searching = 1; 
+	      redisplay = CURSOR_IN_VIEW; 
+	      break;
+	    case snd_K_B: case snd_K_b: 
+	      redisplay = set_window_bounds(cp, ext_count); 
+	      break;
+	    case snd_K_C: case snd_K_c: 
+	      sound_hide_ctrls(sp); 
+	      break;
+	    case snd_K_D: case snd_K_d: 
+	      redisplay = prompt(sp, "eps file:", NULL); 
+	      sp->printing = ext_count; 
+	      searching = 1; 
+	      break;
+	    case snd_K_E: case snd_K_e: 
+	      redisplay = prompt(sp, "macro name:", NULL); 
+	      sp->filing = MACRO_FILING; 
+	      searching = 1; 
+	      break;
+	    case snd_K_F: case snd_K_f: 
+	      redisplay = prompt(sp, "file:", NULL); 
+	      sp->filing = INPUT_FILING; 
+	      searching = 1; 
+	      break;
 	    case snd_K_G: case snd_K_g: 
 	      number_ctr = 0;
 	      counting = 0; 
@@ -6621,37 +6647,93 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      if ((ss->checking_explicitly) || (play_in_progress())) ss->stopped_explicitly = 1; 
 	      clear_listener();
 	      break;
-	    case snd_K_H: case snd_K_h: break;
-	    case snd_K_I: case snd_K_i: redisplay = prompt(sp, "insert file:", NULL); sp->filing = INSERT_FILING; searching = 1; break;
-	    case snd_K_J: case snd_K_j: cp->cursor_on = 1; redisplay = goto_mix(cp, ext_count); break;
-	    case snd_K_L: case snd_K_l: redisplay = prompt(sp, "load:", NULL); sp->loading = 1; searching = 1; break;
+	    case snd_K_H: case snd_K_h: 
+	      /* TODO: what is this??? */
+	      break;
+	    case snd_K_I: case snd_K_i: 
+	      redisplay = prompt(sp, "insert file:", NULL); 
+	      sp->filing = INSERT_FILING; 
+	      searching = 1; 
+	      break;
+	    case snd_K_J: case snd_K_j:
+	      cp->cursor_on = 1; 
+	      redisplay = goto_mix(cp, ext_count); 
+	      break;
+	    case snd_K_L: case snd_K_l: 
+	      redisplay = prompt(sp, "load:", NULL); 
+	      sp->loading = 1;
+	      searching = 1; 
+	      break;
 	    case snd_K_M: case snd_K_m:
 	      cp->cursor_on = 1; 
 	      redisplay = prompt_named_mark(cp);
 	      set_show_marks(ss, 1); 
 	      searching = 1; 
 	      break;
-	    case snd_K_N: case snd_K_n: eval_expression(cp, sp, ext_count, 0); searching = 1; redisplay = CURSOR_IN_VIEW; break;
-	    case snd_K_O: case snd_K_o: sound_show_ctrls(sp); break;
-	    case snd_K_P: case snd_K_p: redisplay = set_window_size(cp, ext_count); break;
-	    case snd_K_Q: case snd_K_q: redisplay = prompt(sp, STR_mix_file_p, NULL); sp->filing = CHANGE_FILING; searching = 1; break;
-	    case snd_K_R: case snd_K_r: redo_edit_with_sync(cp, ext_count); redisplay = CURSOR_UPDATE_DISPLAY; break;
-	    case snd_K_S: case snd_K_s: save_edits(sp, NULL); redisplay = CURSOR_IN_VIEW; break;
-	    case snd_K_T: case snd_K_t: stop_playing_sound(sp); redisplay = NO_ACTION; break;
-	    case snd_K_U: case snd_K_u: undo_edit_with_sync(cp, ext_count); redisplay = CURSOR_UPDATE_DISPLAY; break;
-	    case snd_K_V: case snd_K_v: redisplay = set_window_percentage(cp, ext_count); break;
-	    case snd_K_W: case snd_K_w: redisplay = prompt(sp, STR_file_p, NULL); sp->filing = CHANNEL_FILING; searching = 1; break;
-	    case snd_K_X: case snd_K_x: get_eval_expression(sp, ext_count, 0); searching = 1; redisplay = CURSOR_IN_VIEW; break;
-	    case snd_K_Y: case snd_K_y: break;
+	    case snd_K_N: case snd_K_n: 
+	      eval_expression(cp, sp, ext_count, 0); 
+	      searching = 1; 
+	      redisplay = CURSOR_IN_VIEW; 
+	      break;
+	    case snd_K_O: case snd_K_o: 
+	      sound_show_ctrls(sp); 
+	      break;
+	    case snd_K_P: case snd_K_p: 
+	      redisplay = set_window_size(cp, ext_count); 
+	      break;
+	    case snd_K_Q: case snd_K_q: 
+	      redisplay = prompt(sp, STR_mix_file_p, NULL); 
+	      sp->filing = CHANGE_FILING; 
+	      searching = 1; 
+	      break;
+	    case snd_K_R: case snd_K_r: 
+	      redo_edit_with_sync(cp, ext_count); 
+	      redisplay = CURSOR_UPDATE_DISPLAY;
+	      break;
+	    case snd_K_S: case snd_K_s: 
+	      save_edits(sp, NULL); 
+	      redisplay = CURSOR_IN_VIEW; 
+	      break;
+	    case snd_K_T: case snd_K_t: 
+	      stop_playing_sound(sp); 
+	      redisplay = NO_ACTION; 
+	      break;
+	    case snd_K_U: case snd_K_u: 
+	      undo_edit_with_sync(cp, ext_count); 
+	      redisplay = CURSOR_UPDATE_DISPLAY; 
+	      break;
+	    case snd_K_V: case snd_K_v:
+	      redisplay = set_window_percentage(cp, ext_count);
+	      break;
+	    case snd_K_W: case snd_K_w: 
+	      redisplay = prompt(sp, STR_file_p, NULL); 
+	      sp->filing = CHANNEL_FILING; 
+	      searching = 1; 
+	      break;
+	    case snd_K_X: case snd_K_x: 
+	      get_eval_expression(sp, ext_count, 0); 
+	      searching = 1; 
+	      redisplay = CURSOR_IN_VIEW; 
+	      break;
+	    case snd_K_Y: case snd_K_y: 
+	      break;
 	    case snd_K_Z: case snd_K_z: 
 	      cp->cursor_on = 1; 
 	      cos_smooth(cp, cp->cursor, ext_count, 0, "C-x C-z"); 
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
-	    case snd_K_Right: sx_incremented(cp, state_amount(state)); break;
-	    case snd_K_Left:  sx_incremented(cp, -state_amount(state)); break;
-	    case snd_K_Up: zx_incremented(cp, 1.0+state_amount(state)); break;
-	    case snd_K_Down: zx_incremented(cp, 1.0/(1.0+state_amount(state))); break;
+	    case snd_K_Right: 
+	      sx_incremented(cp, state_amount(state)); 
+	      break;
+	    case snd_K_Left:  
+	      sx_incremented(cp, -state_amount(state)); 
+	      break;
+	    case snd_K_Up: 
+	      zx_incremented(cp, 1.0 + state_amount(state)); 
+	      break;
+	    case snd_K_Down: 
+	      zx_incremented(cp, 1.0 / (1.0 + state_amount(state))); 
+	      break;
 	    default:
 	      report_in_minibuffer(sp, "C-x C-%s undefined", key_to_name(keysym));
 	      break;
@@ -6669,18 +6751,44 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_0: case snd_K_1: case snd_K_2: case snd_K_3: case snd_K_4:
 	    case snd_K_5: case snd_K_6: case snd_K_7: case snd_K_8: case snd_K_9: 
 	      counting = 1;
-	      number_buffer[number_ctr] =(char)('0'+keysym-snd_K_0); 
-	      if (number_ctr < (NUMBER_BUFFER_SIZE-2)) number_ctr++; 
+	      number_buffer[number_ctr] =(char)('0' + keysym-snd_K_0); 
+	      if (number_ctr < (NUMBER_BUFFER_SIZE-2)) 
+		number_ctr++; 
 	      break;
-	    case snd_K_period: counting = 1; number_buffer[number_ctr] ='.'; number_ctr++; dot_seen = 1; break;
-	    case snd_K_greater: cp->cursor_on = 1; redisplay = cursor_moveto_end(cp); break;
-	    case snd_K_less: cp->cursor_on = 1; redisplay = cursor_moveto_beginning(cp); break;
-	    case snd_K_minus: counting = 1; number_buffer[0] ='-'; number_ctr = 1; break;
-	    case snd_K_Right: sx_incremented(cp, state_amount(state)); break;
-	    case snd_K_Left:  sx_incremented(cp, -state_amount(state)); break;
-	    case snd_K_Up:    zx_incremented(cp, 1.0+state_amount(state)); break;
-	    case snd_K_Down:  zx_incremented(cp, 1.0/(1.0+state_amount(state))); break;
-	    case snd_K_Home: snd_update(ss, sp); break;
+	    case snd_K_period: 
+	      counting = 1; 
+	      number_buffer[number_ctr] = '.'; 
+	      number_ctr++; 
+	      dot_seen = 1; 
+	      break;
+	    case snd_K_greater: 
+	      cp->cursor_on = 1; 
+	      redisplay = cursor_moveto_end(cp); 
+	      break;
+	    case snd_K_less: 
+	      cp->cursor_on = 1; 
+	      redisplay = cursor_moveto_beginning(cp); 
+	      break;
+	    case snd_K_minus: 
+	      counting = 1; 
+	      number_buffer[0] = '-'; 
+	      number_ctr = 1; 
+	      break;
+	    case snd_K_Right: 
+	      sx_incremented(cp, state_amount(state)); 
+	      break;
+	    case snd_K_Left:  
+	      sx_incremented(cp, -state_amount(state)); 
+	      break;
+	    case snd_K_Up:    
+	      zx_incremented(cp, 1.0 + state_amount(state)); 
+	      break;
+	    case snd_K_Down: 
+	      zx_incremented(cp, 1.0 / (1.0 + state_amount(state))); 
+	      break;
+	    case snd_K_Home: 
+	      snd_update(ss, sp); 
+	      break;
 	    case snd_K_space: 
 	      if (play_in_progress())
 		toggle_dac_pausing(ss); 
@@ -6690,43 +6798,43 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      /* fUn WiTh KeYpAd! */
 #if HAVE_ARROW_KEYS
 	    case snd_keypad_Up: case snd_keypad_8: 
-	      set_spectro_z_scale(ss, spectro_z_scale(ss)+.01);
+	      set_spectro_z_scale(ss, spectro_z_scale(ss) + .01);
 	      redisplay = CURSOR_UPDATE_DISPLAY;
 	      reflect_spectro(ss);
 	      break;
 	    case snd_keypad_Down: case snd_keypad_2: 
-	      set_spectro_z_scale(ss, spectro_z_scale(ss)-.01);
+	      set_spectro_z_scale(ss, spectro_z_scale(ss) - .01);
 	      redisplay = CURSOR_UPDATE_DISPLAY;
 	      reflect_spectro(ss);
 	      break;
 	    case snd_keypad_Left: case snd_keypad_4: 
-	      set_spectro_z_angle(ss, spectro_z_angle(ss)-1.0);
+	      set_spectro_z_angle(ss, spectro_z_angle(ss) - 1.0);
 	      redisplay = CURSOR_UPDATE_DISPLAY;
 	      reflect_spectro(ss);
 	      break;
 	    case snd_keypad_Right: case snd_keypad_6: 
-	      set_spectro_z_angle(ss, spectro_z_angle(ss)+1.0);
+	      set_spectro_z_angle(ss, spectro_z_angle(ss) + 1.0);
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 #else
 	    case snd_keypad_8: 
-	      set_spectro_z_scale(ss, spectro_z_scale(ss)+.01);
+	      set_spectro_z_scale(ss, spectro_z_scale(ss) + .01);
 	      redisplay = CURSOR_UPDATE_DISPLAY;
 	      reflect_spectro(ss);
 	      break;
 	    case snd_keypad_2: 
-	      set_spectro_z_scale(ss, spectro_z_scale(ss)-.01);
+	      set_spectro_z_scale(ss, spectro_z_scale(ss) - .01);
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 	    case snd_keypad_4: 
-	      set_spectro_z_angle(ss, spectro_z_angle(ss)-1.0);
+	      set_spectro_z_angle(ss, spectro_z_angle(ss) - 1.0);
 	      redisplay = CURSOR_UPDATE_DISPLAY;
 	      reflect_spectro(ss);
 	      break;
 	    case snd_keypad_6: 
-	      set_spectro_z_angle(ss, spectro_z_angle(ss)+1.0);
+	      set_spectro_z_angle(ss, spectro_z_angle(ss) + 1.0);
 	      redisplay = CURSOR_UPDATE_DISPLAY;
 	      reflect_spectro(ss); 
 	      break;
@@ -6734,7 +6842,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_keypad_Add:
 	      if (wavo(ss)) 
 		set_wavo_trace(ss, wavo_trace(ss)+1); 
-	      else set_spectro_hop(ss, spectro_hop(ss)+1);
+	      else set_spectro_hop(ss, spectro_hop(ss) + 1);
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
@@ -6742,12 +6850,12 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      if (wavo(ss)) 
 		{
 		  if (wavo_trace(ss)>1) 
-		    set_wavo_trace(ss, wavo_trace(ss)-1);
+		    set_wavo_trace(ss, wavo_trace(ss) - 1);
 		} 
 	      else 
 		{
 		  if (spectro_hop(ss)>1) 
-		    set_spectro_hop(ss, spectro_hop(ss)-1);
+		    set_spectro_hop(ss, spectro_hop(ss) - 1);
 		}
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
@@ -6757,47 +6865,48 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 	    case snd_keypad_Divide: 
-	      if (fft_size(ss) > 4) set_fft_size(ss, fft_size(ss) / 2); 
+	      if (fft_size(ss) > 4) 
+		set_fft_size(ss, fft_size(ss) / 2); 
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 #if HAVE_ARROW_KEYS
 	    case snd_keypad_Delete: case snd_keypad_Decimal: 
-	      set_dot_size(ss, dot_size(ss)+1); 
+	      set_dot_size(ss, dot_size(ss) + 1); 
 	      redisplay = KEYBOARD_NO_ACTION; 
 	      break;
 	    case snd_keypad_Insert: case snd_keypad_0: 
 	      if (dot_size(ss) > 1) 
-		set_dot_size(ss, dot_size(ss)-1); 
+		set_dot_size(ss, dot_size(ss) - 1); 
 	      redisplay = KEYBOARD_NO_ACTION; 
 	      break;
 	    case snd_keypad_PageDown: case snd_keypad_3: 
-	      set_spectro_cutoff(ss, spectro_cutoff(ss)*.95); 
+	      set_spectro_cutoff(ss, spectro_cutoff(ss) * .95); 
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
 	    case snd_keypad_PageUp: case snd_keypad_9: 
 	      if (spectro_cutoff(ss) < 1.0) 
-		set_spectro_cutoff(ss, spectro_cutoff(ss)/.95); 
+		set_spectro_cutoff(ss, spectro_cutoff(ss) / .95); 
 	      redisplay = CURSOR_UPDATE_DISPLAY; reflect_spectro(ss); 
 	      break;
 #else
 	    case snd_keypad_Decimal: 
-	      set_dot_size(ss, dot_size(ss)+1);
+	      set_dot_size(ss, dot_size(ss) + 1);
 	      redisplay = KEYBOARD_NO_ACTION; 
 	      break;
 	    case_snd_keypad_0: 
 	      if (dot_size(ss) > 1) 
-		set_dot_size(ss, dot_size(ss)-1); 
+		set_dot_size(ss, dot_size(ss) - 1); 
 	      redisplay = KEYBOARD_NO_ACTION;
 	      break;
 	    case snd_keypad_3: 
-	      set_spectro_cutoff(ss, spectro_cutoff(ss)*.95); 
+	      set_spectro_cutoff(ss, spectro_cutoff(ss) * .95); 
 	      redisplay = CURSOR_UPDATE_DISPLAY;
 	      reflect_spectro(ss); 
 	      break;
 	    case snd_keypad_9: 
 	      if (spectro_cutoff(ss) < 1.0) 
-		set_spectro_cutoff(ss, spectro_cutoff(ss)/.95); 
+		set_spectro_cutoff(ss, spectro_cutoff(ss) / .95); 
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
@@ -6872,7 +6981,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_C: case snd_K_c: 
 	      mark_define_region(cp, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); 
-	      redisplay = CURSOR_CLAIM_SELECTION; 
+	      redisplay = CURSOR_UPDATE_DISPLAY;
 	      break;
 	    case snd_K_D: case snd_K_d: 
 	      redisplay = prompt(sp, "temp dir:", NULL); 
@@ -6883,7 +6992,8 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_E: case snd_K_e: 
 	      execute_last_macro(cp, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count);
 	      redisplay = cursor_decision(cp);
-	      if (redisplay == CURSOR_IN_VIEW) redisplay = CURSOR_UPDATE_DISPLAY; 
+	      if (redisplay == CURSOR_IN_VIEW) 
+		redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 #endif
 	    case snd_K_F: case snd_K_f: 
@@ -6891,10 +7001,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      redisplay = CURSOR_ON_RIGHT; 
 	      break;
 	    case snd_K_I: case snd_K_i: 
-	      paste_selection_or_region(ss,
-					(ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count,
-					cp,
-					"C-x i");
+	      paste_selection_or_region(ss, (ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count, cp, "C-x i");
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 	    case snd_K_J: case snd_K_j: 
@@ -6909,15 +7016,13 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_L: case snd_K_l: 
 	      cp->cursor_on = 1;
 	      if (selection_is_active_in_channel(cp))
-		cursor_moveto(cp, (int)(selection_beg(cp)+0.5*selection_len()));
+		cursor_moveto(cp, (int)(selection_beg(cp) + 0.5 * selection_len()));
 	      else no_selection_error(sp); 
 	      redisplay = CURSOR_IN_MIDDLE;
 	      break;
 	    case snd_K_N: case snd_K_n: 
 	      if (selection_is_active_in_channel(cp))
-		eval_expression(cp, sp, 
-				(ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count, 
-				TRUE); 
+		eval_expression(cp, sp, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count, TRUE); 
 	      else no_selection_error(sp); 
 	      break;
 	    case snd_K_O: case snd_K_o: 
@@ -6933,20 +7038,15 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      redisplay = NO_ACTION;
 	      break;
 	    case snd_K_Q: case snd_K_q: 
-	      add_selection_or_region(ss,
-				      (ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count,
-				      cp,
-				      "C-x q"); 
+	      add_selection_or_region(ss, (ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count, cp, "C-x q"); 
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 	    case snd_K_R: case snd_K_r: 
-	      redo_edit_with_sync(cp,
-				  (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); 
+	      redo_edit_with_sync(cp, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); 
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 	    case snd_K_U: case snd_K_u: 
-	      undo_edit_with_sync(cp,
-				  (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); 
+	      undo_edit_with_sync(cp, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); 
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 	    case snd_K_V: case snd_K_v: 
@@ -6966,9 +7066,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_X: case snd_K_x: 
 	      if (selection_is_active_in_channel(cp))
 		{
-		  get_eval_expression(sp, 
-				      (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count, 
-				      TRUE); 
+		  get_eval_expression(sp, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count, TRUE); 
 		  searching = 1; 
 		  redisplay = CURSOR_IN_VIEW;
 		}
@@ -6977,19 +7075,31 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_Z: case snd_K_z: 
 	      if (selection_is_active_in_channel(cp))
 		{
-		  cos_smooth(cp, cp->cursor, 
-			     (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count, 1, 
-			     "C-x z"); 
+		  cos_smooth(cp, cp->cursor, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count, 1, "C-x z"); 
 		  redisplay = CURSOR_UPDATE_DISPLAY; 
 		}
 	      else no_selection_error(sp); 
 	      break;
-	    case snd_K_Right:   sx_incremented(cp, state_amount(state));                    break;
-	    case snd_K_Left:    sx_incremented(cp, -state_amount(state));                   break;
-	    case snd_K_Up:      zx_incremented(cp, 1.0+state_amount(state));                break;
-	    case snd_K_Down:    zx_incremented(cp, 1.0/(1.0+state_amount(state)));          break;
-	    case snd_K_less:    cp->cursor_on = 1; redisplay = cursor_moveto_beginning(cp); break;
-	    case snd_K_greater: cp->cursor_on = 1; redisplay = cursor_moveto_end(cp);       break;
+	    case snd_K_Right:   
+	      sx_incremented(cp, state_amount(state));
+	      break;
+	    case snd_K_Left:
+	      sx_incremented(cp, -state_amount(state));
+	      break;
+	    case snd_K_Up:
+	      zx_incremented(cp, 1.0 + state_amount(state));
+              break;
+	    case snd_K_Down:
+	      zx_incremented(cp, 1.0 / (1.0 + state_amount(state)));
+	      break;
+	    case snd_K_less:
+	      cp->cursor_on = 1; 
+	      redisplay = cursor_moveto_beginning(cp); 
+	      break;
+	    case snd_K_greater: 
+	      cp->cursor_on = 1; 
+	      redisplay = cursor_moveto_end(cp);
+	      break;
 	    case snd_K_openparen:
 #if HAVE_GUILE
 	      if (defining_macro) 
@@ -7106,7 +7216,7 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
       x = ap->x_axis_x1;
   xf = ap->x0 + (ap->x1 - ap->x0) * (Float)(x - ap->x_axis_x0) / (Float)(ap->x_axis_x1 - ap->x_axis_x0);
   if (cp->fft_log_frequency)                                /* map axis x1 = 1.0 to srate/2 */
-    xf = ((exp(xf*log(LOG_FACTOR+1.0)) - 1.0)/LOG_FACTOR) * SND_SRATE(cp->sound) * 0.5 * cp->spectro_cutoff; 
+    xf = ((exp(xf * log(LOG_FACTOR + 1.0)) - 1.0) / LOG_FACTOR) * SND_SRATE(cp->sound) * 0.5 * cp->spectro_cutoff; 
   if (cp->fft_style == NORMAL_FFT)                          /* fp->data[bins] */
     {
       if (cp->transform_type == FOURIER)
@@ -7115,7 +7225,7 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
       return(mus_format("(%.1f%s, transform val: %.3f%s (raw: %.3f)",
 			xf,
 			((cp->transform_type == AUTOCORRELATION) ? " samps" : " Hz"),
-			(cp->fft_log_magnitude) ? cp_dB(cp, (fp->data[ind]*fp->scale)) : (fp->data[ind]*fp->scale),
+			(cp->fft_log_magnitude) ? cp_dB(cp, (fp->data[ind] * fp->scale)) : (fp->data[ind] * fp->scale),
 			(cp->fft_log_magnitude) ? "dB" : "",
 			fp->data[ind]));
     }
@@ -7131,7 +7241,7 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
 	  time = (int)(si->target_slices * (Float)(x - ap->x_axis_x0) / (Float)(ap->x_axis_x1 - ap->x_axis_x0));
 	  return(mus_format("(time: %.2f, freq: %.1f, val: %.3f%s (raw: %.3f))",
 			    xf, yf,
-			    (cp->fft_log_magnitude) ? cp_dB(cp, si->data[time][ind]/si->scale) : (si->data[time][ind]/si->scale),
+			    (cp->fft_log_magnitude) ? cp_dB(cp, si->data[time][ind] / si->scale) : (si->data[time][ind] / si->scale),
 			    (cp->fft_log_magnitude) ? "dB" : "",
 			    si->data[time][ind]));
 	}
@@ -7267,8 +7377,6 @@ int key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
       (handle_key_press(cp, keysym, key_state) == TRUE))
     return(FALSE);
   redisplay = keyboard_command(cp, keysym, key_state);
-  if (redisplay == CURSOR_CLAIM_SELECTION)
-    redisplay = CURSOR_UPDATE_DISPLAY;
   /* if lisp graph has cursor? */
   handle_cursor_with_sync(cp, redisplay);
   return(FALSE);
@@ -7766,40 +7874,40 @@ static SCM g_sound_to_temp_1(SCM ht, SCM df, int selection, int one_file)
 
 static SCM g_sound_to_temp(SCM ht, SCM df) 
 {
-  #define H_sound_to_temp "(" S_sound_to_temp " &optional header-type data-format) writes the syncd data to a temp file\n\
-   with the indicated header type and data format; returns temp file name"
+  #define H_sound_to_temp "(" S_sound_to_temp " &optional header-type data-format) writes the syncd data to a temp file \
+with the indicated header type and data format; returns temp file name"
 
   return(g_sound_to_temp_1(ht, df, USE_FULL_FILE, USE_ONE_FILE));
 }
 
 static SCM g_sound_to_temps(SCM ht, SCM df) 
 {
-  #define H_sound_to_temps "(" S_sound_to_temps " &optional header-type data-format) writes the syncd data to mono temp files\n\
-   with the indicated header type and data format; returns temp file names"
+  #define H_sound_to_temps "(" S_sound_to_temps " &optional header-type data-format) writes the syncd data to mono temp files \
+with the indicated header type and data format; returns temp file names"
 
   return(g_sound_to_temp_1(ht, df, USE_FULL_FILE, USE_MANY_FILES));
 }
 
 static SCM g_selection_to_temp(SCM ht, SCM df) 
 {
-  #define H_selection_to_temp "(" S_selection_to_temp " &optional header-type data-format) writes the selected data to a temp file\n\
-   with the indicated header type and data format; returns temp file name"
+  #define H_selection_to_temp "(" S_selection_to_temp " &optional header-type data-format) writes the selected data to a temp file \
+with the indicated header type and data format; returns temp file name"
 
   return(g_sound_to_temp_1(ht, df, USE_SELECTION, USE_ONE_FILE));
 }
 
 static SCM g_selection_to_temps(SCM ht, SCM df) 
 {
-  #define H_selection_to_temps "(" S_selection_to_temps " &optional header-type data-format) writes the selected data to mono temp files\n\
-   with the indicated header type and data format; returns temp file names"
+  #define H_selection_to_temps "(" S_selection_to_temps " &optional header-type data-format) writes the selected data to mono temp files \
+with the indicated header type and data format; returns temp file names"
 
   return(g_sound_to_temp_1(ht, df, USE_SELECTION, USE_MANY_FILES));
 }
 
 static SCM g_temp_to_sound(SCM data, SCM new_name, SCM origin)
 {
-  #define H_temp_to_sound "(" S_temp_to_sound " data new-name origin) reads new-name to complete the edit begun by " S_sound_to_temp "\n\
-   using data returned by the latter and origin as the edit history entry for the edit"
+  #define H_temp_to_sound "(" S_temp_to_sound " data new-name origin) reads new-name to complete the edit begun by " S_sound_to_temp " \
+using data returned by the latter and origin as the edit history entry for the edit"
 
   snd_exf *program_data;
   SCM_ASSERT(gh_string_p(new_name), new_name, SCM_ARG2, S_temp_to_sound);
@@ -7812,8 +7920,8 @@ static SCM g_temp_to_sound(SCM data, SCM new_name, SCM origin)
 
 static SCM g_temps_to_sound(SCM data, SCM new_names, SCM origin)
 {
-  #define H_temps_to_sound "(" S_temps_to_sound " data new-names origin) reads new-names to complete the edit begun by " S_sound_to_temps "\n\
-   using data returned by the latter and origin as the edit history entry for the edit"
+  #define H_temps_to_sound "(" S_temps_to_sound " data new-names origin) reads new-names to complete the edit begun by " S_sound_to_temps " \
+using data returned by the latter and origin as the edit history entry for the edit"
 
   snd_exf *program_data;
   int i, len;
@@ -7884,9 +7992,9 @@ static SCM g_sp_scan(SCM proc, int chan_choice, SCM s_beg, SCM s_end, int series
 static SCM g_scan_chan(SCM proc, SCM beg, SCM end, SCM snd, SCM chn) 
 { 
   #define H_scan_chan "(" S_scan_chan " func &optional (start 0) end snd chn)\n\
-   apply func to samples in current channel (or the specified channel)\n\
-   func is a function of one argument, either the current sample, or #f (to indicate end-of-data)\n\
-   if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number"
+apply func to samples in current channel (or the specified channel) \
+func is a function of one argument, either the current sample, or #f (to indicate end-of-data) \
+if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number"
 
   SND_ASSERT_CHAN(S_scan_chan, snd, chn, 4); 
   return(g_sp_scan(proc, SCAN_CURRENT_CHAN, beg, end, TRUE, TRUE, SCM_BOOL_F, snd, chn));
@@ -7911,7 +8019,7 @@ static SCM g_scan_all_chans(SCM proc, SCM beg, SCM end)
 static SCM g_scan_sound_chans(SCM proc, SCM beg, SCM end, SCM snd) 
 { 
   #define H_scan_sound_chans "(" S_scan_sound_chans " func &optional (start 0) end snd)\n\
-   apply func to samples in all of sound snd's channels"
+apply func to samples in all of sound snd's channels"
 
   SND_ASSERT_SND(S_scan_sound_chans, snd, 4); 
   return(g_sp_scan(proc, SCAN_SOUND_CHANS, beg, end, TRUE, TRUE, SCM_BOOL_F, snd, SCM_BOOL_F));
@@ -7920,7 +8028,7 @@ static SCM g_scan_sound_chans(SCM proc, SCM beg, SCM end, SCM snd)
 static SCM g_scan_across_chans(SCM proc, SCM beg, SCM end) 
 { 
   #define H_scan_across_chans "(" S_scan_across_chans " func &optional (start 0) end)\n\
-   apply func to samples in all sync'd channels in parallel"
+apply func to samples in all sync'd channels in parallel"
 
   return(g_sp_scan(proc, SCAN_SYNCD_CHANS, beg, end, FALSE, TRUE, SCM_BOOL_F, SCM_BOOL_F, SCM_BOOL_F));
 }
@@ -7928,7 +8036,7 @@ static SCM g_scan_across_chans(SCM proc, SCM beg, SCM end)
 static SCM g_scan_across_all_chans(SCM proc, SCM beg, SCM end) 
 { 
   #define H_scan_across_all_chans "(" S_scan_across_all_chans " func &optional (start 0) end)\n\
-   apply func to samples in all channels in parallel"
+apply func to samples in all channels in parallel"
 
   return(g_sp_scan(proc, SCAN_ALL_CHANS, beg, end, FALSE, TRUE, SCM_BOOL_F, SCM_BOOL_F, SCM_BOOL_F));
 }
@@ -7936,7 +8044,7 @@ static SCM g_scan_across_all_chans(SCM proc, SCM beg, SCM end)
 static SCM g_scan_across_sound_chans(SCM proc, SCM beg, SCM end, SCM snd) 
 { 
   #define H_scan_across_sound_chans "(" S_scan_across_sound_chans " func &optional (start 0) end snd)\n\
-   apply func to samples in sound snd's channels in parallel"
+apply func to samples in sound snd's channels in parallel"
 
   SND_ASSERT_SND(S_scan_across_sound_chans, snd, 4); 
   return(g_sp_scan(proc, SCAN_SOUND_CHANS, beg, end, FALSE, TRUE, SCM_BOOL_F, snd, SCM_BOOL_F));
@@ -7945,7 +8053,7 @@ static SCM g_scan_across_sound_chans(SCM proc, SCM beg, SCM end, SCM snd)
 static SCM g_map_chan(SCM proc, SCM beg, SCM end, SCM org, SCM snd, SCM chn) 
 { 
   #define H_map_chan "(" S_map_chan "func &optional (start 0) end edname snd chn)\n\
-   apply func to samples in current channel, edname is the edit history name for this editing operation"
+apply func to samples in current channel, edname is the edit history name for this editing operation"
 
   SND_ASSERT_CHAN(S_map_chan, snd, chn, 5); 
   return(g_sp_scan(proc, SCAN_CURRENT_CHAN, beg, end, TRUE, FALSE, org, snd, chn));
@@ -7954,7 +8062,7 @@ static SCM g_map_chan(SCM proc, SCM beg, SCM end, SCM org, SCM snd, SCM chn)
 static SCM g_map_chans(SCM proc, SCM beg, SCM end, SCM org) 
 { 
   #define H_map_chans "(" S_map_chans "func &optional (start 0) end edname)\n\
-   apply func to currently sync'd channels, edname is the edit history name for this editing operation"
+apply func to currently sync'd channels, edname is the edit history name for this editing operation"
 
   return(g_sp_scan(proc, SCAN_SYNCD_CHANS, beg, end, TRUE, FALSE, org, SCM_BOOL_F, SCM_BOOL_F));
 }
@@ -7962,7 +8070,7 @@ static SCM g_map_chans(SCM proc, SCM beg, SCM end, SCM org)
 static SCM g_map_all_chans(SCM proc, SCM beg, SCM end, SCM org) 
 { 
   #define H_map_all_chans "(" S_map_all_chans "func &optional (start 0) end edname)\n\
-    apply func to all channels, edname is the edit history name for this editing operation"
+apply func to all channels, edname is the edit history name for this editing operation"
 
   return(g_sp_scan(proc, SCAN_ALL_CHANS, beg, end, TRUE, FALSE, org, SCM_BOOL_F, SCM_BOOL_F));
 }
@@ -7970,7 +8078,7 @@ static SCM g_map_all_chans(SCM proc, SCM beg, SCM end, SCM org)
 static SCM g_map_sound_chans(SCM proc, SCM beg, SCM end, SCM org, SCM snd) 
 {
   #define H_map_sound_chans "(" S_map_sound_chans "func &optional (start 0) end edname snd)\n\
-    apply func to sound snd's channels, edname is the edit history name for this editing operation"
+apply func to sound snd's channels, edname is the edit history name for this editing operation"
 
   SND_ASSERT_SND(S_map_sound_chans, snd, 5); 
   return(g_sp_scan(proc, SCAN_SOUND_CHANS, beg, end, TRUE, FALSE, org, snd, SCM_BOOL_F));
@@ -7979,7 +8087,7 @@ static SCM g_map_sound_chans(SCM proc, SCM beg, SCM end, SCM org, SCM snd)
 static SCM g_map_across_chans(SCM proc, SCM beg, SCM end, SCM org) 
 {
   #define H_map_across_chans "(" S_map_across_chans "func &optional (start 0) end edname)\n\
-   apply func to currently sync'd channels in parallel, edname is the edit history name for this editing operation"
+apply func to currently sync'd channels in parallel, edname is the edit history name for this editing operation"
 
   return(g_sp_scan(proc, SCAN_SYNCD_CHANS, beg, end, FALSE, FALSE, org, SCM_BOOL_F, SCM_BOOL_F));
 }
@@ -7987,7 +8095,7 @@ static SCM g_map_across_chans(SCM proc, SCM beg, SCM end, SCM org)
 static SCM g_map_across_all_chans(SCM proc, SCM beg, SCM end, SCM org) 
 {
   #define H_map_across_all_chans "(" S_map_across_all_chans "func &optional (start 0) end edname)\n\
-   apply func to all channels in parallel, edname is the edit history name for this editing operation"
+apply func to all channels in parallel, edname is the edit history name for this editing operation"
 
   return(g_sp_scan(proc, SCAN_ALL_CHANS, beg, end, FALSE, FALSE, org, SCM_BOOL_F, SCM_BOOL_F));
 }
@@ -7995,7 +8103,7 @@ static SCM g_map_across_all_chans(SCM proc, SCM beg, SCM end, SCM org)
 static SCM g_map_across_sound_chans(SCM proc, SCM beg, SCM end, SCM org, SCM snd) 
 {
   #define H_map_across_sound_chans "(" S_map_across_sound_chans "func &optional (start 0) end edname snd)\n\
-   apply func to sound snd's channels in parallel, edname is the edit history name for this editing operation"
+apply func to sound snd's channels in parallel, edname is the edit history name for this editing operation"
 
   SND_ASSERT_SND(S_map_across_sound_chans, snd, 5); 
   return(g_sp_scan(proc, SCAN_SOUND_CHANS, beg, end, FALSE, FALSE, org, snd, SCM_BOOL_F));
@@ -8003,8 +8111,8 @@ static SCM g_map_across_sound_chans(SCM proc, SCM beg, SCM end, SCM org, SCM snd
 
 static SCM g_find(SCM expr, SCM sample, SCM snd_n, SCM chn_n)
 {
-  #define H_find "(" S_find " func &optional (start-samp 0) snd chn) applies func, a function of one argument,\n\
-   the current sample, to each sample in snd's channel chn, starting at 'start-samp' until func returns #t"
+  #define H_find "(" S_find " func &optional (start-samp 0) snd chn) applies func, a function of one argument, \
+the current sample, to each sample in snd's channel chn, starting at 'start-samp' until func returns #t"
 
   /* no free here -- it's handled as ss->search_expr in snd-find.c */
   SCM_ASSERT(gh_procedure_p(expr), expr, SCM_ARG1, S_find);
@@ -8015,8 +8123,8 @@ static SCM g_find(SCM expr, SCM sample, SCM snd_n, SCM chn_n)
 
 static SCM g_count_matches(SCM expr, SCM sample, SCM snd_n, SCM chn_n)
 {
-  #define H_count_matches "(" S_count_matches " func &optional (start-samp 0) snd chn) returns how many\n\
-   samples satisfy func (a function of one argument, the current sample, returning #t upon match)"
+  #define H_count_matches "(" S_count_matches " func &optional (start-samp 0) snd chn) returns how many \
+samples satisfy func (a function of one argument, the current sample, returning #t upon match)"
 
   chan_info *cp = NULL;
   int samp = 0, matches, lim;
@@ -8044,8 +8152,8 @@ static SCM g_count_matches(SCM expr, SCM sample, SCM snd_n, SCM chn_n)
 
 static SCM g_prompt_in_minibuffer(SCM msg, SCM callback, SCM snd_n)
 {
-  #define H_prompt_in_minibuffer "(" S_prompt_in_minibuffer " msg callback &optional snd) posts msg in snd's minibuffer\n\
-   then when the user eventually responds, invokes the function callback with the response and snd (the index)"
+  #define H_prompt_in_minibuffer "(" S_prompt_in_minibuffer " msg callback &optional snd) posts msg in snd's minibuffer \
+then when the user eventually responds, invokes the function callback with the response and snd (the index)"
 
   snd_info *sp;
   SCM_ASSERT(gh_string_p(msg), msg, SCM_ARG1, S_prompt_in_minibuffer);
@@ -8108,10 +8216,10 @@ static SCM g_append_to_minibuffer(SCM msg, SCM snd_n)
 /* TODO: no such key? */
 static SCM g_bind_key(SCM key, SCM state, SCM code, SCM ignore_prefix)
 {
-  #define H_bind_key "(" S_bind_key " key modifiers func (ignore-prefix #f)) causes 'key' (an integer)\n\
-   when typed with 'modifiers' (1:shift, 4:control, 8:meta) to invoke 'func', a function of\n\
-   no arguments.  If ignore-prefix is #t, preceding C-u arguments are not handled by Snd itself.\n\
-   The function should return one of the cursor choices (e.g. cursor-no-action)."
+  #define H_bind_key "(" S_bind_key " key modifiers func (ignore-prefix #f)) causes 'key' (an integer) \
+when typed with 'modifiers' (1:shift, 4:control, 8:meta) to invoke 'func', a function of \
+no arguments.  If ignore-prefix is #t, preceding C-u arguments are not handled by Snd itself. \
+The function should return one of the cursor choices (e.g. cursor-no-action)."
 
   int ip;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(key)), key, SCM_ARG1, S_bind_key);
@@ -9649,8 +9757,8 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_type_reversed, g_set_transfor
 
 static SCM g_normalize_fft(SCM snd, SCM chn)
 {
-  #define H_normalize_fft "(" S_normalize_fft " (snd #t) (chn #t)) -> one of '(" S_dont_normalize " " S_normalize_by_channel " " S_normalize_by_sound " " S_normalize_globally ")\n\
-  decides whether spectral data is normalized before display (default: " S_normalize_by_channel ")"
+  #define H_normalize_fft "(" S_normalize_fft " (snd #t) (chn #t)) -> one of '(" S_dont_normalize " " S_normalize_by_channel " " S_normalize_by_sound " " S_normalize_globally ") \
+decides whether spectral data is normalized before display (default: " S_normalize_by_channel ")"
 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd, chn, CP_NORMALIZE_FFT, S_normalize_fft));
@@ -9706,8 +9814,8 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_max_fft_peaks_reversed, g_set_max_fft_p
 
 static SCM g_graph_style(SCM snd, SCM chn)
 {
-  #define H_graph_style "(" S_graph_style " (snd #t) (chn #t)) -> one of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lollipops " " S_graph_filled ")\n\
-  determines how graphs are drawn (default: " S_graph_lines ")"
+  #define H_graph_style "(" S_graph_style " (snd #t) (chn #t)) -> one of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lollipops " " S_graph_filled ") \
+determines how graphs are drawn (default: " S_graph_lines ")"
 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
     return(cp_iread(snd, chn, CP_GRAPH_STYLE, S_graph_style));
@@ -9813,8 +9921,8 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_graphs_horizontal_reversed, g_set_graph
 
 static SCM g_peaks(SCM filename, SCM snd_n, SCM chn_n)
 {
-  #define H_peaks "(" S_peaks " &optional filename snd chn) writes current fft peaks data to filename, or\n\
-   to the help dialog if filename is omitted"
+  #define H_peaks "(" S_peaks " &optional filename snd chn) writes current fft peaks data to filename, or \
+to the help dialog if filename is omitted"
 
   chan_info *cp;
   char *name = NULL;
@@ -10536,14 +10644,24 @@ void g_init_chn(SCM local_doc)
 
   DEFINE_PROC(gh_new_procedure(S_key_binding, SCM_FNC g_key_binding, 2, 0, 0), H_key_binding);
 
-  fft_hook = MAKE_HOOK(S_fft_hook, 3);                       /* args = sound channel scaler */
-  graph_hook = MAKE_HOOK(S_graph_hook, 4);                   /* args = sound channel y0 y1 */
-  after_graph_hook = MAKE_HOOK(S_after_graph_hook, 2);       /* args = sound channel */
-  mouse_press_hook = MAKE_HOOK(S_mouse_press_hook, 6);       /* args = sound channel button state x y */
-  mouse_release_hook = MAKE_HOOK(S_mouse_release_hook, 6);   /* args = sound channel button state x y */
-  mouse_drag_hook = MAKE_HOOK(S_mouse_drag_hook, 6);         /* args = sound channel button state x y */
-  key_press_hook = MAKE_HOOK(S_key_press_hook, 4);           /* args = sound channel key state */
-  mark_click_hook = MAKE_HOOK(S_mark_click_hook, 1);         /* arg = id */
+  #define H_fft_hook S_fft_hook " (snd chn scaler) is called just after a spectrum is calculated."
+  #define H_graph_hook S_graph_hook " (snd chn y0 y1) is called each time a graph is about to be updated. If it returns #t, the display is not updated."
+  #define H_after_graph_hook S_after_graph_hook " (snd chn) is called after a graph is updated."
+  #define H_mouse_press_hook S_mouse_press_hook " (snd chn button state x y) is called upon mouse button press within the lisp graph."
+  #define H_mouse_release_hook S_mouse_press_hook " (snd chn button state x y) is called upon mouse button release within the lisp graph."
+  #define H_mouse_drag_hook S_mouse_press_hook " (snd chn button state x y) is called upon mouse drag within the lisp graph."
+  #define H_mark_click_hook S_mark_click_hook " (id) is called when a mark is clicked; return #t to squelch the default message."
+  #define H_key_press_hook S_key_press_hook " (snd chn key state) is called upon a key press if the mouse is in the lisp graph. \
+If it returns #t, the key press is not passed to the main handler. 'state' refers to the control, meta, and shift keys."
+
+  fft_hook =           MAKE_HOOK(S_fft_hook, 3, H_fft_hook);                     /* args = sound channel scaler */
+  graph_hook =         MAKE_HOOK(S_graph_hook, 4, H_graph_hook);                 /* args = sound channel y0 y1 */
+  after_graph_hook =   MAKE_HOOK(S_after_graph_hook, 2, H_after_graph_hook);     /* args = sound channel */
+  mouse_press_hook =   MAKE_HOOK(S_mouse_press_hook, 6, H_mouse_press_hook);     /* args = sound channel button state x y */
+  mouse_release_hook = MAKE_HOOK(S_mouse_release_hook, 6, H_mouse_release_hook); /* args = sound channel button state x y */
+  mouse_drag_hook =    MAKE_HOOK(S_mouse_drag_hook, 6, H_mouse_drag_hook);       /* args = sound channel button state x y */
+  key_press_hook =     MAKE_HOOK(S_key_press_hook, 4, H_key_press_hook);         /* args = sound channel key state */
+  mark_click_hook =    MAKE_HOOK(S_mark_click_hook, 1, H_mark_click_hook);       /* arg = id */
 }
 
 #endif

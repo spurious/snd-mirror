@@ -7,13 +7,13 @@
   #define HAVE_NEW_SMOB 1
   #define HAVE_KEYWORDS 1
   #define HAVE_HOOKS 1
-  #define MAKE_HOOK(Name, Args) scm_create_hook(Name, Args)
+  #define MAKE_HOOK(Name, Args, Help) snd_set_object_property(scm_create_hook(Name, Args), local_doc, TO_SCM_STRING(Help))
 #else
   #define HAVE_GENERALIZED_SET 0
   #define HAVE_NEW_SMOB 0
   #define HAVE_KEYWORDS 0
   #define HAVE_HOOKS 0
-  #define MAKE_HOOK(Name, Args) gh_define(Name, SCM_BOOL_F)
+  #define MAKE_HOOK(Name, Args, Help) gh_define(Name, SCM_BOOL_F)
 #endif
 
 #if HAVE_NEW_SMOB
@@ -92,6 +92,7 @@
 #define TO_SCM_STRING(a) scm_makfrom0str(a)
 #define TO_NEW_C_STRING(a) gh_scm2newstr(a, NULL)
 #define TO_SCM_BOOLEAN(a) ((a) ? SCM_BOOL_T : SCM_BOOL_F)
+#define TO_SCM_SYMBOL(a) gh_symbol2scm(a)
 
 #define SCM_WRAP(a) ((SCM)(gh_ulong2scm((unsigned long)a)))
 #define SCM_UNWRAP(a) gh_scm2ulong(a)
@@ -104,7 +105,7 @@
 #define DEFINE_VAR(a, b, c) \
   { \
     gh_define(a, b); \
-    scm_set_object_property_x(gh_symbol2scm(a), local_doc, TO_SCM_STRING(c)); \
+    scm_set_object_property_x(TO_SCM_SYMBOL(a), local_doc, TO_SCM_STRING(c)); \
   }
 
 /* DEFINE_PROC(proc, doc) sets the documentation property of procedure proc to the text doc
@@ -125,21 +126,21 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 
 /* error indications */
 
-#define NO_SUCH_CHANNEL gh_symbol2scm("no-such-channel")
-#define NO_SUCH_SOUND gh_symbol2scm("no-such-sound")
-#define NO_SUCH_MARK gh_symbol2scm("no-such-mark")
-#define NO_SUCH_MIX gh_symbol2scm("no-such-mix")
-#define NO_SUCH_TRACK gh_symbol2scm("no-such-track")
-#define NO_SUCH_MENU gh_symbol2scm("no-such-menu")
-#define NO_SUCH_FILE gh_symbol2scm("no-such-file")
-#define NO_SUCH_REGION gh_symbol2scm("no-such-region")
-#define NO_SUCH_SAMPLE gh_symbol2scm("no-such-sample")
-#define NO_SUCH_ENVELOPE gh_symbol2scm("no-such-envelope")
-#define NO_SUCH_EDIT gh_symbol2scm("no-such-edit")
-#define CANNOT_SAVE gh_symbol2scm("cannot-save")
-#define CANNOT_PRINT gh_symbol2scm("cannot-print")
-#define IMPOSSIBLE_BOUNDS gh_symbol2scm("impossible-bounds")
-#define NO_ACTIVE_SELECTION gh_symbol2scm("no-active-selection")
-#define MUS_MISC_ERROR gh_symbol2scm("mus-error")
+#define NO_SUCH_CHANNEL     TO_SCM_SYMBOL("no-such-channel")
+#define NO_SUCH_SOUND       TO_SCM_SYMBOL("no-such-sound")
+#define NO_SUCH_MARK        TO_SCM_SYMBOL("no-such-mark")
+#define NO_SUCH_MIX         TO_SCM_SYMBOL("no-such-mix")
+#define NO_SUCH_TRACK       TO_SCM_SYMBOL("no-such-track")
+#define NO_SUCH_MENU        TO_SCM_SYMBOL("no-such-menu")
+#define NO_SUCH_FILE        TO_SCM_SYMBOL("no-such-file")
+#define NO_SUCH_REGION      TO_SCM_SYMBOL("no-such-region")
+#define NO_SUCH_SAMPLE      TO_SCM_SYMBOL("no-such-sample")
+#define NO_SUCH_ENVELOPE    TO_SCM_SYMBOL("no-such-envelope")
+#define NO_SUCH_EDIT        TO_SCM_SYMBOL("no-such-edit")
+#define CANNOT_SAVE         TO_SCM_SYMBOL("cannot-save")
+#define CANNOT_PRINT        TO_SCM_SYMBOL("cannot-print")
+#define IMPOSSIBLE_BOUNDS   TO_SCM_SYMBOL("impossible-bounds")
+#define NO_ACTIVE_SELECTION TO_SCM_SYMBOL("no-active-selection")
+#define MUS_MISC_ERROR      TO_SCM_SYMBOL("mus-error")
 
 #endif

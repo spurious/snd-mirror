@@ -2592,8 +2592,8 @@ static SCM g_display_edits(SCM snd, SCM chn)
 
 static SCM g_edit_fragment(SCM uctr, SCM snd, SCM chn)
 {
-  #define H_edit_fragment "(" S_edit_fragment " ctr &optional snd chn) returns the edit history entry at 'ctr'\n\
-   associated with snd's channel chn; this is a list (origin type start-sample samps)"
+  #define H_edit_fragment "(" S_edit_fragment " ctr &optional snd chn) returns the edit history entry at 'ctr' \
+associated with snd's channel chn; this is a list (origin type start-sample samps)"
 
   chan_info *cp;
   ed_list *ed;
@@ -2741,9 +2741,9 @@ SCM g_c_make_sample_reader(snd_fd *fd)
 static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir1, SCM pos) /* "dir" confuses Mac OS-X Objective-C! */
 {
   #define H_make_sample_reader "(" S_make_sample_reader " &optional (start-samp 0) snd chn (dir 1) edit-position)\n\
-   returns a reader ready to access snd's channel chn's data starting at 'start-samp', going in direction 'dir'\n\
-   (-1 = backward), reading the version of the data indicated by 'edit-position' which defaults to the current version.\n\
-   snd can be a filename, a sound index number, or a list with a mix id number."
+returns a reader ready to access snd's channel chn's data starting at 'start-samp', going in direction 'dir' \
+(-1 = backward), reading the version of the data indicated by 'edit-position' which defaults to the current version. \
+snd can be a filename, a sound index number, or a list with a mix id number."
 
   snd_fd *fd = NULL;
   int chan;
@@ -2792,7 +2792,7 @@ static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir1, SCM pos)
 static SCM g_make_region_sample_reader(SCM samp_n, SCM reg, SCM chn, SCM dir1)
 {
   #define H_make_region_sample_reader "(" S_make_region_sample_reader " &optional (start-samp 0) (region 0) chn (dir 1))\n\
-   returns a reader ready to access region's channel chn data starting at 'start-samp' going in direction 'dir'"
+returns a reader ready to access region's channel chn data starting at 'start-samp' going in direction 'dir'"
 
   snd_fd *fd = NULL;
   SCM_ASSERT(bool_or_arg_p(samp_n), samp_n, SCM_ARG1, S_make_sample_reader);
@@ -2849,8 +2849,8 @@ typedef Float (*g_plug_env)(Float val, void *envp);
 
 static SCM g_loop_samples(SCM reader, SCM proc, SCM calls, SCM origin, SCM environ)
 {
-  #define H_loop_samples "(" S_loop_samples " reader func calls origin environ) calls (func (reader)) 'calls' times,\n\
-   replacing current data with the function results; origin is the edit-history name for this operation"
+  #define H_loop_samples "(" S_loop_samples " reader func calls origin environ) calls (func (reader)) 'calls' times, \
+replacing current data with the function results; origin is the edit-history name for this operation"
 
   /* proc here is a pointer to a float procedure that takes a float arg */
   g_plug func;
@@ -3151,7 +3151,11 @@ void g_init_edits(SCM local_doc)
   DEFINE_PROC(gh_new_procedure("section-scale-by", SCM_FNC g_section_scale_by, 5, 0, 0), "internal scaling function");
 
 #if HAVE_HOOKS
-  save_hook = MAKE_HOOK(S_save_hook, 2);                   /* arg = sound index, possible new name */
+  #define H_save_hook S_save_hook " (snd name) is called each time a file is about to be saved. \
+If it returns #t, the file is not saved.  'name' is #f unless \
+the file is being saved under a new name (as in sound-save-as)."
+
+  save_hook = MAKE_HOOK(S_save_hook, 2, H_save_hook);      /* arg = sound index, possible new name */
 #endif
 }
 #endif

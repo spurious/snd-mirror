@@ -2838,7 +2838,7 @@ Graph Line style:
 
 Keyboard action choices:
   cursor-in-view     cursor-on-left     cursor-on-right   cursor-in-middle
-  cursor-update-display cursor-no-action cursor-claim-selection keyboard-no-action
+  cursor-update-display cursor-no-action keyboard-no-action
 
 Cursor style:
   cursor-cross   cursor-line
@@ -2882,7 +2882,7 @@ These functions don't seem to fit anywhere else:
                                   Possible return values are:
 
                                     cursor-in-view     cursor-on-left     cursor-on-right   cursor-in-middle
-                                    cursor-update-display cursor-no-action cursor-claim-selection keyboard-no-action
+                                    cursor-update-display cursor-no-action keyboard-no-action
 
                                   We can use bind-key to turn the keyboard into a sort of extended piano:
 
@@ -2979,8 +2979,8 @@ These functions don't seem to fit anywhere else:
   snd-help          (obj)         returns (as a string) the help text associated with obj,
                                   for example: (snd-help vct-ref).
 
-                                  For scheme functions, this returns the procedure-documentation, if any.  To go to the
-                                  HTML documentation for a given procedure, load index.scm and use the html function.
+                                  snd-help this returns the help text associated with obj.  To go to the
+                                  HTML documentation for a given object, load index.scm and use the html function.
                                   To get a more global help function, (use-modules (ice-9 session)).  This loads Guile's
                                   help (and apropos) support which uses 'regexps' and so forth.
 

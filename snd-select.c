@@ -880,8 +880,8 @@ static SCM g_select_all (SCM snd_n, SCM chn_n)
 
 static SCM g_save_selection(SCM filename, SCM header_type, SCM data_format, SCM srate, SCM comment)
 {
-  #define H_save_selection "(" S_save_selection " filename &optional header-type data-format srate comment)\n\
-   saves the current selection in filename using the indicated file attributes"
+  #define H_save_selection "(" S_save_selection " filename\n    &optional header-type data-format srate comment)\n\
+saves the current selection in filename using the indicated file attributes"
 
   snd_state *ss;
   int type, format, sr, err;

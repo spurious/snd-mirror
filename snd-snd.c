@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: if user desires, write peak file(s?) and auto-read it
+ */
+
 /* ---------------- amp envs ---------------- */
 
 #define MULTIPLIER 100
@@ -1840,8 +1843,8 @@ static SCM g_open_sound(SCM filename)
 
 static SCM g_open_raw_sound(SCM filename, SCM chans, SCM srate, SCM format)
 {
-  #define H_open_raw_sound "(" S_open_raw_sound " filename chans srate format) opens filename assuming the data\n\
-   matches the attributes indicated unless the file actually has a header"
+  #define H_open_raw_sound "(" S_open_raw_sound " filename chans srate format)\n\
+opens filename assuming the data matches the attributes indicated unless the file actually has a header"
 
   char *fname = NULL;
   snd_state *ss;
@@ -1917,8 +1920,8 @@ static SCM g_view_sound(SCM filename)
 
 static SCM g_save_sound_as(SCM newfile, SCM index, SCM type, SCM format, SCM srate, SCM channel)
 {
-  #define H_save_sound_as "("  S_save_sound_as " filename &optional snd header-type data-format srate channel)\n\
-   saves snd in filename using the indicated attributes.  If channel is specified, only that channel is saved (extracted)."
+  #define H_save_sound_as "("  S_save_sound_as " filename\n     &optional snd header-type data-format srate channel)\n\
+saves snd in filename using the indicated attributes.  If channel is specified, only that channel is saved (extracted)."
 
   snd_info *sp;
   file_info *hdr;
@@ -1961,8 +1964,8 @@ static SCM g_save_sound_as(SCM newfile, SCM index, SCM type, SCM format, SCM sra
 
 static SCM g_new_sound(SCM name, SCM type, SCM format, SCM srate, SCM chans, SCM comment) 
 {
-  #define H_new_sound "(" S_new_sound " name &optional type format srate chans comment) creates a new sound file\n\
-   with the indicated attributes; if any are omitted, the corresponding default-output variable is used"
+  #define H_new_sound "(" S_new_sound " name\n    &optional type format srate chans comment)\n\
+creates a new sound file with the indicated attributes; if any are omitted, the corresponding default-output variable is used"
 
   snd_info *sp; 
   int ht, df, sr, ch;
@@ -2534,7 +2537,10 @@ static int dont_babble_info(snd_info *sp)
 
 void g_init_snd(SCM local_doc)
 {
-  name_click_hook = MAKE_HOOK(S_name_click_hook, 1);       /* args = snd-index */
+  #define H_name_click_hook S_name_click_hook " (snd) is called when sound name clicked. \
+If it returns #t, the usual informative minibuffer babbling is squelched."
+
+  name_click_hook = MAKE_HOOK(S_name_click_hook, 1, H_name_click_hook);       /* args = snd-index */
 
   DEFINE_PROC(gh_new_procedure(S_soundQ, SCM_FNC g_soundQ, 0, 1, 0), H_soundQ);
   DEFINE_PROC(gh_new_procedure(S_bomb, SCM_FNC g_bomb, 0, 2, 0), H_bomb);

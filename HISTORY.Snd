@@ -1,5 +1,6 @@
 snd change log
 
+  27-Feb:    removed cursor-claim-selection (was identical to cursor-update-display).
   26-Feb:    Tab-completion is much smarter in Guile 1.4.1.
   23-Feb:    --with-gsl is the default in configure.
   21-Feb:    snd 4.11.

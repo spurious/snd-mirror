@@ -2984,7 +2984,7 @@ Graph Line style:
 
 Keyboard action choices:
   <a name="cursorchoices">cursor-in-view</a>     cursor-on-left     cursor-on-right   cursor-in-middle 
-  cursor-update-display cursor-no-action cursor-claim-selection keyboard-no-action
+  cursor-update-display cursor-no-action keyboard-no-action
 
 Cursor style:
   cursor-cross   cursor-line
@@ -3033,7 +3033,7 @@ Axis choice:
                                   Possible return values are:
 <small>
                                     cursor-in-view     cursor-on-left     cursor-on-right   cursor-in-middle 
-                                    cursor-update-display cursor-no-action cursor-claim-selection keyboard-no-action
+                                    cursor-update-display cursor-no-action keyboard-no-action
 </small>
                                   We can use bind-key to turn the keyboard into a sort of extended piano:
 <small>
@@ -3130,8 +3130,8 @@ Axis choice:
   <b><a name="sndhelp">snd-help</a></b>          (obj)         returns (as a string) the help text associated with <i>obj</i>,
                                   for example: (snd-help vct-ref).
 <small>
-                                  For scheme functions, this returns the procedure-documentation, if any.  To go to the
-                                  HTML documentation for a given procedure, load <a href="sndscm.html#indexdoc">index.scm</a> and use the html function.
+                                  <i>snd-help</i> this returns the help text associated with <i>obj</i>.  To go to the
+                                  HTML documentation for a given object, load <a href="sndscm.html#indexdoc">index.scm</a> and use the html function.
                                   To get a more global help function, (use-modules (ice-9 session)).  This loads Guile's
                                   help (and apropos) support which uses 'regexps' and so forth.
 </small>

@@ -336,7 +336,7 @@ static SCM vct_set(SCM obj, SCM pos, SCM val)
 
 static SCM vct_multiply(SCM obj1, SCM obj2)
 {
-  #define H_vct_multiplyB "(" S_vct_multiplyB " v1 v2) -> v1 with element-wise multiply of vcts v1 and v2:\n   v1[i] *= v2[i]"
+  #define H_vct_multiplyB "(" S_vct_multiplyB " v1 v2) -> v1 with element-wise multiply of vcts v1 and v2: v1[i] *= v2[i]"
   int i, lim;
   vct *v1, *v2;
   SCM_ASSERT(vct_p(obj1), obj1, SCM_ARG1, S_vct_multiplyB);
@@ -353,7 +353,7 @@ static SCM vct_multiply(SCM obj1, SCM obj2)
 
 static SCM vct_add(SCM obj1, SCM obj2, SCM offs)
 {
-  #define H_vct_addB "(" S_vct_addB " v1 v2 &optional (offset 0)) -> v1 with element-wise add of vcts v1 and v2:\n   v1[i+offset] += v2[i]"
+  #define H_vct_addB "(" S_vct_addB " v1 v2 &optional (offset 0)) -> v1 with element-wise add of vcts v1 and v2: v1[i+offset] += v2[i]"
   int i, lim, j;
   vct *v1, *v2;
   SCM_ASSERT(vct_p(obj1), obj1, SCM_ARG1, S_vct_addB);
@@ -375,7 +375,7 @@ static SCM vct_add(SCM obj1, SCM obj2, SCM offs)
 
 static SCM vct_subtract(SCM obj1, SCM obj2)
 {
-  #define H_vct_subtractB "(" S_vct_subtractB " v1 v2) -> v1 with element-wise subtract of vcts v1 and v2:\n   v1[i] -= v2[i]"
+  #define H_vct_subtractB "(" S_vct_subtractB " v1 v2) -> v1 with element-wise subtract of vcts v1 and v2: v1[i] -= v2[i]"
   int i, lim;
   vct *v1, *v2;
   SCM_ASSERT(vct_p(obj1), obj1, SCM_ARG1, S_vct_subtractB);
@@ -392,7 +392,7 @@ static SCM vct_subtract(SCM obj1, SCM obj2)
 
 static SCM vct_scale(SCM obj1, SCM obj2)
 {
-  #define H_vct_scaleB "(" S_vct_scaleB " v val) -> v with each element scaled by val:\n   v[i] *= val"
+  #define H_vct_scaleB "(" S_vct_scaleB " v val) -> v with each element scaled by val: v[i] *= val"
   int i;
   vct *v1;
   Float scl;
@@ -407,7 +407,7 @@ static SCM vct_scale(SCM obj1, SCM obj2)
 
 static SCM vct_offset(SCM obj1, SCM obj2)
 {
-  #define H_vct_offsetB "(" S_vct_offsetB " v val) -> v with val added to each element:\n   v[i] += val"
+  #define H_vct_offsetB "(" S_vct_offsetB " v val) -> v with val added to each element: v[i] += val"
   int i;
   vct *v1;
   Float scl;
@@ -422,7 +422,7 @@ static SCM vct_offset(SCM obj1, SCM obj2)
 
 static SCM vct_fill(SCM obj1, SCM obj2)
 {
-  #define H_vct_fillB "(" S_vct_fillB " v val) -> v with each element set to val:\n   v[i] = val"
+  #define H_vct_fillB "(" S_vct_fillB " v val) -> v with each element set to val: v[i] = val"
   int i;
   vct *v1;
   Float scl;
@@ -437,7 +437,7 @@ static SCM vct_fill(SCM obj1, SCM obj2)
 
 static SCM vct_map(SCM obj, SCM proc)
 {
-  #define H_vct_mapB "(" S_vct_mapB " v proc) -> v with each element set to value of proc:\n   v[i] = (proc)"
+  #define H_vct_mapB "(" S_vct_mapB " v proc) -> v with each element set to value of proc: v[i] = (proc)"
   int i;
   vct *v;
   SCM_ASSERT(vct_p(obj), obj, SCM_ARG1, S_vct_mapB);
@@ -457,7 +457,7 @@ static SCM vct_map(SCM obj, SCM proc)
 
 static SCM vct_do(SCM obj, SCM proc)
 {
-  #define H_vct_doB "(" S_vct_doB " v proc) -> v with each element set to value of proc:\n   v[i] = (proc i)"
+  #define H_vct_doB "(" S_vct_doB " v proc) -> v with each element set to value of proc: v[i] = (proc i)"
   int i;
   vct *v;
   SCM_ASSERT(vct_p(obj), obj, SCM_ARG1, S_vct_doB);
@@ -477,7 +477,7 @@ static SCM vct_do(SCM obj, SCM proc)
 
 static SCM vcts_map(SCM args)
 {
-  #define H_vcts_mapB "(" S_vcts_mapB " v1 v2 ... proc) sets each element of the vct objects from\n   the list of values returned by (proc)"
+  #define H_vcts_mapB "(" S_vcts_mapB " v1 v2 ... proc) sets each element of the vct objects from the list of values returned by (proc)"
   /* n vcts followed by proc, proc returns n values (list) on each call */
   int i, vi, vnum, vsize, argnum;
   vct **v;
@@ -533,7 +533,7 @@ static SCM vcts_map(SCM args)
 
 static SCM vcts_do(SCM args)
 {
-  #define H_vcts_doB "(" S_vcts_doB " v1 v2 ... proc) sets each element of the vct objects from\n   the list of values returned by (proc i)"
+  #define H_vcts_doB "(" S_vcts_doB " v1 v2 ... proc) sets each element of the vct objects from the list of values returned by (proc i)"
   /* n vcts followed by proc, proc returns n values (list) on each call */
   int i, vi, vnum, vsize, argnum;
   vct **v;

@@ -3648,8 +3648,7 @@ static SCM g_set_mix_amp_env(SCM n, SCM chan, SCM val)
 
 static SCM g_mix_sound(SCM file, SCM start_samp)
 {
-  #define H_mix_sound "(" S_mix_sound " file start_samp) mixes file (all channels)\n\
-   into the currently selected sound at start_samp."
+  #define H_mix_sound "(" S_mix_sound " file start_samp) mixes file (all channels) into the currently selected sound at start_samp."
 
   char *filename;
   snd_state *ss;
@@ -3778,10 +3777,10 @@ static SCM g_backward_mix(SCM count, SCM snd, SCM chn)
 
 static SCM g_mix(SCM file, SCM chn_samp_n, SCM file_chn, SCM snd_n, SCM chn_n, SCM console)
 {
-  #define H_mix "(" S_mix " file &optional (chn-start 0) (file-chan 0) snd chn with-console)) mixes file\n\
-   channel file-chan into snd's channel chn starting at chn-start (or at the cursor location if chan-start\n\
-   is omitted), returning the new mix's id.  if with-console is #f, the data is mixed (no console is created).\n\
-   If chn is omitted, file's channels are mixed until snd runs out of channels"
+  #define H_mix "(" S_mix " file &optional (chn-start 0) (file-chan 0) snd chn with-console))\n\
+mixes file channel file-chan into snd's channel chn starting at chn-start (or at the cursor location if chan-start \
+is omitted), returning the new mix's id.  if with-console is #f, the data is mixed (no console is created). \
+If chn is omitted, file's channels are mixed until snd runs out of channels"
 
   chan_info *cp = NULL;
   char *name = NULL;
@@ -4013,7 +4012,7 @@ static scm_smobfuns tf_smobfuns = {
 static SCM g_make_track_sample_reader(SCM track_id, SCM samp, SCM snd, SCM chn)
 {
   #define H_make_track_sample_reader "(" S_make_track_sample_reader " track &optional (start-samp 0) snd chn)\n\
-   returns a reader ready to access track's data associated with snd's channel chn starting at 'start-samp'"
+returns a reader ready to access track's data associated with snd's channel chn starting at 'start-samp'"
 
   track_fd *tf = NULL;
   chan_info *cp;
@@ -4245,10 +4244,22 @@ void g_init_mix(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_backward_mix, SCM_FNC g_backward_mix, 0, 3, 0), H_backward_mix);
   DEFINE_PROC(gh_new_procedure(S_mix,          SCM_FNC g_mix, 1, 5, 0),          H_mix);
 
-  multichannel_mix_hook = MAKE_HOOK(S_multichannel_mix_hook, 1);
-  mix_speed_changed_hook = MAKE_HOOK(S_mix_speed_changed_hook, 1);
-  mix_amp_changed_hook = MAKE_HOOK(S_mix_amp_changed_hook, 1);
-  mix_position_changed_hook = MAKE_HOOK(S_mix_position_changed_hook, 2);
+  #define H_multichannel_mix_hook S_multichannel_mix_hook "(ids) is called when a multichannel mix happens in a sync'd sound. \
+'ids' is a list of mix id numbers."
+
+  #define H_mix_speed_changed_hook S_mix_speed_changed_hook " (mix-id) is called when a mix speed changes via the mouse. \
+If it returns #t, the actual remix is the hook's responsibility."
+
+  #define H_mix_amp_changed_hook S_mix_amp_changed_hook " (mix-id) is called when a mix amp changes via the mouse. \
+If it returns #t, the actual remix is the hook's responsibility."
+
+  #define H_mix_position_changed_hook S_mix_position_changed_hook " (mix-id samps) is called when a mix position changes via the mouse. \
+'samps' = samples moved. If it returns #t, the actual remix is the hook's responsibility."
+
+  multichannel_mix_hook =     MAKE_HOOK(S_multichannel_mix_hook, 1, H_multichannel_mix_hook);
+  mix_speed_changed_hook =    MAKE_HOOK(S_mix_speed_changed_hook, 1, H_mix_speed_changed_hook);
+  mix_amp_changed_hook =      MAKE_HOOK(S_mix_amp_changed_hook, 1, H_mix_amp_changed_hook);
+  mix_position_changed_hook = MAKE_HOOK(S_mix_position_changed_hook, 2, H_mix_position_changed_hook);
 }
 
 #else

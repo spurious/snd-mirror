@@ -927,8 +927,8 @@ static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SC
 
 static SCM g_insert_region(SCM samp_n, SCM reg_n, SCM snd_n, SCM chn_n) /* opt reg_n */
 {
-  #define H_insert_region "("  S_insert_region " &optional (start-samp 0) (region 0) snd chn) inserts region data\n\
-   into snd's channel chn starting at 'start-samp'"
+  #define H_insert_region "("  S_insert_region " &optional (start-samp 0) (region 0) snd chn)\n\
+inserts region data into snd's channel chn starting at 'start-samp'"
 
   chan_info *cp;
   int rg, samp;
@@ -1088,8 +1088,8 @@ static SCM g_play_region (SCM n, SCM wait)
 
 static SCM g_protect_region (SCM n, SCM protect) 
 {
-  #define H_protect_region "(" S_protect_region " &optional (n 0) (val #t)) if val is #t protects region n from being\n\
-   pushed off the end of the region list"
+  #define H_protect_region "(" S_protect_region " &optional (n 0) (val #t))\n\
+if val is #t protects region n from being pushed off the end of the region list"
 
   int rg;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(n)), n, SCM_ARG1, S_protect_region);
@@ -1172,8 +1172,8 @@ static SCM g_save_region (SCM n, SCM filename, SCM format)
 
 static SCM g_mix_region(SCM chn_samp_n, SCM reg_n, SCM snd_n, SCM chn_n)
 {
-  #define H_mix_region "(" S_mix_region " &optional (chn-samp 0) (region 0) snd chn) mixer region\n\
-   into snd's channel chn starting at chn-samp; returns new mix id."
+  #define H_mix_region "(" S_mix_region " &optional (chn-samp 0) (region 0) snd chn)\n\
+mixes region into snd's channel chn starting at chn-samp; returns new mix id."
 
   chan_info *cp;
   int rg, id=-1;
@@ -1219,8 +1219,8 @@ static SCM g_region_sample(SCM samp_n, SCM reg_n, SCM chn_n)
 
 static SCM g_region_samples(SCM beg_n, SCM num, SCM reg_n, SCM chn_n)
 {
-  #define H_region_samples "(" S_region_samples " &optional (beg 0) samps (region 0) (chan 0)) returns a vector with\n\
-   region's samples starting at samp for samps from channel chan"
+  #define H_region_samples "(" S_region_samples " &optional (beg 0) samps (region 0) (chan 0))\n\
+returns a vector with region's samples starting at samp for samps from channel chan"
 
   SCM new_vect;
   SCM *vdata;
@@ -1263,8 +1263,8 @@ static SCM g_region_samples(SCM beg_n, SCM num, SCM reg_n, SCM chn_n)
 
 static SCM g_region_samples2vct(SCM beg_n, SCM num, SCM reg_n, SCM chn_n, SCM v)
 {
-  #define H_region_samples2vct "(" S_region_samples_vct " &optional (beg 0) samps (region 0) (chan 0) obj) writes\n\
-   region's samples starting at beg for samps in channel chan to vct obj, returning obj (or creating a new one)"
+  #define H_region_samples2vct "(" S_region_samples_vct " &optional (beg 0) samps (region 0) (chan 0) obj)\n\
+writes region's samples starting at beg for samps in channel chan to vct obj, returning obj (or creating a new one)"
 
   Float *data;
   int len, reg, chn;

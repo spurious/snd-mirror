@@ -5,13 +5,13 @@
  *         but would be much faster if we can wait until the amp-env is computed
  *         via after-open-hook?
  * TODO  sample-color?
- * TODO: all gh_defines -> DEFINE_VAR, also the hooks
  */
 
 #if HAVE_GUILE
 
 #include "sndlib2scm.h"
 #include "clm2scm.h"
+#include "sndlib-strings.h"
 
 static snd_state *state = NULL;
 static int g_error_occurred = 0;
@@ -35,6 +35,12 @@ static SCM snd_internal_stack_catch (SCM tag,
   return(result);
 }
 
+SCM snd_set_object_property(SCM obj, SCM key, SCM val)
+{
+  /* a convenience in creating hooks -- return obj, not val */
+  scm_set_object_property_x(obj, key, val);
+  return(obj);
+}
 
 static SCM gc_protection;
 static int gc_protection_size = 0;
@@ -750,9 +756,9 @@ static SCM g_set_filter_env_in_hz(SCM val)
 static SCM g_channel_style(void) {return(TO_SCM_INT(channel_style(state)));}
 static SCM g_set_channel_style(SCM style) 
 {
-  #define H_channel_style "(" S_channel_style ") -> how multichannel sounds layout the channels\n\
-   default is channels-separate, other values are channels-combined and channels-superimposed.\n\
-   this is the default setting for each sound's 'unite' button."
+  #define H_channel_style "(" S_channel_style ") -> how multichannel sounds layout the channels \
+default is channels-separate, other values are channels-combined and channels-superimposed. \
+this is the default setting for each sound's 'unite' button."
 
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(style)), style, SCM_ARG1, "set-" S_channel_style); 
   set_channel_style(state, iclamp(CHANNELS_SEPARATE,
@@ -823,9 +829,9 @@ static SCM g_default_output_type(void) {return(TO_SCM_INT(default_output_type(st
 static SCM g_set_default_output_type(SCM val) 
 {
   int typ;
-  #define H_default_output_type "(" S_default_output_type ") -> default header type when a new or temporary file is created\n\
-   normally this is mus-next, -1 here indicates you want Snd to use the current sound's header type, if possible\n\
-   other writable headers include mus-aiff, mus-riff, mus-ircam, mus-nist, mus-aifc, mus-raw"
+  #define H_default_output_type "(" S_default_output_type ") -> default header type when a new or temporary file is created. \
+Normally this is " S_mus_next "; -1 here indicates you want Snd to use the current sound's header type, if possible. \
+Other writable headers include " S_mus_aiff ", " S_mus_riff ", " S_mus_ircam ", " S_mus_nist ", " S_mus_aifc ", and " S_mus_raw "."
 
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_default_output_type); 
   typ = TO_C_INT_OR_ELSE(val, 0);
@@ -840,9 +846,9 @@ static SCM g_default_output_format(void) {return(TO_SCM_INT(default_output_forma
 static SCM g_set_default_output_format(SCM val) 
 {
   int format;
-  #define H_default_output_format "(" S_default_output_format ") -> default data format when a new or temporary file is created\n\
-   normally mus-bshort, -1 here means try to use the current sound's data format; many other formats\n\
-   are available, but not all are compatible with all header types"
+  #define H_default_output_format "(" S_default_output_format ") -> default data format when a new or temporary file is created, \
+normally " S_mus_bshort "; -1 here means try to use the current sound's data format; many other formats \
+are available, but not all are compatible with all header types"
 
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_default_output_format); 
   format = TO_C_INT_OR_ELSE(val, 0);
@@ -875,8 +881,9 @@ static SCM g_set_enved_power(SCM val)
 static SCM g_enved_clipping(void) {return(TO_SCM_BOOLEAN(enved_clipping(state)));}
 static SCM g_set_enved_clipping(SCM on)
 {
-  #define H_enved_clipping "(" S_enved_clipping ") -> envelope editor 'clip' button setting\n\
-   if clipping, the motion of the mouse is restricted to the current graph bounds."
+  #define H_enved_clipping "(" S_enved_clipping ") -> envelope editor 'clip' button setting; \
+if clipping, the motion of the mouse is restricted to the current graph bounds."
+
   SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG1, "set-" S_enved_clipping);
   set_enved_clipping(state, bool_int_or_one(on)); 
   return(TO_SCM_BOOLEAN(enved_clipping(state)));
@@ -885,8 +892,8 @@ static SCM g_set_enved_clipping(SCM on)
 static SCM g_enved_exping(void) {return(TO_SCM_BOOLEAN(enved_exping(state)));}
 static SCM g_set_enved_exping(SCM val) 
 {
-  #define H_enved_exping "(" S_enved_exping ") -> envelope editor 'exp' and 'lin' buttons\n\
-   if enved-exping, the connecting segments use exponential curves rather than straight lines."
+  #define H_enved_exping "(" S_enved_exping ") -> envelope editor 'exp' and 'lin' buttons; \
+if enved-exping, the connecting segments use exponential curves rather than straight lines."
 
   SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_enved_exping);
   set_enved_exping(state, bool_int_or_one(val)); 
@@ -897,8 +904,8 @@ static SCM g_enved_target(void) {return(TO_SCM_INT(enved_target(state)));}
 static SCM g_set_enved_target(SCM val) 
 {
   int n; 
-  #define H_enved_target "(" S_enved_target ") determines how the envelope is applied to data in the envelope editor\n\
-   choices are amplitude-env, srate-env, and spectrum-env"
+  #define H_enved_target "(" S_enved_target ") determines how the envelope is applied to data in the envelope editor; \
+choices are " S_amplitude_env ", " S_srate_env ", and " S_spectrum_env
 
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_enved_target); 
   n = iclamp(AMPLITUDE_ENV,
@@ -1160,10 +1167,10 @@ static SCM g_update_usage_stats(void)
 static SCM g_sinc_width(void) {return(TO_SCM_INT(sinc_width(state)));}
 static SCM g_set_sinc_width(SCM val) 
 {
-  #define H_sinc_width "(" S_sinc_width ") -> sampling rate conversion sinc width (10)\n\
-   The higher this number, the better the src low-pass filter, but the slower\n\
-   src runs.  If you use too low a setting, you can sometimes hear high\n\
-   frequency whistles leaking through."
+  #define H_sinc_width "(" S_sinc_width ") -> sampling rate conversion sinc width (10). \
+The higher this number, the better the src low-pass filter, but the slower \
+src runs.  If you use too low a setting, you can sometimes hear high \
+frequency whistles leaking through."
 
   int len;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_sinc_width); 
@@ -1176,10 +1183,10 @@ static SCM g_set_sinc_width(SCM val)
 static SCM g_color_map(void) {return(TO_SCM_INT(color_map(state)));}
 static SCM g_set_color_map(SCM val) 
 {
-  #define H_colormap "(" S_colormap ") -> current colormap choice\n\
-   This should be an integer between -1 and 15.  The maps (from 0 to 15) are:\n\
-   gray, hsv, hot, cool, bone, copper, pink, jet, prism, autumn, winter,\n\
-   spring, summer, colorcube, flag, and lines.  -1 means black and white."
+  #define H_colormap "(" S_colormap ") -> current colormap choice. \
+This should be an integer between -1 and 15.  The maps (from 0 to 15) are: \
+gray, hsv, hot, cool, bone, copper, pink, jet, prism, autumn, winter, \
+spring, summer, colorcube, flag, and lines.  -1 means black and white."
 
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)), val, SCM_ARG1, "set-" S_colormap); 
   set_color_map(state, iclamp(0,
@@ -1244,8 +1251,8 @@ static SCM g_set_with_mix_tags(SCM val)
 static SCM g_use_raw_defaults(void) {return(TO_SCM_BOOLEAN(use_raw_defaults(state)));}
 static SCM g_set_use_raw_defaults(SCM val) 
 {
-  #define H_use_raw_defaults "(" S_use_raw_defaults ") -> #t if Snd should simply use the raw-* defaults\n\
-   when a headerless file is encountered. If #f, Snd fires up the raw file dialog."
+  #define H_use_raw_defaults "(" S_use_raw_defaults ") -> #t if Snd should simply use the raw-* defaults \
+when a headerless file is encountered. If #f, Snd fires up the raw file dialog."
 
   SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_use_raw_defaults);
   set_use_raw_defaults(state, bool_int_or_one(val));
@@ -1255,8 +1262,8 @@ static SCM g_set_use_raw_defaults(SCM val)
 static SCM g_use_sinc_interp(void) {return(TO_SCM_BOOLEAN(use_sinc_interp(state)));}
 static SCM g_set_use_sinc_interp(SCM val) 
 {
-  #define H_use_sinc_interp "(" S_use_sinc_interp ") -> #t if Snd should use convolution with sinc for sampling rate\n\
-   conversion.  The other choice is (much faster) linear interpolation which can introduce distortion"
+  #define H_use_sinc_interp "(" S_use_sinc_interp ") -> #t if Snd should use convolution with sinc for sampling rate \
+conversion.  The other choice is (much faster) linear interpolation which can introduce distortion"
 
   SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_use_sinc_interp);
   set_use_sinc_interp(state, bool_int_or_one(val));
@@ -1266,8 +1273,8 @@ static SCM g_set_use_sinc_interp(SCM val)
 static SCM g_data_clipped(void) {return(TO_SCM_BOOLEAN(data_clipped(state)));}
 static SCM g_set_data_clipped(SCM val) 
 {
-  #define H_data_clipped "(" S_data_clipped ") -> #t if Snd should clip output values to the current\n\
-   output data format's maximum. The default (#f) allows them to wrap-around which makes a very loud click"
+  #define H_data_clipped "(" S_data_clipped ") -> #t if Snd should clip output values to the current \
+output data format's maximum. The default (#f) allows them to wrap-around which makes a very loud click"
 
   SCM_ASSERT(bool_or_arg_p(val), val, SCM_ARG1, "set-" S_data_clipped);
   set_data_clipped(state, bool_int_or_one(val));
@@ -1762,9 +1769,9 @@ static void unset_temp_fd(int fd)
 
 static SCM g_open_sound_file(SCM g_name, SCM g_chans, SCM g_srate, SCM g_comment)
 {
-  #define H_open_sound_file "(" S_open_sound_file " &optional (name \"test.snd\") (chans 1) (srate 22050) comment) creates a new\n\
-   sound file 'name' using either 'wave' or 'next' headers and float data, returns the file descriptor for subsequent " S_close_sound_file "\n\
-   data can be written with " S_vct_sound_file
+  #define H_open_sound_file "(" S_open_sound_file " &optional (name \"test.snd\")\n    (chans 1) (srate 22050) comment)\n\
+creates a new sound file 'name' using either 'wave' or 'next' headers and float data, returns the file descriptor for \
+subsequent " S_close_sound_file ". data can be written with " S_vct_sound_file
 
   /* assume user temp files are writing floats in native format */
   char *name = NULL, *comment = NULL;
@@ -1855,9 +1862,9 @@ static SCM g_close_sound_file(SCM g_fd, SCM g_bytes)
 
 static SCM samples2vct(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM v, SCM pos)
 {
-  #define H_samples2vct "(" S_samples_vct " &optional (start-samp 0) samps snd chn vct-obj edit-position)\n\
-   returns a vct object (vct-obj if given) containing snd channel chn's data starting at start-samp for samps,\n\
-   reading edit version edit-position (defaulting to the current version)"
+  #define H_samples2vct "(" S_samples_vct " &optional (start-samp 0)\n    samps snd chn vct-obj edit-position)\n\
+returns a vct object (vct-obj if given) containing snd channel chn's data starting at start-samp for samps, \
+reading edit version edit-position (defaulting to the current version)"
 
   chan_info *cp;
   snd_fd *sf;
@@ -1895,9 +1902,9 @@ static inline MUS_SAMPLE_TYPE local_next_sample_unscaled(snd_fd *sf)
 
 static SCM samples2sound_data(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM sdobj, SCM pos, SCM sdchan)
 {
-  #define H_samples2sound_data "(" S_samples2sound_data " &optional (start-samp 0) samps snd chn sdobj edit-position (sdobj-chan 0))\n\
-   returns a sound-data object (sdobj if given) containing snd channel chn's data starting at start-samp for samps,\n\
-   reading edit version edit-position (defaulting to the current version)"
+  #define H_samples2sound_data "(" S_samples2sound_data " &optional (start-samp 0)\n    samps snd chn sdobj edit-position (sdobj-chan 0))\n\
+returns a sound-data object (sdobj if given) containing snd channel chn's data starting at start-samp for samps, \
+reading edit version edit-position (defaulting to the current version)"
 
   chan_info *cp;
   snd_fd *sf;
@@ -1947,8 +1954,8 @@ static SCM samples2sound_data(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM s
 
 static SCM transform_samples2vct(SCM snd_n, SCM chn_n, SCM v)
 {
-  #define H_transform_samples2vct "(" S_transform_samples_vct " &optional snd chn vct-obj) returns a vct object\n\
-   (vct-obj if passed), with the current transform data from snd's channel chn"
+  #define H_transform_samples2vct "(" S_transform_samples_vct " &optional snd chn vct-obj)\n\
+returns a vct object (vct-obj if passed), with the current transform data from snd's channel chn"
 
   chan_info *cp;
   fft_info *fp;
@@ -2026,8 +2033,8 @@ static SCM vct2soundfile(SCM g_fd, SCM obj, SCM g_nums)
 
 static SCM mix_vct(SCM obj, SCM beg, SCM snd, SCM chn, SCM with_consoles, SCM origin)
 {
-  #define H_mix_vct "(" S_mix_vct " data &optional (beg 0) snd chn (with-consoles #t) origin) mixes data\n\
-   (a vct object) into snd's channel chn starting at beg; returns the new mix id"
+  #define H_mix_vct "(" S_mix_vct " data &optional (beg 0) snd chn (with-consoles #t) origin)\n\
+mixes data (a vct object) into snd's channel chn starting at beg; returns the new mix id"
 
   vct *v;
   int bg;
@@ -2163,9 +2170,9 @@ static SCM g_set_sample_reversed(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 
 static SCM g_samples(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM pos)
 {
-  #define H_samples "(" S_samples " &optional (start-samp 0) samps snd chn edit-position) returns a vector\n\
-   containing snd channel chn's samples starting a start-samp for samps samples; edit-position is the edit\n\
-   history position to read (defaults to current position)."
+  #define H_samples "(" S_samples " &optional (start-samp 0) samps snd chn edit-position)\n\
+returns a vector containing snd channel chn's samples starting a start-samp for samps samples; edit-position is the edit \
+history position to read (defaults to current position)."
 
   /* return the filled vector for scm to free? */
   chan_info *cp;
@@ -2194,9 +2201,10 @@ static SCM g_samples(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM pos)
 
 static SCM g_set_samples(SCM samp_0, SCM samps, SCM vect, SCM snd_n, SCM chn_n, SCM truncate)
 {
-  #define H_set_samples "(" "set-" S_samples " start-samp samps data &optional snd chn truncate) sets snd's channel chn's samples\n\
-   starting at start-samp for samps from data (a vct, vector, or string (filename)); start-samp can be beyond current data end\n\
-   if truncate is #t and start-samp is 0, the end of the file is set to match the new data's end"
+  #define H_set_samples "(" "set-" S_samples " start-samp samps data &optional snd chn truncate)\n\
+sets snd's channel chn's samples starting at start-samp for samps from data (a vct, vector, or string (filename)); \
+start-samp can be beyond current data end if truncate is #t and start-samp is 0, the end of the file is set to match \
+the new data's end"
 
   chan_info *cp;
   MUS_SAMPLE_TYPE *ivals;
@@ -2322,8 +2330,8 @@ static SCM g_delete_samples_1(SCM samp_n, SCM samps, SCM snd_n, SCM chn_n, char 
 
 static SCM g_delete_samples(SCM samp_n, SCM samps, SCM snd_n, SCM chn_n)
 {
-  #define H_delete_samples "(" S_delete_samples " start-samp samps &optional snd chn) deletes 'samps' samples\n\
-   from snd's channel chn starting at 'start-samp'"
+  #define H_delete_samples "(" S_delete_samples " start-samp samps &optional snd chn)\n\
+deletes 'samps' samples from snd's channel chn starting at 'start-samp'"
 
   return(g_delete_samples_1(samp_n, samps, snd_n, chn_n, S_delete_samples));
 }
@@ -2360,8 +2368,8 @@ static SCM g_insert_sample(SCM samp_n, SCM val, SCM snd_n, SCM chn_n)
 
 static SCM g_insert_samples(SCM samp, SCM samps, SCM vect, SCM snd_n, SCM chn_n)
 {
-  #define H_insert_samples "(" S_insert_samples " start-samp samps data &optional snd chn) inserts data (either\n\
-   a vector, vct, or list of samples, or a filename) into snd's channel chn starting at 'start-samp' for 'samps' samples"
+  #define H_insert_samples "(" S_insert_samples " start-samp samps data &optional snd chn)\n\
+inserts data (either a vector, vct, or list of samples, or a filename) into snd's channel chn starting at 'start-samp' for 'samps' samples"
 
   chan_info *cp;
   MUS_SAMPLE_TYPE *ivals;
@@ -2427,8 +2435,8 @@ static SCM g_insert_samples_with_origin(SCM samp, SCM samps, SCM origin, SCM vec
 
 static SCM g_insert_sound(SCM file, SCM ubeg, SCM file_chn, SCM snd_n, SCM chn_n)
 {
-  #define H_insert_sound "(" S_insert_sound " file &optional beg file-chan snd chn) inserts channel 'file-chan'\n\
-   of 'file' (or all chans file-chan not given) into snd's channel chn at beg or the cursor position"
+  #define H_insert_sound "(" S_insert_sound " file &optional beg file-chan snd chn)\n\
+inserts channel 'file-chan' of 'file' (or all chans file-chan not given) into snd's channel chn at beg or the cursor position"
 
   chan_info *cp;
   snd_info *sp;
@@ -2549,8 +2557,9 @@ static SCM g_update_lisp_graph(SCM snd, SCM chn)
 
 static SCM g_transform_size(SCM snd, SCM chn)
 {
-  #define H_transform_size "(" S_transform_size " &optional snd chn) -> description of transform data in snd's channel chn.\n\
-   If no fft, returns 0; if normal-fft, returns fft-size, else returns a list (full-size active-bins active-slices)"
+  #define H_transform_size "(" S_transform_size " &optional snd chn)\n\
+returns a description of transform data in snd's channel chn. \
+If no fft, returns 0; if normal-fft, returns fft-size, else returns a list (full-size active-bins active-slices)"
 
   chan_info *cp;
   sono_info *si;
@@ -2568,8 +2577,8 @@ static SCM g_transform_size(SCM snd, SCM chn)
 
 static SCM g_transform_sample(SCM bin, SCM slice, SCM snd_n, SCM chn_n)
 {
-  #define H_transform_sample "(" S_transform_sample " &optional (bin 0) (slice 0) snd chn) -> the current transform\n\
-   sample at bin and slice in snd channel chn (assuming sonogram or spectrogram)"
+  #define H_transform_sample "(" S_transform_sample " &optional (bin 0) (slice 0) snd chn)\n\
+returns the current transform sample at bin and slice in snd channel chn (assuming sonogram or spectrogram)"
 
   chan_info *cp;
   fft_info *fp;
@@ -2695,8 +2704,8 @@ static Float *load_Floats(SCM scalers, int *result_len)
 
 static SCM g_scale_to(SCM scalers, SCM snd_n, SCM chn_n)
 {
-  #define H_scale_to "(" S_scale_to " norms &optional snd chn) normalizes snd to norms (following sync)\n\
-   norms can be a float or a vector of floats"
+  #define H_scale_to "(" S_scale_to " norms &optional snd chn)\n\
+normalizes snd to norms (following sync) norms can be a float or a vector of floats"
 
   /* chn_n irrelevant if syncing */
   chan_info *cp;
@@ -2712,8 +2721,8 @@ static SCM g_scale_to(SCM scalers, SCM snd_n, SCM chn_n)
 
 static SCM g_scale_by(SCM scalers, SCM snd_n, SCM chn_n)
 {
-  #define H_scale_by "(" S_scale_by " scalers &optional snd chn) scales snd by scalers (following sync)\n\
-   scalers can be a float or a vector of floats"
+  #define H_scale_by "(" S_scale_by " scalers &optional snd chn)\n\
+scales snd by scalers (following sync) scalers can be a float or a vector of floats"
 
   /* chn_n irrelevant if syncing */
   chan_info *cp;
@@ -2832,8 +2841,8 @@ static SCM g_yes_or_no_p(SCM msg)
 
 static SCM g_env_selection(SCM edata, SCM base, SCM snd_n, SCM chn_n)
 {
-  #define H_env_selection "(" S_env_selection " env &optional (env-base 1.0) snd chn) applies envelope 'env'\n\
-   to the currently selected portion of snd's channel chn using 'env-base' to determine how breakpoints are connected"
+  #define H_env_selection "(" S_env_selection " env &optional (env-base 1.0) snd chn)\n\
+applies envelope 'env' to the currently selected portion of snd's channel chn using 'env-base' to determine how breakpoints are connected"
 
   chan_info *cp;
   env *e;
@@ -2870,9 +2879,9 @@ static SCM g_env_selection(SCM edata, SCM base, SCM snd_n, SCM chn_n)
 
 static SCM g_env_sound(SCM edata, SCM samp_n, SCM samps, SCM base, SCM snd_n, SCM chn_n)
 {
-  #define H_env_sound "(" S_env_sound " env &optional (start-samp 0) samps (env-base 1.0) snd chn) applies\n\
-   amplitude envelope 'env' (a list of breakpoints or a CLM env) to snd's channel chn starting at start-samp, going\n\
-   either to the end of the sound or for 'samps' samples, with segments interpolating according to 'env-base'"
+  #define H_env_sound "(" S_env_sound " env &optional (start-samp 0) samps (env-base 1.0) snd chn)\n\
+applies amplitude envelope 'env' (a list of breakpoints or a CLM env) to snd's channel chn starting at start-samp, going \
+either to the end of the sound or for 'samps' samples, with segments interpolating according to 'env-base'"
 
   chan_info *cp;
   env *e;
@@ -3012,16 +3021,16 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
 
 static SCM g_fft(SCM reals, SCM imag, SCM sign)
 {
-  #define H_fft "(" S_fft " reals imags &optional (sign 1)) ffts the data returning the result in reals\n\
-   if sign is -1, performs inverse fft"
+  #define H_fft "(" S_fft " reals imags &optional (sign 1)) ffts the data returning the result in reals. \
+If sign is -1, performs inverse fft"
 
   return(g_fft_1(reals, imag, sign, TRUE));
 }
 
 static SCM g_convolve_with(SCM file, SCM new_amp, SCM snd_n, SCM chn_n)
 {
-  #define H_convolve_with "(" S_convolve_with " file &optional (amp 1.0) snd chn) convolves file\n\
-   with snd's channel chn (or the currently sync'd channels), amp is the resultant peak amp"
+  #define H_convolve_with "(" S_convolve_with " file &optional (amp 1.0) snd chn)\n\
+convolves file with snd's channel chn (or the currently sync'd channels), amp is the resultant peak amp"
 
   chan_info *cp;
   Float amp;
@@ -3060,8 +3069,8 @@ static SCM g_convolve_with(SCM file, SCM new_amp, SCM snd_n, SCM chn_n)
 
 static SCM g_snd_spectrum(SCM data, SCM win, SCM len, SCM linear_or_dB)
 {
-  #define H_snd_spectrum "(" S_snd_spectrum " data window len linear-or-dB) return magnitude spectrum of data (vct) in data\n\
-   using fft-window win and fft length len"
+  #define H_snd_spectrum "(" S_snd_spectrum " data window len linear-or-dB)\n\
+return magnitude spectrum of data (vct) in data using fft-window win and fft length len"
 
   int i, n, linear;
   Float maxa, todb, lowest, val;
@@ -3114,8 +3123,8 @@ static SCM g_snd_spectrum(SCM data, SCM win, SCM len, SCM linear_or_dB)
 
 static SCM g_convolve_selection_with(SCM file, SCM new_amp)
 {
-  #define H_convolve_selection_with "(" S_convolve_selection_with " file &optional (amp 1.0)) convolves the current selection\n\
-   with file; amp is the resultant peak amp"
+  #define H_convolve_selection_with "(" S_convolve_selection_with " file &optional (amp 1.0))\n\
+convolves the current selection with file; amp is the resultant peak amp"
 
   Float amp;
   char *fname = NULL, *error;
@@ -3164,8 +3173,8 @@ static SCM g_convolve(SCM reals, SCM imag)
 
 static SCM g_src_sound(SCM ratio_or_env, SCM base, SCM snd_n, SCM chn_n)
 {
-  #define H_src_sound "(" S_src_sound " ratio-or-env &optional (base 1.0) snd chn) sampling-rate converts snd's channel chn\n\
-   by ratio, or following an envelope. Negative ratio reverses the sound"
+  #define H_src_sound "(" S_src_sound " ratio-or-env &optional (base 1.0) snd chn)\n\
+sampling-rate converts snd's channel chn by ratio, or following an envelope. Negative ratio reverses the sound"
 
   chan_info *cp;
   env *e = NULL;
@@ -3200,8 +3209,8 @@ static SCM g_src_sound(SCM ratio_or_env, SCM base, SCM snd_n, SCM chn_n)
 
 static SCM g_src_selection(SCM ratio_or_env, SCM base)
 {
-  #define H_src_selection "(" S_src_selection " ratio-or-env &optional (base 1.0)) sampling-rate converts the\n\
-   currently selected data by ratio (which can be an envelope)"
+  #define H_src_selection "(" S_src_selection " ratio-or-env &optional (base 1.0))\n\
+sampling-rate converts the currently selected data by ratio (which can be an envelope)"
   env *e = NULL;
   mus_any *egen;
   chan_info *cp;
@@ -3239,8 +3248,8 @@ static SCM g_src_selection(SCM ratio_or_env, SCM base)
 
 static SCM g_filter_sound(SCM e, SCM order, SCM snd_n, SCM chn_n)
 {
-  #define H_filter_sound "(" S_filter_sound " filter order &optional snd chn) applies FIR filter to snd's channel chn\n\
-   'filter' is either the frequency response envelope, a CLM filter, or a vct object with the actual coefficients"
+  #define H_filter_sound "(" S_filter_sound " filter order &optional snd chn)\n\
+applies FIR filter to snd's channel chn. 'filter' is either the frequency response envelope, a CLM filter, or a vct object with the actual coefficients"
 
   chan_info *cp;
   vct *v;
@@ -3336,9 +3345,9 @@ static SCM g_filter_selection(SCM e, SCM order)
 
 static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM snd_n, SCM chn_n)
 {
-  #define H_graph "(" S_graph " data &optional xlabel x0 x1 y0 y1 snd chn) displays 'data' as a graph\n\
-   with x axis label 'xlabel', axis units going from x0 to x1 and y0 to y1; 'data' can be a list, vct, or vector.\n\
-   If 'data' is a list of numbers, it is treated as an envelope."
+  #define H_graph "(" S_graph " data &optional xlabel x0 x1 y0 y1 snd chn)\n\
+displays 'data' as a graph with x axis label 'xlabel', axis units going from x0 to x1 and y0 to y1; 'data' can be a list, vct, or vector. \
+If 'data' is a list of numbers, it is treated as an envelope."
 
   chan_info *cp;
   lisp_grf *lg;
@@ -3522,8 +3531,8 @@ static SCM g_finish_progress_report(SCM snd)
 
 static SCM g_progress_report(SCM pct, SCM name, SCM cur_chan, SCM chans, SCM snd)
 {
-  #define H_progress_report "(" S_progress_report " pct &optional name cur-chan chans snd) updates an on-going\n\
-   'progress report' (e. g. an animated hour-glass icon) in snd using pct to indicate how far along we are"
+  #define H_progress_report "(" S_progress_report " pct &optional name cur-chan chans snd)\n\
+updates an on-going 'progress report' (e. g. an animated hour-glass icon) in snd using pct to indicate how far along we are"
 
   snd_info *sp;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(pct)), pct, SCM_ARG1, S_progress_report);
@@ -3611,57 +3620,108 @@ void g_initialize_gh(snd_state *ss)
 
   /* ---------------- CONSTANTS ---------------- */
 
-  DEFINE_VAR(S_amplitude_env,         TO_SMALL_SCM_INT(AMPLITUDE_ENV), "The value for " S_enved_target " that sets the envelope editor 'amp' button");
-  DEFINE_VAR(S_spectrum_env,          TO_SMALL_SCM_INT(SPECTRUM_ENV), "The value for " S_enved_target " that sets the envelope editor 'flt' button");
-  DEFINE_VAR(S_srate_env,             TO_SMALL_SCM_INT(SRATE_ENV), "The value for " S_enved_target " that sets the envelope editor 'src' button");
+  #define H_amplitude_env "The value for " S_enved_target " that sets the envelope editor 'amp' button."
+  #define H_spectrum_env "The value for " S_enved_target " that sets the envelope editor 'flt' button."
+  #define H_srate_env "The value for " S_enved_target " that sets the envelope editor 'src' button."
 
-  gh_define(S_graph_lines,           TO_SMALL_SCM_INT(GRAPH_LINES));
-  gh_define(S_graph_dots,            TO_SMALL_SCM_INT(GRAPH_DOTS));
-  gh_define(S_graph_filled,          TO_SMALL_SCM_INT(GRAPH_FILLED));
-  gh_define(S_graph_dots_and_lines,  TO_SMALL_SCM_INT(GRAPH_DOTS_AND_LINES));
-  gh_define(S_graph_lollipops,       TO_SMALL_SCM_INT(GRAPH_LOLLIPOPS));
+  DEFINE_VAR(S_amplitude_env,         TO_SMALL_SCM_INT(AMPLITUDE_ENV), H_amplitude_env);
+  DEFINE_VAR(S_spectrum_env,          TO_SMALL_SCM_INT(SPECTRUM_ENV), H_spectrum_env);
+  DEFINE_VAR(S_srate_env,             TO_SMALL_SCM_INT(SRATE_ENV), H_srate_env);
 
-  gh_define(S_normal_fft,            TO_SMALL_SCM_INT(NORMAL_FFT));
-  gh_define(S_sonogram,              TO_SMALL_SCM_INT(SONOGRAM));
-  gh_define(S_spectrogram,           TO_SMALL_SCM_INT(SPECTROGRAM));
+  #define H_graph_lines "The value for " S_graph_style " that causes graphs to use line-segments"
+  #define H_graph_dots "The value for " S_graph_style " that causes graphs to use dots"
+  #define H_graph_filled "The value for " S_graph_style " that causes graphs to use filled polygons"
+  #define H_graph_dots_and_lines "The value for " S_graph_style " that causes graphs to use dots connected by lines"
+  #define H_graph_lollipops "The value for " S_graph_style " that makes DSP engineers happy"
 
-  gh_define(S_focus_left,            TO_SMALL_SCM_INT(FOCUS_LEFT));
-  gh_define(S_focus_right,           TO_SMALL_SCM_INT(FOCUS_RIGHT));
-  gh_define(S_focus_active,          TO_SMALL_SCM_INT(FOCUS_ACTIVE));
-  gh_define(S_focus_middle,          TO_SMALL_SCM_INT(FOCUS_MIDDLE));
+  DEFINE_VAR(S_graph_lines,           TO_SMALL_SCM_INT(GRAPH_LINES), H_graph_lines);
+  DEFINE_VAR(S_graph_dots,            TO_SMALL_SCM_INT(GRAPH_DOTS), H_graph_dots);
+  DEFINE_VAR(S_graph_filled,          TO_SMALL_SCM_INT(GRAPH_FILLED), H_graph_filled);
+  DEFINE_VAR(S_graph_dots_and_lines,  TO_SMALL_SCM_INT(GRAPH_DOTS_AND_LINES), H_graph_dots_and_lines);
+  DEFINE_VAR(S_graph_lollipops,       TO_SMALL_SCM_INT(GRAPH_LOLLIPOPS), H_graph_lollipops);
 
-  gh_define(S_x_in_seconds,          TO_SMALL_SCM_INT(X_IN_SECONDS));
-  gh_define(S_x_in_samples,          TO_SMALL_SCM_INT(X_IN_SAMPLES));
-  gh_define(S_x_to_one,              TO_SMALL_SCM_INT(X_TO_ONE));
+  #define H_normal_fft "The value for " S_fft_style " that causes a single transform to be displayed"
+  #define H_sonogram "The value for " S_fft_style " that causes a snongram to be displayed"
+  #define H_spectrogram "The value for " S_fft_style " that causes a spectrogram to be displayed"
 
-  gh_define(S_speed_as_float,        TO_SMALL_SCM_INT(SPEED_AS_FLOAT));
-  gh_define(S_speed_as_ratio,        TO_SMALL_SCM_INT(SPEED_AS_RATIO));
-  gh_define(S_speed_as_semitone,     TO_SMALL_SCM_INT(SPEED_AS_SEMITONE));
+  DEFINE_VAR(S_normal_fft,            TO_SMALL_SCM_INT(NORMAL_FFT), H_normal_fft);
+  DEFINE_VAR(S_sonogram,              TO_SMALL_SCM_INT(SONOGRAM), H_sonogram);
+  DEFINE_VAR(S_spectrogram,           TO_SMALL_SCM_INT(SPECTROGRAM), H_spectrogram);
 
-  gh_define(S_channels_separate,     TO_SMALL_SCM_INT(CHANNELS_SEPARATE));
-  gh_define(S_channels_combined,     TO_SMALL_SCM_INT(CHANNELS_COMBINED));
-  gh_define(S_channels_superimposed, TO_SMALL_SCM_INT(CHANNELS_SUPERIMPOSED));
+  #define H_focus_left "The value for " S_zoom_focus_style " that causes zooming to maintain the left edge steady"
+  #define H_focus_right "The value for " S_zoom_focus_style " that causes zooming to maintain the right edge steady"
+  #define H_focus_middle "The value for " S_zoom_focus_style " that causes zooming to focus on the middle sample"
+  #define H_focus_active "The value for " S_zoom_focus_style " that causes zooming to focus on the currently active object"
 
-  gh_define(S_cursor_in_view,        TO_SMALL_SCM_INT(CURSOR_IN_VIEW));
-  gh_define(S_cursor_on_left,        TO_SMALL_SCM_INT(CURSOR_ON_LEFT));
-  gh_define(S_cursor_on_right,       TO_SMALL_SCM_INT(CURSOR_ON_RIGHT));
-  gh_define(S_cursor_in_middle,      TO_SMALL_SCM_INT(CURSOR_IN_MIDDLE));
-  gh_define(S_cursor_update_display, TO_SMALL_SCM_INT(CURSOR_UPDATE_DISPLAY));
-  gh_define(S_cursor_no_action,      TO_SMALL_SCM_INT(CURSOR_NO_ACTION));
-  gh_define(S_cursor_claim_selection, TO_SMALL_SCM_INT(CURSOR_CLAIM_SELECTION));
-  gh_define(S_keyboard_no_action,    TO_SMALL_SCM_INT(KEYBOARD_NO_ACTION));
+  DEFINE_VAR(S_focus_left,            TO_SMALL_SCM_INT(FOCUS_LEFT), H_focus_left);
+  DEFINE_VAR(S_focus_right,           TO_SMALL_SCM_INT(FOCUS_RIGHT), H_focus_right);
+  DEFINE_VAR(S_focus_active,          TO_SMALL_SCM_INT(FOCUS_ACTIVE), H_focus_active);
+  DEFINE_VAR(S_focus_middle,          TO_SMALL_SCM_INT(FOCUS_MIDDLE), H_focus_middle);
 
-  gh_define(S_cursor_cross,          TO_SMALL_SCM_INT(CURSOR_CROSS));
-  gh_define(S_cursor_line,           TO_SMALL_SCM_INT(CURSOR_LINE));
+  #define H_x_in_seconds "The value for " S_x_axis_style " that displays the x axis using seconds"
+  #define H_x_in_samples "The value for " S_x_axis_style " that displays the x axis using sample numbers"
+  #define H_x_to_one "The value for " S_x_axis_style " that displays the x axis using percentages"
 
-  gh_define(S_show_all_axes,         TO_SMALL_SCM_INT(SHOW_ALL_AXES));
-  gh_define(S_show_no_axes,          TO_SMALL_SCM_INT(SHOW_NO_AXES));
-  gh_define(S_show_x_axis,           TO_SMALL_SCM_INT(SHOW_X_AXIS));
+  DEFINE_VAR(S_x_in_seconds,          TO_SMALL_SCM_INT(X_IN_SECONDS), H_x_in_seconds);
+  DEFINE_VAR(S_x_in_samples,          TO_SMALL_SCM_INT(X_IN_SAMPLES), H_x_in_samples);
+  DEFINE_VAR(S_x_to_one,              TO_SMALL_SCM_INT(X_TO_ONE), H_x_to_one);
 
-  gh_define(S_dont_normalize,        TO_SMALL_SCM_INT(DONT_NORMALIZE));
-  gh_define(S_normalize_by_channel,  TO_SMALL_SCM_INT(NORMALIZE_BY_CHANNEL));
-  gh_define(S_normalize_by_sound,    TO_SMALL_SCM_INT(NORMALIZE_BY_SOUND));
-  gh_define(S_normalize_globally,    TO_SMALL_SCM_INT(NORMALIZE_GLOBALLY));
+  #define H_speed_as_float "The value for " S_speed_style " that interprets the speed slider as a float"
+  #define H_speed_as_ratio "The value for " S_speed_style " that interprets the speed slider as a just-intonation ratio"
+  #define H_speed_as_semitone "The value for " S_speed_style " that interprets the speed slider as a microtone (via " S_speed_tones ")"
+
+  DEFINE_VAR(S_speed_as_float,        TO_SMALL_SCM_INT(SPEED_AS_FLOAT), H_speed_as_float);
+  DEFINE_VAR(S_speed_as_ratio,        TO_SMALL_SCM_INT(SPEED_AS_RATIO), H_speed_as_ratio);
+  DEFINE_VAR(S_speed_as_semitone,     TO_SMALL_SCM_INT(SPEED_AS_SEMITONE), H_speed_as_semitone);
+
+  #define H_channels_separate "The value for " S_channel_style " that causes channel graphs to occupy separate panes"
+  #define H_channels_combined "The value for " S_channel_style " that causes channel graphs to occupy one panes (the 'unite' button)"
+  #define H_channels_superimposed "The value for " S_channel_style " that causes channel graphs to occupy one pane and one axis"
+
+  DEFINE_VAR(S_channels_separate,     TO_SMALL_SCM_INT(CHANNELS_SEPARATE), H_channels_separate);
+  DEFINE_VAR(S_channels_combined,     TO_SMALL_SCM_INT(CHANNELS_COMBINED), H_channels_combined);
+  DEFINE_VAR(S_channels_superimposed, TO_SMALL_SCM_INT(CHANNELS_SUPERIMPOSED), H_channels_superimposed);
+
+  #define H_cursor_in_view "The value for an " S_bind_key " function that causes it to shift the window so that the cursor is in the view"
+  #define H_cursor_on_left "The value for an " S_bind_key " function that causes it to shift the window so that the cursor is at the left edge"
+  #define H_cursor_on_right "The value for an " S_bind_key " function that causes it to shift the window so that the cursor is at the right edge"
+  #define H_cursor_in_middle "The value for an " S_bind_key " function that causes it to shift the window so that the cursor is in the middle"
+  #define H_cursor_update_display "The value for an " S_bind_key " function that causes it to redraw the graph"
+  #define H_cursor_no_action "The value for an " S_bind_key " function that causes it do nothing with the graph window"
+  #define H_keyboard_no_action "The value for an " S_bind_key " function that causes it do nothing upon return"
+
+  DEFINE_VAR(S_cursor_in_view,        TO_SMALL_SCM_INT(CURSOR_IN_VIEW), H_cursor_in_view);
+  DEFINE_VAR(S_cursor_on_left,        TO_SMALL_SCM_INT(CURSOR_ON_LEFT), H_cursor_on_left);
+  DEFINE_VAR(S_cursor_on_right,       TO_SMALL_SCM_INT(CURSOR_ON_RIGHT), H_cursor_on_right);
+  DEFINE_VAR(S_cursor_in_middle,      TO_SMALL_SCM_INT(CURSOR_IN_MIDDLE), H_cursor_in_middle);
+  DEFINE_VAR(S_cursor_update_display, TO_SMALL_SCM_INT(CURSOR_UPDATE_DISPLAY), H_cursor_update_display);
+  DEFINE_VAR(S_cursor_no_action,      TO_SMALL_SCM_INT(CURSOR_NO_ACTION), H_cursor_no_action);
+  DEFINE_VAR(S_keyboard_no_action,    TO_SMALL_SCM_INT(KEYBOARD_NO_ACTION), H_keyboard_no_action);
+
+  #define H_cursor_cross "The value for " S_cursor_style " that causes is to be a cross (the default)"
+  #define H_cursor_line "The value for " S_cursor_style " that causes is to be a full vertical line"
+
+  DEFINE_VAR(S_cursor_cross,          TO_SMALL_SCM_INT(CURSOR_CROSS), H_cursor_cross);
+  DEFINE_VAR(S_cursor_line,           TO_SMALL_SCM_INT(CURSOR_LINE), H_cursor_line);
+
+  #define H_show_all_axes "The value for " S_show_axes " that causes both the x and y axes to be displayed"
+  #define H_show_no_axes "The value for " S_show_axes " that causes neither the x or y axes to be displayed"
+  #define H_show_x_axis "The value for " S_show_axes " that causes only the x axis to be displayed"
+
+  DEFINE_VAR(S_show_all_axes,         TO_SMALL_SCM_INT(SHOW_ALL_AXES), H_show_all_axes);
+  DEFINE_VAR(S_show_no_axes,          TO_SMALL_SCM_INT(SHOW_NO_AXES), H_show_no_axes);
+  DEFINE_VAR(S_show_x_axis,           TO_SMALL_SCM_INT(SHOW_X_AXIS), H_show_x_axis);
+
+  #define H_dont_normalize "The value for " S_normalize_fft " that causes the fft to display raw data"
+  #define H_normalize_by_channel "The value for " S_normalize_fft " that causes the fft to be normalized in each channel independently"
+  #define H_normalize_by_sound "The value for " S_normalize_fft " that causes the fft to be normalized across a sound's channels"
+  #define H_normalize_globally "The value for " S_normalize_fft " that causes the fft to be normalized across all sounds"
+
+  DEFINE_VAR(S_dont_normalize,        TO_SMALL_SCM_INT(DONT_NORMALIZE), H_dont_normalize);
+  DEFINE_VAR(S_normalize_by_channel,  TO_SMALL_SCM_INT(NORMALIZE_BY_CHANNEL), H_normalize_by_channel);
+  DEFINE_VAR(S_normalize_by_sound,    TO_SMALL_SCM_INT(NORMALIZE_BY_SOUND), H_normalize_by_sound);
+  DEFINE_VAR(S_normalize_globally,    TO_SMALL_SCM_INT(NORMALIZE_GLOBALLY), H_normalize_globally);
+
 
   /* ---------------- VARIABLES ---------------- */
   define_procedure_with_setter(S_ask_before_overwrite, SCM_FNC g_ask_before_overwrite, H_ask_before_overwrite,
@@ -3979,14 +4039,29 @@ void g_initialize_gh(snd_state *ss)
 
   /* ---------------- HOOKS ---------------- */
 
-  during_open_hook = MAKE_HOOK(S_during_open_hook, 3);       /* args = fd filename reason */
-  after_open_hook = MAKE_HOOK(S_after_open_hook, 1);         /* args = sound */
-  exit_hook = MAKE_HOOK(S_exit_hook, 0);
-  start_hook = MAKE_HOOK(S_start_hook, 1);                   /* arg = argv filename if any */
-  output_comment_hook = MAKE_HOOK(S_output_comment_hook, 1); /* arg = current mus_sound_comment(hdr) if any */
+  #define H_during_open_hook S_during_open_hook " (fd name reason) is called after file is opened, but before data has been read."
 
-  /* scm_set_object_property_x(start_hook,local_doc,TO_SCM_STRING("hiho")); */
-  /* TODO: make this a part of MAKE_HOOK macro */
+  #define H_after_open_hook S_after_open_hook " (snd) is called just before the new file's window is displayed. \
+This provides a way to set various sound-specific defaults."
+
+  #define H_exit_hook S_exit_hook " () is called upon exit. \
+If it returns #t, Snd does not exit.  This can be used to check for unsaved edits, or to perform cleanup activities."
+
+  #define H_start_hook S_start_hook " (filename) is called upon start-up. If it returns #t, snd exits immediately."
+
+  #define H_output_comment_hook S_output_comment_hook " (str) is called in Save-As dialog, passed current sound's comment, if any. \
+If more than one hook function, results are concatenated. If none, the current comment is used.\n\
+  (add-hook! output-comment-hook\n\
+    (lambda (str)\n\
+      (string-append \"written \"\n\
+        (strftime \"%a %d-%b-%Y %H:%M %Z\"\n\
+          (localtime (current-time))))))"
+
+  during_open_hook =    MAKE_HOOK(S_during_open_hook, 3, H_during_open_hook);       /* args = fd filename reason */
+  after_open_hook =     MAKE_HOOK(S_after_open_hook, 1, H_after_open_hook);         /* args = sound */
+  exit_hook =           MAKE_HOOK(S_exit_hook, 0, H_exit_hook);
+  start_hook =          MAKE_HOOK(S_start_hook, 1, H_start_hook);                   /* arg = argv filename if any */
+  output_comment_hook = MAKE_HOOK(S_output_comment_hook, 1, H_output_comment_hook); /* arg = current mus_sound_comment(hdr) if any */
 
   g_init_marks(local_doc);
   g_init_regions(local_doc);
@@ -4002,7 +4077,8 @@ void g_initialize_gh(snd_state *ss)
   g_init_errors(local_doc);
   g_init_fft(local_doc);
   g_init_edits(local_doc);
-  g_init_completions(local_doc);
+  g_init_listener(local_doc);
+  g_init_help(local_doc);
   g_init_menu(local_doc);
   g_init_main(local_doc);
   g_init_snd(local_doc);
@@ -4011,7 +4087,7 @@ void g_initialize_gh(snd_state *ss)
   g_init_recorder(local_doc);
   g_init_gxenv(local_doc);
 #if HAVE_HOOKS
-  g_init_gxmenu();
+  g_init_gxmenu(local_doc);
 #endif
 
 #if HAVE_LADSPA
@@ -4022,18 +4098,14 @@ void g_initialize_gh(snd_state *ss)
                    \"(unbind-key key state) undoes the effect of a prior bind-key call\"\
                    (bind-key key state #f)))");
 
-  /* TODO:
-     (snd-help 'unbind-key)
-     #f
-     (procedure-documentation unbind-key)
-     "(unbind-key key state) undoes the effect of a prior bind-key call"
-  */
-
   gh_eval_str("(defmacro defvar (a b)\
                  `(begin\
                     (define , a , b)\
                     (define-envelope (symbol->string ', a) , b)))");
   /* this is trying to keep track of envelopes for the envelope editor */
+
+  gh_eval_str("(define (snd-apropos val) (snd-print (with-output-to-string (lambda () (apropos val)))))");
+  /* this doesn't work with Guile's help procedure due to a bug the latter */
 
   gh_eval_str("(read-set! keywords 'prefix)");
   gh_eval_str("(print-enable 'source)");  /* added 13-Feb-01 */

@@ -5,21 +5,6 @@
 /* TODO  completion activated in emacs (snd-as-subjob)
  */
 
-#if HAVE_DIRENT_H
-  #include <dirent.h>
-#else
-  #define dirent direct
-  #if HAVE_SYS_NDIR_H
-    #include <sys/ndir.h>
-  #endif
-  #if HAVE_SYS_DIR_H
-    #include <sys/dir.h>
-  #endif
-  #if HAVE_NDIR_H
-    #include <ndir.h>
-  #endif
-#endif
-
 static char *current_match = NULL;
 
 #ifdef SCM_MODULE_OBARRAY
@@ -125,7 +110,7 @@ S_vct2sound_data
 static int sndlib_num_commands(void) {return(NUM_SNDLIB_NAMES);}
 static const char **sndlib_commands(void) {return(sndlib_names);}
 
-#define NUM_COMMANDS 563
+#define NUM_COMMANDS 562
 
 static char *snd_commands[NUM_COMMANDS] ={
   S_abort, S_activate_listener, S_add_mark, S_add_player, S_add_sound_file_extension, 
@@ -147,7 +132,7 @@ static char *snd_commands[NUM_COMMANDS] ={
   S_color2list, S_color_cutoff, S_color_dialog, S_color_inverted, S_color_scale, S_colorQ, S_colormap,
   S_comment, S_contrast, S_contrast_amp, S_contrast_func, S_contrasting,
   S_convolve_arrays, S_convolve_selection_with, S_convolve_with, S_corruption_time, S_count_matches,
-  S_cursor, S_cursor_claim_selection, S_cursor_color, S_cursor_cross,
+  S_cursor, S_cursor_color, S_cursor_cross,
   S_cursor_follows_play, S_cursor_in_middle, S_cursor_in_view, S_cursor_line, S_cursor_no_action,
   S_cursor_on_left, S_cursor_on_right, S_cursor_style, S_cursor_update_display, S_cut,
 
@@ -424,6 +409,42 @@ char *complete_text(char *text, int func)
 
 void clear_possible_completions(void) {possible_completions_ctr = 0;}
 
+char *srate_completer(char *text)
+{
+  set_completion_matches(1);
+  while ((text) && (*text == ' ')) text++;
+  if (strcmp(text, "4410") == 0) return(copy_string("44100"));
+  if (strcmp(text, "441") == 0) return(copy_string("44100"));
+  if (strcmp(text, "44") == 0) return(copy_string("44100"));
+  if (strcmp(text, "2205") == 0) return(copy_string("22050"));
+  if (strcmp(text, "220") == 0) return(copy_string("22050"));
+  if (strcmp(text, "22") == 0) return(copy_string("22050"));
+  if (strcmp(text, "2") == 0) return(copy_string("22050"));
+  if (strcmp(text, "4800") == 0) return(copy_string("48000"));
+  if (strcmp(text, "480") == 0) return(copy_string("48000"));
+  if (strcmp(text, "48") == 0) return(copy_string("48000"));
+  if (strcmp(text, "800") == 0) return(copy_string("8000"));
+  if (strcmp(text, "80") == 0) return(copy_string("8000"));
+  if (strcmp(text, "8") == 0) return(copy_string("8000"));
+  set_completion_matches(0);
+  return(copy_string(text));
+}
+
+#if HAVE_DIRENT_H
+  #include <dirent.h>
+#else
+  #define dirent direct
+  #if HAVE_SYS_NDIR_H
+    #include <sys/ndir.h>
+  #endif
+  #if HAVE_SYS_DIR_H
+    #include <sys/dir.h>
+  #endif
+  #if HAVE_NDIR_H
+    #include <ndir.h>
+  #endif
+#endif
+
 char *filename_completer(char *text)
 {
 #if HAVE_OPENDIR
@@ -506,27 +527,6 @@ char *filename_completer(char *text)
       return(file_name);
     }
 #endif
-  return(copy_string(text));
-}
-
-char *srate_completer(char *text)
-{
-  set_completion_matches(1);
-  while ((text) && (*text == ' ')) text++;
-  if (strcmp(text, "4410") == 0) return(copy_string("44100"));
-  if (strcmp(text, "441") == 0) return(copy_string("44100"));
-  if (strcmp(text, "44") == 0) return(copy_string("44100"));
-  if (strcmp(text, "2205") == 0) return(copy_string("22050"));
-  if (strcmp(text, "220") == 0) return(copy_string("22050"));
-  if (strcmp(text, "22") == 0) return(copy_string("22050"));
-  if (strcmp(text, "2") == 0) return(copy_string("22050"));
-  if (strcmp(text, "4800") == 0) return(copy_string("48000"));
-  if (strcmp(text, "480") == 0) return(copy_string("48000"));
-  if (strcmp(text, "48") == 0) return(copy_string("48000"));
-  if (strcmp(text, "800") == 0) return(copy_string("8000"));
-  if (strcmp(text, "80") == 0) return(copy_string("8000"));
-  if (strcmp(text, "8") == 0) return(copy_string("8000"));
-  set_completion_matches(0);
   return(copy_string(text));
 }
 
@@ -680,117 +680,3 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
   return(new_text);
 }
 
-
-
-#if HAVE_GUILE
-
-static char *snd_apropos(char *old_text)
-{
-  int i, matches = 0, len = 0;
-  char *new_text = NULL, *buffer = NULL;
-  clear_possible_completions();
-  set_save_completions(TRUE);
-  new_text = command_completer(old_text);
-  matches = get_completion_matches();
-  if (new_text) 
-    {
-      FREE(new_text); 
-      new_text = NULL;
-    }
-  if ((matches > 0) && (possible_completions_ctr > 0))
-    {
-      for (i = 0; i < possible_completions_ctr; i++) 
-	len += (snd_strlen(possible_completions[i]) + 3);
-      buffer = (char *)CALLOC(len, sizeof(char));
-      for (i = 0; i < possible_completions_ctr; i++)
-	{
-	  strcat(buffer, possible_completions[i]);
-	  strcat(buffer, " ");
-	}
-    }
-  set_save_completions(FALSE);
-  return(buffer);
-}
-
-static SCM g_apropos(SCM text)
-{
-  #define H_apropos "(" S_snd_apropos " name) returns possible continuations of name"
-  char *res = NULL, *str = NULL;
-  SCM val = SCM_BOOL_F;
-  SCM_ASSERT((gh_string_p(text) || gh_symbol_p(text)), text, SCM_ARG1, S_snd_apropos);
-  if (gh_string_p(text))
-    str = TO_NEW_C_STRING(text);
-  else str = gh_symbol2newstr(text, NULL);
-  res = snd_apropos(str);
-  if (str) 
-    {
-      free(str); 
-      str = NULL;
-    }
-  if (res) 
-    {
-      val = TO_SCM_STRING(res);
-      FREE(res);
-    }
-  return(val);
-}
-
-SCM g_help(SCM text)
-{
-  SCM help_text = SCM_BOOL_F, value;
-  char *str = NULL;
-
-  if (SCM_EQ_P(text,SCM_UNDEFINED))
-    return(TO_SCM_STRING(
-
-"snd-help returns the documentation associated with its argument.\n\
-(snd-help make-vct) for example, prints out a brief description of make-vct.\n\
-In the help descriptions, '&optional' marks optional arguments, and\n\
-'&opt-key' marks CLM-style optional keyword arguments.  If you load index.scm\n\
-the functions html and ? can be used in place of help to go to the HTML description\n\
-"));
-
-  SCM_ASSERT((gh_string_p(text) || gh_symbol_p(text)), text, SCM_ARG1, "new-help");
-  if (gh_string_p(text))
-    str = TO_NEW_C_STRING(text);
-  else str = gh_symbol2newstr(text, NULL);
-  value = SND_LOOKUP(str);
-  help_text = scm_object_property(value, 
-				  gh_symbol2scm("documentation"));
-  if ((SCM_FALSEP(help_text)) &&
-      (gh_procedure_p(value)))
-    help_text = scm_procedure_property(value, 
-				       gh_symbol2scm("documentation"));
-  if (SCM_FALSEP(help_text))
-    help_text = scm_object_property(gh_symbol2scm(str), 
-				    gh_symbol2scm("documentation"));
-  if (str) 
-    {
-      free(str); 
-      str = NULL;
-    }
-  return(help_text);
-}
-
-static SCM g_save_listener(SCM filename)
-{
-  #define H_save_listener "(" S_save_listener " filename) saves the current listener text in filename"
-  FILE *fp = NULL;
-  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_save_listener);
-  fp = fopen(SCM_STRING_CHARS(filename), "w");
-  if (fp) save_listener_text(fp);
-  if ((!fp) || (fclose(fp) != 0))
-    scm_throw(CANNOT_SAVE,
-	      SCM_LIST3(TO_SCM_STRING(S_save_listener),
-			filename,
-			TO_SCM_STRING(strerror(errno))));
-  return(filename);
-}
-
-void g_init_completions(SCM local_doc)
-{
-  DEFINE_PROC(gh_new_procedure(S_snd_apropos,   SCM_FNC g_apropos, 1, 0, 0),       H_apropos);
-  DEFINE_PROC(gh_new_procedure(S_save_listener, SCM_FNC g_save_listener, 1, 0, 0), H_save_listener);
-  gh_new_procedure0_1("snd-help",g_help);
-}
-#endif

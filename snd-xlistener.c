@@ -1010,6 +1010,13 @@ int listener_height(void)
   else return(0);
 }
 
+int listener_width(void)
+{
+  if (listener_text) 
+    return(widget_width(listener_text)); 
+  else return(0);
+}
+
 #if OVERRIDE_TOGGLE
 /* Metrolink Motif defines control-button1 to be "take focus" and then segfaults if you use it!! */
 static char ToggleTrans2[] =

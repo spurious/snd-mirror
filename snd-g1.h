@@ -91,6 +91,7 @@ void color_listener(GdkColor *pix);
 void handle_listener(snd_state *ss, int new_state);
 void snd_completion_help(snd_state *ss, int matches, char **buffer);
 int listener_height(void);
+int listener_width(void);
 void goto_listener(void);
 void save_listener_text(FILE *fp);
 void append_listener_text(int end, char *msg);
@@ -182,7 +183,7 @@ GtkWidget *get_menubar(void);
   void init_menu_widgets(SCM local_doc);
 #endif
 #if HAVE_GUILE
-  void g_init_gxmenu(void);
+  void g_init_gxmenu(SCM local_doc);
 #endif
 
 

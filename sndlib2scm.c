@@ -45,7 +45,7 @@ static char *full_filename(SCM file)
 
 static SCM g_sound_loop_info(SCM filename)
 {
-  #define H_mus_sound_loop_info "(" S_mus_sound_loop_info " filename) -> loop info for sound as a list\n   (start1 end1 start2 end2 base-note base-detune)"
+  #define H_mus_sound_loop_info "(" S_mus_sound_loop_info " filename) -> loop info for sound as a list (start1 end1 start2 end2 base-note base-detune)"
   int *res;
   char *tmpstr;
   SCM sres = SCM_EOL;
@@ -515,13 +515,10 @@ static SCM g_open_sound_output(SCM file, SCM srate, SCM chans, SCM data_format, 
 {
 
   #define H_mus_sound_open_output "(" S_mus_sound_open_output " filename srate chans data-format header-type &optional comment)\n\
-   opens filename for sound output with the given srate and so on,\n\
-   returns the file number (int).\n\
-   the file size is normally set later via mus-sound-close-output.\n\
-   srate is an integer, comment is a string,\n\
-   data-format is a sndlib format indicator such as mus-bshort, if #f if defaults to a format compatible with sndlib,\n\
-   header-type is a sndlib type indicator such as mus-aiff,\n\
-   sndlib currently only writes 5 or so header types."
+opens filename for sound output with the given srate and so on, returns the file number (int). \
+the file size is normally set later via mus-sound-close-output. srate is an integer, comment is a string, \
+data-format is a sndlib format indicator such as mus-bshort, if #f if defaults to a format compatible with sndlib, \
+header-type is a sndlib type indicator such as mus-aiff, sndlib currently only writes 5 or so header types."
 
   int fd;
   char *com = NULL;
@@ -546,9 +543,9 @@ static SCM g_reopen_sound_output(SCM file, SCM chans, SCM data_format, SCM heade
 {
 
   #define H_mus_sound_reopen_output "(" S_mus_sound_reopen_output " filename chans data-format header-type data-location)\n\
-   reopen (without alteration) filename for output\n\
-   data-format and header-type are sndlib indicators such as mus-bshort or mus-aiff\n\
-   data-location should be retrieved from a previous call to mus-sound-data-location"
+reopen (without alteration) filename for output \
+data-format and header-type are sndlib indicators such as mus-bshort or mus-aiff \
+data-location should be retrieved from a previous call to mus-sound-data-location"
 
   int fd;
   char *tmpstr = NULL;
@@ -574,8 +571,8 @@ static SCM g_close_sound_input(SCM fd)
 
 static SCM g_close_sound_output(SCM fd, SCM bytes)
 {
-  #define H_mus_sound_close_output "(" S_mus_sound_close_output " fd bytes) closes file number fd\n\
-   after updating its header (if any) to reflect bytes, the new file data size"
+  #define H_mus_sound_close_output "(" S_mus_sound_close_output " fd bytes) closes file number fd \
+after updating its header (if any) to reflect bytes, the new file data size"
 
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(fd)), fd, SCM_ARG1, S_mus_sound_close_output);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(bytes)), bytes, SCM_ARG2, S_mus_sound_close_output);
@@ -585,8 +582,8 @@ static SCM g_close_sound_output(SCM fd, SCM bytes)
 
 static SCM g_read_sound(SCM fd, SCM beg, SCM end, SCM chans, SCM sv)
 {
-  #define H_mus_sound_read "(" S_mus_sound_read " fd beg end chans sdata) reads sound data from file number fd,\n\
-   filling the sound-data object sdata's buffers starting at (buffer location) beg, going to end"
+  #define H_mus_sound_read "(" S_mus_sound_read " fd beg end chans sdata) reads sound data from file number fd, \
+filling the sound-data object sdata's buffers starting at (buffer location) beg, going to end"
 
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(fd)), fd, SCM_ARG1, S_mus_sound_read);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(beg)), beg, SCM_ARG2, S_mus_sound_read);
@@ -602,8 +599,8 @@ static SCM g_read_sound(SCM fd, SCM beg, SCM end, SCM chans, SCM sv)
 
 static SCM g_write_sound(SCM fd, SCM beg, SCM end, SCM chans, SCM sv)
 {
-  #define H_mus_sound_write "(" S_mus_sound_write " fd beg end chans sdata) writes sound-data object sdata's data\n\
-   starting at (buffer location) beg, going to end, writing to file number fd"
+  #define H_mus_sound_write "(" S_mus_sound_write " fd beg end chans sdata) writes sound-data object sdata's data \
+starting at (buffer location) beg, going to end, writing to file number fd"
 
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(fd)), fd, SCM_ARG1, S_mus_sound_write);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(beg)), beg, SCM_ARG2, S_mus_sound_write);
@@ -619,8 +616,8 @@ static SCM g_write_sound(SCM fd, SCM beg, SCM end, SCM chans, SCM sv)
 
 static SCM g_seek_sound(SCM fd, SCM offset, SCM origin)
 {
-  #define H_mus_sound_seek "(" S_mus_sound_seek " fd offset origin) moves the current read/write location in file number fd\n\
-   to the short-wise sample offset given origin (both treated as in lseek)"
+  #define H_mus_sound_seek "(" S_mus_sound_seek " fd offset origin) moves the current read/write location in file number fd \
+to the short-wise sample offset given origin (both treated as in lseek)"
 
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(fd)), fd, SCM_ARG1, S_mus_sound_seek);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(offset)), offset, SCM_ARG2, S_mus_sound_seek);
@@ -632,8 +629,8 @@ static SCM g_seek_sound(SCM fd, SCM offset, SCM origin)
 
 static SCM g_seek_sound_frame(SCM fd, SCM offset)
 {
-  #define H_mus_sound_seek_frame "(" S_mus_sound_seek_frame " fd frame) moves the current read/write location in file number fd\n\
-   to the indicated frame"
+  #define H_mus_sound_seek_frame "(" S_mus_sound_seek_frame " fd frame) moves the current read/write location in file number fd \
+to the indicated frame"
 
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(fd)), fd, SCM_ARG1, S_mus_sound_seek_frame);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(offset)), offset, SCM_ARG2, S_mus_sound_seek_frame);
@@ -644,9 +641,9 @@ static SCM g_seek_sound_frame(SCM fd, SCM offset)
 static SCM g_open_audio_output(SCM dev, SCM srate, SCM chans, SCM format, SCM size)
 {
   #define H_mus_audio_open_output "(" S_mus_audio_open_output " device srate chans format clipped)\n\
-   opens the audio device ready for output at the given srate and so on.\n\
-   returns the audio line number:\n\
-     (set! line (mus-audio-open-output mus-audio-default 22050 1 mus-lshort 256)"
+opens the audio device ready for output at the given srate and so on. \
+returns the audio line number:\n\
+  (set! line (mus-audio-open-output mus-audio-default 22050 1 mus-lshort 256)"
 
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(dev)), dev, SCM_ARG1, S_mus_audio_open_output);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(srate)), srate, SCM_ARG2, S_mus_audio_open_output);
@@ -663,8 +660,7 @@ static SCM g_open_audio_output(SCM dev, SCM srate, SCM chans, SCM format, SCM si
 static SCM g_open_audio_input(SCM dev, SCM srate, SCM chans, SCM format, SCM size)
 {
   #define H_mus_audio_open_input "(" S_mus_audio_open_input " (device srate chans format bufsize)\n\
-   opens the audio device ready for input with the indicated attributes\n\
-   returns the audio line number"
+opens the audio device ready for input with the indicated attributes, returns the audio line number"
 
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(dev)), dev, SCM_ARG1, S_mus_audio_open_input);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(srate)), srate, SCM_ARG2, S_mus_audio_open_input);
@@ -711,8 +707,8 @@ static SCM g_audio_systems (void)
 
 static SCM g_write_audio(SCM line, SCM sdata, SCM frames)
 {
-  #define H_mus_audio_write "(" S_mus_audio_write " line sdata frames) writes frames of data (channels*frames = samples)\n\
-   to the audio line from the sound-data object sdata."
+  #define H_mus_audio_write "(" S_mus_audio_write " line sdata frames) writes frames of data (channels*frames = samples) \
+to the audio line from the sound-data object sdata."
 
   /* assuming 16-bit output here for now */
   short *obuf;
@@ -745,8 +741,8 @@ static SCM g_write_audio(SCM line, SCM sdata, SCM frames)
 
 static SCM g_read_audio(SCM line, SCM sdata, SCM frames)
 {
-  #define H_mus_audio_read "(" S_mus_audio_read " line sdata frames) reads frames of data (channels*frames = samples)\n\
-   from the audio line into the sound-data object sdata."
+  #define H_mus_audio_read "(" S_mus_audio_read " line sdata frames) reads frames of data (channels*frames = samples) \
+from the audio line into the sound-data object sdata."
 
   short *inbuf;
   sound_data *sd;
@@ -887,74 +883,74 @@ void mus_sndlib2scm_initialize(void)
   sound_data_tag = scm_newsmob(&sound_data_smobfuns);
 #endif
 
-  gh_define(S_mus_next,  TO_SMALL_SCM_INT(MUS_NEXT));
-  gh_define(S_mus_aifc,  TO_SMALL_SCM_INT(MUS_AIFC));
-  gh_define(S_mus_riff,  TO_SMALL_SCM_INT(MUS_RIFF));
-  gh_define(S_mus_nist,  TO_SMALL_SCM_INT(MUS_NIST));
-  gh_define(S_mus_raw,   TO_SMALL_SCM_INT(MUS_RAW));
-  gh_define(S_mus_ircam, TO_SMALL_SCM_INT(MUS_IRCAM));
-  gh_define(S_mus_aiff,  TO_SMALL_SCM_INT(MUS_AIFF));
+  DEFINE_VAR(S_mus_next,  TO_SMALL_SCM_INT(MUS_NEXT),  "NeXT (Sun) sound header id");
+  DEFINE_VAR(S_mus_aifc,  TO_SMALL_SCM_INT(MUS_AIFC),  "AIFC sound header id");
+  DEFINE_VAR(S_mus_riff,  TO_SMALL_SCM_INT(MUS_RIFF),  "RIFF (wave) sound header id");
+  DEFINE_VAR(S_mus_nist,  TO_SMALL_SCM_INT(MUS_NIST),  "NIST (Sphere) sound header id");
+  DEFINE_VAR(S_mus_raw,   TO_SMALL_SCM_INT(MUS_RAW),   "raw (headerless) sound header id");
+  DEFINE_VAR(S_mus_ircam, TO_SMALL_SCM_INT(MUS_IRCAM), "IRCAM sound header id");
+  DEFINE_VAR(S_mus_aiff,  TO_SMALL_SCM_INT(MUS_AIFF),  "AIFF (old-style) sound header id");
 
-  gh_define(S_mus_bshort,  TO_SMALL_SCM_INT(MUS_BSHORT));
-  gh_define(S_mus_lshort,  TO_SMALL_SCM_INT(MUS_LSHORT));
-  gh_define(S_mus_mulaw,   TO_SMALL_SCM_INT(MUS_MULAW));
-  gh_define(S_mus_alaw,    TO_SMALL_SCM_INT(MUS_ALAW));
-  gh_define(S_mus_byte,    TO_SMALL_SCM_INT(MUS_BYTE));
-  gh_define(S_mus_ubyte,   TO_SMALL_SCM_INT(MUS_UBYTE));
-  gh_define(S_mus_bfloat,  TO_SMALL_SCM_INT(MUS_BFLOAT));
-  gh_define(S_mus_lfloat,  TO_SMALL_SCM_INT(MUS_LFLOAT));
-  gh_define(S_mus_bint,    TO_SMALL_SCM_INT(MUS_BINT));
-  gh_define(S_mus_lint,    TO_SMALL_SCM_INT(MUS_LINT));
-  gh_define(S_mus_bintn,   TO_SMALL_SCM_INT(MUS_BINTN));
-  gh_define(S_mus_lintn,   TO_SMALL_SCM_INT(MUS_LINTN));
-  gh_define(S_mus_b24int,  TO_SMALL_SCM_INT(MUS_B24INT));
-  gh_define(S_mus_l24int,  TO_SMALL_SCM_INT(MUS_L24INT));
-  gh_define(S_mus_bdouble, TO_SMALL_SCM_INT(MUS_BDOUBLE));
-  gh_define(S_mus_ldouble, TO_SMALL_SCM_INT(MUS_LDOUBLE));
-  gh_define(S_mus_ubshort, TO_SMALL_SCM_INT(MUS_UBSHORT));
-  gh_define(S_mus_ulshort, TO_SMALL_SCM_INT(MUS_ULSHORT));
+  DEFINE_VAR(S_mus_bshort,  TO_SMALL_SCM_INT(MUS_BSHORT),  "big-endian short data format id");
+  DEFINE_VAR(S_mus_lshort,  TO_SMALL_SCM_INT(MUS_LSHORT),  "little-endian short data format id");
+  DEFINE_VAR(S_mus_mulaw,   TO_SMALL_SCM_INT(MUS_MULAW),   "mulaw (8-bit) data format id");
+  DEFINE_VAR(S_mus_alaw,    TO_SMALL_SCM_INT(MUS_ALAW),    "alaw (8-bit) data format id");
+  DEFINE_VAR(S_mus_byte,    TO_SMALL_SCM_INT(MUS_BYTE),    "signed byte data format id");
+  DEFINE_VAR(S_mus_ubyte,   TO_SMALL_SCM_INT(MUS_UBYTE),   "unsigned byte data format id");
+  DEFINE_VAR(S_mus_bfloat,  TO_SMALL_SCM_INT(MUS_BFLOAT),  "big-endian float data format id");
+  DEFINE_VAR(S_mus_lfloat,  TO_SMALL_SCM_INT(MUS_LFLOAT),  "little-endian float data format id");
+  DEFINE_VAR(S_mus_bint,    TO_SMALL_SCM_INT(MUS_BINT),    "big-endian int data format id");
+  DEFINE_VAR(S_mus_lint,    TO_SMALL_SCM_INT(MUS_LINT),    "little-endian int data format id");
+  DEFINE_VAR(S_mus_bintn,   TO_SMALL_SCM_INT(MUS_BINTN),   "normalized big-endian int data format id");
+  DEFINE_VAR(S_mus_lintn,   TO_SMALL_SCM_INT(MUS_LINTN),   "normalized little-endian int data format id");
+  DEFINE_VAR(S_mus_b24int,  TO_SMALL_SCM_INT(MUS_B24INT),  "big-endian 24-bit data format id");
+  DEFINE_VAR(S_mus_l24int,  TO_SMALL_SCM_INT(MUS_L24INT),  "little-endian 24-bit data format id");
+  DEFINE_VAR(S_mus_bdouble, TO_SMALL_SCM_INT(MUS_BDOUBLE), "big-endian double data format id");
+  DEFINE_VAR(S_mus_ldouble, TO_SMALL_SCM_INT(MUS_LDOUBLE), "little-endian double data format id");
+  DEFINE_VAR(S_mus_ubshort, TO_SMALL_SCM_INT(MUS_UBSHORT), "unsigned big-endian short data format id");
+  DEFINE_VAR(S_mus_ulshort, TO_SMALL_SCM_INT(MUS_ULSHORT), "unsigned little-endian short data format id");
 
-  gh_define(S_mus_audio_default,        TO_SMALL_SCM_INT(MUS_AUDIO_DEFAULT));
-  gh_define(S_mus_audio_duplex_default, TO_SMALL_SCM_INT(MUS_AUDIO_DUPLEX_DEFAULT));
-  gh_define(S_mus_audio_line_out,       TO_SMALL_SCM_INT(MUS_AUDIO_LINE_OUT));
-  gh_define(S_mus_audio_line_in,        TO_SMALL_SCM_INT(MUS_AUDIO_LINE_IN));
-  gh_define(S_mus_audio_microphone,     TO_SMALL_SCM_INT(MUS_AUDIO_MICROPHONE));
-  gh_define(S_mus_audio_speakers,       TO_SMALL_SCM_INT(MUS_AUDIO_SPEAKERS));
-  gh_define(S_mus_audio_dac_out,        TO_SMALL_SCM_INT(MUS_AUDIO_DAC_OUT));
-  gh_define(S_mus_audio_adat_in,        TO_SMALL_SCM_INT(MUS_AUDIO_ADAT_IN));
-  gh_define(S_mus_audio_aes_in,         TO_SMALL_SCM_INT(MUS_AUDIO_AES_IN));
-  gh_define(S_mus_audio_digital_in,     TO_SMALL_SCM_INT(MUS_AUDIO_DIGITAL_IN));
-  gh_define(S_mus_audio_digital_out,    TO_SMALL_SCM_INT(MUS_AUDIO_DIGITAL_OUT));
-  gh_define(S_mus_audio_adat_out,       TO_SMALL_SCM_INT(MUS_AUDIO_ADAT_OUT));
-  gh_define(S_mus_audio_aes_out,        TO_SMALL_SCM_INT(MUS_AUDIO_AES_OUT));
-  gh_define(S_mus_audio_dac_filter,     TO_SMALL_SCM_INT(MUS_AUDIO_DAC_FILTER));
-  gh_define(S_mus_audio_mixer,          TO_SMALL_SCM_INT(MUS_AUDIO_MIXER));
-  gh_define(S_mus_audio_line1,          TO_SMALL_SCM_INT(MUS_AUDIO_LINE1));
-  gh_define(S_mus_audio_line2,          TO_SMALL_SCM_INT(MUS_AUDIO_LINE2));
-  gh_define(S_mus_audio_line3,          TO_SMALL_SCM_INT(MUS_AUDIO_LINE3));
-  gh_define(S_mus_audio_aux_input,      TO_SMALL_SCM_INT(MUS_AUDIO_AUX_INPUT));
-  gh_define(S_mus_audio_cd,             TO_SMALL_SCM_INT(MUS_AUDIO_CD));
-  gh_define(S_mus_audio_aux_output,     TO_SMALL_SCM_INT(MUS_AUDIO_AUX_OUTPUT));
-  gh_define(S_mus_audio_spdif_in,       TO_SMALL_SCM_INT(MUS_AUDIO_SPDIF_IN));
-  gh_define(S_mus_audio_spdif_out,      TO_SMALL_SCM_INT(MUS_AUDIO_SPDIF_OUT));
-  gh_define(S_mus_audio_direction,      TO_SMALL_SCM_INT(MUS_AUDIO_DIRECTION));
-  gh_define(S_mus_audio_samples_per_channel, TO_SMALL_SCM_INT(MUS_AUDIO_SAMPLES_PER_CHANNEL));
+  DEFINE_VAR(S_mus_audio_default,        TO_SMALL_SCM_INT(MUS_AUDIO_DEFAULT),        "default audio device");
+  DEFINE_VAR(S_mus_audio_duplex_default, TO_SMALL_SCM_INT(MUS_AUDIO_DUPLEX_DEFAULT), "default duplex device");
+  DEFINE_VAR(S_mus_audio_line_out,       TO_SMALL_SCM_INT(MUS_AUDIO_LINE_OUT),       "audio line-out device");
+  DEFINE_VAR(S_mus_audio_line_in,        TO_SMALL_SCM_INT(MUS_AUDIO_LINE_IN),        "audio line-in device");
+  DEFINE_VAR(S_mus_audio_microphone,     TO_SMALL_SCM_INT(MUS_AUDIO_MICROPHONE),     "microphone device");
+  DEFINE_VAR(S_mus_audio_speakers,       TO_SMALL_SCM_INT(MUS_AUDIO_SPEAKERS),       "speakers device (a mixer kludge)");
+  DEFINE_VAR(S_mus_audio_dac_out,        TO_SMALL_SCM_INT(MUS_AUDIO_DAC_OUT),        "DAC out device");
+  DEFINE_VAR(S_mus_audio_adat_in,        TO_SMALL_SCM_INT(MUS_AUDIO_ADAT_IN),        "ADAT in device");
+  DEFINE_VAR(S_mus_audio_aes_in,         TO_SMALL_SCM_INT(MUS_AUDIO_AES_IN),         "AES in device");
+  DEFINE_VAR(S_mus_audio_digital_in,     TO_SMALL_SCM_INT(MUS_AUDIO_DIGITAL_IN),     "digital audio in device");
+  DEFINE_VAR(S_mus_audio_digital_out,    TO_SMALL_SCM_INT(MUS_AUDIO_DIGITAL_OUT),    "digital audio out device");
+  DEFINE_VAR(S_mus_audio_adat_out,       TO_SMALL_SCM_INT(MUS_AUDIO_ADAT_OUT),       "ADAT out device");
+  DEFINE_VAR(S_mus_audio_aes_out,        TO_SMALL_SCM_INT(MUS_AUDIO_AES_OUT),        "AES out device");
+  DEFINE_VAR(S_mus_audio_dac_filter,     TO_SMALL_SCM_INT(MUS_AUDIO_DAC_FILTER),     "DAC filter 'device' (a mixer kludge)");
+  DEFINE_VAR(S_mus_audio_mixer,          TO_SMALL_SCM_INT(MUS_AUDIO_MIXER),          "the 'mixer' device");
+  DEFINE_VAR(S_mus_audio_line1,          TO_SMALL_SCM_INT(MUS_AUDIO_LINE1),          "audio line 1 device");
+  DEFINE_VAR(S_mus_audio_line2,          TO_SMALL_SCM_INT(MUS_AUDIO_LINE2),          "audio line 2device");
+  DEFINE_VAR(S_mus_audio_line3,          TO_SMALL_SCM_INT(MUS_AUDIO_LINE3),          "audio line 3device");
+  DEFINE_VAR(S_mus_audio_aux_input,      TO_SMALL_SCM_INT(MUS_AUDIO_AUX_INPUT),      "aux audio in device");
+  DEFINE_VAR(S_mus_audio_cd,             TO_SMALL_SCM_INT(MUS_AUDIO_CD),             "CD in device");
+  DEFINE_VAR(S_mus_audio_aux_output,     TO_SMALL_SCM_INT(MUS_AUDIO_AUX_OUTPUT),     "aux audio out device");
+  DEFINE_VAR(S_mus_audio_spdif_in,       TO_SMALL_SCM_INT(MUS_AUDIO_SPDIF_IN),       "SPDIF in device");
+  DEFINE_VAR(S_mus_audio_spdif_out,      TO_SMALL_SCM_INT(MUS_AUDIO_SPDIF_OUT),      "SPDIF out device");
+  DEFINE_VAR(S_mus_audio_direction,      TO_SMALL_SCM_INT(MUS_AUDIO_DIRECTION),      "audio sample flow direction (mus-audio-read)");
+  DEFINE_VAR(S_mus_audio_samples_per_channel, TO_SMALL_SCM_INT(MUS_AUDIO_SAMPLES_PER_CHANNEL), "samples per channel (mus-audio-read)");
 
-  gh_define(S_mus_audio_amp,     TO_SMALL_SCM_INT(MUS_AUDIO_AMP));
-  gh_define(S_mus_audio_srate,   TO_SMALL_SCM_INT(MUS_AUDIO_SRATE));
-  gh_define(S_mus_audio_channel, TO_SMALL_SCM_INT(MUS_AUDIO_CHANNEL));
-  gh_define(S_mus_audio_format,  TO_SMALL_SCM_INT(MUS_AUDIO_FORMAT));
-  gh_define(S_mus_audio_port,    TO_SMALL_SCM_INT(MUS_AUDIO_PORT));
-  gh_define(S_mus_audio_imix,    TO_SMALL_SCM_INT(MUS_AUDIO_IMIX));
-  gh_define(S_mus_audio_igain,   TO_SMALL_SCM_INT(MUS_AUDIO_IGAIN));
-  gh_define(S_mus_audio_reclev,  TO_SMALL_SCM_INT(MUS_AUDIO_RECLEV));
-  gh_define(S_mus_audio_pcm,     TO_SMALL_SCM_INT(MUS_AUDIO_PCM));
-  gh_define(S_mus_audio_pcm2,    TO_SMALL_SCM_INT(MUS_AUDIO_PCM2));
-  gh_define(S_mus_audio_ogain,   TO_SMALL_SCM_INT(MUS_AUDIO_OGAIN));
-  gh_define(S_mus_audio_line,    TO_SMALL_SCM_INT(MUS_AUDIO_LINE));
-  gh_define(S_mus_audio_synth,   TO_SMALL_SCM_INT(MUS_AUDIO_SYNTH));
-  gh_define(S_mus_audio_bass,    TO_SMALL_SCM_INT(MUS_AUDIO_BASS));
-  gh_define(S_mus_audio_treble,  TO_SMALL_SCM_INT(MUS_AUDIO_TREBLE));
+  DEFINE_VAR(S_mus_audio_amp,     TO_SMALL_SCM_INT(MUS_AUDIO_AMP),     "mixer amp field id");
+  DEFINE_VAR(S_mus_audio_srate,   TO_SMALL_SCM_INT(MUS_AUDIO_SRATE),   "mixer srate field id");
+  DEFINE_VAR(S_mus_audio_channel, TO_SMALL_SCM_INT(MUS_AUDIO_CHANNEL), "mixer channel field id");
+  DEFINE_VAR(S_mus_audio_format,  TO_SMALL_SCM_INT(MUS_AUDIO_FORMAT),  "mixer data format field id");
+  DEFINE_VAR(S_mus_audio_port,    TO_SMALL_SCM_INT(MUS_AUDIO_PORT),    "mixer port");
+  DEFINE_VAR(S_mus_audio_imix,    TO_SMALL_SCM_INT(MUS_AUDIO_IMIX),    "mixer 'imix' field id");
+  DEFINE_VAR(S_mus_audio_igain,   TO_SMALL_SCM_INT(MUS_AUDIO_IGAIN),   "mixer 'igain' field id");
+  DEFINE_VAR(S_mus_audio_reclev,  TO_SMALL_SCM_INT(MUS_AUDIO_RECLEV),  "mixer 'reclev' field id");
+  DEFINE_VAR(S_mus_audio_pcm,     TO_SMALL_SCM_INT(MUS_AUDIO_PCM),     "mixer 'pcm' field id");
+  DEFINE_VAR(S_mus_audio_pcm2,    TO_SMALL_SCM_INT(MUS_AUDIO_PCM2),    "mixer 'pcm2' field id");
+  DEFINE_VAR(S_mus_audio_ogain,   TO_SMALL_SCM_INT(MUS_AUDIO_OGAIN),   "mixer 'ogain' field id");
+  DEFINE_VAR(S_mus_audio_line,    TO_SMALL_SCM_INT(MUS_AUDIO_LINE),    "mixer 'line' field id");
+  DEFINE_VAR(S_mus_audio_synth,   TO_SMALL_SCM_INT(MUS_AUDIO_SYNTH),   "mixer 'synth' field id");
+  DEFINE_VAR(S_mus_audio_bass,    TO_SMALL_SCM_INT(MUS_AUDIO_BASS),    "mixer 'bass' field id");
+  DEFINE_VAR(S_mus_audio_treble,  TO_SMALL_SCM_INT(MUS_AUDIO_TREBLE),  "mixer 'treble' field id");
 
   DEFINE_PROC(gh_new_procedure1_0(S_sound_data_length,        sound_data_length),       H_sound_data_length);
   DEFINE_PROC(gh_new_procedure1_0(S_sound_data_chans,         sound_data_chans),        H_sound_data_chans);

@@ -2195,11 +2195,11 @@ static SCM g_autocorrelate(SCM reals)
 
 static SCM g_add_transform(SCM name, SCM xlabel, SCM lo, SCM hi, SCM proc)
 {
-  #define H_add_transform "(" S_add_transform " name x-label low high func) adds the transform func\n\
-   to the transform lists; func should be a function of two arguments, the length of the transform\n\
-   and a sample-reader to get the data, and should return a vct object containing the transform results.\n\
-   'name' is the transform's name, x-label is its x-axis label, and the relevant returned data\n\
-   to be displayed goes from low to high (normally 0.0 to 1.0)"
+  #define H_add_transform "(" S_add_transform " name x-label low high func) adds the transform func \
+to the transform lists; func should be a function of two arguments, the length of the transform \
+and a sample-reader to get the data, and should return a vct object containing the transform results. \
+'name' is the transform's name, x-label is its x-axis label, and the relevant returned data \
+to be displayed goes from low to high (normally 0.0 to 1.0)"
 
   SCM res = SCM_BOOL_F;
   SCM_ASSERT(gh_string_p(name), name, SCM_ARG1, S_add_transform);
@@ -2220,16 +2220,39 @@ static SCM g_add_transform(SCM name, SCM xlabel, SCM lo, SCM hi, SCM proc)
 void g_init_fft(SCM local_doc)
 {
 #if HAVE_HOOKS
-  before_fft_hook = MAKE_HOOK(S_before_fft_hook, 2);       /* args = snd chn */
+
+  #define H_before_fft_hook S_before_fft_hook " (snd chn) is called just before an FFT (or spectrum) is calculated.  If it returns \
+an integer, it is used as the starting point of the fft.  The following \
+somewhat brute-force code shows a way to have the fft reflect the position \
+of a moving mark:\n\
+  (define fft-position #f)\n\
+  (add-hook! before-fft-hook \n\
+    (lambda (snd chn) fft-position))\n\
+  (add-hook! mark-drag-hook \n\
+    (lambda (id)\n\
+      (set! fft-position (mark-sample id))\n\
+      (update-fft)))"
+
+  before_fft_hook = MAKE_HOOK(S_before_fft_hook, 2, H_before_fft_hook);  /* args = snd chn */
 #endif
-  gh_define(S_fourier_transform,   TO_SMALL_SCM_INT(FOURIER));
-  gh_define(S_wavelet_transform,   TO_SMALL_SCM_INT(WAVELET));
-  gh_define(S_hankel_transform,    TO_SMALL_SCM_INT(HANKEL));
-  gh_define(S_chebyshev_transform, TO_SMALL_SCM_INT(CHEBYSHEV));
-  gh_define(S_cepstrum,            TO_SMALL_SCM_INT(CEPSTRUM));
-  gh_define(S_hadamard_transform,  TO_SMALL_SCM_INT(HADAMARD));
-  gh_define(S_walsh_transform,     TO_SMALL_SCM_INT(WALSH));
-  gh_define(S_autocorrelation,     TO_SMALL_SCM_INT(AUTOCORRELATION));
+
+  #define H_fourier_transform   S_transform_type " value for Fourier transform (sinusoid basis)"
+  #define H_wavelet_transform   S_transform_type " value for wavelet transform (" S_wavelet_type " chooses wavelet)"
+  #define H_hankel_transform    S_transform_type " value for Hankel transform (Bessel function basis)"
+  #define H_chebyshev_transform S_transform_type " value for Chebyshev transform (Checbyshev polynomial basis)"
+  #define H_cepstrum            S_transform_type " value for cepstrum (log of power spectrum)"
+  #define H_hadamard_transform  S_transform_type " value for Hadamard transform"
+  #define H_walsh_transform     S_transform_type " value for Walsh transform (step function basis)"
+  #define H_autocorrelation     S_transform_type " value for autocorrelation (ifft of spectrum)"
+
+  DEFINE_VAR(S_fourier_transform,   TO_SMALL_SCM_INT(FOURIER),         H_fourier_transform);
+  DEFINE_VAR(S_wavelet_transform,   TO_SMALL_SCM_INT(WAVELET),         H_wavelet_transform);
+  DEFINE_VAR(S_hankel_transform,    TO_SMALL_SCM_INT(HANKEL),          H_hankel_transform);
+  DEFINE_VAR(S_chebyshev_transform, TO_SMALL_SCM_INT(CHEBYSHEV),       H_chebyshev_transform);
+  DEFINE_VAR(S_cepstrum,            TO_SMALL_SCM_INT(CEPSTRUM),        H_cepstrum);
+  DEFINE_VAR(S_hadamard_transform,  TO_SMALL_SCM_INT(HADAMARD),        H_hadamard_transform);
+  DEFINE_VAR(S_walsh_transform,     TO_SMALL_SCM_INT(WALSH),           H_walsh_transform);
+  DEFINE_VAR(S_autocorrelation,     TO_SMALL_SCM_INT(AUTOCORRELATION), H_autocorrelation);
 
   DEFINE_PROC(gh_new_procedure1_0(S_autocorrelate, g_autocorrelate), H_autocorrelate);
   DEFINE_PROC(gh_new_procedure5_0(S_add_transform, g_add_transform), H_add_transform);

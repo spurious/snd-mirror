@@ -90,6 +90,7 @@ void color_listener(Pixel pix);
 void snd_append_char(snd_state *ss, char *msg);
 void handle_listener(snd_state *ss, int new_state);
 int listener_height(void);
+int listener_width(void);
 Widget sndCreateFormWidget(char *name, Widget parent, Arg *args, int n);
 Widget sndCreateDrawingAreaWidget(char *name, Widget parent, Arg *args, int n);
 Widget sndCreateFrameWidget(char *name, Widget parent, Arg *args, int n);
@@ -175,7 +176,7 @@ int gh_remove_from_menu(int which_menu, char *label);
 int gh_menu_is_sensitive(int which_menu, char *old_label);
 
 #if HAVE_GUILE
-  void g_init_gxmenu(void);
+  void g_init_gxmenu(SCM local_doc);
 #endif
 
 

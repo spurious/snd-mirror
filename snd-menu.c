@@ -630,8 +630,8 @@ static SCM g_add_to_main_menu(SCM label, SCM callback)
 
 static SCM g_add_to_menu(SCM menu, SCM label, SCM callstr)
 {
-  #define H_add_to_menu "(" S_add_to_menu " menu label func) adds label to menu invoking func when activated\n\
-   menu is the index returned by add-to-main-menu, func should be a function of no arguments"
+  #define H_add_to_menu "(" S_add_to_menu " menu label func) adds label to menu invoking func when activated \
+menu is the index returned by add-to-main-menu, func should be a function of no arguments"
 
   int err = 0, slot;
   SCM_ASSERT(gh_string_p(label), label, SCM_ARG2, S_add_to_menu);
@@ -705,11 +705,8 @@ static SCM g_set_menu_sensitive(SCM menu, SCM label, SCM on)
 
 void g_init_menu(SCM local_doc)
 {
-#if HAVE_HOOKS
-  output_name_hook = scm_create_hook(S_output_name_hook, 0);
-#else
-  output_name_hook = gh_define(S_output_name_hook, SCM_BOOL_F);
-#endif
+  #define H_output_name_hook S_output_name_hook " () is called from the File:New dialog"
+  output_name_hook = MAKE_HOOK(S_output_name_hook, 0, H_output_name_hook);
 
   define_procedure_with_setter(S_save_state_file, SCM_FNC g_save_state_file, H_save_state_file,
 			       "set-" S_save_state_file, SCM_FNC g_set_save_state_file,
@@ -719,9 +716,9 @@ void g_init_menu(SCM local_doc)
 			       "set-" S_menu_sensitive, SCM_FNC g_set_menu_sensitive,
 			       local_doc, 2, 0, 3, 0);
 
-  DEFINE_PROC(gh_new_procedure1_1(S_add_to_main_menu, g_add_to_main_menu), H_add_to_main_menu);
-  DEFINE_PROC(gh_new_procedure3_0(S_add_to_menu, g_add_to_menu), H_add_to_menu);
-  DEFINE_PROC(gh_new_procedure2_0(S_remove_from_menu, g_remove_from_menu), H_remove_from_menu);
+  DEFINE_PROC(gh_new_procedure1_1(S_add_to_main_menu,  g_add_to_main_menu),  H_add_to_main_menu);
+  DEFINE_PROC(gh_new_procedure3_0(S_add_to_menu,       g_add_to_menu),       H_add_to_menu);
+  DEFINE_PROC(gh_new_procedure2_0(S_remove_from_menu,  g_remove_from_menu),  H_remove_from_menu);
   DEFINE_PROC(gh_new_procedure3_0(S_change_menu_label, g_change_menu_label), H_change_menu_label);
 }
 #endif

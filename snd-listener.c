@@ -406,3 +406,27 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
 #endif
 #endif
 }
+
+#if HAVE_GUILE
+
+static SCM g_save_listener(SCM filename)
+{
+  #define H_save_listener "(" S_save_listener " filename) saves the current listener text in filename"
+  FILE *fp = NULL;
+  SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_save_listener);
+  fp = fopen(SCM_STRING_CHARS(filename), "w");
+  if (fp) save_listener_text(fp);
+  if ((!fp) || (fclose(fp) != 0))
+    scm_throw(CANNOT_SAVE,
+	      SCM_LIST3(TO_SCM_STRING(S_save_listener),
+			filename,
+			TO_SCM_STRING(strerror(errno))));
+  return(filename);
+}
+
+void g_init_listener(SCM local_doc)
+{
+  DEFINE_PROC(gh_new_procedure(S_save_listener, SCM_FNC g_save_listener, 1, 0, 0), H_save_listener);
+}
+
+#endif

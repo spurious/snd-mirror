@@ -1994,8 +1994,8 @@ static SCM g_set_sound_loop_info(SCM start0, SCM end0, SCM start1, SCM end1, SCM
 static SCM g_soundfont_info(SCM snd)
 {
   /* return all soundfont descriptors as list of lists: ((name start loopstart loopend)) */
-  #define H_soundfont_info "(" S_soundfont_info " &optional snd) -> list of lists describing snd as a soundfont.\n\
-   each inner list has the form: (name start loopstart loopend)"
+  #define H_soundfont_info "(" S_soundfont_info " &optional snd) -> list of lists describing snd as a soundfont. \
+each inner list has the form: (name start loopstart loopend)"
 
   SCM inlist = SCM_EOL, outlist = SCM_EOL;
   int i, lim;
@@ -2089,8 +2089,17 @@ void g_init_file(SCM local_doc)
 
   memo_sound = gh_define(S_memo_sound, SCM_BOOL_F);
 
-  open_hook = MAKE_HOOK(S_open_hook, 1);                     /* arg = filename */
-  close_hook = MAKE_HOOK(S_close_hook, 1);                   /* arg = sound index */
-  just_sounds_hook = MAKE_HOOK(S_just_sounds_hook, 1);       /* arg = filename */
+  #define H_open_hook S_open_hook " (filename) is called each time a file is opened (before the actual open). \
+If it returns #t, the file is not opened."
+
+  #define H_close_hook S_close_hook " (snd) is called each time a file is closed (before the close). \
+If it returns #t, the file is not closed."
+
+  #define H_just_sounds_hook S_just_sounds_hook " (filename) is called on each file (after the sound file extension check) if the \
+just-sounds button is set. Return #f to filter out filename. "
+
+  open_hook =        MAKE_HOOK(S_open_hook, 1, H_open_hook);                 /* arg = filename */
+  close_hook =       MAKE_HOOK(S_close_hook, 1, H_close_hook);               /* arg = sound index */
+  just_sounds_hook = MAKE_HOOK(S_just_sounds_hook, 1, H_just_sounds_hook);   /* arg = filename */
 }
 #endif

@@ -1516,10 +1516,23 @@ static SCM g_test_menus(void)
   return(SCM_BOOL_F);
 }
 
-void g_init_gxmenu(void)
+void g_init_gxmenu(SCM local_doc)
 {
 #if HAVE_HOOKS
-  menu_hook = MAKE_HOOK(S_menu_hook, 2);
+  #define H_menu_hook S_menu_hook " (name option) is called each time a menu item is \
+selected; its entries should be functions of two arguments, the top menu \
+name and the option selected (both as strings), and should return #f if it \
+wants to override the default menu action:\n\
+  (add-hook! menu-hook\n\
+    (lambda (name option)\n\
+      (if (and (string=? name \"File\")\n\
+               (string=? option \"Exit\"))\n\
+        (begin\n\
+          (snd-print \"no exit!\")\n\
+          #f)\n\
+        #t))) ; #t to make sure other menu items remain active"
+
+  menu_hook = MAKE_HOOK(S_menu_hook, 2, H_menu_hook);
 #endif
   gh_new_procedure("test-menus", SCM_FNC g_test_menus, 0, 0, 0);
 }

@@ -327,7 +327,6 @@
 #define S_corruption_time               "corruption-time"
 #define S_count_matches                 "count-matches"
 #define S_cursor                        "cursor"
-#define S_cursor_claim_selection        "cursor-claim-selection"
 #define S_cursor_color                  "cursor-col" STR_OR
 #define S_cursor_cross                  "cursor-cross"
 #define S_cursor_follows_play           "cursor-follows-play"

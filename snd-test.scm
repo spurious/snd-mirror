@@ -119,7 +119,6 @@
 	'channels-separate channels-separate 0 
 	'channels-superimposed channels-superimposed 2
 	'chebyshev-transform chebyshev-transform 5 
-	'cursor-claim-selection cursor-claim-selection 6 
 	'cursor-in-middle cursor-in-middle 3
 	'cursor-in-view cursor-in-view 0 
 	'cursor-no-action cursor-no-action 5 
@@ -144,7 +143,7 @@
 	'hankel-transform hankel-transform 2 
 	'hanning-window hanning-window 1
 	'kaiser-window kaiser-window 11 
-	'keyboard-no-action keyboard-no-action 7
+	'keyboard-no-action keyboard-no-action 6
 	'cepstrum cepstrum 6
 	'normal-fft normal-fft 0 
 	'parzen-window parzen-window 3
@@ -5912,7 +5911,7 @@
   (snd-display (format #f ";all done!~%~A" original-prompt))
   (snd-display (format #f "timings:~%  ~A: total~%  GC: ~A~%~{    ~A~%~})~%" 
 		       (/ (- (get-internal-real-time) overall-start-time) 1000) 
-		       (* (car (gc-stats)) .001)
+		       (* (cdar (gc-stats)) .001)
 		       (let ((lst (gc-stats)))
 			 (list (list-ref lst 1) 
 			       (list-ref lst 5) 

@@ -660,17 +660,16 @@ static SCM g_multiply_arrays(SCM val1, SCM val2, SCM len)
 
 static SCM g_rectangular2polar(SCM val1, SCM val2) 
 {
-  #define H_rectangular2polar "(" S_rectangular2polar " rl im) converts real/imaginary\n\
-   data in (vcts) rl and im from rectangular form (fft output) to polar form (a spectrum)"
+  #define H_rectangular2polar "(" S_rectangular2polar " rl im) converts real/imaginary \
+data in (vcts) rl and im from rectangular form (fft output) to polar form (a spectrum)"
 
   return(g_fft_window_1(S_rectangular2polar, FALSE, val1, val2, SCM_UNDEFINED));
 }
 
 static SCM g_mus_fft(SCM url, SCM uim, SCM len, SCM usign)
 {
-  #define H_mus_fft "(" S_mus_fft " rl im len &optional dir) returns the fft of (vcts) rl and im\n\
-   the real and imaginary parts of the data, len should be a power of 2\n\
-   dir = 1 for fft, -1 for inverse-fft"
+  #define H_mus_fft "(" S_mus_fft " rl im len &optional dir) returns the fft of (vcts) rl and im \
+the real and imaginary parts of the data, len should be a power of 2, dir = 1 for fft, -1 for inverse-fft"
 
   int sign, n;
   vct *v1, *v2;
@@ -686,9 +685,9 @@ static SCM g_mus_fft(SCM url, SCM uim, SCM len, SCM usign)
 
 static SCM g_make_fft_window(SCM type, SCM size, SCM ubeta)
 {
-  #define H_make_fft_window "(" S_make_fft_window " type size &optional beta) -> fft data window (vct obj)\n\
-   type is one of the sndlib fft window identifiers such as kaiser-window\n\
-   beta is the window parameter, if any:\n\
+  #define H_make_fft_window "(" S_make_fft_window " type size &optional beta) -> fft data window (vct obj) \
+type is one of the sndlib fft window identifiers such as kaiser-window \
+beta is the window parameter, if any:\n\
      (set! v1 (make-fft-window hamming-window 256))"
 
   Float beta = 0.0;
@@ -703,12 +702,11 @@ static SCM g_make_fft_window(SCM type, SCM size, SCM ubeta)
 static SCM g_spectrum(SCM url, SCM uim, SCM uwin, SCM un, SCM utype)
 {
   #define H_mus_spectrum "(" S_spectrum " rl im window &optional len type)\n\
-   real and imaginary data in (vcts) rl and im, returns (in rl) the spectrum thereof\n\
-   len is the fft size (a power of 2),\n\
-   window is the data window (a vct object as returned by make-fft-window)\n\
-   and type determines how the spectral data is scaled:\n\
-     1, the default = linear and normalized\n\
-     0 = data in dB, anything else = linear and un-normalized."
+real and imaginary data in (vcts) rl and im, returns (in rl) the spectrum thereof, \
+len is the fft size (a power of 2), window is the data window (a vct object as returned by make-fft-window), \
+and type determines how the spectral data is scaled:\n\
+  1, the default = linear and normalized\n\
+  0 = data in dB, anything else = linear and un-normalized."
 
   int n, type;
   vct *v1, *v2, *v3 = NULL;
@@ -726,8 +724,8 @@ static SCM g_spectrum(SCM url, SCM uim, SCM uwin, SCM un, SCM utype)
 
 static SCM g_convolution(SCM url1, SCM url2, SCM un)
 {
-  #define H_mus_convolution "(" S_convolution " v1 v2 &optional len) -> convolution\n\
-   of (vcts) v1 with v2, using fft of size len (a power of 2), result in v1"
+  #define H_mus_convolution "(" S_convolution " v1 v2 &optional len) -> convolution \
+of (vcts) v1 with v2, using fft of size len (a power of 2), result in v1"
 
   int n;
   vct *v1, *v2;
@@ -762,8 +760,8 @@ static SCM g_polynomial(SCM arr, SCM x)
 
 static SCM g_array_interp(SCM obj, SCM phase, SCM size) /* opt size */
 {
-  #define H_array_interp "(" S_array_interp " v phase &optional size) -> v[phase]\n\
-   taking into account wrap-around (size = size of data), with linear interpolation if phase is not integral."
+  #define H_array_interp "(" S_array_interp " v phase &optional size) -> v[phase] \
+taking into account wrap-around (size = size of data), with linear interpolation if phase is not integral."
 
   int len;
   vct *v;
@@ -810,23 +808,41 @@ static void init_simple_stuff(void)
   DEFINE_PROC(gh_new_procedure(S_array_interp,    SCM_FNC g_array_interp, 2, 1, 0), H_array_interp);
   DEFINE_PROC(gh_new_procedure2_0(S_sum_of_sines,         g_sum_of_sines),         H_sum_of_sines);
 
-  gh_define(S_rectangular_window,     TO_SMALL_SCM_INT(MUS_RECTANGULAR_WINDOW));
-  gh_define(S_hanning_window,         TO_SMALL_SCM_INT(MUS_HANNING_WINDOW));
-  gh_define(S_welch_window,           TO_SMALL_SCM_INT(MUS_WELCH_WINDOW));
-  gh_define(S_parzen_window,          TO_SMALL_SCM_INT(MUS_PARZEN_WINDOW));
-  gh_define(S_bartlett_window,        TO_SMALL_SCM_INT(MUS_BARTLETT_WINDOW));
-  gh_define(S_hamming_window,         TO_SMALL_SCM_INT(MUS_HAMMING_WINDOW));
-  gh_define(S_blackman2_window,       TO_SMALL_SCM_INT(MUS_BLACKMAN2_WINDOW));
-  gh_define(S_blackman3_window,       TO_SMALL_SCM_INT(MUS_BLACKMAN3_WINDOW));
-  gh_define(S_blackman4_window,       TO_SMALL_SCM_INT(MUS_BLACKMAN4_WINDOW));
-  gh_define(S_exponential_window,     TO_SMALL_SCM_INT(MUS_EXPONENTIAL_WINDOW));
-  gh_define(S_riemann_window,         TO_SMALL_SCM_INT(MUS_RIEMANN_WINDOW));
-  gh_define(S_kaiser_window,          TO_SMALL_SCM_INT(MUS_KAISER_WINDOW));
-  gh_define(S_cauchy_window,          TO_SMALL_SCM_INT(MUS_CAUCHY_WINDOW));
-  gh_define(S_poisson_window,         TO_SMALL_SCM_INT(MUS_POISSON_WINDOW));
-  gh_define(S_gaussian_window,        TO_SMALL_SCM_INT(MUS_GAUSSIAN_WINDOW));
-  gh_define(S_tukey_window,           TO_SMALL_SCM_INT(MUS_TUKEY_WINDOW));
-  gh_define(S_dolph_chebyshev_window, TO_SMALL_SCM_INT(MUS_DOLPH_CHEBYSHEV_WINDOW));
+  #define H_rectangular_window     "The un-window, so to speak"
+  #define H_hanning_window         "A simple raised cosine window"
+  #define H_welch_window           "A triangular window squared"
+  #define H_parzen_window          "A triangular window"
+  #define H_bartlett_window        "A triangular window"
+  #define H_hamming_window         "A raised cosine"
+  #define H_blackman2_window       "2nd order cosine window"
+  #define H_blackman3_window       "3rd order cosine window"
+  #define H_blackman4_window       "4th order cosine window"
+  #define H_exponential_window     "An inverted triangle from exp"
+  #define H_riemann_window         "sinc-based window"
+  #define H_kaiser_window          "Bessel I0 based window"
+  #define H_cauchy_window          "window based on 1/(1+sqr(angle)"
+  #define H_poisson_window         "window based on exp(-angle)"
+  #define H_gaussian_window        "window based on exp(-sqr(angle))"
+  #define H_tukey_window           "window based on truncated cosine"
+  #define H_dolph_chebychev_window "window from inverse fft"
+
+  DEFINE_VAR(S_rectangular_window,     TO_SMALL_SCM_INT(MUS_RECTANGULAR_WINDOW),     H_rectangular_window);
+  DEFINE_VAR(S_hanning_window,         TO_SMALL_SCM_INT(MUS_HANNING_WINDOW),         H_hanning_window);
+  DEFINE_VAR(S_welch_window,           TO_SMALL_SCM_INT(MUS_WELCH_WINDOW),           H_welch_window);
+  DEFINE_VAR(S_parzen_window,          TO_SMALL_SCM_INT(MUS_PARZEN_WINDOW),          H_parzen_window);
+  DEFINE_VAR(S_bartlett_window,        TO_SMALL_SCM_INT(MUS_BARTLETT_WINDOW),        H_bartlett_window);
+  DEFINE_VAR(S_hamming_window,         TO_SMALL_SCM_INT(MUS_HAMMING_WINDOW),         H_hamming_window);
+  DEFINE_VAR(S_blackman2_window,       TO_SMALL_SCM_INT(MUS_BLACKMAN2_WINDOW),       H_blackman2_window);
+  DEFINE_VAR(S_blackman3_window,       TO_SMALL_SCM_INT(MUS_BLACKMAN3_WINDOW),       H_blackman3_window);
+  DEFINE_VAR(S_blackman4_window,       TO_SMALL_SCM_INT(MUS_BLACKMAN4_WINDOW),       H_blackman4_window);
+  DEFINE_VAR(S_exponential_window,     TO_SMALL_SCM_INT(MUS_EXPONENTIAL_WINDOW),     H_exponential_window);
+  DEFINE_VAR(S_riemann_window,         TO_SMALL_SCM_INT(MUS_RIEMANN_WINDOW),         H_riemann_window);
+  DEFINE_VAR(S_kaiser_window,          TO_SMALL_SCM_INT(MUS_KAISER_WINDOW),          H_kaiser_window);
+  DEFINE_VAR(S_cauchy_window,          TO_SMALL_SCM_INT(MUS_CAUCHY_WINDOW),          H_cauchy_window);
+  DEFINE_VAR(S_poisson_window,         TO_SMALL_SCM_INT(MUS_POISSON_WINDOW),         H_poisson_window);
+  DEFINE_VAR(S_gaussian_window,        TO_SMALL_SCM_INT(MUS_GAUSSIAN_WINDOW),        H_gaussian_window);
+  DEFINE_VAR(S_tukey_window,           TO_SMALL_SCM_INT(MUS_TUKEY_WINDOW),           H_tukey_window);
+  DEFINE_VAR(S_dolph_chebyshev_window, TO_SMALL_SCM_INT(MUS_DOLPH_CHEBYSHEV_WINDOW), H_dolph_chebychev_window);
 }
 
 
@@ -1407,11 +1423,11 @@ static SCM g_make_delay_1(int choice, SCM arglist)
 static SCM g_make_delay(SCM args) 
 {
   #define H_make_delay "(" S_make_delay " &opt-key size initial-contents (initial-element 0.0) max-size)\n\
-   returns a new delay line of size elements.\n\
-   If the delay length will be changing, max-size determines its maximum length\n\
-     (" S_make_delay " len :max-size (+ len 10))\n\
-   provides 10 extra elements of delay for subsequent phasing.\n\
-   initial-contents can be either a list or a vct object."
+returns a new delay line of size elements. \
+If the delay length will be changing, max-size determines its maximum length\n\
+   (" S_make_delay " len :max-size (+ len 10))\n\
+provides 10 extra elements of delay for subsequent phasing. \
+initial-contents can be either a list or a vct object."
 
   return(g_make_delay_1(G_DELAY, args));
 }
@@ -1419,9 +1435,9 @@ static SCM g_make_delay(SCM args)
 static SCM g_make_comb(SCM args) 
 {
   #define H_make_comb "(" S_make_comb " &opt-key scaler size initial-contents (initial-element 0.0) max-size)\n\
-   returns a new comb filter (a delay line with a scaler on the feedback) of size elements.\n\
-   If the comb length will be changing, max-size determines its maximum length.\n\
-   initial-contents can be either a list or a vct object."
+returns a new comb filter (a delay line with a scaler on the feedback) of size elements. \
+If the comb length will be changing, max-size determines its maximum length. \
+initial-contents can be either a list or a vct object."
 
   return(g_make_delay_1(G_COMB, args));
 }
@@ -1429,9 +1445,9 @@ static SCM g_make_comb(SCM args)
 static SCM g_make_notch(SCM args) 
 {
   #define H_make_notch "(" S_make_notch " &opt-key scaler size initial-contents (initial-element 0.0) max-size)\n\
-   returns a new notch filter (a delay line with a scaler on the feedforward) of size elements.\n\
-   If the notch length will be changing, max-size determines its maximum length.\n\
-   initial-contents can be either a list or a vct object."
+returns a new notch filter (a delay line with a scaler on the feedforward) of size elements. \
+If the notch length will be changing, max-size determines its maximum length. \
+initial-contents can be either a list or a vct object."
 
   return(g_make_delay_1(G_NOTCH, args));
 }
@@ -1439,9 +1455,9 @@ static SCM g_make_notch(SCM args)
 static SCM g_make_all_pass(SCM args) 
 {
   #define H_make_all_pass "(" S_make_all_pass " &opt-key feedback feedforward size initial-contents (initial-element 0.0) max-size)\n\
-   returns a new allpass filter (a delay line with a scalers on both the feedback and the feedforward).\n\
-   If the all-pass length will be changing, max-size determines its maximum length.\n\
-   initial-contents can be either a list or a vct object."
+returns a new allpass filter (a delay line with a scalers on both the feedback and the feedforward). \
+If the all-pass length will be changing, max-size determines its maximum length. \
+initial-contents can be either a list or a vct object."
 
   return(g_make_delay_1(G_ALL_PASS, args));
 }
@@ -1449,9 +1465,9 @@ static SCM g_make_all_pass(SCM args)
 static SCM g_delay(SCM obj, SCM input, SCM pm)
 {
   #define H_delay "(" S_delay " gen &optional (val 0.0) (pm 0.0))\n\
-   delays val according to the delay line's length and pm ('phase-modulation').\n\
-   The Scheme built-in 'delay' function is named %delay.\n\
-   If pm is greater than 0.0, the max-size argument used to create gen should have accommodated its maximum value."
+delays val according to the delay line's length and pm ('phase-modulation'). \
+The Scheme built-in 'delay' function is named %delay. \
+If pm is greater than 0.0, the max-size argument used to create gen should have accommodated its maximum value."
 
   Float in1 = 0.0, pm1 = 0.0;
   SCM_ASSERT(((mus_scm_p(obj)) && (mus_delay_p(mus_get_any(obj)))), obj, SCM_ARG1, S_delay);
@@ -1592,7 +1608,7 @@ static SCM g_sum_of_cosines_p(SCM obj)
 static SCM g_make_sum_of_cosines(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6)
 {
   #define H_make_sum_of_cosines "(" S_make_sum_of_cosines " &opt-key (frequency 440.0) (initial-phase 0.0) (cosines 1))\n\
-   returns a new " S_sum_of_cosines " generator, producing a band-limited pulse train."
+returns a new " S_sum_of_cosines " generator, producing a band-limited pulse train."
 
   mus_scm *gn;
   SCM args[6], keys[3];
@@ -1621,7 +1637,7 @@ static SCM g_make_sum_of_cosines(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg
 static SCM g_sum_of_cosines(SCM obj, SCM fm)
 {
   #define H_sum_of_cosines "(" S_sum_of_cosines " gen &optional (fm 0.0))\n\
-    gets the next sample of the band-limited pulse-train produced by gen"
+gets the next sample of the band-limited pulse-train produced by gen"
 
   Float fm1 = 0.0;
   SCM_ASSERT(((mus_scm_p(obj)) && (mus_sum_of_cosines_p(mus_get_any(obj)))), obj, SCM_ARG1, S_sum_of_cosines);
@@ -1684,8 +1700,8 @@ static SCM g_make_noi(int rand_case, SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 static SCM g_make_rand_interp(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 {
   #define H_make_rand_interp "(" S_make_rand_interp " &opt-key (frequency 440.0) (amplitude 1.0))\n\
-   returns a new " S_rand_interp " generator, producing linearly interpolated random numbers.\n\
-   frequency is the rate at which new end-points are chosen."
+returns a new " S_rand_interp " generator, producing linearly interpolated random numbers. \
+frequency is the rate at which new end-points are chosen."
 
   return(g_make_noi(FALSE, arg1, arg2, arg3, arg4));
 }
@@ -1693,16 +1709,16 @@ static SCM g_make_rand_interp(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 static SCM g_make_rand(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 {
   #define H_make_rand "(" S_make_rand " &opt-key (frequency 440.0) (amplitude 1.0))\n\
-   returns a new " S_rand " generator, producing a sequence of random numbers (a step  function).\n\
-   frequency is the rate at which new numbers are chosen."
+returns a new " S_rand " generator, producing a sequence of random numbers (a step  function). \
+frequency is the rate at which new numbers are chosen."
 
   return(g_make_noi(TRUE, arg1, arg2, arg3, arg4));
 }
 
 static SCM g_rand(SCM obj, SCM fm)
 {
-  #define H_rand "(" S_rand " gen &optional (fm 0.0)) -> gen's current random number.\n\
-   fm can modulate the rate at which the current number is changed."
+  #define H_rand "(" S_rand " gen &optional (fm 0.0)) -> gen's current random number. \
+fm can modulate the rate at which the current number is changed."
 
   Float fm1 = 0.0;
   SCM_ASSERT(((mus_scm_p(obj)) && (mus_rand_p(mus_get_any(obj)))), obj, SCM_ARG1, S_rand);
@@ -1718,8 +1734,8 @@ static SCM g_rand_p(SCM obj)
 
 static SCM g_rand_interp(SCM obj, SCM fm)
 {
-  #define H_rand_interp "(" S_rand_interp " gen &optional (fm 0.0)) -> gen's current (interpolating) random number.\n\
-   fm can modulate the rate at which new segment end-points are chosen."
+  #define H_rand_interp "(" S_rand_interp " gen &optional (fm 0.0)) -> gen's current (interpolating) random number. \
+fm can modulate the rate at which new segment end-points are chosen."
 
   Float fm1 = 0.0;
   SCM_ASSERT(((mus_scm_p(obj)) && (mus_rand_interp_p(mus_get_any(obj)))), obj, SCM_ARG1, S_rand_interp);
@@ -1735,8 +1751,8 @@ static SCM g_rand_interp_p(SCM obj)
 
 static SCM g_mus_random(SCM a) 
 {
-  #define H_mus_random "(" S_mus_random " val) -> a random number between -val and val\n\
-   the built-in 'random' function returns values between 0 and its argument"
+  #define H_mus_random "(" S_mus_random " val) -> a random number between -val and val. \
+the built-in 'random' function returns values between 0 and its argument"
 
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(a))), a, SCM_ARG1, S_mus_random);
   return(TO_SCM_DOUBLE(mus_random(TO_C_DOUBLE(a))));
@@ -1744,8 +1760,8 @@ static SCM g_mus_random(SCM a)
 
 static SCM g_set_rand_seed(SCM a) 
 {
-  #define H_mus_set_rand_seed "(" S_mus_set_rand_seed " val) sets the random number seed\n\
-   this can be used to re-run a particular random number sequence."
+  #define H_mus_set_rand_seed "(" S_mus_set_rand_seed " val) sets the random number seed, \
+this can be used to re-run a particular random number sequence."
 
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(a))), a, SCM_ARG1, S_mus_set_rand_seed);
   mus_set_rand_seed(TO_C_INT_OR_ELSE(a, 0)); 
@@ -1785,10 +1801,10 @@ static SCM g_table_lookup_p(SCM obj)
 static SCM g_partials2wave(SCM partials, SCM utable, SCM normalize)
 {
   #define H_partials2wave "(" S_partials2wave " partials &optional wave normalize)\n\
-   takes a list of partials (harmonic number and associated amplitude) and produces\n\
-   a waveform for use in " S_table_lookup ".  If wave (a vct object) is not given,\n\
-   a new one is created.  If normalize is #t, the resulting waveform goes between -1 and 1.\n\
-     (set! gen (make-table-lookup 440.0 :wave (partials->wave '(1 1.0 2 .5))))"
+takes a list of partials (harmonic number and associated amplitude) and produces \
+a waveform for use in " S_table_lookup ".  If wave (a vct object) is not given, \
+a new one is created.  If normalize is #t, the resulting waveform goes between -1 and 1.\n\
+  (set! gen (make-table-lookup 440.0 :wave (partials->wave '(1 1.0 2 .5))))"
 
   vct *f;
   SCM table, lst;
@@ -1819,10 +1835,10 @@ static SCM g_phasepartials2wave(SCM partials, SCM utable, SCM normalize)
   int len, i;
 
   #define H_phasepartials2wave "(" S_phasepartials2wave " partials &optional wave normalize)\n\
-   takes a list of partials (harmonic number, amplitude, initial phase) and produces\n\
-   a waveform for use in " S_table_lookup ".  If wave (a vct object) is not given,\n\
-   a new one is created.  If normalize is #t, the resulting waveform goes between -1 and 1.\n\
-     (set! gen (make-table-lookup 440.0 :wave (phase-partials->wave (list 1 .75 0.0 2 .25 (* pi .5)))))"
+takes a list of partials (harmonic number, amplitude, initial phase) and produces \
+a waveform for use in " S_table_lookup ".  If wave (a vct object) is not given, \
+a new one is created.  If normalize is #t, the resulting waveform goes between -1 and 1.\n\
+  (set! gen (make-table-lookup 440.0 :wave (phase-partials->wave (list 1 .75 0.0 2 .25 (* pi .5)))))"
 
   SCM_ASSERT(gh_list_p(partials), partials, SCM_ARG1, S_phasepartials2wave);
   if ((SCM_UNBNDP(utable)) || (!(vct_p(utable))))
@@ -1844,10 +1860,10 @@ static SCM g_phasepartials2wave(SCM partials, SCM utable, SCM normalize)
 static SCM g_make_table_lookup (SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6)
 {
   #define H_make_table_lookup "(" S_make_table_lookup " &opt-key (frequency 440.0) (initial-phase 0.0) wave)\n\
-   returns a new " S_table_lookup " generator.  This is known as an oscillator in other synthesis systems.\n\
-   The default table size is 512; to use some other size, pass your own vct object as the 'wave'.\n\
-     (set! gen (make-table-lookup 440.0 :wave (partials->wave '(1 1.0)))\n\
-   is the same in effect as " S_make_oscil "."
+returns a new " S_table_lookup " generator.  This is known as an oscillator in other synthesis systems. \
+The default table size is 512; to use some other size, pass your own vct object as the 'wave'.\n\
+   (set! gen (make-table-lookup 440.0 :wave (partials->wave '(1 1.0)))\n\
+is the same in effect as " S_make_oscil "."
 
   mus_scm *gn;
   int vals, table_size = DEFAULT_TABLE_SIZE;
@@ -1890,8 +1906,8 @@ static SCM g_make_table_lookup (SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5
 
 static SCM g_table_lookup (SCM obj, SCM fm) 
 {
-  #define H_table_lookup "(" S_table_lookup " gen &optional (fm 0.0)) performs interpolated table-lookup\n\
-   with 'wrap-around' when gen's phase marches off the end of its table."
+  #define H_table_lookup "(" S_table_lookup " gen &optional (fm 0.0)) performs interpolated table-lookup \
+with 'wrap-around' when gen's phase marches off the end of its table."
 
   Float fm1 = 0.0;
   SCM_ASSERT(((mus_scm_p(obj)) && (mus_table_lookup_p(mus_get_any(obj)))), obj, SCM_ARG1, S_table_lookup);
@@ -1969,7 +1985,7 @@ static SCM g_make_sw(int type, Float def_phase, SCM arg1, SCM arg2, SCM arg3, SC
 static SCM g_make_sawtooth_wave(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6) 
 {
   #define H_make_sawtooth_wave "(" S_make_sawtooth_wave " &opt-key (frequency 440.0) (amplitude 1.0) (initial-phase 0.0))\n\
-   returns a new " S_sawtooth_wave " generator."
+returns a new " S_sawtooth_wave " generator."
 
   return(g_make_sw(G_SAWTOOTH_WAVE, M_PI, arg1, arg2, arg3, arg4, arg5, arg6));
 }
@@ -1977,7 +1993,7 @@ static SCM g_make_sawtooth_wave(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5
 static SCM g_make_square_wave(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6) 
 {
   #define H_make_square_wave "(" S_make_square_wave " &opt-key (frequency 440.0) (amplitude 1.0) (initial-phase 0.0))\n\
-   returns a new " S_square_wave " generator."
+returns a new " S_square_wave " generator."
 
   return(g_make_sw(G_SQUARE_WAVE, 0.0, arg1, arg2, arg3, arg4, arg5, arg6));
 }
@@ -1985,7 +2001,7 @@ static SCM g_make_square_wave(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, 
 static SCM g_make_triangle_wave(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6) 
 {
   #define H_make_triangle_wave "(" S_make_triangle_wave " &opt-key (frequency 440.0) (amplitude 1.0) (initial-phase 0.0))\n\
-   returns a new " S_triangle_wave " generator."
+returns a new " S_triangle_wave " generator."
 
   return(g_make_sw(G_TRIANGLE_WAVE, 0.0, arg1, arg2, arg3, arg4, arg5, arg6));
 }
@@ -1993,7 +2009,7 @@ static SCM g_make_triangle_wave(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5
 static SCM g_make_pulse_train(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6) 
 {
   #define H_make_pulse_train "(" S_make_pulse_train " &opt-key (frequency 440.0) (amplitude 1.0) (initial-phase 0.0))\n\
-   returns a new " S_pulse_train " generator.  This produces a sequence of impulses."
+returns a new " S_pulse_train " generator.  This produces a sequence of impulses."
 
   return(g_make_sw(G_PULSE_TRAIN, TWO_PI, arg1, arg2, arg3, arg4, arg5, arg6));
 }
@@ -2084,7 +2100,7 @@ static void init_sw(void)
 static SCM g_make_asymmetric_fm(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6, SCM arg7, SCM arg8)
 {
   #define H_make_asymmetric_fm "(" S_make_asymmetric_fm " &opt-key (frequency 440.0) (initial-phase 0.0) (r 1.0) (ratio 1.0))\n\
-   returns a new " S_asymmetric_fm " generator."
+returns a new " S_asymmetric_fm " generator."
 
   mus_scm *gn;
   SCM args[8], keys[4];
@@ -2213,18 +2229,18 @@ static SCM g_make_one_pole(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 
 static SCM g_make_zpolar(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 {
-  #define H_make_zpolar "(" S_make_zpolar " radius frequency) -> new " S_two_zero " filter\n\
-   where the coefficients (a0..a2) are set from the desired zero's radius and center frequency.\n\
-   Use this in conjunction with the " S_two_zero " generator" 
+  #define H_make_zpolar "(" S_make_zpolar " radius frequency) -> new " S_two_zero " filter \
+where the coefficients (a0..a2) are set from the desired zero's radius and center frequency. \
+Use this in conjunction with the " S_two_zero " generator" 
 
   return(g_make_smpflt_1(G_ZPOLAR, arg1, arg2, arg3, arg4));
 }
 
 static SCM g_make_ppolar(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 {
-  #define H_make_ppolar "(" S_make_ppolar " radius frequency) -> new " S_two_pole " filter\n\
-   where the coefficients are set from the desired pole's radius and center frequency.\n\
-   Use this in conjunction with the " S_two_pole " generator" 
+  #define H_make_ppolar "(" S_make_ppolar " radius frequency) -> new " S_two_pole " filter \
+where the coefficients are set from the desired pole's radius and center frequency. \
+Use this in conjunction with the " S_two_pole " generator" 
 
   return(g_make_smpflt_1(G_PPOLAR, arg1, arg2, arg3, arg4));
 }
@@ -2267,15 +2283,17 @@ static SCM g_make_smpflt_2(int choice, SCM arg1, SCM arg2, SCM arg3, SCM arg4, S
 
 static SCM g_make_two_zero(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6) 
 {
-  #define H_make_two_zero "(" S_make_two_zero " a0 a1 a2) -> new " S_two_zero " filter\n\
-   returning a0*x(n) + a1*x(n-1) + a2*x(n-2)"
+  #define H_make_two_zero "(" S_make_two_zero " a0 a1 a2) -> new " S_two_zero " filter \
+returning a0*x(n) + a1*x(n-1) + a2*x(n-2)"
+
   return(g_make_smpflt_2(G_TWO_ZERO, arg1, arg2, arg3, arg4, arg5, arg6));
 }
 
 static SCM g_make_two_pole(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6) 
 {
-  #define H_make_two_pole "(" S_make_two_pole " a0 b1 b2) -> new " S_two_pole " filter\n\
-   returning a0*x(n) - b1*y(n-1) - b2*y(n-2)"
+  #define H_make_two_pole "(" S_make_two_pole " a0 b1 b2) -> new " S_two_pole " filter \
+returning a0*x(n) - b1*y(n-1) - b2*y(n-2)"
+
   return(g_make_smpflt_2(G_TWO_POLE, arg1, arg2, arg3, arg4, arg5, arg6));
 }
 
@@ -2442,9 +2460,9 @@ static void init_smpflt(void)
 static SCM g_make_formant(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6)
 {
   #define H_make_formant "(" S_make_formant " &opt-key radius frequency (gain 1.0))\n\
-   returns a new formant generator (a resonator).  radius sets the pole radius.\n\
-   frequency sets the resonance center frequency (Hz).  gain is an overall amplitude\n\
-   control."
+returns a new formant generator (a resonator).  radius sets the pole radius. \
+frequency sets the resonance center frequency (Hz).  gain is an overall amplitude \
+control."
 
   mus_scm *gn;
   int vals;
@@ -2492,8 +2510,9 @@ static SCM g_formant_p(SCM os)
 
 static SCM g_formant_radius (SCM gen)
 {
-  #define H_mus_formant_radius  "(" S_mus_formant_radius  " gen) -> (" S_formant " generator) gen's pole radius\n\
-   (the closer the radius is to 1.0, the narrower the resonance)."
+  #define H_mus_formant_radius  "(" S_mus_formant_radius  " gen) -> (" S_formant " generator) gen's pole radius \
+(the closer the radius is to 1.0, the narrower the resonance)."
+
   SCM_ASSERT(((mus_scm_p(gen)) && (mus_formant_p(mus_get_any(gen)))), gen, SCM_ARG1, S_mus_formant_radius);
   return(TO_SCM_DOUBLE(mus_formant_radius(mus_get_any(gen))));
 }
@@ -2508,7 +2527,9 @@ static SCM g_set_formant_radius (SCM gen, SCM val)
 
 static SCM g_set_formant_radius_and_frequency (SCM gen, SCM rad, SCM frq)
 {
-  #define H_mus_set_formant_radius_and_frequency  "(" S_mus_set_formant_radius_and_frequency  " gen radius frequency) sets (" S_formant " generator) gen's radius and frequency"
+  #define H_mus_set_formant_radius_and_frequency  "(" S_mus_set_formant_radius_and_frequency  " gen radius frequency) sets (" S_formant " \
+generator) gen's radius and frequency"
+
   SCM_ASSERT(((mus_scm_p(gen)) && (mus_formant_p(mus_get_any(gen)))), gen, SCM_ARG1, S_mus_set_formant_radius_and_frequency);
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(rad))), rad, SCM_ARG2, S_mus_set_formant_radius_and_frequency);
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(frq))), frq, SCM_ARG3, S_mus_set_formant_radius_and_frequency);
@@ -2543,9 +2564,9 @@ static void init_formant(void)
 
 static SCM g_make_frame(SCM arglist)
 {
-  #define H_make_frame "(" S_make_frame " chans val0 val1 ...) returns a new frame object\n\
-   with chans samples, each sample set from the trailing arguments (defaulting to 0.0):\n\
-     (set! fr0 (make-frame 2 .1 .2))"
+  #define H_make_frame "(" S_make_frame " chans val0 val1 ...) returns a new frame object \
+with chans samples, each sample set from the trailing arguments (defaulting to 0.0):\n\
+   (set! fr0 (make-frame 2 .1 .2))"
 
   /* make_empty_frame from first of arglist, then if more args, load vals */
   mus_scm *gn;
@@ -2589,8 +2610,8 @@ static SCM g_wrap_frame(mus_frame *val, int dealloc)
 
 static SCM g_frame_add(SCM uf1, SCM uf2, SCM ures) /* optional res */
 {
-  #define H_frame_add "(" S_frame_add " f1 f2 &optional outf) adds f1 and f2 returning outf\n\
-   if outf is not given, a new frame is created. outf[i] = f1[i] + f2[i]"
+  #define H_frame_add "(" S_frame_add " f1 f2 &optional outf) adds f1 and f2 returning outf; \
+if outf is not given, a new frame is created. outf[i] = f1[i] + f2[i]"
 
   mus_frame *res = NULL;
   SCM_ASSERT(((mus_scm_p(uf1)) && (mus_frame_p(mus_get_any(uf1)))), uf1, SCM_ARG1, S_frame_add);
@@ -2606,8 +2627,8 @@ static SCM g_frame_add(SCM uf1, SCM uf2, SCM ures) /* optional res */
 
 static SCM g_frame_multiply(SCM uf1, SCM uf2, SCM ures) /* optional res */
 {
-  #define H_frame_multiply "(" S_frame_multiply " f1 f2 &optional outf) multiplies f1 and f2 returning outf\n\
-   if outf is not given, a new frame is created. outf[i] = f1[i] * f2[i]."
+  #define H_frame_multiply "(" S_frame_multiply " f1 f2 &optional outf) multiplies f1 and f2 returning outf; \
+if outf is not given, a new frame is created. outf[i] = f1[i] * f2[i]."
 
   mus_frame *res = NULL;
   SCM_ASSERT(((mus_scm_p(uf1)) && (mus_frame_p(mus_get_any(uf1)))), uf1, SCM_ARG1, S_frame_multiply);
@@ -2708,8 +2729,8 @@ static SCM g_wrap_mixer(mus_mixer *val, int dealloc)
 
 static SCM g_mixer_multiply(SCM uf1, SCM uf2, SCM ures) /* optional res */
 {
-  #define H_mixer_multiply "(" S_mixer_multiply " m1 m2 &optional outm) multiplies mixers m1 and m2\n\
-   (a matrix multiply), returning the mixer outm, or creating a new mixer if outm is not given."
+  #define H_mixer_multiply "(" S_mixer_multiply " m1 m2 &optional outm) multiplies mixers m1 and m2 \
+(a matrix multiply), returning the mixer outm, or creating a new mixer if outm is not given."
 
   mus_mixer *res = NULL;
   SCM_ASSERT(((mus_scm_p(uf1)) && (mus_mixer_p(mus_get_any(uf1)))), uf1, SCM_ARG1, S_mixer_multiply);
@@ -2725,8 +2746,8 @@ static SCM g_mixer_multiply(SCM uf1, SCM uf2, SCM ures) /* optional res */
 
 static SCM g_frame2frame(SCM mx, SCM infr, SCM outfr) /* optional outfr */
 {
-  #define H_frame2frame "(" S_frame2frame " m f &optional outf) passes frame f through mixer m\n\
-    returning frame outf (or creating a new frame if necessary); this is a matrix multiply of m and f"
+  #define H_frame2frame "(" S_frame2frame " m f &optional outf) passes frame f through mixer m \
+returning frame outf (or creating a new frame if necessary); this is a matrix multiply of m and f"
 
   mus_frame *res = NULL;
   SCM_ASSERT(((mus_scm_p(mx)) && (mus_mixer_p(mus_get_any(mx)))), mx, SCM_ARG1, S_frame2frame);
@@ -2764,8 +2785,8 @@ static SCM g_frame2sample(SCM mx, SCM fr)
 
 static SCM g_sample2frame(SCM mx, SCM insp, SCM outfr) /* optional outfr */
 {
-  #define H_sample2frame "(" S_sample2frame " m val &optional outf) passes the sample val through mixer m\n\
-   returning frame outf (creating it if necessary)"
+  #define H_sample2frame "(" S_sample2frame " m val &optional outf) passes the sample val through mixer m \
+returning frame outf (creating it if necessary)"
 
   mus_frame *res = NULL;
   SCM_ASSERT((mus_scm_p(mx)), mx, SCM_ARG1, S_sample2frame);
@@ -2781,9 +2802,9 @@ static SCM g_sample2frame(SCM mx, SCM insp, SCM outfr) /* optional outfr */
 
 static SCM g_make_mixer(SCM arglist)
 {
-  #define H_make_mixer "(" S_make_mixer " chans val0 val1 ...) makes a new mixer object\n\
-   with chans inputs and outputs, initializing the scalers from the rest of the arguments:\n\
-      (set! gen (make-mixer 2 .5 .25 .125 1.0))"
+  #define H_make_mixer "(" S_make_mixer " chans val0 val1 ...) makes a new mixer object \
+with chans inputs and outputs, initializing the scalers from the rest of the arguments:\n\
+   (set! gen (make-mixer 2 .5 .25 .125 1.0))"
 
   /* make_empty_mixer from first of arglist, then if more args, load vals */
   mus_scm *gn;
@@ -2851,10 +2872,10 @@ static SCM g_buffer_p(SCM obj)
 
 static SCM g_make_buffer(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 {
-  #define H_make_buffer "(" S_make_buffer " &opt-key (size 512) fill-time) returns a new buffer\n\
-   generator, a FIFO for samples. The size argument sets the size of the buffer (not a delay time)\n\
-   and fill-time sets the time to the next request for more samples.  The intended use is in block\n\
-   processing normally involving overlap-adds."
+  #define H_make_buffer "(" S_make_buffer " &opt-key (size 512) fill-time) returns a new buffer \
+generator, a FIFO for samples. The size argument sets the size of the buffer (not a delay time) \
+and fill-time sets the time to the next request for more samples.  The intended use is in block \
+processing normally involving overlap-adds."
 
   mus_scm *gn;
   SCM args[4], keys[2];
@@ -2953,8 +2974,8 @@ static void init_rblk(void)
 static SCM g_make_wave_train(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6)
 {
   #define H_make_wave_train "(" S_make_wave_train " &opt-key (frequency 440.0) (initial-phase 0.0) wave)\n\
-   returns a new wave-train generator (an extension of pulse-train).   Frequency is\n\
-   the repetition rate of the wave found in wave. Successive waves can overlap."
+returns a new wave-train generator (an extension of pulse-train).   Frequency is \
+the repetition rate of the wave found in wave. Successive waves can overlap."
 
   SCM gwave = SCM_UNDEFINED;
   mus_scm *gn;
@@ -3054,9 +3075,9 @@ static Float *list2partials(SCM harms, int *npartials)
 static SCM g_make_waveshape(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6, SCM arg7, SCM arg8)
 {
   #define H_make_waveshape "(" S_make_waveshape " &opt-key (frequency 440.0) (partials '(1 1)) (size 512) wave)\n\
-   returns a new waveshaping generator (essentially table-lookup driven by a sinewave)\n\
-      (make-waveshape :wave (partials->waveshape '(1 1.0)))\n\
-   is basically the same as make-oscil"
+returns a new waveshaping generator (essentially table-lookup driven by a sinewave)\n\
+   (make-waveshape :wave (partials->waveshape '(1 1.0)))\n\
+is basically the same as make-oscil"
 
   SCM gwave = SCM_UNDEFINED;
   mus_scm *gn;
@@ -3132,8 +3153,8 @@ static SCM g_waveshape_p(SCM obj)
 static SCM g_partials2waveshape(SCM amps, SCM s_size)
 {
   #define H_partials2waveshape "(" S_partials2waveshape " partials &optional (size 512))\n\
-   produces a waveshaping lookup table (suitable for the " S_waveshape " generator)\n\
-   that will produce the harmonic spectrum given by the partials argument"
+produces a waveshaping lookup table (suitable for the " S_waveshape " generator) \
+that will produce the harmonic spectrum given by the partials argument"
 
   int npartials, size;
   Float *partials, *wave;
@@ -3151,11 +3172,11 @@ static SCM g_partials2waveshape(SCM amps, SCM s_size)
 static SCM g_partials2polynomial(SCM amps, SCM ukind)
 {
   #define H_partials2polynomial "(" S_partials2polynomial " partials &optional (kind 1))\n\
-   produces a Chebychev polynomial suitable for use with the " S_polynomial " generator\n\
-   to create (via waveshaping) the harmonic spectrum described by the partials argument:\n\
-     (let ((v0 (partials->polynomial '(1 1 2 1)))\n\
-           (os (make-oscil)))\n\
-       (polynomial v0 (oscil os)))"
+produces a Chebychev polynomial suitable for use with the " S_polynomial " generator \
+to create (via waveshaping) the harmonic spectrum described by the partials argument:\n\
+   (let ((v0 (partials->polynomial '(1 1 2 1)))\n\
+         (os (make-oscil)))\n\
+     (polynomial v0 (oscil os)))"
 
   int npartials, kind;
   Float *partials, *wave;
@@ -3201,7 +3222,7 @@ static SCM g_sine_summation(SCM obj, SCM fm)
 static SCM g_make_sine_summation(SCM arglist)
 {
   #define H_make_sine_summation "(" S_make_sine_summation " &opt-key (frequency 440.0) (initial-phase 0.0) (n 1) (a 0.5) (ratio 1.0)\n\
-   returns a new sine summation synthesis generator."
+returns a new sine summation synthesis generator."
 
   mus_scm *gn;
   SCM args[10], keys[5];
@@ -3461,10 +3482,10 @@ static SCM g_restart_env(SCM obj)
 static SCM g_make_env(SCM arglist)
 {
   #define H_make_env "(" S_make_env " &opt-key envelope (scaler 1.0) duration (offset 0.0) (base 1.0) end (start 0))\n\
-   returns a new envelope generator.  'envelope' is a list of break-point pairs. To create the envelope\n\
-   these points are offset by 'offset', scaled by 'scaler', mapped over the time interval defined by\n\
-   either 'duration' (seconds) or 'start' and 'end' (samples).  If 'base' is 1.0, the connecting segments\n\
-   are linear, if 0.0 you get a step function, and anything else produces an exponential connecting segment."
+returns a new envelope generator.  'envelope' is a list of break-point pairs. To create the envelope \
+these points are offset by 'offset', scaled by 'scaler', mapped over the time interval defined by \
+either 'duration' (seconds) or 'start' and 'end' (samples).  If 'base' is 1.0, the connecting segments \
+are linear, if 0.0 you get a step function, and anything else produces an exponential connecting segment."
 
   mus_scm *gn;
   SCM args[14], keys[7];
@@ -3708,10 +3729,10 @@ static SCM g_file2sample(SCM obj, SCM samp, SCM chan)
 static SCM g_make_sample2file(SCM name, SCM chans, SCM out_format, SCM out_type)
 {
   #define H_make_sample2file "(" S_make_sample2file " filename chans data-format header-type)\n\
-   returns an output generator writing the sound file 'filename' which is set up to have\n\
-   'chans' channels of 'data-format' samples with a header of 'header-type'.  The latter\n\
-   should be sndlib identifiers:\n\
-      (make-sample->file \"test.snd\" 2 mus-lshort mus-riff)"
+returns an output generator writing the sound file 'filename' which is set up to have \
+'chans' channels of 'data-format' samples with a header of 'header-type'.  The latter \
+should be sndlib identifiers:\n\
+   (make-sample->file \"test.snd\" 2 mus-lshort mus-riff)"
 
   mus_scm *gn;
   SCM_ASSERT((gh_string_p(name)), name, SCM_ARG1, S_make_sample2file);
@@ -3729,8 +3750,8 @@ static SCM g_make_sample2file(SCM name, SCM chans, SCM out_format, SCM out_type)
 
 static SCM g_sample2file(SCM obj, SCM samp, SCM chan, SCM val)
 {
-  #define H_sample2file "(" S_sample2file " obj samp chan val) adds val to the output stream\n\
-   handled by the output generator 'obj', in channel 'chan' at frame 'samp'"
+  #define H_sample2file "(" S_sample2file " obj samp chan val) adds val to the output stream \
+handled by the output generator 'obj', in channel 'chan' at frame 'samp'"
 
   SCM_ASSERT(((mus_scm_p(obj)) && (mus_output_p(mus_get_any(obj)))), obj, SCM_ARG1, S_sample2file);
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(samp))), samp, SCM_ARG2, S_sample2file);
@@ -3771,10 +3792,10 @@ static SCM g_file2frame(SCM obj, SCM samp, SCM outfr)
 static SCM g_make_frame2file(SCM name, SCM chans, SCM out_format, SCM out_type)
 {
   #define H_make_frame2file "(" S_make_frame2file " filename chans data-format header-type)\n\
-   returns an output generator writing the sound file 'filename' which is set up to have\n\
-   'chans' channels of 'data-format' samples with a header of 'header-type'.  The latter\n\
-   should be sndlib identifiers:\n\
-      (make-frame->file \"test.snd\" 2 mus-lshort mus-riff)"
+returns an output generator writing the sound file 'filename' which is set up to have \
+'chans' channels of 'data-format' samples with a header of 'header-type'.  The latter \
+should be sndlib identifiers:\n\
+   (make-frame->file \"test.snd\" 2 mus-lshort mus-riff)"
 
   mus_scm *gn;
   SCM_ASSERT((gh_string_p(name)), name, SCM_ARG1, S_make_frame2file);
@@ -3792,8 +3813,8 @@ static SCM g_make_frame2file(SCM name, SCM chans, SCM out_format, SCM out_type)
 
 static SCM g_frame2file(SCM obj, SCM samp, SCM val)
 {
-  #define H_frame2file "(" S_frame2file " obj samp val) adds frame 'val' to the output stream\n\
-   handled by the output generator 'obj' at frame 'samp'"
+  #define H_frame2file "(" S_frame2file " obj samp val) adds frame 'val' to the output stream \
+handled by the output generator 'obj' at frame 'samp'"
 
   SCM_ASSERT(((mus_scm_p(obj)) && (mus_output_p(mus_get_any(obj)))), obj, SCM_ARG1, S_frame2file);
   SCM_ASSERT((SCM_NFALSEP(scm_real_p(samp))), samp, SCM_ARG2, S_frame2file);
@@ -3806,9 +3827,9 @@ static SCM g_frame2file(SCM obj, SCM samp, SCM val)
 
 static SCM g_array2file(SCM filename, SCM data, SCM len, SCM srate, SCM channels)
 {
-  #define H_array2file "(" S_array2file " filename data len srate channels) writes 'data',\n\
-   a vct object of interleaved samples to the sound file 'filename' set up to have the given\n\
-   srate and channels.  'len' samples are written."
+  #define H_array2file "(" S_array2file " filename data len srate channels) writes 'data', \
+a vct object of interleaved samples to the sound file 'filename' set up to have the given \
+srate and channels.  'len' samples are written."
 
   int olen;
   vct *v;
@@ -3828,9 +3849,9 @@ static SCM g_array2file(SCM filename, SCM data, SCM len, SCM srate, SCM channels
 
 static SCM g_file2array(SCM filename, SCM chan, SCM start, SCM samples, SCM data)
 {
-  #define H_file2array "(" S_file2array " filename chan start samples data) reads the sound file\n\
-   'filename' placing samples from channel 'chan' into the vct object 'data' starting in the file\n\
-   at frame 'start' and reading 'samples' samples altogether."
+  #define H_file2array "(" S_file2array " filename chan start samples data) reads the sound file \
+'filename' placing samples from channel 'chan' into the vct object 'data' starting in the file \
+at frame 'start' and reading 'samples' samples altogether."
 
   int err;
   vct *v;
@@ -3905,8 +3926,8 @@ static SCM g_readin(SCM obj)
 static SCM g_make_readin(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6, SCM arg7, SCM arg8)
 {
   #define H_make_readin "(" S_make_readin " &opt-key file (channel 0) (start 0) (direction 1))\n\
-   returns a new readin (file input) generator reading the sound file 'file' starting at frame\n\
-   'start' in channel 'channel' and reading forward if 'direction' is not -1"
+returns a new readin (file input) generator reading the sound file 'file' starting at frame \
+'start' in channel 'channel' and reading forward if 'direction' is not -1"
 
   /* optkey file channel start direction */
   mus_scm *gn;
@@ -4059,7 +4080,7 @@ static SCM g_locsig(SCM obj, SCM loc, SCM val)
 static SCM g_make_locsig(SCM arglist)
 {
   #define H_make_locsig "(" S_make_locsig " &opt-key (degree 0.0) (distance 1.0) (reverb 0.0) output revout (channels 1))\n\
-   returns a new generator for signal placement in up to 4 channels.  Channel 0 corresponds to 0 degrees."
+returns a new generator for signal placement in up to 4 channels.  Channel 0 corresponds to 0 degrees."
 
   SCM out_obj = SCM_UNDEFINED, rev_obj = SCM_UNDEFINED;
   mus_scm *gn;
@@ -4188,11 +4209,11 @@ static SCM g_src_p(SCM obj)
 
 static SCM g_src(SCM obj, SCM pm, SCM func) 
 {
-  #define H_src "(" S_src " gen &optional (pm 0.0) input-function) -> next sampling rate conversion sample.\n\
-   'pm' can be used to change the sampling rate on a sample-by-sample basis.  'input-function'\n\
-   is a function of one argument (the current input direction, normally ignored) that is called\n\
-   internally whenever a new sample of input data is needed.  If the associated " S_make_src "\n\
-   included an 'input' argument, input-function is ignored."
+  #define H_src "(" S_src " gen &optional (pm 0.0) input-function) -> next sampling rate conversion sample. \
+'pm' can be used to change the sampling rate on a sample-by-sample basis.  'input-function' \
+is a function of one argument (the current input direction, normally ignored) that is called \
+internally whenever a new sample of input data is needed.  If the associated " S_make_src " \
+included an 'input' argument, input-function is ignored."
 
   Float pm1 = 0.0;
   mus_scm *gn = mus_get_scm(obj);
@@ -4205,10 +4226,10 @@ static SCM g_src(SCM obj, SCM pm, SCM func)
 static SCM g_make_src(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6)
 {
   #define H_make_src "(" S_make_src " &opt-key input (srate 1.0) (width 10))\n\
-   returns a new sampling-rate conversion generator (using 'warped sinc interpolation').\n\
-   'srate' is the ratio between the new rate and the old. 'width' is the sine\n\
-   width (effectively the steepness of the low-pass filter), normally between 10 and 100.\n\
-   'input' if given is an open file stream."
+returns a new sampling-rate conversion generator (using 'warped sinc interpolation'). \
+'srate' is the ratio between the new rate and the old. 'width' is the sine \
+width (effectively the steepness of the low-pass filter), normally between 10 and 100. \
+'input' if given is an open file stream."
 
   SCM in_obj = SCM_UNDEFINED;
   mus_scm *gn;
@@ -4291,11 +4312,11 @@ static SCM g_set_ramp(SCM obj, SCM val)
 static SCM g_make_granulate(SCM arglist)
 {
   #define H_make_granulate "(" S_make_granulate " &opt-key input (expansion 1.0) (length .15)\n\
-       (scaler .6) (hop .05) (ramp .4) (jitter 1.0) max-size) returns a new granular synthesis\n\
-   generator.  'length' is the grain length (seconds), 'expansion' is the ratio in timing\n\
-   between the new and old (expansion > 1.0 slows things down), 'scaler' scales the grains\n\
-   to avoid overflows, 'hop' is the spacing (seconds) between successive grains upon output\n\
-   jitter controls the randomness in that spacing, input can be a file pointer."
+    (scaler .6) (hop .05) (ramp .4) (jitter 1.0) max-size)\n\
+returns a new granular synthesis generator.  'length' is the grain length (seconds), 'expansion' is the ratio in timing \
+between the new and old (expansion > 1.0 slows things down), 'scaler' scales the grains \
+to avoid overflows, 'hop' is the spacing (seconds) between successive grains upon output \
+jitter controls the randomness in that spacing, input can be a file pointer."
 
   SCM in_obj = SCM_UNDEFINED;
   mus_scm *gn;
@@ -4378,8 +4399,8 @@ static SCM g_convolve(SCM obj, SCM func)
 
 static SCM g_make_convolve(SCM arglist)
 {
-  #define H_make_convolve "(" S_make_convolve " &opt-key input filter fft-size) returns\n\
-   a new convolution generator which convolves its input with the impulse response 'filter'."
+  #define H_make_convolve "(" S_make_convolve " &opt-key input filter fft-size)\n\
+returns a new convolution generator which convolves its input with the impulse response 'filter'."
 
   mus_scm *gn;
   SCM args[6], keys[3];
@@ -4427,8 +4448,8 @@ static SCM g_make_convolve(SCM arglist)
 
 static SCM g_convolve_files(SCM file1, SCM file2, SCM maxamp, SCM outfile)
 {
-  #define H_convolve_files "(" S_convolve_files " file1 file2 maxamp output-file) convolves\n\
-   file1 and file2 writing outfile after scaling the convolution result to maxamp."
+  #define H_convolve_files "(" S_convolve_files " file1 file2 maxamp output-file) convolves \
+file1 and file2 writing outfile after scaling the convolution result to maxamp."
 
   char *f1, *f2, *f3;
   Float maxval = 1.0;
@@ -4536,10 +4557,10 @@ static SCM g_phase_vocoder(SCM obj, SCM func)
 
 static SCM g_make_phase_vocoder(SCM arglist)
 {
-  #define H_make_phase_vocoder "(" S_make_phase_vocoder " &opt-key input fft-size overlap interp pitch analyze edit synthesize\n\
-   returns a new phase-vocoder generator; input is the input function (if can be set at run-time), analyze, edit,\n\
-   and synthesize are either #f or functions that replace the default innards of the generator, fft-size, overlap\n\
-   and interp set the fftsize, the amount of overlap between ffts, and the time between new analysis calls."
+  #define H_make_phase_vocoder "(" S_make_phase_vocoder " &opt-key input fft-size overlap interp pitch analyze edit synthesize)\n\
+returns a new phase-vocoder generator; input is the input function (if can be set at run-time), analyze, edit, \
+and synthesize are either #f or functions that replace the default innards of the generator, fft-size, overlap \
+and interp set the fftsize, the amount of overlap between ffts, and the time between new analysis calls."
 
   SCM in_obj = SCM_UNDEFINED, edit_obj = SCM_UNDEFINED, synthesize_obj = SCM_UNDEFINED, analyze_obj = SCM_UNDEFINED;
   mus_scm *gn;
@@ -4808,10 +4829,10 @@ static void init_pv(void)
 static SCM g_mus_mix(SCM out, SCM in, SCM ost, SCM olen, SCM ist, SCM mx, SCM envs)
 {
   #define H_mus_mix "(" S_mus_mix " outfile infile (outloc 0) frames (inloc 0) mixer envs)\n\
-    mixes infile into outfile starting at outloc in outfile and inloc in infile\n\
-    mixing frames frames of infile.  frames defaults to the length of infile. If mixer,\n\
-    use it to scale the various channels; if envs (an array of envelope generators), use\n\
-    it in conjunction with mixer to scale/envelope all the various ins and outs."
+mixes infile into outfile starting at outloc in outfile and inloc in infile \
+mixing frames frames of infile.  frames defaults to the length of infile. If mixer, \
+use it to scale the various channels; if envs (an array of envelope generators), use \
+it in conjunction with mixer to scale/envelope all the various ins and outs."
 
   mus_mixer *mx1 = NULL;
   mus_any ***envs1 = NULL;

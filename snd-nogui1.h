@@ -67,6 +67,7 @@ void goto_listener(void);
 void snd_append_char(snd_state *ss, char *msg);
 void handle_listener(snd_state *ss, int new_state);
 int listener_height(void);
+int listener_width(void);
 
 
 
@@ -138,7 +139,7 @@ int gh_remove_from_menu(int which_menu, char *label);
 #if HAVE_GUILE
 void g_initialize_xgh(snd_state *ss, SCM local_doc);
 void g_init_gxutils(void);
-void g_init_gxmenu(void);
+void g_init_gxmenu(SCM local_doc);
 #endif
 
 

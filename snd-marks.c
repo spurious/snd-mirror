@@ -1656,8 +1656,8 @@ static SCM g_mark_to_sound(SCM mark_n)
 
 static SCM g_find_mark(SCM samp_n, SCM snd_n, SCM chn_n) 
 {
-  #define H_find_mark "(" S_find_mark " samp-or-name &optional snd chn) finds the mark in snd's channel chn\n\
-   at samp (if a number) or with the given name (if a string), returning the mark id"
+  #define H_find_mark "(" S_find_mark " samp-or-name &optional snd chn)\n\
+finds the mark in snd's channel chn at samp (if a number) or with the given name (if a string), returning the mark id"
 
   mark **mps;
   int i, samp = 0;
@@ -1963,7 +1963,9 @@ static SCM g_save_marks(SCM snd_n)
 void g_init_marks(SCM local_doc)
 {
 #if HAVE_HOOKS
-  mark_drag_hook = MAKE_HOOK(S_mark_drag_hook, 1); /* arg = id */
+  #define H_mark_drag_hook S_mark_drag_hook " (id) is called when a mark is dragged"
+
+  mark_drag_hook = MAKE_HOOK(S_mark_drag_hook, 1, H_mark_drag_hook); /* arg = id */
 #endif
 
   define_procedure_with_setter(S_mark_sample, SCM_FNC g_mark_sample, H_mark_sample,

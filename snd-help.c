@@ -2,9 +2,6 @@
 #include "sndlib-strings.h"
 #include "vct.h"
 
-/* TODO: make these help strings click-sensitive (i.e. urls)
- */
-
 void ssnd_help(snd_state *ss, char *subject, ...)
 {
   va_list ap;
@@ -19,7 +16,7 @@ void ssnd_help(snd_state *ss, char *subject, ...)
       len += strlen(helpstr);
       if (len >= size)
 	{
-	  size = len+1024;
+	  size = len + 1024;
 	  newstr = (char *)REALLOC(newstr, size * sizeof(char));
 	}
       strcat(newstr, helpstr);
@@ -56,7 +53,7 @@ static void ssnd_help_with_url(snd_state *ss, char *subject, char *url, ...)
       len += strlen(helpstr);
       if (len >= size)
 	{
-	  size = len+1024;
+	  size = len + 1024;
 	  newstr = (char *)REALLOC(newstr, size * sizeof(char));
 	}
       strcat(newstr, helpstr);
@@ -902,7 +899,7 @@ Graph Line style:\n\
 \n\
 Keyboard action choices:\n\
   " S_cursor_in_view "     " S_cursor_on_left "     " S_cursor_on_right "   " S_cursor_in_middle "\n\
-  " S_cursor_update_display " " S_cursor_no_action " " S_cursor_claim_selection " " S_keyboard_no_action "\n\
+  " S_cursor_update_display " " S_cursor_no_action " " S_keyboard_no_action "\n\
 \n\
 Cursor style:\n\
   " S_cursor_cross "    " S_cursor_line "\n\
@@ -2605,3 +2602,101 @@ static char CLM_help_string[] =
 static char *CLM_help(void) {return(CLM_help_string);}
 void clm_help(snd_state *ss) {snd_help_with_url(ss, STR_CLM, "grfsnd.html#sndwithclm", CLM_help());}
 
+
+#if HAVE_GUILE
+
+#define GLYPH_WIDTH 11
+
+static char* word_wrap(char *text, int widget_len)
+{
+  char *new_text;
+  int new_len, old_len, i, j, line_len = 0, desired_len;
+  old_len = snd_strlen(text);
+  new_len = old_len + 32;
+  desired_len = (int)(widget_len / GLYPH_WIDTH);
+  if (desired_len <= 8)
+    return(copy_string(text));
+  new_text = (char *)CALLOC(new_len, sizeof(char));
+  for (i = 0, j = 0; i < old_len; i++)
+    if ((line_len >= desired_len) &&
+	((text[i] == '\n') || (text[i] == ' ')))
+      {
+	new_text[j++] = '\n';
+	line_len = 0;
+      }
+    else
+      {
+	new_text[j++] = text[i];
+	if (text[i] == '\n')
+	  line_len = 0;
+	line_len++;
+      }
+  return(new_text);
+}
+
+SCM g_help(SCM text, int widget_wid)
+{
+  SCM help_text = SCM_BOOL_F, value, local_doc;
+  char *str = NULL;
+
+  if (SCM_EQ_P(text,SCM_UNDEFINED))                              /* if no arg, describe snd-help */
+    help_text = TO_SCM_STRING("snd-help returns the documentation associated with its argument. \
+(snd-help make-vct) for example, prints out a brief description of make-vct. \
+The argument can be a string, a symbol, or the object itself.  In some cases, only the symbol has the documentation. \
+In the help descriptions, '&optional' marks optional arguments, and \
+'&opt-key' marks CLM-style optional keyword arguments.  If you load index.scm \
+the functions html and ? can be used in place of help to go to the HTML description.");
+  else
+    {
+      if ((gh_string_p(text)) || (gh_symbol_p(text)))            /* arg can be name (string), symbol, or the value */
+	{
+	  if (gh_string_p(text))
+	    str = TO_NEW_C_STRING(text);
+	  else str = gh_symbol2newstr(text, NULL);
+	  value = SND_LOOKUP(str);
+	}
+      else
+	{
+	  value = text;
+	  str = NULL;
+	}
+      local_doc = TO_SCM_SYMBOL("documentation");
+      
+      help_text = scm_object_property(value, local_doc);         /* (object-property ...) */
+      if ((SCM_FALSEP(help_text)) &&
+	  (gh_procedure_p(value)))
+	{
+	  help_text = scm_procedure_property(value, local_doc);  /* (procedure-property ...) */
+	  if (SCM_FALSEP(help_text))
+	    help_text = scm_procedure_documentation(value);      /* (procedure-documentation ...) -- this is the first line of source if string */
+	}
+      if ((SCM_FALSEP(help_text)) &&
+	  (str))
+	help_text = scm_object_property(TO_SCM_SYMBOL(str), local_doc);
+
+      if (str) 
+	{
+	  free(str); 
+	  str = NULL;
+	}
+    }
+  
+  /* help strings are always processed through the word-wrapper to fit whichever widget they are posted to */
+  /*   this means all the H_doc strings in Snd need to omit line-feeds except where necessary (i.e. code) */
+
+  str = word_wrap(SCM_STRING_CHARS(help_text), widget_wid);
+  help_text = TO_SCM_STRING(str);
+  if (str) FREE(str);
+  return(help_text);
+}
+
+static SCM g_listener_help(SCM arg)
+{
+  return(g_help(arg,listener_width()));
+}
+
+void g_init_help(SCM local_doc)
+{
+  gh_new_procedure0_1("snd-help",g_listener_help);
+}
+#endif
