@@ -87,7 +87,6 @@
               (set! record-input-dialog
                     (make-effect-dialog record-input-label
                                         (lambda (w context info) (cp-record-input))
-                                        (lambda (w context info) (XtUnmanageChild record-input-dialog))
                                         (lambda (w context info)
                                           (help-dialog "Record input channel Help"
 "Select the appropriate radio button to set the record input channel. Note that if you are using the ALSA drivers you may need to set the record channel from your system mixer (e.g. aumix) as well."))
@@ -201,7 +200,6 @@
               (set! play-panned-dialog
                     (make-effect-dialog play-panned-label
                                         (lambda (w context info) (cp-play-panned))
-                                        (lambda (w context info) (XtUnmanageChild play-panned-dialog))
                                         (lambda (w context info)
                                           (help-dialog "Play panned"
                                                        "Move the slider to select the file to play with panning envelope."))
@@ -251,7 +249,6 @@
               (set! save-as-mp3-dialog
                     (make-effect-dialog save-as-mp3-label
                                         (lambda (w context info) (cp-save-as-mp3))
-                                        (lambda (w context info) (XtUnmanageChild save-as-mp3-dialog))
                                         (lambda (w context info)
                                           (help-dialog "Save as MP3"
                                                        "Move the slider to select the file to save as an MP3.\n\ The new MP3 will be named tmp-N.mp3 by default.\n\ Bladeenc is currently the only supported encoder. Please see the Web page at bladeenc.mp3.no for details regarding Bladeenc."))
@@ -300,7 +297,6 @@
               (set! save-as-ogg-dialog
                     (make-effect-dialog save-as-ogg-label
                                         (lambda (w context info) (cp-save-as-ogg))
-                                        (lambda (w context info) (XtUnmanageChild save-as-ogg-dialog))
                                         (lambda (w context info)
                                           (help-dialog "Save as Ogg file"
                                                        "Move the slider to select the file to save as an Ogg file. The new file will be named tmp-N.ogg by default.\n\ Oggenc is currently the only supported Ogg encoder. Please see the Web page at www.xiphophorus.org for details regarding the Ogg/Vorbis project."))

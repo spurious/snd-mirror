@@ -52,20 +52,17 @@ static Window find_window(Display *display,
   return(window);
 }
 
-static XEN send_netscape(XEN cmd)
+bool send_netscape(const char *html_viewer, const char *url)
 {
-  #define H_send_netscape "(" S_send_netscape " cmd): find an html-reader (or start it if necessary), and send it the \
-string 'cmd'.  cmd should be a URL."
   Window window;
   Display *dpy;
-  char *command, *tmp = NULL;
-  XEN_ASSERT_TYPE(XEN_STRING_P(cmd), cmd, XEN_ONLY_ARG, S_send_netscape, "a string");
+  char *command;
   dpy = MAIN_DISPLAY(ss);
-  command = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  tmp = XEN_TO_C_STRING(cmd);
-  if ((window = find_window(dpy, DefaultRootWindow(dpy), NS_VERSION, compare_window)))
+  command = (char *)CALLOC(snd_strlen(url) + snd_strlen(html_viewer) + 32, sizeof(char));
+  window = find_window(dpy, DefaultRootWindow(dpy), NS_VERSION, compare_window);
+  if (window)
     {
-      mus_snprintf(command, PRINT_BUFFER_SIZE, "openURL(file:%s)", tmp);
+      sprintf(command, "openURL(file:%s)", url);
       XChangeProperty(dpy, 
 		      window, 
 		      XInternAtom(dpy, NS_COMMAND, 0), 
@@ -79,16 +76,24 @@ string 'cmd'.  cmd should be a URL."
     {
       if (!(fork()))
         {
-	  mus_snprintf(command, PRINT_BUFFER_SIZE, "%s file:%s", html_program(ss), tmp);
+	  sprintf(command, "%s file:%s", html_viewer, url);
 	  if (execl("/bin/sh", "/bin/sh", "-c", command, NULL) == -1)
 	    {
 	      FREE(command);
-	      return(XEN_FALSE);
+	      return(false);
 	    }
 	}
     }
   FREE(command);
-  return(XEN_TRUE);
+  return(true);
+}
+
+static XEN g_send_netscape(XEN cmd)
+{
+  #define H_send_netscape "(" S_send_netscape " cmd): find an html-reader (or start it if necessary), and send it the \
+string 'cmd'.  cmd should be a URL."
+  XEN_ASSERT_TYPE(XEN_STRING_P(cmd), cmd, XEN_ONLY_ARG, S_send_netscape, "a string");
+  return(C_TO_XEN_BOOLEAN(send_netscape(html_program(ss), XEN_TO_C_STRING(cmd))));
 }
 
 static void change_window_property(char *winat, char *name, char *command)
@@ -130,16 +135,16 @@ for example"
 }
 
 #ifdef XEN_ARGIFY_1
-XEN_NARGIFY_1(send_netscape_w, send_netscape)
+XEN_NARGIFY_1(g_send_netscape_w, g_send_netscape)
 XEN_NARGIFY_3(g_change_window_property_w, g_change_window_property)
 #else
-#define send_netscape_w send_netscape
+#define g_send_netscape_w g_send_netscape
 #define g_change_window_property_w g_change_window_property
 #endif
 
 void g_init_gxutils(void)
 {
-  XEN_DEFINE_PROCEDURE(S_send_netscape, send_netscape_w, 1, 0, 0, H_send_netscape);
+  XEN_DEFINE_PROCEDURE(S_send_netscape, g_send_netscape_w, 1, 0, 0, H_send_netscape);
   XEN_DEFINE_PROCEDURE(S_change_window_property, g_change_window_property_w, 3, 0, 0, H_change_window_property);
 }
 

@@ -92,8 +92,6 @@
 					(lambda (w context info)
 					  (cp-play-between-marks))
 					(lambda (w context info)
-					  (XtUnmanageChild play-between-marks-dialog))
-					(lambda (w context info)
 					  (help-dialog "Define selection by marks Help"
 						"Plays area between specified marks.\n\ Use the sliders to select the boundary marks.\n\ Negative play not supported yet: coming soon !"))
 					(lambda (w c i)
@@ -153,7 +151,6 @@
               (set! loop-between-marks-dialog
                     (make-effect-dialog loop-between-marks-label
                                         (lambda (w context info) (cp-loop-between-marks))
-                                        (lambda (w context info) (XtUnmanageChild loop-between-marks-dialog))
                                         (lambda (w context info)
                                           (help-dialog "Loop play between marks"
                                                        "Move the sliders to set the mark numbers. Check a radio button to set the buffer size."))
@@ -366,8 +363,6 @@
 					(lambda (w context info)
 					  (cp-fit-to-marks))
 					(lambda (w context info)
-					  (XtUnmanageChild fit-to-mark-dialog))
-					(lambda (w context info)
 					  (help-dialog "Fit selection to marks Help"
 "Fit-selection-between-marks tries to squeeze the current selection between two marks,\n\
  using the granulate generator to fix up the selection duration (this still is not perfect).\n\
@@ -438,8 +433,6 @@
 		    (make-effect-dialog define-by-mark-label
 					(lambda (w context info)
 					  (cp-define-by-marks))
-					(lambda (w context info)
-					  (XtUnmanageChild define-by-mark-dialog))
 					(lambda (w context info)
 					  (help-dialog "Define selection by marks Help"
 						"Selects and highlights area between marks.\n\ Use the sliders to choose the boundary marks."))

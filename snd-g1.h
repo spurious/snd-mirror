@@ -228,6 +228,7 @@ void g_init_gxregion(void);
 
 /* -------- snd-gxutils -------- */
 
+bool send_netscape(const char *html_viewer, const char *url);
 void g_init_gxutils(void);
 
 

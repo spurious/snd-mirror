@@ -2717,3 +2717,5 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; SOMEDAY: radar scope style region cue list
 ;;; SOMEDAY: spatial envelope dialog
 ;;; SOMEDAY: xemacs style top list of sounds, current takes whole screen [add-second-row above, files-popup-buffer in examp.scm]
+;;; SOMEDAY: speedbar style extension of file viewer dialog
+;;; SOMEDAY: speedbar/emacs -> Snd subjob support

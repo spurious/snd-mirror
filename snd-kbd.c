@@ -464,8 +464,7 @@ static chan_info *goto_previous_graph (chan_info *cp, int count)
   if (ncp == vcp) return(ncp);
   if (!ncp) snd_error("goto previous graph failed!");
   select_channel(ncp->sound, ncp->chan);
-  if (sp->channel_style == CHANNELS_SEPARATE) /* TODO: what if newly selected sound is obscured? */
-    equalize_sound_panes(ncp->sound, ncp, false);
+  equalize_sound_panes(ncp->sound, ncp, false);
   return(ncp);
 }
 
@@ -519,8 +518,7 @@ static chan_info *goto_next_graph (chan_info *cp, int count)
   if (ncp == vcp) return(ncp);
   if (!ncp) snd_error("goto next graph failed!");
   select_channel(ncp->sound, ncp->chan);
-  if (sp->channel_style == CHANNELS_SEPARATE)
-    equalize_sound_panes(ncp->sound, ncp, false);
+  equalize_sound_panes(ncp->sound, ncp, false);
   return(ncp);
 }
 
@@ -946,8 +944,6 @@ static bool stop_selecting(int keysym, int state)
 
 static char *key_to_name(int keysym) {if (keysym) return(KEY_TO_NAME(keysym)); else return("NUL");}
 
-#define NO_CX_ARG_SPECIFIED -1
-
 static int number_ctr = 0;
 static bool dot_seen = false;
 static bool counting = false;
@@ -992,7 +988,8 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
   bool searching = false, cursor_searching = false, clear_search = true;
   int hashloc, sync_num, i, state;
   off_t loc;
-  static off_t ext_count = NO_CX_ARG_SPECIFIED;
+  static off_t ext_count = 1;
+  static bool got_ext_count = false;
   snd_info *sp;
   axis_info *ap;
   sync_info *si;
@@ -1193,6 +1190,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      if (got_count) 
 		{
 		  ext_count = count; 
+		  got_ext_count = got_count;
 		  got_count = false;
 		}
 	      break;
@@ -1286,7 +1284,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
       else /* extended mode with ctrl down */
 	{
 	  /* -------------------------------- C-x C-key -------------------------------- */
-	  if (ext_count == NO_CX_ARG_SPECIFIED) ext_count = 1;
+	  if (!got_ext_count) ext_count = 1;
 	  extended_mode = false;
 	  switch (keysym)
 	    {
@@ -1344,6 +1342,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      searching = true; 
 	      break;
 	    case snd_K_O: case snd_K_o: 
+	      /* this doesn't change the View:Controls menu label because (sigh...) it's specific to the currently selected sound */
 	      sound_show_ctrls(sp); 
 	      break;
 	    case snd_K_P: case snd_K_p: 
@@ -1571,7 +1570,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	    case snd_K_A: case snd_K_a: 
 	      if (selection_is_active_in_channel(cp)) 
 		{
-		  get_amp_expression(sp, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count, true); 
+		  get_amp_expression(sp, (!got_ext_count) ? 1 : ext_count, true); 
 		  searching = true; 
 		} 
 	      else no_selection_error(sp); 
@@ -1581,7 +1580,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      handle_cursor(cp, CURSOR_ON_LEFT);
 	      break;
 	    case snd_K_C: case snd_K_c: 
-	      mark_define_region(cp, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); 
+	      mark_define_region(cp, (!got_ext_count) ? 1 : ext_count); 
 	      break;
 	    case snd_K_D: case snd_K_d: 
 	      prompt(sp, _("temp dir:"), NULL); 
@@ -1589,7 +1588,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      searching = true; 
 	      break;
 	    case snd_K_E: case snd_K_e: 
-	      execute_last_macro(cp, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count);
+	      execute_last_macro(cp, (!got_ext_count) ? 1 : ext_count);
 	      handle_cursor(cp, cursor_decision(cp));
 	      break;
 	    case snd_K_F: case snd_K_f: 
@@ -1597,7 +1596,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      handle_cursor(cp, CURSOR_ON_RIGHT); 
 	      break;
 	    case snd_K_I: case snd_K_i: 
-	      insert_selection_or_region((ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count, cp, "C-x i");
+	      insert_selection_or_region((!got_ext_count) ? 0 : ext_count, cp, "C-x i");
 	      break;
 	    case snd_K_J: case snd_K_j: 
 	      prompt(sp, _("mark:"), NULL); 
@@ -1615,24 +1614,23 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      handle_cursor(cp, CURSOR_IN_MIDDLE);
 	      break;
 	    case snd_K_O: case snd_K_o: 
-	      /* TODO: Cx O is all screwed up (it moves backwards and creates a bogus extra channel sometimes) */
 	      if (ext_count > 0) 
 		goto_next_graph(cp, ext_count); 
 	      else goto_previous_graph(cp, ext_count); 
 	      break;
 	    case snd_K_P: case snd_K_p: 
-	      if (ext_count == NO_CX_ARG_SPECIFIED)
+	      if (!got_ext_count)
 		play_selection(IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "C-x p", 0);
 	      else play_region(ext_count, IN_BACKGROUND);
 	      break;
 	    case snd_K_Q: case snd_K_q: 
-	      add_selection_or_region((ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count, cp, "C-x q"); 
+	      add_selection_or_region((!got_ext_count) ? 0 : ext_count, cp, "C-x q"); 
 	      break;
 	    case snd_K_R: case snd_K_r: 
-	      redo_edit_with_sync(cp, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); 
+	      redo_edit_with_sync(cp, (!got_ext_count) ? 1 : ext_count); 
 	      break;
 	    case snd_K_U: case snd_K_u: 
-	      undo_edit_with_sync(cp, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); 
+	      undo_edit_with_sync(cp, (!got_ext_count) ? 1 : ext_count); 
 	      break;
 	    case snd_K_V: case snd_K_v: 
 	      if (selection_is_active_in_channel(cp))
@@ -1640,14 +1638,14 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      else no_selection_error(sp); 
 	      break;
 	    case snd_K_W: case snd_K_w:
-	      region_count = ((ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count);
+	      region_count = ((!got_ext_count) ? 0 : ext_count);
 	      prompt(sp, _("file:"), NULL); 
 	      sp->filing = REGION_FILING; 
 	      searching = true;
 	      break;
 	    case snd_K_Z: case snd_K_z: 
 	      if (selection_is_active_in_channel(cp))
-		cos_smooth(cp, CURSOR(cp), (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count, true, "C-x z"); 
+		cos_smooth(cp, CURSOR(cp), (!got_ext_count) ? 1 : ext_count, true, "C-x z"); 
 	      else no_selection_error(sp); 
 	      break;
 	    case snd_K_Right:   
@@ -1700,7 +1698,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	    }
 	}
     }
-  if (!extended_mode) ext_count = NO_CX_ARG_SPECIFIED;
+  if (!extended_mode) {got_ext_count = false; ext_count = 1;}
   if (clear_search)
     {
       if ((sp->minibuffer_on == MINI_FIND) && (!searching)) 

@@ -109,8 +109,10 @@ static XmString parse_crossref(const char *xref)
 
 static char *help_completer(char *text) {return(NULL);}
 /* TODO: help completion, cref tables, help search mechanism (via help strings I guess) */
-/* TODO: find default font for xref table */
 /* TODO: mozilla if related is not top level, else go to it. */
+/* TODO: help index data (index.cl generated? + tables) */
+/* TODO: if mouse over topic, post short help (doc string), returning to orig on exit, click->mozilla  */
+/* TODO: completion in help search */
 
 static void new_help(const char *pattern)
 {
@@ -122,6 +124,7 @@ static Widget help_search = NULL;
 static void ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
   state_context *sgx;
+  char *help_str;
   XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
   sgx = ss->sgx;
   /* this is the OK button from Motif's point of view, or text activation (<cr> in the text field) from ours */
@@ -131,13 +134,28 @@ static void ok_callback(Widget w, XtPointer context, XtPointer info)
   else 
     {
       if (sgx->text_widget == help_search)
-	new_help(XmTextFieldGetString(help_search));
-#if DEBUGGING
-      else fprintf(stderr," oops help!");
-#endif
+	{
+	  help_str = XmTextFieldGetString(help_search);
+	  new_help(help_str);
+	  XtFree(help_str);
+	}
     }
 #endif
 }
+
+#if (XmVERSION > 1)
+static void text_release_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+{
+  /* fprintf(stderr,"text release: %s\n", XmTextGetSelection(w)); */
+  char *help_str;
+  help_str = XmTextGetSelection(w);
+  if (help_str)
+    {
+      new_help(help_str);
+      XtFree(help_str);
+    }
+}
+#endif
 
 static void create_help_monolog(void)
 {
@@ -190,28 +208,40 @@ static void create_help_monolog(void)
       XtSetArg(args[n], XmNbackground, (ss->sgx)->white); n++;
     }
   help_text = XmCreateScrolledText(holder, "help-text", args, n);
+#if (XmVERSION > 1)
+  XtAddEventHandler(help_text, ButtonReleaseMask, false, text_release_callback, NULL);
+#endif
   XtManageChild(help_text);
 
 #if (XmVERSION > 1)
   {
     XmRendition texts[2];
-    Widget frame, search, label, inner_holder, sep;
+    Widget frame, search, label, inner_holder, sep, parent;
     XmString *strs;
-    XmRenderTable rs;
+    XmRenderTable rs = NULL;
     
+    /* to display the url-related portion of the text in red, we need to a rendition for it to the rendertable */
+    /* try to find the current default render table. */
+    parent = help_text;
+    while ((parent != NULL) && (rs == NULL))
+      {
+	XtVaGetValues(parent, XmNrenderTable, &rs, NULL);
+	parent = XtParent(parent);
+      }
     n = 0;
-
-    XtSetArg(args[n], XmNfontName, listener_font(ss)); n++;
-    XtSetArg(args[n], XmNfontType, XmFONT_IS_FONT); n++; 
-    XtSetArg(args[n], XmNloadModel, XmLOAD_IMMEDIATE); n++;
-
+    if (rs == NULL)
+      {
+	/* failed to find a rendertable to specialize, so we need an explicit font */
+	XtSetArg(args[n], XmNfontName, listener_font(ss)); n++;
+	XtSetArg(args[n], XmNfontType, XmFONT_IS_FONT); n++; 
+	XtSetArg(args[n], XmNloadModel, XmLOAD_IMMEDIATE); n++;
+      }
     XtSetArg(args[n], XmNrenditionBackground, ss->sgx->white); n++;
     XtSetArg(args[n], XmNrenditionForeground, ss->sgx->quit_button_color); n++;
-    /* XtSetArg(args[n], XmNunderlineType, XmSINGLE_LINE); n++; */
-    texts[0] = XmRenditionCreate(MAIN_SHELL(ss), "url_text", args, n);
+    texts[0] = XmRenditionCreate(help_text, "url_text", args, n);
     XtSetArg(args[n - 1], XmNrenditionForeground, ss->sgx->black); 
-    texts[1] = XmRenditionCreate(MAIN_SHELL(ss), "normal_text", args, n);
-    rs = XmRenderTableAddRenditions(NULL, texts, 2, XmMERGE_NEW);
+    texts[1] = XmRenditionCreate(help_text, "normal_text", args, n);
+    rs = XmRenderTableCopy(XmRenderTableAddRenditions(rs, texts, 2, XmMERGE_NEW), NULL, 0);
     XmRenditionFree(texts[0]);
     XmRenditionFree(texts[1]);
 

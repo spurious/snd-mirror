@@ -54,8 +54,6 @@
                                         (lambda (w context info)
                                           (cp-delete-mix))
                                         (lambda (w context info)
-                                          (XtUnmanageChild delete-mix-dialog))
-                                        (lambda (w context info)
                                           (help-dialog "Delete mix"
                                                 "Deletes specified mix."))
                                         (lambda (w c i)
@@ -95,7 +93,7 @@
 (define (unsnap!)
   (set! snapping #f)
   (change-menu-label mix-menu no-snap-label snap-label)
-  (reset-hook! mix-position-changed-hook))
+  (reset-hook! mix-dragged-hook))
 
 (add-to-menu mix-menu snap-label
   (lambda ()
@@ -134,8 +132,6 @@
                     (make-effect-dialog renumber-tracks-label
                                         (lambda (w context info)
                                           (cp-renumber-tracks))
-                                        (lambda (w context info)
-                                          (XtUnmanageChild renumber-tracks-dialog))
                                         (lambda (w context info)
                                           (help-dialog "Assign all tracks"
                                                 "Assign all tracks to number specified by the slider."))
@@ -194,8 +190,6 @@
                                         (lambda (w context info)
                                           (cp-delete-track))
                                         (lambda (w context info)
-                                          (XtUnmanageChild delete-track-dialog))
-                                        (lambda (w context info)
                                           (help-dialog "Delete track"
                                                 "Deletes the track specified by the slider."))
                                         (lambda (w c i)
@@ -245,8 +239,6 @@
                                         (lambda (w context info)
                                           (cp-play-track))
                                         (lambda (w context info)
-                                          (XtUnmanageChild play-track-dialog))
-                                        (lambda (w context info)
                                           (help-dialog "Play track"
                                                 "Plays the track specified by the slider."))
                                         (lambda (w c i)
@@ -293,8 +285,6 @@
                     (make-effect-dialog reverse-track-label
                                         (lambda (w context info)
                                           (cp-reverse-track))
-                                        (lambda (w context info)
-                                          (XtUnmanageChild reverse-track-dialog))
                                         (lambda (w context info)
                                           (help-dialog "Reverse track"
                                                 "Reverses the order in which a track's members occur."))
@@ -344,8 +334,6 @@
                     (make-effect-dialog set-track-amp-label
                                         (lambda (w context info)
                                           (cp-set-track-amp))
-                                        (lambda (w context info)
-                                          (XtUnmanageChild set-track-amp-dialog))
                                         (lambda (w context info)
                                           (help-dialog "Set track amplitude"
                                                        "Move the sliders to set the track number and amp scaling."))
@@ -401,8 +389,6 @@
                                         (lambda (w context info)
                                           (cp-set-track-speed))
                                         (lambda (w context info)
-                                          (XtUnmanageChild set-track-speed-dialog))
-                                        (lambda (w context info)
                                           (help-dialog "Set track speed"
                                                        "Move the sliders to set the track number and rate scaling."))
                                         (lambda (w c i)
@@ -456,7 +442,6 @@
                     (make-effect-dialog set-track-tempo-label
                                         (lambda (w context info)
                                           (cp-set-track-tempo))
-                                        (lambda (w context info) (XtUnmanageChild set-track-tempo-dialog))
                                         (lambda (w context info)
                                           (help-dialog "Set track tempo"
                                                        "Affects the time between the successive mix begin points (tempo > 1.0 makes the mixes happen more quickly)."))
@@ -511,7 +496,6 @@
                     (make-effect-dialog transpose-track-label
                                         (lambda (w context info)
                                           (cp-transpose-track))
-                                        (lambda (w context info) (XtUnmanageChild transpose-track-dialog))
                                         (lambda (w context info)
                                           (help-dialog "Transpose track"
                                                        "A simple track transposition utility."))
@@ -564,8 +548,6 @@
                     (make-effect-dialog save-track-label
                                         (lambda (w context info)
                                           (cp-save-track))
-                                        (lambda (w context info)
-                                          (XtUnmanageChild save-track-dialog))
                                         (lambda (w context info)
                                           (help-dialog "Save track"
                                                 "Save track to track-N.snd soundfile."))

@@ -2735,8 +2735,6 @@ void unlock_control_panel(snd_info *sp)
 
 void equalize_sound_panes(snd_info *sp, chan_info *ncp, bool all_panes)
 {
-  /* TODO: this can open (separate) a channel if in united mode from C-x O -- how? */
-
   /* make sp look ok, squeezing others if needed */
   /* if there's already enough (i.e. ss->channel_min_height), just return */
   /* this is used in goto_next_graph and goto_previous_graph (snd-chn.c) to open windows that are currently squeezed shut */
@@ -2748,7 +2746,7 @@ void equalize_sound_panes(snd_info *sp, chan_info *ncp, bool all_panes)
   if ((!ss) || (!sp) || (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)) return;
   if (sound_style(ss) != SOUNDS_HORIZONTAL)
     {
-      if ((all_panes) && (sp->nchans > 1))
+      if ((all_panes) && (sp->nchans > 1) && (sp->channel_style == CHANNELS_SEPARATE))
 	{
 	  for (i = 0; i < sp->nchans; i++)
 	    {
@@ -2778,14 +2776,17 @@ void equalize_sound_panes(snd_info *sp, chan_info *ncp, bool all_panes)
       else
 	{
 	  /* several attempts to be fancy here just made a mess of the display */
-	  XtVaGetValues(channel_main_pane(ncp), XmNheight, &chan_y, NULL);
+	  if (sp->channel_style == CHANNELS_SEPARATE)
+	    cp = ncp;
+	  else cp = ncp->sound->chans[0];
+	  XtVaGetValues(channel_main_pane(cp), XmNheight, &chan_y, NULL);
 	  if (chan_y < (Dimension)(ss->channel_min_height >> 1)) 
 	    {
 	      wid = (int *)CALLOC(1, sizeof(int));
 	      wid[0] = (ss->channel_min_height >> 1) + 10;
-	      channel_lock_pane(ncp, (void *)wid);
-	      channel_open_pane(ncp, NULL);
-	      channel_unlock_pane(ncp, NULL);
+	      channel_lock_pane(cp, (void *)wid);
+	      channel_open_pane(cp, NULL);
+	      channel_unlock_pane(cp, NULL);
 	      FREE(wid);
 	      wid = NULL;
 	    }

@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO: basic-[small|large]-[bold]-font (somehow set default font in motif)
- */
-
 #include <X11/cursorfont.h>
 
 #define FALLBACK_FONT "fixed"
