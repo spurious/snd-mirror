@@ -120,7 +120,7 @@ static void file_print_callback_1(GtkWidget *w, gpointer info) {file_print_callb
 /* -------------------------------- EDIT MENU -------------------------------- */
 
 
-static void edit_mix_callback(GtkWidget *w, gpointer info) {add_selection_or_region(0, selected_channel(), "Edit: mix");}
+static void edit_mix_callback(GtkWidget *w, gpointer info) {add_selection_or_region(0, selected_channel());}
 static void edit_envelope_callback(GtkWidget *w, gpointer info) {create_envelope_editor();}
 static void edit_cut_callback(GtkWidget *w, gpointer info) {delete_selection("Edit: Cut", UPDATE_DISPLAY);}
 static void edit_paste_callback(GtkWidget *w, gpointer info) {insert_selection_from_menu();}

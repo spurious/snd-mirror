@@ -4120,7 +4120,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		  cursor_moveto(cp, 
 				snd_round_off_t(ungrf_x(cp->axis, x) * 
 						(double)SND_SRATE(sp)));
-		  paste_region(region_list_position_to_id(0), cp, "Btn2");
+		  paste_region(region_list_position_to_id(0), cp);
 		}
 	      else 
 		{

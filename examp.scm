@@ -1971,7 +1971,7 @@ starting at the cursor in the currently selected channel: (add-notes '((\"oboe.s
 		(mix-vct (vct-scale! (file->vct file) amp) beg snd chn #f "add-notes")
 		(mix file beg 0 snd chn #f))))
 	notes))
-     (format #f "add-notes '~A" notes))))
+     (format #f "add-notes '~S" notes))))
 
 (define (region-play-list data)
   "(region-play-list data): 'data' is list of lists (list (list time reg)...), time in secs, setting up 

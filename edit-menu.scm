@@ -54,11 +54,7 @@
 (add-to-menu edit-menu "Cut selection->new" cut-selection->new 9)
 
 
-;;; -------- append sound (and append selection for lafs)
-
-(define (append-sound name)
-  "(append-sound name) appends file 'name'"
-  (insert-sound name (frames)))
+;;; -------- append selection
 
 (define (append-selection)
   "(append-selection) appends the current selection"
@@ -66,6 +62,7 @@
       (insert-selection (frames))))
 
 (add-to-menu edit-menu "Append selection" append-selection 10)
+
 
 ;;; -------- make-stereofile
 (define (make-stereofile)

@@ -644,10 +644,7 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
   XmStringGetLtoR (cbs->value, XmFONTLIST_DEFAULT_TAG, &filename);
   file_dialog_stop_playing(fd);
   if (!(directory_p(filename)))               /* this can be a directory name if the user clicked 'ok' when he meant 'cancel' */
-    mix_complete_file_at_cursor(any_selected_sound(), 
-				filename,
-				"File: mix",
-				with_mix_tags(ss), 0);
+    mix_complete_file_at_cursor(any_selected_sound(), filename, with_mix_tags(ss), 0);
   else snd_error(_("%s is a directory"), filename);
 }
 

@@ -3578,6 +3578,9 @@
 (if (not (provided? 'snd-snd4.scm)) (load "snd4.scm")) ; needed for various scan/map extensions
 (define a-ctr 0)
 
+(define (append-sound filename)
+  (insert-sound filename (frames)))
+
 (define (test-edpos test-func func-name change-thunk ind1)
   (let ((fr1 (test-func ind1 0))
 	(fr2 (test-func ind1 0 0))

@@ -1329,13 +1329,16 @@ static void after_mix_file(void *context)
 }
 #endif
 
-static int mix_complete_file(snd_info *sp, off_t beg, char *fullname, const char *origin, 
-			     bool with_tag, file_delete_t auto_delete, int track_id, bool all_chans)
+/* TODO: need origin here: perhaps via "mix" and explicit in chan? */
+/*       (mix file samp in-chan snd chn with-mix-tags auto-delete (track 0)) */
+
+static int mix_complete_file(snd_info *sp, off_t beg, char *fullname, bool with_tag, file_delete_t auto_delete, int track_id, bool all_chans)
 {
   /* no need to save as temp here, but we do need sync info (from menu and keyboard) */
   /* returns -1 if with_tag is false, -2 if no such file */
   chan_info *cp;
   chan_info **cps = NULL;
+  char *origin = NULL;
   int i, chans, id = MIX_FILE_NO_MIX, old_sync = 0, new_sync = 1;
   off_t len;
   sync_info *si = NULL;
@@ -1403,10 +1406,11 @@ static int mix_complete_file(snd_info *sp, off_t beg, char *fullname, const char
       FREE(cps);
   sp->sync = old_sync;
 #endif
+  if (origin) FREE(origin);
   return(id);
 }
 
-void mix_complete_file_at_cursor(snd_info *sp, char *str, const char *origin, bool with_tag, int track_id)
+void mix_complete_file_at_cursor(snd_info *sp, char *str, bool with_tag, int track_id)
 {
   if ((sp) && (str) && (*str))
     {
@@ -1415,7 +1419,7 @@ void mix_complete_file_at_cursor(snd_info *sp, char *str, const char *origin, bo
       char *fullname;
       fullname = mus_expand_filename(str);
       cp = any_selected_channel(sp);
-      err = mix_complete_file(sp, CURSOR(cp), fullname, origin, with_tag, DONT_DELETE_ME, track_id, false);
+      err = mix_complete_file(sp, CURSOR(cp), fullname, with_tag, DONT_DELETE_ME, track_id, false);
       if (err == MIX_FILE_NO_FILE) 
 	report_in_minibuffer_and_save(sp, _("can't mix file: %s, %s"), str, strerror(errno));
       if (fullname) FREE(fullname);
@@ -3759,7 +3763,6 @@ void mix_at_x_y(int data, char *filename, int x, int y)
     {
       snd_info *sp = NULL;
       chan_info *cp;
-      char *origin;
       off_t sample;
       char *fullname = NULL;
       sp = ss->sounds[snd];
@@ -3770,14 +3773,11 @@ void mix_at_x_y(int data, char *filename, int x, int y)
 	  chn = cp->chan;
 	}
       select_channel(sp, chn);
-      origin = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
       sample = snd_round_off_t(ungrf_x(cp->axis, x) * (double)(SND_SRATE(sp)));
       if (sample < 0) sample = 0;
-      mus_snprintf(origin, PRINT_BUFFER_SIZE, "drop mix %s " OFF_TD, filename, sample); /* ORIGIN? */
       fullname = mus_expand_filename(filename);
-      mix_complete_file(sp, sample, fullname, origin, with_mix_tags(ss), DONT_DELETE_ME, 0, false);
+      mix_complete_file(sp, sample, fullname, with_mix_tags(ss), DONT_DELETE_ME, 0, false);
       if (fullname) FREE(fullname);
-      FREE(origin);
     }
 }
 
@@ -4282,9 +4282,9 @@ static XEN g_set_mix_tag_height(XEN val)
 
 /* TODO: need a regularized mix-channel (or some such name) for edit-list->function */
 
-static XEN g_mix_file(XEN file, XEN chn_samp_n, XEN file_chn, XEN snd_n, XEN chn_n, XEN tag, XEN auto_delete, XEN track_id)
+static XEN g_mix(XEN file, XEN chn_samp_n, XEN file_chn, XEN snd_n, XEN chn_n, XEN tag, XEN auto_delete, XEN track_id)
 {
-  #define H_mix_file "(" S_mix " file (chn-start 0) (file-chan 0) (snd #f) (chn #f) (with-tag " S_with_mix_tags ") (auto-delete #f) (track-id 0)): \
+  #define H_mix "(" S_mix " file (chn-start 0) (file-chan 0) (snd #f) (chn #f) (with-tag " S_with_mix_tags ") (auto-delete #f) (track-id 0)): \
 mix file channel file-chan into snd's channel chn starting at chn-start (or at the cursor location if chn-start \
 is omitted), returning the new mix's id.  if with-tag is #f, the data is mixed (no draggable tag is created). \
 If file_chn is omitted or #t, file's channels are mixed until snd runs out of channels. \
@@ -4328,8 +4328,9 @@ track-id is the track value for each newly created mix."
       (!(XEN_INTEGER_P(chn_n))))
     {
       /* #t = if not sync, set it for this op */
-      id = mix_complete_file(cp->sound, beg, name, S_mix, with_mixer,  /* ORIGIN? */
-			     (delete_file) ? DELETE_ME : DONT_DELETE_ME, track_num,
+      id = mix_complete_file(cp->sound, beg, name, with_mixer,
+			     (delete_file) ? DELETE_ME : DONT_DELETE_ME, 
+			     track_num,
 			     XEN_TRUE_P(file_chn) || (!(XEN_BOUND_P(file_chn))));
       if (id == MIX_FILE_NO_FILE) 
 	{
@@ -4774,7 +4775,7 @@ XEN_NARGIFY_1(g_mix_chans_w, g_mix_chans)
 XEN_NARGIFY_1(g_mix_p_w, g_mix_p)
 XEN_NARGIFY_1(g_mix_home_w, g_mix_home)
 XEN_ARGIFY_2(g_mixes_w, g_mixes)
-XEN_ARGIFY_8(g_mix_file_w, g_mix_file)
+XEN_ARGIFY_8(g_mix_w, g_mix)
 XEN_ARGIFY_7(g_mix_vct_w, g_mix_vct)
 XEN_ARGIFY_1(g_mix_color_w, g_mix_color)
 XEN_ARGIFY_2(g_set_mix_color_w, g_set_mix_color)
@@ -4816,7 +4817,7 @@ XEN_NARGIFY_1(g_delete_mix_w, g_delete_mix)
 #define g_mix_p_w g_mix_p
 #define g_mix_home_w g_mix_home
 #define g_mixes_w g_mixes
-#define g_mix_file_w g_mix_file
+#define g_mix_w g_mix
 #define g_mix_vct_w g_mix_vct
 #define g_mix_color_w g_mix_color
 #define g_set_mix_color_w g_set_mix_color
@@ -4878,7 +4879,7 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE(S_mix_p,        g_mix_p_w,        1, 0, 0, H_mix_p);
   XEN_DEFINE_PROCEDURE(S_mix_home,     g_mix_home_w,     1, 0, 0, H_mix_home);
   XEN_DEFINE_PROCEDURE(S_mixes,        g_mixes_w,        0, 2, 0, H_mixes);
-  XEN_DEFINE_PROCEDURE(S_mix,          g_mix_file_w,     1, 7, 0, H_mix_file);
+  XEN_DEFINE_PROCEDURE(S_mix,          g_mix_w,          1, 7, 0, H_mix);
   XEN_DEFINE_PROCEDURE(S_mix_vct,      g_mix_vct_w,      1, 6, 0, H_mix_vct);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_mix_tags, g_with_mix_tags_w, H_with_mix_tags,

@@ -1629,6 +1629,9 @@ void das_init(){
   (define (delete-node nodenum)
     (changefunc this)
     (set! nodes (delete! (list-ref nodes nodenum) nodes eq?))
+    (set! pressednode #f)
+    (set! prevnode #f)
+    (set! nextnode #f)
     (make-lines-and-boxes)
     (this->paint)
     'stop!)
@@ -2336,3 +2339,13 @@ void das_init(){
 (-> d show)
 (-> d hide)
 !#
+
+
+
+
+
+
+    
+
+
+

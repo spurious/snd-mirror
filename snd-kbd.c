@@ -876,7 +876,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 #endif
 	    case CHANGE_FILING:
 	      clear_minibuffer(sp);
-	      mix_complete_file_at_cursor(sp, str, "C-x C-q", with_mix_tags(ss), 0);
+	      mix_complete_file_at_cursor(sp, str, with_mix_tags(ss), 0);
 	      break;
 	    case INSERT_FILING:
 	      {
@@ -1383,7 +1383,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		}
 	      break;
 	    case snd_K_Y: case snd_K_y: 
-	      paste_region(region_list_position_to_id(0), cp, "C-y");
+	      paste_region(region_list_position_to_id(0), cp);
 	      break;
 	    case snd_K_Z: case snd_K_z: 
 	      cp->cursor_on = true; 
@@ -1822,7 +1822,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		  else play_region(ext_count, IN_BACKGROUND);
 		  break;
 		case snd_K_Q: case snd_K_q: 
-		  add_selection_or_region((!got_ext_count) ? 0 : ext_count, cp, "C-x q"); 
+		  add_selection_or_region((!got_ext_count) ? 0 : ext_count, cp); 
 		  break;
 		case snd_K_R: case snd_K_r: 
 		  redo_edit_with_sync(cp, (!got_ext_count) ? 1 : ext_count); 

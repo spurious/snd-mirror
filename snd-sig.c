@@ -1914,6 +1914,8 @@ static char *edit_list_envelope(mus_any *egen, off_t beg, off_t env_dur, off_t c
   return(new_origin);
 }
 
+/* TODO: if env-selection, ignores env in origin? -> ramp-channel? */
+
 void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection, 
 	       enved_progress_t from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos)
 {

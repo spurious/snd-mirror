@@ -602,9 +602,10 @@ int save_region(int n, char *ofile, int data_format)
 
 #define NOT_EDITABLE -2
 
-static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, const char *origin, int trk)
+static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, int trk)
 {
   region *r;
+  char *origin = NULL;
   int i, err = MUS_NO_ERROR, id = -1;
   sync_info *si = NULL;
   r = id_to_region(n);
@@ -623,7 +624,12 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, const char 
 	  cp->edit_hook_checked = false;
 	  snd_error(_("can't save mix temp file (%s: %s)"), newname, strerror(errno));
 	}
-      else id = mix_file(beg, r->frames, si->chans, si->cps, newname, DELETE_ME, origin, with_mix_tags(ss), trk);
+      else 
+	{
+	  origin = mus_format("%s " OFF_TD " %d ", S_mix_region, beg, n);
+	  id = mix_file(beg, r->frames, si->chans, si->cps, newname, DELETE_ME, origin, with_mix_tags(ss), trk);
+	  FREE(origin);
+	}
       if (newname) FREE(newname);
     }
   else
@@ -644,6 +650,7 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, const char 
 	    if (r->chans > 1) 
 	      remember_temp(tempfile, r->chans);
 	}
+      origin = mus_format("%s " OFF_TD " %d", S_insert_region, beg, n);
       for (i = 0; ((i < r->chans) && (i < si->chans)); i++)
 	{
 	  chan_info *ncp;
@@ -653,6 +660,7 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, const char 
 				  origin, ncp->edit_ctr))
 	    update_graph(si->cps[i]);
 	}
+      FREE(origin);
       if ((r->use_temp_file == REGION_FILE) && (tempfile)) FREE(tempfile);
     }
   if (si) si = free_sync_info(si);
@@ -660,8 +668,8 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, const char 
   return(id);
 }
 
-void paste_region(int n, chan_info *cp, const char *origin) {paste_region_1(n, cp, false, CURSOR(cp), origin, 0);}
-void add_region(int n, chan_info *cp, const char *origin) {paste_region_1(n, cp, true, CURSOR(cp), origin, 0);}
+void paste_region(int n, chan_info *cp) {paste_region_1(n, cp, false, CURSOR(cp), 0);}
+void add_region(int n, chan_info *cp) {paste_region_1(n, cp, true, CURSOR(cp), 0);}
 
 int define_region(sync_info *si, off_t *ends)
 {
@@ -1144,7 +1152,6 @@ insert region data into snd's channel chn starting at start-samp"
 
   chan_info *cp;
   int rg;
-  char *buf;
   off_t samp;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_insert_region, "a number");
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(reg_n), reg_n, XEN_ARG_2, S_insert_region, "a region id");
@@ -1154,9 +1161,7 @@ insert region data into snd's channel chn starting at start-samp"
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_insert_region, reg_n));
   samp = beg_to_sample(samp_n, S_insert_region);
-  buf = mus_format("%s " OFF_TD " %d", S_insert_region, samp, rg);
-  paste_region_1(rg, cp, false, samp, buf, 0);
-  FREE(buf);
+  paste_region_1(rg, cp, false, samp, 0);
   update_graph(cp);
   return(reg_n);
 }
@@ -1445,7 +1450,6 @@ mix region into snd's channel chn starting at chn-samp; return new mix id."
 
   chan_info *cp;
   off_t samp;
-  char *buf;
   int rg, id = -1, track_id = 0;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(chn_samp_n), chn_samp_n, XEN_ARG_1, S_mix_region, "a number");
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(reg_n), reg_n, XEN_ARG_2, S_mix_region, "a region id");
@@ -1464,9 +1468,7 @@ mix region into snd's channel chn starting at chn-samp; return new mix id."
 	      XEN_LIST_2(C_TO_XEN_STRING(S_mix_region),
 			 tid));
   ss->catch_message = NULL;
-  buf = mus_format("%s %d at " OFF_TD, S_mix_region, rg, samp);
-  id = paste_region_1(rg, cp, true, samp, buf, track_id);
-  FREE(buf);
+  id = paste_region_1(rg, cp, true, samp, track_id);
   /* id might legitmately be invalid mix id if with_mix_tags is #f */
   return(C_TO_XEN_INT(id));
 }

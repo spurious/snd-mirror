@@ -304,9 +304,9 @@ sync_info *selection_sync(void)
   return(si);
 }
 
-static int mix_selection(chan_info *cp, off_t beg, const char *origin)
+static int mix_selection(chan_info *cp, off_t beg)
 {
-  char *tempfile = NULL;
+  char *tempfile = NULL, *origin = NULL;
   int err, id = INVALID_MIX_ID;
   if (!(editable_p(cp))) return(id);
   tempfile = snd_tempnam();
@@ -315,9 +315,11 @@ static int mix_selection(chan_info *cp, off_t beg, const char *origin)
     {
       sync_info *si_out;
       si_out = sync_to_chan(cp);
+      origin = mus_format("%s " OFF_TD, S_mix_selection, beg);
       id = mix_file(beg, selection_len(), si_out->chans, si_out->cps, tempfile, 
 		    (si_out->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
 		    origin, with_mix_tags(ss), 0);
+      FREE(origin);
       free_sync_info(si_out);	      
     }
   if (tempfile) FREE(tempfile);
@@ -325,19 +327,19 @@ static int mix_selection(chan_info *cp, off_t beg, const char *origin)
   return(id);
 }
 
-void add_selection_or_region(int reg, chan_info *cp, const char *origin)
+void add_selection_or_region(int reg, chan_info *cp)
 {
   if (cp) 
     {
       if ((reg == 0) && (selection_is_active()))
-	mix_selection(cp, CURSOR(cp), origin);
-      else add_region(reg, cp, origin);
+	mix_selection(cp, CURSOR(cp));
+      else add_region(reg, cp);
     }
 }
 
-static int insert_selection(chan_info *cp, off_t beg, const char *origin)
+static int insert_selection(chan_info *cp, off_t beg)
 {
-  char *tempfile = NULL;
+  char *tempfile = NULL, *origin = NULL;
   int i, err = MUS_NO_ERROR, out_format = MUS_OUT_FORMAT;
   if (!(editable_p(cp))) return(MUS_NO_ERROR);
   if (mus_header_writable(MUS_NEXT, cp->sound->hdr->format))
@@ -362,11 +364,13 @@ static int insert_selection(chan_info *cp, off_t beg, const char *origin)
 	      cp_out = si_out->cps[i]; /* currently syncd chan that we might paste to */
 	      cp_in = si_in->cps[i];   /* selection chan to paste in (no wrap-around here) */
 	      len = cp_selection_len(cp_in, NULL);
+	      origin = mus_format("%s " OFF_TD, S_insert_selection, beg);
 	      if (file_insert_samples(beg, len,
 				      tempfile, cp_out, i,
 				      (si_in->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
 				      origin, cp_out->edit_ctr))
 		update_graph(cp_out);
+	      FREE(origin);
 	    }
 	  free_sync_info(si_in);
 	  free_sync_info(si_out);
@@ -381,18 +385,9 @@ void insert_selection_or_region(int reg, chan_info *cp)
 {
   if (cp) 
     {
-      char *origin = NULL;
       if ((reg == 0) && (selection_is_active()))
-	{
-	  origin = mus_format("%s " OFF_TD, S_insert_selection, CURSOR(cp));
-	  insert_selection(cp, CURSOR(cp), origin);
-	}
-      else 
-	{
-	  origin = mus_format("%s " OFF_TD " %d", S_insert_region, CURSOR(cp), reg);
-	  paste_region(reg, cp, origin);
-	}
-      if (origin) FREE(origin);
+	insert_selection(cp, CURSOR(cp));
+      else paste_region(reg, cp);
     }
 }
 
@@ -771,14 +766,11 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
       chan_info *cp;
       off_t samp;
       int err = MUS_NO_ERROR;
-      char *buf;
       ASSERT_CHANNEL(S_insert_selection, snd, chn, 2);
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_insert_selection, "a number");
       cp = get_cp(snd, chn, S_insert_selection);
       samp = beg_to_sample(beg, S_insert_selection);
-      buf = mus_format("%s " OFF_TD, S_insert_selection, samp);
-      err = insert_selection(cp, samp, buf);
-      FREE(buf);
+      err = insert_selection(cp, samp);
       return(C_TO_XEN_BOOLEAN((err == MUS_NO_ERROR)));
     }
   return(snd_no_active_selection_error(S_insert_selection));
@@ -792,15 +784,11 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn)
       chan_info *cp;
       off_t obeg;
       XEN res;
-      char *buf;
       ASSERT_CHANNEL(S_mix_selection, snd, chn, 2);
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_mix_selection, "a number");
       cp = get_cp(snd, chn, S_mix_selection);
       obeg = beg_to_sample(beg, S_mix_selection);
-      buf = mus_format("%s " OFF_TD, S_mix_selection, obeg);
-      /* TODO: how to get mix id before it is actually created?  how to handle multi-channel mixes in origin string? */
-      res = C_TO_XEN_INT(mix_selection(cp, obeg, buf));
-      FREE(buf);
+      res = C_TO_XEN_INT(mix_selection(cp, obeg));
       return(res);
     }
   return(snd_no_active_selection_error(S_mix_selection));

@@ -121,7 +121,7 @@ static void file_print_callback_1(Widget w, XtPointer info, XtPointer context) {
 /* -------------------------------- EDIT MENU -------------------------------- */
 
 
-static void edit_mix_callback(Widget w, XtPointer info, XtPointer context) {add_selection_or_region(0, selected_channel(), "Edit: mix");}
+static void edit_mix_callback(Widget w, XtPointer info, XtPointer context) {add_selection_or_region(0, selected_channel());}
 static void edit_envelope_callback(Widget w, XtPointer info, XtPointer context) {create_envelope_editor();}
 static void edit_cut_callback(Widget w, XtPointer info, XtPointer context) {delete_selection("Edit: Cut", UPDATE_DISPLAY);}
 static void edit_paste_callback(Widget w, XtPointer info, XtPointer context) {insert_selection_from_menu();}

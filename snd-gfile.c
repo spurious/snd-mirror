@@ -572,7 +572,7 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
   file_dialog_stop_playing(mix_dialog);
   mix_complete_file_at_cursor(any_selected_sound(),
 			      snd_filer_get_filename(mix_dialog->dialog),
-			      "File: mix", with_mix_tags(ss), 0);
+			      with_mix_tags(ss), 0);
 }
 
 widget_t make_mix_file_dialog(bool managed)

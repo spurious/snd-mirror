@@ -3235,7 +3235,7 @@ mix <i>file</i>'s channel <i>in-chan</i> starting at <i>samp</i> in <i>snd</i>'s
 if only the <i>file</i> argument is given, this is equivalent to the File menu's 
 Mix option; the mix start sample in this case depends on the cursor location.
 mix returns the id of the first channel's mix (subsequent channels simply 
-increment this number). If sync is off and <i>in-chan</i> is not #t, only the first channel is mixed.
+increment this number). If <a class=quiet href="#sync">sync</a> is off and <i>in-chan</i> is not #t, only the first channel is mixed.
 If <i>with-mix-tags</i> is #f (default is #t), the data is simply
 mixed without creating any mix tags.  <i>track</i> is the newly created mix's track number.
 </td></tr>
@@ -3638,7 +3638,7 @@ function uses insert-region (and other region functions) to rotate the samples i
 <tr><td></td><td>
 create a new region spanning samples <i>beg</i> to <i>end</i> in <i>snd</i>'s channel <i>chn</i>.
 return region's id.  If no arguments are given, the 
-selection is used. If <i>chn</i> is #t, all chans are included, taking the <i>snd</i> sync field into account if it's not 0.
+selection is used. If <i>chn</i> is #t, all chans are included, taking the <i>snd</i> <a class=quiet href="#sync">sync</a> field into account if it's not 0.
 </td></tr>
 
 <!-- make-region-sample-reader -->
@@ -4040,11 +4040,11 @@ nothing is guaranteed.
 <small><A NAME="regularizedargs"></a>
 For not-very-good historical reasons (it took me awhile to decide how to organize things), some of the procedures here are unnecessarily inconsistent in
 what arguments they accept, whether a channel of #f signals application to all channels or just the
-selected one, whether the sync field is followed, and so on.  Rather than make a bunch of backwards
+selected one, whether the <a class=quiet href="#sync">sync</a> field is followed, and so on.  Rather than make a bunch of backwards
 incompatible changes, I decided to add a bunch of more-or-less synonymous functions that regularize
 these calls. The replacements always take arguments in the order begin time, duration (not end sample),
 sound index, channel number, and edit position, possibly preceded by one argument, and sometimes followed by 
-an edit history name or 'ring time' (overlap).  The sync field is ignored, an unspecified sound argument applies only to the
+an edit history name or 'ring time' (overlap).  The <a class=quiet href="#sync">sync</a> field is ignored, an unspecified sound argument applies only to the
 current sound, and an unspecified channel argument applies only to the current channel. 
 The following substitutions can be made:
 </small>
@@ -6302,7 +6302,7 @@ for the given channel.  This should be called only within <a href="#initialgraph
 <code><a class=def name="redo">redo</a> (<i>edits snd chn</i>)</code>
 </td></tr>
 <tr><td></td><td>
-redo <i>edits</i> edits (default is 1) in <i>snd</i>'s channel <i>chn</i>. Redo follows the sync field if it
+redo <i>edits</i> edits (default is 1) in <i>snd</i>'s channel <i>chn</i>. Redo follows the <a class=quiet href="#sync">sync</a> field if it
 is not 0, which sometimes means that the channel arg is simply ignored.  The following might be a more reasonable redo function:
 <br><br><pre>
 (define* (<a name="redochannel">redo-channel</a> #:optional (<a class=quiet href="#edits">edits</a> 1) snd chn)
@@ -6651,7 +6651,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 <code><a class=def name="scaleto">scale-to</a> (<i>scalers snd chn</i>)</code>
 </td></tr>
 <tr><td></td><td>
-<a href="snd.html#scaling">normalize</a> <i>snd</i> to <i>scalers</i> (following sync as in <a href="#scaleby">scale-by</a>).
+<a href="snd.html#scaling">normalize</a> <i>snd</i> to <i>scalers</i> (following <a class=quiet href="#sync">sync</a> as in <a href="#scaleby">scale-by</a>).
 <code>(scale-to 0.5)</code> scales the current channel so that its maxamp is 0.5.
 If all the samples are 0.0, scale-to returns #f and does not perform any edit.
 <i>scalers</i> can be a number, a list of numbers, or a vct.
@@ -7539,7 +7539,7 @@ See <a href="#fftpeak">fft-peak</a> for an example.
 </td></tr>
 <tr><td></td><td>
 undo <i>edits</i> edits (default 1) in <i>snd</i>'s channel <i>chn</i>.
-Undo follows the sync field if it
+Undo follows the <a class=quiet href="#sync">sync</a> field if it
 is not 0, which sometimes means that the channel arg is simply ignored.  The following might be a more reasonable undo function:
 <br>
 <pre>

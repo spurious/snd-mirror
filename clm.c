@@ -136,8 +136,6 @@ char *mus_name(mus_any *ptr)
   return((ptr->core)->name);
 }
 
-/* SOMEDAY: mus_set_name might be nice (to distinguish gens) */
-
 Float mus_radians_to_hz(Float rads) {return(rads / w_rate);}
 Float mus_hz_to_radians(Float hz) {return(hz * w_rate);}
 Float mus_degrees_to_radians(Float degree) {return(degree * TWO_PI / 360.0);}

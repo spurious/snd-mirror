@@ -144,6 +144,7 @@ static bool within_selection_src = false;
 
 static void apply_enved(void)
 {
+  char *origin = NULL, *estr = NULL;
   if (active_env)
     {
       active_channel = current_channel();
@@ -156,13 +157,19 @@ static void apply_enved(void)
 	  switch (enved_target(ss))
 	    {
 	    case ENVED_AMPLITUDE:
+	      origin = mus_format("%s %s%s", 
+				  (apply_to_selection) ? S_env_selection : S_env_channel,
+				  estr = env_to_string(active_env),
+				  (apply_to_selection) ? "" : " 0 #f");
 	      apply_env(active_channel, active_env, 0, 
 			CURRENT_SAMPLES(active_channel),
 			apply_to_selection, FROM_ENVED, 
-			"Enved: amp", NULL,
+			origin, NULL,
 			C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
 	      /* calls update_graph, I think, but in short files that doesn't update the amp-env */
 	      if (enved_wave_p(ss)) env_redisplay();
+	      if (estr) FREE(estr);
+	      if (origin) FREE(origin);
 	      break;
 	    case ENVED_SPECTRUM: 
 	      apply_filter(active_channel, 
