@@ -1849,6 +1849,13 @@ static SCM samples2vct(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM v, SCM p
   else return(make_vct(len, fvals));
 }
 
+static inline MUS_SAMPLE_TYPE local_next_sample_unscaled(snd_fd *sf)
+{
+  if (sf->view_buffered_data > sf->last)
+    return(next_sound(sf));
+  else return(*sf->view_buffered_data++);
+}
+
 static SCM samples2sound_data(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM sdobj, SCM pos, SCM sdchan)
 {
   #define H_samples2sound_data "(" S_samples2sound_data " &optional (start-samp 0) samps snd chn sdobj edit-position (sdobj-chan 0))\n\
@@ -1888,7 +1895,7 @@ static SCM samples2sound_data(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM s
 	    {
 	      if (no_ed_scalers(cp))
 		for (i=0;i<len;i++) 
-		  sd->data[chn][i] = next_sample_unscaled(sf);
+		  sd->data[chn][i] = local_next_sample_unscaled(sf);
 	      else 
 		for (i=0;i<len;i++) 
 		  sd->data[chn][i] = next_sample(sf);

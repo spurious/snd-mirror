@@ -1546,6 +1546,13 @@ static void clear_dac_buffers(dac_state *dacp)
 #endif  
 }
 
+static inline MUS_SAMPLE_TYPE local_next_sample_unscaled(snd_fd *sf)
+{
+  if (sf->view_buffered_data > sf->last)
+    return(next_sound(sf));
+  else return(*sf->view_buffered_data++);
+}
+
 static int fill_dac_buffers(dac_state *dacp, int write_ok)
 {
   int i,j,cursor_change;
@@ -1600,7 +1607,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 
 		case NO_CHANGE_AND_NO_SCALING:
 		  for (j=0;j<frames;j++)
-		    buf[j] += next_sample_unscaled(dp->chn_fd);
+		    buf[j] += local_next_sample_unscaled(dp->chn_fd);
 		  break;
 
 		case JUST_AMP:

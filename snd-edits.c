@@ -1937,7 +1937,7 @@ snd_fd *init_sample_read(int samp, chan_info *cp, int direction)
   return(init_sample_read_any(samp, cp, direction, cp->edit_ctr));
 }
 
-static MUS_SAMPLE_TYPE previous_sound (snd_fd *sf) 
+MUS_SAMPLE_TYPE previous_sound (snd_fd *sf) 
 {
   int ind0,ind1,indx;
   snd_data *prev_snd;
@@ -1986,7 +1986,7 @@ static MUS_SAMPLE_TYPE previous_sound (snd_fd *sf)
   return((MUS_SAMPLE_TYPE)(UNWRAP_SAMPLE(*sf->view_buffered_data--, sf->cb[ED_SCL])));
 }
 
-static MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
+MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
 {
   int ind0,ind1,indx;
   snd_data *nxt_snd;
@@ -2057,41 +2057,6 @@ inline MUS_SAMPLE_TYPE previous_sample(snd_fd *sf)
   if (sf->view_buffered_data < sf->first)
     return(previous_sound(sf));
   else return((MUS_SAMPLE_TYPE)(UNWRAP_SAMPLE(*sf->view_buffered_data--, sf->cb[ED_SCL])));
-}
-
-inline MUS_SAMPLE_TYPE next_sample_unscaled(snd_fd *sf)
-{
-  if (sf->view_buffered_data > sf->last)
-    return(next_sound(sf));
-  else return(*sf->view_buffered_data++);
-}
-
-inline MUS_SAMPLE_TYPE previous_sample_unscaled(snd_fd *sf)
-{
-  if (sf->view_buffered_data < sf->first)
-    return(previous_sound(sf));
-  else return(*sf->view_buffered_data--);
-}
-
-inline Float next_sample_to_float (snd_fd *sf) 
-{
-  if (sf->view_buffered_data > sf->last)
-    return(MUS_SAMPLE_TO_FLOAT(next_sound(sf)));
-  else return(UNWRAP_SAMPLE_TO_FLOAT(*sf->view_buffered_data++, sf));
-}
-
-inline Float previous_sample_to_float (snd_fd *sf) 
-{
-  if (sf->view_buffered_data < sf->first)
-    return(MUS_SAMPLE_TO_FLOAT(previous_sound(sf)));
-  else return(UNWRAP_SAMPLE_TO_FLOAT(*sf->view_buffered_data--, sf));
-}
-
-void move_to_next_sample(snd_fd *sf)
-{
-  if (sf->view_buffered_data > sf->last)
-    next_sound(sf);
-  else sf->view_buffered_data++;
 }
 
 int read_sample_eof (snd_fd *sf)
@@ -2700,7 +2665,7 @@ static SCM g_edit_tree(SCM snd, SCM chn, SCM upos)
 /* ---------------- sample readers ---------------- */
 
 static SND_TAG_TYPE sf_tag = 0;
-static SCM mark_sf(SCM obj) {SCM_SETGC8MARK(obj); return(SCM_BOOL_F);}
+static SCM mark_sf(SCM obj) {SND_SETGCMARK(obj); return(SCM_BOOL_F);}
 
 int sf_p(SCM obj); /* currently for snd-ladspa.c */
 int sf_p(SCM obj) {return((SCM_NIMP(obj)) && (SND_SMOB_TYPE(sf_tag, obj)));}

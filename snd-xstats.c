@@ -4,17 +4,17 @@
 
 static Widget stats_window = NULL;
 
-static void stats_help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void stats_help(Widget w, XtPointer clientData, XtPointer callData) 
 {
   stats_dialog_help((snd_state *)clientData);
 }
 
-static void stats_dismiss_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void stats_dismiss(Widget w, XtPointer clientData, XtPointer callData) 
 {
   set_show_usage_stats((snd_state *)clientData, FALSE);
 }
 
-static void stats_update_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void stats_update(Widget w, XtPointer clientData, XtPointer callData) 
 {
   snd_state *ss = (snd_state *)clientData;
   update_all_usage_stats(ss);
@@ -23,7 +23,10 @@ static void stats_update_Callback(Widget w, XtPointer clientData, XtPointer call
 
 static Widget stats_form;
 
-void update_stats(snd_state *ss) {update_stats_with_widget(ss, stats_form);}
+void update_stats(snd_state *ss) 
+{
+  update_stats_with_widget(ss, stats_form);
+}
 
 void update_stats_display(snd_state *ss, int all)
 {
@@ -56,9 +59,9 @@ void update_stats_display(snd_state *ss, int all)
       override_form_translation(stats_window);
 #endif
 
-      XtAddCallback(stats_window, XmNcancelCallback, stats_update_Callback, ss);
-      XtAddCallback(stats_window, XmNhelpCallback, stats_help_Callback, ss);
-      XtAddCallback(stats_window, XmNokCallback, stats_dismiss_Callback, ss);
+      XtAddCallback(stats_window, XmNcancelCallback, stats_update, ss);
+      XtAddCallback(stats_window, XmNhelpCallback, stats_help, ss);
+      XtAddCallback(stats_window, XmNokCallback, stats_dismiss, ss);
       XmStringFree(xstr1);
       XmStringFree(xstr2);
       XmStringFree(xstr3);

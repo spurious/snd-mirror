@@ -8,12 +8,12 @@
 Float un_dB(snd_state *ss, Float py)
 {
   /* used only by envelope editor (snd-xenv etc) */
-  return((py <= ss->min_dB) ? 0.0 : pow(10.0, py*.05));
+  return((py <= ss->min_dB) ? 0.0 : pow(10.0, py * .05));
 }
 
 static Float dB(snd_state *ss, Float py)
 {
-  return((py <= ss->lin_dB) ? ss->min_dB : (20.0*(log10(py))));
+  return((py <= ss->lin_dB) ? ss->min_dB : (20.0 * (log10(py))));
 }
 
 
@@ -35,10 +35,10 @@ env *copy_env(env *e)
     {
       ne = (env *)CALLOC(1, sizeof(env));
       ne->pts = e->pts;
-      ne->data_size = e->pts*2;
-      ne->data = (Float *)CALLOC(e->pts*2, sizeof(Float));
-      for (i=0;i<e->pts*2;i++) ne->data[i] = e->data[i];
-      ne->base = e->base; /* was 1.0? 20-Aug-98 */
+      ne->data_size = e->pts * 2;
+      ne->data = (Float *)CALLOC(e->pts * 2, sizeof(Float));
+      for (i=0;i<e->pts * 2;i++) ne->data[i] = e->data[i];
+      ne->base = e->base;
       return(ne);
     }
   return(NULL);
@@ -51,10 +51,10 @@ char *env_to_string(env *e)
   char *news = NULL;
   if (e)
     {
-      news = (char *)CALLOC(4 + (e->pts*2*8), sizeof(char));
-      news[0]='\'';
-      news[1]='(';
-      news[2]='\0';
+      news = (char *)CALLOC(4 + (e->pts * 2 * 8), sizeof(char));
+      news[0] = '\'';
+      news[1] = '(';
+      news[2] = '\0';
       expr_buf = (char *)CALLOC(128, sizeof(char));
       for (i=0, j=0;i<e->pts;i++,j+=2)
 	{
@@ -80,9 +80,13 @@ env *make_envelope(Float *env_buffer, int len)
   e = (env *)CALLOC(1, sizeof(env));
   e->data = (Float *)CALLOC(flen, sizeof(Float));
   e->data_size = flen;
-  e->pts = flen/2;
+  e->pts = flen / 2;
   for (i=0;i<len;i++) e->data[i] = env_buffer[i];
-  if ((flen == 4) && (len == 2)) {e->data[2] = e->data[0]+1.0; e->data[3] = e->data[1];} /* fixup degenerate envelope */
+  if ((flen == 4) && (len == 2))  /* fixup degenerate envelope */
+    {
+      e->data[2] = e->data[0] + 1.0; 
+      e->data[3] = e->data[1];
+    } 
   e->base = 1.0;
   return(e);
 }
@@ -94,22 +98,22 @@ static Float *magify_env(env *e, int dur, Float scaler)
   Float *result;
   if (!e) return(NULL);
   x1 = e->data[0];
-  xmag = (Float)dur/(Float)(e->data[e->pts*2 - 2] - x1);
+  xmag = (Float)dur / (Float)(e->data[e->pts * 2 - 2] - x1);
   y1 = e->data[1];
-  result = (Float *)CALLOC(e->pts*2, sizeof(Float));
-  for (j=0, i=2;i<e->pts*2;i+=2,j+=2)
+  result = (Float *)CALLOC(e->pts * 2, sizeof(Float));
+  for (j=0, i=2; i<e->pts * 2; i+=2, j+=2)
     {
       x0 = x1;
       x1 = e->data[i];
       y0 = y1;
-      y1 = e->data[i+1];
-      curx = (int)(xmag*(x1-x0)+0.5);
+      y1 = e->data[i + 1];
+      curx = (int)(xmag * (x1 - x0) + 0.5);
       if (curx < 1) curx = 1;
       result[j] = curx;
-      if (y0 == y1) result[j+1]=0.0;
-      else result[j+1] = scaler*(y1-y0)/(Float)curx;
+      if (y0 == y1) result[j + 1]=0.0;
+      else result[j + 1] = scaler * (y1 - y0) / (Float)curx;
     }
-  result[e->pts*2-2] = 100000000;
+  result[e->pts * 2 - 2] = 100000000;
   return(result);
 }
 
@@ -123,18 +127,18 @@ static Float *fixup_exp_env(env *e, Float *offset, Float *scaler, Float base)
   min_y = (*offset) + (*scaler) * e->data[1];
   max_y = min_y;
   b = 1.0 / log(base);
-  b1 = base-1.0;
-  len = e->pts*2;
+  b1 = base - 1.0;
+  len = e->pts * 2;
   result = (Float *)CALLOC(len, sizeof(Float));
   result[0] = e->data[0];
   result[1] = min_y;
   for (i=2;i<len;i+=2)
     {
-      tmp = (*offset) + (*scaler) * e->data[i+1];
+      tmp = (*offset) + (*scaler) * e->data[i + 1];
       result[i] = e->data[i];
-      result[i+1] = tmp;
-      if (tmp<min_y) min_y = tmp;
-      if (tmp>max_y) max_y = tmp;
+      result[i + 1] = tmp;
+      if (tmp < min_y) min_y = tmp;
+      if (tmp > max_y) max_y = tmp;
     }
   flat = (min_y == max_y);
   if (!flat) val = 1.0 / (max_y - min_y);
@@ -143,7 +147,7 @@ static Float *fixup_exp_env(env *e, Float *offset, Float *scaler, Float base)
       if (flat) 
 	tmp = 1.0;
       else tmp = val * (result[i] - min_y);
-      result[i] = log(1.0+(tmp*b1)) * b;
+      result[i] = log(1.0 + (tmp * b1)) * b;
     }
   (*scaler) = (max_y - min_y) / b1;
   (*offset) = min_y;
@@ -153,25 +157,25 @@ static Float *fixup_exp_env(env *e, Float *offset, Float *scaler, Float base)
 static void add_point (env *e, int pos, Float x, Float y)
 {
   int i,j;
-  if (e->pts*2 == e->data_size)
+  if (e->pts * 2 == e->data_size)
     {
       e->data_size += 16;
       e->data = (Float *)REALLOC(e->data, (e->data_size) * sizeof(Float));
     }
-  for (i=e->pts-1, j=(e->pts-1)*2;i>=pos;i--,j-=2)
+  for (i=e->pts-1, j=(e->pts - 1) * 2; i>=pos; i--, j-=2)
     {
-      e->data[j+2] = e->data[j];
-      e->data[j+3] = e->data[j+1];
+      e->data[j + 2] = e->data[j];
+      e->data[j + 3] = e->data[j + 1];
     }
-  e->data[pos*2] = x;
-  e->data[pos*2+1] = y;
+  e->data[pos * 2] = x;
+  e->data[pos * 2 + 1] = y;
   e->pts++;
 }
 
 void move_point (env *e, int pos, Float x, Float y)
 {
-  e->data[pos*2] = x;
-  e->data[pos*2 + 1] = y;
+  e->data[pos * 2] = x;
+  e->data[pos * 2 + 1] = y;
 }
 
 void delete_point(env *e, int pos)
@@ -179,8 +183,8 @@ void delete_point(env *e, int pos)
   int i,j;
   for (i=pos, j=pos*2;i<e->pts-1;i++,j+=2)
     {
-      e->data[j] = e->data[j+2];
-      e->data[j+1] = e->data[j+3];
+      e->data[j] = e->data[j + 2];
+      e->data[j + 1] = e->data[j + 3];
     }
   e->pts--;
 }
@@ -189,9 +193,8 @@ static int place_point(int *cxs, int points, int x)
 {
   int i;
   for (i=0;i<points;i++)
-    {
-      if (x<cxs[i]) return(i-1);
-    }
+    if (x < cxs[i]) 
+      return(i - 1);
   return(points);
 }
 
@@ -199,11 +202,11 @@ static int hit_point(snd_state *ss, int *cxs, int *cys, int points, int x, int y
 {
   int i;
   for (i=0;i<points;i++)
-    {
-      if (((x>(cxs[i]-ss->enved_point_size)) && (x<(cxs[i]+ss->enved_point_size))) &&
-	  ((y>(cys[i]-ss->enved_point_size)) && (y<(cys[i]+ss->enved_point_size))))
-	return(i);
-    }
+    if (((x > (cxs[i] - ss->enved_point_size)) && 
+	 (x < (cxs[i] + ss->enved_point_size))) &&
+	((y > (cys[i] - ss->enved_point_size)) && 
+	 (y < (cys[i] + ss->enved_point_size))))
+      return(i);
   return(-1);
 }
 
@@ -294,12 +297,16 @@ static void sp_make_axis_cp(snd_info *sp, char *name, int ex0, int ey0, int widt
   if (!(spf->axis_cp)) 
     {
       spf->axis_cp = new_env_axis(ss);
-      fixup_axis_context((spf->axis_cp)->axis->ax, w_snd_filter_env(sp), (ss->sgx)->fltenv_basic_gc);
+      fixup_axis_context((spf->axis_cp)->axis->ax, 
+			 w_snd_filter_env(sp), 
+			 (ss->sgx)->fltenv_basic_gc);
     }
   if (!(spf->gray_ap)) 
     {
       spf->gray_ap = new_wave_axis(ss);
-      fixup_axis_context(spf->gray_ap->ax, w_snd_filter_env(sp), (ss->sgx)->fltenv_data_gc);
+      fixup_axis_context(spf->gray_ap->ax, 
+			 w_snd_filter_env(sp), 
+			 (ss->sgx)->fltenv_data_gc);
     }
   init_env_axes(spf->axis_cp, name, ex0, ex0, ey0, width, height, xmin, xmax, ymin, ymax);
 }
@@ -338,7 +345,7 @@ void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int wid
   if (spf == NULL) return;
   ex0 = e->data[0];
   ey0 = e->data[1];
-  ex1 = e->data[(e->pts*2) - 2];
+  ex1 = e->data[(e->pts * 2) - 2];
   ey1 = ey0;
   for (i=3;i<e->pts*2;i+=2)
     {
@@ -349,7 +356,11 @@ void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int wid
   if (ey0 > 0.0) ey0 = 0.0;
   if ((ey0 == ey1) && (ey1 == 0.0)) ey1 = 1.0; /* fixup degenerate case */
   if (ey1 < 1.0) ey1 = 1.0;
-  if (sp->filter_dBing) {ey0 = ss->min_dB; ey1 = 0.0;}
+  if (sp->filter_dBing) 
+    {
+      ey0 = ss->min_dB; 
+      ey1 = 0.0;
+    }
   sp_make_axis_cp(sp, "frequency response", 0, 0, width, height, ex0, ex1, ey0, ey1); 
   ap = (spf->axis_cp)->axis;
   ix1 = grf_x(e->data[0], ap);
@@ -366,11 +377,11 @@ void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int wid
 	  ix0 = ix1;
 	  iy0 = iy1;
 	  ix1 = grf_x(e->data[i], ap);
-	  iy1 = sp_grf_y_dB(sp, e->data[i+1], ap);
+	  iy1 = sp_grf_y_dB(sp, e->data[i + 1], ap);
 	  sp_set_current_point(spf, j, ix1, iy1);
 	  draw_arc(ax, ix1, iy1, size);
 	  /* now try to fill in from the last point to this one */
-	  if ((ix1-ix0) < (2*EXP_SEGLEN))
+	  if ((ix1 - ix0) < (2 * EXP_SEGLEN))
 	    {
 	      /* points are too close to be worth interpolating */
 	      draw_line(ax, ix0, iy0, ix1, iy1);
@@ -378,9 +389,9 @@ void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int wid
 	  else
 	    {
 	      /* interpolate so the display looks closer to dB (we should use the env base...) */
-	      dur = (ix1-ix0) / EXP_SEGLEN;
-	      xincr = (e->data[i] - e->data[i-2]) / (Float)dur;
-	      curx = e->data[i-2] + xincr;
+	      dur = (ix1 - ix0) / EXP_SEGLEN;
+	      xincr = (e->data[i] - e->data[i - 2]) / (Float)dur;
+	      curx = e->data[i - 2] + xincr;
 	      lx1 = ix0;
 	      ly1 = iy0;
 	      for (k=1;k<dur;k++,curx+=xincr)
@@ -403,7 +414,7 @@ void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int wid
 	  ix0 = ix1;
 	  iy0 = iy1;
 	  ix1 = grf_x(e->data[i], ap);
-	  iy1 = grf_y(e->data[i+1], ap);
+	  iy1 = grf_y(e->data[i + 1], ap);
 	  sp_set_current_point(spf, j, ix1, iy1);
 	  draw_arc(ax, ix1, iy1, size);
 	  draw_line(ax, ix0, iy0, ix1, iy1);
@@ -426,16 +437,20 @@ void handle_filter_point(snd_state *ss, snd_info *sp, int evx, int evy, TIME_TYP
   spf->click_to_delete = 0;
   ap = (spf->axis_cp)->axis;
   x = ungrf_x(ap, evx);
-  if (spf->env_pos > 0) x0 = e->data[spf->env_pos*2-2]; else x0 = 0.0;
-  if (spf->env_pos < e->pts) x1 = e->data[spf->env_pos*2+2]; else x1 = sp->filter_env_xmax; /* x1 = 1.0; */
-  if (x<x0) x=x0;
-  if (x>x1) x=x1;
+  if (spf->env_pos > 0) 
+    x0 = e->data[spf->env_pos * 2 - 2]; 
+  else x0 = 0.0;
+  if (spf->env_pos < e->pts) 
+    x1 = e->data[spf->env_pos * 2 + 2]; 
+  else x1 = sp->filter_env_xmax; /* x1 = 1.0; */
+  if (x < x0) x = x0;
+  if (x > x1) x = x1;
   if (spf->env_pos == 0) x = e->data[0];
-  if (spf->env_pos == (e->pts-1)) x = e->data[(e->pts-1)*2];
+  if (spf->env_pos == (e->pts - 1)) x = e->data[(e->pts - 1) * 2];
   y = ungrf_y(ap, evy);
-  if (y<ap->y0) y=ap->y0;
-  if (y>ap->y1) y=ap->y1;
-  if (sp->filter_dBing) y=un_dB(ss, y);
+  if (y < ap->y0) y = ap->y0;
+  if (y > ap->y1) y = ap->y1;
+  if (sp->filter_dBing) y = un_dB(ss, y);
   move_point(e, spf->env_pos, x, y);
   spf->edited = 1;
   sp_display_env(sp);
@@ -467,7 +482,7 @@ void handle_filter_press(snd_info *sp, int evx, int evy, TIME_TYPE time)
       else 
 	if (x > sp->filter_env_xmax) /* (x > 1.0) */
 	  {
-	    pos = e->pts-1;
+	    pos = e->pts - 1;
 	    x = sp->filter_env_xmax; /* x = 1.0; */
 	  }
     }
@@ -477,7 +492,7 @@ void handle_filter_press(snd_info *sp, int evx, int evy, TIME_TYPE time)
     {
       pos = place_point(spf->current_xs, e->pts, evx);
       add_point(e, pos+1, x, y);
-      spf->env_pos = pos+1;
+      spf->env_pos = pos + 1;
       spf->click_to_delete = 0;
       sp_display_env(sp);
     }
@@ -492,14 +507,16 @@ void handle_filter_release(snd_info *sp)
   spflt *spf;
   spf = (spflt *)((sp->sgx)->flt);
   e = sp->filter_env;
-  if ((spf->click_to_delete) && (!(spf->env_dragged)) && 
-      ((spf->env_pos > 0) && (spf->env_pos < ((sp->filter_env)->pts - 1))))
+  if ((spf->click_to_delete) && 
+      (!(spf->env_dragged)) && 
+      ((spf->env_pos > 0) && 
+       (spf->env_pos < ((sp->filter_env)->pts - 1))))
     delete_point(e, spf->env_pos);
   spf->env_pos = 0;
   spf->env_dragged = 0;
   spf->click_to_delete = 0;
   sp_display_env(sp);
-  set_filter_text(sp, tmpstr=env_to_string(e));
+  set_filter_text(sp, tmpstr = env_to_string(e));
   if (tmpstr) FREE(tmpstr);
   sp->filter_changed = 1;
 }
@@ -617,7 +634,8 @@ static double ungrf_y_dB(snd_state *ss, axis_info *ap, int y)
   else return(ungrf_y(ap, y));
 }
 
-void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_cp, char *name, int x0, int y0, int width, int height, int dots)
+void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_cp, 
+		       char *name, int x0, int y0, int width, int height, int dots)
 {
   int i,j,k;
   Float ex0,ey0,ex1,ey1,val,offset;
@@ -631,7 +649,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
     {
       ex0 = e->data[0];
       ey0 = e->data[1];
-      ex1 = e->data[(e->pts*2) - 2];
+      ex1 = e->data[(e->pts * 2) - 2];
       ey1 = ey0;
       for (i=3;i<e->pts*2;i+=2)
 	{
@@ -677,14 +695,14 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 		  ix0 = ix1;
 		  iy0 = iy1;
 		  ix1 = grf_x(e->data[i], axis_cp->axis);
-		  iy1 = grf_y_dB(ss, e->data[i+1], axis_cp->axis);
+		  iy1 = grf_y_dB(ss, e->data[i + 1], axis_cp->axis);
 		  if (dots)
 		    {
 		      set_current_point(j, ix1, iy1);
 		      draw_arc(ax, ix1, iy1, size);
 		    }
 		  /* now try to fill in from the last point to this one */
-		  if ((ix1-ix0) < (2*EXP_SEGLEN))
+		  if ((ix1 - ix0) < (2 * EXP_SEGLEN))
 		    {
 		      /* points are too close to be worth interpolating */
 		      draw_line(ax, ix0, iy0, ix1, iy1);
@@ -692,9 +710,9 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 		  else
 		    {
 		      /* interpolate so the display looks closer to dB (we should use the env base...) */
-		      dur = (ix1-ix0) / EXP_SEGLEN;
-		      xincr = (e->data[i] - e->data[i-2]) / (Float)dur;
-		      curx = e->data[i-2] + xincr;
+		      dur = (ix1 - ix0) / EXP_SEGLEN;
+		      xincr = (e->data[i] - e->data[i - 2]) / (Float)dur;
+		      curx = e->data[i - 2] + xincr;
 		      lx1 = ix0;
 		      ly1 = iy0;
 		      for (k=1;k<dur;k++,curx+=xincr)
@@ -717,7 +735,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 		  ix0 = ix1;
 		  iy0 = iy1;
 		  ix1 = grf_x(e->data[i], axis_cp->axis);
-		  iy1 = grf_y(e->data[i+1], axis_cp->axis);
+		  iy1 = grf_y(e->data[i + 1], axis_cp->axis);
 		  if (dots)
 		    {
 		      set_current_point(j, ix1, iy1);
@@ -737,7 +755,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 		  ix0 = ix1;
 		  iy0 = iy1;
 		  ix1 = grf_x(e->data[i], axis_cp->axis);
-		  iy1 = grf_y_dB(ss, e->data[i+1], axis_cp->axis);
+		  iy1 = grf_y_dB(ss, e->data[i + 1], axis_cp->axis);
 		  if (dots)
 		    {
 		      set_current_point(j, ix1, iy1);
@@ -761,7 +779,12 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 	      offset = 0.0;
 	      logbase = log(e->base);
 	      ef = fixup_exp_env(e, &offset, &scl, e->base);
-	      if (ef == NULL) {snd_error("%s[%d] %s: fixup exp env failed", __FILE__, __LINE__, __FUNCTION__); return;}
+	      if (ef == NULL) 
+		{
+		  snd_error("%s[%d] %s: fixup exp env failed",
+			    __FILE__, __LINE__, __FUNCTION__);
+		  return;
+		}
 	      newe = make_envelope(ef, e->pts*2);
 	      newe->base = 1.0; /* ? */
 	      efm = magify_env(newe, dur, 1.0);
@@ -772,7 +795,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 	      pass = (int)(efm[0]);
 	      ix1 = grf_x(0.0, axis_cp->axis);
 	      iy1 = grf_y_dB(ss, env_val, axis_cp->axis);
-	      xincr = (ex1-ex0) / (Float)dur;
+	      xincr = (ex1 - ex0) / (Float)dur;
 	      j=1;
 	      for (i=1, curx=ex0;i<dur;i++,curx+=xincr)
 		{
@@ -802,7 +825,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 		  iy0 = iy1;
 		  ix0 = ix1;
 		  ix1 = grf_x(ex1, axis_cp->axis);
-		  iy1 = grf_y_dB(ss, e->data[e->pts*2 -1], axis_cp->axis);
+		  iy1 = grf_y_dB(ss, e->data[e->pts * 2 - 1], axis_cp->axis);
 		  draw_line(ax, ix0, iy0, ix1, iy1);
 		  if (axis_cp->printing) ps_draw_line(axis_cp, ix0, iy0, ix1, iy1);
 		}
@@ -829,15 +852,15 @@ void view_envs(snd_state *ss, int env_window_width, int env_window_height)
     {
       cols = round(sqrt((Float)(all_envs_top * env_window_width) / (Float)env_window_height));
       rows = round((Float)all_envs_top/(Float)cols);
-      if ((rows*cols) < all_envs_top) rows++;
+      if ((rows * cols) < all_envs_top) rows++;
     }
   else
     {
       cols = 1;
       rows = 1;
     }
-  width = (int)((Float)env_window_width/(Float)cols);
-  height = (int)((Float)env_window_height/(Float)rows);
+  width = (int)((Float)env_window_width / (Float)cols);
+  height = (int)((Float)env_window_height / (Float)rows);
   k=0;
   for (i=0, x=0;i<cols;i++,x+=width)
     {
@@ -862,10 +885,10 @@ int hit_env(int xe, int ye, int env_window_width, int env_window_height)
       else
 	{
 	  cols = round(sqrt((Float)(all_envs_top * env_window_width) / (Float)env_window_height));
-	  rows = round((Float)all_envs_top/(Float)cols);
-	  if ((rows*cols) < all_envs_top) rows++;
-	  width = (int)((Float)env_window_width/(Float)cols);
-	  height = (int)((Float)env_window_height/(Float)rows);
+	  rows = round((Float)all_envs_top / (Float)cols);
+	  if ((rows * cols) < all_envs_top) rows++;
+	  width = (int)((Float)env_window_width / (Float)cols);
+	  height = (int)((Float)env_window_height / (Float)rows);
 	  k=0;
 	  for (i=0, x=width;i<cols;i++,x+=width)
 	    {
@@ -877,7 +900,7 @@ int hit_env(int xe, int ye, int env_window_width, int env_window_height)
 		      k++;
 		    }
 		}
-	      else k+=rows;
+	      else k += rows;
 	    }
 	}
     }
@@ -899,9 +922,8 @@ void do_enved_edit(env *new_env)
     }
   /* clear out current edit list above this edit */
   for (i=env_list_top;i<env_list_size;i++)
-    {
-      if (env_list[i]) env_list[i] = free_env(env_list[i]);
-    }
+    if (env_list[i]) 
+      env_list[i] = free_env(env_list[i]);
   env_list[env_list_top] = copy_env(new_env);
   env_list_top++;
 }
@@ -910,13 +932,15 @@ void redo_env_edit(void)
 {
   if (env_list)
     {
-      if ((env_list_top < env_list_size) && (env_list[env_list_top])) 
+      if ((env_list_top < env_list_size) && 
+	  (env_list[env_list_top])) 
 	{
 	  env_list_top++;
 	  set_enved_undo_sensitive(TRUE);
 	  set_enved_revert_sensitive(TRUE);
 	}
-      if ((env_list_top == env_list_size) || (env_list[env_list_top] == NULL)) 
+      if ((env_list_top == env_list_size) || 
+	  (env_list[env_list_top] == NULL)) 
 	set_enved_redo_sensitive(FALSE);
       set_enved_save_sensitive(TRUE);
     }
@@ -961,12 +985,9 @@ static int find_env(char *name)
 { /* -1 upon failure */
   int i;
   if ((all_envs) && (name))
-    {
-      for (i=0;i<all_envs_top;i++)
-	{
-	  if (strcmp(name, all_names[i]) == 0) return(i);
-	}
-    }
+    for (i=0;i<all_envs_top;i++)
+      if (strcmp(name, all_names[i]) == 0) 
+	return(i);
   return(-1);
 }
 
@@ -1042,9 +1063,9 @@ void alert_envelope_editor(snd_state *ss, char *name, env *val)
 
 void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info *gray_ap, int apply_to_mix, int apply_to_selection)
 {
-  int samps,srate,pts=0,id,old_wavo=0;
-  axis_info *ap,*active_ap;
-  chan_info *active_channel,*ncp;
+  int samps,srate,pts=0,id = INVALID_MIX_ID,old_wavo=0,mixing=0;
+  axis_info *ap,*active_ap = NULL;
+  chan_info *active_channel = NULL,*ncp;
 
   if (!(any_selected_sound(ss))) return;
   set_grf_points(-1, 0, 0, 0); /* this is a kludge to handle one-sided graphs (snd-xchn.c) */
@@ -1072,18 +1093,7 @@ void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info
       gray_ap->y1 = 1.0;
       gray_ap->x0 = 0.0;
       gray_ap->x1 = (Float)samps / (Float)srate;
-
-      /* TODO: why is this repeated??? */
-      gray_ap->x_scale = ((double)(gray_ap->x_axis_x1 - gray_ap->x_axis_x0))/((double)(gray_ap->x1 - gray_ap->x0));
-      gray_ap->y_scale = (gray_ap->y_axis_y1 - gray_ap->y_axis_y0)/(gray_ap->y1 - gray_ap->y0);
-      gray_ap->x_base = (double)(gray_ap->x_axis_x0 - gray_ap->x0*gray_ap->x_scale);
-      gray_ap->y_base = (Float)(gray_ap->y_axis_y0 - gray_ap->y0*gray_ap->y_scale);
-      axis_cp->axis = gray_ap;
-      
-      /* md->height = (gray_ap->y_axis_y0 + gray_ap->y_axis_y1)/2; */
-      /* md->y = (gray_ap->y_axis_y1 - gray_ap->y_axis_y0)/2; */
-      pts = display_mix_waveform_at_zero(axis_cp, id);
-      axis_cp->axis = ap;
+      mixing = 1;
     }
   else
     {
@@ -1122,10 +1132,19 @@ void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info
 	  gray_ap->x0 = 0.0;
 	  gray_ap->x1 = (Float)samps / (Float)srate;
 	}
-      gray_ap->x_scale = ((double)(gray_ap->x_axis_x1 - gray_ap->x_axis_x0))/((double)(gray_ap->x1 - gray_ap->x0));
-      gray_ap->y_scale = (gray_ap->y_axis_y1 - gray_ap->y_axis_y0)/(gray_ap->y1 - gray_ap->y0);
-      gray_ap->x_base = (double)(gray_ap->x_axis_x0 - gray_ap->x0*gray_ap->x_scale);
-      gray_ap->y_base = (Float)(gray_ap->y_axis_y0 - gray_ap->y0*gray_ap->y_scale);
+    }
+  gray_ap->x_scale = ((double)(gray_ap->x_axis_x1 - gray_ap->x_axis_x0)) / ((double)(gray_ap->x1 - gray_ap->x0));
+  gray_ap->y_scale = (gray_ap->y_axis_y1 - gray_ap->y_axis_y0) / (gray_ap->y1 - gray_ap->y0);
+  gray_ap->x_base = (double)(gray_ap->x_axis_x0 - gray_ap->x0 * gray_ap->x_scale);
+  gray_ap->y_base = (Float)(gray_ap->y_axis_y0 - gray_ap->y0 * gray_ap->y_scale);
+  if (mixing)
+    {
+      axis_cp->axis = gray_ap;
+      pts = display_mix_waveform_at_zero(axis_cp, id);
+      axis_cp->axis = ap;
+    }
+  else
+    {
       active_channel->axis = gray_ap;
       old_wavo = active_channel->wavo;
       active_channel->wavo = 0;
@@ -1145,8 +1164,8 @@ int enved_button_press_display(snd_state *ss, axis_info *ap, env *active_env, in
   y = ungrf_y_dB(ss, ap, evy);
   if (enved_clipping(ss))
     {
-      if (y<ap->y0) y=ap->y0;
-      if (y>ap->y1) y=ap->y1;
+      if (y < ap->y0) y = ap->y0;
+      if (y > ap->y1) y = ap->y1;
     }
   if (pos == -1)
     {
@@ -1158,7 +1177,7 @@ int enved_button_press_display(snd_state *ss, axis_info *ap, env *active_env, in
       else 
 	if (x > ap->x1) 
 	  {
-	    pos = active_env->pts-1;
+	    pos = active_env->pts - 1;
 	    x = ap->x1;
 	  }
     }
@@ -1169,8 +1188,8 @@ int enved_button_press_display(snd_state *ss, axis_info *ap, env *active_env, in
       pos = place_point(current_xs, active_env->pts, evx);
       /* place returns left point index of current segment or pts if off left end */
       /* in this case, user clicked in middle of segment, so add point there */
-      add_point(active_env, pos+1, x, y);
-      env_pos = pos+1;
+      add_point(active_env, pos + 1, x, y);
+      env_pos = pos + 1;
       set_enved_click_to_delete(0);
       env_redisplay(ss);
     }
@@ -1181,7 +1200,9 @@ int enved_button_press_display(snd_state *ss, axis_info *ap, env *active_env, in
 
 env *enved_next_env(void)
 {
-  if (env_list_top > 0) return(copy_env(env_list[env_list_top-1])); else return(NULL);
+  if (env_list_top > 0) 
+    return(copy_env(env_list[env_list_top - 1])); 
+  else return(NULL);
 }
 
 char *env_name_completer(char *text)
@@ -1292,7 +1313,7 @@ env *string2env(char *str)
   res = scm_internal_stack_catch(SCM_BOOL_T, eval_str_wrapper, str, snd_catch_scm_error, str);
   if (gh_list_p(res))
     {
-      if ((gh_length(res)%2) == 0)
+      if ((gh_length(res) % 2) == 0)
 	{
 	  if (x_increases(res))
 	    return(scm2env(res));
@@ -1316,7 +1337,9 @@ static SCM g_define_envelope(SCM a, SCM b)
   #define H_define_envelope "(" S_define_envelope " name data) defines 'name' to be the envelope 'data', a list of breakpoints"
   SCM_ASSERT(gh_string_p(a), a, SCM_ARG1, S_define_envelope);
   if (gh_list_p(b)) 
-    alert_envelope_editor(get_global_state(), SCM_STRING_CHARS(a), scm2env(b));
+    alert_envelope_editor(get_global_state(), 
+			  SCM_STRING_CHARS(a), 
+			  scm2env(b));
   return(SCM_BOOL_F);
 }
 
@@ -1333,7 +1356,8 @@ static SCM g_env_base(SCM name)
   free(urn);
   if (i != -1) 
     return(TO_SCM_DOUBLE(all_envs[i]->base));
-  else scm_throw(NO_SUCH_ENVELOPE, SCM_LIST1(name));
+  else scm_throw(NO_SUCH_ENVELOPE, 
+		 SCM_LIST1(name));
   return(TO_SCM_DOUBLE(0.0));
 }
 
@@ -1350,13 +1374,15 @@ static SCM g_set_env_base(SCM name, SCM val)
   free(urn);
   if (i != -1) 
     all_envs[i]->base = TO_C_DOUBLE(val);
-  else scm_throw(NO_SUCH_ENVELOPE, SCM_LIST1(name));
+  else scm_throw(NO_SUCH_ENVELOPE, 
+		 SCM_LIST1(name));
   return(val);
 }
 
 SCM env2scm (env *e)
 {
-  if (e) return(array_to_list(e->data, 0, e->pts*2));
+  if (e) 
+    return(array_to_list(e->data, 0, e->pts * 2));
   return(SCM_EOL);
 }
 
@@ -1367,9 +1393,9 @@ void add_or_edit_symbol(char *name, env *val)
   char *buf,*tmpstr=NULL;
   buf = (char *)CALLOC(256, sizeof(char));
   e = SND_LOOKUP(name);
-  if ((e) && (SCM_NFALSEP(e)) && (!(SCM_UNBNDP(e))) && (gh_list_p(e)))
-    sprintf(buf, "(set! %s %s)", name, tmpstr=env_to_string(val));
-  else sprintf(buf, "(define %s %s)", name, tmpstr=env_to_string(val));
+  if ((e) && (gh_list_p(e)))
+    sprintf(buf, "(set! %s %s)", name, tmpstr = env_to_string(val));
+  else sprintf(buf, "(define %s %s)", name, tmpstr = env_to_string(val));
   scm_internal_stack_catch(SCM_BOOL_T, eval_str_wrapper, buf, snd_catch_scm_error, buf);
   FREE(buf);
   if (tmpstr) FREE(tmpstr);
@@ -1401,7 +1427,9 @@ env *get_env(SCM e, SCM base, char *origin) /* list or vector in e */
       }
     else return(NULL);
   newenv = make_envelope(buf, len);
-  if (gh_number_p(base)) newenv->base = TO_C_DOUBLE(base); else newenv->base = 1.0;
+  if (gh_number_p(base)) 
+    newenv->base = TO_C_DOUBLE(base); 
+  else newenv->base = 1.0;
   if (buf) FREE(buf);
   return(newenv);
 }
@@ -1420,7 +1448,9 @@ static SCM g_save_envelopes(SCM filename)
     {
       save_envelope_editor_state(fd);
       if (fclose(fd) != 0)
-	snd_error("can't close %s! [%s[%d] %s]", name, __FILE__, __LINE__, __FUNCTION__);
+	snd_error("can't close %s! [%s[%d] %s]", 
+		  name,
+		  __FILE__, __LINE__, __FUNCTION__);
       if (name) FREE(name);
       return(filename);
     }
@@ -1433,7 +1463,7 @@ static SCM g_save_envelopes(SCM filename)
 
 void g_init_env(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure0_1(S_save_envelopes, g_save_envelopes), H_save_envelopes);
+  DEFINE_PROC(gh_new_procedure0_1(S_save_envelopes, g_save_envelopes),   H_save_envelopes);
   DEFINE_PROC(gh_new_procedure2_0(S_define_envelope, g_define_envelope), H_define_envelope);
   define_procedure_with_setter(S_env_base, SCM_FNC g_env_base, H_env_base,
 			       "set-" S_env_base, SCM_FNC g_set_env_base, local_doc, 1, 0, 2, 0);

@@ -4,7 +4,7 @@ int round(Float x)
 {
   int i;
   i = (int)x;
-  if ((x-i) > 0.5) return(i+1);
+  if ((x - i) > 0.5) return(i + 1);
   return(i);
 }
 
@@ -67,8 +67,10 @@ char *filename_without_home_directory(char *name)
   int i,len,last_slash;
   last_slash = 0;
   len = strlen(name);
-  for (i=0;i<len-1;i++) if (name[i] == '/') last_slash = i+1;
-  return((char *)(name+last_slash));
+  for (i=0; i<len-1; i++) 
+    if (name[i] == '/') 
+      last_slash = i + 1;
+  return((char *)(name + last_slash));
 }
 
 char *just_filename(char *name)
@@ -77,7 +79,12 @@ char *just_filename(char *name)
   int i,len;
   nodir = copy_string(filename_without_home_directory(name));
   len = strlen(nodir);
-  for (i=0;i<len;i++) if (nodir[i] == '.') {nodir[i] = '\0'; break;}
+  for (i=0; i<len; i++) 
+    if (nodir[i] == '.') 
+      {
+	nodir[i] = '\0'; 
+	break;
+      }
   return(nodir);
 }
 
@@ -88,29 +95,29 @@ char *prettyf(Float num, int tens)
   int fullf,len,i;
   Float rounder;
   char *newval,*sp,*sn,*zp;
-  zp=NULL;
-  if (tens>9) tens=9;
+  zp = NULL;
+  if (tens > 9) tens = 9;
   if (num < 0.0) rounder = -.49; else rounder = .49;
   if (tens < 0)
     {
-      fullf=(int)(num+rounder);
+      fullf = (int)(num + rounder);
       sprintf(prtbuf, "%d", fullf);
       return(copy_string(prtbuf));
     }
   fullf = (int)num;
   if ((num-fullf) == 0.0) 
     {
-      if (num<100.0)
+      if (num < 100.0)
 	sprintf(prtbuf, "%d%c0", fullf, STR_decimal);
       else sprintf(prtbuf, "%d", fullf);
       return(copy_string(prtbuf));
     }
   if (num > 1000)
     {
-      sprintf(prtbuf, "%d%c%d", fullf, STR_decimal, (int)((num-fullf)*pow(10.0, tens)));
+      sprintf(prtbuf, "%d%c%d", fullf, STR_decimal, (int)((num - fullf) * pow(10.0, tens)));
       return(copy_string(prtbuf));
     }
-  fullf = (int)(num*pow(10.0, tens+1)+rounder);
+  fullf = (int)(num * pow(10.0, tens + 1) + rounder);
   if (fullf == 0) 
     {
       /* will be freed later, so can't return a constant */
@@ -121,14 +128,26 @@ char *prettyf(Float num, int tens)
     }
   sprintf(prtbuf, "%d", fullf);
   len=strlen(prtbuf);
-  newval=(char *)CALLOC(len+tens+10, sizeof(char));
+  newval=(char *)CALLOC(len + tens + 10, sizeof(char));
   sn = newval;
   sp = prtbuf;
-  if ((*sp) == '-') {(*sn) = (*sp); sn++; sp++; len--;}
+  if ((*sp) == '-') 
+    {
+      (*sn) = (*sp); 
+      sn++; 
+      sp++; 
+      len--;
+    }
   if (len >= (tens+1))
     {
-      for (i=0;i<len-tens-1;i++) {(*sn)=(*sp); sn++; sp++;}
-      (*sn)=STR_decimal; sn++;
+      for (i=0; i<len-tens-1; i++) 
+	{
+	  (*sn)=(*sp); 
+	  sn++; 
+	  sp++;
+	}
+      (*sn) = STR_decimal; 
+      sn++;
     }
   else
     {
@@ -136,22 +155,22 @@ char *prettyf(Float num, int tens)
       sn++;
       (*sn) = STR_decimal;
       sn++;
-      for (i=0;i<abs(len-tens-1);i++) 
+      for (i=0; i<abs(len-tens-1); i++) 
 	{
 	  (*sn) = '0';
 	  sn++;
 	}
     }
   if (tens > 5) tens = 5;
-  for (i=0;i<=tens;i++) 
+  for (i=0; i<=tens; i++) 
     {
       if (!(*sp)) break;
-      (*sn)=(*sp); 
+      (*sn) = (*sp); 
       if ((!zp) || ((*sn) != '0')) zp = sn;
       sn++; 
       sp++;
     }
-  if (zp) sn=zp; else (*sn)='0';
+  if (zp) sn = zp; else (*sn) = '0';
   sn++;
   (*sn) = '\0';
   return(newval);
@@ -160,11 +179,22 @@ char *prettyf(Float num, int tens)
 void fill_number(char *fs, char *ps)
 {
   int i,j;
-  j=snd_strlen(fs);
-  if (j>4) j=4;
-  if (j<4) {ps[4] = '\0'; ps[3]='0'; ps[2]='0'; ps[1]=STR_decimal;}
-  if ((*fs) == STR_decimal) {*ps++ = '0'; if (j==4) j=3;}
-  for (i=0;i<j;i++) (*ps++) = (*fs++);
+  j = snd_strlen(fs);
+  if (j > 4) j = 4;
+  if (j < 4) 
+    {
+      ps[4] = '\0'; 
+      ps[3] = '0'; 
+      ps[2] = '0'; 
+      ps[1] = STR_decimal;
+    }
+  if ((*fs) == STR_decimal) 
+    {
+      *ps++ = '0'; 
+      if (j == 4) j = 3;
+    }
+  for (i=0; i<j; i++) 
+    (*ps++) = (*fs++);
 }
 
 static char *get_tmpdir(void)
@@ -254,13 +284,13 @@ char *kmg (int num)
   str = (char *)calloc(16, sizeof(char));
   if (num > 1024)
     {
-      if (num > (1024*1024))
+      if (num > (1024 * 1024))
 	{
-	  if (num > (1024*1024*1024))
-	    sprintf(str, "%.5fG", (float)num/(float)(1024*1024*1024));
-	  else sprintf(str, "%.4fM", (float)num/(float)(1024*1024));
+	  if (num > (1024 * 1024 * 1024))
+	    sprintf(str, "%.5fG", (float)num / (float)(1024 * 1024 * 1024));
+	  else sprintf(str, "%.4fM", (float)num / (float)(1024 * 1024));
 	}
-      else sprintf(str, "%.3fK", (float)num/1024.0);
+      else sprintf(str, "%.3fK", (float)num / 1024.0);
     }
   else sprintf(str, "%d", num);
   return(str);
@@ -320,17 +350,15 @@ static int find_mem_location(const char *ur_func, const char *file, int line)
   char *func = NULL;
   if (encloser)
     {
-      func = (char *)calloc(strlen(encloser)+strlen(ur_func)+4, sizeof(char));
+      func = (char *)calloc(strlen(encloser) + strlen(ur_func) + 4, sizeof(char));
       sprintf(func, "%s->%s", encloser, ur_func);
     }
   else func = (char *)ur_func;
-  for (i=0;i<=mem_location;i++)
-    {
-      if ((line == lines[i]) &&
-	  (strcmp(func, functions[i]) == 0) &&
-	  (strcmp(file, files[i]) == 0))
-	return(i);
-    }
+  for (i=0; i<=mem_location; i++)
+    if ((line == lines[i]) &&
+	(strcmp(func, functions[i]) == 0) &&
+	(strcmp(file, files[i]) == 0))
+      return(i);
   mem_location++;
   if (mem_location >= mem_locations)
     {
@@ -369,7 +397,7 @@ static void forget_pointer(void *ptr, const char *func, const char *file, int li
 {
   int i;
   if (ptr == NULL) {fprintf(stderr, "attempt to free NULL"); mem_report(); abort();}
-  for (i=0;i<mem_size;i++)
+  for (i=0; i<mem_size; i++)
     if (pointers[i] == (int)ptr)
       {
 	pointers[i] = 0;
@@ -388,14 +416,14 @@ static void remember_pointer(void *ptr, size_t len, const char *func, const char
       sizes = (int *)calloc(mem_size, sizeof(int));
       locations = (int *)calloc(mem_size, sizeof(int));
     }
-  for (i=0;i<mem_size;i++)
+  for (i=0; i<mem_size; i++)
     {
       if (pointers[i] == 0) 
 	{
 	  least_loc = i;
 	  break;
 	}
-      if (sizes[i]<least)
+      if (sizes[i] < least)
 	{
 	  least = sizes[i];
 	  least_loc = i;
@@ -477,17 +505,17 @@ void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, in
 char *mem_stats(snd_state *ss, int ub);
 char *mem_stats(snd_state *ss, int ub)
 {
-  int i,ptrs=0,sum=0,snds=0,chns=0;
+  int i,ptrs = 0,sum = 0,snds = 0,chns = 0;
   snd_info *sp;
-  char *result,*ksum=NULL,*kptrs=NULL,*kpers=NULL;
-  for (i=0;i<mem_size;i++)
+  char *result,*ksum = NULL,*kptrs = NULL,*kpers = NULL;
+  for (i=0; i<mem_size; i++)
     if (pointers[i])
       {
 	ptrs++;
 	sum += sizes[i];
       }
   result = (char *)calloc(128, sizeof(char));
-  for (i=0;i<ss->max_sounds;i++)
+  for (i=0; i<ss->max_sounds; i++)
     {
       if ((sp=((snd_info *)(ss->sounds[i]))))
 	{
@@ -496,10 +524,10 @@ char *mem_stats(snd_state *ss, int ub)
 	}
     }
   sprintf(result, "snd mem: %s (%s ptrs), %d sounds, %d chans (%s)\n",
-	  ksum=kmg(sum),
-	  kptrs=kmg(ptrs),
+	  ksum = kmg(sum),
+	  kptrs = kmg(ptrs),
 	  snds, chns,
-	  (chns>0) ? (kpers=kmg(ub / chns)) : "");
+	  (chns > 0) ? (kpers = kmg(ub / chns)) : "");
   if (ksum) free(ksum);
   if (kptrs) free(kptrs);
   if (kpers) free(kpers);
@@ -516,11 +544,11 @@ void mem_report(void)
 
   sums = (int *)calloc(mem_location+1, sizeof(int));
   ptrs = (int *)calloc(mem_location+1, sizeof(int));
-  for (loc=0;loc<=mem_location;loc++)
+  for (loc=0; loc<=mem_location; loc++)
     {
-      sum=0;
-      ptr=0;
-      for (i=0;i<mem_size;i++)
+      sum = 0;
+      ptr = 0;
+      for (i=0; i<mem_size; i++)
 	{
 	  if ((pointers[i]) && (locations[i] == loc))
 	    {
@@ -528,8 +556,8 @@ void mem_report(void)
 	      ptr++;
 	    }
 	}
-      sums[loc]=sum;
-      ptrs[loc]=ptr;
+      sums[loc] = sum;
+      ptrs[loc] = ptr;
     }
   Fp=fopen("memlog", "w");
 
@@ -537,10 +565,10 @@ void mem_report(void)
   strftime(time_buf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&ts));
   fprintf(Fp, "memlog: %s: %s\n\n", time_buf, mem_stats(get_global_state(), 0));
 
-  for (i=0;i<=mem_location;i++)
+  for (i=0; i<=mem_location; i++)
     {
-      sum=0;
-      for (loc=0;loc<=mem_location;loc++)
+      sum = 0;
+      for (loc=0; loc<=mem_location; loc++)
 	{
 	  if (sums[loc]>sum)
 	    {
@@ -548,14 +576,14 @@ void mem_report(void)
 	      sum = sums[loc];
 	    }
 	}
-      if (sum>0)
+      if (sum > 0)
 	{
 	  fprintf(Fp, "%s[%d]:%s:  %d (%d)\n", files[ptr], lines[ptr], functions[ptr], sums[ptr], ptrs[ptr]);
 	  sums[ptr] = 0;
 	}
     }
 
-  for (i=0;i<512;i++)
+  for (i=0; i<512; i++)
     if (mus_file_fd_name(i))
       fprintf(Fp, "[%d]: %s\n", i, mus_file_fd_name(i));
   fclose(Fp);
@@ -598,13 +626,13 @@ static int run_time (void)
   #ifdef SGI
     gettimeofday(&t1);
   #else
-      c2=clock();
-      return((int)(1000.0*((float)(c2-c1))/(float)CLOCKS_PER_SEC));
+      c2 = clock();
+      return((int)(1000.0 * ((float)(c2 - c1)) / (float)CLOCKS_PER_SEC));
   #endif
 #endif
   secs = (t1.tv_sec - t0.tv_sec);
   millisecs = ((t1.tv_usec - t0.tv_usec) / 1000);
-  return(secs*1000+millisecs);
+  return(secs * 1000 + millisecs);
 }
 
 static int timing_in_progress = 0;

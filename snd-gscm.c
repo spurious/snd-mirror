@@ -59,7 +59,7 @@ typedef struct {
 
 static SCM mark_snd_color(SCM obj)
 {
-  SCM_SETGC8MARK(obj);
+  SND_SETGCMARK(obj);
   return(SCM_BOOL_F);
 }
 

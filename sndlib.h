@@ -27,12 +27,8 @@
 
 
 #define SNDLIB_VERSION 11
-#define SNDLIB_REVISION 39
-#define SNDLIB_DATE "19-Feb-01"
-
-#ifndef HAVE_SNDLIB
-  #define HAVE_SNDLIB 1
-#endif
+#define SNDLIB_REVISION 40
+#define SNDLIB_DATE "20-Feb-01"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 /* gcc has various compile-time macros like #cpu, but we're hoping to run in Metroworks C, Watcom C, MSC, MPW, etc */

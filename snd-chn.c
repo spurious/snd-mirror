@@ -316,7 +316,7 @@ static int prompt(snd_info *sp, char *msg, char *preload)
 static int map_chans_dot_size(chan_info *cp, void *ptr) 
 {
   cp->dot_size = (int)ptr; 
-  if ((cp->graph_style != GRAPH_DOTS) && (cp->graph_style != GRAPH_FILLED))
+  if ((cp->graph_style != GRAPH_LINES) && (cp->graph_style != GRAPH_FILLED))
     update_graph(cp, NULL);
   return(0);
 }
@@ -590,12 +590,12 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
     }
   else
     {
-      ap->zx = (ap->x1-ap->x0) / (ap->xmax-ap->xmin);
-      ap->sx = (ap->x0-ap->xmin) / (ap->xmax-ap->xmin);
+      ap->zx = (ap->x1 - ap->x0) / (ap->xmax - ap->xmin);
+      ap->sx = (ap->x0 - ap->xmin) / (ap->xmax - ap->xmin);
       ap->no_data = 0;
     }
-  ap->zy = (ap->y1-ap->y0) / (ap->ymax-ap->ymin);
-  ap->sy = (ap->y0-ap->ymin) / (ap->ymax-ap->ymin);
+  ap->zy = (ap->y1 - ap->y0) / (ap->ymax - ap->ymin);
+  ap->sy = (ap->y0 - ap->ymin) / (ap->ymax - ap->ymin);
   cp->axis = ap;
   if (graphed == WITH_GRAPH) initialize_scrollbars(cp);
   /* our initial edit_list size will be relatively small */
@@ -662,7 +662,7 @@ static void set_y_bounds(axis_info *ap)
 {
   Float range;
   range = ap->zy*(ap->ymax - ap->ymin);
-  ap->y0 = ap->ymin + ap->sy*(ap->ymax - ap->ymin);
+  ap->y0 = ap->ymin + ap->sy * (ap->ymax - ap->ymin);
   ap->y1 = (ap->y0 + range);
   if (ap->y1 > ap->ymax)
     {
@@ -676,8 +676,8 @@ void set_x_bounds(axis_info *ap)
 {
   Float range;
   if (ap->xmax <= ap->xmin) ap->xmax = ap->xmin+.001;
-  range = ap->zx*(ap->xmax - ap->xmin);
-  ap->x0 = ap->xmin + ap->sx*(ap->xmax - ap->xmin);
+  range = ap->zx * (ap->xmax - ap->xmin);
+  ap->x0 = ap->xmin + ap->sx * (ap->xmax - ap->xmin);
 #if (HAVE_ISNAN) || defined(__bsdi__)
   if (isnan(ap->x0)) ap->x0 = 0.0;
 #endif
@@ -729,9 +729,9 @@ static void set_x_axis_x0x1 (chan_info *cp, Float x0, Float x1)
   if (x0 >= 0.0) ap->x0 = x0; else ap->x0 = 0.0;
   ap->x1 = x1;
   if (x1 > ap->xmax) ap->xmax = x1;
-  if (ap->xmax <= ap->xmin) ap->xmax = ap->xmin+.001;
-  ap->zx = (x1-x0) / (ap->xmax-ap->xmin);
-  ap->sx = (x0-ap->xmin) / (ap->xmax-ap->xmin);
+  if (ap->xmax <= ap->xmin) ap->xmax = ap->xmin + .001;
+  ap->zx = (x1 - x0) / (ap->xmax - ap->xmin);
+  ap->sx = (x0 - ap->xmin) / (ap->xmax - ap->xmin);
   resize_sx(cp);
   resize_zx(cp);
   apply_x_axis_change(ap, cp, cp->sound); /* this checks sync */
@@ -780,8 +780,8 @@ static void set_y_axis_y0y1 (chan_info *cp, Float y0, Float y1)
   if (y1 > ap->ymax) ap->ymax = y1;
   ap->y0 = y0;
   ap->y1 = y1;
-  ap->zy = (y1-y0) / (ap->ymax-ap->ymin);
-  ap->sy = (y0-ap->ymin) / (ap->ymax-ap->ymin);
+  ap->zy = (y1 - y0) / (ap->ymax - ap->ymin);
+  ap->sy = (y0 - ap->ymin) / (ap->ymax - ap->ymin);
   resize_sy(cp);
   resize_zy(cp);
   apply_y_axis_change(ap, cp);
@@ -807,7 +807,7 @@ static void update_xs(chan_info *ncp, axis_info *ap)
   if (nap->xmax > 0.0)
     {
       scl = ap->xmax/nap->xmax;
-      reset_x_display(ncp, ap->sx*scl, ap->zx*scl);
+      reset_x_display(ncp, ap->sx * scl, ap->zx * scl);
     }
 }
 
@@ -886,8 +886,8 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp, int focus_s
     {
       switch (focus_style)
 	{
-	case FOCUS_RIGHT:   ap->x0 = ap->x1 - ap->zx*(ap->xmax - ap->xmin); break;
-	case FOCUS_MIDDLE:  ap->x0 = 0.5 * ((ap->x1 + ap->x0) - ap->zx*(ap->xmax - ap->xmin)); break;
+	case FOCUS_RIGHT:   ap->x0 = ap->x1 - ap->zx * (ap->xmax - ap->xmin); break;
+	case FOCUS_MIDDLE:  ap->x0 = 0.5 * ((ap->x1 + ap->x0) - ap->zx * (ap->xmax - ap->xmin)); break;
 	case FOCUS_ACTIVE:
 	  ncp = virtual_selected_channel(cp);
 	  /* axes should be the same, since all move together in this mode */
@@ -917,9 +917,9 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp, int focus_s
 		/* try to maintain current relative position in window */
 		{
 		  pos = (loc - ap->x0) / (ap->x1 - ap->x0);
-		  ap->x0 = loc - pos*ap->zx*(ap->xmax - ap->xmin);
+		  ap->x0 = loc - pos * ap->zx * (ap->xmax - ap->xmin);
 		}
-	      else ap->x0 = loc - 0.5*ap->zx*(ap->xmax - ap->xmin);
+	      else ap->x0 = loc - 0.5 * ap->zx * (ap->xmax - ap->xmin);
 	    }
 	  break;
 	}
@@ -967,14 +967,14 @@ int move_axis(chan_info *cp, axis_info *ap, int x)
   if (x > ap->x_axis_x1)
     {
       off = x - ap->x_axis_x1;
-      ap->sx += (off*ap->zx/1000.0);
-      if (ap->sx > (1.0-ap->zx)) ap->sx = 1.0 - ap->zx;
+      ap->sx += (off * ap->zx / 1000.0);
+      if (ap->sx > (1.0 - ap->zx)) ap->sx = 1.0 - ap->zx;
       nx = ap->x_axis_x1;
     }
   else
     {
       off = ap->x_axis_x0 - x;
-      ap->sx -= (off*ap->zx/1000.0);
+      ap->sx -= (off * ap->zx / 1000.0);
       if (ap->sx < 0.0) ap->sx = 0.0;
       nx = ap->x_axis_x0;
     }
@@ -989,14 +989,14 @@ void set_axes(chan_info *cp, Float x0, Float x1, Float y0, Float y1)
   ap = cp->axis;
   ap->x0 = x0;
   ap->x1 = x1;
-  ap->zx = (x1-x0) / (ap->xmax-ap->xmin);
-  ap->sx = (x0-ap->xmin) / (ap->xmax-ap->xmin);
+  ap->zx = (x1 - x0) / (ap->xmax - ap->xmin);
+  ap->sx = (x0 - ap->xmin) / (ap->xmax - ap->xmin);
   resize_sx(cp);
   resize_zx(cp);
   ap->y0 = y0;
   ap->y1 = y1;
-  ap->zy = (y1-y0) / (ap->ymax-ap->ymin);
-  ap->sy = (y0-ap->ymin) / (ap->ymax-ap->ymin);
+  ap->zy = (y1 - y0) / (ap->ymax - ap->ymin);
+  ap->sy = (y0 - ap->ymin) / (ap->ymax - ap->ymin);
   resize_sy(cp);
   resize_zy(cp);
 }
@@ -1050,8 +1050,8 @@ static void display_channel_id (chan_info *cp, int height, int chans)
 	  if (chans > 1)
 	    {
 	      if (cp->edit_ctr == 0)
-		sprintf(chn_id_str, "[%s%d]", STR_channel_id, (cp->chan+1)); /* cp chan numbers are 0 based to index sp->chans array */
-	      else sprintf(chn_id_str, "[%s%d: (%d)]", STR_channel_id, (cp->chan+1), cp->edit_ctr);
+		sprintf(chn_id_str, "[%s%d]", STR_channel_id, (cp->chan + 1)); /* cp chan numbers are 0 based to index sp->chans array */
+	      else sprintf(chn_id_str, "[%s%d: (%d)]", STR_channel_id, (cp->chan + 1), cp->edit_ctr);
 	    }
 	  else sprintf(chn_id_str, "[%d]", cp->edit_ctr);
 	}
@@ -1060,8 +1060,8 @@ static void display_channel_id (chan_info *cp, int height, int chans)
 	  if (chans > 1)
 	    {
 	      if (cp->edit_ctr == 0)
-		sprintf(chn_id_str, "%s%d", STR_channel_id, (cp->chan+1)); /* cp chan numbers are 0 based to index sp->chans array */
-	      else sprintf(chn_id_str, "%s%d:(%d)", STR_channel_id, (cp->chan+1), cp->edit_ctr);
+		sprintf(chn_id_str, "%s%d", STR_channel_id, (cp->chan + 1)); /* cp chan numbers are 0 based to index sp->chans array */
+	      else sprintf(chn_id_str, "%s%d:(%d)", STR_channel_id, (cp->chan + 1), cp->edit_ctr);
 	    }
 	  else sprintf(chn_id_str, "(%d)", cp->edit_ctr);
 	}
@@ -1086,6 +1086,14 @@ static void display_selection_fft_size (chan_info *cp, axis_info *fap)
 static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss);
 static axis_context *cursor_context(chan_info *cp);
 static axis_context *combined_context(chan_info *cp);
+
+/* TODO: to add: add-graph, remove-graph, reset-graph
+ *   where each channel has two graph lists for time/fft
+ *   each list (snd chn pos color style)
+ *   starts with (current-snd current-chn current-pos current-color current-style)
+ * a problem (can easily add pos arg to init_sample_read below):
+ *   amp_env_usable (et al) assume cp->edit_ctr -- would it be safe to pass as arg?
+ */
 
 int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 {
@@ -1130,15 +1138,15 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   if (sp)
     {
       cur_srate = (double)SND_SRATE(sp);
-      ap->losamp = (int)(ceil(ap->x0*cur_srate));
+      ap->losamp = (int)(ceil(ap->x0 * cur_srate));
       if (ap->losamp < 0) ap->losamp = 0;
-      start_time = (double)(ap->losamp)/cur_srate;
-      ap->hisamp = (int)(ap->x1*cur_srate);
+      start_time = (double)(ap->losamp) / cur_srate;
+      ap->hisamp = (int)(ap->x1 * cur_srate);
       if ((ap->losamp == 0) && (ap->hisamp == 0)) return(0);
     }
   x_start = ap->x_axis_x0;
   x_end = ap->x_axis_x1;
-  samps = ap->hisamp - ap->losamp+1;
+  samps = ap->hisamp - ap->losamp + 1;
   if ((x_start == x_end) && (samps > 10)) return(0); /* must be too-tiny graph */
   pixels = x_end - x_start;
   if (pixels >= POINT_BUFFER_SIZE) pixels = POINT_BUFFER_SIZE-1;
@@ -1531,13 +1539,21 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	      i++;
 	      if (xf>samples_per_pixel)
 		{
-		  if (cp->fft_log_frequency) logx = local_grf_x(log(x+1.0)*scaler, fap); else logx = local_grf_x(x, fap);
-		  if (cp->fft_log_magnitude) logy = local_grf_y(cp_dB(cp, ymax*scale), fap); else logy = local_grf_y(ymax*scale, fap);
+		  if (cp->fft_log_frequency) 
+		    logx = local_grf_x(log(x+1.0)*scaler, fap); 
+		  else logx = local_grf_x(x, fap);
+		  if (cp->fft_log_magnitude) 
+		    logy = local_grf_y(cp_dB(cp, ymax*scale), fap); 
+		  else logy = local_grf_y(ymax*scale, fap);
 		  set_grf_point(logx, j, logy);
 		  if (cp->printing) 
 		    {
-		      if (cp->fft_log_frequency) pslogx = log(x+1.0)*scaler; else pslogx = x;
-		      if (cp->fft_log_magnitude) pslogy = cp_dB(cp, ymax*scale); else pslogy = ymax*scale;
+		      if (cp->fft_log_frequency) 
+			pslogx = log(x+1.0)*scaler; 
+		      else pslogx = x;
+		      if (cp->fft_log_magnitude) 
+			pslogy = cp_dB(cp, ymax*scale); 
+		      else pslogy = ymax*scale;
 		      ps_set_grf_point(pslogx, j, pslogy);
 		    }
 		  x+=(incr*samples_per_pixel);
@@ -1558,8 +1574,12 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   if (cp->show_fft_peaks) 
     {
       if (cp->transform_type == FOURIER)
-	display_peaks(cp, fap, data, (int)(SND_SRATE(sp)*cp->spectro_cutoff/2), hisamp, samples_per_pixel, 1, scale);
-      else display_peaks(cp, fap, data, (int)(fp->current_size*cp->spectro_cutoff), hisamp, samples_per_pixel, 1, 0.0);
+	display_peaks(cp, fap, data, 
+		      (int)(SND_SRATE(sp)*cp->spectro_cutoff/2), 
+		      hisamp, samples_per_pixel, 1, scale);
+      else display_peaks(cp, fap, data, 
+			 (int)(fp->current_size*cp->spectro_cutoff), 
+			 hisamp, samples_per_pixel, 1, 0.0);
     }
   if (cp->selection_transform_size != 0) display_selection_fft_size(cp, fap);
   if (cp->hookable) after_fft(ss, cp, scale);
@@ -1627,7 +1647,7 @@ static int display_fft_peaks(chan_info *ucp, char *filename)
 		  sp = cp->sound;
 		  data = fp->data;
 		  samps = fp->current_size/2;
-		  samples_per_pixel = (Float)samps/(Float)(fap->x_axis_x1-fap->x_axis_x0);
+		  samples_per_pixel = (Float)samps / (Float)(fap->x_axis_x1 - fap->x_axis_x0);
 		  srate = SND_SRATE(sp);
 		  srate2 = (Float)srate * .5;
 		  if (samps > (5*srate)) 
@@ -1798,21 +1818,21 @@ static void rotate_matrix(Float xangle, Float yangle, Float zangle, Float xscl, 
   Float sinx,siny,sinz,cosx,cosy,cosz,deg;
   deg = TWO_PI / 360.0;
   /* might be nice to use sincosf here, but it segfaults in GnuC */
-  sinx = sin(xangle*deg);
-  siny = sin(yangle*deg);
-  sinz = sin(zangle*deg);
-  cosx = cos(xangle*deg);
-  cosy = cos(yangle*deg);
-  cosz = cos(zangle*deg);
-  mat[0] = cosy*cosz*xscl;
-  mat[1] = (sinx*siny*cosz - cosx*sinz)*yscl;
-  mat[2] = (cosx*siny*cosz + sinx*sinz)*zscl;
-  mat[3] = cosy*sinz*xscl;
-  mat[4] = (sinx*siny*sinz + cosx*cosz)*yscl;
-  mat[5] = (cosx*siny*sinz - sinx*cosz)*zscl;
-  mat[6] = -siny*xscl;
-  mat[7] = sinx*cosy*yscl;
-  mat[8] = cosx*cosy*zscl;
+  sinx = sin(xangle * deg);
+  siny = sin(yangle * deg);
+  sinz = sin(zangle * deg);
+  cosx = cos(xangle * deg);
+  cosy = cos(yangle * deg);
+  cosz = cos(zangle * deg);
+  mat[0] = cosy * cosz * xscl;
+  mat[1] = (sinx * siny * cosz - cosx * sinz) * yscl;
+  mat[2] = (cosx * siny * cosz + sinx * sinz) * zscl;
+  mat[3] = cosy * sinz * xscl;
+  mat[4] = (sinx * siny * sinz + cosx * cosz) * yscl;
+  mat[5] = (cosx * siny * sinz - sinx * cosz) * zscl;
+  mat[6] = -siny * xscl;
+  mat[7] = sinx * cosy * yscl;
+  mat[8] = cosx * cosy * zscl;
 }
 
 static void rotate(Float *xyz, Float *mat)
@@ -1821,9 +1841,9 @@ static void rotate(Float *xyz, Float *mat)
   x = xyz[0];
   y = xyz[1];
   z = xyz[2];
-  xyz[0] = mat[0]*x + mat[1]*y + mat[2]*z;
-  xyz[1] = mat[3]*x + mat[4]*y + mat[5]*z;
-  xyz[2] = mat[6]*x + mat[7]*y + mat[8]*z;
+  xyz[0] = mat[0] * x + mat[1] * y + mat[2] * z;
+  xyz[1] = mat[3] * x + mat[4] * y + mat[5] * z;
+  xyz[2] = mat[6] * x + mat[7] * y + mat[8] * z;
 }
 
 void reset_spectro(snd_state *state)
@@ -1919,7 +1939,7 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	{
 	  /* spectrogram in various colors */
 	  allocate_color_map(ss, color_map(ss));
-	  for (slice=0, xoff=fap->x_axis_x0, yoff=fap->y_axis_y0;slice<si->active_slices;slice++,yoff+=yincr)
+	  for (slice=0, xoff=fap->x_axis_x0, yoff=fap->y_axis_y0; slice<si->active_slices; slice++, yoff+=yincr)
 	    {
 	      fdata = si->data[slice];
 	      x = xoff;
@@ -4808,6 +4828,13 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
       if (d) FREE(d);
     }
   free_sync_state(sc);
+}
+
+static inline MUS_SAMPLE_TYPE previous_sample_unscaled(snd_fd *sf)
+{
+  if (sf->view_buffered_data < sf->first)
+    return(previous_sound(sf));
+  else return(*sf->view_buffered_data--);
 }
 
 static void reverse_sound(chan_info *ncp, int over_selection)

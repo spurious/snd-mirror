@@ -42,10 +42,6 @@
   #endif
 #endif
 
-#ifndef HAVE_SNDLIB
-  #define HAVE_SNDLIB 1
-#endif
-
 #if USE_SND
   #include "snd.h"
 #endif
@@ -344,7 +340,7 @@ static SCM all_keys[NUM_KEYWORDS];
 /* what about user-declared keywords? */
 
 static SND_TAG_TYPE keyword_tag = 0;
-static SCM mark_keyword(SCM obj) {SCM_SETGC8MARK(obj); return(SCM_BOOL_F);}
+static SCM mark_keyword(SCM obj) {SND_SETGCMARK(obj); return(SCM_BOOL_F);}
 static int keyword_p(SCM obj) {return((SCM_NIMP(obj)) && (SCM_TYP16(obj) == (SCM)keyword_tag));}
 #define get_keyword(arg) ((int)SND_VALUE_OF(arg))
 static scm_sizet free_keyword(SCM obj) {return(0);}
@@ -853,7 +849,7 @@ static SCM mark_mus_scm(SCM obj)
 	if (ms->vcts[i]) 
 	  scm_gc_mark(ms->vcts[i]);
     }
-  SCM_SETGC8MARK(obj); 
+  SND_SETGCMARK(obj); 
   return(SCM_BOOL_F);
 }
 
@@ -4371,7 +4367,7 @@ static SCM g_convolve_p(SCM obj)
 
 static SCM g_convolve(SCM obj, SCM func) 
 {
-  #define H_convolve "(" S_convolve " gen &optional input-func) -> next sample from convolution generator"
+  #define H_convolve_gen "(" S_convolve " gen &optional input-func) -> next sample from convolution generator"
   mus_scm *gn = mus_get_scm(obj);
   SCM_ASSERT(((mus_scm_p(obj)) && (mus_convolve_p(mus_get_any(obj)))), obj, SCM_ARG1, S_convolve);
   if (gh_procedure_p(func)) gn->vcts[INPUT_FUNCTION] = func;
@@ -4454,7 +4450,7 @@ static SCM g_convolve_files(SCM file1, SCM file2, SCM maxamp, SCM outfile)
 static void init_conv(void)
 {
   DEFINE_PROC(gh_new_procedure(S_convolve_p, SCM_FNC g_convolve_p, 1, 0, 0), H_convolve_p);
-  DEFINE_PROC(gh_new_procedure(S_convolve, SCM_FNC g_convolve, 1, 1, 0), H_convolve);
+  DEFINE_PROC(gh_new_procedure(S_convolve, SCM_FNC g_convolve, 1, 1, 0), H_convolve_gen);
   DEFINE_PROC(gh_new_procedure(S_make_convolve, SCM_FNC g_make_convolve, 0, 0, 1), H_make_convolve);
   DEFINE_PROC(gh_new_procedure(S_convolve_files, SCM_FNC g_convolve_files, 2, 2, 0), H_convolve_files);
 }

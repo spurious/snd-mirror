@@ -252,7 +252,7 @@ static void unset_sound_error(void)
 
 
 #ifndef MPW_C
-static time_t file_write_date(const char *filename)
+static time_t local_file_write_date(const char *filename)
 {
   struct stat statbuf;
   int err;
@@ -261,7 +261,7 @@ static time_t file_write_date(const char *filename)
   return((time_t)(statbuf.st_mtime));
 }
 #else
-static int file_write_date(const char *filename) {return(1);}
+static int local_file_write_date(const char *filename) {return(1);}
 #endif
 
 static int sndlib_initialized = 0;
@@ -434,7 +434,7 @@ static sound_file *check_write_date(const char *name, sound_file *sf)
   int chan,data_size,date;
   if (sf)
     {
-      date = file_write_date(name);
+      date = local_file_write_date(name);
       if (date == sf->write_date)
 	return(sf);
       else 
@@ -624,7 +624,7 @@ static void fill_sf_record(const char *name, sound_file *sf)
   sf->bits_per_sample = mus_header_bits_per_sample();
   sf->fact_samples = mus_header_fact_samples();
   sf->block_align = mus_header_block_align();
-  sf->write_date = file_write_date(name);
+  sf->write_date = local_file_write_date(name);
   if (mus_header_loop_mode(0) != 0)
     {
 #if (!HAVE_GDBM)

@@ -108,6 +108,20 @@ static Float fp_dB(snd_state *ss, Float py)
   return((py <= ss->lin_dB) ? 0.0 : (1.0 - ((20.0*(log10(py))) / ss->min_dB)));
 }
 
+static inline short local_grf_x(double val, axis_info *ap)
+{
+  if (val >= ap->x1) return(ap->x_axis_x1);
+  if (val <= ap->x0) return(ap->x_axis_x0);
+  return((short)(ap->x_base + val * ap->x_scale));
+}
+
+static inline short local_grf_y(Float val, axis_info *ap)
+{
+  if (val >= ap->y1) return(ap->y_axis_y1);
+  if (val <= ap->y0) return(ap->y_axis_y0);
+  return((short)(ap->y_base + val * ap->y_scale));
+}
+
 static void graph_redisplay(snd_state *ss)
 {
   Display *dp;
@@ -121,32 +135,32 @@ static void graph_redisplay(snd_state *ss)
   wn = XtWindow(graph_drawer);
 
   ax->gc = gc;
-  ix1 = grf_x(0.0, axis_cp->axis);
-  iy1 = grf_y(current_graph_data[0], axis_cp->axis);
+  ix1 = local_grf_x(0.0, axis_cp->axis);
+  iy1 = local_grf_y(current_graph_data[0], axis_cp->axis);
   xincr = 1.0 / (Float)GRAPH_SIZE;
 
   for (i=1, x=xincr;i<GRAPH_SIZE;i++,x+=xincr)
     {
       ix0 = ix1;
       iy0 = iy1;
-      ix1 = grf_x(x, axis_cp->axis);
-      iy1 = grf_y(current_graph_data[i], axis_cp->axis);
+      ix1 = local_grf_x(x, axis_cp->axis);
+      iy1 = local_grf_y(current_graph_data[i], axis_cp->axis);
       XDrawLine(dp, wn, gc, ix0, iy0, ix1, iy1);
     }
 
   ax->gc = fgc;
-  ix1 = grf_x(0.0, axis_cp->axis);
-  iy1 = grf_y(current_graph_fftr[0], axis_cp->axis);
+  ix1 = local_grf_x(0.0, axis_cp->axis);
+  iy1 = local_grf_y(current_graph_fftr[0], axis_cp->axis);
   xincr = 1.0 / (Float)GRAPH_SIZE;
 
   for (i=1, x=xincr;i<GRAPH_SIZE;i++,x+=xincr)
     {
       ix0 = ix1;
       iy0 = iy1;
-      ix1 = grf_x(x, axis_cp->axis);
+      ix1 = local_grf_x(x, axis_cp->axis);
       if (fft_log_magnitude(ss))
-	iy1 = grf_y(fp_dB(ss, current_graph_fftr[i]), axis_cp->axis);
-      else iy1 = grf_y(current_graph_fftr[i], axis_cp->axis);
+	iy1 = local_grf_y(fp_dB(ss, current_graph_fftr[i]), axis_cp->axis);
+      else iy1 = local_grf_y(current_graph_fftr[i], axis_cp->axis);
       XDrawLine(dp, wn, fgc, ix0, iy0, ix1, iy1);
     }
 }

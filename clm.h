@@ -89,10 +89,6 @@
   #define FALSE 0
 #endif
 
-#ifndef HAVE_SNDLIB
-  #define HAVE_SNDLIB 1
-#endif
-
 #include "sndlib.h"
 
 #if (!defined(M_PI))

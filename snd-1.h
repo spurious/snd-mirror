@@ -655,16 +655,24 @@ void file_change_samples(int beg, int num, char *tempfile, chan_info *cp, int ch
 void file_override_samples(int num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, char *origin);
 Float sample (int samp, chan_info *cp);
 snd_fd *free_snd_fd(snd_fd *sf);
+MUS_SAMPLE_TYPE previous_sound (snd_fd *sf);
+MUS_SAMPLE_TYPE next_sound (snd_fd *sf);
 
 snd_fd *init_sample_read(int samp, chan_info *cp, int direction);
 snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_position);
+
+#define next_sample_to_float(SF) \
+  ((SF->view_buffered_data > SF->last) ? \
+     (MUS_SAMPLE_TO_FLOAT(next_sound(SF))) : \
+     ((*SF->view_buffered_data++) * SF->scaler))
+
+#define previous_sample_to_float(SF) \
+  ((SF->view_buffered_data < SF->first) ? \
+    (MUS_SAMPLE_TO_FLOAT(previous_sound(SF))) : \
+    ((*SF->view_buffered_data--) * SF->scaler))
+
 inline MUS_SAMPLE_TYPE next_sample(snd_fd *sf);
 inline MUS_SAMPLE_TYPE previous_sample(snd_fd *sf);
-inline MUS_SAMPLE_TYPE next_sample_unscaled(snd_fd *sf);
-inline MUS_SAMPLE_TYPE previous_sample_unscaled(snd_fd *sf);
-inline Float next_sample_to_float (snd_fd *sf);
-inline Float previous_sample_to_float (snd_fd *sf);
-void move_to_next_sample(snd_fd *df);
 int read_sample_eof (snd_fd *sf);
 void undo_edit_with_sync(chan_info *cp, int count);
 void redo_edit_with_sync(chan_info *cp, int count);
@@ -1006,8 +1014,10 @@ axis_info *free_axis_info(axis_info *ap);
 inline short grf_x(double val, axis_info *ap);
 inline short grf_y(Float val, axis_info *ap);
 void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate);
-double ungrf_x(axis_info *ap, int x);
-Float ungrf_y(axis_info *ap, int y);
+
+#define ungrf_x(AP, X) (((X) - (AP)->x_base) / (AP)->x_scale)
+#define ungrf_y(AP, Y) (((Y) - (AP)->y_base) / (AP)->y_scale)
+
 axis_info *make_axis_info (chan_info *cp, Float xmin, Float xmax, Float ymin, Float ymax, 
 			   char *xlabel, Float x0, Float x1, Float y0, Float y1,
 			   axis_info *old_ap);

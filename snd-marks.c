@@ -1341,6 +1341,13 @@ void play_syncd_mark(chan_info *cp, mark *m)
   if (sd) free_syncdata(sd);
 }
 
+static inline void move_to_next_sample(snd_fd *sf)
+{
+  if (sf->view_buffered_data > sf->last)
+    next_sound(sf);
+  else sf->view_buffered_data++;
+}
+
 static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int current_sample, int which)
 {
   int i,j=0,samps,xi,k;

@@ -275,13 +275,13 @@ static SND_TAG_TYPE sound_data_tag = 0;
 
 static SCM mark_sound_data(SCM obj)
 {
-  SCM_SETGC8MARK(obj);
+  SND_SETGCMARK(obj);
   return(SCM_BOOL_F);
 }
 
 int sound_data_p(SCM obj)
 {
-  return((SCM_NIMP(obj)) && (SCM_TYP16(obj) == (SCM)sound_data_tag));
+  return((SCM_NIMP(obj)) && (SND_SMOB_TYPE(sound_data_tag, obj)));
 }
 
 static SCM g_sound_data_p(SCM obj) 

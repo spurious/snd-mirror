@@ -3786,7 +3786,7 @@ static SCM g_mix(SCM file, SCM chn_samp_n, SCM file_chn, SCM snd_n, SCM chn_n, S
 /* ---------------- mix sample readers ---------------- */
 
 static SND_TAG_TYPE mf_tag = 0;
-static SCM mark_mf(SCM obj) {SCM_SETGC8MARK(obj); return(SCM_BOOL_F);}
+static SCM mark_mf(SCM obj) {SND_SETGCMARK(obj); return(SCM_BOOL_F);}
 static int mf_p(SCM obj) {return((SCM_NIMP(obj)) && (SND_SMOB_TYPE(mf_tag, obj)));}
 
 static SCM g_mf_p(SCM obj) 
@@ -3886,7 +3886,7 @@ static SCM g_free_mix_sample_reader(SCM obj)
 /* ---------------- track sample readers ---------------- */
 
 static SND_TAG_TYPE tf_tag = 0;
-static SCM mark_tf(SCM obj) {SCM_SETGC8MARK(obj); return(SCM_BOOL_F);}
+static SCM mark_tf(SCM obj) {SND_SETGCMARK(obj); return(SCM_BOOL_F);}
 static int tf_p(SCM obj) {return((SCM_NIMP(obj)) && (SND_SMOB_TYPE(tf_tag, obj)));}
 
 static SCM g_tf_p(SCM obj) 

@@ -26,7 +26,9 @@ static env* active_env = NULL;   /* env currently being edited */
 static chan_info *axis_cp = NULL;
 static axis_info *gray_ap = NULL;
 
-chan_info *enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax, int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax)
+chan_info *enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax, 
+			      int ex0, int ey0, int width, int height, 
+			      Float xmin, Float xmax, Float ymin, Float ymax)
 {
   /* conjure up minimal context for axis drawer in snd-axis.c */
   if (!axis_cp) 
@@ -43,7 +45,8 @@ chan_info *enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax, int e
   return(axis_cp);
 }
 
-static void display_env(snd_state *ss, env *e, char *name, GC cur_gc, int x0, int y0, int width, int height, int dots)
+static void display_env(snd_state *ss, env *e, char *name, GC cur_gc, 
+			int x0, int y0, int width, int height, int dots)
 {
   axis_context *ax=NULL;  
   ax = (axis_context *)CALLOC(1, sizeof(axis_context));
@@ -53,7 +56,8 @@ static void display_env(snd_state *ss, env *e, char *name, GC cur_gc, int x0, in
   display_enved_env(ss, e, ax, axis_cp, name, x0, y0, width, height, dots);
 }
 
-void display_enved_env_with_selection(snd_state *ss, env *e, char *name, int x0, int y0, int width, int height, int dots)
+void display_enved_env_with_selection(snd_state *ss, env *e, char *name, 
+				      int x0, int y0, int width, int height, int dots)
 {
   display_env(ss, e, name, (selected_env == e) ? rgc : gc, x0, y0, width, height, dots);
 }
@@ -84,7 +88,10 @@ void make_scrolled_env_list (snd_state *ss)
   if (!(ss->using_schemes)) XtVaSetValues(screnvlst, XmNbackground, (ss->sgx)->highlight_color, NULL); 
   strs = (XmString *)CALLOC(size, sizeof(XmString)); 
   for (n=0;n<size;n++) strs[n] = XmStringCreate(enved_all_names(n), "button_font");
-  XtVaSetValues(screnvlst, XmNitems, strs, XmNitemCount, size, NULL);
+  XtVaSetValues(screnvlst, 
+		XmNitems, strs, 
+		XmNitemCount, size, 
+		NULL);
   for (n=0;n<size;n++) XmStringFree(strs[n]);
   FREE(strs);
 }
@@ -94,9 +101,8 @@ void alert_enved_amp_env(snd_info *sp)
   snd_state *ss;
   ss = sp->state;
   if ((enved_dialog) && (active_channel) && (enved_waving(ss)))
-    {
-      if (active_channel->sound == sp) env_redisplay(sp->state);
-    }
+    if (active_channel->sound == sp) 
+      env_redisplay(sp->state);
 }
 
 void new_active_channel_alert(snd_state *ss)
@@ -591,48 +597,44 @@ static void selection_button_pressed(Widget s, XtPointer clientData, XtPointer c
 static void mix_button_pressed(Widget w, XtPointer clientData, XtPointer callData) 
 {
   snd_state *ss = (snd_state *)clientData;
-  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)callData;
-  XButtonEvent *ev;
   int chan = 0;
   int mxchan,mix_id=NO_SELECTION;
-  ev = (XButtonEvent *)(cb->event);
-#if DEBUGGING
-  if ((int)ev <= 0) return;
-#endif
   apply_to_mix = (!apply_to_mix);
   if (apply_to_mix) 
     {
-      if (apply_to_selection) XmChangeColor(selectionB, ((Pixel)(ss->sgx)->highlight_color));
+      if (apply_to_selection) 
+	XmChangeColor(selectionB, ((Pixel)(ss->sgx)->highlight_color));
       apply_to_selection = 0;
-      if (ev->state & snd_ControlMask) 
+      if (ss->selected_mix != NO_SELECTION) 
+	mix_id = ss->selected_mix; 
+      else
 	{
-	  if (ss->selected_mix != NO_SELECTION) 
-	    mix_id = ss->selected_mix; 
-	  else
+	  mix_id = any_mix_id();
+	  if (mix_id != NO_SELECTION) 
+	    select_mix_from_id(mix_id);
+	}
+      if (mix_id != NO_SELECTION)
+	{
+	  mxchan = mix_selected_channel(mix_id);
+	  if (mxchan != NO_SELECTION) chan = mxchan;
+	  if (mix_amp_env_from_id(mix_id, chan))
 	    {
-	      mix_id = any_mix_id();
-	      if (mix_id != NO_SELECTION) select_mix_from_id(mix_id);
-	    }
-	  if (mix_id != NO_SELECTION)
-	    {
-	      mxchan = mix_selected_channel(mix_id);
-	      if (mxchan != NO_SELECTION) chan = mxchan;
-	      if (mix_amp_env_from_id(mix_id, chan))
-		{
-		  if (active_env) active_env = free_env(active_env);
-		  active_env = copy_env(mix_amp_env_from_id(mix_id, chan));
-		  set_enved_env_list_top(0);
-		  do_env_edit(active_env, TRUE);
-		  set_sensitive(undoB, FALSE);
-		  set_sensitive(revertB, FALSE);
-		  set_sensitive(saveB, FALSE);
-		  env_redisplay(ss);
-		}
+	      if (active_env) active_env = free_env(active_env);
+	      active_env = copy_env(mix_amp_env_from_id(mix_id, chan));
+	      set_enved_env_list_top(0);
+	      do_env_edit(active_env, TRUE);
+	      set_sensitive(undoB, FALSE);
+	      set_sensitive(revertB, FALSE);
+	      set_sensitive(saveB, FALSE);
+	      env_redisplay(ss);
 	    }
 	}
     }
   XmChangeColor(mixB, (apply_to_mix) ? ((Pixel)(ss->sgx)->yellow) : ((Pixel)(ss->sgx)->highlight_color));
-  if ((enved_target(ss) == AMPLITUDE_ENV) && (enved_waving(ss)) && (!showing_all_envs)) env_redisplay(ss);
+  if ((enved_target(ss) == AMPLITUDE_ENV) && 
+      (enved_waving(ss)) && 
+      (!showing_all_envs)) 
+    env_redisplay(ss);
 }
 
 static void selection_button_help_callback(Widget w, XtPointer clientData, XtPointer callData) 

@@ -3016,7 +3016,7 @@
 	(print-and-check gen 
 			 "granulate"
 			 "granulate: expansion: 2.000 (551/1102), scaler: 0.600, length: 0.150 secs (3308 samps), ramp: 0.060"
-			 "spd_info s20: 1102, s50: 441, rmp: 1323, amp: 0.600000, len: 3308, cur_out: 0, cur_in: 0, input_hop: 551, ctr: 0, output_hop: 1102, in_data_start: 5513, in_data[5513]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], data[4410]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...]")
+			 "grn_info s20: 1102, s50: 441, rmp: 1323, amp: 0.600000, len: 3308, cur_out: 0, cur_in: 0, input_hop: 551, ctr: 0, output_hop: 1102, in_data_start: 5513, in_data[5513]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], data[4410]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...]")
 	(do ((i 0 (1+ i)))
 	    ((= i 1000))
 	  (if (rs .1) (gc))
@@ -5678,11 +5678,11 @@
 	    (time (filter-sound '(0 1 .2 0 .5 1 1 0) 20))      ; FIR direct form
 	    (time (filter-sound '(0 0 .1 0 .11 1 .12 0 1 0) 2048)) ; convolution
 	    (time (map-chan (map-silence .01 #f)))
-	    (close-sound ind)
-	    (if (file-exists? "1a.snd")
-		(let ((ind1 (open-sound "1a.snd")))
-		  (time (rubber-sound 1.25))
-		  (close-sound ind1)))))
+	    (close-sound ind)))
+      (if (file-exists? "1a.snd")
+	  (let ((ind1 (open-sound "1a.snd")))
+	    (time (rubber-sound 1.25))
+	    (close-sound ind1)))
 
       (let* ((oboe (open-sound "oboe.snd"))
 	     (a4 (open-sound "4.aiff"))
@@ -5869,12 +5869,14 @@
   (save-listener "test.output")
   (set! (listener-prompt) original-prompt)
   (snd-display (format #f ";all done!~%~A" original-prompt))
+  (snd-display (format #f "timings:~%  ~A: total~%  GC: ~{    ~A~%~})~%" 
+		       (/ (- (get-internal-real-time) overall-start-time) 100) 
+		       (let ((lst (gc-stats)))
+			 (list (list-ref lst 0) (list-ref lst 4) (list-ref lst 5)))))
   (if (not (null? times))
-      (begin
-	(snd-display (format #f "timings:~%  ~A: total~%" (/ (- (get-internal-real-time) overall-start-time) 100)))
-	(for-each (lambda (n)
-		    (snd-display (format #f "  ~A: ~A~%" (cadr n) (car n))))
-		  times)))
+      (for-each (lambda (n)
+		  (snd-display (format #f "  ~A: ~A~%" (cadr n) (car n))))
+		times))
   (if (= snd-test -1) (exit)))
 
 (if include-clm 

@@ -85,7 +85,7 @@ void set_vct_print_length(int len) {vct_print_length = len;}
 
 static SCM mark_vct(SCM obj)
 {
-  SCM_SETGC8MARK(obj);
+  SND_SETGCMARK(obj);
   return(SCM_BOOL_F);
 }
 
@@ -278,6 +278,9 @@ static SCM vct_length(SCM obj)
     return(TO_SCM_INT(v->length));
   return(TO_SMALL_SCM_INT(0));
 }
+
+/* static SCM reckless_vct_ref(SCM obj, SCM pos) {return(TO_SCM_DOUBLE(((vct *)SND_VALUE_OF(obj))->data[TO_SMALL_C_INT(pos)]));} */
+/* this is about 4% faster than the checked version */
 
 static SCM vct_ref(SCM obj, SCM pos)
 {
