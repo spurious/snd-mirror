@@ -434,9 +434,9 @@ static void display_sound_file_entry(FILE *fp, const char *name, sound_file *sf)
   if (sf->loop_modes)
     {
       if (sf->loop_modes[0] != 0)
-	fprintf(fp, ", loop: %d to %d", sf->loop_starts[0], sf->loop_ends[0]);
+	fprintf(fp, ", loop mode %d: %d to %d", sf->loop_modes[0], sf->loop_starts[0], sf->loop_ends[0]);
       if (sf->loop_modes[1] != 0)
-	fprintf(fp, ", loop: %d to %d, ", sf->loop_starts[1], sf->loop_ends[1]);
+	fprintf(fp, ", loop mode %d: %d to %d, ", sf->loop_modes[1], sf->loop_starts[1], sf->loop_ends[1]);
       fprintf(fp, ", base: %d, detune: %d", sf->base_note, sf->base_detune);
     }
   if (sf->maxamps)
@@ -517,7 +517,7 @@ static void fill_sf_record(const char *name, sound_file *sf)
   sf->fact_samples = mus_header_fact_samples();
   sf->block_align = mus_header_block_align();
   sf->write_date = local_file_write_date(name);
-  if (mus_header_loop_mode(0) != 0)
+  if (mus_header_loop_mode(0) > 0)
     {
       sf->loop_modes = (int *)CALLOC(2, sizeof(int));
       sf->loop_starts = (int *)CALLOC(2, sizeof(int));
@@ -623,16 +623,18 @@ int *mus_sound_loop_info(const char *arg)
   sf = getsf(arg); 
   if ((sf) && (sf->loop_modes))
     {
-      info = (int *)CALLOC(6, sizeof(int));
+      info = (int *)CALLOC(8, sizeof(int));
       if (sf->loop_modes[0] != 0)
 	{
 	  info[0] = sf->loop_starts[0];
 	  info[1] = sf->loop_ends[0];
+	  info[6] = sf->loop_modes[0];
 	}
       if (sf->loop_modes[1] != 0)
 	{
 	  info[2] = sf->loop_starts[1];
 	  info[3] = sf->loop_ends[1];
+	  info[7] = sf->loop_modes[1];
 	}
       info[4] = sf->base_note;
       info[5] = sf->base_detune;
@@ -641,7 +643,7 @@ int *mus_sound_loop_info(const char *arg)
   else return(NULL);
 }
 
-void mus_sound_set_loop_info(const char *arg, int *loop)
+void mus_sound_set_full_loop_info(const char *arg, int *loop)
 {
   sound_file *sf; 
   sf = getsf(arg); 
@@ -653,21 +655,35 @@ void mus_sound_set_loop_info(const char *arg, int *loop)
 	  sf->loop_starts = (int *)CALLOC(2, sizeof(int));
 	  sf->loop_ends = (int *)CALLOC(2, sizeof(int));
 	}
-      if ((loop[0] != 0) || (loop[1] != 0))
+      if (loop[6] != 0)
 	{
-	  sf->loop_modes[0] = 1;             /* TODO: this should be settable (0:none, 1:forward, 2:to and fro) */
+	  sf->loop_modes[0] = loop[6]; 
 	  sf->loop_starts[0] = loop[0];
 	  sf->loop_ends[0] = loop[1];
 	}
-      if ((loop[2] != 0) || (loop[3] != 0))
+      if (loop[7] != 0)
 	{
-	  sf->loop_modes[1] = 1;
+	  sf->loop_modes[1] = loop[7];
 	  sf->loop_starts[1] = loop[2];
 	  sf->loop_ends[1] = loop[3];
 	}
       if (loop[4] != 0) sf->base_note = loop[4];
       sf->base_detune = loop[5];
     }
+}
+
+void mus_sound_set_loop_info(const char *arg, int *loop)
+{
+  /* backwards compatibility */
+  int bloop[8];
+  int i;
+  if (loop)
+    {
+      for (i = 0; i < 6; i++) bloop[i] = loop[i];
+      bloop[6] = 1; bloop[7] = 1;
+      mus_sound_set_full_loop_info(arg, bloop);
+    }
+  else mus_sound_set_full_loop_info(arg, NULL);
 }
 
 int mus_sound_aiff_p(const char *arg) 

@@ -1,5 +1,4 @@
 /* TODO  drag via mark could still use amp-env opts
- * TODO  sync colors? could use 6-7 bits of id+table (or local mark context)
  * TODO  mark fixups -- negative src env mark fixups are broken (move as if positive)
  * TODO  reverse (or any fixup) if syncd mark, but unsyncd chans -- should other marks move or break sync chain?
  */
@@ -24,7 +23,6 @@ typedef mark *mark_map_func(chan_info *cp, mark *mp, void *m);
 
 static XEN mark_drag_hook;
 static XEN mark_hook; /* add, delete, move */
-#define S_mark_hook "mark-hook"
 
 #define MARK_ID_MASK   0x0fffffff
 #define MARK_VISIBLE   0x10000000
@@ -190,12 +188,26 @@ void marks_off(chan_info *cp)
 #define MARK_TAB_WIDTH 10
 #define MARK_TAB_HEIGHT 4
 
+static XEN draw_mark_hook;
+
 static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, int show)
 {
   /* fields are samp and name */
   int len, top, cx, y0, y1;
   axis_context *ax;
-  ax = mark_context(cp); /* was cursor_context */
+  XEN res = XEN_FALSE;
+  ax = mark_context(cp);
+  if (XEN_HOOKED(draw_mark_hook))
+    {
+      res = g_c_run_progn_hook(draw_mark_hook,
+			       XEN_LIST_1(C_TO_SMALL_XEN_INT(mark_id(mp))),
+			       S_transform_hook);
+      if (XEN_TRUE_P(res))
+	{
+	  if (show) mp->id |= MARK_VISIBLE; else mp->id &= (~MARK_VISIBLE);
+	  return;
+	}
+    }
   top = ap->y_axis_y1;
   y1 = top;
   y0 = ap->y_axis_y0;
@@ -2063,6 +2075,11 @@ void g_init_marks(void)
   XEN_DEFINE_PROCEDURE(S_backward_mark, g_backward_mark_w, 0, 3, 0, H_backward_mark);
   XEN_DEFINE_PROCEDURE(S_save_marks,    g_save_marks_w, 0, 1, 0,    H_save_marks);
   XEN_DEFINE_PROCEDURE(S_mark_p,        g_mark_p_w, 1, 0, 0,        H_mark_p);
+
+  #define H_draw_mark_hook S_draw_mark_hook " (mark-id) is called before a mark is drawn (in XOR mode). \
+If the hook returns #t, the mark is not drawn."
+
+  XEN_DEFINE_HOOK(draw_mark_hook, S_draw_mark_hook, 1, H_draw_mark_hook);  /* arg = mark-id */
 }
 
 

@@ -267,6 +267,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+23-Nov:  draw-mark-hook.\n\
 20-Nov:  xm-enved.scm.\n\
 19-Nov:  reopen menu example in examp.scm.\n\
 13-Nov:  edit123.scm by Tom Roth added to contrib directory.\n\
@@ -308,8 +309,8 @@ static char edit_menu_help_string[] =
 "  Undo: undo the last edit in the current file.\n\
   Redo: redo the undone edit.\n\
   Find: a global search -- operates across all currently sync'd sounds.\n\
-  Cut: delete selected portion.\n\
-  Paste: insert the selection at the current location\n\
+  Delete selection: delete selected portion.\n\
+  Insert selection: insert the selection at the current location\n\
   Mix selection: add the selection at the current location\n\
   Play selection: play the current selection.\n\
   Save selection: save the current selection in a file.\n\
@@ -2267,8 +2268,8 @@ char* word_wrap(char *text, int widget_len)
 
 XEN g_help(XEN text, int widget_wid)
 {
-  #define H_snd_help "(" S_snd_help " arg) returns the documentation associated with its argument. \
-(snd-help make-vct) for example, prints out a brief description of make-vct. \
+  #define H_snd_help "(" S_snd_help " arg) returns the documentation associated with its argument. (snd-help make-vct) \
+for example, prints out a brief description of make-vct. \
 The argument can be a string, a symbol, or the object itself.  In some cases, only the symbol has the documentation. \
 In the help descriptions, '&optional' marks optional arguments, and \
 '&opt-key' marks CLM-style optional keyword arguments.  If you load index.scm \
@@ -2362,6 +2363,14 @@ and the location of the associated C code will be displayed, if it can be found.
 static XEN g_listener_help(XEN arg)
 {
   return(g_help(arg, listener_width()));
+}
+
+void set_html_dir(snd_state *ss, char *new_dir)
+{
+#if HAVE_HTML
+  if (html_dir(ss)) FREE(html_dir(ss));
+  set_html_dir_1(ss, new_dir);
+#endif
 }
 
 #ifdef XEN_ARGIFY_1

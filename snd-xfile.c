@@ -657,7 +657,7 @@ static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
   snd_state *ss = (snd_state *)context;
   char *str = NULL, *comment, *fullname;
   snd_info *sp;
-  int type, format, srate, opened = -1;
+  int i, type, format, srate, opened = -1;
   str = XmTextGetString(save_as_file_data->srate_text);
   srate = string2int(str);
   if (str) XtFree(str);
@@ -676,6 +676,8 @@ static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
       (save_as_dialog_type == FILE_SAVE_AS) && 
       (opened == 0))
     {
+      for (i = 0; i < sp->nchans; i++) 
+	sp->chans[i]->edit_ctr = 0; /* don't trigger close-hook unsaved-edit checks */
       snd_close_file(sp, ss);
       fullname = mus_expand_filename(str);
       snd_open_file(fullname, ss, FALSE); /* FALSE = not read_only */

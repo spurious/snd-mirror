@@ -36,7 +36,7 @@ void mus_misc_error(const char *caller, char *msg, XEN val)
 
 static XEN g_sound_loop_info(XEN filename)
 {
-  #define H_mus_sound_loop_info "(" S_mus_sound_loop_info " filename) -> loop info for sound as a list (start1 end1 start2 end2 base-note base-detune)"
+  #define H_mus_sound_loop_info "(" S_mus_sound_loop_info " filename) -> loop info for sound as a list (start1 end1 start2 end2 base-note base-detune mode1 mode2)"
   int *res;
   char *tmpstr;
   XEN sres = XEN_EMPTY_LIST;
@@ -46,8 +46,9 @@ static XEN g_sound_loop_info(XEN filename)
   if (tmpstr) FREE(tmpstr);
   if (res)
     {
-      sres = XEN_LIST_6(C_TO_XEN_INT(res[0]), C_TO_XEN_INT(res[1]), C_TO_XEN_INT(res[2]),
-			C_TO_XEN_INT(res[3]), C_TO_XEN_INT(res[4]), C_TO_XEN_INT(res[5]));
+      sres = XEN_LIST_8(C_TO_XEN_INT(res[0]), C_TO_XEN_INT(res[1]), C_TO_XEN_INT(res[2]),
+			C_TO_XEN_INT(res[3]), C_TO_XEN_INT(res[4]), C_TO_XEN_INT(res[5]),
+			C_TO_XEN_INT(res[6]), C_TO_XEN_INT(res[7]));
       FREE(res);
     }
   return(sres);

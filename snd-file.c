@@ -2078,7 +2078,7 @@ void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_da
 	  type = hdr->type;
 	  if ((type == MUS_AIFF) || 
 	      (type == MUS_AIFC))
-	    mus_header_set_aiff_loop_info(mus_sound_loop_info(sp->filename));
+	    mus_header_set_full_aiff_loop_info(mus_sound_loop_info(sp->filename));
 	  mus_sound_forget(sp->filename);
 	  format = hdr->format;
 	  loc = hdr->data_location;
@@ -2262,8 +2262,8 @@ static XEN g_add_sound_file_extension(XEN ext)
 static XEN g_file_write_date(XEN file)
 {
   #define S_file_write_date "file-write-date"
-  #define H_file_write_date "(" S_file_write_date " file) -> write date in the same format as current-time:\n\
-(strftime \"%a %d-%b-%Y %H:%M %Z\" (localtime (file-write-date \"oboe.snd\")))\n\
+  #define H_file_write_date "(" S_file_write_date " file) -> write date in the same format as 
+current-time:\n\(strftime \"%a %d-%b-%Y %H:%M %Z\" (localtime (file-write-date \"oboe.snd\")))\n\
 Equivalent to Guile (stat:mtime (stat file))"
 
   time_t date;
@@ -2274,8 +2274,8 @@ Equivalent to Guile (stat:mtime (stat file))"
 
 static XEN g_sound_loop_info(XEN snd)
 {
-  #define H_sound_loop_info "(" S_sound_loop_info " snd) returns the sound's loop points as a list: \
-(sustain-start sustain-end release-start release-end baseNote detune)"
+  #define H_sound_loop_info "(" S_sound_loop_info " snd) returns the sound's loop points as a 
+list: (sustain-start sustain-end release-start release-end baseNote detune)"
   int *res;
   XEN sres = XEN_EMPTY_LIST;
   snd_info *sp;
@@ -2286,8 +2286,9 @@ static XEN g_sound_loop_info(XEN snd)
   res = mus_sound_loop_info(sp->filename);
   if (res)
     {
-      sres = XEN_LIST_6(C_TO_XEN_INT(res[0]), C_TO_XEN_INT(res[1]), C_TO_XEN_INT(res[2]),
-                        C_TO_XEN_INT(res[3]), C_TO_XEN_INT(res[4]), C_TO_XEN_INT(res[5]));
+      sres = XEN_LIST_8(C_TO_XEN_INT(res[0]), C_TO_XEN_INT(res[1]), C_TO_XEN_INT(res[2]),
+                        C_TO_XEN_INT(res[3]), C_TO_XEN_INT(res[4]), C_TO_XEN_INT(res[5]),
+                        C_TO_XEN_INT(res[6]), C_TO_XEN_INT(res[7]));
       FREE(res);
     }
   return(sres);
@@ -2301,6 +2302,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
   int type, len = 0;
   XEN start0 = XEN_UNDEFINED; XEN end0 = XEN_UNDEFINED; 
   XEN start1 = XEN_UNDEFINED; XEN end1 = XEN_UNDEFINED; 
+  XEN mode0 = XEN_UNDEFINED; XEN mode1 = XEN_UNDEFINED;
   XEN note = XEN_UNDEFINED; XEN detune = XEN_UNDEFINED;
   ASSERT_SOUND("set-" S_sound_loop_info, snd, 1);
   XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(vals) || XEN_LIST_P_WITH_LENGTH(vals, len), vals, XEN_ARG_2, "set-" S_sound_loop_info, "a list");
@@ -2333,10 +2335,17 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
 		  if (len > 4)
 		    {
 		      note = XEN_LIST_REF(vals, 4);
-		      if (len > 5) detune = XEN_LIST_REF(vals, 5);
-		    }}}}}
+		      if (len > 5) 
+			{
+			  detune = XEN_LIST_REF(vals, 5);
+			  if (len > 6) 
+			    {
+			      mode0 = XEN_LIST_REF(vals, 6);
+			      if (len > 7)
+				mode1 = XEN_LIST_REF(vals, 7);
+			    }}}}}}}
   if (hdr->loops == NULL)
-    hdr->loops = (int *)CALLOC(6, sizeof(int));
+    hdr->loops = (int *)CALLOC(8, sizeof(int));
   hdr->loops[0] = XEN_TO_C_INT_OR_ELSE(start0, 0);
   hdr->loops[1] = XEN_TO_C_INT_OR_ELSE(end0, 0);
   hdr->loops[2] = XEN_TO_C_INT_OR_ELSE(start1, 0);
@@ -2346,7 +2355,19 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
       hdr->loops[4] = XEN_TO_C_INT_OR_ELSE(note, 60);
       hdr->loops[5] = XEN_TO_C_INT_OR_ELSE(detune, 0);
     }
-  mus_sound_set_loop_info(sp->filename, hdr->loops);
+  if (len > 6)
+    {
+      hdr->loops[6] = XEN_TO_C_INT_OR_ELSE(mode0, 0);
+      hdr->loops[7] = XEN_TO_C_INT_OR_ELSE(mode1, 0);
+    }
+  else
+    {
+      if (end0 != 0) hdr->loops[6] = 1;
+      if (end1 != 0) hdr->loops[7] = 1;
+    }
+  mus_sound_set_full_loop_info(sp->filename, hdr->loops);
+  mus_header_set_full_aiff_loop_info(hdr->loops);
+  /* TODO: if no edits, and loop info already present (we're just changing it), just edit the header directly */
   type = hdr->type;
   if ((type != MUS_AIFF) && 
       (type != MUS_AIFC))
@@ -2366,6 +2387,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
   move_file(tmp_file, sp->filename);
   FREE(tmp_file);
   snd_update(sp->state, sp);
+  mus_header_set_full_aiff_loop_info(NULL);
   return(XEN_TRUE);
 }
 

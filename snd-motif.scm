@@ -22,7 +22,7 @@
 ;;; (add-very-useful-icons) adds some very useful icons
 ;;; (remove-main-menu menu) removes a top-level menu
 ;;; add delete and rename options to the file menu (add-delete-option) (add-rename-option)
-
+;;; (mark-sync-color new-color) sets the color of syncd marks
 
 (use-modules (ice-9 common-list) (ice-9 format))
 
@@ -2106,3 +2106,34 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;		    (sync-button (find-child ctrls "sync")))
 ;	     (|XtUnmanageChild play-button)
 ;	     (|XtVaSetValues sync-button (list |XmNrightAttachment |XmATTACH_FORM)))))
+
+(define (mark-sync-color new-color)
+  (define get-color
+    (lambda (color)
+      (let* ((col (|XColor))
+	     (dpy (|XtDisplay (|Widget (cadr (main-widgets)))))
+	     (scr (|DefaultScreen dpy))
+	     (cmap (|DefaultColormap dpy scr)))
+	(if (= (|XAllocNamedColor dpy cmap color col col) 0)
+	    (snd-error "can't allocate ~S" color)
+	    (|pixel col)))))
+
+  (let* ((mark-gc (|GC (list-ref (snd-gcs) 9)))
+	 (selected-mark-gc (|GC (list-ref (snd-gcs) 10)))
+	 (dpy (|XtDisplay (|Widget (cadr (main-widgets)))))
+	 (original-mark-color (|Pixel (logxor (snd-pixel (mark-color)) (snd-pixel (graph-color)))))
+	 (original-selected-mark-color (|Pixel (logxor (snd-pixel (mark-color)) (snd-pixel (selected-graph-color)))))
+	 (new-mark-color (|Pixel (logxor (snd-pixel (graph-color)) (cadr (get-color new-color)))))
+	 (new-selected-mark-color (|Pixel (logxor (snd-pixel (selected-graph-color)) (cadr (get-color new-color))))))
+    (if (not (hook-empty? draw-mark-hook)) 
+	(reset-hook! draw-mark-hook))
+    (add-hook! draw-mark-hook
+	       (lambda (id)
+		 (if (> (mark-sync id) 0)
+		     (begin
+		       (|XSetForeground dpy mark-gc new-mark-color)
+		       (|XSetForeground dpy selected-mark-gc new-selected-mark-color))
+		     (begin
+		       (|XSetForeground dpy mark-gc original-mark-color)
+		       (|XSetForeground dpy selected-mark-gc original-selected-mark-color)))
+		 #f))))

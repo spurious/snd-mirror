@@ -684,7 +684,7 @@ enum {COLOR_POSITION, COLOR_ZOOM};
   #define set_html_height(ss, a) ss->HTML_Height = a
 
   #define html_dir(ss) ss->HTML_Dir
-  #define set_html_dir(ss, a) ss->HTML_Dir = a
+  #define set_html_dir_1(ss, a) ss->HTML_Dir = a
 
   #define html_font_size_list(ss) ss->HTML_Font_Size_List
   #define set_html_font_size_list(ss, a) ss->HTML_Font_Size_List = a

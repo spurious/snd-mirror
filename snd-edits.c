@@ -1518,7 +1518,7 @@ void delete_samples(int beg, int num, chan_info *cp, const char *origin, int edp
     }
   else
     {
-      if (num == 1) /* TODO: if from g_delete: NO_SUCH_SAMPLE? */
+      if (num == 1)
 	report_in_minibuffer_and_save(cp->sound, "can't delete sample %d (current len=%d)", beg, len);
       else report_in_minibuffer_and_save(cp->sound, "can't delete samples %d to %d (current len=%d)", beg, beg + num - 1, len);
     }

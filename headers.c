@@ -297,17 +297,17 @@ int mus_header_format (void) {return(data_format);}
 int mus_header_distributed (void) {return(header_distributed);}
 int mus_header_comment_start (void) {return(comment_start);}
 int mus_header_comment_end (void) {return(comment_end);}
-int mus_header_aux_comment_start (int n) {return(aux_comment_start[n]);}
-int mus_header_aux_comment_end (int n) {return(aux_comment_end[n]);}
+int mus_header_aux_comment_start (int n) {if (aux_comment_start) return(aux_comment_start[n]); else return(-1);}
+int mus_header_aux_comment_end (int n) {if (aux_comment_end) return(aux_comment_end[n]); else return(-1);}
 int mus_header_type_specifier (void) {return(type_specifier);}
 int mus_header_bits_per_sample (void) {return(bits_per_sample);}
 int mus_header_fact_samples (void) {return(fact_samples);}
 int mus_header_block_align (void) {return(block_align);}
 off_t mus_header_true_length (void) {return(true_file_length);}
 int mus_header_original_format (void) {return(original_data_format);}
-int mus_header_loop_mode(int which) {return(loop_modes[which]);}
-int mus_header_loop_start(int which) {return(loop_starts[which]);}
-int mus_header_loop_end(int which) {return(loop_ends[which]);}
+int mus_header_loop_mode(int which) {if (loop_modes) return(loop_modes[which]); else return(-1);}
+int mus_header_loop_start(int which) {if (loop_starts) return(loop_starts[which]); else return(-1);}
+int mus_header_loop_end(int which) {if (loop_ends) return(loop_ends[which]); else return(-1);}
 int mus_header_mark_position(int id) {int i; for (i = 0; i < markers; i++) {if (marker_ids[i] == id) return(marker_positions[i]);} return(-1);}
 int mus_header_base_detune(void) {return(base_detune);}
 int mus_header_base_note(void) {return(base_note);}
@@ -889,8 +889,6 @@ static int read_aiff_marker(int m, unsigned char *buf)
   return(psize+6);
 }
 
-static int *aiff_loop_info = NULL;
-
 static int read_aiff_header (int chan, int overall_offset)
 {
   /* we know we have checked for FORM xxxx AIFF|AIFC when we arrive here */
@@ -907,8 +905,6 @@ static int read_aiff_header (int chan, int overall_offset)
   chans = 0;
   happy = 1;
   data_size = 0;
-  loop_modes[0] = 0;
-  loop_modes[1] = 0;
   true_file_length = SEEK_FILE_LENGTH(chan);
   update_form_size = mus_char_to_bint((unsigned char *)(hdrbuf + 4 + overall_offset)); /* should be file-size-8 unless there are multiple forms */
   while (happy)
@@ -1123,12 +1119,6 @@ static int read_aiff_header (int chan, int overall_offset)
 
 int mus_header_aiff_p(void) {return(type_specifier == mus_char_to_uninterpreted_int((unsigned const char *)I_AIFF));}
 
-void mus_header_set_aiff_loop_info(int *data)
-{
-  aiff_loop_info = data;
-  /* assuming 6 fields, 4 mark positions, followed by (as ints) the base note and detune */
-}
-
 static int write_aif_header (int chan, int wsrate, int wchans, int siz, int format, const char *comment, int len, int aifc_header)
 {
   /* we write the simplest possible AIFC header: AIFC | COMM | APPL-MUS_ if needed | SSND eof. */
@@ -1140,7 +1130,7 @@ static int write_aif_header (int chan, int wsrate, int wchans, int siz, int form
   extra = 0;
   curend = 0;
   lenloop = 38;
-  if (aiff_loop_info != NULL) lenloop = 42 + 28;
+  if ((loop_modes[0] != 0) || (loop_modes[1] != 0)) lenloop = 42 + 28;
   if (len != 0) 
     {
       lenhdr = 12;
@@ -1276,7 +1266,7 @@ static int write_aif_header (int chan, int wsrate, int wchans, int siz, int form
 	}
       if (extra != 0)
 	{
-	  if ((i+extra) > HDRBUFSIZ)
+	  if ((i + extra) > HDRBUFSIZ)
 	    {
 	      curend += i;
 	      write(chan, hdrbuf, i);
@@ -1291,7 +1281,7 @@ static int write_aif_header (int chan, int wsrate, int wchans, int siz, int form
     }
   curend += i;
   write(chan, hdrbuf, i);
-  if (aiff_loop_info == NULL)
+  if ((loop_modes[0] == 0) && (loop_modes[1] == 0))
     {
       write_four_chars((unsigned char *)hdrbuf, I_MARK);   /* SoundHack includes a blank MARK chunk for some reason */
       mus_bint_to_char((unsigned char *)(hdrbuf + 4), 2);
@@ -1316,7 +1306,13 @@ static int write_aif_header (int chan, int wsrate, int wchans, int siz, int form
       for (j = 0; j < 4; j++)
 	{
 	  mus_bshort_to_char((unsigned char *)(hdrbuf + 10 + 8 * j), j + 1);
-	  mus_bint_to_char((unsigned char *)(hdrbuf + 10 + 8 * j + 2), aiff_loop_info[j]);
+	  switch (j)
+	    {
+	    case 0: mus_bint_to_char((unsigned char *)(hdrbuf + 10 + 8 * j + 2), loop_starts[0]); break;
+	    case 1: mus_bint_to_char((unsigned char *)(hdrbuf + 10 + 8 * j + 2), loop_ends[0]);   break;
+	    case 2: mus_bint_to_char((unsigned char *)(hdrbuf + 10 + 8 * j + 2), loop_starts[1]); break;
+	    case 3: mus_bint_to_char((unsigned char *)(hdrbuf + 10 + 8 * j + 2), loop_ends[1]);   break;
+	    }
 	  mus_bshort_to_char((unsigned char *)(hdrbuf + 10 + 8 * j + 6), 0);
 	}
       write(chan, hdrbuf, 42);
@@ -1325,16 +1321,12 @@ static int write_aif_header (int chan, int wsrate, int wchans, int siz, int form
       mus_bint_to_char((unsigned char *)(hdrbuf + 4), 20);
       mus_bint_to_char((unsigned char *)(hdrbuf + 8), 0x3c00007f);
       mus_bint_to_char((unsigned char *)(hdrbuf + 12), 0x017f0000);
-      if (aiff_loop_info[4] != 0) hdrbuf[8] = (unsigned char)(aiff_loop_info[4]);
-      hdrbuf[9] = (unsigned char)(aiff_loop_info[5]);
-      if ((aiff_loop_info[0] != 0) || (aiff_loop_info[1] != 0))  /* TODO: can't the sustain start by sample 0? */
-	mus_bshort_to_char((unsigned char *)(hdrbuf + 16), 1);   /* TODO: loop mode settable (and below as well) */
-      else mus_bshort_to_char((unsigned char *)(hdrbuf + 16), 0);
+      hdrbuf[8] = (unsigned char)(base_note);
+      hdrbuf[9] = (unsigned char)(base_detune);
+      mus_bshort_to_char((unsigned char *)(hdrbuf + 16), loop_modes[0]);
       mus_bshort_to_char((unsigned char *)(hdrbuf + 18), 1);
       mus_bshort_to_char((unsigned char *)(hdrbuf + 20), 2);
-      if (aiff_loop_info[2] != 0)
-	mus_bshort_to_char((unsigned char *)(hdrbuf + 22), 1);
-      else mus_bshort_to_char((unsigned char *)(hdrbuf + 22), 0);
+      mus_bshort_to_char((unsigned char *)(hdrbuf + 22), loop_modes[1]);
       mus_bshort_to_char((unsigned char *)(hdrbuf + 24), 3);
       mus_bshort_to_char((unsigned char *)(hdrbuf + 26), 4);
       write(chan, hdrbuf, 28);
@@ -1739,7 +1731,7 @@ static int write_riff_header (int chan, int wsrate, int wchans, int siz, int for
 	}
       if (extra != 0)
 	{
-	  if ((i+extra) > HDRBUFSIZ)
+	  if ((i + extra) > HDRBUFSIZ)
 	    {
 	      curend += i;
 	      write(chan, hdrbuf, i);
@@ -1815,7 +1807,7 @@ char *mus_header_riff_aux_comment(const char *name, int *starts, int *ends)
       k = 4;
       lseek(fd, i, SEEK_SET);
       auxcom = (char *)CALLOC(end - i + 2, sizeof(char));
-      read(fd, auxcom, end-i+1);
+      read(fd, auxcom, end - i + 1);
       close(fd);
       i += 4;
       while (i < end)
@@ -4474,7 +4466,7 @@ static int read_asf_header (int chan)
       ilen = mus_char_to_lint((unsigned char *)(hdrbuf + 16));
       if (ilen <= 0) break;
       if ((chans > 0) && (srate > 0)) break;
-      i+=ilen;
+      i += ilen;
     }
   i = len;
   seek_and_read(chan, (unsigned char *)hdrbuf, i, HDRBUFSIZ);
@@ -4483,8 +4475,8 @@ static int read_asf_header (int chan)
     {
       ilen = mus_char_to_lint((unsigned char *)(hdrbuf + 16));
       if (asf_huge) asf_huge = 4; else asf_huge = 2;
-      data_location = i+20+asf_huge+2+4+3+1;
-      if (bits == 0) bits = 8;
+      data_location = i + 20 + asf_huge + 2+4+3+1;
+      if (bits == 0) bits = 8; 
       data_format = wave_to_sndlib_format(original_data_format, bits, 1);
     }
   if (data_format != MUS_UNSUPPORTED)
@@ -4621,7 +4613,6 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
   comment_start = 0;
   comment_end = 0;
   data_size = 0;
-  aiff_loop_info = NULL;
   if (loop_modes)
     {
       loop_modes[0] = 0;
@@ -5848,4 +5839,39 @@ int mus_header_no_header(const char *filename)
 	  (match_four_chars((unsigned char *)hdrbuf, I_FAP_)) ||
 	  (match_four_chars((unsigned char *)hdrbuf, I_DSPL)));
   return(!ok);
+}
+
+void mus_header_set_full_aiff_loop_info (int *data)
+{
+  /* include modes */
+  if (data)
+    {
+      loop_starts[0] = data[0];
+      loop_ends[0] = data[1];
+      loop_starts[1] = data[2];
+      loop_ends[1] = data[3];
+      base_note = data[4];
+      base_detune = data[5];
+      loop_modes[0] = data[6];
+      loop_modes[1] = data[7];
+    }
+  else
+    {
+      loop_modes[0] = 0;
+      loop_modes[1] = 0;
+    }
+}
+
+void mus_header_set_aiff_loop_info (int *data)
+{
+  /* backwards compatibility */
+  int bloop[8];
+  int i;
+  if (data)
+    {
+      for (i = 0; i < 6; i++) bloop[i] = data[i];
+      bloop[6] = 1; bloop[7] = 1;
+      mus_header_set_full_aiff_loop_info(bloop);
+    }
+  else mus_header_set_full_aiff_loop_info(NULL);
 }

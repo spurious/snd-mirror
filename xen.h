@@ -140,7 +140,7 @@
 #endif
 
 #if HAVE_SCM_NUM2INT
-  #ifdef SCM_GUILE_MAJOR_VERSION
+  #if defined(SCM_GUILE_MAJOR_VERSION) || defined(SCM_MAJOR_VERSION)
     #define XEN_TO_C_INT(a)           ((XEN_TRUE_P(scm_exact_p(a))) ? (int)scm_num2int(a, 0, __FUNCTION__) : ((int)scm_num2dbl(a, __FUNCTION__)))
   #else
     #define XEN_TO_C_INT(a)           ((int)scm_num2int(a, 0, __FUNCTION__))
@@ -814,6 +814,7 @@ XEN xen_rb_funcall_0(XEN func);
 #define XEN_LIST_5(a, b, c, d, e) 0
 #define XEN_LIST_6(a, b, c, d, e, f) 0
 #define XEN_LIST_7(a, b, c, d, e, f, g) 0
+#define XEN_LIST_8(a, b, c, d, e, f, g, h) 0
 #define XEN_CAR(a) 0
 #define XEN_CADR(a) 0
 #define XEN_CADDR(a) 0

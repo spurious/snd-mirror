@@ -3,6 +3,7 @@ snd change log
 
 2002 ----------------------------------------------------------------
 
+  23-Nov:    draw-mark-hook.
   20-Nov:    xm-enved.scm.
   19-Nov:    reopen menu example in examp.scm.
   13-Nov:    edit123.scm by Tom Roth added to contrib directory.

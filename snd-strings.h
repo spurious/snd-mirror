@@ -385,6 +385,7 @@
 #define S_draw_dots                     "draw-dots"
 #define S_draw_line                     "draw-line"
 #define S_draw_lines                    "draw-lines"
+#define S_draw_mark_hook                "draw-mark-hook"
 #define S_draw_string                   "draw-string"
 #define S_drop_hook                     "drop-hook"
 #define S_during_open_hook              "during-open-hook"
@@ -538,8 +539,10 @@
 #define S_map_channel                   "map-channel"
 #define S_mark_click_hook               "mark-click-hook"
 #define S_mark_color                    "mark-col" STR_OR
+#define S_mark_context                  "mark-context"
 #define S_mark_drag_hook                "mark-drag-hook"
 #define S_mark_home                     "mark-home"
+#define S_mark_hook                     "mark-hook"
 #define S_mark_name                     "mark-name"
 #define S_mark_p                        "mark?"
 #define S_mark_sample                   "mark-sample"

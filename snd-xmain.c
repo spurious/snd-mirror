@@ -666,7 +666,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 #if HAVE_HTML
   set_html_width(ss, snd_rs.html_width);
   set_html_height(ss, snd_rs.html_height);
-  set_html_dir(ss, snd_rs.html_dir);
+  set_html_dir(ss, copy_string(snd_rs.html_dir));
   if ((html_dir(ss)) && (strcmp(html_dir(ss), HTML_DIR) == 0))
     {
       /* default wasn't changed by user -- check to see if default should have been /usr/doc/snd-n instead */

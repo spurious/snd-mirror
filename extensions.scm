@@ -440,7 +440,7 @@
 (define (unsaved-edits-at-exit?)
   (letrec ((unsaved-edits-at-exit-1?
 	    (lambda (snds)
-	      (and snds
+	      (and (not (null? snds))
 		   (or (unsaved-edits-at-close? (car snds))
 		       (unsaved-edits-at-exit-1? (cdr snds)))))))
     (unsaved-edits-at-exit-1? (sounds))))

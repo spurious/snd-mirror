@@ -841,12 +841,21 @@ The lowest level procedures are:
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
+<!-- mark-context -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="markcontext">mark-context</a></em></code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->the graphics context to use to draw a mark (XOR mode).
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
 <!-- selection-context -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="selectioncontext">selection-context</a></em></code></span></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
-<!-- -->the graphics mode for XOR drawing in the selection color.</td></tr>
+<!-- -->the graphics context for XOR drawing in the selection color.</td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- --></table>
@@ -1391,6 +1400,15 @@ the hook.
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called just before data is sent to DAC passing data as sound-data object.
 <!-- --></td></tr><tr><td colspan=3></td></tr>
+<!-- -->
+<!-- draw-mark-hook -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="drawmarkhook">draw-mark-hook</a></em> (id)</code></span><td align=right><b>progn</b></td>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td colspan=2>
+<!-- -->called before a mark is drawn (in XOR mode). If the hook returns #t, the mark is not drawn.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- drop-hook -->
 <!-- --><tr><td colspan=2>
@@ -5810,6 +5828,7 @@ The following substitutions can be made:
 <!-- --><td>returns or sets loop points in header.  In each case, the loop info is a list of
 <!-- -->up to 4 points, the first two (start, end) refer to the "sustain" loop,
 <!-- -->the second two to the "release".  The 5th and 6th list entries are the "base note" and "detune" values.
+<!-- -->For historical reasons, the 7th and 8th entries are the sustain and release modes.
 <!-- -->This is similar to mus-sound-loop-info (but it's settable).
 <!-- --></td></tr>
 <!-- -->

@@ -2276,7 +2276,6 @@ static XEN g_html_dir(void)
 static XEN g_set_html_dir(XEN val) 
 {
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_html_dir, "a string");
-  /* TODO free? */
   set_html_dir(get_global_state(), copy_string(XEN_TO_C_STRING(val))); 
   return(val);
 }

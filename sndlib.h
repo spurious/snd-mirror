@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 14
-#define SNDLIB_REVISION 10
-#define SNDLIB_DATE "15-Nov-01"
+#define SNDLIB_REVISION 11
+#define SNDLIB_DATE "23-Nov-01"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -412,6 +412,7 @@ void mus_sound_report_cache   PROTO((FILE *fp));
 int mus_sound_aiff_p          PROTO((const char *arg));
 int *mus_sound_loop_info      PROTO((const char *arg));
 void mus_sound_set_loop_info  PROTO((const char *arg, int *loop));
+void mus_sound_set_full_loop_info PROTO((const char *arg, int *loop));
 
 int mus_sound_open_input      PROTO((const char *arg));
 int mus_sound_open_output     PROTO((const char *arg, int srate, int chans, int data_format, int header_type, const char *comment));
@@ -607,6 +608,7 @@ void mus_header_snd_set_header      PROTO((int in_srate, int in_chans, int in_fo
 int mus_header_aiff_p               PROTO((void));
 int mus_header_writable             PROTO((int type, int format));
 void mus_header_set_aiff_loop_info  PROTO((int *data));
+void mus_header_set_full_aiff_loop_info PROTO((int *data));
 int mus_header_sf2_entries          PROTO((void));
 char *mus_header_sf2_name           PROTO((int n));
 int mus_header_sf2_start            PROTO((int n));

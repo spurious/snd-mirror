@@ -466,6 +466,8 @@ char* word_wrap(char *text, int widget_len);
 void g_init_help(void);
 XEN g_help(XEN text, int widget_wid);
 
+void set_html_dir(snd_state *ss, char *new_dir);
+
 
 /* -------- snd-menu.c -------- */
 
