@@ -29,11 +29,6 @@ static char *FFT_WINDOWS[NUM_FFT_WINDOWS] =
   {"Rectangular", "Hann", "Welch", "Parzen", "Bartlett", "Hamming", "Blackman2", "Blackman3", "Blackman4",
    "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev"};
 
-static char *WAVELETS[NUM_WAVELETS] = {
-  "daub4", "daub6", "daub8", "daub10", "daub12", "daub14", "daub16", "daub18", "daub20",
-  "battle_lemarie", "burt_adelson", "beylkin", "coif2", "coif4", "coif6",
-  "sym2", "sym3", "sym4", "sym5", "sym6"};
-
 #define NUM_TRANSFORM_TYPES 7
 static char *TRANSFORM_TYPES[NUM_TRANSFORM_TYPES] = {"Fourier", "Wavelet", "Walsh", "Autocorrelate", "Cepstrum", "Hadamard", "Haar"};
 static int num_transform_types = NUM_TRANSFORM_TYPES;
@@ -798,7 +793,7 @@ Widget fire_up_transform_dialog(bool managed)
       wavelet_list = XmCreateScrolledList(wavelet_form, "wavelet-list", args, n);
       if (!(ss->using_schemes)) XtVaSetValues(wavelet_list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
       for (i = 0; i < NUM_WAVELETS; i++) 
-	wavelets[i] = XmStringCreate(WAVELETS[i], XmFONTLIST_DEFAULT_TAG);
+	wavelets[i] = XmStringCreate(wavelet_name(i), XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(wavelet_list, 
 		    XmNitems, wavelets, 
 		    XmNitemCount, NUM_WAVELETS, 

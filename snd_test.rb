@@ -680,6 +680,10 @@ set_expand_control_hop 0.1
 if fneq(expand_control_hop, 0.1) then snd_display sprintf("\n# expand_control_hop: %s", expand_control_hop) end
 set_expand_control_hop 0.05 
 if fneq(expand_control_hop, 0.05) then snd_display sprintf("\n# expand_control_hop: %s", expand_control_hop) end
+set_expand_control_jitter 0.2
+if fneq(expand_control_jitter, 0.2) then snd_display sprintf("\n# expand_control_jitter: %s", expand_control_jitter) end
+set_expand_control_jitter 0.1
+if fneq(expand_control_jitter, 0.1) then snd_display sprintf("\n# expand_control_jitter: %s", expand_control_jitter) end
 set_expand_control_length 0.2
 if fneq(expand_control_length, 0.2) then snd_display sprintf("\n# expand_control_length: %s", expand_control_length) end
 set_expand_control_length 0.15 

@@ -234,6 +234,7 @@ void initialize_control_panel(snd_info *sp)
   sp->expand_control_length = DEFAULT_EXPAND_CONTROL_LENGTH;
   sp->expand_control_ramp = DEFAULT_EXPAND_CONTROL_RAMP;
   sp->expand_control_hop = DEFAULT_EXPAND_CONTROL_HOP;
+  sp->expand_control_jitter = DEFAULT_EXPAND_CONTROL_JITTER;
   sp->reverb_control_feedback = DEFAULT_REVERB_CONTROL_FEEDBACK;
   sp->reverb_control_lowpass = DEFAULT_REVERB_CONTROL_LOWPASS;
   sp->reverb_control_scale = DEFAULT_REVERB_CONTROL_SCALE;

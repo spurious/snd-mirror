@@ -31,11 +31,6 @@ static char *FFT_WINDOWS[NUM_FFT_WINDOWS] =
   {"Rectangular", "Hann", "Welch", "Parzen", "Bartlett", "Hamming", "Blackman2", "Blackman3", "Blackman4",
    "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev"};
 
-static char *WAVELETS[NUM_WAVELETS] = {
-  "daub4", "daub6", "daub8", "daub10", "daub12", "daub14", "daub16", "daub18", "daub20",
-  "battle_lemarie", "burt_adelson", "beylkin", "coif2", "coif4", "coif6",
-  "sym2", "sym3", "sym4", "sym5", "sym6"};
-
 #define NUM_TRANSFORM_TYPES 7
 static char *TRANSFORM_TYPES[NUM_TRANSFORM_TYPES] = {"Fourier", "Wavelet", "Walsh", "Autocorrelate", "Cepstrum", "Hadamard", "Haar"};
 static int num_transform_types = NUM_TRANSFORM_TYPES;
@@ -206,7 +201,7 @@ static void wavelet_browse_callback(GtkTreeSelection *selection, gpointer *gp)
   if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
   gtk_tree_model_get(model, &iter, 0, &value, -1);
   for (i = 0; i < NUM_WAVELETS; i++)
-    if (strcmp(value, WAVELETS[i]) == 0)
+    if (strcmp(value, wavelet_name(i)) == 0)
       {
 	gfft_wavelet(i);
 	g_free(value);
@@ -600,7 +595,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_widget_show(display_frame);
 
       /* WAVELET */
-      wavelet_list = sg_make_list(_("wavelet"), outer_table, TABLE_ATTACH, NULL, NUM_WAVELETS, WAVELETS, 
+      wavelet_list = sg_make_list(_("wavelet"), outer_table, TABLE_ATTACH, NULL, NUM_WAVELETS, wavelet_names(),
 				  GTK_SIGNAL_FUNC(wavelet_browse_callback), 0, 1, 1, 2);
       gtk_widget_show(wavelet_list);
 

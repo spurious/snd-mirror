@@ -35,6 +35,7 @@
   (display (apply format #f args) xg-x11-file))
 
 (define names '())
+(define names-232 '())
 (define types '())
 (define ints '())
 (define ulongs '())
@@ -45,6 +46,7 @@
 (define check-types '())
 (define atoms '())
 (define strings '())
+(define strings-232 '())
 (define structs '())
 (define make-structs '()) ; these have a xg-specific make function
 (define struct-fields '())
@@ -77,6 +79,7 @@
 (define ints-23 '())
 
 (define funcs-231 '())
+(define funcs-232 '())
 
 (define idlers (list "gtk_idle_remove" "gtk_idle_remove_by_data" 
 		     "gtk_quit_remove" "gtk_quit_remove_by_data" 
@@ -753,6 +756,21 @@
 	    (set! funcs-231 (cons (list name type strs args) funcs-231))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
+(define* (CFNC-232 data)
+  (let ((name (cadr-str data))
+	(args (caddr-str data)))
+    (if (assoc name names)
+	(no-way "~A CFNC-232~%" name)
+	(let ((type (car-str data)))
+	  (if (and (not (member type types))
+		   (not (member type types-21))
+		   (not (member type types-22))
+		   (not (member type types-23)))
+	      (set! types-23 (cons type types-23)))
+	  (let ((strs (parse-args args '23)))
+	    (set! funcs-232 (cons (list name type strs args) funcs-232))
+	    (set! names (cons (cons name (func-type strs)) names)))))))
+
 (define* (CFNC-22 data)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
@@ -811,6 +829,13 @@
       (begin
 	(set! strings (cons name strings))
 	(set! names (cons (cons name 'string) names)))))
+
+(define (CSTR-232 name)
+  (if (assoc name names-232)
+      (no-way "~A CSTR-232~%" name)
+      (begin
+	(set! strings-232 (cons name strings-232))
+	(set! names-232 (cons (cons name 'string) names-232)))))
 
 (define (CSTR-extra name)
   (if (assoc name names)
@@ -1032,6 +1057,11 @@
   (thunk)
   (dpy "#endif~%~%"))
 
+(define (with-232 dpy thunk)
+  (dpy "#if HAVE_GTK_MENU_SHELL_CANCEL~%")
+  (thunk)
+  (dpy "#endif~%~%"))
+
 
 ;;; ---------------------------------------- write output files ----------------------------------------
 (hey "/* xg.c: Guile and Ruby bindings for gdk/gtk/pango, some of glib~%")
@@ -1045,6 +1075,7 @@
 (hey " *     defined(GTK_CELL_RENDERER_FOCUSED) for gtk+-2.2~%")
 (hey " *     HAVE_GTK_FILE_CHOOSER_DIALOG_NEW for gtk+-2.3~%")
 (hey " *     HAVE_GTK_EXPANDER_GET_USE_MARKUP for gtk+-2.3.1~%")
+(hey " *     HAVE_GTK_MENU_SHELL_CANCEL for gtk+-2.3.2~%")
 
 (let ((ifs '()))
   (for-each
@@ -1090,6 +1121,8 @@
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     6-Feb:     gtk 2.3.2 changes.~%")
+(hey " *     --------~%")
 (hey " *     16-Dec:    gtk 2.3.1 changes.~%")
 (hey " *     1-Dec:     gtk 2.3 changes.~%")
 (hey " *     15-Sep:    removed client_window GtkIMMulticontext struct field (for Gtk 2.2.4).~%")
@@ -1826,6 +1859,7 @@
 (if (not (null? funcs-22)) (with-22 hey (lambda () (for-each handle-func (reverse funcs-22)))))
 (if (not (null? funcs-23)) (with-23 hey (lambda () (for-each handle-func (reverse funcs-23)))))
 (if (not (null? funcs-231)) (with-231 hey (lambda () (for-each handle-func (reverse funcs-231)))))
+(if (not (null? funcs-232)) (with-232 hey (lambda () (for-each handle-func (reverse funcs-232)))))
 
 (define cast-it
  (lambda (cast)
@@ -1907,6 +1941,7 @@
 (if (not (null? funcs-22)) (with-22 say (lambda () (for-each argify-func (reverse funcs-22)))))
 (if (not (null? funcs-23)) (with-23 say (lambda () (for-each argify-func (reverse funcs-23)))))
 (if (not (null? funcs-231)) (with-231 say (lambda () (for-each argify-func (reverse funcs-231)))))
+(if (not (null? funcs-232)) (with-232 say (lambda () (for-each argify-func (reverse funcs-232)))))
 
 (define (ruby-cast func) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func)))) 
 (for-each ruby-cast (reverse casts))
@@ -2037,6 +2072,7 @@
 (if (not (null? funcs-22)) (with-22 say-hey (lambda () (for-each defun (reverse funcs-22)))))
 (if (not (null? funcs-23)) (with-23 say-hey (lambda () (for-each defun (reverse funcs-23)))))
 (if (not (null? funcs-231)) (with-231 say-hey (lambda () (for-each defun (reverse funcs-231)))))
+(if (not (null? funcs-232)) (with-232 say-hey (lambda () (for-each defun (reverse funcs-232)))))
 
 (define (cast-out func)
   (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func)))
@@ -2441,6 +2477,8 @@
 (for-each (lambda (str) (hey "  DEFINE_STRING(~A);~%" str)) (reverse strings))
 (if (not (null? extra-strings))
     (with-extra hey (lambda () (for-each (lambda (str) (hey "  DEFINE_STRING(~A);~%" str)) (reverse extra-strings)))))
+(if (not (null? strings-232))
+    (with-232 hey (lambda () (for-each (lambda (str) (hey "  DEFINE_STRING(~A);~%" str)) (reverse strings-232)))))
 (hey "}~%~%")
 
 

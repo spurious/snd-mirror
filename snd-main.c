@@ -516,6 +516,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
   if (sp->expand_control != DEFAULT_EXPAND_CONTROL) psp_sf(fd, S_expand_control, sp->expand_control);
   if (sp->expand_control_ramp != DEFAULT_EXPAND_CONTROL_RAMP) psp_sf(fd, S_expand_control_ramp, sp->expand_control_ramp);
   if (sp->expand_control_hop != DEFAULT_EXPAND_CONTROL_HOP) psp_sf(fd, S_expand_control_hop, sp->expand_control_hop);
+  if (sp->expand_control_jitter != DEFAULT_EXPAND_CONTROL_JITTER) psp_sf(fd, S_expand_control_jitter, sp->expand_control_jitter);
   if (sp->expand_control_length != DEFAULT_EXPAND_CONTROL_LENGTH) psp_sf(fd, S_expand_control_length, sp->expand_control_length);
   if (sp->speed_control_tones != DEFAULT_SPEED_CONTROL_TONES) psp_sd(fd, S_speed_control_tones, sp->speed_control_tones);
   if (sp->speed_control_style != DEFAULT_SPEED_CONTROL_STYLE) psp_ss(fd, S_speed_control_style, speed_control_style_name(sp->speed_control_style));

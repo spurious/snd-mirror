@@ -139,16 +139,17 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
     }
 }
 
+#if HAVE_GFCDN
+  #define SND_FILER(Widget) GTK_FILE_CHOOSER_DIALOG(Widget)
+  #define SndFiler GtkFileChooser
+#else
+
 static void unpad(gpointer w, gpointer data)
 {
   if (GTK_IS_CELL_RENDERER_TEXT(w))
     GTK_CELL_RENDERER(w)->ypad = 0;
 }
 
-#if HAVE_GFCDN
-  #define SND_FILER(Widget) GTK_FILE_CHOOSER_DIALOG(Widget)
-  #define SndFiler GtkFileChooser
-#else
   #define SND_FILER(Widget) GTK_FILE_SELECTION(Widget)
   #define SndFiler GtkFileSelection
 #endif
@@ -205,9 +206,7 @@ static GtkWidget *snd_filer_new(char *title, bool saving, GtkSignalFunc gdelete,
 static GtkWidget *snd_filer_new(char *title, bool saving, GtkSignalFunc gdelete, GtkSignalFunc ok, GtkSignalFunc cancel)
 #endif
 {
-  GtkWidget *new_dialog, *entry;
-  GList *cells;
-  GtkTreeViewColumn *dirl;
+  GtkWidget *new_dialog;
 #if HAVE_GFCDN
   new_dialog = gtk_file_chooser_dialog_new(title, NULL, 
 					   (saving) ? GTK_FILE_CHOOSER_ACTION_SAVE : GTK_FILE_CHOOSER_ACTION_OPEN,
@@ -228,6 +227,9 @@ static GtkWidget *snd_filer_new(char *title, bool saving, GtkSignalFunc gdelete,
 				 0);
 
 #else
+  GtkWidget *entry;
+  GList *cells;
+  GtkTreeViewColumn *dirl;
   GtkFileSelection *filer;
   new_dialog = gtk_file_selection_new(title);
   filer = SND_FILER(new_dialog);
@@ -817,7 +819,9 @@ static void save_as_delete_callback(GtkWidget *w, GdkEvent *event, gpointer cont
 static void make_save_as_dialog(char *sound_name, int header_type, int format_type)
 {
   /* save old as new, close old, open new */
+#if (!HAVE_GFCDN)
   GtkWidget *fbox;
+#endif
   if (!save_as_dialog)
     {
 #if HAVE_GFCDN

@@ -94,7 +94,7 @@ static void *make_expand(snd_info *sp, Float initial_ex, dac_info *dp)
 				initial_ex, sp->expand_control_length,
 				.6, /* expand scaler, not currently settable -- dac_set_expand_scaler below */
 				sp->expand_control_hop, sp->expand_control_ramp, 
-				.1, /* jitter, not settable, defaults to 1.0 in clm2xen.c and mus.lisp */
+				sp->expand_control_jitter,
 				max_expand_control_len(sp), (void *)spd);
   spd->dp = dp;
   spd->speeding = false;

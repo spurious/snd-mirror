@@ -171,6 +171,7 @@
 #define S_exit_hook                     "exit-hook"
 #define S_expand_control                "expand-control"
 #define S_expand_control_hop            "expand-control-hop"
+#define S_expand_control_jitter         "expand-control-jitter"
 #define S_expand_control_length         "expand-control-length"
 #define S_expand_control_p              "expand-control?"
 #define S_expand_control_ramp           "expand-control-ramp"

@@ -297,7 +297,7 @@ typedef struct snd_info {
   Float last_reverb_control_length, last_reverb_control_scale;
   Float saved_speed_control, saved_amp_control, saved_expand_control, saved_contrast_control;
   Float saved_reverb_control_length, saved_reverb_control_scale;
-  Float expand_control, expand_control_length, expand_control_ramp, expand_control_hop;
+  Float expand_control, expand_control_length, expand_control_ramp, expand_control_hop, expand_control_jitter;
   Float contrast_control, contrast_control_amp;
   Float reverb_control_length, reverb_control_scale, reverb_control_feedback, reverb_control_lowpass;
   Float reverb_control_decay, filter_control_xmax;
@@ -826,7 +826,8 @@ void cp_free_fft_state(chan_info *cp);
 void autocorrelation(Float *data, int n);
 void set_fft_info_xlabel(chan_info *cp, char *new_label);
 void fourier_spectrum(snd_fd *sf, Float *data, int fft_size, int data_len, Float *window);
-
+char *wavelet_name(int i);
+char **wavelet_names(void);
 
 
 /* -------- snd-xen.c -------- */
@@ -1448,11 +1449,11 @@ void g_init_base(void);
 void save_macro_state(FILE *fd);
 
 #ifdef __GNUC__
-  void report_in_minibuffer(snd_info *sp, char *format, ...)  __attribute__ ((format (printf, 2, 3)));
-  void report_in_minibuffer_and_save(snd_info *sp, char *format, ...)  __attribute__ ((format (printf, 2, 3)));
+  void report_in_minibuffer(snd_info *sp, const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
+  void report_in_minibuffer_and_save(snd_info *sp, const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
 #else
-  void report_in_minibuffer(snd_info *sp, char *format, ...);
-  void report_in_minibuffer_and_save(snd_info *sp, char *format, ...);
+  void report_in_minibuffer(snd_info *sp, const char *format, ...);
+  void report_in_minibuffer_and_save(snd_info *sp, const char *format, ...);
 #endif
 void clear_minibuffer(snd_info *sp);
 void clear_minibuffer_prompt(snd_info *sp);

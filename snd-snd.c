@@ -1341,6 +1341,7 @@ void save_controls(snd_info *sp)
 void restore_controls(snd_info *sp) 
 {
   ctrl_state *cs;
+  char *tmpstr;
   cs = (ctrl_state *)(sp->saved_controls);
   if (!cs) 
     {
@@ -1376,10 +1377,14 @@ void restore_controls(snd_info *sp)
     sp->filter_control_envelope = copy_env(cs->filter_env);
   else sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
   set_snd_filter_order(sp, cs->filter_order);
+  tmpstr = env_to_string(sp->filter_control_envelope);
+  set_filter_text(sp, tmpstr);
+  if (tmpstr) FREE(tmpstr);
 }
 
 void reset_controls(snd_info *sp) 
 {
+  char *tmpstr;
   toggle_expand_button(sp, DEFAULT_EXPAND_CONTROL_P);
   toggle_contrast_button(sp, DEFAULT_CONTRAST_CONTROL_P);
   toggle_reverb_button(sp, DEFAULT_REVERB_CONTROL_P);
@@ -1394,6 +1399,21 @@ void reset_controls(snd_info *sp)
   set_snd_filter_order(sp, DEFAULT_FILTER_CONTROL_ORDER);
   if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope);
   sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
+  tmpstr = env_to_string(sp->filter_control_envelope);
+  set_filter_text(sp, tmpstr);
+  if (tmpstr) FREE(tmpstr);
+}
+
+static void apply_unset_controls(snd_info *sp) 
+{
+  /* after apply_controls there's no need to clear everything! */
+  toggle_expand_button(sp, DEFAULT_EXPAND_CONTROL_P);
+  toggle_contrast_button(sp, DEFAULT_CONTRAST_CONTROL_P);
+  toggle_reverb_button(sp, DEFAULT_REVERB_CONTROL_P);
+  toggle_filter_button(sp, DEFAULT_FILTER_CONTROL_P);
+  toggle_direction_arrow(sp, false);
+  set_snd_amp(sp, DEFAULT_AMP_CONTROL);
+  set_snd_speed(sp, DEFAULT_SPEED_CONTROL);
 }
 
 
@@ -1826,7 +1846,7 @@ Cessate apply_controls(Indicium ptr)
 	}
     }
   unlock_apply(sp);
-  reset_controls(sp); /* i.e. clear it */
+  apply_unset_controls(sp);
   sp->applying = false;
   sgx = sp->sgx;
   if ((sgx) && (sgx->apply_in_progress)) sgx->apply_in_progress = 0;
@@ -1996,7 +2016,7 @@ typedef enum {SP_SYNC, SP_READ_ONLY, SP_NCHANS, SP_CONTRASTING, SP_EXPANDING, SP
 	      SP_FILTER_DBING, SP_SPEED_TONES, SP_SPEED_STYLE, SP_RESET_CONTROLS,
 	      SP_AMP, SP_CONTRAST, SP_CONTRAST_AMP, SP_EXPAND, SP_EXPAND_LENGTH, SP_EXPAND_RAMP, SP_EXPAND_HOP,
 	      SP_SPEED, SP_REVERB_LENGTH, SP_REVERB_FEEDBACK, SP_REVERB_SCALE, SP_REVERB_LOW_PASS,
-	      SP_REVERB_DECAY, SP_PROPERTIES, SP_FILTER_COEFFS, SP_DATA_SIZE, SP_FILTER_HZING
+	      SP_REVERB_DECAY, SP_PROPERTIES, SP_FILTER_COEFFS, SP_DATA_SIZE, SP_FILTER_HZING, SP_EXPAND_JITTER
 } sp_field_t;
 
 static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
@@ -2068,6 +2088,7 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
     case SP_EXPAND_LENGTH:       return(C_TO_XEN_DOUBLE(sp->expand_control_length));   break;
     case SP_EXPAND_RAMP:         return(C_TO_XEN_DOUBLE(sp->expand_control_ramp));     break;
     case SP_EXPAND_HOP:          return(C_TO_XEN_DOUBLE(sp->expand_control_hop));      break;
+    case SP_EXPAND_JITTER:       return(C_TO_XEN_DOUBLE(sp->expand_control_jitter));   break;
     case SP_SPEED:
 #if HAVE_SCM_MAKE_RATIO
       if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
@@ -2335,6 +2356,11 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 	  if (sp->playing) dac_set_expand_hop(sp, fval); 
 	}
       return(C_TO_XEN_DOUBLE(sp->expand_control_hop));
+      break;
+    case SP_EXPAND_JITTER:    
+      fval = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
+      sp->expand_control_jitter = fval; 
+      return(C_TO_XEN_DOUBLE(sp->expand_control_jitter));
       break;
     case SP_SPEED: 
 #if HAVE_SCM_MAKE_RATIO
@@ -3268,6 +3294,20 @@ static XEN g_set_expand_control_hop(XEN on, XEN snd_n)
 
 WITH_REVERSED_ARGS(g_set_expand_control_hop_reversed, g_set_expand_control_hop)
 
+static XEN g_expand_control_jitter(XEN snd_n) 
+{
+  #define H_expand_control_jitter "(" S_expand_control_jitter " (snd #f)): current expansion output grain spacing jitter (0.1)"
+  return(sound_get(snd_n, SP_EXPAND_JITTER, S_expand_control_jitter));
+}
+
+static XEN g_set_expand_control_jitter(XEN on, XEN snd_n) 
+{
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, XEN_ARG_1, S_setB S_expand_control_jitter, "a number"); 
+  return(sound_set(snd_n, on, SP_EXPAND_JITTER, S_setB S_expand_control_jitter));
+}
+
+WITH_REVERSED_ARGS(g_set_expand_control_jitter_reversed, g_set_expand_control_jitter)
+
 static XEN g_speed_control(XEN snd_n) 
 {
   #define H_speed_control "(" S_speed_control " (snd #f)): current speed (srate) slider setting"
@@ -3966,6 +4006,8 @@ XEN_ARGIFY_1(g_expand_control_ramp_w, g_expand_control_ramp)
 XEN_ARGIFY_2(g_set_expand_control_ramp_w, g_set_expand_control_ramp)
 XEN_ARGIFY_1(g_expand_control_hop_w, g_expand_control_hop)
 XEN_ARGIFY_2(g_set_expand_control_hop_w, g_set_expand_control_hop)
+XEN_ARGIFY_1(g_expand_control_jitter_w, g_expand_control_jitter)
+XEN_ARGIFY_2(g_set_expand_control_jitter_w, g_set_expand_control_jitter)
 XEN_ARGIFY_1(g_speed_control_w, g_speed_control)
 XEN_ARGIFY_2(g_set_speed_control_w, g_set_speed_control)
 XEN_ARGIFY_1(g_reverb_control_length_w, g_reverb_control_length)
@@ -4070,6 +4112,8 @@ XEN_ARGIFY_5(g_progress_report_w, g_progress_report)
 #define g_set_expand_control_ramp_w g_set_expand_control_ramp
 #define g_expand_control_hop_w g_expand_control_hop
 #define g_set_expand_control_hop_w g_set_expand_control_hop
+#define g_expand_control_jitter_w g_expand_control_jitter
+#define g_set_expand_control_jitter_w g_set_expand_control_jitter
 #define g_speed_control_w g_speed_control
 #define g_set_speed_control_w g_set_speed_control
 #define g_reverb_control_length_w g_reverb_control_length
@@ -4225,6 +4269,9 @@ If it returns #t, the apply is aborted."
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_expand_control_hop, g_expand_control_hop_w, H_expand_control_hop,
 					    S_setB S_expand_control_hop, g_set_expand_control_hop_w, g_set_expand_control_hop_reversed, 0, 1, 1, 1);
+  
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_expand_control_jitter, g_expand_control_jitter_w, H_expand_control_jitter,
+					    S_setB S_expand_control_jitter, g_set_expand_control_jitter_w, g_set_expand_control_jitter_reversed, 0, 1, 1, 1);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_speed_control, g_speed_control_w, H_speed_control,
 					    S_setB S_speed_control, g_set_speed_control_w, g_set_speed_control_reversed, 0, 1, 1, 1);

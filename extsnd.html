@@ -2753,6 +2753,10 @@ between two edits:
 </pre></td></tr></table></td></tr>
 
 <tr><td></td><td>
+Once the reader has been setup to read at a given edit position, subsequent
+edits won't affect it. One sequence that takes advantage of this is: make-sample-reader, scale-by 0,
+then run an overlap-add process on the data before the scaling.
+<br><br>
 <i>snd</i> can also be a filename (a string); in this way a sample-reader
 can read external sounds without going to the trouble of loading them into Snd.
 <br><br>
@@ -7335,8 +7339,8 @@ displayed in the minibuffer.  This is the View:Verbose cursor option
 <tr><td></td><td>
 If <i><a href="#ltransformtype">transform-type</a></i> is <i>wavelet-transform</i>, <i>wavelet-type</i> selects which 
 wavelet is used.  The list of available wavelets is in the Transform 
-Dialog. There are currently 20 choices, so this variable goes from 
-0 to 19 (default: 0).
+Dialog. There are currently 48 choices, so this variable goes from 
+0 to 47 (default: 0).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7599,7 +7603,7 @@ For many examples see new-effects.scm.
 <code><a class=def name="sndcontrast">contrast-control</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The <a href="snd.html#contrast">contrast</a> amount.
+The <a class=quiet href="snd.html#contrast">contrast</a> amount.
 The contrast-enhancement algorithm treats this variable as a kind of modulation index (the higher, the brighter),
 whereas <i>contrast-control-amp</i> below prescales the in-coming signal to be closer to -1.0 to 1.0
 (the brightening effect works best if it has a full amplitude signal to work with).
@@ -7612,7 +7616,7 @@ whereas <i>contrast-control-amp</i> below prescales the in-coming signal to be c
 <code><a class=def name="sndcontrastamp">contrast-control-amp</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The <a href="snd.html#contrast">contrast-control-amp</a> (a prescaler on the contrast-enhancement to get the
+The <a class=quiet href="snd.html#contrast">contrast-control-amp</a> (a prescaler on the contrast-enhancement to get the
 full effect of the compander).
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -7623,7 +7627,7 @@ full effect of the compander).
 <code><a class=def name="sndcontrasting">contrast-control?</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-#t if the <a href="snd.html#contrast">contrast</a> button is set (i.e. the contrast compander is active).
+#t if the <a class=quiet href="snd.html#contrast">contrast</a> button is set (i.e. the contrast compander is active).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7633,7 +7637,7 @@ full effect of the compander).
 <code><a class=def name="sndexpand">expand-control</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The <a href="snd.html#expand">expansion</a> amount.  This sets the ratio between the
+The <a class=quiet href="snd.html#expand">expansion</a> amount.  This sets the ratio between the
 output and input grain spacing.  If it is greater than 1.0, the result is longer.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -7644,7 +7648,18 @@ output and input grain spacing.  If it is greater than 1.0, the result is longer
 <code><a class=def name="sndexpandhop">expand-control-hop</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The <a href="snd.html#expand">expansion</a> hop amount in seconds (the distance between successive grains).
+The <a class=quiet href="snd.html#expand">expansion</a> hop amount in seconds (the distance between successive grains).
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
+<!-- expand-control-jitter -->
+<tr><td colspan=2>
+<code><a class=def name="sndexpandjitter">expand-control-jitter</a> (<em class=targ>snd</em>)</code>
+</td></tr>
+<tr><td></td><td>
+The <a class=quiet href="snd.html#expand">expansion</a> grain timing jitter.  This defaults to .1; if you set it
+to too small a number (0.0 for example), you'll probably notice (unwanted) notch-filter effects.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7654,7 +7669,7 @@ The <a href="snd.html#expand">expansion</a> hop amount in seconds (the distance 
 <code><a class=def name="sndexpandlength">expand-control-length</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The <a href="snd.html#expand">expansion</a> segment (grain) length in seconds.  The longer the grain,
+The <a class=quiet href="snd.html#expand">expansion</a> segment (grain) length in seconds.  The longer the grain,
 the more reverberated or slurred the effect.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -7665,7 +7680,7 @@ the more reverberated or slurred the effect.
 <code><a class=def name="sndexpandramp">expand-control-ramp</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The <a href="snd.html#expand">expansion</a> ramp amount (between 0 and .5).
+The <a class=quiet href="snd.html#expand">expansion</a> ramp amount (between 0 and .5).
 This affects the smoothness of the grain overlaps -- .001 gives a 
 rattling effect.
 </td></tr>
@@ -7687,7 +7702,7 @@ rattling effect.
 <code><a class=def name="sndfiltercoeffs">filter-control-coeffs</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The <a href="snd.html#filtercontrol">filter</a> coefficients (read-only currently).  It is
+The <a class=quiet href="snd.html#filtercontrol">filter</a> coefficients (read-only currently).  It is
 a vct suitable for use with the <a href="clm.html#filter">filter generator</a> or with
 <a href="#sndfilter">filter-sound</a>.
 </td></tr>
@@ -7699,7 +7714,7 @@ a vct suitable for use with the <a href="clm.html#filter">filter generator</a> o
 <code><a class=def name="sndfilterenv">filter-control-envelope</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The <a href="snd.html#filtercontrol">filter</a> (frequency reponse) envelope (a list of breakpoints).
+The <a class=quiet href="snd.html#filtercontrol">filter</a> (frequency reponse) envelope (a list of breakpoints).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7709,7 +7724,7 @@ The <a href="snd.html#filtercontrol">filter</a> (frequency reponse) envelope (a 
 <code><a class=def name="sndfilterdbing">filter-control-in-dB</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The <a href="snd.html#filtercontrol">filter</a> dB button.  If #t, the filter (frequency) envelope
+The <a class=quiet href="snd.html#filtercontrol">filter</a> dB button.  If #t, the filter (frequency) envelope
 graph is displayed in dB.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -7730,7 +7745,7 @@ If #t, filter frequency response envelope (sound control panel) x axis is in Hz,
 <code><a class=def name="sndfilterorder">filter-control-order</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The <a href="snd.html#filtercontrol">filter</a> order.  This affects how much computing
+The <a class=quiet href="snd.html#filtercontrol">filter</a> order.  This affects how much computing
 is needed to run the filter, and how close the filter can get to the desired frequency response envelope.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -7802,7 +7817,7 @@ The reverb feedback coefficient.  The more feedback, the happier Elvis.
 <code><a class=def name="sndreverblength">reverb-control-length</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The <a href="snd.html#reverb">reverb</a> delay line length scaler. Longer reverb simulates, to some
+The <a class=quiet href="snd.html#reverb">reverb</a> delay line length scaler. Longer reverb simulates, to some
 extent, a bigger hall.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -7823,7 +7838,7 @@ The reverb low pass filter coefficient.  (This filter is in the feedback loop).
 <code><a class=def name="sndreverbscale">reverb-control-scale</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The <a href="snd.html#reverb">reverb</a> amount (the amount of the direct signal sent to the reverb).
+The <a class=quiet href="snd.html#reverb">reverb</a> amount (the amount of the direct signal sent to the reverb).
 You can never have enough reverb.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -7873,7 +7888,7 @@ If set to #t, <i>snd</i>'s control panel is opened, else it is closed.
 <code><a class=def name="sndspeed">speed-control</a> (<em class=targ>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-current <a href="snd.html#speed">speed</a>.  A speed of 2 plays the sound twice as fast.
+current <a class=quiet href="snd.html#speed">speed</a>.  A speed of 2 plays the sound twice as fast.
 </td></tr>
 <tr><td colspan=2></td></tr>
 

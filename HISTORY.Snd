@@ -1,5 +1,6 @@
 Snd change log
 
+  6-Feb:     expand-control-jitter.
   29-Jan:    removed X resources epsfile (use eps-file) and overwriteCheck (use ask-before-overwrite)
   26-Jan:    changed filter-control-env to filter-control-envelope, filter-waveform-color to filter-control-waveform-color,
                also filter-env-in-hz to filter-control-in-hz as a sound-local variable

@@ -524,6 +524,7 @@
 "Expand-hop sets the time in seconds between successive grains.
 Expand-length sets the length of each grain.
 Expand-ramp sets the ramp-time in the grain envelope.
+Expand-jitter sets the grain timing jitter.
 Contrast-amp sets the prescaler for contrast-enhancement.
 Reverb-lowpass sets the feedback lowpass filter coeficient.
 Reverb-feedback sets the scaler on the feedback.
@@ -602,6 +603,7 @@ Reverb-feedback sets the scaler on the feedback.
 	   (list (list "expand-hop" 0.01 1.0 0.05  expand-control-hop)
 		 (list "expand-length" 0.01 .5 0.15 expand-control-length)
 		 (list "expand-ramp" 0.01 .5 0.4 expand-control-ramp)
+		 (list "expand-jitter" 0.0 .5 0.1 expand-control-jitter)
 		 (list "contrast-amp" 0.0 2.0 1.0 contrast-control-amp)
 		 (list "reverb-lowpass" 0.0 1.0 0.7 reverb-control-lowpass)
 		 (list "reverb-feedback" 0.0 1.25 1.09 reverb-control-feedback))))

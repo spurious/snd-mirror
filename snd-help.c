@@ -378,6 +378,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+6-Feb:   expand-control-jitter.\n\
 29-Jan:  removed X resources epsfile (use eps-file) and overwriteCheck (use ask-before-overwrite)\n\
 26-Jan:  changed filter-control-env to filter-control-envelope, \n\
            filter-waveform-color to filter-control-waveform-color,\n\

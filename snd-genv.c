@@ -360,7 +360,7 @@ static gboolean drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer 
 {
   int evx, evy;
   GdkModifierType state;
-  Tempus motion_time;
+  Tempus motion_time = 0;
   ignore_button_release = false;
   if (ev->state & GDK_BUTTON1_MASK)
     {

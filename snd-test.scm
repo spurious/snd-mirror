@@ -900,6 +900,7 @@
 	'eps-size (eps-size) 1.0
 	'expand-control (without-errors (expand-control)) 'no-such-sound
 	'expand-control-hop (without-errors (expand-control-hop)) 'no-such-sound
+	'expand-control-jitter (without-errors (expand-control-jitter)) 'no-such-sound
 	'expand-control-length (without-errors (expand-control-length)) 'no-such-sound
 	'expand-control-ramp (without-errors (expand-control-ramp)) 'no-such-sound
 	'expand-control? (without-errors (expand-control?)) 'no-such-sound
@@ -1446,6 +1447,7 @@
 	  (list 'eps-bottom-margin eps-bottom-margin 0.0 36.0)
 	  (list 'expand-control expand-control 1.0 2.0)
 	  (list 'expand-control-hop expand-control-hop 0.05 0.1)
+	  (list 'expand-control-jitter expand-control-jitter 0.1 0.2)
 	  (list 'expand-control-length expand-control-length 0.15 0.2)
 	  (list 'expand-control-ramp expand-control-ramp 0.4 0.2)
 	  (list 'expand-control? expand-control? #f #t)
@@ -20917,6 +20919,8 @@ EDITS: 5
 		(if (fneq (expand-control-length cfd2) .025) (snd-display ";set-expand-control-length .025 #t -> ~A?" (expand-control-length cfd2)))
 		(set! (expand-control-hop #t) .025)
 		(if (fneq (expand-control-hop cfd2) .025) (snd-display ";set-expand-control-hop .025 #t -> ~A?" (expand-control-hop cfd2)))
+		(set! (expand-control-jitter #t) .025)
+		(if (fneq (expand-control-jitter cfd2) .025) (snd-display ";set-expand-control-jitter .025 #t -> ~A?" (expand-control-jitter cfd2)))
 		(set! (expand-control-ramp #t) .025)
 		(if (fneq (expand-control-ramp cfd2) .025) (snd-display ";set-expand-control-ramp .025 #t -> ~A?" (expand-control-ramp cfd2)))
 		(let ((clone (clone-sound-as "/tmp/cloned.snd" cfd2)))
@@ -21147,6 +21151,7 @@ EDITS: 5
 		(list 'enved-wave? enved-wave? #f #f #t)
 		(list 'expand-control expand-control #t 0.1 5.0)
 		(list 'expand-control-hop expand-control-hop #t 0.01 0.5)
+		(list 'expand-control-jitter expand-control-jitter #t 0.01 0.5)
 		(list 'expand-control-length expand-control-length #t 0.1 0.25)
 		(list 'expand-control-ramp expand-control-ramp #t 0.1 0.4)
 		(list 'expand-control? expand-control? #t #f #t)
@@ -40972,7 +40977,7 @@ EDITS: 2
 		     draw-lines draw-string edit-header-dialog edit-fragment edit-position edit-tree edits env-selection
 		     env-sound enved-envelope enved-base enved-clip? enved-in-dB enved-dialog enved-style enved-power
 		     enved-target enved-waveform-color enved-wave? eps-file eps-left-margin emacs-style-save-as
-		     eps-bottom-margin eps-size expand-control expand-control-hop expand-control-length expand-control-ramp
+		     eps-bottom-margin eps-size expand-control expand-control-hop expand-control-jitter expand-control-length expand-control-ramp
 		     expand-control? fft fft-window-beta fft-log-frequency fft-log-magnitude transform-size disk-kspace
 		     transform-graph-type fft-window transform-graph? file-dialog mix-file-dialog file-name fill-polygon
 		     fill-rectangle filter-sound filter-control-in-dB filter-control-envelope enved-filter-order enved-filter
@@ -41091,7 +41096,7 @@ EDITS: 2
 			 default-output-chans default-output-format default-output-srate default-output-type dot-size
 			 enved-envelope enved-base enved-clip? enved-in-dB enved-style enved-power
 			 enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
-			 expand-control expand-control-hop expand-control-length expand-control-ramp expand-control?
+			 expand-control expand-control-hop expand-control-jitter expand-control-length expand-control-ramp expand-control?
 			 fft-window-beta fft-log-frequency fft-log-magnitude transform-size transform-graph-type fft-window
 			 transform-graph? filter-control-in-dB filter-control-envelope enved-filter-order enved-filter emacs-style-save-as
 			 filter-control-in-hz filter-control-order filter-control-waveform-color filter-control?  foreground-color
@@ -41183,7 +41188,7 @@ EDITS: 2
 			  (if (not (eq? tag 'no-such-sound))
 			      (snd-display ";snd no-such-sound ~A: ~A" n tag))))
 		      (list amp-control bomb apply-controls channels chans close-sound comment contrast-control
-			    contrast-control-amp contrast-control? data-format data-location data-size expand-control expand-control-hop
+			    contrast-control-amp contrast-control? data-format data-location data-size expand-control expand-control-hop expand-control-jitter
 			    expand-control-length expand-control-ramp expand-control? file-name filter-control-in-dB filter-control-in-hz
 			    filter-control-envelope filter-control-order filter-control?  finish-progress-report frames header-type
 			    progress-report read-only reset-controls restore-controls reverb-control-decay reverb-control-feedback
@@ -41202,7 +41207,7 @@ EDITS: 2
 					  (snd-display ";snd wrong-type-arg ~A: ~A ~A" n tag arg))))
 				  (list amp-control bomb apply-controls channels chans close-sound comment contrast-control
 					contrast-control-amp contrast-control? data-format data-location data-size expand-control
-					expand-control-hop expand-control-length expand-control-ramp expand-control? file-name
+					expand-control-hop expand-control-jitter expand-control-length expand-control-ramp expand-control? file-name
 					filter-control-in-dB filter-control-in-hz filter-control-envelope filter-control-order filter-control?
 					finish-progress-report frames header-type read-only reset-controls restore-controls
 					reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-lowpass
@@ -41223,7 +41228,7 @@ EDITS: 2
 					    (snd-display ";snd set wrong-type-arg ~D: ~A: ~A ~A" ctr n tag arg))
 					(set! ctr (+ ctr 1))))
 				    (list amp-control channels chans comment contrast-control contrast-control-amp
-					  contrast-control? data-format data-location data-size expand-control expand-control-hop
+					  contrast-control? data-format data-location data-size expand-control expand-control-hop expand-control-jitter
 					  expand-control-length expand-control-ramp expand-control? filter-control-in-dB filter-control-in-hz
 					  filter-control-envelope filter-control-order filter-control? frames header-type read-only
 					  reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-lowpass
@@ -41244,7 +41249,7 @@ EDITS: 2
 					      (snd-display ";snd safe set wrong-type-arg ~A: ~A ~A ~A" ctr n tag arg))
 					  (set! ctr (+ ctr 1))))
 				      (list amp-control contrast-control contrast-control-amp contrast-control?  expand-control
-					    expand-control-hop expand-control-length expand-control-ramp expand-control?
+					    expand-control-hop expand-control-jitter expand-control-length expand-control-ramp expand-control?
 					    filter-control-in-dB filter-control-in-hz filter-control-envelope filter-control-order filter-control?
 					    reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-lowpass
 					    reverb-control-scale reverb-control? speed-control speed-control-style speed-control-tones

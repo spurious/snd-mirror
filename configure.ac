@@ -588,6 +588,8 @@ else
 	# gtk 2.3
 	AC_CHECK_LIB(m, gtk_expander_get_use_markup, [AC_DEFINE(HAVE_GTK_EXPANDER_GET_USE_MARKUP)], ,$GTK_LIBS)
 	# gtk 2.3.1
+	AC_CHECK_LIB(m, gtk_menu_shell_cancel, [AC_DEFINE(HAVE_GTK_MENU_SHELL_CANCEL)], ,$GTK_LIBS)
+	# gtk 2.3.2
 
         if test "$with_x11" = yes ; then
 	  AC_DEFINE(WITH_GTK_AND_X11)

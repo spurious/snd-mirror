@@ -1108,6 +1108,7 @@ static void copy_snd_info(snd_info *nsp, snd_info *osp)
   nsp->expand_control_length = osp->expand_control_length;
   nsp->expand_control_ramp = osp->expand_control_ramp;
   nsp->expand_control_hop = osp->expand_control_hop;
+  nsp->expand_control_jitter = osp->expand_control_jitter;
   nsp->contrast_control_amp = osp->contrast_control_amp;
   nsp->reverb_control_feedback = osp->reverb_control_feedback;
   nsp->reverb_control_lowpass = osp->reverb_control_lowpass;
