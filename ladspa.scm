@@ -183,11 +183,12 @@
 
 
   (define-method (set-default-input-controls)
-    (let* ((def-uri (lrdf_get_default_uri (.UniqueID this->descriptor)))
-	   (defs (and def-uri (lrdf_get_setting_values def-uri)))
-	   (def-count (and defs (lrdf_defaults_count defs)))
-	   (def-vals (and defs (-> (<array/map> def-count (lambda (n) (cons (lrdf_defaults_pid defs n) (lrdf_defaults_value defs n)))) get-list))))
-      (if defs (lrdf_free_setting_values defs))
+    ;;;; There is a serious bug regarding getting default values using lrdf. Disabled for now.
+    ;;(let* ((def-uri (lrdf_get_default_uri (.UniqueID this->descriptor)))
+    ;;   (defs (and def-uri (lrdf_get_setting_values def-uri)))
+    ;;   (def-count (and defs (lrdf_defaults_count defs)))
+    ;;   (def-vals (and defs (-> (<array/map> def-count (lambda (n) (cons (lrdf_defaults_pid defs n) (lrdf_defaults_value defs n)))) get-list))))
+    ;;(if defs (lrdf_free_setting_values defs))
       (for-each (lambda (x)
 		  (let ((hint (car (x 1)))
 			(lo (cadr (x 1)))
@@ -197,7 +198,7 @@
 		    (define (ishint_notdefault dashint)
 		      (not (= (logand hint dashint ) 0)))
 		    (this 'input-control-set! (x 0) 
-			  (cond ((and def-vals (assoc (x 0) def-vals )) (cdr (assoc (x 0) def-vals)))
+			  (cond ;;((and def-vals (assoc (x 0) def-vals )) (cdr (assoc (x 0) def-vals)))
 				((ishint LADSPA_HINT_DEFAULT_0) 0)
 				((ishint LADSPA_HINT_DEFAULT_MINIMUM) lo)
 				((ishint LADSPA_HINT_DEFAULT_LOW) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
@@ -218,7 +219,8 @@
 				 (/ (+ lo hi) 2))))))
 		
 		(map (lambda (x) (<array> x (list-ref (.PortRangeHints this->descriptor) x)))
-		     this->input-controls))))
+		     this->input-controls)))
+  ;;)
   
   
   (define (minimum-num-handles sndchannels pluginchannels)
