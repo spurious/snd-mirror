@@ -293,7 +293,6 @@ void set_foreground_color(chan_info *cp, axis_context *ax, GdkColor *color);
 GdkGC *copy_GC(chan_info *cp);
 GdkGC *erase_GC(chan_info *cp);
 void cleanup_cw(chan_info *cp);
-int channel_unlock_pane(chan_info *cp, void *ptr);
 void change_channel_style(snd_info *sp, int new_style);
 
 void g_init_gxchn(void);
@@ -316,6 +315,8 @@ int set_tiny_font(snd_state *ss, char *font);
 int set_listener_font(snd_state *ss, char *font);
 int set_button_font(snd_state *ss, char *font);
 int set_bold_button_font(snd_state *ss, char *font);
+int set_peaks_font(snd_state *ss, char *font);
+int set_bold_peaks_font(snd_state *ss, char *font);
 int set_axis_label_font(snd_state *ss, char *font);
 int set_axis_numbers_font(snd_state *ss, char *font);
 void activate_numbers_font(axis_context *ax, snd_state *ss);
@@ -333,7 +334,6 @@ void set_active_color(GtkWidget *w, GdkColor *col);
 void set_background_and_redraw(GtkWidget *w, GdkColor *col);
 void set_foreground(GtkWidget *w, GdkColor *col);
 void set_text_background(GtkWidget *w, GdkColor *col);
-void set_pushed_button_colors(GtkWidget *w, snd_state *ss);
 void highlight_color(snd_state *ss, GtkWidget *w);
 void white_color(snd_state *ss, GtkWidget *w);
 void raise_dialog(GtkWidget *w);
@@ -361,8 +361,6 @@ int is_sensitive(GtkWidget *wid);
 void set_toggle_button(GtkWidget *wid, int val, int passed, void *data);
 guint16 widget_height(GtkWidget *w);
 guint16 widget_width(GtkWidget *w);
-void set_widget_height(GtkWidget *w, guint16 height);
-void set_widget_width(GtkWidget *w, guint16 width);
 gint16 widget_x(GtkWidget *w);
 gint16 widget_y(GtkWidget *w);
 void set_widget_x(GtkWidget *w, gint16 x);
@@ -389,7 +387,7 @@ void sg_list_select(GtkWidget *lst, int row);
 void sg_list_moveto(GtkWidget *lst, int row);
 
 GtkWidget *make_scrolled_text(snd_state *ss, GtkWidget *parent, int editable, GtkWidget *boxer, GtkWidget *paner);
-GtkWidget *sg_make_list(gpointer gp, int num_items, char **items, GtkSignalFunc callback);
+GtkWidget *sg_make_list(const char *title, GtkWidget *parent, int paned, gpointer gp, int num_items, char **items, GtkSignalFunc callback, int t1, int t2, int t3, int t4);
 void sg_text_delete(GtkWidget *w, int start, int end);
 void sg_make_resizable(GtkWidget *w);
 
@@ -437,10 +435,7 @@ void reflect_amp_env_completion(snd_info *sp);
 void reflect_amp_env_in_progress(snd_info *sp);
 snd_info *add_sound_window (char *filename, snd_state *state, int read_only);
 void set_sound_pane_file_label(snd_info *sp, char *str);
-void sound_unlock_control_panel(snd_info *sp, void *ptr);
-void sound_lock_control_panel(snd_info *sp, void *ptr);
 void snd_info_cleanup(snd_info *sp);
-void unlock_control_panel(snd_info *sp);
 void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp, int all_panes);
 void equalize_all_panes(snd_state *ss);
 void sound_show_ctrls(snd_info *sp);
@@ -504,8 +499,6 @@ void g_init_gxenv(void);
 
 /* -------- snd-gxen.c -------- */
 
-
-void recolor_button(GUI_WIDGET w, void *ptr);
 void color_chan_components(COLOR_TYPE color, int which_component);
 void color_unselected_graphs(COLOR_TYPE color);
 void recolor_everything(GUI_WIDGET w, void *ptr);

@@ -1,9 +1,5 @@
 #include "snd.h"
 
-/* TODO: if controls close, drag main sash should keep it closed
- * TODO: M-p and M-n in filter/mini?
- */
-
 enum {W_pane, W_pane_box, W_control_panel,
       W_name_form, W_name, W_name_event, W_name_icon, W_name_pix, W_info_label, W_info, W_info_sep,
       W_play, W_sync, W_unite,
@@ -243,16 +239,7 @@ void set_minibuffer_string(snd_info *sp, char *str)
 
 void make_minibuffer_label(snd_info *sp, char *str)
 {
-  GtkWidget *button;
-  GtkStyle *style;
-  snd_state *ss;
-  ss = sp->state;
-  button = MINIBUFFER_LABEL(sp);
-  style = gtk_style_copy(gtk_widget_get_style(button));
-  /* style->font_desc = (ss->sgx)->button_fnt; */
-  gtk_widget_set_style(button, style);
-  gtk_label_set_text(GTK_LABEL(button), str);
-  /* gtk_widget_queue_draw(button); */
+  gtk_label_set_text(GTK_LABEL(MINIBUFFER_LABEL(sp)), str);
 }
 
 static void minibuffer_activate_callback(GtkWidget *w, gpointer data)
@@ -1496,7 +1483,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       
       sw[W_play] = gtk_check_button_new_with_label("play");
       gtk_box_pack_end(GTK_BOX(sw[W_name_form]), sw[W_play], FALSE, FALSE, 0);
-      set_pushed_button_colors(sw[W_play], ss);
       g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_play]),
 				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_play]))),
 				     0,
@@ -1535,7 +1521,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       
       sw[W_unite] = gtk_check_button_new_with_label("unite");
       gtk_box_pack_end(GTK_BOX(sw[W_name_form]), sw[W_unite], FALSE, FALSE, 0);
-      set_pushed_button_colors(sw[W_unite], ss);
       g_signal_connect_closure_by_id(GTK_OBJECT(sw[W_unite]),
 				     g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(sw[W_unite]))),
 				     0,
@@ -1736,7 +1721,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
 				     0);
-      set_pushed_button_colors(sw[W_expand_button], ss);
       gtk_widget_show(sw[W_expand_button]);
       
       gtk_widget_show(sw[W_expand_form]);
@@ -1798,7 +1782,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
 				     0);
-      set_pushed_button_colors(sw[W_contrast_button], ss);
       gtk_widget_show(sw[W_contrast_button]);
       
       gtk_widget_show(sw[W_contrast_form]);
@@ -1898,7 +1881,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
 				     0);
-      set_pushed_button_colors(sw[W_reverb_button], ss);
       gtk_widget_show(sw[W_reverb_button]);
       
       gtk_widget_show(sw[W_reverb_form]);
@@ -1939,7 +1921,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(filter_db_callback), (gpointer)sp, 0),
 				     0);
-      set_pushed_button_colors(sw[W_filter_dB], ss);
       gtk_widget_show(sw[W_filter_dB]);
       
       sw[W_filter_button] = gtk_check_button_new();
@@ -1954,7 +1935,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
 				     0);
-      set_pushed_button_colors(sw[W_filter_button], ss);
       gtk_widget_show(sw[W_filter_button]);
       
       gtk_widget_show(sw[W_filter_form]);
@@ -1983,7 +1963,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
 				     0);
-      set_pushed_button_colors(sw[W_apply], ss);
       gtk_widget_show(sw[W_apply]);
       
       sw[W_remember] = gtk_button_new_with_label("Remember");
@@ -1998,7 +1977,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
 				     0);
-      set_pushed_button_colors(sw[W_remember], ss);
       gtk_widget_show(sw[W_remember]);
       
       sw[W_restore] = gtk_button_new_with_label("Restore");
@@ -2013,7 +1991,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
 				     0);
-      set_pushed_button_colors(sw[W_restore], ss);
       gtk_widget_show(sw[W_restore]);
       
       sw[W_reset] = gtk_button_new_with_label("Reset");
@@ -2028,7 +2005,6 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)), 0),
 				     0);
-      set_pushed_button_colors(sw[W_reset], ss);
       gtk_widget_show(sw[W_reset]);
       
       gtk_widget_show(sw[W_apply_form]);
@@ -2123,15 +2099,6 @@ void set_sound_pane_file_label(snd_info *sp, char *str)
   set_label(w_snd_name(sp), str);
 }
 
-void sound_unlock_control_panel(snd_info *sp, void *ptr)
-{
-}
-
-void sound_lock_control_panel(snd_info *sp, void *ptr)
-{
-  /* might use gtk_paned_set_position here */
-}
-
 void snd_info_cleanup(snd_info *sp)
 {
   snd_context *sx;
@@ -2153,8 +2120,6 @@ void snd_info_cleanup(snd_info *sp)
     }
 }
 
-void unlock_control_panel(snd_info *sp) {return;}
-
 void set_apply_button(snd_info *sp, int val) 
 {
   gtk_widget_set_sensitive(APPLY_BUTTON(sp), val);
@@ -2174,18 +2139,12 @@ void equalize_all_panes(snd_state *ss)
 
 void sound_show_ctrls(snd_info *sp)
 {
-  int height;
-  height = widget_height(w_snd_pane(sp));
-  if (height > 200)
-    gtk_paned_set_position(GTK_PANED(w_snd_pane(sp)), height - 150);
-  else gtk_paned_set_position(GTK_PANED(w_snd_pane(sp)), height / 2);
   gtk_widget_show_all(CONTROL_PANEL(sp));
 }
 
 void sound_hide_ctrls(snd_info *sp)
 {
   gtk_widget_hide_all(CONTROL_PANEL(sp));
-  gtk_paned_set_position(GTK_PANED(w_snd_pane(sp)), widget_height(w_snd_pane(sp)));
 }
 
 int control_panel_open(snd_info *sp)

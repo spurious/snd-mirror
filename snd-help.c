@@ -268,6 +268,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+28-Oct:  added peaks-font and bold-peaks-font.\n\
 25-Oct:  added -I switch to add dir to load path.\n\
 23-Oct:  added origin arg to bind-key, edpos arg to find-mark.\n\
 14-Oct:  removed max-sounds.\n\
@@ -957,6 +958,8 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_beats_per_minute "      60\n\
   " S_bold_button_font "      varies\n\
   " S_button_font "           varies\n\
+  " S_bold_peaks_font "       varies\n\
+  " S_peaks_font "            varies\n\
   " S_color_cutoff "          0.003\n\
   " S_color_inverted "        #t\n\
   " S_color_scale "           0.5\n\

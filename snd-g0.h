@@ -102,6 +102,8 @@ typedef struct {
   PangoFontDescription *axis_numbers_fnt;
   PangoFontDescription *help_text_fnt;
   PangoFontDescription *tiny_fnt;
+  PangoFontDescription *peaks_fnt;
+  PangoFontDescription *bold_peaks_fnt; 
 
   GdkColor *white, *black, *red, *yellow, *green, *light_blue, *lighter_blue;
   GdkColor *data_color, *selected_data_color, *mark_color, *graph_color, *selected_graph_color, *listener_color, *listener_text_color, *cursor_color;

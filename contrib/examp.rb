@@ -1,8 +1,8 @@
 ## examp.rb -- Guile -> Ruby translation
 
 ## Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-## Last: Sat Oct 19 02:55:10 CEST 2002
-## Version: $Revision: 1.4 $
+## Last: Mon Oct 28 01:31:42 CET 2002
+## Version: $Revision: 1.5 $
 
 ##
 ## Utilities
@@ -12,6 +12,7 @@
 ## warn(str), die(str), message(str)
 ## shell(cmd)
 ## get_func_name(n)
+## get_args(args, key, val)
 ##
 ## Buffers
 ## 
@@ -36,6 +37,8 @@
 ## compand(h)
 ## 
 
+include Math;			# PI
+
 $VERBOSE = true;		# Ruby's -v or -w option
 $IN_SND = true;			# script mode: $IN_SND = false
 
@@ -54,6 +57,7 @@ def help(func = false)
 ## warn(str), die(str), message(str)
 ## shell(cmd)
 ## get_func_name(n)
+## get_args(args, key, val)
 ##
 ## Buffers
 ## 
@@ -79,20 +83,20 @@ def help(func = false)
 ##
 ## Global variables
 ##
-## $VERBOSE = #{$VERBOSE}
-## $IN_SND = #{$IN_SND}
+## $VERBOSE              = #{$VERBOSE}
+## $IN_SND               = #{$IN_SND}
 ##
-## $rbm_file_name = \"#{$rbm_file_name}\"
-## $rbm_srate = #{$rbm_srate}
-## $rbm_channels = #{$rbm_channels}
-## $rbm_header_type = Mus_next (#{$rbm_header_type})
-## $rbm_data_format = Mus_bshort (#{$rbm_data_format})
-## $rbm_comment = \"#{$rbm_comment}\"
-## $rbm_statistics = #{$rbm_statistics}
-## $rbm_play = #{$rbm_play}
-## $rbm_player = #{$rbm_player}
+## $rbm_file_name        = \"#{$rbm_file_name}\"
+## $rbm_srate            = #{$rbm_srate}
+## $rbm_channels         = #{$rbm_channels}
+## $rbm_header_type      = Mus_next (#{$rbm_header_type})
+## $rbm_data_format      = Mus_bshort (#{$rbm_data_format})
+## $rbm_comment          = \"#{$rbm_comment}\"
+## $rbm_statistics       = #{$rbm_statistics}
+## $rbm_play             = #{$rbm_play}
+## $rbm_player           = #{$rbm_player}
 ## $rbm_reverb_file_name = \"#{$rbm_reverb_file_name}\";
-## $rbm_reverb_channels = #{$rbm_reverb_channels}
+## $rbm_reverb_channels  = #{$rbm_reverb_channels}
 ##
 ##     [*]: function has option :help 
 
@@ -174,6 +178,22 @@ end
 
 def get_func_name(n = 1)
   caller(n)[0].scan(/^.*:in `(.*)'/)[0][0];
+end
+
+# get_args(args, key, val)
+#
+# returns value, whether default VAL or value of KEY found in ARGS
+
+def get_args(args, key, val)
+  if(key == :help and (args == key or args.member?(key) or args.assoc(key)))
+    val = true;
+  elsif(args.member?(key))
+    x = args[args.index(key) + 1];
+    val = ((x == nil) ? val : x);
+  elsif(args.assoc(key))
+    val = (args.assoc(key)[1] rescue val);
+  end
+  val;
 end
 
 ##
@@ -284,7 +304,7 @@ $rbm_header_type = Mus_next;
 $rbm_data_format = Mus_bshort;
 $rbm_comment = "created by #{ENV["USER"]}";
 $rbm_statistics = false;
-$rbm_play = false;
+$rbm_play = 0;
 $rbm_player = "sndplay";
 $rbm_reverb = false;
 $rbm_reverb_file_name = "reverb.snd";
@@ -295,79 +315,77 @@ $rbm_reverb_channels = 1;
 #
 
 def fm_violin(start = 0.0, dur = 1.0, freq = 440.0, amp = 0.3, *args)
-  include Math;			# PI
-
   func_name = "\n" + get_func_name() + "()";
   usage = "fm_violin([start=0.0[, dur=1.0[, freq=440.0[, amp=0.3[, *args]]]]])
 
 fm_violin(:help)
 
-	[:fm_index, 1.0]
-	[:amp_env, [0, 0, 25, 1, 75, 1, 100, 0]]
-	[:periodic_vibrato_rate, 5.0]
-	[:random_vibrato_rate, 16.0]
-	[:periodic_vibrato_amp, 0.0025]
-	[:random_vibrato_amp, 0.005]
-	[:noise_amount, 0.0]
-	[:noise_freq, 1000.0]
-	[:ind_noise_freq, 10.0]
-	[:ind_noise_amount, 0.0]
-	[:amp_noise_freq, 20.0]
-	[:amp_noise_amount, 0.0]
-	[:gliss_env, [0, 0,  100, 0]]
-	[:gliss_amount, 0.0]
-	[:fm1_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0]]
-	[:fm2_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0]]
-	[:fm3_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0]]
-	[:fm1_rat, 1.0]
-	[:fm2_rat, 3.0]
-	[:fm3_rat, 4.0]
-	[:fm1_index, false]
-	[:fm2_index, false]
-	[:fm3_index, false]
-	[:base, 1.0]
-	[:reverb_amount, 0.01]
-	[:index_type, :violin]
-	[:degree, false]
-	[:distance, 1.0]
-	[:degrees, false]
-	[:help]
+	:fm_index,              1.0
+	:amp_env,               [0, 0, 25, 1, 75, 1, 100, 0]
+	:periodic_vibrato_rate, 5.0
+	:random_vibrato_rate,   16.0
+	:periodic_vibrato_amp,  0.0025
+	:random_vibrato_amp,    0.005
+	:noise_amount,          0.0
+	:noise_freq,            1000.0
+	:ind_noise_freq,        10.0
+	:ind_noise_amount,      0.0
+	:amp_noise_freq,        20.0
+	:amp_noise_amount,      0.0
+	:gliss_env,             [0, 0,  100, 0]
+	:gliss_amount,          0.0
+	:fm1_env,               [0, 1, 25, 0.4, 75, 0.6, 100, 0]
+	:fm2_env,               [0, 1, 25, 0.4, 75, 0.6, 100, 0]
+	:fm3_env,               [0, 1, 25, 0.4, 75, 0.6, 100, 0]
+	:fm1_rat,               1.0
+	:fm2_rat,               3.0
+	:fm3_rat,               4.0
+	:fm1_index,             false
+	:fm2_index,             false
+	:fm3_index,             false
+	:base,                  1.0
+	:reverb_amount,         0.01
+	:index_type,            :violin
+	:degree,                false
+	:distance,              1.0
+	:degrees,               false
+	:help
 
-   Ruby: fm_violin(0, 1, 440, .1, [[:fm_index, 2.0]])
+   Ruby: fm_violin(0, 1, 440, .1, :fm_index, 2.0)
   Guile: (fm-violin 0 1 440 .1 :fm-index 2.0)
 
-Example: with_sound { fm_violin(0, 1, 440, .1, [[:fm_index, 2.0]]) }\n";
+Example: with_sound { fm_violin(0, 1, 440, .1, :fm_index, 2.0) }\n";
 
-  unless(start == :help or args.member?(:help) or args.assoc(:help))
-    fm_index = (args.assoc(:fm_index)[1] rescue 1.0);
-    amp_env = (args.assoc(:amp_env)[1] rescue [0, 0, 25, 1, 75, 1, 100, 0]);
-    periodic_vibrato_rate = (args.assoc(:periodic_vibrato_rate)[1] rescue 5.0);
-    random_vibrato_rate = (args.assoc(:random_vibrato_rate)[1] rescue 16.0);
-    periodic_vibrato_amp = (args.assoc(:periodic_vibrato_amp)[1] rescue 0.0025);
-    random_vibrato_amp = (args.assoc(:random_vibrato_amp)[1] rescue 0.005);
-    noise_amount = (args.assoc(:noise_amount)[1] rescue 0.0);
-    noise_freq = (args.assoc(:noise_freq)[1] rescue 1000.0);
-    ind_noise_freq = (args.assoc(:ind_noise_freq)[1] rescue 10.0);
-    ind_noise_amount = (args.assoc(:ind_noise_amount)[1] rescue 0.0);
-    amp_noise_freq = (args.assoc(:amp_noise_freq)[1] rescue 20.0);
-    amp_noise_amount = (args.assoc(:amp_noise_amount)[1] rescue 0.0);
-    gliss_env = (args.assoc(:gliss_env)[1] rescue [0, 0,  100, 0]);
-    gliss_amount = (args.assoc(:gliss_amount)[1] rescue 0.0);
-    fm1_env = (args.assoc(:fm1_env)[1] rescue [0, 1, 25, 0.4, 75, 0.6, 100, 0]);
-    fm2_env = (args.assoc(:fm2_env)[1] rescue [0, 1, 25, 0.4, 75, 0.6, 100, 0]);
-    fm3_env = (args.assoc(:fm3_env)[1] rescue [0, 1, 25, 0.4, 75, 0.6, 100, 0]);
-    fm1_rat = (args.assoc(:fm1_rat)[1] rescue 1.0);
-    fm2_rat = (args.assoc(:fm2_rat)[1] rescue 3.0);
-    fm3_rat = (args.assoc(:fm3_rat)[1] rescue 4.0);
-    fm1_index = (args.assoc(:fm1_index)[1] rescue false);
-    fm2_index = (args.assoc(:fm2_index)[1] rescue false);
-    fm3_index = (args.assoc(:fm3_index)[1] rescue false);
-    base = (args.assoc(:base)[1] rescue 1.0);
-    reverb_amount = (args.assoc(:reverb_amount)[1] rescue 0.01);
-    index_type = (args.assoc(:index_type)[1] rescue :violin);
-    degree = (args.assoc(:degree)[1] rescue false);
-    distance = (args.assoc(:distance)[1] rescue 1.0);
-    degrees = (args.assoc(:degrees)[1] rescue false);
+  unless(start == :help or get_args(args, :help, false))
+    fm_index              = get_args(args, :fm_index, 1.0);
+    amp_env               = get_args(args, :amp_env, [0, 0, 25, 1, 75, 1, 100, 0]);
+    periodic_vibrato_rate = get_args(args, :periodic_vibrato_rate, 5.0);
+    random_vibrato_rate   = get_args(args, :random_vibrato_rate, 16.0);
+    periodic_vibrato_amp  = get_args(args, :periodic_vibrato_amp, 0.0025);
+    random_vibrato_amp    = get_args(args, :random_vibrato_amp, 0.005);
+    noise_amount          = get_args(args, :noise_amount, 0.0);
+    noise_freq            = get_args(args, :noise_freq, 1000.0);
+    ind_noise_freq        = get_args(args, :ind_noise_freq, 10.0);
+    ind_noise_amount      = get_args(args, :ind_noise_amount, 0.0);
+    amp_noise_freq        = get_args(args, :amp_noise_freq, 20.0);
+    amp_noise_amount      = get_args(args, :amp_noise_amount, 0.0);
+    gliss_env             = get_args(args, :gliss_env, [0, 0,  100, 0]);
+    gliss_amount          = get_args(args, :gliss_amount, 0.0);
+    fm1_env               = get_args(args, :fm1_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0]);
+    fm2_env               = get_args(args, :fm2_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0]);
+    fm3_env               = get_args(args, :fm3_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0]);
+    fm1_rat               = get_args(args, :fm1_rat, 1.0);
+    fm2_rat               = get_args(args, :fm2_rat, 3.0);
+    fm3_rat               = get_args(args, :fm3_rat, 4.0);
+    fm1_index             = get_args(args, :fm1_index, false);
+    fm2_index             = get_args(args, :fm2_index, false);
+    fm3_index             = get_args(args, :fm3_index, false);
+    base                  = get_args(args, :base, 1.0);
+    reverb_amount         = get_args(args, :reverb_amount, 0.01);
+    index_type            = get_args(args, :index_type, :violin);
+    degree                = get_args(args, :degree, false);
+    distance              = get_args(args, :distance, 1.0);
+    degrees               = get_args(args, :degrees, false);
 
     srate = (mus_srate() rescue $rbm_srate);
     chans = (mus_channels($rbm_output) rescue $rbm_channels);
@@ -453,31 +471,30 @@ def jc_reverb(args = [])
 
 jc_reverb(:help)
 
-	[:decay, 1.0]
-	[:low_pass, false]
-	[:volume, 1.0]
-	[:amp_env1, false]
-	[:amp_env2, false]
-	[:delay1, 0.013]
-	[:delay2, 0.011]
-	[:help]
+	:decay,    1.0
+	:low_pass, false
+	:volume,   1.0
+	:amp_env1, false
+	:amp_env2, false
+	:delay1,   0.013
+	:delay2,   0.011
+	:help
 
 The old Chowning reverberator (see examp.scm).
 
-Usage: jc_reverb([[:decay, 2.0], [:volume, .1]])
+Usage: jc_reverb(:decay, 2.0, :volume, .1)
 
-       jc_rev = lambda { |args| jc_reverb(args) }
-       with_sound([:reverb, jc_rev]) { fm_violin }\n";
+       with_sound(:reverb, :jc_reverb) { fm_violin }\n";
 
-  unless(args == :help or args.member?(:help) or args.assoc(:help))
-    decay = (args.assoc(:decay)[1] rescue 1.0);
-    low_pass = (args.assoc(:low_pass)[1] rescue false);
-    vol = (args.assoc(:volume)[1] rescue 1.0);
-    amp_env1 = (args.assoc(:amp_env1)[1] rescue false);
-    amp_env2 = (args.assoc(:amp_env2)[1] rescue false);
-    delay1 = (args.assoc(:delay1)[1] rescue 0.013);
-    delay2 = (args.assoc(:delay2)[1] rescue 0.011);
-    
+  unless(get_args(args, :help, false))
+    decay    = get_args(args, :decay, 1.0);
+    low_pass = get_args(args, :low_pass, false);
+    volume   = get_args(args, :volume, 1.0);
+    amp_env1 = get_args(args, :amp_env1, false);
+    amp_env2 = get_args(args, :amp_env2, false);
+    delay1   = get_args(args, :delay1, 0.013);
+    delay2   = get_args(args, :delay2, 0.011);
+
     allpass1 = make_all_pass(-0.700, 0.700, 1051);
     allpass2 = make_all_pass(-0.700, 0.700, 337);
     allpass3 = make_all_pass(-0.700, 0.700, 113);
@@ -491,10 +508,10 @@ Usage: jc_reverb([[:decay, 2.0], [:volume, .1]])
     outdel2 = make_delay((delay2 * srate).round) if chans == 2;
     dur = decay + mus_sound_frames($rbm_file_name) / srate.to_f;
     len = (srate * dur).round;
-    envA = (amp_env1 ? make_env(amp_env1, vol, dur) : false);
-    envB = (amp_env2 ? make_env(amp_env2, vol, dur) : false);
-    delA = (envA ? env(envA) : vol);
-    delB = (envB ? env(envB) : vol);
+    envA = (amp_env1 ? make_env(amp_env1, volume, dur) : false);
+    envB = (amp_env2 ? make_env(amp_env2, volume, dur) : false);
+    delA = (envA ? env(envA) : volume);
+    delB = (envB ? env(envB) : volume);
     allpass_sum, all_sums = 0.0, 0.0;
     comb_sumA, comb_sum_1A, comb_sum_2A = 0.0, 0.0, 0.0;
     comb_sumB, comb_sum_1B, comb_sum_2B = 0.0, 0.0, 0.0;
@@ -550,45 +567,60 @@ def with_sound(*args)
 
 with_sound(:help)
 
-	[:output, $rbm_file_name]
-	[:continue_old_file, false]
-	[:channels, $rbm_channels]
-	[:statistics, $rbm_statistics]
-	[:play, $rbm_play]
-	[:player, $rbm_player]
-	[:srate, $rbm_srate]
-	[:header_type, $rbm_header_type]
-	[:data_format, $rbm_data_format]
-	[:comment, $rbm_comment]
-	[:reverb, false]
-	[:revfile, $rbm_reverb_file_name]
-	[:reverb_channels, $rbm_reverb_channels]
-	[:reverb_args, []]
-	[:help]
+	:output,            $rbm_file_name
+	:continue_old_file, false
+	:channels,          $rbm_channels
+	:statistics,        $rbm_statistics
+	:play,              $rbm_play
+	:player,            $rbm_player
+	:srate,             $rbm_srate
+	:header_type,       $rbm_header_type
+	:data_format,       $rbm_data_format
+	:comment,           $rbm_comment
+	:reverb,            false
+	:revfile,           $rbm_reverb_file_name
+	:reverb_channels,   $rbm_reverb_channels
+	:reverb_data,       []
+	:scaled_to,         false
+	:scaled_by,         false
+	:help
 
-Usage: with_sound([:play, true], [:statistics, true]) { fm_violin }\n";
+Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n";
 
-  unless(args.member?(:help) or args.assoc(:help))
-    output = (args.assoc(:output)[1] rescue $rbm_file_name);
-    continue_old_file = (args.assoc(:continue_old_file)[1] rescue false);
-    channels = (args.assoc(:channels)[1] rescue $rbm_channels);
-    statistics = (args.assoc(:statistics)[1] rescue $rbm_statistics);
-    play = (args.assoc(:play)[1] rescue $rbm_play);
-    player = (args.assoc(:player)[1] rescue $rbm_player);
-    srate = (args.assoc(:srate)[1] rescue $rbm_srate);
-    header_type = (args.assoc(:header_type)[1] rescue $rbm_header_type);
-    data_format = (args.assoc(:data_format)[1] rescue $rbm_data_format);
-    comment = (args.assoc(:comment)[1] rescue $rbm_comment);
-    reverb = (args.assoc(:reverb)[1] rescue false);
-    revfile = (args.assoc(:revfile)[1] rescue $rbm_reverb_file_name);
-    reverb_channels = (args.assoc(:reverb_channels)[1] rescue $rbm_reverb_channels);
-    reverb_args = (args.assoc(:reverb_args)[1] rescue []);
+  unless(get_args(args, :help, false))
+    output            = get_args(args, :output, $rbm_file_name);
+    continue_old_file = get_args(args, :continue_old_file, false);
+    channels          = get_args(args, :channels, $rbm_channels);
+    statistics        = get_args(args, :statistics, $rbm_statistics);
+    play              = get_args(args, :play, $rbm_play);
+    player            = get_args(args, :player, $rbm_player);
+    srate             = get_args(args, :srate, $rbm_srate);
+    header_type       = get_args(args, :header_type, $rbm_header_type);
+    data_format       = get_args(args, :data_format, $rbm_data_format);
+    comment           = get_args(args, :comment, $rbm_comment);
+    reverb            = get_args(args, :reverb, false);
+    revfile           = get_args(args, :revfile, $rbm_reverb_file_name);
+    reverb_channels   = get_args(args, :reverb_channels, $rbm_reverb_channels);
+    reverb_data       = get_args(args, :reverb_data, []);
+    scaled_to         = get_args(args, :scaled_to, false);
+    scaled_by         = get_args(args, :scaled_by, false);
 
     $rbm_file_name = output;
     $rbm_channels = channels;
     $rbm_srate = srate;
     $rbm_reverb_file_name = revfile;
     $rbm_reverb_channels = reverb_channels;
+
+    case play
+    when true
+      play = 1;
+    when false, nil
+      play = 0;
+    else
+      play = play.abs
+    end
+    
+    $rbm_play = play;
 
     (close_sound(find_sound(output)) rescue false) if $IN_SND;
 
@@ -597,31 +629,26 @@ Usage: with_sound([:play, true], [:statistics, true]) { fm_violin }\n";
       mus_set_srate(srate);
       $rbm_output, $rbm_reverb = false, false;
       File::unlink(output) if File::exist?(output);
-      $rbm_output = make_sample2file(output, channels, data_format, header_type,
-				     comment) rescue  die(usage + "make_sample2file(#{output})");
+      $rbm_output = make_sample2file(output, channels, data_format, header_type, comment);
       
       if(reverb)
 	File::unlink(revfile) if File::exist?(revfile);
-	$rbm_reverb = make_sample2file(revfile, reverb_channels, data_format, header_type,
-				       "reverb") rescue die(usage +
-							    "make_sample2file(#{revfile})");
+	$rbm_reverb = make_sample2file(revfile, reverb_channels, data_format, header_type, "rev");
       end
     else
-      $rbm_output = continue_sample2file(output) rescue die(usage + 
-							    "continue_sample2file{#{output}}");
+      $rbm_output = continue_sample2file(output);
       if(reverb)
-	$rbm_reverb = continue_sample2file(revfile) rescue die(usage + 
-							       "continue_sample2file(#{revfile})");
+	$rbm_reverb = continue_sample2file(revfile);
       end
     end
 
     atime = Time.new if statistics;
-    yield() rescue die(usage + "yield()");
+    yield();
 
     if(reverb)
       mus_close($rbm_reverb);
-      $rbm_reverb = make_file2sample(revfile) rescue die(usage + "make_file2sample(#{revfile})");
-      reverb.call(reverb_args) rescue die(usage + "reverb.call()");
+      $rbm_reverb = make_file2sample(revfile);
+      (reverb.class == Proc) ? reverb.call(reverb_data) : send(reverb, reverb_data);
     end
     
     unless(continue_old_file)
@@ -632,6 +659,16 @@ Usage: with_sound([:play, true], [:statistics, true]) { fm_violin }\n";
       mus_close($rbm_output);
       $rbm_output = false;
       mus_set_srate(old_srate);
+    end
+
+    if($IN_SND)
+      snd = open_sound(output);
+      olds = sync(snd);
+      set_sync(true, snd)
+      scale_to(scaled_to, snd) if scaled_to;
+      scale_by(scaled_by, snd) if scaled_by;
+      save_sound(snd) if scaled_to or scaled_by;
+      set_sync(olds, snd);
     end
 
     if(statistics)
@@ -658,8 +695,7 @@ Usage: with_sound([:play, true], [:statistics, true]) { fm_violin }\n";
       end
     end
 
-    snd = open_sound(output);
-    ($IN_SND ? play_and_wait(snd) : system("#{player} #{output}")) if play;
+    1.upto(play) { |i| ($IN_SND ? play_and_wait(snd) : system("#{player} #{output}")) }
     output;
   else
     message(usage);
@@ -673,21 +709,51 @@ end
 
 with_sound { fm_violin }
 
-jc_rev = lambda { |args| jc_reverb(args) }
+with_sound(:channels, 2,
+	   :play, 3,
+	   :statistics, true,
+	   :reverb_channels, 2,
+	   :reverb, :jc_reverb,	# or :reverb, "jc_reverb",
+	   :reverb_data, [:decay, .8, :volume, .3],
+	   :reverb_channels, 1) { 
+  0.upto(3) { |i| fm_violin(i, 1, 220 * (i + 1), .3, :distance, i * .4) }
+}
 
-with_sound([:channels, 2],
-	   [:play, true],
-	   [:statistics, true],
-	   [:reverb_channels, 2],
-	   [:reverb, jc_rev],
-	   [:reverb_args, [[:decay, .8], [:volume, .3]]],
-	   [:reverb_channels, 1]) { fm_violin(0, 1, 440, .3) }
+with_sound(:play, 1,
+	   :channels, 2,
+	   :scaled_to, .3,
+	   :reverb, :jc_reverb,
+	   :statistics, true) { 
+  0.upto(20) { |i| 
+    metalamp = [0, 0, 0.5, 1, 5, 1, 10, 0.5, 15, 0.25, 35, 0.1, 100, 0]
+
+    fm_violin(i * 0.1, 1, 220 + i * 10, 0.1, 
+	      :fm_index, i * 0.5, :distance, i * 0.05, :amp_env, metalamp)
+
+    fm_violin(i * 0.1, 1, 2200 - i * 10, 0.1, 
+	      :fm_index, i * 0.5, :distance, i * -0.05, :amp_env, metalamp)
+  }
+}
+
+with_sound(:play, 1) { 
+  fm_violin(0, 1, 440);
+  with_sound(:continue_old_file, true, :play, 0) {
+    fm_violin(1, 1, 220);
+  }
+  with_sound(:continue_old_file, true, :play, 0) {
+    fm_violin(2, 1, 880);
+    with_sound(:continue_old_file, true, :play, 0) {
+      fm_violin(3, 1, 660);
+    }
+  }
+  fm_violin(4, 1, 440);
+}
 
 =end
 
 # fm_play(func[, outfile="test.snd"[, play_f=true]])
 #
-# Usage: fm_play(lambda { || fm_bell(0, 1, 440, .1) })
+# Usage: fm_play(lambda { fm_bell(0, 1, 440, .1) })
 
 def fm_play(func, outfile = "test.snd", play_f = true)
   snd = new_sound(outfile, Mus_next, Mus_bshort, 22050, 1, "created by fm_play()");
@@ -746,7 +812,7 @@ def fm_bell(start, dur, freq, amp,
 end
 
 =begin
-fm_play(lambda { | |
+fm_play(lambda {
 	  fbell = [0, 1, 2, 1.1000, 25, .7500, 75, .5000, 100, .2000];
 	  abell = [0, 0, .1000, 1, 10, .6000, 25, .3000, 50, .1500, 90, .1000, 100, 0];
 	  fm_bell(0.0, 1.0, 220.0, .5, abell, fbell, 1.0);
@@ -763,19 +829,19 @@ def n_rev(args = [])
 
 n_rev(:help)
 
-	[:amount, 0.1]
-	[:filter, 0.5]
-	[:feedback, 1.09]
-	[:help]
+	:amount,   0.1
+	:filter,   0.5
+	:feedback, 1.09
+	:help
 
 Reverb from Michael McNabb's Nrev (see new-effects.scm).
 
-Usage: n_rev([[:amount, .2], [:filter, .8]])\n";
+Usage: n_rev([:amount, .2, :filter, .8])\n";
 
-  unless(args == :help or args.member?(:help) or args.assoc(:help))
-    amount = (args.assoc(:amount)[1] rescue 0.1);
-    filter = (args.assoc(:filter)[1] rescue 0.5);
-    feedback = (args.assoc(:feedback)[1] rescue 1.09);
+  unless(get_args(args, :help, false))
+    amount   = get_args(args, :amount, 0.1);
+    filter   = get_args(args, :filter, 0.5);
+    feedback = get_args(args, :feedback, 1.09);
 
     set_reverb_control?(true);
     set_reverb_control_scale(amount);

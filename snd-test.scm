@@ -790,8 +790,10 @@
 	       (IF (or (not (string? (func)))
 		       (not (string=? val (func))))
 		   (snd-display ";set ~A to bogus value: ~A ~A" name val (func)))))
-	   (list axis-label-font axis-numbers-font listener-font help-text-font tiny-font button-font bold-button-font)
-	   (list 'axis-label-font 'axis-numbers-font 'listener-font 'help-text-font 'tiny-font button-font 'bold-button-font)))
+	   (list axis-label-font axis-numbers-font listener-font help-text-font 
+		 tiny-font button-font bold-button-font peaks-font bold-peaks-font)
+	   (list 'axis-label-font 'axis-numbers-font 'listener-font 'help-text-font 
+		 'tiny-font button-font 'bold-button-font 'peaks-font 'bold-peaks-font)))
 
       ))
 
@@ -4382,8 +4384,11 @@
 				 (lambda (newsnd)
 				   (set! s-out newsnd))))
         (scale-by 3.0)
-        (add-mark 101 ind)
-        (add-mark 202 ind)
+	(catch #t
+	       (lambda ()
+		 (add-mark 101 ind)
+		 (add-mark 202 ind))
+	       (lambda args (snd-display "got error from add-mark: ~A" args)))
         (system "sndtst") 
         (IF (= (mus-sound-write-date "fmv.snd") date)
             (snd-display ";script didn't overwrite fmv.snd?"))
@@ -27162,7 +27167,7 @@ EDITS: 2
 	       audio-state-file auto-resize auto-update autocorrelate axis-info axis-label-font axis-numbers-font
 	       backward-graph backward-mark backward-mix basic-color bind-key bold-button-font bomb
 	       button-font c-g?  apply-controls change-menu-label change-samples-with-origin channel-style
-	       channel-widgets channels chans clear-audio-inputs 
+	       channel-widgets channels chans clear-audio-inputs peaks-font bold-peaks-font
 	       close-sound ;close-sound-file 
 	       color-cutoff color-dialog
 	       color-inverted color-scale color->list colormap color?  comment contrast-control contrast-control-amp
@@ -27271,7 +27276,7 @@ EDITS: 2
 (define set-procs (list 
 		   amp-control ask-before-overwrite audio-input-device audio-output-device audio-state-file auto-resize
 		   auto-update axis-label-font axis-numbers-font ;basic-color 
-		   bold-button-font button-font channel-style
+		   bold-button-font button-font channel-style peaks-font bold-peaks-font
 		   color-cutoff color-inverted color-scale contrast-control contrast-control-amp
 		   contrast-control? auto-update-interval current-font cursor cursor-color channel-properties
 		   cursor-follows-play cursor-size cursor-style dac-combines-channels dac-size data-clipped data-color
@@ -27950,7 +27955,7 @@ EDITS: 2
 			  foreground-color graph-color graph-cursor help-text-font highlight-color just-sounds key-binding
 			  listener-color listener-font listener-prompt listener-text-color max-regions
 			  minibuffer-history-length mix-waveform-height region-graph-style position-color
-			  time-graph-style lisp-graph-style transform-graph-style
+			  time-graph-style lisp-graph-style transform-graph-style peaks-font bold-peaks-font
 			  previous-files-sort print-length pushed-button-color recorder-in-device recorder-autoload
 			  recorder-buffer-size recorder-file recorder-in-format recorder-max-duration recorder-out-chans
 			  recorder-out-format recorder-srate recorder-trigger sash-color ladspa-dir save-dir save-state-file

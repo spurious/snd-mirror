@@ -126,10 +126,6 @@ void edit_find_callback(GtkWidget *w, gpointer context)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_find_previous), (gpointer)ss, 0),
 				     0);
-      set_pushed_button_colors(help_button, ss);
-      set_pushed_button_colors(cancelB, ss);
-      set_pushed_button_colors(next_button, ss);
-      set_pushed_button_colors(previous_button, ss);
       gtk_widget_show(cancelB);
       gtk_widget_show(next_button);
       gtk_widget_show(previous_button);

@@ -153,6 +153,10 @@
   (let ((type (car arg)))
     (substring type 0 (1- (string-length type)))))
 
+(define (deref-element-type arg)
+  (let ((type (car arg)))
+    (substring type 0 (- (string-length type) 2))))
+
 (define (deref-name arg)
   (let* ((name (cadr arg)))
     (string-append "ref_" name)))
@@ -1323,7 +1327,8 @@
 		(set! ctr (1+ ctr)))
 	      args))))
      (if (> (length args) 0)
-	 (let ((ctr 1))
+	 (let ((ctr 1)
+	       (argc #f))
 	   (for-each
 	    (lambda (arg)
 	      (let ((argname (cadr arg))
@@ -1341,12 +1346,22 @@
 				 (no-stars argtype) argname argname ctr name argtype)))
 		    (if (>= (length arg) 3)
 			(if (char=? (string-ref (list-ref arg 2) 0) #\{)
-			    (hey "  ~A = 1;~%" (deref-name arg))
-;			    (hey "  ~A = 0;~%" (deref-name arg))
+			    (begin
+			      (set! argc (deref-name arg))
+			      (hey "  ~A = XEN_TO_C_~A(~A);~%" (deref-name arg) (deref-type arg) argname))
 			    (if (char=? (string-ref (list-ref arg 2) 0) #\|)
-				(hey "  ~A = (char **)malloc(sizeof(char *));~%  ~A[0] = strdup(\"xgprog\");~%" (deref-name arg) (deref-name arg))
-;				(hey "  ~A = NULL;~%" (deref-name arg))
-				))))
+				(begin
+				  (hey "  ~A = (~A)calloc(~A, sizeof(~A));~%" 
+				       (deref-name arg)
+				       (deref-type arg)
+				       argc
+				       (deref-element-type arg))
+				  (hey "  {~%   int i;~%   XEN lst;~%   lst = XEN_COPY_ARG(~A);~%" argname)
+				  (hey "   for (i = 0; i < ~A; i++, lst = XEN_CDR(lst)) ~A[i] = XEN_TO_C_~A(XEN_CAR(lst));~%"
+				       argc
+				       (deref-name arg)
+				       (no-stars (deref-element-type arg)))
+				  (hey "  }~%"))))))
 		(set! ctr (1+ ctr))))
 	    args)))
      (let ((using-result #f)

@@ -74,6 +74,34 @@ int set_bold_button_font(snd_state *ss, char *font)
   return(FALSE);
 }
 
+int set_peaks_font(snd_state *ss, char *font)
+{
+  PangoFontDescription *fs = NULL;
+  fs = pango_font_description_from_string(font);
+  if (fs)
+    {
+      if (peaks_font(ss)) FREE(peaks_font(ss));
+      in_set_peaks_font(ss, copy_string(font));
+      (ss->sgx)->peaks_fnt = fs;
+      return(TRUE);
+    }
+  return(FALSE);
+}
+
+int set_bold_peaks_font(snd_state *ss, char *font)
+{
+  PangoFontDescription *fs = NULL;
+  fs = pango_font_description_from_string(font);
+  if (fs)
+    {
+      if (bold_peaks_font(ss)) FREE(bold_peaks_font(ss));
+      in_set_bold_peaks_font(ss, copy_string(font));
+      (ss->sgx)->bold_peaks_fnt = fs;
+      return(TRUE);
+    }
+  return(FALSE);
+}
+
 int set_axis_label_font(snd_state *ss, char *font)
 {
   PangoFontDescription *fs = NULL;
@@ -202,9 +230,6 @@ GtkWidget *sg_pixmap_new(GdkPixmap *map, GdkBitmap *mask)
   fixed = gtk_fixed_new();
   gtk_widget_set_size_request(fixed, 16, 16);
   gtk_fixed_put(GTK_FIXED(fixed), pixmap, 0, 0);
-  /* gtk_container_add(GTK_CONTAINER(window), fixed); */
-  /* gtk_widget_show(fixed); */
-  /* gtk_widget_shape_combine_mask(window, mask, 0, 0); */
   return(fixed);
 }
 
@@ -306,15 +331,6 @@ void set_text_background(GtkWidget *w, GdkColor *col)
   gtk_widget_set_style(w, style);
 }
 
-void set_pushed_button_colors(GtkWidget *w, snd_state *ss)
-{
-  GtkStyle *style;
-  style = gtk_style_copy(gtk_widget_get_style(w));
-  style->bg[GTK_STATE_ACTIVE] = (*((ss->sgx)->pushed_button_color));
-  style->bg[GTK_STATE_NORMAL] = (*((ss->sgx)->basic_color));
-  gtk_widget_set_style(w, style);
-}
-
 void highlight_color(snd_state *ss, GtkWidget *w)
 {
   set_background(w, (ss->sgx)->highlight_color);
@@ -336,12 +352,9 @@ void raise_dialog(GtkWidget *w)
 
 void set_button_label_bold(GtkWidget *button, const char *str)
 {
-  GtkStyle *style;
   snd_state *ss;
   ss = get_global_state();
-  style = gtk_style_copy(gtk_widget_get_style(button));
   gtk_widget_modify_font(button, (ss->sgx)->bold_button_fnt);
-  gtk_widget_set_style(button, style);
   gtk_label_set_text(GTK_LABEL(GTK_BIN(button)->child), str);
 }
 
@@ -499,8 +512,18 @@ void reflect_resize(snd_state *ss)
   gtk_window_set_resizable(GTK_WINDOW(MAIN_SHELL(ss)), auto_resize(ss));
 }
 
-void set_sensitive(GtkWidget *wid, int val) {if (wid) gtk_widget_set_sensitive(wid, val);}
-int is_sensitive(GtkWidget *wid) {if (wid) return(GTK_WIDGET_IS_SENSITIVE(wid)); return(0);}
+void set_sensitive(GtkWidget *wid, int val) 
+{
+  if (wid) 
+    gtk_widget_set_sensitive(wid, val);
+}
+
+int is_sensitive(GtkWidget *wid) 
+{
+  if (wid) 
+    return(GTK_WIDGET_IS_SENSITIVE(wid)); 
+  return(FALSE);
+}
 
 void set_toggle_button(GtkWidget *wid, int val, int passed, void *data) 
 {
@@ -521,16 +544,6 @@ guint16 widget_width(GtkWidget *w)
   gint x, y;
   gdk_drawable_get_size(w->window, &x, &y);
   return(x);
-}
-
-void set_widget_height(GtkWidget *w, guint16 height)
-{
-  gtk_window_resize(GTK_WINDOW(w), widget_width(w), height);
-}
-
-void set_widget_width(GtkWidget *w, guint16 width)
-{
-  gtk_window_resize(GTK_WINDOW(w), width, widget_height(w));
 }
 
 gint16 widget_x(GtkWidget *w)
@@ -665,7 +678,7 @@ void sg_text_delete(GtkWidget *w, int start, int end)
   GtkTextBuffer *buf;
   buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
   gtk_text_buffer_get_iter_at_offset(buf, &s, start);
-  gtk_text_buffer_get_iter_at_offset(buf, &e, end);  /* this is utterly idiotic!!! */
+  gtk_text_buffer_get_iter_at_offset(buf, &e, end); 
   gtk_text_buffer_delete(buf, &s, &e);
 }
 
@@ -759,39 +772,51 @@ GtkWidget *make_scrolled_text(snd_state *ss, GtkWidget *parent, int editable, Gt
   return(new_text);
 }
 
-GtkWidget *sg_make_list(gpointer gp, int num_items, char **items, GtkSignalFunc callback)
+GtkWidget *sg_make_list(const char *title, GtkWidget *parent, int paned, gpointer gp, int num_items, char **items, GtkSignalFunc callback, int t1, int t2, int t3, int t4)
 {
   GtkWidget *list;
   int i;
-  GtkTreeStore *model;
-  GtkTreeSelection *selection;
+  GtkListStore *model;
   GtkTreeIter iter;
   GtkTreeViewColumn *column;
-  GtkCellRenderer *cell;
-  model = gtk_tree_store_new(1, G_TYPE_STRING);
-  list = gtk_tree_view_new_with_model(GTK_TREE_MODEL(model));
-  cell = gtk_cell_renderer_text_new();
-  g_object_set(G_OBJECT(cell), "style", PANGO_STYLE_NORMAL, NULL);
+  GtkWidget *scrolled_win;
 
-  column = gtk_tree_view_column_new_with_attributes(NULL, cell, "text", 0, NULL);
-#if 0
-  column = gtk_tree_view_column_new();
-  gtk_tree_view_column_pack_start(column, cell, TRUE);
-  gtk_tree_view_column_clear_attributes(column, cell);
-  gtk_tree_view_column_add_attribute(column, cell, "text", 0);
-  gtk_widget_hide(gtk_tree_view_column_get_widget(column));
-#endif
+  model = gtk_list_store_new(1, G_TYPE_STRING);
+  list = gtk_tree_view_new_with_model(GTK_TREE_MODEL(model));
+  column = gtk_tree_view_column_new_with_attributes(title,
+						    gtk_cell_renderer_text_new (),
+						    "text", 0,
+						    NULL);
+  gtk_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_AUTOSIZE);
   gtk_tree_view_append_column(GTK_TREE_VIEW(list), column);
-  selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(list));
-  gtk_tree_selection_set_mode (GTK_TREE_SELECTION (selection), GTK_SELECTION_BROWSE);
-  g_signal_connect(selection, "changed", G_CALLBACK(callback), gp);
+  scrolled_win = gtk_scrolled_window_new(NULL, NULL);
+  gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolled_win), GTK_SHADOW_IN);  
+  gtk_container_add(GTK_CONTAINER(scrolled_win), list);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_win), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
+  gtk_container_set_border_width(GTK_CONTAINER(scrolled_win), 0);
+
+  g_signal_connect(gtk_tree_view_get_selection(GTK_TREE_VIEW(list)), "changed", G_CALLBACK(callback), gp);
+
+  switch (paned)
+    {
+    case 1: gtk_paned_add1(GTK_PANED(parent), scrolled_win); break;
+    case 2: gtk_box_pack_start(GTK_BOX(parent), scrolled_win, TRUE, TRUE, 0); break;
+    case 3: gtk_table_attach(GTK_TABLE(parent), scrolled_win, t1, t2, t3, t4,
+			     (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
+			     (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
+			     0, 0);
+      break;
+    default: gtk_container_add(GTK_CONTAINER(parent), scrolled_win); break;
+    }
+  gtk_widget_show(list);
+  gtk_widget_show(scrolled_win);
+
   for (i = 0; i < num_items; i++) 
     {
-      gtk_tree_store_append(GTK_TREE_STORE(model), &iter, NULL);
-      gtk_tree_store_set(GTK_TREE_STORE(model), &iter, 0, items[i], -1);
+      gtk_list_store_append(model, &iter);
+      gtk_list_store_set(model, &iter, 0, items[i], -1);
     }
-  gtk_tree_view_expand_all(GTK_TREE_VIEW(list));
-  /* gtk_widget_hide(gtk_tree_view_column_get_widget(column)); */
+
   return(list);
 }
 
@@ -800,8 +825,8 @@ void sg_list_append(GtkWidget *lst, char *val)
   GtkTreeIter iter;
   GtkTreeModel *w;
   w = gtk_tree_view_get_model(GTK_TREE_VIEW(lst));
-  gtk_tree_store_append(GTK_TREE_STORE(w), &iter, NULL);
-  gtk_tree_store_set(GTK_TREE_STORE(w), &iter, 0, val, -1);
+  gtk_list_store_append(GTK_LIST_STORE(w), &iter);
+  gtk_list_store_set(GTK_LIST_STORE(w), &iter, 0, val, -1);
 }
 
 void sg_list_insert(GtkWidget *lst, int row, char *val)
@@ -809,8 +834,8 @@ void sg_list_insert(GtkWidget *lst, int row, char *val)
   GtkTreeIter iter;
   GtkTreeModel *w;
   w = gtk_tree_view_get_model(GTK_TREE_VIEW(lst));
-  gtk_tree_store_insert(GTK_TREE_STORE(w), &iter, NULL, row);
-  gtk_tree_store_set(GTK_TREE_STORE(w), &iter, 0, val, -1);
+  gtk_list_store_insert(GTK_LIST_STORE(w), &iter, row);
+  gtk_list_store_set(GTK_LIST_STORE(w), &iter, 0, val, -1);
 }
 
 void sg_list_set_text(GtkWidget *lst, int row, char *val)
@@ -819,7 +844,7 @@ void sg_list_set_text(GtkWidget *lst, int row, char *val)
   GtkTreeModel *w;
   w = gtk_tree_view_get_model(GTK_TREE_VIEW(lst));
   gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(w), &iter, NULL, row);
-  gtk_tree_store_set(GTK_TREE_STORE(w), &iter, 0, val, -1);
+  gtk_list_store_set(GTK_LIST_STORE(w), &iter, 0, val, -1);
 }
 
 void sg_list_select(GtkWidget *lst, int row)

@@ -415,31 +415,22 @@ static void reflect_segment_state (snd_state *ss)
 
 static void select_or_edit_env(snd_state *ss, int pos)
 {
-  if (selected_env == enved_all_envs(pos)) 
+  if (showing_all_envs)
     {
-      if (showing_all_envs)
-	{
-	  showing_all_envs = 0;
-	  set_button_label_normal(showB, "view envs");
-	}
-      if (active_env) active_env = free_env(active_env);
-      active_env = copy_env(enved_all_envs(pos));
-      XmTextSetString(textL, enved_all_names(pos));
-      set_enved_env_list_top(0);
-      do_env_edit(active_env, TRUE);
-      set_sensitive(undoB, FALSE);
-      set_sensitive(revertB, FALSE);
-      set_sensitive(saveB, FALSE);
-      set_enved_exp_p(ss, (active_env_base != 1.0));
-      set_enved_base(ss, active_env_base);
-      env_redisplay(ss);
+      showing_all_envs = 0;
+      set_button_label_normal(showB, "view envs");
     }
-  else
-    {
-      selected_env = enved_all_envs(pos);
-      if (showing_all_envs) 
-	view_envs(ss, env_window_width, env_window_height, FALSE);
-    }
+  if (active_env) active_env = free_env(active_env);
+  active_env = copy_env(enved_all_envs(pos));
+  XmTextSetString(textL, enved_all_names(pos));
+  set_enved_env_list_top(0);
+  do_env_edit(active_env, TRUE);
+  set_sensitive(undoB, FALSE);
+  set_sensitive(revertB, FALSE);
+  set_sensitive(saveB, FALSE);
+  set_enved_exp_p(ss, (active_env_base != 1.0));
+  set_enved_base(ss, active_env_base);
+  env_redisplay(ss);
   set_sensitive(deleteB, TRUE);
 }
 

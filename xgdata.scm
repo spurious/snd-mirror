@@ -1,5 +1,5 @@
 ;;; [] for ref args, @ for ptr args that can be null, # are optional (default #f)
-;;; || for ref arg currently ignored, but init'd to null, {} for ref currently ignored but init'd to 0
+;;; || for ref arg list, {} for ref arg int as list len
 (CFNC "gchar* g_type_name GType type")
 (CFNC "GQuark g_type_qname GType type")
 (CFNC "GType g_type_from_name gchar* name")

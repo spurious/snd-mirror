@@ -58,8 +58,6 @@ static void create_help_monolog(snd_state *ss)
 				 0,
 				 g_cclosure_new(GTK_SIGNAL_FUNC(help_help_callback), (gpointer)ss, 0),
 				 0);
-  set_pushed_button_colors(help_button, ss);
-  set_pushed_button_colors(ok_button, ss);
   gtk_widget_show(ok_button);
   gtk_widget_show(help_button);
 
@@ -79,7 +77,7 @@ static GtkWidget *snd_help_1(snd_state *ss, char *subject, char *helpstr, int wi
   if (with_wrap)
     {
       char *new_help = NULL;
-      new_help = word_wrap(helpstr, widget_width(help_text));
+      new_help = word_wrap(helpstr, (int)(widget_width(help_text) * 1.3));
       add_help_text(ss, help_text, new_help);
       if (new_help) FREE(new_help);
     }
@@ -144,10 +142,6 @@ static void create_help_monolog(snd_state *ss)
 				 0,
 				 g_cclosure_new(GTK_SIGNAL_FUNC(help_help_callback), (gpointer)ss, 0),
 				 0);
-  set_pushed_button_colors(help_button, ss);
-  set_pushed_button_colors(ok_button, ss);
-  set_pushed_button_colors(back_button, ss);
-  set_pushed_button_colors(forward_button, ss);
   gtk_widget_show(ok_button);
   gtk_widget_show(back_button);
   gtk_widget_show(forward_button);

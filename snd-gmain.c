@@ -43,6 +43,8 @@
 #define TINY_FONT "Monospace 8"
 #define DEFAULT_BUTTON_FONT "Serif 14"
 #define DEFAULT_BOLD_BUTTON_FONT "Serif Bold 14"
+#define DEFAULT_PEAKS_FONT "Serif 10"
+#define DEFAULT_BOLD_PEAKS_FONT "Serif Bold 10"
 #define DEFAULT_AXIS_NUMBERS_FONT "Monospace 10"
 #define DEFAULT_AXIS_LABEL_FONT "Serif 14"
 #define DEFAULT_HELP_TEXT_FONT "Monospace 14"
@@ -348,18 +350,8 @@ static BACKGROUND_TYPE startup_funcs(gpointer context)
 #ifndef SND_AS_WIDGET
       if ((ss->init_window_width > 0) && (ss->init_window_height > 0))
 	set_widget_size(GTK_WIDGET(MAIN_SHELL(ss)), ss->init_window_width, ss->init_window_height);
-      else
-	{
-	  if (ss->init_window_width > 0) set_widget_width(MAIN_SHELL(ss), ss->init_window_width);
-	  if (ss->init_window_height > 0) set_widget_height(MAIN_SHELL(ss), ss->init_window_height);
-	}
       if ((ss->init_window_x != DEFAULT_INIT_WINDOW_X) && (ss->init_window_y != DEFAULT_INIT_WINDOW_Y))
 	set_widget_position(GTK_WIDGET(MAIN_SHELL(ss)), ss->init_window_x, ss->init_window_y);
-      else
-	{
-	  if (ss->init_window_x != DEFAULT_INIT_WINDOW_X) set_widget_x(MAIN_SHELL(ss), ss->init_window_x);
-	  if (ss->init_window_y != DEFAULT_INIT_WINDOW_Y) set_widget_y(MAIN_SHELL(ss), ss->init_window_y);
-	}
 #endif
       gtk_timeout_add((guint32)(auto_update_interval(ss) * 1000), auto_update_check, (gpointer)ss);
       break;
@@ -559,6 +551,14 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   if ((!(set_help_text_font(ss, DEFAULT_HELP_TEXT_FONT))) &&
       (!(set_help_text_font(ss, FALLBACK_FONT))))
     fprintf(stderr, "can't find font: %s", DEFAULT_HELP_TEXT_FONT);
+
+  if ((!(set_peaks_font(ss, DEFAULT_PEAKS_FONT))) &&
+      (!(set_peaks_font(ss, FALLBACK_FONT))))
+    fprintf(stderr, "can't find font: %s", DEFAULT_PEAKS_FONT);
+
+  if ((!(set_bold_peaks_font(ss, DEFAULT_BOLD_PEAKS_FONT))) &&
+      (!(set_bold_peaks_font(ss, FALLBACK_FONT))))
+    fprintf(stderr, "can't find font: %s", DEFAULT_BOLD_PEAKS_FONT);
 
   ss->init_file = copy_string(getenv(SND_INIT_FILE_ENVIRONMENT_NAME));
   if (ss->init_file == NULL)

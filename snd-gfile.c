@@ -84,7 +84,7 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
   g_signal_handlers_block_matched(GTK_OBJECT(fdat->header_list), G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, (gpointer)fdat);
   sg_list_select(fdat->header_list, fdat->header_pos);
   g_signal_handlers_unblock_matched(GTK_OBJECT(fdat->header_list), G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, (gpointer)fdat);
-  gtk_tree_store_clear(GTK_TREE_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(fdat->format_list))));
+  gtk_list_store_clear(GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(fdat->format_list))));
   for (i = 0; i < fdat->formats; i++) 
     {
       str = fl[i];
@@ -152,8 +152,6 @@ static GtkWidget *snd_gtk_file_selection_new(snd_state *ss, char *title, GtkSign
 				 0);
   if (last_filename) gtk_file_selection_set_filename(GTK_FILE_SELECTION(new_dialog), last_filename);
   gtk_file_selection_hide_fileop_buttons(GTK_FILE_SELECTION(new_dialog));
-  set_pushed_button_colors(GTK_FILE_SELECTION(new_dialog)->ok_button, ss);
-  set_pushed_button_colors(GTK_FILE_SELECTION(new_dialog)->cancel_button, ss);
   return(new_dialog);
 }
 
@@ -274,7 +272,6 @@ static file_dialog_info *make_file_dialog(snd_state *ss, int read_only, char *ti
 
   fd->playb = gtk_check_button_new_with_label("play selected sound");
   gtk_box_pack_start(GTK_BOX(fd->dialog_vbox), fd->playb, TRUE, TRUE, 2);
-  set_pushed_button_colors(fd->playb, ss);
   g_signal_connect_closure_by_id(GTK_OBJECT(fd->playb),
 				 g_signal_lookup("toggled", G_OBJECT_TYPE(GTK_OBJECT(fd->playb))),
 				 0,
@@ -436,7 +433,7 @@ static void save_as_data_format_callback(GtkTreeSelection *selection, gpointer *
 file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name, 
 				int with_chan, int header_type, int data_format, int with_loc, int comment_as_entry)
 {
-  GtkWidget *form, *hlab, *dlab, *slab, *clab, *comment_label, *loclab, *hscroll, *dscroll, *scbox, *combox;
+  GtkWidget *form, *slab, *clab, *comment_label, *loclab, *scbox, *combox;
   file_data *fdat;
   int dformats = 0;
   char **formats = NULL;
@@ -450,38 +447,15 @@ file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name,
   gtk_box_pack_start(GTK_BOX(parent), form, FALSE, FALSE, 4); /* ??? */
   gtk_widget_show(form);
 
-  hlab = gtk_frame_new("header");
-  gtk_box_pack_start(GTK_BOX(form), hlab, TRUE, TRUE, 2);
-  gtk_frame_set_label_align(GTK_FRAME(hlab), 0.5, 0.0);
-  gtk_frame_set_shadow_type(GTK_FRAME(hlab), GTK_SHADOW_ETCHED_IN);
-
-  fdat->header_list = sg_make_list((gpointer)fdat, NUM_HEADER_TYPES, header_short_names, GTK_SIGNAL_FUNC(save_as_header_type_callback));
-  hscroll = gtk_scrolled_window_new(NULL, NULL);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(hscroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-  gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(hscroll), fdat->header_list);
-  gtk_container_add(GTK_CONTAINER(hlab), hscroll);
-
-  dlab = gtk_frame_new("data");
-  gtk_box_pack_start(GTK_BOX(form), dlab, TRUE, TRUE, 2);
-  gtk_frame_set_label_align(GTK_FRAME(dlab), 0.5, 0.0);
-  gtk_frame_set_shadow_type(GTK_FRAME(dlab), GTK_SHADOW_ETCHED_IN);
-
-  fdat->format_list = sg_make_list((gpointer)fdat, dformats, formats, GTK_SIGNAL_FUNC(save_as_data_format_callback));
-  dscroll = gtk_scrolled_window_new(NULL, NULL);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(dscroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-  gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(dscroll), fdat->format_list);
-  gtk_container_add(GTK_CONTAINER(dlab), dscroll);
-
+  fdat->header_list = sg_make_list("header", form, 2, (gpointer)fdat, NUM_HEADER_TYPES, header_short_names, 
+				   GTK_SIGNAL_FUNC(save_as_header_type_callback), 0, 0, 0, 0);
+  fdat->format_list = sg_make_list("data", form, 2, (gpointer)fdat, dformats, formats, 
+				   GTK_SIGNAL_FUNC(save_as_data_format_callback), 0, 0, 0, 0);
   sg_list_select(fdat->header_list, fdat->header_pos);
   sg_list_select(fdat->format_list, fdat->format_pos);
 
-  gtk_widget_show(hlab);
   gtk_widget_show(fdat->header_list);
-  gtk_widget_show(hscroll);
-
-  gtk_widget_show(dlab);
   gtk_widget_show(fdat->format_list);
-  gtk_widget_show(dscroll);
 
   scbox = gtk_vbox_new(FALSE, 0);
   gtk_box_pack_start(GTK_BOX(form), scbox, FALSE, FALSE, 4);
@@ -611,15 +585,12 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int save_type, 
 				     0);
       if (last_filename) gtk_file_selection_set_filename(GTK_FILE_SELECTION(open_dialog), last_filename);
       gtk_file_selection_hide_fileop_buttons(GTK_FILE_SELECTION(save_as_dialog));
-      set_pushed_button_colors(GTK_FILE_SELECTION(save_as_dialog)->ok_button, ss);
-      set_pushed_button_colors(GTK_FILE_SELECTION(save_as_dialog)->cancel_button, ss);
 
       fbox = gtk_vbox_new(FALSE, 0);
       gtk_box_pack_start(GTK_BOX(GTK_FILE_SELECTION(save_as_dialog)->main_vbox), fbox, TRUE, TRUE, 0);
       gtk_widget_show(fbox);
 
       save_as_file_data = make_file_data_panel(ss, fbox, "data-form", FALSE, header_type, format_type, FALSE, FALSE);
-      gtk_window_resize(GTK_WINDOW(save_as_file_data->comment_text), 100, 20);
       set_dialog_widget(ss, FILE_SAVE_AS_DIALOG, save_as_dialog);
     }
 }
@@ -1224,10 +1195,6 @@ void view_files_callback(GtkWidget *w, gpointer context)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(view_files_clear_callback), (gpointer)ss, 0),
 				     0);
-      set_pushed_button_colors(helpB, ss);
-      set_pushed_button_colors(dismissB, ss);
-      set_pushed_button_colors(updateB, ss);
-      set_pushed_button_colors(clearB, ss);
       gtk_widget_show(dismissB);
       gtk_widget_show(updateB);
       gtk_widget_show(helpB);
@@ -1292,7 +1259,6 @@ void view_files_callback(GtkWidget *w, gpointer context)
       FREE(wwl); 
       wwl = NULL;
       set_dialog_widget(ss, VIEW_FILES_DIALOG, view_files_dialog);
-      /* set_widget_height(fs1, widget_height(fs3)); */
     }
   gtk_widget_show(view_files_dialog);
   make_curfiles_list(ss);
@@ -1376,8 +1342,8 @@ static void make_raw_data_dialog(snd_state *ss)
 {
   char dfs_str[LABEL_BUFFER_SIZE];
   int sr, oc, fr;
-  GtkWidget *lst, *dls, *dlab, *dloclab, *chnlab;
-  GtkWidget *defaultB, *helpB, *cancelB, *okB, *sratehbox, *lochbox, *scroller;
+  GtkWidget *lst, *dls, *dloclab, *chnlab;
+  GtkWidget *defaultB, *helpB, *cancelB, *okB, *sratehbox, *lochbox;
 
   mus_header_raw_defaults(&sr, &oc, &fr);
 
@@ -1422,10 +1388,6 @@ static void make_raw_data_dialog(snd_state *ss)
 				 0,
 				 g_cclosure_new(GTK_SIGNAL_FUNC(raw_data_cancel_callback), (gpointer)ss, 0),
 				 0);
-  set_pushed_button_colors(helpB, ss);
-  set_pushed_button_colors(okB, ss);
-  set_pushed_button_colors(defaultB, ss);
-  set_pushed_button_colors(cancelB, ss);
   gtk_widget_show(okB);
   gtk_widget_show(cancelB);
   gtk_widget_show(helpB);
@@ -1465,20 +1427,9 @@ static void make_raw_data_dialog(snd_state *ss)
 
   raw_location_text = snd_entry_new(ss, lochbox, TRUE);
   gtk_entry_set_text(GTK_ENTRY(raw_location_text), "0");
-
-  dlab = gtk_label_new("data format:");
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->vbox), dlab, FALSE, FALSE, 6);
-  gtk_widget_show(dlab);
-
-  lst = sg_make_list((gpointer)ss, MUS_LAST_DATA_FORMAT, data_format_names(), GTK_SIGNAL_FUNC(raw_data_browse_callback));
-
-  scroller = gtk_scrolled_window_new(NULL, NULL);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-  gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller), lst);
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->vbox), scroller, TRUE, TRUE, 0);
-
+  lst = sg_make_list("data format:", GTK_DIALOG(raw_data_dialog)->vbox, 2, (gpointer)ss, MUS_LAST_DATA_FORMAT, data_format_names(),
+		     GTK_SIGNAL_FUNC(raw_data_browse_callback), 0, 0, 0, 0);
   gtk_widget_show(lst);
-  gtk_widget_show(scroller);
   set_dialog_widget(ss, RAW_DATA_DIALOG, raw_data_dialog);
 }
 
@@ -1595,9 +1546,6 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(new_file_ok_callback), (gpointer)ss, 0),
 				     0);
-      set_pushed_button_colors(help_button, ss);
-      set_pushed_button_colors(cancel_button, ss);
-      set_pushed_button_colors(ok_button, ss);
       gtk_widget_show(cancel_button);
       gtk_widget_show(ok_button);
       gtk_widget_show(help_button);
@@ -1724,9 +1672,6 @@ GtkWidget *edit_header(snd_info *sp)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(edit_header_ok_callback), (gpointer)ss, 0),
 				     0);
-      set_pushed_button_colors(help_button, ss);
-      set_pushed_button_colors(cancel_button, ss);
-      set_pushed_button_colors(save_button, ss);
       gtk_widget_show(cancel_button);
       gtk_widget_show(save_button);
       gtk_widget_show(help_button);

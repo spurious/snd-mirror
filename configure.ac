@@ -117,71 +117,11 @@ AC_ARG_WITH(ruby,
               AC_DEFINE_UNQUOTED(RUBY_VERSION,"${RUBY_VERSION}")
               AC_DEFINE_UNQUOTED(RUBY_RELEASE_DATE,"${RUBY_RELEASE_DATE}")
 
-              RUBY_LOC=`$RUBY -e [['puts \$:[0]']]`  # good grief... 
-              GUILE_CFLAGS="-I$RUBY_LOC"
-	      GUILE_LIBS="-L$RUBY_LOC"
-              RUBY_LOC=`$RUBY -e [['puts \$:[1]']]`
-	      if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
-                GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
-	        GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
-                RUBY_LOC=`$RUBY -e [['puts \$:[2]']]`
-	        if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
-                  GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
-	          GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
-                  RUBY_LOC=`$RUBY -e [['puts \$:[3]']]`
-	          if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
-                    GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
-	            GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
-                    RUBY_LOC=`$RUBY -e [['puts \$:[4]']]`
-	            if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
-                      GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
-	              GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
-                      RUBY_LOC=`$RUBY -e [['puts \$:[5]']]`
-	              if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
-                        GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
-	                GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
-                        RUBY_LOC=`$RUBY -e [['puts \$:[6]']]`
-	                if test "$RUBY_LOC" != nil && test "$RUBY_LOC" != "."; then
-                          GUILE_CFLAGS="$GUILE_CFLAGS -I$RUBY_LOC"
-	                  GUILE_LIBS="$GUILE_LIBS -L$RUBY_LOC"
-  		        fi
-	 	      fi
-	            fi
-	  	  fi
-		fi
-	      fi
-              RUBY_PATH=`$RUBY -e [['puts \$:[0]']]`  # good grief... 
-	      RUBY_SEARCH_PATH="$RUBY_PATH"
-              RUBY_PATH=`$RUBY -e [['puts \$:[1]']]`
-	      if test "$RUBY_PATH" != nil; then
-		RUBY_SEARCH_PATH="$RUBY_SEARCH_PATH:$RUBY_PATH"
-                RUBY_PATH=`$RUBY -e [['puts \$:[2]']]`
-	        if test "$RUBY_PATH" != nil; then
-		  RUBY_SEARCH_PATH="$RUBY_SEARCH_PATH:$RUBY_PATH"
-                  RUBY_PATH=`$RUBY -e [['puts \$:[3]']]`
-	          if test "$RUBY_PATH" != nil; then
-		    RUBY_SEARCH_PATH="$RUBY_SEARCH_PATH:$RUBY_PATH"
-                    RUBY_PATH=`$RUBY -e [['puts \$:[4]']]`
-	            if test "$RUBY_PATH" != nil; then
-		      RUBY_SEARCH_PATH="$RUBY_SEARCH_PATH:$RUBY_PATH"
-                      RUBY_PATH=`$RUBY -e [['puts \$:[5]']]`
-	              if test "$RUBY_PATH" != nil; then
-		        RUBY_SEARCH_PATH="$RUBY_SEARCH_PATH:$RUBY_PATH"
-                        RUBY_PATH=`$RUBY -e [['puts \$:[6]']]`
-	                if test "$RUBY_PATH" != nil; then
-		          RUBY_SEARCH_PATH="$RUBY_SEARCH_PATH:$RUBY_PATH"
-                          RUBY_PATH=`$RUBY -e [['puts \$:[7]']]`
-	                  if test "$RUBY_PATH" != nil; then
-		            RUBY_SEARCH_PATH="$RUBY_SEARCH_PATH:$RUBY_PATH"
-			  fi
-  		        fi
-	 	      fi
-	            fi
-	  	  fi
-		fi
-	      fi
-	      AC_DEFINE_UNQUOTED(RUBY_SEARCH_PATH,"${RUBY_SEARCH_PATH}")
+	      GUILE_CFLAGS=`$RUBY -e [['\$:.each {|path| print "-I", path, " "}']]`
+	      GUILE_LIBS=`$RUBY -e [['\$:.each {|path| print "-L", path, " "}']]`
+	      RUBY_SEARCH_PATH=`$RUBY -e [['\$:.each {|path| print path, ":"}']]`
 
+	      AC_DEFINE_UNQUOTED(RUBY_SEARCH_PATH,"${RUBY_SEARCH_PATH}")
               GUILE_LIBS="$GUILE_LIBS -lruby -ldl -lcrypt"
 	      AC_CHECK_LIB(readline, readline, 
 			   [AC_DEFINE(HAVE_READLINE)

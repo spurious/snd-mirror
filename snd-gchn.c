@@ -2,7 +2,7 @@
 
 enum {
     W_main_window,
-    W_edhist, W_edscroll,
+    W_edhist, 
     W_graph_window,
     W_wf_buttons,
       W_f, W_w,
@@ -16,7 +16,7 @@ enum {
 
 enum {W_zy_adj, W_zx_adj, W_sy_adj, W_sx_adj, W_gzy_adj, W_gsy_adj};
 
-#define NUM_CHAN_WIDGETS 17
+#define NUM_CHAN_WIDGETS 16
 #define NUM_CHAN_ADJS 6
 #define DEFAULT_EDIT_HISTORY_WIDTH 1
 
@@ -446,7 +446,7 @@ void reflect_edit_history_change(chan_info *cp)
 	  while ((eds < (cp->edit_size - 1)) && (cp->edits[eds + 1])) eds++;
 	  if (eds >= 0)
 	    {
-	      gtk_tree_store_clear(GTK_TREE_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(lst))));
+	      gtk_list_store_clear(GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(lst))));
 	      sp = cp->sound;
 	      str = sp->filename;
 	      sg_list_append(lst, str);
@@ -643,23 +643,10 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  cw[W_main_window] = gtk_hpaned_new();
 	  set_backgrounds(cw[W_main_window], (ss->sgx)->sash_color);
 	  gtk_container_set_border_width(GTK_CONTAINER(cw[W_main_window]), 2);
-	  /* gtk_paned_add1(GTK_PANED(w_snd_pane(sp)), cw[W_main_window]); */
 	  gtk_box_pack_start(GTK_BOX(w_snd_pane_box(sp)), cw[W_main_window], TRUE, TRUE, 0);
-
-	  cw[W_edhist] = sg_make_list((gpointer)cp, 0, NULL, GTK_SIGNAL_FUNC(history_select_callback));
-
-	  cw[W_edscroll] = gtk_scrolled_window_new(NULL, NULL);
-	  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(cw[W_edscroll]), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-	  gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(cw[W_edscroll]), cw[W_edhist]);
-	  gtk_paned_add1(GTK_PANED(cw[W_main_window]), cw[W_edscroll]);
-	  gtk_widget_show(cw[W_edscroll]);
+	  cw[W_edhist] = sg_make_list("Edits", cw[W_main_window], 1, (gpointer)cp, 0, NULL, 
+				      GTK_SIGNAL_FUNC(history_select_callback), 0, 0, 0, 0);
 	  gtk_widget_show(cw[W_edhist]);
-
-	  g_signal_connect_closure_by_id(GTK_OBJECT(cw[W_edscroll]),
-					 g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(cw[W_edscroll]))),
-					 0,
-					 g_cclosure_new(GTK_SIGNAL_FUNC(real_graph_key_press), (gpointer)cp, 0),
-					 0);
 	  g_signal_connect_closure_by_id(GTK_OBJECT(cw[W_edhist]),
 					 g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(cw[W_edhist]))),
 					 0,
@@ -777,7 +764,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  gtk_box_pack_start(GTK_BOX(cw[W_wf_buttons]), cw[W_f], TRUE, TRUE, 0);
 	  gtk_widget_show(cw[W_f]);
 	  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cw[W_f]), FALSE);
-	  set_pushed_button_colors(cw[W_f], ss);
 	  g_signal_connect_closure_by_id(GTK_OBJECT(cw[W_f]),
 					 g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(cw[W_f]))),
 					 0,
@@ -792,7 +778,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  cw[W_w] = gtk_check_button_new_with_label("w");
 	  gtk_box_pack_start(GTK_BOX(cw[W_wf_buttons]), cw[W_w], TRUE, TRUE, 0);
 	  gtk_widget_show(cw[W_w]);
-	  set_pushed_button_colors(cw[W_w], ss);
 	  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cw[W_w]), TRUE);
 	  g_signal_connect_closure_by_id(GTK_OBJECT(cw[W_w]),
 					 g_signal_lookup("button_press_event", G_OBJECT_TYPE(GTK_OBJECT(cw[W_w]))),
@@ -929,9 +914,9 @@ static void set_graph_font(chan_info *cp, PangoFontDescription *fnt)
   gtk_widget_modify_font(cp->cgx->ax->w, fnt);
 }
 
-void set_peak_numbers_font(chan_info *cp) {set_graph_font(cp, (cp->state->sgx)->button_fnt);}
 void set_tiny_numbers_font(chan_info *cp) {set_graph_font(cp, (cp->state->sgx)->tiny_fnt);}
-void set_bold_peak_numbers_font(chan_info *cp) {set_graph_font(cp, (cp->state->sgx)->bold_button_fnt);}
+void set_peak_numbers_font(chan_info *cp) {set_graph_font(cp, (cp->state->sgx)->peaks_fnt);}
+void set_bold_peak_numbers_font(chan_info *cp) {set_graph_font(cp, (cp->state->sgx)->bold_peaks_fnt);}
 
 COLOR_TYPE get_foreground_color(chan_info *cp, axis_context *ax)
 {
@@ -1039,8 +1024,6 @@ void change_channel_style(snd_info *sp, int new_style)
 	  if (old_style == CHANNELS_SEPARATE)
 	    {
 	      ncp = sp->chans[0];
-	      sound_lock_control_panel(sp, NULL);
-	      /* channel_lock_pane(ncp, height); */
 	      mcgx = ncp->cgx;
 	      for (i = 1; i < sp->nchans; i++) 
 		{
@@ -1050,8 +1033,6 @@ void change_channel_style(snd_info *sp, int new_style)
 		  reset_mix_graph_parent(ncp);
 		}
 	      channel_open_pane(sp->chans[0], NULL);
-	      /* channel_unlock_pane(sp->chans[0], NULL); */
-	      sound_unlock_control_panel(sp, NULL);
 	      set_toggle_button(unite_button(sp), TRUE, FALSE, (void *)sp);
 	    }
 	  else
@@ -1060,11 +1041,7 @@ void change_channel_style(snd_info *sp, int new_style)
 		{
 		  /* height[0] = total space available */
 		  height[0] /= sp->nchans;
-		  sound_lock_control_panel(sp, NULL);
-		  /* map_over_sound_chans(sp, channel_lock_pane, (void *)height); */
 		  map_over_sound_chans(sp, channel_open_pane, NULL);
-		  /* map_over_sound_chans(sp, channel_unlock_pane, NULL); */
-		  sound_unlock_control_panel(sp, NULL);
 		  for (i = 0; i < sp->nchans; i++) reset_mix_graph_parent(sp->chans[i]);
 		  pcp = sp->chans[0];
 		  ap = pcp->axis;
@@ -1099,9 +1076,6 @@ int fixup_cp_cgx_ax_wn(chan_info *cp)
   ax->w = w;
   return((int)(ax->wn));
 }
-
-int channel_unlock_pane(chan_info *cp, void *ptr) {return(0);}
-/* static int channel_lock_pane(chan_info *cp, void *ptr) {return(0);} */
 
 static XEN g_channel_widgets(XEN snd, XEN chn)
 {

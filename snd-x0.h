@@ -139,6 +139,10 @@ typedef struct {
   XFontStruct *button_fontstruct;
   XM_FONT_TYPE bold_button_fontlist;
   XFontStruct *bold_button_fontstruct; 
+  XM_FONT_TYPE peaks_fontlist;
+  XFontStruct *peaks_fontstruct;
+  XM_FONT_TYPE bold_peaks_fontlist;
+  XFontStruct *bold_peaks_fontstruct; 
   XM_FONT_TYPE listener_fontlist;
   XFontStruct *listener_fontstruct;
   XFontStruct *axis_label_fontstruct;
@@ -217,8 +221,8 @@ typedef struct {
 #define MAIN_DISPLAY(a) (a->sgx)->mdpy
 #define BUTTON_FONT(a) (a->sgx)->button_fontlist
 #define BOLD_BUTTON_FONT(a) (a->sgx)->bold_button_fontlist
-#define PEAK_NUMBERS_FONT(a) (a->sgx)->button_fontstruct
-#define BOLD_PEAK_NUMBERS_FONT(a) (a->sgx)->bold_button_fontstruct
+#define PEAK_NUMBERS_FONT(a) (a->sgx)->peaks_fontstruct
+#define BOLD_PEAK_NUMBERS_FONT(a) (a->sgx)->bold_peaks_fontstruct
 #define AXIS_NUMBERS_FONT(a) ((state_context *)((snd_state *)a)->sgx)->axis_numbers_fontstruct
 #define AXIS_LABEL_FONT(a) ((state_context *)((snd_state *)a)->sgx)->axis_label_fontstruct
 #define TINY_NUMBERS_FONT(a) (a->sgx)->tiny_fontstruct

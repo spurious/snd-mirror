@@ -356,7 +356,7 @@ typedef struct snd__state {
    */
   int Show_Transform_Peaks, Show_Y_Zero, Show_Marks, Fft_Log_Frequency, Fft_Log_Magnitude, Channel_Style, Sound_Style, Show_Axes;
   char *Eps_File, *Temp_Dir, *Audio_State_File, *Save_Dir, *Ladspa_Dir;
-  char *Listener_Font, *Help_Text_Font, *Axis_Label_Font, *Axis_Numbers_Font, *Bold_Button_Font, *Button_Font, *Tiny_Font;
+  char *Listener_Font, *Help_Text_Font, *Axis_Label_Font, *Axis_Numbers_Font, *Bold_Button_Font, *Button_Font, *Tiny_Font, *Peaks_Font, *Bold_Peaks_Font;
   int Verbose_Cursor, Trap_Segfault;
   int Enved_Filter_Order, Filter_Env_In_Hz;  /* for spectral envelopes from the envelope editor */
   Float Vu_Size, Vu_Font_Size, Eps_Left_Margin, Eps_Bottom_Margin, Eps_Size;

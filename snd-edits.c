@@ -2911,6 +2911,7 @@ void save_edits(snd_info *sp, void *ptr)
 void revert_edits(chan_info *cp, void *ptr)
 {
   int old_ctr;
+  if (cp->edit_ctr == 0) return;
   old_ctr = cp->edit_ctr;
   cp->edit_ctr = 0;
   clear_transform_edit_ctrs(cp);
@@ -2929,6 +2930,7 @@ void revert_edits(chan_info *cp, void *ptr)
 void undo_edit(chan_info *cp, int count)
 {
   snd_info *sp;
+  if (cp->edit_ctr == 0) return;
   if ((cp) && (cp->edit_ctr > 0) && (count != 0))
     {
       sp = cp->sound;

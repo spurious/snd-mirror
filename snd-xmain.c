@@ -58,6 +58,8 @@
 
 #define DEFAULT_BUTTON_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
 #define DEFAULT_BOLD_BUTTON_FONT "-*-times-bold-r-*-*-14-*-*-*-*-*-iso8859-1"
+#define DEFAULT_PEAKS_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
+#define DEFAULT_BOLD_PEAKS_FONT "-*-times-bold-r-*-*-14-*-*-*-*-*-iso8859-1"
 #define DEFAULT_AXIS_NUMBERS_FONT "-*-courier-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
 #define DEFAULT_AXIS_LABEL_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
 #define DEFAULT_HELP_TEXT_FONT "9x15"
@@ -118,8 +120,10 @@ typedef struct {
 
   char *use_schemes;
   char *button_font;
+  char *peaks_font;
   char *listener_font;
   char *bold_button_font;
+  char *bold_peaks_font;
   char *axis_label_font;
   char *axis_numbers_font;
   char *help_text_font;
@@ -176,8 +180,10 @@ static XtResource resources[] = {
   {"pushedbuttoncolor", "Pushedbuttoncolor", XmRString, sizeof(char *), XtOffset(sndres *, pushed_button_color), XmRString, (XtPointer)PUSHED_BUTTON_COLOR},
   {"useSchemes", "UseSchemes", XmRString, sizeof(char *), XtOffset(sndres *, use_schemes), XmRString, (XtPointer)"none"},
   {"buttonFont", "ButtonFont", XmRString, sizeof(char *), XtOffset(sndres *, button_font), XmRString, (XtPointer)DEFAULT_BUTTON_FONT},
+  {"peaksFont", "PeaksFont", XmRString, sizeof(char *), XtOffset(sndres *, peaks_font), XmRString, (XtPointer)DEFAULT_PEAKS_FONT},
   {"listenerFont", "ListenerFont", XmRString, sizeof(char *), XtOffset(sndres *, listener_font), XmRString, (XtPointer)NULL},
   {"boldbuttonFont", "BoldbuttonFont", XmRString, sizeof(char *), XtOffset(sndres *, bold_button_font), XmRString, (XtPointer)DEFAULT_BOLD_BUTTON_FONT},
+  {"boldpeaksFont", "BoldPeaksFont", XmRString, sizeof(char *), XtOffset(sndres *, bold_peaks_font), XmRString, (XtPointer)DEFAULT_BOLD_PEAKS_FONT},
   {"axisLabelFont", "AxisLabelFont", XmRString, sizeof(char *), XtOffset(sndres *, axis_label_font), XmRString, (XtPointer)DEFAULT_AXIS_LABEL_FONT},
   {"axisNumbersFont", "AxisNumbersFont", XmRString, sizeof(char *), XtOffset(sndres *, axis_numbers_font), XmRString, (XtPointer)DEFAULT_AXIS_NUMBERS_FONT},
   {"helpTextFont", "HelpTextFont", XmRString, sizeof(char *), XtOffset(sndres *, help_text_font), XmRString, (XtPointer)DEFAULT_HELP_TEXT_FONT},
@@ -815,6 +821,11 @@ void snd_doit(snd_state *ss, int argc, char **argv)
       (!(set_button_font(ss, FALLBACK_FONT))))
     fprintf(stderr, "can't find font %s", snd_rs.button_font);
 
+  if ((!(set_peaks_font(ss, snd_rs.peaks_font))) &&
+      (!(set_peaks_font(ss, DEFAULT_PEAKS_FONT))) &&
+      (!(set_peaks_font(ss, FALLBACK_FONT))))
+    fprintf(stderr, "can't find font %s", snd_rs.peaks_font);
+
   if ((!(set_tiny_font(ss, TINY_FONT))) &&
       (!(set_tiny_font(ss, FALLBACK_FONT))))
     fprintf(stderr, "can't find font %s", TINY_FONT);
@@ -823,6 +834,11 @@ void snd_doit(snd_state *ss, int argc, char **argv)
       (!(set_bold_button_font(ss, DEFAULT_BOLD_BUTTON_FONT))) &&
       (!(set_bold_button_font(ss, FALLBACK_FONT))))
     fprintf(stderr, "can't find font %s", snd_rs.bold_button_font);
+
+  if ((!(set_bold_peaks_font(ss, snd_rs.bold_peaks_font))) &&
+      (!(set_bold_peaks_font(ss, DEFAULT_BOLD_PEAKS_FONT))) &&
+      (!(set_bold_peaks_font(ss, FALLBACK_FONT))))
+    fprintf(stderr, "can't find font %s", snd_rs.bold_peaks_font);
 
   if ((!(set_axis_label_font(ss, snd_rs.axis_label_font))) &&
       (!(set_axis_label_font(ss, DEFAULT_AXIS_LABEL_FONT))) &&

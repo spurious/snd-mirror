@@ -501,6 +501,12 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 #define bold_button_font(ss) ss->Bold_Button_Font
 #define in_set_bold_button_font(ss, a) ss->Bold_Button_Font = a
 
+#define peaks_font(ss) ss->Peaks_Font
+#define in_set_peaks_font(ss, a) ss->Peaks_Font = a
+
+#define bold_peaks_font(ss) ss->Bold_Peaks_Font
+#define in_set_bold_peaks_font(ss, a) ss->Bold_Peaks_Font = a
+
 #define axis_label_font(ss) ss->Axis_Label_Font
 #define in_set_axis_label_font(ss, a) ss->Axis_Label_Font = a
 

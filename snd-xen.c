@@ -1446,6 +1446,28 @@ static XEN g_set_button_font(XEN val)
   return(C_TO_XEN_STRING(button_font(ss)));
 }
 
+static XEN g_bold_peaks_font(void) {return(C_TO_XEN_STRING(bold_peaks_font(get_global_state())));}
+static XEN g_set_bold_peaks_font(XEN val) 
+{
+  #define H_bold_peaks_font "(" S_bold_peaks_font ") -> font used by fft peak display"
+  snd_state *ss;
+  ss = get_global_state();
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set! " S_bold_peaks_font, "a string"); 
+  set_bold_peaks_font(ss, XEN_TO_C_STRING(val)); 
+  return(C_TO_XEN_STRING(bold_peaks_font(ss)));
+}
+
+static XEN g_peaks_font(void) {return(C_TO_XEN_STRING(peaks_font(get_global_state())));}
+static XEN g_set_peaks_font(XEN val) 
+{
+  #define H_peaks_font "(" S_peaks_font ") -> font used by fft peak display"
+  snd_state *ss;
+  ss = get_global_state();
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set! " S_peaks_font, "a string"); 
+  set_peaks_font(ss, XEN_TO_C_STRING(val)); 
+  return(C_TO_XEN_STRING(peaks_font(ss)));
+}
+
 static XEN g_window_width(void) 
 {
   #define H_window_width "(" S_window_width ") -> current Snd window width in pixels"
@@ -1506,7 +1528,9 @@ static XEN g_set_window_height(XEN height)
   val = (Latus)XEN_TO_C_INT_OR_ELSE(height, 0);
   if ((val > 0) && (val < snd_screen_height()))
     {
+#if HAVE_MOTIF
       set_widget_height(MAIN_SHELL(ss), val);
+#endif
       ss->init_window_height = val;
     }
   return(height);
@@ -1522,7 +1546,9 @@ static XEN g_set_window_width(XEN width)
   val = (Latus)XEN_TO_C_INT_OR_ELSE(width, 0);
   if ((val > 0) && (val < snd_screen_width()))
     {
+#if HAVE_MOTIF
       set_widget_width(MAIN_SHELL(ss), val);
+#endif
       ss->init_window_width = val;
     }
   return(width);
@@ -2614,6 +2640,10 @@ XEN_NARGIFY_0(g_button_font_w, g_button_font)
 XEN_ARGIFY_1(g_set_button_font_w, g_set_button_font)
 XEN_NARGIFY_0(g_bold_button_font_w, g_bold_button_font)
 XEN_ARGIFY_1(g_set_bold_button_font_w, g_set_bold_button_font)
+XEN_NARGIFY_0(g_peaks_font_w, g_peaks_font)
+XEN_ARGIFY_1(g_set_peaks_font_w, g_set_peaks_font)
+XEN_NARGIFY_0(g_bold_peaks_font_w, g_bold_peaks_font)
+XEN_ARGIFY_1(g_set_bold_peaks_font_w, g_set_bold_peaks_font)
 XEN_NARGIFY_0(g_axis_label_font_w, g_axis_label_font)
 XEN_ARGIFY_1(g_set_axis_label_font_w, g_set_axis_label_font)
 XEN_NARGIFY_0(g_axis_numbers_font_w, g_axis_numbers_font)
@@ -2776,6 +2806,10 @@ XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 #define g_set_button_font_w g_set_button_font
 #define g_bold_button_font_w g_bold_button_font
 #define g_set_bold_button_font_w g_set_bold_button_font
+#define g_peaks_font_w g_peaks_font
+#define g_set_peaks_font_w g_set_peaks_font
+#define g_bold_peaks_font_w g_bold_peaks_font
+#define g_set_bold_peaks_font_w g_set_bold_peaks_font
 #define g_axis_label_font_w g_axis_label_font
 #define g_set_axis_label_font_w g_set_axis_label_font
 #define g_axis_numbers_font_w g_axis_numbers_font
@@ -3064,6 +3098,12 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_bold_button_font, g_bold_button_font_w, H_bold_button_font,
 				   "set-" S_bold_button_font, g_set_bold_button_font_w,  0, 0, 0, 1);
 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_peaks_font, g_peaks_font_w, H_peaks_font,
+				   "set-" S_peaks_font, g_set_peaks_font_w,  0, 0, 0, 1);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_bold_peaks_font, g_bold_peaks_font_w, H_bold_peaks_font,
+				   "set-" S_bold_peaks_font, g_set_bold_peaks_font_w,  0, 0, 0, 1);
+
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_axis_label_font, g_axis_label_font_w, H_axis_label_font,
 				   "set-" S_axis_label_font, g_set_axis_label_font_w,  0, 0, 0, 1);
 
@@ -3315,7 +3355,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_YES_WE_HAVE("snd-ruby");
   /* we need to set up the search path so that load and require will work as in the program Ruby */
   #ifdef RUBY_SEARCH_PATH
-    /* TODO: check -I arg here */
     {
       /* this code stolen from ruby.c */
       extern VALUE rb_load_path;

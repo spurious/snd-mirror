@@ -121,6 +121,38 @@ int set_bold_button_font(snd_state *ss, char *font)
   return(FALSE);
 }
 
+int set_peaks_font(snd_state *ss, char *font)
+{
+  XFontStruct *fs = NULL;
+  fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
+  if (fs)
+    {
+      if (peaks_font(ss)) FREE(peaks_font(ss));
+      in_set_peaks_font(ss, copy_string(font));
+      (ss->sgx)->peaks_fontstruct = fs;
+      if ((ss->sgx)->peaks_fontlist) XM_FONT_FREE((ss->sgx)->peaks_fontlist);
+      (ss->sgx)->peaks_fontlist = get_xm_font(ss, (ss->sgx)->peaks_fontstruct, font, "peaks_font");
+      return(TRUE);
+    }
+  return(FALSE);
+}
+
+int set_bold_peaks_font(snd_state *ss, char *font)
+{
+  XFontStruct *fs = NULL;
+  fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
+  if (fs)
+    {
+      if (bold_peaks_font(ss)) FREE(bold_peaks_font(ss));
+      in_set_bold_peaks_font(ss, copy_string(font));
+      (ss->sgx)->bold_peaks_fontstruct = fs;
+      if ((ss->sgx)->bold_peaks_fontlist) XM_FONT_FREE((ss->sgx)->bold_peaks_fontlist);
+      (ss->sgx)->bold_peaks_fontlist = get_xm_font(ss, (ss->sgx)->bold_peaks_fontstruct, font, "bold_peaks_font");
+      return(TRUE);
+    }
+  return(FALSE);
+}
+
 int set_axis_label_font(snd_state *ss, char *font)
 {
   XFontStruct *fs = NULL;

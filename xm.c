@@ -24832,38 +24832,43 @@ static int xm_already_inited = 0;
       define_pointers();
       define_procedures();
       define_structs();
-#if HAVE_GUILE && HAVE_MOTIF
-      /* TODO: Ruby versions of WMProtocol procs */
+#if HAVE_MOTIF
+#if HAVE_GUILE
       XEN_EVAL_C_STRING("(define (XmAddWMProtocols s p n) \
                            (XmAddProtocols s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p n))");
       XEN_EVAL_C_STRING("(define (XmRemoveWMProtocols s p n) \
                            (XmRemoveProtocols s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p n))");
-      XEN_EVAL_C_STRING("(define (XmAddWMProtocolCallback s p call close) \
-                           (XmAddProtocolCallback s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p call close))");
-      XEN_EVAL_C_STRING("(define (XmRemoveWMProtocolCallback s p call close) \
-                           (XmRemoveProtocolCallback s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p call close))");
+      XEN_EVAL_C_STRING("(define (XmAddWMProtocolCallback s p c cl) \
+                           (XmAddProtocolCallback s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p c cl))");
+      XEN_EVAL_C_STRING("(define (XmRemoveWMProtocolCallback s p c cl) \
+                           (XmRemoveProtocolCallback s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p c cl))");
       XEN_EVAL_C_STRING("(define (XmActivateWMProtocol s p) \
                            (XmActivateProtocol s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p))");
       XEN_EVAL_C_STRING("(define (XmDeactivateWMProtocol s p) \
                            (XmDeactivateProtocol s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p))");
       XEN_EVAL_C_STRING("(define (XmSetWMProtocolHooks s p preh prec posth postc) \
                            (XmSetProtocolHooks s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p preh prec posth postc))");
-
-      /*
-	(XmSetWMProtocolHooks shell
-		      (XmInternAtom dpy "WM_DELETE_WINDOW" #f)
-		      (lambda (w c i)
-			(snd-display "prehook: ~A ~A ~A" w c i))
-		      12345
-		      (lambda (w c i)
-			(snd-display "posthook: ~A ~A ~A" w c i))
-		      54321)
-      */
+#else
+      XEN_EVAL_C_STRING("(def RXmAddWMProtocols(s, p, n) \
+                            RXmAddProtocols(s, RXInternAtom(RXtDisplay(s), \"WM_PROTOCOLS\", false), p, n); end");
+      XEN_EVAL_C_STRING("(def RXmRemoveWMProtocols(s, p, n) \
+                            RXmRemoveProtocols(s, RXInternAtom(RXtDisplay(s), \"WM_PROTOCOLS\" false), p, n); end");
+      XEN_EVAL_C_STRING("(def RXmAddWMProtocolCallback(s, p, c, cl) \
+                            RXmAddProtocolCallback(s, RXInternAtom(RXtDisplay(s), \"WM_PROTOCOLS\", false), p, c, cl); end");
+      XEN_EVAL_C_STRING("(def RXmRemoveWMProtocolCallback(s, p, c, cl) \
+                            RXmRemoveProtocolCallback(s, RXInternAtom(RXtDisplay(s), \"WM_PROTOCOLS\", false), p, c, cl); end");
+      XEN_EVAL_C_STRING("(def RXmActivateWMProtocol(s, p) \
+                            RXmActivateProtocol(s, RXInternAtom(RXtDisplay(s), \"WM_PROTOCOLS\", false), p); end");
+      XEN_EVAL_C_STRING("(def RXmDeactivateWMProtocol(s, p) \
+                            RXmDeactivateProtocol(s, RXInternAtom(RXtDisplay(s), \"WM_PROTOCOLS\" false), p); end");
+      XEN_EVAL_C_STRING("(def RXmSetWMProtocolHooks(s, p, preh, prec, posth, postc) \
+                            RXmSetProtocolHooks(s, RXInternAtom(RXtDisplay(s), \"WM_PROTOCOLS\", false), p, preh, prec, posth, postc); end");
+#endif
 #endif
       XEN_DEFINE_PROCEDURE(S_add_resource, g_add_resource_w, 2, 0, 0, H_add_resource);
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"15-Oct-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"28-Oct-02\")");
 #endif
       xm_already_inited = 1;
     }

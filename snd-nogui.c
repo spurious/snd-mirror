@@ -136,13 +136,15 @@ int region_dialog_is_active(void) {return(0);}
 void allocate_region_rows(int n) {}
 void reflect_region_graph_style(snd_state *ss) {}
 void snd_completion_help(snd_state *ss, int matches, char **buffer) {}
-int set_help_text_font(snd_state *ss, char *font) {ss->Help_Text_Font = font; return(0);}
-int set_tiny_font(snd_state *ss, char *font) {ss->Tiny_Font = font; return(0);}
-int set_listener_font(snd_state *ss, char *font) {ss->Listener_Font = font; return(0);}
-int set_button_font(snd_state *ss, char *font) {ss->Button_Font = font; return(0);}
-int set_bold_button_font(snd_state *ss, char *font) {ss->Bold_Button_Font = font; return(0);}
-int set_axis_label_font(snd_state *ss, char *font) {ss->Axis_Label_Font = font; return(0);}
-int set_axis_numbers_font(snd_state *ss, char *font) {ss->Axis_Numbers_Font = font; return(0);}
+int set_help_text_font(snd_state *ss, char *font) {ss->Help_Text_Font = copy_string(font); return(0);}
+int set_tiny_font(snd_state *ss, char *font) {ss->Tiny_Font = copy_string(font); return(0);}
+int set_listener_font(snd_state *ss, char *font) {ss->Listener_Font = copy_string(font); return(0);}
+int set_button_font(snd_state *ss, char *font) {ss->Button_Font = copy_string(font); return(0);}
+int set_bold_button_font(snd_state *ss, char *font) {ss->Bold_Button_Font = copy_string(font); return(0);}
+int set_peaks_font(snd_state *ss, char *font) {ss->Peaks_Font = copy_string(font); return(0);}
+int set_bold_peaks_font(snd_state *ss, char *font) {ss->Bold_Peaks_Font = copy_string(font); return(0);}
+int set_axis_label_font(snd_state *ss, char *font) {ss->Axis_Label_Font = copy_string(font); return(0);}
+int set_axis_numbers_font(snd_state *ss, char *font) {ss->Axis_Numbers_Font = copy_string(font); return(0);}
 void activate_numbers_font(axis_context *ax, snd_state *ss) {}
 void activate_label_font(axis_context *ax, snd_state *ss) {}
 void activate_button_font(axis_context *ax, snd_state *ss) {}
@@ -164,8 +166,6 @@ void set_sensitive(int wid, int val) {}
 void set_toggle_button(int wid, int val, int passed, void *data) {}
 int widget_height(int w) {return(0);}
 int widget_width(int w) {return(0);}
-void set_widget_height(int w, int height) {}
-void set_widget_width(int w, int width) {}
 void set_widget_size(int w, int width, int height) {}
 int widget_x(int w) {return(0);}
 int widget_y(int w) {return(0);}
@@ -184,7 +184,6 @@ void resize_zx(chan_info *cp) {}
 void resize_sy(chan_info *cp) {}
 void resize_zy(chan_info *cp) {}
 int channel_open_pane(chan_info *cp, void *ptr) {return(0);}
-int channel_unlock_pane(chan_info *cp, void *ptr) {return(0);}
 void reflect_edit_history_change(chan_info *cp) {}
 void reflect_edit_counter_change(chan_info *cp) {}
 void reflect_save_as_in_edit_history(chan_info *cp, char *filename) {}
@@ -430,6 +429,9 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define (" S_main_widgets " . args) #f)\
                (define (" S_current_font ") #f)\
                (define (" S_reset_listener_cursor ") #f)\
+               (define (" S_graph_data " . args) #f)\
+               (define (" S_make_graph_data " . args) #f)\
+               (define (" S_widget_text " . args) \"\")\
                (define " S_basic_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_zoom_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_position_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
@@ -487,8 +489,10 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   XEN_EVAL_C_STRING("Selection_context = 2");
 #endif
   set_button_font(ss, FALLBACK_FONT);
+  set_peaks_font(ss, FALLBACK_FONT);
   set_tiny_font(ss, FALLBACK_FONT);
   set_bold_button_font(ss, FALLBACK_FONT);
+  set_bold_peaks_font(ss, FALLBACK_FONT);
   set_axis_label_font(ss, FALLBACK_FONT);
   set_axis_numbers_font(ss, FALLBACK_FONT);
   set_help_text_font(ss, FALLBACK_FONT);

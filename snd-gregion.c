@@ -354,9 +354,6 @@ static void make_region_dialog(snd_state *ss)
 				 g_cclosure_new(GTK_SIGNAL_FUNC(region_ok_callback), (gpointer)ss, 0),
 				 0);
 
-  set_pushed_button_colors(help_button, ss);
-  set_pushed_button_colors(delete_button, ss);
-  set_pushed_button_colors(dismiss_button, ss);
 
   gtk_widget_show(delete_button);
   gtk_widget_show(help_button);
@@ -427,7 +424,6 @@ static void make_region_dialog(snd_state *ss)
   gtk_widget_show(maxamp_text);
 
   edit_button = gtk_button_new_with_label("edit");
-  set_pushed_button_colors(edit_button, ss);
   g_signal_connect_closure_by_id(GTK_OBJECT(edit_button),
 				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(edit_button))),
 				 0,
@@ -437,7 +433,6 @@ static void make_region_dialog(snd_state *ss)
   gtk_widget_show(edit_button);
 
   print_button = gtk_button_new_with_label("print");
-  set_pushed_button_colors(print_button, ss);
   g_signal_connect_closure_by_id(GTK_OBJECT(print_button),
 				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(print_button))),
 				 0,

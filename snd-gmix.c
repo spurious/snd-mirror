@@ -489,7 +489,6 @@ GtkWidget *make_mix_panel(snd_state *ss)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(dismiss_mix_panel), (gpointer)ss, 0),
 				     0);
-      set_pushed_button_colors(dismiss_button, ss);
       gtk_widget_show(dismiss_button);
 
       apply_button = gtk_button_new_with_label("Apply Env");
@@ -499,7 +498,6 @@ GtkWidget *make_mix_panel(snd_state *ss)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(apply_mix_panel), (gpointer)ss, 0),
 				     0);
-      set_pushed_button_colors(apply_button, ss);
       gtk_widget_show(apply_button);
 
       help_button = gtk_button_new_with_label("Help");
@@ -509,7 +507,6 @@ GtkWidget *make_mix_panel(snd_state *ss)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(mix_panel_help), (gpointer)ss, 0),
 				     0);
-      set_pushed_button_colors(help_button, ss);
       gtk_widget_show(help_button);
 
 
@@ -524,7 +521,6 @@ GtkWidget *make_mix_panel(snd_state *ss)
       gtk_widget_show(w_id_label);
 
       w_id = snd_entry_new(ss, rc, FALSE);
-      /* set_widget_width(w_id, 60); */
       g_signal_connect_closure_by_id(GTK_OBJECT(w_id),
 				     g_signal_lookup("activate", G_OBJECT_TYPE(GTK_OBJECT(w_id))),
 				     0,

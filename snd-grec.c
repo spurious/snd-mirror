@@ -1,5 +1,5 @@
 /* TODO  buttons that choose which devices to display are no-ops
- * TODO  vertical slider labels aren't centered correctly (actually nothing is right -- this code should be deleted)
+ * TODO  vertical slider labels aren't centered correctly and icons mess up vertical extents
  */
 
 #include "snd.h"
@@ -110,14 +110,6 @@ static int current_vu_label = 0;
 static char **pending_error = NULL;
 static int pending_errors = 0;
 static int pending_error_size = 0;
-
-static void set_label_font(GtkWidget *w)
-{
-  GtkStyle *style;
-  style = gtk_style_copy(gtk_widget_get_style(w));
-  /* style->font_desc = small_font; */
-  gtk_widget_set_style(w, style);
-}
 
 static void record_report(GtkWidget *text, ...)
 {
@@ -1301,13 +1293,11 @@ static GtkWidget *make_button_matrix(snd_state *ss, PANE *p, char *name, GtkWidg
   gtk_widget_show(outer_hbox);
 
   left_vbox = gtk_vbox_new(FALSE, 0);
-  /* set_widget_width(left_vbox, 10); */
   gtk_box_pack_start(GTK_BOX(outer_hbox), left_vbox, FALSE, FALSE, 0);
   gtk_widget_show(left_vbox);
 
   buttons = gtk_table_new(ins, outs, TRUE);
   gtk_box_pack_start(GTK_BOX(outer_hbox), buttons, TRUE, TRUE, 0);
-  /* set_widget_width(buttons, outs * 30); */
   gtk_widget_show(buttons);
 
   diag_button = gtk_label_new("/ ");
@@ -1525,7 +1515,10 @@ static void make_vu_meters(snd_state *ss, PANE *p, int vu_meters,
       frame = gtk_frame_new(NULL);
 
       gtk_box_pack_start(GTK_BOX(hboxes[row]), frame, TRUE, TRUE, 0);
-      gtk_container_set_border_width(GTK_CONTAINER(frame), 4);
+      gtk_container_set_border_width(GTK_CONTAINER(frame), 2);
+      gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
+      set_backgrounds(frame, ss->sgx->black);
+      gtk_widget_set_size_request(frame, (int)(250 * meter_size), (int)(100 * meter_size));
       gtk_widget_show(frame);
 
       meter = gtk_drawing_area_new();
@@ -1549,7 +1542,7 @@ static void make_vu_meters(snd_state *ss, PANE *p, int vu_meters,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(meter_resize_callback), (gpointer)vu, 0),
 				     0);
 
-      if ((i == (columns*(row + 1) - 1)) && 
+      if ((i == (columns * (row + 1) - 1)) && 
 	  (vu_meters > (i + 1))) 
 	row++;
     }
@@ -1610,7 +1603,6 @@ static void make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p
 		slabel = gtk_label_new("ton");
 	      else slabel = gtk_label_new(recorder_field_abbreviation(this_device));
 	      gtk_box_pack_start(GTK_BOX(sbox), slabel, FALSE, FALSE, 0);
-	      set_label_font(slabel);
 	      gtk_widget_show(slabel);
 	    }
 	}
@@ -1618,7 +1610,6 @@ static void make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p
 	{
 	  slabel = gtk_label_new(" ");
 	  gtk_box_pack_start(GTK_BOX(sbox), slabel, FALSE, FALSE, 0);
-	  set_label_font(slabel);
 	  gtk_widget_show(slabel);
 	}
 #endif
@@ -1685,7 +1676,6 @@ static GtkWidget *make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Flo
       /* gtk_container_set_border_width(GTK_CONTAINER(p->on_buttons[i]), 6); */
       set_background(p->on_buttons[i], (ss->sgx)->basic_color);
       gtk_box_pack_start(GTK_BOX(hboxes[row]), p->on_buttons[i], TRUE, TRUE, 0);
-      /* set_widget_width(p->on_buttons[i], 30); */
       gtk_widget_show(p->on_buttons[i]);
 
       bbox = gtk_vbox_new(FALSE, 0);
@@ -2117,9 +2107,6 @@ void snd_record_file(snd_state *ss)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(record_button_callback), (gpointer)ss, 0),
 				     0);
-      set_pushed_button_colors(help_button, ss);
-      set_pushed_button_colors(dismiss_button, ss);
-      set_pushed_button_colors(reset_button, ss);
       gtk_widget_show(dismiss_button);
       gtk_widget_show(reset_button);
       gtk_widget_show(record_button);
@@ -2156,6 +2143,7 @@ void snd_record_file(snd_state *ss)
 
       /* then make file_info_pane and messages at the bottom */
       file_info_pane = gtk_frame_new(NULL);
+      /* set_backgrounds(file_info_pane, ss->sgx->black); */
       gtk_box_pack_end(GTK_BOX(rec_panes_box), file_info_pane, FALSE, FALSE, 0);
       gtk_widget_show(file_info_pane);
 

@@ -137,9 +137,6 @@ void file_print_callback(GtkWidget *w, gpointer context)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(file_print_ok_callback), (gpointer)ss, 0),
 				     0);
-      set_pushed_button_colors(help_button, ss);
-      set_pushed_button_colors(dismiss_button, ss);
-      set_pushed_button_colors(print_button, ss);
       gtk_widget_show(dismiss_button);
       gtk_widget_show(print_button);
       gtk_widget_show(help_button);

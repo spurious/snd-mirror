@@ -113,12 +113,6 @@ void color_chan_components(COLOR_TYPE color, int which_component)
     }
 }
 
-void recolor_button(GUI_WIDGET w, void *ptr)
-{
-  if ((GTK_IS_WIDGET(w)) && (GTK_IS_BUTTON(w)))
-    set_pushed_button_colors(w, get_global_state());
-}
-
 static XEN g_graph_cursor(void)
 {
   #define H_graph_cursor "(" S_graph_cursor ") -> current graph cursor shape"
@@ -131,9 +125,6 @@ static XEN g_set_graph_cursor(XEN curs)
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_NUMBER_P(curs), curs, XEN_ONLY_ARG, "set! " S_graph_cursor, "a number");
-  /* X11/cursorfont.h has various even-numbered glyphs, but the odd numbers are ok, and XC_num_glyphs is a lie */
-  /*   if you use too high a number here, Goddamn X dies */
-  /* gdk/gdkcursors.h is just a capitalization of the original so I assume it has the same great features */
   val = XEN_TO_C_INT(curs);
   if ((val >= 0) && (val <= GDK_XTERM))
     {

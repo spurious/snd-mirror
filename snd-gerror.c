@@ -39,7 +39,6 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
 				 0,
 				 g_cclosure_new(GTK_SIGNAL_FUNC(dismiss_snd_error), (gpointer)ss, 0),
 				 0);
-  set_pushed_button_colors(ok_button, ss);
   gtk_widget_show(ok_button);
   snd_error_history = make_scrolled_text(ss, GTK_DIALOG(snd_error_dialog)->vbox, FALSE, NULL, NULL);
   if (popup) gtk_widget_show(snd_error_dialog);
@@ -154,8 +153,6 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(no_callback), (gpointer)ss, 0),
 				     0);
-      set_pushed_button_colors(no_button, ss);
-      set_pushed_button_colors(yes_button, ss);
       gtk_widget_show(yes_button);
       gtk_widget_show(no_button);
 

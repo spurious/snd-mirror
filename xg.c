@@ -2781,9 +2781,14 @@ static XEN gxg_gdk_init(XEN argc, XEN argv)
   #define H_gdk_init "void gdk_init(gint* {argc}, gchar*** |argv|)"
   gint ref_argc;
   gchar** ref_argv;
-  ref_argc = 1;
-  ref_argv = (char **)malloc(sizeof(char *));
-  ref_argv[0] = strdup("xgprog");
+  ref_argc = XEN_TO_C_gint(argc);
+  ref_argv = (gchar**)calloc(ref_argc, sizeof(gchar*));
+  {
+   int i;
+   XEN lst;
+   lst = XEN_COPY_ARG(argv);
+   for (i = 0; i < ref_argc; i++, lst = XEN_CDR(lst)) ref_argv[i] = XEN_TO_C_gchar_(XEN_CAR(lst));
+  }
   gdk_init(&ref_argc, &ref_argv);
   return(XEN_LIST_2(C_TO_XEN_gint(ref_argc), C_TO_XEN_gchar__(ref_argv)));
 }
@@ -2792,9 +2797,14 @@ static XEN gxg_gdk_init_check(XEN argc, XEN argv)
   #define H_gdk_init_check "gboolean gdk_init_check(gint* {argc}, gchar*** |argv|)"
   gint ref_argc;
   gchar** ref_argv;
-  ref_argc = 1;
-  ref_argv = (char **)malloc(sizeof(char *));
-  ref_argv[0] = strdup("xgprog");
+  ref_argc = XEN_TO_C_gint(argc);
+  ref_argv = (gchar**)calloc(ref_argc, sizeof(gchar*));
+  {
+   int i;
+   XEN lst;
+   lst = XEN_COPY_ARG(argv);
+   for (i = 0; i < ref_argc; i++, lst = XEN_CDR(lst)) ref_argv[i] = XEN_TO_C_gchar_(XEN_CAR(lst));
+  }
   {
     XEN result = XEN_FALSE;
     result = C_TO_XEN_gboolean(gdk_init_check(&ref_argc, &ref_argv));
@@ -9467,9 +9477,14 @@ static XEN gxg_gtk_init(XEN argc, XEN argv)
   #define H_gtk_init "void gtk_init(int* {argc}, char*** |argv|)"
   int ref_argc;
   char** ref_argv;
-  ref_argc = 1;
-  ref_argv = (char **)malloc(sizeof(char *));
-  ref_argv[0] = strdup("xgprog");
+  ref_argc = XEN_TO_C_int(argc);
+  ref_argv = (char**)calloc(ref_argc, sizeof(char*));
+  {
+   int i;
+   XEN lst;
+   lst = XEN_COPY_ARG(argv);
+   for (i = 0; i < ref_argc; i++, lst = XEN_CDR(lst)) ref_argv[i] = XEN_TO_C_char_(XEN_CAR(lst));
+  }
   gtk_init(&ref_argc, &ref_argv);
   return(XEN_LIST_2(C_TO_XEN_int(ref_argc), C_TO_XEN_char__(ref_argv)));
 }
@@ -9478,9 +9493,14 @@ static XEN gxg_gtk_init_check(XEN argc, XEN argv)
   #define H_gtk_init_check "gboolean gtk_init_check(int* {argc}, char*** |argv|)"
   int ref_argc;
   char** ref_argv;
-  ref_argc = 1;
-  ref_argv = (char **)malloc(sizeof(char *));
-  ref_argv[0] = strdup("xgprog");
+  ref_argc = XEN_TO_C_int(argc);
+  ref_argv = (char**)calloc(ref_argc, sizeof(char*));
+  {
+   int i;
+   XEN lst;
+   lst = XEN_COPY_ARG(argv);
+   for (i = 0; i < ref_argc; i++, lst = XEN_CDR(lst)) ref_argv[i] = XEN_TO_C_char_(XEN_CAR(lst));
+  }
   {
     XEN result = XEN_FALSE;
     result = C_TO_XEN_gboolean(gtk_init_check(&ref_argc, &ref_argv));
@@ -30411,7 +30431,7 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"25-Oct-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"26-Oct-02\")");
 #endif
       xg_already_inited = 1;
     }

@@ -655,13 +655,15 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select, int
       if (files == 1) reflect_file_open_in_menu();
       reflect_equalize_panes_in_menu(active_channels(ss, WITHOUT_VIRTUAL_CHANNELS) > 1);
       reflect_file_change_in_title(ss);
-#if (!USE_NO_GUI)
+#if USE_MOTIF
       unlock_control_panel(sp);
 #endif
       add_to_current_files(ss, sp->short_filename);
     }
   map_over_separate_chans(ss, channel_open_pane, NULL);
+#if USE_MOTIF
   map_over_separate_chans(ss, channel_unlock_pane, NULL);
+#endif
   if (sp) 
     {
       if (select) select_channel(sp, 0);

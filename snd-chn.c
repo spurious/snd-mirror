@@ -888,6 +888,12 @@ static void display_zero(chan_info *cp)
     }
 }
 
+#if USE_MOTIF
+  #define CHN_LABEL_OFFSET -5
+#else
+  #define CHN_LABEL_OFFSET -18
+#endif
+
 static char chn_id_str[LABEL_BUFFER_SIZE];
 
 static void display_channel_id(chan_info *cp, int height, int chans)
@@ -898,7 +904,7 @@ static void display_channel_id(chan_info *cp, int height, int chans)
       set_peak_numbers_font(cp);
       if (cp->printing) ps_set_peak_numbers_font();
       x0 = 5;
-      y0 = height - 5;
+      y0 = height + CHN_LABEL_OFFSET;
       if (cp == selected_channel(cp->state))
 	{
 	  if (chans > 1)
@@ -929,13 +935,19 @@ static void display_channel_id(chan_info *cp, int height, int chans)
     }
 }
 
+#if USE_MOTIF
+  #define SELECTION_FFT_LABEL_OFFSET -3
+#else
+  #define SELECTION_FFT_LABEL_OFFSET -15
+#endif
+
 static void display_selection_transform_size (chan_info *cp, axis_info *fap)
 {
   int x0, y0;
   if (fap->height < 60) return;
   set_tiny_numbers_font(cp);
   if (cp->printing) ps_set_tiny_numbers_font();
-  y0 = fap->height + fap->y_offset - 3;
+  y0 = fap->height + fap->y_offset + SELECTION_FFT_LABEL_OFFSET;
   x0 = fap->x_axis_x0 + 10;
   mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, 
 	       "(len: " OFF_TD "/%d)", 

@@ -272,6 +272,14 @@ void reload_number_font(snd_state *ss)
 }
 #endif
 
+#if USE_MOTIF
+  #define X_LABEL_Y_OFFSET 7
+  #define X_NUMBERS_OFFSET 2
+#else
+  #define X_LABEL_Y_OFFSET 0
+  #define X_NUMBERS_OFFSET -5
+#endif
+
 void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, int show_x_axis)
 {
   snd_state *ss;
@@ -581,11 +589,11 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	}
       else
 #endif
-      draw_string(ax, ap->x_label_x, ap->x_label_y + 7, ap->xlabel, snd_strlen(ap->xlabel));
+      draw_string(ax, ap->x_label_x, ap->x_label_y + X_LABEL_Y_OFFSET, ap->xlabel, snd_strlen(ap->xlabel));
       if (printing) 
 	{
 	  ps_set_label_font();
-	  ps_draw_string(ap, ap->x_label_x, ap->x_label_y + 7, ap->xlabel);
+	  ps_draw_string(ap, ap->x_label_x, ap->x_label_y + X_LABEL_Y_OFFSET, ap->xlabel);
 	}
     }
 
@@ -713,13 +721,13 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 #endif
 	  draw_string(ax,
 		      tx0,
-		      ap->x_label_y + 2,
+		      ap->x_label_y + X_NUMBERS_OFFSET,
 		      tdx->min_label,
 		      strlen(tdx->min_label));
 	  if (printing) 
 	    ps_draw_string(ap,
 			   tx0,
-			   ap->x_label_y + 2,
+			   ap->x_label_y + X_NUMBERS_OFFSET,
 			   tdx->min_label);
 	}
       tx0 = (int)(tick_grf_x(tdx->mhi, ap, x_style, srate) - (.45 * tdx->max_label_width)); /* try centered label first */
@@ -741,13 +749,13 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 #endif
 	  draw_string(ax,
 		      tx0,
-		      ap->x_label_y + 2,
+		      ap->x_label_y + X_NUMBERS_OFFSET,
 		      tdx->max_label,
 		      strlen(tdx->max_label));
 	  if (printing) 
 	    ps_draw_string(ap,
 			   tx0,
-			   ap->x_label_y + 2,
+			   ap->x_label_y + X_NUMBERS_OFFSET,
 			   tdx->max_label);
 	}
     }

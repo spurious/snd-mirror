@@ -278,6 +278,8 @@ int set_tiny_font(snd_state *ss, char *font);
 int set_listener_font(snd_state *ss, char *font);
 int set_button_font(snd_state *ss, char *font);
 int set_bold_button_font(snd_state *ss, char *font);
+int set_peaks_font(snd_state *ss, char *font);
+int set_bold_peaks_font(snd_state *ss, char *font);
 int set_axis_label_font(snd_state *ss, char *font);
 int set_axis_numbers_font(snd_state *ss, char *font);
 void activate_numbers_font(axis_context *ax, snd_state *ss);

@@ -418,38 +418,6 @@ static void help_transform_callback(GtkWidget *w, gpointer context)
   transform_dialog_help((snd_state *)context);
 }
 
-static void button_pushed_red(GtkWidget *w, snd_state *ss)
-{
-  GtkStyle *style;
-  style = gtk_style_copy(gtk_widget_get_style(w));
-  style->bg[GTK_STATE_ACTIVE] = (*((ss->sgx)->red));
-  style->bg[GTK_STATE_SELECTED] = (*((ss->sgx)->red));
-  style->bg[GTK_STATE_NORMAL] = (*((ss->sgx)->basic_color));
-  gtk_widget_set_style(w, style);
-}
-
-static GtkWidget *sg_make_scrolled_list(snd_state *ss, char *title, GtkWidget *parent, int num_items, char **items, 
-					GtkSignalFunc callback, int t1, int t2, int t3, int t4)
-{
-  GtkWidget *frame, *list, *scroller;
-  frame = gtk_frame_new(title);
-  gtk_table_attach_defaults(GTK_TABLE(parent), frame, t1, t2, t3, t4);
-  gtk_frame_set_label_align(GTK_FRAME(frame), 0.5, 0.0);
-  gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
-
-  list = sg_make_list((gpointer)ss, num_items, items, callback);
-
-  scroller = gtk_scrolled_window_new(NULL, NULL);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-  gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller), list);
-  gtk_container_add(GTK_CONTAINER(frame), scroller);
-
-  gtk_widget_show(list);
-  gtk_widget_show(scroller);
-  gtk_widget_show(frame);
-  return(list);
-}
-
 #define BUTTON_HEIGHT 20
 #define BUTTON_WIDTH 40
 /* for some reason gtk puts a mile and a half of padding around buttons */
@@ -458,8 +426,8 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 {
   GtkWidget *outer_table, *buttons;
   int i, need_callback = 0;
-  GtkWidget *display_frame, *window_frame, *help_button, *dismiss_button;
-  GtkWidget *window_scroller, *window_box, *orient_button, *color_button;
+  GtkWidget *display_frame, *help_button, *dismiss_button;
+  GtkWidget *window_box, *orient_button, *color_button;
 
   if (!transform_dialog)
     {
@@ -504,10 +472,6 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(help_transform_callback), (gpointer)ss, 0),
 				     0);
-      set_pushed_button_colors(help_button, ss);
-      set_pushed_button_colors(dismiss_button, ss);
-      set_pushed_button_colors(color_button, ss);
-      set_pushed_button_colors(orient_button, ss);
       gtk_widget_show(dismiss_button);
       gtk_widget_show(color_button);
       gtk_widget_show(orient_button);
@@ -522,8 +486,6 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 	 
 	 type (list)    |  size (list)        |  display (button column)
 	 wavelet (list) |  window (list+beta) |  graph (fft?) of current window
-	 
-	 each box has a frame, label, and contents
       */
 
       /* TYPE */
@@ -536,14 +498,16 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 	      transform_names[i] = TRANSFORM_TYPES[i];
 	    else transform_names[i] = added_transform_name(i);
 	  }
-	transform_list = sg_make_scrolled_list(ss, "type", outer_table, num_transform_types, transform_names, 
-					       GTK_SIGNAL_FUNC(transform_browse_callback), 0, 1, 0, 1);
+	transform_list = sg_make_list("type", outer_table, 3, (gpointer)ss, num_transform_types, transform_names, 
+				      GTK_SIGNAL_FUNC(transform_browse_callback), 0, 1, 0, 1);
+	gtk_widget_show(transform_list);
 	FREE(transform_names);
       }
 
       /* SIZE */
-      size_list = sg_make_scrolled_list(ss, "size", outer_table, NUM_TRANSFORM_SIZES, TRANSFORM_SIZES, 
-					GTK_SIGNAL_FUNC(size_browse_callback), 1, 2, 0, 1);
+      size_list = sg_make_list("size", outer_table, 3, (gpointer)ss, NUM_TRANSFORM_SIZES, TRANSFORM_SIZES, 
+			       GTK_SIGNAL_FUNC(size_browse_callback), 1, 2, 0, 1);
+      gtk_widget_show(size_list);
 
       /* DISPLAY */
       display_frame = gtk_frame_new("display");
@@ -567,7 +531,6 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(normal_fft_callback), (gpointer)ss, 0),
 				     0);
-      button_pushed_red(normal_fft_button, ss);
       gtk_widget_set_size_request(GTK_WIDGET(normal_fft_button), BUTTON_WIDTH, BUTTON_HEIGHT);
 
       sono_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(normal_fft_button)), "sonogram");
@@ -578,7 +541,6 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(sonogram_callback), (gpointer)ss, 0),
 				     0);
-      button_pushed_red(sono_button, ss);
       gtk_widget_set_size_request(GTK_WIDGET(sono_button), BUTTON_WIDTH, BUTTON_HEIGHT);
 
       spectro_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(normal_fft_button)), "spectrogram");
@@ -589,7 +551,6 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(spectrogram_callback), (gpointer)ss, 0),
 				     0);
-      button_pushed_red(spectro_button, ss);
       gtk_widget_set_size_request(GTK_WIDGET(spectro_button), BUTTON_WIDTH, BUTTON_HEIGHT);
       
       peaks_button = gtk_check_button_new_with_label("peaks");
@@ -600,7 +561,6 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(peaks_callback), (gpointer)ss, 0),
 				     0);
-      button_pushed_red(peaks_button, ss);
       gtk_widget_set_size_request(GTK_WIDGET(peaks_button), BUTTON_WIDTH, BUTTON_HEIGHT);
  
       db_button = gtk_check_button_new_with_label("dB");
@@ -611,7 +571,6 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(db_callback), (gpointer)ss, 0),
 				     0);
-      button_pushed_red(db_button, ss);
       gtk_widget_set_size_request(GTK_WIDGET(db_button), BUTTON_WIDTH, BUTTON_HEIGHT);
  
       logfreq_button = gtk_check_button_new_with_label("log freq");
@@ -622,7 +581,6 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(logfreq_callback), (gpointer)ss, 0),
 				     0);
-      button_pushed_red(logfreq_button, ss);
       gtk_widget_set_size_request(GTK_WIDGET(logfreq_button), BUTTON_WIDTH, BUTTON_HEIGHT);
 
       normalize_button = gtk_check_button_new_with_label("normalize");
@@ -633,7 +591,6 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(normalize_callback), (gpointer)ss, 0),
 				     0);
-      button_pushed_red(normalize_button, ss);
       gtk_widget_set_size_request(GTK_WIDGET(normalize_button), BUTTON_WIDTH, BUTTON_HEIGHT);
 
       selection_button = gtk_check_button_new_with_label("selection");
@@ -644,35 +601,21 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(selection_callback), (gpointer)ss, 0),
 				     0);
-      button_pushed_red(selection_button, ss);
       gtk_widget_set_size_request(GTK_WIDGET(selection_button), BUTTON_WIDTH, BUTTON_HEIGHT);
 
       gtk_widget_show(buttons);
       gtk_widget_show(display_frame);
 
       /* WAVELET */
-      wavelet_list = sg_make_scrolled_list(ss, "wavelet", outer_table, NUM_WAVELETS, WAVELETS, 
-					   GTK_SIGNAL_FUNC(wavelet_browse_callback), 0, 1, 1, 2);
+      wavelet_list = sg_make_list("wavelet", outer_table, 3, (gpointer)ss, NUM_WAVELETS, WAVELETS, 
+				  GTK_SIGNAL_FUNC(wavelet_browse_callback), 0, 1, 1, 2);
+      gtk_widget_show(wavelet_list);
 
       /* WINDOW */
-      window_frame = gtk_frame_new("window");
-      gtk_table_attach_defaults(GTK_TABLE(outer_table), window_frame, 1, 2, 1, 2);
-      gtk_frame_set_label_align(GTK_FRAME(window_frame), 0.5, 0.0);
-      gtk_frame_set_shadow_type(GTK_FRAME(window_frame), GTK_SHADOW_ETCHED_IN);
-
       window_box = gtk_table_new(2, 2, FALSE);
-      gtk_container_add(GTK_CONTAINER(window_frame), window_box);
-
-      window_list = sg_make_list((gpointer)ss, GUI_NUM_FFT_WINDOWS, FFT_WINDOWS, GTK_SIGNAL_FUNC(window_browse_callback));
-
-      window_scroller = gtk_scrolled_window_new(NULL, NULL);
-      gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(window_scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-      gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(window_scroller), window_list);
-      /* gtk_table_attach_defaults(GTK_TABLE(window_box), window_scroller, 0, 1, 0, 1); */
-      gtk_table_attach(GTK_TABLE(window_box), window_scroller, 0, 1, 0, 1, 
-		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
-		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
-		       0, 0);
+      gtk_table_attach_defaults(GTK_TABLE(outer_table), window_box, 1, 2, 1, 2);
+      window_list = sg_make_list("window", window_box, 3, (gpointer)ss, GUI_NUM_FFT_WINDOWS, FFT_WINDOWS, 
+				 GTK_SIGNAL_FUNC(window_browse_callback), 0, 1, 0, 1);
 
       beta_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
       window_beta_scale = gtk_hscale_new(GTK_ADJUSTMENT(beta_adj));
@@ -693,9 +636,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 
       gtk_widget_show(window_beta_scale);
       gtk_widget_show(window_list);
-      gtk_widget_show(window_scroller);
       gtk_widget_show(window_box);
-      gtk_widget_show(window_frame);
 
 
       /* GRAPH */
