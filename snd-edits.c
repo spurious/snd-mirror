@@ -9005,10 +9005,10 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_delete_samples,            g_delete_samples_w,            2, 3, 0, H_delete_samples);
   XEN_DEFINE_PROCEDURE(S_insert_sample,             g_insert_sample_w,             2, 3, 0, H_insert_sample);
   XEN_DEFINE_PROCEDURE(S_insert_samples,            g_insert_samples_w,            3, 4, 0, H_insert_samples);
-  XEN_DEFINE_PROCEDURE(S_vct_to_samples,               g_vct_to_samples_w,               1, 7, 0, H_vct_to_samples);
-  XEN_DEFINE_PROCEDURE(S_vct_to_channel,               g_vct_to_channel_w,               1, 5, 0, H_vct_to_channel);
-  XEN_DEFINE_PROCEDURE(S_samples_to_vct,               g_samples_to_vct_w,               0, 6, 0, H_samples_to_vct);
-  XEN_DEFINE_PROCEDURE(S_channel_to_vct,               g_channel_to_vct_w,               0, 5, 0, H_channel_to_vct);
+  XEN_DEFINE_PROCEDURE(S_vct_to_samples,            g_vct_to_samples_w,            1, 7, 0, H_vct_to_samples);
+  XEN_DEFINE_PROCEDURE(S_vct_to_channel,            g_vct_to_channel_w,            1, 5, 0, H_vct_to_channel);
+  XEN_DEFINE_PROCEDURE(S_samples_to_vct,            g_samples_to_vct_w,            0, 6, 0, H_samples_to_vct);
+  XEN_DEFINE_PROCEDURE(S_channel_to_vct,            g_channel_to_vct_w,            0, 5, 0, H_channel_to_vct);
   XEN_DEFINE_PROCEDURE(S_insert_sound,              g_insert_sound_w,              1, 6, 0, H_insert_sound);
   XEN_DEFINE_PROCEDURE(S_scale_sound_by,            g_scale_sound_by_w,            1, 5, 0, H_scale_sound_by);
   XEN_DEFINE_PROCEDURE(S_scale_channel,             g_scale_channel_w,             1, 5, 0, H_scale_channel);

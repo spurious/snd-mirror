@@ -429,6 +429,31 @@ this can be confusing if fft normalization is on (the default)"
 	   n)))))
 
 
+;;; a version of "do" that is interruptible and continuable
+;;;   to continue an interrupted "do?", (do-go-on)
+
+(define do-go-on-continuation #f)
+
+(define (do-go-on)
+  (if (continuation? do-go-on-continuation)
+      (do-go-on-continuation #f)
+      ";sorry! can't continue"))
+
+(defmacro do? (inits ends . body)
+  `(do ,inits
+       ((or (and ,(car ends)
+		 (begin 
+		   (set! do-go-on-continuation #f)
+		   #t))
+	    (and (c-g?)
+		 (call-with-current-continuation
+		  (lambda (go-on)
+		    (set! do-go-on-continuation go-on)))))
+	,(and (not (null? (cdr ends)))
+	      (cadr ends)))
+     ,@body))
+
+
 ;;; -------- make a system call from the listener
 ;;;
 ;;;   (shell "df") for example -- there's probably a more elegant way to do this is in Scheme

@@ -136,6 +136,8 @@ char *mus_name(mus_any *ptr)
   return((ptr->core)->name);
 }
 
+/* SOMEDAY: mus_set_name might be nice (to distinguish gens) */
+
 Float mus_radians_to_hz(Float rads) {return(rads / w_rate);}
 Float mus_hz_to_radians(Float hz) {return(hz * w_rate);}
 Float mus_degrees_to_radians(Float degree) {return(degree * TWO_PI / 360.0);}
@@ -149,7 +151,7 @@ off_t mus_seconds_to_samples(Float secs) {return((off_t)(secs * sampling_rate));
 Float mus_samples_to_seconds(off_t samps) {return((Float)((double)samps / (double)sampling_rate));}
 
 int mus_array_print_length(void) {return(array_print_length);}
-int mus_set_array_print_length(int val) {array_print_length = val; return(val);}
+int mus_set_array_print_length(int val) {if (val >= 0) array_print_length = val; return(array_print_length);}
 
 static char *print_array(Float *arr, int len, int loc)
 {
@@ -666,6 +668,10 @@ Float mus_array_interp(Float *wave, Float phase, int size)
   /* changed 26-Sep-00 to be closer to mus.lisp */
   int int_part;
   Float frac_part;
+#if HAVE_DECL_ISNAN
+  /* TODO: surely there's a better way to handle Nans and infs?? */
+  if (isnan(phase)) return(0.0);
+#endif  
   if ((phase < 0.0) || (phase > size))
     {
       /* 28-Mar-01 changed to fmod; I was hoping to avoid this... */
@@ -1306,7 +1312,6 @@ static bool delay_equalp(mus_any *p1, mus_any *p2)
 }
 
 static off_t delay_length(mus_any *ptr) {return(((dly *)ptr)->size);}
-static off_t set_delay_length(mus_any *ptr, off_t val) {((dly *)ptr)->size = (int)val; return(val);}
 static Float *delay_data(mus_any *ptr) {return(((dly *)ptr)->line);}
 static Float delay_scaler(mus_any *ptr) {return(((dly *)ptr)->xscl);}
 static Float set_delay_scaler(mus_any *ptr, Float val) {((dly *)ptr)->xscl = val; return(val);}
@@ -1320,6 +1325,23 @@ static Float *delay_set_data(mus_any *ptr, Float *val)
   if (gen->line_allocated) {FREE(gen->line); gen->line_allocated = false;}
   gen->line = val; 
   return(val);
+}
+
+static off_t set_delay_length(mus_any *ptr, off_t val) 
+{
+  dly *gen = (dly *)ptr;  
+  if (val > 0) 
+    {
+      int old_size;
+      old_size = gen->size;
+      gen->size = (int)val; 
+      if (gen->size < old_size)
+	{
+	  if (gen->loc > gen->size) gen->loc = 0;
+	  gen->zdly = false; /* otherwise too many ways to screw up */
+	}
+    }
+  return((off_t)(gen->size));
 }
 
 bool mus_delay_line_p(mus_any *gen)
@@ -3079,7 +3101,7 @@ bool mus_fir_filter_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_F
 bool mus_iir_filter_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_IIR_FILTER));}
 static Float *filter_data(mus_any *ptr) {return(((flt *)ptr)->state);}
 static off_t filter_length(mus_any *ptr) {return(((flt *)ptr)->order);}
-static off_t set_filter_length(mus_any *ptr, off_t val) {((flt *)ptr)->order = (int)val; return(val);}
+static off_t set_filter_length(mus_any *ptr, off_t val) {if (val > 0) ((flt *)ptr)->order = (int)val; return((off_t)(((flt *)ptr)->order));}
 static Float *filter_xcoeffs(mus_any *ptr) {return(((flt *)ptr)->x);}
 static Float *filter_ycoeffs(mus_any *ptr) {return(((flt *)ptr)->y);}
 
@@ -4020,9 +4042,7 @@ static bool equalp_frame(mus_any *p1, mus_any *p2)
 
 static Float run_frame(mus_any *ptr, Float arg1, Float arg2) {return(mus_frame_ref(ptr, (int)arg1));}
 static Float *frame_data(mus_any *ptr) {return(((mus_frame *)ptr)->vals);}
-static Float *set_frame_data(mus_any *ptr, Float *new_data) {((mus_frame *)ptr)->vals = new_data; return(new_data);}
 static off_t frame_length(mus_any *ptr) {return(((mus_frame *)ptr)->chans);}
-static off_t set_frame_length(mus_any *ptr, off_t new_len) {((mus_frame *)ptr)->chans = (int)new_len; return(new_len);}
 static int frame_channels(mus_any *ptr) {return(((mus_frame *)ptr)->chans);}
 
 static mus_any_class FRAME_CLASS = {
@@ -4031,10 +4051,8 @@ static mus_any_class FRAME_CLASS = {
   &free_frame,
   &describe_frame,
   &equalp_frame,
-  &frame_data,
-  &set_frame_data,
-  &frame_length,
-  &set_frame_length,
+  &frame_data, 0,
+  &frame_length, 0,
   0, 0, 0, 0,
   0, 0,
   0, 0,
@@ -4542,7 +4560,7 @@ static Float set_wt_freq(mus_any *ptr, Float val) {((wt *)ptr)->freq = val; retu
 static Float wt_phase(mus_any *ptr) {return(fmod(((TWO_PI * ((wt *)ptr)->phase) / ((Float)((wt *)ptr)->wave_size)), TWO_PI));}
 static Float set_wt_phase(mus_any *ptr, Float val) {((wt *)ptr)->phase = (fmod(val, TWO_PI) * ((wt *)ptr)->wave_size) / TWO_PI; return(val);}
 static off_t wt_length(mus_any *ptr) {return(((wt *)ptr)->wave_size);}
-static off_t wt_set_length(mus_any *ptr, off_t val) {((wt *)ptr)->wave_size = (int)val; return(val);}
+static off_t wt_set_length(mus_any *ptr, off_t val) {if (val > 0) ((wt *)ptr)->wave_size = (int)val; return((off_t)(((wt *)ptr)->wave_size));}
 static Float *wt_data(mus_any *ptr) {return(((wt *)ptr)->wave);}
 static int wt_interp_type(mus_any *ptr) {return((int)(((wt *)ptr)->type));}
 static Float *wt_set_data(mus_any *ptr, Float *data) {((wt *)ptr)->wave = data; return(data);}
@@ -6168,7 +6186,7 @@ static off_t grn_length(mus_any *ptr) {return(((grn_info *)ptr)->grain_len);}
 static off_t grn_set_length(mus_any *ptr, off_t val) 
 {
   grn_info *gen = ((grn_info *)ptr);
-  if (val < gen->out_data_len) gen->grain_len = (int)val; /* larger -> segfault */
+  if ((val > 0) && (val < gen->out_data_len)) gen->grain_len = (int)val; /* larger -> segfault */
   return(gen->grain_len);
 }
 static Float grn_scaler(mus_any *ptr) {return(((grn_info *)ptr)->amp);}
@@ -7487,7 +7505,6 @@ static int free_phase_vocoder(mus_any *ptr)
 }
 
 static off_t pv_length(mus_any *ptr) {return(((pv_info *)ptr)->N);}
-static off_t pv_set_length(mus_any *ptr, off_t val) {((pv_info *)ptr)->N = (int)val; return(val);}
 static off_t pv_hop(mus_any *ptr) {return(((pv_info *)ptr)->D);}
 static off_t pv_set_hop(mus_any *ptr, off_t val) {((pv_info *)ptr)->D = (int)val; return(val);}
 static Float pv_frequency(mus_any *ptr) {return(((pv_info *)ptr)->pitch);}
@@ -7512,8 +7529,7 @@ static mus_any_class PHASE_VOCODER_CLASS = {
   &describe_phase_vocoder,
   &phase_vocoder_equalp,
   0, 0,
-  &pv_length,
-  &pv_set_length,
+  &pv_length, 0,
   &pv_frequency,
   &pv_set_frequency,
   0, 0,
@@ -7597,7 +7613,12 @@ Float mus_phase_vocoder_with_editors(mus_any *ptr,
       Float (*pv_input)(void *arg, int direction) = input;
       bool (*pv_analyze)(void *arg, Float (*input)(void *arg1, int direction)) = analyze;
       int (*pv_edit)(void *arg) = edit;
-      if (pv_input == NULL) pv_input = pv->input;
+      if (pv_input == NULL) 
+	{
+	  pv_input = pv->input;
+	  if (pv_input == NULL)
+	    mus_error(MUS_NO_SAMPLE_INPUT, "%s has no input function!", mus_describe(ptr));
+	}
       if (pv_analyze == NULL) pv_analyze = pv->analyze;
       if (pv_edit == NULL) pv_edit = pv->edit;
 

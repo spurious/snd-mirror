@@ -406,7 +406,7 @@ static int find_mem_location(const char *func, const char *file, int line)
 static void set_padding(void *p1, void *p2, int len)
 {
 }
-static void check_padding(void *p1, void *p2, int len)
+static void check_padding(void *p1, void *p2, int len, bool refill)
 {
 }
 #else
@@ -979,7 +979,6 @@ static XEN g_mem_report(void)
   #define g_mem_report_w g_mem_report
 #endif
 #endif
-
 
 void g_init_utils(void)
 {

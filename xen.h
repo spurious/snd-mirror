@@ -19,6 +19,9 @@
  * "xen" from Greek xenos (guest, foreigner)
  */
 
+/* TODO: get rid of "WITH_CALLER" versions -- they no longer do anything useful */
+/* TODO: decide how to handle NaNs and infs in double translations */
+
 #define XEN_MAJOR_VERSION 1
 #define XEN_MINOR_VERSION 18
 #define XEN_VERSION "1.18"
@@ -161,6 +164,7 @@
   #else
     #define XEN_OBJECT_TYPE            scm_bits_t
   #endif
+  /* TODO: SCM_SMOB_PREDICATE -> scm_assert_smob_type? */
   #define XEN_OBJECT_TYPE_P(Obj, Type) ((SCM_NIMP(Obj)) && (SCM_SMOB_PREDICATE(Type, Obj)))
 #else
   #define XEN_OBJECT_TYPE              long
@@ -197,11 +201,13 @@
 
 #define XEN_TRUE_P(a)                XEN_EQ_P(a, XEN_TRUE)
 #define XEN_FALSE_P(a)               XEN_EQ_P(a, XEN_FALSE)
+/* TODO: NULLP -> scm_is_null */
 #define XEN_NULL_P(a)                SCM_NULLP(a)
 #define XEN_BOUND_P(Arg)             (!(SCM_UNBNDP(Arg)))
 #define XEN_NOT_BOUND_P(Arg)         SCM_UNBNDP(Arg)
 #define XEN_ZERO                     SCM_INUM0
 
+/* TODO: should SCM_CAR -> scm_car? (snd-run also) */
 #define XEN_CAR(a)                   SCM_CAR(a)
 #define XEN_CADR(a)                  SCM_CADR(a)
 #define XEN_CADDR(a)                 SCM_CADDR(a)
@@ -540,6 +546,7 @@
   #endif
 #endif
 
+/* TODO: SCM_CONSP -> scm_is_pair */
 #define XEN_CONS_P(Arg)               SCM_CONSP(Arg)
 #define XEN_PAIR_P(a)                 XEN_TRUE_P(scm_pair_p(a))
 

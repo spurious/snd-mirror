@@ -20,7 +20,7 @@ static XEN g_in(XEN ms, XEN code)
 	XEN_OUT_OF_RANGE_ERROR(S_in, XEN_ARG_1, ms, "a positive integer");
       else
 	{
-	  g_timeout_add_full(0, (guint32)XEN_TO_C_INT(ms), timed_eval, (gpointer)code, NULL);
+	  g_timeout_add_full(0, (guint32)secs, timed_eval, (gpointer)code, NULL);
 	  snd_protect(code);
 	}
     }

@@ -1340,10 +1340,7 @@ Other writable headers include " S_mus_aiff ", " S_mus_riff ", " S_mus_ircam ", 
   typ = XEN_TO_C_INT(val);
   if (mus_header_writable(typ, -2))
     set_default_output_type(typ); 
-  else mus_misc_error(S_setB S_default_output_type, 
-		      "can't write this header type", 
-		      XEN_LIST_2(val, 
-				 C_TO_XEN_STRING(mus_header_type_name(typ))));
+  else XEN_OUT_OF_RANGE_ERROR(S_setB S_default_output_type, 1, val, "~A: unwritable header type");
   return(C_TO_XEN_INT(default_output_type(ss)));
 }
 

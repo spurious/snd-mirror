@@ -1,7 +1,7 @@
 Snd
 
 Snd is a sound editor.  It currently runs on Linux, Sun, SGI,
-HPUX, LinuxPPC, FreeBSD, Mac OSX, BSD, ande Cygwin systems. 
+HPUX, LinuxPPC, FreeBSD, Mac OSX, BSD, and Cygwin systems. 
 
 
 To build Snd, get the sources from
@@ -696,7 +696,7 @@ So to sum up:
   Guile 1.3.4 or later but Snd's Scheme files need 1.5.0 or later
   Ruby 1.6.4 or later
   if GSL, version 0.8 or later
-  
+  if gtkglext, version 1.0 or later
 
 ----------------------------------------------------------------
 If you hit a bug, don't just sit there weeping -- send me

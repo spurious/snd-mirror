@@ -22,6 +22,7 @@
 </head>
 
 <!-- SOMEDAY: parallel Ruby code for all the Guile examples -->
+<!-- TODO: continuation as index entry? -->
 
 <body bgcolor=white>
 
@@ -9682,7 +9683,7 @@ See <i>save-track</i> in mix.scm.
 <code><a class=def name="cgp">c-g?</a> ()</code></td></tr>
 <tr><td></td><td>
 check for C-g to interrupt an on-going computation, and let other UI 
-events through.  <i>c-g?</i> is especially useful in loops; we could define our own safe 'while' loop as follows
+events through.  <b>c-g?</b> is especially useful in loops; we could define our own safe 'while' loop as follows
 (this is a slight revision of Guile's while macro from ice-9/boot-9.scm):
 </td></tr>
 <tr><td></td><td>
@@ -9697,6 +9698,34 @@ events through.  <i>c-g?</i> is especially useful in loops; we could define our 
      (catch 'break
 	    (lambda () (continue))
 	    (lambda v (cadr v)))))
+</pre></td></tr></table>
+<p>
+Here's a version of "do" that is interruptible and continuable.  <b>c-g?</b> provides
+the interrupt, and <b>call-with-current-continuation</b> provides the continuation.
+To continue running an interrupted <b>do?</b>, <code>(do-go-on)</code>.
+</p>
+</td></tr>
+<tr><td></td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(define do-go-on-continuation #f)
+(define (do-go-on)
+  (if (continuation? do-go-on-continuation) ; a Snd function -- should be provided by Guile!
+      (do-go-on-continuation #f)
+      ";sorry! can't continue"))
+
+(defmacro do? (inits ends . body)
+  `(do ,inits
+       ((or (and ,(car ends)
+		 (begin 
+		   (set! do-go-on-continuation #f) ; clear obsolete continuation
+		   #t))
+	    (and (<em class=red>c-g?</em>)                            ; got C-g -- set continuation
+		 (call-with-current-continuation
+		  (lambda (go-on)
+		    (set! do-go-on-continuation go-on)))))
+	,(and (not (null? (cdr ends)))
+	      (cadr ends)))
+     ,@body))
 </pre></td></tr></table>
 <br>
 See examp.scm and play.scm for other examples.

@@ -1,5 +1,6 @@
 Snd change log
 
+  27-Sep:    do? (examp.scm -- do that can be interrupted and continued)
   20-Sep:    show-sonogram-cursor.
   13-Sep:    removed buffer generator.
              log-freq-start.

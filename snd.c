@@ -134,6 +134,8 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   #endif
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
+  /* TODO: Guile now has i18n support: i18n.h, i18n.c -- does this include "," in Scheme numbers? */
+  /*       or should this just be documented and left to the individual's ~/.snd stuff? */
 #endif
 
   ss = (snd_state *)CALLOC(1, sizeof(snd_state));

@@ -2,6 +2,13 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
+/* SOMEDAY: continuable src/convolution/etc 
+ * It would be neat if long computations could be interrupted and continued -- currently
+ *   the interrupt (C-g) breaks out of the computation, but there's no way to return to
+ *   the C-g point and go on.  My earlier attempts to use scm_make_continuation for this
+ *   got segfaults that were not easy to understand. 
+ */
+
 /* collect syncd chans */
 typedef struct {
   sync_info *si;
@@ -747,14 +754,11 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 {
   snd_info *sp = NULL;
   bool reporting = false;
-  int jj;
   bool full_chan;
   mus_sample_t **data;
   file_info *hdr = NULL;
   int j, ofd = 0, datumb = 0, err = 0;
   off_t *old_marks = NULL, *new_marks = NULL;
-  int cur_mark = 0, cur_new_mark = 0;
-  off_t cur_mark_sample = -1;
   int cur_marks = 0, m;
   off_t k;
   char *ofile = NULL;
@@ -828,6 +832,8 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
     {
       off_t next_pass;
       Float env_val;
+      off_t cur_mark_sample = -1;
+      int cur_mark = 0, cur_new_mark = 0;
       /* envelope case -- have to go by sr->sample, not output sample counter, also check marks */
       cur_mark_sample = -1;
       env_val = mus_env(egen);
@@ -882,7 +888,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 	    }
 	  if (next_pass != sr->sample)             /* tick env forward dependent on sr->sample */
 	    {
-	      off_t idiff;
+	      off_t jj, idiff;
 	      idiff = sr->sample - next_pass;
 	      next_pass = sr->sample;
 	      if ((new_marks) && 
@@ -3392,16 +3398,25 @@ swap the indicated channels"
   return(XEN_FALSE);
 }
 
+/* TODO: scale-by takes a vector/list(or any random garbage) but not a vct!!?? */
+
 static Float *load_Floats(XEN scalers, int *result_len, const char *caller)
 {
-  int len, i;
+  int len = 0, i;
   Float *scls;
-  if (XEN_VECTOR_P(scalers))
-    len = XEN_VECTOR_LENGTH(scalers);
+  if (XEN_NUMBER_P(scalers))
+    len = 1;
   else
-    if (XEN_LIST_P(scalers))
-      len = XEN_LIST_LENGTH(scalers);
-    else len = 1;
+    {
+      if (XEN_VECTOR_P(scalers))
+	len = XEN_VECTOR_LENGTH(scalers);
+      else
+	{
+	  if (XEN_LIST_P(scalers))
+	    len = XEN_LIST_LENGTH(scalers);
+	  else XEN_WRONG_TYPE_ARG_ERROR(caller, 1, scalers, "a number, list, vector, geez --anything else!");
+	}
+    }
   if (len == 0) 
     XEN_ERROR(NO_DATA,
 	      XEN_LIST_3(C_TO_XEN_STRING(caller), 
@@ -3416,16 +3431,15 @@ static Float *load_Floats(XEN scalers, int *result_len, const char *caller)
 	scls[i] = (Float)XEN_TO_C_DOUBLE(vdata[i]);
     }
   else
-    if (XEN_LIST_P(scalers))
-      {
-	XEN lst;
-	for (i = 0, lst = XEN_COPY_ARG(scalers); i < len; i++, lst = XEN_CDR(lst)) 
-	  scls[i] = (Float)XEN_TO_C_DOUBLE(XEN_CAR(lst));
-      }
-    else
-      if (XEN_NUMBER_P(scalers))
-	scls[0] = (Float)XEN_TO_C_DOUBLE(scalers);
-      else scls[0] = 1.0;
+    {
+      if (XEN_LIST_P(scalers))
+	{
+	  XEN lst;
+	  for (i = 0, lst = XEN_COPY_ARG(scalers); i < len; i++, lst = XEN_CDR(lst)) 
+	    scls[i] = (Float)XEN_TO_C_DOUBLE(XEN_CAR(lst));
+	}
+      else scls[0] = (Float)XEN_TO_C_DOUBLE(scalers);
+    }
   result_len[0] = len;
   return(scls);
 }

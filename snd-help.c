@@ -369,6 +369,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+27-Sep:  do? (examp.scm -- do that can be interrupted and continued)\n\
 20-Sep:  show-sonogram-cursor\n\
 13-Sep:  removed buffer generator.\n\
          log-freq-start.\n\

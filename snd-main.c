@@ -1,6 +1,9 @@
 #include "snd.h"
 #include "clm2xen.h"
 
+/* TODO: error (overwrite) check for save state temp files (write date arg added to various edit-with-origin funcs in snd-edit?)
+ */
+
 #if HAVE_RUBY
   #define TO_VAR_NAME(Str) xen_scheme_constant_to_ruby(Str)
   #define TO_PROC_NAME(Str) xen_scheme_procedure_to_ruby(Str)

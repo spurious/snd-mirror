@@ -82,6 +82,9 @@
  *   args to same type (i.e. int->float done just once, if possible)
  */
 
+/* TODO: run safety complex checks (CL too?) -- will require extracted macro or something
+ */
+
 #include "snd.h"
 #include "sndlib2xen.h"
 #include "clm2xen.h"

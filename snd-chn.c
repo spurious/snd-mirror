@@ -6,6 +6,14 @@
 /* SOMEDAY: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both (and chan1 cursor takes precedence?) */
 /*    cursor redraw can check for this, but it gloms up code */
 
+/* TODO: grid size (tick density) control
+ * TODO: tick choice based on stuff like beats-in-measure (div 3 7) -> measure numbers
+ * TODO: overlay of rms env
+ * TODO: fill in two-sided with colormap choice based on rms of underlying pixels (same for line graph?) -- would want peak-env style support
+ * TODO: bark scale as axis or color as above (fft as well?)
+ * TODO: more info in edit history window -- thumbnail graph or max amp?
+ */
+
 typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */
 
 static XEN lisp_graph_hook;

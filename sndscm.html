@@ -725,7 +725,7 @@ There is a dialog that runs ssb-bank in snd-motif.scm: create-ssb-dialog.
 <p><b>any-random</b> provides the same output as <a href="clm.html#rand">rand</a> if the latter's
 envelope (distribution function) argument is used, but using a slightly different method
 to generate the numbers.  Also included is <b>inverse-integrate</b>, a Scheme version of
-CLM's distribution-to-weighting function, and <b>gaussion-envelope</b> which makes
+CLM's distribution-to-weighting function, and <b>gaussian-envelope</b> which makes
 a gaussian distribution envelope suitable for <b>rand</b>.
 </p>
 
@@ -1134,7 +1134,7 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>'info' from extsnd.html using format
     <li>make a system call
     <li>documentation examples made harder to break
-    <li>example of c-g?
+    <li>examples of c-g?
     <li>translate mpeg input to 16-bit linear and read into Snd
     <li>read and write OGG files
     <li>read and write Speex files
@@ -1521,6 +1521,7 @@ happens to be on the chosen one, with fade-ins and fade-outs to avoid clicks.
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="ssmiscellaneousextensions">miscellaneous extensions</a></h3></td></tr></table>
 
 <pre>
+  <a class=def name="dop">do?</a>
   <em class=emdef>finfo</em> filename
   <em class=emdef>shell</em> cmd
   <a class=def name="exmpg">mpg</a> mpgfile rawfile 
@@ -1532,6 +1533,8 @@ happens to be on the chosen one, with fade-ins and fade-outs to avoid clicks.
   <em class=emdef>write-flac</em> snd
   <em class=emdef>read-ascii</em> file <i>out-file out-type out-format out-srate</i>
 </pre>
+<p><b>do?</b> provides an interruptible "do" that can be continued from the point of the C-g interrupt.
+</p>
 <p><b>finfo</b> returns a description of the file <i>filename</i>. <b>shell</b> is similar
 to Guile's <i>system</i> function, but output is sent to Snd's listener, rather than stdout.
 <b>mpg</b> uses the system function to call the program mpg123 to translate an MPEG

@@ -948,9 +948,33 @@ static XEN g_mus_length(XEN gen)
 
 static XEN g_mus_set_length(XEN gen, XEN val) 
 {
+  off_t len;
+  mus_any *ptr;
+  mus_xen *ms;
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_setB S_mus_length, "a generator");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_length, "a number");
-  return(C_TO_XEN_OFF_T(mus_set_length(XEN_TO_MUS_ANY(gen), XEN_TO_C_OFF_T_OR_ELSE(val, 0))));
+  len = XEN_TO_C_OFF_T_OR_ELSE(val, 0);
+  if (len <= 0)
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_length, XEN_ONLY_ARG, val, "must be > 0");
+  ptr = XEN_TO_MUS_ANY(gen);
+  if ((ptr) && (!mus_env_p(ptr)) && (!mus_src_p(ptr))) /* set length doesn't refer to data vct here */
+    {
+      if ((ptr->core->set_length) && (ptr->core->set_data)) /* else throw error below (backwards compatibility) */
+	{
+	  ms = XEN_TO_MUS_XEN(gen);
+	  if ((ms->vcts) && (!(XEN_EQ_P(ms->vcts[MUS_DATA_WRAPPER], XEN_UNDEFINED))))
+	    {
+	      vct *v;
+	      v = (vct *)XEN_OBJECT_REF(ms->vcts[MUS_DATA_WRAPPER]);
+	      if ((v) && (len > v->length))
+		XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_length, XEN_ONLY_ARG, val, "must be <= current data size");
+	      /* set_offset refers only to env, set_width only to square_wave et al, set_location only readin */
+
+	      /* TODO: can this mess up in filter case if state not big enough? */
+	    }
+	}
+    }
+  return(C_TO_XEN_OFF_T(mus_set_length(ptr, len)));
 }
 
 static XEN g_mus_name(XEN gen) 
@@ -4644,6 +4668,8 @@ is run.  'synthesize' is a function of 1 arg, the generator; it is called to get
 	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, orig_arg[1], keys[1], "fft size ~A <= 1?");
       if (fft_size > MAX_ALLOC_SIZE)
 	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, orig_arg[1], keys[1], "fft size ~A too large");
+      if (!POWER_OF_2_P(fft_size))
+	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, orig_arg[1], keys[1], "fft size ~A must be power of 2");
       overlap = mus_optkey_to_int(keys[2], S_make_phase_vocoder, orig_arg[2], overlap);
       if (overlap <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, orig_arg[2], keys[2], "overlap ~A <= 0?");

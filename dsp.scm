@@ -1417,6 +1417,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 ;;; (make-rand :envelope (gaussian-envelope 1.0))
 
+;;; TODO: force-delay for these rand table calcs?
+
 
 ;;; ---------------- Julius Smith stuff ----------------
 ;;;
@@ -1444,6 +1446,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 (mu (* (/ N (- N 1)) (channel-mean snd chn))) ; avoid bias sez JOS
 	 (P (channel-total-energy snd chn)))
     (- P (* mu mu))))
+
+;;; TODO: could variance/norm etc be packaged up in force/delay (or channel-property)
 
 (define* (channel-norm #:optional snd chn)
   (sqrt (channel-total-energy snd chn)))
@@ -1719,3 +1723,5 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 		(let ((pk (vct-peak new-sound)))
 		  (vct-scale! new-sound (/ peak pk)))))))
     (vct->channel new-sound 0 (max len (* len (1- num-coeffs))) snd chn)))
+
+;;; TODO: permute-channel, equalize-channel (via inv ave?), local reverse/permute (section again) or across sounds

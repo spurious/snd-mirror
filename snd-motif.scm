@@ -2850,6 +2850,8 @@ Reverb-feedback sets the scaler on the feedback.
 
 (define ssb-dialog #f)
 
+;; TODO: microphone input for ssb-dialog
+
 (define (create-ssb-dialog)
   (if (not (Widget? ssb-dialog))
       (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
