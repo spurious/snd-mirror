@@ -143,9 +143,9 @@ int mus_type(mus_any *ptr)
 
 char *mus_name(mus_any *ptr) 
 {
-  if (check_gen(ptr, "mus-name"))
-    return((ptr->core)->name);
-  return(NULL);
+  if (ptr == NULL)
+    return("null");
+  return((ptr->core)->name);
 }
 
 static void describe_bad_gen(void *ptr, char *gen_name, char *an)
@@ -297,23 +297,21 @@ int mus_free(mus_any *gen)
 
 char *mus_describe(mus_any *gen)
 {
-  if (check_gen(gen, "mus-describe"))
-    {
-      if ((gen->core)->describe)
-	return((*((gen->core)->describe))(gen));
-      else mus_error(MUS_NO_DESCRIBE, "can't describe %s", mus_name(gen));
-    }
+  if (gen == NULL)
+    return("null clm gen");
+  if ((gen->core) && ((gen->core)->describe))
+    return((*((gen->core)->describe))(gen));
+  else mus_error(MUS_NO_DESCRIBE, "can't describe %s", mus_name(gen));
   return(NULL);
 }
 
 char *mus_inspect(mus_any *gen)
 {
-  if (check_gen(gen, "mus-inspect"))
-    {
-      if ((gen->core)->inspect)
-	return((*((gen->core)->inspect))(gen));
-      else mus_error(MUS_NO_DESCRIBE, "can't inspect %s", mus_name(gen));
-    }
+  if (gen == NULL)
+    return("null clm gen");
+  if ((gen->core) && ((gen->core)->inspect))
+    return((*((gen->core)->inspect))(gen));
+  else mus_error(MUS_NO_DESCRIBE, "can't inspect %s", mus_name(gen));
   return(NULL);
 }
 

@@ -5,6 +5,7 @@ XEN_NARGIFY_1(gxg_g_type_qname_w, gxg_g_type_qname)
 XEN_NARGIFY_1(gxg_g_type_from_name_w, gxg_g_type_from_name)
 XEN_NARGIFY_1(gxg_g_type_parent_w, gxg_g_type_parent)
 XEN_NARGIFY_2(gxg_g_type_is_a_w, gxg_g_type_is_a)
+XEN_NARGIFY_3(gxg_g_cclosure_new_w, gxg_g_cclosure_new)
 XEN_VARGIFY(gxg_g_signal_newv_w, gxg_g_signal_newv)
 XEN_NARGIFY_9(gxg_g_signal_new_w, gxg_g_signal_new)
 XEN_NARGIFY_4(gxg_g_signal_emitv_w, gxg_g_signal_emitv)
@@ -179,8 +180,8 @@ XEN_NARGIFY_2(gxg_gdk_gc_set_colormap_w, gxg_gdk_gc_set_colormap)
 XEN_NARGIFY_1(gxg_gdk_gc_get_colormap_w, gxg_gdk_gc_get_colormap)
 XEN_NARGIFY_2(gxg_gdk_gc_set_rgb_fg_color_w, gxg_gdk_gc_set_rgb_fg_color)
 XEN_NARGIFY_2(gxg_gdk_gc_set_rgb_bg_color_w, gxg_gdk_gc_set_rgb_bg_color)
-XEN_NARGIFY_2(gxg_gdk_init_w, gxg_gdk_init)
-XEN_NARGIFY_2(gxg_gdk_init_check_w, gxg_gdk_init_check)
+XEN_ARGIFY_2(gxg_gdk_init_w, gxg_gdk_init)
+XEN_ARGIFY_2(gxg_gdk_init_check_w, gxg_gdk_init_check)
 XEN_NARGIFY_0(gxg_gdk_set_locale_w, gxg_gdk_set_locale)
 XEN_NARGIFY_0(gxg_gdk_get_program_class_w, gxg_gdk_get_program_class)
 XEN_NARGIFY_1(gxg_gdk_set_program_class_w, gxg_gdk_set_program_class)
@@ -989,8 +990,8 @@ XEN_NARGIFY_2(gxg_gtk_list_store_prepend_w, gxg_gtk_list_store_prepend)
 XEN_NARGIFY_2(gxg_gtk_list_store_append_w, gxg_gtk_list_store_append)
 XEN_NARGIFY_1(gxg_gtk_list_store_clear_w, gxg_gtk_list_store_clear)
 XEN_NARGIFY_3(gxg_gtk_check_version_w, gxg_gtk_check_version)
-XEN_NARGIFY_2(gxg_gtk_init_w, gxg_gtk_init)
-XEN_NARGIFY_2(gxg_gtk_init_check_w, gxg_gtk_init_check)
+XEN_ARGIFY_2(gxg_gtk_init_w, gxg_gtk_init)
+XEN_ARGIFY_2(gxg_gtk_init_check_w, gxg_gtk_init_check)
 XEN_NARGIFY_0(gxg_gtk_disable_setlocale_w, gxg_gtk_disable_setlocale)
 XEN_NARGIFY_0(gxg_gtk_set_locale_w, gxg_gtk_set_locale)
 XEN_NARGIFY_0(gxg_gtk_get_default_language_w, gxg_gtk_get_default_language)
@@ -2274,6 +2275,7 @@ XEN_NARGIFY_1(gxg_pango_layout_iter_get_baseline_w, gxg_pango_layout_iter_get_ba
 XEN_NARGIFY_0(gxg_pango_language_get_type_w, gxg_pango_language_get_type)
 XEN_NARGIFY_1(gxg_pango_language_from_string_w, gxg_pango_language_from_string)
 XEN_NARGIFY_2(gxg_pango_language_matches_w, gxg_pango_language_matches)
+XEN_NARGIFY_1(gxg_G_OBJECT_TYPE_w, gxg_G_OBJECT_TYPE)
 #if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
 XEN_NARGIFY_5(gxg_pango_default_break_w, gxg_pango_default_break)
 XEN_NARGIFY_0(gxg_pango_context_new_w, gxg_pango_context_new)
@@ -3229,6 +3231,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(g_type_from_name, gxg_g_type_from_name_w, 1, 0, 0, H_g_type_from_name);
   XG_DEFINE_PROCEDURE(g_type_parent, gxg_g_type_parent_w, 1, 0, 0, H_g_type_parent);
   XG_DEFINE_PROCEDURE(g_type_is_a, gxg_g_type_is_a_w, 2, 0, 0, H_g_type_is_a);
+  XG_DEFINE_PROCEDURE(g_cclosure_new, gxg_g_cclosure_new_w, 3, 0, 0, H_g_cclosure_new);
   XG_DEFINE_PROCEDURE(g_signal_newv, gxg_g_signal_newv_w, 0, 0, 1, H_g_signal_newv);
   XG_DEFINE_PROCEDURE(g_signal_new, gxg_g_signal_new_w, 9, 0, 0, H_g_signal_new);
   XG_DEFINE_PROCEDURE(g_signal_emitv, gxg_g_signal_emitv_w, 4, 0, 0, H_g_signal_emitv);
@@ -3403,8 +3406,8 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_gc_get_colormap, gxg_gdk_gc_get_colormap_w, 1, 0, 0, H_gdk_gc_get_colormap);
   XG_DEFINE_PROCEDURE(gdk_gc_set_rgb_fg_color, gxg_gdk_gc_set_rgb_fg_color_w, 2, 0, 0, H_gdk_gc_set_rgb_fg_color);
   XG_DEFINE_PROCEDURE(gdk_gc_set_rgb_bg_color, gxg_gdk_gc_set_rgb_bg_color_w, 2, 0, 0, H_gdk_gc_set_rgb_bg_color);
-  XG_DEFINE_PROCEDURE(gdk_init, gxg_gdk_init_w, 2, 0, 0, H_gdk_init);
-  XG_DEFINE_PROCEDURE(gdk_init_check, gxg_gdk_init_check_w, 2, 0, 0, H_gdk_init_check);
+  XG_DEFINE_PROCEDURE(gdk_init, gxg_gdk_init_w, 0, 2, 0, H_gdk_init);
+  XG_DEFINE_PROCEDURE(gdk_init_check, gxg_gdk_init_check_w, 0, 2, 0, H_gdk_init_check);
   XG_DEFINE_PROCEDURE(gdk_set_locale, gxg_gdk_set_locale_w, 0, 0, 0, H_gdk_set_locale);
   XG_DEFINE_PROCEDURE(gdk_get_program_class, gxg_gdk_get_program_class_w, 0, 0, 0, H_gdk_get_program_class);
   XG_DEFINE_PROCEDURE(gdk_set_program_class, gxg_gdk_set_program_class_w, 1, 0, 0, H_gdk_set_program_class);
@@ -4213,8 +4216,8 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_list_store_append, gxg_gtk_list_store_append_w, 2, 0, 0, H_gtk_list_store_append);
   XG_DEFINE_PROCEDURE(gtk_list_store_clear, gxg_gtk_list_store_clear_w, 1, 0, 0, H_gtk_list_store_clear);
   XG_DEFINE_PROCEDURE(gtk_check_version, gxg_gtk_check_version_w, 3, 0, 0, H_gtk_check_version);
-  XG_DEFINE_PROCEDURE(gtk_init, gxg_gtk_init_w, 2, 0, 0, H_gtk_init);
-  XG_DEFINE_PROCEDURE(gtk_init_check, gxg_gtk_init_check_w, 2, 0, 0, H_gtk_init_check);
+  XG_DEFINE_PROCEDURE(gtk_init, gxg_gtk_init_w, 0, 2, 0, H_gtk_init);
+  XG_DEFINE_PROCEDURE(gtk_init_check, gxg_gtk_init_check_w, 0, 2, 0, H_gtk_init_check);
   XG_DEFINE_PROCEDURE(gtk_disable_setlocale, gxg_gtk_disable_setlocale_w, 0, 0, 0, H_gtk_disable_setlocale);
   XG_DEFINE_PROCEDURE(gtk_set_locale, gxg_gtk_set_locale_w, 0, 0, 0, H_gtk_set_locale);
   XG_DEFINE_PROCEDURE(gtk_get_default_language, gxg_gtk_get_default_language_w, 0, 0, 0, H_gtk_get_default_language);
@@ -5498,6 +5501,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_language_get_type, gxg_pango_language_get_type_w, 0, 0, 0, H_pango_language_get_type);
   XG_DEFINE_PROCEDURE(pango_language_from_string, gxg_pango_language_from_string_w, 1, 0, 0, H_pango_language_from_string);
   XG_DEFINE_PROCEDURE(pango_language_matches, gxg_pango_language_matches_w, 2, 0, 0, H_pango_language_matches);
+  XG_DEFINE_PROCEDURE(G_OBJECT_TYPE, gxg_G_OBJECT_TYPE_w, 1, 0, 0, H_G_OBJECT_TYPE);
 #if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
   XG_DEFINE_PROCEDURE(pango_default_break, gxg_pango_default_break_w, 5, 0, 0, H_pango_default_break);
   XG_DEFINE_PROCEDURE(pango_context_new, gxg_pango_context_new_w, 0, 0, 0, H_pango_context_new);

@@ -179,7 +179,7 @@ static void execute_named_macro(chan_info *cp, char *name, off_t count)
     }
 }
 
-typedef struct {int key; int state; int args; XEN func; int extended;} key_entry;
+typedef struct {int key; int state; int args; XEN func; int extended; char *origin;} key_entry;
 static key_entry *user_keymap = NULL;
 static int keymap_size = 0;
 static int keymap_top = 0;
@@ -212,7 +212,7 @@ static XEN g_key_binding(XEN key, XEN state, XEN extended)
   return(XEN_UNDEFINED);
 }
 
-static void set_keymap_entry(int key, int state, int args, XEN func, int extended)
+static void set_keymap_entry(int key, int state, int args, XEN func, int extended, char *origin)
 {
   int i;
   i = in_user_keymap(key, state, extended);
@@ -235,6 +235,7 @@ static void set_keymap_entry(int key, int state, int args, XEN func, int extende
 		  user_keymap[i].state = 0; 
 		  user_keymap[i].func = XEN_UNDEFINED;
 		  user_keymap[i].extended = 0;
+		  user_keymap[i].origin = NULL;
 		}
 	    }
 	}
@@ -249,7 +250,13 @@ static void set_keymap_entry(int key, int state, int args, XEN func, int extende
     {
       if (XEN_PROCEDURE_P(user_keymap[i].func))
 	snd_unprotect(user_keymap[i].func);
+      if (user_keymap[i].origin)
+	{
+	  FREE(user_keymap[i].origin);
+	  user_keymap[i].origin = NULL;
+	}
     }
+  user_keymap[i].origin = copy_string(origin);
   user_keymap[i].args = args;
   user_keymap[i].func = func;
   if (XEN_PROCEDURE_P(func)) snd_protect(func);
@@ -261,13 +268,14 @@ static void call_user_keymap(int hashedsym, int count)
   /* if guile call the associated scheme code, else see if basic string parser can handle it */
   if (XEN_BOUND_P(user_keymap[hashedsym].func))
     {
+      /* not _NO_CATCH here because the code is not protected at any higher level */
       if (user_keymap[hashedsym].args == 0)
-	res = XEN_TO_C_INT_OR_ELSE(XEN_CALL_0_NO_CATCH(user_keymap[hashedsym].func, 
-						       "user key func"), 
+	res = XEN_TO_C_INT_OR_ELSE(XEN_CALL_0(user_keymap[hashedsym].func, 
+					      user_keymap[hashedsym].origin), 
 				   KEYBOARD_NO_ACTION);
-      else res = XEN_TO_C_INT_OR_ELSE(XEN_CALL_1_NO_CATCH(user_keymap[hashedsym].func, 
-							  C_TO_XEN_INT(count), 
-							  "user key func"),
+      else res = XEN_TO_C_INT_OR_ELSE(XEN_CALL_1(user_keymap[hashedsym].func, 
+						 C_TO_XEN_INT(count), 
+						 user_keymap[hashedsym].origin),
 				      KEYBOARD_NO_ACTION);
     }
   handle_cursor(selected_channel(get_global_state()), res);
@@ -1721,13 +1729,16 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 }
 
 
-static XEN g_bind_key(XEN key, XEN state, XEN code, XEN extended)
+static XEN g_bind_key(XEN key, XEN state, XEN code, XEN extended, XEN origin)
 {
-  #define H_bind_key "(" S_bind_key " key modifiers func (ignore-prefix #f) (extended #f))\n\
+  #define H_bind_key "(" S_bind_key " key modifiers func (extended #f) (origin \"user key func\")\n\
 causes 'key' (an integer) \
 when typed with 'modifiers' (1:shift, 4:control, 8:meta) (and C-x if extended) to invoke 'func', a function of \
-no arguments.  If ignore-prefix is #t, preceding C-u arguments are not handled by Snd itself. \
-The function should return one of the cursor choices (e.g. cursor-no-action)."
+zero or one arguments. If the function takes one argument, it is passed the preceding C-u number, if any. \
+The function should return one of the cursor choices (e.g. cursor-no-action).  'origin' is \
+the name reported if an error occurs.\n\
+(bind-key (char->integer #\z) 4 (lambda () (exit)))\n\
+causes Snd to exit if C-z is typed in the graph."
 
   int args;
   char *errstr;
@@ -1735,12 +1746,14 @@ The function should return one of the cursor choices (e.g. cursor-no-action)."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(key), key, XEN_ARG_1, S_bind_key, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(state), state, XEN_ARG_2, S_bind_key, "an integer");
   XEN_ASSERT_TYPE((XEN_FALSE_P(code) || XEN_PROCEDURE_P(code)), code, XEN_ARG_3, S_bind_key, "#f or a procedure");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(extended), extended, XEN_ARG_4, S_bind_key, "a boolean");
   if (XEN_FALSE_P(code))
     set_keymap_entry(XEN_TO_C_INT(key), 
 		     XEN_TO_C_INT(state), 
 		     0,
 		     XEN_UNDEFINED,
-		     0);
+		     0,
+		     (XEN_STRING_P(origin)) ? XEN_TO_C_STRING(origin) : "user key func");
   else 
     {
       args = XEN_REQUIRED_ARGS(code);
@@ -1757,7 +1770,8 @@ The function should return one of the cursor choices (e.g. cursor-no-action)."
 		       XEN_TO_C_INT(state), 
 		       args, 
 		       code,
-		       (XEN_TRUE_P(extended)) ? 1 : 0);
+		       (XEN_TRUE_P(extended)) ? 1 : 0,
+		       (XEN_STRING_P(origin)) ? XEN_TO_C_STRING(origin) : "user key func");
     }
   return(XEN_TRUE);
 }
@@ -1765,7 +1779,7 @@ The function should return one of the cursor choices (e.g. cursor-no-action)."
 static XEN g_unbind_key(XEN key, XEN state, XEN extended)
 {
   #define H_unbind_key "(" S_unbind_key " key state &optional extended) undoes the effect of a prior bind-key call."
-  return(g_bind_key(key, state, XEN_FALSE, extended));
+  return(g_bind_key(key, state, XEN_FALSE, extended, XEN_UNDEFINED));
 }
 
 static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
@@ -1914,7 +1928,7 @@ static XEN g_control_g_x(void)
 XEN_ARGIFY_3(g_forward_graph_w, g_forward_graph)
 XEN_ARGIFY_3(g_backward_graph_w, g_backward_graph)
 XEN_ARGIFY_3(g_key_binding_w, g_key_binding)
-XEN_ARGIFY_4(g_bind_key_w, g_bind_key)
+XEN_ARGIFY_5(g_bind_key_w, g_bind_key)
 XEN_ARGIFY_3(g_unbind_key_w, g_unbind_key)
 XEN_ARGIFY_4(g_key_w, g_key)
 XEN_NARGIFY_0(g_save_macros_w, g_save_macros)
@@ -1942,7 +1956,7 @@ void g_init_kbd(void)
   XEN_DEFINE_PROCEDURE(S_backward_graph,          g_backward_graph_w, 0, 3, 0,          H_backward_graph);
 
   XEN_DEFINE_PROCEDURE(S_key_binding,             g_key_binding_w, 2, 1, 0,             H_key_binding);
-  XEN_DEFINE_PROCEDURE(S_bind_key,                g_bind_key_w, 3, 1, 0,                H_bind_key);
+  XEN_DEFINE_PROCEDURE(S_bind_key,                g_bind_key_w, 3, 2, 0,                H_bind_key);
   XEN_DEFINE_PROCEDURE(S_unbind_key,              g_unbind_key_w, 2, 1, 0,              H_unbind_key);
   XEN_DEFINE_PROCEDURE(S_key,                     g_key_w, 2, 2, 0,                     H_key);
   XEN_DEFINE_PROCEDURE(S_save_macros,             g_save_macros_w, 0, 0, 0,             H_save_macros);

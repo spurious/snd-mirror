@@ -2606,7 +2606,7 @@ about where it is in the sound."
   else
     {
       snd_warning("can't optimize ptree; calling map-channel");
-      g_map_chan_1(proc_and_list, s_beg, XEN_FALSE, C_TO_XEN_STRING(S_ptree_channel), snd, chn, edpos, s_dur, "map-chan");
+      g_map_chan_1(proc_and_list, s_beg, XEN_FALSE, C_TO_XEN_STRING(S_ptree_channel), snd, chn, edpos, s_dur, S_map_chan);
     }
   return(XEN_FALSE);
 }

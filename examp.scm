@@ -60,6 +60,7 @@
 ;;; replace-with-selection
 ;;; explode-sf2 -- turn soundfont file into a bunch of files of the form sample-name.aif
 ;;; open-next-file-in-directory -- middle button click closes current file and opens next
+;;; chain-dsps
 
 ;;; SOMEDAY: robust pitch tracker
 ;;; SOMEDAY: adaptive notch filter
@@ -2479,3 +2480,38 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 		   #f)))) ; else handle it normally
 
 
+;;; -------- chain-dsps
+
+(define* (chain-dsps beg dur #:rest dsps)
+  ;; I assume the dsps are already made, 
+  ;;          the envs are present as break-point lists
+  ;;          the calls are ordered out->in (or last first)
+  (let* ((dsp-chain (apply vector (reverse (map (lambda (gen)
+						 (if (list? gen)
+						     (make-env gen :duration dur)
+						     gen))
+					       dsps))))
+	 (output (make-vct (inexact->exact (floor (* dur (mus-srate))))))
+	 (len (vector-length dsp-chain)))
+    (vct-map! output (lambda ()
+		       (let ((val 0.0))
+			 ;; using do and vector here for the run macro's benefit
+			 (do ((i 0 (1+ i)))
+			     ((= i len))
+			   (let ((gen (vector-ref dsp-chain i)))
+			     (if (env? gen)
+				 (set! val (* (gen) val))
+				 (if (readin? gen)
+				     (set! val (gen))
+				     (set! val (gen val))))))
+			 val)))
+    (mix-vct output (inexact->exact (floor (* beg (mus-srate)))) #f #f #f)))
+
+#!
+(chain-dsps 0 1.0 '(0 0 1 1 2 0) (make-oscil 440))
+(chain-dsps 0 1.0 '(0 0 1 1 2 0) (make-one-zero .5) (make-readin "oboe.snd"))
+(chain-dsps 0 1.0 '(0 0 1 1 2 0) (let ((osc1 (make-oscil 220)) 
+				       (osc2 (make-oscil 440))) 
+				   (lambda (val) (+ (osc1 val) 
+						    (osc2 (* 2 val))))))
+!#

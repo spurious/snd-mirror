@@ -268,6 +268,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+23-Oct:  added origin arg to bind-key, edpos arg to find-mark.\n\
 14-Oct:  removed max-sounds.\n\
 11-Oct:  add-find-to-listener in snd-motif.scm.\n\
 18-Sep:  show-font-name et al in snd-motif.scm.\n\
@@ -1160,7 +1161,7 @@ all refer to the same thing.\n\
   " S_backward_graph "    (count)\n\
   " S_backward_mark "     (count)\n\
   " S_backward_mix "      (count)\n\
-  " S_bind_key "          (key state code ignore-prefix)\n\
+  " S_bind_key "          (key state code extended origin)\n\
   " S_c_g "               ()\n\
   " S_c_g_x "              ()\n\
   " S_change_menu_label " (top-menu old-label new-label)\n\
@@ -1217,7 +1218,7 @@ all refer to the same thing.\n\
   " S_filter_selection "  (env order)\n\
   " S_filter_sound "      (env order snd chn)\n\
   " S_find "              (c-expr start snd chn)\n\
-  " S_find_mark "         (samp snd chn)\n\
+  " S_find_mark "         (samp snd chn edpos)\n\
   " S_find_sound "        (filename)\n\
   " S_forget_region "     (reg)\n\
   " S_forward_graph "     (count)\n\
@@ -1397,7 +1398,7 @@ all refer to the same thing.\n\
   " S_transform_samples " (snd chn()\n\
   " S_transform_samples2vct " (snd chn)\n\
   " S_transform_samples_size " (snd chn)\n\
-  " S_unbind_key "        (key state)\n\
+  " S_unbind_key "        (key state extended)\n\
   " S_undo "              (edits snd chn)\n\
   " S_update_lisp_graph " (snd chn)\n\
   " S_update_sound "      ()\n\

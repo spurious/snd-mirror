@@ -29,7 +29,7 @@
  *     all *_CLASS, *_IFACE macros
  *     win32-specific functions
  *
- * TODO: check out the g_signal handlers (gtk_signal_* is ok)
+ * TODO: check out the g_signal handlers
  * TODO: GdkEvent casts
  * TODO: struct print, more struct instance creators(?)
  * TODO: tie into Snd (snd-motif translation)
@@ -37,6 +37,7 @@
  * TODO: test suite (snd-test 24)
  *
  * HISTORY:
+ *     23-Oct:    gtk_init and friends ref args ignored
  *     31-Jul:    removed GTK 1.n support
  *     24-Jul:    changed Guile prefix (R5RS reserves vertical-bar).
  *     19-Jul:    XG_FIELD_PRE for change from using vertical-bar (reserved in R5RS)
@@ -72,6 +73,7 @@
 #include <glib-object.h>
 #include <pango/pango.h>
 #include <string.h>
+#include <stdlib.h>
 
 #if USE_SND
   /* USE_SND causes xm to use Snd's error handlers which are much smarter than xen's fallback versions */
@@ -168,6 +170,7 @@ static void define_xm_obj(void)
 #define XEN_GtkClipboardClearFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2))
 #define XEN_lambda_P(Arg) XEN_PROCEDURE_P(Arg)
 #define XEN_GtkSignalFunc_P(Arg) XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2)
+#define XEN_GCallback_P(Arg) XEN_PROCEDURE_P(Arg) && ((XEN_REQUIRED_ARGS(Arg) == 2) || (XEN_REQUIRED_ARGS(Arg) == 3))
 #define XEN_TO_C_lambda2(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_child_func
 #define XEN_TO_C_lambda3(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_find_func
 #define XEN_TO_C_GdkInputFunction(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_input_func
@@ -194,6 +197,7 @@ static void define_xm_obj(void)
 #define XEN_TO_C_GtkClipboardGetFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_clip_get
 #define XEN_TO_C_GtkClipboardClearFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_clip_clear
 #define XEN_TO_C_GtkSignalFunc(Arg) (GtkSignalFunc)gxg_func2
+#define XEN_TO_C_GCallback(Arg) ((XEN_REQUIRED_ARGS(Arg) == 3) ? (GCallback)gxg_func3 : (GCallback)gxg_func2)
 #define XEN_TO_C_lambda_data(Arg) (gpointer)gxg_ptr
 #define XEN_lambda_data_P(Arg) 1
 #define C_TO_XEN_GtkTreeViewSearchEqualFunc(Arg) WRAP_FOR_XEN("GtkTreeViewSearchEqualFunc", Arg)
@@ -247,11 +251,12 @@ XM_TYPE_PTR(GtkTreeSelection_, GtkTreeSelection*)
 #define C_TO_XEN_GQuark(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_GQuark(Arg) (GQuark)(XEN_TO_C_ULONG(Arg))
 #define XEN_GQuark_P(Arg) XEN_ULONG_P(Arg)
+XM_TYPE(GClosureNotify, GClosureNotify)
 #define C_TO_XEN_GSignalFlags(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GSignalFlags(Arg) (GSignalFlags)(XEN_TO_C_INT(Arg))
 #define XEN_GSignalFlags_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE(GSignalAccumulator, GSignalAccumulator)
-XM_TYPE(gpointer, gpointer)
+XM_TYPE_PTR(gpointer, gpointer)
 XM_TYPE(GSignalCMarshaller, GSignalCMarshaller)
 XM_TYPE_PTR(GType_, GType*)
 XM_TYPE_PTR(GValue_, GValue*)
@@ -264,8 +269,6 @@ XM_TYPE_PTR(GSignalInvocationHint_, GSignalInvocationHint*)
 #define XEN_gulong_P(Arg) XEN_ULONG_P(Arg)
 XM_TYPE(GSignalEmissionHook, GSignalEmissionHook)
 XM_TYPE(GDestroyNotify, GDestroyNotify)
-XM_TYPE(GCallback, GCallback)
-XM_TYPE(GClosureNotify, GClosureNotify)
 #define C_TO_XEN_GConnectFlags(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GConnectFlags(Arg) (GConnectFlags)(XEN_TO_C_INT(Arg))
 #define XEN_GConnectFlags_P(Arg) XEN_INTEGER_P(Arg)
@@ -336,7 +339,7 @@ XM_TYPE_PTR(GdkRectangle_, GdkRectangle*)
 #define XEN_TO_C_GdkJoinStyle(Arg) (GdkJoinStyle)(XEN_TO_C_INT(Arg))
 #define XEN_GdkJoinStyle_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(gint8_, gint8*)
-XM_TYPE_PTR(gchar___, gchar***)
+XM_TYPE_PTR(gchar__, gchar**)
 #define C_TO_XEN_char_(Arg) C_TO_XEN_STRING(Arg)
 #define XEN_TO_C_char_(Arg) (char*)(XEN_TO_C_STRING(Arg))
 #define XEN_char__P(Arg) XEN_STRING_P(Arg)
@@ -382,7 +385,6 @@ XM_TYPE_PTR(GdkPixbuf_, GdkPixbuf*)
 #define XEN_TO_C_GdkPixbufAlphaMode(Arg) (GdkPixbufAlphaMode)(XEN_TO_C_INT(Arg))
 #define XEN_GdkPixbufAlphaMode_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(GdkBitmap__, GdkBitmap**)
-XM_TYPE_PTR(gchar__, gchar**)
 #define C_TO_XEN_GdkNativeWindow(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_GdkNativeWindow(Arg) (GdkNativeWindow)(XEN_TO_C_ULONG(Arg))
 #define XEN_GdkNativeWindow_P(Arg) XEN_ULONG_P(Arg)
@@ -390,6 +392,7 @@ XM_TYPE_PTR(guchar_, guchar*)
 #define C_TO_XEN_GdkPropMode(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkPropMode(Arg) (GdkPropMode)(XEN_TO_C_INT(Arg))
 #define XEN_GdkPropMode_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_PTR(gchar___, gchar***)
 XM_TYPE_PTR(GdkAtom_, GdkAtom*)
 #define C_TO_XEN_GdkFillRule(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkFillRule(Arg) (GdkFillRule)(XEN_TO_C_INT(Arg))
@@ -579,8 +582,6 @@ XM_TYPE_PTR(GtkLabel_, GtkLabel*)
 #define XEN_GtkJustification_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(GtkLayout_, GtkLayout*)
 XM_TYPE_PTR(GtkListStore_, GtkListStore*)
-XM_TYPE_PTR(int_, int*)
-XM_TYPE_PTR(char___, char***)
 XM_TYPE_PTR(PangoLanguage_, PangoLanguage*)
 XM_TYPE(GtkCallbackMarshal, GtkCallbackMarshal)
 #define XEN_xen_P(Arg) ((XEN_LIST_P(Arg)) && (XEN_LIST_LENGTH(Arg) > 2))
@@ -771,6 +772,7 @@ XM_TYPE_PTR(PangoEngineShape_, PangoEngineShape*)
 #define XEN_TO_C_PangoGlyph(Arg) (PangoGlyph)(XEN_TO_C_ULONG(Arg))
 #define XEN_PangoGlyph_P(Arg) XEN_ULONG_P(Arg)
 XM_TYPE_PTR(PangoFontMap_, PangoFontMap*)
+XM_TYPE_PTR(int_, int*)
 XM_TYPE_PTR(PangoItem_, PangoItem*)
 #define C_TO_XEN_PangoWrapMode(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_PangoWrapMode(Arg) (PangoWrapMode)(XEN_TO_C_INT(Arg))
@@ -1329,6 +1331,22 @@ static XEN gxg_g_type_is_a(XEN type, XEN is_a_type)
   XEN_ASSERT_TYPE(XEN_GType_P(is_a_type), is_a_type, 2, "g_type_is_a", "GType");
   return(C_TO_XEN_gboolean(g_type_is_a(XEN_TO_C_GType(type), XEN_TO_C_GType(is_a_type))));
 }
+static XEN gxg_g_cclosure_new(XEN func, XEN func_data, XEN destroy_data)
+{
+  #define H_g_cclosure_new "GClosure* g_cclosure_new(GCallback func, lambda_data func_data, GClosureNotify destroy_data)"
+  XEN_ASSERT_TYPE(XEN_GCallback_P(func), func, 1, "g_cclosure_new", "GCallback");
+  XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 2, "g_cclosure_new", "lambda_data");
+  XEN_ASSERT_TYPE(XEN_GClosureNotify_P(destroy_data), destroy_data, 3, "g_cclosure_new", "GClosureNotify");
+  {
+    XEN result = XEN_FALSE;
+    int loc;
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
+    loc = xm_protect(gxg_ptr);
+    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
+    result = C_TO_XEN_GClosure_(g_cclosure_new(XEN_TO_C_GCallback(func), XEN_TO_C_lambda_data(func_data), XEN_TO_C_GClosureNotify(destroy_data)));
+    return(result);
+   }
+}
 static XEN gxg_g_signal_newv(XEN arglist)
 {
   #define H_g_signal_newv "guint g_signal_newv(gchar* signal_name, GType itype, GSignalFlags signal_flags, \
@@ -1524,18 +1542,27 @@ GClosure* closure, gboolean after)"
   return(C_TO_XEN_gulong(g_signal_connect_closure(XEN_TO_C_gpointer(instance), XEN_TO_C_gchar_(detailed_signal), XEN_TO_C_GClosure_(closure), 
                                                   XEN_TO_C_gboolean(after))));
 }
-static XEN gxg_g_signal_connect_data(XEN instance, XEN detailed_signal, XEN c_handler, XEN data, XEN destroy_data, XEN connect_flags)
+static XEN gxg_g_signal_connect_data(XEN instance, XEN detailed_signal, XEN func, XEN func_data, XEN destroy_data, XEN connect_flags)
 {
   #define H_g_signal_connect_data "gulong g_signal_connect_data(gpointer instance, gchar* detailed_signal, \
-GCallback c_handler, gpointer data, GClosureNotify destroy_data, GConnectFlags connect_flags)"
+GCallback func, lambda_data func_data, GClosureNotify destroy_data, GConnectFlags connect_flags)"
   XEN_ASSERT_TYPE(XEN_gpointer_P(instance), instance, 1, "g_signal_connect_data", "gpointer");
   XEN_ASSERT_TYPE(XEN_gchar__P(detailed_signal), detailed_signal, 2, "g_signal_connect_data", "gchar*");
-  XEN_ASSERT_TYPE(XEN_GCallback_P(c_handler), c_handler, 3, "g_signal_connect_data", "GCallback");
-  XEN_ASSERT_TYPE(XEN_gpointer_P(data), data, 4, "g_signal_connect_data", "gpointer");
+  XEN_ASSERT_TYPE(XEN_GCallback_P(func), func, 3, "g_signal_connect_data", "GCallback");
+  XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 4, "g_signal_connect_data", "lambda_data");
   XEN_ASSERT_TYPE(XEN_GClosureNotify_P(destroy_data), destroy_data, 5, "g_signal_connect_data", "GClosureNotify");
   XEN_ASSERT_TYPE(XEN_GConnectFlags_P(connect_flags), connect_flags, 6, "g_signal_connect_data", "GConnectFlags");
-  return(C_TO_XEN_gulong(g_signal_connect_data(XEN_TO_C_gpointer(instance), XEN_TO_C_gchar_(detailed_signal), XEN_TO_C_GCallback(c_handler), 
-                                               XEN_TO_C_gpointer(data), XEN_TO_C_GClosureNotify(destroy_data), XEN_TO_C_GConnectFlags(connect_flags))));
+  {
+    XEN result = XEN_FALSE;
+    int loc;
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
+    loc = xm_protect(gxg_ptr);
+    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
+    result = C_TO_XEN_gulong(g_signal_connect_data(XEN_TO_C_gpointer(instance), XEN_TO_C_gchar_(detailed_signal), XEN_TO_C_GCallback(func), 
+                                                   XEN_TO_C_lambda_data(func_data), XEN_TO_C_GClosureNotify(destroy_data), 
+                                                   XEN_TO_C_GConnectFlags(connect_flags)));
+    return(result);
+   }
 }
 static XEN gxg_g_signal_handler_block(XEN instance, XEN handler_id)
 {
@@ -2742,18 +2769,28 @@ static XEN gxg_gdk_gc_set_rgb_bg_color(XEN gc, XEN color)
 }
 static XEN gxg_gdk_init(XEN argc, XEN argv)
 {
-  #define H_gdk_init "void gdk_init(gint* argc, gchar*** argv)"
-  XEN_ASSERT_TYPE(XEN_gint__P(argc), argc, 1, "gdk_init", "gint*");
-  XEN_ASSERT_TYPE(XEN_gchar____P(argv), argv, 2, "gdk_init", "gchar***");
-  gdk_init(XEN_TO_C_gint_(argc), XEN_TO_C_gchar___(argv));
-  return(XEN_FALSE);
+  #define H_gdk_init "void gdk_init(gint* {argc}, gchar*** |argv|)"
+  gint ref_argc;
+  gchar** ref_argv;
+  ref_argc = 1;
+  ref_argv = (char **)malloc(sizeof(char *));
+  ref_argv[0] = strdup("xgprog");
+  gdk_init(&ref_argc, &ref_argv);
+  return(XEN_LIST_2(C_TO_XEN_gint(ref_argc), C_TO_XEN_gchar__(ref_argv)));
 }
 static XEN gxg_gdk_init_check(XEN argc, XEN argv)
 {
-  #define H_gdk_init_check "gboolean gdk_init_check(gint* argc, gchar*** argv)"
-  XEN_ASSERT_TYPE(XEN_gint__P(argc), argc, 1, "gdk_init_check", "gint*");
-  XEN_ASSERT_TYPE(XEN_gchar____P(argv), argv, 2, "gdk_init_check", "gchar***");
-  return(C_TO_XEN_gboolean(gdk_init_check(XEN_TO_C_gint_(argc), XEN_TO_C_gchar___(argv))));
+  #define H_gdk_init_check "gboolean gdk_init_check(gint* {argc}, gchar*** |argv|)"
+  gint ref_argc;
+  gchar** ref_argv;
+  ref_argc = 1;
+  ref_argv = (char **)malloc(sizeof(char *));
+  ref_argv[0] = strdup("xgprog");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_gboolean(gdk_init_check(&ref_argc, &ref_argv));
+    return(XEN_LIST_3(result, C_TO_XEN_gint(ref_argc), C_TO_XEN_gchar__(ref_argv)));
+   }
 }
 static XEN gxg_gdk_set_locale(void)
 {
@@ -9424,18 +9461,28 @@ static XEN gxg_gtk_check_version(XEN required_major, XEN required_minor, XEN req
 }
 static XEN gxg_gtk_init(XEN argc, XEN argv)
 {
-  #define H_gtk_init "void gtk_init(int* argc, char*** argv)"
-  XEN_ASSERT_TYPE(XEN_int__P(argc), argc, 1, "gtk_init", "int*");
-  XEN_ASSERT_TYPE(XEN_char____P(argv), argv, 2, "gtk_init", "char***");
-  gtk_init(XEN_TO_C_int_(argc), XEN_TO_C_char___(argv));
-  return(XEN_FALSE);
+  #define H_gtk_init "void gtk_init(int* {argc}, char*** |argv|)"
+  int ref_argc;
+  char** ref_argv;
+  ref_argc = 1;
+  ref_argv = (char **)malloc(sizeof(char *));
+  ref_argv[0] = strdup("xgprog");
+  gtk_init(&ref_argc, &ref_argv);
+  return(XEN_LIST_2(C_TO_XEN_int(ref_argc), C_TO_XEN_char__(ref_argv)));
 }
 static XEN gxg_gtk_init_check(XEN argc, XEN argv)
 {
-  #define H_gtk_init_check "gboolean gtk_init_check(int* argc, char*** argv)"
-  XEN_ASSERT_TYPE(XEN_int__P(argc), argc, 1, "gtk_init_check", "int*");
-  XEN_ASSERT_TYPE(XEN_char____P(argv), argv, 2, "gtk_init_check", "char***");
-  return(C_TO_XEN_gboolean(gtk_init_check(XEN_TO_C_int_(argc), XEN_TO_C_char___(argv))));
+  #define H_gtk_init_check "gboolean gtk_init_check(int* {argc}, char*** |argv|)"
+  int ref_argc;
+  char** ref_argv;
+  ref_argc = 1;
+  ref_argv = (char **)malloc(sizeof(char *));
+  ref_argv[0] = strdup("xgprog");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_gboolean(gtk_init_check(&ref_argc, &ref_argv));
+    return(XEN_LIST_3(result, C_TO_XEN_int(ref_argc), C_TO_XEN_char__(ref_argv)));
+   }
 }
 static XEN gxg_gtk_disable_setlocale(void)
 {
@@ -20133,6 +20180,12 @@ static XEN gxg_pango_language_matches(XEN language, XEN range_list)
   XEN_ASSERT_TYPE(XEN_char__P(range_list), range_list, 2, "pango_language_matches", "char*");
   return(C_TO_XEN_gboolean(pango_language_matches(XEN_TO_C_PangoLanguage_(language), XEN_TO_C_char_(range_list))));
 }
+static XEN gxg_G_OBJECT_TYPE(XEN object)
+{
+  #define H_G_OBJECT_TYPE "GType G_OBJECT_TYPE(GtkObject* object)"
+  XEN_ASSERT_TYPE(XEN_GtkObject__P(object), object, 1, "G_OBJECT_TYPE", "GtkObject*");
+  return(C_TO_XEN_GType(G_OBJECT_TYPE(XEN_TO_C_GtkObject_(object))));
+}
 #if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
 static XEN gxg_pango_default_break(XEN text, XEN length, XEN analysis, XEN attrs, XEN attrs_len)
 {
@@ -20370,6 +20423,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(g_type_from_name, gxg_g_type_from_name, 1, 0, 0, H_g_type_from_name);
   XG_DEFINE_PROCEDURE(g_type_parent, gxg_g_type_parent, 1, 0, 0, H_g_type_parent);
   XG_DEFINE_PROCEDURE(g_type_is_a, gxg_g_type_is_a, 2, 0, 0, H_g_type_is_a);
+  XG_DEFINE_PROCEDURE(g_cclosure_new, gxg_g_cclosure_new, 3, 0, 0, H_g_cclosure_new);
   XG_DEFINE_PROCEDURE(g_signal_newv, gxg_g_signal_newv, 0, 0, 1, H_g_signal_newv);
   XG_DEFINE_PROCEDURE(g_signal_new, gxg_g_signal_new, 9, 0, 0, H_g_signal_new);
   XG_DEFINE_PROCEDURE(g_signal_emitv, gxg_g_signal_emitv, 4, 0, 0, H_g_signal_emitv);
@@ -20544,8 +20598,8 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_gc_get_colormap, gxg_gdk_gc_get_colormap, 1, 0, 0, H_gdk_gc_get_colormap);
   XG_DEFINE_PROCEDURE(gdk_gc_set_rgb_fg_color, gxg_gdk_gc_set_rgb_fg_color, 2, 0, 0, H_gdk_gc_set_rgb_fg_color);
   XG_DEFINE_PROCEDURE(gdk_gc_set_rgb_bg_color, gxg_gdk_gc_set_rgb_bg_color, 2, 0, 0, H_gdk_gc_set_rgb_bg_color);
-  XG_DEFINE_PROCEDURE(gdk_init, gxg_gdk_init, 2, 0, 0, H_gdk_init);
-  XG_DEFINE_PROCEDURE(gdk_init_check, gxg_gdk_init_check, 2, 0, 0, H_gdk_init_check);
+  XG_DEFINE_PROCEDURE(gdk_init, gxg_gdk_init, 0, 2, 0, H_gdk_init);
+  XG_DEFINE_PROCEDURE(gdk_init_check, gxg_gdk_init_check, 0, 2, 0, H_gdk_init_check);
   XG_DEFINE_PROCEDURE(gdk_set_locale, gxg_gdk_set_locale, 0, 0, 0, H_gdk_set_locale);
   XG_DEFINE_PROCEDURE(gdk_get_program_class, gxg_gdk_get_program_class, 0, 0, 0, H_gdk_get_program_class);
   XG_DEFINE_PROCEDURE(gdk_set_program_class, gxg_gdk_set_program_class, 1, 0, 0, H_gdk_set_program_class);
@@ -21354,8 +21408,8 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_list_store_append, gxg_gtk_list_store_append, 2, 0, 0, H_gtk_list_store_append);
   XG_DEFINE_PROCEDURE(gtk_list_store_clear, gxg_gtk_list_store_clear, 1, 0, 0, H_gtk_list_store_clear);
   XG_DEFINE_PROCEDURE(gtk_check_version, gxg_gtk_check_version, 3, 0, 0, H_gtk_check_version);
-  XG_DEFINE_PROCEDURE(gtk_init, gxg_gtk_init, 2, 0, 0, H_gtk_init);
-  XG_DEFINE_PROCEDURE(gtk_init_check, gxg_gtk_init_check, 2, 0, 0, H_gtk_init_check);
+  XG_DEFINE_PROCEDURE(gtk_init, gxg_gtk_init, 0, 2, 0, H_gtk_init);
+  XG_DEFINE_PROCEDURE(gtk_init_check, gxg_gtk_init_check, 0, 2, 0, H_gtk_init_check);
   XG_DEFINE_PROCEDURE(gtk_disable_setlocale, gxg_gtk_disable_setlocale, 0, 0, 0, H_gtk_disable_setlocale);
   XG_DEFINE_PROCEDURE(gtk_set_locale, gxg_gtk_set_locale, 0, 0, 0, H_gtk_set_locale);
   XG_DEFINE_PROCEDURE(gtk_get_default_language, gxg_gtk_get_default_language, 0, 0, 0, H_gtk_get_default_language);
@@ -22639,6 +22693,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_language_get_type, gxg_pango_language_get_type, 0, 0, 0, H_pango_language_get_type);
   XG_DEFINE_PROCEDURE(pango_language_from_string, gxg_pango_language_from_string, 1, 0, 0, H_pango_language_from_string);
   XG_DEFINE_PROCEDURE(pango_language_matches, gxg_pango_language_matches, 2, 0, 0, H_pango_language_matches);
+  XG_DEFINE_PROCEDURE(G_OBJECT_TYPE, gxg_G_OBJECT_TYPE, 1, 0, 0, H_G_OBJECT_TYPE);
 #if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
   XG_DEFINE_PROCEDURE(pango_default_break, gxg_pango_default_break, 5, 0, 0, H_pango_default_break);
   XG_DEFINE_PROCEDURE(pango_context_new, gxg_pango_context_new, 0, 0, 0, H_pango_context_new);
@@ -23045,11 +23100,6 @@ static XEN c_array_to_xen_list(XEN val, XEN clen)
       guint16* arr; arr = (guint16*)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_guint16(arr[i]), result);
     }
-  if (strcmp(ctype, "int_") == 0)
-    {
-      int* arr; arr = (int*)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_int(arr[i]), result);
-    }
   if (strcmp(ctype, "GtkStateType_") == 0)
     {
       GtkStateType* arr; arr = (GtkStateType*)XEN_TO_C_ULONG(XEN_CADR(val)); 
@@ -23069,6 +23119,11 @@ static XEN c_array_to_xen_list(XEN val, XEN clen)
     {
       gunichar* arr; arr = (gunichar*)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gunichar(arr[i]), result);
+    }
+  if (strcmp(ctype, "int_") == 0)
+    {
+      int* arr; arr = (int*)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_int(arr[i]), result);
     }
   if (strcmp(ctype, "GdkPixmap__") == 0)
     {
@@ -23100,30 +23155,25 @@ static XEN c_array_to_xen_list(XEN val, XEN clen)
       GtkTreeModel** arr; arr = (GtkTreeModel**)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GtkTreeModel_(arr[i]), result);
     }
-  if (strcmp(ctype, "char___") == 0)
-    {
-      char*** arr; arr = (char***)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_char__(arr[i]), result);
-    }
   if (strcmp(ctype, "char__") == 0)
     {
       char** arr; arr = (char**)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_char_(arr[i]), result);
     }
-  if (strcmp(ctype, "gchar__") == 0)
+  if (strcmp(ctype, "gchar___") == 0)
     {
-      gchar** arr; arr = (gchar**)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gchar_(arr[i]), result);
+      gchar*** arr; arr = (gchar***)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gchar__(arr[i]), result);
     }
   if (strcmp(ctype, "GdkBitmap__") == 0)
     {
       GdkBitmap** arr; arr = (GdkBitmap**)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkBitmap_(arr[i]), result);
     }
-  if (strcmp(ctype, "gchar___") == 0)
+  if (strcmp(ctype, "gchar__") == 0)
     {
-      gchar*** arr; arr = (gchar***)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gchar__(arr[i]), result);
+      gchar** arr; arr = (gchar**)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gchar_(arr[i]), result);
     }
   if (strcmp(ctype, "GList_") == 0)
     { /* tagging these pointers is currently up to the caller */
@@ -23261,12 +23311,6 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_guint16(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("guint16_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "int*") == 0)
-    {
-      int* arr; arr = (int*)CALLOC(len, sizeof(int));
-      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_int(XEN_CAR(val));
-      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("int_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
-    }
   if (strcmp(ctype, "GtkStateType*") == 0)
     {
       GtkStateType* arr; arr = (GtkStateType*)CALLOC(len, sizeof(GtkStateType));
@@ -23290,6 +23334,12 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
       gunichar* arr; arr = (gunichar*)CALLOC(len, sizeof(gunichar));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gunichar(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gunichar_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "int*") == 0)
+    {
+      int* arr; arr = (int*)CALLOC(len, sizeof(int));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_int(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("int_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "GdkPixmap**") == 0)
     {
@@ -23327,23 +23377,17 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GtkTreeModel_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkTreeModel__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "char***") == 0)
-    {
-      char*** arr; arr = (char***)CALLOC(len, sizeof(char**));
-      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_char__(XEN_CAR(val));
-      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("char___"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
-    }
   if (strcmp(ctype, "char**") == 0)
     {
       char** arr; arr = (char**)CALLOC(len, sizeof(char*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_char_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("char__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "gchar**") == 0)
+  if (strcmp(ctype, "gchar***") == 0)
     {
-      gchar** arr; arr = (gchar**)CALLOC(len, sizeof(gchar*));
-      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gchar_(XEN_CAR(val));
-      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gchar__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+      gchar*** arr; arr = (gchar***)CALLOC(len, sizeof(gchar**));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gchar__(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gchar___"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "GdkBitmap**") == 0)
     {
@@ -23351,11 +23395,11 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GdkBitmap_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkBitmap__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "gchar***") == 0)
+  if (strcmp(ctype, "gchar**") == 0)
     {
-      gchar*** arr; arr = (gchar***)CALLOC(len, sizeof(gchar**));
-      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gchar__(XEN_CAR(val));
-      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gchar___"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+      gchar** arr; arr = (gchar**)CALLOC(len, sizeof(gchar*));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gchar_(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gchar__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
   return(XEN_FALSE);
 }
@@ -29666,7 +29710,7 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"20-Oct-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"22-Oct-02\")");
 #endif
       xg_already_inited = 1;
     }

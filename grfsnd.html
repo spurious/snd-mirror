@@ -1705,23 +1705,32 @@ will be moved into Scheme.  In the meantime, here's the scale-dialog in xg/gtk:
 (define scale-dialog #f)
 (define current-scaler 1.0)
 
+(define* (g_signal_connect obj name func #:optional data)
+  ;; slightly obsolete example...
+  (g_signal_connect_closure_by_id 
+   (list 'gpointer (cadr obj))
+   (g_signal_lookup name (G_OBJECT_TYPE (GTK_OBJECT obj)))
+   0
+   (g_cclosure_new func data (list 'GClosureNotify 0))
+   #f))
+
 (define (create-scale-dialog parent)
   (if (not scale-dialog)
       (begin
 	(set! scale-dialog (gtk_dialog_new))
-	(gtk_signal_connect (GTK_OBJECT scale-dialog) "delete-event"
+	(g_signal_connect scale-dialog "delete-event"
 			     (lambda (w ev info)
 			       (gtk_widget_hide w)))
 	(gtk_window_set_title (GTK_WINDOW scale-dialog) "Scale")
 	(gtk_widget_realize scale-dialog)
 	(let ((dismiss (gtk_button_new_with_label "Dismiss"))
 	      (help (gtk_button_new_with_label "Help")))
-	  (gtk_box_pack_start (GTK_BOX (action_area (GTK_DIALOG scale-dialog))) dismiss #t #t 4)
-	  (gtk_box_pack_end (GTK_BOX (action_area (GTK_DIALOG scale-dialog))) help #t #t 4)	
-	  (gtk_signal_connect (GTK_OBJECT dismiss) "clicked"
+	  (gtk_box_pack_start (GTK_BOX (.action_area (GTK_DIALOG scale-dialog))) dismiss #t #t 4)
+	  (gtk_box_pack_end (GTK_BOX (.action_area (GTK_DIALOG scale-dialog))) help #t #t 4)	
+	  (g_signal_connect dismiss "clicked"
 			       (lambda (w info)
 				 (gtk_widget_hide scale-dialog)))
-	  (gtk_signal_connect (GTK_OBJECT help) "clicked"
+	  (g_signal_connect help "clicked"
 			       (lambda (w info)
 				 (help-dialog "Scaler Dialog" "move the slider to affect the volume")))
 	  (gtk_widget_show dismiss)
@@ -1731,10 +1740,10 @@ will be moved into Scheme.  In the meantime, here's the scale-dialog in xg/gtk:
 	    (gtk_range_set_update_policy (GTK_RANGE (GTK_SCALE scale)) GTK_UPDATE_CONTINUOUS)
 	    (gtk_scale_set_draw_value (GTK_SCALE scale) #t)
 	    (gtk_scale_set_digits (GTK_SCALE scale) 2)
-	    (gtk_signal_connect (GTK_OBJECT adj) "value_changed"
+	    (g_signal_connect adj "value_changed"
 				 (lambda (wadj info)
 				   (set! current-scaler (.value (GTK_ADJUSTMENT wadj)))))
-	    (gtk_box_pack_start (GTK_BOX (vbox (GTK_DIALOG scale-dialog))) scale #f #f 6)
+	    (gtk_box_pack_start (GTK_BOX (.vbox (GTK_DIALOG scale-dialog))) scale #f #f 6)
 	    (gtk_widget_show scale)))))
   (gtk_widget_show scale-dialog))
 

@@ -759,6 +759,7 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>FOF voice synthesis (wave-train, #&amp;optional args)
     <li>pluck instrument (physical modelling)
     <li>voice instrument (formants via FM)
+    <li>chain-dsps
   </ul>
 </small>
 <li><a href="#ssmiscellaneousextensions">miscellaneous extensions</a>
@@ -1134,7 +1135,8 @@ happens to be on the chosen one, with fade-ins and fade-outs to avoid clicks.
   <em class=def><A NAME="exfmviolin">fm-violin</a></em> ...many args...
   <em class=def><A NAME="exfofins">fofins</a></em> ...many args...
   <em class=def><A NAME="expluck">pluck</a></em> start dur freq amp weighting lossfact
-  <em class=def><A NAME="exvox">vox</a></em>beg dur freq amp ampfun freqfun freqscl voxfun index vibscl
+  <em class=def><A NAME="exvox">vox</a></em> beg dur freq amp ampfun freqfun freqscl voxfun index vibscl
+  <em class=def><A NAME="chaineddsps">chained-dsps</a></em> beg dur &amp;rest dsps
 </pre>
 <p><i>scissor</i> synthesizes the squawk of the scissor-tailed flycatcher (state bird of Oklahoma, <i>Tyrannus forficatus</i>);
 see <a href="#birddoc">bird.scm</a> for more birds.  The fm-violin is discussed in <a href="#vdoc">v.scm</a>.
@@ -1149,6 +1151,7 @@ CMJ vol 7 no 2 Summer 1983, reprinted in "The Music Machine".
 Another physical model is Nicky Hind's flute in flute.scm.
 <i>vox</i> is a translations of Marc LeBrun's MUS10 waveshaping voice instrument
 using FM in this case.  The waveshaping version can be found in <a href="#pqwvoxdoc">pqwvox.scm</a>.
+<i>chain-dsps</i> creates a patch of chained generators from its arguments.
 </p>
 
 <!-- -------------------------------- MISCELLANEOUS EXTENSIONS -------------------------------- -->

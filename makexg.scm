@@ -3,6 +3,10 @@
 
 ;;; makexg.scm creates the gtk2/gdk/pango/glib bindings using xgdata.scm, writes xg.c and xg-ruby.c
 
+;;; TODO: GClosureNotify arg can be #f => NULL
+;;; TODO: any->gpointer picks out cadr? or get rid of gpointer?
+;;; TODO: OBJECT_TYPE macros? g_print? (is basically format)
+
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
 (use-modules (ice-9 optargs))
@@ -211,7 +215,9 @@
 						       (substring given-name 1 (string-length given-name))
 						       'opt)
 						 data))
-				(if (char=? (string-ref given-name 0) #\[) 
+				(if (or (char=? (string-ref given-name 0) #\[)
+					(char=? (string-ref given-name 0) #\{)
+					(char=? (string-ref given-name 0) #\|))
 				    (begin
 				      (set! reftype (deref-type (list type)))
 				      (set! data (cons (list type 
@@ -358,7 +364,7 @@
 			      (parse-args "GtkClipboard* clipboard lambda_data func_data" 'callback)
 			      'permanent)
 
-			;'GtkSignalFunc
+			;'GtkSignalFunc and GCallback
 			;'lambda can be whatever is indicated by caller (2 or 3 args)
 			))
 
@@ -545,10 +551,11 @@
 		 (not (find-callback 
 		       (lambda (func)
 			 (string=? type (symbol->string (car func))))))
+		 (not (string=? type "GCallback"))
 		 (not (string=? type "GtkSignalFunc")))
 	    (begin
 	      (hey "XM_TYPE~A(~A, ~A)~%" 
-		   (if (has-stars type) "_PTR" "")
+		   (if (or (has-stars type) (string=? type "gpointer")) "_PTR" "")
 		   (no-stars type) 
 		   type))))))
 
@@ -572,8 +579,10 @@
 	      (return (callback-name callb))
 	      (if (string=? (car arg) "lambda")
 		  (return 'lambda)
-		  (if (string=? (car arg) "GtkSignalFunc")
-		      (return 'GtkSignalFunc))))))
+		  (if (string=? (car arg) "GCallback")
+		      (return 'GCallback)
+		      (if (string=? (car arg) "GtkSignalFunc")
+			  (return 'GtkSignalFunc)))))))
       strs)
      'fnc)))
 
@@ -834,7 +843,7 @@
 (hey " *     all *_CLASS, *_IFACE macros~%")
 (hey " *     win32-specific functions~%")
 (hey " *~%")
-(hey " * ~A: check out the g_signal handlers (gtk_signal_* is ok)~%" (string-append "T" "ODO"))
+(hey " * ~A: check out the g_signal handlers~%" (string-append "T" "ODO"))
 (hey " * ~A: GdkEvent casts~%" (string-append "T" "ODO"))
 (hey " * ~A: struct print, more struct instance creators(?)~%" (string-append "T" "ODO"))
 (hey " * ~A: tie into Snd (snd-motif translation)~%" (string-append "T" "ODO"))
@@ -842,6 +851,7 @@
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     23-Oct:    gtk_init and friends ref args ignored~%")
 (hey " *     31-Jul:    removed GTK 1.n support~%")
 (hey " *     24-Jul:    changed Guile prefix (R5RS reserves vertical-bar).~%")
 (hey " *     19-Jul:    XG_FIELD_PRE for change from using vertical-bar (reserved in R5RS)~%")
@@ -870,7 +880,8 @@
 (hey "#include <gtk/gtk.h>~%")
 (hey "#include <glib-object.h>~%")
 (hey "#include <pango/pango.h>~%")
-(hey "#include <string.h>~%~%")
+(hey "#include <string.h>~%")
+(hey "#include <stdlib.h>~%~%")
 
 (hey "#if USE_SND~%")
 (hey "  /* USE_SND causes xm to use Snd's error handlers which are much smarter than xen's fallback versions */~%")
@@ -952,6 +963,7 @@
 
 (hey "#define XEN_lambda_P(Arg) XEN_PROCEDURE_P(Arg)~%")
 (hey "#define XEN_GtkSignalFunc_P(Arg) XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2)~%")
+(hey "#define XEN_GCallback_P(Arg) XEN_PROCEDURE_P(Arg) && ((XEN_REQUIRED_ARGS(Arg) == 2) || (XEN_REQUIRED_ARGS(Arg) == 3))~%")
 
 (for-each
  (lambda (func)
@@ -961,6 +973,7 @@
  callbacks)
 
 (hey "#define XEN_TO_C_GtkSignalFunc(Arg) (GtkSignalFunc)gxg_func2~%")
+(hey "#define XEN_TO_C_GCallback(Arg) ((XEN_REQUIRED_ARGS(Arg) == 3) ? (GCallback)gxg_func3 : (GCallback)gxg_func2)~%")
 (hey "#define XEN_TO_C_lambda_data(Arg) (gpointer)gxg_ptr~%")
 (hey "#define XEN_lambda_data_P(Arg) 1~%")
 
@@ -1263,7 +1276,15 @@
 			      (hey "  else XEN_ASSERT_TYPE(XEN_~A_P(~A), ~A, ~D, ~S, ~S);~%" 
 				   (no-stars argtype) argname argname ctr name argtype))
 			    (hey "  XEN_ASSERT_TYPE(XEN_~A_P(~A), ~A, ~D, ~S, ~S);~%"
-				 (no-stars argtype) argname argname ctr name argtype))))
+				 (no-stars argtype) argname argname ctr name argtype)))
+		    (if (>= (length arg) 3)
+			(if (char=? (string-ref (list-ref arg 2) 0) #\{)
+			    (hey "  ~A = 1;~%" (deref-name arg))
+;			    (hey "  ~A = 0;~%" (deref-name arg))
+			    (if (char=? (string-ref (list-ref arg 2) 0) #\|)
+				(hey "  ~A = (char **)malloc(sizeof(char *));~%  ~A[0] = strdup(\"xgprog\");~%" (deref-name arg) (deref-name arg))
+;				(hey "  ~A = NULL;~%" (deref-name arg))
+				))))
 		(set! ctr (1+ ctr))))
 	    args)))
      (let ((using-result #f)
@@ -1271,6 +1292,7 @@
        (if (not (eq? lambda-type 'fnc))
 	   (begin
 	     (set! using-loc (or (eq? lambda-type 'GtkSignalFunc)
+				 (eq? lambda-type 'GCallback)
 				 (and callback-data
 				      (or (eq? (callback-gc callback-data) 'temporary)
 					  (eq? (callback-gc callback-data) 'semi-permanent)
@@ -1859,9 +1881,3 @@
 
 (close-output-port xg-file)
 (close-output-port xg-ruby-file)
-
-
-;/* cc -c xg.c -g3 -DUSE_GTK -DDEBUGGING -DDEBUG_MEMORY -DLINUX -DUSE_SND -DHAVE_GNU_LIBC_VERSION_H -DHAVE_GSL -DHAVE_DLFCN_H -DHAVE_GUILE -DHAVE_LLONGS -DHAVE_APPLICABLE_SMOB -DHAVE_SCM_REMEMBER_UPTO_HERE -DHAVE_SCM_OBJECT_TO_STRING -DHAVE_SCM_NUM2LONG_LONG -DHAVE_SCM_C_MAKE_VECTOR -DHAVE_SCM_C_DEFINE -DHAVE_SCM_NUM2INT -DHAVE_SCM_C_DEFINE_GSUBR -DHAVE_SCM_LIST_N -DHAVE_SCM_C_EVAL_STRING -DHAVE_SCM_STR2SYMBOL -DHAVE_SCM_MAKE_REAL -DHAVE_SCM_T_CATCH_BODY -DHAVE_EXTENSION_LANGUAGE -DHAVE_STATIC_XM -DHAVE_GTK2 -I/home/bil/test/g3/include -I/home/bil/test/g3/include/glib-2.0 -I/home/bil/test/g3/include/pango-1.0 -I/home/bil/test/g3/include/gtk-2.0 -I/home/bil/test/g3/lib/gtk-2.0/include -I/home/bil/test/g3/include/atk-1.0 -I/home/bil/test/include -DPANGO_ENABLE_ENGINE -DPANGO_ENABLE_BACKEND */
-
-
-

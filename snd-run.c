@@ -7086,17 +7086,24 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       var = find_var_in_ptree(prog, funcname);
       if (var == NULL)
 	{
-	  XEN val = XEN_UNDEFINED;
-	  XEN nval;
-	  nval = XEN_SYMBOL_TO_VAR(function);
-	  if (!(XEN_FALSE_P(nval))) val = XEN_VARIABLE_REF(nval);
-	  if ((sf_p(val)) || (mus_xen_p(val)))
+	  /* add_global_var will find things like *, but ignores functions and returns null */
+	  if (XEN_SYMBOL_P(function))
 	    v = add_global_var_to_ptree(prog, function);
-
+	  /* (let ((gen (make-oscil 440))) (vct-map! v (lambda () (gen 0.0)))) */
+	  else 
+	    if (XEN_LIST_P(function))
+	      v = walk(prog, function, NEED_ANY_RESULT);
+	  /* trying to support stuff like ((vector-ref gens 0) 0.0) here */
+	  /*
+	  if (v)
+	    fprintf(stderr, "func: %s %d %s\n", funcname, v->type, type_name(v->type));
+	  else fprintf(stderr, "func: %s not local\n", funcname);
+	  */
 	  /* if we had a way to handle arbitrary lambda args, this might pick up user func:
 	   *	   if (XEN_PROCEDURE_P(val))
 	   *         fprintf(stderr,"%s: %s\n", funcname, XEN_PROCEDURE_SOURCE_TO_C_STRING(val));
 	   */
+
 	}
       else v = var->v;
       if (v) 
@@ -8099,3 +8106,9 @@ during optimization to indicate where the optimizer ran into trouble:\n\
 
   XEN_DEFINE_HOOK(optimization_hook, S_optimization_hook, 1, H_optimization_hook);      /* arg = message */
 }
+
+/*
+    (load "t.scm")
+    (define hi (make-vct 3))
+    (let ((gen (make-oscil 440))) (vct-map! hi (lambda () (oscil gen 0.0))))
+*/
