@@ -42,7 +42,7 @@
 
 
 #if (!USE_SND)
-static int to_c_int_or_else(SCM obj, int fallback, char *origin)
+int to_c_int_or_else(SCM obj, int fallback, char *origin)
 {
   /* don't want errors here about floats with non-zero fractions etc */
   if (INTEGER_P(obj))
@@ -51,6 +51,39 @@ static int to_c_int_or_else(SCM obj, int fallback, char *origin)
     if (NUMBER_P(obj))
       return((int)TO_C_DOUBLE_WITH_ORIGIN(obj, origin));
   return(fallback);
+}
+
+void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_help,
+				  char *set_name, SCM (*set_func)(), 
+				  SCM local_doc,
+				  int get_req, int get_opt, int set_req, int set_opt)
+{
+#if HAVE_GUILE
+#if HAVE_SCM_C_DEFINE
+  scm_set_object_property_x(
+    scm_permanent_object(
+      scm_c_define(get_name,
+	scm_make_procedure_with_setter(
+          gh_new_procedure("", SCM_FNC get_func, get_req, get_opt, 0),
+	  gh_new_procedure(set_name, SCM_FNC set_func, set_req, set_opt, 0)
+	  ))),
+    local_doc,
+    TO_SCM_STRING(get_help));
+#else
+  scm_set_object_property_x(
+    SCM_CDR(
+      gh_define(get_name,
+	scm_make_procedure_with_setter(gh_new_procedure("", SCM_FNC get_func, get_req, get_opt, 0),
+	  gh_new_procedure(set_name, SCM_FNC set_func, set_req, set_opt, 0)
+	  ))),
+    local_doc,
+    TO_SCM_STRING(get_help));
+#endif
+#endif
+#if HAVE_LIBREP
+  DEFINE_PROC(get_name, get_func, get_req, get_opt, 0, get_help);
+  DEFINE_PROC(set_name, set_func, set_req, set_opt, 0, get_help);
+#endif
 }
 #endif
 

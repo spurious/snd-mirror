@@ -445,10 +445,6 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 #define set_zoom_focus_style(ss, a) ss->Zoom_Focus_Style = a
 #define DEFAULT_ZOOM_FOCUS_STYLE FOCUS_ACTIVE
 
-#define fit_data_on_open(ss) ss->Fit_Data_On_Open
-#define set_fit_data_on_open(ss, a) ss->Fit_Data_On_Open = a
-#define DEFAULT_FIT_DATA_ON_OPEN 0
-
 #define eps_file(ss) ss->Eps_File
 #define set_eps_file(ss, a) ss->Eps_File = a
 #define DEFAULT_EPS_FILE EPS_FILE_NAME

@@ -182,7 +182,6 @@ static repv snd_rep_main(repv arg)
   ss->Movies = DEFAULT_MOVIES;
   ss->Selection_Creates_Region = DEFAULT_SELECTION_CREATES_REGION;
   ss->Normalize_Fft = DEFAULT_NORMALIZE_FFT;
-  ss->Fit_Data_On_Open = DEFAULT_FIT_DATA_ON_OPEN;
   ss->Zoom_Focus_Style = DEFAULT_ZOOM_FOCUS_STYLE;
   ss->Save_State_On_Exit = DEFAULT_SAVE_STATE_ON_EXIT;
   ss->Graph_Style = DEFAULT_GRAPH_STYLE;
@@ -247,7 +246,6 @@ static repv snd_rep_main(repv arg)
 
   init_sound_file_extensions();
 
-  ss->viewing = 0;
   ss->max_sounds = 4;                 /* expands to accommodate any number of files */
   ss->stopped_explicitly = 0;
   ss->reloading_updated_file = FALSE;

@@ -25,7 +25,7 @@ static void Snd_Callback(Widget w, XtPointer clientData, XtPointer callData)
       XtSetArg(args[n], XmNallowResize, TRUE); n++;
       
       snd_as_widget(0, NULL, app, form, args, n);
-      snd_open_file("~/cl/oboe.snd", get_global_state());
+      snd_open_file("~/cl/oboe.snd", get_global_state(), FALSE);
 
       snd_running = 1;
     }
@@ -105,7 +105,7 @@ static void Snd_Callback(GtkWidget *w, gpointer data)
       snd = snd_as_widget(0, NULL, w, NULL);
       gtk_box_pack_start(GTK_BOX(form), snd, TRUE, TRUE, 0);
       gtk_widget_show(snd);
-      snd_open_file("~/cl/oboe.snd", get_global_state()); 
+      snd_open_file("~/cl/oboe.snd", get_global_state(), FALSE); 
       snd_running = 1;
       gtk_label_set_text(GTK_LABEL(GTK_BIN(label)->child), "Push to quit Snd");
     }

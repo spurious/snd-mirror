@@ -2760,7 +2760,7 @@ static int print_sf(SCM obj, SCM port, scm_print_state *pstate)
 
 static scm_sizet free_sf(SCM obj) 
 {
-  snd_fd *fd = (snd_fd *)SND_VALUE_OF(obj); 
+  snd_fd *fd = TO_SAMPLE_READER(obj); 
   snd_info *sp = NULL;
   if (fd) 
     {
@@ -2778,6 +2778,16 @@ static SCM g_sample_reader_at_end(SCM obj)
   #define H_sample_reader_at_end "(" S_sample_reader_at_endQ " obj) -> #t if sample-reader has reached the end of its data"
   ASSERT_TYPE(SAMPLE_READER_P(obj), obj, SCM_ARGn, S_sample_reader_at_endQ, "a sample-reader");
   return(TO_SCM_BOOLEAN(read_sample_eof(TO_SAMPLE_READER(obj))));
+}
+
+static SCM g_sample_reader_home(SCM obj)
+{
+  #define H_sample_reader_home "(" S_sample_reader_home " obj) -> (list sound-index chan-num) associated with reader"
+  snd_fd *fd = NULL;
+  ASSERT_TYPE(SAMPLE_READER_P(obj), obj, SCM_ARGn, S_sample_reader_home, "a sample-reader");
+  fd = TO_SAMPLE_READER(obj);
+  return(SCM_LIST2(TO_SMALL_SCM_INT(fd->cp->sound->index),
+		   TO_SMALL_SCM_INT(fd->cp->chan)));
 }
 
 SCM g_c_make_sample_reader(snd_fd *fd)
@@ -3601,6 +3611,7 @@ void g_init_edits(SCM local_doc)
   DEFINE_PROC(S_next_sample,               g_next_sample, 1, 0, 0,               H_next_sample);
   DEFINE_PROC(S_previous_sample,           g_previous_sample, 1, 0, 0,           H_previous_sample);
   DEFINE_PROC(S_free_sample_reader,        g_free_sample_reader, 1, 0, 0,        H_free_sample_reader);
+  DEFINE_PROC(S_sample_reader_home,        g_sample_reader_home, 1, 0, 0,        H_sample_reader_home);
   DEFINE_PROC(S_sample_readerQ,            g_sf_p, 1, 0, 0,                      H_sf_p);
   DEFINE_PROC(S_sample_reader_at_endQ,     g_sample_reader_at_end, 1, 0, 0,      H_sample_reader_at_end);
   DEFINE_PROC(S_loop_samples,              g_loop_samples, 4, 1, 0,              H_loop_samples);
@@ -3617,7 +3628,7 @@ void g_init_edits(SCM local_doc)
   DEFINE_PROC(S_delete_samples,            g_delete_samples, 2, 2, 0,            H_delete_samples);
   DEFINE_PROC(S_insert_sample,             g_insert_sample, 2, 2, 0,             H_insert_sample);
   DEFINE_PROC(S_insert_samples,            g_insert_samples, 3, 2, 0,            H_insert_samples);
-  DEFINE_PROC(S_vct_samples,               g_set_samples, 3, 3, 0,               H_set_samples);
+  DEFINE_PROC(S_vct2samples,               g_set_samples, 3, 3, 0,               H_set_samples);
   DEFINE_PROC(S_insert_sound,              g_insert_sound, 1, 4, 0,              H_insert_sound);
 
   /* semi-internal functions (restore-state) */

@@ -1,9 +1,20 @@
 snd change log
 
+  26-May:    removed fit-data-on-open; here's a replacement:
+               (define (fit-data snd chn dur)
+                 (let ((mx (maxamp snd chn)))
+                   (list 0.0 dur (- mx) mx "time" (- mx) mx)))
+               (add-hook! initial-graph-hook fit-data #t) ; #t to make sure env restorers get to function first
+             added 'extended' arg to bind-key et al so C-x keys can be bound.
+             example of zero-crossing base C-p, C-n, and C-k in extsnd.html (bind-key).
+             save-control-panel renamed save-controls, similarly for reset-controls and restore-controls 
+               (these now parallel show-controls and apply-controls).
+             mark->sound renamed mark-home (the arrow is out of place here, and it's returning the sound-channel list).
+	     added sample-reader-home.
   25-May:    removed open-alternate-sound -- is exactly the same as close-sound + open-sound.
              removed earlier scm_apply optimizations ("Rule #1 of optimization: don't do it").
              removed normalize-on-open (use after-open-hook and equalize-panes):
-               (add-hook after-open-hook (lambda (snd) (equalize-panes snd)))
+               (add-hook! after-open-hook (lambda (snd) (equalize-panes)))
              renamed normalize-view to equalize-panes.\n\
   24-May:    removed line-size, prefix-arg (it's now an optional arg to the key function).
              ignore-prefix arg to bind-key removed, Snd no longer handles prefix itself.

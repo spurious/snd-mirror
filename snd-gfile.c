@@ -177,6 +177,8 @@ static GtkWidget *snd_gtk_file_selection_new(snd_state *ss, char *title, GtkSign
 static GtkWidget *open_dialog = NULL;
 void alert_new_file(void) {}
 
+static int file_dialog_read_only = 0;
+
 static void file_open_dialog_ok(GtkWidget *w, gpointer data)
 {
   snd_info *sp;
@@ -185,7 +187,7 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
   gtk_widget_hide(open_dialog);
   if (!(is_directory(last_filename)))
     {
-      sp = snd_open_file(last_filename, ss);
+      sp = snd_open_file(last_filename, ss, file_dialog_read_only);
       if (sp) select_channel(sp, 0);           /* add_sound_window (snd-xsnd.c) will report reason for error, if any */
     }
   else
@@ -205,8 +207,9 @@ static void file_open_dialog_delete(GtkWidget *w, GdkEvent *event, gpointer cont
   gtk_widget_hide(open_dialog);
 }
 
-void make_open_file_dialog(snd_state *ss)
+void make_open_file_dialog(snd_state *ss, int read_only)
 {
+  file_dialog_read_only = read_only;
   if (!open_dialog)
     {
       open_dialog = snd_gtk_file_selection_new(ss, STR_File,

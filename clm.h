@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 49
-#define MUS_DATE "22-May-01"
+#define MUS_REVISION 50
+#define MUS_DATE "26-May-01"
 
 /* 
+ * 26-May:     mus_rand_seed.
  * 22-May:     locsig reverb distance calc was upside down.
  * 18-May:     mus_describe and mus_inspect returned string should not be freed any more.
                  (previous version was not usable in gdb and was unneeded due to mus_snprintf)
@@ -291,7 +292,8 @@ Float mus_pulse_train           PROTO((mus_any *gen, Float fm));
 mus_any *mus_make_pulse_train   PROTO((Float freq, Float amp, Float phase));
 int mus_pulse_train_p           PROTO((mus_any *gen));
 
-void mus_set_rand_seed          PROTO((int seed));
+void mus_set_rand_seed          PROTO((unsigned long seed));
+unsigned long mus_rand_seed     PROTO((void));
 Float mus_random                PROTO((Float amp));
 
 Float mus_rand                  PROTO((mus_any *gen, Float fm));

@@ -136,17 +136,12 @@ static int call_menu_hook(char *name, char *option)
 
 static void File_Open_Callback(GtkWidget *w, gpointer cD) 
 {
-  IF_MENU_HOOK(STR_File, STR_Open) make_open_file_dialog((snd_state *)cD);
+  IF_MENU_HOOK(STR_File, STR_Open) make_open_file_dialog((snd_state *)cD, FALSE);
 }
 
 static void File_View_Callback(GtkWidget *w, gpointer cD) 
 {
-  snd_state *ss = (snd_state *)cD;
-  IF_MENU_HOOK(STR_File, STR_View) 
-    {
-      ss->viewing = 1;
-      make_open_file_dialog(ss);
-    }
+  IF_MENU_HOOK(STR_File, STR_View) make_open_file_dialog((snd_state *)cD, TRUE);
 }
 
 static void File_New_Callback(GtkWidget *w, gpointer cD) 

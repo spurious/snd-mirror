@@ -2439,7 +2439,7 @@ void inner_main(int argc, char **argv)
   int size = 512;
   char **buffer = NULL;
   buffer = (char **)calloc(1, sizeof(char *));
-  buffer[0] = (char *)calloc(512, sizeof(char));
+  buffer[0] = (char *)calloc(size, sizeof(char));
   /* counter = gh_define("counter", gh_int2scm(0)); */       /* old style (pre Guile 1.6) */
   counter = scm_permanent_object(scm_c_define("counter", gh_int2scm(0)));
   while (1)
@@ -2502,7 +2502,7 @@ void inner_main(int argc, char **argv)
   int size = 512;
   char **buffer = NULL;
   buffer = (char **)calloc(1, sizeof(char *));
-  buffer[0] = (char *)calloc(512, sizeof(char));
+  buffer[0] = (char *)calloc(size, sizeof(char));
   gh_new_procedure0_0("counter", g_counter);
   gh_new_procedure1_0("set-counter", g_set_counter);
   while (1)
@@ -2608,7 +2608,7 @@ static void inner_main(int argc, char **argv)
       gh_new_procedure1_0("",g_set_counter)));
 
   buffer = (char **)calloc(1, sizeof(char *));
-  buffer[0] = (char *)calloc(512, sizeof(char));
+  buffer[0] = (char *)calloc(size, sizeof(char));
   while (1)
     {
       /* (exit) to exit */
@@ -2746,7 +2746,7 @@ void inner_main(int argc, char **argv)
   int size = 512;
   char **buffer = NULL;
   buffer = (char **)calloc(1, sizeof(char *));
-  buffer[0] = (char *)calloc(512, sizeof(char));
+  buffer[0] = (char *)calloc(size, sizeof(char));
   input = (src_state *)calloc(1, sizeof(src_state));
   fprintf(stdout, "input function: ");
   getline(buffer, &amp;size, stdin);

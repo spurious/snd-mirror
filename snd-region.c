@@ -830,7 +830,7 @@ void region_edit(snd_state *ss, int reg)
 	  else err = save_region(ss, reg, temp_region_name, MUS_OUT_FORMAT);
 	  if (err == MUS_NO_ERROR)
 	    {
-	      sp = snd_open_file(temp_region_name, ss);
+	      sp = snd_open_file(temp_region_name, ss, FALSE);
 	      if (sp)
 		{
 		  r->editor_copy = sp;
@@ -1010,7 +1010,7 @@ static SCM region_read(int field, SCM n, char *caller)
   int rg;
   int i;
   SCM res = SCM_EOL;
-  if (SCM_EQ_P(n, SCM_BOOL_T))
+  if (SCM_EQ_P(n, SCM_BOOL_T)) /* can this happen? all callers appear to check for int_if_bound */
     {
       for (i = 0; i < regions_size; i++)
 	if (regions[i])
@@ -1289,22 +1289,22 @@ returns a vector with region's samples starting at samp for samps from channel c
 
 static SCM g_region_samples2vct(SCM beg_n, SCM num, SCM reg_n, SCM chn_n, SCM v)
 {
-  #define H_region_samples2vct "(" S_region_samples_vct " &optional (beg 0) samps (region 0) (chan 0) obj)\n\
+  #define H_region_samples2vct "(" S_region_samples2vct " &optional (beg 0) samps (region 0) (chan 0) obj)\n\
 writes region's samples starting at beg for samps in channel chan to vct obj, returning obj (or creating a new one)"
 
   Float *data;
   int len, reg, chn, beg;
   vct *v1 = get_vct(v);
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(beg_n), beg_n, SCM_ARG1, S_region_samples_vct, "a number");
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(num), num, SCM_ARG2, S_region_samples_vct, "a number");
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(reg_n), reg_n, SCM_ARG3, S_region_samples_vct, "an integer");
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(chn_n), chn_n, SCM_ARG4, S_region_samples_vct, "an integer");
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(beg_n), beg_n, SCM_ARG1, S_region_samples2vct, "a number");
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(num), num, SCM_ARG2, S_region_samples2vct, "a number");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(reg_n), reg_n, SCM_ARG3, S_region_samples2vct, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(chn_n), chn_n, SCM_ARG4, S_region_samples2vct, "an integer");
   reg = TO_C_INT_OR_ELSE(reg_n, 0);
   if (!(region_ok(reg)))
-    return(snd_no_such_region_error(S_region_samples_vct, reg_n));
+    return(snd_no_such_region_error(S_region_samples2vct, reg_n));
   chn = TO_C_INT_OR_ELSE(chn_n, 0);
   if (chn >= region_chans(reg)) 
-    return(snd_no_such_channel_error(S_region_samples_vct, SCM_LIST1(reg_n), chn_n));
+    return(snd_no_such_channel_error(S_region_samples2vct, SCM_LIST1(reg_n), chn_n));
   len = TO_C_INT_OR_ELSE(num, 0);
   if (len == 0) len = region_len(reg);
   if (len > 0)
@@ -1344,7 +1344,7 @@ void g_init_regions(SCM local_doc)
   DEFINE_PROC(S_mix_region,         g_mix_region, 0, 4, 0,         H_mix_region);
   DEFINE_PROC(S_region_sample,      g_region_sample, 0, 3, 0,      H_region_sample);
   DEFINE_PROC(S_region_samples,     g_region_samples, 0, 4, 0,     H_region_samples);
-  DEFINE_PROC(S_region_samples_vct, g_region_samples2vct, 0, 5, 0, H_region_samples2vct);
+  DEFINE_PROC(S_region_samples2vct, g_region_samples2vct, 0, 5, 0, H_region_samples2vct);
   DEFINE_PROC(S_regionQ,            g_regionQ, 1, 0, 0,            H_regionQ);
 
   define_procedure_with_setter(S_max_regions, SCM_FNC g_max_regions, H_max_regions,

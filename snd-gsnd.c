@@ -1241,9 +1241,9 @@ void unlock_apply(snd_state *ss, snd_info *sp)
     set_background(w_snd_apply(sp), (ss->sgx)->basic_color);
 }
 
-static void remember_button_callback(GtkWidget *w, gpointer context) {save_control_panel((snd_info *)context);}
-static void restore_button_callback(GtkWidget *w, gpointer context) {restore_control_panel((snd_info *)context);}
-static void reset_button_callback(GtkWidget *w, gpointer context) {reset_control_panel((snd_info *)context);}
+static void remember_button_callback(GtkWidget *w, gpointer context) {save_controls((snd_info *)context);}
+static void restore_button_callback(GtkWidget *w, gpointer context) {restore_controls((snd_info *)context);}
+static void reset_button_callback(GtkWidget *w, gpointer context) {reset_controls((snd_info *)context);}
 
 
 /* -------- AMP ENVS ETC -------- */
@@ -1295,7 +1295,7 @@ static gint Close_Sound_Dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 
 /* -------- SOUND PANE -------- */
 
-snd_info *add_sound_window(char *filename, snd_state *ss)
+snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 {
   snd_info *sp, *osp;
   file_info *hdr;
@@ -1339,7 +1339,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
     }
   else old_chans = 0;
   make_widgets = (ss->sounds[snd_slot] == NULL);
-  ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot], ss, filename, hdr, snd_slot);
+  ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot], ss, filename, hdr, snd_slot, read_only);
   sp = ss->sounds[snd_slot];
   sp->inuse = 1;
   sx = sp->sgx;
@@ -1809,7 +1809,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
 	add_channel_window(sp, k, ss, chan_min_y, 0, NULL, WITH_FW_BUTTONS);
       gtk_label_set_text(GTK_LABEL(sw[W_name]), shortname_indexed(sp));
 
-      reset_control_panel(sp);
+      reset_controls(sp);
       gtk_label_set_text(GTK_LABEL(sw[W_revscl_label]), reverb_name());
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
 	{
@@ -1832,7 +1832,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
     gtk_widget_hide(sw[W_combine]);
   add_sound_data(filename, sp, ss, WITH_GRAPH);
 
-  snd_file_lock_icon(sp, (ss->viewing || (cant_write(sp->fullname)))); /* sp->read_only not set yet */
+  snd_file_lock_icon(sp, (sp->read_only || (cant_write(sp->fullname))));
   if (ss->pending_change)
     report_in_minibuffer(sp, "(translated %s)", old_name);
   after_open(sp->index);

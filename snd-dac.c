@@ -2730,7 +2730,7 @@ static SCM g_make_player(SCM snd, SCM chn)
   cp = get_cp(snd, chn, S_make_player);
   if (cp)
     {
-      new_sp = make_snd_info(NULL, get_global_state(), "wrapper", true_sp->hdr, new_player_index());
+      new_sp = make_snd_info(NULL, get_global_state(), "wrapper", true_sp->hdr, new_player_index(), TRUE);
       FREE(new_sp->sgx); /* no built-in GUI */
       new_sp->sgx = NULL;
       new_sp->chans[cp->chan] = cp;

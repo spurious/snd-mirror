@@ -200,7 +200,7 @@ static chan_info *free_chan_info(chan_info *cp)
   return(cp);  /* pointer is left for possible future re-use */
 }
 
-snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_info *hdr, int snd_slot)
+snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_info *hdr, int snd_slot, int read_only)
 {
   snd_info *sp = NULL;
   int chans, i;
@@ -226,6 +226,7 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
 	  sp->allocated_chans = chans;
 	}
     }
+  sp->read_only = read_only;  /* need to be sure this is set before any hooks run */
   sp->index = snd_slot;
   sp->nchans = chans;
   sp->hdr = hdr;
@@ -263,7 +264,6 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->evaling = 0;
   sp->marking = 0;
   sp->filing = 0;
-  sp->read_only = 0;
   sp->minibuffer_on = 0;
   sp->minibuffer_temp = 0;
   sp->expand_length = DEFAULT_EXPAND_LENGTH;
@@ -293,7 +293,6 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->saved_controls = NULL;
   sp->env_anew = 0;
   sp->contrast_amp = DEFAULT_CONTRAST_AMP;
-  sp->fit_data_amps = NULL;
   sp->search_expr = NULL;
   sp->lacp = NULL;
   sp->search_proc = SCM_UNDEFINED;
@@ -301,22 +300,6 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->prompt_callback = SCM_UNDEFINED;
   sp->filter_env = default_env(sp->filter_env_xmax, 1.0);
   sp->delete_me = 0;
-
-  if (fit_data_on_open(ss)) 
-    {
-      MUS_SAMPLE_TYPE *vals;
-      int i;
-      sp->fit_data_amps = (Float *)MALLOC(sp->nchans * sizeof(Float));
-      if (hdr->type == MUS_RAW)
-	{
-	  mus_sound_set_chans(sp->fullname, hdr->chans);
-	  mus_sound_set_data_format(sp->fullname, hdr->format);
-	}
-      vals = (MUS_SAMPLE_TYPE *)CALLOC(sp->nchans * 2, sizeof(MUS_SAMPLE_TYPE));
-      mus_sound_max_amp(sp->fullname, vals);
-      for (i = 0; i < sp->nchans; i++)
-	sp->fit_data_amps[i] = MUS_SAMPLE_TO_FLOAT(vals[i * 2 + 1]);
-    }
   sp->active = 1;
   return(sp);
 }
@@ -389,11 +372,6 @@ void free_snd_info(snd_info *sp)
   sp->contrast_amp = 1.0;
   sp->delete_me = 0;
   sp->lacp = NULL;
-  if (sp->fit_data_amps)
-    {
-      FREE(sp->fit_data_amps);
-      sp->fit_data_amps = NULL;
-    }
   if (sp->hdr) sp->hdr = free_file_info(sp->hdr);
   if (sp->edited_region) clear_region_backpointer(sp);
   clear_mini_strings(sp);

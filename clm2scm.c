@@ -71,53 +71,6 @@
 #include "sndlib2scm.h"
 #include "clm2scm.h"
 
-#if (!USE_SND)
-static int to_c_int_or_else(SCM obj, int fallback, char *origin)
-{
-  /* don't want errors here about floats with non-zero fractions etc */
-  if (INTEGER_P(obj))
-    return(TO_C_INT(obj));
-  else
-    if (NUMBER_P(obj))
-      return((int)TO_C_DOUBLE_WITH_ORIGIN(obj, origin));
-  return(fallback);
-}
-
-static void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_help,
-					 char *set_name, SCM (*set_func)(), 
-					 SCM local_doc,
-					 int get_req, int get_opt, int set_req, int set_opt)
-{
-#if HAVE_GUILE
-#if HAVE_SCM_C_DEFINE
-  scm_set_object_property_x(
-    scm_permanent_object(
-      scm_c_define(get_name,
-	scm_make_procedure_with_setter(
-          gh_new_procedure("", SCM_FNC get_func, get_req, get_opt, 0),
-	  gh_new_procedure(set_name, SCM_FNC set_func, set_req, set_opt, 0)
-	  ))),
-    local_doc,
-    TO_SCM_STRING(get_help));
-#else
-  scm_set_object_property_x(
-    SCM_CDR(
-      gh_define(get_name,
-	scm_make_procedure_with_setter(gh_new_procedure("", SCM_FNC get_func, get_req, get_opt, 0),
-	  gh_new_procedure(set_name, SCM_FNC set_func, set_req, set_opt, 0)
-	  ))),
-    local_doc,
-    TO_SCM_STRING(get_help));
-#endif
-#endif
-#if HAVE_LIBREP
-  DEFINE_PROC(get_name, get_func, get_req, get_opt, 0, get_help);
-  DEFINE_PROC(set_name, set_func, set_req, set_opt, 0, get_help);
-#endif
-}
-#endif
-
-
 
 /* ---------------- keywords ---------------- */
 
@@ -294,8 +247,6 @@ static int ikeyarg (SCM key, char *caller, int n, int def)
   return(def);
 }
 
-
-static SCM local_doc;
 
 /* ---------------- AM and simple stuff ---------------- */
 
@@ -672,7 +623,7 @@ taking into account wrap-around (size = size of data), with linear interpolation
   return(scm_return_first(TO_SCM_DOUBLE(mus_array_interp(v->data, TO_C_DOUBLE(phase), len)), obj));
 }
 
-static void init_simple_stuff(void)
+static void init_simple_stuff(SCM local_doc)
 {
   define_procedure_with_setter(S_mus_srate, SCM_FNC g_srate, H_mus_srate,
 			       S_mus_set_srate, SCM_FNC g_set_srate, local_doc, 0, 0, 0, 1);
@@ -1064,7 +1015,7 @@ static SCM g_mus_bank(SCM gens, SCM amps, SCM inp, SCM inp2)
   return(TO_SCM_DOUBLE(outval));
 }
 
-static void init_generic_funcs(void)
+static void init_generic_funcs(SCM local_doc)
 {
   DEFINE_PROC(S_mus_inspect,  g_inspect, 1, 0, 0,  H_mus_inspect);
   DEFINE_PROC(S_mus_describe, g_describe, 1, 0, 0, H_mus_describe);
@@ -1164,7 +1115,7 @@ static SCM g_mus_apply(SCM arglist)
 				 TO_C_DOUBLE(SCM_CADDR(arglist)))));
 }
 
-static void init_oscil(void)
+static void init_oscil(SCM local_doc)
 {
   DEFINE_PROC(S_oscil_p,    g_oscil_p, 1, 0, 0,    H_oscil_p);
   DEFINE_PROC(S_make_oscil, g_make_oscil, 0, 4, 0, H_make_oscil);
@@ -1469,7 +1420,7 @@ static SCM g_set_feedforward(SCM obj, SCM val)
   return(TO_SCM_DOUBLE(mus_set_feedforward(TO_CLM(obj), TO_C_DOUBLE(val))));
 }
 
-static void init_dly(void)
+static void init_dly(SCM local_doc)
 {
 #if HAVE_GUILE
   EVAL_STRING("(define %delay delay)"); /* protect the original meaning */
@@ -1558,7 +1509,7 @@ static SCM g_cosines(SCM obj)
   return(TO_SCM_DOUBLE(mus_cosines(TO_CLM(obj))));
 }
 
-static void init_cosp(void)
+static void init_cosp(SCM local_doc)
 {
   DEFINE_PROC(S_make_sum_of_cosines, g_make_sum_of_cosines, 0, 6, 0, H_make_sum_of_cosines); 
   DEFINE_PROC(S_sum_of_cosines,      g_sum_of_cosines, 1, 1, 0,      H_sum_of_cosines);
@@ -1577,6 +1528,7 @@ static void init_cosp(void)
 #define S_rand_interp "rand-interp"
 #define S_rand_interp_p "rand-interp?"
 #define S_mus_set_rand_seed "mus-set-rand-seed"
+#define S_mus_rand_seed "mus-rand-seed"
 #define S_mus_random "mus-random"
 
 static SCM g_make_noi(int rand_case, SCM arg1, SCM arg2, SCM arg3, SCM arg4)
@@ -1664,17 +1616,18 @@ the built-in 'random' function returns values between 0 and its argument"
   return(TO_SCM_DOUBLE(mus_random(TO_C_DOUBLE(a))));
 }
 
+static SCM g_rand_seed(SCM a) {return(TO_SCM_UNSIGNED_LONG(mus_rand_seed()));}
 static SCM g_set_rand_seed(SCM a) 
 {
   #define H_mus_set_rand_seed "(" S_mus_set_rand_seed " val) sets the random number seed, \
 this can be used to re-run a particular random number sequence."
 
-  ASSERT_TYPE(INTEGER_P(a), a, SCM_ARGn, S_mus_set_rand_seed, "an integer");
-  mus_set_rand_seed(TO_C_INT(a)); 
+  ASSERT_TYPE(NUMBER_P(a), a, SCM_ARGn, S_mus_set_rand_seed, "an integer");
+  mus_set_rand_seed(TO_C_UNSIGNED_LONG(a)); 
   return(a);
 }
 
-static void init_noi(void)
+static void init_noi(SCM local_doc)
 {
   DEFINE_PROC(S_make_rand,        g_make_rand, 0, 4, 0,        H_make_rand);
   DEFINE_PROC(S_make_rand_interp, g_make_rand_interp, 0, 4, 0, H_make_rand_interp);
@@ -1682,8 +1635,10 @@ static void init_noi(void)
   DEFINE_PROC(S_rand_interp,      g_rand_interp, 1, 1, 0,      H_rand_interp);
   DEFINE_PROC(S_rand_p,           g_rand_p, 1, 0, 0,           H_rand_p);
   DEFINE_PROC(S_rand_interp_p,    g_rand_interp_p, 1, 0, 0,    H_rand_interp_p);
-  DEFINE_PROC(S_mus_random,            g_mus_random, 1, 0, 0,                H_mus_random);
-  DEFINE_PROC(S_mus_set_rand_seed,     g_set_rand_seed, 1, 0, 0,             H_mus_set_rand_seed);
+  DEFINE_PROC(S_mus_random,       g_mus_random, 1, 0, 0,       H_mus_random);
+
+  define_procedure_with_setter(S_mus_rand_seed, SCM_FNC g_rand_seed, H_mus_set_rand_seed,
+			       S_mus_set_rand_seed, SCM_FNC g_set_rand_seed, local_doc, 0, 0, 0, 1);
 }
 
 
@@ -1820,7 +1775,7 @@ with 'wrap-around' when gen's phase marches off the end of its table."
   return(TO_SCM_DOUBLE(mus_table_lookup(TO_CLM(obj), fm1)));
 }
 
-static void init_tbl(void)
+static void init_tbl(SCM local_doc)
 {
   DEFINE_PROC(S_table_lookup_p,     g_table_lookup_p, 1, 0, 0,     H_table_lookup_p);
   DEFINE_PROC(S_make_table_lookup,  g_make_table_lookup, 0, 6, 0,  H_make_table_lookup);
@@ -1979,7 +1934,7 @@ static SCM g_pulse_train_p(SCM obj)
   return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_pulse_train_p(TO_CLM(obj)))));
 }
 
-static void init_sw(void)
+static void init_sw(SCM local_doc)
 {
   DEFINE_PROC(S_make_sawtooth_wave, g_make_sawtooth_wave, 0, 6, 0, H_make_sawtooth_wave);
   DEFINE_PROC(S_sawtooth_wave,      g_sawtooth_wave, 1, 1, 0,      H_sawtooth_wave);
@@ -2049,7 +2004,7 @@ static SCM g_asymmetric_fm_p(SCM obj)
   return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_asymmetric_fm_p(TO_CLM(obj)))));
 }
 
-static void init_asyfm(void)
+static void init_asyfm(SCM local_doc)
 {
   DEFINE_PROC(S_make_asymmetric_fm, g_make_asymmetric_fm, 0, 8, 0, H_make_asymmetric_fm);
   DEFINE_PROC(S_asymmetric_fm,      g_asymmetric_fm, 1, 2, 0,      H_asymmetric_fm);
@@ -2336,7 +2291,7 @@ static SCM g_set_b2(SCM obj, SCM val)
   return(TO_SCM_DOUBLE(mus_set_b2(TO_CLM(obj), TO_C_DOUBLE(val))));
 }
 
-static void init_smpflt(void)
+static void init_smpflt(SCM local_doc)
 {
   DEFINE_PROC(S_make_one_zero, g_make_one_zero, 0, 4, 0, H_make_one_zero);
   DEFINE_PROC(S_one_zero,      g_one_zero, 1, 1, 0,      H_one_zero);
@@ -2461,7 +2416,7 @@ generator) gen's radius and frequency"
   return(rad);
 }
 
-static void init_formant(void)
+static void init_formant(SCM local_doc)
 {
   DEFINE_PROC(S_formant_bank, g_formant_bank, 2, 1, 0, H_formant_bank);
   DEFINE_PROC(S_formant_p,    g_formant_p, 1, 0, 0,    H_formant_p);
@@ -2589,7 +2544,7 @@ static SCM g_set_frame_ref(SCM uf1, SCM uchan, SCM val)
   return(TO_SCM_DOUBLE(mus_frame_set((mus_frame *)TO_CLM(uf1), TO_C_INT(uchan), TO_C_DOUBLE(val))));
 }
 
-static void init_frame(void)
+static void init_frame(SCM local_doc)
 {
   DEFINE_PROC(S_make_frame,     g_make_frame, 0, 0, 1,     H_make_frame);
   DEFINE_PROC(S_frame_p,        g_frame_p, 1, 0, 0,        H_frame_p);
@@ -2785,7 +2740,7 @@ giving | (a*.5 + b*.125) (a*.25 + b*1.0) |"
   return(mus_scm_to_smob(gn));
 }
 
-static void init_mixer(void)
+static void init_mixer(SCM local_doc)
 {
   DEFINE_PROC(S_make_mixer,     g_make_mixer, 0, 0, 1,     H_make_mixer);
   DEFINE_PROC(S_mixer_p,        g_mixer_p, 1, 0, 0,        H_mixer_p);
@@ -2904,7 +2859,7 @@ static SCM g_frame2buffer(SCM obj, SCM val)
 		      DONT_FREE_FRAME));
 }
 
-static void init_rblk(void)
+static void init_rblk(SCM local_doc)
 {
   DEFINE_PROC(S_make_buffer,    g_make_buffer, 0, 4, 0,    H_make_buffer);
   DEFINE_PROC(S_buffer_p,       g_buffer_p, 1, 0, 0,       H_buffer_p);
@@ -2978,7 +2933,7 @@ static SCM g_wave_train_p(SCM obj)
   return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_wave_train_p(TO_CLM(obj)))));
 }
 
-static void init_wt(void)
+static void init_wt(SCM local_doc)
 {
   DEFINE_PROC(S_make_wave_train, g_make_wave_train, 0, 6, 0, H_make_wave_train);
   DEFINE_PROC(S_wave_train,      g_wave_train, 1, 1, 0,      H_wave_train);
@@ -3158,7 +3113,7 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
   return(make_vct(npartials, wave));
 }
 
-static void init_ws(void)
+static void init_ws(SCM local_doc)
 {
   DEFINE_PROC(S_make_waveshape,      g_make_waveshape, 0, 8, 0,      H_make_waveshape);
   DEFINE_PROC(S_waveshape,           g_waveshape, 1, 2, 0,           H_waveshape);
@@ -3222,7 +3177,7 @@ returns a new sine summation synthesis generator."
   return(mus_scm_to_smob(gn));
 }
 
-static void init_sss(void)
+static void init_sss(SCM local_doc)
 {
   DEFINE_PROC(S_make_sine_summation, g_make_sine_summation, 0, 0, 1, H_make_sine_summation);
   DEFINE_PROC(S_sine_summation,      g_sine_summation, 1, 1, 0,      H_sine_summation);
@@ -3419,7 +3374,7 @@ static SCM g_mus_ycoeffs(SCM gen)
   return(SCM_BOOL_F);
 }
 
-static void init_flt(void)
+static void init_flt(SCM local_doc)
 {
   DEFINE_PROC(S_make_filter,     g_make_filter, 0, 6, 0,     H_make_filter);
   DEFINE_PROC(S_filter,          g_filter, 2, 0, 0,          H_filter);
@@ -3552,7 +3507,7 @@ static SCM g_env_interp(SCM x, SCM env1) /* "env" causes trouble in Objective-C!
   return(TO_SCM_DOUBLE(mus_env_interp(TO_C_DOUBLE(x), TO_CLM(env1))));
 }
 
-static void init_env(void)
+static void init_env(SCM local_doc)
 {
   DEFINE_PROC(S_env_p,       g_env_p, 1, 0, 0,       H_env_p);
   DEFINE_PROC(S_env,         g_env, 1, 0, 0,         H_env);
@@ -3940,7 +3895,7 @@ static SCM g_mus_set_file_buffer_size(SCM val)
 }
 
 
-static void init_io(void)
+static void init_io(SCM local_doc)
 {
   DEFINE_PROC(S_file2sample_p,    g_file2sample_p, 1, 0, 0,    H_file2sample_p);
   DEFINE_PROC(S_make_file2sample, g_make_file2sample, 1, 0, 0, H_make_file2sample);
@@ -4076,7 +4031,7 @@ static SCM g_channel(SCM obj)
   return(TO_SMALL_SCM_INT(mus_channel((mus_input *)TO_CLM(obj))));
 }
 
-static void init_rdin(void)
+static void init_rdin(SCM local_doc)
 {
   DEFINE_PROC(S_readin_p,    g_readin_p, 1, 0, 0,    H_readin_p);
   DEFINE_PROC(S_readin,      g_readin, 1, 0, 0,      H_readin);
@@ -4236,7 +4191,7 @@ static SCM g_channels(SCM obj)
   return(TO_SMALL_SCM_INT(mus_channels(TO_CLM(obj))));
 }
 
-static void init_locs(void)
+static void init_locs(SCM local_doc)
 {
   DEFINE_PROC(S_locsig_p,          g_locsig_p, 1, 0, 0,          H_locsig_p);
   DEFINE_PROC(S_locsig,            g_locsig, 3, 0, 0,            H_locsig);
@@ -4349,7 +4304,7 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
 }
 
 
-static void init_sr(void)
+static void init_sr(SCM local_doc)
 {
   DEFINE_PROC(S_clear_sincs, g_clear_sincs, 0, 0, 0, "clears out any sinc tables");
   DEFINE_PROC(S_src_p,       g_src_p, 1, 0, 0,       H_src_p);
@@ -4455,7 +4410,7 @@ jitter controls the randomness in that spacing, input can be a file pointer."
   return(mus_scm_to_smob(gn));
 }
 
-static void init_spd(void)
+static void init_spd(SCM local_doc)
 {
   DEFINE_PROC(S_granulate_p,    g_granulate_p, 1, 0, 0,    H_granulate_p);
   DEFINE_PROC(S_granulate,      g_granulate, 1, 1, 0,      H_granulate);
@@ -4558,7 +4513,7 @@ file1 and file2 writing outfile after scaling the convolution result to maxamp."
   return(SCM_BOOL_F);
 }
 
-static void init_conv(void)
+static void init_conv(SCM local_doc)
 {
   DEFINE_PROC(S_convolve_p,     g_convolve_p, 1, 0, 0,     H_convolve_p);
   DEFINE_PROC(S_convolve,       g_convolve, 1, 1, 0,       H_convolve_gen);
@@ -4925,7 +4880,7 @@ static SCM g_set_hop(SCM obj, SCM val)
 
 
 
-static void init_pv(void)
+static void init_pv(SCM local_doc)
 {
   DEFINE_PROC(S_phase_vocoder_p,    g_phase_vocoder_p, 1, 0, 0,    H_phase_vocoder_p);
   DEFINE_PROC(S_phase_vocoder,      g_phase_vocoder, 1, 1, 0,      H_phase_vocoder);
@@ -5009,6 +4964,8 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
   return(SCM_BOOL_T);
 }
 
+static SCM local_doc;
+
 void init_mus2scm_module(void)
 {
   local_doc = MAKE_PERMANENT(DOCUMENTATION);
@@ -5016,32 +4973,32 @@ void init_mus2scm_module(void)
   init_mus_module();
   init_mus_scm();
   init_keywords();
-  init_simple_stuff();
-  init_generic_funcs();
-  init_oscil();
-  init_dly();
-  init_noi();
-  init_cosp();
-  init_tbl();
-  init_sw();
-  init_asyfm();
-  init_smpflt();
-  init_wt();
-  init_rblk();
-  init_frame();
-  init_mixer();
-  init_formant();
-  init_ws();
-  init_sss();
-  init_flt();
-  init_env();
-  init_locs();
-  init_io();
-  init_rdin();
-  init_spd();
-  init_sr();
-  init_conv();
-  init_pv();
+  init_simple_stuff(local_doc);
+  init_generic_funcs(local_doc);
+  init_oscil(local_doc);
+  init_dly(local_doc);
+  init_noi(local_doc);
+  init_cosp(local_doc);
+  init_tbl(local_doc);
+  init_sw(local_doc);
+  init_asyfm(local_doc);
+  init_smpflt(local_doc);
+  init_wt(local_doc);
+  init_rblk(local_doc);
+  init_frame(local_doc);
+  init_mixer(local_doc);
+  init_formant(local_doc);
+  init_ws(local_doc);
+  init_sss(local_doc);
+  init_flt(local_doc);
+  init_env(local_doc);
+  init_locs(local_doc);
+  init_io(local_doc);
+  init_rdin(local_doc);
+  init_spd(local_doc);
+  init_sr(local_doc);
+  init_conv(local_doc);
+  init_pv(local_doc);
 
   DEFINE_PROC(S_mus_mix, g_mus_mix, 2, 5, 0, H_mus_mix);
 

@@ -158,22 +158,24 @@ static void color_file_selection_box(Widget w, snd_state *ss)
 
 /* -------- File Open Dialog -------- */
 
+static int file_dialog_read_only = 0;
+
 static void File_Open_OK_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_info *sp;
   snd_state *ss = (snd_state *)context;
   XmFileSelectionBoxCallbackStruct *cbs = (XmFileSelectionBoxCallbackStruct *) info;
-  char *fileName;
+  char *filename;
   XtUnmanageChild(w);
-  XmStringGetLtoR (cbs->value, XmFONTLIST_DEFAULT_TAG, &fileName);
+  XmStringGetLtoR (cbs->value, XmFONTLIST_DEFAULT_TAG, &filename);
   /* this can be a directory name if the user clicked 'ok' when he meant 'cancel' */
-  if (!(is_directory(fileName)))
+  if (!(is_directory(filename)))
     {
-      sp = snd_open_file(fileName, ss);
+      sp = snd_open_file(filename, ss, file_dialog_read_only);
       if (sp) select_channel(sp, 0);           /* add_sound_window (snd-xsnd.c) will report reason for error, if any */
     }
   else
-    snd_error("%s is a directory", fileName);
+    snd_error("%s is a directory", filename);
 }
 
 static void File_Open_Help_Callback (Widget w, XtPointer context, XtPointer info) 
@@ -356,13 +358,14 @@ static void just_sounds_Callback(Widget w, XtPointer context, XtPointer info)
 static Widget just_sounds_button = NULL;
 static int just_sounds_state = FALSE;
 
-void make_open_file_dialog(snd_state *ss)
+void make_open_file_dialog(snd_state *ss, int read_only)
 {
   Widget w;
   Arg args[20];
   int n;
   XmString s1;
   Widget wtmp = NULL;
+  file_dialog_read_only = read_only;
   if (!open_dialog) 
     {
       /* file selection dialog box with added "Just Sound Files" toggle button */

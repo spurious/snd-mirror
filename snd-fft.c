@@ -2388,7 +2388,7 @@ static SCM g_transform_samples(SCM snd_n, SCM chn_n)
 
 static SCM transform_samples2vct(SCM snd_n, SCM chn_n, SCM v)
 {
-  #define H_transform_samples2vct "(" S_transform_samples_vct " &optional snd chn vct-obj)\n\
+  #define H_transform_samples2vct "(" S_transform_samples2vct " &optional snd chn vct-obj)\n\
 returns a vct object (vct-obj if passed), with the current transform data from snd's channel chn"
 
   chan_info *cp;
@@ -2397,8 +2397,8 @@ returns a vct object (vct-obj if passed), with the current transform data from s
   int i, j, k, len, bins, slices;
   Float *fvals;
   vct *v1 = get_vct(v);
-  SND_ASSERT_CHAN(S_transform_samples_vct, snd_n, chn_n, 1);
-  cp = get_cp(snd_n, chn_n, S_transform_samples_vct);
+  SND_ASSERT_CHAN(S_transform_samples2vct, snd_n, chn_n, 1);
+  cp = get_cp(snd_n, chn_n, S_transform_samples2vct);
   if ((cp->ffting) && (cp->fft))
     {
       /* BACK */
@@ -2553,7 +2553,7 @@ of a moving mark:\n\
   DEFINE_PROC(S_transform_size,        g_transform_size, 0, 2, 0,      H_transform_size);
   DEFINE_PROC(S_transform_samples,     g_transform_samples, 0, 2, 0,   H_transform_samples);
   DEFINE_PROC(S_transform_sample,      g_transform_sample, 0, 4, 0,    H_transform_sample);
-  DEFINE_PROC(S_transform_samples_vct, transform_samples2vct, 0, 3, 0, H_transform_samples2vct);
+  DEFINE_PROC(S_transform_samples2vct, transform_samples2vct, 0, 3, 0, H_transform_samples2vct);
   DEFINE_PROC(S_autocorrelate,         g_autocorrelate, 1, 0, 0,       H_autocorrelate);
   DEFINE_PROC(S_add_transform,         g_add_transform, 5, 0, 0,       H_add_transform);
 

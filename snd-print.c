@@ -500,7 +500,7 @@ void print_enved(char *output, chan_info *cp, int y0)
 
 static SCM g_graph2ps(SCM filename)
 {
-  #define H_graph2ps "(" S_graph_ps " &optional filename) writes the current Snd displays to an EPS file"
+  #define H_graph2ps "(" S_graph2ps " &optional filename) writes the current Snd displays to an EPS file"
 
   char *error,*file;
   SCM result;
@@ -515,7 +515,7 @@ static SCM g_graph2ps(SCM filename)
       result = TO_SCM_STRING(error);
       FREE(error);
       ERROR(CANNOT_PRINT,
-	    SCM_LIST3(TO_SCM_STRING(S_graph_ps),
+	    SCM_LIST3(TO_SCM_STRING(S_graph2ps),
 		      TO_SCM_STRING(file),
 		      result));
     }
@@ -524,5 +524,5 @@ static SCM g_graph2ps(SCM filename)
 
 void g_init_print(SCM local_doc)
 {
-  DEFINE_PROC(S_graph_ps, g_graph2ps, 0, 1, 0, H_graph2ps);
+  DEFINE_PROC(S_graph2ps, g_graph2ps, 0, 1, 0, H_graph2ps);
 }

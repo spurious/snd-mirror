@@ -1652,11 +1652,11 @@ static SCM g_mark_sync_max(void)
   return(TO_SCM_INT(mark_sync_max()));
 }
 
-static SCM g_mark_to_sound(SCM mark_n)
+static SCM g_mark_home(SCM mark_n)
 {
-  #define H_mark_to_sound "(" S_mark_to_sound " id) returns the sound (index) and channel that hold mark id"
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(mark_n), mark_n, SCM_ARGn, S_mark_to_sound, "an integer");
-  return(iread_mark(mark_n, MARK_HOME, SCM_UNDEFINED, S_mark_to_sound));
+  #define H_mark_home "(" S_mark_home " id) returns the sound (index) and channel that hold mark id"
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(mark_n), mark_n, SCM_ARGn, S_mark_home, "an integer");
+  return(iread_mark(mark_n, MARK_HOME, SCM_UNDEFINED, S_mark_home));
 }
 
 static SCM g_find_mark(SCM samp_n, SCM snd_n, SCM chn_n) 
@@ -1969,7 +1969,7 @@ void g_init_marks(SCM local_doc)
 
   DEFINE_PROC(S_restore_marks, g_restore_marks, 4, 0, 0, "internal func");
   DEFINE_PROC(S_mark_sync_max, g_mark_sync_max, 0, 0, 0, H_mark_sync_max);
-  DEFINE_PROC(S_mark_to_sound, g_mark_to_sound, 0, 1, 0, H_mark_to_sound);
+  DEFINE_PROC(S_mark_home,     g_mark_home, 0, 1, 0,     H_mark_home);
   DEFINE_PROC(S_marks,         g_marks, 0, 3, 0,         H_marks);
   DEFINE_PROC(S_add_mark,      g_add_mark, 0, 3, 0,      H_add_mark);
   DEFINE_PROC(S_delete_mark,   g_delete_mark, 0, 1, 0,   H_delete_mark);

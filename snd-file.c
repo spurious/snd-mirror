@@ -589,20 +589,19 @@ static void greet_me(snd_state *ss, char *shortname);
 static void remember_me(snd_state *ss, char *shortname, char *fullname);
 
 
-static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select)
+static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select, int read_only)
 {
   snd_info *sp;
   char *mcf = NULL;
   int files, val;
   if (dont_open(ss, filename)) return(NULL);
-  sp = add_sound_window(mcf = mus_expand_filename(filename), ss); /* snd-xsnd.c -> make_file_info */
+  sp = add_sound_window(mcf = mus_expand_filename(filename), ss, read_only); /* snd-xsnd.c -> make_file_info */
   if (mcf) FREE(mcf);
   if (sp)
     {
       SET_SCM_VALUE(memo_sound, TO_SMALL_SCM_INT(sp->index));
       sp->write_date = file_write_date(sp->fullname);
       sp->need_update = 0;
-      if (ss->viewing) sp->read_only = 1;
       ss->active_sounds++;
       files = ss->active_sounds;
       if (files == 1) reflect_file_open_in_menu();
@@ -613,7 +612,6 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select)
     }
   map_over_separate_chans(ss, channel_open_pane, NULL);
   map_over_separate_chans(ss, channel_unlock_pane, NULL);
-  ss->viewing = 0;
   if (sp) 
     {
       if (select) select_channel(sp, 0);
@@ -632,8 +630,8 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select)
   return(sp);
 }
 
-snd_info *snd_open_file (char *filename, snd_state *ss) {return(snd_open_file_1(filename, ss, TRUE));}
-snd_info *snd_open_file_unselected (char *filename, snd_state *ss) {return(snd_open_file_1(filename, ss, FALSE));}
+snd_info *snd_open_file (char *filename, snd_state *ss, int read_only) {return(snd_open_file_1(filename, ss, TRUE, read_only));}
+snd_info *snd_open_file_unselected (char *filename, snd_state *ss, int read_only) {return(snd_open_file_1(filename, ss, FALSE, read_only));}
 
 void snd_close_file(snd_info *sp, snd_state *ss)
 {
@@ -746,7 +744,6 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   /* we've already checked that filename exists */
   hdr = make_file_info_1(filename, ss);
   sp = (snd_info *)CALLOC(1, sizeof(snd_info));
-  sp->active = 1;
   sp->nchans = mus_sound_chans(filename);
   sp->allocated_chans = sp->nchans;
   sp->chans = (chan_info **)CALLOC(sp->nchans, sizeof(chan_info *));
@@ -811,6 +808,7 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
 	   */
 	}
     }
+  sp->active = 1;
   return(sp);
 }
 
@@ -819,7 +817,7 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
   /* we can't be real smart here because the channel number may have changed and so on */
   Float *axis_data;
   int *ffts, *waves;
-  int i, j, old_chans, old_sync, old_combine, need_update;
+  int i, j, old_chans, old_sync, old_combine, need_update, read_only;
   Float duration;
   chan_info *cp;
   axis_info *ap;
@@ -830,6 +828,7 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
   old_chans = sp->nchans;
   old_sync = sp->sync;
   old_combine = sp->combining;
+  read_only = sp->read_only;
   axis_data = (Float *)CALLOC(4 * old_chans, sizeof(Float));
   ffts = (int *)CALLOC(old_chans, sizeof(int));
   waves = (int *)CALLOC(old_chans, sizeof(int));
@@ -851,7 +850,7 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
    * so we set the use-raw-defaults flag in a sort of ugly wrapper around the snd_open_file
    */
   ss->reloading_updated_file = TRUE;
-  nsp = snd_open_file(filename, ss);
+  nsp = snd_open_file(filename, ss, read_only);
   ss->reloading_updated_file = FALSE;
   /* end wrapper */
   duration = (Float)mus_sound_samples(filename) / (Float)(mus_sound_chans(filename) * mus_sound_srate(filename));
@@ -1021,7 +1020,7 @@ void view_curfiles_save(snd_state *ss, int pos)
 void view_prevfiles_select(snd_state *ss, int pos)
 {
   snd_info *sp;
-  sp = snd_open_file(prevfullnames[pos], ss);
+  sp = snd_open_file(prevfullnames[pos], ss, FALSE);
   if (sp) select_channel(sp, 0); 
 }
 
@@ -1789,7 +1788,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
       else report_in_minibuffer(sp, "%s saved as %s",
 				(save_type == FILE_SAVE_AS) ? sp->shortname : "selection",
 				str);
-      if (collision->sp) snd_open_file(fullname, ss);
+      if (collision->sp) snd_open_file(fullname, ss, FALSE);
       FREE(fullname);
       FREE(collision);
     }

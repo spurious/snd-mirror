@@ -349,32 +349,15 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
 	      ymax = TO_C_DOUBLE(LIST_REF(res, 6));
 	      ymax_set = 1;
 	    }
-	  /* also ymin/ymax for fit data eventually */
+	  /* ymin/ymax for possible fit data hooks */
 	}
     }
 
   if (dur == 0.0) gdur = .001; else gdur = dur;
   xmax = gdur;
-  if ((sp->fit_data_amps) && 
-      (fit_data_on_open(ss)))
-    {
-      if (!ymax_set) 
-	{
-	  ymax = sp->fit_data_amps[cp->chan];
-	  if (ymax == 0.0) ymax = 1.0;
-	}
-      if (!ymin_set) ymin = -ymax;
-      y0 = ymin; 
-      y1 = ymax; 
-      x0 = 0.0;
-      x1 = xmax;
-    }
-  else
-    {
-      if (x1 == 0.0) x1 = gdur;
-      if (!ymax_set) {if (y1 > 1.0) ymax = y1; else ymax = 1.0;}
-      if (!ymin_set) {if (y0 < -1.0) ymin = y0; else ymin = -1.0;}
-    }
+  if (x1 == 0.0) x1 = gdur;
+  if (!ymax_set) {if (y1 > 1.0) ymax = y1; else ymax = 1.0;}
+  if (!ymin_set) {if (y0 < -1.0) ymin = y0; else ymin = -1.0;}
   if (dur <= 0.0)
     {
       /* empty sound */

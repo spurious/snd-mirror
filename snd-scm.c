@@ -1070,15 +1070,6 @@ static SCM g_set_filter_env_order(SCM val)
   return(TO_SCM_INT(filter_env_order(state)));
 }
 
-static SCM g_fit_data_on_open(void) {return(TO_SCM_BOOLEAN(fit_data_on_open(state)));}
-static SCM g_set_fit_data_on_open(SCM val) 
-{
-  #define H_fit_data_on_open "(" S_fit_data_on_open ") -> #t if Snd should set up the initial time domain axes to show the entire sound (#f)"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_fit_data_on_open, "a boolean");
-  set_fit_data_on_open(state, TO_C_BOOLEAN_OR_T(val));
-  return(TO_SCM_BOOLEAN(fit_data_on_open(state)));
-}
-
 static SCM g_movies(void) {return(TO_SCM_BOOLEAN(movies(state)));}
 static SCM g_set_movies(SCM val) 
 {
@@ -1682,7 +1673,7 @@ static SCM g_open_sound_file(SCM g_name, SCM g_chans, SCM g_srate, SCM g_comment
 {
   #define H_open_sound_file "(" S_open_sound_file " &optional (name \"test.snd\")\n    (chans 1) (srate 22050) comment)\n\
 creates a new sound file 'name' using either 'wave' or 'next' headers and float data, returns the file descriptor for \
-subsequent " S_close_sound_file ". data can be written with " S_vct_sound_file
+subsequent " S_close_sound_file ". data can be written with " S_vct2sound_file
 
   /* assume user temp files are writing floats in native format */
   char *name = NULL, *comment = NULL;
@@ -1758,7 +1749,7 @@ static SCM g_close_sound_file(SCM g_fd, SCM g_bytes)
 
 static SCM samples2vct(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM v, SCM edpos)
 {
-  #define H_samples2vct "(" S_samples_vct " &optional (start-samp 0)\n    samps snd chn vct-obj edit-position)\n\
+  #define H_samples2vct "(" S_samples2vct " &optional (start-samp 0)\n    samps snd chn vct-obj edit-position)\n\
 returns a vct object (vct-obj if given) containing snd channel chn's data starting at start-samp for samps, \
 reading edit version edit-position (defaulting to the current version)"
 
@@ -1767,11 +1758,11 @@ reading edit version edit-position (defaulting to the current version)"
   Float *fvals;
   int i, len, beg, pos;
   vct *v1 = get_vct(v);
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_0), samp_0, SCM_ARG1, S_samples_vct, "a number");
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(samps), samps, SCM_ARG2, S_samples_vct, "a number");
-  SND_ASSERT_CHAN(S_samples_vct, snd_n, chn_n, 3);
-  cp = get_cp(snd_n, chn_n, S_samples_vct);
-  pos = to_c_edit_position(cp, edpos, S_samples_vct);
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_0), samp_0, SCM_ARG1, S_samples2vct, "a number");
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(samps), samps, SCM_ARG2, S_samples2vct, "a number");
+  SND_ASSERT_CHAN(S_samples2vct, snd_n, chn_n, 3);
+  cp = get_cp(snd_n, chn_n, S_samples2vct);
+  pos = to_c_edit_position(cp, edpos, S_samples2vct);
   beg = TO_C_INT_OR_ELSE(samp_0, 0);
   len = TO_C_INT_OR_ELSE(samps, cp->samples[pos] - beg);
   if (v1)
@@ -1851,16 +1842,16 @@ reading edit version edit-position (defaulting to the current version)"
 
 static SCM vct2soundfile(SCM g_fd, SCM obj, SCM g_nums)
 {
-  #define H_vct_sound_file "(" S_vct_sound_file " fd vct-obj samps) writes samps samples from vct-obj to the sound file controlled by fd"
+  #define H_vct2sound_file "(" S_vct2sound_file " fd vct-obj samps) writes samps samples from vct-obj to the sound file controlled by fd"
   int fd, nums, i;
   float *vals;
   vct *v;
-  ASSERT_TYPE(INTEGER_P(g_fd), g_fd, SCM_ARG1, S_vct_sound_file, "an integer");
-  ASSERT_TYPE((VCT_P(obj)), obj, SCM_ARG2, S_vct_sound_file, "a vct");
-  ASSERT_TYPE(NUMBER_P(g_nums), g_nums, SCM_ARG3, S_vct_sound_file, "a number");
+  ASSERT_TYPE(INTEGER_P(g_fd), g_fd, SCM_ARG1, S_vct2sound_file, "an integer");
+  ASSERT_TYPE((VCT_P(obj)), obj, SCM_ARG2, S_vct2sound_file, "a vct");
+  ASSERT_TYPE(NUMBER_P(g_nums), g_nums, SCM_ARG3, S_vct2sound_file, "a number");
   fd = TO_C_INT(g_fd);
   if ((fd < 0) || (fd == fileno(stdin)) || (fd == fileno(stdout)) || (fd == fileno(stderr)))
-    mus_misc_error(S_vct_sound_file, "invalid file", g_fd);
+    mus_misc_error(S_vct2sound_file, "invalid file", g_fd);
   nums = TO_C_INT_OR_ELSE(g_nums, 0);
   v = TO_VCT(obj);
   lseek(fd, 0L, SEEK_END);
@@ -3139,9 +3130,6 @@ void g_initialize_gh(snd_state *ss)
   define_procedure_with_setter(S_filter_env_order, SCM_FNC g_filter_env_order, H_filter_env_order,
 			       "set-" S_filter_env_order, SCM_FNC g_set_filter_env_order, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_fit_data_on_open, SCM_FNC g_fit_data_on_open, H_fit_data_on_open,
-			       "set-" S_fit_data_on_open, SCM_FNC g_set_fit_data_on_open, local_doc, 0, 0, 0, 1);
-
   define_procedure_with_setter(S_movies, SCM_FNC g_movies, H_movies,
 			       "set-" S_movies, SCM_FNC g_set_movies, local_doc, 0, 0, 0, 1);
 
@@ -3342,12 +3330,12 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(S_show_listener,       g_show_listener, 0, 0, 0,       H_show_listener);
   DEFINE_PROC(S_hide_listener,       g_hide_listener, 0, 0, 0,       H_hide_listener);
   DEFINE_PROC(S_activate_listener,   g_activate_listener, 0, 0, 0,   H_activate_listener);
-  DEFINE_PROC(S_equalize_panes,      g_equalize_panes, 0, 0, 0,      H_equalize_panes);
+  DEFINE_PROC(S_equalize_panes,      g_equalize_panes, 0, 1, 0,      H_equalize_panes);
   DEFINE_PROC(S_open_sound_file,     g_open_sound_file, 0, 4, 0,     H_open_sound_file);
   DEFINE_PROC(S_close_sound_file,    g_close_sound_file, 2, 0, 0,    H_close_sound_file);
-  DEFINE_PROC(S_vct_sound_file,      vct2soundfile, 3, 0, 0,         H_vct_sound_file);
+  DEFINE_PROC(S_vct2sound_file,      vct2soundfile, 3, 0, 0,         H_vct2sound_file);
   DEFINE_PROC(S_graph,               g_graph, 1, 8, 0,               H_graph);
-  DEFINE_PROC(S_samples_vct,         samples2vct, 0, 6, 0,           H_samples2vct);
+  DEFINE_PROC(S_samples2vct,         samples2vct, 0, 6, 0,           H_samples2vct);
   DEFINE_PROC(S_samples2sound_data,  samples2sound_data, 0, 7, 0,    H_samples2sound_data);
   DEFINE_PROC(S_start_progress_report, g_start_progress_report, 0, 1, 0, H_start_progress_report);
   DEFINE_PROC(S_finish_progress_report, g_finish_progress_report, 0, 1, 0, H_finish_progress_report);
@@ -3428,11 +3416,6 @@ If more than one hook function, results are concatenated. If none, the current c
 #endif
 
 #if HAVE_GUILE
-  EVAL_STRING("(define unbind-key\
-                 (lambda (key state)\
-                   \"(unbind-key key state) undoes the effect of a prior bind-key call\"\
-                   (bind-key key state #f)))");
-
   EVAL_STRING("(defmacro defvar (a b)\
                  `(begin\
                     (define , a , b)\
@@ -3449,6 +3432,12 @@ If more than one hook function, results are concatenated. If none, the current c
   EVAL_STRING("(define call-apply apply-controls)");
   EVAL_STRING("(define (open-alternate-sound file) (close-sound) (open-sound file))");
   EVAL_STRING("(define normalize-view equalize-panes)");
+  EVAL_STRING("(define save-control-panel save-controls)");
+  EVAL_STRING("(define restore-control-panel restore-controls)");
+  EVAL_STRING("(define reset-control-panel reset-controls)");
+  EVAL_STRING("(define mark->sound mark-home)");
+  EVAL_STRING("(define (mix-sound-index m) (car (mix-home m)))");
+  EVAL_STRING("(define (mix-sound-channel m) (cadr (mix-home m)))");
 
   /* from ice-9/r4rs.scm but with output to snd listener */
   EVAL_STRING("(define snd-last-file-loaded #f)");

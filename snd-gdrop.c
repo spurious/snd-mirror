@@ -20,7 +20,7 @@ static void drag_data_received (GtkWidget *widget, GdkDragContext *context, gint
 					SCM_LIST1(TO_SCM_STRING((char *)(data->data))),
 					"drop")))))
 	{
-	  sp = snd_open_file((char *)(data->data), get_global_state());
+	  sp = snd_open_file((char *)(data->data), get_global_state(), FALSE);
 	  if (sp) select_channel(sp, 0);
 	}
       gtk_drag_finish (context, TRUE, FALSE, time);

@@ -3249,7 +3249,7 @@ void finish_recording(snd_state *ss, recorder_info *rp)
     {
       if ((sp = find_sound(ss, rp->output_file)))
 	snd_update(ss, sp);
-      else snd_open_file(rp->output_file, ss);
+      else snd_open_file(rp->output_file, ss, FALSE);
     }
 }
 

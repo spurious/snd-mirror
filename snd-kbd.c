@@ -168,18 +168,19 @@ static void execute_named_macro(chan_info *cp, char *name, int count)
     }
 }
 
-typedef struct {int key; int state; int args; SCM func;} key_entry;
+typedef struct {int key; int state; int args; SCM func; int extended;} key_entry;
 static key_entry *user_keymap = NULL;
 static int keymap_size = 0;
 static int keymap_top = 0;
 
-static int in_user_keymap(int key, int state)
+static int in_user_keymap(int key, int state, int extended)
 {
   int i;
   if (keymap_top == 0) return(-1);
   for (i = 0; i < keymap_top; i++)
     if ((user_keymap[i].key == key) && 
 	(user_keymap[i].state == state) && 
+	(user_keymap[i].extended == extended) && 
 	(BOUND_P(user_keymap[i].func)))
       return(i);
   return(-1);
@@ -187,14 +188,16 @@ static int in_user_keymap(int key, int state)
 
 void save_user_key_bindings(FILE *fd)
 {
+#if 0
   int i;
+  /* TODO: save key bindings currently is a no-op */
   char binder[64];
   SCM con;
   for (i = 0; i < keymap_top; i++)
     if (BOUND_P(user_keymap[i].func))
       {
 	sprintf(binder,
-		"(bind-key (char->integer #\\%c) %d ",
+		"(bind-key (char->integer #\\%c) %d %s)",
 		(unsigned char)(user_keymap[i].key),
 		user_keymap[i].state);
 	con = TO_SCM_STRING(binder);
@@ -202,25 +205,28 @@ void save_user_key_bindings(FILE *fd)
 		g_print_1(user_keymap[i].func,
 			  __FUNCTION__));
       }
+#endif
 }
 
-static SCM g_key_binding(SCM key, SCM state)
+static SCM g_key_binding(SCM key, SCM state, SCM extended)
 {
-  #define H_key_binding "(" S_key_binding " key state) -> function bound to this key"
+  #define H_key_binding "(" S_key_binding " key state extended) -> function bound to this key"
   int i;
   ASSERT_TYPE(INTEGER_P(key), key, SCM_ARG1, S_key_binding, "an integer");
   ASSERT_TYPE(INTEGER_P(state), state, SCM_ARG2, S_key_binding, "an integer");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(extended), extended, SCM_ARG3, S_key_binding, "a boolean");
   i = in_user_keymap(TO_SMALL_C_INT(key),
-		     TO_SMALL_C_INT(state));
+		     TO_SMALL_C_INT(state),
+		     (TRUE_P(extended)) ? 1 : 0);
   if (i >= 0) 
     return(user_keymap[i].func);
   return(SCM_UNDEFINED);
 }
 
-static void set_keymap_entry(int key, int state, int args, SCM func)
+static void set_keymap_entry(int key, int state, int args, SCM func, int extended)
 {
   int i;
-  i = in_user_keymap(key, state);
+  i = in_user_keymap(key, state, extended);
   if (i == -1)
     {
       if (keymap_size == keymap_top)
@@ -239,11 +245,13 @@ static void set_keymap_entry(int key, int state, int args, SCM func)
 		  user_keymap[i].key = 0; 
 		  user_keymap[i].state = 0; 
 		  user_keymap[i].func = SCM_UNDEFINED;
+		  user_keymap[i].extended = 0;
 		}
 	    }
 	}
       user_keymap[keymap_top].key = key;
       user_keymap[keymap_top].state = state;
+      user_keymap[keymap_top].extended = extended;
       i = keymap_top;
       keymap_top++;
     }
@@ -684,7 +692,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	    {
 	      /* don't free(str) locally in this switch statement without setting it to null as well */
 	    case INPUT_FILING:
-	      nsp = snd_open_file(str, ss); /* will post error if any */
+	      nsp = snd_open_file(str, ss, FALSE); /* will post error if any */
 	      if (nsp) 
 		{
 		  select_channel(nsp, 0);
@@ -1030,7 +1038,6 @@ int keyboard_command (chan_info *cp, int keysym, int state)
   
   /* should we check snd_keypad_Decimal as well as snd_K_period? -- is this assuming USA float syntax? */
   /*   (similarly snd_keypad_0...9) */
-  /* TODO: user-defined extended command? */
 
   if ((selection_creation_in_progress()) &&
       ((extended_mode) || (stop_selecting(keysym, state))))
@@ -1065,7 +1072,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
       sp->macroing = count;
       return(KEYBOARD_NO_ACTION);
     }
-  hashloc = in_user_keymap(keysym, state);
+  hashloc = in_user_keymap(keysym, state, extended_mode);
   if (hashloc != -1)                       /* found user-defined key */
     return(call_user_keymap(hashloc, count));
   if (sp->minibuffer_temp) clear_minibuffer(sp);
@@ -1869,10 +1876,11 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 }
 
 
-static SCM g_bind_key(SCM key, SCM state, SCM code)
+static SCM g_bind_key(SCM key, SCM state, SCM code, SCM extended)
 {
-  #define H_bind_key "(" S_bind_key " key modifiers func (ignore-prefix #f)) causes 'key' (an integer) \
-when typed with 'modifiers' (1:shift, 4:control, 8:meta) to invoke 'func', a function of \
+  #define H_bind_key "(" S_bind_key " key modifiers func (ignore-prefix #f) (extended #f))\n\
+causes 'key' (an integer) \
+when typed with 'modifiers' (1:shift, 4:control, 8:meta) (and C-x if extended) to invoke 'func', a function of \
 no arguments.  If ignore-prefix is #t, preceding C-u arguments are not handled by Snd itself. \
 The function should return one of the cursor choices (e.g. cursor-no-action)."
 
@@ -1886,7 +1894,8 @@ The function should return one of the cursor choices (e.g. cursor-no-action)."
     set_keymap_entry(TO_C_INT(key), 
 		     TO_C_INT(state), 
 		     0,
-		     SCM_UNDEFINED);
+		     SCM_UNDEFINED,
+		     0);
   else 
     {
       arity_list = ARITY(code);
@@ -1903,9 +1912,16 @@ The function should return one of the cursor choices (e.g. cursor-no-action)."
       set_keymap_entry(TO_C_INT(key), 
 		       TO_C_INT(state), 
 		       args, 
-		       code);
+		       code,
+		       (TRUE_P(extended)) ? 1 : 0);
     }
   return(SCM_BOOL_T);
+}
+
+static SCM g_unbind_key(SCM key, SCM state, SCM extended)
+{
+  #define H_unbind_key "(" S_unbind_key " key state &optional extended) undoes the effect of a prior bind-key call."
+  return(g_bind_key(key, state, SCM_BOOL_F, extended));
 }
 
 static SCM g_key(SCM kbd, SCM buckybits, SCM snd, SCM chn)
@@ -2040,8 +2056,9 @@ void g_init_kbd(SCM local_doc)
   DEFINE_PROC(S_forward_graph,           g_forward_graph, 0, 3, 0,           H_forward_graph);
   DEFINE_PROC(S_backward_graph,          g_backward_graph, 0, 3, 0,          H_backward_graph);
 
-  DEFINE_PROC(S_key_binding,             g_key_binding, 2, 0, 0,             H_key_binding);
-  DEFINE_PROC(S_bind_key,                g_bind_key, 3, 0, 0,                H_bind_key);
+  DEFINE_PROC(S_key_binding,             g_key_binding, 2, 1, 0,             H_key_binding);
+  DEFINE_PROC(S_bind_key,                g_bind_key, 3, 1, 0,                H_bind_key);
+  DEFINE_PROC(S_unbind_key,              g_unbind_key, 2, 1, 0,              H_unbind_key);
   DEFINE_PROC(S_key,                     g_key, 2, 2, 0,                     H_key);
   DEFINE_PROC(S_save_macros,             g_save_macros, 0, 0, 0,             H_save_macros);
 

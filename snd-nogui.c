@@ -327,7 +327,7 @@ void reflect_recorder_mixer_gain(int ind, Float val) {}
 void reflect_recorder_out_amp(int ind, Float val) {}
 void reflect_recorder_in_amp(int in, int out, Float val) {}
 
-snd_info *add_sound_window (char *filename, snd_state *ss)
+snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
 {
   snd_info *sp;
   file_info *hdr;
@@ -347,7 +347,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
       nchans = 1; /* ?? */
     }
   snd_slot = find_free_sound_slot(ss, nchans); /* expands sound list if needed */
-  ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot], ss, filename, hdr, snd_slot);
+  ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot], ss, filename, hdr, snd_slot, read_only);
   sp = ss->sounds[snd_slot];
   for (i = 0; i < nchans; i++) sp->chans[i] = make_chan_info(sp->chans[i], i, sp, ss);
   add_sound_data(filename, sp, ss, WITHOUT_GRAPH);

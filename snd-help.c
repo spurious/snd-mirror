@@ -267,8 +267,20 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+27-May:  replaced mix-sound-channel and mix-sound-index by mix-home.\n\
+26-May:  removed fit-data-on-open; here's a replacement:\n\
+             (define (fit-data snd chn dur)\n\
+               (let ((mx (maxamp snd chn)))\n\
+                 (list 0.0 dur (- mx) mx \"time\" (- mx) mx)))\n\
+             (add-hook! initial-graph-hook fit-data #t) ; #t to make sure env restorers get to function first\n\
+         added 'extended' arg to bind-key et al so C-x keys can be bound.\n\
+         example of zero-crossing base C-p, C-n, and C-k in extsnd.html (bind-key).\n\
+         save-control-panel renamed save-controls, similarly for reset-controls and restore-controls.\n\
+         mark->sound renamed mark-home (the arrow is out of place here).\n\
+         added sample-reader-home.\n\
 25-May:  removed open-alternate-sound -- is exactly the same as close-sound + open-sound.\n\
          removed normalize-on-open (use open-hook and equalize-panes).\n\
+             (add-hook! after-open-hook (lambda (snd) (equalize-panes)))\n\
          renamed normalize-view to equalize-panes.\n\
 24-May:  removed line-size, prefix-arg (it's now an optional arg to the key function).\n\
          ignore-prefix arg to bind-key removed, Snd no longer handles prefix itself.\n\
@@ -284,11 +296,6 @@ void news_help(snd_state *ss)
          removed raw-srate, raw-chans, raw-format, and use-raw-defaults (use open-raw-sound-hook instead), erase-rectangle.\n\
          mouse-enter|leave-text-hook now works in Gtk version as well as Motif.\n\
 20-May:  snd 4.14.\n\
-9-May:   support for GSL 0.7+\n\
-7-May:   added edit-position arg to various play functions, save-sound-as,\n\
-           scan/map/find funcs, frames and maxamps.\n\
-         \"vector synthesis\" in examp.scm\n\
-         Guile 1.5\n\
 ",
 NULL);
   FREE(info);
@@ -1209,7 +1216,7 @@ all refer to the same thing.\n\
   " S_free_sample_reader "(rd)\n\
   " S_graph "             (data xlabel x0 x1 snd chn)\n\
   " S_graphing "          (snd chn)\n\
-  " S_graph_ps "         ()\n\
+  " S_graph2ps "         ()\n\
   " S_header_type "       (snd)\n\
   " S_help_dialog "       (subject help)\n\
   " S_hide_listener "     ()\n\
@@ -1234,9 +1241,9 @@ all refer to the same thing.\n\
   " S_make_region_sample_reader "(start snd chn dir)\n\
   " S_make_sample_reader "(start snd chn dir)\n\
   " S_make_vct "          (len)\n\
+  " S_mark_home "         (mark)\n\
   " S_mark_name "         (mark)\n\
   " S_mark_sample "       (mark)\n\
-  " S_mark_to_sound "     (mark)\n\
   " S_mark_sync "         (mark)\n\
   " S_mark_sync_max "     ()\n\
   " S_marks "             (snd chn pos)\n\
@@ -1251,14 +1258,13 @@ all refer to the same thing.\n\
   " S_mix_amp_env "       (mix chan)\n\
   " S_mix_anchor "        (mix)\n\
   " S_mix_chans "         (mix)\n\
+  " S_mix_home "          (mix)\n\
   " S_mix_length "        (mix)\n\
   " S_mix_locked "        (mix)\n\
   " S_mix_name "          (mix)\n\
   " S_mix_position "      (mix)\n\
   " S_mix_region "        (samp reg snd chn)\n\
   " S_mix_selection "     (samp snd chn)\n\
-  " S_mix_sound_channel " (mix)\n\
-  " S_mix_sound_index "   (mix)\n\
   " S_mix_speed "         (mix)\n\
   " S_mix_track "         (mix)\n\
   " S_mix_vct "           (vct beg chans snd chn)\n\
@@ -1295,13 +1301,14 @@ all refer to the same thing.\n\
   " S_region_maxamp "     (reg)\n\
   " S_region_sample "     (samp reg chn)\n\
   " S_region_samples "    (samp samps reg chn)\n\
-  " S_region_samples_vct "(samp samps reg chn)\n\
+  " S_region_samples2vct "(samp samps reg chn)\n\
   " S_region_srate "      (reg)\n\
   " S_regions "           ()\n\
   " S_regionQ "           (id)\n\
   " S_remove_idler "      (id)\n\
   " S_report_in_minibuffer "(msg snd)\n\
-  " S_restore_control_panel "(snd)\n\
+  " S_reset_controls "    (snd)\n\
+  " S_restore_controls "  (snd)\n\
   " S_reverb_feedback "   (snd)\n\
   " S_reverb_length "     (snd)\n\
   " S_reverb_lowpass "    (snd)\n\
@@ -1313,10 +1320,11 @@ all refer to the same thing.\n\
   " S_right_sample "      (snd chn)\n\
   " S_sample "            (samp snd chn)\n\
   " S_sample_reader_at_endQ "(rd)\n\
+  " S_sample_reader_home "(rd)\n\
   " S_sample_readerQ "    (rd)\n\
   " S_samples "           (samp samps snd chn)\n\
-  " S_samples_vct "      (samp samps snd chn)\n\
-  " S_save_control_panel "(snd)\n\
+  " S_samples2vct "      (samp samps snd chn)\n\
+  " S_save_controls "     (snd)\n\
   " S_save_edit_history " (file snd chn)\n\
   " S_save_listener "     (filename)\n\
   " S_save_macros "       ()\n\
@@ -1378,7 +1386,7 @@ all refer to the same thing.\n\
   " S_transform_dialog "  ()\n\
   " S_transform_sample "  (bin slice snd chn)\n\
   " S_transform_samples " (snd chn()\n\
-  " S_transform_samples_vct " (snd chn)\n\
+  " S_transform_samples2vct " (snd chn)\n\
   " S_transform_size "    (snd chn)\n\
   " S_unbind_key "        (key state)\n\
   " S_undo "              (edits snd chn)\n\
@@ -1403,8 +1411,8 @@ all refer to the same thing.\n\
   " S_vct_ref "           (vobj pos)\n\
   " S_vct_scaleB "        (vobj scl)\n\
   " S_vct_setB "          (vobj pos val)\n\
-  " S_vct_samples "      (samp samps data snd chn)\n\
-  " S_vct_sound_file "   (fd vobj vals)\n\
+  " S_vct2samples "      (samp samps data snd chn)\n\
+  " S_vct2sound_file "   (fd vobj vals)\n\
   " S_vcts_doB "          (obj ... proc)\n\
   " S_vcts_mapB "         (obj ... proc)\n\
   " S_vector2vct "       (vect)\n\

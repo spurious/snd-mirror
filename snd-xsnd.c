@@ -1223,9 +1223,9 @@ static int cant_write(char *name)
 #endif
 }
 
-static void save_control_panel_Callback(Widget w, XtPointer context, XtPointer info) {save_control_panel((snd_info *)context);}
-static void restore_control_panel_Callback(Widget w, XtPointer context, XtPointer info) {restore_control_panel((snd_info *)context);}
-static void reset_control_panel_Callback(Widget w, XtPointer context, XtPointer info) {reset_control_panel((snd_info *)context);}
+static void save_control_panel_Callback(Widget w, XtPointer context, XtPointer info) {save_controls((snd_info *)context);}
+static void restore_control_panel_Callback(Widget w, XtPointer context, XtPointer info) {restore_controls((snd_info *)context);}
+static void reset_control_panel_Callback(Widget w, XtPointer context, XtPointer info) {reset_controls((snd_info *)context);}
 
 /* bitmaps for the playback direction arrow */
 static unsigned char speed_r_bits1[] = {
@@ -1367,7 +1367,7 @@ static void Close_Sound_Dialog(Widget w, XtPointer context, XtPointer info)
   if (sp) snd_close_file(sp, sp->state);
 } 
 
-snd_info *add_sound_window (char *filename, snd_state *ss)
+snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
 {  
   snd_info *sp = NULL, *osp;
   file_info *hdr = NULL;
@@ -1417,7 +1417,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
     }
   else old_chans = 0;
   make_widgets = (ss->sounds[snd_slot] == NULL);
-  ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot], ss, filename, hdr, snd_slot);
+  ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot], ss, filename, hdr, snd_slot, read_only);
   sp = ss->sounds[snd_slot];
   sp->inuse = 1;
   sx = sp->sgx;
@@ -2497,7 +2497,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
       XtUnmanageChild(w_snd_combine(sp));
     }
   add_sound_data(filename, sp, ss, WITH_GRAPH);
-  snd_file_lock_icon(sp, (ss->viewing || (cant_write(sp->fullname)))); /* sp->read_only not set yet */
+  snd_file_lock_icon(sp, (sp->read_only || (cant_write(sp->fullname))));
   if (ss->pending_change)
     report_in_minibuffer(sp, "(translated %s)", old_name);
   if (!(ss->using_schemes)) map_over_children(SOUND_PANE(ss), color_sashes, (void *)ss);
@@ -2523,7 +2523,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
 	XtVaSetValues(sw[W_ctrls],
 		      XmNpaneMaximum, LOTSA_PIXELS,
 		      NULL); /* locked above to force correct initial setup */
-      reset_control_panel(sp);
+      reset_controls(sp);
       /* end if control-panel */
     }
   else 
@@ -2595,14 +2595,15 @@ void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp)
   int *wid;
   chan_info *cp = NULL;
   if ((!ss) || (!sp) || (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)) return;
+  /* TODO: add hook for initial layout? */
   if (sound_style(ss) != SOUNDS_HORIZONTAL)
     {
       /* several attempts to be fancy here just made a mess of the display */
       XtVaGetValues(channel_main_pane(ncp), XmNheight, &chan_y, NULL);
-      if (chan_y < (Dimension)(ss->channel_min_height>>1)) 
+      if (chan_y < (Dimension)(ss->channel_min_height >> 1)) 
 	{
 	  wid = (int *)CALLOC(1, sizeof(int));
-	  (*wid) = (ss->channel_min_height>>1) + 10;
+	  (*wid) = (ss->channel_min_height >> 1) + 10;
 	  channel_lock_pane(ncp, (void *)wid);
 	  channel_open_pane(ncp, NULL);
 	  channel_unlock_pane(ncp, NULL);

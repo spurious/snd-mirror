@@ -232,7 +232,6 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (dac_size(ss) != DEFAULT_DAC_SIZE) pss_sd(fd, S_dac_size, dac_size(ss));
   if (movies(ss) != DEFAULT_MOVIES) pss_ss(fd, S_movies, b2s(movies(ss)));
   if (selection_creates_region(ss) != DEFAULT_SELECTION_CREATES_REGION) pss_ss(fd, S_selection_creates_region, b2s(selection_creates_region(ss)));
-  if (fit_data_on_open(ss) != DEFAULT_FIT_DATA_ON_OPEN) pss_ss(fd, S_fit_data_on_open, b2s(fit_data_on_open(ss)));
   if (save_state_on_exit(ss) != DEFAULT_SAVE_STATE_ON_EXIT) pss_ss(fd, S_save_state_on_exit, b2s(save_state_on_exit(ss)));
   if (filter_env_order(ss) != DEFAULT_FILTER_ENV_ORDER) pss_sd(fd, S_filter_env_order, filter_env_order(ss));
   if (filter_env_in_hz(ss) != DEFAULT_FILTER_ENV_IN_HZ) pss_ss(fd, S_filter_env_in_hz, b2s(filter_env_in_hz(ss)));
@@ -610,7 +609,7 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 			      startup_filename = copy_string(argname);
 			      if (dont_start(ss, startup_filename)) snd_exit(1);
 			    }
-			  snd_open_file_unselected(argname, ss);
+			  snd_open_file_unselected(argname, ss, FALSE);
 			}
 		    }
 		}

@@ -27,7 +27,7 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 					SCM_LIST1(TO_SCM_STRING(str)),
 					"drop")))))
 	{
-	  sp = snd_open_file(str, (snd_state *)context);
+	  sp = snd_open_file(str, (snd_state *)context, FALSE);
 	  if (sp) select_channel(sp, 0);
 	  /* value is the file name if dropped icon from filer */
 	}

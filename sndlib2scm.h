@@ -34,4 +34,12 @@ int sound_data_p(SCM obj);
 SCM make_sound_data(int chans, int frames);
 void mus_misc_error(const char *caller, char *msg, SCM val);
 
+#if (!USE_SND)
+  int to_c_int_or_else(SCM obj, int fallback, char *origin);
+  void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_help,
+	 			    char *set_name, SCM (*set_func)(), 
+				    SCM local_doc,
+				    int get_req, int get_opt, int set_req, int set_opt);
+#endif
+
 #endif

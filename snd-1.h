@@ -240,7 +240,6 @@ typedef struct snd__info {
   Float contrast_amp;
   time_t write_date;          /* check for change behind back while editing */
   int need_update;            /* current in-core data does not match actual file (someone wrote it behind our back) */
-  Float *fit_data_amps;
   int combining;              /* 0:separate panes per chan, 1:all chans in one pane */
   int allocated_chans;        /* snd_info widget tree is never pruned -- can only grow */
   int cursor_follows_play;
@@ -261,8 +260,7 @@ typedef struct snd__info {
 typedef struct snd__state {
   int selected_sound, selected_mix;         /* NO_SELECTION = none selected = which sound is currently receiving user's attention */
   int active_sounds;
-  int viewing;
-  int ctrls_height, open_ctrls_height, channel_min_height;
+  Latus ctrls_height, open_ctrls_height, channel_min_height;
   snd_info **sounds;
   char *search_expr, *startup_title;
   SCM search_proc;
@@ -307,7 +305,7 @@ typedef struct snd__state {
   int Fft_Size, Fft_Window, Fft_Style, Zero_Pad, Ask_Before_Overwrite, Wavo_Hop, Wavo, Wavo_Trace;
   Float Fft_Beta, Reverb_Decay;
   Float Color_Scale, Color_Cutoff;
-  int Color_Inverted, Speed_Style, Movies, Normalize_Fft, Show_Mix_Waveforms, Mix_Waveform_Height, Fit_Data_On_Open;
+  int Color_Inverted, Speed_Style, Movies, Normalize_Fft, Show_Mix_Waveforms, Mix_Waveform_Height;
   int Speed_Tones, Sinc_Width, X_Axis_Style, Zoom_Focus_Style, Save_State_On_Exit, Graph_Style;
   int Auto_Resize, Auto_Update, Max_Regions, Max_Fft_Peaks;
   int Audio_Output_Device, Audio_Input_Device, Show_Backtrace;
@@ -604,7 +602,7 @@ void g_init_marks(SCM local_doc);
 
 lisp_grf *free_lisp_info(chan_info *cp);
 chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *state);
-snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_info *hdr, int snd_slot);
+snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_info *hdr, int snd_slot, int read_only);
 void free_snd_info(snd_info *sp);
 snd_info *completely_free_snd_info(snd_info *sp);
 int map_over_sounds (snd_state *ss, int (*func)(snd_info *, void *), void *userptr);
@@ -1044,9 +1042,9 @@ void add_sound_data(char *filename, snd_info *sp, snd_state *ss, int graphed);
 Float srate_changed(Float ival, char *srcbuf, int style, int tones);
 void sp_name_click(snd_info *sp);
 void free_controls(snd_info *sp);
-void save_control_panel(snd_info *sp);
-void restore_control_panel(snd_info *sp);
-void reset_control_panel(snd_info *sp);
+void save_controls(snd_info *sp);
+void restore_controls(snd_info *sp);
+void reset_controls(snd_info *sp);
 void stop_applying(snd_info *sp);
 void *make_apply_state(void *xp);
 void remove_apply(snd_info *sp);
@@ -1083,8 +1081,8 @@ dir *free_dir (dir *dp);
 void init_sound_file_extensions(void);
 dir *find_sound_files_in_dir (char *name);
 dir *filter_sound_files(dir *dp, char *pattern);
-snd_info *snd_open_file (char *filename, snd_state *ss);
-snd_info *snd_open_file_unselected (char *filename, snd_state *ss);
+snd_info *snd_open_file (char *filename, snd_state *ss, int read_only);
+snd_info *snd_open_file_unselected (char *filename, snd_state *ss, int read_only);
 void snd_close_file(snd_info *sp, snd_state *ss);
 int copy_file(char *oldname, char *newname);
 int move_file(char *oldfile, char *newfile);

@@ -3374,29 +3374,17 @@ static SCM g_mixes(SCM snd, SCM chn)
   return(res1);
 }
 
-static SCM g_mix_sound_index(SCM n) 
+static SCM g_mix_home(SCM n) 
 {
-  #define H_mix_sound_index "(" S_mix_sound_index " id) -> index of sound affected by mix"
+  #define H_mix_home "(" S_mix_home " id) -> list of index of sound and channel number affected by mix"
   mix_info *md; 
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_sound_index, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_home, "an integer");
   md = md_from_id(TO_C_INT_OR_ELSE(n, 0));
   if (md == NULL)
-    return(snd_no_such_mix_error(S_mix_sound_index, n));
-  return(TO_SCM_INT(((md->cp)->sound)->index));
+    return(snd_no_such_mix_error(S_mix_home, n));
+  return(SCM_LIST2(TO_SCM_INT(((md->cp)->sound)->index),
+		   TO_SCM_INT(((md->cp)->chan))));
 }
-
-static SCM g_mix_sound_channel(SCM n) 
-{
-  #define H_mix_sound_channel "(" S_mix_sound_channel " id) -> channel affected by mix"
-  mix_info *md; 
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_sound_channel, "an integer");
-  md = md_from_id(TO_C_INT_OR_ELSE(n, 0));
-  if (md == NULL)
-    return(snd_no_such_mix_error(S_mix_sound_channel, n));
-  return(TO_SCM_INT((md->cp)->chan));
-}
-
-/* these last two refer to the mix output location, not the underlying mix (input) data */
 
 static SCM g_mix_amp(SCM n, SCM uchan) 
 {
@@ -4211,13 +4199,12 @@ void g_init_mix(SCM local_doc)
 			       local_doc, 0, 2, 3, 0);
 
 
-  DEFINE_PROC(S_mix_chans,         g_mix_chans, 0, 1, 0,         H_mix_chans);
-  DEFINE_PROC(S_mixQ,              g_mixQ, 0, 1, 0,              H_mixQ);
-  DEFINE_PROC(S_mix_sound_channel, g_mix_sound_channel, 0, 1, 0, H_mix_sound_channel);
-  DEFINE_PROC(S_mix_sound_index,   g_mix_sound_index, 0, 1, 0,   H_mix_sound_index);
-  DEFINE_PROC(S_mixes,             g_mixes, 0, 2, 0,             H_mixes);
-  DEFINE_PROC(S_mix_sound,         g_mix_sound, 2, 0, 0,         H_mix_sound);
-  DEFINE_PROC(S_select_mix,        g_select_mix, 1, 0, 0,        H_select_mix);
+  DEFINE_PROC(S_mix_chans,    g_mix_chans, 0, 1, 0,    H_mix_chans);
+  DEFINE_PROC(S_mixQ,         g_mixQ, 0, 1, 0,         H_mixQ);
+  DEFINE_PROC(S_mix_home,     g_mix_home, 0, 1, 0,     H_mix_home);
+  DEFINE_PROC(S_mixes,        g_mixes, 0, 2, 0,        H_mixes);
+  DEFINE_PROC(S_mix_sound,    g_mix_sound, 2, 0, 0,    H_mix_sound);
+  DEFINE_PROC(S_select_mix,   g_select_mix, 1, 0, 0,   H_select_mix);
 
   define_procedure_with_setter(S_selected_mix, SCM_FNC g_selected_mix, H_selected_mix,
 			       "set-" S_selected_mix, SCM_FNC g_select_mix,

@@ -26,7 +26,7 @@ snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_f
 			  chan, newname, strerror(errno),
 			  __FILE__, __LINE__, __FUNCTION__);
 	      FREE(buf);
-	      sp = snd_open_file(newname, ss);
+	      sp = snd_open_file(newname, ss, FALSE);
 	      return(sp);
 	    }
 	}
@@ -810,7 +810,7 @@ void free_controls(snd_info *sp)
     }
 }
 
-void save_control_panel(snd_info *sp) 
+void save_controls(snd_info *sp) 
 {
   ctrl_state *cs;
   cs = (ctrl_state *)(sp->saved_controls);
@@ -840,7 +840,7 @@ void save_control_panel(snd_info *sp)
   else cs->direction = 1;
 }
 
-void restore_control_panel(snd_info *sp) 
+void restore_controls(snd_info *sp) 
 {
   ctrl_state *cs;
   cs = (ctrl_state *)(sp->saved_controls);
@@ -880,7 +880,7 @@ void restore_control_panel(snd_info *sp)
   set_snd_filter_order(sp, cs->filter_order);
 }
 
-void reset_control_panel(snd_info *sp) 
+void reset_controls(snd_info *sp) 
 {
   toggle_expand_button(sp, DEFAULT_EXPANDING);
   toggle_contrast_button(sp, DEFAULT_CONTRASTING);
@@ -1248,7 +1248,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	}
     }
   unlock_apply(ss, sp);
-  reset_control_panel(sp); /* i.e. clear it */
+  reset_controls(sp); /* i.e. clear it */
   sp->applying = 0;
   sgx = sp->sgx;
   if (sgx->apply_in_progress) sgx->apply_in_progress = 0;
@@ -1400,9 +1400,9 @@ static SCM g_bomb(SCM snd, SCM on)
 }
 
 enum {SP_SYNC, SP_UNITE, SP_READ_ONLY, SP_NCHANS, SP_CONTRASTING, SP_EXPANDING, SP_REVERBING, SP_FILTERING, SP_FILTER_ORDER,
-      SP_SRATE, SP_DATA_FORMAT, SP_DATA_LOCATION, SP_HEADER_TYPE, SP_CONTROL_PANEL_SAVE, SP_CONTROL_PANEL_RESTORE, SP_SELECTED_CHANNEL,
+      SP_SRATE, SP_DATA_FORMAT, SP_DATA_LOCATION, SP_HEADER_TYPE, SP_SAVE_CONTROLS, SP_RESTORE_CONTROLS, SP_SELECTED_CHANNEL,
       SP_COMMENT, SP_FILE_NAME, SP_SHORT_FILE_NAME, SP_CLOSE, SP_UPDATE, SP_SAVE, SP_CURSOR_FOLLOWS_PLAY, SP_SHOW_CONTROLS,
-      SP_FILTER_DBING, SP_SPEED_TONES, SP_SPEED_STYLE, SP_CONTROL_PANEL_RESET
+      SP_FILTER_DBING, SP_SPEED_TONES, SP_SPEED_STYLE, SP_RESET_CONTROLS
 };
 
 static SCM sp_iread(SCM snd_n, int fld, char *caller)
@@ -1429,33 +1429,33 @@ static SCM sp_iread(SCM snd_n, int fld, char *caller)
     return(snd_no_such_sound_error(caller, snd_n));
   switch (fld)
     {
-    case SP_SYNC:                  return(TO_SCM_INT(sp->sync));                 break;
-    case SP_UNITE:                 return(TO_SCM_INT(sp->combining));               break;
-    case SP_READ_ONLY:             return(TO_SCM_BOOLEAN(sp->read_only));           break;
-    case SP_NCHANS:                return(TO_SCM_INT(sp->nchans));                  break;
-    case SP_EXPANDING:             return(TO_SCM_BOOLEAN(sp->expanding));           break;
-    case SP_CONTRASTING:           return(TO_SCM_BOOLEAN(sp->contrasting));         break;
-    case SP_REVERBING:             return(TO_SCM_BOOLEAN(sp->reverbing));           break;
-    case SP_FILTERING:             return(TO_SCM_BOOLEAN(sp->filtering));           break;
-    case SP_FILTER_DBING:          return(TO_SCM_BOOLEAN(sp->filter_dBing));        break;
-    case SP_FILTER_ORDER:          return(TO_SCM_INT(sp->filter_order));            break;
-    case SP_SRATE:                 return(TO_SCM_INT((sp->hdr)->srate));            break;
-    case SP_DATA_FORMAT:           return(TO_SCM_INT((sp->hdr)->format));           break;
-    case SP_HEADER_TYPE:           return(TO_SCM_INT((sp->hdr)->type));             break;
-    case SP_DATA_LOCATION:         return(TO_SCM_INT((sp->hdr)->data_location));    break;
-    case SP_CONTROL_PANEL_SAVE:    save_control_panel(sp);                          break;
-    case SP_CONTROL_PANEL_RESTORE: restore_control_panel(sp);                       break;
-    case SP_CONTROL_PANEL_RESET:   reset_control_panel(sp);                         break;
-    case SP_SELECTED_CHANNEL:      return(TO_SCM_INT(sp->selected_channel));        break;
-    case SP_FILE_NAME:             return(TO_SCM_STRING(sp->fullname));             break;
-    case SP_SHORT_FILE_NAME:       return(TO_SCM_STRING(sp->shortname));            break;
-    case SP_CLOSE:                 snd_close_file(sp, sp->state);                   break;
-    case SP_SAVE:                  save_edits(sp, NULL);                            break;
-    case SP_UPDATE:                snd_update(sp->state, sp);                       break;
-    case SP_CURSOR_FOLLOWS_PLAY:   return(TO_SCM_BOOLEAN(sp->cursor_follows_play)); break;
-    case SP_SHOW_CONTROLS:         return(TO_SCM_BOOLEAN(control_panel_open(sp)));  break;
-    case SP_SPEED_TONES:           return(TO_SCM_INT(sp->speed_tones));             break;
-    case SP_SPEED_STYLE:           return(TO_SCM_INT(sp->speed_style));             break;
+    case SP_SYNC:                return(TO_SCM_INT(sp->sync));                    break;
+    case SP_UNITE:               return(TO_SCM_INT(sp->combining));               break;
+    case SP_READ_ONLY:           return(TO_SCM_BOOLEAN(sp->read_only));           break;
+    case SP_NCHANS:              return(TO_SCM_INT(sp->nchans));                  break;
+    case SP_EXPANDING:           return(TO_SCM_BOOLEAN(sp->expanding));           break;
+    case SP_CONTRASTING:         return(TO_SCM_BOOLEAN(sp->contrasting));         break;
+    case SP_REVERBING:           return(TO_SCM_BOOLEAN(sp->reverbing));           break;
+    case SP_FILTERING:           return(TO_SCM_BOOLEAN(sp->filtering));           break;
+    case SP_FILTER_DBING:        return(TO_SCM_BOOLEAN(sp->filter_dBing));        break;
+    case SP_FILTER_ORDER:        return(TO_SCM_INT(sp->filter_order));            break;
+    case SP_SRATE:               return(TO_SCM_INT((sp->hdr)->srate));            break;
+    case SP_DATA_FORMAT:         return(TO_SCM_INT((sp->hdr)->format));           break;
+    case SP_HEADER_TYPE:         return(TO_SCM_INT((sp->hdr)->type));             break;
+    case SP_DATA_LOCATION:       return(TO_SCM_INT((sp->hdr)->data_location));    break;
+    case SP_SAVE_CONTROLS:       save_controls(sp);                               break;
+    case SP_RESTORE_CONTROLS:    restore_controls(sp);                            break;
+    case SP_RESET_CONTROLS:      reset_controls(sp);                              break;
+    case SP_SELECTED_CHANNEL:    return(TO_SCM_INT(sp->selected_channel));        break;
+    case SP_FILE_NAME:           return(TO_SCM_STRING(sp->fullname));             break;
+    case SP_SHORT_FILE_NAME:     return(TO_SCM_STRING(sp->shortname));            break;
+    case SP_CLOSE:               snd_close_file(sp, sp->state);                   break;
+    case SP_SAVE:                save_edits(sp, NULL);                            break;
+    case SP_UPDATE:              snd_update(sp->state, sp);                       break;
+    case SP_CURSOR_FOLLOWS_PLAY: return(TO_SCM_BOOLEAN(sp->cursor_follows_play)); break;
+    case SP_SHOW_CONTROLS:       return(TO_SCM_BOOLEAN(control_panel_open(sp)));  break;
+    case SP_SPEED_TONES:         return(TO_SCM_INT(sp->speed_tones));             break;
+    case SP_SPEED_STYLE:         return(TO_SCM_INT(sp->speed_style));             break;
     case SP_COMMENT:
       str = mus_sound_comment(sp->fullname);
       res = TO_SCM_STRING(str);
@@ -1838,22 +1838,22 @@ static SCM g_set_show_controls(SCM on, SCM snd_n)
 
 WITH_REVERSED_BOOLEAN_ARGS(g_set_show_controls_reversed, g_set_show_controls)
 
-static SCM g_save_control_panel(SCM snd_n) 
+static SCM g_save_controls(SCM snd_n) 
 {
-  #define H_save_control_panel "(" S_save_control_panel " &optional snd) saves the current control panel settings for subsequent " S_restore_control_panel
-  return(sp_iread(snd_n, SP_CONTROL_PANEL_SAVE, S_save_control_panel));
+  #define H_save_controls "(" S_save_controls " &optional snd) saves the current control panel settings for subsequent " S_restore_controls
+  return(sp_iread(snd_n, SP_SAVE_CONTROLS, S_save_controls));
 }
 
-static SCM g_restore_control_panel(SCM snd_n) 
+static SCM g_restore_controls(SCM snd_n) 
 {
-  #define H_restore_control_panel "(" S_restore_control_panel " &optional snd) restores the previously saved control panel settings"
-  return(sp_iread(snd_n, SP_CONTROL_PANEL_RESTORE, S_restore_control_panel));
+  #define H_restore_controls "(" S_restore_controls " &optional snd) restores the previously saved control panel settings"
+  return(sp_iread(snd_n, SP_RESTORE_CONTROLS, S_restore_controls));
 }
 
-static SCM g_reset_control_panel(SCM snd_n) 
+static SCM g_reset_controls(SCM snd_n) 
 {
-  #define H_reset_control_panel "(" S_reset_control_panel " &optional snd) resets (clears) the control panel settings"
-  return(sp_iread(snd_n, SP_CONTROL_PANEL_RESET, S_reset_control_panel));
+  #define H_reset_controls "(" S_reset_controls " &optional snd) resets (clears) the control panel settings"
+  return(sp_iread(snd_n, SP_RESET_CONTROLS, S_reset_controls));
 }
 
 static SCM g_selected_channel(SCM snd_n) 
@@ -1964,7 +1964,7 @@ opens filename (as if opened from File:Open menu option), and returns the new fi
       if (fname) FREE(fname);
       return(snd_no_such_file_error(S_open_sound, filename));
     }
-  sp = snd_open_file(fname, ss);
+  sp = snd_open_file(fname, ss, FALSE);
   if (fname) FREE(fname);
   if (sp) return(TO_SCM_INT(sp->index));
   return(SCM_BOOL_F);
@@ -1978,30 +1978,27 @@ opens filename assuming the data matches the attributes indicated unless the fil
   char *fname = NULL;
   snd_state *ss;
   snd_info *sp;
-  int os, oc, ofr, ofit;
+  int os, oc, ofr;
   ASSERT_TYPE(STRING_P(filename), filename, SCM_ARG1, S_open_raw_sound, "a string");
   ASSERT_TYPE(NUMBER_P(srate), srate, SCM_ARG2, S_open_raw_sound, "a number");
   ASSERT_TYPE(INTEGER_P(chans), chans, SCM_ARG3, S_open_raw_sound, "an integer");
   ASSERT_TYPE(INTEGER_P(format), format, SCM_ARG4, S_open_raw_sound, "an integer");
-  ss = get_global_state();
-  mus_header_raw_defaults(&os, &oc, &ofr);
-  ofit = fit_data_on_open(ss);
-  mus_header_set_raw_defaults(TO_C_INT_OR_ELSE(srate, os),
-			      TO_C_INT_OR_ELSE(chans, oc),
-			      TO_C_INT_OR_ELSE(format, ofr));
   fname = mus_expand_filename(TO_C_STRING(filename));
   if (!(mus_file_probe(fname)))
     {
       if (fname) FREE(fname);
       return(snd_no_such_file_error(S_open_raw_sound, filename));
     }
-  set_fit_data_on_open(ss, 1);
+  ss = get_global_state();
+  mus_header_raw_defaults(&os, &oc, &ofr);
+  mus_header_set_raw_defaults(TO_C_INT_OR_ELSE(srate, os),
+			      TO_C_INT_OR_ELSE(chans, oc),
+			      TO_C_INT_OR_ELSE(format, ofr));
   ss->reloading_updated_file = TRUE;
-  sp = snd_open_file(fname, ss);
+  sp = snd_open_file(fname, ss, FALSE);
   ss->reloading_updated_file = FALSE;
   /* snd_open_file -> snd_open_file_1 -> add_sound_window -> make_file_info -> raw_data_dialog_to_file_info */
   /*   so here if hooked, we'd need to save the current hook, make it return the current args, open, then restore */
-  set_fit_data_on_open(ss, ofit);
   if (fname) FREE(fname);
   if (sp) return(TO_SCM_INT(sp->index));
   return(SCM_BOOL_F);
@@ -2024,10 +2021,8 @@ You can subsequently make it writable by (set! (read-only) #f)."
     }
   if (fname)
     {
-      ss->viewing = 1;
-      sp = snd_open_file(fname, ss);
+      sp = snd_open_file(fname, ss, TRUE);
       FREE(fname);
-      ss->viewing = 0;
       if (sp) return(TO_SCM_INT(sp->index));
     }
   return(SCM_BOOL_F);
@@ -2173,7 +2168,7 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
 		  write(chan, buf, size);
 		  close(chan);
 		  FREE(buf);
-		  sp = snd_open_file(str, ss);
+		  sp = snd_open_file(str, ss, FALSE);
 		}
 	      else 
 		{
@@ -2789,9 +2784,9 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
 
   DEFINE_PROC(S_file_name,             g_file_name, 0, 1, 0,             H_file_name);
   DEFINE_PROC(S_short_file_name,       g_short_file_name, 0, 1, 0,       H_short_file_name);
-  DEFINE_PROC(S_save_control_panel,    g_save_control_panel, 0, 1, 0,    H_save_control_panel);
-  DEFINE_PROC(S_restore_control_panel, g_restore_control_panel, 0, 1, 0, H_restore_control_panel);
-  DEFINE_PROC(S_reset_control_panel,   g_reset_control_panel, 0, 1, 0,   H_reset_control_panel);
+  DEFINE_PROC(S_save_controls,         g_save_controls, 0, 1, 0,         H_save_controls);
+  DEFINE_PROC(S_restore_controls,      g_restore_controls, 0, 1, 0,      H_restore_controls);
+  DEFINE_PROC(S_reset_controls,        g_reset_controls, 0, 1, 0,        H_reset_controls);
 
   define_procedure_with_setter(S_selected_sound, SCM_FNC g_selected_sound, H_selected_sound,
 			       "set-" S_selected_sound, SCM_FNC g_select_sound, local_doc, 0, 0, 0, 1);

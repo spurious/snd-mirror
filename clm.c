@@ -1699,7 +1699,8 @@ static unsigned long randx = 1;
 #define INVERSE_MAX_RAND  0.0000610351563
 #define INVERSE_MAX_RAND2 0.000030517579
 
-void mus_set_rand_seed(int val) {randx = val;}
+void mus_set_rand_seed(unsigned long val) {randx = val;}
+unsigned long mus_rand_seed(void) {return(randx);}
 
 Float mus_random(Float amp) /* -amp to amp as Float */
 {

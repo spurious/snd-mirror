@@ -107,7 +107,7 @@ S_vct2sound_data
 static int sndlib_num_commands(void) {return(NUM_SNDLIB_NAMES);}
 static const char **sndlib_commands(void) {return(sndlib_names);}
 
-#define NUM_COMMANDS 547
+#define NUM_COMMANDS 546
 
 static char *snd_commands[NUM_COMMANDS] ={
   S_abort, S_activate_listener, S_add_mark, S_add_player, S_add_sound_file_extension, 
@@ -151,11 +151,11 @@ static char *snd_commands[NUM_COMMANDS] ={
   S_filter_dBing, S_filter_env, S_filter_env_in_hz, S_filter_env_order,
   S_filter_order, S_filter_selection, S_filter_sound, S_filter_waveform_color, S_filtering,
   S_find, S_find_mark, S_find_sound, S_finish_progress_report,
-  S_fit_data_on_open, S_focus_active, S_focus_left, S_focus_middle,
+  S_focus_active, S_focus_left, S_focus_middle,
   S_focus_right, S_forward_graph, S_forward_mark, S_forward_mix, S_forward_sample, S_fourier_transform, S_frames,
   S_free_mix_sample_reader, S_free_sample_reader, S_free_track_sample_reader,
 
-  S_graph, S_graph_ps, S_graph_color, S_graph_cursor,
+  S_graph, S_graph2ps, S_graph_color, S_graph_cursor,
   S_graph_dots, S_graph_dots_and_lines, S_graph_filled, S_graph_hook,
   S_graph_lines, S_graph_lollipops, S_graph_style, S_graphing, S_graphs_horizontal,
 
@@ -176,10 +176,10 @@ static char *snd_commands[NUM_COMMANDS] ={
   S_map_across_all_chans, S_map_across_chans, S_map_across_sound_chans, S_map_all_chans, S_map_chan, S_map_chans, S_map_sound_chans,
   S_mark_color, S_mark_drag_hook, S_mark_name, S_mark_sample, S_mark_sync, S_mark_sync_max, S_markQ, S_marks,
   S_max_fft_peaks, S_max_regions, S_max_sounds, S_maxamp, S_memo_sound, S_menu_hook, S_min_dB, S_minibuffer_history_length, S_mix,
-  S_mix_amp, S_mix_amp_changed_hook, S_mix_amp_env, S_mix_anchor, S_mix_chans, S_mix_color,
+  S_mix_amp, S_mix_amp_changed_hook, S_mix_amp_env, S_mix_anchor, S_mix_chans, S_mix_color, S_mix_home,
   S_mix_length, S_mix_locked, S_mix_name, S_mix_panel, S_mix_position, S_mix_position_changed_hook,
-  S_mix_region, S_mix_sample_readerQ, S_mix_selection, S_mix_sound, S_mix_sound_channel, 
-  S_mix_sound_index, S_mix_speed, S_mix_speed_changed_hook,
+  S_mix_region, S_mix_sample_readerQ, S_mix_selection, S_mix_sound, 
+  S_mix_speed, S_mix_speed_changed_hook,
   S_mix_tag_height, S_mix_tag_width, S_mix_tag_y, S_mix_track,
   S_mix_vct, S_mix_waveform_height, S_mixQ, S_mixes,
   S_mouse_drag_hook, S_mouse_press_hook, S_mouse_release_hook, S_movies, S_multichannel_mix_hook, S_mus_error_hook,
@@ -201,14 +201,14 @@ static char *snd_commands[NUM_COMMANDS] ={
   S_recorder_max_duration, S_recorder_out_amp, S_recorder_out_chans,
   S_recorder_out_format, S_recorder_srate, S_recorder_trigger, S_redo, 
   S_region_chans, S_region_dialog, S_region_id, S_region_length,
-  S_region_maxamp, S_region_sample, S_region_samples, S_region_samples_vct,
+  S_region_maxamp, S_region_sample, S_region_samples, S_region_samples2vct,
   S_region_srate, S_regionQ, S_regions,
-  S_remove_from_menu, S_report_in_minibuffer, S_restore_control_panel,
+  S_remove_from_menu, S_report_in_minibuffer, S_reset_controls, S_restore_controls,
   S_restore_marks, S_restore_region, S_reverb_decay, S_reverb_feedback, S_reverb_funcs, S_reverb_length, S_reverb_lowpass, S_reverb_scale,
   S_reverbing, S_reverse_selection, S_reverse_sound, S_revert_sound, S_right_sample,
 
-  S_sample, S_sample_reader_at_endQ, S_sample_readerQ, S_samples, S_samples2sound_data, S_samples_vct, S_sash_color,
-  S_save_control_panel, S_save_dir, S_save_edit_history, S_save_envelopes, S_save_hook,
+  S_sample, S_sample_reader_at_endQ, S_sample_readerQ, S_samples, S_samples2sound_data, S_samples2vct, S_sash_color,
+  S_save_controls, S_save_dir, S_save_edit_history, S_save_envelopes, S_save_hook,
   S_save_listener, S_save_macros, S_save_marks, S_save_options,
   S_save_region, S_save_selection, S_save_sound, S_save_sound_as, S_save_state, S_save_state_file,
   S_save_state_on_exit, S_scale_by, S_scale_selection_by, S_scale_selection_to, S_scale_to,
@@ -232,13 +232,13 @@ static char *snd_commands[NUM_COMMANDS] ={
 
   S_temp_dir, S_temp_filenames, S_temp_to_selection, S_temp_to_sound, S_temps_to_selection, S_temps_to_sound, S_text_focus_color,
   S_tiny_font, S_track_sample_readerQ,
-  S_transform_dialog, S_transform_sample, S_transform_samples, S_transform_samples_vct, 
+  S_transform_dialog, S_transform_sample, S_transform_samples, S_transform_samples2vct, 
   S_transform_size, S_transform_type, S_trap_segfault,
 
   S_unbind_key, S_undo, S_undo_hook, S_uniting, S_update_fft, S_update_graph, S_update_lisp_graph, 
   S_update_sound, S_use_sinc_interp,
 
-  S_vct2list, S_vct_samples, S_vct_sound_file, S_vct_addB, S_vct_copy, S_vct_doB, S_vct_fillB, S_vct_length, S_vct_mapB, S_vct_moveB,
+  S_vct2list, S_vct2samples, S_vct2sound_file, S_vct_addB, S_vct_copy, S_vct_doB, S_vct_fillB, S_vct_length, S_vct_mapB, S_vct_moveB,
   S_vct_multiplyB, S_vct_offsetB, S_vct_peak, S_vct_ref, S_vct_scaleB, S_vct_setB, S_vct_subtractB, S_vct_p, S_vcts_doB, S_vcts_mapB,
   S_verbose_cursor, S_view_sound, S_vu_font, S_vu_font_size, S_vu_size,
 

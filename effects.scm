@@ -144,12 +144,12 @@
 
 (define (reverberate)
   "reverberate adds reverberation scaled by reverb-amount"
-  (save-control-panel)
-  (reset-control-panel)
+  (save-controls)
+  (reset-controls)
   (set! (reverbing) #t)
   (set! (reverb-scale) reverb-amount)
   (apply-controls)
-  (restore-control-panel))
+  (restore-controls))
 
 (add-to-menu effects-menu reverb-label reverberate)
 
@@ -166,14 +166,14 @@
 
 (define (intensify)
   (let ((peak (maxamp)))
-    (save-control-panel)
-    (reset-control-panel)
+    (save-controls)
+    (reset-controls)
     (set! (contrasting) #t)
     (set! (contrast) contrast-amount)
     (set! (contrast-amp) (/ 1.0 peak))
     (set! (amp) peak)
     (apply-controls)
-    (restore-control-panel)))
+    (restore-controls)))
 
 (add-to-menu effects-menu contrast-label intensify)
 
@@ -462,8 +462,8 @@
 (define expsrc-label "expsrc")
 
 (define (cp-expsrc)
-  (save-control-panel)
-  (reset-control-panel)
+  (save-controls)
+  (reset-controls)
   (set! (speed) pitch-scale)
   (let ((new-time (* pitch-scale time-scale)))
     (if (not (= new-time 1.0))
@@ -471,7 +471,7 @@
 	  (set! (expanding) #t)
 	  (set! (expand) new-time))))
   (apply-controls)
-  (restore-control-panel))
+  (restore-controls))
 	    
 (add-to-menu effects-menu expsrc-label cp-expsrc)
 

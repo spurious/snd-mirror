@@ -84,6 +84,7 @@
 #define TO_SMALL_SCM_INT(a)   SCM_MAKINUM(a)
 #define TO_SMALL_C_INT(a)     ((int)(SCM_INUM(a)))
 #define TO_C_UNSIGNED_LONG(a) scm_num2ulong(a, 0, __FUNCTION__)
+#define TO_SCM_UNSIGNED_LONG(a) scm_ulong2num(a)
 #define TO_SCM_STRING(a)      scm_makfrom0str(a)
 #define TO_NEW_C_STRING(a)    gh_scm2newstr(a, NULL)
 #define TO_SCM_BOOLEAN(a)     ((a) ? SCM_BOOL_T : SCM_BOOL_F)
