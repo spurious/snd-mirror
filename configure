@@ -873,7 +873,7 @@ Optional Packages:
   --with-motif		  use libXm to build Snd
   --with-static-motif	  use libXm.a to build Snd
   --with-modules	  use if sndlib uses modules
-  --with-editres         include editres in xm
+  --with-editres	  include editres in xm
   --with-float-samples	  use floats as the internal sample respresentation
   --with-sample-width=N   use N bits of samples
   --with-motif-prefix=PFX where Motif is installed
@@ -884,7 +884,7 @@ Optional Packages:
   --with-snd-as-widget	  make Snd a loadable widget, not a standalone program
   --with-ladspa	  	  include support for LADSPA plugins
   --with-x                use the X Window System
-  --with-shared-sndlib  	  try to load libsndlib.so
+  --with-shared-sndlib	  try to load libsndlib.so
 
 Some influential environment variables:
   CC          C compiler command

@@ -10147,8 +10147,15 @@ EDITS: 5
 	    (IF (equal? gen gold) (snd-display ";src eqaul? ~A ~A" gen gold))))
 	
 	(let ((var (catch #t (lambda () (make-src :width -1)) (lambda args args))))
-	(IF (not (eq? (car var) 'mus-error))
-	    (snd-display ";make-src bad width: ~A" var)))
+	  (IF (not (eq? (car var) 'mus-error))
+	      (snd-display ";make-src bad width: ~A" var)))
+
+	(let ((s1 (make-src (lambda (y) 1.0) 2.0)))
+	  (src s1 25.0) ; try to tickle segfault
+	  (src s1 25.0)
+	  (src s1 125.0)
+	  (src s1 -25.0)
+	  (src s1 -125.0))
 
       (let ((gen (make-granulate :expansion 2.0))
 	    (v0 (make-vct 1000))

@@ -61,7 +61,7 @@ AC_ARG_WITH(html,	[  --with-html		  include the XmHTML or mozilla browser librar
 AC_ARG_WITH(motif,	[  --with-motif		  use libXm to build Snd])
 AC_ARG_WITH(static-motif,[  --with-static-motif	  use libXm.a to build Snd])
 AC_ARG_WITH(modules,    [  --with-modules	  use if sndlib uses modules])
-AC_ARG_WITH(editres,    [  --with-editres         include editres in xm])
+AC_ARG_WITH(editres,    [  --with-editres	  include editres in xm])
 
 if test "$with_doubles" = yes; then
   AC_DEFINE(Float,double)
@@ -1025,7 +1025,7 @@ fi
 SNDLIB_FILES="SNDLIB_O_FILES"
 SNDLIB_LIB=""
 SNDLIB_PREFIX=""
-AC_ARG_WITH(shared-sndlib,[  --with-shared-sndlib  	  try to load libsndlib.so])
+AC_ARG_WITH(shared-sndlib,[  --with-shared-sndlib	  try to load libsndlib.so])
 if test "$with_shared_sndlib" = yes; then
   AC_PATH_PROG(SNDLIB_CONFIG, sndlib-config, no)
   if test "$SNDLIB_CONFIG" = "no" ; then

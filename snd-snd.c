@@ -2321,8 +2321,8 @@ static XEN g_set_channel_style(XEN style, XEN snd)
   snd_state *ss;
   snd_info *sp;
   int new_style = CHANNELS_SEPARATE;
-  #define H_channel_style "(" S_channel_style " &optional snd) -> how multichannel sounds layout the channels \
-default is channels-separate, other values are channels-combined and channels-superimposed. \
+  #define H_channel_style "(" S_channel_style " &optional snd) -> how multichannel sounds layout the channels. \
+Default is channels-separate, other values are channels-combined and channels-superimposed. \
 As a global (if the 'snd' arg is omitted), it is the default setting for each sound's 'unite' button."
 
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(style), style, XEN_ARG_1, "set! " S_channel_style, "an integer or boolean"); 

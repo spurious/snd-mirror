@@ -1205,7 +1205,7 @@ void syncb(snd_info *sp, int on)
   if (!(IS_PLAYER(sp)))
     {
       set_sync_color(sp);
-      XmToggleButtonSetState(SYNC_BUTTON(sp), (Boolean)((on == 0) ? FALSE : TRUE), FALSE);
+      XmToggleButtonSetState(SYNC_BUTTON(sp), (Boolean)on, FALSE);
     }
 }
 

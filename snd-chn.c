@@ -3476,8 +3476,8 @@ static void propagate_wf_state(snd_info *sp)
 	  cp = sp->chans[i];
 	  cp->graph_time_p = w;
 	  cp->graph_transform_p = f;
-	  set_toggle_button(channel_f(cp), (f) ? TRUE : FALSE, FALSE, (void *)cp);
-	  set_toggle_button(channel_w(cp), (w) ? TRUE : FALSE, FALSE, (void *)cp);
+	  set_toggle_button(channel_f(cp), f, FALSE, (void *)cp);
+	  set_toggle_button(channel_w(cp), w, FALSE, (void *)cp);
 	}
       for_each_sound_chan(sp, update_graph);
     }
@@ -3504,9 +3504,9 @@ void f_button_callback(chan_info *cp, int on, int with_control)
 		{
 		  ncp->graph_transform_p = on;
 #if USE_GTK
-		  set_toggle_button(channel_f(ncp), (on) ? TRUE : FALSE, TRUE, (void *)cp);
+		  set_toggle_button(channel_f(ncp), on, TRUE, (void *)cp);
 #else
-		  set_toggle_button(channel_f(ncp), (on) ? TRUE : FALSE, FALSE, (void *)cp);
+		  set_toggle_button(channel_f(ncp), on, FALSE, (void *)cp);
 #endif
 		  update_graph(ncp);
 		}
@@ -3537,9 +3537,9 @@ void w_button_callback(chan_info *cp, int on, int with_control)
 		{
 		  ncp->graph_time_p = on;
 #if USE_GTK
-		  set_toggle_button(channel_w(ncp), (on) ? TRUE : FALSE, TRUE, (void *)cp);
+		  set_toggle_button(channel_w(ncp), on, TRUE, (void *)cp);
 #else
-		  set_toggle_button(channel_w(ncp), (on) ? TRUE : FALSE, FALSE, (void *)cp);
+		  set_toggle_button(channel_w(ncp), on, FALSE, (void *)cp);
 #endif
 		  update_graph(ncp);
 		}
@@ -4998,7 +4998,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_window_beta_reversed, g_set_fft_win
 
 static XEN g_spectro_cutoff(XEN snd, XEN chn) 
 {
-  #define H_spectro_cutoff "(" S_spectro_cutoff " *optional (snd #t) (chn #t)) -> amount of frequency shown in spectra (1.0)"
+  #define H_spectro_cutoff "(" S_spectro_cutoff " *optional (snd #t) (chn #t)) -> max frequency shown in spectra (1.0)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SPECTRO_CUTOFF, S_spectro_cutoff));
   return(C_TO_XEN_DOUBLE(spectro_cutoff(get_global_state())));
@@ -5512,7 +5512,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_size_reversed, g_set_transfor
 
 static XEN g_transform_graph_type(XEN snd, XEN chn)
 {
-  #define H_transform_graph_type "(" S_transform_graph_type " (snd #t) (chn #t)) -> normal-fft, sonogram, or spectrogram"
+  #define H_transform_graph_type "(" S_transform_graph_type " (snd #t) (chn #t)) can be graph-once, graph-as-sonogram, or graph-as-spectrogram."
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_TRANSFORM_GRAPH_TYPE, S_transform_graph_type));
   return(C_TO_XEN_INT(transform_graph_type(get_global_state())));
@@ -5538,7 +5538,13 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_graph_type_reversed, g_set_tr
 
 static XEN g_fft_window(XEN snd, XEN chn)
 {
-  #define H_fft_window "(" S_fft_window " (snd #t) (chn #t)) -> current fft data window choice (e.g. blackman2-window)"
+  #define H_fft_window "(" S_fft_window " (snd #t) (chn #t)) -> current fft data window choice (e.g. blackman2-window).  The \
+choices are: rectangular-window, hann(ing)-window, welch-window, parzen-window, \
+bartlett-window, hamming-window, blackman2-window, blackman3-window, \
+blackman4-window, exponential-window, riemann-window, kaiser-window, \
+cauchy-window, poisson-window, gaussian-window, tukey-window, \
+dolph-chebyshev-window (if GSL is loaded)"
+
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_FFT_WINDOW, S_fft_window));
   return(C_TO_XEN_INT(fft_window(get_global_state())));
@@ -5564,7 +5570,10 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_window_reversed, g_set_fft_window)
 
 static XEN g_transform_type(XEN snd, XEN chn)
 {
-  #define H_transform_type "(" S_transform_type " (snd #t) (chn #t)) -> transform type, e.g. fourier-transform"
+  #define H_transform_type "(" S_transform_type " (snd #t) (chn #t)) -> transform type; can be one of fourier-transform, \
+wavelet-transform, haar-transform, autocorrelation, walsh-transform, hadamard-transform, cepstrum, or an index corresponding \
+to an added transform."
+
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_TRANSFORM_TYPE, S_transform_type));
   return(C_TO_XEN_INT(transform_type(get_global_state())));
@@ -5779,7 +5788,10 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_dot_size_reversed, g_set_dot_size)
 
 static XEN g_x_axis_style(XEN snd, XEN chn)
 {
-  #define H_x_axis_style "(" S_x_axis_style " (snd #t) (chn #t)) -> labelling of time domain x axis (" S_x_axis_in_seconds ")"
+  #define H_x_axis_style "(" S_x_axis_style " (snd #t) (chn #t)) \
+The x axis labelling of the time domain waveform can be in seconds (x-axis-in-seconds), in samples (x-axis-in-samples), expressed as a \
+       percentage of the overall duration (x-axis-as-percentage), or as a beat number (x-axis-in-beats)."
+
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_X_AXIS_STYLE, S_x_axis_style));
   return(C_TO_XEN_INT(x_axis_style(get_global_state())));
@@ -5828,7 +5840,10 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_beats_per_minute_reversed, g_set_beats_
 
 static XEN g_show_axes(XEN snd, XEN chn)
 {
-  #define H_show_axes "(" S_show_axes "(snd #t) (chn #t)) -> show-all-axes if Snd should display axes"
+  #define H_show_axes "(" S_show_axes "(snd #t) (chn #t)) \
+If show-all-axes, display x and y axes; if show-x-axis, just one (bottom) axis is displayed. \
+The other choice is show-no-axes."
+
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SHOW_AXES, S_show_axes));
   return(C_TO_XEN_INT(show_axes(get_global_state())));
@@ -5926,7 +5941,10 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_right_sample_reversed, g_set_right_sample)
 
 static XEN g_channel_properties(XEN snd_n, XEN chn_n) 
 {
-  #define H_channel_properties "(" S_channel_properties " &optional snd chn) -> property list of chn"
+  #define H_channel_properties "(" S_channel_properties " &optional snd chn). \
+A property list associated with the given channel. It is set to '() at the time a sound is opened. \
+The accessor channel-property is provided in extensions.scm."
+
   return(channel_get(snd_n, chn_n, CP_PROPERTIES, S_channel_properties));
 }
 

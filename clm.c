@@ -5649,19 +5649,34 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
   sr *srp = (sr *)srptr;
   Float sum = 0.0, x, zf, srx, factor;
   int fsx, lim, i, k, loc;
-  int xi, xs, int_ok;
+  int xi, xs, int_ok = FALSE;
   lim = srp->lim;
   srx = srp->incr + sr_change;
   if (srp->x >= 1.0)
     {
       fsx = (int)(srp->x);
+      srp->x -= fsx;
       /* realign data, reset srp->x */
+      if (fsx > lim)
+	{
+	  /* if sr_change is so extreme that the new index falls outside the data table, we need to
+	   *   read forward until we reach the new data bounds
+	   */
+	  for (i = lim; i < fsx; i++)
+	    {
+	      if (input)
+		(*input)(srp->environ, (srx >= 0.0) ? 1 : -1);
+	      else (*(srp->feeder))(srp->environ, (srx >= 0.0) ? 1 : -1);
+	    }
+	  fsx = lim;
+	}
 #if (!HAVE_MEMMOVE)
       for (i = fsx, loc = 0; i < lim; i++, loc++) 
 	srp->data[loc] = srp->data[i];
 #else
       loc = lim - fsx;
-      memmove((void *)(srp->data), (void *)(srp->data + fsx), sizeof(Float) * loc);
+      if (loc > 0)
+	memmove((void *)(srp->data), (void *)(srp->data + fsx), sizeof(Float) * loc);
 #endif
       for (i = loc; i < lim; i++) 
 	{
@@ -5669,7 +5684,6 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
 	    srp->data[i] = (*input)(srp->environ, (srx >= 0.0) ? 1 : -1);
 	  else srp->data[i] = (*(srp->feeder))(srp->environ, (srx >= 0.0) ? 1 : -1);
 	}
-      srp->x -= fsx;
     }
   /* if (srx == 0.0) srx = 0.01; */ /* can't decide about this ... */
   if (srx < 0.0) srx = -srx;
@@ -5677,6 +5691,7 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
   if (srx > 1.0) 
     {
       factor = 1.0 / srx;
+      /* this is not exact since we're sampling the sinc and so on, but it's close over a wide range */
       zf = factor * (Float)SRC_SINC_DENSITY; 
       xi = (int)zf;
       int_ok = ((zf - xi) < .001);

@@ -412,7 +412,7 @@ void syncb(snd_info *sp, int on)
   if (!(IS_PLAYER(sp)))
     {
       set_sync_color(sp);
-      set_toggle_button(SYNC_BUTTON(sp), (on == 0) ? FALSE : TRUE, FALSE, (void *)sp);
+      set_toggle_button(SYNC_BUTTON(sp), on, FALSE, (void *)sp);
     }
 }
 

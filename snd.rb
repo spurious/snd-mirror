@@ -63,7 +63,6 @@ if Graph_lollipops != 4 then snd_display sprintf("\n# Graph_lollipops => %d", Gr
 if Hadamard_transform != 5 then snd_display sprintf("\n# Hadamard_transform => %d", Hadamard_transform) end
 if Haar_transform != 6 then snd_display sprintf("\n# Haar_transform => %d", Haar_transform) end
 if Hamming_window != 5 then snd_display sprintf("\n# Hamming_window => %d", Hamming_window) end
-if Hankel_transform != 7 then snd_display sprintf("\n# Hankel_transform => %d", Hankel_transform) end
 if Hanning_window != 1 then snd_display sprintf("\n# Hanning_window => %d", Hanning_window) end
 if Kaiser_window != 11 then snd_display sprintf("\n# Kaiser_window => %d", Kaiser_window) end
 if Keyboard_no_action != 4 then snd_display sprintf("\n# Keyboard_no_action => %d", Keyboard_no_action) end
@@ -227,7 +226,6 @@ if filter_env_in_hz != false then snd_display sprintf("\n# filter_env_in_hz: %s"
 if graph_cursor != 34 then snd_display sprintf("\n# graph_cursor: %s", graph_cursor) end
 if graph_style != 0 then snd_display sprintf("\n# graph_style: %s", graph_style) end
 if graphs_horizontal != true then snd_display sprintf("\n# graphs_horizontal: %s", graphs_horizontal) end
-if hankel_jn != 0.0 then snd_display sprintf("\n# hankel_jn: %s", hankel_jn) end
 if just_sounds != false then snd_display sprintf("\n# just_sounds: %s", just_sounds) end
 if listener_prompt != ">" then snd_display sprintf("\n# listener_prompt: %s", listener_prompt) end
 if max_transform_peaks != 100 then snd_display sprintf("\n# max_transform_peaks: %s", max_transform_peaks) end

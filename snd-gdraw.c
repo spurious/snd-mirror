@@ -947,6 +947,8 @@ void set_spectro_hop(snd_state *ss, int val)
     }
 }
 
+static void chans_spectro_cut(chan_info *cp) {cp->fft_changed = FFT_CHANGE_LOCKED;}
+
 static void cut_orientation_callback(GtkAdjustment *adj, gpointer context) 
 {
   /* y axis limit */
@@ -954,6 +956,7 @@ static void cut_orientation_callback(GtkAdjustment *adj, gpointer context)
   orientation_info *od = (orientation_info *)context;
   ss = od->state;
   chans_field(ss, FCP_CUTOFF, (Float)(adj->value));
+  for_each_chan(ss, chans_spectro_cut);
   check_orientation_hook();
   set_spectro_cutoff_and_redisplay(ss, (Float)(adj->value)); /* calls in_set... */
 } 
