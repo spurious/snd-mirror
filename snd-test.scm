@@ -13975,7 +13975,7 @@ EDITS: 5
 			(not (= (list-ref val1 3) 1234)))
 		    (snd-display ";describe-mark m1 [1]: ~A" val1)))))
 	  (revert-sound ind)
-	  (add-hook! draw-mark-hook (lambda (id) #t)
+	  (add-hook! draw-mark-hook (lambda (id) #t))
 	  (let ((m0 (add-mark 4321))
 		(m1 (add-mark 1234))
 		(dur (/ (frames ind) (srate ind))))
@@ -33518,7 +33518,7 @@ EDITS: 2
 				  (snd-display ";(set ~A ~A) -> ~A" name arg tag))))))
 		    struct-accessors
 		    struct-accessor-names))
-		 (list dpy win '(Atom 0) '(Colormap 0) 1.5 "/hiho" 1234 #f #t '() (make-vector 0))))
+		 (list dpy win '(Atom 0) '(Colormap 0) 1.5 "/hiho" 1234 #f #\c '(Time 0) (make-vector 0))))
 	      (gc))
 	      ))))
 
@@ -34684,6 +34684,8 @@ EDITS: 2
 	(check-error-tag 'cannot-print (lambda () (graph->ps)))
 	(let ((ind (open-sound "oboe.snd"))) 
 	  (select-all)
+	  (check-error-tag 'mus-error (lambda () (filter-sound (make-frame 4))))
+	  (check-error-tag 'wrong-type-arg (lambda () (smooth-sound 0 -10)))
 	  (check-error-tag 'out-of-range (lambda () (let ((hi (make-sound-data 1 10))) (samples->sound-data 0 8 #f #f hi #f 2))))
 	  (check-error-tag 'cannot-save (lambda () (write-peak-env-info-file ind 0 "/baddy/hi")))
 	  (check-error-tag 'bad-arity (lambda () (ptree-channel (lambda (a b c) #f) 0 10 #f #f #f #f (lambda (a) #f))))

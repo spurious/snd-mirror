@@ -8390,7 +8390,7 @@ int mus_audio_close(int line)
 
 enum {CONVERT_NOT, CONVERT_COPY, CONVERT_SKIP, CONVERT_COPY_AND_SKIP, CONVERT_SKIP_N, CONVERT_COPY_AND_SKIP_N};
 static int conversion_choice = CONVERT_NOT;
-static int conversion_multiplier = 1;
+static float conversion_multiplier = 1.0;
 static int dac_out_chans, dac_out_srate;
 static int incoming_out_chans = 1, incoming_out_srate = 44100;
 static int fill_point = 0;
@@ -8491,13 +8491,13 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
       if (incoming_out_srate == dac_out_srate)
 	{
 	  conversion_choice = CONVERT_NOT;
-	  conversion_multiplier = 1;
+	  conversion_multiplier = 1.0;
 	}
       else 
 	{
 	  /* here we don't get very fancy -- assume dac/2=in */
 	  conversion_choice = CONVERT_COPY;
-	  conversion_multiplier = 2;
+	  conversion_multiplier = 2.0;
 	}
     }
   else
@@ -8507,12 +8507,12 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
 	  if ((dac_out_chans == 2) &&(incoming_out_chans == 1)) /* the usual case */
 	    {
 	      conversion_choice = CONVERT_SKIP;
-	      conversion_multiplier = 2;
+	      conversion_multiplier = 2.0;
 	    }
 	  else
 	    {
 	      conversion_choice = CONVERT_SKIP_N;
-	      conversion_multiplier = (dac_out_chans - incoming_out_chans - 1);
+	      conversion_multiplier = ((float)dac_out_chans / (float)incoming_out_chans);
 	    }
 	}
       else 
@@ -8520,12 +8520,12 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
 	  if ((dac_out_chans == 2) &&(incoming_out_chans == 1)) /* the usual case */
 	    {
 	      conversion_choice = CONVERT_COPY_AND_SKIP;
-	      conversion_multiplier = 4;
+	      conversion_multiplier = 4.0;
 	    }
 	  else
 	    {
 	      conversion_choice = CONVERT_COPY_AND_SKIP_N;
-	      conversion_multiplier = (dac_out_chans - incoming_out_chans - 1) * 2;
+	      conversion_multiplier = ((float)dac_out_chans / (float)incoming_out_chans) * 2;
 	    }
 	}
     }
@@ -8610,10 +8610,10 @@ int mus_audio_write(int line, char *buf, int bytes)
   UInt32 running;
   char *to_buf;
   to_buf = bufs[in_buf];
-  out_bytes = bytes * conversion_multiplier;
+  out_bytes = (int)(bytes * conversion_multiplier);
   if ((fill_point + out_bytes) > bufsize)
     out_bytes = bufsize - fill_point;
-  lim = out_bytes / conversion_multiplier;
+  lim = (int)(out_bytes / conversion_multiplier);
   if (writing == FALSE)
     {
       convert_incoming(to_buf, fill_point, lim, buf);

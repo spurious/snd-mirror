@@ -1383,7 +1383,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
     return(NULL);
 
   if ((gen) && (!(MUS_RUN_P(gen))))
-    return(mus_format(_("filter-channel: %s can't handle %s generators"),
+    return(mus_format(_("%s: can't handle %s generators"),
 		      origin,
 		      mus_name(gen)));
   ss = ncp->state;
