@@ -638,6 +638,7 @@ envelope functions that are often useful:
   <em class=def><a name="powerenv">power-env</a></em> e
   <em class=def><a name="makepowerenv">make-power-env</a></em> e #:key (scaler 1.0) (offset 0.0) duration
   <em class=def><a name="powerenvchannel">power-env-channel</a></em> pe #:optional (beg 0) dur snd chn edpos (edname "power-env-channel")
+  <em class=def>envelope-exp</em> e #:optional (power 1.0) (xgrid 100)
 </pre>
 <p>These are translated from CLM's env.lisp.
 <code>(envelope-interp x env base)</code> returns value of env at x.
@@ -737,6 +738,8 @@ mechanism as an extension of env-channel.
 (let ((pe1 (make-power-env '(0 0 32.0  1 1 0.0312  2 0 1.0  3 .5 3.0  4 0 0) :duration 1.0)))
   (power-env-channel pe1))
 </pre>
+<p><i>envelope-exp</i> interpolates segments into envelope to approximate exponential curves.
+</p>
 <br>
 
 <A NAME="enveddoc"></a><span class=box><h2>enved.scm</h2></span>

@@ -35,8 +35,7 @@
 ;;; TODO: pan env field in mix dialog if stereo in/out
 ;;; TODO: xemacs style top list of sounds, current takes whole screen [make-top-row snd-motif.scm, files-popup-buffer in examp.scm]
 ;;; TOOD: extend the mix-as-list syntax to list-of-ids (tracks) (are these all rationalized now?)
-;;; TODO: effects crossref + tests + clm translations[grani? -- needs exp-envelope -- see tmp17.scm]
-;;; TODO: interface crossref
+;;; TODO: effects and interface crossref
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 
@@ -18518,6 +18517,15 @@ EDITS: 5
       (if (not (feql (repeat-envelope '(0 0 1.5 1 2 0) 3) '(0 0 1.5 1 2.0 0 3.5 1 4.0 0 5.5 1 6.0 0)))
 	  (snd-display ";repeat-envelope 4: ~A" (repeat-envelope '(0 0 1.5 1 2 0) 3)))
 
+      (let ((val (envelope-exp '(0 0 1 1) 2.0 10)))
+	(if (not (feql val '(0.000 0.000 0.100 0.010 0.200 0.040 0.300 0.090 0.400 0.160 
+				   0.500 0.250 0.600 0.360 0.700 0.490 0.800 0.640 0.900 0.810 1.000 1.000)))
+	    (snd-display ";envelope-exp: ~A" val))
+	(set! val (envelope-exp '(0 0 1 1 2 0) 1.0 10))
+	(if (not (feql val '(0.000 0.000 0.200 0.200 0.400 0.400 0.600 0.600 0.800 0.800 
+				   1.000 1.000 1.200 0.800 1.400 0.600 1.600 0.400 1.800 0.200 2.000 0.000)))
+	    (snd-display ";envelope exp 2: ~A" val)))
+
       (let ((ind (new-sound "fmv.snd"))
 	    (v (make-vct 20)))
 	(vct-fill! v 1.0)
@@ -22294,7 +22302,7 @@ EDITS: 6
 	      ((5) (src-channel (+ .9 (random .2)) (random (* 1.25 (frames))) (random 1000)))
 	      ((6) (ramp-channel (random 1.0) (random 1.0) (random (* 1.25 (frames))) (random 1000)))
 	      ((7) (reverse-channel (random (* 1.25 (frames))) (random 1000)))
-	      ((8) (let ((dur (inexact->exact (random 100)))) (vct->channel (make-vct dur) (random (* 1.25 (frames))) dur)))
+	      ((8) (let ((dur (max 2 (inexact->exact (random 100))))) (vct->channel (make-vct dur) (random (* 1.25 (frames))) dur)))
 	      ((9) (map-channel (lambda (y) (* y 2)) (random (* .5 (frames))) (random 1000)))))
 
 	  (close-sound ind))
@@ -24539,6 +24547,7 @@ EDITS: 2
       (etst '(let*))
       (etst '(let ()))
       (etst '(let* ()))
+      (etst '(let* * *))
       (etst '(let ((a 1))))
       (etst '(let* ((a 1))))
       (etst '(do))
@@ -24558,6 +24567,7 @@ EDITS: 2
       (etst '(lambda))
       (etst '(quote))
       (etst '(quote 1 2 4))
+      (etst '(* + -))
 
       (itst '(* 2 3) 6)
       (itst '(* 2) 2)
@@ -35692,7 +35702,7 @@ EDITS: 2
 	       polar->rectangular previous-files-sort-procedure 
 	       pv-amp-increments pv-amps pv-freqs pv-outctr pv-phase-increments pv-phases 
                read-sample reset-listener-cursor sample-reader-home selection-chans selection-srate snd-gcs
-	       snd-warning sum-of-sines vct-map make-variable-display channel-data x-axis-label
+	       snd-warning sum-of-sines vct-map make-variable-graph channel-data x-axis-label
 
 	       ))
 

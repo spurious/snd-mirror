@@ -7328,8 +7328,11 @@ mus_any *mus_make_phase_vocoder(Float (*input)(void *arg, int direction),
   pv->synthesize = synthesize;
   pv->win = mus_make_fft_window(MUS_HAMMING_WINDOW, fftsize, 0.0);
   scl = 2.0 / (0.54 * (Float)fftsize);
-  for (i = 0; i < fftsize; i++) 
-    pv->win[i] *= scl;
+  if (pv->win) /* clm2xen traps errors for later reporting (to clean up local allocation),
+		*   so clm_calloc might return NULL in all the cases here
+		*/
+    for (i = 0; i < fftsize; i++) 
+      pv->win[i] *= scl;
   return((mus_any *)pv);
 }
 

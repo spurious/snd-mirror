@@ -6073,13 +6073,13 @@ static void swap_readers(snd_fd *sf)
   sf->rev_runf = rrunf;
 }
 
-void read_sample_change_direction(snd_fd *sf, int dir)
+void read_sample_change_direction(snd_fd *sf, int dir1) /* can't use "dir" on Mac */
 {
   /* direction reversal can happen in dac(speed arrow), src gen, or user can call next/previous independent of initial dir */
   swap_readers(sf);
-  sf->direction = dir;
+  sf->direction = dir1;
   /* can't optimize anything here -- some accessors have state, but how to handle the loc=-1 case? */
-  if ((dir == READ_FORWARD) && (sf->loc < 0)) 
+  if ((dir1 == READ_FORWARD) && (sf->loc < 0)) 
     sf->loc = 0;
   else read_sample(sf);
 }
@@ -8175,7 +8175,7 @@ snd_fd *get_sf(XEN obj) {if (SAMPLE_READER_P(obj)) return((snd_fd *)XEN_OBJECT_R
 
 char *sf_to_string(snd_fd *fd)
 {
-  char *desc, *name;
+  char *desc, *name = NULL;
   chan_info *cp;
   desc = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   if (fd == NULL)
@@ -8188,9 +8188,20 @@ char *sf_to_string(snd_fd *fd)
       else
 	{
 	  if ((cp) && (cp->sound) && (cp->active) && (!(fd->at_eof)))
-	    name = (cp->sound)->short_filename;
-	  else name = "unknown source";
+	    {
+	      name = (cp->sound)->short_filename;
+	      if (name == NULL)
+		switch (cp->sound->inuse)
+		  {
+		  case SOUND_IDLE: name = "idle source";        break;
+		  case SOUND_NORMAL: name = "unknown source";   break;
+		  case SOUND_WRAPPER: name = "wrapped source";  break;
+		  case SOUND_REGION: name = "region as source"; break;
+		  case SOUND_READER: name = "reader source";    break;
+		  }
+	    }
 	}
+      if (name == NULL) name = "unknown source";
       if (fd->at_eof)
 	mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader %p: %s at eof or freed>",
 		     fd, name);

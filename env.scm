@@ -14,6 +14,7 @@
 ;;; concatenate-envelopes (#:rest envs) concatenates its arguments into a new envelope
 ;;; repeat-envelope env repeats #:optional (reflected #f) (normalized #f) repeats an envelope
 ;;; power-env: generator for extended envelopes (each segment has its own base)
+;;; envelope-exp: interpolate segments into envelope to give exponential curves
 
 (use-modules (ice-9 format) (ice-9 optargs))
 
@@ -409,3 +410,35 @@ repetition to be in reverse."
 	   (set! curbeg (+ curbeg len)))))
      edname)))
 
+
+
+;;; by Anders Vinjar:
+;;;
+;;; envelope-exp can be used to create exponential segments to include in
+;;; envelopes.  Given 2 or more breakpoints, it approximates the
+;;; curve between them using 'xgrid linesegments and 'power as the
+;;; exponent. 
+;;; 
+;;; env is a list of x-y-breakpoint-pairs,
+;;; power applies to whole envelope,
+;;; xgrid is how fine a solution to sample our new envelope with.
+
+(define* (envelope-exp e #:optional (power 1.0) (xgrid 100))
+  (let* ((mn (min-envelope e))
+	 (largest-diff (- (max-envelope e) mn))
+	 (x-min (car e))
+	 (len (length e))
+	 (x-max (list-ref e (- len 2)))
+	 (x-incr (/ (- x-max x-min) xgrid))
+	 (new-e '()))
+    (do ((x x-min (+ x x-incr)))
+	((>= x x-max))
+      (let ((y (envelope-interp x e)))
+	(set! new-e (cons x new-e))
+	(set! new-e (cons (if (= largest-diff 0.0)
+			      y
+			      (+ mn
+				 (* largest-diff
+				    (expt (/ (- y mn) largest-diff) power))))
+			  new-e))))
+    (reverse new-e)))

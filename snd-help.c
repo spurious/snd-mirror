@@ -295,6 +295,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+28-May:  snd 6.9.\n\
 26-May:  x-axis-label.\n\
 20-May:  make-variable-display in snd-motif.scm.\n\
 16-May:  definstrument changes, added clm-ins.scm.\n\
@@ -310,9 +311,6 @@ void news_help(snd_state *ss)
 30-Apr:  mix-property in mix.scm.\n\
          property-changed-hook -> window-property-changed-hook.\n\
 29-Apr:  mix-click-hook\n\
-28-Apr:  snd 6.8.\n\
-         freeverb.rb and freeverb.scm from Michael Scholz.\n\
-         removed mus-sound-seek.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
