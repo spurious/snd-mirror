@@ -1,5 +1,6 @@
 Snd change log
 
+  6-Apr:     volterra-filter in dsp.scm
   4-Apr:     rt-examples.scm (Kjetil Matheussen).
   30-Mar:    marks.rb (Mike Scholz).
   25-Mar:    mixer.scm with various matrix/vector related functions (determinant, inverse,

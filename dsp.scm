@@ -1882,8 +1882,9 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;;   (filter-channel (invert-filter (vct .5 .25 .125)))
 ;;;
 ;;; there are a million gotchas here.  The primary one is that the inverse filter
-;;; can "explode" -- the coefficients can grow without bound.  For example, any
-;;; filter returned by spectrum->coeffs above will be a problem.
+;;;   can "explode" -- the coefficients can grow without bound.  For example, any
+;;;   filter returned by spectrum->coeffs above will be a problem (it always returns
+;;;   a "linear phase" filter).
 
 (define (invert-filter fcoeffs)
   (let* ((flen (vct-length fcoeffs))
@@ -1904,3 +1905,37 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	  (vct-set! nfilt i (/ sum (- (vct-ref coeffs 0))))))
       nfilt)))
 
+
+;;; ----------------
+;;;
+;;; Volterra filter
+;;;
+;;; one of the standard non-linear filters
+;;; this version is taken from Monson Hayes "Statistical DSP and Modeling"
+;;;   it is a slight specialization of the form mentioned by J O Smith and others
+
+(define (make-volterra-filter acoeffs bcoeffs)
+  (list acoeffs 
+	bcoeffs 
+	(make-vct (max (vct-length acoeffs) (vct-length bcoeffs)))))
+
+(define (volterra-filter flt x)
+  (let* ((as (car flt))
+	 (bs (cadr flt))
+	 (xs (caddr flt))
+	 (xlen (vct-length xs))
+	 (x1len (vct-length as))
+	 (x2len (vct-length bs))
+	 (sum 0.0))
+    (vct-move! xs (- xlen 1) (- xlen 2) #t)
+    (vct-set! xs 0 x)
+    (set! sum (dot-product as xs x1len))
+    (do ((i 0 (1+ i)))
+	((= i x2len))
+      (do ((j i (1+ j)))
+	  ((= j x2len))
+	(set! sum (+ sum (* (vct-ref bs j) (vct-ref xs i) (vct-ref xs j))))))
+    sum))
+
+;;; (define flt (make-volterra-filter (vct .5 .1) (vct .3 .2 .1)))
+;;; (map-channel (lambda (x) (volterra-filter flt x)))

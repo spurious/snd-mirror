@@ -345,7 +345,7 @@ generate run-time code to figure out the type.  The generated code will
 be faster and tighter (and a lot easier to read) if you use declare to
 tell run what the types are.
 In Common Lisp, the recognized types are :integer, :float, :string, :boolean, :bignum (sample number),
-:double*, :int*, :mus-any, and :mus-any-array (the keyword package
+:double*, :int*, :mus-any, and :mus-any* (the keyword package
 is used to avoid endless CL package name troubles).
 In Scheme (in the Snd run macro), the declarable types are:
 int, float, boolean, char, string, vct, reader, clm, number, vector, integer, real, string, bignum (sample number), mus-any (i.e. a generator),
@@ -2873,7 +2873,7 @@ See also the <a href="#brighten">brighten</a> instrument.
 </pre>
 <p>These functions underlie some of the generators, and can be
 called within run.  See <a href="mus.lisp">mus.lisp</a> for
-details. Array-interp can be used for companding and similar functions --
+details. <b>array-interp</b> can be used for companding and similar functions --
 load the array (call it "compander" below) with the positive half 
 of the companding function, then:
 </p>
@@ -2887,10 +2887,31 @@ of the companding function, then:
 </pre>
 </td></tr></table>
 
-<p>sine-bank simply loops through its arrays of amps and phases, summing
+<p><b>sine-bank</b> simply loops through its arrays of amps and phases, summing
 (* amp (sin phase)) -- it is mostly a convenience function for additive synthesis.
-<b>dot-product</b> is also known as scalar product, and in orthogonal coordinate systems is the same as the usual inner product
-(as opposed to various unusual ones).
+</p>
+
+<p>
+<b>dot-product</b> is the usual "inner product" or "scalar product".
+ We could define our own FIR filter using dot-product:
+</p>
+
+<table border=2 bordercolor="tan" hspace=40 cellpadding=8 cellspacing=3><tr><td>
+<pre>
+(define (make-fr-filter coeffs)
+  (list coeffs (<a class=quiet href="extsnd.html#makevct">make-vct</a> (<a class=quiet href="extsnd.html#vctlength">vct-length</a> coeffs))))
+
+(define (fr-filter flt x)
+  (let* ((coeffs (car flt))
+	 (xs (cadr flt))
+	 (xlen (<a class=quiet href="extsnd.html#vctlength">vct-length</a> xs)))
+    (<a class=quiet href="extsnd.html#vctmove">vct-move!</a> xs (- xlen 1) (- xlen 2) #t)
+    (<a class=quiet href="extsnd.html#vctset">vct-set!</a> xs 0 x)
+    (<em class=red>dot-product</em> coeffs xs xlen)))
+</pre>
+</td></tr></table>
+
+<p>
 <b>edot-product</b> returns a dot product, the sum of e^(freq*i) with data[i], i going from 0 to (1 less than) data's size.
 <i>freq</i> and <i>data</i> can be complex, as can the return value.  (This is intended for DFT applications).
 </p>

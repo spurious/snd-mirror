@@ -291,10 +291,19 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 		    (c-display "\n\nError. <jack>/constructor: process-func is not an ec-pointer.\n\n")
 		    (return #f)))
 
-	      (set! client (jack_client_new name))
-	      (if (not client) 
-		  (return #f))
-
+	      (call-with-current-continuation
+	       (lambda (got-it)
+		 (for-each (lambda (postfix)
+			     (set! client (jack_client_new (<-> name postfix)))
+			     (if client
+				 (got-it)))
+			   '("" "0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "10"))))
+	      
+	      (if (not client)
+		  (begin
+		    (c-display "Could not create jack client with name \"" name "\".")
+		    (return #f)))
+	      
 	      (if num-inports
 		  (-> jack-arg num_inports num-inports))
 	      (if num-outports

@@ -203,7 +203,7 @@ rte-frames     => Returns the number of frames since the engine was started.
 
 rte-is-running? => Returns true if engine is running. (Ie. not paused)
 
-rt-info         => Returns a list of 5 elements:
+rte-info         => Returns a list of 5 elements:
                    1. Current size of the priority queue.
                    2. Maximum size of the priority queue.
                    3. Number of lost events because the priority queue was full.
@@ -981,7 +981,7 @@ Notes
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define rt-verbose #t)
+(define rt-verbose #f)
 
 (define rt-operators '(+ - * / = < > <= >=))
 
@@ -1073,7 +1073,7 @@ Notes
 		    (das-remove (cdr t))))))
      
      (define (remove++ term)
-       (c-display "remove++" term)
+       ;;(c-display "remove++" term)
        (cond ((not (list? term)) term)
 	     ((null? term) term)
 
@@ -1510,7 +1510,7 @@ Notes
 ;; (set! (asetter 5) 2)     -> (setter!-asetter 5 2)
 ;;
 (define (rt-expand-macros term)
-  (c-display "expand" term)
+  ;;(c-display "expand" term)
   (call-with-current-continuation
    (lambda (return)
 
@@ -1817,9 +1817,9 @@ Notes
 			 
 		    (cons funcname args))))))
      
-     (c-display "fix-term:" term)
+     ;;(c-display "fix-term:" term)
      (let ((ret (fix '() term #t)))
-       (c-display "fixed term" ret)
+       ;;(c-display "fixed term" ret)
        ;;(c-display "renamed:" renamed-guile-vars)
        (list (map (lambda (var)
 		    (list (cadr var) (car var)))
@@ -2159,7 +2159,7 @@ Notes
 			
 			(else
 			 (let ((func (assq (car term) varlist)))
-			   (c-display "got func for " (car term) ":" func)
+			   ;;(c-display "got func for " (car term) ":" func)
 			   (if func
 			       (if (and (list? (cadr func))
 					(or (= 2 (length func))
@@ -2426,8 +2426,8 @@ Notes
 		(let ((vardecls (remove (lambda (var)
 					  (eq? (cadr var) '<undefined>))
 					vardecls)))
-		  (c-display "vardecls" vardecls)
-		  (c-display "newvarlist" newvarlist)
+		  ;;(c-display "vardecls" vardecls)
+		  ;;(c-display "newvarlist" newvarlist)
 		  (if (null? vardecls)
 		      `(rt-begin_p/begin_p
 			 ,@body)
@@ -2866,9 +2866,9 @@ Notes
      (if (not (eq? 'lambda (car term)))
 	 (check-failed "This is not a lambda function: " term))
 
-     (c-display)
-     (c-display "check-calls term" term)
-     (c-display)
+     ;;(c-display)
+     ;;(c-display "check-calls term" term)
+     ;;(c-display)
      
      (check-calls term))))
 
@@ -4079,8 +4079,9 @@ Notes
 				 (symbol-append rt-name '/ c-name)
 				 (symbol-append 'rt- rt-name '/ c-name))))
 	      (<rt-func> funcname returntype args)
-	      (if (or (eq? name 'set_location)
-		      (eq? name 'location))
+	      (if (and #f
+		       (or (eq? name 'set_location)
+			   (eq? name 'location)))
 		  (begin
 		    (c-display "c-name" c-name)
 		    (c-display "funcname" funcname)
@@ -4815,7 +4816,7 @@ setter!-rt-mus-location/mus_location
 
 	      
        (set! orgargs (map (lambda (org new)
-			    (c-display "org/new" org new)
+			    ;;(c-display "org/new" org new)
 			    (list org (-> (hashq-ref rt-types (cadr new)) c-type)))
 			  (cadr term)
 			  (cadr (car insert-types-res))))
@@ -4842,14 +4843,14 @@ setter!-rt-mus-location/mus_location
        (if (not term)
 	   (return #f))
 
-       (c-display "before" (cadr term))
+       ;;(c-display "before" (cadr term))
        (set-car! (cdr term)
 		 (append (map (lambda (var)
 				(list (car var)
 				      (-> (cadr var) c-type)))
 			      (append extnumbers-writing extpointers extnumbers))
 			 orgargs))
-       (c-display "after" (cadr term))
+       ;;(c-display "after" (cadr term))
        
        (rt-print "RT: Final term:" term)
        (list extnumbers
@@ -4885,11 +4886,11 @@ setter!-rt-mus-location/mus_location
 	       
 	       (funcarg (rt-gensym))
 	       (publicargs (append (map (lambda (extvar)
-					  (c-display "extvar1" extvar)
+					  ;;(c-display "extvar1" extvar)
 					  `(<SCM> ,(symbol-append '_rt_scm_ (car extvar))))
 					extnumbers-writing)
 				   (map (lambda (extvar)
-					  (c-display "extvar2" extvar)
+					  ;;(c-display "extvar2" extvar)
 					  (list (-> (cadr extvar) c-type) (car extvar)))
 					(append extpointers extnumbers))
 				   (map (lambda (a)
@@ -4897,7 +4898,7 @@ setter!-rt-mus-location/mus_location
 					orgargs)))
 	       (i 0)
 	       (types (map (lambda (var)
-			     (c-display "var" var)
+			     ;;(c-display "var" var)
 			     (list (eval-c-to-scm
 				    (string-trim-right
 				     (eval-c-get-propertype
@@ -4905,9 +4906,9 @@ setter!-rt-mus-location/mus_location
 				   (cadr var)))
 			   publicargs)))
 
-	  (c-display "publicargs" publicargs)
+	  ;;(c-display "publicargs" publicargs)
 	  
-	  (c-display "term" term)
+	  ;;(c-display "term" term)
 	  (newline)
 	  
 	  (list funcname

@@ -89,7 +89,10 @@
  *            complex.h: ccos csin ctan cacos casin catan ccosh csinh ctanh cacosh casinh catanh cexp clog cabs cpow csqrt
  *                       carg[angle] creal cimag, complex double _Complex_I
  *            all arithmetic needs extra complex checks etc
- * PERHAPS: let gen/vct/etc binding? (this can't screw up allocs can it? -- just set as no-free)
+ * PERHAPS: set! local gen
+   (let ((gen (make-oscil 440.0)))
+     (run (lambda () (let ((g1 gen) (g2 #f)) (oscil g1) (set! g2 g1) (oscil g2)))))
+ *   -> opt: can't set pointer var (g2) to alias other such var
  */
 
 #include "snd.h"

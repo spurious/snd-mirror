@@ -32,7 +32,7 @@
 </center>
 <br>
 
-<!-- TODO: oo.scm, gui.scm, rt-examples.scm, rt-compile.scm, rt-engine.scm, check ladspa.scm, eval-c.scm -->
+<!-- TODO: document oo.scm, gui.scm, rt-examples.scm, rt-compile.scm, rt-engine.scm, check ladspa.scm, eval-c.scm -->
 <!-- TODO: a tutorial for Guile and Ruby -- how to customize, how to use with-sound and so on -- more programmer related than dlp's tutorial -->
 <!-- TODO: a tutorial for the rt stuff -->
 
@@ -572,6 +572,7 @@ the listener?
   <tr><td><a class=def name="spectralpolynomial">spectral-polynomial</a> coeffs snd chn</td><td>polynomial evaluation of entire channel in frequency domain (convolution)</td></tr>
   <tr><td><a class=def name="scentroid">scentroid</a> file beg dur db-floor rfreq fftsize</td><td>spectral center of gravity (brightness)</td></tr>
   <tr><td><a class=def NAME="invertfilter">invert-filter</a> coeffs</td><td>return inverse filter given original coeffs</td></tr>
+  <tr><td><a class=def NAME="volterrafilter">volterra-filter</a> flt x</td><td>Volterra (non-linear FIR) filter</td></tr>
 </table>
 
 <p><b>dolph</b> is the Dolph-Chebyshev fft data window, taken
@@ -716,6 +717,22 @@ it has the given magnitude, but its phase is randomized, rather than being simpl
 <b>scentroid</b> is Brett Battey's CLM scentroid instrument, translated to Snd/Scheme.
 </p>
 
+<p>
+<b>invert-filter</b> inverts an FIR filter.
+Say we previously filtered a sound via <code>(filter-channel (vct .5 .25 .125))</code>,
+and our mouse is broken so we can't use the Undo menu, and we've forgotten that
+we could type <code>(undo)</code>.  Nothing daunted, we use:
+<code>(filter-channel (invert-filter (vct .5 .25 .125)))</code>.
+There are a million gotchas here.  The primary one is that the inverse filter
+can "explode" -- the coefficients can grow without bound.  For example, any
+filter returned by spectrum->coeffs will be problematic.
+</p>
+
+<p><b>make-volterra-filter</b> and <b>volterra-filter</b> implement one form
+of a common non-linear FIR filter.
+This version is taken from Monson Hayes "Statistical DSP and Modeling";
+it is a slight specialization of the form mentioned by J O Smith and others.
+</p>
 
 <p>The ssb-* functions provide single-sideband amplitude modulation, and pitch/time changes
 based on the ssb-am generator.  

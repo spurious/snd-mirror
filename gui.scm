@@ -89,17 +89,6 @@
 				  #f))
 
 
-;; C-like for-iterator
-(define (c-for init pred least add proc)
-  (do ((n init (+ n add)))
-      ((not (pred n least)))
-    (proc n)))
-
-
-#!
-(c-for 2 < 7 1
-       (lambda (n) (display n)(newline)))
-!#
 
 
 (define-c <float> (c-scale ((<float> x)

@@ -398,6 +398,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+6-Apr:   volterra-filter in dsp.scm.\n\
 4-Apr:   rt-examples.scm (Kjetil Matheussen).\n\
 30-Mar:  marks.rb (Mike Scholz).\n\
 25-Mar:  mixer.scm with various matrix/vector related functions (determinant, inverse,\n\
@@ -408,9 +409,6 @@ void about_snd_help(void)
 17-Mar:  gc-on|off are no-ops now in Guile.\n\
          pvoc.rb thanks to Mike Scholz.\n\
 10-Mar:  dsp.rb thanks to Mike Scholz.\n\
-1-Mar:   rt-engine.scm thanks to Kjetil Matheussen!\n\
-         zoom-focus-style can be a function\n\
-28-Feb:  env-channel-with-base, Ruby side of edit-list->function.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
