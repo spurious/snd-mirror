@@ -3191,6 +3191,7 @@
 		(set-reverb-funcs
 		 (lambda (ptr inval chans)
 		   (vector-set! outputs 0 (delay delay-line (+ (* .75 (tap delay-line)) inval)))
+		   (do ((i 1 (1+ i))) ((= i chans)) (vector-set! outputs i 0.0))
 		   outputs)
 		 (lambda (revlen srate chans)
 		   (set! delay-line (make-delay (inexact->exact (* srate delay-time))))

@@ -287,8 +287,8 @@ static mus_any **make_flt(dac_info *dp, int order, int chans, Float *env)
   return(flt);
 }
 
-#define ADD_NEXT_SAMPLE(val,sf)  {if (sf->data > sf->last) val += next_sound(sf); else val += (*sf->data++);}
-#define SCALE_NEXT_SAMPLE(val,sf,amp)  {if (sf->data > sf->last) val += (MUS_SAMPLE_TYPE)(amp*next_sound(sf)); else val += (MUS_SAMPLE_TYPE)(amp*(*sf->data++));}
+#define ADD_NEXT_SAMPLE(val,sf)  do {if (sf->data > sf->last) val += next_sound(sf); else val += (*sf->data++);} while(0)
+#define SCALE_NEXT_SAMPLE(val,sf,amp)  do {if (sf->data > sf->last) val += (MUS_SAMPLE_TYPE)(amp*next_sound(sf)); else val += (MUS_SAMPLE_TYPE)(amp*(*sf->data++));} while(0)
 
 static void speed_1(dac_info *dp, Float sr, int chan)
 {
@@ -1203,7 +1203,7 @@ static int fill_dac(snd_state *ss, int write_ok)
 		  if (dp_chans == 1) 
 		    {
 		      for (j=0;j<dac_buffer_size;j+=dac_chans) 
-			{ADD_NEXT_SAMPLE(dac_buffer[j],dp->chn_fds[0]);}
+			ADD_NEXT_SAMPLE(dac_buffer[j],dp->chn_fds[0]);
 		    }
 		  else 
 		    {
@@ -1212,7 +1212,7 @@ static int fill_dac(snd_state *ss, int write_ok)
 			  for (j=0;j<dac_buffer_size;j+=dac_chans) 
 			    {
 			      for (k=0;k<dp_chans;k++) 
-				{ADD_NEXT_SAMPLE(dac_buffer[j+k],dp->chn_fds[k]);}
+				ADD_NEXT_SAMPLE(dac_buffer[j+k],dp->chn_fds[k]);
 			    }
 			}
 		      else
@@ -1237,7 +1237,7 @@ static int fill_dac(snd_state *ss, int write_ok)
 		  if (dp_chans == 1) 
 		    {
 		      for (j=0;j<dac_buffer_size;j+=dac_chans,amp+=incr) 
-			{SCALE_NEXT_SAMPLE(dac_buffer[j],dp->chn_fds[0],amp);}
+			SCALE_NEXT_SAMPLE(dac_buffer[j],dp->chn_fds[0],amp);
 		    }
 		  else 
 		    {
@@ -1246,7 +1246,7 @@ static int fill_dac(snd_state *ss, int write_ok)
 			  for (j=0;j<dac_buffer_size;j+=dac_chans,amp+=incr) 
 			    {
 			      for (k=0;k<dp_chans;k++) 
-				{SCALE_NEXT_SAMPLE(dac_buffer[j+k],dp->chn_fds[k],amp);}
+				SCALE_NEXT_SAMPLE(dac_buffer[j+k],dp->chn_fds[k],amp);
 			    }
 			}
 		      else

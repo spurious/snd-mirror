@@ -158,23 +158,31 @@ static void release_mixmark(mixmark *m)
   release_mixmark_widgets(m);
 }
 
+mix_context *make_mix_context(chan_info *cp)
+{
+  mix_context *g;
+  g = (mix_context *)CALLOC(1,sizeof(mix_context));
+  g->graph = channel_graph(cp);
+  return(g);
+}
+
+mix_context *free_mix_context(mix_context *ms)
+{
+  if (ms->p0) {FREE(ms->p0); ms->p0 = NULL;}
+  if (ms->p1) {FREE(ms->p1); ms->p1 = NULL;}
+  FREE(ms);
+  return(NULL);
+}
+
 static mixdata *free_mixdata(mixdata *m)
 {
   int i;
-  mix_context *ms;
   snd_state *ss;
   if (m)
     {
       ss = m->ss;
       if (m->id == ss->selected_mix) ss->selected_mix = NO_SELECTION;
-      if (m->wg)
-	{
-	  ms = m->wg;
-	  if (ms->p0) {FREE(ms->p0); ms->p0 = NULL;}
-	  if (ms->p1) {FREE(ms->p1); ms->p1 = NULL;}
-	  FREE(ms);
-	  m->wg = NULL;
-	}
+      if (m->wg) m->wg = free_mix_context(m->wg);
       mixdatas[m->id] = NULL;
       if (m->temporary == DELETE_ME) {mus_sound_forget(m->in_filename); remove(m->in_filename);}
       if (m->mixer) {release_mixmark(m->mixer); m->mixer = NULL;}
@@ -315,7 +323,7 @@ MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
     {
     case C_STRAIGHT:
       if (mf->type == MIX_INPUT_SOUND)
-	NEXT_SAMPLE(sum,mf->sfs[mf->base]) /* weird looking syntax -- macro has {} */
+	NEXT_SAMPLE(sum,mf->sfs[mf->base]);
       else sum = next_mix_input_amp_env_sample(mf,mf->base);
       break;
     case C_ZERO: 
@@ -329,7 +337,7 @@ MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
 	  for (i=0;i<mf->chans;i++)
 	    {
 	      if (mf->type == MIX_INPUT_SOUND)
-		NEXT_SAMPLE(val,mf->sfs[i])
+		NEXT_SAMPLE(val,mf->sfs[i]);
 	      else val = next_mix_input_amp_env_sample(mf,i);
 	      if (mf->segs[i])
 		sum += ((MUS_SAMPLE_TYPE)(val * mus_env(mf->segs[i])));
@@ -417,7 +425,7 @@ MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
 		    {
 		      mf->lst[i] = mf->nxt[i];
 		      if (mf->type == MIX_INPUT_SOUND)
-			NEXT_SAMPLE(mf->nxt[i],mf->sfs[i])
+			NEXT_SAMPLE(mf->nxt[i],mf->sfs[i]);
 		      else mf->nxt[i] = next_mix_input_amp_env_sample(mf,i);
 		    }
 		}

@@ -152,13 +152,10 @@ static void activate_mixmark_widgets(mixmark *m)
 
 mix_context *set_mixdata_context(chan_info *cp)
 {
-  mix_context *g;
   snd_info *sp;
   sp = cp->sound;
   if (sp->combining != CHANNELS_SEPARATE) cp=sp->chans[0];
-  g = (mix_context *)CALLOC(1,sizeof(mix_context));
-  g->graph = channel_graph(cp);
-  return(g);
+  return(make_mix_context(cp));
 }
 
 void select_mix(snd_state *ss, mixdata *md)

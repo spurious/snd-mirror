@@ -737,8 +737,8 @@ void redo_EDIT(void *ptr,int count);
 void undo_edit(chan_info *cp, int count);
 void redo_edit(chan_info *cp, int count);
 
-#define NEXT_SAMPLE(val,sf)  {if (sf->data > sf->last) val=next_sound(sf); else val=(*sf->data++);}
-#define PREVIOUS_SAMPLE(val,sf)  {if (sf->data < sf->first) val=previous_sound(sf); else val=(*sf->data--);}
+#define NEXT_SAMPLE(val,sf)  do {if (sf->data > sf->last) val=next_sound(sf); else val=(*sf->data++);} while (0)
+#define PREVIOUS_SAMPLE(val,sf)  do {if (sf->data < sf->first) val=previous_sound(sf); else val=(*sf->data--);} while (0)
 
 int chan_save_edits(chan_info *cp, char *ofile);
 int save_edits(snd_info *sp, void *ptr);
@@ -1215,6 +1215,8 @@ snd_info *make_mix_readable(mixdata *md);
 MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf);
 mix_fd *init_mix_read(mixdata *md, int old);
 mix_fd *free_mix_fd(mix_fd *mf);
+mix_context *make_mix_context(chan_info *cp);
+mix_context *free_mix_context(mix_context *ms);
 int map_over_mixes(int (*func)(mixdata *,void *), void *ptr);
 void free_mix_list(chan_info *cp);
 void free_mixes(chan_info *cp);

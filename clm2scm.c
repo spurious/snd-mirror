@@ -341,7 +341,12 @@ static void init_keywords(void)
 {
   int i;
 #if (!HAVE_GUILE_1_3_0)
-  keyword_tag = scm_make_smob_type_mfpe("keyword",sizeof(SCM),mark_keyword,free_keyword,print_keyword,0);
+  /* keyword_tag = scm_make_smob_type_mfpe("keyword",sizeof(SCM),mark_keyword,free_keyword,print_keyword,0); */
+  keyword_tag = scm_make_smob_type("keyword",sizeof(SCM));
+  scm_set_smob_mark(keyword_tag,mark_keyword);
+  scm_set_smob_print(keyword_tag,print_keyword);
+  scm_set_smob_free(keyword_tag,free_keyword);
+  /* scm_set_smob_equalp(keyword_tag,NULL); */
 #else
   keyword_tag = scm_newsmob(&keyword_smobfuns);
 #endif
@@ -846,6 +851,11 @@ static void init_mus_scm(void)
 {
 #if (!HAVE_GUILE_1_3_0)
   mus_scm_tag = scm_make_smob_type_mfpe("mus",sizeof(mus_scm),mark_mus_scm,free_mus_scm,print_mus_scm,equalp_mus_scm);
+  mus_scm_tag = scm_make_smob_type("mus",sizeof(mus_scm));
+  scm_set_smob_mark(mus_scm_tag,mark_mus_scm);
+  scm_set_smob_print(mus_scm_tag,print_mus_scm);
+  scm_set_smob_free(mus_scm_tag,free_mus_scm);
+  scm_set_smob_equalp(mus_scm_tag,equalp_mus_scm);
 #else
   mus_scm_tag = scm_newsmob(&mus_scm_smobfuns); 
 #endif

@@ -4345,16 +4345,21 @@ static int print_sf(SCM obj, SCM port, scm_print_state *pstate)
   chan_info *cp;
   snd_fd *fd;
   fd = get_sf(obj);
-  cp = fd->cp;
-  desc = (char *)CALLOC(128,sizeof(char));
-  sprintf(desc,"<sample-reader %p: %s from %d, at %d (%.4f)",
-	  fd,
-	  (cp) ? ((cp->sound)->shortname) : "unknown source?",
-	  fd->initial_samp,
-	  current_location(fd),
-	  MUS_SAMPLE_TO_FLOAT(fd->current_value));
-  scm_puts(desc,port); 
-  FREE(desc);
+  if (fd == NULL)
+    scm_puts("<null>",port);
+  else
+    {
+      cp = fd->cp;
+      desc = (char *)CALLOC(128,sizeof(char));
+      sprintf(desc,"<sample-reader %p: %s from %d, at %d (%.4f)",
+	      fd,
+	      (cp) ? ((cp->sound)->shortname) : "unknown source?",
+	      fd->initial_samp,
+	      current_location(fd),
+	      MUS_SAMPLE_TO_FLOAT(fd->current_value));
+      scm_puts(desc,port); 
+      FREE(desc);
+    }
   return(1);
 }
 
@@ -4565,14 +4570,19 @@ static int print_mf(SCM obj, SCM port, scm_print_state *pstate)
   mixdata *md;
   char *desc;
   fd = get_mf(obj);
-  md = fd->md;
-  desc = (char *)CALLOC(128,sizeof(char));
-  sprintf(desc,"<mix-sample-reader %p: %s via mix %d>",
-	  fd,
-	  md->in_filename,
-	  md->id);
-  scm_puts(desc,port); 
-  FREE(desc);
+  if (fd == NULL)
+    scm_puts("<null>",port);
+  else
+    {
+      md = fd->md;
+      desc = (char *)CALLOC(128,sizeof(char));
+      sprintf(desc,"<mix-sample-reader %p: %s via mix %d>",
+	      fd,
+	      md->in_filename,
+	      md->id);
+      scm_puts(desc,port); 
+      FREE(desc);
+    }
   return(1);
 }
 
@@ -4663,29 +4673,34 @@ static int print_tf(SCM obj, SCM port, scm_print_state *pstate)
   char *desc;
   int i,len;
   fd = get_tf(obj);
-  desc = (char *)CALLOC(128,sizeof(char));
-  mf = fd->fds[0];
-  md = mf->md;
-  sprintf(desc,"<track-sample-reader %p: %s chan %d via mixes '(",
-	  fd,
-	  md->in_filename,
-	  (md->cp)->chan);
-  scm_puts(desc,port); 
-  len = fd->mixes;
-  if (len > 0)
+  if (fd == NULL)
+    scm_puts("<null>",port);
+  else
     {
-      for (i=0;i<len-1;i++)
+      desc = (char *)CALLOC(128,sizeof(char));
+      mf = fd->fds[0];
+      md = mf->md;
+      sprintf(desc,"<track-sample-reader %p: %s chan %d via mixes '(",
+	      fd,
+	      md->in_filename,
+	      (md->cp)->chan);
+      scm_puts(desc,port); 
+      len = fd->mixes;
+      if (len > 0)
 	{
-	  mf = fd->fds[i];
-	  sprintf(desc,"%d ",(mf->md)->id);
-	  scm_puts(desc,port); 
+	  for (i=0;i<len-1;i++)
+	    {
+	      mf = fd->fds[i];
+	      sprintf(desc,"%d ",(mf->md)->id);
+	      scm_puts(desc,port); 
+	    }
+	  mf = fd->fds[len-1];
+	  sprintf(desc,"%d)>",(mf->md)->id);
 	}
-      mf = fd->fds[len-1];
-      sprintf(desc,"%d)>",(mf->md)->id);
+      else sprintf(desc,")>");
+      scm_puts(desc,port); 
+      FREE(desc);
     }
-  else sprintf(desc,")>");
-  scm_puts(desc,port); 
-  FREE(desc);
   return(1);
 }
 
@@ -8422,7 +8437,12 @@ void g_initialize_gh(snd_state *ss)
 
   /* ---------------- SAMPLE READERS ---------------- */
 #if (!HAVE_GUILE_1_3_0)
-  sf_tag = scm_make_smob_type_mfpe("sf",sizeof(SCM),mark_sf,free_sf,print_sf,equalp_sf);
+  /* sf_tag = scm_make_smob_type_mfpe("sf",sizeof(SCM),mark_sf,free_sf,print_sf,equalp_sf); */
+  sf_tag = scm_make_smob_type("sf",sizeof(SCM));
+  scm_set_smob_mark(sf_tag,mark_sf);
+  scm_set_smob_print(sf_tag,print_sf);
+  scm_set_smob_free(sf_tag,free_sf);
+  scm_set_smob_equalp(sf_tag,equalp_sf);
 #else
   sf_tag = scm_newsmob(&sf_smobfuns);
 #endif
@@ -8435,7 +8455,12 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure1_0(S_sample_reader_at_endQ,g_sample_reader_at_end),H_sample_reader_at_end);
 
 #if (!HAVE_GUILE_1_3_0)
-  mf_tag = scm_make_smob_type_mfpe("mf",sizeof(SCM),mark_mf,free_mf,print_mf,equalp_mf);
+  /* mf_tag = scm_make_smob_type_mfpe("mf",sizeof(SCM),mark_mf,free_mf,print_mf,equalp_mf); */
+  mf_tag = scm_make_smob_type("mf",sizeof(SCM));
+  scm_set_smob_mark(mf_tag,mark_mf);
+  scm_set_smob_print(mf_tag,print_mf);
+  scm_set_smob_free(mf_tag,free_mf);
+  scm_set_smob_equalp(mf_tag,equalp_mf);
 #else
   mf_tag = scm_newsmob(&mf_smobfuns);
 #endif
@@ -8445,7 +8470,12 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure1_0(S_mix_sample_readerQ,g_mf_p),H_mf_p);
 
 #if (!HAVE_GUILE_1_3_0)
-  tf_tag = scm_make_smob_type_mfpe("tf",sizeof(SCM),mark_tf,free_tf,print_tf,equalp_tf);
+  /* tf_tag = scm_make_smob_type_mfpe("tf",sizeof(SCM),mark_tf,free_tf,print_tf,equalp_tf); */
+  tf_tag = scm_make_smob_type("tf",sizeof(SCM));
+  scm_set_smob_mark(tf_tag,mark_tf);
+  scm_set_smob_print(tf_tag,print_tf);
+  scm_set_smob_free(tf_tag,free_tf);
+  scm_set_smob_equalp(tf_tag,equalp_tf);
 #else
   tf_tag = scm_newsmob(&tf_smobfuns);
 #endif

@@ -307,6 +307,7 @@ static scm_sizet free_sound_data(SCM obj)
 {
   int i;
   sound_data *v = (sound_data *)GH_VALUE_OF(obj);
+  if (v == NULL) return(0);
   if (v->data) 
     {
       for (i=0;i<v->chans;i++) if (v->data[i]) FREE(v->data[i]);
@@ -321,10 +322,15 @@ static int print_sound_data(SCM obj, SCM port, scm_print_state *pstate)
 {
   char *buf;
   sound_data *v = (sound_data *)GH_VALUE_OF(obj);
-  buf = (char *)CALLOC(64,sizeof(char));
-  sprintf(buf,"#<sound_data: %d chans, %d frames>",v->chans,v->length);
-  scm_puts(buf,port);
-  FREE(buf);
+  if (v == NULL)
+    scm_puts("<null>",port);
+  else
+    {
+      buf = (char *)CALLOC(64,sizeof(char));
+      sprintf(buf,"#<sound_data: %d chans, %d frames>",v->chans,v->length);
+      scm_puts(buf,port);
+      FREE(buf);
+    }
   scm_remember(&obj);
   return(1);
 }
@@ -342,6 +348,7 @@ static SCM sound_data_length(SCM obj)
 {
   #define H_sound_data_length "(" S_sound_data_length " sd) -> length (samples) of each channel of sound-data object sd"
   sound_data *v = (sound_data *)GH_VALUE_OF(obj);
+  if (v == NULL) return(0);
   return(gh_int2scm(v->length));
 }
 
@@ -349,6 +356,7 @@ static SCM sound_data_chans(SCM obj)
 {
   #define H_sound_data_chans "(" S_sound_data_chans " sd) -> number of channels in sound-data object sd"
   sound_data *v = (sound_data *)GH_VALUE_OF(obj);
+  if (v == NULL) return(0);
   return(gh_int2scm(v->chans));
 }
 
@@ -813,7 +821,12 @@ void mus_sndlib2scm_initialize(void)
   local_doc = scm_permanent_object(scm_string_to_symbol(gh_str02scm("documentation")));
 
 #if (!HAVE_GUILE_1_3_0)
-  sound_data_tag = scm_make_smob_type_mfpe("sound-data",sizeof(sound_data),mark_sound_data,free_sound_data,print_sound_data,equalp_sound_data);
+  /* sound_data_tag = scm_make_smob_type_mfpe("sound-data",sizeof(sound_data),mark_sound_data,free_sound_data,print_sound_data,equalp_sound_data); */
+  sound_data_tag = scm_make_smob_type("sound-data",sizeof(sound_data));
+  scm_set_smob_mark(sound_data_tag,mark_sound_data);
+  scm_set_smob_print(sound_data_tag,print_sound_data);
+  scm_set_smob_free(sound_data_tag,free_sound_data);
+  scm_set_smob_equalp(sound_data_tag,equalp_sound_data);
 #else
   sound_data_tag = scm_newsmob(&sound_data_smobfuns);
 #endif

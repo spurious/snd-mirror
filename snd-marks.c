@@ -1,6 +1,7 @@
 /* TODO: 
- *       drag via mark (drag portion between marks?) (C-click?) -- need sync case and mix-style graphics updates
- *       shift-click to sync?
+ *       drag via mark could still sue amp-env opts
+ *         drag doubled-up isn't right yet
+ *       shift-click to sync (via makr-click-hook and syncd, unsyncd mark-related scm funcs)
  *       doc topic marks for drag
  *       sync colors? could use 6-7 bits of id+table (or local mark context)
  *       play-syncd-marks (scm -- pause arg here?)
@@ -16,7 +17,9 @@
 /* to handle undo/redo cleanly, we keep the mark list as an array (indexed to edit_ctr)
  * of arrays of pointers to marks.  Any mark-related operation follows cp->edit_ctr's
  * array within the outer array.  This way, marks come and go in an intuitively clean
- * manner without endless list operations in this file.
+ * manner without endless list operations in this file.  The downside is that the
+ * mark associated with a given id is actually a list of marks, and which one is
+ * "current" can change at any time.
  */
 
 /* added sync field and related operations 16-June-00 */
@@ -79,87 +82,6 @@ int *channel_marks(chan_info *cp, int pos)
   return(ids);
 }
 
-typedef struct {
-  mark **marks;
-  chan_info **chans;
-  int marks_size;
-  int mark_ctr;
-  int sync;
-} syncdata;
-
-static syncdata *make_syncdata(int sync)
-{
-  syncdata *sd;
-  sd = (syncdata *)CALLOC(1,sizeof(syncdata));
-  sd->sync = sync;
-  sd->mark_ctr = 0;
-  sd->marks_size = 8;
-  sd->marks = (mark **)CALLOC(sd->marks_size,sizeof(mark *));
-  sd->chans = (chan_info **)CALLOC(sd->marks_size,sizeof(chan_info *));
-  return(sd);
-}
-
-static void add_syncd_mark(syncdata *sd, mark *mp, chan_info *cp)
-{
-  int i;
-  sd->marks[sd->mark_ctr] = mp;
-  sd->chans[sd->mark_ctr++] = cp;
-  if (sd->mark_ctr == sd->marks_size)
-    {
-      sd->marks = (mark **)REALLOC(sd->marks,sd->marks_size*2 * sizeof(mark *));
-      sd->chans = (chan_info **)REALLOC(sd->chans,sd->marks_size*2 * sizeof(chan_info *));
-      for (i=sd->marks_size;i<sd->marks_size*2;i++) {sd->marks[i] = NULL; sd->chans[i] = NULL;}
-      sd->marks_size *= 2;
-    }
-}
-
-static mark *gather_local_syncd_marks(chan_info *cp, mark *mp, void *usd)
-{
-  syncdata *sd = (syncdata *)usd;
-  if (sd->sync == mp->sync)
-    add_syncd_mark(sd,mp,cp);
-  return(NULL);
-}
-
-static int gather_chan_syncd_marks(chan_info *cp, void *sd)
-{
-  map_over_marks(cp,gather_local_syncd_marks,sd,READ_FORWARD);
-  return(0);
-}
-
-static syncdata *gather_syncd_marks(snd_state *ss, int sync)
-{
-  syncdata *sd;
-  sd = make_syncdata(sync);
-  map_over_chans(ss,gather_chan_syncd_marks,(void *)sd);
-  return(sd);
-}
-
-static syncdata *free_syncdata(syncdata *sd)
-{
-  if (sd)
-    {
-      if (sd->marks)
-	FREE(sd->marks);
-      FREE(sd);
-    }
-  return(NULL);
-}
-
-int *syncd_marks(snd_state *ss, int sync)
-{
-  syncdata *sd;
-  int *ids;
-  int i;
-  sd = make_syncdata(sync);
-  map_over_chans(ss,gather_chan_syncd_marks,(void *)sd);
-  ids = (int *)CALLOC(1+sd->mark_ctr,sizeof(int));
-  ids[0] = sd->mark_ctr;
-  for (i=0;i<sd->mark_ctr;i++) ids[i+1] = mark_id(sd->marks[i]);
-  free_syncdata(sd);
-  return(ids);
-}
-
 static mark *make_mark_1(int samp, char *name, int id, unsigned int sc)
 {
   mark *mp;
@@ -213,6 +135,7 @@ static mark *find_mark_from_id(snd_state *ss, int id, chan_info **cps, int pos)
 		    {
 		      old_pos = cp->edit_ctr;
 		      if (pos >= 0) cp->edit_ctr = pos;
+		      /* memoization would have to be done here where we know cp->edit_ctr */
 		      mp = map_over_marks(cp,find_mark_id_1,(void *)id,READ_FORWARD);
 		      cp->edit_ctr = old_pos;
 		      if (mp) 
@@ -352,33 +275,6 @@ static mark *hit_mark_1(chan_info *cp, mark *mp, void *m)
   else return(mp);
 }
 
-static int mark_control_clicked = 0; /* C-click of mark -> drag data as mark is dragged */
-static int mark_initial_sample = 0;
-
-mark *hit_mark(chan_info *cp, int x, int y, int key_state)
-{
-  mark *mp;
-  mdata *md;
-  axis_info *ap;
-  ap = cp->axis;
-  if (cp->marks)
-    {
-      /* first check that we're in the top portion of the graph where the mark tabs are */
-      if ((y >= ap->y_axis_y1) && (y <= (ap->y_axis_y1+MARK_TAB_HEIGHT+10))) /* +10 for named marks -- checked again later */
-	{
-	  md = (mdata *)CALLOC(1,sizeof(mdata));
-	  md->x = x;
-	  md->y = y;
-	  mp = map_over_marks(cp,hit_mark_1,(void *)md,READ_FORWARD);
-	  FREE(md);
-	  mark_control_clicked = (key_state & snd_ControlMask);
-	  if (mp) mark_initial_sample = mp->samp;
-	  return(mp);
-	}
-    }
-  return(NULL);
-}
-
 static mark *hit_triangle_1(chan_info *cp, mark *mp, void *m)
 {
   /* m->samp = raw x mouse position */
@@ -438,11 +334,11 @@ static void cancel_mark_watch(chan_info *cp)
   moving_mark = NULL;
 }
 
-static void move_mark_1(chan_info *cp, mark *mp, int x)
+static int move_mark_1(chan_info *cp, mark *mp, int x)
 {
   axis_info *ap;
   int nx,samps;
-  int redraw = 1;
+  int redraw;
   ap = cp->axis;
   redraw = (!watching_mouse);
   if ((x > ap->x_axis_x1) || (x < ap->x_axis_x0)) 
@@ -451,7 +347,7 @@ static void move_mark_1(chan_info *cp, mark *mp, int x)
 	{
 	  if (((x < ap->x_axis_x0) && (ap->x0 == ap->xmin)) ||
 	      ((x > ap->x_axis_x1) && (ap->x1 == ap->xmax)))
-	    return;
+	    return(0);
 	}
       nx = move_axis(cp,ap,x);
       if (!watching_mouse) start_mark_watching(cp,mp);
@@ -466,7 +362,7 @@ static void move_mark_1(chan_info *cp, mark *mp, int x)
   if (mp->samp < 0) mp->samp = 0;
   samps = current_ed_samples(cp);
   if (mp->samp > samps) mp->samp = samps;
-  if (redraw) draw_mark(cp,ap,mp);
+  return(redraw);
 }
 
 static int compare_mark_samps(const void *mp1, const void *mp2)
@@ -488,119 +384,6 @@ void sort_marks(chan_info *cp)
   qsort((void *)mps,cp->mark_ctr[ed]+1,sizeof(mark *),compare_mark_samps);
 }
 
-static void move_syncd_mark(chan_info *cp, mark *m, int x)
-{
-  int old_samp,diff,i,j,samps;
-  syncdata *sd;
-  mark *mp;
-  axis_info *ap;
-  old_samp = m->samp;
-  move_mark_1(cp,m,x);
-  diff = m->samp - old_samp;
-  if (diff != 0)
-    {
-      sd = gather_syncd_marks(cp->state,m->sync);
-      if ((sd) && (sd->mark_ctr > 1))
-	{
-	  for (i=0;i<sd->mark_ctr;i++)
-	    {
-	      mp = sd->marks[i];
-	      if (mp != m)
-		{
-		  ap = sd->chans[i]->axis;
-		  if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) erase_mark(sd->chans[i],ap,mp);
-		  mp->samp += diff;
-		  if (mp->samp < 0) mp->samp = 0;
-		  samps = current_ed_samples(sd->chans[i]);
-		  if (mp->samp > samps) mp->samp = samps;
-		  if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) draw_mark(sd->chans[i],ap,mp);
-		}
-	    }
-	  for (i=0;i<sd->mark_ctr;i++)
-	    if (sd->chans[i])
-	      {
-		sort_marks(sd->chans[i]); /* resort marks in case movement scrambled them */
-		for (j=i+1;j<sd->mark_ctr;j++)    /* only sort each channel once */
-		  if (sd->chans[j] == sd->chans[i])
-		    sd->chans[j] = NULL;
-	      }
-	}
-      if (sd) free_syncdata(sd);
-    }
-}
-
-void move_axis_to_track_mark(chan_info *cp) /* from snd-xchn.c, called when mark is not visible (moving axes) */
-{
-  if (moving_mark)
-    {
-      if (moving_mark->sync)
-	move_syncd_mark(cp,moving_mark,last_mouse_x);
-      else move_mark_1(cp,moving_mark,last_mouse_x);
-    }
-}
-
-void move_mark(chan_info *cp, mark *mp, int x, int y) /* from mouse drag callback in snd-chn.c, called whenever mark is visible */
-{
-  last_mouse_x = x;
-  if (mp->sync)
-    move_syncd_mark(cp,mp,x);
-  else move_mark_1(cp,mp,x);
-  if (mark_control_clicked)
-    {
-      /* drag data as well --- upon mouse release, establish edit (deletion or insertion of zeros) */
-      /* mark_initial_sample is where we were when the drag started, end at mp->samp */
-    }
-}
-
-void finish_moving_mark(chan_info *cp, mark *m) /* button release called from snd-chn.c */
-{
-  int num,mark_final_sample,id;
-  mark *new_m;
-  MUS_SAMPLE_TYPE *zeros;
-  if (watching_mouse) cancel_mark_watch(cp);
-  sort_marks(cp);
-  if (mark_control_clicked)
-    {
-      /* edit -- mark_initial_sample is where we were when the drag started, ended at m->samp */
-      mark_final_sample = m->samp;
-      num = mark_final_sample - mark_initial_sample;
-      m->samp = mark_initial_sample;
-      if (num > 0)
-	{
-	  id = mark_id(m);
-	  zeros = (MUS_SAMPLE_TYPE *)CALLOC(num,sizeof(MUS_SAMPLE_TYPE));
-	  insert_samples(mark_initial_sample,num,zeros,cp,"mark dragged");
-	  FREE(zeros);
-	  /* at this point, old mark pointer is irrelevant (it lives in the previous edit history list) */
-	  /*   but since the ripple didn't touch it, we need to move it forward to reflect the insertion */
-	  new_m = map_over_marks(cp,find_mark_id_1,(void *)id,READ_FORWARD);
-	  new_m->samp += num;
-	}
-      else 
-	{
-	  if (num < 0)
-	    delete_samples(mark_final_sample,-num,cp,"mark dragged");
-	}
-      if (num != 0) update_graph(cp,NULL);
-    }
-}
-
-void play_syncd_mark(chan_info *cp, mark *m)
-{
-  int i;
-  mark *mp;
-  syncdata *sd;
-  sd = gather_syncd_marks(cp->state,m->sync);
-  if ((sd) && (sd->mark_ctr > 0))
-    {
-      for (i=0;i<sd->mark_ctr;i++)
-	{
-	  mp = sd->marks[i];
-	  start_playing_chan_syncd(sd->chans[i],mp->samp,TRUE,(i < (sd->mark_ctr-1)));
-	}
-    }
-  if (sd) free_syncdata(sd);
-}
 
 static int prev_cx = -1;
 
@@ -1272,6 +1055,421 @@ void ripple_trailing_marks(chan_info *cp, int beg, int old_len, int new_len)
     }
 }
 
+
+/* -------------------------------- SYNCD AND DRAGGED MARKS -------------------------------- */
+
+typedef struct {
+  mark **marks;
+  chan_info **chans;
+  int marks_size;
+  int mark_ctr;
+  int sync;
+  int *initial_samples;
+} syncdata;
+
+static syncdata *make_syncdata(int sync)
+{
+  syncdata *sd;
+  sd = (syncdata *)CALLOC(1,sizeof(syncdata));
+  sd->sync = sync;
+  sd->mark_ctr = 0;
+  sd->marks_size = 8;
+  sd->marks = (mark **)CALLOC(sd->marks_size,sizeof(mark *));
+  sd->chans = (chan_info **)CALLOC(sd->marks_size,sizeof(chan_info *));
+  sd->initial_samples = (int *)CALLOC(sd->marks_size,sizeof(int));
+  return(sd);
+}
+
+static void add_syncd_mark(syncdata *sd, mark *mp, chan_info *cp)
+{
+  int i;
+  sd->marks[sd->mark_ctr] = mp;
+  sd->initial_samples[sd->mark_ctr] = mp->samp;
+  sd->chans[sd->mark_ctr++] = cp;
+  if (sd->mark_ctr == sd->marks_size)
+    {
+      sd->marks = (mark **)REALLOC(sd->marks,sd->marks_size*2 * sizeof(mark *));
+      sd->chans = (chan_info **)REALLOC(sd->chans,sd->marks_size*2 * sizeof(chan_info *));
+      for (i=sd->marks_size;i<sd->marks_size*2;i++) {sd->marks[i] = NULL; sd->chans[i] = NULL;}
+      sd->marks_size *= 2;
+    }
+}
+
+static mark *gather_local_syncd_marks(chan_info *cp, mark *mp, void *usd)
+{
+  syncdata *sd = (syncdata *)usd;
+  if (sd->sync == mp->sync)
+    add_syncd_mark(sd,mp,cp);
+  return(NULL);
+}
+
+static int gather_chan_syncd_marks(chan_info *cp, void *sd)
+{
+  map_over_marks(cp,gather_local_syncd_marks,sd,READ_FORWARD);
+  return(0);
+}
+
+static syncdata *gather_syncd_marks(snd_state *ss, int sync)
+{
+  syncdata *sd;
+  sd = make_syncdata(sync);
+  map_over_chans(ss,gather_chan_syncd_marks,(void *)sd);
+  return(sd);
+}
+
+static syncdata *free_syncdata(syncdata *sd)
+{
+  if (sd)
+    {
+      if (sd->marks) FREE(sd->marks);
+      if (sd->initial_samples) FREE(sd->initial_samples);
+      if (sd->chans) FREE(sd->chans);
+      FREE(sd);
+    }
+  return(NULL);
+}
+
+int *syncd_marks(snd_state *ss, int sync)
+{
+  syncdata *sd;
+  int *ids;
+  int i;
+  sd = make_syncdata(sync);
+  map_over_chans(ss,gather_chan_syncd_marks,(void *)sd);
+  ids = (int *)CALLOC(1+sd->mark_ctr,sizeof(int));
+  ids[0] = sd->mark_ctr;
+  for (i=0;i<sd->mark_ctr;i++) ids[i+1] = mark_id(sd->marks[i]);
+  free_syncdata(sd);
+  return(ids);
+}
+
+static int mark_control_clicked = 0; /* C-click of mark -> drag data as mark is dragged */
+static int mark_initial_sample = 0;
+static syncdata *mark_sd = NULL;
+static mix_context **mark_movers = NULL;
+
+static void initialize_md_context(int size, chan_info **cps)
+{
+  int i;
+  mix_context *ms;
+  mark_movers = (mix_context **)CALLOC(size,sizeof(mix_context *));
+  for (i=0;i<size;i++)
+    {
+      mark_movers[i] = make_mix_context(cps[i]);
+      ms = mark_movers[i];
+      ms->lastpj = make_graph(cps[i],cps[i]->sound,cps[i]->state); 
+      mix_save_graph(cps[i]->state,ms,ms->lastpj);
+    }
+}
+
+static void finalize_md_context(int size)
+{
+  int i;
+  if (mark_movers)
+    {
+      for (i=0;i<size;i++) 
+	if (mark_movers[i]) 
+	  free_mix_context(mark_movers[i]);
+      FREE(mark_movers);
+      mark_movers = NULL;
+    }
+}
+
+mark *hit_mark(chan_info *cp, int x, int y, int key_state)
+{
+  mark *mp = NULL;
+  mdata *md;
+  axis_info *ap;
+  ap = cp->axis;
+  if (cp->marks)
+    {
+      /* first check that we're in the top portion of the graph where the mark tabs are */
+      if ((y >= ap->y_axis_y1) && (y <= (ap->y_axis_y1+MARK_TAB_HEIGHT+10))) /* +10 for named marks -- checked again later */
+	{
+	  md = (mdata *)CALLOC(1,sizeof(mdata));
+	  md->x = x;
+	  md->y = y;
+	  mp = map_over_marks(cp,hit_mark_1,(void *)md,READ_FORWARD);
+	  FREE(md);
+	  if (mp)
+	    {
+	      mark_control_clicked = (key_state & snd_ControlMask);
+	      if (mp->sync != 0) mark_sd = gather_syncd_marks(cp->state,mp->sync);
+	      if (mark_control_clicked)
+		{
+		  mark_initial_sample = mp->samp;
+		  if (mark_sd) 
+		    initialize_md_context(mark_sd->mark_ctr,mark_sd->chans);
+		  else initialize_md_context(1,&cp);
+		}
+	    }
+	}
+    }
+  return(mp);
+}
+
+static int make_mark_graph(chan_info *cp, snd_info *sp, snd_state *ss, int initial_sample, int current_sample, int which);
+
+static int move_syncd_mark(chan_info *cp, mark *m, int x)
+{
+  int old_samp,diff,i,samps,redraw;
+  mark *mp;
+  axis_info *ap;
+  chan_info *ncp;
+  old_samp = m->samp;
+  redraw = move_mark_1(cp,m,x);
+  diff = m->samp - old_samp;
+  if (diff != 0)
+    {
+      if ((mark_sd) && (mark_sd->mark_ctr > 1))
+	{
+	  for (i=0;i<mark_sd->mark_ctr;i++)
+	    {
+	      mp = mark_sd->marks[i];
+	      if (mp != m)
+		{
+		  ncp = mark_sd->chans[i];
+		  ap = ncp->axis;
+		  if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) erase_mark(ncp,ap,mp);
+		  mp->samp += diff;
+		  if (mp->samp < 0) mp->samp = 0;
+		  samps = current_ed_samples(ncp);
+		  if (mp->samp > samps) mp->samp = samps;
+		  if (mark_control_clicked)
+		    make_mark_graph(ncp,ncp->sound,ncp->state,mark_sd->initial_samples[i],mp->samp,i);
+		  if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) draw_mark(ncp,ap,mp);
+		}
+	    }
+	}
+    }
+  return(redraw);
+}
+
+void move_axis_to_track_mark(chan_info *cp) /* from snd-xchn.c, called when mark is not visible (moving axes) */
+{
+  int redraw;
+  if (moving_mark)
+    {
+      if (moving_mark->sync)
+	redraw = move_syncd_mark(cp,moving_mark,last_mouse_x);
+      else redraw = move_mark_1(cp,moving_mark,last_mouse_x);
+      if (redraw) draw_mark(cp,cp->axis,moving_mark);
+    }
+}
+
+void move_mark(chan_info *cp, mark *mp, int x, int y) /* from mouse drag callback in snd-chn.c, called whenever mark is visible */
+{
+  int redraw;
+  last_mouse_x = x;
+  if (mp->sync)
+    redraw = move_syncd_mark(cp,mp,x);
+  else redraw = move_mark_1(cp,mp,x);
+  if (mark_control_clicked)
+    make_mark_graph(cp,cp->sound,cp->state,mark_initial_sample,mp->samp,0);
+  if (redraw) draw_mark(cp,cp->axis,mp);
+}
+
+static void edit_dragged_mark(chan_info *cp, mark *m, int initial_sample)
+{
+  /* edit -- initial_sample is where we were when the drag started, ended at m->samp */
+  int num,mark_final_sample,id;
+  mark *new_m;
+  MUS_SAMPLE_TYPE *zeros;
+  mark_final_sample = m->samp;
+  num = mark_final_sample - initial_sample;
+  m->samp = initial_sample;
+  id = mark_id(m);
+  if (num > 0)
+    {
+      zeros = (MUS_SAMPLE_TYPE *)CALLOC(num,sizeof(MUS_SAMPLE_TYPE));
+      insert_samples(initial_sample,num,zeros,cp,"mark dragged");
+      FREE(zeros);
+      /* at this point, old mark pointer is irrelevant (it lives in the previous edit history list) */
+      /*   but since the ripple didn't touch it, we need to move it forward to reflect the insertion */
+    }
+  else 
+    if (num < 0)
+      delete_samples(mark_final_sample,-num,cp,"mark dragged");
+  if (num != 0) 
+    {
+      new_m = map_over_marks(cp,find_mark_id_1,(void *)id,READ_FORWARD);
+      new_m->samp = mark_final_sample;
+      update_graph(cp,NULL);
+    }
+}
+
+void finish_moving_mark(chan_info *cp, mark *m) /* button release called from snd-chn.c */
+{
+  int i,j;
+  mark *sdm;
+  if (watching_mouse) cancel_mark_watch(cp);
+  if ((m->sync != 0) && (mark_sd))
+    {
+      if (mark_control_clicked)
+	{
+	  for (i=mark_sd->mark_ctr-1;i>=0;i--)
+	    {
+	      /* do the edits in reverse order on the assumption that marks sharing a channel were ordered to begin with,
+	       *   so they'll happen in reverse order here, so the lower sample edits in rippling won't affect the higher
+	       */
+	      sdm = mark_sd->marks[i];
+	      edit_dragged_mark(mark_sd->chans[i],sdm,mark_sd->initial_samples[i]);
+	    }
+	  finalize_md_context(mark_sd->mark_ctr);
+	}
+      for (i=0;i<mark_sd->mark_ctr;i++)
+	if (mark_sd->chans[i])
+	  {
+	    sort_marks(mark_sd->chans[i]); /* resort marks in case movement scrambled them */
+	    for (j=i+1;j<mark_sd->mark_ctr;j++)    /* only sort each channel once */
+	      if (mark_sd->chans[j] == mark_sd->chans[i])
+		mark_sd->chans[j] = NULL;
+	  }
+    }
+  else 
+    {
+      if (mark_control_clicked) 
+	{
+	  edit_dragged_mark(cp,m,mark_initial_sample);
+	  finalize_md_context(1);
+	}
+      sort_marks(cp);
+    }
+  if (mark_sd) mark_sd = free_syncdata(mark_sd);
+}
+
+void play_syncd_mark(chan_info *cp, mark *m)
+{
+  int i;
+  mark *mp;
+  syncdata *sd;
+  sd = gather_syncd_marks(cp->state,m->sync);
+  if ((sd) && (sd->mark_ctr > 0))
+    {
+      for (i=0;i<sd->mark_ctr;i++)
+	{
+	  mp = sd->marks[i];
+	  start_playing_chan_syncd(sd->chans[i],mp->samp,TRUE,(i < (sd->mark_ctr-1)));
+	}
+    }
+  if (sd) free_syncdata(sd);
+}
+
+static int make_mark_graph(chan_info *cp, snd_info *sp, snd_state *ss, int initial_sample, int current_sample, int which)
+{
+  int i,j=0,samps,xi,k;
+  mix_context *ms;
+  axis_info *ap;
+  Float samples_per_pixel,xf;
+  double x,incr;  
+  MUS_SAMPLE_TYPE ina,ymin,ymax;
+  int pixels;
+  snd_fd *sf = NULL;
+  int x_start,x_end;
+  double start_time=0.0,cur_srate=1.0;
+  ap = cp->axis;
+  cur_srate = (double)SND_SRATE(sp);
+  ap->losamp = (int)(ap->x0*cur_srate);
+  if (ap->losamp < 0) ap->losamp = 0;
+  if (ap->x0 != (ap->losamp/cur_srate)) ap->losamp++;
+  start_time = (double)(ap->losamp)/cur_srate;
+  ap->hisamp = (int)(ap->x1*cur_srate);
+  if ((ap->losamp == 0) && (ap->hisamp == 0)) return(0);
+  x_start = ap->x_axis_x0;
+  x_end = ap->x_axis_x1;
+  samps = ap->hisamp - ap->losamp+1;
+  if ((x_start == x_end) && (samps > 10)) return(0); /* must be too-tiny graph */
+  pixels = x_end - x_start;
+  if (pixels >= POINT_BUFFER_SIZE) pixels = POINT_BUFFER_SIZE-1;
+  if ((x_start == x_end) || (samps <= 1))
+    samples_per_pixel = 0.01; /* any non-zero value < 1.0 should be ok here */
+  else samples_per_pixel = (Float)(samps-1)/(Float)pixels;
+
+  ms = mark_movers[which];
+ /* this is assuming one such mark per channel */
+  if ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE))
+    {
+      sf = init_sample_read(ap->losamp,cp,READ_FORWARD);
+      incr = (double)1.0 / cur_srate;
+
+      if (current_sample < initial_sample)
+	{
+	  for (j=0,i=ap->losamp,x=start_time;i<=ap->hisamp;i++,j++,x+=incr)
+	    {
+	      if (i == current_sample) {for (k=current_sample;k<initial_sample;k++) NEXT_SAMPLE(ina,sf);}
+	      NEXT_SAMPLE(ina,sf);
+	      set_grf_point(grf_x(x,ap),j,grf_y(MUS_SAMPLE_TO_FLOAT(ina),ap));
+	    }
+	}
+      else
+	{
+	  for (j=0,i=ap->losamp,x=start_time;i<=ap->hisamp;i++,j++,x+=incr)
+	    {
+	      if ((i < initial_sample) || (i >= current_sample)) 
+		NEXT_SAMPLE(ina,sf);
+	      else ina = MUS_SAMPLE_0;
+	      set_grf_point(grf_x(x,ap),j,grf_y(MUS_SAMPLE_TO_FLOAT(ina),ap));
+	    }
+	}
+      erase_and_draw_grf_points(ss,mark_movers[which],cp,j);
+    }
+  else
+    {
+      sf = init_sample_read(ap->losamp,cp,READ_FORWARD);
+      j = 0;      /* graph point counter */
+      x=ap->x0;
+      xi=grf_x(x,ap);
+      xf=0.0;     /* samples per pixel counter */
+      ymin = MUS_MIX_MAX;
+      ymax = MUS_MIX_MIN;
+      if (current_sample < initial_sample) 
+	{
+	  for (i=ap->losamp,xf=0.0;i<=ap->hisamp;i++)
+	    {
+	      if (i == current_sample) for (k=current_sample;k<initial_sample;k++) NEXT_SAMPLE(ina,sf);
+	      NEXT_SAMPLE(ina,sf);
+	      if (ina > ymax) ymax = ina;
+	      if (ina < ymin) ymin = ina;
+	      xf+=1.0;
+	      if (xf>samples_per_pixel)
+		{
+		  set_grf_points(xi,j,grf_y(MUS_SAMPLE_TO_FLOAT(ymin),ap),grf_y(MUS_SAMPLE_TO_FLOAT(ymax),ap));
+		  xi++;
+		  j++;
+		  xf -= samples_per_pixel;
+		  ymin = MUS_MIX_MAX;
+		  ymax = MUS_MIX_MIN;
+		}
+	    }
+	}
+      else
+	{
+	  for (i=ap->losamp,xf=0.0;i<=ap->hisamp;i++)
+	    {
+	      if ((i < initial_sample) || (i >= current_sample))
+		NEXT_SAMPLE(ina,sf);
+	      else ina = MUS_SAMPLE_0;
+	      if (ina > ymax) ymax = ina;
+	      if (ina < ymin) ymin = ina;
+	      xf+=1.0;
+	      if (xf>samples_per_pixel)
+		{
+		  set_grf_points(xi,j,grf_y(MUS_SAMPLE_TO_FLOAT(ymin),ap),grf_y(MUS_SAMPLE_TO_FLOAT(ymax),ap));
+		  xi++;
+		  j++;
+		  xf -= samples_per_pixel;
+		  ymin = MUS_MIX_MAX;
+		  ymax = MUS_MIX_MIN;
+		}
+	    }
+	}
+      erase_and_draw_both_grf_points(ss,mark_movers[which],cp,j);
+    }
+  if (sf) {free_snd_fd(sf); sf = NULL;}
+  return(j);
+}
+
+
 #if HAVE_GUILE
 static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)
 {
@@ -1337,3 +1535,4 @@ void gh_init_marks(void)
 }
 
 #endif
+
