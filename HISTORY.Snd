@@ -1,5 +1,6 @@
 Snd change log
 
+  17-May:    snd 7.4.
   6-May:     mono->stereo, mono-files->stereo, stereo->mono (extensions.scm).
              channel-variance etc in dsp.scm, taken from J Smith "Mathematics of the DFT"
   5-May:     reverse-channels, scramble-channels, rotate-channel, scramble-channel (extsnd.html, examp.scm)
@@ -11,8 +12,8 @@ Snd change log
   5-Apr:     snd 7.3.
   24-Mar:    dialog function consistency changes: added find-dialog, print-dialog
                changed region-dialog to view-regions-dialog, edit-save-as-dialog -> save-selection-dialog
-               file-dialog -> view-files-dialog, mix-dialog -> view-mixes-dialog, track-dialog -> view-tracks-dialog\n\
-               file-save-as-dialog -> save-sound-dialog\n\
+               file-dialog -> view-files-dialog, mix-dialog -> view-mixes-dialog, track-dialog -> view-tracks-dialog
+               file-save-as-dialog -> save-sound-dialog
   19-Mar:    change-window-property is now a procedure-with-setter named window-property.
              removed change-menu-label, menu-sensitive, recolor-widget.
   16-Mar:    def-optkey-fun in ws.scm.
@@ -27,7 +28,7 @@ Snd change log
              C-_ deletes text in listener to previous command.
   23-Feb:    speed-control-tones, speed-control-style, reverb-control-decay now handled like other control settings
              removed Options:Speed Style menu
-  20-Feb:    snd 7.2
+  20-Feb:    snd 7.2.
   19-Feb:    filter-channel (regularized filter-sound)
   18-Feb:    an enormous number of improvements to the Ruby code and inf-snd.el thanks to Michael Scholz.
                also new: snd-motif.rb.
@@ -489,7 +490,7 @@ Snd change log
              removed earlier scm_apply optimizations ("Rule #1 of optimization: don't do it").
              removed normalize-on-open (use after-open-hook and equalize-panes):
                (add-hook! after-open-hook (lambda (snd) (equalize-panes)))
-             renamed normalize-view to equalize-panes.\n\
+             renamed normalize-view to equalize-panes.
   24-May:    removed line-size, prefix-arg (it's now an optional arg to the key function).
              ignore-prefix arg to bind-key removed, Snd no longer handles prefix itself.
              removed cut (use delete-selection).

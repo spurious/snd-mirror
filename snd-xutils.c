@@ -112,6 +112,7 @@ bool set_axis_label_font(char *font)
     {
       if (axis_label_font(ss)) FREE(axis_label_font(ss));
       in_set_axis_label_font(copy_string(font));
+      /* TODO: should this call XFreeFont(MAIN_DISPLAY(ss), (ss->sgx)->axis_label_fontstruct)? [also XQueryFont] */
       (ss->sgx)->axis_label_fontstruct = fs;
 #if HAVE_GL
       reload_label_font();

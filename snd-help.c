@@ -361,18 +361,20 @@ char *version_info(void)
 
 void about_snd_help(void)
 {
-  char *info = NULL, *features = NULL;
+  char *info = NULL, *features = NULL, *files = NULL;
   info = version_info();
 #if HAVE_GUILE
-  features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("*features*")), 600);
+  features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("*features*")), 400);
+  files = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("snd-loaded-files")), 400);
 #endif
 #if HAVE_RUBY
-  features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("$\".join(' ')")), 600);
+  features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("$\".join(' ')")), 400);
 #endif
   main_snd_help("Snd is a sound editor.",
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+16-May:  snd 7.4\n\
 6-May:   mono->stereo, mono-files->stereo, stereo->mono (extensions.scm).\n\
          channel-variance etc in dsp.scm, taken from J Smith \"Mathematics of the DFT\"\n\
 5-May:   reverse-channels, scramble-channels, rotate-channel, scramble-channel (extsnd.html, examp.scm)\n\
@@ -381,10 +383,10 @@ void about_snd_help(void)
 13-Apr:  removed forward|backward-graph|mix|mark -- see snd7.scm for Scheme versions.\n\
 12-Apr:  dither-channel.\n\
          goertzel in dsp.scm (faster version of find-sine)\n\
-5-Apr:   snd 7.3\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
+            "\n    loaded files: ", files, "\n\n",
 #else
   #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",

@@ -468,6 +468,7 @@ char *gain_channel_name(int in_chans, int out_chans, bool input, int dev_in, int
 Float mixer_gain(int system, int device, int chan, int gain, int field)
 {
   float g[1];
+  g[0] = 0.0;
   mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system) | (device), field, chan, g);
   if (gain > rp->num_mixer_gains) 
     snd_error(_("gain (slider) number too high: %d > %d"),

@@ -35,6 +35,41 @@
     im))
 
 
+;;; this version taken from Julius Smith's "Spectral Audio..." with three changes
+;;;   it does the DFT by hand, and is independent of anything from Snd (fft, vcts etc)
+
+(define (dolph-1 N gamma)
+  (let* ((alpha (cosh (/ (acosh (expt 10.0 gamma)) N)))
+	 (den (/ 1.0 (cosh (* N (acosh alpha)))))
+	 (freq (/ pi N))
+	 (vals (make-vector N))
+	 (w (make-vector N))
+	 (pk 0.0)
+	 (mult -1))
+    (do ((i 0 (1+ i))
+	 (phase (- (/ pi 2)) (+ phase freq)))
+	((= i N))
+      (vector-set! vals i (* mult den (cos (* N (acos (* alpha (cos phase)))))))
+      (set! mult (* -1 mult)))
+    ;; now take the DFT
+    (do ((i 0 (1+ i)))
+	((= i N))
+      (let ((sum 0.0))
+	(do ((k 0 (1+ k)))
+	    ((= k N))
+	  (set! sum (+ sum (* (vector-ref vals k) (exp (/ (* 2.0 0+1.0i pi k i) N))))))
+	(vector-set! w i (magnitude sum))
+	(if (> (vector-ref w i) pk) (set! pk (vector-ref w i)))))
+    ;; scale to 1.0 (it's usually pretty close already, that is pk is close to 1.0)
+    (do ((i 0 (1+ i)))
+	((= i N))
+      (vector-set! w i (/ (vector-ref w i) pk)))
+    (if (and (even? N) ; w(0) is "extra" in that it is not reflected in the w(last)
+	     (> (vector-ref w 0) (vector-ref w 1)))
+	(vector-set! w 0 (vector-ref w 1)))
+    w))
+
+
 ;;; -------- move sound down by n (a power of 2)
 
 (define (down-oct n)

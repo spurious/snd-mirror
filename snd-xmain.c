@@ -606,7 +606,7 @@ void snd_doit(int argc, char **argv)
   Display *dpy;
   Drawable wn;
   Arg args[32];
-  int i, n, err;
+  int i, n, err = 0;
   sndres snd_rs;
   state_context *sx;
   Widget menu;

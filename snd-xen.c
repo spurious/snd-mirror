@@ -1018,7 +1018,7 @@ void snd_load_file(char *filename)
   if (!mus_file_probe(str))
     {
       /* try tacking on extension */
-      str1 = (char *)CALLOC(snd_strlen(str) + 2 + strlen(XEN_FILE_EXTENSION), sizeof(char));
+      str1 = (char *)CALLOC(snd_strlen(str) + 8 + strlen(XEN_FILE_EXTENSION), sizeof(char));
       sprintf(str1, "%s.%s", str, XEN_FILE_EXTENSION);
       if (!mus_file_probe(str1))
 	{
@@ -3251,22 +3251,26 @@ If it returns some non-false result, Snd assumes you've sent the text out yourse
   XEN_EVAL_C_STRING("(define undo-edit undo)");
 
   /* from ice-9/r4rs.scm but with output to snd listener */
+  XEN_EVAL_C_STRING("(define snd-loaded-files '())");
   XEN_EVAL_C_STRING("(define snd-remember-paths #f)");
   XEN_EVAL_C_STRING("(set! %load-path (cons \".\" %load-path))");
-  XEN_EVAL_C_STRING("(set! %load-hook (lambda (filename)\
-                                        (if %load-verbosely\
-                                            (snd-print (format #f \"~%;;; loading ~S\" filename)))\
-                                        (if snd-remember-paths\
-                                            (let ((curfile (mus-expand-filename filename))\
-                                                  (last-slash 0))\
-                                              (do ((i 0 (1+ i)))\
-                                                  ((= i (string-length curfile)))\
-                                                (if (char=? (string-ref curfile i) #\\/)\
-	                                            (set! last-slash i)))\
-                                              (let ((new-path (substring curfile 0 last-slash)))\
-                                                (if (and (not (member new-path %load-path))\
-                                                         (not (string=? (substring curfile (max 0 (- last-slash 5)) last-slash) \"ice-9\")))\
-	                                            (set! %load-path (cons new-path %load-path))))))))");
+  XEN_EVAL_C_STRING("(set! %load-hook \
+                       (lambda (filename)\
+                         (if %load-verbosely\
+                             (snd-print (format #f \"~%;;; loading ~S\" filename)))\
+                         (if (not (member filename snd-loaded-files))\
+                             (set! snd-loaded-files (cons filename snd-loaded-files)))\
+                         (if snd-remember-paths\
+                             (let ((curfile (mus-expand-filename filename))\
+                                   (last-slash 0))\
+                               (do ((i 0 (1+ i)))\
+                                   ((= i (string-length curfile)))\
+                                 (if (char=? (string-ref curfile i) #\\/)\
+	                             (set! last-slash i)))\
+                                     (let ((new-path (substring curfile 0 last-slash)))\
+                                       (if (and (not (member new-path %load-path))\
+                                                (not (string=? (substring curfile (max 0 (- last-slash 5)) last-slash) \"ice-9\")))\
+	                                   (set! %load-path (cons new-path %load-path))))))))");
   /* the "ice-9" business is to keep us from loading ice-9/debug.scm when we intend our own debug.scm */
   /* load-from-path can still be fooled, but the user will have to work at it. */
   /* If you load Guile's debug.scm by mistake (set! %load-verbosely #t) to see Snd's names get clobbered! */

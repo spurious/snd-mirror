@@ -8815,7 +8815,7 @@ int mus_audio_mixer_read(int dev1, int field, int chan, float *val)
       /* bufsize / 16 seems to safe max -- conversions can be by 8, and hmmm we're off by 2 somewhere I guess */
       {
 	int bufsize = 4096;
-	int sizeof_bufsize;
+	UInt32 sizeof_bufsize;
 	sizeof_bufsize = sizeof(unsigned int);
 	curdev = MUS_AUDIO_DEVICE(dev1);
 	size = sizeof(AudioDeviceID);

@@ -477,13 +477,13 @@ static XFontStruct *help_font(void)
 int help_text_width(const char *txt, int start, int end)
 {
   XFontStruct *font;
-  if ((txt[start] != '\0') && (help_text))
+  if (txt[start] != '\0')
     {
       font = help_font();
       if (font)
 	return(XTextWidth(font, (char *)(txt + start), end - start));
     }
-  return(0);
+  return((end - start) * 8);
 }
 
 

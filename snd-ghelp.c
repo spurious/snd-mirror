@@ -29,17 +29,13 @@ static void add_help_text(GtkWidget *text, const char *message)
 
 int help_text_width(const char *txt, int start, int end)
 {
-  if (help_text)
-    {
-      char *buf;
-      int len;
-      buf = (char *)CALLOC(end - start + 2, sizeof(char));
-      strncpy(buf, txt, end - start);
-      len = sg_text_width(buf, ss->sgx->listener_fnt);
-      FREE(buf);
-      return(len);
-    }
-  return(0);
+  char *buf;
+  int len;
+  buf = (char *)CALLOC(end - start + 2, sizeof(char));
+  strncpy(buf, txt, end - start);
+  len = sg_text_width(buf, ss->sgx->listener_fnt);
+  FREE(buf);
+  return(len);
 }
 
 static int old_help_text_width = 0;

@@ -115,7 +115,7 @@
 	     (copy-file (string-append home-dir "/cl/" file) (string-append (getcwd) "/" file)))))
      (list "4.aiff" "2.snd" "obtest.snd" "oboe.snd" "pistol.snd" "1a.snd" "now.snd" "fyow.snd"
 	   "storm.snd" "z.snd" "1.snd" "cardinal.snd" "now.snd.scm" "2a.snd" "4a.snd" "zero.snd"
-	   "loop.scm" "cmn-glyphs.lisp" "bullet.xpm")))
+	   "loop.scm" "cmn-glyphs.lisp" "bullet.xpm" "mb.snd")))
 
 (define (real-time) (exact->inexact (/ (get-internal-real-time) internal-time-units-per-second)))
 (define (hundred n) (inexact->exact (round (* 100 n))))
@@ -30249,6 +30249,8 @@ EDITS: 2
                   (list new-low-data new-high-data) snd chn copy-context left-bin right-bin)
 		(set! (foreground-color snd chn) old-color)))))))
 
+(if (provided? 'snd-nogui)
+    (define (load-font name) #f))
 (define new-font (load-font "-*-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
 (define apropos-cs "(guile-user): close-sound	#<primitive-procedure close-sound>
 (guile-user): close-sound-file	#<primitive-procedure close-sound-file>
