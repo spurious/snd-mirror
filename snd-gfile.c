@@ -343,7 +343,7 @@ static char *last_save_as_filename = NULL;
 
 static void save_as_ok_callback(GtkWidget *w, gpointer data)
 {
-  char *str = NULL,*comment;
+  char *str = NULL,*comment=NULL;
   int result;
   int type,format,srate;
   snd_info *sp;
@@ -359,6 +359,7 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
   if (last_save_as_filename)
     result = check_for_filename_collisions_and_save(ss,sp,last_save_as_filename,save_as_dialog_type,srate,type,format,comment);
   else if (sp) report_in_minibuffer(sp,"not saved (no name given)");
+  if (comment) g_free(comment);
   gtk_widget_hide(save_as_dialog);
 } 
 

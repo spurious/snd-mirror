@@ -1649,7 +1649,8 @@ static GtkWidget *make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Flo
   GtkWidget **hboxes;
 
   btab = gtk_vbox_new(FALSE,0);
-  gtk_box_pack_start(GTK_BOX(vuh),btab,!input,!input,10);
+  /* gtk_box_pack_start(GTK_BOX(vuh),btab,!input,!input,10); */
+  gtk_box_pack_start(GTK_BOX(vuh),btab,TRUE,TRUE,10);
   gtk_widget_show(btab);
 
   if ((rp->systems == 1) || (!input))
@@ -1842,7 +1843,7 @@ static void Reset_Record_Callback(GtkWidget *w,gpointer clientData)
       rp->triggered = (!rp->triggering);
       sensitize_control_buttons();
       set_button_label(reset_button,STR_Reset);
-      set_background(record_button,(ss->sgx)->basic_color);
+      set_backgrounds(record_button,(ss->sgx)->basic_color);
       set_button_label(record_button,(rp->triggering) ? STR_Triggered_Record : STR_Record);
       snd_close(rp->output_file_descriptor);
       rp->output_file_descriptor = -1;
@@ -1893,7 +1894,7 @@ void finish_recording(snd_state *ss, recorder_info *rp)
   snd_info *sp;
   Float duration;
   sensitize_control_buttons();
-  set_background(record_button,(ss->sgx)->basic_color);
+  set_backgrounds(record_button,(ss->sgx)->basic_color);
   set_button_label(reset_button,STR_Reset);
   set_button_label(record_button,(rp->triggering) ? STR_Triggered_Record : STR_Record);
   snd_close(rp->output_file_descriptor);
@@ -1955,8 +1956,8 @@ static void Record_Button_Callback(GtkWidget *w,gpointer clientData)
 	      return;
 	    }
 
-	  if (gtk_text_get_length(GTK_TEXT(recdat->comment_text)) > 0)
-	    comment = copy_string(gtk_editable_get_chars(GTK_EDITABLE(recdat->comment_text),0,-1));
+	  if (comment) g_free(comment);
+	  comment = gtk_editable_get_chars(GTK_EDITABLE(recdat->comment_text),0,-1);
 	  reflect_recorder_duration(0.0);
 	  
 	  if (out_chans_active() != rp->out_chans)
@@ -1989,7 +1990,7 @@ static void Record_Button_Callback(GtkWidget *w,gpointer clientData)
 	      rp->triggered = (!rp->triggering);
 	      return;
 	    }
-	  set_background(w,(ss->sgx)->red);
+	  set_backgrounds(record_button,(ss->sgx)->red);
 	  set_button_label(reset_button,STR_Cancel);
 	  set_button_label(record_button,STR_Done);
 
@@ -2075,6 +2076,7 @@ void snd_record_file(snd_state *ss)
       dismiss_button = gtk_button_new_with_label(STR_Dismiss);
       reset_button = gtk_button_new_with_label(STR_Reset);
       record_button = gtk_button_new_with_label(STR_Record);
+      set_backgrounds(record_button,(ss->sgx)->basic_color);
 
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(recorder)->action_area),dismiss_button,TRUE,TRUE,10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(recorder)->action_area),reset_button,TRUE,TRUE,10);
@@ -2088,7 +2090,6 @@ void snd_record_file(snd_state *ss)
       set_pushed_button_colors(help_button,ss);
       set_pushed_button_colors(dismiss_button,ss);
       set_pushed_button_colors(reset_button,ss);
-      set_active_color(record_button,(ss->sgx)->red);
       gtk_widget_show(dismiss_button);
       gtk_widget_show(reset_button);
       gtk_widget_show(record_button);

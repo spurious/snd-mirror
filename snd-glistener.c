@@ -42,7 +42,7 @@ static void Listener_completion(snd_state *ss)
       new_text = complete_listener_text(old_text,end,&try_completion,&file_text);
       if (try_completion == 0)
 	{
-	  free(old_text);
+	  g_free(old_text);
 	  return;
 	}
       if (strcmp(old_text,new_text) == 0) matches = get_completion_matches();
@@ -67,7 +67,7 @@ static void Listener_completion(snd_state *ss)
 	    }
 	  if (file_text) FREE(file_text);
 	}
-      if (old_text) free(old_text);
+      if (old_text) g_free(old_text);
     }
 }
 
@@ -165,6 +165,7 @@ static void Command_Return_Callback(snd_state *ss)
 	      append_listener_text(0,"\n");
 	      /* gtk_text_set_point(GTK_TEXT(listener_text),gtk_text_get_length(GTK_TEXT(listener_text))); */
 	      gtk_editable_set_position(GTK_EDITABLE(listener_text),gtk_text_get_length(GTK_TEXT(listener_text)));
+	      if (full_str) g_free(full_str);
 	      return;
 	    }
 	}
@@ -195,7 +196,7 @@ static void Command_Return_Callback(snd_state *ss)
   cmd_eot = gtk_text_get_length(GTK_TEXT(listener_text));
   /* gtk_text_set_point(GTK_TEXT(listener_text),cmd_eot); */
   gtk_editable_set_position(GTK_EDITABLE(listener_text),cmd_eot); 
-  if (full_str) free(full_str);
+  if (full_str) g_free(full_str);
 }
 
 static char *C_k_str = NULL;
@@ -216,7 +217,7 @@ static void grab_line(snd_state *ss)
       C_k_str = (char *)CALLOC(i-current_position+2,sizeof(char));
       for (j=current_position,k=0;j<i;j++,k++) C_k_str[k] = full_str[j];
     }
-  if (full_str) free(full_str);
+  if (full_str) g_free(full_str);
 }
 
 static void insert_line(snd_state *ss)
@@ -242,7 +243,7 @@ static void back_to_start(snd_state *ss)
 	  }
     }
   gtk_editable_set_position(GTK_EDITABLE(listener_text),start_of_text);
-  if (full_str) free(full_str);
+  if (full_str) g_free(full_str);
 }
 
 static gint listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
@@ -298,10 +299,10 @@ static gint listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 				      fstr = gtk_editable_get_chars(GTK_EDITABLE(listener_text),current_position-2,current_position);
 				      if ((current_position != (last_prompt - 2)) && (strcmp(fstr,listener_prompt_with_cr(ss)) != 0))
 					{
-					  free(fstr);
+					  g_free(fstr);
 					  return(TRUE);
 					}
-				      free(fstr);
+				      g_free(fstr);
 				    }
 				}
 			      else return(TRUE);

@@ -4491,6 +4491,7 @@ static SCM g_make_phase_vocoder(SCM arglist)
   return(pv_obj);
 }
 
+/* these names are all wrong!! */
 static SCM g_pv_amps(SCM pv, SCM ind) 
 {
   Float *amps; 
@@ -4508,6 +4509,16 @@ static SCM g_set_pv_amps(SCM pv, SCM ind, SCM val)
   return(val);
 }
 
+static SCM g_pv_amps_1(SCM pv) 
+{
+  Float *amps; 
+  int len;
+  mus_scm *gn = mus_get_scm(pv);
+  amps = mus_phase_vocoder_amps((void *)(gn->gen)); 
+  len = mus_length((mus_any *)(gn->gen));
+  return(make_vct_wrapper(len/2,amps));
+}
+  
 static SCM g_pv_freqs(SCM pv, SCM ind) 
 {
   Float *freqs; 
@@ -4525,6 +4536,16 @@ static SCM g_set_pv_freqs(SCM pv, SCM ind, SCM val)
   return(val);
 }
 
+static SCM g_pv_freqs_1(SCM pv) 
+{
+  Float *amps; 
+  int len;
+  mus_scm *gn = mus_get_scm(pv);
+  amps = mus_phase_vocoder_freqs((void *)(gn->gen)); 
+  len = mus_length((mus_any *)(gn->gen));
+  return(make_vct_wrapper(len,amps));
+}
+  
 static SCM g_pv_phases(SCM pv, SCM ind) 
 {
   Float *phases; 
@@ -4542,6 +4563,16 @@ static SCM g_set_pv_phases(SCM pv, SCM ind, SCM val)
   return(val);
 }
 
+static SCM g_pv_phases_1(SCM pv) 
+{
+  Float *amps; 
+  int len;
+  mus_scm *gn = mus_get_scm(pv);
+  amps = mus_phase_vocoder_phases((void *)(gn->gen)); 
+  len = mus_length((mus_any *)(gn->gen));
+  return(make_vct_wrapper(len/2,amps));
+}
+  
 /* temporary !?? */
 static SCM g_pv_ampinc(SCM pv, SCM ind) 
 {
@@ -4560,6 +4591,16 @@ static SCM g_set_pv_ampinc(SCM pv, SCM ind, SCM val)
   return(val);
 }
 
+static SCM g_pv_ampinc_1(SCM pv) 
+{
+  Float *amps; 
+  int len;
+  mus_scm *gn = mus_get_scm(pv);
+  amps = mus_phase_vocoder_ampinc((void *)(gn->gen)); 
+  len = mus_length((mus_any *)(gn->gen));
+  return(make_vct_wrapper(len,amps));
+}
+  
 static SCM g_pv_phaseinc(SCM pv, SCM ind) 
 {
   Float *phaseinc; 
@@ -4577,6 +4618,16 @@ static SCM g_set_pv_phaseinc(SCM pv, SCM ind, SCM val)
   return(val);
 }
 
+static SCM g_pv_phaseinc_1(SCM pv) 
+{
+  Float *amps; 
+  int len;
+  mus_scm *gn = mus_get_scm(pv);
+  amps = mus_phase_vocoder_phaseinc((void *)(gn->gen)); 
+  len = mus_length((mus_any *)(gn->gen));
+  return(make_vct_wrapper(len/2,amps));
+}
+  
 static SCM g_pv_lastphase(SCM pv, SCM ind) 
 {
   Float *lastphase; 
@@ -4594,6 +4645,16 @@ static SCM g_set_pv_lastphase(SCM pv, SCM ind, SCM val)
   return(val);
 }
 
+static SCM g_pv_lastphase_1(SCM pv) 
+{
+  Float *amps; 
+  int len;
+  mus_scm *gn = mus_get_scm(pv);
+  amps = mus_phase_vocoder_lastphase((void *)(gn->gen)); 
+  len = mus_length((mus_any *)(gn->gen));
+  return(make_vct_wrapper(len/2,amps));
+}
+
 static SCM g_hop(SCM obj)
 {
   #define H_mus_hop "(" S_mus_hop " gen) -> gen's " S_mus_hop " field"
@@ -4609,6 +4670,8 @@ static SCM g_set_hop(SCM obj, SCM val)
   return(gh_int2scm(mus_set_hop(mus_get_any(obj),g_scm2int(val))));
 }
 
+
+
 static void init_pv(void)
 {
   DEFINE_PROC(gh_new_procedure(S_phase_vocoder_p,SCM_FNC g_phase_vocoder_p,1,0,0),H_phase_vocoder_p);
@@ -4616,16 +4679,22 @@ static void init_pv(void)
   DEFINE_PROC(gh_new_procedure(S_make_phase_vocoder,SCM_FNC g_make_phase_vocoder,0,0,1),H_make_phase_vocoder);
 
   gh_new_procedure2_0("pv-ampinc",g_pv_ampinc);
+  gh_new_procedure1_0("pv-ampinc-1",g_pv_ampinc_1);
   gh_new_procedure3_0("set-pv-ampinc",g_set_pv_ampinc);
   gh_new_procedure2_0("pv-amps",g_pv_amps);
+  gh_new_procedure1_0("pv-amps-1",g_pv_amps_1);
   gh_new_procedure3_0("set-pv-amps",g_set_pv_amps);
   gh_new_procedure2_0("pv-freqs",g_pv_freqs);
+  gh_new_procedure1_0("pv-freqs-1",g_pv_freqs_1);
   gh_new_procedure3_0("set-pv-freqs",g_set_pv_freqs);
   gh_new_procedure2_0("pv-phases",g_pv_phases);
+  gh_new_procedure1_0("pv-phases-1",g_pv_phases_1);
   gh_new_procedure3_0("set-pv-phases",g_set_pv_phases);
   gh_new_procedure2_0("pv-phaseinc",g_pv_phaseinc);
+  gh_new_procedure1_0("pv-phaseinc-1",g_pv_phaseinc_1);
   gh_new_procedure3_0("set-pv-phaseinc",g_set_pv_phaseinc);
   gh_new_procedure2_0("pv-lastphase",g_pv_lastphase);
+  gh_new_procedure1_0("pv-lastphase-1",g_pv_lastphase_1);
   gh_new_procedure3_0("set-pv-lastphase",g_set_pv_lastphase);
 
   DEFINE_PROC(gh_new_procedure(S_mus_hop,SCM_FNC g_hop,1,0,0),H_mus_hop);

@@ -4,7 +4,7 @@ snd change log
   24-Aug:    drag-and-drop bugfixes.
   23-Aug:    removed -s startup switch.
   22-Aug:    removed snd-gdac.c, snd-xdac.c.
-  19-Aug:    removed Lesstif support.
+  19-Aug:    removed special-case Lesstif support.
   18-Aug:    scan and map-chan and friends (including find and count-matches)
                no longer call the function with #f at the end -- this is a non-backwards-compatible change.
                The #f call can be implemented using closures (see data-max example), the early exit

@@ -8,6 +8,7 @@
  *   void init_vct(void)                   called to declare the various functions and the vct type in Guile
  *   int vct_p(SCM obj)                    is obj a vct
  *   SCM make_vct(int len, Float *data)    make a new vct
+ *   SCM make_vct_wrapper(int len, Float *data) make a new vct that doesn't free data when garbage collector strikes
  *   vct *get_vct(SCM arg)                 given SCM arg, return vct object
  *   void set_vct_print_length(int val)    set vct print length (default 10)
  *
@@ -105,7 +106,7 @@ vct *get_vct(SCM arg)
 static scm_sizet free_vct(SCM obj)
 {
   vct *v = (vct *)GH_VALUE_OF(obj);
-  if (v->data) FREE(v->data);
+  if ((v->dont_free == 0) && (v->data)) FREE(v->data);
   v->data = NULL;
   FREE(v);
   return(0);
@@ -159,6 +160,27 @@ SCM make_vct(int len, Float *data)
   new_vct = (vct *)CALLOC(1,sizeof(vct));
   new_vct->length = len;
   new_vct->data = data;
+  new_vct->dont_free = 0;
+#if (!HAVE_GUILE_1_3_0)
+  SCM_RETURN_NEWSMOB(vct_tag,new_vct);
+#else
+  SCM_NEWCELL(ans);
+  SCM_SETCDR(ans,(SCM)new_vct);
+  SCM_SETCAR(ans,vct_tag);
+  return(ans);
+#endif
+}
+
+SCM make_vct_wrapper(int len, Float *data)
+{
+#if HAVE_GUILE_1_3_0
+  SCM ans;
+#endif
+  vct *new_vct;
+  new_vct = (vct *)CALLOC(1,sizeof(vct));
+  new_vct->length = len;
+  new_vct->data = data;
+  new_vct->dont_free = 1;
 #if (!HAVE_GUILE_1_3_0)
   SCM_RETURN_NEWSMOB(vct_tag,new_vct);
 #else
