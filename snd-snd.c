@@ -1330,7 +1330,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 		  else
 		    {
 		      int ok;
-		      ok = delete_selection(S_src_selection, DONT_UPDATE_DISPLAY);
+		      ok = delete_selection("Apply to selection", DONT_UPDATE_DISPLAY);
 		      for (i = 0; i < si->chans; i++)
 			{
 			  file_insert_samples(si->begs[i], apply_dur, ap->ofile, si->cps[i], 0, DELETE_ME, "Apply to selection");

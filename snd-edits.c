@@ -508,7 +508,7 @@ void backup_edit_list(chan_info *cp)
   cur = cp->edit_ctr;
   if (cur <= 0) return;
   free_ed_list(cp->edits[cur - 1]);
-  free_amp_env(cp, cur-1);
+  free_amp_env(cp, cur - 1);
   cp->edits[cur - 1] = cp->edits[cur];
   cp->amp_envs[cur - 1] = cp->amp_envs[cur];
   cp->edits[cur] = NULL;
@@ -616,7 +616,7 @@ static ed_list *selected_ed_list(int beg, int end, ed_list *current_state)
   if (FRAGMENT_GLOBAL_POSITION(current_state, bk) > beg) bk--;
   ek = find_split_loc(end + 1, current_state) - 1; /* was end 11-Nov-00 */
   new_size = current_state->size;
-  /* if (ek < 0) ek = new_size-1; */
+  /* if (ek < 0) ek = new_size - 1; */
   if (ek < 0) ek = 0;
   if (FRAGMENT_GLOBAL_POSITION(current_state, bk) != beg) new_size++;
   if (FRAGMENT_GLOBAL_POSITION(current_state, (ek + 1)) != end + 1) new_size++;
@@ -650,7 +650,7 @@ static ed_list *selected_ed_list(int beg, int end, ed_list *current_state)
       for (i = 0; i < ED_SIZE; i++)
 	new_ed->fragments[k * ED_SIZE + i] = current_state->fragments[ek * ED_SIZE + i];
       FRAGMENT_LOCAL_END(new_ed, (k-1)) -= diff;
-      FRAGMENT_LOCAL_POSITION(new_ed, k) = FRAGMENT_LOCAL_END(new_ed, (k-1)) + 1;
+      FRAGMENT_LOCAL_POSITION(new_ed, k) = FRAGMENT_LOCAL_END(new_ed, (k - 1)) + 1;
       FRAGMENT_GLOBAL_POSITION(new_ed, k) = end + 1; /* 1? */
       k++;
     }
@@ -693,7 +693,7 @@ void remember_temp(char *filename, int chans)
       if (i >= tempfiles_size)
 	{
 	  tempfiles = (tempfile_ctr **)REALLOC(tempfiles, tempfiles_size * sizeof(tempfile_ctr *));
-	  for (i = tempfiles_size; i<(tempfiles_size + 8); i++) tempfiles[i] = NULL;
+	  for (i = tempfiles_size; i < (tempfiles_size + 8); i++) tempfiles[i] = NULL;
 	  i = tempfiles_size;
 	  tempfiles_size += 8;
 	}
@@ -1311,8 +1311,8 @@ void extend_with_zeros(chan_info *cp, int beg, int num, const char *origin)
   ed_list *ed;
   if (num <= 0) return;
   len = current_ed_samples(cp);
-  k = cp->edit_ctr;
-  prepare_edit_list(cp, len+num);
+  k = cp->edit_ctr; /* TODO: edpos */
+  prepare_edit_list(cp, len + num);
   if (num > 1024)
     {
       cp->edits[cp->edit_ctr] = insert_samples_1(beg, num, NULL, cp->edits[k], cp, &cb, origin);
@@ -1353,7 +1353,7 @@ void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, i
       len = current_ed_samples(cp);
     }
   ss = cp->state;
-  k = cp->edit_ctr;
+  k = cp->edit_ctr; /* TODO: edpos?? */
   prepare_edit_list(cp, len + num);
   cp->edits[cp->edit_ctr] = insert_samples_1(beg, num, NULL, cp->edits[k], cp, &cb, origin);
   reflect_edit_history_change(cp);
@@ -1399,7 +1399,7 @@ void insert_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, cons
       extend_with_zeros(cp, len, beg - len + 1, "(insert-extend)");
       len = current_ed_samples(cp);
     }
-  k = cp->edit_ctr;
+  k = cp->edit_ctr; /* TODO: edpos? moved up */
   prepare_edit_list(cp, len + num);
   cp->edits[cp->edit_ctr] = insert_samples_1(beg, num, vals, cp->edits[k], cp, &cb, origin);
   reflect_edit_history_change(cp);
@@ -1507,7 +1507,7 @@ void delete_samples(int beg, int num, chan_info *cp, const char *origin)
   if ((beg < len) && (beg >= 0))
     {
       if ((beg + num) > len) num = len - beg;
-      k = cp->edit_ctr;
+      k = cp->edit_ctr; /* TODO: edpos?? */
       prepare_edit_list(cp, len - num);
       cp->edits[cp->edit_ctr] = delete_samples_1(beg, num, cp->edits[k], cp, origin);
       reflect_edit_history_change(cp);
@@ -1517,7 +1517,7 @@ void delete_samples(int beg, int num, chan_info *cp, const char *origin)
     }
   else
     {
-      if (num == 1)
+      if (num == 1) /* TODO: if from g_delete: NO_SUCH_SAMPLE? */
 	report_in_minibuffer_and_save(cp->sound, "can't delete sample %d (current len=%d)", beg, len);
       else report_in_minibuffer_and_save(cp->sound, "can't delete samples %d to %d (current len=%d)", beg, beg + num - 1, len);
     }
@@ -1635,7 +1635,7 @@ void file_change_samples(int beg, int num, char *tempfile,
     }
   new_len = beg + num;
   if (new_len < prev_len) new_len = prev_len;
-  k = cp->edit_ctr;
+  k = cp->edit_ctr; /* TODO: edpos?? moved up */
   prepare_edit_list(cp, new_len);
   cp->edits[cp->edit_ctr] = change_samples_1(beg, num, NULL, cp->edits[k], cp, &cb, new_len - prev_len, origin);
   reflect_edit_history_change(cp);
@@ -1737,7 +1737,7 @@ void change_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, int 
     }
   new_len = beg + num;
   if (new_len < prev_len) new_len = prev_len;
-  k = cp->edit_ctr;
+  k = cp->edit_ctr; /* TODO: edpos? */
   prepare_edit_list(cp, new_len);
   cp->edits[cp->edit_ctr] = change_samples_1(beg, num, vals, cp->edits[k], cp, NULL, new_len - prev_len, origin);
   reflect_edit_history_change(cp);

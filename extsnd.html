@@ -3782,9 +3782,9 @@ Most of the region number arguments default to the current region (the first in 
 <!-- -->
 <!-- env-selection -->
 <!-- -->
-<!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="sndenvselection">env-selection</a></em> (envelope <i>env-base snd chn</i>)</code></span></td>
+<!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="sndenvselection">env-selection</a></em> (envelope <i>env-base</i>)</code></span></td>
 <!-- --></tr><tr><td></td><td>
-<!-- -->apply <i>envelope</i> to the currently selected portion of <i>snd</i>'s channel <i>chn</i>.
+<!-- -->apply <i>envelope</i> to the selection.
 <!-- --><i>envelope</i> can also be a CLM env generator (in this case, <i>env-base</i> 
 <!-- -->is ignored).
 <!-- --></td></tr>
@@ -3994,8 +3994,8 @@ The following substitutions can be made:
 <a href="#sndsmooth">smooth-sound</a> beg dur s c                    <a href="#smoothchannel">smooth-channel</a> beg dur s c e
 <a href="#samples2vct">samples-&gt;vct</a> beg dur snd chn v e            <a href="#channel2vct">channel-&gt;vct</a> beg dur s c e
 <a href="#vct2samples">vct-&gt;samples</a> beg dur vct s c                <a href="#vct2channel">vct-&gt;channel</a> vct beg dur s c [edpos doesn't apply here]
+<a href="#sndsrc">src-sound</a> num base s c e                    <a href="#srcchannel">src-channel</a> ratio-or-env-gen beg dur s c e
 <a href="#sndconvolvewith">convolve-with</a> file amp s c e               
-<a href="#sndsrc">src-sound</a> num base s c e
 </pre>
 </small>
 <p><small>An equivalent Scheme wrapper might be:</small></p>
@@ -5851,6 +5851,18 @@ The following substitutions can be made:
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- --><i>snd</i>'s sampling rate.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- src-channel -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="srcchannel">src-channel</a></em> (num-or-env-gen <i>beg dur snd chn edpos</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->sampling rate conversion using 'warped sinc interpolation'.  The
+<!-- -->argument <i>num-or-env-gen</i> can be either a number or an envelope generator.
+<!-- -->This is the <a href="#regularizedargs">regularized</a> version of <a href="#sndsrc">src-sound</a>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

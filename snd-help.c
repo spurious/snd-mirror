@@ -84,7 +84,7 @@ static char *snd_itoa(int n)
   return(str);
 }
 
-#ifdef USE_MOTIF
+#if USE_MOTIF
   #include <X11/IntrinsicP.h>
   #if HAVE_XPM
     #include <X11/xpm.h>
@@ -274,15 +274,6 @@ void news_help(snd_state *ss)
 1-Oct:   Snd 5.3.\n\
 26-Sep:  after-edit-hook.\n\
 24-Sep:  changed mus-sound-max-amp to mus-sound-maxamp to match all other such cases (old name still exists)\n\
-18-Sep:  backwards incompatible change to save-state of small regions\n\
-17-Sep:  section-scale-by renamed scale-sound-by (more consistent), also scale-sound-to\n\
-14-Sep:  peak-env.scm.\n\
-7-Sep:   define-selection-via-marks in marks.scm.\n\
-4-Sep:   eps-size.\n\
-3-Sep:   mix-file-dialog.\n\
-         optional position arg to add-to-menu.\n\
-1-Sep:   zero-phase, rotate-phase in dsp.scm (Scott McNab).\n\
-         region-play-list in examp.scm.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'",
@@ -614,162 +605,111 @@ Chebyshev transforms, and perhaps others.\n\
 void find_help(snd_state *ss) 
 {
   snd_help_with_url_and_wrap(ss, STR_Find, "#find", 
-"Searches in Snd refer to the sound data, and are \
-in general patterned after Emacs.  When you type \
-c-s or c-r, the minibuffer below the graph is \
-activated and you are asked for the search function. \
-The expression is a Scheme function of one argument, \
-the current sample value.  It should return #t when the \
-search is satisified.  For example, (lambda (n) (> n .1) \
-looks for the next sample that is greater than .1. \
-Successive c-s or c-r repeat the search.  c-x c-s can \
-redefine the search pattern, which is also cleared in other \
+"Searches in Snd refer to the sound data, and are in general patterned after Emacs.  When you type \
+c-s or c-r, the minibuffer below the graph is activated and you are asked for the search function. \
+The expression is a Scheme function of one argument, the current sample value.  It should return #t when the \
+search is satisified.  For example, (lambda (n) (> n .1) looks for the next sample that is greater than .1. \
+Successive c-s or c-r repeat the search.  c-x c-s can redefine the search pattern, which is also cleared in other \
 events, much like Emacs. \
 \n\n\
-Normally, the search applies only to the current channel. \
-To search all current files at once, use the Edit menu's \
-find option.");
+Normally, the search applies only to the current channel. To search all current files at once, use the Edit menu's find option.");
 }
 
 void undo_help(snd_state *ss) 
 {
   snd_help_with_url_and_wrap(ss, STR_Undo, "#undoredo",
-"Snd supports unlimited undo in the \
-sense that you can backup through all \
-the edits since the last save, and at \
-any point redo those edits.  Certain \
-operations require that temporary files \
-be written, so disk space may eventually \
-become a problem.  Revert is the same \
-as backing up to the last save. \
+"Snd supports unlimited undo in the sense that you can backup through all \
+the edits since the last save, and at any point redo those edits.  Certain \
+operations require that temporary files be written, so disk space may eventually \
+become a problem.  Revert is the same as backing up to the last save. \
 \n\n\
-In addition, eight or so of the previous \
-selections are saved on a stack accessible \
-via c-y.");
+In addition, eight or so of the previous selections are saved on a stack accessible via c-y.");
 }
 
 void sync_help(snd_state *ss) 
 {
   snd_help_with_url_and_wrap(ss, STR_Sync, "#multichannel",
-"The sync button causes certain operations to \
-apply to all channels simultaneously.  In mono \
-sounds, the sync button has a similar effect, \
-but applied across multiple sounds. \
+"The sync button causes certain operations to apply to all channels simultaneously.  In mono \
+sounds, the sync button has a similar effect, but applied across multiple sounds. \
 \n\n\
-To get multi-channel selections, set the sync \
-button, then define the selection (by dragging \
-the mouse) in one channel, and the parallel \
-portions of the other channels will also be \
-selected. ");
+To get multi-channel selections, set the sync button, then define the selection (by dragging \
+the mouse) in one channel, and the parallel portions of the other channels will also be selected. ");
 }
 
 static char speed_help_string[] = 
-"'Speed' refers to the rate at which the \
-sound data is consumed during playback. \
-Another term might be 'srate'.  Snd uses \
-linear interpolation to perform the speed \
-change.  The arrow button on the right determines \
-the direction we move through the data. \
-The scroll bar position is normally interpreted \
-as a float between .05 and 20.  The Options \
-Speed Style menu (or the " S_speed_control_style " variable) \
-can change this to use semitones (actually microtones) \
-or just-intonation ratios.  The number of equal \
-divisions to the octave in the semitone case is \
+"'Speed' refers to the rate at which the sound data is consumed during playback. \
+Another term might be 'srate'.  Snd uses linear interpolation to perform the speed \
+change.  The arrow button on the right determines the direction we move through the data. \
+The scroll bar position is normally interpreted as a float between .05 and 20.  The Options \
+Speed Style menu (or the " S_speed_control_style " variable) can change this to use semitones (actually microtones) \
+or just-intonation ratios.  The number of equal divisions to the octave in the semitone case is \
 set by the variable " S_speed_control_tones " (normally 12). \
 \n\
 ";
 
 static char expand_help_string[] = 
-"'Expand' refers to a kind of granular \
-synthesis used to change the tempo of events \
-in the sound without changing pitch.  Successive \
-short slices of the file are overlapped with \
-the difference in size between the input and \
-output hops (between successive slices) giving \
-the change in tempo.  This doesn't work in all \
-files -- it sometimes sounds like execrable reverb \
-or is too buzzy -- but it certainly is more \
-robust than the phase vocoder approach to the \
+"'Expand' refers to a kind of granular synthesis used to change the tempo of events \
+in the sound without changing pitch.  Successive short slices of the file are overlapped with \
+the difference in size between the input and output hops (between successive slices) giving \
+the change in tempo.  This doesn't work in all files -- it sometimes sounds like execrable reverb \
+or is too buzzy -- but it certainly is more robust than the phase vocoder approach to the \
 same problem.  \
 \n\n\
-There are a variety of variables that control \
-hop sizes, segment lengths, and overall segment \
-envelopes.  These can be set in the minibuffer \
-via m-x and setf, or in your Snd init file. \
+There are a variety of variables that control hop sizes, segment lengths, and overall segment \
+envelopes.  These can be set in the minibuffer via m-x and setf, or in your Snd init file. \
 The variables are:\n\
 \n\
   " S_expand_control_ramp ": the length of the ramp up (.4, 0 to .5)\n\
   " S_expand_control_length ": the length of each slice (.15)\n\
   " S_expand_control_hop ": the hop size (.05)\n\
 \n\
-The expander is on only if the expand \
-button is set. \
+The expander is on only if the expand button is set. \
 \n\
 ";
 
 static char reverb_help_string[] = 
-"The Snd reverberator is a version of Michael \
-McNabb's Nrev.  In addition to the controls \
-in the control pane, you can set the reverb \
-feedback gains and the coefficient of the low \
-pass filter in the allpass bank. The variables \
-are '" S_reverb_control_feedback "' and '" S_reverb_control_lowpass "'. \
+"The Snd reverberator is a version of Michael McNabb's Nrev.  In addition to the controls \
+in the control pane, you can set the reverb feedback gains and the coefficient of the low \
+pass filter in the allpass bank. The variables are '" S_reverb_control_feedback "' and '" S_reverb_control_lowpass "'. \
 The reverb is on only if the reverb button is set.\
 ";
 
 void contrast_help(snd_state *ss) 
 {
   snd_help_with_url_and_wrap(ss, STR_Contrast, "#contrast",
-"'Contrast enhancement' is my name for this \
-somewhat weird waveshaper or compander.  It \
-phase-modulates a sound, which can in some \
-cases make it sound sharper or brighter. \
-For softer sounds, it causes only an amplitude \
-change.  Contrast is on only if the contrast \
-button is set.");
+"'Contrast enhancement' is my name for this somewhat weird waveshaper or compander.  It \
+phase-modulates a sound, which can in some cases make it sound sharper or brighter. \
+For softer sounds, it causes only an amplitude change.  Contrast is on only if the contrast button is set.");
 }
 
 void env_help(snd_state *ss) 
 {
   snd_help_with_url_and_wrap(ss, STR_Envelope, "#editenvelope",
-"An envelope in Snd is a list of x y \
-break-point pairs. The x axis range is \
-arbitrary. For example, to define a triangle \
-curve: '(0 0 1 1 2 0). There is no (obvious) limit \
+"An envelope in Snd is a list of x y break-point pairs. The x axis range is \
+arbitrary. For example, to define a triangle curve: '(0 0 1 1 2 0). There is no (obvious) limit \
 on the number of breakpoints. \
 \n\n\
-To apply an envelope to a sound, use the extended \
-command C-x C-a. If this command gets a numeric \
-argument, the envelope is applied from the cursor \
-for that many samples. \
+To apply an envelope to a sound, use the extended command C-x C-a. If this command gets a numeric \
+argument, the envelope is applied from the cursor for that many samples. \
 \n\n\
   C-x a     apply amplitude envelope to selection\n\
   C-x C-a   apply amplitude envelope to channel\n\
 \n\n\
-You can also specify a envelope name to the C-x C-a \
-prompt. \
+You can also specify a envelope name to the C-x C-a prompt. \
 \n\n\
-To scale a file or selection by or to some\n\
-amplitude, use the M-x commands:\n\
+To scale a file or selection by or to some amplitude, use the M-x commands:\n\
 \n\
   " S_scale_by " args\n\
   " S_scale_to " args\n\
   " S_scale_selection_by " args\n\
   " S_scale_selection_to " args\n\
 \n\
-" S_scale_by " scales the current sync'd channels by its \
-arguments, and " S_scale_to " scales them to its \
-arguments (a normalization). The arguments in \
-each case are either a list of floats \
-corresponding to each successsive member of the \
-current set of sync'd channels, or just one \
-argument. In the latter case, " S_scale_by " uses that \
-scaler for all its channels, and " S_scale_to " \
-normalizes all the channels together so that the \
-loudest reaches that amplitude (that is, " S_scale_to " \
-.5) when applied to a stereo file means that both \
-channels are scaled by the same amount so that the \
+" S_scale_by " scales the current sync'd channels by its arguments, and " S_scale_to " scales them to its \
+arguments (a normalization). The arguments in each case are either a list of floats \
+corresponding to each successsive member of the current set of sync'd channels, or just one \
+argument. In the latter case, " S_scale_by " uses that scaler for all its channels, and " S_scale_to " \
+normalizes all the channels together so that the loudest reaches that amplitude (that is, " S_scale_to " \
+.5) when applied to a stereo file means that both channels are scaled by the same amount so that the \
 loudest point in the file becomes .5). ");
 }
 
@@ -1484,183 +1424,109 @@ sashIndent          -6\n\
 
 #ifndef _MSC_VER
 static char mix_help_string[] = 
-"Since mixing is the most common and most \
-useful editing operation performed on \
-sounds, there is relatively elaborate \
-support for it in Snd. To mix in a file, \
-use the File Mix menu option, the \
-command C-x C-q, or one of the various \
-mixing functions. Currently the only \
-difference between the first two is that \
-the Mix menu option tries to take the \
-current sync state into account, whereas \
-the C-x C-q command does not. To mix a \
-selection, use C-x q. The mix starts at \
-the current cursor location. It is \
-displayed as a separate waveform above \
-the main waveform with a red tag at the \
-beginning.  You can drag the tag to \
-reposition the mix. The underlying sound \
-being mixed can be edited by the same \
-functions used throughout Snd; the mix \
-number is used as the first (only) \
-member of a list where the functions \
-take the sound index argument. It is \
-usually handier, however, to adjust the \
-mix via the Mix Panel. \
+"Since mixing is the most common and most useful editing operation performed on \
+sounds, there is relatively elaborate support for it in Snd. To mix in a file, \
+use the File Mix menu option, the command C-x C-q, or one of the various \
+mixing functions. Currently the only difference between the first two is that \
+the Mix menu option tries to take the current sync state into account, whereas \
+the C-x C-q command does not. To mix a selection, use C-x q. The mix starts at \
+the current cursor location. It is displayed as a separate waveform above \
+the main waveform with a red tag at the beginning.  You can drag the tag to \
+reposition the mix. The underlying sound being mixed can be edited by the same \
+functions used throughout Snd; the mix number is used as the first (only) \
+member of a list where the functions take the sound index argument. It is \
+usually handier, however, to adjust the mix via the Mix Panel. \
 \n\n\
-The Mix Panel is a dialog (under the \
-View Menu) that provides various \
-commonly-used controls on the currently \
-selected mix. At the top are the mix id, \
-name, begin and end times, track number, \
-and a play button. Beneath that are \
-various sliders controlling the speed \
-(sampling rate) of the mix, amplitude of \
-each input channel, and the amplitude \
-envelope. This part of Snd is in flux \
-currently. \
+The Mix Panel is a dialog (under the View Menu) that provides various \
+commonly-used controls on the currently selected mix. At the top are the mix id, \
+name, begin and end times, track number, and a play button. Beneath that are \
+various sliders controlling the speed (sampling rate) of the mix, amplitude of \
+each input channel, and the amplitude envelope. This part of Snd is in flux currently. \
 \n\n\
-To move the cursor from one mix to the \
-next, in the same manner as C-j moves \
-through marks, use C-x C-j. \
+To move the cursor from one mix to the next, in the same manner as C-j moves through marks, use C-x C-j. \
 \n\n\
-It is often handy to collect several \
-mixes into a 'track'; mix.scm implements \
-a variety of track-related operations. \
+It is often handy to collect several mixes into a 'track'; mix.scm implements a variety of track-related operations. \
 ";
 #else
 static char mix_help_string[] = "";
 #endif
 
 static char recording_help_string[] = 
-"To make a recording, choose 'Record' from the \
-File menu. A window opens with the various \
-recording controls.  The top three panes display \
-the status of the input and output lines. If a \
-channel is active, its meter will glow \
-yellow. If some signal clips during recording, \
-the meter will flash red. The numbers below the \
-channel buttons indicate the signal maximum \
-since it was last reset. The sliders underneath \
-the meters scale the audio data in various ways \
-before it is mixed into the output. The vertical \
-sliders on the right scale the line-in and \
-microphone signals before the meter, and the \
-output signal before it gets to the speaker \
-(these are needed to avoid clipping on input,  \
-and to set the 'monitor' volume of the output \
+"To make a recording, choose 'Record' from the File menu. A window opens with the various \
+recording controls.  The top three panes display the status of the input and output lines. If a \
+channel is active, its meter will glow yellow. If some signal clips during recording, \
+the meter will flash red. The numbers below the channel buttons indicate the signal maximum \
+since it was last reset. The sliders underneath the meters scale the audio data in various ways \
+before it is mixed into the output. The vertical sliders on the right scale the line-in and \
+microphone signals before the meter, and the output signal before it gets to the speaker \
+(these are needed to avoid clipping on input,  and to set the 'monitor' volume of the output \
 independent of the output file volume). \
 \n\n\
-The fourth pane has information about the \
-current output file (its name and so on), and \
-the layout of the window. The buttons on the \
-right can be used to open and close panes \
-painlessly. If the button is not square (a \
-diamond on the SGI), the underlying audio \
-hardware can't handle input from that device at \
-the same time as it reads other 'radio' button \
-devices. So, in that case, opening the panel via \
-the button also turns off the other incompatible \
-device. The fifth pane contains a history of \
-whatever the recorder thought worth \
-reporting. The duration field gives the current \
-output file's duration. The bottom row of \
-buttons dismiss the window, start recording, \
-cancel the current take, and provide some \
-help. There's also a slider on the far right \
-that controls the speaker output volume \
+The fourth pane has information about the current output file (its name and so on), and \
+the layout of the window. The buttons on the right can be used to open and close panes \
+painlessly. If the button is not square (a diamond on the SGI), the underlying audio \
+hardware can't handle input from that device at the same time as it reads other 'radio' button \
+devices. So, in that case, opening the panel via the button also turns off the other incompatible \
+device. The fifth pane contains a history of whatever the recorder thought worth \
+reporting. The duration field gives the current output file's duration. The bottom row of \
+buttons dismiss the window, start recording, cancel the current take, and provide some \
+help. There's also a slider on the far right that controls the speaker output volume \
 (independent of the output file volume). \
 \n\n\
-To make a recording, choose the inputs and \
-outputs you want; for example, to record channel \
-A from the microphone to channel A of the output \
-file, click the Microphone panel's A button and \
-the Output panel's A button. Then when you're \
-ready to go, click the Record button. Click it \
+To make a recording, choose the inputs and outputs you want; for example, to record channel \
+A from the microphone to channel A of the output file, click the Microphone panel's A button and \
+the Output panel's A button. Then when you're ready to go, click the Record button. Click it \
 again to finish the recording. \
 \n\n\
-If the record window's VU meters are too big (or \
-too small) for your screen, you can fool around \
-with the variable " S_vu_size " which defaults to 1.0. \
-Similarly the variable " S_vu_font_size " tries to \
-change the size of the numbers on the label, and \
-" S_vu_font " chooses the family name of the font \
-used. \
+If the record window's VU meters are too big (or too small) for your screen, you can fool around \
+with the variable " S_vu_size " which defaults to 1.0. Similarly the variable " S_vu_font_size " tries to \
+change the size of the numbers on the label, and " S_vu_font " chooses the family name of the font used. \
 \n\n\
-If you go to the main Snd window while the \
-recorder is active and play a sound, the \
-recorder's audio lines are made inactive \
-to try to reduce confusion.  To re-activate \
-the recorder, press the 'reset' button at \
-the bottom of the window. \
+If you go to the main Snd window while the recorder is active and play a sound, the \
+recorder's audio lines are made inactive to try to reduce confusion.  To re-activate \
+the recorder, press the 'reset' button at the bottom of the window. \
 \n\n\
-Digital input is slightly tricky -- you \
-need to set the sampling rate before you \
-click the 'digital input' button; otherwise \
-you'll get a stuttering effect because the output \
-(monitor) rate doesn't match the input rate. \
-";
+Digital input is slightly tricky -- you need to set the sampling rate before you \
+click the 'digital input' button; otherwise you'll get a stuttering effect because the output \
+(monitor) rate doesn't match the input rate. ";
 
 void envelope_editor_dialog_help(snd_state *ss)
 {
   snd_help_with_url_and_wrap(ss, "Envelope Editor", "#editenvelope", 
-"The Edit Envelope dialog (under the Edit menu) \
-fires up a window for viewing and editing \
-envelopes. The dialog has a display showing either \
-the envelope currently being edited or a panorama \
-of all currently loaded envelopes. The current \
-envelope can be edited with the mouse: click at \
-some spot in the graph to place a new breakpoint, \
-drag an existing breakpoint to change its \
-position, and click an existing breakpoint to \
-delete it. The Undo and Redo buttons can be used \
-to move around in the list of envelope edits; the \
-current state of the envelope can be saved with \
+"The Edit Envelope dialog (under the Edit menu) fires up a window for viewing and editing \
+envelopes. The dialog has a display showing either the envelope currently being edited or a panorama \
+of all currently loaded envelopes. The current envelope can be edited with the mouse: click at \
+some spot in the graph to place a new breakpoint, drag an existing breakpoint to change its \
+position, and click an existing breakpoint to delete it. The Undo and Redo buttons can be used \
+to move around in the list of envelope edits; the current state of the envelope can be saved with \
 the 'save' button, or printed with 'print'. \
 \n\n\
-Envelopes can be defined using defvar, and loaded \
-from a separate file of envelope definitions via \
+Envelopes can be defined using defvar, and loaded from a separate file of envelope definitions via \
 the load function.  For example, the file: \
 \n\n\
   (defvar ramp '(0 0 1 1))\n\
   (defvar pyramid '(0 0 1 1 2 0))\n\
 \n\n\
-defines two envelopes that can be used in Snd \
-wherever an envelope is needed (e.g. C-x C-a). You \
-can also define a new envelope in the dialog's \
-text field; '(0 0 1 1) followed by return fires up \
+defines two envelopes that can be used in Snd wherever an envelope is needed (e.g. C-x C-a). You \
+can also define a new envelope in the dialog's text field; '(0 0 1 1) followed by return fires up \
 a ramp as a new envelope. \
 \n\n\
-In the overall view of envelopes, click an \
-envelope, or click its name in the scrolled list \
-on the left to select it; click the selected \
-envelope to load it into the editor portion, \
-clearing out whatever was previously there.  To \
-load an exisiting envelope into the editor, you \
-can also type its name in the text field; to give \
-a name to the envelope as it is currently defined \
-in the graph viewer, type its name in this field, \
-then either push return or the 'save' button. \
+In the overall view of envelopes, click an envelope, or click its name in the scrolled list \
+on the left to select it; click the selected envelope to load it into the editor portion, \
+clearing out whatever was previously there.  To load an exisiting envelope into the editor, you \
+can also type its name in the text field; to give a name to the envelope as it is currently defined \
+in the graph viewer, type its name in this field, then either push return or the 'save' button. \
 \n\n\
-Once you have an envelope in the editor, it can be \
-applied to the currently active sounds via the \
-'Apply' or 'Undo&Apply' buttons; the latter first \
-tries to undo the previous edit, then applies the \
-envelope. The envelope can be applied to the \
-amplitude, the spectrum, or the sampling rate. The \
-choice is made via the three buttons marked 'amp', \
-'flt', and 'src'. The filter order is the variable \
-" S_enved_filter_order " which defaults to 40. \
-To apply the changes to the current selection, \
-rather than the current sound, set the 'selection' \
-button.  To apply it to the currently selected mix, \
+Once you have an envelope in the editor, it can be applied to the currently active sounds via the \
+'Apply' or 'Undo&Apply' buttons; the latter first tries to undo the previous edit, then applies the \
+envelope. The envelope can be applied to the amplitude, the spectrum, or the sampling rate. The \
+choice is made via the three buttons marked 'amp', 'flt', and 'src'. The filter order is the variable \
+" S_enved_filter_order " which defaults to 40. To apply the changes to the current selection, \
+rather than the current sound, set the 'selection' button.  To apply it to the currently selected mix, \
 set the 'mix' button. \
 \n\n\
-The two toggle buttons at the lower right choose \
-whether to show a light-colored version of the \
-currently active sound (the 'wave' button), and \
-whether to clip mouse movement at the current y \
+The two toggle buttons at the lower right choose whether to show a light-colored version of the \
+currently active sound (the 'wave' button), and whether to clip mouse movement at the current y \
 axis bounds (the 'clip' button).");
 }
 
@@ -1842,18 +1708,12 @@ void click_for_history_help(snd_state *ss)
   snd_help_with_url_and_wrap(ss,
 		    "Edit History",
 		    "#edithistory",
-"The current state of the undo/redo list can be \
-viewed as a scrolled list of strings in the pane \
-on the left of the graph (in Motif 1, there's a \
-'Show Edit History' menu option).  If there are no \
-current edits, it just lists the associated file \
-name (i.e. the zero-edits state).  As you edit the \
-sound, the operations appear in the edit list \
-window.  Click on a member of the list to move to \
-that point in the edit list (equivalent to some \
-number of undo's or redo's).  To move to a given \
-edit point and follow the sync chain (if any), use \
-control-click.");
+"The current state of the undo/redo list can be viewed as a scrolled list of strings in the pane \
+on the left of the graph (in Motif 1, there's a 'Show Edit History' menu option).  If there are no \
+current edits, it just lists the associated file name (i.e. the zero-edits state).  As you edit the \
+sound, the operations appear in the edit list window.  Click on a member of the list to move to \
+that point in the edit list (equivalent to some number of undo's or redo's).  To move to a given \
+edit point and follow the sync chain (if any), use control-click.");
 }
 
 void listener_dialog_help(snd_state *ss)
@@ -1871,136 +1731,101 @@ access the Guile Scheme interpreter.\n\
 void click_for_name_separator_help(snd_state *ss)
 {
   snd_help_with_wrap(ss, "Name Separator", 
-"When reading a very large file, Snd tries to \
-keep an overview at hand of the channels so \
-that you can move around quickly in very large \
-data sets; when first read in, these overviews \
-are set underway, and when they are finally \
-ready for use, the line after the file name \
-appears.  If you try to zoom out to a large \
-view before the separator line appears, the \
-graphics update process may be slow. ");
+"When reading a very large file, Snd tries to keep an overview at hand of the channels so \
+that you can move around quickly in very large data sets; when first read in, these overviews \
+are set underway, and when they are finally ready for use, the line after the file name \
+appears.  If you try to zoom out to a large view before the separator line appears, the graphics update process may be slow. ");
 }
 
 void click_for_amp_help(snd_state *ss)
 {
   snd_help_with_wrap(ss, "Amp", 
-"This scrollbar controls the amplitude \
-at which the sound is played.  Click the \
-amp label to return to 1.0. Control-Click \
-returns to the previous value.");
+"This scrollbar controls the amplitude at which the sound is played.  Click the \
+amp label to return to 1.0. Control-Click returns to the previous value.");
 }
 
 void click_for_srate_arrow_help(snd_state *ss)
 {
   snd_help_with_wrap(ss, "Srate Arrow",
-"This button determines which direction \
-the sound file is played.  When pointing \
-to the right, the sound is played forwards;  \
-to the left, backwards.");
+"This button determines which direction the sound file is played.  When pointing \
+to the right, the sound is played forwards;  to the left, backwards.");
 }
 
 void click_for_speed_help(snd_state *ss)
 {
   snd_help_with_url_and_wrap(ss, "Srate", "#speed", 
-"This scrollbar controls the sampling rate \
-at which the sound is played.  The arrow \
-controls the direction (forwards or backwards) \
-of playback.  Label clicks behave as with amp.");
+"This scrollbar controls the sampling rate at which the sound is played.  The arrow \
+controls the direction (forwards or backwards) of playback.  Label clicks behave as with amp.");
 }
 
 void click_for_minibuffer_help(snd_state *ss)
 {
   snd_help_with_url_and_wrap(ss, "Minibuffer", "#panelayout",
-"This is the 'minibuffer', to use Emacs \
-jargon.  Although it looks inert and wasted,  \
-there is in fact a text window lurking beneath \
-that has access to the Lisp evaluator, not \
+"This is the 'minibuffer', to use Emacs jargon.  Although it looks inert and wasted,  \
+there is in fact a text window lurking beneath that has access to the Lisp evaluator, not \
 to mention much of the innards of the Snd program.");
 }
 
 void click_for_play_help(snd_state *ss)
 {
   snd_help_with_url_and_wrap(ss, "Play", "#play",
-"Snd can play any number of sounds at once \
-or should be able to anyway.  A sort of \
-clumsy realtime mixer, although it was not \
-intended to fill that role.");
+"Snd can play any number of sounds at once or should be able to anyway.  A sort of \
+clumsy realtime mixer, although it was not intended to fill that role.");
 }
 
 void click_for_expand_help(snd_state *ss)
 {
   snd_help_with_url_and_wrap(ss, STR_Expand, "#expand",
-"This scrollbar controls the tempo at which \
-the sound is played back, using granular \
-synthesis. The expand button must be down \
-to get any expansion. Label clicks as in amp.");
+"This scrollbar controls the tempo at which the sound is played back, using granular \
+synthesis. The expand button must be down to get any expansion. Label clicks as in amp.");
 }
 
 void click_for_contrast_help(snd_state *ss)
 {
   snd_help_with_url(ss, STR_Contrast, "#contrast",
-"This scrollbar controls the amount of \
-'contrast enhancement' applied during \
-playback.  The contrast button must be \
-down to get any effect.  Label clicks as in amp.");
+"This scrollbar controls the amount of 'contrast enhancement' applied during \
+playback.  The contrast button must be down to get any effect.  Label clicks as in amp.");
 }
 
 void click_for_reverb_scale_help(snd_state *ss)
 {
   snd_help_with_url_and_wrap(ss, "Reverb amount", "#reverb",
-"This scrollbar controls the amount of the \
-sound that is fed into the reverberator. \
-The reverb button must be down to get any \
-reverb during playback.  Label clicks as in amp.");
+"This scrollbar controls the amount of the sound that is fed into the reverberator. \
+The reverb button must be down to get any reverb during playback.  Label clicks as in amp.");
 }
 
 void click_for_reverb_length_help(snd_state *ss)
 {
   snd_help_with_url_and_wrap(ss, "Reverb length", "#reverb", 
-"This scrollbar controls the lengths of \
-the various delay lines in the reverb. \
-It only takes effect when the reverb is \
-created, that is, only when the play \
-operation starts from silence.  Label clicks \
-as in amp.");
+"This scrollbar controls the lengths of the various delay lines in the reverb. \
+It only takes effect when the reverb is created, that is, only when the play \
+operation starts from silence.  Label clicks as in amp.");
 }
 
 void click_for_filter_help(snd_state *ss)
 {
   snd_help_with_wrap(ss, "Filter", 
-"The Snd filter is an FIR filter of arbitrary \
-order.  You specify the filter you want by \
-defining the frequency response as an envelope \
-in the 'env' window; set the desired order in \
-the 'order' window; then turn it on by pushing \
-the filter button at the right.  The filter \
-design algorithm uses frequency sampling. \
-The higher the order, the closer the filter \
-can approximate the envelope you draw. \
-You can also specify the filter coefficients \
-in a file of floats, then load them into the \
-Snd filter by typing the file name in the \
+"The Snd filter is an FIR filter of arbitrary order.  You specify the filter you want by \
+defining the frequency response as an envelope in the 'env' window; set the desired order in \
+the 'order' window; then turn it on by pushing the filter button at the right.  The filter \
+design algorithm uses frequency sampling. The higher the order, the closer the filter \
+can approximate the envelope you draw. You can also specify the filter coefficients \
+in a file of floats, then load them into the Snd filter by typing the file name in the \
 filter envelope text window.");
 }
 
 void click_for_filter_order_help(snd_state *ss)
 {
   snd_help_with_wrap(ss, "Filter Order", 
-"The filter order determines how closely \
-the filter approximates the frequency response \
-curve you drew in the 'env' window. ");
+"The filter order determines how closely the filter approximates the frequency response curve you drew in the 'env' window. ");
 }
 
 void click_for_filter_envelope_help(snd_state *ss)
 {
   snd_help_with_wrap(ss, "Filter Envelope", 
-"The filter envelope is a line-segment \
-description of the frequency response \
-you want.  It consists of a sequence of \
-x, y pairs; normally the x axis goes \
-from 0 to .5 or 0 to 1.0.  For example, \
-a low-pass filter envelope could be: \
+"The filter envelope is a line-segment description of the frequency response \
+you want.  It consists of a sequence of x, y pairs; normally the x axis goes \
+from 0 to .5 or 0 to 1.0.  For example, a low-pass filter envelope could be: \
 0.0 1.0 .25 1.0 .5 0.0 1.0 0.0");
 }
 
@@ -2008,37 +1833,24 @@ void click_for_sound_help(snd_state *ss)
 {
   snd_help_with_wrap(ss,
 		     "Minibuffer",
-"This portion of the snd display has several \
-parts: the sound file name, with an asterisk if \
-the file has unsaved edits; a minibuffer for \
-various expression evaluations; a sync button \
-that causes operations on one channel to be \
-applied to all channels; and a play button \
-that causes the sound to be played.  The \
-lower portion of the pane, normally hidden, \
-contains a variety of sound manipulation \
-controls that can be applied while it is \
-playing.");
+"This portion of the snd display has several parts: the sound file name, with an asterisk if \
+the file has unsaved edits; a minibuffer for various expression evaluations; a sync button \
+that causes operations on one channel to be applied to all channels; and a play button \
+that causes the sound to be played.  The lower portion of the pane, normally hidden, \
+contains a variety of sound manipulation controls that can be applied while it is playing.");
 }
 
 void click_for_save_as_help(snd_state *ss)
 {
   snd_help_with_wrap(ss,
 		     "Save As",
-"You can save the current state of a file or region \
-under a different file name using the Save \
-As option.  The output header type, data format,  \
-and sampling rate can also be set.  The data formats \
-are big-endian where relevant except for 'wave' \
-output.  If a file by the chosen name already exists \
-it is silently overwritten, unless that file is \
-already open in Snd and has edits.  In that case,  \
-you'll be asked what to do.  If you want to be warned \
-whenever a file is about to be overwritten by this \
-option, set the resource overwriteCheck to 1. \
-If you give the current file name to Save As,  \
-any current edits will be saved and the current \
-version in Snd will be updated (that is, in this \
+"You can save the current state of a file or region under a different file name using the Save \
+As option.  The output header type, data format,  and sampling rate can also be set.  The data formats \
+are big-endian where relevant except for 'wave' output.  If a file by the chosen name already exists \
+it is silently overwritten, unless that file is already open in Snd and has edits.  In that case,  \
+you'll be asked what to do.  If you want to be warned whenever a file is about to be overwritten by this \
+option, set the resource overwriteCheck to 1. If you give the current file name to Save As,  \
+any current edits will be saved and the current version in Snd will be updated (that is, in this \
 case, the current edit tree is not preserved).");
 }
 #endif
@@ -2050,76 +1862,49 @@ void help_dialog_help(snd_state *ss)
 {
   snd_help_with_wrap(ss,
 		     "Help",
-"You can get help within Snd either from \
-the Help Menu items, or by clicking on \
-some portion of the Snd display while the \
-cursor is '?'.  See Click for Help in the \
-Help Menu.");
+"You can get help within Snd either from the Help Menu items, or by clicking on \
+some portion of the Snd display while the cursor is '?'.  See Click for Help in the Help Menu.");
 }
 
 void transform_dialog_help(snd_state *ss)
 {
   snd_help_with_wrap(ss,
 		     "Transform Options",
-"This dialog presents the various transform (fft) \
-related choices. \
+"This dialog presents the various transform (fft) related choices. \
 \n\n\
-On the upper left is a list of available transform \
-types; next on the right is a list of fft sizes;  \
-next is a panel of buttons that sets various \
-display-oriented choices; the lower left panel \
-sets the current wavelet, when relevant; next is \
-the fft data window choice; and next to it is a \
-graph of the current fft window; when the window \
-has an associated parameter (sometimes known as \
-'alpha' or 'beta'), the slider beneath the window \
-list is highlighted and can be used to choose the \
+On the upper left is a list of available transform types; next on the right is a list of fft sizes;  \
+next is a panel of buttons that sets various display-oriented choices; the lower left panel \
+sets the current wavelet, when relevant; next is the fft data window choice; and next to it is a \
+graph of the current fft window; when the window has an associated parameter (sometimes known as \
+'alpha' or 'beta'), the slider beneath the window list is highlighted and can be used to choose the \
 desired member of that family of windows. \
 \n\n\
-If the 'selection' button is not set, the FFT is \
-taken from the start (the left edge) of the \
-current window and is updated as the window bounds \
-change; otherwise the FFT is taken over the extent \
-of the current selection, if any is active in the \
-current channel.  The fft data is scaled to fit \
-between 0.0 and 1.0 unless the fft normalization \
-is off. The full frequency axis is normally \
-displayed, but the axis is 'dragable' -- put the \
-mouse on the axis and drag it either way to change \
-the range (this is equivalent to changing the \
-variable " S_spectro_cutoff "). You can also click on \
-any point in the fft to get the associated fft \
-data displayed; if " S_verbose_cursor " is on, you can \
-drag the mouse through the fft display and the \
-description in the minibuffer will be constantly \
-updated. \
+If the 'selection' button is not set, the FFT is taken from the start (the left edge) of the \
+current window and is updated as the window bounds change; otherwise the FFT is taken over the extent \
+of the current selection, if any is active in the current channel.  The fft data is scaled to fit \
+between 0.0 and 1.0 unless the fft normalization is off. The full frequency axis is normally \
+displayed, but the axis is 'dragable' -- put the mouse on the axis and drag it either way to change \
+the range (this is equivalent to changing the variable " S_spectro_cutoff "). You can also click on \
+any point in the fft to get the associated fft data displayed; if " S_verbose_cursor " is on, you can \
+drag the mouse through the fft display and the description in the minibuffer will be constantly updated. \
 \n\n\
-The harmonic analysis function is normally the \
-Fourier Transform, but others are available, \
-including about 20 wavelet choices, the Hankel and \
-Chebyshev transforms, and perhaps others. (The \
-Hankel transform returns the Bessel function \
-spectrum, the Chebyshev transform returns the \
+The harmonic analysis function is normally the Fourier Transform, but others are available, \
+including about 20 wavelet choices, the Hankel and Chebyshev transforms, and perhaps others. (The \
+Hankel transform returns the Bessel function spectrum, the Chebyshev transform returns the \
 Chebyshev polynomial spectrum). \
 \n\n\
-The top three buttons in the transform dialog \
-choose between a normal fft, a sonogram, or a \
-spectrogram. The 'peaks' button affects whether \
-peak info is displayed alongside the graph of the \
-spectrum. The 'dB' button selects between a linear \
-and logarithmic Y (magnitude) axis. The 'log freq' \
-button makes a similar choice along the frequency \
-axis.");	   
+The top three buttons in the transform dialog choose between a normal fft, a sonogram, or a \
+spectrogram. The 'peaks' button affects whether peak info is displayed alongside the graph of the \
+spectrum. The 'dB' button selects between a linear and logarithmic Y (magnitude) axis. The 'log freq' \
+button makes a similar choice along the frequency axis.");	   
 }
 
 void color_dialog_help(snd_state *ss)
 {
   snd_help_with_wrap(ss,
 		     "View Color",
-"This dialog sets the colormap and associated \
-variables used during sonogram, spectrogram,  \
-and perhaps wavogram display. The cutoff scale refers \
-to the minimum data value to be displayed.");	   
+"This dialog sets the colormap and associated variables used during sonogram, spectrogram,  \
+and perhaps wavogram display. The cutoff scale refers to the minimum data value to be displayed.");	   
 }
 
 void orientation_dialog_help(snd_state *ss)
@@ -2132,36 +1917,24 @@ void orientation_dialog_help(snd_state *ss)
 void region_dialog_help(snd_state *ss)
 {
   snd_help_with_url_and_wrap(ss, STR_Region_Browser, "#regionbrowser",
-"This is the 'region browser'.  The scrolled \
-window contains the list of current regions \
-with a brief title to indicate the provenance \
-thereof, and two buttons.  The 'save' button \
-protects or unprotects the region from deletion. \
-The 'play' button plays the associated region. \
-One channel of the currently selected region \
-is displayed in the graph window.  The up and \
-down arrows move up or down in the region's \
-list of channels.  If you click a region's \
-title, the text is highlighted, and that region \
-is displayed in the graph area.  You can delete the \
-region by clicking the 'Delete' button.  To dismiss the \
-browser, click 'Ok'.  The 'edit' button \
-loads the region into the main editor as a temporary \
-file.  It can be edited or renamed, etc.  If you save \
-the file, the region is updated to reflect any edits \
-you made.");
+"This is the 'region browser'.  The scrolled window contains the list of current regions \
+with a brief title to indicate the provenance thereof, and two buttons.  The 'save' button \
+protects or unprotects the region from deletion. The 'play' button plays the associated region. \
+One channel of the currently selected region is displayed in the graph window.  The up and \
+down arrows move up or down in the region's list of channels.  If you click a region's \
+title, the text is highlighted, and that region is displayed in the graph area.  You can delete the \
+region by clicking the 'Delete' button.  To dismiss the browser, click 'Ok'.  The 'edit' button \
+loads the region into the main editor as a temporary file.  It can be edited or renamed, etc.  If you save \
+the file, the region is updated to reflect any edits you made.");
 }
 
 void raw_data_dialog_help(snd_state *ss)
 {
   snd_help_with_wrap(ss,
 		     STR_Raw_Data,
-"To display and edit sound data, Snd needs \
-to know how the data's sampling rate, number \
-of channels, and numerical format.  This dialog \
-gives you a chance to set those fields. \
-To make the current settings the default \
-for any future headerless files, click the \
+"To display and edit sound data, Snd needs to know how the data's sampling rate, number \
+of channels, and numerical format.  This dialog gives you a chance to set those fields. \
+To make the current settings the default for any future headerless files, click the \
 'Default' button.");
 }
 
@@ -2176,34 +1949,26 @@ void file_mix_dialog_help(snd_state *ss)
 {
   snd_help_with_wrap(ss,
 		     "File Mix",
-"The file you specify to the mix file prompt \
-will be mixed into the current active sound at \
-the current cursor location of the active channel. \
-The equivalent keyboard command is C-x C-q.");
+"The file you specify to the mix file prompt will be mixed into the current active sound at \
+the current cursor location of the active channel. The equivalent keyboard command is C-x C-q.");
 }
 
 void edit_header_dialog_help(snd_state *ss)
 {
   snd_help_with_wrap(ss,
 		     STR_Edit_Header,
-"This dialog edits the header of a sound file. \
-No change is made to the actual sound data; the \
-new header is blindly written, any unsaved edits \
-are ignored. If you specify 'raw' as the type, \
-any existing header is removed.  This dialog is \
-aimed at adding or removing an entire header,  \
-or editing the header comments; anything else \
-is obviously dangerous.");
+"This dialog edits the header of a sound file. No change is made to the actual sound data; the \
+new header is blindly written, any unsaved edits are ignored. If you specify 'raw' as the type, \
+any existing header is removed.  This dialog is aimed at adding or removing an entire header,  \
+or editing the header comments; anything else is obviously dangerous.");
 }
 
 void print_dialog_help(snd_state *ss)
 {
   snd_help_with_wrap(ss,
 		     "File Print",
-"Print causes the currently active display to be \
-either printed (via the lpr command) or saved as \
-an eps file.  In the latter case, the file name \
-is set either by the dialog, or taken from the \
+"Print causes the currently active display to be either printed (via the lpr command) or saved as \
+an eps file.  In the latter case, the file name is set either by the dialog, or taken from the \
 resource epsFile (normally snd.eps).");
 }
 
@@ -2211,33 +1976,22 @@ void view_files_dialog_help(snd_state *ss)
 {
   snd_help_with_wrap(ss,
 		     "File Browser",
-"This dialog provides two lists, one of \
-the currently active files in Snd, and \
-the other of previously active files. \
-The save button saves current edits, the \
-play button plays the file, and the \
-unlist button removes a file from the \
-previous files list.  If a file is deleted \
-while Snd is running, it will not notice \
-its deletion automatically.  To update the \
-previous files list to account for such \
-actions, click on the 'update' button. \
-To reopen a previous file, simply select \
-that file from the previous files list. \
-To remove all files from the previous files \
-list, click the 'clear' button.  To select \
-one of the current files in Snd, opening \
-its associated windows, select it in the \
-current files list. \
+"This dialog provides two lists, one of the currently active files in Snd, and \
+the other of previously active files. The save button saves current edits, the \
+play button plays the file, and the unlist button removes a file from the \
+previous files list.  If a file is deleted while Snd is running, it will not notice \
+its deletion automatically.  To update the previous files list to account for such \
+actions, click on the 'update' button. To reopen a previous file, simply select \
+that file from the previous files list. To remove all files from the previous files \
+list, click the 'clear' button.  To select one of the current files in Snd, opening \
+its associated windows, select it in the current files list. \
 \n\n\
-To preload all the sound files in a directory \
-into the previous files list, use either the \
+To preload all the sound files in a directory into the previous files list, use either the \
 command (" S_preload_directory " dir), as in \
 \n\n\
   M-x (" S_preload_directory " \"/usr/people/bil/hdr)\"\n\
 \n\
-or give the directory name to the -p flag \
-when starting Snd: \
+or give the directory name to the -p flag when starting Snd: \
 \n\n\
   snd -p . oboe.snd\n\
 \n\
@@ -2245,14 +1999,10 @@ To preload a specific file, \n\
 \n\
   (" S_preload_file " <name>)\n\
 \n\
-The 'sort' label on the right activates \
-a menu of sorting choices; 'name' sorts the \
-previous files list alphabetically, 'date' \
-sorts by date written, 'size' sorts by the \
-number of samples in the sound, and 'entry' \
-sorts by the order the sound appears in the \
-absence of explicit sorting.  The variable \
-" S_previous_files_sort " (default 0: \
+The 'sort' label on the right activates a menu of sorting choices; 'name' sorts the \
+previous files list alphabetically, 'date' sorts by date written, 'size' sorts by the \
+number of samples in the sound, and 'entry' sorts by the order the sound appears in the \
+absence of explicit sorting.  The variable " S_previous_files_sort " (default 0: \
 unsorted) refers to this menu.");	   
 }
 
@@ -2260,20 +2010,13 @@ void stats_dialog_help(snd_state *ss)
 {
   snd_help_with_wrap(ss,
 		     STR_Disk_and_Memory_Usage,
-"This window gives an approximate notion of how \
-much memory (RAM) and disk space each channel is \
-taking up.  As a channel is edited, the relevant \
-data is saved either in arrays or temporary files. \
-The number of bytes in these arrays, and the number \
-of such arrays are the first two numbers; then \
-comes the space in bytes the channel takes up in \
-the main (presumably permanent) file; the next \
-three numbers give the number of bytes in the \
-temporary files, the number of such files, and \
-the number of these files that are currently \
-being held open.  The related variable is \
-" S_show_usage_stats ".  The 'Update' button forces \
-the stats to be regathered, in case the display \
+"This window gives an approximate notion of how much memory (RAM) and disk space each channel is \
+taking up.  As a channel is edited, the relevant data is saved either in arrays or temporary files. \
+The number of bytes in these arrays, and the number of such arrays are the first two numbers; then \
+comes the space in bytes the channel takes up in the main (presumably permanent) file; the next \
+three numbers give the number of bytes in the temporary files, the number of such files, and \
+the number of these files that are currently being held open.  The related variable is \
+" S_show_usage_stats ".  The 'Update' button forces the stats to be regathered, in case the display \
 somehow gets out of sync with the actual data.");
 }
 

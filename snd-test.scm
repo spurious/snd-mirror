@@ -162,6 +162,9 @@
 		     (snd-display ";test ~D" n)
 		     (gc)
 		     ;(snd-display (gc-stats))
+		     ;(if (file-exists? "memlog")
+		     ;	 (system (format #f "cp memlog memlog.~D" (1- n))))
+		     ;(mem-report)
 		     ))
 
 (define overall-start-time (get-internal-real-time))
@@ -3629,8 +3632,40 @@
 	  (if (not (equal? (edits index) (list 155 0)))
 	      (snd-display ";saved channel edits: ~A" (edits index)))
 	  (close-sound index)
-	  (delete-file "s61.scm")
-	))
+	  (delete-file "s61.scm")))
+
+      (let ((index (new-sound "fmv.snd" mus-next mus-bshort 22050 2 "channel tests"))
+	    (v (make-vct 10))
+	    (sw (sinc-width)))
+        (set! (sinc-width) 10)
+	(vct-set! v 0 1.0)
+	(vct->channel v 0 10 index 0)
+	(src-channel 0.5 0 10 index 0)
+	(let ((v (make-vct 10))
+	      (s (make-src :srate 0.5
+			   :input (let ((val 1.0))
+				    (lambda (dir)
+				      (let ((rtn val))
+					(set! val 0.0)
+					rtn))))))
+	  (vct-set! v 0 (src s))
+	  (do ((i 1 (1+ i)))
+	      ((= i 10))
+	    (vct-set! v i (src s)))
+	  (if (not (vequal v (channel->vct 0 10 index 0)))
+	      (snd-display "src-channel: ~A ~A" v (channel->vct 0 10 index 0)))
+	  (if (not (vequal (make-vct 10) (channel->vct 0 10 index 1)))
+	      (snd-display ";src-channel leaks: ~A" (channel->vct 0 10 index 1))))
+	(revert-sound index)
+	(vct->channel v 0 10 index 1)
+	(vct->channel v 10 10 index 1)
+	(src-channel (make-env :envelope '(1 1 2 2) :end 19) 0 20 index 1)
+	(if (not (vequal (channel->vct 0 10 index 1) (vct 1.000 -0.000 -0.048 0.068 -0.059 0.022 0.030 -0.100 0.273 0.606)))
+	    (snd-display ";src-channel env: ~A" (channel->vct 0 10 index 1)))
+	(if (not (vequal (make-vct 10) (channel->vct 0 10 index 0)))
+	    (snd-display ";src-channel env leaks: ~A" (channel->vct 0 10 index 0)))
+        (set! (sinc-width) sw)
+	(close-sound index))
 
       (let* ((ind (open-sound "oboe.snd"))
 	     (rid0 (make-region 2000 2020 ind 0))
@@ -8931,13 +8966,13 @@
       (let ((snd1 (open-sound "oboe.snd"))
 	    (snd2 (or (open-sound "2.snd") (open-sound "4.aiff")))
 	    (snd3 (open-sound "4.aiff")))
-	(define tests 
+	(define tests-1
 	  (lambda (f sf fn nv)
 	    (if (not (null? f))
 		(begin
 		  (test-history-channel (car f) (car sf) (car fn) (car nv) snd1 snd2 snd3)
-		  (tests (cdr f) (cdr sf) (cdr fn) (cdr nv))))))
-	(tests funcs set-funcs func-names new-values)
+		  (tests-1 (cdr f) (cdr sf) (cdr fn) (cdr nv))))))
+	(tests-1 funcs set-funcs func-names new-values)
 	(close-sound snd1)
 	(close-sound snd2)
 	(close-sound snd3))
@@ -11569,6 +11604,10 @@ EDITS: 3
 
 ;;; ---------------- test 23: errors ----------------
 
+(mem-report)
+(if (file-exists? "memlog")
+    (system "mv memlog memlog.22")) ; save pre-error version
+
 (if (provided? 'snd-nogui) (exit))
 
 (define (check-error-tag expected-tag thunk)
@@ -11683,7 +11722,7 @@ EDITS: 3
 	       two-zero? wave-train wave-train?  waveshape waveshape?  make-vct vct-add! vct-subtract!  vct-copy
 	       vct-length vct-multiply! vct-offset! vct-ref vct-scale! vct-fill! vct-set! mus-audio-describe vct-peak
 	       vct? list->vct vct->list vector->vct vct-move!  vct-subseq vct little-endian?
-	       clm-channel env-channel map-channel scan-channel play-channel reverse-channel smooth-channel vct->channel channel->vct
+	       clm-channel env-channel map-channel scan-channel play-channel reverse-channel smooth-channel vct->channel channel->vct src-channel
 	       ))
 
 (define set-procs (list 
@@ -12197,7 +12236,7 @@ EDITS: 3
 			(set! ctr (+ ctr 1))))
 		    (list mix-amp mix-anchor mix-chans mix-track mix-length mix-locked mix-name
 			  mix-position mix-home mix-speed mix-tag-y)))
- 
+
         (let ((ctr 0))
 	  (for-each (lambda (n)
 		      (let ((tag
@@ -12392,7 +12431,6 @@ EDITS: 3
 	(check-error-tag 'bad-arity (lambda () (set! (search-procedure) (lambda (a b c) a))))
 	(check-error-tag 'no-such-sound (lambda () (set! (search-procedure 1234) (lambda (a) a))))
 	(check-error-tag 'bad-arity (lambda () (bind-key (char->integer #\p) 0 (lambda (a b) (play-often (max 1 a))))))
-	
 	(let ((ind (open-sound "oboe.snd"))) 
 	  (check-error-tag 'mus-error (lambda () (set! (filter-control-env ind) '())))
 	  (check-error-tag 'bad-arity (lambda () (set! (search-procedure ind) (lambda (a b c) #t))))
@@ -12435,7 +12473,6 @@ EDITS: 3
 	  (check-error-tag 'no-such-track (lambda () (make-track-sample-reader 0 0 ind 0)))
 	  (check-error-tag 'no-such-mix (lambda () (make-mix-sample-reader 1234)))
 	  (close-sound ind))
-	
 	(check-error-tag 'bad-arity (lambda () (set-reverb-control-procedures abs map +)))
 	(check-error-tag 'bad-arity (lambda () (set-contrast-control-procedure (lambda () 1.0))))
 	(check-error-tag 'bad-arity (lambda () (add-transform "hiho" "time" 0 1 (lambda () 1.0))))
