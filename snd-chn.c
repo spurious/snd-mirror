@@ -290,7 +290,7 @@ int update_graph(chan_info *cp, void *ptr)
 
 static SCM initial_graph_hook;
 
-void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
+void add_channel_data_1(chan_info *cp, snd_info *sp, int graphed)
 {
   /* initialize channel, including edit/sound lists */
   axis_info *ap;
@@ -304,7 +304,12 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
   x1 = DEFAULT_INITIAL_X1;
   y0 = DEFAULT_INITIAL_Y0;
   y1 = DEFAULT_INITIAL_Y1;
-  label = STR_time;
+  switch (x_axis_style(cp->state))
+    {
+    case X_AXIS_IN_SAMPLES:    label = STR_time_samples; break;
+    case X_AXIS_AS_PERCENTAGE: label = STR_time_percent; break;
+    default:                   label = STR_time;         break;
+    }
   dur = (Float)samples_per_channel / (Float)hdr->srate;
 
   cp->edit_size = INITIAL_EDIT_SIZE;
@@ -414,7 +419,7 @@ void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *
   snd_info *sp;
   file_info *chdr;
   sp = cp->sound;
-  add_channel_data_1(cp, sp, ss, graphed);
+  add_channel_data_1(cp, sp, graphed);
   set_initial_ed_list(cp, (hdr->samples/hdr->chans) - 1);
   chdr = copy_header(filename, sp->hdr); /* need one separate from snd_info case */
   chn = cp->chan;
@@ -2396,7 +2401,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
       if (with_fft)
 	{
 	  make_axes(cp, fap,
-		    (x_axis_style(ss) == X_IN_SAMPLES) ? X_IN_SECONDS : (x_axis_style(ss)),
+		    (x_axis_style(ss) == X_AXIS_IN_SAMPLES) ? X_AXIS_IN_SECONDS : (x_axis_style(ss)),
 #if USE_MOTIF
 		    ((cp->chan == sp->nchans-1) || (sp->channel_style != CHANNELS_SUPERIMPOSED)));
 	            /* Xt documentation says the most recently added work proc runs first, but we're
@@ -2446,7 +2451,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	    uap = up->axis;
 	  /* if these were changed in the hook function, the old fields should have been saved across the change (g_graph in snd-scm.c) */
 	  make_axes(cp, uap, /* this file l 2229 */
-		    X_IN_LENGTH,
+		    X_AXIS_IN_LENGTH,
 		    ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)));
 
 	  make_lisp_graph(cp, sp, ss);

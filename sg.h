@@ -35,7 +35,8 @@
 
 #if HAVE_SCM_C_DEFINE
   #define SET_SCM_VALUE(Var, Val) SCM_VARIABLE_SET(Var, Val)
-  #define SND_LOOKUP(a) SCM_VARIABLE_REF(scm_c_lookup(a))
+  #define SND_LOOKUP(a) SCM_VARIABLE_REF(scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure (), SCM_BOOL_T))
+  /* can't use scm_c_lookup here because it exits the goddamn program if the name is undefined */
 #else
   #define SET_SCM_VALUE(Var, Val) SCM_SETCDR(Var, Val)
   #define SND_LOOKUP(a) scm_symbol_value0(a)

@@ -242,7 +242,7 @@ static void sp_make_axis_cp(snd_info *sp, char *name, int ex0, int ey0, int widt
 			 w_snd_filter_env(sp), 
 			 (ss->sgx)->fltenv_data_gc);
     }
-  init_env_axes(spf->axis_cp, name, ex0, ex0, ey0, width, height, xmin, xmax, ymin, ymax);
+  init_env_axes(spf->axis_cp, name, ex0, ey0, width, height, xmin, xmax, ymin, ymax);
 }
 
 #define EXP_SEGLEN 4
@@ -530,7 +530,7 @@ axis_info *new_wave_axis(snd_state *ss)
   return(gap);
 }
 
-void init_env_axes(chan_info *acp, char *name, int x_offset, int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax)
+void init_env_axes(chan_info *acp, char *name, int x_offset, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax)
 {
   axis_info *ap;
   ap = acp->axis;
@@ -551,7 +551,7 @@ void init_env_axes(chan_info *acp, char *name, int x_offset, int ex0, int ey0, i
   ap->y_offset = ey0;
   ap->height = height;
   ap->graph_x0 = x_offset;
-  make_axes_1(acp, ap, X_IN_SECONDS, 1);
+  make_axes_1(acp, ap, X_AXIS_IN_SECONDS, 1);
   /* if this is too small for an axis, it still sets up the fields needed for grf_x|y, so tiny envelope graphs will work */
 }
 
@@ -1254,40 +1254,6 @@ static SCM g_define_envelope(SCM a, SCM b)
   return(SCM_BOOL_F);
 }
 
-static SCM g_env_base(SCM name)
-{
-  #define H_env_base "(" S_env_base " 'env) is the base of the envelope env"
-  int i;
-  char *urn = NULL;
-  ASSERT_TYPE(SYMBOL_P(name) || STRING_P(name), name, SCM_ARGn, S_env_base, "a symbol or a string");
-  if (STRING_P(name))
-    urn = TO_C_STRING(name);
-  else urn = SYMBOL_TO_C_STRING(name);
-  i = find_env(urn);
-  if ((i != -1) && (all_envs[i]))
-    return(TO_SCM_DOUBLE(all_envs[i]->base));
-  else ERROR(NO_SUCH_ENVELOPE, 
-	     SCM_LIST1(name));
-  return(TO_SCM_DOUBLE(0.0));
-}
-
-static SCM g_set_env_base(SCM name, SCM val) 
-{
-  int i;
-  char *urn = NULL;
-  ASSERT_TYPE(SYMBOL_P(name) || STRING_P(name), name, SCM_ARG1, "set-" S_env_base, "a symbol or a string");
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARG2, "set-" S_env_base, "a number");
-  if (STRING_P(name))
-    urn = TO_C_STRING(name);
-  else urn = SYMBOL_TO_C_STRING(name);
-  i = find_env(urn);
-  if ((i != -1) && (all_envs[i]))
-    all_envs[i]->base = TO_C_DOUBLE(val);
-  else ERROR(NO_SUCH_ENVELOPE, 
-	     SCM_LIST1(name));
-  return(val);
-}
-
 static SCM array_to_list(Float *arr, int i, int len)
 {
   if (i < (len - 1))
@@ -1431,8 +1397,6 @@ void g_init_env(SCM local_doc)
 {
   DEFINE_PROC(S_save_envelopes,  g_save_envelopes, 0, 1, 0,   H_save_envelopes);
   DEFINE_PROC(S_define_envelope, g_define_envelope, 2, 0, 0,  H_define_envelope);
-  define_procedure_with_setter(S_env_base, SCM_FNC g_env_base, H_env_base,
-			       "set-" S_env_base, SCM_FNC g_set_env_base, local_doc, 1, 0, 2, 0);
 
   DEFINE_VAR(S_enved_add_point,    ENVED_ADD_POINT,    S_enved_hook " 'reason' arg when point is added");
   DEFINE_VAR(S_enved_delete_point, ENVED_DELETE_POINT, S_enved_hook " 'reason' arg when point is deleted");

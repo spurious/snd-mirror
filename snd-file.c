@@ -78,7 +78,7 @@ time_t file_write_date(char *filename)
   return((time_t)(statbuf.st_mtime));
 }
 
-file_info *make_file_info_1(char *fullname, snd_state *ss)
+static file_info *make_file_info_1(char *fullname)
 {
   file_info *hdr;
   hdr = (file_info *)CALLOC(1, sizeof(file_info));
@@ -163,7 +163,7 @@ static file_info *translate_file(char *filename, snd_state *ss, int type)
       err = mus_header_read(newname);
       if (err == MUS_NO_ERROR)
 	{
-	  hdr = make_file_info_1(newname, ss);
+	  hdr = make_file_info_1(newname);
 	  if (hdr) ss->pending_change = newname;
 	}
     }
@@ -196,7 +196,7 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 		{
 		  char *tmp;
 		  file_info *tmp_hdr;
-		  tmp_hdr = make_file_info_1(fullname, ss);
+		  tmp_hdr = make_file_info_1(fullname);
 		  tmp = raw_data_explanation(fullname, ss, tmp_hdr);
 		  hdr = raw_data_dialog_to_file_info(fullname, ss, tmp);
 		  if (tmp) FREE(tmp);
@@ -216,7 +216,7 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 	    {
 	      /* choices already made, so just send back a header that reflects those choices */
 	      if (mus_file_probe(fullname))
-		return(make_file_info_1(fullname, ss));
+		return(make_file_info_1(fullname));
 	      else
 		{
 		  snd_error("can't find raw (headerless) file %s: %s",
@@ -275,7 +275,7 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 	    {
 	      format = mus_sound_data_format(fullname);
 	      if (MUS_DATA_FORMAT_OK(format))
-		hdr = make_file_info_1(fullname, ss);
+		hdr = make_file_info_1(fullname);
 	      else hdr = translate_file(fullname, ss, type);
 	    }
 	  else snd_error("%s does not seem to be a sound file?", fullname);
@@ -548,7 +548,7 @@ static void read_memo_file(snd_info *sp)
 
 static SCM memo_sound, open_hook, close_hook, just_sounds_hook;
 
-static int dont_open(snd_state *ss, char *file)
+static int dont_open(char *file)
 {
   char *mcf = NULL;
   SCM res = SCM_BOOL_F, fstr;
@@ -564,7 +564,7 @@ static int dont_open(snd_state *ss, char *file)
   return(TRUE_P(res));
 }
 
-static int dont_close(snd_state *ss, snd_info *sp)
+static int dont_close(snd_info *sp)
 {
   SCM res = SCM_BOOL_F;
   if (HOOKED(close_hook))
@@ -594,7 +594,7 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select, int
   snd_info *sp;
   char *mcf = NULL;
   int files, val;
-  if (dont_open(ss, filename)) return(NULL);
+  if (dont_open(filename)) return(NULL);
   sp = add_sound_window(mcf = mus_expand_filename(filename), ss, read_only); /* snd-xsnd.c -> make_file_info */
   if (mcf) FREE(mcf);
   if (sp)
@@ -636,7 +636,7 @@ snd_info *snd_open_file_unselected (char *filename, snd_state *ss, int read_only
 void snd_close_file(snd_info *sp, snd_state *ss)
 {
   int files;
-  if (dont_close(ss, sp)) return;
+  if (dont_close(sp)) return;
   sp->inuse = 0;
   remember_me(ss, sp->shortname, sp->fullname);
   if (sp->playing) stop_playing_sound(sp);
@@ -742,7 +742,7 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   int *datai;
   int i, fd, len;
   /* we've already checked that filename exists */
-  hdr = make_file_info_1(filename, ss);
+  hdr = make_file_info_1(filename);
   sp = (snd_info *)CALLOC(1, sizeof(snd_info));
   sp->nchans = mus_sound_chans(filename);
   sp->allocated_chans = sp->nchans;
@@ -772,7 +772,7 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
       FREE(cp->cgx);
       cp->cgx = NULL;
       sp->chans[i] = cp;
-      add_channel_data_1(cp, sp, ss, WITHOUT_GRAPH);
+      add_channel_data_1(cp, sp, WITHOUT_GRAPH);
       set_initial_ed_list(cp, len - 1);
       cp->edit_size = 1;
       cp->sound_size = 1;
@@ -1748,7 +1748,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
       ofile = snd_tempnam(ss); 
       if (save_type == FILE_SAVE_AS)
 	result = save_edits_without_display(sp, ofile, type, format, srate, comment, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "file save as", 0);
-      else result = save_selection(ss, ofile, type, format, srate, comment);
+      else result = save_selection(ss, ofile, type, format, srate, comment, SAVE_ALL_CHANS);
       if (result != MUS_NO_ERROR)
 	report_in_minibuffer(sp, "save as temp: %s: %s", ofile, strerror(errno));
       else err = move_file(ofile, sp->fullname);
@@ -1781,7 +1781,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 	}
       if (save_type == FILE_SAVE_AS)
 	result = save_edits_without_display(sp, str, type, format, srate, comment, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "file save as", 0);
-      else result = save_selection(ss, str, type, format, srate, comment);
+      else result = save_selection(ss, str, type, format, srate, comment, SAVE_ALL_CHANS);
       if (result != MUS_NO_ERROR)
 	report_in_minibuffer_and_save(sp, "%s: %s", str, strerror(errno));
       else report_in_minibuffer(sp, "%s saved as %s",

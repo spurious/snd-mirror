@@ -291,7 +291,7 @@ static int mix_selection(snd_state *ss, chan_info *cp, int beg, const char *orig
   sync_info *si_out;
   int err, id = INVALID_MIX_ID;
   tempfile = snd_tempnam(ss);
-  err = save_selection(ss, tempfile, MUS_NEXT, MUS_OUT_FORMAT, SND_SRATE(cp->sound), NULL);
+  err = save_selection(ss, tempfile, MUS_NEXT, MUS_OUT_FORMAT, SND_SRATE(cp->sound), NULL, SAVE_ALL_CHANS);
   if (err == MUS_NO_ERROR)
     {
       si_out = sync_to_chan(cp);
@@ -324,7 +324,7 @@ static int insert_selection(snd_state *ss, chan_info *cp, int beg, const char *o
   chan_info *cp_in, *cp_out;
   int i, err = MUS_NO_ERROR;
   tempfile = snd_tempnam(ss);
-  err = save_selection(ss, tempfile, MUS_NEXT, MUS_OUT_FORMAT, SND_SRATE(cp->sound), NULL);
+  err = save_selection(ss, tempfile, MUS_NEXT, MUS_OUT_FORMAT, SND_SRATE(cp->sound), NULL, SAVE_ALL_CHANS);
   if (err == MUS_NO_ERROR)
     {
       si_out = sync_to_chan(cp);
@@ -562,12 +562,12 @@ void move_selection(chan_info *cp, int x)
   move_selection_1(cp, x);
 }
 
-int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, char *comment)
+int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, char *comment, int chan)
 {
   int ofd, oloc, comlen, err = MUS_NO_ERROR, reporting = 0, no_space, num, bps;
   sync_info *si;
   int *ends;
-  int i, dur, j, k;
+  int i, dur, j, k, chans;
   snd_fd **sfs;
   snd_info *sp = NULL;
   MUS_SAMPLE_TYPE **data;
@@ -580,8 +580,11 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	  if ((si) && (si->cps) && (si->cps[0])) sp = si->cps[0]->sound;
 	  comlen = snd_strlen(comment);
 	  dur = selection_len();
+	  if (chan == SAVE_ALL_CHANS)
+	    chans = si->chans;
+	  else chans = 1;
 
-	  if ((snd_write_header(ss, ofile, type, srate, si->chans, 28, si->chans * dur, format, comment, comlen, NULL)) == -1) 
+	  if ((snd_write_header(ss, ofile, type, srate, chans, 28, chans * dur, format, comment, comlen, NULL)) == -1) 
 	    {
 	      si = free_sync_info(si);
 	      return(MUS_HEADER_WRITE_FAILED);
@@ -595,7 +598,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	  if (sp)
 	    {
 	      bps = mus_data_format_to_bytes_per_sample(format);
-	      num = dur * bps * si->chans;
+	      num = dur * bps * chans;
 	      no_space = disk_space_p(sp, ofd, num, 0);
 	      if (no_space == GIVE_UP)
 		{
@@ -607,25 +610,31 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	    }
 	  reporting = ((sp) && (dur > 1000000));
 	  if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
-	  ends = (int *)CALLOC(si->chans, sizeof(int));
-	  sfs = (snd_fd **)CALLOC(si->chans, sizeof(snd_fd *));
-	  for (i = 0; i < si->chans; i++) 
+	  ends = (int *)CALLOC(chans, sizeof(int));
+	  sfs = (snd_fd **)CALLOC(chans, sizeof(snd_fd *));
+	  if (chan == SAVE_ALL_CHANS)
+	    for (i = 0; i < chans; i++) 
+	      {
+		ends[i] = selection_end(si->cps[i]);
+		sfs[i] = init_sample_read(selection_beg(si->cps[i]), si->cps[i], READ_FORWARD);
+	      }
+	  else
 	    {
-	      ends[i] = selection_end(si->cps[i]);
-	      sfs[i] = init_sample_read(selection_beg(si->cps[i]), si->cps[i], READ_FORWARD);
+	      ends[0] = selection_end(si->cps[chan]);
+	      sfs[0] = init_sample_read(selection_beg(si->cps[chan]), si->cps[chan], READ_FORWARD);
 	    }
 	  mus_file_open_descriptors(ofd, ofile, format, 
 				   mus_data_format_to_bytes_per_sample(format), 
-				   oloc, si->chans, type);
+				   oloc, chans, type);
 	  mus_file_set_data_clipped(ofd, data_clipped(ss));
 	  mus_file_seek(ofd, oloc, SEEK_SET);
-	  data = (MUS_SAMPLE_TYPE **)CALLOC(si->chans, sizeof(MUS_SAMPLE_TYPE *));
-	  for (i = 0; i < si->chans; i++) 
+	  data = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
+	  for (i = 0; i < chans; i++) 
 	    data[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE)); 
 	  j = 0;
 	  for (i = 0; i < dur; i++)
 	    {
-	      for (k = 0; k < si->chans; k++)
+	      for (k = 0; k < chans; k++)
 		{
 		  if (i <= ends[k]) 
 		    data[k][j] = next_sample(sfs[k]);
@@ -634,11 +643,11 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	      j++;
 	      if (j == FILE_BUFFER_SIZE)
 		{
-		  err = mus_file_write(ofd, 0, j - 1, si->chans, data);
+		  err = mus_file_write(ofd, 0, j - 1, chans, data);
 		  j = 0;
 		  if (err == MUS_ERROR) break; /* error message already posted */
 		  if (reporting) 
-		    progress_report(sp, "save-selection", si->chans - 1, si->chans, (Float)i / (Float)dur, NOT_FROM_ENVED);
+		    progress_report(sp, "save-selection", chans - 1, chans, (Float)i / (Float)dur, NOT_FROM_ENVED);
 		  if (ss->stopped_explicitly)
 		    {
 		      ss->stopped_explicitly = 0;
@@ -648,9 +657,9 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 		}
 	    }
 	  if ((err == MUS_NO_ERROR) && (j > 0)) 
-	    mus_file_write(ofd, 0, j - 1, si->chans, data);
+	    mus_file_write(ofd, 0, j - 1, chans, data);
 	  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
-	  for (i = 0; i < si->chans; i++)
+	  for (i = 0; i < chans; i++)
 	    {
 	      free_snd_fd(sfs[i]);
 	      FREE(data[i]);
@@ -874,7 +883,7 @@ static SCM g_set_selection_member(SCM on, SCM snd, SCM chn)
   SND_ASSERT_CHAN("set-" S_selection_member, snd, chn, 2);
   ASSERT_TYPE(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_selection_member, "a boolean");
   cp = get_cp(snd, chn, "set-" S_selection_member);
-  if (TO_C_INT_OR_ELSE(on, 1))
+  if ((NOT_BOUND_P(on)) || (TRUE_P(on)))
     {
       if (selection_is_active())
 	cp_set_selection_beg(cp, selection_beg(NULL));
@@ -915,18 +924,19 @@ static void mus_local_error(int type, char *msg)
 		  TO_SCM_STRING(msg)));
 }
 
-static SCM g_save_selection(SCM filename, SCM header_type, SCM data_format, SCM srate, SCM comment)
+static SCM g_save_selection(SCM filename, SCM header_type, SCM data_format, SCM srate, SCM comment, SCM chan)
 {
-  #define H_save_selection "(" S_save_selection " filename\n    &optional header-type data-format srate comment)\n\
-saves the current selection in filename using the indicated file attributes"
+  #define H_save_selection "(" S_save_selection " filename\n    &optional header-type data-format srate comment chan)\n\
+saves the current selection in filename using the indicated file attributes.  If chan is given, save only that channel."
 
   snd_state *ss;
-  int type, format, sr, err;
+  int type, format, sr, err, chn;
   char *com = NULL, *fname = NULL;
   ASSERT_TYPE(STRING_P(filename), filename, SCM_ARG1, S_save_selection, "a string");
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(header_type), header_type, SCM_ARG2, S_save_selection, "an integer");
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(data_format), data_format, SCM_ARG3, S_save_selection, "an integer");
-  ASSERT_TYPE(NUMBER_IF_BOUND_P(srate), srate, SCM_ARG4, S_save_selection, "a number");
+  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(header_type), header_type, SCM_ARG2, S_save_selection, "an integer");
+  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(data_format), data_format, SCM_ARG3, S_save_selection, "an integer");
+  ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(srate), srate, SCM_ARG4, S_save_selection, "a number");
+  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(chan), chan, SCM_ARG6, S_save_selection, "an integer");
   if (selection_is_active() == 0)
     return(snd_no_active_selection_error(S_save_selection));
   ss = get_global_state();
@@ -942,9 +952,10 @@ saves the current selection in filename using the indicated file attributes"
   if (STRING_P(comment)) 
     com = TO_C_STRING(comment); 
   else com = NULL;
+  chn = TO_C_INT_OR_ELSE(chan, SAVE_ALL_CHANS);
   fname = mus_expand_filename(TO_C_STRING(filename));
   old_mus_error = mus_error_set_handler(mus_local_error);
-  err = save_selection(ss, fname, type, format, sr, com);
+  err = save_selection(ss, fname, type, format, sr, com, chn);
   mus_error_set_handler(old_mus_error);
   if (fname) FREE(fname);
   if (err == MUS_NO_ERROR) return(filename);
@@ -984,8 +995,5 @@ void g_init_selection(SCM local_doc)
   DEFINE_PROC(S_insert_selection, g_insert_selection, 0, 3, 0, H_insert_selection);
   DEFINE_PROC(S_mix_selection,    g_mix_selection, 0, 3, 0,    H_mix_selection);
   DEFINE_PROC(S_select_all,       g_select_all, 0, 2, 0,       H_select_all);
-  DEFINE_PROC(S_save_selection,   g_save_selection, 1, 4, 0,   H_save_selection);
-
-  /* should save-selection (and others like it) be selection->file? */
-  /* TODO add chan arg to save-selection */
+  DEFINE_PROC(S_save_selection,   g_save_selection, 1, 5, 0,   H_save_selection);
 }

@@ -97,7 +97,7 @@ function example()
     <li><a href="#sndsounddata">Sound-data and Sndlib</a>
     <li><a href="#sndmarks">Marks</a>
     <li><a href="#sndmixes">Mixes</a>
-    <li><a href="#sndregions">Regions</a>
+    <li><a href="#sndregions">Regions and Selections</a>
     <li><a href="#sndsounds">Sounds and channels</a>
       <ul><li><a href="#customcontrols">the control panel</a></li></ul>
     <li><a href="#editlists">Edit Lists</a>
@@ -1210,7 +1210,7 @@ when you save a sound via the "save" dialog.</p>
 <!-- -->
 <!-- zoom-focus-style -->
 <!-- --><tr><td><code><em class=def><a name="zoomfocusstyle">zoom-focus-style</a></em></code></td>
-<!-- --><td colspan=2><code>focus-active</code></td></tr>
+<!-- --><td colspan=2><code>zoom-focus-active</code></td></tr>
 <!-- --><tr><td colspan=2></td><td>This determines what a zoom action focuses (centers) on.  See <a href="snd.html#zoomoption">Zoom options</a>.</td></tr>
 <!-- -->
 <!-- --></table>
@@ -1567,7 +1567,6 @@ the hook.
 <!-- -->This writes the peak-env data when a file is closed, and reads
 <!-- -->it upon opening the file, if it exists; it provides essentially
 <!-- -->immediate display of any size file.
-<!-- -->Snd's author is not responsible for any unpaid rent.
 <!-- --></td></tr><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- just-sounds-hook -->
@@ -3279,7 +3278,7 @@ shows the edit list of that sound, and <code>(set! (edit-position (list 0) 0) 0)
 it to its original state.
 </p>
 <br>
-<span class=cbox><h3><A NAME="sndregions">Regions</a></h3></span>
+<span class=cbox><h3><A NAME="sndregions">Regions and Selections</a></h3></span>
 
 <p>A region is a saved portion of sound data.  There is a dialog to browse regions, and
 a notion of a stack of regions.  As regions are added, old ones get pushed off the
@@ -3322,8 +3321,8 @@ Most of the region number arguments default to the current region (the first in 
 <!-- -->create a <a href="#samplereaders">sample-reader</a> object reading region <i>reg</i>'s channel <i>chn</i>
 <!-- --></td></tr>
 <!-- -->
-<!-- mix-region --><td><span class=defbox><code><em class=def>mix-region</em> (<i>samp reg snd chn</i>)</code></span></td></tr>
-<!-- --><td> see <a href="#sndmixregion">above</a>.
+<!-- mix-region --><td ><span class=defbox><code><em class=def>mix-region</em> (<i>samp reg snd chn</i>)</code></span></td>
+<!-- --><td>see <a href="#sndmixregion">above</a>.
 <!-- --></td></tr>
 <!-- -->
 <!-- play-region -->
@@ -3417,6 +3416,7 @@ Most of the region number arguments default to the current region (the first in 
 <!-- -->
 <!-- --></table>
 
+<hr>
 <p>These are specific to the current selection (these can return the error 'no-active-selection):</p>
 
 <!-- -------------------------------- SELECTION TABLE -------------------------------- -->
@@ -3486,9 +3486,9 @@ Most of the region number arguments default to the current region (the first in 
 <!-- -->
 <!-- save-selection -->
 <!-- -->
-<!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="sndsaveselection">save-selection</a></em> (file <i>header-type data-format srate comment</i>)</code></span></td>
+<!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="sndsaveselection">save-selection</a></em> (file <i>header-type data-format srate comment chan</i>)</code></span></td>
 <!-- --></tr><tr><td></td><td>
-<!-- -->save the currently selected data in <i>file</i> 
+<!-- -->save the currently selected data in <i>file</i>.  If <i>chan</i> is given, save only that channel.
 <!-- --></td></tr>
 <!-- -->
 <!-- scale-selection-by -->
@@ -3524,23 +3524,23 @@ Most of the region number arguments default to the current region (the first in 
 <!-- -->
 <!-- selection-length -->
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="selectionlength">selection-length</a></em> ()</code></span></td>
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="selectionlength">selection-length</a></em> (<i>snd chn</i>)</code></span></td>
 <!-- --><td>
-<!-- -->selection frames 
+<!-- -->selection frames. See make-selection in examp.scm.
 <!-- --></td></tr>
 <!-- -->
 <!-- selection-member? -->
 <!-- -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="selectionmember">selection-member?</a></em> (<i>snd chn</i>)</code></span></td>
 <!-- --><td>
-<!-- -->#t if snd's chn is member of active selection. (This is settable).
+<!-- -->#t if snd's chn is member of active selection. (This is settable).  See make-selection in examp.scm.
 <!-- --></td></tr>
 <!-- -->
 <!-- selection-position -->
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="selectionposition">selection-position</a></em> ()</code></span></td>
+<!-- --><tr><td valign=top><span class=defbox><code><em class=def><a name="selectionposition">selection-position</a></em> (<i>snd chn</i>)</code></span></td>
 <!-- --><td>
-<!-- -->selection begin sample number (used to be called selection-beg).
+<!-- -->selection begin sample number (used to be called selection-beg). See make-selection in examp.scm.
 <!-- --></td></tr>
 <!-- -->
 <!-- selection-srate -->
@@ -3703,7 +3703,8 @@ desired edit history position.
 <!-- -->
 <!-- channels -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="channels">channels</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="channels">channels</a></em> (<em class=targ>snd</em>)</code> 
+<!-- --><spacer type=horizontal size=40><code><em class=def><a name="chans">chans</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->number of channels in <i>snd</i>.  <a name="sndchans">chans</a> is another name for this procedure.
@@ -3913,16 +3914,6 @@ desired edit history position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->size in pixels of dots when graphing with dots (default: 1)
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
-<!-- env-base -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndenvbase">env-base</a></em> (env)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->base of env (not stable -- may be removed).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4328,16 +4319,15 @@ desired edit history position.
 <!-- --><span class=defbox><code><em class=def><a name="mapchan">map-chan</a></em> (func <i>start end edname snd chn edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->apply <i>func</i> to samples in the specified channel.
-<!-- -->The "map" functions can change data, if they wish; the entire mapping call
-<!-- -->becomes one large editing operation from the editor's point of view.
+<!-- --><b>map-chan</b> applies <i>func</i> to samples in the specified channel.
+<!-- -->As opposed to scan-chan, map-chan can change the data.
 <!-- -->An optional subsequence of the data can be requested via
 <!-- -->'start' and 'end' points.  If beg is #f, it defaults to 0; if end is #f,
 <!-- -->it defaults to the end of the channel.
 <!-- -->The fourth argument <i>edname</i> is the
 <!-- -->name of the editing operation that will be reported by the
 <!-- -->edit history mechanism. 
-<!-- --><i>func</i>
+<!-- --><i>func</i>, a procedure of one argument (the current sample),
 <!-- -->can return #f, which means that the data passed in is
 <!-- -->deleted (replaced by nothing), or a number which replaces the
 <!-- -->current sample,
@@ -4345,9 +4335,9 @@ desired edit history position.
 <!-- -->unaffected, or a list, vct object, or vector of numbers;
 <!-- -->the numbers are spliced into the edited version, effectively
 <!-- -->replacing the current sample with any number of samples. This sounds
-<!-- -->more complicated than it is!  Basically, a map receives
+<!-- -->more complicated than it is!  Basically, a map-chan function receives
 <!-- -->each sample and returns either #f (no corresponding output), a number
-<!-- -->(the new output), or a list of numbers.
+<!-- -->(the new output), or a bunch of numbers.
 <!-- -->If every value returned for a given channel is #f, the data is not edited.
 <!-- --><br>
 <!-- --><pre>
@@ -4360,11 +4350,6 @@ desired edit history position.
 <!-- -->&gt;<em class=typing>(map-chan (lambda (y) (if (&gt; y .1) (list .1 .2 .3) y))) </em>
 <!-- --><em class=listener>#f</em>
 <!-- --></pre>
-<!-- -->The edit history may show multiple entries for one call on map-chan;
-<!-- -->if the new and old lengths are different, Snd has to delete the old samples before
-<!-- -->inserting the new samples.  This means that you may have to repeat 'undo'
-<!-- -->once or twice to get back to the state before the map operation. 
-<!-- -->Wrap the call up in <a href="#asoneedit">as-one-edit</a> to get around this.
 <!-- -->Here's a slightly more involved example;
 <!-- -->we define a function that finds silences and replaces them with
 <!-- -->something:<br><br>
@@ -4411,7 +4396,7 @@ desired edit history position.
 <!-- --><br>
 <!-- -->It is possible to break out of a map, flushing any edits, via call-with-current-continuation:
 <!-- --><br><br>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+<!-- --><center><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 (define ctr 0)
 (call-with-current-continuation 
   (lambda (return)
@@ -4420,7 +4405,7 @@ desired edit history position.
                 (if (&gt; ctr 100) 
                   (return "quitting!") 
                   val)))))
-<!-- --></pre></td></tr></table>
+<!-- --></pre></td></tr></table></center>
 <!-- --><br>
 <!-- -->If the editing action is not mapping something over the current sound, it is
 <!-- -->safest to write a temp file with the new data, then pass that to set-samples
@@ -4428,7 +4413,21 @@ desired edit history position.
 <!-- -->will fit in memory (as in using vct-&gt;samples for example).
 <!-- -->Use snd-tempnam to get a temporary filename that reflects the current
 <!-- -->temp-dir setting (if any).  The env-sound-interp function in <a href="sndscm.html#exenvsoundinterp">examp.scm</a>
-<!-- -->is an example of this.
+<!-- -->is an example of this.  examp.scm also has Snd-4 style mapping functions such as
+<!-- -->map-sound-chans, map-all-chans, etc.  For example:
+<!-- --><br><br>
+<!-- --><center><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define* (map-sound-chans proc #:optional (beg 0) end edname snd edpos)
+  (do ((i 0 (1+ i)))
+      ((= i (chans snd)))
+    (map-chan proc beg end edname snd i edpos)))
+
+(define* (map-all-chans proc #:optional (beg 0) end edname edpos)
+  (apply for-each 
+	 (lambda (snd chn)
+	   (map-chan proc beg end edname snd chn edpos))
+	 (all-chans)))
+<!-- --></pre></td></tr></table></center>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4777,6 +4776,7 @@ desired edit history position.
 <!-- -->return vector of <i>samps</i> samples starting at <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
 <!-- --><i>samp</i> defaults to 0.  <i>samps</i> defaults to frames - samp.
 <!-- --><i>pos</i> is the edit history position to read (defaults to current position).
+<!-- -->This is settable (as is <b>sample</b>) -- see <a href="#sndsetsamples">set-samples</a>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4863,7 +4863,7 @@ desired edit history position.
 <!-- --><span class=defbox><code><em class=def><a name="scanchan">scan-chan</a></em> (func <i>start end snd chn edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->apply <i>func</i> to samples in the specified channel.
+<!-- --><b>scan-chan</b> applies <i>func</i> to samples in the specified channel.
 <!-- -->An optional subsequence of the data can be requested via
 <!-- -->'start' and 'end' points.  If beg is #f, it defaults to 0; if end is #f,
 <!-- -->it defaults to the end of the channel.
@@ -4908,6 +4908,18 @@ desired edit history position.
 	   (free-sample-reader reader)
 	   val))
       (set! result (func (next-sample reader))))))
+<!-- --></pre></td></tr></table>
+<!-- --><br>examp.scm has Snd-4 style scanning functions.  For example:<br><br>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define* (scan-all-chans proc #:optional (beg 0) end edpos)
+  (catch 'done
+	 (lambda ()
+	   (apply for-each 
+		  (lambda (snd chn)
+		    (let ((result (scan-chan proc beg end snd chn edpos)))
+		      (if result (throw 'done (append result (list snd chn))))))
+		  (all-chans)))
+	 (lambda args (cadr args))))
 <!-- --></pre></td></tr></table>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
@@ -4965,7 +4977,7 @@ desired edit history position.
 <!-- -->
 <!-- set-samples -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndsetsamples">set-samples</a></em> (samp samps data <i>snd chn trunc</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndsetsamples">set-samples</a></em> (samp samps data <i>snd chn trunc infile-chan</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->set <i>snd</i>'s channel <i>chn</i>'s samples starting from
@@ -4974,7 +4986,7 @@ desired edit history position.
 <!-- --><i>data</i> can be a filename; Snd assumes any such file is temporary; it will
 <!-- -->be deleted when no longer needed.  If <i>trunc</i> is #t and <i>samp</i> is 0, the
 <!-- -->sound is truncated (if necessary) to reflect the end of <i>data</i>.
-<!-- -->The form (set! (samples samp samps <i>snd chn trunc</i>) data) can also be used.
+<!-- -->The form (set! (samples samp samps <i>snd chn trunc infile-chan</i>) data) can also be used.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5524,10 +5536,10 @@ desired edit history position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->The x axis labelling of the time domain waveform can be in seconds
-<!-- -->(<i>x-in-seconds</i>), in samples (<i>x-in-samples</i>), or expressed
+<!-- -->(<i>x-axis-in-seconds</i>), in samples (<i>x-axis-in-samples</i>), or expressed
 <!-- -->as a percentage of the overall duration (useful in envelope definitions).
-<!-- -->The latter is <i>x-to-one</i>. This is the View menu 'X-axis units' option.
-<!-- -->(default: <i>x-in-seconds</i>). 
+<!-- -->The latter is <i>x-axis-as-percentage</i>. This is the View menu 'X-axis units' option.
+<!-- -->(default: <i>x-axis-in-seconds</i>). 
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6825,12 +6837,12 @@ variable %load-verbosely to #t.
 
 <p><b>Zoom Focus</b> style:</p>
 <pre>
-  focus-left         focus-right        focus-active      focus-middle
+  zoom-focus-left    zoom-focus-right   zoom-focus-active zoom-focus-middle
 </pre><br>
 
 <p><b>X-axis Label</b>:</p>
 <pre>
-  x-in-seconds       x-in-samples       x-to-one
+  x-axis-in-seconds  x-axis-in-samples  x-axis-as-percentage
 </pre><br>
 
 <p><b>Speed Control</b> style:</p>
@@ -7064,6 +7076,7 @@ variable %load-verbosely to #t.
 				      ((= i (abs arg)))
 				    (go-to-zero (&lt; arg 0)))))
 <!-- --></pre></td></tr></table></td></tr>
+<!-- --><tr><td></td><td>Most of the predefined key definitions are given in <a href="snd.html#builtinkeys">Keyboard Commands</a>.</td></tr>
 <!-- -->
 <!-- c-g? -->
 <!-- --><tr><td colspan=2>

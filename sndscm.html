@@ -494,6 +494,7 @@ between these examples, other .scm files, and discussions in other documents.
     <li>eval over selection or between marks replacing current samples, mapped to "x" or "m" key using prompt-in-minibuffer
     <li>swap selection chans
     <li>selection-members
+    <li>make-selection
   </ul>
 </small>
 <li><a href="#ssmixes">mixes</a>
@@ -548,6 +549,7 @@ between these examples, other .scm files, and discussions in other documents.
     <li>sound-interp, env-sound-interp
     <li>describe-hook
     <li>local-hook
+    <li>Snd 4 scan/map function compatibility
   </ul>
 </small>
 </ul>
@@ -927,6 +929,7 @@ between the leftmost marks in <i>snd</i>.
   <em class=def><a name="exselectionrms">selection-rms</a></em>
   <em class=def><A NAME="exregionrms1">region-rms-1</a></em> region
   <em class=def><a name="exregionrms">region-rms</a></em> region
+  <em class=def><a name="exmakeselection">make-selection</a></em> &amp;optional beg end snd chn
 </pre>
 <p><i>selection-members</i> returns a list of lists of (snd chn) indicating the channels participating in the current selection.
 It is very similar to <i>all-chans</i> which returns a list of lists of all (snd chn)'s.
@@ -956,6 +959,8 @@ of ways. The fastest and simplest uses CLM's dot-product function:
 then prompts (in the minibuffer) for the function to apply, and when
 the user eventually replies with a function, applies that function
 to each sample in the selection.
+make-selection makes a selection (like make-region but without creating
+a region).
 </p>
 
 <!-- -------------------------------- MIXES -------------------------------- -->
@@ -1188,7 +1193,9 @@ with the sound copied first in normal order, then reversed.  src-sound with an
 envelope could be used for this effect, but it is much more direct to apply the
 envelope to sound sample positions.
 </p>
-
+<p>The Snd-4 compatibilty section contains a number of the map-chan and scan-chan
+generalizations that were removed from Snd-5.  
+</p>
 <br>
 
 <A NAME="fmvdoc"></a><span class=box><h2>fmv.scm</h2></span>

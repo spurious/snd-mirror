@@ -79,10 +79,10 @@ static char *zoom_focus_style_name(int choice)
 {
   switch (choice)
     {
-    case FOCUS_LEFT: return(S_focus_left); break;
-    case FOCUS_RIGHT: return(S_focus_right); break;
-    case FOCUS_MIDDLE: return(S_focus_middle); break;
-    default: return(S_focus_active); break;
+    case FOCUS_LEFT: return(S_zoom_focus_left); break;
+    case FOCUS_RIGHT: return(S_zoom_focus_right); break;
+    case FOCUS_MIDDLE: return(S_zoom_focus_middle); break;
+    default: return(S_zoom_focus_active); break;
     }
 }
 
@@ -125,9 +125,9 @@ static char *x_axis_style_name(int choice)
 {
   switch(choice)
     {
-    case X_IN_SAMPLES: return(S_x_in_samples); break;
-    case X_TO_ONE: return(S_x_to_one); break;
-    default: return(S_x_in_seconds); break;
+    case X_AXIS_IN_SAMPLES: return(S_x_axis_in_samples); break;
+    case X_AXIS_AS_PERCENTAGE: return(S_x_axis_as_percentage); break;
+    default: return(S_x_axis_in_seconds); break;
     }
 }
 
@@ -542,7 +542,7 @@ static char *file_extension(char *arg)
 
 static SCM start_hook;
 
-static int dont_start(snd_state *ss, char *filename)
+static int dont_start(char *filename)
 {
   SCM res = SCM_BOOL_F;
   if (HOOKED(start_hook))
@@ -612,7 +612,7 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 			  if (startup_filename == NULL)
 			    {
 			      startup_filename = copy_string(argname);
-			      if (dont_start(ss, startup_filename)) snd_exit(1);
+			      if (dont_start(startup_filename)) snd_exit(1);
 			    }
 			  snd_open_file_unselected(argname, ss, FALSE);
 			}

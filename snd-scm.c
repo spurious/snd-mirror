@@ -583,6 +583,7 @@ SCM snd_report_result(snd_state *ss, SCM result, char *buf, int check_mini)
     {
       if (buf) snd_append_command(ss, buf);
       ss->result_printout = MESSAGE_WITH_CARET;
+      /* TODO: print-hook? but need before/after stuff or around-method (to distinguish user from snd text) */
       snd_append_command(ss, str);
     }
   if (str) free(str);
@@ -1246,6 +1247,7 @@ conversion.  The other choice is (much faster) linear interpolation which can in
   return(TO_SCM_BOOLEAN(use_sinc_interp(state)));
 }
 
+/* data-clipped -> clip-data? -- this is from sndlib */
 static SCM g_data_clipped(void) {return(TO_SCM_BOOLEAN(data_clipped(state)));}
 static SCM g_set_data_clipped(SCM val) 
 {
@@ -1290,17 +1292,18 @@ static SCM g_set_x_axis_style(SCM val)
 {
   #define H_x_axis_style "(" S_x_axis_style ") -> labelling of time domain x axis (x-in-seconds)"
   ASSERT_TYPE(INTEGER_P(val), val, SCM_ARGn, "set-" S_x_axis_style, "an integer"); 
-  set_x_axis_style(state, mus_iclamp(X_IN_SECONDS,
+  set_x_axis_style(state, mus_iclamp(X_AXIS_IN_SECONDS,
 				TO_C_INT(val),
-				X_IN_LENGTH));
+				X_AXIS_IN_LENGTH));
+  /* TODO: change existing xlabels */
   return(TO_SCM_INT(x_axis_style(state)));
 }
 
 static SCM g_zoom_focus_style(void) {return(TO_SCM_INT(zoom_focus_style(state)));}
 static SCM g_set_zoom_focus_style(SCM focus) 
 {
-  #define H_zoom_focus_style "(" S_zoom_focus_style ") -> one of '(" S_focus_left " " S_focus_right " " S_focus_middle " " S_focus_active ")\n\
-  decides what zooming centers on (default: " S_focus_active ")"
+  #define H_zoom_focus_style "(" S_zoom_focus_style ") -> one of '(" S_zoom_focus_left " " S_zoom_focus_right " " S_zoom_focus_middle " " S_zoom_focus_active ")\n\
+  decides what zooming centers on (default: " S_zoom_focus_active ")"
   ASSERT_TYPE(INTEGER_P(focus), focus, SCM_ARGn, "set-" S_zoom_focus_style, "an integer"); 
   activate_focus_menu(state, mus_iclamp(FOCUS_LEFT,
 				    TO_C_INT(focus),
@@ -2934,23 +2937,23 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_VAR(S_graph_dots_and_lines,  GRAPH_DOTS_AND_LINES, H_graph_dots_and_lines);
   DEFINE_VAR(S_graph_lollipops,       GRAPH_LOLLIPOPS,      H_graph_lollipops);
 
-  #define H_focus_left "The value for " S_zoom_focus_style " that causes zooming to maintain the left edge steady"
-  #define H_focus_right "The value for " S_zoom_focus_style " that causes zooming to maintain the right edge steady"
-  #define H_focus_middle "The value for " S_zoom_focus_style " that causes zooming to focus on the middle sample"
-  #define H_focus_active "The value for " S_zoom_focus_style " that causes zooming to focus on the currently active object"
+  #define H_zoom_focus_left "The value for " S_zoom_focus_style " that causes zooming to maintain the left edge steady"
+  #define H_zoom_focus_right "The value for " S_zoom_focus_style " that causes zooming to maintain the right edge steady"
+  #define H_zoom_focus_middle "The value for " S_zoom_focus_style " that causes zooming to focus on the middle sample"
+  #define H_zoom_focus_active "The value for " S_zoom_focus_style " that causes zooming to focus on the currently active object"
 
-  DEFINE_VAR(S_focus_left,            FOCUS_LEFT,   H_focus_left);
-  DEFINE_VAR(S_focus_right,           FOCUS_RIGHT,  H_focus_right);
-  DEFINE_VAR(S_focus_active,          FOCUS_ACTIVE, H_focus_active);
-  DEFINE_VAR(S_focus_middle,          FOCUS_MIDDLE, H_focus_middle);
+  DEFINE_VAR(S_zoom_focus_left,       FOCUS_LEFT,   H_zoom_focus_left);
+  DEFINE_VAR(S_zoom_focus_right,      FOCUS_RIGHT,  H_zoom_focus_right);
+  DEFINE_VAR(S_zoom_focus_active,     FOCUS_ACTIVE, H_zoom_focus_active);
+  DEFINE_VAR(S_zoom_focus_middle,     FOCUS_MIDDLE, H_zoom_focus_middle);
 
-  #define H_x_in_seconds "The value for " S_x_axis_style " that displays the x axis using seconds"
-  #define H_x_in_samples "The value for " S_x_axis_style " that displays the x axis using sample numbers"
-  #define H_x_to_one "The value for " S_x_axis_style " that displays the x axis using percentages"
+  #define H_x_axis_in_seconds    "The value for " S_x_axis_style " that displays the x axis using seconds"
+  #define H_x_axis_in_samples    "The value for " S_x_axis_style " that displays the x axis using sample numbers"
+  #define H_x_axis_as_percentage "The value for " S_x_axis_style " that displays the x axis using percentages"
 
-  DEFINE_VAR(S_x_in_seconds,          X_IN_SECONDS, H_x_in_seconds);
-  DEFINE_VAR(S_x_in_samples,          X_IN_SAMPLES, H_x_in_samples);
-  DEFINE_VAR(S_x_to_one,              X_TO_ONE,     H_x_to_one);
+  DEFINE_VAR(S_x_axis_in_seconds,     X_AXIS_IN_SECONDS,    H_x_axis_in_seconds);
+  DEFINE_VAR(S_x_axis_in_samples,     X_AXIS_IN_SAMPLES,    H_x_axis_in_samples);
+  DEFINE_VAR(S_x_axis_as_percentage,  X_AXIS_AS_PERCENTAGE, H_x_axis_as_percentage);
 
   #define H_speed_control_as_float "The value for " S_speed_control_style " that interprets the speed slider as a float"
   #define H_speed_control_as_ratio "The value for " S_speed_control_style " that interprets the speed slider as a just-intonation ratio"
@@ -3441,6 +3444,13 @@ If more than one hook function, results are concatenated. If none, the current c
                (define (hide-listener) (set! (show-listener) #f))\
                (define activate-listener show-listener)\
                (define dac-folding       dac-combines-channels)\
+               (define focus-left        zoom-focus-left)\
+               (define focus-right       zoom-focus-right)\
+               (define focus-middle      zoom-focus-middle)\
+               (define focus-active      zoom-focus-active)\
+               (define x-to-one          x-axis-as-percentage)\
+               (define x-in-seconds      x-axis-in-seconds)\
+               (define x-in-samples      x-axis-in-samples)\
                (define uniting \
                  (make-procedure-with-setter \
                    (lambda arg \

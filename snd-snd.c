@@ -2,7 +2,6 @@
 
 snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *new_comment)
 {
-  snd_info *sp;
   int chan, size, err;
   unsigned char* buf;
   if (snd_overwrite_ok(ss, newname))
@@ -26,8 +25,7 @@ snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_f
 			  chan, newname, strerror(errno),
 			  __FILE__, __LINE__, __FUNCTION__);
 	      FREE(buf);
-	      sp = snd_open_file(newname, ss, FALSE);
-	      return(sp);
+	      return(snd_open_file(newname, ss, FALSE));
 	    }
 	}
       else 
@@ -1050,7 +1048,7 @@ static int max_sync(snd_info *sp, void *val)
   return(0);
 }
 
-static int apply_dur, apply_tick = 0, apply_reporting = 0, orig_dur;
+static int apply_dur, apply_tick = 0, apply_reporting = 0, orig_dur, apply_beg = 0;
 
 BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 {
@@ -1094,7 +1092,8 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
     {
       switch (ap->slice)
 	{
-	case 0: 
+	case 0:
+	  apply_beg = 0;
 	  ap->ofile = NULL;
 	  lock_apply(ss, sp);
 	  ap->ofile = snd_tempnam(ss);
@@ -1121,7 +1120,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	  apply_dur = (int)(mult_dur * (apply_dur + added_dur));
 	  ap->ofd = open_temp_file(ap->ofile, ap->hdr->chans, ap->hdr, ss);
 	  sp->apply_ok = 1;
-	  initialize_apply(sp, ap->hdr->chans, apply_dur);
+	  initialize_apply(sp, ap->hdr->chans, apply_beg, apply_dur); /* snd-dac.c, called only here */
 	  apply_reporting = (apply_dur > (MAX_BUFFER_SIZE * 4));
 	  if (apply_reporting) 
 	    start_progress_report(sp, NOT_FROM_ENVED);
@@ -1178,6 +1177,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 		case APPLY_TO_SOUND:
 		  if (sp->nchans > 1) 
 		    remember_temp(ap->ofile, sp->nchans);
+		  /* TODO: if apply_beg > 0, use change_samples */
 		  for (i = 0; i < sp->nchans; i++)
 		    file_override_samples(apply_dur, ap->ofile, sp->chans[i], i,
 					  (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
@@ -2636,6 +2636,7 @@ WITH_REVERSED_ARGS(g_set_filter_control_env_reversed, g_set_filter_control_env)
 
 static SCM g_apply_controls(SCM snd, SCM choice)
 {
+  /* TODO: add beg+end args to apply */
   #define H_apply_controls "(" S_apply_controls " &optional snd choice) is equivalent to clicking the control panel 'Apply' button"
   snd_info *sp;
   snd_state *ss;

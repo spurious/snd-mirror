@@ -198,7 +198,6 @@
     (list "edit-tree" "extsnd.html#sndedittree")
     (list "edits" "extsnd.html#sndedits")
     (list "env" "clm.html#env")
-    (list "env-base" "extsnd.html#sndenvbase")
     (list "env-interp" "clm.html#env-interp")
     (list "env-selection" "extsnd.html#sndenvselection")
     (list "env-sound" "extsnd.html#sndenv")

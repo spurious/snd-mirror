@@ -451,17 +451,17 @@ static void reflect_x_axis_unit_change_in_menu(int oldval, int newval)
 {
   switch (oldval)
     {
-    case X_IN_SECONDS: set_sensitive(view_x_axis_seconds_menu(), TRUE);    break;
-    case X_IN_SAMPLES: set_sensitive(view_x_axis_samples_menu(), TRUE);    break;
-    case X_TO_ONE:     set_sensitive(view_x_axis_percentage_menu(), TRUE); break;
-    default:           set_sensitive(view_x_axis_seconds_menu(), TRUE);    break;
+    case X_AXIS_IN_SECONDS:    set_sensitive(view_x_axis_seconds_menu(), TRUE);    break;
+    case X_AXIS_IN_SAMPLES:    set_sensitive(view_x_axis_samples_menu(), TRUE);    break;
+    case X_AXIS_AS_PERCENTAGE: set_sensitive(view_x_axis_percentage_menu(), TRUE); break;
+    default:                   set_sensitive(view_x_axis_seconds_menu(), TRUE);    break;
     }
   switch (newval)
     {
-    case X_IN_SECONDS: set_sensitive(view_x_axis_seconds_menu(), FALSE);    break;
-    case X_IN_SAMPLES: set_sensitive(view_x_axis_samples_menu(), FALSE);    break;
-    case X_TO_ONE:     set_sensitive(view_x_axis_percentage_menu(), FALSE); break;
-    default:           set_sensitive(view_x_axis_seconds_menu(), FALSE);    break;
+    case X_AXIS_IN_SECONDS:    set_sensitive(view_x_axis_seconds_menu(), FALSE);    break;
+    case X_AXIS_IN_SAMPLES:    set_sensitive(view_x_axis_samples_menu(), FALSE);    break;
+    case X_AXIS_AS_PERCENTAGE: set_sensitive(view_x_axis_percentage_menu(), FALSE); break;
+    default:                   set_sensitive(view_x_axis_seconds_menu(), FALSE);    break;
     }
 }
   

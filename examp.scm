@@ -78,6 +78,8 @@
 ;;; pointer focus within Snd
 ;;; View: Files dialog chooses which sound is displayed
 ;;; "vector synthesis"
+;;; Snd 4 compatibility (re-implement various old functions)
+;;; make-selection
 
 ;;; TODO: robust pitch tracker
 ;;; TODO: adaptive notch filter
@@ -976,19 +978,18 @@
 
 ;;; -------- mix mono sound into stereo sound panning according to env
 
-;;; TODO: test this thing! (and check docs for arg change)
 (define place
   (lambda (mono-snd stereo-snd pan-env)
     (let* ((len (frames mono-snd))
 	   (msf (make-sample-reader 0 mono-snd 0))
 	   (out-data0 (make-vct len))
 	   (out-data1 (make-vct len))
-	   (e (make-envelope pan-env :end (1- len))))
+	   (e (make-env pan-env :end (1- len))))
       (vcts-do! out-data0 out-data1
 		 (lambda (num i)
-		   (let ((panval (env pan-env))
+		   (let ((panval (env e))
 			 (val (next-sample msf)))
-		     (list (* msf panval) (* msf (- 1.0 panval))))))
+		     (list (* val (- 1.0 panval)) (* val panval)))))
       (free-sample-reader msf)
       (vct-add! out-data0 (samples->vct 0 len stereo-snd 0))
       (vct-add! out-data1 (samples->vct 0 len stereo-snd 1))
@@ -1004,8 +1005,8 @@
 	   (in-data1 (samples->vct 0 len mono-snd))
 	   (out-data0 (samples->vct 0 len stereo-snd 0))
 	   (out-data1 (samples->vct 0 len stereo-snd 1)))
-      (vct-scale! in-data0 pos)
-      (vct-scale! in-data1 (- 1.0 pos))
+      (vct-scale! in-data0 (- 1.0 pos))
+      (vct-scale! in-data1 pos)
       (vct-add! out-data0 in-data0)
       (vct-add! out-data1 in-data1)
       (vct->samples 0 len out-data0 stereo-snd 0)
@@ -3205,3 +3206,372 @@ read, even if not playing.  'files' is a list of files to be played."
 		      file))
 		  (list "oboe.snd" "pistol.snd") #t)
 !#
+
+
+;;; -------- Snd 4 compatibility
+
+;;; the following are currently defined in snd-scm.c, but may be removed later
+(if #f
+    (begin
+      (define smooth            smooth-sound)
+      (define cut               delete-selection)
+      (define call-apply        apply-controls)
+      (define (open-alternate-sound file) (close-sound) (open-sound file))
+      (define normalize-view    equalize-panes)
+      (define save-control-panel save-controls)
+      (define restore-control-panel restore-controls)
+      (define reset-control-panel reset-controls)
+      (define mark->sound       mark-home)
+      (define (mix-sound-index m) (car (mix-home m)))
+      (define (mix-sound-channel m) (cadr (mix-home m)))
+      (define amp               amp-control)
+      (define contrast          contrast-control)
+      (define contrast-amp      contrast-control-amp)
+      (define contrast-func     contrast-control-procedure)
+      (define contrasting       contrast-control?)
+      (define expand            expand-control)
+      (define expand-hop        expand-control-hop)
+      (define expand-length     expand-control-length)
+      (define expand-ramp       expand-control-ramp)
+      (define expanding         expand-control?)
+      (define filtering         filter-control?)
+      (define filter-order      filter-control-order)
+      (define filter-env        filter-control-env)
+      (define filter-dBing      filter-control-in-dB)
+      (define reverb-decay      reverb-control-decay)
+      (define reverb-feedback   reverb-control-feedback)
+      (define reverb-funcs      reverb-control-procedures)
+      (define reverb-length     reverb-control-length)
+      (define reverb-lowpass    reverb-control-lowpass)
+      (define reverb-scale      reverb-control-scale)
+      (define reverbing         reverb-control?)
+      (define speed             speed-control)
+      (define speed-as-float    speed-control-as-float)
+      (define speed-as-ratio    speed-control-as-ratio)
+      (define speed-as-semitone speed-control-as-semitone)
+      (define speed-style       speed-control-style)
+      (define speed-tones       speed-control-tones)
+      (define filter-env-order  enved-filter-order)
+      (define enved-dBing       enved-in-dB)
+      (define enved-exping      enved-exp?)
+      (define enved-waving      enved-wave?)
+      (define enved-clipping    enved-clip?)
+      (define amplitude-env     enved-amplitude)
+      (define srate-env         enved-srate)
+      (define spectrum-env      enved-spectrum)
+      (define (hide-listener) (set! (show-listener) #f))
+      (define activate-listener show-listener)
+      (define dac-folding       dac-combines-channels)
+      (define focus-left        zoom-focus-left)
+      (define focus-right       zoom-focus-right)
+      (define focus-middle      zoom-focus-middle)
+      (define focus-active      zoom-focus-active)
+      (define x-to-one          x-axis-as-percentage)
+      (define x-in-seconds      x-axis-in-seconds)
+      (define x-in-samples      x-axis-in-samples)
+      (define uniting 
+	(make-procedure-with-setter 
+	 (lambda arg 
+	   (apply channel-style arg)) 
+	 (lambda args 
+	   (if (= (length args) 1)
+	       (set! (channel-style) (car args))
+	       (set! (channel-style (car args)) (cadr args))))))
+      ))
+
+
+;;; Snd-4 map/scan/temp functions
+
+(define* (scan-sound-chans proc #:optional (beg 0) end snd edpos)
+  (let ((result #f))
+    (do ((i 0 (1+ i)))
+	((or (= i (chans snd))
+	     result)
+	 result)
+      (let ((val (scan-chan proc beg end snd i edpos)))
+	(if val
+	    (set! result (append val (list (or snd (selected-sound)) i))))))))
+
+(define* (map-sound-chans proc #:optional (beg 0) end edname snd edpos)
+  (do ((i 0 (1+ i)))
+      ((= i (chans snd)))
+    (map-chan proc beg end edname snd i edpos)))
+
+
+(define* (scan-all-chans proc #:optional (beg 0) end edpos)
+  (catch 'done
+	 (lambda ()
+	   (apply for-each 
+		  (lambda (snd chn)
+		    (let ((result (scan-chan proc beg end snd chn edpos)))
+		      (if result (throw 'done (append result (list snd chn))))))
+		  (all-chans)))
+	 (lambda args (cadr args))))
+
+(define* (map-all-chans proc #:optional (beg 0) end edname edpos)
+  (apply for-each 
+	 (lambda (snd chn)
+	   (map-chan proc beg end edname snd chn edpos))
+	 (all-chans)))
+
+
+(define* (scan-chans proc #:optional (beg 0) end edpos)
+  (let ((current-sync (sync (selected-sound))))
+    (define (check-one-chan proc beg end snd chn edpos)
+      (let ((val (scan-chan proc beg end snd chn edpos)))
+	(if val
+	    (append val (list snd chn))
+	    #f)))
+    (call-with-current-continuation
+     (lambda (return)
+       (for-each 
+	(lambda (snd)
+	  (if (= (sync snd) current-sync)
+	      (do ((i 0 (1+ i)))
+		  ((= i (chans snd)))
+		(let ((val (check-one-chan proc beg end snd i edpos)))
+		  (if val
+		      (return val))))))
+	(sounds))
+       #f))))
+
+(define* (map-chans proc #:optional (beg 0) end edname edpos)
+  (let ((current-sync (sync (selected-sound))))
+    (for-each 
+     (lambda (snd)
+       (if (= (sync snd) current-sync)
+	   (do ((i 0 (1+ i)))
+	       ((= i (chans snd)))
+	     (map-chan proc beg end edname snd i edpos))))
+     (sounds))))
+
+
+(define* (map-across-all-chans proc #:optional (beg 0) end edname snd edpos)
+  (let* ((chans (all-chans))
+	 (chan-num (length (car chans)))
+	 (maxlen (apply max (apply map frames chans)))
+	 (len (if (number? end)
+		  (- (min end maxlen) beg)
+		  (- maxlen beg)))
+	 (data (make-vector chan-num))
+	 (fds (make-vector chan-num))
+	 (filenames (make-vector chan-num))
+	 (outsamp 0)
+	 (outgs (make-vector chan-num)))
+    (do ((j 0 (1+ j))
+	 (s (car chans) (cdr s))
+	 (c (cadr chans) (cdr c)))
+	((= j chan-num))
+      (vector-set! fds j (make-sample-reader beg (car s) (car c) 1 edpos))
+      (vector-set! filenames j (snd-tempnam))
+      (vector-set! outgs j (make-sample->file (vector-ref filenames j) 1 mus-out-format mus-next)))
+    (do ((i 0 (1+ i)))
+	((= i len))
+      (do ((j 0 (1+ j)))
+	  ((= j chan-num))
+	(vector-set! data j (next-sample (vector-ref fds j))))
+      (let ((newdata (proc data chan-num)))
+	(if newdata
+	    (begin
+	      (do ((j 0 (1+ j)))
+		  ((= j chan-num))
+		(out-any outsamp (vector-ref newdata j) 0 (vector-ref outgs j)))
+	      (set! outsamp (1+ outsamp))))))
+    (do ((j 0 (1+ j))
+	 (s (car chans) (cdr s))
+	 (c (cadr chans) (cdr c)))
+	((= j chan-num))
+      (mus-close (vector-ref outgs j))
+      (free-sample-reader (vector-ref fds j))
+      (if (> outsamp 0)
+	  (begin
+	    (if (not (= outsamp len))
+		(delete-samples beg len (car s) (car c)))
+	    (set! (samples beg outsamp (car s) (car c) #t edname) (vector-ref filenames j)))))))
+
+(define* (scan-across-all-chans proc #:optional (beg 0) end snd edpos)
+  (let* ((chans (all-chans))
+	 (chan-num (length (car chans)))
+	 (maxlen (apply max (apply map frames chans)))
+	 (len (if (number? end)
+		  (- (min end maxlen) beg)
+		  (- maxlen beg)))
+	 (data (make-vector chan-num))
+	 (fds (make-vector chan-num)))
+    (do ((j 0 (1+ j))
+	 (s (car chans) (cdr s))
+	 (c (cadr chans) (cdr c)))
+	((= j chan-num))
+      (vector-set! fds j (make-sample-reader beg (car s) (car c) 1 edpos)))
+    (catch 'done
+	   (lambda ()
+	     (do ((i 0 (1+ i)))
+		 ((= i len))
+	       (do ((j 0 (1+ j)))
+		   ((= j chan-num))
+		 (vector-set! data j (next-sample (vector-ref fds j))))
+	       (let ((newdata (proc data chan-num)))
+		 (if newdata
+		     (throw 'done (list newdata (+ i beg)))))))
+	   (lambda args (cadr args)))))
+
+(define* (map-across-sound-chans proc #:optional (beg 0) end edname snd edpos)
+  (let* ((chan-num (chans snd))
+	 (len (- (min end (frames snd 0)) beg))
+	 (data (make-vector chan-num))
+	 (fds (make-vector chan-num))
+	 (filenames (make-vector chan-num))
+	 (outsamp 0)
+	 (outgs (make-vector chan-num)))
+    (do ((j 0 (1+ j)))
+	((= j chan-num))
+      (vector-set! fds j (make-sample-reader beg snd j 1 edpos))
+      (vector-set! filenames j (snd-tempnam))
+      (vector-set! outgs j (make-sample->file (vector-ref filenames j) 1 mus-out-format mus-next)))
+    (do ((i 0 (1+ i)))
+	((= i len))
+      (do ((j 0 (1+ j)))
+	  ((= j chan-num))
+	(vector-set! data j (next-sample (vector-ref fds j))))
+      (let ((newdata (proc data chan-num)))
+	(if newdata
+	    (begin
+	      (do ((j 0 (1+ j)))
+		  ((= j chan-num))
+		(out-any outsamp (vector-ref newdata j) 0 (vector-ref outgs j)))
+	      (set! outsamp (1+ outsamp))))))
+    (do ((j 0 (1+ j)))
+	((= j chan-num))
+      (mus-close (vector-ref outgs j))
+      (free-sample-reader (vector-ref fds j))
+      (if (> outsamp 0)
+	  (begin
+	    (if (not (= outsamp len))
+		(delete-samples beg len snd j))
+	    (set! (samples beg outsamp snd j #t edname) (vector-ref filenames j)))))))
+
+
+;;; Snd-4 external program support stuff
+
+(define* (selection-to-temp #:optional (type mus-next) (format mus-out-format))
+  (let ((data (make-vector 1)))
+    (vector-set! data 0 (snd-tempnam))
+    (save-selection (vector-ref data 0) type format)
+    data))
+
+(define (syncd-sounds val)
+  (let ((ctr 0))
+    (for-each 
+     (lambda (n)
+       (if (= (sync n) val)
+	   (set! ctr (+ ctr 1))))
+     (sounds))
+    ctr))
+
+(define* (sound-to-temp #:optional (type mus-next) (format mus-out-format) edpos)
+  (let* ((cursnd (selected-sound))
+	 (cursync (sync cursnd)))
+    (if (or (= cursync 0)
+	    (= (syncd-sounds cursync) 1))
+	(let ((data (make-vector 1)))
+	  (vector-set! data 0 (snd-tempnam))
+	  (save-sound-as (vector-ref data 0) (selected-sound) type format #f #f edpos)
+	  data)
+	(snd-error "re-implemented sound-to-temp doesn't handle sync bit correctly yet."))))
+
+(define* (selection-to-temps #:optional (type mus-next) (format mus-out-format))
+  (let* ((chns (selection-chans))
+	 (data (make-vector chns)))
+    (do ((i 0 (1+ i))) 
+	((= i chns)) 
+      (vector-set! data i (snd-tempnam))
+      (save-selection (vector-ref data i) type format #f #f i))
+    data))
+
+  
+(define* (sound-to-temps #:optional (type mus-next) (format mus-out-format) edpos)
+  (let* ((cursnd (selected-sound))
+	 (cursync (sync cursnd)))
+    (if (or (= cursync 0)
+	    (= (syncd-sounds cursync) 1))
+	(let* ((chns (chans cursnd))
+	       (data (make-vector chns)))
+	  (do ((i 0 (1+ i)))
+	      ((= i chns))
+	    (vector-set! data i (snd-tempnam))
+	    (save-sound-as (vector-ref data i) (selected-sound) type format #f i edpos))
+	  data)
+	(snd-error "re-implemented sound-to-temps doesn't handle sync bit correctly yet."))))
+
+(define (temp-filenames data) data)
+
+(define* (temp-to-sound data filename #:optional origin)
+  (let ((cursnd (selected-sound)))
+    (do ((i 0 (1+ i)))
+	((= i (chans cursnd)))
+      (set! (samples 0 (mus-sound-frames filename)  cursnd i #t origin i) filename))))
+
+(define* (temps-to-sound data filenames #:optional origin)
+  (let ((cursnd (selected-sound)))
+    (do ((i 0 (1+ i)))
+	((= i (chans cursnd)))
+      (set! (samples 0 (mus-sound-frames (vector-ref filenames i)) cursnd i #t origin) (vector-ref filenames i)))))
+
+(define* (temp-to-selection data filename #:optional origin)
+  (let ((chan 0)
+	(len (mus-sound-frames filename)))
+    (for-each
+     (lambda (n)
+       (do ((i 0 (1+ i)))
+	   ((= i (chans n)))
+	 (if (selection-member? n i)
+	     (begin
+	       (set! (samples (selection-position n i) len n i #t origin chan) filename)
+	       (set! chan (+ chan 1))))))
+     (sounds))))
+
+(define* (temps-to-selection data filenames #:optional origin)
+  (let ((chan 0))
+    (for-each
+     (lambda (n)
+       (do ((i 0 (1+ i)))
+	   ((= i (chans n)))
+	 (if (selection-member? n i)
+	     (let ((len (mus-sound-frames (vector-ref filenames chan))))
+	       (set! (samples (selection-position n i) len n i #t origin) (vector-ref filenames chan))
+	       (set! chan (+ chan 1))))))
+     (sounds))))
+
+
+;;; -------- make-selection
+
+(define* (make-selection #:optional beg end snd chn)
+  (let ((current-sound (or (and (number? snd) snd) (selected-sound))))
+    (define (add-chan-to-selection s0 s1 s c)
+      (set! (selection-member? s c) #t)
+      (set! (selection-position s c) (or s0 0))
+      (set! (selection-length s c) (- (or (and (number? s1) (1+ s1)) (frames s c)) (or s0 0))))
+    (if (not (sound? current-sound))
+	(throw 'no-such-sound (list "make-selection" beg end snd chn)))
+    (let ((current-sync (sync current-sound)))
+      (if (selection?) ; clear selection
+	  (for-each
+	   (lambda (s)
+	     (do ((i 0 (1+ i)))
+		 ((= i (chans s)))
+	       (let ((need-update (selection-member? s i)))
+		 (set! (selection-member? s i) #f)
+		 (if need-update (update-graph s i)))))
+	   (sounds)))
+      (if chn
+	  (add-chan-to-selection beg end snd chn)
+	  (for-each
+	   (lambda (s)
+	     (if (or (eq? snd #t)
+		     (= s current-sound)
+		     (and (not (= current-sync 0))
+			  (= current-sync (sync s))))
+		 (do ((i 0 (1+ i)))
+		     ((= i (chans s)))
+		   (add-chan-to-selection beg end s i))))
+	   (sounds))))))

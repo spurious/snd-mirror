@@ -41,6 +41,8 @@
  * snd-scm.c in the Snd package; others can be found in the CLM package, (clm2scm.c).
  */
 
+/* TODO: if USE_SND add check for C-g in all CALLn loops (or should we assume c-g? from caller?) */
+
 #if defined(HAVE_CONFIG_H)
   #include "config.h"
 #endif
@@ -455,6 +457,7 @@ static SCM vct_map(SCM obj, SCM proc)
   v = TO_VCT(obj);
   if (v) 
     for (i = 0; i < v->length; i++) 
+      /* TODO: if error happens... (and below) */
       v->data[i] = TO_C_DOUBLE(CALL0(proc, S_vct_mapB));
   return(scm_return_first(obj, proc));
 }
@@ -515,6 +518,9 @@ static SCM vcts_map(SCM args)
       if (LIST_P(arg))
 	for (vi = 0, lst = arg; vi < vnum; vi++, lst = SCM_CDR(lst))
 	  v[vi]->data[i] = TO_C_DOUBLE(SCM_CAR(lst));
+      else
+	if (SYMBOL_P(arg))
+	  break;
     }
   FREE(v);
   return(scm_return_first(TO_SMALL_SCM_INT(vnum), args));
@@ -561,6 +567,9 @@ static SCM vcts_do(SCM args)
       if (LIST_P(arg))
 	for (vi = 0, lst = arg; vi < vnum; vi++, lst = SCM_CDR(lst))
 	  v[vi]->data[i] = TO_C_DOUBLE(SCM_CAR(lst));
+      else
+	if (SYMBOL_P(arg))
+	  break;
     }
   FREE(v);
   return(scm_return_first(TO_SMALL_SCM_INT(vnum), args));

@@ -72,12 +72,8 @@
 #else
   #define LINE_MARGIN 4
   #define CONTROLS_MARGIN 1
-  #ifndef LESSTIF_VERSION
-    #define TOGGLE_MARGIN 0
-    #define NEED_TOGGLE_MARGIN 1
-  #else
-    #define NEED_TOGGLE_MARGIN 0
-  #endif
+  #define TOGGLE_MARGIN 0
+  #define NEED_TOGGLE_MARGIN 1
 #endif
 
 #define SCROLLBAR_MAX 100       /* used by zx, zy but not sx (huge files need special handling) or sy (tiny motions needed here too) */
@@ -104,6 +100,12 @@
 #define NUM_GLASSES 15
 #define NUM_BOMBS 15
 #define NUM_COLORMAPS 16
+
+#if DEBUGGING
+  #define ASSERT_WIDGET_TYPE(Cond, Wid) if (!(Cond)) fprintf(stderr,"%s:[%s %d] %s is wrong type", __FUNCTION__, __FILE__, __LINE__, XtName(Wid))
+#else
+  #define ASSERT_WIDGET_TYPE(Cond, Wid)
+#endif
 
 #define Locus short
 #define Latus unsigned short

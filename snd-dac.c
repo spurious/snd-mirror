@@ -2434,7 +2434,7 @@ static BACKGROUND_TYPE dac_in_background(GUI_POINTER ptr)
 
 /* ---------------- support for Apply button (snd-apply.c) ---------------- */
 
-void initialize_apply(snd_info *sp, int chans, int dur)
+void initialize_apply(snd_info *sp, int chans, int beg, int dur)
 {
   int curchan = 0;
   snd_state *ss;
@@ -2462,7 +2462,7 @@ void initialize_apply(snd_info *sp, int chans, int dur)
   switch (ss->apply_choice)
     {
     case APPLY_TO_SOUND: 
-      play_sound(sp, 0, dur, IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), S_apply_controls, 0); 
+      play_sound(sp, beg, dur, IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), S_apply_controls, 0); 
       break;
     case APPLY_TO_SELECTION: 
       play_selection(IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), S_apply_controls, 0); 
@@ -2470,7 +2470,7 @@ void initialize_apply(snd_info *sp, int chans, int dur)
     case APPLY_TO_CHANNEL: 
       if (sp->selected_channel != NO_SELECTION)
 	curchan = sp->selected_channel;
-      play_channel(sp->chans[curchan], 0, dur, IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), S_apply_controls, 0); 
+      play_channel(sp->chans[curchan], beg, dur, IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), S_apply_controls, 0); 
       break;
     }
 }

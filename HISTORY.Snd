@@ -1,19 +1,24 @@
 snd change log
 
+  4-June:    configure.ac for autoconf 2.50.
+             prepended "zoom-" to the zoom-focus-style choices (e.g. zoom-focus-left).
+             added axis- to x-axis-style choices (e.g. x-axis-in-samples). x-to-one -> x-axis-as-percentage.
   1-June:    add-to-menu and remove-from-menu can affect the popup menu.
              region handling changed to use the region "id", not its current stack position.
                many related changes: 
                  region-* procedures take the id as the region number argument.
                  removed: select-region, select-region-hook, id-region, region-id
                  renamed: delete-region -> forget-region.
-             (Snd version 5.0 due to this change)
              added selection-chans, selection-srate (since regions may be disassociated from the selection).
              with-big-colormap is now the default.
              removed all the map and scan functions except map-chan and scan-chan
-               (the rest can be easily re-implemented using loops, sample-readers, set-samples, and sync).
+               (the rest can be easily re-implemented using loops, sample-readers, set-samples, and sync -- see examp.scm).
              removed all the temp-to-sound|selection (and vice versa) functions (and temp-filenames)
-               (these were redundant since set-samples can take a filename)
-             added channel arg to save-selection (for multi-file selection saves)
+               (these were redundant since set-samples can take a filename -- see examp.scm for re-implementations)
+             Snd version 5.0 due to these changes.
+             added channel arg to save-selection and set-samples (for multi-file selection saves)
+	     added make-selection (examp.scm).
+	     removed env-base.
   29-May:    combined channel-style and uniting under the name channel-style (uniting removed).
              dac-folding -> dac-combines-channels (not sure about this name change).
              C-x x|n|x_x|n key support ("eval expression") removed (was useless and broken).
@@ -47,7 +52,7 @@ snd change log
                    (list 0.0 dur (- mx) mx "time" (- mx) mx)))
                (add-hook! initial-graph-hook fit-data #t) ; #t to make sure env restorers get to function first
              added 'extended' arg to bind-key et al so C-x keys can be bound.
-             example of zero-crossing base C-p, C-n, and C-k in extsnd.html (bind-key).
+             example of zero-crossing based C-p, C-n, and C-k in extsnd.html (bind-key).
              save-control-panel renamed save-controls, similarly for reset-controls and restore-controls 
                (these now parallel show-controls and apply-controls).
              mark->sound renamed mark-home (the arrow is out of place here, and it's returning the sound-channel list).

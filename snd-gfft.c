@@ -97,7 +97,7 @@ static axis_context *make_axis_cp(snd_state *ss, GtkWidget *w)
   ap->height = widget_height(graph_drawer);
   ap->graph_x0 = 0;
   gdk_window_clear(ax->wn);
-  make_axes_1(axis_cp, ap, X_IN_SECONDS, 1);
+  make_axes_1(axis_cp, ap, X_AXIS_IN_SECONDS, 1);
   return(ax);
 }
 

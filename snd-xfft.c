@@ -99,7 +99,7 @@ static axis_context *make_axis_cp(snd_state *ss, Widget w)
   ap->height = widget_height(w);
   ap->graph_x0 = 0;
   clear_window(ax);
-  make_axes_1(axis_cp, ap, X_IN_SECONDS, 1);
+  make_axes_1(axis_cp, ap, X_AXIS_IN_SECONDS, 1);
   return(ax);
 }
 

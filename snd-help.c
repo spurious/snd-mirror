@@ -214,8 +214,8 @@ char *version_info(void)
                            itoa[6] = snd_itoa(XmHTMLREVISION), ".", 
                            itoa[7] = snd_itoa(XmHTMLUPDATE_LEVEL),
   #else
-	  "\n,   with mozilla browser",
-	  /* TODO: find a version number for this thing */
+	  "\n    with mozilla browser",
+	  /* TODO: find a version number for this thing -- if netscape is running, it's the _MOZILLA_VERSION window property apparently */
   #endif
 #endif
 #if ((HAVE_XPM) && (defined(USE_MOTIF)))
@@ -267,20 +267,25 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+4-June:  configure.ac for autoconf 2.50.\n\
+         prepended \"zoom-\" to the zoom-focus-style choices (e.g. zoom-focus-left)\n\
+         added \"axis-\" to x-axis-style choices (e.g. x-axis-in-samples),  x-to-one -> x-axis-as-percentage.\n\
 1-June:  add-to-menu and remove-from-menu can affect the popup menu.\n\
          region handling changed to use the region \"id\", not its current stack position.\n\
            many related changes: \n\
              region-* procedures take the id as the region number argument.\n\
              removed: select-region, select-region-hook, id-region, region-id\n\
              renamed: delete-region -> forget-region.\n\
-         (Snd version 5.0 due to this change)\n\
          added selection-chans, selection-srate (since regions may be disassociated from the selection).\n\
          with-big-colormap is now the default.\n\
          removed all the map and scan functions except map-chan and scan-chan\n\
-           (the rest can be easily re-implemented using loops, sample-readers, set-samples, and sync).\n\
+           (the rest can be easily re-implemented using loops, sample-readers, set-samples, and sync -- see examp.scm).\n\
          removed all the temp-to-sound|selection (and vice versa) functions, and temp-filenames\n\
-           (these were redundant since set-samples can take a filename)\n\
-         added channel arg to save-selection (for multi-file selection saves)\n\
+           (these were redundant since set-samples can take a filename -- see examp.scm for re-implementation)\n\
+         Snd version 5.0 due to these changes\n\
+         added channel arg to save-selection and set-samples (for multi-file selection saves)\n\
+         added make-selection (examp.scm).\n\
+         removed env-base.\n\
 29-May:  combined channel-style and uniting under the name channel-style (uniting removed).\n\
          dac-folding -> dac-combines-channels (not sure about this name change).\n\
          C-x x|n|x_x|n key support (\"eval expression\") removed (was useless and broken).\n\
@@ -314,7 +319,7 @@ void news_help(snd_state *ss)
                  (list 0.0 dur (- mx) mx \"time\" (- mx) mx)))\n\
              (add-hook! initial-graph-hook fit-data #t) ; #t to make sure env restorers get to function first\n\
          added 'extended' arg to bind-key et al so C-x keys can be bound.\n\
-         example of zero-crossing base C-p, C-n, and C-k in extsnd.html (bind-key).\n\
+         example of zero-crossing based C-p, C-n, and C-k in extsnd.html (bind-key).\n\
          save-control-panel renamed save-controls, similarly for reset-controls and restore-controls.\n\
          mark->sound renamed mark-home (the arrow is out of place here).\n\
          added sample-reader-home.\n\
@@ -930,10 +935,10 @@ Transform normalization choice:\n\
   dont-normalize    normalize-by-channel normalize-by-sound  normalize-globally\n\
 \n\
 Zoom Focus style:\n\
-  " S_focus_left "         " S_focus_right "        " S_focus_active "      " S_focus_middle "\n\
+  " S_zoom_focus_left "    " S_zoom_focus_right "   " S_zoom_focus_active " " S_zoom_focus_middle "\n\
 \n\
 X-axis Label:\n\
-  " S_x_in_seconds "       " S_x_in_samples "       " S_x_to_one "\n\
+  " S_x_axis_in_seconds "  " S_x_axis_in_samples "  " S_x_axis_as_percentage "\n\
 \n\
 Speed Control style:\n\
   " S_speed_control_as_float "     " S_speed_control_as_ratio "     " S_speed_control_as_semitone "\n\
@@ -1093,10 +1098,10 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_window_x "             -1\n\
   " S_window_y "             -1\n\
   " S_with_mix_tags "        #t\n\
-  " S_x_axis_style "          " S_x_in_seconds "\n\
+  " S_x_axis_style "          " S_x_axis_in_seconds "\n\
   " S_zero_pad "              0 (snd #t) (chn #t)\n\
   " S_zoom_color "            ivory4\n\
-  " S_zoom_focus_style "      " S_focus_active "\n\
+  " S_zoom_focus_style "      " S_zoom_focus_active "\n\
 \n\
 ";
 
@@ -1362,7 +1367,7 @@ all refer to the same thing.\n\
   " S_save_macros "       ()\n\
   " S_save_marks "        (snd)\n\
   " S_save_region "       (reg filename format)\n\
-  " S_save_selection "    (file chan)\n\
+  " S_save_selection "    (file header-type data-format srate comment chan)\n\
   " S_save_sound "        (snd)\n\
   " S_save_sound_as "     (filename snd type format srate)\n\
   " S_save_state "        (filename)\n\

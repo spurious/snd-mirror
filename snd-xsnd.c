@@ -280,6 +280,7 @@ static void W_amp_Click_Callback(Widget w, XtPointer context, XtPointer info)
   XButtonEvent *ev;
   int val;
   snd_context *sx;
+  ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
   sx = sp->sgx;
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
@@ -291,6 +292,7 @@ static void W_amp_Click_Callback(Widget w, XtPointer context, XtPointer info)
 
 static void W_amp_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
 {
+  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   snd_amp_changed((snd_info *)context, ((XmScrollBarCallbackStruct *)info)->value);
 }
 
@@ -298,6 +300,7 @@ static void W_amp_ValueChanged_Callback(Widget w, XtPointer context, XtPointer i
 {
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   snd_info *sp = (snd_info *)context;
+  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   snd_amp_changed(sp, cb->value);
   sp->last_amp_control = sp->saved_amp_control;
   sp->saved_amp_control = sp->amp_control;
@@ -358,6 +361,7 @@ static void W_srate_Click_Callback(Widget w, XtPointer context, XtPointer info)
   XButtonEvent *ev;
   int val;
   snd_context *sx;
+  ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
   sx = sp->sgx;
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
@@ -369,6 +373,7 @@ static void W_srate_Click_Callback(Widget w, XtPointer context, XtPointer info)
 
 static void W_srate_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
 {
+  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   snd_srate_changed((snd_info *)context, ((XmScrollBarCallbackStruct *)info)->value);
 }
 
@@ -376,6 +381,7 @@ static void W_srate_ValueChanged_Callback(Widget w, XtPointer context, XtPointer
 {
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   snd_info *sp = (snd_info *)context;
+  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   snd_srate_changed(sp, cb->value);
   sp->last_speed_control = sp->saved_speed_control;
   sp->saved_speed_control = sp->speed_control;
@@ -434,6 +440,7 @@ static void W_expand_Click_Callback(Widget w, XtPointer context, XtPointer info)
   XButtonEvent *ev;
   int val;
   snd_context *sx;
+  ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
   sx = sp->sgx;
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
@@ -445,6 +452,7 @@ static void W_expand_Click_Callback(Widget w, XtPointer context, XtPointer info)
 
 static void W_expand_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
 {
+  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   snd_expand_changed((snd_info *)context, ((XmScrollBarCallbackStruct *)info)->value);
 }
 
@@ -452,6 +460,7 @@ static void W_expand_ValueChanged_Callback(Widget w, XtPointer context, XtPointe
 {
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   snd_info *sp = (snd_info *)context;
+  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   snd_expand_changed(sp, cb->value);
   sp->last_expand_control = sp->saved_expand_control;
   sp->saved_expand_control = sp->expand_control;
@@ -462,6 +471,7 @@ static void Expand_button_Callback(Widget w, XtPointer context, XtPointer info)
   snd_state *ss;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info; 
   snd_info *sp = (snd_info *)context;
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   ss = sp->state;
   sp->expand_control_p = cb->set;
   if (!(ss->using_schemes)) 
@@ -514,6 +524,7 @@ static void W_contrast_Click_Callback(Widget w, XtPointer context, XtPointer inf
   XButtonEvent *ev;
   int val;
   snd_context *sx;
+  ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
   sx = sp->sgx;
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
@@ -525,6 +536,7 @@ static void W_contrast_Click_Callback(Widget w, XtPointer context, XtPointer inf
 
 static void W_contrast_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
 {
+  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   snd_contrast_changed((snd_info *)context, ((XmScrollBarCallbackStruct *)info)->value);
 }
 
@@ -532,6 +544,7 @@ static void W_contrast_ValueChanged_Callback(Widget w, XtPointer context, XtPoin
 {
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   snd_info *sp = (snd_info *)context;
+  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   snd_contrast_changed(sp, cb->value);
   sp->last_contrast_control = sp->saved_contrast_control;
   sp->saved_contrast_control = sp->contrast_control;
@@ -542,6 +555,7 @@ static void Contrast_button_Callback(Widget w, XtPointer context, XtPointer info
   snd_state *ss;
   snd_info *sp = (snd_info *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   ss = sp->state;
   sp->contrast_control_p = cb->set;
   if (!(ss->using_schemes)) 
@@ -625,6 +639,7 @@ static void W_revscl_Click_Callback(Widget w, XtPointer context, XtPointer info)
   XButtonEvent *ev;
   int val;
   snd_context *sx;
+  ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
   sx = sp->sgx;
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
@@ -644,6 +659,7 @@ static void W_revscl_ValueChanged_Callback(Widget w, XtPointer context, XtPointe
 {
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   snd_info *sp = (snd_info *)context;
+  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   snd_revscl_changed(sp, cb->value);
   sp->last_reverb_control_scale = sp->saved_reverb_control_scale;
   sp->saved_reverb_control_scale = sp->reverb_control_scale;
@@ -686,6 +702,7 @@ static void W_revlen_Click_Callback(Widget w, XtPointer context, XtPointer info)
   XButtonEvent *ev;
   int val;
   snd_context *sx;
+  ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
   sx = sp->sgx;
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
@@ -697,6 +714,7 @@ static void W_revlen_Click_Callback(Widget w, XtPointer context, XtPointer info)
 
 static void W_revlen_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
 {
+  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   snd_revlen_changed((snd_info *)context, ((XmScrollBarCallbackStruct *)info)->value);
 }
 
@@ -704,6 +722,7 @@ static void W_revlen_ValueChanged_Callback(Widget w, XtPointer context, XtPointe
 {
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   snd_info *sp = (snd_info *)context;
+  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   snd_revlen_changed(sp, cb->value);
   sp->last_reverb_control_length = sp->saved_reverb_control_length;
   sp->saved_reverb_control_length = sp->reverb_control_length;
@@ -716,6 +735,7 @@ static void Reverb_button_Callback(Widget w, XtPointer context, XtPointer info)
   snd_state *ss;
   snd_info *sp = (snd_info *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   ss = sp->state;
   sp->reverb_control_p = cb->set;
   if (!(ss->using_schemes))
@@ -736,6 +756,7 @@ static void Filter_button_Callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_info *sp = (snd_info *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   sp->filter_control_p = cb->set;
 }
 
@@ -825,6 +846,7 @@ static void filter_dB_Callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_info *sp = (snd_info *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   sp->filter_control_in_dB = (cb->set);
   sp_display_env(sp);
 }
@@ -986,6 +1008,7 @@ static void Play_button_Callback(Widget w, XtPointer context, XtPointer info)
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   int i;
   XButtonEvent *ev;
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   ev = (XButtonEvent *)(cb->event);
   if (sp->playing) 
     {
@@ -1058,6 +1081,7 @@ static void Play_arrow_Callback(Widget w, XtPointer context, XtPointer info)
   snd_info *sp = (snd_info *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   int dir;
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   dir = cb->set;
   if (dir) sp->speed_control_direction = -1; else sp->speed_control_direction = 1;
 }
@@ -1094,6 +1118,7 @@ static void Sync_button_Callback(Widget w, XtPointer context, XtPointer info)
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   chan_info *cp;
   XButtonEvent *ev;
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   ev = (XButtonEvent *)(cb->event);
   if (cb->set)
     if (ev->state & snd_ControlMask) 
@@ -1122,6 +1147,7 @@ static void Combine_button_Callback(Widget w, XtPointer context, XtPointer info)
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   XButtonEvent *ev;
   int val;
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   ev = (XButtonEvent *)(cb->event);
   if (cb->set)
     {
@@ -1159,6 +1185,7 @@ static void Apply_Callback(Widget w, XtPointer context, XtPointer info)
   XButtonEvent *ev;
   snd_state *ss;
   snd_context *sgx;
+  ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
   sgx = sp->sgx;
   ss = sp->state;
   if (sp->applying) 
@@ -1665,6 +1692,11 @@ snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
       XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(ss)); n++;
       XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
+      /* TODO: ideally either the button would include the "play" label or be about
+       *         twice its current size, but I can't seem to get the first to look right
+       *         (it would need to be a push button and track its "set" state), or the
+       *         latter to center itself correctly after setting XmNindicatorSize.
+       */
       sw[W_play] = sndCreateToggleButtonWidget(STR_play, sw[W_name_form], args, n);
       XtAddCallback(sw[W_play], XmNhelpCallback, W_play_Help_Callback, ss);
       XtAddCallback(sw[W_play], XmNvalueChangedCallback, Play_button_Callback, (XtPointer)sp);

@@ -140,6 +140,7 @@ enum {ENVED_AMPLITUDE, ENVED_SPECTRUM, ENVED_SRATE};
 #define NO_MIX_TAG -1
 #define INVALID_MIX_ID -1
 #define INVALID_MIX_CHANNEL -2
+#define SAVE_ALL_CHANS -1
 
 #define NOT_IN_BACKGROUND 0
 #define IN_BACKGROUND 1
@@ -193,7 +194,7 @@ enum {WITHOUT_GRAPH, WITH_GRAPH, WITHOUT_INITIAL_GRAPH_HOOK};
 #define PLAYER(snd) (-(snd->index))
 #define AT_CURRENT_EDIT_POSITION -1
 
-enum {X_IN_SECONDS, X_IN_SAMPLES, X_TO_ONE, X_IN_LENGTH};
+enum {X_AXIS_IN_SECONDS, X_AXIS_IN_SAMPLES, X_AXIS_AS_PERCENTAGE, X_AXIS_IN_LENGTH};
 enum {SPEED_CONTROL_AS_FLOAT, SPEED_CONTROL_AS_RATIO, SPEED_CONTROL_AS_SEMITONE};
 #define MAX_SPEED_CONTROL_STYLE SPEED_CONTROL_AS_SEMITONE
 
@@ -531,7 +532,7 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 
 #define x_axis_style(ss) ss->X_Axis_Style
 #define in_set_x_axis_style(ss, a) ss->X_Axis_Style = a
-#define DEFAULT_AXIS_STYLE X_IN_SECONDS
+#define DEFAULT_AXIS_STYLE X_AXIS_IN_SECONDS
 
 #define zero_pad(ss) ss->Zero_Pad
 #define in_set_zero_pad(ss, a) ss->Zero_Pad = a

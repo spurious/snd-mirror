@@ -678,7 +678,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 		  return;
 		}
 	      if ((region_count == 0) && (selection_is_active()))
-		save_selection(ss, str1, MUS_NEXT, MUS_OUT_FORMAT, SND_SRATE(sp), NULL);
+		save_selection(ss, str1, MUS_NEXT, MUS_OUT_FORMAT, SND_SRATE(sp), NULL, SAVE_ALL_CHANS);
 	      else save_region(ss, region_count, str1, MUS_OUT_FORMAT);
 	      clear_minibuffer(sp);
 	      FREE(str1);

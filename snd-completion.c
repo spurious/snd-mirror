@@ -151,8 +151,7 @@ static char *snd_commands[NUM_COMMANDS] ={
   S_filter_control_env, S_filter_control_in_dB, S_filter_env_in_hz, 
   S_filter_control_order, S_filter_selection, S_filter_sound, S_filter_waveform_color, S_filter_control_p,
   S_find, S_find_mark, S_find_sound, S_finish_progress_report,
-  S_focus_active, S_focus_left, S_focus_middle,
-  S_focus_right, S_forget_region, S_forward_graph, S_forward_mark, S_forward_mix, S_forward_sample, S_fourier_transform, S_frames,
+  S_forget_region, S_forward_graph, S_forward_mark, S_forward_mix, S_forward_sample, S_fourier_transform, S_frames,
   S_free_mix_sample_reader, S_free_sample_reader, S_free_track_sample_reader,
 
   S_graph, S_graph2ps, S_graph_color, S_graph_cursor,
@@ -245,11 +244,12 @@ static char *snd_commands[NUM_COMMANDS] ={
   S_walsh_transform, S_wavelet_transform, S_wavelet_type, S_waving, S_wavo, S_wavo_hop, S_wavo_trace,
   S_window_height, S_window_width, S_window_x, S_window_y, S_with_mix_tags,
 
-  S_x_axis_style, S_x_bounds, S_x_in_samples, S_x_in_seconds, S_x_position_slider, S_x_to_one, S_x_zoom_slider,
+  S_x_axis_as_percentage, S_x_axis_in_samples, S_x_axis_in_seconds, S_x_axis_style, S_x_bounds, S_x_position_slider, S_x_zoom_slider,
 
   S_y_bounds, S_y_position_slider, S_y_zoom_slider, S_yes_or_no_p,
 
-  S_zero_pad, S_zoom_color, S_zoom_focus_style
+  S_zero_pad, S_zoom_color, 
+  S_zoom_focus_active, S_zoom_focus_left, S_zoom_focus_middle, S_zoom_focus_right, S_zoom_focus_style
 };
 
 static int complete_one_set(char *text, int num_commands, char **commands)

@@ -745,10 +745,11 @@ instrument as an editing operation from the beginning.
 <p>To write out the current data, we use either save-sound-as or save-selection.  Our
 program then writes its changes, and Snd reads these back in as edits using
 set! samples.  We can delete the Snd output at that point, though the
-input (changed) files should be left for Snd to handle.  Here are some examples.
+input (changed) files should be left for Snd to handle.  Here are some examples,
+based on the Snd-4 sound-to-temp functions and its friends; these are implemented
+in examp.scm.  The basic idea is that you can write out any portion of the current
+data, and (independent of any prior write) use any external sound file as an edit of any portion.
 <br>
-
-<!-- TODO: rewrite temp-to etc from here -->
 
 <span class=cbox><h4><A NAME="stk">STK</a></h4></span>
 

@@ -41,7 +41,7 @@ chan_info *enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax,
       gray_ap = new_wave_axis(ss);
       fixup_axis_context(gray_ap->ax, drawer, ggc);
     }
-  init_env_axes(axis_cp, name, ex0, ex0, ey0, width, height, xmin, xmax, ymin, ymax);
+  init_env_axes(axis_cp, name, ex0, ey0, width, height, xmin, xmax, ymin, ymax);
   return(axis_cp);
 }
 
@@ -899,6 +899,7 @@ static void env_browse_Callback(Widget w, XtPointer context, XtPointer info)
 {
   XmListCallbackStruct *cb = (XmListCallbackStruct *)info;
   snd_state *ss = (snd_state *)context;
+  ASSERT_WIDGET_TYPE(XmIsList(w), w);
   select_or_edit_env(ss, cb->item_position - 1);
 }
 
@@ -906,6 +907,7 @@ static void Graph_Button_Callback(Widget w, XtPointer context, XtPointer info)
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   snd_state *ss = (snd_state *)context; 
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   in_set_enved_wave_p(ss, cb->set);
   env_redisplay(ss);
 }
@@ -944,6 +946,7 @@ static void Clip_Button_Callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss = (snd_state *)context; 
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info; 
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   in_set_enved_clip_p(ss, cb->set);
 }
 
@@ -960,9 +963,9 @@ change to accommodate the current mouse position.\n\
 
 static void Exp_Button_Callback(Widget w, XtPointer context, XtPointer info) 
 {
+  /* a push button */
   snd_state *ss = (snd_state *)context; 
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info; 
-  in_set_enved_exp_p(ss, cb->set);
+  in_set_enved_exp_p(ss, TRUE); 
   if ((active_env) && 
       (!(showing_all_envs)))
     {
@@ -985,9 +988,9 @@ drawn with an exponential curve\n\
 
 static void Lin_Button_Callback(Widget w, XtPointer context, XtPointer info) 
 {
+  /* a push button */
   snd_state *ss = (snd_state *)context; 
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info; 
-  in_set_enved_exp_p(ss, (!(cb->set)));
+  in_set_enved_exp_p(ss, FALSE);
   if ((active_env) && 
       (!(showing_all_envs)))
     {
@@ -1037,7 +1040,7 @@ static void make_base_label(snd_state *ss, Float bval)
   len = (int)(enved_power(ss) * 4);
   if (len < 32) len = 32;
   sfs = (char *)CALLOC(len, sizeof(char));
-  mus_snprintf(sfs, len, "%f", bval);
+  mus_snprintf(sfs, len, "%.3f", bval);
   scale_len = (int)(enved_power(ss) + 3);
   if (scale_len < 32) scale_len = 32;
   buf = (char *)CALLOC(scale_len, sizeof(char));
@@ -1102,6 +1105,7 @@ static void Base_Drag_Callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss = (snd_state *)context;
   XmScrollBarCallbackStruct *sb = (XmScrollBarCallbackStruct *)info;
+  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   base_changed(ss, sb->value);
 }
 
@@ -1111,6 +1115,7 @@ static void Base_ValueChanged_Callback(Widget w, XtPointer context, XtPointer in
 {
   snd_state *ss = (snd_state *)context;
   XmScrollBarCallbackStruct *sb = (XmScrollBarCallbackStruct *)info;
+  ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   base_last_value = sb->value;
   base_changed(ss, sb->value);
 }
@@ -1121,6 +1126,7 @@ static void Base_Click_Callback(Widget w, XtPointer context, XtPointer info)
   snd_state *ss = (snd_state *)context;
   XButtonEvent *ev;
   int val;
+  ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
   ev = (XButtonEvent *)(cb->event);
 #if DEBUGGING
   if ((int)ev <= 0) return;
@@ -1719,8 +1725,6 @@ void set_enved_clip_p(snd_state *ss, int val)
 void set_enved_exp_p(snd_state *ss, int val) 
 {
   in_set_enved_exp_p(ss, val); 
-  if (enved_dialog) 
-    XmToggleButtonSetState(expB, val, FALSE); 
   reflect_segment_state(ss);
 }
 

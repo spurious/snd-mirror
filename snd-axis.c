@@ -139,13 +139,13 @@ static Locus tick_grf_x(double val, axis_info *ap, int style, int srate)
   int res;
   switch (style)
     {
-    case X_IN_SECONDS: 
+    case X_AXIS_IN_SECONDS: 
       res = (int)(ap->x_base + val * ap->x_scale); 
       break;
-    case X_IN_SAMPLES: 
+    case X_AXIS_IN_SAMPLES: 
       res = (int)(ap->x_axis_x0 + (val - ap->x0 * srate) * ap->x_scale / srate); 
       break;
-    case X_TO_ONE: 
+    case X_AXIS_AS_PERCENTAGE: 
       res = (int)(ap->x_axis_x0 + (val - ap->x0 / ap->xmax) * ap->x_scale * ap->xmax); 
       break;
     default: 
@@ -365,13 +365,13 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
       num_ticks = (ap->x_axis_x1 - curx) / x_tick_spacing;
       switch (x_style)
 	{
-	case X_IN_SECONDS: 
+	case X_AXIS_IN_SECONDS: 
 	  tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0, ap->x1, num_ticks); 
 	  break;
-	case X_IN_SAMPLES: 
+	case X_AXIS_IN_SAMPLES: 
 	  tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0 * srate, ap->x1 * srate, num_ticks); 
 	  break;
-	case X_TO_ONE: 
+	case X_AXIS_AS_PERCENTAGE: 
 	  tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0 / ap->xmax, ap->x1 / ap->xmax, num_ticks); 
 	  break;
 	default: 

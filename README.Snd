@@ -285,6 +285,10 @@ you can find where it occurs by:
     <now do whatever it takes to hit the warning>
   where
 
+If you configure Snd --with-html as well as --with-gtk, and
+get an error in snd-ghelp about gtkmozembed.h, it probably
+means you don't have the mozilla-devel package installed.
+
 
 GSL:
 If configure finds GSL, but Snd refuses to load with an error

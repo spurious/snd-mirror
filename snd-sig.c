@@ -1932,12 +1932,13 @@ apply func to samples in current channel, edname is the edit history name for th
   SCM *data;
   vct *v;
 
-  SND_ASSERT_CHAN(S_map_chan, snd, chn, 5); 
   if (STRING_P(org)) 
     caller = TO_C_STRING(org);
   else caller = S_map_chan;
+  ASSERT_TYPE((PROCEDURE_P(proc)), proc, SCM_ARG1, caller, "a procedure");
   ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_beg), s_beg, SCM_ARG2, caller, "a number");
   ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_end), s_end, SCM_ARG3, caller, "a number");
+  SND_ASSERT_CHAN(S_map_chan, snd, chn, 5); 
   ss = get_global_state();
   cp = get_cp(snd, chn, caller);
   beg = TO_C_INT_OR_ELSE_WITH_ORIGIN(s_beg, 0, caller);
@@ -2061,7 +2062,7 @@ static SCM g_sp_scan(SCM proc, SCM s_beg, SCM s_end, SCM snd, SCM chn,
   ASSERT_TYPE((PROCEDURE_P(proc)), proc, SCM_ARG1, caller, "a procedure");
   ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_beg), s_beg, SCM_ARG2, caller, "a number");
   ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_end), s_end, SCM_ARG3, caller, "a number");
-  ss = get_global_state();
+  SND_ASSERT_CHAN(caller, snd, chn, 4);
   cp = get_cp(snd, chn, caller);
   beg = TO_C_INT_OR_ELSE_WITH_ORIGIN(s_beg, 0, caller);
   end = TO_C_INT_OR_ELSE_WITH_ORIGIN(s_end, 0, caller);
@@ -2073,6 +2074,7 @@ static SCM g_sp_scan(SCM proc, SCM s_beg, SCM s_end, SCM snd, SCM chn,
       FREE(errmsg);
       return(snd_bad_arity_error(caller, errstr, proc));
     }
+  ss = get_global_state();
   sp = cp->sound;
   sf = init_sample_read_any(beg, cp, READ_FORWARD, to_c_edit_position(cp, edpos, caller, arg_pos));
   if (sf == NULL) return(SCM_BOOL_T);

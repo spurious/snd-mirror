@@ -410,17 +410,17 @@ static void Options_Speed_Semitone_Callback(GtkWidget *w, gpointer cD, gpointer 
 
 static void Options_X_Axis_Seconds_Callback(GtkWidget *w, gpointer cD) 
 {
-  IF_MENU_HOOK(STR_Options, STR_seconds) set_x_axis_style((snd_state *)cD, X_IN_SECONDS);
+  IF_MENU_HOOK(STR_Options, STR_seconds) set_x_axis_style((snd_state *)cD, X_AXIS_IN_SECONDS);
 }
 
 static void Options_X_Axis_Samples_Callback(GtkWidget *w, gpointer cD) 
 {
-  IF_MENU_HOOK(STR_Options, STR_samples) set_x_axis_style((snd_state *)cD, X_IN_SAMPLES);
+  IF_MENU_HOOK(STR_Options, STR_samples) set_x_axis_style((snd_state *)cD, X_AXIS_IN_SAMPLES);
 }
 
 static void Options_X_Axis_Percentage_Callback(GtkWidget *w, gpointer cD) 
 {
-  IF_MENU_HOOK(STR_Options, STR_percentage) set_x_axis_style((snd_state *)cD, X_TO_ONE);
+  IF_MENU_HOOK(STR_Options, STR_percentage) set_x_axis_style((snd_state *)cD, X_AXIS_AS_PERCENTAGE);
 }
 
 static void Options_Save_State_Callback(GtkWidget *w, gpointer cD) 

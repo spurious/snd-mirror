@@ -3201,7 +3201,7 @@ void display_mix_amp_envs(snd_state *ss, chan_info *axis_cp, axis_context *ax, i
 
       init_env_axes(axis_cp, "mix env",
 		    (int)(chan * width / chans),
-		    (int)ex0, (int)ey0,
+		    (int)ey0,
 		    width/chans, height,
 		    ex0, ex1, ey0, ey1);
       ap = axis_cp->axis;

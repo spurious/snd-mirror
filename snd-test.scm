@@ -152,10 +152,10 @@
 	'cursor-update-display cursor-update-display 4 
 	'dolph-chebyshev-window dolph-chebyshev-window 16
 	'exponential-window exponential-window 9 
-	'focus-active focus-active 2
-	'focus-left focus-left 0
-	'focus-middle focus-middle 3
-	'focus-right focus-right 1 
+	'zoom-focus-active zoom-focus-active 2
+	'zoom-focus-left zoom-focus-left 0
+	'zoom-focus-middle zoom-focus-middle 3
+	'zoom-focus-right zoom-focus-right 1 
 	'fourier-transform fourier-transform 0 
 	'gaussian-window gaussian-window 14 
 	'graph-dots graph-dots 1
@@ -193,9 +193,9 @@
 	'normalize-by-channel normalize-by-channel 1
 	'normalize-by-sound normalize-by-sound 2
 	'normalize-globally normalize-globally 3
-	'x-in-samples x-in-samples 1 
-	'x-in-seconds x-in-seconds 0 
-	'x-to-one x-to-one 2
+	'x-axis-in-samples x-axis-in-samples 1 
+	'x-axis-in-seconds x-axis-in-seconds 0 
+	'x-axis-as-percentage x-axis-as-percentage 2
 	'enved-add-point enved-add-point 0
 	'enved-delete-point enved-delete-point 1
 	'enved-move-point enved-move-point 2
@@ -1485,6 +1485,8 @@
 
 ;;; ---------------- test 5: simple overall checks ----------------
 
+(load "examp.scm")
+
 (define (our-x->position ind x) 
   (let ((ax (axis-info ind)))
     (list
@@ -1779,7 +1781,7 @@
 	(vct-set! v0 64 .5)
 	(vct-set! v0 127 .5)
 	(vct->samples 0 128 v0 index 0)
-	(make-region 0 126) 
+	(make-selection 0 126) 
 	(smooth-selection) 
 	(set! v0 (samples->vct 0 128 index 0 v0))
 	(if (or (fneq (sample 127) .5) (fneq (sample 120) .4962) (fneq (sample 32) 0.07431) (fneq (sample 64) 0.25308))
@@ -1902,22 +1904,22 @@
 		    (if (> (- fltdur (+ 40 50828)) 256) (snd-display (format #f ";apply filter length: ~A?" fltdur)))
 		    (undo obind)))))))
 	(revert-sound obind)
-	(make-region 1000 1000)
+	(make-selection 1000 1000)
 	(scale-selection-to .1)
 	(scale-selection-by 2.0)
-	(make-region 2000 2001)
+	(make-selection 2000 2001)
 	(scale-selection-by 2.0)
 	(scale-selection-to .5)
-	(make-region 1000 2001)
+	(make-selection 1000 2001)
 	(scale-selection-to .5)
 	(scale-selection-by .5)
-	(make-region 2000 2000)
+	(make-selection 2000 2000)
 	(scale-selection-by 2.0)
 	(scale-selection-to .5)
-	(make-region 1000 1001)
+	(make-selection 1000 1001)
 	(scale-selection-to .1)
 	(scale-selection-by 2.0)
-	(make-region 999 2002)
+	(make-selection 999 2002)
 	(scale-selection-to 1.0)
 	(scale-selection-by .5)
 	(let ((tree (edit-tree))
@@ -2161,7 +2163,7 @@
 	    (if (not (vfequal data new-data))
 		(snd-display (format #f ";convolve-selection-with: ~A ~A?" data new-data)))))
 	(revert-sound ind1)
-	(make-region 1000 2000 ind1)
+	(make-selection 1000 2000 ind1)
 	(let ((ma (maxamp ind1)))
 	  (convolve-selection-with "pistol.snd" ma)
 	  (if (fneq (maxamp ind1) ma) (snd-display (format #f ";convolve-selection-with 1000: ~A ~A?" ma (maxamp ind1)))))
@@ -2232,6 +2234,50 @@
 		(snd-display (format #f ";2[0] scan-chan: ~A ~A?" ups1 ups3)))
 	    (if (not (= ups2 ups4))
 		(snd-display (format #f ";2[1] scan-chan: ~A ~A?" ups2 ups4))))
+
+	  (set! (sync ind2) #t)
+	  (let ((total
+		 (let ((count 0)) 
+		   (scan-chans (lambda (n) 
+				 (if (> n .03) 
+				     (set! count (+ count 1))) 
+				 #f))
+		   count)))
+	    (if (not (= total (+ ups1 ups2)))
+		(snd-display (format #f ";scan-chans: ~A ~A?" total (+ ups1 ups2)))))
+	  (set! (sync ind2) #f)
+	  (let ((total
+		 (let ((count 0)) 
+		   (scan-sound-chans (lambda (n) 
+				       (if (> n .03) 
+					   (set! count (+ count 1))) 
+				       #f)
+				     0 (frames ind2) ind2)
+		   count)))
+	    (if (not (= total (+ ups1 ups2)))
+		(snd-display (format #f ";scan-sound-chans: ~A ~A?" total (+ ups1 ups2)))))
+	  (set! (sync ind2) #f)
+	  (let ((total
+		 (let ((count 0)) 
+		   (scan-across-all-chans (lambda (nd len) 
+					    (do ((i 0 (1+ i)))
+						((= i len) #f) 
+					      (if (> (vector-ref nd i) .03) 
+						  (set! count (+ count 1))))))
+		   count))
+		(ups3 (count-matches (lambda (n) (> n .03)) 0 ind1 0)))
+	    (if (not (= total (+ ups1 ups2 ups3)))
+		(snd-display (format #f ";scan-across-all-chans: ~A ~A?" total (+ ups1 ups2 ups3)))))
+	  (let ((total
+		 (let ((count 0)) 
+		   (scan-all-chans (lambda (n) 
+				     (if (> n .03)
+					 (set! count (+ count 1)))
+				     #f))
+		   count))
+		(ups3 (count-matches (lambda (n) (> n .03)) 0 ind1 0)))
+	    (if (not (= total (+ ups1 ups2 ups3)))
+		(snd-display (format #f ";scan-all-chans: ~A ~A?" total (+ ups1 ups2 ups3))))))
 	
 	(select-sound ind1)
 	(forward-graph)
@@ -2264,7 +2310,72 @@
 	    (snd-display (format #f ";backward 2 from ~A 0 to ~A ~A?" ind1 (selected-sound) (selected-channel))))
 
 	(close-sound ind1)
-	(close-sound ind2)))
+	(close-sound ind2))
+
+      (let ((ind1 (open-sound "oboe.snd"))
+	    (ind2 (open-sound "2.snd")))
+	(let ((ups1 (maxamp ind1 0))
+	      (ups2 (maxamp ind2 #t)))
+	  (map-chan (lambda (n)
+		      (* n 2.0))
+		    0 (frames ind1) "times 2" ind1 0)
+	  (map-sound-chans (lambda (n)
+			     (* n 2.0))
+			   0 (frames ind2) "times 2" ind2)
+	  (let ((ups3 (maxamp ind1 0))
+		(ups4 (maxamp ind2 #t)))
+	    (if (fneq ups3 (* ups1 2.0))
+		(snd-display (format #f ";map-chan: ~A ~A?" ups3 (* ups1 2.0))))
+	    (if (or (fneq (car ups4) (* (car ups2) 2.0))
+		    (fneq (cadr ups4) (* (cadr ups2) 2.0)))
+		(snd-display (format #f ";map-sound-chans: ~A ~A?" (map (lambda (n) (* 2 n)) ups2) ups4))))
+	  
+	  (set! (sync ind2) #t)
+	  (set! (sync ind1) #t)
+	  (map-chans (lambda (n) (* n 0.5)))
+	  (let ((ups3 (maxamp ind1 0))
+		(ups4 (maxamp ind2 #t)))
+	    (if (fneq ups3 ups1)
+		(snd-display (format #f ";map-chans: ~A ~A?" ups3 ups1)))
+	    (if (or (fneq (car ups4) (car ups2))
+		    (fneq (cadr ups4) (cadr ups2)))
+		(snd-display (format #f ";map-chans: ~A ~A?" ups2 ups4))))
+	  (set! (sync ind1) #f)
+	  
+	  (let ((len-err #f))
+	    (map-across-all-chans (lambda (data len)
+				    (if (not (= len 3))
+					(set! len-err len)
+					(begin
+					  (vector-set! data 0 (* (vector-ref data 0) 4.0))
+					  (let ((chan0-sample (vector-ref data 1)))
+					    (vector-set! data 1 (vector-ref data 2))
+					    (vector-set! data 2 chan0-sample))))
+				    data))
+	    (if (number? len-err)
+		(snd-display (format #f ";map-across-all-chans len: ~A?" len-err)))
+	    (let ((ups3 (maxamp ind1 0))
+		  (ups4 (maxamp ind2 #t)))
+	      (if (fneq ups3 (* 4 ups1))
+		  (snd-display (format #f ";map-across-all-chans 1: ~A ~A?" ups3 ups1)))
+	      (if (or (fneq (car ups4) (cadr ups2))
+		      (fneq (car ups4) (cadr ups2)))
+		  (snd-display (format #f ";map-across-all-chans 2: ~A ~A?" ups2 ups4)))))
+  
+	  (revert-sound ind1)
+	  (revert-sound ind2)
+	  (map-all-chans (lambda (n) (* n 4.0)))
+	  (let ((ups3 (maxamp ind1 0))
+		(ups4 (maxamp ind2 0))
+		(ups5 (maxamp ind1 0 0))
+		(ups6 (maxamp ind2 0 0)))
+	    (if (fneq ups3 (* 4 ups5))
+		(snd-display (format #f ";map-all-chans: ~A ~A?" ups3 ups5)))
+	    (if (fneq ups4 (* 4 ups6))
+		(snd-display (format #f ";map-all-chans(2): ~A ~A?" ups4 ups6))))
+  
+	  (close-sound ind1)
+	  (close-sound ind2)))
 
       (let* ((ind1 (open-sound "oboe.snd"))
 	     (len (frames ind1))
@@ -2578,7 +2689,6 @@
       ))
 
 
-(load "examp.scm")
 (reset-hook! graph-hook)
 (load "mix.scm")
 (load "pqwvox.scm")
@@ -4754,16 +4864,15 @@
 
 (clear-sincs)
 
-;;; TODO: add some form of these to the scan-chan doc
 (define data-max
   (lambda (beg end)
-    (let ((maxval 0.0)
-	  (chans (all-chans)))
-      (for-each (lambda (snd-chn)
-		  (scan-chan (lambda (n)
-			       (set! maxval (max maxval (abs n))))
-			     0 #f (car snd-chn) (cadr snd-chn)))
-		chans)
+    (let ((maxval 0.0))
+      (apply for-each 
+	     (lambda (snd chn)
+	       (scan-chan (lambda (n)
+			    (set! maxval (max maxval (abs n))))
+			     0 #f snd chn))
+	     (all-chans))
       maxval)))
 
 (define data-max2
@@ -5011,10 +5120,6 @@
      (mus-audio-describe) 
      (define-envelope "env1" '(0 1 1 0)) 
      (let ((envd (enved-dialog) ))
-       (if (fneq (env-base 'env1) 1.0) (snd-display (format #f ";env-base 'env1: ~A?" (env-base 'env1))))
-       (if (fneq (env-base "env1") 1.0) (snd-display (format #f ";env-base \"env1\": ~A?" (env-base "env1"))))
-       (set! (env-base 'env1) 2.0)
-       (if (fneq (env-base 'env1) 2.0) (snd-display (format #f ";set-env-base 'env1: ~A?" (env-base 'env1))))
        (let ((cold (color-dialog))
 	     (ord (orientation-dialog))
 	     (trd (transform-dialog))
@@ -5267,8 +5372,8 @@
         (vector-set! output-names i (string-append (tmpnam) ".snd"))
         (set! stopped (execute-and-wait (make-cmd (vector-ref input-names i) (vector-ref output-names i)))))
       (if select 
-	  (temps-to-sound data output-names description)
-	  (temps-to-selection data output-names description)))))
+	  (temps-to-selection data output-names description)
+	  (temps-to-sound data output-names description)))))
 
 (define copyfile-1
   (lambda (select)
@@ -7002,7 +7107,7 @@
 	       (o1 (sample half-way obi 0))
 	       (s1 (sample half-way s2i 0))
 	       (s2 (sample half-way s2i 1)))
-	  (place obi s2i 45.0)
+	  (place obi s2i '(0 .5 1 .5))
 	  (let ((s21 (sample half-way s2i 0))
 		(s22 (sample half-way s2i 1)))
 	    (revert-sound s2i)
@@ -7013,7 +7118,7 @@
 			(fneq (+ s2 (* 0.5 o1)) s22)
 			(fneq s21 s31)
 			(fneq s22 s32))
-		    (snd-display (format #f ";place: ~A " (list o1 s1 s2 s21 s22 s31 s32))))))))
+		    (snd-display (format #f ";place: ~A " (list o1 s1 s2 s21 s22 s31 s32)))))))
 	(revert-sound s2i)
 	(revert-sound obi)
 	(set! (sync obi) 0)
@@ -7416,7 +7521,7 @@
 	(test-selection-to ind 0 50828 0.5)
 
 	(revert-sound ind)
-	(make-region 1200 1200)
+	(make-selection 1200 1200)
 	(if (not (selection?)) (snd-display ";no selection from 1 samp region?"))
 	(if (not (= (selection-length) 1)) (snd-display (format #f ";1 samp selection: ~A samps?" (selection-length))))
 	(scale-selection-to 1.0)
@@ -7733,7 +7838,7 @@ EDITS: 3
 	       data-color data-format data-location default-output-chans default-output-format default-output-srate default-output-type define-envelope
 	       delete-mark delete-marks forget-region delete-sample delete-samples delete-samples-with-origin delete-selection dialog-widgets
 	       dismiss-all-dialogs display-edits dot-size draw-dot draw-dots draw-line draw-lines draw-string edit-header-dialog edit-fragment edit-position
-	       edit-tree edits env-base env-selection env-sound enved-active-env enved-base enved-clip? enved-in-dB enved-dialog enved-exp? enved-power
+	       edit-tree edits env-selection env-sound enved-active-env enved-base enved-clip? enved-in-dB enved-dialog enved-exp? enved-power
 	       enved-selected-env enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin expand-control
 	       expand-control-hop expand-control-length expand-control-ramp expand-control? fft fft-beta fft-log-frequency 
 	       fft-log-magnitude fft-size fft-style fft-window ffting
@@ -7809,7 +7914,7 @@ EDITS: 3
 		   color-scale contrast-control contrast-control-amp contrast-control-procedure contrast-control? corruption-time 
 		   current-font cursor cursor-color cursor-follows-play
 		   cursor-size cursor-style dac-combines-channels dac-size data-clipped data-color default-output-chans default-output-format default-output-srate
-		   default-output-type dot-size env-base enved-active-env enved-base enved-clip? enved-in-dB enved-exp? enved-power enved-selected-env
+		   default-output-type dot-size enved-active-env enved-base enved-clip? enved-in-dB enved-exp? enved-power enved-selected-env
 		   enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin 
 		   expand-control expand-control-hop expand-control-length
 		   expand-control-ramp expand-control? fft-beta fft-log-frequency fft-log-magnitude 
@@ -8463,10 +8568,7 @@ EDITS: 3
 			(list mouse-release-hook 'mouse-release-hook)
 			(list enved-hook 'enved-hook)))
 
-	(check-error-tag 'no-such-envelope (lambda () (env-base "not-an-env")))
-	(check-error-tag 'no-such-envelope (lambda () (set! (env-base "not-an-env") .321)))
 	(check-error-tag 'no-such-envelope (lambda () (set! (enved-active-env) "not-an-env")))
-	(check-error-tag 'wrong-type-arg (lambda () (set! (env-base env3) (list 0 0 1 1))))
 	(check-error-tag 'cannot-save (lambda () (save-envelopes "/bad/baddy")))
 	(check-error-tag 'bad-arity (lambda () (set! (search-procedure) (lambda (a b c) a))))
 	(check-error-tag 'no-such-sound (lambda () (set! (search-procedure 1234) (lambda (a) a))))
