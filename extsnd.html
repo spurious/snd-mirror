@@ -1284,7 +1284,7 @@ See the <i>current-window-location</i> procedures in draw.scm.  Here's a simpler
 
 (add-hook! <em class=red>mouse-click-hook</em> click-to-center)
 
-;;; this example disables button 2 -> insert selection
+;;; this example disables button 2 -&gt; insert selection
 (add-hook! mouse-click-hook
   (lambda (snd chn button state x y axis)
     (and (= axis time-graph) (= button 2))))
@@ -9152,6 +9152,12 @@ are:</p>
 <tr><td><code><em class=def><a name="datacolor">data-color</a></em></code></td>
     <td><code>black</code></td>
     <td>color of data in unselected graph.</td></tr>
+<tr><td><code><em class=def><a name="doitbuttoncolor">doit-button-color</a></em></code></td>
+    <td><code>palegreen2</code></td>
+    <td>color of Ok and Apply buttons.</td></tr>
+<tr><td><code><em class=def><a name="doitagainbuttoncolor">doit-again-button-color</a></em></code></td>
+    <td><code>darkolivegreen1</code></td>
+    <td>color of Undo&amp;Apply buttons.</td></tr>
 <tr><td><code><em class=def>enved-waveform-color</em></code></td>
     <td><code>blue</code></td>
     <td>color of waveform displayed in envelope editor.</td></tr>
@@ -9161,6 +9167,9 @@ are:</p>
 <tr><td><code><em class=def><a name="graphcolor">graph-color</a></em></code></td>
     <td><code>white</code></td>
     <td>background color of unselected graph.</td></tr>
+<tr><td><code><em class=def><a name="helpbuttoncolor">help-button-color</a></em></code></td>
+    <td><code>lightsteelblue2</code></td>
+    <td>color of Help buttons.</td></tr>
 <tr><td><code><em class=def><a name="highlightcolor">highlight-color</a></em></code></td>
     <td><code>ivory1</code></td>
     <td>highlighting color.</td></tr>
@@ -9185,6 +9194,12 @@ are:</p>
 <tr><td><code><em class=def><a name="pushedbuttoncolor">pushed-button-color</a></em></code></td>
     <td><code>lightsteelblue1</code></td>
     <td>color of pushed button.</td></tr>
+<tr><td><code><em class=def><a name="quitbuttoncolor">quit-button-color</a></em></code></td>
+    <td><code>indianred</code></td>
+    <td>color of Dismiss and Cancel buttons.</td></tr>
+<tr><td><code><em class=def><a name="resetbuttoncolor">reset-button-color</a></em></code></td>
+    <td><code>goldenrod1</code></td>
+    <td>color of Reset buttons.</td></tr>
 <tr><td><code><em class=def><a name="sashcolor">sash-color</a></em></code></td>
     <td><code>lightgreen</code></td>
     <td>color of paned window sashes.</td></tr>

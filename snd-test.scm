@@ -9587,7 +9587,15 @@ EDITS: 5
 		 (list 'selected-graph-color selected-graph-color white)
 		 (list 'selection-color selection-color lightsteelblue1)
 		 (list 'text-focus-color text-focus-color white)
-		 (list 'zoom-color zoom-color ivory4)))
+		 (list 'zoom-color zoom-color ivory4)
+		       
+		 (list 'quit-button-color quit-button-color indian-red)
+		 (list 'help-button-color help-button-color lightsteelblue2)
+		 (list 'reset-button-color reset-button-color goldenrod1)
+		 (list 'doit-button-color doit-button-color palegreen2)
+		 (list 'doit-again-button-color doit-again-button-color darkolivegreen1)
+		 ))
+
 	       (let ((ind (open-sound "oboe.snd")))
 		 (recolor-widget (cadr (sound-widgets ind)) (make-color 1 0 0))
 		 (set! (selected-data-color) light-green)
@@ -14155,7 +14163,7 @@ EDITS: 5
 		(if (fneq (maxamp (list mix-id)) maxa) (snd-display ";(mix) scale-to+undo: ~A ~A" maxa (maxamp (list mix-id))))
 		(scale-by 2.0 (list mix-id)) 
 		(set! newmaxa (maxamp (list mix-id)))
-		(if (fneq newmaxa (* 2.0 maxa)) (begin (snd-display ";(mix) scale-by: ~A (~A)?" newmaxa maxa) (throw 'oops)))
+		(if (fneq newmaxa (* 2.0 maxa)) (begin (snd-display ";(mix) scale-by: ~A (~A)?" newmaxa maxa)))
 		(revert-sound)
 		(let ((tag (catch 'no-such-mix
 				  (lambda ()
@@ -37805,6 +37813,8 @@ EDITS: 2
 		     read-sample reset-listener-cursor sample-reader-home selection-chans selection-srate snd-gcs
 		     snd-warning sum-of-sines vct-map make-variable-graph channel-data x-axis-label
 		     
+		     quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
+
 		     ))
       
       (define set-procs (list 
@@ -37851,6 +37861,8 @@ EDITS: 2
 			 beats-per-minute filter-control-coeffs locsig-type mus-file-buffer-size 
 			 mus-rand-seed mus-width mus-x1 mus-x2 mus-y1 mus-y2 
 			 previous-files-sort-procedure pv-amp-increments pv-amps pv-freqs pv-outctr pv-phase-increments pv-phases 
+
+			 quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 			 ))
       
       (define make-procs (list
@@ -38503,7 +38515,9 @@ EDITS: 2
 			      show-selection-transform sinc-width temp-dir text-focus-color tiny-font
 			      trap-segfault optimization unbind-key verbose-cursor vu-font vu-font-size vu-size window-height
 			      window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color zoom-focus-style mix-tag-height
-			      mix-tag-width with-relative-panes))
+			      mix-tag-width with-relative-panes
+			      quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
+			      ))
 	      (gc))
 	    
 	    (for-each (lambda (n)

@@ -31,6 +31,7 @@ static void create_snd_error_dialog(bool popup)
   gtk_widget_realize(snd_error_dialog);
 
   ok_button = gtk_button_new_with_label(_("Ok"));
+  gtk_widget_set_name(ok_button, "quit_button");
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(snd_error_dialog)->action_area), ok_button, false, true, 20);
   g_signal_connect_closure_by_id(GTK_OBJECT(ok_button),
 				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(ok_button))),
@@ -136,7 +137,9 @@ bool snd_yes_or_no_p(const char *format, ...)
       gtk_window_resize(GTK_WINDOW(yes_or_no_dialog), 180, 100);
 
       yes_button = gtk_button_new_with_label(_("Yes"));
+      gtk_widget_set_name(yes_button, "doit_button");
       no_button = gtk_button_new_with_label(_("No"));
+      gtk_widget_set_name(no_button, "quit_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(yes_or_no_dialog)->action_area), yes_button, false, true, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(yes_or_no_dialog)->action_area), no_button, false, true, 10);
       g_signal_connect_closure_by_id(GTK_OBJECT(yes_button),

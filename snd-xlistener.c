@@ -99,6 +99,8 @@ static void create_completion_help_dialog(char *title)
       XtVaSetValues(completion_help_list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
       XtVaSetValues(XmMessageBoxGetChild(completion_help_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
       XtVaSetValues(XmMessageBoxGetChild(completion_help_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(completion_help_dialog, XmDIALOG_OK_BUTTON), XmNbackground, (ss->sgx)->quit_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(completion_help_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, (ss->sgx)->help_button_color, NULL);
     }
   set_dialog_widget(COMPLETION_DIALOG, completion_help_dialog);
 }

@@ -144,7 +144,7 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
 
 static void color_file_selection_box(Widget w)
 {
-  Widget wtmp = NULL, ftmp = NULL;
+  Widget wtmp = NULL, ftmp = NULL, ltmp = NULL;
   if (!(ss->using_schemes)) 	
     {
       map_over_children(w, set_main_color_of_widget, NULL);
@@ -156,14 +156,34 @@ static void color_file_selection_box(Widget w)
 		    XmNbackground, (ss->sgx)->white, 
 		    XmNforeground, (ss->sgx)->black, 
 		    NULL);
+
       XtVaSetValues(XtNameToWidget(w, "Apply"), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
       XtVaSetValues(XtNameToWidget(w, "Cancel"), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
       XtVaSetValues(XtNameToWidget(w, "Help"), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
       XtVaSetValues(XtNameToWidget(w, "OK"), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
+      XtVaSetValues(XtNameToWidget(w, "Apply"), XmNbackground, (ss->sgx)->reset_button_color, NULL);
+      XtVaSetValues(XtNameToWidget(w, "Cancel"), XmNbackground, (ss->sgx)->quit_button_color, NULL);
+      XtVaSetValues(XtNameToWidget(w, "Help"), XmNbackground, (ss->sgx)->help_button_color, NULL);
+      XtVaSetValues(XtNameToWidget(w, "OK"), XmNbackground, (ss->sgx)->doit_button_color, NULL);
+
+      ltmp = XtNameToWidget(w, "FilterLabel");
+      if (!ltmp) ltmp = XmFileSelectionBoxGetChild(w, XmDIALOG_FILTER_LABEL);
+      XtVaSetValues(ltmp, XmNbackground, (ss->sgx)->reset_button_color, NULL);
+
+      ltmp = XtNameToWidget(w, "Selection");
+      if (!ltmp) ltmp = XmFileSelectionBoxGetChild(w, XmDIALOG_SELECTION_LABEL);
+      XtVaSetValues(ltmp, XmNbackground, (ss->sgx)->help_button_color, NULL);
+
+      ltmp = XtNameToWidget(w, "Dir");
+      if (!ltmp) ltmp = XmFileSelectionBoxGetChild(w, XmDIALOG_DIR_LIST_LABEL);
+      XtVaSetValues(ltmp, XmNbackground, (ss->sgx)->doit_button_color, NULL);
+
+      ltmp = XtNameToWidget(w, "Items");
+      if (!ltmp) ltmp = XmFileSelectionBoxGetChild(w, XmDIALOG_LIST_LABEL);
+      XtVaSetValues(ltmp, XmNbackground, (ss->sgx)->quit_button_color, NULL);
+
       wtmp = XtNameToWidget(w, "Text");
       if (!wtmp) wtmp = XmFileSelectionBoxGetChild(w, XmDIALOG_TEXT);
-      ftmp = XtNameToWidget(w, "FilterText");
-      if (!ftmp) ftmp = XmFileSelectionBoxGetChild(w, XmDIALOG_FILTER_TEXT);	
       if (wtmp)
 	{
 	  XtAddCallback(wtmp, XmNfocusCallback, textfield_focus_callback, NULL);
@@ -171,6 +191,9 @@ static void color_file_selection_box(Widget w)
 	  XtAddEventHandler(wtmp, EnterWindowMask, false, mouse_enter_text_callback, NULL);
 	  XtAddEventHandler(wtmp, LeaveWindowMask, false, mouse_leave_text_callback, NULL);
 	}
+
+      ftmp = XtNameToWidget(w, "FilterText");
+      if (!ftmp) ftmp = XmFileSelectionBoxGetChild(w, XmDIALOG_FILTER_TEXT);	
       if (ftmp)
 	{
 	  XtAddCallback(ftmp, XmNfocusCallback, textfield_focus_callback, NULL);
@@ -520,9 +543,10 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title,
   rc2 = XtVaCreateManagedWidget("", 
 				xmRowColumnWidgetClass, fd->dialog_frame,
 				XmNorientation, XmVERTICAL,
+				XmNbackground, ss->sgx->highlight_color,
 				NULL);
-  fd->dialog_info1 = XtVaCreateManagedWidget("", xmLabelWidgetClass, rc2, NULL);
-  fd->dialog_info2 = XtVaCreateManagedWidget("", xmLabelWidgetClass, rc2, NULL);
+  fd->dialog_info1 = XtVaCreateManagedWidget("", xmLabelWidgetClass, rc2, XmNbackground, ss->sgx->highlight_color, NULL);
+  fd->dialog_info2 = XtVaCreateManagedWidget("", xmLabelWidgetClass, rc2, XmNbackground, ss->sgx->highlight_color, NULL);
 #endif
   color_file_selection_box(fd->dialog);
 
@@ -776,6 +800,7 @@ file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_
   sep1 = XtCreateManagedWidget("sep1", xmSeparatorWidgetClass, form, args, n);
 
   n = 0;
+  XtSetArg(args[n], XmNbackground, ss->sgx->doit_button_color); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
@@ -819,6 +844,7 @@ file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_
   sep2 = XtCreateManagedWidget("sep2", xmSeparatorWidgetClass, form, args, n);
 
   n = 0;
+  XtSetArg(args[n], XmNbackground, ss->sgx->help_button_color); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
@@ -859,6 +885,7 @@ file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_
   sep3 = XtCreateManagedWidget("sep3", xmSeparatorWidgetClass, form, args, n);
 
   n = 0;
+  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
@@ -881,6 +908,7 @@ file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_
   if (with_chan)
     {
       n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, stext); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -904,6 +932,7 @@ file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_
       if (with_loc)
 	{
 	  n = 0;
+	  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
 	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
 	  XtSetArg(args[n], XmNtopWidget, ctext); n++;
 	  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -929,6 +958,7 @@ file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_
   if (with_samples)
     {
       n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, ((loctext) ? loctext : ((ctext) ? ctext : stext))); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -964,6 +994,7 @@ file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_
   if (with_comment)
     {
       n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, sep4); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -1109,7 +1140,7 @@ ww_info *make_title_row(Widget formw, char *top_str, char *main_str, dialog_pad_
 {
   int n;
   Arg args[32];
-  Widget plw, rlw, sep1;
+  Widget plw, rlw, sep1 = NULL;
   Widget smenu, sbar;
   ww_info *wwi;
   wwi = (ww_info *)CALLOC(1, sizeof(ww_info));
@@ -1713,12 +1744,15 @@ void view_files_callback(Widget w, XtPointer context, XtPointer info)
 	  XtVaSetValues(XmMessageBoxGetChild(view_files_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(view_files_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(view_files_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(view_files_dialog, XmDIALOG_OK_BUTTON), XmNbackground, (ss->sgx)->quit_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(view_files_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, (ss->sgx)->reset_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(view_files_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, (ss->sgx)->help_button_color, NULL);
 	}
 
       n = 0;
       if (!(ss->using_schemes)) 
 	{
-	  XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
+	  XtSetArg(args[n], XmNbackground, (ss->sgx)->doit_button_color); n++;
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	}
       updateB = XtCreateManagedWidget(_("Update"), xmPushButtonGadgetClass, view_files_dialog, args, n);
@@ -2020,6 +2054,9 @@ static void make_raw_data_dialog(const char *filename)
       XtVaSetValues(XmMessageBoxGetChild(raw_data_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
       XtVaSetValues(XmMessageBoxGetChild(raw_data_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
       XtVaSetValues(XmMessageBoxGetChild(raw_data_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(raw_data_dialog, XmDIALOG_OK_BUTTON), XmNbackground, (ss->sgx)->doit_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(raw_data_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, (ss->sgx)->quit_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(raw_data_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, (ss->sgx)->help_button_color, NULL);
       XtVaSetValues(defw, XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
     }
   set_dialog_widget(RAW_DATA_DIALOG, raw_data_dialog);
@@ -2146,6 +2183,8 @@ snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, 
       form = XtCreateManagedWidget("newfile", xmFormWidgetClass, new_dialog, args, n);
 
       n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->reset_button_color); n++;
+      XtSetArg(args[n], XmNforeground, ss->sgx->black); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -2170,18 +2209,20 @@ snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, 
       new_dialog_data = make_file_data_panel(form, "data-form", args, n, true, default_output_type(ss), default_output_format(ss), false, true, true);
 
       XtManageChild(new_dialog);
+      if (!(ss->using_schemes)) map_over_children(new_dialog, set_main_color_of_widget, NULL);
       if (!(ss->using_schemes))	
 	{
 	  XtVaSetValues(new_dialog_data->format_list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
 	  XtVaSetValues(new_dialog_data->header_list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
 	}
-      if (!(ss->using_schemes)) map_over_children(new_dialog, set_main_color_of_widget, NULL);
-
       if (!(ss->using_schemes))
 	{
 	  XtVaSetValues(XmMessageBoxGetChild(new_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(new_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(new_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(new_dialog, XmDIALOG_OK_BUTTON), XmNbackground, (ss->sgx)->doit_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(new_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, (ss->sgx)->quit_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(new_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, (ss->sgx)->help_button_color, NULL);
 	}
       set_dialog_widget(NEW_FILE_DIALOG, new_dialog);
     }
@@ -2306,10 +2347,13 @@ Widget edit_header(snd_info *sp)
 
       if (!(ss->using_schemes)) 
 	{
+	  map_over_children(edit_header_dialog, set_main_color_of_widget, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(edit_header_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(edit_header_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(edit_header_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
-	  map_over_children(edit_header_dialog, set_main_color_of_widget, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(edit_header_dialog, XmDIALOG_OK_BUTTON), XmNbackground, (ss->sgx)->doit_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(edit_header_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, (ss->sgx)->quit_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(edit_header_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, (ss->sgx)->help_button_color, NULL);
 	  XtVaSetValues(edit_header_data->header_list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
 	  XtVaSetValues(edit_header_data->format_list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
 	}

@@ -36,6 +36,12 @@
 #define PUSHED_BUTTON_COLOR  "lightsteelblue1"
 #define SASH_COLOR           "lightgreen"
 
+#define HELP_BUTTON_COLOR    "lightsteelblue2"
+#define QUIT_BUTTON_COLOR    "indianred"
+#define RESET_BUTTON_COLOR   "goldenrod1"
+#define DOIT_BUTTON_COLOR    "palegreen2"
+#define DOIT_AGAIN_BUTTON_COLOR "darkolivegreen1"
+
 #define CHANNEL_SASH_INDENT -10
 #define CHANNEL_SASH_SIZE 0
 /* 0 means: use Motif default size */
@@ -129,6 +135,11 @@ typedef struct {
   int sash_size;
   int sash_indent;
   char *html_dir;
+  char *help_button_color;
+  char *quit_button_color;
+  char *reset_button_color;
+  char *doit_button_color;
+  char *doit_again_button_color;
 } sndres;
 
 static XtResource resources[] = {
@@ -180,6 +191,11 @@ static XtResource resources[] = {
   {"sashSize", "SashSize", XmRInt, sizeof(int), XtOffset(sndres *, sash_size), XmRImmediate, (XtPointer)SASH_SIZE},
   {"sashIndent", "SashIndent", XmRInt, sizeof(int), XtOffset(sndres *, sash_indent), XmRImmediate, (XtPointer)SASH_INDENT},
   {"htmldir", "HtmlDir", XmRString, sizeof(char *), XtOffset(sndres *, html_dir), XmRString, (XtPointer)DEFAULT_HTML_DIR},
+  {"helpbuttoncolor", "Helpbuttoncolor", XmRString, sizeof(char *), XtOffset(sndres *, help_button_color), XmRString, (XtPointer)HELP_BUTTON_COLOR},
+  {"quitbuttoncolor", "Quitbuttoncolor", XmRString, sizeof(char *), XtOffset(sndres *, quit_button_color), XmRString, (XtPointer)QUIT_BUTTON_COLOR},
+  {"resetbuttoncolor", "Resetbuttoncolor", XmRString, sizeof(char *), XtOffset(sndres *, reset_button_color), XmRString, (XtPointer)RESET_BUTTON_COLOR},
+  {"doitbuttoncolor", "Doitbuttoncolor", XmRString, sizeof(char *), XtOffset(sndres *, doit_button_color), XmRString, (XtPointer)DOIT_BUTTON_COLOR},
+  {"doitagainbuttoncolor", "Doitagainbuttoncolor", XmRString, sizeof(char *), XtOffset(sndres *, doit_again_button_color), XmRString, (XtPointer)DOIT_AGAIN_BUTTON_COLOR}
 };
 
 
@@ -726,6 +742,11 @@ void snd_doit(int argc, char **argv)
   sx->sash_color =            get_color(shell, snd_rs.sash_color,            SASH_COLOR,            NULL, NULL, false);
   sx->pushed_button_color =   get_color(shell, snd_rs.pushed_button_color,   PUSHED_BUTTON_COLOR,   NULL, NULL, false);
   sx->text_focus_color =      get_color(shell, snd_rs.text_focus_color,      TEXT_FOCUS_COLOR,      NULL, NULL, false);
+  sx->help_button_color =     get_color(shell, snd_rs.help_button_color,     HELP_BUTTON_COLOR,     NULL, NULL, false);
+  sx->quit_button_color =     get_color(shell, snd_rs.quit_button_color,     QUIT_BUTTON_COLOR,     NULL, NULL, false);
+  sx->reset_button_color =    get_color(shell, snd_rs.reset_button_color,    RESET_BUTTON_COLOR,    NULL, NULL, false);
+  sx->doit_button_color =     get_color(shell, snd_rs.doit_button_color,     DOIT_BUTTON_COLOR,     NULL, NULL, false);
+  sx->doit_again_button_color = get_color(shell, snd_rs.doit_again_button_color, DOIT_AGAIN_BUTTON_COLOR, NULL, NULL, false);
 
   if ((!(set_peaks_font(snd_rs.peaks_font))) &&
       (!(set_peaks_font(DEFAULT_PEAKS_FONT))) &&

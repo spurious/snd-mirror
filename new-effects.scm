@@ -122,12 +122,13 @@
 			     XmNbackground          (basic-color)
 			     XmNtransient           #f))))
     (for-each
-     (lambda (button)
+     (lambda (button color)
        (XtVaSetValues
 	 (XmMessageBoxGetChild new-dialog button)
 	 (list XmNarmColor   (pushed-button-color)
-		XmNbackground (basic-color))))
-     (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON))
+		XmNbackground color)))
+     (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON)
+     (list (help-button-color) (quit-button-color) (doit-button-color)))
     
     (XtAddCallback new-dialog XmNcancelCallback (lambda (w c i) (XtUnmanageChild new-dialog)))
     (XtAddCallback new-dialog XmNhelpCallback help-callback)  ; "Help"
@@ -136,7 +137,8 @@
     (if reset-callback
 	;; add a Reset button
 	(let ((reset-button (XtCreateManagedWidget "Reset" xmPushButtonWidgetClass new-dialog
-			      (list XmNbackground (basic-color)
+			      (list XmNbackground (reset-button-color)
+				    XmNforeground (BlackPixelOfScreen (current-screen))
 				    XmNarmColor   (pushed-button-color)))))
 	  (XtAddCallback reset-button XmNactivateCallback reset-callback)))
 
@@ -267,9 +269,8 @@
 				      XmNvalue         (inexact->exact (* initial scale))
 				      XmNdecimalPoints (if (= scale 1000) 3 (if (= scale 100) 2 (if (= scale 10) 1 0)))
 				      XmNtitleString   title
-		      XmNleftAttachment XmATTACH_FORM
-		      XmNrightAttachment XmATTACH_FORM
-
+				      XmNleftAttachment XmATTACH_FORM
+				      XmNrightAttachment XmATTACH_FORM
 				      XmNbackground    (basic-color))))))
 	 (XmStringFree title)
 	 (XtAddCallback new-slider XmNvalueChangedCallback func)

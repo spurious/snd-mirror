@@ -379,6 +379,7 @@ void sg_make_resizable(GtkWidget *w);
 
 Cessator add_work_proc(GtkFunction func, gpointer data);
 GtkWidget *snd_gtk_dialog_new(void);
+GtkWidget *snd_gtk_label_new(const char *label, GdkColor *color);
 
 
 /* -------- snd-gsnd.c -------- */

@@ -950,17 +950,27 @@ Widget create_envelope_editor(void)
 	  XtVaSetValues(XmMessageBoxGetChild(enved_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(enved_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(enved_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(enved_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, (ss->sgx)->quit_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(enved_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, (ss->sgx)->help_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(enved_dialog, XmDIALOG_OK_BUTTON), XmNbackground, (ss->sgx)->doit_button_color, NULL);
 	}
 
       n = 0;
       if (!(ss->using_schemes)) 
 	{
-	  XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
+	  XtSetArg(args[n], XmNbackground, (ss->sgx)->doit_again_button_color); n++;
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	}
       apply2B = XtCreateManagedWidget(_("Undo&Apply"), xmPushButtonGadgetClass, enved_dialog, args, n);
       XtAddCallback(apply2B, XmNactivateCallback, undo_and_apply_enved_callback, NULL);
 
+      n = 0;
+      if (!(ss->using_schemes)) 
+	{
+	  XtSetArg(args[n], XmNbackground, (ss->sgx)->reset_button_color); n++;
+	  XtSetArg(args[n], XmNforeground, (ss->sgx)->black); n++;
+	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
+	}
       resetB = XtCreateManagedWidget(_("Reset"), xmPushButtonGadgetClass, enved_dialog, args, n);
       XtAddCallback(resetB, XmNactivateCallback, reset_button_callback, NULL);
 

@@ -78,7 +78,9 @@ static void start_completion_dialog(int num_items, char **items)
       gtk_window_resize(GTK_WINDOW(completion_dialog), 260, 200);
 
       help_button = gtk_button_new_with_label(_("Help"));
+      gtk_widget_set_name(help_button, "help_button");
       dismiss_button = gtk_button_new_with_label(_("Dismiss"));
+      gtk_widget_set_name(dismiss_button, "quit_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(completion_dialog)->action_area), dismiss_button, false, true, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(completion_dialog)->action_area), help_button, false, true, 10);
       g_signal_connect_closure_by_id(GTK_OBJECT(dismiss_button),

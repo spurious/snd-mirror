@@ -104,6 +104,7 @@ static void create_help_monolog(void)
   gtk_widget_realize(help_dialog);
 
   ok_button = gtk_button_new_with_label(_("Ok"));
+  gtk_widget_set_name(ok_button, "quit_button");
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), ok_button, false, true, 20);
   g_signal_connect_closure_by_id(GTK_OBJECT(ok_button),
 				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(ok_button))),

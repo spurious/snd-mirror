@@ -3143,7 +3143,11 @@ void snd_record_file(void)
       XmStringFree(xreset);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      if (!(ss->using_schemes)) 
+	{
+	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
+	  XtSetArg(args[n], XmNbackground, (ss->sgx)->doit_button_color); n++;
+	}
       XtSetArg(args[n], XmNlabelString, titlestr); n++;
       record_button = XtCreateManagedWidget("record-button", xmPushButtonGadgetClass, recorder, args, n);
       XtAddCallback(record_button, XmNactivateCallback, record_button_callback, NULL);
@@ -3156,6 +3160,9 @@ void snd_record_file(void)
 	  XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_CANCEL_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_CANCEL_BUTTON), XmNbackground, (ss->sgx)->reset_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_HELP_BUTTON), XmNbackground, (ss->sgx)->help_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_OK_BUTTON), XmNbackground, (ss->sgx)->quit_button_color, NULL);
 	}
 
       n = 0;

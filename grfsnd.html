@@ -99,6 +99,11 @@ a built-in default value, so you can ignore any that are already acceptable:</p>
 <tr><td>markcolor</td>                        <td>red</td></tr>
 <tr><td>pushedbuttoncolor</td>                <td>lightsteelblue1</td></tr>
 <tr><td>sashcolor</td>                        <td>lightgreen</td></tr>
+<tr><td>helpbuttoncolor</td>                  <td>lightsteelblue2</td></tr>
+<tr><td>quitbuttoncolor</td>                  <td>indianred</td></tr>
+<tr><td>resetbuttoncolor</td>                 <td>goldenrod1</td></tr>
+<tr><td>doitbuttoncolor</td>                  <td>palegreen2</td></tr>
+<tr><td>doitagainbuttoncolor</td>             <td>darkolivegreen1</td></tr>
 </table>
 
 <p>You can experiment with other choices by
@@ -173,15 +178,18 @@ effect in Gtk.
 </p>
 
 
-<p><A NAME="aboutcolors"></a>The various color resources are:</p>
+<p><A NAME="aboutcolors"></a>The Snd-specific color resources are:</p>
 
 <table cellspacing=0 cellpadding=0>
 <tr><td width=200>basiccolor</td><td width=350>default background color everywhere</td><td><code><a href="extsnd.html#basiccolor">basic-color</a></code></td></tr>
 <tr><td>cursorcolor</td>         <td>color of the cursor</td>                   <td><code><a href="extsnd.html#cursorcolor">cursor-color</a></code></td></tr>
 <tr><td>datacolor</td>           <td>unselected data color</td>                 <td><code><a href="extsnd.html#datacolor">data-color</a></code></td></tr>
+<tr><td>doitbuttoncolor</td>     <td>color of Apply or Ok buttons</td>          <td><code><a href="extsnd.html#doitbuttoncolor">doit-button-color</a></code></td></tr>
+<tr><td>doitagainbuttoncolor</td><td>color of Undo&amp;Apply buttons</td>       <td><code><a href="extsnd.html#doitagainbuttoncolor">doit-again-button-color</a></code></td></tr>
 <tr><td>envedwaveformcolor</td>  <td>color of envelope editor waveform</td>     <td><code><a href="extsnd.html#envedwaveformcolor">enved-waveform-color</a></code></td></tr>
 <tr><td>filterwaveformcolor</td> <td>color of control panel filter waveform</td><td><code><a href="extsnd.html#filterwaveformcolor">filter-waveform-color</a></code></td></tr>
 <tr><td>graphcolor</td>          <td>unselected channels' graph background</td> <td><code><a href="extsnd.html#graphcolor">graph-color</a></code></td></tr>
+<tr><td>helpbuttoncolor</td>     <td>color of Help buttons</td>                 <td><code><a href="extsnd.html#helpbuttoncolor">help-button-color</a></code></td></tr>
 <tr><td>highlightcolor</td>      <td>highlighting here and there</td>           <td><code><a href="extsnd.html#highlightcolor">highlight-color</a></code></td></tr>
 <tr><td>listenercolor</td>       <td>background color of the listener</td>      <td><code><a href="extsnd.html#listenercolor">listener-color</a></code></td></tr>
 <tr><td>listenertextcolor</td>   <td>text color in the listener</td>            <td><code><a href="extsnd.html#listenertextcolor">listener-text-color</a></code></td></tr>
@@ -190,6 +198,8 @@ effect in Gtk.
 <tr><td>selectedmixcolor</td>    <td>selected mix waveforms</td>                <td><code><a href="extsnd.html#selectedmixcolor">selected-mix-color</a></code></td></tr>
 <tr><td>positioncolor</td>       <td>color of position sliders</td>             <td><code><a href="extsnd.html#positioncolor">position-color</a></code></td></tr>
 <tr><td>pushedbuttoncolor</td>   <td>color of pushed button</td>                <td><code><a href="extsnd.html#pushedbuttoncolor">pushed-button-color</a></code></td></tr>
+<tr><td>quitbuttoncolor</td>     <td>color of Cancel or Dismiss buttons</td>    <td><code><a href="extsnd.html#quitbuttoncolor">quit-button-color</a></code></td></tr>
+<tr><td>resetbuttoncolor</td>    <td>color of Reset buttons</td>                <td><code><a href="extsnd.html#resetbuttoncolor">reset-button-color</a></code></td></tr>
 <tr><td>sashcolor</td>           <td>color of paned window sash handles</td>    <td><code><a href="extsnd.html#sashcolor">sash-color</a></code></td></tr>
 <tr><td>selecteddatacolor</td>   <td>color of the data in selected channel</td> <td><code><a href="extsnd.html#selecteddatacolor">selected-data-color</a></code></td></tr>
 <tr><td>selectedgraphcolor</td>  <td>background of selected channel's graph</td><td><code><a href="extsnd.html#selectedgraphcolor">selected-graph-color</a></code></td></tr>
@@ -976,7 +986,7 @@ In Ruby <b>rand</b> is a built-in method; it is aliased to <b>kernel_rand</b> he
 <tr><td><a href="clm.html#sine-summation">sine-summation</a></td><td>(gen <i>fm</i>)</td><td>sine-summation generator</td></tr>
 <tr><td><a href="clm.html#sine-summation?">sine-summation?</a></td><td>(gen)</td><td>#t if gen is sine-summation generator</td></tr>
 <tr><td><a href="extsnd.html#snd2sample">snd-&gt;sample</a></td><td>(loc (chan 0))</td><td>return sample from sound (index=snd) at loc</td></tr>
-<tr><td><a href="extsnd.html#snd2sample?">snd-&gt;sample?</a></td><td>(gen)</td><td>#t if gen is snd-&gt;sample generator</td></tr>
+<tr><td><a href="extsnd.html#snd2samplep">snd-&gt;sample?</a></td><td>(gen)</td><td>#t if gen is snd-&gt;sample generator</td></tr>
 <tr><td><a href="clm.html#spectrum">spectrum</a></td><td>(rl im win type)</td><td>produce spectrum of data in rl (return rl)</td></tr>
 <tr><td><a href="clm.html#square-wave">square-wave</a></td><td>(gen <i>fm</i>)</td><td>square-wave generator</td></tr>
 <tr><td><a href="clm.html#square-wave?">square-wave?</a></td><td>(gen)</td><td>#t if gen is square-wave generator</td></tr>
@@ -999,7 +1009,7 @@ In Ruby <b>rand</b> is a built-in method; it is aliased to <b>kernel_rand</b> he
 <tr><td><a href="clm.html#waveshape">waveshape</a></td><td>(gen <i>index fm</i>)</td><td>waveshaping generator</td></tr>
 <tr><td><a href="clm.html#waveshape?">waveshape?</a></td><td>(gen)</td><td>#t if gen is waveshape generator</td></tr>
 <tr><td><a href="extsnd.html#xen2sample">xen-&gt;sample</a></td><td>(loc (chan 0))</td><td>return sample from xen func at loc in chan</td></tr>
-<tr><td><a href="extsnd.html#xen2sample?">xen-&gt;sample?</a></td><td>(gen)</td><td>#t if gen is xen-&gt;sample generator</td></tr>
+<tr><td><a href="extsnd.html#xen2samplep">xen-&gt;sample?</a></td><td>(gen)</td><td>#t if gen is xen-&gt;sample generator</td></tr>
 </table>
 <br>
 

@@ -148,20 +148,22 @@ static GtkWidget *snd_gtk_file_selection_new(char *title, GtkSignalFunc gdelete,
   GtkWidget *new_dialog, *entry;
   GList *cells;
   GtkTreeViewColumn *dirl;
+  GtkFileSelection *filer;
   new_dialog = gtk_file_selection_new(title);
+  filer = GTK_FILE_SELECTION(new_dialog);
 
   /* get rid of ridiculous padding in lists */
-  dirl = gtk_tree_view_get_column(GTK_TREE_VIEW(GTK_FILE_SELECTION(new_dialog)->dir_list), 0);
+  dirl = gtk_tree_view_get_column(GTK_TREE_VIEW(filer->dir_list), 0);
   cells = gtk_tree_view_column_get_cell_renderers(dirl);
   g_list_foreach(cells, unpad, NULL);
   g_list_free(cells);
-  dirl = gtk_tree_view_get_column(GTK_TREE_VIEW(GTK_FILE_SELECTION(new_dialog)->file_list), 0);
+  dirl = gtk_tree_view_get_column(GTK_TREE_VIEW(filer->file_list), 0);
   cells = gtk_tree_view_column_get_cell_renderers(dirl);
   g_list_foreach(cells, unpad, NULL);
   g_list_free(cells);
 
   /* make entry widget look like one of ours */
-  entry = GTK_FILE_SELECTION(new_dialog)->selection_entry;
+  entry = filer->selection_entry;
   gtk_widget_modify_bg(entry, GTK_STATE_NORMAL, ss->sgx->white);
   connect_mouse_to_text(entry);
 
@@ -170,16 +172,22 @@ static GtkWidget *snd_gtk_file_selection_new(char *title, GtkSignalFunc gdelete,
 				 0,
 				 g_cclosure_new(gdelete, NULL, 0),
 				 0);
-  g_signal_connect_closure_by_id(GTK_OBJECT(GTK_FILE_SELECTION(new_dialog)->ok_button),
-				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(GTK_FILE_SELECTION(new_dialog)->ok_button))),
+  g_signal_connect_closure_by_id(GTK_OBJECT(filer->ok_button),
+				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(filer->ok_button))),
 				 0,
 				 g_cclosure_new(ok, NULL, 0),
 				 0);
-  g_signal_connect_closure_by_id(GTK_OBJECT(GTK_FILE_SELECTION(new_dialog)->cancel_button), 
-				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(GTK_FILE_SELECTION(new_dialog)->cancel_button))),
+  g_signal_connect_closure_by_id(GTK_OBJECT(filer->cancel_button), 
+				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(filer->cancel_button))),
 				 0,
 				 g_cclosure_new_swap(cancel, NULL, 0),
 				 0);
+
+  gtk_widget_set_name(filer->ok_button, "doit_button");
+  gtk_widget_set_name(filer->cancel_button, "quit_button");
+  if (filer->fileop_c_dir) gtk_widget_set_name(filer->fileop_c_dir, "help_button");
+  if (filer->fileop_del_file) gtk_widget_set_name(filer->fileop_del_file, "doit_again_button");
+  if (filer->fileop_ren_file) gtk_widget_set_name(filer->fileop_ren_file, "reset_button");
   return(new_dialog);
 }
 
@@ -489,7 +497,7 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
   gtk_box_pack_start(GTK_BOX(form), scbox, false, false, 4);
   gtk_widget_show(scbox);
 
-  slab = gtk_label_new(_("srate:"));
+  slab = snd_gtk_label_new(_("srate:"), ss->sgx->highlight_color);
   gtk_box_pack_start(GTK_BOX(scbox), slab, false, false, 0);
   gtk_widget_show(slab);
 
@@ -497,7 +505,7 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
 
   if (with_chan)
     {
-      clab = gtk_label_new(_("chans:"));
+      clab = snd_gtk_label_new(_("chans:"), ss->sgx->highlight_color);
       gtk_box_pack_start(GTK_BOX(scbox), clab, false, false, 0);
       gtk_widget_show(clab);
 
@@ -505,7 +513,7 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
       
       if (with_loc)
 	{
-	  loclab = gtk_label_new(_("location:"));
+	  loclab = snd_gtk_label_new(_("location:"), ss->sgx->highlight_color);
 	  gtk_box_pack_start(GTK_BOX(scbox), loclab, false, false, 0);
 	  gtk_widget_show(loclab);
 
@@ -515,7 +523,7 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
 
   if (with_samples)
     {
-      samplab = gtk_label_new(_("samples:"));
+      samplab = snd_gtk_label_new(_("samples:"), ss->sgx->highlight_color);
       gtk_box_pack_start(GTK_BOX(scbox), samplab, false, false, 0);
       gtk_widget_show(samplab);
 
@@ -526,7 +534,8 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
   gtk_box_pack_start(GTK_BOX(parent), combox, true, true, 4);
   gtk_widget_show(combox);
 
-  comment_label = gtk_label_new(_("comment:"));
+  comment_label = snd_gtk_label_new(_("comment:"), ss->sgx->highlight_color);
+  gtk_entry_set_width_chars(GTK_ENTRY(comment_label), 2 + strlen(_("comment:")));
   gtk_box_pack_start(GTK_BOX(combox), comment_label, false, false, 0);
   gtk_widget_show(comment_label);
 
@@ -677,24 +686,9 @@ ww_info *make_title_row(GtkWidget *formw, char *top_str, char *main_str, dialog_
   /* assuming "formw" is a vbox */
   if (main_str)
     {
-
-      /* -------------------------------- fUn WiTh DuMb SoFtWaRe!!  -------------------------------- */
-#if 0
-      /* this is what any reasonable gui widget set would let us do */
-      rlw = gtk_label_new(main_str);
+      
+      rlw = snd_gtk_label_new(main_str, ss->sgx->highlight_color);
       gtk_box_pack_start(GTK_BOX(formw), rlw, false, false, 0);
-      gtk_widget_show(rlw);
-#endif
-
-      /* this is what goddamn gtk forces us to use -- all I want is a label with a background color! */
-      rlw = gtk_entry_new();
-      gtk_entry_set_has_frame(GTK_ENTRY(rlw), false);
-      gtk_entry_set_text(GTK_ENTRY(rlw), main_str);
-      gtk_entry_set_editable(GTK_ENTRY(rlw), false);
-      gtk_box_pack_start(GTK_BOX(formw), rlw, false, false, 0);
-      GTK_WIDGET_UNSET_FLAGS(GTK_WIDGET(rlw), GTK_CAN_FOCUS); /* turn off the $%#@$! blinking cursor */
-      gtk_widget_modify_base(rlw, GTK_STATE_NORMAL, ss->sgx->highlight_color);
-      gtk_widget_modify_base(rlw, GTK_STATE_ACTIVE, ss->sgx->highlight_color);
       gtk_widget_show(rlw);
 
       sep1 = gtk_hseparator_new();
@@ -1160,9 +1154,13 @@ void view_files_callback(GtkWidget *w, gpointer context)
       gtk_widget_realize(view_files_dialog);
 
       helpB = gtk_button_new_with_label(_("Help"));
+      gtk_widget_set_name(helpB, "help_button");
       dismissB = gtk_button_new_with_label(_("Dismiss"));
+      gtk_widget_set_name(dismissB, "quit_button");
       updateB = gtk_button_new_with_label(_("Update"));
+      gtk_widget_set_name(updateB, "doit_button");
       clearB = gtk_button_new_with_label(_("Clear"));
+      gtk_widget_set_name(clearB, "reset_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(view_files_dialog)->action_area), dismissB, true, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(view_files_dialog)->action_area), updateB, true, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(view_files_dialog)->action_area), clearB, true, true, 10);
@@ -1351,9 +1349,13 @@ static void make_raw_data_dialog(void)
   gtk_widget_realize(raw_data_dialog);
 
   helpB = gtk_button_new_with_label(_("Help"));
+  gtk_widget_set_name(helpB, "help_button");
   cancelB = gtk_button_new_with_label(_("Cancel"));
+  gtk_widget_set_name(cancelB, "quit_button");
   defaultB = gtk_button_new_with_label(_("Default"));
+  gtk_widget_set_name(defaultB, "reset_button");
   okB = gtk_button_new_with_label(_("Ok"));
+  gtk_widget_set_name(okB, "doit_button");
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->action_area), okB, true, true, 10);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->action_area), defaultB, true, true, 10);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->action_area), cancelB, true, true, 10);
@@ -1517,8 +1519,11 @@ snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, 
       gtk_widget_realize(new_dialog);
 
       help_button = gtk_button_new_with_label(_("Help"));
+      gtk_widget_set_name(help_button, "help_button");
       cancel_button = gtk_button_new_with_label(_("Cancel"));
+      gtk_widget_set_name(cancel_button, "quit_button");
       ok_button = gtk_button_new_with_label(_("Ok"));
+      gtk_widget_set_name(ok_button, "doit_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(new_dialog)->action_area), ok_button, true, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(new_dialog)->action_area), cancel_button, true, true, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(new_dialog)->action_area), help_button, true, true, 10);
@@ -1639,8 +1644,11 @@ GtkWidget *edit_header(snd_info *sp)
       gtk_widget_realize(edit_header_dialog);
 
       help_button = gtk_button_new_with_label(_("Help"));
+      gtk_widget_set_name(help_button, "help_button");
       cancel_button = gtk_button_new_with_label(_("Cancel"));
+      gtk_widget_set_name(cancel_button, "quit_button");
       save_button = gtk_button_new_with_label(_("Save"));
+      gtk_widget_set_name(save_button, "doit_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_header_dialog)->action_area), cancel_button, true, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_header_dialog)->action_area), save_button, true, true, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(edit_header_dialog)->action_area), help_button, true, true, 10);

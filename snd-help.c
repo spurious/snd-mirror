@@ -298,6 +298,8 @@ void news_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+12-Sep:  quit-button-color, help-button-color, reset-button-color, \n\
+         doit-button-color, doit-again-button-color.\n\
 8-Sep:   added show-all-axes-unlabelled and show-x-axis-unlabelled.\n\
          removed parse-rc-file, added support for Snd.gtkrc.\n\
 2-Sep:   removed bold-button-font and boldbuttonFont resource.\n\
@@ -306,10 +308,6 @@ void news_help(void)
            ina and friends automatically to Snd data.\n\
 19-Aug:  removed mouse-release-hook (use mouse-click-hook).\n\
 15-Aug:  snd 6.11.\n\
-11-Aug:  start-playing-selection-hook (suggested by Kjetil S. Matheussen).\n\
-         removed dlp/dp-new-effects.scm and plugins-menu.scm.\n\
-         int -> bool changes (ISO C99).\n\
-7-Aug:   dac-is-running.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

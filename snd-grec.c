@@ -1980,9 +1980,13 @@ void snd_record_file(void)
       gtk_widget_realize(recorder);
 
       help_button = gtk_button_new_with_label(_("Help"));
+      gtk_widget_set_name(help_button, "help_button");
       dismiss_button = gtk_button_new_with_label(_("Dismiss"));
+      gtk_widget_set_name(dismiss_button, "quit_button");
       reset_button = gtk_button_new_with_label(_("Reset"));
+      gtk_widget_set_name(reset_button, "reset_button");
       record_button = gtk_button_new_with_label(_("Record"));
+      gtk_widget_set_name(record_button, "doit_button");
 
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(recorder)->action_area), dismiss_button, true, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(recorder)->action_area), reset_button, true, true, 10);

@@ -118,7 +118,7 @@ static void make_edit_find_dialog(void)
   n = 0;
   if (!(ss->using_schemes)) 
     {
-      XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
+      XtSetArg(args[n], XmNbackground, (ss->sgx)->doit_button_color); n++;
       XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
     }
   findnextB = XtCreateManagedWidget(_("Next"), xmPushButtonGadgetClass, edit_find_dialog, args, n);
@@ -163,6 +163,9 @@ void edit_find_callback(Widget w, XtPointer context, XtPointer info)
 	  XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON), XmNbackground, (ss->sgx)->quit_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, (ss->sgx)->doit_again_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, (ss->sgx)->help_button_color, NULL);
 	}
       cancelB = XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON);
     }

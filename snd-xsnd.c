@@ -2417,7 +2417,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       n = 0;
       if (need_colors) 
 	{
-	  XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
+	  XtSetArg(args[n], XmNbackground, (ss->sgx)->doit_button_color); n++;
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	  XtSetArg(args[n], XmNfillOnArm, true); n++;
 	}
@@ -2434,7 +2434,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       n = 0;
       if (need_colors) 
 	{
-	  XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
+	  XtSetArg(args[n], XmNbackground, (ss->sgx)->doit_again_button_color); n++;
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	  XtSetArg(args[n], XmNfillOnArm, true); n++;
 	}
@@ -2452,7 +2452,8 @@ snd_info *add_sound_window(char *filename, bool read_only)
       n = 0;
       if (need_colors) 
 	{
-	  XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
+	  XtSetArg(args[n], XmNbackground, (ss->sgx)->quit_button_color); n++;
+	  XtSetArg(args[n], XmNforeground, (ss->sgx)->black); n++;
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	  XtSetArg(args[n], XmNfillOnArm, true); n++;
 	}
@@ -2470,7 +2471,8 @@ snd_info *add_sound_window(char *filename, bool read_only)
       n = 0;
       if (need_colors) 
 	{
-	  XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
+	  XtSetArg(args[n], XmNbackground, (ss->sgx)->reset_button_color); n++;
+	  XtSetArg(args[n], XmNforeground, (ss->sgx)->black); n++;
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	  XtSetArg(args[n], XmNfillOnArm, true); n++;
 	}

@@ -538,6 +538,9 @@ Reverb-feedback sets the scaler on the feedback.\n\
       (let ((dismiss-button (gtk_button_new_with_label "Dismiss"))
 	    (help-button (gtk_button_new_with_label "Help"))
 	    (reset-button (gtk_button_new_with_label "Reset")))
+	(gtk_widget_set_name dismiss-button "quit_button")
+	(gtk_widget_set_name help-button "help_button")
+	(gtk_widget_set_name reset-button "reset_button")
 	(set! hidden-controls-dialog (gtk_dialog_new))
 	(gtk_window_set_title (GTK_WINDOW hidden-controls-dialog) "More Controls")
 	(gtk_container_set_border_width (GTK_CONTAINER hidden-controls-dialog) 10)
@@ -980,6 +983,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 (define (make-variables-dialog)
   (let ((dismiss-button (gtk_button_new_with_label "Dismiss")))
+    (gtk_widget_set_name dismiss-button "quit_button")
     (set! variables-dialog (gtk_dialog_new))
     (gtk_window_set_title (GTK_WINDOW variables-dialog) "Variables")
     (gtk_container_set_border_width (GTK_CONTAINER variables-dialog) 10)

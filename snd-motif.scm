@@ -484,11 +484,12 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		      XmNbackground          (basic-color))))
 
 	(for-each
-	 (lambda (button)
+	 (lambda (button color)
 	   (XtVaSetValues (XmMessageBoxGetChild hidden-controls-dialog button)
 			  (list XmNarmColor   (pushed-button-color)
-				XmNbackground (basic-color))))
-	 (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON))
+				XmNbackground color)))
+	 (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON)
+	 (list (help-button-color) (reset-button-color) (quit-button-color)))
 
 	(XtAddCallback hidden-controls-dialog 
 		       XmNokCallback (lambda (w context info)
@@ -2048,12 +2049,13 @@ Reverb-feedback sets the scaler on the feedback.\n\
 				       XmNbackground          (basic-color)
 				       XmNtransient           #f))))
 	      (for-each
-	       (lambda (button)
+	       (lambda (button color)
 		 (XtVaSetValues
 		   (XmMessageBoxGetChild new-dialog button)
 		   (list XmNarmColor   (pushed-button-color)
-			 XmNbackground (basic-color))))
-	       (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON))
+			 XmNbackground color)))
+	       (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON)
+	       (list (help-button-color) (quit-button-color) (doit-button-color)))
     
 	      (XtAddCallback new-dialog XmNcancelCallback 
 			     (lambda (w c i) (XtUnmanageChild w)))
@@ -2370,11 +2372,12 @@ Reverb-feedback sets the scaler on the feedback.\n\
 							XmNtransient           #f
 							XmNbackground          (basic-color))))
 	      (for-each
-	       (lambda (button)
+	       (lambda (button color)
 		 (XtVaSetValues (XmMessageBoxGetChild dialog button)
 				(list XmNarmColor   (pushed-button-color)
-				      XmNbackground (basic-color))))
-	       (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON))
+				      XmNbackground color)))
+	       (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON)
+	       (list (help-button-color) (quit-button-color) (doit-button-color)))
 	      (XtAddCallback dialog XmNcancelCallback (lambda (w context info) (XtUnmanageChild dialog)))
 	      (XtAddCallback dialog XmNhelpCallback (lambda (w context info) (help-dialog "Find" "no help yet")))
 	      (XtAddCallback dialog XmNokCallback (lambda (w context info) (find-it)))
@@ -2495,7 +2498,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
     
     (XtVaSetValues (XmMessageBoxGetChild variables-dialog XmDIALOG_OK_BUTTON)
 		   (list XmNarmColor   (pushed-button-color)
-			 XmNbackground (basic-color)))
+			 XmNbackground (quit-button-color)))
     (XtAddCallback variables-dialog 
 		   XmNokCallback (lambda (w context info)
 				   (XtUnmanageChild variables-dialog)))

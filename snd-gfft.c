@@ -430,9 +430,13 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_window_resize(GTK_WINDOW(transform_dialog), 400, 500);
 
       help_button = gtk_button_new_with_label(_("Help"));
+      gtk_widget_set_name(help_button, "help_button");
       dismiss_button = gtk_button_new_with_label(_("Dismiss"));
+      gtk_widget_set_name(dismiss_button, "quit_button");
       color_button = gtk_button_new_with_label(_("Color"));
+      gtk_widget_set_name(color_button, "doit_button");
       orient_button = gtk_button_new_with_label(_("Orientation"));
+      gtk_widget_set_name(orient_button, "doit_again_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), dismiss_button, false, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), color_button, false, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), orient_button, false, true, 10);

@@ -1,5 +1,7 @@
 Snd change log
 
+  12-Sep:    quit-button-color, help-button-color, reset-button-color,
+               doit-button-color, doit-again-button-color.
   8-Sep:     added show-all-axes-unlabelled and show-x-axis-unlabelled.
              removed parse-rc-file, added support for Snd.gtkrc.
   2-Sep:     removed bold-button-font and boldbuttonFont resource.

@@ -185,12 +185,13 @@
 				       XmNbackground          (basic-color)
 				       XmNtransient           #f))))
 	      (for-each
-	       (lambda (button)
+	       (lambda (button color)
 		 (XtVaSetValues
 		   (XmMessageBoxGetChild new-dialog button)
 		   (list XmNarmColor   (pushed-button-color)
-			 XmNbackground (basic-color))))
-	       (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON))
+			 XmNbackground color)))
+	       (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON)
+	       (list (help-button-color) (quit-button-color) (doit-button-color)))
     
 	      (XtAddCallback new-dialog XmNcancelCallback 
 			      (lambda (w c i) (XtUnmanageChild w)))

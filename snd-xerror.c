@@ -42,6 +42,7 @@ static void create_snd_error_dialog(bool popup)
   if (!(ss->using_schemes))
     {
       XtVaSetValues(XtNameToWidget(snd_error_dialog, _("OK")), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
+      XtVaSetValues(XtNameToWidget(snd_error_dialog, _("OK")), XmNbackground, (ss->sgx)->quit_button_color, NULL);
       XtVaSetValues(snd_error_history, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
     }
   set_dialog_widget(ERROR_DIALOG, snd_error_dialog);
@@ -170,6 +171,8 @@ bool snd_yes_or_no_p(const char *format, ...)
 	{
 	  XtVaSetValues(XmMessageBoxGetChild(yes_or_no_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(yes_or_no_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(yes_or_no_dialog, XmDIALOG_OK_BUTTON), XmNbackground, (ss->sgx)->doit_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(yes_or_no_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, (ss->sgx)->quit_button_color, NULL);
 	}
       XmStringFree(titlestr);
       XmStringFree(xmstr1);

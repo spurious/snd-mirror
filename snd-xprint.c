@@ -175,6 +175,9 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info)
 	  XtVaSetValues(XmMessageBoxGetChild(file_print_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(file_print_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(file_print_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(file_print_dialog, XmDIALOG_OK_BUTTON), XmNbackground, (ss->sgx)->doit_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(file_print_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, (ss->sgx)->quit_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(file_print_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, (ss->sgx)->help_button_color, NULL);
 	  XtVaSetValues(file_print_eps_or_lpr, XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
 	}
       set_dialog_widget(PRINT_DIALOG, file_print_dialog);

@@ -452,11 +452,14 @@ Widget fire_up_transform_dialog(bool managed)
 	  XtVaSetValues(XmMessageBoxGetChild(transform_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(transform_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(transform_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(transform_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, (ss->sgx)->doit_again_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(transform_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, (ss->sgx)->help_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(transform_dialog, XmDIALOG_OK_BUTTON), XmNbackground, (ss->sgx)->quit_button_color, NULL);
 	}
       n = 0;
       if (!(ss->using_schemes)) 
 	{
-	  XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
+	  XtSetArg(args[n], XmNbackground, (ss->sgx)->doit_button_color); n++;
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	}
       color_button = XtCreateManagedWidget(_("Color"), xmPushButtonGadgetClass, transform_dialog, args, n);

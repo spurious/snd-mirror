@@ -616,6 +616,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 	    gtk_box_pack_start(GTK_BOX(cw[W_main_window]), cw[W_graph_window], true, true, 4);
 	  else gtk_container_add(GTK_CONTAINER(cw[W_main_window]), cw[W_graph_window]);
 	}
+      gtk_widget_set_size_request(cw[W_graph_window], -1, chan_y);
 
       cw[W_graph] = gtk_drawing_area_new();
 #if HAVE_GL

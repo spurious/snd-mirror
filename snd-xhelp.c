@@ -103,6 +103,7 @@ static void create_help_monolog(void)
       map_over_children(help_dialog, set_main_color_of_widget, NULL);
       XtVaSetValues(help_text, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
       XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_OK_BUTTON), XmNbackground, (ss->sgx)->quit_button_color, NULL);
     }
   set_dialog_widget(HELP_DIALOG, help_dialog);
 }

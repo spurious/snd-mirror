@@ -474,6 +474,7 @@ GtkWidget *make_mix_panel(void)
       gtk_widget_realize(mix_panel);
       
       dismiss_button = gtk_button_new_with_label(_("Dismiss"));
+      gtk_widget_set_name(dismiss_button, "quit_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_panel)->action_area), dismiss_button, false, true, 10);
       g_signal_connect_closure_by_id(GTK_OBJECT(dismiss_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(dismiss_button))),
@@ -483,6 +484,7 @@ GtkWidget *make_mix_panel(void)
       gtk_widget_show(dismiss_button);
 
       previousb = gtk_button_new_with_label(_("Previous"));
+      gtk_widget_set_name(previousb, "reset_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_panel)->action_area), previousb, false, true, 10);
       g_signal_connect_closure_by_id(GTK_OBJECT(previousb),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(previousb))),
@@ -492,6 +494,7 @@ GtkWidget *make_mix_panel(void)
       gtk_widget_show(previousb);
 
       nextb = gtk_button_new_with_label(_("Next"));
+      gtk_widget_set_name(nextb, "doit_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_panel)->action_area), nextb, false, true, 10);
       g_signal_connect_closure_by_id(GTK_OBJECT(nextb),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(nextb))),
@@ -501,6 +504,7 @@ GtkWidget *make_mix_panel(void)
       gtk_widget_show(nextb);
 
       apply_button = gtk_button_new_with_label(_("Apply Env"));
+      gtk_widget_set_name(apply_button, "doit_again_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_panel)->action_area), apply_button, false, true, 10);
       g_signal_connect_closure_by_id(GTK_OBJECT(apply_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(apply_button))),
@@ -510,6 +514,7 @@ GtkWidget *make_mix_panel(void)
       gtk_widget_show(apply_button);
 
       help_button = gtk_button_new_with_label(_("Help"));
+      gtk_widget_set_name(help_button, "help_button");
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(mix_panel)->action_area), help_button, true, true, 10);
       g_signal_connect_closure_by_id(GTK_OBJECT(help_button),
 				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(help_button))),
@@ -722,6 +727,7 @@ GtkWidget *make_mix_panel(void)
       w_env = gtk_drawing_area_new();
       gtk_widget_set_events(w_env, GDK_ALL_EVENTS_MASK);
       gtk_container_add(GTK_CONTAINER(w_env_frame), w_env);
+      gtk_widget_modify_bg(w_env, GTK_STATE_NORMAL, ss->sgx->highlight_color);
       gtk_widget_show(w_env);
       g_signal_connect_closure_by_id(GTK_OBJECT(w_env),
 				     g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(w_env))),

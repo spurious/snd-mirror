@@ -574,14 +574,14 @@ style \"default_entry\" = \"default\"\n\
   base[ACTIVE]      = { 0.93, 0.93, 0.87 }\n\
   base[SELECTED]    = { 1.0, 1.0, 1.0 }\n\
   base[PRELIGHT]    = { 1.0, 1.0, 1.0}\n\
+  base[NORMAL]      = { 0.93, 0.93, 0.87 }\n\
+  base[INSENSITIVE] = { 0.93, 0.93, 0.87 }\n\
   bg[ACTIVE]        = { 1.0, 1.0, 1.0 }\n\
   bg[SELECTED]      = { 1.0, 1.0, 1.0 }\n\
   bg[PRELIGHT]      = { 1.0, 1.0, 1.0 }\n\
   text[ACTIVE]      = { 0.0, 0.0, 0.0 }\n\
   text[SELECTED]    = { 0.0, 0.0, 0.0 }\n\
   text[PRELIGHT]    = { 0.0, 0.0, 0.0 }\n\
-  base[NORMAL]      = { 0.93, 0.93, 0.87 }\n\
-  base[INSENSITIVE] = { 0.93, 0.93, 0.87 }\n\
 }\n\
 \n\
 style \"default_text\" = \"default_entry\"\n\
@@ -613,6 +613,9 @@ style \"zoom_slider\" = \"default_slider\"\n\
   bg[NORMAL] = { 0.70, 0.70, 0.64 }\n\
   bg[ACTIVE] = { 0.54, 0.54, 0.51 }\n\
   bg[PRELIGHT] = { 0.44, 0.44, 0.36 }\n\
+\n\
+  GtkRange::slider_width = 12\n\
+  GtkRange::stepper_size = 12\n\
 }\n\
 \n\
 widget \"*.zx_slider\" style \"zoom_slider\"\n\
@@ -628,6 +631,46 @@ style \"listener\" = \"default\"\n\
 }\n\
 \n\
 widget \"*.listener_text\" style \"listener\"\n\
+\n\
+style \"help\" = \"default_button\"\n\
+{\n\
+  bg[NORMAL] = { 0.73, 0.82, 0.93 }\n\
+  bg[PRELIGHT] = { 0.73, 0.82, 0.93 }\n\
+}\n\
+\n\
+widget \"*.help_button\" style \"help\"\n\
+\n\
+style \"quit\" = \"default_button\"\n\
+{\n\
+  bg[NORMAL] = { 0.8, 0.36, 0.36 }\n\
+  bg[PRELIGHT] = { 0.8, 0.36, 0.36 }\n\
+}\n\
+\n\
+widget \"*.quit_button\" style \"quit\"\n\
+\n\
+style \"doit\" = \"default_button\"\n\
+{\n\
+  bg[NORMAL] = { 0.56, 0.93, 0.56 }\n\
+  bg[PRELIGHT] = { 0.56, 0.93, 0.56 }\n\
+}\n\
+\n\
+widget \"*.doit_button\" style \"doit\"\n\
+\n\
+style \"doit_again\" = \"default_button\"\n\
+{\n\
+  bg[NORMAL] = { 0.79, 1.0, 0.44 }\n\
+  bg[PRELIGHT] = { 0.79, 1.0, 0.44 }\n\
+}\n\
+\n\
+widget \"*.doit_again_button\" style \"doit_again\"\n\
+\n\
+style \"reset\" = \"default_button\"\n\
+{\n\
+  bg[NORMAL] = { 1.0, 0.85, 0.24 }\n\
+  bg[PRELIGHT] = { 1.0, 0.85, 0.24 }\n\
+}\n\
+\n\
+widget \"*.reset_button\" style \"reset\"\n\
 ");
 
   MAIN_PANE(ss) = gtk_vbox_new(false, 0); /* not homogenous, spacing 0 */
