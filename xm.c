@@ -1,15 +1,16 @@
 /* xm.c: Guile/Ruby bindings for X/Xt/Xpm/Xm
  *   needs xen.h
+ *   for tests and examples see xm-test.scm and snd-motif.scm (Snd tarball)
  */
 
 /* TODO: rest of callbacks (Xt)
- *       rest of callback arity checks
  *       xm-test.scm regression tests
- *       Ruby version needs the nargify macros (sigh)
+ *       Ruby version needs the nargify macros (sigh -- there must be a better way)
  *       autoconf support (see snd tarball and 'make xm')
  *       XEvent fields should be settable
  *       check for memory leaks etc
  *       help strings?
+ *       should XtSetValues do type checking?
  */
 
 /* HISTORY: 
@@ -357,8 +358,8 @@
  *    XpmCreatePixmapFromXpmImage omits and returns pixmap args
  *    XpmCreatePixmapFromBuffer omits and returns pixmap args
  *    XpmReadFileToPixmap omits and returns pixmap args
- *    XpmCreatePixmapFromData omits and returns pixmap args
- *    XpmCreateBufferFromPixmap omits arg2
+ *    XpmCreatePixmapFromData omits and returns pixmap args, arg3 (bits) is list of strings
+ *    XpmCreateBufferFromPixmap omits arg2, returns list of strings
  *    XpmCreateBufferFromImage omits arg2
  *    XpmCreateDataFromPixmap arg2 omitted and rtn'd
  *    selected_items field returns list
@@ -370,7 +371,7 @@
  *    XtAppContext app -> bare XtAppContext (pointer) wrapped for xm 
  *    XGCValues -> a blank XGCValues struct (for XCreateGC etc)
  *    XColor &optional pixel red green blue flags pad
- *    XArc XRectangle XPoint XSegment XEvent
+ *    XArc XRectangle XPoint XSegment XEvent Pixel GC
  *    XTextItem XpmImage XpmColorSymbol
  *    XmStringTableFree
  *
@@ -709,6 +710,8 @@ static int resource_type(char *resource);
 
 static XEN gxm_Widget(XEN w) {return(C_TO_XEN_Widget((Widget)XEN_TO_C_ULONG(w)));}
 static XEN gxm_XtAppContext(XEN w) {return(C_TO_XEN_XtAppContext((XtAppContext)XEN_TO_C_ULONG(w)));}
+static XEN gxm_Pixel(XEN w) {return(C_TO_XEN_Pixel((Pixel)XEN_TO_C_ULONG(w)));}
+static XEN gxm_GC(XEN w) {return(C_TO_XEN_GC((GC)XEN_TO_C_ULONG(w)));}
 
 static XEN C_TO_XEN_Widgets(Widget *array, int len)
 {
@@ -911,6 +914,7 @@ enum {CALLBACK_TYPE, CALLBACK_FUNC, CALLBACK_DATA, CALLBACK_STRUCT_TYPE, CALLBAC
 static void gxm_XtCallbackProc(Widget w, XtPointer context, XtPointer info)
 {
   XEN descr = (XEN)context;
+  /* XEN_ASSERT_TYPE(XM_XtCallback_P(descr) && (XEN_LIST_LENGTH(descr) == 5), descr, XEN_ONLY_ARG, "XtCallback", "list of 5 elements"); */
   XEN_CALL_3(XEN_LIST_REF(descr, CALLBACK_FUNC),    /* descr: (list "XtCallback" func user-data struct-type gc-loc) */
 	     C_TO_XEN_Widget(w),
 	     XEN_LIST_REF(descr, CALLBACK_DATA),
@@ -14632,19 +14636,25 @@ static XEN gxm_XpmReadFileToPixmap(XEN arg1, XEN arg2, XEN arg3, XEN arg6)
 
 static XEN gxm_XpmCreatePixmapFromData(XEN arg1, XEN arg2, XEN arg3, XEN arg6)
 {
-  /* DIFF: XpmCreatePixmapFromData omits and returns pixmap args
+  /* DIFF: XpmCreatePixmapFromData omits and returns pixmap args, arg3 (bits) is list of strings
    */
   Pixmap p1, p2;
-  int val;
+  int val, i, len;
+  char **bits;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpmCreatePixmapFromData", "Display*");
   XEN_ASSERT_TYPE(XEN_Drawable_P(arg2), arg2, 2, "XpmCreatePixmapFromData", "Drawable");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XpmCreatePixmapFromData", "char**");
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XpmCreatePixmapFromData", "list of char*");
   XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg6), arg6, 6, "XpmCreatePixmapFromData", "XpmAttributes*");
+  len = XEN_LIST_LENGTH(arg3);
+  bits = (char **)calloc(len, sizeof(char *));
+  for (i = 0; i < len; i++, arg3 = XEN_CDR(arg3))
+    bits[i] = XEN_TO_C_STRING(XEN_CAR(arg3));
   val = XpmCreatePixmapFromData(XEN_TO_C_Display(arg1), 
 				XEN_TO_C_Drawable(arg2), 
-				(char **)XEN_TO_C_ULONG(arg3), 
+				bits,
 				&p1, &p2,
 				XEN_TO_C_XpmAttributes(arg6));
+  free(bits);
   return(XEN_LIST_3(C_TO_XEN_INT(val),
 		    C_TO_XEN_Pixmap(p1),
 		    C_TO_XEN_Pixmap(p2)));
@@ -14656,6 +14666,7 @@ static XEN gxm_XpmCreateBufferFromPixmap(XEN arg1, XEN arg3, XEN arg4, XEN arg5)
    */
   char **buf;
   int val;
+  XEN lst = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpmCreateBufferFromPixmap", "Display*");
   XEN_ASSERT_TYPE(XEN_Pixmap_P(arg3), arg3, 3, "XpmCreateBufferFromPixmap", "Pixmap");
   XEN_ASSERT_TYPE(XEN_Pixmap_P(arg4), arg4, 4, "XpmCreateBufferFromPixmap", "Pixmap");
@@ -14665,8 +14676,9 @@ static XEN gxm_XpmCreateBufferFromPixmap(XEN arg1, XEN arg3, XEN arg4, XEN arg5)
 				  XEN_TO_C_Pixmap(arg3), 
 				  XEN_TO_C_Pixmap(arg4), 
 				  XEN_TO_C_XpmAttributes(arg5));
+  /* TODO: where is buffer size? */
   return(XEN_LIST_2(C_TO_XEN_INT(val),
-		    C_TO_XEN_ULONG(buf)));
+		    lst));
 }
 
 static XEN gxm_XpmCreateBufferFromImage(XEN arg1, XEN arg3, XEN arg4, XEN arg5)
@@ -14721,11 +14733,11 @@ static XEN gxm_XpmColorSymbol(XEN name, XEN value, XEN pixel)
 {
   XpmColorSymbol *r;
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, "XpmColorSymbol", "char*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(value), value, 2, "XpmColorSymbol", "char*");
+  XEN_ASSERT_TYPE(XEN_FALSE_P(value) || XEN_STRING_P(value), value, 2, "XpmColorSymbol", "char*");
   XEN_ASSERT_TYPE(XEN_Pixel_P(pixel), pixel, 3, "XpmColorSymbol", "Pixel");
   r = (XpmColorSymbol *)calloc(1, sizeof(XpmColorSymbol));
   r->name = XEN_TO_C_STRING(name);
-  r->value = XEN_TO_C_STRING(value);
+  r->value = (XEN_FALSE_P(value)) ? NULL : XEN_TO_C_STRING(value);
   r->pixel = XEN_TO_C_Pixel(pixel);
   return(WRAP_FOR_XEN_OBJ("XpmColorSymbol",r));
 }
@@ -16038,6 +16050,8 @@ static void define_procedures(void)
       ADD: XHostAddress? XpmAttributes? XpmImage? XmRendition? XmRenderTable? XModifierKeymap?
   */
 #if HAVE_MOTIF
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "Pixel" XM_POSTFIX, gxm_Pixel, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "GC" XM_POSTFIX, gxm_GC, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "Widget" XM_POSTFIX, gxm_Widget, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtAppContext?" XM_POSTFIX, XEN_XtAppContext_p, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRequestId?" XM_POSTFIX, XEN_XtRequestId_p, 1, 0, 0, NULL);
@@ -16944,7 +16958,18 @@ static XEN gxm_colormap(XEN ptr)
   if (XEN_XSetWindowAttributes_P(ptr)) return(C_TO_XEN_Colormap((Colormap)((XEN_TO_C_XSetWindowAttributes(ptr))->colormap)));
   if (XEN_XColormapEvent_P(ptr)) return(C_TO_XEN_Colormap((Colormap)((XEN_TO_C_XColormapEvent(ptr))->colormap)));
   if (XEN_XStandardColormap_P(ptr)) return(C_TO_XEN_Colormap((Colormap)((XEN_TO_C_XStandardColormap(ptr))->colormap)));
+#if HAVE_XPM
+  if (XEN_XpmAttributes_P(ptr)) return(C_TO_XEN_Colormap((Colormap)((XEN_TO_C_XpmAttributes(ptr))->colormap)));
+#endif
   return(XEN_FALSE);
+}
+
+static XEN gxm_set_colormap(XEN ptr, XEN val)
+{
+#if HAVE_XPM
+  if (XEN_XpmAttributes_P(ptr)) (XEN_TO_C_XpmAttributes(ptr))->colormap = XEN_TO_C_Colormap(val);
+#endif
+  return(val);
 }
 
 static XEN gxm_property(XEN ptr)
@@ -18921,7 +18946,6 @@ static void define_structs(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "requestor" XM_POSTFIX, gxm_requestor, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "target" XM_POSTFIX, gxm_target, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "property" XM_POSTFIX, gxm_property, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "colormap" XM_POSTFIX, gxm_colormap, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "new" XM_POSTFIX, gxm_new, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "message_type" XM_POSTFIX, gxm_message_type, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "format" XM_POSTFIX, gxm_format, 1, 0, 0, NULL);
@@ -19085,6 +19109,8 @@ static void define_structs(void)
 				   XM_PREFIX "set-value" XM_POSTFIX, gxm_set_value,  1, 0, 2, 0); 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "doit" XM_POSTFIX, gxm_doit, "", 
 				   XM_PREFIX "set-doit" XM_POSTFIX, gxm_set_doit,  1, 0, 2, 0); 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "colormap" XM_POSTFIX, gxm_colormap, "",
+				   XM_PREFIX "set-colormap" XM_POSTFIX, gxm_set_colormap, 1, 0, 2, 0);
 
 #if HAVE_XPM
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_PREFIX "valuemask" XM_POSTFIX, gxm_valuemask, "", 

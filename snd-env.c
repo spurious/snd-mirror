@@ -578,7 +578,7 @@ void init_env_axes(chan_info *acp, char *name, int x_offset, int ey0, int width,
   ap->y_offset = ey0;
   ap->height = height;
   ap->graph_x0 = x_offset;
-  make_axes_1(acp, ap, X_AXIS_IN_SECONDS, 1);
+  make_axes_1(ap, X_AXIS_IN_SECONDS, 1, SHOW_ALL_AXES, acp->printing, TRUE);
   /* if this is too small for an axis, it still sets up the fields needed for grf_x|y, so tiny envelope graphs will work */
 }
 
@@ -708,7 +708,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 		      draw_arc(ax, ix1, iy1, size);
 		    }
 		  draw_line(ax, ix0, iy0, ix1, iy1);
-		  if (axis_cp->printing) ps_draw_line(axis_cp, ix0, iy0, ix1, iy1);
+		  if (axis_cp->printing) ps_draw_line(axis_cp->axis, ix0, iy0, ix1, iy1);
 		}
 	    }
 	}
@@ -731,8 +731,8 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 		  draw_line(ax, ix1, iy0, ix1, iy1);
 		  if (axis_cp->printing) 
 		    {
-		      ps_draw_line(axis_cp, ix0, iy0, ix1, iy0);
-		      ps_draw_line(axis_cp, ix1, iy0, ix1, iy1);
+		      ps_draw_line(axis_cp->axis, ix0, iy0, ix1, iy0);
+		      ps_draw_line(axis_cp->axis, ix1, iy0, ix1, iy1);
 		    }
 		}
 	    }
@@ -755,7 +755,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 		  ix1 = grf_x(curx, axis_cp->axis);
 		  iy1 = grf_y_dB(ss, env_val, axis_cp->axis);
 		  draw_line(ax, ix0, iy0, ix1, iy1);
-		  if (axis_cp->printing) ps_draw_line(axis_cp, ix0, iy0, ix1, iy1);
+		  if (axis_cp->printing) ps_draw_line(axis_cp->axis, ix0, iy0, ix1, iy1);
 		  if ((dots) && (index != mus_position(ce)))
 		    {
 		      set_current_point(j++, ix1, iy1);
@@ -770,7 +770,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 		  ix1 = grf_x(ex1, axis_cp->axis);
 		  iy1 = grf_y_dB(ss, e->data[e->pts * 2 - 1], axis_cp->axis);
 		  draw_line(ax, ix0, iy0, ix1, iy1);
-		  if (axis_cp->printing) ps_draw_line(axis_cp, ix0, iy0, ix1, iy1);
+		  if (axis_cp->printing) ps_draw_line(axis_cp->axis, ix0, iy0, ix1, iy1);
 		}
 	      if (dots)
 		{

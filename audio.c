@@ -5059,6 +5059,36 @@ static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int siz
 		  __FUNCTION__, alsa_name, snd_pcm_access_name(alsa_interleave));
 	return(MUS_ERROR);
     }
+    periods = alsa_periods;
+    frames = size/chans/mus_data_format_to_bytes_per_sample(format);
+    err = snd_pcm_hw_params_set_buffer_size(handle, hw_params, frames*periods);
+    if (err < 0) {
+	snd_pcm_uframes_t min, max;
+	min = snd_pcm_hw_params_get_buffer_size_min(hw_params);
+	max = snd_pcm_hw_params_get_buffer_size_max(hw_params);
+	snd_pcm_close(handle);
+	handles[alsa_stream] = NULL;
+	alsa_dump_configuration(alsa_name, hw_params, sw_params);
+	mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
+		  "%s: %s: cannot set buffer size to %d periods of %d frames;
+total requested buffer size is %d frames, minimum allowed is %d, maximum is %d", 
+		  __FUNCTION__, alsa_name, periods, frames, periods*frames, min, max);
+	return(MUS_ERROR);
+    }
+    err = snd_pcm_hw_params_set_periods(handle, hw_params, periods, 0);
+    if (err < 0) {
+	int dir;
+	snd_pcm_uframes_t min, max;
+	min = snd_pcm_hw_params_get_period_size_min(hw_params, &dir);
+	max = snd_pcm_hw_params_get_period_size_max(hw_params, &dir);
+	snd_pcm_close(handle);
+	handles[alsa_stream] = NULL;
+	alsa_dump_configuration(alsa_name, hw_params, sw_params);
+	mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
+		  "%s: %s: cannot set number of periods to %d, min is %d, max is %d", 
+		  __FUNCTION__, alsa_name, periods, min, max);
+	return(MUS_ERROR);
+    }
     err = snd_pcm_hw_params_set_format(handle, hw_params, alsa_format);
     if (err < 0) {
 	snd_pcm_close(handle);
@@ -5093,28 +5123,6 @@ static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int siz
 	    mus_print("%s: %s: could not set rate to exactly %d, set to %d instead",
 		      alsa_name, srate, r);
 	}
-    }
-    periods = alsa_periods;
-    frames = size/chans/mus_data_format_to_bytes_per_sample(format);
-    err = snd_pcm_hw_params_set_buffer_size(handle, hw_params, frames*periods);
-    if (err < 0) {
-	snd_pcm_close(handle);
-	handles[alsa_stream] = NULL;
-	alsa_dump_configuration(alsa_name, hw_params, sw_params);
-	mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
-		  "%s: %s: cannot set buffer size to %s frames", 
-		  __FUNCTION__, alsa_name, frames*periods);
-	return(MUS_ERROR);
-    }
-    err = snd_pcm_hw_params_set_periods(handle, hw_params, periods, 0);
-    if (err < 0) {
-	snd_pcm_close(handle);
-	handles[alsa_stream] = NULL;
-	alsa_dump_configuration(alsa_name, hw_params, sw_params);
-	mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
-		  "%s: %s: cannot set number of periods to %d", 
-		  __FUNCTION__, alsa_name, periods);
-	return(MUS_ERROR);
     }
     err = snd_pcm_hw_params(handle, hw_params);
     if (err < 0) {

@@ -1916,10 +1916,22 @@ that were removed from or renamed in Snd-5.
 <A NAME="sndmotifdoc"></a><span class=box><h2>snd-motif.scm</h2></span>
 
 <p>snd-motif.scm has procedures that rely on the Motif module (xm.c).
-Currently, that comprises <b>install-searcher</b> which places
+<b>install-searcher</b> places
 our own search procedure into the "filter" mechanism in the File:Open
-dialog, and the pair <b>zync</b> and <b>unzync</b> which cause the
-y-axis zoom sliders of a multi-channel file to move together.
+dialog. The pair <b>zync</b> and <b>unzync</b> cause the
+y-axis zoom sliders of a multi-channel file to move together or separately.
+<b>make-hidden-controls-dialog</b> adds "Hidden controls" to the Option
+menu.  If you click it, it
+creates a dialog that controls all the "hidden" control-panel variables.
+The "expand-hop" control sets the hop size (per grain), "expand-length"
+sets the grain length, "expand-ramp" sets the slope, essentially, of the grain amplitude envelope,
+"contrast-amp" sets the prescaler for the contrast effect, "reverb-feedback" sets the feedback
+amount in the reverberator (it sets all the comb filter scalers), and "reverb-lowpass" sets
+the lowpass filter coefficient in the reverberator. 
+<b>create-fmv-dialog</b> sets up a very simple dialog with amplitude control on
+the fm-violin (fmv.scm) running (interpreted!) in "real-time".
+<b>make-pixmap</b> turns xpm-style description into pixmap.
+<b>display-scanned-synthesis</b> opens a pane for experimenting with scanned synthesis.
 </p>
 
 

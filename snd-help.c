@@ -253,7 +253,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
-27-Jul:  zync/unzync in snd-motif.scm.\n\
+28-Jul:  removed set-pixmap, make-pixmap (see snd-motif.scm replacement).\n\
+27-Jul:  zync/unzync, make-hidden-controls-dialog in snd-motif.scm.\n\
 26-Jul:  added 'play selected sound' button to open file dialog.\n\
          previous-files-select-hook, open-file-dialog, install-searcher (grfsnd.html).\n\
          snd-motif.scm.\n\

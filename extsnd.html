@@ -21,6 +21,9 @@
 </style>
 </head>
 
+<!-- TODO: snd-pixel draw-axes snd-gcs
+-->
+
 <!-- -------------------------------------------------------------------------------- -->
 <!-- an experiment: click button to post an example; I'd like the buttons on the right to take less space somehow -->
 <!--    also, need some automatic way to update the location references etc -->
@@ -7868,8 +7871,6 @@ variable %load-verbosely to #t.
 <pre>
   <b><a name="changeproperty">change-property</a></b> (known-atom property value)
   <b><a name="listenerselection">listener-selection</a></b> ()
-  <b><a name="makepixmap">make-pixmap</a></b> (list-of-xpm-style-strings)
-  <b><a name="setpixmap">set-pixmap</a></b> (widget pixmap)
   <b><a name="colormapref">colormap-ref</a></b> (map position)
 </pre>
 <p><i>change-property</i> changes an X-window's property; there's an example in examp.scm. <i>listener-selection</i>
@@ -7882,36 +7883,6 @@ to the selection if "h" is typed in the graph:
       (let ((subject (<em class=red>listener-selection</em>)))
 	(if subject
             (help-dialog subject (snd-help subject))))))
-</pre>
-<p>The pixmap procedures are based on XPM-style pixmaps; these can be used either to set the
-sound name icon pixmap (normally either blank, a lock, an hour-glass, or a bomb), or can
-be used to "tile" the background of various widgets.  The following example creates
-an arrow pixmap and displays it next to the sound file name:
-</p>
-<pre>
-(define arrow (make-pixmap (list
-"16 12 6 1"
-" 	c None s None"
-".	c gray50"
-"X	c black"
-"o	c white"
-"O	c yellow"
-"-      c ivory2 s basiccolor"
-"--------X---------"
-"---------X--------"
-"----------X-------"
-"-----------X------"
-"------------X-----"
-"XXXXXXXXXXXXXX----"
-"------------X-----"
-"-----------X------"
-"----------X-------"
-"---------X--------"
-"--------X---------"
-"-------X----------"
-)))
-
-(set-pixmap (list-ref (sound-widgets) 8) arrow)
 </pre>
 <p><i>colormap-ref</i> returns the rgb values of the colormap <i>map</i> at position <i>pos</i>,
 suitable for use with make-color.

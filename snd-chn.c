@@ -840,7 +840,7 @@ static void display_zero (chan_info *cp)
       zero = local_grf_y(0.0, ap);
       draw_line(copy_context(cp), ap->x_axis_x0, zero, ap->x_axis_x1, zero);
       if (cp->printing) 
-	ps_draw_line(cp, ap->x_axis_x0, 0, ap->x_axis_x1, 0);
+	ps_draw_line(ap, ap->x_axis_x0, 0, ap->x_axis_x1, 0);
     }
 }
 
@@ -852,7 +852,7 @@ static void display_channel_id (chan_info *cp, int height, int chans)
   if ((chans > 1) || (cp->edit_ctr > 0))
     {
       set_peak_numbers_font(cp);
-      if (cp->printing) ps_set_peak_numbers_font(cp);
+      if (cp->printing) ps_set_peak_numbers_font();
       x0 = 5;
       y0 = height - 5;
       if (cp == selected_channel(cp->state))
@@ -881,7 +881,7 @@ static void display_channel_id (chan_info *cp, int height, int chans)
 	}
       draw_string(copy_context(cp), x0, y0, chn_id_str, strlen(chn_id_str));
       if (cp->printing) 
-	ps_draw_string(cp, x0, y0, chn_id_str);
+	ps_draw_string(cp->axis, x0, y0, chn_id_str);
     }
 }
 
@@ -890,12 +890,12 @@ static void display_selection_transform_size (chan_info *cp, axis_info *fap)
   int x0, y0;
   if (fap->height < 60) return;
   set_tiny_numbers_font(cp);
-  if (cp->printing) ps_set_tiny_numbers_font(cp);
+  if (cp->printing) ps_set_tiny_numbers_font();
   y0 = fap->height + fap->y_offset - 3;
   x0 = fap->x_axis_x0 + 10;
   mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "(len: %d/%d)", selection_len(), cp->selection_transform_size);
   draw_string(copy_context(cp), x0, y0, chn_id_str, strlen(chn_id_str));
-  if (cp->printing) ps_draw_string(cp, x0, y0, chn_id_str);
+  if (cp->printing) ps_draw_string(fap, x0, y0, chn_id_str);
 }
 
 static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss);
@@ -999,7 +999,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	{
 	  draw_grf_points(cp, ax, j, ap, 0.0, TIME_GRAPH_STYLE(cp));
 	  if (cp->printing) 
-	    ps_draw_grf_points(cp, ap, j, 0.0, TIME_GRAPH_STYLE(cp));
+	    ps_draw_grf_points(ap, j, 0.0, TIME_GRAPH_STYLE(cp), cp->dot_size);
 	}
     }
   else
@@ -1059,7 +1059,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	{
 	  draw_both_grf_points(cp, ax, j, TIME_GRAPH_STYLE(cp));
 	  if (cp->printing) 
-	    ps_draw_both_grf_points(cp, ap, j, TIME_GRAPH_STYLE(cp));
+	    ps_draw_both_grf_points(ap, j, TIME_GRAPH_STYLE(cp), cp->dot_size);
 	}
     }
   if (sf) {free_snd_fd(sf); sf = NULL;}
@@ -1067,7 +1067,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
     {
       copy_context(cp); /* reset for axes etc */
       if (cp->printing)
-	ps_reset_color(cp);
+	ps_reset_color();
     }
   return(j);
 }
@@ -1322,7 +1322,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
       qsort((void *)peak_amps, num_peaks, sizeof(fft_peak), compare_peak_amps);
       if (num_peaks < 12) amp0 = peak_amps[2].amp; else amp0 = peak_amps[5].amp;
       set_bold_peak_numbers_font(cp);
-      if (cp->printing) ps_set_bold_peak_numbers_font(cp);
+      if (cp->printing) ps_set_bold_peak_numbers_font();
       row = fap->y_axis_y1 + 15;
       for (i = 0; i < num_peaks; i++)
 	{
@@ -1331,7 +1331,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 	      px = peak_freqs[i].freq;
 	      fstr = prettyf(px * scaler, tens);
 	      draw_string(ax, col, row, fstr, strlen(fstr));
-	      if (cp->printing) ps_draw_string(cp, col, row, fstr);
+	      if (cp->printing) ps_draw_string(fap, col, row, fstr);
 	      FREE(fstr);
 	      fstr = NULL;
 	      if (with_amps)
@@ -1341,7 +1341,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 		  else mus_snprintf(ampstr, LABEL_BUFFER_SIZE, "%.*f", acols, peak_freqs[i].amp);
 		  draw_string(ax, acol, row, ampstr, strlen(ampstr));
 		  if (cp->printing) 
-		    ps_draw_string(cp, acol, row, ampstr);
+		    ps_draw_string(fap, acol, row, ampstr);
 		}
 	    }
 	  row += 15;
@@ -1349,7 +1349,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
     }
   else amp0 = 100.0;
   set_peak_numbers_font(cp);
-  if (cp->printing) ps_set_peak_numbers_font(cp);
+  if (cp->printing) ps_set_peak_numbers_font();
   /* choose a small font for these numbers */
   row = fap->y_axis_y1 + 15;
   for (i = 0; i < num_peaks; i++)
@@ -1359,7 +1359,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 	  px = peak_freqs[i].freq;
 	  fstr = prettyf(px * scaler, tens);
 	  draw_string(ax, col, row, fstr, strlen(fstr));
-	  if (cp->printing) ps_draw_string(cp, col, row, fstr);
+	  if (cp->printing) ps_draw_string(fap, col, row, fstr);
 	  FREE(fstr);
 	  fstr = NULL;
 	  if (with_amps)
@@ -1369,7 +1369,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 	      else mus_snprintf(ampstr, LABEL_BUFFER_SIZE, "%.*f", acols, peak_freqs[i].amp);
 	      draw_string(ax, acol, row, ampstr, strlen(ampstr));
 	      if (cp->printing) 
-		ps_draw_string(cp, acol, row, ampstr);
+		ps_draw_string(fap, acol, row, ampstr);
 	    }
 	}
       row += 15;
@@ -1477,7 +1477,7 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	}
       draw_grf_points(cp, ax, i - losamp, fap, 0.0, TRANSFORM_GRAPH_STYLE(cp));
       if (cp->printing) 
-	ps_draw_grf_points(cp, fap, i - losamp, 0.0, TRANSFORM_GRAPH_STYLE(cp));
+	ps_draw_grf_points(fap, i - losamp, 0.0, TRANSFORM_GRAPH_STYLE(cp), cp->dot_size);
     }
   else
     {
@@ -1552,12 +1552,12 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	}
       draw_grf_points(cp, ax, j, fap, 0.0, TRANSFORM_GRAPH_STYLE(cp));
       if (cp->printing) 
-	ps_draw_grf_points(cp, fap, j, 0.0, TRANSFORM_GRAPH_STYLE(cp));
+	ps_draw_grf_points(fap, j, 0.0, TRANSFORM_GRAPH_STYLE(cp), cp->dot_size);
     }
   if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
     {
       copy_context(cp); /* reset for axes etc */
-      if (cp->printing) ps_reset_color(cp);
+      if (cp->printing) ps_reset_color();
     }
   if (cp->show_transform_peaks) 
     {
@@ -1782,8 +1782,8 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		  if (cp->printing)
 		    {
 		      if (cp->fft_log_frequency) 
-			ps_draw_sono_rectangle(cp, fap, j, fap->x0 + xscl * slice, hfdata[i + 1], frectw, hfdata[i] - hfdata[i + 1]);
-		      else ps_draw_sono_rectangle(cp, fap, j, fap->x0 + xscl * slice, hfdata[i + 1], frectw, frecth);
+			ps_draw_sono_rectangle(fap, j, fap->x0 + xscl * slice, hfdata[i + 1], frectw, hfdata[i] - hfdata[i + 1]);
+		      else ps_draw_sono_rectangle(fap, j, fap->x0 + xscl * slice, hfdata[i + 1], frectw, frecth);
 		    }
 		  js[j]++;
 		}
@@ -1802,7 +1802,7 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		}
 	    }
 	}
-      if (cp->printing) ps_reset_color(cp);
+      if (cp->printing) ps_reset_color();
       FREE(hfdata);
       FREE(hidata);
       if (cp->hookable) after_fft(ss, cp, 1.0/scl);
@@ -1931,7 +1931,7 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	      draw_grf_points(cp, ax, bins, fap, 0.0, TRANSFORM_GRAPH_STYLE(cp));
 	      if (cp->printing) 
 		{
-		  ps_draw_grf_points(cp, fap, bins, 0.0, TRANSFORM_GRAPH_STYLE(cp));
+		  ps_draw_grf_points(fap, bins, 0.0, TRANSFORM_GRAPH_STYLE(cp), cp->dot_size);
 		  check_for_event(ss);
 		  if ((ss->stopped_explicitly) || (!(cp->active)))
 		    {
@@ -1985,7 +1985,7 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 					(int)(xval + x0), 
 					(int)(yval + y0));
 		      if (cp->printing) 
-			ps_draw_spectro_line(cp, j, xx, yy, xval + x0, yval + y0);
+			ps_draw_spectro_line(fap, j, xx, yy, xval + x0, yval + y0);
 		    }
 		  xx = (int)(xval + x0); 
 		  yy = (int)(yval + y0);
@@ -2001,7 +2001,7 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		    }
 		}
 	    }
-	  if (cp->printing) ps_reset_color(cp);
+	  if (cp->printing) ps_reset_color();
 	}
       if (cp->hookable) after_fft(ss, cp, 1.0 / scl);
     }
@@ -2060,7 +2060,7 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	    }
 	  draw_grf_points(cp, ax, cp->wavo_trace, ap, 0.0, TIME_GRAPH_STYLE(cp));
 	  if (cp->printing) 
-	    ps_draw_grf_points(cp, ap, cp->wavo_trace, 0.0, TIME_GRAPH_STYLE(cp));
+	    ps_draw_grf_points(ap, cp->wavo_trace, 0.0, TIME_GRAPH_STYLE(cp), cp->dot_size);
 	}
     }
   else
@@ -2096,13 +2096,13 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 				    (int)(xval + x0), 
 				    (int)(yval + y0));
 		  if (cp->printing) 
-		    ps_draw_spectro_line(cp, j, xx, yy, xval + x0, yval + y0);
+		    ps_draw_spectro_line(ap, j, xx, yy, xval + x0, yval + y0);
 		}
 	      xx = (int)(xval + x0); 
 	      yy = (int)(yval + y0);
 	    }
 	}
-      if (cp->printing) ps_reset_color(cp);
+      if (cp->printing) ps_reset_color();
     }
   free_snd_fd(sf);
 }
@@ -2184,7 +2184,7 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 		}
 	      draw_grf_points(cp, ax, grf_len, uap, 0.0, LISP_GRAPH_STYLE(cp));
 	      if (cp->printing) 
-		ps_draw_grf_points(cp, uap, grf_len, 0.0, LISP_GRAPH_STYLE(cp));
+		ps_draw_grf_points(uap, grf_len, 0.0, LISP_GRAPH_STYLE(cp), cp->dot_size);
 	    }
 	  else
 	    {
@@ -2222,14 +2222,14 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 		}
 	      draw_both_grf_points(cp, ax, j, LISP_GRAPH_STYLE(cp));
 	      if (cp->printing) 
-		ps_draw_both_grf_points(cp, uap, j, LISP_GRAPH_STYLE(cp));
+		ps_draw_both_grf_points(uap, j, LISP_GRAPH_STYLE(cp), cp->dot_size);
 	    }
 	}
       if (up->graphs > 1) set_foreground_color(cp, ax, old_color);
       if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
 	{
 	  copy_context(cp); /* reset for axes etc */
-	  if (cp->printing) ps_reset_color(cp);
+	  if (cp->printing) ps_reset_color();
 	}
       if (cp->show_transform_peaks) 
 	display_peaks(cp, uap, up->data[0], 1, up->len[0] - 1, samples_per_pixel, 0, 0.0);
@@ -2253,7 +2253,12 @@ static void make_axes(chan_info *cp, axis_info *ap, int x_style, int erase_first
   setup_axis_context(cp, ax);
   if (erase_first)
     erase_rectangle(cp, ap->ax, ap->graph_x0, ap->y_offset, ap->width, ap->height); 
-  make_axes_1(cp, ap, x_style, SND_SRATE(sp));
+  make_axes_1(ap, x_style, SND_SRATE(sp), cp->show_axes, cp->printing,
+	      ((sp == NULL) || 
+	       (sp->channel_style != CHANNELS_COMBINED) || 
+	       (cp->show_axes == SHOW_ALL_AXES) || 
+	       (cp->chan == (sp->nchans - 1))));
+  /* sp is null in the control panel filter envelope display */
 }
 
 static void draw_graph_cursor(chan_info *cp);

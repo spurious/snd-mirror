@@ -97,9 +97,9 @@ static void end_ps_graph(void)
  * kept here in full precision since normally printers have much higher resolution than screens 
  */
 
-static int reflect_y(chan_info *cp, int y)
+static int reflect_y(axis_info *ap, int y)
 {
-  return(((axis_info *)(cp->axis))->height - y);
+  return(ap->height - y);
 }
 
 static Float *xpts = NULL;
@@ -136,7 +136,7 @@ static Float ps_grf_y(axis_info *ap, Float val)
   return(by0 + ap->height - (ap->y_axis_y0 + (val - ap->y0) * ap->y_scale));
 }
 
-static void ps_draw_lines(chan_info *cp, axis_info *ap, int j, Float *xpts, Float *ypts)
+static void ps_draw_lines(axis_info *ap, int j, Float *xpts, Float *ypts)
 {
   int i;
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f moveto\n", ps_grf_x(ap, xpts[0]), ps_grf_y(ap, ypts[0]));
@@ -150,11 +150,11 @@ static void ps_draw_lines(chan_info *cp, axis_info *ap, int j, Float *xpts, Floa
   ps_write(ps_fd, pbuf);
 }
 
-static void ps_draw_dots(chan_info *cp, axis_info *ap, int j, Float *xpts, Float *ypts)
+static void ps_draw_dots(axis_info *ap, int j, Float *xpts, Float *ypts, int dot_size)
 {
   int i;
   Float arc_size;
-  arc_size = .5 * cp->dot_size; /* radius here, diameter in X */
+  arc_size = .5 * dot_size; /* radius here, diameter in X */
   for (i = 0; i < j; i++)
     {
       mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f 0 360 NAF\n", ps_grf_x(ap, xpts[i]), ps_grf_y(ap, ypts[i]), arc_size);
@@ -162,7 +162,7 @@ static void ps_draw_dots(chan_info *cp, axis_info *ap, int j, Float *xpts, Float
     }
 }
 
-static void ps_fill_polygons(chan_info *cp, axis_info *ap, int j, Float *xpts, Float *ypts, Float y0)
+static void ps_fill_polygons(axis_info *ap, int j, Float *xpts, Float *ypts, Float y0)
 {
   int i;
   for (i = 1; i < j; i++)
@@ -180,29 +180,29 @@ static void ps_fill_polygons(chan_info *cp, axis_info *ap, int j, Float *xpts, F
     }
 }
 
-void ps_draw_grf_points(chan_info *cp, axis_info *ap, int j, Float y0, int graph_style) 
+void ps_draw_grf_points(axis_info *ap, int j, Float y0, int graph_style, int dot_size) 
 {
   int i, gy0, size8, size4;
   switch (graph_style)
     {
     case GRAPH_LINES:
-      ps_draw_lines(cp, ap, j, xpts, ypts);
+      ps_draw_lines(ap, j, xpts, ypts);
       break;
     case GRAPH_DOTS:
-      ps_draw_dots(cp, ap, j, xpts, ypts);
+      ps_draw_dots(ap, j, xpts, ypts, dot_size);
       break;
     case GRAPH_FILLED:
-      ps_fill_polygons(cp, ap, j, xpts, ypts, y0);
+      ps_fill_polygons(ap, j, xpts, ypts, y0);
       break;
     case GRAPH_DOTS_AND_LINES:
-      ps_draw_lines(cp, ap, j, xpts, ypts);
-      if (cp->dot_size > 1) ps_draw_dots(cp, ap, j, xpts, ypts);
+      ps_draw_lines(ap, j, xpts, ypts);
+      if (dot_size > 1) ps_draw_dots(ap, j, xpts, ypts, dot_size);
       break;
     case GRAPH_LOLLIPOPS:
-      if (cp->dot_size > 1) ps_draw_dots(cp, ap, j, xpts, ypts);
+      if (dot_size > 1) ps_draw_dots(ap, j, xpts, ypts, dot_size);
       gy0 = (int)ps_grf_y(ap, y0);
-      size8 = cp->dot_size / 8;
-      size4 = cp->dot_size / 4;
+      size8 = dot_size / 8;
+      size4 = dot_size / 4;
       if (size4 < 1) size4 = 1;
       for (i = 0; i < j; i++)
 	{
@@ -217,18 +217,18 @@ void ps_draw_grf_points(chan_info *cp, axis_info *ap, int j, Float y0, int graph
     }
 }
 
-void ps_draw_both_grf_points(chan_info *cp, axis_info *ap, int j, int graph_style) 
+void ps_draw_both_grf_points(axis_info *ap, int j, int graph_style, int dot_size) 
 {
   int i, size8, size4;
   switch (graph_style)
     {
     case GRAPH_LINES:
-      ps_draw_lines(cp, ap, j, xpts, ypts);
-      ps_draw_lines(cp, ap, j, xpts, ypts1);
+      ps_draw_lines(ap, j, xpts, ypts);
+      ps_draw_lines(ap, j, xpts, ypts1);
       break;
     case GRAPH_DOTS:
-      ps_draw_dots(cp, ap, j, xpts, ypts);
-      ps_draw_dots(cp, ap, j, xpts, ypts1);
+      ps_draw_dots(ap, j, xpts, ypts, dot_size);
+      ps_draw_dots(ap, j, xpts, ypts1, dot_size);
       break;
     case GRAPH_FILLED:
       for (i = 1; i < j; i++)
@@ -246,22 +246,22 @@ void ps_draw_both_grf_points(chan_info *cp, axis_info *ap, int j, int graph_styl
 	}
       break;
     case GRAPH_DOTS_AND_LINES:
-      if (cp->dot_size > 1)
+      if (dot_size > 1)
 	{
-	  ps_draw_dots(cp, ap, j, xpts, ypts);
-	  ps_draw_dots(cp, ap, j, xpts, ypts1);
+	  ps_draw_dots(ap, j, xpts, ypts, dot_size);
+	  ps_draw_dots(ap, j, xpts, ypts1, dot_size);
 	}
-      ps_draw_lines(cp, ap, j, xpts, ypts);
-      ps_draw_lines(cp, ap, j, xpts, ypts1);
+      ps_draw_lines(ap, j, xpts, ypts);
+      ps_draw_lines(ap, j, xpts, ypts1);
       break;
     case GRAPH_LOLLIPOPS:
-      if (cp->dot_size > 1)
+      if (dot_size > 1)
 	{
-	  ps_draw_dots(cp, ap, j, xpts, ypts);
-	  ps_draw_dots(cp, ap, j, xpts, ypts1);
+	  ps_draw_dots(ap, j, xpts, ypts, dot_size);
+	  ps_draw_dots(ap, j, xpts, ypts1, dot_size);
 	}
-      size8 = cp->dot_size / 8;
-      size4 = cp->dot_size / 4;
+      size8 = dot_size / 8;
+      size4 = dot_size / 4;
       if (size4 < 1) size4 = 1;
       for (i = 0; i < j; i++)
 	{
@@ -279,11 +279,11 @@ void ps_draw_both_grf_points(chan_info *cp, axis_info *ap, int j, int graph_styl
 
 static int last_color = -1;
 
-void ps_draw_sono_rectangle(chan_info *cp, axis_info *ap, int color, Float x, Float y, Float width, Float height)
+void ps_draw_sono_rectangle(axis_info *ap, int color, Float x, Float y, Float width, Float height)
 {
   snd_state *ss;
   unsigned short r, g, b;
-  ss = cp->state;
+  ss = get_global_state();
   if (last_color != color)
     {
       get_current_color(color_map(ss), color, &r, &g, &b);
@@ -295,7 +295,7 @@ void ps_draw_sono_rectangle(chan_info *cp, axis_info *ap, int color, Float x, Fl
   ps_write(ps_fd, pbuf);
 }
 
-void ps_reset_color(chan_info *cp)
+void ps_reset_color(void)
 {
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " 0 setgray\n");
   ps_write(ps_fd, pbuf);
@@ -311,13 +311,13 @@ void ps_recolor(chan_info *cp)
 }
 
 /* the rest are in real coordinates except upsidedown from PS point of view */
-void ps_draw_line (chan_info *cp, int x0, int y0, int x1, int y1) 
+void ps_draw_line (axis_info *ap, int x0, int y0, int x1, int y1) 
 {
   int py0, py1, px0, px1;
   px0 = x0 + bx0;
   px1 = x1 + bx0;
-  py0 = reflect_y(cp, y0) + by0;
-  py1 = reflect_y(cp, y1) + by0;
+  py0 = reflect_y(ap, y0) + by0;
+  py1 = reflect_y(ap, y1) + by0;
   if (px0 > bbx) bbx = px0;
   if (px1 > bbx) bbx = px1;
   if (py0 > bby) bby = py0;
@@ -326,12 +326,12 @@ void ps_draw_line (chan_info *cp, int x0, int y0, int x1, int y1)
   ps_write(ps_fd, pbuf);
 }
 
-void ps_draw_spectro_line(chan_info *cp, int color, Float x0, Float y0, Float x1, Float y1)
+void ps_draw_spectro_line(axis_info *ap, int color, Float x0, Float y0, Float x1, Float y1)
 {
   /* these are in local coords */
   snd_state *ss;
   unsigned short r, g, b;
-  ss = cp->state;
+  ss = get_global_state();
   if (last_color != color)
     {
       get_current_color(color_map(ss), color, &r, &g, &b);
@@ -339,16 +339,16 @@ void ps_draw_spectro_line(chan_info *cp, int color, Float x0, Float y0, Float x1
       mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f RG\n", (float)r / 65535.0, (float)g / 65535.0, (float)b / 65535.0);
       ps_write(ps_fd, pbuf);
     }
-  ps_draw_line(cp, (int)x0, (int)y0, (int)x1, (int)y1);
+  ps_draw_line(ap, (int)x0, (int)y0, (int)x1, (int)y1);
 }
 
-void ps_fill_rectangle (chan_info *cp, int x0, int y0, int width, int height) 
+void ps_fill_rectangle (axis_info *ap, int x0, int y0, int width, int height) 
 {
   int py0, py1, px0, px1;
   px0 = x0 + bx0;
   px1 = x0 + bx0 + width;
-  py0 = reflect_y(cp, y0) + by0;
-  py1 = reflect_y(cp, y0 + height) + by0;
+  py0 = reflect_y(ap, y0) + by0;
+  py1 = reflect_y(ap, y0 + height) + by0;
   if (px0 > bbx) bbx = px0;
   if (px1 > bbx) bbx = px1;
   if (py0 > bby) bby = py0;
@@ -357,42 +357,42 @@ void ps_fill_rectangle (chan_info *cp, int x0, int y0, int width, int height)
   ps_write(ps_fd, pbuf);
 }
 
-void ps_draw_string (chan_info *cp, int x0, int y0, char *str) 
+void ps_draw_string (axis_info *ap, int x0, int y0, char *str) 
 {
   int px0, py0;
   px0 = x0 + bx0;
-  py0 = reflect_y(cp, y0) + by0;
+  py0 = reflect_y(ap, y0) + by0;
   if (px0 > bbx) bbx = px0;
   if (py0 > bby) bby = py0;
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %d %d moveto (%s) show\n", px0, py0, str);
   ps_write(ps_fd, pbuf);
 }
 
-void ps_set_number_font(chan_info *cp) 
+void ps_set_number_font(void) 
 {
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " /Courier findfont 15 scalefont setfont\n");
   ps_write(ps_fd, pbuf);
 }
 
-void ps_set_label_font(chan_info *cp) 
+void ps_set_label_font(void) 
 {
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " /Times-Roman findfont 20 scalefont setfont\n");
   ps_write(ps_fd, pbuf);
 }
 
-void ps_set_bold_peak_numbers_font(chan_info *cp) 
+void ps_set_bold_peak_numbers_font(void) 
 {
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " /Times-Bold findfont 14 scalefont setfont\n");
   ps_write(ps_fd, pbuf);
 }
 
-void ps_set_peak_numbers_font(chan_info *cp) 
+void ps_set_peak_numbers_font(void) 
 {
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " /Times-Roman findfont 14 scalefont setfont\n");
   ps_write(ps_fd, pbuf);
 }
 
-void ps_set_tiny_numbers_font(chan_info *cp) 
+void ps_set_tiny_numbers_font(void) 
 {
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " /Times-Roman findfont 12 scalefont setfont\n");
   ps_write(ps_fd, pbuf);

@@ -1,5 +1,12 @@
 (use-modules (ice-9 format))
 
+(if (not (provided? 'xm))
+    (let ((hxm (dlopen "xm.so")))
+      (if (string? hxm)
+	  (snd-error (format #f "snd-motif.scm needs the xm module: ~A" hxm))
+	  (dlinit hxm "init_xm"))))
+
+
 (define (snd-display . args)
   (let ((str (apply format #f args)))
     (display str)
@@ -7,8 +14,6 @@
 	(begin
 	  (snd-print "\n")
 	  (snd-print str)))))
-
-(init-xm)
 
 (define (for-each-child w func)
   (func w)
@@ -132,9 +137,23 @@
 		     "toggle" |xmToggleButtonWidgetClass main-pane
 		     (list |XmNleftAttachment   |XmATTACH_WIDGET
 			   |XmNleftWidget       button
-                           |XmNrightAttachment  |XmATTACH_FORM
+                           |XmNrightAttachment  |XmATTACH_NONE
 			   |XmNbottomAttachment |XmATTACH_NONE
 			   |XmNtopAttachment    |XmATTACH_FORM)))
+	   (slider (|XtCreateManagedWidget 
+		     "slider" |xmScrollBarWidgetClass main-pane
+		     (list |XmNleftAttachment   |XmATTACH_WIDGET
+			   |XmNleftWidget       toggle
+                           |XmNrightAttachment  |XmATTACH_FORM
+			   |XmNbottomAttachment |XmATTACH_NONE
+			   |XmNtopAttachment    |XmATTACH_FORM
+			   |XmNorientation      |XmHORIZONTAL
+			   |XmNdragCallback (list (lambda (widget context info)
+						    (display (|value info)))
+						  #f
+						  (lambda (widget context info)
+						    (display context))
+						  "ha"))))
 	   (drawer (|XtCreateManagedWidget
 		     "drawer" |xmDrawingAreaWidgetClass main-pane
 		     (list |XmNleftAttachment   |XmATTACH_FORM
@@ -158,7 +177,8 @@
 	    (draw-window (|XtWindow drawer))
 	    (draw-display (|XtDisplay drawer)))
 	
-	(|XtSetValues button (list |XmNbackground (|pixel col)) 1)
+;	(|XtSetValues button (list |XmNbackground (|pixel col)) 1)
+	(|XtSetValues button (list |XmNbackground (|Pixel (snd-pixel (basic-color)))) 1)
 
 	(|XtAppAddWorkProc app (let ((ctr 0))
 				 (lambda (n)

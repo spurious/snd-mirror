@@ -1,6 +1,7 @@
 snd change log
 
-  27-Jul:    zync/unzync in snd-motif.scm.
+  28-Jul:    removed set-pixmap, make-pixmap (see snd-motif.scm replacement).
+  27-Jul:    zync/unzync, make-hidden-controls-dialog in snd-motif.scm.
   26-Jul:    added 'play selected sound' button to open file dialog.
              previous-files-select-hook, open-file-dialog, install-searcher (grfsnd.html).
              snd-motif.scm.

@@ -510,7 +510,6 @@
 #define S_make_color                    "make-col" STR_OR
 #define S_make_graph_data               "make-graph-data"
 #define S_make_mix_sample_reader        "make-mix-sample-reader"
-#define S_make_pixmap                   "make-pixmap"
 #define S_make_player                   "make-player"
 #define S_make_region                   "make-region"
 #define S_make_region_sample_reader     "make-region-sample-reader"

@@ -574,20 +574,20 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
 void ps_set_grf_points(double x, int j, Float ymin, Float ymax);
 void ps_set_grf_point(double x, int j, Float y);
 void ps_allocate_grf_points(void);
-void ps_draw_grf_points(chan_info *cp, axis_info *ap, int j, Float y0, int graph_style);
-void ps_draw_both_grf_points(chan_info *cp, axis_info *ap, int j, int graph_style);
-void ps_draw_sono_rectangle(chan_info *cp, axis_info *ap, int color, Float x, Float y, Float width, Float height);
-void ps_reset_color(chan_info *cp);
+void ps_draw_grf_points(axis_info *ap, int j, Float y0, int graph_style, int dot_size);
+void ps_draw_both_grf_points(axis_info *ap, int j, int graph_style, int dot_size);
+void ps_draw_sono_rectangle(axis_info *ap, int color, Float x, Float y, Float width, Float height);
+void ps_reset_color(void);
 void ps_recolor(chan_info *cp);
-void ps_draw_line (chan_info *cp, int x0, int y0, int x1, int y1);
-void ps_draw_spectro_line(chan_info *cp, int color, Float x0, Float y0, Float x1, Float y1);
-void ps_fill_rectangle (chan_info *cp, int x0, int y0, int width, int height);
-void ps_draw_string (chan_info *cp, int x0, int y0, char *str);
-void ps_set_number_font(chan_info *cp);
-void ps_set_label_font(chan_info *cp);
-void ps_set_bold_peak_numbers_font(chan_info *cp);
-void ps_set_peak_numbers_font(chan_info *cp);
-void ps_set_tiny_numbers_font(chan_info *cp);
+void ps_draw_line (axis_info *ap, int x0, int y0, int x1, int y1);
+void ps_draw_spectro_line(axis_info *ap, int color, Float x0, Float y0, Float x1, Float y1);
+void ps_fill_rectangle (axis_info *ap, int x0, int y0, int width, int height);
+void ps_draw_string (axis_info *ap, int x0, int y0, char *str);
+void ps_set_number_font(void);
+void ps_set_label_font(void);
+void ps_set_bold_peak_numbers_font(void);
+void ps_set_peak_numbers_font(void);
+void ps_set_tiny_numbers_font(void);
 void snd_print(snd_state *ss, char *output);
 void region_print(char *output, char* title, chan_info *cp);
 void print_enved(char *output, chan_info *cp, int y0);
@@ -1041,7 +1041,7 @@ int calculate_fft(chan_info *cp, void *ptr);
 axis_info *free_axis_info(axis_info *ap);
 Locus grf_x(double val, axis_info *ap);
 Locus grf_y(Float val, axis_info *ap);
-void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate);
+void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, int show_x_axis);
 
 #define ungrf_x(AP, X) (((X) - (AP)->x_base) / (AP)->x_scale)
 #define ungrf_y(AP, Y) (((Y) - (AP)->y_base) / (AP)->y_scale)

@@ -52,57 +52,6 @@ char *transform_type_name(int choice)
 
 int max_transform_type(void) {return(num_transform_types - 1);}
 
-static chan_info *axis_cp = NULL;
-static axis_context *make_axis_cp(snd_state *ss, Widget w)
-{
-  /* conjure up minimal context for axis drawer in snd-axis.c */
-  /* almost the same as the same-named function in snd-xenv.c, but doesn't seem worth the trouble of making one function for both */
-  axis_info *ap;
-  axis_context *ax;
-  if (!axis_cp)
-    {
-      /* axis_cp is just a dummy chan_info struct to hold the axis_info pointer */
-      axis_cp = (chan_info *)CALLOC(1, sizeof(chan_info));
-      axis_cp->printing = 0;
-      axis_cp->state = ss;
-      ap = (axis_info *)CALLOC(1, sizeof(axis_info));
-      axis_cp->axis = ap;
-      ax = (axis_context *)CALLOC(1, sizeof(axis_context));
-      ap->ax = ax;
-      ap->ss = ss;
-      ap->cp = axis_cp;
-      ax->ss = ss;
-      ax->dp = XtDisplay(graph_drawer);
-      ax->wn = XtWindow(graph_drawer);
-    }
-  else
-    {
-      ap = axis_cp->axis;
-      ax = ap->ax;
-      if (ap->xlabel) FREE(ap->xlabel);
-    }
-  ax->gc = gc;
-  ap->xmin = 0.0;
-  ap->xmax = 1.0;
-  ap->ymin = 0.0;
-  ap->ymax = 1.0;
-  ap->y_ambit = 1.0;
-  ap->x_ambit = 1.0;
-  ap->xlabel = NULL;
-  ap->x0 = 0.0;
-  ap->x1 = 1.0;
-  ap->y0 = 0.0;
-  ap->y1 = 1.0;
-  ap->width = widget_width(w);
-  ap->window_width = ap->width;
-  ap->y_offset = 0;
-  ap->height = widget_height(w);
-  ap->graph_x0 = 0;
-  clear_window(ax);
-  make_axes_1(axis_cp, ap, X_AXIS_IN_SECONDS, 1);
-  return(ax);
-}
-
 static Float fp_dB(snd_state *ss, Float py)
 {
   return((py <= ss->lin_dB) ? 0.0 : (1.0 - ((20.0 * (log10(py))) / ss->min_dB)));
@@ -122,46 +71,74 @@ static Locus local_grf_y(Float val, axis_info *ap)
   return((Locus)(ap->y_base + val * ap->y_scale));
 }
 
+static axis_info *axis_ap = NULL;
+
 static void graph_redisplay(snd_state *ss)
 {
-  Display *dp;
-  Drawable wn;
   int ix0, iy0, ix1, iy1, i;
   Float xincr, x;
   axis_context *ax;
-
-  ax = make_axis_cp(ss, graph_drawer);
-  dp = XtDisplay(graph_drawer);
-  wn = XtWindow(graph_drawer);
-
+  if (axis_ap == NULL) 
+    {
+      axis_ap = (axis_info *)CALLOC(1, sizeof(axis_info));
+      ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      axis_ap->ax = ax;
+      axis_ap->ss = ss;
+      ax->ss = ss;
+      ax->dp = XtDisplay(graph_drawer);
+      ax->wn = XtWindow(graph_drawer);
+    }
+  else 
+    {
+      if (axis_ap->xlabel) FREE(axis_ap->xlabel);
+      ax = axis_ap->ax;
+    }
+  axis_ap->xmin = 0.0;
+  axis_ap->xmax = 1.0;
+  axis_ap->ymin = 0.0;
+  axis_ap->ymax = 1.0;
+  axis_ap->y_ambit = 1.0;
+  axis_ap->x_ambit = 1.0;
+  axis_ap->xlabel = NULL;
+  axis_ap->x0 = 0.0;
+  axis_ap->x1 = 1.0;
+  axis_ap->y0 = 0.0;
+  axis_ap->y1 = 1.0;
+  axis_ap->width = widget_width(graph_drawer);
+  axis_ap->window_width = axis_ap->width;
+  axis_ap->y_offset = 0;
+  axis_ap->height = widget_height(graph_drawer);
+  axis_ap->graph_x0 = 0;
+  clear_window(ax);
   ax->gc = gc;
-  ix1 = local_grf_x(0.0, axis_cp->axis);
-  iy1 = local_grf_y(current_graph_data[0], axis_cp->axis);
+  make_axes_1(axis_ap, X_AXIS_IN_SECONDS, 1, SHOW_ALL_AXES, FALSE, TRUE);
+  ix1 = local_grf_x(0.0, axis_ap);
+  iy1 = local_grf_y(current_graph_data[0], axis_ap);
   xincr = 1.0 / (Float)GRAPH_SIZE;
 
-  for (i = 1, x = xincr; i < GRAPH_SIZE; i++, x+=xincr)
+  for (i = 1, x = xincr; i < GRAPH_SIZE; i++, x += xincr)
     {
       ix0 = ix1;
       iy0 = iy1;
-      ix1 = local_grf_x(x, axis_cp->axis);
-      iy1 = local_grf_y(current_graph_data[i], axis_cp->axis);
-      XDrawLine(dp, wn, gc, ix0, iy0, ix1, iy1);
+      ix1 = local_grf_x(x, axis_ap);
+      iy1 = local_grf_y(current_graph_data[i], axis_ap);
+      XDrawLine(ax->dp, ax->wn, gc, ix0, iy0, ix1, iy1);
     }
 
   ax->gc = fgc;
-  ix1 = local_grf_x(0.0, axis_cp->axis);
-  iy1 = local_grf_y(current_graph_fftr[0], axis_cp->axis);
+  ix1 = local_grf_x(0.0, axis_ap);
+  iy1 = local_grf_y(current_graph_fftr[0], axis_ap);
   xincr = 1.0 / (Float)GRAPH_SIZE;
 
-  for (i = 1, x = xincr; i < GRAPH_SIZE; i++, x+=xincr)
+  for (i = 1, x = xincr; i < GRAPH_SIZE; i++, x += xincr)
     {
       ix0 = ix1;
       iy0 = iy1;
-      ix1 = local_grf_x(x, axis_cp->axis);
+      ix1 = local_grf_x(x, axis_ap);
       if (fft_log_magnitude(ss))
-	iy1 = local_grf_y(fp_dB(ss, current_graph_fftr[i]), axis_cp->axis);
-      else iy1 = local_grf_y(current_graph_fftr[i], axis_cp->axis);
-      XDrawLine(dp, wn, fgc, ix0, iy0, ix1, iy1);
+	iy1 = local_grf_y(fp_dB(ss, current_graph_fftr[i]), axis_ap);
+      else iy1 = local_grf_y(current_graph_fftr[i], axis_ap);
+      XDrawLine(ax->dp, ax->wn, fgc, ix0, iy0, ix1, iy1);
     }
 }
 

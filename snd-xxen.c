@@ -175,7 +175,7 @@ COLOR_TYPE color2pixel(XEN color)
   return(ss->sgx->basic_color);
 }
 
-XEN g_snd_pixel(XEN color)
+static XEN g_snd_pixel(XEN color)
 {
   snd_color *v;
   v = TO_SND_COLOR(color); 

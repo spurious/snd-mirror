@@ -159,6 +159,7 @@
 (define inset-height .15)
 
 (define (make-current-window-display)
+  ;; TODO: make this work right with combined channels etc 
   (let ((envelopes '()))
     ;; keep track of already-computed envelopes
 

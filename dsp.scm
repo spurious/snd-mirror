@@ -183,10 +183,9 @@
 ;;;
 ;;; this is a simplification of the underlying table-filling routine for "scanned synthesis".
 ;;; To watch the wave, open some sound (so Snd has some place to put the graph), turn off
-;;; the time domain display (to give our graph all the window -- I may make this available
-;;; in a simpler form), then (testunif 1.0 0.1 0.0) or whatever.
+;;; the time domain display (to give our graph all the window -- to do this in a much more
+;;; elegant manner, see snd-motif.scm under scanned-synthesis.
 
-;;; TODO: make it straight-forward to define/use an unattached lisp graph
 
 (define compute-uniform-circular-string
   (lambda (size x0 x1 x2 mass xspring damp)
@@ -200,6 +199,7 @@
     (let* ((dm (/ damp mass))
 	   (km (/ xspring mass))
 	   (denom (+ 1.0 dm))
+
 	   (p1 (/ (+ 2.0 (- dm (* 2.0 km))) denom))
 	   (p2 (/ km denom))
 	   (p3 (/ -1.0 denom)))

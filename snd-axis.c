@@ -160,32 +160,26 @@ static Locus tick_grf_x(double val, axis_info *ap, int style, int srate)
   return(-32768);
 }
 
-
-enum {AXIS_X_BOTTOM, AXIS_X_MIDDLE};
-
-void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
+void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, int show_x_axis)
 {
   Latus width, height;
-  int axis_style;                 /* x_bottom or x_middle or xy_middle => |_ or |- or + */
   double x_range, y_range, tens;
   Latus axis_thickness, left_border_width, bottom_border_width, top_border_width, right_border_width;
   Latus inner_border_width, tick_label_width;
   Latus major_tick_length, minor_tick_length, x_tick_spacing, y_tick_spacing;
-  int include_x_label, include_x_ticks, include_x_tick_labels, include_y_ticks, include_y_tick_labels, show_x_axis = 1;
+  int include_x_label, include_x_ticks, include_x_tick_labels, include_y_ticks, include_y_tick_labels;
   Latus x_label_width, x_label_height, x_number_height;
   int num_ticks, majy, miny, majx, minx, x, y, tx, ty, x0, y0;
   double fy, fx;
   tick_descriptor *tdx = NULL, *tdy = NULL;
   Locus curx, cury, curdy;
   axis_context *ax;
-  snd_info *sp;
-  sp = cp->sound;
   ax = ap->ax;
   width = ap->width;
   height = ap->height;
   ap->graph_active = ((width > 4) || (height > 10));
 
-  if (((sp) && (cp->show_axes == SHOW_NO_AXES)) || (width < 40) || (height < 40))
+  if ((axes == SHOW_NO_AXES) || (width < 40) || (height < 40))
     {
       /* ap->graph_active = 0; */
       /* leave it set up for bare graph */
@@ -222,12 +216,6 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
       return;
     }
 
-  show_x_axis = ((sp == NULL) || 
-		 (sp->channel_style != CHANNELS_COMBINED) || 
-		 (cp->show_axes == SHOW_ALL_AXES) || 
-		 (cp->chan == (sp->nchans - 1)));
-  /* sp is null in the control panel filter envelope display */
-
   left_border_width = 10;
   bottom_border_width = 14;
   top_border_width = 10;
@@ -240,7 +228,6 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
   major_tick_length = 9;
   minor_tick_length = 5;
   axis_thickness = 2;
-  axis_style = AXIS_X_BOTTOM;
   if (show_x_axis)
     {
       include_x_label = ((ap->xlabel) && ((height > 100) && (width > 100)));
@@ -253,7 +240,7 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
       include_x_tick_labels = 0;
       include_x_ticks = 0;
     }
-  if ((sp == NULL) || (cp->show_axes != SHOW_X_AXIS))
+  if (axes != SHOW_X_AXIS)
     {
       include_y_tick_labels = ((width > 100) && (height > 60));
       include_y_ticks = ((width > 100) && (height > 40));
@@ -412,61 +399,47 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
     }
   ap->y_axis_y0 = cury;
   ap->y_axis_x0 = curx;
-
   ap->y_axis_x0 += ap->graph_x0;
   ap->x_axis_x0 += ap->graph_x0;
   ap->x_axis_x1 += ap->graph_x0;
   ap->x_label_x += ap->graph_x0;
-  if (axis_style == AXIS_X_BOTTOM)
-    ap->x_axis_y0 = cury;
-  else
-    {
-      if (axis_style == AXIS_X_MIDDLE)
-	ap->x_axis_y0 = (cury + ap->y_axis_y1) / 2; /* in this case, we should be zero centered! */
-      else snd_error("impossible x axis style: %d\n", axis_style);
-    }
-
+  ap->x_axis_y0 = cury;
   ap->x_scale = ((double)(ap->x_axis_x1 - ap->x_axis_x0))/((double)(ap->x1 - ap->x0));
   ap->y_scale = (Float)(ap->y_axis_y1 - ap->y_axis_y0)/(ap->y1 - ap->y0);
-
   /* now if y_offset is in use, apply global shift in y direction */
   ap->x_axis_y0 += ap->y_offset;
   ap->y_axis_y0 += ap->y_offset;
   ap->y_axis_y1 += ap->y_offset;
   ap->x_label_y += ap->y_offset;
-
   ap->x_base = (double)(ap->x_axis_x0 - ap->x0 * ap->x_scale);
   ap->y_base = (Float)(ap->y_axis_y0 - ap->y0 * ap->y_scale);
-
   if (include_x_label)
     {
       activate_label_font(ax);
       draw_string(ax, ap->x_label_x, ap->x_label_y + 7, ap->xlabel, snd_strlen(ap->xlabel));
-      if (cp->printing) 
+      if (printing) 
 	{
-	  ps_set_label_font(cp);
-	  ps_draw_string(cp, ap->x_label_x, ap->x_label_y + 7, ap->xlabel);
+	  ps_set_label_font();
+	  ps_draw_string(ap, ap->x_label_x, ap->x_label_y + 7, ap->xlabel);
 	}
     }
 
   if (show_x_axis)
     fill_rectangle(ax, ap->x_axis_x0, ap->x_axis_y0, (unsigned int)(ap->x_axis_x1 - ap->x_axis_x0), axis_thickness);
-  if ((sp == NULL) || 
-      (cp->show_axes != SHOW_X_AXIS))
+  if (axes != SHOW_X_AXIS)
     fill_rectangle(ax, ap->y_axis_x0, ap->y_axis_y1, axis_thickness, (unsigned int)(ap->y_axis_y0 - ap->y_axis_y1));
   if ((include_y_tick_labels) || 
       (include_x_tick_labels))
     activate_numbers_font(ax);
-  if (cp->printing) 
+  if (printing) 
     {
       if (show_x_axis)
-	ps_fill_rectangle(cp, ap->x_axis_x0, ap->x_axis_y0, (unsigned int)(ap->x_axis_x1 - ap->x_axis_x0), axis_thickness);
-      if ((sp == NULL) || 
-	  (cp->show_axes != SHOW_X_AXIS))
-	ps_fill_rectangle(cp, ap->y_axis_x0, ap->y_axis_y1, axis_thickness, (unsigned int)(ap->y_axis_y0 - ap->y_axis_y1));
+	ps_fill_rectangle(ap, ap->x_axis_x0, ap->x_axis_y0, (unsigned int)(ap->x_axis_x1 - ap->x_axis_x0), axis_thickness);
+      if (axes != SHOW_X_AXIS)
+	ps_fill_rectangle(ap, ap->y_axis_x0, ap->y_axis_y1, axis_thickness, (unsigned int)(ap->y_axis_y0 - ap->y_axis_y1));
       if ((include_y_tick_labels) || 
 	  (include_x_tick_labels)) 
-	ps_set_number_font(cp);
+	ps_set_number_font();
     }
 
   if (include_y_tick_labels)
@@ -481,13 +454,13 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 		  (int)(grf_y(tdy->mhi, ap) + .5 * x_number_height),
 		  tdy->max_label,
 		  strlen(tdy->max_label));
-      if (cp->printing) 
+      if (printing) 
 	{
-	  ps_draw_string(cp,
+	  ps_draw_string(ap,
 		      ap->y_axis_x0 - tdy->maj_tick_len - tdy->min_label_width - inner_border_width,
 		      (int)(grf_y(tdy->mlo, ap) + .25 * x_number_height),
 		      tdy->min_label);
-	  ps_draw_string(cp,
+	  ps_draw_string(ap,
 		      ap->y_axis_x0 - tdy->maj_tick_len - tdy->max_label_width - inner_border_width,
 		      (int)(grf_y(tdy->mhi, ap) + .5 * x_number_height),
 		      tdy->max_label);
@@ -509,8 +482,8 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 		      ap->x_label_y + 2,
 		      tdx->min_label,
 		      strlen(tdx->min_label));
-	  if (cp->printing) 
-	    ps_draw_string(cp,
+	  if (printing) 
+	    ps_draw_string(ap,
 			   tx0,
 			   ap->x_label_y + 2,
 			   tdx->min_label);
@@ -526,8 +499,8 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 		      ap->x_label_y + 2,
 		      tdx->max_label,
 		      strlen(tdx->max_label));
-	  if (cp->printing) 
-	    ps_draw_string(cp,
+	  if (printing) 
+	    ps_draw_string(ap,
 			   tx0,
 			   ap->x_label_y + 2,
 			   tdx->max_label);
@@ -542,7 +515,7 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
       fy = tdy->mlo;
       ty = grf_y(fy, ap);
       draw_line(ax, majx, ty, x0, ty);
-      if (cp->printing) ps_draw_line(cp, majx, ty, x0, ty);
+      if (printing) ps_draw_line(ap, majx, ty, x0, ty);
       tens = 0.0;
       fy -= tdy->step;
       while (fy >= tdy->flo)
@@ -556,7 +529,7 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 	  else x = minx;
 	  ty = grf_y(fy, ap);
 	  draw_line(ax, x, ty, x0, ty);
-	  if (cp->printing) ps_draw_line(cp, x, ty, x0, ty);
+	  if (printing) ps_draw_line(ap, x, ty, x0, ty);
 	  fy -= tdy->step;
 	}
       tens = 0.0;
@@ -573,7 +546,7 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 	  else x = minx;
 	  ty = grf_y(fy, ap);
 	  draw_line(ax, x, ty, x0, ty);
-	  if (cp->printing) ps_draw_line(cp, x, ty, x0, ty);
+	  if (printing) ps_draw_line(ap, x, ty, x0, ty);
 	  fy += tdy->step;
 	}
     }
@@ -586,7 +559,7 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
       fx = tdx->mlo;
       tx = tick_grf_x(fx, ap, x_style, srate);
       draw_line(ax, tx, majy, tx, y0);
-      if (cp->printing) ps_draw_line(cp, tx, majy, tx, y0);
+      if (printing) ps_draw_line(ap, tx, majy, tx, y0);
       tens = 0.0;
       fx -= tdx->step;
       while (fx >= tdx->flo)
@@ -600,7 +573,7 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 	  else y = miny;
 	  tx = tick_grf_x(fx, ap, x_style, srate);
 	  draw_line(ax, tx, y, tx, y0);
-	  if (cp->printing) ps_draw_line(cp, tx, y, tx, y0);
+	  if (printing) ps_draw_line(ap, tx, y, tx, y0);
 	  fx -= tdx->step;
 	}
       tens = 0.0;
@@ -617,7 +590,7 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 	  else y = miny;
 	  tx = tick_grf_x(fx, ap, x_style, srate);
 	  draw_line(ax, tx, y, tx, y0);
-	  if (cp->printing) ps_draw_line(cp, tx, y, tx, y0);
+	  if (printing) ps_draw_line(ap, tx, y, tx, y0);
 	  fx += tdx->step;
 	}
     }
@@ -720,8 +693,67 @@ static XEN g_axis_info(XEN snd, XEN chn, XEN ap_id)
                     XEN_CONS(C_TO_XEN_INT(ap->y_axis_y0),
                      XEN_CONS(C_TO_XEN_INT(ap->x_axis_x1),
 		      XEN_CONS(C_TO_XEN_INT(ap->y_axis_y1),
-			   XEN_EMPTY_LIST)))))))))))))));
+		       XEN_EMPTY_LIST)))))))))))))));
 }
+
+#if HAVE_MOTIF
+/* this is intended for use with the xm package */
+
+static XEN g_draw_axes(XEN args)
+{
+  XEN val;
+  Widget w; GC gc; char *xlabel; 
+  Float x0 = 0.0; Float x1 = 1.0; Float y0 = -1.0; Float y1 = 1.0; 
+  int x_style = X_AXIS_IN_SECONDS; int axes = 1;
+  axis_context *ax;
+  axis_info *ap;
+  int len;
+  len = XEN_LIST_LENGTH(args);
+  XEN_ASSERT_TYPE((len >= 3) && (len < 10), args, XEN_ONLY_ARG, "draw-axes", "3 required and 6 optional args");
+  w = (Widget)(XEN_TO_C_ULONG(XEN_CADR(XEN_LIST_REF(args, 0))));
+  gc = (GC)(XEN_TO_C_ULONG(XEN_CADR(XEN_LIST_REF(args, 1))));
+  xlabel = XEN_TO_C_STRING(XEN_LIST_REF(args, 2));
+  if (len > 3) x0 = XEN_TO_C_DOUBLE(XEN_LIST_REF(args, 3));
+  if (len > 4) x1 = XEN_TO_C_DOUBLE(XEN_LIST_REF(args, 4));
+  if (len > 5) y0 = XEN_TO_C_DOUBLE(XEN_LIST_REF(args, 5));
+  if (len > 6) y1 = XEN_TO_C_DOUBLE(XEN_LIST_REF(args, 6));
+  if (len > 7) x_style = XEN_TO_C_INT(XEN_LIST_REF(args, 7));
+  if (len > 8) axes = XEN_TO_C_BOOLEAN(XEN_LIST_REF(args, 8));
+  ap = (axis_info *)CALLOC(1, sizeof(axis_info));
+  ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+  ap->ax = ax;
+  ap->ss = get_global_state();
+  ax->ss = ap->ss;
+  ax->dp = XtDisplay(w);
+  ax->wn = XtWindow(w);
+  ap->xmin = x0;
+  ap->xmax = x1;
+  ap->ymin = y0;
+  ap->ymax = y1;
+  ap->y_ambit = y1 - y0;
+  ap->x_ambit = x1 - x0;
+  ap->xlabel = copy_string(xlabel);
+  ap->x0 = x0;
+  ap->x1 = x1;
+  ap->y0 = y0;
+  ap->y1 = y1;
+  ap->width = widget_width(w);
+  ap->window_width = ap->width;
+  ap->y_offset = 0;
+  ap->height = widget_height(w);
+  ap->graph_x0 = 0;
+  clear_window(ax);
+  ax->gc = gc;
+  make_axes_1(ap, x_style, 1, axes, FALSE, TRUE);
+  val = XEN_CONS(C_TO_XEN_INT(ap->x_axis_x0),
+	 XEN_CONS(C_TO_XEN_INT(ap->y_axis_y0),
+          XEN_CONS(C_TO_XEN_INT(ap->x_axis_x1),
+	   XEN_CONS(C_TO_XEN_INT(ap->y_axis_y1),
+	    XEN_EMPTY_LIST))));
+  free_axis_info(ap);
+  return(val);
+}
+#endif
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_4(g_grf_x_w, g_grf_x)
@@ -746,5 +778,8 @@ void g_init_axis(void)
 
   XEN_DEFINE_PROCEDURE(S_axis_info,  g_axis_info_w, 0, 3, 0, H_axis_info);
 
+#if HAVE_MOTIF
+  XEN_DEFINE_PROCEDURE("draw-axes", g_draw_axes, 0, 0, 1, "(draw-axes wid gc label x0 x1 y0 y1 style axes)");
+#endif
 }
 #endif

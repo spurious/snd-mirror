@@ -722,90 +722,6 @@ static XEN g_focus_widget(XEN wid)
   return(wid);
 }
 
-static XEN g_set_pixmap(XEN wid, XEN pix)
-{
-  GUI_WIDGET w;
-  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(wid), wid, XEN_ONLY_ARG, S_focus_widget, "a wrapped object");
-  w = (GUI_WIDGET)(XEN_UNWRAP_C_POINTER(wid));
-  if (w)
-    {
-#if USE_MOTIF
-      if (XmIsLabel(w))
-	XtVaSetValues(w, XmNlabelPixmap, (Pixmap)(XEN_UNWRAP_C_POINTER(pix)), NULL);
-      else XtVaSetValues(w, XmNbackgroundPixmap, (Pixmap)(XEN_UNWRAP_C_POINTER(pix)), NULL);
-#else
-      /* the "pixmap" here is a list (pixmap mask) */
-      gtk_pixmap_set(GTK_PIXMAP(w), (GdkPixmap *)(XEN_UNWRAP_C_POINTER(XEN_CAR(pix))), (GdkBitmap *)(XEN_UNWRAP_C_POINTER(XEN_CADR(pix))));
-#endif
-    }
-  return(pix);
-}
-
-#if USE_MOTIF && HAVE_XPM
-  #include <X11/xpm.h>
-#endif
-
-#if 0
-typedef struct {
-  GUI_PIXMAP pix; /* Pixmap or GdkPixmap* */
-} snd_pixmap;
-
-/* if we want to free pixmaps we need to make an smob for them.
- * but I don't immediately see anyway to free them!
- */
-#endif
-
-static XEN g_make_pixmap(XEN vals)
-{
-  #define H_make_pixmap "(make-pixmap strs)"
-  snd_state *ss;
-  char **bits;
-  int rows, i;
-  XEN row; XEN result;
-
-  ss = get_global_state();
-  rows = XEN_LIST_LENGTH(vals);
-  bits = (char **)CALLOC(rows, sizeof(char *));
-  for (i = 0, row = vals; i < rows; i++, row = XEN_CDR(row))
-    bits[i] = XEN_TO_C_STRING(XEN_CAR(row));
-#if USE_MOTIF
-#if HAVE_XPM
-  {
-    Pixmap shape1, pix;
-    XpmAttributes attributes; 
-    XpmColorSymbol symbols[1];
-    Widget anywid;
-    int scr, pixerr;
-    Display *dp;
-    Drawable wn;
-    anywid = MAIN_PANE(ss);
-    dp = XtDisplay(anywid);
-    wn = XtWindow(anywid);
-    scr = DefaultScreen(dp);
-    XtVaGetValues(anywid, XmNdepth, &attributes.depth, XmNcolormap, &attributes.colormap, NULL);
-    attributes.visual = DefaultVisual(dp, scr);
-    symbols[0].name = "basiccolor";
-    symbols[0].value = NULL;
-    symbols[0].pixel = (ss->sgx)->basic_color;
-    attributes.colorsymbols = symbols;
-    attributes.numsymbols = 1;
-    attributes.valuemask = XpmColorSymbols | XpmDepth | XpmColormap | XpmVisual;
-    pixerr = XpmCreatePixmapFromData(dp, wn, bits, &pix, &shape1, &attributes);
-    result = XEN_WRAP_C_POINTER(pix);
-  }
-#endif
-#else
-  {
-    GdkPixmap *pix;
-    GdkBitmap *mask;
-    pix = gdk_pixmap_create_from_xpm_d((GdkWindow *)(MAIN_WINDOW(ss)), &mask, NULL, bits);
-    result = XEN_LIST_2(XEN_WRAP_C_POINTER(pix), XEN_WRAP_C_POINTER(mask));
-  }
-#endif
-  FREE(bits);
-  return(result);
-}
-
 static XEN g_colormap_ref(XEN map, XEN pos)
 {
   #define H_colormap_ref "(colormap-ref map position) -> (list r g b)"
@@ -816,6 +732,33 @@ static XEN g_colormap_ref(XEN map, XEN pos)
   return(XEN_LIST_3(C_TO_XEN_DOUBLE((float)r / 65535.0),
 		C_TO_XEN_DOUBLE((float)g / 65535.0),
 		C_TO_XEN_DOUBLE((float)b / 65535.0)));
+}
+
+static XEN g_snd_gcs(void)
+{
+  snd_state *ss;
+  state_context *sx;
+  ss = get_global_state();
+  sx = ss->sgx;
+  if (sx)
+    return(XEN_CONS(C_TO_XEN_ULONG(sx->basic_gc),
+	    XEN_CONS(C_TO_XEN_ULONG(sx->selected_basic_gc), 
+	     XEN_CONS(C_TO_XEN_ULONG(sx->combined_basic_gc), 
+	      XEN_CONS(C_TO_XEN_ULONG(sx->cursor_gc), 
+               XEN_CONS(C_TO_XEN_ULONG(sx->selected_cursor_gc), 
+                XEN_CONS(C_TO_XEN_ULONG(sx->selection_gc), 
+                 XEN_CONS(C_TO_XEN_ULONG(sx->selected_selection_gc), 
+                  XEN_CONS(C_TO_XEN_ULONG(sx->erase_gc), 
+                   XEN_CONS(C_TO_XEN_ULONG(sx->selected_erase_gc), 
+                    XEN_CONS(C_TO_XEN_ULONG(sx->mark_gc), 
+                     XEN_CONS(C_TO_XEN_ULONG(sx->selected_mark_gc), 
+                      XEN_CONS(C_TO_XEN_ULONG(sx->mix_gc), 
+                       XEN_CONS(C_TO_XEN_ULONG(sx->selected_mix_gc), 
+                        XEN_CONS(C_TO_XEN_ULONG(sx->fltenv_basic_gc), 
+                         XEN_CONS(C_TO_XEN_ULONG(sx->fltenv_data_gc), 
+                          XEN_CONS(C_TO_XEN_ULONG(sx->speed_gc),
+			   XEN_EMPTY_LIST)))))))))))))))));
+  return(XEN_EMPTY_LIST);
 }
 
 
@@ -848,8 +791,6 @@ XEN_ARGIFY_5(g_make_graph_data_w, g_make_graph_data)
 XEN_ARGIFY_7(g_graph_data_w, g_graph_data)
 XEN_NARGIFY_2(g_set_widget_foreground_w, g_set_widget_foreground)
 XEN_VARGIFY(g_make_bezier_w, g_make_bezier)
-XEN_NARGIFY_1(g_make_pixmap_w, g_make_pixmap)
-XEN_NARGIFY_2(g_set_pixmap_w, g_set_pixmap)
 XEN_NARGIFY_2(g_colormap_ref_w, g_colormap_ref)
 #else
 #define g_draw_line_w g_draw_line
@@ -880,8 +821,6 @@ XEN_NARGIFY_2(g_colormap_ref_w, g_colormap_ref)
 #define g_graph_data_w g_graph_data
 #define g_set_widget_foreground_w g_set_widget_foreground
 #define g_make_bezier_w g_make_bezier
-#define g_make_pixmap_w g_make_pixmap
-#define g_set_pixmap_w g_set_pixmap
 #define g_colormap_ref_w g_colormap_ref
 #endif
 
@@ -945,10 +884,9 @@ void g_init_draw(void)
   XEN_DEFINE_PROCEDURE("set-widget-foreground", g_set_widget_foreground_w, 2, 0, 0, H_set_widget_foreground);
   XEN_DEFINE_PROCEDURE(S_make_bezier,     g_make_bezier_w, 0, 0, 1,     H_make_bezier);
 
-  XEN_DEFINE_PROCEDURE(S_make_pixmap, g_make_pixmap_w, 1, 0, 0, H_make_pixmap);
-  XEN_DEFINE_PROCEDURE("set-pixmap", g_set_pixmap_w, 2, 0, 0, "(set-pixmap widget pixmap)");
-
   XEN_DEFINE_PROCEDURE("colormap-ref", g_colormap_ref_w, 2, 0, 0, H_colormap_ref);
   XEN_DEFINE_CONSTANT("colormap-size", COLORMAP_SIZE, "colormap size");
+
+  XEN_DEFINE_PROCEDURE("snd-gcs", g_snd_gcs, 0, 0, 0, "(snd-gcs) -> list of Snd graphics contexts");
 }
 #endif
