@@ -2204,12 +2204,17 @@ and a sample-reader to get the data, and should return a vct object containing t
 to be displayed goes from low to high (normally 0.0 to 1.0)"
 
   char *errmsg;
+  SCM errstr;
   errmsg = procedure_ok(proc, 2, 0, S_add_transform, "func", 5);
   if (errmsg)
-    scm_throw(BAD_ARITY,
-	      SCM_LIST3(TO_SCM_STRING(S_add_transform),
-			proc,
-			TO_SCM_STRING(errmsg)));
+    {
+      errstr = TO_SCM_STRING(errmsg);
+      FREE(errmsg);
+      scm_throw(BAD_ARITY,
+		SCM_LIST3(TO_SCM_STRING(S_add_transform),
+			  proc,
+			  errstr));
+    }
   SCM_ASSERT(gh_string_p(name), name, SCM_ARG1, S_add_transform);
   SCM_ASSERT(gh_string_p(xlabel), xlabel, SCM_ARG2, S_add_transform);
   SCM_ASSERT(NUMBER_P(lo), lo, SCM_ARG3, S_add_transform);

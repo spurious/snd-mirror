@@ -664,8 +664,9 @@ int mus_file_reopen_write(const char *arg)
 
 int mus_file_close(int fd)
 {
-  mus_file_close_descriptors(fd);
-  return(close(fd));
+  if (mus_file_close_descriptors(fd) == MUS_NO_ERROR)
+    return(close(fd));
+  return(MUS_ERROR);
 }
 
 
@@ -1561,7 +1562,7 @@ char *mus_file_full_name(char *utok)
   return(file_name_buf);
 }
 
-#define MUS_FORMAT_STRING_MAX 256
+#define MUS_FORMAT_STRING_MAX 1024
 
 char *mus_format(const char *format, ...)
 {
@@ -1572,11 +1573,11 @@ char *mus_format(const char *format, ...)
   va_list ap;
   buf = (char *)CALLOC(MUS_FORMAT_STRING_MAX, sizeof(char));
   va_start(ap, format);
-  vsprintf(buf, format, ap);
+  vsnprintf(buf, MUS_FORMAT_STRING_MAX, format, ap);
   va_end(ap);
 #else
   buf = (char *)CALLOC(MUS_FORMAT_STRING_MAX, sizeof(char));
-  sprintf(buf, "%s...[you need vprintf]", format);
+  snprintf(buf, MUS_FORMAT_STRING_MAX, "%s...[you need vprintf]", format);
 #endif
   return(buf);
 }

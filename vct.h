@@ -46,6 +46,7 @@ SCM make_vct(int len, Float *data);
 SCM make_vct_wrapper(int len, Float *data);
 vct *get_vct(SCM arg);
 void set_vct_print_length(int len);
+int procedure_fits(SCM proc, int args);
 
 #endif
 #endif

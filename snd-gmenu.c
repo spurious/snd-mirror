@@ -1189,6 +1189,7 @@ static int remove_option(int which_menu, char *label)
   int i;
   for (i = 0; i < added_options_pos; i++)
     if ((added_options_menus[i] == which_menu) && 
+	(added_options_names[i]) &&
 	(strcmp(label, added_options_names[i]) == 0) && 
 	(added_options[i]))
       {
@@ -1281,6 +1282,7 @@ int gh_change_menu_label(int which_menu, char *old_label, char *new_label)
   int i;
   for (i = 0; i < added_options_pos; i++)
     if ((added_options_menus[i] == which_menu) && 
+	(added_options_names[i]) &&
 	(strcmp(old_label, added_options_names[i]) == 0) && 
 	(added_options[i]))
       {
@@ -1298,6 +1300,7 @@ int gh_menu_is_sensitive(int which_menu, char *old_label)
   int i;
   for (i = 0; i < added_options_pos; i++)
     if ((added_options_menus[i] == which_menu) && 
+	(added_options_names[i]) &&
 	(strcmp(old_label, added_options_names[i]) == 0) && 
 	(added_options[i]))
       return(is_sensitive(added_options[i]));
@@ -1309,6 +1312,7 @@ int gh_set_menu_sensitive(int which_menu, char *old_label, int on)
   int i;
   for (i = 0; i < added_options_pos; i++)
     if ((added_options_menus[i] == which_menu) && 
+	(added_options_names[i]) &&
 	(strcmp(old_label, added_options_names[i]) == 0) && 
 	(added_options[i]))
       {

@@ -455,7 +455,11 @@ static SCM g_add_input(SCM file, SCM callback)
   snd_state *ss;
   int loc;
   SCM_ASSERT(INTEGER_P(file), file, SCM_ARG1, S_add_input);
-  SCM_ASSERT(gh_procedure_p(callback), callback, SCM_ARG2, S_add_input); /* TODO: arity check?? */
+  if (!(procedure_fits(callback, 1)))
+    scm_throw(MUS_MISC_ERROR,
+	      SCM_LIST3(TO_SCM_STRING(S_add_input),
+			TO_SCM_STRING("2nd argument should be a procedure of one arg"),
+			callback));
   ss = get_global_state();
   snd_protect(callback);
   loc = get_callback_slot();
@@ -485,7 +489,11 @@ static BACKGROUND_TYPE call_idler(GUI_POINTER code)
 
 static SCM g_add_idler(SCM code)
 {
-  SCM_ASSERT(gh_procedure_p(code), code, SCM_ARG1, S_add_idler); /* TODO: arity check? */
+  if (!(procedure_fits(code, 0)))
+    scm_throw(MUS_MISC_ERROR,
+	      SCM_LIST3(TO_SCM_STRING(S_add_idler),
+			TO_SCM_STRING("argument should be a procedure of no args"),
+			code));
   return(SND_WRAP(BACKGROUND_ADD(get_global_state(), 
 				 call_idler, 
 				 (GUI_POINTER)SND_WRAP(code))));

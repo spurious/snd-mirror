@@ -307,7 +307,7 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
       MUS_AUDIO_CANT_CLOSE, MUS_AUDIO_CANT_OPEN, MUS_AUDIO_READ_ERROR, MUS_AUDIO_AMP_NOT_AVAILABLE, MUS_AUDIO_NO_OP,
       MUS_AUDIO_CANT_WRITE, MUS_AUDIO_CANT_READ, MUS_AUDIO_NO_READ_PERMISSION,
 
-      MUS_CANT_CLOSE_FILE,
+      MUS_CANT_CLOSE_FILE, MUS_ARG_OUT_OF_RANGE,
 
       MUS_INITIAL_ERROR_TAG};
 
@@ -480,8 +480,10 @@ int mus_file_read_file              PROTO((int tfd, int beg, int chans, int nint
 int mus_file_read_buffer            PROTO((int charbuf_data_format, int beg, int chans, int nints, MUS_SAMPLE_TYPE **bufs, char *charbuf));
 int mus_file_write_file             PROTO((int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs));
 int mus_file_write_buffer           PROTO((int charbuf_data_format, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs, char *charbuf, int clipped));
+
 char *mus_file_full_name            PROTO((char *tok));
-#define mus_expand_filename(File) mus_file_full_name(File)
+#define mus_expand_filename(File)   mus_file_full_name(File)
+
 int mus_file_set_data_clipped       PROTO((int tfd, int clipped));
 int mus_file_set_header_type        PROTO((int tfd, int type));
 int mus_file_header_type            PROTO((int tfd));

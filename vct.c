@@ -42,6 +42,7 @@
  */
 
 /* TODO  offsets for vct-*?
+ * TODO  need a wrapper for each applicable smob to make the wrong-num-args error catchable 
  */
 
 #if defined(HAVE_CONFIG_H)
@@ -428,6 +429,17 @@ static SCM vct_fill(SCM obj1, SCM obj2)
   return(scm_return_first(obj1, obj2));
 }
 
+int procedure_fits(SCM proc, int args)
+{
+  SCM arity;
+  if (gh_procedure_p(proc))
+    {
+      arity = scm_i_procedure_arity(proc);
+      return(SCM_NFALSEP(arity) && (SCM_INUM(SCM_CAR(arity)) == args));
+    }
+  return(0);
+}
+
 static SCM vct_map(SCM obj, SCM proc)
 {
   #define H_vct_mapB "(" S_vct_mapB " v proc) -> v with each element set to value of proc: v[i] = (proc)"
@@ -435,6 +447,8 @@ static SCM vct_map(SCM obj, SCM proc)
   vct *v;
   SCM_ASSERT(vct_p(obj), obj, SCM_ARG1, S_vct_mapB);
   SCM_ASSERT((gh_procedure_p(proc)), proc, SCM_ARG2, S_vct_mapB);
+  if (!(procedure_fits(proc, 0)))
+    scm_wrong_type_arg(S_vct_mapB, 2, proc);
   v = get_vct(obj);
 #if USE_SND
   if (v) 
@@ -455,6 +469,8 @@ static SCM vct_do(SCM obj, SCM proc)
   vct *v;
   SCM_ASSERT(vct_p(obj), obj, SCM_ARG1, S_vct_doB);
   SCM_ASSERT((gh_procedure_p(proc)), proc, SCM_ARG2, S_vct_doB);
+  if (!(procedure_fits(proc, 1)))
+    scm_wrong_type_arg(S_vct_doB, 2, proc);
   v = get_vct(obj);
 #if USE_SND
   if (v) 
@@ -488,18 +504,19 @@ static SCM vcts_map(SCM args)
       arg = gh_list_ref(args, TO_SMALL_SCM_INT(i));
       if (!(vct_p(arg))) 
 	{
+	  FREE(v);
 	  scm_wrong_type_arg(S_vcts_mapB, i, arg);
 	  return(TO_SMALL_SCM_INT(0));
 	}
       v[i] = get_vct(arg);
     }
   proc = gh_list_ref(args, TO_SMALL_SCM_INT(vnum));
-  if (!(gh_procedure_p(proc)))
+  if (!(procedure_fits(proc, 1)))
     {
-      scm_misc_error(S_vcts_mapB,
-		     "in ~S, last argument must be a function",
-		     SCM_LIST1(args));
       FREE(v);
+      scm_misc_error(S_vcts_mapB,
+		     "in ~S, last argument must be a function of 1 arg",
+		     SCM_LIST1(args));
       return(TO_SMALL_SCM_INT(0));
     }
   svi = TO_SMALL_SCM_INT(vnum);
@@ -544,18 +561,19 @@ static SCM vcts_do(SCM args)
       arg = gh_list_ref(args, TO_SMALL_SCM_INT(i));
       if (!(vct_p(arg))) 
 	{
+	  FREE(v);
 	  scm_wrong_type_arg(S_vcts_doB, i, arg);
 	  return(TO_SMALL_SCM_INT(0));
 	}
       v[i] = get_vct(arg);
     }
   proc = gh_list_ref(args, TO_SMALL_SCM_INT(vnum));
-  if (!(gh_procedure_p(proc)))
+  if (!(procedure_fits(proc, 2)))
     {
-      scm_misc_error(S_vcts_doB,
-		     "in ~S, last argument must be a function",
-		     SCM_LIST1(args));
       FREE(v);
+      scm_misc_error(S_vcts_doB,
+		     "in ~S, last argument must be a function of 2 args",
+		     SCM_LIST1(args));
       return(TO_SMALL_SCM_INT(0));
     }
   vsize = v[0]->length;
@@ -608,6 +626,8 @@ static SCM list2vct(SCM lst)
   SCM scv, lst1;
   SCM_ASSERT(gh_list_p(lst), lst, SCM_ARG1, S_list2vct);
   len = gh_length(lst);
+  if (len == 0)
+    return(SCM_BOOL_F);
   scv = make_vct(len, (Float *)CALLOC(len, sizeof(Float)));
   v = get_vct(scv);
   for (i = 0, lst1 = lst; i < len; i++, lst1 = SCM_CDR(lst1)) 

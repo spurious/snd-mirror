@@ -111,7 +111,7 @@ static void set_max_regions(snd_state *ss, int n)
     }
 }
 
-int region_ok(int n) {return((n < regions_size) && (regions[n]));}
+int region_ok(int n) {return((n >= 0) && (n < regions_size) && (regions[n]));}
 int region_len(int n) {if (region_ok(n)) return(regions[n]->frames); else return(0);}
 int region_chans(int n) {if (region_ok(n)) return(regions[n]->chans); else return(0);}
 int region_srate(int n) {if (region_ok(n)) return(regions[n]->srate); else return(0);}

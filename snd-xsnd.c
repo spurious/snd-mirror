@@ -915,7 +915,7 @@ static void Filter_activate_Callback(Widget w, XtPointer context, XtPointer info
   str = XmTextGetString(w);
   if ((str) && (*str)) remember_filter_string(sp, str);
 
-  if (sp->filter_env) free_env(sp->filter_env);
+  if (sp->filter_env) sp->filter_env = free_env(sp->filter_env);
   sp->filter_env = string2env(str);
   if (str) XtFree(str);
   if (!(sp->filter_env)) /* maybe user cleared text field? */

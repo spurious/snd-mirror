@@ -59,14 +59,17 @@ mus_error_handler_t *mus_error_set_handler(mus_error_handler_t *new_error_handle
   return(old_handler);
 }
 
+#define MUS_ERROR_BUFFER_SIZE 1024
 static char *mus_error_buffer = NULL;
 
 void mus_error(int error, const char *format, ...)
 {
 #if HAVE_VPRINTF
   va_list ap;
+  if (mus_error_buffer == NULL)
+    mus_error_buffer = (char *)CALLOC(MUS_ERROR_BUFFER_SIZE, sizeof(char));
   va_start(ap, format);
-  vsprintf(mus_error_buffer, format, ap);
+  vsnprintf(mus_error_buffer, MUS_ERROR_BUFFER_SIZE, format, ap);
   va_end(ap);
   if (mus_error_handler)
     (*mus_error_handler)(error, mus_error_buffer);
@@ -95,10 +98,12 @@ void mus_print(const char *format, ...)
 {
 #if HAVE_VPRINTF
   va_list ap;
+  if (mus_error_buffer == NULL)
+    mus_error_buffer = (char *)CALLOC(MUS_ERROR_BUFFER_SIZE, sizeof(char));
   if (mus_print_handler)
     {
       va_start(ap, format);
-      vsprintf(mus_error_buffer, format, ap);
+      vsnprintf(mus_error_buffer, MUS_ERROR_BUFFER_SIZE, format, ap);
       va_end(ap);
       (*mus_print_handler)(mus_error_buffer);
     }
@@ -128,7 +133,9 @@ static const char *mus_initial_error_names[] = {
   "audio configuration not available", "audio input closed", "audio output closed", "audio io interrupted",
   "no audio lines available", "audio write error", "audio size not available", "audio device not available",
   "can't close audio", "can't open audio", "audio read error", "audio amp not available", "audio no op",
-  "can't write audio", "can't read audio", "no audio read permission", "can't close file"};
+  "can't write audio", "can't read audio", "no audio read permission", 
+
+  "can't close file", "arg out of range"};
 
 static char **mus_error_names = NULL;
 static int mus_error_names_size = 0;
@@ -206,17 +213,11 @@ int mus_sound_initialize(void)
   if (!sndlib_initialized)
     {
       sndlib_initialized = 1;
-      mus_error_buffer = (char *)CALLOC(256, sizeof(char));
-      if (mus_error_buffer == NULL) return(MUS_ERROR);
       mus_error_handler = sound_mus_error;
       err = mus_header_initialize();
       if (err == MUS_NO_ERROR) 
 	err = mus_audio_initialize();
-      if (err == MUS_ERROR) 
-	{
-	  FREE(mus_error_buffer); 
-	  return(MUS_ERROR);
-	}
+      return(err);
     }
   return(MUS_NO_ERROR);
 }

@@ -794,7 +794,7 @@ void save_control_panel(snd_info *sp)
   cs->filter_order = sp->filter_order;
   if (sp->filter_env) 
     {
-      if (cs->filter_env) free_env(cs->filter_env);
+      if (cs->filter_env) cs->filter_env = free_env(cs->filter_env);
       cs->filter_env = copy_env(sp->filter_env);
     }
   if (sp->play_direction == 1) 
@@ -835,7 +835,7 @@ void restore_control_panel(snd_info *sp)
   set_snd_expand(sp, cs->expand);
   set_snd_revscl(sp, cs->revscl);
   set_snd_revlen(sp, cs->revlen);
-  if (sp->filter_env) free_env(sp->filter_env); 
+  if (sp->filter_env) sp->filter_env = free_env(sp->filter_env); 
   if (cs->filter_env) 
     sp->filter_env = copy_env(cs->filter_env);
   else sp->filter_env = default_env(sp->filter_env_xmax, 1.0);
@@ -856,7 +856,7 @@ void reset_control_panel(snd_info *sp)
   set_snd_revscl(sp, DEFAULT_REVERB_SCALE);
   set_snd_revlen(sp, DEFAULT_REVERB_LENGTH);
   set_snd_filter_order(sp, DEFAULT_FILTER_ORDER);
-  if (sp->filter_env) free_env(sp->filter_env);
+  if (sp->filter_env) sp->filter_env = free_env(sp->filter_env);
   sp->filter_env = default_env(sp->filter_env_xmax, 1.0);
 }
 
@@ -1940,10 +1940,13 @@ static SCM g_open_sound(SCM filename)
   ss = get_global_state();
   fname = mus_expand_filename(TO_C_STRING(filename));
   if (!(mus_file_probe(fname)))
-    scm_throw(NO_SUCH_FILE,
-	      SCM_LIST3(TO_SCM_STRING(S_open_sound),
-			filename,
-			TO_SCM_STRING(strerror(errno))));
+    {
+      if (fname) FREE(fname);
+      scm_throw(NO_SUCH_FILE,
+		SCM_LIST3(TO_SCM_STRING(S_open_sound),
+			  filename,
+			  TO_SCM_STRING(strerror(errno))));
+    }
   sp = snd_open_file(fname, ss);
   if (fname) FREE(fname);
   if (sp) return(TO_SCM_INT(sp->index));
@@ -1979,10 +1982,13 @@ opens filename assuming the data matches the attributes indicated unless the fil
 			      TO_C_INT(format));
   fname = mus_expand_filename(TO_C_STRING(filename));
   if (!(mus_file_probe(fname)))
-    scm_throw(NO_SUCH_FILE,
-	      SCM_LIST3(TO_SCM_STRING(S_open_raw_sound),
-			filename,
-			TO_SCM_STRING(strerror(errno))));
+    {
+      if (fname) FREE(fname);
+      scm_throw(NO_SUCH_FILE,
+		SCM_LIST3(TO_SCM_STRING(S_open_raw_sound),
+			  filename,
+			  TO_SCM_STRING(strerror(errno))));
+    }
   sp = snd_open_file(fname, ss);
   /* snd_open_file -> snd_open_file_1 -> add_sound_window -> make_file_info -> raw_data_dialog_to_file_info */
   /*   so here if hooked, we'd need to save the current hook, make it return the current args, open, then restore */
@@ -2009,10 +2015,13 @@ static SCM g_open_alternate_sound(SCM filename)
   if (sp) snd_close_file(sp, ss); /* should we ask about saving edits here? */
   fname = mus_expand_filename(TO_C_STRING(filename));
   if (!(mus_file_probe(fname)))
-    scm_throw(NO_SUCH_FILE,
-	      SCM_LIST3(TO_SCM_STRING(S_open_alternate_sound),
-			filename,
-			TO_SCM_STRING(strerror(errno))));
+    {
+      if (fname) FREE(fname);
+      scm_throw(NO_SUCH_FILE,
+		SCM_LIST3(TO_SCM_STRING(S_open_alternate_sound),
+			  filename,
+			  TO_SCM_STRING(strerror(errno))));
+    }
   sp = snd_open_file(fname, ss);
   if (fname) FREE(fname);
   if (sp) return(TO_SCM_INT(sp->index));
@@ -2029,10 +2038,13 @@ static SCM g_view_sound(SCM filename)
   ss = get_global_state();
   fname = mus_expand_filename(TO_C_STRING(filename));
   if (!(mus_file_probe(fname)))
-    scm_throw(NO_SUCH_FILE,
-	      SCM_LIST3(TO_SCM_STRING(S_view_sound),
-			filename,
-			TO_SCM_STRING(strerror(errno))));
+    {
+      if (fname) FREE(fname);
+      scm_throw(NO_SUCH_FILE,
+		SCM_LIST3(TO_SCM_STRING(S_view_sound),
+			  filename,
+			  TO_SCM_STRING(strerror(errno))));
+    }
   if (fname)
     {
       ss->viewing = 1;
@@ -2145,17 +2157,29 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
 		  sp = snd_new_file(ss, str, ht, df, sr, ch, com, WITHOUT_DIALOG);
 		  if (com) free(com);
 		}
-	      else scm_misc_error(S_new_sound, 
-				  "can't write this combination of data format (~S) and header type (~S)",
-				  SCM_LIST2(type, format));
+	      else 
+		{
+		  if (str) FREE(str);
+		  scm_misc_error(S_new_sound, 
+				 "can't write this combination of data format (~S) and header type (~S)",
+				 SCM_LIST2(type, format));
+		}
 	    }
-	  else scm_misc_error(S_new_sound, 
-			      "invalid data format: ~S",
-			      SCM_LIST1(format));
+	  else 
+	    {
+	      if (str) FREE(str);
+	      scm_misc_error(S_new_sound, 
+			     "invalid data format: ~S",
+			     SCM_LIST1(format));
+	    }
 	}
-      else scm_misc_error(S_new_sound, 
-			  "invalid header type: ~S",
-			  SCM_LIST1(type));
+      else
+	{
+	  if (str) FREE(str);
+	  scm_misc_error(S_new_sound, 
+			 "invalid header type: ~S",
+			 SCM_LIST1(type));
+	}
     }
   if (str) FREE(str);
   if (sp) return(TO_SCM_INT(sp->index));
@@ -2648,6 +2672,7 @@ static SCM g_write_peak_env_info_file(SCM snd, SCM chn, SCM name)
   char *fullname = NULL;
   env_info *ep;
   int fd;
+  SCM errstr;
   int ibuf[5];
   MUS_SAMPLE_TYPE mbuf[2];
   SND_ASSERT_CHAN(S_write_peak_env_info_file, snd, chn, 1);
@@ -2658,10 +2683,14 @@ static SCM g_write_peak_env_info_file(SCM snd, SCM chn, SCM name)
       fullname = mus_expand_filename(TO_C_STRING(name));
       fd = mus_file_create(fullname);
       if (fd == -1)
-	scm_throw(CANNOT_SAVE,
-		  SCM_LIST3(TO_SCM_STRING(S_write_peak_env_info_file),
-			    TO_SCM_STRING(fullname),
-			    TO_SCM_STRING(strerror(errno))));
+	{
+	  errstr = TO_SCM_STRING(fullname);
+	  if (fullname) FREE(fullname);
+	  scm_throw(CANNOT_SAVE,
+		    SCM_LIST3(TO_SCM_STRING(S_write_peak_env_info_file),
+			      errstr,
+			      TO_SCM_STRING(strerror(errno))));
+	}
       if (fullname) FREE(fullname);
       ep = cp->amp_envs[0];
       ibuf[0] = ep->completed;
@@ -2693,16 +2722,21 @@ static SCM g_read_peak_env_info_file(SCM snd, SCM chn, SCM name)
   env_info *ep;
   int fd;
   int ibuf[5];
+  SCM errstr;
   MUS_SAMPLE_TYPE mbuf[2];
   SND_ASSERT_CHAN(S_read_peak_env_info_file, snd, chn, 1);
   cp = get_cp(snd, chn, S_read_peak_env_info_file);
   fullname = mus_expand_filename(TO_C_STRING(name));
   fd = mus_file_open_read(fullname);
   if (fd == -1)
-    scm_throw(NO_SUCH_FILE,
-	      SCM_LIST3(TO_SCM_STRING(S_read_peak_env_info_file),
-			TO_SCM_STRING(fullname),
-			TO_SCM_STRING(strerror(errno))));
+    {
+      errstr = TO_SCM_STRING(fullname);
+      if (fullname) FREE(fullname);
+      scm_throw(NO_SUCH_FILE,
+		SCM_LIST3(TO_SCM_STRING(S_read_peak_env_info_file),
+			  errstr,
+			  TO_SCM_STRING(strerror(errno))));
+    }
   if (fullname) FREE(fullname);
   /* assume cp->amp_envs already exists (needs change to snd-chn) */
   cp->amp_envs[0] = (env_info *)CALLOC(1, sizeof(env_info));

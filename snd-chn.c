@@ -2959,7 +2959,7 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
 			    si->data[time][ind]));
 	}
     }
-  return(mus_format("?"));
+  return(copy_string("?"));
 }
 
 void fftb(chan_info *cp, int on)
@@ -3217,6 +3217,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
   axis_info *ap;
   mark *old_mark;
   int actax, samps;
+  char *str;
   sp = cp->sound;
   ss = cp->state;
   if (sp->combining == CHANNELS_COMBINED) cp = which_channel(sp, y);
@@ -3305,7 +3306,11 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	  else
 	    {
 	      if (actax == FFT_MAIN)
-		report_in_minibuffer(sp, describe_fft_point(cp, x, y));
+		{
+		  str = describe_fft_point(cp, x, y);
+		  report_in_minibuffer(sp, str);
+		  if (str) FREE(str);
+		}
 #if HAVE_GUILE
 	      else
 		if ((actax == LISP) && 
@@ -3377,6 +3382,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
   snd_state *ss;
   TIME_TYPE mouse_time, time_interval;
   int samps;
+  char *str;
   Float old_cutoff;
   /* this needs to be a little slow about deciding that we are dragging, as opposed to a slow click */
   mouse_time = time;
@@ -3476,7 +3482,11 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
 		    }
 #endif
 		  if ((cp->verbose_cursor) && (within_graph(cp, x, y) == FFT_MAIN))
-		    report_in_minibuffer(cp->sound, describe_fft_point(cp, x, y));
+		    {
+		      str = describe_fft_point(cp, x, y);
+		      report_in_minibuffer(cp->sound, str);
+		      if (str) FREE(str);
+		    }
 		}
 	    }
 	}
@@ -3659,7 +3669,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
   snd_state *ss;
   int i, curlen, newlen;
   char *error = NULL;
-  SCM res = SCM_EOL;
+  SCM res = SCM_EOL, errstr;
   if (SCM_EQ_P(snd_n, SCM_BOOL_T))
     {
       ss = get_global_state();
@@ -3740,10 +3750,15 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 	      cp->cursor_proc = on;
 	      cp->cursor_style = CURSOR_PROC;
 	    }
-	  else scm_throw(BAD_ARITY,
-			 SCM_LIST3(TO_SCM_STRING("set-" S_cursor_style),
-				   TO_SCM_STRING(error),
-				   on));
+	  else 
+	    {
+	      errstr = TO_SCM_STRING(error);
+	      FREE(error);
+	      scm_throw(BAD_ARITY,
+			SCM_LIST3(TO_SCM_STRING("set-" S_cursor_style),
+				  errstr,
+				  on));
+	    }
 	}
       else
 	{

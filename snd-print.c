@@ -402,7 +402,7 @@ void ps_set_tiny_numbers_font(chan_info *cp)
 
 #define PRINTED_VERTICAL_SPACING 25 
 
-char *snd_print_or_error(snd_state *ss, char *output)
+static char *snd_print_or_error(snd_state *ss, char *output)
 {
   int j, i, err;
   int *offsets = NULL;

@@ -1473,9 +1473,10 @@ static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)
   char *str;
   snd_state *ss;
   int i, j, list_size, in_size, id, sync;
+  SND_ASSERT_CHAN(S_restore_marks, snd, chn, 2);
   ss = get_global_state();
-  sp = ss->sounds[TO_C_INT(snd)];
-  cp = sp->chans[TO_C_INT(chn)];
+  sp = get_sp(snd);
+  cp = get_cp(snd, chn, S_restore_marks);
   if ((cp) && (!(cp->marks)))
     {
       cp->marks_size = TO_C_INT(size);

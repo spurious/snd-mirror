@@ -558,7 +558,6 @@ void ps_set_tiny_numbers_font(chan_info *cp);
 void snd_print(snd_state *ss, char *output);
 void region_print(char *output, char* title, chan_info *cp);
 void print_enved(char *output, chan_info *cp, int y0);
-char *snd_print_or_error(snd_state *ss, char *output);
 #if HAVE_GUILE
   void g_init_print(SCM local_doc);
 #endif

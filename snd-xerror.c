@@ -118,6 +118,8 @@ static int yes_or_no = 0;
 static void YesCallback(Widget w, XtPointer context, XtPointer info) {yes_or_no = 1;}
 static void NoCallback(Widget w, XtPointer context, XtPointer info) {yes_or_no = 0;}
 
+#define YES_OR_NO_BUFFER_SIZE 1024
+
 int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
 {
   static Widget yes_or_no_dialog = NULL;
@@ -128,13 +130,13 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
   char *yes_buf;
 #if HAVE_VPRINTF
   va_list ap;
-  yes_buf = (char *)CALLOC(256, sizeof(char));
+  yes_buf = (char *)CALLOC(YES_OR_NO_BUFFER_SIZE, sizeof(char));
   va_start(ap, format);
-  vsprintf(yes_buf, format, ap);
+  vsnprintf(yes_buf, YES_OR_NO_BUFFER_SIZE, format, ap);
   va_end(ap);
 #else
   yes_buf = (char *)CALLOC(256, sizeof(char));
-  sprintf(yes_buf, "%s...[you need vprintf]", format);
+  snprintf(yes_buf, YES_OR_NO_BUFFER_SIZE, "%s...[you need vprintf]", format);
 #endif
   yes_or_no = 0;
   if (!yes_or_no_dialog)

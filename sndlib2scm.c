@@ -389,6 +389,16 @@ SCM make_sound_data(int chans, int frames)
   #define H_make_sound_data "(" S_make_sound_data " chans frames) -> new sound-data object with chans channels, each having frames samples"
   int i;
   sound_data *new_sound_data;
+  if (chans <= 0)
+    scm_throw(MUS_MISC_ERROR,
+	      SCM_LIST3(TO_SCM_STRING(S_make_sound_data),
+			TO_SCM_STRING("chans <= 0?"),
+			TO_SCM_INT(chans)));
+  if (frames <= 0)
+    scm_throw(MUS_MISC_ERROR,
+	      SCM_LIST3(TO_SCM_STRING(S_make_sound_data),
+			TO_SCM_STRING("frames <= 0?"),
+			TO_SCM_INT(frames)));
   new_sound_data = (sound_data *)CALLOC(1, sizeof(sound_data));
   new_sound_data->length = frames;
   new_sound_data->chans = chans;

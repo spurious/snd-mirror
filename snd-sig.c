@@ -279,15 +279,20 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
   snd_info *sp;
   snd_fd **sfs;
   snd_fd *sf;
+  SCM errstr;
   int kp, j, ip, len, num, reporting = 0, rpt = 0, rpt4;
   SCM res;
   char *errmsg;
   errmsg = procedure_ok(proc, 1, 0, origin, procname, procn);
   if (errmsg)
-    scm_throw(BAD_ARITY,
-	      SCM_LIST3(TO_SCM_STRING(origin),
-			proc,
-			TO_SCM_STRING(errmsg)));
+    {
+      errstr = TO_SCM_STRING(errmsg);
+      FREE(errmsg);
+      scm_throw(BAD_ARITY,
+		SCM_LIST3(TO_SCM_STRING(origin),
+			  proc,
+			  errstr));
+    }
   sp = cp->sound;
   switch (chan_choice)
     {
@@ -391,15 +396,20 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
   snd_info *sp;
   snd_fd **sfs;
   SCM *vdata;
+  SCM errstr;
   int kp, ip, pos = 0, len, num, reporting = 0, rpt = 0, rpt4;
   SCM res = SCM_UNDEFINED, args, gh_chans;
   char *errmsg;
   errmsg = procedure_ok(proc, 2, 0, origin, procname, procn);
   if (errmsg)
-    scm_throw(BAD_ARITY,
-	      SCM_LIST3(TO_SCM_STRING(origin),
-			proc,
-			TO_SCM_STRING(errmsg)));
+    {
+      errstr = TO_SCM_STRING(errmsg);
+      FREE(errmsg);
+      scm_throw(BAD_ARITY,
+		SCM_LIST3(TO_SCM_STRING(origin),
+			  proc,
+			  errstr));
+    }
   sp = cp->sound;
   switch (chan_choice)
     {
@@ -618,13 +628,18 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
   int kp, j, k, ip, num, val_size, reporting = 0, rpt = 0, rpt4;
   MUS_SAMPLE_TYPE *vals;
   SCM res;
+  SCM errstr;
   char *errmsg;
   errmsg = procedure_ok(proc, 1, 0, origin, procname, procn);
   if (errmsg)
-    scm_throw(BAD_ARITY,
-	      SCM_LIST3(TO_SCM_STRING(origin),
-			proc,
-			TO_SCM_STRING(errmsg)));
+    {
+      errstr = TO_SCM_STRING(errmsg);
+      FREE(errmsg);
+      scm_throw(BAD_ARITY,
+		SCM_LIST3(TO_SCM_STRING(origin),
+			  proc,
+			  errstr));
+    }
   sp = cp->sound;
   switch (chan_choice)
     {
@@ -740,14 +755,18 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
   output_state **os_arr;
   int kp, k, n, ip, len, num, val_size, res_size, reporting = 0, rpt = 0, rpt4;
   MUS_SAMPLE_TYPE *vals;
-  SCM res = SCM_UNDEFINED, args, gh_chans, resval;
+  SCM res = SCM_UNDEFINED, args, gh_chans, resval, errstr;
   char *errmsg;
   errmsg = procedure_ok(proc, 2, 0, origin, procname, procn);
   if (errmsg)
-    scm_throw(BAD_ARITY,
-	      SCM_LIST3(TO_SCM_STRING(origin),
-			proc,
-			TO_SCM_STRING(errmsg)));
+    {
+      errstr = TO_SCM_STRING(errmsg);
+      FREE(errmsg);
+      scm_throw(BAD_ARITY,
+		SCM_LIST3(TO_SCM_STRING(origin),
+			  proc,
+			  errstr));
+    }
   sp = cp->sound;
   switch (chan_choice)
     {
@@ -865,6 +884,7 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
 
 static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp)
 {
+  /* if string returned, needs to be freed */
   /* amp == 0.0 means unnormalized, cp == NULL means current selection */
   sync_state *sc;
   sync_info *si;
@@ -2062,6 +2082,7 @@ static void fht(int powerOfFour, Float *array)
 static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_enved, 
 				   const char *origin, int over_selection, Float *ur_a, mus_any *gen)
 {
+  /* if string returned, needs to be freed */
   /* interpret e as frequency response and apply as filter to all sync'd chans */
   Float *a = NULL, *d = NULL;
   Float x;
@@ -3684,7 +3705,8 @@ convolves file with snd's channel chn (or the currently sync'd channels), amp is
 
   chan_info *cp;
   Float amp;
-  char *fname = NULL, *error;
+  SCM errstr;
+  char *fname = NULL, *error = NULL;
   SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_convolve_with);
   SND_ASSERT_CHAN(S_convolve_with, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_convolve_with);
@@ -3701,10 +3723,15 @@ convolves file with snd's channel chn (or the currently sync'd channels), amp is
     {
       error = convolve_with_or_error(fname, amp, cp);
       if (error)
-	scm_throw(MUS_MISC_ERROR,
-		  SCM_LIST3(TO_SCM_STRING(S_convolve_with),
-			    file,
-			    TO_SCM_STRING(error)));
+	{
+	  if (fname) FREE(fname);
+	  errstr = TO_SCM_STRING(error);
+	  FREE(error);
+	  scm_throw(MUS_MISC_ERROR,
+		    SCM_LIST3(TO_SCM_STRING(S_convolve_with),
+			      file,
+			      errstr));
+	}
     }
   else 
     {
@@ -3777,6 +3804,7 @@ static SCM g_convolve_selection_with(SCM file, SCM new_amp)
 convolves the current selection with file; amp is the resultant peak amp"
 
   Float amp;
+  SCM errstr;
   char *fname = NULL, *error;
   SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_convolve_selection_with);
   if (selection_is_active() == 0) 
@@ -3795,10 +3823,15 @@ convolves the current selection with file; amp is the resultant peak amp"
     {
       error = convolve_with_or_error(fname, amp, NULL);
       if (error)
-	scm_throw(MUS_MISC_ERROR,
-		  SCM_LIST3(TO_SCM_STRING(S_convolve_selection_with),
-			    file,
-			    TO_SCM_STRING(error)));
+	{
+	  if (fname) FREE(fname);
+	  errstr = TO_SCM_STRING(error);
+	  FREE(error);
+	  scm_throw(MUS_MISC_ERROR,
+		    SCM_LIST3(TO_SCM_STRING(S_convolve_selection_with),
+			      file,
+			      errstr));
+	}
     }
   else 
     {
@@ -3894,7 +3927,7 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope. Neg
 			       FALSE, NOT_FROM_ENVED, S_src_sound, FALSE, egen);
 	      else scm_throw(MUS_MISC_ERROR,
 			     SCM_LIST3(TO_SCM_STRING(S_src_sound),
-				       TO_SCM_STRING(mus_format("can't use %s generator (need env):", mus_name(egen))),
+				       TO_SCM_STRING("clm gen not an envelope handler"),
 				       ratio_or_env));
 	    }
 	  else scm_wrong_type_arg(S_src_sound, 1, ratio_or_env);
@@ -3940,7 +3973,7 @@ sampling-rate converts the currently selected data by ratio (which can be an env
 			       FALSE, NOT_FROM_ENVED, S_src_selection, TRUE, egen);
 	      else scm_throw(MUS_MISC_ERROR,
 			     SCM_LIST3(TO_SCM_STRING(S_src_selection),
-				       TO_SCM_STRING(mus_format("can't use %s generator (need env):", mus_name(egen))),
+				       TO_SCM_STRING("clm generator not an envelope handler"),
 				       ratio_or_env));
 	    }
 	  else scm_wrong_type_arg(S_src_selection, 1, ratio_or_env);
@@ -3957,6 +3990,7 @@ applies FIR filter to snd's channel chn. 'filter' is either the frequency respon
   chan_info *cp;
   vct *v;
   int len;
+  SCM errstr;
   env *ne = NULL;
   char *error;
   SND_ASSERT_CHAN(S_filter_sound, snd_n, chn_n, 3);
@@ -3965,11 +3999,15 @@ applies FIR filter to snd's channel chn. 'filter' is either the frequency respon
     {
       error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, S_filter_sound, FALSE, NULL, mus_scm_to_clm(e));
       if (error)
-	scm_throw(MUS_MISC_ERROR,
-		  SCM_LIST4(TO_SCM_STRING(S_filter_sound),
-			    e, 
-			    order,
-			    TO_SCM_STRING(error)));
+	{
+	  errstr = TO_SCM_STRING(error);
+	  FREE(error);
+	  scm_throw(MUS_MISC_ERROR,
+		    SCM_LIST4(TO_SCM_STRING(S_filter_sound),
+			      e, 
+			      order,
+			      errstr));
+	}
     }
   else
     {
@@ -4009,6 +4047,7 @@ static SCM g_filter_selection(SCM e, SCM order)
   char *error;
   vct *v;
   int len;
+  SCM errstr;
   env *ne = NULL;
   if (selection_is_active() == 0) 
     scm_throw(NO_ACTIVE_SELECTION,
@@ -4018,11 +4057,15 @@ static SCM g_filter_selection(SCM e, SCM order)
     {
       error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, S_filter_selection, TRUE, NULL, mus_scm_to_clm(e));
       if (error)
-	scm_throw(MUS_MISC_ERROR,
-		  SCM_LIST4(TO_SCM_STRING(S_filter_selection),
-			    e, 
-			    order,
-			    TO_SCM_STRING(error)));
+	{
+	  errstr = TO_SCM_STRING(error);
+	  FREE(error);
+	  scm_throw(MUS_MISC_ERROR,
+		    SCM_LIST4(TO_SCM_STRING(S_filter_selection),
+			      e, 
+			      order,
+			      errstr));
+	}
     }
   else
     {

@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 43
-#define MUS_DATE "16-Mar-01"
+#define MUS_REVISION 44
+#define MUS_DATE "26-Mar-01"
 
 /* 
+ * 26-Mar:     extended_type field added to mus_any_class for more robust type checking.
  * 16-Mar:     mus_phase of env -> current_value.
  * 28-Feb:     added mus_position (currently only for envs).
  * 8-Feb:      clm2scm.h.
@@ -124,6 +125,7 @@ typedef struct mus__any_class {
   Float (*scaler)(void *ptr);
   Float (*set_scaler)(void *ptr, Float val);
   Float (*run)(mus_any *gen, Float arg1, Float arg2);
+  int extended_type;
 } mus_any_class;
 
 typedef struct {
@@ -178,6 +180,8 @@ enum {MUS_RECTANGULAR_WINDOW, MUS_HANNING_WINDOW, MUS_WELCH_WINDOW, MUS_PARZEN_W
       MUS_HAMMING_WINDOW, MUS_BLACKMAN2_WINDOW, MUS_BLACKMAN3_WINDOW, MUS_BLACKMAN4_WINDOW,
       MUS_EXPONENTIAL_WINDOW, MUS_RIEMANN_WINDOW, MUS_KAISER_WINDOW, MUS_CAUCHY_WINDOW, MUS_POISSON_WINDOW,
       MUS_GAUSSIAN_WINDOW, MUS_TUKEY_WINDOW, MUS_DOLPH_CHEBYSHEV_WINDOW};
+
+#define MUS_FFT_WINDOW_OK(Window) (((Window) >= MUS_RECTANGULAR_WINDOW) && ((Window) <= MUS_DOLPH_CHEBYSHEV_WINDOW))
 
 #define MUS_RUN(GEN, ARG1, ARG2) ((*((GEN->core)->run))(GEN, ARG1, ARG2))
 #define MUS_RUN_P(GEN) 	         ((GEN->core)->run)

@@ -228,26 +228,29 @@ static SCM g_set_reverb_funcs(SCM rev, SCM make_rev, SCM free_rev)
   #define H_set_reverb_funcs "(" "set-" S_reverb_funcs " reverb make-reverb free-reverb) sets the current reverb functions"
 
   char *errmsg;
+  SCM errstr, bad_func;
 
   errmsg = procedure_ok(rev, 3, 0, "set-" S_reverb_funcs, "reverb", 1);
+  if (errmsg == NULL) 
+    {
+      errmsg = procedure_ok(make_rev, 2, 0, "set-" S_reverb_funcs, "make-reverb", 2); 
+      if (errmsg == NULL) 
+	{
+	  errmsg = procedure_ok(free_rev, 1, 0, "set-" S_reverb_funcs, "free-reverb", 3); 
+	  if (errmsg) bad_func = free_rev;
+	}
+      else bad_func = make_rev;
+    }
+  else bad_func = rev;
   if (errmsg)
-    scm_throw(BAD_ARITY,
-	      SCM_LIST3(TO_SCM_STRING(S_reverb_funcs),
-			rev,
-			TO_SCM_STRING(errmsg)));
-  errmsg = procedure_ok(make_rev, 2, 0, "set-" S_reverb_funcs, "make-reverb", 2);
-  if (errmsg)
-    scm_throw(BAD_ARITY,
-	      SCM_LIST3(TO_SCM_STRING(S_reverb_funcs),
-			make_rev,
-			TO_SCM_STRING(errmsg)));
-  errmsg = procedure_ok(free_rev, 1, 0, "set-" S_reverb_funcs, "free-reverb", 3);
-  if (errmsg)
-    scm_throw(BAD_ARITY,
-	      SCM_LIST3(TO_SCM_STRING(S_reverb_funcs),
-			free_rev,
-			TO_SCM_STRING(errmsg)));
-
+    {
+      errstr = TO_SCM_STRING(errmsg);
+      FREE(errmsg);
+      scm_throw(BAD_ARITY,
+		SCM_LIST3(TO_SCM_STRING(S_reverb_funcs),
+			  bad_func,
+			  errstr));
+    }
   if (gh_procedure_p(g_reverb)) snd_unprotect(g_reverb);
   if (gh_procedure_p(g_make_reverb)) snd_unprotect(g_make_reverb);
   if (gh_procedure_p(g_free_reverb)) snd_unprotect(g_free_reverb);
@@ -295,13 +298,18 @@ static SCM g_set_contrast_func(SCM func)
   #define H_set_contrast_func "(" "set-" S_contrast_func " func) sets the current contrast function"
 
   char *errmsg;
+  SCM errstr;
 
   errmsg = procedure_ok(func, 2, 0, "set-" S_contrast_func, "contrast", 1);
   if (errmsg)
-    scm_throw(BAD_ARITY,
-	      SCM_LIST3(TO_SCM_STRING(S_contrast_func),
-			func,
-			TO_SCM_STRING(errmsg)));
+    {
+      errstr = TO_SCM_STRING(errmsg);
+      FREE(errmsg);
+      scm_throw(BAD_ARITY,
+		SCM_LIST3(TO_SCM_STRING(S_contrast_func),
+			  func,
+			  errstr));
+    }
 
   if (gh_procedure_p(g_contrast)) snd_unprotect(g_contrast);
   if (SCM_NFALSEP(func))
@@ -411,7 +419,8 @@ static mus_any_class FCOMB_CLASS = {
   0, 0, 0, 0, /* freq phase */
   &fcomb_scaler,
   &set_fcomb_scaler,
-  &mus_fcomb
+  &mus_fcomb,
+  0
 };
 
 static mus_any *mus_make_fcomb (Float scaler, int size, Float a0, Float a1)
@@ -1401,6 +1410,7 @@ void play_region(snd_state *ss, int region, int background)
   if ((background == NOT_IN_BACKGROUND) && (play_list_members > 0)) return;
   if (!(region_ok(region))) return;
   chans = region_chans(region);
+  if (chans == 0) return;
   for (i = 0; i < chans; i++) 
     {
       dp = add_region_channel_to_play_list(region, i, 0, NO_END_SPECIFIED);
@@ -1452,6 +1462,7 @@ void play_channels(chan_info **cps, int chans, int *starts, int *ur_ends, int ba
   if ((background == NOT_IN_BACKGROUND) && 
       (play_list_members > 0)) 
     return;
+  if (chans <= 0) return;
   if (ur_ends)
     ends = ur_ends;
   else
@@ -2536,20 +2547,31 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
       /* filename beg end background syncd ignored */
       name = mus_expand_filename(TO_C_STRING(samp_n));
       if (!(mus_file_probe(name)))
-	scm_throw(NO_SUCH_FILE,
-		  SCM_LIST2(TO_SCM_STRING(S_play),
-			    samp_n));
+	{
+	  FREE(name);
+	  scm_throw(NO_SUCH_FILE,
+		    SCM_LIST2(TO_SCM_STRING(S_play),
+			      samp_n));
+	}
       if (!(MUS_HEADER_TYPE_OK(mus_sound_header_type(name))))
-	scm_throw(MUS_MISC_ERROR,
-		  SCM_LIST3(samp_n,
-			    TO_SCM_STRING("can't read header"),
-			    TO_SCM_STRING(mus_header_type_name(mus_header_type()))));
+	{
+	  FREE(name);
+	  scm_throw(MUS_MISC_ERROR,
+		    SCM_LIST4(TO_SCM_STRING(S_play),
+			      samp_n,
+			      TO_SCM_STRING("can't read header"),
+			      TO_SCM_STRING(mus_header_type_name(mus_header_type()))));
+	}
       if (!(MUS_DATA_FORMAT_OK(mus_sound_data_format(name))))
-	scm_throw(MUS_MISC_ERROR,
-		  SCM_LIST3(samp_n,
-			    TO_SCM_STRING("can't read data"),
-			    TO_SCM_STRING(mus_header_original_format_name(mus_sound_original_format(name),
-									  mus_sound_header_type(name)))));
+	{
+	  FREE(name);
+	  scm_throw(MUS_MISC_ERROR,
+		    SCM_LIST4(TO_SCM_STRING(S_play),
+			      samp_n,
+			      TO_SCM_STRING("can't read data"),
+			      TO_SCM_STRING(mus_header_original_format_name(mus_sound_original_format(name),
+									    mus_sound_header_type(name)))));
+	}
       sp = make_sound_readable(get_global_state(), name, FALSE);
       sp->shortname = filename_without_home_directory(name);
       sp->fullname = NULL;
@@ -2760,12 +2782,25 @@ static SCM g_add_player(SCM snd_chn, SCM start, SCM end)
 static SCM g_start_playing(SCM chans, SCM srate, SCM in_background)
 {
   #define H_start_playing "(" S_start_playing " &optional chans srate in-background)"
+  int c, s;
   SCM_ASSERT(INTEGER_IF_BOUND_P(chans), chans, SCM_ARG1, S_start_playing);
   SCM_ASSERT(NUMBER_IF_BOUND_P(srate), srate, SCM_ARG2, S_start_playing);
   SCM_ASSERT(BOOLEAN_IF_BOUND_P(in_background), in_background, SCM_ARG3, S_start_playing);
+  c = TO_C_INT_OR_ELSE(chans, 1);
+  if (c <= 0)
+    scm_throw(MUS_MISC_ERROR,
+	      SCM_LIST3(TO_SCM_STRING(S_start_playing),
+			TO_SCM_STRING("invalid chans arg"),
+			chans));
+  s = TO_C_INT_OR_ELSE(srate, 44100);
+  if (s <= 0)
+    scm_throw(MUS_MISC_ERROR,
+	      SCM_LIST3(TO_SCM_STRING(S_start_playing),
+			TO_SCM_STRING("invalid srate arg"),
+			srate));
   start_dac(get_global_state(),
-	    TO_C_INT_OR_ELSE(srate, 44100),
-	    TO_C_INT_OR_ELSE(chans, 1),
+	    s,
+	    c,
 	    TO_C_BOOLEAN_OR_T(in_background));
   return(SCM_BOOL_F);
 }

@@ -1119,7 +1119,7 @@ static void filter_activate_callback(GtkWidget *w, gpointer context)
   snd_info *sp = (snd_info *)context;
   char *str = NULL;
   str = gtk_entry_get_text(GTK_ENTRY(w));
-  if (sp->filter_env) free_env(sp->filter_env);
+  if (sp->filter_env) sp->filter_env = free_env(sp->filter_env);
   sp->filter_env = string2env(str);
   if (!(sp->filter_env)) /* maybe user cleared text field? */
     sp->filter_env = default_env(sp->filter_env_xmax, 1.0);

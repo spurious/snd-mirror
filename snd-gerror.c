@@ -124,6 +124,8 @@ static void YesCallback(GtkWidget *w, gpointer context) {gtk_widget_hide(yes_or_
 static void NoCallback(GtkWidget *w, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = 0;}
 static void delete_yes_or_no_dialog(GtkWidget *w, GdkEvent *event, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = 1;}
 
+#define YES_OR_NO_BUFFER_SIZE 1024
+
 int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
 {
   GtkWidget *yes_button, *no_button;
@@ -131,13 +133,13 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
   char *yes_buf;
 #if HAVE_VPRINTF
   va_list ap;
-  yes_buf = (char *)CALLOC(256, sizeof(char));
+  yes_buf = (char *)CALLOC(YES_OR_NO_BUFFER_SIZE, sizeof(char));
   va_start(ap, format);
-  vsprintf(yes_buf, format, ap);
+  vsnprintf(yes_buf, YES_OR_NO_BUFFER_SIZE, format, ap);
   va_end(ap);
 #else
   yes_buf = (char *)CALLOC(256, sizeof(char));
-  sprintf(yes_buf, "%s...[you need vprintf]", format);
+  snprintf(yes_buf, YES_OR_NO_BUFFER_SIZE, "%s...[you need vprintf]", format);
 #endif
 
   yes_or_no = 0;

@@ -1,5 +1,6 @@
 #include "snd.h"
 
+#define SND_ERROR_BUFFER_SIZE 1024
 static char *snd_error_buffer = NULL;
 
 #if HAVE_GUILE
@@ -12,17 +13,10 @@ void snd_warning(char *format, ...)
   snd_info *sp;
   snd_state *ss;
   if (snd_error_buffer == NULL) 
-    {
-      snd_error_buffer = (char *)CALLOC(1024, sizeof(char));
-      if (snd_error_buffer == NULL) 
-	{
-	  fprintf(stderr, "serious memory trouble!!"); 
-	  return;
-	}
-    }
+    snd_error_buffer = (char *)CALLOC(SND_ERROR_BUFFER_SIZE, sizeof(char));
 #if HAVE_VPRINTF
   va_start(ap, format);
-  vsprintf(snd_error_buffer, format, ap);
+  vsnprintf(snd_error_buffer, SND_ERROR_BUFFER_SIZE, format, ap);
   va_end(ap);
 #if HAVE_GUILE
   if ((HOOKED(snd_warning_hook)) &&
@@ -61,16 +55,9 @@ void snd_error(char *format, ...)
   snd_info *sp;
   snd_state *ss;
   if (snd_error_buffer == NULL) 
-    {
-      snd_error_buffer = (char *)CALLOC(1024, sizeof(char));
-      if (snd_error_buffer == NULL) 
-	{
-	  fprintf(stderr, "serious memory trouble!!"); 
-	  return;
-	}
-    }
+    snd_error_buffer = (char *)CALLOC(SND_ERROR_BUFFER_SIZE, sizeof(char));
   va_start(ap, format);
-  vsprintf(snd_error_buffer, format, ap);
+  vsnprintf(snd_error_buffer, SND_ERROR_BUFFER_SIZE, format, ap);
   va_end(ap);
 #if HAVE_GUILE
     if ((HOOKED(snd_error_hook)) &&

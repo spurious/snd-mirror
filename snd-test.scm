@@ -26,7 +26,7 @@
 (use-modules (ice-9 format) (ice-9 debug))
 
 (define tests 1)
-(define snd-test 20)
+(define snd-test -1)
 (define full-test (< snd-test 0))
 
 (if (and (not (file-exists? "4.aiff"))
@@ -6172,6 +6172,83 @@
 			   expected-tag (procedure-source thunk) tag)))))
 (defvar env3 '(0 0 1 1))
 
+(define procs (list 
+	       activate-listener add-mark add-player add-sound-file-extension add-to-main-menu add-to-menu add-transform amp append-to-minibuffer
+	       as-one-edit ask-before-overwrite audio-input-device audio-output-device audio-state-file auto-resize auto-update autocorrelate axis-info
+	       axis-label-font axis-numbers-font backward-graph backward-mark backward-mix backward-sample basic-color bind-key bold-button-font
+	       bomb button-font c-g? call-apply change-menu-label change-samples-with-origin channel-style channel-sync channel-widgets channels
+	       chans clear-audio-inputs close-sound close-sound-file color-cutoff color-dialog color-inverted color-scale color->list colormap
+	       color? comment contrast contrast-amp contrast-func contrasting convolve-arrays convolve-selection-with convolve-with corruption-time
+	       count-matches current-font cursor cursor-color cursor-follows-play cursor-size cursor-style cut dac-folding dac-size data-clipped
+	       data-color data-format data-location default-output-chans default-output-format default-output-srate default-output-type define-envelope
+	       delete-mark delete-marks delete-region delete-sample delete-samples delete-samples-with-origin delete-selection describe-audio dialog-widgets
+	       dismiss-all-dialogs display-edits dot-size draw-dot draw-dots draw-line draw-lines draw-string edit-header-dialog edit-fragment edit-position
+	       edit-tree edits env-base env-selection env-sound enved-active-env enved-base enved-clipping enved-dBing enved-dialog enved-exping enved-power
+	       enved-selected-env enved-target enved-waveform-color enved-waving eps-file eps-left-margin eps-bottom-margin erase-rectangle expand
+	       expand-hop expand-length expand-ramp expanding fft fft-beta fft-log-frequency fft-log-magnitude fft-size fft-style fft-window ffting
+	       fht file-dialog file-name fill-polygon fill-rectangle filter-sound filter-dBing filter-env filter-env-order filter-env-in-hz filter-order
+	       filter-selection filter-waveform-color filtering find find-mark find-sound finish-progress-report fit-data-on-open foreground-color
+	       forward-graph forward-mark forward-mix forward-sample frames free-mix-sample-reader free-sample-reader free-track-sample-reader graph
+	       graph-color graph-cursor graph-data graph->ps graph-style graphing graphs-horizontal header-type help-dialog hide-listener help-text-font
+	       highlight-color id-region in insert-region insert-sample insert-samples insert-samples-with-origin insert-selection insert-silence
+	       insert-sound just-sounds key key-binding left-sample line-size listener-color listener-font listener-prompt listener-text-color
+	       load-colormap load-font loop-samples main-widgets make-color make-graph-data make-mix-sample-reader make-player make-region
+	       make-region-sample-reader make-sample-reader make-track-sample-reader map-across-all-chans map-across-chans map-across-sound-chans
+	       map-chan map-chans map-sound-chans map-all-chans mark-color mark-name mark-sample mark-sync mark-sync-max mark->sound marks mark?
+	       max-fft-peaks max-regions max-sounds maxamp menu-sensitive menu-widgets minibuffer-history-length min-dB mix mixes mix-amp mix-amp-env
+	       mix-anchor mix-chans mix-color mix-track mix-length mix-locked mix-name mix? mix-panel mix-position mix-region mix-sample-reader?
+	       mix-selection mix-sound mix-sound-channel mix-sound-index mix-speed mix-tag-height mix-tag-width mix-tag-y mix-vct mix-waveform-height
+	       movies new-sound next-mix-sample next-sample next-track-sample normalize-fft normalize-on-open normalize-view open-alternate-sound
+	       open-raw-sound open-sound open-sound-file orientation-dialog peak-env-info peaks play play-and-wait play-mix play-region play-selection
+	       play-track player? position-color position->x position->y prefix-arg preload-directory preload-file previous-files-sort previous-sample 
+	       print-length progress-report prompt-in-minibuffer  protect-region pushed-button-color raw-chans raw-format raw-srate read-only
+	       read-peak-env-info-file recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain recorder-in-amp recorder-in-format
+	       recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format recorder-srate recorder-trigger redo region-chans region-dialog
+	       region-id region-length region-maxamp region-sample region-samples region-samples->vct region-srate regions region? remove-from-menu
+	       report-in-minibuffer reset-control-panel restore-control-panel restore-marks restore-region reverb-decay reverb-feedback reverb-funcs
+	       reverb-length reverb-lowpass reverb-scale reverbing reverse-sound reverse-selection revert-sound right-sample sample sample-reader-at-end?
+	       sample-reader? samples samples->vct samples->sound-data sash-color save-control-panel save-dir save-edit-history save-envelopes
+	       save-listener save-macros save-marks save-options save-region save-selection save-sound save-sound-as save-state save-state-file
+	       save-state-on-exit scale-by scale-selection-by scale-selection-to scale-to scan-across-all-chans scan-across-chans scan-across-sound-chans
+	       scan-chan scan-chans scan-sound-chans scan-all-chans search-procedure select-all select-channel select-mix select-region select-sound
+	       selected-channel selected-data-color selected-graph-color selected-mix selected-mix-color selected-sound selection-position selection-color
+	       selection-creates-region selection-length selection-member? selection? short-file-name show-axes show-backtrace show-controls show-fft-peaks
+	       show-indices show-listener show-marks show-mix-waveforms show-selection-transform show-usage-stats show-y-zero sinc-width smooth
+	       smooth-selection snd-apropos snd-print snd-spectrum snd-tempnam snd-version sound-files-in-directory sound-loop-info sound-widgets
+	       soundfont-info sound? sounds spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale
+	       spectro-z-angle spectro-z-scale speed speed-style speed-tones squelch-update srate src-sound src-selection start-playing start-progress-report
+	       stop-player stop-playing swap-channels syncd-marks sync temp-dir text-focus-color tiny-font track-sample-reader? transform-dialog transform-sample
+	       transform-samples transform-samples->vct transform-size transform-type trap-segfault unbind-key undo uniting update-fft update-graph
+	       update-lisp-graph update-sound update-usage-stats use-raw-defaults use-sinc-interp vct->samples vct->sound-file verbose-cursor view-sound
+	       vu-font vu-font-size vu-size wavelet-type waving wavo wavo-hop wavo-trace window-height window-width window-x window-y with-mix-tags
+	       write-peak-env-info-file x-axis-style x-bounds x-position-slider x->position x-zoom-slider y-bounds y-position-slider y->position
+	       y-zoom-slider zero-pad zoom-color zoom-focus-style mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size
+	       mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length mus-sound-type-specifier
+	       mus-header-type-name mus-data-format-name mus-sound-comment mus-sound-write-date mus-data-format-bytes-per-sample mus-sound-loop-info
+	       mus-audio-report mus-audio-sun-outputs mus-sound-max-amp mus-sound-max-amp-exists? mus-sound-open-input mus-sound-open-output
+	       mus-sound-reopen-output mus-sound-close-input mus-sound-close-output mus-sound-read mus-sound-write mus-sound-seek mus-sound-seek-frame
+	       mus-file-set-data-clipped mus-file-prescaler mus-file-set-prescaler mus-expand-filename make-sound-data sound-data-ref sound-data-set!
+	       sound-data? sound-data-length sound-data-chans sound-data->vct vct->sound-data all-pass all-pass? amplitude-modulate array->file
+	       array-interp asymmetric-fm asymmetric-fm? buffer->frame buffer->sample buffer-empty? buffer? clear-array comb comb? contrast-enhancement
+	       convolution convolve convolve? db->linear degrees->radians delay delay? dot-product env env-interp env? file->array file->frame file->frame?
+	       file->sample file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant? frame* frame+ frame->buffer frame->file
+	       frame->file? frame->frame frame->list frame->sample frame-ref frame-set! frame? granulate granulate? hz->radians iir-filter iir-filter?
+	       in-any in-hz ina inb linear->db locsig locsig-ref locsig-reverb-ref locsig-reverb-set! locsig-set! locsig? make-all-pass make-asymmetric-fm
+	       make-buffer make-comb make-convolve make-delay make-env make-fft-window make-file->frame make-file->sample make-filter make-fir-filter
+	       make-formant make-frame make-frame->file make-granulate make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-zero
+	       make-oscil make-ppolar make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave make-sine-summation
+	       make-square-wave make-src make-sum-of-cosines make-table-lookup make-triangle-wave make-two-pole make-two-zero make-wave-train make-waveshape
+	       make-zpolar mixer* mixer-ref mixer-set! mixer? multiply-arrays mus-a0 mus-a1 mus-a2 mus-array-print-length mus-b1 mus-b2 mus-channel
+	       mus-channels mus-close mus-cosines mus-data mus-feedback mus-feedforward mus-fft mus-formant-radius mus-frequency mus-hop mus-increment
+	       mus-input? mus-length mus-location mus-mix mus-order mus-output? mus-phase mus-ramp mus-random mus-scaler mus-srate mus-xcoeffs mus-ycoeffs
+	       notch notch? one-pole one-pole? one-zero one-zero? oscil oscil-bank oscil? out-any outa outb outc outd partials->polynomial partials->wave
+	       partials->waveshape phase-partials->wave polynomial pulse-train pulse-train? radians->degrees radians->hz rand rand-interp rand-interp?
+	       rand? readin readin? rectangular->polar restart-env ring-modulate sample->buffer sample->file sample->file? sample->frame sawtooth-wave
+	       sawtooth-wave? sine-summation sine-summation? spectrum square-wave square-wave? src src? sum-of-cosines sum-of-cosines? table-lookup
+	       table-lookup? tap triangle-wave triangle-wave? two-pole two-pole? two-zero two-zero? wave-train wave-train? waveshape waveshape?
+	       make-vct vct-add! vct-subtract! vct-copy vct-length vct-multiply! vct-offset! vct-ref vct-scale! vct-fill! vct-set!
+	       vct-peak vct? list->vct vct->list vector->vct vct-move! vct-subseq vct))
+
 (if (or full-test (= snd-test 20))
     (begin
       (if tracing (snd-display ";test 20"))
@@ -6861,6 +6938,84 @@
 	(check-error-tag 'no-such-file (lambda () (view-sound "/bad/baddy.snd")))
 	(check-error-tag 'no-such-file (lambda () (make-sample-reader 0 "/bad/baddy.snd")))
 	(check-error-tag 'no-such-region (lambda () (make-region-sample-reader 0 1234567)))
+
+	;; now try everything! (all we care about here is that Snd keeps running)
+	(for-each (lambda (n)
+		    (catch #t
+			   (lambda () (n))
+			   (lambda args (car args))))
+		  procs)
+	(dismiss-all-dialogs)
+	(gc)
+
+	(for-each (lambda (arg)
+		    (for-each (lambda (n)
+				;(display (format #f "(~A ~A)~%" n arg))
+				(catch #t
+				       (lambda () (n arg))
+				       (lambda args (car args))))
+			      procs))
+		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color 1 0 0) 
+			#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
+			(lambda () #t) (current-module) (make-sound-data 2 3) :order
+			0 1 -1 (make-hook 2)))
+	(gc)
+
+	(for-each (lambda (arg1)
+		    (for-each (lambda (arg2)
+				;(display (format #f "(~A ~A)~%" arg1 arg2))
+				(for-each (lambda (n)
+					    ;(display (format #f "(~A ~A ~A)~%" n arg1 arg2))
+					    (catch #t
+						   (lambda () (n arg1 arg2))
+						   (lambda args (car args))))
+					  procs))
+			      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color 1 0 0) #(0 1) 3/4 
+				    'mus-error (sqrt -1.0) (make-delay 32) :feedback -1)))
+		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color 1 0 0) #(0 1) 3/4 
+			'mus-error (sqrt -1.0) (make-delay 32) :frequency -1))
+	(gc)
+
+	(if (> tests 1)
+	    (begin
+	      (for-each (lambda (arg1)
+			  (begin
+			    (for-each (lambda (arg2)
+					(for-each (lambda (arg3)
+						    ;(display (format #f "(~A ~A ~A)~%" arg1 arg2 arg3))
+						    (for-each (lambda (n)
+								;(display (format #f "(~A ~A ~A ~A)~%" n arg1 arg2 arg3))
+								(catch #t
+								       (lambda () (n arg1 arg2 arg3))
+								       (lambda args (car args))))
+							      procs))
+						  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1)
+							(sqrt -1.0) (make-delay 32) :start)))
+				      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) 
+					    (sqrt -1.0) (make-delay 32) :phase))
+			    (gc)))
+			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) 
+			      (sqrt -1.0) (make-delay 32) :channels))
+	      (gc)
+	      
+	      (for-each (lambda (arg1)
+			  (begin
+			    (for-each (lambda (arg2)
+					(for-each (lambda (arg3)
+						    (for-each (lambda (arg4)
+								;(display (format #f "(~A ~A ~A ~A)~%" arg1 arg2 arg3 arg4))
+								(for-each (lambda (n)
+									    ;(display (format #f "(~A ~A ~A ~A ~A)~%" n arg1 arg2 arg3 arg4))
+									    (catch #t
+										   (lambda () (n arg1 arg2 arg3 arg4))
+										   (lambda args (car args))))
+									  procs))
+							      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :wave)))
+						  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :initial-contents)))
+				      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :srate))
+			    (gc)))
+			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :input))
+	      ))
       ))
 
 

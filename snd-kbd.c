@@ -295,12 +295,12 @@ void report_in_minibuffer(snd_info *sp, char *format, ...)
   len = snd_strlen(format) + 256;
   buf = (char *)CALLOC(len, sizeof(char));
   va_start(ap, format);
-  vsprintf(buf, format, ap);
+  vsnprintf(buf, len, format, ap);
   va_end(ap);
 #else
   len = snd_strlen(format) + 256;
   buf = (char *)CALLOC(len, sizeof(char));
-  sprintf(buf, "%s...[you need vprintf]", format);
+  snprintf(buf, len, "%s...[you need vprintf]", format);
 #endif
   set_minibuffer_string(sp, buf);
   sp->minibuffer_temp = 1;
@@ -318,12 +318,12 @@ void report_in_minibuffer_and_save(snd_info *sp, char *format, ...)
   len = snd_strlen(format) + 256;
   buf = (char *)CALLOC(len, sizeof(char));
   va_start(ap, format);
-  vsprintf(buf, format, ap);
+  vsnprintf(buf, len, format, ap);
   va_end(ap);
 #else
   len = snd_strlen(format) + 256;
   buf = (char *)CALLOC(len, sizeof(char));
-  sprintf(buf, "%s...[you need vprintf]", format);
+  snprintf(buf, len, "%s...[you need vprintf]", format);
 #endif
   set_minibuffer_string(sp, buf);
   sp->minibuffer_temp = 1;
@@ -774,7 +774,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	      else apply_env(active_chan, e, 0, current_ed_samples(active_chan), 1.0, 
 			     sp->reging, NOT_FROM_ENVED,
 			     (char *)((sp->reging) ? "C-x a" : "C-x C-a"), NULL);
-	      free_env(e);
+	      e = free_env(e);
 	    }
 	  sp->reging = 0;
 	  sp->amping = 0;
@@ -1892,6 +1892,7 @@ The function should return one of the cursor choices (e.g. cursor-no-action)."
 
   int ip;
   char *errmsg;
+  SCM errstr;
   SCM_ASSERT(INTEGER_P(key), key, SCM_ARG1, S_bind_key);
   SCM_ASSERT(INTEGER_P(state), state, SCM_ARG2, S_bind_key);
   SCM_ASSERT((SCM_FALSEP(code) || gh_procedure_p(code)), code, SCM_ARG3, S_bind_key);
@@ -1909,10 +1910,14 @@ The function should return one of the cursor choices (e.g. cursor-no-action)."
     {
       errmsg = procedure_ok(code, 0, 0, S_bind_key, "func", 3);
       if (errmsg)
-	scm_throw(BAD_ARITY,
-		  SCM_LIST3(TO_SCM_STRING(S_bind_key),
-			    code,
-			    TO_SCM_STRING(errmsg)));
+	{
+	  errstr = TO_SCM_STRING(errmsg);
+	  FREE(errmsg);
+	  scm_throw(BAD_ARITY,
+		    SCM_LIST3(TO_SCM_STRING(S_bind_key),
+			      code,
+			      errstr));
+	}
       set_keymap_entry(TO_C_INT_OR_ELSE(key, 0), 
 		       TO_C_INT_OR_ELSE(state, 0), 
 		       ip, code);
