@@ -7032,6 +7032,24 @@ Float mus_set_increment(mus_any *rd, Float direction)
   return(direction);
 }
 
+void *mus_environ(mus_any *rd)
+{
+  if (mus_src_p(rd)) return(((sr *)rd)->environ);
+  if (mus_granulate_p(rd)) return(((grn_info *)rd)->environ);
+  if (mus_phase_vocoder_p(rd)) return(((pv_info *)rd)->environ);
+  if (mus_convolve_p(rd)) return(((conv *)rd)->environ);
+  return(NULL);
+}
+
+void *mus_set_environ(mus_any *rd, void *ptr)
+{
+  if (mus_src_p(rd)) ((sr *)rd)->environ = ptr; else
+  if (mus_granulate_p(rd)) ((grn_info *)rd)->environ = ptr; else
+  if (mus_phase_vocoder_p(rd)) ((pv_info *)rd)->environ = ptr; else
+  if (mus_convolve_p(rd)) ((conv *)rd)->environ = ptr;
+  return(ptr);
+}
+
 static Float *phase_vocoder_data(void *ptr) {return(((pv_info *)ptr)->in_data);}
 static Float run_phase_vocoder(mus_any *ptr, Float unused1, Float unused2) {return(mus_phase_vocoder(ptr, NULL));}
 

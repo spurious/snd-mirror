@@ -1079,11 +1079,10 @@ formants: (map-chan (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
 					       0.0)))
 				  (set! i (+ i dir)) 
 				  val)))))
-    (do ()
-	((or (= i len) (= j out-len)))
-      (vct-set! out-data j (src rd (rand-interp rn)))
-      (set! j (+ j 1)))
-    (vct->samples 0 j out-data)))
+    (vct->channel
+     (vct-map! out-data
+	       (lambda ()
+		 (src rd (rand-interp rn)))))))
 
 ;;; a very similar function uses oscil instead of rand-interp, giving
 ;;; various "Forbidden Planet" sound effects:

@@ -28,7 +28,7 @@
 
 #define SNDLIB_VERSION 15
 #define SNDLIB_REVISION 3
-#define SNDLIB_DATE "18-Apr-02"
+#define SNDLIB_DATE "23-Apr-02"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -655,5 +655,9 @@ char *mus_midi_describe             PROTO((void));
 #endif
 
 END_DECLS
+
+#ifdef MPW_C
+char *strdup (const char *str);
+#endif
 
 #endif

@@ -1608,6 +1608,17 @@ void reset_io_c(void)
 }
 #endif
 
+#ifdef MPW_C
+/* this taken from libit-0.7 */
+char *strdup (const char *str)
+{
+  char *newstr;
+  newstr = (char *)malloc(strlen(str) + 1);
+  if (newstr) strcpy(newstr, str);
+  return(newstr);
+}
+#endif
+
 static char *file_name_buf = NULL;
 
 char *mus_expand_filename(char *utok)

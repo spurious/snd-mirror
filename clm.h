@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 4
-#define MUS_DATE "8-Apr-02"
+#define MUS_REVISION 5
+#define MUS_DATE "23-Apr-02"
 
 /* 
+ * 23-Apr:     mus_environ and mus_set_environ for snd-run optimizer.
  * 8-Apr:      off-by-1 env bug (Lisp/C are now identical), env_interp of exp env beyond end bugfix.
  * 1-Apr:      sine-summation n=0 bugfix.
  * 27-Mar:     negative degree locsig bugfix.
@@ -536,6 +537,8 @@ int mus_phase_vocoder_outctr    PROTO((void *ptr));
 int mus_phase_vocoder_set_outctr PROTO((void *ptr, int val));
 
 void mus_clear_sinc_tables      PROTO((void));
+void *mus_environ               PROTO((mus_any *rd));
+void *mus_set_environ           PROTO((mus_any *rd, void *ptr));
 
 END_DECLS
 
