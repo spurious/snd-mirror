@@ -174,8 +174,6 @@ int device_gains(int ur_dev)
 
 #include <audio.h>
 
-static char *errstr = NULL;
-
 int mus_audio_systems(void) {return(1);} /* I think more than 1 is possible, but don't have a case to test with */
 
 char *mus_audio_system_name(int system) {return("SGI");}
@@ -314,7 +312,6 @@ int mus_audio_initialize(void)
   if (!audio_initialized)
     {
       audio_initialized = 1;
-      errstr = (char *)CALLOC(256,sizeof(char));
       config = (ALconfig *)CALLOC(IO_LINES,sizeof(ALconfig));
       port = (ALport *)CALLOC(IO_LINES,sizeof(ALport));
       line_in_use = (int *)CALLOC(IO_LINES,sizeof(int));

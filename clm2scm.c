@@ -53,14 +53,6 @@
 
 void init_mus2scm_module(void);
 
-#if 0
-/* this isn't a safe default -- Guile aborts the main program if the throw tag isn't caught */
-static void mus_error2scm(int type, char *msg)
-{
-  scm_throw(MUS_ERROR,SCM_LIST2(gh_int2scm(type),gh_str02scm(msg)));
-}
-#endif
-
 #if (!USE_SND)
 static int g_scm2int(SCM obj)
 {
@@ -362,15 +354,7 @@ static scm_smobfuns keyword_smobfuns = {
 
 static SCM make_keyword(int val)
 {
-#if HAVE_NEW_SMOB
-  SCM_RETURN_NEWSMOB(keyword_tag,val);
-#else
-  SCM new_keyword;
-  SCM_NEWCELL(new_keyword);
-  SCM_SETCDR(new_keyword,(SCM)val);
-  SCM_SETCAR(new_keyword,keyword_tag);
-  return(new_keyword);
-#endif
+  SND_RETURN_NEWSMOB(keyword_tag,val);
 }
 
 static void init_keywords(void)
@@ -910,15 +894,7 @@ static void init_mus_scm(void)
 
 static SCM mus_scm_to_smob(mus_scm *gn)
 {
-#if HAVE_NEW_SMOB
-  SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
-#else
-  SCM new_osc;
-  SCM_NEWCELL(new_osc);
-  SCM_SETCDR(new_osc,(SCM)gn);
-  SCM_SETCAR(new_osc,mus_scm_tag);
-  return(new_osc);
-#endif
+  SND_RETURN_NEWSMOB(mus_scm_tag,gn);
 }
 
 #define MUS_DATA_POSITION 0
@@ -1126,7 +1102,7 @@ static SCM g_mus_bank1(SCM amps, SCM gens, SCM inp, int type, char *caller)
 		  for (i=0;i<size;i++) invals[i] = gh_scm2double(gh_call1(inp,gh_int2scm(i)));
 #endif
 		}
-	      else scm_misc_error("mus_bank","invalid input arg: ~S",SCM_LIST1(inp));
+	      else scm_wrong_type_arg(caller,3,inp);
 	    }
 	}
     }
@@ -1162,7 +1138,7 @@ static SCM g_mus_bank1(SCM amps, SCM gens, SCM inp, int type, char *caller)
 		  for (i=0;i<size;i++) scls[i] = gh_scm2double(gh_call1(amps,gh_int2scm(i)));
 #endif
 		}
-	      else scm_misc_error("mus_bank","invalid scaler arg: ~S",SCM_LIST1(amps));
+	      else scm_wrong_type_arg(caller,1,amps);
 	    }
 	}
     }
@@ -1315,7 +1291,7 @@ static SCM g_make_delay_1(int choice, SCM arglist)
   int size = 1;
   Float *line = NULL;
   Float scaler = 0.0, feedback = 0.0, feedforward = 0.0;
-  SCM initial_contents = SCM_UNDEFINED;
+  SCM initial_contents = SCM_UNDEFINED,lst;
   Float initial_element = 0.0;
   
   switch (choice)
@@ -1367,7 +1343,8 @@ static SCM g_make_delay_1(int choice, SCM arglist)
 		{
 		  len = gh_length(initial_contents);
 		  line = (Float *)CALLOC(len,sizeof(Float));
-		  for (i=0;i<len;i++) line[i] = gh_scm2double(gh_list_ref(initial_contents,gh_int2scm(i)));
+		  for (i=0,lst=initial_contents;i<len;i++,lst=SCM_CDR(lst)) 
+		    line[i] = gh_scm2double(SCM_CAR(lst));
 		}
 	    }
 	}
@@ -1787,7 +1764,7 @@ static SCM g_partials2wave(SCM partials, SCM utable, SCM normalize)
      (set! gen (make-table-lookup 440.0 :wave (partials->wave '(1 1.0 2 .5))))"
 
   vct *f;
-  SCM table;
+  SCM table,lst;
   Float *partial_data,*wave;
   int len,i;
   SCM_ASSERT(gh_list_p(partials),partials,SCM_ARG1,S_partials2wave);
@@ -1800,7 +1777,8 @@ static SCM g_partials2wave(SCM partials, SCM utable, SCM normalize)
   f = get_vct(table);
   len = gh_length(partials);
   partial_data = (Float *)CALLOC(len,sizeof(Float));
-  for (i=0;i<len;i++) partial_data[i] = gh_scm2double(gh_list_ref(partials,gh_int2scm(i)));
+  for (i=0,lst=partials;i<len;i++,lst=SCM_CDR(lst)) 
+    partial_data[i] = gh_scm2double(SCM_CAR(lst));
   mus_partials2wave(partial_data,len / 2,f->data,f->length,(SCM_TRUE_P(normalize)));
   FREE(partial_data);
   return(table);
@@ -1809,7 +1787,7 @@ static SCM g_partials2wave(SCM partials, SCM utable, SCM normalize)
 static SCM g_phasepartials2wave(SCM partials, SCM utable, SCM normalize)
 {
   vct *f;
-  SCM table;
+  SCM table,lst;
   Float *partial_data,*wave;
   int len,i;
 
@@ -1829,7 +1807,8 @@ static SCM g_phasepartials2wave(SCM partials, SCM utable, SCM normalize)
   f = get_vct(table);
   len = gh_length(partials);
   partial_data = (Float *)CALLOC(len,sizeof(Float));
-  for (i=0;i<len;i++) partial_data[i] = gh_scm2double(gh_list_ref(partials,gh_int2scm(i)));
+  for (i=0,lst=partials;i<len;i++,lst=SCM_CDR(lst)) 
+    partial_data[i] = gh_scm2double(SCM_CAR(lst));
   mus_phasepartials2wave(partial_data,len / 3,f->data,f->length,(SCM_TRUE_P(normalize)));
   FREE(partial_data);
   return(table);
@@ -2543,12 +2522,12 @@ static SCM g_make_frame(SCM arglist)
   /* make_empty_frame from first of arglist, then if more args, load vals */
   mus_scm *gn;
   mus_frame *fr;
-  SCM cararg;
+  SCM cararg,lst;
   int size = 0,i,len;
   SCM_ASSERT((gh_list_p(arglist)),arglist,SCM_ARG1,S_make_frame);
   len = gh_length(arglist);
-  if (len == 0) scm_misc_error(S_make_frame,"no arguments?",SCM_EOL);
-  cararg = gh_list_ref(arglist,gh_int2scm(0));
+  if (len == 0) scm_wrong_num_args(gh_str02scm(S_make_frame));
+  cararg = SCM_CAR(arglist);
   if (!(SCM_NFALSEP(scm_real_p(cararg)))) scm_wrong_type_arg(S_make_frame,1,cararg);
   size = g_scm2int(cararg);
   gn = (mus_scm *)CALLOC(1,sizeof(mus_scm));
@@ -2556,8 +2535,8 @@ static SCM g_make_frame(SCM arglist)
   if (len > 1)
     {
       fr = (mus_frame *)(gn->gen);
-      for (i=1;i<len;i++)
-	fr->vals[i-1] = gh_scm2double(gh_list_ref(arglist,gh_int2scm(i)));
+      for (i=1,lst=SCM_CDR(arglist);i<len;i++,lst=SCM_CDR(lst))
+	fr->vals[i-1] = gh_scm2double(SCM_CAR(lst));
     }
   return(mus_scm_to_smob(gn));
 }
@@ -2749,12 +2728,12 @@ static SCM g_make_mixer(SCM arglist)
   /* make_empty_mixer from first of arglist, then if more args, load vals */
   mus_scm *gn;
   mus_mixer *fr;
-  SCM cararg;
+  SCM cararg,lst;
   int size = 0,i,j,k,len;
   SCM_ASSERT((gh_list_p(arglist)),arglist,SCM_ARG1,S_make_mixer);
   len = gh_length(arglist);
-  if (len == 0) scm_misc_error(S_make_mixer,"no arguments?",SCM_EOL);
-  cararg = gh_list_ref(arglist,gh_int2scm(0));
+  if (len == 0) scm_wrong_num_args(gh_str02scm(S_make_mixer));
+  cararg = SCM_CAR(arglist);
   if (!(SCM_NFALSEP(scm_real_p(cararg)))) scm_wrong_type_arg(S_make_mixer,1,cararg);
   size = g_scm2int(cararg);
   gn = (mus_scm *)CALLOC(1,sizeof(mus_scm));
@@ -2764,9 +2743,9 @@ static SCM g_make_mixer(SCM arglist)
       fr = (mus_mixer *)(gn->gen);
       j = 0;
       k = 0;
-      for (i=1;i<len;i++)
+      for (i=1,lst=SCM_CDR(arglist);i<len;i++,lst=SCM_CDR(lst))
 	{
-	  fr->vals[j][k] = gh_scm2double(gh_list_ref(arglist,gh_int2scm(i)));
+	  fr->vals[j][k] = gh_scm2double(SCM_CAR(lst));
 	  k++;
 	  if (k == size)
 	    {
@@ -2988,21 +2967,22 @@ static void init_wt(void)
 static Float *list2partials(SCM harms, int *npartials)
 {
   int listlen,i,maxpartial,curpartial;
-  Float *partials;
+  Float *partials=NULL;
+  SCM lst;
   listlen = gh_length(harms);
   /* the list is '(partial-number partial-amp ... ) */
-  maxpartial = g_scm2int(gh_list_ref(harms,gh_int2scm(0)));
-  for (i=2;i<listlen;i+=2)
+  maxpartial = g_scm2int(SCM_CAR(harms));
+  for (i=2,lst=SCM_CDDR(harms);i<listlen;i+=2,lst=SCM_CDDR(lst))
     {
-      curpartial = g_scm2int(gh_list_ref(harms,gh_int2scm(i)));
+      curpartial = g_scm2int(SCM_CAR(lst));
       if (curpartial > maxpartial) maxpartial = curpartial;
     }
   partials = (Float *)CALLOC(maxpartial+1,sizeof(Float));
   (*npartials) = maxpartial+1;
-  for (i=0;i<listlen;i+=2)
+  for (i=0,lst=harms;i<listlen;i+=2,lst=SCM_CDDR(lst))
     {
-      curpartial = g_scm2int(gh_list_ref(harms,gh_int2scm(i)));
-      partials[curpartial] = gh_scm2double(gh_list_ref(harms,gh_int2scm(i+1)));
+      curpartial = g_scm2int(SCM_CAR(lst));
+      partials[curpartial] = gh_scm2double(SCM_CADR(lst));
     }
   return(partials);
 }
@@ -3429,6 +3409,7 @@ static SCM g_make_env(SCM arglist)
   Float base=1.0,scaler=1.0,offset=0.0,duration=0.0;
   int start=0,end=0,npts=0;
   Float *brkpts = NULL,*odata = NULL;
+  SCM lst;
   keys[0] = all_keys[C_envelope];
   keys[1] = all_keys[C_scaler];
   keys[2] = all_keys[C_duration];
@@ -3451,9 +3432,9 @@ static SCM g_make_env(SCM arglist)
 	      npts = len/2;
 	      brkpts = (Float *)CALLOC(len,sizeof(Float));
 	      odata = (Float *)CALLOC(len,sizeof(Float));
-	      for (i=0;i<len;i++)
+	      for (i=0,lst=keys[0];i<len;i++,lst=SCM_CDR(lst))
 		{
-		  brkpts[i] = gh_scm2double(gh_list_ref(keys[0],gh_int2scm(i)));
+		  brkpts[i] = gh_scm2double(SCM_CAR(lst));
 		  odata[i] = brkpts[i];
 		}
 	    }
@@ -4788,7 +4769,6 @@ void init_mus2scm_module(void)
 
   init_mus_module();
   init_mus_scm();
-  /* mus_error_set_handler(mus_error2scm); */
   init_keywords();
   init_simple_stuff();
   init_generic_funcs();

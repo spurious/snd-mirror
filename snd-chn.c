@@ -478,8 +478,14 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
   else
     {
       if (x1 == 0.0) x1 = gdur;
+#if 0
       ymax = 1.0;
       ymin = -1.0;
+#else
+      /* surely these should follow user-set initial y vals? */
+      if (y1 > 1.0) ymax = y1; else ymax = 1.0;
+      if (y0 < -1.0) ymin = y0; else ymin = -1.0;
+#endif
     }
   if (dur <= 0.0)
     {
@@ -2663,7 +2669,7 @@ void handle_cursor(chan_info *cp, int redisplay)
 	  else {if (cp->cursor_on) draw_graph_cursor(cp);}
 	}
     }
-  update_possible_selection_in_progress(cp,cp->cursor);
+  update_possible_selection_in_progress(cp->cursor);
 }
 
 /* collect syncd chans */
@@ -6954,7 +6960,7 @@ void graph_button_motion_callback(chan_info *cp,int x, int y, TIME_TYPE time, TI
 		start_selection_creation(cp,(int)round(ungrf_x(cp->axis,x) * SND_SRATE(sp)));
 	      else 
 		{
-		  update_possible_selection_in_progress(cp,(int)round(ungrf_x(cp->axis,x) * SND_SRATE(sp)));
+		  update_possible_selection_in_progress((int)round(ungrf_x(cp->axis,x) * SND_SRATE(sp)));
 		  move_selection(cp,x);
 		}
 	      dragged = 1;
@@ -7423,10 +7429,10 @@ static SCM g_count_matches(SCM expr, SCM sample, SCM snd_n, SCM chn_n)
 	{
 	  cursamp = gh_int2scm(samp);
 	  match = g_sp_scan(expr,SCAN_CURRENT_CHAN,cursamp,SCM_BOOL_F,TRUE,TRUE,SCM_BOOL_F,snd_n,chn_n);
-	  if ((gh_list_p(match)) && (SCM_TRUE_P(scm_list_ref(match,gh_int2scm(0)))))
+	  if ((gh_list_p(match)) && (SCM_TRUE_P(SCM_CAR(match))))
 	    {
 	      matches++;
-	      samp = g_scm2int(scm_list_ref(match,gh_int2scm(1))) + 1;
+	      samp = g_scm2int(SCM_CADR(match)) + 1;
 	    }
 	  else break;
 	}

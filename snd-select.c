@@ -190,10 +190,9 @@ static void update_selection(chan_info *cp, int newend)
   else ed->selection_end = newend;
 }
 
-void ripple_selection(chan_info *cp, ed_list *ed, int beg, int num)
+void ripple_selection(ed_list *ed, int beg, int num)
 {
   /* beg=insert or delete begin point (snd-edits.c), num = samps inserted (num positive) or deleted (num negative) at beg */
-  /* fprintf(stderr,"ripple ed[%d]: (%d %d) (%d %d) ",cp->edit_ctr,beg,num,ed->selection_beg,ed->selection_end); */
   if (ed->selection_beg != NO_SELECTION)
     {
       if (beg < ed->selection_beg) 
@@ -213,7 +212,6 @@ void ripple_selection(chan_info *cp, ed_list *ed, int beg, int num)
 	    }
 	}
     }
-  /* fprintf(stderr,"-> (%d %d)\n",ed->selection_beg,ed->selection_end); */
 }
 
 static int next_selection_chan(chan_info *cp, void *sidata)
@@ -299,7 +297,7 @@ void start_selection_creation(chan_info *cp, int samp)
 
 static void redraw_selection(void);
 
-void update_possible_selection_in_progress(chan_info *cp, int samp)
+void update_possible_selection_in_progress(int samp)
 {
   int i;
   if (selection_creation_chans)

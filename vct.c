@@ -153,42 +153,22 @@ static SCM equalp_vct(SCM obj1, SCM obj2)
 
 SCM make_vct(int len, Float *data)
 {
-#if (!(HAVE_NEW_SMOB))
-  SCM ans;
-#endif
   vct *new_vct;
   new_vct = (vct *)CALLOC(1,sizeof(vct));
   new_vct->length = len;
   new_vct->data = data;
   new_vct->dont_free = 0;
-#if HAVE_NEW_SMOB
-  SCM_RETURN_NEWSMOB(vct_tag,new_vct);
-#else
-  SCM_NEWCELL(ans);
-  SCM_SETCDR(ans,(SCM)new_vct);
-  SCM_SETCAR(ans,vct_tag);
-  return(ans);
-#endif
+  SND_RETURN_NEWSMOB(vct_tag,new_vct);
 }
 
 SCM make_vct_wrapper(int len, Float *data)
 {
-#if (!(HAVE_NEW_SMOB))
-  SCM ans;
-#endif
   vct *new_vct;
   new_vct = (vct *)CALLOC(1,sizeof(vct));
   new_vct->length = len;
   new_vct->data = data;
   new_vct->dont_free = 1;
-#if HAVE_NEW_SMOB
-  SCM_RETURN_NEWSMOB(vct_tag,new_vct);
-#else
-  SCM_NEWCELL(ans);
-  SCM_SETCDR(ans,(SCM)new_vct);
-  SCM_SETCAR(ans,vct_tag);
-  return(ans);
-#endif
+  SND_RETURN_NEWSMOB(vct_tag,new_vct);
 }
 
 #if (!(HAVE_NEW_SMOB))
@@ -205,7 +185,11 @@ static SCM g_make_vct(SCM len)
   int size;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(len)),len,SCM_ARG1,S_make_vct);
   size = gh_scm2int(len);
-  if (size <= 0) scm_misc_error(S_make_vct,"size: ~S?",SCM_LIST1(len));
+  if (size <= 0) 
+    {
+      scm_out_of_range(S_make_vct,len);
+      return(SCM_EOL);
+    }
   return(scm_return_first(make_vct(size,(Float *)CALLOC(size,sizeof(Float))),len));
 }
 
@@ -260,11 +244,16 @@ static SCM vct_ref(SCM obj, SCM pos)
   if (v)
     {
       loc = gh_scm2int(pos);
-      if ((loc >= 0) && (loc < v->length))
-	RTNFLT(v->data[loc]);
-      else scm_misc_error(S_vct_ref,"invalid index: ~S[~S]",SCM_LIST2(obj,pos));
+      if (loc < 0)
+	scm_misc_error(S_vct_ref,"index: ~A?",SCM_LIST1(pos));
+      else
+	{
+	  if (loc >= v->length)
+	    scm_misc_error(S_vct_ref,"index: ~A but vct length: ~A?",SCM_LIST2(pos,gh_int2scm(v->length)));
+	  else RTNFLT(v->data[loc]);
+	}
     }
-  else scm_misc_error(S_vct_ref,"nil vct?",SCM_EOL);
+  else scm_misc_error(S_vct_ref,"~A is null?",SCM_LIST1(obj));
   RTNFLT(0.0);
 }
 
@@ -279,11 +268,16 @@ static SCM vct_set(SCM obj, SCM pos, SCM val)
   if (v)
     {
       loc = gh_scm2int(pos);
-      if ((loc >= 0) && (loc < v->length))
-	v->data[loc] = gh_scm2double(val);
-      else scm_misc_error(S_vct_setB,"invalid index: ~S[~S] = ~S",SCM_LIST3(obj,pos,val));
+      if (loc < 0)
+	scm_misc_error(S_vct_setB,"index: ~A?",SCM_LIST1(pos));
+      else
+	{
+	  if (loc >= v->length)
+	    scm_misc_error(S_vct_setB,"index: ~A but vct length: ~A?",SCM_LIST2(pos,gh_int2scm(v->length)));
+	  else v->data[loc] = gh_scm2double(val);
+	}
     }
-  else scm_misc_error(S_vct_setB,"nil vct?",SCM_EOL);
+  else scm_misc_error(S_vct_ref,"~A is null?",SCM_LIST1(obj));
   return(scm_return_first(val,obj,pos));
 }
 
@@ -421,12 +415,12 @@ static SCM vcts_map(SCM args)
   /* n vcts followed by proc, proc returns n values (list) on each call */
   int i,vi,vnum,vsize,argnum;
   vct **v;
-  SCM proc,arg,svi;
+  SCM proc,arg,svi,lst;
   argnum = gh_length(args);
   vnum = argnum-1;
   if (vnum <= 0)
     {
-      scm_misc_error(S_vcts_mapB,"not enough args: ~S",SCM_LIST1(args));
+      scm_wrong_num_args(gh_str02scm("vcts-map!"));
       return(gh_int2scm(0));
     }
   v = (vct **)CALLOC(vnum,sizeof(vct *));
@@ -435,7 +429,7 @@ static SCM vcts_map(SCM args)
       arg = gh_list_ref(args,gh_int2scm(i));
       if (!(vct_p(arg))) 
 	{
-	  scm_misc_error(S_vcts_mapB,"in ~S, non-vct argument ~S at position ~S",SCM_LIST3(args,arg,gh_int2scm(i)));
+	  scm_wrong_type_arg(S_vcts_mapB,i,arg);
 	  return(gh_int2scm(0));
 	}
       v[i] = get_vct(arg);
@@ -459,8 +453,8 @@ static SCM vcts_map(SCM args)
 #endif
       if (gh_list_p(arg))
 	{
-	  for (vi=0;vi<vnum;vi++)
-	    v[vi]->data[i] = gh_scm2double(gh_list_ref(arg,gh_int2scm(vi)));
+	  for (vi=0,lst=arg;vi<vnum;vi++,lst=SCM_CDR(lst))
+	    v[vi]->data[i] = gh_scm2double(SCM_CAR(lst));
 	}
     }
   FREE(v);
@@ -473,12 +467,12 @@ static SCM vcts_do(SCM args)
   /* n vcts followed by proc, proc returns n values (list) on each call */
   int i,vi,vnum,vsize,argnum;
   vct **v;
-  SCM proc,arg,svi;
+  SCM proc,arg,svi,lst;
   argnum = gh_length(args);
   vnum = argnum-1;
   if (vnum <= 0)
     {
-      scm_misc_error(S_vcts_doB,"not enough args: ~S",SCM_LIST1(args));
+      scm_wrong_num_args(gh_str02scm("vcts-do!"));
       return(gh_int2scm(0));
     }
   v = (vct **)CALLOC(vnum,sizeof(vct *));
@@ -487,7 +481,7 @@ static SCM vcts_do(SCM args)
       arg = gh_list_ref(args,gh_int2scm(i));
       if (!(vct_p(arg))) 
 	{
-	  scm_misc_error(S_vcts_doB,"in ~S, non-vct argument ~S at position ~S",SCM_LIST3(args,arg,gh_int2scm(i)));
+	  scm_wrong_type_arg(S_vcts_doB,i,arg);
 	  return(gh_int2scm(0));
 	}
       v[i] = get_vct(arg);
@@ -511,8 +505,8 @@ static SCM vcts_do(SCM args)
 #endif
       if (gh_list_p(arg))
 	{
-	  for (vi=0;vi<vnum;vi++)
-	    v[vi]->data[i] = gh_scm2double(gh_list_ref(arg,gh_int2scm(vi)));
+	  for (vi=0,lst=arg;vi<vnum;vi++,lst=SCM_CDR(lst))
+	    v[vi]->data[i] = gh_scm2double(SCM_CAR(lst));
 	}
     }
   FREE(v);
@@ -544,12 +538,13 @@ static SCM list2vct(SCM lst)
   #define H_list2vct "(" S_list2vct " lst) -> a new vct object filled with elements of list lst"
   int len,i;
   vct *v;
-  SCM scv;
+  SCM scv,lst1;
   SCM_ASSERT(gh_list_p(lst),lst,SCM_ARG1,S_list2vct);
   len = gh_length(lst);
   scv = make_vct(len,(Float *)CALLOC(len,sizeof(Float)));
   v = get_vct(scv);
-  for (i=0;i<len;i++) v->data[i] = (Float)gh_scm2double(scm_list_ref(lst,gh_int2scm(i)));
+  for (i=0,lst1=lst;i<len;i++,lst1=SCM_CDR(lst1)) 
+    v->data[i] = (Float)gh_scm2double(SCM_CAR(lst1));
   return(scm_return_first(scv,lst));
 }
 

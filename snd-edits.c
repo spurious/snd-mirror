@@ -538,44 +538,6 @@ void forget_temps(void)
     }
 }
 
-#if DEBUGGING
-static snd_data **active_sds=NULL;
-static int active_sds_size=0;
-static void remember_sd(snd_data *sd)
-{
-  int i;
-  if (active_sds == NULL)
-    {
-      active_sds_size = 256;
-      active_sds = (snd_data **)CALLOC(active_sds_size,sizeof(snd_data *));
-      active_sds[0] = sd;
-      return;
-    }
-  for (i=0;i<active_sds_size;i++)
-    if (active_sds[i] == NULL)
-      {
-	active_sds[i] = sd;
-	return;
-      }
-  active_sds = (snd_data **)REALLOC(active_sds,(active_sds_size + 256) * sizeof(snd_data *));
-  for (i=active_sds_size;i<active_sds_size+256;i++) active_sds[i]=NULL;
-  active_sds[active_sds_size] = sd;
-  active_sds_size += 256;
-}
-static void forget_sd(snd_data *sd)
-{
-  int i;
-  for (i=0;i<active_sds_size;i++)
-    if (sd == active_sds[i])
-      {
-	active_sds[i] = NULL;
-	return;
-      }
-  fprintf(stderr,"attempt to forget unknown pointer?");
-  abort();
-}
-#endif
-
 snd_data *make_snd_data_file(char *name, int *io, MUS_SAMPLE_TYPE *data, file_info *hdr, int temp, int ctr, int temp_chan)
 {
   snd_data *sf;
@@ -594,9 +556,6 @@ snd_data *make_snd_data_file(char *name, int *io, MUS_SAMPLE_TYPE *data, file_in
   sf->chan = temp_chan;
   sf->len = (hdr->samples)*(mus_data_format_to_bytes_per_sample(hdr->format)) + hdr->data_location;
   sf->owner = NULL; 
-#if DEBUGGING
-  remember_sd(sf);
-#endif
   return(sf);
 }
 
@@ -626,9 +585,6 @@ static snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
   sf->inuse = FALSE;
   sf->copy = TRUE;
   sf->owner = NULL;
-#if DEBUGGING
-  remember_sd(sf);
-#endif
   return(sf);
 }
 
@@ -649,9 +605,6 @@ snd_data *make_snd_data_buffer(MUS_SAMPLE_TYPE *data, int len, int ctr)
   sf->inuse = FALSE;
   sf->len = len*4;
   sf->owner = NULL;
-#if DEBUGGING
-  remember_sd(sf);
-#endif
   return(sf);
 }
 
@@ -660,9 +613,6 @@ static snd_data *free_snd_data(snd_data *sf)
   /* in the snd file case, these pointers are dealt with elsewhere (where??) */
   if (sf)
     {
-#if DEBUGGING
-      forget_sd(sf);
-#endif
       if (sf->temporary == ALREADY_DELETED)
 	return(NULL);
       if (sf->temporary == MULTICHANNEL_DELETION)
@@ -685,23 +635,6 @@ static snd_data *free_snd_data(snd_data *sf)
 	  sf->io = free_file_state(sf->io);
 	  if (sf->temporary == DELETE_ME) 
 	    {
-#if DEBUGGING
-	      {
-		int i;
-		snd_data *tmp;
-		for (i=0;i<active_sds_size;i++)
-		  {
-		    tmp = active_sds[i];
-		    if ((tmp) &&
-			(tmp->type == SND_DATA_FILE) &&
-			(strcmp(sf->filename,tmp->filename) == 0))
-		      {
-			fprintf(stderr,"about to delete in-use temp!!");
-			abort();
-		      }
-		  }
-	      }
-#endif
 	      remove(sf->filename);
 	      mus_sound_forget(sf->filename);
 	    }
@@ -1059,7 +992,7 @@ static ed_list *insert_samples_1 (int samp, int num, MUS_SAMPLE_TYPE* vals, ed_l
   ripple_out(new_state->fragments,k+1,num,len);
   ripple_marks(cp,samp,num);
   ripple_mixes(cp,samp,num);
-  ripple_selection(cp,new_state,samp,num);
+  ripple_selection(new_state,samp,num);
   reflect_sample_change_in_axis(cp);
   check_for_first_edit(cp);
   fixup_edlist_endmark(new_state,current_state,len);
@@ -1213,7 +1146,7 @@ static ed_list *delete_samples_1(int beg, int num, ed_list *current_state, chan_
   ripple_out(new_state->fragments,start_del,-num,len+len_fixup);
   ripple_marks(cp,beg,-num);
   ripple_mixes(cp,beg,-num);
-  ripple_selection(cp,new_state,beg,-num);
+  ripple_selection(new_state,beg,-num);
   reflect_sample_change_in_axis(cp);
   check_for_first_edit(cp);
   new_state->size = len+len_fixup; /* don't propogate useless trailing blocks */
@@ -2507,15 +2440,7 @@ static SCM g_sample_reader_at_end(SCM obj)
 
 SCM g_c_make_sample_reader(snd_fd *fd)
 {
-#if HAVE_NEW_SMOB
-  SCM_RETURN_NEWSMOB(sf_tag,(SCM)fd);
-#else
-  SCM new_sf;
-  SCM_NEWCELL(new_sf);
-  SCM_SETCDR(new_sf,(SCM)fd);
-  SCM_SETCAR(new_sf,sf_tag);
-  return(new_sf);
-#endif
+  SND_RETURN_NEWSMOB(sf_tag,(SCM)fd);
 }
 
 static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir1, SCM pos) /* "dir" confuses Mac OS-X Objective-C! */
@@ -2531,9 +2456,6 @@ static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir1, SCM pos)
   char *loc_name;
   snd_state *ss;
   snd_info *loc_sp = NULL;
-#if (!(HAVE_NEW_SMOB))
-  SCM new_sf;
-#endif
   ERRB1(samp_n,S_make_sample_reader);
   ERRB4(dir1,S_make_sample_reader);
   ss = get_global_state();
@@ -2560,15 +2482,7 @@ static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir1, SCM pos)
   edpos = g_scm2intdef(pos,cp->edit_ctr);
   fd = init_sample_read_any(g_scm2intdef(samp_n,0),cp,g_scm2intdef(dir1,1),edpos);
   fd->local_sp = loc_sp;
-#if HAVE_NEW_SMOB
-  SCM_RETURN_NEWSMOB(sf_tag,(SCM)fd);
-#else
-  SCM_NEWCELL(new_sf);
-  SCM_SETCDR(new_sf,(SCM)fd);
-  SCM_SETCAR(new_sf,sf_tag);
-  return(new_sf);
-#endif
-  return(SCM_BOOL_F);
+  SND_RETURN_NEWSMOB(sf_tag,fd);
 }
 
 static SCM g_make_region_sample_reader(SCM samp_n, SCM reg, SCM chn, SCM dir1)
@@ -2577,9 +2491,6 @@ static SCM g_make_region_sample_reader(SCM samp_n, SCM reg, SCM chn, SCM dir1)
    returns a reader ready to access region's channel chn data starting at 'start-samp' going in direction 'dir'"
 
   snd_fd *fd = NULL;
-#if (!(HAVE_NEW_SMOB))
-  SCM new_sf;
-#endif
   ERRB1(samp_n,S_make_sample_reader);
   ERRB2(reg,S_make_sample_reader);
   ERRB3(chn,S_make_sample_reader);
@@ -2587,14 +2498,7 @@ static SCM g_make_region_sample_reader(SCM samp_n, SCM reg, SCM chn, SCM dir1)
   fd = init_region_read(get_global_state(),g_scm2intdef(samp_n,0),g_scm2intdef(reg,0),g_scm2intdef(chn,0),g_scm2intdef(dir1,1));
   if (fd)
     {
-#if HAVE_NEW_SMOB
-      SCM_RETURN_NEWSMOB(sf_tag,(SCM)fd);
-#else
-      SCM_NEWCELL(new_sf);
-      SCM_SETCDR(new_sf,(SCM)fd);
-      SCM_SETCAR(new_sf,sf_tag);
-      return(new_sf);
-#endif
+      SND_RETURN_NEWSMOB(sf_tag,(SCM)fd);
     }
   return(SCM_BOOL_F);
 }
@@ -2617,16 +2521,19 @@ static SCM g_free_sample_reader(SCM obj)
 {
   #define H_free_sample_reader "(" S_free_sample_reader " reader) frees sample reader 'reader'"
   snd_fd *fd;
+  snd_info *sp=NULL;
   SCM_ASSERT(sf_p(obj),obj,SCM_ARG1,S_free_sample_reader);
   fd = get_sf(obj);
-  if (fd->local_sp)
-    {
-      completely_free_snd_info(fd->local_sp);
-      fd->local_sp = NULL;
-    }
-  free_snd_fd(fd);
+  sp = fd->local_sp; 
+  fd->local_sp = NULL;
   GH_SET_VALUE_OF(obj,(SCM)NULL);
-  return(SCM_BOOL_F);
+  free_snd_fd(fd);
+  /* free_snd_fd looks at its snd_data field to see if the latter's copy flag is set,
+   *   free_snd_info may free this snd_data structure (via free_sound_list), so we have to
+   *   call free_snd_fd before free_snd_info
+   */
+  if (sp) completely_free_snd_info(sp);
+  return(scm_return_first(SCM_BOOL_F,obj));
 }
 
 typedef Float (*g_plug)(Float val);

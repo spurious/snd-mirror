@@ -502,12 +502,8 @@ static MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
 	  else
 	    {
 	      for (i=0;i<mf->chans;i++)
-		{
-		  if (cs->scalers[i] > 0.0)
-		    {
-		      sum += (MUS_FLOAT_TO_SAMPLE(cs->scalers[i] * run_src(mf->srcs[i],mf->sr)));
-		    }
-		}
+		if (cs->scalers[i] > 0.0)
+		  sum += (MUS_FLOAT_TO_SAMPLE(cs->scalers[i] * run_src(mf->srcs[i],mf->sr)));
 	    }
 	}
       else
@@ -528,10 +524,8 @@ static MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
 	  else
 	    {
 	      for (i=0;i<mf->chans;i++)
-		{
-		  if (cs->scalers[i] > 0.0)
-		    sum += (MUS_SAMPLE_TYPE)(cs->scalers[i] * (mf->lst[i] + mf->x * (mf->nxt[i] - mf->lst[i])));
-		}
+		if (cs->scalers[i] > 0.0)
+		  sum += (MUS_SAMPLE_TYPE)(cs->scalers[i] * (mf->lst[i] + mf->x * (mf->nxt[i] - mf->lst[i])));
 	    }
 	  mf->x += spd;
 	  move = (int)(mf->x);
@@ -581,9 +575,11 @@ static mix_fd *init_mix_read_1(mixdata *md, int old, int type)
   mf->cs = cs;
   mf->chans = chans;
   for (i=0;i<chans;i++)
-    {
-      if (cs->scalers[i] != 0.0) {mf->calc = C_STRAIGHT; break;}
-    }
+    if (cs->scalers[i] != 0.0) 
+      {
+	mf->calc = C_STRAIGHT; 
+	break;
+      }
   if (mf->calc == C_ZERO) return(mf);
   if (!(md->add_snd)) md->add_snd = make_mix_readable(md);
   add_sp = md->add_snd;
@@ -641,9 +637,7 @@ static mix_fd *init_mix_read_1(mixdata *md, int old, int type)
 	{
 	  mf->srcs = (src_state **)CALLOC(chans,sizeof(src_state *));
 	  for (i=0;i<chans;i++)
-	    {
-	      mf->srcs[i] = make_src(md->ss,0.0,mf->sfs[i]);
-	    }
+	    mf->srcs[i] = make_src(md->ss,0.0,mf->sfs[i]);
 	  mf->lst = NULL;
 	  mf->nxt = NULL;
 	}
@@ -3577,22 +3571,12 @@ static SCM g_make_mix_sample_reader(SCM mix_id)
   #define H_make_mix_sample_reader "(" S_make_mix_sample_reader " id) returns a reader ready to access mix 'id'"
   mixdata *md = NULL;
   mix_fd *mf = NULL;
-#if (!(HAVE_NEW_SMOB))
-  SCM new_mf;
-#endif
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(mix_id)),mix_id,SCM_ARG1,S_make_mix_sample_reader);
   md = md_from_int(g_scm2int(mix_id));
   if (md) mf = init_mix_read(md,FALSE); else return(scm_throw(NO_SUCH_MIX,SCM_LIST2(gh_str02scm(S_make_mix_sample_reader),mix_id)));
   if (mf)
     {
-#if HAVE_NEW_SMOB
-      SCM_RETURN_NEWSMOB(mf_tag,(SCM)mf);
-#else
-      SCM_NEWCELL(new_mf);
-      SCM_SETCDR(new_mf,(SCM)mf);
-      SCM_SETCAR(new_mf,mf_tag);
-      return(new_mf);
-#endif
+      SND_RETURN_NEWSMOB(mf_tag,(SCM)mf);
     }
   return(SCM_BOOL_F);
 }
@@ -3608,9 +3592,9 @@ static SCM g_free_mix_sample_reader(SCM obj)
 {
   #define H_free_mix_sample_reader "(" S_free_mix_sample_reader " reader) frees mix sample reader 'reader'"
   SCM_ASSERT(mf_p(obj),obj,SCM_ARG1,S_free_mix_sample_reader);
-  free_mix_fd(get_mf(obj));
   GH_SET_VALUE_OF(obj,(SCM)NULL);
-  return(SCM_BOOL_F);
+  free_mix_fd(get_mf(obj));
+  return(scm_return_first(SCM_BOOL_F,obj));
 }
 
 
@@ -3697,23 +3681,13 @@ static SCM g_make_track_sample_reader(SCM track_id, SCM samp, SCM snd, SCM chn)
 
   track_fd *tf = NULL;
   chan_info *cp;
-#if (!(HAVE_NEW_SMOB))
-  SCM new_tf;
-#endif
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(track_id)),track_id,SCM_ARG1,S_make_track_sample_reader);
   ERRCP(S_make_track_sample_reader,snd,chn,3); 
   cp = get_cp(snd,chn,S_make_track_sample_reader);
   tf = init_track_reader(cp,g_scm2int(track_id),g_scm2intdef(samp,0));
   if (tf)
     {
-#if HAVE_NEW_SMOB
-      SCM_RETURN_NEWSMOB(tf_tag,(SCM)tf);
-#else
-      SCM_NEWCELL(new_tf);
-      SCM_SETCDR(new_tf,(SCM)tf);
-      SCM_SETCAR(new_tf,tf_tag);
-      return(new_tf);
-#endif
+      SND_RETURN_NEWSMOB(tf_tag,(SCM)tf);
     }
   return(scm_throw(NO_SUCH_TRACK,SCM_LIST2(gh_str02scm(S_make_track_sample_reader),track_id)));
 }
@@ -3729,9 +3703,9 @@ static SCM g_free_track_sample_reader(SCM obj)
 {
   #define H_free_track_sample_reader "(" S_free_track_sample_reader " reader) frees the track sample reader 'reader'"
   SCM_ASSERT(tf_p(obj),obj,SCM_ARG1,S_free_track_sample_reader);
-  free_track_fd(get_tf(obj));
   GH_SET_VALUE_OF(obj,(SCM)NULL);
-  return(SCM_BOOL_F);
+  free_track_fd(get_tf(obj));
+  return(scm_return_first(SCM_BOOL_F,obj));
 }
 
 static SCM g_play_track(SCM num, SCM snd, SCM chn)

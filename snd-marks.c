@@ -1493,7 +1493,7 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
 
 static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)
 {
-  SCM lst,el,nm,sm,mlst;
+  SCM lst,el,nm,sm,mlst,olst,molst;
   chan_info *cp;
   snd_info *sp;
   char *str;
@@ -1510,30 +1510,30 @@ static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)
       cp->mark_ctr = (int *)CALLOC(cp->marks_size,sizeof(int));
       for (i=0;i<cp->marks_size;i++) cp->mark_ctr[i] = -1;
       list_size = gh_length(marklist);
-      for (i=0;i<list_size;i++)
+      for (i=0,olst=marklist;i<list_size;i++,olst=SCM_CDR(olst))
 	{
-	  lst = scm_list_ref(marklist,gh_int2scm(i));
-	  cp->mark_size[i] = gh_scm2int(scm_list_ref(lst,SCM_MAKINUM(0)));
-	  cp->mark_ctr[i] = gh_scm2int(scm_list_ref(lst,SCM_MAKINUM(1)));
+	  lst = SCM_CAR(olst);
+	  cp->mark_size[i] = gh_scm2int(SCM_CAR(lst));
+	  cp->mark_ctr[i] = gh_scm2int(SCM_CADR(lst));
           if (cp->mark_size[i] > 0)
 	    {
-	      mlst = scm_list_ref(lst,SCM_MAKINUM(2));
+	      mlst = SCM_CADDR(lst);
 	      cp->marks[i] = (mark **)CALLOC(cp->mark_size[i],sizeof(mark *));
 	      in_size = gh_length(mlst);
-	      for (j=0;j<in_size;j++)
+	      for (j=0,molst=mlst;j<in_size;j++,molst=SCM_CDR(molst))
 		{
-		  el = scm_list_ref(mlst,gh_int2scm(j));
+		  el = SCM_CAR(molst);
 		  if (!(gh_list_p(el))) snd_error("%s[%d] %s: saved mark data is not a list?? ",__FILE__,__LINE__,__FUNCTION__);
-		  sm = scm_list_ref(el,SCM_MAKINUM(1));
+		  sm = SCM_CADR(el);
 		  if (SCM_NFALSEP(sm))
 		    {
-		      nm = scm_list_ref(el,SCM_MAKINUM(0));
+		      nm = SCM_CAR(el);
 		      if (SCM_NFALSEP(nm))
 			str = gh_scm2newstr(nm,NULL);
 		      else str = NULL;
-		      id = gh_scm2int(scm_list_ref(el,SCM_MAKINUM(2)));
+		      id = gh_scm2int(SCM_CADDR(el));
 		      if (gh_length(el) > 3)
-			sync = gh_scm2int(scm_list_ref(el,SCM_MAKINUM(3)));
+			sync = gh_scm2int(SCM_CADDDR(el));
 		      else sync = 0;
 		      cp->marks[i][j] = make_mark_1(gh_scm2int(sm),str,id,sync);
 		      if (id > mark_id_counter) mark_id_counter = id;

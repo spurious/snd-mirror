@@ -369,9 +369,6 @@ static SCM sound_data_chans(SCM obj)
 SCM make_sound_data(int chans, int frames)
 {
   #define H_make_sound_data "(" S_make_sound_data " chans frames) -> new sound-data object with chans channels, each having frames samples"
-#if (!(HAVE_NEW_SMOB))
-  SCM ans;
-#endif
   int i;
   sound_data *new_sound_data;
   new_sound_data = (sound_data *)CALLOC(1,sizeof(sound_data));
@@ -379,14 +376,7 @@ SCM make_sound_data(int chans, int frames)
   new_sound_data->chans = chans;
   new_sound_data->data = (MUS_SAMPLE_TYPE **)CALLOC(chans,sizeof(MUS_SAMPLE_TYPE *));
   for (i=0;i<chans;i++) new_sound_data->data[i] = (MUS_SAMPLE_TYPE *)CALLOC(frames,sizeof(MUS_SAMPLE_TYPE));
-#if HAVE_NEW_SMOB
-  SCM_RETURN_NEWSMOB(sound_data_tag,new_sound_data);
-#else
-  SCM_NEWCELL(ans);
-  SCM_SETCDR(ans,(SCM)new_sound_data);
-  SCM_SETCAR(ans,sound_data_tag);
-  return(ans);
-#endif
+  SND_RETURN_NEWSMOB(sound_data_tag,new_sound_data);
 }
 
 #if (!(HAVE_NEW_SMOB))

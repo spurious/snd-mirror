@@ -134,9 +134,6 @@ static SCM equalp_snd_color(SCM obj1, SCM obj2)
 static SCM g_make_snd_color(SCM r, SCM g, SCM b)
 {
   #define H_make_color "(" S_make_color " r g b) -> a color object with the indicated rgb values"
-#if (!(HAVE_NEW_SMOB))
-  SCM ans;
-#endif
   Colormap cmap;
   XColor tmp_color;
   Display *dpy;
@@ -155,14 +152,7 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
   if ((XAllocColor(dpy,cmap,&tmp_color)) == 0)
     new_color->color = BlackPixel(dpy,DefaultScreen(dpy)); 
   else new_color->color = tmp_color.pixel;
-#if HAVE_NEW_SMOB
-  SCM_RETURN_NEWSMOB(snd_color_tag,new_color);
-#else
-  SCM_NEWCELL(ans);
-  SCM_SETCDR(ans,(SCM)new_color);
-  SCM_SETCAR(ans,snd_color_tag);
-  return(ans);
-#endif
+  SND_RETURN_NEWSMOB(snd_color_tag,new_color);
 }
 
 static SCM pixel2color(Pixel pix)

@@ -44,9 +44,8 @@ static void free_region(region *r, int complete)
       if (r->data)  /* null if temp file */
 	{
 	  for (i=0;i<r->chans;i++) 
-	    {
-	      if (r->data[i]) FREE(r->data[i]);
-	    }
+	    if (r->data[i]) 
+	      FREE(r->data[i]);
 	  FREE(r->data);
 	  r->data = NULL;
 	}
@@ -166,7 +165,8 @@ static void region_samples(int reg, int chn, int beg, int num, Float *data)
 	{
 	  if (r->use_temp_file == REGION_ARRAY)
 	    {
-	      for (i=beg,j=0;(i<r->frames) && (j<num);i++,j++) data[j] = MUS_SAMPLE_TO_FLOAT(r->data[chn][i]);
+	      for (i=beg,j=0;(i<r->frames) && (j<num);i++,j++) 
+		data[j] = MUS_SAMPLE_TO_FLOAT(r->data[chn][i]);
 	    }
 	  else
 	    {
@@ -187,9 +187,8 @@ static int first_region_active(void)
 {
   int i;
   for (i=0;i<regions_size;i++)
-    {
-      if (regions[i]) return(i);
-    }
+    if (regions[i]) 
+      return(i);
   return(NO_REGIONS);
 }
   
@@ -236,7 +235,10 @@ static void make_region_readable(region *r, snd_state *ss)
 	  if (hdr)
 	    {
 	      fd = snd_open_read(ss,r->filename);
-	      mus_file_open_descriptors(fd,hdr->format,mus_data_format_to_bytes_per_sample(hdr->format),hdr->data_location);
+	      mus_file_open_descriptors(fd,
+					hdr->format,
+					mus_data_format_to_bytes_per_sample(hdr->format),
+					hdr->data_location);
 	      datai = make_file_state(fd,hdr,SND_IO_IN_FILE,i,FILE_BUFFER_SIZE);
 	      cp->sounds[0] = make_snd_data_file(r->filename,datai,
 						 MUS_SAMPLE_ARRAY(datai[SND_IO_DATS+SND_AREF_HEADER_SIZE+i]),
@@ -282,7 +284,12 @@ region_state *region_report(void)
   region *r;
   rs = (region_state *)CALLOC(1,sizeof(region_state));
   len = regions_size;
-  for (i=0;i<regions_size;i++) {if (!(regions[i])) {len = i; break;}}
+  for (i=0;i<regions_size;i++) 
+    if (!(regions[i])) 
+      {
+	len = i; 
+	break;
+      }
   rs->len = len;
   if (len == 0) return(rs);
   rs->save = (int *)CALLOC(len,sizeof(int));
@@ -304,9 +311,7 @@ void free_region_state (region_state *r)
   if (r)
     {
       for (i=0;i<r->len;i++)
-	{
-	  if (r->name[i]) FREE(r->name[i]);
-	}
+	if (r->name[i]) FREE(r->name[i]);
       if (r->name) FREE(r->name);
       if (r->save) FREE(r->save);
       FREE(r);
@@ -383,16 +388,17 @@ static int save_region_1(snd_state *ss, char *ofile,int type, int format, int sr
   if (region_ok(reg)) r = regions[reg]; else r=NULL;
   if (r)
     {
-      if ((snd_write_header(ss,ofile,type,srate,r->chans,28,r->chans*r->frames,format,comment,comlen,NULL)) == -1) return(MUS_HEADER_WRITE_FAILED);
+      /* TODO: fix these error messages! */
+      if ((snd_write_header(ss,ofile,type,srate,r->chans,28,r->chans*r->frames,format,comment,comlen,NULL)) == -1)
+	return(MUS_HEADER_WRITE_FAILED);
       oloc = mus_header_data_location();
-      if ((ofd = snd_reopen_write(ss,ofile)) == -1) return(MUS_CANT_OPEN_TEMP_FILE);
+      if ((ofd = snd_reopen_write(ss,ofile)) == -1) 
+	return(MUS_CANT_OPEN_TEMP_FILE);
       mus_file_set_descriptors(ofd,ofile,format,mus_data_format_to_bytes_per_sample(format),oloc,r->chans,type);
       mus_file_set_data_clipped(ofd,data_clipped(ss));
       mus_file_seek(ofd,oloc,SEEK_SET);
       if (r->use_temp_file == REGION_ARRAY)
-	{
-	  mus_file_write(ofd,0,r->frames-1,r->chans,r->data); /* was * r->chans --> mus_file_write wants per channel size */
-	}
+	mus_file_write(ofd,0,r->frames-1,r->chans,r->data); /* was * r->chans --> mus_file_write wants per channel size */
       else
 	{
 	  /* copy r->filename with possible header/data format changes */
@@ -400,9 +406,13 @@ static int save_region_1(snd_state *ss, char *ofile,int type, int format, int sr
 	  chans = mus_sound_chans(r->filename);
 	  frames = mus_sound_samples(r->filename) / chans;
 	  iloc = mus_sound_data_location(r->filename);
-	  mus_file_set_descriptors(ifd,r->filename,
-				   mus_sound_data_format(r->filename),mus_sound_datum_size(r->filename),iloc,
-				   chans,mus_sound_header_type(r->filename));
+	  mus_file_set_descriptors(ifd,
+				   r->filename,
+				   mus_sound_data_format(r->filename),
+				   mus_sound_datum_size(r->filename),
+				   iloc,
+				   chans,
+				   mus_sound_header_type(r->filename));
 	  mus_file_seek(ifd,iloc,SEEK_SET);
 	  bufs = (MUS_SAMPLE_TYPE **)CALLOC(chans,sizeof(MUS_SAMPLE_TYPE *));
 	  for (i=0;i<chans;i++) bufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE));
@@ -474,7 +484,9 @@ static int paste_region_1(int n, chan_info *cp, int add, int beg, Float scaler, 
 	  err = copy_file(r->filename,tempfile);
 	  if (err != MUS_NO_ERROR)
 	    snd_error("can't make region temp file (%s: %s)",tempfile,strerror(errno));
-	  else if (r->chans > 1) remember_temp(tempfile,r->chans);
+	  else
+	    if (r->chans > 1) 
+	      remember_temp(tempfile,r->chans);
 	}
       for (i=0;((i<r->chans) && (i<si->chans));i++)
 	{
@@ -483,8 +495,11 @@ static int paste_region_1(int n, chan_info *cp, int add, int beg, Float scaler, 
 	    {
 	      data = (MUS_SAMPLE_TYPE *)CALLOC(r->frames,sizeof(MUS_SAMPLE_TYPE));
 	      if (scaler == 1.0)
-		for (j=0;j<r->frames;j++) data[j] = r->data[i][j];
-	      else for (j=0;j<r->frames;j++) data[j] = (MUS_SAMPLE_TYPE)(scaler * r->data[i][j]);
+		for (j=0;j<r->frames;j++) 
+		  data[j] = r->data[i][j];
+	      else 
+		for (j=0;j<r->frames;j++) 
+		  data[j] = (MUS_SAMPLE_TYPE)(scaler * r->data[i][j]);
 	      insert_samples(beg,r->frames,data,ncp,origin);
 	      FREE(data);
 	    }

@@ -235,7 +235,10 @@ env *default_env(Float y)
   e->data = (Float *)CALLOC(4,sizeof(Float));
   e->data_size = 4;
   e->pts = 2;
-  e->data[0] = 0.0; e->data[1] = y; e->data[2] = 1.0; e->data[3] = y;
+  e->data[0] = 0.0; 
+  e->data[1] = y; 
+  e->data[2] = 1.0; 
+  e->data[3] = y;
   e->base = 1.0;
   return(e);
 }
@@ -428,9 +431,7 @@ void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int wid
 	}
     }
   if (spf->edited)
-    {
-      display_frequency_response(ss,e,ap,(spf->gray_ap)->ax,sp->filter_order,sp->filter_dBing);
-    }
+    display_frequency_response(ss,e,ap,(spf->gray_ap)->ax,sp->filter_order,sp->filter_dBing);
 }
 
 void handle_filter_point(snd_state *ss, snd_info *sp, int evx, int evy, TIME_TYPE motion_time)
@@ -1230,7 +1231,7 @@ void save_envelope_editor_state(FILE *fd)
 
 static env *scm2env(SCM res)
 {
-  SCM el;
+  SCM el,lst;
   int i,len;
   Float *data;
   env *rtn = NULL;
@@ -1240,9 +1241,9 @@ static env *scm2env(SCM res)
       if (len > 0)
 	{
 	  data = (Float *)CALLOC(len,sizeof(Float));
-	  for (i=0;i<len;i++)
+	  for (i=0,lst=res;i<len;i++,lst=SCM_CDR(lst))
 	    {
-	      el = scm_list_ref(res,gh_int2scm(i));
+	      el = SCM_CAR(lst);
 	      if (gh_number_p(el))
 		data[i] = gh_scm2double(el);
 	      else data[i] = 0.0;
@@ -1258,12 +1259,13 @@ static env *scm2env(SCM res)
 static int x_increases(SCM res)
 {
   int i,len;
+  SCM lst;
   Float x,nx;
   len = gh_length(res);
-  x = gh_scm2double(gh_list_ref(res,gh_int2scm(0)));
-  for (i=2;i<len;i+=2)
+  x = gh_scm2double(SCM_CAR(res));
+  for (i=2,lst=SCM_CDDR(res);i<len;i+=2,lst=SCM_CDDR(lst))
     {
-      nx = gh_scm2double(gh_list_ref(res,gh_int2scm(i)));
+      nx = gh_scm2double(SCM_CAR(lst));
       if (x >= nx) return(0);
       x = nx;
     }
@@ -1358,19 +1360,22 @@ env *get_env(SCM e, SCM base, char *origin) /* list or vector in e */
   Float *buf = NULL;
   int i,len;
   env *newenv;
+  SCM lst;
   SCM_ASSERT(((gh_vector_p(e)) || (gh_list_p(e))),e,SCM_ARG1,origin);
   if (gh_vector_p(e))
     {
       len = gh_vector_length(e);
       buf = (Float *)CALLOC(len,sizeof(Float));
-      for (i=0;i<len;i++) buf[i] = gh_scm2double(gh_vector_ref(e,gh_int2scm(i)));
+      for (i=0;i<len;i++) 
+	buf[i] = gh_scm2double(gh_vector_ref(e,gh_int2scm(i)));
     }
   else
     if (gh_list_p(e))
       {
 	len = gh_length(e);
 	buf = (Float *)CALLOC(len,sizeof(Float));
-        for (i=0;i<len;i++) buf[i] = gh_scm2double(scm_list_ref(e,gh_int2scm(i)));
+        for (i=0,lst=e;i<len;i++,lst=SCM_CDR(lst)) 
+	  buf[i] = gh_scm2double(SCM_CAR(lst));
       }
     else return(NULL);
   newenv = make_envelope(buf,len);

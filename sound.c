@@ -533,7 +533,9 @@ static void display_sound_file_entry(const char *name, sound_file *sf)
 	  for (i=0;i<lim;i++)
 	    {
 	      if (i>1) fprintf(stdout,",");
-	      fprintf(stdout," %.3f at %.3f ",MUS_SAMPLE_TO_FLOAT(sf->max_amps[i+1]),(float)(sf->max_amps[i])/(float)(sf->srate));
+	      fprintf(stdout," %.3f at %.3f ",
+		      MUS_SAMPLE_TO_FLOAT(sf->max_amps[i+1]),
+		      (float)(sf->max_amps[i])/(float)(sf->srate));
 	    }
 	}
     }
@@ -867,7 +869,13 @@ int mus_sound_open_output (const char *arg, int srate, int chans, int data_forma
   if (err != MUS_ERROR)
     {
       fd = mus_file_open_write(arg);
-      mus_file_set_descriptors(fd,arg,data_format,mus_data_format_to_bytes_per_sample(data_format),mus_header_data_location(),chans,header_type);
+      mus_file_set_descriptors(fd,
+			       arg,
+			       data_format,
+			       mus_data_format_to_bytes_per_sample(data_format),
+			       mus_header_data_location(),
+			       chans,
+			       header_type);
     }
   return(fd);
 }
@@ -878,7 +886,13 @@ int mus_sound_reopen_output(const char *arg, int chans, int format, int type, in
   mus_sound_initialize();
   set_sound_error(arg,__LINE__,__FUNCTION__);
   fd = mus_file_reopen_write(arg);
-  mus_file_set_descriptors(fd,arg,format,mus_data_format_to_bytes_per_sample(format),data_loc,chans,type);
+  mus_file_set_descriptors(fd,
+			   arg,
+			   format,
+			   mus_data_format_to_bytes_per_sample(format),
+			   data_loc,
+			   chans,
+			   type);
   unset_sound_error();
   return(fd);
 }

@@ -1,14 +1,19 @@
 #include "snd.h"
 #include "vct.h"
 
+/* TODO: perhaps fit-data-on-open should be fit-data, callable via hooks at open time
+ */
+
 #if HAVE_GUILE
 
 #include "sndlib2scm.h"
 static snd_state *state = NULL;
 
-/* if error occurs that in sndlib, mus-error wants to throw to user-defined catch
- *   of any exists, but if the sndlib function was not called by the user, 
- *   an attempt to throw to a non-existent catch tag exits the main program!!
+
+/* if error occurs in sndlib, mus-error wants to throw to user-defined catch
+ *   (or out own global catch), but if the sndlib function was not called by the user, 
+ *   the attempt to throw to a non-existent catch tag exits the main program!!
+ *   so, we only throw if the catch_exists flag is true.
  */
 static SCM snd_internal_stack_catch (SCM tag,
 				     scm_catch_body_t body,
@@ -1468,7 +1473,7 @@ snd_info *get_sp(SCM scm_snd_n)
       if (gh_list_p(scm_snd_n))
 	{
 	  /* a mix input sound */
-	  snd_n = g_scm2int(gh_list_ref(scm_snd_n,gh_int2scm(0)));
+	  snd_n = g_scm2int(SCM_CAR(scm_snd_n));
 	  md = md_from_int(snd_n);
 	  if (md) return(make_mix_readable(md));
 	  return(NULL);
@@ -1839,11 +1844,13 @@ MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, char *caller, int posit
   MUS_SAMPLE_TYPE *vals = NULL;
   vct *v;
   int i,num = 0;
+  SCM lst;
   if (gh_list_p(obj))
     {
       if ((*size) == 0) num = gh_length(obj); else num = (*size);
       vals = (MUS_SAMPLE_TYPE *)CALLOC(num,sizeof(MUS_SAMPLE_TYPE));
-      for (i=0;i<num;i++) vals[i] = MUS_FLOAT_TO_SAMPLE(gh_scm2double(scm_list_ref(obj,gh_int2scm(i))));
+      for (i=0,lst=obj;i<num;i++,lst=SCM_CDR(lst)) 
+	vals[i] = MUS_FLOAT_TO_SAMPLE(gh_scm2double(SCM_CAR(lst)));
     }
   else
     {
@@ -1851,7 +1858,8 @@ MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, char *caller, int posit
 	{
 	  if ((*size) == 0) num = gh_vector_length(obj); else num = (*size);
 	  vals = (MUS_SAMPLE_TYPE *)CALLOC(num,sizeof(MUS_SAMPLE_TYPE));
-	  for (i=0;i<num;i++) vals[i] = MUS_FLOAT_TO_SAMPLE(gh_scm2double(gh_vector_ref(obj,gh_int2scm(i))));
+	  for (i=0;i<num;i++) 
+	    vals[i] = MUS_FLOAT_TO_SAMPLE(gh_scm2double(gh_vector_ref(obj,gh_int2scm(i))));
 	}
       else
 	{
@@ -1860,7 +1868,8 @@ MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, char *caller, int posit
 	      v = get_vct(obj);
 	      if ((*size) == 0) num = v->length; else num = (*size);
 	      vals = (MUS_SAMPLE_TYPE *)CALLOC(num,sizeof(MUS_SAMPLE_TYPE));
-	      for (i=0;i<num;i++) vals[i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
+	      for (i=0;i<num;i++) 
+		vals[i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
 	    }
 	  else scm_wrong_type_arg(caller,position,obj);
 	}
@@ -2273,7 +2282,9 @@ static SCM g_transform_size(SCM snd, SCM chn)
   if (!(cp->ffting)) return(SCM_INUM0);
   if (fft_style(state) == NORMAL_FFT) return(gh_int2scm(fft_size(state)));
   si = (sono_info *)(cp->sonogram_data);
-  if (si) return(SCM_LIST3(gh_double2scm(spectro_cutoff(state)),gh_int2scm(si->active_slices),gh_int2scm(si->target_bins)));
+  if (si) return(SCM_LIST3(gh_double2scm(spectro_cutoff(state)),
+			   gh_int2scm(si->active_slices),
+			   gh_int2scm(si->target_bins)));
   return(SCM_INUM0);
 }
 
@@ -2363,6 +2374,7 @@ static Float *load_Floats(SCM scalers, int *result_len)
 {
   int len,i;
   Float *scls;
+  SCM lst;
   if (gh_vector_p(scalers))
     len = gh_vector_length(scalers);
   else
@@ -2373,12 +2385,14 @@ static Float *load_Floats(SCM scalers, int *result_len)
   scls = (Float *)CALLOC(len,sizeof(Float));
   if (gh_vector_p(scalers))
     {
-      for (i=0;i<len;i++) scls[i] = (Float)gh_scm2double(gh_vector_ref(scalers,gh_int2scm(i)));
+      for (i=0;i<len;i++) 
+	scls[i] = (Float)gh_scm2double(gh_vector_ref(scalers,gh_int2scm(i)));
     }
   else
     if (gh_list_p(scalers))
       {
-	for (i=0;i<len;i++) scls[i] = (Float)gh_scm2double(scm_list_ref(scalers,gh_int2scm(i)));
+	for (i=0,lst=scalers;i<len;i++,lst=SCM_CDR(lst)) 
+	  scls[i] = (Float)gh_scm2double(SCM_CAR(lst));
       }
     else
       if (gh_number_p(scalers))
@@ -2648,16 +2662,13 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
       if (v1 == NULL)
 	{
 	  for (i=0;i<n;i++)
-	    {
-	      gh_vector_set_x(reals,gh_int2scm(i),gh_double2scm(rl[i]));
-	    }
+	    gh_vector_set_x(reals,gh_int2scm(i),gh_double2scm(rl[i]));
 	}
       else
 	{
 	  if (n != n2)
-	    {
-	      for (i=0;i<n;i++) v1->data[i] = rl[i];
-	    }
+	    for (i=0;i<n;i++) 
+	      v1->data[i] = rl[i];
 	}
     }
   if ((!v1) || (n != n2))

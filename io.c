@@ -510,19 +510,6 @@ int mus_file_close_descriptors(int tfd)
   return(MUS_NO_ERROR);
 }
 
-#if 0
-/* apparently no longer used anywhere?? */
-int mus_file_cleanup_descriptors(void)
-{
-  /* error cleanup -- try to find C-opened files that are invisible to lisp and close them */
-  int i;
-  for (i=0;i<io_fd_size;i++)
-    if (io_fds[i])
-      mus_file_close(i);
-  return(MUS_NO_ERROR);
-}
-#endif
-
 int mus_file_set_data_clipped (int tfd, int clipped)
 {
   io_fd *fd;

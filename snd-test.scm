@@ -19,6 +19,9 @@
 ;;; test 16: define-syntax 
 ;;; test 17: guile-gtk dialogs
 
+;;; need tests of set! srate et al
+;;;      add to test-spectral-difference set (reading o2 etc)
+
 
 (use-modules (ice-9 format) (ice-9 debug))
 

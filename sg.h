@@ -14,6 +14,19 @@
   #define HAVE_HOOKS 0
 #endif
 
+#if HAVE_NEW_SMOB
+#define SND_RETURN_NEWSMOB(Tag,Val) SCM_RETURN_NEWSMOB(Tag,(SCM)Val)
+#else
+#define SND_RETURN_NEWSMOB(Tag,Val) \
+  do { \
+     SCM New_Cell; \
+     SCM_NEWCELL(New_Cell); \
+     SCM_SETCDR(New_Cell,(SCM)Val); \
+     SCM_SETCAR(New_Cell,Tag); \
+     return(New_Cell); \
+     } while (0)
+#endif
+
 #define GH_LOOKUP(a) scm_symbol_value0(a)
 #define GH_TYPE_OF(a) (SCM_TYP16(a))
 

@@ -127,9 +127,6 @@ static SCM equalp_snd_color(SCM obj1, SCM obj2)
 static SCM g_make_snd_color(SCM r, SCM g, SCM b)
 {
   #define H_make_color "(" S_make_color " r g b) -> a color object with the indicated rgb values"
-#if (!(HAVE_NEW_SMOB))
-  SCM ans;
-#endif
   snd_color *new_color;
   GdkColor gcolor;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(r)),r,SCM_ARG1,S_make_color);
@@ -142,14 +139,7 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
   gcolor.blue = (unsigned short)(65535 * gh_scm2double(b));
   new_color->color = gdk_color_copy(&gcolor);
   gdk_color_alloc(gdk_colormap_get_system(),new_color->color);
-#if HAVE_NEW_SMOB
-  SCM_RETURN_NEWSMOB(snd_color_tag,new_color);
-#else
-  SCM_NEWCELL(ans);
-  SCM_SETCDR(ans,(SCM)new_color);
-  SCM_SETCAR(ans,snd_color_tag);
-  return(ans);
-#endif
+  SND_RETURN_NEWSMOB(snd_color_tag,new_color);
 }
 
 static SCM gcolor2sndcolor(GdkColor *pix)
