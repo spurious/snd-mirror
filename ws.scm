@@ -314,10 +314,13 @@ returning you to the true top-level."
 								     revmax)) 
 				  "")
 			      cycles)))
-		 (if scaled-to
-		     (scale-to scaled-to snd-output)
-		     (if scaled-by
-			 (scale-by scaled-by snd-output)))
+		 (if (or scaled-to scale-by)
+		     (begin
+		       (if scaled-to
+			   (scale-to scaled-to snd-output)
+			   (if scaled-by
+			       (scale-by scaled-by snd-output)))
+		       (save-sound snd-output)))
 		 (if play 
 		     (if *clm-player*
 			 (*clm-player* snd-output)
