@@ -486,7 +486,7 @@ merely a simple and obvious bandage.</p>
                          (+ vib 
                             (* (env indf1) (oscil fmosc1 vib))
                             (* (env indf2) (oscil fmosc2 (* 3.0 vib)))
-                            (* (env indf3) (oscil fmosc3 (* 4.0 vib))))))))))))
+                            (* (env indf3) (oscil fmosc3 (* 4.0 vib)))))))))))
 
 (with-sound () (violin 0 10000 440 .1 2.5))
 </pre>
@@ -638,7 +638,7 @@ smeared out by a copy of the noise band. </p>
 </pre>
 <p>In the realm of "anything" as the modulating signal, consider </p>
 <pre>
-    (sin (+ sound-file (* index (sin (* 2 pi sound-file))))
+    (sin (+ sound-file (* index (sin (* 2 pi sound-file)))))
 </pre>
 <p>where "sound file" is any recorded sound.  I call this "contrast-enhancement" in the clm package.  It 
 makes a sound "crisper" -- "Wait for Me!" uses it whenever a sound needs to cut through a huge 

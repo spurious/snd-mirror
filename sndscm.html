@@ -182,9 +182,9 @@ Waveshaping is described in Le Brun, "Digital Waveshaping Synthesis", JAES 1979 
    birdname))
 </pre>
 <p>The <i>one-bird</i> function collects all the individual tweets of a given bird song
-into one vct object, then mixes that into the output sound.  The <i>beg</i> and <i>maxdur</i>
+into one vct, then mixes that into the output sound.  The <i>beg</i> and <i>maxdur</i>
 arguments set the begin time and maximum duration in seconds of the mix; the duration is
-used to allocate the global vct object (<i>out-data</i>. The <i>func</i> argument is
+used to allocate the global vct <i>out-data</i>. The <i>func</i> argument is
 a Scheme function of no arguments (known in Scheme as a thunk).  It is called
 via <code>(func)</code>; the assumption is that <i>func</i> will actually provide
 a complete bird song.  For example:</p>
@@ -217,6 +217,7 @@ In <i>bigbird</i> the lines
            ...
 		     (polynomial coeffs
 				 (oscil os (env gls-env))))))
+				 <!-- ((( -->
 </pre>
 <p>setup and run the waveshaping synthesis (in this case it's just a fast
 additive synthesis).  <i>partials-&gt;polynomial</i> calculates the Chebyshev
@@ -1310,7 +1311,7 @@ and moves the cursor to that sample. It can be interrupted by C-g.
 <pre>
   <em class=def><a name="exmakesoundinterp">make-sound-interp</a></em> start #:optional snd chn
   <em class=def><a name="exsoundinterp">sound-interp</a></em> reader loc
-  <em class=def><a name="exenvsoundinterp">env-sound-interp</a></em> envelope #:optional (time-scale 1.0) snd chn) 
+  <em class=def><a name="exenvsoundinterp">env-sound-interp</a></em> envelope #:optional (time-scale 1.0) snd chn
 </pre>
 <p><i>make-sound-interp</i> returns an interpolating reader for <i>snd</i>'s channel <i>chn</i>.
 The interpolating reader reads a channel at an arbitary location,
@@ -1536,7 +1537,7 @@ be rewritten in the same form.
     (periodic-vibrato-amplitude 0.0025) (random-vibrato-amplitude 0.005) (noise-amount 0.0) (noise-freq 1000.0)
     (ind-noise-freq 10.0) (ind-noise-amount 0.0) (amp-noise-freq 20.0) (amp-noise-amount 0.0) (gliss-env #f)
     (fm1-env #f) (fm2-env #f) (fm3-env #f) (fm1-rat 1.0) (fm2-rat 3.0) (fm3-rat 4.0) (fm1-index #f) (fm2-index #f) 
-    (fm3-index #f) (base 1.0) #:allow-other-keys)
+    (fm3-index #f) (base 1.0) #:allow-other-keys
 
   <em class=def>fm-violin</em> gen
   <em class=def>fm-violin-ins</em> [same args as original violin in v.scm]
@@ -1754,7 +1755,7 @@ operation can be undone (bringing the mix back to life).
 function takes the track id and the list of member mixes, returning the list of mixes.  Thereafter, the
 <i>track</i> function returns the mix list given the track <i>id</i>.  The rest of the track functions
 take the track mix list as their initial argument.  <i>track-&gt;vct</i> places all the mix samples
-in the track into a vct object.  Similarly, <i>save-track</i> places the track's samples into a file.
+in the track into a vct.  Similarly, <i>save-track</i> places the track's samples into a file.
 </p>
 <p>
 The track-color refers to the color of the mix waveform (the thing displayed to the right
@@ -1826,9 +1827,9 @@ each mix's amp env(s) to match the portion of that envelope that happens to fall
 mixed in sound is being edited, then the mix takes place); any kind of edit can follow the
 same sequence.  <i>reverse-track</i> reverses the order in which a track's members occur.
 </p>
-<p>Finally, the various mix hooks can be tied into these functions so that (for example) the
+<p>Finally, the various mix hooks can be tied into these functions so that the
 entire track moves when you drag one mix in it, or all the amplitudes change at once.
-<i>mix-panel-applies-to-track</i>, for example,
+<i>mix-panel-applies-to-track</i>
 causes multichannel mixes to be placed in a separate track,
 and subsequent srate or position changes affect all channels in parallel (this makes
 it easier to mix multichannel files into other multichannel files and keep the mixed
@@ -1847,7 +1848,7 @@ http://www-ccrma.stanford.edu/~nando/clm/moog),
 itself a translation of Tim Stilson's original C code.  The functions provide
 a kind of CLM generator view of the filter.  Fernando describes it as a
 "Moog style four pole lowpass (24db/Oct) filter clm unit generator,
-variable resonance, warm, analog sound ;-)".
+variable resonance, warm, analog sound ;-)". <!-- ( -->
 In <i>make-moog-filter</i> "frequency" is the cutoff frequency
 in Hz (more or less) and "Q" is the resonance: 0 = no resonance,
 1 causes the filter to oscillate at frequency.  My translation is
@@ -2166,6 +2167,7 @@ is and see how much difference there is between the current period and the next,
 the smallest, throw away this crossing, 6) sort the remaining crossings by least weight,
 7) interpolate or delete periods until the sound has been sufficiently lengthened or
 shortened.
+<!-- ((((((( -->
 </p>
 
 <A NAME="singerdoc"></a><span class=box><h2>singer.scm</h2></span>
@@ -2706,7 +2708,7 @@ In CLM, the fm-violin became (fm.html, 1989):</p>
                          (+ vib 
                             (* (env indf1) (oscil fmosc1 vib))
                             (* (env indf2) (oscil fmosc2 (* 3.0 vib)))
-                            (* (env indf3) (oscil fmosc3 (* 4.0 vib))))))))))))
+                            (* (env indf3) (oscil fmosc3 (* 4.0 vib)))))))))))
 </pre>
 <p>or in its actual (non-simplified) form:
 </p>
@@ -3147,7 +3149,7 @@ The global variables that parallel CLM's *clm-...* are:
   	  (revfile "test.rev")
 	  (statistics #f)
 	  (scaled-to #f)
-	  (scaled-by #f))
+	  (scaled-by #f)
 </pre>
 <p>As far as possible, this parallels CLM's <a href="clm.html#with-sound">with-sound</a>.</p>
 <pre>
@@ -3238,7 +3240,7 @@ resource argument list is <i>args</i>.  The editor's current envelope is accessi
 				   XmNtopAttachment    XmATTACH_FORM
 				   XmNbottomAttachment XmATTACH_FORM
 				   XmNrightAttachment  XmATTACH_FORM)
-			     '(0.0 1.0 0.0 1.0)))))
+			     '(0.0 1.0 0.0 1.0)))
 (set! (xe-envelope editor) (list 0.0 1.0 1.0 0.5))
 </pre>
 
@@ -3690,7 +3692,7 @@ along the lines of:
   (format stream "#&lt;(fcomb: size: ~A, loc: ~A, feedback: ~A, a0: ~A, a1: ~A, x1: ~A, line: ~A&gt;"
 	  (dly-size d) (dly-loc d) (dly-xscl d)
 	  (mus-a0 d) (mus-a1 d) (mus-x1 d)
-	  (prettified-array (dly-line d))))
+	  (prettified-array (dly-line d)))))
 </pre>
 <p>And to get the
 new (lisp-side, non-macro) generator to be callable within the run macro is yet another set
@@ -3843,7 +3845,7 @@ static Float mus_fcomb (mus_any *ptr, Float input, Float ignored)
 
 static mus_any_class FCOMB_CLASS = {
   -1, /* MUS_FCOMB eventually */ /* mus_type: this is assigned at run-time via mus_make_class_tag below */
-  "fcomb",                       /* mus_name: class name (used in descriptive/error messages */
+  "fcomb",                       /* mus_name: class name (used in descriptive/error messages) */
   &amp;free_fcomb,                   /* mus_free: free gen's struct etc */
   &amp;describe_fcomb,               /* mus_describe: user-friendly description */
   &amp;describe_fcomb,               /* mus_inspect: internal debugging description */

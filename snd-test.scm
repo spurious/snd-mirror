@@ -5959,6 +5959,7 @@ EDITS: 5
 	    (xto1-data (make-vct 101))
 	    (cos-data (make-vct 101))
 	    (ind (new-sound "test.snd")))
+	;; test-ops.scm for 7 and 8 cases (40 min per branch)
 	
 	(define (set-to-1) (map-chan (lambda (y) 1.0) 0 100))
 	(define (cset-to-1 dat) (do ((i 0 (1+ i))) ((= i 101)) (vct-set! dat i 1.0)))
@@ -14091,6 +14092,7 @@ EDITS: 5
 
 (defvar env1 '(0 0 1 0))
 (defvar env2 '(0 0 1 1))
+(defvar ramp-up-env '(0 0 1 1))
 (define-envelope "env4" '(0 1 1 0))
 
 (if (and (not (provided? 'snd-nogui))
@@ -27619,6 +27621,23 @@ EDITS: 2
 		      ((= i 10))
 		    (IF (fneq (sample i) (* i .1111))
 			(snd-display ";C-x a [~A]: ~A" i (sample i))))
+		  (undo)
+		  (key-event cwid (char->integer #\x) 4) (force-event)
+		  (key-event cwid (char->integer #\a) 0) (force-event)
+		  (widget-string minibuffer "ramp-u")
+		  (key-event minibuffer snd-tab-key 0) (force-event)
+		  (key-event minibuffer snd-return-key 0) (force-event)
+		  (undo)
+		  (key-event cwid (char->integer #\u) 4) (force-event)
+		  (key-event cwid (char->integer #\5) 0) (force-event)
+		  (key-event cwid (char->integer #\0) 0) (force-event)
+		  (key-event cwid (char->integer #\0) 0) (force-event)
+		  (key-event cwid (char->integer #\x) 4) (force-event)
+		  (key-event cwid (char->integer #\a) 4) (force-event)
+		  (widget-string minibuffer "env2")
+		  (key-event minibuffer snd-tab-key 0) (force-event)
+		  (key-event minibuffer snd-return-key 0) (force-event)
+
 		  (key-event cwid (char->integer #\x) 4) (force-event)
 		  (key-event cwid (char->integer #\() 1) (force-event)
 		  (key-event cwid (char->integer #\f) 4) (force-event)
@@ -28518,6 +28537,8 @@ EDITS: 2
 		      (widget-string text-widget "'(0 0 .5 1 1 0)") (force-event)
 		      (key-event text-widget snd-return-key 0) (force-event)
 			
+		      (set! (transform-size ind 0) 65536)
+		      (set! (transform-graph? ind 0) #t)
 		      (click-button flt-button) (force-event)
 		      (IF (not (= (enved-target) enved-spectrum))
 			  (snd-display ";click flt button but target: ~A" (enved-target)))
@@ -33835,7 +33856,7 @@ EDITS: 2
 	       cursor-style dac-combines-channels dac-size data-clipped data-color data-format data-location
 	       default-output-chans default-output-format default-output-srate default-output-type define-envelope
 	       delete-mark delete-marks forget-region delete-sample delete-samples delete-samples-with-origin
-	       delete-selection dialog-widgets dismiss-all-dialogs display-edits dot-size draw-dot draw-dots draw-line
+	       delete-selection dialog-widgets display-edits dot-size draw-dot draw-dots draw-line
 	       draw-lines draw-string edit-header-dialog edit-fragment edit-position edit-tree edits env-selection
 	       env-sound enved-active-env enved-base enved-clip? enved-in-dB enved-dialog enved-exp? enved-power
 	       enved-selected-env enved-target enved-waveform-color enved-wave? eps-file eps-left-margin emacs-style-save-as

@@ -367,7 +367,7 @@ an inch is 2.54 cm:
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (inches-to-ps inches) 
-  (* inches 72)
+  (* inches 72))
 
 (define (cm-to-ps cm) 
   (* cm (/ 72.0 2.54)))
@@ -701,7 +701,7 @@ and filled graphs:
         (begin
           (set! (sync snd) (1+ snd)) ; 0 = #f
           (set! (channel-style snd) channels-combined)
-          (set! (graph-style snd) graph-filled)))
+          (set! (graph-style snd) graph-filled)))))
 </pre></td></tr></table>
 <br>
 See also <i>C-x b support</i> in examp.scm, <i>remember-sound-state</i> in extensions.scm, enved.scm, and various
@@ -830,7 +830,7 @@ This provides an opportunity to set sndlib prescaling values:
 (add-hook! <em class=red>during-open-hook</em>
   (lambda (fd name reason)
     (if (= (mus-sound-header-type name) mus-raw)
-        (<a href="#musfileprescaler">(set! (mus-file-prescaler</a> fd) 500.0))))
+        (<a href="#musfileprescaler">(set! (mus-file-prescaler</a> fd) 500.0)))))
 </pre></td></tr></table></td></tr>
 
 <tr><td></td><td colspan=2>
@@ -1014,7 +1014,7 @@ So, we read and write the entire peak-env-info contents ourselves (see peak-env.
 (define (peak-env-info-file-name snd chn)
   (format #f "~A-peaks-~D" (file-name snd) chn))
   ;; or, if we want these files saved in a directory named "peaks":
-  ;;   (format #f "~~/peaks/~A-peaks-~D" (short-file-name snd) chn))
+  ;;   (format #f "~~/peaks/~A-peaks-~D" (short-file-name snd) chn)
 
 (define (save-peak-env-info-at-close snd)
   ;; intended as a close-hook function
@@ -1848,7 +1848,7 @@ called just after an FFT (or spectrum) is calculated.
            (= (transform-graph-type) graph-once))
       (report-in-minibuffer 
         (number-&gt;string (/ (* 2 (vct-peak (transform-samples-&gt;vct snd chn))) 
-                           (transform-size snd chn)))))
+                           (transform-size snd chn))))))
 (add-hook! <em class=red>transform-hook</em> fft-peak)
 </pre></td></tr></table>
 </td></tr><tr><td colspan=3></td></tr>
@@ -2614,7 +2614,7 @@ data is:</p>
    ...
    (sf (make-sample-reader start))
    ...
-   (vct-map! out-data (lambda () (+ (read-sample sf) &lt;new stuff&gt;))
+   (vct-map! out-data (lambda () (+ (read-sample sf) &lt;new stuff&gt;)))
    (free-sample-reader sf)
    (vct-&gt;samples start len out-data)
 </pre>
@@ -3884,7 +3884,7 @@ This is used by some of the <a href="#regularizedargs">regularized</a> functions
     (free-sample-reader reader)))
 
 (define (difference) (<em class=red>clm-channel</em> (make-two-zero 1 -1)))
-(define (wobble) (<em class=red>clm-channel</em> (make-sum-of-cosines 3 50))
+(define (wobble) (<em class=red>clm-channel</em> (make-sum-of-cosines 3 50)))
 (define (hold-nose) (<em class=red>clm-channel</em> (make-sum-of-cosines 3 1)))
 (define (bad-reception) (<em class=red>clm-channel</em> (make-sum-of-cosines 5 10)))
 </pre></td></tr></table>
@@ -7701,16 +7701,15 @@ default: 4.
 
 <!-- print-length -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="printlength">print-length</a></em> ()</code></span></td></tr>
-<tr><td></td><td>number of elements of lists and vectors that are printed (default is 12).</td></tr>
+<tr><td></td><td>number of elements of lists and vectors that are printed. default: 12.</td></tr>
 
 <!-- recorder-autoload -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="recorderautoload">recorder-autoload</a></em> ()</code></span></td></tr>
-<tr><td></td><td>The '<a href="snd.html#Xautoload">autoload</a>' button in the recorder dialog. (#f)</td></tr>
+<tr><td></td><td>The '<a href="snd.html#Xautoload">autoload</a>' button in the recorder dialog. default: #f.</td></tr>
 
 <!-- recorder-buffer-size -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="recorderbuffersize">recorder-buffer-size</a></em> ()</code></span></td></tr>
-<tr><td></td><td>The size of the recorder input buffer (there's a trade-off
-between responsiveness and clicks in some cases). (4096)
+<tr><td></td><td>The size of the recorder input buffer (there's a trade-off between responsiveness and clicks in some cases).
 </td></tr>
 
 <!-- recorder-dialog -->
@@ -7818,6 +7817,7 @@ mark code omissions -- see the original for details):
 		   (return (1- ctr)))
 	       (return #f)
                ...
+	       <!-- )))))) -->
 </pre></td></tr></table></td></tr>
 <tr><td></td><td>
 But this is kinda dumb; we really should use a continuation here:
@@ -7837,6 +7837,7 @@ But this is kinda dumb; we really should use a continuation here:
 	      (if (and (&gt; (abs (- samp0 samp1)) local-max)
                   ...
 		  (return (1- ctr))
+		  <!-- )))))))) -->
 </pre></td></tr></table></td></tr>
 <tr><td></td><td>
 Now save the continuation after the first call, and whenever you want to
@@ -8309,7 +8310,7 @@ If <i>origin</i> is included, it is the name reported if an error occurs.  The u
 
 (<em class=red>bind-key</em> (char-&gt;integer #\v) 4
 	  (lambda ()
-            "C-v redefined to behave as in Emacs (move ahead window)
+            "C-v redefined to behave as in Emacs (move ahead window)"
 	    (if (&lt; (right-sample) (frames))
 		(set! (left-sample) (right-sample)))
 	    keyboard-no-action))
@@ -9080,7 +9081,7 @@ The four "-widgets" procedures return lists of possibly useful widgets:
   main-widgets:    '(0:top-level-application 1:top-level-shell 2:main-pane 3:main-sound-pane 4:listener-pane 5:notebook-outer-pane)
   menu-widgets:    '(0:top-level-menu-bar 1:file-menu 2:edit-menu 3:view-menu 4:options-menu 5:help-menu)
   sound-widgets:   '(0:main-pane 1:name-label 2:control-panel 3:minibuffer 4:play 5:filter-graph 6:unite 7:minibuffer-label 8:name-icon 9:sync)
-  channel-widgets: '(0:graph 1:w 2:f 3:sx 4:sy 5:zx 6:zy 7:edhist 8:gsy 9:gzy + others in gtk
+  channel-widgets: '(0:graph 1:w 2:f 3:sx 4:sy 5:zx 6:zy 7:edhist 8:gsy 9:gzy) + others in gtk
   dialog-widgets:  '(0:color_dialog 1:orientation_dialog 2:enved_dialog 3:error_dialog 
                      4:yes_or_no_dialog 5:transform_dialog 6:file_open_dialog 
                      7:file_save_as_dialog 8:view_files_dialog 9:raw_data_dialog 

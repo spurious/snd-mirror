@@ -353,7 +353,6 @@ typedef struct {
   int gc;
 } xen_value;
 
-#if (!DEBUG_MEMORY)
 static xen_value *make_xen_value(int typ, int address, int constant)
 {
   xen_value *v;
@@ -364,27 +363,6 @@ static xen_value *make_xen_value(int typ, int address, int constant)
   v->gc = FALSE;
   return(v);
 }
-
-#else
-
-static xen_value *make_xen_value_1(int typ, int address, int constant, const char *func, int line)
-{
-  xen_value *v;
-  char *buf;
-  buf = (char *)malloc(64);
-  sprintf(buf, "%s: %d", func, line);
-  set_encloser(buf);
-  v = (xen_value *)CALLOC(1, sizeof(xen_value));
-  v->type = typ;
-  v->addr = address;
-  v->constant = constant;
-  v->gc = FALSE;
-  set_encloser(NULL);
-  return(v);
-}
-
-#define make_xen_value(a,b,c) make_xen_value_1(a, b, c, __FUNCTION__, __LINE__)
-#endif
 
 #define OPTIMIZER_WARNING_BUFFER_SIZE 1024
 static char optimizer_warning_buffer[OPTIMIZER_WARNING_BUFFER_SIZE];

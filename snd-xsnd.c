@@ -72,7 +72,7 @@ void goto_minibuffer(snd_info *sp)
 void set_minibuffer_string(snd_info *sp, char *str) 
 {
   XmTextSetString(MINIBUFFER_TEXT(sp), str);
-  XmUpdateDisplay(MINIBUFFER_TEXT(sp));
+  if (sp->inuse) XmUpdateDisplay(MINIBUFFER_TEXT(sp));
 }
 
 void set_minibuffer_cursor_position(snd_info *sp, int pos)

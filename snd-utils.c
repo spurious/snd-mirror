@@ -717,7 +717,12 @@ void mem_report(void)
 
   time(&ts);
   strftime(time_buf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&ts));
-  fprintf(Fp, "memlog: %s: %s\n\n", time_buf, mem_stats(ss, 0));
+  {
+    char *str;
+    str = mem_stats(ss, 0);
+    fprintf(Fp, "memlog: %s: %s\n\n", time_buf, str);
+    free(str);
+  }
 
   for (i = 0; i <= mem_location; i++)
     {
@@ -795,6 +800,8 @@ void mem_report(void)
     if (open_files[i])
       fprintf(Fp, "%s: %s[%d] (%s) %d %p?\n", file_files[i], file_funcs[i], file_lines[i], open_files[i], file_fds[i], file_fls[i]);
   dump_protection(Fp);
+  free(sums);
+  free(ptrs);
   fclose(Fp);
 }
 

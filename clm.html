@@ -155,34 +155,34 @@ value, and add it into the current output:</p>
 <p>This creates a sine-wave at 440.0 Hz, 0.2 amplitude, between times 0 and
 0.25 seconds.  The line:</p>
 <pre>
-(defun simp (start-time duration frequency amplitude)
+(defun simp (start-time duration frequency amplitude) <!-- ) -->
 </pre>
 <p>declares that our instrument is a lisp function (defun) named simp which
 takes the four parameters start-time, duration, frequency, and amplitude.
 The next two lines:</p>
 <pre>
   (let* ((beg (floor (* start-time *srate*)))
-	 (end (+ beg (floor (* duration *srate*)))))
+	 (end (+ beg (floor (* duration *srate*))))) <!-- ) -->
 </pre>
 <p>turn the start-time and duration values, passed by the caller in
 terms of seconds, into samples.  The variable <i>*srate*</i>
 holds the current sampling rate. The next
 line:</p>
 <pre>
-    (loop for i from beg below end and j from 0 by 1 do
+    (loop for i from beg below end and j from 0 by 1 do <!-- ) -->
 </pre>
 <p>uses the Lisp <i>loop</i> construct to loop through the samples
 between start-time (beg) and start-time+duration (end) calculating
 simp's output on each sample.  We are also using the variable <i>j</i>
 to increment the current phase in the last line:</p>
 <pre>
-      (outa i (* amplitude (sin (* j 2.0 pi (/ frequency *srate*))))))))
+      (outa i (* amplitude (sin (* j 2.0 pi (/ frequency *srate*)))))))) <!-- ((( -->
 </pre>
 <p>This is the meat of our instrument.  The call (<a href="#outa">outa</a> <i>i</i> <i>whatever</i>)
 adds its third argument (in this case a complicated expression) into channel 0 of the
 current output stream at location <i>i</i>.  The expression itself:</p>
 <pre>
-(* amplitude (sin (* j 2.0 pi (/ frequency *srate*))))))))
+(* amplitude (sin (* j 2.0 pi (/ frequency *srate*)))))))) <!-- (((( -->
 </pre>
 <p>is creating a sinusoid (via the "sin" function) at the specified
 volume ("amplitude" is passed as an argument to simp), and the
@@ -260,8 +260,8 @@ so our simp instrument becomes:
 </p>
 <pre>
 (define (simp start-time duration frequency amplitude)
-  (let* ((beg (inexact->exact (floor (* start-time (mus-srate)))))
-         (dur (inexact->exact (floor (* duration (mus-srate)))))
+  (let* ((beg (inexact-&gt;exact (floor (* start-time (mus-srate)))))
+         (dur (inexact-&gt;exact (floor (* duration (mus-srate)))))
          (s (make-oscil :frequency frequency)))
     (run
       (do ((i 0 (1+ i)))
@@ -488,7 +488,7 @@ discussion of fm.</p>
       <i>duration</i>      ; seconds
       (<i>offset</i> 0.0)  ; value added to every y value
       <i>base</i>          ; type of connecting line between break-points
-      <i>end</i>           ; (- end start) =&gt; duration in samples (can be used instead of <i>duration</i>
+      <i>end</i>           ; (- end start) =&gt; duration in samples (can be used instead of <i>duration</i>)
       (<i>start</i> 0)     ; can be used in conjunction with <i>end</i>
   <a name="env"><em class=def>env</em></a> <i>e</i>
   <a name="env?"><em class=def>env?</em></a> <i>e</i>
@@ -913,7 +913,7 @@ way around Lisp's clumsy mechanism for repeating a random number sequence.
 <pre><small>
 rand:
   (if (&gt;= phase (* 2 pi))
-      (setf output (centered-random amplitude))
+      (setf output (centered-random amplitude)))
   (incf phase (+ (hz-&gt;radians frequency) sweep))
 </small></pre>
 <br clear=left>
@@ -2992,7 +2992,7 @@ one note in the body; for more complex cases, use parallel
 instruments (defpinstrument).  Local input sound files should not
 be closed until with-psound returns (that is, if you call open-input,
 you need to save the file pointer -- don't call close-input in the
-instrument.
+instrument).
 Record (microphone) input is enabled when
 <b>rec-chans</b> is greater than 0 (see <a href="#rec-any">rec-any</a>).
 Reverb in this mode is handled currently by the
@@ -3351,7 +3351,7 @@ than its default (65536).  For example, on ccrma's PC's running Linux
 with IDE drives and 64MBytes of RAM, CLM runs as much as 50% faster
 if you use:</p>
 <pre>
-  (let ((*clm-file-buffer-size* (* 1024 1024))) (with-sound ...)
+  (let ((*clm-file-buffer-size* (* 1024 1024))) (with-sound ...) <!-- ) -->
 </pre>
 
 <p>The macro <a name="with-offset"><em class=def>with-offset</em></a> can be used to set local

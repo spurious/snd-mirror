@@ -1,4 +1,4 @@
-	<html>
+<html>
 <head>
 <title>Snd</title>
 <style type="text/css">
@@ -1611,7 +1611,7 @@ function save-macros saves all currently named macros.
 See the <a href="extsnd.html#lisplistener">lisp</a> section for
 more details.</p>
 
-        <!-- I(keyboard macros):K(C-(, C-x e)(kce) -->
+        <!-- I(keyboard macros):K(C-(, C-x e)(kce) --><!-- ) -->
         <!-- I(save macros):A(kbdmacros) -->
 
 <h4><A NAME="changeformat">Change file format</a></h4>
@@ -2046,7 +2046,7 @@ all the samples between the cursor and the next mark.</p>
 <td><code><small><pre>
   (set! (x-bounds) 
     (list (/ (selection-position) (srate))
-	  (/ (+ (selection-position) (selection-frames)) (srate)))))
+	  (/ (+ (selection-position) (selection-frames)) (srate))))
 </pre></small></code></td></tr>
 <tr><td>C-x w</td><td>save selection as file</td><td><code><small>(lambda (arg) (prompt "file:" save-region)) ;save-selection if no arg</small></code></td></tr>
 <tr><td>C-x <A NAME="cxz">z</a></td><td>smooth selection</td><td><code><small>smooth-selection</small></code></td></tr>
@@ -2056,8 +2056,8 @@ all the samples between the cursor and the next mark.</p>
   (prompt "mark:" 
     (lambda (val) (set! (mark-name (add-mark (cursor))) val))))
 </pre></small></code></td></tr>
-<tr><td>C-x (</td><td>begin keyboard macro definition</td><td><code><small>; bind-key</small></code></td></tr>
-<tr><td>C-x )</td><td>end keyboard macro definition</td><td></td></tr>
+<tr><td>C-x ( <!-- ) --></td><td>begin keyboard macro definition</td><td><code><small>; bind-key</small></code></td></tr>
+<tr><td>C-x ) <!-- ( --></td><td>end keyboard macro definition</td><td></td></tr>
 
         <!-- I(smooth selection):K(C-x z)(cxz) --><!-- I(smooth selection):A(cxz) --><!-- I(define mark):K(C-x /, C-x C-m)(cxcm) -->
         <!-- I(define mark):O(also C-m)(cm) --><!-- I(delete mark):K(- C-m)(cm) --><!-- I(delete mark):A(marks) -->
@@ -2319,7 +2319,7 @@ panel are:</p>
   <tr><td><a href="#editcut">insert selection</a></td><td><small>Edit: <a href="#editcut">Paste</a></small></td><td><a href="#cxi"><small>Cy or Cx i</small></a></td><td><a href="extsnd.html#sndinsertselection"><small>insert-selection</small></a></td><td><a href="extsnd.html#sndinsertregion"><small>insert-region</small></a></td></tr>
   <tr><td><a href="#co">insert zeros</a></td><td><small>Effects: <a href="sndscm.html#effectsdoc">Add Silence</a></small></td><td><a href="#cz"><small>Co, Cz</small></a></td><td><a href="extsnd.html#sndinsertsilence"><small>insert-silence</small></a></td><td><a href="extsnd.html#padchannel"><small>pad-channel</small></a></td></tr>
   <tr><td><a href="#kgc">interrupt Snd</a></td><td><br></td><td><a href="#kgc"><small>Cg</small></a></td><td><a href="extsnd.html#sndstop"><small>stop-playing</small></a></td><td><a href="extsnd.html#sndoops"><small>c-g!</small></a></td></tr>
-  <tr><td><a href="#kbdmacros">keyboard macros</a></td><td><br></td><td><a href="#kce"><small>C(, Cx e</small></a></td><td><a href="extsnd.html#sndkey"><small>key</small></a></td><td><br></td></tr>
+  <tr><td><a href="#kbdmacros">keyboard macros</a></td><td><br></td><td><a href="#kce"><small>C(, Cx e</small></a><!-- ) --></td><td><a href="extsnd.html#sndkey"><small>key</small></a></td><td><br></td></tr>
   <tr><td><a href="extsnd.html#sndmaxamp">max amp</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndmaxamp"><small>maxamp</small></a></td><td><br></td></tr>
   <tr><td><a href="#mixingfiles">mix file</a></td><td><small>File: <a href="#mixingfiles">Mix</a></small></td><td><a href="#cxcq"><small>Cx Cq</small></a></td><td><a href="extsnd.html#sndmix"><small>mix</small></a></td><td><small>see mix.scm for tracks</small></td></tr>
   <tr><td><a href="#editcut">mix selection</a></td><td><small>Edit: <a href="#editcut">Mix</a></small></td><td><a href="#cxq"><small>Cx q</small></a></td><td><a href="extsnd.html#sndmixselection"><small>mix-selection</small></a></td><td><a href="extsnd.html#sndmixregion"><small>mix-region</small></a></td></tr>

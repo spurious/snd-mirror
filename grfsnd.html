@@ -1951,7 +1951,7 @@ def display_energy(snd, chn)
 In Ruby you make a symbol by prepending ":", so Guile's
 </p>
 <pre>
-(list 'KeySym (char-&gt;integer #\F)
+(list 'KeySym (char-&gt;integer #\F))
 </pre> 
 <p>becomes</p>
 <pre>
@@ -2051,7 +2051,7 @@ The main function is:
 An example call to apply the low-pass-filter in the CMT plugin library is 
 (apply-ladspa (make-sample-reader 0) (list "cmt" "lpf" 1000) 10000 "origin").
 </pre>
-<p>Dave Phillips in <a href="http://www.oreillynet.com/pub/a/linux/2001/02/02/ladspa.html">Linux Audio Plug-Ins: A Look Into LADSPA"</a> adds this
+<p>Dave Phillips in <a href="http://www.oreillynet.com/pub/a/linux/2001/02/02/ladspa.html">Linux Audio Plug-Ins: A Look Into LADSPA</a> adds this
 example:
 </p>
 <pre>
