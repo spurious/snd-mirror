@@ -1255,6 +1255,7 @@ static pane_t *make_pane(recorder_info *rp, GtkWidget *paned_window, int device,
       vu_meters = true_inputs;
       if (vu_meters < rp->out_chans) vu_meters = rp->out_chans;
       p->out_chans = vu_meters;
+      if (num_gains > vu_meters) num_gains = vu_meters;
       p->in_chans = 1;
     }
 

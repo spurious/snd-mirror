@@ -4579,14 +4579,19 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 	      if (err != MUS_NO_ERROR)
 		report_in_minibuffer_and_save(cp->sound, _("edit history save data as %s hit error: %s"), nfile, strerror(errno));
 #if HAVE_RUBY
-	      fprintf(fd, "      %s(\"%s\", " OFF_TD ", sfile, %d, \"%s\")\n",
-		      S_override_samples_with_origin, nfile, len, cp->chan, (ed->origin) ? ed->origin : "");
+	      fprintf(fd, "      %s(\"%s\", " OFF_TD ", sfile, %d, ", S_override_samples_with_origin, nfile, len, cp->chan);
+	      if (ed->origin) 
+		fprintf_with_possible_embedded_string(fd, ed->origin);
+	      else fprintf(fd, "\"\"");
+	      fprintf(fd, ")\n");
 #else
-	      fprintf(fd, "      (%s \"%s\" " OFF_TD " sfile %d \"%s\" (list %d " OFF_TD "))\n",
-		      S_override_samples_with_origin, nfile, len, cp->chan, (ed->origin) ? ed->origin : "",
+	      fprintf(fd, "      (%s \"%s\" " OFF_TD " sfile %d ", S_override_samples_with_origin, nfile, len, cp->chan);
+	      if (ed->origin) 
+		fprintf_with_possible_embedded_string(fd, ed->origin);
+	      else fprintf(fd, "\"\"");
+	      fprintf(fd, " (list %d " OFF_TD "))\n",
 		      (int)mus_sound_write_date(nfile),
 		      mus_sound_length(nfile));
-		      
 #endif
 	      FREE(nfile);
 	    }
