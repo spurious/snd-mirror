@@ -281,116 +281,116 @@ int channel_lock_pane(chan_info *cp, void *ptr)
   return(0);
 }
 
-static void W_sy_Drag_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_sy_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  chan_info *cp = (chan_info *)(clientData);
+  chan_info *cp = (chan_info *)(context);
   START_JUST_TIME(cp);
-  sy_changed(((XmScrollBarCallbackStruct *)callData)->value, cp);
+  sy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
   END_JUST_TIME(cp);
 }
 
-static void W_sy_ValueChanged_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_sy_ValueChanged_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  sy_changed(((XmScrollBarCallbackStruct *)callData)->value, (chan_info *)(clientData));
+  sy_changed(((XmScrollBarCallbackStruct *)info)->value, (chan_info *)(context));
 }
 
-static void W_sx_Drag_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_sx_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  chan_info *cp = (chan_info *)(clientData);
+  chan_info *cp = (chan_info *)(context);
   START_JUST_TIME(cp);
-  sx_changed(((XmScrollBarCallbackStruct *)callData)->value, cp);
+  sx_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
   END_JUST_TIME(cp);
 }
 
-static void W_sx_ValueChanged_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_sx_ValueChanged_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  sx_changed(((XmScrollBarCallbackStruct *)callData)->value, (chan_info *)(clientData));
+  sx_changed(((XmScrollBarCallbackStruct *)info)->value, (chan_info *)(context));
 }
 
-static void W_sx_Increment_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_sx_Increment_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* problem here is that in large files these increments, if determined via scrollbar values, are huge */
   /* so, move ahead one windowfull on each tick */
-  sx_incremented((chan_info *)clientData, 1.0);
+  sx_incremented((chan_info *)context, 1.0);
 }
 
-static void W_sx_Decrement_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_sx_Decrement_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  sx_incremented((chan_info *)clientData, -1.0);
+  sx_incremented((chan_info *)context, -1.0);
 }
 
-static void W_zy_Drag_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_zy_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  chan_info *cp = (chan_info *)(clientData);
+  chan_info *cp = (chan_info *)(context);
   START_JUST_TIME(cp);
-  zy_changed(((XmScrollBarCallbackStruct *)callData)->value, cp);
+  zy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
   END_JUST_TIME(cp);
 }
 
-static void W_zy_ValueChanged_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_zy_ValueChanged_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  zy_changed(((XmScrollBarCallbackStruct *)callData)->value, (chan_info *)clientData);
+  zy_changed(((XmScrollBarCallbackStruct *)info)->value, (chan_info *)context);
 }
 
-static void W_zx_Drag_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_zx_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  chan_info *cp = (chan_info *)(clientData);
+  chan_info *cp = (chan_info *)(context);
   START_JUST_TIME(cp);
-  zx_changed(((XmScrollBarCallbackStruct *)callData)->value, cp);
+  zx_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
   END_JUST_TIME(cp);
 }
 
-static void W_zx_ValueChanged_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_zx_ValueChanged_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  zx_changed(((XmScrollBarCallbackStruct *)callData)->value, (chan_info *)clientData);
+  zx_changed(((XmScrollBarCallbackStruct *)info)->value, (chan_info *)context);
 }
 
-static void W_gzy_Drag_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_gzy_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  chan_info *cp = (chan_info *)(clientData);
+  chan_info *cp = (chan_info *)(context);
   START_JUST_TIME(cp);
-  gzy_changed(((XmScrollBarCallbackStruct *)callData)->value, cp);
+  gzy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
   END_JUST_TIME(cp);
 }
 
-static void W_gzy_ValueChanged_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_gzy_ValueChanged_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  gzy_changed(((XmScrollBarCallbackStruct *)callData)->value, (chan_info *)clientData);
+  gzy_changed(((XmScrollBarCallbackStruct *)info)->value, (chan_info *)context);
 }
 
-static void W_gsy_Drag_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_gsy_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  chan_info *cp = (chan_info *)(clientData);
+  chan_info *cp = (chan_info *)(context);
   START_JUST_TIME(cp);
-  gsy_changed(((XmScrollBarCallbackStruct *)callData)->value, cp);
+  gsy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
   END_JUST_TIME(cp);
 }
 
-static void W_gsy_ValueChanged_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_gsy_ValueChanged_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  gsy_changed(((XmScrollBarCallbackStruct *)callData)->value, (chan_info *)clientData);
+  gsy_changed(((XmScrollBarCallbackStruct *)info)->value, (chan_info *)context);
 }
 
 /* anything special for increment?  XmNincrementCallback W_sx_Increment_Callback */
 
 
-/* help callbacks (for mouse click help) -- all take snd_state as clientData */
+/* help callbacks (for mouse click help) -- all take snd_state as context */
 
-static void W_graph_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_graph_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  click_for_graph_help((snd_state *)clientData);
+  click_for_graph_help((snd_state *)context);
 }
 
 #if (XmVERSION > 1)
-static void W_History_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_History_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  click_for_history_help((snd_state *)clientData);
+  click_for_history_help((snd_state *)context);
 }
 #endif
 
-static void W_sx_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_sx_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "X axis scroll",
 "This scrollbar controls the position of\n\
 the x axis within the overall sound file.\n\
@@ -398,9 +398,9 @@ The arrows increment the view by one window.\n\
 ");
 }
 
-static void W_sy_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_sy_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "Y axis scroll",
 "This (nearly useless) scrollbar controls the\n\
 position of the y-axis within the current y axis\n\
@@ -408,27 +408,27 @@ limits.\n\
 ");
 }
 
-static void W_zx_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_zx_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "X axis zoom",
 "This scrollbar zooms in (as you move\n\
 it to the left) or out along the x axis.\n\
 ");
 }
 
-static void W_zy_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_zy_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "Y axis zoom",
 "This scrollbar zooms in (as you move\n\
 it down) or out along the y axis.\n\
 ");
 }
 
-static void W_gsy_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_gsy_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "Graph position",
 "This scrollbar controls the position\n\
 in the overall combined graph of the\n\
@@ -436,9 +436,9 @@ portion visible in the sound pane.\n\
 ");
 }
 
-static void W_gzy_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_gzy_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "Graph zoom",
 "This scrollbar controls how much of\n\
 the overall combined graph is visible\n\
@@ -446,9 +446,9 @@ in the sound pane.\n\
 ");
 }
 
-static void F_button_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void F_button_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "fft button",
 "This button controls whether an FFT is\n\
 displayed alongside the waveform.  To affect\n\
@@ -456,9 +456,9 @@ all channels at once, use control-click.\n\
 ");
 }
 
-static void W_button_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_button_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "time domain waveform button",
 "This button determines whether the time\n\
 domain waveform is displayed.  If both the\n\
@@ -469,30 +469,30 @@ all channels at once, use control-click.\n\
 }
 
 
-static void F_button_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void F_button_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   XButtonEvent *ev;
   ev = (XButtonEvent *)(cb->event);
-  f_button_callback((chan_info *)clientData, cb->set, (ev->state & snd_ControlMask));
+  f_button_callback((chan_info *)context, cb->set, (ev->state & snd_ControlMask));
 }
 
-static void W_button_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void W_button_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   XButtonEvent *ev;
   ev = (XButtonEvent *)(cb->event);
-  w_button_callback((chan_info *)clientData, cb->set, (ev->state & snd_ControlMask));
+  w_button_callback((chan_info *)context, cb->set, (ev->state & snd_ControlMask));
 }
 
 #define GUI_CURRENT_TIME(ss) XtLastTimestampProcessed(MAIN_DISPLAY(ss))
 
-static void Channel_Expose_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void Channel_Expose_Callback(Widget w, XtPointer context, XtPointer info)
 {
   TIME_TYPE last_expose_event_time=0;
   snd_info *sp;
-  chan_info *cp = (chan_info *)clientData;
-  XmDrawingAreaCallbackStruct *cb = (XmDrawingAreaCallbackStruct *)callData;
+  chan_info *cp = (chan_info *)context;
+  XmDrawingAreaCallbackStruct *cb = (XmDrawingAreaCallbackStruct *)info;
   XExposeEvent *ev;
   TIME_TYPE curtime;
   ev = (XExposeEvent *)(cb->event);
@@ -508,43 +508,43 @@ static void Channel_Expose_Callback(Widget w, XtPointer clientData, XtPointer ca
   else update_graph(cp, NULL);
 }
 
-static void Channel_Resize_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void Channel_Resize_Callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_info *sp;
-  chan_info *cp = (chan_info *)clientData;
+  chan_info *cp = (chan_info *)context;
   sp = cp->sound;
   if (sp->combining != CHANNELS_SEPARATE)
     map_over_sound_chans(sp, update_graph, NULL);
   else update_graph(cp, NULL);
 }
 
-static void graph_mouse_enter(Widget w, XtPointer clientData, XEvent *event, Boolean *flag)
+static void graph_mouse_enter(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   XDefineCursor(XtDisplay(w), XtWindow(w), (ss->sgx)->graph_cursor);
 }
 
-static void graph_mouse_leave(Widget w, XtPointer clientData, XEvent *event, Boolean *flag)
+static void graph_mouse_leave(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
   XUndefineCursor(XtDisplay(w), XtWindow(w));
 }
 
-static void graph_button_press(Widget w, XtPointer clientData, XEvent *event, Boolean *cont) 
+static void graph_button_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   XButtonEvent *ev = (XButtonEvent *)event;
-  graph_button_press_callback((chan_info *)clientData, ev->x, ev->y, ev->state, ev->button, ev->time);
+  graph_button_press_callback((chan_info *)context, ev->x, ev->y, ev->state, ev->button, ev->time);
 }
 
-static void graph_button_release(Widget w, XtPointer clientData, XEvent *event, Boolean *cont) 
+static void graph_button_release(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   XButtonEvent *ev = (XButtonEvent *)event;
-  graph_button_release_callback((chan_info *)clientData, ev->x, ev->y, ev->state, ev->button);
+  graph_button_release_callback((chan_info *)context, ev->x, ev->y, ev->state, ev->button);
 }
 
-static void graph_button_motion(Widget w, XtPointer clientData, XEvent *event, Boolean *cont) 
+static void graph_button_motion(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 { /* mouse drag */
   XMotionEvent *ev = (XMotionEvent *)event;
-  graph_button_motion_callback((chan_info *)clientData, ev->x, ev->y, ev->time, XtGetMultiClickTime(XtDisplay(w)));
+  graph_button_motion_callback((chan_info *)context, ev->x, ev->y, ev->time, XtGetMultiClickTime(XtDisplay(w)));
 }
 
 static int no_padding(Arg *args, int n)
@@ -580,13 +580,13 @@ static void show_gz_scrollbars(snd_info *sp)
 /* edit history support */
 
 #if (XmVERSION > 1)
-static void edit_select_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void edit_select_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* undo/redo to reach selected position */
-  XmListCallbackStruct *cbs = (XmListCallbackStruct *)callData;
+  XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   XButtonEvent *ev;
   ev = (XButtonEvent *)(cbs->event);
-  edit_select_callback((chan_info *)clientData, cbs->item_position-1, (ev->state & snd_ControlMask));
+  edit_select_callback((chan_info *)context, cbs->item_position-1, (ev->state & snd_ControlMask));
 }
 #endif
 
@@ -708,7 +708,7 @@ void reflect_edit_counter_change(chan_info *cp)
     }
 }
 
-static void cp_graph_key_press(Widget w, XtPointer clientData, XEvent *event, Boolean *cont);
+static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont);
 
 void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int insertion, Widget main, int button_style)
 {
@@ -1161,13 +1161,13 @@ GC erase_GC(chan_info *cp)
  * virtual_selected_channel(cp) (snd-chn.c) retains the current selected channel
  */
 
-void graph_key_press(Widget w, XtPointer clientData, XEvent *event, Boolean *cont) 
+void graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   /* called by every key-intercepting widget in the entire sound pane */
   XKeyEvent *ev = (XKeyEvent *)event;
   KeySym keysym;
   int key_state;
-  snd_info *sp = (snd_info *)clientData;
+  snd_info *sp = (snd_info *)context;
   key_state = ev->state;
   keysym = XKeycodeToKeysym(XtDisplay(w),
 			    (int)(ev->keycode),
@@ -1175,13 +1175,13 @@ void graph_key_press(Widget w, XtPointer clientData, XEvent *event, Boolean *con
   key_press_callback(any_selected_channel(sp), ev->x, ev->y, ev->state, keysym);
 }
  
-static void cp_graph_key_press(Widget w, XtPointer clientData, XEvent *event, Boolean *cont) 
+static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   /* called by every key-intercepting widget in the entire sound pane */
   XKeyEvent *ev = (XKeyEvent *)event;
   KeySym keysym;
   int key_state;
-  chan_info *cp = (chan_info *)clientData;
+  chan_info *cp = (chan_info *)context;
   key_state = ev->state;
   keysym = XKeycodeToKeysym(XtDisplay(w),
 			    (int)(ev->keycode),

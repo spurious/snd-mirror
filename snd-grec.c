@@ -121,7 +121,7 @@ static void record_report(GtkWidget *text, ...)
   snd_state *ss;
   ss = get_global_state();
   if (msgbuf == NULL) msgbuf = (char *)CALLOC(512, sizeof(char));
-#if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
+#if HAVE_STRFTIME
   time(&ts);
   strftime(timbuf, TIME_STR_SIZE, "%H:%M:%S", localtime(&ts));
   sprintf(msgbuf, "\n[%s] ", timbuf);
@@ -332,14 +332,14 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
     {
       vu_colors_allocated = 1;
       tmp_color.red = (unsigned short)65535;
-      for (i=0;i<VU_COLORS;i++)
+      for (i=0; i<VU_COLORS; i++)
 	{
 	  tmp_color.blue = (unsigned short)(256*yellow_vals[i]);
 	  tmp_color.green = (unsigned short)(256*230 + 26*yellow_vals[i]);
 	  yellows[i] = gdk_color_copy(&tmp_color);
 	  gdk_color_alloc(cmap, yellows[i]);
 	}
-      for (i=0;i<VU_COLORS;i++)
+      for (i=0; i<VU_COLORS; i++)
 	{
 	  tmp_color.blue = (unsigned short)(128*yellow_vals[i]);
 	  tmp_color.green = (unsigned short)(128*yellow_vals[i]);
@@ -381,7 +381,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 	gdk_draw_polygon(vu->clip_label, draw_gc, TRUE, pts, 7);
       else gdk_draw_polygon(vu->on_label, draw_gc, TRUE, pts, 7);
 
-      for (i=1;i<VU_COLORS;i++)
+      for (i=1; i<VU_COLORS; i++)
 	{
 	  band += i;
 	  if (k == 1) 
@@ -449,7 +449,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
   gdk_draw_arc(vu->clip_label, draw_gc, FALSE, xs[3], ys[3], (unsigned int)(size*(232)), (unsigned int)(size*(232)), 45*64, 90*64);
 
   /* draw the axis ticks */
-  for (i=0;i<5;i++)
+  for (i=0; i<5; i++)
     {
       rdeg = mus_degrees2radians(45-i*22.5);
       x0 = (int)(CENTER_X*size+120*size*sin(rdeg));
@@ -576,7 +576,7 @@ static void display_vu_meter(VU *vu)
       if (redx<(VU_BUBBLE_SIZE)) redy=redx; else redy=VU_BUBBLE_SIZE;
       bub0 = (int)(size*117);
       bub1 = (int)(size*119);
-      for (i=bub0, j=bub0*2;i<=bub1;i++,j+=(int)(2*size))
+      for (i=bub0, j=bub0*2; i<=bub1; i++,j+=(int)(2*size))
 	gdk_draw_arc(vu->wn, vu_gc, FALSE, vu->center_x - i, vu->center_y - i, j, j, 135*64 - redx, redy);
       gdk_gc_set_foreground(vu_gc, sx->black);
     }
@@ -612,7 +612,7 @@ static VU *make_vu_meter(GtkWidget *meter, int light_x, int light_y, int center_
   vu->center_y = (int)(center_y*size);
   vu->ss = ss;
 
-  for (i=0;i<current_vu_label;i++)
+  for (i=0; i<current_vu_label; i++)
     if (vu_labels[i]->size == size)
       {
 	vl = vu_labels[i];
@@ -1086,7 +1086,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   gtk_container_add(GTK_CONTAINER(button_frame), button_holder);
   gtk_widget_show(button_holder);
 
-  for (i=0;i<ndevs;i++)
+  for (i=0; i<ndevs; i++)
     {
       if ((rp->systems == 1) || (!(recorder_input_device(rp->ordered_devices[i]))))
 	name = recorder_device_name(rp->ordered_devices[i]);
@@ -1151,7 +1151,7 @@ static void VU_Reset_Callback(GtkWidget *w, gpointer clientData)
   int i;
   PANE *p = (PANE *)clientData;
   VU *vu;
-  for (i=0;i<p->meters_size;i++)
+  for (i=0; i<p->meters_size; i++)
     {
       vu = p->meters[i];
       vu->max_val = 0.0;
@@ -1196,7 +1196,7 @@ static void Meter_Button_Callback(GtkWidget *w, gpointer clientData)
 	}
       else n=0;
       val = 0;
-      for (i=0;i<p->active_size;i++) {if (p->active[i]) val++;}
+      for (i=0; i<p->active_size; i++) {if (p->active[i]) val++;}
       if ((val>0) && (val != n))
 	{
 	  sprintf(timbuf, "%d", val);
@@ -1449,7 +1449,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
   p->active = (int *)CALLOC(vu_meters, sizeof(int));
   p->active_size = vu_meters;
   p->active_sliders = (int **)CALLOC(p->in_chans, sizeof(int *));
-  for (i=0;i<p->in_chans;i++) p->active_sliders[i] = (int *)CALLOC(p->out_chans, sizeof(int));
+  for (i=0; i<p->in_chans; i++) p->active_sliders[i] = (int *)CALLOC(p->out_chans, sizeof(int));
 
   /* paned_window is a vbox = stack of panes, each pane is hbox = meters,sliders | gains */
   p->pane = gtk_hbox_new(FALSE, 0);
@@ -1477,7 +1477,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
 
   if ((input) && ((p->in_chans*p->out_chans) > 8))
     {
-      for (i=0;i<p->in_chans;i++) 
+      for (i=0; i<p->in_chans; i++) 
 	for (k=0;k<p->out_chans;k++) 
 	  if (i == k) p->active_sliders[i][k] = 1;
 
@@ -1486,7 +1486,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
     }
   else 
     {
-      for (i=0;i<p->in_chans;i++) 
+      for (i=0; i<p->in_chans; i++) 
 	for (k=0;k<p->out_chans;k++) 
 	  p->active_sliders[i][k]=1;
     }
@@ -1534,7 +1534,7 @@ static void make_vu_meters(snd_state *ss, PANE *p, int vu_meters,
   columns = recorder_columns(vu_meters);
   rows = vu_meters / columns;
   hboxes = (GtkWidget **)CALLOC(rows, sizeof(GtkWidget *));
-  for (i=0;i<rows;i++) 
+  for (i=0; i<rows; i++) 
     {
       hboxes[i] = gtk_hbox_new(TRUE, 0);
       gtk_box_pack_start(GTK_BOX(vbox), hboxes[i], TRUE, TRUE, 0);
@@ -1543,7 +1543,7 @@ static void make_vu_meters(snd_state *ss, PANE *p, int vu_meters,
 
   row = 0;
 
-  for (i=0;i<vu_meters;i++)
+  for (i=0; i<vu_meters; i++)
     {
 
       frame = gtk_frame_new("");
@@ -1582,7 +1582,7 @@ static void make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p
 
   last_device = -1;
 
-  for (i=0, chan=num_gains-1;i<num_gains;i++,chan--)
+  for (i=0, chan=num_gains-1; i<num_gains; i++,chan--)
     {
       wd = (Wdesc *)CALLOC(1, sizeof(Wdesc));
       wd->system = p->system;
@@ -1677,7 +1677,7 @@ static GtkWidget *make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Flo
   columns = recorder_columns(vu_meters);
   rows = vu_meters / columns;
   hboxes = (GtkWidget **)CALLOC(rows, sizeof(GtkWidget *));
-  for (i=0;i<rows;i++) 
+  for (i=0; i<rows; i++) 
     {
       hboxes[i] = gtk_hbox_new(FALSE, 0);
       gtk_box_pack_start(GTK_BOX(btab), hboxes[i], TRUE, TRUE, 0);
@@ -1691,7 +1691,7 @@ static GtkWidget *make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Flo
   row = 0;
   button_size = 100/columns;
 
-  for (i=0;i<vu_meters;i++)
+  for (i=0; i<vu_meters; i++)
     {
       p->on_buttons[i] = gtk_button_new();
       /* gtk_container_set_border_width(GTK_CONTAINER(p->on_buttons[i]), 6); */
@@ -1766,7 +1766,7 @@ static int make_amp_sliders(snd_state *ss, recorder_info *rp, PANE *p, int input
   /* if input, do direct cases first, then fill in rest of 1, rest of 2 etc */
   temp_out_chan = 0;
   temp_in_chan = 0;
-  for (i=0;i<amp_sliders;i++)
+  for (i=0; i<amp_sliders; i++)
     {
       in_chan = temp_in_chan;
       out_chan = temp_out_chan;
@@ -1823,7 +1823,7 @@ static int make_amp_sliders(snd_state *ss, recorder_info *rp, PANE *p, int input
 void sensitize_control_buttons(void)
 {
   int i;
-  for (i=0;i<device_buttons_size-1;i++) /* last button is autoload_file */
+  for (i=0; i<device_buttons_size-1; i++) /* last button is autoload_file */
     {
       if (device_buttons[i])
 	set_sensitive(device_buttons[i], TRUE);
@@ -1833,7 +1833,7 @@ void sensitize_control_buttons(void)
 void unsensitize_control_buttons(void)
 {
   int i;
-  for (i=0;i<device_buttons_size-1;i++)
+  for (i=0; i<device_buttons_size-1; i++)
     {
       if (device_buttons[i])
 	set_sensitive(device_buttons[i], FALSE);
@@ -1867,7 +1867,7 @@ static void Reset_Record_Callback(GtkWidget *w, gpointer clientData)
     }
   else                            /* reset or restart */
     { 
-      for (i=0;i<rp->ordered_devices_size;i++)
+      for (i=0; i<rp->ordered_devices_size; i++)
 	{
 	  p = all_panes[i];
 	  for (k=0;k<p->meters_size;k++)
@@ -1989,7 +1989,7 @@ static void Record_Button_Callback(GtkWidget *w, gpointer clientData)
 	      wd->field = MUS_AUDIO_AMP;
 	      wd->device = p->device;
 	      wd->system = 0;
-	      for (i=0;i<rp->out_chans;i++)
+	      for (i=0; i<rp->out_chans; i++)
 		{
 		  if (!(p->active[i]))
 		    {
@@ -2072,7 +2072,7 @@ void snd_record_file(snd_state *ss)
       rec_out_VU = (VU **)CALLOC(MAX_OUT_CHANS, sizeof(VU *));
 
       AMP_rec_ins = (AMP ***)CALLOC(rp->possible_input_chans, sizeof(AMP **));
-      for (i=0;i<rp->possible_input_chans;i++) 
+      for (i=0; i<rp->possible_input_chans; i++) 
 	{
 	  AMP_rec_ins[i] = (AMP **)CALLOC(MAX_OUT_CHANS, sizeof(AMP *));
 	}
@@ -2131,7 +2131,7 @@ void snd_record_file(snd_state *ss)
       if ((rp->out_chans == DEFAULT_RECORDER_OUT_CHANS) && (n > 2))
 	rp->out_chans = n;
 
-      for (i=0;i<rp->ordered_devices_size;i++)
+      for (i=0; i<rp->ordered_devices_size; i++)
 	{
 	  /* last one is output */
 	  device = rp->ordered_devices[i];
@@ -2156,7 +2156,7 @@ void snd_record_file(snd_state *ss)
 
   if (pending_errors>0)
     {
-      for (i=0;i<pending_errors;i++)
+      for (i=0; i<pending_errors; i++)
 	{
 	  record_report(messages, pending_error[i], NULL);
 	  FREE(pending_error[i]);
@@ -2226,7 +2226,7 @@ static void initialize_recorder(recorder_info *rp)
   int err;
   int in_digital = 0;
 #endif
-  for (i=0;i<MAX_SOUNDCARDS;i++) rp->raw_input_bufs[i] = NULL;
+  for (i=0; i<MAX_SOUNDCARDS; i++) rp->raw_input_bufs[i] = NULL;
 #if OLD_SGI_AL
   sb[0] = AL_INPUT_SOURCE;
   err = ALgetparams(AL_DEFAULT_DEVICE, sb, 2);
@@ -2237,7 +2237,7 @@ static void initialize_recorder(recorder_info *rp)
 #if NEW_SGI_AL || defined(SUN)
   /* for simplicity, and until someone complains, new SGI AL machines will just have one active input device */
   active_device_button = rp->microphone_button;
-  for (i=0;i<device_buttons_size-1;i++)
+  for (i=0; i<device_buttons_size-1; i++)
     {
       if (device_buttons[i])
 	{

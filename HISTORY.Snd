@@ -1,5 +1,6 @@
 snd change log
 
+  23-Feb:    configure now uses GSL if it can find it (i.e. --with-gsl is the default).
   14-Feb:    vct func now built-in (was in examp.scm).
   13-Feb:    added search-procedure, key-binding.
   12-Feb:    added Wakefield's freeverb, changed user-defined reverb handlers.

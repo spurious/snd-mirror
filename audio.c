@@ -415,7 +415,7 @@ int find_audio_output(int chans)
   y.param = AL_INTERFACE;
   y.value.i = AL_DIGITAL_IF_TYPE;
   n = alQueryValues(AL_SYSTEM, AL_DEFAULT_OUTPUT, x, 32, &y, 1);
-  for (i=0;i<n;i++) 
+  for (i=0; i<n; i++) 
     {
       y.param = AL_CHANNELS;
       alGetParams(x[i].i, &y, 1);
@@ -448,7 +448,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int requ
   start_sgi_print();
   dev = MUS_AUDIO_DEVICE(ur_dev);
   line = -1;
-  for (i=0;i<IO_LINES;i++) 
+  for (i=0; i<IO_LINES; i++) 
     if (line_in_use[i] == 0) 
       {
 	line = i; 
@@ -612,7 +612,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int reque
   start_sgi_print();
   dev = MUS_AUDIO_DEVICE(ur_dev);
   line = -1;
-  for (i=0;i<IO_LINES;i++) if (line_in_use[i] == 0) 
+  for (i=0; i<IO_LINES; i++) if (line_in_use[i] == 0) 
     {
       line = i; 
       break;
@@ -926,7 +926,7 @@ static void dump_resources(ALvalue *x, int rv)
   int i,k;
   ALvalue z[16];
   int nres;
-  for (i=0;i<rv;i++)
+  for (i=0; i<rv; i++)
     {
       y[0].param = AL_LABEL;
       y[0].value.ptr = dl;
@@ -1005,7 +1005,7 @@ static void save_devices(ALvalue *x, int rv)
   int i;
   ALvalue z[16];
   int nres;
-  for (i=0;i<rv;i++)
+  for (i=0; i<rv; i++)
     {
       if (saved_devices >= saved_devices_size)
 	{
@@ -1017,7 +1017,7 @@ static void save_devices(ALvalue *x, int rv)
 	  else
 	    {
 	      si = (saved_info **)REALLOC(si, 2*saved_devices*sizeof(saved_info *));
-	      for (i=saved_devices_size;i<2*saved_devices;i++) si[i]=NULL;
+	      for (i=saved_devices_size; i<2*saved_devices; i++) si[i]=NULL;
 	      saved_devices_size = 2*saved_devices;
 	    }
 	}
@@ -1052,7 +1052,7 @@ void mus_audio_save (void)
   ALvalue x[16];
   if (saved_devices>0)
     {
-      for (i=0;i<saved_devices;i++)
+      for (i=0; i<saved_devices; i++)
         {
           if (si[i])
             {
@@ -1072,7 +1072,7 @@ void mus_audio_restore (void)
   ALpv x;
   if (saved_devices > 0)
     {
-      for (i=0;i<saved_devices;i++)
+      for (i=0; i<saved_devices; i++)
         {
           if (si[i])
             {
@@ -1643,8 +1643,8 @@ static int oss_mus_audio_initialize(void)
       init_chans = (int *)CALLOC(MAX_SOUNDCARDS, sizeof(int));
       init_format = (int *)CALLOC(MAX_SOUNDCARDS, sizeof(int));
       mixer_state = (int **)CALLOC(MAX_SOUNDCARDS, sizeof(int *));
-      for (i=0;i<MAX_SOUNDCARDS;i++) mixer_state[i] = (int *)CALLOC(MIXER_SIZE, sizeof(int));
-      for (i=0;i<MAX_SOUNDCARDS;i++)
+      for (i=0; i<MAX_SOUNDCARDS; i++) mixer_state[i] = (int *)CALLOC(MIXER_SIZE, sizeof(int));
+      for (i=0; i<MAX_SOUNDCARDS; i++)
 	{
 	  audio_fd[i] = -1;
 	  audio_open_ctr[i] = 0;
@@ -1656,7 +1656,7 @@ static int oss_mus_audio_initialize(void)
       {
 	SamApiInfo apiInfo;
 	SamDriverInfo driverInfo;
-	for (i=0;i<MAX_SOUNDCARDS;i++) 
+	for (i=0; i<MAX_SOUNDCARDS; i++) 
 	  {
 	    sprintf(dname, "/dev/sam%d_mixer", i);
 	    fd = open(dname, O_WRONLY);
@@ -1810,7 +1810,7 @@ static int oss_mus_audio_initialize(void)
 #endif
 	  err = ioctl(md, SOUND_MIXER_READ_DEVMASK, &devmask);
 	  responsive_field = SOUND_MIXER_VOLUME;
-	  for (i=0;i<SOUND_MIXER_NRDEVICES;i++)
+	  for (i=0; i<SOUND_MIXER_NRDEVICES; i++)
 	    if ((1<<i) & devmask)
 	      {
 		responsive_field = i;
@@ -1903,7 +1903,7 @@ static int linux_audio_open_with_error(const char *pathname, int flags, mode_t m
 static int find_system(int line)
 {
   int i;
-  for (i=0;i<sound_cards;i++)
+  for (i=0; i<sound_cards; i++)
     {
       if (line == audio_fd[i])
 	return(i);
@@ -2512,7 +2512,7 @@ static int oss_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
           break;
         case MUS_AUDIO_FORMAT: /* this is asking for configuration info -- we return an array with per-"device" channels */
           ioctl(fd, SOUND_MIXER_READ_STEREODEVS, &stereodevs);
-	  for (ind=0;ind<=MUS_AUDIO_SYNTH;ind++) {if (chan>ind) val[ind]=0;}
+	  for (ind=0; ind<=MUS_AUDIO_SYNTH; ind++) {if (chan>ind) val[ind]=0;}
 	  if (SOUND_MASK_IMIX & devmask)   {if (chan>MUS_AUDIO_IMIX)       val[MUS_AUDIO_IMIX] = ((SOUND_MASK_IMIX & stereodevs) ? 2 : 1);}
 	  if (SOUND_MASK_IGAIN & devmask)  {if (chan>MUS_AUDIO_IGAIN)      val[MUS_AUDIO_IGAIN] = ((SOUND_MASK_IGAIN & stereodevs) ? 2 : 1);}
 	  if (SOUND_MASK_RECLEV & devmask) {if (chan>MUS_AUDIO_RECLEV)     val[MUS_AUDIO_RECLEV] = ((SOUND_MASK_RECLEV & stereodevs) ? 2 : 1);}
@@ -2910,7 +2910,7 @@ static void oss_describe_audio_state_1(void)
   if (sound_cards > 1)
     {
       pprint(": ");
-      for (i=0;i<sound_cards;i++)
+      for (i=0; i<sound_cards; i++)
 	{
 	  sprintf(strbuf, "/dev/dsp%d with /dev/mixer%d%s", audio_dsp[i], audio_mixer[i], (i<(sound_cards-1)) ? ", " : "");
 	  pprint(strbuf);
@@ -2938,7 +2938,7 @@ static void oss_describe_audio_state_1(void)
 	{
 	  sprintf(strbuf, "/dev/sequencer: %d device%s installed\n", numdevs, (numdevs == 1) ? "" : "s"); 
 	  pprint(strbuf);
-	  for (i=0;i<numdevs;i++)
+	  for (i=0; i<numdevs; i++)
 	    {
 	      sinfo.device = i;
 	      status = ioctl(fd, SNDCTL_SYNTH_INFO, &sinfo);
@@ -2958,7 +2958,7 @@ static void oss_describe_audio_state_1(void)
 	    {
 	      sprintf(strbuf, "  %d midi device%s installed\n", numdevs, (numdevs == 1) ? "" : "s"); 
 	      pprint(strbuf);
-	      for (i=0;i<numdevs;i++)
+	      for (i=0; i<numdevs; i++)
 		{
 		  minfo.device = i;
 		  status = ioctl(fd, SNDCTL_MIDI_INFO, &minfo);
@@ -3010,7 +3010,7 @@ MIXER_INFO:
     {
       sprintf(strbuf, " (%s", mixinfo.name);
       pprint(strbuf);
-      for (i=0;i<sound_cards;i++)
+      for (i=0; i<sound_cards; i++)
 	{
 	  if ((audio_mixer[i] == dsp_num) && (audio_type[i] == SONORUS_STUDIO))
 	    {
@@ -3060,7 +3060,7 @@ MIXER_INFO:
 		 "  mixer     recording  active     stereo    current\n"
 		 "  channel   source     source     device    level\n"
 		 "  --------  --------   --------   --------  -------- \n"); 
-	  for (i=0;i<SOUND_MIXER_NRDEVICES;i++)
+	  for (i=0; i<SOUND_MIXER_NRDEVICES; i++)
 	    {
 	      if ((1<<i) & devmask)
 		{
@@ -3171,7 +3171,7 @@ static void oss_mus_audio_save (void)
 	  return;
 	}
       ioctl(afd, SOUND_MIXER_READ_DEVMASK, &devmask);
-      for (i=0;i<SOUND_MIXER_NRDEVICES;i++)
+      for (i=0; i<SOUND_MIXER_NRDEVICES; i++)
 	{
 	  mixer_state[system][i] = 0;
 	  if ((1<<i) & devmask)
@@ -3206,7 +3206,7 @@ static void oss_mus_audio_restore (void)
       ioctl(afd, SOUND_PCM_WRITE_RATE, &(init_srate[system]));
       ioctl(afd, SOUND_PCM_SETFMT, &(init_format[system]));
       ioctl(afd, SOUND_MIXER_READ_DEVMASK, &devmask);
-      for (i=0;i<SOUND_MIXER_NRDEVICES;i++) 
+      for (i=0; i<SOUND_MIXER_NRDEVICES; i++) 
 	{
 	  if ((1<<i) & devmask)
 	    {
@@ -3226,7 +3226,7 @@ static void oss_mus_audio_mixer_save(const char *file)
   if (fd != -1)
     {
       systems = mus_audio_systems();
-      for (i=0;i<systems;i++) 
+      for (i=0; i<systems; i++) 
 	write(fd, (unsigned char *)mixer_state[i], MIXER_SIZE * sizeof(int));
       close(fd);
     }
@@ -3240,7 +3240,7 @@ static void oss_mus_audio_mixer_restore(const char *file)
   if (fd != -1)
     {
       systems = mus_audio_systems();
-      for (i=0;i<systems;i++)
+      for (i=0; i<systems; i++)
 	read(fd, (unsigned char *)vals[i], MIXER_SIZE * sizeof(int));
       close(fd);
       for (system=0;system<systems;system++)
@@ -3249,7 +3249,7 @@ static void oss_mus_audio_mixer_restore(const char *file)
 	  if (afd != -1)
 	    {
 	      ioctl(afd, SOUND_MIXER_READ_DEVMASK, &devmask);
-	      for (i=0;i<SOUND_MIXER_NRDEVICES;i++) 
+	      for (i=0; i<SOUND_MIXER_NRDEVICES; i++) 
 		{
 		  if ((1<<i) & devmask)
 		    {
@@ -5361,7 +5361,7 @@ static void alsa_describe_audio_state_1(void)
 	*/
 	
 	int i;
-	for (i=0;i<SND_CARDS;i++) {
+	for (i=0; i<SND_CARDS; i++) {
 		/* look at device_info[i][PLAYBACK] and
 		           device_info[i][CAPTURE]
 		*/
@@ -5484,7 +5484,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
           rtbuf = (short *)CALLOC(size, sizeof(short));
           rtbuf_size = size;
         }
-      for (i=0;i<size;i++) rtbuf[i] = 0;
+      for (i=0; i<size; i++) rtbuf[i] = 0;
     }
   nxt_err = SNDAcquire(SND_ACCESS_OUT, 0, 0, 0, NULL_NEGOTIATION_FUN, 0, &dev_port, &owner_port); 
   if (nxt_err == 0)
@@ -5541,7 +5541,7 @@ int mus_audio_write(int line, char *buf, int bytes)
   samps = (bytes>>1);
 #ifdef MUS_LITTLE_ENDIAN
   /* "sound" format in NextStep is always big-endian */
-  for (i=0;i<bytes;i+=2)
+  for (i=0; i<bytes; i+=2)
     {
       tmp = buf[i+1];
       buf[i+1] = buf[i];
@@ -5567,7 +5567,7 @@ int mus_audio_write(int line, char *buf, int bytes)
     {
       /* since output is always stereo on the Next, we have to fake up the second channel in the 1-channel case */
       j = 0;
-      for (i=0;i<samps;i++)
+      for (i=0; i<samps; i++)
         {
           rtbuf[j++] = sbuf[i];
           rtbuf[j++] = sbuf[i];
@@ -5660,7 +5660,7 @@ static void read_completed(void *arg, int tag, void *inp, int bytes)
 {
   int i;
   if (tag == READ_TAG)
-    for (i=0;i<bytes;i++) 
+    for (i=0; i<bytes; i++) 
       readbuf[i] = ((char *)inp)[i];
 }
 
@@ -6680,7 +6680,7 @@ static int available_input_devices(void)
   int i;
   Handle h;
   devname = (unsigned char *)CALLOC(256, sizeof(char));
-  for (i=1;i<16;i++)
+  for (i=1; i<16; i++)
     {
       err = SPBGetIndexedDevice(i, devname, &h);
       if (err != noErr) break;
@@ -6880,7 +6880,7 @@ static int input_device_sample_rates(long refnum, int *range, int *rates)
       num = pp[1] + (pp[0]<<8);                             /* unsigned short is first element */
       if (num == 0) {(*range) = 1; num = 2;} else (*range) = 0;
       ptr = pp[5] + (pp[4]<<8) + (pp[3]<<16) + (pp[2]<<24); /* pointer to "fixed" table is second element */
-      for (i=0, j=0;i<num;i++,j+=4)                          
+      for (i=0, j=0; i<num; i++,j+=4)                          
         rates[i] = (*(unsigned short *)(j+(*(int *)ptr)));  /* ignore fraction -- this is dubious code */
     }
   return(num);
@@ -6899,7 +6899,7 @@ static int input_device_sample_sizes(long refnum, int *sizes)
     {
       num = pp[1] + (pp[0]<<8); 
       ptr = pp[5] + (pp[4]<<8) + (pp[3]<<16) + (pp[2]<<24);
-      for (i=0, j=0;i<num;i++,j+=2) sizes[i] = (*(unsigned short *)(j+(*(int *)ptr)));
+      for (i=0, j=0; i<num; i++,j+=2) sizes[i] = (*(unsigned short *)(j+(*(int *)ptr)));
     }
   return(num);
 }
@@ -6982,9 +6982,9 @@ static void describe_audio_state_1(void)
         {
           devname = (unsigned char *)CALLOC(256, sizeof(char));
           sprintf(strbuf, "input device%s:\n", (devs>1) ? "s" : ""); pprint(strbuf);
-          for (i=1;i<=devs;i++)
+          for (i=1; i<=devs; i++)
             {
-              for (i=1;i<=devs;i++)
+              for (i=1; i<=devs; i++)
                 {
                   err = SPBGetIndexedDevice(i, devname, &h);
                   if (err == noErr)
@@ -7023,7 +7023,7 @@ static void describe_audio_state_1(void)
                               if (range)
                                 {sprintf(strbuf, "%d to %d", vals[0], vals[1]); pprint(strbuf);}
                               else
-                                {for (j=0;j<rates;j++) {sprintf(strbuf, " %d", vals[j]); pprint(strbuf);}}
+                                {for (j=0; j<rates; j++) {sprintf(strbuf, " %d", vals[j]); pprint(strbuf);}}
                               sprintf(strbuf, ", current srate: %d\n",
                                       input_device_get_srate(refnum));
                               pprint(strbuf);
@@ -7049,7 +7049,7 @@ static void describe_audio_state_1(void)
                           if (sizes > 0)
                             {
                               sprintf(strbuf, " (%d", vals[0]); pprint(strbuf);
-                              for (j=1;j<sizes;j++) 
+                              for (j=1; j<sizes; j++) 
                                 {sprintf(strbuf, ", %d", vals[j]); pprint(strbuf);}
                               pprint(" bit samples available)");
                             }
@@ -7184,7 +7184,7 @@ static OSErr fill_buffer(int dbi, char *inbuf, int instart, int bytes)
   int i,j;
   OSErr err;
   err = noErr;
-  for (i=instart, j=0;j<bytes;j++,i++) db[dbi]->dbSoundData[j] = inbuf[i];
+  for (i=instart, j=0; j<bytes; j++,i++) db[dbi]->dbSoundData[j] = inbuf[i];
   db_state[dbi] = BUFFER_FILLED;
   db[dbi]->dbFlags = (db[dbi]->dbFlags | dbBufferReady);
   db[dbi]->dbNumFrames = (bytes / (current_chans * current_datum_size));
@@ -7251,7 +7251,7 @@ int mus_audio_close(int line)
       if (sound_state != SOUND_UNREADY)
         {
           wait_for_empty_buffer(current_buf);
-          for (i=0;i<128;i++) db[current_buf]->dbSoundData[i] = 0;
+          for (i=0; i<128; i++) db[current_buf]->dbSoundData[i] = 0;
           db[current_buf]->dbFlags = (db[current_buf]->dbFlags | dbBufferReady | dbLastBuffer);
           db[current_buf]->dbNumFrames = (128 / (current_chans * current_datum_size));
           wait_for_empty_buffer(current_buf);
@@ -7295,7 +7295,7 @@ static void read_callback(SPB *spb)
   if (data_status != DATA_EMPTY)
     {
       if (data_bytes > spb->bufferLength) lim=spb->bufferLength; else lim=data_bytes;
-      for (i=0;i<lim;i++) data[i] = spb->bufferPtr[i]; 
+      for (i=0; i<lim; i++) data[i] = spb->bufferPtr[i]; 
       spb->bufferLength = data_bytes;
       SPBRecord(spb, TRUE);
       data_status = DATA_WRITTEN;
@@ -7581,7 +7581,7 @@ static void write_callback(void *ignored, void *buffer, size_t size, const media
   if (data_status != DATA_EMPTY)
     {
       if (data_bytes > size) lim=size/4; else lim=data_bytes/4;
-      for (i=0;i<lim;i++) buf[i] += data[i];
+      for (i=0; i<lim; i++) buf[i] += data[i];
       data_status = DATA_WRITTEN;
     }
 }
@@ -7720,7 +7720,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
 				   format, mus_audio_format_name(format),
 				   dev, mus_audio_device_name(dev)));
   ioctl(fd, AUDIO_DESCRIBE, &desc);
-  for(i=0;i<desc.nrates;i++) if(srate == desc.sample_rate[i]) break;
+  for(i=0; i<desc.nrates; i++) if(srate == desc.sample_rate[i]) break;
   if (i == desc.nrates) 
     RETURN_ERROR_EXIT(SRATE_NOT_AVAILABLE, fd,
 		      mus_format("can't set srate to %d on %d (%s)",
@@ -8041,7 +8041,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
 				   format, mus_audio_format_name(format),
 				   dev, mus_audio_device_name(dev)));
   ioctl(fd, AUDIO_DESCRIBE, &desc);
-  for(i=0;i<desc.nrates;i++) if(srate == desc.sample_rate[i]) break;
+  for(i=0; i<desc.nrates; i++) if(srate == desc.sample_rate[i]) break;
   if (i == desc.nrates) 
     RETURN_ERROR_EXIT(MUS_AUDIO_SRATE_NOT_AVAILABLE, fd,
 		      mus_format("can't set srate to %d on %d (%s)",
@@ -8236,7 +8236,7 @@ static MMRESULT fill_buffer(int dbi, char *inbuf, int instart, int bytes)
   int i,j;
   win_out_err = 0;
   if (sound_state == SOUND_UNREADY) return(0);
-  for (i=instart, j=0;j<bytes;j++,i++) wh[dbi].lpData[j] = inbuf[i];
+  for (i=instart, j=0; j<bytes; j++,i++) wh[dbi].lpData[j] = inbuf[i];
   wh[dbi].dwBufferLength = bytes;
   db_state[dbi] = BUFFER_FILLED;
   if ((sound_state == SOUND_INITIALIZED) && (dbi == 1))
@@ -8363,7 +8363,7 @@ void mus_audio_restore(void)
   HWAVEOUT hd;
   WAVEFORMATEX pwfx;
   MMRESULT err;
-  for (i=0;i<out_saved;i++)
+  for (i=0; i<out_saved; i++)
     if (out_set[i])
       {
 	err = waveOutOpen(&hd, i, &pwfx, 0, 0, WAVE_MAPPER);
@@ -8373,7 +8373,7 @@ void mus_audio_restore(void)
 	    waveOutClose(hd);
 	  }
       }
-  for (i=0;i<aux_saved;i++) if (aux_set[i]) auxSetVolume(i, aux_vols[i]);
+  for (i=0; i<aux_saved; i++) if (aux_set[i]) auxSetVolume(i, aux_vols[i]);
 }
 
 static float unlog(unsigned short val)
@@ -8862,7 +8862,7 @@ int mus_audio_close(int line)
       if (sound_state != SOUND_UNREADY)
         {
           wait_for_empty_buffer(current_buf);
-          for (i=0;i<128;i++) wh[current_buf].lpData[i] = 0;
+          for (i=0; i<128; i++) wh[current_buf].lpData[i] = 0;
           wait_for_empty_buffer(current_buf);
           win_out_err = waveOutClose(fd);
 	  i = 0;
@@ -10052,7 +10052,7 @@ static void pprint(char *str)
       else
 	{
 	  len = strlen(str);
-	  for (i=0;i<len;i++,save_it_loc++)
+	  for (i=0; i<len; i++,save_it_loc++)
 	    {
 	      check_save_it(save_it_loc);
 	      save_it[save_it_loc] = str[i];

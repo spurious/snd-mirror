@@ -5870,7 +5870,7 @@
   (set! (listener-prompt) original-prompt)
   (snd-display (format #f ";all done!~%~A" original-prompt))
   (snd-display (format #f "timings:~%  ~A: total~%  GC: ~{    ~A~%~})~%" 
-		       (/ (- (get-internal-real-time) overall-start-time) 100) 
+		       (/ (- (get-internal-real-time) overall-start-time) 1000) 
 		       (let ((lst (gc-stats)))
 			 (list (list-ref lst 0) (list-ref lst 4) (list-ref lst 5)))))
   (if (not (null? times))

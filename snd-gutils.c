@@ -171,9 +171,7 @@ void map_over_children (GtkWidget *w, void (*func)(GtkWidget *w, gpointer ptr), 
     {
       (*func)(w, userptr);
       if (GTK_IS_CONTAINER(w))
-	{
-	  gtk_container_foreach(GTK_CONTAINER(w), func, (gpointer)userptr);
-	}
+	gtk_container_foreach(GTK_CONTAINER(w), func, (gpointer)userptr);
     }
 }
 
@@ -207,7 +205,7 @@ void set_backgrounds(GtkWidget *w, GdkColor *col)
   GtkStyle *style;
   int i;
   style = gtk_style_copy(gtk_widget_get_style(w));
-  for (i=0;i<5;i++)
+  for (i=0; i<5; i++)
     {
       style->bg[i].pixel = col->pixel;
       style->bg[i].red = col->red;
@@ -246,14 +244,6 @@ void set_foreground(GtkWidget *w, GdkColor *col)
   gtk_widget_set_style(w, style);
 }
 
-#if 0
-void set_foreground_and_redraw(GtkWidget *w, GdkColor *col) 
-{
-  set_foreground(w, col);
-  gtk_widget_queue_draw(w);
-}
-#endif
-
 void set_text_background(GtkWidget *w, GdkColor *col)
 { 
   GtkStyle *style;
@@ -264,20 +254,6 @@ void set_text_background(GtkWidget *w, GdkColor *col)
   style->base[GTK_STATE_NORMAL].blue = col->blue;
   gtk_widget_set_style(w, style);
 }
-
-#if 0
-static void set_main_color_of_widget (GtkWidget *w, gpointer userptr)
-{
-  snd_state *ss = (snd_state *)userptr;
-  if (GTK_IS_WIDGET(w))
-    {
-      if ((GTK_IS_HSCROLLBAR(w)) || (GTK_IS_VSCROLLBAR(w)))
-	set_background(w, (ss->sgx)->position_color);
-      else set_background(w, (ss->sgx)->basic_color);
-      gtk_widget_queue_draw(w);
-    }
-}
-#endif
 
 void set_pushed_button_colors(GtkWidget *w, snd_state *ss)
 {
@@ -306,26 +282,6 @@ void raise_dialog(GtkWidget *w)
   gtk_widget_show(w);
   gdk_window_raise(w->window);
 }
-
-#if 0
-void raise_widget(GtkWidget *w)
-{
-  gtk_widget_show(w);
-  gdk_window_raise(w->window);
-}
-
-void set_button_label_normal(GtkWidget *button, const char *str)
-{
-  GtkStyle *style;
-  snd_state *ss;
-  ss = get_global_state();
-  style = gtk_style_copy(gtk_widget_get_style(button));
-  style->font = (ss->sgx)->button_fnt;
-  gtk_widget_set_style(button, style);
-  gtk_label_set_text(GTK_LABEL(GTK_BIN(button)->child), str);
-  /* gtk_widget_queue_draw(button); */
-}
-#endif
 
 void set_button_label_bold(GtkWidget *button, const char *str)
 {

@@ -212,12 +212,12 @@ void map_over_children (Widget w, void (*func)(Widget, void *), void *userptr)
       if (XtIsComposite(w))
 	{
 	  CompositeWidget cw = (CompositeWidget)w;
-	  for (i=0;i<cw->composite.num_children;i++)
+	  for (i=0; i<cw->composite.num_children; i++)
 	    map_over_children(cw->composite.children[i], func, userptr);
 	}
       if (XtIsWidget(w))
 	{
-	  for (i=0;i<w->core.num_popups;i++)
+	  for (i=0; i<w->core.num_popups; i++)
 	    {
 	      Widget child = w->core.popup_list[i];
 	      map_over_children(child, func, userptr);
@@ -235,7 +235,8 @@ void raise_dialog(Widget w)
   if ((w) && (XtIsManaged(w)))
     {
       parent = XtParent(w);
-      if ((parent) && (XtIsSubclass(parent, xmDialogShellWidgetClass)))
+      if ((parent) && 
+	  (XtIsSubclass(parent, xmDialogShellWidgetClass)))
 	XtPopup(parent, XtGrabNone);
       /* XtGrabNone means don't lock out events to rest of App (i.e. modeless dialog) */
     }
@@ -271,7 +272,10 @@ void set_button_label_normal(Widget button, const char *str)
   XmString s1;
   s1=XmStringCreate((char *)str, "button_font");
 #if (USE_RENDITIONS)
-  XtVaSetValues(button, XmNlabelString, s1, XmNrenderTable, BUTTON_FONT(get_global_state()), NULL);
+  XtVaSetValues(button, 
+		XmNlabelString, s1, 
+		XmNrenderTable, BUTTON_FONT(get_global_state()), 
+		NULL);
 #else
   XtVaSetValues(button, XmNlabelString, s1, NULL);
 #endif
@@ -283,7 +287,10 @@ void set_button_label_bold(Widget button, const char *str)
   XmString s1;
   s1=XmStringCreate((char *)str, "bold_button_font");
 #if (USE_RENDITIONS)
-  XtVaSetValues(button, XmNlabelString, s1, XmNrenderTable, BOLD_BUTTON_FONT(get_global_state()), NULL);
+  XtVaSetValues(button, 
+		XmNlabelString, s1,
+		XmNrenderTable, BOLD_BUTTON_FONT(get_global_state()), 
+		NULL);
 #else
   XtVaSetValues(button, XmNlabelString, s1, NULL);
 #endif
@@ -311,7 +318,8 @@ static int complain_about_focus_policy = 1;
 void goto_window(Widget text)
 {
   int err;
-  if ((XmIsTraversable(text)) && (XmGetVisibility(text) != XmVISIBILITY_FULLY_OBSCURED))
+  if ((XmIsTraversable(text)) && 
+      (XmGetVisibility(text) != XmVISIBILITY_FULLY_OBSCURED))
     {
       if (!(XmProcessTraversal(text, XmTRAVERSE_CURRENT)))
 	{
@@ -319,10 +327,13 @@ void goto_window(Widget text)
 	    {
 	      XtVaGetValues(text, XmNkeyboardFocusPolicy, &err, NULL);
 	      if (err == XmEXPLICIT)
-		snd_error("%s[%d] %s: traverse to %s failed!", __FILE__, __LINE__, __FUNCTION__, XtName(text));
+		snd_error("%s[%d] %s: traverse to %s failed!", 
+			  __FILE__, __LINE__, __FUNCTION__, 
+			  XtName(text));
 	      else 
 		{
-		  snd_error("%s[%d] %s: keyboard focus policy is not explicit!", __FILE__, __LINE__, __FUNCTION__);
+		  snd_error("%s[%d] %s: keyboard focus policy is not explicit!", 
+			    __FILE__, __LINE__, __FUNCTION__);
 		  complain_about_focus_policy = 0;
 		}
 	    }
@@ -344,7 +355,9 @@ XtCallbackList make_callback_list(XtCallbackProc callback, XtPointer closure)
 #include <Xm/SashP.h>
 void color_sashes(Widget w, void *ptr)
 {
-  if ((XtIsWidget(w)) && (XtIsManaged(w)) && (XtIsSubclass(w, xmSashWidgetClass)))
+  if ((XtIsWidget(w)) && 
+      (XtIsManaged(w)) && 
+      (XtIsSubclass(w, xmSashWidgetClass)))
     XmChangeColor(w, (Pixel)(((snd_state *)ptr)->sgx)->sash_color);
 }
 
@@ -566,8 +579,13 @@ void fixup_axis_context(axis_context *ax, Widget w, GC gc)
 Pixmap make_pixmap(snd_state *ss, unsigned char *bits, int width, int height, int depth, GC gc)
 {
   Pixmap rb,nr;
-  rb = XCreateBitmapFromData(MAIN_DISPLAY(ss), RootWindowOfScreen(XtScreen(MAIN_PANE(ss))), (const char *)bits, width, height);
-  nr = XCreatePixmap(MAIN_DISPLAY(ss), RootWindowOfScreen(XtScreen(MAIN_PANE(ss))), width, height, depth);
+  rb = XCreateBitmapFromData(MAIN_DISPLAY(ss), 
+			     RootWindowOfScreen(XtScreen(MAIN_PANE(ss))), 
+			     (const char *)bits, 
+			     width, height);
+  nr = XCreatePixmap(MAIN_DISPLAY(ss), 
+		     RootWindowOfScreen(XtScreen(MAIN_PANE(ss))), 
+		     width, height, depth);
   XCopyPlane(MAIN_DISPLAY(ss), rb, nr, gc, 0, 0, width, height, 0, 0, 1);
   XFreePixmap(MAIN_DISPLAY(ss), rb);
   return(nr);
@@ -638,13 +656,14 @@ void make_bg(snd_state *ss, unsigned int width, unsigned int height)
   green_incr = (tmp_color.green - green_init) / bgs_size;
   blue_incr = (tmp_color.blue - blue_init) / bgs_size;
   /* this should probably be light at left top and shade toward lower right */
-  for (i=0, j=0;i<width;i+=wid_incr,j++)
+  for (i=0, j=0; i<width; i+=wid_incr, j++)
     {
       tmp_color.flags = DoRed | DoGreen | DoBlue;
       tmp_color.red = red_init; red_init += red_incr;
       tmp_color.green = green_init; green_init += green_incr;
       tmp_color.blue = blue_init; blue_init += blue_incr;
-      err = XAllocColor(dp, cmap, &tmp_color); if (err == 0) fprintf(stderr, ".");
+      err = XAllocColor(dp, cmap, &tmp_color); 
+      if (err == 0) fprintf(stderr, ".");
       bgs[j] = tmp_color.pixel;
       XSetForeground(dp, draw_gc, tmp_color.pixel);
       XFillRectangle(dp, sx->backmap, draw_gc, i, 0, wid_incr, height);

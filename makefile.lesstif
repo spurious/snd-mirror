@@ -1,7 +1,7 @@
 # make file for snd in mkLinux with Lesstif
 
 CC = gcc
-CFLAGS = -O2 -DLINUX -I/usr/local/include -I/usr/X11R6/include
+CFLAGS = -O2 -DUSE_SND -DLINUX -I/usr/local/include -I/usr/X11R6/include
 LIBS = -L/usr/local/lib -lMrm -lXm -L/usr/X11R6/lib -lXpm -lXext -lFS -lSM -lICE -lXt -lX11 -lm `guile-config link`
 
 include makesnd.files

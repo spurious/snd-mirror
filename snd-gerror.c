@@ -68,7 +68,7 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
 
 void add_to_error_history(snd_state *ss, char *msg, int popup)
 {
-#if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
+#if HAVE_STRFTIME
   char *tim,*buf;
   time_t ts;
 #endif
@@ -82,7 +82,7 @@ void add_to_error_history(snd_state *ss, char *msg, int popup)
   pos = gtk_text_get_length(GTK_TEXT(snd_error_history));
   if (pos > 0) gtk_text_set_point(GTK_TEXT(snd_error_history), pos);
 
-#if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
+#if HAVE_STRFTIME
   tim = (char *)CALLOC(TIME_STR_SIZE, sizeof(char));
   buf = (char *)CALLOC(TIME_STR_SIZE, sizeof(char));
   time(&ts);

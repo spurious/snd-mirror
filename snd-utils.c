@@ -374,7 +374,7 @@ static int find_mem_location(const char *ur_func, const char *file, int line)
 	  functions = (char **)realloc(functions, (mem_locations+1024)*sizeof(char *));
 	  files = (char **)realloc(files, (mem_locations+1024)*sizeof(char *));
 	  lines = (int *)realloc(lines, (mem_location+1024)*sizeof(int));
-	  for (i=0;i<1024;i++) 
+	  for (i=0; i<1024; i++) 
 	    {
 	      functions[i+mem_locations] = NULL;
 	      files[i+mem_locations] = NULL;
@@ -436,7 +436,7 @@ static void remember_pointer(void *ptr, size_t len, const char *func, const char
       pointers = (int *)realloc(pointers, mem_size * sizeof(int));
       sizes = (int *)realloc(sizes, mem_size * sizeof(int));
       locations = (int *)realloc(locations, mem_size * sizeof(int));
-      for (i=least_loc;i<mem_size;i++)
+      for (i=least_loc; i<mem_size; i++)
 	{
 	  pointers[i] = 0;
 	  sizes[i] = 0;
@@ -592,50 +592,12 @@ void mem_report(void)
 #endif
 
 #if DEBUGGING
-
+#if HAVE_CLOCK
 #if HAVE_SYS_TIME_H
   #include <sys/time.h>
 #endif
-
-struct timeval t0,t1;
-struct timezone z0,z1;
-
-static void start_time (void)
-{
-#if (!SGI)
-  gettimeofday(&t0, &z0);
-#else
-  gettimeofday(&t0);
+static clock_t start;
+void start_timing(void) {start = clock();}
+void stop_timing(void) {fprintf(stderr, "time: %d ",(int)((clock() - start) * 1000.0 / CLOCKS_PER_SEC));}
 #endif
-}
-
-static int run_time (void)
-{
-  int secs,millisecs;
-#if (!SGI)
-  gettimeofday(&t1, &z1);
-#else
-  gettimeofday(&t1);
-#endif
-  secs = (t1.tv_sec - t0.tv_sec);
-  millisecs = ((t1.tv_usec - t0.tv_usec) / 1000);
-  return(secs * 1000 + millisecs);
-}
-
-static int timing_in_progress = 0;
-
-void start_timing(void)
-{
-  if (timing_in_progress == 0)
-    {
-      timing_in_progress = 1;
-      start_time();
-    }
-}
-
-void stop_timing(void)
-{
-  timing_in_progress = 0;
-  fprintf(stderr, "time: %d ", run_time());
-}
 #endif

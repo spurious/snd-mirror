@@ -745,7 +745,7 @@ void display_info(snd_info *sp)
 		  ((*comment) == ' ') || 
 		  ((*comment) == '\xd')))
 	    comment++;
-#if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
+#if HAVE_STRFTIME
 	  strftime(timestr, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&(sp->write_date)));
 #endif
 	  sprintf(buffer, "srate: %d\nchans: %d\nlength: %.3f (%d %s)\ntype: %s\nformat: %s\nwritten: %s%s%s\n",

@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 11
-#define SNDLIB_REVISION 40
-#define SNDLIB_DATE "20-Feb-01"
+#define SNDLIB_REVISION 41
+#define SNDLIB_DATE "23-Feb-01"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 /* gcc has various compile-time macros like #cpu, but we're hoping to run in Metroworks C, Watcom C, MSC, MPW, etc */
@@ -120,6 +120,10 @@
     #endif
   #endif
 #endif  
+
+#ifndef MUS_LITTLE_ENDIAN
+  #define MUS_LITTLE_ENDIAN 0
+#endif
 
 #ifndef __GNUC__
   #ifndef __FUNCTION__
@@ -240,13 +244,13 @@ enum {MUS_UNKNOWN,MUS_BSHORT,MUS_MULAW,MUS_BYTE,MUS_BFLOAT,MUS_BINT,MUS_ALAW,MUS
 
 #define MUS_DATA_FORMAT_OK(n) (((n) > MUS_UNKNOWN) && ((n) <= MUS_L12INT))
 
-#ifdef MUS_LITTLE_ENDIAN
+#if MUS_LITTLE_ENDIAN
   #define MUS_COMPATIBLE_FORMAT MUS_LSHORT
 #else
   #define MUS_COMPATIBLE_FORMAT MUS_BSHORT
 #endif
 
-#ifdef MUS_LITTLE_ENDIAN
+#if MUS_LITTLE_ENDIAN
   #if SNDLIB_USE_FLOATS
     #define MUS_OUT_FORMAT MUS_LFLOAT
   #else

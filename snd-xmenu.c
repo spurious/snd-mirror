@@ -529,9 +529,9 @@ Widget add_menu(snd_state *ss)
   int in_n,n,high_n,main_n,start_high_n,k,j,p;
   /* this mainly passes the global data pointer (ss) to all the menu-related callbacks */
   
-  in_n=0;
-  main_n=0;
-  high_n=0;
+  in_n = 0;
+  main_n = 0;
+  high_n = 0;
   if (!(ss->using_schemes))
     {
       XtSetArg(main_args[main_n], XmNbackground, (ss->sgx)->basic_color); main_n++;
@@ -951,7 +951,7 @@ static char *main_menu_name(int callb)
 static int callb2option(int callb)
 {
   int i;
-  for (i=0;i<added_options_pos;i++)
+  for (i=0; i<added_options_pos; i++)
     if (added_options_callb[i] == callb)
       return(i);
   return(-1);
@@ -990,7 +990,7 @@ static void add_option(Widget w, int which_menu, char *label, int callb)
 	  added_options_names = (char **)REALLOC(added_options_names, added_options_size * sizeof(char *));
 	  added_options_menus = (int *)REALLOC(added_options_menus, added_options_size * sizeof(int));
 	  added_options_callb = (int *)REALLOC(added_options_callb, added_options_size * sizeof(int));
-	  for (i=added_options_pos;i<added_options_size;i++) 
+	  for (i=added_options_pos; i<added_options_size; i++) 
 	    {
 	      added_options[i] = NULL;
 	      added_options_callb[i] = 0;
@@ -1011,7 +1011,7 @@ static int remove_option(int which_menu, char *label)
    *         (this requires that the cascade widget also be saved, at least -- 
    *          simply unmanaging added_menus[which_menu] doesn't work).
    */
-  for (i=0;i<added_options_pos;i++)
+  for (i=0; i<added_options_pos; i++)
     {
       if ((added_options_menus[i] == which_menu) && (strcmp(label, added_options_names[i]) == 0) && (added_options[i]))
 	{
@@ -1103,7 +1103,7 @@ static int remove_option(int which_menu, char *label)
 int gh_change_menu_label(int which_menu, char *old_label, char *new_label)
 {
   int i;
-  for (i=0;i<added_options_pos;i++)
+  for (i=0; i<added_options_pos; i++)
     {
       if ((added_options_menus[i] == which_menu) && (strcmp(old_label, added_options_names[i]) == 0) && (added_options[i]))
 	{
@@ -1119,7 +1119,7 @@ int gh_change_menu_label(int which_menu, char *old_label, char *new_label)
 int gh_set_menu_sensitive(int which_menu, char *old_label, int on)
 {
   int i;
-  for (i=0;i<added_options_pos;i++)
+  for (i=0; i<added_options_pos; i++)
     {
       if ((added_options_menus[i] == which_menu) && (strcmp(old_label, added_options_names[i]) == 0) && (added_options[i]))
 	{
@@ -1133,7 +1133,7 @@ int gh_set_menu_sensitive(int which_menu, char *old_label, int on)
 int gh_menu_is_sensitive(int which_menu, char *old_label)
 {
   int i;
-  for (i=0;i<added_options_pos;i++)
+  for (i=0; i<added_options_pos; i++)
     {
       if ((added_options_menus[i] == which_menu) && (strcmp(old_label, added_options_names[i]) == 0) && (added_options[i]))
 	{
@@ -1151,11 +1151,11 @@ int gh_add_to_main_menu(snd_state *ss, char *label, int slot)
 
   if (auto_resize(ss)) XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, FALSE, NULL);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   m = XmCreatePulldownMenu(mw[menu_menu], label, args, n);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
   XtSetArg(args[n], XmNsubMenuId, m); n++;
   cas = XtCreateManagedWidget(label, xmCascadeButtonWidgetClass, mw[menu_menu], args, n);
@@ -1192,7 +1192,7 @@ int gh_add_to_menu(snd_state *ss, int which_menu, char *label, int callb)
       else return(-1);
       break;
     }
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNuserData, callb); n++;
   m = XtCreateManagedWidget(label, xmPushButtonWidgetClass, menw, args, n);
@@ -1274,7 +1274,7 @@ void create_popup_menu(snd_state *ss)
   int n;
   if (!popup_menu)
     {
-      n=0;
+      n = 0;
       if (!ss->using_schemes) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       mainp = MAIN_PANE(ss);
       popup_menu = XmCreatePopupMenu(mainp, "popup-menu", args, n);
@@ -1314,14 +1314,14 @@ static SCM g_test_menus(void)
   snd_state *ss;
   ss = get_global_state();
 #ifndef SGI
-  for (i=0;i<NUM_MENU_WIDGETS;i++)
+  for (i=0; i<NUM_MENU_WIDGETS; i++)
     if ((mw[i]) && (XmIsPushButton(mw[i])) && (XtIsSensitive(mw[i])) &&
 	(i != f_exit_menu) && (i != f_save_menu) && (i != f_close_menu) &&
 	(i != f_new_menu) && (i != h_click_for_help_menu) && (i != v_mix_panel_menu))
       XtCallCallbacks(mw[i], XmNactivateCallback, (void *)ss);
   /* test_all_dialogs(ss); */
 #endif
-  for (i=0;i<added_options_pos;i++)
+  for (i=0; i<added_options_pos; i++)
     if ((added_options[i]) && (XmIsPushButton(mw[i])) && (XtIsSensitive(mw[i])))
       XtCallCallbacks(added_options[i], XmNactivateCallback, (void *)ss);
   dismiss_all_dialogs(ss);

@@ -56,7 +56,7 @@ static int snd_checked_write(int fd, unsigned char *buf, int bytes)
 static int be_snd_checked_write(int fd, unsigned char *buf, int bytes)
 {
   /* handle little-endian swap if necessary */
-#ifdef MUS_LITTLE_ENDIAN
+#if MUS_LITTLE_ENDIAN
   unsigned char tmp;
   int i;
   for (i=0; i<bytes; i+=2)
@@ -1133,7 +1133,7 @@ static int read_iff(char *oldname, char *newname, int orig, char *hdr)
 static int read_avi(char *oldname, char *newname, char *hdr)
 {
   int totalin,fs=-1,fd=-1,cksize,num,happy;
-#ifndef MUS_LITTLE_ENDIAN
+#if (!MUS_LITTLE_ENDIAN)
   int i;
   unsigned char *bb;
 #endif
@@ -1170,7 +1170,7 @@ static int read_avi(char *oldname, char *newname, char *hdr)
 		}
 	      else 
 		{
-#ifndef MUS_LITTLE_ENDIAN
+#if (!MUS_LITTLE_ENDIAN)
 		  bb = (unsigned char *)buf;
 		  for (i=0; i<totalin/2; i++,bb+=2) buf[i] = mus_char_to_lshort(bb);
 #endif		  

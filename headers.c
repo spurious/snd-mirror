@@ -4726,7 +4726,7 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
       header_type = MUS_DESKMATE_2500;
       return(read_deskmate_2500_header(chan));
     }
-#ifdef MUS_LITTLE_ENDIAN
+#if MUS_LITTLE_ENDIAN
   if (mus_char_to_uninterpreted_int((unsigned char *)hdrbuf) == 0x01000800)
 #else
   if (mus_char_to_uninterpreted_int((unsigned char *)hdrbuf) == 0x00080001)
@@ -5454,7 +5454,7 @@ char *mus_header_original_format_name(int format, int type)
       if (format)
 	{
 	  f4 = (char *)calloc(5, sizeof(char));
-#ifdef MUS_LITTLE_ENDIAN
+#if MUS_LITTLE_ENDIAN
 	  sprintf(f4, "%c%c%c%c", format&0xff, (format>>8)&0xff, (format>>16)&0xff, (format>>24)&0xff);
 #else
 	  sprintf(f4, "%c%c%c%c", (format>>24)&0xff, (format>>16)&0xff, (format>>8)&0xff, format&0xff);

@@ -29,7 +29,8 @@ static SCM g_set_html_dir(SCM val)
 static SCM g_region_dialog(void) 
 {
   #define H_region_dialog "(" S_region_dialog ") starts the region dialog"
-  if (snd_regions() > 0) View_Region_Callback(MAIN_PANE(state), (XtPointer)state, NULL);
+  if (snd_regions() > 0) 
+    View_Region_Callback(MAIN_PANE(state), (XtPointer)state, NULL);
   return(SCM_BOOL_F);
 }
 
@@ -42,7 +43,10 @@ static void timed_eval(XtPointer in_code, XtIntervalId *id)
 static SCM g_in(SCM ms, SCM code)
 {
   #define H_in "(" S_in " msecs thunk) invokes thunk in msecs milliseconds"
-  XtAppAddTimeOut(MAIN_APP(state), SCM_UNWRAP(ms), (XtTimerCallbackProc)timed_eval, (XtPointer)code);
+  XtAppAddTimeOut(MAIN_APP(state), 
+		  SCM_UNWRAP(ms), 
+		  (XtTimerCallbackProc)timed_eval, 
+		  (XtPointer)code);
   return(ms);
 }
 
@@ -224,12 +228,12 @@ static void color_unselected_graphs(Pixel color)
   int i,j;
   chan_info *cp;
   snd_info *sp;
-  for (i=0;i<state->max_sounds;i++)
+  for (i=0; i<state->max_sounds; i++)
     {
       sp = (snd_info *)state->sounds[i];
       if (sp)
 	{
-	  for (j=0;j<sp->allocated_chans;j++)
+	  for (j=0; j<sp->allocated_chans; j++)
 	    {
 	      cp = sp->chans[j];
 	      if ((cp) && ((i != state->selected_sound) || (j != sp->selected_channel)))
@@ -249,12 +253,12 @@ static void color_chan_components(Pixel color, int which_component)
   int i,j;
   chan_info *cp;
   snd_info *sp;
-  for (i=0;i<state->max_sounds;i++)
+  for (i=0; i<state->max_sounds; i++)
     {
       sp = (snd_info *)state->sounds[i];
       if (sp)
 	{
-	  for (j=0;j<sp->allocated_chans;j++)
+	  for (j=0; j<sp->allocated_chans; j++)
 	    {
 	      cp = sp->chans[j];
 	      if (cp)
@@ -642,7 +646,7 @@ static SCM g_load_colormap(SCM colors)
   len = gh_vector_length(colors);
   xcs = (Pixel *)CALLOC(len, sizeof(Pixel));
   vdata = SCM_VELTS(colors);
-  for (i=0;i<len;i++)
+  for (i=0; i<len; i++)
     {
       v = get_snd_color(vdata[i]);
       xcs[i] = v->color;

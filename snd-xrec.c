@@ -113,7 +113,7 @@ static void record_report(Widget text, ...)
   char *nextstr;
   int textpos = 0;
   if (msgbuf == NULL) msgbuf = (char *)CALLOC(512, sizeof(char));
-#if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
+#if HAVE_STRFTIME
   time(&ts);
   strftime(timbuf, TIME_STR_SIZE, "%H:%M:%S", localtime(&ts));
   sprintf(msgbuf, "\n[%s] ", timbuf);
@@ -815,9 +815,9 @@ static void display_vu_meter(VU *vu)
     }
 }
 
-static void Meter_Display_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Meter_Display_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  display_vu_meter((VU *)clientData);
+  display_vu_meter((VU *)context);
 }
 
 static VU *make_vu_meter(Widget meter, int light_x, int light_y, int center_x, int center_y, snd_state *ss, Float size)
@@ -968,10 +968,10 @@ static char *amp_to_string(Float val)
   return(amp_number_buffer);
 }
 
-static void Record_Amp_Click_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Record_Amp_Click_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)callData;
-  AMP *ap = (AMP *)clientData;
+  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
+  AMP *ap = (AMP *)context;
   XButtonEvent *ev;
   int val;
   ev = (XButtonEvent *)(cb->event);
@@ -983,15 +983,15 @@ static void Record_Amp_Click_Callback(Widget w, XtPointer clientData, XtPointer 
   XtVaSetValues(ap->slider, XmNvalue, val, NULL);
 }
 
-static void Record_Amp_Drag_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Record_Amp_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  record_amp_changed((AMP *)clientData, ((XmScrollBarCallbackStruct *)callData)->value);
+  record_amp_changed((AMP *)context, ((XmScrollBarCallbackStruct *)info)->value);
 }
 
-static void Record_Amp_ValueChanged_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Record_Amp_ValueChanged_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)callData;
-  AMP *ap = (AMP *)clientData;
+  XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
+  AMP *ap = (AMP *)context;
   ap->last_amp = cb->value;
   record_amp_changed(ap, cb->value);
 }
@@ -1000,9 +1000,9 @@ static void Record_Amp_ValueChanged_Callback(Widget w, XtPointer clientData, XtP
 
 /* ---------------- MESSAGE PANE ---------------- */
 
-static void Messages_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Messages_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   snd_help(ss,
 	   "Message Pane",
 "This pane contains any messages the recorder\n\
@@ -1043,18 +1043,18 @@ static Widget make_message_pane(snd_state *ss, Widget message_pane)
 
 /* ---------------- FILE INFO PANE ---------------- */
 
-static void file_label_help_callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void file_label_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   snd_help(ss,
 	   "Output File Name",
 "This field sets the name of the output file.\n\
 ");	   
 }
 
-static void duration_label_help_callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void duration_label_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   snd_help(ss,
 	   "Output File Duration",
 "This field shows the duration of the current\n\
@@ -1062,9 +1062,9 @@ or previous recording.\n\
 ");	   
 }
 
-static void button_holder_help_callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void button_holder_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   snd_help(ss,
 	   "Record Options",
 "These buttons configure the appearance of the recorder;\n\
@@ -1073,9 +1073,9 @@ loaded automatically into Snd.\n\
 ");
 }
 
-static void autoload_file_help_callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void autoload_file_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   snd_help(ss,
        "Autoload File",
 "If this button is set, the recorded file\n\
@@ -1083,14 +1083,14 @@ is automatically loaded into Snd.\n\
 ");	   
 }
 
-static void Help_Record_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Help_Record_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  record_dialog_help((snd_state *)clientData);
+  record_dialog_help((snd_state *)context);
 }
 
-static void VU_Reset_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void VU_Reset_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   snd_help(ss,
 	   "Reset Button",
 "This button resets the fields above it that\n\
@@ -1099,9 +1099,9 @@ since the last reset\n\
 ");
 }
 
-static void trigger_help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void trigger_help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   snd_help(ss,
 	   "Record Trigger",
 "This scale sets the auto-record trigger\n\
@@ -1144,22 +1144,22 @@ static void internal_trigger_set(Float val)
     }
 }
 
-static void change_trigger_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void change_trigger_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* if val=0, set record button normal label to 'Record', else 'Triggered Record' */
-  XmScaleCallbackStruct *cb = (XmScaleCallbackStruct *)callData;
+  XmScaleCallbackStruct *cb = (XmScaleCallbackStruct *)info;
   internal_trigger_set((Float)(cb->value)/100.0);
 }
 
-static void drag_trigger_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void drag_trigger_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  XmScaleCallbackStruct *cb = (XmScaleCallbackStruct *)callData;
+  XmScaleCallbackStruct *cb = (XmScaleCallbackStruct *)info;
   make_trigger_label((Float)(cb->value)/100.0);
 }
 
-static void device_button_callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void device_button_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  PANE *p = (PANE *)clientData;
+  PANE *p = (PANE *)context;
   int on,button;
   snd_state *ss;
 #if defined(SGI) || defined(SUN)
@@ -1278,7 +1278,7 @@ static void device_button_callback(Widget w, XtPointer clientData, XtPointer cal
 #endif
 }
 
-static void autoload_file_callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void autoload_file_callback(Widget w, XtPointer context, XtPointer info) 
 {
   recorder_info *rp;
   rp = get_recorder_info();
@@ -1286,7 +1286,7 @@ static void autoload_file_callback(Widget w, XtPointer clientData, XtPointer cal
 }
 
 #if (HAVE_OSS || HAVE_ALSA)
-static void save_audio_settings_callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void save_audio_settings_callback(Widget w, XtPointer context, XtPointer info) 
 {
   recorder_info *rp;
   rp = get_recorder_info();
@@ -1295,9 +1295,9 @@ static void save_audio_settings_callback(Widget w, XtPointer clientData, XtPoint
   mus_audio_mixer_save(AUDIO_STATE_FILE);
 }
 
-static void save_audio_settings_help_callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void save_audio_settings_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   snd_help(ss,
 	   "Save Audio Settings",
 	   "Normally, Snd saves the state of the audio hardware\n\
@@ -1313,7 +1313,7 @@ read by CLM, someday.\n\
 }
 #endif
 
-static void Srate_Changed_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Srate_Changed_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   char *str;
   int n;
@@ -1332,7 +1332,7 @@ static void Srate_Changed_Callback(Widget w, XtPointer clientData, XtPointer cal
     }
 }
 
-static void Rec_Size_Changed_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Rec_Size_Changed_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   char *str;
   int n;
@@ -1347,9 +1347,9 @@ static void Rec_Size_Changed_Callback(Widget w, XtPointer clientData, XtPointer 
     }
 }
 
-static void rec_size_help_callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void rec_size_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   snd_help(ss,
 	   "Record Input Buffer Size",
 "This field sets the size of the recorder's input\n\
@@ -1681,9 +1681,9 @@ void unlock_recording_audio(void)
 
 
 
-static void VU_Max_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void VU_Max_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  Wdesc *wd = (Wdesc *)clientData;
+  Wdesc *wd = (Wdesc *)context;
   ssnd_help(wd->ss,
 	   "Max Amp Indicator",
 	    "This number indicates the max amp encountered\n\
@@ -1696,9 +1696,9 @@ The reset button sets it back to 0.0.\n",
 	    NULL);
 }
 
-static void VU_On_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void VU_On_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  Wdesc *wd = (Wdesc *)clientData;
+  Wdesc *wd = (Wdesc *)context;
   ssnd_help(wd->ss,
 	    "On/Off Button",
 	    "This button causes ",
@@ -1711,9 +1711,9 @@ is red when the signal is active.\n",
 	    NULL);
 }
 
-static void volume_help_callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void volume_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  Wdesc *wd = (Wdesc *)clientData;
+  Wdesc *wd = (Wdesc *)context;
 #if (HAVE_OSS || HAVE_ALSA)
   int device,channel,field;
   device = wd->device;
@@ -1785,9 +1785,9 @@ is reflected in the meters or the audio data.\n" : "",
 #endif
 }
 
-static void amp_slider_help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void amp_slider_help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  Wdesc *wd = (Wdesc *)clientData;
+  Wdesc *wd = (Wdesc *)context;
   PANE *p;
   AMP *a;
   p = wd->p;
@@ -1804,9 +1804,9 @@ static void amp_slider_help_Callback(Widget w, XtPointer clientData, XtPointer c
 	    NULL);
 }
 
-static void Meter_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Meter_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  Wdesc *wd = (Wdesc *)clientData;
+  Wdesc *wd = (Wdesc *)context;
   ssnd_help(wd->ss,
 	    "VU Meter",
 	    "This meter shows the current volume of ",
@@ -1818,11 +1818,11 @@ It is yellow if active, red if clipping.\n",
 	    NULL);
 }
 
-static void VU_Reset_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void VU_Reset_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* set current maxes to 0.0 */
   int i;
-  PANE *p = (PANE *)clientData;
+  PANE *p = (PANE *)context;
   VU *vu;
   for (i=0; i<p->meters_size; i++)
     {
@@ -1832,9 +1832,9 @@ static void VU_Reset_Callback(Widget w, XtPointer clientData, XtPointer callData
     }
 }
 
-static void Meter_Button_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Meter_Button_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  Wdesc *wd = (Wdesc *)clientData;
+  Wdesc *wd = (Wdesc *)context;
   VU *vu;
   snd_state *ss;
   int val,i,n;
@@ -1887,18 +1887,18 @@ static void Meter_Button_Callback(Widget w, XtPointer clientData, XtPointer call
   else rp->chan_in_active[wd->gain] = val;
 }
 
-static void volume_callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void volume_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  Wdesc *wd = (Wdesc *)clientData;
-  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)callData;
+  Wdesc *wd = (Wdesc *)context;
+  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
   set_mixer_gain(wd->system, wd->device, wd->chan, wd->gain, wd->field, (Float)cbs->value/100.0);
 }
 
 /* ---- slider button matrix ---- */
 
-static void Button_Matrix_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Button_Matrix_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   snd_help(ss, "Channel Matrix",
 "This set of buttons controls which amplitude sliders\n\
 are visible in the pane.  To conserve screen space, only\n\
@@ -2059,9 +2059,9 @@ typedef struct {
   int in_chan,out_chan;
 } slider_info;
 
-static void Matrix_Button_Callback(Widget mb, XtPointer clientData, XtPointer callData) 
+static void Matrix_Button_Callback(Widget mb, XtPointer context, XtPointer info) 
 {
-  slider_info *si = (slider_info *)clientData;
+  slider_info *si = (slider_info *)context;
   PANE *p;
   int curamp;
   p = si->p;
@@ -2076,7 +2076,7 @@ static Widget active_button = NULL;
 
 enum {CORNER_BUTTON,OUTPUT_BUTTON,INPUT_BUTTON};
 
-static void button_matrix_button_press(Widget w, XtPointer clientData, XEvent *event, Boolean *flag) 
+static void button_matrix_button_press(Widget w, XtPointer context, XEvent *event, Boolean *flag) 
 {
   XButtonEvent *ev = (XButtonEvent *)event;
   button_matrix_button = ev->button;
@@ -2085,9 +2085,9 @@ static void button_matrix_button_press(Widget w, XtPointer clientData, XEvent *e
   XtVaGetValues(w, XmNuserData, &initial_button, NULL);
 }
 
-static void button_matrix_button_motion(Widget w, XtPointer clientData, XEvent *event, Boolean *flag) 
+static void button_matrix_button_motion(Widget w, XtPointer context, XEvent *event, Boolean *flag) 
 {
-  PANE *p = (PANE *)clientData;
+  PANE *p = (PANE *)context;
   XButtonEvent *ev = (XButtonEvent *)event;
   Widget current_button = NULL;
   Position x,y;
@@ -2108,9 +2108,9 @@ static void button_matrix_button_motion(Widget w, XtPointer clientData, XEvent *
     }
 }
 
-static void button_matrix_button_release(Widget w, XtPointer clientData, XEvent *event, Boolean *flag) 
+static void button_matrix_button_release(Widget w, XtPointer context, XEvent *event, Boolean *flag) 
 {
-  PANE *p = (PANE *)clientData;
+  PANE *p = (PANE *)context;
   XButtonEvent *ev = (XButtonEvent *)event;
   Position x,y;
   int row,col,on;
@@ -3054,15 +3054,15 @@ void unsensitize_control_buttons(void)
     }
 }
 
-static void RecordCleanupCB(Widget w, XtPointer clientData, XtPointer callData)
+static void RecordCleanupCB(Widget w, XtPointer context, XtPointer info)
 {
   cleanup_recording(); 
 }
 
-static void Reset_Record_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Reset_Record_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* if recording, cancel and toss data, else reset various fields to default (ss) values */
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   char *str;
   XmString s1;
   PANE *p;
@@ -3117,17 +3117,17 @@ static void Reset_Record_Callback(Widget w, XtPointer clientData, XtPointer call
     }
 }
 
-static void Dismiss_Record_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Dismiss_Record_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
-  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)callData;
+  snd_state *ss = (snd_state *)context;
+  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
   state_context *sgx;
   recorder_info *rp;
   rp = get_recorder_info();
   sgx = ss->sgx;
   if (cb->event != sgx->text_activate_event)  /* passed up from textfield widget after <cr> typed */
     {
-      if (rp->recording) Reset_Record_Callback(w, clientData, callData);
+      if (rp->recording) Reset_Record_Callback(w, context, info);
       XtUnmanageChild(recorder);
       close_recorder_audio();
 #if (!(HAVE_OSS || HAVE_ALSA))
@@ -3189,9 +3189,9 @@ void finish_recording(snd_state *ss, recorder_info *rp)
     }
 }
 
-static void Record_Button_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Record_Button_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   XmString s1 = NULL,s2 = NULL;
   Wdesc *wd;
   int i,old_srate,ofmt,rs,ochns,oloc;
@@ -3250,7 +3250,7 @@ static void Record_Button_Callback(Widget w, XtPointer clientData, XtPointer cal
 		  if (!(p->active[i]))
 		    {
 		      wd->chan = i;
-		      Meter_Button_Callback(p->on_buttons[i], (XtPointer)wd, NULL); /* callData not used */
+		      Meter_Button_Callback(p->on_buttons[i], (XtPointer)wd, NULL); /* info not used */
 		    }
 		}
 	      FREE(wd);

@@ -30,9 +30,9 @@ static void change_mix_speed(int mix_id, Float val)
   set_label(w_speed_number, speed_number_buffer);
 }
 
-static void Speed_Click_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Speed_Click_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   change_mix_speed(current_mix_id(ss), 1.0);
   XtVaSetValues(w_speed, XmNvalue, 450, NULL);
 }
@@ -56,20 +56,20 @@ static int mix_speed_to_int(Float uval, snd_info *sp)
   else return(0);
 }
 
-static void Speed_Drag_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Speed_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   int ival;
-  snd_state *ss = (snd_state *)clientData;
-  ival = ((XmScrollBarCallbackStruct *)callData)->value;
+  snd_state *ss = (snd_state *)context;
+  ival = ((XmScrollBarCallbackStruct *)info)->value;
   if (dragging == 0) start_mix_drag(current_mix_id(ss));
   dragging = 1;
   change_mix_speed(current_mix_id(ss), exp((Float)(ival-450.0) / 150.0));
 }
 
-static void Speed_ValueChanged_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Speed_ValueChanged_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)callData;
-  snd_state *ss = (snd_state *)clientData;
+  XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
+  snd_state *ss = (snd_state *)context;
   dragging = 0;
   change_mix_speed(current_mix_id(ss), exp((Float)(cb->value - 450.0) / 150.0));
 }
@@ -126,9 +126,9 @@ static void change_mix_amp(int mix_id, int chan, Float val)
   FREE(sfs);
 }
 
-static void Amp_Click_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Amp_Click_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   int chan;
   XtVaGetValues(w, XmNuserData, &chan, NULL);
   change_mix_amp(current_mix_id(ss), chan, 1.0);
@@ -147,23 +147,23 @@ static Float int_amp_to_Float(int amp)
     }
 }
 
-static void Amp_Drag_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Amp_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   int ival,chan;
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   XtVaGetValues(w, XmNuserData, &chan, NULL);
-  ival = ((XmScrollBarCallbackStruct *)callData)->value;
+  ival = ((XmScrollBarCallbackStruct *)info)->value;
   if (dragging == 0) start_mix_drag(current_mix_id(ss));
   dragging = 1;
   change_mix_amp(current_mix_id(ss), chan, int_amp_to_Float(ival));
 }
 
-static void Amp_ValueChanged_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Amp_ValueChanged_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   int ival,chan;
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   XtVaGetValues(w, XmNuserData, &chan, NULL);
-  ival = ((XmScrollBarCallbackStruct *)callData)->value;
+  ival = ((XmScrollBarCallbackStruct *)info)->value;
   dragging = 0;
   change_mix_amp(current_mix_id(ss), chan, int_amp_to_Float(ival));
 }
@@ -198,9 +198,9 @@ static chan_info *axis_cp = NULL;
 static axis_context *ax = NULL;
 static GC cur_gc;
 
-static void Mix_Amp_Env_Resize(Widget w, XtPointer clientData, XtPointer callData) 
+static void Mix_Amp_Env_Resize(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   XGCValues gv;
 
   if (ax == NULL)
@@ -285,11 +285,11 @@ static void name_activated(snd_state *ss)
     }
 }
 
-static void Dismiss_Mix_Panel_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Dismiss_Mix_Panel_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   state_context *sgx;
-  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)callData;
+  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
   sgx = ss->sgx;
   if (cb->event != sgx->text_activate_event)
     XtUnmanageChild(mix_panel);
@@ -315,9 +315,9 @@ static void Dismiss_Mix_Panel_Callback(Widget w, XtPointer clientData, XtPointer
     }
 }
 
-static void Help_Mix_Panel_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Help_Mix_Panel_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
        "Mix Panel",
 "This dialog controls the currently selected mix");
 }
@@ -337,7 +337,7 @@ void reflect_mix_play_stop(void)
   mix_playing = 0;
 }
 
-static void mix_panel_play_callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void mix_panel_play_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
   if (mix_playing)

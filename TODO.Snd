@@ -103,9 +103,6 @@ dnl and we don't want to be global namespace polluters.
 and then make needs a target for glfft.
 --------
 
-Also, HAVE_GSL should be the default in configure.in (see gsl's gsl.m4,
-but it needs to set gslblas etc).
-
 
 Sawfish connection: it should be possible to send commands to sawfish,
   (via sawfish-client?); also there's a switch in Snd, HAVE_THEMES,

@@ -15,10 +15,10 @@
   #endif
 #endif
 
-#if defined(HAVE_SYS_STATFS_H)
+#if HAVE_SYS_STATFS_H
   #include <sys/statfs.h>
 #endif
-#if defined(HAVE_SYS_VFS_H)
+#if HAVE_SYS_VFS_H
   #include <sys/vfs.h>
 #endif
 #ifdef __bsdi__

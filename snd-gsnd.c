@@ -344,7 +344,7 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
     {
       if (sp->cursor_follows_play != DONT_FOLLOW)
 	{
-	  for (i=0;i<sp->nchans;i++)
+	  for (i=0; i<sp->nchans; i++)
 	    {
 	      cp = sp->chans[i];
 	      cp->original_cursor = cp->cursor;
@@ -362,7 +362,7 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
   cp = any_selected_channel(sp);
   goto_graph(cp);
   if ((!(cp->cursor_on)) && (sp->cursor_follows_play != DONT_FOLLOW))
-    for (i=0;i<sp->nchans;i++)
+    for (i=0; i<sp->nchans; i++)
       {
 	cp = sp->chans[i];
 	cp->cursor_on = 1;
@@ -822,7 +822,7 @@ void set_reverb_labels(const char *new_label)
   snd_info *sp;
   GtkWidget *lab;
   ss = get_global_state();
-  for (i=0;i<ss->max_sounds;i++)
+  for (i=0; i<ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
       if ((sp) && (sp->sgx) && (sp->sgx->snd_widgets))
@@ -856,7 +856,7 @@ static void set_snd_revscl_1(snd_info *sp, Float val, int setadj)
       revscl_number_buffer[2]='0'; 
       revscl_number_buffer[1]=STR_decimal;
     }
-  for (i=0;i<j;i++) (*ps++) = (*fs++);
+  for (i=0; i<j; i++) (*ps++) = (*fs++);
   gtk_label_set_text(GTK_LABEL(w_snd_revscl_number(sp)), revscl_number_buffer);
   FREE(sfs);
   if (setadj)
@@ -1151,7 +1151,7 @@ void color_filter_waveform(snd_state *ss, GdkColor *color)
   snd_info *sp;
   gdk_gc_set_foreground((ss->sgx)->fltenv_data_gc, color);
   (ss->sgx)->filter_waveform_color = color;
-  for (i=0;i<ss->max_sounds;i++)
+  for (i=0; i<ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse)) sp_display_env(sp);
@@ -1249,7 +1249,7 @@ void reflect_amp_env_completion(snd_info *sp)
   int i;
   GtkWidget *info_sep;
   /* a channel completed an amp env, check to see if all are complete */
-  for (i=0;i<sp->nchans;i++)
+  for (i=0; i<sp->nchans; i++)
     {
       cp = sp->chans[i];
       if (!(cp->amp_envs)) return;
@@ -1351,7 +1351,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
 
   if ((!make_widgets) && (old_chans < nchans))
     {
-      for (i=old_chans;i<nchans;i++) add_channel_window(sp, i, ss, chan_min_y, 1, NULL, WITH_FW_BUTTONS);
+      for (i=old_chans; i<nchans; i++) add_channel_window(sp, i, ss, chan_min_y, 1, NULL, WITH_FW_BUTTONS);
     }
 
   if (make_widgets)
@@ -1391,7 +1391,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
       sw[W_name_form] = gtk_hbox_new(FALSE, 0);
       gtk_box_pack_end(GTK_BOX(sw[W_pane_box]), sw[W_name_form], FALSE, FALSE, 0);
       
-      for (i=0;i<nchans;i++) add_channel_window(sp, i, ss, chan_min_y, 0, NULL, WITH_FW_BUTTONS);
+      for (i=0; i<nchans; i++) add_channel_window(sp, i, ss, chan_min_y, 0, NULL, WITH_FW_BUTTONS);
 
       /* controls etc */
 
@@ -1911,7 +1911,7 @@ void show_controls(snd_state *ss)
   int i;
   ss->ctrls_height = ss->open_ctrls_height;
   set_view_ctrls_label(STR_Hide_controls);
-  for (i=0;i<ss->max_sounds;i++)
+  for (i=0; i<ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse)) sound_show_ctrls(sp);
@@ -1924,7 +1924,7 @@ void hide_controls(snd_state *ss)
   int i;
   ss->ctrls_height = CLOSED_CTRLS_HEIGHT;
   set_view_ctrls_label(STR_Show_controls);
-  for (i=0;i<ss->max_sounds;i++)
+  for (i=0; i<ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse)) sound_hide_ctrls(sp);

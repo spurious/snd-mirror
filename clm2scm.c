@@ -181,7 +181,7 @@ static SCM all_keys[NUM_KEYWORDS];
 static void init_keywords(void)
 {
   int i;
-  for (i=0;i<NUM_KEYWORDS;i++) 
+  for (i=0; i<NUM_KEYWORDS; i++) 
     all_keys[i] = scm_c_make_keyword(keywords[i]);
 }
 
@@ -222,7 +222,7 @@ static int decode_keywords(char *caller, int nkeys, SCM *keys, int nargs, SCM *a
 	  if (key_start > nkeys) 
 	    mus_print("%s has extra trailing args?", caller);
 	  key_found = 0;
-	  for (i=key_start;i<nkeys;i++)
+	  for (i=key_start; i<nkeys; i++)
 	    {
 	      if ((keyword_p(keys[i])) && (keys[i] == key))
 		{
@@ -371,7 +371,7 @@ static void init_keywords(void)
 #else
   keyword_tag = scm_newsmob(&keyword_smobfuns);
 #endif
-  for (i=0;i<NUM_KEYWORDS;i++) 
+  for (i=0; i<NUM_KEYWORDS; i++) 
     {
       all_keys[i] = make_keyword(i);
       gh_define(keywords[i], all_keys[i]);
@@ -412,7 +412,7 @@ static int decode_keywords(char *caller, int nkeys, SCM *keys, int nargs, SCM *a
 	  if (key_start > nkeys) 
 	    mus_print("%s has extra trailing args?", caller);
 	  key_found = 0;
-	  for (i=key_start;i<nkeys;i++)
+	  for (i=key_start; i<nkeys; i++)
 	    {
 	      if ((keyword_p(keys[i])) && (get_keyword(keys[i]) == key))
 		{
@@ -845,7 +845,7 @@ static SCM mark_mus_scm(SCM obj)
   ms = mus_get_scm(obj);
   if (ms->vcts) 
     {
-      for (i=0;i<ms->nvcts;i++) 
+      for (i=0; i<ms->nvcts; i++) 
 	if (ms->vcts[i]) 
 	  scm_gc_mark(ms->vcts[i]);
     }
@@ -1093,7 +1093,7 @@ static Float *whatever_to_floats(SCM inp, int size, int *free_invals)
       invals = (Float *)CALLOC(size, sizeof(Float));
       (*free_invals) = 1;
       data = SCM_VELTS(inp);
-      for (i=0;i<size;i++) 
+      for (i=0; i<size; i++) 
 	invals[i] = TO_C_DOUBLE(data[i]);
     }
   else
@@ -1110,7 +1110,7 @@ static Float *whatever_to_floats(SCM inp, int size, int *free_invals)
 	  if (SCM_NFALSEP(scm_real_p(inp))) 
 	    {
 	      inval = TO_C_DOUBLE(inp);
-	      for (i=0;i<size;i++) 
+	      for (i=0; i<size; i++) 
 		invals[i] = inval;
 	    }
 	  else
@@ -1118,10 +1118,10 @@ static Float *whatever_to_floats(SCM inp, int size, int *free_invals)
 	      if (gh_procedure_p(inp))
 		{
 #if USE_SND
-		  for (i=0;i<size;i++) 
+		  for (i=0; i<size; i++) 
 		    invals[i] = TO_C_DOUBLE(g_call1(inp, TO_SCM_INT(i)));
 #else
-		  for (i=0;i<size;i++) 
+		  for (i=0; i<size; i++) 
 		    invals[i] = TO_C_DOUBLE(gh_call1(inp, TO_SCM_INT(i)));
 #endif
 		}
@@ -1147,7 +1147,7 @@ static SCM g_mus_bank(SCM gens, SCM amps, SCM inp, SCM inp2)
   scls = whatever_to_floats(amps, size, &free_scls);
   gs = (mus_any **)CALLOC(size, sizeof(mus_any *));
   data = SCM_VELTS(gens);
-  for (i=0;i<size;i++) gs[i] = mus_get_any(data[i]);
+  for (i=0; i<size; i++) gs[i] = mus_get_any(data[i]);
   outval = mus_bank(gs, scls, invals, invals2, size);
   if ((scls) && (free_scls)) FREE(scls);
   if ((invals) && (free_invals)) FREE(invals);
@@ -1329,9 +1329,9 @@ static SCM g_make_delay_1(int choice, SCM arglist)
   keys[argn++] = all_keys[C_initial_contents];
   keys[argn++] = all_keys[C_initial_element];
   keys[argn++] = all_keys[C_max_size];
-  for (i=0;i<14;i++) args[i] = SCM_UNDEFINED;
+  for (i=0; i<14; i++) args[i] = SCM_UNDEFINED;
   arglist_len = gh_length(arglist);
-  for (i=0;i<arglist_len;i++) args[i] = gh_list_ref(arglist, TO_SMALL_SCM_INT(i));
+  for (i=0; i<arglist_len; i++) args[i] = gh_list_ref(arglist, TO_SMALL_SCM_INT(i));
   vals = decode_keywords(caller, argn, keys, argn*2, args, orig_arg);
   if (vals > 0)
     {
@@ -1367,7 +1367,7 @@ static SCM g_make_delay_1(int choice, SCM arglist)
 		{
 		  len = gh_length(initial_contents);
 		  line = (Float *)CALLOC(len, sizeof(Float));
-		  for (i=0, lst=initial_contents;i<len;i++,lst=SCM_CDR(lst)) 
+		  for (i=0, lst=initial_contents; i<len; i++,lst=SCM_CDR(lst)) 
 		    line[i] = TO_C_DOUBLE(SCM_CAR(lst));
 		}
 	    }
@@ -1388,7 +1388,7 @@ static SCM g_make_delay_1(int choice, SCM arglist)
   if (line == NULL) 
     line = (Float *)CALLOC(max_size, sizeof(Float));
   if (initial_element != 0.0) 
-    for (i=0;i<max_size;i++) 
+    for (i=0; i<max_size; i++) 
       line[i] = initial_element;
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->vcts = (SCM *)CALLOC(1, sizeof(SCM));
@@ -1804,7 +1804,7 @@ static SCM g_partials2wave(SCM partials, SCM utable, SCM normalize)
   f = get_vct(table);
   len = gh_length(partials);
   partial_data = (Float *)CALLOC(len, sizeof(Float));
-  for (i=0, lst=partials;i<len;i++,lst=SCM_CDR(lst)) 
+  for (i=0, lst=partials; i<len; i++,lst=SCM_CDR(lst)) 
     partial_data[i] = TO_C_DOUBLE(SCM_CAR(lst));
   mus_partials2wave(partial_data, len / 2, f->data, f->length, (SCM_TRUE_P(normalize)));
   FREE(partial_data);
@@ -1834,7 +1834,7 @@ static SCM g_phasepartials2wave(SCM partials, SCM utable, SCM normalize)
   f = get_vct(table);
   len = gh_length(partials);
   partial_data = (Float *)CALLOC(len, sizeof(Float));
-  for (i=0, lst=partials;i<len;i++,lst=SCM_CDR(lst)) 
+  for (i=0, lst=partials; i<len; i++,lst=SCM_CDR(lst)) 
     partial_data[i] = TO_C_DOUBLE(SCM_CAR(lst));
   mus_phasepartials2wave(partial_data, len / 3, f->data, f->length, (SCM_TRUE_P(normalize)));
   FREE(partial_data);
@@ -2563,7 +2563,7 @@ static SCM g_make_frame(SCM arglist)
   if (len > 1)
     {
       fr = (mus_frame *)(gn->gen);
-      for (i=1, lst=SCM_CDR(arglist);i<len;i++,lst=SCM_CDR(lst))
+      for (i=1, lst=SCM_CDR(arglist); i<len; i++,lst=SCM_CDR(lst))
 	fr->vals[i-1] = TO_C_DOUBLE(SCM_CAR(lst));
     }
   return(mus_scm_to_smob(gn));
@@ -2748,7 +2748,7 @@ static SCM g_frame2list(SCM fr)
   SCM res = SCM_EOL;
   SCM_ASSERT(((mus_scm_p(fr)) && (mus_frame_p(mus_get_any(fr)))), fr, SCM_ARG1, S_frame2list);
   val = (mus_frame *)mus_get_any(fr);
-  for (i=(val->chans)-1;i>=0;i--) 
+  for (i=(val->chans)-1; i>=0; i--) 
     res = scm_cons(TO_SCM_DOUBLE(val->vals[i]), res);
   return(scm_return_first(res, fr));
 }
@@ -2803,7 +2803,7 @@ static SCM g_make_mixer(SCM arglist)
       fr = (mus_mixer *)(gn->gen);
       j = 0;
       k = 0;
-      for (i=1, lst=SCM_CDR(arglist);i<len;i++,lst=SCM_CDR(lst))
+      for (i=1, lst=SCM_CDR(arglist); i<len; i++,lst=SCM_CDR(lst))
 	{
 	  fr->vals[j][k] = TO_C_DOUBLE(SCM_CAR(lst));
 	  k++;
@@ -3036,14 +3036,14 @@ static Float *list2partials(SCM harms, int *npartials)
   listlen = gh_length(harms);
   /* the list is '(partial-number partial-amp ... ) */
   maxpartial = TO_C_INT_OR_ELSE(SCM_CAR(harms), 0);
-  for (i=2, lst=SCM_CDDR(harms);i<listlen;i+=2,lst=SCM_CDDR(lst))
+  for (i=2, lst=SCM_CDDR(harms); i<listlen; i+=2,lst=SCM_CDDR(lst))
     {
       curpartial = TO_C_INT_OR_ELSE(SCM_CAR(lst), 0);
       if (curpartial > maxpartial) maxpartial = curpartial;
     }
   partials = (Float *)CALLOC(maxpartial+1, sizeof(Float));
   (*npartials) = maxpartial+1;
-  for (i=0, lst=harms;i<listlen;i+=2,lst=SCM_CDDR(lst))
+  for (i=0, lst=harms; i<listlen; i+=2,lst=SCM_CDDR(lst))
     {
       curpartial = TO_C_INT_OR_ELSE(SCM_CAR(lst), 0);
       partials[curpartial] = TO_C_DOUBLE(SCM_CADR(lst));
@@ -3214,9 +3214,9 @@ static SCM g_make_sine_summation(SCM arglist)
   keys[2] = all_keys[C_n];
   keys[3] = all_keys[C_a];
   keys[4] = all_keys[C_ratio];
-  for (i=0;i<10;i++) args[i] = SCM_UNDEFINED;
+  for (i=0; i<10; i++) args[i] = SCM_UNDEFINED;
   arglist_len = gh_length(arglist);
-  for (i=0;i<arglist_len;i++) args[i] = gh_list_ref(arglist, TO_SMALL_SCM_INT(i));
+  for (i=0; i<arglist_len; i++) args[i] = gh_list_ref(arglist, TO_SMALL_SCM_INT(i));
   vals = decode_keywords(S_make_sine_summation, 5, keys, 10, args, orig_arg);
   if (vals > 0)
     {
@@ -3481,9 +3481,9 @@ static SCM g_make_env(SCM arglist)
   keys[4] = all_keys[C_base];
   keys[5] = all_keys[C_end];
   keys[6] = all_keys[C_start];
-  for (i=0;i<14;i++) args[i] = SCM_UNDEFINED;
+  for (i=0; i<14; i++) args[i] = SCM_UNDEFINED;
   arglist_len = gh_length(arglist);
-  for (i=0;i<arglist_len;i++) args[i] = gh_list_ref(arglist, TO_SMALL_SCM_INT(i));
+  for (i=0; i<arglist_len; i++) args[i] = gh_list_ref(arglist, TO_SMALL_SCM_INT(i));
   vals = decode_keywords(S_make_env, 7, keys, 14, args, orig_arg);
   if (vals > 0)
     {
@@ -3496,7 +3496,7 @@ static SCM g_make_env(SCM arglist)
 	      npts = len/2;
 	      brkpts = (Float *)CALLOC(len, sizeof(Float));
 	      odata = (Float *)CALLOC(len, sizeof(Float));
-	      for (i=0, lst=keys[0];i<len;i++,lst=SCM_CDR(lst))
+	      for (i=0, lst=keys[0]; i<len; i++,lst=SCM_CDR(lst))
 		{
 		  brkpts[i] = TO_C_DOUBLE(SCM_CAR(lst));
 		  odata[i] = brkpts[i];
@@ -4074,9 +4074,9 @@ static SCM g_make_locsig(SCM arglist)
   keys[3] = all_keys[C_output];  
   keys[4] = all_keys[C_revout];
   keys[5] = all_keys[C_channels];
-  for (i=0;i<12;i++) args[i] = SCM_UNDEFINED;
+  for (i=0; i<12; i++) args[i] = SCM_UNDEFINED;
   arglist_len = gh_length(arglist);
-  for (i=0;i<arglist_len;i++) args[i] = gh_list_ref(arglist, TO_SMALL_SCM_INT(i));
+  for (i=0; i<arglist_len; i++) args[i] = gh_list_ref(arglist, TO_SMALL_SCM_INT(i));
   vals = decode_keywords(S_make_locsig, 6, keys, 12, args, orig_arg);
   if (vals > 0)
     {
@@ -4312,9 +4312,9 @@ static SCM g_make_granulate(SCM arglist)
   keys[5] = all_keys[C_ramp];
   keys[6] = all_keys[C_jitter];
   keys[7] = all_keys[C_max_size];
-  for (i=0;i<16;i++) args[i] = SCM_UNDEFINED;
+  for (i=0; i<16; i++) args[i] = SCM_UNDEFINED;
   arglist_len = gh_length(arglist);
-  for (i=0;i<arglist_len;i++) args[i] = gh_list_ref(arglist, TO_SMALL_SCM_INT(i));
+  for (i=0; i<arglist_len; i++) args[i] = gh_list_ref(arglist, TO_SMALL_SCM_INT(i));
   vals = decode_keywords(S_make_granulate, 8, keys, 16, args, orig_arg);
   if (vals > 0)
     {
@@ -4391,9 +4391,9 @@ static SCM g_make_convolve(SCM arglist)
   keys[0] = all_keys[C_input];
   keys[1] = all_keys[C_filter];
   keys[2] = all_keys[C_fft_size];
-  for (i=0;i<6;i++) args[i] = SCM_UNDEFINED;
+  for (i=0; i<6; i++) args[i] = SCM_UNDEFINED;
   arglist_len = gh_length(arglist);
-  for (i=0;i<arglist_len;i++) args[i] = gh_list_ref(arglist, TO_SMALL_SCM_INT(i));
+  for (i=0; i<arglist_len; i++) args[i] = gh_list_ref(arglist, TO_SMALL_SCM_INT(i));
   vals = decode_keywords(S_make_convolve, 3, keys, 6, args, orig_arg);
   if (vals > 0)
     {
@@ -4557,9 +4557,9 @@ static SCM g_make_phase_vocoder(SCM arglist)
   keys[5] = all_keys[C_analyze];
   keys[6] = all_keys[C_edit];
   keys[7] = all_keys[C_synthesize];
-  for (i=0;i<16;i++) args[i] = SCM_UNDEFINED;
+  for (i=0; i<16; i++) args[i] = SCM_UNDEFINED;
   arglist_len = gh_length(arglist);
-  for (i=0;i<arglist_len;i++) args[i] = gh_list_ref(arglist, TO_SMALL_SCM_INT(i));
+  for (i=0; i<arglist_len; i++) args[i] = gh_list_ref(arglist, TO_SMALL_SCM_INT(i));
   vals = decode_keywords(S_make_phase_vocoder, 8, keys, 16, args, orig_arg);
   if (vals > 0)
     {
@@ -4833,10 +4833,10 @@ static SCM g_mus_mix(SCM out, SCM in, SCM ost, SCM olen, SCM ist, SCM mx, SCM en
       in_len = gh_vector_length(envs);
       out_len = gh_vector_length(gh_vector_ref(envs, TO_SMALL_SCM_INT(0)));
       envs1 = (mus_any ***)CALLOC(in_len, sizeof(mus_any **));
-      for (i=0;i<in_len;i++)
+      for (i=0; i<in_len; i++)
 	{
 	  envs1[i] = (mus_any **)CALLOC(out_len, sizeof(mus_any *));
-	  for (j=0;j<out_len;j++) 
+	  for (j=0; j<out_len; j++) 
 	    envs1[i][j] = mus_get_any(gh_vector_ref(gh_vector_ref(envs, TO_SCM_INT(i)), TO_SCM_INT(j)));
 	}
     }
@@ -4848,7 +4848,7 @@ static SCM g_mus_mix(SCM out, SCM in, SCM ost, SCM olen, SCM ist, SCM mx, SCM en
   if (infile) free(infile);
   if (envs1) 
     {
-      for (i=0;i<in_len;i++) if (envs1[i]) FREE(envs1[i]);
+      for (i=0; i<in_len; i++) if (envs1[i]) FREE(envs1[i]);
       FREE(envs1);
     }
   return(SCM_BOOL_T);

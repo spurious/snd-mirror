@@ -70,6 +70,7 @@
 #define TINY_FONT "6x12"
 
 /* we assume later that we can always find these fonts (if resource file gives bogus entry, we fall back on these) */
+
 #ifdef SGI
   #define DEFAULT_BUTTON_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
   #define DEFAULT_BOLD_BUTTON_FONT "-*-times-bold-r-*-*-14-*-*-*-*-*-iso8859-1"
@@ -244,25 +245,24 @@ static startup_state *make_startup_state(snd_state *ss, Widget shell, Display *d
 }
 
 #ifndef SND_AS_WIDGET
-static void Window_Close(Widget w, XtPointer clientData, XtPointer callData)
+static void Window_Close(Widget w, XtPointer context, XtPointer callData)
 {
-  snd_exit_cleanly((snd_state *)clientData);
+  snd_exit_cleanly((snd_state *)context);
 }
 #endif
 
-static void corruption_check(XtPointer clientData, XtIntervalId *id)
+static void corruption_check(XtPointer context, XtIntervalId *id)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   if (corruption_time(ss) > 0.0)
     {
-      if ((!(play_in_progress())) && (!(record_in_progress())))
-	{
-	  map_over_sounds(ss, snd_not_current, NULL);
-	}
+      if ((!(play_in_progress())) && 
+	  (!(record_in_progress())))
+	map_over_sounds(ss, snd_not_current, NULL);
       XtAppAddTimeOut(MAIN_APP(ss),
 		      (unsigned long)(corruption_time(ss)*1000),
 		      (XtTimerCallbackProc)corruption_check,
-		      clientData);
+		      context);
     }
 }
 
@@ -272,7 +272,7 @@ void add_dialog(snd_state *ss, Widget dialog)
   int i;
   sx = ss->sgx;
   if (sx->dialogs)
-    for (i=0;i<sx->ndialogs;i++)
+    for (i=0; i<sx->ndialogs; i++)
       if (sx->dialogs[i] == dialog)
 	return;
   if (sx->dialog_list_size == 0)
@@ -287,7 +287,7 @@ void add_dialog(snd_state *ss, Widget dialog)
 	{
 	  sx->dialog_list_size *= 2;
 	  sx->dialogs = (Widget *)REALLOC(sx->dialogs, sx->dialog_list_size * sizeof(Widget));
-	  for (i=sx->ndialogs;i<sx->dialog_list_size;i++) sx->dialogs[i] = NULL;
+	  for (i=sx->ndialogs; i<sx->dialog_list_size; i++) sx->dialogs[i] = NULL;
 	}
     }
   sx->dialogs[sx->ndialogs] = dialog;
@@ -301,7 +301,7 @@ void dismiss_all_dialogs(snd_state *ss)
   sx = ss->sgx;
   if (record_dialog_is_active()) close_recorder_audio();
   if (sx->dialog_list_size > 0)
-    for (i=0;i<sx->ndialogs;i++)
+    for (i=0; i<sx->ndialogs; i++)
       if (sx->dialogs[i])
 	if (XtIsManaged(sx->dialogs[i])) 
 	  XtUnmanageChild(sx->dialogs[i]);
@@ -321,17 +321,17 @@ void test_all_dialogs(snd_state *ss)
   int i;
   sx = ss->sgx;
   if (sx->dialog_list_size > 0)
-    for (i=0;i<sx->ndialogs;i++)
+    for (i=0; i<sx->ndialogs; i++)
       if (sx->dialogs[i])
 	if (XtIsManaged(sx->dialogs[i]))
 	  map_over_children(sx->dialogs[i], push_buttons, NULL);
 }
 #endif
 
-static void minify_maxify_window(Widget w, XtPointer clientData, XEvent *event, Boolean *cont) 
+static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   XMapEvent *ev = (XMapEvent *)event;
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   /* ev->type can be several things, but the ones we care about here are
    * MapNotify and UnmapNotify.  Snd dialogs are "windows" in X-jargon, so
    * when the main window is minimized (iconified), other active dialogs
@@ -344,11 +344,11 @@ static void minify_maxify_window(Widget w, XtPointer clientData, XEvent *event, 
 
 static Atom snd_v,snd_c;
 
-static void who_called(Widget w, XtPointer clientData, XEvent *event, Boolean *cont) 
+static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   /* watch for communication from some other program via the SND_COMMAND property */
   XPropertyEvent *ev = (XPropertyEvent *)event;
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   Atom type;
   int format;
   unsigned long nitems, bytesafter;
@@ -382,7 +382,7 @@ static int auto_open_files = 0;
 static int noglob = 0, noinit = 0;
 static XtInputId stdin_id = 0;
 
-static void GetStdinString (XtPointer clientData, int *fd, XtInputId *id)
+static void GetStdinString (XtPointer context, int *fd, XtInputId *id)
 {
   int bytes,size;
   char *buf;
@@ -403,14 +403,14 @@ static void GetStdinString (XtPointer clientData, int *fd, XtInputId *id)
 	  buf = (char *)REALLOC(buf, size);
 	  bytes = read(*fd, (char *)(buf+size-1024), 1024);
 	}
-      snd_eval_stdin_str((snd_state *)clientData, buf);
+      snd_eval_stdin_str((snd_state *)context, buf);
     }
   FREE(buf);
 }
 
-static BACKGROUND_TYPE startup_funcs(XtPointer clientData)
+static BACKGROUND_TYPE startup_funcs(XtPointer context)
 {
-  startup_state *tm = (startup_state *)clientData;
+  startup_state *tm = (startup_state *)context;
   Atom wm_delete_window;
   snd_state *ss;
 #if HAVE_OPENDIR
@@ -545,12 +545,12 @@ static void muffle_warning(char *name, char *type, char *klass, char *defaultp, 
   /* fprintf(stderr, "ignoring: %s: %s\n", name, defaultp); */
 }
 
-static void ss_graph_key_press(Widget w, XtPointer clientData, XEvent *event, Boolean *cont) 
+static void ss_graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   XKeyEvent *ev = (XKeyEvent *)event;
   KeySym keysym;
   int key_state;
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   snd_info *sp;
   key_state = ev->state;
   keysym = XKeycodeToKeysym(XtDisplay(w), (int)(ev->keycode), (key_state & ShiftMask) ? 1 : 0);
@@ -662,7 +662,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   if (app_title) ss->startup_title = copy_string(app_title); else ss->startup_title = copy_string("snd");
 
   set_sound_style(ss, snd_rs.horizontal_panes);
-  for (i=1;i<argc;i++)
+  for (i=1; i<argc; i++)
     {
       if ((strcmp(argv[i], "-h") == 0) || (strcmp(argv[i], "-horizontal") == 0))
 	set_sound_style(ss, SOUNDS_HORIZONTAL);
@@ -812,7 +812,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   set_ask_before_overwrite(ss, snd_rs.overwrite_check);
 
 #ifndef SND_AS_WIDGET
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
 #ifdef UW2
   XtSetArg(args[n], XmNforeground, sx->black); n++;
@@ -829,7 +829,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 #endif
   menu = add_menu(ss);
 
-  n=0;
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, menu); n++;
@@ -846,7 +846,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
       XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
       sx->soundpanebox = sndCreatePanedWindowWidget("soundpane", sx->mainpane, args, n);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNsashHeight, ss->sash_size); n++;
       XtSetArg(args[n], XmNsashWidth, ss->sash_size); n++;
@@ -865,7 +865,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
       XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
       sx->soundpanebox = sndCreatePanedWindowWidget("soundpane", sx->mainpane, args, n);
 
-      n=0;
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNframeBackground, sx->zoom_color); n++;
       XtSetArg(args[n], XmNbindingWidth, NOTEBOOK_BINDING_WIDTH); n++;

@@ -31,7 +31,7 @@ void fill_polygon(axis_context *ax, int points, ...)
   if (points == 0) return;
   pts = (GdkPoint *)CALLOC(points, sizeof(GdkPoint));
   va_start(ap, points);
-  for (i=0;i<points;i++)
+  for (i=0; i<points; i++)
     {
       pts[i].x = va_arg(ap, int);
       pts[i].y = va_arg(ap, int);
@@ -49,7 +49,7 @@ void draw_polygon(axis_context *ax, int points, ...)
   if (points == 0) return;
   pts = (GdkPoint *)CALLOC(points, sizeof(GdkPoint));
   va_start(ap, points);
-  for (i=0;i<points;i++)
+  for (i=0; i<points; i++)
     {
       pts[i].x = va_arg(ap, int);
       pts[i].y = va_arg(ap, int);
@@ -74,7 +74,7 @@ static void draw_points (axis_context *ax, GdkPoint *points, int num, int size)
   else
     {
       size2 = size/2;
-      for (i=0;i<num;i++) 
+      for (i=0; i<num; i++) 
 	gdk_draw_arc(ax->wn, ax->gc, TRUE, points[i].x - size2, points[i].y - size2, size, size, 0, 360*64);
     }
 }
@@ -97,7 +97,7 @@ static GdkPoint polypts[4];
 static void fill_polygons (axis_context *ax, GdkPoint *points, int num, axis_info *ap, int y0)
 {
   int i;
-  for (i=1;i<num;i++)
+  for (i=1; i<num; i++)
     {
       polypts[0].x = points[i-1].x;
       polypts[0].y = points[i-1].y;
@@ -114,7 +114,7 @@ static void fill_polygons (axis_context *ax, GdkPoint *points, int num, axis_inf
 static void fill_two_sided_polygons(axis_context *ax, GdkPoint *points, GdkPoint *points1, int num)
 {
   int i;
-  for (i=1;i<num;i++)
+  for (i=1; i<num; i++)
     {
       polypts[0].x = points[i-1].x;
       polypts[0].y = points[i-1].y;
@@ -181,7 +181,7 @@ void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, int graph_styl
     case GRAPH_LOLLIPOPS:
       if (cp->dot_size == 1)
 	{
-	  for (i=0;i<j;i++)
+	  for (i=0; i<j; i++)
 	    gdk_draw_line(ax->wn, ax->gc, points[i].x, points[i].y, points1[i].x, points1[i].y);
 	}
       else
@@ -191,7 +191,7 @@ void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, int graph_styl
 	  if (size4 < 1) size4 = 1;
 	  draw_points(ax, points, j, cp->dot_size);
 	  draw_points(ax, points1, j, cp->dot_size);
-	  for (i=0;i<j;i++)
+	  for (i=0; i<j; i++)
 	    gdk_draw_rectangle(ax->wn, ax->gc, TRUE, points[i].x - size8, points[i].y, size4, points1[i].y - points[i].y);
 	}
     }
@@ -213,7 +213,7 @@ void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Floa
       gy0 = grf_y(y0, ap);
       if (cp->dot_size == 1)
 	{
-	  for (i=0;i<j;i++)
+	  for (i=0; i<j; i++)
 	    gdk_draw_line(ax->wn, ax->gc, points[i].x, points[i].y, points[i].x, gy0);
 	}
       else
@@ -222,7 +222,7 @@ void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Floa
 	  size4 = cp->dot_size/4;
 	  if (size4 < 1) size4 = 1;
 	  draw_points(ax, points, j, cp->dot_size);
-	  for (i=0;i<j;i++)
+	  for (i=0; i<j; i++)
 	    if (points[i].y > gy0) /* unsigned int height */
 	      gdk_draw_rectangle(ax->wn, ax->gc, TRUE, points[i].x - size8, gy0, size4, points[i].y - gy0);
 	    else gdk_draw_rectangle(ax->wn, ax->gc, TRUE, points[i].x - size8, points[i].y, size4, gy0 - points[i].y);
@@ -253,7 +253,7 @@ static void backup_erase_grf_points(mix_context *ms, int nj)
   points = points_address(0);
   points1 = points_address(1);
   ms->lastpj = nj;
-  for (i=0;i<nj;i++)
+  for (i=0; i<nj; i++)
     {
       ms->p0[i] = points[i];
       ms->p1[i] = points1[i];
@@ -288,39 +288,39 @@ void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int nj)
   min = ((nj < previous_j) ? nj : previous_j);
   if (cp->graph_style == GRAPH_LINES)
     {
-      for (i=0, j=1;i<min-1;i++,j++)
+      for (i=0, j=1; i<min-1; i++,j++)
 	{
 	  gdk_draw_line(wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[j].x, ms->p0[j].y);
 	  gdk_draw_line(wn, draw_gc, points[i].x, points[i].y, points[j].x, points[j].y);
 	}
       if (nj > previous_j)
 	{
-	  for (i=min-1;i<nj-1;i++) gdk_draw_line(wn, draw_gc, points[i].x, points[i].y, points[i+1].x, points[i+1].y);
+	  for (i=min-1; i<nj-1; i++) gdk_draw_line(wn, draw_gc, points[i].x, points[i].y, points[i+1].x, points[i+1].y);
 	}
       else
 	{
 	  if (previous_j > nj)
 	    {
-	      for (i=min-1;i<previous_j-1;i++) gdk_draw_line(wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[i+1].x, ms->p0[i+1].y);
+	      for (i=min-1; i<previous_j-1; i++) gdk_draw_line(wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[i+1].x, ms->p0[i+1].y);
 	    }
 	}
     }
   else /* dots */
     {
-      for (i=0;i<min;i++)
+      for (i=0; i<min; i++)
 	{
 	  draw_point(wn, undraw_gc, ms->p0[i], cp->dot_size);
 	  draw_point(wn, draw_gc, points[i], cp->dot_size);
 	}
       if (nj > previous_j)
 	{
-	  for (i=min;i<nj;i++) draw_point(wn, draw_gc, points[i], cp->dot_size);
+	  for (i=min; i<nj; i++) draw_point(wn, draw_gc, points[i], cp->dot_size);
 	}
       else
 	{
 	  if (previous_j > nj)
 	    {
-	      for (i=min;i<previous_j;i++) draw_point(wn, undraw_gc, ms->p0[i], cp->dot_size);
+	      for (i=min; i<previous_j; i++) draw_point(wn, undraw_gc, ms->p0[i], cp->dot_size);
 	    }
 	}
     }
@@ -347,7 +347,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
   min = ((nj < previous_j) ? nj : previous_j);
   if (cp->graph_style == GRAPH_LINES)
     {
-      for (i=0, j=1;i<min-1;i++,j++)
+      for (i=0, j=1; i<min-1; i++,j++)
 	{
 	  gdk_draw_line(wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[j].x, ms->p0[j].y);
 	  gdk_draw_line(wn, draw_gc, points[i].x, points[i].y, points[j].x, points[j].y);
@@ -356,7 +356,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
 	}
       if (nj > previous_j)
 	{
-	  for (i=min-1;i<nj-1;i++) 
+	  for (i=min-1; i<nj-1; i++) 
 	    {
 	      gdk_draw_line(wn, draw_gc, points[i].x, points[i].y, points[i+1].x, points[i+1].y);
 	      gdk_draw_line(wn, draw_gc, points1[i].x, points1[i].y, points1[i+1].x, points1[i+1].y);
@@ -365,7 +365,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
       else
 	if (previous_j > nj)
 	  {
-	    for (i=min-1;i<previous_j-1;i++) 
+	    for (i=min-1; i<previous_j-1; i++) 
 	      {
 		gdk_draw_line(wn, undraw_gc, ms->p0[i].x, ms->p0[i].y, ms->p0[i+1].x, ms->p0[i+1].y);
 		gdk_draw_line(wn, undraw_gc, ms->p1[i].x, ms->p1[i].y, ms->p1[i+1].x, ms->p1[i+1].y);
@@ -374,7 +374,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
     }
   else /* dots */
     {
-      for (i=0;i<min;i++)
+      for (i=0; i<min; i++)
 	{
 	  draw_point(wn, undraw_gc, ms->p0[i], cp->dot_size);
 	  draw_point(wn, draw_gc, points[i], cp->dot_size);
@@ -383,7 +383,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
 	}
       if (nj > previous_j)
 	{
-	  for (i=min;i<nj;i++) 
+	  for (i=min; i<nj; i++) 
 	    {
 	      draw_point(wn, draw_gc, points[i], cp->dot_size);
 	      draw_point(wn, draw_gc, points1[i], cp->dot_size);
@@ -393,7 +393,7 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
 	{
 	  if (previous_j > nj)
 	    {
-	      for (i=min;i<previous_j;i++) 
+	      for (i=min; i<previous_j; i++) 
 		{
 		  draw_point(wn, undraw_gc, ms->p0[i], cp->dot_size);
 		  draw_point(wn, undraw_gc, ms->p1[i], cp->dot_size);
@@ -440,7 +440,7 @@ void draw_sono_rectangles(axis_context *ax, int color, int jmax)
 {
   int i;
   gdk_gc_set_foreground(colormap_GC, grays[color]);
-  for (i=0;i<jmax;i++)
+  for (i=0; i<jmax; i++)
     gdk_draw_rectangle(ax->wn, colormap_GC, TRUE, sono_data[color][i].x, sono_data[color][i].y, sono_data[color][i].width, sono_data[color][i].height);
 }
 
@@ -468,12 +468,12 @@ void allocate_sono_rects(snd_state *ss, int size)
   else allocate_color_map(ss, 0);
   if (size > sono_size)
     {
-      for (i=0;i<GRAY_SCALES;i++)
+      for (i=0; i<GRAY_SCALES; i++)
 	{
 	  if ((sono_size > 0) && (sono_data[i])) FREE(sono_data[i]); 
 	  sono_data[i] = NULL;
 	}
-      for (i=0;i<GRAY_SCALES;i++)
+      for (i=0; i<GRAY_SCALES; i++)
 	{
 	  sono_data[i] = (GdkRectangle *)CALLOC(size, sizeof(GdkRectangle));
 	}
@@ -492,10 +492,10 @@ void allocate_color_map(snd_state *ss, int colormap)
       curmap = snd_colormap(colormap);
       cmap = gdk_colormap_get_system();
       if (grays_allocated != -1) 
-	for (i=0;i<GRAY_SCALES;i++) 
+	for (i=0; i<GRAY_SCALES; i++) 
 	  gdk_color_free(grays[i]);
       j = 0;
-      for (i=0;i<GRAY_SCALES;i++)
+      for (i=0; i<GRAY_SCALES; i++)
 	{
 	  tmp_color.red = curmap[j++];
 	  tmp_color.green = curmap[j++];
@@ -511,7 +511,7 @@ void allocate_color_map(snd_state *ss, int colormap)
 void x_load_colormap(GdkColor **colors)
 {
   int i;
-  for (i=0;i<GRAY_SCALES;i++) grays[i] = colors[i];
+  for (i=0; i<GRAY_SCALES; i++) grays[i] = colors[i];
 }
 #endif
 
@@ -722,7 +722,7 @@ void View_Color_Callback(GtkWidget *w, gpointer clientData)
       gtk_clist_set_selection_mode(GTK_CLIST(ccd->list), GTK_SELECTION_SINGLE);
       gtk_clist_set_shadow_type(GTK_CLIST(ccd->list), GTK_SHADOW_ETCHED_IN);
       gtk_clist_column_titles_passive(GTK_CLIST(ccd->list));
-      for (i=0;i<NUM_COLORMAPS;i++) 
+      for (i=0; i<NUM_COLORMAPS; i++) 
 	{
 	  str = colormap_name(i);
 	  gtk_clist_append(GTK_CLIST(ccd->list), &str);

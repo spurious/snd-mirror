@@ -10,7 +10,7 @@
 
 #include "snd.h"
 
-#ifdef HAVE_FPU_CONTROL_H
+#if HAVE_FPU_CONTROL_H
   #include <fpu_control.h>
 #endif
 
@@ -49,7 +49,7 @@ static void mus_print2snd(char *msg)
 #endif
 }
 
-#ifdef SGI
+#if HAVE_SYS_FPU_H
   #include <sys/fpu.h>
 #endif
 
@@ -68,11 +68,11 @@ static void mus_print2snd(char *msg)
   FILE *md;
 #endif
 
-#ifdef SGI
+#if HAVE_SYS_FPU_H
   union fpc_csr f; f.fc_word = get_fpc_csr(); f.fc_struct.flush = 1; set_fpc_csr(f.fc_word);
 #endif
 
-#ifdef HAVE_FPU_CONTROL_H
+#if HAVE_FPU_CONTROL_H
   #if __GLIBC_MINOR__ < 1
     /* in linux there's <fpu_control.h> with __setfpucw which Clisp calls as __setfpucw(_FPU_IEEE); */
     /* this appears to be useful in getting rid of idiotic NaN's */

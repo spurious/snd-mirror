@@ -8,20 +8,20 @@ static Widget listener_text = NULL;
 
 static Widget completion_help_dialog = NULL,completion_help_list = NULL;
 
-static void completion_help_help_callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void completion_help_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   snd_help(ss, "completion",
 "These are the completions that Snd thinks might be likely.\n\
 If you select one, it will be used to complete the current name.\n\
 ");
 }
 
-static void completion_help_browse_callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void completion_help_browse_callback(Widget w, XtPointer context, XtPointer info) 
 {
   int choice,i,j,old_len,new_len;
   char *text=NULL,*old_text=NULL;
-  XmListCallbackStruct *cbs = (XmListCallbackStruct *)callData;
+  XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   choice = cbs->item_position - 1;
   XmStringGetLtoR(cbs->item, XmFONTLIST_DEFAULT_TAG, &text);
   old_text = XmTextGetString(listener_text);
@@ -117,16 +117,16 @@ void snd_completion_help(snd_state *ss, int matches, char **buffer)
 
 /* ---------------- text widget specializations ---------------- */
 
-void textfield_focus_Callback(Widget w, XtPointer clientData, XtPointer callData)
+void textfield_focus_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   if (!(ss->using_schemes)) 
     XtVaSetValues(w, XmNbackground, (ss->sgx)->text_focus_color, NULL);
 }
 
-void textfield_unfocus_Callback(Widget w, XtPointer clientData, XtPointer callData)
+void textfield_unfocus_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   if (!(ss->using_schemes)) 
     XtVaSetValues(w, XmNbackground, (ss->sgx)->basic_color, NULL);
 }
@@ -691,10 +691,10 @@ static XtTranslations transTable4 = NULL;
 
 /* -------- text related widgets -------- */
 
-static void remember_event(Widget w, XtPointer clientData, XtPointer callData) 
+static void remember_event(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
-  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)callData;
+  snd_state *ss = (snd_state *)context;
+  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
   (ss->sgx)->text_activate_event = cb->event;
   (ss->sgx)->text_widget = w;
 }
@@ -803,17 +803,17 @@ void snd_append_command(snd_state *ss, char *msg)
     }
 }
 
-static void Command_Return_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void Command_Return_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  command_return(w, (snd_state *)clientData, last_prompt);
+  command_return(w, (snd_state *)context, last_prompt);
 }
 
 static int last_highlight_position = -1;
 
-static void Command_Motion_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void Command_Motion_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)callData;
-  snd_state *ss = (snd_state *)clientData;
+  XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
+  snd_state *ss = (snd_state *)context;
   char *str = NULL,*prompt;
   int pos,i,parens;
   cbs->doit = TRUE; 
@@ -849,10 +849,10 @@ static void Command_Motion_Callback(Widget w, XtPointer clientData, XtPointer ca
     }
 }
 
-static void Command_Modify_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void Command_Modify_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)callData;
-  snd_state *ss = (snd_state *)clientData;
+  XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
+  snd_state *ss = (snd_state *)context;
   char *str=NULL,*prompt;
   int len;
   if ((cbs->text)->length > 0)
@@ -878,9 +878,9 @@ static void Command_Modify_Callback(Widget w, XtPointer clientData, XtPointer ca
     }
 }
 
-static void Command_Help_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void Command_Help_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  listener_dialog_help((snd_state *)clientData);
+  listener_dialog_help((snd_state *)context);
 }
 
 static void sndCreateCommandWidget(snd_state *ss, int height)

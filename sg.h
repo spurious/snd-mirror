@@ -2,7 +2,7 @@
 #define SG_H
 /* macros useful in all the files using guile */
 
-#if (HAVE_SCM_CREATE_HOOK)
+#if HAVE_SCM_CREATE_HOOK
   #define HAVE_GENERALIZED_SET 1
   #define HAVE_NEW_SMOB 1
   #define HAVE_KEYWORDS 1

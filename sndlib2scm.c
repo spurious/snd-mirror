@@ -257,7 +257,7 @@ static SCM g_sound_max_amp(SCM file)
 	{
 	  vect = gh_make_vector(TO_SMALL_SCM_INT(chans*2), TO_SMALL_SCM_INT(0));
 	  vdata = SCM_VELTS(vect);
-	  for (i=0;i<chans*2;i+=2)
+	  for (i=0; i<chans*2; i+=2)
 	    {
 	      vdata[i] = TO_SCM_INT((int)(vals[i]));
 	      vdata[i+1] = TO_SCM_DOUBLE(MUS_SAMPLE_TO_FLOAT(vals[i+1]));
@@ -308,7 +308,7 @@ static scm_sizet free_sound_data(SCM obj)
   if (v == NULL) return(0);
   if (v->data) 
     {
-      for (i=0;i<v->chans;i++) if (v->data[i]) FREE(v->data[i]);
+      for (i=0; i<v->chans; i++) if (v->data[i]) FREE(v->data[i]);
       FREE(v->data);
     }
   v->data = NULL;
@@ -369,7 +369,7 @@ SCM make_sound_data(int chans, int frames)
   new_sound_data->length = frames;
   new_sound_data->chans = chans;
   new_sound_data->data = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
-  for (i=0;i<chans;i++)
+  for (i=0; i<chans; i++)
     new_sound_data->data[i] = (MUS_SAMPLE_TYPE *)CALLOC(frames, sizeof(MUS_SAMPLE_TYPE));
   SND_RETURN_NEWSMOB(sound_data_tag, new_sound_data);
 }
@@ -464,7 +464,7 @@ static SCM sound_data2vct(SCM sdobj, SCM chan, SCM vobj)
       if (sd->length < v->length) 
 	len = sd->length; 
       else len = v->length;
-      for (i=0;i<len;i++) 
+      for (i=0; i<len; i++) 
 	v->data[i] = (Float)(MUS_SAMPLE_TO_FLOAT(sd->data[chn][i]));
     }
   else scm_misc_error(S_sound_data2vct,
@@ -490,7 +490,7 @@ static SCM vct2sound_data(SCM vobj, SCM sdobj, SCM chan)
       if (sd->length < v->length) 
 	len = sd->length; 
       else len = v->length;
-      for (i=0;i<len;i++) 
+      for (i=0; i<len; i++) 
 	sd->data[chn][i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
     }
   else scm_misc_error(S_vct2sound_data,
@@ -736,7 +736,7 @@ static SCM g_write_audio(SCM line, SCM sdata, SCM frames)
     {
       for (k=0, j=0;k<frms;k++,j+=sd->chans)
 	{
-	  for (i=0;i<sd->chans;i++) 
+	  for (i=0; i<sd->chans; i++) 
 	    obuf[j+i] = MUS_SAMPLE_TO_SHORT(bufs[i][k]);
 	}
     }
@@ -772,7 +772,7 @@ static SCM g_read_audio(SCM line, SCM sdata, SCM frames)
     {
       for (k=0, j=0;k<frms;k++,j+=sd->chans)
 	{
-	  for (i=0;i<sd->chans;i++) 
+	  for (i=0; i<sd->chans; i++) 
 	    bufs[i][k] = MUS_SHORT_TO_SAMPLE(inbuf[j+i]);
 	}
     }
@@ -799,7 +799,7 @@ static SCM g_read_audio_state(SCM dev, SCM field, SCM chan, SCM vals)
 			     TO_C_INT_OR_ELSE(chan, 0),
 			     fvals);
   vdata = SCM_VELTS(vals);
-  for (i=0;i<len;i++) 
+  for (i=0; i<len; i++) 
     vdata[i] = TO_SCM_DOUBLE(fvals[i]);
   FREE(fvals);
   return(TO_SCM_INT(val));
@@ -822,7 +822,7 @@ static SCM g_write_audio_state(SCM dev, SCM field, SCM chan, SCM vals)
     {
       fvals = (float *)CALLOC(len, sizeof(float));
       vdata = SCM_VELTS(vals);
-      for (i=0;i<len;i++) 
+      for (i=0; i<len; i++) 
 	fvals[i] = TO_C_DOUBLE(vdata[i]);
     }
   res = mus_audio_mixer_write(TO_C_INT_OR_ELSE(dev, 0),

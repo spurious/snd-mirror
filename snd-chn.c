@@ -682,7 +682,7 @@ void set_x_bounds(axis_info *ap)
   if (ap->xmax <= ap->xmin) ap->xmax = ap->xmin+.001;
   range = ap->zx * (ap->xmax - ap->xmin);
   ap->x0 = ap->xmin + ap->sx * (ap->xmax - ap->xmin);
-#if (HAVE_ISNAN) || defined(__bsdi__)
+#if HAVE_ISNAN
   if (isnan(ap->x0)) ap->x0 = 0.0;
 #endif
   ap->x1 = (ap->x0 + range);
@@ -752,7 +752,7 @@ static void set_x_axis_x0(chan_info *cp, int left)
 	{
 	  x1x0 = ap->x1 - ap->x0; 
 	  ap->x0 = (double)left / (double)SND_SRATE(cp->sound); 
-#if (HAVE_ISNAN) || defined(__bsdi__)
+#if HAVE_ISNAN
 	  if (isnan(ap->x0)) ap->x0 = 0.0;
 #endif
 	  set_x_axis_x0x1(cp, ap->x0, ap->x0 + x1x0);
@@ -927,7 +927,7 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp, int focus_s
 	    }
 	  break;
 	}
-#if (HAVE_ISNAN) || defined(__bsdi__)
+#if HAVE_ISNAN
       if (isnan(ap->x0)) ap->x0 = 0.0;
 #endif
       if (ap->x0 < 0.0) ap->x0 = 0.0;
@@ -1630,7 +1630,7 @@ static int display_fft_peaks(chan_info *ucp, char *filename)
     }
   if (fd) 
     {
-#if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
+#if HAVE_STRFTIME
       timbuf = (char *)CALLOC(TIME_STR_SIZE, sizeof(char));
       time(&ts);
       strftime(timbuf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&ts));
@@ -6408,7 +6408,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      undo_edit_with_sync(cp, count); 
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
-#if !defined(UW2)
+#if HAVE_ARROW_KEYS
 	    case snd_keypad_Left: 
 	    case snd_keypad_4: 
 	      set_spectro_y_angle(ss, spectro_y_angle(ss)-1.0);
@@ -6548,7 +6548,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 
 	      /* fUn WiTh KeYpAd! */
-#if !defined(UW2)
+#if HAVE_ARROW_KEYS
 	    case snd_keypad_Up: case snd_keypad_8: 
 	      set_spectro_z_scale(ss, spectro_z_scale(ss)+.01);
 	      redisplay = CURSOR_UPDATE_DISPLAY;
@@ -6620,7 +6620,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      if (fft_size(ss) > 4) set_fft_size(ss, fft_size(ss) / 2); 
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
-#if !defined(UW2)
+#if HAVE_ARROW_KEYS
 	    case snd_keypad_Delete: case snd_keypad_Decimal: 
 	      set_dot_size(ss, dot_size(ss)+1); 
 	      redisplay = KEYBOARD_NO_ACTION; 
@@ -6906,10 +6906,10 @@ static int within_graph(chan_info *cp, int x, int y)
   axis_info *ap;
   fft_info *fp;
   int x0,x1,y0,y1;
-  x0 = x-SLOPPY_MOUSE;
-  x1 = x+SLOPPY_MOUSE;
-  y0 = y-SLOPPY_MOUSE;
-  y1 = y+SLOPPY_MOUSE;
+  x0 = x - SLOPPY_MOUSE;
+  x1 = x + SLOPPY_MOUSE;
+  y0 = y - SLOPPY_MOUSE;
+  y1 = y + SLOPPY_MOUSE;
   if (cp->waving)
     {
       ap = cp->axis;
@@ -7483,7 +7483,7 @@ void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_conte
   if (pts > (width * 10)) return; /* no point in the graph since it just duplicates the current envelope and slows everything to a halt */
   if (pts > width) pts = width;
   if (pts <= 0) pts = 1;
-  invpts = 1.0/(Float)pts;
+  invpts = 1.0 / (Float)pts;
   samps_per_pixel = (Float)(ap->x_axis_x1 - ap->x_axis_x0) * invpts;
   x1 = ap->x_axis_x0;
   coeffs = get_filter_coeffs(order, e);
@@ -7492,7 +7492,7 @@ void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_conte
   if (dBing)
     y1 = (int)(ap->y_axis_y0 + (ss->min_dB - dB(ss, resp)) * height / ss->min_dB);
   else y1 = (int)(ap->y_axis_y0 + resp * height);
-  for (i=1, pix=x1, frq=invpts; i<pts; i++,pix+=samps_per_pixel,frq+=invpts)
+  for (i=1, pix=x1, frq=invpts; i<pts; i++, pix+=samps_per_pixel, frq+=invpts)
     {
       x0 = x1;
       y0 = y1;
@@ -8471,17 +8471,29 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
   cp = get_cp(snd_n, chn_n, caller);
   switch (fld)
     {
-    case CP_AP_SX:           reset_x_display(cp, fclamp(0.0, TO_C_DOUBLE(on), 1.0), cp->axis->zx);                             break;
-    case CP_AP_ZX:           reset_x_display(cp, cp->axis->sx, fclamp(0.0, TO_C_DOUBLE(on), 1.0));                             break;
-    case CP_AP_SY:           reset_y_display(cp, fclamp(0.0, TO_C_DOUBLE(on), 1.0), cp->axis->zy);                             break;
-    case CP_AP_ZY:           reset_y_display(cp, cp->axis->sy, fclamp(0.0, TO_C_DOUBLE(on), 1.0));                             break;
-    case CP_MIN_DB:          cp->min_dB = TO_C_DOUBLE(on); cp->lin_dB = pow(10.0, cp->min_dB * 0.05); calculate_fft(cp, NULL); break;
-    case CP_SPECTRO_X_ANGLE: cp->spectro_x_angle = TO_C_DOUBLE(on); calculate_fft(cp, NULL);                                  break;
-    case CP_SPECTRO_Y_ANGLE: cp->spectro_y_angle = TO_C_DOUBLE(on); calculate_fft(cp, NULL);                                  break;
-    case CP_SPECTRO_Z_ANGLE: cp->spectro_z_angle = TO_C_DOUBLE(on); calculate_fft(cp, NULL);                                  break;
-    case CP_SPECTRO_X_SCALE: cp->spectro_x_scale = TO_C_DOUBLE(on); calculate_fft(cp, NULL);                                  break;
-    case CP_SPECTRO_Y_SCALE: cp->spectro_y_scale = TO_C_DOUBLE(on); calculate_fft(cp, NULL);                                  break;
-    case CP_SPECTRO_Z_SCALE: cp->spectro_z_scale = TO_C_DOUBLE(on); calculate_fft(cp, NULL);                                  break;
+    case CP_AP_SX:
+      reset_x_display(cp, fclamp(0.0, TO_C_DOUBLE(on), 1.0), cp->axis->zx);
+      break;
+    case CP_AP_ZX:
+      reset_x_display(cp, cp->axis->sx, fclamp(0.0, TO_C_DOUBLE(on), 1.0));
+      break;
+    case CP_AP_SY:
+      reset_y_display(cp, fclamp(0.0, TO_C_DOUBLE(on), 1.0), cp->axis->zy);
+      break;
+    case CP_AP_ZY:
+      reset_y_display(cp, cp->axis->sy, fclamp(0.0, TO_C_DOUBLE(on), 1.0)); 
+      break;
+    case CP_MIN_DB:
+      cp->min_dB = TO_C_DOUBLE(on); 
+      cp->lin_dB = pow(10.0, cp->min_dB * 0.05); 
+      calculate_fft(cp, NULL); 
+      break;
+    case CP_SPECTRO_X_ANGLE: cp->spectro_x_angle = TO_C_DOUBLE(on); calculate_fft(cp, NULL); break;
+    case CP_SPECTRO_Y_ANGLE: cp->spectro_y_angle = TO_C_DOUBLE(on); calculate_fft(cp, NULL); break;
+    case CP_SPECTRO_Z_ANGLE: cp->spectro_z_angle = TO_C_DOUBLE(on); calculate_fft(cp, NULL); break;
+    case CP_SPECTRO_X_SCALE: cp->spectro_x_scale = TO_C_DOUBLE(on); calculate_fft(cp, NULL); break;
+    case CP_SPECTRO_Y_SCALE: cp->spectro_y_scale = TO_C_DOUBLE(on); calculate_fft(cp, NULL); break;
+    case CP_SPECTRO_Z_SCALE: cp->spectro_z_scale = TO_C_DOUBLE(on); calculate_fft(cp, NULL); break;
     case CP_SPECTRO_CUTOFF:  
       cp->spectro_cutoff = fclamp(0.0, TO_C_DOUBLE(on), 1.0); 
       calculate_fft(cp, NULL); 
@@ -9761,7 +9773,7 @@ static SCM g_set_y_bounds(SCM bounds, SCM snd_n, SCM chn_n)
 {
   chan_info *cp;
   Float low,hi;
-  SCM y0=SCM_UNDEFINED,y1=SCM_UNDEFINED;
+  SCM y0 = SCM_UNDEFINED,y1 = SCM_UNDEFINED;
   SND_ASSERT_CHAN("set-" S_y_bounds, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, "set-" S_y_bounds);
   if (gh_length(bounds) > 0)
@@ -9920,7 +9932,7 @@ static SCM g_swap_channels(SCM snd0, SCM chn0, SCM snd1, SCM chn1, SCM beg, SCM 
   #define H_swap_channels "(" S_swap_channels " snd0 chn0 snd1 chn1) swaps the indicated channels"
   chan_info *cp0 = NULL,*cp1 = NULL;
   snd_fd *c0,*c1;
-  int dur0=0,dur1=0,beg0=0,num,old_squelch0,old_squelch1;
+  int dur0 = 0,dur1 = 0,beg0 = 0,num,old_squelch0,old_squelch1;
   snd_info *sp = NULL;
   env_info *e0,*e1;
   SND_ASSERT_CHAN(S_swap_channels, snd0, chn0, 1);
@@ -9937,7 +9949,7 @@ static SCM g_swap_channels(SCM snd0, SCM chn0, SCM snd1, SCM chn1, SCM beg, SCM 
       else sp = cp0->sound;
       if (SCM_INUM(snd0) == SCM_INUM(snd1))
 	{
-	  if ((cp0->chan+1) < sp->nchans)
+	  if ((cp0->chan + 1) < sp->nchans)
 	    cp1 = sp->chans[cp0->chan + 1];
 	  else cp1 = sp->chans[0];
 	}
@@ -10123,44 +10135,44 @@ static int handle_key_press(chan_info *cp, int key, int state) {return(0);}
 
 void g_init_chn(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure(S_temp_filenames, SCM_FNC g_temp_filenames, 1, 0, 0), H_temp_filenames);
-  DEFINE_PROC(gh_new_procedure(S_sound_to_temp, SCM_FNC g_sound_to_temp, 0, 2, 0), H_sound_to_temp);
-  DEFINE_PROC(gh_new_procedure(S_sound_to_temps, SCM_FNC g_sound_to_temps, 0, 2, 0), H_sound_to_temps);
-  DEFINE_PROC(gh_new_procedure(S_selection_to_temp, SCM_FNC g_selection_to_temp, 0, 2, 0), H_selection_to_temp);
-  DEFINE_PROC(gh_new_procedure(S_selection_to_temps, SCM_FNC g_selection_to_temps, 0, 2, 0), H_selection_to_temps);
-  DEFINE_PROC(gh_new_procedure(S_temp_to_sound, SCM_FNC g_temp_to_sound, 3, 0, 0), H_temp_to_sound);
-  DEFINE_PROC(gh_new_procedure(S_temps_to_sound, SCM_FNC g_temps_to_sound, 3, 0, 0), H_temps_to_sound);
-  DEFINE_PROC(gh_new_procedure(S_temp_to_selection, SCM_FNC g_temp_to_sound, 3, 0, 0), H_temp_to_sound);
-  DEFINE_PROC(gh_new_procedure(S_temps_to_selection, SCM_FNC g_temps_to_sound, 3, 0, 0), H_temps_to_sound);
-  DEFINE_PROC(gh_new_procedure(S_scan_chan, SCM_FNC g_scan_chan, 1, 4, 0), H_scan_chan);
-  DEFINE_PROC(gh_new_procedure(S_scan_chans, SCM_FNC g_scan_chans, 1, 2, 0), H_scan_chans);
-  DEFINE_PROC(gh_new_procedure(S_scan_all_chans, SCM_FNC g_scan_all_chans, 1, 2, 0), H_scan_all_chans);
-  DEFINE_PROC(gh_new_procedure(S_scan_sound_chans, SCM_FNC g_scan_sound_chans, 1, 3, 0), H_scan_sound_chans);
-  DEFINE_PROC(gh_new_procedure(S_scan_across_chans, SCM_FNC g_scan_across_chans, 1, 2, 0), H_scan_across_chans);
-  DEFINE_PROC(gh_new_procedure(S_scan_across_all_chans, SCM_FNC g_scan_across_all_chans, 1, 2, 0), H_scan_across_all_chans);
+  DEFINE_PROC(gh_new_procedure(S_temp_filenames,          SCM_FNC g_temp_filenames, 1, 0, 0),          H_temp_filenames);
+  DEFINE_PROC(gh_new_procedure(S_sound_to_temp,           SCM_FNC g_sound_to_temp, 0, 2, 0),           H_sound_to_temp);
+  DEFINE_PROC(gh_new_procedure(S_sound_to_temps,          SCM_FNC g_sound_to_temps, 0, 2, 0),          H_sound_to_temps);
+  DEFINE_PROC(gh_new_procedure(S_selection_to_temp,       SCM_FNC g_selection_to_temp, 0, 2, 0),       H_selection_to_temp);
+  DEFINE_PROC(gh_new_procedure(S_selection_to_temps,      SCM_FNC g_selection_to_temps, 0, 2, 0),      H_selection_to_temps);
+  DEFINE_PROC(gh_new_procedure(S_temp_to_sound,           SCM_FNC g_temp_to_sound, 3, 0, 0),           H_temp_to_sound);
+  DEFINE_PROC(gh_new_procedure(S_temps_to_sound,          SCM_FNC g_temps_to_sound, 3, 0, 0),          H_temps_to_sound);
+  DEFINE_PROC(gh_new_procedure(S_temp_to_selection,       SCM_FNC g_temp_to_sound, 3, 0, 0),           H_temp_to_sound);
+  DEFINE_PROC(gh_new_procedure(S_temps_to_selection,      SCM_FNC g_temps_to_sound, 3, 0, 0),          H_temps_to_sound);
+  DEFINE_PROC(gh_new_procedure(S_scan_chan,               SCM_FNC g_scan_chan, 1, 4, 0),               H_scan_chan);
+  DEFINE_PROC(gh_new_procedure(S_scan_chans,              SCM_FNC g_scan_chans, 1, 2, 0),              H_scan_chans);
+  DEFINE_PROC(gh_new_procedure(S_scan_all_chans,          SCM_FNC g_scan_all_chans, 1, 2, 0),          H_scan_all_chans);
+  DEFINE_PROC(gh_new_procedure(S_scan_sound_chans,        SCM_FNC g_scan_sound_chans, 1, 3, 0),        H_scan_sound_chans);
+  DEFINE_PROC(gh_new_procedure(S_scan_across_chans,       SCM_FNC g_scan_across_chans, 1, 2, 0),       H_scan_across_chans);
+  DEFINE_PROC(gh_new_procedure(S_scan_across_all_chans,   SCM_FNC g_scan_across_all_chans, 1, 2, 0),   H_scan_across_all_chans);
   DEFINE_PROC(gh_new_procedure(S_scan_across_sound_chans, SCM_FNC g_scan_across_sound_chans, 1, 3, 0), H_scan_across_sound_chans);
-  DEFINE_PROC(gh_new_procedure(S_map_chan, SCM_FNC g_map_chan, 1, 5, 0), H_map_chan);
-  DEFINE_PROC(gh_new_procedure(S_map_chans, SCM_FNC g_map_chans, 1, 3, 0), H_map_chans);
-  DEFINE_PROC(gh_new_procedure(S_map_all_chans, SCM_FNC g_map_all_chans, 1, 3, 0), H_map_all_chans);
-  DEFINE_PROC(gh_new_procedure(S_map_sound_chans, SCM_FNC g_map_sound_chans, 1, 4, 0), H_map_sound_chans);
-  DEFINE_PROC(gh_new_procedure(S_map_across_chans, SCM_FNC g_map_across_chans, 1, 3, 0), H_map_across_chans);
-  DEFINE_PROC(gh_new_procedure(S_map_across_all_chans, SCM_FNC g_map_across_all_chans, 1, 3, 0), H_map_across_all_chans);
-  DEFINE_PROC(gh_new_procedure(S_map_across_sound_chans, SCM_FNC g_map_across_sound_chans, 1, 4, 0), H_map_across_sound_chans);
-  DEFINE_PROC(gh_new_procedure(S_find, SCM_FNC g_find, 1, 3, 0), H_find);
-  DEFINE_PROC(gh_new_procedure(S_count_matches, SCM_FNC g_count_matches, 1, 3, 0), H_count_matches);
-  DEFINE_PROC(gh_new_procedure(S_report_in_minibuffer, SCM_FNC g_report_in_minibuffer, 1, 1, 0), H_report_in_minibuffer);
-  DEFINE_PROC(gh_new_procedure(S_prompt_in_minibuffer, SCM_FNC g_prompt_in_minibuffer, 1, 2, 0), H_prompt_in_minibuffer);
-  DEFINE_PROC(gh_new_procedure(S_append_to_minibuffer, SCM_FNC g_append_to_minibuffer, 1, 1, 0), H_append_to_minibuffer);
-  DEFINE_PROC(gh_new_procedure(S_bind_key, SCM_FNC g_bind_key, 3, 1, 0), H_bind_key);
-  DEFINE_PROC(gh_new_procedure(S_key, SCM_FNC g_key, 2, 2, 0), H_key);
-  DEFINE_PROC(gh_new_procedure(S_save_macros, SCM_FNC g_save_macros, 0, 0, 0), H_save_macros);
-  DEFINE_PROC(gh_new_procedure(S_forward_graph, SCM_FNC g_forward_graph, 0, 3, 0), H_forward_graph);
-  DEFINE_PROC(gh_new_procedure(S_backward_graph, SCM_FNC g_backward_graph, 0, 3, 0), H_backward_graph);
+  DEFINE_PROC(gh_new_procedure(S_map_chan,                SCM_FNC g_map_chan, 1, 5, 0),                H_map_chan);
+  DEFINE_PROC(gh_new_procedure(S_map_chans,               SCM_FNC g_map_chans, 1, 3, 0),               H_map_chans);
+  DEFINE_PROC(gh_new_procedure(S_map_all_chans,           SCM_FNC g_map_all_chans, 1, 3, 0),           H_map_all_chans);
+  DEFINE_PROC(gh_new_procedure(S_map_sound_chans,         SCM_FNC g_map_sound_chans, 1, 4, 0),         H_map_sound_chans);
+  DEFINE_PROC(gh_new_procedure(S_map_across_chans,        SCM_FNC g_map_across_chans, 1, 3, 0),        H_map_across_chans);
+  DEFINE_PROC(gh_new_procedure(S_map_across_all_chans,    SCM_FNC g_map_across_all_chans, 1, 3, 0),    H_map_across_all_chans);
+  DEFINE_PROC(gh_new_procedure(S_map_across_sound_chans,  SCM_FNC g_map_across_sound_chans, 1, 4, 0),  H_map_across_sound_chans);
+  DEFINE_PROC(gh_new_procedure(S_find,                    SCM_FNC g_find, 1, 3, 0),                    H_find);
+  DEFINE_PROC(gh_new_procedure(S_count_matches,           SCM_FNC g_count_matches, 1, 3, 0),           H_count_matches);
+  DEFINE_PROC(gh_new_procedure(S_report_in_minibuffer,    SCM_FNC g_report_in_minibuffer, 1, 1, 0),    H_report_in_minibuffer);
+  DEFINE_PROC(gh_new_procedure(S_prompt_in_minibuffer,    SCM_FNC g_prompt_in_minibuffer, 1, 2, 0),    H_prompt_in_minibuffer);
+  DEFINE_PROC(gh_new_procedure(S_append_to_minibuffer,    SCM_FNC g_append_to_minibuffer, 1, 1, 0),    H_append_to_minibuffer);
+  DEFINE_PROC(gh_new_procedure(S_bind_key,                SCM_FNC g_bind_key, 3, 1, 0),                H_bind_key);
+  DEFINE_PROC(gh_new_procedure(S_key,                     SCM_FNC g_key, 2, 2, 0),                     H_key);
+  DEFINE_PROC(gh_new_procedure(S_save_macros,             SCM_FNC g_save_macros, 0, 0, 0),             H_save_macros);
+  DEFINE_PROC(gh_new_procedure(S_forward_graph,           SCM_FNC g_forward_graph, 0, 3, 0),           H_forward_graph);
+  DEFINE_PROC(gh_new_procedure(S_backward_graph,          SCM_FNC g_backward_graph, 0, 3, 0),          H_backward_graph);
 
-  DEFINE_PROC(gh_new_procedure(S_edits, SCM_FNC g_edits, 0, 2, 0), H_edits);
-  DEFINE_PROC(gh_new_procedure(S_peaks, SCM_FNC g_peaks, 0, 3, 0), H_peaks);
-  DEFINE_PROC(gh_new_procedure(S_edit_hook, SCM_FNC g_edit_hook, 0, 2, 0), H_edit_hook);
-  DEFINE_PROC(gh_new_procedure(S_undo_hook, SCM_FNC g_undo_hook, 0, 2, 0), H_undo_hook);
+  DEFINE_PROC(gh_new_procedure(S_edits,                   SCM_FNC g_edits, 0, 2, 0),                   H_edits);
+  DEFINE_PROC(gh_new_procedure(S_peaks,                   SCM_FNC g_peaks, 0, 3, 0),                   H_peaks);
+  DEFINE_PROC(gh_new_procedure(S_edit_hook,               SCM_FNC g_edit_hook, 0, 2, 0),               H_edit_hook);
+  DEFINE_PROC(gh_new_procedure(S_undo_hook,               SCM_FNC g_undo_hook, 0, 2, 0),               H_undo_hook);
 
   define_procedure_with_reversed_setter(S_x_position_slider, SCM_FNC g_ap_sx, H_x_position_slider,
 					"set-" S_x_position_slider, SCM_FNC g_set_ap_sx, SCM_FNC g_set_ap_sx_reversed,
@@ -10186,15 +10198,15 @@ void g_init_chn(SCM local_doc)
 					"set-" S_maxamp, SCM_FNC g_set_maxamp, SCM_FNC g_set_maxamp_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  DEFINE_PROC(gh_new_procedure(S_forward_sample, SCM_FNC g_forward_sample, 0, 3, 0), H_forward_sample);
-  DEFINE_PROC(gh_new_procedure(S_backward_sample, SCM_FNC g_backward_sample, 0, 3, 0), H_backward_sample);
-  DEFINE_PROC(gh_new_procedure(S_smooth, SCM_FNC g_smooth, 2, 2, 0), H_smooth);
-  DEFINE_PROC(gh_new_procedure(S_smooth_selection, SCM_FNC g_smooth_selection, 0, 0, 0), H_smooth_selection);
-  DEFINE_PROC(gh_new_procedure(S_reverse_sound, SCM_FNC g_reverse_sound, 0, 2, 0), H_reverse_sound);
+  DEFINE_PROC(gh_new_procedure(S_forward_sample,    SCM_FNC g_forward_sample, 0, 3, 0),    H_forward_sample);
+  DEFINE_PROC(gh_new_procedure(S_backward_sample,   SCM_FNC g_backward_sample, 0, 3, 0),   H_backward_sample);
+  DEFINE_PROC(gh_new_procedure(S_smooth,            SCM_FNC g_smooth, 2, 2, 0),            H_smooth);
+  DEFINE_PROC(gh_new_procedure(S_smooth_selection,  SCM_FNC g_smooth_selection, 0, 0, 0),  H_smooth_selection);
+  DEFINE_PROC(gh_new_procedure(S_reverse_sound,     SCM_FNC g_reverse_sound, 0, 2, 0),     H_reverse_sound);
   DEFINE_PROC(gh_new_procedure(S_reverse_selection, SCM_FNC g_reverse_selection, 0, 0, 0), H_reverse_selection);
-  DEFINE_PROC(gh_new_procedure(S_swap_channels, SCM_FNC g_swap_channels, 0, 6, 0), H_swap_channels);
-  DEFINE_PROC(gh_new_procedure(S_insert_silence, SCM_FNC g_insert_silence, 2, 2, 0), H_insert_silence);
-  DEFINE_PROC(gh_new_procedure(S_fht, SCM_FNC g_fht, 1, 0, 0), H_fht);
+  DEFINE_PROC(gh_new_procedure(S_swap_channels,     SCM_FNC g_swap_channels, 0, 6, 0),     H_swap_channels);
+  DEFINE_PROC(gh_new_procedure(S_insert_silence,    SCM_FNC g_insert_silence, 2, 2, 0),    H_insert_silence);
+  DEFINE_PROC(gh_new_procedure(S_fht,               SCM_FNC g_fht, 1, 0, 0),               H_fht);
 
   define_procedure_with_reversed_setter(S_edit_position, SCM_FNC g_edit_position, H_edit_position,
 					"set-" S_edit_position, SCM_FNC g_set_edit_position, SCM_FNC g_set_edit_position_reversed,

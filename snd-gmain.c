@@ -49,13 +49,10 @@
 #define ENVED_POINT_SIZE 10
 #define NOTEBOOK_BINDING_WIDTH 20
 
-#define NO_ICON 0
-#define PLAIN_ICON 1
-#define XPM_ICON 2
-
 #define TINY_FONT "6x12"
 
 /* we assume later that we can always find these fonts (if resource file gives bogus entry, we fall back on these) */
+
 #ifdef SGI
   #define DEFAULT_BUTTON_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1"
   #define DEFAULT_BOLD_BUTTON_FONT "-*-times-bold-r-*-*-14-*-*-*-*-*-iso8859-1"
@@ -87,25 +84,24 @@
 #define AUTO_RESIZE_DEFAULT 1
 
 #ifndef SND_AS_WIDGET
-static gint Window_Close(GtkWidget *w, GdkEvent *event, gpointer clientData)
+static gint Window_Close(GtkWidget *w, GdkEvent *event, gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   snd_exit_cleanly(ss);
   snd_exit(0);
   return(FALSE);
 }
 #endif
 
-static gint corruption_check(gpointer clientData)
+static gint corruption_check(gpointer context)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   if (corruption_time(ss) > 0.0)
     {
-      if ((!(play_in_progress())) && (!(record_in_progress())))
-	{
-	  map_over_sounds(ss, snd_not_current, NULL);
-	}
-      gtk_timeout_add((guint32)(corruption_time(ss)*1000), corruption_check, clientData);
+      if ((!(play_in_progress())) && 
+	  (!(record_in_progress())))
+	map_over_sounds(ss, snd_not_current, NULL);
+      gtk_timeout_add((guint32)(corruption_time(ss) * 1000), corruption_check, context);
     }
   return(0);
 }
@@ -131,7 +127,7 @@ void add_dialog(snd_state *ss, GtkWidget *dialog)
 	{
 	  sx->dialog_list_size *= 2;
 	  sx->dialogs = (GtkWidget **)REALLOC(sx->dialogs, sx->dialog_list_size * sizeof(GtkWidget *));
-	  for (i=sx->ndialogs;i<sx->dialog_list_size;i++) sx->dialogs[i] = NULL;
+	  for (i=sx->ndialogs; i<sx->dialog_list_size; i++) sx->dialogs[i] = NULL;
 	}
     }
   sx->dialogs[sx->ndialogs] = dialog;
@@ -145,32 +141,33 @@ void dismiss_all_dialogs(snd_state *ss)
   sx = ss->sgx;
   if (record_dialog_is_active()) close_recorder_audio();
   if (sx->dialog_list_size > 0)
-    for (i=0;i<sx->ndialogs;i++)
+    for (i=0; i<sx->ndialogs; i++)
       if (sx->dialogs[i])
 	gtk_widget_hide(sx->dialogs[i]);
 }
 
 #ifndef SND_AS_WIDGET
-static gint iconify_window(GtkWidget *w, GdkEvent *event, gpointer clientData) 
+static gint iconify_window(GtkWidget *w, GdkEvent *event, gpointer context) 
 { 
-  dismiss_all_dialogs((snd_state *)clientData);
+  dismiss_all_dialogs((snd_state *)context);
   return(FALSE);
 }
 #endif
 
 static GdkAtom snd_v,snd_c;
 
-static void who_called(GtkWidget *w, GdkEvent *event, gpointer clientData) 
+static void who_called(GtkWidget *w, GdkEvent *event, gpointer context) 
 {
   /* watch for communication from some other program via the SND_COMMAND property */
   GdkEventProperty *ev = (GdkEventProperty *)event;
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   GdkAtom type;
   gint format,nitems;
   guchar *version[1];
   if (ev->atom == snd_c)
     {
-      if (gdk_property_get(MAIN_WINDOW(ss), snd_c, GDK_TARGET_STRING, 0L, (long)BUFSIZ, FALSE,
+      if (gdk_property_get(MAIN_WINDOW(ss), snd_c, 
+			   GDK_TARGET_STRING, 0L, (long)BUFSIZ, FALSE,
 			   &type, &format, &nitems, (guchar **)version))
 	{
 	  if (version[0])
@@ -198,12 +195,12 @@ static int auto_open_files = 0;
 static int noglob = 0, noinit = 0;
 static gint stdin_id = 0;
 
-static void GetStdinString (gpointer clientData, gint fd, GdkInputCondition condition)
+static void GetStdinString (gpointer context, gint fd, GdkInputCondition condition)
 {
   int bytes,size;
   char *buf;
   buf = (char *)CALLOC(1024, sizeof(char));
-  size=1024;
+  size = 1024;
   bytes = read(fd, buf, 1024);
   if (bytes <= 0) 
     {
@@ -215,11 +212,11 @@ static void GetStdinString (gpointer clientData, gint fd, GdkInputCondition cond
     {
       while (bytes == 1024)
 	{
-	  size+=1024;
+	  size += 1024;
 	  buf = (char *)REALLOC(buf, size);
-	  bytes = read(fd, (char *)(buf+size-1024), 1024);
+	  bytes = read(fd, (char *)(buf + size - 1024), 1024);
 	}
-      snd_eval_stdin_str((snd_state *)clientData, buf);
+      snd_eval_stdin_str((snd_state *)context, buf);
     }
   FREE(buf);
 }
@@ -314,9 +311,9 @@ static void setup_gcs (snd_state *ss)
 
 typedef struct {int slice; snd_state *ss; GtkWidget *shell;} startup_state;
 
-static BACKGROUND_TYPE startup_funcs(gpointer clientData)
+static BACKGROUND_TYPE startup_funcs(gpointer context)
 {
-  startup_state *tm = (startup_state *)clientData;
+  startup_state *tm = (startup_state *)context;
   snd_state *ss;
   static int auto_open_ctr = 0;
   ss = tm->ss;
@@ -334,7 +331,12 @@ static BACKGROUND_TYPE startup_funcs(gpointer clientData)
       snd_v = gdk_atom_intern("SND_VERSION", FALSE);
       snd_c = gdk_atom_intern("SND_COMMAND", FALSE);
 
-      gdk_property_change(MAIN_WINDOW(ss), snd_v, GDK_TARGET_STRING, 8, GDK_PROP_MODE_REPLACE, (guchar *)(SND_VERSION), strlen(SND_VERSION)+1);
+      gdk_property_change(MAIN_WINDOW(ss), 
+			  snd_v, 
+			  GDK_TARGET_STRING, 8, 
+			  GDK_PROP_MODE_REPLACE, 
+			  (guchar *)(SND_VERSION), 
+			  strlen(SND_VERSION) + 1);
       gtk_widget_add_events (tm->shell, gtk_widget_get_events (tm->shell) | GDK_PROPERTY_CHANGE_MASK);
       gtk_signal_connect(GTK_OBJECT(tm->shell), "property_notify_event", GTK_SIGNAL_FUNC(who_called), (gpointer)ss);
 
@@ -483,7 +485,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   ss->startup_title = copy_string("snd");
 
   set_sound_style(ss, SOUNDS_VERTICAL);
-  for (i=1;i<argc;i++)
+  for (i=1; i<argc; i++)
     {
       if ((strcmp(argv[i], "-h") == 0) || (strcmp(argv[i], "-horizontal") == 0))
 	set_sound_style(ss, SOUNDS_HORIZONTAL);

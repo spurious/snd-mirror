@@ -1,7 +1,7 @@
 # make file for RPM snd in LinuxPPC with Motif 2.1 and Guile statically loaded
 
 CC = gcc
-CFLAGS = -O3 -DLINUX -I/usr/local/include -I/usr/X11R6/include
+CFLAGS = -O3 -DUSE_SND -DLINUX -I/usr/local/include -I/usr/X11R6/include
 LIBS = /usr/local/lib/libguile.a /usr/X11R6/lib/libXm.so.2.1 -L/usr/X11R6/lib -lXp -lXpm -lXt -lXext -lX11 -lm -ldl
 
 include makesnd.files

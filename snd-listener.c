@@ -212,9 +212,9 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
       for (i=end_of_text; i>=0; i--)
 	if ((full_str[i] == prompt[0]) && 
 	    ((i == 0) || 
-	     (full_str[i-1] == '\n')))
+	     (full_str[i - 1] == '\n')))
 	  {
-	    start_of_text = i+1;
+	    start_of_text = i + 1;
 	    break;
 	  }
     }
@@ -230,7 +230,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
 	  if (str[j] == '(') 
 	    parens++;
 	}
-      str[end_of_text-start_of_text+1] = 0;
+      str[end_of_text - start_of_text + 1] = 0;
       end_of_text = snd_strlen(str);
       /* fprintf(stderr, "got: %s %d parens ", str, parens); */
       if (parens)
@@ -241,7 +241,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
 	      (end_of_text < slen))
 	    {
 	      if (end_of_text < (slen - 1))
-		str[end_of_text+1] = 0;
+		str[end_of_text + 1] = 0;
 	      else str[end_of_text] = 0;
 	      if (str[end_of_text] == '\n') str[end_of_text]=0;
 	      /* fprintf(stderr, "now str: %s ", str); */
@@ -268,7 +268,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
 		tmp = (char *)CALLOC(len+1, sizeof(char));
 		if (i != 0) i++;
 		for (k=0; i<len; i++, k++) 
-		  if ((i>loc) &&
+		  if ((i > loc) &&
 		      ((str[i] == '\n') || 
 		       (str[i] == ' ')))
 		    break;
@@ -327,22 +327,15 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
   char *str,*r0 = NULL,*r1 = NULL;
   GUI_SET_TEXT(stats_form, "file chn: mem(#bufs), main, temp(#files), amp envs\n\n");
   for (i=0; i<ss->max_sounds; i++)
-    {
-      if ((sp=((snd_info *)(ss->sounds[i]))))
-	{
-	  if (sp->inuse)
-	    {
-	      for (j=0; j<(sp->nchans); j++)
-		{
-		  if ((cp=((chan_info *)(sp->chans[j]))))
-		    {
-		      if (cp->stats)
-			{
-			  pos = GUI_TEXT_END(stats_form);
-			  str = update_chan_stats(cp);
-			  GUI_STATS_TEXT_INSERT(stats_form, pos, str);
-			  FREE(str);
-			}}}}}}
+    if ((sp = ((snd_info *)(ss->sounds[i]))) &&	(sp->inuse))
+      for (j=0; j<(sp->nchans); j++)
+	if ((cp = ((chan_info *)(sp->chans[j]))) && (cp->stats))
+	  {
+	    pos = GUI_TEXT_END(stats_form);
+	    str = update_chan_stats(cp);
+	    GUI_STATS_TEXT_INSERT(stats_form, pos, str);
+	    FREE(str);
+	  }
   regs = snd_regions();
   if (regs > 0)
     {
@@ -383,6 +376,26 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
   pos = GUI_TEXT_END(stats_form);
   GUI_STATS_TEXT_INSERT(stats_form, pos, str);
   free(str);
+#endif
+#if HAVE_GUILE && HAVE_CLOCK
+  {
+    SCM stats;
+    stats = scm_gc_stats();
+    if (gh_list_p(stats))
+      {
+	str = (char *)CALLOC(2048,sizeof(char));
+	sprintf(str,
+		"\nGuile:\n  gc time: %.2f secs (%d sweeps)\n  cells: %d (%d gc'd)\n  heap size: %d",
+		(float)TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(0)))) * 1000.0 / (float)CLOCKS_PER_SEC,
+		TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(5)))),
+		TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(1)))),
+		TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(9)))),
+		TO_C_INT(gh_cdr(gh_list_ref(stats,TO_SMALL_SCM_INT(2)))));
+	pos = GUI_TEXT_END(stats_form);
+	GUI_STATS_TEXT_INSERT(stats_form, pos, str);
+	FREE(str);
+      }
+  }
 #endif
 #endif
 }

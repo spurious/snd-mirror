@@ -726,7 +726,7 @@ void sp_name_click(snd_info *sp)
 	{
 	  linked = is_link(sp->fullname);
 	  dur = (Float)(hdr->samples) / (Float)(hdr->chans * hdr->srate);
-#if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
+#if HAVE_STRFTIME
 	  strftime(timebuf,
 		   TIME_STR_SIZE,
 		   STRFTIME_FORMAT,

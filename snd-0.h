@@ -4,19 +4,19 @@
 #if (!defined(HAVE_CONFIG_H))
   /* we need fstatfs -- need its header and how many args it takes */
   #if defined(SGI) || defined(SCO5) || defined(UW2) || defined(SOLARIS)
-    #define HAVE_SYS_STATFS_H
+    #define HAVE_SYS_STATFS_H 1
     #define FSTATFS_ARGS 4
   #else
     #if defined(HPUX) || defined(LINUX)
-      #define HAVE_SYS_VFS_H
+      #define HAVE_SYS_VFS_H 1
       #define FSTATFS_ARGS 2
     #else
       #if (defined(ALPHA) || defined(__APPLE__) || defined(__bsdi__))
-        #define HAVE_SYS_MOUNT_H
+        #define HAVE_SYS_MOUNT_H 1
         #define FSTATFS_ARGS 2
       #else
         #if defined(WINDOZE) && defined(__CYGWIN__)
-          #define HAVE_SYS_VFS_H
+          #define HAVE_SYS_VFS_H 1
           #define FSTATFS_ARGS 2
         #endif
       #endif
@@ -37,6 +37,9 @@
   #if defined(LINUX) && (!(defined(HAVE_SCHED_H)))
     #define HAVE_SCHED_H 1
   #endif
+  #ifdef SGI
+    #define HAVE_SYS_FPU_H 1
+  #endif
   #ifdef LINUX
     #define HAVE_MALLINFO 1
     #define HAVE_MKSTEMP 1
@@ -54,6 +57,8 @@
     #define HAVE_MEMSET 1
     #define HAVE_FSTATFS 1
     #define HAVE_DIRENT_H 1
+    #define HAVE_STRFTIME 1
+    #define HAVE_CLOCK 1
   #endif
   #ifdef __GNUC__
     #define HAVE_LONG_LONGS 1
@@ -64,17 +69,25 @@
   #ifndef BEOS
     #define HAVE_X 1
   #endif
-  #if GUILE_1_3_0
+  #if HAVE_GUILE_1_3_0
     #define HAVE_SCM_CREATE_HOOK 0
     #define HAVE_SCM_STRPORT_TO_STRING 0
   #else
     #define HAVE_SCM_CREATE_HOOK 1
     #define HAVE_SCM_STRPORT_TO_STRING 1
-    #if (!GUILE_1_3)
+    #if (!HAVE_GUILE_1_3)
       #define HAVE_SCM_MAKE_REAL 1
       #define HAVE_SCM_OUT_OF_RANGE_POS 1
     #endif
   #endif
+#endif
+
+#if defined(__bsdi__) && (!HAVE_ISNAN)
+  #define HAVE_ISNAN 1
+#endif
+
+#ifndef UW2
+  #define HAVE_ARROW_KEYS 1
 #endif
 
 #if 0

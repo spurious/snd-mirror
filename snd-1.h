@@ -1155,7 +1155,7 @@ char *kmg (int num);
 #ifdef DEBUG_MEMORY
   void set_encloser(char *name);
 #endif
-#if DEBUGGING
+#if DEBUGGING && HAVE_CLOCK
   void start_timing(void);
   void stop_timing(void);
 #endif

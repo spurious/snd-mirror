@@ -583,11 +583,11 @@ typedef struct {
 
 static color_chooser_info *ccd = NULL;
 
-static void Invert_Color_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void Invert_Color_Callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss;
-  color_chooser_info *cd = (color_chooser_info *)clientData;
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
+  color_chooser_info *cd = (color_chooser_info *)context;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   ss = cd->state;
   in_set_color_inverted(ss, cb->set);
   map_over_chans(ss, update_graph, NULL);
@@ -602,13 +602,13 @@ void set_color_inverted(snd_state *ss, int val)
     map_over_chans(ss, update_graph, NULL);
 }
 
-static void Scale_Color_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void Scale_Color_Callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss;
   Float val;
   int scale_val;
-  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)callData;
-  color_chooser_info *cd = (color_chooser_info *)clientData;
+  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
+  color_chooser_info *cd = (color_chooser_info *)context;
   ss = cd->state;
   scale_val = cbs->value;
   if (scale_val <= 50) 
@@ -634,11 +634,11 @@ void set_color_scale(snd_state *ss, Float val)
     map_over_chans(ss, update_graph, NULL);
 }
 
-static void List_Color_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void List_Color_Callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss;
-  XmListCallbackStruct *cbs = (XmListCallbackStruct *)callData;
-  color_chooser_info *cd = (color_chooser_info *)clientData;
+  XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
+  color_chooser_info *cd = (color_chooser_info *)context;
   ss = cd->state;
   in_set_color_map(ss, (cbs->item_position - 1));
   map_over_chans(ss, update_graph, NULL);
@@ -653,12 +653,12 @@ void set_color_map(snd_state *ss, int val)
     map_over_chans(ss, update_graph, NULL);
 }
 
-static void Cutoff_Color_Callback(Widget w, XtPointer clientData, XtPointer callData) /* cutoff point */
+static void Cutoff_Color_Callback(Widget w, XtPointer context, XtPointer info) /* cutoff point */
 {
   /* cutoff point for color chooser */
   snd_state *ss;
-  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)callData;
-  color_chooser_info *cd = (color_chooser_info *)clientData;
+  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
+  color_chooser_info *cd = (color_chooser_info *)context;
   ss = cd->state;
   in_set_color_cutoff(ss, (Float)(cbs->value) / 1000.0);
   map_over_chans(ss, update_graph, NULL);
@@ -674,27 +674,27 @@ void set_color_cutoff(snd_state *ss, Float val)
 }
 
 
-static void Dismiss_Color_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void Dismiss_Color_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  color_chooser_info *cd = (color_chooser_info *)clientData;
+  color_chooser_info *cd = (color_chooser_info *)context;
   XtUnmanageChild(cd->dialog);
 }
 
-static void Help_Color_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void Help_Color_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  color_dialog_help((snd_state *)clientData);
+  color_dialog_help((snd_state *)context);
 }
 
 /* I tried a scrolled window with each colormap name in an appropriate color, but it looked kinda dumb */
 
-void View_Color_Callback(Widget w, XtPointer clientData, XtPointer callData)
+void View_Color_Callback(Widget w, XtPointer context, XtPointer info)
 {
   Arg args[32];
   int n,i;
   XmString xhelp,xdismiss,xcutoff,xinvert,titlestr;
   XmString *cmaps;
   Widget mainform,list_label,light_label,sep,sep1;
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   if (!ccd)
     {
       /* create color chooser dialog window */
@@ -892,11 +892,11 @@ typedef struct {
 
 static orientation_info *oid = NULL;
 
-static void AX_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void AX_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
-  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)callData;
-  orientation_info *od = (orientation_info *)clientData;
+  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
+  orientation_info *od = (orientation_info *)context;
   ss = od->state;
   in_set_spectro_x_angle(ss, (Float)(cbs->value));
   map_chans_field(ss, FCP_X_ANGLE, (Float)(cbs->value));
@@ -912,18 +912,18 @@ void set_spectro_x_angle(snd_state *ss, Float val)
     map_over_chans(ss, update_graph, NULL);
 }
 
-static void AX_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void AX_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData, 
+  snd_help((snd_state *)context, 
 	   "x angle slider", 
 	   "This slider causes the graph to rotate\naround the x axis.\n");
 }
 
-static void AY_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void AY_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
-  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)callData;
-  orientation_info *od = (orientation_info *)clientData;
+  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
+  orientation_info *od = (orientation_info *)context;
   ss = od->state;
   in_set_spectro_y_angle(ss, (Float)(cbs->value));
   map_chans_field(ss, FCP_Y_ANGLE, (Float)(cbs->value));
@@ -939,18 +939,18 @@ void set_spectro_y_angle(snd_state *ss, Float val)
     map_over_chans(ss, update_graph, NULL);
 }
 
-static void AY_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void AY_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData, 
+  snd_help((snd_state *)context, 
 	   "y angle slider", 
 	   "This slider causes the graph to rotate\naround the y axis.\n");
 }
 
-static void AZ_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void AZ_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
-  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)callData;
-  orientation_info *od = (orientation_info *)clientData;
+  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
+  orientation_info *od = (orientation_info *)context;
   ss = od->state;
   in_set_spectro_z_angle(ss, (Float)(cbs->value));
   map_chans_field(ss, FCP_Z_ANGLE, (Float)(cbs->value));
@@ -966,18 +966,18 @@ void set_spectro_z_angle(snd_state *ss, Float val)
     map_over_chans(ss, update_graph, NULL);
 }
 
-static void AZ_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void AZ_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData, 
+  snd_help((snd_state *)context, 
 	   "z angle slider", 
 	   "This slider causes the graph to rotate\naround the z axis.\n");
 }
 
-static void SX_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void SX_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
-  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)callData;
-  orientation_info *od = (orientation_info *)clientData;
+  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
+  orientation_info *od = (orientation_info *)context;
   ss = od->state;
   in_set_spectro_x_scale(ss, (Float)(cbs->value) * 0.01);
   map_chans_field(ss, FCP_X_SCALE, (Float)(cbs->value) * 0.01);
@@ -993,18 +993,18 @@ void set_spectro_x_scale(snd_state *ss, Float val)
     map_over_chans(ss, update_graph, NULL);
 }
 
-static void SX_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void SX_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData, 
+  snd_help((snd_state *)context, 
 	   "x scale slider", 
 	   "This slider causes the graph to expand or\ncontract along the x axis.\n");
 }
 
-static void SY_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void SY_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
-  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)callData;
-  orientation_info *od = (orientation_info *)clientData;
+  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
+  orientation_info *od = (orientation_info *)context;
   ss = od->state;
   in_set_spectro_y_scale(ss, (Float)(cbs->value) * 0.01);
   map_chans_field(ss, FCP_Y_SCALE, (Float)(cbs->value) * 0.01);
@@ -1020,18 +1020,18 @@ void set_spectro_y_scale(snd_state *ss, Float val)
     map_over_chans(ss, update_graph, NULL);
 }
 
-static void SY_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void SY_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData, 
+  snd_help((snd_state *)context, 
 	   "y scale slider", 
 	   "This slider causes the graph to expand or\ncontract along the y axis.\n");
 }
 
-static void SZ_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void SZ_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
-  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)callData;
-  orientation_info *od = (orientation_info *)clientData;
+  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
+  orientation_info *od = (orientation_info *)context;
   ss = od->state;
   in_set_spectro_z_scale(ss, (Float)(cbs->value) * 0.01);
   map_chans_field(ss, FCP_Z_SCALE, (Float)(cbs->value) * 0.01);
@@ -1047,21 +1047,21 @@ void set_spectro_z_scale(snd_state *ss, Float val)
     map_over_chans(ss, update_graph, NULL);
 }
 
-static void SZ_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void SZ_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData, 
+  snd_help((snd_state *)context, 
 	   "z scale slider", 
 	   "This slider causes the graph to expand or\ncontract along the z axis.\n");
 }
 
 static int map_chans_spectro_hop(chan_info *cp, void *ptr) {cp->spectro_hop = (int)ptr; return(0);}
 
-static void Hop_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Hop_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
   int val;
-  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)callData;
-  orientation_info *od = (orientation_info *)clientData;
+  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
+  orientation_info *od = (orientation_info *)context;
   ss = od->state;
   val = iclamp(1, cbs->value, 20);
   in_set_spectro_hop(ss, val);
@@ -1081,19 +1081,19 @@ void set_spectro_hop(snd_state *ss, int val)
     }
 }
 
-static void Hop_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Hop_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData, 
+  snd_help((snd_state *)context, 
 	   "hop slider", 
 	   "This slider changes the hop size.\n");
 }
 
-static void Cut_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Cut_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* y axis limit */
   snd_state *ss;
-  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)callData;
-  orientation_info *od = (orientation_info *)clientData;
+  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
+  orientation_info *od = (orientation_info *)context;
   ss = od->state;
   map_chans_field(ss, FCP_CUTOFF, (Float)(cbs->value) * 0.01);
   set_spectro_cutoff_and_redisplay(ss, (Float)(cbs->value) * 0.01); /* calls in_set... */
@@ -1108,21 +1108,21 @@ void set_spectro_cutoff(snd_state *ss, Float val)
     map_over_chans(ss, update_graph, NULL);
 }
 
-static void Cut_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Cut_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData, 
+  snd_help((snd_state *)context, 
 	   "% of spectrum slider", 
 	   "This slider determines how much of\nthe spectrum is displayed\n");
 }
 
-static void Help_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Help_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  orientation_dialog_help((snd_state *)clientData);
+  orientation_dialog_help((snd_state *)context);
 }
 
-static void Dismiss_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Dismiss_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  orientation_info *od = (orientation_info *)clientData;
+  orientation_info *od = (orientation_info *)context;
   XtUnmanageChild(od->dialog);
 }
 
@@ -1157,10 +1157,10 @@ void reflect_spectro(snd_state *ss)
     }
 }
 
-static void Reset_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Reset_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
-  orientation_info *od = (orientation_info *)clientData;
+  orientation_info *od = (orientation_info *)context;
   /* put everything back the way it was at the start */
   ss = od->state;
   reset_spectro(ss);
@@ -1168,9 +1168,9 @@ static void Reset_Orientation_Callback(Widget w, XtPointer clientData, XtPointer
   map_over_chans(ss, update_graph, NULL);
 }
 
-void View_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callData)
+void View_Orientation_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   Widget mainform,rightbox,leftbox;
   XmString xdismiss,xhelp,xstr,xreset,titlestr;
   int n;

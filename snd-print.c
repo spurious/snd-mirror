@@ -48,7 +48,7 @@ static int start_ps_graph(char *output, char *title)
   bby = 0;
   sprintf(pbuf, "%%!PS-Adobe-2.0 EPSF-2.0\n%%%%Title: %s\n%%%%Creator: Snd: %s\n%%%%CreationDate: ", title, SND_VERSION);
   ps_write(ps_fd, pbuf);
-#if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
+#if HAVE_STRFTIME
   time(&ts);
   strftime(pbuf, PRINT_BUFFER_SIZE, STRFTIME_FORMAT, localtime(&ts));
   ps_write(ps_fd, pbuf);

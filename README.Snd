@@ -30,7 +30,6 @@ The configure program has several Snd-related arguments:
    --with-float-samples  represent samples internally as floats (default: ints)
                          my (not-very-extensive) timing tests indicate floats are
                          slightly faster than ints in most cases on the Pentium
-   --with-gsl            use gsl for ffts and whatnot
    --with-ladspa         include LADSPA plugin support (Linux)
    --with-sample-width=N use N bits of samples (default = 24)
                          N=32 or so is not recommended because it does not leave
@@ -305,7 +304,7 @@ you can find where it occurs by:
 
 
 GSL:
-If you configure --with-gsl, but Snd refuses to load with an error
+If configure finds GSL, but Snd refuses to load with an error
 about missing gsl_complex_cos (or whatever), you need to get the
 GSL sources and build it again; apparently the version of libgsl.a
 that comes with Redhat 7.0 doesn't include any of the complex

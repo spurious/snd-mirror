@@ -153,32 +153,46 @@ char *version_info(void)
 #endif
 #if HAVE_GUILE
 	  "\n    Guile ", guile_version(),
-#ifdef LIBGUILE_VERSION
+  #ifdef LIBGUILE_VERSION
 	  " libguile.so.", itoa[18] = snd_itoa(LIBGUILE_VERSION),
+  #endif
 #endif
-#endif
-	  "\n    CLM ", itoa[0] = snd_itoa(MUS_VERSION), ".", itoa[1] = snd_itoa(MUS_REVISION), " (", MUS_DATE, ")",
+	  "\n    CLM ", itoa[0] = snd_itoa(MUS_VERSION), ".", 
+	                itoa[1] = snd_itoa(MUS_REVISION), " (", 
+                        MUS_DATE, ")",
 #if ((HAVE_XPM) && (defined(USE_MOTIF)))
-	  "\n    Xpm ", itoa[2] = snd_itoa(XpmFormat), ".", itoa[3] = snd_itoa(XpmVersion), ".", itoa[4] = snd_itoa(XpmRevision),
+	  "\n    Xpm ", itoa[2] = snd_itoa(XpmFormat), ".", 
+                        itoa[3] = snd_itoa(XpmVersion), ".", 
+                        itoa[4] = snd_itoa(XpmRevision),
 #endif
 #ifdef SND_CONF
 	  "\n    conf: ", SND_CONF,
 #endif
 #if HAVE_HTML
+  #if USE_MOTIF
+	  "\n    XmHTML ", itoa[5] = snd_itoa(XmHTMLVERSION), ".", 
+                           itoa[6] = snd_itoa(XmHTMLREVISION), ".", 
+                           itoa[7] = snd_itoa(XmHTMLUPDATE_LEVEL),
+  #endif
+#endif
 #if USE_MOTIF
-	  "\n    XmHTML ", itoa[5] = snd_itoa(XmHTMLVERSION), ".", itoa[6] = snd_itoa(XmHTMLREVISION), ".", itoa[7] = snd_itoa(XmHTMLUPDATE_LEVEL),
-#endif
-#endif
-#if USE_MOTIF
-#ifdef LESSTIF_VERSION
-	  "\n    Lesstif ", itoa[8] = snd_itoa(LESSTIF_VERSION), ".", itoa[9] = snd_itoa(LESSTIF_REVISION), " ",
-#endif
-	  "\n    Motif ", itoa[10] = snd_itoa(XmVERSION), ".", itoa[11] = snd_itoa(XmREVISION), ".", itoa[12] = snd_itoa(XmUPDATE_LEVEL),
-	  " X", itoa[13] = snd_itoa(X_PROTOCOL), "R", itoa[14] = snd_itoa(XT_REVISION),
+  #ifdef LESSTIF_VERSION
+	  "\n    Lesstif ", itoa[8] = snd_itoa(LESSTIF_VERSION), ".", 
+                            itoa[9] = snd_itoa(LESSTIF_REVISION), " ",
+  #endif
+	  "\n    Motif ", itoa[10] = snd_itoa(XmVERSION), ".", 
+                          itoa[11] = snd_itoa(XmREVISION), ".", 
+                          itoa[12] = snd_itoa(XmUPDATE_LEVEL),
+	  " X", itoa[13] = snd_itoa(X_PROTOCOL), "R", 
+                itoa[14] = snd_itoa(XT_REVISION),
 #endif
 #if USE_GTK
-	  "\n    Gtk+ ", itoa[9] = snd_itoa(GTK_MAJOR_VERSION), ".", itoa[10] = snd_itoa(GTK_MINOR_VERSION), ".", itoa[11] = snd_itoa(GTK_MICRO_VERSION),
-	  ", Glib ", itoa[12] = snd_itoa(GLIB_MAJOR_VERSION), ".", itoa[13] = snd_itoa(GLIB_MINOR_VERSION), ".", itoa[14] = snd_itoa(GLIB_MICRO_VERSION),
+	  "\n    Gtk+ ", itoa[9] = snd_itoa(GTK_MAJOR_VERSION), ".", 
+                         itoa[10] = snd_itoa(GTK_MINOR_VERSION), ".", 
+                         itoa[11] = snd_itoa(GTK_MICRO_VERSION),
+	  ", Glib ",     itoa[12] = snd_itoa(GLIB_MAJOR_VERSION), ".", 
+                         itoa[13] = snd_itoa(GLIB_MINOR_VERSION), ".", 
+                         itoa[14] = snd_itoa(GLIB_MICRO_VERSION),
 #endif
 #if HAVE_GUILE_GTK
 	  ", Guile-gtk",
@@ -202,11 +216,16 @@ char *version_info(void)
 	  "\n    (uses ccrma-specific /zap dirs)",
 #endif
 	  "\n    ", mus_audio_moniker(),
-	  "\n    Sndlib ", itoa[15] = snd_itoa(SNDLIB_VERSION), ".", itoa[16] = snd_itoa(SNDLIB_REVISION), " (", SNDLIB_DATE,
+	  "\n    Sndlib ", itoa[15] = snd_itoa(SNDLIB_VERSION), ".", 
+                           itoa[16] = snd_itoa(SNDLIB_REVISION), 
+                           " (", SNDLIB_DATE,
 #if SNDLIB_USE_FLOATS
 	  ", float samples",
 #else
-	  ", int", itoa[17]=snd_itoa(MUS_SAMPLE_BITS), " samples",
+	  ", int", itoa[17] = snd_itoa(MUS_SAMPLE_BITS), " samples",
+#endif
+#if LONG_INT_P
+	  " and int* tables",
 #endif
 	  ")", sndlib_consistency_check(),
 #if HAVE_GDBM
@@ -233,7 +252,8 @@ char *version_info(void)
 	  __VERSION__,
 #endif
 #if HAVE_GNU_LIBC_VERSION_H
-	  "\n    Libc: ", gnu_get_libc_version(), ".", gnu_get_libc_release(),
+	  "\n    Libc: ", gnu_get_libc_version(), ".", 
+                          gnu_get_libc_release(),
 #endif
 	  "\n", NULL);
   for (i=0; i<NUM_ITOAS; i++) 

@@ -79,7 +79,7 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
   gtk_clist_select_row(GTK_CLIST(fdat->header_list), fdat->header_pos, 0);
   gtk_signal_handler_unblock_by_data(GTK_OBJECT(fdat->header_list), (gpointer)ss);
   gtk_clist_clear(GTK_CLIST(fdat->format_list));
-  for (i=0;i<fdat->formats;i++) 
+  for (i=0; i<fdat->formats; i++) 
     {
       str = fl[i];
       gtk_clist_insert(GTK_CLIST(fdat->format_list), i, &str);
@@ -289,7 +289,7 @@ file_data *sndCreateFileDataForm(snd_state *ss, GtkWidget *parent, char *name, i
   gtk_clist_set_shadow_type(GTK_CLIST(fdat->header_list), GTK_SHADOW_ETCHED_IN);
   gtk_clist_column_titles_passive(GTK_CLIST(fdat->header_list));
 
-  for (i=0;i<num_header_types();i++) 
+  for (i=0; i<num_header_types(); i++) 
     {
       str = header_short_name(i);
       gtk_clist_append(GTK_CLIST(fdat->header_list), &str);
@@ -317,7 +317,7 @@ file_data *sndCreateFileDataForm(snd_state *ss, GtkWidget *parent, char *name, i
   gtk_clist_set_shadow_type(GTK_CLIST(fdat->format_list), GTK_SHADOW_ETCHED_IN);
   gtk_clist_column_titles_passive(GTK_CLIST(fdat->format_list));
 
-  for (i=0;i<dformats;i++) 
+  for (i=0; i<dformats; i++) 
     {
       str = formats[i];
       gtk_clist_append(GTK_CLIST(fdat->format_list), &str);
@@ -685,7 +685,7 @@ void make_cur_name_row(int old_size, int new_size)
   else 
     {
       cur_name_row = (regrow **)REALLOC(cur_name_row, new_size * sizeof(regrow *));
-      for (i=old_size;i<new_size;i++) cur_name_row[i] = NULL;
+      for (i=old_size; i<new_size; i++) cur_name_row[i] = NULL;
     }
 }
 
@@ -697,7 +697,7 @@ void make_prev_name_row(int old_size, int new_size)
   else 
     {
       prev_name_row = (regrow **)REALLOC(prev_name_row, new_size * sizeof(regrow *));
-      for (i=old_size;i<new_size;i++) prev_name_row[i] = NULL;
+      for (i=old_size; i<new_size; i++) prev_name_row[i] = NULL;
     }
 }
 
@@ -842,7 +842,7 @@ void make_curfiles_list (snd_state *ss)
   int i;
   char *str;
   regrow *r;
-  for (i=0;i<get_curfile_end();i++)
+  for (i=0; i<get_curfile_end(); i++)
     {
       r = cur_name_row[i];
       if (r == NULL)
@@ -859,7 +859,7 @@ void make_curfiles_list (snd_state *ss)
       set_toggle_button(r->pl, FALSE, FALSE, (void *)r);
       gtk_widget_show(r->rw);
     }
-  for (i=get_curfile_end();i<get_max_curfile_end();i++)
+  for (i=get_curfile_end(); i<get_max_curfile_end(); i++)
     {
       if ((r = cur_name_row[i]))
 	{
@@ -910,7 +910,7 @@ void make_prevfiles_list (snd_state *ss)
   if (get_prevfile_end() >= 0)
     {
       make_prevfiles_list_1(ss);
-      for (i=0;i<=get_prevfile_end();i++)
+      for (i=0; i<=get_prevfile_end(); i++)
 	{
 	  if (!((r = prev_name_row[i])))
 	    {
@@ -925,7 +925,7 @@ void make_prevfiles_list (snd_state *ss)
 	  gtk_widget_show(r->rw);
 	}
     }
-  for (i=get_prevfile_end()+1;i<=get_max_prevfile_end();i++)
+  for (i=get_prevfile_end()+1; i<=get_max_prevfile_end(); i++)
     {
       if ((r = prev_name_row[i]))
 	{
@@ -1169,7 +1169,7 @@ static void make_raw_data_dialog(snd_state *ss)
   gtk_clist_set_selection_mode(GTK_CLIST(lst), GTK_SELECTION_SINGLE);
   gtk_clist_set_shadow_type(GTK_CLIST(lst), GTK_SHADOW_ETCHED_IN);
   gtk_clist_column_titles_passive(GTK_CLIST(lst));
-  for (i=1;i<num_data_formats();i++) 
+  for (i=1; i<num_data_formats(); i++) 
     {
       str = data_format_name(i);
       gtk_clist_append(GTK_CLIST(lst), &str);

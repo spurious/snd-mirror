@@ -66,51 +66,51 @@ static Widget w_snd_sync(snd_info *sp)             {if ((sp) && (sp->sgx)) retur
 
 #define MAX_NOTEBOOK_TAB_LENGTH 5
 
-static void W_info_Help_Callback(Widget w, XtPointer clientData, XtPointer callData)            {click_for_minibuffer_help((snd_state *)clientData);}
-static void W_play_Help_Callback(Widget w, XtPointer clientData, XtPointer callData)            {click_for_play_help((snd_state *)clientData);}
-static void W_info_sep_Help_Callback(Widget w, XtPointer clientData, XtPointer callData)        {click_for_name_separator_help((snd_state *)clientData);}
-static void W_amp_Help_Callback(Widget w, XtPointer clientData, XtPointer callData)             {click_for_amp_help((snd_state *)clientData);}
-static void W_srate_Help_Callback(Widget w, XtPointer clientData, XtPointer callData)           {click_for_speed_help((snd_state *)clientData);}
-static void W_srate_arrow_Help_Callback(Widget w, XtPointer clientData, XtPointer callData)     {click_for_srate_arrow_help((snd_state *)clientData);}
-static void W_expand_Help_Callback(Widget w, XtPointer clientData, XtPointer callData)          {click_for_expand_help((snd_state *)clientData);}
-static void W_contrast_Help_Callback(Widget w, XtPointer clientData, XtPointer callData)        {click_for_contrast_help((snd_state *)clientData);}
-static void W_revscl_Help_Callback(Widget w, XtPointer clientData, XtPointer callData)          {click_for_reverb_scale_help((snd_state *)clientData);}
-static void W_revlen_Help_Callback(Widget w, XtPointer clientData, XtPointer callData)          {click_for_reverb_length_help((snd_state *)clientData);}
-static void W_filter_Help_Callback(Widget w, XtPointer clientData, XtPointer callData)          {click_for_filter_help((snd_state *)clientData);} 
-static void W_filter_order_Help_Callback(Widget w, XtPointer clientData, XtPointer callData)    {click_for_filter_order_help((snd_state *)clientData);}
-static void W_filter_envelope_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) {click_for_filter_envelope_help((snd_state *)clientData);}
-static void W_name_Help_Callback(Widget w, XtPointer clientData, XtPointer callData)            {click_for_sound_help((snd_state *)clientData);}
+static void W_info_Help_Callback(Widget w, XtPointer context, XtPointer info)            {click_for_minibuffer_help((snd_state *)context);}
+static void W_play_Help_Callback(Widget w, XtPointer context, XtPointer info)            {click_for_play_help((snd_state *)context);}
+static void W_info_sep_Help_Callback(Widget w, XtPointer context, XtPointer info)        {click_for_name_separator_help((snd_state *)context);}
+static void W_amp_Help_Callback(Widget w, XtPointer context, XtPointer info)             {click_for_amp_help((snd_state *)context);}
+static void W_srate_Help_Callback(Widget w, XtPointer context, XtPointer info)           {click_for_speed_help((snd_state *)context);}
+static void W_srate_arrow_Help_Callback(Widget w, XtPointer context, XtPointer info)     {click_for_srate_arrow_help((snd_state *)context);}
+static void W_expand_Help_Callback(Widget w, XtPointer context, XtPointer info)          {click_for_expand_help((snd_state *)context);}
+static void W_contrast_Help_Callback(Widget w, XtPointer context, XtPointer info)        {click_for_contrast_help((snd_state *)context);}
+static void W_revscl_Help_Callback(Widget w, XtPointer context, XtPointer info)          {click_for_reverb_scale_help((snd_state *)context);}
+static void W_revlen_Help_Callback(Widget w, XtPointer context, XtPointer info)          {click_for_reverb_length_help((snd_state *)context);}
+static void W_filter_Help_Callback(Widget w, XtPointer context, XtPointer info)          {click_for_filter_help((snd_state *)context);} 
+static void W_filter_order_Help_Callback(Widget w, XtPointer context, XtPointer info)    {click_for_filter_order_help((snd_state *)context);}
+static void W_filter_envelope_Help_Callback(Widget w, XtPointer context, XtPointer info) {click_for_filter_envelope_help((snd_state *)context);}
+static void W_name_Help_Callback(Widget w, XtPointer context, XtPointer info)            {click_for_sound_help((snd_state *)context);}
 
-static void W_expand_button_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_expand_button_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData, "Expand Button", "This button turns on expansion\n");
+  snd_help((snd_state *)context, "Expand Button", "This button turns on expansion\n");
 }
 
-static void W_contrast_button_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_contrast_button_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData, "Contrast Button", "This button turns on contrast enhancement\n");
+  snd_help((snd_state *)context, "Contrast Button", "This button turns on contrast enhancement\n");
 }
 
-static void W_reverb_button_Help_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void W_reverb_button_Help_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_help((snd_state *)clientData, "Reverb Button", "This button turns on reverberation\n");
+  snd_help((snd_state *)context, "Reverb Button", "This button turns on reverberation\n");
 }
 
-static void W_filter_button_Help_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void W_filter_button_Help_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_help((snd_state *)clientData, "Filter Button", "This button turns on the filter\n");
+  snd_help((snd_state *)context, "Filter Button", "This button turns on the filter\n");
 }
 
-static void W_filter_dB_Help_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void W_filter_dB_Help_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_help((snd_state *)clientData, "Filter dB",
+  snd_help((snd_state *)context, "Filter dB",
 "This button chooses between dB and linear y axis\n\
 in the frequency response graph\n");
 }
 
-static void W_sync_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_sync_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "Sync Button",
 "This button causes edit operations on one\n\
 channel to be applied to all channels at the\n\
@@ -118,9 +118,9 @@ same time.\n\
 ");
 }
 
-static void W_combine_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_combine_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "Combine Button",
 "This button causes all channels to be\n\
 displayed in one window, sharing the various\n\
@@ -133,9 +133,9 @@ the variable combine-channels.\n\
 ");
 }
 
-static void W_apply_Help_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void W_apply_Help_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   STR_Apply,
 "The Apply button saves the last recorded\n\
 run over the current file (see Record) as\n\
@@ -143,27 +143,27 @@ an edit of the current file.\n\
 ");
 }
 
-static void W_reset_Help_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void W_reset_Help_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   STR_Reset,
 "The 'Reset' button clears the control panel\n\
 settings to the no-change state.\n\
 ");
 }
 
-static void W_remember_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_remember_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   STR_Remember,
 "The 'Remember' button saves the current control\n\
 panel state for a subsequent 'Restore'.\n\
 ");
 }
 
-static void W_restore_Help_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void W_restore_Help_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   STR_Restore,
 "The 'Restore' button returns the control\n\
 panel to the state at the time of the\n\
@@ -218,9 +218,9 @@ int sound_lock_ctrls(snd_info *sp, void *ptr)
   return(0);
 }
 
-static void W_name_Click_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_name_Click_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  sp_name_click((snd_info *)clientData);
+  sp_name_click((snd_info *)context);
 }
 
 static char number_one[5]={'1',STR_decimal,'0','0','\0'};
@@ -276,10 +276,10 @@ void set_snd_amp(snd_info *sp, Float val)
 		     NULL);
 }
 
-static void W_amp_Click_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_amp_Click_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)callData;
-  snd_info *sp = (snd_info *)clientData;
+  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
+  snd_info *sp = (snd_info *)context;
   XButtonEvent *ev;
   int val;
   snd_context *sx;
@@ -290,15 +290,15 @@ static void W_amp_Click_Callback(Widget w, XtPointer clientData, XtPointer callD
   XtVaSetValues(sx->snd_widgets[W_amp], XmNvalue, val, NULL);
 }
 
-static void W_amp_Drag_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_amp_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_amp_changed((snd_info *)clientData, ((XmScrollBarCallbackStruct *)callData)->value);
+  snd_amp_changed((snd_info *)context, ((XmScrollBarCallbackStruct *)info)->value);
 }
 
-static void W_amp_ValueChanged_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_amp_ValueChanged_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)callData;
-  snd_info *sp = (snd_info *)clientData;
+  XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
+  snd_info *sp = (snd_info *)context;
   snd_amp_changed(sp, cb->value);
   sp->last_amp = sp->saved_amp;
   sp->saved_amp = sp->amp;
@@ -352,10 +352,10 @@ void set_snd_srate(snd_info *sp, Float val)
 		     NULL);
 }
 
-static void W_srate_Click_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_srate_Click_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)callData;
-  snd_info *sp = (snd_info *)clientData;
+  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
+  snd_info *sp = (snd_info *)context;
   XButtonEvent *ev;
   int val;
   snd_context *sx;
@@ -368,15 +368,15 @@ static void W_srate_Click_Callback(Widget w, XtPointer clientData, XtPointer cal
   XtVaSetValues(sx->snd_widgets[W_srate], XmNvalue, val, NULL);
 }
 
-static void W_srate_Drag_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_srate_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_srate_changed((snd_info *)clientData, ((XmScrollBarCallbackStruct *)callData)->value);
+  snd_srate_changed((snd_info *)context, ((XmScrollBarCallbackStruct *)info)->value);
 }
 
-static void W_srate_ValueChanged_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_srate_ValueChanged_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)callData;
-  snd_info *sp = (snd_info *)clientData;
+  XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
+  snd_info *sp = (snd_info *)context;
   snd_srate_changed(sp, cb->value);
   sp->last_srate = sp->saved_srate;
   sp->saved_srate = sp->srate;
@@ -428,10 +428,10 @@ void set_snd_expand(snd_info *sp, Float val)
 		     NULL);
 }
 
-static void W_expand_Click_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_expand_Click_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)callData;
-  snd_info *sp = (snd_info *)clientData;
+  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
+  snd_info *sp = (snd_info *)context;
   XButtonEvent *ev;
   int val;
   snd_context *sx;
@@ -444,25 +444,25 @@ static void W_expand_Click_Callback(Widget w, XtPointer clientData, XtPointer ca
   XtVaSetValues(sx->snd_widgets[W_expand], XmNvalue, val, NULL);
 }
 
-static void W_expand_Drag_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_expand_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_expand_changed((snd_info *)clientData, ((XmScrollBarCallbackStruct *)callData)->value);
+  snd_expand_changed((snd_info *)context, ((XmScrollBarCallbackStruct *)info)->value);
 }
 
-static void W_expand_ValueChanged_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_expand_ValueChanged_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)callData;
-  snd_info *sp = (snd_info *)clientData;
+  XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
+  snd_info *sp = (snd_info *)context;
   snd_expand_changed(sp, cb->value);
   sp->last_expand = sp->saved_expand;
   sp->saved_expand = sp->expand;
 }
 
-static void Expand_button_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Expand_button_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData; 
-  snd_info *sp = (snd_info *)clientData;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info; 
+  snd_info *sp = (snd_info *)context;
   ss = sp->state;
   sp->expanding = cb->set;
   if (!(ss->using_schemes)) 
@@ -508,10 +508,10 @@ void set_snd_contrast(snd_info *sp, Float val)
 		     NULL);
 }
 
-static void W_contrast_Click_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_contrast_Click_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)callData;
-  snd_info *sp = (snd_info *)clientData;
+  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
+  snd_info *sp = (snd_info *)context;
   XButtonEvent *ev;
   int val;
   snd_context *sx;
@@ -524,25 +524,25 @@ static void W_contrast_Click_Callback(Widget w, XtPointer clientData, XtPointer 
   XtVaSetValues(sx->snd_widgets[W_contrast], XmNvalue, val, NULL);
 }
 
-static void W_contrast_Drag_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_contrast_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_contrast_changed((snd_info *)clientData, ((XmScrollBarCallbackStruct *)callData)->value);
+  snd_contrast_changed((snd_info *)context, ((XmScrollBarCallbackStruct *)info)->value);
 }
 
-static void W_contrast_ValueChanged_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_contrast_ValueChanged_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)callData;
-  snd_info *sp = (snd_info *)clientData;
+  XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
+  snd_info *sp = (snd_info *)context;
   snd_contrast_changed(sp, cb->value);
   sp->last_contrast = sp->saved_contrast;
   sp->saved_contrast = sp->contrast;
 }
 
-static void Contrast_button_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Contrast_button_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
-  snd_info *sp = (snd_info *)clientData;
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
+  snd_info *sp = (snd_info *)context;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   ss = sp->state;
   sp->contrasting = cb->set;
   if (!(ss->using_schemes)) 
@@ -619,10 +619,10 @@ void set_snd_revscl(snd_info *sp, Float val)
 		     NULL);
 }
 
-static void W_revscl_Click_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_revscl_Click_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)callData;
-  snd_info *sp = (snd_info *)clientData;
+  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
+  snd_info *sp = (snd_info *)context;
   XButtonEvent *ev;
   int val;
   snd_context *sx;
@@ -636,15 +636,15 @@ static void W_revscl_Click_Callback(Widget w, XtPointer clientData, XtPointer ca
 }
 
 
-static void W_revscl_Drag_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_revscl_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_revscl_changed((snd_info *)clientData, ((XmScrollBarCallbackStruct *)callData)->value);
+  snd_revscl_changed((snd_info *)context, ((XmScrollBarCallbackStruct *)info)->value);
 }
 
-static void W_revscl_ValueChanged_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_revscl_ValueChanged_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)callData;
-  snd_info *sp = (snd_info *)clientData;
+  XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
+  snd_info *sp = (snd_info *)context;
   snd_revscl_changed(sp, cb->value);
   sp->last_revscl = sp->saved_revscl;
   sp->saved_revscl = sp->revscl;
@@ -680,10 +680,10 @@ void set_snd_revlen(snd_info *sp, Float val)
 		     NULL);
 }
 
-static void W_revlen_Click_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_revlen_Click_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)callData;
-  snd_info *sp = (snd_info *)clientData;
+  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
+  snd_info *sp = (snd_info *)context;
   XButtonEvent *ev;
   int val;
   snd_context *sx;
@@ -696,15 +696,15 @@ static void W_revlen_Click_Callback(Widget w, XtPointer clientData, XtPointer ca
   XtVaSetValues(sx->snd_widgets[W_revlen], XmNvalue, val, NULL);
 }
 
-static void W_revlen_Drag_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_revlen_Drag_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_revlen_changed((snd_info *)clientData, ((XmScrollBarCallbackStruct *)callData)->value);
+  snd_revlen_changed((snd_info *)context, ((XmScrollBarCallbackStruct *)info)->value);
 }
 
-static void W_revlen_ValueChanged_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void W_revlen_ValueChanged_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)callData;
-  snd_info *sp = (snd_info *)clientData;
+  XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
+  snd_info *sp = (snd_info *)context;
   snd_revlen_changed(sp, cb->value);
   sp->last_revlen = sp->saved_revlen;
   sp->saved_revlen = sp->revlen;
@@ -712,11 +712,11 @@ static void W_revlen_ValueChanged_Callback(Widget w, XtPointer clientData, XtPoi
 
 
 
-static void Reverb_button_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Reverb_button_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
-  snd_info *sp = (snd_info *)clientData;
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
+  snd_info *sp = (snd_info *)context;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   ss = sp->state;
   sp->reverbing = cb->set;
   if (!(ss->using_schemes))
@@ -733,10 +733,10 @@ void toggle_reverb_button(snd_info *sp, int state)
   else XmToggleButtonSetState(w_snd_reverb_button(sp), state, TRUE);
 }
 
-static void Filter_button_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Filter_button_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_info *sp = (snd_info *)clientData;
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
+  snd_info *sp = (snd_info *)context;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   sp->filtering = cb->set;
 }
 
@@ -789,43 +789,43 @@ void set_filter_text(snd_info *sp, char *str)
     XmTextSetString(w_snd_filter(sp), str);
 }
 
-static void filter_drawer_help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void filter_drawer_help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData, "Filter Frequency Response",
+  snd_help((snd_state *)context, "Filter Frequency Response",
 "This graph shows the current filter frequency response envelope, \n\
 and the actual response (dependent on the filter order).\n\
 See the envelope editor documentation for editing directions.\n");
 }
 
-static void filter_drawer_button_motion(Widget w, XtPointer clientData, XEvent *event, Boolean *cont) 
+static void filter_drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
-  snd_info *sp = (snd_info *)clientData;
+  snd_info *sp = (snd_info *)context;
   XMotionEvent *ev = (XMotionEvent *)event;
   handle_filter_point(sp->state, sp, ev->x, ev->y, ev->time);
 }
 
-static void filter_drawer_button_press(Widget w, XtPointer clientData, XEvent *event, Boolean *cont) 
+static void filter_drawer_button_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
-  snd_info *sp = (snd_info *)clientData;
+  snd_info *sp = (snd_info *)context;
   XButtonEvent *ev = (XButtonEvent *)event;
   handle_filter_press(sp, ev->x, ev->y, ev->time);
 }
 
-static void filter_drawer_button_release(Widget w, XtPointer clientData, XEvent *event, Boolean *cont) 
+static void filter_drawer_button_release(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
-  handle_filter_release((snd_info *)clientData);
+  handle_filter_release((snd_info *)context);
 }
 
-static void filter_drawer_resize(Widget w, XtPointer clientData, XtPointer callData) 
+static void filter_drawer_resize(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_info *sp = (snd_info *)clientData;
+  snd_info *sp = (snd_info *)context;
   sp_display_env(sp);
 }
 
-static void filter_dB_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void filter_dB_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_info *sp = (snd_info *)clientData;
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
+  snd_info *sp = (snd_info *)context;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   sp->filter_dBing = (cb->set);
   sp_display_env(sp);
 }
@@ -857,22 +857,22 @@ void set_snd_filter_order(snd_info *sp, int order)
   sp->filter_changed = 1;
 }
 
-static void filter_order_up_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void filter_order_up_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_info *sp = (snd_info *)clientData;
+  snd_info *sp = (snd_info *)context;
   set_snd_filter_order(sp, sp->filter_order + 2);
 }
 
-static void filter_order_down_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void filter_order_down_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_info *sp = (snd_info *)clientData;
+  snd_info *sp = (snd_info *)context;
   if (sp->filter_order > 2)
     set_snd_filter_order(sp, sp->filter_order - 2);
 }
 
-static void W_filter_order_up_Help_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void W_filter_order_up_Help_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "Filter Order Increment Button",
 "This button causes the filter order to be incremented\n\
 in case your keyboard is not working, or arabic numbers\n\
@@ -880,9 +880,9 @@ present an insuperable challenge.\n\
 ");
 }
 
-static void W_filter_order_down_Help_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void W_filter_order_down_Help_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "Filter Order Decrement Button",
 "This button causes the filter order to be decremented\n\
 in case your keyboard is not working, or arabic numbers\n\
@@ -890,14 +890,14 @@ present an insuperable challenge.\n\
 ");
 }
 
-static void Filter_activate_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void Filter_activate_Callback(Widget w, XtPointer context, XtPointer info)
 {
   /* make an envelope out of the data */
-  snd_info *sp = (snd_info *)clientData;
+  snd_info *sp = (snd_info *)context;
   char *str=NULL;
   int order;
   snd_state *ss;
-  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)callData;
+  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
   XKeyEvent *ev;
   KeySym keysym;
   ev = (XKeyEvent *)(cb->event);
@@ -936,11 +936,11 @@ static void Filter_activate_Callback(Widget w, XtPointer clientData, XtPointer c
   sp->filter_changed = 1;
 }
 
-static void Filter_Order_activate_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void Filter_Order_activate_Callback(Widget w, XtPointer context, XtPointer info)
 {
   char *str;
   int order;
-  snd_info *sp = (snd_info *)clientData;
+  snd_info *sp = (snd_info *)context;
   str = XmTextGetString(w);
   if ((str) && (*str))
     {
@@ -979,12 +979,12 @@ void set_play_button(snd_info *sp, int val)
     }
 }
 
-static void Play_button_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void Play_button_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_info *sp = (snd_info *)clientData;
+  snd_info *sp = (snd_info *)context;
   chan_info *cp;
   snd_state *ss;
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   int i;
   XButtonEvent *ev;
   ev = (XButtonEvent *)(cb->event);
@@ -1054,10 +1054,10 @@ void play_button_pause(snd_state *ss, int pausing)
 }
 
 
-static void Play_arrow_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void Play_arrow_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_info *sp = (snd_info *)clientData;
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
+  snd_info *sp = (snd_info *)context;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   int dir;
   dir = cb->set;
   if (dir) sp->play_direction = -1; else sp->play_direction = 1;
@@ -1089,10 +1089,10 @@ void syncb(snd_info *sp, int on)
     }
 }
 
-static void Sync_button_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void Sync_button_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_info *sp = (snd_info *)clientData;
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
+  snd_info *sp = (snd_info *)context;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   chan_info *cp;
   XButtonEvent *ev;
   ev = (XButtonEvent *)(cb->event);
@@ -1116,11 +1116,11 @@ static void Sync_button_Callback(Widget w, XtPointer clientData, XtPointer callD
     }
 }
 
-static void Combine_button_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void Combine_button_Callback(Widget w, XtPointer context, XtPointer info)
 {
   /* click if set unsets, click if unset->combine, ctrl-click->superimpose */
-  snd_info *sp = (snd_info *)clientData;
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
+  snd_info *sp = (snd_info *)context;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   XButtonEvent *ev;
   int val;
   ev = (XButtonEvent *)(cb->event);
@@ -1135,12 +1135,12 @@ static void Combine_button_Callback(Widget w, XtPointer clientData, XtPointer ca
 }
 
 
-static void minibuffer_click_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void minibuffer_click_Callback(Widget w, XtPointer context, XtPointer info)
 {
   /* can be response to various things */
-  snd_info *sp = (snd_info *)clientData;
+  snd_info *sp = (snd_info *)context;
   snd_state *ss;
-  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)callData;
+  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
   XKeyEvent *ev;
   KeySym keysym;
   ev = (XKeyEvent *)(cb->event);
@@ -1152,11 +1152,11 @@ static void minibuffer_click_Callback(Widget w, XtPointer clientData, XtPointer 
   snd_minibuffer_activate(sp, keysym, (ev->state & snd_MetaMask));
 }
 
-static void Apply_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void Apply_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* create temp file of run over current file using the current (saved) ctrls state */
-  snd_info *sp = (snd_info *)clientData;
-  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)callData;
+  snd_info *sp = (snd_info *)context;
+  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
   XButtonEvent *ev;
   snd_state *ss;
   snd_context *sgx;
@@ -1223,9 +1223,9 @@ static int cant_write(char *name)
 #endif
 }
 
-static void save_control_panel_Callback(Widget w, XtPointer clientData, XtPointer callData) {save_control_panel((snd_info *)clientData);}
-static void restore_control_panel_Callback(Widget w, XtPointer clientData, XtPointer callData) {restore_control_panel((snd_info *)clientData);}
-static void reset_control_panel_Callback(Widget w, XtPointer clientData, XtPointer callData) {reset_control_panel((snd_info *)clientData);}
+static void save_control_panel_Callback(Widget w, XtPointer context, XtPointer info) {save_control_panel((snd_info *)context);}
+static void restore_control_panel_Callback(Widget w, XtPointer context, XtPointer info) {restore_control_panel((snd_info *)context);}
+static void reset_control_panel_Callback(Widget w, XtPointer context, XtPointer info) {reset_control_panel((snd_info *)context);}
 
 /* bitmaps for the playback direction arrow */
 static unsigned char speed_r_bits1[] = {
@@ -1299,9 +1299,9 @@ static int inc_bomb(snd_info *sp, void *ptr)
 
 static int bomb_in_progress = 0;
 
-static void bomb_check(XtPointer clientData, XtIntervalId *id)
+static void bomb_check(XtPointer context, XtIntervalId *id)
 {
-  snd_info *sp = (snd_info *)clientData;
+  snd_info *sp = (snd_info *)context;
   snd_state *ss;
   int incs[1];
   ss = sp->state;
@@ -1311,7 +1311,7 @@ static void bomb_check(XtPointer clientData, XtIntervalId *id)
     XtAppAddTimeOut(MAIN_APP(ss),
 		    (unsigned long)BOMB_TIME,
 		    (XtTimerCallbackProc)bomb_check,
-		    clientData);
+		    context);
   else bomb_in_progress = 0;
 }
 
@@ -1361,9 +1361,9 @@ static void snd_file_glasses_icon(snd_info *sp, int on, int glass) {}
 void x_bomb(snd_info *sp, int on) {}
 #endif
 
-static void Close_Sound_Dialog(Widget w, XtPointer clientData, XtPointer callData) 
+static void Close_Sound_Dialog(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_info *sp = (snd_info *)clientData;
+  snd_info *sp = (snd_info *)context;
   if (sp) snd_close_file(sp, sp->state);
 } 
 

@@ -123,7 +123,7 @@ static void graph_redisplay(snd_state *ss)
   iy1 = grf_y(current_graph_data[0], axis_cp->axis);
   xincr = 1.0 / (Float)GRAPH_SIZE;
 
-  for (i=1, x=xincr;i<GRAPH_SIZE;i++,x+=xincr)
+  for (i=1, x=xincr; i<GRAPH_SIZE; i++,x+=xincr)
     {
       ix0 = ix1;
       iy0 = iy1;
@@ -137,7 +137,7 @@ static void graph_redisplay(snd_state *ss)
   iy1 = grf_y(current_graph_fftr[0], axis_cp->axis);
   xincr = 1.0 / (Float)GRAPH_SIZE;
 
-  for (i=1, x=xincr;i<GRAPH_SIZE;i++,x+=xincr)
+  for (i=1, x=xincr; i<GRAPH_SIZE; i++,x+=xincr)
     {
       ix0 = ix1;
       iy0 = iy1;
@@ -153,15 +153,15 @@ static void get_fft_window_data(snd_state *ss)
 {
   int i;
   make_fft_window_1(current_graph_data, GRAPH_SIZE, fft_window(ss), fft_beta(ss));
-  for (i=0;i<GRAPH_SIZE*2;i++)
+  for (i=0; i<GRAPH_SIZE*2; i++)
     {
       current_graph_fftr[i] = 0.0;
       current_graph_ffti[i] = 0.0;
     }
-  for (i=0;i<GRAPH_SIZE;i++)
+  for (i=0; i<GRAPH_SIZE; i++)
     current_graph_fftr[i] = current_graph_data[i];
   mus_spectrum(current_graph_fftr, current_graph_ffti, NULL, GRAPH_SIZE*2, 0);
-  for (i=0;i<GRAPH_SIZE;i++)
+  for (i=0; i<GRAPH_SIZE; i++)
     current_graph_fftr[i] = (current_graph_fftr[i] + 80.0)/80.0;
 }
 
@@ -414,7 +414,7 @@ void fire_up_transform_dialog(snd_state *ss)
       gtk_clist_set_selection_mode(GTK_CLIST(transform_list), GTK_SELECTION_SINGLE);
       gtk_clist_set_shadow_type(GTK_CLIST(transform_list), GTK_SHADOW_ETCHED_IN);
       gtk_clist_column_titles_passive(GTK_CLIST(transform_list));
-      for (i=0;i<num_transform_types;i++) 
+      for (i=0; i<num_transform_types; i++) 
 	{
 	  if (i < NUM_TRANSFORM_TYPES)
 	    str = TRANSFORM_TYPES[i];
@@ -443,7 +443,7 @@ void fire_up_transform_dialog(snd_state *ss)
       gtk_clist_set_selection_mode(GTK_CLIST(size_list), GTK_SELECTION_SINGLE);
       gtk_clist_set_shadow_type(GTK_CLIST(size_list), GTK_SHADOW_ETCHED_IN);
       gtk_clist_column_titles_passive(GTK_CLIST(size_list));
-      for (i=0;i<NUM_FFT_SIZES;i++) 
+      for (i=0; i<NUM_FFT_SIZES; i++) 
 	{
 	  str = FFT_SIZES[i];
 	  gtk_clist_append(GTK_CLIST(size_list), &str);
@@ -543,7 +543,7 @@ void fire_up_transform_dialog(snd_state *ss)
       gtk_clist_set_selection_mode(GTK_CLIST(wavelet_list), GTK_SELECTION_SINGLE);
       gtk_clist_set_shadow_type(GTK_CLIST(wavelet_list), GTK_SHADOW_ETCHED_IN);
       gtk_clist_column_titles_passive(GTK_CLIST(wavelet_list));
-      for (i=0;i<NUM_WAVELETS;i++) 
+      for (i=0; i<NUM_WAVELETS; i++) 
 	{
 	  str = WAVELETS[i];
 	  gtk_clist_append(GTK_CLIST(wavelet_list), &str);
@@ -573,7 +573,7 @@ void fire_up_transform_dialog(snd_state *ss)
       gtk_clist_set_selection_mode(GTK_CLIST(window_list), GTK_SELECTION_SINGLE);
       gtk_clist_set_shadow_type(GTK_CLIST(window_list), GTK_SHADOW_ETCHED_IN);
       gtk_clist_column_titles_passive(GTK_CLIST(window_list));
-      for (i=0;i<GUI_NUM_FFT_WINDOWS;i++) 
+      for (i=0; i<GUI_NUM_FFT_WINDOWS; i++) 
 	{
 	  str = FFT_WINDOWS[i];
 	  gtk_clist_append(GTK_CLIST(window_list), &str);
@@ -629,7 +629,7 @@ void fire_up_transform_dialog(snd_state *ss)
 
 
       gtk_clist_select_row(GTK_CLIST(transform_list), transform_type(ss), 0);
-      for (i=0;i<NUM_FFT_SIZES;i++)
+      for (i=0; i<NUM_FFT_SIZES; i++)
 	if (fft_sizes[i] == fft_size(ss))
 	  {
 	    gtk_clist_select_row(GTK_CLIST(size_list), i, 0);
@@ -689,7 +689,7 @@ void set_fft_size(snd_state *ss, int val)
   map_over_chans(ss, map_chans_fft_size, (void *)val);
   if (transform_dialog)
     {
-      for (i=0;i<NUM_FFT_SIZES;i++)
+      for (i=0; i<NUM_FFT_SIZES; i++)
 	if (fft_sizes[i] == val)
 	  {
 	    gtk_clist_select_row(GTK_CLIST(size_list), i, 0);

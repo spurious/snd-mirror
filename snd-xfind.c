@@ -4,9 +4,9 @@
 
 static Widget edit_find_dialog,edit_find_text,cancelB,edit_find_label;
 
-static void edit_find_help_callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void edit_find_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "Global Find",
 "This search travels through all the current channels\n\
 in parallel until a match is found.  The find\n\
@@ -17,12 +17,12 @@ looks for the next sample that is greater than .1.\n\
 ");
 } 
 
-static void edit_find_ok_callback(int direction, Widget w, XtPointer clientData, XtPointer callData)
+static void edit_find_ok_callback(int direction, Widget w, XtPointer context, XtPointer info)
 { /* "Find" is the label here */
 #if HAVE_GUILE
   char *str,*buf=NULL;
   XmString s1;
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   SCM proc;
   str = XmTextGetString(edit_find_text);
   if ((str) && (*str))
@@ -57,20 +57,20 @@ static void edit_find_ok_callback(int direction, Widget w, XtPointer clientData,
 #endif
 } 
 
-static void edit_find_next_callback(Widget w, XtPointer clientData, XtPointer callData) {edit_find_ok_callback(READ_FORWARD, w, clientData, callData);}
-static void edit_find_previous_callback(Widget w, XtPointer clientData, XtPointer callData) {edit_find_ok_callback(READ_BACKWARD, w, clientData, callData);}
+static void edit_find_next_callback(Widget w, XtPointer context, XtPointer info) {edit_find_ok_callback(READ_FORWARD, w, context, info);}
+static void edit_find_previous_callback(Widget w, XtPointer context, XtPointer info) {edit_find_ok_callback(READ_BACKWARD, w, context, info);}
 
-static void edit_find_cancel_callback(Widget w, XtPointer clientData, XtPointer callData)
+static void edit_find_cancel_callback(Widget w, XtPointer context, XtPointer info)
 { /* "Done" */
-  snd_state *ss = (snd_state *)clientData;
-  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)callData;
+  snd_state *ss = (snd_state *)context;
+  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
   if (cb->event != (ss->sgx)->text_activate_event)
     {
       if (ss->checking_explicitly)
 	ss->stopped_explicitly = 1;
       else XtUnmanageChild(edit_find_dialog);
     }
-  else edit_find_next_callback(w, clientData, callData);
+  else edit_find_next_callback(w, context, info);
 } 
 
 static void make_edit_find_dialog(snd_state *ss)
@@ -145,9 +145,9 @@ static void make_edit_find_dialog(snd_state *ss)
   edit_find_label = XtCreateManagedWidget(STR_global_search, xmLabelWidgetClass, rc, args, n);
 }
 
-void Edit_Find_Callback(Widget w, XtPointer clientData, XtPointer callData)
+void Edit_Find_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   if (!edit_find_dialog)
     {
       make_edit_find_dialog(ss);
@@ -155,7 +155,7 @@ void Edit_Find_Callback(Widget w, XtPointer clientData, XtPointer callData)
 
       if (!(ss->using_schemes)) 
 	{
-	  map_over_children(edit_find_dialog, set_main_color_of_widget, (void *)clientData);
+	  map_over_children(edit_find_dialog, set_main_color_of_widget, (void *)context);
 	  XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);

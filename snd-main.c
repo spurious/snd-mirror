@@ -205,7 +205,7 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   locale = copy_string(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */
 #endif
 
-#if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
+#if HAVE_STRFTIME
   time(&ts);
   strftime(time_buf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&ts));
   fprintf(fd, "\n;;; Snd %s (%s) options saved %s\n",SND_RPM_VERSION,SND_VERSION,time_buf);

@@ -122,11 +122,11 @@ static void color_file_selection_box(Widget w, snd_state *ss)
 
 /* -------- File Open Dialog -------- */
 
-static void File_Open_OK_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void File_Open_OK_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_info *sp;
-  snd_state *ss = (snd_state *)clientData;
-  XmFileSelectionBoxCallbackStruct *cbs = (XmFileSelectionBoxCallbackStruct *) callData;
+  snd_state *ss = (snd_state *)context;
+  XmFileSelectionBoxCallbackStruct *cbs = (XmFileSelectionBoxCallbackStruct *) info;
   char *fileName;
   XtUnmanageChild(w);
   XmStringGetLtoR (cbs->value, XmFONTLIST_DEFAULT_TAG, &fileName);
@@ -140,9 +140,9 @@ static void File_Open_OK_Callback(Widget w, XtPointer clientData, XtPointer call
     snd_error("%s is a directory", fileName);
 }
 
-static void File_Open_Help_Callback (Widget w, XtPointer clientData, XtPointer callData) 
+static void File_Open_Help_Callback (Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
        "File Open",
 "If you click the 'Sound Files Only'\n\
 button, only those files in the current\n\
@@ -151,7 +151,7 @@ files will be displayed.\n\
 ");
 }
 
-static void File_Open_Cancel_Callback (Widget w, XtPointer clientData, XtPointer callData) 
+static void File_Open_Cancel_Callback (Widget w, XtPointer context, XtPointer info) 
 {
   XtUnmanageChild (w);
 }
@@ -164,9 +164,9 @@ static int string_compare(const void *ss1, const void *ss2)
   return(strcmp((*((char **)ss1)), (*((char **)ss2))));
 }
 
-static void just_sounds_help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void just_sounds_help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "Sound Files Only",
 "If you click the 'Sound Files Only'\n\
 button, only those files in the current\n\
@@ -182,7 +182,7 @@ static int new_file_written = 0;          /* sound file list needs update becaus
 
 void alert_new_file(void) {new_file_written = 1;}
 
-static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *callData)
+static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *info)
 {
   /* generate list of sound files, set XmNfileListItems, XmNfileListItemCount, XmNlistUpdated
    * the latter if new file list generated -- if no files, XmNfileListItems NULL, Count 0
@@ -215,7 +215,7 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *ca
   static dir *sound_files,*current_files;
   static char *last_pattern = NULL;
   dir *cdp;
-  XmFileSelectionBoxCallbackStruct *data = (XmFileSelectionBoxCallbackStruct *)callData;
+  XmFileSelectionBoxCallbackStruct *data = (XmFileSelectionBoxCallbackStruct *)info;
   XmString *names = NULL;
   int i,filter_callback,need_update;
 
@@ -299,9 +299,9 @@ static void force_directory_reread(void)
   XmStringFree(dirmask);
 }
 
-static void just_sounds_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void just_sounds_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   if (cb->set)
     XtVaSetValues(open_dialog, XmNfileSearchProc, sound_file_search, NULL);
   else XtVaSetValues(open_dialog, XmNfileSearchProc, default_search_proc, NULL);
@@ -339,14 +339,14 @@ void g_initialize_xgfile(SCM local_doc)
 
 #endif
 
-void CreateOpenDialog(Widget w, XtPointer clientData)
+void CreateOpenDialog(Widget w, XtPointer context)
 {
   /* file selection dialog box with added "Just Sound Files" toggle button */
   Arg args[20];
   int n;
   XmString s1;
   Widget wtmp = NULL;
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   n = 0;
   if (!open_dialog)
     {
@@ -379,11 +379,11 @@ void CreateOpenDialog(Widget w, XtPointer clientData)
 
       if (!(ss->using_schemes)) XtVaSetValues(just_sounds_button, XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
       XtVaGetValues(open_dialog, XmNfileSearchProc, &default_search_proc, NULL);
-      XtAddCallback(open_dialog, XmNokCallback, File_Open_OK_Callback, clientData);
-      XtAddCallback(open_dialog, XmNcancelCallback, File_Open_Cancel_Callback, clientData);
-      XtAddCallback(open_dialog, XmNhelpCallback, File_Open_Help_Callback, clientData);
+      XtAddCallback(open_dialog, XmNokCallback, File_Open_OK_Callback, context);
+      XtAddCallback(open_dialog, XmNcancelCallback, File_Open_Cancel_Callback, context);
+      XtAddCallback(open_dialog, XmNhelpCallback, File_Open_Help_Callback, context);
       XtAddCallback(just_sounds_button, XmNvalueChangedCallback, just_sounds_Callback, NULL);
-      XtAddCallback(just_sounds_button, XmNhelpCallback, just_sounds_help_Callback, clientData);
+      XtAddCallback(just_sounds_button, XmNhelpCallback, just_sounds_help_Callback, context);
       add_dialog(ss, open_dialog);
     }
 }
@@ -411,9 +411,9 @@ static file_data *save_as_file_data = NULL;
 static Widget save_as_dialog = NULL, file_save_as_file_name;
 static int save_as_dialog_type = FILE_SAVE_AS;
 
-static void save_as_ok_callback(Widget w, XtPointer clientData, XtPointer callData)
+static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
 { 
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   char *str = NULL,*comment;
   snd_info *sp;
   int type,format,srate;
@@ -434,21 +434,21 @@ static void save_as_ok_callback(Widget w, XtPointer clientData, XtPointer callDa
   XtUnmanageChild(save_as_dialog);
 } 
 
-static void save_as_help_callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void save_as_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  click_for_save_as_help((snd_state *)clientData);
+  click_for_save_as_help((snd_state *)context);
 }
 
-static void save_as_cancel_callback(Widget w, XtPointer clientData, XtPointer callData)
+static void save_as_cancel_callback(Widget w, XtPointer context, XtPointer info)
 { 
   XtUnmanageChild(save_as_dialog);
 } 
 
-static void file_data_Type_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void file_data_Type_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* this can be called from any header list created by sndCreateFileDataForm */
   int pos;
-  XmListCallbackStruct *cbs = (XmListCallbackStruct *)callData;
+  XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   file_data *fd;
   XtVaGetValues(w, XmNuserData, &fd, NULL);
   pos = cbs->item_position-1;
@@ -462,26 +462,26 @@ static void file_data_Type_Callback(Widget w, XtPointer clientData, XtPointer ca
     }
 }
 
-static void file_data_Format_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void file_data_Format_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  XmListCallbackStruct *cbs = (XmListCallbackStruct *)callData;
+  XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   file_data *fd;
   XtVaGetValues(w, XmNuserData, &fd, NULL);
   fd->current_format = data_format_from_position(fd->current_type, cbs->item_position-1);
 }
 
-static void file_header_help_callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void file_header_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "File Header Type",
 "This list shows the output header types that\n\
 Snd is willing to write.\n\
 ");
 }
 
-static void file_data_help_callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void file_data_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "File Data Format",
 "This list shows the data format choices\n\
 available with the currently selected header\n\
@@ -494,36 +494,36 @@ on the header type.\n\
 ");
 }
 
-static void file_data_location_help_callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void file_data_location_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "File Data Location",
 "If you know the data location (in bytes)\n\
 you can set it in this field.\n\
 ");
 }
 
-static void file_srate_help_callback(Widget w, XtPointer clientData, XtPointer callData)
+static void file_srate_help_callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "File Srate",
 "This field sets the nominal file sampling\n\
 rate.\n\
 ");
 } 
 
-static void file_chans_help_callback(Widget w, XtPointer clientData, XtPointer callData)
+static void file_chans_help_callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "File Srate",
 "This field sets the number of channels\n\
 in the output file.\n\
 ");
 } 
 
-static void file_comment_label_help_callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void file_comment_label_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   snd_help(ss,
 	   "Output File Comment",
 "This optional field provides any comments\n\
@@ -1105,11 +1105,7 @@ regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row,
   XtSetArg(args[n], XmNtopAttachment, (last_row) ? XmATTACH_WIDGET : XmATTACH_FORM); n++;
   if (last_row) {XtSetArg(args[n], XmNtopWidget, last_row); n++;}
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-#if defined(LINUX) || defined(SCO5) || defined(UW2) || defined(SUN)
-  XtSetArg(args[n], XmNheight, 17); n++; 
-#else
-  XtSetArg(args[n], XmNheight, 20); n++; 
-#endif
+  XtSetArg(args[n], XmNheight, 18); n++; 
   r->rw = XtCreateWidget("rw", xmFormWidgetClass, ww, args, n);
 
   n = 0;
@@ -1206,31 +1202,31 @@ void view_curfiles_set_row_name(int pos)
   FREE(str);
 }
 
-static void View_Files_Help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void View_Files_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  view_files_dialog_help((snd_state *)clientData);
+  view_files_dialog_help((snd_state *)context);
 }
 
-static void View_Files_Dismiss_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void View_Files_Dismiss_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   XtUnmanageChild(view_files_dialog);
 }
 
-static void View_Files_Clear_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void View_Files_Clear_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* clear previous files list and associated widget list */
-  clear_prevlist((snd_state *)clientData);
+  clear_prevlist((snd_state *)context);
 }
 
-static void View_Files_Update_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void View_Files_Update_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* run through previous files list looking for any that have been deleted behind our back */
-  update_prevlist((snd_state *)clientData);
+  update_prevlist((snd_state *)context);
 }
 
-static void View_CurFiles_Save_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void View_CurFiles_Save_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  regrow *r = (regrow *)clientData;
+  regrow *r = (regrow *)context;
   view_curfiles_save(r->ss, r->pos);
   XmToggleButtonSetState(r->sv, FALSE, FALSE);
 }
@@ -1252,10 +1248,10 @@ void set_file_browser_play_button(char *name, int state)
     }
 }
 
-static void View_CurFiles_Play_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void View_CurFiles_Play_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  regrow *r = (regrow *)clientData;
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
+  regrow *r = (regrow *)context;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   view_curfiles_play(r->ss, r->pos, cb->set);
 }
 
@@ -1290,32 +1286,32 @@ void curfile_highlight(snd_state *ss, int i)
     }
 }
 
-static void View_CurFiles_Select_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void View_CurFiles_Select_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  regrow *r = (regrow *)clientData;
+  regrow *r = (regrow *)context;
   view_curfiles_select(r->ss, r->pos);
 }
 
-static void View_PrevFiles_Unlist_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void View_PrevFiles_Unlist_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  regrow *r = (regrow *)clientData;
+  regrow *r = (regrow *)context;
   file_unprevlist(get_prevnames(r->pos));
   make_prevfiles_list(r->ss);
 }
 
-static void View_PrevFiles_Play_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void View_PrevFiles_Play_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* open and play -- close at end or when button off toggled */
-  regrow *r = (regrow *)clientData;
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
+  regrow *r = (regrow *)context;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   if (view_prevfiles_play(r->ss, r->pos, cb->set))
     XmToggleButtonSetState(w, FALSE, FALSE);
 }
 
-static void View_PrevFiles_Select_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void View_PrevFiles_Select_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* open and set as selected */
-  regrow *r = (regrow *)clientData;
+  regrow *r = (regrow *)context;
   view_prevfiles_select(r->ss, r->pos);
 }
 
@@ -1370,30 +1366,30 @@ void make_curfiles_list (snd_state *ss)
   XtManageChild(vf_curlst);
 }
 
-static void sort_prevfiles_by_name(Widget w, XtPointer clientData, XtPointer callData) 
+static void sort_prevfiles_by_name(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   set_previous_files_sort(ss, 1);
   make_prevfiles_list(ss);
 }
 
-static void sort_prevfiles_by_date(Widget w, XtPointer clientData, XtPointer callData) 
+static void sort_prevfiles_by_date(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   set_previous_files_sort(ss, 2);
   make_prevfiles_list(ss);
 }
 
-static void sort_prevfiles_by_size(Widget w, XtPointer clientData, XtPointer callData) 
+static void sort_prevfiles_by_size(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   set_previous_files_sort(ss, 3);
   make_prevfiles_list(ss);
 }
 
-static void sort_prevfiles_by_entry_order(Widget w, XtPointer clientData, XtPointer callData) 
+static void sort_prevfiles_by_entry_order(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   set_previous_files_sort(ss, 4);
   make_prevfiles_list(ss);
 }
@@ -1438,7 +1434,7 @@ void make_prevfiles_list (snd_state *ss)
 
 /* play open unlist for prevfile, play save select for curfile, preload process for prevfile (snd-clm) */
 
-void View_Files_Callback(Widget w, XtPointer clientData, XtPointer callData)
+void View_Files_Callback(Widget w, XtPointer context, XtPointer info)
 {
   /* fire up a dialog window with a list of currently open files, 
    * currently selected file also selected in list --
@@ -1449,7 +1445,7 @@ void View_Files_Callback(Widget w, XtPointer clientData, XtPointer callData)
    * The previous files list requires that we keep such a list as we go along, on the
    * off-chance this browser will be fired up.  (Such files may be subsequently moved or deleted).
    */
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   int n;
   Arg args[20];
   ww_info *wwl;
@@ -1547,7 +1543,7 @@ void View_Files_Callback(Widget w, XtPointer clientData, XtPointer callData)
 			   PAD_TITLE_ON_RIGHT, WITHOUT_SORT_BUTTON, WITHOUT_PANED_WINDOW);
       vf_curww = wwl->ww;
       vf_curlst = wwl->list;
-      if (!(ss->using_schemes)) map_over_children(vf_curlst, set_main_color_of_widget, (void *)clientData);
+      if (!(ss->using_schemes)) map_over_children(vf_curlst, set_main_color_of_widget, (void *)context);
       FREE(wwl); 
       wwl=NULL;
       if (get_curfile_size() == 0) /* apparently we need at least one row to get Motif to allocate the outer widgets correctly */
@@ -1571,7 +1567,7 @@ void View_Files_Callback(Widget w, XtPointer clientData, XtPointer callData)
 
       vf_prevww = wwl->ww;
       vf_prevlst = wwl->list;
-      if (!(ss->using_schemes)) map_over_children(vf_prevlst, set_main_color_of_widget, (void *)clientData);
+      if (!(ss->using_schemes)) map_over_children(vf_prevlst, set_main_color_of_widget, (void *)context);
       FREE(wwl); 
       wwl=NULL;
       if (get_prevfile_size() == 0)
@@ -1615,26 +1611,26 @@ static Widget raw_srate_text,raw_chans_text,raw_location_text;
 static int raw_data_location = 0;
 static int raw_cancelled = 0;
 
-static void raw_data_ok_Callback(Widget w, XtPointer clientData, XtPointer callData) {raw_cancelled = 0;}
-static void raw_data_cancel_Callback(Widget w, XtPointer clientData, XtPointer callData) {raw_cancelled = 1;}
+static void raw_data_ok_Callback(Widget w, XtPointer context, XtPointer info) {raw_cancelled = 0;}
+static void raw_data_cancel_Callback(Widget w, XtPointer context, XtPointer info) {raw_cancelled = 1;}
 
-static void raw_data_default_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void raw_data_default_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   set_use_raw_defaults(ss, 1);
-  raw_data_ok_Callback(w, clientData, callData);
+  raw_data_ok_Callback(w, context, info);
 }
 
-static void raw_data_browse_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void raw_data_browse_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
-  XmListCallbackStruct *cbs = (XmListCallbackStruct *)callData;
+  snd_state *ss = (snd_state *)context;
+  XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   set_raw_format(ss, cbs->item_position);
 }
 
-static void raw_data_help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void raw_data_help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  raw_data_dialog_help((snd_state *)clientData);
+  raw_data_dialog_help((snd_state *)context);
 }
 
 static char dfs_str[8];
@@ -1891,12 +1887,12 @@ static Widget new_dialog = NULL;
 static file_data *new_dialog_data = NULL;
 static Widget new_file_name = NULL;
 
-static void NewFileOkCallback(Widget w, XtPointer clientData, XtPointer callData) {new_file_cancelled = 0;}
-static void NewFileCancelCallback(Widget w, XtPointer clientData, XtPointer callData) {new_file_cancelled = 1;}
+static void NewFileOkCallback(Widget w, XtPointer context, XtPointer info) {new_file_cancelled = 0;}
+static void NewFileCancelCallback(Widget w, XtPointer context, XtPointer info) {new_file_cancelled = 1;}
 
-static void new_file_help_callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void new_file_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  new_file_dialog_help((snd_state *)clientData);
+  new_file_dialog_help((snd_state *)context);
 }
 
 snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment)
@@ -2017,20 +2013,20 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
 static Widget file_mix_dialog = NULL;
 static Widget file_mix_name = NULL;
 
-static void file_mix_help_callback(Widget w, XtPointer clientData, XtPointer callData)
+static void file_mix_help_callback(Widget w, XtPointer context, XtPointer info)
 {
-  file_mix_dialog_help((snd_state *)clientData);
+  file_mix_dialog_help((snd_state *)context);
 }
 
-static void file_mix_cancel_callback(Widget w, XtPointer clientData, XtPointer callData)
+static void file_mix_cancel_callback(Widget w, XtPointer context, XtPointer info)
 {
   XtUnmanageChild(w);
 }
 
-static void file_mix_ok_callback(Widget w, XtPointer clientData, XtPointer callData)
+static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
 {
   char *str = NULL;
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   XtUnmanageChild(w);
   mix_complete_file(any_selected_sound(ss), 
 		    str=XmTextGetString(file_mix_name), 
@@ -2039,13 +2035,13 @@ static void file_mix_ok_callback(Widget w, XtPointer clientData, XtPointer callD
   if (str) XtFree(str);
 }
 
-void File_Mix_Callback(Widget w, XtPointer clientData, XtPointer callData)
+void File_Mix_Callback(Widget w, XtPointer context, XtPointer info)
 {
   Arg args[20];
   int n;
   XmString s1;
   Widget wtmp;
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   if (!file_mix_dialog)
     {
       n = 0;
@@ -2084,21 +2080,21 @@ void File_Mix_Callback(Widget w, XtPointer clientData, XtPointer callData)
 static Widget edit_header_dialog = NULL;
 static file_data *edit_header_data;
 
-static void edit_header_help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void edit_header_help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  edit_header_dialog_help((snd_state *)clientData);
+  edit_header_dialog_help((snd_state *)context);
 }
 
-static void edit_header_cancel_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void edit_header_cancel_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   XtUnmanageChild(edit_header_dialog);
 }
 
-static void edit_header_ok_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void edit_header_ok_Callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss;
-  snd_info *sp = (snd_info *)clientData;
-  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)callData;
+  snd_info *sp = (snd_info *)context;
+  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
   ss = sp->state;
   if (cb->event == ((ss->sgx)->text_activate_event)) return; /* <cr> in one of text fields */
   if (!(sp->read_only))

@@ -1,7 +1,7 @@
 # make file for snd in Linux with no user-interface
 
 CC = cc
-CFLAGS = -g -DLINUX -DUSE_NO_GUI `guile-config compile`
+CFLAGS = -g -DLINUX -DUSE_SND -DUSE_NO_GUI `guile-config compile`
 LIBS = -lm `guile-config link`
 
 include makesnd.files

@@ -1739,7 +1739,7 @@ static SCM g_open_sound_file(SCM g_name, SCM g_chans, SCM g_srate, SCM g_comment
   char *name = NULL,*comment = NULL;
   file_info *hdr;
   int chans = 1,srate = 22050,result;
-#ifdef MUS_LITTLE_ENDIAN
+#if MUS_LITTLE_ENDIAN
   int type = MUS_RIFF;
   int format = MUS_LFLOAT; /* see comment! */
 #else
@@ -1767,7 +1767,7 @@ static SCM g_open_sound_file(SCM g_name, SCM g_chans, SCM g_srate, SCM g_comment
     if (!(SCM_UNBNDP(g_comment))) 
       scm_wrong_type_arg(S_open_sound_file, 4, g_comment);
   if (name == NULL)
-#ifdef MUS_LITTLE_ENDIAN
+#if MUS_LITTLE_ENDIAN
     name = copy_string("test.wav");
 #else
     name = copy_string("test.snd");

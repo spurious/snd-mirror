@@ -1253,7 +1253,7 @@ static void remix_file(mix_info *md, char *origin)
 	      if (mus_data_format_to_bytes_per_sample(MUS_COMPATIBLE_FORMAT) == 2)
 		ohdr->format = MUS_COMPATIBLE_FORMAT;
 	      else
-#ifdef MUS_LITTLE_ENDIAN
+#if MUS_LITTLE_ENDIAN
 		ohdr->format = MUS_LSHORT;
 #else
 		ohdr->format = MUS_BSHORT;

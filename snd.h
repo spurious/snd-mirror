@@ -120,13 +120,8 @@
 #endif
 
 #include <time.h>
-
-#if MACOS
-  #include <stat.h>
-#else
-  #include <sys/types.h>
-  #include <sys/stat.h>
-#endif
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #ifndef HAVE_GUILE
   #define HAVE_GUILE 1
@@ -173,7 +168,7 @@
 #endif
 #include "snd-strings.h"
 
-#define SND_VERSION "22-Feb-01"
+#define SND_VERSION "23-Feb-01"
 #define SND_RPM_VERSION "4.11"
 #define SND_MAJOR_VERSION 4
 #define SND_MINOR_VERSION 11

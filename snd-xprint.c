@@ -7,14 +7,14 @@ static Widget file_print_name = NULL;
 static Widget file_print_eps_or_lpr = NULL;
 static char print_string[256];
 
-static void file_print_help_callback(Widget w, XtPointer clientData, XtPointer callData)
+static void file_print_help_callback(Widget w, XtPointer context, XtPointer info)
 {
-  print_dialog_help((snd_state *)clientData);
+  print_dialog_help((snd_state *)context);
 }
 
-static void file_print_cancel_callback(Widget w, XtPointer clientData, XtPointer callData)
+static void file_print_cancel_callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   ss->print_choice = PRINT_SND;
   XtUnmanageChild(file_print_dialog);
 }
@@ -28,9 +28,9 @@ static int lpr (char *name)
 
 static int printing = 0;
 
-static void file_print_ok_callback(Widget w, XtPointer clientData, XtPointer callData)
+static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   int print_it,quit = 0,err = 0;
   char *name,*str = NULL;
   XmString plab,slab;
@@ -97,14 +97,14 @@ static void file_print_ok_callback(Widget w, XtPointer clientData, XtPointer cal
     XtUnmanageChild(file_print_dialog);
 }
 
-void File_Print_Callback(Widget w, XtPointer clientData, XtPointer callData)
+void File_Print_Callback(Widget w, XtPointer context, XtPointer info)
 {
   Arg args[20];
   int n;
   Widget dl,rc;
   XmString xmstr1,xmstr2,xmstr3,xmstr4,titlestr;
   snd_info *nsp;
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   if (ss->print_choice == PRINT_SND)
     {
       nsp = any_selected_sound(ss);
@@ -176,7 +176,7 @@ void File_Print_Callback(Widget w, XtPointer clientData, XtPointer callData)
 
       if (!(ss->using_schemes))	
 	{
-	  map_over_children(file_print_dialog, set_main_color_of_widget, (void *)clientData);
+	  map_over_children(file_print_dialog, set_main_color_of_widget, (void *)context);
 	  XtVaSetValues(XmMessageBoxGetChild(file_print_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(file_print_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(file_print_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);

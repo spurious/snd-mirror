@@ -1,4 +1,4 @@
-/* transform settings dialog */
+/* Transform settings dialog */
 
 #include "snd.h"
 
@@ -165,9 +165,9 @@ static void graph_redisplay(snd_state *ss)
     }
 }
 
-static void size_help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void size_help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "FFT Size",
 "Any size FFT can be accommodated here, as long\n\
 as it will fit in memory somehow.  The larger\n\
@@ -205,11 +205,11 @@ static int map_chans_fft_size(chan_info *cp, void *ptr)
   return(0);
 }
 
-static void size_browse_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void size_browse_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   int size;
-  XmListCallbackStruct *cbs = (XmListCallbackStruct *)callData;
+  XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   in_set_fft_size(ss, fft_sizes[cbs->item_position - 1]);
   size = fft_size(ss);
   map_over_chans(ss, map_chans_fft_size, (void *)size);
@@ -221,20 +221,20 @@ static void size_browse_Callback(Widget w, XtPointer clientData, XtPointer callD
 
 static int map_chans_wavelet_type(chan_info *cp, void *ptr) {cp->wavelet_type = (int)ptr; return(0);}
 
-static void wavelet_browse_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void wavelet_browse_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   int val;
-  XmListCallbackStruct *cbs = (XmListCallbackStruct *)callData;
+  XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   in_set_wavelet_type(ss, val = (cbs->item_position - 1)); /* make these numbers 0-based as in mus.lisp */
   map_over_chans(ss, map_chans_wavelet_type, (void *)val);
   if (transform_type(ss) == WAVELET)
     map_over_chans(ss, calculate_fft, NULL);
 }
 
-static void wavelet_help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void wavelet_help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "Wavelet Choice",
 "These names refer to various standard wavelets.\n\
 The actual coefficients are in snd-fft.c.\n\
@@ -242,11 +242,11 @@ The actual coefficients are in snd-fft.c.\n\
 }
 
 
-static void window_browse_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void window_browse_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  XmListCallbackStruct *cbs = (XmListCallbackStruct *)callData;
+  XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   int fft_window_choice;
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   fft_window_choice = (cbs->item_position - 1); /* make these numbers 0-based as in mus.lisp */
   in_set_fft_window(ss, fft_window_choice);
   map_over_chans(ss, calculate_fft, NULL);
@@ -261,9 +261,9 @@ static void window_browse_Callback(Widget w, XtPointer clientData, XtPointer cal
     }
 }
 
-static void window_help_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void window_help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "FFT Window",
 "The FFT window names are taken from the article\n\
 of Harris that discusses most FFT windows\n\
@@ -275,11 +275,11 @@ is a second order Blackman window.\n\
 
 static int map_chans_transform_type(chan_info *cp, void *ptr) {cp->transform_type = (int)ptr; return(0);}
 
-static void transform_type_browse_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void transform_type_browse_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   int type;
-  XmListCallbackStruct *cbs = (XmListCallbackStruct *)callData;
+  XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   type = cbs->item_position - 1;
   map_over_chans(ss, force_fft_clear, NULL);
   in_set_transform_type(ss, type);
@@ -287,9 +287,9 @@ static void transform_type_browse_Callback(Widget w, XtPointer clientData, XtPoi
   map_over_chans(ss, calculate_fft, NULL);
 }
 
-static void transform_type_help_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void transform_type_help_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   snd_help(ss,
        "Transform Type",
 "This list presents the various transforms\n\
@@ -298,10 +298,10 @@ that are available.\n\
 }
 
 
-static void normal_fft_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void normal_fft_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss = (snd_state *)clientData;
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
+  snd_state *ss = (snd_state *)context;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   if (cb->set)
     {
       XmToggleButtonSetState(sono_button, FALSE, FALSE);
@@ -316,10 +316,10 @@ static void normal_fft_Callback(Widget w, XtPointer clientData, XtPointer callDa
   map_over_chans(ss, calculate_fft, NULL);
 }
 
-static void sonogram_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void sonogram_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss = (snd_state *)clientData;
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
+  snd_state *ss = (snd_state *)context;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   if (cb->set)
     {
       XmToggleButtonSetState(normo_button, FALSE, FALSE);
@@ -334,10 +334,10 @@ static void sonogram_Callback(Widget w, XtPointer clientData, XtPointer callData
   map_over_chans(ss, calculate_fft, NULL);
 }
 
-static void spectrogram_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void spectrogram_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss = (snd_state *)clientData;
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
+  snd_state *ss = (snd_state *)context;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   if (cb->set)
     {
       XmToggleButtonSetState(normo_button, FALSE, FALSE);
@@ -354,11 +354,11 @@ static void spectrogram_Callback(Widget w, XtPointer clientData, XtPointer callD
 
 static int map_show_fft_peaks(chan_info *cp, void *ptr) {cp->show_fft_peaks = (int)ptr; return(0);}
 
-static void peaks_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void peaks_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   int val = 0;
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   in_set_show_fft_peaks(ss, val = (cb->set));
   map_over_chans(ss, map_show_fft_peaks, (void *)val);
   map_over_chans(ss, calculate_fft, NULL);
@@ -366,11 +366,11 @@ static void peaks_Callback(Widget w, XtPointer clientData, XtPointer callData)
 
 static int map_chans_fft_log_magnitude(chan_info *cp, void *ptr) {cp->fft_log_magnitude = (int)ptr; return(0);}
 
-static void db_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void db_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   int val;
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   in_set_fft_log_magnitude(ss, val = cb->set);
   map_over_chans(ss, map_chans_fft_log_magnitude, (void *)val);
   map_over_chans(ss, calculate_fft, NULL);
@@ -378,11 +378,11 @@ static void db_Callback(Widget w, XtPointer clientData, XtPointer callData)
 
 static int map_chans_fft_log_frequency(chan_info *cp, void *ptr) {cp->fft_log_frequency = (int)ptr; return(0);}
 
-static void logfreq_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void logfreq_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss = (snd_state *)clientData;
+  snd_state *ss = (snd_state *)context;
   int val;
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   in_set_fft_log_frequency(ss, val = cb->set);
   map_over_chans(ss, map_chans_fft_log_frequency, (void *)val);
   map_over_chans(ss, calculate_fft, NULL);
@@ -390,29 +390,29 @@ static void logfreq_Callback(Widget w, XtPointer clientData, XtPointer callData)
 
 static int map_chans_normalize_fft(chan_info *cp, void *ptr) {cp->normalize_fft = (int)ptr; return(0);}
 
-static void normalize_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void normalize_Callback(Widget w, XtPointer context, XtPointer info)
 {
   int choice;
-  snd_state *ss = (snd_state *)clientData;
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
+  snd_state *ss = (snd_state *)context;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   choice = (cb->set) ? NORMALIZE_BY_CHANNEL : DONT_NORMALIZE;
   in_set_normalize_fft(ss, choice);
   map_over_chans(ss, map_chans_normalize_fft, (void *)choice);
   map_over_chans(ss, calculate_fft, NULL);
 }
 
-static void selection_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void selection_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss = (snd_state *)clientData;
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
+  snd_state *ss = (snd_state *)context;
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   in_set_show_selection_transform(ss, cb->set);
   map_over_chans(ss, calculate_fft, NULL);
 }
 
 
-static void beta_help_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void beta_help_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "FFT Window Parameter",
 "This scale sets the FFT window parameter\n\
 sometimes known as alpha or beta.  The\n\
@@ -421,10 +421,10 @@ values, given the current FFT window.\n\
 ");
 } 
 
-static void beta_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void beta_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_state *ss = (snd_state *)clientData;
-  XmScaleCallbackStruct *cb = (XmScaleCallbackStruct *)callData;
+  snd_state *ss = (snd_state *)context;
+  XmScaleCallbackStruct *cb = (XmScaleCallbackStruct *)info;
   in_set_fft_beta(ss, (Float)(cb->value) / 100.0);
   map_chans_field(ss, FCP_BETA, (Float)(cb->value) / 100.0);
   if (fft_window_beta_in_use(fft_window(ss)))
@@ -436,28 +436,28 @@ static void beta_Callback(Widget w, XtPointer clientData, XtPointer callData)
     }
 } 
 
-static void graph_help_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void graph_help_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_help((snd_state *)clientData,
+  snd_help((snd_state *)context,
 	   "Window Graph",
 "This shows a graph of the current fft window and the spectrum\n\
 thereof -- the spectrum is in dB with the min at -80dB.\n\
 ");
 }
 
-static void graph_resize_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void graph_resize_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  graph_redisplay((snd_state *)clientData);
+  graph_redisplay((snd_state *)context);
 }
 
-static void Dismiss_Transform_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void Dismiss_Transform_Callback(Widget w, XtPointer context, XtPointer info)
 {
   XtUnmanageChild(transform_dialog);
 }
 
-static void Help_Transform_Callback(Widget w, XtPointer clientData, XtPointer callData)
+static void Help_Transform_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  transform_dialog_help((snd_state *)clientData);
+  transform_dialog_help((snd_state *)context);
 }
 
 void fire_up_transform_dialog(snd_state *ss)
