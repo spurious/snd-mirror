@@ -49,23 +49,28 @@
 			  (centered-points (cdr points))))))
 	      (centered-points ms))))))
 
-(define (map-chan-over-target func target)
-  (let ((ms (and (eq? target 'marks)
-		 (plausible-mark-samples))))
-    (map-chan (func)
-	      (if (eq? target 'sound)
+(define (map-chan-over-target func target decay)
+  (let* ((ms (and (eq? target 'marks)
+		 (plausible-mark-samples)))
+	 (beg (if (eq? target 'sound)
 		  0
 		  (if (eq? target 'selection)
 		      (selection-position)
-		      (car ms)))
-	      (if (eq? target 'sound)
+		      (car ms))))
+	 (dur (if (eq? target 'sound)
 		  (1- (frames))
 		  (if (eq? target 'selection)
 		      (+ (selection-position) (selection-length))
-		      (cadr ms))))))
+		      (cadr ms))))
+	 (overlap (if decay
+		      (inexact->exact (* (srate) decay))
+		      0)))
+    (map-chan (func dur)
+	      beg 
+	      (+ dur overlap))))
 
 (define map-chan-over-target-with-sync
-  (lambda (func target origin)
+  (lambda (func target origin decay)
     (let* ((snc (sync))
 	   (ms (and (eq? target 'marks)
 		    (plausible-mark-samples)))
@@ -73,28 +78,26 @@
 		    0
 		    (if (eq? target 'selection)
 			(selection-position)
-			(car ms)))))
-      (if (> snc 0)
-	  (apply for-each
-		 (lambda (snd chn)
-		   (if (= (sync snd) snc)
-		       (map-chan (func) 
-				 beg 
-				 (if (eq? target 'sound)
-				     (1- (frames snd chn))
-				     (if (eq? target 'selection)
-					 (+ (selection-position) (selection-length))
-					 (cadr ms)))
-				 origin snd chn)))
-		 (all-chans))
-	  (map-chan (func) 
-		    beg 
-		    (if (eq? target 'sound)
-			(1- (frames))
-			(if (eq? target 'selection)
-			    (+ (selection-position) (selection-length))
-			    (cadr ms)))
-		    origin)))))
+			(car ms))))
+	   (overlap (if decay
+			(inexact->exact (* (srate) decay))
+			0)))
+      (apply for-each
+	     (lambda (snd chn)
+	       (let ((dur (if (eq? target 'sound)
+			      (1- (frames snd chn))
+			      (if (eq? target 'selection)
+				  (+ (selection-position) (selection-length))
+				  (cadr ms)))))
+		 (if (= (sync snd) snc)
+		     (map-chan (func dur) 
+			       beg 
+			       (+ dur overlap)
+			       origin snd chn))))
+	     (if (> snc 0) 
+		 (all-chans) 
+		 (list (list (selected-sound)) 
+		       (list (selected-channel))))))))
 
 (define (make-effect-dialog label ok-callback dismiss-callback help-callback reset-callback)
   ;; make a standard dialog
@@ -532,7 +535,7 @@
 (define (cp-adsat)
   "adsat does weird stuff by adsat size"
   (map-chan-over-target 
-   (lambda ()
+   (lambda (ignored)
      (let ((mn 0.0)
 	   (mx 0.0)
 	   (n 0)
@@ -555,7 +558,7 @@
 	       (if (< val mn) (set! mn val))
 	       (set! n (1+ n))
 	       #f)))))
-   adsat-target))
+   adsat-target #f))
 
 
 
@@ -614,7 +617,7 @@
 
 (define (cp-am)
   "amplitude modulation"
-  (map-chan-over-target (lambda () (am am-amount)) am-target))
+  (map-chan-over-target (lambda (ignored) (am am-amount)) am-target #f))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -674,9 +677,9 @@
 
 (define (cp-ring-mod)
   (map-chan-over-target 
-   (lambda () 
+   (lambda (ignored) 
      (ring-mod ring-mod-frequency (list 0 0 1 (hz->radians ring-mod-radians))))
-   ring-mod-target))
+   ring-mod-target #f))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -970,7 +973,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 (define jc-reverb-truncate #t)
 
 (define jc-reverb-1 ; changed from examp.scm for target/truncate (and omits low-pass and amp-env)
-  (lambda (input-samps volume)
+  (lambda (input-samps)
     (let* ((allpass1 (make-all-pass -0.700 0.700 1051))
 	   (allpass2 (make-all-pass -0.700 0.700  337))
 	   (allpass3 (make-all-pass -0.700 0.700  113))
@@ -999,28 +1002,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 		   (comb comb3 allpass-sum)
 		   (comb comb4 allpass-sum)))
 	  (+ inval
-	     (* volume (delay outdel1 comb-sum))))))))
-
-(define (cp-jc-reverb)
-  (let* ((ms (and (eq? jc-reverb-target 'marks)
-		 (plausible-mark-samples)))
-	 (beg (if (eq? jc-reverb-target 'sound)
-		  0
-		  (if (eq? jc-reverb-target 'selection)
-		      (selection-position)
-		      (car ms))))
-	 (dur (if (eq? jc-reverb-target 'sound)
-		     (1- (frames))
-		     (if (eq? jc-reverb-target 'selection)
-			 (+ (selection-position) (selection-length))
-			 (cadr ms))))
-	 (decay (if jc-reverb-truncate
-		    0
-		    (inexact->exact (* (srate) jc-reverb-decay)))))
-    (map-chan
-     (jc-reverb-1 dur jc-reverb-volume)
-     beg 
-     (+ dur decay))))
+	     (* jc-reverb-volume (delay outdel1 comb-sum))))))))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -1033,7 +1015,8 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
                   (sliders '()))
               (set! jc-reverb-dialog
                     (make-effect-dialog jc-reverb-label
-                                        (lambda (w context info) (cp-jc-reverb))
+                                        (lambda (w context info) 
+					  (map-chan-over-target jc-reverb-1 jc-reverb-target (and (not jc-reverb-truncate) jc-reverb-decay)))
                                         (lambda (w context info) (|XtUnmanageChild jc-reverb-dialog))
                                         (lambda (w context info)
                                           (help-dialog "Chowning reverb Help"
@@ -1156,22 +1139,25 @@ Move the sliders to set the numbers of the soundfiles to be convolved and the am
 
 
 ;;; -------- Echo (controlled by delay-time and echo-amount)
-;;;
-;;; (truncate)
 
 (define delay-time .5) ; i.e. delay between echoes
 (define echo-amount .2)
 (define echo-label "Echo")
 (define echo-dialog #f)
 (define echo-target 'sound)
+(define echo-truncate #t)
+;;; echo-decay? -- using (* 4 delay-time) currently
 
-(define (cp-echo)
+
+(define (cp-echo input-samps)
   "echo adds echos spaced by delay-time seconds and scaled by echo-amount"
-  (let ((del (make-delay (round (* delay-time (srate))))))
+  (let ((del (make-delay (round (* delay-time (srate)))))
+	(samp 0))
     (lambda (inval)
+      (set! samp (1+ samp))
       (+ inval
          (delay del
-                (* echo-amount (+ (tap del) inval)))))))
+                (* echo-amount (+ (tap del) (if (<= samp input-samps) inval 0.0))))))))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin  
@@ -1185,7 +1171,12 @@ Move the sliders to set the numbers of the soundfiles to be convolved and the am
               (set! echo-dialog 
 		    (make-effect-dialog echo-label
 					(lambda (w context info)
-					  (map-chan-over-target-with-sync (lambda () (cp-echo)) echo-target "echo" ))
+					  (map-chan-over-target-with-sync 
+					   (lambda (input-samps) 
+					     (cp-echo input-samps))
+					   echo-target "echo"
+					   (and (not echo-truncate) 
+						(* 4 delay-time))))
 					(lambda (w context info) (|XtUnmanageChild echo-dialog))
 					(lambda (w context info)
 					  (help-dialog "Echo Help"
@@ -1205,7 +1196,9 @@ Move the sliders to set the numbers of the soundfiles to be convolved and the am
 					     (lambda (w context info)
 					       (set! echo-amount (/ (|value info) 100.0)))
 					     100))))
-              (add-target (|XtParent (car sliders)) (lambda (target) (set! echo-target target)) #f)))
+              (add-target (|XtParent (car sliders)) 
+			  (lambda (target) (set! echo-target target))
+			  (lambda (truncate) (set! echo-truncate truncate)))))
 
 	(activate-dialog echo-dialog))
 
@@ -1223,29 +1216,32 @@ Move the sliders to set the numbers of the soundfiles to be convolved and the am
 
 
 ;;; -------- Filtered echo
-;;;
-;;; (truncate)
 
 (define flecho-scaler 0.5)
 (define flecho-delay 0.9)
 (define flecho-label "Filtered echo")
 (define flecho-dialog #f)
 (define flecho-target 'sound)
+(define flecho-truncate #t)
 
-(if (not (defined? 'flecho))
-    (define flecho 
-      (lambda (scaler secs)
-	(let* ((flt (make-fir-filter :order 4 :xcoeffs (list->vct '(.125 .25 .25 .125))))
-	       (del (make-delay  (round (* secs (srate))))))
-	  (lambda (inval)
-	    (+ inval 
-	       (delay del 
-		      (fir-filter flt (* scaler (+ (tap del) inval))))))))))
+(define flecho-1
+  (lambda (scaler secs input-samps)
+    (let* ((flt (make-fir-filter :order 4 :xcoeffs (list->vct '(.125 .25 .25 .125))))
+	   (del (make-delay  (round (* secs (srate)))))
+	   (samp 0))
+      (lambda (inval)
+	(set! samp (1+ samp))
+	(+ inval 
+	   (delay del 
+		  (fir-filter flt (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0))))))))))
 
 (define (cp-flecho)
  (map-chan-over-target 
-  (lambda () (flecho flecho-scaler flecho-delay))
-  flecho-target))
+  (lambda (input-samps) 
+    (flecho-1 flecho-scaler flecho-delay input-samps))
+  flecho-target 
+  (and (not flecho-truncate) 
+       (* 4 flecho-delay))))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -1280,7 +1276,9 @@ Move the sliders to set the numbers of the soundfiles to be convolved and the am
 					     (lambda (w context info)
 					       (set! flecho-delay (/ (|value info) 100.0)))
 					     100))))
-	      (add-target (|XtParent (car sliders)) (lambda (target) (set! flecho-target target)) #f)))
+	      (add-target (|XtParent (car sliders)) 
+			  (lambda (target) (set! flecho-target target))
+			  (lambda (truncate) (set! flecho-truncate truncate)))))
 
 	(activate-dialog flecho-dialog))
 
@@ -1297,8 +1295,6 @@ Move the sliders to set the numbers of the soundfiles to be convolved and the am
 
 ;;; -------- Modulated echo
 ;;; -------- very slick
-;;;
-;;; (truncate)
 
 (define zecho-scaler 0.5)
 (define zecho-delay 0.75)
@@ -1307,21 +1303,27 @@ Move the sliders to set the numbers of the soundfiles to be convolved and the am
 (define zecho-label "Modulated echo")
 (define zecho-dialog #f)
 (define zecho-target 'sound)
+(define zecho-truncate #t)
 
-(if (not (defined? 'zecho))
-    (define zecho 
-      (lambda (scaler secs frq amp)
-	(let* ((os (make-oscil frq))
-	       (len (round (* secs (srate))))
-	       (del (make-delay len :max-size (+ len amp 1))))
-	  (lambda (inval)
-	    (+ inval 
-	       (delay del 
-		      (* scaler (+ (tap del) inval))
-		      (* amp (oscil os)))))))))
+(define zecho-1
+  (lambda (scaler secs frq amp input-samps)
+    (let* ((os (make-oscil frq))
+	   (len (round (* secs (srate))))
+	   (del (make-delay len :max-size (+ len amp 1)))
+	   (samp 0))
+      (lambda (inval)
+	(set! samp (1+ samp))
+	(+ inval 
+	   (delay del 
+		  (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0)))
+		  (* amp (oscil os))))))))
 
 (define (cp-zecho)
- (map-chan-over-target (zecho zecho-scaler zecho-delay zecho-freq zecho-amp)) zecho-target)
+ (map-chan-over-target 
+  (lambda (input-samps) (zecho-1 zecho-scaler zecho-delay zecho-freq zecho-amp input-samps)) 
+  zecho-target
+  (and (not zecho-truncate)
+       (* 4 zecho-delay))))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -1371,8 +1373,9 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
                                              (lambda (w context info)
                                                (set! zecho-amp (/ (|value info) 100.0)))
                                              100))))
-	      (add-target (|XtParent (car sliders)) (lambda (target) (set! zecho-target target)) #f)))
-
+	      (add-target (|XtParent (car sliders)) 
+			  (lambda (target) (set! zecho-target target))
+			  (lambda (truncate) (set! zecho-truncate truncate)))))
 	(activate-dialog zecho-dialog))
 
       (add-to-menu effects-menu "Modulated echo" (lambda () (post-zecho-dialog))))
@@ -1420,7 +1423,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
               (set! flange-dialog 
 		    (make-effect-dialog flange-label
 					(lambda (w context info)
-					  (map-chan-over-target-with-sync (lambda () (cp-flange)) flange-target "flange"))
+					  (map-chan-over-target-with-sync (lambda (ignored) (cp-flange)) flange-target "flange" #f))
 					(lambda (w context info)
 					  (|XtUnmanageChild flange-dialog))
 					(lambda (w context info)
@@ -1461,7 +1464,6 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
                              (change-menu-label effects-menu flange-label new-label)
                              (set! flange-label new-label)))
                          effects-list))
-
 
 
 ;;; -------- Contrast (brightness control)
@@ -1851,7 +1853,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
               (set! comb-dialog 
 		    (make-effect-dialog comb-label
 					(lambda (w context info) 
-					  (map-chan-over-target (lambda () (comb-filter comb-scaler comb-size)) comb-target))
+					  (map-chan-over-target (lambda (ignored) (comb-filter comb-scaler comb-size)) comb-target #f))
 					(lambda (w context info) (|XtUnmanageChild comb-dialog))
 					(lambda (w context info)
 					  (help-dialog "Comb filter Help"
@@ -1924,11 +1926,11 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
                     (make-effect-dialog comb-chord-label
                                         (lambda (w context info)
                                           (map-chan-over-target-with-sync
-                                           (lambda ()
+                                           (lambda (ignored)
                                              (comb-chord comb-chord-scaler comb-chord-size comb-chord-amp
                                                          comb-chord-interval-one comb-chord-interval-two))
 					   comb-chord-target
-                                           "comb-chord"))
+                                           "comb-chord" #f))
                                         (lambda (w context info)
                                           (|XtUnmanageChild comb-chord-dialog))
                                         (lambda (w context info)
@@ -2010,7 +2012,7 @@ Move the sliders to set the comb-chord parameters."))
         (moog-filter gen inval))))
 
 (define (cp-moog)
-  (map-chan-over-target (lambda () (moog cutoff-frequency resonance)) moog-target))
+  (map-chan-over-target (lambda (ignored) (moog cutoff-frequency resonance)) moog-target #f))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -2302,9 +2304,9 @@ Move the sliders to set the comb-chord parameters."))
 
 (define (cp-cross-synth)
   (map-chan-over-target
-   (lambda () 
+   (lambda (ignored) 
      (cross-synthesis cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
-   cross-synth-target))
+   cross-synth-target #f))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin

@@ -164,6 +164,9 @@ static Locus tick_grf_x(double val, axis_info *ap, int style, int srate)
     case X_AXIS_IN_SECONDS: 
       res = (int)(ap->x_base + val * ap->x_scale); 
       break;
+    case X_AXIS_IN_BEATS: 
+      res = (int)(ap->x_base + val * ap->x_scale * 60.0 / ap->cp->beats_per_minute);
+      break;
     case X_AXIS_IN_SAMPLES: 
       res = (int)(ap->x_axis_x0 + (val - ap->x0 * srate) * ap->x_scale / srate); 
       break;
@@ -379,6 +382,12 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	  break;
 	case X_AXIS_IN_SAMPLES: 
 	  tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0 * srate, ap->x1 * srate, num_ticks); 
+	  break;
+	case X_AXIS_IN_BEATS: 
+	  tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), 
+			       (ap->x0 * ap->cp->beats_per_minute / 60.0), 
+			       (ap->x1 * ap->cp->beats_per_minute / 60.0), 
+			       num_ticks); 
 	  break;
 	case X_AXIS_AS_PERCENTAGE: 
 	  tdx = describe_ticks((tick_descriptor *)(ap->x_ticks), ap->x0 / ap->xmax, ap->x1 / ap->xmax, num_ticks); 

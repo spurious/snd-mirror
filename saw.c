@@ -12,7 +12,7 @@ XtAppContext app;
 int n;
 Arg args[20];
 
-static void Snd_Callback(Widget w, XtPointer clientData, XtPointer callData) 
+static void snd_callback(Widget w, XtPointer clientData, XtPointer callData) 
 {
   if (!snd_running)
     {
@@ -46,7 +46,7 @@ int main (int argc, char **argv )
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   label =  XtCreateManagedWidget("push for Snd", xmPushButtonWidgetClass, form, args, n);
-  XtAddCallback(label, XmNactivateCallback, Snd_Callback, NULL);
+  XtAddCallback(label, XmNactivateCallback, snd_callback, NULL);
   
   XtRealizeWidget(shell);
   XtAppMainLoop(app);
@@ -98,7 +98,7 @@ include makesnd.back
 static int snd_running = 0;
 GtkWidget *form, *shell, *label, *snd;
 
-static void Snd_Callback(GtkWidget *w, gpointer data) 
+static void snd_callback(GtkWidget *w, gpointer data) 
 {
   if (!snd_running)
     {
@@ -117,7 +117,7 @@ static void Snd_Callback(GtkWidget *w, gpointer data)
     }
 }
 
-static gint Window_Close(GtkWidget *w, GdkEvent *event, gpointer clientData)
+static gint window_close(GtkWidget *w, GdkEvent *event, gpointer clientData)
 {
   gtk_main_quit();
   return(FALSE);
@@ -138,8 +138,8 @@ static void gsnd_main (int argc, char **argv )
   gtk_widget_show(label);
   gtk_widget_show(shell);
 
-  gtk_signal_connect(GTK_OBJECT(label), "clicked", GTK_SIGNAL_FUNC(Snd_Callback), (gpointer)form);
-  gtk_signal_connect(GTK_OBJECT(shell), "delete_event", GTK_SIGNAL_FUNC(Window_Close), NULL);
+  gtk_signal_connect(GTK_OBJECT(label), "clicked", GTK_SIGNAL_FUNC(snd_callback), (gpointer)form);
+  gtk_signal_connect(GTK_OBJECT(shell), "delete_event", GTK_SIGNAL_FUNC(window_close), NULL);
   gtk_main();
 }
 

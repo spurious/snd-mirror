@@ -684,7 +684,7 @@ static void help_color_callback(Widget w, XtPointer context, XtPointer info)
 
 /* I tried a scrolled window with each colormap name in an appropriate color, but it looked kinda dumb */
 
-void View_Color_Callback(Widget w, XtPointer context, XtPointer info)
+void view_color_callback(Widget w, XtPointer context, XtPointer info)
 {
   Arg args[32];
   int n, i;
@@ -1170,7 +1170,7 @@ static void reset_orientation_callback(Widget w, XtPointer context, XtPointer in
   map_over_chans(ss, update_graph, NULL);
 }
 
-void View_Orientation_Callback(Widget w, XtPointer context, XtPointer info)
+void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss = (snd_state *)context;
   Widget mainform, rightbox, leftbox;
@@ -1371,7 +1371,7 @@ int orientation_dialog_is_active(void)
 
 Widget start_color_dialog(snd_state *ss, int width, int height)
 {
-  View_Color_Callback(NULL, (XtPointer)ss, NULL);
+  view_color_callback(NULL, (XtPointer)ss, NULL);
   if (width != 0) 
     XtVaSetValues(ccd->dialog, 
 		  XmNwidth, (Dimension)width, 
@@ -1382,7 +1382,7 @@ Widget start_color_dialog(snd_state *ss, int width, int height)
 
 Widget start_orientation_dialog(snd_state *ss, int width, int height)
 {
-  View_Orientation_Callback(NULL, (XtPointer)ss, NULL);
+  view_orientation_callback(NULL, (XtPointer)ss, NULL);
   if (width != 0) 
     XtVaSetValues(oid->dialog, 
 		  XmNwidth, (Dimension)width, 

@@ -267,6 +267,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+5-Oct:   x-axis-in-beats, beats-per-minute.\n\
 1-Oct:   Snd 5.3.\n\
 26-Sep:  after-edit-hook.\n\
 24-Sep:  changed mus-sound-max-amp to mus-sound-maxamp to match all other such cases (old name still exists)\n\
@@ -931,6 +932,7 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_axis_label_font "       varies\n\
   " S_axis_numbers_font "     varies\n\
   " S_basic_color "           ivory2\n\
+  " S_beats_per_minute "      60\n\
   " S_bold_button_font "      varies\n\
   " S_button_font "           varies\n\
   " S_color_cutoff "          0.003\n\

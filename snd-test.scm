@@ -275,6 +275,7 @@
 	'normalize-transform-by-sound normalize-transform-by-sound 2
 	'normalize-transform-globally normalize-transform-globally 3
 	'x-axis-in-samples x-axis-in-samples 1 
+	'x-axis-in-beats x-axis-in-beats 4
 	'x-axis-in-seconds x-axis-in-seconds 0 
 	'x-axis-as-percentage x-axis-as-percentage 2
 	'enved-add-point enved-add-point 0
@@ -660,6 +661,9 @@
       (set! (x-axis-style) (x-axis-style))
       (if (not (equal? (x-axis-style)  0 )) 
 	  (snd-display ";x-axis-style set def: ~A" (x-axis-style)))
+      (set! (beats-per-minute) (beats-per-minute))
+      (if (fneq (beats-per-minute)  60.0 )
+	  (snd-display ";beats-per-minute set def: ~A" (beats-per-minute)))
       (set! (zero-pad) (zero-pad))
       (if (not (equal? (zero-pad)  0)) 
 	  (snd-display ";zero-pad set def: ~A" (zero-pad)))
@@ -828,6 +832,7 @@
 	'wavo-hop (wavo-hop) 3 
 	'wavo-trace (wavo-trace) 64 
 	'x-axis-style (x-axis-style) 0 
+	'beats-per-minute (beats-per-minute) 60.0
 	'zero-pad (zero-pad) 0
 	'zoom-focus-style (zoom-focus-style) 2 
 	'mix-waveform-height (mix-waveform-height) 20 
@@ -1318,6 +1323,7 @@
 	  (list 'wavo-trace wavo-trace 64 set-wavo-trace 128)
 	  (list 'with-mix-tags with-mix-tags #t set-with-mix-tags #f)
 	  (list 'x-axis-style x-axis-style 0 set-x-axis-style 1)
+	  (list 'beats-per-minute beats-per-minute 30.0 set-beats-per-minute 120.0)
 	  (list 'zero-pad zero-pad 0 set-zero-pad 1)
 	  (list 'zoom-focus-style zoom-focus-style 2 set-zoom-focus-style 1))))
     
@@ -8207,6 +8213,7 @@
 		    (list 'wavelet-type #f 0 set-wavelet-type 10)
 		    (list 'graph-time? #t #f set-graph-time? #t)
 		    (list 'x-axis-style #f 0 set-x-axis-style 2)
+		    (list 'beats-per-minute #f 60.0 set-beats-per-minute 120.0)
 		    (list 'zero-pad #f 0 set-zero-pad 2)
 		    (list 'zoom-focus-style #f 0 set-zoom-focus-style 3))))
 	  
@@ -8257,7 +8264,7 @@
 		    verbose-cursor fft-log-frequency fft-log-magnitude min-dB wavelet-type transform-size fft-window-beta transform-type 
 		    transform-normalization show-mix-waveforms graph-style dot-size show-axes show-y-zero show-marks
 		    spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
-		    spectro-hop spectro-cutoff spectro-start graphs-horizontal x-axis-style
+		    spectro-hop spectro-cutoff spectro-start graphs-horizontal x-axis-style beats-per-minute
 		    ))
 (define set-funcs (list set-time-graph-type set-wavo-hop set-wavo-trace set-max-transform-peaks 
 			set-show-transform-peaks set-zero-pad set-transform-graph-type set-fft-window 
@@ -8265,19 +8272,19 @@
 			set-transform-size set-fft-window-beta set-transform-type 
 			set-transform-normalization set-show-mix-waveforms set-graph-style set-dot-size set-show-axes set-show-y-zero set-show-marks
 			set-spectro-x-angle set-spectro-x-scale set-spectro-y-angle set-spectro-y-scale set-spectro-z-angle set-spectro-z-scale
-			set-spectro-hop set-spectro-cutoff set-spectro-start set-graphs-horizontal set-x-axis-style
+			set-spectro-hop set-spectro-cutoff set-spectro-start set-graphs-horizontal set-x-axis-style set-beats-per-minute
 		    ))
 (define func-names (list 'time-graph-type 'wavo-hop 'wavo-trace 'max-transform-peaks 'show-transform-peaks 'zero-pad 'transform-graph-type 'fft-window
 			 'verbose-cursor 'fft-log-frequency 'fft-log-magnitude 'min-dB 'wavelet-type 'transform-size 'fft-window-beta 'transform-type
 			 'transform-normalization 'show-mix-waveforms 'graph-style 'dot-size 'show-axes 'show-y-zero 'show-marks
 			 'spectro-x-angle 'spectro-x-scale 'spectro-y-angle 'spectro-y-scale 'spectro-z-angle 'spectro-z-scale
-			 'spectro-hop 'spectro-cutoff 'spectro-start 'graphs-horizontal 'x-axis-style
+			 'spectro-hop 'spectro-cutoff 'spectro-start 'graphs-horizontal 'x-axis-style 'beats-per-minute
 			 ))
 (define new-values (list graph-time-as-wavogram 12 512 3 #t 32 graph-transform-as-sonogram cauchy-window
 			 #t #t #t -120.0 3 32 .5 autocorrelation
 			 0 #t graph-lollipops 8 show-no-axes #t #f
 			 32.0 .5 32.0 .5 32.0 .5
-			 14 .3 .1 #f x-axis-in-samples
+			 14 .3 .1 #f x-axis-in-samples 120.0
 			 ))
 
 (define test-history-channel
@@ -11476,7 +11483,7 @@ EDITS: 3
 	       update-transform update-time-graph update-lisp-graph update-sound update-usage-stats use-sinc-interp
 	       vct->samples vct->sound-file verbose-cursor view-sound vu-font vu-font-size vu-size wavelet-type
 	       graph-time?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
-	       with-mix-tags write-peak-env-info-file x-axis-style x-bounds x-position-slider x->position x-zoom-slider
+	       with-mix-tags write-peak-env-info-file x-axis-style beats-per-minute x-bounds x-position-slider x->position x-zoom-slider
 	       y-bounds y-position-slider y->position y-zoom-slider zero-pad zoom-color zoom-focus-style
 	       mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location
 	       mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length
@@ -11544,7 +11551,7 @@ EDITS: 3
 		   spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed-control
 		   speed-control-style speed-control-tones squelch-update sync temp-dir text-focus-color tiny-font
 		   transform-type trap-segfault use-sinc-interp verbose-cursor vu-font vu-font-size vu-size wavelet-type
-		   graph-time? wavo-hop wavo-trace with-mix-tags x-axis-style zero-pad zoom-color zoom-focus-style ))
+		   graph-time? wavo-hop wavo-trace with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style ))
 
 (reset-all-hooks)
 
@@ -12149,7 +12156,7 @@ EDITS: 3
 			  selected-sound selection-creates-region show-backtrace show-controls show-indices show-listener
 			  show-selection-transform show-usage-stats sinc-width temp-dir text-focus-color tiny-font
 			  trap-segfault unbind-key use-sinc-interp verbose-cursor vu-font vu-font-size vu-size window-height
-			  window-width window-x window-y with-mix-tags x-axis-style zoom-color zoom-focus-style mix-tag-height
+			  window-width window-x window-y with-mix-tags x-axis-style beats-per-minute zoom-color zoom-focus-style mix-tag-height
 			  mix-tag-width ))
 	  (gc))
 

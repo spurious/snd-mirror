@@ -489,7 +489,7 @@ static void make_region_dialog(snd_state *ss)
   wwl = NULL;
 }
 
-void View_Region_Callback(GtkWidget *w, gpointer context)
+void view_region_callback(GtkWidget *w, gpointer context)
 {
   /* put up scrollable dialog describing/playing/editing the region list */
   snd_state *ss = (snd_state *)context;
@@ -549,7 +549,7 @@ static XEN g_region_dialog(void)
   snd_state *ss;
   ss = get_global_state();
   if (snd_regions() > 0) 
-    View_Region_Callback(MAIN_PANE(ss), (gpointer)ss); 
+    view_region_callback(MAIN_PANE(ss), (gpointer)ss); 
   return(XEN_WRAP_C_POINTER(region_dialog));
 }
 

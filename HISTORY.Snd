@@ -1,5 +1,6 @@
 snd change log
 
+  5-Oct:     x-axis-in-beats, beats-per-minute.
   1-Oct:     Snd 5.3.
   26-Sep:    after-edit-hook.
   24-Sep:    changed mus-sound-max-amp to mus-sound-maxamp to match all other such cases (old name still exists)

@@ -458,6 +458,7 @@ int map_chans_x_axis_style(chan_info *cp, void *ptr)
       if (ap->xlabel) FREE(ap->xlabel);
       switch (new_style)
 	{
+	case X_AXIS_IN_BEATS:      ap->xlabel = copy_string(STR_time_beats); break;
 	case X_AXIS_IN_SAMPLES:    ap->xlabel = copy_string(STR_time_samples); break;
 	case X_AXIS_AS_PERCENTAGE: ap->xlabel = copy_string(STR_time_percent); break;
 	default:                   ap->xlabel = copy_string(STR_time);         break;
@@ -472,6 +473,7 @@ static void reflect_x_axis_unit_change_in_menu(int oldval, int newval)
   switch (oldval)
     {
     case X_AXIS_IN_SECONDS:    set_sensitive(view_x_axis_seconds_menu(), TRUE);    break;
+    case X_AXIS_IN_BEATS:      set_sensitive(view_x_axis_beats_menu(), TRUE);      break;
     case X_AXIS_IN_SAMPLES:    set_sensitive(view_x_axis_samples_menu(), TRUE);    break;
     case X_AXIS_AS_PERCENTAGE: set_sensitive(view_x_axis_percentage_menu(), TRUE); break;
     default:                   set_sensitive(view_x_axis_seconds_menu(), TRUE);    break;
@@ -479,6 +481,7 @@ static void reflect_x_axis_unit_change_in_menu(int oldval, int newval)
   switch (newval)
     {
     case X_AXIS_IN_SECONDS:    set_sensitive(view_x_axis_seconds_menu(), FALSE);    break;
+    case X_AXIS_IN_BEATS:      set_sensitive(view_x_axis_beats_menu(), FALSE);      break;
     case X_AXIS_IN_SAMPLES:    set_sensitive(view_x_axis_samples_menu(), FALSE);    break;
     case X_AXIS_AS_PERCENTAGE: set_sensitive(view_x_axis_percentage_menu(), FALSE); break;
     default:                   set_sensitive(view_x_axis_seconds_menu(), FALSE);    break;

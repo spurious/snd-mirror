@@ -65,8 +65,8 @@ void set_spectro_x_scale(snd_state *ss, Float val);
 void set_spectro_y_scale(snd_state *ss, Float val);
 void set_spectro_z_scale(snd_state *ss, Float val);
 void set_spectro_cutoff(snd_state *ss, Float val);
-void View_Orientation_Callback(GtkWidget *w, gpointer clientData);
-void View_Color_Callback(GtkWidget * w, gpointer clientData);
+void view_orientation_callback(GtkWidget *w, gpointer clientData);
+void view_color_callback(GtkWidget * w, gpointer clientData);
 int color_dialog_is_active(void);
 int orientation_dialog_is_active(void);
 void reflect_spectro(snd_state *ss);
@@ -147,6 +147,7 @@ GtkWidget *view_ctrls_menu(void);
 GtkWidget *view_listener_menu(void);
 GtkWidget *view_cursor_menu(void);
 GtkWidget *view_x_axis_seconds_menu(void);
+GtkWidget *view_x_axis_beats_menu(void);
 GtkWidget *view_x_axis_samples_menu(void);
 GtkWidget *view_x_axis_percentage_menu(void);
 GtkWidget *options_save_state_menu(void);
@@ -220,7 +221,7 @@ int region_browser_is_active(void);
 void delete_region_and_update_browser(snd_state *ss, int n);
 void select_region_and_update_browser(snd_state *ss, int n);
 void set_region_protect(int reg, int protect);
-void View_Region_Callback(GtkWidget *w, gpointer clientData);
+void view_region_callback(GtkWidget *w, gpointer clientData);
 void allocate_region_rows(snd_state *ss, int n);
 int region_dialog_is_active(void);
 void reflect_regions_in_region_browser(void);
@@ -305,7 +306,7 @@ void g_init_gxchn(void);
 
 /* -------- snd-gfind.c -------- */
 
-void Edit_Find_Callback(GtkWidget *w, gpointer clientData);
+void edit_find_callback(GtkWidget *w, gpointer clientData);
 #if DEBUGGING
   void g_init_gxfind(void);
 #endif
@@ -544,7 +545,7 @@ void make_a_big_star_outa_me(char *shortname, int big_star);
 void set_file_browser_play_button(char *name, int state);
 void highlight_selected_sound(snd_state *ss);
 void set_file_sort_sensitive(int sensitive);
-void View_Files_Callback(GtkWidget *w, gpointer clientData);
+void view_files_callback(GtkWidget *w, gpointer clientData);
 GtkWidget *start_file_dialog(snd_state *ss, int width, int height);
 int file_dialog_is_active(void);
 file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const char *title);
@@ -558,7 +559,7 @@ void g_initialize_xgfile(void);
 
 /* -------- snd-gprint.c -------- */
 
-void File_Print_Callback(GtkWidget *w, gpointer clientData);
+void file_print_callback(GtkWidget *w, gpointer clientData);
 char *ps_rgb(snd_state *ss, int pchan);
 
 

@@ -213,7 +213,7 @@ typedef struct chan__info {
   int squelch_update, waiting_to_make_graph;
   /* moved from global to channel-local 4-Aug-00 */
   Float spectro_x_scale, spectro_y_scale, spectro_z_scale, spectro_z_angle, spectro_x_angle, spectro_y_angle, spectro_cutoff, spectro_start;
-  Float lin_dB, min_dB, fft_window_beta;
+  Float lin_dB, min_dB, fft_window_beta, beats_per_minute;
   int show_y_zero, show_marks, wavo_hop, wavo_trace, zero_pad, x_axis_style, wavelet_type, verbose_cursor, max_transform_peaks;
   int show_transform_peaks, show_axes, graph_style, fft_log_frequency, fft_log_magnitude, transform_size, transform_graph_type, fft_window, time_graph_type;
   Latus dot_size;
@@ -333,7 +333,7 @@ typedef struct snd__state {
   Latus Dot_Size;
   int Transform_Size, Fft_Window, Transform_Graph_Type, Time_Graph_Type, Zero_Pad, Ask_Before_Overwrite, Wavo_Hop, Wavo_Trace;
   Float Fft_Window_Beta, Reverb_Control_Decay;
-  Float Color_Scale, Color_Cutoff;
+  Float Color_Scale, Color_Cutoff, Beats_Per_Minute;
   int Color_Inverted, Speed_Control_Style, Movies, Transform_Normalization, Show_Mix_Waveforms, Mix_Waveform_Height;
   int Speed_Control_Tones, Sinc_Width, X_Axis_Style, Zoom_Focus_Style, Graph_Style, Region_Graph_Style;
   int Auto_Resize, Auto_Update, Max_Regions, Max_Transform_Peaks;
@@ -973,6 +973,7 @@ chan_info *virtual_selected_channel(chan_info *cp);
 void map_chans_field(snd_state *ss, int field, Float val);
 void in_set_transform_graph_type(snd_state *ss, int val);
 void in_set_fft_window(snd_state *ss, int val);
+void set_beats_per_minute(snd_state *ss, Float val);
 void combine_sound(snd_info *sp);
 void separate_sound(snd_info *sp);
 void superimpose_sound(snd_info *sp);

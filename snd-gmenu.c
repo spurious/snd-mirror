@@ -36,12 +36,12 @@ enum {menu_menu,
           v_color_menu, v_orientation_menu, 
           v_files_menu, v_mix_panel_menu,
           v_x_axis_menu, v_x_axis_cascade_menu,
-            v_x_axis_seconds_menu, v_x_axis_samples_menu, v_x_axis_percentage_menu,
+            v_x_axis_seconds_menu, v_x_axis_samples_menu, v_x_axis_percentage_menu, v_x_axis_beats_menu,
           v_error_history_menu,
           v_sep2_menu
 };
 
-#define NUM_MENU_WIDGETS 97
+#define NUM_MENU_WIDGETS 98
 static GtkWidget *mw[NUM_MENU_WIDGETS];
 
 enum {W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_info};
@@ -91,6 +91,7 @@ GtkWidget *view_ctrls_menu(void) {return(mw[v_ctrls_menu]);}
 GtkWidget *view_listener_menu(void) {return(mw[v_listener_menu]);}
 GtkWidget *view_cursor_menu(void) {return(mw[v_cursor_menu]);}
 GtkWidget *view_x_axis_seconds_menu(void) {return(mw[v_x_axis_seconds_menu]);}
+GtkWidget *view_x_axis_beats_menu(void) {return(mw[v_x_axis_beats_menu]);}
 GtkWidget *view_x_axis_samples_menu(void) {return(mw[v_x_axis_samples_menu]);}
 GtkWidget *view_x_axis_percentage_menu(void) {return(mw[v_x_axis_percentage_menu]);}
 
@@ -134,113 +135,113 @@ static int call_menu_hook(char *name, char *option)
 
 /* -------------------------------- FILE MENU -------------------------------- */
 
-static void File_Open_Callback(GtkWidget *w, gpointer cD) 
+static void file_open_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_File, STR_Open) make_open_file_dialog((snd_state *)cD, FALSE, TRUE);
 }
 
-static void File_View_Callback(GtkWidget *w, gpointer cD) 
+static void file_view_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_File, STR_View) make_open_file_dialog((snd_state *)cD, TRUE, TRUE);
 }
 
-static void File_New_Callback(GtkWidget *w, gpointer cD) 
+static void file_new_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_File, STR_New) new_file_from_menu((snd_state *)cD);
 }
 
-static void File_Record_Callback(GtkWidget *w, gpointer cD) 
+static void file_record_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_File, STR_Record) snd_record_file((snd_state *)cD);
 }
 
-static void File_Close_Callback(GtkWidget *w, gpointer cD) 
+static void file_close_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_File, STR_Close) close_file_from_menu((snd_state *)cD);
 }
 
-static void File_Save_Callback(GtkWidget *w, gpointer cD) 
+static void file_save_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_File, STR_Save) save_file_from_menu((snd_state *)cD);
 }
 
-static void File_Update_Callback(GtkWidget *w, gpointer cD) 
+static void file_update_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_File, STR_Update) update_file_from_menu((snd_state *)cD);
 }
 
-static void File_Save_As_Callback(GtkWidget *w, gpointer cD) 
+static void file_save_as_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_File, STR_Save_as) make_file_save_as_dialog((snd_state *)cD);
 }
 
-static void File_Revert_Callback(GtkWidget *w, gpointer cD) 
+static void file_revert_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_File, STR_Revert) revert_file_from_menu((snd_state *)cD);
 }
 
-static void File_Exit_Callback(GtkWidget *w, gpointer cD) 
+static void file_exit_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_File, STR_Exit) exit_from_menu((snd_state *)cD);
 }
 
-static void File_Mix_Callback_1(GtkWidget *w, gpointer cD) 
+static void file_mix_callback_1(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_File, STR_Mix) make_mix_file_dialog((snd_state *)cD, TRUE);
 }
 
-static void File_Print_Callback_1(GtkWidget *w, gpointer cD) 
+static void file_print_callback_1(GtkWidget *w, gpointer cD) 
 {
-  IF_MENU_HOOK(STR_File, STR_Print) File_Print_Callback(w, cD);
+  IF_MENU_HOOK(STR_File, STR_Print) file_print_callback(w, cD);
 }
 
 
 /* -------------------------------- EDIT MENU -------------------------------- */
 
 
-static void Edit_Mix_Callback(GtkWidget *w, gpointer cD) 
+static void edit_mix_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_Edit, STR_Mix_Selection) mix_selection_from_menu((snd_state *)cD);
 }
 
-static void Edit_Envelope_Callback(GtkWidget *w, gpointer cD) 
+static void edit_envelope_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_Edit, STR_Edit_Envelope) create_envelope_editor((snd_state *)cD);
 }
 
-static void Edit_Cut_Callback(GtkWidget *w, gpointer cD) 
+static void edit_cut_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_Edit, STR_Delete_Selection) delete_selection("Edit: Cut", UPDATE_DISPLAY);
 }
 
-static void Edit_Paste_Callback(GtkWidget *w, gpointer cD) 
+static void edit_paste_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_Edit, STR_Insert_Selection) paste_selection_from_menu((snd_state *)cD);
 }
 
-static void Edit_Save_As_Callback(GtkWidget *w, gpointer cD) 
+static void edit_save_as_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_Edit, STR_Save_Selection) make_edit_save_as_dialog((snd_state *)cD);
 }
 
-static void Edit_Select_All_Callback(GtkWidget *w, gpointer cD) 
+static void edit_select_all_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_Edit, STR_Select_all) select_all(current_channel((snd_state *)cD));
 }
 
-static void Edit_Undo_Callback(GtkWidget *w, gpointer cD) 
+static void edit_undo_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_Edit, STR_Undo) undo_edit_with_sync(current_channel((snd_state *)cD), 1);
 }
 
-static void Edit_Redo_Callback(GtkWidget *w, gpointer cD) 
+static void edit_redo_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_Edit, STR_Redo) redo_edit_with_sync(current_channel((snd_state *)cD), 1);
 }
 
 static int selection_play_stop = 0;
 
-static void Edit_Play_Callback(GtkWidget *w, gpointer cD) 
+static void edit_play_callback(GtkWidget *w, gpointer cD) 
 {
   if (selection_play_stop)
     {
@@ -263,7 +264,7 @@ void reflect_play_selection_stop(void)
   selection_play_stop = 0;
 }
 
-static void Edit_Header_Callback(GtkWidget *w, gpointer cD)
+static void edit_header_callback_1(GtkWidget *w, gpointer cD)
 {
   snd_state *ss = (snd_state *)cD;
   snd_info *sp;
@@ -275,68 +276,68 @@ static void Edit_Header_Callback(GtkWidget *w, gpointer cD)
 }
 
 #if HAVE_EXTENSION_LANGUAGE
-static void Edit_Find_Callback_1(GtkWidget *w, gpointer cD)
+static void edit_find_callback_1(GtkWidget *w, gpointer cD)
 {
-  IF_MENU_HOOK(STR_Edit, STR_Find) Edit_Find_Callback(w, cD);
+  IF_MENU_HOOK(STR_Edit, STR_Find) edit_find_callback(w, cD);
 }
 #endif
 
 
 /* -------------------------------- VIEW MENU -------------------------------- */
 
-static void View_Separate_Callback(GtkWidget *w, gpointer cD) 
+static void view_separate_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_View, STR_separate) set_channel_style((snd_state *)cD, CHANNELS_SEPARATE);
 }
 
-static void View_Combined_Callback(GtkWidget *w, gpointer cD) 
+static void view_combined_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_View, STR_combined) set_channel_style((snd_state *)cD, CHANNELS_COMBINED);
 }
 
-static void View_Superimposed_Callback(GtkWidget *w, gpointer cD) 
+static void view_superimposed_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_View, STR_superimposed) set_channel_style((snd_state *)cD, CHANNELS_SUPERIMPOSED);
 }
 
-static void View_Dots_Callback(GtkWidget *w, gpointer cD) 
+static void view_dots_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_View, STR_dots) set_graph_style((snd_state *)cD, GRAPH_DOTS);
 }
 
-static void View_Lines_Callback(GtkWidget *w, gpointer cD) 
+static void view_lines_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_View, STR_lines) set_graph_style((snd_state *)cD, GRAPH_LINES);
 }
 
-static void View_Filled_Callback(GtkWidget *w, gpointer cD) 
+static void view_filled_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_View, STR_filled) set_graph_style((snd_state *)cD, GRAPH_FILLED);
 }
 
-static void View_Dots_and_Lines_Callback(GtkWidget *w, gpointer cD) 
+static void view_dots_and_lines_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_View, STR_dots_and_lines) set_graph_style((snd_state *)cD, GRAPH_DOTS_AND_LINES);
 }
 
-static void View_Lollipops_Callback(GtkWidget *w, gpointer cD) 
+static void view_lollipops_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_View, STR_lollipops) set_graph_style((snd_state *)cD, GRAPH_LOLLIPOPS);
 }
 
-static void View_Zero_Callback(GtkWidget *w, gpointer cD)
+static void view_zero_callback(GtkWidget *w, gpointer cD)
 {
   snd_state *ss = (snd_state *)cD;
   IF_MENU_HOOK(STR_View, STR_Show_Y0) set_show_y_zero(ss, (!(show_y_zero(ss))));
 }
 
-static void View_Cursor_Callback(GtkWidget *w, gpointer cD)
+static void view_cursor_callback(GtkWidget *w, gpointer cD)
 {
   snd_state *ss = (snd_state *)cD;
   IF_MENU_HOOK(STR_View, STR_Verbose_cursor) set_verbose_cursor(ss, (!(verbose_cursor(ss))));
 }
 
-static void View_Ctrls_Callback(GtkWidget *w, gpointer cD)
+static void view_ctrls_callback(GtkWidget *w, gpointer cD)
 {
   snd_state *ss = (snd_state *)cD;
   IF_MENU_HOOK(STR_View, STR_Show_controls) 
@@ -348,116 +349,121 @@ static void View_Ctrls_Callback(GtkWidget *w, gpointer cD)
 }
 
 #if HAVE_EXTENSION_LANGUAGE
-static void View_Listener_Callback(GtkWidget *w, gpointer cD) 
+static void view_listener_callback(GtkWidget *w, gpointer cD) 
 {
   snd_state *ss = (snd_state *)cD;
   IF_MENU_HOOK(STR_View, STR_Show_listener) handle_listener((snd_state *)cD, (!(ss->listening)));
 }
 #endif
 
-static void View_Mix_Panel_Callback(GtkWidget *w, gpointer cD) 
+static void view_mix_panel_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_View, STR_Mix_Panel) make_mix_panel((snd_state *)cD);
 }
 
-static void View_Error_History_Callback(GtkWidget *w, gpointer cD) 
+static void view_error_history_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_View, STR_Error_History) show_snd_errors((snd_state *)cD);
 }
 
-static void View_Region_Callback_1(GtkWidget *w, gpointer cD) 
+static void view_region_callback_1(GtkWidget *w, gpointer cD) 
 {
-  IF_MENU_HOOK(STR_View, STR_Regions) View_Region_Callback(w, cD);
+  IF_MENU_HOOK(STR_View, STR_Regions) view_region_callback(w, cD);
 }
 
-static void View_Orientation_Callback_1(GtkWidget *w, gpointer cD) 
+static void view_orientation_callback_1(GtkWidget *w, gpointer cD) 
 {
-  IF_MENU_HOOK(STR_View, STR_Orientation) View_Orientation_Callback(w, cD);
+  IF_MENU_HOOK(STR_View, STR_Orientation) view_orientation_callback(w, cD);
 }
 
-static void View_Color_Callback_1(GtkWidget *w, gpointer cD) 
+static void view_color_callback_1(GtkWidget *w, gpointer cD) 
 {
-  IF_MENU_HOOK(STR_View, STR_Color) View_Color_Callback(w, cD);
+  IF_MENU_HOOK(STR_View, STR_Color) view_color_callback(w, cD);
 }
 
-static void View_Files_Callback_1(GtkWidget *w, gpointer cD) 
+static void view_files_callback_1(GtkWidget *w, gpointer cD) 
 {
-  IF_MENU_HOOK(STR_View, STR_Files) View_Files_Callback(w, cD);
+  IF_MENU_HOOK(STR_View, STR_Files) view_files_callback(w, cD);
 }
 
 
 /* -------------------------------- OPTIONS MENU -------------------------------- */
 
-static void Options_Transform_Callback(GtkWidget *w, gpointer cD) 
+static void options_transform_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_Options, STR_Transform_Options) fire_up_transform_dialog((snd_state *)cD, TRUE);
 }
 
 #if HAVE_EXTENSION_LANGUAGE
-static void Options_Save_Callback(GtkWidget *w, gpointer cD) 
+static void options_save_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_Options, STR_Save_options) save_options_from_menu((snd_state *)cD);
 }
 #endif
 
-static void Options_Focus_Right_Callback(GtkWidget *w, gpointer cD, gpointer Data) 
+static void options_focus_right_callback(GtkWidget *w, gpointer cD, gpointer Data) 
 {
   IF_MENU_HOOK(STR_Options, STR_focus_right) activate_focus_menu((snd_state *)cD, ZOOM_FOCUS_RIGHT);
 }
 
-static void Options_Focus_Left_Callback(GtkWidget *w, gpointer cD, gpointer Data) 
+static void options_focus_left_callback(GtkWidget *w, gpointer cD, gpointer Data) 
 {
   IF_MENU_HOOK(STR_Options, STR_focus_left) activate_focus_menu((snd_state *)cD, ZOOM_FOCUS_LEFT);
 }
 
-static void Options_Focus_Middle_Callback(GtkWidget *w, gpointer cD, gpointer Data) 
+static void options_focus_middle_callback(GtkWidget *w, gpointer cD, gpointer Data) 
 {
   IF_MENU_HOOK(STR_Options, STR_focus_middle) activate_focus_menu((snd_state *)cD, ZOOM_FOCUS_MIDDLE);
 }
 
-static void Options_Focus_Active_Callback(GtkWidget *w, gpointer cD, gpointer Data) 
+static void options_focus_active_callback(GtkWidget *w, gpointer cD, gpointer Data) 
 {
   IF_MENU_HOOK(STR_Options, STR_focus_active) activate_focus_menu((snd_state *)cD, ZOOM_FOCUS_ACTIVE);
 }
 
-static void Options_Speed_Float_Callback(GtkWidget *w, gpointer cD, gpointer Data) 
+static void options_speed_float_callback(GtkWidget *w, gpointer cD, gpointer Data) 
 {
   IF_MENU_HOOK(STR_Options, STR_float) activate_speed_in_menu((snd_state *)cD, SPEED_CONTROL_AS_FLOAT);
 }
 
-static void Options_Speed_Ratio_Callback(GtkWidget *w, gpointer cD, gpointer Data) 
+static void options_speed_ratio_callback(GtkWidget *w, gpointer cD, gpointer Data) 
 {
   IF_MENU_HOOK(STR_Options, STR_ratio) activate_speed_in_menu((snd_state *)cD, SPEED_CONTROL_AS_RATIO);
 }
 
-static void Options_Speed_Semitone_Callback(GtkWidget *w, gpointer cD, gpointer Data) 
+static void options_speed_semitone_callback(GtkWidget *w, gpointer cD, gpointer Data) 
 {
   IF_MENU_HOOK(STR_Options, STR_semitone) activate_speed_in_menu((snd_state *)cD, SPEED_CONTROL_AS_SEMITONE);
 }
 
-static void Options_X_Axis_Seconds_Callback(GtkWidget *w, gpointer cD) 
+static void options_x_axis_seconds_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_Options, STR_seconds) set_x_axis_style((snd_state *)cD, X_AXIS_IN_SECONDS);
 }
 
-static void Options_X_Axis_Samples_Callback(GtkWidget *w, gpointer cD) 
+static void options_x_axis_beats_callback(GtkWidget *w, gpointer cD) 
+{
+  IF_MENU_HOOK(STR_Options, STR_beats) set_x_axis_style((snd_state *)cD, X_AXIS_IN_BEATS);
+}
+
+static void options_x_axis_samples_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_Options, STR_samples) set_x_axis_style((snd_state *)cD, X_AXIS_IN_SAMPLES);
 }
 
-static void Options_X_Axis_Percentage_Callback(GtkWidget *w, gpointer cD) 
+static void options_x_axis_percentage_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_Options, STR_percentage) set_x_axis_style((snd_state *)cD, X_AXIS_AS_PERCENTAGE);
 }
 
 #if HAVE_EXTENSION_LANGUAGE
-static void Options_Save_State_Callback(GtkWidget *w, gpointer cD) 
+static void options_save_state_callback(GtkWidget *w, gpointer cD) 
 {
   IF_MENU_HOOK(STR_Options, STR_Save_state) save_state_from_menu((snd_state *)cD);
 }
 #endif
 
-static void Options_Stats_Callback(GtkWidget *w, gpointer cD)
+static void options_stats_callback(GtkWidget *w, gpointer cD)
 {
   snd_state *ss = (snd_state *)cD;
   IF_MENU_HOOK(STR_Options, STR_Show_stats) set_show_usage_stats(ss, (!(show_usage_stats(ss))));
@@ -466,25 +472,25 @@ static void Options_Stats_Callback(GtkWidget *w, gpointer cD)
 
 /* -------------------------------- HELP MENU -------------------------------- */
 
-static void Help_About_Snd_Callback(GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Overview) about_snd_help((snd_state *)cD);}
-static void Help_FFT_Callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_FFT) fft_help((snd_state *)cD);}
-static void Help_Find_Callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Find) find_help((snd_state *)cD);}
-static void Help_Undo_Callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Undo_and_redo) undo_help((snd_state *)cD);}
-static void Help_Sync_Callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Sync) sync_help((snd_state *)cD);}
-static void Help_Speed_Callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Speed) speed_help((snd_state *)cD);}
-static void Help_Expand_Callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Expand) expand_help((snd_state *)cD);}
-static void Help_Reverb_Callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Reverb) reverb_help((snd_state *)cD);}
-static void Help_Contrast_Callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Contrast) contrast_help((snd_state *)cD);}
-static void Help_Env_Callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Envelope) env_help((snd_state *)cD);}
-static void Help_Marks_Callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Marks) marks_help((snd_state *)cD);}
-static void Help_Mix_Callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Mixing) mix_help((snd_state *)cD);}
-static void Help_Sound_Files_Callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Formats) sound_files_help((snd_state *)cD);}
-static void Help_Init_File_Callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Customization) init_file_help((snd_state *)cD);}
-static void Help_Recording_Callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Recording) recording_help((snd_state *)cD);}
+static void help_about_snd_callback(GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Overview) about_snd_help((snd_state *)cD);}
+static void help_fft_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_FFT) fft_help((snd_state *)cD);}
+static void help_find_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Find) find_help((snd_state *)cD);}
+static void help_undo_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Undo_and_redo) undo_help((snd_state *)cD);}
+static void help_sync_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Sync) sync_help((snd_state *)cD);}
+static void help_speed_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Speed) speed_help((snd_state *)cD);}
+static void help_expand_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Expand) expand_help((snd_state *)cD);}
+static void help_reverb_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Reverb) reverb_help((snd_state *)cD);}
+static void help_contrast_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Contrast) contrast_help((snd_state *)cD);}
+static void help_env_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Envelope) env_help((snd_state *)cD);}
+static void help_marks_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Marks) marks_help((snd_state *)cD);}
+static void help_mix_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Mixing) mix_help((snd_state *)cD);}
+static void help_sound_files_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Formats) sound_files_help((snd_state *)cD);}
+static void help_init_file_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Customization) init_file_help((snd_state *)cD);}
+static void help_recording_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_Recording) recording_help((snd_state *)cD);}
 
-static void Help_CLM_Callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_CLM) clm_help((snd_state *)cD);}
+static void help_clm_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_CLM) clm_help((snd_state *)cD);}
 
-static void Help_News_Callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_News) news_help((snd_state *)cD);}
+static void help_news_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK(STR_Help, STR_News) news_help((snd_state *)cD);}
 
 
 /* -------------------------------- MAIN MENU -------------------------------- */
@@ -521,74 +527,74 @@ GtkWidget *add_menu(snd_state *ss)
   gtk_menu_append(GTK_MENU(mw[f_cascade_menu]), mw[f_open_menu]);
   set_background(mw[f_open_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[f_open_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[f_open_menu]), "activate", GTK_SIGNAL_FUNC(File_Open_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[f_open_menu]), "activate", GTK_SIGNAL_FUNC(file_open_callback), (gpointer)ss);
 
   mw[f_close_menu] = gtk_menu_item_new_with_label(STR_Close);
   gtk_menu_append(GTK_MENU(mw[f_cascade_menu]), mw[f_close_menu]);
   set_background(mw[f_close_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[f_close_menu]);
   set_sensitive(mw[f_close_menu], FALSE);
-  gtk_signal_connect(GTK_OBJECT(mw[f_close_menu]), "activate", GTK_SIGNAL_FUNC(File_Close_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[f_close_menu]), "activate", GTK_SIGNAL_FUNC(file_close_callback), (gpointer)ss);
   
   mw[f_save_menu] = gtk_menu_item_new_with_label(STR_Save);
   gtk_menu_append(GTK_MENU(mw[f_cascade_menu]), mw[f_save_menu]);
   set_background(mw[f_save_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[f_save_menu]);
   set_sensitive(mw[f_save_menu], FALSE);
-  gtk_signal_connect(GTK_OBJECT(mw[f_save_menu]), "activate", GTK_SIGNAL_FUNC(File_Save_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[f_save_menu]), "activate", GTK_SIGNAL_FUNC(file_save_callback), (gpointer)ss);
   
   mw[f_save_as_menu] = gtk_menu_item_new_with_label(STR_Save_as);
   gtk_menu_append(GTK_MENU(mw[f_cascade_menu]), mw[f_save_as_menu]);
   set_background(mw[f_save_as_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[f_save_as_menu]);
   set_sensitive(mw[f_save_as_menu], FALSE);
-  gtk_signal_connect(GTK_OBJECT(mw[f_save_as_menu]), "activate", GTK_SIGNAL_FUNC(File_Save_As_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[f_save_as_menu]), "activate", GTK_SIGNAL_FUNC(file_save_as_callback), (gpointer)ss);
   
   mw[f_revert_menu] = gtk_menu_item_new_with_label(STR_Revert);
   gtk_menu_append(GTK_MENU(mw[f_cascade_menu]), mw[f_revert_menu]);
   set_background(mw[f_revert_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[f_revert_menu]);
   set_sensitive(mw[f_revert_menu], FALSE);
-  gtk_signal_connect(GTK_OBJECT(mw[f_revert_menu]), "activate", GTK_SIGNAL_FUNC(File_Revert_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[f_revert_menu]), "activate", GTK_SIGNAL_FUNC(file_revert_callback), (gpointer)ss);
   
   mw[f_mix_menu] = gtk_menu_item_new_with_label(STR_Mix);
   gtk_menu_append(GTK_MENU(mw[f_cascade_menu]), mw[f_mix_menu]);
   set_background(mw[f_mix_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[f_mix_menu]);
   set_sensitive(mw[f_mix_menu], FALSE);
-  gtk_signal_connect(GTK_OBJECT(mw[f_mix_menu]), "activate", GTK_SIGNAL_FUNC(File_Mix_Callback_1), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[f_mix_menu]), "activate", GTK_SIGNAL_FUNC(file_mix_callback_1), (gpointer)ss);
 
   mw[f_update_menu] = gtk_menu_item_new_with_label(STR_Update);
   gtk_menu_append(GTK_MENU(mw[f_cascade_menu]), mw[f_update_menu]);
   set_background(mw[f_update_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[f_update_menu]);
   set_sensitive(mw[f_update_menu], FALSE);
-  gtk_signal_connect(GTK_OBJECT(mw[f_update_menu]), "activate", GTK_SIGNAL_FUNC(File_Update_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[f_update_menu]), "activate", GTK_SIGNAL_FUNC(file_update_callback), (gpointer)ss);
 
   mw[f_new_menu] = gtk_menu_item_new_with_label(STR_New);
   gtk_menu_append(GTK_MENU(mw[f_cascade_menu]), mw[f_new_menu]);
   set_background(mw[f_new_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[f_new_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[f_new_menu]), "activate", GTK_SIGNAL_FUNC(File_New_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[f_new_menu]), "activate", GTK_SIGNAL_FUNC(file_new_callback), (gpointer)ss);
 
   mw[f_record_menu] = gtk_menu_item_new_with_label(STR_Record);
   gtk_menu_append(GTK_MENU(mw[f_cascade_menu]), mw[f_record_menu]);
   set_background(mw[f_record_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[f_record_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[f_record_menu]), "activate", GTK_SIGNAL_FUNC(File_Record_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[f_record_menu]), "activate", GTK_SIGNAL_FUNC(file_record_callback), (gpointer)ss);
 
   mw[f_view_menu] = gtk_menu_item_new_with_label(STR_View);
   gtk_menu_append(GTK_MENU(mw[f_cascade_menu]), mw[f_view_menu]);
   set_background(mw[f_view_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[f_view_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[f_view_menu]), "activate", GTK_SIGNAL_FUNC(File_View_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[f_view_menu]), "activate", GTK_SIGNAL_FUNC(file_view_callback), (gpointer)ss);
 
   mw[f_print_menu] = gtk_menu_item_new_with_label(STR_Print);
   gtk_menu_append(GTK_MENU(mw[f_cascade_menu]), mw[f_print_menu]);
   set_background(mw[f_print_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[f_print_menu]);
   set_sensitive(mw[f_print_menu], FALSE);
-  gtk_signal_connect(GTK_OBJECT(mw[f_print_menu]), "activate", GTK_SIGNAL_FUNC(File_Print_Callback_1), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[f_print_menu]), "activate", GTK_SIGNAL_FUNC(file_print_callback_1), (gpointer)ss);
 
   mw[f_sep_menu] = gtk_menu_item_new();
   set_background(mw[f_sep_menu], (ss->sgx)->basic_color);
@@ -599,7 +605,7 @@ GtkWidget *add_menu(snd_state *ss)
   gtk_menu_append(GTK_MENU(mw[f_cascade_menu]), mw[f_exit_menu]);
   set_background(mw[f_exit_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[f_exit_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[f_exit_menu]), "activate", GTK_SIGNAL_FUNC(File_Exit_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[f_exit_menu]), "activate", GTK_SIGNAL_FUNC(file_exit_callback), (gpointer)ss);
 
   /* EDIT MENU */
   mw[edit_menu] = gtk_menu_item_new_with_label(STR_Edit);
@@ -616,14 +622,14 @@ GtkWidget *add_menu(snd_state *ss)
   set_background(mw[e_undo_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[e_undo_menu]);
   set_sensitive(mw[e_undo_menu], FALSE);
-  gtk_signal_connect(GTK_OBJECT(mw[e_undo_menu]), "activate", GTK_SIGNAL_FUNC(Edit_Undo_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[e_undo_menu]), "activate", GTK_SIGNAL_FUNC(edit_undo_callback), (gpointer)ss);
 
   mw[e_redo_menu] = gtk_menu_item_new_with_label(STR_Redo);
   gtk_menu_append(GTK_MENU(mw[e_cascade_menu]), mw[e_redo_menu]);
   set_background(mw[e_redo_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[e_redo_menu]);
   set_sensitive(mw[e_redo_menu], FALSE);
-  gtk_signal_connect(GTK_OBJECT(mw[e_redo_menu]), "activate", GTK_SIGNAL_FUNC(Edit_Redo_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[e_redo_menu]), "activate", GTK_SIGNAL_FUNC(edit_redo_callback), (gpointer)ss);
 
 #if HAVE_EXTENSION_LANGUAGE
   mw[e_find_menu] = gtk_menu_item_new_with_label(STR_Find);
@@ -631,7 +637,7 @@ GtkWidget *add_menu(snd_state *ss)
   gtk_menu_append(GTK_MENU(mw[e_cascade_menu]), mw[e_find_menu]);
   gtk_widget_show(mw[e_find_menu]);
   set_sensitive(mw[e_find_menu], FALSE);
-  gtk_signal_connect(GTK_OBJECT(mw[e_find_menu]), "activate", GTK_SIGNAL_FUNC(Edit_Find_Callback_1), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[e_find_menu]), "activate", GTK_SIGNAL_FUNC(edit_find_callback_1), (gpointer)ss);
 #endif
 
   mw[e_select_sep_menu] = gtk_menu_item_new();
@@ -644,42 +650,42 @@ GtkWidget *add_menu(snd_state *ss)
   set_background(mw[e_cut_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[e_cut_menu]);
   set_sensitive(mw[e_cut_menu], FALSE);
-  gtk_signal_connect(GTK_OBJECT(mw[e_cut_menu]), "activate", GTK_SIGNAL_FUNC(Edit_Cut_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[e_cut_menu]), "activate", GTK_SIGNAL_FUNC(edit_cut_callback), (gpointer)ss);
 
   mw[e_paste_menu] = gtk_menu_item_new_with_label(STR_Insert_Selection);
   set_background(mw[e_paste_menu], (ss->sgx)->basic_color);
   gtk_menu_append(GTK_MENU(mw[e_cascade_menu]), mw[e_paste_menu]);
   gtk_widget_show(mw[e_paste_menu]);
   set_sensitive(mw[e_paste_menu], FALSE);
-  gtk_signal_connect(GTK_OBJECT(mw[e_paste_menu]), "activate", GTK_SIGNAL_FUNC(Edit_Paste_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[e_paste_menu]), "activate", GTK_SIGNAL_FUNC(edit_paste_callback), (gpointer)ss);
 
   mw[e_mix_menu] = gtk_menu_item_new_with_label(STR_Mix_Selection);
   gtk_menu_append(GTK_MENU(mw[e_cascade_menu]), mw[e_mix_menu]);
   set_background(mw[e_mix_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[e_mix_menu]);
   set_sensitive(mw[e_mix_menu], FALSE);
-  gtk_signal_connect(GTK_OBJECT(mw[e_mix_menu]), "activate", GTK_SIGNAL_FUNC(Edit_Mix_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[e_mix_menu]), "activate", GTK_SIGNAL_FUNC(edit_mix_callback), (gpointer)ss);
 
   mw[e_play_menu] = gtk_menu_item_new_with_label(STR_Play_selection);
   gtk_menu_append(GTK_MENU(mw[e_cascade_menu]), mw[e_play_menu]);
   set_background(mw[e_play_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[e_play_menu]);
   set_sensitive(mw[e_play_menu], FALSE);
-  gtk_signal_connect(GTK_OBJECT(mw[e_play_menu]), "activate", GTK_SIGNAL_FUNC(Edit_Play_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[e_play_menu]), "activate", GTK_SIGNAL_FUNC(edit_play_callback), (gpointer)ss);
 
   mw[e_save_as_menu] = gtk_menu_item_new_with_label(STR_Save_Selection);
   gtk_menu_append(GTK_MENU(mw[e_cascade_menu]), mw[e_save_as_menu]);
   set_background(mw[e_save_as_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[e_save_as_menu]);
   set_sensitive(mw[e_save_as_menu], FALSE);
-  gtk_signal_connect(GTK_OBJECT(mw[e_save_as_menu]), "activate", GTK_SIGNAL_FUNC(Edit_Save_As_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[e_save_as_menu]), "activate", GTK_SIGNAL_FUNC(edit_save_as_callback), (gpointer)ss);
 
   mw[e_select_all_menu] = gtk_menu_item_new_with_label(STR_Select_all);
   gtk_menu_append(GTK_MENU(mw[e_cascade_menu]), mw[e_select_all_menu]);
   set_background(mw[e_select_all_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[e_select_all_menu]);
   set_sensitive(mw[e_select_all_menu], FALSE);
-  gtk_signal_connect(GTK_OBJECT(mw[e_select_all_menu]), "activate", GTK_SIGNAL_FUNC(Edit_Select_All_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[e_select_all_menu]), "activate", GTK_SIGNAL_FUNC(edit_select_all_callback), (gpointer)ss);
 
   mw[e_edit_sep_menu] = gtk_menu_item_new();
   gtk_menu_append(GTK_MENU(mw[e_cascade_menu]), mw[e_edit_sep_menu]);
@@ -690,14 +696,14 @@ GtkWidget *add_menu(snd_state *ss)
   gtk_menu_append(GTK_MENU(mw[e_cascade_menu]), mw[e_edenv_menu]);
   set_background(mw[e_edenv_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[e_edenv_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[e_edenv_menu]), "activate", GTK_SIGNAL_FUNC(Edit_Envelope_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[e_edenv_menu]), "activate", GTK_SIGNAL_FUNC(edit_envelope_callback), (gpointer)ss);
 
   mw[e_header_menu] = gtk_menu_item_new_with_label(STR_Edit_Header);
   gtk_menu_append(GTK_MENU(mw[e_cascade_menu]), mw[e_header_menu]);
   set_background(mw[e_header_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[e_header_menu]);
   set_sensitive(mw[e_header_menu], FALSE);
-  gtk_signal_connect(GTK_OBJECT(mw[e_header_menu]), "activate", GTK_SIGNAL_FUNC(Edit_Header_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[e_header_menu]), "activate", GTK_SIGNAL_FUNC(edit_header_callback_1), (gpointer)ss);
 
 
   /* VIEW MENU */
@@ -714,7 +720,7 @@ GtkWidget *add_menu(snd_state *ss)
   gtk_menu_append(GTK_MENU(mw[v_cascade_menu]), mw[v_ctrls_menu]);
   set_background(mw[v_ctrls_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_ctrls_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[v_ctrls_menu]), "activate", GTK_SIGNAL_FUNC(View_Ctrls_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[v_ctrls_menu]), "activate", GTK_SIGNAL_FUNC(view_ctrls_callback), (gpointer)ss);
 
 #if 0
   mw[v_equalize_panes_menu] = gtk_menu_item_new_with_label(STR_Equalize_Panes);
@@ -722,7 +728,7 @@ GtkWidget *add_menu(snd_state *ss)
   set_background(mw[v_equalize_panes_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_equalize_panes_menu]);
   set_sensitive(mw[v_equalize_panes_menu], FALSE);
-  gtk_signal_connect(GTK_OBJECT(mw[v_equalize_panes_menu]), "activate", GTK_SIGNAL_FUNC(View_Equalize_Panes_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[v_equalize_panes_menu]), "activate", GTK_SIGNAL_FUNC(view_equalize_panes_callback), (gpointer)ss);
 #endif
 
 #if HAVE_EXTENSION_LANGUAGE
@@ -730,40 +736,40 @@ GtkWidget *add_menu(snd_state *ss)
   gtk_menu_append(GTK_MENU(mw[v_cascade_menu]), mw[v_listener_menu]);
   set_background(mw[v_listener_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_listener_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[v_listener_menu]), "activate", GTK_SIGNAL_FUNC(View_Listener_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[v_listener_menu]), "activate", GTK_SIGNAL_FUNC(view_listener_callback), (gpointer)ss);
 #endif
 
   mw[v_mix_panel_menu] = gtk_menu_item_new_with_label(STR_Mix_Panel);
   gtk_menu_append(GTK_MENU(mw[v_cascade_menu]), mw[v_mix_panel_menu]);
   set_background(mw[v_mix_panel_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_mix_panel_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[v_mix_panel_menu]), "activate", GTK_SIGNAL_FUNC(View_Mix_Panel_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[v_mix_panel_menu]), "activate", GTK_SIGNAL_FUNC(view_mix_panel_callback), (gpointer)ss);
   set_sensitive(mw[v_mix_panel_menu], FALSE);
 
   mw[v_region_menu] = gtk_menu_item_new_with_label(STR_Regions);
   gtk_menu_append(GTK_MENU(mw[v_cascade_menu]), mw[v_region_menu]);
   set_background(mw[v_region_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_region_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[v_region_menu]), "activate", GTK_SIGNAL_FUNC(View_Region_Callback_1), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[v_region_menu]), "activate", GTK_SIGNAL_FUNC(view_region_callback_1), (gpointer)ss);
   set_sensitive(mw[v_region_menu], FALSE);
 
   mw[v_files_menu] = gtk_menu_item_new_with_label(STR_Files);
   gtk_menu_append(GTK_MENU(mw[v_cascade_menu]), mw[v_files_menu]);
   set_background(mw[v_files_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_files_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[v_files_menu]), "activate", GTK_SIGNAL_FUNC(View_Files_Callback_1), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[v_files_menu]), "activate", GTK_SIGNAL_FUNC(view_files_callback_1), (gpointer)ss);
 
   mw[v_color_menu] = gtk_menu_item_new_with_label(STR_Color);
   gtk_menu_append(GTK_MENU(mw[v_cascade_menu]), mw[v_color_menu]);
   set_background(mw[v_color_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_color_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[v_color_menu]), "activate", GTK_SIGNAL_FUNC(View_Color_Callback_1), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[v_color_menu]), "activate", GTK_SIGNAL_FUNC(view_color_callback_1), (gpointer)ss);
 
   mw[v_orientation_menu] = gtk_menu_item_new_with_label(STR_Orientation);
   gtk_menu_append(GTK_MENU(mw[v_cascade_menu]), mw[v_orientation_menu]);
   set_background(mw[v_orientation_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_orientation_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[v_orientation_menu]), "activate", GTK_SIGNAL_FUNC(View_Orientation_Callback_1), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[v_orientation_menu]), "activate", GTK_SIGNAL_FUNC(view_orientation_callback_1), (gpointer)ss);
 
   mw[v_sep2_menu] = gtk_menu_item_new();
   gtk_menu_append(GTK_MENU(mw[v_cascade_menu]), mw[v_sep2_menu]);
@@ -785,42 +791,42 @@ GtkWidget *add_menu(snd_state *ss)
   gtk_menu_append(GTK_MENU(mw[v_graph_style_cascade_menu]), mw[v_lines_menu]);
   set_background(mw[v_lines_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_lines_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[v_lines_menu]), "activate", GTK_SIGNAL_FUNC(View_Lines_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[v_lines_menu]), "activate", GTK_SIGNAL_FUNC(view_lines_callback), (gpointer)ss);
   if (graph_style(ss) == GRAPH_LINES) set_sensitive(mw[v_lines_menu], FALSE);
 
   mw[v_dots_menu] = gtk_menu_item_new_with_label(STR_dots);
   gtk_menu_append(GTK_MENU(mw[v_graph_style_cascade_menu]), mw[v_dots_menu]);
   set_background(mw[v_dots_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_dots_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[v_dots_menu]), "activate", GTK_SIGNAL_FUNC(View_Dots_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[v_dots_menu]), "activate", GTK_SIGNAL_FUNC(view_dots_callback), (gpointer)ss);
   if (graph_style(ss) == GRAPH_DOTS) set_sensitive(mw[v_dots_menu], FALSE);
 
   mw[v_filled_menu] = gtk_menu_item_new_with_label(STR_filled);
   gtk_menu_append(GTK_MENU(mw[v_graph_style_cascade_menu]), mw[v_filled_menu]);
   set_background(mw[v_filled_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_filled_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[v_filled_menu]), "activate", GTK_SIGNAL_FUNC(View_Filled_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[v_filled_menu]), "activate", GTK_SIGNAL_FUNC(view_filled_callback), (gpointer)ss);
   if (graph_style(ss) == GRAPH_FILLED) set_sensitive(mw[v_filled_menu], FALSE);
 
   mw[v_dots_and_lines_menu] = gtk_menu_item_new_with_label(STR_dots_and_lines);
   gtk_menu_append(GTK_MENU(mw[v_graph_style_cascade_menu]), mw[v_dots_and_lines_menu]);
   set_background(mw[v_dots_and_lines_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_dots_and_lines_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[v_dots_and_lines_menu]), "activate", GTK_SIGNAL_FUNC(View_Dots_and_Lines_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[v_dots_and_lines_menu]), "activate", GTK_SIGNAL_FUNC(view_dots_and_lines_callback), (gpointer)ss);
   if (graph_style(ss) == GRAPH_DOTS_AND_LINES) set_sensitive(mw[v_dots_and_lines_menu], FALSE);
 
   mw[v_lollipops_menu] = gtk_menu_item_new_with_label(STR_lollipops);
   gtk_menu_append(GTK_MENU(mw[v_graph_style_cascade_menu]), mw[v_lollipops_menu]);
   set_background(mw[v_lollipops_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_lollipops_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[v_lollipops_menu]), "activate", GTK_SIGNAL_FUNC(View_Lollipops_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[v_lollipops_menu]), "activate", GTK_SIGNAL_FUNC(view_lollipops_callback), (gpointer)ss);
   if (graph_style(ss) == GRAPH_LOLLIPOPS) set_sensitive(mw[v_lollipops_menu], FALSE);
 
   mw[v_cursor_menu] = gtk_menu_item_new_with_label(STR_Verbose_cursor);
   gtk_menu_append(GTK_MENU(mw[v_cascade_menu]), mw[v_cursor_menu]);
   set_background(mw[v_cursor_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_cursor_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[v_cursor_menu]), "activate", GTK_SIGNAL_FUNC(View_Cursor_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[v_cursor_menu]), "activate", GTK_SIGNAL_FUNC(view_cursor_callback), (gpointer)ss);
 
 
   mw[v_combine_menu] = gtk_menu_item_new_with_label(STR_Channel_style);
@@ -836,21 +842,21 @@ GtkWidget *add_menu(snd_state *ss)
   gtk_menu_append(GTK_MENU(mw[v_combine_cascade_menu]), mw[v_combine_separate_menu]);
   set_background(mw[v_combine_separate_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_combine_separate_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[v_combine_separate_menu]), "activate", GTK_SIGNAL_FUNC(View_Separate_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[v_combine_separate_menu]), "activate", GTK_SIGNAL_FUNC(view_separate_callback), (gpointer)ss);
   if (channel_style(ss) == CHANNELS_SEPARATE) set_sensitive(mw[v_combine_separate_menu], FALSE);
 
   mw[v_combine_combined_menu] = gtk_menu_item_new_with_label(STR_combined);
   gtk_menu_append(GTK_MENU(mw[v_combine_cascade_menu]), mw[v_combine_combined_menu]);
   set_background(mw[v_combine_combined_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_combine_combined_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[v_combine_combined_menu]), "activate", GTK_SIGNAL_FUNC(View_Combined_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[v_combine_combined_menu]), "activate", GTK_SIGNAL_FUNC(view_combined_callback), (gpointer)ss);
   if (channel_style(ss) == CHANNELS_COMBINED) set_sensitive(mw[v_combine_combined_menu], FALSE);
 
   mw[v_combine_superimposed_menu] = gtk_menu_item_new_with_label(STR_superimposed);
   gtk_menu_append(GTK_MENU(mw[v_combine_cascade_menu]), mw[v_combine_superimposed_menu]);
   set_background(mw[v_combine_superimposed_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_combine_superimposed_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[v_combine_superimposed_menu]), "activate", GTK_SIGNAL_FUNC(View_Superimposed_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[v_combine_superimposed_menu]), "activate", GTK_SIGNAL_FUNC(view_superimposed_callback), (gpointer)ss);
   if (channel_style(ss) == CHANNELS_SUPERIMPOSED) set_sensitive(mw[v_combine_superimposed_menu], FALSE);
 
 
@@ -858,7 +864,7 @@ GtkWidget *add_menu(snd_state *ss)
   gtk_menu_append(GTK_MENU(mw[v_cascade_menu]), mw[v_zero_menu]);
   set_background(mw[v_zero_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_zero_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[v_zero_menu]), "activate", GTK_SIGNAL_FUNC(View_Zero_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[v_zero_menu]), "activate", GTK_SIGNAL_FUNC(view_zero_callback), (gpointer)ss);
 
   mw[v_x_axis_menu] = gtk_menu_item_new_with_label(STR_X_axis_units);
   gtk_menu_append(GTK_MENU(mw[v_cascade_menu]), mw[v_x_axis_menu]);
@@ -873,26 +879,32 @@ GtkWidget *add_menu(snd_state *ss)
   gtk_menu_append(GTK_MENU(mw[v_x_axis_cascade_menu]), mw[v_x_axis_seconds_menu]);
   set_background(mw[v_x_axis_seconds_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_x_axis_seconds_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[v_x_axis_seconds_menu]), "activate", GTK_SIGNAL_FUNC(Options_X_Axis_Seconds_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[v_x_axis_seconds_menu]), "activate", GTK_SIGNAL_FUNC(options_x_axis_seconds_callback), (gpointer)ss);
   set_sensitive(mw[v_x_axis_seconds_menu], FALSE);
 
   mw[v_x_axis_samples_menu] = gtk_menu_item_new_with_label(STR_samples);
   gtk_menu_append(GTK_MENU(mw[v_x_axis_cascade_menu]), mw[v_x_axis_samples_menu]);
   set_background(mw[v_x_axis_samples_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_x_axis_samples_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[v_x_axis_samples_menu]), "activate", GTK_SIGNAL_FUNC(Options_X_Axis_Samples_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[v_x_axis_samples_menu]), "activate", GTK_SIGNAL_FUNC(options_x_axis_samples_callback), (gpointer)ss);
 
   mw[v_x_axis_percentage_menu] = gtk_menu_item_new_with_label(STR_percentage);
   gtk_menu_append(GTK_MENU(mw[v_x_axis_cascade_menu]), mw[v_x_axis_percentage_menu]);
   set_background(mw[v_x_axis_percentage_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_x_axis_percentage_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[v_x_axis_percentage_menu]), "activate", GTK_SIGNAL_FUNC(Options_X_Axis_Percentage_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[v_x_axis_percentage_menu]), "activate", GTK_SIGNAL_FUNC(options_x_axis_percentage_callback), (gpointer)ss);
+
+  mw[v_x_axis_beats_menu] = gtk_menu_item_new_with_label(STR_beats);
+  gtk_menu_append(GTK_MENU(mw[v_x_axis_cascade_menu]), mw[v_x_axis_beats_menu]);
+  set_background(mw[v_x_axis_beats_menu], (ss->sgx)->basic_color);
+  gtk_widget_show(mw[v_x_axis_beats_menu]);
+  gtk_signal_connect(GTK_OBJECT(mw[v_x_axis_beats_menu]), "activate", GTK_SIGNAL_FUNC(options_x_axis_beats_callback), (gpointer)ss);
 
   mw[v_error_history_menu] = gtk_menu_item_new_with_label(STR_Error_History);
   gtk_menu_append(GTK_MENU(mw[v_cascade_menu]), mw[v_error_history_menu]);
   set_background(mw[v_error_history_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_error_history_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[v_error_history_menu]), "activate", GTK_SIGNAL_FUNC(View_Error_History_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[v_error_history_menu]), "activate", GTK_SIGNAL_FUNC(view_error_history_callback), (gpointer)ss);
 
 
 
@@ -910,7 +922,7 @@ GtkWidget *add_menu(snd_state *ss)
   gtk_menu_append(GTK_MENU(mw[o_cascade_menu]), mw[o_transform_menu]);
   set_background(mw[o_transform_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[o_transform_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[o_transform_menu]), "activate", GTK_SIGNAL_FUNC(Options_Transform_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[o_transform_menu]), "activate", GTK_SIGNAL_FUNC(options_transform_callback), (gpointer)ss);
 
   mw[o_speed_menu] = gtk_menu_item_new_with_label(STR_Speed_style);
   gtk_menu_append(GTK_MENU(mw[o_cascade_menu]), mw[o_speed_menu]);
@@ -925,19 +937,19 @@ GtkWidget *add_menu(snd_state *ss)
   gtk_menu_append(GTK_MENU(mw[o_speed_cascade_menu]), mw[o_speed_float_menu]);
   set_background(mw[o_speed_float_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[o_speed_float_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[o_speed_float_menu]), "activate", GTK_SIGNAL_FUNC(Options_Speed_Float_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[o_speed_float_menu]), "activate", GTK_SIGNAL_FUNC(options_speed_float_callback), (gpointer)ss);
 
   mw[o_speed_semitone_menu] = gtk_menu_item_new_with_label(STR_semitone);
   gtk_menu_append(GTK_MENU(mw[o_speed_cascade_menu]), mw[o_speed_semitone_menu]);
   set_background(mw[o_speed_semitone_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[o_speed_semitone_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[o_speed_semitone_menu]), "activate", GTK_SIGNAL_FUNC(Options_Speed_Semitone_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[o_speed_semitone_menu]), "activate", GTK_SIGNAL_FUNC(options_speed_semitone_callback), (gpointer)ss);
 
   mw[o_speed_ratio_menu] = gtk_menu_item_new_with_label(STR_ratio);
   gtk_menu_append(GTK_MENU(mw[o_speed_cascade_menu]), mw[o_speed_ratio_menu]);
   set_background(mw[o_speed_ratio_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[o_speed_ratio_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[o_speed_ratio_menu]), "activate", GTK_SIGNAL_FUNC(Options_Speed_Ratio_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[o_speed_ratio_menu]), "activate", GTK_SIGNAL_FUNC(options_speed_ratio_callback), (gpointer)ss);
 
 
   mw[o_focus_style_menu] = gtk_menu_item_new_with_label(STR_Focus_style);
@@ -953,25 +965,25 @@ GtkWidget *add_menu(snd_state *ss)
   gtk_menu_append(GTK_MENU(mw[o_focus_cascade_menu]), mw[o_focus_left_menu]);
   set_background(mw[o_focus_left_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[o_focus_left_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[o_focus_left_menu]), "activate", GTK_SIGNAL_FUNC(Options_Focus_Left_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[o_focus_left_menu]), "activate", GTK_SIGNAL_FUNC(options_focus_left_callback), (gpointer)ss);
 
   mw[o_focus_right_menu] = gtk_menu_item_new_with_label(STR_focus_right);
   gtk_menu_append(GTK_MENU(mw[o_focus_cascade_menu]), mw[o_focus_right_menu]);
   set_background(mw[o_focus_right_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[o_focus_right_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[o_focus_right_menu]), "activate", GTK_SIGNAL_FUNC(Options_Focus_Right_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[o_focus_right_menu]), "activate", GTK_SIGNAL_FUNC(options_focus_right_callback), (gpointer)ss);
 
   mw[o_focus_middle_menu] = gtk_menu_item_new_with_label(STR_focus_middle);
   gtk_menu_append(GTK_MENU(mw[o_focus_cascade_menu]), mw[o_focus_middle_menu]);
   set_background(mw[o_focus_middle_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[o_focus_middle_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[o_focus_middle_menu]), "activate", GTK_SIGNAL_FUNC(Options_Focus_Middle_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[o_focus_middle_menu]), "activate", GTK_SIGNAL_FUNC(options_focus_middle_callback), (gpointer)ss);
 
   mw[o_focus_active_menu] = gtk_menu_item_new_with_label(STR_focus_active);
   gtk_menu_append(GTK_MENU(mw[o_focus_cascade_menu]), mw[o_focus_active_menu]);
   set_background(mw[o_focus_active_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[o_focus_active_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[o_focus_active_menu]), "activate", GTK_SIGNAL_FUNC(Options_Focus_Active_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[o_focus_active_menu]), "activate", GTK_SIGNAL_FUNC(options_focus_active_callback), (gpointer)ss);
   activate_focus_menu(ss, zoom_focus_style(ss));
 
 #if HAVE_EXTENSION_LANGUAGE
@@ -979,20 +991,20 @@ GtkWidget *add_menu(snd_state *ss)
   gtk_menu_append(GTK_MENU(mw[o_cascade_menu]), mw[o_save_menu]);
   set_background(mw[o_save_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[o_save_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[o_save_menu]), "activate", GTK_SIGNAL_FUNC(Options_Save_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[o_save_menu]), "activate", GTK_SIGNAL_FUNC(options_save_callback), (gpointer)ss);
 
   mw[o_save_state_menu] = gtk_menu_item_new_with_label(STR_Save_state);
   gtk_menu_append(GTK_MENU(mw[o_cascade_menu]), mw[o_save_state_menu]);
   set_background(mw[o_save_state_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[o_save_state_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[o_save_state_menu]), "activate", GTK_SIGNAL_FUNC(Options_Save_State_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[o_save_state_menu]), "activate", GTK_SIGNAL_FUNC(options_save_state_callback), (gpointer)ss);
 #endif
 
   mw[o_stats_menu] = gtk_menu_item_new_with_label(STR_Show_stats);
   gtk_menu_append(GTK_MENU(mw[o_cascade_menu]), mw[o_stats_menu]);
   set_background(mw[o_stats_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[o_stats_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[o_stats_menu]), "activate", GTK_SIGNAL_FUNC(Options_Stats_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[o_stats_menu]), "activate", GTK_SIGNAL_FUNC(options_stats_callback), (gpointer)ss);
 
 
 
@@ -1011,103 +1023,103 @@ GtkWidget *add_menu(snd_state *ss)
   gtk_menu_append(GTK_MENU(mw[h_cascade_menu]), mw[h_about_snd_menu]);
   set_background(mw[h_about_snd_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[h_about_snd_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[h_about_snd_menu]), "activate", GTK_SIGNAL_FUNC(Help_About_Snd_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[h_about_snd_menu]), "activate", GTK_SIGNAL_FUNC(help_about_snd_callback), (gpointer)ss);
 
   mw[h_fft_menu] = gtk_menu_item_new_with_label(STR_FFT);
   gtk_menu_append(GTK_MENU(mw[h_cascade_menu]), mw[h_fft_menu]);
   set_background(mw[h_fft_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[h_fft_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[h_fft_menu]), "activate", GTK_SIGNAL_FUNC(Help_FFT_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[h_fft_menu]), "activate", GTK_SIGNAL_FUNC(help_fft_callback), (gpointer)ss);
 
   mw[h_find_menu] = gtk_menu_item_new_with_label(STR_Find);
   gtk_menu_append(GTK_MENU(mw[h_cascade_menu]), mw[h_find_menu]);
   set_background(mw[h_find_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[h_find_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[h_find_menu]), "activate", GTK_SIGNAL_FUNC(Help_Find_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[h_find_menu]), "activate", GTK_SIGNAL_FUNC(help_find_callback), (gpointer)ss);
 
   mw[h_undo_menu] = gtk_menu_item_new_with_label(STR_Undo_and_redo);
   gtk_menu_append(GTK_MENU(mw[h_cascade_menu]), mw[h_undo_menu]);
   set_background(mw[h_undo_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[h_undo_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[h_undo_menu]), "activate", GTK_SIGNAL_FUNC(Help_Undo_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[h_undo_menu]), "activate", GTK_SIGNAL_FUNC(help_undo_callback), (gpointer)ss);
 
   mw[h_sync_menu] = gtk_menu_item_new_with_label(STR_Sync);
   gtk_menu_append(GTK_MENU(mw[h_cascade_menu]), mw[h_sync_menu]);
   set_background(mw[h_sync_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[h_sync_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[h_sync_menu]), "activate", GTK_SIGNAL_FUNC(Help_Sync_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[h_sync_menu]), "activate", GTK_SIGNAL_FUNC(help_sync_callback), (gpointer)ss);
 
   mw[h_speed_menu] = gtk_menu_item_new_with_label(STR_Speed);
   gtk_menu_append(GTK_MENU(mw[h_cascade_menu]), mw[h_speed_menu]);
   set_background(mw[h_speed_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[h_speed_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[h_speed_menu]), "activate", GTK_SIGNAL_FUNC(Help_Speed_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[h_speed_menu]), "activate", GTK_SIGNAL_FUNC(help_speed_callback), (gpointer)ss);
 
   mw[h_expand_menu] = gtk_menu_item_new_with_label(STR_Expand);
   gtk_menu_append(GTK_MENU(mw[h_cascade_menu]), mw[h_expand_menu]);
   set_background(mw[h_expand_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[h_expand_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[h_expand_menu]), "activate", GTK_SIGNAL_FUNC(Help_Expand_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[h_expand_menu]), "activate", GTK_SIGNAL_FUNC(help_expand_callback), (gpointer)ss);
 
   mw[h_reverb_menu] = gtk_menu_item_new_with_label(STR_Reverb);
   gtk_menu_append(GTK_MENU(mw[h_cascade_menu]), mw[h_reverb_menu]);
   set_background(mw[h_reverb_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[h_reverb_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[h_reverb_menu]), "activate", GTK_SIGNAL_FUNC(Help_Reverb_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[h_reverb_menu]), "activate", GTK_SIGNAL_FUNC(help_reverb_callback), (gpointer)ss);
 
   mw[h_contrast_menu] = gtk_menu_item_new_with_label(STR_Contrast);
   gtk_menu_append(GTK_MENU(mw[h_cascade_menu]), mw[h_contrast_menu]);
   set_background(mw[h_contrast_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[h_contrast_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[h_contrast_menu]), "activate", GTK_SIGNAL_FUNC(Help_Contrast_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[h_contrast_menu]), "activate", GTK_SIGNAL_FUNC(help_contrast_callback), (gpointer)ss);
 
   mw[h_env_menu] = gtk_menu_item_new_with_label(STR_Envelope);
   gtk_menu_append(GTK_MENU(mw[h_cascade_menu]), mw[h_env_menu]);
   set_background(mw[h_env_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[h_env_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[h_env_menu]), "activate", GTK_SIGNAL_FUNC(Help_Env_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[h_env_menu]), "activate", GTK_SIGNAL_FUNC(help_env_callback), (gpointer)ss);
 
   mw[h_marks_menu] = gtk_menu_item_new_with_label(STR_Marks);
   gtk_menu_append(GTK_MENU(mw[h_cascade_menu]), mw[h_marks_menu]);
   set_background(mw[h_marks_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[h_marks_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[h_marks_menu]), "activate", GTK_SIGNAL_FUNC(Help_Marks_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[h_marks_menu]), "activate", GTK_SIGNAL_FUNC(help_marks_callback), (gpointer)ss);
 
   mw[h_mix_menu] = gtk_menu_item_new_with_label(STR_Mixing);
   gtk_menu_append(GTK_MENU(mw[h_cascade_menu]), mw[h_mix_menu]);
   set_background(mw[h_mix_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[h_mix_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[h_mix_menu]), "activate", GTK_SIGNAL_FUNC(Help_Mix_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[h_mix_menu]), "activate", GTK_SIGNAL_FUNC(help_mix_callback), (gpointer)ss);
 
   mw[h_sound_files_menu] = gtk_menu_item_new_with_label(STR_Formats);
   gtk_menu_append(GTK_MENU(mw[h_cascade_menu]), mw[h_sound_files_menu]);
   set_background(mw[h_sound_files_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[h_sound_files_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[h_sound_files_menu]), "activate", GTK_SIGNAL_FUNC(Help_Sound_Files_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[h_sound_files_menu]), "activate", GTK_SIGNAL_FUNC(help_sound_files_callback), (gpointer)ss);
 
   mw[h_init_file_menu] = gtk_menu_item_new_with_label(STR_Customization);
   gtk_menu_append(GTK_MENU(mw[h_cascade_menu]), mw[h_init_file_menu]);
   set_background(mw[h_init_file_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[h_init_file_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[h_init_file_menu]), "activate", GTK_SIGNAL_FUNC(Help_Init_File_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[h_init_file_menu]), "activate", GTK_SIGNAL_FUNC(help_init_file_callback), (gpointer)ss);
 
   mw[h_recording_menu] = gtk_menu_item_new_with_label(STR_Recording);
   gtk_menu_append(GTK_MENU(mw[h_cascade_menu]), mw[h_recording_menu]);
   set_background(mw[h_recording_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[h_recording_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[h_recording_menu]), "activate", GTK_SIGNAL_FUNC(Help_Recording_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[h_recording_menu]), "activate", GTK_SIGNAL_FUNC(help_recording_callback), (gpointer)ss);
 
   mw[h_clm_menu] = gtk_menu_item_new_with_label(STR_CLM);
   gtk_menu_append(GTK_MENU(mw[h_cascade_menu]), mw[h_clm_menu]);
   set_background(mw[h_clm_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[h_clm_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[h_clm_menu]), "activate", GTK_SIGNAL_FUNC(Help_CLM_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[h_clm_menu]), "activate", GTK_SIGNAL_FUNC(help_clm_callback), (gpointer)ss);
 
   mw[h_news_menu] = gtk_menu_item_new_with_label(STR_News);
   set_background(mw[h_news_menu], (ss->sgx)->basic_color);
   gtk_menu_append(GTK_MENU(mw[h_cascade_menu]), mw[h_news_menu]);
   gtk_widget_show(mw[h_news_menu]);
-  gtk_signal_connect(GTK_OBJECT(mw[h_news_menu]), "activate", GTK_SIGNAL_FUNC(Help_News_Callback), (gpointer)ss);
+  gtk_signal_connect(GTK_OBJECT(mw[h_news_menu]), "activate", GTK_SIGNAL_FUNC(help_news_callback), (gpointer)ss);
 
   gtk_widget_add_events (MAIN_SHELL(ss), gtk_widget_get_events(MAIN_SHELL(ss)) | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK);
   gtk_signal_connect(GTK_OBJECT(MAIN_SHELL(ss)), "button_press_event", GTK_SIGNAL_FUNC(middle_button_press), (gpointer)ss); 
@@ -1170,7 +1182,7 @@ static int callb2option(int callb)
   return(-1);
 }
 
-static void SND_Callback(GtkWidget *w, gpointer cD) 
+static void SND_callback(GtkWidget *w, gpointer cD) 
 {
   int callb, opt;
   callb = (int)get_user_data(GTK_OBJECT(w));
@@ -1378,7 +1390,7 @@ int g_add_to_main_menu(snd_state *ss, char *label, int slot)
   gtk_menu_bar_append(GTK_MENU_BAR(mw[menu_menu]), m);
   gtk_widget_show(m);
   set_user_data(GTK_OBJECT(m), (gpointer)slot);
-  if (slot >= 0) gtk_signal_connect(GTK_OBJECT(m), "activate", GTK_SIGNAL_FUNC(SND_Callback), (gpointer)ss);
+  if (slot >= 0) gtk_signal_connect(GTK_OBJECT(m), "activate", GTK_SIGNAL_FUNC(SND_callback), (gpointer)ss);
 
   mc = gtk_menu_new();
   set_background(mc, (ss->sgx)->basic_color);
@@ -1422,7 +1434,7 @@ int g_add_to_menu(snd_state *ss, int which_menu, char *label, int callb, int pos
    if (label)
      {
        set_user_data(GTK_OBJECT(m), (gpointer)callb);
-       gtk_signal_connect(GTK_OBJECT(m), "activate", GTK_SIGNAL_FUNC(SND_Callback), (gpointer)ss);
+       gtk_signal_connect(GTK_OBJECT(m), "activate", GTK_SIGNAL_FUNC(SND_callback), (gpointer)ss);
        add_option(m, which_menu, label, callb);
      }
   return(0);
@@ -1438,7 +1450,7 @@ int g_remove_from_menu(int which_menu, char *label)
 
 static int stopping = 0;
 
-static void Popup_Play_Callback(GtkWidget *w, gpointer cD) 
+static void popup_play_callback(GtkWidget *w, gpointer cD) 
 {
   snd_state *ss = (snd_state *)cD;
   snd_info *sp;
@@ -1473,28 +1485,28 @@ void reflect_play_stop_in_popup_menu(void)
     set_button_label(popup_children[W_pop_play], "Play");
 }
 
-static void Popup_Save_Callback(GtkWidget *w, gpointer cD) 
+static void popup_save_callback(GtkWidget *w, gpointer cD) 
 {
   snd_state *ss = (snd_state *)cD;
   IF_MENU_HOOK("Popup", STR_Save) save_edits(any_selected_sound(ss), NULL);
   gtk_widget_hide(popup_menu);
 }
 
-static void Popup_Undo_Callback(GtkWidget *w, gpointer cD) 
+static void popup_undo_callback(GtkWidget *w, gpointer cD) 
 {
   snd_state *ss = (snd_state *)cD;
   IF_MENU_HOOK("Popup", STR_Undo) undo_edit_with_sync(current_channel(ss), 1);
   gtk_widget_hide(popup_menu);
 }
 
-static void Popup_Redo_Callback(GtkWidget *w, gpointer cD) 
+static void popup_redo_callback(GtkWidget *w, gpointer cD) 
 {
   snd_state *ss = (snd_state *)cD;
   IF_MENU_HOOK("Popup", STR_Redo) redo_edit_with_sync(current_channel(ss), 1);
   gtk_widget_hide(popup_menu);
 }
 
-static void Popup_Info_Callback(GtkWidget *w, gpointer cD) 
+static void popup_info_callback(GtkWidget *w, gpointer cD) 
 {
   snd_state *ss = (snd_state *)cD;
   snd_info *sp;
@@ -1525,35 +1537,35 @@ void create_popup_menu(snd_state *ss, guint button, TIME_TYPE time)
       popup_children[W_pop_play] = gtk_menu_item_new_with_label(STR_Play);
       gtk_menu_append(GTK_MENU(popup_menu), popup_children[W_pop_play]);
       set_background(popup_children[W_pop_play], (ss->sgx)->basic_color);
-      gtk_signal_connect(GTK_OBJECT(popup_children[W_pop_play]), "activate", GTK_SIGNAL_FUNC(Popup_Play_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(popup_children[W_pop_play]), "activate", GTK_SIGNAL_FUNC(popup_play_callback), (gpointer)ss);
       set_sensitive(popup_children[W_pop_play], (ss->active_sounds > 0));
       gtk_widget_show(popup_children[W_pop_play]);
 
       popup_children[W_pop_undo] = gtk_menu_item_new_with_label(STR_Undo);
       gtk_menu_append(GTK_MENU(popup_menu), popup_children[W_pop_undo]);
       set_background(popup_children[W_pop_undo], (ss->sgx)->basic_color);
-      gtk_signal_connect(GTK_OBJECT(popup_children[W_pop_undo]), "activate", GTK_SIGNAL_FUNC(Popup_Undo_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(popup_children[W_pop_undo]), "activate", GTK_SIGNAL_FUNC(popup_undo_callback), (gpointer)ss);
       set_sensitive(popup_children[W_pop_undo], undo_possible);
       gtk_widget_show(popup_children[W_pop_undo]);
       
       popup_children[W_pop_redo] = gtk_menu_item_new_with_label(STR_Redo);
       gtk_menu_append(GTK_MENU(popup_menu), popup_children[W_pop_redo]);
       set_background(popup_children[W_pop_redo], (ss->sgx)->basic_color);
-      gtk_signal_connect(GTK_OBJECT(popup_children[W_pop_redo]), "activate", GTK_SIGNAL_FUNC(Popup_Redo_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(popup_children[W_pop_redo]), "activate", GTK_SIGNAL_FUNC(popup_redo_callback), (gpointer)ss);
       set_sensitive(popup_children[W_pop_redo], redo_possible);
       gtk_widget_show(popup_children[W_pop_redo]);
       
       popup_children[W_pop_save] = gtk_menu_item_new_with_label(STR_Save);
       gtk_menu_append(GTK_MENU(popup_menu), popup_children[W_pop_save]);
       set_background(popup_children[W_pop_save], (ss->sgx)->basic_color);
-      gtk_signal_connect(GTK_OBJECT(popup_children[W_pop_save]), "activate", GTK_SIGNAL_FUNC(Popup_Save_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(popup_children[W_pop_save]), "activate", GTK_SIGNAL_FUNC(popup_save_callback), (gpointer)ss);
       set_sensitive(popup_children[W_pop_save], (ss->active_sounds > 0));
       gtk_widget_show(popup_children[W_pop_save]);
 
       popup_children[W_pop_info] = gtk_menu_item_new_with_label(STR_Info);
       gtk_menu_append(GTK_MENU(popup_menu), popup_children[W_pop_info]);
       set_background(popup_children[W_pop_info], (ss->sgx)->basic_color);
-      gtk_signal_connect(GTK_OBJECT(popup_children[W_pop_info]), "activate", GTK_SIGNAL_FUNC(Popup_Info_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(popup_children[W_pop_info]), "activate", GTK_SIGNAL_FUNC(popup_info_callback), (gpointer)ss);
       set_sensitive(popup_children[W_pop_info], (ss->active_sounds > 0));
       gtk_widget_show(popup_children[W_pop_info]);
     }

@@ -53,6 +53,17 @@ void set_wavo_trace(snd_state *ss, int uval)
   map_over_chans(ss, map_chans_wavo_trace, (void *)(&val));
 }
 
+void set_beats_per_minute(snd_state *ss, Float val) 
+{
+  if (val > 0.0) 
+    {
+      in_set_beats_per_minute(ss, val); 
+      map_chans_field(ss, FCP_BEATS, val);
+      if (!(ss->graph_hook_active)) 
+	map_over_chans(ss, update_graph, NULL);
+    }
+}
+
 static int map_chans_max_transform_peaks(chan_info *cp, void *ptr) {cp->max_transform_peaks = (*((int *)ptr)); return(0);}
 static void set_max_transform_peaks(snd_state *ss, int uval) 
 {
@@ -121,6 +132,7 @@ void map_chans_field(snd_state *ss, int field, Float val)
 	    case FCP_START:   sp->chans[j]->spectro_start = mus_fclamp(0.0, val, 1.0);   break;
 	    case FCP_CUTOFF:  sp->chans[j]->spectro_cutoff = mus_fclamp(0.0, val, 1.0);  break;
 	    case FCP_BETA:    sp->chans[j]->fft_window_beta = mus_fclamp(0.0, val, 1.0); break;
+	    case FCP_BEATS:   sp->chans[j]->beats_per_minute = val;                      break;
 	    }
     }
 }
@@ -313,6 +325,7 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, int graphed)
   y1 = DEFAULT_INITIAL_Y1;
   switch (cp->x_axis_style)
     {
+    case X_AXIS_IN_BEATS:      label = STR_time_beats; break;
     case X_AXIS_IN_SAMPLES:    label = STR_time_samples; break;
     case X_AXIS_AS_PERCENTAGE: label = STR_time_percent; break;
     default:                   label = STR_time;         break;
@@ -2417,7 +2430,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
       if (with_fft)
 	{
 	  make_axes(cp, fap,
-		    (cp->x_axis_style == X_AXIS_IN_SAMPLES) ? X_AXIS_IN_SECONDS : (cp->x_axis_style),
+		    ((cp->x_axis_style == X_AXIS_IN_SAMPLES) || (cp->x_axis_style == X_AXIS_IN_BEATS)) ? X_AXIS_IN_SECONDS : (cp->x_axis_style),
 #if USE_MOTIF
 		    ((cp->chan == sp->nchans-1) || (sp->channel_style != CHANNELS_SUPERIMPOSED)));
 	            /* Xt documentation says the most recently added work proc runs first, but we're
@@ -3937,7 +3950,8 @@ static XEN cp_iwrite(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
 }
 
 enum {CP_MIN_DB, CP_SPECTRO_X_ANGLE, CP_SPECTRO_Y_ANGLE, CP_SPECTRO_Z_ANGLE, CP_SPECTRO_X_SCALE, CP_SPECTRO_Y_SCALE, CP_SPECTRO_Z_SCALE,
-      CP_SPECTRO_CUTOFF, CP_SPECTRO_START, CP_FFT_WINDOW_BETA, CP_AP_SX, CP_AP_SY, CP_AP_ZX, CP_AP_ZY, CP_MAXAMP, CP_EDPOS_MAXAMP
+      CP_SPECTRO_CUTOFF, CP_SPECTRO_START, CP_FFT_WINDOW_BETA, CP_AP_SX, CP_AP_SY, CP_AP_ZX, CP_AP_ZY, CP_MAXAMP, CP_EDPOS_MAXAMP,
+      CP_BEATS_PER_MINUTE
 };
 
 
@@ -3984,22 +3998,23 @@ static XEN cp_fread(XEN snd_n, XEN chn_n, int fld, char *caller)
   cp = get_cp(snd_n, chn_n, caller);
   switch(fld)
     {
-    case CP_AP_SX:           if (cp->axis) return(C_TO_XEN_DOUBLE((cp->axis)->sx));     break;
-    case CP_AP_SY:           if (cp->axis) return(C_TO_XEN_DOUBLE((cp->axis)->sy));     break;
-    case CP_AP_ZX:           if (cp->axis) return(C_TO_XEN_DOUBLE((cp->axis)->zx));     break;
-    case CP_AP_ZY:           if (cp->axis) return(C_TO_XEN_DOUBLE((cp->axis)->zy));     break;
-    case CP_MIN_DB:          return(C_TO_XEN_DOUBLE(cp->min_dB));                       break;
-    case CP_SPECTRO_X_ANGLE: return(C_TO_XEN_DOUBLE(cp->spectro_x_angle));              break;
-    case CP_SPECTRO_Y_ANGLE: return(C_TO_XEN_DOUBLE(cp->spectro_y_angle));              break;
-    case CP_SPECTRO_Z_ANGLE: return(C_TO_XEN_DOUBLE(cp->spectro_z_angle));              break;
-    case CP_SPECTRO_X_SCALE: return(C_TO_XEN_DOUBLE(cp->spectro_x_scale));              break;
-    case CP_SPECTRO_Y_SCALE: return(C_TO_XEN_DOUBLE(cp->spectro_y_scale));              break;
-    case CP_SPECTRO_Z_SCALE: return(C_TO_XEN_DOUBLE(cp->spectro_z_scale));              break;
-    case CP_SPECTRO_CUTOFF:  return(C_TO_XEN_DOUBLE(cp->spectro_cutoff));               break;
-    case CP_SPECTRO_START:   return(C_TO_XEN_DOUBLE(cp->spectro_start));                break;
-    case CP_FFT_WINDOW_BETA: return(C_TO_XEN_DOUBLE(cp->fft_window_beta));              break;
-    case CP_MAXAMP:          return(C_TO_XEN_DOUBLE(get_maxamp(cp->sound, cp, AT_CURRENT_EDIT_POSITION)));        break;
-    case CP_EDPOS_MAXAMP:    return(C_TO_XEN_DOUBLE(get_maxamp(cp->sound, cp, to_c_edit_position(cp, cp_edpos, S_maxamp, 3)))); break;
+    case CP_AP_SX:            if (cp->axis) return(C_TO_XEN_DOUBLE((cp->axis)->sx));     break;
+    case CP_AP_SY:            if (cp->axis) return(C_TO_XEN_DOUBLE((cp->axis)->sy));     break;
+    case CP_AP_ZX:            if (cp->axis) return(C_TO_XEN_DOUBLE((cp->axis)->zx));     break;
+    case CP_AP_ZY:            if (cp->axis) return(C_TO_XEN_DOUBLE((cp->axis)->zy));     break;
+    case CP_MIN_DB:           return(C_TO_XEN_DOUBLE(cp->min_dB));                       break;
+    case CP_SPECTRO_X_ANGLE:  return(C_TO_XEN_DOUBLE(cp->spectro_x_angle));              break;
+    case CP_SPECTRO_Y_ANGLE:  return(C_TO_XEN_DOUBLE(cp->spectro_y_angle));              break;
+    case CP_SPECTRO_Z_ANGLE:  return(C_TO_XEN_DOUBLE(cp->spectro_z_angle));              break;
+    case CP_SPECTRO_X_SCALE:  return(C_TO_XEN_DOUBLE(cp->spectro_x_scale));              break;
+    case CP_SPECTRO_Y_SCALE:  return(C_TO_XEN_DOUBLE(cp->spectro_y_scale));              break;
+    case CP_SPECTRO_Z_SCALE:  return(C_TO_XEN_DOUBLE(cp->spectro_z_scale));              break;
+    case CP_SPECTRO_CUTOFF:   return(C_TO_XEN_DOUBLE(cp->spectro_cutoff));               break;
+    case CP_SPECTRO_START:    return(C_TO_XEN_DOUBLE(cp->spectro_start));                break;
+    case CP_FFT_WINDOW_BETA:  return(C_TO_XEN_DOUBLE(cp->fft_window_beta));              break;
+    case CP_MAXAMP:           return(C_TO_XEN_DOUBLE(get_maxamp(cp->sound, cp, AT_CURRENT_EDIT_POSITION))); break;
+    case CP_EDPOS_MAXAMP:     return(C_TO_XEN_DOUBLE(get_maxamp(cp->sound, cp, to_c_edit_position(cp, cp_edpos, S_maxamp, 3)))); break;
+    case CP_BEATS_PER_MINUTE: return(C_TO_XEN_DOUBLE(cp->beats_per_minute));             break;
     }
   return(XEN_FALSE);
 }
@@ -4083,6 +4098,10 @@ static XEN cp_fwrite(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
 	  scale_to(cp->state, cp->sound, cp, newamp, 1, FALSE);
 	  update_graph(cp, NULL);
 	}
+      break;
+    case CP_BEATS_PER_MINUTE:
+      cp->beats_per_minute = XEN_TO_C_DOUBLE(on);
+      update_graph(cp, NULL);
       break;
     }
   return(on);
@@ -5162,13 +5181,37 @@ static XEN g_set_x_axis_style(XEN style, XEN snd, XEN chn)
   else
     {
       ss = get_global_state();
-      set_x_axis_style(ss, mus_iclamp(X_AXIS_IN_SECONDS, XEN_TO_C_INT(style), X_AXIS_IN_LENGTH));
+      set_x_axis_style(ss, mus_iclamp(X_AXIS_IN_SECONDS, XEN_TO_C_INT(style), X_AXIS_IN_BEATS));
       /* snd-menu.c -- maps over chans */
       return(C_TO_XEN_INT(x_axis_style(ss)));
     }
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_x_axis_style_reversed, g_set_x_axis_style)
+
+static XEN g_beats_per_minute(XEN snd, XEN chn)
+{
+  #define H_beats_per_minute "(" S_beats_per_minute " (snd #t) (chn #t)) -> beats per minute if " S_x_axis_style " = " S_x_axis_in_beats
+  if (XEN_BOUND_P(snd))
+    return(cp_fread(snd, chn, CP_BEATS_PER_MINUTE, S_beats_per_minute));
+  return(C_TO_XEN_DOUBLE(beats_per_minute(get_global_state())));
+}
+
+static XEN g_set_beats_per_minute(XEN beats, XEN snd, XEN chn)
+{
+  snd_state *ss;
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(beats), beats, XEN_ARG_1, "set-" S_beats_per_minute, "a number"); 
+  if (XEN_BOUND_P(snd))
+    return(cp_fwrite(snd, chn, beats, CP_BEATS_PER_MINUTE, "set-" S_beats_per_minute));
+  else
+    {
+      ss = get_global_state();
+      set_beats_per_minute(ss, XEN_TO_C_DOUBLE(beats));
+      return(C_TO_XEN_DOUBLE(beats_per_minute(ss)));
+    }
+}
+
+WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_beats_per_minute_reversed, g_set_beats_per_minute)
 
 static XEN g_show_axes(XEN snd, XEN chn)
 {
@@ -5565,6 +5608,8 @@ XEN_ARGIFY_2(g_dot_size_w, g_dot_size)
 XEN_ARGIFY_3(g_set_dot_size_w, g_set_dot_size)
 XEN_ARGIFY_2(g_x_axis_style_w, g_x_axis_style)
 XEN_ARGIFY_3(g_set_x_axis_style_w, g_set_x_axis_style)
+XEN_ARGIFY_2(g_beats_per_minute_w, g_beats_per_minute)
+XEN_ARGIFY_3(g_set_beats_per_minute_w, g_set_beats_per_minute)
 XEN_ARGIFY_2(g_show_axes_w, g_show_axes)
 XEN_ARGIFY_3(g_set_show_axes_w, g_set_show_axes)
 XEN_ARGIFY_2(g_graphs_horizontal_w, g_graphs_horizontal)
@@ -5686,6 +5731,8 @@ XEN_ARGIFY_2(g_update_transform_w, g_update_transform)
 #define g_set_dot_size_w g_set_dot_size
 #define g_x_axis_style_w g_x_axis_style
 #define g_set_x_axis_style_w g_set_x_axis_style
+#define g_beats_per_minute_w g_beats_per_minute
+#define g_set_beats_per_minute_w g_set_beats_per_minute
 #define g_show_axes_w g_show_axes
 #define g_set_show_axes_w g_set_show_axes
 #define g_graphs_horizontal_w g_graphs_horizontal
@@ -5893,14 +5940,19 @@ void g_init_chn(void)
 
   #define H_x_axis_in_seconds    "The value for " S_x_axis_style " that displays the x axis using seconds"
   #define H_x_axis_in_samples    "The value for " S_x_axis_style " that displays the x axis using sample numbers"
+  #define H_x_axis_in_beats      "The value for " S_x_axis_style " that displays the x axis using beats (also beats-per-minute)"
   #define H_x_axis_as_percentage "The value for " S_x_axis_style " that displays the x axis using percentages"
 
   XEN_DEFINE_CONSTANT(S_x_axis_in_seconds,     X_AXIS_IN_SECONDS,    H_x_axis_in_seconds);
   XEN_DEFINE_CONSTANT(S_x_axis_in_samples,     X_AXIS_IN_SAMPLES,    H_x_axis_in_samples);
+  XEN_DEFINE_CONSTANT(S_x_axis_in_beats,       X_AXIS_IN_BEATS,      H_x_axis_in_beats);
   XEN_DEFINE_CONSTANT(S_x_axis_as_percentage,  X_AXIS_AS_PERCENTAGE, H_x_axis_as_percentage);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_x_axis_style, g_x_axis_style_w, H_x_axis_style,
 					    "set-" S_x_axis_style, g_set_x_axis_style_w, g_set_x_axis_style_reversed,
+					    0, 2, 0, 3);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_beats_per_minute, g_beats_per_minute_w, H_beats_per_minute,
+					    "set-" S_beats_per_minute, g_set_beats_per_minute_w, g_set_beats_per_minute_reversed,
 					    0, 2, 0, 3);
 
   #define H_show_all_axes "The value for " S_show_axes " that causes both the x and y axes to be displayed"

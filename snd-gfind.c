@@ -61,7 +61,7 @@ static void edit_find_find(int direction, GtkWidget *w, gpointer context)
 static void edit_find_next(GtkWidget *w, gpointer context) {edit_find_find(READ_FORWARD, w, context);}
 static void edit_find_previous(GtkWidget *w, gpointer context) {edit_find_find(READ_BACKWARD, w, context);}
 
-void Edit_Find_Callback(GtkWidget *w, gpointer context)
+void edit_find_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   GtkWidget *dl, *rc;
@@ -133,7 +133,7 @@ static XEN g_find_dialog_widgets(void)
 
 static XEN g_edit_find_dialog(void)
 {
-  Edit_Find_Callback(NULL, (gpointer)(get_global_state()));
+  edit_find_callback(NULL, (gpointer)(get_global_state()));
   return(XEN_FALSE);
 }
 

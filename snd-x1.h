@@ -69,8 +69,8 @@ void set_spectro_x_scale(snd_state *ss, Float val);
 void set_spectro_y_scale(snd_state *ss, Float val);
 void set_spectro_z_scale(snd_state *ss, Float val);
 void set_spectro_cutoff(snd_state *ss, Float val);
-void View_Orientation_Callback(Widget w, XtPointer clientData, XtPointer callData);
-void View_Color_Callback(Widget w, XtPointer clientData, XtPointer callData);
+void view_orientation_callback(Widget w, XtPointer clientData, XtPointer callData);
+void view_color_callback(Widget w, XtPointer clientData, XtPointer callData);
 int color_dialog_is_active(void);
 int orientation_dialog_is_active(void);
 void reflect_spectro(snd_state *ss);
@@ -79,8 +79,8 @@ void reflect_spectro(snd_state *ss);
 
 /* -------- snd-xlistener.c -------- */
 
-void textfield_focus_Callback(Widget w, XtPointer clientData, XtPointer callData);
-void textfield_unfocus_Callback(Widget w, XtPointer clientData, XtPointer callData);
+void textfield_focus_callback(Widget w, XtPointer clientData, XtPointer callData);
+void textfield_unfocus_callback(Widget w, XtPointer clientData, XtPointer callData);
 void add_completer_to_textfield(snd_state *ss, Widget w, int completer);
 void snd_completion_help(snd_state *ss, int matches, char **buffer);
 void listener_append_and_prompt(snd_state *ss, char *msg);
@@ -145,6 +145,7 @@ Widget view_ctrls_menu(void);
 Widget view_listener_menu(void);
 Widget view_cursor_menu(void);
 Widget view_x_axis_seconds_menu(void);
+Widget view_x_axis_beats_menu(void);
 Widget view_x_axis_samples_menu(void);
 Widget view_x_axis_percentage_menu(void);
 Widget options_save_state_menu(void);
@@ -231,7 +232,7 @@ void delete_region_and_update_browser(snd_state *ss, int n);
 void select_region_and_update_browser(snd_state *ss, int n);
 void reflect_play_region_stop(int n);
 void set_region_protect(int reg, int protect);
-void View_Region_Callback(Widget w, XtPointer clientData, XtPointer callData);
+void view_region_callback(Widget w, XtPointer clientData, XtPointer callData);
 int region_dialog_is_active(void);
 void allocate_region_rows(snd_state *ss, int n);
 void reflect_regions_in_region_browser(void);
@@ -270,7 +271,7 @@ void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g
 
 /* -------- snd-xfind.c -------- */
 
-void Edit_Find_Callback(Widget w, XtPointer clientData, XtPointer callData);
+void edit_find_callback(Widget w, XtPointer clientData, XtPointer callData);
 #if DEBUGGING
   void g_init_gxfind(void);
 #endif
@@ -467,7 +468,7 @@ void make_a_big_star_outa_me(char *shortname, int big_star);
 void set_file_browser_play_button(char *name, int state);
 void set_file_sort_sensitive(int sensitive);
 void highlight_selected_sound(snd_state *ss);
-void View_Files_Callback(Widget w, XtPointer clientData, XtPointer callData);
+void view_files_callback(Widget w, XtPointer clientData, XtPointer callData);
 Widget start_file_dialog(snd_state *ss, int width, int height);
 int file_dialog_is_active(void);
 file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const char *title);
@@ -533,7 +534,7 @@ int record_dialog_is_active(void);
 
 /* -------- snd-xprint.c -------- */
 
-void File_Print_Callback(Widget w, XtPointer clientData, XtPointer callData);
+void file_print_callback(Widget w, XtPointer clientData, XtPointer callData);
 char *ps_rgb(snd_state *ss, int pchan);
 
 

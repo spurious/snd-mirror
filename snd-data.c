@@ -105,6 +105,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->graphs_horizontal = graphs_horizontal(ss);
   cp->dot_size = dot_size(ss);
   cp->x_axis_style = x_axis_style(ss);
+  cp->beats_per_minute = beats_per_minute(ss);
   cp->show_axes = show_axes(ss);
   cp->sync = 0;
   cp->graph_time_p = 1; /* the default state (button is set when we start) */

@@ -122,6 +122,7 @@ int view_ctrls_menu(void);
 int view_listener_menu(void);
 int view_cursor_menu(void);
 int view_x_axis_seconds_menu(void);
+int view_x_axis_beats_menu(void);
 int view_x_axis_samples_menu(void);
 int view_x_axis_percentage_menu(void);
 int options_save_state_menu(void);

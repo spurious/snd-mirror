@@ -622,7 +622,7 @@ static void delete_color_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
   gtk_widget_hide(ccd->dialog);
 }
 
-void View_Color_Callback(GtkWidget *w, gpointer context)
+void view_color_callback(GtkWidget *w, gpointer context)
 {
   GtkWidget *light_label, *dark_label, *help_button, *dismiss_button;
   GtkWidget *outer_table, *scale_box, *cutoff_box, *cutoff_label, *colormap_scroller, *maplabel, *colormap_box;
@@ -756,7 +756,7 @@ int color_dialog_is_active(void)
 
 GtkWidget *start_color_dialog(snd_state *ss, int width, int height)
 {
-  View_Color_Callback(NULL, (gpointer)ss);
+  view_color_callback(NULL, (gpointer)ss);
   if (width != 0) gtk_widget_set_usize(GTK_WIDGET(ccd->dialog), width, height);
   return(ccd->dialog);
 }
@@ -983,7 +983,7 @@ static void reset_orientation_callback(GtkWidget *w, gpointer context)
   map_over_chans(ss, update_graph, NULL);
 }
 
-void View_Orientation_Callback(GtkWidget *w, gpointer context)
+void view_orientation_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   GtkWidget *outer_table, *dismiss_button, *help_button, *reset_button;
@@ -1214,7 +1214,7 @@ int orientation_dialog_is_active(void)
 
 GtkWidget *start_orientation_dialog(snd_state *ss, int width, int height)
 {
-  View_Orientation_Callback(NULL, (gpointer)ss);
+  view_orientation_callback(NULL, (gpointer)ss);
   if (width != 0) gtk_widget_set_usize(GTK_WIDGET(oid->dialog), width, height);
   return(oid->dialog);
 }

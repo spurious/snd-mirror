@@ -894,7 +894,7 @@ static void print_button_pressed(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss = (snd_state *)context;
   ss->print_choice = PRINT_ENV;
-  File_Print_Callback(w, context, info);
+  file_print_callback(w, context, info);
 }
 
 static void print_button_help_callback(Widget w, XtPointer context, XtPointer info) 

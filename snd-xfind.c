@@ -136,7 +136,7 @@ static void make_edit_find_dialog(snd_state *ss)
   edit_find_label = XtCreateManagedWidget(STR_global_search, xmLabelWidgetClass, rc, args, n);
 }
 
-void Edit_Find_Callback(Widget w, XtPointer context, XtPointer info)
+void edit_find_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss = (snd_state *)context;
   if (!edit_find_dialog)
@@ -172,7 +172,7 @@ static XEN g_find_dialog_widgets(void)
 
 static XEN g_edit_find_dialog(void)
 {
-  Edit_Find_Callback(NULL, (XtPointer *)(get_global_state()), NULL);
+  edit_find_callback(NULL, (XtPointer *)(get_global_state()), NULL);
   return(XEN_FALSE);
 }
 

@@ -195,7 +195,7 @@ static void apply_enved(snd_state *ss)
 	      break;
 	    }
 	  set_sensitive(applyB, TRUE);
-	  set_sensitive(apply2B, TRUE);
+	  if (!apply_to_mix) set_sensitive(apply2B, TRUE);
 	  set_button_label(cancelB, STR_Dismiss);
 	}
     }
@@ -515,7 +515,11 @@ static void selection_button_pressed(GtkWidget *w, gpointer context)
       apply_to_mix = 0;
     }
   set_backgrounds(selectionB, (apply_to_selection) ? (ss->sgx)->yellow : (ss->sgx)->highlight_color);
-  if ((enved_target(ss) != ENVED_SPECTRUM) && (enved_wave_p(ss)) && (!showing_all_envs)) env_redisplay(ss);
+  set_sensitive(apply2B, (!apply_to_mix));
+  if ((enved_target(ss) != ENVED_SPECTRUM) && 
+      (enved_wave_p(ss)) && 
+      (!showing_all_envs)) 
+    env_redisplay(ss);
 }
 
 static void mix_button_pressed(GtkWidget *w, gpointer data)
@@ -553,7 +557,11 @@ static void mix_button_pressed(GtkWidget *w, gpointer data)
 	}
     }
   set_backgrounds(mixB, (apply_to_mix) ? (ss->sgx)->yellow : (ss->sgx)->highlight_color);
-  if ((enved_target(ss) == ENVED_AMPLITUDE) && (enved_wave_p(ss)) && (!showing_all_envs)) env_redisplay(ss);
+  set_sensitive(apply2B, (!apply_to_mix));
+  if ((enved_target(ss) == ENVED_AMPLITUDE) && 
+      (enved_wave_p(ss)) && 
+      (!showing_all_envs)) 
+    env_redisplay(ss);
 }
 
 static void delete_button_pressed(GtkWidget *w, gpointer context)
@@ -666,7 +674,7 @@ static void print_button_pressed(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   ss->print_choice = PRINT_ENV;
-  File_Print_Callback(w, context);
+  file_print_callback(w, context);
 }
 
 static void env_browse_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)

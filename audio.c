@@ -3971,7 +3971,11 @@ static const char *decode_alsa_format(int format)
 
 /* convert a sndlib sample format to an alsa sample format */
 
-static int to_alsa_format(int snd_format)
+#if ALSA_5
+  static int to_alsa_format(int snd_format)
+#else /* ALSA_9 */
+  static snd_pcm_format_t to_alsa_format(int snd_format)
+#endif
 {
     switch (snd_format) {
     case MUS_BYTE: 
@@ -4011,7 +4015,11 @@ static int to_alsa_format(int snd_format)
     case MUS_LDOUBLE: 
 	return(SND_PCM_FORMAT_FLOAT64_LE); 
     }
+#if ALSA_5
     return(MUS_ERROR);
+#else
+    return((snd_pcm_format_t)MUS_ERROR);
+#endif
 }
 
 /* FIXME: this is not taking yet into account the 
@@ -4086,7 +4094,11 @@ static int to_mus_format(int alsa_format)
  * how do we specify that???
  */
 
-static int to_alsa_device(int dev, int *adev, int *achan)
+#if ALSA_5
+  static int to_alsa_device(int dev, int *adev, int *achan)
+#else /* ALSA_9 */
+  static int to_alsa_device(int dev, int *adev, snd_pcm_stream_t *achan)
+#endif
 {
     switch(dev) {
 	/* default values are a problem because the concept does
@@ -4734,7 +4746,7 @@ static snd_pcm_sw_params_t *alsa_sw_params[2];
 
 static int alsa_open_mode = SND_PCM_ASYNC;
 static int alsa_periods = 3;
-static int alsa_interleave = SND_PCM_ACCESS_RW_INTERLEAVED;
+static snd_pcm_access_t alsa_interleave = SND_PCM_ACCESS_RW_INTERLEAVED;
 static int alsa_max_capture_channels = 32;
 
 /* first default name for pcm configuration */
@@ -4776,7 +4788,7 @@ void alsa_dump_software_params(snd_pcm_sw_params_t *params, const char *msg)
 
 /* get hardware params for a pcm */
 
-snd_pcm_hw_params_t * alsa_get_hardware_params(char *name, int stream, int mode)
+snd_pcm_hw_params_t * alsa_get_hardware_params(char *name, snd_pcm_stream_t stream, int mode)
 {
     int err;
     snd_pcm_t *handle;
@@ -5035,7 +5047,9 @@ static void alsa_dump_configuration(char *name, snd_pcm_hw_params_t *hw_params, 
 
 static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int size)
 {
-    int alsa_format, card, device, alsa_device, alsa_stream;
+    int card, device, alsa_device;
+    snd_pcm_format_t alsa_format;
+    snd_pcm_stream_t alsa_stream;
     char *alsa_name;
     int frames, periods;
     int err;
@@ -5053,7 +5067,7 @@ static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int siz
 		  __FUNCTION__, mus_audio_device_name(device), device);
 	return(MUS_ERROR);
     }
-    if ((alsa_format = to_alsa_format(format)) == -1) {
+    if ((alsa_format = to_alsa_format(format)) == (snd_pcm_format_t)MUS_ERROR) {
 	mus_error(MUS_AUDIO_FORMAT_NOT_AVAILABLE, "%s: could not change %s<%d> to alsa format", 
 		  __FUNCTION__, mus_audio_format_name(format), format);
 	return(MUS_ERROR);
@@ -5293,9 +5307,11 @@ static int alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val
     int card;
     int device;
     int alsa_device;
-    int alsa_stream;
 #if ALSA_5
+    int alsa_stream;
     device_info_t *info;
+#else
+    snd_pcm_stream_t alsa_stream;
 #endif
     int i, f, err;
     int channels;
@@ -5493,7 +5509,7 @@ static int alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val
 	    snd_pcm_format_mask_alloca(&mask);
 	    snd_pcm_hw_params_get_format_mask(alsa_hw_params[alsa_stream], mask); 
 	    for (format=0, f=1; format<SND_PCM_FORMAT_LAST; format++) {
-		err = snd_pcm_format_mask_test(mask, format);
+		err = snd_pcm_format_mask_test(mask, (snd_pcm_format_t)format);
 		if (err>0) {
 		    if (f < chan && (to_mus_format(format)!=MUS_ERROR)) {
 			val[f++] = (float)to_mus_format(format);

@@ -3981,6 +3981,18 @@ desired edit history position.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
+<!-- beats-per-minute -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="beatsperminute">beats-per-minute</a></em> (<em class=narg>snd chn</em>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->The x axis labelling of the time domain waveform can be in beats
+<!-- -->(x-axis-style = x-axis-in-beats); this variable sets the number of beats per minute.
+<!-- -->The default is 60.0, making it the same as x-axis-in-seconds.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
 <!-- bomb -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="bomb">bomb</a></em> (<i>snd on</i>)</code></span>
@@ -5971,9 +5983,9 @@ desired edit history position.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->The x axis labelling of the time domain waveform can be in seconds
-<!-- -->(<i>x-axis-in-seconds</i>), in samples (<i>x-axis-in-samples</i>), or expressed
-<!-- -->as a percentage of the overall duration (useful in envelope definitions).
-<!-- -->The latter is <i>x-axis-as-percentage</i>. This is the View menu 'X-axis units' option.
+<!-- -->(<i>x-axis-in-seconds</i>), in samples (<i>x-axis-in-samples</i>), expressed
+<!-- -->as a percentage of the overall duration (<i>x-axis-as-percentage</i>, useful in envelope definitions), or as a beat number (<i>x-axis-in-beats</i>).
+<!-- -->This is the View menu 'X-axis units' option.
 <!-- -->(default: <i>x-axis-in-seconds</i>). 
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
@@ -7500,7 +7512,7 @@ variable %load-verbosely to #t.
 
 <p><b>X-axis Label</b>:</p>
 <pre>
-  x-axis-in-seconds  x-axis-in-samples  x-axis-as-percentage
+  x-axis-in-seconds  x-axis-in-samples  x-axis-as-percentage  x-axis-in-beats
 </pre><br>
 
 <p><b>Speed Control</b> style:</p>

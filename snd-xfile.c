@@ -147,13 +147,13 @@ static void color_file_selection_box(Widget w, snd_state *ss)
       if (!ftmp) ftmp = XmFileSelectionBoxGetChild(w, XmDIALOG_FILTER_TEXT);	
       if (wtmp)
 	{
-	  XtAddCallback(wtmp, XmNfocusCallback, textfield_focus_Callback, ss);
-	  XtAddCallback(wtmp, XmNlosingFocusCallback, textfield_unfocus_Callback, ss);
+	  XtAddCallback(wtmp, XmNfocusCallback, textfield_focus_callback, ss);
+	  XtAddCallback(wtmp, XmNlosingFocusCallback, textfield_unfocus_callback, ss);
 	}
       if (ftmp)
 	{
-	  XtAddCallback(ftmp, XmNfocusCallback, textfield_focus_Callback, ss);
-	  XtAddCallback(ftmp, XmNlosingFocusCallback, textfield_unfocus_Callback, ss);
+	  XtAddCallback(ftmp, XmNfocusCallback, textfield_focus_callback, ss);
+	  XtAddCallback(ftmp, XmNlosingFocusCallback, textfield_unfocus_callback, ss);
 	}
     }
 }
@@ -1718,7 +1718,7 @@ void set_file_sort_sensitive(int sensitive)
 
 /* play open unlist for prevfile, play save select for curfile, preload process for prevfile (snd-clm) */
 
-void View_Files_Callback(Widget w, XtPointer context, XtPointer info)
+void view_files_callback(Widget w, XtPointer context, XtPointer info)
 {
   /* fire up a dialog window with a list of currently open files, 
    * currently selected file also selected in list --
@@ -1878,7 +1878,7 @@ void View_Files_Callback(Widget w, XtPointer context, XtPointer info)
 
 Widget start_file_dialog(snd_state *ss, int width, int height)
 {
-  View_Files_Callback(NULL, (XtPointer)ss, NULL);
+  view_files_callback(NULL, (XtPointer)ss, NULL);
   if (width > 0) XtVaSetValues(view_files_dialog, 
 			       XmNwidth, (Dimension)width, 
 			       XmNheight, (Dimension)height, 

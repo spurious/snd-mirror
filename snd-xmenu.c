@@ -32,12 +32,12 @@ enum {menu_menu,
           v_color_menu, v_orientation_menu, 
           v_files_menu, v_mix_panel_menu,
           v_x_axis_menu, v_x_axis_cascade_menu,
-            v_x_axis_seconds_menu, v_x_axis_samples_menu, v_x_axis_percentage_menu,
+            v_x_axis_seconds_menu, v_x_axis_samples_menu, v_x_axis_percentage_menu, v_x_axis_beats_menu,
           v_error_history_menu,
           v_sep2_menu
 };
 
-#define NUM_MENU_WIDGETS 99
+#define NUM_MENU_WIDGETS 100
 static Widget mw[NUM_MENU_WIDGETS];
 
 enum {W_pop_menu, W_pop_sep, W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_equalize_panes, W_pop_info};
@@ -85,6 +85,7 @@ Widget view_ctrls_menu(void) {return(mw[v_ctrls_menu]);}
 Widget view_listener_menu(void) {return(mw[v_listener_menu]);}
 Widget view_cursor_menu(void) {return(mw[v_cursor_menu]);}
 Widget view_x_axis_seconds_menu(void) {return(mw[v_x_axis_seconds_menu]);}
+Widget view_x_axis_beats_menu(void) {return(mw[v_x_axis_beats_menu]);}
 Widget view_x_axis_samples_menu(void) {return(mw[v_x_axis_samples_menu]);}
 Widget view_x_axis_percentage_menu(void) {return(mw[v_x_axis_percentage_menu]);}
 
@@ -190,7 +191,7 @@ static void file_mix_callback_1(Widget w, XtPointer cD, XtPointer mD)
 
 static void file_print_callback_1(Widget w, XtPointer cD, XtPointer mD) 
 {
-  IF_MENU_HOOK(STR_File, STR_Print) File_Print_Callback(w, cD, mD);
+  IF_MENU_HOOK(STR_File, STR_Print) file_print_callback(w, cD, mD);
 }
 
 
@@ -282,7 +283,7 @@ static void edit_header_callback_1(Widget w, XtPointer cD, XtPointer mD)
 #if HAVE_EXTENSION_LANGUAGE
 static void edit_find_callback_1(Widget w, XtPointer cD, XtPointer mD) 
 {
-  IF_MENU_HOOK(STR_Edit, STR_Find) Edit_Find_Callback(w, cD, mD);
+  IF_MENU_HOOK(STR_Edit, STR_Find) edit_find_callback(w, cD, mD);
 }
 #endif
 
@@ -382,22 +383,22 @@ static void view_ctrls_callback(Widget w, XtPointer cD, XtPointer mD)
 
 static void view_region_callback_1(Widget w, XtPointer cD, XtPointer mD) 
 {
-  IF_MENU_HOOK(STR_View, STR_Regions) View_Region_Callback(w, cD, mD);
+  IF_MENU_HOOK(STR_View, STR_Regions) view_region_callback(w, cD, mD);
 }
 
 static void view_orientation_callback_1(Widget w, XtPointer cD, XtPointer mD) 
 {
-  IF_MENU_HOOK(STR_View, STR_Orientation) View_Orientation_Callback(w, cD, mD);
+  IF_MENU_HOOK(STR_View, STR_Orientation) view_orientation_callback(w, cD, mD);
 }
 
 static void view_color_callback_1(Widget w, XtPointer cD, XtPointer mD) 
 {
-  IF_MENU_HOOK(STR_View, STR_Color) View_Color_Callback(w, cD, mD);
+  IF_MENU_HOOK(STR_View, STR_Color) view_color_callback(w, cD, mD);
 }
 
 static void view_files_callback_1(Widget w, XtPointer cD, XtPointer mD) 
 {
-  IF_MENU_HOOK(STR_View, STR_Files) View_Files_Callback(w, cD, mD);
+  IF_MENU_HOOK(STR_View, STR_Files) view_files_callback(w, cD, mD);
 }
 
 
@@ -459,6 +460,11 @@ static void options_speed_semitone_callback(Widget w, XtPointer cD, XtPointer Da
 static void options_x_axis_seconds_callback(Widget w, XtPointer cD, XtPointer mD) 
 {
   IF_MENU_HOOK(STR_Options, STR_seconds) set_x_axis_style((snd_state *)cD, X_AXIS_IN_SECONDS);
+}
+
+static void options_x_axis_beats_callback(Widget w, XtPointer cD, XtPointer mD) 
+{
+  IF_MENU_HOOK(STR_Options, STR_beats) set_x_axis_style((snd_state *)cD, X_AXIS_IN_BEATS);
 }
 
 static void options_x_axis_samples_callback(Widget w, XtPointer cD, XtPointer mD) 
@@ -811,6 +817,9 @@ Widget add_menu(snd_state *ss)
 
   mw[v_x_axis_percentage_menu] = XtCreateManagedWidget(STR_percentage, xmPushButtonWidgetClass, mw[v_x_axis_menu], main_args, main_n);
   XtAddCallback(mw[v_x_axis_percentage_menu], XmNactivateCallback, options_x_axis_percentage_callback, ss);  
+
+  mw[v_x_axis_beats_menu] = XtCreateManagedWidget(STR_beats, xmPushButtonWidgetClass, mw[v_x_axis_menu], main_args, main_n);
+  XtAddCallback(mw[v_x_axis_beats_menu], XmNactivateCallback, options_x_axis_beats_callback, ss);  
 
   mw[v_error_history_menu] = XtCreateManagedWidget(STR_Error_History, xmPushButtonWidgetClass, mw[view_menu], main_args, main_n);
   XtAddCallback(mw[v_error_history_menu], XmNactivateCallback, view_error_history_callback, ss);

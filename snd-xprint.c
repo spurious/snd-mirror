@@ -98,7 +98,7 @@ static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
     XtUnmanageChild(file_print_dialog);
 }
 
-void File_Print_Callback(Widget w, XtPointer context, XtPointer info)
+void file_print_callback(Widget w, XtPointer context, XtPointer info)
 {
   Arg args[20];
   int n;

@@ -110,14 +110,14 @@ void snd_completion_help(snd_state *ss, int matches, char **buffer)
 
 /* ---------------- text widget specializations ---------------- */
 
-void textfield_focus_Callback(Widget w, XtPointer context, XtPointer info)
+void textfield_focus_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss = (snd_state *)context;
   if (!(ss->using_schemes)) 
     XtVaSetValues(w, XmNbackground, (ss->sgx)->text_focus_color, NULL);
 }
 
-void textfield_unfocus_Callback(Widget w, XtPointer context, XtPointer info)
+void textfield_unfocus_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss = (snd_state *)context;
   if (!(ss->using_schemes)) 
@@ -725,8 +725,8 @@ Widget sndCreateTextFieldWidget(snd_state *ss, char *name, Widget parent, Arg *a
   XtSetArg(args[n], XmNactivateCallback, n1 = make_callback_list(remember_event, (XtPointer)ss)); n++;
   /* can't use XmNuserData here because it is in use elsewhere (snd-xmix.c) */
   df = XtCreateManagedWidget(name, xmTextFieldWidgetClass, parent, args, n);
-  XtAddCallback(df, XmNfocusCallback, textfield_focus_Callback, ss);
-  XtAddCallback(df, XmNlosingFocusCallback, textfield_unfocus_Callback, ss);
+  XtAddCallback(df, XmNfocusCallback, textfield_focus_callback, ss);
+  XtAddCallback(df, XmNlosingFocusCallback, textfield_unfocus_callback, ss);
 
   XtAddEventHandler(df, EnterWindowMask, FALSE, mouse_enter_text_callback, NULL);
   XtAddEventHandler(df, LeaveWindowMask, FALSE, mouse_leave_text_callback, NULL);
@@ -777,8 +777,8 @@ Widget sndCreateTextWidget(snd_state *ss, char *name, Widget parent, Arg *args, 
   df = XmCreateScrolledText(parent, name, args, n);
   XtManageChild(df);
   /* df = XtCreateManagedWidget(name, xmTextWidgetClass, parent, args, n); */
-  /* XtAddCallback(df, XmNfocusCallback, textfield_focus_Callback, ss); */
-  XtAddCallback(df, XmNlosingFocusCallback, textfield_unfocus_Callback, ss);
+  /* XtAddCallback(df, XmNfocusCallback, textfield_focus_callback, ss); */
+  XtAddCallback(df, XmNlosingFocusCallback, textfield_unfocus_callback, ss);
   /* b1_press action overrides focus */
   if (!transTable3) 
     transTable3 = XtParseTranslationTable(TextTrans3);
@@ -818,7 +818,7 @@ void listener_append_and_prompt(snd_state *ss, char *msg)
     }
 }
 
-static void Command_Return_Callback(Widget w, XtPointer context, XtPointer info)
+static void command_return_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss = (snd_state *)context;
   if (!(ss->error_lock))
@@ -827,7 +827,7 @@ static void Command_Return_Callback(Widget w, XtPointer context, XtPointer info)
 
 static int last_highlight_position = -1;
 
-static void Command_Motion_Callback(Widget w, XtPointer context, XtPointer info)
+static void command_motion_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
   snd_state *ss = (snd_state *)context;
@@ -866,7 +866,7 @@ static void Command_Motion_Callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
-static void Command_Modify_Callback(Widget w, XtPointer context, XtPointer info)
+static void command_modify_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
   snd_state *ss = (snd_state *)context;
@@ -895,7 +895,7 @@ static void Command_Modify_Callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
-static void Command_Help_Callback(Widget w, XtPointer context, XtPointer info)
+static void command_help_callback(Widget w, XtPointer context, XtPointer info)
 {
   listener_dialog_help((snd_state *)context);
 }
@@ -969,10 +969,10 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
 	transTable4 = XtParseTranslationTable(TextTrans4);
       XtOverrideTranslations(listener_text, transTable4);
       printout_end = 0;
-      XtAddCallback(listener_text, XmNactivateCallback, Command_Return_Callback, ss);
-      XtAddCallback(listener_text, XmNmodifyVerifyCallback, Command_Modify_Callback, ss);
-      XtAddCallback(listener_text, XmNmotionVerifyCallback, Command_Motion_Callback, ss);
-      XtAddCallback(listener_text, XmNhelpCallback, Command_Help_Callback, ss);
+      XtAddCallback(listener_text, XmNactivateCallback, command_return_callback, ss);
+      XtAddCallback(listener_text, XmNmodifyVerifyCallback, command_modify_callback, ss);
+      XtAddCallback(listener_text, XmNmotionVerifyCallback, command_motion_callback, ss);
+      XtAddCallback(listener_text, XmNhelpCallback, command_help_callback, ss);
       FREE(n1);
       lisp_window = XtParent(listener_text);
       XtAddEventHandler(lisp_window, EnterWindowMask, FALSE, listener_focus_callback, NULL);

@@ -97,7 +97,7 @@ static void file_print_ok_callback(GtkWidget *w, gpointer context)
   if (quit) gtk_widget_hide(file_print_dialog);
 }
 
-void File_Print_Callback(GtkWidget *w, gpointer context)
+void file_print_callback(GtkWidget *w, gpointer context)
 {
   GtkWidget *print_button, *help_button, *dismiss_button, *epsbox, *epslabel;
   snd_info *nsp;

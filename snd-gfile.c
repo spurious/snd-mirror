@@ -1132,7 +1132,7 @@ void make_prevfiles_list (snd_state *ss)
 /* play open unlist for prevfile, play save select for curfile, preload process for prevfile (snd-clm) */
 
 static GtkWidget *fs1, *fs3;
-void View_Files_Callback(GtkWidget *w, gpointer context)
+void view_files_callback(GtkWidget *w, gpointer context)
 {
   /* fire up a dialog window with a list of currently open files, 
    * currently selected file also selected in list --
@@ -1230,7 +1230,7 @@ void View_Files_Callback(GtkWidget *w, gpointer context)
 
 GtkWidget *start_file_dialog(snd_state *ss, int width, int height)
 {
-  View_Files_Callback(NULL, (gpointer)ss);
+  view_files_callback(NULL, (gpointer)ss);
   if (width > 0) set_widget_size(view_files_dialog, width, height);
   return(view_files_dialog);
 }
