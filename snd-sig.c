@@ -601,6 +601,7 @@ static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c
       change_samples(beg, dur, data0[0], cp0, LOCK_MIXES, S_swap_channels, cp0->edit_ctr);
       change_samples(beg, dur, data1[0], cp1, LOCK_MIXES, S_swap_channels, cp1->edit_ctr);
     }
+  swap_marks(cp0, cp1);
   update_graph(cp0, NULL);
   update_graph(cp1, NULL);
   if (ofile0) FREE(ofile0);
@@ -647,6 +648,16 @@ src_state *free_src(src_state *sr)
   return(NULL);
 }
 
+static int int_compare(const void *a, const void *b)
+{
+  int *m1, *m2;
+  m1 = (int *)a;
+  m2 = (int *)b;
+  if (*m1 < *m2) return(-1);
+  if (*m1 == *m2) return(0);
+  return(1);
+}
+
 static char *src_channel_with_error(chan_info *cp, snd_fd *sf, int beg, int dur, Float ratio, mus_any *egen, 
 				    int from_enved, const char *origin, int over_selection)
 {
@@ -662,7 +673,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, int beg, int dur,
   src_state *sr;
   int *old_marks = NULL, *new_marks = NULL;
   mark **mps;
-  int cur_mark = 0, cur_mark_sample = -1, cur_marks = 0, m;
+  int cur_mark = 0, cur_new_mark = 0, cur_mark_sample = -1, cur_marks = 0, m;
   Float env_val;
   int next_pass;
 
@@ -708,6 +719,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, int beg, int dur,
     {
       /* envelope case -- have to go by sr->sample, not output sample counter, also check marks */
       cur_mark_sample = -1;
+      env_val = mus_env(egen);
       if ((cp->marks) && 
 	  (cp->mark_ctr[cp->edit_ctr] >= 0))
 	{
@@ -718,18 +730,29 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, int beg, int dur,
 	  for (m = 0; m < cur_marks; m++)
 	    {
 	      new_marks[m] = -1;
-	      old_marks[m] = mps[m]->samp;
+	      if ((env_val >= 0.0) ||
+		  (mps[m]->samp < beg) ||
+		  (mps[m]->samp > (beg + dur)))
+		old_marks[m] = mps[m]->samp;
+	      else 
+		{
+		  old_marks[m] = (dur - mps[m]->samp - 1) + beg; /* moving backwards, so flip marks */
+		  cur_new_mark = m;
+		}
 	    }
+	  if ((env_val < 0.0) && (cur_marks > 1))
+	    qsort((void *)old_marks, cur_marks, sizeof(int), int_compare);
 	  for (m = 0; m < cur_marks; m++)
 	    if (old_marks[m] > beg)
 	      {
 		cur_mark_sample = old_marks[m];
 		cur_mark = m;
+		if ((env_val >= 0.0) || (cur_marks <= 1))
+		  cur_new_mark = m;
 		break;
 	      }
 	}
       next_pass = sr->sample;
-      env_val = mus_env(egen);
       for (k = 0; sr->sample < dur; k++)
 	{
 	  idata[j] = (MUS_FLOAT_TO_SAMPLE(run_src(sr, env_val)));
@@ -754,8 +777,9 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, int beg, int dur,
 		  (next_pass >= (cur_mark_sample - beg))) 
 		{
 		  /* not '==' because sr->sample can be incremented by more than 1 */
-		  new_marks[cur_mark] = k + beg;
+		  new_marks[cur_new_mark] = k + beg;
 		  cur_mark++;
+		  if (env_val >= 0.0) cur_new_mark++; else cur_new_mark--;
 		  if (cur_mark < cur_marks)
 		    cur_mark_sample = old_marks[cur_mark];
 		  else cur_mark_sample = -1;
@@ -2544,6 +2568,7 @@ static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN 
 	    }
 	  cp0->squelch_update = old_squelch0;
 	  cp1->squelch_update = old_squelch1;
+	  swap_marks(cp0, cp1);
 	  update_graph(cp0, NULL);
 	  update_graph(cp1, NULL);
 	}

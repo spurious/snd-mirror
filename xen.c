@@ -339,7 +339,7 @@ char *xen_version(void)
 
 static XEN xen_rb_report_error(XEN nada, XEN err_info)
 {
-  /* TODO: backtrace info? */
+  /* backtrace info: */
   /*    return rb_funcall(err_info, rb_intern("backtrace"), 0); */
   /* which can be an array of strings */
 

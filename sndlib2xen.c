@@ -199,7 +199,7 @@ static XEN g_audio_outputs(XEN speakers, XEN headphones, XEN line_out)
 
 static XEN g_sound_maxamp_exists(XEN file)
 {
-  #define H_mus_sound_maxamp_exists "(" S_mus_sound_maxamp_exists " filename) -> max amps available for sound"
+  #define H_mus_sound_maxamp_exists "(" S_mus_sound_maxamp_exists " filename) -> #t if max amps available for sound"
   int val;
   char *filename;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_mus_sound_maxamp, "a string");

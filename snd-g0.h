@@ -312,6 +312,7 @@ typedef struct {
  *    gdkfont -> pango? 
  *    gdk_color_alloc?
  *    gdk_input_add? gdk_color_white|black?
+ *    gdk_gc_set_font?
  *
  *    gtk_entry_set_text changed res type
  *    gtk_paned_set_handle_size and gtk_paned_set_gutter_size removed

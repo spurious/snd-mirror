@@ -1,6 +1,4 @@
 /* TODO  drag via mark could still use amp-env opts
- * TODO  mark fixups -- negative src env mark fixups are broken (move as if positive)
- * TODO  reverse (or any fixup) if syncd mark, but unsyncd chans -- should other marks move or break sync chain?
  */
 
 /* if mark is handled as an smob, rather than a bare integer, we get better
@@ -596,7 +594,7 @@ static void delete_mark_id(int id, chan_info *cp)
   report_in_minibuffer(cp->sound, "no mark with id: %d", id);
 }
 
-static void delete_marks (chan_info *cp)
+static void delete_marks(chan_info *cp)
 {
   int i, ed;
   mark *mp;
@@ -1083,6 +1081,41 @@ void ripple_trailing_marks(chan_info *cp, int beg, int old_len, int new_len)
 	      if (m->samp > (beg + old_len)) m->samp += (new_len - old_len);
 	    }
 	}
+    }
+}
+
+void swap_marks(chan_info *cp0, chan_info *cp1)
+{
+  mark **mps0 = NULL, **mps1 = NULL;
+  int ctr0 = 0, ctr1 = 0;
+  int size0 = 0, size1 = 0;
+  int pos0, pos1;
+  if ((cp0->marks) || (cp1->marks))
+    {
+      pos0 = cp0->edit_ctr;
+      pos1 = cp1->edit_ctr;
+      if (cp0->marks)
+	{
+	  mps0 = cp0->marks[pos0];
+	  ctr0 = cp0->mark_ctr[pos0];
+	  size0 = cp0->mark_size[pos0];
+	}
+      if (cp1->marks)
+	{
+	  mps1 = cp1->marks[pos1];
+	  ctr1 = cp1->mark_ctr[pos1];
+	  size1 = cp1->mark_size[pos1];
+	}
+      if ((cp0->marks) && (cp1->marks == NULL))
+	allocate_marks(cp1, pos1);
+      if ((cp1->marks) && (cp0->marks == NULL))
+	allocate_marks(cp0, pos0);
+      cp0->marks[pos0] = mps1;
+      cp0->mark_ctr[pos0] = ctr1;
+      cp0->mark_size[pos0] = size1;
+      cp1->marks[pos1] = mps0;
+      cp1->mark_ctr[pos1] = ctr0;
+      cp1->mark_size[pos1] = size0;
     }
 }
 

@@ -619,7 +619,7 @@ void reverse_marks(chan_info *cp, int beg, int dur);
 void src_marks(chan_info *cp, Float ratio, int old_samps, int new_samps, int beg, int over_selection);
 void reset_marks(chan_info *cp, int num, int *samps, int end, int extension, int over_selection);
 void ripple_trailing_marks(chan_info *cp, int beg, int old_len, int new_len);
-
+void swap_marks(chan_info *cp0, chan_info *cp1);
 void g_init_marks(void);
 
 

@@ -2490,8 +2490,8 @@ modifies resources"
 
 static XEN gxm_XmRenderTableCvtToProp(XEN arg1, XEN arg2)
 {
-  #define H_XmRenderTableCvtToProp "unsigned int XmRenderTableCvtToProp(Widget widget, XmRenderTable table, char **prop_return) \
-converts a render table to a string representation"
+  #define H_XmRenderTableCvtToProp "unsigned int XmRenderTableCvtToProp(Widget widget, XmRenderTable table) \
+converts a render table to a string representation -> (val props)"
   /* DIFF: XmRenderTableCvtToProp omits and rtns arg3
    */
   char *buf;
@@ -3021,8 +3021,8 @@ converts from a compound string in Byte Stream format to a compound string"
 
 static XEN gxm_XmCvtXmStringToByteStream(XEN arg1)
 {
-  #define H_XmCvtXmStringToByteStream "unsigned int XmCvtXmStringToByteStream(XmString string, unsigned char **prop_return) \
-converts a compound string to a Byte Stream format"
+  #define H_XmCvtXmStringToByteStream "unsigned int XmCvtXmStringToByteStream(XmString string) \
+converts a compound string to a Byte Stream format -> prop"
   /* DIFF: XmCvtXmStringToByteStream omit arg2 and rtns string
    */
   int len;
@@ -3463,8 +3463,8 @@ static XEN gxm_XmFontListEntryGetTag(XEN arg1)
 
 static XEN gxm_XmFontListEntryGetFont(XEN arg1, XEN arg2)
 {
-  #define H_XmFontListEntryGetFont "XtPointer XmFontListEntryGetFont(XmFontListEntry entry, XmFontType *type_return) \
-retrieves font information from a font list entry"
+  #define H_XmFontListEntryGetFont "XtPointer XmFontListEntryGetFont(XmFontListEntry entry) \
+retrieves font information from a font list entry -> fontstruct"
   /* DIFF: XmFontListEntryGetFont omits arg2
    */
   XmFontType f;
@@ -3755,7 +3755,7 @@ selection of a component (obsolete)"
 
 static XEN gxm_XmTrackingEvent(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmTrackingEvent "Widget XmTrackingEvent(Widget widget, Cursor cursor, Boolean confine_to, XEvent *event_return)"
+  #define H_XmTrackingEvent "Widget XmTrackingEvent(Widget widget, Cursor cursor, Boolean confine_to) -> (widget event)"
   /* DIFF: XmTrackingEvent widget cursor confine [event] -> (list widget event)
    */
   XEvent *e; /* do we need to allocate? */
@@ -4303,8 +4303,8 @@ Widget vertical_scrollbar, Widget work_region) identifies manageable children fo
 
 static XEN gxm_XmTranslateKey(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XmTranslateKey "void XmTranslateKey(Display *display, KeyCode keycode, Modifiers modifiers, Modifiers *modifiers_return, \
-KeySym *keysym_return) The default keycode-to-keysym translator"
+  #define H_XmTranslateKey "void XmTranslateKey(Display *display, KeyCode keycode, Modifiers modifiers) \
+The default keycode-to-keysym translator -> (modifiers keysym)"
   /* DIFF: XmTranslateKey omit and rtn last 2 args
    */
   Modifiers m;
@@ -5740,9 +5740,7 @@ reorders a stack of widgets that are registered drop sites"
 
 static XEN gxm_XmDropSiteQueryStackingOrder(XEN arg1)
 {
-  #define H_XmDropSiteQueryStackingOrder "Status XmDropSiteQueryStackingOrder(Widget widget, Widget *parent_return, Widget **child_returns, \
-Cardinal *num_child_returns) returns the parent, a list of children, and the number of children \
-for a specified widget"
+  #define H_XmDropSiteQueryStackingOrder "Status XmDropSiteQueryStackingOrder(Widget widget) -> (list parent child ...)"
   /* DIFF: XmDropSiteQueryStackingOrder widget [parent child numchild] -> (list parent child ...)
      no parent children num_children -- returned as '(parent child1...) or #f 
   */
@@ -6112,8 +6110,8 @@ changes ScrollBar's increment values and the slider's size and position"
 
 static XEN gxm_XmScrollBarGetValues(XEN arg1)
 {
-  #define H_XmScrollBarGetValues "void XmScrollBarGetValues (widget, value_return, slider_size_return, increment_return, page_increment_return) \
-returns the ScrollBar's increment values"
+  #define H_XmScrollBarGetValues "void XmScrollBarGetValues (widget) \
+returns the ScrollBar's increment values (list val size incr page)"
   /* DIFF: XmScrollBarGetValues omits and returns last 4 args
    */
   int val, size, incr, page;
@@ -6480,7 +6478,7 @@ The Scale widget creation function"
 
 static XEN gxm_XmScaleGetValue(XEN arg1)
 {
-  #define H_XmScaleGetValue "void XmScaleGetValue(Widget widget, int * value_return) returns the current (scale) slider position"
+  #define H_XmScaleGetValue "void XmScaleGetValue(Widget widget) returns the current (scale) slider position"
   /* DIFF: XmScaleGetValue omits and returns arg2
    */
   int val;
@@ -7709,7 +7707,7 @@ static XEN gxm_XOffsetRegion(XEN arg1, XEN arg2, XEN arg3)
 static XVisualInfo *match_visual_info;
 static XEN gxm_XMatchVisualInfo(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_XMatchVisualInfo "Status XMatchVisualInfo(display, screen, depth, class, vinfo_return) returns the visual information for a \
+  #define H_XMatchVisualInfo "Status XMatchVisualInfo(display, screen, depth, class) returns the visual information for a \
 visual that matches the specified depth and class for a screen."
   /* DIFF: XMatchVisualInfo dpy scr dep class [visual] -> #f or visual
    */
@@ -7727,8 +7725,7 @@ visual that matches the specified depth and class for a screen."
 
 static XEN gxm_XLookupString(XEN arg1)
 {
-  #define H_XLookupString "int XLookupString(event_struct, buffer_return, bytes_buffer, keysym_return, status_in_out) translates a key \
-event to a KeySym and a string."
+  #define H_XLookupString "int XLookupString(event_struct) translates a key event to a KeySym and a string -> (len str keysym)."
   /* DIFF: XLookupString last arg is ignored, keyevent and all but last omitted -> (list len str keysym)
    */
   KeySym key;
@@ -7747,7 +7744,7 @@ event to a KeySym and a string."
 
 static XEN gxm_XConvertCase(XEN arg1)
 {
-  #define H_XConvertCase "void XConvertCase(keysym, lower_return, upper_return) returns the uppercase and lowercase forms of the specified \
+  #define H_XConvertCase "void XConvertCase(keysym) returns the uppercase and lowercase forms of the specified \
 Keysym, if the KeySym is subject to case conversion; otherwise, the specified KeySym is returned to both lower_return and upper_return."
   /* DIFF: XConvertCase keysym [k1 k2] -> (list k1 k2)
    */
@@ -7778,7 +7775,7 @@ set on the window or returns a pointer to a XWMHints structure if it succeeds."
 
 static XEN gxm_XGetVisualInfo(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XGetVisualInfo "XVisualInfo *XGetVisualInfo(display, vinfo_mask, vinfo_template, nitems_return) returns a list of visual \
+  #define H_XGetVisualInfo "XVisualInfo *XGetVisualInfo(display, vinfo_mask, vinfo_template) returns a list of visual \
 structures that have attributes equal to the attributes specified by vinfo_template."
   /* DIFF: XGetVisualInfo dpy mask template [nitems] -> '() or (list visual...)
    */
@@ -7817,7 +7814,7 @@ static XEN gxm_XGetStandardColormap(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XGetRGBColormaps(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XGetRGBColormaps "Status XGetRGBColormaps(display, w, std_colormap_return, count_return, property) returns the RGB colormap \
+  #define H_XGetRGBColormaps "Status XGetRGBColormaps(display, w, property) returns the RGB colormap \
 definitions stored in the specified property on the named window."
   /* DIFF: XGetRGBColormaps omits arg 3 and 4, returns list of XStandardColormaps 
    */
@@ -7924,7 +7921,7 @@ static XEN gxm_XCreateRegion(void)
 
 static XEN gxm_XClipBox(XEN arg1)
 {
-  #define H_XClipBox "XClipBox(r, rect_return) returns the smallest rectangle enclosing the specified region."
+  #define H_XClipBox "XClipBox(r) returns the smallest rectangle enclosing the specified region."
   /* DIFF: XClipBox region [rectangle] -> (list val rectangle)
    */
   XRectangle *r;
@@ -8010,7 +8007,7 @@ by the client when the  XFontSet was created."
 
 static XEN gxm_XFontsOfFontSet(XEN arg1)
 {
-  #define H_XFontsOfFontSet "int XFontsOfFontSet(font_set, font_struct_list_return, font_name_list_return) returns a list of one or more \
+  #define H_XFontsOfFontSet "int XFontsOfFontSet(font_set) returns a list of one or more \
 XFontStructs and font names for the fonts used by the Xmb and Xwc layers, for the given font set."
   /* DIFF: XFontsOfFontSet omit last 2 args, return 2 lists
    */
@@ -8043,8 +8040,7 @@ static XEN gxm_XFreeFontSet(XEN arg1, XEN arg2)
 
 static XEN gxm_XCreateFontSet(XEN arg1, XEN arg2)
 {
-  #define H_XCreateFontSet "XFontSet XCreateFontSet(display, base_font_name_list, missing_charset_list_return, missing_charset_count_return, \
-def_string_return) creates a font set for the specified display."
+  #define H_XCreateFontSet "XFontSet XCreateFontSet(display, base_font_name_list) creates a font set for the specified display."
   /* DIFF: XCreateFontSet ignores (omits) the 3 trailing missing glyph args
    */
   char **cs;
@@ -8088,7 +8084,7 @@ the X Version 11 format."
 
 static XEN gxm_XWindowEvent(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XWindowEvent "XWindowEvent(display, w, event_mask, event_return) searches the event queue for an event that matches both \
+  #define H_XWindowEvent "XWindowEvent(display, w, event_mask) searches the event queue for an event that matches both \
 the specified window and event mask. "
   /* DIFF: XWindowEvent dpy win ev [evrtn] -> (list val evrtn)
    */
@@ -8231,9 +8227,9 @@ static XEN gxm_XUndefineCursor(XEN arg1, XEN arg2)
 
 static XEN gxm_XTranslateCoordinates(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
-  #define H_XTranslateCoordinates "Bool XTranslateCoordinates(display, src_w, dest_w, src_x, src_y, dest_x_return, dest_y_return, child_return) \
+  #define H_XTranslateCoordinates "Bool XTranslateCoordinates(display, src_w, dest_w, src_x, src_y) \
 takes the src_x and src_y coordinates relative to the source window's origin and returns these coordinates to dest_x_return and dest_y_return \
-relative to the destination window's origin."
+relative to the destination window's origin -> (rtn x y win)."
   /* DIFF: XTranslateCoordinates omit last 3 args
    */
   Window w;
@@ -8265,8 +8261,7 @@ static XEN gxm_XTextWidth(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XTextExtents(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XTextExtents "XTextExtents(font_struct, string, nchars, direction_return, font_ascent_return, font_descent_return, overall_return) \
-returns an XCharStruct structure describing the text."
+  #define H_XTextExtents "XTextExtents(font_struct, string, nchars) returns an XCharStruct structure describing the text."
   /* DIFF: XTextExtents omit final 4 args and returns them [Xcharset returned as embedded list)
    */
   int dir, fa, fd, rtn;
@@ -8947,7 +8942,7 @@ static XEN gxm_XRebindKeysym(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, X
 
 static XEN gxm_XReadBitmapFileData(XEN arg1)
 {
-  #define H_XReadBitmapFileData "int XReadBitmapFileData(filename, width_return, height_return, data_return, x_hot_return, y_hot_return) reads in a \
+  #define H_XReadBitmapFileData "int XReadBitmapFileData(filename) reads in a \
 file containing a bitmap, in the same manner as XReadBitmapFile, but returns the data directly rather than creating a pixmap in the server."
   /* DIFF: XReadBitmapFileData omits last 5 args, returns as list
    */
@@ -8974,8 +8969,7 @@ file containing a bitmap, in the same manner as XReadBitmapFile, but returns the
 
 static XEN gxm_XReadBitmapFile(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XReadBitmapFile "int XReadBitmapFile(display, d, filename, width_return, height_return, bitmap_return, x_hot_return, y_hot_return) reads \
-in a file containing a bitmap."
+  #define H_XReadBitmapFile "int XReadBitmapFile(display, d, filename) reads in a file containing a bitmap."
   /* DIFF: XReadBitmapFile omits last 5 args, returns as list
    */
   unsigned int w, h;
@@ -9004,7 +8998,7 @@ static XEN gxm_XRaiseWindow(XEN arg1, XEN arg2)
 
 static XEN gxm_XQueryTree(XEN arg1, XEN arg2)
 {
-  #define H_XQueryTree "Status XQueryTree(display, w, root_return, parent_return, children_return, nchildren_return) returns the root ID, the \
+  #define H_XQueryTree "Status XQueryTree(display, w) returns the root ID, the \
 parent window ID, a pointer to the list of children windows and the number of children in the list for the specified window."
   /* DIFF: XQueryTree last 4 arg omit, returns (list val root parent (list children))
    */
@@ -9031,8 +9025,7 @@ parent window ID, a pointer to the list of children windows and the number of ch
 
 static XEN gxm_XQueryTextExtents(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XQueryTextExtents "XQueryTextExtents(display, font_ID, string, nchars, direction_return, font_ascent_return, font_descent_return, \
-overall_return) returns the bounding box of the specified 8-bit string."
+  #define H_XQueryTextExtents "XQueryTextExtents(display, font_ID, string) returns the bounding box of the specified 8-bit string."
   /* DIFF: XQueryTextExtents omits last 5 args, returns list 
    */
   XCharStruct *c;
@@ -9055,8 +9048,8 @@ overall_return) returns the bounding box of the specified 8-bit string."
 
 static XEN gxm_XQueryPointer(XEN arg1, XEN arg2)
 {
-  #define H_XQueryPointer "Bool XQueryPointer(display, w, root_return, child_return, root_x_return, root_y_return, win_x_return, win_y_return, \
-mask_return) returns the root window the pointer is logically on and the pointer coordinates relative to the root window's origin."
+  #define H_XQueryPointer "Bool XQueryPointer(display, w) returns the root window the pointer is logically on and the pointer \
+coordinates relative to the root window's origin."
   /* DIFF: XQueryPointer last 7 args omit and rtn
    */
   Window w1, w2;
@@ -9080,7 +9073,7 @@ mask_return) returns the root window the pointer is logically on and the pointer
 
 static XEN gxm_XQueryKeymap(XEN arg1)
 {
-  #define H_XQueryKeymap "XQueryKeymap(display, keys_return) returns a bit vector for the logical state of the keyboard, where each bit \
+  #define H_XQueryKeymap "XQueryKeymap(display) returns a bit vector for the logical state of the keyboard, where each bit \
 set to 1 indicates that the corresponding key is currently pressed down."
   /* DIFF: XQueryKeymap omits keys -> (list val keys)
    */
@@ -9133,7 +9126,7 @@ and sets the DoRed, DoGreen, DoBlue flags."
 
 static XEN gxm_XQueryBestTile(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_XQueryBestTile "Status XQueryBestTile(display, which_screen, width, height, width_return, height_return)  returns the best or \
+  #define H_XQueryBestTile "Status XQueryBestTile(display, which_screen, width, height)  returns the best or \
 closest size, that is, the size that can be tiled fastest on the screen specified by which_screen."
   /* DIFF: XQueryBestTile dpy scr wid hgt [wd hg] -> (list status wd hg)
    */
@@ -9152,7 +9145,7 @@ closest size, that is, the size that can be tiled fastest on the screen specifie
 
 static XEN gxm_XQueryBestStipple(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_XQueryBestStipple "Status XQueryBestStipple(display, which_screen, width, height, width_return, height_return)  returns the \
+  #define H_XQueryBestStipple "Status XQueryBestStipple(display, which_screen, width, height)  returns the \
 best or closest size, that is, the size that can be stippled fastest on the screen specified by which_screen."
   /* DIFF: XQueryBestStipple dpy scr wid hgt [wd hg] -> (list status wd hg)
    */
@@ -9172,7 +9165,7 @@ best or closest size, that is, the size that can be stippled fastest on the scre
 
 static XEN gxm_XQueryBestSize(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
-  #define H_XQueryBestSize "Status XQueryBestSize(display, class, which_screen, width, height, width_return, height_return)  returns the \
+  #define H_XQueryBestSize "Status XQueryBestSize(display, class, which_screen, width, height)  returns the \
 best or closest size to the specified size."
   /* DIFF: XQueryBestSize dpy cls scr wid hgt [wd hg] -> (list status wd hg)
    */
@@ -9193,7 +9186,7 @@ best or closest size to the specified size."
 
 static XEN gxm_XQueryBestCursor(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_XQueryBestCursor "Status XQueryBestCursor(display, d, width, height, width_return, height_return) provides a way to find \
+  #define H_XQueryBestCursor "Status XQueryBestCursor(display, d, width, height) provides a way to find \
 out what size cursors are actually possible on the display."
   /* DIFF: XQueryBestCursor dpy d wid hgt [wd hg] -> (list status wd hg)
    */
@@ -9293,7 +9286,7 @@ static Bool gxm_XPeekIfEventProc(Display *dpy, XEvent *e, XtPointer p)
 
 static XEN gxm_XPeekIfEvent(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XPeekIfEvent "XPeekIfEvent(display, event_return, predicate, arg) returns only when the specified predicate procedure returns #t for an event."
+  #define H_XPeekIfEvent "XPeekIfEvent(display, predicate, arg) returns only when the specified predicate procedure returns #t for an event."
   /* DIFF: XPeekIfEvent dpy [evrtn] proc ptr -> (list val evrtn)
    */
   XEvent *e;
@@ -9310,7 +9303,7 @@ static XEN gxm_XPeekIfEvent(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XPeekEvent(XEN arg1)
 {
-  #define H_XPeekEvent "XPeekEvent(display, event_return) returns the first event from the event queue, but it does not remove the event from the queue."
+  #define H_XPeekEvent "XPeekEvent(display) returns the first event from the event queue, but it does not remove the event from the queue."
   /* DIFF: XPeekEvent dpy [ev] -> (list int event)
    */
   XEvent *e;
@@ -9323,7 +9316,7 @@ static XEN gxm_XPeekEvent(XEN arg1)
 
 static XEN gxm_XParseGeometry(XEN arg1)
 {
-  #define H_XParseGeometry "int XParseGeometry(parsestring, x_return, y_return, width_return, height_return) returns a bitmask that \
+  #define H_XParseGeometry "int XParseGeometry(parsestring) returns a bitmask that \
 indicates which of the four values (width, height, xoffset, and yoffset) were actually found in the string and whether the x and y values are negative. "
   /* DIFF: XParseGeometry str [x y w h] -> (list bit x y w h)
    */
@@ -9358,7 +9351,7 @@ static XEN gxm_XNoOp(XEN arg1)
 
 static XEN gxm_XNextEvent(XEN arg1)
 {
-  #define H_XNextEvent "XNextEvent(display, event_return) copies the first event from the event queue into the specified XEvent structure \
+  #define H_XNextEvent "XNextEvent(display) copies the first event from the event queue into the specified XEvent structure \
 and then removes it from the queue."
   /* DIFF: XNextEvent dpy [ev] -> (list int event)
    */
@@ -9412,7 +9405,7 @@ static XEN gxm_XMaxCmapsOfScreen(XEN arg1)
 
 static XEN gxm_XMaskEvent(XEN arg1, XEN arg2)
 {
-  #define H_XMaskEvent "XMaskEvent(display, event_mask, event_return) searches the event queue for the events associated with the specified mask."
+  #define H_XMaskEvent "XMaskEvent(display, event_mask) searches the event queue for the events associated with the specified mask."
   /* DIFF: XMaskEvent dpy mask [ev] -> (list val ev)
    */
   XEvent *e;
@@ -9505,7 +9498,7 @@ static XEN gxm_XImageByteOrder(XEN arg1)
 
 static XEN gxm_XIfEvent(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XIfEvent "XIfEvent(display, event_return, predicate, arg) completes only when the specified predicate procedure returns #t for \
+  #define H_XIfEvent "XIfEvent(display, predicate, arg) completes only when the specified predicate procedure returns #t for \
 an event, which indicates an event in the queue matches."
   /* DIFF: XIfEvent dpy [ev] proc ptr -> (list val ev)
    */
@@ -9631,7 +9624,7 @@ establishes a passive grab."
 
 static XEN gxm_XGetWindowAttributes(XEN arg1, XEN arg2)
 { 
-  #define H_XGetWindowAttributes "Status XGetWindowAttributes(display, w, window_attributes_return) returns the current attributes for the \
+  #define H_XGetWindowAttributes "Status XGetWindowAttributes(display, w) returns the current attributes for the \
 specified window to an XWindowAttributes structure."
   /* DIFF: XGetWindowAttributes omits and rtns arg3 
    */
@@ -9645,8 +9638,8 @@ specified window to an XWindowAttributes structure."
 
 static XEN gxm_XGetWindowProperty(XEN args)
 {
-  #define H_XGetWindowProperty "int XGetWindowProperty(display, w, property, long_offset, long_length, delete, req_type, actual_type_return, \
-actual_format_return, nitems_return, bytes_after_return,  returns the actual type of the property; the actual format of the property; the \
+  #define H_XGetWindowProperty "int XGetWindowProperty(display, w, property, long_offset, long_length, delete, req_type) \
+returns the actual type of the property; the actual format of the property; the \
 number of 8-bit, 16-bit, or 32-bit items transferred; the number of bytes remaining to be read in the property; and a pointer to the data \
 actually returned."
   /* DIFF: XGetWindowProperty omit trailing 5 args, rtn as list
@@ -9688,7 +9681,7 @@ actually returned."
 
 static XEN gxm_XGetTransientForHint(XEN arg1, XEN arg2)
 {
-  #define H_XGetTransientForHint "Status XGetTransientForHint(display, w, prop_window_return) returns the WM_TRANSIENT_FOR property for the specified window."
+  #define H_XGetTransientForHint "Status XGetTransientForHint(display, w) returns the WM_TRANSIENT_FOR property for the specified window."
   /* DIFF: XGetTransientForHint omit and rtn last arg
    */
   Window w;
@@ -9702,8 +9695,7 @@ static XEN gxm_XGetTransientForHint(XEN arg1, XEN arg2)
 
 static XEN gxm_XGetScreenSaver(XEN arg1)
 {
-  #define H_XGetScreenSaver "XGetScreenSaver(display, timeout_return, interval_return, prefer_blanking_return, allow_exposures_return) \
-gets the current screen saver values."
+  #define H_XGetScreenSaver "XGetScreenSaver(display) gets the current screen saver values."
   /* DIFF: XGetScreenSaver omit and rtn last 4 args
    */
   int a, b, c ,d, val;
@@ -9718,7 +9710,7 @@ gets the current screen saver values."
 
 static XEN gxm_XGetPointerMapping(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XGetPointerMapping "int XGetPointerMapping(display, map_return, nmap) returns the current mapping of the pointer."
+  #define H_XGetPointerMapping "int XGetPointerMapping(display) returns the current mapping of the pointer."
   /* DIFF: XGetPointerMapping ignores arg2, returns list
    */
   int i, len, loc;
@@ -9740,7 +9732,7 @@ static XEN gxm_XGetPointerMapping(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XGetPointerControl(XEN arg1)
 {
-  #define H_XGetPointerControl "XGetPointerControl(display, accel_numerator_return, accel_denominator_return, threshold_return) \
+  #define H_XGetPointerControl "XGetPointerControl(display) \
 returns the pointer's current acceleration multiplier and acceleration threshold."
   /* DIFF: XGetPointerControl omits and return last 3 args
    */
@@ -9755,7 +9747,7 @@ returns the pointer's current acceleration multiplier and acceleration threshold
 
 static XEN gxm_XGetKeyboardControl(XEN arg1)
 {
-  #define H_XGetKeyboardControl "XGetKeyboardControl(display, values_return) returns the current control values for the keyboard \
+  #define H_XGetKeyboardControl "XGetKeyboardControl(display) returns the current control values for the keyboard \
 to the XKeyboardState structure."
   /* DIFF: XGetKeyboardControl omits arg2 and rtns list of fields
    */
@@ -9782,7 +9774,7 @@ to the XKeyboardState structure."
 
 static XEN gxm_XGetInputFocus(XEN arg1)
 {
-  #define H_XGetInputFocus "XGetInputFocus(display, focus_return, revert_to_return) returns the focus window and the current focus state."
+  #define H_XGetInputFocus "XGetInputFocus(display) returns the focus window and the current focus state."
   /* DIFF: XGetInputFocus omit and rtn last 2 args
    */
   Window w;
@@ -9796,7 +9788,7 @@ static XEN gxm_XGetInputFocus(XEN arg1)
 
 static XEN gxm_XGetIconName(XEN arg1, XEN arg2)
 {
-  #define H_XGetIconName "Status XGetIconName(display, w, icon_name_return) returns the name to be displayed in the specified window's icon."
+  #define H_XGetIconName "Status XGetIconName(display, w) returns the name to be displayed in the specified window's icon."
   /* DIFF: XGetIconName omits and returns arg3
    */
   char *str;
@@ -9811,8 +9803,7 @@ static XEN gxm_XGetIconName(XEN arg1, XEN arg2)
 
 static XEN gxm_XGetGeometry(XEN arg1, XEN arg2)
 {
-  #define H_XGetGeometry "Status XGetGeometry(display, d, root_return, x_return, y_return, width_return, height_return, border_width_return, \
-depth_return) returns the root window and the current geometry of the drawable."
+  #define H_XGetGeometry "Status XGetGeometry(display, d) returns the root window and the current geometry of the drawable."
   /* DIFF: XGetGeometry omits last 7 args and returns list
    */
   unsigned int wr, hr, br, dr;
@@ -9834,7 +9825,7 @@ depth_return) returns the root window and the current geometry of the drawable."
 
 static XEN gxm_XGetGCValues(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XGetGCValues "Status XGetGCValues(display, gc, valuemask, values_return) returns the components specified by valuemask for the specified GC."
+  #define H_XGetGCValues "Status XGetGCValues(display, gc, valuemask) returns the components specified by valuemask for the specified GC."
   /* DIFF: XGetGCValues omits and returns last arg
    */
   XGCValues *val;
@@ -9850,7 +9841,7 @@ static XEN gxm_XGetGCValues(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XGetFontProperty(XEN arg1, XEN arg2)
 {
-  #define H_XGetFontProperty "Bool XGetFontProperty(font_struct, atom, value_return) returns the value of the specified font property. "
+  #define H_XGetFontProperty "Bool XGetFontProperty(font_struct, atom) returns the value of the specified font property. "
   /* DIFF: XGetFontProperty omits and rtns last arg
    */
   Bool val;
@@ -10212,7 +10203,7 @@ static XEN gxm_XFillArc(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN ar
 
 static XEN gxm_XFetchName(XEN arg1, XEN arg2)
 {
-  #define H_XFetchName "Status XFetchName(display, w, window_name_return) returns the name of the specified window."
+  #define H_XFetchName "Status XFetchName(display, w) returns the name of the specified window."
   /* DIFF: XFetchName omits and rtns arg3
    */
   char *name;
@@ -10622,8 +10613,7 @@ static XEN gxm_XDisplayPlanes(XEN arg1, XEN arg2)
 
 static XEN gxm_XDisplayKeycodes(XEN arg1)
 {
-  #define H_XDisplayKeycodes "XDisplayKeycodes(display, min_keycodes_return, max_keycodes_return) returns the min-keycodes and max-keycodes \
-supported by the specified display."
+  #define H_XDisplayKeycodes "XDisplayKeycodes(display) returns the min-keycodes and max-keycodes supported by the specified display."
   /* DIFF: XDisplayKeycodes omit and rtn arg 2 and 3
    */
   int m1, m2, val;
@@ -10921,7 +10911,7 @@ static XEN gxm_XCirculateSubwindows(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XCheckWindowEvent(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XCheckWindowEvent "Bool XCheckWindowEvent(display, w, event_mask, event_return) searches the event queue and then the events available \
+  #define H_XCheckWindowEvent "Bool XCheckWindowEvent(display, w, event_mask) searches the event queue and then the events available \
 on the server connection for the first event that matches the specified window and event mask."
   /* DIFF: XCheckWindowEvent dpy win mask [ev] -> (list val ev)
    */
@@ -10937,7 +10927,7 @@ on the server connection for the first event that matches the specified window a
 
 static XEN gxm_XCheckTypedWindowEvent(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XCheckTypedWindowEvent "Bool XCheckTypedWindowEvent(display, w, event_type, event_return) searches the event queue and then any events \
+  #define H_XCheckTypedWindowEvent "Bool XCheckTypedWindowEvent(display, w, event_type) searches the event queue and then any events \
 available on the server connection for the first event that matches the specified"
   /* DIFF: XCheckTypedWindowEvent dpy win mask [ev] -> (list val ev)
    */
@@ -10953,7 +10943,7 @@ available on the server connection for the first event that matches the specifie
 
 static XEN gxm_XCheckTypedEvent(XEN arg1, XEN arg2)
 {
-  #define H_XCheckTypedEvent "Bool XCheckTypedEvent(display, event_type, event_return) searches the event queue and then any events available  \
+  #define H_XCheckTypedEvent "Bool XCheckTypedEvent(display, event_type) searches the event queue and then any events available  \
 on the server connection for the first event that matches the specified type."
   /* DIFF: XCheckTypedEvent dpy mask [ev] -> (list val ev)
    */
@@ -10968,7 +10958,7 @@ on the server connection for the first event that matches the specified type."
 
 static XEN gxm_XCheckMaskEvent(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XCheckMaskEvent "Bool XCheckMaskEvent(display, event_mask, event_return) searches the event queue and then any events available on \
+  #define H_XCheckMaskEvent "Bool XCheckMaskEvent(display, event_mask) searches the event queue and then any events available on \
 the server connection for the first event that matches the specified mask."
   /* DIFF: XCheckMaskEvent dpy mask [ev] -> (list val ev)
    */
@@ -10983,7 +10973,7 @@ the server connection for the first event that matches the specified mask."
 
 static XEN gxm_XCheckIfEvent(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XCheckIfEvent "Bool XCheckIfEvent(display, event_return, predicate, arg)"
+  #define H_XCheckIfEvent "Bool XCheckIfEvent(display, predicate, arg)"
   /* DIFF: XCheckIfEvent dpy [ev] proc ptr -> (list val ev)
    */
   XEvent *e;
@@ -11365,7 +11355,7 @@ on the specified window with the list of windows specified by the colormap_windo
 
 static XEN gxm_XGetWMColormapWindows(XEN arg1, XEN arg2)
 {
-  #define H_XGetWMColormapWindows "Status XGetWMColormapWindows(display, w, colormap_windows_return, count_return) returns the list of \
+  #define H_XGetWMColormapWindows "Status XGetWMColormapWindows(display, w) returns the list of \
 window identifiers stored in the WM_COLORMAP_WINDOWS property on the specified window."
   /* DIFF: XGetWMColormapWindows omit last 2 args, return list of windows
    */
@@ -11389,7 +11379,7 @@ window identifiers stored in the WM_COLORMAP_WINDOWS property on the specified w
 
 static XEN gxm_XGetCommand(XEN arg1, XEN arg2)
 {
-  #define H_XGetCommand "Status XGetCommand(display, w, argv_return, argc_return) reads the WM_COMMAND property from the specified window \
+  #define H_XGetCommand "Status XGetCommand(display, w) reads the WM_COMMAND property from the specified window \
 and returns a string list."
   /* DIFF: XGetCommand omits last 2 args, returns list
    */
@@ -11451,7 +11441,7 @@ specified window with the list of atoms specified by the protocols argument."
 
 static XEN gxm_XGetWMProtocols(XEN arg1, XEN arg2)
 {
-  #define H_XGetWMProtocols "Status XGetWMProtocols(display, w, protocols_return, count_return) returns the list of atoms stored in the \
+  #define H_XGetWMProtocols "Status XGetWMProtocols(display, w) returns the list of atoms stored in the \
 WM_PROTOCOLS property on the specified window."
   /* DIFF: XGetWMProtocols omits last 2 args, returns list
    */
@@ -11485,7 +11475,7 @@ request on the specified top-level window."
 
 static XEN gxm_XListDepths(XEN arg1, XEN arg2)
 {
-  #define H_XListDepths "int *XListDepths(display, screen_number, count_return) returns the array of depths that are available on the \
+  #define H_XListDepths "int *XListDepths(display, screen_number) returns the array of depths that are available on the \
 specified screen."
   /* DIFF: XListDepths omits last arg, returns list of depths
    */
@@ -11505,7 +11495,7 @@ specified screen."
 
 static XEN gxm_XListPixmapFormats(XEN arg1)
 {
-  #define H_XListPixmapFormats "XPixmapFormatValues *XListPixmapFormats(display, count_return) returns an array of XPixmapFormatValues \
+  #define H_XListPixmapFormats "XPixmapFormatValues *XListPixmapFormats(display) returns an array of XPixmapFormatValues \
 structures that describe the types of Z format images supported by the specified display."
   /* DIFF: XListPixmapFormats omits arg2, rtns list of lists, each holding XPixmapFormatValues data
    */
@@ -11815,7 +11805,7 @@ static XEN gxm_XStringToKeysym(XEN arg1)
 
 static XEN gxm_XGetKeyboardMapping(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XGetKeyboardMapping "KeySym *XGetKeyboardMapping(display, first_keycode, keycode_count, keysyms_per_keycode_return) returns \
+  #define H_XGetKeyboardMapping "KeySym *XGetKeyboardMapping(display, first_keycode, keycode_count) returns \
 the symbols for the specified number of KeyCodes starting with first_keycode."
   /* DIFF: XGetKeyboardMapping omits last arg, returns list of keys
    */
@@ -11857,7 +11847,7 @@ for the specified KeyCode and the element of the KeyCode vector."
 
 static XEN gxm_XListHosts(XEN arg1)
 {
-  #define H_XListHosts "XHostAddress *XListHosts(display, nhosts_return, state_return) returns the current access control list as well \
+  #define H_XListHosts "XHostAddress *XListHosts(display) returns the current access control list as well \
 as whether the use of the list at connection setup was enabled or disabled."
   /* DIFF: XListHosts omits and returns last 2 args
    */
@@ -11871,7 +11861,7 @@ as whether the use of the list at connection setup was enabled or disabled."
 
 static XEN gxm_XListProperties(XEN arg1, XEN arg2)
 {
-  #define H_XListProperties "Atom *XListProperties(display, w, num_prop_return) returns a pointer to an array of atom properties that \
+  #define H_XListProperties "Atom *XListProperties(display, w) returns a pointer to an array of atom properties that \
 are defined for the specified window or returns NULL if no properties were found."
   /* DIFF: XListProperties returns list, no arg3
    */
@@ -11911,7 +11901,7 @@ static XEN gxm_XListExtensions(XEN arg1)
 
 static XEN gxm_XGetFontPath(XEN arg1)
 {
-  #define H_XGetFontPath "char **XGetFontPath(display, npaths_return) allocates and returns an array of strings containing the search path."
+  #define H_XGetFontPath "char **XGetFontPath(display) allocates and returns an array of strings containing the search path."
   /* DIFF: XGetFontPath omits arg2, returns list
    */
   int i, len, loc;
@@ -11928,7 +11918,7 @@ static XEN gxm_XGetFontPath(XEN arg1)
 
 static XEN gxm_XListFontsWithInfo(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XListFontsWithInfo "char **XListFontsWithInfo(display, pattern, maxnames, count_return, info_return) returns a list of \
+  #define H_XListFontsWithInfo "char **XListFontsWithInfo(display, pattern, maxnames) returns a list of \
 font names that match the specified pattern and their associated font information."
   /* DIFF: XListFontsWithInfo omit last 2 args, returns list of lists
    */
@@ -11952,7 +11942,7 @@ font names that match the specified pattern and their associated font informatio
 
 static XEN gxm_XListFonts(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XListFonts "char **XListFonts(display, pattern, maxnames, actual_count_return) returns an array of available font names that match \
+  #define H_XListFonts "char **XListFonts(display, pattern, maxnames) returns an array of available font names that match \
 the string you passed to the pattern argument."
   /* DIFF: XListFonts omits arg4, returns list
    */
@@ -11972,7 +11962,7 @@ the string you passed to the pattern argument."
 
 static XEN gxm_XListInstalledColormaps(XEN arg1, XEN arg2)
 {
-  #define H_XListInstalledColormaps "Colormap *XListInstalledColormaps(display, w, num_return) returns a list of the currently installed \
+  #define H_XListInstalledColormaps "Colormap *XListInstalledColormaps(display, w) returns a list of the currently installed \
 colormaps for the screen of the specified window."
   /* DIFF: XListInstalledColormaps omits last arg, rtns list of XColormaps
    */
@@ -12296,7 +12286,7 @@ static XEN gxm_XGetAtomName(XEN arg1, XEN arg2)
 
 static XEN gxm_XFetchBuffer(XEN arg1, XEN arg3)
 {
-  #define H_XFetchBuffer "char *XFetchBuffer(display, nbytes_return, buffer) returns zero to the nbytes_return argument if there \
+  #define H_XFetchBuffer "char *XFetchBuffer(display, buffer) returns zero to the nbytes_return argument if there \
 is no data in the buffer or if an invalid buffer is specified."
   /* DIFF: XFetchBuffer returns list of bytes, omits arg2
    */
@@ -12304,7 +12294,7 @@ is no data in the buffer or if an invalid buffer is specified."
   char *buf;
   XEN lst = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XFetchBuffer", "Display*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XFetchBuffer", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 2, "XFetchBuffer", "int");
   buf = XFetchBuffer(XEN_TO_C_Display(arg1), &len, XEN_TO_C_INT(arg3));
   loc = xm_protect(lst);
   for (i = len - 1; i >= 0; i--)
@@ -12316,7 +12306,7 @@ is no data in the buffer or if an invalid buffer is specified."
 
 static XEN gxm_XFetchBytes(XEN arg1)
 {
-  #define H_XFetchBytes "char *XFetchBytes(display, nbytes_return) returns the number of bytes in the nbytes_return argument, if the buffer \
+  #define H_XFetchBytes "char *XFetchBytes(display) returns the number of bytes in the nbytes_return argument, if the buffer \
 contains data."
   /* DIFF: XFetchBytes returns list of bytes, omits arg2
    */
@@ -12477,7 +12467,7 @@ from the set that controls the specified modifier and returns a pointer to the r
 
 static XEN gxm_XGetMotionEvents(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_XGetMotionEvents "XTimeCoord *XGetMotionEvents(display, w, start, stop, nevents_return) returns all events in the motion history \
+  #define H_XGetMotionEvents "XTimeCoord *XGetMotionEvents(display, w, start, stop) returns all events in the motion history \
 buffer that fall between the specified start and stop times, inclusive, and that have coordinates that lie within the specified window \
 (including its borders) at its present placement."
   /* DIFF: XGetMotionEvents omits last arg, return time coords as list of lists
@@ -12983,7 +12973,7 @@ static XEN gxm_XtToolkitThreadInitialize(void)
 
 static XEN gxm_XtGetDisplays(XEN arg1)
 {
-  #define H_XtGetDisplays "void XtGetDisplays(app_context, dpy_return, num_dpy_return)"
+  #define H_XtGetDisplays "void XtGetDisplays(app_context) -> list of displays"
   /* DIFF: XtGetDisplays not arg2 arg3 returns list
    */
   unsigned int x;
@@ -13028,7 +13018,7 @@ widget so that future calls to XtWindowToWidget with the drawable will return th
 
 static XEN gxm_XtGetApplicationNameAndClass(XEN arg1)
 {
-  #define H_XtGetApplicationNameAndClass "void XtGetApplicationNameAndClass(display, name_return, class_return) returns the application name \
+  #define H_XtGetApplicationNameAndClass "void XtGetApplicationNameAndClass(display) returns the application name \
 and class passed to XtDisplayInitialize for the specified display."
   /* DIFF: XtGetApplicationNameAndClass omits and rtns args 2 and 3
    */
@@ -14945,9 +14935,9 @@ static XEN gxm_XtPending(void)
 
 static XEN gxm_XtAppNextEvent(XEN arg1)
 {
-  #define H_XtAppNextEvent "void XtAppNextEvent(app_context, event_return) flushes the X output buffers of each Display in the application \
+  #define H_XtAppNextEvent "void XtAppNextEvent(app_context) flushes the X output buffers of each Display in the application \
 context and waits for an event while looking at the other input sources, timeout timeout values, and signal handlers and calling any callback \
-procedures triggered by them."
+procedures triggered by them -> event."
   /* DIFF: XtAppNextEvent app [ev] -> ev
    */
   XEvent *e;
@@ -14959,7 +14949,7 @@ procedures triggered by them."
 
 static XEN gxm_XtNextEvent(void)
 {
-  #define H_XtNextEvent "void XtNextEvent(event_return) has been replaced by XtAppNextEvent."
+  #define H_XtNextEvent "void XtNextEvent() has been replaced by XtAppNextEvent."
   /* DIFF: XtNextEvent [ev] -> ev
    */
   XEvent *e;
@@ -15408,7 +15398,7 @@ mechanism that is to be called when an event that matches the mask occurs on the
 
 static XEN gxm_XtConvertCase(XEN arg1, XEN arg2)
 {
-  #define H_XtConvertCase "void XtConvertCase(display, keysym, lower_return, upper_return) calls the appropriate converter and returns the results."
+  #define H_XtConvertCase "void XtConvertCase(display, keysym) calls the appropriate converter and returns the results."
   /* DIFF: XtConvertCase dpy keysym [k1 k2] -> (list k1 k2)
    */
   KeySym k1, k2;
@@ -15518,8 +15508,8 @@ static XEN gxm_XtTranslateKey(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XtTranslateKeycode(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XtTranslateKeycode "void XtTranslateKeycode(display, keycode, modifiers, modifiers_return, keysym_return) passes the specified \
-arguments directly to the currently registered KeyCode to KeySym translator."
+  #define H_XtTranslateKeycode "void XtTranslateKeycode(display, keycode, modifiers) passes the specified \
+arguments directly to the currently registered KeyCode to KeySym translator, returns (modifiers keysym)."
   /* DIFF: XtTranslateKeycode omit and rtn last 2 args
    */
   Modifiers m;
@@ -15534,7 +15524,7 @@ arguments directly to the currently registered KeyCode to KeySym translator."
 
 static XEN gxm_XtGetActionKeysym(XEN arg1)
 {
-  #define H_XtGetActionKeysym "KeySym XtGetActionKeysym(event, modifiers_return)"
+  #define H_XtGetActionKeysym "KeySym XtGetActionKeysym(event) -> (keysym modifiers)"
   /* DIFF: XtGetActionKeysym omit and rtn last arg
    */
   Modifiers m;
@@ -15600,7 +15590,7 @@ and parameters."
 
 static XEN gxm_XtGetActionList(XEN arg1)
 {
-  #define H_XtGetActionList "void XtGetActionList(widget_class, actions_return, num_actions_return)"
+  #define H_XtGetActionList "void XtGetActionList(widget_class) -> list of actions"
   /* DIFF: XtGetActionList omit arg2 and 3, return list of lists
    */
   unsigned int len;
@@ -15884,8 +15874,8 @@ static XEN gxm_XtStringConversionWarning(XEN arg1, XEN arg2)
 
 static XEN gxm_XtKeysymToKeycodeList(XEN arg1, XEN arg2)
 {
-  #define H_XtKeysymToKeycodeList "void XtKeysymToKeycodeList(display, keysym, keycodes_return, keycount_return) procedure returns all the \
-KeyCodes that have keysym in their entry for the keyboard mapping table associated with display."
+  #define H_XtKeysymToKeycodeList "void XtKeysymToKeycodeList(display, keysym) procedure returns all the \
+KeyCodes that have keysym in their entry for the keyboard mapping table associated with display -> (keycodes)."
   /* DIFF: XtKeysymToKeycodeList final 2 args omit, returns list
    */
   unsigned int len;
@@ -15908,7 +15898,7 @@ KeyCodes that have keysym in their entry for the keyboard mapping table associat
 
 static XEN gxm_XtTranslateCoords(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XtTranslateCoords "void XtTranslateCoords(w, x, y, rootx_return, rooty_return)"
+  #define H_XtTranslateCoords "void XtTranslateCoords(w, x, y) -> (root_x root_y)"
   /* DIFF: XtTranslateCoords omits and returns last 2 args
    */
   Position x, y;
@@ -15922,7 +15912,7 @@ static XEN gxm_XtTranslateCoords(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XtMakeResizeRequest(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XtMakeResizeRequest "XtGeometryResult XtMakeResizeRequest(w, width, height, width_return, height_return)"
+  #define H_XtMakeResizeRequest "XtGeometryResult XtMakeResizeRequest(w, width, height) -> (res width height)"
   /* DIFF: XtMakeResizeRequest w wid hgt [rtnw rtn] -> (list res w h)
    */
   Dimension w, h;
@@ -16019,7 +16009,7 @@ subclass of the specified class."
 
 static XEN gxm_XtAppPeekEvent(XEN arg1)
 {
-  #define H_XtAppPeekEvent "Boolean XtAppPeekEvent(app_context, event_return) fills in the event and returns a nonzero value. If no X \
+  #define H_XtAppPeekEvent "Boolean XtAppPeekEvent(app_context) fills in the event and returns a nonzero value. If no X \
 input is on the queue, XtAppPeekEvent flushes the output buffer and blocks until input is available."
   /* DIFF: XtAppPeekEvent app [ev] -> (list val ev)
    */
@@ -16033,7 +16023,7 @@ input is on the queue, XtAppPeekEvent flushes the output buffer and blocks until
 
 static XEN gxm_XtPeekEvent(void)
 {
-  #define H_XtPeekEvent "Boolean XtPeekEvent(event_return) has been replaced by XtAppPeekEvent."
+  #define H_XtPeekEvent "Boolean XtPeekEvent() has been replaced by XtAppPeekEvent."
   /* DIFF: XtPeekEvent [ev] -> (list val ev)
    */
   XEvent *e;
@@ -16512,7 +16502,7 @@ static XEN gxm_XpQueryScreens(XEN arg1)
 
 static XEN gxm_XpQueryExtension(XEN arg1)
 {
-  #define H_XpQueryExtension "Bool XpQueryExtension(Display *display,int *event_base_return,int *error_base_return)"
+  #define H_XpQueryExtension "Bool XpQueryExtension(Display *display)"
   /* DIFF: XpQueryExtension omits and rtns last 2 args
    */
   int val, i1, i2;
@@ -24438,7 +24428,7 @@ static int xm_already_inited = 0;
       define_structs();
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"24-Dec-01\")");
+      XEN_EVAL_C_STRING("(define xm-version \"1-Jan-02\")");
 #endif
       xm_already_inited = 1;
     }

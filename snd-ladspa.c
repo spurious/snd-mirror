@@ -14,7 +14,7 @@
 
 /* CHANGES:
  *
- * bil  14-Dec-01 various C++ cleanups.
+ * bil: 14-Dec-01 various C++ cleanups.
  * bil: 28-Nov-01 input chans need not equal output chans now.
  * bil: 15-Oct-01 added some error returns (rather than snd_error).   multichannel plugin support.
  * bil: 20-Sep-01 changed location of pfInputBuffer to avoid glomming up the stack with a huge array.
@@ -24,7 +24,7 @@
 
 /*****************************************************************************/
 
-/* FIXME: Repository is not threadsafe. Does this matter in Snd? (not currently -- Bill) */
+/* FIXME: Repository is not threadsafe. */
 
 /* FIXME: Memory checking is non-existent. */
 

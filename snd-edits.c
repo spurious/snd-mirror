@@ -2294,7 +2294,6 @@ static int save_edits_and_update_display(snd_info *sp)
       report_in_minibuffer(sp, "saving %s", sp->short_filename);
       sphdr = sp->hdr;
       err = snd_make_file(ofile, sp->nchans, sp->hdr, sf, samples, ss);
-      /* TODO: here add hook for output format? -- or can this be done in save-hook? */
     }
   if (err != MUS_NO_ERROR) 
     {
@@ -3983,4 +3982,3 @@ the file is being saved under a new name (as in sound-save-as)."
   XEN_DEFINE_PROCEDURE("get-test-a2", g_get_test_a2, 0, 0, 0, "internal test function");
 #endif
 }
-/* TODO: ask-before-overwrite could be handled by save-hook, but they seem to be checked at different times? */
