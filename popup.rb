@@ -1,8 +1,8 @@
 # popup.rb -- Specialize Popup Menus converted from Guile to Ruby.
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Tue Mar 04 18:02:06 CET 2003
-# Version: $Revision: 1.2 $
+# Last: Wed Apr 09 00:16:49 CEST 2003
+# Version: $Revision: 1.9 $
 
 # Requires the Motif module (xm.so) or --with-static-xm!
 
@@ -15,7 +15,7 @@
 # If you need one or more of these three hook variables you can set it
 # in two ways.
 
-# If you set it before requiring 'popup.rb' you must use the normal
+# If you set it before requiring 'popup.rb' you can use the normal
 # way, e.g:
 #
 # $after_open_hook = lambda  do |snd|
@@ -34,10 +34,18 @@
 #
 # Otherwise they overwrite the existing hook-procedures.
 
+# If you have a $nb_database file (see nb.rb/nb.scm) you can set the
+# path in your ~/.snd_ruby.rb file before loading popup.rb to use it.
+
 require "English"
-require "xm" unless $LOADED_FEATURES.grep(/xm/)
+begin
+  require "xm" unless $LOADED_FEATURES.detect do |x| x == "xm" end
+rescue
+  snd_error "popup.rb needs Motif module"
+end
 require "examp"
-include NB
+
+$nb_database = nil unless defined? $nb_database
 
 begin
   if $after_open_hook
@@ -341,7 +349,11 @@ $graph_popup_menu = lambda do
                     lambda do |w, c, i| equalize_panes() end],
                    ["Info", RxmPushButtonWidgetClass, every_menu,
                     lambda do |w, c, i|
-                      ptr = DBM.open($nb_database) rescue warn("DBM.open(#{$nb_database}")
+                      ptr = if $nb_database
+                              DBM.open($nb_database) rescue warn("DBM.open(#{$nb_database}")
+                            else
+                              nil
+                            end
                       snd = $graph_popup_snd
                       chn = $graph_popup_chn
                       file = file_name(snd)

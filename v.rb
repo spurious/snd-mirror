@@ -1,19 +1,29 @@
-# v.rb -- Inline FM violin version
+# v.rb -- Inlined fm_violin and jc_reverb version
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Wed Nov 20 22:43:39 CET 2002
-# Version: $Revision: 1.3 $
+# Last: Tue Apr 08 04:00:49 CEST 2003
+# Version: $Revision: 1.10 $
 
 # NOTE: Don't `require' the normal inline.rb but use function `inline'
-# included in this file. It will work with Snd as well as with Ruby.
+# included in this file.  It will work with Snd as well as with Ruby.
+
+# If you have the libsndlib.so in your ${LD_LIBRARY_PATH} and if you
+# have compiled Snd with link option -lsndlib, you don't need `require
+# 'sndlib'' (see section `Dynamically loaded modules' in
+# snd-6/grfsnd.html for more information about it).  Set in that case
+# the Ruby variable $HAVE_SNDLIB_SO to true, here or in your startup
+# file (e.g. ~./snd-ruby.rb).
+
+# fm_violin(start, dur, freq, amp, *args)
+# run_fm_violin(*args)
+# jc_reverb(startime, dur, *args)
+# run_jc_reverb(*args)
 
 $IN_SND = true unless defined? $IN_SND
+$HAVE_SNDLIB_SO = false unless defined? $HAVE_SNDLIB_SO
 
-require "sndlib"		# produces many but harmless warnings
+require "sndlib" unless $HAVE_SNDLIB_SO
 require "examp"
-
-undef fm_violin if defined? fm_violin
-undef jc_reverb if defined? jc_reverb
 
 #
 # Inline example (see clm.html):
@@ -41,7 +51,7 @@ typedef struct {
   float amp = NUM2DBL(argv[i++]);
   float index = NUM2DBL(argv[i++]);
   mus_any *os = RSNDGEN(argv[i++]);
-  mus_output *out = (mus_output *)RSNDGEN(argv[i++]);
+  mus_any *out = RSNDGEN(argv[i++]);
 
   for(i = FIX2LONG(argv[0]); i < FIX2LONG(argv[1]); i++)
     mus_outa(i, amp * mus_asymmetric_fm(os, index, 0.0), out);
@@ -58,19 +68,11 @@ def simp(start, dur, amp, freq, index, r = 1.0, ratio = 1.0)
 end
 
 with_sound(:play, 1, :statistics, true) { 
-  0.upto(10) { |i| simp(i * .2, .2, .3, 440, .2 * i, (i + .01) / 10) }}
+  0.upto(10) { |i| simp(i * 0.2, 0.2, 0.3, 440, 0.2 * i, (i + 0.01) / 10) }}
 =end
 
-#
-# fm_violin([start=0.0[, dur=1.0[, freq=440.0[, amp=0.3[, *args]]]]])
-#
-
 def fm_violin(start = 0.0, dur = 1.0, freq = 440.0, amp = 0.3, *args)
-  func_name = "\n" + get_func_name() + "()"
-  usage = "fm_violin([start=0.0[, dur=1.0[, freq=440.0[, amp=0.3[, *args]]]]])
-
-fm_violin(:help)
-
+  doc("fm_violin([start=0.0[, dur=1.0[, freq=440.0[, amp=0.3[, *args]]]]])
 	:fm_index,              1.0
 	:amp_env,               [0, 0, 25, 1, 75, 1, 100, 0]
 	:periodic_vibrato_rate, 5.0
@@ -96,91 +98,79 @@ fm_violin(:help)
 	:fm3_index,             0.0
 	:base,                  1.0
 	:reverb_amount,         0.01
-	:index_type,            :violin
+	:index_type,            :violin [:cello]
 	:degree,                0.0
 	:distance,              1.0
 	:degrees,               0.0
 	:help
-
    Ruby: fm_violin(0, 1, 440, .1, :fm_index, 2.0)
   Guile: (fm-violin 0 1 440 .1 :fm-index 2.0)
-
-Example: with_sound { fm_violin(0, 1, 440, .1, :fm_index, 2.0) }\n"
-
-  unless(start == :help or get_args(args, :help, false))
-    fm_index              = get_args(args, :fm_index, 1.0)
-    amp_env               = get_args(args, :amp_env, [0, 0, 25, 1, 75, 1, 100, 0])
-    periodic_vibrato_rate = get_args(args, :periodic_vibrato_rate, 5.0)
-    periodic_vibrato_amp  = get_args(args, :periodic_vibrato_amp, 0.0025)
-    random_vibrato_rate   = get_args(args, :random_vibrato_rate, 16.0)
-    random_vibrato_amp    = get_args(args, :random_vibrato_amp, 0.005)
-    noise_freq            = get_args(args, :noise_freq, 1000.0)
-    noise_amount          = get_args(args, :noise_amount, 0.0)
-    ind_noise_freq        = get_args(args, :ind_noise_freq, 10.0)
-    ind_noise_amount      = get_args(args, :ind_noise_amount, 0.0)
-    amp_noise_freq        = get_args(args, :amp_noise_freq, 20.0)
-    amp_noise_amount      = get_args(args, :amp_noise_amount, 0.0)
-    gliss_env             = get_args(args, :gliss_env, [0, 0, 100, 0])
-    gliss_amount          = get_args(args, :gliss_amount, 0.0)
-    fm1_env               = get_args(args, :fm1_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0])
-    fm2_env               = get_args(args, :fm2_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0])
-    fm3_env               = get_args(args, :fm3_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0])
-    fm1_rat               = get_args(args, :fm1_rat, 1.0)
-    fm2_rat               = get_args(args, :fm2_rat, 3.0)
-    fm3_rat               = get_args(args, :fm3_rat, 4.0)
-    fm1_index             = get_args(args, :fm1_index, false)
-    fm2_index             = get_args(args, :fm2_index, false)
-    fm3_index             = get_args(args, :fm3_index, false)
-    base                  = get_args(args, :base, 1.0)
-    reverb_amount         = get_args(args, :reverb_amount, 0.01)
-    index_type            = get_args(args, :index_type, :violin)
-    degree                = get_args(args, :degree, false)
-    distance              = get_args(args, :distance, 1.0)
-    degrees               = get_args(args, :degrees, false)
-
-    run_fm_violin(start, 
-		  dur, 
-		  freq, 
-		  amp,
-		  fm_index,
-		  amp_env,
-		  periodic_vibrato_rate,
-		  periodic_vibrato_amp,
-		  random_vibrato_rate, 
-		  random_vibrato_amp,
-		  noise_freq,
-		  noise_amount, 
-		  ind_noise_freq,
-		  ind_noise_amount,
-		  amp_noise_freq,
-		  amp_noise_amount,
-		  gliss_env,
-		  gliss_amount, 
-		  fm1_env, 
-		  fm2_env,
-		  fm3_env,
-		  fm1_rat, 
-		  fm2_rat, 
-		  fm3_rat, 
-		  (fm1_index or 0.0), 
-		  (fm2_index or 0.0),
-		  (fm3_index or 0.0),
-		  base,
-		  reverb_amount,
-		  index_type.to_s,
-		  (degree or 0.0), 
-		  distance, 
-		  (degrees or 0.0)) 
-  else
-    message(usage)
-  end
+Example: with_sound { fm_violin(0, 1, 440, .1, :fm_index, 2.0) }\n") if start == :help
+  fm_index              = get_args(args, :fm_index, 1.0)
+  amp_env               = get_args(args, :amp_env, [0, 0, 25, 1, 75, 1, 100, 0])
+  periodic_vibrato_rate = get_args(args, :periodic_vibrato_rate, 5.0)
+  periodic_vibrato_amp  = get_args(args, :periodic_vibrato_amp, 0.0025)
+  random_vibrato_rate   = get_args(args, :random_vibrato_rate, 16.0)
+  random_vibrato_amp    = get_args(args, :random_vibrato_amp, 0.005)
+  noise_freq            = get_args(args, :noise_freq, 1000.0)
+  noise_amount          = get_args(args, :noise_amount, 0.0)
+  ind_noise_freq        = get_args(args, :ind_noise_freq, 10.0)
+  ind_noise_amount      = get_args(args, :ind_noise_amount, 0.0)
+  amp_noise_freq        = get_args(args, :amp_noise_freq, 20.0)
+  amp_noise_amount      = get_args(args, :amp_noise_amount, 0.0)
+  gliss_env             = get_args(args, :gliss_env, [0, 0, 100, 0])
+  gliss_amount          = get_args(args, :gliss_amount, 0.0)
+  fm1_env               = get_args(args, :fm1_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0])
+  fm2_env               = get_args(args, :fm2_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0])
+  fm3_env               = get_args(args, :fm3_env, [0, 1, 25, 0.4, 75, 0.6, 100, 0])
+  fm1_rat               = get_args(args, :fm1_rat, 1.0)
+  fm2_rat               = get_args(args, :fm2_rat, 3.0)
+  fm3_rat               = get_args(args, :fm3_rat, 4.0)
+  fm1_index             = get_args(args, :fm1_index, false)
+  fm2_index             = get_args(args, :fm2_index, false)
+  fm3_index             = get_args(args, :fm3_index, false)
+  base                  = get_args(args, :base, 1.0)
+  reverb_amount         = get_args(args, :reverb_amount, 0.01)
+  index_type            = get_args(args, :index_type, :violin)
+  degree                = get_args(args, :degree, false)
+  distance              = get_args(args, :distance, 1.0)
+  degrees               = get_args(args, :degrees, false)
+  run_fm_violin(start, 
+		dur, 
+		freq, 
+		amp,
+		fm_index,
+		amp_env,
+		periodic_vibrato_rate,
+		periodic_vibrato_amp,
+		random_vibrato_rate, 
+		random_vibrato_amp,
+		noise_freq,
+		noise_amount, 
+		ind_noise_freq,
+		ind_noise_amount,
+		amp_noise_freq,
+		amp_noise_amount,
+		gliss_env,
+		gliss_amount, 
+		fm1_env, 
+		fm2_env,
+		fm3_env,
+		fm1_rat, 
+		fm2_rat, 
+		fm3_rat, 
+		(fm1_index or 0.0), 
+		(fm2_index or 0.0),
+		(fm3_index or 0.0),
+		base,
+		reverb_amount,
+		index_type.to_s,
+		(degree or 0.0), 
+		distance, 
+		(degrees or 0.0)) 
 rescue
-  die(usage + func_name)
+  die get_func_name
 end
-
-#
-# run_fm_violin(*args)
-#
 
 def run_fm_violin(*args)
   prelude = %Q{
@@ -257,10 +247,9 @@ get_ary(VALUE ary) {
     float distance = NUM2DBL(argv[i++]);
     float degrees = NUM2DBL(argv[i++]);
 
-    mus_output *out = (rb_gv_get("$rbm_output") != Qfalse) ?
-	(mus_output *)RSNDGEN(rb_gv_get("$rbm_output")) : NULL;
-    mus_output *rev_out = (rb_gv_get("$rbm_reverb") != Qfalse) ?
-	(mus_output *)RSNDGEN(rb_gv_get("$rbm_reverb")) : NULL;
+    mus_any *out = (rb_gv_get("$rbm_output") != Qfalse) ? RSNDGEN(rb_gv_get("$rbm_output")) : NULL;
+    mus_any *rev_out = (rb_gv_get("$rbm_reverb") != Qfalse) ?
+      RSNDGEN(rb_gv_get("$rbm_reverb")) : NULL;
 
     long beg = 0L;
     long len = 0L;
@@ -456,17 +445,8 @@ get_ary(VALUE ary) {
 }
 end
 
-#
-# jc_reverb([args=[]])
-#
-
-def jc_reverb(args = [])
-  func_name = "\n" + get_func_name() + "()"
-  usage = "jc_reverb([args=[]])
-
-jc_reverb(:help)
-
-	:decay,    1.0
+def jc_reverb(startime, dur, *args)
+  doc("jc_reverb(startime, dur, *args)
 	:low_pass, false
 	:volume,   1.0
 	:amp_env1, false
@@ -474,61 +454,47 @@ jc_reverb(:help)
 	:delay1,   0.013
 	:delay2,   0.011
 	:help
-
 The old Chowning reverberator (see snd-6/examp.scm).
-
-Usage: jc_reverb(:decay, 2.0, :volume, .1)
-       with_sound(:reverb, :jc_reverb) { fm_violin }\n"
-
-  unless(get_args(args, :help, false))
-    decay    = get_args(args, :decay, 1.0)
-    low_pass = get_args(args, :low_pass, 0)
-    volume   = get_args(args, :volume, 1.0)
-    amp_env1 = get_args(args, :amp_env1, false)
-    amp_env2 = get_args(args, :amp_env2, false)
-    delay1   = get_args(args, :delay1, 0.013)
-    delay2   = get_args(args, :delay2, 0.011)
-
-    allpass1 = make_all_pass(-0.700, 0.700, 1051)
-    allpass2 = make_all_pass(-0.700, 0.700, 337)
-    allpass3 = make_all_pass(-0.700, 0.700, 113)
-    comb1 = make_comb(0.742, 4799)
-    comb2 = make_comb(0.733, 4999)
-    comb3 = make_comb(0.715, 5399)
-    comb4 = make_comb(0.697, 5801)
-    srate = (mus_srate() rescue $rbm_srate)
-    outdel1 = make_delay((delay1 * srate).round)
-    outdel2 = make_delay((delay2 * srate).round)
-    dur = decay + mus_sound_frames($rbm_file_name) / srate.to_f
-    len = (srate * dur).round
-    envA = (amp_env1 ? make_env(amp_env1, volume, dur) : false)
-    envB = (amp_env2 ? make_env(amp_env2, volume, dur) : false)
-    delA = (envA ? env(envA) : volume)
-    delB = (envB ? env(envB) : volume)
-    
-    run_jc_reverb(len,
-		  low_pass,
-		  allpass1,
-		  allpass2,
-		  allpass3,
-		  comb1,
-		  comb2,
-		  comb3,
-		  comb4,
-		  outdel1,
-		  outdel2,
-		  delA,
-		  delB)
-  else
-    message(usage)
-  end
+Usage: with_sound(:reverb, :jc_reverb) { fm_violin }\n") if get_args(args, :help, false)
+  low_pass = get_args(args, :low_pass, 0)
+  volume   = get_args(args, :volume, 1.0)
+  amp_env1 = get_args(args, :amp_env1, false)
+  amp_env2 = get_args(args, :amp_env2, false)
+  delay1   = get_args(args, :delay1, 0.013)
+  delay2   = get_args(args, :delay2, 0.011)
+  allpass1 = make_all_pass(-0.700, 0.700, 1051)
+  allpass2 = make_all_pass(-0.700, 0.700, 337)
+  allpass3 = make_all_pass(-0.700, 0.700, 113)
+  comb1 = make_comb(0.742, 4799)
+  comb2 = make_comb(0.733, 4999)
+  comb3 = make_comb(0.715, 5399)
+  comb4 = make_comb(0.697, 5801)
+  srate = (mus_srate() rescue $rbm_srate)
+  outdel1 = make_delay((delay1 * srate).round)
+  outdel2 = make_delay((delay2 * srate).round)
+  beg = (srate * startime).round
+  len = beg + (srate * dur).round
+  envA = (amp_env1 ? make_env(amp_env1, volume, dur) : false)
+  envB = (amp_env2 ? make_env(amp_env2, volume, dur) : false)
+  delA = (envA ? env(envA) : volume)
+  delB = (envB ? env(envB) : volume)
+  run_jc_reverb(beg,
+                len,
+		low_pass,
+		allpass1,
+		allpass2,
+		allpass3,
+		comb1,
+		comb2,
+		comb3,
+		comb4,
+		outdel1,
+		outdel2,
+		delA,
+		delB)
 rescue
-  die(usage + func_name)
+  die get_func_name
 end
-
-#
-# run_jc_reverb(*args)
-#
 
 def run_jc_reverb(*args)
   prelude = %Q{
@@ -547,6 +513,7 @@ typedef struct {
 
   inline args, prelude, %Q{
     long i = 0L;
+    long beg = FIX2LONG(argv[i++]);
     long len = FIX2LONG(argv[i++]);
     int low_pass = FIX2INT(argv[i++]);
     mus_any *allpass1 = RSNDGEN(argv[i++]);
@@ -561,10 +528,10 @@ typedef struct {
     float delA = NUM2DBL(argv[i++]);
     float delB = NUM2DBL(argv[i++]);
 
-    mus_output *out = (rb_gv_get("$rbm_output") != Qfalse) ?
-	(mus_output *)RSNDGEN(rb_gv_get("$rbm_output")) : NULL;
-    mus_input *rev_in = (rb_gv_get("$rbm_reverb") != Qfalse) ?
-	(mus_input *)RSNDGEN(rb_gv_get("$rbm_reverb")) : NULL;
+    mus_any *out = (rb_gv_get("$rbm_output") != Qfalse) ?
+	RSNDGEN(rb_gv_get("$rbm_output")) : NULL;
+    mus_any *rev_in = (rb_gv_get("$rbm_reverb") != Qfalse) ?
+	RSNDGEN(rb_gv_get("$rbm_reverb")) : NULL;
     int chans = mus_channels((mus_any *)out);
     int rev_chans = mus_channels((mus_any *)rev_in);
     float srate = mus_srate();
@@ -574,7 +541,7 @@ typedef struct {
     float comb_sum_1A = 0.0, comb_sum_2A = 0.0;
     float comb_sum_1B = 0.0, comb_sum_2B = 0.0;
 
-    for(i = 0; i < len; i++) {
+    for(i = beg; i < len; i++) {
 	ho = mus_ina(i, rev_in);
 	allpass_sum = mus_all_pass(allpass3, 
 				   mus_all_pass(allpass2,
@@ -616,96 +583,97 @@ typedef struct {
 }
 end
 
-### Original README.txt of RubyInline 1.0.7 [MS]
+### Original README.txt of RubyInline 2.0.0 [MS]
 
-=begin	
-Ruby Inline
-    http://www.zenspider.com/Languages/Ruby/
-    support@zenspider.com
+# Ruby Inline
+#     http://www.zenspider.com/Languages/Ruby/
+#     support@zenspider.com
+# 
+# DESCRIPTION:
+#   
+# Ruby Inline is my quick attempt to create an analog to Perl's
+# Inline::C. It allows you to embed C external module code in your ruby
+# script directly. The code is compiled and run on the fly when
+# needed. The ruby version isn't near as feature-full as the perl
+# version, but it is neat!
+# 
+# FEATURES/PROBLEMS:
+#   
+# + Quick and easy inlining of your C code embedded in your ruby script.
+# + Rudimentary automatic conversion between ruby and C basic types
+#   (char, unsigned, unsigned int, char *, int, long, unsigned long).
+# + Only recompiles if the C code has changed.
+# + Pretends to be secure.
+# + Only uses standard ruby libraries, nothing extra to download.
+# + Simple as it can be. Less than 350 lines long... um... sorta simple.
+# - Currently doesn't munge ruby names that aren't compatible in C (ex: a!())
+# 
+# SYNOPSYS:
+# 
+#   require "inline"
+#   class MyTest
+#     inline_c "
+#       long factorial(int max) {
+#         int i=max, result=1;
+#         while (i >= 2) { result *= i--; }
+#         return result;
+#       }"
+#   end
+#   t = MyTest.new()
+#   factorial_5 = t.factorial(5)
+# 
+# Produces:
+# 
+#   % rm ~/.ruby_inline/*
+#   % ./example.rb 0
+#   Type = Inline C , Iter = 1000000, T = 7.12203800 sec, 0.00000712 sec / iter
+#   % ./example.rb 0
+#   Type = Inline C , Iter = 1000000, T = 7.11633600 sec, 0.00000712 sec / iter
+#   % ./example.rb 1
+#   WARNING: Inline#inline is deprecated, use Module#inline_c
+#   Type = Alias    , Iter = 1000000, T = 7.27398900 sec, 0.00000727 sec / iter
+#   % ./example.rb 2
+#   WARNING: Inline#inline is deprecated, use Module#inline_c
+#   Type = InlineOld, Iter = 1000000, T = 7.10194600 sec, 0.00000710 sec / iter
+#   % ./example.rb 3
+#   Type = Native   , Iter = 1000000, T = 22.10488600 sec, 0.00002210 sec / iter
+# 
+# REQUIREMENTS:
+# 
+# + Ruby - 1.6.7 & 1.7.2 has been used on FreeBSD 4.6.
+# + POSIX compliant system (ie pretty much any UNIX, or Cygwin on MS platforms).
+# + A C compiler (the same one that compiled your ruby interpreter).
+# 
+# INSTALL:
+# 
+# + no install instructions yet.
+# 
+# LICENSE:
+# 
+# (The MIT License)
+# 
+# Copyright (c) 2001-2002 Ryan Davis, Zen Spider Software
+# 
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+# 
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+# CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+# TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-DESCRIPTION:
-  
-Ruby Inline is my quick attempt to create an analog to Perl's
-Inline::C. It allows you to embed C external module code in your ruby
-script directly. The code is compiled and run on the fly when
-needed. The ruby version isn't near as feature-full as the perl
-version, but it is neat!
-
-FEATURES/PROBLEMS:
-  
-+ Quick and easy inlining of your C code embedded in your ruby script.
-+ Only recompiles if the C code has changed.
-+ Pretends to be secure.
-+ Only uses standard ruby libraries, nothing extra to download.
-+ Simple as it can be. Less than 125 lines long.
-- Currently doesn't munge ruby names that aren't compatible in C (ex: a!())
-
-SYNOPSYS:
-
-  require "inline"
-  class MyTest
-    include Inline
-    def fastfact(*args)
-      inline args, <<-END
-      int i, f=1;
-      for (i = FIX2INT(argv[0]); i >= 1; i--) { f = f * i; }
-      return INT2FIX(f);
-      END
-    end
-  end
-  t = MyTest.new()
-  factorial_5 = t.fastfact(5)
-
-Produces:
-
-  <502> rm /tmp/Mod_MyTest_fastfact.*; ./example.rb 
-  RubyInline 1.0.4
-  Building /tmp/Mod_MyTest_fastfact.so with 'cc -shared -O -pipe  -fPIC -I /usr/local/lib/ruby/1.6/i386-freebsd4'
-  Type = Inline, Iter = 1000000, time = 5.37746200 sec, 0.00000538 sec / iter
-  <503> ./example.rb 
-  RubyInline 1.0.4
-  Type = Inline, Iter = 1000000, time = 5.26147500 sec, 0.00000526 sec / iter
-  <504> ./example.rb native
-  RubyInline 1.0.4
-  Type = Native, Iter = 1000000, time = 24.09801500 sec, 0.00002410 sec / iter
-
-REQUIREMENTS:
-
-+ Ruby - 1.6.7 has been used on FreeBSD 4.6.
-+ POSIX compliant system (ie pretty much any UNIX, or Cygwin on MS platforms).
-+ A C compiler (the same one that compiled your ruby interpreter).
-
-INSTALL:
-
-+ no install instructions yet.
-
-LICENSE:
-
-(The MIT License)
-
-Copyright (c) 2001-2002 Ryan Davis, Zen Spider Software
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-=end
-
-### Patched inline.rb of RubyInline 1.0.7 [MS]
+### Patched inline.rb of RubyInline 2.0.0 [MS]
 
 require "rbconfig"
 require "ftools"
@@ -721,102 +689,340 @@ def assert_dir_secure(path)
     exit 1
   end
 end
+public :caller_method_name, :assert_dir_secure
 
-RB_INLINE_VERSION = '1.0.7.p0'
-#  VERSION = '1.0.7' [MS]
+$RUBY_INLINE_COMPAT = 0
 
-# TODO: extend the signature to pass in self in order to zap aliased methods
-# def inline(args, prelude, src=nil, instance=self)
-def inline(args, prelude, src=nil)
+# module Inline (commented out [MS])
 
-  if src.nil? then
-    src = prelude
-    prelude = ""
-  end
+  INLINE_VERSION = '2.0.0p0'    # 2.0.0 -> 2.0.0p0 [MS]
 
-  rootdir = ENV['INLINEDIR'] || ENV['HOME']
-  assert_dir_secure(rootdir)
+  def inline(args, prelude, src=nil)
 
-  tmpdir = rootdir + "/.ruby_inline"
-  unless File.directory? tmpdir then
-    $stderr.puts "NOTE: creating #{tmpdir} for RubyInline" if $DEBUG
-    Dir.mkdir(tmpdir, 0700)
-  end
-  assert_dir_secure(tmpdir)
+#    $stderr.puts "WARNING: Inline#inline is deprecated, use Module#inline_c"
 
-  myclass = self.class
-  mymethod = caller_method_name
-  mod_name = "Mod_#{myclass}_#{mymethod}"
-  so_name = "#{tmpdir}/#{mod_name}.so"
+    if src.nil? then
+      src = prelude
+      prelude = ""
+    end
 
-  # extracted from mkmf.rb
-  srcdir  = Config::CONFIG["srcdir"]
-  archdir = Config::CONFIG["archdir"]
-  if File.exist? archdir + "/ruby.h"
-    hdrdir = archdir
-  elsif File.exist? srcdir + "/ruby.h"
-    hdrdir = srcdir
-  else
-    $stderr.puts "ERROR: Can't find header files for ruby. Exiting..."
-    exit 1
-  end
+    rootdir = ENV['INLINEDIR'] || ENV['HOME']
+    assert_dir_secure(rootdir)
 
-  # Generating code
-  src = %Q{
+    tmpdir = rootdir + "/.ruby_inline"
+    unless File.directory? tmpdir then
+      $stderr.puts "NOTE: creating #{tmpdir} for RubyInline" if $DEBUG
+      Dir.mkdir(tmpdir, 0700)
+    end
+    assert_dir_secure(tmpdir)
+
+    myclass   = self.class
+    mymethod  = self.caller_method_name
+    mod_name  = "Mod_#{myclass}_#{mymethod}"
+    extension = Config::CONFIG["DLEXT"]
+    so_name   = "#{tmpdir}/#{mod_name}.#{extension}"
+
+    f = File.expand_path(caller.first.split(/:/).first)	# [MS]
+    unless File.file? so_name and File.mtime(f) < File.mtime(so_name) then
+      # extracted from mkmf.rb
+      srcdir  = Config::CONFIG["srcdir"]
+      archdir = Config::CONFIG["archdir"]
+      if File.exist? archdir + "/ruby.h"
+	hdrdir = archdir
+      elsif File.exist? srcdir + "/ruby.h"
+	hdrdir = srcdir
+      else
+	$stderr.puts "ERROR: Can't find header files for ruby. Exiting..."
+	exit 1
+      end
+
+      # Generating code
+      src = %Q{
 #include <ruby.h>
 #{prelude}
 
-  static VALUE t_#{mymethod}(int argc, VALUE *argv, VALUE self) {
+static VALUE
+t_#{mymethod}(int argc, VALUE *argv, VALUE self) {
     #{src}
-  }
+}
 
-  VALUE c#{mod_name};
+VALUE c#{mod_name};
 
-  void Init_#{mod_name}() {
+void
+Init_#{mod_name}() {
     c#{mod_name} = rb_define_module("#{mod_name}");
     rb_define_method(c#{mod_name}, "_#{mymethod}", t_#{mymethod}, -1);
-  }
 }
-  
-  src_name = "#{tmpdir}/#{mod_name}.c"
+}
 
-  # move previous version to the side if it exists
-  test_cmp = false
-  old_src_name = src_name + ".old"
-  if test ?f, src_name then
-    test_cmp = true
-    File.rename src_name, old_src_name
-  end
+      src_name = "#{tmpdir}/#{mod_name}.c"
 
-  f = File.new(src_name, "w")
-  f.puts src
-  f.close
+      # move previous version to the side if it exists
+      test_cmp = false
+      old_src_name = src_name + ".old"
+      if test ?f, src_name then
+	test_cmp = true
+	File.rename src_name, old_src_name
+      end
 
-  # recompile only if the files are different
-  recompile = true
-  if test_cmp and File::compare(old_src_name, src_name, $DEBUG) then
-    recompile = false
-  end
+      f = File.new(src_name, "w")
+      f.puts src
+      f.close
 
-  if recompile then
-    cmd = "#{Config::CONFIG['LDSHARED']} #{Config::CONFIG['CFLAGS']} -I #{hdrdir} -o #{so_name} #{src_name}"
-    
-    if /mswin32/ =~ RUBY_PLATFORM then
-      cmd += " -link /INCREMENTAL:no /EXPORT:Init_#{mod_name}"
+      # recompile only if the files are different
+      recompile = true
+      if test_cmp and File::compare(old_src_name, src_name, $DEBUG) then
+	recompile = false
+      end
+
+      if recompile then
+
+	cmd = "#{Config::CONFIG['LDSHARED']} #{Config::CONFIG['CFLAGS']} -I #{hdrdir} -o #{so_name} #{src_name}"
+	
+	if /mswin32/ =~ RUBY_PLATFORM then
+	  cmd += " -link /INCREMENTAL:no /EXPORT:Init_#{mod_name}"
+	end
+	
+	$stderr.puts "Building #{so_name} with '#{cmd}'" if $DEBUG
+	`#{cmd}`
+      end
     end
+
+    # Loading & Replacing w/ new method
+    require "#{so_name}"
+    myclass.class_eval("include #{mod_name}")
+    myclass.class_eval("alias_method :old_#{mymethod}, :#{mymethod}")
+
+    if RUBY_VERSION >= "1.7.2" then
+      oldmeth = myclass.instance_method(mymethod)
+      old_method_name = "old_#{mymethod}"
+      myclass.instance_methods.each { |methodname|
+	if methodname != old_method_name then
+	  meth = myclass.instance_method(methodname)
+	  if meth == oldmeth then
+	    myclass.class_eval("alias_method :#{methodname}, :_#{mymethod}")
+	  end
+	end
+      }
+    else
+      if $RUBY_INLINE_COMPAT == 0 then
+	$stderr.puts "WARNING: ruby versions < 1.7.2 cannot inline aliased methods"
+	at_exit {
+	  $stderr.puts "NOTE: you ran a REALLY slow version of #{mymethod} #{$RUBY_INLINE_COMPAT} times."
+	  $stderr.puts "NOTE: Upgrade to 1.7.2 or greater."
+	}
+
+      end
+      $RUBY_INLINE_COMPAT += 1
+      myclass.class_eval("alias_method :#{mymethod}, :_#{mymethod}")
+    end    
+
+    # Calling
+    return method("_#{mymethod}").call(*args)
+  end # def inline
+
+# end # module Inline (commented out [MS])
+
+class Module
+
+  # FIX: this has been modified to be 1.6 specific... 1.7 has better
+  # options for longs
+
+  @@type_map = {
+    'char'         => [ 'NUM2CHR',  'CHR2FIX' ],
+    'unsigned'     => [ 'NUM2UINT', 'UINT2NUM' ],
+    'unsigned int' => [ 'NUM2UINT', 'UINT2NUM' ],
+    'char *'       => [ 'STR2CSTR', 'rb_str_new2' ],
     
-    $stderr.puts "Building #{so_name} with '#{cmd}'" if $DEBUG
-    `#{cmd}`
+    # slower versions:
+    #define INT2NUM(v)
+    #define NUM2INT(x)
+    'int'  => [ 'FIX2INT', 'INT2FIX' ],
+    
+    # not sure - faster, but could overflow?
+    #define FIX2LONG(x)
+    #define LONG2FIX(i)
+    'long' => [ 'NUM2INT', 'INT2NUM' ],
+
+    # not sure
+    #define FIX2ULONG(x)
+    'unsigned long' => [ 'NUM2UINT', 'UINT2NUM' ],
+
+    # Can't do these converters
+    #define ID2SYM(x)
+    #define SYM2ID(x)
+    #define NUM2DBL(x)
+    #define FIX2UINT(x)
+  }
+
+  def ruby2c(type)
+    return @@type_map[type].first
   end
-  
-  # Loading & Replacing w/ new method
-  require "#{so_name}"
-  myclass.class_eval("include #{mod_name}")
-  myclass.class_eval("alias_method :old_#{mymethod}, :#{mymethod}")
-  myclass.class_eval("alias_method :#{mymethod}, :_#{mymethod}")
-  
-  # Calling
-  return method("_#{mymethod}").call(*args)
-end
+#  module_function :ruby2c
+
+  def c2ruby(type)
+    return @@type_map[type].last
+  end
+#  module_function :c2ruby
+
+  def parse_signature(src)
+
+    sig = src.dup
+
+    # strip c-comments
+    sig.gsub!(/(?:(?:\/\*)(?:(?:(?!\*\/)[\s\S])*)(?:\*\/))/, '')
+    # strip cpp-comments
+    sig.gsub!(/(?:\/\*(?:(?!\*\/)[\s\S])*\*\/|\/\/[^\n]*\n)/, '')
+    # strip preprocessor directives
+    sig.gsub!(/^\s*\#.*(\\\n.*)*/, '')
+    # strip {}s
+    sig.gsub!(/\{[^\}]*\}/, '{ }')
+    # clean and collapse whitespace
+    sig.gsub!(/\s+/, ' ')
+
+    types = 'void|' + @@type_map.keys.map{|x| Regexp.escape(x)}.join('|')
+    if /(#{types})\s*(\w+)\s*\(([^)]*)\)/ =~ sig
+      return_type, function_name, arg_string = $1, $2, $3
+      args = []
+      arg_string.split(',').each do |arg|
+
+	# ACK! see if we can't make this go away (FIX)
+	# helps normalize into 'char * varname' form
+	arg = arg.gsub(/\*/, ' * ').gsub(/\s+/, ' ').strip
+
+	if /(#{types})\s+(\w+)\s*$/ =~ arg
+	  args.push([$2, $1])
+	end
+      end
+      return {'return' => return_type,
+	  'name' => function_name,
+	  'args' => args }
+    end
+    raise "Bad parser exception: #{sig}"
+  end # def parse_signature
+#  module_function :parse_signature
+
+  def inline_c_gen(src)
+    result = src.dup
+
+    # REFACTOR: this is duplicated from above
+    # strip c-comments
+    result.gsub!(/(?:(?:\/\*)(?:(?:(?!\*\/)[\s\S])*)(?:\*\/))/, '')
+    # strip cpp-comments
+    result.gsub!(/(?:\/\*(?:(?!\*\/)[\s\S])*\*\/|\/\/[^\n]*\n)/, '')
+
+    signature = parse_signature(src)
+    function_name = signature['name']
+    return_type = signature['return']
+
+    prefix = "static VALUE t_#{function_name}(int argc, VALUE *argv, VALUE self) {\n"
+    count = 0
+    signature['args'].each do |arg, type|
+      prefix += "#{type} #{arg} = #{ruby2c(type)}(argv[#{count}]);\n"
+      count += 1
+    end
+
+    # replace the function signature (hopefully) with new signature (prefix)
+    result.sub!(/[^;\/\"]+#{function_name}\s*\([^\{]+\{/, "\n" + prefix)
+    result.sub!(/\A\n/, '') # strip off the \n in front in case we added it
+    result.gsub!(/return\s+([^\;\}]+)/) do
+      "return #{c2ruby(return_type)}(#{$1})"
+    end
+
+    return result
+  end # def inline_c_gen
+#  module_function :inline_c_gen
+
+  def inline_c(src)
+
+    rootdir = ENV['INLINEDIR'] || ENV['HOME']
+    assert_dir_secure(rootdir)
+
+    tmpdir = rootdir + "/.ruby_inline"
+    unless File.directory? tmpdir then
+      $stderr.puts "NOTE: creating #{tmpdir} for RubyInline" if $DEBUG
+      Dir.mkdir(tmpdir, 0700)
+    end
+    assert_dir_secure(tmpdir)
+
+    myclass = self
+    mymethod = parse_signature(src)['name']
+    mod_name = "Mod_#{myclass}_#{mymethod}"
+    extension = Config::CONFIG["DLEXT"]
+    so_name = "#{tmpdir}/#{mod_name}.#{extension}"  # REFACTOR
+
+    f = File.expand_path(caller.first.split(/:/).first)	# [MS]
+    unless File.file? so_name and File.mtime(f) < File.mtime(so_name) then
+      # extracted from mkmf.rb
+      srcdir  = Config::CONFIG["srcdir"]
+      archdir = Config::CONFIG["archdir"]
+      if File.exist? archdir + "/ruby.h"
+	hdrdir = archdir
+      elsif File.exist? srcdir + "/ruby.h"
+	hdrdir = srcdir
+      else
+	$stderr.puts "ERROR: Can't find header files for ruby. Exiting..."
+	exit 1
+      end
+      
+      # Generating code
+      src = %Q{
+#include <ruby.h>
+
+#{inline_c_gen(src)}
+
+VALUE c#{mod_name};
+
+void
+Init_#{mod_name}() {
+    c#{mod_name} = rb_define_module("#{mod_name}");
+    rb_define_method(c#{mod_name}, "_#{mymethod}", t_#{mymethod}, -1);
+}
+}
+
+      src_name = "#{tmpdir}/#{mod_name}.c"
+
+      # move previous version to the side if it exists
+      test_cmp = false
+      old_src_name = src_name + ".old"
+      if test ?f, src_name then
+	test_cmp = true
+	File.rename src_name, old_src_name
+      end
+
+      f = File.new(src_name, "w")
+      f.puts src
+      f.close
+
+      # recompile only if the files are different
+      recompile = true
+      if test_cmp and File::compare(old_src_name, src_name, $DEBUG) then
+	recompile = false
+      end
+
+      if recompile then
+
+	cmd = "#{Config::CONFIG['LDSHARED']} #{Config::CONFIG['CFLAGS']} -I #{hdrdir} -o #{so_name} #{src_name}"
+	
+	if /mswin32/ =~ RUBY_PLATFORM then
+	  cmd += " -link /INCREMENTAL:no /EXPORT:Init_#{mod_name}"
+	end
+	
+	$stderr.puts "Building #{so_name} with '#{cmd}'" if $DEBUG
+	`#{cmd}`
+      end
+    end
+
+    # Loading & Replacing w/ new method
+
+    require "#{so_name}" or raise "require on #{so_name} failed"
+    class_eval("include #{mod_name}")
+
+    eval("alias_method :#{mymethod}, :_#{mymethod}")
+
+  end # def inline_c
+#  module_function :inline_c
+
+end # Module
 
 # v.rb ends here

@@ -1,8 +1,8 @@
 # examp.rb -- Guile -> Ruby translation
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Wed Apr 02 03:16:14 CEST 2003
-# Version: $Revision: 1.48 $
+# Last: Wed Apr 09 04:53:00 CEST 2003
+# Version: $Revision: 1.52 $
 
 #
 # Utilities
@@ -18,6 +18,7 @@
 # extensions to Class Integer
 #  even?
 #  odd?
+#  prime?
 #
 # extension to Module Enumerable
 #  map_with_index { |x, i| ... }
@@ -26,7 +27,7 @@
 # doc(str), putd(func), snd_putd(func)
 # remove_if(func, lst)
 # car(v), cadr(v), caddr(v), cdr(v)
-# warn(str), die(str), message(*args)
+# warn(*args), die(*args), message(*args)
 # let { ... }
 # array?(ary)
 # to_rary(ary)
@@ -45,11 +46,8 @@
 # 
 # fm_bell(start, dur, freq, amp, *args)
 # fm_violin_rb(start, dur, freq, amp, *args)
-# jc_reverb_rb(*args)
-# with_sound(*args) { ... }
-# sound_let(fname, *args) { |tmp_fname| ... }
+# jc_reverb_rb(startime, dur, *args)
 #
-# fm_play(*args) { |len| ... }
 # fm_bell_snd(start, dur, freq, amp, amp_env, index_env, index)
 # n_rev(*args)
 # hello_dentist(frq, amp)
@@ -59,11 +57,6 @@
 # fp(sr, osamp, osfreq)
 # compand(h)
 #
-# Module NB (see nb.scm)
-#  nb(note, file), unb(file), prune_db
-#  files_popup_info(type, position, name)
-#  files_popup_quit(type, position, name)
-# 
 # Module Dsp (see dsp.scm)
 #  butter(b, sig)
 #  make_butter_high_pass(freq)
@@ -83,9 +76,10 @@
 #  make_moog_filter(freq, q)
 #  moog_filter(m, sig)
 
-include Math
-
 $IN_SND = true unless defined? $IN_SND
+
+include Math
+require "ws"
 
 def get_func_name(n = 1)
   doc("get_func_name([n=1])
@@ -272,14 +266,20 @@ class Integer
   doc "#{self.class} #{self.name}
 usefule lisp-like extensions [(evenp x), (oddp x)]:
   x.even?
-  x.odd?\n"
+  x.odd?
+  x.prime?\n"
 
   def even?
-    (self % 2) == 0
+    self.modulo(2) == 0
   end
 
   def odd?
-    (self % 2) == 1
+    self.modulo(2) != 0
+  end
+
+  def prime?
+    (self == 2) or
+    (self.odd? and 3.step(sqrt(self), 2) do |i| return false if self.modulo(i) == 0 end)
   end
 end
 
@@ -322,38 +322,38 @@ def caddr(v) v[2]; end
 
 def cdr(v) v.shift; v; end
 
-# warn([str="Warning"])
+# warn(*args)
 #
 # If no error occurs it works like snd_print() or print(), if an error
-# occurs it works like C's perror() function. It works in script mode
-# and in Snd too.
+# occurs it works like C's perror() function.  It works in script mode
+# as well as in Snd.
 
-def warn(str = "Warning")
-  if $IN_SND and (not ENV['EMACS'])
-    snd_print("\n#{str}#{$! ? ": #{$!}" : ""}")
-    snd_print("\n[#{$@.join("\n")}]") if $@ and $DEBUG
-  else
-    print("#{str}#{$! ? ": #{$!}" : ""}\n")
-    print("#{$@.join("\n")}") if $@ and $DEBUG
-  end
+def warn(*args)
+  str = "Warning: " << format(*args) << ($! ? ": #{$!}" : "")
+  str << (($@ and $DEBUG) ? "\n[#{$@.join("\n")}]" : "")
+  message(str)
+  $! = nil
 end
 
-# die([str="Error"[, n=1]])
+# die(*args)
 #
-# If no error occurs it works like snd_print() or print(), if an error
-# occurs it works like C's perror() function. It exits only in script
-# mode with error number n.
+# If no error occurs it works like snd_error() or print(), if an error
+# occurs it works like C's perror() function.  In script mode program
+# terminates.
 
-def die(str = "Error", n = 1)
-  warn(str)
-  exit(n) unless $IN_SND
+def die(*args)
+  str = "Error: " << format(*args) << ($! ? ": #{$!}" : "")
+  str << (($@ and $DEBUG) ? "\n[#{$@.join("\n")}]" : "")
+  ($IN_SND  and (not ENV['EMACS'])) ? snd_error(str) : $stdout.print(str << "\n")
+  $! = nil
+  exit(1) unless $IN_SND
 end
 
 def message(*args)
   if $IN_SND and (not ENV['EMACS'])
-    snd_print "\n" << format(*args)
+    snd_print("\n" << format(*args))
   else
-    STDOUT.print format(*args) << "\n"
+    $stdout.print(format(*args) << "\n")
   end
 end
 
@@ -512,27 +512,6 @@ end
 ##
 ## FM
 ##
-
-#
-# *clm-like variables used by fm_bell(), fm_violin_rb(), jc_reverb_rb(), and
-# with_sound()
-#
-
-$rbm_output = false
-$rbm_file_name = "test.snd"
-$rbm_srate = 22050
-$rbm_channels = 1
-$rbm_header_type = Mus_next
-$rbm_data_format = Mus_bshort
-$rbm_comment = "created by #{ENV["USER"]}"
-$rbm_statistics = false
-$rbm_play = 0
-$rbm_player = "sndplay"
-$rbm_reverb = false
-$rbm_reverb_file_name = "reverb.snd"
-$rbm_reverb_channels = 1
-$rbm_reverb_func = false
-$rbm_locsig_type = Mus_sinusoidal
 
 ##
 ## Michael McNabb's FM bell (see bell.scm and fm_bell_snd() below)
@@ -734,9 +713,8 @@ end
 
 # for a faster version see v.rb
 
-def jc_reverb_rb(args = [])
-  doc("jc_reverb_rb([args=[]])
-	:decay,    1.0
+def jc_reverb_rb(startime, dur, *args)
+  doc("jc_reverb_rb(startime, dur, *args)
 	:low_pass, false
 	:volume,   1.0
 	:amp_env1, false
@@ -744,9 +722,8 @@ def jc_reverb_rb(args = [])
 	:delay1,   0.013
 	:delay2,   0.011
 The old Chowning reverberator (see examp.scm).
-Usage: jc_reverb_rb(:decay, 2.0, :volume, 0.1)
+Usage: jc_reverb_rb(0, 2.5, :volume, 0.1)
        with_sound(:reverb, :jc_reverb) { fm_violin }\n") if get_args(args, :help, false)
-  decay    = get_args(args, :decay, 1.0)
   low_pass = get_args(args, :low_pass, false)
   volume   = get_args(args, :volume, 1.0)
   amp_env1 = get_args(args, :amp_env1, false)
@@ -764,8 +741,8 @@ Usage: jc_reverb_rb(:decay, 2.0, :volume, 0.1)
   chans = (mus_channels($rbm_output) rescue $rbm_channels)
   outdel1 = make_delay((delay1 * srate).round)
   outdel2 = make_delay((delay2 * srate).round) if chans == 2
-  dur = decay + mus_sound_frames($rbm_file_name) / srate.to_f
-  len = (srate * dur).round
+  beg = (srate * startime).round
+  len = beg + (srate * dur).round
   envA = (amp_env1 ? make_env(amp_env1, volume, dur) : false)
   envB = (amp_env2 ? make_env(amp_env2, volume, dur) : false)
   delA = (envA ? env(envA) : volume)
@@ -773,7 +750,7 @@ Usage: jc_reverb_rb(:decay, 2.0, :volume, 0.1)
   allpass_sum, all_sums = 0.0, 0.0
   comb_sumA, comb_sum_1A, comb_sum_2A = 0.0, 0.0, 0.0
   comb_sumB, comb_sum_1B, comb_sum_2B = 0.0, 0.0, 0.0
-  0.upto(len) { |i|
+  beg.upto(len) { |i|
     ho = ina(i, $rbm_reverb)
     allpass_sum = all_pass(allpass3, all_pass(allpass2, all_pass(allpass1, ho)))
     comb_sum_2A = comb_sum_1A
@@ -803,321 +780,6 @@ Usage: jc_reverb_rb(:decay, 2.0, :volume, 0.1)
   }
 rescue
   die get_func_name
-end
-
-def with_sound(*args)
-  doc("with_sound(*args) { ... }
-	:output,            $rbm_file_name (#$rbm_file_name)
-	:continue_old_file, false
-	:channels,          $rbm_channels (#$rbm_channels)
-	:statistics,        $rbm_statistics (#$rbm_statistics)
-	:play,              $rbm_play (#$rbm_play)
-	:player,            $rbm_player (#$rbm_player)
-	:srate,             $rbm_srate (#$rbm_srate)
-	:header_type,       $rbm_header_type (#$rbm_header_type)
-	:data_format,       $rbm_data_format (#$rbm_data_format)
-	:comment,           $rbm_comment (#$rbm_comment)
-	:reverb,            $rbm_reverb_func (#$rbm_reverb_func)
-	:revfile,           $rbm_reverb_file_name (#$rbm_reverb_file_name)
-	:reverb_channels,   $rbm_reverb_channels (#$rbm_reverb_channels)
-	:reverb_data,       []    [:decay, 1.0, :low_pass, 0, :volume, 1.0,
-                                   :amp_env1/2, false, :delay1/2, 0.013/0.011]
-	:scaled_to,         false
-	:scaled_by,         false
-        :snd_mix,           false
-
-Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n") if get_args(args, :help, false)
-  output            = get_args(args, :output, $rbm_file_name)
-  continue_old_file = get_args(args, :continue_old_file, false)
-  channels          = get_args(args, :channels, $rbm_channels)
-  statistics        = get_args(args, :statistics, $rbm_statistics)
-  play              = get_args(args, :play, $rbm_play)
-  player            = get_args(args, :player, $rbm_player)
-  srate             = get_args(args, :srate, $rbm_srate)
-  header_type       = get_args(args, :header_type, $rbm_header_type)
-  data_format       = get_args(args, :data_format, $rbm_data_format)
-  comment           = get_args(args, :comment, $rbm_comment)
-  reverb            = get_args(args, :reverb, $rbm_reverb_func)
-  revfile           = get_args(args, :revfile, $rbm_reverb_file_name)
-  reverb_channels   = get_args(args, :reverb_channels, $rbm_reverb_channels)
-  reverb_data       = get_args(args, :reverb_data, [])
-  scaled_to         = get_args(args, :scaled_to, false)
-  scaled_by         = get_args(args, :scaled_by, false)
-  snd_mix           = get_args(args, :snd_mix, false)
-  $rbm_file_name = output
-  $rbm_srate = srate
-  $rbm_channels = channels
-  $rbm_reverb_channels = reverb_channels
-  play = case play
-         when true
-           1
-         when false, nil
-           0
-         else
-           play.abs
-         end
-  play, statistics = 0, false if snd_mix or continue_old_file
-  if $IN_SND and (snd = find_sound(output))
-    close_sound(snd)
-  end
-  unless continue_old_file
-    old_srate = mus_srate
-    set_mus_srate(srate)
-    $rbm_output = $rbm_reverb = false
-    File.unlink(output) if File.exist?(output)
-    $rbm_output = make_sample2file(output, channels, data_format, header_type, comment)
-    if reverb
-      File.unlink(revfile) if File.exist?(revfile)
-      $rbm_reverb = make_sample2file(revfile, reverb_channels, data_format, header_type, "rev")
-    end
-  else
-    $rbm_output = continue_sample2file(output)
-    $rbm_reverb = continue_sample2file(revfile) if reverb
-  end
-  atime = Time.now if statistics
-  yield
-  if reverb
-    mus_close($rbm_reverb)
-    $rbm_reverb = make_file2sample(revfile)
-    (reverb.class == Proc) ? reverb.call(*reverb_data) : send(reverb, *reverb_data)
-  end
-  unless continue_old_file
-    if reverb
-      mus_close($rbm_reverb)
-      $rbm_reverb = false
-    end
-    mus_close($rbm_output)
-    $rbm_output = false
-    set_mus_srate(old_srate)
-  end
-  if $IN_SND and snd_mix and (snd = find_sound(output))
-    close_sound(snd)
-  end
-  if $IN_SND and (not snd_mix)
-    snd = open_sound(output)
-    olds = sync(snd)
-    set_sync(true, snd)
-    scale_to(scaled_to, snd) if scaled_to
-    scale_by(scaled_by, snd) if scaled_by
-    save_sound(snd) if scaled_to or scaled_by
-    set_sync(olds, snd)
-  end
-  if statistics
-    rtime = Time.now - atime
-    samps = mus_sound_samples(output)
-    max_amp = mus_sound_maxamp(output)
-    srate = $rbm_srate.to_f
-    message("    Sound File: %s", output)
-    message("      Duration: %.4f", (samps / srate / channels))
-    message("  Compute time: %.3f, Compute ratio: %.2f", rtime,
-	    rtime * (srate / samps) * channels)
-    out_chan = 64.chr
-    0.step(2 * channels - 1, 2) do |i|
-      message("  Out%s max amp: %.3f (near %.3f secs)",
-              out_chan.next!, max_amp[i + 1], max_amp[i] / srate)
-    end
-    if(reverb)
-      max_amp = mus_sound_maxamp(revfile)
-      out_chan = 64.chr
-      0.step(2 * reverb_channels - 1, 2) do |i|
-        message("  Rev%s max amp: %.3f (near %.3f secs)",
-                out_chan.next!, max_amp[i + 1], max_amp[i] / srate)
-      end
-    end
-  end
-  1.upto(play) do |i| ($IN_SND ? play_and_wait(snd) : system("#{player} #{output}")) end
-  output
-rescue
-  die get_func_name
-end
-
-=begin
-# Examples:
-
-with_sound { fm_violin }
-
-with_sound(:channels, 2,
-	   :play, 3,
-	   :statistics, true,
-	   :reverb_channels, 2,
-	   :reverb, :jc_reverb,	# or :reverb, "jc_reverb",
-	   :reverb_data, [:decay, 0.8, :volume, 0.3],
-	   :reverb_channels, 1) { 
-  0.upto(3) { |i| fm_violin_rb(i, 1, 220 * (i + 1), 0.3, :distance, i * 0.4) }
-}
-
-with_sound(:play, 1,
-	   :channels, 2,
-	   :scaled_to, 0.3,
-	   :reverb, :jc_reverb,
-	   :statistics, true) { 
-  0.upto(20) { |i| 
-    metalamp = [0, 0, 0.5, 1, 5, 1, 10, 0.5, 15, 0.25, 35, 0.1, 100, 0]
-
-    fm_violin_rb(i * 0.1, 1, 220 + i * 10, 0.1, 
-	      :fm_index, i * 0.5, :distance, i * 0.05, :amp_env, metalamp)
-
-    fm_violin_rb(i * 0.1, 1, 2200 - i * 10, 0.1, 
-	      :fm_index, i * 0.5, :distance, i * -0.05, :amp_env, metalamp)
-  }
-}
-
-with_sound(:play, 1) { 
-  fm_violin_rb(0, 1, 440)
-  with_sound(:continue_old_file, true, :play, 0) {
-    fm_violin_rb(1, 1, 220)
-  }
-  with_sound(:continue_old_file, true, :play, 0) {
-    fm_violin_rb(2, 1, 880)
-    with_sound(:continue_old_file, true, :play, 0) {
-      fm_violin_rb(3, 1, 660)
-    }
-  }
-  fm_violin_rb(4, 1, 440)
-}
-
-=end
-
-def sound_let(fname = nil, *args)
-  doc("sound_let(fname = nil, *args) { |tmp_fname| ... }
-mimics more or less CLM's and Snd/Guile's (sound-let)
-
-FNAME means a temporary sound filename; if not given snd_tempnam()
-creates a unique one.  *ARGS means with_sound()-args.  FNAME will be
-deleted afterwards and the result will be mixed in
-with_sound()-output.  Returns the used temporary filename.
-
-Usage: with_sound() {
-  sound_let() { |tmp_file|
-    fm_violin(0, 2, 220, 0.5)
-  }
-}\n") if fname == :help
-  tfname = (fname or snd_tempnam())
-  args += [:output, tfname]
-  old_file_name = $rbm_file_name
-  old_output = $rbm_output
-  old_channels = $rbm_channels
-  old_reverb = $rbm_reverb
-  old_reverb_channels = $rbm_reverb_channels
-  result = with_sound(:snd_mix, true, *args) do yield(tfname) end
-  mus_mix(old_file_name, $rbm_file_name, mus_sound_frames(old_file_name))
-  $rbm_reverb_channels = old_reverb_channels
-  $rbm_reverb = old_reverb
-  $rbm_channels = old_channels
-  $rbm_output = old_output
-  $rbm_file_name = old_file_name
-  File.unlink(tfname) if File.exists?(tfname)
-  result
-end
-
-def fm_play(*args)
-  doc("fm_play(*args) { |len| ... }
-  VCT options:
-	:start,             false
-	:dur,               false
-	:degree,            kernel_rand(90.0)
-	:reverb,            false [true means n_rev]
-        :reverb_data,       []    [:amount, 0.1, :filter, 0.5, :feedback, 1.09]
-	:distance,          1.0
-	:scaled_to,         false
-	:scaled_by,         false
-
-  PLAYING options:
-	:play,              $rbm_play (#$rbm_play)
-	:statistics,        $rbm_statistics (#$rbm_statistics)
-
-  If the above two options are set, options below will be used for the
-  new file:
-	:output,            false
-	:save_after,        false
-
-  options for new sound file:
-	:channels,          $rbm_channels (#$rbm_channels)
-	:srate,             $rbm_srate (#$rbm_srate)
-	:header_type,       $rbm_header_type (#$rbm_header_type)
-	:data_format,       $rbm_data_format (#$rbm_data_format)
-	:comment,           \"created by fm_play()\"
-
-If :start and :dur are given, the block may return an out_data vct
-which will be set to the channel(s), e.g.:
-
-fm_play(:start, 0, :dur, 9.8,
-        :channels, 4, :output, \"noise.snd\") { |len|
-  vct_map!(make_vct(len), make_fm_noise(len, 500))
-}
-
-If :output is false, the default, the current sound is used, otherwise
-a new sound will be opened with values of :channels, :srate, etc.
-
-fm_play(:output, \"bell.snd\") {
-  fbell = [0, 1, 2, 1.1000, 25, 0.7500, 75, 0.5000, 100, 0.2000]
-  abell = [0, 0, 0.1000, 1, 10, 0.6000, 25, 0.3000, 50, 0.1500, 90, 0.1000, 100, 0]
-  fm_bell_snd(0.0, 1.0, 220.0, 0.5, abell, fbell, 1.0)
-}\n") if get_args(args, :help, false)
-  start       = get_args(args, :start, false)
-  dur         = get_args(args, :dur, false)
-  degree      = get_args(args, :degree, kernel_rand(90.0))
-  reverb      = get_args(args, :reverb, false)
-  reverb_data = get_args(args, :reverb_data, [])
-  distance    = get_args(args, :distance, 1.0)
-  scaled_to   = get_args(args, :scaled_to, false)
-  scaled_by   = get_args(args, :scaled_by, false)
-  play        = get_args(args, :play, $rbm_play)
-  statistics  = get_args(args, :statistics, $rbm_statistics)
-  output      = get_args(args, :output, false)
-  save_after  = get_args(args, :save_after, false)
-  chns        = get_args(args, :channels, $rbm_channels)
-  srate       = get_args(args, :srate, $rbm_srate)
-  header_type = get_args(args, :header_type, $rbm_header_type)
-  data_format = get_args(args, :data_format, $rbm_data_format)
-  comment     = get_args(args, :comment, "created by " + get_func_name + "()")
-  play = case play
-         when true
-           1
-         when false, nil
-           0
-         else
-           play.abs
-         end
-  if output
-    if snd = find_sound(output)
-      close_sound(snd)
-    end
-    snd = new_sound(output, header_type, data_format, srate, chns, comment)
-  else
-    snd = false
-  end
-  chns = (channels(snd) rescue $rbm_channels) unless chns
-  if start and dur
-    beg = (start * srate(snd)).round
-    len = (dur * srate(snd)).round
-    loc = make_locsig(:degree, degree, :distance, distance, :channels, chns,
-                      :type, $rbm_locsig_type)
-  end
-  atime = Time.now if statistics
-  data = yield((len or 0))
-  if data and loc
-    chns.times do |i|
-      mix_vct(vct_scale!(vct_copy(data), locsig_ref(loc, i)), beg, snd, i, false)
-    end
-  end
-  chns.times do |i| scale_to(scaled_to, snd, i) end if scaled_to
-  chns.times do |i| scale_by(scaled_by, snd, i) end if scaled_by
-  n_rev(*reverb_data) if reverb
-  save_sound(snd) if save_after
-  if statistics
-    rtime = Time.now - atime
-    samps = frames(snd)
-    srate = srate(snd).to_f
-    message("    Sound File: %s", output)
-    message("      Duration: %.4f", samps / srate)
-    message("  Compute time: %.3f, Compute ratio: %.2f", rtime, rtime * srate / samps)
-    out_chan = 64.chr
-    chns.times do |i| message("  Out%s max amp: %.3f", out_chan.next!, maxamp(snd, i)) end  # .
-    message("        Reverb: n_rev(%s)", reverb_data.inspect) if reverb
-  end
-  1.upto(play) do |i| play(0, snd) end
-  output
 end
 
 #
@@ -1280,134 +942,6 @@ Usage: map_chan(compand())\n") if doc == :help
   }
 rescue
   die get_func_name
-end
-
-#
-# from nb.scm
-# 
-
-module NB
-  $nb_database = "nb"
-  doc "#{self.class} #{self.name} is a translation of nb.scm.
-Provide pop-up help in the Files viewer.
-If you have `dbm', any data associated with the file in the dbm
-database will also be posted.  The database name is defined by
-$nb_database (#{$nb_database}).  You may replace the require statement
-with an other database library which you have, e.g. `gdbm'.
-The function nb(note[, file=@current_file]) adds NOTE to the info
-currently associated with FILE.
-To remove a file's info, unb([file=@current_file]).
-To clean non-existent file references out of the database,
-prune_db()."
-
-  require "dbm"
-
-  @current_file = nil
-
-  def nb(note, file = nil)
-    doc("nb(note[, file=@current_file])
-Adds NOTE to the info associated with FILE.\n") if note == :help
-    file = @current_file unless file
-    ptr = DBM.open($nb_database) rescue warn("DBM.open(#{$nb_database}")
-    if ptr
-      current_note = (ptr.key?(file) ? ptr.fetch(file) : "")
-      ptr.store(file, current_note.empty? ? note : (note + "\n" + current_note))
-      ptr.close
-    end
-  end
-
-  def unb(file = @current_file)
-    doc("unb([file=@current_file])
-Removes FILE's info from the nb (dbm) data base.\n") if file == :help
-    ptr = DBM.open($nb_database) rescue warn("DBM.open(#{$nb_database}")
-    if ptr
-      ptr.delete(file)
-      ptr.close
-    end
-  end
-
-  def prune_db(doc = nil)
-    doc("prune_db([doc=nil]
-Cleans up the nb (dbm) data base by removing references to
-non-existent files.\n") if doc == :help
-    ptr = DBM.open($nb_database) rescue warn("DBM.open(#{$nb_database}")
-    ptr.delete_if { |k, v| k.empty? } if ptr
-    ptr.close
-  end
-
-  def files_popup_info(type, position = nil, name = nil)
-    doc("files_popup_info(type, position, name)
-It's intended as a mouse-enter-label hook function.
-It causes a description of the file to popup when the mouse crosses
-the filename.\n") if type == :help
-    ptr = DBM.open($nb_database) rescue warn("DBM.open(#{$nb_database}")
-    file_info = lambda { |file|
-      chans = mus_sound_chans(file)
-      srate = mus_sound_srate(file)
-      len = format("%.3f", (mus_sound_samples(file).to_f / (chans * srate)))
-      d_format = mus_data_format_name(mus_sound_data_format(file))
-      h_type = mus_header_type_name(mus_sound_header_type(file))
-      date = Time.at(mus_sound_write_date(file)).localtime.strftime "%a %d-%b-%y %H:%M %Z"
-      comm = mus_sound_comment(file)
-      loops = mus_sound_loop_info(file)
-      notes = ((ptr and ptr.key?(file)) ? ptr.fetch(file) : "")
-      format("\
-  chans: %d, srate: %d
- length: %.3f (%d samples)
- format: %s [%s]
-written: %s
-%s%s\n%s",
-             chans, srate, len, mus_sound_frames(file), d_format, h_type, date,
-             comm.empty? ? "" : "comment: #{comm}\n",
-             loops ? "   loop: #{loops.inspect}\n" : "", (notes or ""))
-    }
-    alert_color = make_color(1.0, 1.0, 0.94)
-    current_file_viewer = 0
-    previous_file_viewer = 1
-    region_viewer = 2
-    unless type == region_viewer
-      @current_file = name
-      help_dialog(name, file_info.call(name))
-      help_widget = dialog_widgets()[14]
-      unless help_widget
-        files_dialog = dialog_widgets()[8]
-        files_position = widget_position(files_dialog)
-        files_size = widget_size(files_dialog)
-        set_widget_position(help_widget, [files_position[0] + 10, files_position[1] + 10])
-      end
-      recolor_widget(help_widget, alert_color) if help_widget
-    end
-    ptr.close if ptr
-  end
-
-  def files_popup_quit(type, position = nil, name = nil)
-    doc("files_popup_quit(type, position, name)
-It's intended as a mouse-leave-label hook function.
-It unhighlights the popped-up info about a file as the mouse leaves
-the associated label.\n") if type == :help
-    widget = dialog_widgets()[14]
-    recolor_widget(widget, basic_color()) if widget
-  end
-
-  if defined? $mouse_enter_label_hook and $mouse_enter_label_hook
-    old_after = $mouse_enter_label_hook
-    $mouse_enter_label_hook = Hook.new("original") do |t, p, n|
-      old_after.call(t, p, n) if old_after
-    end
-    $mouse_enter_label_hook.add_hook!("NB_Enter") do |t, p, n| files_popup_info(t, p, n) end
-  else
-    $mouse_enter_label_hook = Hook.new("NB_Enter") do |t, p, n| files_popup_info(t, p, n) end
-  end
-
-  if defined? $mouse_leave_label_hook and $mouse_leave_label_hook
-    old_after = $mouse_leave_label_hook
-    $mouse_leave_label_hook = Hook.new("original") do |t, p, n|
-      old_after.call(t, p, n) if old_after
-    end
-    $mouse_leave_label_hook.add_hook!("NB_Leave") do |t, p, n| files_popup_quit(t, p, n) end
-  else
-    $mouse_leave_label_hook = Hook.new("NB_Leave") do |t, p, n| files_popup_quit(t, p, n) end
-  end
 end
 
 module Dsp
