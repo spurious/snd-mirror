@@ -15240,6 +15240,18 @@ EDITS: 6
 	  (close-sound ind))
 	(let ((ind (open-sound "storm.snd")))
 	  (ptree-channel (lambda (y) (* y .5)) 1000 123000 ind 0 0 #t) ; get the amp-env code too
+	  (pad-channel 0 10000)
+	  (ptree-channel (lambda (y) .1))
+	  (let ((reader (make-sample-reader 1000 ind 0 -1)))
+	    (call-with-current-continuation
+	     (lambda (break)
+	       (do ((i 0 (1+ i)))
+		   ((= i 10))
+		 (let ((val (reader)))
+		   (if (fneq val .1)
+		     (begin
+		       (snd-display ";ptree previous: ~A ~A" i val)
+		       (break))))))))
 	  (close-sound ind))
 
 	;; recursion tests

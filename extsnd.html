@@ -5075,6 +5075,14 @@ the direction argument between the channel and edit-position:
 <!-- -->about where it is in the sound.  'proc' must be compatible with (and run through) the optimizer;
 <!-- -->this means the <a href="#optimization">optimization</a> variable must be greater than 0. 
 <!-- -->The name refers to "parse tree" -- see <a href="#editexpl">Edit Lists</a> and snd-run.c for more details. (ptree-channel does not work in Ruby).
+<!-- --><br><br><small>
+<!-- -->The "no state" restriction include closures.  For example, the following call:
+<br><br><pre>
+        (let ((ctr 0)) (ptree-channel (lambda (y) (set! ctr (1+ ctr)) (* ctr .0001))))
+</pre>
+will never reset ctr to 0!  So every time the segment is read by Snd, the samples will be
+higher -- this is probably not what you want.
+</small>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

@@ -514,22 +514,22 @@ colormap of the entire system is hijacked while Snd is running.
 ---- Mac OS-X: ---- 
 
 Currently you need to install Guile 1.4 (at least, I haven't managed
-to compile 1.5), GSL 0.9 (using --disable-shared), and the prebuilt
-Glib/Gtk or Motif 2.1 tarballs that contain the headers (the
-package at osxgnu is just the libraries -- I think I got my version
-from gnu-darwin or motifzone or some such address).  The Snd configure
-process is confused by the lack of gtk-config (in the Gtk case), and
-(in the Motif case) by a problem with dynamic loading, so you need to
-run configure, then compare config.h and makefile with the versions
-config.motif.osx (gtk) and makefile.motif.osx (gtk).  The main thing
-that needs to be fixed by hand is that libXm.a and libXt.a must be
-used, not the shared object versions of those libraries.  The "native"
-Mac audio hardware supports only stereo 44100Hz; sndplay tries to fix
-up 22050 and mono, but Snd only fixes up mono cases.  Anything else
-will be played incorrectly, though you can use the speed control to
-correct it by hand.  If C-f (and others like it) doesn't work, either
-try toggling the "w" button, or add the focus-widget related hooks
-from grfsnd.html to your initialization file:
+to compile 1.5), GSL 1.2 (using --disable-shared), and the prebuilt
+Glib/Gtk or Motif 2.1 tarballs that contain the headers (the package
+at osxgnu is just the libraries -- I think I got my version from
+motifzone).  The Snd configure process is confused by the lack of
+gtk-config (in the Gtk case), and (in the Motif case) by a problem
+with dynamic loading, so you need to run configure, then compare
+config.h and makefile with the versions config.motif.osx (gtk) and
+makefile.motif.osx (gtk).  The main thing that needs to be fixed by
+hand is that libXm.a, libXt.a and libXp.a must be used, not the shared
+object versions of those libraries.  The "native" Mac audio hardware
+supports only stereo 44100Hz; sndplay tries to fix up 22050 and mono,
+but Snd only fixes up mono cases.  Anything else will be played
+incorrectly, though you can use the speed control to correct it by
+hand.  If C-f (and others like it) doesn't work, either try toggling
+the "w" button, or add the focus-widget related hooks from grfsnd.html
+to your initialization file:
 
 (add-hook! mouse-enter-graph-hook 
   (lambda (snd chn) 
@@ -547,6 +547,10 @@ If you want to use fftw, first copy Snd's versions of config.sub
 and config.guess to the main fftw directory (clobbering its ancient
 versions), then configure --disable-shared, and ignore the (bogus)
 error messages.
+
+If the openmotif package forgot to include libXm.a, a version is
+at ccrma-ftp.  If the Mac loader complains that it it out of date,
+run ranlib: ranlib libXm.a (you may need to be root to do this).
 
 
 
