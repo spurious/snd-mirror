@@ -621,18 +621,17 @@ void snd_load_file(char *filename)
   if (str) FREE(str);
 }
 
-#if DEBUGGING
-  static SCM snd_test = SCM_BOOL_F, full_test = SCM_BOOL_F;
-#endif
+static SCM snd_test = SCM_BOOL_F, full_test = SCM_BOOL_F;
 
 static SCM g_snd_print(SCM msg)
 {
   #define H_snd_print "(" S_snd_print " str) displays str in the lisp listener window"
+  char *str=NULL;
+#if DEBUGGING
+  char *buf;
   int fd;
-  char *str=NULL,*buf;
   char time_buf[TIME_STR_SIZE];
   time_t ts;
-#if DEBUGGING
   SCM val;
 #endif
   ERRS1(msg,S_snd_print);
@@ -3699,10 +3698,8 @@ void g_initialize_gh(snd_state *ss)
 #if HAVE_LADSPA
   g_ladspa_to_snd(local_doc);
 #endif
-#if DEBUGGING
   snd_test = gh_define("snd-test",gh_int2scm(-1));
   full_test = gh_define("full-test",SCM_BOOL_T);
-#endif
   gh_eval_str("(define unbind-key\
                  (lambda (key state)\
                    \"(unbind-key key state) undoes the effect of a prior bind-key call\"\

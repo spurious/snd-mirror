@@ -86,7 +86,6 @@ static void mus_error2snd(int type, char *msg)
   mus_sound_initialize();
 
   ss=(snd_state *)CALLOC(1,sizeof(snd_state));
-  ss->s_type = SND_STATE;
 
   ss->Fft_Size = DEFAULT_FFT_SIZE;
   ss->Fft_Window = DEFAULT_FFT_WINDOW;

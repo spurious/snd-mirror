@@ -161,7 +161,7 @@ GtkWidget *popup_save_menu(void);
 GtkWidget *popup_normalize_menu(void);
 GtkWidget *popup_info_menu(void);
 int popup_menu_exists(void);
-void create_popup_menu(snd_state *ss, guint button, guint32 time);
+void create_popup_menu(snd_state *ss, guint button, TIME_TYPE time);
 void set_menu_label(GtkWidget *w, char *label);
 int gh_change_menu_label(int which_menu,char *old_label, char *new_label);
 int gh_set_menu_sensitive(int which_menu,char *old_label, int on);

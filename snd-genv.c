@@ -143,7 +143,7 @@ static void apply_enved(snd_state *ss)
 	      active_channel = sp->chans[((md->selected_chan != NO_SELECTION) ? (md->selected_chan) : 0)];
 	    }
 	}
-      else active_channel = current_channel((void *)ss);
+      else active_channel = current_channel(ss);
       if (active_channel)
 	{
 	  set_sensitive(applyB,FALSE);
@@ -265,9 +265,9 @@ static void Undo_and_Apply_Enved_Callback(GtkWidget *w, gpointer clientData)
   /* undo upto previous amp env, then apply */
   /* this blindly undoes the previous edit (assumed to be an envelope) -- if the user made some other change in the meantime, too bad */
   snd_state *ss = (snd_state *)clientData;
-  if ((active_channel) && (active_channel == current_channel((void *)ss)))
+  if ((active_channel) && (active_channel == current_channel(ss)))
     {
-      undo_EDIT((void *)ss,1);
+      undo_edit_with_sync((void *)ss,1);
     }
   apply_enved(ss);
 }

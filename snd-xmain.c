@@ -530,6 +530,24 @@ static void muffle_warning(String name, String type, String class, String defaul
 }
 #endif
 
+static void ss_graph_key_press(Widget w,XtPointer clientData,XEvent *event,Boolean *cont) 
+{
+  XKeyEvent *ev = (XKeyEvent *)event;
+  KeySym keysym;
+  int key_state;
+  snd_state *ss = (snd_state *)clientData;
+  snd_info *sp;
+  key_state = ev->state;
+  keysym = XKeycodeToKeysym(XtDisplay(w),(int)(ev->keycode),(key_state & ShiftMask) ? 1 : 0);
+  sp = any_selected_sound(ss);
+  if (sp)
+    key_press_callback(any_selected_channel(sp),
+		       ev->x,ev->y,ev->state,keysym,
+		       XKeysymToString(keysym));
+  else
+    snd_append_command(ss,XKeysymToString(keysym));
+}
+
 static Pixel get_color(Widget shell,
 		       char *rs_color, char *defined_color, char *fallback_color, char *second_fallback_color,
 		       int use_white)
@@ -802,7 +820,7 @@ void snd_doit(snd_state *ss,int argc, char **argv)
   XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
   XtSetArg(args[n],XmNallowResize,TRUE); n++;
   sx->mainpane = sndCreateFormWidget("mainpane",shell,args,n);
-  XtAddEventHandler(sx->mainpane,KeyPressMask,FALSE,graph_key_press,(XtPointer)ss);
+  XtAddEventHandler(sx->mainpane,KeyPressMask,FALSE,ss_graph_key_press,(XtPointer)ss);
 #else
   sx->mainpane = sndCreateFormWidget("mainpane",parent,caller_args,caller_argn);
 #endif
@@ -853,7 +871,7 @@ void snd_doit(snd_state *ss,int argc, char **argv)
       break;
 #endif
     }
-  XtAddEventHandler(sx->soundpane,KeyPressMask,FALSE,graph_key_press,(XtPointer)ss);
+  XtAddEventHandler(sx->soundpane,KeyPressMask,FALSE,ss_graph_key_press,(XtPointer)ss);
 
 #ifndef SND_AS_WIDGET
   #if ICON_TYPE

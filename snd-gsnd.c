@@ -370,7 +370,7 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
       if (sp->cursor_follows_play != DONT_FOLLOW) 
 	set_active_color(w,(ss->sgx)->green); 
       else set_active_color(w,(ss->sgx)->pushed_button_color);
-      start_playing(sp,0,NO_END_SPECIFIED);
+      sp_start_playing(sp,0,NO_END_SPECIFIED);
     }
 }
 
@@ -1305,6 +1305,8 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
   if (make_widgets)
     {
       sw[W_pane] = gtk_vpaned_new();
+      set_backgrounds(sw[W_pane],(ss->sgx)->sash_color);
+
       gtk_paned_set_gutter_size(GTK_PANED(sw[W_pane]),8);
       gtk_paned_set_handle_size(GTK_PANED(sw[W_pane]),ss->sash_size);
       gtk_container_set_border_width(GTK_CONTAINER(sw[W_pane]),0);

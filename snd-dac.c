@@ -899,71 +899,55 @@ static BACKGROUND_TYPE run_dac(GUI_POINTER dacData)
   return(feed_dac((dac_manager *)dacData));
 }
 
-static void start_playing_1(void *ptr, int start, int background, int paused, int end)
+static dac_info *init_dp(int slot, snd_info *sp, int chans, snd_fd **fds, int beg, int end, int orig_chan)
 {
-  int slot,chans = 0,i,direction,beg = 0,channels = 1,specific_chan = -1;
   dac_info *dp;
+  dp = make_dac_info(sp,chans,fds);
+  dp->end = end; /* if controls are in use (srate for example), this is not right */
+  dp->orig_chan = orig_chan;
+  if (end != NO_END_SPECIFIED) {dp->end -= beg; if (dp->end < 0) dp->end = -(dp->end);}
+  play_list[slot] = dp;
+  dp->slot = slot;
+  if (max_active_slot < slot) max_active_slot = slot;
+  if (sp)
+    {
+      dp->cur_srate = sp->srate*sp->play_direction;
+      dp->cur_amp = sp->amp;
+      dp->cur_index = sp->contrast;
+      dp->cur_exp = sp->expand;
+      dp->cur_rev = sp->revscl;
+    }
+  return(dp);
+}
+
+/* a temporary giant mess */
+static void start_dac(snd_state *ss, int srate, int decay_samps, int channels, int background);
+
+static void reg_start_playing_1(region_info *ri, int start, int background, int paused, int end)
+{
+  int slot,chans = 0,i,direction,beg = 0,channels = 1;
   snd_info *sp = NULL;
   snd_state *ss = NULL;
-  dac_manager *dac_m;
-  chan_info *cp = NULL,*ncp = NULL;
-  region_info *ri = NULL;
+  chan_info *ncp = NULL;
+  dac_info *dp;
   snd_fd **fds;
   if ((!(background)) && (play_list_members > 0)) return;
-  switch (((snd_any *)ptr)->s_type)
-    {
-    case SND_INFO:
-      sp = (snd_info *)ptr;
-      if (!(sp->inuse)) return;
-#if HAVE_GUILE
-      if (sp) 
-	{
-	  if (call_start_playing_hook(sp))
-	    {
-	      reflect_play_stop(sp); /* turns off buttons */
-	      if (sp->delete_me) completely_free_snd_info(sp); /* dummy snd_info struct for (play "filename") in snd-scm.c */
-	      return;
-	    }
-	}
-#endif
-      ss = sp->state;
-      ss->apply_choice = APPLY_TO_SOUND;
-      chans = sp->nchans;
-      break;
-    case CHAN_INFO: 
-      cp = (chan_info *)ptr; 
-      sp = cp->sound;
-      if (!(sp->inuse)) return;
-      ss = sp->state;
-      ss->apply_choice = APPLY_TO_SOUND;
-      if (sp->syncing != 0)
-	chans = sp->nchans;
-      else 
-	{
-	  chans = 1; 
-	  if (sp->nchans > 1) ss->apply_choice = APPLY_TO_CHANNEL;
-	}
-      specific_chan = cp->chan;
-      /* start playing hook?? */
-      break;
-    case REGION_INFO:
-      ri = (region_info *) ptr;
-      if (!(ri->rg)) sp = region_sound(ri->n); else sp=NULL;
-      /* to be completely consistent with the region browser, this should be just sp=NULL;
-       * but that disables a nice feature that we can goof with the controls while listening
-       * to just the current active selection (sp is not null only in this case).
-       * But, that means a subsequent 'Apply' will not do 'the right thing' -- it will try to
-       * treat the whole file, rather than deleting the current selection, running apply over
-       * that data, and splicing in the result (perhaps longer etc).  To get the latter to work will require a
-       * much smarter selection editing mechanism (since file length can change) -- and what
-       * is the selection afterwards?  Does it follow the redo/undo state?
-       */
-      ss = (snd_state *)(ri->ss);
-      if ((sp) && (ri->n == 0)) ss->apply_choice = APPLY_TO_SELECTION; else ss->apply_choice = APPLY_TO_SOUND;
-      chans = region_chans(ri->n);
-      /* start playing hook?? */
-      break;
-    }
+
+  sp = ri->sp;
+  /* to be completely consistent with the region browser, this should be just sp=NULL;
+   * but that disables a nice feature that we can goof with the controls while listening
+   * to just the current active selection (sp is not null only in this case).
+   * But, that means a subsequent 'Apply' will not do 'the right thing' -- it will try to
+   * treat the whole file, rather than deleting the current selection, running apply over
+   * that data, and splicing in the result (perhaps longer etc).  To get the latter to work will require a
+   * much smarter selection editing mechanism (since file length can change) -- and what
+   * is the selection afterwards?  Does it follow the redo/undo state?
+   */
+  ss = (snd_state *)(ri->ss);
+  if ((sp) && (ri->n == 0)) ss->apply_choice = APPLY_TO_SELECTION; else ss->apply_choice = APPLY_TO_SOUND;
+  chans = region_chans(ri->n);
+  /* start playing hook?? */
+
   if (sp) sp->playing++;
   if ((sp) && (sp->cursor_follows_play != DONT_FOLLOW)) /* sp can be nil if ptr is region */
     {
@@ -992,93 +976,248 @@ static void start_playing_1(void *ptr, int start, int background, int paused, in
     }
   else direction = READ_FORWARD;
   fds = (snd_fd **)CALLOC(chans,sizeof(snd_fd *));
-  switch (((snd_any *)ptr)->s_type)
-    {
-    case SND_INFO:  
-      for (i=0;i<chans;i++)
-	{
-	  cp = sp->chans[i];
-	  fds[i] = init_sample_read(beg,cp,direction);
-	}
-      break;
+  for (i=0;i<chans;i++)
+    fds[i] = init_region_read(ss,0,ri->n,i,direction);
 
-    case CHAN_INFO: 
-      if (chans > 1)
-	{
-	  for (i=0;i<chans;i++)
-	    {
-	      cp = sp->chans[i];
-	      fds[i] = init_sample_read(beg,cp,direction);
-	    }
-	}
-      else fds[0] = init_sample_read(beg,cp,direction);
-      break;
-
-    case REGION_INFO:
-      for (i=0;i<chans;i++)
-	{
-	  fds[i] = init_region_read(ss,0,ri->n,i,direction);
-	}
-      break;
-    }
-  dp = make_dac_info(sp,chans,fds);
+  dp = init_dp(slot,sp,chans,fds,beg,end,-1);
   dp->ri = ri;
-  dp->end = end;
-  dp->orig_chan = specific_chan;
-  if (end != NO_END_SPECIFIED) {dp->end -= beg; if (dp->end < 0) dp->end = -(dp->end);}
-
   if (chans > channels) channels = chans;
-  play_list[slot] = dp;
-  dp->slot = slot;
-  if (max_active_slot < slot) max_active_slot = slot;
-  if (sp)
+
+  if (!paused)
     {
-      dp->cur_srate = sp->srate*sp->play_direction;
-      dp->cur_amp = sp->amp;
-      dp->cur_index = sp->contrast;
-      dp->cur_exp = sp->expand;
-      dp->cur_rev = sp->revscl;
+      int srate,decay_samps;
+      srate = region_srate(ri->n);
+      decay_samps = (int)(reverb_decay(ss) * srate);
+      start_dac(ss,srate,decay_samps,channels,background);
     }
+}
+
+static void cp_start_playing_1(chan_info *cp, int start, int background, int paused, int end)
+{
+  int slot,chans = 0,i,direction,beg = 0,channels = 1,specific_chan = -1;
+  dac_info *dp;
+  snd_info *sp = NULL;
+  snd_state *ss = NULL;
+  chan_info *ncp = NULL;
+  snd_fd **fds;
+  if ((!(background)) && (play_list_members > 0)) return;
+
+  sp = cp->sound;
+  if (!(sp->inuse)) return;
+  ss = sp->state;
+  ss->apply_choice = APPLY_TO_SOUND;
+  if (sp->syncing != 0)
+    chans = sp->nchans;
+  else 
+    {
+      chans = 1; 
+      if (sp->nchans > 1) ss->apply_choice = APPLY_TO_CHANNEL;
+    }
+  specific_chan = cp->chan;
+  /* start playing hook?? */
+
+  sp->playing++;
+  if (sp->cursor_follows_play != DONT_FOLLOW)
+    {
+      for (i=0;i<sp->nchans;i++) 
+	{
+	  ncp = sp->chans[i];
+	  ncp->original_cursor = ncp->cursor;
+	  handle_cursor(ncp,cursor_moveto(ncp,start));
+	}
+    }
+  slot = find_slot_to_play();
+  if (slot == -1) return;
+  play_list_members++;
+
+  if (sp->play_direction == 1) 
+    {
+      direction = READ_FORWARD; 
+      beg = start;
+    }
+  else 
+    {
+      direction = READ_BACKWARD;
+      if (start == 0) beg = current_ed_samples(sp->chans[0])-1; else beg = start;
+    }
+
+  fds = (snd_fd **)CALLOC(chans,sizeof(snd_fd *));
+  if (chans > 1)
+    {
+      for (i=0;i<chans;i++)
+	fds[i] = init_sample_read(beg,sp->chans[i],direction);
+    }
+  else fds[0] = init_sample_read(beg,cp,direction);
+  dp = init_dp(slot,sp,chans,fds,beg,end,specific_chan);
+  if (chans > channels) channels = chans;
+  
+  if (!paused)
+    {
+      int srate,decay_samps;
+      srate = SND_SRATE(sp); 
+      decay_samps = (int)(sp->reverb_decay * srate);
+      start_dac(ss,srate,decay_samps,channels,background);
+    }
+}
+
+static void sp_start_playing_1(snd_info *sp, int start, int background, int paused, int end)
+{
+  int slot,chans = 0,i,direction,beg = 0,channels = 1;
+  dac_info *dp;
+  snd_state *ss = NULL;
+  chan_info *ncp = NULL;
+  snd_fd **fds;
+  if ((!(background)) && (play_list_members > 0)) return;
+
+  if (!(sp->inuse)) return;
+#if HAVE_GUILE
+  if (call_start_playing_hook(sp))
+    {
+      reflect_play_stop(sp); /* turns off buttons */
+      if (sp->delete_me) completely_free_snd_info(sp); /* dummy snd_info struct for (play "filename") in snd-scm.c */
+      return;
+    }
+#endif
+  ss = sp->state;
+  ss->apply_choice = APPLY_TO_SOUND;
+  chans = sp->nchans;
+  sp->playing++;
+  if (sp->cursor_follows_play != DONT_FOLLOW)
+    {
+      for (i=0;i<sp->nchans;i++) 
+	{
+	  ncp = sp->chans[i];
+	  ncp->original_cursor = ncp->cursor;
+	  handle_cursor(ncp,cursor_moveto(ncp,start));
+	}
+    }
+  slot = find_slot_to_play();
+  if (slot == -1) return;
+  play_list_members++;
+
+  if (sp->play_direction == 1) 
+    {
+      direction = READ_FORWARD; 
+      beg = start;
+    }
+  else 
+    {
+      direction = READ_BACKWARD;
+      if (start == 0) beg = current_ed_samples(sp->chans[0])-1; else beg = start;
+    }
+
+  fds = (snd_fd **)CALLOC(chans,sizeof(snd_fd *));
+
+  for (i=0;i<chans;i++)
+    fds[i] = init_sample_read(beg,sp->chans[i],direction);
+  dp = init_dp(slot,sp,chans,fds,beg,end,-1);
+  if (chans > channels) channels = chans;
+  
+  if (!paused)
+    {
+      int srate,decay_samps;
+      srate = SND_SRATE(sp); 
+      decay_samps = (int)(sp->reverb_decay * srate);
+      start_dac(ss,srate,decay_samps,channels,background);
+    }
+}
+
+#if 0
+static void si_start_playing_1(sync_info *si, int start, int background, int paused, int end)
+{
+  int slot,chans = 0,i,direction,beg = 0,channels = 1;
+  dac_info *dp;
+  snd_state *ss = NULL;
+  chan_info *ncp = NULL;
+  snd_fd **fds;
+  snd_info *sp;
+  if ((!(background)) && (play_list_members > 0)) return;
+  
+  if (!(sp->inuse)) return;
+#if HAVE_GUILE
+  if (call_start_playing_hook(sp))
+    {
+      reflect_play_stop(sp); /* turns off buttons */
+      if (sp->delete_me) completely_free_snd_info(sp); /* dummy snd_info struct for (play "filename") in snd-scm.c */
+      return;
+    }
+#endif
+  ss = sp->state;
+  ss->apply_choice = APPLY_TO_SOUND;
+  chans = sp->nchans;
+  sp->playing++;
+  if (sp->cursor_follows_play != DONT_FOLLOW)
+    {
+      for (i=0;i<sp->nchans;i++) 
+	{
+	  ncp = sp->chans[i];
+	  ncp->original_cursor = ncp->cursor;
+	  handle_cursor(ncp,cursor_moveto(ncp,start));
+	}
+    }
+  slot = find_slot_to_play();
+  if (slot == -1) return;
+  play_list_members++;
+
+  if (sp->play_direction == 1) 
+    {
+      direction = READ_FORWARD; 
+      beg = start;
+    }
+  else 
+    {
+      direction = READ_BACKWARD;
+      if (start == 0) beg = current_ed_samples(sp->chans[0])-1; else beg = start;
+    }
+
+  fds = (snd_fd **)CALLOC(chans,sizeof(snd_fd *));
+
+  for (i=0;i<chans;i++)
+    fds[i] = init_sample_read(beg,sp->chans[i],direction);
+  dp = init_dp(slot,sp,chans,fds,beg,end,-1);
+  if (chans > channels) channels = chans;
+  
+  if (!paused)
+    {
+      int srate,decay_samps;
+      srate = SND_SRATE(sp); 
+      decay_samps = (int)(sp->reverb_decay * srate);
+      start_dac(ss,srate,decay_samps,channels,background);
+    }
+}
+#endif
+
+static void start_dac(snd_state *ss, int srate, int decay_samps, int channels, int background)
+{
+  dac_manager *dac_m;
   if (!dac_running)
     {
       dac_m = (dac_manager *)CALLOC(1,sizeof(dac_manager));
       dac_m->slice = 0;
       dac_m->ss = ss;
-      dac_m->srate = 0;
-      if (sp) 
-	dac_m->srate = SND_SRATE(sp); 
-      else 
-	if (((snd_any *)ptr)->s_type == REGION_INFO)
-	  dac_m->srate = region_srate(ri->n);
-        else 
-	  {
-	    sp = any_selected_sound(ss);
-	    if (sp) dac_m->srate = SND_SRATE(sp);
-	  }
+      dac_m->srate = srate;
       if (dac_m->srate <= 0) dac_m->srate = 44100;
-      if (sp)
-	dac_decay = (int)(sp->reverb_decay * dac_m->srate);
-      else dac_decay = (int)(reverb_decay(ss) * dac_m->srate);
       dac_m->channels = channels;
-      if (!paused)
+      if (background) 
+	BACKGROUND_ADD(ss,run_dac,dac_m);
+      else
 	{
-	  if (background) 
-	    BACKGROUND_ADD(ss,run_dac,dac_m);
-	  else
+	  /* here we want to play as an atomic (not background) action */
+	  while (feed_dac(dac_m) == BACKGROUND_CONTINUE)
 	    {
-	      /* here we want to play as an atomic (not background) action */
-	      while (feed_dac(dac_m) == BACKGROUND_CONTINUE)
-		{
-		  check_for_event(ss); /* need to be able to C-g out of this */
-		  if ((sp) && (!(sp->inuse))) break;
-		}
+	      check_for_event(ss); /* need to be able to C-g out of this */
+	      /* if ((sp) && (!(sp->inuse))) break; */
 	    }
 	}
     }
 }
 
-void start_playing(void *ptr, int start, int end) {start_playing_1(ptr,start,TRUE,FALSE,end);}
-void play_to_end(void *ptr, int start, int end) {start_playing_1(ptr,start,FALSE,FALSE,end);}
+void cp_start_playing(chan_info *cp, int start, int end) {cp_start_playing_1(cp,start,TRUE,FALSE,end);}
+void cp_play_to_end(chan_info *cp, int start, int end) {cp_start_playing_1(cp,start,FALSE,FALSE,end);}
+void sp_start_playing(snd_info *sp, int start, int end) {sp_start_playing_1(sp,start,TRUE,FALSE,end);}
+void sp_play_to_end(snd_info *sp, int start, int end) {sp_start_playing_1(sp,start,FALSE,FALSE,end);}
+void reg_start_playing(region_info *ri, int start, int end) {reg_start_playing_1(ri,start,TRUE,FALSE,end);}
+void reg_play_to_end(region_info *ri, int start, int end) {reg_start_playing_1(ri,start,FALSE,FALSE,end);}
 
 /* TODO: check stop_playing -- perhaps need a sync indication for it? */
 static void start_playing_syncd(snd_info *sp, int start, int background, int end)
@@ -1094,13 +1233,13 @@ static void start_playing_syncd(snd_info *sp, int start, int background, int end
 	  nsp = ss->sounds[i];
 	  if ((nsp) && (nsp->inuse) && (nsp->syncing == sp->syncing))
 	    {
-	      if (lsp) start_playing_1((void *)lsp,start,background,TRUE,end); /* TRUE=dac waits for the rest of the sounds to be queued up */
+	      if (lsp) sp_start_playing_1(lsp,start,background,TRUE,end); /* TRUE=dac waits for the rest of the sounds to be queued up */
 	      lsp = nsp;
 	    }
 	}
-      if (lsp) start_playing_1((void *)lsp,start,background,FALSE,end); /* this triggers the dac */
+      if (lsp) sp_start_playing_1(lsp,start,background,FALSE,end); /* this triggers the dac */
     }
-  else start_playing_1((void *)sp,start,background,FALSE,end);
+  else sp_start_playing_1(sp,start,background,FALSE,end);
 }
 
 void start_playing_chan_syncd(chan_info *cp, int start, int background, int pause, int end)
@@ -1110,7 +1249,7 @@ void start_playing_chan_syncd(chan_info *cp, int start, int background, int paus
   sp = cp->sound;
   old_syncing = sp->syncing;
   sp->syncing = 0;
-  start_playing_1((void *)cp,start,background,pause,end);
+  cp_start_playing_1(cp,start,background,pause,end);
   sp->syncing = old_syncing;
 }
 
@@ -2037,8 +2176,8 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
       sp->fullname = NULL;
       sp->delete_me = 1;
       if (background)
-	start_playing(sp,0,end);
-      else play_to_end(sp,0,end);
+	sp_start_playing(sp,0,end);
+      else sp_play_to_end(sp,0,end);
       if (name) FREE(name);
     }
   else
@@ -2055,8 +2194,8 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
 	  else
 	    {
 	      if (background)
-		start_playing(sp,samp,end);
-	      else play_to_end(sp,samp,end);
+		sp_start_playing(sp,samp,end);
+	      else sp_play_to_end(sp,samp,end);
 	    }
 	}
       else 
@@ -2067,8 +2206,8 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
 	  else
 	    {
 	      if (background)
-		start_playing(cp,samp,end);
-	      play_to_end(cp,samp,end);
+		cp_start_playing(cp,samp,end);
+	      cp_play_to_end(cp,samp,end);
 	    }
 	}
     }

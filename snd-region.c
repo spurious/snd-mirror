@@ -267,7 +267,6 @@ static void make_region_readable(region *r, snd_state *ss)
   int i,fd;
   if (r->rsp) return;
   regsp = (snd_info *)CALLOC(1,sizeof(snd_info));
-  regsp->s_type = SND_INFO;
   regsp->nchans = r->chans;
   regsp->allocated_chans = r->chans; /* needed for complete GC */
   regsp->chans = (chan_info **)CALLOC(r->chans,sizeof(chan_info *));
@@ -1262,20 +1261,19 @@ snd_fd *init_region_read (snd_state *ss, int beg, int n, int chan, int direction
   return(NULL);
 }
 
-void play_region(snd_state *ss, int n, void *rg, int to_end)
+void play_region(snd_state *ss, int n, snd_info *sp, int to_end)
 {
   region_info *ri;
   finish_keyboard_selection();
   if (!(region_ok(n))) return;
   ri = (region_info *)CALLOC(1,sizeof(region_info));
-  ri->s_type = REGION_INFO;
   ri->r = (void *)regions[n];
   ri->n = n;
-  ri->rg = rg;
+  ri->sp = sp;
   ri->ss = ss;
   if (to_end)
-    play_to_end(ri,0,NO_END_SPECIFIED);
-  else start_playing(ri,0,NO_END_SPECIFIED);
+    reg_play_to_end(ri,0,NO_END_SPECIFIED);
+  else reg_start_playing(ri,0,NO_END_SPECIFIED);
 }
 
 sync_info *region_sync(int n)
@@ -1695,7 +1693,7 @@ static SCM g_play_region (SCM n, SCM wait)
   rg = g_scm2intdef(n,0);
   if (SCM_TRUE_P(wait)) wt = 1; else wt = g_scm2intdef(n,0);
   if (region_ok(rg))
-    play_region(get_global_state(),rg,NULL,wt);
+    play_region(get_global_state(),rg,region_sound(rg),wt);
   else return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_play_region),n)));
   return(n);
 }

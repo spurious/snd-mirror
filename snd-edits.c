@@ -2318,18 +2318,16 @@ void undo_edit(chan_info *cp, int count)
     }
 }
 
-void undo_EDIT(void *ptr, int count)
+void undo_edit_with_sync(chan_info *cp, int count)
 {
-  chan_info *cp;
   snd_info *sp;
   int i;
   sync_info *si;
   if (count < 0)
-    redo_EDIT(ptr,-count);
+    redo_edit_with_sync(cp,-count);
   else
     {
       si = NULL;
-      cp = current_channel(ptr);
       if (cp)
 	{
 	  sp = cp->sound;
@@ -2368,18 +2366,16 @@ void redo_edit(chan_info *cp, int count)
     }
 }
 
-void redo_EDIT(void *ptr, int count)
+void redo_edit_with_sync(chan_info *cp, int count)
 {
-  chan_info *cp;
   snd_info *sp;
   int i;
   sync_info *si;
   if (count < 0)
-    undo_EDIT(ptr,-count);
+    undo_edit_with_sync(cp,-count);
   else
     {
       si = NULL;
-      cp = current_channel(ptr);
       if (cp)
 	{
 	  sp = cp->sound;
@@ -2757,8 +2753,8 @@ static SCM g_undo(SCM ed_n, SCM snd_n, SCM chn_n) /* opt ed_n */
   ERRCP(S_undo,snd_n,chn_n,2);
   cp = get_cp(snd_n,chn_n,S_undo);
   if (gh_number_p(ed_n))
-    undo_EDIT(cp,g_scm2int(ed_n));
-  else undo_EDIT(cp,1);
+    undo_edit_with_sync(cp,g_scm2int(ed_n));
+  else undo_edit_with_sync(cp,1);
   update_graph(cp,NULL);
   return(SCM_BOOL_T);
 }
@@ -2770,8 +2766,8 @@ static SCM g_redo(SCM ed_n, SCM snd_n, SCM chn_n) /* opt ed_n */
   ERRCP(S_redo,snd_n,chn_n,2);
   cp = get_cp(snd_n,chn_n,S_redo);
   if (gh_number_p(ed_n))
-    redo_EDIT(cp,g_scm2int(ed_n));
-  else redo_EDIT(cp,1);
+    redo_edit_with_sync(cp,g_scm2int(ed_n));
+  else redo_edit_with_sync(cp,1);
   update_graph(cp,NULL);
   return(SCM_BOOL_T);
 }

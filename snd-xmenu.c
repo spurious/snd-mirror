@@ -144,14 +144,16 @@ static void Edit_Select_All_Callback(Widget w,XtPointer clientData,XtPointer cal
 
 static void Edit_Undo_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
+  snd_state *ss = (snd_state *)clientData;
   finish_keyboard_selection();
-  undo_EDIT((void *)clientData,1);
+  undo_edit_with_sync(current_channel(ss),1);
 }
 
 static void Edit_Redo_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
+  snd_state *ss = (snd_state *)clientData;
   finish_keyboard_selection();
-  redo_EDIT((void *)clientData,1);
+  redo_edit_with_sync(current_channel(ss),1);
 }
 
 static void Edit_Header_Callback(Widget w,XtPointer clientData,XtPointer callData)
@@ -165,7 +167,7 @@ static void Edit_Header_Callback(Widget w,XtPointer clientData,XtPointer callDat
 static void Edit_Play_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
   finish_keyboard_selection();
-  if (region_ok(0)) play_region((snd_state *)clientData,0,NULL,FALSE);
+  play_selection();
 }
 
 
@@ -878,7 +880,7 @@ static void Popup_Play_Callback(Widget w,XtPointer clientData,XtPointer callData
 {
   snd_state *ss = (snd_state *)clientData;
   snd_info *sp;
-  start_playing(sp=any_selected_sound(ss),0,NO_END_SPECIFIED);
+  sp_start_playing(sp=any_selected_sound(ss),0,NO_END_SPECIFIED);
   set_play_button(sp,1);
 }
 
@@ -889,12 +891,14 @@ static void Popup_Save_Callback(Widget w,XtPointer clientData,XtPointer callData
 
 static void Popup_Undo_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
-  undo_EDIT((void *)clientData,1);
+  snd_state *ss = (snd_state *)clientData;
+  undo_edit_with_sync(current_channel(ss),1);
 }
 
 static void Popup_Redo_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
-  redo_EDIT((void *)clientData,1);
+  snd_state *ss = (snd_state *)clientData;
+  redo_edit_with_sync(current_channel(ss),1);
 }
 
 static void Popup_Normalize_Callback(Widget w,XtPointer clientData,XtPointer callData) 

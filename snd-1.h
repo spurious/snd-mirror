@@ -1,8 +1,6 @@
 #ifndef SND_1_H_LOADED
 #define SND_1_H_LOADED
 
-typedef struct {unsigned int s_type;} snd_any;
-
 typedef struct {
   int samps_per_bin,amp_env_size;
   MUS_SAMPLE_TYPE fmax,fmin;
@@ -127,14 +125,6 @@ typedef struct {
 } fft_info;
 
 typedef struct {
-  int s_type;
-  int n;
-  void *r;
-  struct snd__state *ss;
-  void *rg;
-} region_info;
-
-typedef struct {
   int total_slices;        /* size of the data array (max for allocation checks) */
   int total_bins;          /* size other axis data array */
   int active_slices;       /* how many slices contain current data */
@@ -147,7 +137,6 @@ typedef struct {
 } sono_info;
 
 typedef struct chan__info {
-  unsigned int s_type;     /* CHAN_INFO */
   int chan;                /* which chan are we */
   int *samples;            /* current length */
   int ffting;              /* f button state */
@@ -209,7 +198,6 @@ typedef struct chan__info {
 } chan_info;
 
 typedef struct snd__info {
-  unsigned int s_type;
   int inuse;
   int index;
   int playing;
@@ -272,7 +260,6 @@ typedef struct snd__info {
 #define SND_SRATE(sp) (((sp)->hdr)->srate)
 
 typedef struct snd__state {
-  unsigned int s_type;        /* SND_STATE */
   int selected_sound,selected_mix;         /* NO_SELECTION = none selected = which sound is currently receiving user's attention */
   int active_sounds;
   int viewing;
@@ -409,6 +396,13 @@ typedef struct {
   snd_fd *sf;
   int m,amp_buffer_size;
 } env_state;
+
+typedef struct {
+  int n;
+  void *r;
+  snd_state *ss;
+  snd_info *sp;
+} region_info;
 
 
 
@@ -672,7 +666,7 @@ snd_info *any_selected_sound (snd_state *ss);
 chan_info *any_selected_channel(snd_info *sp);
 void select_channel(snd_info *sp, int chan);
 int syncd_chans(snd_state *ss, int sync);
-chan_info *current_channel(void *ptr);
+chan_info *current_channel(snd_state *ss);
 void free_sync_info (sync_info *si);
 sync_info *snd_sync(snd_state *ss, int sync);
 sync_info *make_simple_sync (chan_info *cp, int beg);
@@ -715,8 +709,8 @@ Float next_sample (snd_fd *sf);
 int read_sample_eof (snd_fd *sf);
 MUS_SAMPLE_TYPE next_sample_1 (snd_fd *sf);
 MUS_SAMPLE_TYPE previous_sample_1(snd_fd *sf);
-void undo_EDIT(void *ptr, int count);
-void redo_EDIT(void *ptr,int count);
+void undo_edit_with_sync(chan_info *cp, int count);
+void redo_edit_with_sync(chan_info *cp,int count);
 void undo_edit(chan_info *cp, int count);
 void redo_edit(chan_info *cp, int count);
 
@@ -855,7 +849,7 @@ void move_selection(chan_info *cp, int x);
 void define_selection(chan_info *cp);
 void define_region(chan_info *cp, int beg, int end, int cleared);
 snd_fd *init_region_read (snd_state *ss, int beg, int n, int chan, int direction);
-void play_region(snd_state *ss,int n, void *r, int to_end);
+void play_region(snd_state *ss,int n, snd_info *sp, int to_end);
 sync_info *region_sync(int n);
 void cleanup_region_temp_files(void);
 int snd_regions(void);
@@ -921,8 +915,14 @@ void stop_playing_sound(snd_info *sp);
 void stop_playing_sound_no_toggle(snd_info *sp);
 void stop_playing_all_sounds(void);
 void stop_playing_region(int n);
-void start_playing(void *ptr, int start, int end);
-void play_to_end(void *ptr, int start, int end);
+
+void cp_start_playing(chan_info *cp, int start, int end);
+void cp_play_to_end(chan_info *cp, int start, int end);
+void sp_start_playing(snd_info *sp, int start, int end);
+void sp_play_to_end(snd_info *sp, int start, int end);
+void reg_start_playing(region_info *ri, int start, int end);
+void reg_play_to_end(region_info *ri, int start, int end);
+
 void start_playing_chan_syncd(chan_info *cp, int start, int background, int pause, int end);
 void play_selection(void);
 void toggle_dac_pausing(snd_state *ss); /* snd-dac.c */
@@ -977,7 +977,7 @@ void sx_incremented(chan_info *cp, double amount);
 int move_axis(chan_info *cp, axis_info *ap, int x);
 void set_axes(chan_info *cp,Float x0,Float x1,Float y0,Float y1);
 void focus_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp, int focus_style);
-int key_press_callback(snd_state *ss, snd_info *sp, chan_info *ur_cp, int x, int y, int key_state, int keysym, char *keyname);
+int key_press_callback(chan_info *ur_cp, int x, int y, int key_state, int keysym, char *keyname);
 void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int button, TIME_TYPE time);
 void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, int button);
 void graph_button_motion_callback(chan_info *cp,int x, int y, TIME_TYPE time, TIME_TYPE click_time);

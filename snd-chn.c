@@ -5535,7 +5535,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
   if ((keysym == snd_K_s) || (keysym == snd_K_r)) s_or_r = 1;
   ss = sp->state;
   if (sp != selected_sound(ss)) select_channel(sp,0);
-  active_chan = current_channel(sp);
+  active_chan = any_selected_channel(sp);
   if (active_chan)
     {
       goto_graph(active_chan);
@@ -5990,7 +5990,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_O: case snd_K_o: cp->cursor_on = 1; cks(); redisplay = cursor_insert(cp,count); break;
 	    case snd_K_P: case snd_K_p: cp->cursor_on = 1; redisplay = cursor_move(cp,-count*cp->line_size); break;
 	    case snd_K_Q: case snd_K_q: 
-	      start_playing(cp,cp->cursor,NO_END_SPECIFIED); 
+	      cp_start_playing(cp,cp->cursor,NO_END_SPECIFIED); 
 	      set_play_button(sp,1); 
 	      redisplay = NO_ACTION; 
 	      break;
@@ -6042,7 +6042,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_greater: cp->cursor_on = 1; redisplay = cursor_moveto_end(cp); break;
 	    case snd_K_less: cp->cursor_on = 1; redisplay = cursor_moveto_beginning(cp); break;
 	    case snd_K_minus: counting = 1; number_ctr = 1; number_buffer[0]='-'; break;
-	    case snd_K_underscore: undo_EDIT(cp,count); redisplay = CURSOR_UPDATE_DISPLAY; break;
+	    case snd_K_underscore: undo_edit_with_sync(cp,count); redisplay = CURSOR_UPDATE_DISPLAY; break;
 #if !defined(NEXT) && !defined(UW2)
 	    case snd_keypad_Left: case snd_keypad_4: 
 	      set_spectro_y_angle(ss,spectro_y_angle(ss)-1.0);
@@ -6125,10 +6125,10 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_O: case snd_K_o: sound_show_ctrls(sp); break;
 	    case snd_K_P: case snd_K_p: redisplay = set_window_size(cp,ext_count); break;
 	    case snd_K_Q: case snd_K_q: redisplay = prompt(sp,STR_mix_file_p,NULL); sp->filing = CHANGE_FILING; searching = 1; break;
-	    case snd_K_R: case snd_K_r: redo_EDIT(cp,ext_count); redisplay = CURSOR_UPDATE_DISPLAY; break;
+	    case snd_K_R: case snd_K_r: redo_edit_with_sync(cp,ext_count); redisplay = CURSOR_UPDATE_DISPLAY; break;
 	    case snd_K_S: case snd_K_s: save_edits(sp,NULL); redisplay = CURSOR_IN_VIEW; break;
 	    case snd_K_T: case snd_K_t: stop_playing_sound(sp); redisplay = NO_ACTION; break;
-	    case snd_K_U: case snd_K_u: undo_EDIT(cp,ext_count); redisplay = CURSOR_UPDATE_DISPLAY; break;
+	    case snd_K_U: case snd_K_u: undo_edit_with_sync(cp,ext_count); redisplay = CURSOR_UPDATE_DISPLAY; break;
 	    case snd_K_V: case snd_K_v: redisplay = set_window_percentage(cp,ext_count); break;
 	    case snd_K_W: case snd_K_w: redisplay = prompt(sp,STR_file_p,NULL); sp->filing = CHANNEL_FILING; searching = 1; break;
 	    case snd_K_X: case snd_K_x: get_eval_expression(sp,ext_count,0); searching = 1; redisplay = CURSOR_IN_VIEW; break;
@@ -6344,13 +6344,13 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_P: case snd_K_p: 
 	      if (ext_count == NO_CX_ARG_SPECIFIED)
 		play_selection();
-	      else play_region(ss,ext_count,NULL,FALSE); 
+	      else play_region(ss,ext_count,region_sound(ext_count),FALSE); 
 	      redisplay = NO_ACTION;
 	      break;
 	    case snd_K_Q: case snd_K_q: add_region((ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count,cp,"C-x q"); redisplay = CURSOR_UPDATE_DISPLAY; break;
 	      /* if count is Float, it becomes the scaler on the added data */
-	    case snd_K_R: case snd_K_r: redo_EDIT(cp,(ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); redisplay = CURSOR_UPDATE_DISPLAY; break;
-	    case snd_K_U: case snd_K_u: undo_EDIT(cp,(ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); redisplay = CURSOR_UPDATE_DISPLAY; break;
+	    case snd_K_R: case snd_K_r: redo_edit_with_sync(cp,(ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); redisplay = CURSOR_UPDATE_DISPLAY; break;
+	    case snd_K_U: case snd_K_u: undo_edit_with_sync(cp,(ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); redisplay = CURSOR_UPDATE_DISPLAY; break;
 	    case snd_K_V: case snd_K_v: 
 	      if (selection_active(cp))
 		{
@@ -6625,13 +6625,13 @@ void edit_select_callback(chan_info *cp, int ed, int with_control)
       if (cp->edit_ctr > ed)
 	{
 	  if (with_control)
-	    undo_EDIT(cp,cp->edit_ctr - ed);
+	    undo_edit_with_sync(cp,cp->edit_ctr - ed);
 	  else undo_edit(cp,cp->edit_ctr - ed);
 	}
       else 
 	{
 	  if (with_control)
-	    redo_EDIT(cp,ed - cp->edit_ctr);	      
+	    redo_edit_with_sync(cp,ed - cp->edit_ctr);	      
 	  else redo_edit(cp,ed - cp->edit_ctr);
 	}
     }
@@ -6665,30 +6665,12 @@ void draw_graph_border(chan_info *cp)
     }
 }
 
-int key_press_callback(snd_state *ss, snd_info *ur_sp, chan_info *ur_cp, int x, int y, int key_state, int keysym, char *keyname)
+int key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym, char *keyname)
 {
   /* called by every key-intercepting widget in the entire sound pane */
-  chan_info *cp,*ncp;
+  chan_info *cp;
   snd_info *sp;
   int redisplay;
-  sp = ur_sp;
-  if (ss)
-    {
-      sp = any_selected_sound(ss);
-      if (sp)
-	ncp = current_channel(sp);
-      else
-	{
-	  snd_append_command(ss,keyname);
-	  return(TRUE);
-	}
-    }
-  else
-    {
-      if (sp)
-	ncp = any_selected_channel(sp);
-      else ncp = ur_cp;
-    }
   cp = virtual_selected_channel(ncp);
   sp = cp->sound;
   select_channel(sp,cp->chan);
@@ -6814,7 +6796,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	    {
 	      if (play_mark->sync)
 		play_syncd_mark(cp,play_mark);
-	      else start_playing(cp,play_mark->samp,NO_END_SPECIFIED);
+	      else cp_start_playing(cp,play_mark->samp,NO_END_SPECIFIED);
 	      sp->playing_mark = play_mark;
 	      set_play_button(sp,1);
 	    }
@@ -6951,7 +6933,7 @@ void graph_button_motion_callback(chan_info *cp,int x, int y, TIME_TYPE time, TI
 	      dragged = 1;
 	      sp->srate = 0.0;
 	      mouse_cursor = cp->cursor;
-	      start_playing(cp,play_mark->samp,NO_END_SPECIFIED);
+	      cp_start_playing(cp,play_mark->samp,NO_END_SPECIFIED);
 	      set_play_button(sp,1);
 	    }
 	  else

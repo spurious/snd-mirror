@@ -234,7 +234,7 @@ static void region_focus_Callback(Widget w,XtPointer clientData,XtPointer callDa
 void reflect_play_region_stop(region_info *r)
 {
   regrow *rg;
-  rg = (regrow *)(r->rg);
+  rg = region_rows[r->n];
   if (rg) XmToggleButtonSetState(rg->pl,FALSE,FALSE);
 }
 
@@ -242,7 +242,7 @@ static void region_play_Callback(Widget w,XtPointer clientData,XtPointer callDat
 {
   regrow *r = (regrow *)clientData;
   if (XmToggleButtonGetState(r->pl))
-    play_region(r->ss,r->pos,(void *)r,FALSE);
+    play_region(r->ss,r->pos,NULL,FALSE);
   else stop_playing_region(r->pos);
 }
 
@@ -468,7 +468,6 @@ static void make_region_dialog(snd_state *ss)
   if (!reg_sp) 
     { /* just a place holder, I think -- see make_region_readable in snd-clip.c */
       reg_sp = (snd_info *)CALLOC(1,sizeof(snd_info));
-      reg_sp->s_type = SND_INFO;
       reg_sp->nchans = 1;
       reg_sp->allocated_chans = 1;
       reg_sp->chans = (chan_info **)CALLOC(1,sizeof(chan_info *));

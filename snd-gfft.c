@@ -57,7 +57,6 @@ static axis_context *make_axis_cp(snd_state *ss, GtkWidget *w)
     {
       /* axis_cp is just a dummy chan_info struct to hold the axis_info pointer */
       axis_cp = (chan_info *)CALLOC(1,sizeof(chan_info));
-      axis_cp->s_type = CHAN_INFO;
       axis_cp->printing = 0;
       axis_cp->drawing = 1;
       axis_cp->state = ss;

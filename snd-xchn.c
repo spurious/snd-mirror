@@ -651,6 +651,8 @@ void reflect_edit_counter_change(chan_info *cp)
     }
 }
 
+static void cp_graph_key_press(Widget w,XtPointer clientData,XEvent *event,Boolean *cont);
+
 void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int insertion, Widget main, int button_style)
 {
   Widget *cw;
@@ -911,7 +913,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  XtAddEventHandler(cw[W_graph],ButtonPressMask,FALSE,graph_button_press,(XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph],ButtonMotionMask,FALSE,graph_button_motion,(XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph],ButtonReleaseMask,FALSE,graph_button_release,(XtPointer)cp);
-	  XtAddEventHandler(cw[W_graph],KeyPressMask,FALSE,graph_key_press,(XtPointer)cp);
+	  XtAddEventHandler(cw[W_graph],KeyPressMask,FALSE,cp_graph_key_press,(XtPointer)cp);
 	}
       if (need_extra_scrollbars)
 	{
@@ -1077,13 +1079,25 @@ void graph_key_press(Widget w,XtPointer clientData,XEvent *event,Boolean *cont)
   /* called by every key-intercepting widget in the entire sound pane */
   XKeyEvent *ev = (XKeyEvent *)event;
   KeySym keysym;
-  int key_state,caller_type;
+  int key_state;
+  snd_info *sp = (snd_info *)clientData;
   key_state = ev->state;
   keysym = XKeycodeToKeysym(XtDisplay(w),(int)(ev->keycode),(key_state & ShiftMask) ? 1 : 0);
-  caller_type = ((snd_any *)(clientData))->s_type;
-  key_press_callback((caller_type == SND_STATE) ? (snd_state *)clientData : NULL,
-		     (caller_type == SND_INFO) ? (snd_info *)clientData : NULL,
-		     (caller_type == CHAN_INFO) ? (chan_info *)clientData : NULL,
+  key_press_callback(any_selected_channel(sp),
+		     ev->x,ev->y,ev->state,keysym,
+		     XKeysymToString(keysym));
+}
+ 
+static void cp_graph_key_press(Widget w,XtPointer clientData,XEvent *event,Boolean *cont) 
+{
+  /* called by every key-intercepting widget in the entire sound pane */
+  XKeyEvent *ev = (XKeyEvent *)event;
+  KeySym keysym;
+  int key_state;
+  chan_info *cp = (chan_info *)clientData;
+  key_state = ev->state;
+  keysym = XKeycodeToKeysym(XtDisplay(w),(int)(ev->keycode),(key_state & ShiftMask) ? 1 : 0);
+  key_press_callback(cp,
 		     ev->x,ev->y,ev->state,keysym,
 		     XKeysymToString(keysym));
 }

@@ -3,8 +3,6 @@
 
 /* -------------------------------- DATA STRUCTURES -------------------------------- 
  *
- * s_type used for run-time type checks (generic functions)
- * 
  * axis_info: axis data
  * file_info: header data describing sound data in file
  * fft_info: data relating to one fft display
@@ -38,10 +36,9 @@ lisp_grf *free_lisp_info(chan_info *cp)
 chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *ss)
 {
   chan_info *cp; /* may be re-use */
-  if ((!cip) || (((snd_any *)cip)->s_type != CHAN_INFO))
+  if (!cip)
     {
       cp = (chan_info *)CALLOC(1,sizeof(chan_info)); 
-      cp->s_type = CHAN_INFO;
       cp->cgx = (chan_context *)CALLOC(1,sizeof(chan_context));
       (cp->cgx)->ax = (axis_context *)CALLOC(1,sizeof(axis_context));
       cp->mixes = NULL;
@@ -193,10 +190,9 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   /* assume file has been found and header read before reaching us */
   /* if a reused pointer, may need to extend current chans array */
   chans = hdr->chans;
-  if ((!sip) || (((snd_any *)sip)->s_type != SND_INFO))
+  if (!sip)
     {
       sp = (snd_info *)CALLOC(1,sizeof(snd_info));
-      sp->s_type = SND_INFO;
       sp->chans = (chan_info **)CALLOC(chans,sizeof(chan_info *));
       sp->allocated_chans = chans;
       sp->sgx = (snd_context *)CALLOC(1,sizeof(snd_context));
@@ -640,30 +636,14 @@ void select_channel(snd_info *sp, int chan)
     }
 }
 
-chan_info *current_channel(void *ptr)
+chan_info *current_channel(snd_state *ss)
 {
   snd_info *sp = NULL;
-  snd_state *ss;
-  if (!ptr) return(NULL); /* ptr can be null when Snd has only the menu bar */
-  switch (((snd_any *)ptr)->s_type)
-    {
-    case CHAN_INFO: 
-      return((chan_info *)ptr); 
-      break;
-    case SND_INFO: 
-      sp = (snd_info *)ptr;
-      if (sp->selected_channel != NO_SELECTION)
-	return(sp->chans[sp->selected_channel]);
-      else return(sp->chans[0]);
-      break;
-    case SND_STATE:
-      ss = (snd_state *)ptr;
-      if (ss->selected_sound != NO_SELECTION)
-	sp = ss->sounds[ss->selected_sound];
-      else sp = any_active_sound(ss);
-      if (sp) return(current_channel(sp));
-      break;
-    }
+  if (!ss) return(NULL); /* can be null when Snd has only the menu bar ?? really?? */
+  if (ss->selected_sound != NO_SELECTION)
+    sp = ss->sounds[ss->selected_sound];
+  else sp = any_active_sound(ss);
+  if (sp) return(any_selected_channel(sp));
   return(NULL);
 }
 

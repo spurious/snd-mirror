@@ -973,7 +973,7 @@ static int symit(snd_state *ss,char **str)
 	  cp = get_cp(ss,str[2],str[3]); 
 	  if (cp) 
 	    {
-	      redo_EDIT(cp,ival); 
+	      redo_edit_with_sync(cp,ival); 
 	      update_graph(cp,NULL);
 	    }
 	  isym(ss,0);
@@ -1187,7 +1187,7 @@ static int symit(snd_state *ss,char **str)
 	  cp = get_cp(ss,str[2],str[3]); 
 	  if (cp) 
 	    {
-	      undo_EDIT(cp,ival); 
+	      undo_edit_with_sync(cp,ival); 
 	      update_graph(cp,NULL);
 	    }
 	  isym(ss,0);

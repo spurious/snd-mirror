@@ -253,6 +253,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+31-Aug:  gtk popup menu fixed.\n\
 30-Aug:  new snd.spec thanks to Fernando Lopez-Lezcano.\n\
          snd-emacs errors now go to emacs, play-region notices its wait argument (thanks to Anders Vinjar).\n\
          added sash-color, gtk CLM/Snd connection finally works.\n\

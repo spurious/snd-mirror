@@ -765,7 +765,6 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   hdr = make_file_info_1(filename,ss);
   if (!hdr) return(NULL);
   sp = (snd_info *)CALLOC(1,sizeof(snd_info));
-  sp->s_type = SND_INFO;
   sp->nchans = mus_sound_chans(filename);
   sp->allocated_chans = sp->nchans;
   sp->chans = (chan_info **)CALLOC(sp->nchans,sizeof(chan_info *));
@@ -965,7 +964,7 @@ void view_curfiles_play(snd_state *ss, int pos, int play)
       if (sp->playing) stop_playing_sound(sp);
       if (play)
 	{
-	  start_playing(sp,0,NO_END_SPECIFIED);
+	  sp_start_playing(sp,0,NO_END_SPECIFIED);
 	  set_play_button(sp,1);
 	}
       else set_play_button(sp,0);
@@ -1023,7 +1022,7 @@ int view_prevfiles_play(snd_state *ss, int pos, int play)
 	{
 	  play_sp->shortname = prevnames[pos];
 	  play_sp->fullname = NULL;
-	  start_playing(play_sp,0,NO_END_SPECIFIED);
+	  sp_start_playing(play_sp,0,NO_END_SPECIFIED);
 	}
       else return(1); /* can't find or setup file */
     }

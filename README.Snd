@@ -433,6 +433,7 @@ Motif:
 
 Gtk+:
   http://www.gtk.org
+  ftp://ftp.gtk.org/pub/gtk/
 
 Guile-gtk:
   http://www.ping.de/sites/zagadka/guile-gtk/

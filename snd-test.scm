@@ -27,7 +27,7 @@
 
 (define tests 1)
 (set! full-test #t)
-;(set! snd-test 10)
+;(set! snd-test 8)
 ;;; to run a specific test: ./snd -e "(set! snd-test 4) (set! full-test #f)" -l snd-test.scm
 (define include-clm #f)
 (define original-prompt (listener-prompt))
@@ -1435,7 +1435,6 @@
 (load "mix.scm")
 (load "pqwvox.scm")
 
-
 ;;; ---------------- test 8: clm ----------------
 (if (or full-test (= snd-test 8))
     (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests))
@@ -1940,6 +1939,21 @@
 	(mus-set-b2 gen .5) (if (fneq (mus-b2 gen) 0.5) (snd-print (format #f ";formant set-b2: ~F?" (mus-b2 gen))))
 	(mus-set-formant-radius gen .01) (if (fneq (mus-formant-radius gen) 0.01) (snd-print (format #f ";formant set-radius: ~F?" (mus-formant-radius gen)))))
       
+      (let ((ob (open-sound "oboe.snd")))
+	(define (poltergeist frek amp R gain frek-env R-env)
+	  ;; test courtesy of Anders Vinjar
+	  (let ((filt (make-formant R frek gain))
+		(fe (make-env :envelope frek-env :end (frames) :offset frek))
+		(re (make-env :envelope R-env :end (frames) :offset R)))
+	    (lambda (y)
+	      (let ((outval (formant filt (* amp y))))
+		(mus-set-frequency filt (env fe))
+		(mus-set-formant-radius filt (env re))
+		outval))))
+	(map-chan (poltergeist 300 0.1 0.0 30.0 '(0 100 1 4000.0) '(0 0.99 1 .9)))  ;; should sound like "whyieee?"
+	(play-and-wait 0 ob)
+	(close-sound ob))
+
       (let ((gen (make-mixer 2 .5 .25 .125 1.0))
 	    (fr0 (make-frame 2 1.0 1.0))
 	    (fr1 (make-frame 2 0.0 0.0)))
@@ -4352,12 +4366,12 @@
       (if (not (= hiho 32)) (snd-print (format #f "setf hiho 32: ~A" hiho)))
       ))
 
-
+(if #f (begin
 ;;; ---------------- test 17: define-syntax ----------------
-(load "loop.scm")
 (if (or full-test (= snd-test 17))
     (let ((hi 32)
 	  (ho 0))
+      (load "loop.scm")
       (if tracing (snd-print "test 17"))
       (set! hi (progn (dotimes (k 3) (set! ho (1+ ho))) ho))
       (if (not (= hi 3)) (snd-print (format #f "dotimes: ~A ~A?" ho hi)))
@@ -4365,7 +4379,7 @@
       (if (not (= ho 16)) (snd-print (format #f "loop: ~A?" ho)))
       (set! hi (prog1 (+ 2 ho) (set! ho 3)))
       (if (not (= hi 18)) (snd-print (format #f "prog1: ~A?" hi)))))
-
+))
 
 ;;; ---------------- test 18: guile-gtk dialogs ----------------
 (if (or full-test (= snd-test 18))

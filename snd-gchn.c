@@ -304,7 +304,6 @@ static void edit_select_Callback(GtkWidget *w, gint row, gint column, GdkEventBu
   chan_info *cp = (chan_info *)clientData;
 #if DEBUGGING
   if (event == NULL) return;
-  if (cp->s_type != CHAN_INFO) {fprintf(stderr,"got: %d ",cp->s_type); return;}
 #endif
   edit_select_callback(cp,row,(event->state & snd_ControlMask));
 }
@@ -433,7 +432,7 @@ static gint real_graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
   keysym = ev->keyval;
   ss = cp->state;
   /* fprintf(stderr,"grf: %s %d ",gdk_keyval_name(keysym),key_state); */
-  theirs = key_press_callback(NULL,NULL,cp,
+  theirs = key_press_callback(cp,
 			      x,y,ev->state,keysym,
 			      gdk_keyval_name(keysym));
   if (theirs) (ss->sgx)->graph_is_active = FALSE;
@@ -453,7 +452,7 @@ gint graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
   keysym = ev->keyval;
   ss = cp->state;
   /* fprintf(stderr,"key: %s %d ",gdk_keyval_name(keysym),key_state); */
-  theirs = key_press_callback(NULL,NULL,cp,
+  theirs = key_press_callback(cp,
 			      x,y,ev->state,keysym,
 			      gdk_keyval_name(keysym));
   if (theirs) (ss->sgx)->graph_is_active = TRUE;
@@ -466,10 +465,15 @@ static void graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
   snd_state *ss;
   /* fprintf(stderr,"graph press "); */
   ss = cp->state;
-  (ss->sgx)->graph_is_active = TRUE;
-  gtk_widget_grab_focus(w);
-  ((cp->sound)->sgx)->mini_active = 0;
-  graph_button_press_callback(cp,(int)(ev->x),(int)(ev->y),ev->state,ev->button,ev->time);
+  if ((ev->type == GDK_BUTTON_PRESS) && (ev->button == 2))
+    create_popup_menu(ss,ev->button,ev->time);
+  else
+    {
+      (ss->sgx)->graph_is_active = TRUE;
+      gtk_widget_grab_focus(w);
+      ((cp->sound)->sgx)->mini_active = 0;
+      graph_button_press_callback(cp,(int)(ev->x),(int)(ev->y),ev->state,ev->button,ev->time);
+    }
 }
 
 static void graph_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -529,6 +533,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       if (!main)
 	{
 	  cw[W_main_window] = gtk_hpaned_new();
+	  set_backgrounds(cw[W_main_window],(ss->sgx)->sash_color);
 	  gtk_container_set_border_width(GTK_CONTAINER(cw[W_main_window]),2);
 	  gtk_paned_set_handle_size(GTK_PANED(cw[W_main_window]),6);
 	  /* gtk_paned_add1(GTK_PANED(w_snd_pane(sp)),cw[W_main_window]); */

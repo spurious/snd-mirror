@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 27
-#define MUS_DATE "10-Aug-00"
+#define MUS_REVISION 28
+#define MUS_DATE "31-Aug-00"
 
 /* 
+ * 31-Aug:     changed formant field setters (thanks to Anders Vinjar).
  * 10-Aug:     removed built-in setf support (clm2scm.c).
  * 31-Jul:     mus_granulate tries to protect against illegal length and ramp values.
  * 24-Jul:     mus_make_fir_coeffs.

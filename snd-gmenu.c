@@ -3,9 +3,10 @@
 /* DIFFS: click for help is called tipquery or something like that (and isn't implemented)
  *        no normalize menus (not using paned windows here, so no use for them)
  */
-/* TODO: popup doesn't work right 
- *       finish guile-gtk connection (popup and decide about inner cascades)
+/* TODO: finish guile-gtk connection (popup and decide about inner cascades)
  */
+
+static gint middle_button_press (GtkWidget *widget, GdkEvent *bevent, gpointer data);
 
 enum {menu_menu,
         file_menu,f_cascade_menu,
@@ -50,8 +51,8 @@ enum {menu_menu,
 
 static GtkWidget *mw[NUM_MENU_WIDGETS];
 
-enum {W_pop_menu,W_pop_sep,W_pop_play,W_pop_undo,W_pop_redo,W_pop_save,W_pop_normalize,W_pop_info};
-#define NUM_POPUP_CHILDREN 8
+enum {W_pop_play,W_pop_undo,W_pop_redo,W_pop_save,W_pop_info};
+#define NUM_POPUP_CHILDREN 6
 static GtkWidget *popup_menu = NULL;
 static GtkWidget *popup_children[NUM_POPUP_CHILDREN];
 
@@ -155,14 +156,16 @@ static void Edit_Select_All_Callback(GtkWidget *w,gpointer clientData) {select_a
 
 static void Edit_Undo_Callback(GtkWidget *w,gpointer clientData) 
 {
+  snd_state *ss = (snd_state *)clientData;
   finish_keyboard_selection();
-  undo_EDIT((void *)clientData,1);
+  undo_edit_with_sync(current_channel(ss),1);
 }
 
 static void Edit_Redo_Callback(GtkWidget *w,gpointer clientData) 
 {
+  snd_state *ss = (snd_state *)clientData;
   finish_keyboard_selection();
-  redo_EDIT((void *)clientData,1);
+  redo_edit_with_sync(current_channel(ss),1);
 }
 
 static void Edit_Header_Callback(GtkWidget *w,gpointer clientData)
@@ -176,7 +179,7 @@ static void Edit_Header_Callback(GtkWidget *w,gpointer clientData)
 static void Edit_Play_Callback(GtkWidget *w,gpointer clientData) 
 {
   finish_keyboard_selection();
-  if (region_ok(0)) play_region((snd_state *)clientData,0,NULL,FALSE);
+  play_selection();
 }
 
 
@@ -920,6 +923,9 @@ GtkWidget *add_menu(snd_state *ss)
   gtk_widget_show(mw[h_news_menu]);
   gtk_signal_connect(GTK_OBJECT(mw[h_news_menu]),"activate",GTK_SIGNAL_FUNC(Help_News_Callback),(gpointer)ss);
 
+  gtk_widget_add_events (MAIN_SHELL(ss),gtk_widget_get_events(MAIN_SHELL(ss)) | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK);
+  gtk_signal_connect(GTK_OBJECT(MAIN_SHELL(ss)),"button_press_event",GTK_SIGNAL_FUNC(middle_button_press),(gpointer)ss); 
+
   return(mw[menu_menu]);
 }
 
@@ -1064,14 +1070,13 @@ int gh_remove_from_menu(int which_menu, char *label)
 }
 
 
-#if 0
 /* -------------------------------- POPUP MENU -------------------------------- */
 
 static void Popup_Play_Callback(GtkWidget *w,gpointer clientData) 
 {
   snd_state *ss = (snd_state *)clientData;
   snd_info *sp;
-  start_playing(sp=any_selected_sound(ss),0,NO_END_SPECIFIED);
+  sp_start_playing(sp=any_selected_sound(ss),0,NO_END_SPECIFIED);
   set_play_button(sp,1);
   gtk_widget_hide(popup_menu);
 }
@@ -1085,13 +1090,15 @@ static void Popup_Save_Callback(GtkWidget *w,gpointer clientData)
 
 static void Popup_Undo_Callback(GtkWidget *w,gpointer clientData) 
 {
-  undo_EDIT((void *)clientData,1);
+  snd_state *ss = (snd_state *)clientData;
+  undo_edit_with_sync(current_channel(ss),1);
   gtk_widget_hide(popup_menu);
 }
 
 static void Popup_Redo_Callback(GtkWidget *w,gpointer clientData) 
 {
-  redo_EDIT((void *)clientData,1);
+  snd_state *ss = (snd_state *)clientData;
+  redo_edit_with_sync(current_channel(ss),1);
   gtk_widget_hide(popup_menu);
 }
 
@@ -1104,114 +1111,70 @@ static void Popup_Info_Callback(GtkWidget *w,gpointer clientData)
   gtk_widget_hide(popup_menu);
 }
 
-  GtkWidget *m1,*m5;
-static gint Popup_Dismiss_Callback(GtkWidget *w, GdkEvent *event, gpointer clientData)
+void create_popup_menu(snd_state *ss, guint button, TIME_TYPE time)
 {
-fprintf(stderr,"released");
-  gtk_widget_destroy(popup_menu);
-  popup_menu = NULL;
-  return(FALSE);
-}
-
-static gint Popup_Destroy_Callback(GtkWidget *w, GdkEvent *event, gpointer clientData)
-{
-  gtk_widget_destroy(popup_menu);
-  popup_menu = NULL;
-  return(FALSE);
-}
-
-#endif
-void create_popup_menu(snd_state *ss, guint button, guint32 time)
-{
-#if 0
+  int undo_possible=0,redo_possible=0;
+  chan_info *selcp = NULL;
   if (!popup_menu)
     {
-      popup_menu = gtk_window_new(GTK_WINDOW_POPUP);
-      gtk_window_set_position (GTK_WINDOW(popup_menu), GTK_WIN_POS_MOUSE);
-      gtk_signal_connect(GTK_OBJECT(popup_menu),"button_release_event",GTK_SIGNAL_FUNC(Popup_Dismiss_Callback),(gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(popup_menu),"delete_event",GTK_SIGNAL_FUNC(Popup_Destroy_Callback),(gpointer)ss);
-      /*
-      gtk_widget_set_app_paintable (GTK_WIDGET (popup_menu), TRUE);
-      gtk_widget_realize (popup_menu);
-      */
-      m5 = gtk_vbox_new(FALSE,0); /* not homogenous, spacing 0 */
-      gtk_container_add(GTK_CONTAINER(popup_menu),m5);
-      set_background(m5,(ss->sgx)->basic_color);
-      gtk_widget_show(m5);
-
-      m1 = gtk_menu_bar_new();
-      gtk_box_pack_start(GTK_BOX(m5),m1,FALSE,TRUE,0);
-      set_background(m1,(ss->sgx)->basic_color);
-      gtk_widget_show(m1);
-      gtk_signal_connect(GTK_OBJECT(m1),"button_release_event",GTK_SIGNAL_FUNC(Popup_Dismiss_Callback),(gpointer)ss);
-
-      popup_children[W_pop_menu] = gtk_menu_item_new_with_label("snd");
-      set_background(popup_children[W_pop_menu],(ss->sgx)->basic_color);
-      gtk_menu_bar_append(GTK_MENU_BAR(m1),popup_children[W_pop_menu]);
-      gtk_widget_show(popup_children[W_pop_menu]);
-
-      popup_children[W_pop_sep] = gtk_menu_new();
-      gtk_menu_item_set_submenu(GTK_MENU_ITEM(popup_children[W_pop_menu]),popup_children[W_pop_sep]);
-      set_background(popup_children[W_pop_sep],(ss->sgx)->basic_color);
+      selcp = selected_channel(ss);
+      if (selcp)
+	{
+	  undo_possible = (selcp->edit_ctr > 0);
+	  redo_possible = ((selcp->edit_size > (selcp->edit_ctr+1)) && (selcp->edits[selcp->edit_ctr+1]));
+	}
+      popup_menu = gtk_menu_new();
 
       popup_children[W_pop_play] = gtk_menu_item_new_with_label(STR_Play);
-      gtk_menu_append(GTK_MENU(popup_children[W_pop_sep]),popup_children[W_pop_play]);
+      gtk_menu_append(GTK_MENU(popup_menu),popup_children[W_pop_play]);
       set_background(popup_children[W_pop_play],(ss->sgx)->basic_color);
       gtk_signal_connect(GTK_OBJECT(popup_children[W_pop_play]),"activate",GTK_SIGNAL_FUNC(Popup_Play_Callback),(gpointer)ss);
+      set_sensitive(popup_children[W_pop_play],(ss->active_sounds > 0));
       gtk_widget_show(popup_children[W_pop_play]);
 
       popup_children[W_pop_undo] = gtk_menu_item_new_with_label(STR_Undo);
-      gtk_menu_append(GTK_MENU(popup_children[W_pop_sep]),popup_children[W_pop_undo]);
+      gtk_menu_append(GTK_MENU(popup_menu),popup_children[W_pop_undo]);
       set_background(popup_children[W_pop_undo],(ss->sgx)->basic_color);
       gtk_signal_connect(GTK_OBJECT(popup_children[W_pop_undo]),"activate",GTK_SIGNAL_FUNC(Popup_Undo_Callback),(gpointer)ss);
-      set_sensitive(popup_children[W_pop_undo],FALSE);
+      set_sensitive(popup_children[W_pop_undo],undo_possible);
       gtk_widget_show(popup_children[W_pop_undo]);
       
       popup_children[W_pop_redo] = gtk_menu_item_new_with_label(STR_Redo);
-      gtk_menu_append(GTK_MENU(popup_children[W_pop_sep]),popup_children[W_pop_redo]);
+      gtk_menu_append(GTK_MENU(popup_menu),popup_children[W_pop_redo]);
       set_background(popup_children[W_pop_redo],(ss->sgx)->basic_color);
       gtk_signal_connect(GTK_OBJECT(popup_children[W_pop_redo]),"activate",GTK_SIGNAL_FUNC(Popup_Redo_Callback),(gpointer)ss);
-      set_sensitive(popup_children[W_pop_redo],FALSE);
+      set_sensitive(popup_children[W_pop_redo],redo_possible);
       gtk_widget_show(popup_children[W_pop_redo]);
       
       popup_children[W_pop_save] = gtk_menu_item_new_with_label(STR_Save);
-      gtk_menu_append(GTK_MENU(popup_children[W_pop_sep]),popup_children[W_pop_save]);
+      gtk_menu_append(GTK_MENU(popup_menu),popup_children[W_pop_save]);
       set_background(popup_children[W_pop_save],(ss->sgx)->basic_color);
       gtk_signal_connect(GTK_OBJECT(popup_children[W_pop_save]),"activate",GTK_SIGNAL_FUNC(Popup_Save_Callback),(gpointer)ss);
+      set_sensitive(popup_children[W_pop_save],(ss->active_sounds > 0));
       gtk_widget_show(popup_children[W_pop_save]);
 
       popup_children[W_pop_info] = gtk_menu_item_new_with_label(STR_Info);
-      gtk_menu_append(GTK_MENU(popup_children[W_pop_sep]),popup_children[W_pop_info]);
+      gtk_menu_append(GTK_MENU(popup_menu),popup_children[W_pop_info]);
       set_background(popup_children[W_pop_info],(ss->sgx)->basic_color);
       gtk_signal_connect(GTK_OBJECT(popup_children[W_pop_info]),"activate",GTK_SIGNAL_FUNC(Popup_Info_Callback),(gpointer)ss);
-      set_sensitive(popup_children[W_pop_info],FALSE);
+      set_sensitive(popup_children[W_pop_info],(ss->active_sounds > 0));
       gtk_widget_show(popup_children[W_pop_info]);
     }
   gtk_widget_show(popup_menu);
-#endif
+  gtk_menu_popup(GTK_MENU(popup_menu),NULL,NULL,NULL,NULL,button,time);
 }
 
-#if 0
 static gint middle_button_press (GtkWidget *widget, GdkEvent *bevent, gpointer data)
 {
   GdkEventButton *event = (GdkEventButton *) bevent; 
   if ((event->type == GDK_BUTTON_PRESS) && (event->button == 2))
     {
       create_popup_menu((snd_state *)data,event->button,event->time);
-      /* gtk_menu_popup(GTK_MENU(popup_children[W_pop_sep]),m1,popup_children[W_pop_menu],NULL,NULL,event->button,event->time); */
       return(TRUE);
     }
   return(FALSE);
 }
 
-static void init_popup(void)
-{
-  snd_state *ss;
-  ss = get_global_state();
-  gtk_widget_add_events (MAIN_SHELL(ss),gtk_widget_get_events(MAIN_SHELL(ss)) | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK);
-  gtk_signal_connect(GTK_OBJECT(MAIN_SHELL(ss)),"button_press_event",GTK_SIGNAL_FUNC(middle_button_press),(gpointer)ss); 
-}
-#endif
 
 #if HAVE_GUILE_GTK
 #include <guile-gtk.h>

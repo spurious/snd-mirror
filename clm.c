@@ -1921,6 +1921,7 @@ typedef struct {
   Float x2;
   Float y1;
   Float y2;
+  Float gain,radius,frequency;
 } smpflt;
 
 static char *inspect_smpflt(void *ptr)
@@ -2252,27 +2253,10 @@ static char *describe_formant(void *ptr)
     {
       if (mus_formant_p((mus_any *)ptr))
 	sprintf(desc,"formant: radius: %.3f, frequency: %.3f, (gain: %.3f)",
-		-(gen->a2),mus_radians2hz(acos(gen->b1 / (2.0 * gen->a2))),gen->a1);
+		gen->radius,gen->frequency,gen->gain);
       else describe_bad_gen(ptr,desc,"formant","a");
     }
   return(desc);
-}
-
-static Float formant_frequency(void *ptr)
-{
-  smpflt *gen = (smpflt *)ptr;
-  return(mus_radians2hz(acos(gen->b1 / (2.0 * gen->a2))));
-}
-
-static Float set_formant_frequency(void *ptr, Float val)
-{
-  smpflt *gen = (smpflt *)ptr;
-  Float radius,gain;
-  radius = -gen->a2;
-  gain = gen->a1;
-  gen->a0 = gain * sin(mus_hz2radians(val)) * (1.0 - (radius*radius));
-  gen->b1 = -2.0 * radius * cos(mus_hz2radians(val));
-  return(val);
 }
 
 Float mus_formant(mus_any *ptr, Float input) 
@@ -2298,6 +2282,45 @@ Float mus_formant_bank(Float *amps, mus_any **formants, Float *inputs, int size)
   return(sum);
 }
 
+static void set_formant_fields(smpflt *gen, Float radius, Float frequency)
+{
+  Float fw;
+  fw = mus_hz2radians(frequency);
+  gen->radius = radius;
+  gen->frequency = frequency;
+  gen->b2 = radius * radius;
+  gen->a0 = gen->gain * sin(fw) * (1.0 - gen->b2);
+  gen->a2 = -radius;
+  gen->b1 = -2.0 * radius * cos(fw);
+}
+
+static Float formant_frequency(void *ptr)
+{
+  smpflt *gen = (smpflt *)ptr;
+  return(gen->frequency);
+}
+
+static Float set_formant_frequency(void *ptr, Float val)
+{
+  smpflt *gen = (smpflt *)ptr;
+  set_formant_fields(gen,gen->radius,val);
+  return(val);
+}
+
+Float mus_formant_radius(mus_any *ptr)
+{
+  smpflt *gen = (smpflt *)ptr;
+  if (mus_formant_p(ptr)) return(gen->radius);
+  return(0.0);
+}
+
+Float mus_set_formant_radius(mus_any *ptr, Float val)
+{
+  smpflt *gen = (smpflt *)ptr;
+  set_formant_fields(gen,val,gen->frequency);
+  return(val);
+}
+
 static mus_any_class FORMANT_CLASS = {
   MUS_FORMANT,
   "formant",
@@ -2320,35 +2343,12 @@ mus_any *mus_make_formant(Float radius, Float frequency, Float gain)
   else
     {
       gen->core = &FORMANT_CLASS;
-      gen->a0 = gain * sin(mus_hz2radians(frequency)) * (1.0 - (radius*radius));
-      gen->a2 = -radius;
-      gen->b1 = -2.0 * radius * cos(mus_hz2radians(frequency));
-      gen->b2 = radius * radius;
-      gen->a1 = gain;  /* for frequency calc etc */
-
+      gen->gain = gain;
+      gen->a1 = gain; /* for backwards compatibility */
+      set_formant_fields(gen,radius,frequency);
       return((mus_any *)gen);
     }
   return(NULL);
-}
-
-Float mus_formant_radius(mus_any *ptr)
-{
-  smpflt *gen = (smpflt *)ptr;
-  if (mus_formant_p(ptr)) return(-(gen->a2));
-  return(0.0);
-}
-
-Float mus_set_formant_radius(mus_any *ptr, Float val)
-{
-  smpflt *gen = (smpflt *)ptr;
-  Float oldR;
-  oldR = -(gen->a2);
-  if (val >= 1.0) val = 0.9999999;
-  gen->a2 = -val;
-  gen->b2 = val * val;
-  gen->b1 *= val / oldR;
-  gen->a0 *= (1.0 - (val * val)) / (1.0 - (oldR * oldR));
-  return(val);
 }
 
 

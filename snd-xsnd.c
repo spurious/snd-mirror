@@ -670,7 +670,7 @@ static void filter_textfield_deactivate(snd_info *sp)
 {
   chan_info *active_chan;
   Widget graph;
-  active_chan = current_channel(sp);
+  active_chan = any_selected_channel(sp);
   if (active_chan)
     {
       graph = channel_graph(active_chan);
@@ -905,7 +905,7 @@ static void Play_button_Callback(Widget w,XtPointer clientData,XtPointer callDat
     {
       ss = sp->state;
       XtVaSetValues(w,XmNselectColor,((sp->cursor_follows_play != DONT_FOLLOW) ? ((ss->sgx)->green) : ((ss->sgx)->pushed_button_color)),NULL);
-      start_playing(sp,0,NO_END_SPECIFIED);
+      sp_start_playing(sp,0,NO_END_SPECIFIED);
     }
 }
 
