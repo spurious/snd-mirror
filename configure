@@ -876,8 +876,8 @@ Optional Packages:
   --with-editres	  include editres in xm
   --with-ladspa  	  include support for LADSPA plugins
   --with-x11		  include X funcs from xm.c with xg.c
-  --with-gsl             use GSL, default=yes
-  --with-fftw            use fftw, default=yes
+  --with-gsl		  use GSL, default=yes
+  --with-fftw		  use fftw, default=yes
   --with-float-samples	  use floats as the internal sample respresentation
   --with-sample-width=N   use N bits of samples
   --with-motif-prefix=PFX where Motif is installed
@@ -2806,9 +2806,10 @@ _ACEOF
 #   --with-editres 	  include EditRes in xm
 #   --with-shared-sndlib  load sndlib.so if possible
 #   --with-x11            if gtk, this also includes X funcs from xm.c
+#   --without-gsl         omit GSL even if it exists
+#   --without-fftw        omit FFTW even if it exists
 #   GUILE_CONFIG_path     where to look for guile-config
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
-#   --without-gsl --without-fftw
 #
 # SOMEDAY: --with-static-libraries --with-static-guile
 

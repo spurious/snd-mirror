@@ -33,6 +33,7 @@
 <ul>
   <li><a href="#autosavedoc">autosave.scm: auto-save support</a>
   <li><a href="#bessdoc">bess.scm, bess.rb: FM demo</a>
+  <li><a href="#bess1doc">bess1.scm, bess1.rb: FM violin demo</a>
   <li><a href="#birddoc">bird.scm, bird.rb: North-American birds</a>
   <li><a href="#clminsdoc">clm-ins.scm: more CLM instruments</a>
   <li><a href="#debugdoc">debug.scm: debugging aids</a>
@@ -112,7 +113,7 @@ To start auto-saving, (load "autosave.scm").  Thereafter <code>(cancel-auto-save
 stops autosaving, and <code>(auto-save)</code> restarts it.
 </p>
 
-<A NAME="bessdoc"></a><span class=box><h2>bess.scm</h2></span>
+<A NAME="bessdoc"></a><span class=box><h2>bess.scm, bess.rb</h2></span>
 
 <p>bess.scm is a Guile script (independent of Snd) that loads sndlib and xmlib into Guile,
 opens the DAC, puts up a bunch of scale widgets, and starts two CLM oscils doing
@@ -120,6 +121,15 @@ frequency modulation in semi-real-time (how "real-time" it is depends on your
 audio setup).  This is a translation to the Sndlib/Libxm system of bess.cl in CLM.
 Michael Scholz has contributed a Ruby translation of this with many improvements:
 bess.rb.
+</p>
+
+
+<A NAME="bess1doc"></a><span class=box><h2>bess1.scm, bess1.rb</h2></span>
+
+<p>bess1.scm and bess1.rb are scripts (independent of Snd), similar to bess.scm and bess.rb,
+that give you real-time GUI-based control over the fm-violin while it cycles around in a simple
+compositional algorithm.  Both were written by
+Michael Scholz, based on CLM's bess5.cl and rt.lisp.
 </p>
 
 

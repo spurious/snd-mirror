@@ -8,7 +8,6 @@
 /* TODO: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both */
 /* TODO: if superimposed and 2chn has mark, no way to drag/click it */
 /* TODO: if superimposed where are mixes? */
-/* TODO: if superimposed, then separated, click in 2chn does not select it? */
 /* TODO: if superimposed and selections differ, no way to see that */
 
 enum {NOGRAPH, WAVE, FFT_AXIS, LISP, FFT_MAIN};    /* for marks, regions, mouse click detection */
@@ -3688,7 +3687,7 @@ int key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
   return(FALSE);
 }
 
-static chan_info *which_channel(snd_info *sp, int y)
+chan_info *which_channel(snd_info *sp, int y)
 {
   int i;
   chan_info *cp, *ncp;

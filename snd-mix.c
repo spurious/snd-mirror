@@ -8,6 +8,9 @@
    files, doesnt leave the mixes in any synced state.
 */
 
+/* TODO: mix stereo->stereo[syncd+united] -- mix tag of 2nd chan is at 0? */
+/* TODO: where are the mix tags if united chans? */
+
 #define NO_SUCH_TRACK XEN_ERROR_TYPE("no-such-track")
 
 typedef struct {         /* save one mix console state */
@@ -3409,7 +3412,7 @@ int mix_selected_channel(int id)
   return(NO_SELECTION);
 }
 
-void mix_at_x(snd_state *ss, int data, char *filename, int x)
+void mix_at_x_y(snd_state *ss, int data, char *filename, int x, int y)
 {
   int chn, snd;
   snd_info *sp = NULL;
@@ -3428,6 +3431,11 @@ void mix_at_x(snd_state *ss, int data, char *filename, int x)
     {
       sp = ss->sounds[snd];
       cp = sp->chans[chn];
+      if ((sp->nchans > 1) && (sp->channel_style == CHANNELS_COMBINED))
+	{
+	  cp = which_channel(sp, y);
+	  chn = cp->chan;
+	}
       select_channel(sp, chn);
       origin = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
       sample = snd_round_off_t(ungrf_x(cp->axis, x) * (double)(SND_SRATE(sp)));

@@ -737,9 +737,10 @@ is a physical model of a flute:\n\
 				    (* (env indxf)
 				       (oscil fmosc 
 					      (+ (* gls fmrat)
-						 (* (env mindxf) (oscil cascade 
-									(+ (* gls casrat)
-									   (* (env devf) (rand rn))))))))))))))))))
+						 (* (env mindxf) 
+						    (oscil cascade 
+							   (+ (* gls casrat)
+							      (* (env devf) (rand rn))))))))))))))))))
 #!
 (with-sound ()
   (fm-drum 0 1.5 55 .3 5 #f)

@@ -1,15 +1,14 @@
 #include "snd.h"
 
-static GtkTargetEntry target_table[] = {
-  {"STRING",        0, 0},
-  {"FILE_NAME",     0, 0},
-  {"text/plain",    0, 0},
-  {"COMPOUND_TEXT", 0, 0}
-};
+enum {TARGET_STRING, TARGET_UTF8};
 
-/* SOMEDAY: from gtk we might see UTF8_STRING -- glib has conversions for this: g_filename_from_utf8 in glib/glib/gconvert.h,
- *          but how can this be tested? 
- */
+static GtkTargetEntry target_table[] = {
+  {"STRING",        0, TARGET_STRING},
+  {"FILE_NAME",     0, TARGET_STRING},
+  {"text/plain",    0, TARGET_STRING}, /* untested */
+  {"COMPOUND_TEXT", 0, TARGET_STRING}, /* hmm... -- why does Motif have elaborate converters for this if it's just a string? */
+  {"UTF8_STRING",   0, TARGET_UTF8}    /* untested */
+};
 
 static XEN drop_hook;
 
@@ -18,6 +17,7 @@ static void drag_data_received (GtkWidget *widget, GdkDragContext *context, gint
 {
   snd_state *ss;
   snd_info *sp = NULL;
+  /* data->target */
   if ((data->length >= 0) && 
       (data->format == 8))
     {
@@ -27,11 +27,17 @@ static void drag_data_received (GtkWidget *widget, GdkDragContext *context, gint
 				    XEN_LIST_1(C_TO_XEN_STRING((char *)(data->data))),
 				    "drop")))))
 	{
+	  gsize bread, bwritten;
+	  GError *error;
+	  char *filename;
+	  if (info == TARGET_STRING)
+	    filename = (char *)(data->data);
+	  else filename = (char *)g_filename_from_utf8((gchar *)(data->data), data->length, &bread, &bwritten, &error);
 	  if (GTK_IS_DRAWING_AREA(widget))
-	    mix_at_x(ss, get_user_int_data(G_OBJECT(widget)), (char *)(data->data), x);
+	    mix_at_x_y(ss, get_user_int_data(G_OBJECT(widget)), filename, x, y);
 	  else
 	    {
-	      sp = snd_open_file((char *)(data->data), ss, FALSE);
+	      sp = snd_open_file(filename, ss, FALSE);
 	      if (sp) select_channel(sp, 0);
 	    }
 	}
@@ -41,7 +47,7 @@ static void drag_data_received (GtkWidget *widget, GdkDragContext *context, gint
   gtk_drag_finish(context, FALSE, FALSE, time);
 }
 
-static void report_mouse_position_as_seconds(GtkWidget *w, gint x)
+static void report_mouse_position_as_seconds(GtkWidget *w, gint x, gint y)
 {
   snd_state *ss;
   snd_info *sp;
@@ -54,10 +60,12 @@ static void report_mouse_position_as_seconds(GtkWidget *w, gint x)
   snd = UNPACK_SOUND(data);
   sp = ss->sounds[snd];
   cp = sp->chans[chn];
+  if ((sp->nchans > 1) && (sp->channel_style == CHANNELS_COMBINED))
+    cp = which_channel(sp, y);    
   seconds = (float)(ungrf_x(cp->axis, x));
   if (seconds < 0.0) seconds = 0.0;
   if (sp->nchans > 1)
-    report_in_minibuffer(sp, "drop to mix file in chan %d at %.4f", chn + 1, seconds);
+    report_in_minibuffer(sp, "drop to mix file in chan %d at %.4f", cp->chan + 1, seconds);
   else report_in_minibuffer(sp, "drop to mix file at %.4f", seconds);
 }
 
@@ -86,7 +94,7 @@ void drag_leave(GtkWidget *widget, GdkDragContext *context, guint time)
 gboolean drag_motion(GtkWidget *widget, GdkDragContext *context, gint x, gint y, guint time)
 {
   if (GTK_IS_DRAWING_AREA(widget))
-    report_mouse_position_as_seconds(widget, x);
+    report_mouse_position_as_seconds(widget, x, y);
   else
     {
       if (!have_drag_title)
@@ -106,7 +114,7 @@ gboolean drag_motion(GtkWidget *widget, GdkDragContext *context, gint x, gint y,
 
 void add_drop(snd_state *ss, GtkWidget *w)
 {
-  gtk_drag_dest_set(w, GTK_DEST_DEFAULT_ALL, target_table, 4, (GdkDragAction)(GDK_ACTION_COPY | GDK_ACTION_MOVE));
+  gtk_drag_dest_set(w, GTK_DEST_DEFAULT_ALL, target_table, 5, (GdkDragAction)(GDK_ACTION_COPY | GDK_ACTION_MOVE));
   /* this (the cast to GdkDragAction) is actually a bug in gtk -- they are OR'ing these together so the correct type is some flavor of int */
   g_signal_connect_closure_by_id(GTK_OBJECT(w),
 				 g_signal_lookup("drag_data_received", G_OBJECT_TYPE(GTK_OBJECT(w))),

@@ -702,6 +702,19 @@ static void select_sound(snd_state *ss, snd_info *sp)
     }
 }
 
+chan_info *color_selected_channel(snd_info *sp)
+{
+  snd_state *ss;
+  chan_info *ncp;
+  ss = sp->state;
+  ncp = sp->chans[sp->selected_channel];
+  recolor_graph(ncp, TRUE);
+  (ncp->cgx)->selected = TRUE;
+  if ((ss->sgx)->data_color != (ss->sgx)->selected_data_color) 
+    update_graph(ncp);
+  return(ncp);
+}
+
 void select_channel(snd_info *sp, int chan)
 {
   snd_state *ss = sp->state;
@@ -718,17 +731,13 @@ void select_channel(snd_info *sp, int chan)
 	  if (sp != cp->sound) (cp->sound)->selected_channel = NO_SELECTION;
 	  update_graph(cp);
 	}
-  if (XEN_HOOKED(select_channel_hook))
-    run_hook(select_channel_hook,
-	     XEN_LIST_2(C_TO_XEN_INT(sp->index),
-			C_TO_XEN_INT(chan)),
-	     S_select_channel_hook);
-      ncp = sp->chans[chan];
+      if (XEN_HOOKED(select_channel_hook))
+	run_hook(select_channel_hook,
+		 XEN_LIST_2(C_TO_XEN_INT(sp->index),
+			    C_TO_XEN_INT(chan)),
+		 S_select_channel_hook);
+      ncp = color_selected_channel(sp);
       reflect_undo_or_redo_in_menu(ncp);
-      recolor_graph(ncp, TRUE);
-      (ncp->cgx)->selected = TRUE;
-      if ((ss->sgx)->data_color != (ss->sgx)->selected_data_color) 
-	update_graph(ncp);
       goto_graph(ncp);
     }
 }

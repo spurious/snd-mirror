@@ -1292,8 +1292,10 @@ void change_channel_style(snd_info *sp, int new_style)
 		      set_axes(cp, ap->x0, ap->x1, ap->y0, ap->y1);
 		    }
 		  XmToggleButtonSetState(unite_button(sp), FALSE, FALSE);
+		  if (sp->selected_channel > 0) color_selected_channel(sp);
 		}
 	    }
+	  if ((new_style == CHANNELS_COMBINED) && (sp->selected_channel > 0)) color_selected_channel(sp);
 	}
     }
 }

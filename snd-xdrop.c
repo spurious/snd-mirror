@@ -8,7 +8,7 @@
 static Atom FILE_NAME;               /* Sun uses this, SGI uses STRING */
 static Atom COMPOUND_TEXT;           /* various Motif widgets use this and the next */
 static Atom _MOTIF_COMPOUND_STRING;
-static Atom text_plain;              /* gtk uses this */
+static Atom text_plain;              /* gtk uses this -- untested here */
 
 static XEN drop_hook;
 
@@ -77,7 +77,7 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 		{
 		  int data;
 		  XtVaGetValues(caller, XmNuserData, &data, NULL);
-		  mix_at_x(ss, data, str, mx);
+		  mix_at_x_y(ss, data, str, mx, my);
 		}
 	    }
 	  /* value is the file name if dropped icon from filer */
@@ -141,7 +141,7 @@ static void handle_drop(Widget w, XtPointer context, XtPointer info)
   XmDropTransferStart(cb->dragContext, args, n);
 }
 
-static void report_mouse_position_as_seconds(Widget w, Position x)
+static void report_mouse_position_as_seconds(Widget w, Position x, Position y)
 {
   snd_state *ss;
   snd_info *sp;
@@ -154,10 +154,12 @@ static void report_mouse_position_as_seconds(Widget w, Position x)
   snd = UNPACK_SOUND(data);
   sp = ss->sounds[snd];
   cp = sp->chans[chn];
+  if ((sp->nchans > 1) && (sp->channel_style == CHANNELS_COMBINED))
+    cp = which_channel(sp, y);    
   seconds = (float)(ungrf_x(cp->axis, x));
   if (seconds < 0.0) seconds = 0.0;
   if (sp->nchans > 1)
-    report_in_minibuffer(sp, "drop to mix file in chan %d at %.4f", chn + 1, seconds);
+    report_in_minibuffer(sp, "drop to mix file in chan %d at %.4f", cp->chan + 1, seconds);
   else report_in_minibuffer(sp, "drop to mix file at %.4f", seconds);
 }
 
@@ -182,7 +184,7 @@ static void handle_drag(Widget w, XtPointer context, XtPointer info)
     { 
     case XmCR_DROP_SITE_MOTION_MESSAGE:
       if (!is_menubar)
-	report_mouse_position_as_seconds(w, cb->x);
+	report_mouse_position_as_seconds(w, cb->x, cb->y);
       break;
     case XmCR_DROP_SITE_ENTER_MESSAGE:
       if (is_menubar)
@@ -194,7 +196,7 @@ static void handle_drag(Widget w, XtPointer context, XtPointer info)
 	  XmChangeColor(w, ss->sgx->pushed_button_color);
 	  FREE(new_title);
 	}
-      else report_mouse_position_as_seconds(w, cb->x);
+      else report_mouse_position_as_seconds(w, cb->x, cb->y);
       break;
     case XmCR_DROP_SITE_LEAVE_MESSAGE: 
       if (is_menubar)

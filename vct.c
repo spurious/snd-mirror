@@ -37,7 +37,7 @@
  *
  * The intended use is a sort of latter-day array-processing system that handles huge
  * one-dimensional vectors -- fft's, etc.  Some of these functions can be found in
- * snd-xen.c in the Snd package; others can be found in the CLM package, (clm2xen.c).
+ * the Snd package; others can be found in the CLM package (clm2xen.c).
  */
 
 #if defined(HAVE_CONFIG_H)

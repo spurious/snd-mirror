@@ -441,8 +441,9 @@ it through a mixer (a matrix, the operation being a matrix multiply).
 <pre>
   mus_any *osc;
   init_mus_module();
-  osc = mus_make_oscil(440.0,0.0);
-  if (oscil_p(osc)) fprintf(stderr,"%.3f, %.3f ",.1 * mus_oscil(osc,0.0,0.0),mus_frequency(osc));
+  osc = mus_make_oscil(440.0, 0.0);
+  if (mus_oscil_p(osc)) 
+    fprintf(stderr, "%.3f, %.3f ", .1 * mus_oscil(osc, 0.0, 0.0), mus_frequency(osc));
   mus_free(osc);
 </pre>
 </ul>

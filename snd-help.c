@@ -295,6 +295,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+12-Jun:  bess1.scm and bess1.rb from Michael Scholz.\n\
 10-Jun:  added initial-length arg to new-sound.\n\
 2-June:  debug.scm and with-sound debugger in ws.scm.\n\
 28-May:  snd 6.9.\n\

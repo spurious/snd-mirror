@@ -161,7 +161,7 @@ current frame) after a call to snd-break"
 ;  (break-local obj) shows the value of obj.\n\
 ;  (break-backtrace (full #f)) shows the backtrace at the point of the break.\n\
 ;  (break-quit) exits the current break context.\n\
-;  (break-quit!) exists all break contexts.\n\
+;  (break-quit!) exits all break contexts.\n\
 ")
 
 (define* (snd-break #:optional message)
@@ -197,7 +197,7 @@ needed information, call snd-debug first (after receiving the error)."
   (set! *stack* (fluid-ref the-last-stack)))
 
 
-;;; -------- snd-trace 
+;;; -------- snd-trace --------
 
 (defmacro snd-trace body
   "(snd-trace body) activates tracing and redirects its output to the Snd listener.  To get trace info, \

@@ -644,6 +644,7 @@ int find_free_sound_slot (snd_state *state, int desired_chans);
 int find_free_sound_slot_for_channel_display (snd_state *ss);
 snd_info *selected_sound(snd_state *ss);
 chan_info *selected_channel(snd_state *ss);
+chan_info *color_selected_channel(snd_info *sp);
 snd_info *any_selected_sound (snd_state *ss);
 chan_info *any_selected_channel(snd_info *sp);
 void select_channel(snd_info *sp, int chan);
@@ -998,6 +999,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Temp
 int make_graph(chan_info *cp, snd_info *sp, snd_state *ss);
 void reset_spectro(snd_state *state);
 void cursor_moveto (chan_info *cp, off_t samp);
+chan_info *which_channel(snd_info *sp, int y);
 
 void g_init_chn(void);
 XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp);
@@ -1254,7 +1256,7 @@ void set_mix_position_from_id(int mix_id, off_t beg);
 int mix_ok(int n);
 env **mix_panel_envs(int n);
 env *mix_panel_env(int n, int chan);
-void mix_at_x(snd_state *ss, int data, char *filename, int x);
+void mix_at_x_y(snd_state *ss, int data, char *filename, int x, int y);
 
 
 

@@ -49,9 +49,10 @@ AC_SUBST(VERSION)
 #   --with-editres 	  include EditRes in xm
 #   --with-shared-sndlib  load sndlib.so if possible
 #   --with-x11            if gtk, this also includes X funcs from xm.c
+#   --without-gsl         omit GSL even if it exists
+#   --without-fftw        omit FFTW even if it exists
 #   GUILE_CONFIG_path     where to look for guile-config
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
-#   --without-gsl --without-fftw 
 #
 # SOMEDAY: --with-static-libraries --with-static-guile
 
