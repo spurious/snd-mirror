@@ -20,9 +20,9 @@ void post_error_dialog(snd_state *ss, char *msg);
 void show_snd_errors(snd_state *ss);
 
 #ifdef __GNUC__
-  int snd_yes_or_no_p(snd_state *ss, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
+  bool snd_yes_or_no_p(snd_state *ss, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
 #else
-  int snd_yes_or_no_p(snd_state *ss, const char *format, ...);
+  bool snd_yes_or_no_p(snd_state *ss, const char *format, ...);
 #endif
 
 
@@ -177,7 +177,7 @@ void reflect_play_stop_in_popup_menu(void);
 void reflect_play_selection_stop(void);
 void g_init_gxmenu(void);
 GtkWidget *menu_widget(int which_menu);
-void check_menu_labels(int key, int state, int extended);
+void check_menu_labels(int key, int state, bool extended);
 void popup_menu_from(GtkWidget *w, GdkEventButton *ev, gpointer data, int snd, int chn);
 
 
@@ -198,7 +198,7 @@ int max_transform_type(void);
 void set_show_transform_peaks(snd_state *ss, bool val);
 void set_fft_log_magnitude(snd_state *ss, bool val);
 void set_fft_log_frequency(snd_state *ss, bool val);
-void set_transform_normalization(snd_state *ss, int val);
+void set_transform_normalization(snd_state *ss, fft_normalize_t val);
 void set_show_selection_transform(snd_state *ss, bool show);
 void set_transform_graph_type(snd_state *ss, graph_type_t val);
 
@@ -292,7 +292,7 @@ void set_foreground_color(chan_info *cp, axis_context *ax, GdkColor *color);
 GdkGC *copy_GC(chan_info *cp);
 GdkGC *erase_GC(chan_info *cp);
 void cleanup_cw(chan_info *cp);
-void change_channel_style(snd_info *sp, int new_style);
+void change_channel_style(snd_info *sp, channel_style_t new_style);
 
 void g_init_gxchn(void);
 
@@ -478,7 +478,7 @@ GtkWidget *create_envelope_editor (snd_state *ss);
 void set_enved_clip_p(snd_state *ss, bool val);
 void set_enved_exp_p(snd_state *ss, bool val);
 void set_enved_base(snd_state *ss, Float val);
-void set_enved_target(snd_state *ss, int val);
+void set_enved_target(snd_state *ss, enved_target_t val);
 void set_enved_wave_p(snd_state *ss, bool val);
 void set_enved_in_dB(snd_state *ss, bool val);
 int enved_dialog_is_active(void);

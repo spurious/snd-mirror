@@ -3,7 +3,7 @@
 
 ;;; this is used by index.cl to create index.scm 
 
-(use-modules (ice-9 popen) (ice-9 format))
+(use-modules (ice-9 format) (ice-9 popen))
 
 (define (shell cmd)
   (with-output-to-string

@@ -476,7 +476,7 @@ static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer i
 static int just_sounds_state = 0;
 
 static file_dialog_info *make_file_dialog(snd_state *ss, bool read_only, char *title, 
-					  char *select_title, int which_dialog, XtCallbackProc file_ok_proc)
+					  char *select_title, snd_dialog_t which_dialog, XtCallbackProc file_ok_proc)
 {
   Widget w;
   file_dialog_info *fd;

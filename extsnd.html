@@ -9391,8 +9391,8 @@ See <a href="#xcursor">x-cursor</a> or
 <tr><td width=50></td><td>
 draw axes in the widget <i>wid</i>, using the graphics context <i>gc</i>, with the x-axis label <i>label</i>
 going from <i>x0</i> to <i>x1</i> (floats) along the x axis, <i>y0</i> to <i>y1</i> along the y axis, with x-axis-style
-<i>style</i> (x-axis-in-seconds etc); whether the axes are actually displayed or just implied
-depends on <i>axes</i>. Return a list of the actual (pixel) axis bounds.  See the scanned-synthesis display code in snd-motif.scm,
+<i>style</i> (x-axis-in-seconds etc); which axes are actually displayed or just implied
+depends on <i>axes</i> (it defaults to <i>show-all-axes</i>). Return a list of the actual (pixel) axis bounds.  See the scanned-synthesis display code in snd-motif.scm,
 or the local envelope editor code in xm-enved.scm.
 </td></tr><tr><td colspan=2></td></tr>
 

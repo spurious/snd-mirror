@@ -478,7 +478,7 @@ static void help_recording_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK("H
 static void help_news_callback (GtkWidget *w, gpointer cD) {IF_MENU_HOOK("Help", "News") news_help((snd_state *)cD);}
 
 
-void check_menu_labels(int key, int state, int extended) {}
+void check_menu_labels(int key, int state, bool extended) {}
 
 
 /* -------------------------------- MAIN MENU -------------------------------- */

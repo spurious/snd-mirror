@@ -1364,6 +1364,21 @@ char *strdup (const char *str)
 }
 #endif
 
+#if (defined(HAVE_CONFIG_H) && (!HAVE_FILENO))
+/* this is needed by XtAppAddInput */
+int fileno(FILE *fp)
+{
+  if (fp == stdout)
+    return(0);
+  else
+    {
+      if (fp == stdin)
+	return(1);
+    }
+  return(2);
+}
+#endif
+
 #ifdef MACOS
 /* realloc replacement, thanks to Michael Klingbeil */
 Ptr NewPtr_realloc(Ptr p, Size newSize)
@@ -1457,7 +1472,11 @@ char *mus_expand_filename(const char *filename)
     }
   else strcpy(file_name_buf, tok);
 #endif
+#if defined(MPW_C)
+  FREE(orig); /* strdup -> MALLOC in MPW */
+#else
   free(orig);
+#endif
 #if DEBUG_MEMORY
   return(copy_string(file_name_buf));
 #else

@@ -338,13 +338,13 @@ static void logfreq_callback(Widget w, XtPointer context, XtPointer info)
 
 static void chans_transform_normalization(chan_info *cp, void *ptr) 
 {
-  cp->transform_normalization = (*((int *)ptr)); 
+  cp->transform_normalization = (*((fft_normalize_t *)ptr)); 
   cp->fft_changed = FFT_CHANGE_LOCKED;
 }
 
 static void normalize_callback(Widget w, XtPointer context, XtPointer info)
 {
-  int choice;
+  fft_normalize_t choice;
   snd_state *ss = (snd_state *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
@@ -936,7 +936,7 @@ Widget fire_up_transform_dialog(snd_state *ss, bool managed)
       XmToggleButtonSetState(peaks_button, (Boolean)(show_transform_peaks(ss)), false);
       XmToggleButtonSetState(db_button, (Boolean)(fft_log_magnitude(ss)), false);
       XmToggleButtonSetState(logfreq_button, (Boolean)(fft_log_frequency(ss)), false);
-      XmToggleButtonSetState(normalize_button, (Boolean)(transform_normalization(ss)), false);
+      XmToggleButtonSetState(normalize_button, (Boolean)(transform_normalization(ss) != DONT_NORMALIZE), false);
       XmToggleButtonSetState(selection_button, (Boolean)(show_selection_transform(ss)), false);
 
       /* select current list choices */
@@ -1109,12 +1109,12 @@ void set_fft_log_magnitude(snd_state *ss, bool val)
     for_each_chan(ss, calculate_fft);
 }
 
-void set_transform_normalization(snd_state *ss, int val)
+void set_transform_normalization(snd_state *ss, fft_normalize_t val)
 {
   in_set_transform_normalization(ss, val);
   for_each_chan_1(ss, chans_transform_normalization, (void *)(&val));
   if (transform_dialog) 
-    set_toggle_button(normalize_button, val, false, (void *)ss);
+    set_toggle_button(normalize_button, (val != DONT_NORMALIZE), false, (void *)ss);
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, calculate_fft);
 }

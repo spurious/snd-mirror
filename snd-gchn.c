@@ -961,9 +961,10 @@ void cleanup_cw(chan_info *cp)
     }
 }
 
-void change_channel_style(snd_info *sp, int new_style)
+void change_channel_style(snd_info *sp, channel_style_t new_style)
 {
-  int i, old_style;
+  int i;
+  channel_style_t old_style;
   snd_state *ss;
   chan_info *ncp, *cp, *pcp;
   int height[1];

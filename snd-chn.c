@@ -145,11 +145,11 @@ static void set_show_mix_waveforms(snd_state *ss, bool val)
 
 static void chans_show_axes(chan_info *cp, void *ptr) 
 {
-  cp->show_axes = (*((int *)ptr)); 
+  cp->show_axes = (*((show_axes_t *)ptr)); 
   update_graph(cp); 
 }
 
-static void set_show_axes(snd_state *ss, int val) 
+static void set_show_axes(snd_state *ss, show_axes_t val) 
 {
   in_set_show_axes(ss, val); 
   for_each_chan_1(ss, chans_show_axes, (void *)(&val));
@@ -208,7 +208,7 @@ void combine_sound(snd_info *sp) {change_channel_style(sp, CHANNELS_COMBINED);}
 void superimpose_sound(snd_info *sp) {change_channel_style(sp, CHANNELS_SUPERIMPOSED);}
 void separate_sound(snd_info *sp) {change_channel_style(sp, CHANNELS_SEPARATE);}
 
-void set_sound_channel_style(snd_info *sp, int val)
+void set_sound_channel_style(snd_info *sp, channel_style_t val)
 {
   switch (val)
     {
@@ -388,7 +388,7 @@ void update_graph(chan_info *cp)
 
 static XEN initial_graph_hook;
 
-void add_channel_data_1(chan_info *cp, int srate, off_t frames, int graphed)
+void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t graphed)
 {
   /* initialize channel, including edit/sound lists */
   axis_info *ap;
@@ -517,7 +517,7 @@ void start_amp_env(chan_info *cp)
     }
 }
 
-void add_channel_data(char *filename, chan_info *cp, int graphed)
+void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed)
 {
   int fd, chn = 0;
   off_t frames;
@@ -2091,7 +2091,7 @@ void reset_spectro(snd_state *ss)
 
 static void display_channel_time_data(chan_info *cp, snd_info *sp, snd_state *ss);
 static void display_channel_lisp_data(chan_info *cp, snd_info *sp, snd_state *ss);
-static void make_axes(chan_info *cp, axis_info *ap, int x_style, bool erase_first);
+static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool erase_first);
 #define DONT_CLEAR_GRAPH false
 #define CLEAR_GRAPH true
 
@@ -2838,7 +2838,7 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss, XEN pixe
     }
 }
 
-static void make_axes(chan_info *cp, axis_info *ap, int x_style, bool erase_first)
+static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool erase_first)
 {
   snd_info *sp;
   axis_context *ax;
@@ -3262,7 +3262,7 @@ static void draw_graph_cursor(chan_info *cp)
   cp->cursor_visible = true;
 }
 
-int cursor_decision(chan_info *cp)
+kbd_cursor_t cursor_decision(chan_info *cp)
 {
   off_t len;
   len = CURRENT_SAMPLES(cp);
@@ -3291,7 +3291,7 @@ int cursor_decision(chan_info *cp)
   return(CURSOR_IN_VIEW);
 }
 
-void handle_cursor(chan_info *cp, int redisplay)
+void handle_cursor(chan_info *cp, kbd_cursor_t redisplay)
 {
   axis_info *ap;
   axis_context *ax;
@@ -3326,6 +3326,8 @@ void handle_cursor(chan_info *cp, int redisplay)
 	      break;
 	    case CURSOR_IN_MIDDLE: 
 	      gx = (double)(CURSOR(cp)) / (double)SND_SRATE(sp) - ap->zx * 0.5 * ap->x_ambit; 
+	      break;
+	    default:
 	      break;
 	    }
 	  if (gx < 0.0) gx = 0.0;
@@ -4173,7 +4175,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Temp
 }
 
 
-axis_context *set_context (chan_info *cp, int gc)
+axis_context *set_context (chan_info *cp, chan_gc_t gc)
 {
   axis_context *ax;
   state_context *sx;
@@ -4303,7 +4305,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, int fld, char *caller)
 	    case CP_AP_HISAMP:               if (cp->axis) return(C_TO_XEN_OFF_T((cp->axis)->hisamp));         break;
 	    case CP_SQUELCH_UPDATE:          return(C_TO_XEN_BOOLEAN(cp->squelch_update));                     break;
 	    case CP_CURSOR_SIZE:             return(C_TO_XEN_INT(cp->cursor_size));                            break;
-	    case CP_CURSOR_STYLE:            return(C_TO_XEN_INT(cp->cursor_style));                           break;
+	    case CP_CURSOR_STYLE:            return(C_TO_XEN_INT((int)(cp->cursor_style)));                    break;
 	    case CP_EDIT_HOOK:               return(cp->edit_hook);                                            break;
 	    case CP_AFTER_EDIT_HOOK:         return(cp->after_edit_hook);                                      break;
 	    case CP_UNDO_HOOK:               return(cp->undo_hook);                                            break;
@@ -4324,14 +4326,14 @@ static XEN channel_get(XEN snd_n, XEN chn_n, int fld, char *caller)
 	    case CP_TRANSFORM_GRAPH_TYPE:    return(C_TO_XEN_INT((int)(cp->transform_graph_type)));            break;
 	    case CP_FFT_WINDOW:              return(C_TO_XEN_INT(cp->fft_window));                             break;
 	    case CP_TRANSFORM_TYPE:          return(C_TO_XEN_INT(cp->transform_type));                         break;
-	    case CP_TRANSFORM_NORMALIZATION: return(C_TO_XEN_INT(cp->transform_normalization));                break;
+	    case CP_TRANSFORM_NORMALIZATION: return(C_TO_XEN_INT((int)(cp->transform_normalization)));         break;
 	    case CP_SHOW_MIX_WAVEFORMS:      return(C_TO_XEN_BOOLEAN(cp->show_mix_waveforms));                 break;
 	    case CP_TIME_GRAPH_STYLE:        return(C_TO_XEN_INT(cp->time_graph_style));                       break;
 	    case CP_LISP_GRAPH_STYLE:        return(C_TO_XEN_INT(cp->lisp_graph_style));                       break;
 	    case CP_TRANSFORM_GRAPH_STYLE:   return(C_TO_XEN_INT(cp->transform_graph_style));                  break;
-	    case CP_X_AXIS_STYLE:            return(C_TO_XEN_INT(cp->x_axis_style));                           break;
+	    case CP_X_AXIS_STYLE:            return(C_TO_XEN_INT((int)(cp->x_axis_style)));                    break;
 	    case CP_DOT_SIZE:                return(C_TO_XEN_INT(cp->dot_size));                               break;
-	    case CP_SHOW_AXES:               return(C_TO_XEN_INT(cp->show_axes));                              break;
+	    case CP_SHOW_AXES:               return(C_TO_XEN_INT((int)(cp->show_axes)));                       break;
 	    case CP_GRAPHS_HORIZONTAL:       return(C_TO_XEN_BOOLEAN(cp->graphs_horizontal));                  break;
 	    case CP_CURSOR_POSITION:         return(XEN_LIST_2(C_TO_XEN_INT(cp->cx), C_TO_XEN_INT(cp->cy)));   break;
 	    case CP_EDPOS_FRAMES:            return(C_TO_XEN_OFF_T(to_c_edit_samples(cp, cp_edpos, caller, 3))); break;
@@ -4550,11 +4552,11 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
 	      snd_unprotect(cp->cursor_proc);
 	      cp->cursor_proc = XEN_UNDEFINED;
 	    }
-	  cp->cursor_style = XEN_TO_C_INT(on); /* range already checked */
+	  cp->cursor_style = (cursor_style_t)XEN_TO_C_INT(on); /* range already checked */
 	}
       cp->just_zero = (cp->cursor_style == CURSOR_LINE); /* no point in displaying y value in this case */
       update_graph(cp); 
-      return(C_TO_XEN_INT(cp->cursor_style));
+      return(C_TO_XEN_INT((int)(cp->cursor_style)));
       break;
     case CP_SHOW_Y_ZERO:
       cp->show_y_zero = XEN_TO_C_BOOLEAN(on); 
@@ -4640,9 +4642,9 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       return(C_TO_XEN_INT(cp->transform_type));
       break;
     case CP_TRANSFORM_NORMALIZATION:      
-      cp->transform_normalization = XEN_TO_SMALL_C_INT(on); /* range already checked */
+      cp->transform_normalization = (fft_normalize_t)XEN_TO_SMALL_C_INT(on); /* range already checked */
       calculate_fft(cp); 
-      return(C_TO_XEN_INT(cp->transform_normalization));
+      return(C_TO_XEN_INT((int)(cp->transform_normalization)));
       break;
     case CP_SHOW_MIX_WAVEFORMS: 
       cp->show_mix_waveforms = XEN_TO_C_BOOLEAN(on); 
@@ -4667,7 +4669,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
     case CP_X_AXIS_STYLE:
       val = XEN_TO_C_INT(on); /* range already checked */
       chans_x_axis_style(cp, (void *)(&val));
-      return(C_TO_XEN_INT(cp->x_axis_style));
+      return(C_TO_XEN_INT((int)(cp->x_axis_style)));
       break;
     case CP_DOT_SIZE:
       cp->dot_size = g_imin(0, on, DEFAULT_DOT_SIZE); 
@@ -4675,9 +4677,9 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       return(C_TO_XEN_INT(cp->dot_size));
       break;
     case CP_SHOW_AXES:
-      cp->show_axes = XEN_TO_C_INT(on); /* range checked already */
+      cp->show_axes = (show_axes_t)XEN_TO_C_INT(on); /* range checked already */
       update_graph(cp); 
-      return(C_TO_XEN_INT(cp->show_axes));
+      return(C_TO_XEN_INT((int)(cp->show_axes)));
       break;
     case CP_GRAPHS_HORIZONTAL:
       cp->graphs_horizontal = XEN_TO_C_BOOLEAN(on); 
@@ -4936,11 +4938,11 @@ cursor-context whenever it is called."
 
 static XEN g_set_cursor_style(XEN on, XEN snd_n, XEN chn_n) 
 {
-  int val;
+  cursor_style_t val;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(on) || XEN_PROCEDURE_P(on), on, XEN_ARG_1, S_setB S_cursor_style, "an integer");
   if (XEN_INTEGER_P(on))
     {
-      val = XEN_TO_C_INT(on);
+      val = (cursor_style_t)XEN_TO_C_INT(on);
       if ((val < CURSOR_CROSS) || (val > CURSOR_LINE))
 	XEN_OUT_OF_RANGE_ERROR(S_setB S_cursor_style, 1, on, "~A, but must be " S_cursor_cross " or " S_cursor_line ", or a procedure");
     }
@@ -5835,15 +5837,15 @@ decides whether spectral data is normalized before display (default: " S_normali
 
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_TRANSFORM_NORMALIZATION, S_transform_normalization));
-  return(C_TO_XEN_INT(transform_normalization(get_global_state())));
+  return(C_TO_XEN_INT((int)transform_normalization(get_global_state())));
 }
 
 static XEN g_set_transform_normalization(XEN val, XEN snd, XEN chn)
 {
   snd_state *ss;
-  int norm;
+  fft_normalize_t norm;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_setB S_transform_normalization, "an integer");
-  norm = XEN_TO_C_INT(val);
+  norm = (fft_normalize_t)XEN_TO_C_INT(val);
   if ((norm < DONT_NORMALIZE) || (norm > NORMALIZE_GLOBALLY))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_normalization, 1, val, 
 			   "~A, but must be " S_dont_normalize ", " S_normalize_by_channel ", " S_normalize_by_sound ", or " S_normalize_globally);
@@ -5853,7 +5855,7 @@ static XEN g_set_transform_normalization(XEN val, XEN snd, XEN chn)
     {
       ss = get_global_state();
       set_transform_normalization(ss, norm);
-      return(C_TO_XEN_INT(transform_normalization(ss)));
+      return(C_TO_XEN_INT((int)transform_normalization(ss)));
     }
 }
 
@@ -6018,15 +6020,15 @@ percentage of the overall duration (" S_x_axis_as_percentage "), or as a beat nu
 
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_X_AXIS_STYLE, S_x_axis_style));
-  return(C_TO_XEN_INT(x_axis_style(get_global_state())));
+  return(C_TO_XEN_INT((int)x_axis_style(get_global_state())));
 }
 
 static XEN g_set_x_axis_style(XEN style, XEN snd, XEN chn)
 {
   snd_state *ss;
-  int val;
+  x_axis_style_t val;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, S_setB S_x_axis_style, "an integer"); 
-  val = XEN_TO_C_INT(style);
+  val = (x_axis_style_t)XEN_TO_C_INT(style);
   if ((val < X_AXIS_IN_SECONDS) || (val > X_AXIS_IN_BEATS))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_x_axis_style, 1, style, 
 			   "~A, but must be " S_x_axis_in_seconds ", " S_x_axis_in_samples ", " S_x_axis_as_percentage ", or " S_x_axis_in_beats);
@@ -6037,7 +6039,7 @@ static XEN g_set_x_axis_style(XEN style, XEN snd, XEN chn)
       ss = get_global_state();
       set_x_axis_style(ss, val);
       /* snd-menu.c -- maps over chans */
-      return(C_TO_XEN_INT(x_axis_style(ss)));
+      return(C_TO_XEN_INT((int)x_axis_style(ss)));
     }
 }
 
@@ -6078,15 +6080,15 @@ The other choice is " S_show_no_axes "."
 
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SHOW_AXES, S_show_axes));
-  return(C_TO_XEN_INT(show_axes(get_global_state())));
+  return(C_TO_XEN_INT((int)show_axes(get_global_state())));
 }
 
 static XEN g_set_show_axes(XEN on, XEN snd, XEN chn)
 {
   snd_state *ss;
-  int val;
+  show_axes_t val;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(on), on, XEN_ARG_1, S_setB S_show_axes, "an integer");
-  val = XEN_TO_C_INT(on);
+  val = (show_axes_t)XEN_TO_C_INT(on);
   if ((val < SHOW_NO_AXES) || (val > SHOW_X_AXIS))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_show_axes, 1, on, "~A, but must be " S_show_all_axes ", " S_show_x_axis ", or " S_show_no_axes);
   if (XEN_BOUND_P(snd))
@@ -6095,7 +6097,7 @@ static XEN g_set_show_axes(XEN on, XEN snd, XEN chn)
     {
       ss = get_global_state();
       set_show_axes(ss, val);
-      return(C_TO_XEN_INT(show_axes(ss)));
+      return(C_TO_XEN_INT((int)show_axes(ss)));
     }
 }
 

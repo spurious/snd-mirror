@@ -151,7 +151,7 @@ void snd_file_bomb_icon(snd_info *sp, bool on)
     }
 }
 
-static void snd_file_glasses_icon(snd_info *sp, int on, int glass)
+static void snd_file_glasses_icon(snd_info *sp, bool on, int glass)
 {
   snd_state *ss;
   ss = get_global_state();
@@ -331,8 +331,8 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
   snd_info *sp = (snd_info *)data;
   chan_info *cp;
   snd_state *ss;
-  int on;
-  on = (GTK_TOGGLE_BUTTON(w)->active);
+  bool on;
+  on = (bool)(GTK_TOGGLE_BUTTON(w)->active);
   if (sp->playing) 
     stop_playing_sound_no_toggle(sp);
   if (sp->cursor_follows_play != FOLLOW_ALWAYS)         /* can be set in init file */
@@ -457,9 +457,10 @@ static gboolean unite_button_callback(GtkWidget *w, GdkEventButton *ev, gpointer
 
 static void unite_button_click(GtkWidget *w, gpointer data)
 {
-  int val, on;
+  channel_style_t val;
+  bool on;
   snd_info *sp = (snd_info *)data;
-  on = (GTK_TOGGLE_BUTTON(w)->active);
+  on = (bool)(GTK_TOGGLE_BUTTON(w)->active);
   if (on)
     {
       if (last_combine_state & (snd_ControlMask | snd_MetaMask)) 

@@ -259,7 +259,7 @@ static void play_selected_callback(GtkWidget *w, gpointer data)
   else file_dialog_stop_playing(fd);
 }
 
-static file_dialog_info *make_file_dialog(snd_state *ss, int read_only, char *title, int which_dialog, 
+static file_dialog_info *make_file_dialog(snd_state *ss, int read_only, char *title, snd_dialog_t which_dialog, 
 					  GtkSignalFunc file_ok_proc,
 					  GtkSignalFunc file_delete_proc,
 					  GtkSignalFunc file_dismiss_proc)

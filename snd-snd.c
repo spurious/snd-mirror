@@ -1092,7 +1092,7 @@ static Float rat_values[] = {
   4.5, 4.8, 5.0, 5.3333335, 6.0, 6.4, 6.6666665, 7.0, 8.0, 9.0, 9.6, 10.0, 10.666667, 12.0, 12.8, 13.333333, 
   14.0, 16.0, 18.0, 19.2, 20.0};
 
-Float srate_changed(Float val, char *srcbuf, int style, int tones)
+Float srate_changed(Float val, char *srcbuf, speed_style_t style, int tones)
 {
   char *sfs;
   int semi, i, j;
@@ -1151,7 +1151,7 @@ char *shortname_indexed(snd_info *sp)
   return(shortname(sp));
 }
 
-void add_sound_data(char *filename, snd_info *sp, int graphed)
+void add_sound_data(char *filename, snd_info *sp, channel_graph_t graphed)
 {
   int i;
   for (i = 0; i < sp->nchans; i++) 
@@ -1816,10 +1816,10 @@ static void set_speed_tones(snd_state *ss, int val)
 
 static void map_sounds_speed_style(snd_info *sp, void *val) 
 {
-  sp->speed_control_style = (*((int *)val)); 
+  sp->speed_control_style = (*((speed_style_t *)val)); 
 }
 
-void set_speed_style(snd_state *ss, int val) 
+void set_speed_style(snd_state *ss, speed_style_t val) 
 {
   in_set_speed_control_style(ss, val); 
   for_each_sound(ss, map_sounds_speed_style, (void *)(&val));
@@ -1986,7 +1986,7 @@ static XEN sound_get(XEN snd_n, int fld, char *caller, bool just_sound)
     case SP_CURSOR_FOLLOWS_PLAY: return(C_TO_XEN_BOOLEAN(sp->cursor_follows_play));    break;
     case SP_SHOW_CONTROLS:       if (!(IS_PLAYER(sp))) return(C_TO_XEN_BOOLEAN(control_panel_open(sp))); break;
     case SP_SPEED_TONES:         return(C_TO_XEN_INT(sp->speed_control_tones));        break;
-    case SP_SPEED_STYLE:         return(C_TO_XEN_INT(sp->speed_control_style));        break;
+    case SP_SPEED_STYLE:         return(C_TO_XEN_INT((int)(sp->speed_control_style))); break;
     case SP_COMMENT:             return(C_TO_XEN_STRING(sp->hdr->comment));            break;
     case SP_PROPERTIES:
       if (!(IS_PLAYER(sp))) 
@@ -2106,7 +2106,7 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
 	sp->speed_control_tones = DEFAULT_SPEED_CONTROL_TONES;
       break;
     case SP_SPEED_STYLE:
-      sp->speed_control_style = XEN_TO_C_INT(val); /* range checked already */
+      sp->speed_control_style = (speed_style_t)XEN_TO_C_INT(val); /* range checked already */
       break;
     case SP_SRATE:
       if (!(IS_PLAYER(sp))) 
@@ -2456,20 +2456,20 @@ static XEN g_channel_style(XEN snd)
   sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_channel_style, snd));
-  return(C_TO_XEN_INT(sp->channel_style));
+  return(C_TO_XEN_INT((int)(sp->channel_style)));
 }
 
 static XEN g_set_channel_style(XEN style, XEN snd) 
 {
   snd_state *ss;
   snd_info *sp;
-  int new_style = CHANNELS_SEPARATE;
+  channel_style_t new_style = CHANNELS_SEPARATE;
   #define H_channel_style "(" S_channel_style " (snd #f)): how multichannel sounds lay out the channels. \
 Default is " S_channels_separate ", other values are " S_channels_combined " and " S_channels_superimposed ". \
 As a global (if the 'snd' arg is omitted), it is the default setting for each sound's 'unite' button."
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, S_setB S_channel_style, "an integer or boolean"); 
-  new_style = XEN_TO_C_INT(style);
+  new_style = (channel_style_t)XEN_TO_C_INT(style);
   if ((new_style < CHANNELS_SEPARATE) || (new_style > CHANNELS_SUPERIMPOSED))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_channel_style, 1, style, "~A, but must be " S_channels_separate ", " S_channels_combined ", or " S_channels_superimposed);
   if (XEN_NOT_BOUND_P(snd))
@@ -2483,7 +2483,7 @@ As a global (if the 'snd' arg is omitted), it is the default setting for each so
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_setB S_channel_style, snd));
   set_sound_channel_style(sp, new_style);
-  return(C_TO_XEN_INT(sp->channel_style));
+  return(C_TO_XEN_INT((int)(sp->channel_style)));
 }
 
 WITH_REVERSED_BOOLEAN_ARGS(g_set_channel_style_reversed, g_set_channel_style)
@@ -3011,15 +3011,15 @@ static XEN g_speed_control_style(XEN snd)
   #define H_speed_control_style "(" S_speed_control_style " (snd #t)): speed control panel interpretation choice (" S_speed_control_as_float ")"
   if (XEN_BOUND_P(snd))
     return(sound_get(snd, SP_SPEED_STYLE, S_speed_control_style, NO_MIX));
-  return(C_TO_XEN_INT(speed_control_style(get_global_state())));
+  return(C_TO_XEN_INT((int)speed_control_style(get_global_state())));
 }
 
 static XEN g_set_speed_control_style(XEN speed, XEN snd) 
 {
   snd_state *ss;
-  int spd;
+  speed_style_t spd;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(speed), speed, XEN_ARG_1, S_setB S_speed_control_style, "an integer"); 
-  spd = XEN_TO_C_INT(speed);
+  spd = (speed_style_t)XEN_TO_C_INT(speed);
   if ((spd < SPEED_CONTROL_AS_FLOAT) || (spd > SPEED_CONTROL_AS_SEMITONE))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_speed_control_style, 
 			   1, speed, 
@@ -3030,7 +3030,7 @@ static XEN g_set_speed_control_style(XEN speed, XEN snd)
     {
       ss = get_global_state();
       activate_speed_in_menu(ss, spd);
-      return(C_TO_XEN_INT(speed_control_style(ss)));
+      return(C_TO_XEN_INT((int)speed_control_style(ss)));
     }
 }
 
@@ -3320,7 +3320,7 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
   snd_info *sp;
   snd_state *ss;
   apply_state *ap;
-  int cur_choice;
+  snd_apply_t cur_choice;
   ASSERT_JUST_SOUND(S_apply_controls, snd, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(choice), choice, XEN_ARG_2, S_apply_controls, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg), beg, XEN_ARG_3, S_apply_controls, "an integer");
@@ -3331,8 +3331,8 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
       ss = sp->state;
       if (XEN_OFF_T_P(beg)) apply_beg = XEN_TO_C_OFF_T(beg); else apply_beg = 0;
       if (XEN_OFF_T_P(dur)) apply_dur = XEN_TO_C_OFF_T(dur); else apply_dur = 0;
-      cur_choice = XEN_TO_C_INT_OR_ELSE(choice, 0);
-      if ((cur_choice < 0) || (cur_choice > 2))
+      cur_choice = (snd_apply_t)XEN_TO_C_INT_OR_ELSE(choice, APPLY_TO_SOUND);
+      if ((cur_choice < APPLY_TO_SOUND) || (cur_choice > APPLY_TO_SELECTION))
 	XEN_OUT_OF_RANGE_ERROR(S_apply_controls, 2, choice, "~A, but must be 0=sound, 1=channel, or 2=selection");
       ss->apply_choice = cur_choice;
       sp->applying = true;

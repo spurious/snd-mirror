@@ -1,11 +1,11 @@
 #include "snd.h"
 
-void check_menu_labels(int key, int state, int extended) {}
+void check_menu_labels(int key, int state, bool extended) {}
 int add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, widget_t main, int arrows, bool with_events) {return(0);}
 int snd_help(snd_state *ss, const char *subject, const char *help, bool with_wrap) {fprintf(stdout, help); return(0);}
 void add_to_error_history(snd_state *ss, char *msg, bool popup) {}
 void post_error_dialog(snd_state *ss, char *msg) {}
-int snd_yes_or_no_p(snd_state *ss, char *format, ...) {return(0);}
+bool snd_yes_or_no_p(snd_state *ss, char *format, ...) {return(0);}
 void draw_line (axis_context *ax, int x0, int y0, int x1, int y1) {}
 void fill_rectangle (axis_context *ax, int x0, int y0, int width, int height) {}
 void fill_polygon(axis_context *ax, int points, ...) {}
@@ -122,7 +122,7 @@ int transform_dialog_is_active(void) {return(0);}
 void set_show_transform_peaks(snd_state *ss, bool val) {}
 void set_fft_log_magnitude(snd_state *ss, bool val) {}
 void set_fft_log_frequency(snd_state *ss, bool val) {}
-void set_transform_normalization(snd_state *ss, int val) {}
+void set_transform_normalization(snd_state *ss, fft_normalize_t val) {}
 void set_show_selection_transform(snd_state *ss, bool show) {}
 void reflect_regions_in_region_browser(void) {}
 void reflect_no_regions_in_region_browser(void) {}
@@ -185,7 +185,7 @@ void set_tiny_numbers_font(chan_info *cp) {}
 color_t get_foreground_color(chan_info *cp, axis_context *ax) {return(0);}
 color_t get_background_color(chan_info *cp, axis_context *ax) {return(0);}
 void set_foreground_color(chan_info *cp, axis_context *ax, int color) {}
-void change_channel_style(snd_info *sp, int new_style) {}
+void change_channel_style(snd_info *sp, channel_style_t new_style) {}
 void reflect_amp_env_in_progress(snd_info *sp) {}
 void cleanup_cw(chan_info *cp) {}
 void clear_deleted_snd_info(void *fd) {}
@@ -259,7 +259,7 @@ int create_envelope_editor (snd_state *ss) {return(0);}
 void set_enved_clip_p(snd_state *ss, bool val) {}
 void set_enved_exp_p(snd_state *ss, bool val) {}
 void set_enved_base(snd_state *ss, Float val) {}
-void set_enved_target(snd_state *ss, int val) {}
+void set_enved_target(snd_state *ss, enved_target_t val) {}
 void set_enved_wave_p(snd_state *ss, bool val) {}
 void set_enved_in_dB(snd_state *ss, bool val) {}
 int enved_dialog_is_active(void) {return(0);}
@@ -303,7 +303,7 @@ void set_transform_size(snd_state *ss, int val) {in_set_transform_size(ss, val);
 void set_fft_window(snd_state *ss, int val) {in_set_fft_window(ss, val);}
 void set_transform_type(snd_state *ss, int val) {in_set_transform_type(ss, val);}
 void set_wavelet_type(snd_state *ss, int val) {in_set_wavelet_type(ss, val);}
-void set_transform_graph_type(snd_state *ss, int val) {in_set_transform_graph_type(ss, val);}
+void set_transform_graph_type(snd_state *ss, graph_type_t val) {in_set_transform_graph_type(ss, val);}
 void set_snd_amp(snd_info *sp, Float val) {sp->amp_control = val;}
 void set_snd_expand(snd_info *sp, Float val) {sp->expand_control = val;}
 void set_snd_contrast(snd_info *sp, Float val) {sp->contrast_control = val;}

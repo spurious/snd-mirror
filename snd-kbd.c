@@ -282,19 +282,19 @@ static void set_keymap_entry(int key, int state, int args, XEN func, bool cx_ext
 
 static void call_user_keymap(int hashedsym, int count)
 {
-  int res = KEYBOARD_NO_ACTION;
+  kbd_cursor_t res = KEYBOARD_NO_ACTION;
   /* if guile call the associated scheme code, else see if basic string parser can handle it */
   if (XEN_BOUND_P(user_keymap[hashedsym].func))
     {
       /* not _NO_CATCH here because the code is not protected at any higher level */
       if (user_keymap[hashedsym].args == 0)
-	res = XEN_TO_C_INT_OR_ELSE(XEN_CALL_0(user_keymap[hashedsym].func, 
-					      user_keymap[hashedsym].origin), 
-				   KEYBOARD_NO_ACTION);
-      else res = XEN_TO_C_INT_OR_ELSE(XEN_CALL_1(user_keymap[hashedsym].func, 
-						 C_TO_XEN_INT(count), 
-						 user_keymap[hashedsym].origin),
-				      KEYBOARD_NO_ACTION);
+	res = (kbd_cursor_t)XEN_TO_C_INT_OR_ELSE(XEN_CALL_0(user_keymap[hashedsym].func, 
+							    user_keymap[hashedsym].origin), 
+						 KEYBOARD_NO_ACTION);
+      else res = (kbd_cursor_t)XEN_TO_C_INT_OR_ELSE(XEN_CALL_1(user_keymap[hashedsym].func, 
+							       C_TO_XEN_INT(count), 
+							       user_keymap[hashedsym].origin),
+						    KEYBOARD_NO_ACTION);
     }
   handle_cursor(selected_channel(get_global_state()), res);
 }

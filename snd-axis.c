@@ -165,7 +165,7 @@ void init_axis_scales(axis_info *ap)
   ap->y_base = (Float)(ap->y_axis_y0 - ap->y0 * ap->y_scale);
 }
 
-static Locus tick_grf_x(double val, axis_info *ap, int style, int srate)
+static Locus tick_grf_x(double val, axis_info *ap, x_axis_style_t style, int srate)
 {
   int res = 0;
   switch (style)
@@ -286,7 +286,7 @@ void reload_number_font(snd_state *ss)
   #define X_NUMBERS_OFFSET -5
 #endif
 
-void make_axes_1(axis_info *ap, int x_style, int srate, int axes, bool printing, bool show_x_axis)
+void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t axes, bool printing, bool show_x_axis)
 {
   snd_state *ss;
   Latus width, height;
@@ -1041,10 +1041,10 @@ x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset label)"
 #if (!USE_NO_GUI)
 static XEN g_draw_axes(XEN args)
 {
-  #define H_draw_axes "(" S_draw_axes " wid gc label (x0 0.0) (x1 1.0) (y0 -1.0) (y1 1.0) (style " S_x_axis_in_seconds ") (axes #t)): draws axes \
-in the widget 'wid', using the graphics context 'gc', with the x-axis label 'label' \
+  #define H_draw_axes "(" S_draw_axes " wid gc label (x0 0.0) (x1 1.0) (y0 -1.0) (y1 1.0) (style " S_x_axis_in_seconds ") (axes " S_show_all_axes ")): \
+draws axes in the widget 'wid', using the graphics context 'gc', with the x-axis label 'label' \
 going from x0 to x1 (floats) along the x axis, y0 to y1 along the y axis, with x-axis-style \
-'style' (" S_x_axis_in_seconds " etc); the axes are actually displayed if 'axes' is #t.\
+'style' (" S_x_axis_in_seconds " etc); the axes are actually displayed if 'axes' is " S_show_all_axes ".\
 Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   XEN val;
 #if USE_MOTIF
@@ -1055,7 +1055,8 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   char *xlabel; 
   double x0 = 0.0; double x1 = 1.0; 
   Float y0 = -1.0; Float y1 = 1.0; 
-  int x_style = X_AXIS_IN_SECONDS; int axes = 1;
+  x_axis_style_t x_style = X_AXIS_IN_SECONDS;
+  show_axes_t axes = SHOW_ALL_AXES;
   axis_context *ax;
   axis_info *ap;
   int len;
@@ -1073,8 +1074,8 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   if (len > 4) x1 = XEN_TO_C_DOUBLE(XEN_LIST_REF(args, 4));
   if (len > 5) y0 = XEN_TO_C_DOUBLE(XEN_LIST_REF(args, 5));
   if (len > 6) y1 = XEN_TO_C_DOUBLE(XEN_LIST_REF(args, 6));
-  if (len > 7) x_style = XEN_TO_C_INT(XEN_LIST_REF(args, 7));
-  if (len > 8) axes = XEN_TO_C_BOOLEAN(XEN_LIST_REF(args, 8));
+  if (len > 7) x_style = (x_axis_style_t)XEN_TO_C_INT(XEN_LIST_REF(args, 7));
+  if (len > 8) axes = (show_axes_t)XEN_TO_C_INT(XEN_LIST_REF(args, 8)); /* TODO: test the draw-axes x-style and axes args */
   ap = (axis_info *)CALLOC(1, sizeof(axis_info));
   ax = (axis_context *)CALLOC(1, sizeof(axis_context));
   ap->ax = ax;

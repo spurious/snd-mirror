@@ -408,7 +408,7 @@ void set_view_listener_label(const char *lab)
   set_menu_label(view_listener_menu(), lab);
 }
 
-void activate_focus_menu(snd_state *ss, int new_focus)
+void activate_focus_menu(snd_state *ss, zoom_focus_t new_focus)
 {
   if (options_focus_left_menu())
     {
@@ -433,7 +433,7 @@ void activate_focus_menu(snd_state *ss, int new_focus)
     }
 }  
 
-void activate_speed_in_menu(snd_state *ss, int newval)
+void activate_speed_in_menu(snd_state *ss, speed_style_t newval)
 {
   if (options_speed_ratio_menu())
     {
@@ -459,7 +459,7 @@ void activate_speed_in_menu(snd_state *ss, int newval)
 void chans_x_axis_style(chan_info *cp, void *ptr)
 {
   axis_info *ap;
-  int new_style = (*((int *)ptr));
+  x_axis_style_t new_style = (*((x_axis_style_t *)ptr));
   ap = cp->axis;
   cp->x_axis_style = new_style;
   if (ap)
@@ -476,7 +476,7 @@ void chans_x_axis_style(chan_info *cp, void *ptr)
     }
 } 
 
-static void reflect_x_axis_unit_change_in_menu(int oldval, int newval)
+static void reflect_x_axis_unit_change_in_menu(x_axis_style_t oldval, x_axis_style_t newval)
 {
   switch (oldval)
     {
@@ -494,7 +494,7 @@ static void reflect_x_axis_unit_change_in_menu(int oldval, int newval)
     }
 }
   
-void set_x_axis_style(snd_state *ss, int val)
+void set_x_axis_style(snd_state *ss, x_axis_style_t val)
 {
   reflect_x_axis_unit_change_in_menu(x_axis_style(ss), val);
   in_set_x_axis_style(ss, val);
@@ -515,7 +515,7 @@ static void update_sound(snd_info *sp, void *ptr)
     }
 }
 
-void set_channel_style(snd_state *ss, int val)
+void set_channel_style(snd_state *ss, channel_style_t val)
 {
   switch (channel_style(ss))
     {

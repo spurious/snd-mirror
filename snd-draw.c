@@ -11,7 +11,7 @@
 static axis_context *get_ax(chan_info *cp, int ax_id, const char *caller)
 {
   if ((cp) && (AXIS_CONTEXT_ID_OK(ax_id)))
-    return(set_context(cp, ax_id));
+    return(set_context(cp, (chan_gc_t)ax_id));
   XEN_ERROR(NO_SUCH_AXIS_CONTEXT,
 	    XEN_LIST_3(C_TO_XEN_STRING(caller),
 		       C_TO_XEN_STRING("axis: ~A, sound index: ~A (~A), chan: ~A"),
@@ -501,16 +501,16 @@ static XEN g_dialog_widgets(void)
   return(XEN_VECTOR_TO_LIST(dialog_widgets));
 }
 
-void set_dialog_widget(snd_state *ss, int which, widget_t wid)
+void set_dialog_widget(snd_state *ss, snd_dialog_t which, widget_t wid)
 {
   state_context *sx;
   sx = ss->sgx;
   if (sx->dialogs == NULL)
     sx->dialogs = (widget_t *)CALLOC(NUM_DIALOGS, sizeof(widget_t));
-  sx->dialogs[which] = wid;
+  sx->dialogs[(int)which] = wid;
   check_dialog_widget_table();
   XEN_VECTOR_SET(dialog_widgets, 
-		 which, 
+		 (int)which, 
 		 XEN_WRAP_WIDGET(wid));
   run_new_widget_hook(wid);
 }

@@ -480,7 +480,7 @@ static void help_init_file_callback (Widget w, XtPointer cD, XtPointer mD) {if (
 static void help_recording_callback (Widget w, XtPointer cD, XtPointer mD) {if (call_menu_hook(w)) recording_help((snd_state *)cD);}
 static void help_news_callback (Widget w, XtPointer cD, XtPointer mD) {if (call_menu_hook(w)) news_help((snd_state *)cD);}
 
-void check_menu_labels(int key, int state, int extended)
+void check_menu_labels(int key, int state, bool extended)
 {
   if (extended)
     {

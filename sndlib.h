@@ -643,6 +643,9 @@ char *mus_midi_describe(void);
 #if defined(MPW_C) || (defined(HAVE_CONFIG_H) && (!HAVE_STRDUP))
 char *strdup(const char *str);
 #endif
+#if (defined(HAVE_CONFIG_H) && (!HAVE_FILENO))
+int fileno(FILE *fp);
+#endif
 
 #ifdef __cplusplus
 }

@@ -101,7 +101,7 @@ static void delete_yes_or_no_dialog(GtkWidget *w, GdkEvent *event, gpointer cont
 
 #define YES_OR_NO_BUFFER_SIZE 1024
 
-int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
+bool snd_yes_or_no_p(snd_state *ss, const char *format, ...)
 {
   char *yes_buf;
 #if HAVE_VPRINTF

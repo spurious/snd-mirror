@@ -117,7 +117,7 @@ static void no_callback(Widget w, XtPointer context, XtPointer info) {yes_or_no 
 
 #define YES_OR_NO_BUFFER_SIZE 1024
 
-int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
+bool snd_yes_or_no_p(snd_state *ss, const char *format, ...)
 {
   static Widget yes_or_no_dialog = NULL;
   Arg args[20];

@@ -199,7 +199,8 @@ typedef struct chan_info {
   bool cursor_on;          /* channel's cursor */
   bool cursor_visible;     /* for XOR decisions */
   off_t *cursors;          /* sample number (follows edit history) */
-  int cursor_style, cursor_size;
+  int cursor_size;
+  cursor_style_t cursor_style;
   int cx, cy;               /* graph-relative cursor loc (for XOR) */
   int edit_ctr;            /* channel's edit history */
   int edit_size;           /* current edit list size */
@@ -226,7 +227,7 @@ typedef struct chan_info {
   void *last_sonogram, *temp_sonogram;
   void *fft_data;          /* parallels sonogram -- try to avoid repeating large ffts needlessly */
   bool printing;
-  int fft_changed;
+  fft_change_t fft_changed;
   Float gsy, gzy;
   void *mix_dragging;
   int height, mixes;
@@ -238,13 +239,16 @@ typedef struct chan_info {
   Float spectro_x_scale, spectro_y_scale, spectro_z_scale, spectro_z_angle, spectro_x_angle, spectro_y_angle, spectro_cutoff, spectro_start;
   Float lin_dB, min_dB, fft_window_beta, beats_per_minute;
   bool show_y_zero, show_marks, verbose_cursor;
-  int wavo_hop, wavo_trace, zero_pad, x_axis_style, wavelet_type, max_transform_peaks;
-  int show_axes, transform_size, fft_window;
+  int wavo_hop, wavo_trace, zero_pad, wavelet_type, max_transform_peaks;
+  x_axis_style_t x_axis_style;
+  show_axes_t show_axes;
+  int transform_size, fft_window;
   graph_type_t transform_graph_type, time_graph_type;
   bool show_transform_peaks, fft_log_frequency, fft_log_magnitude;
   graph_style_t time_graph_style, lisp_graph_style, transform_graph_style;
   Latus dot_size;
-  int transform_normalization, transform_type, spectro_hop;
+  fft_normalize_t transform_normalization;
+  int transform_type, spectro_hop;
   bool show_mix_waveforms, graphs_horizontal;
   void *mix_md;
   XEN edit_hook;
@@ -266,7 +270,7 @@ typedef struct chan_info {
 #define CURSOR(Cp) (Cp)->cursors[(Cp)->edit_ctr]
 
 typedef struct snd_info {
-  int inuse;
+  sound_inuse_t inuse;
   int index;
   int playing;
   mark *playing_mark;
@@ -277,7 +281,8 @@ typedef struct snd_info {
   bool filter_control_p, filter_control_in_dB;
   Float amp_control;
   Float speed_control;
-  int speed_control_direction, speed_control_style, speed_control_tones;
+  int speed_control_direction, speed_control_tones;
+  speed_style_t speed_control_style;
   Float last_speed_control, last_amp_control, last_expand_control, last_contrast_control;
   Float last_reverb_control_length, last_reverb_control_scale;
   Float saved_speed_control, saved_amp_control, saved_expand_control, saved_contrast_control;
@@ -312,7 +317,7 @@ typedef struct snd_info {
   int bomb_ctr;
   time_t write_date;          /* check for change behind back while editing */
   bool need_update;           /* current in-core data does not match actual file (someone wrote it behind our back) */
-  int channel_style;          /* 0:separate panes per chan, 1:all chans in one pane */
+  channel_style_t channel_style;
   int allocated_chans;        /* snd_info widget tree is never pruned -- can only grow */
   int cursor_follows_play;
   void *edited_region;
@@ -348,7 +353,8 @@ typedef struct snd_state {
   int max_sounds;
   snd_info *mx_sp;
   char *pending_change;
-  int print_choice, apply_choice;
+  int print_choice;
+  snd_apply_t apply_choice;
   bool gl_has_double_buffer, just_time;
   bool stopped_explicitly, checking_explicitly;
   int reloading_updated_file;
@@ -357,7 +363,9 @@ typedef struct snd_state {
   bool graph_hook_active, lisp_graph_hook_active;
   bool Show_Transform_Peaks, Show_Y_Zero, Show_Marks;
   bool Fft_Log_Frequency, Fft_Log_Magnitude;
-  int Channel_Style, Sound_Style, Show_Axes;
+  channel_style_t Channel_Style;
+  sound_style_t Sound_Style;
+  show_axes_t Show_Axes;
   char *Eps_File, *Temp_Dir, *Save_Dir, *Ladspa_Dir;
   char *Listener_Font, *Axis_Label_Font, *Axis_Numbers_Font, *Bold_Button_Font, *Tiny_Font, *Peaks_Font, *Bold_Peaks_Font;
   bool Verbose_Cursor, Trap_Segfault;
@@ -375,8 +383,12 @@ typedef struct snd_state {
   Float Fft_Window_Beta, Reverb_Control_Decay;
   Float Color_Scale, Color_Cutoff, Beats_Per_Minute;
   bool Color_Inverted, Show_Mix_Waveforms;
-  int Speed_Control_Style, Transform_Normalization, Mix_Waveform_Height;
-  int Speed_Control_Tones, Sinc_Width, X_Axis_Style, Zoom_Focus_Style;
+  speed_style_t Speed_Control_Style;
+  int Mix_Waveform_Height;
+  fft_normalize_t Transform_Normalization;
+  int Speed_Control_Tones, Sinc_Width;
+  x_axis_style_t X_Axis_Style;
+  zoom_focus_t Zoom_Focus_Style;
   graph_style_t Graph_Style, Region_Graph_Style;
   bool Auto_Resize, Auto_Update;
   int Max_Regions, Max_Transform_Peaks;
@@ -387,7 +399,8 @@ typedef struct snd_state {
   char *Save_State_File, *Listener_Prompt;
   Float Enved_Base, Enved_Power, Auto_Update_Interval;
   bool Enved_Clip_p, Enved_Exp_p, Enved_Wave_p, Enved_in_dB, Graphs_Horizontal, With_Background_Processes;
-  int Graph_Cursor, Mix_Tag_Width, Mix_Tag_Height, Minibuffer_History_Length, Enved_Target;
+  int Graph_Cursor, Mix_Tag_Width, Mix_Tag_Height, Minibuffer_History_Length;
+  enved_target_t Enved_Target;
   bool Data_Clipped, Show_Indices;
   Float min_dB, lin_dB;
   char *HTML_Dir, *HTML_Program;
@@ -521,10 +534,10 @@ void set_show_y_zero(snd_state *ss, bool val);
 void set_verbose_cursor(snd_state *ss, bool val);
 void set_view_ctrls_label(const char *lab);
 void set_view_listener_label(const char *lab);
-void activate_focus_menu(snd_state *ss, int new_focus);
-void activate_speed_in_menu(snd_state *ss, int newval);
-void set_x_axis_style(snd_state *ss, int val);
-void set_channel_style(snd_state *ss, int val);
+void activate_focus_menu(snd_state *ss, zoom_focus_t new_focus);
+void activate_speed_in_menu(snd_state *ss, speed_style_t newval);
+void set_x_axis_style(snd_state *ss, x_axis_style_t val);
+void set_channel_style(snd_state *ss, channel_style_t val);
 void chans_x_axis_style(chan_info *cp, void *ptr);
 
 void g_init_menu(void);
@@ -659,7 +672,7 @@ void for_each_sound_chan(snd_info *sp, void (*func)(chan_info *));
 void for_each_sound(snd_state *ss, void (*func)(snd_info *, void *), void *userptr);
 int map_over_separate_chans(snd_state *ss, int (*func)(chan_info *, void *), void *userptr);
 int snd_ok (snd_info *sp);
-int active_channels (snd_state *ss, bool count_virtual_channels);
+int active_channels (snd_state *ss, int count_virtual_channels);
 int find_free_sound_slot (snd_state *state, int desired_chans);
 int find_free_sound_slot_for_channel_display (snd_state *ss);
 snd_info *selected_sound(snd_state *ss);
@@ -797,7 +810,7 @@ void snd_unprotect_at(int loc);
 XEN run_or_hook (XEN hook, XEN args, const char *caller);
 XEN run_progn_hook (XEN hook, XEN args, const char *caller);
 XEN run_hook(XEN hook, XEN args, const char *caller);
-void during_open(int fd, char *file, int reason);
+void during_open(int fd, char *file, open_reason_t reason);
 void after_open(int index);
 int listener_print_p(char *msg);
 Float check_color_range(const char *caller, XEN val);
@@ -932,7 +945,7 @@ XEN env_to_xen (env *e);
 env *xen_to_env(XEN res);
 env *get_env(XEN e, const char *origin);
 void g_init_env(void);
-bool check_enved_hook(env *e, int pos, Float x, Float y, int reason);
+bool check_enved_hook(env *e, int pos, Float x, Float y, enved_point_t reason);
 
 
 
@@ -977,7 +990,7 @@ snd_info *make_simple_channel_display(snd_state *ss, int srate, int initial_leng
 axis_info *lisp_info_axis(chan_info *cp);
 void *free_lisp_info(chan_info *cp);
 void zx_incremented(chan_info *cp, double amount);
-int cursor_decision(chan_info *cp);
+kbd_cursor_t cursor_decision(chan_info *cp);
 void reset_x_display(chan_info *cp, double sx, double zx);
 void set_x_axis_x0x1 (chan_info *cp, double x0, double x1);
 void cursor_move (chan_info *cp, off_t samps);
@@ -985,14 +998,14 @@ void cursor_moveto_without_verbosity(chan_info *cp, off_t samp);
 void set_wavo_trace(snd_state *ss, int uval);
 void set_dot_size(snd_state *ss, int val);
 chan_info *virtual_selected_channel(chan_info *cp);
-void handle_cursor(chan_info *cp, int redisplay);
+void handle_cursor(chan_info *cp, kbd_cursor_t redisplay);
 void chans_field(snd_state *ss, int field, Float val);
 void in_set_transform_graph_type(snd_state *ss, graph_type_t val);
 void in_set_fft_window(snd_state *ss, int val);
 void combine_sound(snd_info *sp);
 void separate_sound(snd_info *sp);
 void superimpose_sound(snd_info *sp);
-void set_sound_channel_style(snd_info *sp, int val);
+void set_sound_channel_style(snd_info *sp, channel_style_t val);
 void set_chan_fft_in_progress(chan_info *cp, Cessator fp);
 void goto_graph(chan_info *cp);
 void start_amp_env(chan_info *cp);
@@ -1001,8 +1014,8 @@ bool chan_fft_in_progress(chan_info *cp);
 void force_fft_clear(chan_info *cp);
 void chan_info_cleanup(chan_info *cp);
 void update_graph(chan_info *cp);
-void add_channel_data(char *filename, chan_info *cp, int graphed);
-void add_channel_data_1(chan_info *cp, int srate, off_t frames, int graphed);
+void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed);
+void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t graphed);
 void set_x_bounds(axis_info *ap);
 void display_channel_data (chan_info *cp, snd_info *sp, snd_state *ss);
 void display_channel_fft_data (chan_info *cp, snd_info *sp, snd_state *ss);
@@ -1030,7 +1043,7 @@ void fftb(chan_info *cp, bool on);
 void waveb(chan_info *cp, bool on);
 void f_button_callback(chan_info *cp, bool on, bool with_control);
 void w_button_callback(chan_info *cp, bool on, bool with_control);
-axis_context *set_context (chan_info *cp, int gc);
+axis_context *set_context (chan_info *cp, chan_gc_t gc);
 axis_context *copy_context (chan_info *cp);
 axis_context *erase_context (chan_info *cp);
 axis_context *selection_context (chan_info *cp);
@@ -1047,7 +1060,7 @@ axis_context *free_axis_context(axis_context *ax);
 Locus grf_x(double val, axis_info *ap);
 Locus grf_y(Float val, axis_info *ap);
 void init_axis_scales(axis_info *ap);
-void make_axes_1(axis_info *ap, int x_style, int srate, int axes, bool printing, bool show_x_axis);
+void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t axes, bool printing, bool show_x_axis);
 
 #define ungrf_x(AP, X) (((X) - (AP)->x_base) / (AP)->x_scale)
 #define ungrf_y(AP, Y) (((Y) - (AP)->y_base) / (AP)->y_scale)
@@ -1078,8 +1091,8 @@ bool amp_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, bool s
 int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int srate);
 char *shortname(snd_info *sp);
 char *shortname_indexed(snd_info *sp);
-void add_sound_data(char *filename, snd_info *sp, int graphed);
-Float srate_changed(Float ival, char *srcbuf, int style, int tones);
+void add_sound_data(char *filename, snd_info *sp, channel_graph_t graphed);
+Float srate_changed(Float ival, char *srcbuf, speed_style_t style, int tones);
 void sp_name_click(snd_info *sp);
 void free_controls(snd_info *sp);
 void save_controls(snd_info *sp);
@@ -1099,7 +1112,7 @@ snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_f
 void g_init_snd(void);
 XEN snd_no_such_sound_error(const char *caller, XEN n);
 
-void set_speed_style(snd_state *ss, int val);
+void set_speed_style(snd_state *ss, speed_style_t val);
 void amp_env_scale_by(chan_info *cp, Float scl, int pos);
 void amp_env_scale_selection_by(chan_info *cp, Float scl, off_t beg, off_t num, int pos);
 env_info *amp_env_copy(chan_info *cp, bool reversed, int edpos);
@@ -1384,7 +1397,7 @@ Float evaluate_ptreec(void *upt, Float arg, vct *v, bool dir);
 #if (!USE_NO_GUI)
   axis_info *get_ap(chan_info *cp, int ap_id, const char *caller);
   void g_init_draw(void);
-  void set_dialog_widget(snd_state *ss, int which, widget_t wid);
+  void set_dialog_widget(snd_state *ss, snd_dialog_t which, widget_t wid);
   void run_new_widget_hook(widget_t w);
 #endif
 #if HAVE_GL

@@ -65,7 +65,7 @@ static int fneq(Float a, Float b)
   return(fabs(a - b) > .00001);
 }
 
-static char *show_axes2string(int ax)
+static char *show_axes2string(show_axes_t ax)
 {
   switch (ax)
     {
@@ -75,7 +75,7 @@ static char *show_axes2string(int ax)
     }
 }
 
-static char *zoom_focus_style_name(int choice)
+static char *zoom_focus_style_name(zoom_focus_t choice)
 {
   switch (choice)
     {
@@ -86,7 +86,7 @@ static char *zoom_focus_style_name(int choice)
     }
 }
 
-static char *transform_normalization_name(int choice)
+static char *transform_normalization_name(fft_normalize_t choice)
 {
   switch (choice)
     {
@@ -98,7 +98,7 @@ static char *transform_normalization_name(int choice)
     }
 }
 
-static char *graph_style_name(int choice)
+static char *graph_style_name(graph_style_t choice)
 {
   switch (choice)
     {
@@ -111,7 +111,7 @@ static char *graph_style_name(int choice)
     }
 }
 
-static char *transform_graph_type_name(int choice)
+static char *transform_graph_type_name(graph_type_t choice)
 {
   switch (choice)
     {
@@ -121,7 +121,7 @@ static char *transform_graph_type_name(int choice)
     }
 }
 
-static char *time_graph_type_name(int choice)
+static char *time_graph_type_name(graph_type_t choice)
 {
   switch (choice)
     {
@@ -130,7 +130,7 @@ static char *time_graph_type_name(int choice)
     }
 }
 
-static char *x_axis_style_name(int choice)
+static char *x_axis_style_name(x_axis_style_t choice)
 {
   switch(choice)
     {
@@ -141,7 +141,7 @@ static char *x_axis_style_name(int choice)
     }
 }
 
-static char *speed_control_style_name(int choice)
+static char *speed_control_style_name(speed_style_t choice)
 {
   switch (choice)
     {
@@ -151,7 +151,7 @@ static char *speed_control_style_name(int choice)
     }
 }
 
-static char *channel_style_name(int choice)
+static char *channel_style_name(channel_style_t choice)
 {
   switch (choice)
     {
@@ -161,7 +161,7 @@ static char *channel_style_name(int choice)
     }
 }
 
-static char *enved_target_name(int choice)
+static char *enved_target_name(enved_target_t choice)
 {
   switch (choice)
     {
@@ -539,7 +539,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
       if ((ap->y0 != -1.0) || (ap->y1 != 1.0)) pcp_sl(fd, S_y_bounds, ap->y0, ap->y1, chan);
       if (CURSOR(cp) != 0) pcp_sod(fd, S_cursor, CURSOR(cp), chan);
       if (cp->cursor_size != DEFAULT_CURSOR_SIZE) pcp_sd(fd, S_cursor_size, cp->cursor_size, chan);
-      if (cp->cursor_style != CURSOR_CROSS) pcp_sd(fd, S_cursor_style, cp->cursor_style, chan);
+      if (cp->cursor_style != CURSOR_CROSS) pcp_sd(fd, S_cursor_style, (int)(cp->cursor_style), chan);
       if (cp->show_marks != show_marks(ss)) pcp_ss(fd, S_show_marks, b2s(cp->show_marks), chan);
       if (cp->show_y_zero != show_y_zero(ss)) pcp_ss(fd, S_show_y_zero, b2s(cp->show_y_zero), chan);
       if (cp->wavo_hop != wavo_hop(ss)) pcp_sd(fd, S_wavo_hop, cp->wavo_hop, chan);

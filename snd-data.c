@@ -550,7 +550,7 @@ int snd_ok(snd_info *sp)
 	 (sp->active));
 }
 
-int active_channels(snd_state *ss, bool count_virtual_channels)
+int active_channels(snd_state *ss, int count_virtual_channels)
 {
   int chans, i;
   snd_info *sp;

@@ -667,7 +667,7 @@ static snd_info *snd_open_file_1 (const char *filename, snd_state *ss, bool sele
 {
   snd_info *sp;
   char *mcf = NULL;
-  int files, val;
+  int files;
   XEN res = XEN_FALSE; XEN fstr;
   mcf = mus_expand_filename(filename);
   if (XEN_HOOKED(open_hook))
@@ -734,6 +734,7 @@ static snd_info *snd_open_file_1 (const char *filename, snd_state *ss, bool sele
       if ((sp->channel_style != CHANNELS_SEPARATE) && 
 	  (sp->nchans > 1)) 
 	{
+	  channel_style_t val;
 	  val = sp->channel_style;
 	  sp->channel_style = CHANNELS_SEPARATE; 
 	  if (val == CHANNELS_COMBINED)
@@ -1163,7 +1164,8 @@ static XEN update_hook;
 static snd_info *snd_update_1(snd_state *ss, snd_info *sp, const char *ur_filename)
 {
   /* we can't be real smart here because the channel number may have changed and so on */
-  int i, old_srate, old_chans, old_format, old_raw, sp_chans, old_index, old_channel_style;
+  int i, old_srate, old_chans, old_format, old_raw, sp_chans, old_index;
+  channel_style_t old_channel_style;
   bool read_only;
   void *sa;
   snd_info *nsp = NULL;

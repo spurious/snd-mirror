@@ -1296,7 +1296,7 @@ void set_enved_exp_p(snd_state *ss, bool val)
   reflect_segment_state(ss);
 }
 
-void set_enved_target(snd_state *ss, int val) 
+void set_enved_target(snd_state *ss, enved_target_t val) 
 {
   in_set_enved_target(ss, val); 
   if (enved_dialog) reflect_apply_state(ss);

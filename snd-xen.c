@@ -1506,22 +1506,22 @@ output data format's maximum. The default (#f) allows them to wrap-around which 
   return(C_TO_XEN_BOOLEAN(data_clipped(ss)));
 }
 
-static XEN g_zoom_focus_style(void) {return(C_TO_XEN_INT(zoom_focus_style(get_global_state())));}
+static XEN g_zoom_focus_style(void) {return(C_TO_XEN_INT((int)zoom_focus_style(get_global_state())));}
 static XEN g_set_zoom_focus_style(XEN focus) 
 {
   #define H_zoom_focus_style "(" S_zoom_focus_style "): one of '(" S_zoom_focus_left ", " S_zoom_focus_right ", " S_zoom_focus_middle \
 ", or " S_zoom_focus_active "). This determines what zooming centers on (default: " S_zoom_focus_active ")"
   snd_state *ss;
-  int choice;
+  zoom_focus_t choice;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_INTEGER_P(focus), focus, XEN_ONLY_ARG, S_setB S_zoom_focus_style, "an integer"); 
-  choice = XEN_TO_C_INT(focus);
+  choice = (zoom_focus_t)XEN_TO_C_INT(focus);
   if ((choice < ZOOM_FOCUS_LEFT) || (choice > ZOOM_FOCUS_MIDDLE))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_zoom_focus_style, 
 			   1, focus, 
 			   "~A, but must be " S_zoom_focus_left ", " S_zoom_focus_right ", " S_zoom_focus_middle ", or " S_zoom_focus_active);
   activate_focus_menu(ss, choice);
-  return(C_TO_XEN_INT(zoom_focus_style(ss)));
+  return(C_TO_XEN_INT((int)zoom_focus_style(ss)));
 }
 
 static XEN g_snd_version(void) 
@@ -2625,13 +2625,13 @@ XEN run_or_hook (XEN hook, XEN args, const char *caller)
 #endif
 }
 
-void during_open(int fd, char *file, int reason)
+void during_open(int fd, char *file, open_reason_t reason)
 {
   if (XEN_HOOKED(during_open_hook))
     run_hook(during_open_hook,
 	     XEN_LIST_3(C_TO_XEN_INT(fd),
 			C_TO_XEN_STRING(file),
-			C_TO_XEN_INT(reason)),
+			C_TO_XEN_INT((int)reason)),
 	     S_during_open_hook);
 }
 

@@ -340,15 +340,15 @@ static void logfreq_callback(GtkWidget *w, gpointer context)
 
 static void chans_transform_normalization(chan_info *cp, void *ptr) 
 {
-  cp->transform_normalization = (*((int *)ptr)); 
+  cp->transform_normalization = (*((fft_normalize_t *)ptr)); 
   cp->fft_changed = FFT_CHANGE_LOCKED;
 }
 
 static void normalize_callback(GtkWidget *w, gpointer context)
 {
-  int choice;
+  fft_normalize_t choice;
   snd_state *ss = (snd_state *)context;
-  choice = GTK_TOGGLE_BUTTON(w)->active;
+  if (GTK_TOGGLE_BUTTON(w)->active) choice = NORMALIZE_BY_CHANNEL; else choice = DONT_NORMALIZE;
   in_set_transform_normalization(ss, choice);
   for_each_chan_1(ss, chans_transform_normalization, (void *)(&choice));
   for_each_chan(ss, calculate_fft);
@@ -671,7 +671,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, bool managed)
       set_toggle_button(peaks_button, show_transform_peaks(ss), false, (gpointer)ss);
       set_toggle_button(db_button, fft_log_magnitude(ss), false, (gpointer)ss);
       set_toggle_button(logfreq_button, fft_log_frequency(ss), false, (gpointer)ss);
-      set_toggle_button(normalize_button, transform_normalization(ss), false, (gpointer)ss);
+      set_toggle_button(normalize_button, (transform_normalization(ss) != DONT_NORMALIZE), false, (gpointer)ss);
       set_toggle_button(selection_button, show_selection_transform(ss), false, (gpointer)ss);
       sg_list_select(window_list, fft_window(ss));
       sg_list_moveto(window_list, fft_window(ss));
@@ -833,12 +833,12 @@ void set_transform_graph_type(snd_state *ss, graph_type_t val)
     for_each_chan(ss, calculate_fft);
 }
 
-void set_transform_normalization(snd_state *ss, int val)
+void set_transform_normalization(snd_state *ss, fft_normalize_t val)
 {
   in_set_transform_normalization(ss, val);
   for_each_chan_1(ss, chans_transform_normalization, (void *)(&val));
   if (transform_dialog) 
-    set_toggle_button(normalize_button, val, false, (void *)ss);
+    set_toggle_button(normalize_button, (val != DONT_NORMALIZE), false, (void *)ss);
   if (!(ss->graph_hook_active)) 
     for_each_chan(ss, calculate_fft);
 }

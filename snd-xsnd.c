@@ -1030,7 +1030,7 @@ static void unite_button_callback(Widget w, XtPointer context, XtPointer info)
   snd_info *sp = (snd_info *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   XButtonEvent *ev;
-  int val;
+  channel_style_t val;
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   ev = (XButtonEvent *)(cb->event);
   if (cb->set)

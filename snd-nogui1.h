@@ -11,7 +11,7 @@ void snd_completion_help(snd_state *ss, int matches, char **buffer);
 
 void add_to_error_history(snd_state *ss, char *msg, bool popup);
 void post_error_dialog(snd_state *ss, char *msg);
-int snd_yes_or_no_p(snd_state *ss, char *format, ...);
+bool snd_yes_or_no_p(snd_state *ss, char *format, ...);
 
 
 /* -------- snd-xdraw.c -------- */
@@ -138,7 +138,7 @@ int popup_equalize_panes_menu(void);
 int popup_info_menu(void);
 int popup_menu_exists(void);
 void set_menu_label(int w, const char *label);
-void check_menu_labels(int key, int state, int extended);
+void check_menu_labels(int key, int state, bool extended);
 int g_change_menu_label(int which_menu, char *old_label, char *new_label);
 int g_set_menu_sensitive(int which_menu, char *old_label, bool on);
 int g_menu_is_sensitive(int which_menu, char *old_label);
@@ -175,9 +175,9 @@ int max_transform_type(void);
 void set_show_transform_peaks(snd_state *ss, bool val);
 void set_fft_log_magnitude(snd_state *ss, bool val);
 void set_fft_log_frequency(snd_state *ss, bool val);
-void set_transform_normalization(snd_state *ss, int val);
+void set_transform_normalization(snd_state *ss, fft_normalize_t val);
 void set_show_selection_transform(snd_state *ss, bool show);
-void set_transform_graph_type(snd_state *ss, int val);
+void set_transform_graph_type(snd_state *ss, graph_type_t val);
 
 
 
@@ -256,7 +256,7 @@ void separate_sound(snd_info *sp);
 void superimpose_sound(snd_info *sp);
 bool fixup_cp_cgx_ax_wn(chan_info *cp);
 void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b);
-void change_channel_style(snd_info *sp, int new_style);
+void change_channel_style(snd_info *sp, channel_style_t new_style);
 int add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, widget_t main, int arrows, bool with_events);
 
 
@@ -352,7 +352,7 @@ int create_envelope_editor (snd_state *ss);
 void set_enved_clip_p(snd_state *ss, bool val);
 void set_enved_exp_p(snd_state *ss, bool val);
 void set_enved_base(snd_state *ss, Float val);
-void set_enved_target(snd_state *ss, int val);
+void set_enved_target(snd_state *ss, enved_target_t val);
 void set_enved_wave_p(snd_state *ss, bool val);
 void set_enved_in_dB(snd_state *ss, bool val);
 int enved_dialog_is_active(void);

@@ -1316,7 +1316,7 @@ static XEN g_save_envelopes(XEN filename)
 
 static XEN enved_hook;
 
-bool check_enved_hook(env *e, int pos, Float x, Float y, int reason)
+bool check_enved_hook(env *e, int pos, Float x, Float y, enved_point_t reason)
 {
   XEN result = XEN_FALSE;
   XEN procs; XEN env_list;
@@ -1338,7 +1338,7 @@ bool check_enved_hook(env *e, int pos, Float x, Float y, int reason)
 					C_TO_SMALL_XEN_INT(pos),
 					C_TO_XEN_DOUBLE(x),
 					C_TO_XEN_DOUBLE(y),
-					C_TO_SMALL_XEN_INT(reason)),
+					C_TO_SMALL_XEN_INT((int)reason)),
 			     S_enved_hook);
 	  procs = XEN_CDR (procs);
 #else
@@ -1347,7 +1347,7 @@ bool check_enved_hook(env *e, int pos, Float x, Float y, int reason)
 					C_TO_SMALL_XEN_INT(pos),
 					C_TO_XEN_DOUBLE(x),
 					C_TO_XEN_DOUBLE(y),
-					C_TO_SMALL_XEN_INT(reason)),
+					C_TO_SMALL_XEN_INT((int)reason)),
 			     S_enved_hook);
 #endif
 
@@ -1418,21 +1418,21 @@ if enved-exping, the connecting segments use exponential curves rather than stra
   return(C_TO_XEN_BOOLEAN(enved_clip_p(get_global_state())));
 }
 
-static XEN g_enved_target(void) {return(C_TO_XEN_INT(enved_target(get_global_state())));}
+static XEN g_enved_target(void) {return(C_TO_XEN_INT((int)enved_target(get_global_state())));}
 static XEN g_set_enved_target(XEN val) 
 {
-  int n; 
+  enved_target_t n; 
   snd_state *ss;
   #define H_enved_target "(" S_enved_target "): where (amplitude, frequency, etc) the envelope is applied in the envelope editor; \
 choices are " S_enved_amplitude ", " S_enved_srate ", and " S_enved_spectrum
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_enved_target, "an integer"); 
-  n = XEN_TO_C_INT(val);
+  n = (enved_target_t)XEN_TO_C_INT(val);
   if ((n < ENVED_AMPLITUDE) || (n > ENVED_SRATE))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_enved_target, 1, val, "~A, but must be " S_enved_amplitude ", " S_enved_srate ", or " S_enved_spectrum);
   ss = get_global_state();
   set_enved_target(ss, n); 
-  return(C_TO_XEN_INT(enved_target(ss)));
+  return(C_TO_XEN_INT((int)enved_target(ss)));
 }
 
 static XEN g_enved_wave_p(void) {return(C_TO_XEN_BOOLEAN(enved_wave_p(get_global_state())));}

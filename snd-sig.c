@@ -103,7 +103,7 @@ static off_t end_to_sample(XEN end, chan_info *cp, int edpos, const char *caller
 }
 
 
-static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, off_t beg, int regexpr, 
+static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, off_t beg, bool regexpr, 
 				    int forwards, off_t prebeg, XEN edpos, const char *caller, int arg_pos)
 {
   /* can return NULL if regexpr and no current selection */
@@ -174,12 +174,13 @@ static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, 
   return(sc);
 }
 
-static sync_state *get_sync_state(snd_state *ss, snd_info *sp, chan_info *cp, off_t beg, int regexpr, int forwards, XEN edpos, const char *caller, int arg_pos)
+static sync_state *get_sync_state(snd_state *ss, snd_info *sp, chan_info *cp, off_t beg, bool regexpr, 
+				  int forwards, XEN edpos, const char *caller, int arg_pos)
 {
   return(get_sync_state_1(ss, sp, cp, beg, regexpr, forwards, 0, edpos, caller, arg_pos));
 }
 
-static sync_state *get_sync_state_without_snd_fds(snd_state *ss, snd_info *sp, chan_info *cp, off_t beg, int regexpr)
+static sync_state *get_sync_state_without_snd_fds(snd_state *ss, snd_info *sp, chan_info *cp, off_t beg, bool regexpr)
 {
   sync_info *si = NULL;
   off_t dur;

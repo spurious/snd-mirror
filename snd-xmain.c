@@ -613,7 +613,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
     ss->startup_title = copy_string(app_title); 
   else ss->startup_title = copy_string("snd");
 
-  set_sound_style(ss, snd_rs.horizontal_panes);
+  set_sound_style(ss, (sound_style_t)snd_rs.horizontal_panes);
   for (i = 1; i < argc; i++)
     if ((strcmp(argv[i], "-h") == 0) || 
 	(strcmp(argv[i], "-horizontal") == 0))
