@@ -337,7 +337,7 @@ well as set variable types (this can result in tighter code in many cases).
 In Common Lisp, the recognized types are integer and float;
 in the resultant C code these become integers and doubles respectively.
 In Scheme (in the Snd run macro), the declarable types are:
-int, float, boolean, char, string, vct, reader, clm, number, vector, integer, real, 
+int, float, boolean, char, string, vct, reader, clm, number, vector, integer, real, mus-any (i.e. a generator),
 and any def-clm-struct name.
 </small></p>
 <br>
@@ -952,13 +952,13 @@ use this for VOSIM and other related techniques.</p>
 (<a class=quiet href="#definstrument">definstrument</a> fofins (beg dur frq amp vib f0 a0 f1 a1 f2 a2 &amp;optional ve ae)
   (let* ((start (floor (* beg *srate*)))
          (end (+ start (floor (* dur *srate*))))
-         (ampf (<a class=quiet href="#make-env">make-env</a> :envelope (or ae (list 0 0 25 1 75 1 100 0)) amp dur))
+         (ampf (<a class=quiet href="#make-env">make-env</a> :envelope (or ae (list 0 0 25 1 75 1 100 0)) :scaler amp :duration dur))
          (frq0 (<a class=quiet href="#hz-&gt;radians">hz-&gt;radians</a> f0))
          (frq1 (<a class=quiet href="#hz-&gt;radians">hz-&gt;radians</a> f1))
          (frq2 (<a class=quiet href="#hz-&gt;radians">hz-&gt;radians</a> f2))
          (foflen (if (= *srate* 22050) 100 200))
          (vibr (<a class=quiet href="#make-oscil">make-oscil</a> :frequency 6))
-	 (vibenv (<a class=quiet href="#make-env">make-env</a> :envelope (or ve (list 0 1 100 1)) vib dur))
+	 (vibenv (<a class=quiet href="#make-env">make-env</a> :envelope (or ve (list 0 1 100 1)) :scaler vib :duration dur))
          (win-freq (/ two-pi foflen))
          (foftab (make-double-float-array foflen))
          (wt0 (<em class=red>make-wave-train</em> :wave foftab :frequency frq)))
