@@ -157,6 +157,22 @@ static XEN equalp_vct(XEN obj1, XEN obj2)
   return(xen_return_first(XEN_TRUE, obj1, obj2));
 }
 
+vct *c_make_vct(int len)
+{
+  vct *new_vct;
+  new_vct = (vct *)MALLOC(sizeof(vct));
+  new_vct->length = len;
+  new_vct->data = CALLOC(len, sizeof(Float));
+  new_vct->dont_free = 0;
+  return(new_vct);
+}
+
+vct *c_free_vct(vct *v) 
+{
+  vct_free(v);
+  return(NULL);
+}
+
 XEN make_vct(int len, Float *data)
 {
   vct *new_vct;

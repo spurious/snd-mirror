@@ -2456,6 +2456,7 @@
 (load "snd4.scm") ; needed for various scan/map extensions, external program testers etc
 (load "dsp.scm")
 (load "pvoc.scm")
+(define g-init-val 0)
 
 (define (our-x->position ind x) 
   (let ((ax (axis-info ind)))
@@ -4018,6 +4019,7 @@
 	  (let* ((len (frames index))
 		 (chns (chans index))
 		 (val #f))
+	    (set! g-init-val init-val)
 	    (do ((k 0 (1+ k)))
 		((= k 2))
 	      (set! val (val-func len))
@@ -4030,7 +4032,7 @@
 	      ;; now it's cleared
 	      (do ((i 0 (1+ i)))
 		  ((= i chns))
-		(map-channel (lambda (n) init-val) 0 len index i)
+		(map-channel (lambda (n) g-init-val) 0 len index i)
 		(func 0 len index i)
 		(do ((j 0 (1+ j)))
 		    ((= j chns))
@@ -4043,9 +4045,9 @@
 		(map-channel (lambda (n) 0.0) 0 len index i))
 	      (do ((i 0 (1+ i)))
 		  ((= i chns))
-		(map-channel (lambda (n) init-val) 0 len index i)
+		(map-channel (lambda (n) g-init-val) 0 len index i)
 		(let ((ed (edit-position index i)))
-		  (map-channel (lambda (n) (+ init-val 1.0)) 0 len index i)
+		  (map-channel (lambda (n) (+ g-init-val 1.0)) 0 len index i)
 		  (func 0 len index i ed)
 		  (do ((j 0 (1+ j)))
 		      ((= j chns))
@@ -4066,7 +4068,7 @@
 		  (vct-set! val i (vct-ref nv j)))
 		(do ((i 0 (1+ i)))
 		    ((= i chns))
-		  (map-channel (lambda (n) init-val) beg dur index i)
+		  (map-channel (lambda (n) g-init-val) beg dur index i)
 		  (func beg dur index i)
 		  (add-mark beg index i)
 		  (do ((j 0 (1+ j)))
@@ -8046,36 +8048,39 @@
 
 (clear-sincs)
 
+(define maxval 0.0)
 (define data-max
   (lambda (beg end)
-    (let ((maxval 0.0))
-      (apply for-each 
-	     (lambda (snd chn)
-	       (scan-chan (lambda (n)
-			    (set! maxval (max maxval (abs n))))
-			     0 #f snd chn))
-	     (all-chans))
-      maxval)))
+    (set! maxval 0.0)
+    (apply for-each 
+	   (lambda (snd chn)
+	     (scan-chan (lambda (n)
+			  (set! maxval (max maxval (abs n)))
+			  #f)
+			0 #f snd chn))
+	   (all-chans))
+    maxval))
 
 (define data-max2
   (lambda (beg end snd)
-    (let ((maxval 0.0))
-      (do ((i 0 (1+ i)))
-	  ((= i (chans snd)) maxval)
-	(scan-chan (lambda (n)
-		     (set! maxval (max maxval (abs n))))
-		   0 #f snd i)))))
+    (set! maxval 0.0)
+    (do ((i 0 (1+ i)))
+	((= i (chans snd)) maxval)
+      (scan-chan (lambda (n)
+		   (set! maxval (max maxval (abs n)))
+		   #f)
+		 0 #f snd i))))
 
 (define data-max1
   (lambda (beg end snd chn)
-    (let ((maxval 0.0))
-      (scan-chan 
-       (lambda (data)
-	 (let ((curval (abs data)))
-	   (if (> curval maxval) (set! maxval curval))
-	   #f))
-       beg end snd chn)
-      maxval)))
+    (set! maxval 0.0)
+    (scan-chan 
+     (lambda (data)
+       (let ((curval (abs data)))
+	 (if (> curval maxval) (set! maxval curval))
+	 #f))
+     beg end snd chn)
+    maxval))
 
 (load "marks.scm")
 
@@ -13882,6 +13887,11 @@ EDITS: 5
 
 ;;; ---------------- test 22: run ----------------
 
+(defmacro time-it (a) 
+  `(let ((start (get-internal-real-time))) 
+   ,a 
+   (/ (- (get-internal-real-time) start) 100)))
+
 (if (or full-test (= snd-test 22) (and keep-going (<= snd-test 22)))
     (begin
 
@@ -13922,19 +13932,19 @@ EDITS: 5
       (if (procedure? test-hook) (test-hook 22))
       
       (ftsta '(lambda (y) (set! dbl-var 32.0) dbl-var) 0.0 32.0)
-      (if (fneq dbl-var 32.0) (snd-display ";set! dbl-var: ~A" dbl-var))
+      (if (fneq dbl-var 32.0) (snd-display ";set! 1 dbl-var: ~A" dbl-var))
       (ftsta '(lambda (y) (set! dbl-var y) dbl-var) 0.5 0.5)
-      (if (fneq dbl-var 0.5) (snd-display ";set! dbl-var: ~A" dbl-var))
+      (if (fneq dbl-var 0.5) (snd-display ";set! 2 dbl-var: ~A" dbl-var))
       
       (itsta '(lambda (y) (set! int-var 3) int-var) 0 3)
-      (if (not (= int-var 3)) (snd-display ";set! int-var: ~A" int-var))
+      (if (not (= int-var 3)) (snd-display ";set! 1 int-var: ~A" int-var))
       (itsta '(lambda (y) (set! int-var (inexact->exact y)) int-var) -2 -2)
-      (if (not (= int-var -2)) (snd-display ";set! int-var: ~A" int-var))
+      (if (not (= int-var -2)) (snd-display ";set! 2 int-var: ~A" int-var))
       
       (btsta '(lambda (y) (set! bool-var #f) bool-var) 0.0 #f)
-      (if (not (eq? bool-var #f)) (snd-display ";set! bool-var: ~A" bool-var))
+      (if (not (eq? bool-var #f)) (snd-display ";set! 1 bool-var: ~A" bool-var))
       (btsta '(lambda (y) (set! bool-var (odd? y)) bool-var) 1 #t)
-      (if (not (eq? bool-var #t)) (snd-display ";set! bool-var: ~A" bool-var))
+      (if (not (eq? bool-var #t)) (snd-display ";set! 2 bool-var: ~A" bool-var))
       
       (set! int-var 32)
       (set! dbl-var 3.14)
@@ -14951,6 +14961,44 @@ EDITS: 5
       (btst '(vct? global-v) #t)
       (btst '(vct? 1) #f)
       
+      (let ((ind0 (new-sound "fmv0.snd" mus-next mus-bfloat 22050 1 "map tests"))
+	    (ind1 (new-sound "fmv1.snd" mus-next mus-bfloat 22050 1 "map tests"))
+	    (ones (make-vct 1000000))
+	    (t0 0)
+	    (t1 0)
+	    (ts '()))
+	(vct-map! ones (lambda () (- 1.0 (* 2 (random 1.0)))))
+	(vct->channel ones 0 1000000 ind0)
+	(vct->channel ones 0 1000000 ind1)
+	(set! (optimization) 0) (set! t0 (time-it (map-channel (lambda (y) (* y 2)) 0 1000000 ind0)))
+	(set! (optimization) 1) (set! t1 (time-it (map-channel (lambda (y) (* y 2)) 0 1000000 ind1)))
+	(if (not (vequal (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1))) 
+	    (snd-display ";y * 2 run: ~A ~A" (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1)))
+	(set! ts (cons (list t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
+	(set! (optimization) 0) (set! t0 (time-it (map-channel (lambda (y) (- y 1.0)) 0 1000000 ind0)))
+	(set! (optimization) 1) (set! t1 (time-it (map-channel (lambda (y) (- y 1.0)) 0 1000000 ind1)))
+	(if (not (vequal (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1))) 
+	    (snd-display ";y - 1 run: ~A ~A" (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1)))
+	(set! ts (cons (list t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
+	(set! (optimization) 0) (set! t0 (time-it (map-channel (lambda (y) (abs (sin y))) 0 1000000 ind0)))
+	(set! (optimization) 1) (set! t1 (time-it (map-channel (lambda (y) (abs (sin y))) 0 1000000 ind1)))
+	(if (not (vequal (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1))) 
+	    (snd-display ";abs sin run: ~A ~A" (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1)))
+	(set! ts (cons (list t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
+	(set! (optimization) 0) (set! t0 (time-it (map-channel (lambda (y) (let ((a (* y 2))) (if (> y 1.0) 1.0 y))) 0 1000000 ind0)))
+	(set! (optimization) 1) (set! t1 (time-it (map-channel (lambda (y) (let ((a (* y 2))) (if (> y 1.0) 1.0 y))) 0 1000000 ind1)))
+	(if (not (vequal (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1))) 
+	    (snd-display ";let y run: ~A ~A" (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1)))
+	(set! ts (cons (list t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
+	(set! (optimization) 0) (set! t0 (time-it (map-channel (let ((v (make-vct 3))) (lambda (y) (vct-set! v 1 .5) (* y (vct-ref v 1)))) 0 1000000 ind0)))
+	(set! (optimization) 1) (set! t1 (time-it (map-channel (let ((v (make-vct 3))) (lambda (y) (vct-set! v 1 .5) (* y (vct-ref v 1)))) 0 1000000 ind1)))
+	(if (not (vequal (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1))) 
+	    (snd-display ";let y run: ~A ~A" (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1)))
+	(set! ts (cons (list t0 t1 (inexact->exact (round (/ t0 t1)))) ts))
+	(close-sound ind0)
+	(close-sound ind1)
+	(snd-display ";timings: ~A" ts))
+
       ))
 
 

@@ -2873,8 +2873,8 @@ XEN g_c_make_sample_reader(snd_fd *fd)
 static XEN g_make_sample_reader(XEN samp_n, XEN snd, XEN chn, XEN dir1, XEN pos) /* "dir" confuses Mac OS-X Objective-C! */
 {
   #define H_make_sample_reader "(" S_make_sample_reader " &optional (start-samp 0) snd chn (dir 1) edit-position)\n\
-returns a reader ready to access snd's channel chn's data starting at 'start-samp', going in direction 'dir' \
-(1 = forward, -1 = backward), reading the version of the data indicated by 'edit-position' which defaults to the current version. \
+returns a reader ready to access snd's channel chn's data starting at 'start-samp', going in direction 'dir' (1 = \
+forward, -1 = backward), reading the version of the data indicated by 'edit-position' which defaults to the current version. \
 snd can be a filename, a sound index number, or a list with a mix id number."
 
   snd_fd *fd = NULL;

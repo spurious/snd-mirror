@@ -45,6 +45,8 @@ void set_vct_print_length(int len);
 XEN vct2vector(XEN vobj);
 XEN mus_array_to_list(Float *arr, int i, int len);
 char *vct_to_string(vct *v);
+vct *c_make_vct(int len);
+vct *c_free_vct(vct *v);
 
 #define TO_VCT(arg) ((vct *)XEN_OBJECT_REF(arg))
 #define VCT_P(arg) vct_p(arg)

@@ -2261,7 +2261,73 @@ void cos_smooth(chan_info *cp, int beg, int num, int regexpr, const char *origin
 #include "clm2xen.h"
 
 #if WITH_RUN
-char *run_channel(chan_info *cp, void *upt, int beg, int dur, int edpos);
+static char *run_channel(chan_info *cp, void *upt, int beg, int dur, int edpos)
+{
+  snd_state *ss;
+  snd_info *sp;
+  file_info *hdr = NULL;
+  int j, k, ofd = 0, datumb = 0, temp_file, err = 0;
+  MUS_SAMPLE_TYPE **data;
+  MUS_SAMPLE_TYPE *idata;
+  char *ofile = NULL;
+  snd_fd *sf;
+  if ((beg < 0) || (dur <= 0)) return(NULL);
+  ss = cp->state;
+  sp = cp->sound;
+  sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
+  if (sf == NULL) return(mus_format("run-channel: can't read %s[%d] channel data!", sp->short_filename, cp->chan));
+  if (dur > MAX_BUFFER_SIZE)
+    {
+      temp_file = 1; 
+      ofile = snd_tempnam(ss);
+      hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, S_map_channel);
+      ofd = open_temp_file(ofile, 1, hdr, ss);
+      if (ofd == -1)
+	{
+	  free_snd_fd(sf); 
+	  return(mus_format("can't open run-channel temp file %s: %s\n", ofile, strerror(errno)));
+	}
+      datumb = mus_data_format_to_bytes_per_sample(hdr->format);
+    }
+  else temp_file = 0;
+  data = (MUS_SAMPLE_TYPE **)MALLOC(sizeof(MUS_SAMPLE_TYPE *));
+  data[0] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE)); 
+  idata = data[0];
+  j = 0;
+  for (k = 0; k < dur; k++)
+    {
+      idata[j++] = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(upt, read_sample_to_float(sf)));
+      if ((temp_file) && (j == MAX_BUFFER_SIZE))
+	{
+	  err = mus_file_write(ofd, 0, j - 1, 1, data);
+	  j = 0;
+	  if (err == -1) break;
+	}
+    }
+  if (temp_file)
+    {
+      if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
+      close_temp_file(ofd, hdr, dur * datumb, sp);
+      hdr = free_file_info(hdr);
+      file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, S_map_channel, cp->edit_ctr);
+      if (ofile) 
+	{
+	  FREE(ofile); 
+	  ofile = NULL;
+	}
+    }
+  else 
+    {
+      if (dur > 0) 
+	change_samples(beg, dur, idata, cp, LOCK_MIXES, S_map_channel, cp->edit_ctr);
+    }
+  update_graph(cp, NULL); 
+  free_snd_fd(sf);
+  FREE(data[0]);
+  FREE(data);
+  return(NULL);
+}
+
 static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos, XEN s_dur, char *fallback_caller) 
 #else
 static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos, XEN s_dur, char *fallback_caller) 
@@ -2327,13 +2393,16 @@ static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN ch
 #if WITH_RUN
   if (optimization(ss) > 0)
     {
-      pt = form_to_ptree_1f2f(XEN_CAR(proc_and_list));
+      pt = form_to_ptree_1f2f(proc_and_list);
       if (pt)
 	{
 	  run_channel(cp, pt, beg, num, pos);
 	  free_ptree(pt);
 	  return(XEN_ZERO);
 	}
+#if DEBUGGING
+      else fprintf(stderr,"can't map %s\n", XEN_TO_C_STRING(XEN_TO_STRING(XEN_CAR(proc_and_list)))); 
+#endif
     }
 #endif
 
@@ -2499,6 +2568,9 @@ static XEN g_sp_scan(XEN proc, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 #if WITH_RUN
   if (optimization(ss) > 0)
     pt = form_to_ptree_1f2b(XEN_CAR(proc_and_list));
+#if DEBUGGING
+  /* if (pt == NULL) fprintf(stderr,"can't scan %s\n", XEN_TO_C_STRING(XEN_TO_STRING(XEN_CAR(proc_and_list)))); */
+#endif
 #endif
   if (num > 0)
     {
