@@ -189,6 +189,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+29-Jun:  many ardour-related improvements from Paul Barton-Davis.\n\
 28-Jun:  added channel argument to save-sound-as (for channel extraction).\n\
          removed OSS-specific set-dsp-reset.\n\
 27-Jun:  update configure for gsl 0.6.\n\

@@ -50,7 +50,7 @@
 ;;; FOF voice synthesis (wave-train, #&optional args)
 ;;; phase vocoder
 ;;; mix with envelope
-;;; time varying FIR filter
+;;; time varying FIR filter, notch filter, frequency-response -> FIR coeffs
 ;;; map-sound-files, match-sound-files
 ;;; move sound down 8ve using fft
 ;;; vct func like list
@@ -2115,10 +2115,23 @@
 	    #f)))))
 
 ;(map-chan (fltit-1 10 (list->vct '(0 1.0 0 0 0 0 0 0 1.0 0))))
+;
 ;(let ((notched-spectr (make-vct 40)))
 ;  (vct-set! notched-spectr 2 1.0)  
 ;  (vct-set! notched-spectr 37 1.0)
 ;  (map-chan (fltit-1 40 notched-spectr)))
+;
+;;; but for something this simple, we can use a two-zero filter:
+;
+;(define flt (make-zpolar .99 550.0))
+;
+;;; this is a strong notch filter centered at 550 Hz
+;
+;(map-chan (lambda (x) (if x (two-zero flt x) #f)))
+;
+;;; similarly make-ppolar/two-pole (or better, make-formant)
+;;; can be used for resonances.
+
 
 
 
@@ -2206,7 +2219,7 @@
 
 ;;; -------- vct func like list -- takes any number of args and creates vct
 ;;;
-;;;  :(vct 1 2 3)
-;;;  #<vct 1.000 2.000 3.000>
+;;;  (vct 1 2 3)
+;;;  -> #<vct 1.000 2.000 3.000>
 
 (define vct (lambda args (list->vct args)))

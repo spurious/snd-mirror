@@ -52,6 +52,7 @@
 #undef HAVE_SETJMP_H
 #undef TIME_WITH_SYS_TIME
 #undef HAVE_GNU_LIBC_VERSION_H
+#undef HAVE_PWD_H
 
 #define SIZEOF_INT 0
 #define SIZEOF_CHAR 0

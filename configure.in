@@ -28,10 +28,16 @@ AC_ARG_WITH(ardour,
 	    MAKE_TARGET=widget
 	    AC_DEFINE(MUS_SAMPLE_BITS,32)
 	    AC_DEFINE(SNDLIB_USE_FLOATS)
-	    AC_DEFINE(GTKRC_COLORS)
+dnl	    AC_DEFINE(GTKRC_COLORS)
             AC_DEFINE(FILE_PER_CHAN)
 	    with_gtk="yes"
 	    audio_system="ardour"
+	fi)
+
+AC_ARG_WITH(multifile,
+	[  --with-multifile	  experimental file-per-channel support],
+  	if test "$with_multifile" = y || test "$with_multifile" = yes; then
+	    AC_DEFINE(FILE_PER_CHAN)
 	fi)
 
 AC_ARG_WITH(gtkrc-colors,
@@ -170,7 +176,7 @@ LIBS=""
 
 AC_HEADER_DIRENT
 AC_HEADER_STDC
-AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h soundcard.h machine/soundcard.h libc.h sys/vfs.h sys/statfs.h sys/mount.h fpu_control.h setjmp.h sched.h)
+AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h soundcard.h machine/soundcard.h libc.h sys/vfs.h sys/statfs.h sys/mount.h fpu_control.h setjmp.h sched.h pwd.h)
 AC_CHECK_HEADER(/usr/local/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LOCAL_LIB_OSS)])
 AC_CHECK_HEADER(/usr/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LIB_OSS)])
 AC_CHECK_HEADER(/opt/oss/include/sys/soundcard.h,[AC_DEFINE(OPT_OSS)])
@@ -352,7 +358,13 @@ AUDIO_LIB=""
 dnl we need the sndlib.h equivalents to try to find the native sound support (see config.guess)
 dnl this only matters for those cases where we've implemented the audio code in audio.c
 dnl test for ALSA courtesy of Paul Barton-Davis
-audio_system="unknown"
+
+if test "$audio_system" != unknown ; then
+
+  AC_MSG_RESULT(Using the $audio_system audio system)
+
+else
+
 case "$host" in
     *-*-linux*) 
 	AC_DEFINE(LINUX)
@@ -435,6 +447,7 @@ fi
 esac
 AC_MSG_CHECKING([for audio system])
 AC_MSG_RESULT($audio_system)
+fi
 
 
 dnl fstatfs is a mess

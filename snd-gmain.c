@@ -244,6 +244,88 @@ static void GetStdinString (gpointer clientData, gint fd, GdkInputCondition cond
   FREE(buf);
 }
 
+static void setup_gcs (snd_state *ss)
+{
+  GdkWindow *wn;	
+  state_context *sx;
+
+  sx = ss->sgx;
+  wn = MAIN_WINDOW(ss);
+
+  sx->basic_gc = gdk_gc_new(wn);
+  gdk_gc_set_background(sx->basic_gc,sx->graph_color);
+  gdk_gc_set_foreground(sx->basic_gc,sx->data_color);
+
+  sx->combined_basic_gc = gdk_gc_new(wn);
+  gdk_gc_set_background(sx->combined_basic_gc,sx->graph_color);
+  gdk_gc_set_foreground(sx->combined_basic_gc,sx->data_color);
+
+  sx->mix_gc = gdk_gc_new(wn);
+  gdk_gc_set_background(sx->mix_gc,sx->graph_color);
+  gdk_gc_set_foreground(sx->mix_gc,sx->mix_waveform_color);
+
+  sx->cursor_gc = gdk_gc_new(wn);
+  gdk_gc_set_background(sx->cursor_gc,sx->graph_color);
+  gc_set_foreground_xor(sx->cursor_gc,sx->cursor_color,sx->graph_color);
+  gdk_gc_set_function(sx->cursor_gc,GDK_XOR);
+
+  sx->selection_gc = gdk_gc_new(wn);
+  gdk_gc_set_background(sx->selection_gc,sx->graph_color);
+  gc_set_foreground_xor(sx->selection_gc,sx->selection_color,sx->graph_color);
+  gdk_gc_set_function(sx->selection_gc,GDK_XOR);
+
+  sx->mark_gc = gdk_gc_new(wn);
+  gdk_gc_set_background(sx->mark_gc,sx->graph_color);
+  gc_set_foreground_xor(sx->mark_gc,sx->mark_color,sx->graph_color);
+  gdk_gc_set_function(sx->mark_gc,GDK_XOR);
+
+  sx->erase_gc = gdk_gc_new(wn);
+  gdk_gc_set_background(sx->erase_gc,sx->data_color);
+  gdk_gc_set_foreground(sx->erase_gc,sx->graph_color);
+  gdk_gc_set_function(sx->erase_gc,GDK_COPY);
+
+  sx->selected_basic_gc = gdk_gc_new(wn);
+  gdk_gc_set_background(sx->selected_basic_gc,sx->selected_graph_color);
+  gdk_gc_set_foreground(sx->selected_basic_gc,sx->selected_data_color);
+
+  sx->selected_cursor_gc = gdk_gc_new(wn);
+  gdk_gc_set_background(sx->selected_cursor_gc,sx->graph_color);
+  gc_set_foreground_xor(sx->selected_cursor_gc,sx->cursor_color,sx->graph_color);
+  gdk_gc_set_function(sx->selected_cursor_gc,GDK_XOR);
+
+  sx->selected_selection_gc = gdk_gc_new(wn);
+  gdk_gc_set_background(sx->selected_selection_gc,sx->graph_color);
+  gc_set_foreground_xor(sx->selected_selection_gc,sx->selection_color,sx->graph_color);
+  gdk_gc_set_function(sx->selected_selection_gc,GDK_XOR);
+
+  sx->selected_mark_gc = gdk_gc_new(wn);
+  gdk_gc_set_background(sx->selected_mark_gc,sx->selected_graph_color);
+  gc_set_foreground_xor(sx->selected_mark_gc,sx->mark_color,sx->selected_graph_color);
+  gdk_gc_set_function(sx->selected_mark_gc,GDK_XOR);
+
+  sx->selected_erase_gc = gdk_gc_new(wn);
+  gdk_gc_set_background(sx->selected_erase_gc,sx->selected_data_color);
+  gdk_gc_set_foreground(sx->selected_erase_gc,sx->selected_graph_color);
+  gdk_gc_set_function(sx->selected_erase_gc,GDK_COPY);
+
+  sx->fltenv_basic_gc = gdk_gc_new(wn);
+  gdk_gc_set_background(sx->fltenv_basic_gc,sx->basic_color);
+  gdk_gc_set_foreground(sx->fltenv_basic_gc,sx->black);
+  gdk_gc_set_function(sx->fltenv_basic_gc,GDK_COPY);
+
+  sx->fltenv_data_gc = gdk_gc_new(wn);
+  gdk_gc_set_background(sx->fltenv_data_gc,sx->basic_color);
+  gdk_gc_set_foreground(sx->fltenv_data_gc,sx->filter_waveform_color);
+  gdk_gc_set_function(sx->fltenv_data_gc,GDK_COPY);
+
+  sx->speed_gc = gdk_gc_new(wn);
+  gdk_gc_set_background(sx->speed_gc,sx->basic_color);
+  gdk_gc_set_foreground(sx->speed_gc,sx->black);
+  gdk_gc_set_function(sx->speed_gc,GDK_COPY);
+
+  initialize_colormap(ss);
+}
+
 typedef struct {int slice; snd_state *ss; GtkWidget *shell;} startup_state;
 
 static BACKGROUND_TYPE startup_funcs(gpointer clientData)
@@ -297,7 +379,7 @@ static BACKGROUND_TYPE startup_funcs(gpointer clientData)
 #endif
       break;
     case 1: 
-      gtk_rc_parse(RC_FILE_NAME); /* whatever ... */
+      /* gtk_rc_parse(RC_FILE_NAME); */ /* whatever ... */
       snd_load_init_file(ss,noglob,noinit);
       break;
     case 2: 
@@ -455,29 +537,63 @@ static GdkColor *get_color(char *defined_color, char *fallback_color, char *seco
   return(new_color);
 }
 
+#if HAVE_PWD_H
+  #include <pwd.h>
+#endif
+
+static void load_gtk_rc_file ()
+{
+  char fullpath[PATH_MAX+1];
+  char *path;
+
+  if ((path = getenv ("SND_GTKRC")) == NULL) 
+    {
+#if HAVE_PWD_H
+      struct passwd *pw;
+      pw = getpwuid (getuid());
+      sprintf (fullpath, "%s/.sndrc", pw->pw_dir);
+#else 
+      char *home = getenv ("HOME");
+      sprintf (fullpath, "%s/.sndrc", home ? home : "");
+#endif
+      path = fullpath;
+    }
+
+  if (access (path, R_OK)) 
+    {
+#if DEBUGGING
+      mus_error (0, "No GTK rc file for snd at %s\n", path);
+      /* I take it this is a purely aesthetic "error"? */
+#endif
+      return;
+    }
+  gtk_rc_parse(path);
+}
+
 #ifdef SND_AS_WIDGET
-GtkWidget *snd_as_widget(int argc, char **argv, GdkWindow *wn)
+GtkWidget *snd_as_widget(int argc, char **argv, GtkWidget *parent, void (*error_func)(const char *))
 {
   snd_state *ss;
 #else
 
 void snd_doit(snd_state *ss,int argc, char **argv)
 {
-  GdkWindow *wn;
 #endif
   
   GtkWidget *shell;
   int i;
   state_context *sx;
-  GtkWidget *menu;
   startup_state *tm;
 
 #ifdef SND_AS_WIDGET
+  set_snd_error_display (error_func);
   ss = snd_main(argc,argv);
 #else
   gtk_init(&argc,&argv);
   gdk_set_locale();
 #endif
+
+  load_gtk_rc_file ();
 
   ss->ctrls_height = CLOSED_CTRLS_HEIGHT;
   ss->channel_min_height = CHANNEL_MIN_HEIGHT;
@@ -590,19 +706,20 @@ void snd_doit(snd_state *ss,int argc, char **argv)
   set_color_map(ss,DEFAULT_SPECTROGRAM_COLOR);
   set_ask_before_overwrite(ss,FALSE);
 
-#ifdef SND_AS_WIDGET
   sx->mainpane = gtk_vbox_new(FALSE,0); /* not homogenous, spacing 0 */
-  sx->mainshell = sx->mainpane;
+
+#ifdef SND_AS_WIDGET
+  sx->mainshell = parent;
   shell = sx->mainpane;
 #else
   sx->mainshell = shell;
-  sx->mainpane = gtk_vbox_new(FALSE,0); /* not homogenous, spacing 0 */
   gtk_container_add(GTK_CONTAINER(MAIN_SHELL(ss)),MAIN_PANE(ss));
   set_background(MAIN_SHELL(ss),(ss->sgx)->basic_color);
 #endif
+
   set_background(MAIN_PANE(ss),(ss->sgx)->basic_color);
 
-  menu = add_menu(ss);
+  add_menu(ss);
 
   sx->soundpane = gtk_vpaned_new();
   gtk_paned_set_handle_size(GTK_PANED(SOUND_PANE(ss)),ss->sash_size);
@@ -631,84 +748,14 @@ void snd_doit(snd_state *ss,int argc, char **argv)
 
   gtk_widget_show(SOUND_PANE(ss));
   gtk_widget_show(MAIN_PANE(ss));
+  gtk_widget_show (MAIN_SHELL(ss));
 #ifndef SND_AS_WIDGET
-  gtk_widget_show(MAIN_SHELL(ss));
-  wn = shell->window;
+  ss->sgx->mainwindow = ss->sgx->mainshell->window;
+#else
+  ss->sgx->mainwindow = gtk_widget_get_parent_window (ss->sgx->mainshell);
 #endif
-  sx->mainwindow = wn;
 
-  sx->basic_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->basic_gc,sx->graph_color);
-  gdk_gc_set_foreground(sx->basic_gc,sx->data_color);
-
-  sx->combined_basic_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->combined_basic_gc,sx->graph_color);
-  gdk_gc_set_foreground(sx->combined_basic_gc,sx->data_color);
-
-  sx->mix_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->mix_gc,sx->graph_color);
-  gdk_gc_set_foreground(sx->mix_gc,sx->mix_waveform_color);
-
-  sx->cursor_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->cursor_gc,sx->graph_color);
-  gc_set_foreground_xor(sx->cursor_gc,sx->cursor_color,sx->graph_color);
-  gdk_gc_set_function(sx->cursor_gc,GDK_XOR);
-
-  sx->selection_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->selection_gc,sx->graph_color);
-  gc_set_foreground_xor(sx->selection_gc,sx->selection_color,sx->graph_color);
-  gdk_gc_set_function(sx->selection_gc,GDK_XOR);
-
-  sx->mark_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->mark_gc,sx->graph_color);
-  gc_set_foreground_xor(sx->mark_gc,sx->mark_color,sx->graph_color);
-  gdk_gc_set_function(sx->mark_gc,GDK_XOR);
-
-  sx->erase_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->erase_gc,sx->data_color);
-  gdk_gc_set_foreground(sx->erase_gc,sx->graph_color);
-  gdk_gc_set_function(sx->erase_gc,GDK_COPY);
-
-  sx->selected_basic_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->selected_basic_gc,sx->selected_graph_color);
-  gdk_gc_set_foreground(sx->selected_basic_gc,sx->selected_data_color);
-
-  sx->selected_cursor_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->selected_cursor_gc,sx->graph_color);
-  gc_set_foreground_xor(sx->selected_cursor_gc,sx->cursor_color,sx->graph_color);
-  gdk_gc_set_function(sx->selected_cursor_gc,GDK_XOR);
-
-  sx->selected_selection_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->selected_selection_gc,sx->graph_color);
-  gc_set_foreground_xor(sx->selected_selection_gc,sx->selection_color,sx->graph_color);
-  gdk_gc_set_function(sx->selected_selection_gc,GDK_XOR);
-
-  sx->selected_mark_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->selected_mark_gc,sx->selected_graph_color);
-  gc_set_foreground_xor(sx->selected_mark_gc,sx->mark_color,sx->selected_graph_color);
-  gdk_gc_set_function(sx->selected_mark_gc,GDK_XOR);
-
-  sx->selected_erase_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->selected_erase_gc,sx->selected_data_color);
-  gdk_gc_set_foreground(sx->selected_erase_gc,sx->selected_graph_color);
-  gdk_gc_set_function(sx->selected_erase_gc,GDK_COPY);
-
-  sx->fltenv_basic_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->fltenv_basic_gc,sx->basic_color);
-  gdk_gc_set_foreground(sx->fltenv_basic_gc,sx->black);
-  gdk_gc_set_function(sx->fltenv_basic_gc,GDK_COPY);
-
-  sx->fltenv_data_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->fltenv_data_gc,sx->basic_color);
-  gdk_gc_set_foreground(sx->fltenv_data_gc,sx->filter_waveform_color);
-  gdk_gc_set_function(sx->fltenv_data_gc,GDK_COPY);
-
-  sx->speed_gc = gdk_gc_new(wn);
-  gdk_gc_set_background(sx->speed_gc,sx->basic_color);
-  gdk_gc_set_foreground(sx->speed_gc,sx->black);
-  gdk_gc_set_function(sx->speed_gc,GDK_COPY);
-
-  initialize_colormap(ss);
+  setup_gcs(ss);
 
   tm = (startup_state *)CALLOC(1,sizeof(startup_state));
   tm->slice = 0;

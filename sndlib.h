@@ -27,15 +27,15 @@
 
 
 #define SNDLIB_VERSION 10
-#define SNDLIB_REVISION 22
-#define SNDLIB_DATE "28-Jun-00"
+#define SNDLIB_REVISION 23
+#define SNDLIB_DATE "29-Jun-00"
 
 #ifndef HAVE_SNDLIB
   #define HAVE_SNDLIB 1
 #endif
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
-/* gcc has various compile-time macros like #cpu, but we're hoping to run in Metroworks C, Watcom C, MSC, CodeWarrior, MPW, etc */
+/* gcc has various compile-time macros like #cpu, but we're hoping to run in Metroworks C, Watcom C, MSC, MPW, etc */
 
 #if defined(HAVE_CONFIG_H)
   #include "config.h"
@@ -120,8 +120,10 @@
   #endif
 #endif  
 
-/* others apparently are __QNX__ __bsdi__ __FreeBSD__ */
 
+/* this block needed because not everyone uses configure, and those who don't often have no clue what audio system they're using */
+/*   so, if nothing is set but we're on a system that looks linux-like and we can find the OSS headers, use OSS */
+#ifndef ARDOUR_AUDIO
 #ifndef HAVE_OSS
 #ifndef HAVE_ALSA
   #if defined(LINUX) || defined(SCO5) || defined(UW2) || defined(HAVE_SOUNDCARD_H) || defined(HAVE_SYS_SOUNDCARD_H) || defined(HAVE_MACHINE_SOUNDCARD_H) || defined(USR_LIB_OSS) || defined(USR_LOCAL_LIB_OSS) || defined(OPT_OSS)
@@ -130,9 +132,12 @@
     #define HAVE_OSS 0
   #endif
 #else
+  /* this branch may be obsolete with Fernando's new OSS+Alsa code -- need to test it */
   #define HAVE_OSS 0
 #endif
 #endif
+#endif
+
 
 #if (!defined(M_PI))
   #define M_PI 3.14159265358979323846264338327
@@ -391,6 +396,8 @@ int mus_audio_close           PROTO((int line));
 int mus_audio_read            PROTO((int line, char *buf, int bytes));
 int mus_audio_mixer_read      PROTO((int dev, int field, int chan, float *val));
 int mus_audio_mixer_write     PROTO((int dev, int field, int chan, float *val));
+int mus_audio_write_channel   PROTO((int line, char *buf, int bytes, int chan));
+int mus_audio_flush           PROTO((int line));
 void mus_audio_save           PROTO((void));
 void mus_audio_restore        PROTO((void));
 int mus_audio_error           PROTO((void));

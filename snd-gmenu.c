@@ -430,7 +430,10 @@ GtkWidget *add_menu(snd_state *ss)
 
   GtkAccelGroup *accel_group;
   accel_group = gtk_accel_group_new();
+
+#ifndef SND_AS_WIDGET
   gtk_window_add_accel_group(GTK_WINDOW(MAIN_SHELL(ss)),accel_group);
+#endif
 
   mw[menu_menu] = gtk_menu_bar_new();
   set_background(mw[menu_menu],(ss->sgx)->highlight_color);

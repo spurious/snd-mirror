@@ -95,9 +95,14 @@ void mus_error(int error, const char *format, ...)
   va_end(ap);
   if (mus_error_handler)
     (*mus_error_handler)(error,mus_error_buffer);
-  else fprintf(stderr,mus_error_buffer);
+  else 
+    {
+      fprintf(stderr,mus_error_buffer);
+      if (error != MUS_AUDIO_NO_ERROR) fputc('\n',stderr);
+    }
 #else
   fprintf(stderr,"error: %d",error);
+  if (error != MUS_AUDIO_NO_ERROR) fputc('\n',stderr);
 #endif
 }
 
@@ -124,24 +129,7 @@ static time_t file_write_date(const char *filename)
   return((time_t)(statbuf.st_mtime));
 }
 #else
-#include <Files.h>
-static int file_write_date(const char *filename)
-{
-#if 0
-  /* this isn't right... */
-  HParamBlockRec pb;
-  FSSpec fs;
-  FSMakeFSSpec(0,0,(unsigned char *)filename,&fs);
-  pb.fileParam.ioVRefNum = fs.vRefNum;
-  pb.fileParam.ioDirID = fs.parID;
-  pb.fileParam.ioNamePtr = fs.name;
-  PBHGetFInfo(&pb,FALSE);
-mus_error(0,"%s date: %d ",filename,pb.fileParam.ioFlMdDat);
-  return(pb.fileParam.ioFlMdDat);
-#else
-  return(1);
-#endif
-}
+static int file_write_date(const char *filename) {return(1);}
 #endif
 
 static int sndlib_initialized = 0;

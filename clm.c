@@ -60,9 +60,14 @@ void mus_error(int error, const char *format, ...)
   va_end(ap);
   if (mus_error_handler)
     (*mus_error_handler)(error,mus_error_buffer);
-  else fprintf(stderr,mus_error_buffer);
+  else 
+    {
+      fprintf(stderr,mus_error_buffer);
+      if (error != MUS_AUDIO_NO_ERROR) fputc('\n',stderr);
+    }
 #else
   fprintf(stderr,"error: %d",error);
+  if (error != MUS_AUDIO_NO_ERROR) fputc('\n',stderr);
 #endif
 }
 

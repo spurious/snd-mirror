@@ -1,7 +1,3 @@
-/* TODO: swap chans should be do-able simply by copying and swapping the current ed_list blocks
- *         with cp->sounds[index] or data buffer pointers swapped also (gets slightly tricky...)
- */
-
 #include "snd.h"
 
 /* -------------------------------- EDIT LISTS -------------------------------- *

@@ -96,10 +96,9 @@ GtkWidget *form,*shell,*label,*snd;
 
 static void Snd_Callback(GtkWidget *w,gpointer data) 
 {
-  GdkWindow *wn = (GdkWindow *)data;
   if (!snd_running)
     {
-      snd = snd_as_widget(0,NULL,wn);
+      snd = snd_as_widget(0,NULL,w,NULL);
       gtk_box_pack_start(GTK_BOX(form),snd,TRUE,TRUE,0);
       gtk_widget_show(snd);
       snd_open_file("~/cl/oboe.snd",get_global_state()); 
@@ -135,7 +134,7 @@ static void gsnd_main (int argc,char **argv )
   gtk_widget_show(label);
   gtk_widget_show(shell);
 
-  gtk_signal_connect(GTK_OBJECT(label),"clicked",GTK_SIGNAL_FUNC(Snd_Callback),(gpointer)(shell->window));
+  gtk_signal_connect(GTK_OBJECT(label),"clicked",GTK_SIGNAL_FUNC(Snd_Callback),(gpointer)form);
   gtk_signal_connect(GTK_OBJECT(shell),"delete_event",GTK_SIGNAL_FUNC(Window_Close),NULL);
   gtk_main();
 }

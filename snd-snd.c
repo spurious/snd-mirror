@@ -158,7 +158,7 @@ int tick_amp_env(chan_info *cp, env_state *es)
       else lm = (ep->amp_env_size - ep->bin);
       if (lm > MULTIPLIER) lm = MULTIPLIER;
       sb = ep->bin;
-      if (ep->samps_per_bin < (2*AMP_ENV_SUBSAMPLE))
+      if ((cp->edit_ctr != 0) || (ep->samps_per_bin < (2*AMP_ENV_SUBSAMPLE)))
 	{
 	  if (es->sf == NULL) es->sf = init_sample_read(ep->bin * ep->samps_per_bin,cp,READ_FORWARD);
 	  sfd = es->sf;

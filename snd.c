@@ -248,6 +248,9 @@ static void mus_error2snd(int type, char *msg)
   state->exit_hook_active = 0;
   state->start_hook_active = 0;
   state->search_in_progress = 0;
+#if NONINTERLEAVED_AUDIO
+  state->audio_hw_channels = DEFAULT_AUDIO_HW_CHANNELS;
+#endif
 
   set_snd_IO_error(SND_NO_ERROR);
 

@@ -664,3 +664,8 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define graphs_horizontal(ss) ss->Graphs_Horizontal
 #define set_graphs_horizontal(ss,a) ss->Graphs_Horizontal = a
 #define DEFAULT_GRAPHS_HORIZONTAL 1
+
+#if NONINTERLEAVED_AUDIO
+  #define DEFAULT_AUDIO_HW_CHANNELS 2
+#endif
+

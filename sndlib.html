@@ -868,17 +868,9 @@ ld -r audio.o io.o headers.o sound.o -o sndlib.a
 cc sndplay.c -o sndplay -O -DNEXT sndlib.a
 </pre>
 <p>Some similar sequence should work on a Sun (-DSOLARIS) or in HP-UX (-DHPUX).
-On a Mac, you need to make a project in CodeWarrior or whatever that
-includes all the basic sndlib .c and .h files (io.c, audio.c
-headers.c, sound.c, sndlib.h) as source
-files.  Add the main program you're interested in
-(say sndplay.c), and "Make" the project.  When the
-project is "Run", a dialog pops up asking for
-the arguments to the program (in this case the
-name of the file to be played, as a quoted string).
 In the BeOS (Intel), rename audio.c to audio.cc, then use make (for some
 reason Be's version of g++ gets a segfault if the name is audio.c).
-In Windoze, you can use the C IDE (a project builder as in the Mac case),
+In Windoze, you can use the C IDE (a project builder),
 or run the compiler from a DOS shell.  In the latter case,
 (in Watcom C) cl io.c -c -DWINDOZE to create the object files (io.obj and so on), then</p>
 <pre>

@@ -32,6 +32,15 @@ void snd_warning(char *format, ...)
 #endif
 }
 
+#ifdef SND_AS_WIDGET
+static void (*snd_error_display)(const char *);
+
+void set_snd_error_display (void (*func)(const char *))
+{
+  snd_error_display = func;
+}
+#endif
+
 void snd_error(char *format, ...)
 {
 #if HAVE_VPRINTF
@@ -52,15 +61,31 @@ void snd_error(char *format, ...)
 #ifdef DEBUGGING
       fprintf(stderr,snd_error_buffer);
 #endif
+
+#ifdef SND_AS_WIDGET
+      if (snd_error_display) 
+	snd_error_display(snd_error_buffer);
+      else
+	{
+	  /* don't break (unlikely) existing code? */
+#endif
       add_to_error_history(ss,snd_error_buffer);
       sp = selected_sound(ss);
       if (sp)
 	report_in_minibuffer(sp,snd_error_buffer);
       else post_error_dialog(ss,snd_error_buffer);
+#ifdef SND_AS_WIDGET
+	}
+#endif
     }
-  else fprintf(stderr,snd_error_buffer);
+  else 
+    {
+      fprintf(stderr,snd_error_buffer);
+      fputc('\n', stderr);
+    }
 #else
   fprintf(stderr,"error...");
+  fputc('\n', stderr);
 #endif
 }
 

@@ -1,5 +1,6 @@
 snd change log
 
+  29-Jun:    many ardour-related improvements from Paul Barton-Davis.
   28-Jun:    added channel argument to save-sound-as (for channel extraction).
              removed OSS-specific set-dsp-reset.
   27-Jun:    update configure for gsl 0.6.

@@ -24,7 +24,12 @@ static int dac_decay = 0;
 /* static int dac_min_chans = 0; */ /* currently unused? */
 #endif
 
-static MUS_SAMPLE_TYPE dac_buffer[MAX_DAC_BUFFER_SIZE];
+#if NONINTERLEAVED_AUDIO
+  static MUS_SAMPLE_TYPE **dac_buffers;
+#else
+  static MUS_SAMPLE_TYPE dac_buffer[MAX_DAC_BUFFER_SIZE];
+#endif
+
 static Float *revin = NULL;
 #if (HAVE_OSS || HAVE_ALSA)
   static MUS_SAMPLE_TYPE *dac_buffer0 = NULL;
@@ -1152,18 +1157,48 @@ int play_in_progress(void) {return(play_list_members > 0);}
 static unsigned char *dacbuf = NULL,*dacbuf1 = NULL;
 static int compatible_format = MUS_COMPATIBLE_FORMAT;
 
+#if NONINTERLEAVED_AUDIO
+  #define DAC_BUFFER(chn,offset) dac_buffers[chn][offset]
+
+/* Make this something quicker to evaluate - its in the inner loop
+   right now.
+*/
+
+  #define AUDIO_CHANNEL(dp,k) (dp->chn_fds[k]->cp->sound->index)
+#else
+  #define DAC_BUFFER(chn,offset) dac_buffer[offset]
+  #define AUDIO_CHANNEL 0 /* has no effect - removed by pre-processor */
+#endif
+
+
 static int fill_dac(snd_state *ss, int write_ok)
 {
   int i,j,k,m,dac_increments,len,cursor_change,chn;
-  MUS_SAMPLE_TYPE *bufs[1];
   int bytes,dp_chans;
   Float amp,incr,sr,sincr,ind,indincr,ex,exincr,rev,revincr;
   dac_info *dp;
   snd_info *sp;
   Float *data;
+  int nbufs;
+  int bufskip;
+
+#if NONINTERLEAVED_AUDIO
+
+  MUS_SAMPLE_TYPE **bufs;
+  bufs = dac_buffers;
+  nbufs = ss->audio_hw_channels;
+
+#else
+
+  MUS_SAMPLE_TYPE *bufs[1];
   bufs[0] = dac_buffer;
+  nbufs = 1;
+
+#endif
+
+  for (i=0;i<nbufs;i++) memset(bufs[i],0,dac_buffer_size * sizeof(MUS_SAMPLE_TYPE));
+
   bytes = dac_buffer_size * mus_data_format_to_bytes_per_sample(compatible_format);
-  memset(dac_buffer,0,dac_buffer_size * sizeof(MUS_SAMPLE_TYPE));
   if (global_reverb) 
     {
       if (revin == NULL)
@@ -1172,6 +1207,13 @@ static int fill_dac(snd_state *ss, int write_ok)
     }
   dac_increments = dac_buffer_size / dac_chans;
   len = dac_increments;
+
+#if NONINTERLEAVED_AUDIO
+  bufskip = 1;
+#else
+  bufskip = dac_chans;
+#endif
+
   if (dac_pausing) 
     cursor_change = 0;
   else
@@ -1203,7 +1245,7 @@ static int fill_dac(snd_state *ss, int write_ok)
 		  if (dp_chans == 1) 
 		    {
 		      for (j=0;j<dac_buffer_size;j+=dac_chans) 
-			ADD_NEXT_SAMPLE(dac_buffer[j],dp->chn_fds[0]);
+			ADD_NEXT_SAMPLE(DAC_BUFFER(dp->sp->index,j),dp->chn_fds[0]);
 		    }
 		  else 
 		    {
@@ -1212,7 +1254,7 @@ static int fill_dac(snd_state *ss, int write_ok)
 			  for (j=0;j<dac_buffer_size;j+=dac_chans) 
 			    {
 			      for (k=0;k<dp_chans;k++) 
-				ADD_NEXT_SAMPLE(dac_buffer[j+k],dp->chn_fds[k]);
+		                ADD_NEXT_SAMPLE(DAC_BUFFER(AUDIO_CHANNEL(dp,k),j+k),dp->chn_fds[k]);
 			    }
 			}
 		      else
@@ -1221,7 +1263,7 @@ static int fill_dac(snd_state *ss, int write_ok)
 			    {
 			      for (chn=0,k=0;k<dp_chans;k++) 
 				{
-				  ADD_NEXT_SAMPLE(dac_buffer[j+chn],dp->chn_fds[k]); 
+				  ADD_NEXT_SAMPLE(DAC_BUFFER(AUDIO_CHANNEL(dp,k),j+chn),dp->chn_fds[k]);
 				  chn++; 
 				  if (chn == dac_chans) chn = 0;
 				}
@@ -1237,7 +1279,7 @@ static int fill_dac(snd_state *ss, int write_ok)
 		  if (dp_chans == 1) 
 		    {
 		      for (j=0;j<dac_buffer_size;j+=dac_chans,amp+=incr) 
-			SCALE_NEXT_SAMPLE(dac_buffer[j],dp->chn_fds[0],amp);
+			SCALE_NEXT_SAMPLE(DAC_BUFFER(AUDIO_CHANNEL(dp,k),j),dp->chn_fds[0],amp);
 		    }
 		  else 
 		    {
@@ -1246,7 +1288,7 @@ static int fill_dac(snd_state *ss, int write_ok)
 			  for (j=0;j<dac_buffer_size;j+=dac_chans,amp+=incr) 
 			    {
 			      for (k=0;k<dp_chans;k++) 
-				SCALE_NEXT_SAMPLE(dac_buffer[j+k],dp->chn_fds[k],amp);
+				SCALE_NEXT_SAMPLE(DAC_BUFFER(AUDIO_CHANNEL(dp,k),j+k),dp->chn_fds[k],amp);
 			    }
 			}
 		      else
@@ -1256,7 +1298,7 @@ static int fill_dac(snd_state *ss, int write_ok)
 			      for (chn=0,k=0;k<dp_chans;k++) 
 				{
 				  if (chn >= dac_chans) chn = 0;
-				  SCALE_NEXT_SAMPLE(dac_buffer[j+chn],dp->chn_fds[k],amp); 
+				  SCALE_NEXT_SAMPLE(DAC_BUFFER(AUDIO_CHANNEL(dp,k),j+chn),dp->chn_fds[k],amp); 
 				  chn++; 
 				}
 			    }
@@ -1280,7 +1322,7 @@ static int fill_dac(snd_state *ss, int write_ok)
 			  for (chn=0,k=0;k<dp_chans;k++) 
 			    {
 			      if (chn >= dac_chans) chn = 0;
-			      dac_buffer[j+chn] += MUS_FLOAT_TO_SAMPLE(amp*dp->fvals[k]);
+			      DAC_BUFFER(AUDIO_CHANNEL(dp,k),j+chn) += MUS_FLOAT_TO_SAMPLE(amp*dp->fvals[k]);
 			      chn++; 
 			    }
 			}
@@ -1313,7 +1355,7 @@ static int fill_dac(snd_state *ss, int write_ok)
 		      for (chn=0,k=0;k<dp_chans;k++)
 			{
 			  if (chn >= dac_chans) chn = 0;
-			  dac_buffer[j+chn] += MUS_FLOAT_TO_SAMPLE(dp->fvals[k]);
+			  DAC_BUFFER(AUDIO_CHANNEL(dp,k),j+chn) += MUS_FLOAT_TO_SAMPLE(dp->fvals[k]);
 			  chn++; 
 			}
 		      if (dp->reverbing) revin[j] += dp->rev_in;
@@ -1350,7 +1392,12 @@ static int fill_dac(snd_state *ss, int write_ok)
 	{
 	  for (i=0;i<dac_buffer_size;i+=dac_chans)
 	    {
+#if NONINTERLEAVED_AUDIO
+	      for (k=0;k<nbufs;k++) 
+		reverb(global_reverb,revin[i],(MUS_SAMPLE_TYPE *)(&(DAC_BUFFER(k,i))),revchans);
+#else
 	      reverb(global_reverb,revin[i],(MUS_SAMPLE_TYPE *)(dac_buffer+i),revchans);
+#endif
 	    }
 	  if (play_list_members == 0)
 	    {
@@ -1393,8 +1440,17 @@ static int fill_dac(snd_state *ss, int write_ok)
 #else
   if (write_ok) 
     {
+#if NONINTERLEAVED_AUDIO
+      for (i=0;i<nbufs;i++)
+	{
+	  mus_file_write_buffer(compatible_format,0,dac_buffer_size-1,1,&bufs[i],(char *)dacbuf,data_clipped(ss));
+	  mus_audio_write_channel(dev_fd[0],(char *)dacbuf,bytes, i);
+	}
+      mus_audio_flush (dev_fd[0]);
+#else
       mus_file_write_buffer(compatible_format,0,dac_buffer_size-1,1,bufs,(char *)dacbuf,data_clipped(ss));
       mus_audio_write(dev_fd[0],(char *)dacbuf,bytes);
+#endif
     }
 #endif
   if (cursor_change) cursor_time = 0;
@@ -1439,7 +1495,11 @@ int mus_audio_compatible_format(int dev)
  * in place designed to select whatever the user _reeely_ wants. Till 
  * then set this to "1" to always send to the first device. */
 
-int feed_first_device = 0;
+#if NONINTERLEAVED_AUDIO
+  int feed_first_device = 1;
+#else
+  int feed_first_device = 0;
+#endif
 
 static int really_start_audio_output (dac_manager *tm)
 {
@@ -1932,8 +1992,12 @@ int run_apply(snd_info *sp, int ofd)
 
   /* sr .07 -> infinite output? */
 
-  bufs[0] = dac_buffer;
-  mus_file_write(ofd,0,dac_buffer_size-1,1,bufs);
+#if NONINTERLEAVED_AUDIO
+  fprintf (stderr, "run apply not yet support for non-interleaved operation\n"); abort();
+#else
+   bufs[0] = dac_buffer;
+   mus_file_write(ofd,0,dac_buffer_size-1,1,bufs);
+#endif
   return(len);
 }
 

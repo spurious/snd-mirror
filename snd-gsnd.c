@@ -288,18 +288,31 @@ static void minibuffer_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer 
 {
   snd_info *sp = (snd_info *)data;
   snd_state *ss;
-  ss = sp->state;
-  set_text_background(w,(ss->sgx)->white);
-  (sp->sgx)->mini_active = 1;
+  if ((sp) && (sp->inuse))
+    {
+      ss = sp->state;
+      if (ss)
+	{
+	  set_text_background(w,(ss->sgx)->white);
+	  (sp->sgx)->mini_active = 1;
+	}
+    }
 }
 
 static void minibuffer_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
   snd_state *ss;
-  ss = sp->state;
-  set_text_background(w,(ss->sgx)->basic_color);
-  (sp->sgx)->mini_active = 0;
+  if ((sp) && (sp->inuse))
+    {
+      ss = sp->state;
+      if (ss)
+	{
+	  /* weird -- I'm getting this event sent to an inactive sound?? */
+	  set_text_background(w,(ss->sgx)->basic_color);
+	  (sp->sgx)->mini_active = 0;
+	}
+    }
 }
 
 

@@ -268,6 +268,9 @@ typedef struct snd__state {
   int selected_sound,selected_mix;         /* NO_SELECTION = none selected = which sound is currently receiving user's attention */
   int active_sounds;
   int viewing;
+#if NONINTERLEAVED_AUDIO
+  int audio_hw_channels;  /* XXX needs to be saved, or not ??? */
+#endif
   int ctrls_height,open_ctrls_height,channel_min_height;
   snd_info **sounds;
   char *search_expr,*startup_title;
@@ -548,14 +551,17 @@ int save_state (snd_state *ss, char *save_state_name);
 /* --------- snd-error.c -------- */
 
 #ifdef __GNUC__
-void snd_error(char *format, ...)  __attribute__ ((format (printf, 1, 2)));
-void snd_warning(char *format, ...)  __attribute__ ((format (printf, 1, 2)));
+  void snd_error(char *format, ...)  __attribute__ ((format (printf, 1, 2)));
+  void snd_warning(char *format, ...)  __attribute__ ((format (printf, 1, 2)));
 #else
-void snd_error(char *format, ...);
-void snd_warning(char *format, ...);
+  void snd_error(char *format, ...);
+  void snd_warning(char *format, ...);
 #endif
 #if HAVE_GUILE
-void g_init_errors(SCM local_doc);
+  void g_init_errors(SCM local_doc);
+#endif
+#ifdef SND_AS_WIDGET
+  void set_snd_error_display (void (*func)(const char *));
 #endif
 
 

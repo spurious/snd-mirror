@@ -3313,7 +3313,7 @@ static int fire_up_recorder(snd_state *ss)
 		      if ((recorder) && (rec_size_text))
 			{
 			  sprintf(timbuf,"%d",recorder_buffer_size(ss));
-+			  gtk_entry_set_text(GTK_ENTRY(rec_size_text),timbuf);
+			  gtk_entry_set_text(GTK_ENTRY(rec_size_text),timbuf);
 			}
 		    }
 		  if (!(record_buf[sys]))
