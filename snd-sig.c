@@ -2061,7 +2061,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 				      (si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
 				      LOCK_MIXES, origin, si->cps[i]->edit_ctr);
 		  if ((si->begs[i] == 0) && (dur == si->cps[i]->samples[pos]))
-		    amp_env_env(si->cps[i], mus_data(egen), len, pos);
+		    amp_env_env(si->cps[i], mus_data(egen), len, pos, 1.0);
 		  else 
 		    {
 		      if ((len < 2) || (abs(dur - passes[len - 2]) < 2))
@@ -2127,7 +2127,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 	      segnum = passes[k + 1] - passes[k];
 	    }
 	  if ((si->begs[i] == 0) && (dur == si->cps[i]->samples[env_pos]))
-	    amp_env_env(si->cps[i], mus_data(egen), len, env_pos);
+	    amp_env_env(si->cps[i], mus_data(egen), len, env_pos, 1.0);
 	  else 
 	    {
 	      if ((len < 2) || (abs(dur - passes[len - 2]) < 2))

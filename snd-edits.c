@@ -9,41 +9,6 @@
  */
 
 
-#if 0
-static Float evaluate_ptree_chain(int ptree_index, Float y)
-{
-    /* use a vct as below with scaler[iwth no fix_to_float embedded] : index */
-    val = MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++]);
-    for (i = 0; i < data->length; i += 2)
-      val = evaluate_ptree_1f2f(sf->ptrees[data[i + 1]], data[i] * val);
-    return(MUS_FLOAT_TO_SAMPLE(READER_SCALER(sf) * val));
-}
-/* init-func here needs ptree indices and scalers */
-/* ptree+ptree -> ptrees, ptree+ptrees -> ptrees */
-/* proc */
-static mus_sample_t next_sample_with_ramps(snd_fd *sf)
-{
-  if (sf->loc > sf->last)
-    return(next_sound(sf));
-  else
-    {
-      Float val = 1.0;
-      vct *data = (vct *)(sf->closure); /* needs to be wrapped as xen object or use some other pointer */
-      int ramps, i;
-      ramps = data->length / 2;
-      for (i = 0; i < data->length; i += 2)
-	{
-	  val *= data[i]; /* stored curval incr */
-	  data[i] += data[i + 1];
-	}
-      return((mus_sample_t)(sf->data[sf->loc++] * val));
-    }
-}
-/* init-func on fragment would set up initial values from ramp0..1, dur, pos */
-#endif
-
-
-
 static int dont_edit(chan_info *cp) 
 {
   XEN res = XEN_FALSE;
@@ -374,8 +339,6 @@ typedef struct {
 
 /* ed_list fields accessed only in this file */
 enum {ED_SIMPLE, ED_RAMP, ED_PTREE}; /* typ field choices */
-#define UNWRAP_SAMPLE(X, ED) ((X) * (ED))
-#define UNWRAP_SAMPLE_TO_FLOAT(X, SF) ((X) * (SF->fscaler))
 
 /* try to make this code easier to read... */
 #define FRAGMENTS(Ed)                       (ed_fragment **)((Ed)->fragments)
@@ -2068,14 +2031,14 @@ static mus_sample_t next_sample(snd_fd *sf)
 {
   if (sf->loc > sf->last)
     return(next_sound(sf));
-  else return((mus_sample_t)(UNWRAP_SAMPLE(sf->data[sf->loc++], READER_SCALER(sf))));
+  else return((mus_sample_t)(sf->data[sf->loc++] * READER_SCALER(sf)));
 }
 
 static mus_sample_t previous_sample(snd_fd *sf)
 {
   if (sf->loc < sf->first)
     return(previous_sound(sf));
-  else return((mus_sample_t)(UNWRAP_SAMPLE(sf->data[sf->loc--], READER_SCALER(sf))));
+  else return((mus_sample_t)(sf->data[sf->loc--] * READER_SCALER(sf)));
 }
 
 static Float next_sample_to_float(snd_fd *sf)
@@ -2206,9 +2169,8 @@ static Float next_sample_to_float_with_ramp(snd_fd *sf)
      return(MUS_SAMPLE_TO_FLOAT(next_sound(sf)));
   else 
     {
-      /* assume fscaler or iscaler has been incorporated into the incr/curval fields already */
       Float val;
-      val = MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++]) * sf->curval;
+      val = sf->data[sf->loc++] * sf->curval * MUS_FIX_TO_FLOAT;
       sf->curval += sf->incr;
       return(val);
     }
@@ -2221,7 +2183,7 @@ static Float previous_sample_to_float_with_ramp(snd_fd *sf)
   else
     {
       Float val;
-      val = MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc--]) * sf->curval;
+      val = sf->data[sf->loc--] * sf->curval * MUS_FIX_TO_FLOAT;
       sf->curval -= sf->incr;
       return(val);
     }
@@ -2240,7 +2202,7 @@ static mus_sample_t next_sample_with_xramp(snd_fd *sf)
       val = (mus_sample_t)(sf->data[sf->loc++] *
 			   READER_SCALER(sf) *
 			   (READER_XRAMP_OFFSET(sf) + 
-			    (READER_XRAMP_SCALER(sf) * (exp(sf->curval) - 1.0))));
+			    (READER_XRAMP_SCALER(sf) * exp(sf->curval))));
       sf->curval += sf->incr;
       return(val);
     }
@@ -2256,7 +2218,7 @@ static mus_sample_t previous_sample_with_xramp(snd_fd *sf)
       val = (mus_sample_t)(sf->data[sf->loc++] * 
 			   READER_SCALER(sf) *
 			   (READER_XRAMP_OFFSET(sf) + 
-			    (READER_XRAMP_SCALER(sf) * (exp(sf->curval) - 1.0))));
+			    (READER_XRAMP_SCALER(sf) * exp(sf->curval))));
       sf->curval -= sf->incr;
       return(val);
     }
@@ -2272,7 +2234,7 @@ static Float next_sample_to_float_with_xramp(snd_fd *sf)
       val = sf->data[sf->loc++] * 
             sf->fscaler *
 	    (READER_XRAMP_OFFSET(sf) + 
-	     (READER_XRAMP_SCALER(sf) * (exp(sf->curval) - 1.0)));
+	     (READER_XRAMP_SCALER(sf) * exp(sf->curval)));
       sf->curval += sf->incr;
       return(val);
     }
@@ -2288,7 +2250,7 @@ static Float previous_sample_to_float_with_xramp(snd_fd *sf)
       val = sf->data[sf->loc--] * 
 	    sf->fscaler *
 	    (READER_XRAMP_OFFSET(sf) + 
-	     (READER_XRAMP_SCALER(sf) * (exp(sf->curval) - 1.0)));
+	     (READER_XRAMP_SCALER(sf) * exp(sf->curval)));
       sf->curval -= sf->incr;
       return(val);
     }
@@ -2301,7 +2263,9 @@ static mus_sample_t next_sample_with_ptree(snd_fd *sf)
 {
   if (sf->loc > sf->last)
      return(next_sound(sf));
-  else return(MUS_FLOAT_TO_SAMPLE(READER_SCALER(sf) * evaluate_ptree_1f2f(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++])));
+  else return((mus_sample_t)(sf->rscaler * 
+			     evaluate_ptree_1f2f(sf->ptree, 
+						 READER_PTREE_SCALER(sf) * sf->data[sf->loc++])));
   /* fscaler after ptree so that subsequent scaling of ptree-fragment actually scales it */
 }
 
@@ -2309,21 +2273,27 @@ static mus_sample_t previous_sample_with_ptree(snd_fd *sf)
 {
   if (sf->loc < sf->first)
     return(previous_sound(sf));
-  else return(MUS_FLOAT_TO_SAMPLE(READER_SCALER(sf) * evaluate_ptree_1f2f(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--])));
+  else return((mus_sample_t)(sf->rscaler * 
+			     evaluate_ptree_1f2f(sf->ptree, 
+						 READER_PTREE_SCALER(sf) * sf->data[sf->loc--])));
 }
 
 static Float next_sample_to_float_with_ptree(snd_fd *sf)
 {
   if (sf->loc > sf->last)
      return(MUS_SAMPLE_TO_FLOAT(next_sound(sf)));
-  else return(READER_SCALER(sf) * evaluate_ptree_1f2f(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc++]));
+  else return(READER_SCALER(sf) * 
+	      evaluate_ptree_1f2f(sf->ptree, 
+				  READER_PTREE_SCALER(sf) * sf->data[sf->loc++]));
 }
 
 static Float previous_sample_to_float_with_ptree(snd_fd *sf)
 {
   if (sf->loc < sf->first)
     return(MUS_SAMPLE_TO_FLOAT(previous_sound(sf)));
-  else return(READER_SCALER(sf) * evaluate_ptree_1f2f(sf->ptree, READER_PTREE_SCALER(sf) * sf->data[sf->loc--]));
+  else return(READER_SCALER(sf) * 
+	      evaluate_ptree_1f2f(sf->ptree, 
+				  READER_PTREE_SCALER(sf) * sf->data[sf->loc--]));
 }
 
 static mus_sample_t next_sample_with_ptree_on_air(snd_fd *sf)
@@ -2333,7 +2303,7 @@ static mus_sample_t next_sample_with_ptree_on_air(snd_fd *sf)
   else 
     {
       sf->loc++;
-      return(MUS_FLOAT_TO_SAMPLE(READER_SCALER(sf) * evaluate_ptree_1f2f(sf->ptree, 0.0)));
+      return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f2f(sf->ptree, 0.0)));
     }
 }
 
@@ -2344,7 +2314,7 @@ static mus_sample_t previous_sample_with_ptree_on_air(snd_fd *sf)
   else 
     {
       sf->loc--;
-      return(MUS_FLOAT_TO_SAMPLE(READER_SCALER(sf) * evaluate_ptree_1f2f(sf->ptree, 0.0)));
+      return((mus_sample_t)(sf->rscaler * evaluate_ptree_1f2f(sf->ptree, 0.0)));
     }
 }
 
@@ -2380,13 +2350,13 @@ static mus_sample_t next_sample_with_ptree_on_ramp(snd_fd *sf)
      return(next_sound(sf));
   else 
     {
-      mus_sample_t val;
-      val = (mus_sample_t)(sf->data[sf->loc++] * sf->curval);
+      Float val;
+      val = sf->data[sf->loc++] * sf->curval;
       /* curval and incr have possible post-ramp but pre-ptree scaling embedded (choose_accessor) */
       sf->curval += sf->incr;
-      return(MUS_FLOAT_TO_SAMPLE(READER_SCALER(sf) *                /* post-ptree scaling */
-				 evaluate_ptree_1f2f(sf->ptree, 
-						     MUS_SAMPLE_TO_FLOAT(val))));
+      return((mus_sample_t)(sf->rscaler *                /* post-ptree scaling */
+			    evaluate_ptree_1f2f(sf->ptree, 
+						val)));
     }
 }
 
@@ -2396,12 +2366,12 @@ static mus_sample_t previous_sample_with_ptree_on_ramp(snd_fd *sf)
     return(previous_sound(sf));
   else 
     {
-      mus_sample_t val;
-      val = (mus_sample_t)(sf->data[sf->loc--] * sf->curval);
+      Float val;
+      val = sf->data[sf->loc--] * sf->curval;
       sf->curval -= sf->incr;
-      return(MUS_FLOAT_TO_SAMPLE(READER_SCALER(sf) *                /* post-ptree scaling */
-				 evaluate_ptree_1f2f(sf->ptree, 
-						     MUS_SAMPLE_TO_FLOAT(val))));
+      return((mus_sample_t)(sf->rscaler *                /* post-ptree scaling */
+			    evaluate_ptree_1f2f(sf->ptree, 
+						val)));
     }
 }
 
@@ -2411,13 +2381,12 @@ static Float next_sample_to_float_with_ptree_on_ramp(snd_fd *sf)
      return(MUS_SAMPLE_TO_FLOAT(next_sound(sf)));
   else 
     {
-      mus_sample_t val;
-      val = (mus_sample_t)(sf->data[sf->loc++] * sf->curval);
-      /* curval and incr have possible post-ramp but pre-ptree scaling embedded (choose_accessor) */
+      Float val;
+      val = sf->data[sf->loc++] * sf->curval;
       sf->curval += sf->incr;
       return(READER_SCALER(sf) *
 	     evaluate_ptree_1f2f(sf->ptree, 
-				 MUS_SAMPLE_TO_FLOAT(val)));
+				 val));
     }
 }
 
@@ -2427,12 +2396,12 @@ static Float previous_sample_to_float_with_ptree_on_ramp(snd_fd *sf)
     return(MUS_SAMPLE_TO_FLOAT(previous_sound(sf)));
   else 
     {
-      mus_sample_t val;
-      val = (mus_sample_t)(sf->data[sf->loc--] * sf->curval);
+      Float val;
+      val = sf->data[sf->loc--] * sf->curval;
       sf->curval -= sf->incr;
       return(READER_SCALER(sf) *
 	     evaluate_ptree_1f2f(sf->ptree, 
-				 MUS_SAMPLE_TO_FLOAT(val)));
+				 val));
     }
 }
 
@@ -2443,22 +2412,22 @@ static mus_sample_t next_sample_with_ptree_and_closure(snd_fd *sf)
 {
   if (sf->loc > sf->last)
      return(next_sound(sf));
-  else return(MUS_FLOAT_TO_SAMPLE(READER_SCALER(sf) * 
-				  evaluate_ptree_1f1v1b2f(sf->ptree, 
-							  READER_PTREE_SCALER(sf) * sf->data[sf->loc++], 
-							  (vct *)XEN_OBJECT_REF(sf->closure),
-							  TRUE)));
+  else return((mus_sample_t)(sf->rscaler * 
+			     evaluate_ptree_1f1v1b2f(sf->ptree, 
+						     READER_PTREE_SCALER(sf) * sf->data[sf->loc++], 
+						     (vct *)XEN_OBJECT_REF(sf->closure),
+						     TRUE)));
 }
 
 static mus_sample_t previous_sample_with_ptree_and_closure(snd_fd *sf)
 {
   if (sf->loc < sf->first)
     return(previous_sound(sf));
-  else return(MUS_FLOAT_TO_SAMPLE(READER_SCALER(sf) * 
-				  evaluate_ptree_1f1v1b2f(sf->ptree, 
-							  READER_PTREE_SCALER(sf) * sf->data[sf->loc--],
-							  (vct *)XEN_OBJECT_REF(sf->closure),
-							  FALSE)));
+  else return((mus_sample_t)(sf->rscaler * 
+			     evaluate_ptree_1f1v1b2f(sf->ptree, 
+						     READER_PTREE_SCALER(sf) * sf->data[sf->loc--],
+						     (vct *)XEN_OBJECT_REF(sf->closure),
+						     FALSE)));
 }
 
 static Float next_sample_to_float_with_ptree_and_closure(snd_fd *sf)
@@ -2490,11 +2459,11 @@ static mus_sample_t next_sample_with_ptree_and_closure_on_air(snd_fd *sf)
   else 
     {
       sf->loc++;
-      return(MUS_FLOAT_TO_SAMPLE(READER_SCALER(sf) *
-				 evaluate_ptree_1f1v1b2f(sf->ptree, 
-							 0.0,
-							 (vct *)XEN_OBJECT_REF(sf->closure),
-							 TRUE)));
+      return((mus_sample_t)(sf->rscaler *
+			    evaluate_ptree_1f1v1b2f(sf->ptree, 
+						    0.0,
+						    (vct *)XEN_OBJECT_REF(sf->closure),
+						    TRUE)));
     }
 }
 
@@ -2505,11 +2474,11 @@ static mus_sample_t previous_sample_with_ptree_and_closure_on_air(snd_fd *sf)
   else 
     {
       sf->loc--;
-      return(MUS_FLOAT_TO_SAMPLE(READER_SCALER(sf) * 
-				 evaluate_ptree_1f1v1b2f(sf->ptree, 
-							 0.0,
-							 (vct *)XEN_OBJECT_REF(sf->closure),
-							 FALSE)));
+      return((mus_sample_t)(sf->rscaler * 
+			    evaluate_ptree_1f1v1b2f(sf->ptree, 
+						    0.0,
+						    (vct *)XEN_OBJECT_REF(sf->closure),
+						    FALSE)));
     }
 }
 
@@ -2551,15 +2520,14 @@ static mus_sample_t next_sample_with_ptree_with_closure_on_ramp(snd_fd *sf)
      return(next_sound(sf));
   else 
     {
-      mus_sample_t val;
-      val = (mus_sample_t)(sf->data[sf->loc++] * sf->curval);
-      /* curval and incr have possible post-ramp but pre-ptree scaling embedded (choose_accessor) */
+      Float val;
+      val = sf->data[sf->loc++] * sf->curval;
       sf->curval += sf->incr;
-      return(MUS_FLOAT_TO_SAMPLE(READER_SCALER(sf) * 
-				 evaluate_ptree_1f1v1b2f(sf->ptree, 
-							 MUS_SAMPLE_TO_FLOAT(val),
-							 (vct *)XEN_OBJECT_REF(sf->closure),
-							 TRUE)));
+      return((mus_sample_t)(sf->rscaler * 
+			    evaluate_ptree_1f1v1b2f(sf->ptree, 
+						    val,
+						    (vct *)XEN_OBJECT_REF(sf->closure),
+						    TRUE)));
     }
 }
 
@@ -2569,14 +2537,14 @@ static mus_sample_t previous_sample_with_ptree_with_closure_on_ramp(snd_fd *sf)
     return(previous_sound(sf));
   else 
     {
-      mus_sample_t val;
-      val = (mus_sample_t)(sf->data[sf->loc--] * sf->curval);
+      Float val;
+      val = sf->data[sf->loc--] * sf->curval;
       sf->curval -= sf->incr;
-      return(MUS_FLOAT_TO_SAMPLE(READER_SCALER(sf) * 
-				 evaluate_ptree_1f1v1b2f(sf->ptree, 
-							 MUS_SAMPLE_TO_FLOAT(val),
-							 (vct *)XEN_OBJECT_REF(sf->closure),
-							 TRUE)));
+      return((mus_sample_t)(sf->rscaler * 
+			    evaluate_ptree_1f1v1b2f(sf->ptree, 
+						    val,
+						    (vct *)XEN_OBJECT_REF(sf->closure),
+						    TRUE)));
     }
 }
 
@@ -2586,13 +2554,12 @@ static Float next_sample_to_float_with_ptree_with_closure_on_ramp(snd_fd *sf)
      return(MUS_SAMPLE_TO_FLOAT(next_sound(sf)));
   else 
     {
-      mus_sample_t val;
-      val = (mus_sample_t)(sf->data[sf->loc++] * sf->curval);
-      /* curval and incr have possible post-ramp but pre-ptree scaling embedded (choose_accessor) */
+      Float val;
+      val = sf->data[sf->loc++] * sf->curval;
       sf->curval += sf->incr;
       return(READER_SCALER(sf) *
 	     evaluate_ptree_1f1v1b2f(sf->ptree, 
-				     MUS_SAMPLE_TO_FLOAT(val),
+				     val,
 				     (vct *)XEN_OBJECT_REF(sf->closure),
 				     TRUE));
     }
@@ -2604,12 +2571,12 @@ static Float previous_sample_to_float_with_ptree_with_closure_on_ramp(snd_fd *sf
     return(MUS_SAMPLE_TO_FLOAT(previous_sound(sf)));
   else 
     {
-      mus_sample_t val;
-      val = (mus_sample_t)(sf->data[sf->loc--] * sf->curval);
+      Float val;
+      val = sf->data[sf->loc--] * sf->curval;
       sf->curval -= sf->incr;
       return(READER_SCALER(sf) *
 	     evaluate_ptree_1f1v1b2f(sf->ptree, 
-				     MUS_SAMPLE_TO_FLOAT(val),
+				     val,
 				     (vct *)XEN_OBJECT_REF(sf->closure),
 				     TRUE));
     }
@@ -2764,7 +2731,7 @@ static void choose_accessor(snd_fd *sf)
 		  rmp1 = READER_RAMP_END(sf);
 		  if ((rmp0 != 0.0) || (rmp1 != 0.0))
 		    {
-		      scl = MUS_FLOAT_TO_FIX * READER_PTREE_SCALER(sf);
+		      scl = READER_PTREE_SCALER(sf);
 		      rmp0 *= scl;
 		      rmp1 *= scl;
 		      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
@@ -2803,7 +2770,7 @@ static void choose_accessor(snd_fd *sf)
 		      rmp1 = READER_RAMP_END(sf);
 		      if ((rmp0 != 0.0) || (rmp1 != 0.0))
 			{
-			  scl = MUS_FLOAT_TO_FIX * READER_PTREE_SCALER(sf);
+			  scl = READER_PTREE_SCALER(sf);
 			  rmp0 *= scl;
 			  rmp1 *= scl;
 			  if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
@@ -2930,7 +2897,7 @@ static void choose_accessor(snd_fd *sf)
 		  rmp1 = READER_RAMP_END(sf);
 		  if ((rmp0 != 0.0) || (rmp1 != 0.0))
 		    {
-		      scl = MUS_FLOAT_TO_FIX * READER_PTREE_SCALER(sf);
+		      scl = READER_PTREE_SCALER(sf);
 		      rmp0 *= scl;
 		      rmp1 *= scl;
 		      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
@@ -2969,7 +2936,7 @@ static void choose_accessor(snd_fd *sf)
 		      rmp1 = READER_RAMP_END(sf);
 		      if ((rmp0 != 0.0) || (rmp1 != 0.0))
 			{
-			  scl = MUS_FLOAT_TO_FIX * READER_PTREE_SCALER(sf);
+			  scl = READER_PTREE_SCALER(sf);
 			  rmp0 *= scl;
 			  rmp1 *= scl;
 			  if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
@@ -3069,7 +3036,8 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, int 
   sf = (snd_fd *)CALLOC(1, sizeof(snd_fd));
   sf->initial_samp = samp;
   sf->cp = cp;
-  sf->fscaler = MUS_SAMPLE_TO_FLOAT(1.0);
+  sf->fscaler = MUS_FIX_TO_FLOAT;
+  sf->rscaler = MUS_FLOAT_TO_FIX;
   sf->direction = direction;
   sf->current_state = ed;
   if ((curlen <= 0) ||    /* no samples, not ed->len (delete->len = #deleted samps) */
@@ -3090,7 +3058,8 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, int 
 	  ind0 = READER_LOCAL_POSITION(sf);
 	  indx = READER_LOCAL_POSITION(sf) + sf->frag_pos;
 	  ind1 = READER_LOCAL_END(sf);
-	  sf->fscaler = MUS_SAMPLE_TO_FLOAT(READER_SCALER(sf));
+	  sf->fscaler = MUS_FIX_TO_FLOAT * READER_SCALER(sf);
+	  sf->rscaler = MUS_FLOAT_TO_FIX * READER_SCALER(sf);
 	  if ((READER_SCALER(sf) == 0.0) || (READER_SOUND(sf) == EDIT_LIST_ZERO_MARK))
 	    {
 	      sf->current_sound = NULL;
@@ -3196,7 +3165,8 @@ mus_sample_t previous_sound (snd_fd *sf)
       sf->cb = FRAGMENT((sf->current_state), sf->cbi);
       ind0 = READER_LOCAL_POSITION(sf);
       ind1 = READER_LOCAL_END(sf);
-      sf->fscaler = MUS_SAMPLE_TO_FLOAT(READER_SCALER(sf));
+      sf->fscaler = MUS_FIX_TO_FLOAT * READER_SCALER(sf);
+      sf->rscaler = MUS_FLOAT_TO_FIX * READER_SCALER(sf);
       if ((READER_SCALER(sf) == 0.0) || (READER_SOUND(sf) == EDIT_LIST_ZERO_MARK))
 	{
 	  sf->current_sound = NULL;
@@ -3265,7 +3235,8 @@ mus_sample_t next_sound (snd_fd *sf)
 	return(reader_out_of_data(sf));
       ind0 = READER_LOCAL_POSITION(sf);
       ind1 = READER_LOCAL_END(sf);
-      sf->fscaler = MUS_SAMPLE_TO_FLOAT(READER_SCALER(sf));
+      sf->fscaler = MUS_FIX_TO_FLOAT * READER_SCALER(sf);
+      sf->rscaler = MUS_FLOAT_TO_FIX * READER_SCALER(sf);
       if ((READER_SCALER(sf) == 0.0) || (READER_SOUND(sf) == EDIT_LIST_ZERO_MARK))
 	{
 	  sf->current_sound = NULL;

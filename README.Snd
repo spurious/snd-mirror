@@ -669,14 +669,6 @@ where
 ----------------------------------------------------------------
 URLS:
 
-Guile/Scheme:
-  http://www.gnu.org/software/guile/guile.html
-  http://www.cs.indiana.edu/scheme-repository
-  http://www.schemers.org/
-  http://www.ccs.neu.edu/home/dorai/t-y-scheme/t-y-scheme.html
-  http://www.cs.utexas.edu/users/wilson/schintro/schintro_toc.html
-  http://www.swiss.ai.mit.edu/~jaffer/SLIB.html
-
 CCRMA:
   http://www-ccrma.stanford.edu/
   http://www-ccrma.stanford.edu/~jos/
@@ -694,6 +686,14 @@ Snd:
   http://www.saunalahti.fi/~mjkoskin/
   http://www.cosy.sbg.ac.at/~gwesp/mma-sound.html (Mathematica)
   http://www.notam02.no/9
+
+Guile/Scheme:
+  http://www.gnu.org/software/guile/guile.html
+  http://www.cs.indiana.edu/scheme-repository
+  http://www.schemers.org/
+  http://www.ccs.neu.edu/home/dorai/t-y-scheme/t-y-scheme.html
+  http://www.cs.utexas.edu/users/wilson/schintro/schintro_toc.html
+  http://www.swiss.ai.mit.edu/~jaffer/SLIB.html
 
 Motif:
   http://www.opengroup.org/openmotif/

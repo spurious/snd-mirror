@@ -90,7 +90,7 @@ typedef struct snd__fd {
   off_t initial_samp;
   struct chan__info *cp;
   struct snd__info *local_sp;
-  Float fscaler;
+  Float fscaler, rscaler;
   int iscaler;
   off_t frag_pos;
   double incr, curval;
@@ -1079,7 +1079,7 @@ void stop_applying(snd_info *sp);
 void remove_apply(snd_info *sp);
 BACKGROUND_TYPE apply_controls(GUI_POINTER xp);
 void *make_apply_state_with_implied_beg_and_dur(void *xp);
-void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos);
+void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base);
 void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, int pos);
 void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func);
 void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos, XEN init_func);

@@ -3167,7 +3167,7 @@ pass: " OFF_TD ", end: " OFF_TD ", style: %d, index: %d, size: %d, original_data
 
 int mus_env_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_ENV));}
 
-Float mus_env (mus_any *ptr)
+Float mus_env(mus_any *ptr)
 {
   seg *gen = (seg *)ptr;
   Float val;
@@ -3185,7 +3185,7 @@ Float mus_env (mus_any *ptr)
       if (gen->rate != 0.0)
 	{
 	  gen->power += gen->rate;
-	  gen->current_value = gen->offset + (gen->scaler * (exp(gen->power) - 1.0));
+	  gen->current_value = gen->offset + (gen->scaler * exp(gen->power));
 	}
       break;
     }
@@ -3436,6 +3436,7 @@ mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float
 	  e->power = edata[1];
 	  e->init_power = e->power;
 	  if (edata) FREE(edata);
+	  e->offset -= e->scaler;
 	}
     }
   e->rate = e->rates[0];
@@ -3474,7 +3475,7 @@ static void set_env_location(mus_any *ptr, off_t val)
 	  break;
 	case ENV_EXP: 
 	  gen->power += (passes * gen->rate); 
-	  gen->current_value = gen->offset + (gen->scaler * (exp(gen->power) - 1.0));
+	  gen->current_value = gen->offset + (gen->scaler * exp(gen->power));
 	  break;
 	}
       ctr += passes;
@@ -3515,14 +3516,14 @@ Float mus_env_interp(Float x, mus_any *ptr)
 		      break;
 		    case ENV_EXP:
 		      intrp = data[i + 1] + ((x - data[i]) / (data[i + 2] - data[i])) * (data[i + 3] - data[i + 1]);
-		      val = exp(intrp * log(gen->base)) - 1.0;
+		      val = exp(intrp * log(gen->base));
 		      break;
 		    }
 		  return(gen->offset + (gen->scaler * val));
 		}
 	    }
 	  if (gen->style == ENV_EXP)
-	    val = exp(data[gen->size * 2 - 1] * log(gen->base)) - 1.0;
+	    val = exp(data[gen->size * 2 - 1] * log(gen->base));
 	  else val = data[gen->size * 2 - 1];
 	  return(gen->offset + (gen->scaler * val));
 	}
