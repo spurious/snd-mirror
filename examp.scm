@@ -11,7 +11,7 @@
 ;;; set fft-size based on current time domain window size
 ;;; superimpose spectra of sycn'd sounds
 ;;; example of c-g?
-;;; play sound n times
+;;; play sound n times or until c-g
 ;;; play region over and over until C-g typed
 ;;; play samples created on-the-fly
 ;;; play while looping continuously between two movable marks
@@ -438,23 +438,30 @@
 
 ;;; -------- play sound n times -- (pl 3) for example.
 
-(define plays 0)
+(define (play-often n) 
+  (let ((plays (- n 1)))
+    (define (play-once snd)
+      (if (or (= plays 0)
+	      (c-g?))
+	  (remove-hook! stop-playing-hook play-once)
+	  (begin
+	    (set! plays (- plays 1))
+	    (play 0 snd))))
+    (add-hook! stop-playing-hook play-once)
+    (play)))
 
-(define pl1
-  (lambda (snd)
-    (if (= plays 0)
-	(remove-hook! stop-playing-hook pl1)
-      (begin
-	(set! plays (- plays 1))
-	(play 0 snd)))))
+(bind-key (char->integer #\p) 0 (lambda () (play-often (max 1 (prefix-arg)))) #t)
 
-(define (pl n) 
-  (set! plays (- n 1))
-  (add-hook! stop-playing-hook pl1)
+
+;;; -------- play sound until c-g
+
+(define (play-until-c-g)
+  (define (play-once snd)
+    (if (c-g?)
+	(remove-hook! stop-playing-hook play-once)
+	(play 0 snd)))
+  (add-hook! stop-playing-hook play-once)
   (play))
-
-(bind-key (char->integer #\p) 0 (lambda () (pl (max 1 (prefix-arg)))) #t)
-
 
 
 ;;; -------- play region over and over until C-g typed

@@ -350,7 +350,7 @@ between these examples, other .scm files, and discussions in other
 documents.
 
    * play
-        o play sound n times
+        o play sound n times or until C-g
         o play region over and over until C-g typed
         o play samples created on-the-fly
         o play while looping continuously between two movable marks
@@ -439,14 +439,15 @@ extended piano, we could map keys to sounds:
 
 The various play hooks can be used to play sounds over and over.
 
-  pl times
+  play-often times
+  play-until-c-g
   play-region-forever region
 
-(bind-key (char->integer #\p) 0 (lambda () (pl (max 1 (prefix-arg)))) #t)
+(bind-key (char->integer #\p) 0 (lambda () (play-often (max 1 (prefix-arg)))) #t)
 (bind-key (char->integer #\r) 0 (lambda () (play-region-forever (max 0 (prefix-arg)))) #t)
 
 Now C-u 31 p plays the current sound 31 times; C-u 3 r plays region 3 until
-we type C-g. pl uses stop-playing-hook, and play-region-forever uses
+we type C-g. play-often uses stop-playing-hook, and play-region-forever uses
 stop-playing-region-hook. With a sufficiently fast computer, it's possible
 to create the samples to be played in "real-time". play-fun starts and stops
 the DAC, ampit and amprt fill up the audio buffer with data.

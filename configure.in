@@ -330,6 +330,19 @@ else
 
   if test "$with_gtk" != yes ; then
 
+    SAVELIBS=$LIBS
+    SAVEFLAGS=$CFLAGS
+    LIBS=$XLIBS
+    CFLAGS=$XFLAGS
+    AC_CHECK_LIB(Xm, XmCreateForm, 
+	[
+	],
+	[
+      AC_MSG_WARN([can't find the motif library!])
+        ])
+    LIBS=$SAVELIBS
+    CFLAGS=$SAVEFLAGS
+
     AC_DEFINE(USE_MOTIF)
     AC_SUBST(XLIBS)
     AC_SUBST(XFLAGS)

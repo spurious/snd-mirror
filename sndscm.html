@@ -408,7 +408,7 @@ between these examples, other .scm files, and discussions in other documents.
 <li><a href="#ssplay">play</a>
 <small>
   <ul>
-    <li>play sound n times
+    <li>play sound n times or until C-g
     <li>play region over and over until C-g typed
     <li>play samples created on-the-fly
     <li>play while looping continuously between two movable marks
@@ -534,14 +534,15 @@ as a kind of extended piano, we could map keys to sounds:
 <p>The various play hooks can be used to play sounds over and over. 
 </p>
 <pre>
-  <b><A NAME="expl">pl</a></b> times
+  <b><A NAME="expl">play-often</a></b> times
+  <b><A NAME="expluntil">play-until-c-g</a></b>
   <b><a name="explayregionforever">play-region-forever</a></b> region
 
-(bind-key (char-&gt;integer #\p) 0 (lambda () (pl (max 1 (prefix-arg)))) #t)
+(bind-key (char-&gt;integer #\p) 0 (lambda () (play-often (max 1 (prefix-arg)))) #t)
 (bind-key (char-&gt;integer #\r) 0 (lambda () (play-region-forever (max 0 (prefix-arg)))) #t)
 </pre>
 <p>Now C-u 31 p plays the current sound 31 times; C-u 3 r plays region 3 until we type C-g.
-<i>pl</i> uses stop-playing-hook, and <i>play-region-forever</i> uses stop-playing-region-hook.
+<i>play-often</i> uses stop-playing-hook, and <i>play-region-forever</i> uses stop-playing-region-hook.
 With a sufficiently fast computer, it's possible to create the samples to be played 
 in "real-time".  <i>play-fun</i> starts and stops the DAC, <i>ampit</i> and <i>amprt</i>
 fill up the audio buffer with data.

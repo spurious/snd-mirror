@@ -728,7 +728,7 @@ void snd_append_char(snd_state *ss, char *msg)
  
 static Widget listener_pane = NULL; 
 
-static char listener_prompt_buffer[4];
+static char listener_prompt_buffer[64];
 static char *listener_prompt_with_cr(snd_state *ss)
 {
   sprintf(listener_prompt_buffer,"\n%s",listener_prompt(ss));

@@ -10,7 +10,7 @@
  * 24-Jan:     mus-bank in clm2scm.
  * 5-Jan:      clm2scm gens are applicable.
  * 4-Jan:      mus_bank.
- * 2-Jan:      mus_run method.
+ * 2-Jan-01:   mus_run method.
  * 28-Dec:     mus_clear_filter_state and other minor tweaks for Snd.
  * 28-Nov:     Dolph-Chebyshev window (under HAVE_GSL flag -- needs complex trig support).
  * 8-Nov:      mus_clear_sinc_tables.

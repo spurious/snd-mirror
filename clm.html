@@ -2718,6 +2718,7 @@ Global amplitude envelopes can be handled with eref, and so on.</p>
 There are several associated functions:</p>
 <pre>
   <a name="dac"><em class=def>dac</em></a> &amp;optional <i>file</i>
+  <a name="sldac"><em class=def>sl-dac</em></a> file &amp;optional (<i>output-device</i> mus-audio-default)
   <a name="stop-dac"><em class=def>stop-dac</em></a>
   <a name="volume"><em class=def>volume</em></a> &amp;optional (<i>device</i> +default-device+) <i>channel</i>
 </pre>
@@ -2725,7 +2726,11 @@ There are several associated functions:</p>
 argument is given); in some cases (MCL and ACL) it then returns to the lisp listener;
 to interrupt the dac in those cases, use <b>stop-dac</b>.  To set the dac volume
 (setf (<em class=red>volume</em>) 1.0).  Similarly (<em class=red>volume</em>)
-returns the current volume settings.</p>
+returns the current volume settings.
+Currently, <b>dac</b> calls the sndplay program if possible; <b>sl-dac</b> is essentially
+the same thing, but calls the sl_dac function.  The latter gives you control over the
+output device (sndplay will also someday).
+</p>
 
 <span class=cbox><h4><A NAME="howtowsm">How to use many machines at once</a></h4></span>
 <!-- INDEX howtowsm:Multi-host with-sound -->

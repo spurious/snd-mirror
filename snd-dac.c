@@ -34,66 +34,6 @@
  * this also affects contrast-func
  */
 
-static int prime (int num)
-{
-  int lim,i;
-  if (num == 2) return(1);
-  if ((num%2) == 1)
-    {
-      lim = (int)(sqrt(num));
-      for (i=3;i<lim;i+=2)
-	{
-	  if ((num%i) == 0) return(0);
-	}
-      return(1);
-    }
-  return(0);
-}
-
-static int get_prime(int num)
-{
-  int i;
-  if ((num%2) == 1)
-    i=num;
-  else i=num+1;
-  while (!(prime(i))) {i+=2;}
-  return(i);
-}
-
-Float list_interp(Float x, Float *e, int pts)
-{
-  if (pts == 0) return(0.0);
-  if ((x <= e[0]) || (pts == 1)) return(e[1]);
-  if (e[2] > x)
-    {
-      if (e[1] == e[3]) return(e[1]);
-      return(e[1]+(x-e[0])*(e[3]-e[1])/(e[2]-e[0]));
-    }
-  return(list_interp(x,(Float *)(e+2),pts-1));
-}
-
-static Float *sample_linear_env(env *e, int order)
-{
-  Float *data;
-  Float last_x,step,x;
-  int i,j;
-  data = (Float *)CALLOC(order,sizeof(Float));
-  last_x = e->data[(e->pts-1)*2];
-  step = 2*last_x/((Float)order-1);
-  for (i=0,x=0.0;i<order/2;i++,x+=step) data[i] = list_interp(x,e->data,e->pts);
-  for (j=order/2-1,i=order/2;(i<order) && (j>=0);i++,j--) data[i] = data[j];
-  return(data);
-}
-
-
-
-static Float reverb_factor = DEFAULT_REVERB_FEEDBACK;
-static Float reverb_length = DEFAULT_REVERB_LENGTH;
-static Float lp_coeff = DEFAULT_REVERB_LOWPASS;
-static int revchans = 0;
-static int revdecay = 0;
-
-
 /* -------------------------------- user-defined control-panel functions -------------------------------- */
 #if HAVE_GUILE
 
@@ -342,6 +282,39 @@ static Float expand(dac_info *dp, Float sr, Float ex)
   return(mus_granulate(spd->gen,&expand_input_as_needed));
 }
 
+
+static int prime (int num)
+{
+  int lim,i;
+  if (num == 2) return(1);
+  if ((num%2) == 1)
+    {
+      lim = (int)(sqrt(num));
+      for (i=3;i<lim;i+=2)
+	{
+	  if ((num%i) == 0) return(0);
+	}
+      return(1);
+    }
+  return(0);
+}
+
+static int get_prime(int num)
+{
+  int i;
+  if ((num%2) == 1)
+    i=num;
+  else i=num+1;
+  while (!(prime(i))) {i+=2;}
+  return(i);
+}
+
+static Float reverb_factor = DEFAULT_REVERB_FEEDBACK;
+static Float reverb_length = DEFAULT_REVERB_LENGTH;
+static Float lp_coeff = DEFAULT_REVERB_LOWPASS;
+static int revchans = 0;
+static int revdecay = 0;
+
 /* -------------------------------- GWRAPPED VERSIONS -------------------------------- */
 #if USE_GWRAPPED_FUNCS
 
@@ -386,7 +359,8 @@ static SCM g_nrev(SCM ptr, SCM val, SCM chans)
   return(s_nrev_out);
 }
 
-static Float comb_factors[6] = {0.822,0.802,0.773,0.753,0.753,0.733};
+#define NREV_COMBS 6
+static Float comb_factors[NREV_COMBS] = {0.822,0.802,0.773,0.753,0.753,0.733};
 static SCM g_make_nrev(SCM ulen, SCM srate, SCM chns) 
 {
   /* Mike McNabb's nrev from Mus10 days (ca. 1978) */
@@ -408,7 +382,7 @@ static SCM g_make_nrev(SCM ulen, SCM srate, SCM chns)
   for (i=0;i<BASE_DLY_LEN;i++) 
     dly_len[i] = get_prime((int)(srscale*base_dly_len[i]));
   r=(rev_info *)CALLOC(1,sizeof(rev_info));
-  r->num_combs = 6;
+  r->num_combs = NREV_COMBS;
   r->combs = (mus_any **)CALLOC(r->num_combs,sizeof(mus_any *));
   r->num_allpasses = 4+chans;
   r->allpasses = (mus_any **)CALLOC(r->num_allpasses,sizeof(mus_any *));
@@ -497,12 +471,7 @@ static char *inspect_fcomb(void *ptr)
   desc = (char *)CALLOC(1024,sizeof(char));
   if (desc) 
     sprintf(desc,"fcomb line[%d at %d], xscl: %f, a0: %f, a1: %f, x1: %f",
-	    gen->size,
-	    gen->loc,
-	    gen->xscl,
-	    gen->a0,
-	    gen->a1,
-	    gen->x1);
+	    gen->size,gen->loc,gen->xscl,gen->a0,gen->a1,gen->x1);
   return(desc);
 }
 
@@ -684,6 +653,17 @@ static SCM g_mus_contrast(SCM inval, SCM index)
 #endif
 }
 
+static void init_rev_funcs(SCM local_doc)
+{
+  DEFINE_PROC(gh_new_procedure("make-snd-nrev",SCM_FNC g_make_nrev,3,0,0),"make-snd-nrev is the default reverb make function");
+  DEFINE_PROC(gh_new_procedure("snd-nrev",SCM_FNC g_nrev,3,0,0),"snd-nrev is the default reverb");
+  DEFINE_PROC(gh_new_procedure("free-snd-nrev",SCM_FNC g_free_nrev,1,0,0),"free-snd-nrev is the default reverb free function");
+  DEFINE_PROC(gh_new_procedure("snd-contrast",SCM_FNC g_mus_contrast,2,0,0),"snd-contrast is the default contrast function");
+  DEFINE_PROC(gh_new_procedure("make-snd-freeverb",SCM_FNC g_make_freeverb,3,0,0),"make-snd-freeverb is the freeverb reverb make function");
+  DEFINE_PROC(gh_new_procedure("snd-freeverb",SCM_FNC g_freeverb,3,0,0),"snd-freeverb is the freeverb reverb");
+  DEFINE_PROC(gh_new_procedure("free-snd-freeverb",SCM_FNC g_free_freeverb,1,0,0),"free-snd-freeverb is the freeverb reverb free function");
+}
+
 
 #else
 
@@ -691,7 +671,8 @@ static SCM g_mus_contrast(SCM inval, SCM index)
 /* -------------------------------- NOT GWRAPPED -------------------------------- */
 
 /* -------- reverb -------- */
-static Float comb_factors[6] = {0.822,0.802,0.773,0.753,0.753,0.733};
+#define NREV_COMBS 6
+static Float comb_factors[NREV_COMBS] = {0.822,0.802,0.773,0.753,0.753,0.733};
 
 static void *make_reverb(snd_info *sp, Float sampling_rate, int chans)
 { 
@@ -717,7 +698,7 @@ static void *make_reverb(snd_info *sp, Float sampling_rate, int chans)
   for (i=0;i<BASE_DLY_LEN;i++) 
     dly_len[i] = get_prime((int)(srscale*base_dly_len[i]));
   r=(rev_info *)CALLOC(1,sizeof(rev_info));
-  r->num_combs = 6;
+  r->num_combs = NREV_COMBS;
   r->combs = (mus_any **)CALLOC(r->num_combs,sizeof(mus_any *));
   r->num_allpasses = 4+chans;
   r->allpasses = (mus_any **)CALLOC(r->num_allpasses,sizeof(mus_any *));
@@ -810,10 +791,75 @@ static Float contrast (dac_info *dp, Float amp, Float index, Float inval)
     return(amp * mus_contrast_enhancement(dp->contrast_amp * inval,index));
 }
 
+#if HAVE_GUILE
+static void init_rev_funcs(SCM local_doc)
+{
+  gh_define("make-snd-nrev",SCM_BOOL_F);
+  gh_define("snd-nrev",SCM_BOOL_F);
+  gh_define("free-snd-nrev",SCM_BOOL_F);
+  gh_define("snd-contrast",SCM_BOOL_F);
+  gh_define("make-snd-freeverb",SCM_BOOL_F);
+  gh_define("snd-freeverb",SCM_BOOL_F);
+  gh_define("free-snd-freeverb",SCM_BOOL_F);
+}
+#endif
 #endif
 /* end GWRAPPED cases */
 
+static void set_nrev_comb_factors(Float newval)
+{
+  rev_info *r;
+  int j;
+  r = (rev_info *)global_reverb;
+  for (j=0;j<NREV_COMBS;j++)
+    mus_set_feedback(r->combs[j],comb_factors[j]*newval);
+}
 
+static void set_reverb_comb_factors(Float newval)
+{
+  set_nrev_comb_factors(newval);
+}
+
+static void set_nrev_filter_coeff(Float newval)
+{
+  rev_info *r;
+  r = (rev_info *)global_reverb;
+  lp_coeff = newval;
+  mus_set_a0(r->onep,lp_coeff);
+  mus_set_b1(r->onep,1.0 - lp_coeff);
+}
+
+static void set_reverb_filter_coeff(Float newval)
+{
+  set_nrev_filter_coeff(newval);
+}
+
+
+
+Float list_interp(Float x, Float *e, int pts)
+{
+  if (pts == 0) return(0.0);
+  if ((x <= e[0]) || (pts == 1)) return(e[1]);
+  if (e[2] > x)
+    {
+      if (e[1] == e[3]) return(e[1]);
+      return(e[1]+(x-e[0])*(e[3]-e[1])/(e[2]-e[0]));
+    }
+  return(list_interp(x,(Float *)(e+2),pts-1));
+}
+
+static Float *sample_linear_env(env *e, int order)
+{
+  Float *data;
+  Float last_x,step,x;
+  int i,j;
+  data = (Float *)CALLOC(order,sizeof(Float));
+  last_x = e->data[(e->pts-1)*2];
+  step = 2*last_x/((Float)order-1);
+  for (i=0,x=0.0;i<order/2;i++,x+=step) data[i] = list_interp(x,e->data,e->pts);
+  for (j=order/2-1,i=order/2;(i<order) && (j>=0);i++,j--) data[i] = data[j];
+  return(data);
+}
 
 static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd)
 {
@@ -884,31 +930,21 @@ enum {DAC_EXPAND,DAC_EXPAND_RAMP,DAC_EXPAND_LENGTH,DAC_EXPAND_HOP,DAC_EXPAND_SCA
 static void dac_set_field(snd_info *sp, Float newval, int field)
 {
   /* if sp == NULL, sets globally */
-  int i,j,val;
+  int i,val;
   dac_info *dp;
-  rev_info *r;
   if (play_list)
     {
       if (field == DAC_REVERB_LOWPASS)
 	{
 	  if ((global_reverbing) && (global_reverb))
-	    {
-	      r = (rev_info *)global_reverb;
-	      lp_coeff = newval;
-	      mus_set_a0(r->onep,lp_coeff);
-	      mus_set_b1(r->onep,1.0 - lp_coeff);
-	    }
+	    set_reverb_filter_coeff(newval);
 	}
       else
 	{
 	  if (field == DAC_REVERB_FEEDBACK)
 	    {
 	      if ((global_reverbing) && (global_reverb))
-		{
-		  r = (rev_info *)global_reverb;
-		  for (j=0;j<6;j++)
-		    mus_set_feedback(r->combs[j],comb_factors[j]*newval);
-		}
+		set_reverb_comb_factors(newval);
 	    }
 	  else
 	    {
@@ -2634,23 +2670,8 @@ void g_init_dac(SCM local_doc)
   start_playing_hook = gh_define(S_start_playing_hook,SCM_BOOL_F);
 #endif
 
-#if USE_GWRAPPED_FUNCS
-  DEFINE_PROC(gh_new_procedure("make-snd-nrev",SCM_FNC g_make_nrev,3,0,0),"make-snd-nrev is the default reverb make function");
-  DEFINE_PROC(gh_new_procedure("snd-nrev",SCM_FNC g_nrev,3,0,0),"snd-nrev is the default reverb");
-  DEFINE_PROC(gh_new_procedure("free-snd-nrev",SCM_FNC g_free_nrev,1,0,0),"free-snd-nrev is the default reverb free function");
-  DEFINE_PROC(gh_new_procedure("snd-contrast",SCM_FNC g_mus_contrast,2,0,0),"snd-contrast is the default contrast function");
-  DEFINE_PROC(gh_new_procedure("make-snd-freeverb",SCM_FNC g_make_freeverb,3,0,0),"make-snd-freeverb is the freeverb reverb make function");
-  DEFINE_PROC(gh_new_procedure("snd-freeverb",SCM_FNC g_freeverb,3,0,0),"snd-freeverb is the freeverb reverb");
-  DEFINE_PROC(gh_new_procedure("free-snd-freeverb",SCM_FNC g_free_freeverb,1,0,0),"free-snd-freeverb is the freeverb reverb free function");
-#else
-  gh_define("make-snd-nrev",SCM_BOOL_F);
-  gh_define("snd-nrev",SCM_BOOL_F);
-  gh_define("free-snd-nrev",SCM_BOOL_F);
-  gh_define("snd-contrast",SCM_BOOL_F);
-  gh_define("make-snd-freeverb",SCM_BOOL_F);
-  gh_define("snd-freeverb",SCM_BOOL_F);
-  gh_define("free-snd-freeverb",SCM_BOOL_F);
-#endif
+  init_rev_funcs(local_doc);
+
   gh_eval_str("(set-reverb-funcs snd-nrev make-snd-nrev free-snd-nrev)");
   gh_eval_str("(set-contrast-func snd-contrast)");
 }
