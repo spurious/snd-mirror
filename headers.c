@@ -867,6 +867,9 @@ static int read_aiff_header (int chan, int overall_offset)
       if (seek_and_read(chan, (unsigned char *)hdrbuf, offset, 32) <= 0)
 	return(mus_error(MUS_HEADER_READ_FAILED, "read_aiff_header: chunks confused at " OFF_TD , offset));
       chunksize = mus_char_to_bint((unsigned char *)(hdrbuf + 4));
+      if ((chunksize == 0) && /* can be empty data chunk */
+	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
+	break;
       if (match_four_chars((unsigned char *)hdrbuf, I_COMM))
 	{
 	  chans = mus_char_to_bshort((unsigned char *)(hdrbuf + 8));
@@ -1458,6 +1461,9 @@ static int read_riff_header (int chan)
       if (offset >= true_file_length) break;
       if (seek_and_read(chan, (unsigned char *)hdrbuf, offset, 64) <= 0) break;
       chunksize = big_or_little_endian_int((unsigned char *)(hdrbuf + 4), little);
+      if ((chunksize == 0) && /* can be empty data chunk */
+	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
+	break;
       if (match_four_chars((unsigned char *)hdrbuf, I_fmt_))
 	{
 	  /*
@@ -3170,6 +3176,7 @@ static int read_maud_header (int chan)
 	  data_size = mus_char_to_bint((unsigned char *)(hdrbuf + 8));
 	  num = mus_char_to_bint((unsigned char *)(hdrbuf + 16));
 	  den = mus_char_to_bshort((unsigned char *)(hdrbuf + 20));
+	  if (den == 0) den = 1;
 	  srate = (int)(num / den);
 	  num = mus_char_to_bshort((unsigned char *)(hdrbuf + 12));
 	  den = mus_char_to_bshort((unsigned char *)(hdrbuf + 26));

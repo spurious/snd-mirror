@@ -185,6 +185,7 @@ vct *c_vct_copy(vct *vc)
 XEN make_vct(int len, Float *data)
 {
   vct *new_vct;
+  if (len <= 0) return(XEN_FALSE);
   new_vct = (vct *)MALLOC(sizeof(vct));
   new_vct->length = len;
   new_vct->data = data;

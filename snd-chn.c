@@ -4527,24 +4527,18 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       break;
     case CP_TIME_GRAPH_STYLE:
       val = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
-      if (!(GRAPH_STYLE_OK(val)))
-	XEN_OUT_OF_RANGE_ERROR(caller, 1, on, "unknown " S_time_graph_style);
       cp->time_graph_style = val;
       if (call_update_graph) update_graph(cp);
       return(C_TO_XEN_INT(cp->time_graph_style));
       break;
     case CP_LISP_GRAPH_STYLE:
       val = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
-      if (!(GRAPH_STYLE_OK(val)))
-	XEN_OUT_OF_RANGE_ERROR(caller, 1, on, "unknown " S_lisp_graph_style);
       cp->lisp_graph_style = val;
       if (call_update_graph) update_graph(cp);
       return(C_TO_XEN_INT(cp->lisp_graph_style));
       break;
     case CP_TRANSFORM_GRAPH_STYLE:
       val = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, DEFAULT_GRAPH_STYLE, caller);
-      if (!(GRAPH_STYLE_OK(val)))
-	XEN_OUT_OF_RANGE_ERROR(caller, 1, on, "unknown " S_transform_graph_style);
       cp->transform_graph_style = val;
       if (call_update_graph) update_graph(cp);
       return(C_TO_XEN_INT(cp->transform_graph_style));
@@ -4618,9 +4612,14 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       reset_y_display(cp, cp->axis->sy, mus_fclamp(0.0, XEN_TO_C_DOUBLE(on), 1.0)); 
       break;
     case CP_MIN_DB:
-      cp->min_dB = XEN_TO_C_DOUBLE(on); 
-      cp->lin_dB = pow(10.0, cp->min_dB * 0.05); 
-      calculate_fft(cp); 
+      curamp = XEN_TO_C_DOUBLE(on); 
+      if (curamp < 0.0)
+	{
+	  cp->min_dB = curamp;
+	  cp->lin_dB = pow(10.0, cp->min_dB * 0.05); 
+	  calculate_fft(cp); 
+	}
+      else XEN_OUT_OF_RANGE_ERROR(caller, 1, on, S_min_dB " must be < 0.0");
       break;
     case CP_SPECTRO_X_ANGLE: cp->spectro_x_angle = XEN_TO_C_DOUBLE(on); calculate_fft(cp); break;
     case CP_SPECTRO_Y_ANGLE: cp->spectro_y_angle = XEN_TO_C_DOUBLE(on); calculate_fft(cp); break;
@@ -5036,11 +5035,15 @@ static XEN g_set_min_dB(XEN val, XEN snd, XEN chn)
     return(channel_set(snd, chn, val, CP_MIN_DB, S_setB S_min_dB));
   else
     {
-      db = XEN_TO_C_DOUBLE(val);
       ss = get_global_state();
-      ss->min_dB = db;
-      ss->lin_dB = pow(10.0, db * 0.05);
-      channel_set(XEN_TRUE, XEN_TRUE, val, CP_MIN_DB, S_setB S_min_dB);
+      db = XEN_TO_C_DOUBLE(val);
+      if (db < 0.0)
+	{
+	  ss->min_dB = db;
+	  ss->lin_dB = pow(10.0, db * 0.05);
+	  channel_set(XEN_TRUE, XEN_TRUE, val, CP_MIN_DB, S_setB S_min_dB);
+	}
+      else XEN_OUT_OF_RANGE_ERROR(S_setB S_min_dB, 1, val, S_min_dB " must be < 0.0");
       return(C_TO_XEN_DOUBLE(ss->min_dB));
     }
 }

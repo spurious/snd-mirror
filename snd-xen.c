@@ -665,7 +665,11 @@ static char *gl_print(XEN result)
   newbuf = (char *)CALLOC(128, sizeof(char));
   savelen = 128;
   savectr = 3;
+#if HAVE_GUILE
   sprintf(newbuf, "#("); 
+#else
+  sprintf(newbuf, "[");
+#endif
   for (i = 0; i < ilen; i++)
     {
       str = g_print_1(XEN_VECTOR_REF(result, i));
@@ -679,6 +683,9 @@ static char *gl_print(XEN result)
 	    }
 	  if (i != 0) 
 	    {
+#if HAVE_RUBY
+	      strcat(newbuf, ",");
+#endif
 	      strcat(newbuf, " "); 
 	      savectr++;
 	    }
@@ -688,7 +695,11 @@ static char *gl_print(XEN result)
     }
   if (savectr + 8 > savelen) 
     newbuf = (char *)REALLOC(newbuf, (savectr + 8) * sizeof(char));
+#if HAVE_GUILE
   strcat(newbuf, " ...)");
+#else
+  strcat(newbuf, " ...]");
+#endif
   return(newbuf);
 }
 

@@ -486,7 +486,7 @@ static void display_sound_file_entry(FILE *fp, const char *name, sound_file *sf)
 	      if (i > 1) fprintf(fp, ", ");
 	      fprintf(fp, " %.3f at %.3f ",
 		      MUS_SAMPLE_TO_FLOAT(sf->maxamps[i]),
-		      (float)((double)(sf->maxtimes[i]) / (double)(sf->srate)));
+		      (sf->srate > 0.0) ? (float)((double)(sf->maxtimes[i]) / (double)(sf->srate)) : (float)(sf->maxtimes[i]));
 	    }
 	}
     }
@@ -983,6 +983,7 @@ off_t mus_sound_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_t 
   mus_sample_t **ibufs;
   sound_file *sf; 
   sf = getsf(ifile); 
+  if (sf->chans <= 0) return(MUS_ERROR);
   if ((sf) && (sf->maxamps))
     {
       if (chans > sf->chans) ichans = sf->chans; else ichans = chans;
