@@ -18,6 +18,9 @@
 #if HAVE_SYS_STATFS_H
   #include <sys/statfs.h>
 #endif
+#if HAVE_SYS_STATVFS_H
+  #include <sys/statvfs.h>
+#endif
 #if HAVE_SYS_VFS_H
   #include <sys/vfs.h>
 #endif
@@ -28,7 +31,7 @@
   #include <sys/mount.h>
 #endif
 
-#if (!HAVE_STATFS)
+#if (!HAVE_STATFS) && (!HAVE_STATVFS)
   off_t disk_kspace (char *filename) {return(1234567);}
   int is_link(char *filename) {return(0);}
   int is_directory(char *filename) {return(0);}
@@ -36,6 +39,20 @@
   static off_t file_bytes(char *filename) {return(0);}
 #else
 
+#if HAVE_STATVFS
+off_t disk_kspace (char *filename)
+{
+  statvfs_t buf;
+  off_t err = -1;
+  err = statvfs(filename, &buf);
+  if (err == 0)
+    {
+      if (buf.f_frsize == 1024) return(buf.f_bfree);
+      else return((off_t)(buf.f_frsize * ((double)(buf.f_bfree) / 1024.0)));
+    }
+  return(err);
+}
+#else
 off_t disk_kspace (char *filename)
 {
   struct statfs buf;
@@ -54,6 +71,7 @@ off_t disk_kspace (char *filename)
     }
   return(err);
 }
+#endif
 
 int is_link(char *filename)
 {

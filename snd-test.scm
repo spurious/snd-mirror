@@ -31,6 +31,7 @@
 ;;; test 28: errors
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
+;;; TODO: test for continuation?
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen) (ice-9 syncase) (ice-9 session))
 
@@ -48,7 +49,7 @@
 (define tests 1)
 (if (not (defined? 'snd-test)) (define snd-test -1))
 (if (defined? 'disable-play) (disable-play))
-(define keep-going #t)
+(define keep-going #f)
 (define full-test (< snd-test 0))
 (define total-tests 28)
 (if (not (defined? 'with-exit)) (define with-exit (< snd-test 0)))
@@ -27425,6 +27426,7 @@ EDITS: 2
 	    
 	    (ftst '(let ((gen (make-all-pass))) (all-pass gen)) 0.0)
 	    (ftst '(let ((gen (make-all-pass))) (gen) (gen 0.0) (gen 0.0 0.0)) 0.0)
+	    (ftst '(let ((gen (make-all-pass))) (gen 0) (gen 0 0) (gen 0.0 0) (gen 0 0.0)) 0.0)
 	    (ftst '(let ((gen (make-asymmetric-fm))) (asymmetric-fm gen)) 0.0)
 	    (ftst '(let ((gen (make-asymmetric-fm))) (gen)) 0.0)
 	    (ftst '(let ((gen (make-buffer))) (buffer->sample gen)) 0.0)
@@ -27457,6 +27459,7 @@ EDITS: 2
 	    (ftst '(let ((gen (make-locsig))) (gen 0.0)) 0.0)
 	    (ftst '(let ((gen (make-mixer 2))) (mixer-ref gen 0 0)) 0.0)
 	    (ftst '(let ((gen (make-mixer 2))) (gen) (gen 0.0) (gen 0.0 0.0)) 0.0)
+	    (ftst '(let ((gen (make-mixer 2))) (gen 0.0 0) (gen 0 0) (gen 0) (gen 0 0.0)) 0.0)
 	    (ftst '(let ((gen (make-notch))) (notch gen)) 0.0)
 	    (ftst '(let ((gen (make-notch))) (gen) (gen 0.0) (gen 0.0 0.0)) 0.0)
 	    (ftst '(let ((gen (make-one-pole))) (one-pole gen)) 0.0)
@@ -29377,8 +29380,8 @@ EDITS: 2
 		  (gran-synth 15.5 1 300 .0189 .03 .4)
 		  (spectra 16 1 440.0 .1 '(1.0 .4 2.0 .2 3.0 .2 4.0 .1 6.0 .1) '(0.0 0.0 1.0 1.0 5.0 0.9 12.0 0.5 25.0 0.25 100.0 0.0))
 		  (lbj-piano 16.5 1 440.0 .2)
-		  (resflt 17 1.0 0 0 0 nil .1 200 230 10 '(0 0 50 1 100 0) '(0 0 100 1) 500 .995 .1 1000 .995 .1 2000 .995 .1)
-		  (resflt 17.5 1.0 1 10000 .01 '(0 0 50 1 100 0) 0 0 0 0 nil nil 500 .995 .1 1000 .995 .1 2000 .995 .1)
+		  (resflt 17 1.0 0 0 0 #f .1 200 230 10 '(0 0 50 1 100 0) '(0 0 100 1) 500 .995 .1 1000 .995 .1 2000 .995 .1)
+		  (resflt 17.5 1.0 1 10000 .01 '(0 0 50 1 100 0) 0 0 0 0 #f #f 500 .995 .1 1000 .995 .1 2000 .995 .1)
 		  
 		  (graphEq "oboe.snd")
 		  )
@@ -29390,7 +29393,7 @@ EDITS: 2
 	(close-sound ind))
       (if (defined? 'disable-play) (disable-play))
 
-      (with-sound (:channels 2 :statistics t)
+      (with-sound (:channels 2 :statistics #t)
 		  (fullmix "pistol.snd")
 		  (fullmix "oboe.snd" 1 2 0 (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5)))))
       (let ((ind (find-sound "test.snd")))

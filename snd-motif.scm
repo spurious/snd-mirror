@@ -820,7 +820,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	  (let ((diff (* 0.05 (- ay1 ay0))) ; assuming -10 to 10 
 		(dpy (XtDisplay scan-pane))
 		(wn (XtWindow scan-pane))
-		(xincr (/ (- ax1 ax0) size)))
+		(xincr (exact->inexact (/ (- ax1 ax0) size))))
 	    (if pts1
 		(XDrawLinesDirect dpy wn egc pts1 size 0)
 		(XFillRectangle dpy wn egc ; erase previous graph
@@ -832,7 +832,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		 (j 0 (+ j 2))
 		 (xi ax0 (+ xi xincr)))
 		((= i size))
-	      (vector-set! vect j (inexact->exact xi))
+	      (vector-set! vect j (inexact->exact (floor xi)))
 	      (vector-set! vect (+ j 1) (y->grfy (vct-ref gx0 i) diff)))
 	    (if pts1 (freeXPoints pts1))
 	    (set! pts0 (vector->XPoints vect))
@@ -1271,8 +1271,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	   (x lx (+ x xinc)))
 	  ((= i len))
 	(set! y (y->grfy (vct-ref pts i) range))
-	(XDrawLine dpy wn gc lx ly (inexact->exact x) y)
-	(set! lx (inexact->exact x))
+	(XDrawLine dpy wn gc lx ly (inexact->exact (round x)) y)
+	(set! lx (inexact->exact (round x)))
 	(set! ly y)))))
 
 (define make-sound-box 

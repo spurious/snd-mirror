@@ -7208,17 +7208,31 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args)  \
 VCT_2_F(sum_of_sines, sum-of-sines)
 VCT_2_F(dot_product, dot-product)
 
-static void clm_0f(int *args, Int *ints, Float *dbls) {FLOAT_RESULT = MUS_RUN(((mus_any *)(INT_ARG_1)), 0.0, 0.0);}
+  /* TODO: the various make-<gen> calls can throw an error -- this needs to abort the optimization and pass it up the chain */
+
+static void clm_0f(int *args, Int *ints, Float *dbls) {if (INT_ARG_1) FLOAT_RESULT = MUS_RUN(((mus_any *)(INT_ARG_1)), 0.0, 0.0);}
 static char *descr_clm_0f(int *args, Int *ints, Float *dbls) {return(descr_gen(args, ints, dbls, mus_name(((mus_any *)(INT_ARG_1))), 0));} 
-static void clm_1f(int *args, Int *ints, Float *dbls) {FLOAT_RESULT = MUS_RUN(((mus_any *)(INT_ARG_1)), FLOAT_ARG_2, 0.0);}
+static void clm_1f(int *args, Int *ints, Float *dbls) {if (INT_ARG_1) FLOAT_RESULT = MUS_RUN(((mus_any *)(INT_ARG_1)), FLOAT_ARG_2, 0.0);}
 static char *descr_clm_1f(int *args, Int *ints, Float *dbls) {return(descr_gen(args, ints, dbls, mus_name(((mus_any *)(INT_ARG_1))), 1));} 
-static void clm_2f(int *args, Int *ints, Float *dbls) {FLOAT_RESULT = MUS_RUN(((mus_any *)(INT_ARG_1)), FLOAT_ARG_2, FLOAT_ARG_3);}
+static void clm_2f(int *args, Int *ints, Float *dbls) {if (INT_ARG_1) FLOAT_RESULT = MUS_RUN(((mus_any *)(INT_ARG_1)), FLOAT_ARG_2, FLOAT_ARG_3);}
 static char *descr_clm_2f(int *args, Int *ints, Float *dbls) {return(descr_gen(args, ints, dbls, mus_name(((mus_any *)(INT_ARG_1))), 2));} 
 static xen_value *clm_n(ptree *prog, xen_value **args, int num_args, xen_value *sf)
 {
-  /* TODO: if incoming args are int, fixup */
+  xen_value *temp;
   if (args[0]) FREE(args[0]);
   args[0] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, 0.0), R_VARIABLE);
+  if ((num_args > 0) && (args[1]->type == R_INT))
+    {
+      temp = args[1];
+      args[1] = convert_int_to_dbl(prog, args[1]);
+      FREE(temp);
+    }
+  if ((num_args > 1) && (args[2]->type == R_INT))
+    {
+      temp = args[2];
+      args[2] = convert_int_to_dbl(prog, args[2]);
+      FREE(temp);
+    }
   switch (num_args)
     {
     case 0: add_triple_to_ptree(prog, va_make_triple(clm_0f, descr_clm_0f, 2, args[0], sf)); break;

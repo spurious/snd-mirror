@@ -691,7 +691,7 @@ is a physical model of a flute:\n\
 ;;; Jan Mattox's fm drum:
 
 (definstrument (fm-drum start-time duration frequency amplitude index 
-			#:optional (high nil) (degree 0.0) (distance 1.0) (reverb-amount 0.01))
+			#:optional (high #f) (degree 0.0) (distance 1.0) (reverb-amount 0.01))
   (let* ((beg (inexact->exact (floor (* start-time (mus-srate)))))
 	 (end (+ beg (inexact->exact (floor (* duration (mus-srate))))))
 	 ;; many of the following variables were originally passed as arguments
@@ -1953,8 +1953,8 @@ is a physical model of a flute:\n\
 			    (two-pole f3 (* input1 g3))))))))))
 
 
-;  (resflt 0 1.0 0 0 0 nil .1 200 230 10 '(0 0 50 1 100 0) '(0 0 100 1) 500 .995 .1 1000 .995 .1 2000 .995 .1)
-;  (resflt 0 1.0 1 10000 .01 '(0 0 50 1 100 0) 0 0 0 0 nil nil 500 .995 .1 1000 .995 .1 2000 .995 .1)
+;  (resflt 0 1.0 0 0 0 #f .1 200 230 10 '(0 0 50 1 100 0) '(0 0 100 1) 500 .995 .1 1000 .995 .1 2000 .995 .1)
+;  (resflt 0 1.0 1 10000 .01 '(0 0 50 1 100 0) 0 0 0 0 #f #f 500 .995 .1 1000 .995 .1 2000 .995 .1)
 
 
 (definstrument (scratch start file src-ratio turnaroundlist)
@@ -2507,7 +2507,7 @@ negative. In case the result is a negative number --let's say offset =
 "filt-gain-scale" & "filt-gain-base" will apply to the elements of the
 envelopes if we are in case 2, gains are envelopes.
 
-"stats" if t --default-- prints the number of seconds processed, if
+"stats" if #t --default-- prints the number of seconds processed, if
 nil doesnt print anything, which will speed up a bit the process.
 !#
 
@@ -2751,7 +2751,7 @@ mjkoskin@sci.fi
 	    (if rev-mx (frame->file *reverb* i (frame->frame rev-mx inframe revframe))))))))
 
 #!
-  (with-sound (:channels 2 :statistics t)
+  (with-sound (:channels 2 :statistics #t)
     (fullmix "pistol.snd")
     (fullmix "oboe.snd" 1 2 0 (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5)))))
 !#

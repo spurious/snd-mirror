@@ -243,7 +243,7 @@ LIBS=""
 
 AC_HEADER_DIRENT
 AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h soundcard.h machine/soundcard.h gsl/gsl_version.h sys/mixer.h)
-AC_CHECK_HEADERS(libc.h sys/vfs.h sys/statfs.h sys/mount.h setjmp.h sched.h pwd.h locale.h sys/fpu.h dlfcn.h sys/param.h byteswap.h)
+AC_CHECK_HEADERS(libc.h sys/vfs.h sys/statfs.h sys/statvfs.h sys/mount.h setjmp.h sched.h pwd.h locale.h sys/fpu.h dlfcn.h sys/param.h byteswap.h)
 AC_CHECK_HEADER(/usr/local/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LOCAL_LIB_OSS)])
 AC_CHECK_HEADER(/usr/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LIB_OSS)])
 AC_CHECK_HEADER(/opt/oss/include/sys/soundcard.h,[AC_DEFINE(OPT_OSS)])
@@ -309,7 +309,7 @@ LIBS=$SAVELIBS
 
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME
-AC_CHECK_FUNCS(getcwd strerror readlink setlocale access opendir sleep signal strdup statfs clock vsnprintf snprintf memmove)
+AC_CHECK_FUNCS(getcwd strerror readlink setlocale access opendir sleep signal strdup statfs statvfs clock vsnprintf snprintf memmove)
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
 
@@ -698,6 +698,7 @@ if test $GUILE_CONFIG_works = yes; then
     AC_CHECK_LIB(guile, scm_defined_p,          [AC_DEFINE(HAVE_SCM_DEFINED_P)])
     AC_CHECK_LIB(guile, scm_port_p,             [AC_DEFINE(HAVE_SCM_PORT_P)])
     AC_CHECK_LIB(guile, scm_mem2string,         [AC_DEFINE(HAVE_SCM_MEM2STRING)])
+    AC_CHECK_LIB(guile, scm_continuation_p,     [AC_DEFINE(HAVE_SCM_CONTINUATION_P)])
     AC_CHECK_LIB(guile, scm_c_define_module,    [AC_DEFINE(HAVE_SCM_C_DEFINE_MODULE)
                                                  if test "$with_modules" = yes; then
 						   AC_DEFINE(WITH_MODULES)

@@ -14208,7 +14208,7 @@ static void gxm_XtErrorMsgHandler(String name, String type, String clas, String 
    */
   int i, len;
   XEN lst = XEN_EMPTY_LIST;
-  if (XEN_PROCEDURE_P(xm_XtErrorMsgHandler))
+  if ((XEN_PROCEDURE_P(xm_XtErrorMsgHandler)) && (num) && ((pars) || (*num == 0)))
     {
       xm_protect(lst);
       len = (*num);
@@ -14261,7 +14261,7 @@ static void gxm_XtWarningMsgHandler(String name, String type, String clas, Strin
    */
   int i, len;
   XEN lst = XEN_EMPTY_LIST;
-  if (XEN_PROCEDURE_P(xm_XtWarningMsgHandler))
+  if ((XEN_PROCEDURE_P(xm_XtWarningMsgHandler)) && (num) && ((pars) || (*num == 0)))
     {
       xm_protect(lst);
       len = (*num);

@@ -452,7 +452,7 @@ int mus_audio_mixer_write(int dev, int field, int chan, float *val);
 void mus_audio_save(void);
 void mus_audio_restore(void);
 int mus_audio_initialize(void);
-#if HAVE_OSS
+#if HAVE_OSS || HAVE_ALSA
 int mus_audio_reinitialize(void); /* 29-Aug-01 for CLM/Snd bugfix? */
 #endif
 int mus_audio_systems(void);

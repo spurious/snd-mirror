@@ -2732,6 +2732,7 @@ static SCM g_gc_on(void) {--scm_block_gc; return(XEN_FALSE);}
 
 #endif 
 
+#if (!HAVE_SCM_CONTINUATION_P)
 #if HAVE_GUILE
 static SCM g_continuation_p(XEN obj)
 {
@@ -2741,6 +2742,7 @@ static SCM g_continuation_p(XEN obj)
   return(XEN_PROCEDURE_P(obj));
 #endif
 }
+#endif
 #endif
 
 
@@ -3111,8 +3113,10 @@ void g_initialize_gh(void)
 #endif
 #endif
 
+#if (!HAVE_SCM_CONTINUATION_P)
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE("continuation?", g_continuation_p, 1, 0, 0, "#t if arg is a continuation");
+#endif
 #endif
 
 #if HAVE_RUBY
