@@ -26,39 +26,39 @@ enum {W_pane,
 
 #define NUM_SND_WIDGETS 48
 
-Widget w_snd_ctrls(snd_info *sp)                   {if ((sp) && (sp->sgx)) return(((snd_context *)(sp->sgx))->snd_widgets[W_ctrls]); else return(NULL);}
-Widget w_snd_pane(snd_info *sp)                    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_pane]);                   else return(NULL);}
-Widget w_snd_name(snd_info *sp)                    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_name]);                   else return(NULL);}
-Widget w_snd_combine(snd_info *sp)                 {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_combine]);                else return(NULL);}
-Widget w_snd_play(snd_info *sp)                    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_play]);                   else return(NULL);}
-Widget w_snd_filter_env(snd_info *sp)              {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter_env]);             else return(NULL);}
-Widget w_snd_minibuffer(snd_info *sp)              {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_info]);                   else return(NULL);}
-Widget w_snd_minibuffer_label(snd_info *sp)        {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_info_label]);             else return(NULL);}
-Widget w_snd_name_icon(snd_info *sp)               {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_name_icon]);              else return(NULL);}
+Widget w_snd_ctrls(snd_info *sp)            {return((sp->sgx)->snd_widgets[W_ctrls]);}
+Widget w_snd_pane(snd_info *sp)             {return((sp->sgx)->snd_widgets[W_pane]);}
+Widget w_snd_name(snd_info *sp)             {return((sp->sgx)->snd_widgets[W_name]);}
+Widget w_snd_combine(snd_info *sp)          {return((sp->sgx)->snd_widgets[W_combine]);}
+Widget w_snd_play(snd_info *sp)             {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_play]); else return(NULL);}
+Widget w_snd_filter_env(snd_info *sp)       {return((sp->sgx)->snd_widgets[W_filter_env]);}
 
-static Widget w_snd_amp(snd_info *sp)              {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_amp]);                    else return(NULL);}
-static Widget w_snd_srate(snd_info *sp)            {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_srate]);                  else return(NULL);}
-static Widget w_snd_srate_arrow(snd_info *sp)      {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_srate_arrow]);            else return(NULL);}
-static Widget w_snd_expand(snd_info *sp)           {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_expand]);                 else return(NULL);}
-static Widget w_snd_contrast(snd_info *sp)         {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_contrast]);               else return(NULL);}
-static Widget w_snd_revscl(snd_info *sp)           {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_revscl]);                 else return(NULL);}
-static Widget w_snd_revlen(snd_info *sp)           {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_revlen]);                 else return(NULL);}
-static Widget w_snd_amp_number(snd_info *sp)       {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_amp_number]);             else return(NULL);}
-static Widget w_snd_srate_number(snd_info *sp)     {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_srate_number]);           else return(NULL);}
-static Widget w_snd_expand_number(snd_info *sp)    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_expand_number]);          else return(NULL);}
-static Widget w_snd_expand_button(snd_info *sp)    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_expand_button]);          else return(NULL);}
-static Widget w_snd_contrast_number(snd_info *sp)  {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_contrast_number]);        else return(NULL);}
-static Widget w_snd_contrast_button(snd_info *sp)  {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_contrast_button]);        else return(NULL);}
-static Widget w_snd_revscl_number(snd_info *sp)    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_revscl_number]);          else return(NULL);}
-static Widget w_snd_revlen_number(snd_info *sp)    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_revlen_number]);          else return(NULL);}
-static Widget w_snd_reverb_button(snd_info *sp)    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_reverb_button]);          else return(NULL);}
-static Widget w_snd_apply(snd_info *sp)            {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_apply]);                  else return(NULL);}
-static Widget w_snd_filter_order(snd_info *sp)     {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter_order]);           else return(NULL);}
-static Widget w_snd_filter(snd_info *sp)           {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter]);                 else return(NULL);}
-static Widget w_snd_filter_button(snd_info *sp)    {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter_button]);          else return(NULL);}
-static Widget w_snd_filter_dB(snd_info *sp)        {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_filter_dB]);              else return(NULL);}
-static Widget w_snd_minibuffer_sep(snd_info *sp)   {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_info_sep]);               else return(NULL);}
-static Widget w_snd_sync(snd_info *sp)             {if ((sp) && (sp->sgx)) return((sp->sgx)->snd_widgets[W_sync]);                   else return(NULL);}
+#define NAME_ICON(Sp)            (Sp->sgx)->snd_widgets[W_name_icon]
+#define AMP_SCROLLBAR(Sp)        (Sp->sgx)->snd_widgets[W_amp]
+#define SRATE_SCROLLBAR(Sp)      (Sp->sgx)->snd_widgets[W_srate]
+#define SRATE_ARROW(Sp)          (Sp->sgx)->snd_widgets[W_srate_arrow]
+#define EXPAND_SCROLLBAR(Sp)     (Sp->sgx)->snd_widgets[W_expand]
+#define CONTRAST_SCROLLBAR(Sp)   (Sp->sgx)->snd_widgets[W_contrast]
+#define REVSCL_SCROLLBAR(Sp)     (Sp->sgx)->snd_widgets[W_revscl]
+#define REVLEN_SCROLLBAR(Sp)     (Sp->sgx)->snd_widgets[W_revlen]
+#define AMP_LABEL(Sp)            (Sp->sgx)->snd_widgets[W_amp_number]
+#define SRATE_LABEL(Sp)          (Sp->sgx)->snd_widgets[W_srate_number]
+#define EXPAND_LABEL(Sp)         (Sp->sgx)->snd_widgets[W_expand_number]
+#define EXPAND_BUTTON(Sp)        (Sp->sgx)->snd_widgets[W_expand_button]
+#define CONTRAST_LABEL(Sp)       (Sp->sgx)->snd_widgets[W_contrast_number]
+#define CONTRAST_BUTTON(Sp)      (Sp->sgx)->snd_widgets[W_contrast_button]
+#define REVSCL_LABEL(Sp)         (Sp->sgx)->snd_widgets[W_revscl_number]
+#define REVLEN_LABEL(Sp)         (Sp->sgx)->snd_widgets[W_revlen_number]
+#define REVERB_BUTTON(Sp)        (Sp->sgx)->snd_widgets[W_reverb_button]
+#define APPLY_BUTTON(Sp)         (Sp->sgx)->snd_widgets[W_apply]
+#define FILTER_ORDER_TEXT(Sp)    (Sp->sgx)->snd_widgets[W_filter_order]
+#define FILTER_COEFFS_TEXT(Sp)   (Sp->sgx)->snd_widgets[W_filter]
+#define FILTER_BUTTON(Sp)        (Sp->sgx)->snd_widgets[W_filter_button]
+#define FILTER_DB_BUTTON(Sp)     (Sp->sgx)->snd_widgets[W_filter_dB]
+#define MINIBUFFER_SEPARATOR(Sp) (Sp->sgx)->snd_widgets[W_info_sep]
+#define MINIBUFFER_LABEL(Sp)     (Sp->sgx)->snd_widgets[W_info_label]
+#define MINIBUFFER_TEXT(Sp)      (Sp->sgx)->snd_widgets[W_info]
+#define SYNC_BUTTON(Sp)          (Sp->sgx)->snd_widgets[W_sync]
 
 #define MAX_NOTEBOOK_TAB_LENGTH 5
 
@@ -79,17 +79,17 @@ static void name_help_callback(Widget w, XtPointer context, XtPointer info)     
 
 static void expand_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context, "Expand Button", "This button turns on expansion\n");
+  snd_help((snd_state *)context, "Expand Button", "This button turns on expansion (granular synthesis time scaling)\n");
 }
 
 static void contrast_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context, "Contrast Button", "This button turns on contrast enhancement\n");
+  snd_help((snd_state *)context, "Contrast Button", "This button turns on contrast enhancement (a form of companding)\n");
 }
 
 static void reverb_button_help_callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_help((snd_state *)context, "Reverb Button", "This button turns on reverberation\n");
+  snd_help((snd_state *)context, "Reverb Button", "This button turns on reverberation (Nrev)\n");
 }
 
 static void filter_button_help_callback(Widget w, XtPointer context, XtPointer info)
@@ -151,30 +151,30 @@ has been no 'Remember'.");
 
 void goto_minibuffer(snd_info *sp)
 {
-  if (sp) goto_window(w_snd_minibuffer(sp));
+  if (sp) goto_window(MINIBUFFER_TEXT(sp));
 }
 
 void set_minibuffer_string(snd_info *sp, char *str) 
 {
-  XmTextSetString(w_snd_minibuffer(sp), str);
-  XmUpdateDisplay(w_snd_minibuffer(sp));
+  XmTextSetString(MINIBUFFER_TEXT(sp), str);
+  XmUpdateDisplay(MINIBUFFER_TEXT(sp));
 }
 
 void set_minibuffer_cursor_position(snd_info *sp, int pos)
 {
-  XmTextSetCursorPosition(w_snd_minibuffer(sp), pos);
+  XmTextSetCursorPosition(MINIBUFFER_TEXT(sp), pos);
 }
 
 char *get_minibuffer_string(snd_info *sp) 
 {
-  return(XmTextGetString(w_snd_minibuffer(sp)));
+  return(XmTextGetString(MINIBUFFER_TEXT(sp)));
 }
 
 void make_minibuffer_label(snd_info *sp , char *str)
 {
   XmString s1;
   s1 = XmStringCreate(str, "button_font");
-  XtVaSetValues(w_snd_minibuffer_label(sp), XmNlabelString, s1, NULL);
+  XtVaSetValues(MINIBUFFER_LABEL(sp), XmNlabelString, s1, NULL);
   XmStringFree(s1);
 }
 
@@ -238,7 +238,7 @@ static int snd_amp_changed(snd_info *sp, int val)
     }
   sfs = prettyf(sp->amp_control, 2);
   fill_number(sfs, amp_number_buffer);
-  set_label(w_snd_amp_number(sp), amp_number_buffer);
+  set_label(AMP_LABEL(sp), amp_number_buffer);
   FREE(sfs);
   return(val);
 }
@@ -247,7 +247,7 @@ void set_snd_amp(snd_info *sp, Float val)
 {
   if (IS_PLAYER(sp))
     sp->amp_control = val;
-  else XtVaSetValues(w_snd_amp(sp),
+  else XtVaSetValues(AMP_SCROLLBAR(sp),
 		     XmNvalue,
 		     snd_amp_changed(sp, snd_amp_to_int(mus_fclamp(0.0, val, 7.25))),
 		     NULL);
@@ -320,7 +320,7 @@ static int snd_srate_changed(snd_info *sp, int ival)
 				    srate_number_buffer,
 				    sp->speed_control_style,
 				    sp->speed_control_tones);
-  set_label(w_snd_srate_number(sp), srate_number_buffer);
+  set_label(SRATE_LABEL(sp), srate_number_buffer);
   return(ival);
 }
 
@@ -328,7 +328,7 @@ void set_snd_srate(snd_info *sp, Float val)
 {
   if (IS_PLAYER(sp))
     sp->speed_control = val;
-  else XtVaSetValues(w_snd_srate(sp),
+  else XtVaSetValues(SRATE_SCROLLBAR(sp),
 		     XmNvalue,
 		     snd_srate_changed(sp, snd_srate_to_int(mus_fclamp(-20.0, val, 20.0))),
 		     NULL);
@@ -371,7 +371,7 @@ void toggle_direction_arrow(snd_info *sp, int state)
 {
   if (IS_PLAYER(sp))
     sp->speed_control_direction = ((state) ? -1 : 1);
-  else XmToggleButtonSetState(w_snd_srate_arrow(sp), state, TRUE);
+  else XmToggleButtonSetState(SRATE_ARROW(sp), state, TRUE);
 }
 
 
@@ -398,7 +398,7 @@ static int snd_expand_changed(snd_info *sp, int val)
   if (sp->playing) dac_set_expand(sp, sp->expand_control);
   sfs = prettyf(sp->expand_control, 2);
   fill_number(sfs, expand_number_buffer);
-  set_label(w_snd_expand_number(sp), expand_number_buffer);
+  set_label(EXPAND_LABEL(sp), expand_number_buffer);
   FREE(sfs);
   return(val);
 }
@@ -407,7 +407,7 @@ void set_snd_expand(snd_info *sp, Float val)
 {
   if (IS_PLAYER(sp))
     sp->expand_control = val;
-  else XtVaSetValues(w_snd_expand(sp),
+  else XtVaSetValues(EXPAND_SCROLLBAR(sp),
 		     XmNvalue,
 		     snd_expand_changed(sp, snd_expand_to_int(mus_fclamp(0.0, val, 20.0))),
 		     NULL);
@@ -455,14 +455,14 @@ static void expand_button_callback(Widget w, XtPointer context, XtPointer info)
   ss = sp->state;
   sp->expand_control_p = cb->set;
   if (!(ss->using_schemes)) 
-    XmChangeColor(w_snd_expand(sp), (Pixel)((sp->expand_control_p) ? ((ss->sgx)->position_color) : ((ss->sgx)->basic_color)));
+    XmChangeColor(EXPAND_SCROLLBAR(sp), (Pixel)((sp->expand_control_p) ? ((ss->sgx)->position_color) : ((ss->sgx)->basic_color)));
 }
 
 void toggle_expand_button(snd_info *sp, int state)
 {
   if (IS_PLAYER(sp))
     sp->expand_control_p = state;
-  else XmToggleButtonSetState(w_snd_expand_button(sp), state, TRUE);
+  else XmToggleButtonSetState(EXPAND_BUTTON(sp), state, TRUE);
 }
 
 
@@ -482,7 +482,7 @@ static int snd_contrast_changed(snd_info *sp, int val)
   sp->contrast_control = (Float)val / 10.0;
   sfs = prettyf(sp->contrast_control, 2);
   fill_number(sfs, contrast_number_buffer);
-  set_label(w_snd_contrast_number(sp), contrast_number_buffer);
+  set_label(CONTRAST_LABEL(sp), contrast_number_buffer);
   FREE(sfs);
   return(val);
 }
@@ -491,7 +491,7 @@ void set_snd_contrast(snd_info *sp, Float val)
 {
   if (IS_PLAYER(sp))
     sp->contrast_control = val;
-  else XtVaSetValues(w_snd_contrast(sp),
+  else XtVaSetValues(CONTRAST_SCROLLBAR(sp),
 		     XmNvalue,
 		     snd_contrast_changed(sp, snd_contrast_to_int(mus_fclamp(0.0, val, 9.0))),
 		     NULL);
@@ -539,14 +539,14 @@ static void contrast_button_callback(Widget w, XtPointer context, XtPointer info
   ss = sp->state;
   sp->contrast_control_p = cb->set;
   if (!(ss->using_schemes)) 
-    XmChangeColor(w_snd_contrast(sp), (Pixel)((sp->contrast_control_p) ? ((ss->sgx)->position_color) : ((ss->sgx)->basic_color)));
+    XmChangeColor(CONTRAST_SCROLLBAR(sp), (Pixel)((sp->contrast_control_p) ? ((ss->sgx)->position_color) : ((ss->sgx)->basic_color)));
 }
 
 void toggle_contrast_button(snd_info *sp, int state)
 {
   if (IS_PLAYER(sp))
     sp->contrast_control_p = state;
-  else XmToggleButtonSetState(w_snd_contrast_button(sp), state, TRUE);
+  else XmToggleButtonSetState(CONTRAST_BUTTON(sp), state, TRUE);
 }
 
 
@@ -579,7 +579,7 @@ static int snd_revscl_changed(snd_info *sp, int val)
       revscl_number_buffer[1] = STR_decimal;
     }
   for (i = 0; i < j; i++) (*ps++) = (*fs++);
-  set_label(w_snd_revscl_number(sp), revscl_number_buffer);
+  set_label(REVSCL_LABEL(sp), revscl_number_buffer);
   FREE(sfs);
   return(val);
 }
@@ -588,7 +588,7 @@ void set_snd_revscl(snd_info *sp, Float val)
 {
   if (IS_PLAYER(sp))
     sp->reverb_control_scale = val;
-  else XtVaSetValues(w_snd_revscl(sp),
+  else XtVaSetValues(REVSCL_SCROLLBAR(sp),
 		     XmNvalue,
 		     snd_revscl_changed(sp, snd_revscl_to_int(mus_fclamp(0.0, val, 3.25))),
 		     NULL);
@@ -642,7 +642,7 @@ static int snd_revlen_changed(snd_info *sp, int val)
   sp->reverb_control_length = (Float)val / 20.0;
   sfs = prettyf(sp->reverb_control_length, 2);
   fill_number(sfs, revlen_number_buffer);
-  set_label(w_snd_revlen_number(sp), revlen_number_buffer);
+  set_label(REVLEN_LABEL(sp), revlen_number_buffer);
   FREE(sfs);
   return(val);
 }
@@ -651,7 +651,7 @@ void set_snd_revlen(snd_info *sp, Float val)
 {
   if (IS_PLAYER(sp))
     sp->reverb_control_length = val;
-  else XtVaSetValues(w_snd_revlen(sp),
+  else XtVaSetValues(REVLEN_SCROLLBAR(sp),
 		     XmNvalue,
 		     snd_revlen_changed(sp, snd_revlen_to_int(mus_fclamp(0.0, val, 4.5))),
 		     NULL);
@@ -702,8 +702,8 @@ static void reverb_button_callback(Widget w, XtPointer context, XtPointer info)
   sp->reverb_control_p = cb->set;
   if (!(ss->using_schemes))
     {
-      XmChangeColor(w_snd_revlen(sp), (Pixel)((sp->reverb_control_p) ? ((ss->sgx)->position_color) : ((ss->sgx)->basic_color)));
-      XmChangeColor(w_snd_revscl(sp), (Pixel)((sp->reverb_control_p) ? ((ss->sgx)->position_color) : ((ss->sgx)->basic_color)));
+      XmChangeColor(REVLEN_SCROLLBAR(sp), (Pixel)((sp->reverb_control_p) ? ((ss->sgx)->position_color) : ((ss->sgx)->basic_color)));
+      XmChangeColor(REVSCL_SCROLLBAR(sp), (Pixel)((sp->reverb_control_p) ? ((ss->sgx)->position_color) : ((ss->sgx)->basic_color)));
     }
 }
 
@@ -711,7 +711,7 @@ void toggle_reverb_button(snd_info *sp, int state)
 {
   if (IS_PLAYER(sp))
     sp->reverb_control_p = state;
-  else XmToggleButtonSetState(w_snd_reverb_button(sp), state, TRUE);
+  else XmToggleButtonSetState(REVERB_BUTTON(sp), state, TRUE);
 }
 
 static void filter_button_callback(Widget w, XtPointer context, XtPointer info) 
@@ -726,7 +726,7 @@ void toggle_filter_button(snd_info *sp, int state)
 {
   if (IS_PLAYER(sp))
     sp->filter_control_p = state;
-  else XmToggleButtonSetState(w_snd_filter_button(sp), state, TRUE);
+  else XmToggleButtonSetState(FILTER_BUTTON(sp), state, TRUE);
 }
 
 static void filter_textfield_deactivate(snd_info *sp)
@@ -768,7 +768,7 @@ void sp_display_env(snd_info *sp)
 void set_filter_text(snd_info *sp, char *str)
 {
   if (!(IS_PLAYER(sp)))
-    XmTextSetString(w_snd_filter(sp), str);
+    XmTextSetString(FILTER_COEFFS_TEXT(sp), str);
 }
 
 static void filter_drawer_help_callback(Widget w, XtPointer context, XtPointer info) 
@@ -819,7 +819,7 @@ void set_filter_in_dB(snd_info *sp, int val)
   sp->filter_control_in_dB = val;
   if (!(IS_PLAYER(sp)))
     {
-      XmToggleButtonSetState(w_snd_filter_dB(sp), val, FALSE);
+      XmToggleButtonSetState(FILTER_DB_BUTTON(sp), val, FALSE);
       sp_display_env(sp);
     }
 }
@@ -834,7 +834,7 @@ void set_snd_filter_order(snd_info *sp, int order)
     {
       fltorder = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
       mus_snprintf(fltorder, LABEL_BUFFER_SIZE, "%d", order);
-      XmTextSetString(w_snd_filter_order(sp), fltorder);
+      XmTextSetString(FILTER_ORDER_TEXT(sp), fltorder);
       FREE(fltorder);
       sp_display_env(sp);
     }
@@ -899,7 +899,7 @@ static void filter_activate_callback(Widget w, XtPointer context, XtPointer info
   if (str) XtFree(str);
   if (!(sp->filter_control_env)) /* maybe user cleared text field? */
     sp->filter_control_env = default_env(sp->filter_control_env_xmax, 1.0);
-  str = XmTextGetString(w_snd_filter_order(sp));
+  str = XmTextGetString(FILTER_ORDER_TEXT(sp));
   if ((str) && (*str))
     {
       order = string2int(str);
@@ -939,7 +939,7 @@ void filter_env_changed(snd_info *sp, env *e)
   char *tmpstr = NULL;
   if (!(IS_PLAYER(sp)))
     {
-      XmTextSetString(w_snd_filter(sp), tmpstr = env_to_string(e));
+      XmTextSetString(FILTER_COEFFS_TEXT(sp), tmpstr = env_to_string(e));
       if (tmpstr) FREE(tmpstr);
       report_filter_edit(sp);
       sp_display_env(sp);
@@ -1031,7 +1031,7 @@ static void set_sync_color(snd_info *sp)
 {
   snd_state *ss;
   Widget syb;
-  syb = w_snd_sync(sp);
+  syb = SYNC_BUTTON(sp);
   ss = sp->state;
   switch (sp->sync)
     {
@@ -1049,7 +1049,7 @@ void syncb(snd_info *sp, int on)
   if (!(IS_PLAYER(sp)))
     {
       set_sync_color(sp);
-      XmToggleButtonSetState(w_snd_sync(sp), (on == 0) ? FALSE : TRUE, FALSE);
+      XmToggleButtonSetState(SYNC_BUTTON(sp), (on == 0) ? FALSE : TRUE, FALSE);
     }
 }
 
@@ -1133,7 +1133,7 @@ static void apply_callback(Widget w, XtPointer context, XtPointer info)
     {
       stop_applying(sp);
       if (!(ss->using_schemes)) 
-	XmChangeColor(w_snd_apply(sp), (Pixel)((ss->sgx)->basic_color));
+	XmChangeColor(APPLY_BUTTON(sp), (Pixel)((ss->sgx)->basic_color));
       sp->applying = FALSE;
     }
   else
@@ -1148,7 +1148,7 @@ static void apply_callback(Widget w, XtPointer context, XtPointer info)
 	}
       sp->applying = TRUE;
       if (!(ss->using_schemes)) 
-	XmChangeColor(w_snd_apply(sp), (Pixel)((ss->sgx)->pushed_button_color));
+	XmChangeColor(APPLY_BUTTON(sp), (Pixel)((ss->sgx)->pushed_button_color));
       sgx->apply_in_progress = BACKGROUND_ADD(ss, apply_controls, (GUI_POINTER)(make_apply_state_with_implied_beg_and_dur(sp)));
     }
 }
@@ -1159,7 +1159,7 @@ static void apply_callback(Widget w, XtPointer context, XtPointer info)
 
 static int lockapply(snd_info *sp, void *up) 
 {
-  if (sp != up) set_sensitive(w_snd_apply(sp), FALSE);
+  if (sp != up) set_sensitive(APPLY_BUTTON(sp), FALSE);
   return(0);
 }
 
@@ -1171,7 +1171,7 @@ void lock_apply(snd_state *ss, snd_info *sp)
 
 static int unlockapply(snd_info *sp, void *up) 
 {
-  if (sp != up) set_sensitive(w_snd_apply(sp), TRUE);
+  if (sp != up) set_sensitive(APPLY_BUTTON(sp), TRUE);
   return(0);
 }
 
@@ -1179,7 +1179,7 @@ void unlock_apply(snd_state *ss, snd_info *sp)
 {
   map_over_sounds(ss, unlockapply, (void *)sp);
   if ((sp) && (!(ss->using_schemes))) 
-    XmChangeColor(w_snd_apply(sp), (Pixel)((ss->sgx)->basic_color));
+    XmChangeColor(APPLY_BUTTON(sp), (Pixel)((ss->sgx)->basic_color));
 }
 
 static int cant_write(char *name)
@@ -1220,7 +1220,7 @@ void snd_file_lock_icon(snd_info *sp, int on)
       if (on)
 	sx->file_pix = mini_lock;
       else sx->file_pix = blank_pixmap;
-      XtVaSetValues(w_snd_name_icon(sp), XmNlabelPixmap, sx->file_pix, NULL);
+      XtVaSetValues(NAME_ICON(sp), XmNlabelPixmap, sx->file_pix, NULL);
     }
   /* these Pixmaps can be null if the colormap is screwed up */
 }
@@ -1239,7 +1239,7 @@ static void show_bomb_icon(snd_info *sp, int on)
 	  if (on)
 	    sx->file_pix = mini_bombs[sp->bomb_ctr];
 	  else sx->file_pix = blank_pixmap;
-	  XtVaSetValues(w_snd_name_icon(sp), XmNlabelPixmap, sx->file_pix, NULL);
+	  XtVaSetValues(NAME_ICON(sp), XmNlabelPixmap, sx->file_pix, NULL);
 	}
     }
 }
@@ -1304,7 +1304,7 @@ static void snd_file_glasses_icon(snd_info *sp, int on, int glass)
 {
   Widget w;
   snd_context *sx;
-  w = w_snd_name_icon(sp);
+  w = NAME_ICON(sp);
   if (on)
     {
       if (mini_glasses[glass])
@@ -2529,14 +2529,14 @@ void snd_info_cleanup(snd_info *sp)
     {
       sx = sp->sgx;
       ss = sp->state;
-      if (w_snd_sync(sp))
+      if (SYNC_BUTTON(sp))
 	{
-	  XtVaSetValues(w_snd_sync(sp), XmNset, FALSE, NULL);
-	  XtVaSetValues(w_snd_expand_button(sp), XmNset, FALSE, NULL);
-	  XtVaSetValues(w_snd_contrast_button(sp), XmNset, FALSE, NULL);
-	  XtVaSetValues(w_snd_srate_arrow(sp), XmNset, FALSE, NULL);
-	  XtVaSetValues(w_snd_filter_button(sp), XmNset, FALSE, NULL);
-	  XtVaSetValues(w_snd_reverb_button(sp), XmNset, FALSE, NULL);
+	  XtVaSetValues(SYNC_BUTTON(sp), XmNset, FALSE, NULL);
+	  XtVaSetValues(EXPAND_BUTTON(sp), XmNset, FALSE, NULL);
+	  XtVaSetValues(CONTRAST_BUTTON(sp), XmNset, FALSE, NULL);
+	  XtVaSetValues(SRATE_ARROW(sp), XmNset, FALSE, NULL);
+	  XtVaSetValues(FILTER_BUTTON(sp), XmNset, FALSE, NULL);
+	  XtVaSetValues(REVERB_BUTTON(sp), XmNset, FALSE, NULL);
 	  XmToggleButtonSetState(w_snd_combine(sp), FALSE, FALSE);
 	  sp->channel_style = CHANNELS_SEPARATE;
 #if (XmVERSION > 1)
@@ -2561,7 +2561,7 @@ void set_sound_pane_file_label(snd_info *sp, char *str)
 
 void set_apply_button(snd_info *sp, int val) 
 {
-  XmToggleButtonSetState(w_snd_apply(sp), val, FALSE);
+  XmToggleButtonSetState(APPLY_BUTTON(sp), val, FALSE);
 }
 
 
@@ -2728,7 +2728,7 @@ void reflect_amp_env_completion(snd_info *sp)
       if (!ep) return;
       if (!(ep->completed)) return;
     }
-  info_sep = w_snd_minibuffer_sep(sp);
+  info_sep = MINIBUFFER_SEPARATOR(sp);
   if (info_sep) XtVaSetValues(info_sep, XmNseparatorType, XmSHADOW_ETCHED_IN, NULL);
   alert_enved_amp_env(sp);
 }
@@ -2736,7 +2736,7 @@ void reflect_amp_env_completion(snd_info *sp)
 void reflect_amp_env_in_progress(snd_info *sp)
 {
   Widget info_sep;
-  info_sep = w_snd_minibuffer_sep(sp);
+  info_sep = MINIBUFFER_SEPARATOR(sp);
   if (info_sep) XtVaSetValues(info_sep, XmNseparatorType, XmNO_LINE, NULL);
 }
 
@@ -2964,7 +2964,36 @@ static XEN g_add_sound_window (XEN parent, XEN filename, XEN read_only)
   else return(XEN_FALSE);
 }
 
+static XEN g_sound_widgets(XEN snd)
+{
+  #define H_sound_widgets "(" S_sound_widgets " snd) -> list of widgets \
+((0)pane (1)name (2)ctrls (3)minibuffer (4)play (5)filter-env (6)combine (7)name-label (8)name-icon)"
+  snd_info *sp;
+  ASSERT_SOUND(S_sound_widgets, snd, 1);
+  sp = get_sp(snd);
+  if (sp == NULL)
+    return(snd_no_such_sound_error(S_sound_widgets, snd));
+  return(XEN_CONS(XEN_WRAP_WIDGET(w_snd_pane(sp)),
+	  XEN_CONS(XEN_WRAP_WIDGET(w_snd_name(sp)),
+           XEN_CONS(XEN_WRAP_WIDGET(w_snd_ctrls(sp)),
+	    XEN_CONS(XEN_WRAP_WIDGET(MINIBUFFER_TEXT(sp)),
+	     XEN_CONS(XEN_WRAP_WIDGET(w_snd_play(sp)),
+	      XEN_CONS(XEN_WRAP_WIDGET(w_snd_filter_env(sp)), /* this is the drawingarea widget */
+	       XEN_CONS(XEN_WRAP_WIDGET(w_snd_combine(sp)),
+	        XEN_CONS(XEN_WRAP_WIDGET(MINIBUFFER_LABEL(sp)),
+	         XEN_CONS(XEN_WRAP_WIDGET(NAME_ICON(sp)),
+	          XEN_EMPTY_LIST))))))))));
+}
+
+#ifdef XEN_ARGIFY_1
+  XEN_ARGIFY_1(g_sound_widgets_w, g_sound_widgets)
+#else
+  #define g_sound_widgets_w g_sound_widgets
+#endif
+
 void g_init_gxsnd(void)
 {
+  XEN_DEFINE_PROCEDURE(S_sound_widgets, g_sound_widgets_w, 0, 1, 0, H_sound_widgets);
   XEN_DEFINE_PROCEDURE("create-sound-window", g_add_sound_window, 2, 1, 0, "add a sound window to a widget");
 }
+

@@ -279,8 +279,6 @@ void add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y,
 int w_snd_name(snd_info *sp);
 int w_snd_play(snd_info *sp);
 int w_snd_filter_env(snd_info *sp);
-int w_snd_minibuffer(snd_info *sp);
-int w_snd_minibuffer_label(snd_info *sp);
 void make_minibuffer_label(snd_info *sp, char *str);
 void goto_minibuffer(snd_info *sp);
 void set_minibuffer_string(snd_info *sp, char *str);

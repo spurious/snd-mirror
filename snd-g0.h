@@ -354,10 +354,16 @@ typedef struct {
   #define SG_TEXT_LENGTH(Widget) gtk_text_buffer_get_char_count(gtk_text_view_get_buffer(GTK_TEXT_VIEW(Widget)))
   #define SG_TEXT_CHARS(Widget, Start, End) sg_get_text(Widget, Start, End)
   #define SG_TEXT_CLEAR(Widget) gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(Widget)), "", 0)
+  /*  or  gtk_text_buffer_get_bounds (buffer, &start, &end);  gtk_text_buffer_delete (buffer, &start, &end); */
   #define SG_TEXT_FREEZE(Widget)
   #define SG_TEXT_THAW(Widget)
 
-  /* TODO: gtk2 macros for text cursor selection insertion deletion */
+  /* TODO: gtk2 macros for text cursor selection insertion deletion
+     gtk text marks named "insert" and "selection bound"
+     gtk_text_buffer_get_insert(buf) -> gtkTextMark for insertion point
+     ditto               selection_bounds
+       gtk_text_buffer_get_iter_at_mark converts to iter, gtk_text_iter_get_offset -> offset
+  */
   #define SG_TEXT_SET_POINT(Widget, Point) sg_set_cursor(Widget, Point)
   #define SG_TEXT_GET_POINT(Widget) 0
   #define SG_TEXT_UNSELECT(Widget)
@@ -374,7 +380,7 @@ typedef struct {
   #define SG_LIST_INSERT(Widget, Position, Str)
   #define SG_LIST_SET_TEXT(Widget, Row, Str) 
   #define SG_PIXMAP_NEW(Map, Mask) NULL
-  /* perhaps returns drawingarea?? widget (will hold the pixmap and others) */
+  /* perhaps returns drawingarea?? widget (will hold the pixmap and others) gdk_pixbuf_new_from_xpm_data (book_closed_xpm) */
   #define SG_PIXMAP_SET(Holder, Map, Mask)
   /* now holder is a widget and we set its pixmap -- how to tell this? */
   #define SG_FONT_LOAD(Font) NULL

@@ -203,8 +203,6 @@ int fixup_cp_cgx_ax_wn(chan_info *cp) {return(0);}
 int w_snd_name(snd_info *sp) {return(0);}
 int w_snd_play(snd_info *sp) {return(0);}
 int w_snd_filter_env(snd_info *sp) {return(0);}
-int w_snd_minibuffer(snd_info *sp) {return(0);}
-int w_snd_minibuffer_label(snd_info *sp) {return(0);}
 void make_minibuffer_label(snd_info *sp, char *str) {}
 void goto_minibuffer(snd_info *sp) {}
 void set_minibuffer_string(snd_info *sp, char *str) {if ((str) && (*str)) fprintf(stderr, "%s", str);}

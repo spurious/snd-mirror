@@ -2812,30 +2812,6 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
   return(snd_no_such_sound_error(S_apply_controls, snd));
 }
 
-#if (!USE_NO_GUI)
-static XEN g_sound_widgets(XEN snd)
-{
-  #define H_sound_widgets "(" S_sound_widgets " snd) -> list of widgets \
-((0)pane (1)name (2)ctrls (3)minibuffer (4)play (5)filter-env (6)combine (7)name-label (8)name-icon)"
-  /* perhaps this belongs in snd-xsnd where we can grab every widget */
-  snd_info *sp;
-  ASSERT_SOUND(S_sound_widgets, snd, 1);
-  sp = get_sp(snd);
-  if (sp == NULL)
-    return(snd_no_such_sound_error(S_sound_widgets, snd));
-  return(XEN_CONS(XEN_WRAP_WIDGET(w_snd_pane(sp)),
-	  XEN_CONS(XEN_WRAP_WIDGET(w_snd_name(sp)),
-           XEN_CONS(XEN_WRAP_WIDGET(w_snd_ctrls(sp)),
-	    XEN_CONS(XEN_WRAP_WIDGET(w_snd_minibuffer(sp)),
-	     XEN_CONS(XEN_WRAP_WIDGET(w_snd_play(sp)),
-	      XEN_CONS(XEN_WRAP_WIDGET(w_snd_filter_env(sp)), /* this is the drawingarea widget */
-	       XEN_CONS(XEN_WRAP_WIDGET(w_snd_combine(sp)),
-	        XEN_CONS(XEN_WRAP_WIDGET(w_snd_minibuffer_label(sp)),
-	         XEN_CONS(XEN_WRAP_WIDGET(w_snd_name_icon(sp)),
-	          XEN_EMPTY_LIST))))))))));
-}
-#endif
-
 static XEN g_peak_env_info(XEN snd, XEN chn, XEN pos)
 {
   #define H_peak_env_info "(" S_peak_env_info " snd chn pos) -> '(complete ymin ymax)"
@@ -3195,9 +3171,6 @@ If 'filename' is a sound index (an integer), pts is an edit-position, and the cu
 
 
 #ifdef XEN_ARGIFY_1
-#if (!USE_NO_GUI)
-XEN_ARGIFY_1(g_sound_widgets_w, g_sound_widgets)
-#endif
 XEN_ARGIFY_1(g_sound_p_w, g_sound_p)
 XEN_ARGIFY_2(g_bomb_w, g_bomb)
 XEN_NARGIFY_1(g_find_sound_w, g_find_sound)
@@ -3294,9 +3267,6 @@ XEN_NARGIFY_3(g_write_peak_env_info_file_w, g_write_peak_env_info_file)
 XEN_NARGIFY_3(g_read_peak_env_info_file_w, g_read_peak_env_info_file)
 XEN_ARGIFY_5(g_channel_amp_envs_w, g_channel_amp_envs);
 #else
-#if (!USE_NO_GUI)
-#define g_sound_widgets_w g_sound_widgets
-#endif
 #define g_sound_p_w g_sound_p
 #define g_bomb_w g_bomb
 #define g_find_sound_w g_find_sound
@@ -3415,10 +3385,6 @@ If it returns #t, the apply is aborted."
   XEN_DEFINE_CONSTANT(S_channels_separate,     CHANNELS_SEPARATE,     H_channels_separate);
   XEN_DEFINE_CONSTANT(S_channels_combined,     CHANNELS_COMBINED,     H_channels_combined);
   XEN_DEFINE_CONSTANT(S_channels_superimposed, CHANNELS_SUPERIMPOSED, H_channels_superimposed);
-
-#if (!USE_NO_GUI)
-  XEN_DEFINE_PROCEDURE(S_sound_widgets, g_sound_widgets_w, 0, 1, 0, H_sound_widgets);
-#endif
 
   XEN_DEFINE_PROCEDURE(S_sound_p, g_sound_p_w, 0, 1, 0, H_sound_p);
   XEN_DEFINE_PROCEDURE(S_bomb, g_bomb_w, 0, 2, 0, H_bomb);
