@@ -110,7 +110,7 @@ static XEN g_sound_samples(XEN filename)
 static XEN g_sound_set_samples(XEN filename, XEN val) 
 {
   #define H_mus_sound_set_samples "(set! (" S_mus_sound_samples " filename) val) -> sets samples (frames*channels) in sound"
-  return(glmus_sound_set("set-" S_mus_sound_samples, mus_sound_set_samples, filename, val));
+  return(glmus_sound_set("set! " S_mus_sound_samples, mus_sound_set_samples, filename, val));
 }
 
 static XEN g_sound_frames(XEN filename) 
@@ -134,7 +134,7 @@ static XEN g_sound_data_location(XEN filename)
 static XEN g_sound_set_data_location(XEN filename, XEN val) 
 {
   #define H_mus_sound_set_data_location "(set! (" S_mus_sound_data_location " filename) val) -> sets data_location in sound"
-  return(glmus_sound_set("set-" S_mus_sound_data_location, mus_sound_set_data_location, filename, val));
+  return(glmus_sound_set("set! " S_mus_sound_data_location, mus_sound_set_data_location, filename, val));
 }
 
 static XEN g_sound_chans(XEN filename) 
@@ -146,7 +146,7 @@ static XEN g_sound_chans(XEN filename)
 static XEN g_sound_set_chans(XEN filename, XEN val) 
 {
   #define H_mus_sound_set_chans "(set! (" S_mus_sound_chans " filename) val) -> sets channels in sound"
-  return(gmus_sound_set("set-" S_mus_sound_chans, mus_sound_set_chans, filename, val));
+  return(gmus_sound_set("set! " S_mus_sound_chans, mus_sound_set_chans, filename, val));
 }
 
 static XEN g_sound_srate(XEN filename) 
@@ -158,7 +158,7 @@ static XEN g_sound_srate(XEN filename)
 static XEN g_sound_set_srate(XEN filename, XEN val) 
 {
   #define H_mus_sound_set_srate "(set! (" S_mus_sound_srate " filename) val) -> sets srate of sound"
-  return(gmus_sound_set("set-" S_mus_sound_srate, mus_sound_set_srate, filename, val));
+  return(gmus_sound_set("set! " S_mus_sound_srate, mus_sound_set_srate, filename, val));
 }
 
 static XEN g_sound_header_type(XEN filename) 
@@ -170,7 +170,7 @@ static XEN g_sound_header_type(XEN filename)
 static XEN g_sound_set_header_type(XEN filename, XEN val) 
 {
   #define H_mus_sound_set_header_type "(set! (" S_mus_sound_header_type " filename) val) -> sets header_type of sound"
-  return(gmus_sound_set("set-" S_mus_sound_header_type, mus_sound_set_header_type, filename, val));
+  return(gmus_sound_set("set! " S_mus_sound_header_type, mus_sound_set_header_type, filename, val));
 }
 
 static XEN g_sound_data_format(XEN filename) 
@@ -182,7 +182,7 @@ static XEN g_sound_data_format(XEN filename)
 static XEN g_sound_set_data_format(XEN filename, XEN val) 
 {
   #define H_mus_sound_set_data_format "(set! (" S_mus_sound_data_format " filename) val) -> sets data_format of sound"
-  return(gmus_sound_set("set-" S_mus_sound_data_format, mus_sound_set_data_format, filename, val));
+  return(gmus_sound_set("set! " S_mus_sound_data_format, mus_sound_set_data_format, filename, val));
 }
 
 static XEN g_sound_length(XEN filename) 

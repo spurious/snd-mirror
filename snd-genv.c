@@ -1414,7 +1414,7 @@ static XEN g_enved_active_env(void)
 
 static XEN g_set_enved_active_env(XEN e)
 {
-  XEN_ASSERT_TYPE(XEN_LIST_P(e) || XEN_STRING_P(e) || XEN_SYMBOL_P(e), e, XEN_ONLY_ARG, "set-" S_enved_active_env, "a list, symbol, or string");
+  XEN_ASSERT_TYPE(XEN_LIST_P(e) || XEN_STRING_P(e) || XEN_SYMBOL_P(e), e, XEN_ONLY_ARG, "set! " S_enved_active_env, "a list, symbol, or string");
   if (active_env) active_env = free_env(active_env);
   if ((XEN_STRING_P(e)) || (XEN_SYMBOL_P(e)))
     active_env = copy_env(enved_all_envs(find_named_env(e)));
@@ -1433,7 +1433,7 @@ static XEN g_enved_selected_env(void)
 static XEN g_set_enved_selected_env(XEN name)
 {
   int pos;
-  XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_SYMBOL_P(name), name, XEN_ONLY_ARG, "set-" S_enved_selected_env, "a string or symbol");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_SYMBOL_P(name), name, XEN_ONLY_ARG, "set! " S_enved_selected_env, "a string or symbol");
   pos = find_named_env(name);
   if (pos >= 0)
     {
@@ -1445,7 +1445,7 @@ static XEN g_set_enved_selected_env(XEN name)
 	}
     }
   else XEN_ERROR(NO_SUCH_ENVELOPE,
-		 XEN_LIST_2(C_TO_XEN_STRING("set-" S_enved_selected_env),
+		 XEN_LIST_2(C_TO_XEN_STRING("set! " S_enved_selected_env),
 			    name));
   return(name);
 }
@@ -1458,7 +1458,7 @@ static XEN g_enved_filter(void)
 
 static XEN g_set_enved_filter(XEN type)
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(type), type, XEN_ONLY_ARG, "set-" S_enved_filter, "boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(type), type, XEN_ONLY_ARG, "set! " S_enved_filter, "boolean");
   FIR_p = XEN_TO_C_BOOLEAN(type);
   if (firB)
     set_button_label(firB, (FIR_p) ? "fir" : "fft");

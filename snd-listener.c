@@ -423,18 +423,74 @@ static XEN g_clear_listener(void)
   return(XEN_FALSE);
 }
 
+static XEN g_show_listener(void) 
+{
+  #define H_show_listener "(" S_show_listener ") opens the lisp listener pane"
+  snd_state *ss;
+  ss = get_global_state();
+  handle_listener(ss, TRUE); 
+  return(C_TO_XEN_BOOLEAN(listener_height() > 5));
+}
+
+static XEN g_set_show_listener(XEN val)
+{
+  snd_state *ss;
+  ss = get_global_state();
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, "set! " S_show_listener, "a boolean");
+  handle_listener(ss, XEN_TO_C_BOOLEAN(val));
+  return(C_TO_XEN_BOOLEAN(listener_height() > 5));
+}
+
+static XEN g_listener_prompt(void) {return(C_TO_XEN_STRING(listener_prompt(get_global_state())));}
+static XEN g_set_listener_prompt(XEN val) 
+{
+  #define H_listener_prompt "(" S_listener_prompt ") -> the current lisp listener prompt character ('>') "
+  snd_state *ss;
+  ss = get_global_state();
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set! " S_listener_prompt, "a string"); 
+  if (listener_prompt(ss)) FREE(listener_prompt(ss));
+  set_listener_prompt(ss, copy_string(XEN_TO_C_STRING(val)));
+#if USE_NO_GUI
+  {
+#if HAVE_GUILE
+    char *str;
+    str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+    mus_snprintf(str, PRINT_BUFFER_SIZE, "(set! scm-repl-prompt \"%s\")", listener_prompt(ss));
+    XEN_EVAL_C_STRING(str);
+    FREE(str);
+#endif
+  }
+#endif
+  return(C_TO_XEN_STRING(listener_prompt(ss)));
+}
+
+
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_save_listener_w, g_save_listener)
 XEN_NARGIFY_0(g_clear_listener_w, g_clear_listener);
+XEN_NARGIFY_0(g_show_listener_w, g_show_listener)
+XEN_ARGIFY_1(g_set_show_listener_w, g_set_show_listener)
+XEN_NARGIFY_0(g_listener_prompt_w, g_listener_prompt)
+XEN_ARGIFY_1(g_set_listener_prompt_w, g_set_listener_prompt)
 #else
 #define g_save_listener_w g_save_listener
 #define g_clear_listener_w g_clear_listener);
+#define g_show_listener_w g_show_listener
+#define g_set_show_listener_w g_set_show_listener
+#define g_listener_prompt_w g_listener_prompt
+#define g_set_listener_prompt_w g_set_listener_prompt
 #endif
 
 void g_init_listener(void)
 {
   XEN_DEFINE_PROCEDURE(S_save_listener, g_save_listener_w, 1, 0, 0, H_save_listener);
   XEN_DEFINE_PROCEDURE(S_clear_listener, g_clear_listener, 0, 0, 0, H_clear_listener);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_listener, g_show_listener_w, H_show_listener,
+				   "set-" S_show_listener, g_set_show_listener_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_prompt, g_listener_prompt_w, H_listener_prompt,
+				   "set-" S_listener_prompt, g_set_listener_prompt_w,  0, 0, 0, 1);
 
   #define H_read_hook S_read_hook " (text) is called each time a line is typed into the listener (triggered by the carriage return). \
 If it returns #t, Snd assumes you've dealt the text yourself, and does not try to evaluate it. \n\

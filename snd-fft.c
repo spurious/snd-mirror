@@ -2187,7 +2187,7 @@ static XEN g_set_hankel_jn(XEN val)
   #define H_hankel_jn "(" S_hankel_jn ") -> Bessel function used in Hankel transform."
   snd_state *ss;
   ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set-" S_hankel_jn, "a number"); 
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set! " S_hankel_jn, "a number"); 
   set_hankel_jn(ss, XEN_TO_C_DOUBLE_WITH_CALLER(val, S_hankel_jn));
   return(val);
 }

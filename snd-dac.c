@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* this was sound-oriented; changed to be channel-oriented 31-Aug-00 */
-/* removed reverb-control-procedures (with freeverb and fcomb) and contrast-control-procedure 13-Dec-01 */
-
 /*
  * each channel currently being played has an associated dac_info struct
  *   all active dac_info structs are held in a play_list
@@ -2374,6 +2371,31 @@ static XEN g_player_p(XEN snd_chn)
 			  (players[index])));
 }
 
+static XEN g_dac_size(void) {return(C_TO_XEN_INT(dac_size(get_global_state())));}
+static XEN g_set_dac_size(XEN val) 
+{
+  #define H_dac_size "(" S_dac_size ") is the current DAC buffer size (256)"
+  int len;
+  snd_state *ss;
+  ss = get_global_state();
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set! " S_dac_size, "a number");
+  len = XEN_TO_C_INT_OR_ELSE(val, 0);
+  if (len > 0)
+    set_dac_size(ss, len);
+  return(C_TO_XEN_INT(dac_size(ss)));
+}
+
+static XEN g_dac_combines_channels(void) {return(C_TO_XEN_BOOLEAN(dac_combines_channels(get_global_state())));}
+static XEN g_set_dac_combines_channels(XEN val) 
+{
+  #define H_dac_combines_channels "(" S_dac_combines_channels ") should be #t if extra channels are to be mixed into available ones during playing (#t)"
+  snd_state *ss;
+  ss = get_global_state();
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set! " S_dac_combines_channels, "a boolean");
+  set_dac_combines_channels(ss, XEN_TO_C_BOOLEAN_OR_TRUE(val)); 
+  return(C_TO_XEN_BOOLEAN(dac_combines_channels(ss)));
+}
+
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_6(g_play_w, g_play)
@@ -2387,6 +2409,10 @@ XEN_NARGIFY_1(g_player_home_w, g_player_home)
 XEN_ARGIFY_3(g_start_playing_w, g_start_playing)
 XEN_NARGIFY_1(g_stop_player_w, g_stop_player)
 XEN_NARGIFY_1(g_player_p_w, g_player_p)
+XEN_NARGIFY_0(g_dac_size_w, g_dac_size)
+XEN_ARGIFY_1(g_set_dac_size_w, g_set_dac_size)
+XEN_NARGIFY_0(g_dac_combines_channels_w, g_dac_combines_channels)
+XEN_ARGIFY_1(g_set_dac_combines_channels_w, g_set_dac_combines_channels)
 #else
 #define g_play_w g_play
 #define g_play_channel_w g_play_channel
@@ -2399,6 +2425,10 @@ XEN_NARGIFY_1(g_player_p_w, g_player_p)
 #define g_start_playing_w g_start_playing
 #define g_stop_player_w g_stop_player
 #define g_player_p_w g_player_p
+#define g_dac_size_w g_dac_size
+#define g_set_dac_size_w g_set_dac_size
+#define g_dac_combines_channels_w g_dac_combines_channels
+#define g_set_dac_combines_channels_w g_set_dac_combines_channels
 #endif
 
 void g_init_dac(void)
@@ -2415,6 +2445,12 @@ void g_init_dac(void)
   XEN_DEFINE_PROCEDURE(S_start_playing,  g_start_playing_w, 0, 3, 0,  H_start_playing);
   XEN_DEFINE_PROCEDURE(S_stop_player,    g_stop_player_w, 1, 0, 0,    H_stop_player);
   XEN_DEFINE_PROCEDURE(S_player_p,       g_player_p_w, 1, 0, 0,       H_player_p);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_dac_size, g_dac_size_w, H_dac_size,
+				   "set-" S_dac_size, g_set_dac_size_w,  0, 0, 0, 1);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_dac_combines_channels, g_dac_combines_channels_w, H_dac_combines_channels,
+				   "set-" S_dac_combines_channels, g_set_dac_combines_channels_w,  0, 0, 0, 1);
 
   #define H_stop_playing_hook S_stop_playing_hook " (snd) is called when a sound finishes playing."
   #define H_stop_playing_channel_hook S_stop_playing_channel_hook " (snd chn) is called when a channel finishes playing."

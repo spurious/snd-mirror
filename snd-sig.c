@@ -1864,7 +1864,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 			 */
       /* base == 0 originally, so it's a step env */
       sc = get_sync_state_without_snd_fds(ss, sp, cp, beg, regexpr);
-      /* TODO: if selection, begs/durs can be different so we need a new env on each */
+      /* TODO: if selection, begs/durs can be different so we need a new env on each (begs are correct) */
       if (sc == NULL) return;
       si = sc->si;
       for (i = 0; i < si->chans; i++) 
@@ -3799,6 +3799,25 @@ static XEN g_filter_selection(XEN e, XEN order)
   return(g_filter_1(e, order, XEN_FALSE, XEN_FALSE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), S_filter_selection, TRUE));
 }
 
+static XEN g_sinc_width(void) {return(C_TO_XEN_INT(sinc_width(get_global_state())));}
+static XEN g_set_sinc_width(XEN val) 
+{
+  #define H_sinc_width "(" S_sinc_width ") -> sampling rate conversion sinc width (10). \
+The higher this number, the better the src low-pass filter, but the slower \
+src runs.  If you use too low a setting, you can sometimes hear high \
+frequency whistles leaking through."
+
+  int len;
+  snd_state *ss;
+  ss = get_global_state();
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set! " S_sinc_width, "an integer"); 
+  len = XEN_TO_C_INT(val);
+  if (len >= 0)
+    set_sinc_width(ss, len);
+  return(C_TO_XEN_INT(sinc_width(ss)));
+}
+
+
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_6(g_scan_chan_w, g_scan_chan)
 XEN_ARGIFY_7(g_map_chan_w, g_map_chan)
@@ -3833,6 +3852,8 @@ XEN_ARGIFY_5(g_pad_channel_w, g_pad_channel)
 XEN_ARGIFY_5(g_filter_sound_w, g_filter_sound)
 XEN_ARGIFY_2(g_filter_selection_w, g_filter_selection)
 XEN_ARGIFY_7(g_clm_channel_w, g_clm_channel)
+XEN_NARGIFY_0(g_sinc_width_w, g_sinc_width)
+XEN_ARGIFY_1(g_set_sinc_width_w, g_set_sinc_width)
 #else
 #define g_scan_chan_w g_scan_chan
 #define g_map_chan_w g_map_chan
@@ -3867,6 +3888,8 @@ XEN_ARGIFY_7(g_clm_channel_w, g_clm_channel)
 #define g_filter_sound_w g_filter_sound
 #define g_filter_selection_w g_filter_selection
 #define g_clm_channel_w g_clm_channel
+#define g_sinc_width_w g_sinc_width
+#define g_set_sinc_width_w g_set_sinc_width
 #endif
 
 void g_init_sig(void)
@@ -3934,6 +3957,9 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_smooth_channel,          g_smooth_channel_w, 0, 5, 0,          H_smooth_channel);
   XEN_DEFINE_PROCEDURE(S_src_channel,             g_src_channel_w, 1, 5, 0,             H_src_channel);
   XEN_DEFINE_PROCEDURE(S_pad_channel,             g_pad_channel_w, 2, 3, 0,             H_pad_channel);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sinc_width, g_sinc_width_w, H_sinc_width,
+				   "set-" S_sinc_width, g_set_sinc_width_w,  0, 0, 0, 1);
 }
 
 

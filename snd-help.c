@@ -268,6 +268,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+12-Sep:  removed \"set-\" names -- use -DWITH_SET_NAME=1 to restore them.\n\
 11-Sep:  save-state-hook.\n\
 10-Sep:  new edit123.scm thanks to Tom Roth.\n\
 9-Sep:   bess.scm.\n\
@@ -2285,7 +2286,7 @@ static XEN g_html_dir(void)
 
 static XEN g_set_html_dir(XEN val) 
 {
-  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_html_dir, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set! " S_html_dir, "a string");
   set_html_dir(get_global_state(), copy_string(XEN_TO_C_STRING(val))); 
   return(val);
 }

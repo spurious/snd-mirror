@@ -411,7 +411,7 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
   XEN errstr;
   if (XEN_INTEGER_P(snd)) /* could be the proc arg if no snd */
     {
-      ASSERT_SOUND("set-" S_search_procedure, snd, 1);
+      ASSERT_SOUND("set! " S_search_procedure, snd, 1);
       sp = get_sp(snd);
       if (sp)
 	{
@@ -436,11 +436,11 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 	    {
 	      errstr = C_TO_XEN_STRING(error);
 	      FREE(error);
-	      return(snd_bad_arity_error("set-" S_search_procedure, errstr, proc));
+	      return(snd_bad_arity_error("set! " S_search_procedure, errstr, proc));
 	    }
 	}
       else
-	return(snd_no_such_sound_error("set-" S_search_procedure, snd));
+	return(snd_no_such_sound_error("set! " S_search_procedure, snd));
     }
   else 
     {
@@ -465,7 +465,7 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 	{
 	  errstr = C_TO_XEN_STRING(error);
 	  FREE(error);
-	  return(snd_bad_arity_error("set-" S_search_procedure, errstr, snd));
+	  return(snd_bad_arity_error("set! " S_search_procedure, errstr, snd));
 	}
     }
   return(snd);

@@ -7995,6 +7995,17 @@ in multi-channel situations where you want the optimization that vct-map! provid
   return(proc);
 }
 
+static XEN g_optimization(void) {return(C_TO_XEN_INT(optimization(get_global_state())));}
+static XEN g_set_optimization(XEN val) 
+{
+  #define H_optimization "(" S_optimization ") is the current 'run' optimization level (default 0 = off)"
+  snd_state *ss;
+  ss = get_global_state();
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set! " S_optimization, "an integer");
+  set_optimization(ss, XEN_TO_C_INT(val));
+  return(C_TO_XEN_INT(optimization(ss)));
+}
+
 #if WITH_RUN
 static XEN g_run(XEN proc_and_code)
 {
@@ -8017,6 +8028,15 @@ to Guile and is equivalent to (thunk)."
 }
 #endif
 
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_0(g_optimization_w, g_optimization)
+XEN_ARGIFY_1(g_set_optimization_w, g_set_optimization)
+#else
+#define g_optimization_w g_optimization
+#define g_set_optimization_w g_set_optimization
+#endif
+
+
 void g_init_run(void)
 {
 #if WITH_RUN
@@ -8032,6 +8052,9 @@ void g_init_run(void)
 #else
   XEN_DEFINE_PROCEDURE(S_vct_map, g_vct_map, 1, 0, 1, H_vct_map);
 #endif
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_optimization, g_optimization_w, H_optimization,
+				   "set-" S_optimization, g_set_optimization_w,  0, 0, 1, 0);
 
   #define H_optimization_hook S_optimization_hook " (msg) is called possibly several times \
 during optimization to indicate where the optimizer ran into trouble:\n\

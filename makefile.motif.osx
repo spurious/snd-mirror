@@ -1,6 +1,6 @@
 CC = cc
 DEFS = -DHAVE_CONFIG_H
-CFLAGS = -g -O2
+CFLAGS = -g -O2 -I.
 LDFLAGS = 
 LIBS = 
 
@@ -30,11 +30,6 @@ A_LD_FLAGS =
 SHELL = /bin/sh
 top_srcdir = .
 DESTDIR =
-
-# this can't work in general -- any of the guile, gsl, motif, and gtk flags might be
-#   general (i.e. /usr/local/include) or specific (i.e. /usr/local/include/gtk-2.0)
-#   with older versions on the general area (gtk does this...).  We need a way to
-#   put the most specific first.
 
 .c.o:
 	$(CC) -c $(DEFS) $(GTK_CFLAGS) $(CFLAGS) $(GUILE_CFLAGS) $(MOTIF_FLAGS) $(GSL_FLAGS) $(GTKHTML_FLAGS) $<

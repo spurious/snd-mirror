@@ -1224,10 +1224,10 @@ static XEN g_set_max_regions(XEN n)
 {
   snd_state *ss;
   int regs;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, "set-" S_max_regions, "an integer"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, "set! " S_max_regions, "an integer"); 
   regs = XEN_TO_C_INT(n);
   if (regs < 0)
-    mus_misc_error("set-" S_max_regions, "max_regions can't be < 0", n);
+    mus_misc_error("set! " S_max_regions, "max_regions can't be < 0", n);
   ss = get_global_state();
   set_max_regions(ss, regs);
   return(C_TO_XEN_INT(max_regions(ss)));

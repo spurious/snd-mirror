@@ -572,7 +572,7 @@ static XEN g_set_save_state_file(XEN val)
 {
   #define H_save_state_file "(" S_save_state_file ") -> name of saved state file (\"saved-snd." XEN_FILE_EXTENSION "\")"
   snd_state *ss;
-  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_save_state_file, "a string"); 
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set! " S_save_state_file, "a string"); 
   ss = get_global_state();
   set_save_state_file(ss, XEN_TO_C_STRING(val));
   return(C_TO_XEN_STRING(save_state_file(ss)));
@@ -719,8 +719,8 @@ static XEN gl_menu_sensitive(XEN menu, XEN label)
 {
   #define H_menu_sensitive "(" S_menu_sensitive " menu label) reflects whether item label in menu is sensitive"
   int val, m;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, XEN_ARG_1, "set-" S_menu_sensitive, "an integer");
-  XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_2, "set-" S_menu_sensitive, "a string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, XEN_ARG_1, "set! " S_menu_sensitive, "an integer");
+  XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_2, "set! " S_menu_sensitive, "a string");
   m = XEN_TO_C_INT(menu);
   if (m < 0) 
     return(snd_no_such_menu_error(S_menu_sensitive, menu));
@@ -732,12 +732,12 @@ static XEN gl_menu_sensitive(XEN menu, XEN label)
 static XEN gl_set_menu_sensitive(XEN menu, XEN label, XEN on)
 {
   int val, m;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, XEN_ARG_1, "set-" S_menu_sensitive, "an integer");
-  XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_2, "set-" S_menu_sensitive, "a string");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_3, "set-" S_menu_sensitive, "a boolean");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, XEN_ARG_1, "set! " S_menu_sensitive, "an integer");
+  XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_2, "set! " S_menu_sensitive, "a string");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_3, "set! " S_menu_sensitive, "a boolean");
   m = XEN_TO_C_INT(menu);
   if (m < 0) 
-    return(snd_no_such_menu_error("set-" S_menu_sensitive, menu));
+    return(snd_no_such_menu_error("set! " S_menu_sensitive, menu));
   val = g_set_menu_sensitive(m,
 			     XEN_TO_C_STRING(label), 
 			     XEN_TO_C_BOOLEAN_OR_TRUE(on));

@@ -587,7 +587,7 @@ static XEN g_set_eps_file(XEN val)
   #define H_eps_file "(" S_eps_file ") -> current eps ('Print' command) file name (snd.eps)"
   snd_state *ss;
   ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set-" S_eps_file, "a string"); 
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, "set! " S_eps_file, "a string"); 
   if (eps_file(ss)) FREE(eps_file(ss));
   set_eps_file(ss, copy_string(XEN_TO_C_STRING(val))); 
   return(C_TO_XEN_STRING(eps_file(ss)));
@@ -599,7 +599,7 @@ static XEN g_set_eps_left_margin(XEN val)
   #define H_eps_left_margin "(" S_eps_left_margin ") -> current eps ('Print' command) left margin"
   snd_state *ss;
   ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set-" S_eps_left_margin, "a number"); 
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set! " S_eps_left_margin, "a number"); 
   set_eps_left_margin(ss, XEN_TO_C_DOUBLE(val));
   return(C_TO_XEN_DOUBLE(eps_left_margin(ss)));
 }
@@ -610,7 +610,7 @@ static XEN g_set_eps_bottom_margin(XEN val)
   #define H_eps_bottom_margin "(" S_eps_bottom_margin ") -> current eps ('Print' command) bottom margin"
   snd_state *ss;
   ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set-" S_eps_bottom_margin, "a number"); 
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set! " S_eps_bottom_margin, "a number"); 
   set_eps_bottom_margin(ss, XEN_TO_C_DOUBLE(val));
   return(C_TO_XEN_DOUBLE(eps_bottom_margin(ss)));
 }
@@ -621,7 +621,7 @@ static XEN g_set_eps_size(XEN val)
   #define H_eps_size "(" S_eps_size ") -> current eps ('Print' command) overall picture size scaler (1.0)"
   snd_state *ss;
   ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set-" S_eps_size, "a number"); 
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set! " S_eps_size, "a number"); 
   set_eps_size(ss, XEN_TO_C_DOUBLE(val));
   return(C_TO_XEN_DOUBLE(eps_size(ss)));
 }

@@ -3528,7 +3528,7 @@ static XEN g_mus_file_buffer_size(void)
 
 static XEN g_mus_set_file_buffer_size(XEN val)
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set-" S_mus_file_buffer_size, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set! " S_mus_file_buffer_size, "an integer");
   return(C_TO_XEN_INT(mus_set_file_buffer_size(XEN_TO_C_INT(val))));
 }
 
@@ -4380,8 +4380,8 @@ static XEN g_pv_outctr(XEN obj)
 
 static XEN g_pv_set_outctr(XEN obj, XEN val)
 {
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(obj))), obj, XEN_ONLY_ARG, "set-" S_pv_outctr, "a phase-vocoder generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, "set-" S_pv_outctr, "a number");
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(obj))), obj, XEN_ONLY_ARG, "set! " S_pv_outctr, "a phase-vocoder generator");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, "set! " S_pv_outctr, "a number");
   return(C_TO_XEN_INT(mus_phase_vocoder_set_outctr(MUS_XEN_TO_CLM(obj), XEN_TO_C_INT_OR_ELSE(val, 0))));
 }
 
@@ -4972,6 +4972,10 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_mus_mix_w g_mus_mix
 #endif
 
+#ifndef WITH_SET_NAME
+  #define WITH_SET_NAME 0
+#endif
+
 #if WITH_MODULES
 static void clm_init(void *ignore)
 #else
@@ -5023,9 +5027,16 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_srate, g_srate_w, H_mus_srate,
 				   S_mus_set_srate, g_set_srate_w,  0, 0, 0, 1);
 
+#if (!WITH_SET_NAME)
+  XEN_DEFINE_PROCEDURE(S_mus_set_srate, g_set_srate_w, 0, 1, 0, H_mus_srate);
+#endif
+
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_array_print_length, g_array_print_length_w, H_mus_array_print_length,
 				   S_mus_set_array_print_length, g_set_array_print_length_w,  0, 0, 0, 1);
 
+#if (!WITH_SET_NAME)
+  XEN_DEFINE_PROCEDURE(S_mus_set_array_print_length, g_set_array_print_length_w, 0, 1, 0, H_mus_array_print_length);
+#endif
   XEN_DEFINE_PROCEDURE(S_radians_hz,           g_radians2hz_w, 1, 0, 0,           H_radians_hz);
   XEN_DEFINE_PROCEDURE(S_hz_radians,           g_hz2radians_w, 1, 0, 0,           H_hz_radians);
   XEN_DEFINE_PROCEDURE(S_in_hz,                g_hz2radians_w, 1, 0, 0,           H_in_hz);
@@ -5140,8 +5151,11 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_mus_random,       g_mus_random_w, 1, 0, 0,       H_mus_random);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_rand_seed, g_rand_seed_w, H_mus_set_rand_seed,
-				   S_mus_set_rand_seed, g_set_rand_seed_w,  0, 0, 0, 1);
+				   S_mus_set_rand_seed, g_set_rand_seed_w, 0, 0, 0, 1);
 
+#if (!WITH_SET_NAME)
+  XEN_DEFINE_PROCEDURE(S_mus_set_rand_seed, g_set_rand_seed_w, 0, 1, 0, H_mus_set_rand_seed);
+#endif
 
   XEN_DEFINE_PROCEDURE(S_make_sum_of_cosines, g_make_sum_of_cosines_w, 0, 6, 0, H_make_sum_of_cosines); 
   XEN_DEFINE_PROCEDURE(S_sum_of_cosines,      g_sum_of_cosines_w, 1, 1, 0,      H_sum_of_cosines);

@@ -3737,13 +3737,13 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
   chan_info *cp;
   int pos;
   mus_sample_t ival[1];
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, "set-" S_sample, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, "set-" S_sample, "a number");
-  ASSERT_CHANNEL("set-" S_sample, snd_n, chn_n, 3);
-  cp = get_cp(snd_n, chn_n, "set-" S_sample);
-  pos = to_c_edit_position(cp, edpos, "set-" S_sample, 5);
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, "set! " S_sample, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, "set! " S_sample, "a number");
+  ASSERT_CHANNEL("set! " S_sample, snd_n, chn_n, 3);
+  cp = get_cp(snd_n, chn_n, "set! " S_sample);
+  pos = to_c_edit_position(cp, edpos, "set! " S_sample, 5);
   ival[0] = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE(val));
-  change_samples(XEN_TO_C_OFF_T_OR_ELSE(samp_n, cp->cursor), 1, ival, cp, LOCK_MIXES, "set-" S_sample, pos);
+  change_samples(XEN_TO_C_OFF_T_OR_ELSE(samp_n, cp->cursor), 1, ival, cp, LOCK_MIXES, "set! " S_sample, pos);
   update_graph(cp);
   return(val);
 }
@@ -4541,6 +4541,9 @@ static void init_fcomb(void)
 #endif
 /* -------------------------------- end of internal doc test -------------------------------- */
 
+#ifndef WITH_SET_NAME
+  #define WITH_SET_NAME 0
+#endif
 
 void g_init_edits(void)
 {
@@ -4604,6 +4607,9 @@ void g_init_edits(void)
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_samples, g_samples_w, H_samples,
 					    "set-" S_samples, g_set_samples_w, g_set_samples_reversed, 0, 5, 3, 6);
+#if (!WITH_SET_NAME)
+  XEN_DEFINE_PROCEDURE("set-" S_samples, g_set_samples_w, 3, 6, 0, H_samples);
+#endif
 
   #define H_save_hook S_save_hook " (snd name) is called each time a file is about to be saved. \
 If it returns #t, the file is not saved.  'name' is #f unless the file is being saved under a new name (as in sound-save-as)."

@@ -805,9 +805,9 @@ static XEN g_set_selection_position(XEN pos, XEN snd, XEN chn)
   sync_info *si = NULL;
   int i;
   off_t beg;
-  ASSERT_CHANNEL("set-" S_selection_position, snd, chn, 2);
+  ASSERT_CHANNEL("set! " S_selection_position, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(pos), pos, XEN_ARG_1, S_selection_position, "a number");
-  beg = XEN_TO_C_OFF_T_OR_ELSE(pos, 0);
+  beg = beg_to_sample(pos, "set! " S_selection_position);
   if (XEN_NOT_BOUND_P(snd))
     {
       if (selection_is_active())
@@ -826,7 +826,7 @@ static XEN g_set_selection_position(XEN pos, XEN snd, XEN chn)
     }
   else 
     {
-      cp = get_cp(snd, chn, "set-" S_selection_position);
+      cp = get_cp(snd, chn, "set! " S_selection_position);
       cp_set_selection_beg(cp, beg);
     }
   redraw_selection();
@@ -860,8 +860,10 @@ static XEN g_set_selection_frames(XEN samps, XEN snd, XEN chn)
   sync_info *si = NULL;
   int i;
   off_t len;
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_1, "set-" S_selection_frames, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_1, "set! " S_selection_frames, "a number");
   len = XEN_TO_C_OFF_T_OR_ELSE(samps, 0);
+  if (len <= 0)
+    XEN_WRONG_TYPE_ARG_ERROR("set! " S_selection_frames, XEN_ARG_1, samps, "a positive integer");
   if (XEN_NOT_BOUND_P(snd))
     {
       if (selection_is_active())
@@ -880,8 +882,8 @@ static XEN g_set_selection_frames(XEN samps, XEN snd, XEN chn)
     }
   else 
     {
-      ASSERT_CHANNEL("set-" S_selection_frames, snd, chn, 2);
-      cp = get_cp(snd, chn, "set-" S_selection_frames);
+      ASSERT_CHANNEL("set! " S_selection_frames, snd, chn, 2);
+      cp = get_cp(snd, chn, "set! " S_selection_frames);
       cp_set_selection_len(cp, len);
     }
   redraw_selection();
@@ -902,13 +904,13 @@ static XEN g_selection_member(XEN snd, XEN chn)
 static XEN g_set_selection_member(XEN on, XEN snd, XEN chn)
 {
   chan_info *cp;
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_1, "set-" S_selection_member, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_1, "set! " S_selection_member, "a boolean");
   if ((XEN_TRUE_P(snd)) && (XEN_FALSE_P(on)))
     deactivate_selection();
   else
     {
-      ASSERT_CHANNEL("set-" S_selection_member, snd, chn, 2);
-      cp = get_cp(snd, chn, "set-" S_selection_member);
+      ASSERT_CHANNEL("set! " S_selection_member, snd, chn, 2);
+      cp = get_cp(snd, chn, "set! " S_selection_member);
       if ((XEN_NOT_BOUND_P(on)) || (XEN_TRUE_P(on)))
 	{
 	  if (selection_is_active())

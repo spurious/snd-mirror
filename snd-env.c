@@ -1370,7 +1370,7 @@ static XEN g_enved_base(void) {return(C_TO_XEN_DOUBLE(enved_base(get_global_stat
 static XEN g_set_enved_base(XEN val) 
 {
   #define H_enved_base "(" S_enved_base ") -> envelope editor exponential base value (1.0)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set-" S_enved_base, "a number"); 
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set! " S_enved_base, "a number"); 
   set_enved_base(get_global_state(), mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), 300000.0));
   return(C_TO_XEN_DOUBLE(enved_base(get_global_state())));
 }
@@ -1379,7 +1379,7 @@ static XEN g_enved_power(void) {return(C_TO_XEN_DOUBLE(enved_power(get_global_st
 static XEN g_set_enved_power(XEN val) 
 {
   #define H_enved_power "(" S_enved_power ") -> envelope editor base scale range (9.0^power)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set-" S_enved_power, "a number"); 
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set! " S_enved_power, "a number"); 
   set_enved_power(get_global_state(), mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), 10.0));
   return(C_TO_XEN_DOUBLE(enved_power(get_global_state())));
 }
@@ -1390,7 +1390,7 @@ static XEN g_set_enved_clip_p(XEN on)
   #define H_enved_clip_p "(" S_enved_clip_p ") -> envelope editor 'clip' button setting; \
 if clipping, the motion of the mouse is restricted to the current graph bounds."
 
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ONLY_ARG, "set-" S_enved_clip_p, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ONLY_ARG, "set! " S_enved_clip_p, "a boolean");
   set_enved_clip_p(get_global_state(), XEN_TO_C_BOOLEAN_OR_TRUE(on)); 
   return(C_TO_XEN_BOOLEAN(enved_clip_p(get_global_state())));
 }
@@ -1401,7 +1401,7 @@ static XEN g_set_enved_exp_p(XEN val)
   #define H_enved_exp_p "(" S_enved_exp_p ") -> envelope editor 'exp' and 'lin' buttons; \
 if enved-exping, the connecting segments use exponential curves rather than straight lines."
 
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set-" S_enved_exp_p, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set! " S_enved_exp_p, "a boolean");
   set_enved_exp_p(get_global_state(), XEN_TO_C_BOOLEAN_OR_TRUE(val)); 
   return(C_TO_XEN_BOOLEAN(enved_clip_p(get_global_state())));
 }
@@ -1413,7 +1413,7 @@ static XEN g_set_enved_target(XEN val)
   #define H_enved_target "(" S_enved_target ") determines how the envelope is applied to data in the envelope editor; \
 choices are " S_enved_amplitude ", " S_enved_srate ", and " S_enved_spectrum
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set-" S_enved_target, "an integer"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set! " S_enved_target, "an integer"); 
   n = mus_iclamp(ENVED_AMPLITUDE,
 		 XEN_TO_C_INT(val),
 		 ENVED_SRATE); 
@@ -1425,7 +1425,7 @@ static XEN g_enved_wave_p(void) {return(C_TO_XEN_BOOLEAN(enved_wave_p(get_global
 static XEN g_set_enved_wave_p(XEN val) 
 {
   #define H_enved_wave_p "(" S_enved_wave_p ") -> #t if the envelope editor is displaying the waveform to be edited"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set-" S_enved_wave_p, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set! " S_enved_wave_p, "a boolean");
   set_enved_wave_p(get_global_state(), XEN_TO_C_BOOLEAN_OR_TRUE(val));
   return(C_TO_XEN_BOOLEAN(enved_wave_p(get_global_state())));
 }
@@ -1434,7 +1434,7 @@ static XEN g_enved_in_dB(void) {return(C_TO_XEN_BOOLEAN(enved_in_dB(get_global_s
 static XEN g_set_enved_in_dB(XEN val) 
 {
   #define H_enved_in_dB "(" S_enved_in_dB ") -> #t if the envelope editor is using dB"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set-" S_enved_in_dB, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set! " S_enved_in_dB, "a boolean");
   set_enved_in_dB(get_global_state(), XEN_TO_C_BOOLEAN_OR_TRUE(val)); 
   return(C_TO_XEN_BOOLEAN(enved_in_dB(get_global_state())));
 }
@@ -1443,7 +1443,7 @@ static XEN g_enved_filter_order(void) {return(C_TO_XEN_INT(enved_filter_order(ge
 static XEN g_set_enved_filter_order(XEN val) 
 {
   #define H_enved_filter_order "(" S_enved_filter_order ") -> envelope editor's FIR filter order (40)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set-" S_enved_filter_order, "an integer"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set! " S_enved_filter_order, "an integer"); 
   set_enved_filter_order(get_global_state(), XEN_TO_C_INT(val));
   return(C_TO_XEN_INT(enved_filter_order(get_global_state())));
 }

@@ -143,6 +143,10 @@ void xen_initialize(void)
 #endif
 }
 
+#ifndef WITH_SET_NAME
+  #define WITH_SET_NAME 0
+#endif
+
 void xen_guile_define_procedure_with_setter(char *get_name, XEN (*get_func)(), char *get_help,
 					    char *set_name, XEN (*set_func)(), 
 					    XEN local_doc,
@@ -155,7 +159,7 @@ void xen_guile_define_procedure_with_setter(char *get_name, XEN (*get_func)(), c
     scm_c_define(get_name,
       scm_make_procedure_with_setter(
         XEN_NEW_PROCEDURE("", XEN_PROCEDURE_CAST get_func, get_req, get_opt, 0),
-	XEN_NEW_PROCEDURE(set_name, XEN_PROCEDURE_CAST set_func, set_req, set_opt, 0))));
+	XEN_NEW_PROCEDURE((WITH_SET_NAME) ? set_name : "", XEN_PROCEDURE_CAST set_func, set_req, set_opt, 0))));
   if (get_help)
     {
       scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(get_name), local_doc, str);
@@ -167,7 +171,7 @@ void xen_guile_define_procedure_with_setter(char *get_name, XEN (*get_func)(), c
       gh_define(get_name,
 	scm_make_procedure_with_setter(
           XEN_NEW_PROCEDURE("", XEN_PROCEDURE_CAST get_func, get_req, get_opt, 0),
-	  XEN_NEW_PROCEDURE(set_name, XEN_PROCEDURE_CAST set_func, set_req, set_opt, 0)
+	  XEN_NEW_PROCEDURE((WITH_SET_NAME) ? set_name : "", XEN_PROCEDURE_CAST set_func, set_req, set_opt, 0)
 	  ))),
     local_doc,
     C_TO_XEN_STRING(get_help));
@@ -187,7 +191,9 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
       scm_make_procedure_with_setter(
         XEN_NEW_PROCEDURE("", XEN_PROCEDURE_CAST get_func, get_req, get_opt, 0),
 	XEN_NEW_PROCEDURE("", XEN_PROCEDURE_CAST reversed_set_func, set_req, set_opt, 0))));
-  XEN_NEW_PROCEDURE(set_name, XEN_PROCEDURE_CAST set_func, set_req, set_opt, 0);
+  #if WITH_SET_NAME
+    XEN_NEW_PROCEDURE(set_name, XEN_PROCEDURE_CAST set_func, set_req, set_opt, 0);
+  #endif
   if (get_help)
     {
       scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(get_name), local_doc, str);
@@ -203,7 +209,9 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 	  ))),
     local_doc,
     C_TO_XEN_STRING(get_help));
-  XEN_NEW_PROCEDURE(set_name, XEN_PROCEDURE_CAST set_func, set_req, set_opt, 0);
+  #if WITH_SET_NAME
+    XEN_NEW_PROCEDURE(set_name, XEN_PROCEDURE_CAST set_func, set_req, set_opt, 0);
+  #endif
 #endif
 }
 

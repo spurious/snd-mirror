@@ -22047,7 +22047,7 @@ static int hd_links[27];
 
 static void hash_resource(char *name, int type)
 {
-  xm_hash[hd_ctr] = (hdata *)CALLOC(1, sizeof(hdata));
+  xm_hash[hd_ctr] = (hdata *)malloc(sizeof(hdata));
   xm_hash[hd_ctr]->name = name;
   xm_hash[hd_ctr++]->type = type;
   if (hd_ctr >= XM_HASH_SIZE) fprintf(stderr, "overflowed hash table!");
@@ -22070,7 +22070,7 @@ static int resource_type(char *name)
 static void define_strings(void)
 {
   
-  xm_hash = (hdata **)CALLOC(XM_HASH_SIZE, sizeof(hdata *));
+  xm_hash = (hdata **)calloc(XM_HASH_SIZE, sizeof(hdata *));
 
 #if HAVE_GUILE
 #if HAVE_SCM_C_DEFINE
@@ -24679,7 +24679,7 @@ static int xm_already_inited = 0;
       define_pointers();
       define_procedures();
       define_structs();
-#if HAVE_MOTIF
+#if HAVE_GUILE && HAVE_MOTIF
       XEN_EVAL_C_STRING("(define (XmAddWMProtocols s p n) \
                            (XmAddProtocols s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p n))");
       XEN_EVAL_C_STRING("(define (XmRemoveWMProtocols s p n) \

@@ -162,7 +162,7 @@ static XEN g_set_graph_cursor(XEN curs)
 {
   int val;
   snd_state *ss;
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(curs), curs, XEN_ONLY_ARG, "set-" S_graph_cursor, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(curs), curs, XEN_ONLY_ARG, "set! " S_graph_cursor, "a number");
   /* X11/cursorfont.h has various even-numbered glyphs, but the odd numbers are ok, and XC_num_glyphs is a lie */
   /*   if you use too high a number here, X dies */
   val = XEN_TO_C_INT(curs);
@@ -172,7 +172,7 @@ static XEN g_set_graph_cursor(XEN curs)
       ss->Graph_Cursor = val;
       (ss->sgx)->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), in_graph_cursor(ss));
     }
-  else mus_misc_error("set-" S_graph_cursor, "invalid cursor", curs);
+  else mus_misc_error("set! " S_graph_cursor, "invalid cursor", curs);
   return(curs);
 }
 

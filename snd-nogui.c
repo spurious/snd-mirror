@@ -396,33 +396,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define (" S_color_p " . args) #f)\
                (define (" S_color2list " .args) #f)");
 
-  XEN_EVAL_C_STRING("(define (set-" S_enved_active_env " obj) obj)\
-               (define (set-" S_enved_selected_env " obj) obj)\
-               (define (set-" S_just_sounds " obj) obj)\
-               (define (set-" S_html_dir " obj) obj)\
-               (define (set-" S_basic_color " obj) obj)\
-               (define (set-" S_zoom_color " obj) obj)\
-               (define (set-" S_position_color " obj) obj)\
-               (define (set-" S_mark_color " obj) obj)\
-               (define (set-" S_listener_color " obj) obj)\
-               (define (set-" S_listener_text_color " obj) obj)\
-               (define (set-" S_selected_mix_color " obj) obj)\
-               (define (set-" S_enved_waveform_color " obj) obj)\
-               (define (set-" S_filter_waveform_color " obj) obj)\
-               (define (set-" S_highlight_color " obj) obj)\
-               (define (set-" S_graph_color " obj) obj)\
-               (define (set-" S_selected_graph_color " obj) obj)\
-               (define (set-" S_data_color " obj) obj)\
-               (define (set-" S_selected_data_color " obj) obj)\
-               (define (set-" S_cursor_color " obj) obj)\
-               (define (set-" S_selection_color " obj) obj)\
-               (define (set-" S_pushed_button_color " obj) obj)\
-               (define (set-" S_text_focus_color " obj) obj)\
-               (define (set-" S_sash_color " obj) obj)\
-               (define (set-" S_graph_cursor " obj) obj)\
-               (define (set-" S_mix_color " . args) #f)\
-               (define (set-" S_selected_mix_color " . args) #f)");
-
   XEN_EVAL_C_STRING("(define " S_mouse_enter_graph_hook " (make-hook 2))\
                (define " S_mouse_leave_graph_hook " (make-hook 2))\
                (define " S_mouse_enter_label_hook " (make-hook 3))\
@@ -452,7 +425,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define (" S_main_widgets " . args) #f)\
                (define (" S_current_font ") #f)\
                (define (" S_reset_listener_cursor ") #f)\
-               (define (set-" S_enved_filter " val) #f)\
                (define " S_basic_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_zoom_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_position_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
