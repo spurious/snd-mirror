@@ -50,9 +50,9 @@ void add_to_error_history(snd_state *ss, char *msg, int popup)
   else
     if ((popup) && (!(GTK_WIDGET_VISIBLE(snd_error_dialog))))
       gtk_widget_show(snd_error_dialog);
-  gtk_text_freeze(GTK_TEXT(snd_error_history));
-  pos = gtk_text_get_length(GTK_TEXT(snd_error_history));
-  if (pos > 0) gtk_text_set_point(GTK_TEXT(snd_error_history), pos);
+  SG_TEXT_FREEZE(snd_error_history);
+  pos = SG_TEXT_LENGTH(snd_error_history);
+  if (pos > 0) SG_TEXT_SET_POINT(snd_error_history, pos);
 
 #if HAVE_STRFTIME
   tim = (char *)CALLOC(TIME_STR_SIZE, sizeof(char));
@@ -60,12 +60,12 @@ void add_to_error_history(snd_state *ss, char *msg, int popup)
   time(&ts);
   strftime(tim, TIME_STR_SIZE, "%H:%M:%S", localtime(&ts));
   sprintf(buf, "\n[%s] ", tim);
-  gtk_text_insert(GTK_TEXT(snd_error_history), (ss->sgx)->help_text_fnt, (ss->sgx)->black, (ss->sgx)->white, buf, -1);
+  SG_TEXT_INSERT(snd_error_history, (ss->sgx)->help_text_fnt, (ss->sgx)->black, (ss->sgx)->white, buf, -1);
   FREE(buf);
   FREE(tim);
 #endif
-  gtk_text_insert(GTK_TEXT(snd_error_history), (ss->sgx)->help_text_fnt, (ss->sgx)->black, (ss->sgx)->white, msg, -1);
-  gtk_text_thaw(GTK_TEXT(snd_error_history));
+  SG_TEXT_INSERT(snd_error_history, (ss->sgx)->help_text_fnt, (ss->sgx)->black, (ss->sgx)->white, msg, -1);
+  SG_TEXT_THAW(snd_error_history);
 }
 
 void post_error_dialog(snd_state *ss, char *msg)

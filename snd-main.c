@@ -310,30 +310,20 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (enved_clip_p(ss) != DEFAULT_ENVED_CLIP_P) pss_ss(fd, S_enved_clip_p, b2s(enved_clip_p(ss)));
   if (enved_exp_p(ss) != DEFAULT_ENVED_EXP_P) pss_ss(fd, S_enved_exp_p, b2s(enved_exp_p(ss)));
 
-  if ((vu_font(ss)) && 
-      ((DEFAULT_VU_FONT == NULL) || (strcmp(vu_font(ss), DEFAULT_VU_FONT) != 0))) 
-    pss_sq(fd, S_vu_font, vu_font(ss));
+  if (vu_font(ss)) pss_sq(fd, S_vu_font, vu_font(ss));
   if (save_state_file(ss))
     pss_sq(fd, S_save_state_file, save_state_file(ss));
-  if ((temp_dir(ss)) && 
-      ((DEFAULT_TEMP_DIR == NULL) || (strcmp(temp_dir(ss), DEFAULT_TEMP_DIR) != 0)))
-    pss_sq(fd, S_temp_dir, temp_dir(ss));
-  if ((save_dir(ss)) && 
-      ((DEFAULT_SAVE_DIR == NULL) || (strcmp(save_dir(ss), DEFAULT_SAVE_DIR) != 0))) 
-    pss_sq(fd, S_save_dir, save_dir(ss));
-  if ((ladspa_dir(ss)) && 
-      ((DEFAULT_LADSPA_DIR == NULL) || (strcmp(ladspa_dir(ss), DEFAULT_LADSPA_DIR) != 0))) 
-    pss_sq(fd, S_ladspa_dir, ladspa_dir(ss));
+  if (temp_dir(ss)) pss_sq(fd, S_temp_dir, temp_dir(ss));
+  if (save_dir(ss)) pss_sq(fd, S_save_dir, save_dir(ss));
+  if (ladspa_dir(ss)) pss_sq(fd, S_ladspa_dir, ladspa_dir(ss));
   if ((eps_file(ss)) && 
       ((DEFAULT_EPS_FILE == NULL) || (strcmp(eps_file(ss), DEFAULT_EPS_FILE) != 0)))
     pss_sq(fd, S_eps_file, eps_file(ss));
   if ((listener_prompt(ss)) && 
       ((DEFAULT_LISTENER_PROMPT == NULL) || (strcmp(listener_prompt(ss), DEFAULT_LISTENER_PROMPT) != 0)))
     pss_sq(fd, S_listener_prompt, listener_prompt(ss));
-  if ((audio_state_file(ss)) && 
-      ((AUDIO_STATE_FILE == NULL) || (strcmp(audio_state_file(ss), AUDIO_STATE_FILE) != 0))) 
-      pss_sq(fd, S_audio_state_file, audio_state_file(ss));
-
+  if ((audio_state_file(ss)) && (strcmp(audio_state_file(ss), DEFAULT_AUDIO_STATE_FILE) != 0))
+    pss_sq(fd, S_audio_state_file, audio_state_file(ss));
   if (audio_input_device(ss) != DEFAULT_AUDIO_INPUT_DEVICE) pss_sd(fd, S_audio_input_device, audio_input_device(ss));
   if (audio_output_device(ss) != DEFAULT_AUDIO_OUTPUT_DEVICE) pss_sd(fd, S_audio_output_device, audio_output_device(ss));
 

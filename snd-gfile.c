@@ -46,7 +46,7 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
     }
   if (fdat->comment_text) 
     {
-      comment = gtk_editable_get_chars(GTK_EDITABLE(fdat->comment_text), 0, -1);
+      comment = SG_TEXT_CHARS(fdat->comment_text, 0, -1);
     }
   if (fdat->header_list)
     {
@@ -76,7 +76,7 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
 
 static void load_header_and_data_lists(file_data *fdat, int type, int format, int srate, int chans, int location, char *comment)
 {
-  int i, chars;
+  int i;
   char **fl = NULL;
   char *str;
   snd_state *ss;
@@ -85,16 +85,16 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
   fdat->current_format = format;
   fl = set_header_and_data_positions(fdat, type, format); 
   gtk_signal_handler_block_by_data(GTK_OBJECT(fdat->header_list), (gpointer)ss);
-  gtk_clist_select_row(GTK_CLIST(fdat->header_list), fdat->header_pos, 0);
+  SG_LIST_SELECT_ROW(fdat->header_list, fdat->header_pos);
   gtk_signal_handler_unblock_by_data(GTK_OBJECT(fdat->header_list), (gpointer)ss);
-  gtk_clist_clear(GTK_CLIST(fdat->format_list));
+  SG_LIST_CLEAR(fdat->format_list);
   for (i = 0; i < fdat->formats; i++) 
     {
       str = fl[i];
-      gtk_clist_insert(GTK_CLIST(fdat->format_list), i, &str);
+      SG_LIST_INSERT(fdat->format_list, i, str);
     }
   gtk_signal_handler_block_by_data(GTK_OBJECT(fdat->format_list), (gpointer)ss);
-  gtk_clist_select_row(GTK_CLIST(fdat->format_list), fdat->format_pos, 0);
+  SG_LIST_SELECT_ROW(fdat->format_list, fdat->format_pos);
   gtk_signal_handler_unblock_by_data(GTK_OBJECT(fdat->format_list), (gpointer)ss);
   if ((srate > 0) && (fdat->srate_text))
     {
@@ -112,12 +112,11 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
     }
   if (fdat->comment_text) 
     {
-      chars = gtk_text_get_length(GTK_TEXT(fdat->comment_text));
-      if (chars > 0) 
-	gtk_editable_delete_text(GTK_EDITABLE(fdat->comment_text), 0, -1);
-      gtk_text_insert(GTK_TEXT(fdat->comment_text), 
-		      (ss->sgx)->help_text_fnt, 
-		      (ss->sgx)->black, (ss->sgx)->white, comment, -1);
+      SG_TEXT_CLEAR(fdat->comment_text);
+      SG_TEXT_INSERT(fdat->comment_text, 
+		     (ss->sgx)->help_text_fnt, 
+		     (ss->sgx)->black, (ss->sgx)->white, 
+		     comment, -1);
     }
   if ((location >= 0) && (fdat->location_text))
     {
@@ -388,15 +387,16 @@ static void save_as_data_format_callback(GtkWidget *w, gint row, gint column, Gd
   fd->current_format = data_format_from_position(fd->header_pos, row);
 }
 
+#define NUM_HEADER_TYPES 7
+static char *header_short_names[NUM_HEADER_TYPES] = {"sun  ", "aifc ", "wave ", "raw  ", "aiff ", "ircam", "nist "};
+
 file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name, 
 				 int with_chan, int header_type, int data_format, int with_loc, int comment_as_entry)
 {
   GtkWidget *form, *hlab, *dlab, *slab, *clab, *comment_label, *loclab, *hscroll, *dscroll, *scbox, *combox;
   file_data *fdat;
-  int i;
   int dformats = 0;
   char **formats = NULL;
-  char *str;
   fdat = (file_data *)CALLOC(1, sizeof(file_data));
   fdat->current_type = header_type;
   fdat->current_format = data_format;
@@ -412,25 +412,15 @@ file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name,
   gtk_frame_set_label_align(GTK_FRAME(hlab), 0.5, 0.0);
   gtk_frame_set_shadow_type(GTK_FRAME(hlab), GTK_SHADOW_ETCHED_IN);
 
-  fdat->header_list = gtk_clist_new(1);
+  fdat->header_list = sg_make_list((gpointer)ss, NUM_HEADER_TYPES, header_short_names, GTK_SIGNAL_FUNC(save_as_header_type_callback));
   set_user_data(GTK_OBJECT(fdat->header_list), (gpointer)fdat);
-  gtk_clist_set_selection_mode(GTK_CLIST(fdat->header_list), GTK_SELECTION_SINGLE);
-  gtk_clist_set_shadow_type(GTK_CLIST(fdat->header_list), GTK_SHADOW_ETCHED_IN);
-  gtk_clist_column_titles_passive(GTK_CLIST(fdat->header_list));
-
-  for (i = 0; i < num_header_types(); i++) 
-    {
-      str = header_short_name(i);
-      gtk_clist_append(GTK_CLIST(fdat->header_list), &str);
-    }
 
   hscroll = gtk_scrolled_window_new(NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(hscroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(hscroll), fdat->header_list);
   gtk_container_add(GTK_CONTAINER(hlab), hscroll);
 
-  gtk_clist_select_row(GTK_CLIST(fdat->header_list), fdat->header_pos, 0);
-  gtk_signal_connect(GTK_OBJECT(fdat->header_list), "select_row", GTK_SIGNAL_FUNC(save_as_header_type_callback), (gpointer)ss);
+  SG_LIST_SELECT_ROW(fdat->header_list, fdat->header_pos);
   gtk_widget_show(hlab);
   gtk_widget_show(fdat->header_list);
   gtk_widget_show(hscroll);
@@ -440,25 +430,15 @@ file_data *make_file_data_panel(snd_state *ss, GtkWidget *parent, char *name,
   gtk_frame_set_label_align(GTK_FRAME(dlab), 0.5, 0.0);
   gtk_frame_set_shadow_type(GTK_FRAME(dlab), GTK_SHADOW_ETCHED_IN);
 
-  fdat->format_list = gtk_clist_new(1);
+  fdat->format_list = sg_make_list((gpointer)ss, dformats, formats, GTK_SIGNAL_FUNC(save_as_data_format_callback));
   set_user_data(GTK_OBJECT(fdat->format_list), (gpointer)fdat);
-  gtk_clist_set_selection_mode(GTK_CLIST(fdat->format_list), GTK_SELECTION_SINGLE);
-  gtk_clist_set_shadow_type(GTK_CLIST(fdat->format_list), GTK_SHADOW_ETCHED_IN);
-  gtk_clist_column_titles_passive(GTK_CLIST(fdat->format_list));
-
-  for (i = 0; i < dformats; i++) 
-    {
-      str = formats[i];
-      gtk_clist_append(GTK_CLIST(fdat->format_list), &str);
-    }
 
   dscroll = gtk_scrolled_window_new(NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(dscroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(dscroll), fdat->format_list);
   gtk_container_add(GTK_CONTAINER(dlab), dscroll);
 
-  gtk_clist_select_row(GTK_CLIST(fdat->format_list), fdat->format_pos, 0);
-  gtk_signal_connect(GTK_OBJECT(fdat->format_list), "select_row", GTK_SIGNAL_FUNC(save_as_data_format_callback), (gpointer)ss);
+  SG_LIST_SELECT_ROW(fdat->format_list, fdat->format_pos);
   gtk_widget_show(dlab);
   gtk_widget_show(fdat->format_list);
   gtk_widget_show(dscroll);
@@ -528,7 +508,7 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
   snd_state *ss = (snd_state *)data;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(save_as_file_data->srate_text));
   srate = string2int(str);
-  comment = gtk_editable_get_chars(GTK_EDITABLE(save_as_file_data->comment_text), 0, -1);
+  comment = SG_TEXT_CHARS(save_as_file_data->comment_text, 0, -1);
   type = save_as_file_data->current_type;
   format = save_as_file_data->current_format;
   last_save_as_filename = (char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(save_as_dialog));
@@ -1260,8 +1240,7 @@ static void raw_data_help_callback(GtkWidget *w, gpointer context)
 static void make_raw_data_dialog(snd_state *ss)
 {
   char dfs_str[LABEL_BUFFER_SIZE];
-  int i, sr, oc, fr;
-  char *str;
+  int sr, oc, fr;
   GtkWidget *lst, *dls, *dlab, *dloclab, *chnlab;
   GtkWidget *defaultB, *helpB, *cancelB, *okB, *sratehbox, *lochbox, *scroller;
 
@@ -1336,16 +1315,7 @@ static void make_raw_data_dialog(snd_state *ss)
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->vbox), dlab, FALSE, FALSE, 6);
   gtk_widget_show(dlab);
 
-  lst = gtk_clist_new(1);
-  gtk_clist_set_selection_mode(GTK_CLIST(lst), GTK_SELECTION_SINGLE);
-  gtk_clist_set_shadow_type(GTK_CLIST(lst), GTK_SHADOW_ETCHED_IN);
-  gtk_clist_column_titles_passive(GTK_CLIST(lst));
-  for (i = 1; i < num_data_formats(); i++) 
-    {
-      str = data_format_name(i);
-      gtk_clist_append(GTK_CLIST(lst), &str);
-    }
-  gtk_signal_connect(GTK_OBJECT(lst), "select_row", GTK_SIGNAL_FUNC(raw_data_browse_callback), (gpointer)ss);
+  lst = sg_make_list((gpointer)ss, num_data_formats(), data_format_names(), GTK_SIGNAL_FUNC(raw_data_browse_callback));
 
   scroller = gtk_scrolled_window_new(NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -1362,8 +1332,6 @@ file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const cha
   char *str;
   file_info *hdr = NULL;
   int sr, oc, fr;
-  mus_header_raw_defaults(&sr, &oc, &fr);
-
   if (!raw_data_dialog) make_raw_data_dialog(ss);
   gtk_label_set_text(GTK_LABEL(raw_data_label), title);
   reflect_raw_pending_in_menu();
@@ -1373,6 +1341,7 @@ file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const cha
   gtk_widget_hide(raw_data_dialog);
   reflect_raw_open_in_menu();
   if (raw_cancelled) return(NULL);
+  mus_header_raw_defaults(&sr, &oc, &fr);
   str = (char *)gtk_entry_get_text(GTK_ENTRY(raw_srate_text));
   if ((str) && (*str)) 
     {

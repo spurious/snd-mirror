@@ -174,7 +174,7 @@ static char *get_tmpdir(void)
   char *tmpdir = NULL;
   int len;
   tmpdir = copy_string(getenv("TMPDIR"));
-  if (tmpdir == NULL) tmpdir = copy_string(DEFAULT_TEMP_DIR);
+  if ((tmpdir == NULL) && (DEFAULT_TEMP_DIR)) tmpdir = copy_string(DEFAULT_TEMP_DIR);
 #ifdef P_tmpdir
   if (tmpdir == NULL) tmpdir = copy_string(P_tmpdir); /* /usr/include/stdio.h */
 #else

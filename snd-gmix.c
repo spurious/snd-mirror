@@ -414,7 +414,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
       wn = MAIN_WINDOW(ss);
       speaker_pix = gdk_pixmap_create_from_xpm_d(wn, &speaker_mask, (ss->sgx)->basic_color, speaker_bits());
 
-      w_play_pix = gtk_pixmap_new(speaker_pix, speaker_mask);
+      w_play_pix = SG_PIXMAP_NEW(speaker_pix, speaker_mask);
       gtk_container_add(GTK_CONTAINER(w_play), w_play_pix);
       gtk_widget_show(w_play_pix);
 

@@ -419,18 +419,18 @@ void reflect_edit_history_change(chan_info *cp)
 	  while ((eds<(cp->edit_size-1)) && (cp->edits[eds + 1])) eds++;
 	  if (eds >= 0)
 	    {
-	      gtk_clist_clear(GTK_CLIST(lst));
+	      SG_LIST_CLEAR(lst);
 	      sp = cp->sound;
 	      str = sp->filename;
-	      gtk_clist_append(GTK_CLIST(lst), &str);
+	      SG_LIST_APPEND(lst, str);
 	      for (i = 1; i <= eds; i++) 
 		{
 		  str = edit_to_string(cp, i);
-		  gtk_clist_append(GTK_CLIST(lst), &str);
+		  SG_LIST_APPEND(lst, str);
 		}
 	      gtk_signal_handler_block_by_data(GTK_OBJECT(lst), (gpointer)cp);
-	      gtk_clist_select_row(GTK_CLIST(lst), cp->edit_ctr, 0);
-	      gtk_clist_moveto(GTK_CLIST(lst), cp->edit_ctr, 0, 0.5, 0.5);
+	      SG_LIST_SELECT_ROW(lst, cp->edit_ctr);
+	      SG_LIST_MOVETO(lst, cp->edit_ctr);
 	      gtk_signal_handler_unblock_by_data(GTK_OBJECT(lst), (gpointer)cp);
 	      goto_graph(cp);
 	    }
@@ -455,7 +455,7 @@ void reflect_save_as_in_edit_history(chan_info *cp, char *filename)
 		       "%s: (save-sound-as \"%s\")", 
 		       edit_to_string(cp, cp->edit_ctr), 
 		       filename);
-	  gtk_clist_set_text(GTK_CLIST(lst), cp->edit_ctr, 0, new_line);
+	  SG_LIST_SET_TEXT(lst, cp->edit_ctr, new_line);
 	  FREE(new_line);
 	}
     }
@@ -475,8 +475,8 @@ void reflect_edit_counter_change(chan_info *cp)
       if (lst)
 	{
 	  gtk_signal_handler_block_by_data(GTK_OBJECT(lst), (gpointer)cp);
-	  gtk_clist_select_row(GTK_CLIST(lst), cp->edit_ctr, 0);
-	  gtk_clist_moveto(GTK_CLIST(lst), cp->edit_ctr, 0, 0.5, 0.5);
+	  SG_LIST_SELECT_ROW(lst, cp->edit_ctr);
+	  SG_LIST_MOVETO(lst, cp->edit_ctr);
 	  gtk_signal_handler_unblock_by_data(GTK_OBJECT(lst), (gpointer)cp);
 	  goto_graph(cp);
 	}
@@ -605,11 +605,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  /* gtk_paned_add1(GTK_PANED(w_snd_pane(sp)), cw[W_main_window]); */
 	  gtk_box_pack_start(GTK_BOX(w_snd_pane_box(sp)), cw[W_main_window], TRUE, TRUE, 0);
 
-	  cw[W_edhist] = gtk_clist_new(1);
-	  gtk_clist_set_selection_mode(GTK_CLIST(cw[W_edhist]), GTK_SELECTION_SINGLE);
-	  gtk_clist_set_shadow_type(GTK_CLIST(cw[W_edhist]), GTK_SHADOW_ETCHED_IN);
-	  gtk_clist_column_titles_passive(GTK_CLIST(cw[W_edhist]));
-	  gtk_signal_connect(GTK_OBJECT(cw[W_edhist]), "select_row", GTK_SIGNAL_FUNC(history_select_callback), (gpointer)cp);
+	  cw[W_edhist] = sg_make_list((gpointer)cp, 0, NULL, GTK_SIGNAL_FUNC(history_select_callback));
 
 	  cw[W_edscroll] = gtk_scrolled_window_new(NULL, NULL);
 	  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(cw[W_edscroll]), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);

@@ -690,6 +690,7 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
   int n, i;
   XmString xhelp, xdismiss, xcutoff, xinvert, titlestr;
   XmString *cmaps;
+  char **names;
   Widget mainform, list_label, light_label, sep, sep1;
   snd_state *ss = (snd_state *)context;
   if (!ccd)
@@ -743,7 +744,8 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       
       n = 0;
       cmaps = (XmString *)CALLOC(NUM_COLORMAPS, sizeof(XmString));
-      for (i = 0; i < NUM_COLORMAPS; i++) cmaps[i] = XmStringCreate(colormap_name(i), XmFONTLIST_DEFAULT_TAG);
+      names = colormap_names();
+      for (i = 0; i < NUM_COLORMAPS; i++) cmaps[i] = XmStringCreate(names[i], XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;

@@ -588,7 +588,7 @@ static void list_color_callback(GtkWidget *w, gint row, gint column, GdkEventBut
 void set_color_map(snd_state *ss, int val)
 {
   in_set_color_map(ss, val);
-  if (ccd) gtk_clist_select_row(GTK_CLIST(ccd->list), val, 0);
+  if (ccd) SG_LIST_SELECT_ROW(ccd->list, val);
   if (!(ss->graph_hook_active)) map_over_chans(ss, update_graph, NULL);
 }
 
@@ -626,8 +626,6 @@ void view_color_callback(GtkWidget *w, gpointer context)
 {
   GtkWidget *light_label, *dark_label, *help_button, *dismiss_button;
   GtkWidget *outer_table, *scale_box, *cutoff_box, *cutoff_label, *colormap_scroller, *maplabel, *colormap_box;
-  int i;
-  char *str;
   snd_state *ss = (snd_state *)context;
   if (!ccd)
     {
@@ -722,16 +720,7 @@ void view_color_callback(GtkWidget *w, gpointer context)
       gtk_box_pack_start(GTK_BOX(colormap_box), maplabel, FALSE, FALSE, 0);
       gtk_widget_show(maplabel);
 
-      ccd->list = gtk_clist_new(1);
-      gtk_clist_set_selection_mode(GTK_CLIST(ccd->list), GTK_SELECTION_SINGLE);
-      gtk_clist_set_shadow_type(GTK_CLIST(ccd->list), GTK_SHADOW_ETCHED_IN);
-      gtk_clist_column_titles_passive(GTK_CLIST(ccd->list));
-      for (i = 0; i < NUM_COLORMAPS; i++) 
-	{
-	  str = colormap_name(i);
-	  gtk_clist_append(GTK_CLIST(ccd->list), &str);
-	}
-      gtk_signal_connect(GTK_OBJECT(ccd->list), "select_row", GTK_SIGNAL_FUNC(list_color_callback), (gpointer)ss);
+      ccd->list = sg_make_list((gpointer)ss, NUM_COLORMAPS, colormap_names(), GTK_SIGNAL_FUNC(list_color_callback));
 
       colormap_scroller = gtk_scrolled_window_new(NULL, NULL);
       gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(colormap_scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);

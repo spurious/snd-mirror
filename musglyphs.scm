@@ -1,4 +1,4 @@
-;;; this file loads the music symbol glyphs in cmn-glyphs.lisp (from the cmn package),
+;; this file loads the music symbol glyphs in cmn-glyphs.lisp (from the cmn package),
 ;;; each function in that package becomes a Scheme function of the form:
 ;;;   name &optional x y size style snd chn ax
 ;;;   style: #t for lines, #f (default) for filled polygon
@@ -163,8 +163,8 @@
 	    (not (string? (cadr args))))
 	(apply sound-comment args))))
 
-(load "loop.scm")
+(load-from-path "loop.scm")
 
-(load "cmn-glyphs.lisp")
+(load-from-path "cmn-glyphs.lisp")
 
 (set! defvar old-defvar)

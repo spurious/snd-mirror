@@ -2027,7 +2027,7 @@ Move the sliders to set the comb-chord parameters."))
 (define moog-target 'sound)
 
 (if (not (defined? 'moog-filter))
-    (load "moog.scm"))
+    (load-from-path "moog.scm"))
 
 (define (moog freq Q)
     (let ((gen (make-moog-filter freq Q)))
@@ -2488,7 +2488,7 @@ to be cross-synthesized, the synthesis amplitude, the FFT size, and the radius v
 (define rubber-target 'sound)
 
 (if (not (defined? 'rubber-sound))
-    (load "rubber.scm"))
+    (load-from-path "rubber.scm"))
 
 (define (cp-rubber)
   (rubber-sound rubber-factor))

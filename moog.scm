@@ -11,7 +11,7 @@
 ;;;
 ;;; translated to Snd scheme function by Bill
 
-(load "env.scm") ;for envelope-interp
+(load-from-path "env.scm") ;for envelope-interp
 
 (define saturate
   (lambda (x)

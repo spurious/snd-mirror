@@ -48,11 +48,11 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
       cp->mixes = 0;
       cp->last_sonogram = NULL;
       cp->temp_sonogram = NULL;
-      XEN_DEFINE_HOOK((cp->edit_hook), "edit-hook", 0, NULL);
+      XEN_DEFINE_SIMPLE_HOOK(cp->edit_hook, 0);
       snd_protect(cp->edit_hook);
-      XEN_DEFINE_HOOK((cp->after_edit_hook), "after-edit-hook", 0, NULL);
+      XEN_DEFINE_SIMPLE_HOOK(cp->after_edit_hook, 0);
       snd_protect(cp->after_edit_hook);
-      XEN_DEFINE_HOOK((cp->undo_hook), "undo-hook", 0, NULL);
+      XEN_DEFINE_SIMPLE_HOOK(cp->undo_hook, 0);
       snd_protect(cp->undo_hook);
     }
   else cp = cip;
@@ -422,7 +422,7 @@ int map_over_chans (snd_state *ss, int (*func)(chan_info *, void *), void *userp
     for (i = 0; i < ss->max_sounds; i++)
       if ((sp = ((snd_info *)(ss->sounds[i]))) && 
 	  (sp->inuse))
-	for (j = 0; j < (sp->nchans); j++)
+	for (j = 0; j < sp->nchans; j++)
 	  if ((cp = ((chan_info *)(sp->chans[j]))))
 	    {
 	      val = (*func)(cp, userptr);
@@ -437,7 +437,7 @@ int map_over_sound_chans (snd_info *sp, int (*func)(chan_info *, void *), void *
   int j, val;
   chan_info *cp;
   val = 0;
-  for (j = 0; j < (sp->nchans); j++)
+  for (j = 0; j < sp->nchans; j++)
     if ((cp = sp->chans[j]))
       {
 	val = (*func)(cp, userptr);

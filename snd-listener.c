@@ -146,19 +146,19 @@ char *listener_prompt_with_cr(snd_state *ss)
  
 #if (!USE_NO_GUI)
 #if USE_GTK
-#define GUI_TEXT_END(w) gtk_text_get_length(GTK_TEXT(w))
+#define GUI_TEXT_END(w) SG_TEXT_LENGTH(w)
 #define GUI_TEXT_POSITION_TYPE gint
-#define GUI_TEXT(w) gtk_editable_get_chars(GTK_EDITABLE(w), 0, -1)
-#define GUI_SET_TEXT(w, text) gtk_text_insert(GTK_TEXT(w), (ss->sgx)->help_text_fnt, (ss->sgx)->black, (ss->sgx)->white, text, -1)
-#define GUI_TEXT_INSERTION_POSITION(w) gtk_editable_get_position(GTK_EDITABLE(w))
-#define GUI_TEXT_SET_INSERTION_POSITION(w, pos) gtk_editable_set_position(GTK_EDITABLE(w), pos-1)
+#define GUI_TEXT(w) SG_TEXT_CHARS(w, 0, -1)
+#define GUI_SET_TEXT(w, text) SG_TEXT_INSERT(w, (ss->sgx)->help_text_fnt, (ss->sgx)->black, (ss->sgx)->white, text, -1)
+#define GUI_TEXT_INSERTION_POSITION(w) SG_TEXT_GET_POINT(w)
+#define GUI_TEXT_SET_INSERTION_POSITION(w, pos) SG_TEXT_SET_POINT(w, pos - 1)
 #define GUI_LISTENER_TEXT_INSERT(w, pos, text) append_listener_text(0, text)
-#define GUI_STATS_TEXT_INSERT(w, pos, text) gtk_text_insert(GTK_TEXT(w), (ss->sgx)->help_text_fnt, (ss->sgx)->black, (ss->sgx)->white, text, -1)
+#define GUI_STATS_TEXT_INSERT(w, pos, text) SG_TEXT_INSERT(w, (ss->sgx)->help_text_fnt, (ss->sgx)->black, (ss->sgx)->white, text, -1)
 #define GUI_FREE(w) g_free(w)
 #define GUI_SET_CURSOR(w, cursor) gdk_window_set_cursor(w->window, cursor)
 #define GUI_UNSET_CURSOR(w, cursor) gdk_window_set_cursor(w->window, cursor)
 #define GUI_UPDATE(w) 
-#define GUI_TEXT_GOTO(w, pos) gtk_editable_set_position(GTK_EDITABLE(w), pos)
+#define GUI_TEXT_GOTO(w, pos) SG_TEXT_SET_POINT(w, pos)
 #else
 #define GUI_TEXT_END(w) XmTextGetLastPosition(w)
 #define GUI_TEXT_POSITION_TYPE XmTextPosition

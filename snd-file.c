@@ -1668,7 +1668,6 @@ static XEN g_set_previous_files_sort_procedure(XEN proc)
 
 /* -------- file dialog header/data choices */
 
-#define NUM_HEADER_TYPES 7
 #define NUM_NEXT_FORMATS 8
 #define NUM_IRCAM_FORMATS 5
 #define NUM_WAVE_FORMATS 8
@@ -1684,18 +1683,6 @@ static XEN g_set_previous_files_sort_procedure(XEN proc)
 #define AIFF_POSITION 4
 #define IRCAM_POSITION 5
 #define NIST_POSITION 6
-
-int num_header_types(void) {return(NUM_HEADER_TYPES);}
-
-
-static char *header_short_names[NUM_HEADER_TYPES] = {"sun  ", "aifc ", "wave ", "raw  ", "aiff ", "ircam", "nist "};
-char *header_short_name(int i) 
-{
-  if ((i >= 0) && 
-      (i < NUM_HEADER_TYPES)) 
-    return(header_short_names[i]); 
-  else return("unknown type");
-}
 
 static char *next_data_formats[NUM_NEXT_FORMATS] = {"short", "mulaw", "signed byte  ", "float", "long", "alaw", "24-bit", "double"};
 static char *ircam_data_formats[NUM_IRCAM_FORMATS] = {"short", "mulaw", "float        ", "long", "alaw"};
@@ -1725,9 +1712,8 @@ static int raw_dfs[NUM_RAW_FORMATS] = {MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLO
 				       MUS_LFLOAT, MUS_LDOUBLE, MUS_UBSHORT, MUS_ULSHORT,
 				       MUS_L24INT, MUS_BINTN, MUS_LINTN};
 
-#define NUM_DATA_FORMATS 23
+#define NUM_DATA_FORMATS 22
 static char *data_formats[NUM_DATA_FORMATS] = {
-  "no sound",
   "16 bit big-endian int",
   "8 bit mulaw",
   "8 bit signed int",
@@ -1753,13 +1739,7 @@ static char *data_formats[NUM_DATA_FORMATS] = {
 };
 
 int num_data_formats(void) {return(NUM_DATA_FORMATS);}
-char *data_format_name(int i)
-{
-  if ((i >= 0) && 
-      (i < NUM_DATA_FORMATS)) 
-    return(data_formats[i]); 
-  else return("unknown format");
-}
+char **data_format_names(void) {return(data_formats);}
 
 /* must parallel sndlib.h definitions */
 

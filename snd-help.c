@@ -872,7 +872,7 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_ask_before_overwrite "  #f\n\
   " S_audio_input_device "    " S_mus_audio_default "\n\
   " S_audio_output_device "   " S_mus_audio_default "\n\
-  " S_audio_state_file "      \"" AUDIO_STATE_FILE "\"\n\
+  " S_audio_state_file "      \"" DEFAULT_AUDIO_STATE_FILE "\"\n\
   " S_auto_resize "           #t\n\
   " S_auto_update "           #f\n\
   " S_axis_label_font "       varies\n\

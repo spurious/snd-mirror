@@ -352,6 +352,28 @@ static void button_pushed_red(GtkWidget *w, snd_state *ss)
   gtk_widget_set_style(w, style);
 }
 
+static GtkWidget *sg_make_scrolled_list(snd_state *ss, char *title, GtkWidget *parent, int num_items, char **items, 
+					GtkSignalFunc callback, int t1, int t2, int t3, int t4)
+{
+  GtkWidget *frame, *list, *scroller;
+  frame = gtk_frame_new(title);
+  gtk_table_attach_defaults(GTK_TABLE(parent), frame, t1, t2, t3, t4);
+  gtk_frame_set_label_align(GTK_FRAME(frame), 0.5, 0.0);
+  gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
+
+  list = sg_make_list((gpointer)ss, num_items, items, callback);
+
+  scroller = gtk_scrolled_window_new(NULL, NULL);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+  gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller), list);
+  gtk_container_add(GTK_CONTAINER(frame), scroller);
+
+  gtk_widget_show(list);
+  gtk_widget_show(scroller);
+  gtk_widget_show(frame);
+  return(list);
+}
+
 #define BUTTON_HEIGHT 20
 #define BUTTON_WIDTH 40
 /* for some reason gtk puts a mile and a half of padding around buttons */
@@ -359,10 +381,9 @@ static void button_pushed_red(GtkWidget *w, snd_state *ss)
 GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 {
   GtkWidget *outer_table, *buttons;
-  char *str;
   int i, need_callback = 0;
-  GtkWidget *type_frame, *size_frame, *display_frame, *window_frame, *wavelet_frame, *help_button, *dismiss_button;
-  GtkWidget *type_scroller, *size_scroller, *window_scroller, *wavelet_scroller, *window_box, *orient_button, *color_button;
+  GtkWidget *display_frame, *window_frame, *help_button, *dismiss_button;
+  GtkWidget *window_scroller, *window_box, *orient_button, *color_button;
 
   if (!transform_dialog)
     {
@@ -410,60 +431,23 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       */
 
       /* TYPE */
-      type_frame = gtk_frame_new(STR_type);
-      gtk_table_attach_defaults(GTK_TABLE(outer_table), type_frame, 0, 1, 0, 1);
-      gtk_frame_set_label_align(GTK_FRAME(type_frame), 0.5, 0.0);
-      gtk_frame_set_shadow_type(GTK_FRAME(type_frame), GTK_SHADOW_ETCHED_IN);
-
-      transform_list = gtk_clist_new(1);
-      gtk_clist_set_selection_mode(GTK_CLIST(transform_list), GTK_SELECTION_SINGLE);
-      gtk_clist_set_shadow_type(GTK_CLIST(transform_list), GTK_SHADOW_ETCHED_IN);
-      gtk_clist_column_titles_passive(GTK_CLIST(transform_list));
-      for (i = 0; i < num_transform_types; i++) 
-	{
-	  if (i < NUM_TRANSFORM_TYPES)
-	    str = TRANSFORM_TYPES[i];
-	  else str = added_transform_name(i);
-	  gtk_clist_append(GTK_CLIST(transform_list), &str);
-	}
-      gtk_signal_connect(GTK_OBJECT(transform_list), "select_row", GTK_SIGNAL_FUNC(transform_browse_callback), (gpointer)ss);
-
-      type_scroller = gtk_scrolled_window_new(NULL, NULL);
-      gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(type_scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-      gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(type_scroller), transform_list);
-      gtk_container_add(GTK_CONTAINER(type_frame), type_scroller);
-
-      gtk_widget_show(transform_list);
-      gtk_widget_show(type_scroller);
-      gtk_widget_show(type_frame);
-
+      {
+	char **transform_names;
+	transform_names = (char **)CALLOC(num_transform_types, sizeof(char *));
+	for (i = 0; i < num_transform_types; i++) 
+	  {
+	    if (i < NUM_TRANSFORM_TYPES)
+	      transform_names[i] = TRANSFORM_TYPES[i];
+	    else transform_names[i] = added_transform_name(i);
+	  }
+	transform_list = sg_make_scrolled_list(ss, STR_type, outer_table, num_transform_types, transform_names, 
+					       GTK_SIGNAL_FUNC(transform_browse_callback), 0, 1, 0, 1);
+	FREE(transform_names);
+      }
 
       /* SIZE */
-      size_frame = gtk_frame_new(STR_size);
-      gtk_table_attach_defaults(GTK_TABLE(outer_table), size_frame, 1, 2, 0, 1);
-      gtk_frame_set_label_align(GTK_FRAME(size_frame), 0.5, 0.0);
-      gtk_frame_set_shadow_type(GTK_FRAME(size_frame), GTK_SHADOW_ETCHED_IN);
-
-      size_list = gtk_clist_new(1);
-      gtk_clist_set_selection_mode(GTK_CLIST(size_list), GTK_SELECTION_SINGLE);
-      gtk_clist_set_shadow_type(GTK_CLIST(size_list), GTK_SHADOW_ETCHED_IN);
-      gtk_clist_column_titles_passive(GTK_CLIST(size_list));
-      for (i = 0; i < NUM_TRANSFORM_SIZES; i++) 
-	{
-	  str = TRANSFORM_SIZES[i];
-	  gtk_clist_append(GTK_CLIST(size_list), &str);
-	}
-      gtk_signal_connect(GTK_OBJECT(size_list), "select_row", GTK_SIGNAL_FUNC(size_browse_callback), (gpointer)ss);
-
-      size_scroller = gtk_scrolled_window_new(NULL, NULL);
-      gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(size_scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-      gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(size_scroller), size_list);
-      gtk_container_add(GTK_CONTAINER(size_frame), size_scroller);
-
-      gtk_widget_show(size_list);
-      gtk_widget_show(size_scroller);
-      gtk_widget_show(size_frame);
-
+      size_list = sg_make_scrolled_list(ss, STR_size, outer_table, NUM_TRANSFORM_SIZES, TRANSFORM_SIZES, 
+					GTK_SIGNAL_FUNC(size_browse_callback), 1, 2, 0, 1);
 
       /* DISPLAY */
       display_frame = gtk_frame_new(STR_display);
@@ -539,31 +523,8 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       gtk_widget_show(display_frame);
 
       /* WAVELET */
-      wavelet_frame = gtk_frame_new(STR_wavelet);
-      gtk_table_attach_defaults(GTK_TABLE(outer_table), wavelet_frame, 0, 1, 1, 2);
-      gtk_frame_set_label_align(GTK_FRAME(wavelet_frame), 0.5, 0.0);
-      gtk_frame_set_shadow_type(GTK_FRAME(wavelet_frame), GTK_SHADOW_ETCHED_IN);
-
-      wavelet_list = gtk_clist_new(1);
-      gtk_clist_set_selection_mode(GTK_CLIST(wavelet_list), GTK_SELECTION_SINGLE);
-      gtk_clist_set_shadow_type(GTK_CLIST(wavelet_list), GTK_SHADOW_ETCHED_IN);
-      gtk_clist_column_titles_passive(GTK_CLIST(wavelet_list));
-      for (i = 0; i < NUM_WAVELETS; i++) 
-	{
-	  str = WAVELETS[i];
-	  gtk_clist_append(GTK_CLIST(wavelet_list), &str);
-	}
-      gtk_signal_connect(GTK_OBJECT(wavelet_list), "select_row", GTK_SIGNAL_FUNC(wavelet_browse_callback), (gpointer)ss);
-
-      wavelet_scroller = gtk_scrolled_window_new(NULL, NULL);
-      gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(wavelet_scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-      gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(wavelet_scroller), wavelet_list);
-      gtk_container_add(GTK_CONTAINER(wavelet_frame), wavelet_scroller);
-
-      gtk_widget_show(wavelet_list);
-      gtk_widget_show(wavelet_scroller);
-      gtk_widget_show(wavelet_frame);
-
+      wavelet_list = sg_make_scrolled_list(ss, STR_wavelet, outer_table, NUM_WAVELETS, WAVELETS, 
+					   GTK_SIGNAL_FUNC(wavelet_browse_callback), 0, 1, 1, 2);
 
       /* WINDOW */
       window_frame = gtk_frame_new(STR_window);
@@ -574,16 +535,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       window_box = gtk_table_new(2, 2, FALSE);
       gtk_container_add(GTK_CONTAINER(window_frame), window_box);
 
-      window_list = gtk_clist_new(1);
-      gtk_clist_set_selection_mode(GTK_CLIST(window_list), GTK_SELECTION_SINGLE);
-      gtk_clist_set_shadow_type(GTK_CLIST(window_list), GTK_SHADOW_ETCHED_IN);
-      gtk_clist_column_titles_passive(GTK_CLIST(window_list));
-      for (i = 0; i < GUI_NUM_FFT_WINDOWS; i++) 
-	{
-	  str = FFT_WINDOWS[i];
-	  gtk_clist_append(GTK_CLIST(window_list), &str);
-	}
-      gtk_signal_connect(GTK_OBJECT(window_list), "select_row", GTK_SIGNAL_FUNC(window_browse_callback), (gpointer)ss);
+      window_list = sg_make_list((gpointer)ss, GUI_NUM_FFT_WINDOWS, FFT_WINDOWS, GTK_SIGNAL_FUNC(window_browse_callback));
 
       window_scroller = gtk_scrolled_window_new(NULL, NULL);
       gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(window_scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -633,12 +585,12 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       gtk_widget_show(graph_frame);
 
 
-      gtk_clist_select_row(GTK_CLIST(transform_list), transform_type(ss), 0);
+      SG_LIST_SELECT_ROW(transform_list, transform_type(ss));
       for (i = 0; i < NUM_TRANSFORM_SIZES; i++)
 	if (transform_sizes[i] == transform_size(ss))
 	  {
-	    gtk_clist_select_row(GTK_CLIST(size_list), i, 0);
-	    gtk_clist_moveto(GTK_CLIST(size_list), i, 0, 0.5, 0.5);
+	    SG_LIST_SELECT_ROW(size_list, i);
+	    SG_LIST_MOVETO(size_list, i);
 	    break;
 	  }
       if (transform_graph_type(ss) == GRAPH_TRANSFORM_ONCE) set_toggle_button(normal_fft_button, TRUE, FALSE, (gpointer)ss);
@@ -649,10 +601,10 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
       set_toggle_button(logfreq_button, fft_log_frequency(ss), FALSE, (gpointer)ss);
       set_toggle_button(normalize_button, transform_normalization(ss), FALSE, (gpointer)ss);
       set_toggle_button(selection_button, show_selection_transform(ss), FALSE, (gpointer)ss);
-      gtk_clist_select_row(GTK_CLIST(window_list), fft_window(ss), 0);
-      gtk_clist_moveto(GTK_CLIST(window_list), fft_window(ss), 0, 0.5, 0.5);
-      gtk_clist_select_row(GTK_CLIST(wavelet_list), wavelet_type(ss), 0);
-      gtk_clist_moveto(GTK_CLIST(wavelet_list), wavelet_type(ss), 0, 0.5, 0.5);
+      SG_LIST_SELECT_ROW(window_list, fft_window(ss));
+      SG_LIST_MOVETO(window_list, fft_window(ss));
+      SG_LIST_SELECT_ROW(wavelet_list, wavelet_type(ss));
+      SG_LIST_MOVETO(wavelet_list, wavelet_type(ss));
 
       need_callback = 1;
       gtk_widget_show(outer_table);
@@ -699,8 +651,8 @@ void set_transform_size(snd_state *ss, int val)
       for (i = 0; i < NUM_TRANSFORM_SIZES; i++)
 	if (transform_sizes[i] == val)
 	  {
-	    gtk_clist_select_row(GTK_CLIST(size_list), i, 0);
-	    gtk_clist_moveto(GTK_CLIST(size_list), i, 0, 0.5, 0.5);
+	    SG_LIST_SELECT_ROW(size_list, i);
+	    SG_LIST_MOVETO(size_list, i);
 	    break;
 	  }
     }
@@ -713,8 +665,8 @@ void set_fft_window(snd_state *ss, int val)
   if (!(ss->graph_hook_active)) map_over_chans(ss, calculate_fft, NULL);
   if ((transform_dialog) && (graph_drawer))
     {
-      gtk_clist_select_row(GTK_CLIST(window_list), val, 0);
-      gtk_clist_moveto(GTK_CLIST(window_list), val, 0, 0.5, 0.5);
+      SG_LIST_SELECT_ROW(window_list, val);
+      SG_LIST_MOVETO(window_list, val);
       if (graph_frame) 
 	gtk_frame_set_label(GTK_FRAME(graph_frame),
 			    FFT_WINDOWS[val]);
@@ -731,15 +683,15 @@ void set_transform_type(snd_state *ss, int val)
   if (!(ss->graph_hook_active)) 
     map_over_chans(ss, calculate_fft, NULL);
   if (transform_dialog) 
-    gtk_clist_select_row(GTK_CLIST(transform_list), val, 0);
+    SG_LIST_SELECT_ROW(transform_list, val);
 }
 
 void set_wavelet_type(snd_state *ss, int val)
 {
   if (transform_dialog) 
     {
-      gtk_clist_select_row(GTK_CLIST(wavelet_list), val, 0);
-      gtk_clist_moveto(GTK_CLIST(wavelet_list), val, 0, 0.5, 0.5);
+      SG_LIST_SELECT_ROW(wavelet_list, val);
+      SG_LIST_MOVETO(wavelet_list, val);
     }
   in_set_wavelet_type(ss, val);
   map_over_chans(ss, map_chans_wavelet_type, (void *)(&val));
@@ -823,7 +775,7 @@ int add_transform_to_list(char *name)
 {
   /* put at end of list and return associated browse callback row */
   if (transform_dialog)
-    gtk_clist_append(GTK_CLIST(transform_list), &name);
+    SG_LIST_APPEND(transform_list, name);
   return(num_transform_types++);
 }
 

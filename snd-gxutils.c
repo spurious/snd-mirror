@@ -438,7 +438,7 @@ static XEN g_select_item(XEN wid, XEN pos)
   int id;
   w = (GtkWidget *)XEN_UNWRAP_C_POINTER(wid);
   id = XEN_TO_C_INT(pos);
-  gtk_clist_select_row(GTK_CLIST(w), id, 0); /* does this trigger the callback? */
+  SG_LIST_SELECT_ROW(w, id); /* does this trigger the callback? */
 #endif
   return(pos);
 }

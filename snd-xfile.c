@@ -769,6 +769,9 @@ static void file_comment_label_help_callback(Widget w, XtPointer context, XtPoin
 "This optional field provides any comments that you want saved in the output file's header.");	   
 }
 
+#define NUM_HEADER_TYPES 7
+static char *header_short_names[NUM_HEADER_TYPES] = {"sun  ", "aifc ", "wave ", "raw  ", "aiff ", "ircam", "nist "};
+
 file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *in_args, int in_n, int with_chan, int header_type, int data_format, int with_loc)
 {
   Widget mainform, form,
@@ -776,7 +779,6 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
     slab, stext, clab, ctext, sep2, sep3, 
     comment_label, comment_text, sep4,
     loclab, loctext;
-  int hdrtyps;
   file_data *fdat;
   Arg args[32];
   int i, n;
@@ -826,17 +828,16 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
   XtSetArg(args[n], XmNlistMarginWidth, 1); n++;
   XtSetArg(args[n], XmNuserData, (XtPointer)fdat); n++;
   /* what is selected depends on current type */
-  hdrtyps = num_header_types();
-  strs = (XmString *)CALLOC(hdrtyps, sizeof(XmString)); 
-  for (i = 0; i < hdrtyps; i++) 
-    strs[i] = XmStringCreate(header_short_name(i), XmFONTLIST_DEFAULT_TAG);
+  strs = (XmString *)CALLOC(NUM_HEADER_TYPES, sizeof(XmString)); 
+  for (i = 0; i < NUM_HEADER_TYPES; i++) 
+    strs[i] = XmStringCreate(header_short_names[i], XmFONTLIST_DEFAULT_TAG);
   XtSetArg(args[n], XmNitems, strs); n++;
-  XtSetArg(args[n], XmNitemCount, num_header_types()); n++;
+  XtSetArg(args[n], XmNitemCount, NUM_HEADER_TYPES); n++;
   XtSetArg(args[n], XmNvisibleItemCount, NUM_VISIBLE_HEADERS); n++;
   hlist = XmCreateScrolledList(form, "header type", args, n);
   XtAddCallback(hlist, XmNhelpCallback, file_header_help_callback, ss);
   XtManageChild(hlist);
-  for (i = 0; i < hdrtyps; i++) XmStringFree(strs[i]);
+  for (i = 0; i < NUM_HEADER_TYPES; i++) XmStringFree(strs[i]);
   FREE(strs);
   XmListSelectPos(hlist, fdat->header_pos + 1, FALSE);
   fdat->header_list = hlist;
@@ -1950,6 +1951,7 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   int i, n;
   int sr, oc, fr;
   char *str;
+  char **format_names;
   Arg args[20];
   Widget lst, defw, dls, rform, dlab, dloclab, chnlab;
 
@@ -2075,15 +2077,16 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   XtSetArg(args[n], XmNtopWidget, dlab); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   formats = (XmString *)CALLOC(num_data_formats(), sizeof(XmString));
-  for (i = 1; i < num_data_formats(); i++) 
-    formats[i-1] = XmStringCreate(data_format_name(i), XmFONTLIST_DEFAULT_TAG);
+  format_names = data_format_names();
+  for (i = 0; i < num_data_formats(); i++) 
+    formats[i] = XmStringCreate(format_names[i], XmFONTLIST_DEFAULT_TAG);
   lst = XmCreateScrolledList(rform, "raw-data-format-list", args, n);
   XtVaSetValues(lst, XmNitems, formats, 
-		     XmNitemCount, num_data_formats() - 1, 
+		     XmNitemCount, num_data_formats(), 
 		     XmNvisibleItemCount, 6, NULL);
   XtManageChild(lst); 
   XmListSelectPos(lst, fr, FALSE);
-  for (i = 1; i < num_data_formats(); i++) 
+  for (i = 0; i < num_data_formats(); i++) 
     XmStringFree(formats[i]);
   FREE(formats);
   XtAddCallback(lst, XmNbrowseSelectionCallback, raw_data_browse_callback, ss);

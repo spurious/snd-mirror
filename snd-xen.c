@@ -1190,7 +1190,7 @@ static XEN g_set_temp_dir(XEN val)
   XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, "set-" S_temp_dir, "a string"); 
   if (temp_dir(state)) FREE(temp_dir(state));
   if (XEN_FALSE_P(val))
-    set_temp_dir(state, copy_string(DEFAULT_TEMP_DIR));
+    set_temp_dir(state, (DEFAULT_TEMP_DIR) ? copy_string(DEFAULT_TEMP_DIR) : NULL);
   else 
     {
       set_temp_dir(state, copy_string(XEN_TO_C_STRING(val)));
@@ -1227,7 +1227,7 @@ static XEN g_set_ladspa_dir(XEN val)
   XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, "set-" S_ladspa_dir, "a string"); 
   if (ladspa_dir(state)) FREE(ladspa_dir(state));
   if (XEN_FALSE_P(val))
-    set_ladspa_dir(state, copy_string(DEFAULT_LADSPA_DIR));
+    set_ladspa_dir(state, (DEFAULT_LADSPA_DIR) ? copy_string(DEFAULT_LADSPA_DIR) : NULL);
   else set_ladspa_dir(state, copy_string(XEN_TO_C_STRING(val)));
   return(C_TO_XEN_STRING(ladspa_dir(state)));
 }
@@ -1306,7 +1306,7 @@ static XEN g_set_vu_font(XEN val)
   XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, "set-" S_vu_font, "a string"); 
   if (vu_font(state)) FREE(vu_font(state));
   if (XEN_FALSE_P(val))
-    set_vu_font(state, copy_string(DEFAULT_VU_FONT));
+    set_vu_font(state, (DEFAULT_VU_FONT) ? copy_string(DEFAULT_VU_FONT) : NULL);
   else set_vu_font(state, copy_string(XEN_TO_C_STRING(val)));
   return(C_TO_XEN_STRING(vu_font(state)));
 }

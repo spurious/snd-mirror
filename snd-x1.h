@@ -258,7 +258,7 @@ char **speed_r_bits(void);
 
 /* -------- snd-gxcolormaps.c -------- */
 
-char *colormap_name(int n);
+char **colormap_names(void);
 unsigned short *snd_colormap(int n);
 void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b);
 

@@ -160,7 +160,7 @@ void finish_recording(snd_state *ss, recorder_info *rp);
 #else
   #if USE_GTK
     #define FONT_TYPE GdkFont
-    #define LOAD_FONT(Font) gdk_font_load(Font)
+    #define LOAD_FONT(Font) SG_FONT_LOAD(Font)
   #else
     #define FONT_TYPE int
     #define LOAD_FONT(Font) NULL

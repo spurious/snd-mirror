@@ -24,9 +24,9 @@ static GtkWidget *help_text = NULL;
 
 static void add_help_text (snd_state *ss, GtkWidget *text, char *message)
 {
-  gtk_text_freeze (GTK_TEXT (text));
-  gtk_text_insert (GTK_TEXT (text), (ss->sgx)->help_text_fnt, (ss->sgx)->black, (ss->sgx)->white, message, -1);
-  gtk_text_thaw (GTK_TEXT (text));
+  SG_TEXT_FREEZE(text);
+  SG_TEXT_INSERT(text, (ss->sgx)->help_text_fnt, (ss->sgx)->black, (ss->sgx)->white, message, -1);
+  SG_TEXT_THAW(text);
 }
 
 static void create_help_monolog(snd_state *ss)
@@ -62,12 +62,10 @@ static GtkWidget *snd_help_1(snd_state *ss, char *subject, char *helpstr, int wi
 {
   /* place help string in scrollable help window */
   /* if window is already active, add this help at the top and reposition */
-  guint chars;
   if (!(help_dialog)) create_help_monolog(ss); else raise_dialog(help_dialog);
   mus_snprintf(help_window_label, LABEL_BUFFER_SIZE, "%s help", subject);
   gtk_window_set_title(GTK_WINDOW(help_dialog), help_window_label);
-  chars = gtk_text_get_length(GTK_TEXT(help_text));
-  if (chars > 0) gtk_editable_delete_text(GTK_EDITABLE(help_text), 0, -1);
+  SG_TEXT_CLEAR(help_text);
   if (with_wrap)
     {
       char *new_help = NULL;

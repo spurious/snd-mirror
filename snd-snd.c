@@ -32,7 +32,7 @@ snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_f
 	snd_error("can't write %s %s file with %s data format",
 		  ((header_type != MUS_RIFF) && (header_type != MUS_NEXT)) ? "an" : "a",
 		  mus_header_type_name(header_type),
-		  data_format_name(data_format));
+		  mus_data_format_name(data_format));
     }
   return(NULL);
 }

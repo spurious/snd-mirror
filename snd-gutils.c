@@ -6,7 +6,7 @@ int set_help_text_font(snd_state *ss, char *font)
   state_context *sgx;
   if (ss->using_schemes) return(FALSE);
   sgx = ss->sgx;
-  fs = gdk_font_load(font);
+  fs = SG_FONT_LOAD(font);
   if (fs)
     {
       if (help_text_font(ss)) FREE(help_text_font(ss));
@@ -23,7 +23,7 @@ int set_tiny_font(snd_state *ss, char *font)
   state_context *sgx;
   if (ss->using_schemes) return(FALSE);
   sgx = ss->sgx;
-  fs = gdk_font_load(font);
+  fs = SG_FONT_LOAD(font);
   if (fs)
     {
       if (tiny_font(ss)) FREE(tiny_font(ss));
@@ -38,7 +38,7 @@ int set_listener_font(snd_state *ss, char *font)
 {
   GdkFont *fs = NULL;
   if (ss->using_schemes) return(FALSE);
-  fs = gdk_font_load(font);
+  fs = SG_FONT_LOAD(font);
   if (fs)
     {
       if (listener_font(ss)) FREE(listener_font(ss));
@@ -53,7 +53,7 @@ int set_button_font(snd_state *ss, char *font)
 {
   GdkFont *fs = NULL;
   if (ss->using_schemes) return(FALSE);
-  fs = gdk_font_load(font);
+  fs = SG_FONT_LOAD(font);
   if (fs)
     {
       if (button_font(ss)) FREE(button_font(ss));
@@ -68,7 +68,7 @@ int set_bold_button_font(snd_state *ss, char *font)
 {
   GdkFont *fs = NULL;
   if (ss->using_schemes) return(FALSE);
-  fs = gdk_font_load(font);
+  fs = SG_FONT_LOAD(font);
   if (fs)
     {
       if (bold_button_font(ss)) FREE(bold_button_font(ss));
@@ -83,7 +83,7 @@ int set_axis_label_font(snd_state *ss, char *font)
 {
   GdkFont *fs = NULL;
   if (ss->using_schemes) return(FALSE);
-  fs = gdk_font_load(font);
+  fs = SG_FONT_LOAD(font);
   if (fs)
     {
       if (axis_label_font(ss)) FREE(axis_label_font(ss));
@@ -98,7 +98,7 @@ int set_axis_numbers_font(snd_state *ss, char *font)
 {
   GdkFont *fs = NULL;
   if (ss->using_schemes) return(FALSE);
-  fs = gdk_font_load(font);
+  fs = SG_FONT_LOAD(font);
   if (fs)
     {
       if (axis_numbers_font(ss)) FREE(axis_numbers_font(ss));
@@ -544,47 +544,58 @@ gpointer get_user_data(GtkObject *obj)
   return(gtk_object_get_data(obj, OUR_DATA));
 }
 
-#if (!HAVE_GTK2)
-char *sg_label_text(GtkLabel *w) {char *text; gtk_label_get(w, &text); return(text);}
-#endif
+/* many changes between gtk 1.2 and 1.3, some of which are handled here, others in snd-g0.h */
 
+#if HAVE_GTK2
+
+char *sg_get_text(GtkWidget *w, int start, int end)
+{
+  GtkTextIter s, e;
+  GtkTextBuffer *buf;
+  buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
+  gtk_text_buffer_get_iter_at_offset(buf, &s, start);
+  gtk_text_buffer_get_iter_at_offset(buf, &e, end);  /* this is utterly idiotic!!! */
+  return(gtk_text_buffer_get_text(buf, &s, &e, TRUE));
+}
+
+void sg_set_cursor(GtkWidget *w, int position)
+{
+  GtkTextIter pos;
+  GtkTextBuffer *buf;
+  buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
+  gtk_text_buffer_get_iter_at_offset(buf, &pos, position);
+  gtk_text_buffer_place_cursor(buf, &pos);
+}
+
+#else
+
+char *sg_label_text(GtkLabel *w) {char *text; gtk_label_get(w, &text); return(text);}
+
+#endif
 
 GtkWidget *make_scrolled_text(snd_state *ss, GtkWidget *parent, int editable, GtkWidget *boxer, GtkWidget *paner)
 {
   /* returns new text widget */
-  GtkWidget *table, *hscrollbar, *vscrollbar, *new_text;
 #if HAVE_GTK2
-  table = gtk_table_new (2, 2, FALSE);
+  GtkWidget *sw, *new_text;
+  sw = gtk_scrolled_window_new(NULL, NULL);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   if (boxer)
-    gtk_box_pack_start(GTK_BOX(boxer), table, TRUE, TRUE, 4);
+    gtk_box_pack_start(GTK_BOX(boxer), sw, TRUE, TRUE, 4);
   new_text = gtk_text_view_new();
-  gtk_table_attach(GTK_TABLE(table), new_text, 0, 1, 0, 1, 
-		   (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
-		   (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
-		   0, 0);
+  gtk_container_add(GTK_CONTAINER (sw), new_text);
   gtk_text_view_set_editable(GTK_TEXT_VIEW(new_text), editable);
   gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(new_text), GTK_WRAP_NONE);
   gtk_widget_show(new_text);
-  hscrollbar = gtk_hscrollbar_new(GTK_TEXT_VIEW(new_text)->hadjustment);
-  set_background(hscrollbar, (ss->sgx)->position_color);
-  gtk_table_attach(GTK_TABLE(table), hscrollbar, 0, 1, 1, 2, 
-		   (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), 
-		   (GtkAttachOptions)(GTK_FILL), 
-		   0, 0);
-  gtk_widget_show (hscrollbar);
-  vscrollbar = gtk_vscrollbar_new(GTK_TEXT_VIEW(new_text)->vadjustment);
-  set_background(vscrollbar, (ss->sgx)->position_color);
-  gtk_table_attach(GTK_TABLE(table), vscrollbar, 1, 2, 0, 1,
-		   (GtkAttachOptions)(GTK_FILL), 
-		   (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
-		   0, 0);
-  gtk_widget_show (vscrollbar);
+  set_background((GTK_SCROLLED_WINDOW(sw))->hscrollbar, (ss->sgx)->position_color);
+  set_background((GTK_SCROLLED_WINDOW(sw))->vscrollbar, (ss->sgx)->position_color);
   if (parent)
-    gtk_container_add(GTK_CONTAINER(parent), table);
+    gtk_container_add(GTK_CONTAINER(parent), sw);
   if (paner)
-    gtk_paned_add2(GTK_PANED(paner), table);
-  gtk_widget_show(table);
+    gtk_paned_add2(GTK_PANED(paner), sw);
+  gtk_widget_show(sw);
 #else
+  GtkWidget *table, *hscrollbar, *vscrollbar, *new_text;
   table = gtk_table_new(2, 2, FALSE);
   if (boxer)
     gtk_box_pack_start(GTK_BOX(boxer), table, TRUE, TRUE, 4);
@@ -618,5 +629,26 @@ GtkWidget *make_scrolled_text(snd_state *ss, GtkWidget *parent, int editable, Gt
   gtk_widget_show(table);
 #endif
   return(new_text);
+}
+
+GtkWidget *sg_make_list(gpointer gp, int num_items, char **items, GtkSignalFunc callback)
+{
+  GtkWidget *list;
+#if HAVE_GTK2
+#else
+  char *str;
+  int i;
+  list = gtk_clist_new(1);
+  gtk_clist_set_selection_mode(GTK_CLIST(list), GTK_SELECTION_SINGLE);
+  gtk_clist_set_shadow_type(GTK_CLIST(list), GTK_SHADOW_ETCHED_IN);
+  gtk_clist_column_titles_passive(GTK_CLIST(list));
+  for (i = 0; i < num_items; i++) 
+    {
+      str = items[i];
+      gtk_clist_append(GTK_CLIST(list), &str);
+    }
+  gtk_signal_connect(GTK_OBJECT(list), "select_row", callback, gp);
+#endif
+  return(list);
 }
 

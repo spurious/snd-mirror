@@ -34,8 +34,7 @@
 ;;; (filter-track track coeffs) filter track data
 ;;; (reverse-track track) reverses the mix order
 
-(load "env.scm")
-
+(load-from-path "env.scm")
 
 (define (delete-mix id)
   (if (mix? id)

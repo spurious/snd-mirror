@@ -326,7 +326,7 @@ static XEN g_load_font(XEN font)
   #define H_load_font "(" S_load_font " <name>) -> font-id"
   GdkFont *fs = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(font), font, XEN_ONLY_ARG, S_load_font, "a string");
-  fs = gdk_font_load(XEN_TO_C_STRING(font));
+  fs = SG_FONT_LOAD(XEN_TO_C_STRING(font));
   if (fs) return(XEN_WRAP_C_POINTER(fs));
   return(XEN_FALSE);
 }

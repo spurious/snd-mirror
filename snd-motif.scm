@@ -497,7 +497,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; -------- create-fmv-dialog --------
 
 (define fmv-dialog #f)
-(load "fmv.scm")
+(load-from-path "fmv.scm")
 
 (define (create-fmv-dialog)
   ;; TODO: ramp the amp changes, add index and frequency controls, add spectrum display
@@ -625,7 +625,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 ;;; if you have a nice background pixmap, you can map it over all of Snd with:
 #!
-(load "backgrounds.scm")
+(load-from-path "backgrounds.scm")
 (define wd (make-pixmap (|Widget (cadr (main-widgets))) wood))
 
 (define (paint-all widget)
@@ -1756,7 +1756,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 			|XmNpaneMinimum 48
 			|XmNpaneMaximum 48
 			|XmNorientation |XmHORIZONTAL))))
-    (load "icons.scm")
+    (load-from-path "icons.scm")
     (for-each 
      (lambda (icon callback)
        (let ((button

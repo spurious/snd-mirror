@@ -10,7 +10,7 @@ static int printout_end;
 void save_listener_text(FILE *fp)
 {
   char *str = NULL;
-  str = gtk_editable_get_chars(GTK_EDITABLE(listener_text), 0, -1);
+  str = SG_TEXT_CHARS(listener_text, 0, -1);
   if (str)
     {
       fwrite((void *)str, sizeof(char), snd_strlen(str), fp);
@@ -24,14 +24,14 @@ void append_listener_text(int end, char *msg)
   int chars;
   snd_state *ss;
   ss = get_global_state();
-  chars = gtk_text_get_length(GTK_TEXT(listener_text));
-  if (chars > 0) gtk_text_set_point(GTK_TEXT(listener_text), chars);
-  gtk_text_insert(GTK_TEXT(listener_text),
-		  (ss->sgx)->listener_fnt,
-		  (ss->sgx)->listener_text_color,
-		  (ss->sgx)->listener_color,
-		  msg,
-		  -1);
+  chars = SG_TEXT_LENGTH(listener_text);
+  if (chars > 0) SG_TEXT_SET_POINT(listener_text, chars);
+  SG_TEXT_INSERT(listener_text,
+		 (ss->sgx)->listener_fnt,
+		 (ss->sgx)->listener_text_color,
+		 (ss->sgx)->listener_color,
+		 msg,
+		 -1);
 }
 
 static void activate_channel (snd_state *ss)
@@ -53,9 +53,9 @@ static void listener_completion(snd_state *ss)
   gint xoff, yoff; 
   int try_completion = 1;
   beg = printout_end + 1;
-  end = gtk_text_get_length(GTK_TEXT(listener_text));
+  end = SG_TEXT_LENGTH(listener_text);
   if (end <= beg) return;
-  old_text = gtk_editable_get_chars(GTK_EDITABLE(listener_text), beg, end);
+  old_text = SG_TEXT_CHARS(listener_text, beg, end);
   /* now old_text is the stuff typed since the last prompt */
   if (old_text)
     {
@@ -67,7 +67,7 @@ static void listener_completion(snd_state *ss)
 	}
       if (strcmp(old_text, new_text) == 0) 
 	matches = get_completion_matches();
-      gtk_text_backward_delete(GTK_TEXT(listener_text), (end - beg));
+      SG_TEXT_BACKWARD_DELETE(listener_text, (end - beg));
       append_listener_text(0, new_text);
       if (new_text) 
 	{
@@ -133,7 +133,7 @@ void listener_append(snd_state *ss, char *msg)
       if ((ss->sgx)->graph_is_active)
 	(ss->sgx)->graph_is_active = FALSE;
       append_listener_text(0, msg);
-      printout_end = gtk_text_get_length(GTK_TEXT(listener_text)) - 1;
+      printout_end = SG_TEXT_LENGTH(listener_text) - 1;
     }
 }
 
@@ -145,7 +145,7 @@ void listener_append_and_prompt(snd_state *ss, char *msg)
       if (msg)
 	append_listener_text(0, msg);
       append_listener_text(0, listener_prompt_with_cr(ss));
-      cmd_eot = gtk_text_get_length(GTK_TEXT(listener_text));
+      cmd_eot = SG_TEXT_LENGTH(listener_text);
       printout_end = cmd_eot - 1;
     }
 }
@@ -161,9 +161,9 @@ static void grab_line(snd_state *ss)
 {
   char *full_str;
   int current_position, last_position, i, j, k;
-  full_str = gtk_editable_get_chars(GTK_EDITABLE(listener_text), 0, -1);
-  current_position = gtk_editable_get_position(GTK_EDITABLE(listener_text));
-  last_position = gtk_text_get_length(GTK_TEXT(listener_text));
+  full_str = SG_TEXT_CHARS(listener_text, 0, -1);
+  current_position = SG_TEXT_GET_POINT(listener_text);
+  last_position = SG_TEXT_LENGTH(listener_text);
   for (i = current_position; i < last_position; i++)
     if (full_str[i] == '\n')
       break;
@@ -181,20 +181,20 @@ static void grab_line(snd_state *ss)
 static void insert_line(snd_state *ss)
 {
   if (C_k_str)
-    gtk_text_insert(GTK_TEXT(listener_text),
-		    (ss->sgx)->listener_fnt,
-		    (ss->sgx)->listener_text_color,
-		    (ss->sgx)->listener_color,
-		    C_k_str,
-		    snd_strlen(C_k_str));
+    SG_TEXT_INSERT(listener_text,
+		   (ss->sgx)->listener_fnt,
+		   (ss->sgx)->listener_text_color,
+		   (ss->sgx)->listener_color,
+		   C_k_str,
+		   snd_strlen(C_k_str));
 }
 
 static void back_to_start(snd_state *ss)
 {
   char *full_str = NULL, *prompt;
   int i, start_of_text;
-  full_str = gtk_editable_get_chars(GTK_EDITABLE(listener_text), 0, -1);
-  start_of_text = gtk_editable_get_position(GTK_EDITABLE(listener_text));
+  full_str = SG_TEXT_CHARS(listener_text, 0, -1);
+  start_of_text = SG_TEXT_GET_POINT(listener_text);
   prompt = listener_prompt(ss);
   if (start_of_text > 0)
     {
@@ -206,7 +206,7 @@ static void back_to_start(snd_state *ss)
 	    break;
 	  }
     }
-  gtk_editable_set_position(GTK_EDITABLE(listener_text), start_of_text);
+  SG_TEXT_SET_POINT(listener_text, start_of_text);
   if (full_str) g_free(full_str);
 }
 
@@ -220,7 +220,7 @@ static gint listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 
   if (last_highlight_position != -1)
     {
-      gtk_editable_select_region(GTK_EDITABLE(listener_text), 0, 0);
+      SG_TEXT_UNSELECT(listener_text);
       last_highlight_position = -1;
     }
 
@@ -271,10 +271,10 @@ static gint listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 				{
 				  int current_position;
 				  char *fstr;
-				  current_position = gtk_editable_get_position(GTK_EDITABLE(listener_text));
+				  current_position = SG_TEXT_GET_POINT(listener_text);
 				  if (current_position > 1)
 				    {
-				      fstr = gtk_editable_get_chars(GTK_EDITABLE(listener_text), current_position - 2, current_position);
+				      fstr = SG_TEXT_CHARS(listener_text, current_position - 2, current_position);
 				      if ((current_position != (printout_end - 2)) && 
 					  (strcmp(fstr, listener_prompt_with_cr(ss)) != 0))
 					{
@@ -288,16 +288,14 @@ static gint listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 				{
 				  if ((event->keyval == snd_K_greater) && (event->state & snd_MetaMask))
 				    {
-				      end = gtk_text_get_length(GTK_TEXT(listener_text));
-				      gtk_text_set_point(GTK_TEXT(listener_text), end);
-				      gtk_editable_set_position(GTK_EDITABLE(listener_text), end);
+				      end = SG_TEXT_LENGTH(listener_text);
+				      SG_TEXT_SET_POINT(listener_text, end);
 				    }
 				  else
 				    {
 				      if ((event->keyval == snd_K_less) && (event->state & snd_MetaMask))
 					{
-					  gtk_text_set_point(GTK_TEXT(listener_text), 1);
-					  gtk_editable_set_position(GTK_EDITABLE(listener_text), 1);
+					  SG_TEXT_SET_POINT(listener_text, 1);
 					}
 				      else 
 					{
@@ -320,7 +318,7 @@ static gint clear_paren_check(gpointer nada)
 {
   if (last_highlight_position != -1)
     {
-      gtk_editable_select_region(GTK_EDITABLE(listener_text), 0, 0);
+      SG_TEXT_UNSELECT(listener_text);
       last_highlight_position = -1;
     }
   return(0);
@@ -333,12 +331,12 @@ static gint check_parens(GtkWidget *w, GdkEventKey *event, gpointer data)
   int parens = 0, i;
   snd_state *ss;
   
-  current_position = gtk_editable_get_position(GTK_EDITABLE(listener_text));
-  fstr = gtk_editable_get_chars(GTK_EDITABLE(listener_text), 0, -1);
+  current_position = SG_TEXT_GET_POINT(listener_text);
+  fstr = SG_TEXT_CHARS(listener_text, 0, -1);
 
   if (last_highlight_position != -1)
     {
-      gtk_editable_select_region(GTK_EDITABLE(listener_text), 0, 0);
+      SG_TEXT_UNSELECT(listener_text);
       last_highlight_position = -1;
     }
 
@@ -356,7 +354,7 @@ static gint check_parens(GtkWidget *w, GdkEventKey *event, gpointer data)
 	  if (fstr[i] == '(') parens--;
 	  if (parens == 0)
 	    {
-	      gtk_editable_select_region(GTK_EDITABLE(listener_text), i, i + 1);
+	      SG_TEXT_SELECT(listener_text, i, i + 1);
 	      last_highlight_position = i;
 	      gtk_timeout_add(300, clear_paren_check, NULL);
 	      break;
@@ -445,12 +443,12 @@ static void make_command_widget(snd_state *ss, int height)
       gtk_signal_connect(GTK_OBJECT(listener_text), "enter_notify_event", GTK_SIGNAL_FUNC(listener_focus_callback), NULL);
       gtk_signal_connect(GTK_OBJECT(listener_text), "leave_notify_event", GTK_SIGNAL_FUNC(listener_unfocus_callback), NULL);
       ss->sgx->listener_pane = listener_text;
-      gtk_text_insert(GTK_TEXT(listener_text),
-		      (ss->sgx)->listener_fnt,
-		      (ss->sgx)->listener_text_color,
-		      (ss->sgx)->listener_color,
-		      listener_prompt(ss),
-		      -1);
+      SG_TEXT_INSERT(listener_text,
+		     (ss->sgx)->listener_fnt,
+		     (ss->sgx)->listener_text_color,
+		     (ss->sgx)->listener_color,
+		     listener_prompt(ss),
+		     -1);
       set_text_background(listener_text, (ss->sgx)->listener_color);
     }
 }
@@ -503,11 +501,18 @@ static XEN g_listener_selected_text(void)
   XEN res = XEN_FALSE;
   if (listener_text)
     {
+#if HAVE_GTK2
+      GtkTextIter start, end;
+      if (gtk_text_buffer_get_selection_bounds(gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text)), &start, &end))
+	{
+	  txt = gtk_text_buffer_get_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text)), &start, &end, TRUE);
+#else
       if (GTK_EDITABLE(listener_text)->has_selection)
 	{
-	  txt = gtk_editable_get_chars(GTK_EDITABLE(listener_text),
-				       GTK_EDITABLE(listener_text)->selection_start_pos,
-				       GTK_EDITABLE(listener_text)->selection_end_pos);
+	  txt = SG_TEXT_CHARS(listener_text,
+			      GTK_EDITABLE(listener_text)->selection_start_pos,
+			      GTK_EDITABLE(listener_text)->selection_end_pos);
+#endif
 	  if (txt) 
 	    {
 	      res = C_TO_XEN_STRING(txt);

@@ -91,7 +91,7 @@ void snd_file_lock_icon(snd_info *sp, int on)
 	  sx->file_pix = blank;
 	  sx->file_mask = blank_mask;
 	}
-      gtk_pixmap_set(GTK_PIXMAP(w_snd_name_pix(sp)), sx->file_pix, sx->file_mask);
+      SG_PIXMAP_SET(w_snd_name_pix(sp), sx->file_pix, sx->file_mask);
     }
 }
 
@@ -115,7 +115,7 @@ static void show_bomb_icon(snd_info *sp, int on)
 	  sx->file_pix = blank;
 	  sx->file_mask = blank_mask;
 	}
-      gtk_pixmap_set(GTK_PIXMAP(w_snd_name_pix(sp)), sx->file_pix, sx->file_mask);
+      SG_PIXMAP_SET(w_snd_name_pix(sp), sx->file_pix, sx->file_mask);
     }
 }
 
@@ -173,12 +173,12 @@ static void snd_file_glasses_icon(snd_info *sp, int on, int glass)
   if (on)
     {
       if (mini_glasses[glass]) 
-	gtk_pixmap_set(GTK_PIXMAP(w), mini_glasses[glass], glass_mask);
+	SG_PIXMAP_SET(w, mini_glasses[glass], glass_mask);
     }
   else
     {
       sx = sp->sgx;
-      gtk_pixmap_set(GTK_PIXMAP(w), sx->file_pix, sx->file_mask);
+      SG_PIXMAP_SET(w, sx->file_pix, sx->file_mask);
     }
 }
 
@@ -203,13 +203,13 @@ static void make_pixmaps(snd_state *ss)
 
 void set_blank_pixmap(GtkWidget *w)
 {
-  gtk_pixmap_set(GTK_PIXMAP(w), blank, blank_mask);
+  SG_PIXMAP_SET(w, blank, blank_mask);
 }
 
 GtkWidget *get_blank_pixmap(snd_state *ss) 
 {
   make_pixmaps(ss);
-  return(gtk_pixmap_new(blank, blank_mask));
+  return(SG_PIXMAP_NEW(blank, blank_mask));
 }
 
 
@@ -234,7 +234,7 @@ void set_minibuffer_cursor_position(snd_info *sp, int pos)
 
 char *get_minibuffer_string(snd_info *sp) 
 {
-  return(gtk_editable_get_chars(GTK_EDITABLE(w_snd_minibuffer(sp)), 0, -1));
+  return((char *)gtk_entry_get_text(GTK_ENTRY(w_snd_minibuffer(sp))));
 } 
 
 static char stupid[1] ={'\0'};
@@ -630,12 +630,12 @@ static void srate_arrow_callback(GtkWidget *w, gpointer data)
   if (sp->speed_control_direction == 1)
     {
       sp->speed_control_direction = -1;
-      gtk_pixmap_set(GTK_PIXMAP(w_snd_srate_pix(sp)), speed_l, speed_l_mask);
+      SG_PIXMAP_SET(w_snd_srate_pix(sp), speed_l, speed_l_mask);
     }
   else
     {
       sp->speed_control_direction = 1;
-      gtk_pixmap_set(GTK_PIXMAP(w_snd_srate_pix(sp)), speed_r, speed_r_mask);
+      SG_PIXMAP_SET(w_snd_srate_pix(sp), speed_r, speed_r_mask);
     }
 }
 
@@ -646,8 +646,8 @@ void toggle_direction_arrow(snd_info *sp, int state)
   if ((sp->speed_control_direction != dir) && (!(IS_PLAYER(sp))))
     {
       if (dir == 1)
-	gtk_pixmap_set(GTK_PIXMAP(w_snd_srate_pix(sp)), speed_r, speed_r_mask);
-      else gtk_pixmap_set(GTK_PIXMAP(w_snd_srate_pix(sp)), speed_l, speed_l_mask);
+	SG_PIXMAP_SET(w_snd_srate_pix(sp), speed_r, speed_r_mask);
+      else SG_PIXMAP_SET(w_snd_srate_pix(sp), speed_l, speed_l_mask);
     }
   sp->speed_control_direction = dir;
 }
@@ -1422,7 +1422,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       set_background(sw[W_name_icon], (ss->sgx)->basic_color);
       gtk_widget_show(sw[W_name_icon]);
       
-      sw[W_name_pix] = gtk_pixmap_new(blank, blank_mask);
+      sw[W_name_pix] = SG_PIXMAP_NEW(blank, blank_mask);
       gtk_container_add(GTK_CONTAINER(sw[W_name_icon]), sw[W_name_pix]);
       gtk_widget_show(sw[W_name_pix]);
       
@@ -1549,7 +1549,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       gtk_signal_connect(GTK_OBJECT(sw[W_srate_arrow]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
       gtk_widget_show(sw[W_srate_arrow]);
       
-      sw[W_srate_pix] = gtk_pixmap_new(speed_r, speed_r_mask);
+      sw[W_srate_pix] = SG_PIXMAP_NEW(speed_r, speed_r_mask);
       gtk_container_add (GTK_CONTAINER(sw[W_srate_arrow]), sw[W_srate_pix]);
       gtk_widget_show(sw[W_srate_pix]);
       

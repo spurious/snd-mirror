@@ -310,10 +310,12 @@ typedef struct {
  *    CList -> TreeView?
  *    gtk_pixmap -> gdk_pixmap?
  *    gdkfont -> pango? 
+ *    gdk_color_alloc?
+ *    gdk_input_add? gdk_color_white|black?
  *
  *    gtk_entry_set_text changed res type
  *    gtk_paned_set_handle_size and gtk_paned_set_gutter_size removed
- *    gtk_drawing_area_size? 
+ *    gtk_drawing_area_size? gdk_draw_string?
  */
 
 #if HAVE_GTK2
@@ -322,13 +324,14 @@ typedef struct {
   #define SG_SET_RESIZABLE(Window, Val) gtk_window_set_resizable(Window, Val)
   #define SG_SET_SIZE(Widget, Width, Height) gtk_widget_set_size_request(Widget, Width, Height)
   #define SG_SET_POSITION(Widget, X, Y) gtk_window_move(GTK_WINDOW(Widget), X, Y)
-  #ifndef gdk_window_get_size
-    #define gdk_window_get_size gdk_drawable_get_size
-  #endif
   #define SG_LABEL_TEXT(Widget) (char *)gtk_label_get_text(Widget)
   #define SG_SET_GUTTER_SIZE(Widget, Size)
   #define SG_SET_HANDLE_SIZE(Widget, Size)
   #define SG_SET_DRAWING_AREA_SIZE(Widget, Width, Height)
+
+  #ifndef gdk_window_get_size
+    #define gdk_window_get_size gdk_drawable_get_size
+  #endif
   #ifndef gdk_draw_pixmap
     #define gdk_draw_pixmap gdk_draw_drawable
   #endif
@@ -338,6 +341,42 @@ typedef struct {
   #ifndef gtk_menu_insert
     #define gtk_menu_insert(Menu, Child, Pos) gtk_menu_shell_insert((GtkMenuShell *)(Menu), (Child), (Pos))
   #endif
+  #ifndef gtk_menu_bar_append
+    #define gtk_menu_bar_append(Menu, Child) gtk_menu_shell_append((GtkMenuShell *)(Menu),(Child))
+  #endif
+  #ifndef gtk_menu_item_right_justify
+    #define gtk_menu_item_right_justify(Menu_item) gtk_menu_item_set_right_justified((Menu_item), TRUE)
+  #endif
+  #ifndef gtk_radio_button_group
+    #define gtk_radio_button_group gtk_radio_button_get_group
+  #endif
+
+  #define SG_TEXT_LENGTH(Widget) gtk_text_buffer_get_char_count(gtk_text_view_get_buffer(GTK_TEXT_VIEW(Widget)))
+  #define SG_TEXT_CHARS(Widget, Start, End) sg_get_text(Widget, Start, End)
+  #define SG_TEXT_CLEAR(Widget) gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(Widget)), "", 0)
+  #define SG_TEXT_FREEZE(Widget)
+  #define SG_TEXT_THAW(Widget)
+
+  /* TODO: gtk2 macros for text cursor selection insertion deletion */
+  #define SG_TEXT_SET_POINT(Widget, Point) sg_set_cursor(Widget, Point)
+  #define SG_TEXT_GET_POINT(Widget) 0
+  #define SG_TEXT_UNSELECT(Widget)
+  #define SG_TEXT_SELECT(Widget, Start, End)
+  #define SG_TEXT_INSERT(Widget, Font, ForeColor, BackColor, Text, Number)
+  #define SG_TEXT_BACKWARD_DELETE(Widget, Number)
+
+  /* TODO: macros for lists */
+  #define SG_LIST_SELECT_ROW(Widget, Row)
+  #define SG_LIST_MOVETO(Widget, Row)
+  #define SG_LIST_CLEAR(Widget)
+  #define SG_LIST_APPEND(Widget, Str)
+  #define SG_LIST_INSERT(Widget, Position, Str)
+  #define SG_LIST_SET_TEXT(Widget, Row, Str) 
+
+  /* TODO: macros for pixmaps fonts */
+  #define SG_PIXMAP_NEW(Map, Mask) NULL
+  #define SG_PIXMAP_SET(Holder, Map, Mask)
+  #define SG_FONT_LOAD(Font) NULL
 
 #else
 
@@ -349,8 +388,27 @@ typedef struct {
   #define SG_SET_GUTTER_SIZE(Widget, Size) gtk_paned_set_gutter_size(Widget,Size)
   #define SG_SET_HANDLE_SIZE(Widget, Size) gtk_paned_set_handle_size(Widget,Size)
   #define SG_SET_DRAWING_AREA_SIZE(Widget, Width, Height) gtk_drawing_area_size(Widget, Width, Height)
+  #define SG_TEXT_LENGTH(Widget) gtk_text_get_length(GTK_TEXT(Widget))
+  #define SG_TEXT_CHARS(Widget, Start, End) gtk_editable_get_chars(GTK_EDITABLE(Widget), Start, End)
+  #define SG_TEXT_CLEAR(Widget) if (SG_TEXT_LENGTH(Widget) > 0) gtk_editable_delete_text(GTK_EDITABLE(Widget), 0, -1)
+  #define SG_TEXT_FREEZE(Widget) gtk_text_freeze(GTK_TEXT(Widget))
+  #define SG_TEXT_THAW(Widget) gtk_text_freeze(GTK_TEXT(Widget))
+  #define SG_TEXT_SET_POINT(Widget, Point) gtk_text_set_point(GTK_TEXT(Widget), Point); gtk_editable_set_position(GTK_EDITABLE(Widget), Point)
+  #define SG_TEXT_GET_POINT(Widget) gtk_editable_get_position(GTK_EDITABLE(Widget))
+  #define SG_TEXT_UNSELECT(Widget) gtk_editable_select_region(GTK_EDITABLE(Widget), 0, 0)
+  #define SG_TEXT_SELECT(Widget, Start, End) gtk_editable_select_region(GTK_EDITABLE(Widget), Start, End)
+  #define SG_TEXT_INSERT(Widget, Font, FG, BG, Text, Number) gtk_text_insert(GTK_TEXT(Widget), Font, FG, BG, Text, Number)
+  #define SG_TEXT_BACKWARD_DELETE(Widget, Number) gtk_text_backward_delete(GTK_TEXT(Widget), Number)
+  #define SG_LIST_SELECT_ROW(Widget, Row) gtk_clist_select_row(GTK_CLIST(Widget), Row, 0)
+  #define SG_LIST_MOVETO(Widget, Row) gtk_clist_moveto(GTK_CLIST(Widget), Row, 0, 0.5, 0.5);
+  #define SG_LIST_CLEAR(Widget) gtk_clist_clear(GTK_CLIST(Widget))
+  #define SG_LIST_APPEND(Widget, Str) gtk_clist_append(GTK_CLIST(Widget), &Str)
+  #define SG_LIST_INSERT(Widget, Position, Str) gtk_clist_insert(GTK_CLIST(Widget), Position, &Str)
+  #define SG_LIST_SET_TEXT(Widget, Row, Str) gtk_clist_set_text(GTK_CLIST(Widget), Row, 0, Str)
+  #define SG_PIXMAP_NEW(Map, Mask) gtk_pixmap_new(Map, Mask)
+  #define SG_PIXMAP_SET(Holder, Map, Mask) gtk_pixmap_set(GTK_PIXMAP(Holder), Map, Mask)
+  #define SG_FONT_LOAD(Font) gdk_font_load(Font)
 
 #endif
-
 
 #endif

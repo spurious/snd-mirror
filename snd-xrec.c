@@ -1271,7 +1271,7 @@ static void save_audio_settings_callback(Widget w, XtPointer context, XtPointer 
   rp = get_recorder_info();
   XmToggleButtonSetState(w, FALSE, FALSE);
   rp->mixer_settings_saved = 1;
-  mus_audio_mixer_save(AUDIO_STATE_FILE);
+  mus_audio_mixer_save(DEFAULT_AUDIO_STATE_FILE);
 }
 
 static void save_audio_settings_help_callback(Widget w, XtPointer context, XtPointer info) 

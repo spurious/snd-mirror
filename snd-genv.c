@@ -86,12 +86,12 @@ void make_scrolled_env_list (snd_state *ss)
   int n, size;
   char *str;
   size = enved_all_envs_top();
-  gtk_clist_clear(GTK_CLIST(env_list));
+  SG_LIST_CLEAR(env_list);
   set_background(env_list, (ss->sgx)->highlight_color);
   for (n = 0; n < size; n++) 
     {
       str = enved_all_names(n);
-      gtk_clist_append(GTK_CLIST(env_list), &str);
+      SG_LIST_APPEND(env_list, str);
     }
 }
 
@@ -373,7 +373,7 @@ void display_enved_progress(char *str, GdkPixmap *pix, GdkBitmap *mask)
 {
   if (pix == NULL)
     gtk_label_set_text(GTK_LABEL(brktxtL), str);
-  else gtk_pixmap_set(GTK_PIXMAP(brkpixL), pix, mask);
+  else SG_PIXMAP_SET(brkpixL, pix, mask);
 }
 
 static TIME_TYPE down_time;
@@ -443,7 +443,7 @@ static void drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
   if (showing_all_envs)
     {
       pos = hit_env((int)(ev->x), (int)(ev->y), env_window_width, env_window_height);
-      gtk_clist_select_row(GTK_CLIST(env_list), pos, 0);
+      SG_LIST_SELECT_ROW(env_list, pos);
       if ((pos >= 0) && 
 	  (pos < enved_all_envs_top())) 
 	select_or_edit_env(ss, pos);
@@ -1011,12 +1011,8 @@ GtkWidget *create_envelope_editor (snd_state *ss)
       gtk_frame_set_label_align(GTK_FRAME(env_list_frame), 0.5, 0.0);
       gtk_frame_set_shadow_type(GTK_FRAME(env_list_frame), GTK_SHADOW_ETCHED_IN);
 
-      env_list = gtk_clist_new(1); /* 1 => columns */
-      gtk_clist_set_selection_mode(GTK_CLIST(env_list), GTK_SELECTION_SINGLE);
-      gtk_clist_set_shadow_type(GTK_CLIST(env_list), GTK_SHADOW_ETCHED_IN);
-      gtk_clist_column_titles_passive(GTK_CLIST(env_list));
+      env_list = sg_make_list((gpointer)ss, 0, NULL, GTK_SIGNAL_FUNC(env_browse_callback));
       if (enved_all_envs_top() > 0) make_scrolled_env_list(ss);
-      gtk_signal_connect(GTK_OBJECT(env_list), "select_row", GTK_SIGNAL_FUNC(env_browse_callback), (gpointer)ss);
 
       env_list_scroller = gtk_scrolled_window_new(NULL, NULL);
       gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(env_list_scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -1283,8 +1279,8 @@ static XEN g_set_enved_selected_env(XEN name)
       selected_env = enved_all_envs(pos);
       if (enved_dialog)
 	{
-	  gtk_clist_select_row(GTK_CLIST(env_list), pos, 0);
-	  gtk_clist_moveto(GTK_CLIST(env_list), pos, 0, 0.5, 0.5);
+	  SG_LIST_SELECT_ROW(env_list, pos);
+	  SG_LIST_MOVETO(env_list, pos);
 	}
     }
   return(name);

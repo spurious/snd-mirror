@@ -383,6 +383,7 @@
 #define XEN_LOAD_FILE(File)           scm_primitive_load(C_TO_XEN_STRING(File))
 
 #define XEN_DEFINE_HOOK(Var, Name, Arity, Help) Var = xen_guile_create_hook(Name, Arity, Help, XEN_DOCUMENTATION_SYMBOL)
+#define XEN_DEFINE_SIMPLE_HOOK(Var, Arity) Var = scm_make_hook(C_TO_SMALL_XEN_INT(Arity))
 #define XEN_CLEAR_HOOK(Arg)           scm_reset_hook_x(Arg)
 #define XEN_HOOKED(a)                 (XEN_NOT_NULL_P(SCM_HOOK_PROCEDURES(a)))
 #define XEN_HOOK_PROCEDURES(a)        SCM_HOOK_PROCEDURES(a)
@@ -585,6 +586,12 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
     Var = Qnil; \
     rb_define_variable(xen_scheme_global_variable_to_ruby(Name), (VALUE *)(&Var)); \
     if (Help) xen_add_help(xen_scheme_global_variable_to_ruby(Name), Help); \
+  }
+
+#define XEN_DEFINE_SIMPLE_HOOK(Var, Arity) \
+  { \
+    Var = Qnil; \
+    rb_define_variable("$simple_hook", (VALUE *)(&Var)); \
   }
 
 #define XEN_BOOLEAN_P(Arg)               (XEN_TRUE_P(Arg) || XEN_FALSE_P(Arg))
@@ -903,6 +910,7 @@ XEN xen_rb_funcall_0(XEN func);
 #define XEN_MAKE_VECTOR(Num, Fill) 0
 #define XEN_VECTOR_TO_LIST(Vect) 0
 #define XEN_DEFINE_HOOK(Var, Name, Arity, Help)
+#define XEN_DEFINE_SIMPLE_HOOK(Var, Arity)
 #define XEN_CLEAR_HOOK(Arg)
 #define XEN_CHAR_P(Arg) 0
 #define XEN_TO_C_CHAR(Arg) 0

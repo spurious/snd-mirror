@@ -256,7 +256,7 @@ char **speaker_bits(void);
 
 /* -------- snd-gxcolormaps.c -------- */
 
-char *colormap_name(int n);
+char **colormap_names(void);
 unsigned short *snd_colormap(int n);
 void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b);
 
@@ -376,10 +376,14 @@ void set_widget_position(GtkWidget *w, gint16 x, gint16 y);
 void fixup_axis_context(axis_context *ax, GtkWidget *w, GdkGC *gc);
 void set_user_data(GtkObject *obj, gpointer data);
 gpointer get_user_data(GtkObject *obj);
-#if (!HAVE_GTK2)
+#if HAVE_GTK2
+  char *sg_get_text(GtkWidget *w, int start, int end);
+  void sg_set_cursor(GtkWidget *w, int position);
+#else
   char *sg_label_text(GtkLabel *w);
 #endif
 GtkWidget *make_scrolled_text(snd_state *ss, GtkWidget *parent, int editable, GtkWidget *boxer, GtkWidget *paner);
+GtkWidget *sg_make_list(gpointer gp, int num_items, char **items, GtkSignalFunc callback);
 
 
 /* -------- snd-gsnd.c -------- */

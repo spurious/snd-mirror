@@ -1124,7 +1124,7 @@
 	    (list "PCM_48_8bit_m.w64" 1 48000 0.375 "SoundForge" "unsigned byte (8 bits)")
 	    (list "addf8.24we" 1 8000 2.976000 "RIFF" "little endian int (24 bits)")
 	    (list "hybrid.snd" 1 44100 4.600000 "BICSF" "big endian float (32 bits)")
-	    (list "zulu_a4.w11" 1 33000 1.21987879276276 "TX-16" "unsupported")))))
+	    (list "zulu_a4.w11" 1 33000 1.21987879276276 "TX-16" "unsupported" 23342 40042)))))
     )
 
 

@@ -29,13 +29,11 @@ static void stats_update(GtkWidget *w, gpointer context)
 
 void update_stats(snd_state *ss)
 {
-  int chars;
   if (stats_form == NULL) return;
-  chars = gtk_text_get_length(GTK_TEXT(stats_form));
-  if (chars > 0) gtk_editable_delete_text(GTK_EDITABLE(stats_form), 0, -1);
-  gtk_text_freeze(GTK_TEXT(stats_form));
+  SG_TEXT_CLEAR(stats_form);
+  SG_TEXT_FREEZE(stats_form);
   update_stats_with_widget(ss, stats_form);
-  gtk_text_thaw(GTK_TEXT(stats_form));
+  SG_TEXT_THAW(stats_form);
 }
 
 void update_stats_display(snd_state *ss, int all)
@@ -95,7 +93,7 @@ char *stats_window_state(void);
 char *stats_window_state(void)
 {
   if (stats_form)
-    return(gtk_editable_get_chars(GTK_EDITABLE(stats_form), 0, -1));
+    return(SG_TEXT_CHARS(stats_form, 0, -1));
   return(NULL);
 }
 #endif

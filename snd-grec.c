@@ -122,10 +122,10 @@ static void record_report(GtkWidget *text, ...)
   strftime(timbuf, TIME_STR_SIZE, "%H:%M:%S", localtime(&ts));
   mus_snprintf(msgbuf, PRINT_BUFFER_SIZE, "\n[%s] ", timbuf);
 #endif
-  gtk_text_insert(GTK_TEXT(text), (ss->sgx)->help_text_fnt, (ss->sgx)->black, (ss->sgx)->light_blue, msgbuf, -1);
+  SG_TEXT_INSERT(text, (ss->sgx)->help_text_fnt, (ss->sgx)->black, (ss->sgx)->light_blue, msgbuf, -1);
   va_start(ap, text);
   while ((nextstr = va_arg(ap, char *)))
-    gtk_text_insert(GTK_TEXT(text), (ss->sgx)->help_text_fnt, (ss->sgx)->black, (ss->sgx)->light_blue, nextstr, -1);
+    SG_TEXT_INSERT(text, (ss->sgx)->help_text_fnt, (ss->sgx)->black, (ss->sgx)->light_blue, nextstr, -1);
   va_end(ap);
 }
 
@@ -847,7 +847,7 @@ static void save_audio_settings_callback(GtkWidget *w, gpointer context)
   rp = get_recorder_info();
   set_toggle_button(w, FALSE, FALSE, (void *)ss);
   rp->mixer_settings_saved = 1;
-  mus_audio_mixer_save(AUDIO_STATE_FILE);
+  mus_audio_mixer_save(DEFAULT_AUDIO_STATE_FILE);
 }
 #endif
 
@@ -1528,7 +1528,7 @@ static void make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p
 	      gtk_box_pack_start(GTK_BOX(sbox), slabel, FALSE, FALSE, 0);
 	      gtk_widget_show(slabel);
 	      
-	      spix = gtk_pixmap_new(device_pix(wd->device), device_mask(wd->device));
+	      spix = SG_PIXMAP_NEW(device_pix(wd->device), device_mask(wd->device));
 	      gtk_container_add (GTK_CONTAINER(slabel), spix);
 	      gtk_widget_show(spix);
 	    }
@@ -1884,7 +1884,7 @@ static void record_button_callback(GtkWidget *w, gpointer context)
 	      return;
 	    }
 
-	  comment = gtk_editable_get_chars(GTK_EDITABLE(recdat->comment_text), 0, -1);
+	  comment = SG_TEXT_CHARS(recdat->comment_text, 0, -1);
 	  reflect_recorder_duration(0.0);
 	  
 	  if (out_chans_active() != rp->out_chans)
@@ -1986,7 +1986,7 @@ void snd_record_file(snd_state *ss)
       for (i = 0; i < rp->possible_input_chans; i++) 
 	AMP_rec_ins[i] = (AMP **)CALLOC(MAX_OUT_CHANS, sizeof(AMP *));
       AMP_rec_outs = (AMP **)CALLOC(MAX_OUT_CHANS, sizeof(AMP *));
-      small_font = gdk_font_load((vu_size(ss) < SMALLER_FONT_CUTOFF) ? SMALLER_FONT : SMALL_FONT);
+      small_font = SG_FONT_LOAD((vu_size(ss) < SMALLER_FONT_CUTOFF) ? SMALLER_FONT : SMALL_FONT);
 
       recorder = gtk_dialog_new();
       gtk_signal_connect(GTK_OBJECT(recorder), "delete_event", GTK_SIGNAL_FUNC(recorder_delete), (gpointer)ss);
