@@ -308,6 +308,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+2-Apr:   init-with-sound and finish-with-sound in ws.scm.\n\
 31-Mar:  removed audio-state-file.\n\
          mus_set_srate -> set_mus_srate in Ruby, mus-set-srate removed from Guile.\n\
            similarly for mus_set_rand_seed, mus_file_data_clipped, and mus_file_set_prescaler.\n\
@@ -325,8 +326,6 @@ void news_help(snd_state *ss)
 5-Mar:   contrib/popup.rb from Michael Scholz.\n\
 4-Mar:   redo renamed redo_edit in Ruby version, in -> call_in.\n\
 3-Mar:   contrib/effects.rb from Michael Scholz.\n\
-1-Mar:   make-power-env and power-env in env.scm.\n\
-28-Feb:  new-effects.scm bugfixes from Michael Scholz.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

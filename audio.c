@@ -8092,16 +8092,20 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 
 static char* osx_error(OSStatus err) 
 {
+  if (err == noErr) return("no error");
   switch (err) 
     {
-    case kAudioHardwareUnspecifiedError:      return("unspecified audio hardware error");
-    case kAudioHardwareNotRunningError:       return("audio hardware not running");
-    case kAudioHardwareUnknownPropertyError:  return("unknown property");
-    case kAudioDeviceUnsupportedFormatError:  return("unsupported format");
-    case kAudioHardwareBadPropertySizeError:  return("bad property");
-    case kAudioHardwareIllegalOperationError: return("illegal operation");
+    case kAudioHardwareNoError:               return("no error");                         break;
+    case kAudioHardwareUnspecifiedError:      return("unspecified audio hardware error"); break;
+    case kAudioHardwareNotRunningError:       return("audio hardware not running");       break;
+    case kAudioHardwareUnknownPropertyError:  return("unknown property");                 break;
+    case kAudioHardwareBadPropertySizeError:  return("bad property");                     break;
+    case kAudioHardwareBadDeviceError:        return("bad device");                       break;
+    case kAudioHardwareBadStreamError:        return("bad stream");                       break;
+    case kAudioHardwareIllegalOperationError: return("illegal operation");                break;
+    case kAudioDeviceUnsupportedFormatError:  return("unsupported format");               break;
+    case kAudioDevicePermissionsError:        return("device permissions error");         break;
     }
-  if (err == noErr) return("no error");
   return("unknown error");
 }
 
@@ -8197,17 +8201,34 @@ static void describe_audio_state_1(void)
 	  err = AudioDeviceGetProperty(device, 0, input_case, kAudioDevicePropertyStreamFormat, &size, &desc);
 	  if (err == noErr) 
 	    {
-	      if (buffer_size >= 0)
-		mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "\n    srate: %d, chans: %d, frames: %d, buf: %d",
-			     (int)(desc.mSampleRate), 
-			     (int)(desc.mChannelsPerFrame), 
-			     (int)(desc.mFramesPerPacket), 
-			     buffer_size);
-	      else mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "\n    srate: %d, chans: %d, frames: %d",
-				(int)(desc.mSampleRate), 
-				(int)(desc.mChannelsPerFrame), 
-				(int)(desc.mFramesPerPacket));
+	      unsigned int trans;
+	      trans = (unsigned int)(desc.mFormatID);
+	      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "\n    srate: %d, chans: %d, bits/sample: %d, format: %c%c%c%c",
+			   (int)(desc.mSampleRate), 
+			   (int)(desc.mChannelsPerFrame), 
+			   (int)(desc.mBitsPerChannel),
+			   (trans >> 24) & 0xff, (trans >> 16) & 0xff, (trans >> 8) & 0xff, trans & 0xff);
 	      pprint(audio_strbuf);
+	      if (buffer_size >= 0)
+		{
+		  mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, ", buf: %d", buffer_size);
+		  pprint(audio_strbuf);
+		}
+	      if ((int)(desc.mFormatFlags) != 0) /* assuming "PCM" here */
+		{
+		  int flags;
+		  flags = ((int)(desc.mFormatFlags));
+		  pprint("\n    flags: ");
+		  mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "%s%s%s%s%s%s",
+			       (flags & kLinearPCMFormatFlagIsFloat) ? "float " : "",
+			       (flags & kLinearPCMFormatFlagIsBigEndian) ? "big-endian " : "",
+			       (flags & kLinearPCMFormatFlagIsSignedInteger) ? "signed-int " : "",
+			       (flags & kLinearPCMFormatFlagIsPacked) ? "packed " : "",
+			       (flags & kLinearPCMFormatFlagIsAlignedHigh) ? "aligned-high " : "",
+			       (flags & kLinearPCMFormatFlagIsNonInterleaved) ? "non-interleaved " : "");
+		  pprint(audio_strbuf);
+		}
+
 	      if ((int)(desc.mChannelsPerFrame) > 0)
 		{
 		  pprint("\n    vols:");
@@ -8250,10 +8271,13 @@ static void describe_audio_state_1(void)
 		  pprint(audio_strbuf);
 		  for (k = 0; k < formats; k++)
 		    {
-		      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "\n      srate: %d, chans: %d, frames: %d",
+		      unsigned int trans;
+		      trans = (unsigned int)(descs[k].mFormatID);
+		      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "\n      srate: %d, chans: %d, bits/sample: %d, format: %c%c%c%c",
 				   (int)(descs[k].mSampleRate), 
 				   (int)(descs[k].mChannelsPerFrame), 
-				   (int)(descs[k].mFramesPerPacket));
+				   (int)(descs[k].mBitsPerChannel),
+				   (trans >> 24) & 0xff, (trans >> 16) & 0xff, (trans >> 8) & 0xff, trans & 0xff);					 
 		      pprint(audio_strbuf);
 		    }
 		}
@@ -8308,7 +8332,6 @@ static OSStatus reader(AudioDeviceID inDevice,
 
 
 static AudioDeviceID device = kAudioDeviceUnknown;
-static AudioStreamBasicDescription format;
 static unsigned int bufsize;
 static int writing = FALSE, open_for_input = FALSE;
 static int fill_point = 0;
@@ -8573,13 +8596,6 @@ int mus_audio_read(int line, char *buf, int bytes)
   UInt32 sizeof_running;
   UInt32 running;
   char *to_buf;
-#if DEBUGGING
-  if (bytes != 4096) 
-    {
-      fprintf(stderr,"bytes: %d\n", bytes);
-      abort();
-    }
-#endif
   if (in_buf == out_buf)
     {
       bp = out_buf;

@@ -186,7 +186,94 @@
 	 val))))                                      ; return body result
 
 
-;;; TODO: init-with-sound and friends for cm
-;;; TODO: check out formals->defobject and clm2.lisp for definstrument equivalent
-;;;       I think cm's clm.scm needs to use #:optional (etc) not &optional (etc)
-;;; TODO: check out *clm-with-sound-depth* *clm-channels* *clm-srate* for cm
+
+;;; ---------------- Common Music ----------------
+
+(define* (init-with-sound #:key 
+			  (srate *srate*) 
+			  (output *file-name*) 
+			  (channels *channels*)
+			  (header-type *header-type*)
+			  (data-format *data-format*)
+			  (comment #f)
+			  (reverb #f)
+			  (revfile "test.rev")
+			  (reverb-data #f)
+			  (continue-old-file #f)
+			  (statistics #f)
+			  (scaled-to #f)
+			  (play #f)
+			  (to-snd *to-snd*)
+			  (scaled-by #f))
+  (let ((old-srate (mus-srate))
+	(start (if statistics (get-internal-real-time))))
+    (if continue-old-file
+	(begin
+	  (set! *output* (continue-sample->file output))
+	  (set! (mus-srate) (mus-sound-srate output))
+	  (if reverb (set! *reverb* (continue-sample->file revfile)))
+	  (let ((ind (find-sound output)))
+	    (if ind (close-sound ind))))
+	(begin
+	  (if (file-exists? output) (delete-file output))
+	  (if (and reverb (file-exists? revfile)) (delete-file revfile))
+	  (set! *output* (make-sample->file output channels data-format header-type comment))
+	  (if reverb (set! *reverb* (make-sample->file revfile 1 data-format header-type)))))
+    (list 'with-sound-data
+	  output
+	  reverb
+	  revfile
+	  old-srate
+	  statistics
+	  to-snd
+	  scaled-to
+	  scaled-by
+	  play)))
+
+(define (finish-with-sound wsd)
+  (if (eq? (car wsd) 'with-sound-data)
+      (let ((cycles 0)
+	    (output (list-ref wsd 1))
+	    (reverb (list-ref wsd 2))
+	    (revfile (list-ref wsd 3))
+	    (old-srate (list-ref wsd 4))
+	    (statistics (list-ref wsd 5))
+	    (to-snd (list-ref wsd 6))
+	    (scaled-to (list-ref wsd 7))
+	    (scaled-by (list-ref wsd 8))
+	    (play (list-ref wsd 9)))
+	(if reverb
+	    (begin
+	      (mus-close *reverb*)
+	      (set! *reverb* (make-file->sample revfile))
+	      (reverb)
+	      (mus-close *reverb*)))
+	(mus-close *output*)
+	(if statistics
+	    (set! cycles (/ (- (get-internal-real-time) start) 100)))
+	(if to-snd
+	    (let ((snd-output (open-sound output)))
+	      (set! (sync snd-output) #t)
+	      (if statistics
+		  (snd-print 
+		   (format #f "~A:~%  maxamp: ~A,~%  compute time: ~A~%"
+			   output
+			   (maxamp snd-output #t)
+			   cycles)))
+	      (if scaled-to
+		  (scale-to scaled-to snd-output)
+		  (if scaled-by
+		      (scale-by scaled-by snd-output)))
+	      (if play (play-and-wait snd-output))
+	      (update-time-graph snd-output)))
+	(set! (mus-srate) old-srate)
+	output)
+      (throw 'wrong-type-arg
+	     (list "finish-with-sound" wsd))))
+
+(define definstrument define*)
+;;; this will be using #:optional etc -- not currently compatible with cm's formals->defobject
+;;;
+;;; *clm-channels* -> *channels*
+;;; *clm-srate* -> *srate*
+;;; *clm-with-sound-depth* -> not sure I need it in this context

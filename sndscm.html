@@ -3195,6 +3195,20 @@ be int (so it can be used without restriction in run), and so on.
 all the fields taking their default value except "xx" which is set to 3.14.
 So, hi's value is <code>(list 'hiho #f #f "hiho" 3 3.14))</code>.
 </p>
+<p><b><a name="initwithsound">init-with-sound</a></b> and <b><a name="finishwithsound">finish-with-sound</a></b>
+split with-sound into two pieces, primarily for Common Music's benefit.
+</p>
+<pre>
+(define w (init-with-sound :scaled-to .5))
+(fm-violin 0 1 440 .1)
+(finish-with-sound w)
+</pre>
+<p>is equivalent to 
+</p>
+<pre>
+(with-sound (:scaled-to .5)
+  (fm-violin 0 1 440 .1))
+</pre>
 <br>
 
 <A NAME="xmenveddoc"></a><span class=box><h2>xm-enved.scm, xm-enved.rb</h2></span>

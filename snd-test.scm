@@ -26621,6 +26621,35 @@ EDITS: 2
 	      (snd-display ";sound-let explicit output exists?"))
 	  (close-sound ind)))
 
+      (let ((w (init-with-sound)))
+	(fm-violin 0 1 440 .1)
+	(let ((outer (finish-with-sound w)))
+	  (if (not (string=? outer "test.snd"))
+	      (snd-display ";finish-with-sound returns: ~A" outer))
+	  (let ((ind (find-sound outer)))
+	    (if (not (sound? ind))
+		(snd-display ";init-with-sound: ~A" (map short-file-name (sounds)))
+		(begin
+		  (if (fneq (maxamp ind 0) .1)
+		      (snd-display ";init-with-sound max: ~A" (maxamp ind 0)))
+		  (close-sound ind))))))
+
+      (let ((w (init-with-sound :output "test.aiff" :header-type mus-aifc :scaled-to .5)))
+	(fm-violin 0 1 440 .1)
+	(let ((outer (finish-with-sound w)))
+	  (if (not (string=? outer "test.aiff"))
+	      (snd-display ";finish-with-sound (2) returns: ~A ~A" outer w))
+	  (let ((ind (find-sound outer)))
+	    (if (not (sound? ind))
+		(snd-display ";init-with-sound (2): ~A" (map short-file-name (sounds)))
+		(begin
+		  (if (fneq (maxamp ind 0) .5)
+		      (snd-display ";init-with-sound scaled-to: ~A ~A" (maxamp ind 0) w))
+		  (if (not (= (header-type ind) mus-aifc))
+		      (snd-display ";init-with-sound type: ~A ~A" (header-type ind) w))
+		  (close-sound ind))))))
+
+
       ))
 
 
