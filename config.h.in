@@ -78,6 +78,7 @@
 #undef HAVE_XPM
 #undef FSTATFS_ARGS
 #undef HAVE_GUILE_1_3_0
+#undef HAVE_GUILE_1_3
 #undef HAVE_GUILE_1_4
 #undef TRAP_SEGFAULT
 #undef HAVE_XmHTML

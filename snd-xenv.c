@@ -36,7 +36,7 @@ void enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax, int ex0, in
     }
   if (!gray_ap) 
     {
-      gray_ap = new_wave_axis(ss,axis_cp->axis);
+      gray_ap = new_wave_axis(ss);
       fixup_axis_context(gray_ap->ax,drawer,ggc);
     }
   init_env_axes(axis_cp,name,ex0,ey0,width,height,xmin,xmax,ymin,ymax);

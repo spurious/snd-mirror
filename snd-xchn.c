@@ -581,7 +581,7 @@ void reflect_edit_history_change(chan_info *cp)
 		  sp = cp->sound;
 		  edits = (XmString *)CALLOC(eds+1,sizeof(XmString));
 		  edits[0] = XmStringCreate(sp->fullname,XmFONTLIST_DEFAULT_TAG);
-		  for (i=1;i<=eds;i++) edits[i] = XmStringCreate(edit_to_string(cp->edits[i]),XmFONTLIST_DEFAULT_TAG);
+		  for (i=1;i<=eds;i++) edits[i] = XmStringCreate(edit_to_string(cp,i),XmFONTLIST_DEFAULT_TAG);
 		  XtVaSetValues(lst,XmNitems,edits,XmNitemCount,eds+1,NULL);
 		  XmListSelectPos(lst,cp->edit_ctr+1,FALSE);
 		  for (i=0;i<=eds;i++) XmStringFree(edits[i]);
@@ -610,7 +610,7 @@ void reflect_save_as_in_edit_history(chan_info *cp, char *filename)
       if (lst)
 	{
 	  new_line = (char *)CALLOC(256,sizeof(char));
-	  sprintf(new_line,"%s: (save-sound-as \"%s\")",edit_to_string(cp->edits[cp->edit_ctr]),filename);
+	  sprintf(new_line,"%s: (save-sound-as \"%s\")",edit_to_string(cp,cp->edit_ctr),filename);
 	  str = XmStringCreate(new_line,XmFONTLIST_DEFAULT_TAG);
 	  pos = cp->edit_ctr+1;
 	  XmListReplacePositions(lst,&pos,&str,1);

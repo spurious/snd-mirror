@@ -52,6 +52,7 @@
 ;;; mix with envelope
 ;;; time varying FIR filter
 ;;; map-sound-files, match-sound-files
+;;; move sound down 8ve using fft
 
 
 (use-modules (ice-9 debug))
@@ -2131,3 +2132,27 @@
 	   (cadr args)))))))
 
     
+;;; -------- move sound down 8ve using fft
+
+(define (down-oct)
+  (let* ((len (frames))
+	 (pow2 (ceiling (/ (log len) (log 2))))
+	 (fftlen (inexact->exact (expt 2 pow2)))
+	 (fftscale (/ 1.0 fftlen))
+	 (rl1 (samples->vct 0 fftlen))
+	 (im1 (make-vct fftlen)))
+    (fft rl1 im1 1)
+    (vct-scale! rl1 fftscale)
+    (vct-scale! im1 fftscale)
+    (let ((rl2 (make-vct (* 2 fftlen)))
+	  (im2 (make-vct (* 2 fftlen))))
+      (do ((i 0 (+ i 1))
+	   (k (/ fftlen 2) (+ k 1))
+	   (j (+ fftlen (/ fftlen 2)) (+ j 1)))
+	  ((= i (/ fftlen 2)))
+	(vct-set! rl2 i (vct-ref rl1 i))
+	(vct-set! rl2 j (vct-ref rl1 k))
+	(vct-set! im2 i (vct-ref im1 i))
+	(vct-set! im2 j (vct-ref im1 k)))
+      (fft rl2 im2 -1)
+      (vct->samples 0 (* 2 fftlen) rl2))))

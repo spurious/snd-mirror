@@ -896,7 +896,7 @@ void stop_playing_region(int n)
     }
 }
 
-static int find_slot_to_play(snd_state *ss)
+static int find_slot_to_play(void)
 {
   int i,old_size;
   if (play_list == NULL)
@@ -987,7 +987,7 @@ static void start_playing_1(void *ptr, int start, int background, int paused)
 	  handle_cursor(ncp,cursor_moveto(ncp,start));
 	}
     }
-  slot = find_slot_to_play(ss);
+  slot = find_slot_to_play();
   if (slot == -1) return;
   play_list_members++;
   if (sp)

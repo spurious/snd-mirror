@@ -724,6 +724,11 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                             (if x (- x (next-sample previous-edit)) #f)))))
                                     (map-chan (snd-diff))
 
+                                  <i>snd</i> can also be a filename (a string); in this way a sample-reader
+                                  can read external sounds without going to the trouble of loading them into Snd.
+
+                                    (define reader (make-sample-reader 100 "oboe.snd"))
+
   <a name="maketracksamplereader">make-track-sample-reader</a>(track samp snd chn)     
                                   create a <a href="#samplereaders">track-sample-reader</a> object reading <i>track</i>
   <a name="makevct">make-vct</a>          (len)         create vct struct of size <i>len</i>.

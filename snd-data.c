@@ -146,7 +146,7 @@ static chan_info *free_chan_info(chan_info *cp)
   return(cp);  /* pointer is left for possible future re-use */
 }
 
-static int file_maxamps(snd_state *ss, char *ifile, Float *vals, int ichans, int format);
+static int file_maxamps(char *ifile, Float *vals, int ichans, int format);
 
 snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_info *hdr, int snd_slot)
 {
@@ -249,7 +249,7 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   if (fit_data_on_open(ss)) 
     {
       sp->fit_data_amps = (Float *)CALLOC(sp->nchans,sizeof(Float));
-      file_maxamps(state,sp->fullname,sp->fit_data_amps,hdr->chans,hdr->format);
+      file_maxamps(sp->fullname,sp->fit_data_amps,hdr->chans,hdr->format);
       /* can't use snd-chn.c get_maxamp here because the file edit tree is not yet set up */
       /* can't use mus_sound_chans etc here because this might be a raw header file */
     }
@@ -760,7 +760,7 @@ void display_info(snd_info *sp)
     }
 }
 
-static int file_maxamps(snd_state *ss, char *ifile, Float *vals, int ichans, int format)
+static int file_maxamps(char *ifile, Float *vals, int ichans, int format)
 {
   int ifd,idataloc,bufnum,n,cursamples,idatasize,loc,i,samples,chn;
   MUS_SAMPLE_TYPE fc;

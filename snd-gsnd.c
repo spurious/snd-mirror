@@ -1401,7 +1401,8 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
       gtk_widget_show(sw[W_combine]);
       
       gtk_widget_show(sw[W_name_form]);
-      
+
+      /* if control-panel */
       
       /* -------- AMP FIELDS -------- */
       
@@ -1703,7 +1704,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
       gtk_widget_show(sw[W_filter_frame]);
       new_flt(sp);
       
-      
+      /* end if control-panel */
       gtk_widget_show(sw[W_ctrls]);
       gtk_widget_show(sw[W_pane]);
     } /* new sound ss */
@@ -1712,6 +1713,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss)
       gtk_widget_show(w_snd_pane(sp));
       for (k=0;k<nchans;k++) add_channel_window(sp,k,ss,chan_min_y,0,NULL,WITH_FW_BUTTONS);
       gtk_label_set_text(GTK_LABEL(sw[W_name]),shortname(sp));
+
       reset_control_panel(sp);
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
 	{

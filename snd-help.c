@@ -185,6 +185,9 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+26-Jun:  as-one-edit now handles mark changes correctly.\n\
+         make-sample-reader snd arg can be filename (to read external files without opening them).\n\
+         Guile 1.4 is now the default -- if you are using 1.3.4, include -DHAVE_GUILE_1_3.\n\
 22-Jun:  version renamed snd-version (old name collides with guile) -- similarly for apropos and help.\n\
 21-Jun:  marks.scm.\n\
 19-Jun:  changes to GC handling for new guile.\n\
@@ -203,10 +206,6 @@ void news_help(snd_state *ss)
 29-May:  mix-sound to help with CLM/Snd explode support.\n\
 25-May:  removed snd-clm.c, snd-xclm.c, snd-gclm.c.\n\
 24-May:  sndctrl.c and related X properties in Snd.\n\
-23-May:  snd-ladspa.c (LADSPA support thanks to Richard W.E. Furse).\n\
-         added 'sync' arg to play and play-and-wait.\n\
-22-May:  set-reverb-funcs, set-contrast-func, set-expand-funcs.\n\
-         snd-gxutils for better communication with netscape.\n\
 ",
 NULL);
   FREE(info);
@@ -1272,7 +1271,9 @@ all refer to the same thing.\n\
   " S_sound_files_in_directory "(dir)\n\
   " S_sound_to_temp "     (type format)\n\
   " S_sound_to_temps "    (type format)\n\
+  " S_snd_apropos "       (name)\n\
   " S_snd_error "         (str)\n\
+  " S_snd_help "          (name)\n\
   " S_snd_print "         (str)\n\
   " S_snd_spectrum "      (data window length linear)\n\
   " S_snd_version "       ()\n\

@@ -679,6 +679,11 @@ Snd is currently in flux.
                                             (if x (- x (next-sample previous-edit)) #f)))))
                                     (map-chan (snd-diff))
 
+                                  snd can also be a filename (a string); in this way a sample-reader
+                                  can read external sounds without going to the trouble of loading them into Snd.
+
+                                    (define reader (make-sample-reader 100 "oboe.snd"))
+
   make-track-sample-reader(track samp snd chn)
                                   create a track-sample-reader object reading track
   make-vct          (len)         create vct struct of size len.

@@ -44,7 +44,7 @@
 #define ERRB1(a,b) SCM_ASSERT((gh_number_p(a)) || (gh_boolean_p(a)) || (SCM_UNBNDP(a)),a,SCM_ARG1,b)
 #define ERRB2(a,b) SCM_ASSERT((gh_number_p(a)) || (gh_boolean_p(a)) || (SCM_UNBNDP(a)),a,SCM_ARG2,b)
 #define ERRB3(a,b) SCM_ASSERT((gh_number_p(a)) || (gh_boolean_p(a)) || (SCM_UNBNDP(a)),a,SCM_ARG3,b)
-#define ERRB4(a,b) SCM_ASSERT((bool_or_arg_p(a)),a,SCM_ARG4,b)
+#define ERRB4(a,b) SCM_ASSERT((gh_number_p(a)) || (gh_boolean_p(a)) || (SCM_UNBNDP(a)),a,SCM_ARG4,b)
 
 #define ERRV1(a,b) SCM_ASSERT(((vct_p(a)) || (gh_vector_p(a))),a,SCM_ARG1,b)
 #define ERRV2(a,b) SCM_ASSERT(((vct_p(a)) || (gh_vector_p(a))),a,SCM_ARG2,b)

@@ -493,7 +493,7 @@ void delete_mark_samp(int samp, chan_info *cp)
 	      if (mp->samp == samp)
 		{
 		  ap = cp->axis;
-		  if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) erase_mark(cp,cp->axis,mp); 
+		  if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) erase_mark(cp,ap,mp); 
 		  free_mark(mp);
 		  mps[i] = NULL;
 		  if (i < edm)
@@ -533,7 +533,7 @@ static void delete_mark_id(int id, chan_info *cp)
 	      if (mark_id(mp) == id)
 		{
 		  ap = cp->axis;
-		  if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) erase_mark(cp,cp->axis,mp); 
+		  if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) erase_mark(cp,ap,mp); 
 		  free_mark(mp);
 		  mps[i] = NULL;
 		  if (i < edm)
@@ -558,6 +558,7 @@ static void delete_marks (chan_info *cp)
   int i,ed;
   mark *mp;
   mark **mps;
+  axis_info *ap;
   if ((cp) && (cp->marks))
     {
       ed = cp->edit_ctr;
@@ -567,11 +568,16 @@ static void delete_marks (chan_info *cp)
 	  for (i=0;i<cp->mark_size[ed];i++)
 	    {
 	      mp = mps[i];
-	      if (mp) free_mark(mp);
-	      mps[i] = NULL;
+	      if (mp) 
+		{
+		  ap = cp->axis;
+		  if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) erase_mark(cp,ap,mp); 
+		  free_mark(mp);
+		  mps[i] = NULL;
+		}
 	    }
 	  cp->mark_ctr[ed] = -1;
-	  /* update_graph(cp,NULL); */ /* or dependent on graph_hook? -- if (!(ss->graph_hook_active)) ... */
+	  /* if (!(ss->graph_hook_active)) update_graph(cp,NULL); */
 	}
     }
 }
@@ -703,15 +709,19 @@ int mark_beg(chan_info *cp)
 static mark *display_channel_marks_1(chan_info *cp,  mark *mp, void *m)
 {
   axis_info *ap;
+  int *last_samp = (int *)m;
   ap = cp->axis;
   if (mp->samp > ap->hisamp) return(mp); /* terminates loop */
+  if (mp->samp == last_samp[0]) return(NULL); else last_samp[0] = mp->samp; /* avoid drawing twice at same point == erase */
   if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp) && (mp != moving_mark)) draw_mark(cp,ap,mp);
   return(NULL);
 }
 
 void display_channel_marks(chan_info *cp)
 {
-  map_over_marks(cp,display_channel_marks_1,NULL,READ_FORWARD);
+  int last_samp[1];
+  last_samp[0] = -1;
+  map_over_marks(cp,display_channel_marks_1,(void *)last_samp,READ_FORWARD);
 }
 
 void release_pending_marks(chan_info *cp, int edit_ctr)
@@ -1359,7 +1369,6 @@ void play_syncd_mark(chan_info *cp, mark *m)
 static int make_mark_graph(chan_info *cp, snd_info *sp, snd_state *ss, int initial_sample, int current_sample, int which)
 {
   int i,j=0,samps,xi,k;
-  mix_context *ms;
   axis_info *ap;
   Float samples_per_pixel,xf;
   double x,incr;  
@@ -1386,7 +1395,6 @@ static int make_mark_graph(chan_info *cp, snd_info *sp, snd_state *ss, int initi
     samples_per_pixel = 0.01; /* any non-zero value < 1.0 should be ok here */
   else samples_per_pixel = (Float)(samps-1)/(Float)pixels;
 
-  ms = mark_movers[which];
  /* this is assuming one such mark per channel */
   if ((samples_per_pixel < 5.0) && (samps < POINT_BUFFER_SIZE))
     {
@@ -1654,6 +1662,7 @@ static SCM g_find_mark(SCM samp_n, SCM snd_n, SCM chn_n)
   ERRCP(S_find_mark,snd_n,chn_n,2); 
   cp = get_cp(snd_n,chn_n);
   if (cp == NULL) return(NO_SUCH_CHANNEL);
+  if (cp->marks == NULL) return(NO_SUCH_MARK);
   mps = cp->marks[cp->edit_ctr];
   if (mps)
     {
@@ -1757,7 +1766,8 @@ static SCM g_marks(SCM snd_n, SCM chn_n, SCM pos_n)
       if (cp == NULL) return(NO_SUCH_CHANNEL);
       if (SCM_INUMP(pos_n)) pos = SCM_INUM(pos_n); else pos = cp->edit_ctr;
       ids = channel_marks(cp,pos);
-      if ((ids == NULL) || (ids[0] == 0)) return(SCM_EOL);
+      if (ids == NULL) return(SCM_EOL);
+      if (ids[0] == 0) {FREE(ids); return(SCM_EOL);}
       res = int_array_to_list(ids,1,ids[0]);
       FREE(ids);
       return(res);
@@ -1832,8 +1842,8 @@ void g_init_marks(SCM local_doc)
   DEFINE_PROC(gh_new_procedure0_2(S_delete_marks,g_delete_marks),H_delete_marks);
   DEFINE_PROC(gh_new_procedure1_0(S_syncd_marks,g_syncd_marks),H_syncd_marks);
   DEFINE_PROC(gh_new_procedure1_2(S_find_mark,g_find_mark),H_find_mark);
-  DEFINE_PROC(gh_new_procedure(S_forward_mark,g_forward_mark,0,3,0),H_forward_mark);
-  DEFINE_PROC(gh_new_procedure(S_backward_mark,g_backward_mark,0,3,0),H_backward_mark);
+  DEFINE_PROC(gh_new_procedure(S_forward_mark,SCM_FNC g_forward_mark,0,3,0),H_forward_mark);
+  DEFINE_PROC(gh_new_procedure(S_backward_mark,SCM_FNC g_backward_mark,0,3,0),H_backward_mark);
   DEFINE_PROC(gh_new_procedure0_1(S_save_marks,g_save_marks),H_save_marks);
 }
 

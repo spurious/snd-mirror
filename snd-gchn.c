@@ -367,7 +367,7 @@ void reflect_edit_history_change(chan_info *cp)
 	      gtk_clist_append(GTK_CLIST(lst),&str);
 	      for (i=1;i<=eds;i++) 
 		{
-		  str = edit_to_string(cp->edits[i]);
+		  str = edit_to_string(cp,i);
 		  gtk_clist_append(GTK_CLIST(lst),&str);
 		}
 	      gtk_signal_handler_block_by_data(GTK_OBJECT(lst),(gpointer)cp);
@@ -393,7 +393,7 @@ void reflect_save_as_in_edit_history(chan_info *cp, char *filename)
       if (lst)
 	{
 	  new_line = (char *)CALLOC(256,sizeof(char));
-	  sprintf(new_line,"%s: (save-sound-as \"%s\")",edit_to_string(cp->edits[cp->edit_ctr]),filename);
+	  sprintf(new_line,"%s: (save-sound-as \"%s\")",edit_to_string(cp,cp->edit_ctr),filename);
 	  gtk_clist_set_text(GTK_CLIST(lst),cp->edit_ctr,0,new_line);
 	  FREE(new_line);
 	}

@@ -480,7 +480,7 @@ static BACKGROUND_TYPE startup_funcs(XtPointer clientData)
 			{
 			  /* grab session name -- if arg is "." grab latest on this directory */
 			  auto_open_ctr++;
-			  snd_load_file(ss,auto_open_file_names[auto_open_ctr]);
+			  snd_load_file(auto_open_file_names[auto_open_ctr]);
 			  auto_open_ctr++;
 			}
 		      else

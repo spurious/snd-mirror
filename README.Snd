@@ -67,8 +67,8 @@ make expert.
 
 If you're using guile-1.3, and not going through the configure process
 (i.e. you're using one of the pre-built makefiles), add the switch
--DHAVE_GUILE_1_3_0 to CFLAGS.  If you have Guile 1.3.5 (1.4) add
--DHAVE_GUILE_1_4.
+-DHAVE_GUILE_1_3_0 to CFLAGS.  If you have Guile 1.3.4 add
+-DHAVE_GUILE_1_3.  (The default is now Guile 1.4).
 
 If you're using guile-1.3.4 or later, you need to
   (use-modules (ice-9 debug))

@@ -238,12 +238,6 @@ Float un_dB(snd_state *ss, Float py)
   return((py <= ss->min_dB) ? 0.0 : pow(10.0,py*.05));
 }
 
-void set_min_dB(snd_state *ss, Float val)
-{
-  ss->min_dB = val;
-  ss->lin_dB = pow(10.0,val*0.05);
-}
-
 void snd_exit(int val)
 {
 #ifndef SND_AS_WIDGET

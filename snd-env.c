@@ -302,7 +302,7 @@ static void sp_make_axis_cp(snd_info *sp, char *name, int ex0, int ey0, int widt
     }
   if (!(spf->gray_ap)) 
     {
-      spf->gray_ap = new_wave_axis(ss,(spf->axis_cp)->axis);
+      spf->gray_ap = new_wave_axis(ss);
       fixup_axis_context(spf->gray_ap->ax,w_snd_filter_env(sp),(ss->sgx)->fltenv_data_gc);
     }
   init_env_axes(spf->axis_cp,name,ex0,ey0,width,height,xmin,xmax,ymin,ymax);
@@ -574,7 +574,7 @@ chan_info *new_env_axis(snd_state *ss)
   return(acp);
 }
 
-axis_info *new_wave_axis(snd_state *ss, axis_info *ap)
+axis_info *new_wave_axis(snd_state *ss)
 {
   axis_info *gap;
   axis_context *gray_ax;
@@ -1204,7 +1204,7 @@ char *env_name_completer(char *text)
   return(copy_string(text));
 }
 
-void save_envelope_editor_state(snd_state *ss, FILE *fd)
+void save_envelope_editor_state(FILE *fd)
 {
   char *estr;
   int i;

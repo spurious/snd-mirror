@@ -215,7 +215,7 @@ void reflect_raw_pending_in_menu(void)
 }
 
 
-void set_save_state_file(snd_state *ss, char *name)
+static void set_save_state_file(snd_state *ss, char *name)
 {
   in_set_save_state_file(ss,name);
   set_sensitive(options_save_state_menu(),(snd_strlen(name) > 0));
@@ -261,6 +261,10 @@ void update_file_from_menu(snd_state *ss)
   map_over_sounds(ss,file_update,(void *)ss);
 }
 
+#if HAVE_GUILE
+  static char *output_name(void);
+#endif
+
 static int new_ctr = 0;
 
 void new_file_from_menu(snd_state *ss)
@@ -269,7 +273,7 @@ void new_file_from_menu(snd_state *ss)
   int header_type, data_format, chans, srate;
   finish_keyboard_selection();
 #if HAVE_GUILE
-  new_file_name = output_name(ss);
+  new_file_name = output_name();
 #endif
   header_type = default_output_type(ss);
   if (new_file_name == NULL)
@@ -286,7 +290,7 @@ void new_file_from_menu(snd_state *ss)
   chans = default_output_chans(ss);
   data_format = default_output_format(ss);
   srate = default_output_srate(ss);
-  new_comment = output_comment(ss,NULL);
+  new_comment = output_comment(NULL);
   snd_new_file(ss,new_file_name,header_type,data_format,srate,chans,new_comment);
   if (new_comment) FREE(new_comment);
   if (new_file_name) FREE(new_file_name);
@@ -572,3 +576,59 @@ void set_channel_style(snd_state *ss, int val)
   map_over_chans(ss,update_graph,NULL);
 }
 
+#if HAVE_GUILE
+#include "sg.h"
+
+static SCM output_name_hook;
+
+#if (!HAVE_GUILE_1_3_0)
+static char *output_name(void)
+{
+  if (HOOKED(output_name_hook))
+    {
+      SCM result;
+      SCM procs = SCM_HOOK_PROCEDURES (output_name_hook);
+      while (SCM_NIMP (procs))
+	{
+	  result = g_call0(SCM_CAR(procs));
+	  if (gh_string_p(result)) return(gh_scm2newstr(result,NULL));
+	  procs = SCM_CDR (procs);
+	}
+    }
+  return(NULL);
+}
+#else
+static char *output_name(void) {return(NULL);}
+#endif
+
+static SCM g_save_state_file(void) 
+{
+  snd_state *ss;
+  ss = get_global_state();
+  RTNSTR(save_state_file(ss));
+}
+
+static SCM g_set_save_state_file(SCM val) 
+{
+  #define H_save_state_file "(" S_save_state_file ") -> name of saved state file (\"saved-snd.scm\")"
+  #define H_set_save_state_file "(" S_set_save_state_file " val) sets " S_save_state_file
+  snd_state *ss;
+  ERRS1(val,S_set_save_state_file); 
+  ss = get_global_state();
+  set_save_state_file(ss,gh_scm2newstr(val,0));
+  RTNSTR(save_state_file(ss));
+}
+
+
+void g_init_menu(SCM local_doc)
+{
+#if (!HAVE_GUILE_1_3_0)
+  output_name_hook = scm_create_hook(S_output_name_hook,0);
+#else
+  output_name_hook = gh_define(S_output_name_hook,SCM_BOOL_F);
+#endif
+
+  DEFINE_PROC(gh_new_procedure(S_save_state_file,SCM_FNC g_save_state_file,0,0,0),H_save_state_file);
+  DEFINE_PROC(gh_new_procedure(S_set_save_state_file,SCM_FNC g_set_save_state_file,1,0,0),H_set_save_state_file);
+}
+#endif

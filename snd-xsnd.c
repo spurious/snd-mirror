@@ -1666,7 +1666,8 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
       XtSetArg(args[n],XmNorientation,XmHORIZONTAL); n++;
       sw[W_amp_separator] = XtCreateManagedWidget ("snd-amp-sep",xmSeparatorWidgetClass,sw[W_ctrls],args,n);
       XtAddCallback(sw[W_amp_separator],XmNhelpCallback,W_amp_Help_Callback,ss);
-
+      
+      /* if control-panel */
       n=0;      
       if (need_colors) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
       XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
@@ -2379,7 +2380,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
       XtAddEventHandler(sw[W_filter_env],ButtonMotionMask,FALSE,filter_drawer_button_motion,sp);
       XtAddEventHandler(sw[W_filter_env],ButtonReleaseMask,FALSE,filter_drawer_button_release,sp);
       XtAddEventHandler(sw[W_filter_env],KeyPressMask,FALSE,graph_key_press,(XtPointer)sp);
-
+      /* end if control-panel */
 #if (XmVERSION > 1)
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	{
@@ -2441,16 +2442,20 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
       /* try to get the pane height that shows everything except the filter graph (hidden for my amusement) */
       /* this calculation assumes the window is built amp_form down, then record buttons up, then filter_frame */
       Position fey,cy,rsy;
+      /* if control-panel */
       XtVaGetValues(sw[W_amp_form],XmNy,&cy,NULL);
       XtVaGetValues(sw[W_filter_frame],XmNy,&fey,NULL);
       XtVaGetValues(sw[W_apply],XmNy,&rsy,NULL);
+      /* end if control-panel */
       ss->open_ctrls_height = fey + ((rsy<0) ? (-rsy) : rsy) + cy - 1;
       first_window = 0;
     } 
   if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
     {
+      /* if control-panel */
       if (make_widgets) XtVaSetValues(sw[W_ctrls],XmNpaneMaximum,LOTSA_PIXELS,NULL); /* locked above to force correct initial setup */
       reset_control_panel(sp);
+      /* end if control-panel */
     }
   else 
     {

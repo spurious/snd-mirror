@@ -994,9 +994,9 @@ static mixdata *file_mix_samples(int beg, int num, char *tempfile, chan_info *cp
  */
 
 #if HAVE_GUILE
-static void call_multichannel_mix_hook(snd_state *ss, int *ids, int n);
+static void call_multichannel_mix_hook(int *ids, int n);
 #else
-void call_multichannel_mix_hook(snd_state *ss, int *ids, int n) {}
+void call_multichannel_mix_hook(int *ids, int n) {}
 #endif
 
 static int mix(int beg, int num, int chans, chan_info **cps, char *mixinfile, int temp, char *origin, Float scaler, int with_console)
@@ -1018,7 +1018,7 @@ static int mix(int beg, int num, int chans, chan_info **cps, char *mixinfile, in
 	  if ((sp) && (sp->syncing)) ids[j++] = md->id;
 	}
     }
-  if (j>1) call_multichannel_mix_hook(cps[0]->state,ids,j);
+  if (j>1) call_multichannel_mix_hook(ids,j);
   FREE(ids);
   return(id);
 }
@@ -1051,7 +1051,7 @@ int mix_file(int beg, int num, char *file, chan_info **cps, int out_chans, char 
   snd_state *ss;
   ss = cps[0]->state;
   newname = shorter_tempnam(temp_dir(ss),"snd_");
-  err = copy_file(ss,file,newname);
+  err = copy_file(file,newname);
   if (err != SND_NO_ERROR)
     snd_error("can't save mix temp file (%s: %s)",newname,strerror(errno));
   else
@@ -2237,7 +2237,7 @@ static int mix_sound(snd_state *ss, snd_info *sp, char *file, int beg, Float sca
 {
   /* returns mix id, or -1 if failure */
   char *buf;
-  if (snd_probe_file(ss,file) == FILE_EXISTS)
+  if (snd_probe_file(file) == FILE_EXISTS)
     {
       return(mix(beg,mus_sound_frames(file),sp->nchans,sp->chans,file,DONT_DELETE_ME,S_mix_sound,scaler,with_mix_consoles(ss))); 
     }
@@ -2424,11 +2424,9 @@ typedef struct {
 static track_fd *init_track_reader(chan_info *cp, int track_num, int global) /* edit-position? direction? */
 {
   track_fd *fd = NULL;
-  snd_state *ss;
   int mixes=0,i,mix,track_beg;
   mixdata *md;
   console_state *cs;
-  ss = cp->state;
   track_beg = current_ed_samples(cp);
   for (i=0;i<mixdatas_ctr;i++) 
     {
@@ -3482,7 +3480,7 @@ static SCM g_play_mix(SCM num)
 static SCM multichannel_mix_hook;
 
 #if (!HAVE_GUILE_1_3_0)
-static void call_multichannel_mix_hook(snd_state *ss, int *ids, int n)
+static void call_multichannel_mix_hook(int *ids, int n)
 {
   SCM lst = SCM_EOL;
   int i;
@@ -3495,7 +3493,7 @@ static void call_multichannel_mix_hook(snd_state *ss, int *ids, int n)
     }
 }
 #else
-void call_multichannel_mix_hook(snd_state *ss, int *ids, int n) {}
+static void call_multichannel_mix_hook(int *ids, int n) {}
 #endif
 
 
@@ -3526,7 +3524,7 @@ void g_init_mix(SCM local_doc)
 #else
   tf_tag = scm_newsmob(&tf_smobfuns);
 #endif
-  DEFINE_PROC(gh_new_procedure(S_make_track_sample_reader,g_make_track_sample_reader,1,3,0),H_make_track_sample_reader);
+  DEFINE_PROC(gh_new_procedure(S_make_track_sample_reader,SCM_FNC g_make_track_sample_reader,1,3,0),H_make_track_sample_reader);
   DEFINE_PROC(gh_new_procedure1_0(S_next_track_sample,g_next_track_sample),H_next_track_sample);
   DEFINE_PROC(gh_new_procedure1_0(S_free_track_sample_reader,g_free_track_sample_reader),H_free_track_sample_reader);
   DEFINE_PROC(gh_new_procedure1_0(S_track_sample_readerQ,g_tf_p),H_tf_p);
@@ -3565,9 +3563,9 @@ void g_init_mix(SCM local_doc)
   DEFINE_PROC(gh_new_procedure0_0(S_mix_waveform_height,g_mix_waveform_height),H_mix_waveform_height);
   DEFINE_PROC(gh_new_procedure1_0(S_select_mix,g_select_mix),H_select_mix);
   DEFINE_PROC(gh_new_procedure0_0(S_selected_mix,g_selected_mix),H_selected_mix);
-  DEFINE_PROC(gh_new_procedure(S_forward_mix,g_forward_mix,0,3,0),H_forward_mix);
-  DEFINE_PROC(gh_new_procedure(S_backward_mix,g_backward_mix,0,3,0),H_backward_mix);
-  DEFINE_PROC(gh_new_procedure(S_mix,g_mix,1,5,0),H_mix);
+  DEFINE_PROC(gh_new_procedure(S_forward_mix,SCM_FNC g_forward_mix,0,3,0),H_forward_mix);
+  DEFINE_PROC(gh_new_procedure(S_backward_mix,SCM_FNC g_backward_mix,0,3,0),H_backward_mix);
+  DEFINE_PROC(gh_new_procedure(S_mix,SCM_FNC g_mix,1,5,0),H_mix);
 
 #if (!HAVE_GUILE_1_3_0)
   multichannel_mix_hook = scm_create_hook(S_multichannel_mix_hook,1);

@@ -15,7 +15,7 @@
 #endif
       
 
-#define NUM_COMMANDS 733
+#define NUM_COMMANDS 735
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_abortQ,S_activate_listener,S_active_sounds,S_add_mark,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -161,7 +161,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_short_file_name,S_short_file_names,S_show_axes,S_show_fft_peaks,S_show_listener,S_show_marks,
   S_show_mix_consoles,S_show_mix_waveforms,S_show_selection_transform,S_show_usage_stats,S_show_y_zero,
   S_showing_controls,S_sinc_width,S_smooth,S_smooth_selection,
-  S_snd_error,S_snd_error_hook,S_snd_spectrum,S_snd_version,S_snd_warning,S_snd_warning_hook,
+  S_snd_apropos,S_snd_error,S_snd_error_hook,S_snd_help,S_snd_spectrum,S_snd_version,S_snd_warning,S_snd_warning_hook,
   S_sonogram,S_sound_files_in_directory,
   S_sound_to_temp,S_sound_to_temps,S_soundfont_info,
   S_spectro_cutoff,S_spectro_hop,S_spectro_start,S_spectro_x_angle,S_spectro_x_scale,S_spectro_y_angle,S_spectro_y_scale,
@@ -396,7 +396,7 @@ char *complete_text(char *text, int func)
 
 void clear_possible_completions(void) {possible_completions_ctr = 0;}
 
-char *snd_apropos(snd_state *ss, char *old_text)
+static char *snd_apropos(char *old_text)
 {
   int i,matches=0,len=0;
   char *new_text=NULL,*buffer=NULL;
@@ -575,3 +575,31 @@ char *info_completer(char *text)
   else return(command_completer(text));
 }
 
+
+#if HAVE_GUILE
+#include "sg.h"
+
+static SCM g_apropos(SCM text)
+{
+  #define H_apropos "(" S_snd_apropos " name) returns possible continuations of name"
+  char *res=NULL,*str=NULL;
+  SCM val = SCM_BOOL_F;
+  SCM_ASSERT((gh_string_p(text) || gh_symbol_p(text)),text,SCM_ARG1,S_snd_apropos);
+  if (gh_string_p(text))
+    str = gh_scm2newstr(text,NULL);
+  else str = gh_symbol2newstr(text,NULL);
+  res = snd_apropos(str);
+  if (str) {free(str); str=NULL;}
+  if (res) 
+    {
+      val = gh_str02scm(res);
+      FREE(res);
+    }
+  return(val);
+}
+
+void g_init_completions(SCM local_doc)
+{
+  DEFINE_PROC(gh_new_procedure1_0(S_snd_apropos,SCM_FNC g_apropos),H_apropos);
+}
+#endif

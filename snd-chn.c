@@ -14,21 +14,21 @@
 #if HAVE_GUILE
 static int after_fft(snd_state *ss, chan_info *cp, Float scaler);
 static int dont_graph(snd_state *ss, chan_info *cp);
-static void after_graph(snd_state *ss, chan_info *cp);
-static int handle_mark_click(snd_state *ss, int id);
-static void handle_mouse_release(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y, int button, int state);
-static void handle_mouse_press(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y, int button, int state);
-static void handle_mouse_drag(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y);
-static int handle_key_press(snd_state *ss, snd_info *sp, chan_info *cp, int key, int state);
+static void after_graph(chan_info *cp);
+static int handle_mark_click(int id);
+static void handle_mouse_release(snd_info *sp, chan_info *cp, Float x, Float y, int button, int state);
+static void handle_mouse_press(snd_info *sp, chan_info *cp, Float x, Float y, int button, int state);
+static void handle_mouse_drag(snd_info *sp, chan_info *cp, Float x, Float y);
+static int handle_key_press(chan_info *cp, int key, int state);
 #else
 static int after_fft(snd_state *ss, chan_info *cp, Float scaler) {return(0);}
 static int dont_graph(snd_state *ss, chan_info *cp) {return(0);}
-static void after_graph(snd_state *ss, chan_info *cp) {}
-static int handle_mark_click(snd_state *ss, int id) {return(0);}
-static void handle_mouse_release(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y, int button, int state) {}
-static void handle_mouse_press(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y, int button, int state) {}
-static void handle_mouse_drag(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y) {}
-static int handle_key_press(snd_state *ss, snd_info *sp, chan_info *cp, int key, int state) {return(0);}
+static void after_graph(chan_info *cp) {}
+static int handle_mark_click(int id) {return(0);}
+static void handle_mouse_release(snd_info *sp, chan_info *cp, Float x, Float y, int button, int state) {}
+static void handle_mouse_press(snd_info *sp, chan_info *cp, Float x, Float y, int button, int state) {}
+static void handle_mouse_drag(snd_info *sp, chan_info *cp, Float x, Float y) {}
+static int handle_key_press(chan_info *cp, int key, int state) {return(0);}
 #endif
 
 static char expr_str[256];
@@ -332,7 +332,7 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
   /* our initial edit_list size will be relatively small */
   cp->edit_size = INITIAL_EDIT_SIZE;
   cp->edit_ctr = 0;
-  cp->edits = (ed_list **)CALLOC(cp->edit_size,sizeof(ed_list *));
+  allocate_ed_list(cp);
   cp->amp_envs = (env_info **)CALLOC(cp->edit_size,sizeof(env_info *));
   cp->samples = (int *)CALLOC(cp->edit_size,sizeof(int));
   cp->sound_size = INITIAL_EDIT_SIZE;
@@ -349,7 +349,7 @@ void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *
   file_info *chdr;
   sp = cp->sound;
   add_channel_data_1(cp,sp,ss,1);
-  cp->edits[0] = initial_ed_list(0,(hdr->samples/hdr->chans) - 1);
+  set_initial_ed_list(cp,(hdr->samples/hdr->chans) - 1);
 #if FILE_PER_CHAN
   /* if FILE_PER_CHAN
      check for special case here (can be in hdr or sp),
@@ -380,7 +380,7 @@ void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *
 	{
 	  mus_file_open_descriptors(fd,chdr->format,mus_data_format_to_bytes_per_sample(chdr->format),chdr->data_location);
 	  during_open(fd,filename,SND_OPEN_CHANNEL);
-	  datai = make_file_state(fd,chdr,SND_IO_IN_FILE,chn,FILE_BUFFER_SIZE,ss);
+	  datai = make_file_state(fd,chdr,SND_IO_IN_FILE,chn,FILE_BUFFER_SIZE);
 	  cp->sounds[0] = make_snd_data_file(filename,datai,
 					     MUS_SAMPLE_ARRAY(datai[SND_IO_DATS+SND_AREF_HEADER_SIZE+chn]),
 					     chdr,DONT_DELETE_ME,cp->edit_ctr,chn);
@@ -2039,7 +2039,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
     }
   if ((displays > 0) && (sp->combining != CHANNELS_SUPERIMPOSED) && (height > 10)) 
     display_channel_id(cp,height+offset,sp->nchans);
-  if (cp->hookable) after_graph(ss,cp);
+  if (cp->hookable) after_graph(cp);
 }
 
 void display_channel_data (chan_info *cp, snd_info *sp, snd_state *ss)
@@ -2461,7 +2461,7 @@ static sync_state *get_sync_state(snd_state *ss, snd_info *sp, chan_info *cp, in
 #if HAVE_GUILE
 /* support for scan and map functions */
 
-static sync_state *get_chan_sync_state(snd_state *ss, chan_info *cp, int beg)
+static sync_state *get_chan_sync_state(chan_info *cp, int beg)
 {
   sync_info *si;
   snd_fd **sfs;
@@ -2475,7 +2475,7 @@ static sync_state *get_chan_sync_state(snd_state *ss, chan_info *cp, int beg)
   return(sc);
 }
 
-static sync_state *get_sound_chans_sync_state(snd_state *ss, chan_info *cp, int beg)
+static sync_state *get_sound_chans_sync_state(chan_info *cp, int beg)
 {
   sync_info *si;
   snd_fd **sfs;
@@ -2549,8 +2549,8 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
     {
     case SCAN_SYNCD_CHANS: sc = get_sync_state(ss,sp,cp,beg,FALSE,READ_FORWARD); break;
     case SCAN_ALL_CHANS: sc = get_active_chans_sync_state(ss,beg); break;
-    case SCAN_SOUND_CHANS: sc = get_sound_chans_sync_state(ss,cp,beg); break;
-    case SCAN_CURRENT_CHAN: sc = get_chan_sync_state(ss,cp,beg); break;
+    case SCAN_SOUND_CHANS: sc = get_sound_chans_sync_state(cp,beg); break;
+    case SCAN_CURRENT_CHAN: sc = get_chan_sync_state(cp,beg); break;
     }
   if (sc == NULL) return(SCM_BOOL_T);
   si = sc->si;
@@ -2635,8 +2635,8 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
     {
     case SCAN_SYNCD_CHANS: sc = get_sync_state(ss,sp,cp,beg,FALSE,READ_FORWARD); break;
     case SCAN_ALL_CHANS: sc = get_active_chans_sync_state(ss,beg); break;
-    case SCAN_SOUND_CHANS: sc = get_sound_chans_sync_state(ss,cp,beg); break;
-    case SCAN_CURRENT_CHAN: sc = get_chan_sync_state(ss,cp,beg); break;
+    case SCAN_SOUND_CHANS: sc = get_sound_chans_sync_state(cp,beg); break;
+    case SCAN_CURRENT_CHAN: sc = get_chan_sync_state(cp,beg); break;
     }
   if (sc == NULL) return(SCM_BOOL_T);
   si = sc->si;
@@ -2771,7 +2771,7 @@ static void output_sample(snd_state *ss, output_state *os, MUS_SAMPLE_TYPE sampl
     }
 }
 
-static output_state *end_output(snd_state *ss, output_state *os, int beg, chan_info *cp, char *origin)
+static output_state *end_output(output_state *os, int beg, chan_info *cp, char *origin)
 {
   int cured;
   if (os->data_size > 0)
@@ -2833,8 +2833,8 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
     {
     case SCAN_SYNCD_CHANS: sc = get_sync_state(ss,sp,cp,beg,FALSE,READ_FORWARD); break;
     case SCAN_ALL_CHANS: sc = get_active_chans_sync_state(ss,beg); break;
-    case SCAN_SOUND_CHANS: sc = get_sound_chans_sync_state(ss,cp,beg); break;
-    case SCAN_CURRENT_CHAN: sc = get_chan_sync_state(ss,cp,beg); break;
+    case SCAN_SOUND_CHANS: sc = get_sound_chans_sync_state(cp,beg); break;
+    case SCAN_CURRENT_CHAN: sc = get_chan_sync_state(cp,beg); break;
     }
   if (sc == NULL) return(SCM_BOOL_T);
   si = sc->si;
@@ -2875,7 +2875,7 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 		    }
 		  else /* #t -> halt */
 		    {
-		      os = end_output(ss,os,beg,cp,origin);
+		      os = end_output(os,beg,cp,origin);
 		      for (j=ip;j<si->chans;j++) free_snd_fd(sfs[j]);    
 		      free_sync_state(sc); 
 		      if (reporting) finish_progress_report(ss,sp,NOT_FROM_ENVED);
@@ -2891,7 +2891,7 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 		      rpt = 0;
 		      if (ss->stopped_explicitly) 
 			{
-			  os = end_output(ss,os,beg,cp,origin);
+			  os = end_output(os,beg,cp,origin);
 			  for (j=ip;j<si->chans;j++) free_snd_fd(sfs[j]);    
 			  free_sync_state(sc); 
 			  if (reporting) finish_progress_report(ss,sp,NOT_FROM_ENVED);
@@ -2903,7 +2903,7 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 	    }
 	  if (reporting) finish_progress_report(ss,sp,NOT_FROM_ENVED);
 	  sfs[ip] = free_snd_fd(sfs[ip]);
-	  os = end_output(ss,os,beg,cp,origin);
+	  os = end_output(os,beg,cp,origin);
 	}
     }
   free_sync_state(sc);
@@ -2929,8 +2929,8 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
     {
     case SCAN_SYNCD_CHANS: sc = get_sync_state(ss,sp,cp,beg,FALSE,READ_FORWARD); break;
     case SCAN_ALL_CHANS: sc = get_active_chans_sync_state(ss,beg); break;
-    case SCAN_SOUND_CHANS: sc = get_sound_chans_sync_state(ss,cp,beg); break;
-    case SCAN_CURRENT_CHAN: sc = get_chan_sync_state(ss,cp,beg); break;
+    case SCAN_SOUND_CHANS: sc = get_sound_chans_sync_state(cp,beg); break;
+    case SCAN_CURRENT_CHAN: sc = get_chan_sync_state(cp,beg); break;
     }
   if (sc == NULL) return(SCM_BOOL_T);
   si = sc->si;
@@ -3005,7 +3005,7 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
   if (reporting) finish_progress_report(ss,sp,NOT_FROM_ENVED);
   for (ip=0;ip<si->chans;ip++) 
     {
-      os_arr[ip] = end_output(ss,os_arr[ip],beg,si->cps[ip],origin);
+      os_arr[ip] = end_output(os_arr[ip],beg,si->cps[ip],origin);
       sfs[ip] = free_snd_fd(sfs[ip]);
     }
   FREE(os_arr);
@@ -3343,7 +3343,7 @@ void scale_by(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
   free_sync_state(sc);
 }
 
-Float get_maxamp(snd_state *ss, snd_info *sp, chan_info *cp)
+Float get_maxamp(snd_info *sp, chan_info *cp)
 {
   snd_fd *sf;
   MUS_SAMPLE_TYPE ymax,val;
@@ -3391,7 +3391,7 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
       for (i=0;i<chans;i++)
 	{
 	  ncp = si->cps[i];
-	  val = get_maxamp(ss,ncp->sound,ncp);
+	  val = get_maxamp(ncp->sound,ncp);
 	  if (val > maxamp) maxamp = val;
 	}
       if ((data_clipped(ss) == 0) && (scalers[0] == 1.0) && (mus_data_format_to_bytes_per_sample((sp->hdr)->format) < 4)) scalers[0] = 32767.0/32768.0;
@@ -3404,7 +3404,7 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
       for (i=0;i<chans;i++)
 	{
 	  ncp = si->cps[i];
-	  val = get_maxamp(ss,ncp->sound,ncp);
+	  val = get_maxamp(ncp->sound,ncp);
 	  if ((data_clipped(ss) == 0) && (scalers[i] == 1.0) && (mus_data_format_to_bytes_per_sample((sp->hdr)->format) < 4)) scalers[i] = 32767.0/32768.0;
 	  scalers[i] /= val;
 	}
@@ -3482,7 +3482,7 @@ static snd_exf *snd_to_temp(chan_info *cp, int selection, int one_file, int head
   return(data);
 }
 
-static int temp_to_snd(snd_state *ss, snd_exf *data, char *origin)
+static int temp_to_snd(snd_exf *data, char *origin)
 {
   sync_state *sc;
   sync_info *si;
@@ -4202,7 +4202,7 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
   free_sync_state(sc);
 }
 
-void reverse_sound(chan_info *ncp, int over_selection)
+static void reverse_sound(chan_info *ncp, int over_selection)
 {
   sync_state *sc;
   sync_info *si;
@@ -4786,7 +4786,7 @@ static sync_state *get_sync_state_without_snd_fds(snd_state *ss, snd_info *sp, c
   return(sc);
 }
 
-void cos_smooth(chan_info *cp, int beg, int num, int regexpr, char *origin)
+static void cos_smooth(chan_info *cp, int beg, int num, int regexpr, char *origin)
 {
   /* verbatim, so to speak from Dpysnd */
   /* start at beg, apply a cosine for num samples, matching endpoints */
@@ -5158,7 +5158,7 @@ static void set_keymap_entry(int key, int state, int ignore, SCM func)
     }
 }
 
-static int call_user_keymap(int hashedsym, int count, chan_info *cp)
+static int call_user_keymap(int hashedsym, int count)
 {
   int i,res = KEYBOARD_NO_ACTION;
   /* if guile call the associated scheme code, else see if basic string parser can handle it */
@@ -5170,7 +5170,7 @@ static int call_user_keymap(int hashedsym, int count, chan_info *cp)
 }
 #endif
 
-void save_macro_state (snd_state *ss, FILE *fd)
+void save_macro_state (FILE *fd)
 {
 #if HAVE_GUILE
   int i;
@@ -5292,7 +5292,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
 	}
       if (sp->loading)
 	{
-	  snd_load_file(ss,str);
+	  snd_load_file(str);
 	  sp->loading = 0;
 	  clear_minibuffer(sp);
 	  free(str);
@@ -5579,7 +5579,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
     }
 #if HAVE_GUILE
   hashloc = in_user_keymap(keysym,state);
-  if (hashloc != -1) {return(call_user_keymap(hashloc,count,cp));}
+  if (hashloc != -1) {return(call_user_keymap(hashloc,count));}
 #endif
   if (sp->minibuffer_temp) clear_minibuffer(sp);
   if (state & snd_ControlMask)
@@ -6346,7 +6346,7 @@ int key_press_callback(snd_state *ss, snd_info *ur_sp, chan_info *ur_cp, int x, 
   select_channel(sp,cp->chan);
   if ((cp->lisp_graphing) && 
       (within_graph(cp,x,y) == LISP) &&
-      (handle_key_press(cp->state,sp,cp,keysym,key_state) == TRUE))
+      (handle_key_press(cp,keysym,key_state) == TRUE))
     return(FALSE);
   redisplay = keyboard_command(cp,keysym,key_state);
   if (redisplay == CURSOR_CLAIM_SELECTION)
@@ -6407,7 +6407,7 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
     }
   else
     if (click_within_graph == LISP)
-      handle_mouse_press(ss,sp,cp,ungrf_x((cp->lisp_info)->axis,x),ungrf_y((cp->lisp_info)->axis,y),button,key_state);
+      handle_mouse_press(sp,cp,ungrf_x((cp->lisp_info)->axis,x),ungrf_y((cp->lisp_info)->axis,y),button,key_state);
 }
 
 static Float fft_axis_extent(chan_info *cp)
@@ -6513,7 +6513,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		      handle_cursor(cp,cursor_moveto(cp,cursor_round(ungrf_x(cp->axis,x) * (double)SND_SRATE(sp))));
 		      if (mouse_mark)
 			{
-			  if (handle_mark_click(ss,mark_id(mouse_mark)) == FALSE)
+			  if (handle_mark_click(mark_id(mouse_mark)) == FALSE)
 			    {
 			      des = (char *)CALLOC(64,sizeof(char));
 			      sprintf(des,"mark %d at sample %d",mark_id(mouse_mark),mouse_mark->samp);
@@ -6534,7 +6534,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		}
 	      else
 		if (actax == LISP)
-		  handle_mouse_release(ss,sp,cp,ungrf_x((cp->lisp_info)->axis,x),ungrf_y((cp->lisp_info)->axis,y),button,key_state);
+		  handle_mouse_release(sp,cp,ungrf_x((cp->lisp_info)->axis,x),ungrf_y((cp->lisp_info)->axis,y),button,key_state);
 	    }
 	}
     }
@@ -6663,7 +6663,7 @@ void graph_button_motion_callback(chan_info *cp,int x, int y, TIME_TYPE time, TI
 		{
 		  if (click_within_graph == LISP)
 		    {
-		      handle_mouse_drag(ss,cp->sound,cp,
+		      handle_mouse_drag(cp->sound,cp,
 					ungrf_x((cp->lisp_info)->axis,x),
 					ungrf_y((cp->lisp_info)->axis,y));
 		      return;
@@ -6796,13 +6796,11 @@ static SCM g_temp_to_sound(SCM data, SCM new_name, SCM origin)
    using data returned by the latter and origin as the edit history entry for the edit"
 
   snd_exf *program_data;
-  snd_state *ss;
   ERRS2(new_name,S_temp_to_sound);
   ERRS3(origin,S_temp_to_sound);
-  ss = get_global_state();
   program_data = (snd_exf *)(gh_scm2ulong(data));
   program_data->new_filenames[0] = gh_scm2newstr(new_name,NULL);
-  temp_to_snd(ss,program_data,gh_scm2newstr(origin,NULL));
+  temp_to_snd(program_data,gh_scm2newstr(origin,NULL));
   return(SCM_BOOL_T);
 }
 
@@ -6813,14 +6811,12 @@ static SCM g_temps_to_sound(SCM data, SCM new_names, SCM origin)
 
   snd_exf *program_data;
   int i;
-  snd_state *ss;
   ERRVECT2(new_names,S_temps_to_sound);
   ERRS3(origin,S_temps_to_sound);
-  ss = get_global_state();
   program_data = (snd_exf *)(gh_scm2ulong(data));
   for (i=0;i<(int)gh_vector_length(new_names);i++)
     program_data->new_filenames[i] = gh_scm2newstr(gh_vector_ref(new_names,gh_int2scm(i)),NULL);
-  temp_to_snd(ss,program_data,gh_scm2newstr(origin,NULL));
+  temp_to_snd(program_data,gh_scm2newstr(origin,NULL));
   return(SCM_BOOL_T);
 }
 
@@ -7138,7 +7134,7 @@ static SCM g_save_macros(void)
   snd_state *ss;
   ss = get_global_state();
   fd = open_snd_init_file(ss);
-  save_macro_state(ss,fd);
+  save_macro_state(fd);
   fclose(fd);
   return(SCM_BOOL_F);
 }
@@ -7183,7 +7179,7 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld)
     case WAVEF: RTNBOOL(cp->waving); break;
     case CURSORF: RTNINT(cp->cursor); break;
     case LENGTHF: RTNINT(current_ed_samples(cp)); break;
-    case MAXAMPF: RTNFLT(get_maxamp(cp->state,cp->sound,cp)); break;
+    case MAXAMPF: RTNFLT(get_maxamp(cp->sound,cp)); break;
     case GRAPHINGF: RTNBOOL(cp->lisp_graphing); break;
     case LOSAMPF: if (cp->axis) RTNINT((cp->axis)->losamp); break;
     case HISAMPF: if (cp->axis) RTNINT((cp->axis)->hisamp); break;
@@ -7493,7 +7489,7 @@ static SCM g_set_y_bounds(SCM y0, SCM y1, SCM snd_n, SCM chn_n)
   else
     {
       /* if no bounds given, use maxamp */
-      hi = get_maxamp(cp->state,cp->sound,cp);
+      hi = get_maxamp(cp->sound,cp);
       if (hi < 0.0) hi = -hi;
       if (hi == 0.0) hi = .001;
       low = -hi;
@@ -7564,6 +7560,50 @@ static SCM g_backward_sample(SCM count, SCM snd, SCM chn)
   RTNINT(cp->cursor);
 }
 
+static SCM g_smooth(SCM beg, SCM num, SCM snd_n, SCM chn_n)
+{
+  #define H_smooth "(" S_smooth " start-samp samps &optional snd chn) smooths data from start-samp for samps in snd's channel chn"
+  chan_info *cp;
+  ERRN1(beg,S_smooth);
+  ERRN2(num,S_smooth);
+  ERRCP(S_smooth,snd_n,chn_n,3);
+  cp = get_cp(snd_n,chn_n);
+  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  cos_smooth(cp,g_scm2int(beg),g_scm2int(num),FALSE,S_smooth); 
+  return(SCM_BOOL_T);
+}
+
+static SCM g_smooth_selection(void)
+{
+  #define H_smooth_selection "(" S_smooth_selection ") smooths the data in the currently selected portion"
+  chan_info *cp;
+  if (selection_is_current() == 0) return(NO_ACTIVE_SELECTION);
+  cp = get_cp(SCM_BOOL_F,SCM_BOOL_F);
+  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  cos_smooth(cp,0,0,TRUE,S_smooth_selection);
+  return(SCM_BOOL_T);
+}
+
+static SCM g_reverse_sound(SCM snd_n, SCM chn_n)
+{
+  #define H_reverse_sound "(" S_reverse_sound " &optional snd chn) reverses snd's channel chn"
+  chan_info *cp;
+  ERRCP(S_reverse_sound,snd_n,chn_n,1);
+  cp = get_cp(snd_n,chn_n);
+  if (cp) reverse_sound(cp,FALSE); else return(NO_SUCH_CHANNEL);
+  return(SCM_BOOL_F);
+}
+
+static SCM g_reverse_selection(void)
+{
+  #define H_reverse_selection "(" S_reverse_selection ") reverses the data in the currently selected portion"
+  chan_info *cp;
+  if (selection_is_current() == 0) return(NO_ACTIVE_SELECTION);
+  cp = get_cp(SCM_BOOL_F,SCM_BOOL_F);
+  if (cp) reverse_sound(cp,TRUE); else return(NO_SUCH_CHANNEL);
+  return(SCM_BOOL_F);
+}
+
 
 static SCM mouse_press_hook,mark_click_hook;
 static SCM mouse_release_hook,mouse_drag_hook,key_press_hook,fft_hook;
@@ -7609,14 +7649,14 @@ static int dont_graph(snd_state *ss, chan_info *cp)
   return(SCM_TRUE_P(res));
 }
 
-static void after_graph(snd_state *ss, chan_info *cp)
+static void after_graph(chan_info *cp)
 {
   if (HOOKED(after_graph_hook))
     g_c_run_progn_hook(after_graph_hook,SCM_LIST2(gh_int2scm((cp->sound)->index),gh_int2scm(cp->chan)));
   /* (add-hook! after-graph-hook (lambda (a b) (snd-print (format #f "~A ~A" a b)))) */
 }
 
-static int handle_mark_click(snd_state *ss, int id)
+static int handle_mark_click(int id)
 {
   SCM res = SCM_BOOL_F;
   if (HOOKED(mark_click_hook))
@@ -7626,7 +7666,7 @@ static int handle_mark_click(snd_state *ss, int id)
   
 /* mouse/key events within lisp graph */
 
-static void handle_mouse_event(SCM hook, snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y, int button, int state)
+static void handle_mouse_event(SCM hook, snd_info *sp, chan_info *cp, Float x, Float y, int button, int state)
 {
   if (HOOKED(hook))
     g_c_run_progn_hook(hook,
@@ -7638,22 +7678,22 @@ static void handle_mouse_event(SCM hook, snd_state *ss, snd_info *sp, chan_info 
 				 gh_double2scm(y)));
 }
 
-static void handle_mouse_release(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y, int button, int state)
+static void handle_mouse_release(snd_info *sp, chan_info *cp, Float x, Float y, int button, int state)
 {
-  handle_mouse_event(mouse_release_hook,ss,sp,cp,x,y,button,state);
+  handle_mouse_event(mouse_release_hook,sp,cp,x,y,button,state);
 }
 
-static void handle_mouse_press(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y, int button, int state)
+static void handle_mouse_press(snd_info *sp, chan_info *cp, Float x, Float y, int button, int state)
 {
-  handle_mouse_event(mouse_press_hook,ss,sp,cp,x,y,button,state);
+  handle_mouse_event(mouse_press_hook,sp,cp,x,y,button,state);
 }
 
-static void handle_mouse_drag(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y)
+static void handle_mouse_drag(snd_info *sp, chan_info *cp, Float x, Float y)
 {
-  handle_mouse_event(mouse_drag_hook,ss,sp,cp,x,y,-1,-1);
+  handle_mouse_event(mouse_drag_hook,sp,cp,x,y,-1,-1);
 }
 
-static int handle_key_press(snd_state *ss, snd_info *sp, chan_info *cp, int key, int state)
+static int handle_key_press(chan_info *cp, int key, int state)
 {
   /* return TRUE to keep this key press from being passed to keyboard_command */
   SCM res = SCM_BOOL_F;
@@ -7669,83 +7709,87 @@ static int handle_key_press(snd_state *ss, snd_info *sp, chan_info *cp, int key,
 #else
 static int after_fft(snd_state *ss, chan_info *cp, Float scaler) {return(0);}
 static int dont_graph(snd_state *ss, chan_info *cp) {return(0);}
-static void after_graph(snd_state *ss, chan_info *cp) {}
-static int handle_mark_click(snd_state *ss, int id) {return(0);}
-static void handle_mouse_release(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y, int button, int state) {}
-static void handle_mouse_press(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y, int button, int state) {}
-static void handle_mouse_drag(snd_state *ss, snd_info *sp, chan_info *cp, Float x, Float y) {}
-static int handle_key_press(snd_state *ss, snd_info *sp, chan_info *cp, int key, int state) {return(0);}
+static void after_graph(chan_info *cp) {}
+static int handle_mark_click(int id) {return(0);}
+static void handle_mouse_release(snd_info *sp, chan_info *cp, Float x, Float y, int button, int state) {}
+static void handle_mouse_press(snd_info *sp, chan_info *cp, Float x, Float y, int button, int state) {}
+static void handle_mouse_drag(snd_info *sp, chan_info *cp, Float x, Float y) {}
+static int handle_key_press(chan_info *cp, int key, int state) {return(0);}
 #endif
 
 void g_init_chn(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure(S_temp_filenames,g_temp_filenames,1,0,0),H_temp_filenames);
-  DEFINE_PROC(gh_new_procedure(S_sound_to_temp,g_sound_to_temp,0,2,0),H_sound_to_temp);
-  DEFINE_PROC(gh_new_procedure(S_sound_to_temps,g_sound_to_temps,0,2,0),H_sound_to_temps);
-  DEFINE_PROC(gh_new_procedure(S_selection_to_temp,g_selection_to_temp,0,2,0),H_selection_to_temp);
-  DEFINE_PROC(gh_new_procedure(S_selection_to_temps,g_selection_to_temps,0,2,0),H_selection_to_temps);
-  DEFINE_PROC(gh_new_procedure(S_temp_to_sound,g_temp_to_sound,3,0,0),H_temp_to_sound);
-  DEFINE_PROC(gh_new_procedure(S_temps_to_sound,g_temps_to_sound,3,0,0),H_temps_to_sound);
-  DEFINE_PROC(gh_new_procedure(S_temp_to_selection,g_temp_to_sound,3,0,0),H_temp_to_sound);
-  DEFINE_PROC(gh_new_procedure(S_temps_to_selection,g_temps_to_sound,3,0,0),H_temps_to_sound);
-  DEFINE_PROC(gh_new_procedure(S_scan_chan,g_scan_chan,1,4,0),H_scan_chan);
-  DEFINE_PROC(gh_new_procedure(S_scan_chans,g_scan_chans,1,2,0),H_scan_chans);
-  DEFINE_PROC(gh_new_procedure(S_scan_all_chans,g_scan_all_chans,1,2,0),H_scan_all_chans);
-  DEFINE_PROC(gh_new_procedure(S_scan_sound_chans,g_scan_sound_chans,1,3,0),H_scan_sound_chans);
-  DEFINE_PROC(gh_new_procedure(S_scan_across_chans,g_scan_across_chans,1,2,0),H_scan_across_chans);
-  DEFINE_PROC(gh_new_procedure(S_scan_across_all_chans,g_scan_across_all_chans,1,2,0),H_scan_across_all_chans);
-  DEFINE_PROC(gh_new_procedure(S_scan_across_sound_chans,g_scan_across_sound_chans,1,3,0),H_scan_across_sound_chans);
-  DEFINE_PROC(gh_new_procedure(S_map_chan,g_map_chan,1,5,0),H_map_chan);
-  DEFINE_PROC(gh_new_procedure(S_map_chans,g_map_chans,1,3,0),H_map_chans);
-  DEFINE_PROC(gh_new_procedure(S_map_all_chans,g_map_all_chans,1,3,0),H_map_all_chans);
-  DEFINE_PROC(gh_new_procedure(S_map_sound_chans,g_map_sound_chans,1,4,0),H_map_sound_chans);
-  DEFINE_PROC(gh_new_procedure(S_map_across_chans,g_map_across_chans,1,3,0),H_map_across_chans);
-  DEFINE_PROC(gh_new_procedure(S_map_across_all_chans,g_map_across_all_chans,1,3,0),H_map_across_all_chans);
-  DEFINE_PROC(gh_new_procedure(S_map_across_sound_chans,g_map_across_sound_chans,1,4,0),H_map_across_sound_chans);
-  DEFINE_PROC(gh_new_procedure(S_find,g_find,1,3,0),H_find);
-  DEFINE_PROC(gh_new_procedure(S_count_matches,g_count_matches,1,3,0),H_count_matches);
-  DEFINE_PROC(gh_new_procedure(S_report_in_minibuffer,g_report_in_minibuffer,1,1,0),H_report_in_minibuffer);
-  DEFINE_PROC(gh_new_procedure(S_prompt_in_minibuffer,g_prompt_in_minibuffer,1,2,0),H_prompt_in_minibuffer);
-  DEFINE_PROC(gh_new_procedure(S_append_to_minibuffer,g_append_to_minibuffer,1,1,0),H_append_to_minibuffer);
-  DEFINE_PROC(gh_new_procedure(S_bind_key,g_bind_key,3,1,0),H_bind_key);
-  DEFINE_PROC(gh_new_procedure(S_save_macros,g_save_macros,0,0,0),H_save_macros);
-  DEFINE_PROC(gh_new_procedure(S_forward_graph,g_forward_graph,0,3,0),H_forward_graph);
-  DEFINE_PROC(gh_new_procedure(S_backward_graph,g_backward_graph,0,3,0),H_backward_graph);
-  DEFINE_PROC(gh_new_procedure(S_edit_position,g_edit_position,0,2,0),H_edit_position);
-  DEFINE_PROC(gh_new_procedure(S_ffting,g_ffting,0,2,0),H_ffting);
-  DEFINE_PROC(gh_new_procedure(S_set_ffting,g_set_ffting,0,3,0),H_set_ffting);
-  DEFINE_PROC(gh_new_procedure(S_waving,g_waving,0,2,0),H_waving);
-  DEFINE_PROC(gh_new_procedure(S_set_waving,g_set_waving,0,3,0),H_set_waving);
-  DEFINE_PROC(gh_new_procedure(S_graphing,g_graphing,0,2,0),H_graphing);
-  DEFINE_PROC(gh_new_procedure(S_set_graphing,g_set_graphing,0,3,0),H_set_graphing);
-  DEFINE_PROC(gh_new_procedure(S_squelch_update,g_squelch_update,0,2,0),H_squelch_update);
-  DEFINE_PROC(gh_new_procedure(S_set_squelch_update,g_set_squelch_update,0,3,0),H_set_squelch_update);
-  DEFINE_PROC(gh_new_procedure(S_edits,g_edits,0,2,0),H_edits);
-  DEFINE_PROC(gh_new_procedure(S_maxamp,g_maxamp,0,2,0),H_maxamp);
-  DEFINE_PROC(gh_new_procedure(S_peaks,g_peaks,0,3,0),H_peaks);
-  DEFINE_PROC(gh_new_procedure(S_x_bounds,g_x_bounds,0,2,0),H_x_bounds);
-  DEFINE_PROC(gh_new_procedure(S_y_bounds,g_y_bounds,0,2,0),H_y_bounds);
-  DEFINE_PROC(gh_new_procedure(S_set_x_bounds,g_set_x_bounds,2,2,0),H_set_x_bounds);
-  DEFINE_PROC(gh_new_procedure(S_set_y_bounds,g_set_y_bounds,0,4,0),H_set_y_bounds);
-  DEFINE_PROC(gh_new_procedure(S_cursor,g_cursor,0,2,0),H_cursor);
-  DEFINE_PROC(gh_new_procedure(S_set_cursor,g_set_cursor,1,2,0),H_set_cursor);
-  DEFINE_PROC(gh_new_procedure(S_cursor_style,g_cursor_style,0,2,0),H_cursor_style);
-  DEFINE_PROC(gh_new_procedure(S_set_cursor_style,g_set_cursor_style,1,2,0),H_set_cursor_style);
-  DEFINE_PROC(gh_new_procedure(S_left_sample,g_left_sample,0,2,0),H_left_sample);
-  DEFINE_PROC(gh_new_procedure(S_set_left_sample,g_set_left_sample,1,2,0),H_set_left_sample);
-  DEFINE_PROC(gh_new_procedure(S_right_sample,g_right_sample,0,2,0),H_right_sample);
-  DEFINE_PROC(gh_new_procedure(S_set_right_sample,g_set_right_sample,1,2,0),H_set_right_sample);
-  DEFINE_PROC(gh_new_procedure(S_edit_hook,g_edit_hook,0,2,0),H_edit_hook);
-  DEFINE_PROC(gh_new_procedure(S_undo_hook,g_undo_hook,0,2,0),H_undo_hook);
-  DEFINE_PROC(gh_new_procedure(S_x_position_slider,g_ap_sx,0,2,0),H_x_position_slider);
-  DEFINE_PROC(gh_new_procedure(S_y_position_slider,g_ap_sy,0,2,0),H_y_position_slider);
-  DEFINE_PROC(gh_new_procedure(S_x_zoom_slider,g_ap_zx,0,2,0),H_x_zoom_slider);
-  DEFINE_PROC(gh_new_procedure(S_y_zoom_slider,g_ap_zy,0,2,0),H_y_zoom_slider);
-  DEFINE_PROC(gh_new_procedure(S_frames,g_frames,0,2,0),H_frames);
-  DEFINE_PROC(gh_new_procedure(S_dot_size,g_dot_size,0,0,0),H_dot_size);
-  DEFINE_PROC(gh_new_procedure(S_set_dot_size,g_set_dot_size,1,0,0),H_set_dot_size);
-  DEFINE_PROC(gh_new_procedure(S_forward_sample,g_forward_sample,0,3,0),H_forward_sample);
-  DEFINE_PROC(gh_new_procedure(S_backward_sample,g_backward_sample,0,3,0),H_backward_sample);
+  DEFINE_PROC(gh_new_procedure(S_temp_filenames,SCM_FNC g_temp_filenames,1,0,0),H_temp_filenames);
+  DEFINE_PROC(gh_new_procedure(S_sound_to_temp,SCM_FNC g_sound_to_temp,0,2,0),H_sound_to_temp);
+  DEFINE_PROC(gh_new_procedure(S_sound_to_temps,SCM_FNC g_sound_to_temps,0,2,0),H_sound_to_temps);
+  DEFINE_PROC(gh_new_procedure(S_selection_to_temp,SCM_FNC g_selection_to_temp,0,2,0),H_selection_to_temp);
+  DEFINE_PROC(gh_new_procedure(S_selection_to_temps,SCM_FNC g_selection_to_temps,0,2,0),H_selection_to_temps);
+  DEFINE_PROC(gh_new_procedure(S_temp_to_sound,SCM_FNC g_temp_to_sound,3,0,0),H_temp_to_sound);
+  DEFINE_PROC(gh_new_procedure(S_temps_to_sound,SCM_FNC g_temps_to_sound,3,0,0),H_temps_to_sound);
+  DEFINE_PROC(gh_new_procedure(S_temp_to_selection,SCM_FNC g_temp_to_sound,3,0,0),H_temp_to_sound);
+  DEFINE_PROC(gh_new_procedure(S_temps_to_selection,SCM_FNC g_temps_to_sound,3,0,0),H_temps_to_sound);
+  DEFINE_PROC(gh_new_procedure(S_scan_chan,SCM_FNC g_scan_chan,1,4,0),H_scan_chan);
+  DEFINE_PROC(gh_new_procedure(S_scan_chans,SCM_FNC g_scan_chans,1,2,0),H_scan_chans);
+  DEFINE_PROC(gh_new_procedure(S_scan_all_chans,SCM_FNC g_scan_all_chans,1,2,0),H_scan_all_chans);
+  DEFINE_PROC(gh_new_procedure(S_scan_sound_chans,SCM_FNC g_scan_sound_chans,1,3,0),H_scan_sound_chans);
+  DEFINE_PROC(gh_new_procedure(S_scan_across_chans,SCM_FNC g_scan_across_chans,1,2,0),H_scan_across_chans);
+  DEFINE_PROC(gh_new_procedure(S_scan_across_all_chans,SCM_FNC g_scan_across_all_chans,1,2,0),H_scan_across_all_chans);
+  DEFINE_PROC(gh_new_procedure(S_scan_across_sound_chans,SCM_FNC g_scan_across_sound_chans,1,3,0),H_scan_across_sound_chans);
+  DEFINE_PROC(gh_new_procedure(S_map_chan,SCM_FNC g_map_chan,1,5,0),H_map_chan);
+  DEFINE_PROC(gh_new_procedure(S_map_chans,SCM_FNC g_map_chans,1,3,0),H_map_chans);
+  DEFINE_PROC(gh_new_procedure(S_map_all_chans,SCM_FNC g_map_all_chans,1,3,0),H_map_all_chans);
+  DEFINE_PROC(gh_new_procedure(S_map_sound_chans,SCM_FNC g_map_sound_chans,1,4,0),H_map_sound_chans);
+  DEFINE_PROC(gh_new_procedure(S_map_across_chans,SCM_FNC g_map_across_chans,1,3,0),H_map_across_chans);
+  DEFINE_PROC(gh_new_procedure(S_map_across_all_chans,SCM_FNC g_map_across_all_chans,1,3,0),H_map_across_all_chans);
+  DEFINE_PROC(gh_new_procedure(S_map_across_sound_chans,SCM_FNC g_map_across_sound_chans,1,4,0),H_map_across_sound_chans);
+  DEFINE_PROC(gh_new_procedure(S_find,SCM_FNC g_find,1,3,0),H_find);
+  DEFINE_PROC(gh_new_procedure(S_count_matches,SCM_FNC g_count_matches,1,3,0),H_count_matches);
+  DEFINE_PROC(gh_new_procedure(S_report_in_minibuffer,SCM_FNC g_report_in_minibuffer,1,1,0),H_report_in_minibuffer);
+  DEFINE_PROC(gh_new_procedure(S_prompt_in_minibuffer,SCM_FNC g_prompt_in_minibuffer,1,2,0),H_prompt_in_minibuffer);
+  DEFINE_PROC(gh_new_procedure(S_append_to_minibuffer,SCM_FNC g_append_to_minibuffer,1,1,0),H_append_to_minibuffer);
+  DEFINE_PROC(gh_new_procedure(S_bind_key,SCM_FNC g_bind_key,3,1,0),H_bind_key);
+  DEFINE_PROC(gh_new_procedure(S_save_macros,SCM_FNC g_save_macros,0,0,0),H_save_macros);
+  DEFINE_PROC(gh_new_procedure(S_forward_graph,SCM_FNC g_forward_graph,0,3,0),H_forward_graph);
+  DEFINE_PROC(gh_new_procedure(S_backward_graph,SCM_FNC g_backward_graph,0,3,0),H_backward_graph);
+  DEFINE_PROC(gh_new_procedure(S_edit_position,SCM_FNC g_edit_position,0,2,0),H_edit_position);
+  DEFINE_PROC(gh_new_procedure(S_ffting,SCM_FNC g_ffting,0,2,0),H_ffting);
+  DEFINE_PROC(gh_new_procedure(S_set_ffting,SCM_FNC g_set_ffting,0,3,0),H_set_ffting);
+  DEFINE_PROC(gh_new_procedure(S_waving,SCM_FNC g_waving,0,2,0),H_waving);
+  DEFINE_PROC(gh_new_procedure(S_set_waving,SCM_FNC g_set_waving,0,3,0),H_set_waving);
+  DEFINE_PROC(gh_new_procedure(S_graphing,SCM_FNC g_graphing,0,2,0),H_graphing);
+  DEFINE_PROC(gh_new_procedure(S_set_graphing,SCM_FNC g_set_graphing,0,3,0),H_set_graphing);
+  DEFINE_PROC(gh_new_procedure(S_squelch_update,SCM_FNC g_squelch_update,0,2,0),H_squelch_update);
+  DEFINE_PROC(gh_new_procedure(S_set_squelch_update,SCM_FNC g_set_squelch_update,0,3,0),H_set_squelch_update);
+  DEFINE_PROC(gh_new_procedure(S_edits,SCM_FNC g_edits,0,2,0),H_edits);
+  DEFINE_PROC(gh_new_procedure(S_maxamp,SCM_FNC g_maxamp,0,2,0),H_maxamp);
+  DEFINE_PROC(gh_new_procedure(S_peaks,SCM_FNC g_peaks,0,3,0),H_peaks);
+  DEFINE_PROC(gh_new_procedure(S_x_bounds,SCM_FNC g_x_bounds,0,2,0),H_x_bounds);
+  DEFINE_PROC(gh_new_procedure(S_y_bounds,SCM_FNC g_y_bounds,0,2,0),H_y_bounds);
+  DEFINE_PROC(gh_new_procedure(S_set_x_bounds,SCM_FNC g_set_x_bounds,2,2,0),H_set_x_bounds);
+  DEFINE_PROC(gh_new_procedure(S_set_y_bounds,SCM_FNC g_set_y_bounds,0,4,0),H_set_y_bounds);
+  DEFINE_PROC(gh_new_procedure(S_cursor,SCM_FNC g_cursor,0,2,0),H_cursor);
+  DEFINE_PROC(gh_new_procedure(S_set_cursor,SCM_FNC g_set_cursor,1,2,0),H_set_cursor);
+  DEFINE_PROC(gh_new_procedure(S_cursor_style,SCM_FNC g_cursor_style,0,2,0),H_cursor_style);
+  DEFINE_PROC(gh_new_procedure(S_set_cursor_style,SCM_FNC g_set_cursor_style,1,2,0),H_set_cursor_style);
+  DEFINE_PROC(gh_new_procedure(S_left_sample,SCM_FNC g_left_sample,0,2,0),H_left_sample);
+  DEFINE_PROC(gh_new_procedure(S_set_left_sample,SCM_FNC g_set_left_sample,1,2,0),H_set_left_sample);
+  DEFINE_PROC(gh_new_procedure(S_right_sample,SCM_FNC g_right_sample,0,2,0),H_right_sample);
+  DEFINE_PROC(gh_new_procedure(S_set_right_sample,SCM_FNC g_set_right_sample,1,2,0),H_set_right_sample);
+  DEFINE_PROC(gh_new_procedure(S_edit_hook,SCM_FNC g_edit_hook,0,2,0),H_edit_hook);
+  DEFINE_PROC(gh_new_procedure(S_undo_hook,SCM_FNC g_undo_hook,0,2,0),H_undo_hook);
+  DEFINE_PROC(gh_new_procedure(S_x_position_slider,SCM_FNC g_ap_sx,0,2,0),H_x_position_slider);
+  DEFINE_PROC(gh_new_procedure(S_y_position_slider,SCM_FNC g_ap_sy,0,2,0),H_y_position_slider);
+  DEFINE_PROC(gh_new_procedure(S_x_zoom_slider,SCM_FNC g_ap_zx,0,2,0),H_x_zoom_slider);
+  DEFINE_PROC(gh_new_procedure(S_y_zoom_slider,SCM_FNC g_ap_zy,0,2,0),H_y_zoom_slider);
+  DEFINE_PROC(gh_new_procedure(S_frames,SCM_FNC g_frames,0,2,0),H_frames);
+  DEFINE_PROC(gh_new_procedure(S_dot_size,SCM_FNC g_dot_size,0,0,0),H_dot_size);
+  DEFINE_PROC(gh_new_procedure(S_set_dot_size,SCM_FNC g_set_dot_size,1,0,0),H_set_dot_size);
+  DEFINE_PROC(gh_new_procedure(S_forward_sample,SCM_FNC g_forward_sample,0,3,0),H_forward_sample);
+  DEFINE_PROC(gh_new_procedure(S_backward_sample,SCM_FNC g_backward_sample,0,3,0),H_backward_sample);
+  DEFINE_PROC(gh_new_procedure(S_smooth,SCM_FNC g_smooth,2,2,0),H_smooth);
+  DEFINE_PROC(gh_new_procedure(S_smooth_selection,SCM_FNC g_smooth_selection,0,0,0),H_smooth_selection);
+  DEFINE_PROC(gh_new_procedure(S_reverse_sound,SCM_FNC g_reverse_sound,0,2,0),H_reverse_sound);
+  DEFINE_PROC(gh_new_procedure(S_reverse_selection,SCM_FNC g_reverse_selection,0,0,0),H_reverse_selection);
 
 #if (!HAVE_GUILE_1_3_0)
   fft_hook = scm_create_hook(S_fft_hook,3);                       /* args = sound channel scaler */

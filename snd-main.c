@@ -368,8 +368,8 @@ int save_state (snd_state *ss, char *save_state_name)
 #endif
       save_prevlist(save_fd);                                /* list of previous files (View: Files option) */
       map_over_sounds(ss,save_sound_state,(void *)save_fd);  /* current sound state -- will traverse chans */
-      save_macro_state(ss,save_fd);                          /* current unsaved keyboard macros (snd-chn.c) */
-      save_envelope_editor_state(ss,save_fd);                /* current envelope editor window state */
+      save_macro_state(save_fd);                             /* current unsaved keyboard macros (snd-chn.c) */
+      save_envelope_editor_state(save_fd);                   /* current envelope editor window state */
       save_regions(ss,save_fd);                              /* regions */
       save_snd_state_options(ss,save_fd);                    /* options = user-settable global state variables */
       if (transform_dialog_is_active()) fprintf(save_fd,"(%s)\n",S_transform_dialog);

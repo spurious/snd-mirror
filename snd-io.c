@@ -139,7 +139,7 @@ void mus_file_reset(int loc0, int *io, int *datai)
  * on the SGI, FOPEN_MAX is 100, but we can open many more files than that without hitting the EMFILE error.
  */
 
-void snd_file_reset(snd_state *ss, snd_data *sd, int index)
+void snd_file_reset(snd_data *sd, int index)
 {
   int fd = 0;
   int reclose = 0;
@@ -228,7 +228,7 @@ int snd_open_read(snd_state *ss, char *arg)
   return(fd);
 }
 
-int snd_probe_file(snd_state *ss, char *name)
+int snd_probe_file(char *name)
 {
   if (mus_file_probe(name)) return(FILE_EXISTS);
   return(FILE_DOES_NOT_EXIST);

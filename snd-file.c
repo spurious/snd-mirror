@@ -243,7 +243,7 @@ file_info *free_file_info(file_info *hdr)
   return(NULL);
 }
 
-int *make_file_state(int fd, file_info *hdr, int direction, int chan, int suggested_bufsize, snd_state *ss)
+int *make_file_state(int fd, file_info *hdr, int direction, int chan, int suggested_bufsize)
 {
   int *datai;
   int i,bufsize,chansize;
@@ -585,7 +585,7 @@ static void read_memo_file(snd_info *sp)
   char *newname;
   newname = memo_file_name(sp);
   if (file_write_date(newname) >= sp->write_date)
-    snd_load_file(sp->state,newname);
+    snd_load_file(newname);
   FREE(newname);
 }
 
@@ -659,7 +659,7 @@ void snd_close_file(snd_info *sp, snd_state *ss)
 }
 
 
-int copy_file(snd_state *ss, char *oldname, char *newname)
+int copy_file(char *oldname, char *newname)
 {
   /* make newname a copy of oldname */
   int ifd,ofd;
@@ -689,7 +689,7 @@ int copy_file(snd_state *ss, char *oldname, char *newname)
   return(SND_NO_ERROR);
 }
 
-int snd_copy_file(snd_state *ss, char *oldfile, char *newfile)
+int snd_copy_file(char *oldfile, char *newfile)
 {
   int err;
   err = 0;
@@ -697,7 +697,7 @@ int snd_copy_file(snd_state *ss, char *oldfile, char *newfile)
     {
       if (errno == EXDEV)
 	{
-	  err = copy_file(ss,oldfile,newfile);
+	  err = copy_file(oldfile,newfile);
 	  if (!err) remove(oldfile);
 	}
     }
@@ -747,12 +747,12 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
       cp->cgx = NULL;
       sp->chans[i] = cp;
       add_channel_data_1(cp,sp,ss,0);
-      cp->edits[0] = initial_ed_list(0,len-1);
+      set_initial_ed_list(cp,len-1);
       cp->edit_size = 1;
       cp->sound_size = 1;
       fd = snd_open_read(ss,filename);
       mus_file_open_descriptors(fd,hdr->format,mus_sound_datum_size(filename),hdr->data_location);
-      datai = make_file_state(fd,hdr,SND_IO_IN_FILE,i,(post_close) ? MAX_BUFFER_SIZE : MIX_FILE_BUFFER_SIZE,ss);
+      datai = make_file_state(fd,hdr,SND_IO_IN_FILE,i,(post_close) ? MAX_BUFFER_SIZE : MIX_FILE_BUFFER_SIZE);
       cp->sounds[0] = make_snd_data_file(filename,datai,
 					 MUS_SAMPLE_ARRAY(datai[SND_IO_DATS + SND_AREF_HEADER_SIZE+i]),
 					 copy_header(hdr->name,hdr),
@@ -833,7 +833,7 @@ void snd_update(snd_state *ss, snd_info *sp)
 {
   char *buf;
   if (sp->edited_region) return;
-  if ((snd_probe_file(ss,sp->fullname)) == FILE_DOES_NOT_EXIST)
+  if ((snd_probe_file(sp->fullname)) == FILE_DOES_NOT_EXIST)
     {
       /* user deleted file while editing it? */
       buf = (char *)CALLOC(256,sizeof(char));
@@ -1502,7 +1502,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 	  report_in_minibuffer(sp,file_string);
 	  FREE(file_string);
 	}
-      else err = snd_copy_file(ss,ofile,sp->fullname);
+      else err = snd_copy_file(ofile,sp->fullname);
       snd_update(ss,sp);
       free(ofile);
       FREE(fullname);

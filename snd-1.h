@@ -4,14 +4,6 @@
 typedef struct {unsigned int s_type;} snd_any;
 
 typedef struct {
-  int size;
-  int *fragments;
-  int beg,len;
-  char *origin;
-  int sfnum;
-} ed_list;
-
-typedef struct {
   int samps_per_bin,amp_env_size;
   MUS_SAMPLE_TYPE fmax,fmin;
   MUS_SAMPLE_TYPE *data_max,*data_min;
@@ -50,6 +42,14 @@ typedef struct {
 } snd_data;
 
 typedef struct {
+  int size;
+  int *fragments;
+  int beg,len;
+  char *origin;
+  int sfnum;
+} ed_list;
+
+typedef struct {
   ed_list *current_state;
   int *cb;
   int cbi;
@@ -63,6 +63,7 @@ typedef struct {
   int direction;
   MUS_SAMPLE_TYPE current_value;
   struct chan__info *cp;
+  struct snd__info *local_sp;          /* for local reads via make-sample-reader from Scheme */
 } snd_fd;
 
 typedef struct {Float freq; Float amp;} fft_peak;
@@ -160,7 +161,7 @@ typedef struct chan__info {
   int cx,cy;               /* graph-relative cursor loc (for XOR) */
   int edit_ctr;            /* channel's edit history */
   int edit_size;           /* current edit list size */
-  ed_list **edits;         /* the edit list */
+  ed_list **edits;        /* the edit list */
   int sound_size;          /* edit_list associated temp sound buffers */
   int sound_ctr;           /* current location in sounds list */
   snd_data **sounds;       /* the associated temp buffer/file/struct list */
@@ -401,9 +402,9 @@ typedef struct {
 /* -------- snd-io.c -------- */
 
 void mus_file_reset(int loc0, int *io, int *datai);
-void snd_file_reset(snd_state *ss, snd_data *sd, int index);
+void snd_file_reset(snd_data *sd, int index);
 int snd_open_read(snd_state *ss, char *arg);
-int snd_probe_file(snd_state *ss, char *name);
+int snd_probe_file(char *name);
 int snd_reopen_write(snd_state *ss, char *arg);
 void snd_close(int fd);
 int snd_write_header(snd_state *ss, char *name, int type, int srate, int chans, int loc, int size, int format, char *comment, int len, int *loops);
@@ -501,7 +502,6 @@ void reflect_no_regions_in_menu(void);
 void reflect_raw_open_in_menu(void);
 void reflect_raw_pending_in_menu(void);
 
-void set_save_state_file(snd_state *ss, char *name);
 void set_show_usage_stats(snd_state *ss, int val);
 void close_file_from_menu(snd_state *ss);
 void save_file_from_menu(snd_state *ss);
@@ -528,7 +528,9 @@ void activate_focus_menu(snd_state *ss, int new_focus);
 void activate_speed_in_menu(snd_state *ss, int newval);
 void set_x_axis_style(snd_state *ss, int val);
 void set_channel_style(snd_state *ss, int val);
-
+#if HAVE_GUILE
+  void g_init_menu(SCM local_doc);
+#endif
 
 
 /* -------- snd-main.c -------- */
@@ -566,10 +568,12 @@ void add_possible_completion(char *text);
 void display_completions(snd_state *ss);
 char *complete_text(char *text, int func);
 void clear_possible_completions(void);
-char *snd_apropos(snd_state *ss, char *old_text);
 char *filename_completer(char *text);
 char *srate_completer(char *text);
 char *info_completer(char *text);
+#if HAVE_GUILE
+  void g_init_completions(SCM local_doc);
+#endif
 
 
 /* -------- snd-print.c -------- */
@@ -665,14 +669,14 @@ void display_info(snd_info *sp);
 
 /* -------- snd-edits.c -------- */
 
+void allocate_ed_list(chan_info *cp);
+void set_initial_ed_list(chan_info *cp,int len);
 int edit_changes_begin_at(chan_info *cp);
 int edit_changes_end_at(chan_info *cp);
 void edit_history_to_file(FILE *fd, chan_info *cp);
-char *edit_to_string(ed_list *ed);
-void display_edits(chan_info *cp);
+char *edit_to_string(chan_info *cp, int edit);
 void free_edit_list(chan_info *cp);
 void backup_edit_list(chan_info *cp);
-ed_list *initial_ed_list(int beg, int end);
 void remember_temp(char *filename, int chans);
 void forget_temps(void);
 snd_data *make_snd_data_file(char *name, int *io, MUS_SAMPLE_TYPE *data, file_info *hdr, int temp, int ctr, int temp_chan);
@@ -687,16 +691,13 @@ void delete_samples(int beg, int num, chan_info *cp, char *origin);
 void change_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, int lock, char *origin);
 void file_change_samples(int beg, int num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, char *origin);
 void file_override_samples(int num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, char *origin);
-/* MUS_SAMPLE_TYPE *load_samples(int beg, int num, chan_info *cp, int edit_position); */
 Float sample (int samp, chan_info *cp);
 snd_fd *free_snd_fd(snd_fd *sf);
 snd_fd *init_sample_read (int samp, chan_info *cp, int direction);
 snd_fd *init_sample_read_any (int samp, chan_info *cp, int direction, int edit_position);
 MUS_SAMPLE_TYPE next_sound (snd_fd *sf);
 MUS_SAMPLE_TYPE previous_sound (snd_fd *sf);
-/* MUS_SAMPLE_TYPE next_sub_sound (snd_fd *sf, int inc); */
 Float next_sample (snd_fd *sf);
-Float previous_sample (snd_fd *sf);
 int read_sample_eof (snd_fd *sf);
 MUS_SAMPLE_TYPE next_sample_1 (snd_fd *sf);
 MUS_SAMPLE_TYPE previous_sample_1(snd_fd *sf);
@@ -720,7 +721,7 @@ int close_temp_file(int ofd, file_info *hdr, long bytes, snd_info *sp);
 int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int length, snd_state *ss);
 int current_location(snd_fd *sf);
 #if HAVE_GUILE
-  SCM snd_edit_fragment2scm(chan_info *cp, int ctr);
+  void g_init_edits(SCM local_doc);
 #endif
 
 
@@ -766,7 +767,6 @@ char *added_transform_name(int type);
   SCM g_call2(SCM proc,SCM arg1,SCM arg2);
   SCM g_call3(SCM proc,SCM arg1,SCM arg2,SCM arg3);
   int procedure_ok(SCM proc, int req_args, int opt_args, char *caller, char *arg_name, int argn);
-  char *output_name(snd_state *ss);
   #if FILE_PER_CHAN
     int multifile_channel(char *filename);
     char *multifile_save(int snd, int chn);
@@ -798,31 +798,26 @@ int call_mix_amp_changed_hook(mixdata *md);
 int call_mix_position_changed_hook(mixdata *md, int samps);
 void during_open(int fd, char *file, int reason);
 void after_open(int index);
-char *output_comment(snd_state *ss, file_info *hdr);
+char *output_comment(file_info *hdr);
 env* name_to_env(char *str);
 void snd_load_init_file(snd_state *ss, int nog, int noi);
-int snd_load_file(snd_state *ss,char *filename);
+int snd_load_file(char *filename);
 int snd_eval_str(snd_state *ss, char *buf, int count);
 int snd_eval_listener_str(snd_state *ss, char *buf);
 void snd_eval_stdin_str(snd_state *ss, char *buf);
 void g_snd_callback(snd_state *ss, int callb);
 void add_or_edit_symbol(char *name, env *val);
-int dont_edit(chan_info *cp);
-void call_undo_hook(chan_info *cp, int undo);
 
 
 /* -------- snd-region.c -------- */
 
 void allocate_regions(snd_state *ss, int numreg);
-void set_max_regions(snd_state *ss, int n);
 int region_ok(int n);
 int region_len(int n);
 int region_chans(int n);
 int region_srate(int n);
 Float region_maxamp(int n);
 int selection_is_current(void);
-Float region_sample(int reg, int chn, int samp);
-void region_samples(int reg, int chn, int beg, int num, Float *data);
 file_info *fixup_region_data(chan_info *cp, int chan, int n);
 region_state *region_report(void);
 void free_region_state (region_state *r);
@@ -839,7 +834,6 @@ int save_region(snd_state *ss, int n, char *ofile, int data_format);
 int delete_selection(char *origin, int regraph);
 void paste_region(int n, chan_info *cp, char *origin);
 int add_region(int n, chan_info *cp, char *origin);
-int mix_region(int n, chan_info *cp, int beg, Float scaler);
 void finish_keyboard_selection(void);
 int cancel_keyboard_selection(void);
 void start_selection (chan_info *cp,int x);
@@ -890,7 +884,7 @@ void handle_filter_release(snd_info *sp);
 void report_filter_edit(snd_info *sp);
 chan_info *new_env_axis(snd_state *ss);
 void init_env_axes(chan_info *acp, char *name, int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax);
-axis_info *new_wave_axis(snd_state *ss, axis_info *ap);
+axis_info *new_wave_axis(snd_state *ss);
 void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_cp, char *name, int x0, int y0, int width, int height, int dots);
 void view_envs(snd_state *ss, int env_window_width, int env_window_height);
 int hit_env(int xe, int ye, int env_window_width, int env_window_height);
@@ -905,7 +899,7 @@ env *enved_all_envs(int pos);
 void alert_envelope_editor(snd_state *ss, char *name, env *val);
 void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info *gray_ap, int apply_to_mix, int apply_to_selection);
 int enved_button_press_display(snd_state *ss, axis_info *ap, env *active_env, int evx, int evy);
-void save_envelope_editor_state(snd_state *ss, FILE *fd);
+void save_envelope_editor_state(FILE *fd);
 char *env_name_completer(char *text);
 env *enved_next_env(void);
 int set_env_base(char *name, Float val);
@@ -972,18 +966,16 @@ int keyboard_command (chan_info *cp, int keysym, int state);
 #endif
 int save_selection(snd_state *ss, char *ofile,int type, int format, int srate, char *comment);
 void convolve_with(char *filename, Float amp, chan_info *cp);
-void cos_smooth(chan_info *cp, int beg, int num, int regexpr,char *origin);
 void scale_by(snd_state *ss, snd_info *sp, chan_info *cp, Float *scalers, int len, int selection);
 void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *scalers, int len, int selection);
-Float get_maxamp(snd_state *ss, snd_info *sp, chan_info *cp);
+Float get_maxamp(snd_info *sp, chan_info *cp);
 src_state *make_src(snd_state *ss, Float srate, snd_fd *sf);
 Float run_src(src_state *sr, Float sr_change);
 src_state *free_src(src_state *sr);
 void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_num, int from_enved, char *origin, int over_selection);
 void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origin, int over_selection, Float *ur_a);
-void reverse_sound(chan_info *ncp, int over_selection);
 void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexpr, int from_enved, char *origin);
-void save_macro_state (snd_state *ss, FILE *fd);
+void save_macro_state(FILE *fd);
 void snd_minibuffer_activate(snd_info *sp, int keysym);
 void fftb(chan_info *cp, int on);
 void waveb(chan_info *cp, int on);
@@ -1056,7 +1048,7 @@ file_info *free_file_info(file_info *hdr);
 file_info *copy_header(char *fullname, file_info *ohdr);
 file_info *make_temp_header(snd_state *ss, char *fullname, file_info *old_hdr, int samples);
 dir *free_dir (dir *dp);
-int *make_file_state(int fd, file_info *hdr, int direction, int chan, int suggested_bufsize, snd_state *ss);
+int *make_file_state(int fd, file_info *hdr, int direction, int chan, int suggested_bufsize);
 int *free_file_state(int *datai);
 void add_sound_file_extension(char *ext);
 void init_sound_file_extensions(void);
@@ -1071,8 +1063,8 @@ dir *filter_sound_files(dir *dp, char *pattern);
 snd_info *snd_open_file (char *filename, snd_state *ss);
 snd_info *snd_open_file_unselected (char *filename, snd_state *ss);
 void snd_close_file(snd_info *sp,snd_state *ss);
-int copy_file(snd_state *ss, char *oldname, char *newname);
-int snd_copy_file(snd_state *ss, char *oldfile, char *newfile);
+int copy_file(char *oldname, char *newname);
+int snd_copy_file(char *oldfile, char *newfile);
 snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close);
 void snd_update(snd_state *ss, snd_info *sp);
 char *update_chan_stats(chan_info *cp);
@@ -1138,7 +1130,6 @@ int snd_checked_write(snd_state *ss, int fd, unsigned char *buf, int bytes);
 void fill_number(char *fs, char *ps);
 Float dB(snd_state *ss, Float py);
 Float un_dB(snd_state *ss, Float py);
-void set_min_dB(snd_state *ss, Float val);
 void snd_exit(int val);
 int check_balance(char *expr, int start, int end);
 char *kmg (int num);

@@ -513,7 +513,7 @@ static void make_region_dialog(snd_state *ss)
       cp = reg_sp->chans[0];
       cp->edit_size = 1;
       cp->edit_ctr = 0;
-      cp->edits = (ed_list **)CALLOC(cp->edit_size,sizeof(ed_list *));
+      allocate_ed_list(cp);
       cp->samples = (int *)CALLOC(cp->edit_size,sizeof(int));
       cp->sound_size = 1;
       cp->sound_ctr = 0;

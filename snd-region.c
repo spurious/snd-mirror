@@ -149,7 +149,7 @@ void allocate_regions(snd_state *ss,int numreg)
   regions_size = numreg;
 }
 
-void set_max_regions(snd_state *ss, int n)
+static void set_max_regions(snd_state *ss, int n)
 {
   allocate_regions(ss,n);
   allocate_region_rows(ss,n);
@@ -169,7 +169,7 @@ int selection_is_current(void)
   return((r) && (r->rgx));
 }
 
-Float region_sample(int reg, int chn, int samp)
+static Float region_sample(int reg, int chn, int samp)
 {
   region *r;
   if (region_ok(reg))
@@ -180,7 +180,7 @@ Float region_sample(int reg, int chn, int samp)
   return(0.0);
 }
 
-void region_samples(int reg, int chn, int beg, int num, Float *data)
+static void region_samples(int reg, int chn, int beg, int num, Float *data)
 {
   region *r;
   int i,j;
@@ -238,7 +238,7 @@ static void make_region_readable(region *r, snd_state *ss)
       cp = make_chan_info(NULL,i,regsp,ss);
       regsp->chans[i] = cp;
       add_channel_data_1(cp,regsp,ss,0);
-      cp->edits[0] = initial_ed_list(0,r->len-1);
+      set_initial_ed_list(cp,r->len-1);
       cp->edit_size = 1;
       cp->sound_size = 1;
       cp->hookable = 0;
@@ -251,7 +251,7 @@ static void make_region_readable(region *r, snd_state *ss)
 	    {
 	      fd = snd_open_read(ss,r->filename);
 	      mus_file_open_descriptors(fd,hdr->format,mus_data_format_to_bytes_per_sample(hdr->format),hdr->data_location);
-	      datai = make_file_state(fd,hdr,SND_IO_IN_FILE,i,FILE_BUFFER_SIZE,ss);
+	      datai = make_file_state(fd,hdr,SND_IO_IN_FILE,i,FILE_BUFFER_SIZE);
 	      cp->sounds[0] = make_snd_data_file(r->filename,datai,
 						 MUS_SAMPLE_ARRAY(datai[SND_IO_DATS+SND_AREF_HEADER_SIZE+i]),
 						 hdr,DONT_DELETE_ME,cp->edit_ctr,i); /* don't auto-delete! */
@@ -620,7 +620,7 @@ static int paste_region_1(int n, chan_info *cp, int add, int beg, Float scaler, 
 	  if (r->use_temp_file == REGION_FILE)
 	    {
 	      tempfile = snd_tempnam(ss);
-	      err = copy_file(ss,r->filename,tempfile);
+	      err = copy_file(r->filename,tempfile);
 	      if (err != SND_NO_ERROR)
 		snd_error("can't make region temp file (%s: %s)",tempfile,strerror(errno));
 	      else if (r->chans > 1) remember_temp(tempfile,r->chans);
@@ -678,7 +678,7 @@ static Float paste_fix_scaler(int n, chan_info *cp) {if (n > regions_size) retur
 
 void paste_region(int n, chan_info *cp,char *origin) {paste_region_1(paste_fix_region(n),cp,FALSE,cp->cursor,paste_fix_scaler(n,cp),origin);}
 int add_region(int n, chan_info *cp, char *origin) {return(paste_region_1(paste_fix_region(n),cp,TRUE,cp->cursor,paste_fix_scaler(n,cp),origin));}
-int mix_region(int n, chan_info *cp, int beg, Float scaler) {return(paste_region_1(n,cp,TRUE,beg,scaler,S_mix_region));}
+static int mix_region(int n, chan_info *cp, int beg, Float scaler) {return(paste_region_1(n,cp,TRUE,beg,scaler,S_mix_region));}
 
 /* we're drawing the selection in one channel, but others may be sync'd to it */
 
@@ -1302,7 +1302,7 @@ void save_regions(snd_state *ss, FILE *fd)
 	      if (save_dir(ss))
 		{
 		  newname = shorter_tempnam(save_dir(ss),"snd_");
-		  snd_copy_file(ss,r->filename,newname);
+		  snd_copy_file(r->filename,newname);
 		  fprintf(fd," \"%s\"",newname);
 		  FREE(newname);
 		}
@@ -1359,7 +1359,7 @@ void region_edit(snd_state *ss, int reg)
 	{
 	  temp_region_name = shorter_tempnam(temp_dir(ss),"region-");
 	  if (r->use_temp_file == REGION_FILE)
-	    err = copy_file(ss,r->filename,temp_region_name);
+	    err = copy_file(r->filename,temp_region_name);
 	  else err = save_region(ss, reg, temp_region_name, MUS_BINT);
 	  if (err == SND_NO_ERROR)
 	    {
@@ -1421,12 +1421,12 @@ void save_region_backpointer(snd_info *sp)
 	  r->len = current_ed_samples(sp->chans[0]);
 	  for (i=0;i<sp->nchans;i++)
 	    {
-	      val = get_maxamp(ss,sp,sp->chans[i]);
+	      val = get_maxamp(sp,sp->chans[i]);
 	      if (val > r->maxamp) r->maxamp = val;
 	    }
 	  /* make new region temp file */
 	  r->filename = snd_tempnam(ss);
-	  err = copy_file(ss,r->editor_name,r->filename);
+	  err = copy_file(r->editor_name,r->filename);
 	  if (err != SND_NO_ERROR)
 	    snd_error("can't make region temp file (%s: %s)",r->filename,strerror(errno));
 	  make_region_readable(r,ss);
@@ -1502,11 +1502,322 @@ static SCM g_insert_region(SCM samp_n, SCM reg_n, SCM snd_n, SCM chn_n) /* opt r
   return(SCM_BOOL_T);
 }
 
+static SCM g_max_regions(void) 
+{
+  #define H_max_regions "(" S_max_regions ") -> max number of regions saved on the region list"
+  snd_state *ss;
+  ss = get_global_state();
+  RTNINT(max_regions(ss));
+}
+
+static SCM g_set_max_regions(SCM n) 
+{
+  #define H_set_max_regions "(" S_set_max_regions " val) sets the max length of the region list"
+  snd_state *ss;
+  ERRN1(n,S_set_max_regions); 
+  ss = get_global_state();
+  set_max_regions(ss,g_scm2int(n));
+  RTNINT(max_regions(ss));
+}
+
+enum {REGION_LENGTH,REGION_SRATE,REGION_CHANS,REGION_MAXAMP,REGION_SELECT,REGION_DELETE,REGION_PLAY};
+
+static SCM region_read(int field, SCM n)
+{
+  int rg;
+  rg = g_scm2intdef(n,0);
+  if (region_ok(rg))
+    {
+      switch (field)
+	{
+	case REGION_LENGTH: RTNINT(region_len(rg)); break;
+	case REGION_SRATE:  RTNINT(region_srate(rg)); break;
+	case REGION_CHANS:  RTNINT(region_chans(rg)); break;
+	case REGION_MAXAMP: RTNFLT(region_maxamp(rg)); break;
+	case REGION_SELECT: select_region_and_update_browser(get_global_state(),rg); return(n); break;
+	case REGION_DELETE: delete_region_and_update_browser(get_global_state(),rg); return(n); break;
+	}
+    }
+  else return(NO_SUCH_REGION);
+  RTNINT(0);
+}
+
+static SCM g_region_length (SCM n) 
+{
+  #define H_region_length "(" S_region_length " &optional (n 0)) -> length in frames of region"
+  ERRB1(n,S_region_length); 
+  return(region_read(REGION_LENGTH,n));
+}
+
+static SCM g_region_srate (SCM n) 
+{
+  #define H_region_srate "(" S_region_srate " &optional (n 0)) -> srate of region n"
+  ERRB1(n,S_region_srate); 
+  return(region_read(REGION_SRATE,n));
+}
+
+static SCM g_region_chans (SCM n) 
+{
+  #define H_region_chans "(" S_region_chans " &optional (n 0) -> channels of data in region n"
+  ERRB1(n,S_region_chans); 
+  return(region_read(REGION_CHANS,n));
+}
+
+static SCM g_region_maxamp (SCM n) 
+{
+  #define H_region_maxamp "(" S_region_maxamp " &optional (n 0)) -> max amp of region n"
+  ERRB1(n,S_region_maxamp); 
+  return(region_read(REGION_MAXAMP,n));
+}
+
+static SCM g_select_region (SCM n) 
+{
+  #define H_select_region "(" S_select_region " &optional (n 0)) selects region n (moves it to the top of the region list)"
+  ERRB1(n,S_select_region); 
+  return(region_read(REGION_SELECT,n));
+}
+
+static SCM g_delete_region (SCM n) 
+{
+  #define H_delete_region "(" S_delete_region " &optional (n 0)) remove region n from the region list"
+  ERRB1(n,S_delete_region); 
+  return(region_read(REGION_DELETE,n));
+}
+
+static SCM g_play_region (SCM n, SCM wait) 
+{
+  #define H_play_region "(" S_play_region " &optional (n 0) (wait #f)) play region n, if wait is #t, play to end before returning"
+  int rg;
+  ERRB1(n,S_play_region); 
+  ERRB2(wait,S_play_region);
+  rg = g_scm2intdef(n,0);
+  if (region_ok(rg))
+    play_region(get_global_state(),rg,NULL,g_scm2intdef(wait,0));
+  else return(NO_SUCH_REGION);
+  return(n);
+}
+
+static SCM g_protect_region (SCM n, SCM protect) 
+{
+  #define H_protect_region "(" S_protect_region " &optional (n 0) (val #t)) if val is #t protects region n from being\n\
+   pushed off the end of the region list"
+
+  ERRN1(n,S_protect_region);
+  ERRB2(protect,S_protect_region);
+  set_region_protect(g_scm2int(n),bool_int_or_one(protect)); 
+  return(protect);
+}
+
+static SCM g_regions(void) 
+{
+  #define H_regions "(" S_regions ") -> how many regions are currently in the region list"
+  RTNINT(snd_regions());
+}
+
+static SCM g_make_region (SCM beg, SCM end, SCM snd_n, SCM chn_n)
+{
+  #define H_make_region "(" S_make_region " beg end &optional snd chn) makes a new region between beg and end in snd"
+  chan_info *cp;
+  ERRN1(beg,S_make_region);
+  ERRN2(end,S_make_region);
+  ERRCP(S_make_region,snd_n,chn_n,3);
+  cp = get_cp(snd_n,chn_n);
+  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  define_region(cp,g_scm2int(beg),g_scm2int(end),FALSE);
+  return(SCM_BOOL_T);
+}
+
+static SCM g_selection_beg(void)
+{
+  #define H_selection_beg "(" S_selection_beg ") -> selection start samp in selected sound"
+  if (selection_is_current())
+    return(gh_int2scm(selection_beg(NULL)));
+  return(NO_ACTIVE_SELECTION);
+}
+
+static SCM g_selection_length(void)
+{
+  #define H_selection_length "(" S_selection_length ") -> length (frames) of selected portion"
+  if (selection_is_current())
+    return(gh_int2scm(region_len(0)));
+  return(NO_ACTIVE_SELECTION);
+}
+
+static SCM g_selection_member(SCM snd, SCM chn)
+{
+  #define H_selection_member "(" S_selection_member " &optional snd chn) -> #t if snd's channel chn is a member of the current selection"
+  chan_info *cp;
+  ERRCP(S_selection_member,snd,chn,1);
+  cp = get_cp(snd,chn);
+  if ((cp) && (selection_is_current_in_channel(cp)))
+    return(SCM_BOOL_T);
+  return(SCM_BOOL_F);
+}
+
+static SCM g_select_all (SCM snd_n, SCM chn_n)
+{
+  #define H_select_all "(" S_select_all " &optional snd chn) makes a new selection containing all of snd's channel chn"
+  chan_info *cp;
+  ERRCP(S_select_all,snd_n,chn_n,1);
+  cp = get_cp(snd_n,chn_n);
+  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  define_region(cp,0,current_ed_samples(cp),FALSE);
+  update_graph(cp,NULL);
+  return(SCM_BOOL_T);
+}
+
+static SCM g_save_region (SCM n, SCM filename, SCM format) 
+{
+  #define H_save_region "(" S_save_region " region filename &optional format) saves region in filename using data format (mus-bshort)"
+  char *name = NULL,*urn;
+  int res=SND_NO_ERROR,rg;
+  ERRN1(n,S_save_region);
+  ERRS2(filename,S_save_region);
+  ERRB3(format,S_save_region);
+  rg = g_scm2int(n);
+  if (region_ok(rg))
+    {
+      urn = gh_scm2newstr(filename,NULL);
+      name = mus_file_full_name(urn);
+      free(urn);
+      res = save_region(get_global_state(),rg,name,g_scm2intdef(format,0));
+      if (name) FREE(name);
+    }
+  else return(NO_SUCH_REGION);
+  if (res != SND_NO_ERROR)
+    return(SCM_BOOL_F);
+  return(CANNOT_SAVE);
+}
+
+static SCM g_mix_region(SCM chn_samp_n, SCM scaler, SCM reg_n, SCM snd_n, SCM chn_n)
+{
+  #define H_mix_region "(" S_mix_region " &optional (chn-samp 0) (scaler 1.0) (region 0) snd chn) mixer region\n\
+   into snd's channel chn starting at chn-samp scaled by scaler; returns new mix id."
+
+  chan_info *cp;
+  int rg,id=-1;
+  ERRB1(chn_samp_n,S_mix_region);
+  ERRB2(scaler,S_mix_region);
+  ERRB3(reg_n,S_mix_region);
+  ERRCP(S_mix_region,snd_n,chn_n,4);
+  rg = g_scm2intdef(reg_n,0);
+  if (region_ok(rg))
+    {
+      cp = get_cp(snd_n,chn_n);
+      if (cp)
+	id = mix_region(rg,cp,
+			g_scm2intdef(chn_samp_n,cp->cursor),
+			(gh_number_p(scaler) ? (gh_scm2double(scaler)) : 1.0));
+      else return(NO_SUCH_CHANNEL);
+    }
+  else return(NO_SUCH_REGION);
+  return(gh_int2scm(id));
+}
+
+static SCM g_region_sample(SCM samp_n, SCM reg_n, SCM chn_n)
+{
+  #define H_region_sample "(" S_region_sample " &optional (samp 0) (region 0) (chan 0)) -> region's sample at samp in chan"
+  ERRB1(samp_n,S_region_sample);
+  ERRB2(reg_n,S_region_sample);
+  ERRB3(chn_n,S_region_sample);
+  finish_keyboard_selection();
+  RTNFLT(region_sample(g_scm2intdef(reg_n,0),g_scm2intdef(chn_n,0),g_scm2intdef(samp_n,0)));
+}
+
+static SCM g_region_samples(SCM beg_n, SCM num, SCM reg_n, SCM chn_n)
+{
+  #define H_region_samples "(" S_region_samples " &optional (beg 0) samps (region 0) (chan 0)) returns a vector with\n\
+   region's samples starting at samp for samps from channel chan"
+
+  SCM new_vect;
+  Float *data;
+  int len,reg,i,chn;
+  ERRB1(beg_n,S_region_samples);
+  ERRB2(num,S_region_samples);
+  ERRB3(reg_n,S_region_samples);
+  ERRB4(chn_n,S_region_samples);
+  finish_keyboard_selection();
+  reg = g_scm2intdef(reg_n,0);
+  if (!(region_ok(reg))) return(NO_SUCH_REGION);
+  chn = g_scm2intdef(chn_n,0);
+  if (chn < region_chans(reg))
+    {
+      len = g_scm2intdef(num,0);
+      if (len == 0) len = region_len(reg);
+      if (len > 0)
+	{
+	  new_vect = gh_make_vector(gh_int2scm(len),gh_double2scm(0.0));
+	  data = (Float *)CALLOC(len,sizeof(Float));
+	  region_samples(reg,chn,g_scm2intdef(beg_n,0),len,data);
+	  for (i=0;i<len;i++) gh_vector_set_x(new_vect,gh_int2scm(i),gh_double2scm(data[i]));
+	  FREE(data);
+	  return(new_vect);
+	}
+    }
+  else return(NO_SUCH_CHANNEL);
+  return(SCM_BOOL_F);
+}
+
+#include "vct.h"
+
+static SCM g_region_samples2vct(SCM beg_n, SCM num, SCM reg_n, SCM chn_n, SCM v)
+{
+  #define H_region_samples2vct "(" S_region_samples_vct " &optional (beg 0) samps (region 0) (chan 0) obj) writes\n\
+   region's samples starting at beg for samps in channel chan to vct obj, returning obj (or creating a new one)"
+
+  Float *data;
+  int len,reg,chn;
+  vct *v1 = get_vct(v);
+  finish_keyboard_selection();
+  ERRB1(beg_n,S_region_samples_vct);
+  ERRB2(num,S_region_samples_vct);
+  ERRB3(reg_n,S_region_samples_vct);
+  ERRB4(chn_n,S_region_samples_vct);
+  reg = g_scm2intdef(reg_n,0);
+  if (!(region_ok(reg))) return(NO_SUCH_REGION);
+  chn = g_scm2intdef(chn_n,0);
+  if (chn >= region_chans(reg)) return(NO_SUCH_CHANNEL);
+  len = g_scm2intdef(num,0);
+  if (len == 0) len = region_len(reg);
+  if (len > 0)
+    {
+      if (v1)
+	data = v1->data;
+      else data = (Float *)CALLOC(len,sizeof(Float));
+      region_samples(reg,chn,g_scm2intdef(beg_n,0),len,data);
+      if (v1)
+	return(v);
+      else return(make_vct(len,data));
+    }
+  return(SCM_BOOL_F);
+}
+
 
 void g_init_regions(SCM local_doc)
 {
   DEFINE_PROC(gh_new_procedure(S_restore_region,SCM_FNC g_restore_region,9,0,0),"restores a region");
-  DEFINE_PROC(gh_new_procedure(S_insert_region,g_insert_region,0,4,0),H_insert_region);
+  DEFINE_PROC(gh_new_procedure(S_insert_region,SCM_FNC g_insert_region,0,4,0),H_insert_region);
+  DEFINE_PROC(gh_new_procedure(S_max_regions,SCM_FNC g_max_regions,0,0,0),H_max_regions);
+  DEFINE_PROC(gh_new_procedure(S_set_max_regions,SCM_FNC g_set_max_regions,1,0,0),H_set_max_regions);
+  DEFINE_PROC(gh_new_procedure(S_regions,SCM_FNC g_regions,0,0,0),H_regions);
+  DEFINE_PROC(gh_new_procedure(S_region_length,SCM_FNC g_region_length,0,1,0),H_region_length);
+  DEFINE_PROC(gh_new_procedure(S_region_srate,SCM_FNC g_region_srate,0,1,0),H_region_srate);
+  DEFINE_PROC(gh_new_procedure(S_region_chans,SCM_FNC g_region_chans,0,1,0),H_region_chans);
+  DEFINE_PROC(gh_new_procedure(S_region_maxamp,SCM_FNC g_region_maxamp,0,1,0),H_region_maxamp);
+  DEFINE_PROC(gh_new_procedure(S_save_region,SCM_FNC g_save_region,2,1,0),H_save_region);
+  DEFINE_PROC(gh_new_procedure(S_select_region,SCM_FNC g_select_region,0,1,0),H_select_region);
+  DEFINE_PROC(gh_new_procedure(S_delete_region,SCM_FNC g_delete_region,0,1,0),H_delete_region);
+  DEFINE_PROC(gh_new_procedure(S_protect_region,SCM_FNC g_protect_region,2,0,0),H_protect_region);
+  DEFINE_PROC(gh_new_procedure(S_play_region,SCM_FNC g_play_region,0,2,0),H_play_region);
+  DEFINE_PROC(gh_new_procedure(S_make_region,SCM_FNC g_make_region,2,2,0),H_make_region);
+  DEFINE_PROC(gh_new_procedure(S_selection_beg,SCM_FNC g_selection_beg,0,0,0),H_selection_beg);
+  DEFINE_PROC(gh_new_procedure(S_selection_length,SCM_FNC g_selection_length,0,0,0),H_selection_length);
+  DEFINE_PROC(gh_new_procedure(S_selection_member,SCM_FNC g_selection_member,0,2,0),H_selection_member);
+  DEFINE_PROC(gh_new_procedure(S_select_all,SCM_FNC g_select_all,0,2,0),H_select_all);
+  DEFINE_PROC(gh_new_procedure(S_mix_region,SCM_FNC g_mix_region,0,5,0),H_mix_region);
+  DEFINE_PROC(gh_new_procedure(S_region_sample,SCM_FNC g_region_sample,0,3,0),H_region_sample);
+  DEFINE_PROC(gh_new_procedure(S_region_samples,SCM_FNC g_region_samples,0,4,0),H_region_samples);
+  DEFINE_PROC(gh_new_procedure(S_region_samples_vct,SCM_FNC g_region_samples2vct,0,5,0),H_region_samples2vct);
 }
 
 #endif
