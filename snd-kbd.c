@@ -190,31 +190,31 @@ static void execute_named_macro(chan_info *cp, char *name, off_t count)
     }
 }
 
-typedef struct {int key; int state; int args; XEN func; int extended; char *origin;} key_entry;
+typedef struct {int key; int state; int args; XEN func; int cx_extended; char *origin;} key_entry; /* Sun/Forte C define "extended" somewhere */
 static key_entry *user_keymap = NULL;
 static int keymap_size = 0;
 static int keymap_top = 0;
 
-static int in_user_keymap(int key, int state, int extended)
+static int in_user_keymap(int key, int state, int cx_extended)
 {
   int i;
   if (keymap_top == 0) return(-1);
   for (i = 0; i < keymap_top; i++)
     if ((user_keymap[i].key == key) && 
 	(user_keymap[i].state == state) && 
-	(user_keymap[i].extended == extended) && 
+	(user_keymap[i].cx_extended == cx_extended) && 
 	(XEN_BOUND_P(user_keymap[i].func)))
       return(i);
   return(-1);
 }
 
-static XEN g_key_binding(XEN key, XEN state, XEN extended)
+static XEN g_key_binding(XEN key, XEN state, XEN cx_extended)
 {
   #define H_key_binding "(" S_key_binding " key state (extended #f)): function bound to this key"
   int i, k, s;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(key), key, XEN_ARG_1, S_key_binding, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(state), state, XEN_ARG_2, S_key_binding, "an integer");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(extended), extended, XEN_ARG_3, S_key_binding, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(cx_extended), cx_extended, XEN_ARG_3, S_key_binding, "a boolean");
   k = XEN_TO_SMALL_C_INT(key);
   s = XEN_TO_SMALL_C_INT(state);
   if ((k < MIN_KEY_CODE) || (k > MAX_KEY_CODE) ||
@@ -224,16 +224,16 @@ static XEN g_key_binding(XEN key, XEN state, XEN extended)
 			 C_TO_XEN_STRING("key: ~A, state: ~A"),
 			 XEN_LIST_2(key,
 				    state)));
-  i = in_user_keymap(k, s, (XEN_TRUE_P(extended)) ? TRUE : FALSE);
+  i = in_user_keymap(k, s, (XEN_TRUE_P(cx_extended)) ? TRUE : FALSE);
   if (i >= 0) 
     return(user_keymap[i].func);
   return(XEN_UNDEFINED);
 }
 
-static void set_keymap_entry(int key, int state, int args, XEN func, int extended, char *origin)
+static void set_keymap_entry(int key, int state, int args, XEN func, int cx_extended, char *origin)
 {
   int i;
-  i = in_user_keymap(key, state, extended);
+  i = in_user_keymap(key, state, cx_extended);
   if (i == -1)
     {
       if (keymap_size == keymap_top)
@@ -252,15 +252,15 @@ static void set_keymap_entry(int key, int state, int args, XEN func, int extende
 		  user_keymap[i].key = 0; 
 		  user_keymap[i].state = 0; 
 		  user_keymap[i].func = XEN_UNDEFINED;
-		  user_keymap[i].extended = 0;
+		  user_keymap[i].cx_extended = 0;
 		  user_keymap[i].origin = NULL;
 		}
 	    }
 	}
       user_keymap[keymap_top].key = key;
       user_keymap[keymap_top].state = state;
-      user_keymap[keymap_top].extended = extended;
-      check_menu_labels(key, state, extended);
+      user_keymap[keymap_top].cx_extended = cx_extended;
+      check_menu_labels(key, state, cx_extended);
       i = keymap_top;
       keymap_top++;
     }
@@ -1735,7 +1735,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 }
 
 
-static XEN g_bind_key(XEN key, XEN state, XEN code, XEN extended, XEN origin)
+static XEN g_bind_key(XEN key, XEN state, XEN code, XEN cx_extended, XEN origin)
 {
   #define H_bind_key "(" S_bind_key " key modifiers func (extended #f) (origin \"user key func\"): \
 causes 'key' (an integer) \
@@ -1750,10 +1750,10 @@ the name reported if an error occurs."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(key), key, XEN_ARG_1, S_bind_key, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(state), state, XEN_ARG_2, S_bind_key, "an integer");
   XEN_ASSERT_TYPE((XEN_FALSE_P(code) || XEN_PROCEDURE_P(code)), code, XEN_ARG_3, S_bind_key, "#f or a procedure");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(extended), extended, XEN_ARG_4, S_bind_key, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(cx_extended), cx_extended, XEN_ARG_4, S_bind_key, "a boolean");
   k = XEN_TO_C_INT(key);
   s = XEN_TO_C_INT(state);
-  if (XEN_TRUE_P(extended)) e = TRUE; else e = FALSE;
+  if (XEN_TRUE_P(cx_extended)) e = TRUE; else e = FALSE;
   if ((k < MIN_KEY_CODE) || (k > MAX_KEY_CODE) ||
       (s < MIN_KEY_STATE) || (s > MAX_KEY_STATE))
     XEN_ERROR(NO_SUCH_KEY,
@@ -1778,10 +1778,10 @@ the name reported if an error occurs."
   return(code);
 }
 
-static XEN g_unbind_key(XEN key, XEN state, XEN extended)
+static XEN g_unbind_key(XEN key, XEN state, XEN cx_extended)
 {
   #define H_unbind_key "(" S_unbind_key " key state (extended #f)): undo the effect of a prior bind-key call."
-  return(g_bind_key(key, state, XEN_FALSE, extended, XEN_UNDEFINED));
+  return(g_bind_key(key, state, XEN_FALSE, cx_extended, XEN_UNDEFINED));
 }
 
 static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)

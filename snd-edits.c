@@ -1097,7 +1097,11 @@ static ed_list *make_ed_list(int size)
   /* this form required by the SGI C compiler: */
   ed->fragments = (void *)CALLOC(size, sizeof(ed_fragment *));
 #else
+#if defined(__SUNPRO_C)
+  ed->fragments = (void *)CALLOC(size, sizeof(ed_fragment *));
+#else
   FRAGMENTS(ed) = (ed_fragment **)CALLOC(size, sizeof(ed_fragment *));
+#endif
 #endif
   for (i = 0; i < size; i++)
     FRAGMENT(ed, i) = (ed_fragment *)CALLOC(1, sizeof(ed_fragment));

@@ -1819,13 +1819,11 @@ snd_info *get_sp(XEN x_snd_n, int accept_player)
 	  if ((snd_n < ss->max_sounds) && 
 	      (snd_ok(ss->sounds[snd_n])))
 	    return(ss->sounds[snd_n]);
-	  else return(NULL);
 	}
       else
 	{
 	  if (accept_player)
 	    return(player(snd_n));
-	  else return(NULL);
 	}
       return(NULL);
     }

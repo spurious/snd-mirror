@@ -769,6 +769,7 @@ static void apply_fft(fft_state *fs)
   cp = (chan_info *)(fs->chan);
   fft_data = fs->data;
   data_len = cp->transform_size;
+  if (data_len > fs->size) data_len = fs->size;
   if ((show_selection_transform(ss)) && 
       (selection_is_active_in_channel(cp)) && 
       (fs->datalen > 0))

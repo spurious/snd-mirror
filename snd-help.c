@@ -272,6 +272,10 @@ char *version_info(void)
 	  "\n    C++: ",
   #endif
 	  __VERSION__,
+#else
+#ifdef __SUNPRO_C
+	  "\n    Forte C ",
+#endif
 #endif
 #if HAVE_GNU_LIBC_VERSION_H
 	  "\n    Libc: ", gnu_get_libc_version(), ".", 

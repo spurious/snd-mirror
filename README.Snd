@@ -406,10 +406,11 @@ similar problems involving "applicable smobs" and the tab-completion
 system; if possible, get the latest Guile.
 
 
-If you're using the CVS Guile (1.7.0) and get some complaint about
-lt_dlopen (or some name like that), you need to add -lltdl to the
-library list.  If that doesn't fix it, add -lguile-ltdl -- this part
-of the CVS guile is in flux, so the load sequence is tricky.
+If you're using the CVS Guile (1.7.0), or Forte C on a Sun, and get
+some complaint about lt_dlopen (or some name like that), you need to
+add -lltdl to the library list.  If that doesn't fix it, add
+-lguile-ltdl -- this part of the CVS guile is in flux, so the load
+sequence is tricky.
 
 
 If you get endless stupid warnings about system headers,

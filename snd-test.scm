@@ -45,15 +45,15 @@
 	  (snd-print "\n")
 	  (snd-print str)))))
 
-(define tests 2)
+(define tests 20)
 (if (not (defined? 'snd-test)) (define snd-test -1))
 (if (defined? 'disable-play) (disable-play))
-(define keep-going #t)
+(define keep-going #f)
 (define full-test (< snd-test 0))
 (define total-tests 28)
 (if (not (defined? 'with-exit)) (define with-exit (< snd-test 0)))
 (set! (with-background-processes) #f)
-(define all-args #t) ; huge arg testing
+(define all-args #f) ; huge arg testing
 (define with-big-file #f)
 (define debugging-device-channels 2)
 
@@ -313,6 +313,7 @@
 	      (load "gtk-popup.scm")))))
 
 
+;(define widvardpy (make-variable-display "do-loop" "i*2" 'graph))
 
 ;;; ---------------- test 0: constants ----------------
 
@@ -1693,6 +1694,7 @@
       (run-hook before-test-hook 4)
       (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests)) 
 	(if (> tests 1) (begin (snd-display ";test ~D " clmtest) (mus-sound-prune)))
+	(clear-listener)
 	(let ((chns (mus-sound-chans "oboe.snd"))
 	      (dl (mus-sound-data-location "oboe.snd"))
 	      (fr (mus-sound-frames "oboe.snd"))
@@ -13672,7 +13674,6 @@ EDITS: 5
 	    (if (mix-property :not-there mix-id) (snd-display ";mix-not-property: ~A" (mix-property :not-there mix-id)))
 	    (update-time-graph)
 	    (set! (mix-waveform-height) 20)
-	    (if (not (sound? (list mix-id))) (snd-display ";mix oboe: ~D not ok?" mix-id))
 	    (if (not (= (chans (list mix-id)) 1)) (snd-display ";mix oboe: chans ~D?" (chans (list mix-id))))
 	    (if (not (= (channels (list mix-id)) 1)) (snd-display ";mix oboe: channels ~D?" (channels (list mix-id))))
 	    (if (not (= (frames (list mix-id)) 50828)) (snd-display ";mix oboe: frames ~D?" (frames (list mix-id))))
@@ -17465,6 +17466,8 @@ EDITS: 5
 	   (s8-snd (if (file-exists? "s8.snd") "s8.snd" "oboe.snd"))
 	   (open-ctr 0))
       (run-hook before-test-hook 14)
+      (add-hook! after-open-hook (lambda (snd)
+				   (make-player snd 0)))
       (do ((i 0 (1+ i)))
 	  ((= i cur-dir-len))
 	(let* ((name (list-ref cur-dir-files i))
@@ -17890,16 +17893,20 @@ EDITS: 5
 		(if (not (string? str)) (snd-display ";z.snd reader: ~A" str)))
 	      (if (not (equal? (cursor-position) (list 0 0))) (snd-display ";cursor-position z: ~A" (cursor-position)))
 	      (if (not (= (cursor) 0)) (snd-display ";cursor z: ~A" (cursor)))
-	      (let ((pl (make-player ind 0)))
-		(add-player pl)
-		(start-playing 1 22050 #f))
-	      (revert-sound ind)
-	      (set! (transform-graph? ind 0) #t)
-	      (add-hook! lisp-graph-hook display-energy)
-	      (set! (x-bounds) (list 0.0 .01))
-	      (set! (sample 0) 0.5)
-	      (set! (x-bounds) (list 0.0 .001))
-	      (close-sound ind))
+	      (let ((outer (make-player ind 0)))
+		(let ((pl (make-player ind 0)))
+		  (add-player pl)
+		  (start-playing 1 22050 #f))
+		(revert-sound ind)
+		(set! (transform-graph? ind 0) #t)
+		(add-hook! lisp-graph-hook display-energy)
+		(set! (x-bounds) (list 0.0 .01))
+		(set! (sample 0) 0.5)
+		(set! (x-bounds) (list 0.0 .001))
+		(close-sound ind)
+		(let ((tag (catch #t (lambda () (add-player outer)) (lambda args (car args)))))
+		  (if (not (eq? tag 'no-such-player))
+		      (snd-display ";dangling player: ~A" tag)))))
 	    (if (channel-amp-envs "z.snd" 0 100)
 		(snd-display ";channel-amp-envs of empty file: ~A" (channel-amp-envs "z.snd" 0 100)))
 	    
@@ -18344,6 +18351,7 @@ EDITS: 5
 	(if (or (fneq val -0.7828) 
 		(fneq val1 -0.8804))
 	    (snd-display ";mus-random repeated: ~A ~A?" val val1)))
+      (reset-hook! after-open-hook)
       (run-hook after-test-hook 14)
       )
     )
@@ -19918,6 +19926,8 @@ EDITS: 5
 (if (or full-test (= snd-test 16) (and keep-going (<= snd-test 16)))
     (begin
       (run-hook before-test-hook 16)
+      (do ((test-16 0 (1+ test-16)))
+	  ((= test-16 tests))
       (let ((oboe (open-sound "oboe.snd")))
 	
 	(for-each
@@ -23748,7 +23758,7 @@ EDITS: 1
 	  
 	  (close-sound ind)
 	  )	
-	)
+	))
       (run-hook after-test-hook 16)
       ))
 
@@ -25160,7 +25170,6 @@ EDITS: 2
 		(snd-display ";fcomb at ~A: ~A ~A?" i fval gval)))))
       (run-hook after-test-hook 21)
       ))
-
 
 
 ;;; ---------------- test 22: run ----------------

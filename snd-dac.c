@@ -2194,6 +2194,7 @@ static void free_player(snd_info *sp)
     }
   FREE(sp->filename);
   FREE(sp->chans);
+  if (sp->filter_control_env) sp->filter_control_env = free_env(sp->filter_control_env);
   FREE(sp);
 }
 

@@ -5105,7 +5105,7 @@ int mus_header_change_format(const char *filename, int new_format)
 	      break;
 	    case MUS_IRCAM:
 	      lseek(fd, 12L, SEEK_SET);
-	      mus_bint_to_char((unsigned char *)hdrbuf, sndlib_format_to_ircam(new_format)); break;
+	      mus_bint_to_char((unsigned char *)hdrbuf, sndlib_format_to_ircam(new_format));
 	      write(fd, hdrbuf, 4);
 	      break;
 	    case MUS_NIST:

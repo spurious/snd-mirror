@@ -13065,8 +13065,8 @@ if test $GUILE_CONFIG_works = yes; then
 	;;
     esac
   else
-    # GUILE_CONFIG_path is empty
-    GUILE_LIBS="`guile-config link`"
+    # GUILE_LIB_path is empty
+    GUILE_LIBS="`${GUILE_CONFIG_path}guile-config link`"
   fi
 
   if test "`${GUILE_CONFIG_path}guile -c '(display (string>=? (version) "1.3.4"))'`" != "#t"; then
