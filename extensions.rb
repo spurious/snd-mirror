@@ -2,24 +2,41 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Last: Wed Feb 23 00:31:29 CET 2005
+# Last: Fri Mar 04 03:57:03 CET 2005
 
 # Commentary:
 #
 # module Compatibility
+# 
 # scan_sound_chans(beg, end, snd, edpos) do |y| ... end
 # map_sound_chans(beg, end, edname, snd, edpos) do |y| ... end
 # scan_all_chans(beg, end, edpos) do |y| ... end
 # map_all_chans(beg, end, edname, edpos) do |y| ... end
 # scan_chans(beg, end, edpos) do |y| ... end
 # map_chans(beg, end, edname, edpos) do |y| ... end
+# scan_across_all_chans(beg, end, snd, edpos) do |data, chns| ... end
+# map_across_all_chans(beg, end, edname, snd, edpos) do |data, chns| ... end
+# 
 # forward_sample(count, snd, chn)
 # backward_sample(count, snd, chn)
+# 
+# dismiss_all_dialogs
+# 
+# back_or_forth_graph(count)
+# forward_graph(count)
+# backward_graph(count)
+# back_or_forth_mix(count)
+# forward_mix(count)
+# backward_mix(count)
+# back_or_forth_mark(count)
+# forward_mark(count)
+# backward_mark(count)
 # sound_data_channel2list(sd, chan)
 # sound_data2list(sd)
 # vct2samples(samp, samps, data, snd, chn)
 # samples2vct(samp, samps, snd, chn, nv, epos)
-# 
+# scale_sound_by(scl, beg, dur, snd, chn, edpos)
+# scale_sound_to(norm, beg, dur, snd, chn)
 #
 # module Extensions
 #
@@ -32,12 +49,15 @@
 # remember_all_sound_properties(database, tmp_snd_p)
 # class Remember_sound_properties
 #   initialize(database)
+#   inspect
 #   with_db do |db| ... end
 #   load(snd)
 #   save(snd)
+#   each do |k, v| ... end
 #   delete_if do |k, v| ... end
 #   contents
 #   reorganize
+#   help
 #
 # add_comment(comm, samp, snd, chn)
 # remove_comment(comm, snd, chn)
@@ -75,6 +95,7 @@
 # ramp_expt(rmp0, rmp1, exponent, symmetric, beg, dur, snd, chn, edpos)
 # env_expt_channel(env, exponent, symmetric, beg, dur, snd, chn, edpos)
 # offset_channel(amount, beg, dur, snd, chn, edpos)
+# dither_channel(amnt, beg, dur, snd, chn, edpos)
 # contrast_channel(index, beg, dur, snd, chn, edpos)
 
 # Comments are mostly taken from extensions.scm.
@@ -85,12 +106,17 @@ require "examp"
 require "hooks"
 include Math
 
+def sounds2array
+  (sounds or []).reverse
+end
+
 module Compatibility
   # 
   # Snd-4 compatibility stuff
   # 
   def scan_sound_chans(beg = 0, fin = false, snd = false, edpos = false, &body)
-    if body and body.arity == 1
+    # Proc#arity returns -1 instead of 1 on older versions
+    if body and body.arity.abs == 1
       val = nil
       if c = (0...chans(snd)).detect do |chn| val = scan_chan(body, beg, fin, snd, chn, edpos) end
         val += [snd_snd(snd), c]
@@ -98,22 +124,22 @@ module Compatibility
         nil
       end
     else
-      snd_throw(:bad_arity, "scan_sound_chans([beg, [end, [snd, [edpos]]]]) do |y| ... end")
+      snd_raise(:bad_arity, "scan_sound_chans([beg, [end, [snd, [edpos]]]]) do |y| ... end")
     end
   end
 
   def map_sound_chans(beg = 0, fin = false, edname = false, snd = false, edpos = false, &body)
-    if body and body.arity == 1
+    if body and body.arity.abs == 1
       channels(snd).times do |chn| map_chan(body, beg, fin, edname, snd, chn, edpos) end
     else
-      snd_throw(:bad_arity, "map_sound_chans([beg, [end, [ename, [snd, [edpos]]]]]) do |y| ... end")
+      snd_raise(:bad_arity, "map_sound_chans([beg, [end, [ename, [snd, [edpos]]]]]) do |y| ... end")
     end
   end
 
   def scan_all_chans(beg = 0, fin = false, edpos = false, &body)
-    if body and body.arity == 1
+    if body and body.arity.abs == 1
       catch(:done) do
-        (sounds or []).each do |snd|
+        sounds2array.each do |snd|
           channels(snd).times do |chn|
             if res = scan_chan(body, beg, fin, snd, chn, edpos)
               throw(:done, res += [snd, chn])
@@ -123,27 +149,27 @@ module Compatibility
         false
       end
     else
-      snd_throw(:bad_arity, "scan_all_chans([beg, [end, [edpos]]]) do |y| ... end")
+      snd_raise(:bad_arity, "scan_all_chans([beg, [end, [edpos]]]) do |y| ... end")
     end
   end
 
   def map_all_chans(beg = 0, fin = false, edname = false, edpos = false, &body)
-    if body and body.arity == 1
-      (sounds or []).each do |snd|
+    if body and body.arity.abs == 1
+      sounds2array.each do |snd|
         channels(snd).times do |chn|
           map_chan(body, beg, fin, edname, snd, chn, edpos)
         end
       end
     else
-      snd_throw(:bad_arity, "map_all_chans([beg, [end, [ename, [edpos]]]]) do |y| ... end")
+      snd_raise(:bad_arity, "map_all_chans([beg, [end, [ename, [edpos]]]]) do |y| ... end")
     end
   end
 
   def scan_chans(beg = 0, fin = false, edpos = false, &body)
-    if body and body.arity == 1
+    if body and body.arity.abs == 1
       current_sync = sync(selected_sound)
       catch(:done) do
-        (sounds or []).each do |snd|
+        sounds2array.each do |snd|
           if sync(snd) == current_sync
             channels(snd).times do |chn|
               if res = scan_chan(body, beg, fin, snd, chn, edpos)
@@ -155,14 +181,14 @@ module Compatibility
         false
       end
     else
-      snd_throw(:bad_arity, "scan_chans([beg, [end, [edpos]]]) do |y| ... end")
+      snd_raise(:bad_arity, "scan_chans([beg, [end, [edpos]]]) do |y| ... end")
     end
   end
 
   def map_chans(beg = 0, fin = false, edname = false, edpos = false, &body)
-    if body and body.arity == 1
+    if body and body.arity.abs == 1
       current_sync = sync(selected_sound)
-      (sounds or []).each do |snd|
+      sounds2array.each do |snd|
         if sync(snd) == current_sync
           channels(snd).times do |chn|
             map_chan(body, beg, fin, edname, snd, chn, edpos)
@@ -170,10 +196,74 @@ module Compatibility
         end
       end
     else
-      snd_throw(:bad_arity, "map_chans([beg, [end, [ename, [edpos]]]]) do |y| ... end")
+      snd_raise(:bad_arity, "map_chans([beg, [end, [ename, [edpos]]]]) do |y| ... end")
     end
   end
 
+  # body.call(data, chan_num)
+  def scan_across_all_chans(beg = 0, fin = false, snd = false, edpos = false, &body)
+    chans = all_chans
+    chan_num = chans.first.length
+    maxlen = 0
+    sounds2array.each do |snd|
+      channels(snd).times do |chn|
+        maxlen = [maxlen, frames(snd, chn)].max
+      end
+    end
+    len = fin.kind_of?(Integer) ? ([fin, maxlen].min - beg) : (maxlen - beg)
+    data = make_array(chan_num, 0.0)
+    fds = make_array(chan_num) do |chn|
+      make_sample_reader(beg, chans[0].shift, chans[1].shift, 1, edpos)
+    end
+    catch(:done) do
+      len.times do |i|
+        data.map_with_index! do |d, chn| next_sample(fds[chn]) end
+        if newdata = body.call(data, chan_num)
+          throw(:done, [newdata, i + beg])
+        end
+      end
+    end
+  end
+  
+  def map_across_all_chans(beg = 0, fin = false, edname = false, snd = false, edpos = false, &body)
+    snds, chans = all_chans
+    chan_num = snds.length
+    maxlen = 0
+    sounds2array.each do |sd|
+      channels(sd).times do |chn|
+        maxlen = [maxlen, frames(sd, chn)].max
+      end
+    end
+    len = fin.kind_of?(Integer) ? ([fin, maxlen].min - beg) : (maxlen - beg)
+    data = make_array(chan_num)
+    fds = make_array(chan_num) do |chn|
+      make_sample_reader(beg, snds[chn], chans[chn], 1, edpos)
+    end
+    filenames = make_array(chan_num) do |chn|
+      snd_tempnam
+    end
+    outgs = make_array(chan_num) do |chn|
+      make_sample2file(filenames[chn], 1, Mus_out_format, Mus_next)
+    end
+    outsamp = 0
+    len.times do |i|
+      data.map_with_index! do |d, chn| next_sample(fds[chn]) end
+      if (newdata = body.call(data, chan_num))
+        newdata.each_with_index do |dat, chn| out_any(outsamp, dat, 0, outgs[chn]) end
+        outsamp += 1
+      end
+    end
+    filenames.each_with_index do |file, chn|
+      mus_close(outgs[chn])
+      free_sample_reader(fds[chn])
+      if outsamp > 0
+        delete_samples(beg, len, snds[chn], chans[chn]) if outsamp != len
+        set_samples(beg, outsamp, file, snds[chn], chans[chn], true, edname)
+        delete_file(file)
+      end
+    end
+  end
+  
   # 
   # Snd-5 compatibility stuff
   # 
@@ -189,15 +279,138 @@ module Compatibility
   # Snd-6 compatibility stuff
   # 
   def dismiss_all_dialogs
-    dialog_widgets.each do |dialog|
-      next unless dialog
-      hide_widget dialog
+    if provided? "xm"
+      dialog_widgets.each do |dialog|
+        next unless dialog
+        if provided?("snd-motif") and RXtIsManaged(dialog)
+          RXtUnmanageChild(dialog)
+        end
+      end
     end
   end
 
   # 
-  # Snd-6 compatibility stuff
+  # Snd-7 compatibility stuff
   # 
+  def back_or_forth_graph(count)
+    if sounds
+      cursnd = selected_sound or sounds.first
+      curchn = selected_channel or 0
+      curpos = 0
+      pos = 0
+      sndlst = []
+      chnlst = []
+      sounds.each do |snd|
+        channels(snd).times do |chn|
+          if cursnd == snd and curchn == chn
+            curpos = pos
+          end
+          pos += 1
+          sndlst.push(snd)
+          chnlst.push(chn)
+        end
+      end
+      newpos = (curpos + count) % sndlst.length
+      set_selected_sound(sndlst[newpos])
+      set_selected_channel(chnlst[newpos])
+      [selected_sound, selected_channel]
+    end
+  end
+  
+  def forward_graph(count = 1)
+    back_or_forth_graph(count)
+  end
+  
+  def backward_graph(count = 1)
+    back_or_forth_graph(-count)
+  end
+
+  def back_or_forth_mix(count, snd, chn)
+    if count.nonzero? and (mx = mixes(snd, chn))
+      if mx.length == 1
+        set_cursor(mix_position(mx.first), snd, chn)
+        mx.first
+      else
+        sorted_mx = mx.sort do |a, b|
+          if mix_position(a) < mix_position(b)
+            1
+          elsif mix_position(a) > mix_position(b)
+            -1
+          else
+            0
+          end
+        end
+        pos = cursor(snd, chn)
+        curpos = count > 0 ? -1 : 0
+        if pos >= mix_position(sorted_mx.first)
+          sorted_mx.each do |m|
+            if (count > 0 and pos < mix_position(m)) or (count < 0 and pos <= mix_position(m))
+              break
+            else
+              curpos += 1
+            end
+          end
+        end
+        curpos = (curpos + count) % len
+        set_cursor(mix_position(sorted_mx[curpos]), snd, chn)
+        sorted_mx[curpos]
+      end
+    else
+      false
+    end
+  end
+  
+  def forward_mix(count = 1, snd = false, chn = false)
+    back_and_forth_mix(count, snd_snd(snd), chn_chn(chn))
+  end
+
+  def backward_mix(count = 1, snd = false, chn = false)
+    back_and_forth_mix(-count, snd_snd(snd), chn_chn(chn))
+  end
+
+  def back_or_forth_mark(count, snd, chn)
+    if count.nonzero? and (mk = marks(snd, chn))
+      if mk.length == 1
+        set_cursor(mark_sample(mk.first), snd, chn)
+        mk.first
+      else
+        sorted_mk = mk.sort do |a, b|
+          if mark_sample(a) < mark_sample(b)
+            1
+          elsif mark_sample(a) > mark_sample(b)
+            -1
+          else
+            0
+          end
+        end
+        pos = cursor(snd, chn)
+        curpos = count > 0 ? -1 : 0
+        if pos >= mark_sample(sorted_mk.first)
+          sorted_mk.each do |m|
+            if (count > 0 and pos < mark_sample(m)) or (count < 0 and pos <= mark_sample(m))
+              break
+            else
+              curpos += 1
+            end
+          end
+        end
+        curpos = (curpos + count) % len
+        set_cursor(mark_sample(sorted_mk[curpos]), snd, chn)
+        sorted_mk[curpos]
+      end
+    else
+      false
+    end
+  end
+
+  def forward_mark(count = 1, snd = false, chn = false)
+    back_or_forth_mark(count, snd_snd(snd), snd_chn(chn))
+  end
+
+  def backward_mark(count = 1, snd = false, chn = false)
+    back_or_forth_mark(-count, snd_snd(snd), snd_chn(chn))
+  end
+  
   def sound_data_channel2list(sd, chan)
     v = make_vct(sound_data_length(sd))
     sound_data2vct(sd, chan, v)
@@ -219,6 +432,28 @@ module Compatibility
       vct_subseq(channel2vct(samp, samps, snd, chn, epos), 0, samps, nv)
     else
       channel2vct(samp, samps, snd, chn, epos)
+    end
+  end
+
+  def scale_sound_by(scl, beg = false, dur = false, snd = false, chn = false, edpos = false)
+    if chn.kind_of?(Integer)
+      scale_channel(scl, beg, dur, snd, chn, edpos)
+    else
+      channels(snd).times do |c| scale_channel(scl, beg, dur, snd, c) end
+    end
+  end
+
+  def scale_sound_to(norm, beg = false, dur = false, snd = false, chn = false)
+    if chn.kind_of?(Integer)
+      mx = maxamp(snd, chn)
+      if mx.nonzero? and mx != norm
+        scale_channel(norm / mx, beg, dur, snd, chn)
+      end
+    else
+      mx = maxamp(snd, true).max
+      if mx.nonzero? and mx != norm
+        channels(snd).times do |c| scale_channel(norm / mx, beg, dur, snd, c) end
+      end
     end
   end
 end
@@ -486,6 +721,7 @@ module Extensions
 #   database
 #
 # methods:
+#   inspect
 #   with_db do ... end
 #   load(snd)
 #   save(snd)
@@ -549,9 +785,8 @@ module Extensions
       end
     end
   end
-=begin
-  $after_graph_hook.add_hook!("show-comments") do |snd, chn| show_comments(snd, chn) end
-=end
+  # $after_graph_hook.add_hook!("show-comments") do |snd, chn| show_comments(snd, chn) end
+
   
   # Have we marks?  Similar to selections?().
   def marks?(more_than_one = true)
@@ -572,7 +807,7 @@ module Extensions
   def all_chans
     sndlist = []
     chnlist = []
-    (sounds() or []).each do |snd|
+    sounds2array.each do |snd|
       channels(snd).times do |chn|
         sndlist << snd
         chnlist << chn
@@ -648,7 +883,7 @@ module Extensions
   def selection_members
     sndlist = []
     if selection?
-      (sounds() or []).each do |snd|
+      sounds2array.each do |snd|
         channels(snd).times do |i|
           sndlist.push([snd, i]) if selection_member?(snd, i)
         end
@@ -671,14 +906,14 @@ module Extensions
             end
       set_selection_frames(val - s0, s, c)
     end
-    current_sound = (snd or selected_sound() or (s = sounds() and s[0]))
+    current_sound = (snd or selected_sound() or (sounds and sounds[0]))
     unless sound?(current_sound)
       error("make_selection(%s, %s, %s, %s): no-such-sound",
             beg.inspect, len.inspect, snd.inspect, chn.inspect)
     end
     current_sync = sync(current_sound)
     if selection?
-      (sounds() or []).each do |s|
+      sounds2array.each do |s|
         channels(s).times do |i|
           need_update = selection_member?(s, i)
           set_selection_member?(false, s, i)
@@ -689,7 +924,7 @@ module Extensions
     if chn
       add_chan_to_selection.call(beg, len, snd, chn)
     else
-      (sounds() or []).each do |s|
+      sounds2array.each do |s|
         if snd == true or s == current_sound or (current_sync.nonzero? and current_sync == sync(s))
           channels(s).times do |i|
             add_chan_to_selection.call(beg, len, s, i)
@@ -777,7 +1012,7 @@ module Extensions
       end
       unless $exit_hook.member?("unsaved-edits-at-exit?")
         $exit_hook.add_hook!("unsaved-edits-at-exit?") do | |
-          if (sounds() or []).detect do |snd| unsaved_edits_at_close.call(snd) end
+          if sounds2array.detect do |snd| unsaved_edits_at_close.call(snd) end
             true
           else
             false
@@ -1047,6 +1282,9 @@ FDATA should be a file name or an array [fname, beg = 0, chn = 0] (%s)", fdata.i
   # vct: start, incr, off, scl, exponent
   def ramp_expt(rmp0, rmp1, exponent, symmetric = true,
                 beg = 0, dur = false, snd = false, chn = false, edpos = false)
+    rmp0 = rmp0.to_f
+    rmp1 = rmp1.to_f
+    exponent = exponent.to_f
     ptree_channel(lambda do |y, data, forward|
                     angle = data[0]
                     incr = data[1]
@@ -1057,6 +1295,8 @@ FDATA should be a file name or an array [fname, beg = 0, chn = 0] (%s)", fdata.i
                     end
                     y * (data[2] + exp(log(angle) * data[4]) * data[3])
                   end, beg, dur, snd, chn, edpos, true, lambda do |frag_beg, frag_dur|
+                    frag_beg = frag_beg.to_f
+                    frag_dur = frag_dur.to_f
                     incr = 1.0 / frag_dur
                     if symmetric and rmp1 < rmp0
                       vct((frag_dur - frag_beg) * incr, -incr, rmp1, rmp0 - rmp1, exponent)
@@ -1079,6 +1319,13 @@ FDATA should be a file name or an array [fname, beg = 0, chn = 0] (%s)", fdata.i
   
   def offset_channel(amount, beg = 0, dur = false, snd = false, chn = false, edpos = false)
     ptree_channel(lambda do |y| y + amount end, beg, dur, snd, chn, edpos, true)
+  end
+
+  def dither_channel(amnt = 0.00006, beg = 0, dur = false, snd = false, chn = false, edpos = false)
+    dither = 0.5 * amnt
+    ptree_channel(lambda do |y| mus_random(dither) + mus_random(dither) + y end,
+                  beg, dur, snd, chn, edpos, true, false,
+                  format("dither_channel %1.8f %s %s", amnt, beg, dur))
   end
   
   def contrast_channel(index, beg = 0, dur = false, snd = false, chn = false, edpos = false)

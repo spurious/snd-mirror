@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Last: Wed Feb 23 01:01:05 CET 2005
+# Last: Fri Mar 04 01:37:00 CET 2005
 
 # Commentary:
 #
@@ -35,6 +35,7 @@
 #
 # module Enumerable
 #  map_with_index do |x, i| ... end
+#  map_with_index! do |x, i| ... end
 #
 # with_silence(exception) do |old_verbose, old_debug| ... end
 # 
@@ -71,6 +72,7 @@
 # set_snd_var(name, val, snd, chn)
 # snd_catch(tag, &body)
 # snd_throw(tag, *args)
+# snd_raise(tag, *args)
 # c_g?() (if not in Snd)
 # let(*args) do |*args| ... end
 # gloop(*args) do |args| ... end
@@ -102,6 +104,26 @@
 # vibro(speed, depth)
 # fp(sr, osamp, osfreq)
 # compand(h)
+# compand_channel(beg, dur, snd, chn, edpos)
+# fft_peak(snd, chn, scale)
+# cross_synthesis(cross_snd, amp, fftsize, r)
+# osc_formants(radius, bases, amounts, freqs)
+# echo(scaler, secs)
+# zecho(scaler, secs, freq, amp)
+# flecho(scaler, secs)
+# comb_filter(scaler, size)
+# zcomb(scaler, size, pm)
+# notch_filter(scaler, size)
+# formant_filter(radius, freq)
+# filtered_env(e, snd, chn)
+# fft_edit(bottom, top, snd, chn)
+# fft_squelch(squelch, snd, chn)
+# fft_cancel(lo_freq, hi_freq, snd, chn)
+# ramp(gen, up)
+# make_ramp(size)
+# squelch_vowels(snd, chn)
+# scramble_channels(*new_order)
+# scramble_channel(silence)
 #
 # module Dsp (see dsp.scm)
 #  butter(b, sig)
@@ -114,10 +136,21 @@
 #  zero_phase(h)
 #  rotate_phase(func)
 #  spot_freq(samp, snd, chn)
+#  make_hilbert_transform(len)
+#  hilbert_transform(f, input)
+#  make_lowpass(fc, len)
+#  lowpass(f, input)
+#  make_highpass(fc, len)
+#  highpass(f, input)
+#  make_bandpass(flo, fhi, len)
+#  bandpass(f, input)
+#  make_bandstop(flo, fhi, len)
+#  bandstop(f, input)
 #
 # module Moog (see moog.scm)
 #  make_moog_filter(freq, q)
 #  moog_filter(m, sig)
+#  
 
 # Code:
 
@@ -304,9 +337,12 @@ end
 module Enumerable
   def map_with_index
     i = -1
-    self.map do |x|
-      yield(x, i += 1)
-    end
+    self.map do |x| yield(x, i += 1) end
+  end
+
+  def map_with_index!
+    i = -1
+    self.map! do |x| yield(x, i += 1) end
   end
 end
 
@@ -596,15 +632,19 @@ end
 ## Utilities
 ##
 
-def close_sound_extend(snd)
-  # 5 == Notebook
-  if main_widgets[5] and selected_sound <= snd
-    idx = 0
-    snds = sounds() and idx = snds.index(snd)
-    close_sound(snd)
-    snds = sounds() and set_selected_sound(snds[idx < snds.length ? idx : -1])
-  else
-    close_sound(snd)
+if provided? "snd-nogui"
+  alias close_sound_extend close_sound
+else
+  def close_sound_extend(snd)
+    # 5 == Notebook
+    if main_widgets[5] and selected_sound <= snd
+      idx = 0
+      snds = sounds() and idx = snds.index(snd)
+      close_sound(snd)
+      snds = sounds() and set_selected_sound(snds[idx < snds.length ? idx : -1])
+    else
+      close_sound(snd)
+    end
   end
 end
 
@@ -773,26 +813,84 @@ def set_snd_var(name, val, snd = :no_snd, chn = :no_chn)
   end
 end
 
-def snd_catch(tag = :all, &body)
-  catch(tag) do
-    begin
-      body.call
-    rescue
-      throw(tag, rb_error_to_mus_tag)
-    end
+Snd_error_tags = [
+  :bad_arity,
+  :bad_header,
+  :bad_type,
+  :cannot_apply_controls,
+  :cannot_parse,
+  :cannot_print,
+  :cannot_save,
+  :gsl_error,
+  :mus_error,
+  :no_active_selection,
+  :no_data,
+  :no_such_axis,
+  :no_such_channel,
+  :no_such_color,
+  :no_such_colormap,
+  :no_such_direction,
+  :no_such_edit,
+  :no_such_envelope,
+  :no_such_file,
+  :no_such_graphics_context,
+  :no_such_key,
+  :no_such_mark,
+  :no_such_menu,
+  :no_such_mix,
+  :no_such_player,
+  :no_such_plugin,
+  :no_such_region,
+  :no_such_sample,
+  :no_such_sound,
+  :no_such_track,
+  :no_such_widget,
+  :plugin_error,
+  :wrong_number_of_args,
+  :out_of_range,
+  :wrong_type_arg]
+
+def rb_error_to_mus_tag
+  case $!.inspect
+    # #<StandardError: No_such_file: file->array /baddy/hiho No such file or directory
+    # #<StandardError: insert_region: No_such_region: 1004>
+  when /^#<StandardError/
+      err = $!.inspect.downcase.split(/:/)[1, 2].map do |e| e.strip end
+      Snd_error_tags.detect do |tag| tag.to_s == err[0] or tag.to_s == err[1] end
+  when /^#<RangeError/
+      :out_of_range
+  when /^#<TypeError/
+      :wrong_type_arg
+  else
+    nil
   end
 end
 
+# returns [:tag_name, message]
+def snd_catch(tag = :all, &body)
+  ret = catch(tag) do body.call end
+  (ret.kind_of?(Array) and ret[0] == :snd_throw) ? ret[1, 2] : [ret]
+rescue
+  [rb_error_to_mus_tag, ""]
+end
+
 def snd_throw(tag, *args)
-  str = format("%s: `%s'", get_func_name(2), tag.to_s.capitalize)
+  str = format("%s: %s", get_func_name(2), tag.inspect)
+  args.each do |s| str += format(" %s", s.inspect) end
+  throw(tag, [:snd_throw, tag, str])
+end
+
+def snd_raise(tag, *args)
+  str = format("%s: %s:", tag.to_s.capitalize, get_func_name(2))
   args.each do |s| str += format(" %s", s.inspect) end
   exception = case tag
-              when /[Oo]ut_of_range/
+              when :out_of_range
                 RangeError
+              when :wrong_type_arg
+                TypeError
               else
                 StandardError
               end
-  throw(tag, str)
   raise(exception, str)
 end
 
@@ -1380,10 +1478,302 @@ examp.scm).
 Usage: map_chan(compand())\n") if doc == :help
   tbl = vct(-1.000, -0.960, -0.900, -0.820, -0.720, -0.600, -0.450, -0.250, 
 	    0.000, 0.250, 0.450, 0.600, 0.720, 0.820, 0.900, 0.960, 1.000)
-  lambda do |i| 
-    index = 8.0 + 8.0 * i
-    array_interp(tbl, index, 17)
+  lambda do |inval| array_interp(tbl, 8.0 + 8.0 * inval, 17) end
+end
+
+def compand_channel(beg = 0, dur = false, snd = false, chn = false, edpos = false)
+  tbl = vct(-1.000, -0.960, -0.900, -0.820, -0.720, -0.600, -0.450, -0.250, 
+	    0.000, 0.250, 0.450, 0.600, 0.720, 0.820, 0.900, 0.960, 1.000)
+  ptree_channel(lambda do |inval| array_interp(tbl, 8.0 + 8.0 * inval, 17) end,
+                beg, dur, snd, chn, edpos, true, false, format("compand_channel %s %s", beg, dur))
+end
+
+def fft_peak(snd, chn, scale)
+  if transform_graph? and transform_graph_type == Graph_once
+    report_in_minibuffer(((2.0 * vct_peak(transform2vct(snd, chn))) / transform_size).to_s)
+    snd
+  else
+    false
   end
+end
+
+def cross_synthesis(cross_snd, amp, fftsize, r)
+  freq_inc = fftsize / 2
+  fdr = make_vct(fftsize)
+  fdi = make_vct(fftsize)
+  spectr = make_vct(freq_inc)
+  inctr = 0
+  ctr = freq_inc
+  radius = 1.0 - r / fftsize.to_f
+  bin = srate() / fftsize.to_f
+  formants = make_array(freq_inc) do |i| make_formant(radius, i * bin) end
+  lambda do |inval|
+    if ctr == freq_inc
+      fdr = channel2vct(inctr, fftsize, cross_snd, 0)
+      inctr += freq_inc
+      spectrum(fdr, fdi, false, 2)
+      vct_subtract!(fdr, spectr)
+      vct_scale!(fdr, 1.0 / freq_inc)
+      ctr = 0
+    end
+    ctr += 1
+    vct_add!(spectr, fdr)
+    amp * formant_bank(spectr, formants, inval)
+  end
+end
+
+def osc_formants(radius, bases, amounts, freqs)
+  len = bases.length
+  frms = make_array(len) do |i| make_formant(radius, bases[i]) end
+  oscs = make_array(len) do |i| make_oscil(freqs[i]) end
+  lambda do |x|
+    val = 0.0
+    frms.each_with_index do |frm, i|
+      val += formant(frm, x)
+      set_mus_frequency(frm, bases[i] + amounts[i] * oscil(oscs[i]))
+    end
+    val
+  end
+end
+
+def echo(scaler, secs)
+  del = make_delay((secs * srate()).round)
+  lambda do |inval|
+    inval + delay(del, scaler * (tap(del) + inval))
+  end
+end
+
+def zecho(scaler, secs, freq, amp)
+  os = make_oscil(freq)
+  len = (secs * srate()).round
+  del = make_delay(len, "max-size".intern, (len + amp + 1).to_i)
+  lambda do |inval|
+    inval + delay(del, scaler * (tap(del) + inval), amp * oscil(os))
+  end
+end
+
+def flecho(scaler, secs)
+  flt = make_fir_filter(:order, 4, :xcoeffs, vct(0.125, 0.25, 0.25, 0.125))
+  del = make_delay((secs * srate()).round)
+  lambda do |inval|
+    inval + delay(del, fir_filter(flt, scaler * (tap(del) + inval)))
+  end
+end
+
+def comb_filter(scaler, size)
+  cmb = make_comb(scaler, size)
+  lambda do |inval| comb(cmb, inval) end
+end
+
+def zcomb(scaler, size, pm)
+  max_envelope_1 = lambda do |en, mx|
+    1.step(en.length - 1, 2) do |i| mx = [mx, en[i]].max.to_f end
+    mx
+  end
+  cmb = make_comb(scaler, size, "max-size".intern, (max_envelope_1.call(pm, 0.0) + size + 1).to_i)
+  penv = make_env(:envelope, pm, :end, frames)
+  lambda do |inval| comb(cmb, inval, env(penv)) end
+end
+
+def notch_filter(scaler, size)
+  gen = make_notch(scaler, size)
+  lambda do |inval| notch(gen, inval) end
+end
+
+def formant_filter(radius, freq)
+  frm = make_formant(radius, freq)
+  lambda do |inval| formant(frm, inval) end
+end
+
+def filtered_env(e, snd = false, chn = false)
+  flt = make_one_pole(1.0, 0.0)
+  amp_env = make_env(:envelope, e, :end, frames - 1)
+  map_channel(lambda do |val|
+                env_val = env(amp_env)
+                set_mus_xcoeff(flt, 0, env_val)
+                set_mus_ycoeff(flt, 1, env_val - 1.0)
+                one_pole(flt, env_val * val)
+              end, 0, false, snd, chn, false, format("filtered_env %s", e.inspect))
+end
+
+def fft_edit(bottom, top, snd = false, chn = false)
+  sr = srate(snd).to_f
+  len = frames(snd, chn)
+  fsize = (2.0 ** (log(len) / log(2.0)).ceil).to_i
+  rdata = channel2vct(0, fsize, snd, chn)
+  idata = make_vct(fsize)
+  lo = (bottom / (sr / fsize)).round
+  hi = (top / (sr / fsize)).round
+  fft(rdata, idata, 1)
+  j = fsize - 1
+  lo.times do |i|
+    rdata[i] = rdata[j] = 0.0
+    rdata[i] = rdata[j] = 0.0
+    j -= 1
+  end
+  j = fsize - hi
+  (hi..(fsize / 2)).each do |i|
+    rdata[i] = rdata[j] = 0.0
+    rdata[i] = rdata[j] = 0.0
+    j -= 1
+  end
+  fft(rdata, idata, -1)
+  vct_scale!(rdata, 1.0 / fsize)
+  vct2channel(rdata, 0, len - 1, snd, chn, false, format("fft_edit %s %s", bottom, top))
+end
+
+def fft_squelch(squelch, snd = false, chn = false)
+  sr = srate(snd).to_f
+  len = frames(snd, chn)
+  fsize = (2.0 ** (log(len) / log(2.0)).ceil).to_i
+  rdata = channel2vct(0, fsize, snd, chn)
+  idata = make_vct(fsize)
+  fsize2 = fsize / 2
+  fft(rdata, idata, 1)
+  vr = vct_copy(rdata)
+  vi = vct_copy(idata)
+  rectangular2polar(vr, vi)
+  scaler = vct_peak(vr)
+  scl_squelch = squelch * scaler
+  j = fsize - 1
+  fsize2.times do |i|
+    if sqrt(rdata[i] * rdata[i] + idata[i] * idata[i]) < scl_squelch
+      rdata[i] = rdata[j] = 0.0
+      rdata[i] = rdata[j] = 0.0
+    end
+    j -= 1
+  end
+  fft(rdata, idata, -1)
+  vct_scale!(rdata, 1.0 / fsize)
+  vct2channel(rdata, 0, len - 1, snd, chn, false, format("fft_squelch %s", squelch))
+  scaler
+end
+
+def fft_cancel(lo_freq, hi_freq, snd = false, chn = false)
+  sr = srate(snd).to_f
+  len = frames(snd, chn)
+  fsize = (2.0 ** (log(len) / log(2.0)).ceil).to_i
+  rdata = channel2vct(0, fsize, snd, chn)
+  idata = make_vct(fsize)
+  fsize2 = fsize / 2
+  fft(rdata, idata, 1)
+  hz_bin = sr / fsize
+  lo_bin = (lo_freq / hz_bin).round
+  hi_bin = (hi_freq / hz_bin).round
+  j = fsize - lo_bin - 1
+  fsize2.times do |i|
+    if i > hi_bin
+      rdata[i] = rdata[j] = 0.0
+      rdata[i] = rdata[j] = 0.0
+    end
+    j -= 1
+  end
+  fft(rdata, idata, -1)
+  vct_scale!(rdata, 1.0 / fsize)
+  vct2channel(rdata, 0, len - 1, snd, chn, false, format("fft_cancel %s %s", lo_freq, hi_freq))
+end
+
+def ramp(gen, up)
+  ctr, size = gen[0, 2]
+  val = ctr / size
+  gen[0] = [size, [0, ctr + (up ? 1 : -1)].max].min
+  val
+end
+
+def make_ramp(size = 128)
+  [0, size]
+end
+
+def squelch_vowels(snd = false, chn = false)
+  fft_size = 32
+  fft_mid = fft_size / 2
+  rl = make_vct(fft_size)
+  im = make_vct(fft_size)
+  ramper = make_ramp(256)
+  peak = maxamp / fft_mid
+  read_ahead = make_sample_reader(0, snd, chn)
+  ctr = fft_size - 1
+  ctr.times do |i| rl[i] = read_sample(read_ahead) end
+  in_vowel = false
+  map_channel(lambda do |y|
+                rl[ctr] = read_sample(read_ahead)
+                ctr += 1
+                if ctr == fft_size
+                  fft(rl, im, 1)
+                  vct_multiply!(rl, rl)
+                  vct_multiply!(im, im)
+                  vct_add!(rl, im)
+                  in_vowel = (rl[0] + rl[1] + rl[2] + rl[3]) > peak
+                  vct_fill!(im, 0.0)
+                  ctr = 0
+                end
+                y * (1.0 - ramp(ramper, in_vowel))
+              end, 0, false, snd, chn, false, "squelch_vowels")
+end
+
+def scramble_channels(*new_order)
+  len = new_order.length
+  swap_once = lambda do |current, desired, n|
+    if n != len
+      cur_orig, cur_cur = current[n][0, 2]
+      dst = desired[n]
+      if cur_orig != dst
+        swap_channels(false, cur_cur, false, dst)
+        current[dst][0] = cur_orig
+      end
+      swape_once.call(current, desired, n + 1)
+    end
+  end
+  swap_once.call(make_array(len) do |i| [i, i] end, new_order, 0)
+end
+
+def scramble_channel(silence)
+  buffer = make_average(128)
+  silence = silence / 128.0
+  edges = []
+  samp = 0
+  in_silence = true
+  old_max = max_regions
+  old_tags = with_mix_tags
+  set_max_regions(1024)
+  set_with_mix_tags(false)
+  scan_channel(lambda do |y|
+                 if (now_silent = average(buffer, y * y) < silence) != in_silence
+                   edges.push(samp)
+                 end
+                 in_silence = now_silent
+                 samp += 1
+                 false
+               end)
+  edges.push(frames)
+  len = edges.length
+  pieces = make_array(len)
+  start = 0
+  edges.each_with_index do |fin, i|
+    pieces[i] = make_region(0, fin)
+    start = fin
+  end
+  start = 0
+  as_one_edit(lambda do
+                scale_by(0.0)
+                len.times do
+                  this = rbm_random(len)
+                  reg, pieces[this] = pieces[this], false
+                  unless reg
+                    (this.round + 1).upto(len - 1) do |i|
+                      reg = pieces[i]
+                      reg and pieces[i] = false
+                    end
+                  end
+                  mix_region(start, reg)
+                  start += region_frames(reg)
+                  forget_region(reg)
+                end
+              end)
+rescue
+ensure
+  set_max_regions(old_max)
+  set_with_mix_tags(old_tags)
 end
 
 module Dsp
@@ -1558,7 +1948,6 @@ tries to determine the current pitch: spot_freq(left_sample())\n") if samp == :h
       end
     end
   end
-
   # $graph_hook.add_hook!("examp-left-sample-hook") do |snd, chn, y0, y1|
   #   report_in_minibuffer(format("(freq: %.3f)", spot_freq(left_sample(snd, chn))))
   # end
@@ -1570,6 +1959,112 @@ tries to determine the current pitch: spot_freq(left_sample())\n") if samp == :h
   #     report_in_minibuffer(format("(freq: %.3f)", spot_freq(cursor(snd, chn))))
   #   end
   # end
+
+  def make_hilbert_transform(len = 30)
+    arrlen = len * 2 + 1
+    arr = make_vct(arrlen)
+    (-len...len).each do |i|
+      k = i + len
+      denom = PI * i
+      num = 1.0 - cos(PI * i)
+      if i == 0
+        arr[k] = 0.0
+      else
+        arr[k] = (num / denom) * (0.54 + 0.46 * cos((PI * i) / len))
+      end
+    end
+    make_fir_filter(arrlen, arr)
+  end
+
+  def hilbert_transform(f, input)
+    fir_filter(f, input)
+  end
+
+  def make_lowpass(fc, len = 30)
+    fc = fc.to_f
+    arrlen = len * 2 + 1
+    arr = make_vct(arrlen)
+    (-len...len).each do |i|
+      k = i + len
+      denom = PI * i
+      num = sin(fc * i)
+      if i == 0
+        arr[k] = fc / PI
+      else
+        arr[k] = (num / denom) * (0.54 + 0.46 * cos((PI * i) / len))
+      end
+    end
+    make_fir_filter(arrlen, arr)
+  end
+
+  def lowpass(f, input)
+    fir_filter(f, input)
+  end
+
+  def make_highpass(fc, len = 30)
+    fc = fc.to_f
+    arrlen = len * 2 + 1
+    arr = make_vct(arrlen)
+    (-len...len).each do |i|
+      k = i + len
+      denom = PI * i
+      num = -sin(fc * i)
+      if i == 0
+        arr[k] = 1.0 - fc / PI
+      else
+        arr[k] = (num / denom) * (0.54 + 0.46 * cos((PI * i) / len))
+      end
+    end
+    make_fir_filter(arrlen, arr)
+  end
+
+  def highpass(f, input)
+    fir_filter(f, input)
+  end
+
+  def make_bandpass(flo, fhi, len = 30)
+    flo = flo.to_f
+    fhi = fhi.to_f
+    arrlen = len * 2 + 1
+    arr = make_vct(arrlen)
+    (-len...len).each do |i|
+      k = i + len
+      denom = PI * i
+      num = sin(fhi * i) - sin(flo * i)
+      if i == 0
+        arr[k] = (fhi - flo) / PI
+      else
+        arr[k] = (num / denom) * (0.54 + 0.46 * cos((PI * i) / len))
+      end
+    end
+    make_fir_filter(arrlen, arr)
+  end
+
+  def bandpass(f, input)
+    fir_filter(f, input)
+  end
+
+  def make_bandstop(flo, fhi, len = 30)
+    flo = flo.to_f
+    fhi = fhi.to_f
+    arrlen = len * 2 + 1
+    arr = make_vct(arrlen)
+    (-len...len).each do |i|
+      k = i + len
+      denom = PI * i
+      num = sin(flo * i) - sin(fhi * i)
+      if i == 0
+        arr[k] = 1.0 - (fhi - flo) / PI
+      else
+        arr[k] = (num / denom) * (0.54 + 0.46 * cos((PI * i) / len))
+      end
+    end
+    make_fir_filter(arrlen, arr)
+  end
+
+  def bandstop(f, input)
+    fir_filter(f, input)
+  end
 end
 
 module Moog

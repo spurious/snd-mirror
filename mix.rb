@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Feb 22 13:40:33 CET 2005
-# Last: Wed Feb 23 03:29:07 CET 2005
+# Last: Sun Feb 27 13:40:21 CET 2005
 
 # Commentary:
 #
@@ -59,7 +59,7 @@ module Mix
   
   # returns nil or mixer id
   def find_mix(sample, snd = false, chn = false)
-    mixes(snd_snd(snd), snd_chn(chn)).detect do |n| mix_position(n) == sample end
+    (mixes(snd_snd(snd), snd_chn(chn)) or []).detect do |n| mix_position(n) == sample end
   end
   
   # 
