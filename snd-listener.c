@@ -467,10 +467,10 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
     mall = mallinfo();
     str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
     mus_snprintf(str, PRINT_BUFFER_SIZE, "\nmalloc: %s + %s (in use: %s, freed: %s)\n",
-	    m0 = kmg(mall.arena),
-	    m1 = kmg(mall.hblkhd),
-	    m2 = kmg(used_bytes = mall.uordblks),
-	    m3 = kmg(mall.fordblks));
+		 m0 = kmg(mall.arena),
+		 m1 = kmg(mall.hblkhd),
+		 m2 = kmg(used_bytes = mall.uordblks),
+		 m3 = kmg(mall.fordblks));
     pos = GUI_TEXT_END(stats_form);
     GUI_STATS_TEXT_INSERT(stats_form, pos, str);
     if (m0) free(m0);
@@ -512,18 +512,18 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
 	str = (char *)CALLOC(STATS_BUFFER_SIZE,sizeof(char));
 	if (len > 7)
 	  mus_snprintf(str, STATS_BUFFER_SIZE,
-		  "\nGuile:\n  gc time: %.2f secs (%d sweeps)\n  cells: %Ld (%Ld gc'd)\n  heap size: %Ld",
-		  gc_time,
-		  XEN_TO_C_INT(XEN_CDR(XEN_LIST_REF(stats, 5))),     /* times */
-		  gc_cells,
-		  gc_swept,
-		  gc_heap);
+		       "\nGuile:\n  gc time: %.2f secs (%d sweeps)\n  cells: %Ld (%Ld gc'd)\n  heap size: %Ld",
+		       gc_time,
+		       XEN_TO_C_INT(XEN_CDR(XEN_LIST_REF(stats, 5))),     /* times */
+		       gc_cells,
+		       gc_swept,
+		       gc_heap);
 	else
 	  mus_snprintf(str, STATS_BUFFER_SIZE,
-		  "\nGuile:\n  gc time: %.2f secs\n  cells: %Ld\n  heap size: %Ld",
-		  gc_time,
-		  gc_cells,
-		  gc_heap);
+		       "\nGuile:\n  gc time: %.2f secs\n  cells: %Ld\n  heap size: %Ld",
+		       gc_time,
+		       gc_cells,
+		       gc_heap);
 	pos = GUI_TEXT_END(stats_form);
 	GUI_STATS_TEXT_INSERT(stats_form, pos, str);
 	FREE(str);
@@ -542,9 +542,9 @@ static XEN g_save_listener(XEN filename)
   if (fp) save_listener_text(fp);
   if ((!fp) || (fclose(fp) != 0))
     XEN_ERROR(CANNOT_SAVE,
-	  XEN_LIST_3(C_TO_XEN_STRING(S_save_listener),
-		    filename,
-		    C_TO_XEN_STRING(strerror(errno))));
+	      XEN_LIST_3(C_TO_XEN_STRING(S_save_listener),
+			 filename,
+			 C_TO_XEN_STRING(strerror(errno))));
   return(filename);
 }
 

@@ -418,7 +418,7 @@ XEN make_sound_data(int chans, int frames)
   new_sound_data->data = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
   for (i = 0; i < chans; i++)
     new_sound_data->data[i] = (MUS_SAMPLE_TYPE *)CALLOC(frames, sizeof(MUS_SAMPLE_TYPE));
-  XEN_MAKE_AND_RETURN_OBJECT(sound_data_tag, new_sound_data, 0, free_snd_data);
+  XEN_MAKE_AND_RETURN_OBJECT(sound_data_tag, new_sound_data, 0, free_sound_data);
 }
 
 XEN wrap_sound_data(int chans, int frames, MUS_SAMPLE_TYPE **data)
@@ -429,7 +429,7 @@ XEN wrap_sound_data(int chans, int frames, MUS_SAMPLE_TYPE **data)
   new_sound_data->chans = chans;
   new_sound_data->wrapped = 1;
   new_sound_data->data = data;
-  XEN_MAKE_AND_RETURN_OBJECT(sound_data_tag, new_sound_data, 0, free_snd_data);
+  XEN_MAKE_AND_RETURN_OBJECT(sound_data_tag, new_sound_data, 0, free_sound_data);
 }
 
 static XEN g_make_sound_data(XEN chans, XEN frames)
@@ -1353,4 +1353,3 @@ void mus_sndlib2xen_initialize(void)
 
   XEN_YES_WE_HAVE("sndlib");
 }
-

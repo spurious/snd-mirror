@@ -253,6 +253,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+14-Aug:  added recorder-in-device for OSS.\n\
 13-Aug:  stop-dac-hook, file-save-as-dialog, stop-playing-selection-hook.\n\
          remember-sound-state in extensions.scm.\n\
 10-Aug:  make-level-meter, with-level-meters in snd-motif.scm.\n\

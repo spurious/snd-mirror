@@ -81,9 +81,9 @@ static char *snd_color_to_string(snd_color *v)
   tmp_color.pixel = v->color;
   XQueryColor(dpy, cmap, &tmp_color);
   mus_snprintf(buf, PRINT_BUFFER_SIZE, "#<col" STR_OR ": (%.2f %.2f %.2f)>",
-	  (float)tmp_color.red / 65535.0,
-	  (float)tmp_color.green / 65535.0,
-	  (float)tmp_color.blue / 65535.0);
+	       (float)tmp_color.red / 65535.0,
+	       (float)tmp_color.green / 65535.0,
+	       (float)tmp_color.blue / 65535.0);
   return(buf);
 }
 
@@ -141,8 +141,8 @@ static XEN g_make_snd_color(XEN r, XEN g, XEN b)
   tmp_color.blue = (unsigned short)(65535 * bf);
   if ((XAllocColor(dpy, cmap, &tmp_color)) == 0)
     XEN_ERROR(NO_SUCH_COLOR,
-	  XEN_LIST_2(C_TO_XEN_STRING(S_make_color),
-		    XEN_LIST_3(r, g, b)));
+	      XEN_LIST_2(C_TO_XEN_STRING(S_make_color),
+			 XEN_LIST_3(r, g, b)));
   new_color->color = tmp_color.pixel;
   XEN_MAKE_AND_RETURN_OBJECT(snd_color_tag, new_color, 0, free_snd_color);
 }

@@ -2,8 +2,6 @@
  *         set up line_size in mus_make_comb to 5.0*srate/25641, then
  *         then as running, at each block reset to initial - new scaled
  *         (negative pm = longer delay)
- *
- * TODO: cursor_follows_play seems to be flakey
  */
 
 /* this was sound-oriented; changed to be channel-oriented 31-Aug-00 */

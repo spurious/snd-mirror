@@ -300,12 +300,12 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 		}
 	      idataloc = mus_sound_data_location(sf->filename);
 	      mus_file_open_descriptors(ifd,
-				       sf->filename,
-				       mus_sound_data_format(sf->filename),
-				       mus_sound_datum_size(sf->filename),
-				       idataloc,
-				       mus_sound_chans(sf->filename),
-				       mus_sound_header_type(sf->filename));
+					sf->filename,
+					mus_sound_data_format(sf->filename),
+					mus_sound_datum_size(sf->filename),
+					idataloc,
+					mus_sound_chans(sf->filename),
+					mus_sound_header_type(sf->filename));
 	      samples = mus_sound_samples(sf->filename);
 	      mus_file_seek(ifd, idataloc, SEEK_SET);
 	      ibufs = (MUS_SAMPLE_TYPE **)MALLOC(sizeof(MUS_SAMPLE_TYPE *));
@@ -1404,12 +1404,12 @@ void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, i
     {
       fd = snd_open_read(ss, inserted_file);
       mus_file_open_descriptors(fd,
-			       inserted_file,
-			       hdr->format,
-			       mus_data_format_to_bytes_per_sample(hdr->format),
-			       hdr->data_location,
-			       hdr->chans,
-			       hdr->type);
+				inserted_file,
+				hdr->format,
+				mus_data_format_to_bytes_per_sample(hdr->format),
+				hdr->data_location,
+				hdr->chans,
+				hdr->type);
       during_open(fd, inserted_file, SND_INSERT_FILE);
       datai = make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE);
       cb[ED_SND] = add_sound_file_to_edit_list(cp, inserted_file, datai,
@@ -1424,8 +1424,8 @@ void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, i
     {
       if (ss->catch_exists)
 	XEN_ERROR(NO_SUCH_FILE,
-	      XEN_LIST_2(C_TO_XEN_STRING(origin),
-		     C_TO_XEN_STRING(ss->catch_message)));
+		  XEN_LIST_2(C_TO_XEN_STRING(origin),
+			     C_TO_XEN_STRING(ss->catch_message)));
     }
 }
 
@@ -1686,12 +1686,12 @@ void file_change_samples(int beg, int num, char *tempfile,
     {
       fd = snd_open_read(ss, tempfile);
       mus_file_open_descriptors(fd,
-			       tempfile,
-			       hdr->format,
-			       mus_data_format_to_bytes_per_sample(hdr->format),
-			       hdr->data_location,
-			       hdr->chans,
-			       hdr->type);
+				tempfile,
+				hdr->format,
+				mus_data_format_to_bytes_per_sample(hdr->format),
+				hdr->data_location,
+				hdr->chans,
+				hdr->type);
       during_open(fd, tempfile, SND_CHANGE_FILE);
       datai = make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE);
       cb[ED_SND] = add_sound_file_to_edit_list(cp, tempfile, datai,
@@ -1705,8 +1705,8 @@ void file_change_samples(int beg, int num, char *tempfile,
     {
       if (ss->catch_exists)
 	XEN_ERROR(NO_SUCH_FILE,
-	      XEN_LIST_2(C_TO_XEN_STRING(origin),
-		     C_TO_XEN_STRING(ss->catch_message)));
+		  XEN_LIST_2(C_TO_XEN_STRING(origin),
+			     C_TO_XEN_STRING(ss->catch_message)));
     }
 }
 
@@ -1761,8 +1761,8 @@ void file_override_samples(int num, char *tempfile,
     {
       if (ss->catch_exists)
 	XEN_ERROR(NO_SUCH_FILE,
-	      XEN_LIST_2(C_TO_XEN_STRING(origin),
-		     C_TO_XEN_STRING(ss->catch_message)));
+		  XEN_LIST_2(C_TO_XEN_STRING(origin),
+			     C_TO_XEN_STRING(ss->catch_message)));
     }
 }
 
@@ -2193,12 +2193,12 @@ int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss)
   if ((ofd = snd_reopen_write(ss, ofile)) == -1) return(-1);
   hdr->data_location = mus_header_data_location(); /* header might have changed size (aiff extras) */
   mus_file_open_descriptors(ofd,
-			   ofile,
-			   hdr->format,
-			   mus_data_format_to_bytes_per_sample(hdr->format),
-			   hdr->data_location,
-			   chans,
-			   hdr->type);
+			    ofile,
+			    hdr->format,
+			    mus_data_format_to_bytes_per_sample(hdr->format),
+			    hdr->data_location,
+			    chans,
+			    hdr->type);
   mus_file_set_data_clipped(ofd, data_clipped(ss));
   mus_file_seek(ofd, hdr->data_location, SEEK_SET);
   return(ofd);
@@ -2740,9 +2740,9 @@ static XEN g_display_edits(XEN snd, XEN chn)
     {
       if (name) FREE(name);
       XEN_ERROR(CANNOT_SAVE,
-	    XEN_LIST_3(C_TO_XEN_STRING(S_display_edits),
-		   C_TO_XEN_STRING(name),
-		   C_TO_XEN_STRING(strerror(errno))));
+		XEN_LIST_3(C_TO_XEN_STRING(S_display_edits),
+			   C_TO_XEN_STRING(name),
+			   C_TO_XEN_STRING(strerror(errno))));
     }
   fd = mus_file_open_read(name);
   len = lseek(fd, 0L, SEEK_END);
@@ -2776,14 +2776,14 @@ associated with snd's channel chn; this is a list (origin type start-sample samp
       ed = cp->edits[ctr];
       if (ed) 
 	return(XEN_LIST_4(C_TO_XEN_STRING(ed->origin),
-		      C_TO_XEN_STRING(edit_names[EDIT_TYPE(ed->sfnum)]),
-		      C_TO_XEN_INT(ed->beg),
-		      C_TO_XEN_INT(ed->len)));
+			  C_TO_XEN_STRING(edit_names[EDIT_TYPE(ed->sfnum)]),
+			  C_TO_XEN_INT(ed->beg),
+			  C_TO_XEN_INT(ed->len)));
     }
   XEN_ERROR(NO_SUCH_EDIT,
-	XEN_LIST_4(C_TO_XEN_STRING(S_edit_fragment),
-	       snd, chn,
-	       uctr));
+	    XEN_LIST_4(C_TO_XEN_STRING(S_edit_fragment),
+		       snd, chn,
+		       uctr));
   return(uctr);
 }
 
@@ -2808,11 +2808,11 @@ static XEN g_edit_tree(XEN snd, XEN chn, XEN upos)
 	  len = ed->size; /* fragments in this list */
 	  for (i = len - 1; i >= 0; i--)
 	    res = XEN_CONS(XEN_LIST_5(C_TO_XEN_INT(FRAGMENT_GLOBAL_POSITION(ed, i)),
-			      C_TO_XEN_INT(FRAGMENT_SOUND(ed, i)),
-			      C_TO_XEN_INT(FRAGMENT_LOCAL_POSITION(ed, i)),
-			      C_TO_XEN_INT(FRAGMENT_LOCAL_END(ed, i)),
-			      C_TO_XEN_DOUBLE(INT_AS_FLOAT(FRAGMENT_SCALER(ed, i)))),
-		       res);
+				      C_TO_XEN_INT(FRAGMENT_SOUND(ed, i)),
+				      C_TO_XEN_INT(FRAGMENT_LOCAL_POSITION(ed, i)),
+				      C_TO_XEN_INT(FRAGMENT_LOCAL_END(ed, i)),
+				      C_TO_XEN_DOUBLE(INT_AS_FLOAT(FRAGMENT_SCALER(ed, i)))),
+			   res);
 	  return(res);
 	}
     }
@@ -2894,7 +2894,7 @@ static XEN g_sample_reader_home(XEN obj)
   XEN_ASSERT_TYPE(SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_home, "a sample-reader");
   fd = TO_SAMPLE_READER(obj);
   return(XEN_LIST_2(C_TO_SMALL_XEN_INT(fd->cp->sound->index),
-		C_TO_SMALL_XEN_INT(fd->cp->chan)));
+		    C_TO_SMALL_XEN_INT(fd->cp->chan)));
 }
 
 XEN g_c_make_sample_reader(snd_fd *fd)
@@ -2972,8 +2972,8 @@ returns a reader ready to access region's channel chn data starting at 'start-sa
   reg_n = XEN_TO_C_INT_OR_ELSE(reg, 0);
   if (!(region_ok(reg_n))) 
     XEN_ERROR(NO_SUCH_REGION,
-	  XEN_LIST_2(C_TO_XEN_STRING(S_make_region_sample_reader),
-		 reg));
+	      XEN_LIST_2(C_TO_XEN_STRING(S_make_region_sample_reader),
+                         reg));
   chn_n = XEN_TO_C_INT_OR_ELSE(chn, 0);
   if (chn_n >= region_chans(reg_n)) 
     return(snd_no_such_channel_error(S_make_region_sample_reader, XEN_LIST_1(reg), chn));
@@ -3155,9 +3155,9 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
     }
   if ((!fd) || (fclose(fd) != 0))
     XEN_ERROR(CANNOT_SAVE,
-	  XEN_LIST_3(C_TO_XEN_STRING(S_save_edit_history),
-		 filename,
-		 C_TO_XEN_STRING(strerror(errno))));
+	      XEN_LIST_3(C_TO_XEN_STRING(S_save_edit_history),
+			 filename,
+			 C_TO_XEN_STRING(strerror(errno))));
   return(filename);
 }
 
@@ -3606,9 +3606,9 @@ static XEN g_delete_sample(XEN samp_n, XEN snd_n, XEN chn_n)
       return(XEN_TRUE);
     }
   XEN_ERROR(NO_SUCH_SAMPLE,
-	XEN_LIST_4(C_TO_XEN_STRING(S_delete_sample),
-	       samp_n,
-	       snd_n, chn_n));
+	    XEN_LIST_4(C_TO_XEN_STRING(S_delete_sample),
+		       samp_n,
+		       snd_n, chn_n));
   return(samp_n);
 }
 
@@ -3655,9 +3655,9 @@ static XEN g_insert_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n)
   beg = XEN_TO_C_INT_OR_ELSE(samp_n, 0);
   if (beg < 0) 
     XEN_ERROR(NO_SUCH_SAMPLE,
-	  XEN_LIST_4(C_TO_XEN_STRING(S_insert_sample),
-		 samp_n,
-		 snd_n, chn_n));
+	      XEN_LIST_4(C_TO_XEN_STRING(S_insert_sample),
+			 samp_n,
+			 snd_n, chn_n));
   ival[0] = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE(val));
   insert_samples(beg, 1, ival, cp, S_insert_sample);
   update_graph(cp, NULL);
@@ -3679,9 +3679,7 @@ inserts data (either a vector, vct, or list of samples, or a filename) into snd'
   beg = XEN_TO_C_INT_OR_ELSE(samp, 0);
   len = XEN_TO_C_INT_OR_ELSE(samps, 0);
   if (XEN_STRING_P(vect))
-    {
-      file_insert_samples(beg, len, XEN_TO_C_STRING(vect), cp, 0, DELETE_ME, S_insert_samples);
-    }
+    file_insert_samples(beg, len, XEN_TO_C_STRING(vect), cp, 0, DELETE_ME, S_insert_samples);
   else
     {
       ivals = g_floats_to_samples(vect, &len, S_insert_samples, 3);
@@ -3750,7 +3748,7 @@ static int dont_save(snd_info *sp, char *newname)
   if (XEN_HOOKED(save_hook))
     res = g_c_run_or_hook(save_hook,
 			  XEN_LIST_2(C_TO_SMALL_XEN_INT(sp->index),
-				 (newname) ? C_TO_XEN_STRING(newname) : XEN_FALSE),
+				     (newname) ? C_TO_XEN_STRING(newname) : XEN_FALSE),
 			  S_save_hook);
   return(XEN_TRUE_P(res));
 }

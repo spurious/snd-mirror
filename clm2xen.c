@@ -5426,3 +5426,11 @@ void mus_xen_init(void)
 }
 
 
+#if HAVE_RUBY
+XEN Init_sndlib(void);
+XEN Init_sndlib(void)
+{
+  mus_sndlib2xen_initialize();
+  mus_xen_init();
+}
+#endif

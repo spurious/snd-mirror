@@ -216,8 +216,8 @@ char *ps_rgb(snd_state *ss, int pchan)
   XQueryColor(dpy, cmap, &tmp_color);
   buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   mus_snprintf(buf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f RG\n",
-	  (float)tmp_color.red / 65535.0,
-	  (float)tmp_color.green / 65535.0,
-	  (float)tmp_color.blue / 65535.0);
+	       (float)tmp_color.red / 65535.0,
+	       (float)tmp_color.green / 65535.0,
+	       (float)tmp_color.blue / 65535.0);
   return(buf);
 }

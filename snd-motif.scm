@@ -1,6 +1,6 @@
 ;;; snd-motif.scm -- Motif-related procedures (all use xm.so, most assume Motif 2)
 ;;;
-;;; (install-searcher proc) -- use proc as File Selection Box filter
+;;; (install-searcher proc) -- use proc as File Selection Box filter, also install-searcher-with-colors
 ;;; (zync) and (unzync) -- cause y-zoom sliders to move together
 ;;; (for-each-child w func) -- apply func to w and all its children
 ;;; (make-hidden-controls-dialog) -- add Options menu "Hidden controls" item that creates dialog to control these variables
@@ -16,6 +16,7 @@
 ;;; (show-smpte-label on-or-off) shows the current SMPTE frame number
 ;;; (make-level-meter parent width height args), (display-level data), (with-level-meters n) -- VU meters
 ;;; (make-channel-drop-site snd chn) -- add a drop site
+;;; (select-file func &optional title dir filter help) starts a Snd-like File Selection Dialog running func if a file is selected
 
 (use-modules (ice-9 common-list))
 
@@ -1157,7 +1158,18 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 (define graph-popup-menu 
   ;; used within graph if pointer is not inside selected portion
-  (let ((every-menu (list |XmNbackground (|Pixel (snd-pixel (highlight-color))))))
+  (let ((every-menu (list |XmNbackground (|Pixel (snd-pixel (highlight-color)))))
+	(stopping #f)
+	(stop-widget #f))
+
+    (add-hook! stop-playing-hook
+	       (lambda (snd) 
+		 (if stopping
+		     (begin
+		       (set! stopping #f)
+		       (if (|Widget? stop-widget)
+			   (change-label stop-widget "Play"))))))
+
     (make-popup-menu 
      "graph-popup"
      (|Widget (caddr (main-widgets)))
@@ -1167,10 +1179,18 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
       (list "Snd"                |xmLabelWidgetClass      every-menu) 
       (list "sep"                |xmSeparatorWidgetClass  every-menu)
-      ;; TODO: stop-playing in graph-popup-menu
       (list "Play"               |xmPushButtonWidgetClass every-menu 
-	    (lambda (w c i)
-	      (play 0 graph-popup-snd)))
+	    (lambda (w c i) 
+	      (if stopping
+		  (begin
+		    (set! stopping #f)
+		    (change-label w "Play")
+		    (stop-playing))
+		  (begin
+		    (change-label w "Stop playing")
+		    (set! stop-widget w)
+		    (set! stopping #t)
+		    (play 0 graph-popup-snd)))))
       (list "Play channel"       |xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (play 0 graph-popup-snd graph-popup-chn)))
@@ -1207,13 +1227,16 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	      (let ((snd graph-popup-snd))
 		(help-dialog 
 		 (format #f "~A info" (file-name snd))
-		 (format #f "~A:~%  chans: ~D~%  srate: ~D~%  header: ~A~%  data format: ~A~%  length: ~1,3F~%"
+		 (format #f "~A:~%  chans: ~D~%  srate: ~D~%  header: ~A~%  data format: ~A~%  length: ~1,3F~%  maxamp: ~A~%~A"
 			(short-file-name snd)
 			(chans snd)
 			(srate snd)
 			(mus-header-type-name (header-type snd))
 			(mus-data-format-name (data-format snd))
-			(/ (frames snd graph-popup-chn) (srate snd)))))))
+			(/ (frames snd graph-popup-chn) (srate snd))
+			(maxamp snd #t)
+			(if (comment snd)
+			    (format #f "  comment: ~A~%" (comment snd))))))))
       ))))
 
 (define (edit-graph-popup-menu snd chn)
@@ -1226,7 +1249,9 @@ Reverb-feedback sets the scaler on the feedback.\n\
      (lambda (w)
        (let ((name (|XtName w)))
 	 (if (string=? name "Snd")
-	     (change-label w (format #f "~A[~D]" (short-file-name snd) chn))
+	     (if (> (chans snd) 1)
+		 (change-label w (format #f "~A[~D]" (short-file-name snd) chn))
+		 (change-label w (short-file-name snd)))
 	     (if (or (string=? name "Save")
 		     (string=? name "Undo")
 		     (string=? name "Revert"))
@@ -1347,9 +1372,9 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	     (help (if (> (length args) 4) (list-ref args 4) #f))
 	     (dialog (or (find-free-dialog file-selector-dialogs)
 		 	 (let ((new-dialog (|XmCreateFileSelectionDialog 
-					    (|Widget (cadr (main-widgets))) 
-					    title
-					    (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
+					     (|Widget (cadr (main-widgets))) 
+					     title
+					     (list |XmNbackground (|Pixel (snd-pixel (basic-color)))))))
 			   (|XtAddCallback new-dialog |XmNhelpCallback
 					    (lambda (w c i)
 					      (let ((lst (find-dialog w file-selector-dialogs)))
@@ -1837,34 +1862,34 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 (define make-channel-drop-site
   (lambda args
-  (let* ((snd (if (> (length args) 0) (car args) (selected-sound)))
-	 (chn (selected-channel snd))
-	 (widget (add-channel-pane snd chn "drop here" |xmDrawingAreaWidgetClass
-		  (list |XmNbackground (white-pixel)
-                        |XmNleftAttachment      |XmATTACH_FORM
-		        |XmNrightAttachment     |XmATTACH_FORM
-		        |XmNtopAttachment       |XmATTACH_FORM
-		        |XmNbottomAttachment    |XmATTACH_FORM))))
-    (|XmDropSiteRegister
-     widget 
-     (list |XmNdropSiteOperations |XmDROP_COPY
-	   |XmNimportTargets (list |XA_STRING) ; list of Atoms we can deal with -- in this case, just strings
-	   |XmNnumImportTargets 1
-	   |XmNdropProc (lambda (w c i)
-			  ;; i is the callback data (XmDropProcCallbackStruct), c is always #f
-			  (if (or (not (= (|dropAction i) |XmDROP))
-				  (not (= (|operation i) |XmDROP_COPY)))
-			      (set! (|dropSiteStatus i) |XmINVALID_DROP_SITE)
-			      (begin
-				(set! (|operation i) |XmDROP_COPY) ; tell system drop has succeeded
-				(|XmDropTransferStart 
-				  (|dragContext i)
-				  (list |XmNdropTransfers (list (list |XA_STRING w)) ; list of lists of Atoms/our-data
-					|XmNnumDropTransfers 1
-					|XmNtransferProc (lambda (w context selection type val len fmt)
-							   ;; the actual in-coming string (properly terminated in xm.c) is 'value'
-							   (snd-print (format #f "got: ~A ~A ~A ~A ~A ~A ~A~%"
-									      w context selection type val len fmt)))))))))))))
+    (let* ((snd (if (> (length args) 0) (car args) (selected-sound)))
+	   (chn (selected-channel snd))
+	   (widget (add-channel-pane snd chn "drop here" |xmDrawingAreaWidgetClass
+		     (list |XmNbackground (white-pixel)
+                           |XmNleftAttachment      |XmATTACH_FORM
+		           |XmNrightAttachment     |XmATTACH_FORM
+		           |XmNtopAttachment       |XmATTACH_FORM
+		           |XmNbottomAttachment    |XmATTACH_FORM))))
+      (|XmDropSiteRegister
+	widget 
+	(list |XmNdropSiteOperations |XmDROP_COPY
+	      |XmNimportTargets      (list |XA_STRING) ; list of Atoms we can deal with -- in this case, just strings
+	      |XmNnumImportTargets   1
+	      |XmNdropProc (lambda (w c i)
+			     ;; i is the callback data (XmDropProcCallbackStruct), c is always #f
+			     (if (or (not (= (|dropAction i) |XmDROP))
+				     (not (= (|operation i) |XmDROP_COPY)))
+				 (set! (|dropSiteStatus i) |XmINVALID_DROP_SITE)
+				 (begin
+				   (set! (|operation i) |XmDROP_COPY) ; tell system drop has succeeded
+				   (|XmDropTransferStart 
+				     (|dragContext i)
+				     (list |XmNdropTransfers (list (list |XA_STRING w)) ; list of lists of Atoms/our-data
+					   |XmNnumDropTransfers 1
+					   |XmNtransferProc (lambda (w context selection type val len fmt)
+							      ;; the actual in-coming string (properly terminated in xm.c) is 'value'
+							      (snd-print (format #f "got: ~A ~A ~A ~A ~A ~A ~A~%"
+										 w context selection type val len fmt)))))))))))))
 
 
 

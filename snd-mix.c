@@ -977,11 +977,11 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
     }
   ifd = snd_open_read(ss, tempfile);
   mus_file_open_descriptors(ifd, tempfile,
-			   ihdr->format,
-			   mus_data_format_to_bytes_per_sample(ihdr->format),
-			   ihdr->data_location,
-			   ihdr->chans,
-			   ihdr->type);
+			    ihdr->format,
+			    mus_data_format_to_bytes_per_sample(ihdr->format),
+			    ihdr->data_location,
+			    ihdr->chans,
+			    ihdr->type);
   during_open(ifd, tempfile, SND_MIX_FILE);
   if (num < MAX_BUFFER_SIZE) size = num; else size = MAX_BUFFER_SIZE;
   data = (MUS_SAMPLE_TYPE **)CALLOC(in_chans, sizeof(MUS_SAMPLE_TYPE *));
@@ -1855,14 +1855,14 @@ static int display_mix_amp_env(mix_info *md, Float scl, int yoff, int newbeg, in
     }
   else 
     {
-      xstart = (Float)(newbeg)/(Float)SND_SRATE(cp->sound);
+      xstart = (Float)(newbeg) / (Float)SND_SRATE(cp->sound);
       ymin = 100.0;
       ymax = -100.0;
     }
 
   if (hi < newend)
     xend = ap->x1;
-  else xend = (Float)(newend)/(Float)SND_SRATE(cp->sound);
+  else xend = (Float)(newend) / (Float)SND_SRATE(cp->sound);
   xstep = (Float)(max_fd->samps_per_bin) / (Float)SND_SRATE(cp->sound);
   lastx = local_grf_x(xstart, ap);
   for (j = 0; xstart < xend; xstart += xstep)
@@ -1909,11 +1909,11 @@ static void draw_mix_tag(mix_info *md)
   ax = mark_context(cp);
   if (md->tagx > 0)
     fill_rectangle(ax,
-		   md->tagx - width, md->tagy-height / 2,
+		   md->tagx - width, md->tagy - height / 2,
 		   width, height);
     
   fill_rectangle(ax,
-		 md->x - width, md->y-height / 2,
+		 md->x - width, md->y - height / 2,
 		 width, height);
   md->tagx = md->x;
   md->tagy = md->y;
@@ -2160,7 +2160,7 @@ static int hit_mix_1(mix_info *md, void *uvals)
   width = mix_tag_width(md->ss);
   height = mix_tag_height(md->ss);
   mx = md->x - width;
-  my = md->y - height/2;
+  my = md->y - height / 2;
   if ((vals[0] + SLOPPY_MOUSE >= mx) && (vals[0] - SLOPPY_MOUSE <= (mx + width)) &&
       (vals[1] + SLOPPY_MOUSE >= my) && (vals[1] - SLOPPY_MOUSE <= (my + height)))
     return(md->id + 1);
@@ -3422,7 +3422,9 @@ static XEN g_mixes(XEN snd, XEN chn)
 	{
 	  sp = ss->sounds[j];
 	  if ((sp) && (sp->inuse))
-	    res1 = XEN_CONS(g_mixes(C_TO_SMALL_XEN_INT(j), XEN_UNDEFINED), res1);
+	    res1 = XEN_CONS(g_mixes(C_TO_SMALL_XEN_INT(j), 
+				    XEN_UNDEFINED), 
+			    res1);
 	}
     }
   return(res1);
@@ -3437,7 +3439,7 @@ static XEN g_mix_home(XEN n)
   if (md == NULL)
     return(snd_no_such_mix_error(S_mix_home, n));
   return(XEN_LIST_2(C_TO_XEN_INT(((md->cp)->sound)->index),
-		   C_TO_XEN_INT(((md->cp)->chan))));
+		    C_TO_XEN_INT(((md->cp)->chan))));
 }
 
 static XEN g_mix_amp(XEN n, XEN uchan) 
@@ -3656,8 +3658,8 @@ static XEN g_mix_sound(XEN file, XEN start_samp)
     {
       if (ss->catch_message)
 	XEN_ERROR(MUS_MISC_ERROR,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_mix),
-			C_TO_XEN_STRING(ss->catch_message)));
+		  XEN_LIST_2(C_TO_XEN_STRING(S_mix),
+			     C_TO_XEN_STRING(ss->catch_message)));
       snd_no_such_file_error(S_mix_sound, file);
     }
   return(C_TO_XEN_INT(err));
@@ -3799,8 +3801,8 @@ If chn is omitted, file's channels are mixed until snd runs out of channels"
 	  if (name) FREE(name);
 	  if (ss->catch_message)
 	    XEN_ERROR(MUS_MISC_ERROR,
-		  XEN_LIST_2(C_TO_XEN_STRING(S_mix),
-			    C_TO_XEN_STRING(ss->catch_message)));
+		      XEN_LIST_2(C_TO_XEN_STRING(S_mix),
+				 C_TO_XEN_STRING(ss->catch_message)));
 	  return(snd_no_such_file_error(S_mix, file));
 	}
     }
@@ -3824,8 +3826,8 @@ If chn is omitted, file's channels are mixed until snd runs out of channels"
 	  else
 	    if (ss->catch_message)
 	      XEN_ERROR(MUS_MISC_ERROR,
-		    XEN_LIST_2(C_TO_XEN_STRING(S_mix),
-			      C_TO_XEN_STRING(ss->catch_message)));
+			XEN_LIST_2(C_TO_XEN_STRING(S_mix),
+				   C_TO_XEN_STRING(ss->catch_message)));
 
 	}
       else 
@@ -4107,7 +4109,7 @@ static int call_mix_position_changed_hook(mix_info *md, int samps)
       (XEN_HOOKED(mix_position_changed_hook)))
     res = g_c_run_progn_hook(mix_position_changed_hook,
 			     XEN_LIST_2(C_TO_SMALL_XEN_INT(md->id),
-				       C_TO_XEN_INT(samps)),
+					C_TO_XEN_INT(samps)),
 			     S_mix_position_changed_hook);
   return(XEN_TRUE_P(res));
 }

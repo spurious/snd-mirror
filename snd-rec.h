@@ -81,7 +81,7 @@ typedef struct {
   int *chan_in_active;             /* overall_in_chans */
   int *chan_out_active;            /* (file)_out_chans */
   Float max_duration, trigger;
-  int autoload, srate, in_format, out_format, out_chans, buffer_size, triggering, triggered;
+  int autoload, srate, in_format, out_format, out_chans, buffer_size, triggering, triggered, in_device;
   Float **in_amps;                /* overall_in_chans X out_chans */
   Float *out_amps;                /* out_chans (independent of file write: monitor vol) */
   Float *mixer_gains;             /* audio gain values (widgets are per pane) */

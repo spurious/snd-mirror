@@ -267,8 +267,13 @@ static int call_user_keymap(int hashedsym, int count)
   if (XEN_BOUND_P(user_keymap[hashedsym].func))
     {
       if (user_keymap[hashedsym].args == 0)
-	res = XEN_TO_C_INT_OR_ELSE(XEN_CALL_0(user_keymap[hashedsym].func, "user key func"), KEYBOARD_NO_ACTION);
-      else res = XEN_TO_C_INT_OR_ELSE(XEN_CALL_1(user_keymap[hashedsym].func, C_TO_XEN_INT(count), "user key func"), KEYBOARD_NO_ACTION);
+	res = XEN_TO_C_INT_OR_ELSE(XEN_CALL_0(user_keymap[hashedsym].func, 
+					      "user key func"), 
+				   KEYBOARD_NO_ACTION);
+      else res = XEN_TO_C_INT_OR_ELSE(XEN_CALL_1(user_keymap[hashedsym].func, 
+						 C_TO_XEN_INT(count), 
+						 "user key func"),
+				      KEYBOARD_NO_ACTION);
     }
   return(res);
 }

@@ -383,4 +383,16 @@
  (list "one" "two" "three"))
 (|XmComboBoxUpdate widget)
 (|XtManageChild widget)
+
+
+(let* ((shell (|Widget (cadr (main-widgets))))
+       (mainpane (|Widget (list-ref (main-widgets) 3)))
+       (dpy (|XtDisplay shell))
+       (rc (|XtCreateManagedWidget "rc" |xmRowColumnWidgetClass mainpane '()))
+       (one (|XtCreateManagedWidget "One" |xmPushButtonWidgetClass rc '()))
+       (two (|XtCreateManagedWidget "Two" |xmPushButtonWidgetClass rc '())))
+  (|XtAddCallback one |XmNactivateCallback (lambda (w c i)
+					     (let ((help_cursor (|XCreateFontCursor dpy |XC_question_arrow)))
+					       (snd-print (format #f "got ~S~%"
+							  (|XtName (|XmTrackingLocate one help_cursor #f))))))))
 !#

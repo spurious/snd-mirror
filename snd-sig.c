@@ -2103,7 +2103,7 @@ static XEN g_sp_scan(XEN proc, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 		  if (reporting) 
 		    finish_progress_report(sp, NOT_FROM_ENVED);
 		  return(XEN_LIST_2(res,
-				C_TO_XEN_INT(kp + beg)));
+				    C_TO_XEN_INT(kp + beg)));
 		}
 	    }
 	  if (reporting) 

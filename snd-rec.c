@@ -327,6 +327,7 @@ void init_recorder(void)
   rp->trigger = DEFAULT_RECORDER_TRIGGER;
   rp->max_duration = DEFAULT_RECORDER_MAX_DURATION;
   rp->output_file = DEFAULT_RECORDER_FILE;
+  rp->in_device = MUS_AUDIO_DEFAULT;
   rp->triggering = 0;
   rp->triggered = 1;
   rp->monitor_chans = 2;
@@ -380,6 +381,7 @@ void save_recorder_state(FILE *fd)
   if (rp->out_chans != DEFAULT_RECORDER_OUT_CHANS) fprintf(fd, "(set! (%s) %d)\n", S_recorder_out_chans, rp->out_chans);
   if (rp->out_format != DEFAULT_RECORDER_OUT_FORMAT) fprintf(fd, "(set! (%s) %d)\n", S_recorder_out_format, rp->out_format);
   if (rp->in_format != DEFAULT_RECORDER_IN_FORMAT) fprintf(fd, "(set! (%s) %d)\n", S_recorder_in_format, rp->in_format);
+  if (rp->in_device != MUS_AUDIO_DEFAULT) fprintf(fd, "(set! (%s) %d)\n", S_recorder_in_device, rp->in_device);
   if (rp->srate != DEFAULT_RECORDER_SRATE) fprintf(fd, "(set! (%s) %d)\n", S_recorder_srate, rp->srate);
   if (rp->output_file != DEFAULT_RECORDER_FILE) fprintf(fd, "(set! (%s) \"%s\")\n", S_recorder_file, rp->output_file);
   if (fneq(rp->trigger, DEFAULT_RECORDER_TRIGGER)) fprintf(fd, "(set! (%s) %.4f)\n", S_recorder_trigger, rp->trigger);
@@ -391,6 +393,7 @@ void save_recorder_state(FILE *fd)
   if (rp->out_chans != DEFAULT_RECORDER_OUT_CHANS) fprintf(fd, "set_%s %d\n", S_recorder_out_chans, rp->out_chans);
   if (rp->out_format != DEFAULT_RECORDER_OUT_FORMAT) fprintf(fd, "set_%s %d\n", S_recorder_out_format, rp->out_format);
   if (rp->in_format != DEFAULT_RECORDER_IN_FORMAT) fprintf(fd, "set_%s %d\n", S_recorder_in_format, rp->in_format);
+  if (rp->in_device != MUS_AUDIO_DEFAULT) fprintf(fd, "set_%s %d\n", S_recorder_in_device, rp->in_device);
   if (rp->srate != DEFAULT_RECORDER_SRATE) fprintf(fd, "set_%s %d\n", S_recorder_srate, rp->srate);
   if (rp->output_file != DEFAULT_RECORDER_FILE) fprintf(fd, "set_%s \"%s\"\n", S_recorder_file, rp->output_file);
   if (fneq(rp->trigger, DEFAULT_RECORDER_TRIGGER)) fprintf(fd, "set_%s %.4f\n", S_recorder_trigger, rp->trigger);
@@ -552,6 +555,55 @@ void set_record_size (int new_size)
 }
 
 #if (HAVE_ALSA || HAVE_OSS)
+
+static void oss_get_input_channels(int i)
+{
+  rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | rp->in_device);
+  if (rp->input_channels[i] == 0)
+    {
+      rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DEFAULT);
+      if (rp->input_channels[i] == 0)
+	{
+	  rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_MICROPHONE);
+	  if (rp->input_channels[i] == 0)
+	    {
+	      rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_LINE_IN);
+	      if (rp->input_channels[i] == 0)
+		rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_ADAT_IN);
+	    }
+	}
+    }
+}
+
+
+static void oss_get_input_devices(void)
+{
+  int i;
+  for (i = 0; i < rp->systems; i++)
+    {
+      rp->input_ports[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | rp->in_device,
+						rp->srate,
+						rp->input_channels[i],
+						rp->in_format,
+						rp->buffer_size);
+      if (rp->input_ports[i] == -1)
+	{
+	  rp->input_ports[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DUPLEX_DEFAULT,
+						    rp->srate,
+						    rp->input_channels[i],
+						    rp->in_format,
+						    rp->buffer_size);
+	  if (rp->input_ports[i] == -1) /* perhaps not full-duplex */
+	    {
+	      rp->input_ports[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DEFAULT,
+							rp->srate,
+							rp->input_channels[i],
+							rp->in_format,
+							rp->buffer_size);
+	    }
+	}
+    }
+}
 
 void fire_up_recorder(snd_state *ss)
 {
@@ -726,24 +778,7 @@ void fire_up_recorder(snd_state *ss)
 	  rp->input_buffer_sizes[i] = rp->buffer_size / rp->out_chans;
 	}
       for (i = 0; i < rp->systems; i++)
-	{
-	  if (rp->input_channels[i] == 0)
-	    {
-	      rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DEFAULT);
-	      if (rp->input_channels[i] == 0)
-		{
-		  rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_MICROPHONE);
-		  if (rp->input_channels[i] == 0)
-		    {
-		      rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_LINE_IN);
-		      if (rp->input_channels[i] == 0)
-			{
-			  rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_ADAT_IN);
-			}
-		    }
-		}
-	    }
-	}
+	oss_get_input_channels(i);
       err = 1;
       for (i = 0; i < rp->systems; i++) 
 	if (rp->input_channels[i] > 0) 
@@ -757,22 +792,7 @@ void fire_up_recorder(snd_state *ss)
 	  return;
 	}
       /* if adat, aes etc, make choices about default on/off state, open monitor separately (and write) */
-      for (i = 0; i < rp->systems; i++)
-	{
-	  rp->input_ports[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DUPLEX_DEFAULT,
-						    rp->srate,
-						    rp->input_channels[i],
-						    rp->in_format,
-						    rp->buffer_size);
-	  if (rp->input_ports[i] == -1) /* perhaps not full-duplex */
-	    {
-	      rp->input_ports[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DEFAULT,
-							rp->srate,
-							rp->input_channels[i],
-							rp->in_format,
-							rp->buffer_size);
-	    }
-	}
+      oss_get_input_devices();
       if (rp->input_ports[0] == -1)
 	{
 	  recorder_error("open device: ");
@@ -883,7 +903,7 @@ void fire_up_recorder(snd_state *ss)
     rp->input_channel_active[0] = 1;
     rp->input_channel_active[1] = 0;
   #else
-    err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_DEFAULT, MUS_AUDIO_SRATE, 0, val);
+    err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | rp->in_device, MUS_AUDIO_SRATE, 0, val);
     if (!err) 
       {
 	new_srate = (int)val[0];
@@ -909,19 +929,7 @@ void fire_up_recorder(snd_state *ss)
   #ifdef SUN
 	  rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_MICROPHONE);
   #else
-	  rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DEFAULT);
-	  if (rp->input_channels[i] == 0)
-	    {
-	      rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_MICROPHONE);
-	      if (rp->input_channels[i] == 0)
-		{
-		  rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_LINE_IN);
-		  if (rp->input_channels[i] == 0)
-		    {
-		      rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_ADAT_IN);
-		    }
-		}
-	    }
+	  oss_get_input_channels(i);
   #endif
 #endif
 	}
@@ -958,22 +966,7 @@ void fire_up_recorder(snd_state *ss)
     #else
     /* if adat, aes etc, make choices about default on/off state, open monitor separately (and write) */
 
-    for (i = 0; i < rp->systems; i++)
-      {
-	rp->input_ports[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DUPLEX_DEFAULT,
-						  rp->srate,
-						  rp->input_channels[i],
-						  rp->in_format,
-						  rp->buffer_size);
-	if (rp->input_ports[i] == -1) /* perhaps not full-duplex */
-	  {
-	    rp->input_ports[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DEFAULT,
-						      rp->srate,
-						      rp->input_channels[i],
-						      rp->in_format,
-						      rp->buffer_size);
-	  }
-      }
+    oss_get_input_devices();
     #endif
   #endif
 #endif
@@ -1531,6 +1524,15 @@ static XEN g_set_recorder_in_format(XEN val)
   return(C_TO_XEN_INT(rp->in_format));
 }
 
+static XEN g_recorder_in_device(void) {return(C_TO_XEN_INT(rp->in_device));}
+static XEN g_set_recorder_in_device(XEN val) 
+{
+  #define H_recorder_in_device "(" S_recorder_in_device ") -> default recorder input device (mus-audio-line-in)"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set-" S_recorder_in_device, "an integer"); 
+  rp->in_device = XEN_TO_C_INT(val);
+  return(C_TO_XEN_INT(rp->in_device));
+}
+
 static XEN g_recorder_out_chans(void) {return(C_TO_XEN_INT(rp->out_chans));}
 static XEN g_set_recorder_out_chans(XEN val) 
 {
@@ -1680,6 +1682,8 @@ XEN_NARGIFY_0(g_recorder_file_w, g_recorder_file)
 XEN_NARGIFY_1(g_set_recorder_file_w, g_set_recorder_file)
 XEN_NARGIFY_0(g_recorder_in_format_w, g_recorder_in_format)
 XEN_NARGIFY_1(g_set_recorder_in_format_w, g_set_recorder_in_format)
+XEN_NARGIFY_0(g_recorder_in_device_w, g_recorder_in_device)
+XEN_NARGIFY_1(g_set_recorder_in_device_w, g_set_recorder_in_device)
 XEN_NARGIFY_0(g_recorder_out_chans_w, g_recorder_out_chans)
 XEN_NARGIFY_1(g_set_recorder_out_chans_w, g_set_recorder_out_chans)
 XEN_NARGIFY_0(g_recorder_out_format_w, g_recorder_out_format)
@@ -1706,6 +1710,8 @@ XEN_NARGIFY_0(g_recorder_dialog_w, g_recorder_dialog)
 #define g_set_recorder_file_w g_set_recorder_file
 #define g_recorder_in_format_w g_recorder_in_format
 #define g_set_recorder_in_format_w g_set_recorder_in_format
+#define g_recorder_in_device_w g_recorder_in_device
+#define g_set_recorder_in_device_w g_set_recorder_in_device
 #define g_recorder_out_chans_w g_recorder_out_chans
 #define g_set_recorder_out_chans_w g_set_recorder_out_chans
 #define g_recorder_out_format_w g_recorder_out_format
@@ -1738,6 +1744,9 @@ void g_init_recorder(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_in_format, g_recorder_in_format_w, H_recorder_in_format,
 			       "set-" S_recorder_in_format, g_set_recorder_in_format_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_in_device, g_recorder_in_device_w, H_recorder_in_device,
+			       "set-" S_recorder_in_device, g_set_recorder_in_device_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_out_chans, g_recorder_out_chans_w, H_recorder_out_chans,
 			       "set-" S_recorder_out_chans, g_set_recorder_out_chans_w,  0, 0, 1, 0);

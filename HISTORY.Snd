@@ -1,5 +1,6 @@
 snd change log
 
+  14-Aug:    added recorder-in-device for OSS.
   13-Aug:    stop-dac-hook, file-save-as-dialog, stop-playing-selection-hook.
              remember-sound-state in extensions.scm.
   10-Aug:    make-level-meter, with-level-meters in snd-motif.scm.

@@ -1,6 +1,6 @@
 /* xm.c: Guile/Ruby bindings for X/Xt/Xpm/Xm/Xp
  *   needs xen.h
- *   for tests and examples see xm-test.scm and snd-motif.scm (Snd tarball)
+ *   for tests and examples see xm-test.scm and snd-motif.scm
  */
 
 
@@ -9,8 +9,6 @@
 
 /* TODO: selection-oriented Xt callbacks
  *       xm-test.scm regression tests
- *       Ruby version needs the nargify macros (sigh -- there must be a better way)
- *       autoconf support (see snd tarball and 'make xm')
  *       XEvent fields should be settable
  *       check for memory leaks etc
  */
@@ -132,7 +130,7 @@
  *    XtCallback procedure args are passed by value
  *    various "client data" args are optional
  *    XtCallbackLists are passed as lists of procedure/data pairs
- *    where explicit NULL is needed as arg, use #f
+ *    where explicit NULL is needed as arg, use #f (or '() for list args)
  *
  * omitted:       
  *
@@ -447,6 +445,7 @@ static XEN make_xm_obj(void *ptr)
 
 static void define_xm_obj(void)
 {
+  /* TODO: Ruby free (print?) */
   xm_obj_tag = XEN_MAKE_OBJECT_TYPE("XmObj", sizeof(void *));
 #if HAVE_GUILE
   scm_set_smob_free(xm_obj_tag, xm_obj_free);
@@ -3199,6 +3198,7 @@ static XEN gxm_XmFontListFree(XEN arg1)
 #if MOTIF_2
 static XEN gxm_XmStringCreateFontList_r(XEN arg1, XEN arg2, XEN arg3)
 {
+  #define H_XmStringCreateFontList_r "XmFontList XmStringCreateFontList_r(XFontStruct *font, XmStringCharSet charset, Widget wid)"
   XEN_ASSERT_TYPE(XEN_XFontStruct_P(arg1), arg1, 1, "XmStringCreateFontList_r", "XFontStruct*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmStringCreateFontList_r", "XmStringCharSet");
   XEN_ASSERT_TYPE(XEN_Widget_P(arg3), arg3, 3, "XmStringCreateFontList_r", "Widget");
@@ -3208,6 +3208,7 @@ static XEN gxm_XmStringCreateFontList_r(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XmStringCreateFontList(XEN arg1, XEN arg2)
 {
+  #define H_XmStringCreateFontList "XmFontList XmStringCreateFontList(XFontStruct *font, XmStringCharSet charset)"
   XEN_ASSERT_TYPE(XEN_XFontStruct_P(arg1), arg1, 1, "XmStringCreateFontList", "XFontStruct*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmStringCreateFontList", "XmStringCharSet");
   return(C_TO_XEN_XmFontList(XmStringCreateFontList(XEN_TO_C_XFontStruct(arg1), XEN_TO_C_STRING(arg2))));
@@ -3216,6 +3217,7 @@ static XEN gxm_XmStringCreateFontList(XEN arg1, XEN arg2)
 #if MOTIF_2
 static XEN gxm_XmFontListCreate_r(XEN arg1, XEN arg2, XEN arg3)
 {
+  #define H_XmFontListCreate_r "XmFontList XmFontListCreate_r(XFontStruct *font, XmStringCharSet charset, Widget wid)"
   XEN_ASSERT_TYPE(XEN_XFontStruct_P(arg1), arg1, 1, "XmFontListCreate_r", "XFontStruct*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmFontListCreate_r", "XmStringCharSet");
   XEN_ASSERT_TYPE(XEN_Widget_P(arg3), arg3, 3, "XmFontListCreate_r", "Widget");
@@ -3456,8 +3458,11 @@ creates a compound string"
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmStringSegmentCreate", "char*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmStringSegmentCreate", "XmStringCharSet");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmStringSegmentCreate", "int");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmStringSegmentCreate", "int");
-  return(C_TO_XEN_XmString(XmStringSegmentCreate(XEN_TO_C_STRING(arg1), XEN_TO_C_STRING(arg2), XEN_TO_C_INT(arg3), XEN_TO_C_INT(arg4))));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg4), arg4, 4, "XmStringSegmentCreate", "boolean");
+  return(C_TO_XEN_XmString(XmStringSegmentCreate(XEN_TO_C_STRING(arg1), 
+						 XEN_TO_C_STRING(arg2), 
+						 XEN_TO_C_INT(arg3), 
+						 XEN_TO_C_BOOLEAN(arg4))));
 }
 
 static XEN gxm_XmStringSeparatorCreate(void)
@@ -3558,8 +3563,8 @@ static XEN gxm_XmTrackingLocate(XEN arg1, XEN arg2, XEN arg3)
 selection of a component (obsolete)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTrackingLocate", "Widget");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XmTrackingLocate", "Cursor");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmTrackingLocate", "int");
-  return(C_TO_XEN_Widget(XmTrackingLocate(XEN_TO_C_Widget(arg1), XEN_TO_C_ULONG(arg2), XEN_TO_C_INT(arg3))));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XmTrackingLocate", "boolean");
+  return(C_TO_XEN_Widget(XmTrackingLocate(XEN_TO_C_Widget(arg1), XEN_TO_C_ULONG(arg2), XEN_TO_C_BOOLEAN(arg3))));
 }
 
 static XEN gxm_XmTrackingEvent(XEN arg1, XEN arg2, XEN arg3)
@@ -3572,8 +3577,8 @@ static XEN gxm_XmTrackingEvent(XEN arg1, XEN arg2, XEN arg3)
   e = (XEvent *)calloc(1, sizeof(XEvent));
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTrackingEvent", "Widget");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XmTrackingEvent", "Cursor");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmTrackingEvent", "int");
-  w = XmTrackingEvent(XEN_TO_C_Widget(arg1), XEN_TO_C_ULONG(arg2), XEN_TO_C_INT(arg3), e);
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XmTrackingEvent", "boolean");
+  w = XmTrackingEvent(XEN_TO_C_Widget(arg1), XEN_TO_C_ULONG(arg2), XEN_TO_C_BOOLEAN(arg3), e);
   return(XEN_LIST_2(C_TO_XEN_Widget(w), C_TO_XEN_XEvent_OBJ(e)));
 }
 
@@ -4351,8 +4356,8 @@ static XEN gxm_XmListSetAddMode(XEN arg1, XEN arg2)
 {
   #define H_XmListSetAddMode "void XmListSetAddMode(Widget widget, Boolean state) sets add mode in the list"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListSetAddMode", "Widget");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmListSetAddMode", "int");
-  XmListSetAddMode(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg2), arg2, 2, "XmListSetAddMode", "boolean");
+  XmListSetAddMode(XEN_TO_C_Widget(arg1), XEN_TO_C_BOOLEAN(arg2));
   return(XEN_FALSE);
 }
 
@@ -4426,8 +4431,8 @@ static XEN gxm_XmListSelectPos(XEN arg1, XEN arg2, XEN arg3)
 position in the list"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListSelectPos", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmListSelectPos", "int");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmListSelectPos", "int");
-  XmListSelectPos(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_INT(arg3));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XmListSelectPos", "boolean");
+  XmListSelectPos(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_BOOLEAN(arg3));
   return(XEN_FALSE);
 }
 
@@ -4436,8 +4441,8 @@ static XEN gxm_XmListSelectItem(XEN arg1, XEN arg2, XEN arg3)
   #define H_XmListSelectItem "void XmListSelectItem(Widget widget, XmString item, Boolean notify) selects an item in the list"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmListSelectItem", "Widget");
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmListSelectItem", "XmString");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmListSelectItem", "int");
-  XmListSelectItem(XEN_TO_C_Widget(arg1), XEN_TO_C_XmString(arg2), XEN_TO_C_INT(arg3));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XmListSelectItem", "boolean");
+  XmListSelectItem(XEN_TO_C_Widget(arg1), XEN_TO_C_XmString(arg2), XEN_TO_C_BOOLEAN(arg3));
   return(XEN_FALSE);
 }
 
@@ -4808,8 +4813,8 @@ static XEN gxm_XmToggleButtonSetValue(XEN arg1, XEN arg2, XEN arg3)
 sets or changes the current state"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmToggleButtonSetValue", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmToggleButtonSetValue", "int");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmToggleButtonSetValue", "int");
-  return(C_TO_XEN_BOOLEAN(XmToggleButtonSetValue(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_INT(arg3))));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XmToggleButtonSetValue", "boolean");
+  return(C_TO_XEN_BOOLEAN(XmToggleButtonSetValue(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_BOOLEAN(arg3))));
 }
 #endif
 
@@ -4819,8 +4824,8 @@ static XEN gxm_XmToggleButtonSetState(XEN arg1, XEN arg2, XEN arg3)
 sets or changes the current state"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmToggleButtonSetState", "Widget");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmToggleButtonSetState", "int");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmToggleButtonSetState", "int");
-  XmToggleButtonSetState(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_INT(arg3));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XmToggleButtonSetState", "boolean");
+  XmToggleButtonSetState(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_BOOLEAN(arg3));
   return(XEN_FALSE);
 }
 
@@ -4890,9 +4895,9 @@ static XEN gxm_XmToggleButtonGadgetSetState(XEN arg1, XEN arg2, XEN arg3)
   #define H_XmToggleButtonGadgetSetState "void XmToggleButtonGadgetSetState(Widget widget, Boolean state, Boolean notify) \
 sets or changes the current state"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmToggleButtonGadgetSetState", "Widget");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmToggleButtonGadgetSetState", "int");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmToggleButtonGadgetSetState", "int");
-  XmToggleButtonGadgetSetState(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_INT(arg3));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg2), arg2, 2, "XmToggleButtonGadgetSetState", "boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XmToggleButtonGadgetSetState", "boolean");
+  XmToggleButtonGadgetSetState(XEN_TO_C_Widget(arg1), XEN_TO_C_BOOLEAN(arg2), XEN_TO_C_BOOLEAN(arg3));
   return(XEN_FALSE);
 }
 
@@ -5248,8 +5253,8 @@ static XEN gxm_XmTextSetEditable(XEN arg1, XEN arg2)
 {
   #define H_XmTextSetEditable "void XmTextSetEditable(Widget widget, Boolean editable) sets the edit permission"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextSetEditable", "Widget");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextSetEditable", "int");
-  XmTextSetEditable(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg2), arg2, 2, "XmTextSetEditable", "boolean");
+  XmTextSetEditable(XEN_TO_C_Widget(arg1), XEN_TO_C_BOOLEAN(arg2));
   return(XEN_FALSE);
 }
 
@@ -5270,8 +5275,8 @@ static XEN gxm_XmTextSetAddMode(XEN arg1, XEN arg2)
 {
   #define H_XmTextSetAddMode "void XmTextSetAddMode(Widget widget, Boolean state) sets the state of Add mode"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextSetAddMode", "Widget");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextSetAddMode", "int");
-  XmTextSetAddMode(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg2), arg2, 2, "XmTextSetAddMode", "boolean");
+  XmTextSetAddMode(XEN_TO_C_Widget(arg1), XEN_TO_C_BOOLEAN(arg2));
   return(XEN_FALSE);
 }
 
@@ -5688,8 +5693,8 @@ static XEN gxm_XmTextFieldSetEditable(XEN arg1, XEN arg2)
 {
   #define H_XmTextFieldSetEditable "void XmTextFieldSetEditable(Widget widget, Boolean editable) sets the edit permission"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldSetEditable", "Widget");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextFieldSetEditable", "int");
-  XmTextFieldSetEditable(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg2), arg2, 2, "XmTextFieldSetEditable", "boolean");
+  XmTextFieldSetEditable(XEN_TO_C_Widget(arg1), XEN_TO_C_BOOLEAN(arg2));
   return(XEN_FALSE);
 }
 
@@ -5710,8 +5715,8 @@ static XEN gxm_XmTextFieldSetAddMode(XEN arg1, XEN arg2)
 {
   #define H_XmTextFieldSetAddMode "void XmTextFieldSetAddMode(Widget widget, Boolean state) sets the state of Add mode"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTextFieldSetAddMode", "Widget");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTextFieldSetAddMode", "int");
-  XmTextFieldSetAddMode(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg2), arg2, 2, "XmTextFieldSetAddMode", "boolean");
+  XmTextFieldSetAddMode(XEN_TO_C_Widget(arg1), XEN_TO_C_BOOLEAN(arg2));
   return(XEN_FALSE);
 }
 
@@ -7337,8 +7342,8 @@ static XEN gxm_XmCascadeButtonHighlight(XEN arg1, XEN arg2)
   #define H_XmCascadeButtonHighlight "void XmCascadeButtonHighlight(Widget cascadeButton, Boolean highlight) A CascadeButton and \
 CascadeButtonGadget function that sets the highlight state"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCascadeButtonHighlight", "Widget");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmCascadeButtonHighlight", "int");
-  XmCascadeButtonHighlight(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg2), arg2, 2, "XmCascadeButtonHighlight", "boolean");
+  XmCascadeButtonHighlight(XEN_TO_C_Widget(arg1), XEN_TO_C_BOOLEAN(arg2));
   return(XEN_FALSE);
 }
 
@@ -7519,8 +7524,8 @@ static XEN gxm_XmCascadeButtonGadgetHighlight(XEN arg1, XEN arg2)
   #define H_XmCascadeButtonGadgetHighlight "void XmCascadeButtonGadgetHighlight(Widget cascadeButtonGadget, Boolean highlight) \
 A CascadeButtonGadget function that sets the highlight state"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmCascadeButtonGadgetHighlight", "Widget");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmCascadeButtonGadgetHighlight", "int");
-  XmCascadeButtonGadgetHighlight(XEN_TO_C_Widget(arg1), XEN_TO_C_INT(arg2));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg2), arg2, 2, "XmCascadeButtonGadgetHighlight", "boolean");
+  XmCascadeButtonGadgetHighlight(XEN_TO_C_Widget(arg1), XEN_TO_C_BOOLEAN(arg2));
   return(XEN_FALSE);
 }
 
@@ -12986,8 +12991,8 @@ static XEN gxm_XOpenDisplay(XEN arg1)
   #define H_XOpenDisplay "Display *XOpenDisplay(display_name) returns a Display structure that serves as the connection to the X server \
 and that contains all the information about that X server."
   Display *dpy;
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XOpenDisplay", "char*");
-  dpy = XOpenDisplay(XEN_TO_C_STRING(arg1));
+  XEN_ASSERT_TYPE(XEN_STRING_P(arg1) || XEN_FALSE_P(arg1), arg1, 1, "XOpenDisplay", "char*");
+  dpy = XOpenDisplay(XEN_FALSE_P(arg1) ? NULL : XEN_TO_C_STRING(arg1));
   if (dpy)
     return(C_TO_XEN_Display(dpy));
   return(XEN_FALSE);
@@ -17407,6 +17412,7 @@ static XEN gxm_set_npixels(XEN ptr, XEN val)
 
 /* ---------------------------------------------------------------------------------------------------- */
 
+#if HAVE_GUILE
 static void define_procedures(void)
 {
   xm_protected_size = 128;
@@ -18442,8 +18448,8 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryCreate" XM_POSTFIX, gxm_XmFontListEntryCreate, 3, 0, 0, H_XmFontListEntryCreate);
 #if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryCreate_r" XM_POSTFIX, gxm_XmFontListEntryCreate_r, 4, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListCreate_r" XM_POSTFIX, gxm_XmFontListCreate_r, 3, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringCreateFontList_r" XM_POSTFIX, gxm_XmStringCreateFontList_r, 3, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListCreate_r" XM_POSTFIX, gxm_XmFontListCreate_r, 3, 0, 0, H_XmFontListCreate_r);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringCreateFontList_r" XM_POSTFIX, gxm_XmStringCreateFontList_r, 3, 0, 0, H_XmStringCreateFontList_r);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringConcatAndFree" XM_POSTFIX, gxm_XmStringConcatAndFree, 2, 0, 0, H_XmStringConcatAndFree);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringIsVoid" XM_POSTFIX, gxm_XmStringIsVoid, 1, 0, 0, H_XmStringIsVoid);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCvtXmStringToByteStream" XM_POSTFIX, gxm_XmCvtXmStringToByteStream, 1, 0, 0, H_XmCvtXmStringToByteStream);
@@ -18500,7 +18506,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListRemoveEntry" XM_POSTFIX, gxm_XmFontListRemoveEntry, 2, 0, 0, H_XmFontListRemoveEntry);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListEntryLoad" XM_POSTFIX, gxm_XmFontListEntryLoad, 4, 0, 0, H_XmFontListEntryLoad);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListCreate" XM_POSTFIX, gxm_XmFontListCreate, 2, 0, 0, H_XmFontListCreate);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringCreateFontList" XM_POSTFIX, gxm_XmStringCreateFontList, 2, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XmStringCreateFontList" XM_POSTFIX, gxm_XmStringCreateFontList, 2, 0, 0, H_XmStringCreateFontList);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListFree" XM_POSTFIX, gxm_XmFontListFree, 1, 0, 0, H_XmFontListFree);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListAdd" XM_POSTFIX, gxm_XmFontListAdd, 3, 0, 0, H_XmFontListAdd);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmFontListCopy" XM_POSTFIX, gxm_XmFontListCopy, 1, 0, 0, H_XmFontListCopy);
@@ -18751,6 +18757,9 @@ static void define_procedures(void)
 
   XEN_DEFINE_PROCEDURE("xm-gc-elements", xm_gc_elements, 0, 0, 0, NULL);
 }
+#else
+  #include "xm-ruby.c"
+#endif
 
 
 
@@ -22895,7 +22904,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XM_PREFIX "XmNdetailColumnHeading" XM_POSTFIX, XmNdetailColumnHeading,    XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNdetailColumnHeadingCount" XM_POSTFIX, XmNdetailColumnHeadingCount, XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNdetailCount" XM_POSTFIX, XmNdetailCount,		    XM_INT);
-  DEFINE_RESOURCE(XM_PREFIX "XmNdetailCount" XM_POSTFIX, XmNdetailCount,		    XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNdetailOrder" XM_POSTFIX, XmNdetailOrder,		    XM_INT_TABLE);
   DEFINE_RESOURCE(XM_PREFIX "XmNdetailOrderCount" XM_POSTFIX, XmNdetailOrderCount,	    XM_INT);
   DEFINE_RESOURCE(XM_PREFIX "XmNdetailShadowThickness" XM_POSTFIX, XmNdetailShadowThickness,XM_INT);
@@ -24694,7 +24702,6 @@ static void define_pointers(void)
   DEFINE_POINTER(XM_PREFIX "xmTextWidgetClass" XM_POSTFIX, xmTextWidgetClass);
   DEFINE_POINTER(XM_PREFIX "xmToggleButtonGadgetClass" XM_POSTFIX, xmToggleButtonGadgetClass);
   DEFINE_POINTER(XM_PREFIX "xmToggleButtonWidgetClass" XM_POSTFIX, xmToggleButtonWidgetClass);
-  DEFINE_POINTER(XM_PREFIX "vendorShellWidgetClass" XM_POSTFIX, vendorShellWidgetClass);
 #if MOTIF_2
   DEFINE_POINTER(XM_PREFIX "xmContainerWidgetClass" XM_POSTFIX, xmContainerWidgetClass);
   DEFINE_POINTER(XM_PREFIX "xmComboBoxWidgetClass" XM_POSTFIX, xmComboBoxWidgetClass);
@@ -24969,8 +24976,13 @@ static void muffle_compiler(void)
 
 static int xm_already_inited = 0;
 
-XEN init_xm(void);
-XEN init_xm(void)
+#if HAVE_GUILE
+ XEN init_xm(void);
+ XEN init_xm(void)
+#else
+ XEN Init_libxm(void);
+ XEN Init_libxm(void)
+#endif
 {
   /* perhaps nicer here to check the features list for 'xm */
   if (!xm_already_inited)
@@ -24990,172 +25002,3 @@ XEN init_xm(void)
     }
   return(XEN_FALSE);
 }
-
-
-/* -------------------------------------------------------------------------------- */
-/* another partial example:
-
-(init-xm)
-
-(define (for-each-child w func)
-  (func w)
-  (if (|XtIsComposite w)
-      (for-each 
-       (lambda (n)
-	 (for-each-child n func))
-       (cadr (|XtGetValues w (list |XmNchildren 0) 1)))))
-
-(define scale-dialog #f)
-(define current-scaler 1.0)
-
-(define (create-scale-dialog parent)
-  (if (not (|Widget? scale-dialog))
-      (let ((xdismiss (|XmStringCreate "Dismiss" |XmFONTLIST_DEFAULT_TAG))
-	    (xhelp (|XmStringCreate "Help" |XmFONTLIST_DEFAULT_TAG))
-	    (titlestr (|XmStringCreate "Scaling" |XmFONTLIST_DEFAULT_TAG)))
-	(set! scale-dialog 
-	      (|XmCreateTemplateDialog parent "Scaling"
-                (list |XmNcancelLabelString   xdismiss
-		      |XmNhelpLabelString     xhelp
-		      |XmNautoUnmanage        #f
-		      |XmNdialogTitle         titlestr
-		      |XmNresizePolicy        |XmRESIZE_GROW
-	              |XmNnoResize            #f
-		      |XmNtransient           #f) ))
-
-	(|XtVaSetValues (|XmMessageBoxGetChild scale-dialog |XmDIALOG_HELP_BUTTON) 
-			(list |XmNarmColor (|WhitePixelOfScreen 
-					     (|DefaultScreenOfDisplay 
-					       (|XtDisplay (|Widget (cadr (main-widgets))))))))
-
-	(|XtAddCallback scale-dialog 
-			|XmNcancelCallback (lambda (w context info)
-					     (|XtUnmanageChild scale-dialog)))
-	(|XtAddCallback scale-dialog 
-			|XmNhelpCallback (lambda (w context info)
-					   (snd-print "move the slider to affect the volume")))
-	(|XmStringFree xhelp)
-	(|XmStringFree xdismiss)
-	(|XmStringFree titlestr)
-
-	(let* ((mainform 
-		(|XtCreateManagedWidget "formd" |xmFormWidgetClass scale-dialog
-                  (list |XmNleftAttachment      |XmATTACH_FORM
-		        |XmNrightAttachment     |XmATTACH_FORM
-		        |XmNtopAttachment       |XmATTACH_FORM
-		        |XmNbottomAttachment    |XmATTACH_WIDGET
-		        |XmNbottomWidget        (|XmMessageBoxGetChild scale-dialog |XmDIALOG_SEPARATOR))))
-	       (scale
-		(|XtCreateManagedWidget "" |xmScaleWidgetClass mainform
-		  (list |XmNorientation |XmHORIZONTAL
-			|XmNshowValue   #t
-			|XmNvalue       100
-			|XmNmaximum     500
-			|XmNdecimalPoints 2))))
-
-      (|XtAddCallback scale 
-		      |XmNvalueChangedCallback (lambda (w context info)
-						 (set! current-scaler (/ (|value info) 100.0))))
-      (|XtAddCallback scale |XmNdragCallback (lambda (w context info)
-						 (set! current-scaler (/ (|value info) 100.0)))))))
-  (|XtManageChild scale-dialog))
-
-(let* ((wids (main-widgets)) ; from Snd
-       (app (|XtAppContext (car wids)))
-       (shell (|Widget (cadr wids)))
-       (sound-pane (|Widget (cadddr wids)))
-       (listener (|Widget (list-ref (dialog-widgets) 21))) ; from Snd
-       (dpy (|XtDisplay shell))
-       (black (|BlackPixelOfScreen 
-		(|DefaultScreenOfDisplay 
-		  dpy)))
-       (white (|WhitePixelOfScreen 
-		(|XDefaultScreenOfDisplay 
-		  dpy))))
-  (let ((scrn (|XScreenNumberOfScreen (|DefaultScreenOfDisplay dpy))))
-    (|XtSetValues shell (list |XmNtitle "Hi!") 1)
-    (let* ((main-pane 
-	    (|XtVaCreateManagedWidget 
-	      "main-pane" |xmFormWidgetClass sound-pane
-	      (list |XmNbackground       black
-		    |XmNtopAttachment    |XmATTACH_FORM
-		    |XmNbottomAttachment |XmATTACH_FORM
-		    |XmNleftAttachment   |XmATTACH_FORM
-		    |XmNrightAttachment  |XmATTACH_FORM
-		    |XmNallowResize      #t)))
-	   (button (|XtCreateManagedWidget 
-		     "push me" |xmPushButtonWidgetClass main-pane 
-		     (list |XmNleftAttachment   |XmATTACH_FORM
-			   |XmNbottomAttachment |XmATTACH_NONE
-			   |XmNrightAttachment  |XmATTACH_NONE
-			   |XmNtopAttachment    |XmATTACH_FORM)))
-	   (toggle (|XtCreateManagedWidget
-		     "toggle" |xmToggleButtonWidgetClass main-pane
-		     (list |XmNleftAttachment   |XmATTACH_WIDGET
-			   |XmNleftWidget       button
-                           |XmNrightAttachment  |XmATTACH_NONE
-			   |XmNbottomAttachment |XmATTACH_NONE
-			   |XmNtopAttachment    |XmATTACH_FORM)))
-	   (slider (|XtCreateManagedWidget 
-		     "slider" |xmScrollBarWidgetClass main-pane
-		     (list |XmNleftAttachment   |XmATTACH_WIDGET
-			   |XmNleftWidget       toggle
-                           |XmNrightAttachment  |XmATTACH_FORM
-			   |XmNbottomAttachment |XmATTACH_NONE
-			   |XmNtopAttachment    |XmATTACH_FORM
-			   |XmNorientation      |XmHORIZONTAL
-			   |XmNdragCallback (list (lambda (widget context info)
-						    (display (|value info)))
-						  #f
-						  (lambda (widget context info)
-						    (display context))
-						  "ha"))))
-	   (drawer (|XtCreateManagedWidget
-		     "drawer" |xmDrawingAreaWidgetClass main-pane
-		     (list |XmNleftAttachment   |XmATTACH_FORM
-			   |XmNbottomAttachment |XmATTACH_FORM
-			   |XmNrightAttachment  |XmATTACH_FORM
-			   |XmNtopAttachment    |XmATTACH_WIDGET
-			   |XmNtopWidget        button
-			   |XmNbackground       white)))
-	   (scr (|DefaultScreen dpy))
-	   (cmap (|DefaultColormap dpy scr))
-	   (col (|XColor))
-	   (gv (|XGCValues)))
-      
-      (if (= (|XAllocNamedColor dpy cmap "red" col col) 0)
-	  (display "oops"))
-      (set! (|foreground gv) (|pixel col))
-      (let ((gc (|XCreateGC dpy (|XtWindow shell) |GCForeground gv))
-	    (draw-window (|XtWindow drawer))
-	    (draw-display (|XtDisplay drawer)))
-	(|XtSetValues button (list |XmNbackground (|pixel col)) 1)
-	(|XtAppAddWorkProc app (let ((ctr 0))
-				 (lambda (n)
-				   (if (= ctr 3)
-				       #t
-				       (begin
-					 (display ctr)
-					 (set! ctr (+ ctr 1))
-					 #f)))))
-	(|XtAddCallback button |XmNactivateCallback 
-			(lambda (widget context event-info)
-			  (display (|event event-info))
-			  (display (|reason event-info))
-			  (display (|state (|event event-info)))
-			  (|XtAppAddTimeOut app 1000 (lambda (me id)
-						       (display me))
-					    "ho!"))
-			123)
-	(|XtAddCallback toggle |XmNvalueChangedCallback
-			(lambda (widget context info)
-			  (display info)
-			  (|XDrawLine draw-display draw-window gc 0 0 120 100)
-			  (display (|set info))))
-	(|XtAddEventHandler drawer |EnterWindowMask #f
-			    (lambda (w context ev flag)
-			      (display "hi")))
-	(create-scale-dialog shell)
-      ))))
-
-*/

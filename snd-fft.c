@@ -1326,7 +1326,7 @@ static int apply_fft_window(fft_state *fs)
 	{
 	  res = g_c_run_progn_hook(before_transform_hook, 
 				   XEN_LIST_2(C_TO_SMALL_XEN_INT(cp->sound->index), 
-					     C_TO_SMALL_XEN_INT(cp->chan)),
+					      C_TO_SMALL_XEN_INT(cp->chan)),
 				   S_before_transform_hook);
 	  if (XEN_NUMBER_P(res))
 	    ind0 = XEN_TO_C_INT_OR_ELSE(res, 0) + fs->beg;
@@ -1448,9 +1448,9 @@ static int apply_fft_window(fft_state *fs)
 	sfd = g_c_make_sample_reader(sf);
 	snd_protect(sfd);
 	res = XEN_CALL_2(added_transform_proc(cp->transform_type), 
-		    C_TO_XEN_INT(data_len), 
-		    sfd,
-		    "added transform func");
+			 C_TO_XEN_INT(data_len), 
+			 sfd,
+			 "added transform func");
 	snd_protect(res);
 	if (VCT_P(res))
 	  {
@@ -2278,10 +2278,10 @@ to be displayed goes from low to high (normally 0.0 to 1.0)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(hi), hi, XEN_ARG_4, S_add_transform, "a number");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc), proc, XEN_ARG_5, S_add_transform, "a procedure");
   return(C_TO_SMALL_XEN_INT(add_transform(XEN_TO_C_STRING(name),
-					XEN_TO_C_STRING(xlabel),
-					XEN_TO_C_DOUBLE(lo),
-					XEN_TO_C_DOUBLE(hi),
-					proc)));
+					  XEN_TO_C_STRING(xlabel),
+					  XEN_TO_C_DOUBLE(lo),
+					  XEN_TO_C_DOUBLE(hi),
+					  proc)));
 }
 
 static XEN g_transform_samples_size(XEN snd, XEN chn)
@@ -2301,8 +2301,8 @@ and otherwise returns a list (total-size active-bins active-slices)"
     return(C_TO_SMALL_XEN_INT(transform_size(cp->state)));
   si = (sono_info *)(cp->sonogram_data);
   if (si) return(XEN_LIST_3(C_TO_XEN_DOUBLE(spectro_cutoff(cp->state)),
-			   C_TO_SMALL_XEN_INT(si->active_slices),
-			   C_TO_SMALL_XEN_INT(si->target_bins)));
+			    C_TO_SMALL_XEN_INT(si->active_slices),
+			    C_TO_SMALL_XEN_INT(si->target_bins)));
   return(XEN_ZERO);
 }
 
@@ -2338,9 +2338,9 @@ returns the current transform sample at bin and slice in snd channel chn (assumi
 		  (fslice < si->active_slices))
 		return(C_TO_XEN_DOUBLE(si->data[fslice][fbin]));
 	      else  XEN_ERROR(NO_SUCH_SAMPLE,
-			  XEN_LIST_5(C_TO_XEN_STRING(S_transform_sample),
-				    bin, slice,
-				    snd_n, chn_n));
+			      XEN_LIST_5(C_TO_XEN_STRING(S_transform_sample),
+					 bin, slice,
+					 snd_n, chn_n));
 	    }
 	}
     }

@@ -640,6 +640,7 @@
 #define S_recorder_gain                 "recorder-gain"
 #define S_recorder_in_amp               "recorder-in-amp"
 #define S_recorder_in_format            "recorder-in-format"
+#define S_recorder_in_device            "recorder-in-device"
 #define S_recorder_max_duration         "recorder-max-duration"
 #define S_recorder_out_amp              "recorder-out-amp"
 #define S_recorder_out_chans            "recorder-out-chans"

@@ -5845,6 +5845,8 @@
 	       (if (not (string=? (recorder-file) "hiho.snd")) (snd-display ";set-recorder-file: ~A?" (recorder-file)))
 	       (set! (recorder-in-format) mus-mulaw)
 	       (if (not (= (recorder-in-format) mus-mulaw)) (snd-display ";set-recorder-in-format: ~A?" (recorder-in-format)))
+	       (set! (recorder-in-device) mus-audio-line-in)
+	       (if (not (= (recorder-in-device) mus-audio-line-in)) (snd-display ";set-recorder-in-device: ~A?" (recorder-in-device)))
 	       (set! (recorder-out-format) mus-mulaw)
 	       (if (not (= (recorder-out-format) mus-mulaw)) (snd-display ";set-recorder-out-format: ~A?" (recorder-out-format)))
 	       (set! (recorder-srate) 44100)
@@ -10262,7 +10264,7 @@ EDITS: 3
 	       movies new-sound next-mix-sample next-sample next-track-sample transform-normalization equalize-panes
 	       open-raw-sound open-sound open-sound-file orientation-dialog peak-env-info peaks play play-and-wait play-mix play-region play-selection
 	       play-track player? position-color position->x position->y preload-directory preload-file previous-files-sort previous-sample 
-	       print-length progress-report prompt-in-minibuffer protect-region pushed-button-color read-only
+	       print-length progress-report prompt-in-minibuffer protect-region pushed-button-color read-only recorder-in-device
 	       read-peak-env-info-file recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain recorder-in-amp recorder-in-format
 	       recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format recorder-srate recorder-trigger redo region-chans region-dialog
 	       region-graph-style region-length region-maxamp region-sample region-samples region-samples->vct region-srate regions region? remove-from-menu
@@ -10332,7 +10334,7 @@ EDITS: 3
 		   graph-style graph-lisp? graphs-horizontal help-text-font highlight-color just-sounds left-sample listener-color listener-font
 		   listener-prompt listener-text-color mark-color mark-name mark-sample mark-sync max-transform-peaks max-regions menu-sensitive min-dB mix-amp
 		   mix-amp-env mix-anchor mix-chans mix-color mix-track mix-length mix-locked mix-name mix-position mix-speed mix-tag-height
-		   mix-tag-width mix-tag-y mix-waveform-height movies transform-normalization equalize-panes position-color 
+		   mix-tag-width mix-tag-y mix-waveform-height movies transform-normalization equalize-panes position-color recorder-in-device
 		   previous-files-sort print-length pushed-button-color recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain
 		   recorder-in-amp recorder-in-format recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format recorder-srate
 		   region-graph-style recorder-trigger reverb-control-decay reverb-control-feedback reverb-control-procedures 
@@ -10927,7 +10929,7 @@ EDITS: 3
 			  enved-power enved-selected-env enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin 
 			  foreground-color graph-color graph-cursor help-text-font highlight-color just-sounds key-binding listener-color 
 			  listener-font listener-prompt listener-text-color max-regions max-sounds minibuffer-history-length mix-waveform-height 
-			  region-graph-style movies position-color previous-files-sort print-length pushed-button-color
+			  region-graph-style movies position-color previous-files-sort print-length pushed-button-color recorder-in-device
 			  recorder-autoload recorder-buffer-size recorder-file recorder-in-format recorder-max-duration recorder-out-chans recorder-out-format 
 			  recorder-srate recorder-trigger sash-color save-dir save-state-file selected-channel selected-data-color 
 			  selected-graph-color selected-mix selected-mix-color selected-sound selection-creates-region show-backtrace show-controls 
