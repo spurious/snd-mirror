@@ -6736,6 +6736,26 @@ unless <i>auto-delete</i> is #t.  (If you write a temporary sound
 as an edit, it can be non-obvious when it is safe to delete that
 file; <i>auto-delete</i> set to #t asks Snd to handle cleanup).
 The form (set! (<a class=quiet href="#samples">samples</a> samp samps <i>snd chn trunc edname infile-chan</i>) data) can also be used.
+<i>env-sound-interp</i> in examp.scm has an example of the file version, using
+sound-data objects and mus-sound-write to create a temporary file, but
+it's probably simpler to use <a href="clm.html#with-sound">with-sound</a> (from ws.scm):
+<br><br>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(define (step-src)
+  (let* ((rd (make-sample-reader 0))
+	 (o (make-oscil 2205.0))
+	 (s (make-src :srate 0.0))
+	 (incr (+ 2.0 (oscil o)))	  
+	 (tempfile (<em class=red>with-sound</em> (:output (snd-tempnam) :srate (srate) :to-snd #f)
+		     (run (lambda ()
+			    (do ((samp 0 (1+ samp)))
+				((or (c-g?) (sample-reader-at-end? rd)))
+			      (out-any samp (src s incr (lambda (dir) (read-sample rd))) 0 *output*)
+			      (if (= (modulo samp 2205) 0)
+				  (set! incr (+ 2.0 (oscil o)))))))))
+	 (len (mus-sound-frames tempfile)))
+    (<em class=red>set-samples</em> 0 (1- len) tempfile #f #f #t "step-src" 0 #f #t)))
+</pre></td></tr></table>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7115,6 +7135,7 @@ the digital zipper: <a href="sndscm.html#zipdoc">zipper</a><br>
 resample via FFT: <a href="sndscm.html#exdownoct">down-oct</a><br>
 resample through env: <a href="sndscm.html#exsoundinterp">sound-interp</a> and <a href="sndscm.html#exenvsoundinterp">env-sound-interp</a><br>
 resample through list: <a href="sndscm.html#scratch">scratch</a><br>
+resample step-size through a function: <a href="#setsamples">step-src</a><br>
 <br>
 </blockquote></small>
 </td></tr></TABLE>

@@ -6858,6 +6858,36 @@ static char *descr_previous_reader_f(int *args, ptree *pt) {return(descr_reader(
 static void previous_reader_f(int *args, ptree *pt) {FLOAT_RESULT = protected_previous_sample_to_float(READER_ARG_1);}
 static xen_value *previous_sample_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, previous_reader_f, descr_previous_reader_f, args, 1));}
 
+
+static char *descr_reader_at_end_b_s(int *args, ptree *pt)
+{
+  return(mus_format( BOOL_PT " = sample-reader-at-end?(" RD_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_READER_ARG_1));
+}
+static char *descr_reader_at_end_b_m(int *args, ptree *pt)
+{
+  return(mus_format( BOOL_PT " = (mix-)sample-reader-at-end?(" RD_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_MIX_READER_ARG_1));
+}
+static char *descr_reader_at_end_b_t(int *args, ptree *pt)
+{
+  return(mus_format( BOOL_PT " = (track-)sample-reader-at-end?(" RD_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_TRACK_READER_ARG_1));
+}
+
+static void reader_at_end_b_s(int *args, ptree *pt) {BOOL_RESULT = READER_ARG_1->at_eof;}
+static void reader_at_end_b_m(int *args, ptree *pt) {BOOL_RESULT = mix_sample_reader_at_end_p(MIX_READER_ARG_1);}
+static void reader_at_end_b_t(int *args, ptree *pt) {BOOL_RESULT = track_sample_reader_at_end_p(TRACK_READER_ARG_1);}
+
+static xen_value *sample_reader_at_end_p_1(ptree *prog, xen_value **args, int num_args) 
+{
+  if (args[1]->type == R_READER)
+    return(package(prog, R_BOOL, reader_at_end_b_s, descr_reader_at_end_b_s, args, 1));
+  if (args[1]->type == R_MIX_READER)
+    return(package(prog, R_BOOL, reader_at_end_b_m, descr_reader_at_end_b_m, args, 1));
+  if (args[1]->type == R_TRACK_READER)
+    return(package(prog, R_BOOL, reader_at_end_b_t, descr_reader_at_end_b_t, args, 1));
+  return(NULL);
+}
+
+
 static char *descr_make_sample_reader_r(int *args, ptree *pt)
 {
   return(mus_format( RD_PT " = make-sample-reader(" INT_PT ", " INT_PT ", " INT_PT ", " INT_PT ", " INT_PT ")",
@@ -11707,6 +11737,7 @@ static void init_walkers(void)
   INIT_WALKER(S_read_sample, make_walker(reader_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));
   INIT_WALKER(S_make_sample_reader, make_walker(make_sample_reader_1, NULL, NULL, 0, 5, R_READER, false, 1, R_NUMBER));
   INIT_WALKER(S_sample_reader_p, make_walker(sample_reader_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER(S_sample_reader_at_end_p, make_walker(sample_reader_at_end_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
 
   INIT_WALKER(S_make_region_sample_reader, make_walker(make_region_sample_reader_1, NULL, NULL, 3, 3, R_READER, false, 3, R_INT, R_INT, R_INT));
   INIT_WALKER(S_read_region_sample, make_walker(reader_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));

@@ -321,7 +321,7 @@ returning you to the true top-level."
 								     revmax)) 
 				  "")
 			      cycles)))
-		 (if (or scaled-to scaled-by)
+		 (if (or scaled-to scaled-by) ; TODO: scale-to/by in with-sound only work if to-snd
 		     (begin
 		       (if scaled-to
 			   (scale-to scaled-to snd-output)

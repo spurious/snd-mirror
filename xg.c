@@ -2,11 +2,9 @@
  *   this file generated automatically from makexg.scm and xgdata.scm
  *   needs xen.h
  *
- *   PANGO_ENABLE_ENGINE and PANGO_ENABLE_BACKEND are handled together, and may be removed later
- *
- *   other flags:
+ *   compile-time flags:
  *     HAVE_GDK_DRAW_PIXBUF for gtk+-2.1 additions
- *     defined(GTK_CELL_RENDERER_FOCUSED) for gtk+-2.2
+ *     GTK_CELL_RENDERER_FOCUSED for gtk+-2.2
  *     HAVE_GTK_FILE_CHOOSER_DIALOG_NEW for gtk+-2.3
  *     HAVE_GTK_EXPANDER_GET_USE_MARKUP for gtk+-2.3.1
  *     HAVE_GTK_MENU_SHELL_CANCEL for gtk+-2.3.2
@@ -15,6 +13,7 @@
  *     HAVE_GBOOLEAN_GTK_FILE_CHOOSER_SET_FILENAME for gtk+-2.3.6
  *     HAVE_GTK_ABOUT_DIALOG_NEW for gtk+-2.5.0
  *     HAVE_GTK_LABEL_SET_ELLIPSIZE for gtk+-2.5.1
+ *     HAVE_GTK_FILE_CHOOSER_BUTTON_NEW for gtk+-2.5.2
  *
  * reference args initial values are usually ignored, resultant values are returned in a list.
  * null ptrs are passed and returned as #f, trailing "user_data" callback function arguments are optional (default: #f).
@@ -46,6 +45,7 @@
  *     win32-specific functions
  *
  * HISTORY:
+ *     27-Aug:    gtk 2.5.2 changes.
  *     5-Aug:     gtk 2.5.1 changes.
  *     21-Jul:    gtk 2.5.0 changes.
  *     2-Jun:     gdk_atom_name needs to free return value
@@ -811,8 +811,9 @@ XM_TYPE_PTR_1(PangoFontDescription__, PangoFontDescription**)
 #define C_TO_XEN_PangoFontMask(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_PangoFontMask(Arg) (PangoFontMask)(XEN_TO_C_INT(Arg))
 #define XEN_PangoFontMask_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR_1(PangoFontFace_, PangoFontFace*)
-XM_TYPE_PTR_2(PangoEngineShape_, PangoEngineShape*)
+XM_TYPE_PTR(PangoFontFamily_, PangoFontFamily*)
+XM_TYPE_PTR_2(PangoFontFace__, PangoFontFace**)
+XM_TYPE_PTR(PangoFontFace_, PangoFontFace*)
 #define C_TO_XEN_PangoGlyph(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_PangoGlyph(Arg) (PangoGlyph)(XEN_TO_C_ULONG(Arg))
 #define XEN_PangoGlyph_P(Arg) XEN_ULONG_P(Arg)
@@ -882,13 +883,6 @@ XM_TYPE_PTR_1(GtkColorSelectionDialog_, GtkColorSelectionDialog*)
 XM_TYPE_PTR_2(GdkGC__, GdkGC**)
 XM_TYPE_PTR_2(GdkPixmap__, GdkPixmap**)
 XM_TYPE_PTR_2(GArray_, GArray*)
-#if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
-XM_TYPE_PTR(PangoEngineInfo_, PangoEngineInfo*)
-XM_TYPE_PTR(PangoEngine_, PangoEngine*)
-XM_TYPE_PTR_1(PangoFontFamily_, PangoFontFamily*)
-XM_TYPE_PTR(PangoFontFace__, PangoFontFace**)
-#endif
-
 #if HAVE_GDK_DRAW_PIXBUF
 XM_TYPE_PTR(GdkDisplay_, GdkDisplay*)
 XM_TYPE_PTR(GdkScreen_, GdkScreen*)
@@ -956,9 +950,12 @@ XM_TYPE_PTR_1(GtkAboutDialog_, GtkAboutDialog*)
 #define XEN_TO_C_PangoEllipsizeMode(Arg) (PangoEllipsizeMode)(XEN_TO_C_INT(Arg))
 #define XEN_PangoEllipsizeMode_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_1(PangoAttrFilterFunc, PangoAttrFilterFunc)
-XM_TYPE_PTR_1(PangoFontFamily_, PangoFontFamily*)
 XM_TYPE_NO_P_2(PangoScript, PangoScript)
 XM_TYPE_PTR(PangoScriptIter_, PangoScriptIter*)
+#endif
+
+#if HAVE_GTK_FILE_CHOOSER_BUTTON_NEW
+XM_TYPE_PTR_1(GtkFileChooserButton_, GtkFileChooserButton*)
 #endif
 
 #define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))
@@ -18338,6 +18335,27 @@ static XEN gxg_pango_font_metrics_get_approximate_digit_width(XEN metrics)
   XEN_ASSERT_TYPE(XEN_PangoFontMetrics__P(metrics), metrics, 1, "pango_font_metrics_get_approximate_digit_width", "PangoFontMetrics*");
   return(C_TO_XEN_int(pango_font_metrics_get_approximate_digit_width(XEN_TO_C_PangoFontMetrics_(metrics))));
 }
+static XEN gxg_pango_font_family_get_type(void)
+{
+  #define H_pango_font_family_get_type "GType pango_font_family_get_type( void)"
+  return(C_TO_XEN_GType(pango_font_family_get_type()));
+}
+static XEN gxg_pango_font_family_list_faces(XEN family, XEN faces, XEN n_faces)
+{
+  #define H_pango_font_family_list_faces "void pango_font_family_list_faces(PangoFontFamily* family, \
+PangoFontFace*** [faces], int* [n_faces])"
+  PangoFontFace** ref_faces = NULL;
+  int ref_n_faces;
+  XEN_ASSERT_TYPE(XEN_PangoFontFamily__P(family), family, 1, "pango_font_family_list_faces", "PangoFontFamily*");
+  pango_font_family_list_faces(XEN_TO_C_PangoFontFamily_(family), &ref_faces, &ref_n_faces);
+  return(XEN_LIST_2(C_TO_XEN_PangoFontFace__(ref_faces), C_TO_XEN_int(ref_n_faces)));
+}
+static XEN gxg_pango_font_family_get_name(XEN family)
+{
+  #define H_pango_font_family_get_name "char* pango_font_family_get_name(PangoFontFamily* family)"
+  XEN_ASSERT_TYPE(XEN_PangoFontFamily__P(family), family, 1, "pango_font_family_get_name", "PangoFontFamily*");
+  return(C_TO_XEN_char_(pango_font_family_get_name(XEN_TO_C_PangoFontFamily_(family))));
+}
 static XEN gxg_pango_font_face_get_type(void)
 {
   #define H_pango_font_face_get_type "GType pango_font_face_get_type( void)"
@@ -18372,16 +18390,6 @@ static XEN gxg_pango_font_get_coverage(XEN font, XEN language)
   XEN_ASSERT_TYPE(XEN_PangoFont__P(font), font, 1, "pango_font_get_coverage", "PangoFont*");
   XEN_ASSERT_TYPE(XEN_PangoLanguage__P(language), language, 2, "pango_font_get_coverage", "PangoLanguage*");
   return(C_TO_XEN_PangoCoverage_(pango_font_get_coverage(XEN_TO_C_PangoFont_(font), XEN_TO_C_PangoLanguage_(language))));
-}
-static XEN gxg_pango_font_find_shaper(XEN font, XEN language, XEN ch)
-{
-  #define H_pango_font_find_shaper "PangoEngineShape* pango_font_find_shaper(PangoFont* font, PangoLanguage* language, \
-guint32 ch)"
-  XEN_ASSERT_TYPE(XEN_PangoFont__P(font), font, 1, "pango_font_find_shaper", "PangoFont*");
-  XEN_ASSERT_TYPE(XEN_PangoLanguage__P(language), language, 2, "pango_font_find_shaper", "PangoLanguage*");
-  XEN_ASSERT_TYPE(XEN_guint32_P(ch), ch, 3, "pango_font_find_shaper", "guint32");
-  return(C_TO_XEN_PangoEngineShape_(pango_font_find_shaper(XEN_TO_C_PangoFont_(font), XEN_TO_C_PangoLanguage_(language), 
-                                                           XEN_TO_C_guint32(ch))));
 }
 static XEN gxg_pango_font_get_metrics(XEN font, XEN language)
 {
@@ -19212,82 +19220,6 @@ static XEN gxg_g_quark_to_string(XEN quark)
   XEN_ASSERT_TYPE(XEN_GQuark_P(quark), quark, 1, "g_quark_to_string", "GQuark");
   return(C_TO_XEN_gchar_(g_quark_to_string(XEN_TO_C_GQuark(quark))));
 }
-#if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
-static XEN gxg_pango_default_break(XEN text, XEN length, XEN analysis, XEN attrs, XEN attrs_len)
-{
-  #define H_pango_default_break "void pango_default_break(gchar* text, int length, PangoAnalysis* analysis, \
-PangoLogAttr* attrs, int attrs_len)"
-  XEN_ASSERT_TYPE(XEN_gchar__P(text), text, 1, "pango_default_break", "gchar*");
-  XEN_ASSERT_TYPE(XEN_int_P(length), length, 2, "pango_default_break", "int");
-  XEN_ASSERT_TYPE(XEN_PangoAnalysis__P(analysis), analysis, 3, "pango_default_break", "PangoAnalysis*");
-  XEN_ASSERT_TYPE(XEN_PangoLogAttr__P(attrs), attrs, 4, "pango_default_break", "PangoLogAttr*");
-  XEN_ASSERT_TYPE(XEN_int_P(attrs_len), attrs_len, 5, "pango_default_break", "int");
-  pango_default_break(XEN_TO_C_gchar_(text), XEN_TO_C_int(length), XEN_TO_C_PangoAnalysis_(analysis), XEN_TO_C_PangoLogAttr_(attrs), 
-                      XEN_TO_C_int(attrs_len));
-  return(XEN_FALSE);
-}
-static XEN gxg_pango_context_new(void)
-{
-  #define H_pango_context_new "PangoContext* pango_context_new( void)"
-  return(C_TO_XEN_PangoContext_(pango_context_new()));
-}
-static XEN gxg_script_engine_list(XEN engines, XEN n_engines)
-{
-  #define H_script_engine_list "void script_engine_list(PangoEngineInfo** [engines], int* [n_engines])"
-  PangoEngineInfo* ref_engines = NULL;
-  int ref_n_engines;
-  script_engine_list(&ref_engines, &ref_n_engines);
-  return(XEN_LIST_2(C_TO_XEN_PangoEngineInfo_(ref_engines), C_TO_XEN_int(ref_n_engines)));
-}
-static XEN gxg_script_engine_load(XEN id)
-{
-  #define H_script_engine_load "PangoEngine* script_engine_load(char* id)"
-  XEN_ASSERT_TYPE(XEN_char__P(id), id, 1, "script_engine_load", "char*");
-  return(C_TO_XEN_PangoEngine_(script_engine_load(XEN_TO_C_char_(id))));
-}
-static XEN gxg_script_engine_unload(XEN engine)
-{
-  #define H_script_engine_unload "void script_engine_unload(PangoEngine* engine)"
-  XEN_ASSERT_TYPE(XEN_PangoEngine__P(engine), engine, 1, "script_engine_unload", "PangoEngine*");
-  script_engine_unload(XEN_TO_C_PangoEngine_(engine));
-  return(XEN_FALSE);
-}
-static XEN gxg_pango_font_metrics_new(void)
-{
-  #define H_pango_font_metrics_new "PangoFontMetrics* pango_font_metrics_new( void)"
-  return(C_TO_XEN_PangoFontMetrics_(pango_font_metrics_new()));
-}
-static XEN gxg_pango_font_family_get_type(void)
-{
-  #define H_pango_font_family_get_type "GType pango_font_family_get_type( void)"
-  return(C_TO_XEN_GType(pango_font_family_get_type()));
-}
-static XEN gxg_pango_font_family_list_faces(XEN family, XEN faces, XEN n_faces)
-{
-  #define H_pango_font_family_list_faces "void pango_font_family_list_faces(PangoFontFamily* family, \
-PangoFontFace*** [faces], int* [n_faces])"
-  PangoFontFace** ref_faces = NULL;
-  int ref_n_faces;
-  XEN_ASSERT_TYPE(XEN_PangoFontFamily__P(family), family, 1, "pango_font_family_list_faces", "PangoFontFamily*");
-  pango_font_family_list_faces(XEN_TO_C_PangoFontFamily_(family), &ref_faces, &ref_n_faces);
-  return(XEN_LIST_2(C_TO_XEN_PangoFontFace__(ref_faces), C_TO_XEN_int(ref_n_faces)));
-}
-static XEN gxg_pango_font_family_get_name(XEN family)
-{
-  #define H_pango_font_family_get_name "char* pango_font_family_get_name(PangoFontFamily* family)"
-  XEN_ASSERT_TYPE(XEN_PangoFontFamily__P(family), family, 1, "pango_font_family_get_name", "PangoFontFamily*");
-  return(C_TO_XEN_char_(pango_font_family_get_name(XEN_TO_C_PangoFontFamily_(family))));
-}
-static XEN gxg_pango_context_set_font_map(XEN context, XEN font_map)
-{
-  #define H_pango_context_set_font_map "void pango_context_set_font_map(PangoContext* context, PangoFontMap* font_map)"
-  XEN_ASSERT_TYPE(XEN_PangoContext__P(context), context, 1, "pango_context_set_font_map", "PangoContext*");
-  XEN_ASSERT_TYPE(XEN_PangoFontMap__P(font_map), font_map, 2, "pango_context_set_font_map", "PangoFontMap*");
-  pango_context_set_font_map(XEN_TO_C_PangoContext_(context), XEN_TO_C_PangoFontMap_(font_map));
-  return(XEN_FALSE);
-}
-#endif
-
 #if HAVE_GDK_DRAW_PIXBUF
 static XEN gxg_gdk_draw_pixbuf(XEN arglist)
 {
@@ -23069,14 +23001,6 @@ static XEN gxg_gdk_window_configure_finished(XEN window)
   gdk_window_configure_finished(XEN_TO_C_GdkWindow_(window));
   return(XEN_FALSE);
 }
-static XEN gxg_gtk_action_group_translate_string(XEN action_group, XEN string)
-{
-  #define H_gtk_action_group_translate_string "gchar* gtk_action_group_translate_string(GtkActionGroup* action_group, \
-gchar* string)"
-  XEN_ASSERT_TYPE(XEN_GtkActionGroup__P(action_group), action_group, 1, "gtk_action_group_translate_string", "GtkActionGroup*");
-  XEN_ASSERT_TYPE(XEN_gchar__P(string), string, 2, "gtk_action_group_translate_string", "gchar*");
-  return(C_TO_XEN_gchar_(gtk_action_group_translate_string(XEN_TO_C_GtkActionGroup_(action_group), XEN_TO_C_gchar_(string))));
-}
 static XEN gxg_gtk_combo_box_get_wrap_width(XEN combo_box)
 {
   #define H_gtk_combo_box_get_wrap_width "gint gtk_combo_box_get_wrap_width(GtkComboBox* combo_box)"
@@ -23815,6 +23739,153 @@ static XEN gxg_pango_script_iter_free(XEN iter)
 }
 #endif
 
+#if HAVE_GTK_FILE_CHOOSER_BUTTON_NEW
+static XEN gxg_gtk_file_chooser_button_get_type(void)
+{
+  #define H_gtk_file_chooser_button_get_type "GType gtk_file_chooser_button_get_type( void)"
+  return(C_TO_XEN_GType(gtk_file_chooser_button_get_type()));
+}
+static XEN gxg_gtk_file_chooser_button_new(XEN title)
+{
+  #define H_gtk_file_chooser_button_new "GtkWidget* gtk_file_chooser_button_new(gchar* title)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(title), title, 1, "gtk_file_chooser_button_new", "gchar*");
+  return(C_TO_XEN_GtkWidget_(gtk_file_chooser_button_new(XEN_TO_C_gchar_(title))));
+}
+static XEN gxg_gtk_file_chooser_button_new_with_backend(XEN title, XEN backend)
+{
+  #define H_gtk_file_chooser_button_new_with_backend "GtkWidget* gtk_file_chooser_button_new_with_backend(gchar* title, \
+gchar* backend)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(title), title, 1, "gtk_file_chooser_button_new_with_backend", "gchar*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(backend), backend, 2, "gtk_file_chooser_button_new_with_backend", "gchar*");
+  return(C_TO_XEN_GtkWidget_(gtk_file_chooser_button_new_with_backend(XEN_TO_C_gchar_(title), XEN_TO_C_gchar_(backend))));
+}
+static XEN gxg_gtk_file_chooser_button_new_with_dialog(XEN dialog)
+{
+  #define H_gtk_file_chooser_button_new_with_dialog "GtkWidget* gtk_file_chooser_button_new_with_dialog(GtkWidget* dialog)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(dialog), dialog, 1, "gtk_file_chooser_button_new_with_dialog", "GtkWidget*");
+  return(C_TO_XEN_GtkWidget_(gtk_file_chooser_button_new_with_dialog(XEN_TO_C_GtkWidget_(dialog))));
+}
+static XEN gxg_gtk_file_chooser_button_get_title(XEN button)
+{
+  #define H_gtk_file_chooser_button_get_title "gchar* gtk_file_chooser_button_get_title(GtkFileChooserButton* button)"
+  XEN_ASSERT_TYPE(XEN_GtkFileChooserButton__P(button), button, 1, "gtk_file_chooser_button_get_title", "GtkFileChooserButton*");
+  return(C_TO_XEN_gchar_(gtk_file_chooser_button_get_title(XEN_TO_C_GtkFileChooserButton_(button))));
+}
+static XEN gxg_gtk_file_chooser_button_set_title(XEN button, XEN title)
+{
+  #define H_gtk_file_chooser_button_set_title "void gtk_file_chooser_button_set_title(GtkFileChooserButton* button, \
+gchar* title)"
+  XEN_ASSERT_TYPE(XEN_GtkFileChooserButton__P(button), button, 1, "gtk_file_chooser_button_set_title", "GtkFileChooserButton*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(title), title, 2, "gtk_file_chooser_button_set_title", "gchar*");
+  gtk_file_chooser_button_set_title(XEN_TO_C_GtkFileChooserButton_(button), XEN_TO_C_gchar_(title));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_file_chooser_button_get_active(XEN button)
+{
+  #define H_gtk_file_chooser_button_get_active "gboolean gtk_file_chooser_button_get_active(GtkFileChooserButton* button)"
+  XEN_ASSERT_TYPE(XEN_GtkFileChooserButton__P(button), button, 1, "gtk_file_chooser_button_get_active", "GtkFileChooserButton*");
+  return(C_TO_XEN_gboolean(gtk_file_chooser_button_get_active(XEN_TO_C_GtkFileChooserButton_(button))));
+}
+static XEN gxg_gtk_file_chooser_button_set_active(XEN button, XEN is_active)
+{
+  #define H_gtk_file_chooser_button_set_active "void gtk_file_chooser_button_set_active(GtkFileChooserButton* button, \
+gboolean is_active)"
+  XEN_ASSERT_TYPE(XEN_GtkFileChooserButton__P(button), button, 1, "gtk_file_chooser_button_set_active", "GtkFileChooserButton*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(is_active), is_active, 2, "gtk_file_chooser_button_set_active", "gboolean");
+  gtk_file_chooser_button_set_active(XEN_TO_C_GtkFileChooserButton_(button), XEN_TO_C_gboolean(is_active));
+  return(XEN_FALSE);
+}
+static XEN gxg_gdk_drag_drop_succeeded(XEN context)
+{
+  #define H_gdk_drag_drop_succeeded "gboolean gdk_drag_drop_succeeded(GdkDragContext* context)"
+  XEN_ASSERT_TYPE(XEN_GdkDragContext__P(context), context, 1, "gdk_drag_drop_succeeded", "GdkDragContext*");
+  return(C_TO_XEN_gboolean(gdk_drag_drop_succeeded(XEN_TO_C_GdkDragContext_(context))));
+}
+static XEN gxg_gdk_rgb_colormap_ditherable(XEN cmap)
+{
+  #define H_gdk_rgb_colormap_ditherable "gboolean gdk_rgb_colormap_ditherable(GdkColormap* cmap)"
+  XEN_ASSERT_TYPE(XEN_GdkColormap__P(cmap), cmap, 1, "gdk_rgb_colormap_ditherable", "GdkColormap*");
+  return(C_TO_XEN_gboolean(gdk_rgb_colormap_ditherable(XEN_TO_C_GdkColormap_(cmap))));
+}
+static XEN gxg_gtk_action_set_sensitive(XEN action, XEN sensitive)
+{
+  #define H_gtk_action_set_sensitive "void gtk_action_set_sensitive(GtkAction* action, gboolean sensitive)"
+  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 1, "gtk_action_set_sensitive", "GtkAction*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(sensitive), sensitive, 2, "gtk_action_set_sensitive", "gboolean");
+  gtk_action_set_sensitive(XEN_TO_C_GtkAction_(action), XEN_TO_C_gboolean(sensitive));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_action_set_visible(XEN action, XEN visible)
+{
+  #define H_gtk_action_set_visible "void gtk_action_set_visible(GtkAction* action, gboolean visible)"
+  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 1, "gtk_action_set_visible", "GtkAction*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(visible), visible, 2, "gtk_action_set_visible", "gboolean");
+  gtk_action_set_visible(XEN_TO_C_GtkAction_(action), XEN_TO_C_gboolean(visible));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_combo_box_get_focus_on_click(XEN combo)
+{
+  #define H_gtk_combo_box_get_focus_on_click "gboolean gtk_combo_box_get_focus_on_click(GtkComboBox* combo)"
+  XEN_ASSERT_TYPE(XEN_GtkComboBox__P(combo), combo, 1, "gtk_combo_box_get_focus_on_click", "GtkComboBox*");
+  return(C_TO_XEN_gboolean(gtk_combo_box_get_focus_on_click(XEN_TO_C_GtkComboBox_(combo))));
+}
+static XEN gxg_gtk_combo_box_set_focus_on_click(XEN combo, XEN focus_on_click)
+{
+  #define H_gtk_combo_box_set_focus_on_click "void gtk_combo_box_set_focus_on_click(GtkComboBox* combo, \
+gboolean focus_on_click)"
+  XEN_ASSERT_TYPE(XEN_GtkComboBox__P(combo), combo, 1, "gtk_combo_box_set_focus_on_click", "GtkComboBox*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(focus_on_click), focus_on_click, 2, "gtk_combo_box_set_focus_on_click", "gboolean");
+  gtk_combo_box_set_focus_on_click(XEN_TO_C_GtkComboBox_(combo), XEN_TO_C_gboolean(focus_on_click));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_entry_layout_index_to_text_index(XEN entry, XEN layout_index)
+{
+  #define H_gtk_entry_layout_index_to_text_index "gint gtk_entry_layout_index_to_text_index(GtkEntry* entry, \
+gint layout_index)"
+  XEN_ASSERT_TYPE(XEN_GtkEntry__P(entry), entry, 1, "gtk_entry_layout_index_to_text_index", "GtkEntry*");
+  XEN_ASSERT_TYPE(XEN_gint_P(layout_index), layout_index, 2, "gtk_entry_layout_index_to_text_index", "gint");
+  return(C_TO_XEN_gint(gtk_entry_layout_index_to_text_index(XEN_TO_C_GtkEntry_(entry), XEN_TO_C_gint(layout_index))));
+}
+static XEN gxg_gtk_entry_text_index_to_layout_index(XEN entry, XEN text_index)
+{
+  #define H_gtk_entry_text_index_to_layout_index "gint gtk_entry_text_index_to_layout_index(GtkEntry* entry, \
+gint text_index)"
+  XEN_ASSERT_TYPE(XEN_GtkEntry__P(entry), entry, 1, "gtk_entry_text_index_to_layout_index", "GtkEntry*");
+  XEN_ASSERT_TYPE(XEN_gint_P(text_index), text_index, 2, "gtk_entry_text_index_to_layout_index", "gint");
+  return(C_TO_XEN_gint(gtk_entry_text_index_to_layout_index(XEN_TO_C_GtkEntry_(entry), XEN_TO_C_gint(text_index))));
+}
+static XEN gxg_gtk_file_chooser_set_show_hidden(XEN chooser, XEN show_hidden)
+{
+  #define H_gtk_file_chooser_set_show_hidden "void gtk_file_chooser_set_show_hidden(GtkFileChooser* chooser, \
+gboolean show_hidden)"
+  XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_set_show_hidden", "GtkFileChooser*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(show_hidden), show_hidden, 2, "gtk_file_chooser_set_show_hidden", "gboolean");
+  gtk_file_chooser_set_show_hidden(XEN_TO_C_GtkFileChooser_(chooser), XEN_TO_C_gboolean(show_hidden));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_file_chooser_get_show_hidden(XEN chooser)
+{
+  #define H_gtk_file_chooser_get_show_hidden "gboolean gtk_file_chooser_get_show_hidden(GtkFileChooser* chooser)"
+  XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_get_show_hidden", "GtkFileChooser*");
+  return(C_TO_XEN_gboolean(gtk_file_chooser_get_show_hidden(XEN_TO_C_GtkFileChooser_(chooser))));
+}
+static XEN gxg_gtk_tree_view_set_hover_expand(XEN tree_view, XEN expand)
+{
+  #define H_gtk_tree_view_set_hover_expand "void gtk_tree_view_set_hover_expand(GtkTreeView* tree_view, \
+gboolean expand)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_set_hover_expand", "GtkTreeView*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(expand), expand, 2, "gtk_tree_view_set_hover_expand", "gboolean");
+  gtk_tree_view_set_hover_expand(XEN_TO_C_GtkTreeView_(tree_view), XEN_TO_C_gboolean(expand));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_tree_view_get_hover_expand(XEN tree_view)
+{
+  #define H_gtk_tree_view_get_hover_expand "gboolean gtk_tree_view_get_hover_expand(GtkTreeView* tree_view)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_get_hover_expand", "GtkTreeView*");
+  return(C_TO_XEN_gboolean(gtk_tree_view_get_hover_expand(XEN_TO_C_GtkTreeView_(tree_view))));
+}
+#endif
+
 static XEN gxg_GDK_COLORMAP(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkColormap_"), XEN_CADR(obj)));}
 static XEN gxg_GDK_DRAG_CONTEXT(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkDragContext_"), XEN_CADR(obj)));}
 static XEN gxg_GDK_DRAWABLE(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkDrawable_"), XEN_CADR(obj)));}
@@ -23939,6 +24010,7 @@ static XEN gxg_GTK_VSEPARATOR(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL
 static XEN gxg_GTK_WIDGET(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkWidget_"), XEN_CADR(obj)));}
 static XEN gxg_GTK_WINDOW(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkWindow_"), XEN_CADR(obj)));}
 static XEN gxg_PANGO_CONTEXT(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("PangoContext_"), XEN_CADR(obj)));}
+static XEN gxg_PANGO_FONT_FAMILY(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("PangoFontFamily_"), XEN_CADR(obj)));}
 static XEN gxg_PANGO_FONT_FACE(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("PangoFontFace_"), XEN_CADR(obj)));}
 static XEN gxg_PANGO_FONT(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("PangoFont_"), XEN_CADR(obj)));}
 static XEN gxg_PANGO_FONT_MAP(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("PangoFontMap_"), XEN_CADR(obj)));}
@@ -23962,10 +24034,6 @@ static XEN gxg_GDK_EVENT_PROXIMITY(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_S
 static XEN gxg_GDK_EVENT_SETTING(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkEventSetting_"), XEN_CADR(obj)));}
 static XEN gxg_GDK_EVENT_WINDOWSTATE(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkEventWindowState_"), XEN_CADR(obj)));}
 static XEN gxg_GDK_EVENT_DND(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkEventDND_"), XEN_CADR(obj)));}
-#if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
-static XEN gxg_PANGO_FONT_FAMILY(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("PangoFontFamily_"), XEN_CADR(obj)));}
-#endif
-
 #if HAVE_GDK_DRAW_PIXBUF
 static XEN gxg_GDK_SCREEN(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkScreen_"), XEN_CADR(obj)));}
 static XEN gxg_GDK_DISPLAY_OBJECT(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkDisplay_"), XEN_CADR(obj)));}
@@ -24008,6 +24076,10 @@ static XEN gxg_GTK_ABOUT_DIALOG(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMB
 static XEN gxg_GTK_CELL_RENDERER_COMBO(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkCellRendererCombo_"), XEN_CADR(obj)));}
 static XEN gxg_GTK_CELL_RENDERER_PROGRESS(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkCellRendererProgress_"), XEN_CADR(obj)));}
 static XEN gxg_GTK_ICON_VIEW(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkIconView_"), XEN_CADR(obj)));}
+#endif
+
+#if HAVE_GTK_FILE_CHOOSER_BUTTON_NEW
+static XEN gxg_GTK_FILE_CHOOSER_BUTTON(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkFileChooserButton"), XEN_CADR(obj)));}
 #endif
 
 static XEN gxg_GDK_IS_COLORMAP(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && GDK_IS_COLORMAP((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
@@ -24135,15 +24207,12 @@ static XEN gxg_GTK_IS_VSEPARATOR(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(ob
 static XEN gxg_GTK_IS_WIDGET(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && GTK_IS_WIDGET((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_WINDOW(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && GTK_IS_WINDOW((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_PANGO_IS_CONTEXT(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && PANGO_IS_CONTEXT((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
+static XEN gxg_PANGO_IS_FONT_FAMILY(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && PANGO_IS_FONT_FAMILY((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_PANGO_IS_FONT_FACE(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && PANGO_IS_FONT_FACE((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_PANGO_IS_FONT(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && PANGO_IS_FONT((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_PANGO_IS_FONT_MAP(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && PANGO_IS_FONT_MAP((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_PANGO_IS_LAYOUT(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && PANGO_IS_LAYOUT((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_G_IS_OBJECT(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && G_IS_OBJECT((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
-#if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
-static XEN gxg_PANGO_IS_FONT_FAMILY(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && PANGO_IS_FONT_FAMILY((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
-#endif
-
 #if HAVE_GDK_DRAW_PIXBUF
 static XEN gxg_GDK_IS_SCREEN(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && GDK_IS_SCREEN((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_GDK_IS_DISPLAY(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && GDK_IS_DISPLAY((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
@@ -24186,6 +24255,10 @@ static XEN gxg_GTK_IS_ABOUT_DIALOG(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(
 static XEN gxg_GTK_IS_CELL_RENDERER_COMBO(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && GTK_IS_CELL_RENDERER_COMBO((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_CELL_RENDERER_PROGRESS(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && GTK_IS_CELL_RENDERER_PROGRESS((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_ICON_VIEW(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && GTK_IS_ICON_VIEW((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
+#endif
+
+#if HAVE_GTK_FILE_CHOOSER_BUTTON_NEW
+static XEN gxg_GTK_IS_FILE_CHOOSER_BUTTON(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && GTK_IS_FILE_CHOOSER_BUTTON((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
 #endif
 
 
@@ -26307,13 +26380,15 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_font_metrics_get_descent, gxg_pango_font_metrics_get_descent, 1, 0, 0, H_pango_font_metrics_get_descent);
   XG_DEFINE_PROCEDURE(pango_font_metrics_get_approximate_char_width, gxg_pango_font_metrics_get_approximate_char_width, 1, 0, 0, H_pango_font_metrics_get_approximate_char_width);
   XG_DEFINE_PROCEDURE(pango_font_metrics_get_approximate_digit_width, gxg_pango_font_metrics_get_approximate_digit_width, 1, 0, 0, H_pango_font_metrics_get_approximate_digit_width);
+  XG_DEFINE_PROCEDURE(pango_font_family_get_type, gxg_pango_font_family_get_type, 0, 0, 0, H_pango_font_family_get_type);
+  XG_DEFINE_PROCEDURE(pango_font_family_list_faces, gxg_pango_font_family_list_faces, 1, 2, 0, H_pango_font_family_list_faces);
+  XG_DEFINE_PROCEDURE(pango_font_family_get_name, gxg_pango_font_family_get_name, 1, 0, 0, H_pango_font_family_get_name);
   XG_DEFINE_PROCEDURE(pango_font_face_get_type, gxg_pango_font_face_get_type, 0, 0, 0, H_pango_font_face_get_type);
   XG_DEFINE_PROCEDURE(pango_font_face_describe, gxg_pango_font_face_describe, 1, 0, 0, H_pango_font_face_describe);
   XG_DEFINE_PROCEDURE(pango_font_face_get_face_name, gxg_pango_font_face_get_face_name, 1, 0, 0, H_pango_font_face_get_face_name);
   XG_DEFINE_PROCEDURE(pango_font_get_type, gxg_pango_font_get_type, 0, 0, 0, H_pango_font_get_type);
   XG_DEFINE_PROCEDURE(pango_font_describe, gxg_pango_font_describe, 1, 0, 0, H_pango_font_describe);
   XG_DEFINE_PROCEDURE(pango_font_get_coverage, gxg_pango_font_get_coverage, 2, 0, 0, H_pango_font_get_coverage);
-  XG_DEFINE_PROCEDURE(pango_font_find_shaper, gxg_pango_font_find_shaper, 3, 0, 0, H_pango_font_find_shaper);
   XG_DEFINE_PROCEDURE(pango_font_get_metrics, gxg_pango_font_get_metrics, 2, 0, 0, H_pango_font_get_metrics);
   XG_DEFINE_PROCEDURE(pango_font_get_glyph_extents, gxg_pango_font_get_glyph_extents, 4, 0, 0, H_pango_font_get_glyph_extents);
   XG_DEFINE_PROCEDURE(pango_font_map_get_type, gxg_pango_font_map_get_type, 0, 0, 0, H_pango_font_map_get_type);
@@ -26417,19 +26492,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(g_list_nth_data, gxg_g_list_nth_data, 2, 0, 0, H_g_list_nth_data);
   XG_DEFINE_PROCEDURE(g_quark_from_string, gxg_g_quark_from_string, 1, 0, 0, H_g_quark_from_string);
   XG_DEFINE_PROCEDURE(g_quark_to_string, gxg_g_quark_to_string, 1, 0, 0, H_g_quark_to_string);
-#if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
-  XG_DEFINE_PROCEDURE(pango_default_break, gxg_pango_default_break, 5, 0, 0, H_pango_default_break);
-  XG_DEFINE_PROCEDURE(pango_context_new, gxg_pango_context_new, 0, 0, 0, H_pango_context_new);
-  XG_DEFINE_PROCEDURE(script_engine_list, gxg_script_engine_list, 0, 2, 0, H_script_engine_list);
-  XG_DEFINE_PROCEDURE(script_engine_load, gxg_script_engine_load, 1, 0, 0, H_script_engine_load);
-  XG_DEFINE_PROCEDURE(script_engine_unload, gxg_script_engine_unload, 1, 0, 0, H_script_engine_unload);
-  XG_DEFINE_PROCEDURE(pango_font_metrics_new, gxg_pango_font_metrics_new, 0, 0, 0, H_pango_font_metrics_new);
-  XG_DEFINE_PROCEDURE(pango_font_family_get_type, gxg_pango_font_family_get_type, 0, 0, 0, H_pango_font_family_get_type);
-  XG_DEFINE_PROCEDURE(pango_font_family_list_faces, gxg_pango_font_family_list_faces, 1, 2, 0, H_pango_font_family_list_faces);
-  XG_DEFINE_PROCEDURE(pango_font_family_get_name, gxg_pango_font_family_get_name, 1, 0, 0, H_pango_font_family_get_name);
-  XG_DEFINE_PROCEDURE(pango_context_set_font_map, gxg_pango_context_set_font_map, 2, 0, 0, H_pango_context_set_font_map);
-#endif
-
 #if HAVE_GDK_DRAW_PIXBUF
   XG_DEFINE_PROCEDURE(gdk_draw_pixbuf, gxg_gdk_draw_pixbuf, 0, 0, 1, H_gdk_draw_pixbuf);
   XG_DEFINE_PROCEDURE(gtk_tree_model_get_string_from_iter, gxg_gtk_tree_model_get_string_from_iter, 2, 0, 0, H_gtk_tree_model_get_string_from_iter);
@@ -26932,7 +26994,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_window_set_focus_on_map, gxg_gdk_window_set_focus_on_map, 2, 0, 0, H_gdk_window_set_focus_on_map);
   XG_DEFINE_PROCEDURE(gdk_window_enable_synchronized_configure, gxg_gdk_window_enable_synchronized_configure, 1, 0, 0, H_gdk_window_enable_synchronized_configure);
   XG_DEFINE_PROCEDURE(gdk_window_configure_finished, gxg_gdk_window_configure_finished, 1, 0, 0, H_gdk_window_configure_finished);
-  XG_DEFINE_PROCEDURE(gtk_action_group_translate_string, gxg_gtk_action_group_translate_string, 2, 0, 0, H_gtk_action_group_translate_string);
   XG_DEFINE_PROCEDURE(gtk_combo_box_get_wrap_width, gxg_gtk_combo_box_get_wrap_width, 1, 0, 0, H_gtk_combo_box_get_wrap_width);
   XG_DEFINE_PROCEDURE(gtk_combo_box_get_row_span_column, gxg_gtk_combo_box_get_row_span_column, 1, 0, 0, H_gtk_combo_box_get_row_span_column);
   XG_DEFINE_PROCEDURE(gtk_combo_box_get_column_span_column, gxg_gtk_combo_box_get_column_span_column, 1, 0, 0, H_gtk_combo_box_get_column_span_column);
@@ -27037,6 +27098,29 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_script_iter_get_range, gxg_pango_script_iter_get_range, 1, 3, 0, H_pango_script_iter_get_range);
   XG_DEFINE_PROCEDURE(pango_script_iter_next, gxg_pango_script_iter_next, 1, 0, 0, H_pango_script_iter_next);
   XG_DEFINE_PROCEDURE(pango_script_iter_free, gxg_pango_script_iter_free, 1, 0, 0, H_pango_script_iter_free);
+#endif
+
+#if HAVE_GTK_FILE_CHOOSER_BUTTON_NEW
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_button_get_type, gxg_gtk_file_chooser_button_get_type, 0, 0, 0, H_gtk_file_chooser_button_get_type);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_button_new, gxg_gtk_file_chooser_button_new, 1, 0, 0, H_gtk_file_chooser_button_new);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_button_new_with_backend, gxg_gtk_file_chooser_button_new_with_backend, 2, 0, 0, H_gtk_file_chooser_button_new_with_backend);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_button_new_with_dialog, gxg_gtk_file_chooser_button_new_with_dialog, 1, 0, 0, H_gtk_file_chooser_button_new_with_dialog);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_button_get_title, gxg_gtk_file_chooser_button_get_title, 1, 0, 0, H_gtk_file_chooser_button_get_title);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_button_set_title, gxg_gtk_file_chooser_button_set_title, 2, 0, 0, H_gtk_file_chooser_button_set_title);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_button_get_active, gxg_gtk_file_chooser_button_get_active, 1, 0, 0, H_gtk_file_chooser_button_get_active);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_button_set_active, gxg_gtk_file_chooser_button_set_active, 2, 0, 0, H_gtk_file_chooser_button_set_active);
+  XG_DEFINE_PROCEDURE(gdk_drag_drop_succeeded, gxg_gdk_drag_drop_succeeded, 1, 0, 0, H_gdk_drag_drop_succeeded);
+  XG_DEFINE_PROCEDURE(gdk_rgb_colormap_ditherable, gxg_gdk_rgb_colormap_ditherable, 1, 0, 0, H_gdk_rgb_colormap_ditherable);
+  XG_DEFINE_PROCEDURE(gtk_action_set_sensitive, gxg_gtk_action_set_sensitive, 2, 0, 0, H_gtk_action_set_sensitive);
+  XG_DEFINE_PROCEDURE(gtk_action_set_visible, gxg_gtk_action_set_visible, 2, 0, 0, H_gtk_action_set_visible);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_get_focus_on_click, gxg_gtk_combo_box_get_focus_on_click, 1, 0, 0, H_gtk_combo_box_get_focus_on_click);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_set_focus_on_click, gxg_gtk_combo_box_set_focus_on_click, 2, 0, 0, H_gtk_combo_box_set_focus_on_click);
+  XG_DEFINE_PROCEDURE(gtk_entry_layout_index_to_text_index, gxg_gtk_entry_layout_index_to_text_index, 2, 0, 0, H_gtk_entry_layout_index_to_text_index);
+  XG_DEFINE_PROCEDURE(gtk_entry_text_index_to_layout_index, gxg_gtk_entry_text_index_to_layout_index, 2, 0, 0, H_gtk_entry_text_index_to_layout_index);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_show_hidden, gxg_gtk_file_chooser_set_show_hidden, 2, 0, 0, H_gtk_file_chooser_set_show_hidden);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_get_show_hidden, gxg_gtk_file_chooser_get_show_hidden, 1, 0, 0, H_gtk_file_chooser_get_show_hidden);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_hover_expand, gxg_gtk_tree_view_set_hover_expand, 2, 0, 0, H_gtk_tree_view_set_hover_expand);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_hover_expand, gxg_gtk_tree_view_get_hover_expand, 1, 0, 0, H_gtk_tree_view_get_hover_expand);
 #endif
 
   XG_DEFINE_PROCEDURE(GDK_COLORMAP, gxg_GDK_COLORMAP, 1, 0, 0, NULL);
@@ -27163,6 +27247,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_WIDGET, gxg_GTK_WIDGET, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_WINDOW, gxg_GTK_WINDOW, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(PANGO_CONTEXT, gxg_PANGO_CONTEXT, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(PANGO_FONT_FAMILY, gxg_PANGO_FONT_FAMILY, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(PANGO_FONT_FACE, gxg_PANGO_FONT_FACE, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(PANGO_FONT, gxg_PANGO_FONT, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(PANGO_FONT_MAP, gxg_PANGO_FONT_MAP, 1, 0, 0, NULL);
@@ -27186,10 +27271,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GDK_EVENT_SETTING, gxg_GDK_EVENT_SETTING, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_EVENT_WINDOWSTATE, gxg_GDK_EVENT_WINDOWSTATE, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_EVENT_DND, gxg_GDK_EVENT_DND, 1, 0, 0, NULL);
-#if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
-  XG_DEFINE_PROCEDURE(PANGO_FONT_FAMILY, gxg_PANGO_FONT_FAMILY, 1, 0, 0, NULL);
-#endif
-
 #if HAVE_GDK_DRAW_PIXBUF
   XG_DEFINE_PROCEDURE(GDK_SCREEN, gxg_GDK_SCREEN, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_DISPLAY_OBJECT, gxg_GDK_DISPLAY_OBJECT, 1, 0, 0, NULL);
@@ -27232,6 +27313,10 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_CELL_RENDERER_COMBO, gxg_GTK_CELL_RENDERER_COMBO, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_CELL_RENDERER_PROGRESS, gxg_GTK_CELL_RENDERER_PROGRESS, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_ICON_VIEW, gxg_GTK_ICON_VIEW, 1, 0, 0, NULL);
+#endif
+
+#if HAVE_GTK_FILE_CHOOSER_BUTTON_NEW
+  XG_DEFINE_PROCEDURE(GTK_FILE_CHOOSER_BUTTON, gxg_GTK_FILE_CHOOSER_BUTTON, 1, 0, 0, NULL);
 #endif
 
   XG_DEFINE_PROCEDURE(GDK_IS_COLORMAP, gxg_GDK_IS_COLORMAP, 1, 0, 0, NULL);
@@ -27359,15 +27444,12 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_WIDGET, gxg_GTK_IS_WIDGET, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_IS_WINDOW, gxg_GTK_IS_WINDOW, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(PANGO_IS_CONTEXT, gxg_PANGO_IS_CONTEXT, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(PANGO_IS_FONT_FAMILY, gxg_PANGO_IS_FONT_FAMILY, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(PANGO_IS_FONT_FACE, gxg_PANGO_IS_FONT_FACE, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(PANGO_IS_FONT, gxg_PANGO_IS_FONT, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(PANGO_IS_FONT_MAP, gxg_PANGO_IS_FONT_MAP, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(PANGO_IS_LAYOUT, gxg_PANGO_IS_LAYOUT, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(G_IS_OBJECT, gxg_G_IS_OBJECT, 1, 0, 0, NULL);
-#if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
-  XG_DEFINE_PROCEDURE(PANGO_IS_FONT_FAMILY, gxg_PANGO_IS_FONT_FAMILY, 1, 0, 0, NULL);
-#endif
-
 #if HAVE_GDK_DRAW_PIXBUF
   XG_DEFINE_PROCEDURE(GDK_IS_SCREEN, gxg_GDK_IS_SCREEN, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_IS_DISPLAY, gxg_GDK_IS_DISPLAY, 1, 0, 0, NULL);
@@ -27410,6 +27492,10 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_CELL_RENDERER_COMBO, gxg_GTK_IS_CELL_RENDERER_COMBO, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_IS_CELL_RENDERER_PROGRESS, gxg_GTK_IS_CELL_RENDERER_PROGRESS, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_IS_ICON_VIEW, gxg_GTK_IS_ICON_VIEW, 1, 0, 0, NULL);
+#endif
+
+#if HAVE_GTK_FILE_CHOOSER_BUTTON_NEW
+  XG_DEFINE_PROCEDURE(GTK_IS_FILE_CHOOSER_BUTTON, gxg_GTK_IS_FILE_CHOOSER_BUTTON, 1, 0, 0, NULL);
 #endif
 
 }
@@ -27552,11 +27638,23 @@ static XEN c_array_to_xen_list(XEN val_1, XEN clen)
       if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkGC_(arr[i]), result);
     }
+  if (strcmp(ctype, "PangoFontFace__") == 0)
+    {
+      PangoFontFace** arr; arr = (PangoFontFace**)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_PangoFontFace_(arr[i]), result);
+    }
   if (strcmp(ctype, "PangoFontDescription__") == 0)
     {
       PangoFontDescription** arr; arr = (PangoFontDescription**)XEN_TO_C_ULONG(XEN_CADR(val)); 
       if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_PangoFontDescription_(arr[i]), result);
+    }
+  if (strcmp(ctype, "PangoFontFamily__") == 0)
+    {
+      PangoFontFamily** arr; arr = (PangoFontFamily**)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_PangoFontFamily_(arr[i]), result);
     }
   if (strcmp(ctype, "PangoAttrList__") == 0)
     {
@@ -27706,11 +27804,23 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GdkGC_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkGC__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
+  if (strcmp(ctype, "PangoFontFace**") == 0)
+    {
+      PangoFontFace** arr; arr = (PangoFontFace**)CALLOC(len + 1, sizeof(PangoFontFace*));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_PangoFontFace_(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoFontFace__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
   if (strcmp(ctype, "PangoFontDescription**") == 0)
     {
       PangoFontDescription** arr; arr = (PangoFontDescription**)CALLOC(len + 1, sizeof(PangoFontDescription*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_PangoFontDescription_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoFontDescription__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "PangoFontFamily**") == 0)
+    {
+      PangoFontFamily** arr; arr = (PangoFontFamily**)CALLOC(len + 1, sizeof(PangoFontFamily*));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_PangoFontFamily_(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoFontFamily__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "PangoAttrList**") == 0)
     {
@@ -30778,6 +30888,10 @@ static void define_integers(void)
   DEFINE_ULONG(GTK_TYPE_ICON_VIEW);
 #endif
 
+#if HAVE_GTK_FILE_CHOOSER_BUTTON_NEW
+  DEFINE_ULONG(GTK_TYPE_FILE_CHOOSER_BUTTON);
+#endif
+
 }
 
 static void define_doubles(void)
@@ -30920,12 +31034,6 @@ static void define_strings(void)
   DEFINE_STRING(GTK_STOCK_ZOOM_FIT);
   DEFINE_STRING(GTK_STOCK_ZOOM_IN);
   DEFINE_STRING(GTK_STOCK_ZOOM_OUT);
-#if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
-  DEFINE_STRING(PANGO_ENGINE_TYPE_LANG);
-  DEFINE_STRING(PANGO_ENGINE_TYPE_SHAPE);
-  DEFINE_STRING(PANGO_RENDER_TYPE_NONE);
-#endif
-
 #if HAVE_GTK_MENU_SHELL_CANCEL
   DEFINE_STRING(GTK_STOCK_COLOR_PICKER);
   DEFINE_STRING(GTK_STOCK_HARDDISK);
@@ -30987,10 +31095,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"23-Aug-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"26-Aug-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("23-Aug-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("26-Aug-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

@@ -2047,13 +2047,15 @@ XEN_NARGIFY_1(gxg_pango_font_metrics_get_ascent_w, gxg_pango_font_metrics_get_as
 XEN_NARGIFY_1(gxg_pango_font_metrics_get_descent_w, gxg_pango_font_metrics_get_descent)
 XEN_NARGIFY_1(gxg_pango_font_metrics_get_approximate_char_width_w, gxg_pango_font_metrics_get_approximate_char_width)
 XEN_NARGIFY_1(gxg_pango_font_metrics_get_approximate_digit_width_w, gxg_pango_font_metrics_get_approximate_digit_width)
+XEN_NARGIFY_0(gxg_pango_font_family_get_type_w, gxg_pango_font_family_get_type)
+XEN_ARGIFY_3(gxg_pango_font_family_list_faces_w, gxg_pango_font_family_list_faces)
+XEN_NARGIFY_1(gxg_pango_font_family_get_name_w, gxg_pango_font_family_get_name)
 XEN_NARGIFY_0(gxg_pango_font_face_get_type_w, gxg_pango_font_face_get_type)
 XEN_NARGIFY_1(gxg_pango_font_face_describe_w, gxg_pango_font_face_describe)
 XEN_NARGIFY_1(gxg_pango_font_face_get_face_name_w, gxg_pango_font_face_get_face_name)
 XEN_NARGIFY_0(gxg_pango_font_get_type_w, gxg_pango_font_get_type)
 XEN_NARGIFY_1(gxg_pango_font_describe_w, gxg_pango_font_describe)
 XEN_NARGIFY_2(gxg_pango_font_get_coverage_w, gxg_pango_font_get_coverage)
-XEN_NARGIFY_3(gxg_pango_font_find_shaper_w, gxg_pango_font_find_shaper)
 XEN_NARGIFY_2(gxg_pango_font_get_metrics_w, gxg_pango_font_get_metrics)
 XEN_NARGIFY_4(gxg_pango_font_get_glyph_extents_w, gxg_pango_font_get_glyph_extents)
 XEN_NARGIFY_0(gxg_pango_font_map_get_type_w, gxg_pango_font_map_get_type)
@@ -2157,19 +2159,6 @@ XEN_NARGIFY_3(gxg_g_object_set_data_w, gxg_g_object_set_data)
 XEN_NARGIFY_2(gxg_g_list_nth_data_w, gxg_g_list_nth_data)
 XEN_NARGIFY_1(gxg_g_quark_from_string_w, gxg_g_quark_from_string)
 XEN_NARGIFY_1(gxg_g_quark_to_string_w, gxg_g_quark_to_string)
-#if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
-XEN_NARGIFY_5(gxg_pango_default_break_w, gxg_pango_default_break)
-XEN_NARGIFY_0(gxg_pango_context_new_w, gxg_pango_context_new)
-XEN_ARGIFY_2(gxg_script_engine_list_w, gxg_script_engine_list)
-XEN_NARGIFY_1(gxg_script_engine_load_w, gxg_script_engine_load)
-XEN_NARGIFY_1(gxg_script_engine_unload_w, gxg_script_engine_unload)
-XEN_NARGIFY_0(gxg_pango_font_metrics_new_w, gxg_pango_font_metrics_new)
-XEN_NARGIFY_0(gxg_pango_font_family_get_type_w, gxg_pango_font_family_get_type)
-XEN_ARGIFY_3(gxg_pango_font_family_list_faces_w, gxg_pango_font_family_list_faces)
-XEN_NARGIFY_1(gxg_pango_font_family_get_name_w, gxg_pango_font_family_get_name)
-XEN_NARGIFY_2(gxg_pango_context_set_font_map_w, gxg_pango_context_set_font_map)
-#endif
-
 #if HAVE_GDK_DRAW_PIXBUF
 XEN_VARGIFY(gxg_gdk_draw_pixbuf_w, gxg_gdk_draw_pixbuf)
 XEN_NARGIFY_2(gxg_gtk_tree_model_get_string_from_iter_w, gxg_gtk_tree_model_get_string_from_iter)
@@ -2672,7 +2661,6 @@ XEN_NARGIFY_1(gxg_gtk_cell_view_get_cell_renderers_w, gxg_gtk_cell_view_get_cell
 XEN_NARGIFY_2(gxg_gdk_window_set_focus_on_map_w, gxg_gdk_window_set_focus_on_map)
 XEN_NARGIFY_1(gxg_gdk_window_enable_synchronized_configure_w, gxg_gdk_window_enable_synchronized_configure)
 XEN_NARGIFY_1(gxg_gdk_window_configure_finished_w, gxg_gdk_window_configure_finished)
-XEN_NARGIFY_2(gxg_gtk_action_group_translate_string_w, gxg_gtk_action_group_translate_string)
 XEN_NARGIFY_1(gxg_gtk_combo_box_get_wrap_width_w, gxg_gtk_combo_box_get_wrap_width)
 XEN_NARGIFY_1(gxg_gtk_combo_box_get_row_span_column_w, gxg_gtk_combo_box_get_row_span_column)
 XEN_NARGIFY_1(gxg_gtk_combo_box_get_column_span_column_w, gxg_gtk_combo_box_get_column_span_column)
@@ -2777,6 +2765,29 @@ XEN_NARGIFY_2(gxg_pango_script_iter_new_w, gxg_pango_script_iter_new)
 XEN_ARGIFY_4(gxg_pango_script_iter_get_range_w, gxg_pango_script_iter_get_range)
 XEN_NARGIFY_1(gxg_pango_script_iter_next_w, gxg_pango_script_iter_next)
 XEN_NARGIFY_1(gxg_pango_script_iter_free_w, gxg_pango_script_iter_free)
+#endif
+
+#if HAVE_GTK_FILE_CHOOSER_BUTTON_NEW
+XEN_NARGIFY_0(gxg_gtk_file_chooser_button_get_type_w, gxg_gtk_file_chooser_button_get_type)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_button_new_w, gxg_gtk_file_chooser_button_new)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_button_new_with_backend_w, gxg_gtk_file_chooser_button_new_with_backend)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_button_new_with_dialog_w, gxg_gtk_file_chooser_button_new_with_dialog)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_button_get_title_w, gxg_gtk_file_chooser_button_get_title)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_button_set_title_w, gxg_gtk_file_chooser_button_set_title)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_button_get_active_w, gxg_gtk_file_chooser_button_get_active)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_button_set_active_w, gxg_gtk_file_chooser_button_set_active)
+XEN_NARGIFY_1(gxg_gdk_drag_drop_succeeded_w, gxg_gdk_drag_drop_succeeded)
+XEN_NARGIFY_1(gxg_gdk_rgb_colormap_ditherable_w, gxg_gdk_rgb_colormap_ditherable)
+XEN_NARGIFY_2(gxg_gtk_action_set_sensitive_w, gxg_gtk_action_set_sensitive)
+XEN_NARGIFY_2(gxg_gtk_action_set_visible_w, gxg_gtk_action_set_visible)
+XEN_NARGIFY_1(gxg_gtk_combo_box_get_focus_on_click_w, gxg_gtk_combo_box_get_focus_on_click)
+XEN_NARGIFY_2(gxg_gtk_combo_box_set_focus_on_click_w, gxg_gtk_combo_box_set_focus_on_click)
+XEN_NARGIFY_2(gxg_gtk_entry_layout_index_to_text_index_w, gxg_gtk_entry_layout_index_to_text_index)
+XEN_NARGIFY_2(gxg_gtk_entry_text_index_to_layout_index_w, gxg_gtk_entry_text_index_to_layout_index)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_set_show_hidden_w, gxg_gtk_file_chooser_set_show_hidden)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_get_show_hidden_w, gxg_gtk_file_chooser_get_show_hidden)
+XEN_NARGIFY_2(gxg_gtk_tree_view_set_hover_expand_w, gxg_gtk_tree_view_set_hover_expand)
+XEN_NARGIFY_1(gxg_gtk_tree_view_get_hover_expand_w, gxg_gtk_tree_view_get_hover_expand)
 #endif
 
 XEN_NARGIFY_1(gxg_GDK_COLORMAP_w, gxg_GDK_COLORMAP)
@@ -2903,6 +2914,7 @@ XEN_NARGIFY_1(gxg_GTK_VSEPARATOR_w, gxg_GTK_VSEPARATOR)
 XEN_NARGIFY_1(gxg_GTK_WIDGET_w, gxg_GTK_WIDGET)
 XEN_NARGIFY_1(gxg_GTK_WINDOW_w, gxg_GTK_WINDOW)
 XEN_NARGIFY_1(gxg_PANGO_CONTEXT_w, gxg_PANGO_CONTEXT)
+XEN_NARGIFY_1(gxg_PANGO_FONT_FAMILY_w, gxg_PANGO_FONT_FAMILY)
 XEN_NARGIFY_1(gxg_PANGO_FONT_FACE_w, gxg_PANGO_FONT_FACE)
 XEN_NARGIFY_1(gxg_PANGO_FONT_w, gxg_PANGO_FONT)
 XEN_NARGIFY_1(gxg_PANGO_FONT_MAP_w, gxg_PANGO_FONT_MAP)
@@ -2926,10 +2938,6 @@ XEN_NARGIFY_1(gxg_GDK_EVENT_PROXIMITY_w, gxg_GDK_EVENT_PROXIMITY)
 XEN_NARGIFY_1(gxg_GDK_EVENT_SETTING_w, gxg_GDK_EVENT_SETTING)
 XEN_NARGIFY_1(gxg_GDK_EVENT_WINDOWSTATE_w, gxg_GDK_EVENT_WINDOWSTATE)
 XEN_NARGIFY_1(gxg_GDK_EVENT_DND_w, gxg_GDK_EVENT_DND)
-#if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
-XEN_NARGIFY_1(gxg_PANGO_FONT_FAMILY_w, gxg_PANGO_FONT_FAMILY)
-#endif
-
 #if HAVE_GDK_DRAW_PIXBUF
 XEN_NARGIFY_1(gxg_GDK_SCREEN_w, gxg_GDK_SCREEN)
 XEN_NARGIFY_1(gxg_GDK_DISPLAY_OBJECT_w, gxg_GDK_DISPLAY_OBJECT)
@@ -2972,6 +2980,10 @@ XEN_NARGIFY_1(gxg_GTK_ABOUT_DIALOG_w, gxg_GTK_ABOUT_DIALOG)
 XEN_NARGIFY_1(gxg_GTK_CELL_RENDERER_COMBO_w, gxg_GTK_CELL_RENDERER_COMBO)
 XEN_NARGIFY_1(gxg_GTK_CELL_RENDERER_PROGRESS_w, gxg_GTK_CELL_RENDERER_PROGRESS)
 XEN_NARGIFY_1(gxg_GTK_ICON_VIEW_w, gxg_GTK_ICON_VIEW)
+#endif
+
+#if HAVE_GTK_FILE_CHOOSER_BUTTON_NEW
+XEN_NARGIFY_1(gxg_GTK_FILE_CHOOSER_BUTTON_w, gxg_GTK_FILE_CHOOSER_BUTTON)
 #endif
 
 XEN_NARGIFY_1(gxg_GDK_IS_COLORMAP_w, gxg_GDK_IS_COLORMAP)
@@ -3099,15 +3111,12 @@ XEN_NARGIFY_1(gxg_GTK_IS_VSEPARATOR_w, gxg_GTK_IS_VSEPARATOR)
 XEN_NARGIFY_1(gxg_GTK_IS_WIDGET_w, gxg_GTK_IS_WIDGET)
 XEN_NARGIFY_1(gxg_GTK_IS_WINDOW_w, gxg_GTK_IS_WINDOW)
 XEN_NARGIFY_1(gxg_PANGO_IS_CONTEXT_w, gxg_PANGO_IS_CONTEXT)
+XEN_NARGIFY_1(gxg_PANGO_IS_FONT_FAMILY_w, gxg_PANGO_IS_FONT_FAMILY)
 XEN_NARGIFY_1(gxg_PANGO_IS_FONT_FACE_w, gxg_PANGO_IS_FONT_FACE)
 XEN_NARGIFY_1(gxg_PANGO_IS_FONT_w, gxg_PANGO_IS_FONT)
 XEN_NARGIFY_1(gxg_PANGO_IS_FONT_MAP_w, gxg_PANGO_IS_FONT_MAP)
 XEN_NARGIFY_1(gxg_PANGO_IS_LAYOUT_w, gxg_PANGO_IS_LAYOUT)
 XEN_NARGIFY_1(gxg_G_IS_OBJECT_w, gxg_G_IS_OBJECT)
-#if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
-XEN_NARGIFY_1(gxg_PANGO_IS_FONT_FAMILY_w, gxg_PANGO_IS_FONT_FAMILY)
-#endif
-
 #if HAVE_GDK_DRAW_PIXBUF
 XEN_NARGIFY_1(gxg_GDK_IS_SCREEN_w, gxg_GDK_IS_SCREEN)
 XEN_NARGIFY_1(gxg_GDK_IS_DISPLAY_w, gxg_GDK_IS_DISPLAY)
@@ -3150,6 +3159,10 @@ XEN_NARGIFY_1(gxg_GTK_IS_ABOUT_DIALOG_w, gxg_GTK_IS_ABOUT_DIALOG)
 XEN_NARGIFY_1(gxg_GTK_IS_CELL_RENDERER_COMBO_w, gxg_GTK_IS_CELL_RENDERER_COMBO)
 XEN_NARGIFY_1(gxg_GTK_IS_CELL_RENDERER_PROGRESS_w, gxg_GTK_IS_CELL_RENDERER_PROGRESS)
 XEN_NARGIFY_1(gxg_GTK_IS_ICON_VIEW_w, gxg_GTK_IS_ICON_VIEW)
+#endif
+
+#if HAVE_GTK_FILE_CHOOSER_BUTTON_NEW
+XEN_NARGIFY_1(gxg_GTK_IS_FILE_CHOOSER_BUTTON_w, gxg_GTK_IS_FILE_CHOOSER_BUTTON)
 #endif
 
 XEN_NARGIFY_2(c_array_to_xen_list_w, c_array_to_xen_list)
@@ -5454,13 +5467,15 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_font_metrics_get_descent, gxg_pango_font_metrics_get_descent_w, 1, 0, 0, H_pango_font_metrics_get_descent);
   XG_DEFINE_PROCEDURE(pango_font_metrics_get_approximate_char_width, gxg_pango_font_metrics_get_approximate_char_width_w, 1, 0, 0, H_pango_font_metrics_get_approximate_char_width);
   XG_DEFINE_PROCEDURE(pango_font_metrics_get_approximate_digit_width, gxg_pango_font_metrics_get_approximate_digit_width_w, 1, 0, 0, H_pango_font_metrics_get_approximate_digit_width);
+  XG_DEFINE_PROCEDURE(pango_font_family_get_type, gxg_pango_font_family_get_type_w, 0, 0, 0, H_pango_font_family_get_type);
+  XG_DEFINE_PROCEDURE(pango_font_family_list_faces, gxg_pango_font_family_list_faces_w, 1, 2, 0, H_pango_font_family_list_faces);
+  XG_DEFINE_PROCEDURE(pango_font_family_get_name, gxg_pango_font_family_get_name_w, 1, 0, 0, H_pango_font_family_get_name);
   XG_DEFINE_PROCEDURE(pango_font_face_get_type, gxg_pango_font_face_get_type_w, 0, 0, 0, H_pango_font_face_get_type);
   XG_DEFINE_PROCEDURE(pango_font_face_describe, gxg_pango_font_face_describe_w, 1, 0, 0, H_pango_font_face_describe);
   XG_DEFINE_PROCEDURE(pango_font_face_get_face_name, gxg_pango_font_face_get_face_name_w, 1, 0, 0, H_pango_font_face_get_face_name);
   XG_DEFINE_PROCEDURE(pango_font_get_type, gxg_pango_font_get_type_w, 0, 0, 0, H_pango_font_get_type);
   XG_DEFINE_PROCEDURE(pango_font_describe, gxg_pango_font_describe_w, 1, 0, 0, H_pango_font_describe);
   XG_DEFINE_PROCEDURE(pango_font_get_coverage, gxg_pango_font_get_coverage_w, 2, 0, 0, H_pango_font_get_coverage);
-  XG_DEFINE_PROCEDURE(pango_font_find_shaper, gxg_pango_font_find_shaper_w, 3, 0, 0, H_pango_font_find_shaper);
   XG_DEFINE_PROCEDURE(pango_font_get_metrics, gxg_pango_font_get_metrics_w, 2, 0, 0, H_pango_font_get_metrics);
   XG_DEFINE_PROCEDURE(pango_font_get_glyph_extents, gxg_pango_font_get_glyph_extents_w, 4, 0, 0, H_pango_font_get_glyph_extents);
   XG_DEFINE_PROCEDURE(pango_font_map_get_type, gxg_pango_font_map_get_type_w, 0, 0, 0, H_pango_font_map_get_type);
@@ -5564,19 +5579,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(g_list_nth_data, gxg_g_list_nth_data_w, 2, 0, 0, H_g_list_nth_data);
   XG_DEFINE_PROCEDURE(g_quark_from_string, gxg_g_quark_from_string_w, 1, 0, 0, H_g_quark_from_string);
   XG_DEFINE_PROCEDURE(g_quark_to_string, gxg_g_quark_to_string_w, 1, 0, 0, H_g_quark_to_string);
-#if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
-  XG_DEFINE_PROCEDURE(pango_default_break, gxg_pango_default_break_w, 5, 0, 0, H_pango_default_break);
-  XG_DEFINE_PROCEDURE(pango_context_new, gxg_pango_context_new_w, 0, 0, 0, H_pango_context_new);
-  XG_DEFINE_PROCEDURE(script_engine_list, gxg_script_engine_list_w, 0, 2, 0, H_script_engine_list);
-  XG_DEFINE_PROCEDURE(script_engine_load, gxg_script_engine_load_w, 1, 0, 0, H_script_engine_load);
-  XG_DEFINE_PROCEDURE(script_engine_unload, gxg_script_engine_unload_w, 1, 0, 0, H_script_engine_unload);
-  XG_DEFINE_PROCEDURE(pango_font_metrics_new, gxg_pango_font_metrics_new_w, 0, 0, 0, H_pango_font_metrics_new);
-  XG_DEFINE_PROCEDURE(pango_font_family_get_type, gxg_pango_font_family_get_type_w, 0, 0, 0, H_pango_font_family_get_type);
-  XG_DEFINE_PROCEDURE(pango_font_family_list_faces, gxg_pango_font_family_list_faces_w, 1, 2, 0, H_pango_font_family_list_faces);
-  XG_DEFINE_PROCEDURE(pango_font_family_get_name, gxg_pango_font_family_get_name_w, 1, 0, 0, H_pango_font_family_get_name);
-  XG_DEFINE_PROCEDURE(pango_context_set_font_map, gxg_pango_context_set_font_map_w, 2, 0, 0, H_pango_context_set_font_map);
-#endif
-
 #if HAVE_GDK_DRAW_PIXBUF
   XG_DEFINE_PROCEDURE(gdk_draw_pixbuf, gxg_gdk_draw_pixbuf_w, 0, 0, 1, H_gdk_draw_pixbuf);
   XG_DEFINE_PROCEDURE(gtk_tree_model_get_string_from_iter, gxg_gtk_tree_model_get_string_from_iter_w, 2, 0, 0, H_gtk_tree_model_get_string_from_iter);
@@ -6079,7 +6081,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_window_set_focus_on_map, gxg_gdk_window_set_focus_on_map_w, 2, 0, 0, H_gdk_window_set_focus_on_map);
   XG_DEFINE_PROCEDURE(gdk_window_enable_synchronized_configure, gxg_gdk_window_enable_synchronized_configure_w, 1, 0, 0, H_gdk_window_enable_synchronized_configure);
   XG_DEFINE_PROCEDURE(gdk_window_configure_finished, gxg_gdk_window_configure_finished_w, 1, 0, 0, H_gdk_window_configure_finished);
-  XG_DEFINE_PROCEDURE(gtk_action_group_translate_string, gxg_gtk_action_group_translate_string_w, 2, 0, 0, H_gtk_action_group_translate_string);
   XG_DEFINE_PROCEDURE(gtk_combo_box_get_wrap_width, gxg_gtk_combo_box_get_wrap_width_w, 1, 0, 0, H_gtk_combo_box_get_wrap_width);
   XG_DEFINE_PROCEDURE(gtk_combo_box_get_row_span_column, gxg_gtk_combo_box_get_row_span_column_w, 1, 0, 0, H_gtk_combo_box_get_row_span_column);
   XG_DEFINE_PROCEDURE(gtk_combo_box_get_column_span_column, gxg_gtk_combo_box_get_column_span_column_w, 1, 0, 0, H_gtk_combo_box_get_column_span_column);
@@ -6184,6 +6185,29 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_script_iter_get_range, gxg_pango_script_iter_get_range_w, 1, 3, 0, H_pango_script_iter_get_range);
   XG_DEFINE_PROCEDURE(pango_script_iter_next, gxg_pango_script_iter_next_w, 1, 0, 0, H_pango_script_iter_next);
   XG_DEFINE_PROCEDURE(pango_script_iter_free, gxg_pango_script_iter_free_w, 1, 0, 0, H_pango_script_iter_free);
+#endif
+
+#if HAVE_GTK_FILE_CHOOSER_BUTTON_NEW
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_button_get_type, gxg_gtk_file_chooser_button_get_type_w, 0, 0, 0, H_gtk_file_chooser_button_get_type);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_button_new, gxg_gtk_file_chooser_button_new_w, 1, 0, 0, H_gtk_file_chooser_button_new);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_button_new_with_backend, gxg_gtk_file_chooser_button_new_with_backend_w, 2, 0, 0, H_gtk_file_chooser_button_new_with_backend);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_button_new_with_dialog, gxg_gtk_file_chooser_button_new_with_dialog_w, 1, 0, 0, H_gtk_file_chooser_button_new_with_dialog);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_button_get_title, gxg_gtk_file_chooser_button_get_title_w, 1, 0, 0, H_gtk_file_chooser_button_get_title);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_button_set_title, gxg_gtk_file_chooser_button_set_title_w, 2, 0, 0, H_gtk_file_chooser_button_set_title);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_button_get_active, gxg_gtk_file_chooser_button_get_active_w, 1, 0, 0, H_gtk_file_chooser_button_get_active);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_button_set_active, gxg_gtk_file_chooser_button_set_active_w, 2, 0, 0, H_gtk_file_chooser_button_set_active);
+  XG_DEFINE_PROCEDURE(gdk_drag_drop_succeeded, gxg_gdk_drag_drop_succeeded_w, 1, 0, 0, H_gdk_drag_drop_succeeded);
+  XG_DEFINE_PROCEDURE(gdk_rgb_colormap_ditherable, gxg_gdk_rgb_colormap_ditherable_w, 1, 0, 0, H_gdk_rgb_colormap_ditherable);
+  XG_DEFINE_PROCEDURE(gtk_action_set_sensitive, gxg_gtk_action_set_sensitive_w, 2, 0, 0, H_gtk_action_set_sensitive);
+  XG_DEFINE_PROCEDURE(gtk_action_set_visible, gxg_gtk_action_set_visible_w, 2, 0, 0, H_gtk_action_set_visible);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_get_focus_on_click, gxg_gtk_combo_box_get_focus_on_click_w, 1, 0, 0, H_gtk_combo_box_get_focus_on_click);
+  XG_DEFINE_PROCEDURE(gtk_combo_box_set_focus_on_click, gxg_gtk_combo_box_set_focus_on_click_w, 2, 0, 0, H_gtk_combo_box_set_focus_on_click);
+  XG_DEFINE_PROCEDURE(gtk_entry_layout_index_to_text_index, gxg_gtk_entry_layout_index_to_text_index_w, 2, 0, 0, H_gtk_entry_layout_index_to_text_index);
+  XG_DEFINE_PROCEDURE(gtk_entry_text_index_to_layout_index, gxg_gtk_entry_text_index_to_layout_index_w, 2, 0, 0, H_gtk_entry_text_index_to_layout_index);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_show_hidden, gxg_gtk_file_chooser_set_show_hidden_w, 2, 0, 0, H_gtk_file_chooser_set_show_hidden);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_get_show_hidden, gxg_gtk_file_chooser_get_show_hidden_w, 1, 0, 0, H_gtk_file_chooser_get_show_hidden);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_set_hover_expand, gxg_gtk_tree_view_set_hover_expand_w, 2, 0, 0, H_gtk_tree_view_set_hover_expand);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_hover_expand, gxg_gtk_tree_view_get_hover_expand_w, 1, 0, 0, H_gtk_tree_view_get_hover_expand);
 #endif
 
   XG_DEFINE_PROCEDURE(GDK_COLORMAP, gxg_GDK_COLORMAP_w, 1, 0, 0, NULL);
@@ -6310,6 +6334,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_WIDGET, gxg_GTK_WIDGET_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_WINDOW, gxg_GTK_WINDOW_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(PANGO_CONTEXT, gxg_PANGO_CONTEXT_w, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(PANGO_FONT_FAMILY, gxg_PANGO_FONT_FAMILY_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(PANGO_FONT_FACE, gxg_PANGO_FONT_FACE_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(PANGO_FONT, gxg_PANGO_FONT_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(PANGO_FONT_MAP, gxg_PANGO_FONT_MAP_w, 1, 0, 0, NULL);
@@ -6333,10 +6358,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GDK_EVENT_SETTING, gxg_GDK_EVENT_SETTING_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_EVENT_WINDOWSTATE, gxg_GDK_EVENT_WINDOWSTATE_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_EVENT_DND, gxg_GDK_EVENT_DND_w, 1, 0, 0, NULL);
-#if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
-  XG_DEFINE_PROCEDURE(PANGO_FONT_FAMILY, gxg_PANGO_FONT_FAMILY_w, 1, 0, 0, NULL);
-#endif
-
 #if HAVE_GDK_DRAW_PIXBUF
   XG_DEFINE_PROCEDURE(GDK_SCREEN, gxg_GDK_SCREEN_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_DISPLAY_OBJECT, gxg_GDK_DISPLAY_OBJECT_w, 1, 0, 0, NULL);
@@ -6379,6 +6400,10 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_CELL_RENDERER_COMBO, gxg_GTK_CELL_RENDERER_COMBO_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_CELL_RENDERER_PROGRESS, gxg_GTK_CELL_RENDERER_PROGRESS_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_ICON_VIEW, gxg_GTK_ICON_VIEW_w, 1, 0, 0, NULL);
+#endif
+
+#if HAVE_GTK_FILE_CHOOSER_BUTTON_NEW
+  XG_DEFINE_PROCEDURE(GTK_FILE_CHOOSER_BUTTON, gxg_GTK_FILE_CHOOSER_BUTTON_w, 1, 0, 0, NULL);
 #endif
 
   XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL);
@@ -6512,15 +6537,12 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_WIDGET, gxg_GTK_IS_WIDGET_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_IS_WINDOW, gxg_GTK_IS_WINDOW_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(PANGO_IS_CONTEXT, gxg_PANGO_IS_CONTEXT_w, 1, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(PANGO_IS_FONT_FAMILY, gxg_PANGO_IS_FONT_FAMILY_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(PANGO_IS_FONT_FACE, gxg_PANGO_IS_FONT_FACE_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(PANGO_IS_FONT, gxg_PANGO_IS_FONT_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(PANGO_IS_FONT_MAP, gxg_PANGO_IS_FONT_MAP_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(PANGO_IS_LAYOUT, gxg_PANGO_IS_LAYOUT_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(G_IS_OBJECT, gxg_G_IS_OBJECT_w, 1, 0, 0, NULL);
-#if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
-  XG_DEFINE_PROCEDURE(PANGO_IS_FONT_FAMILY, gxg_PANGO_IS_FONT_FAMILY_w, 1, 0, 0, NULL);
-#endif
-
 #if HAVE_GDK_DRAW_PIXBUF
   XG_DEFINE_PROCEDURE(GDK_IS_SCREEN, gxg_GDK_IS_SCREEN_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_IS_DISPLAY, gxg_GDK_IS_DISPLAY_w, 1, 0, 0, NULL);
@@ -6563,6 +6585,10 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_CELL_RENDERER_COMBO, gxg_GTK_IS_CELL_RENDERER_COMBO_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_IS_CELL_RENDERER_PROGRESS, gxg_GTK_IS_CELL_RENDERER_PROGRESS_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GTK_IS_ICON_VIEW, gxg_GTK_IS_ICON_VIEW_w, 1, 0, 0, NULL);
+#endif
+
+#if HAVE_GTK_FILE_CHOOSER_BUTTON_NEW
+  XG_DEFINE_PROCEDURE(GTK_IS_FILE_CHOOSER_BUTTON, gxg_GTK_IS_FILE_CHOOSER_BUTTON_w, 1, 0, 0, NULL);
 #endif
 
 }

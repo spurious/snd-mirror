@@ -4543,6 +4543,12 @@ XEN g_mix_sample_reader_home(XEN obj)
   return(C_TO_XEN_INT(mf->md->id));
 }
 
+bool mix_sample_reader_at_end_p(void *md)
+{
+  mix_fd *mf = (mix_fd *)md;
+  return(mf->sfs[mf->base]->at_eof);
+}
+
 XEN g_mix_sample_reader_at_end_p(XEN obj)
 {
   mix_fd *mf;
@@ -7838,6 +7844,12 @@ XEN g_track_sample_reader_home(XEN obj)
   tf = TO_TRACK_SAMPLE_READER(obj);
   return(XEN_LIST_2(C_TO_XEN_INT(tf->track),
 		    C_TO_XEN_INT(tf->initial_chan)));
+}
+
+bool track_sample_reader_at_end_p(void *rd)
+{
+  track_fd *tf = (track_fd *)rd;
+  return(tf->loc == -1);
 }
 
 XEN g_track_sample_reader_at_end_p(XEN obj)

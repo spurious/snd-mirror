@@ -1416,12 +1416,14 @@ void *get_mf(XEN obj);
 char *run_mix_reader_to_string(void *ptr);
 void run_free_mix_fd(void *ptr);
 void *run_make_mix_sample_reader(int id, off_t beg);
+bool mix_sample_reader_at_end_p(void *md);
 Float track_read_sample_to_float(void *ptr);
 bool tf_p(XEN obj);
 void *get_tf(XEN obj);
 char *run_track_reader_to_string(void *ptr);
 void run_free_track_fd(void *ptr);
 void *run_make_track_sample_reader(int id, int chan, off_t beg);
+bool track_sample_reader_at_end_p(void *rd);
 bool mix_dialog_mix_inverted(int id);
 void mix_dialog_set_mix_inverted(int id, bool on);
 

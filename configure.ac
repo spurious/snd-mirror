@@ -767,6 +767,8 @@ else
 	# gtk 2.5.0
 	AC_CHECK_LIB(m, gtk_label_set_ellipsize, [AC_DEFINE(HAVE_GTK_LABEL_SET_ELLIPSIZE)], ,$GTK_LIBS)
 	# gtk 2.5.1
+	AC_CHECK_LIB(m, gtk_file_chooser_button_new, [AC_DEFINE(HAVE_GTK_FILE_CHOOSER_BUTTON_NEW)], ,$GTK_LIBS)
+	# gtk 2.5.2
 
         if test "$with_x11" = yes ; then
 	  AC_DEFINE(WITH_GTK_AND_X11)
