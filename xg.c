@@ -25,7 +25,7 @@
  * 'xg is added to *features*
  *
  * added funcs:
- *    (xm-version) -> date string.
+ *    (xg-version) -> date string.
  *    (->string val) interprets 'val' as a string.
  *    (c-array->list arr len) derefs each member of arr, returning lisp list, len=#f: null terminated array
  *    (list->c-array lst ctype) packages each member of list as c-type "type" returning (wrapped) c array
@@ -49,6 +49,7 @@
  *     win32-specific functions
  *
  * HISTORY:
+ *     21-Feb:    changed libxm to libxg, xm-version to xg-version.
  *     10-Jan:    plugged some memory leaks.
  *     4-Jan:     removed deprecated XEN_VECTOR_ELEMENTS.
  *     --------
@@ -32372,11 +32373,11 @@ static bool xg_already_inited = false;
 #endif
 
 #if HAVE_GUILE
- void init_xm(void);
- void init_xm(void)
+ void init_xg(void);
+ void init_xg(void)
 #else
- void Init_libxm(void);
- void Init_libxm(void)
+ void Init_libxg(void);
+ void Init_libxg(void)
 #endif
 {
   if (!xg_already_inited)
@@ -32390,10 +32391,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"13-Feb-05\")");
+      XEN_EVAL_C_STRING("(define xg-version \"21-Feb-05\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("13-Feb-05"));
+      rb_define_global_const("Xg_Version", C_TO_XEN_STRING("21-Feb-05"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

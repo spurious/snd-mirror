@@ -3069,9 +3069,17 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 
 #if HAVE_STATIC_XM
 #if HAVE_GUILE
- void init_xm(void);
+  #if USE_MOTIF
+    void init_xm(void);
+  #else
+    void init_xg(void);
+  #endif
 #else
- void Init_libxm(void);
+  #if USE_MOTIF
+    void Init_libxm(void);
+  #else
+    void Init_libxg(void);
+  #endif
 #endif
 #endif
 
@@ -3523,9 +3531,17 @@ If it returns some non-false result, Snd assumes you've sent the text out yourse
 
 #if HAVE_STATIC_XM
 #if HAVE_GUILE
-  init_xm();
+  #if USE_MOTIF
+    init_xm();
+  #else
+    init_xg();
+  #endif
 #else
-  Init_libxm();
+  #if USE_MOTIF
+    Init_libxm();
+  #else
+    Init_libxg();
+  #endif
 #endif
 #endif
 

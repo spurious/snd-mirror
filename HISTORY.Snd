@@ -1,5 +1,7 @@
 Snd change log
 
+  22-Feb:    changed libxm to libxg in gtk case, also xm-version to xg-version
+               added --with-static-xg configure option
   21-Feb:    removed snd_test.rb, replaced by snd-test.rb thanks to Mike Scholz!
 	     added oo.scm and rt-compile.scm thanks to Kjetil Matheussen!
   11-Feb:    snd 7.10.

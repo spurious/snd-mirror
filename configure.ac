@@ -82,6 +82,7 @@ AC_ARG_WITH(no-gui,      [  --with-no-gui  	  make Snd without any graphics supp
 AC_ARG_WITH(doubles,     [  --with-doubles	  use doubles throughout])
 AC_ARG_WITH(static-gsl,  [  --with-static-gsl	  use libgsl.a to build Snd (for obsolete RPM version)])
 AC_ARG_WITH(static-xm,   [  --with-static-xm	  include the xm module])
+AC_ARG_WITH(static-xg,   [  --with-static-xg	  include the xg module])
 AC_ARG_WITH(guile,       [  --with-guile	  	  use Guile])
 AC_ARG_WITH(gl,          [  --with-gl		  include OpenGL support])
 AC_ARG_WITH(just-gl,     [  --with-just-gl	  include OpenGL support, but omit the GL/Guile bindings])
@@ -102,18 +103,22 @@ AC_ARG_WITH(xpm,         [  --with-xpm		  use xpm, default=yes])
 AC_ARG_WITH(xp,          [  --with-xp		  use xp, default=no])
 AC_ARG_WITH(profiling,   [  --with-profiling	  include profiling machinery, default=no, for internal testing])
 
-if test "$with_doubles" = yes; then
+if test "$with_doubles" = yes ; then
   AC_DEFINE(Float,double)
 else
   AC_DEFINE(Float,float)
 fi
 
-if test "$with_hobbit" = yes; then
+if test "$with_hobbit" = yes ; then
   AC_DEFINE(WITH_HOBBIT)
 fi
 
 if test "$with_builtin_gtkrc" != no; then
   AC_DEFINE(WITH_BUILTIN_GTKRC)
+fi
+
+if test "$with_static_xg" = yes ; then
+  with_static_xm=yes
 fi
 
 LOCAL_SNDLIB_BITS="24"
@@ -204,6 +209,7 @@ AC_CHECK_FUNCS(getcwd getwd strerror readlink setlocale access opendir sleep sig
 AC_CHECK_FUNCS(vsnprintf snprintf memmove strdup lstat fileno strcasecmp)
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
+AC_LIB_PROG_LD
 
 AC_MSG_CHECKING(for __func__)
 AC_LINK_IFELSE(
@@ -1131,9 +1137,6 @@ else
 case "$host" in
     *-*-linux*) 
 	AC_DEFINE(LINUX)
-	LDFLAGS="$LDFLAGS -Wl,-export-dynamic"
-# this ^ added 19-Feb-05 -- apparently this makes Snd functions available to dynamically loaded modules
-#   presumably it should depend on the loader -- should I include it in freebsd and friends below?
         LDSO_FLAGS="-shared"
         LIBS="-lm"
 #     This ^ used to be "" but in redhat 7 the -lm needs it to be explicit
@@ -1538,6 +1541,14 @@ fi
 
 if test "$with_profiling" = yes; then
   CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage -fbranch-probabilities -pg"
+fi
+
+if test "$ac_cv_header_dlfcn_h" = yes ; then
+if test "$with_gnu_ld" = yes ; then
+  LDFLAGS="$LDFLAGS -Wl,-export-dynamic"
+  # this ^ added 19-Feb-05 -- apparently this makes Snd functions available to dynamically loaded modules
+  AC_SUBST(LDFLAGS)
+fi
 fi
 
 AC_SUBST(CFLAGS)

@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <string.h>
+#include <errno.h>
 
 #include "sndlib.h"
 #include "sndlib-strings.h"

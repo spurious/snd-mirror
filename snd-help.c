@@ -139,11 +139,24 @@ static char *xm_version(void)
 {
   XEN xm_val = XEN_FALSE;
 #if HAVE_GUILE
-  xm_val = XEN_EVAL_C_STRING("(and (or (provided? 'xm) (provided? 'xg)) xm-version)");
+  #if USE_MOTIF
+    xm_val = XEN_EVAL_C_STRING("(and (defined? 'xm-version) xm-version)");
+  #else
+    #if USE_GTK
+      xm_val = XEN_EVAL_C_STRING("(and (defined? 'xg-version) xg-version)");
+    #endif
+  #endif
 #else
   #if HAVE_RUBY
-  if (rb_const_defined(rb_cObject, rb_intern("Xm_Version")))
-    xm_val = XEN_EVAL_C_STRING("Xm_Version");
+    #if USE_MOTIF
+      if (rb_const_defined(rb_cObject, rb_intern("Xm_Version")))
+        xm_val = XEN_EVAL_C_STRING("Xm_Version");
+    #else
+      #if USE_GTK
+        if (rb_const_defined(rb_cObject, rb_intern("Xg_Version")))
+          xm_val = XEN_EVAL_C_STRING("Xg_Version");
+      #endif
+    #endif
   #endif
 #endif
   if (XEN_STRING_P(xm_val))
@@ -369,6 +382,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+22-Feb:  changed libxm to libxg in gtk case, also xm-version to xg-version\n\
+           added --with-static-xg configure option\n\
 21-Feb:  removed snd_test.rb, replaced by snd-test.rb thanks to Mike Scholz!\n\
 	 added oo.scm and rt-compile.scm thanks to Kjetil Matheussen!\n\
 11-Feb:  snd 7.10.\n\
