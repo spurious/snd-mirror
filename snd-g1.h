@@ -539,7 +539,6 @@ void make_prev_name_row(int old_size, int new_size);
 void make_prevfiles_list (void);
 void make_curfiles_list (void);
 void curfile_highlight(int i);
-void view_curfiles_set_row_name(int pos);
 void set_file_browser_play_button(char *name, int state);
 void highlight_selected_sound(void);
 void set_file_sort_sensitive(bool sensitive);

@@ -1108,13 +1108,6 @@ void make_prev_name_row(int old_size, int new_size)
     }
 }
 
-void view_curfiles_set_row_name(int pos)
-{
-  regrow *r;
-  r = cur_name_row[pos];
-  set_button_label(r->nm, view_curfiles_name(r->pos));
-}
-
 static void view_files_help_callback(GtkWidget *w, gpointer context) 
 {
   view_files_dialog_help();

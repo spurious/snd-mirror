@@ -168,10 +168,7 @@ void set_fft_window(mus_fft_window_t val);
 void set_wavelet_type(int val);
 int fire_up_transform_dialog(bool managed);
 bool transform_dialog_is_active(void);
-
 void set_transform_type(int val);
-void make_transform_type_list(void);
-
 void set_show_transform_peaks(bool val);
 void set_fft_log_magnitude(bool val);
 void set_fft_log_frequency(bool val);
@@ -182,9 +179,6 @@ void set_transform_graph_type(graph_type_t val);
 void reflect_peaks_in_transform_dialog(void);
 void reflect_log_freq_start_in_transform_dialog(void);
 void reflect_min_db_in_transform_dialog(void);
-void widget_int_to_text(widget_t w, int val);
-void widget_float_to_text(widget_t w, Float val);
-void widget_off_t_to_text(widget_t w, off_t val);
 
 
 /* -------- snd-xregion.c -------- */
@@ -264,8 +258,6 @@ int add_channel_window(snd_info *sound, int channel, int chan_y, int insertion, 
 
 /* -------- snd-xsnd.c -------- */
 
-int w_snd_name(snd_info *sp);
-int filter_graph(snd_info *sp);
 void make_minibuffer_label(snd_info *sp, char *str);
 void goto_minibuffer(snd_info *sp);
 void set_minibuffer_string(snd_info *sp, char *str, bool update);
@@ -317,7 +309,6 @@ void make_cur_name_row(int old_size, int new_size);
 void make_prev_name_row(int old_size, int new_size);
 void make_prevfiles_list (void);
 void make_curfiles_list (void);
-void view_curfiles_set_row_name(int pos);
 void curfile_highlight(int i);
 void set_file_browser_play_button(char *name, int state);
 void highlight_selected_sound(void);
@@ -349,7 +340,6 @@ void make_scrolled_env_list (void);
 void new_active_channel_alert(void);
 void env_redisplay(void);
 void env_redisplay_with_print(void);
-void enved_display_point_label(Float x, Float y);
 int create_envelope_editor (void);
 void set_enved_clip_p(bool val);
 void reflect_enved_style(void);

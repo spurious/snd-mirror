@@ -57,9 +57,6 @@ void reflect_spectro(void) {}
 void reflect_peaks_in_transform_dialog(void) {}
 void reflect_log_freq_start_in_transform_dialog(void) {}
 void reflect_min_db_in_transform_dialog(void) {}
-void widget_int_to_text(widget_t w, int val) {}
-void widget_float_to_text(widget_t w, Float val) {}
-void widget_off_t_to_text(widget_t w, off_t val) {}
 void listener_append_and_prompt(char *msg) {fprintf(stderr, "%s", msg);}
 void goto_listener(void) {}
 void save_listener_text(FILE *fp) {}
@@ -194,8 +191,6 @@ void reflect_amp_env_in_progress(snd_info *sp) {}
 void cleanup_cw(chan_info *cp) {}
 void clear_deleted_snd_info(struct file_dialog_info *fd) {}
 bool fixup_cp_cgx_ax_wn(chan_info *cp) {return(false);}
-int w_snd_name(snd_info *sp) {return(0);}
-int filter_graph(snd_info *sp) {return(0);}
 void make_minibuffer_label(snd_info *sp, char *str) {}
 void goto_minibuffer(snd_info *sp) {}
 void set_minibuffer_string(snd_info *sp, char *str, bool update) {if ((str) && (*str)) fprintf(stderr, "%s", str);}
@@ -232,7 +227,6 @@ void make_prevfiles_list (void) {}
 void make_curfiles_list (void) {}
 void curfile_highlight(int i) {}
 void set_file_sort_sensitive(bool sensitive) {}
-void view_curfiles_set_row_name(int pos) {}
 void set_file_browser_play_button(char *name, int state) {}
 void highlight_selected_sound(void) {}
 int start_file_dialog(bool managed) {return(0);}
@@ -253,7 +247,6 @@ void make_scrolled_env_list (void) {}
 void new_active_channel_alert(void) {}
 void env_redisplay(void) {}
 void env_redisplay_with_print(void) {}
-void enved_display_point_label(Float x, Float y) {}
 int create_envelope_editor (void) {return(0);}
 void set_enved_clip_p(bool val) {}
 void reflect_enved_style(void) {}
@@ -296,7 +289,6 @@ void set_fft_window_beta(Float val) {in_set_fft_window_beta(val);}
 void set_transform_size(int val) {in_set_transform_size(val);}
 void set_fft_window(mus_fft_window_t val) {in_set_fft_window(val);}
 void set_transform_type(int val) {in_set_transform_type(val);}
-void make_transform_type_list(void) {}
 void set_wavelet_type(int val) {in_set_wavelet_type(val);}
 void set_transform_graph_type(graph_type_t val) {in_set_transform_graph_type(val);}
 void set_amp(snd_info *sp, Float val) {sp->amp_control = val;}
