@@ -58,9 +58,6 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 		  mix_complete_file_at_cursor(sp, str, origin, with_mix_tags(ss)); 
 		  FREE(origin);
 		}
-#if DEBUGGING
-	      else fprintf(stderr, "dropped %s?\n", str);
-#endif
 	    }
 	  /* value is the file name if dropped icon from filer */
 	}
@@ -93,7 +90,7 @@ static void handle_drop(Widget w, XtPointer context, XtPointer info)
       }
   if (k == -1)
     {
-#if DEBUGGING
+#if 0
       fprintf(stderr, "failed drop attempt:\n");
       for (i = 0; i < num_targets; i++) 
 	fprintf(stderr, "  target %d = %s\n", i, 

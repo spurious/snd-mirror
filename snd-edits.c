@@ -8406,9 +8406,12 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
 	    {
 	      ss = get_global_state();
 	      for (i = 0; i < ss->max_sounds; i++)
-		if ((sp = ((snd_info *)(ss->sounds[i]))) && (sp->inuse))
-		  for (j = 0; j < sp->nchans; j++)
-		    edit_history_to_file(fd, sp->chans[j]);
+		{
+		  sp = ss->sounds[i];
+		  if ((sp) && (sp->inuse))
+		    for (j = 0; j < sp->nchans; j++)
+		      edit_history_to_file(fd, sp->chans[j]);
+		}
 	    }
 	}
     }

@@ -1377,31 +1377,37 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 	{
 	  int outer_ctr = 0;
 	  for (i = 0; i < ss->max_sounds; i++)
-	    if ((sp = ((snd_info *)(ss->sounds[i]))) &&
-		(sp->inuse) &&
-		(sp->nchans > 1) &&
-		(sp->channel_style == CHANNELS_SEPARATE))
-	      outer_panes++;
-	  if (outer_panes > 0)
 	    {
-	      inner_panes = (int *)CALLOC(outer_panes, sizeof(int));
-	      outer_sizes = (int *)CALLOC(outer_panes, sizeof(int));
-	      inner_sizes = (int **)CALLOC(outer_panes, sizeof(int *));
-	      outer_ctr = 0;
-	      for (i = 0; i < ss->max_sounds; i++)
-		if ((sp = ((snd_info *)(ss->sounds[i]))) &&
-		    (sp->inuse) &&
-		    (sp->nchans > 1) &&
-		    (sp->channel_style == CHANNELS_SEPARATE))
-		  {
-		    child = w_snd_pane(sp);
-		    inner_panes[outer_ctr] = sp->nchans;
-		    inner_sizes[outer_ctr] = (int *)CALLOC(sp->nchans, sizeof(int));
-		    XtVaGetValues(child, XmNheight, &(outer_sizes[outer_ctr]), NULL);
-		    for (k = 0; k < sp->nchans; k++)
-		      XtVaGetValues(channel_main_pane(sp->chans[k]), XmNheight, &(inner_sizes[outer_ctr][k]), NULL);
-		    outer_ctr++;
-		  }
+	      sp = ss->sounds[i];
+	      if ((sp) &&
+		  (sp->inuse) &&
+		  (sp->nchans > 1) &&
+		  (sp->channel_style == CHANNELS_SEPARATE))
+		outer_panes++;
+	      if (outer_panes > 0)
+		{
+		  inner_panes = (int *)CALLOC(outer_panes, sizeof(int));
+		  outer_sizes = (int *)CALLOC(outer_panes, sizeof(int));
+		  inner_sizes = (int **)CALLOC(outer_panes, sizeof(int *));
+		  outer_ctr = 0;
+		  for (i = 0; i < ss->max_sounds; i++)
+		    {
+		      sp = ss->sounds[i];
+		      if ((sp) &&
+			  (sp->inuse) &&
+			  (sp->nchans > 1) &&
+			  (sp->channel_style == CHANNELS_SEPARATE))
+			{
+			  child = w_snd_pane(sp);
+			  inner_panes[outer_ctr] = sp->nchans;
+			  inner_sizes[outer_ctr] = (int *)CALLOC(sp->nchans, sizeof(int));
+			  XtVaGetValues(child, XmNheight, &(outer_sizes[outer_ctr]), NULL);
+			  for (k = 0; k < sp->nchans; k++)
+			    XtVaGetValues(channel_main_pane(sp->chans[k]), XmNheight, &(inner_sizes[outer_ctr][k]), NULL);
+			  outer_ctr++;
+			}
+		    }
+		}
 	    }
 	}
       else
@@ -1411,45 +1417,48 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 	    {
 	      int outer_ctr = 0, cur_outer_size = 0;
 	      for (i = 0; i < ss->max_sounds; i++)
-		if ((sp = ((snd_info *)(ss->sounds[i]))) &&
-		    (sp->inuse) &&
-		    (sp->nchans > 1) &&
-		    (sp->channel_style == CHANNELS_SEPARATE))
-		  {
-		    XtVaGetValues(w_snd_pane(sp), XmNheight, &cur_outer_size, NULL);
-		    if ((cur_outer_size > 40) && 
-			(abs(cur_outer_size - outer_sizes[outer_ctr]) > (sp->nchans * 2)))
-		      {
-			/* this pane has multiple chans and its size has changed enough to matter */
-			int total_inner = 0, diff, size;
-			float ratio;
-			for (k = 0; k < sp->nchans; k++)
-			  total_inner += inner_sizes[outer_ctr][k];
-			diff = outer_sizes[outer_ctr] - total_inner; /* this is non-channel stuff */
-			for (k = 0; k < sp->nchans; k++)
-			  XtUnmanageChild(channel_main_pane(sp->chans[k]));
-			ratio = (float)(cur_outer_size - diff) / (float)(outer_sizes[outer_ctr] - diff);
-			if (ratio > 0.0)
-			  {
-			    for (k = 0; k < sp->nchans; k++)
-			      {
-				size = (int)(ratio * inner_sizes[outer_ctr][k]);
+		{
+		  sp = ss->sounds[i];
+		  if ((sp) &&
+		      (sp->inuse) &&
+		      (sp->nchans > 1) &&
+		      (sp->channel_style == CHANNELS_SEPARATE))
+		    {
+		      XtVaGetValues(w_snd_pane(sp), XmNheight, &cur_outer_size, NULL);
+		      if ((cur_outer_size > 40) && 
+			  (abs(cur_outer_size - outer_sizes[outer_ctr]) > (sp->nchans * 2)))
+			{
+			  /* this pane has multiple chans and its size has changed enough to matter */
+			  int total_inner = 0, diff, size;
+			  float ratio;
+			  for (k = 0; k < sp->nchans; k++)
+			    total_inner += inner_sizes[outer_ctr][k];
+			  diff = outer_sizes[outer_ctr] - total_inner; /* this is non-channel stuff */
+			  for (k = 0; k < sp->nchans; k++)
+			    XtUnmanageChild(channel_main_pane(sp->chans[k]));
+			  ratio = (float)(cur_outer_size - diff) / (float)(outer_sizes[outer_ctr] - diff);
+			  if (ratio > 0.0)
+			    {
+			      for (k = 0; k < sp->nchans; k++)
+				{
+				  size = (int)(ratio * inner_sizes[outer_ctr][k]);
+				  XtVaSetValues(channel_main_pane(sp->chans[k]), 
+						XmNpaneMinimum, size - 1,
+						XmNpaneMaximum, size + 1, 
+						NULL);
+				}
+			      for (k = 0; k < sp->nchans; k++)
+				XtManageChild(channel_main_pane(sp->chans[k]));
+			      for (k = 0; k < sp->nchans; k++)
 				XtVaSetValues(channel_main_pane(sp->chans[k]), 
-					      XmNpaneMinimum, size - 1,
-					      XmNpaneMaximum, size + 1, 
+					      XmNpaneMinimum, 1,
+					      XmNpaneMaximum, LOTSA_PIXELS, 
 					      NULL);
-			      }
-			    for (k = 0; k < sp->nchans; k++)
-			      XtManageChild(channel_main_pane(sp->chans[k]));
-			    for (k = 0; k < sp->nchans; k++)
-			      XtVaSetValues(channel_main_pane(sp->chans[k]), 
-					    XmNpaneMinimum, 1,
-					    XmNpaneMaximum, LOTSA_PIXELS, 
-					    NULL);
-			  }
-		      }
-		    outer_ctr++;
-		  }
+			    }
+			}
+		      outer_ctr++;
+		    }
+		}
 	      for (i = 0; i < outer_panes; i++)
 		if (inner_sizes[i])
 		  FREE(inner_sizes[i]);

@@ -1647,8 +1647,9 @@ void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, o
 	      scl = 0.0;
 	      for (i = 0; i < data_size; i++) 
 		{
-		  if (rl0[i] > scl) scl = rl0[i];
-		  else if (rl0[i] < -scl) scl = (-rl0[i]);
+		  Float val;
+		  val = fabs(rl0[i]);
+		  if (val > scl) scl = val;
 		}
 	      if (scl != 0.0) scl = amp / scl;
 	      for (i = 0; i < data_size; i++) 

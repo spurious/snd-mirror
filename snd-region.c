@@ -129,20 +129,6 @@ void allocate_regions(snd_state *ss, int numreg)
   regions_size = numreg;
 }
 
-#if DEBUGGING
-int file_belongs_to_region(const char *file);
-int file_belongs_to_region(const char *file)
-{
-  int i;
-  for (i = 0; i < regions_size; i++)
-    if ((regions[i]) &&
-	(regions[i]->filename) &&
-	(strcmp(file, regions[i]->filename) == 0))
-      return(regions[i]->id);
-  return(INVALID_REGION);
-}
-#endif
-
 static void set_max_regions(snd_state *ss, int n)
 {
   if (n >= 0)
@@ -786,7 +772,7 @@ static void deferred_region_to_temp_file(region *r)
 {
   int i, k, ofd = 0, datumb = 0, err = 0, copy_ok;
   off_t j, len = 0;
-  mus_sample_t val, mval, curval;
+  mus_sample_t val, curval;
   snd_fd **sfs = NULL;
   snd_state *ss = NULL;
   snd_info *sp0;
@@ -799,7 +785,6 @@ static void deferred_region_to_temp_file(region *r)
   drp = r->dr;
   len = drp->len;
   val = MUS_SAMPLE_0; 
-  mval = MUS_SAMPLE_0;
 
   r->use_temp_file = REGION_FILE;
   r->filename = snd_tempnam(ss);
@@ -900,10 +885,9 @@ static void deferred_region_to_temp_file(region *r)
 		{
 		  if (j <= drp->lens[i])  /* ??? was < ends[i] */
 		    {
-		      curval = read_sample(sfs[i]);
-		      data[i][k] = curval;
+		      data[i][k] = read_sample(sfs[i]);
+		      curval = mus_sample_abs(data[i][k]);
 		      if (curval > val) val = curval;
-		      if (curval < mval) mval = curval;
 		    }
 		  else data[i][k] = MUS_SAMPLE_0;
 		}
@@ -911,7 +895,6 @@ static void deferred_region_to_temp_file(region *r)
 	  if (k > 0) 
 	    mus_file_write(ofd, 0, k - 1, r->chans, data);
 	  close_temp_file(ofd, hdr, len * r->chans * datumb, drp->cps[0]->sound);
-	  if (val < (-mval)) val = -mval;
 	  r->maxamp = MUS_SAMPLE_TO_FLOAT(val);
 	  for (i = 0; i < r->chans; i++) FREE(data[i]);
 	  for (i = 0; i < r->chans; i++) free_snd_fd(sfs[i]);

@@ -150,9 +150,6 @@ static XPoint points1[POINT_BUFFER_SIZE];
 
 void set_grf_points(Locus xi, int j, Locus ymin, Locus ymax)
 {
-#if DEBUGGING
-  if (j >= POINT_BUFFER_SIZE) abort();
-#endif
   points[j].x = xi;
   points1[j].x = xi;
   points[j].y = ymax;
@@ -161,9 +158,6 @@ void set_grf_points(Locus xi, int j, Locus ymin, Locus ymax)
 
 void set_grf_point(Locus xi, int j, Locus yi)
 {
-#if DEBUGGING
-  if (j >= POINT_BUFFER_SIZE) abort();
-#endif
   points[j].x = xi;
   points[j].y = yi;
 }

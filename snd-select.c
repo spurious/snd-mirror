@@ -46,14 +46,16 @@ static off_t off_t_map_over_chans(snd_state *ss, off_t (*func)(chan_info *, off_
   val = 0;
   if (ss)
     for (i = 0; i < ss->max_sounds; i++)
-      if ((sp = ((snd_info *)(ss->sounds[i]))) && 
-	  (sp->inuse))
-	for (j = 0; j < sp->nchans; j++)
-	  if ((cp = ((chan_info *)(sp->chans[j]))))
-	    {
-	      val = (*func)(cp, userptr);
-	      if (val) return(val);
-	    }
+      {
+	sp = ss->sounds[i];
+	if ((sp) && (sp->inuse))
+	  for (j = 0; j < sp->nchans; j++)
+	    if ((cp = ((chan_info *)(sp->chans[j]))))
+	      {
+		val = (*func)(cp, userptr);
+		if (val) return(val);
+	      }
+      }
   return(val);
 }
 
@@ -93,13 +95,6 @@ static void cp_set_selection_beg(chan_info *cp, off_t beg)
 
 off_t selection_end(chan_info *cp) /* never called without selection_member check in advance */
 {
-#if DEBUGGING
-  if ((cp == NULL) || (cp->edits[cp->edit_ctr]->selection_beg == NO_SELECTION))
-    {
-      fprintf(stderr, "selection_end called with non-selection cp");
-      abort();
-    }
-#endif
   return(cp->edits[cp->edit_ctr]->selection_end);
 }
 
@@ -587,15 +582,6 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
   snd_fd **sfs;
   snd_info *sp = NULL;
   mus_sample_t **data;
-#if DEBUGGING
-  if (!(mus_header_writable(type, format)))
-    {
-      fprintf(stderr, "somehow save-selection called with type: %d (%s), format: %d (%s)\n",
-	      type, mus_header_type_name(type),
-	      format, mus_data_format_name(format));
-      abort();
-    }
-#endif
   si = selection_sync();
   if ((si) && (si->cps) && (si->cps[0])) sp = si->cps[0]->sound;
   comlen = snd_strlen(comment);

@@ -409,6 +409,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
     {
       ss = get_global_state();
       sp = any_selected_sound(ss);
+      if ((sp == NULL) || (sp->state == NULL)) return(NULL);
       ncp = any_selected_channel(sp);
     }
 

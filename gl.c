@@ -576,13 +576,6 @@ static XEN gxg_gdk_gl_context_get_render_type(XEN glcontext)
   return(C_TO_XEN_int(gdk_gl_context_get_render_type(XEN_TO_C_GdkGLContext_(glcontext))));
 }
 
-static XEN gxg_gdk_gl_context_get_colormap(XEN glcontext)
-{
-  #define H_gdk_gl_context_get_colormap "GdkColormap* gdk_gl_context_get_colormap(GdkGLContext* glcontext)"
-  XEN_ASSERT_TYPE(XEN_GdkGLContext__P(glcontext), glcontext, 1, "gdk_gl_context_get_colormap", "GdkGLContext*");
-  return(C_TO_XEN_GdkColormap_(gdk_gl_context_get_colormap(XEN_TO_C_GdkGLContext_(glcontext))));
-}
-
 static XEN gxg_gdk_gl_drawable_make_current(XEN gldrawable, XEN glcontext)
 {
   #define H_gdk_gl_drawable_make_current "gboolean gdk_gl_drawable_make_current(GdkGLDrawable* gldrawable, \
@@ -3961,7 +3954,6 @@ static void define_functions(void)
   GL_DEFINE_PROCEDURE(gdk_gl_context_get_share_list, gxg_gdk_gl_context_get_share_list, 1, 0, 0, H_gdk_gl_context_get_share_list);
   GL_DEFINE_PROCEDURE(gdk_gl_context_is_direct, gxg_gdk_gl_context_is_direct, 1, 0, 0, H_gdk_gl_context_is_direct);
   GL_DEFINE_PROCEDURE(gdk_gl_context_get_render_type, gxg_gdk_gl_context_get_render_type, 1, 0, 0, H_gdk_gl_context_get_render_type);
-  GL_DEFINE_PROCEDURE(gdk_gl_context_get_colormap, gxg_gdk_gl_context_get_colormap, 1, 0, 0, H_gdk_gl_context_get_colormap);
   GL_DEFINE_PROCEDURE(gdk_gl_drawable_make_current, gxg_gdk_gl_drawable_make_current, 2, 0, 0, H_gdk_gl_drawable_make_current);
   GL_DEFINE_PROCEDURE(gdk_gl_drawable_is_double_buffered, gxg_gdk_gl_drawable_is_double_buffered, 1, 0, 0, H_gdk_gl_drawable_is_double_buffered);
   GL_DEFINE_PROCEDURE(gdk_gl_drawable_swap_buffers, gxg_gdk_gl_drawable_swap_buffers, 1, 0, 0, H_gdk_gl_drawable_swap_buffers);
@@ -4443,9 +4435,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GDK_GL_DEPTH_BUFFER_BIT);
   DEFINE_INTEGER(GDK_GL_STENCIL_BUFFER_BIT);
   DEFINE_INTEGER(GDK_GL_ACCUM_BUFFER_BIT);
-  DEFINE_INTEGER(GDK_GL_VENDOR);
-  DEFINE_INTEGER(GDK_GL_VERSION);
-  DEFINE_INTEGER(GDK_GL_EXTENSIONS);
   DEFINE_INTEGER(GDK_GL_MODE_RGB);
   DEFINE_INTEGER(GDK_GL_MODE_RGBA);
   DEFINE_INTEGER(GDK_GL_MODE_INDEX);
@@ -4457,7 +4446,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GDK_GL_MODE_STENCIL);
   DEFINE_INTEGER(GDK_GL_MODE_STEREO);
   DEFINE_INTEGER(GDK_GL_MODE_MULTISAMPLE);
-  DEFINE_INTEGER(GDK_GL_MODE_LUMINANCE);
 #ifdef GTKGLEXT_MAJOR_VERSION
   DEFINE_INTEGER(GDKGLEXT_MAJOR_VERSION);
   DEFINE_INTEGER(GDKGLEXT_MINOR_VERSION);
@@ -5191,7 +5179,7 @@ static int gl_already_inited = FALSE;
       define_functions();
       XEN_YES_WE_HAVE("gl");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define gl-version \"01-Feb-03\")");
+      XEN_EVAL_C_STRING("(define gl-version \"03-Feb-03\")");
 #endif
       gl_already_inited = TRUE;
     }

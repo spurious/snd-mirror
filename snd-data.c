@@ -439,14 +439,16 @@ int map_over_chans (snd_state *ss, int (*func)(chan_info *, void *), void *userp
   val = 0;
   if (ss)
     for (i = 0; i < ss->max_sounds; i++)
-      if ((sp = ((snd_info *)(ss->sounds[i]))) && 
-	  (sp->inuse))
-	for (j = 0; j < sp->nchans; j++)
-	  if ((cp = ((chan_info *)(sp->chans[j]))))
-	    {
-	      val = (*func)(cp, userptr);
-	      if (val) return(val);
-	    }
+      {
+	sp = ss->sounds[i];
+	if ((sp) && (sp->inuse))
+	  for (j = 0; j < sp->nchans; j++)
+	    if ((cp = ((chan_info *)(sp->chans[j]))))
+	      {
+		val = (*func)(cp, userptr);
+		if (val) return(val);
+	      }
+      }
   return(val);
 }
 
@@ -457,11 +459,13 @@ void for_each_chan_1(snd_state *ss, void (*func)(chan_info *, void *), void *use
   chan_info *cp;
   if (ss)
     for (i = 0; i < ss->max_sounds; i++)
-      if ((sp = ((snd_info *)(ss->sounds[i]))) && 
-	  (sp->inuse))
-	for (j = 0; j < sp->nchans; j++)
-	  if ((cp = ((chan_info *)(sp->chans[j]))))
-	    (*func)(cp, userptr);
+      {
+	sp = ss->sounds[i];
+	if ((sp) && (sp->inuse))
+	  for (j = 0; j < sp->nchans; j++)
+	    if ((cp = ((chan_info *)(sp->chans[j]))))
+	      (*func)(cp, userptr);
+      }
 }
 
 void for_each_chan(snd_state *ss, void (*func)(chan_info *))
@@ -471,11 +475,13 @@ void for_each_chan(snd_state *ss, void (*func)(chan_info *))
   chan_info *cp;
   if (ss)
     for (i = 0; i < ss->max_sounds; i++)
-      if ((sp = ((snd_info *)(ss->sounds[i]))) && 
-	  (sp->inuse))
-	for (j = 0; j < sp->nchans; j++)
-	  if ((cp = ((chan_info *)(sp->chans[j]))))
-	    (*func)(cp);
+      {
+	sp = ss->sounds[i];
+	if ((sp) && (sp->inuse))
+	  for (j = 0; j < sp->nchans; j++)
+	    if ((cp = ((chan_info *)(sp->chans[j]))))
+	      (*func)(cp);
+      }
 }
 
 int map_over_sound_chans(snd_info *sp, int (*func)(chan_info *, void *), void *userptr)
@@ -510,12 +516,14 @@ int map_over_sounds(snd_state *ss, int (*func)(snd_info *, void *), void *userpt
   val = 0;
   if (ss)
     for (i = 0; i < ss->max_sounds; i++)
-      if ((sp = ((snd_info *)(ss->sounds[i]))) &&
-	  (sp->inuse))
-	{
-	  val = (*func)(sp, userptr);
-	  if (val) return(val);
-	}
+      {
+	sp = ss->sounds[i];
+	if ((sp) && (sp->inuse))
+	  {
+	    val = (*func)(sp, userptr);
+	    if (val) return(val);
+	  }
+      }
   return(val);
 }
 
@@ -525,9 +533,11 @@ void for_each_sound(snd_state *ss, void (*func)(snd_info *, void *), void *userp
   snd_info *sp;
   if (ss)
     for (i = 0; i < ss->max_sounds; i++)
-      if ((sp = ((snd_info *)(ss->sounds[i]))) &&
-	  (sp->inuse))
-	(*func)(sp, userptr);
+      {
+	sp = ss->sounds[i];
+	if ((sp) && (sp->inuse))
+	  (*func)(sp, userptr);
+      }
 }
 
 int map_over_separate_chans(snd_state *ss, int (*func)(chan_info *, void *), void *userptr)
@@ -537,14 +547,16 @@ int map_over_separate_chans(snd_state *ss, int (*func)(chan_info *, void *), voi
   val = 0;
   if (ss)
     for (i = 0; i < ss->max_sounds; i++)
-      if ((sp = ((snd_info *)(ss->sounds[i]))) && 
-	  (sp->inuse))
-	{
-	  if (sp->channel_style != CHANNELS_SEPARATE)
-	    val = (*func)(sp->chans[0], userptr);
-	  else val = map_over_sound_chans(sp, func, userptr);
-	  if (val) return(val);
-	}
+      {
+	sp = ss->sounds[i];
+	if ((sp) && (sp->inuse))
+	  {
+	    if (sp->channel_style != CHANNELS_SEPARATE)
+	      val = (*func)(sp->chans[0], userptr);
+	    else val = map_over_sound_chans(sp, func, userptr);
+	    if (val) return(val);
+	  }
+      }
   return(val);
 }
 
@@ -556,13 +568,16 @@ int active_channels (snd_state *ss, int count_virtual_channels)
   snd_info *sp;
   chans = 0;
   for (i = 0; i < ss->max_sounds; i++)
-    if (snd_ok(sp = (ss->sounds[i])))
-      {
-	if ((count_virtual_channels == WITH_VIRTUAL_CHANNELS) ||
-	    (sp->channel_style == CHANNELS_SEPARATE))
-	  chans += sp->nchans;
-	else chans++;
-      }
+    {
+      sp = ss->sounds[i];
+      if (snd_ok(sp))
+	{
+	  if ((count_virtual_channels == WITH_VIRTUAL_CHANNELS) ||
+	      (sp->channel_style == CHANNELS_SEPARATE))
+	    chans += sp->nchans;
+	  else chans++;
+	}
+    }
   return(chans);
 }
 
@@ -609,8 +624,11 @@ static snd_info *any_active_sound(snd_state *ss)
   snd_info *sp;
   int i;
   for (i = 0; i < ss->max_sounds; i++)
-    if ((sp = (ss->sounds[i])) && (sp->inuse)) 
-      return(sp);
+    {
+      sp = ss->sounds[i];
+      if ((sp) && (sp->inuse))
+	return(sp);
+    }
   return(NULL);
 }
 

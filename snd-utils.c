@@ -513,11 +513,14 @@ static char *mem_stats(snd_state *ss, int ub)
       }
   result = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
   for (i = 0; i < ss->max_sounds; i++)
-    if ((sp = ((snd_info *)(ss->sounds[i]))))
-      {
-	snds++;
-	chns += sp->allocated_chans;
-      }
+    {
+      sp = ss->sounds[i];
+      if (sp)
+	{
+	  snds++;
+	  chns += sp->allocated_chans;
+	}
+    }
   mus_snprintf(result, PRINT_BUFFER_SIZE, "snd mem: %s (%s ptrs), %d sounds, %d chans (%s)\n",
 	  ksum = kmg(sum),
 	  kptrs = kmg(ptrs),
@@ -647,8 +650,6 @@ int io_fclose(FILE *stream, const char *func, const char *file, int line)
   return(fclose(stream));
 }
 
-int file_belongs_to_region(const char *file);
-
 void mem_report(void)
 {
   int loc, i, j, sum, ptr = 0, have_stacks = FALSE;
@@ -700,42 +701,42 @@ void mem_report(void)
       if (sum > 0)
 	{
 	  fprintf(Fp, "%s[%d]:%s:  %d (%d)", files[ptr], lines[ptr], functions[ptr], sums[ptr], ptrs[ptr]);
-	  if (1)
-	  {
-	    int fd, i, line, bytes, happy = TRUE;
-	    char buf[8192];
-	    fd = open(files[ptr], O_RDONLY, 0);
-	    line = 1;
-	    while (happy)
-	      {
-		bytes = read(fd, buf, 8192);
-		if (bytes <= 0) 
-		  {
-		    fprintf(Fp, "where is %s[%d]?\n", files[ptr], lines[ptr]);
-		    happy = FALSE;
-		    break;
-		  }
-		for (i = 0; i < bytes; i++)
-		  {
-		    if (buf[i] == '\n')
-		      {
-			line++;
-			if (line == lines[ptr]) fprintf(Fp, ":   ");
-			if (line > lines[ptr]) 
-			  {
-			    fprintf(Fp, "\n");
-			    happy = FALSE;
-			    break;
-			  }
-		      }
-		    else
-		      {
-			if (line == lines[ptr]) fprintf(Fp, "%c", buf[i]);
-		      }
-		  }
-	      }
-	    close(fd);
-	  }
+	  if (0)
+	    {
+	      int fd, i, line, bytes, happy = TRUE;
+	      char buf[8192];
+	      fd = open(files[ptr], O_RDONLY, 0);
+	      line = 1;
+	      while (happy)
+		{
+		  bytes = read(fd, buf, 8192);
+		  if (bytes <= 0) 
+		    {
+		      fprintf(Fp, "where is %s[%d]?\n", files[ptr], lines[ptr]);
+		      happy = FALSE;
+		      break;
+		    }
+		  for (i = 0; i < bytes; i++)
+		    {
+		      if (buf[i] == '\n')
+			{
+			  line++;
+			  if (line == lines[ptr]) fprintf(Fp, ":   ");
+			  if (line > lines[ptr]) 
+			    {
+			      fprintf(Fp, "\n");
+			      happy = FALSE;
+			      break;
+			    }
+			}
+		      else
+			{
+			  if (line == lines[ptr]) fprintf(Fp, "%c", buf[i]);
+			}
+		    }
+		}
+	      close(fd);
+	    }
 	  else fprintf(Fp, "\n");
 	  sums[ptr] = 0;
 	  if (have_stacks)
@@ -754,13 +755,7 @@ void mem_report(void)
 
   for (i = 0; i < file_size; i++)
     if (open_files[i])
-      {
-	int reg;
-	reg = file_belongs_to_region(open_files[i]);
-	if (reg != INVALID_REGION)
-	  fprintf(Fp, "region %d: %s: %s[%d] (%s) %d %p?\n", reg, file_files[i], file_funcs[i], file_lines[i], open_files[i], file_fds[i], file_fls[i]);
-	else fprintf(Fp, "%s: %s[%d] (%s) %d %p?\n", file_files[i], file_funcs[i], file_lines[i], open_files[i], file_fds[i], file_fls[i]);
-      }
+      fprintf(Fp, "%s: %s[%d] (%s) %d %p?\n", file_files[i], file_funcs[i], file_lines[i], open_files[i], file_fds[i], file_fls[i]);
   fclose(Fp);
 }
 

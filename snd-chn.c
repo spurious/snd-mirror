@@ -496,9 +496,6 @@ void start_amp_env(chan_info *cp)
 {
   chan_context *cgx;
   snd_state *ss;
-#if DEBUGGING
-  if (cp == NULL) abort();
-#endif
   cgx = cp->cgx;
   if (cgx)
     {

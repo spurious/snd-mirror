@@ -1379,8 +1379,8 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form)
   int var_loc = 0, local_var = FALSE;
   xen_value *v = NULL;
   ptree *upper = NULL;
-  char varname[256];
-  mus_snprintf(varname, 256, "%s", XEN_SYMBOL_TO_C_STRING(form));
+  char *varname;
+  varname = XEN_SYMBOL_TO_C_STRING(form);
   var = find_var_in_ptree(prog, varname);
   if (var) return(copy_xen_value(var->v));
   val = symbol_to_value(prog->code, form, &local_var);
@@ -1754,7 +1754,7 @@ static xen_value *walk_sequence(ptree *prog, XEN body, int need_result, char *na
   return(v);
 }
 
-static xen_value *lambda_form(ptree *prog, XEN form, int separate);
+static xen_value *lambda_form(ptree *prog, XEN form, int separate, xen_value **args, int num_args);
 
 static char *define_form(ptree *prog, XEN form)
 {
@@ -1767,7 +1767,7 @@ static char *define_form(ptree *prog, XEN form)
     {
       if (XEN_LIST_P(var))
 	{
-	  v = lambda_form(prog, form, FALSE);
+	  v = lambda_form(prog, form, FALSE, NULL, 0);
 	  if (v == NULL) return(mus_format("can't handle this define: %s", XEN_AS_STRING(form)));
 	  add_var_to_ptree(prog, XEN_SYMBOL_TO_C_STRING(XEN_CAR(var)), v);
 	  FREE(v);
@@ -1884,9 +1884,9 @@ static char *sequential_binds(ptree *prog, XEN old_lets, const char *name)
   return(NULL);
 }
 
-static char *declare_args(ptree *prog, XEN form, int default_arg_type, int separate)
+static char *declare_args(ptree *prog, XEN form, int default_arg_type, int separate, xen_value **cur_args, int num_args)
 {
-  XEN arg, args, declarations, declaration;
+  XEN arg, args, declarations = XEN_FALSE, declaration;
   xen_value *v = NULL;
   int i, arg_num, arg_type;
   char *type;
@@ -1894,14 +1894,18 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, int separ
     args = XEN_CADR(form);
   else args = XEN_CDADR(form);
   if (!(XEN_LIST_P(args))) return(mus_format("can't handle non-explicit lambda args: %s", XEN_AS_STRING(args)));
-  declarations = XEN_CADDR(form);
-  if ((XEN_LIST_P(declarations)) && 
-      (XEN_NOT_NULL_P(declarations)) &&
-      (XEN_SYMBOL_P(XEN_CAR(declarations))) &&
-      (strcmp(XEN_SYMBOL_TO_C_STRING(XEN_CAR(declarations)), "declare") == 0))
-    declarations = XEN_CDR(declarations);
-  else declarations = XEN_FALSE;
-  arg_num = XEN_LIST_LENGTH(args);
+  if (num_args == 0)
+    {
+      declarations = XEN_CADDR(form);
+      if ((XEN_LIST_P(declarations)) && 
+	  (XEN_NOT_NULL_P(declarations)) &&
+	  (XEN_SYMBOL_P(XEN_CAR(declarations))) &&
+	  (strcmp(XEN_SYMBOL_TO_C_STRING(XEN_CAR(declarations)), "declare") == 0))
+	declarations = XEN_CDR(declarations);
+      else declarations = XEN_FALSE;
+      arg_num = XEN_LIST_LENGTH(args);
+    }
+  else arg_num = num_args;
   prog->arity = arg_num;
   if (arg_num > 0)
     {
@@ -1937,6 +1941,11 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, int separ
 		   */
 		}
 	    }
+	  else
+	    {
+	      if ((cur_args) && (cur_args[i]))
+		arg_type = cur_args[i]->type;
+	    }
 	  add_var_to_ptree(prog, 
 			   XEN_SYMBOL_TO_C_STRING(arg), 
 			   v = add_empty_var_to_ptree(prog, arg_type));
@@ -1964,7 +1973,7 @@ static xen_value *walk_then_undefine(ptree *prog, XEN form, int need_result, cha
   return(v);
 }
 
-static xen_value *lambda_form(ptree *prog, XEN form, int separate)
+static xen_value *lambda_form(ptree *prog, XEN form, int separate, xen_value **args, int num_args)
 {
   /* (lambda (args...) | args etc followed by forms */
   /* as args are declared as vars, put addrs in prog->args list */
@@ -1978,7 +1987,7 @@ static xen_value *lambda_form(ptree *prog, XEN form, int separate)
       new_tree = attach_to_ptree(prog);
       new_tree->code = XEN_FALSE;
       outer_locals = prog->var_ctr;
-      declare_args(new_tree, form, R_INT, separate); /* assuming clm here */
+      declare_args(new_tree, form, R_INT, separate, args, num_args);
       new_tree->result = walk_then_undefine(new_tree, XEN_CDDR(form), TRUE, "lambda", prog->var_ctr);
       if (new_tree->result)
 	{
@@ -1999,7 +2008,7 @@ static xen_value *lambda_form(ptree *prog, XEN form, int separate)
     }
   got_lambda = TRUE;
   locals_loc = prog->var_ctr;
-  err = declare_args(prog, form, R_FLOAT, separate);
+  err = declare_args(prog, form, R_FLOAT, separate, args, num_args);
   if (err) return(run_warn(err));
   return(walk_then_undefine(prog, XEN_CDDR(form), TRUE, "lambda", locals_loc));
 }
@@ -5026,6 +5035,7 @@ static void funcall_nf(int *args, int *ints, Float *dbls)
       INT_RESULT = ints[fres->addr];   
       break;
     }
+  /* TODO: extend funcall args and result to all types */
 }
 static char *descr_funcall_nf(int *args, int *ints, Float *dbls) 
 {
@@ -7016,7 +7026,7 @@ static xen_value *declare_1(ptree *prog, XEN form, int need_result)
 
 static xen_value *lambda_preform(ptree *prog, XEN form, int need_result)
 {
-  return(lambda_form(prog, form, TRUE));
+  return(lambda_form(prog, form, TRUE, NULL, 0));
 }
 
 static xen_value *quote_form(ptree *prog, XEN form, int need_result)
@@ -7361,6 +7371,16 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	  if (var == NULL)
 	    {
 	      /* add_global_var will find things like *, but ignores functions and returns null */
+	      
+#if 0
+	      {
+		XEN val;
+		int local_var;
+		val = symbol_to_value(prog->code, function, &local_var);
+		fprintf(stderr,"lookup: %s %d %d\n", funcname, XEN_SYMBOL_P(function), XEN_PROCEDURE_P(val));
+	      }
+#endif
+
 	      if (XEN_SYMBOL_P(function))
 		v = add_global_var_to_ptree(prog, function);
 	      /* (let ((gen (make-oscil 440))) (vct-map! v (lambda () (gen 0.0)))) */
@@ -7368,9 +7388,15 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 		if (XEN_LIST_P(function))
 		  v = walk(prog, function, NEED_ANY_RESULT);
 	      /* trying to support stuff like ((vector-ref gens 0) 0.0) here */
+
 	      /* if we had a way to handle arbitrary lambda args, this might pick up user func:
 	       *	   if (XEN_PROCEDURE_P(val))
 	       *         fprintf(stderr,"%s: %s\n", funcname, XEN_PROCEDURE_SOURCE_TO_C_STRING(val));
+	       * string_to_form(XEN_PROCEDURE_SOURCE_TO_C_STRING(function)) or is that redundant --
+	       *   can we walk scm_procedure_source(function)? Then if we know the in-going types,
+	       *   auto-declare them (use args[i]->type)
+	       * then v's type is R_FUNCTION and we fall into funcall_n below
+	       *   and the result of the walk is func->result->type
 	       */
 	      
 	    }

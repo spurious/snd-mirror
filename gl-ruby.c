@@ -44,7 +44,6 @@ XEN_NARGIFY_1(gxg_gdk_gl_context_get_gl_config_w, gxg_gdk_gl_context_get_gl_conf
 XEN_NARGIFY_1(gxg_gdk_gl_context_get_share_list_w, gxg_gdk_gl_context_get_share_list)
 XEN_NARGIFY_1(gxg_gdk_gl_context_is_direct_w, gxg_gdk_gl_context_is_direct)
 XEN_NARGIFY_1(gxg_gdk_gl_context_get_render_type_w, gxg_gdk_gl_context_get_render_type)
-XEN_NARGIFY_1(gxg_gdk_gl_context_get_colormap_w, gxg_gdk_gl_context_get_colormap)
 XEN_NARGIFY_2(gxg_gdk_gl_drawable_make_current_w, gxg_gdk_gl_drawable_make_current)
 XEN_NARGIFY_1(gxg_gdk_gl_drawable_is_double_buffered_w, gxg_gdk_gl_drawable_is_double_buffered)
 XEN_NARGIFY_1(gxg_gdk_gl_drawable_swap_buffers_w, gxg_gdk_gl_drawable_swap_buffers)
@@ -441,7 +440,6 @@ static void define_functions(void)
   GL_DEFINE_PROCEDURE(gdk_gl_context_get_share_list, gxg_gdk_gl_context_get_share_list_w, 1, 0, 0, H_gdk_gl_context_get_share_list);
   GL_DEFINE_PROCEDURE(gdk_gl_context_is_direct, gxg_gdk_gl_context_is_direct_w, 1, 0, 0, H_gdk_gl_context_is_direct);
   GL_DEFINE_PROCEDURE(gdk_gl_context_get_render_type, gxg_gdk_gl_context_get_render_type_w, 1, 0, 0, H_gdk_gl_context_get_render_type);
-  GL_DEFINE_PROCEDURE(gdk_gl_context_get_colormap, gxg_gdk_gl_context_get_colormap_w, 1, 0, 0, H_gdk_gl_context_get_colormap);
   GL_DEFINE_PROCEDURE(gdk_gl_drawable_make_current, gxg_gdk_gl_drawable_make_current_w, 2, 0, 0, H_gdk_gl_drawable_make_current);
   GL_DEFINE_PROCEDURE(gdk_gl_drawable_is_double_buffered, gxg_gdk_gl_drawable_is_double_buffered_w, 1, 0, 0, H_gdk_gl_drawable_is_double_buffered);
   GL_DEFINE_PROCEDURE(gdk_gl_drawable_swap_buffers, gxg_gdk_gl_drawable_swap_buffers_w, 1, 0, 0, H_gdk_gl_drawable_swap_buffers);

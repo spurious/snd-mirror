@@ -2235,7 +2235,8 @@ when finished, close-sound-file.  If the new data is to replace the old,
 call (set! (samples...) data) with the new sound file's name; otherwise call insert-samples.
 </p>
 <p>If you have Guile 1.4.1 or later, it's possible to access a vct object's
-elements with the syntax (obj index), equivalent to (vct-ref obj index).
+elements with the syntax (obj index), equivalent to (vct-ref obj index),
+but without some of the type checks.
 This is using a feature called "applicable smobs" in Guile.
 The clm generators also use this syntax:
 </p>

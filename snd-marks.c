@@ -108,23 +108,25 @@ static mark *find_mark_from_id(int id, chan_info **cps, int pos)
   mark *mp;
   ss = get_global_state();
   for (i = 0; i < ss->max_sounds; i++)
-    if ((sp = ((snd_info *)(ss->sounds[i]))) &&
-	(sp->inuse))
-      for (j = 0; j<(sp->nchans); j++)
-	if ((cp = ((chan_info *)(sp->chans[j]))))
-	  {
-	    if (pos < cp->marks_size) /* pos can be -1 */
-	      {
-		old_pos = cp->edit_ctr;
-		if (pos >= 0) cp->edit_ctr = pos;
-		/* memoization would have to be done here where we know cp->edit_ctr */
-		mp = map_over_marks(cp, find_mark_id_1, (void *)(&id), READ_FORWARD);
-		cp->edit_ctr = old_pos;
-		if (mp) 
-		  {
-		    cps[0] = cp; 
-		    return(mp);
-		  }
+    {
+      sp = ss->sounds[i];
+      if ((sp) && (sp->inuse))
+	for (j = 0; j<(sp->nchans); j++)
+	  if ((cp = ((chan_info *)(sp->chans[j]))))
+	    {
+	      if (pos < cp->marks_size) /* pos can be -1 */
+		{
+		  old_pos = cp->edit_ctr;
+		  if (pos >= 0) cp->edit_ctr = pos;
+		  /* memoization would have to be done here where we know cp->edit_ctr */
+		  mp = map_over_marks(cp, find_mark_id_1, (void *)(&id), READ_FORWARD);
+		  cp->edit_ctr = old_pos;
+		  if (mp) 
+		    {
+		      cps[0] = cp; 
+		      return(mp);
+		    }
+		}
 	      }
 	  }
   return(NULL);

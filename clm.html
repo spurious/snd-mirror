@@ -603,7 +603,17 @@ Say we want 40% .5, and 60% 1.0,
   <a name="scale-envelope"><em class=def>scale-envelope</em></a> <i>e scale</i> &amp;optional <i>offset</i>    scale e
   <a name="normalize-envelope"><em class=def>normalize-envelope</em></a> <i>e</i> &amp;optional <i>norm</i>        normalize e
 </pre>
-<p>See env.lisp for more such functions.</p>
+<p>See env.lisp for more such functions.  To copy an existing envelope while changing one aspect (say
+duration), it's simplest to use make-env:
+</p>
+<pre>
+(defun change-env-dur (e dur)
+  (make-env (mus-data e)            ; the original breakpoints
+	    :scaler (mus-scaler e)  ; these are the original values passed to make-env
+	    :offset (mus-offset e)
+            :base (mus-increment e) ; the base (using "mus-increment" because it was available...)
+	    :duration dur))
+</pre>
 <br>
 
 

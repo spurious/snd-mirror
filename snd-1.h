@@ -1196,7 +1196,6 @@ char *kmg (int num);
   void start_timing(void);
   void stop_timing(void);
 #endif
-XEN show_stack(void);
 
 
 
