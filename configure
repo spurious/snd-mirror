@@ -21827,6 +21827,10 @@ _ACEOF
 #define SNDLIB_DISABLE_DEPRECATED 1
 _ACEOF
 
+    cat >>confdefs.h <<\_ACEOF
+#define XEN_DISABLE_DEPRECATED 1
+_ACEOF
+
   fi
 fi;
 

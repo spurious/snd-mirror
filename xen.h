@@ -21,11 +21,12 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 14
-#define XEN_VERSION "1.14"
+#define XEN_MINOR_VERSION 15
+#define XEN_VERSION "1.15"
 
 /* HISTORY:
  *
+ *  21-Jul-04: deprecated XEN_TO_SMALL_C_INT and C_TO_SMALL_XEN_INT.
  *  28-Jun-04: XEN_REQUIRED_ARGS_OK to make it easier to turn off this check.
  *  9-June-04: complex number conversions (Guile) -- I don't think Ruby has complex numbers.
  *  21-May-04: plug some memory leaks in Ruby cases.
@@ -92,6 +93,25 @@
 
 
 /* ------------------------------ GUILE ------------------------------ */
+
+/* TODO: new: scm_to_signed_integer, scm_to_unsigned_integer, scm_is_signed_integer, scm_is_unsigned_integer
+ *            scm_to_short, scm_to_ushort, (scm_to_long_long, scm_to_ulong_long, scm_to_int8, scm_to_uint8,
+ *            scm_to_int16, scm_to_uint16, scm_to_int32, scm_to_uint32,
+ *            scm_to_int64, scm_to_uint64, 
+ *            scm_from_long_long, scm_from_ulong_long, scm_from_int8,
+ *            scm_from_uint8, scm_from_int16, scm_from_uint16, scm_from_int32,
+ *            scm_from_uint32, scm_from_int64, scm_from_uint64,
+ *            scm_is_false, scm_is_true, scm_from_bool, and scm_is_bool
+ *            scm_is_unsigned_integer, scm_to_signed_integer,
+ *            scm_to_unsigned_integer, scm_to_schar, scm_to_uchar, scm_to_char,
+ *            scm_to_short, scm_to_ushort, scm_to_long, scm_to_ulong,
+ *            scm_to_size_t, scm_to_ssize_t, scm_from_schar, scm_from_uchar,
+ *            scm_from_char, scm_from_short, scm_from_ushort, scm_from_int,
+ *            scm_from_uint, scm_from_long, scm_from_ulong, scm_from_size_t,
+ *            scm_from_ssize_t, scm_is_real, scm_to_double, scm_from_double
+ *       deprecated: SCM_BOOLP
+ *               #define SCM_BOOLP(x) (SCM_EQ_P ((x), SCM_BOOL_F) || SCM_EQ_P ((x), SCM_BOOL_T))
+ */
 
 #if HAVE_GUILE
 #if (!HAVE_SCM_NUM2INT)
@@ -232,8 +252,6 @@
 #define XEN_TO_C_INT_OR_ELSE(a, b)    xen_to_c_int_or_else(a, b, c__FUNCTION__)
 #define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) xen_to_c_int_or_else(a, b, c)
 #define C_TO_XEN_INT(a)               scm_long2num((long)a)
-#define C_TO_SMALL_XEN_INT(a)         SCM_MAKINUM(a)
-#define XEN_TO_SMALL_C_INT(a)         ((int)(SCM_INUM(a)))
 #define XEN_TO_C_ULONG(a)             scm_num2ulong(a, 0, c__FUNCTION__)
 #define C_TO_XEN_ULONG(a)             scm_ulong2num((unsigned long)a)
 #define XEN_ULONG_P(Arg1)             (XEN_NOT_FALSE_P(scm_number_p(Arg1)))
@@ -343,20 +361,20 @@
 #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
   { \
     if (XEN_DEFINED_P(Name)) fprintf(stderr, "%s is defined\n", Name); \
-    scm_c_define(Name, C_TO_SMALL_XEN_INT(Value)); \
+    scm_c_define(Name, C_TO_XEN_INT(Value)); \
     XEN_SET_DOCUMENTATION(Name, Help); \
   }
 #else
 #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
   { \
-    scm_c_define(Name, C_TO_SMALL_XEN_INT(Value)); \
+    scm_c_define(Name, C_TO_XEN_INT(Value)); \
     XEN_SET_DOCUMENTATION(Name, Help); \
   }
 #endif
 #else
 #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
   { \
-    gh_define(Name, C_TO_SMALL_XEN_INT(Value)); \
+    gh_define(Name, C_TO_XEN_INT(Value)); \
     XEN_SET_DOCUMENTATION(Name, Help); \
   }
 #endif
@@ -416,7 +434,7 @@
 #define XEN_HOOK_P(Arg)               (SCM_HOOKP(Arg))
 
 #define XEN_LIST_LENGTH(Arg)          ((int)(scm_ilength(Arg)))
-#define XEN_LIST_REF(Lst, Num)        scm_list_ref(Lst, C_TO_SMALL_XEN_INT(Num))
+#define XEN_LIST_REF(Lst, Num)        scm_list_ref(Lst, C_TO_XEN_INT(Num))
 #define XEN_LIST_SET(Lst, Loc, Val)   scm_list_set_x(Lst, C_TO_XEN_INT(Loc), Val)
 #define XEN_CONS(Arg1, Arg2)          scm_cons(Arg1, Arg2)
 #define XEN_CONS_2(Arg1, Arg2, Arg3)  scm_cons2(Arg1, Arg2, Arg3)
@@ -499,15 +517,15 @@
 #define XEN_ARITY(Func)               scm_i_procedure_arity(Func)
 
 #if 1
-#define XEN_REQUIRED_ARGS(Func)       XEN_TO_SMALL_C_INT(XEN_CAR(XEN_ARITY(Func)))
+#define XEN_REQUIRED_ARGS(Func)       XEN_TO_C_INT(XEN_CAR(XEN_ARITY(Func)))
 #else
 #define XEN_REQUIRED_ARGS(Func) \
-  XEN_TO_SMALL_C_INT(((!(SCM_CLOSUREP(Func))) && \
-                      (XEN_NOT_FALSE_P(scm_procedure_property(Func, scm_str2symbol("hobbit-numargs"))))) ? \
-		     scm_procedure_property(Func,scm_str2symbol("hobbit-numargs")) : XEN_CAR(XEN_ARITY(Func)))
+  XEN_TO_C_INT(((!(SCM_CLOSUREP(Func))) && \
+                (XEN_NOT_FALSE_P(scm_procedure_property(Func, scm_str2symbol("hobbit-numargs"))))) ? \
+		 scm_procedure_property(Func,scm_str2symbol("hobbit-numargs")) : XEN_CAR(XEN_ARITY(Func)))
 #endif
 
-#define XEN_REQUIRED_ARGS_OK(Func, Args) (XEN_TO_SMALL_C_INT(XEN_CAR(XEN_ARITY(Func))) == Args)
+#define XEN_REQUIRED_ARGS_OK(Func, Args) (XEN_TO_C_INT(XEN_CAR(XEN_ARITY(Func))) == Args)
 #ifdef SCM_CHARP
   #define XEN_KEYWORD_P(Obj)          (SCM_KEYWORDP(Obj))
 #else
@@ -520,7 +538,7 @@
 #define XEN_LOAD_FILE(File)           scm_primitive_load(C_TO_XEN_STRING(File))
 
 #define XEN_DEFINE_HOOK(Var, Name, Arity, Help) Var = xen_guile_create_hook(Name, Arity, Help, XEN_DOCUMENTATION_SYMBOL)
-#define XEN_DEFINE_SIMPLE_HOOK(Var, Arity) Var = scm_make_hook(C_TO_SMALL_XEN_INT(Arity))
+#define XEN_DEFINE_SIMPLE_HOOK(Var, Arity) Var = scm_make_hook(C_TO_XEN_INT(Arity))
 #define XEN_CLEAR_HOOK(Arg)           scm_reset_hook_x(Arg)
 #define XEN_HOOKED(a)                 (XEN_NOT_NULL_P(SCM_HOOK_PROCEDURES(a)))
 #define XEN_HOOK_PROCEDURES(a)        SCM_HOOK_PROCEDURES(a)
@@ -721,8 +739,6 @@ XEN xen_guile_dbg_new_procedure(const char *name, XEN (*func)(), int req, int op
 #endif
 
 #define C_TO_XEN_INT(a)                   INT2NUM(a)
-#define C_TO_SMALL_XEN_INT(a)             INT2FIX(a)
-#define XEN_TO_SMALL_C_INT(a)             FIX2INT(a)
 #define XEN_TO_C_ULONG(a)                 NUM2ULONG(a)
 #ifdef ULONG2NUM
   #define C_TO_XEN_ULONG(a)               ULONG2NUM((unsigned long)a)
@@ -1369,8 +1385,6 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_TO_C_STRING(STR) NULL
 #define C_TO_XEN_DOUBLE(a) 0
 #define C_TO_XEN_INT(a) a
-#define C_TO_SMALL_XEN_INT(a) a
-#define XEN_TO_SMALL_C_INT(a) a
 #define C_TO_XEN_LONG_LONG(a) a
 #define XEN_TO_C_LONG_LONG(a) a
 #define C_TO_XEN_STRING(a) 0
@@ -1528,4 +1542,9 @@ char *xen_version(void);
 void xen_repl(int argc, char **argv);
 void xen_initialize(void);
 void xen_gc_mark(XEN val);
+
+#ifndef XEN_DISABLE_DEPRECATED
+  #define C_TO_SMALL_XEN_INT(a) C_TO_XEN_INT(a)
+  #define XEN_TO_SMALL_C_INT(a) XEN_TO_C_INT(a)
+#endif
 #endif

@@ -14389,10 +14389,10 @@ EDITS: 5
 		  (fneq (frame-ref fr4 0) 1.0))
 	      (snd-display ";fr+*: ~A ~A" fr3 fr4))
 	  (if (fneq (frame-ref fr5 0) .5) 
-	      (snd-display ";sample->frame: ~A?" (frame-ref fr5 0))))
-	(sample->frame fr1 .5 fr5)
-	(if (fneq (frame-ref fr5 0) .5) 
-	    (snd-display ";repeat sample->frame: ~A?" (frame-ref fr5 0)))
+	      (snd-display ";sample->frame: ~A?" (frame-ref fr5 0)))
+	  (sample->frame fr1 .5 fr5)
+	  (if (fneq (frame-ref fr5 0) .5) 
+	      (snd-display ";repeat sample->frame: ~A?" (frame-ref fr5 0))))
 	(let ((fr3 (make-frame 2))
 	      (fr4 (make-frame 4)))
 	  (frame-set! fr3 0 1.0)
@@ -16280,28 +16280,91 @@ EDITS: 5
 	(if (not (eq? (car var) 'out-of-range))
 	    (snd-display ";make-granulate bad sizes: ~A" var)))
       
-      (let ((ind (open-sound "oboe.snd")))
+      (let ((ind (open-sound "oboe.snd"))
+	    (mx (maxamp)))
+	(let ((rd (make-sample-reader 0)))
+	  (let ((grn (make-granulate :expansion 2.0
+				   :input (lambda (dir) (rd))
+				   :edit (lambda (g)
+					   (let ((grain (mus-data g))  ; current grain
+						 (len (mus-length g))) ; current grain length
+					     (do ((i 0 (1+ i)))
+						 ((= i len) len)       ; grain length unchanged in this case
+					       (vct-set! grain i (* 2 (vct-ref grain i))))
+					     0)))))
+	    (map-channel (lambda (y) (granulate grn)))
+	    (if (or (< (/ (maxamp) mx) 1.5) (> (/ mx (maxamp)) 2.5))
+		(snd-display ";gran edit 2* (0): ~A ~A" mx (maxamp)))
+	    (undo)))
+	(let ((rd (make-sample-reader 0)))
+	  (let ((grn (make-granulate :expansion 2.0
+				     :input (lambda (dir) (rd))
+				     :edit (lambda (g)
+					     (let ((grain (mus-data g))  ; current grain
+						   (len (mus-length g))) ; current grain length
+					       (do ((i 0 (1+ i)))
+						   ((= i len) len)       ; grain length unchanged in this case
+						 (vct-set! grain i (* 4 (vct-ref grain i))))
+					       0)))))
+	      (map-channel (lambda (y) (granulate grn)))
+	    (if (or (< (/ (maxamp) mx) 3.0) (> (/ mx (maxamp)) 6.0))
+		(snd-display ";gran edit 4* (0): ~A ~A" mx (maxamp)))
+	    (revert-sound ind)))
 	(let ((grn (make-granulate :expansion 2.0
 				   :edit (lambda (g)
 					   (let ((grain (mus-data g))  ; current grain
 						 (len (mus-length g))) ; current grain length
 					     (do ((i 0 (1+ i)))
 						 ((= i len) len)       ; grain length unchanged in this case
-					       (vct-set! grain i (* 2 (vct-ref grain i))))))))
-	      ;; TODO: shouldn't these edit functions return 0?
+					       (vct-set! grain i (* 2 (vct-ref grain i))))
+					     0))))
 	      (rd (make-sample-reader 0)))
-	  (map-channel (lambda (y) (granulate grn (lambda (dir) (rd))))))
-	(let ((mx (maxamp)))
-	  (undo)
+	  (map-channel (lambda (y) (granulate grn (lambda (dir) (rd)))))
+	  (if (or (< (/ (maxamp) mx) 1.5) (> (/ mx (maxamp)) 2.5))
+	      (snd-display ";gran edit 2* (1): ~A ~A" mx (maxamp)))
+          (undo)
 	  (let ((grn (make-granulate :expansion 2.0
 				     :edit (lambda (g)
 					     (let ((grain (mus-data g))  ; current grain
 						   (len (mus-length g))) ; current grain length
 					       (do ((i 0 (1+ i)))
 						   ((= i len) len)       ; grain length unchanged in this case
-						 (vct-set! grain i (* 4 (vct-ref grain i))))))))
+						 (vct-set! grain i (* 4 (vct-ref grain i))))
+					       0))))
 		(rd (make-sample-reader 0)))
-	    (map-channel (lambda (y) (granulate grn (lambda (dir) (rd)))))))
+	    (map-channel (lambda (y) (granulate grn (lambda (dir) (rd)))))
+	    (if (or (< (/ (maxamp) mx) 3.0) (> (/ mx (maxamp)) 6.0))
+		(snd-display ";gran edit 4* (1): ~A ~A" mx (maxamp)))
+	    (revert-sound ind)))
+	(let ((grn (make-granulate :expansion 2.0))
+	      (rd (make-sample-reader 0)))
+	  (map-channel (lambda (y) (granulate grn 
+					      (lambda (dir) 
+						(rd))
+					      (lambda (g)
+						(let ((grain (mus-data g))  ; current grain
+						      (len (mus-length g))) ; current grain length
+						  (do ((i 0 (1+ i)))
+						      ((= i len) len)       ; grain length unchanged in this case
+						    (vct-set! grain i (* 2 (vct-ref grain i))))
+						  0)))))
+	  (if (or (< (/ (maxamp) mx) 1.5) (> (/ mx (maxamp)) 2.5))
+	      (snd-display ";gran edit 2* (2): ~A ~A" mx (maxamp)))
+          (undo)
+	  (let ((grn (make-granulate :expansion 2.0))
+		(rd (make-sample-reader 0)))
+	    (map-channel (lambda (y) (granulate grn 
+						(lambda (dir) 
+						  (rd))
+						(lambda (g)
+						  (let ((grain (mus-data g))  ; current grain
+							(len (mus-length g))) ; current grain length
+						    (do ((i 0 (1+ i)))
+							((= i len) len)       ; grain length unchanged in this case
+						      (vct-set! grain i (* 4 (vct-ref grain i))))
+						    0)))))
+	    (if (or (< (/ (maxamp) mx) 3.0) (> (/ mx (maxamp)) 6.0))
+		(snd-display ";gran edit 4* (2): ~A ~A" mx (maxamp)))))
 	(close-sound ind))
 
       (let* ((v0 (make-vct 32))

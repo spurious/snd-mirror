@@ -4263,7 +4263,7 @@ included an 'input' argument, input-function is ignored."
 	gn->vcts[MUS_INPUT_FUNCTION] = func;
       else XEN_BAD_ARITY_ERROR(S_src, 3, func, "src input function wants 1 arg");
     }
-  return(C_TO_XEN_DOUBLE(mus_src(XEN_TO_MUS_ANY(obj), pm1, 0)));
+  return(C_TO_XEN_DOUBLE(mus_src(XEN_TO_MUS_ANY(obj), pm1, NULL)));
 }
 
 static XEN g_make_src(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
@@ -4325,19 +4325,43 @@ static XEN g_granulate_p(XEN obj)
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_granulate_p(XEN_TO_MUS_ANY(obj)))));
 }
 
-static XEN g_granulate(XEN obj, XEN func) 
+static int grnedit(void *ptr)
 {
-  #define H_granulate "(" S_granulate " gen): next sample from granular synthesis generator"
+  mus_xen *gn = (mus_xen *)ptr;
+  return(XEN_TO_C_INT(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_EDIT_FUNCTION], 
+					  gn->vcts[MUS_SELF_WRAPPER],
+					  "granulate edit function")));
+}
+
+static XEN g_granulate(XEN obj, XEN func, XEN edit_func) 
+{
+  #define H_granulate "(" S_granulate " gen (input-func #f) (edit-func #f)): next sample from granular synthesis generator"
   mus_xen *gn;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_granulate_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_granulate, "a granulate gen");
   gn = XEN_TO_MUS_XEN(obj);
-  if (XEN_PROCEDURE_P(func))
+  if (XEN_BOUND_P(func))
     {
-      if (XEN_REQUIRED_ARGS_OK(func, 1))
-	gn->vcts[MUS_INPUT_FUNCTION] = func;
-      else XEN_BAD_ARITY_ERROR(S_granulate, 2, func, "granulate input function wants 1 arg");
+      if (XEN_PROCEDURE_P(func))
+	{
+	  if (XEN_REQUIRED_ARGS_OK(func, 1))
+	    gn->vcts[MUS_INPUT_FUNCTION] = func;
+	  else XEN_BAD_ARITY_ERROR(S_granulate, 2, func, "granulate input function wants 1 arg");
+	}
+      if (XEN_PROCEDURE_P(edit_func))
+	{
+	  if (XEN_REQUIRED_ARGS_OK(edit_func, 1))
+	    {
+	      if (!(XEN_BOUND_P(gn->vcts[MUS_EDIT_FUNCTION]))) /* default value is XEN_UNDEFINED */
+		{
+		  mus_granulate_set_edit_function(gn->gen, grnedit);
+		  gn->vcts[MUS_EDIT_FUNCTION] = edit_func;
+		  gn->vcts[MUS_DATA_WRAPPER] = make_vct_wrapper(mus_granulate_grain_max_length(gn->gen), mus_data(gn->gen));
+		}
+	    }
+	  else XEN_BAD_ARITY_ERROR(S_granulate, 3, edit_func, "granulate edit function wants 1 arg");
+	}
     }
-  return(C_TO_XEN_DOUBLE(mus_granulate(XEN_TO_MUS_ANY(obj), 0)));
+  return(C_TO_XEN_DOUBLE(mus_granulate(XEN_TO_MUS_ANY(obj), NULL)));
 }
 
 static XEN g_mus_ramp(XEN obj)
@@ -4352,14 +4376,6 @@ static XEN g_mus_set_ramp(XEN obj, XEN val)
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_granulate_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_setB S_mus_ramp, "a granulate gen");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_ramp, "a number");
   return(C_TO_XEN_OFF_T(mus_set_ramp(XEN_TO_MUS_ANY(obj), XEN_TO_C_OFF_T_OR_ELSE(val, 0))));
-}
-
-static int grnedit (void *ptr)
-{
-  mus_xen *gn = (mus_xen *)ptr;
-  return(XEN_TO_C_INT(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_EDIT_FUNCTION], 
-					  gn->vcts[MUS_SELF_WRAPPER],
-					  "granulate edit function")));
 }
 
 static XEN g_make_granulate(XEN arglist)
@@ -4425,7 +4441,8 @@ The edit function, if any, should return the length in samples of the grain, or 
     XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[7], keys[7], "max-size ~A too large!");
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   old_error_handler = mus_error_set_handler(local_mus_error);
-  ge = mus_make_granulate(funcall1, expansion, segment_length, segment_scaler, output_hop, ramp_time, jitter, maxsize, 
+  ge = mus_make_granulate(funcall1, 
+			  expansion, segment_length, segment_scaler, output_hop, ramp_time, jitter, maxsize, 
 			  (XEN_NOT_BOUND_P(edit_obj) ? NULL : grnedit),
 			  (void *)gn);
   mus_error_set_handler(old_error_handler);
@@ -4433,7 +4450,8 @@ The edit function, if any, should return the length in samples of the grain, or 
     {
       gn->nvcts = MAX_VCTS;
       gn->vcts = make_vcts(gn->nvcts);
-      if (XEN_BOUND_P(edit_obj)) gn->vcts[MUS_DATA_WRAPPER] = make_vct_wrapper(mus_granulate_grain_max_length(ge), mus_data(ge));
+      if (XEN_BOUND_P(edit_obj)) 
+	gn->vcts[MUS_DATA_WRAPPER] = make_vct_wrapper(mus_granulate_grain_max_length(ge), mus_data(ge));
       gn->vcts[MUS_INPUT_FUNCTION] = in_obj;
       gn->vcts[MUS_EDIT_FUNCTION] = edit_obj;
       gn->gen = ge;
@@ -4469,7 +4487,7 @@ static XEN g_convolve(XEN obj, XEN func)
 	gn->vcts[MUS_INPUT_FUNCTION] = func;
       else XEN_BAD_ARITY_ERROR(S_convolve, 2, func, "convolve input function wants 1 arg");
     }
-  return(C_TO_XEN_DOUBLE(mus_convolve(XEN_TO_MUS_ANY(obj), 0)));
+  return(C_TO_XEN_DOUBLE(mus_convolve(XEN_TO_MUS_ANY(obj), NULL)));
 }
 
 /* filter-size? */
@@ -4619,7 +4637,7 @@ static XEN g_phase_vocoder(XEN obj, XEN func)
 	gn->vcts[MUS_INPUT_FUNCTION] = func;
       else XEN_BAD_ARITY_ERROR(S_phase_vocoder, 2, func, "phase-vocoder input function wants 1 arg");
     }
-  return(C_TO_XEN_DOUBLE(mus_phase_vocoder(XEN_TO_MUS_ANY(obj), 0)));
+  return(C_TO_XEN_DOUBLE(mus_phase_vocoder(XEN_TO_MUS_ANY(obj), NULL)));
 }
 
 static XEN g_make_phase_vocoder(XEN arglist)
@@ -5239,7 +5257,7 @@ XEN_NARGIFY_1(g_src_p_w, g_src_p)
 XEN_ARGIFY_3(g_src_w, g_src)
 XEN_ARGIFY_6(g_make_src_w, g_make_src)
 XEN_NARGIFY_1(g_granulate_p_w, g_granulate_p)
-XEN_ARGIFY_2(g_granulate_w, g_granulate)
+XEN_ARGIFY_3(g_granulate_w, g_granulate)
 XEN_VARGIFY(g_make_granulate_w, g_make_granulate)
 XEN_NARGIFY_1(g_mus_ramp_w, g_mus_ramp)
 XEN_NARGIFY_2(g_mus_set_ramp_w, g_mus_set_ramp)
@@ -5929,7 +5947,7 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_increment, g_mus_increment_w, H_mus_increment, S_setB S_mus_increment, g_mus_set_increment_w,  1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_granulate_p,    g_granulate_p_w,    1, 0, 0, H_granulate_p);
-  XEN_DEFINE_PROCEDURE(S_granulate,      g_granulate_w,      1, 1, 0, H_granulate);
+  XEN_DEFINE_PROCEDURE(S_granulate,      g_granulate_w,      1, 2, 0, H_granulate);
   XEN_DEFINE_PROCEDURE(S_make_granulate, g_make_granulate_w, 0, 0, 1, H_make_granulate);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_ramp, g_mus_ramp_w, H_mus_ramp,

@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 0
-#define MUS_DATE "19-July-04"
+#define MUS_REVISION 1
+#define MUS_DATE "21-July-04"
 
 /*
+ * 21-July:    edit-func as run-time arg to granulate (for CL/clm compatibility)
  * 19-July:    clm 3.0!
  *             deprecated mus_ina|b, mus-outa|b|c|d.
  *             mus_make_frame_to_file_with_comment, mus_mixer_scale, mus_make_frame|mixer_with_data.
@@ -578,6 +579,7 @@ mus_any *mus_make_granulate(Float (*input)(void *arg, int direction),
 			    int (*edit)(void *closure),
 			    void *closure);
 int mus_granulate_grain_max_length(mus_any *ptr);
+void mus_granulate_set_edit_function(mus_any *ptr, int (*edit)(void *closure));
 off_t mus_ramp(mus_any *ptr);
 off_t mus_set_ramp(mus_any *ptr, off_t val);
 off_t mus_hop(mus_any *ptr);

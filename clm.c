@@ -6841,6 +6841,14 @@ mus_any *mus_make_granulate(Float (*input)(void *arg, int direction),
   return((mus_any *)spd);
 }
 
+void mus_granulate_set_edit_function(mus_any *ptr, int (*edit)(void *closure))
+{
+  grn_info *gen = (grn_info *)ptr;
+  if (!(gen->grain))
+    gen->grain = (Float *)clm_calloc(gen->in_data_len, sizeof(Float), "granulate grain");
+  gen->edit = edit;
+}
+
 Float mus_granulate(mus_any *ptr, Float (*input)(void *arg, int direction))
 { 
   grn_info *spd = (grn_info *)ptr;

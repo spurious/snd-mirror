@@ -1637,3 +1637,22 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 (define (fm2 gen index)
   (* .25 (+ (oscil (list-ref gen 0) (* index (oscil (list-ref gen 1))))
 	    (oscil (list-ref gen 2) (* index (oscil (list-ref gen 3)))))))
+
+
+#!
+;;; a "bump function" (Stein and Shakarchi)
+(define (bumpy)
+  (let* ((x 0.0) 
+	 (xi (/ 1.0 (frames)))
+	 (start 0)
+	 (end 1)
+	 (scl (exp (/ 4.0 (- end start))))) ; normalize it
+    (map-channel (lambda (y) 
+		   (let ((val (if (and (>= x start)
+				       (<= x end))
+				  (* (exp (/ -1.0 (- x start))) 
+				     (exp (/ -1.0 (- end x))))
+				  0.0)))
+		     (set! x (+ x xi))
+		     (* scl val))))))
+!#
