@@ -2035,20 +2035,14 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
 	  return(snd_no_such_file_error(caller, samp_n));
 	}
       if (!(MUS_HEADER_TYPE_OK(mus_sound_header_type(name))))
-	{
-	  FREE(name);
-	  mus_misc_error(caller, "can't read header", 
-			 XEN_LIST_2(samp_n, 
-				    C_TO_XEN_STRING(mus_header_type_name(mus_header_type()))));
-	}
+	mus_misc_error(caller, "can't read header", 
+		       XEN_LIST_2(samp_n, 
+				  C_TO_XEN_STRING(mus_header_type_name(mus_header_type()))));
       if (!(MUS_DATA_FORMAT_OK(mus_sound_data_format(name))))
-	{
-	  FREE(name);
-	  mus_misc_error(caller, "can't read data", 
-			 XEN_LIST_2(samp_n, 
-				    C_TO_XEN_STRING(mus_header_original_format_name(mus_sound_original_format(name),
-										    mus_sound_header_type(name)))));
-	}
+	mus_misc_error(caller, "can't read data", 
+		       XEN_LIST_2(samp_n, 
+				  C_TO_XEN_STRING(mus_header_original_format_name(mus_sound_original_format(name),
+										  mus_sound_header_type(name)))));
       sp = make_sound_readable(get_global_state(), name, FALSE);
       sp->short_filename = filename_without_home_directory(name);
       sp->filename = NULL;

@@ -4472,7 +4472,8 @@ the direction argument between the channel and edit-position.
 (add-hook! open-hook 
   (lambda (name)
     (if (= (mus-sound-data-format name) mus-lint)
-        (set! (mus-sound-data-format name) mus-lintn))))
+        (set! (mus-sound-data-format name) mus-lintn))
+    #f))
 <!-- --></pre></td></tr></table>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>

@@ -264,6 +264,7 @@ gsl_dht_new_1 (size_t size, double nu, double xmax)
 
 static gsl_dht *dht_t = NULL;
 static int last_dht_size = 0;
+static Float last_dht_jn = 0.0;
 
 static void hankel_transform(int size, Float *input, Float *output, Float Jn)
 {
@@ -271,12 +272,14 @@ static void hankel_transform(int size, Float *input, Float *output, Float Jn)
   double *in1, *out1;
   int i;
   if (size < 2) size = 2; /* GSL dht dies if size = 1 */
-  if (size != last_dht_size)
+  if ((size != last_dht_size) || (last_dht_jn != Jn))
     {
       if (dht_t) 
 	gsl_dht_free(dht_t);
+      dht_t = NULL; /* next line might not return due to gsl_error, so clear for subsequent call */
       dht_t = gsl_dht_new_1(size / 2, Jn, (double)(size / 2));
       last_dht_size = size;
+      last_dht_jn = Jn;
     }
   if (sizeof(Float) == sizeof(double))
     gsl_dht_apply(dht_t, (double *)input, (double *)output); /* the casts exist only to squelch dumb compiler complaints */
@@ -1495,7 +1498,7 @@ static int apply_fft_window(fft_state *fs)
 	for (i = data_len; i < fs->size; i++) 
 	  fs->hwin[i] = 0.0;
 #if HAVE_GSL
-      hankel_transform(data_len, fs->hwin, fft_data, 0.0);
+      hankel_transform(data_len, fs->hwin, fft_data, hankel_jn(ss));
       result = 5;
 #else
       make_abel_transformer(data_len);
@@ -2591,7 +2594,7 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
     case HANKEL:
 #if HAVE_GSL
       dat = (Float *)CALLOC(v->length, sizeof(Float));
-      hankel_transform(v->length, v->data, dat, 0.0);
+      hankel_transform(v->length, v->data, dat, hankel_jn(get_global_state()));
       memcpy((void *)(v->data), (void *)dat, (v->length * sizeof(Float)));
       FREE(dat);
 #endif

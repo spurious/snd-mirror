@@ -216,7 +216,6 @@ enum {TIME_AXIS_INFO, TRANSFORM_AXIS_INFO, LISP_AXIS_INFO};
 enum {COLOR_POSITION, COLOR_ZOOM};
 
 #define DEFAULT_MIN_DB -60.0
-#define DEFAULT_HANKEL_JN 0.0
 
 #define DEFAULT_AMP_CONTROL 1.0
 #define DEFAULT_CONTRAST_CONTROL 0.0
@@ -278,6 +277,10 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 #else
   #define DEFAULT_DAC_SIZE 1024
 #endif
+
+#define hankel_jn(ss) ss->Hankel_Jn
+#define set_hankel_jn(ss, a) ss->Hankel_Jn = a
+#define DEFAULT_HANKEL_JN 0.0
 
 #define dac_combines_channels(ss) ss->Dac_Combines_Channels
 #define set_dac_combines_channels(ss, a) ss->Dac_Combines_Channels = a

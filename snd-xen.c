@@ -1176,12 +1176,12 @@ frequency whistles leaking through."
   return(C_TO_XEN_INT(sinc_width(state)));
 }
 
-static XEN g_hankel_jn(void) {return(C_TO_XEN_DOUBLE(state->Hankel_Jn));}
+static XEN g_hankel_jn(void) {return(C_TO_XEN_DOUBLE(hankel_jn(state)));}
 static XEN g_set_hankel_jn(XEN val) 
 {
   #define H_hankel_jn "(" S_hankel_jn ") -> Bessel function used in Hankel transform."
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set-" S_hankel_jn, "a number"); 
-  state->Hankel_Jn = XEN_TO_C_DOUBLE_WITH_CALLER(val, S_hankel_jn);
+  set_hankel_jn(state, XEN_TO_C_DOUBLE_WITH_CALLER(val, S_hankel_jn));
   return(val);
 }
 

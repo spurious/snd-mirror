@@ -3652,13 +3652,13 @@ returns a new readin (file input) generator reading the sound file 'file' starti
     }
   if (channel < 0)
     mus_misc_error(S_make_readin, "channel < 0?", keys[1]);
-  if (channel >= mus_sound_chans(file))
-    mus_misc_error(S_make_readin, "channel > available chans?", keys[1]);
   if (!(mus_file_probe(file)))
     XEN_ERROR(NO_SUCH_FILE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_readin),
 			 C_TO_XEN_STRING(file),
 			 C_TO_XEN_STRING(strerror(errno))));
+  if (channel >= mus_sound_chans(file))
+    mus_misc_error(S_make_readin, "channel > available chans?", keys[1]);
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   gn->gen = mus_make_readin(file, channel, start, direction);
   return(mus_xen_to_object(gn));

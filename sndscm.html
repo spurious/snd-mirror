@@ -1917,34 +1917,8 @@ the single-sideband cancellation is not working as I expected -- another bug to 
 in CLM.  One starting point for physical modelling is Smith, "Music Applications of Digital Waveguides", CCRMA, Stan-M-39, 1987,
 or Julius's <a href="http://www-ccrma.stanford.edu/~jos">home</a> page, or
 any of several classic papers also by Julius Smith.  Perry's own version of this code can be
-found in <a href="www-ccrma.stanford.edu/CCRMA/Software/STK/">STK</a>; there's also apparently
-a csound version somewhere.
-Perry uses slightly different versions of delay lines and so on, but much (perhaps all) of
-this could be done using "vanilla" CLM generators.  The generators defined here are
-reedtable, bowtable, jettable, onezero, onepole, biquad (biquad filter), lip, dcblock, and two kinds of interpolating delay line:
-delaya and delayl (which I think differ in the interpolation technique -- linear and all-pass?).
-</p>
-<pre>
-  <em class=def><A NAME="makereed">make-reed</a></em> #;key (offset 0.6) (slope -0.8)
-  <em class=def><A NAME="reedtable">reedtable</a></em> r sample
-  <em class=def><A NAME="makebowt">make-bowt</a></em> #:key (offset 0.0) (slope 1.0)
-  <em class=def><A NAME="bowtable">bowtable</a></em> b sample
-  <em class=def><A NAME="jettable">jettable</a></em> sample
-  <em class=def><A NAME="makeonez">make-onez</a></em> #:key (gain 0.5) (zerocoeff 1.0) (input 0.0)
-  <em class=def><A NAME="onezero">onezero</a></em> b sample
-  <em class=def><A NAME="makeonep">make-onep</a></em> #:key (polecoeff 0.9) (gain 1.0) (sgain 0.1) (output 0.0)
-  <em class=def><A NAME="onepole">onepole</a></em> p sample
-  <em class=def><A NAME="makebiq">make-biq</a></em> 
-  <em class=def><A NAME="biquad">biquad</a></em> b sample
-  <em class=def><A NAME="makedcb">make-dcb</a></em> #:key (input 0.0) (output 0.0)
-  <em class=def><A NAME="dcblock">dcblock</a></em> b sample
-  <em class=def><A NAME="makedelaya">make-delaya</a></em> len
-  <em class=def><A NAME="delaya">delaya</a></em> d sample
-  <em class=def><A NAME="makedelayl">make-delayl</a></em> len
-  <em class=def><A NAME="delayl">delayl</a></em> d sample
-  <em class=def><A NAME="lip">lip</a></em> b mouthsample boresample
-</pre>
-<p>The example instruments are:
+found in <a href="www-ccrma.stanford.edu/CCRMA/Software/STK/">STK</a>.
+The example instruments are:
 </p>
 <pre>
   <em class=def><A NAME="plucky">plucky</a></em> beg dur freq amplitude maxa

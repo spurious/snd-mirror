@@ -3,8 +3,8 @@
  * in gdb, p mus_describe(arg) will show the user-view of arg
  *         p mus_inspect(arg) will show every internal field of arg
  *
- * restart method? feedback? channels? increment? user-addmethod? mus-copy? filter class (and filter_p) for a0 etc?
- *   more macros like MUS_RUN?
+ * SOMEDAY: restart method? feedback? channels? increment? add-method? mus-copy? filter class (and filter_p) for a0 etc?
+ * SOMEDAY: rationalize the methods like mus_increment
  */
 
 #if defined(HAVE_CONFIG_H)
@@ -2556,11 +2556,11 @@ Float mus_sine_summation(mus_any *ptr, Float fm)
   thB = gen->phase - B;
   if (gen->n == 0)
     result = (mus_sin(gen->phase) - (gen->a * mus_sin(thB))) / (gen->a2 - (2 * gen->a * cos(B)));
-  result = (mus_sin(gen->phase) - 
-	       (gen->a * mus_sin(thB)) - 
-	       (gen->an * (mus_sin(gen->phase + (B * (gen->n + 1))) - 
+  else result = (mus_sin(gen->phase) - 
+		 (gen->a * mus_sin(thB)) - 
+		 (gen->an * (mus_sin(gen->phase + (B * (gen->n + 1))) - 
                              (gen->a * mus_sin(gen->phase + (B * gen->n)))))) / 
-             (gen->a2 - (2 * gen->a * cos(B)));
+	        (gen->a2 - (2 * gen->a * cos(B)));
   gen->phase += (gen->freq + fm);
   gen->phase = fmod(gen->phase, TWO_PI);
   return(result);

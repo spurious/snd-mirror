@@ -355,11 +355,7 @@ AC_CHECK_SIZEOF(float)
 AC_CHECK_SIZEOF(void *)
 
 dnl this taken from Guile's configure.in
-AC_CACHE_CHECK([for long longs], snd_cv_long_longs,
-	       AC_TRY_COMPILE(,
-			      [long long a],
-			      snd_cv_long_longs=yes,
-			      snd_cv_long_longs=no))
+AC_CACHE_CHECK([for long longs], snd_cv_long_longs, AC_TRY_COMPILE(,[long long a], snd_cv_long_longs=yes, snd_cv_long_longs=no))
 if test "$snd_cv_long_longs" = yes; then
   AC_DEFINE(HAVE_LLONGS)
 fi
@@ -717,26 +713,38 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 
 	case $audio_system in
 	    ALSA)
-	    	AC_DEFINE(HAVE_ALSA)
-		if test "$with_static_alsa" = yes ; then
-                  AUDIO_LIB="/usr/lib/libasound.a"
+                # if alsa version < 0.9 complain and use OSS
+		alsa_ok=yes
+		AC_MSG_CHECKING([for ALSA 0.9 or later])
+		AC_TRY_COMPILE( [#include <alsa/asoundlib.h>],
+			        [
+			  	 #if ((SND_LIB_MAJOR == 0) && (SND_LIB_MINOR < 9))
+				   #error too old
+				 #endif
+				],
+				alsa_ok=yes,
+				alsa_ok=no)
+		AC_MSG_RESULT($alsa_ok)
+		if test "$alsa_ok" = yes ; then
+	    	    AC_DEFINE(HAVE_ALSA)
+		    if test "$with_static_alsa" = yes ; then
+                      AUDIO_LIB="/usr/lib/libasound.a"
+		    else
+	    	      AUDIO_LIB="-lasound"
+		    fi
+	    	    AC_SUBST(AUDIO_LIB)
+                    # snd_config_get_id argnum changed in Nov-01
+                    snd_config_get_id_args=1
+                    AC_MSG_CHECKING([snd_config_get_id args])
+                    AC_TRY_COMPILE([#include <alsa/asoundlib.h>],
+	             		   [snd_config_t *c; const char *id; snd_config_get_id(c, &id)],
+	            		   snd_config_get_id_args=2)
+                    AC_MSG_RESULT($snd_config_get_id_args)
+                    AC_DEFINE_UNQUOTED(SND_CONFIG_GET_ID_ARGS,$snd_config_get_id_args)
 		else
-	    	  AUDIO_LIB="-lasound"
+        	    audio_system=OSS
+		    AC_DEFINE(HAVE_OSS)
 		fi
-# TODO: if alsa version < 0.9 complain and use OSS
-	    	AC_SUBST(AUDIO_LIB)
-                # snd_config_get_id argnum changed in Nov-01
-                snd_config_get_id_args=1
-                AC_MSG_CHECKING([snd_config_get_id args])
-                AC_TRY_COMPILE(
-                 [#include <alsa/asoundlib.h>],
-	         [snd_config_t *c;
-  	          const char *id;
-	          snd_config_get_id(c, &id)
-		 ],
-	        snd_config_get_id_args=2)
-                AC_MSG_RESULT($snd_config_get_id_args)
-                AC_DEFINE_UNQUOTED(SND_CONFIG_GET_ID_ARGS,$snd_config_get_id_args)
 		;;
 	    ESD)
 		AC_DEFINE(ESD)

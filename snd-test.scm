@@ -1718,6 +1718,13 @@
 	  (snd-display ";oboe: file-write-date: ~A?" (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd")))))
       (play-sound "oboe.snd")
 
+      (let ((lasth (do ((i 0 (1+ i)))
+		       ((string=? (mus-header-type-name i) "unknown") i))))
+	(if (< lasth 50) (snd-display "header-type[~A] = ~A" lasth (mus-header-type-name lasth))))
+      (let ((lasth (do ((i 0 (1+ i)))
+		       ((string=? (mus-data-format-name i) "unknown") i))))
+	(if (< lasth 10) (snd-display "data-format[~A] = ~A" lasth (mus-data-format-name lasth))))
+
       (set! (transform-normalization) dont-normalize-transform)
       (IF (not (= (transform-normalization) dont-normalize-transform))
 	  (snd-display ";set-transform-normalization none -> ~A" (transform-normalization)))
@@ -5473,7 +5480,11 @@
 	       (IF (ffneq ss1 os1)
 		   (begin
 		     (snd-display ";sine-summation 2: ~A: os1: ~A ss1: ~A" i os1 ss1)
-		     (give-up))))))))
+		     (give-up)))))))
+	(set! gen1 (make-sine-summation 440.0 0.0 0.0))
+	(sine-summation gen1)
+	(let ((val (sine-summation gen1)))
+	  (IF (fneq val 0.484974980354309) (snd-display ";sine-summation n=0: ~A" val))))
 
 
       (let ((gen (make-asymmetric-fm 440.0))
@@ -6276,8 +6287,10 @@
 	(IF (not (= (mus-location gen) 1000)) (snd-display ";mus-set-location: ~A?" (mus-location gen)))
 	(let ((val (readin gen)))
 	  (IF (fneq val 0.033) (snd-display ";mus-set-location readin: ~A?" val))))
-      (let ((tag (catch #t (lambda () (make-readin "/baddy/hiho" 0 124)) (lambda args (car args)))))
-	(IF (not (eq? tag 'no-such-file)) (snd-display ";make-readin w/o file: ~A" tag)))
+      (let ((tag (catch #t (lambda () (make-readin "/baddy/hiho" 0 124)) (lambda args args))))
+	(IF (not (eq? (car tag) 'no-such-file)) (snd-display ";make-readin w/o file: ~A" tag)))
+      (let ((tag (catch #t (lambda () (make-readin "oboe.snd" 123 124)) (lambda args args))))
+	(IF (not (eq? (car tag) 'mus-error)) (snd-display ";make-readin with bad chan: ~A" tag)))
 
       (test-gen-equal (make-readin "oboe.snd" 0) (make-readin "oboe.snd" 0) (make-readin "oboe.snd" 0 1230))
       (test-gen-equal (make-readin "oboe.snd" 0) (make-readin "oboe.snd" 0) (make-readin "pistol.snd" 0))
@@ -7328,6 +7341,18 @@
 	  (let ((tag (catch #t (lambda () (phase-vocoder pv (lambda (a b) a))) (lambda args (car args)))))
 	    (IF (not (eq? tag 'mus-error)) 
 		(snd-display "phase-vocoder bad func: ~A" tag))))
+	(let ((tag (catch #t 
+			  (lambda () (make-phase-vocoder #f 512 4 256 1.0 (lambda (a b c) #f) #f #f)) 
+			  (lambda args args))))
+	  (IF (not (eq? (car tag) 'mus-error)) (snd-display ";make-phase-vocoder bad analyze func: ~A" tag)))
+	(let ((tag (catch #t
+			  (lambda () (make-phase-vocoder #f 512 4 256 1.0 (lambda (a b) 0.0) (lambda (a b c) #f) #f)) 
+			  (lambda args args))))
+	  (IF (not (eq? (car tag) 'mus-error)) (snd-display ";make-phase-vocoder bad edit func: ~A" tag)))
+	(let ((tag (catch #t 
+			  (lambda () (make-phase-vocoder #f 512 4 256 1.0 (lambda (a b) 0.0) (lambda (a) #f) (lambda (a b) 0)))
+			  (lambda args args))))
+	  (if (not (eq? (car tag) 'mus-error)) (snd-display ";make-phase-vocoder bad synthesize func: ~A" tag)))
 
 	(close-sound ind))
 
@@ -12263,6 +12288,42 @@ EDITS: 4
 	 (- (* (cos xx) ans1)
 	    (* z (sin xx) ans2))))))
 
+(define (bes-j1 x)				;returns J1(x) for any real x
+  (define (signum x) (if (= x 0.0) 0 (if (< x 0.0) -1 1)))
+  (if (< (abs x) 8.0)
+      (let* ((y (* x x))
+	     (ans1 (* x 
+		      (+ 72362614232.0
+			 (* y (+ -7895059235.0
+				 (* y (+ 242396853.1
+					 (* y (+ -2972611.439
+						 (* y (+ 15704.48260
+							 (* y -30.16036606))))))))))))
+	     (ans2 (+ 144725228442.0 
+		      (* y (+ 2300535178.0 
+			      (* y (+ 18583304.74
+				      (* y (+ 99447.43394
+					      (* y (+ 376.9991397 y)))))))))))
+	(/ ans1 ans2))
+    (let* ((ax (abs x))
+	   (z (/ 8.0 ax))
+	   (y (* z z))
+	   (xx (- ax 2.356194491))
+	   (ans1 (+ 1.0
+		    (* y (+ 0.183105e-2
+			    (* y (+ -0.3516396496e-4
+				    (* y (+ 0.2457520174e-5
+					    (* y -0.240337019e-6)))))))))
+	   (ans2 (+ 0.04687499995
+		    (* y (+ -0.2002690873e-3
+			    (* y (+ 0.8449199096e-5
+				    (* y (+ -0.88228987e-6
+					    (* y 0.105787412e-6))))))))))
+      (* (signum x)
+	 (sqrt (/ 0.636619772 ax))
+	 (- (* (cos xx) ans1)
+	    (* z (sin xx) ans2))))))
+
 (define (peak-at data)
   (let ((len (vct-length data))
 	(peak (vct-ref data 0))
@@ -12649,6 +12710,22 @@ EDITS: 4
 		(abs (vct-ref d0 1)))
 	     3.0)
 	  (snd-display ";hankel 8: ~A?" d0))
+
+      (set! (hankel-jn) -1.0)
+      (let ((tag (catch #t (lambda () (snd-transform hankel-transform (make-vct 8))) (lambda args args))))
+	(IF (not (eq? (car tag) 'gsl-error)) (snd-display ";hankel bad jn: ~A" tag)))
+
+      (set! (hankel-jn) 1.0)
+      (set! d0 (make-vct 256))
+      (do ((i 0 (1+ i))) 
+	  ((= i 256)) 
+	(vct-set! d0 i (bes-j1 (/ (* i 2 3.14159) 256))))
+      (snd-transform hankel-transform d0)
+      (IF (< (/ (abs (vct-ref d0 0))
+		(abs (vct-ref d0 1)))
+	     3.0)
+	  (snd-display ";hankel (1) 256: ~A?" d0))
+      (set! (hankel-jn) 0.0)
 
 
       ;; -------- walsh
@@ -19456,6 +19533,9 @@ EDITS: 4
 	  (check-error-tag 'mus-error (lambda () (snd-spectrum (make-vct 8) 0 -123)))
 	  (check-error-tag 'mus-error (lambda () (snd-spectrum (make-vct 8) 0 0)))
 	  (check-error-tag 'no-such-file (lambda () (insert-sound (string-append sf-dir "mus10.snd"))))
+	  (check-error-tag 'no-such-file (lambda () (play "/baddy/hiho")))
+	  (check-error-tag 'mus-error (lambda () (play (string-append sf-dir "mus10.snd"))))
+	  (check-error-tag 'mus-error (lambda () (play (string-append sf-dir "nist-shortpack.wav"))))
 	  (check-error-tag 'no-such-file (lambda () (mix "/baddy/hiho")))
 	  (check-error-tag 'no-such-file (lambda () (mix-sound "/baddy/hiho" 0)))
 	  (check-error-tag 'mus-error (lambda () (set! (filter-control-env ind) '())))
