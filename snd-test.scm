@@ -313,7 +313,6 @@
 	'channels-combined channels-combined 1 
 	'channels-separate channels-separate 0 
 	'channels-superimposed channels-superimposed 2
-	'chebyshev-transform chebyshev-transform 4
 	'cursor-in-middle cursor-in-middle 3
 	'cursor-in-view cursor-in-view 0 
 	'cursor-on-left cursor-on-left 1 
@@ -331,14 +330,14 @@
 	'graph-filled graph-filled 2 
 	'graph-lines graph-lines 0 
 	'graph-lollipops graph-lollipops 4
-	'hadamard-transform hadamard-transform 6
-	'haar-transform haar-transform 7
+	'hadamard-transform hadamard-transform 5
+	'haar-transform haar-transform 6
 	'hamming-window hamming-window 5
-	'hankel-transform hankel-transform 8
+	'hankel-transform hankel-transform 7
 	'hanning-window hanning-window 1
 	'kaiser-window kaiser-window 11 
 	'keyboard-no-action keyboard-no-action 4
-	'cepstrum cepstrum 5
+	'cepstrum cepstrum 4
 	'graph-once graph-once 0 
 	'parzen-window parzen-window 3
 	'poisson-window poisson-window 13
@@ -16368,25 +16367,6 @@ EDITS: 2
 	    (set! peak (vct-ref data i))
 	    (set! loc i))))))
 
-(define (chebyshev-polynomial a x kind lim)	
-  ;; evaluate the sum of the Chebyshev polynomials (coeffs in a) at x
-  ;;  similar to make-waveshape-table which runs through -1<=x<=1 internally,
-  ;;  but intended to be parallel to the polynomial unit generator --
-  ;; (polynomial (get-chebyshev-coefficients harms-and-amps) x) is equivalent to 
-  ;; (chebyshev-polynomial harm-amps x)
-  (let* ((n (1- (vct-length a)))
-	 (r (* kind x))
-	 (s 1.0)
-	 (h 0.0)
-	 (sum (vct-ref a 0)))
-    (do ((k 1 (1+ k)))
-	((= k n))
-      (set! h r)
-      (set! sum (+ sum (* r (vct-ref a k))))
-      (set! r (- (* 2 r x) s))
-      (set! s h))
-    (+ sum (* r (vct-ref a n)))))
-
 (define (inverse-haar f)
   (let* ((n (vct-length f))
 	 (g (make-vct n))
@@ -16549,7 +16529,7 @@ EDITS: 2
 	      (set! (transform-size) size)
 	      (update-transform-graph))
 	    (list 8 7 -7 4 3 2 1 0)))
-	 (list fourier-transform  wavelet-transform   hankel-transform    chebyshev-transform
+	 (list fourier-transform  wavelet-transform   hankel-transform 
 	       autocorrelation    walsh-transform     hadamard-transform  cepstrum     haar-transform))
 	(close-sound index))
 
@@ -17011,36 +16991,6 @@ EDITS: 2
       (inverse-haar d0)
       (IF (not (vequal d0 d1))
 	  (snd-display ";inverse haar 3: ~A ~A" d0 d1))
-
-
-      ;; -------- chebyshev
-
-      (set! fn (make-vct 128))
-      (do ((i 0 (1+ i)))
-	  ((= i 128))
-	(vct-set! fn i (* i (/ 1.0 128))))
-      (snd-transform chebyshev-transform fn)
-      (set! d0 (make-vct 128))
-      (do ((i 0 (1+ i)))
-	  ((= i 128))
-	(vct-set! d0 i (chebyshev-polynomial fn (- (* i (/ 2.0 128)) 1.0) 1 128)))
-      (IF (> (vct-ref d0 1) (vct-ref d0 4))
-	  (snd-display ";cheby ramp: ~A?" d0))
-
-      (do ((i 0 (1+ i)))
-	  ((= i 128))
-	(vct-set! fn i (sin (/ (* i 3.14159) 64.0))))
-      (snd-transform chebyshev-transform fn)
-      (set! d0 (make-vct 128))
-      (do ((i 0 (1+ i)))
-	  ((= i 128))
-	(vct-set! d0 i (chebyshev-polynomial fn (- (* i (/ 2.0 128)) 1.0) 1 128)))
-      (let ((error 0.0))
-	(do ((i 0 (1+ i)))
-	    ((= i 128))
-	  (set! error (+ error (abs (- (sin (/ (* i 3.14159) 64.0)) (* .01 (vct-ref d0 i)))))))
-	(if (> error 3.0)
-	    (snd-display ";cheby sine: ~A?" error)))
 
 
       ;; --------- wavelet

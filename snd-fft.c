@@ -306,105 +306,6 @@ static void haar_transform(Float *f, int n)
 }
 
 
-/* -------------------------------- CHEBYSHEV TRANSFORM -------------------------------- */
-
-/* saving the polynomials speeds up the transform by a factor of 2 (added 15-Oct-98) */
-#define MAX_PN_SIZE 1024
-static double **saved_Pn = NULL;
-static double *saved_wx = NULL;
-static int saved_Pn_size = 0;
-
-static void free_Pn(void)
-{
-  int k;
-  if (saved_Pn_size > 0)
-    {
-      for (k = 0; k < saved_Pn_size; k++) 
-	if (saved_Pn[k]) 
-	  FREE(saved_Pn[k]);
-      if (saved_Pn) FREE(saved_Pn);
-      if (saved_wx) FREE(saved_wx);
-      saved_Pn = NULL;
-      saved_wx = NULL;
-      saved_Pn_size = 0;
-    }
-}
-
-static void chebyshev_polynomials(double x, double *f, int n)
-{
-  int k;
-  double r, s;
-  r = x;
-  s = 1.0;
-  f[0] = 1.0;
-  for (k = 1; k < n; k++)
-    {
-      f[k] = r;
-      r = 2 * r * x - s;
-      s = f[k];
-    }
-}
-
-static void build_Pn(int n)
-{
-  int k;
-  double x, rate, ln2;
-  if (n != saved_Pn_size)
-    {
-      free_Pn();
-      saved_Pn = (double **)CALLOC(n, sizeof(double *));
-      saved_wx = (double *)CALLOC(n, sizeof(double));
-      for (k = 0; k < n; k++) saved_Pn[k] = (double *)CALLOC(n, sizeof(double));
-      saved_Pn_size = n;
-      ln2 = log(n) / log(2);
-      rate = 2.0 / (Float)n;
-      for (k = 0, x = -1.0; k < n; k++, x += rate) 
-	{
-	  chebyshev_polynomials(x, saved_Pn[k], n - 1);
-	  if ((x == 1.0) || (x == -1.0))
-	    saved_wx[k] = ln2;
-	  else saved_wx[k] = 1.0 / sqrt(1.0 - x * x);
-	}
-    }
-}
-
-static void chebyshev_transform(Float *data, int n)
-{
-  double *An, *Pn = NULL;
-  int i, k;
-  double x, rate, wx, wfx, ln2;
-  rate = 2.0 / (Float)n;
-  ln2 = log(n) / log(2);
-  An = (double *)CALLOC(n, sizeof(double));
-  if (n > MAX_PN_SIZE) 
-    Pn = (double *)CALLOC(n, sizeof(double));
-  else build_Pn(n);
-  x = -1.0;
-  for (k = 0; k < n; k++)
-    {
-      if (n > MAX_PN_SIZE)
-	{
-	  if ((x == 1.0) || (x == -1.0))
-	    wx = ln2;
-	  else wx = 1.0 / sqrt(1.0 - x * x);
-	  wfx = wx * data[k];
-	  chebyshev_polynomials(x, Pn, n - 1);
-	  x += rate;
-	}
-      else 
-	{
-	  Pn = saved_Pn[k];
-	  wfx = data[k] * saved_wx[k];
-	}
-      for (i = 0; i < n; i++) An[i] += (wfx * Pn[i]);
-    }
-  for (i = 0; i < n; i++) data[i] = An[i];
-  FREE(An);
-  if (n > MAX_PN_SIZE) FREE(Pn);
-}
-
-
-
 /* -------------------------------- WALSH TRANSFORM -------------------------------- */
 
 /* borrowed from walsh/walshdit2.cc in the fxt package fxt970929.tgz written by (and copyright) Joerg Arndt
@@ -866,7 +767,6 @@ static char *spectro_xlabel(chan_info *cp)
     case WAVELET:         return(wavelet_names[cp->wavelet_type]); break;
     case HAAR:            return("Haar spectrum");                 break;
     case HANKEL:          return("Hankel spectrum");               break;
-    case CHEBYSHEV:       return("Chebyshev spectrum");            break;
     case CEPSTRUM:        return("cepstrum");                      break;
     case WALSH:           return("Sequency");                      break;
     case HADAMARD:        return("Sequency");                      break;
@@ -1051,13 +951,6 @@ static void apply_fft(fft_state *fs)
 	  fft_data[i] = 0.0;
       haar_transform(fft_data, fs->size);
       break;
-    case CHEBYSHEV:
-      for (i = 0; i < data_len; i++) fft_data[i] = read_sample_to_float(sf);
-      if (data_len < fs->size)
-	for (i = data_len; i < fs->size; i++) 
-	  fft_data[i] = 0.0;
-      chebyshev_transform(fft_data, fs->size);
-      break;
     case CEPSTRUM:
       for (i = 0; i < data_len; i++) fft_data[i] = read_sample_to_float(sf);
       if (data_len < fs->size) 
@@ -1157,7 +1050,7 @@ static void display_fft(fft_state *fs)
 	      min_freq = ((Float)(SND_SRATE(sp)) * 0.5 * cp->spectro_start);
 	    }
 	  break;
-	case WAVELET: case HANKEL: case CHEBYSHEV: case HADAMARD: case WALSH: case HAAR:
+	case WAVELET: case HANKEL: case HADAMARD: case WALSH: case HAAR:
 	  max_freq = fs->size * cp->spectro_cutoff; 
 	  min_freq = fs->size * cp->spectro_start; 
 	  break;
@@ -2166,9 +2059,6 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
     case HAAR:
       haar_transform(v->data, v->length);
       break;
-    case CHEBYSHEV:
-      chebyshev_transform(v->data, v->length);
-      break;
     case CEPSTRUM:
       cepstrum(v->data, v->length);
       break;
@@ -2241,7 +2131,6 @@ of a moving mark:\n\
   #define H_fourier_transform   S_transform_type " value for Fourier transform (sinusoid basis)"
   #define H_wavelet_transform   S_transform_type " value for wavelet transform (" S_wavelet_type " chooses wavelet)"
   #define H_hankel_transform    S_transform_type " value for Hankel transform (Bessel function basis)"
-  #define H_chebyshev_transform S_transform_type " value for Chebyshev transform (Chebyshev polynomial basis)"
   #define H_haar_transform      S_transform_type " value for Haar transform"
   #define H_cepstrum            S_transform_type " value for cepstrum (log of power spectrum)"
   #define H_hadamard_transform  S_transform_type " value for Hadamard transform"
@@ -2251,7 +2140,6 @@ of a moving mark:\n\
   XEN_DEFINE_CONSTANT(S_fourier_transform,   FOURIER,         H_fourier_transform);
   XEN_DEFINE_CONSTANT(S_wavelet_transform,   WAVELET,         H_wavelet_transform);
   XEN_DEFINE_CONSTANT(S_hankel_transform,    HANKEL,          H_hankel_transform);
-  XEN_DEFINE_CONSTANT(S_chebyshev_transform, CHEBYSHEV,       H_chebyshev_transform);
   XEN_DEFINE_CONSTANT(S_haar_transform,      HAAR,            H_haar_transform);
   XEN_DEFINE_CONSTANT(S_cepstrum,            CEPSTRUM,        H_cepstrum);
   XEN_DEFINE_CONSTANT(S_hadamard_transform,  HADAMARD,        H_hadamard_transform);

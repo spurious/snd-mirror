@@ -378,7 +378,7 @@
 		      blackman3-window blackman4-window exponential-window riemann-window kaiser-window cauchy-window 
 		      poisson-window gaussian-window tukey-window dolph-chebyshev-window))
        (types (list fourier-transform wavelet-transform autocorrelation cepstrum hankel-transform
-		    walsh-transform chebyshev-transform hadamard-transform haar-transform))
+		    walsh-transform hadamard-transform haar-transform))
 
        (fft-popup-menu #f)
 	;; used within graph if pointer is in the fft graph
@@ -471,7 +471,7 @@
 			    (list name 
 				  (lambda (w data)
 				    (set! (transform-type graph-popup-snd (choose-chan)) val))))
-			  (list "Fourier" "Wavelet" "Autocorrelate" "Cepstrum" "Hankel" "Walsh" "Chebyshev" "Hadamard" "Haar")
+			  (list "Fourier" "Wavelet" "Autocorrelate" "Cepstrum" "Hankel" "Walsh" "Hadamard" "Haar")
 			  types)
 		     'fft-types)))
 	    (list "Wavelet type"

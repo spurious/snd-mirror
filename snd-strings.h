@@ -57,7 +57,6 @@
 #define S_channels_separate             "channels-separate"
 #define S_channels_superimposed         "channels-superimposed"
 #define S_chans                         "chans"
-#define S_chebyshev_transform           "chebyshev-transform"
 #define S_clear_audio_inputs            "clear-audio-inputs"
 #define S_clear_listener                "clear-listener"
 #define S_clm_channel                   "clm-channel"

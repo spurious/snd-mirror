@@ -268,6 +268,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+1-Dec:  removed Chebyshev transform.\n\
 22-Nov:  added contrib/v.rb thanks to Michael Scholz.\n\
 13-Nov:  snd 6.3.\n\
 8-Nov:   gtk-effects.scm.\n\
@@ -671,7 +672,7 @@ data values, to some extent), set the variable\n\
 The harmonic analysis function is normally the\n\
 Fourier Transform, but others are available,\n\
 including about 20 wavelet choices, the Hankel and\n\
-Chebyshev transforms, and perhaps others.\n\
+and perhaps others.\n\
 \n\
 ";
 
@@ -890,7 +891,7 @@ Transform Graph style (the Transform Options Display choice, " S_transform_graph
   " S_graph_once "   " S_graph_as_sonogram "  " S_graph_as_spectrogram "\n\
 \n\
 Transform type (" S_transform_type "):\n\
-  " S_fourier_transform "  " S_wavelet_transform "   " S_hankel_transform "  " S_chebyshev_transform "   " S_cepstrum "\n\
+  " S_fourier_transform "  " S_wavelet_transform "   " S_hankel_transform "  " S_cepstrum "\n\
   " S_autocorrelation "    " S_walsh_transform "  " S_hadamard_transform " " S_haar_transform "\n\
 \n\
 FFT Window type (" S_fft_window "):\n\
@@ -1723,9 +1724,8 @@ any point in the fft to get the associated fft data displayed; if " S_verbose_cu
 drag the mouse through the fft display and the description in the minibuffer will be constantly updated. \
 \n\n\
 The harmonic analysis function is normally the Fourier Transform, but others are available, \
-including about 20 wavelet choices, the Hankel and Chebyshev transforms, and perhaps others. (The \
-Hankel transform returns the Bessel function spectrum, the Chebyshev transform returns the \
-Chebyshev polynomial spectrum). \
+including about 20 wavelet choices, the Hankel transform, and perhaps others. (The \
+Hankel transform returns the Bessel function spectrum). \
 \n\n\
 The top three buttons in the transform dialog choose between a normal fft, a sonogram, or a \
 spectrogram. The 'peaks' button affects whether peak info is displayed alongside the graph of the \
