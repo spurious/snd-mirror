@@ -1769,21 +1769,14 @@ static xen_value *add_empty_var_to_ptree(ptree *prog, int type)
 {
   switch (type)
     {
-    case R_FLOAT:  
-      return(make_xen_value(type, add_dbl_to_ptree(prog, 0.0), R_VARIABLE)); 
-      break;
-    case R_STRING: 
-      return(make_xen_value(type, add_string_to_ptree(prog, NULL), R_VARIABLE)); 
-      break;
+    case R_FLOAT: return(make_xen_value(type, add_dbl_to_ptree(prog, 0.0), R_VARIABLE));      break;
+    case R_STRING: return(make_xen_value(type, add_string_to_ptree(prog, NULL), R_VARIABLE)); break;
+    case R_CLM: return(make_xen_value(type, add_clm_to_ptree(prog, NULL), R_VARIABLE));       break;
+    case R_FUNCTION: return(make_xen_value(type, add_fnc_to_ptree(prog, NULL), R_VARIABLE));  break;
+    case R_READER: return(make_xen_value(type, add_reader_to_ptree(prog, NULL), R_VARIABLE)); break;
     case R_FLOAT_VECTOR:
     case R_VCT: 
       return(make_xen_value(type, add_vct_to_ptree(prog, NULL), R_VARIABLE)); 
-      break;
-    case R_CLM: 
-      return(make_xen_value(type, add_clm_to_ptree(prog, NULL), R_VARIABLE)); 
-      break;
-    case R_FUNCTION: 
-      return(make_xen_value(type, add_fnc_to_ptree(prog, NULL), R_VARIABLE)); 
       break;
     case R_SYMBOL: 
     case R_KEYWORD:
@@ -1793,9 +1786,6 @@ static xen_value *add_empty_var_to_ptree(ptree *prog, int type)
     case R_PAIR:
       return(make_xen_value(type, add_xen_to_ptree(prog, XEN_UNDEFINED), R_VARIABLE)); 
       /* "undefined" for later check in walk for lists as args to embedded funcs */
-      break;
-    case R_READER: 
-      return(make_xen_value(type, add_reader_to_ptree(prog, NULL), R_VARIABLE)); 
       break;
     case R_CLM_VECTOR:
     case R_INT_VECTOR:
@@ -2053,22 +2043,22 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
   /* fprintf(stderr,"add global %s %s %s\n",varname, type_name(type), XEN_AS_STRING(val)); */
   switch (type)
     {
-    case R_INT:    v = make_xen_value(R_INT, add_int_to_ptree(prog, R_XEN_TO_C_INT(val)), R_VARIABLE); break;
-    case R_FLOAT:  v = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(val)), R_VARIABLE); break;
-    case R_BOOL:   v = make_xen_value(R_BOOL, add_int_to_ptree(prog, XEN_TO_C_BOOLEAN(val)), R_VARIABLE); break;
-    case R_VCT:    v = make_xen_value(R_VCT, add_vct_to_ptree(prog, get_vct(val)), R_VARIABLE); break;
-    case R_READER: v = make_xen_value(R_READER, add_reader_to_ptree(prog, get_sf(val)), R_VARIABLE); break;
+    case R_INT:    v = make_xen_value(R_INT, add_int_to_ptree(prog, R_XEN_TO_C_INT(val)), R_VARIABLE);                     break;
+    case R_FLOAT:  v = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(val)), R_VARIABLE);                  break;
+    case R_BOOL:   v = make_xen_value(R_BOOL, add_int_to_ptree(prog, XEN_TO_C_BOOLEAN(val)), R_VARIABLE);                  break;
+    case R_VCT:    v = make_xen_value(R_VCT, add_vct_to_ptree(prog, get_vct(val)), R_VARIABLE);                            break;
+    case R_READER: v = make_xen_value(R_READER, add_reader_to_ptree(prog, get_sf(val)), R_VARIABLE);                       break;
+    case R_CHAR:   v = make_xen_value(R_CHAR, add_int_to_ptree(prog, (Int)(XEN_TO_C_CHAR(val))), R_VARIABLE);              break;
+    case R_STRING: v = make_xen_value(R_STRING, add_string_to_ptree(prog, copy_string(XEN_TO_C_STRING(val))), R_VARIABLE); break;
+    case R_LIST:   v = make_xen_value(R_LIST, add_xen_to_ptree(prog, val), R_VARIABLE);                                    break;
+    case R_PAIR:   v = make_xen_value(R_PAIR, add_xen_to_ptree(prog, val), R_VARIABLE);                                    break;
+    case R_SYMBOL: v = make_xen_value(R_SYMBOL, add_xen_to_ptree(prog, val), R_VARIABLE);                                  break;
+    case R_KEYWORD: v = make_xen_value(R_KEYWORD, add_xen_to_ptree(prog, val), R_VARIABLE);                                break;
     case R_CLM:
       if (prog->need_result == NEED_XCLM_RESULT)
 	v = make_xen_value(R_XCLM, add_xen_to_ptree(prog, val), R_VARIABLE);
       else v = make_xen_value(R_CLM, add_clm_to_ptree(prog, XEN_TO_MUS_ANY(val)), R_VARIABLE);
       break;
-    case R_CHAR:   v = make_xen_value(R_CHAR, add_int_to_ptree(prog, (Int)(XEN_TO_C_CHAR(val))), R_VARIABLE); break;
-    case R_STRING: v = make_xen_value(R_STRING, add_string_to_ptree(prog, copy_string(XEN_TO_C_STRING(val))), R_VARIABLE); break;
-    case R_LIST:   v = make_xen_value(R_LIST, add_xen_to_ptree(prog, val), R_VARIABLE); break;
-    case R_PAIR:   v = make_xen_value(R_PAIR, add_xen_to_ptree(prog, val), R_VARIABLE); break;
-    case R_SYMBOL: v = make_xen_value(R_SYMBOL, add_xen_to_ptree(prog, val), R_VARIABLE); break;
-    case R_KEYWORD: v = make_xen_value(R_KEYWORD, add_xen_to_ptree(prog, val), R_VARIABLE); break;
     case R_FLOAT_VECTOR:
       {
 	vct *vc;

@@ -22,11 +22,13 @@
 <!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (index.cl) -->
 
 <A NAME="grfsndcontents"></a>
-<span class=box><h1>Snd Customization and Extension Part 2</h1></span>
+<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h1>Snd Customization and Extension Part 2</h1></td></tr></table>
 <br>
 
 <center>
-<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25> <a href="extsnd.html">extsnd.html</a><spacer type=horizontal size=25> <a href="clm.html">clm.html</a><spacer type=horizontal size=25> <a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25> <a href="sndscm.html">sndscm.html</a><spacer type=horizontal size=25> <a href="libxm.html">libxm.html</a><spacer type=horizontal size=25> <a href="index.html">index.html</a></span>
+<table border=1><tr><td>
+<table bgcolor="aliceblue" border=0 cellspacing=8><tr><td><small>related documentation:</small></td><td><small><a href="snd.html">snd.html</a></small></td><td><small><a href="extsnd.html">extsnd.html</a></small></td><td><small><a href="clm.html">clm.html</a></small></td><td><small><a href="sndlib.html">sndlib.html</a></small></td><td><small><a href="sndscm.html">sndscm.html</a></small></td><td><small><a href="libxm.html">libxm.html</a></small></td><td><small><a href="index.html">index.html</a></small></td></tr></table>
+</td></tr></table>
 </center>
 
 <ul>
@@ -61,9 +63,9 @@
 
 <br>
 
-<span class=box><h2><A NAME="startup">Snd Startup</a></h2></span>
+<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="startup">Snd Startup</a></h2></td></tr></table>
 <br>
-<span class=bbox><h3><A NAME="sndresources">Snd resources</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndresources">Snd resources</a></h3></td></tr></table>
 
 <p>In the Motif version, there are a few X-style resources that Snd looks for (see Snd.ad); each has
 a built-in default value, so you can ignore any that are already acceptable:</p>
@@ -226,7 +228,7 @@ yellowcolor (a few envelope editor buttons), lightbluecolor (the recorder), and 
 
 <br>
 <!-- INDEX sndswitches:Invocation flags -->
-<span class=bbox><h3><A NAME="sndswitches">Snd invocation flags</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndswitches">Snd invocation flags</a></h3></td></tr></table>
 
 <p>Snd recognizes the following switches in its command line (leaving aside all
 the usual Xt/X-related flags like -xrm).</p>
@@ -271,7 +273,7 @@ snd -e '(add-sound-file-extension "WAV")' -p /home/bil/sounds
 <br>
 
 <!-- INDEX sndinitfile:Initialization file -->
-<span class=bbox><h3><A NAME="sndinitfile">The initialization file</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndinitfile">The initialization file</a></h3></td></tr></table>
 <p>
 When Snd starts, it looks for an initialization file, normally named "~/.snd" (its name can be set
 via the X resource mechanism, or through the environment variable SND_INIT_FILE).  This optional file is
@@ -364,7 +366,7 @@ GSL_IEEE_MODE=double-precision,mask-underflow,mask-denormalized
 </pre>
 
 <br>
-<span class=box><h2><A NAME="snddynamic">Runtime modules and external programs</a></h2></span>
+<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="snddynamic">Runtime modules and external programs</a></h2></td></tr></table>
 
 <p>It is possible to load your own C code into Snd at run-time or
 use any external program from within Snd as an editing function.
@@ -373,7 +375,7 @@ And, perhaps most useful, you can run Snd as an Emacs subjob.
 <br>
 
 <!-- INDEX emacssnd:Emacs and Snd -->
-<span class=bbox><h3><A NAME="emacssnd">Snd as an Emacs subjob</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="emacssnd">Snd as an Emacs subjob</a></h3></td></tr></table>
 
 <p>Snd watches stdin; any input received
 is evaluated as if typed in Snd's lisp listener; any subsequent output
@@ -472,7 +474,7 @@ shows another way to set up the emacs-snd connection:
 </p>
 
 <br>
-<span class=bbox><h3><A NAME="dynamic">Dynamically loaded modules</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="dynamic">Dynamically loaded modules</a></h3></td></tr></table>
 
 <p>You can import shared object files into Snd at any time.
 You need to build Snd
@@ -608,7 +610,7 @@ is a sketch using the Snd internal "srate" function:</p>
 </pre>
 
 <br>
-<span class=bbox><h3><A NAME="programs">External Programs</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="programs">External Programs</a></h3></td></tr></table>
 
 <p>Any external program that knows about sound files can be used to perform editing operations
 in Snd.  You get Snd's display, analysis, header and format conversion, and edit-tree support,
@@ -635,7 +637,7 @@ We then delete the Snd output (the input to CLM).
 </p>
 
 <br>
-<span class=bbox><h3><A NAME="sndaswidget">Snd as a Widget</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndaswidget">Snd as a Widget</a></h3></td></tr></table>
 
 <p>To include the entire Snd editor as a widget in some other program,
 first compile it with -DSND_AS_WIDGET. Then load it into your program,
@@ -659,7 +661,7 @@ In Gtk, the arguments are different, but the basic idea is the same.
 </p>
 
 <br>
-<span class=bbox><h3><A NAME="sndwithclm">Snd and the CLM module</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithclm">Snd and the CLM module</a></h3></td></tr></table>
 
 <p>The files clm.c, clm.h, and clm2xen.c implement CLM (a Common Lisp Music V implementation
 described in clm.html, available in clm-2.tar.gz at ccrma-ftp) as a Guile-loadable module.
@@ -748,7 +750,7 @@ The CLM (common lisp) version might be something like:</p>
 <br>
 
 <!-- INDEX clmfuncs:CLM generators -->
-<span class=cbox><h4><A NAME="clmfuncs">CLM functions</a></h4></span>
+<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="clmfuncs">CLM functions</a></h4></td></tr></table>
 
 <p>See <a href="clm.html">clm.html</a> for full details. Optional args are in italics.</p>
 <br>
@@ -1159,7 +1161,7 @@ You can load Rick Taube's CM into Snd as Scheme code:
 <br>
 
 <!-- INDEX sndinstruments:Instruments -->
-<span class=cbox><h4><A NAME="sndinstruments">Instruments</a></h4></span>
+<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="sndinstruments">Instruments</a></h4></td></tr></table>
 
 <p>It's hard to decide what's an "instrument" in this context, but I think I'll treat
 it as something that can be called as a note in a notelist (say in with-sound) and
@@ -1224,7 +1226,7 @@ Test 23 in snd-test.scm has a with-sound that includes most of these instruments
 <br><br>
 
 <br><br>
-<span class=bbox><h3><A NAME="sndwithcm">Snd and Common Music</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithcm">Snd and Common Music</a></h3></td></tr></table>
 
 <p>You can load Common Music into Snd, but the connection to
 Snd's definstrument macro is not yet as tight as it is in the Common Lisp
@@ -1263,7 +1265,7 @@ CLM:
 
 
 <br><br>
-<span class=bbox><h3><A NAME="sndwithmotif">Snd and Motif</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithmotif">Snd and Motif</a></h3></td></tr></table>
 
 <p>It is possible to add your own user-interface elements using the xm module
 included with Snd.  'make xm' should create
@@ -1415,7 +1417,7 @@ the dialog's files list.  See snd-motif.scm and popup.scm.
 </p>
 <br>
 
-<span class=bbox><h3><A NAME="sndwithgtk">Snd and Gtk+</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithgtk">Snd and Gtk+</a></h3></td></tr></table>
 
 <p>
 Here's the scale-dialog in xg/gtk:
@@ -1477,7 +1479,7 @@ how the "marshaller" works in Gtk, I may be able to fix this.
 <br>
 
 <!-- INDEX sndwithnogui:Scripting -->
-<span class=bbox><h3><A NAME="sndwithnogui">Snd with no GUI and scripting</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithnogui">Snd with no GUI and scripting</a></h3></td></tr></table>
 
 <p>If Snd is built without a graphical user interface (either by specifying
 --with-no-gui to configure, or by setting the USE_NO_GUI compile-time flag),
@@ -1651,7 +1653,7 @@ into a bunch of mono files:
 </pre>
 <br>
 
-<span class=bbox><h3><A NAME="sndandruby">Snd with Ruby</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandruby">Snd with Ruby</a></h3></td></tr></table>
 
 <p>Ruby is an extension language described as an "object-oriented Perl".
 It provides a different syntax from that of Guile/Scheme.  In Ruby, all
@@ -1799,7 +1801,7 @@ any of the .rb files.
 <br>
 
 <!-- INDEX sndandladspa:Plugins -->
-<span class=bbox><h3><A NAME="sndandladspa">Snd and LADSPA</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandladspa">Snd and LADSPA</a></h3></td></tr></table>
 
 <pre>
   <em class=def><a name="initladspa">init-ladspa</a></em>
@@ -1999,12 +2001,15 @@ data directly to the DAC:
      (mus-audio-close audio-port)
      (ladspa-cleanup descriptor handle)))))
 </pre></td></tr></table>
-<p>For a Ladspa GUI builder, see <a href="sndscm.html"#ladspadoc">ladspa.scm</a>
-and <a href="sndscm.html#dlpdoc">plugins-menu.scm</a>.
+<p>For a Ladspa GUI builder, see <a href="sndscm.html#ladspadoc">ladspa.scm</a>
+and <a href="sndscm.html#dlpdoc">plugins-menu.scm</a>.  One slight "gotcha"
+in this area: the Snd configuration switch --with-doubles causes "vcts" to
+be arrays of doubles, but Ladspa plugins expect to see arrays of floats.
+This is a problem only if you're calling ladpsa-connect-port yourself.
 </p>
 <br>
 
-<span class=bbox><h3><A NAME="sndandx">Driving Snd remotely</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandx">Driving Snd remotely</a></h3></td></tr></table>
 
 <p>It is possible to send Snd arbitrary Scheme or Ruby code from any other program;
 see the program sndctrl.c.  Snd has two X window properties:
@@ -2029,7 +2034,7 @@ sets SND_COMMAND to <i>str</i>, which Snd subsequently notices.
 </p>
 <br>
 
-<span class=bbox><h3><A NAME="sndandgl">Snd and OpenGL</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandgl">Snd and OpenGL</a></h3></td></tr></table>
 
 <p>Snd can be used in conjunction with OpenGL.  If it is compiled with
 the switch -DHAVE_GL, and loaded with -lGLU -lGL (normally this can be
@@ -2088,7 +2093,7 @@ program:
 </td></tr></table>
 <br>
 
-<span class=bbox><h3><A NAME="sndandgdb">Snd and gdb</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandgdb">Snd and gdb</a></h3></td></tr></table>
 
 <p>Here are some gdb functions (for your ~/.gbdinit file) that might
 come in handy:
@@ -2153,6 +2158,8 @@ $8 = 0x8296cf0 "\"snd.eps\""
 <br>
 
 <center>
-<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25> <a href="extsnd.html">extsnd.html</a><spacer type=horizontal size=25> <a href="clm.html">clm.html</a><spacer type=horizontal size=25> <a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25> <a href="sndscm.html">sndscm.html</a><spacer type=horizontal size=25> <a href="libxm.html">libxm.html</a><spacer type=horizontal size=25> <a href="index.html">index.html</a></span>
+<table border=1><tr><td>
+<table bgcolor="aliceblue" border=0 cellspacing=8><tr><td><small>related documentation:</small></td><td><small><a href="snd.html">snd.html</a></small></td><td><small><a href="extsnd.html">extsnd.html</a></small></td><td><small><a href="clm.html">clm.html</a></small></td><td><small><a href="sndlib.html">sndlib.html</a></small></td><td><small><a href="sndscm.html">sndscm.html</a></small></td><td><small><a href="libxm.html">libxm.html</a></small></td><td><small><a href="index.html">index.html</a></small></td></tr></table>
+</td></tr></table>
 </center>
 </body></html>

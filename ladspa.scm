@@ -3,6 +3,13 @@
 ;; Ladspa2.scm
 ;; Use ladspa plugins with the help of a mouse. -Kjetil S. Matheussen.
 
+;; Changes 5.8.2003 -> 8.8.2003
+;; -Fixed segfaults when exiting.
+;; -Improved the apply function.
+;; -Use the help text from new-plugins.scm written by Dave Phillips.
+;; -Fixed the sliders so that sound is updated also when changing
+;;  position. Not only after releasing.
+;; 
 ;; ladspa.scm -> ladspa2.scm:
 ;; -Making heavy use of the new ladspa-functions in snd 6.11.
 ;; -Realtime preview works perfectly. Seems to at least.
@@ -16,7 +23,6 @@
 ;; -Added the hour-glass progress reporter when applying.
 ;;
 ;; Problems:
-;; -Snd segfaults when trying to exit snd while previewing.
 ;; -The channels might have been switched after applying.
 ;; -The Model-E vst plugin have no less than 513 input control ports,
 ;;  and makes the script stop because snd is out of stack. There might
@@ -39,6 +45,22 @@
 ;(load "/usr/lib/snd/scheme/new-effects.scm")
 
 
+;; Organize help texts.
+(load "ladspa-help.scm")
+
+
+(define ladspa-help-assoclist '())
+
+(define (insert-ladspa-help alist)
+  (if (not (null? alist))
+      (begin
+	(set! ladspa-help-assoclist 
+	      (cons (list (string-append (car alist) (cadr alist))
+			  (caddr alist) (cadddr alist))
+		    ladspa-help-assoclist))
+	(insert-ladspa-help (cddddr alist)))))
+
+(insert-ladspa-help ladspa-help-texts)
 
 
 
@@ -287,25 +309,22 @@
 			   ;; Update hour-glass
 			   (progress-report (/ n length) "doing the ladspa" chans chans snd)
 
-			   (if (= len maxbuf)
-			       (let ((ch 0))
-				 (for-each (lambda (reader)
-					     (vct-map! vct-out
-						       (lambda () (next-sample reader)))
-					     (vct->sound-data vct-out sdobj ch)
-					     (set! ch (+ ch 1)))
-					   readers))
 
-			       (c-for 0 < len 1
-				      (lambda (n2)
-					(let ((ch 0))
-					  (for-each (lambda (reader)
-						      (sound-data-set! sdobj ch n2
-								       (next-sample reader))
-						      (set! ch (+ ch 1)))
-						    readers)))))
+			   ;; Only happens at last iteration.
+			   (if (< len maxbuf)
+			       (set! sdobj (make-sound-data chans len))
+			       (set! vct-out (make-vct len)))
+
+			   (let ((ch 0))
+			     (for-each (lambda (reader)
+					 (vct-map! vct-out
+						   (lambda () (next-sample reader)))
+					 (vct->sound-data vct-out sdobj ch)
+					 (set! ch (+ ch 1)))
+				       readers))
 
 			   (apply-soundobject sdobj)
+
 			   (c-for 0 < chans 1
 				  (lambda (ch)
 				    (sound-data->vct sdobj ch vct-out)
@@ -526,7 +545,7 @@
     (define (make-ladspadialog ladspa-analysed libraryname effectname)
       (define ladspa-object #f)
       (define ladspa-dialog #f)
-      
+      (define slider-funcs '())
       
       (let ((name (car ladspa-analysed))
 	    (author (cadr ladspa-analysed))
@@ -544,9 +563,12 @@
 	  (enableplugin))
 
 	(define (Help)
-	  (help-dialog author
-		       lisense))
-
+	  (let ((dashelp (assoc (string-append libraryname effectname) ladspa-help-assoclist)))
+	    (help-dialog author
+			 (if dashelp
+			     (caddr dashelp)
+			     lisense))))
+	
 	(define (OK)
 	  (MyStop)
 	  (disableplugin)
@@ -587,11 +609,16 @@
 	  (not (= (logand dashint dashint2 ) 0)))
 
 
-	;;(display effectname)(newline)
 
 	(set! ladspa-object (ladspa-class libraryname effectname maxbuf))
 	(if ((ladspa-object 'constructor))
 	    (let ((descriptor ((ladspa-object 'descriptor))))
+
+
+	      ;; Make sure the plugin is disabled before quitting.
+	      (add-hook! exit-hook (lambda args
+				     (disableplugin)
+				     #f))
 
 	      
 	      ;; Make dialog
@@ -629,17 +656,30 @@
 							  ((ladspa-object 'input-control-set!) portnum (/ (.value info) scale)))
 							scale
 							'log)
-						  (list (list-ref (.PortNames descriptor) portnum)
-							lo
-							init
-							hi
-							(lambda (w context info)
-							  ((ladspa-object 'input-control-set!) portnum (/ (.value info) scale)))
-							scale))))
+						  (begin
+						    (set! slider-funcs (cons (lambda (w c info)
+									       ((ladspa-object 'input-control-set!) portnum (/ (.value info)
+															       scale)))
+									     slider-funcs))
+						    (list (list-ref (.PortNames descriptor) portnum)
+							  lo
+							  init
+							  hi
+							  (car slider-funcs)
+							  scale)))))
 					  (my-filter (lambda (portnum) (not (ishint (car (list-ref (.PortRangeHints descriptor) portnum))  LADSPA_HINT_TOGGLED)))
 						     ((ladspa-object 'input-control-ports))))
 				     #f)))
 	      
+
+	      ;; Fix the sliders
+	      (set! slider-funcs (reverse slider-funcs))
+	      
+	      (for-each (lambda (slider slider-func)
+			  (XtAddCallback slider XmNdragCallback slider-func))
+			sliders
+			slider-funcs)
+
 	      
 	      ;; Add toggle buttons.
 	      (for-each (lambda (portnum)

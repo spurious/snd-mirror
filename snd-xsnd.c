@@ -2557,8 +2557,9 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
   if (old_name)
     report_in_minibuffer(sp, _("(translated %s)"), old_name);
   if (!(ss->using_schemes)) map_over_children(SOUND_PANE(ss), color_sashes, (void *)ss);
-  if (!(auto_resize(ss))) equalize_all_panes(ss);
-  
+  if (!(auto_resize(ss))) equalize_all_panes(ss); 
+
+  /* TODO: if -horizontal, if no height setting, first sound gets no space, added sounds get no width */
   if (first_window)
     {
       /* try to get the pane height that shows everything except the filter graph (hidden for my amusement) */
@@ -2574,13 +2575,11 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
     } 
   if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
     {
-      /* if control-panel */
       if (make_widgets) 
 	XtVaSetValues(sw[W_control_panel],
 		      XmNpaneMaximum, LOTSA_PIXELS,
 		      NULL); /* locked above to force correct initial setup */
       reset_controls(sp);
-      /* end if control-panel */
     }
   else 
     {

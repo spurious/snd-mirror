@@ -60,12 +60,14 @@ Snd has a <a href="http://www-ccrma.stanford.edu/software/snd/">home page</a>
 and a CVS <a href="http://snd.sourceforge.net">repository</a>. 
 </p>
 <center>
-<span class=htmlbox>related documentation</span><span class=htmlbox><a href="extsnd.html">extsnd.html</a><spacer type=horizontal size=25> <a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25> <a href="clm.html">clm.html</a><spacer type=horizontal size=25> <a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25> <a href="sndscm.html">sndscm.html</a><spacer type=horizontal size=25> <a href="libxm.html">libxm.html</a><spacer type=horizontal size=25> <a href="index.html">index.html</a></span>
+<table border=1><tr><td>
+<table bgcolor="aliceblue" border=0 cellspacing=8><tr><td><small>related documentation:</small></td><td><small><a href="extsnd.html">extsnd.html</a></small></td><td><small><a href="grfsnd.html">grfsnd.html</a></small></td><td><small><a href="clm.html">clm.html</a></small></td><td><small><a href="sndlib.html">sndlib.html</a></small></td><td><small><a href="sndscm.html">sndscm.html</a></small></td><td><small><a href="libxm.html">libxm.html</a></small></td><td><small><a href="index.html">index.html</a></small></td></tr></table>
+</td></tr></table>
 </center>
 
 
 <br>
-<span class=box><h2>Contents</h2></span>
+<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>Contents</h2></td></tr></table>
 
 <table><tr><td>
 <ul>
@@ -319,7 +321,7 @@ and a CVS <a href="http://snd.sourceforge.net">repository</a>.
 <br>
 <hr>
 <br>
-<span class=box><h2><A NAME="gettingstarted">Getting Started</a></h2></span>
+<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="gettingstarted">Getting Started</a></h2></td></tr></table>
 
 <p>Once compiled and loaded (see README.Snd for instructions), start Snd:</p>
 <pre>
@@ -435,7 +437,7 @@ falling asleep, but I don't know how to fix it -- the grumpy programmer in me is
 
 <br>
 
-<span class=box><h2><A NAME="fileoperations">File Operations</a></h2></span>
+<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="fileoperations">File Operations</a></h2></td></tr></table>
 <br>
 <center>
 <table border=8 bordercolor="lightgreen">
@@ -495,8 +497,21 @@ or the <a href="grfsnd.html#horizontalpanes">horizontalPanes</a> resource.
 (This only works on systems with Motif 2.0 or later).  Other overall layout
 choices include the Notebook widget (-notebook), 
 and separate windows for each sound (-separate).  
-These special choices need to be set either
+Such special choices need to be set either
 in the resource file, or in the invocation line.
+The default font, for example, is often too small; to get
+something more readable, you can invoke Snd with an
+explicit setting:
+</p>
+<pre>
+  ./snd -xrm "*fontList: 9x15" oboe.snd
+</pre>
+<p>or place the equivalent line in your .Xdefaults file:
+</p>
+<pre>
+snd*fontList:           9x15
+</pre>
+<p>For more on resources and defaults, see <a href="grfsnd.html#startup">Snd Startup</a>.
 </p>
 <!-- I(horizontal panes):O(-h switch to Snd)(verticalpane) --><!-- I(horizontal panes):A(verticalpane) -->
 
@@ -679,7 +694,7 @@ flushed (but see the function check-for-unsaved-edits in <a href="sndscm.html#ex
         <!-- I(overwrite check):A(overwrite) --><!-- I(revert file):A(revertfile) --><!-- I(print file):A(printfile) -->
 <br>
 
-<span class=bbox><h3><A NAME="viewing">The Display</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="viewing">The Display</a></h3></td></tr></table>
 <br>
 <center>
 <table border=8 bordercolor="lightgreen">
@@ -778,7 +793,7 @@ posted during the current run of Snd.  If some error gets erased too quickly fro
 
 <br>
 
-<span class=bbox><h3><A NAME="options">Other Options</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="options">Other Options</a></h3></td></tr></table>
 <br>
 <center>
 <table border=8 bordercolor="lightgreen">
@@ -924,7 +939,7 @@ midpoint of the current window.</p>
         <!-- I(save options):A(saveoptions) --><!-- I(zoom focus):A(zoomoption) -->
 <br>
 
-<span class=box><h2><A NAME="editoperations">Edit Operations</a></h2></span>
+<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="editoperations">Edit Operations</a></h2></td></tr></table>
 <br>
 <center>
 <table border=8 bordercolor="lightgreen">
@@ -973,7 +988,7 @@ panel' provides more complex editing operations, but
 has a chapter to itself.</p>
 
 <br>
-<span class=bbox><h3><A NAME="thecursor">The Active Channel and The Cursor</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="thecursor">The Active Channel and The Cursor</a></h3></td></tr></table>
 
 <h4>The Active Channel</h4>
 
@@ -1073,7 +1088,7 @@ the window display .1 seconds of data.</p>
         <!-- I(center selection):K(C-x l)(cxl) --><!-- I(center selection):A(cxl) -->
         <!-- I(axis bounds):K(C-x C-b, C-x C-p)(cxcb) --><!-- I(axis bounds):A(cxcb) -->
 <br>
-<span class=bbox><h3><A NAME="marks">Marks</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="marks">Marks</a></h3></td></tr></table>
 
 <p>A 'mark' marks a particular sample in a sound (not a
 position in that sound).
@@ -1122,7 +1137,7 @@ file.
         <!-- I(save marks):A(savemarks) -->
 
 <br>
-<span class=bbox><h3><A NAME="regions">Regions</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="regions">Regions</a></h3></td></tr></table>
 
 <p>A region is a portion of the sound
 data.  Although I'm not completely consistent in this document, 
@@ -1204,7 +1219,7 @@ is #t), the fft display, if any, displays the transform of the selected portion.
 </p>
 <br>
 
-<span class=bbox><h3><A NAME="edithistory">The Edit List</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="edithistory">The Edit List</a></h3></td></tr></table>
 
 <p>The current state of the undo/redo list can be viewed
 as a scrolled list of strings in the pane on the left of the 
@@ -1226,7 +1241,7 @@ See <a href="extsnd.html#editlists">Edit Lists</a> for more details.
 </p>
 
 <br>
-<span class=bbox><h3><A NAME="howtoedit">How to...</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="howtoedit">How to...</a></h3></td></tr></table>
 
 <table><tr><td>
 <ul>
@@ -1941,7 +1956,7 @@ If there is no completion routine active, Tab is a no-op.
         <!-- I(temp directory):O(TMPDIR or /var/tmp) -->
 	<!-- I(change key binding):A(sndbindkey) --><!-- I(change key binding):L(bind-key)(sndbindkey) -->
 <br>
-<span class=bbox><h3><A NAME="keyboardcommands">Keyboard Commands</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="keyboardcommands">Keyboard Commands</a></h3></td></tr></table>
 
 <p>There are two types of keyboard commands in Snd: 
 those associated with the Meta ('Alt') key, used as 
@@ -2137,7 +2152,7 @@ and M-p reloads the listener with the last line you typed, ready to be edited.
 	<!-- I(smooth samples):L(smooth-channel)(smoothchannel) -->
 <br>
 <!-- INDEX controls:Control Panel -->
-<span class=box><h2><A NAME="controls">The Control Panel</a></h2></span>
+<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="controls">The Control Panel</a></h2></td></tr></table>
 
 <p>The control panel is the portion of each sound's pane
 beneath the channel graphs.
@@ -2270,7 +2285,7 @@ panel are:</p>
 <p>See <a href="extsnd.html#extsndcontents">extsnd.html</a>.</p>
 <br>
 
-<span class=box><h2><A NAME="index">Index</a></h2></span>
+<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="index">Index</a></h2></td></tr></table>
 <br>
 <center>
 
@@ -2403,7 +2418,9 @@ panel are:</p>
 <br>
 
 <center>
-<span class=htmlbox>related documentation</span><span class=htmlbox><a href="extsnd.html">extsnd.html</a><spacer type=horizontal size=25> <a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25> <a href="clm.html">clm.html</a><spacer type=horizontal size=25> <a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25> <a href="sndscm.html">sndscm.html</a><spacer type=horizontal size=25> <a href="libxm.html">libxm.html</a><spacer type=horizontal size=25> <a href="index.html">index.html</a></span>
+<table border=1><tr><td>
+<table bgcolor="aliceblue" border=0 cellspacing=8><tr><td><small>related documentation:</small></td><td><small><a href="extsnd.html">extsnd.html</a></small></td><td><small><a href="grfsnd.html">grfsnd.html</a></small></td><td><small><a href="clm.html">clm.html</a></small></td><td><small><a href="sndlib.html">sndlib.html</a></small></td><td><small><a href="sndscm.html">sndscm.html</a></small></td><td><small><a href="libxm.html">libxm.html</a></small></td><td><small><a href="index.html">index.html</a></small></td></tr></table>
+</td></tr></table>
 </center>
 
 </body></html>

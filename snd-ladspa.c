@@ -971,6 +971,7 @@ static XEN g_ladspa_connect_port(XEN desc, XEN ptr, XEN port, XEN data)
     descriptor->connect_port(XEN_TO_C_Ladspa_Handle(ptr),
 			     XEN_TO_C_ULONG(port),
 			     samples->data);
+  /* if --with-doubles, samples->data is a double array */
   return(XEN_FALSE);
 }
 

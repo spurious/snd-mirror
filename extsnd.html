@@ -26,10 +26,12 @@
 <!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (index.cl) -->
 
 <A NAME="extsndcontents"></a>
-<span class=box><h1>Snd Customization and Extension</h1></span>
+<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h1>Snd Customization and Extension</h1></td></tr></table>
 <br>
 <center>
-<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25> <a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25> <a href="clm.html">clm.html</a><spacer type=horizontal size=25> <a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25> <a href="sndscm.html">sndscm.html</a><spacer type=horizontal size=25> <a href="libxm.html#xm">libxm.html</a><spacer type=horizontal size=25> <a href="index.html">index.html</a></span>
+<table border=1><tr><td>
+<table bgcolor="aliceblue" border=0 cellspacing=8><tr><td><small>related documentation:</small></td><td><small><a href="snd.html">snd.html</a></small></td><td><small><a href="grfsnd.html">grfsnd.html</a></small></td><td><small><a href="clm.html">clm.html</a></small></td><td><small><a href="sndlib.html">sndlib.html</a></small></td><td><small><a href="sndscm.html">sndscm.html</a></small></td><td><small><a href="libxm.html">libxm.html</a></small></td><td><small><a href="index.html">index.html</a></small></td></tr></table>
+</td></tr></table>
 </center>
 
 <ul>
@@ -70,7 +72,7 @@
 <li><a href="index.html">Index</a>
 </ul>
 <br>
-<span class=box><h2>Introduction</h2></span>
+<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>Introduction</h2></td></tr></table>
 <A NAME="lisplistener"></a>
 
 <p>Snd is a highly customizable, extensible program.
@@ -113,7 +115,7 @@ In any case, whenever the cursor is just past a close paren,
 the matching open paren is underlined.
 </small></p>
 <br>
-<span class=box><h2><A NAME="etc">Snd Programming</a></h2></span>
+<table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="etc">Snd Programming</a></h2></td></tr></table>
 
 <p>Snd is organized as a list of sounds, each with a list of channels,
 each channel containing lists of edits, marks, mixes, etc.
@@ -186,7 +188,7 @@ Extensions to Snd can be found in:
 </table>
 
 <br>
-<span class=bbox><h3><A NAME="behavior">Customizing Snd's behavior</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="behavior">Customizing Snd's behavior</a></h3></td></tr></table>
 
 <p>Most of Snd's behavior can be customized.  For example,
 when a sound is saved, some people want to be warned if
@@ -246,7 +248,7 @@ in a separate file of Scheme code and loaded at any time via the load
 function. </p>
 
 <br>
-<span class=cbox><h4><A NAME="sndglobalvars">Global variables</a></h4></span>
+<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="sndglobalvars">Global variables</a></h4></td></tr></table>
 
 <p>The variables affecting Snd's overall behavior are:</p>
 
@@ -633,7 +635,7 @@ See <a href="snd.html#zoomoption">Zoom options</a>.</td></tr>
 <br>
 
 <!-- INDEX sndhooks:Hooks -->
-<span class=cbox><h4><A NAME="sndhooks">Hooks</a></h4></span>
+<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="sndhooks">Hooks</a></h4></td></tr></table>
 
 <p>When some user-interface action takes place, code is called that responds to that action;
 these functions are sometimes called callbacks; in Guile the variable that holds a list of such
@@ -2033,7 +2035,7 @@ useful hook-related functions.
 </p>
 
 <br>
-<span class=bbox><h3><A NAME="sndobjects">Snd's objects</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndobjects">Snd's objects</a></h3></td></tr></table>
 
 <p>Snd presents its various data structures as a list
 of sounds, each with a list of channels, each with lists of edits,
@@ -2096,7 +2098,7 @@ of these below.
 
 <br>
 <!-- INDEX Vcts:Vcts -->
-<span class=cbox><h3><A NAME="Vcts">Vcts</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="Vcts">Vcts</a></h3></td></tr></table>
 <p>
 Many of the Snd and CLM functions handle vectors (arrays) of data.
 By defining a new vector type, named vct, and providing a package
@@ -2310,7 +2312,7 @@ an oscil or a sawtooth-wave:
 </pre>
 
 <br>
-<span class=cbox><h3><A NAME="sndsounddata">Sound-data and Sndlib</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndsounddata">Sound-data and Sndlib</a></h3></td></tr></table>
 
 <p>Another sound data object is the sound-data array used in Sndlib.</p>
 
@@ -2646,7 +2648,7 @@ throw 'mus-error upon encountering an error, rather than returning -1 like the u
 <br>
 
 <br>
-<span class=cbox><h3><A NAME="samplereaders">Sample-readers</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="samplereaders">Sample-readers</a></h3></td></tr></table>
 <p>
 The simplest data access function is <a href="#sndsample">sample</a> which returns the sample at
 a given position in a sound's channel.  This simplicity, however, comes at
@@ -2836,7 +2838,7 @@ See <a href="#scanagain">scan-again</a> and <a href="newcp">find-zero</a>.
 </p>
 
 <br>
-<span class=cbox><h3><A NAME="sndmarks">Marks</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndmarks">Marks</a></h3></td></tr></table>
 
 <p>A mark is an object that refers to a particular sample.
 Each mark has an associated sample number (<b>mark-sample</b>), name (<b>mark-name</b>), sync value (<b>mark-sync</b>), and
@@ -3052,7 +3054,7 @@ edit-menu.scm (trim from mark, etc), examp.scm (move window to correspond to mar
 </p>
 <br>
 <br>
-<span class=cbox><h3><A NAME="sndmixes">Mixes</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndmixes">Mixes</a></h3></td></tr></table>
 
 <p>A mix is an object that represents a channel of a sound mix.
 Each mix object has a unique identifier called its id that identifies it in the following functions.
@@ -3270,28 +3272,34 @@ See mix.scm for more mix-related (and track-related) functions including:
 <tr><td><em class=def><a href="sndscm.html#deletemix">delete-mix</a></em></td><td>delete mix (set amps to 0 and lock)</td></tr>
 <tr><td><em class=def><a href="sndscm.html#deleteallmixes">delete-all-mixes</a></em></td><td>delete all mixes</td></tr>
 </table>
-<pre>
+
 <!-- INDEX mixingexamples:Mixing -->
 <A NAME="mixingexamples"></a>
-<blockquote><small>
-mix sound file: <a href="#sndmix">mix</a> or drag-and-drop it where you want it mixed.
-mix channel: see <i>mix-channel</i> in extensions.scm
-mix region: <a href="#sndmixregion">mix-region</a>
-mix selection: <a href="#sndmixselection">mix-selection</a>
-mix vct: <a href="#sndmixvct">mix-vct</a>
-enveloped mix: see <i>enveloped-mix</i> in extensions.scm
-pan mono into stereo: see <i>place-sound</i> in examp.scm
-the mix dialog: <a href="snd.html#mixpanel">Mix Panel</a>
-mix menu: see dlp/mix-menu.scm
-filter mix (or any other such operation): use list with mix id as 'snd' arg.
-read pre-mix samples: <a href="#makemixsamplereader">make-mix-sample-reader</a>
-mix property list: <a href="sndscm.html#mixproperty">mix-property</a> in mix.scm
-cross-fade in frequency: <i>cross-fade</i> and <i>dissolve-fade</i> in <a href="sndscm.html#fadedoc">fade.scm</a>
-zipper cross-fade: <a href="sndscm.html#zipdoc">zipper.scm</a>
-</small></blockquote>
-</pre>
 <br>
-<span class=cbox><h3><A NAME="sndregions">Regions and Selections</a></h3></span>
+<table border=3 bordercolor="red" hspace=40><tr><td>
+
+<blockquote><small>
+<br>
+mix sound file: <a href="#sndmix">mix</a> or drag-and-drop it where you want it mixed.<br>
+mix channel: see <i>mix-channel</i> in extensions.scm<br>
+mix region: <a href="#sndmixregion">mix-region</a><br>
+mix selection: <a href="#sndmixselection">mix-selection</a><br>
+mix vct: <a href="#sndmixvct">mix-vct</a><br>
+enveloped mix: see <i>enveloped-mix</i> in extensions.scm<br>
+pan mono into stereo: see <i>place-sound</i> in examp.scm<br>
+the mix dialog: <a href="snd.html#mixpanel">Mix Panel</a><br>
+mix menu: see dlp/mix-menu.scm<br>
+filter mix (or any other such operation): use list with mix id as 'snd' arg.<br>
+read pre-mix samples: <a href="#makemixsamplereader">make-mix-sample-reader</a><br>
+mix property list: <a href="sndscm.html#mixproperty">mix-property</a> in mix.scm<br>
+cross-fade in frequency: <i>cross-fade</i> and <i>dissolve-fade</i> in <a href="sndscm.html#fadedoc">fade.scm</a><br>
+zipper cross-fade: <a href="sndscm.html#zipdoc">zipper.scm</a><br>
+<br>
+</small></blockquote>
+
+</td></tr></table>
+<br>
+<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndregions">Regions and Selections</a></h3></td></tr></table>
 
 <p>A region is a saved portion of sound data.  There is a dialog, the View:Region browser, to inspect regions.
 As regions are defined, the new ones are pushed on a stack, and if enough regions already
@@ -3422,18 +3430,20 @@ is mus-next), with header comment <i>comment</i>.
 </table>
 <!-- INDEX regionexamples:Regions -->
 <A NAME="regionexamples"></a>
-<pre><small><blockquote>
-See also:
-Max length of region list: <a href="#maxregions">max-regions</a>
-Whether selection creates a region: <a href="selectioncreatesregion">selection-creates-region</a>
-Play hook: <a href="#stopplayingregionhook">stop-playing-region-hook</a>
-To play region repeatedly: <a href="sndscm.html#explayregionforever">play-region-forever</a>
-Start region browser from Scheme: <a href="#sndregiondialog">region-dialog</a>
-All about regions: <a href="snd.html#regions">regions</a>
-The region dialog: <a href="snd.html#regionbrowser">region browser</a>
-Region rms amp: <a href="sndscm.html#exregionrms">region-rms</a>
-region-play-list and region-play-sequence in examp.scm
-</blockquote></small></pre>
+<table border=3 bordercolor="red" hspace=40><tr><td>
+<small><blockquote>
+See also:<br>
+Max length of region list: <a href="#maxregions">max-regions</a><br>
+Whether selection creates a region: <a href="selectioncreatesregion">selection-creates-region</a><br>
+Play hook: <a href="#stopplayingregionhook">stop-playing-region-hook</a><br>
+To play region repeatedly: <a href="sndscm.html#explayregionforever">play-region-forever</a><br>
+Start region browser from Scheme: <a href="#sndregiondialog">region-dialog</a><br>
+All about regions: <a href="snd.html#regions">regions</a><br>
+The region dialog: <a href="snd.html#regionbrowser">region browser</a><br>
+Region rms amp: <a href="sndscm.html#exregionrms">region-rms</a><br>
+region-play-list and region-play-sequence in examp.scm<br>
+</blockquote></small>
+</td></tr></table>
 <br>
 <hr>
 
@@ -3604,29 +3614,31 @@ this is the same as <i>src-sound</i> but applied to selection.
 
 <!-- INDEX selectionexamples:Selections -->
 <A NAME="selectionexamples"></a>
-<pre><small><blockquote>
-See also:
-<a href="#selectioncolor">selection-color</a>: color of selected portion
-<a href="#selectioncreatesregion">selection-creates-region</a>: if #f, creating a selection does not create a region
-<a href="#lshowselectiontransform">show-selection-transform</a>: if #t, fft graph refers to the selection
-<a href="#stopplayingselectionhook">stop-playing-selection-hook</a>: hook called when selection stops playing
-<a href="sndscm.html#exswapselectionchannels">swap-selection-channels</a>: swap chans in selected portion
-<a href="sndscm.html#exreplacewithselection">replace-with-selection</a>: replace portion with selection
-<a href="sndscm.html#exmakeselection">make-selection</a>: select portion via function
-<a href="sndscm.html#exevaloverselection">eval-over-selection</a>: evaluate thunk on each sample of selection
-<a href="sndscm.html#exselectionmembers">selection-members</a>: list of lists of sound index and channel if selection is active there
-<a href="sndscm.html#exselectionrms">selection-rms</a>: rms of selection data
-<a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a>: delete selection and smooth the splice
-<a href="sndscm.html#exdefineselectionviamarks">define-selection-via-marks</a>: select portion between two marks
-<a href="sndscm.html#exsnapmarks">snap-marks</a>: place marks at selection start and end
-<a href="sndscm.html#fitselectionbetweenmarks">fit-selection-between-marks</a>: squeeze selection between marks
-<a href="sndscm.html#addselectionpopup">add-selection-popup</a>: add context-sensitive popup menu specific to selection
-<a href="sndscm.html#editmenudoc">cut-selection-&gt;new</a>: delete selection and write it to a file
-<a href="sndscm.html#editmenudoc">append-selection</a>: append selection
-<a href="sndscm.html#editmenudoc">selection-&gt;new</a>: write selection to a file
-<a href="sndscm.html#dlpdoc">deselect-all</a>: undo select-all.
-</blockquote></small></pre>
+<table border=3 bordercolor="red" hspace=40><tr><td>
+<small><blockquote>
+See also:<br>
+<a href="#selectioncolor">selection-color</a>: color of selected portion<br>
+<a href="#selectioncreatesregion">selection-creates-region</a>: if #f, creating a selection does not create a region<br>
+<a href="#lshowselectiontransform">show-selection-transform</a>: if #t, fft graph refers to the selection<br>
+<a href="#stopplayingselectionhook">stop-playing-selection-hook</a>: hook called when selection stops playing<br>
+<a href="sndscm.html#exswapselectionchannels">swap-selection-channels</a>: swap chans in selected portion<br>
+<a href="sndscm.html#exreplacewithselection">replace-with-selection</a>: replace portion with selection<br>
+<a href="sndscm.html#exmakeselection">make-selection</a>: select portion via function<br>
+<a href="sndscm.html#exevaloverselection">eval-over-selection</a>: evaluate thunk on each sample of selection<br>
+<a href="sndscm.html#exselectionmembers">selection-members</a>: list of lists of sound index and channel if selection is active there<br>
+<a href="sndscm.html#exselectionrms">selection-rms</a>: rms of selection data<br>
+<a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a>: delete selection and smooth the splice<br>
+<a href="sndscm.html#exdefineselectionviamarks">define-selection-via-marks</a>: select portion between two marks<br>
+<a href="sndscm.html#exsnapmarks">snap-marks</a>: place marks at selection start and end<br>
+<a href="sndscm.html#fitselectionbetweenmarks">fit-selection-between-marks</a>: squeeze selection between marks<br>
+<a href="sndscm.html#addselectionpopup">add-selection-popup</a>: add context-sensitive popup menu specific to selection<br>
+<a href="sndscm.html#editmenudoc">cut-selection-&gt;new</a>: delete selection and write it to a file<br>
+<a href="sndscm.html#editmenudoc">append-selection</a>: append selection<br>
+<a href="sndscm.html#editmenudoc">selection-&gt;new</a>: write selection to a file<br>
+<a href="sndscm.html#dlpdoc">deselect-all</a>: undo select-all.<br>
 <br>
+</blockquote></small>
+</td></tr></table>
 
 <p>The selected portion can be chosen, independent of any region, by setting selection-position and selection-frames.
 It's easy to extend the notion of a selection to an arbitrary list of sound portions:
@@ -3649,7 +3661,7 @@ It's easy to extend the notion of a selection to an arbitrary list of sound port
 
 
 <br>
-<span class=cbox><h3><A NAME="sndsounds">Sounds and channels</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndsounds">Sounds and channels</a></h3></td></tr></table>
 
 <p>This is the heart of Snd; we've waded through all the ancillary junk, and we've
 finally reached the functions that actually edit sounds!  Most of these functions
@@ -4048,12 +4060,17 @@ cursor in the currently selected channel if you don't specify otherwise.
 
 <!-- INDEX cursorexamples:Cursors -->
 <A NAME="cursorexamples"></a>
+<br><br>
+<table border=3 bordercolor="red" hspace=40><tr><td>
 <blockquote><small>
+<br>
 Tracking cursor: <a href="#sndcursorfollowsplay">cursor-follows-play</a><br>
 Change cursor shape or size: <a href="#cursorstyle">cursor-style</a>, <a href="#cursorsize">cursor-size</a><br>
 Cursor moving keys: <a href="snd.html#movecursor">Moving the Cursor</a><br>
 Display data about sample under cursor: <a href="#verbosecursor">verbose cursor</a><br>
+<br>
 </small></blockquote>
+</td></tr></table>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4070,12 +4087,17 @@ I wonder whether "track" or "frame" has the most uses.
 
 <!-- INDEX trackingcursors:Tracking cursors -->
 <A NAME="trackingcursors"></a>
+<br><br>
+<table border=3 bordercolor="red" hspace=40><tr><td>
 <blockquote><small>
+<br>
 To play from the current cursor position with a tracking cursor:  <a href="#pfc">pfc</a>.<br>
 To display tracking cursor as a full height vertical line: <a href="#cursorstyle">cursor-style</a>.<br>
 To track play once: control-click 'play'. (You can add a mark at the current tracking cursor location during the play with C-m).<br>
-To leave the cursor at the final position after tracking play: if-cursor-follows-play-it-stays-where-play-stopped in examp.scm.
+To leave the cursor at the final position after tracking play: if-cursor-follows-play-it-stays-where-play-stopped in examp.scm.<br>
+<br>
 </small></blockquote>
+</td></tr></table>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4251,18 +4273,21 @@ delete sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
 
 <!-- INDEX deletionexamples:Deletions -->
 <A NAME="deletionexamples"></a>
-<pre><small><blockquote>
-To delete a file: use the Guile function delete-file or Ruby's File.delete.
-To delete a region: <a href="#forgetregion">forget-region</a>
-To delete the currently selected samples: <a href="#snddeleteselection">delete-selection</a>
-To delete the selection and smooth the splice: <a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a>
-To delete a mix or all mixes: <a href="sndscm.html#deletemix">delete-mix</a>
-To delete a track or all tracks: <a href="sndscm.html#deletetrack">delete-track</a>
-To delete a mark or all marks: <a href="#snddeletemark">delete-mark</a>
-To remove a file from the sound cache: <a href="#soundforget">mus-sound-forget</a>
-To remove a menu item: <a href="#sndremovefrommenu">remove-from-menu</a>
-To add a 'delete' option to the file selection dialog: <a href="sndscm.html#adddeleteoption">add-delete-option</a>
-</blockquote></small></pre>
+<br><br>
+<table border=3 bordercolor="red" hspace=40><tr><td>
+<small><blockquote>
+To delete a file: use the Guile function delete-file or Ruby's File.delete.<br>
+To delete a region: <a href="#forgetregion">forget-region</a><br>
+To delete the currently selected samples: <a href="#snddeleteselection">delete-selection</a><br>
+To delete the selection and smooth the splice: <a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a><br>
+To delete a mix or all mixes: <a href="sndscm.html#deletemix">delete-mix</a><br>
+To delete a track or all tracks: <a href="sndscm.html#deletetrack">delete-track</a><br>
+To delete a mark or all marks: <a href="#snddeletemark">delete-mark</a><br>
+To remove a file from the sound cache: <a href="#soundforget">mus-sound-forget</a><br>
+To remove a menu item: <a href="#sndremovefrommenu">remove-from-menu</a><br>
+To add a 'delete' option to the file selection dialog: <a href="sndscm.html#adddeleteoption">add-delete-option</a><br>
+</blockquote></small>
+</td></tr></table>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4298,8 +4323,11 @@ can be either a CLM envelope generator or an envelope (a list of breakpoints). <
 
 <!-- INDEX envexamples:Envelopes -->
 <A NAME="envexamples"></a>
+<br><br>
+<table border=3 bordercolor="red" hspace=40><tr><td>
 <blockquote><small>
-<spacer type=horizontal size=40>envelopes in Snd:<br>
+<br>
+envelopes in Snd:<br>
 Other enveloping functions: <a href="#rampchannel">ramp-channel</a>, <a href="#xrampchannel">xramp-channel</a>, <a href="#smoothchannel">smooth-channel</a><br>
 The CLM env generator: <a href="clm.html#make-env">env</a>, many examples in examp.scm, new-effects.scm, etc<br>
 Various operations on envelopes: <a href="sndscm.html#envdoc">env.scm</a><br>
@@ -4311,8 +4339,10 @@ Envelope over track (a set of mixes): <a href="sndscm.html#envtrack">env-track</
 Local envelope editor: <a href="sndscm.html#enveddoc">enved.scm</a>, xm-enved.scm<br>
 Read sound indexed through envelope: <a href="sndscm.html#exenvsoundinterp">env-sound-interp</a><br>
 Cosine as envelope: <a href="#cosinechannel">cosine-channel</a>, <a href="#cosinechannelviaptree">cosine-channel-via-ptree</a>, <a href="clm.html#bellcurve">bell-curve</a><br>
-Customizing the envelope editor: <a href="#envedhook">enved-hook</a>
+Customizing the envelope editor: <a href="#envedhook">enved-hook</a><br>
+<br>
 </small></blockquote>
+</td></tr></table>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4453,8 +4483,10 @@ form of CLM's filter generator:
 some other form, see <b>cascade-&gt;canonical</b> in dsp.scm, and the examples that follow.
 </p>
 <!-- INDEX filtersinsnd:Filters -->
+<table border=3 bordercolor="red" hspace=40><tr><td>
 <blockquote><small>
-<spacer type=horizontal size=40><A NAME="filtersinsnd">Filters</a> in Snd:<br>
+<br>
+<A NAME="filtersinsnd">Filters</a> in Snd:<br>
 CLM filter generators: <a href="clm.html#filters">filter, one-pole, formant, comb, notch, all-pass, etc</a>, many examples in examp.scm, new-effects.scm<br>
 lowpass filter: make-lowpass in dsp.scm<br>
 highpass filter: make-highpass in dsp.scm<br>
@@ -4477,8 +4509,10 @@ LADSPA-based filter effects: see dlp/plugins-menu.scm<br>
 Max Mathews resonator: <a href="sndscm.html#maxfdoc">maxf.scm, maxf.rb</a><br>
 Spectral edit dialog: <a href="snd.html#editenvelope">Envelope Editor</a><br>
 graphical equalizer filter bank: <a href="sndscm.html#clminsdoc">graphEq</a><br>
-see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts">fft-based filtering</a>
+see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts">fft-based filtering</a><br>
+<br>
 </small></blockquote>
+</td></tr></table>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4495,7 +4529,10 @@ In the find dialog and in C-s or C-r searches, if the value returned is an integ
 
 <!-- INDEX searchexamples:Searching -->
 <A NAME="searchexamples"></a>
+<br><br>
+<table border=3 bordercolor="red" hspace=40><tr><td>
 <blockquote><small>
+<br>
 Example find procedures: <a href="sndscm.html#exsearchforclick">search-for-click, zero+, next-peak, find-pitch</a><br>
 Search via continuation: <a href="#scanagain">scan-again</a><br>
 Explicit access to search procedures: <a href="#searchprocedure">search-procedure</a><br>
@@ -4503,8 +4540,10 @@ The Find dialog: <a href="snd.html#editoperations">Find</a><br>
 find silence: <a href="#mapsilence">map-silence</a><br>
 find zero crossing: <a href="#newcp">find-zero</a><br>
 find a mark etc: <a href="#sndfindmark">find-mark</a>, <a href="#sndfindmix">find-mix</a>, <a href="#sndfindsound">find-sound</a><br>
-see also <a href="#lcountmatches">count-matches</a> and <a href="#scanchannel">scan-channel</a>.
+see also <a href="#lcountmatches">count-matches</a> and <a href="#scanchannel">scan-channel</a>.<br>
+<br>
 </small></blockquote>
+</td></tr></table>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4675,14 +4714,17 @@ insert sample <i>value</i> at sample <i>samp</i> in <i>snd</i>'s channel <i>chn<
 
 <!-- INDEX insertionexamples:Insertions -->
 <A NAME="insertionexamples"></a>
-<pre><small><blockquote>
-To insert some portion of a channel: <a href="sndscm.html#insertchannel">insert-channel</a>
-To insert a silence: <a href="#padchannel">pad-channel</a>, <a href="#sndinsertsilence">insert-silence</a>
-To insert a region: <a href="#sndinsertregion">insert-region</a>
-To insert the selection: <a href="#sndinsertselection">insert-selection</a>
-To insert a vct of samples: <a href="#sndinsertsamples">insert-samples</a>
-To insert a sound: <a href="#sndinsertfile">insert-sound</a>
-</blockquote></small></pre>
+<br><br>
+<table border=3 bordercolor="red" hspace=40><tr><td>
+<small><blockquote>
+To insert some portion of a channel: <a href="sndscm.html#insertchannel">insert-channel</a><br>
+To insert a silence: <a href="#padchannel">pad-channel</a>, <a href="#sndinsertsilence">insert-silence</a><br>
+To insert a region: <a href="#sndinsertregion">insert-region</a><br>
+To insert the selection: <a href="#sndinsertselection">insert-selection</a><br>
+To insert a vct of samples: <a href="#sndinsertsamples">insert-samples</a><br>
+To insert a sound: <a href="#sndinsertfile">insert-sound</a><br>
+</blockquote></small>
+</td></tr></table>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5006,16 +5048,20 @@ max amp of <i>snd</i>'s channel <i>chn</i>.  Used with set!, this is equivalent 
 
 <!-- INDEX maxampexamples:Maxamps -->
 <A NAME="maxampexamples"></a>
-<pre><blockquote><small>
-Sound file maxamp: <a href="#mussoundmaxamp">mus-sound-maxamp</a>
-Region maxamp: <a href="#sndregionmaxamp">region-maxamp</a>
-Selection maxamp: <a href="#sndselectionmaxamp">selection-maxamp</a>
-Sound data object maxamp: <a href="#sounddatamaxamp">sound-data-maxamp</a>
-Vct maxamp: <a href="#vctpeak">vct-peak</a>
-CLM's sound maxamp: <a href="clm.html#sound-maxamp">sound-maxamp</a> (same as mus-sound-maxamp)
-To set the y axis bounds to reflect the channel's maxamp: <a href="#sndybounds">y-bounds</a>
+<br><br>
+<table border=3 bordercolor="red" hspace=40><tr><td>
+<blockquote><small>
+<br>
+Sound file maxamp: <a href="#mussoundmaxamp">mus-sound-maxamp</a><br>
+Region maxamp: <a href="#sndregionmaxamp">region-maxamp</a><br>
+Selection maxamp: <a href="#sndselectionmaxamp">selection-maxamp</a><br>
+Sound data object maxamp: <a href="#sounddatamaxamp">sound-data-maxamp</a><br>
+Vct maxamp: <a href="#vctpeak">vct-peak</a><br>
+CLM's sound maxamp: <a href="clm.html#sound-maxamp">sound-maxamp</a> (same as mus-sound-maxamp)<br>
+To set the y axis bounds to reflect the channel's maxamp: <a href="#sndybounds">y-bounds</a><br>
+<br>
 </small></blockquote>
-</pre>
+</td></tr></table>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5203,29 +5249,33 @@ The following code plays from the cursor with a moving ("tracking") cursor:<br><
 
 <!-- INDEX playexamples:Playing -->
 <A NAME="playexamples"></a>
-<pre><small><blockquote>
-To play one channel: <a href="#playchannel">play-channel</a>, play button in control panel or files dialog
-To play from cursor: C-q and example above
-To play from cursor with tracking cursor: <a href="#pfc">pfc</a> above
-To play the selection: <a href="#sndplayselection">play-selection</a>, <a href="snd.html#cxp">C-x p</a>
-To play a region: <a href="#sndplayregion">play-region</a>, <a href="snd.html#cxp">C-x p</a>, play button in Region dialog
-To play a mix: <a href="#sndplaymix">play-mix</a>, play button in Mix dialog
-To play a track: <a href="#sndplaytrack">play-track</a>
-To play from mark: click or drag triangle (control-click for all chans)
-To play continuously between two marks: <a href="sndscm.html#exloopbetweenmarks">loop-it</a>
-To stop playing: C-g, C-t, <a href="#sndstop">stop-playing</a>
-To pause or resume playback: space
-To play repeatedly: <a href="sndscm.html#explayoften">play-often</a>
-To play repeatedly until C-g: <a href="sndscm.html#explayuntilcg">play-until-c-g</a>
-To play region repeatedly: <a href="sndscm.html#explayregionforever">play-region-forever</a>
-To play a file upon a keystroke: <a href="#extendedpiano">bind-key</a>
-To play using an external program: (shell "sndplay wood16.wav")
-To play arbitrary mixtures of things: <a href="#makeplayer">make-player</a> and related functions, <a href="sndscm.html#playsyncdmarks">play-syncd-marks</a>
-To send arbitrary data to the DAC: <a href="#musaudiowrite">mus-audio-write</a>, <a href="sndscm.html#exstartdac">start-dac</a>
-To play after sending the data through some function: <a href="sndscm.html#explaysound">play-sound</a>
-To play with applied amplitude envelope: <a href="sndscm.html#explaywithenvs">play-with-envs</a>, <a href="sndscm.html#explaypanned">play-panned</a>
-To play an external file: (play "file")
-</blockquote></small></pre></td></tr>
+<br><br>
+<table border=3 bordercolor="red" hspace=40><tr><td>
+<small><blockquote>
+To play one channel: <a href="#playchannel">play-channel</a>, play button in control panel or files dialog<br>
+To play from cursor: C-q and example above<br>
+To play from cursor with tracking cursor: <a href="#pfc">pfc</a> above<br>
+To play the selection: <a href="#sndplayselection">play-selection</a>, <a href="snd.html#cxp">C-x p</a><br>
+To play a region: <a href="#sndplayregion">play-region</a>, <a href="snd.html#cxp">C-x p</a>, play button in Region dialog<br>
+To play a mix: <a href="#sndplaymix">play-mix</a>, play button in Mix dialog<br>
+To play a track: <a href="#sndplaytrack">play-track</a><br>
+To play from mark: click or drag triangle (control-click for all chans)<br>
+To play continuously between two marks: <a href="sndscm.html#exloopbetweenmarks">loop-it</a><br>
+To stop playing: C-g, C-t, <a href="#sndstop">stop-playing</a><br>
+To pause or resume playback: space<br>
+To play repeatedly: <a href="sndscm.html#explayoften">play-often</a><br>
+To play repeatedly until C-g: <a href="sndscm.html#explayuntilcg">play-until-c-g</a><br>
+To play region repeatedly: <a href="sndscm.html#explayregionforever">play-region-forever</a><br>
+To play a file upon a keystroke: <a href="#extendedpiano">bind-key</a><br>
+To play using an external program: (shell "sndplay wood16.wav")<br>
+To play arbitrary mixtures of things: <a href="#makeplayer">make-player</a> and related functions, <a href="sndscm.html#playsyncdmarks">play-syncd-marks</a><br>
+To send arbitrary data to the DAC: <a href="#musaudiowrite">mus-audio-write</a>, <a href="sndscm.html#exstartdac">start-dac</a><br>
+To play after sending the data through some function: <a href="sndscm.html#explaysound">play-sound</a><br>
+To play with applied amplitude envelope: <a href="sndscm.html#explaywithenvs">play-with-envs</a>, <a href="sndscm.html#explaypanned">play-panned</a><br>
+To play an external file: (play "file")<br>
+</blockquote></small>
+</td></tr></table>
+</td></tr>
 <tr><td colspan=2></td></tr>
 
 
@@ -5667,16 +5717,21 @@ temporary messages.  C-g clears it.
 <tr><td></td><td>
 <b>reverse-channel</b> is the <a href="#regularizedargs">regularized</a> version of <a href="#sndreverse">reverse-sound</a>.
 <!-- INDEX reverseexamples:Reversing -->
+<br><br>
 <A NAME="reverseexamples"></a>
-<pre><blockquote><small>
-To reverse selected portion: <a href="#sndreverseselection">reverse-selection</a>
-To read samples in reverse: use <a href="#makesamplereader">make-sample-reader</a> with direction -1.
-To reverse at new sampling rate: use <a href="#srcchannel">src-channel</a> with a negative ratio.
-Reverse in control panel: <a href="snd.html#speed">control panel</a> and <a href="#sndspeed">speed-control</a> variable.
-To reverse a track: <a href="sndscm.html#reversetrack">reverse-track</a>
-To reverse an envelope: <a href="sndscm.html#reverseenvelope">reverse-envelope</a>
-Virtual reverse-channel: <a href="#virtualreverse">xen-channel</a>
-</small></blockquote></pre>
+<table border=3 bordercolor="red" hspace=40><tr><td>
+<blockquote><small>
+<br>
+To reverse selected portion: <a href="#sndreverseselection">reverse-selection</a><br>
+To read samples in reverse: use <a href="#makesamplereader">make-sample-reader</a> with direction -1.<br>
+To reverse at new sampling rate: use <a href="#srcchannel">src-channel</a> with a negative ratio.<br>
+Reverse in control panel: <a href="snd.html#speed">control panel</a> and <a href="#sndspeed">speed-control</a> variable.<br>
+To reverse a track: <a href="sndscm.html#reversetrack">reverse-track</a><br>
+To reverse an envelope: <a href="sndscm.html#reverseenvelope">reverse-envelope</a><br>
+Virtual reverse-channel: <a href="#virtualreverse">xen-channel</a><br>
+<br>
+</small></blockquote>
+</td></tr></table>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5801,35 +5856,37 @@ There are many examples in examp.scm and dsp.scm.
 save <i>snd</i>; same as File menu's Save option. <a href="#savehook">save-hook</a> is invoked upon save-sound.
 
 <!-- INDEX saveexamples:Saving -->
+<br><br>
 <A NAME="saveexamples"></a>
-<pre><small><blockquote>
-To save all sounds: <code>(for-each save-sound (sounds))</code>.
-To save a sound under a different name: <a href="#sndsaveas">save-sound-as</a>
-To extract one channel of a sound: <a href="#sndsaveas">save-sound-as</a>
-To save a sound in a different format or header: <a href="#sndsaveas">save-sound-as</a>
-To backup edits automatically: <a href="sndscm.html#exautosave">autosave</a>
-To check first for unsaved edits: <a href="sndscm.html#exunsavededits">check-for-unsaved-edits</a>
-To save Snd's complete state (unsaved edits and all): <a href="#sndsavestate">save-state</a>, <a href="#savedir">save-dir</a>, <a href="#savestatehook">save-state-hook</a>, <a href="#lsavestatefile">save-state-file</a>
-To save just the current options: <a href="#sndsaveoptions">save-options</a>
-To save the selection: <a href="#sndsaveselection">save-selection</a>
-To save a region: <a href="#sndsaveregion">save-region</a>
-To save a track: <a href="sndscm.html#savetrack">save-track</a>
-To save the control panel state: <a href="#sndcontrolsave">save-controls</a>
-To save currently defined envelopes (envelope editor): <a href="#sndsaveenvelopes">save-envelopes</a>
-To start the file save dialog: <a href="#sndfilesaveasdialog">file-save-as-dialog</a>
-To start the selection save dialog: <a href="#sndeditsaveasdialog">edit-save-as-dialog</a>
-To use Emacs-style save-as behavior: <a href="#emacssytlesaveas">emacs-style-save-as</a>
-To save the current listener text: <a href="#sndsavelistener">save-listener</a>
-To save keyboard macros: <a href="#sndsavemacros">save-macros</a>
-To save marks: <a href="#sndsavemarks">save-marks</a>
-To save the audio hardware settings: <a href="#musaudiosave">mus-audio-save</a>
-To save just the edit history: <a href="#sndsaveedithistory">save-edit-history</a>
-To save the peak-env data: <a href="sndscm.html#peakenvdoc">save-peak-env-info</a>
-To take some action upon a window manager save-yourself signal: <a href="sndscm.html#uponsaveyourself">upon-save-yourself</a>
-To save the current sound setup for a later reopen: <a href="sndscm.html#exremembersoundstate">remember-sound-state</a>
-To save the current fft peak info: <a href="#sndpeaks">peaks</a>
+<table border=3 bordercolor="red" hspace=40><tr><td>
+<small><blockquote>
+To save all sounds: <code>(for-each save-sound (sounds))</code>.<br>
+To save a sound under a different name: <a href="#sndsaveas">save-sound-as</a><br>
+To extract one channel of a sound: <a href="#sndsaveas">save-sound-as</a><br>
+To save a sound in a different format or header: <a href="#sndsaveas">save-sound-as</a><br>
+To backup edits automatically: <a href="sndscm.html#exautosave">autosave</a><br>
+To check first for unsaved edits: <a href="sndscm.html#exunsavededits">check-for-unsaved-edits</a><br>
+To save Snd's complete state (unsaved edits and all): <a href="#sndsavestate">save-state</a>, <a href="#savedir">save-dir</a>, <a href="#savestatehook">save-state-hook</a>, <a href="#lsavestatefile">save-state-file</a><br>
+To save just the current options: <a href="#sndsaveoptions">save-options</a><br>
+To save the selection: <a href="#sndsaveselection">save-selection</a><br>
+To save a region: <a href="#sndsaveregion">save-region</a><br>
+To save a track: <a href="sndscm.html#savetrack">save-track</a><br>
+To save the control panel state: <a href="#sndcontrolsave">save-controls</a><br>
+To save currently defined envelopes (envelope editor): <a href="#sndsaveenvelopes">save-envelopes</a><br>
+To start the file save dialog: <a href="#sndfilesaveasdialog">file-save-as-dialog</a><br>
+To start the selection save dialog: <a href="#sndeditsaveasdialog">edit-save-as-dialog</a><br>
+To use Emacs-style save-as behavior: <a href="#emacssytlesaveas">emacs-style-save-as</a><br>
+To save the current listener text: <a href="#sndsavelistener">save-listener</a><br>
+To save keyboard macros: <a href="#sndsavemacros">save-macros</a><br>
+To save marks: <a href="#sndsavemarks">save-marks</a><br>
+To save the audio hardware settings: <a href="#musaudiosave">mus-audio-save</a><br>
+To save just the edit history: <a href="#sndsaveedithistory">save-edit-history</a><br>
+To save the peak-env data: <a href="sndscm.html#peakenvdoc">save-peak-env-info</a><br>
+To take some action upon a window manager save-yourself signal: <a href="sndscm.html#uponsaveyourself">upon-save-yourself</a><br>
+To save the current sound setup for a later reopen: <a href="sndscm.html#exremembersoundstate">remember-sound-state</a><br>
+To save the current fft peak info: <a href="#sndpeaks">peaks</a><br>
 </blockquote></small>
-</pre>
+</td></tr></table>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6207,16 +6264,19 @@ If #t, the y=0 axis is displayed.  This is the '<a href="snd.html#viewy0">Show Y
 <i>smooth-channel-via-ptree</i> in examp.scm is the virtual form.
 
 <!-- INDEX smoothexamples:Smoothing -->
+<br><br>
 <A NAME="smoothexamples"></a>
-<pre><small><blockquote>
-To smooth all channels: <a href="#sndsmooth">smooth-sound</a>
-To smooth selection: <a href="#sndsmoothselection">smooth-selection</a>
-To delete the selection and smooth the splice: <a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a>
-Smoothing as virtual op: smooth-channel-via-ptree in examp.scm
-Smoothing via fft: <a href="sndscm.html#exfftsmoother">fft-smoother</a>
-Smooth via low-pass <a href="#filtersinsnd">filter</a>
-Smooth over click: Remove-click in examp.scm
-</blockquote></small></pre>
+<table border=3 bordercolor="red" hspace=40><tr><td>
+<small><blockquote>
+To smooth all channels: <a href="#sndsmooth">smooth-sound</a><br>
+To smooth selection: <a href="#sndsmoothselection">smooth-selection</a><br>
+To delete the selection and smooth the splice: <a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a><br>
+Smoothing as virtual op: smooth-channel-via-ptree in examp.scm<br>
+Smoothing via fft: <a href="sndscm.html#exfftsmoother">fft-smoother</a><br>
+Smooth via low-pass <a href="#filtersinsnd">filter</a><br>
+Smooth over click: Remove-click in examp.scm<br>
+</blockquote></small>
+</td></tr></table>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6466,20 +6526,24 @@ argument <i>num-or-env-gen</i> can be either a number or an envelope generator.
 This is the <a href="#regularizedargs">regularized</a> version of <a href="#sndsrc">src-sound</a>.
 
 <!-- INDEX resampleexamples:Resampling -->
+<br><br>
 <A NAME="resampleexamples"></a>
-<pre><small><blockquote>
-resample all chans: <a href="#sndsrc">src-sound</a>
-resample selection: <a href="#sndsrcselection">src-selection</a>
-resample mix: speed control in <a href="snd.html#mixpanel">Mix dialog</a> (also <a href="#applycontrols">apply-controls</a>) or src-channel with mix id in list
-resample via drawn envelope: srate in <a href="snd.html#editenvelope">Envelope editor</a>
-resample via CLM gen: <a href="clm.html#src">src</a>
-resample with independent time control: expand in <a href="#customcontrols">control panel</a>, <a href="sndscm.html#exexpsrc">expsrc</a> and <a href="sndscm.html#exexpsnd">expsnd</a>
-resampling-based sound effects: <a href="sndscm.html#exhellodentist">hello-dentist</a>, <a href="sndscm.html#exfp">fp</a> ("Forbidden Planet"), flange and chorus in dsp.scm and new-effects.scm
-the digital zipper: <a href="sndscm.html#zipdoc">zipper</a>
-resample via FFT: <a href="sndscm.html#exdownoct">down-oct</a>
-resample through env: <a href="sndscm.html#exsoundinterp">sound-interp</a> and <a href="sndscm.html#exenvsoundinterp">env-sound-interp</a>
-resample through list: <a href="sndscm.html#scratch">scratch</a>
-</blockquote></small></pre>
+<table border=3 bordercolor="red" hspace=40><tr><td>
+<small><blockquote>
+resample all chans: <a href="#sndsrc">src-sound</a><br>
+resample selection: <a href="#sndsrcselection">src-selection</a><br>
+resample mix: speed control in <a href="snd.html#mixpanel">Mix dialog</a> (also <a href="#applycontrols">apply-controls</a>) or src-channel with mix id in list<br>
+resample via drawn envelope: srate in <a href="snd.html#editenvelope">Envelope editor</a><br>
+resample via CLM gen: <a href="clm.html#src">src</a><br>
+resample with independent time control: expand in <a href="#customcontrols">control panel</a>, <a href="sndscm.html#exexpsrc">expsrc</a> and <a href="sndscm.html#exexpsnd">expsnd</a><br>
+resampling-based sound effects: <a href="sndscm.html#exhellodentist">hello-dentist</a>, <a href="sndscm.html#exfp">fp</a> ("Forbidden Planet"), flange and chorus in dsp.scm and new-effects.scm<br>
+the digital zipper: <a href="sndscm.html#zipdoc">zipper</a><br>
+resample via FFT: <a href="sndscm.html#exdownoct">down-oct</a><br>
+resample through env: <a href="sndscm.html#exsoundinterp">sound-interp</a> and <a href="sndscm.html#exenvsoundinterp">env-sound-interp</a><br>
+resample through list: <a href="sndscm.html#scratch">scratch</a><br>
+<br>
+</blockquote></small>
+</td></tr></table>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6995,7 +7059,7 @@ of the fft points, making the display smoother.
 </table>
 
 
-<span class=cbox><h4><A NAME="customcontrols">the control panel</a></h4></span>
+<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="customcontrols">the control panel</a></h4></td></tr></table>
 
 <p>
 The control panel normally processes samples as follows: if the sampling
@@ -7331,7 +7395,7 @@ style (default: 12).
 <!-- INDEX editlists:Edit lists -->
 <!-- Edit Lists -->
 <br>
-<span class=cbox><h3><A NAME="editlists">Edit Lists</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="editlists">Edit Lists</a></h3></td></tr></table>
 
 <p>An edit list (in other editors this is called an "edit decision list", I guess because it sounds decisive)
 describes the edit history of a channel. When, for example, you type C-d, nothing actually
@@ -7553,7 +7617,7 @@ sound).  <a href="#ptreechannel">ptree-channel</a> (still in the experimental st
 
 <!-- Transforms -->
 <br>
-<span class=bbox><h3><A NAME="sndtransforms">Transforms</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndtransforms">Transforms</a></h3></td></tr></table>
 
 <p>Except for add-transform, the transform functions and variables have been treated above, so this is just
 a list of them with cross-references.</p>
@@ -7661,35 +7725,37 @@ This function is the same as <a href="clm.html#convolution">convolution</a>.
 </p>
 <!-- INDEX fftexamples:FFTs -->
 <A NAME="fftexamples"></a>
-<pre><small><blockquote>
-CLM fft function: <a href="clm.html#fft">mus-fft</a>
-CLM spectrum: <a href="clm.html#spectrum">spectrum</a>
-Snd spectrum: <a href="#sndspectrum">snd-spectrum</a>
-Cross Correlation: <a href="sndscm.html#excorrelate">correlate</a>
-FFT window: <a href="clm.html#make-fft-window">make-fft-window</a>
-Dolph-Chebyshev window in Scheme: <a href="sndscm.html#exdolph">dolph</a>
-Hartley transform in Scheme: <a href="sndscm.html#exdht">dht</a>
-Spectral edit dialog: <a href="snd.html#editenvelope">Envelope Editor</a>
-
-fft-based filter: <a href="sndscm.html#exfftedit">fft-edit</a>, <a href="sndscm.html#exfftenvedit">fft-env-edit</a>, <a href="sndscm.html#exfftenvinterp">fft-env-interp</a>, <a href="sndscm.html#exfftsquelch">fft-squelch</a>, <a href="sndscm.html#exfftcancel">fft-cancel</a>
-phase-vocoder: <a href="clm.html#phase-vocoder">phase-vocoder</a>. <a href="sndscm.html#pvocdoc">pvoc</a>
-transposition via fft: <a href="sndscm.html#exdownoct">down-oct</a>
-phase rotation via fft: <a href="sndscm.html#zerophase">zero-phase, rotate-phase</a>
-duration change via autocorrelation: <a href="sndscm.html#rubberdoc">rubber-sound</a>
-smoothing via fft: <a href="sndscm.html#exfftsmoother">fft-smoother</a>
-cross-synthesis: <a href="sndscm.html#excrosssynthesis">cross-synthesis</a>
-voiced-&gt;unvoiced effect: <a href="sndscm.html#exvoiced2unvoiced">voiced-&gt;unvoiced</a>
-noise reduction: <a href="sndscm.html#clminsdoc">anoi</a>
-spectral modeling: <a href="sndscm.html#clminsdoc">pins</a>
-
-Superimpose ffts: <a href="sndscm.html#exsuperimposeffts">superimpose-ffts</a>
-Waterfall real-time spectrograph: <a href="sndscm.html#startwaterfall">start-waterfall</a>
-Simple rt spectrum: <a href="sndscm.html#exshowinputfft">show-input-fft</a>, <a href="sndscm.html#exshowdraggableinputfft">show-draggable-input-fft</a>
-</blockquote></small></pre>
+<table border=3 bordercolor="red" hspace=40><tr><td>
+<small><blockquote>
+CLM fft function: <a href="clm.html#fft">mus-fft</a><br>
+CLM spectrum: <a href="clm.html#spectrum">spectrum</a><br>
+Snd spectrum: <a href="#sndspectrum">snd-spectrum</a><br>
+Cross Correlation: <a href="sndscm.html#excorrelate">correlate</a><br>
+FFT window: <a href="clm.html#make-fft-window">make-fft-window</a><br>
+Dolph-Chebyshev window in Scheme: <a href="sndscm.html#exdolph">dolph</a><br>
+Hartley transform in Scheme: <a href="sndscm.html#exdht">dht</a><br>
+Spectral edit dialog: <a href="snd.html#editenvelope">Envelope Editor</a><br>
+<br>
+fft-based filter: <a href="sndscm.html#exfftedit">fft-edit</a>, <a href="sndscm.html#exfftenvedit">fft-env-edit</a>, <a href="sndscm.html#exfftenvinterp">fft-env-interp</a>, <a href="sndscm.html#exfftsquelch">fft-squelch</a>, <a href="sndscm.html#exfftcancel">fft-cancel</a><br>
+phase-vocoder: <a href="clm.html#phase-vocoder">phase-vocoder</a>. <a href="sndscm.html#pvocdoc">pvoc</a><br>
+transposition via fft: <a href="sndscm.html#exdownoct">down-oct</a><br>
+phase rotation via fft: <a href="sndscm.html#zerophase">zero-phase, rotate-phase</a><br>
+duration change via autocorrelation: <a href="sndscm.html#rubberdoc">rubber-sound</a><br>
+smoothing via fft: <a href="sndscm.html#exfftsmoother">fft-smoother</a><br>
+cross-synthesis: <a href="sndscm.html#excrosssynthesis">cross-synthesis</a><br>
+voiced-&gt;unvoiced effect: <a href="sndscm.html#exvoiced2unvoiced">voiced-&gt;unvoiced</a><br>
+noise reduction: <a href="sndscm.html#clminsdoc">anoi</a><br>
+spectral modeling: <a href="sndscm.html#clminsdoc">pins</a><br>
+<br>
+Superimpose ffts: <a href="sndscm.html#exsuperimposeffts">superimpose-ffts</a><br>
+Waterfall real-time spectrograph: <a href="sndscm.html#startwaterfall">start-waterfall</a><br>
+Simple rt spectrum: <a href="sndscm.html#exshowinputfft">show-input-fft</a>, <a href="sndscm.html#exshowdraggableinputfft">show-draggable-input-fft</a><br>
+</blockquote></small>
+</td></tr></table>
 
 <!-- Dialogs -->
 <br>
-<span class=bbox><h3><A NAME="snddialogs">Dialogs</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="snddialogs">Dialogs</a></h3></td></tr></table>
 <p>Many aspects of the various dialogs can be customized.  The following is organized by dialog, or was meant to be originally.</p>
 
 <!-- -------------------------------- DIALOG TABLE -------------------------------- -->
@@ -8146,7 +8212,7 @@ to do!
 </p>
 
 <br>
-<span class=bbox><h3><A NAME="sndmisc">Miscellaneous functions</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndmisc">Miscellaneous functions</a></h3></td></tr></table>
 
 <p>These functions don't seem to fit anywhere else:</p>
 
@@ -8761,7 +8827,7 @@ return a list giving the widget width and height (pixels).  Can be set. See nb.s
 </table>
 <br>
 
-<span class=bbox><h3><A NAME="sndconstants">Constants</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndconstants">Constants</a></h3></td></tr></table>
 
 <p><b>Sndlib</b> (see <a href="sndlib.html#sndlibguile">sndlib.html</a> for a complete list):</p>
 <pre>
@@ -8858,7 +8924,7 @@ return a list giving the widget width and height (pixels).  Can be set. See nb.s
 
 
 <br>
-<span class=bbox><h3><A NAME="snderrors">Errors and Debugging</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="snderrors">Errors and Debugging</a></h3></td></tr></table>
 <!-- INDEX snderrors:Debugging (Scheme) -->
 <p> When something goes awry, the various functions can throw an error (a symbol)
 which is normally caught by the default error handler (this is a kind of goto 
@@ -8981,7 +9047,7 @@ run
 <br>
 
 
-<span class=bbox><h3><A NAME="appearance">Customizing Snd's appearance</a></h3></span>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="appearance">Customizing Snd's appearance</a></h3></td></tr></table>
 
 <p>Snd's overall appearance is controlled first by the startup <a href="grfsnd.html#sndswitches">switches</a> that
 choose the outermost widget; normally this is a paned window with a sound
@@ -8992,7 +9058,7 @@ and -vertical determine which way the outer panes are laid out.
 There are a variety of functions and variables related to widget colors and so forth.
 </p>
 
-<span class=cbox><h4><A NAME="colors">Colors</a></h4></span>
+<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="colors">Colors</a></h4></td></tr></table>
 
 <p>A color in Snd is an object with three fields representing the
 rgb (red green blue) settings as numbers between 0.0 and 1.0.  A color
@@ -9131,7 +9197,7 @@ Two colors are equal (i.e. equal? returns #t) if their rgb values are the same.
 </table>
 
 <br>
-<span class=cbox><h4><A NAME="fonts">Fonts</a></h4></span>
+<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="fonts">Fonts</a></h4></td></tr></table>
 
 <p>Fonts in Snd are strings containing a description of the
 desired font.  These can be the abbreviated forms such as
@@ -9165,7 +9231,7 @@ If the requested font can't be loaded, the set! statement returns the old (uncha
 </pre>
 <br>
 <br>
-<span class=cbox><h4><A NAME="sndwidgets">Widgets</a></h4></span>
+<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="sndwidgets">Widgets</a></h4></td></tr></table>
 
 <p>Snd can be built with Motif, Gtk, or no GUI; other toolkits might be supported in the future.
 Unfortunately, each toolkit has its own way of handling widgets.  I originally started implementing
@@ -9225,7 +9291,7 @@ for looks):
 <p>See also snd-motif.scm, new-effects.scm, and examp.scm.</p>
 
 <br>
-<span class=cbox><h4><A NAME="sndgraphics">Graphics</a></h4></span>
+<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="sndgraphics">Graphics</a></h4></td></tr></table>
 
 <p>It is possible to draw directly on any of the channel graphs.  Simple examples include the
 <a href="extsnd.html#showoriginal">show-original</a> after-graph-hook function, and the
@@ -9780,8 +9846,10 @@ return the current x axis label (also settable).
 	<!-- I(file formats):L(data-format)(snddataformat) -->
 
 <br><br>
-<center>
-<span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25> <a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25> <a href="clm.html">clm.html</a><spacer type=horizontal size=25> <a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25> <a href="sndscm.html">sndscm.html</a><spacer type=horizontal size=25> <a href="libxm.html#xm">libxm.html</a><spacer type=horizontal size=25> <a href="index.html">index.html</a></span>
-</center>
 
+<center>
+<table border=1><tr><td>
+<table bgcolor="aliceblue" border=0 cellspacing=8><tr><td><small>related documentation:</small></td><td><small><a href="snd.html">snd.html</a></small></td><td><small><a href="grfsnd.html">grfsnd.html</a></small></td><td><small><a href="clm.html">clm.html</a></small></td><td><small><a href="sndlib.html">sndlib.html</a></small></td><td><small><a href="sndscm.html">sndscm.html</a></small></td><td><small><a href="libxm.html">libxm.html</a></small></td><td><small><a href="index.html">index.html</a></small></td></tr></table>
+</td></tr></table>
+</center>
 </body></html>
