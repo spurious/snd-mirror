@@ -2134,9 +2134,8 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
 	  if (audio_out == -1) return(MUS_ERROR);
           buffer_info = (FRAGMENTS << 16) | (FRAGMENT_SIZE);
           if (ioctl(audio_out, SNDCTL_DSP_SETFRAGMENT, &buffer_info) == -1) 
-	    RETURN_ERROR_EXIT(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, audio_out,
-			      mus_format("can't set %s fragments to: %d x %d",
-					 dev_name, FRAGMENTS, FRAGMENT_SIZE));
+	    fprintf(stderr, mus_format("can't set %s fragments to: %d x %d",
+				       dev_name, FRAGMENTS, FRAGMENT_SIZE)); /* not an error if ALSA OSS-emulation */
         }
     }
   if ((ioctl(audio_out, SNDCTL_DSP_SETFMT, &oss_format) == -1) || 

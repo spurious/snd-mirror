@@ -18,7 +18,7 @@
 #if HAVE_SYS_STATFS_H
   #include <sys/statfs.h>
 #endif
-#if HAVE_SYS_STATVFS_H
+#if HAVE_SYS_STATVFS_H && SUN
   #include <sys/statvfs.h>
 #endif
 #if HAVE_SYS_VFS_H
@@ -32,15 +32,15 @@
 #endif
 
 #if (!HAVE_STATFS) && (!HAVE_STATVFS)
-  off_t disk_kspace (char *filename) {return(1234567);}
-  int is_link(char *filename) {return(0);}
-  int is_directory(char *filename) {return(0);}
-  static int is_empty_file(char *filename) {return(0);}
-  static off_t file_bytes(char *filename) {return(0);}
+  off_t disk_kspace (const char *filename) {return(1234567);}
+  int is_link(const char *filename) {return(0);}
+  int is_directory(const char *filename) {return(0);}
+  static int is_empty_file(const char *filename) {return(0);}
+  static off_t file_bytes(const char *filename) {return(0);}
 #else
 
-#if HAVE_STATVFS
-off_t disk_kspace (char *filename)
+#if HAVE_STATVFS && SUN
+off_t disk_kspace (const char *filename)
 {
   statvfs_t buf;
   off_t err = -1;
@@ -53,7 +53,7 @@ off_t disk_kspace (char *filename)
   return(err);
 }
 #else
-off_t disk_kspace (char *filename)
+off_t disk_kspace (const char *filename)
 {
   struct statfs buf;
   off_t err = -1;
@@ -73,7 +73,7 @@ off_t disk_kspace (char *filename)
 }
 #endif
 
-int is_link(char *filename)
+int is_link(const char *filename)
 {
   struct stat statbuf;
   if (lstat(filename, &statbuf) >= 0) 
@@ -81,7 +81,7 @@ int is_link(char *filename)
   return(0);
 }
 
-int is_directory(char *filename)
+int is_directory(const char *filename)
 {
   struct stat statbuf;
   if (lstat(filename, &statbuf) >= 0) 
@@ -89,7 +89,7 @@ int is_directory(char *filename)
   return(0);
 }
 
-static off_t file_bytes(char *filename) /* using this name to make searches simpler */
+static off_t file_bytes(const char *filename) /* using this name to make searches simpler */
 {
   struct stat statbuf;
   if (lstat(filename, &statbuf) >= 0) 
@@ -97,13 +97,13 @@ static off_t file_bytes(char *filename) /* using this name to make searches simp
   return(-1);
 }
 
-static int is_empty_file(char *filename)
+static int is_empty_file(const char *filename)
 {
   return(file_bytes(filename) == (off_t)0);
 }
 #endif
 
-time_t file_write_date(char *filename)
+time_t file_write_date(const char *filename)
 {
   struct stat statbuf;
   int err;
@@ -112,7 +112,7 @@ time_t file_write_date(char *filename)
   return((time_t)(statbuf.st_mtime));
 }
 
-static file_info *make_file_info_1(char *fullname)
+static file_info *make_file_info_1(const char *fullname)
 {
   file_info *hdr;
   hdr = (file_info *)CALLOC(1, sizeof(file_info));
@@ -135,7 +135,7 @@ static file_info *make_file_info_1(char *fullname)
   return(hdr);
 }
 
-file_info *copy_header(char *fullname, file_info *ohdr)
+file_info *copy_header(const char *fullname, file_info *ohdr)
 {
   file_info *hdr;
   int i;
@@ -160,7 +160,7 @@ file_info *copy_header(char *fullname, file_info *ohdr)
   return(hdr);
 }
 
-static file_info *translate_file(char *filename, snd_state *ss, int type)
+static file_info *translate_file(const char *filename, snd_state *ss, int type)
 {
   char *newname, *tempname;
   int *loops = NULL;
@@ -214,10 +214,10 @@ static file_info *translate_file(char *filename, snd_state *ss, int type)
 
 static XEN open_raw_sound_hook, bad_header_hook;
 #if (!USE_NO_GUI)
-static char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr);
+static char *raw_data_explanation(const char *filename, snd_state *ss, file_info *hdr);
 #endif
 
-file_info *make_file_info(char *fullname, snd_state *ss)
+file_info *make_file_info(const char *fullname, snd_state *ss)
 {
   file_info *hdr = NULL;
   int type = MUS_UNSUPPORTED, format = MUS_UNKNOWN;
@@ -354,7 +354,7 @@ file_info *make_file_info(char *fullname, snd_state *ss)
   return(hdr);
 }
 
-file_info *make_temp_header(char *fullname, int srate, int chans, off_t samples, const char *caller)
+file_info *make_temp_header(const char *fullname, int srate, int chans, off_t samples, const char *caller)
 {
   file_info *hdr;
   hdr = (file_info *)CALLOC(1, sizeof(file_info));
@@ -386,7 +386,7 @@ file_info *free_file_info(file_info *hdr)
  * fool as an extension check (file might start with the word ".snd" or whatever).
  */
 
-static dir *make_dir (char *name)
+static dir *make_dir(const char *name)
 {
   dir *dp;
   dp = (dir *)CALLOC(1, sizeof(dir));
@@ -412,7 +412,7 @@ dir *free_dir (dir *dp)
   return(NULL);
 }
   
-static void add_snd_file_to_dir_list(dir *dp, char *name)
+static void add_snd_file_to_dir_list(dir *dp, const char *name)
 {
   int i;
   dp->files[dp->len] = copy_string(name);
@@ -429,7 +429,7 @@ static char **sound_file_extensions = NULL;
 static int sound_file_extensions_size = 0;
 static int sound_file_extensions_end = 0;
 
-static void add_sound_file_extension(char *ext)
+static void add_sound_file_extension(const char *ext)
 {
   if (sound_file_extensions_end == sound_file_extensions_size)
     {
@@ -473,7 +473,7 @@ int is_sound_file(char *name)
   return(0);
 }
 
-dir *find_sound_files_in_dir (char *name)
+dir *find_sound_files_in_dir(const char *name)
 {
 #if (!HAVE_OPENDIR)
   return(NULL);
@@ -634,8 +634,8 @@ static XEN memo_sound;
 static XEN open_hook;
 static XEN close_hook;
 
-static void add_to_current_files(snd_state *ss, char *shortname);
-static void add_to_previous_files(snd_state *ss, char *shortname, char *fullname);
+static void add_to_current_files(snd_state *ss, const char *shortname);
+static void add_to_previous_files(snd_state *ss, const char *shortname, const char *fullname);
 
 #if HAVE_DYNAMIC_WIND
 /* cleanup even if error in file lookup process */
@@ -662,7 +662,7 @@ static void after_open_file(void *context)
 }
 #endif
 
-static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select, int read_only)
+static snd_info *snd_open_file_1 (const char *filename, snd_state *ss, int select, int read_only)
 {
   snd_info *sp;
   char *mcf = NULL;
@@ -744,8 +744,8 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select, int
   return(sp);
 }
 
-snd_info *snd_open_file(char *filename, snd_state *ss, int read_only) {return(snd_open_file_1(filename, ss, TRUE, read_only));}
-snd_info *snd_open_file_unselected(char *filename, snd_state *ss, int read_only) {return(snd_open_file_1(filename, ss, FALSE, read_only));}
+snd_info *snd_open_file(const char *filename, snd_state *ss, int read_only) {return(snd_open_file_1(filename, ss, TRUE, read_only));}
+snd_info *snd_open_file_unselected(const char *filename, snd_state *ss, int read_only) {return(snd_open_file_1(filename, ss, FALSE, read_only));}
 
 void snd_close_file(snd_info *sp, snd_state *ss)
 {
@@ -775,7 +775,7 @@ void snd_close_file(snd_info *sp, snd_state *ss)
 }
 
 
-int copy_file(char *oldname, char *newname)
+int copy_file(const char *oldname, const char *newname)
 {
   /* make newname a copy of oldname */
   int ifd, ofd;
@@ -817,7 +817,7 @@ int copy_file(char *oldname, char *newname)
   return(MUS_NO_ERROR);
 }
 
-int move_file(char *oldfile, char *newfile)
+int move_file(const char *oldfile, const char *newfile)
 {
   int err;
   err = 0;
@@ -838,7 +838,7 @@ int move_file(char *oldfile, char *newfile)
 #define TEMP_SOUND_INDEX 123456
 /* just a marker for debugging */
 
-snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
+snd_info *make_sound_readable(snd_state *ss, const char *filename, int post_close)
 {
   /* conjure up just enough Snd structure to make this sound readable by the edit-tree readers */
   snd_info *sp;
@@ -1158,7 +1158,7 @@ static void sound_restore_chan_info(snd_info *nsp, snd_info *osp)
 
 static XEN update_hook;
 
-static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
+static snd_info *snd_update_1(snd_state *ss, snd_info *sp, const char *ur_filename)
 {
   /* we can't be real smart here because the channel number may have changed and so on */
   int i, read_only, old_srate, old_chans, old_format, old_raw, sp_chans, old_index, old_channel_style;
@@ -1389,7 +1389,7 @@ int view_prevfiles_play(snd_state *ss, int pos, int play)
   return(0);
 }
 
-void file_unprevlist(char *filename)
+void file_unprevlist(const char *filename)
 {
   int i, j;
   i = find_prevfile_regrow(filename);
@@ -1411,7 +1411,7 @@ void file_unprevlist(char *filename)
     }
 }
 
-static void file_prevlist(char *filename, char *fullname)
+static void file_prevlist(const char *filename, const char *fullname)
 {
   int k, i, new_size;
   if (find_prevfile_regrow(filename) != -1) return;
@@ -1453,7 +1453,7 @@ static void file_prevlist(char *filename, char *fullname)
     max_prevfile_end = prevfile_end;
 }
 
-void add_directory_to_prevlist(snd_state *ss, char *dirname)
+void add_directory_to_prevlist(snd_state *ss, const char *dirname)
 {
   dir *sound_files = NULL;
   char *fullpathname = NULL;
@@ -1486,7 +1486,7 @@ void add_directory_to_prevlist(snd_state *ss, char *dirname)
   if (file_dialog_is_active()) make_prevfiles_list(ss);
 }
 
-static void add_to_previous_files(snd_state *ss, char *shortname, char *fullname)
+static void add_to_previous_files(snd_state *ss, const char *shortname, const char *fullname)
 {
   int i, j;
   file_prevlist(shortname, fullname);
@@ -1516,7 +1516,7 @@ void init_curfiles(int size)
     }
 }
 
-static void add_to_current_files(snd_state *ss, char *shortname)
+static void add_to_current_files(snd_state *ss, const char *shortname)
 {
   int i, new_size;
   if (curfile_end == curfile_size)
@@ -1556,7 +1556,7 @@ void init_prevfiles(int size)
     }
 }
 
-int find_curfile_regrow(char *shortname)
+int find_curfile_regrow(const char *shortname)
 {
   int i;
   for (i = 0; i < curfile_end; i++)
@@ -1565,7 +1565,7 @@ int find_curfile_regrow(char *shortname)
   return(-1);
 }
 
-int find_prevfile_regrow(char *shortname)
+int find_prevfile_regrow(const char *shortname)
 {
   int i;
   if (prevnames)
@@ -2237,7 +2237,7 @@ static short swap_short(short n)
   return(o);
 }
 
-static char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
+static char *raw_data_explanation(const char *filename, snd_state *ss, file_info *hdr)
 {
   char *reason_str, *tmp_str, *file_string;
   off_t nsamp;

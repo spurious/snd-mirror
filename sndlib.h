@@ -495,7 +495,7 @@ int mus_file_read_file(int tfd, int beg, int chans, int nints, mus_sample_t **bu
 int mus_file_read_buffer(int charbuf_data_format, int beg, int chans, int nints, mus_sample_t **bufs, char *charbuf);
 int mus_file_write_file(int tfd, int beg, int end, int chans, mus_sample_t **bufs);
 int mus_file_write_buffer(int charbuf_data_format, int beg, int end, int chans, mus_sample_t **bufs, char *charbuf, int clipped);
-char *mus_expand_filename(char *name);
+char *mus_expand_filename(const char *name);
 
 int mus_file_data_clipped(int tfd);
 int mus_file_set_data_clipped(int tfd, int clipped);

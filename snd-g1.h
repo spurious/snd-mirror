@@ -532,7 +532,7 @@ void set_file_sort_sensitive(int sensitive);
 void view_files_callback(GtkWidget *w, gpointer info);
 GtkWidget *start_file_dialog(snd_state *ss, int width, int height);
 int file_dialog_is_active(void);
-file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const char *title);
+file_info *raw_data_dialog_to_file_info(const char *filename, snd_state *ss, const char *title);
 snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment);
 void make_mix_file_dialog(snd_state *ss, int managed);
 GtkWidget *edit_header(snd_info *sp);

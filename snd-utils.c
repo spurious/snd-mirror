@@ -43,7 +43,7 @@ Float in_dB(Float min_dB, Float lin_dB, Float py)
 
 char *copy_string(const char *str)
 {
-#if DEBUG_MEMORY || (!HAVE_STRDUP)
+#if DEBUG_MEMORY
   char *newstr = NULL;
   if (str)
     {

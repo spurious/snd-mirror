@@ -1403,20 +1403,21 @@ Ptr NewPtr_realloc(Ptr p, Size newSize)
 
 static char *file_name_buf = NULL;
 
-char *mus_expand_filename(char *utok)
+char *mus_expand_filename(const char *filename)
 {
   /* fill out under-specified library pathnames etc */
   /* what about "../" and "./" ? these work, but perhaps we should handle them explicitly) */
-  char *tok;
-  int i, j, len;
-  tok = utok;
-  if ((tok) && (*tok)) 
-    len = strlen(tok); 
+  char *tok = NULL, *orig = NULL;
+  int i, j = 0, len = 0;
+  if ((filename) && (*filename)) 
+    len = strlen(filename); 
   else return(NULL);
+  if (len == 0) return(NULL);
   if (file_name_buf == NULL) 
     file_name_buf = (char *)CALLOC(MUS_MAX_FILE_NAME, sizeof(char));
   else file_name_buf[0] = '\0';
-  j = 0;
+  orig = strdup(filename);
+  tok = orig;
   for (i = 0; i < len - 1; i++)
     {
       if ((tok[i] == '/') && 
@@ -1434,7 +1435,6 @@ char *mus_expand_filename(char *utok)
 #else
   if (tok[0] != '/')
     {
-      file_name_buf[0] = '\0';
       if ((tok[0] == '~') && (getenv("HOME") != NULL))
 	{
 	  strcpy(file_name_buf, getenv("HOME"));
@@ -1455,6 +1455,7 @@ char *mus_expand_filename(char *utok)
     }
   else strcpy(file_name_buf, tok);
 #endif
+  free(orig);
 #if DEBUG_MEMORY
   return(copy_string(file_name_buf));
 #else

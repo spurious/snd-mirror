@@ -1,5 +1,6 @@
 Snd change log
 
+  28-Jul:    Sun disk space bugfix (thanks to Russell Aspinwall).
   22-Jul:    removed protect-region.
   18-Jul:    removed button-font and buttonFont resource, help-text-font and helpTextFont.
   10-Jul:    record->raw file segfault bugfix (thanks to Russell Aspinwall).

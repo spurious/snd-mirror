@@ -453,7 +453,7 @@ void highlight_selected_sound(snd_state *ss);
 void view_files_callback(Widget w, XtPointer context, XtPointer info);
 Widget start_file_dialog(snd_state *ss, int width, int height);
 int file_dialog_is_active(void);
-file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const char *title);
+file_info *raw_data_dialog_to_file_info(const char *filename, snd_state *ss, const char *title);
 Widget edit_header(snd_info *sp);
 void set_open_file_play_button(int val);
 void make_mix_file_dialog(snd_state *ss, int managed);

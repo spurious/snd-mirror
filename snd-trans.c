@@ -21,7 +21,7 @@
 
 static char write_error_buffer[PRINT_BUFFER_SIZE];
 
-static int snd_checked_write(int fd, unsigned char *buf, int bytes, char *filename)
+static int snd_checked_write(int fd, unsigned char *buf, int bytes, const char *filename)
 {
   /* io.c checked_write assumes its file descriptors are around */
   /* can't call mus_error here because we need to clean up first in case of error */
@@ -53,7 +53,7 @@ static int snd_checked_write(int fd, unsigned char *buf, int bytes, char *filena
   return(bytes_written);
 }
 
-static int be_snd_checked_write(int fd, unsigned char *buf, int bytes, char *filename)
+static int be_snd_checked_write(int fd, unsigned char *buf, int bytes, const char *filename)
 {
   /* handle little-endian swap if necessary */
 #if MUS_LITTLE_ENDIAN
@@ -121,7 +121,7 @@ static int be_snd_checked_write(int fd, unsigned char *buf, int bytes, char *fil
  * 0000020       0000 007f f7f0 7e00 0200 4000 003f 7140
  */
 
-static int read_midi_sample_dump(char *oldname, char *newname, char *hdr)
+static int read_midi_sample_dump(const char *oldname, const char *newname, char *hdr)
 {
   int fs = -1, fd = -1, err = MUS_NO_ERROR, totalin, happy, chans, srate, inp, outp;
   int val = 0, bits, block_count, header_count, state, samples, shift1, shift2, offset;
@@ -242,7 +242,7 @@ static int read_midi_sample_dump(char *oldname, char *newname, char *hdr)
 
 /* -------------------------------- IEEE TEXT -------------------------------- */
 
-static int read_ieee_text(char *oldname, char *newname, char *hdr)
+static int read_ieee_text(const char *oldname, const char *newname, char *hdr)
 {
   /* from untext.c */
   /* look for "%sampling rate: nn.nn KHz\n", also get end of to comment (i.e. data location) */
@@ -370,7 +370,7 @@ static int read_ieee_text(char *oldname, char *newname, char *hdr)
 
 #define PDP_BUF_SIZE (9*1024)
 
-static int read_mus10(char *oldname, char *newname, char *hdr)
+static int read_mus10(const char *oldname, const char *newname, char *hdr)
 {
   /* from trans.lisp */
   /* nostalgic code -- 36 bit words, two 16-bit samples, right justified */
@@ -478,7 +478,7 @@ static int read_mus10(char *oldname, char *newname, char *hdr)
 
 /* -------------------------------- HCOM (from Sox) -------------------------------- */
 
-static int read_hcom(char *oldname, char *newname, char *hdr)
+static int read_hcom(const char *oldname, const char *newname, char *hdr)
 {
   short **d;
   int osp, isp;
@@ -578,7 +578,7 @@ static int read_hcom(char *oldname, char *newname, char *hdr)
 
 static unsigned short log2s[] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768};
 
-static int read_nist_shortpack(char *oldname, char *newname, char *hdr)
+static int read_nist_shortpack(const char *oldname, const char *newname, char *hdr)
 {
   int fs = -1, fd = -1, err = MUS_NO_ERROR, totalin, happy, chans, srate, outp, i = 0, k, num, bits = 0, out, els = 0;
   int isp, osp;
@@ -717,7 +717,7 @@ static int read_nist_shortpack(char *oldname, char *newname, char *hdr)
  * taken from Perry Cook's adpcmdec.c
  */
 
-static int read_ibm_adpcm(char *oldname, char *newname, char *hdr)
+static int read_ibm_adpcm(const char *oldname, const char *newname, char *hdr)
 {
   short MAX_STEP = 2048, MIN_STEP = 16;
   int totalin, i, j, k, fs = -1, fd = -1;
@@ -838,7 +838,7 @@ static int adpcm_decoder(unsigned char *indata, short *outdata, int totalbytes, 
 }
 
 
-static int read_dvi_adpcm(char *oldname, char *newname, char *hdr, int type)
+static int read_dvi_adpcm(const char *oldname, const char *newname, char *hdr, int type)
 {
   int fs = -1, fd = -1, totalin, chans, srate, blksiz, samps, samps_read;
   unsigned char *buf = NULL;
@@ -917,7 +917,7 @@ static short oki_adpcm_decode(char code, struct oki_adpcm_status *stat)
   return(samp << 4);
 }
 
-static int read_oki_adpcm(char *oldname, char *newname, char *hdr)
+static int read_oki_adpcm(const char *oldname, const char *newname, char *hdr)
 {
   int fs = -1, fd = -1, i, j, totalin, chans, srate, blksiz, samps, samps_read;
   unsigned char *buf = NULL;
@@ -976,7 +976,7 @@ static int read_oki_adpcm(char *oldname, char *newname, char *hdr)
 /* -------------------------------- 12 bit cases --------------------------------
  */
 
-static int read_12bit(char *oldname, char *newname, char *hdr)
+static int read_12bit(const char *oldname, const char *newname, char *hdr)
 {
   int chans, totalin, i, j, fs = -1, fd = -1;
   unsigned char *buf = NULL;
@@ -1026,7 +1026,7 @@ static int read_12bit(char *oldname, char *newname, char *hdr)
  * (in the 'rec' case, audio and video data can be interleaved, but that's too bad)
  */
 
-static int read_avi(char *oldname, char *newname, char *hdr)
+static int read_avi(const char *oldname, const char *newname, char *hdr)
 {
   int totalin, fs = -1, fd = -1, cksize, num, happy;
 #if (!MUS_LITTLE_ENDIAN)
@@ -1357,7 +1357,7 @@ static int unpack_input(FILE *fin, unsigned char *code, int bits)
   return (in_bits > 0);
 }
 
-static int read_g72x_adpcm(char *oldname, char *newname, char *hdr, int which_g)
+static int read_g72x_adpcm(const char *oldname, const char *newname, char *hdr, int which_g)
 {
   int fs = -1, j, chans, srate, dec_bits = 0, err = MUS_NO_ERROR;
   FILE *fd;
@@ -1455,7 +1455,7 @@ static int read_g72x_adpcm(char *oldname, char *newname, char *hdr, int which_g)
 
 static int MUS_CANT_TRANSLATE = 0;
 
-static const char *any_format_name(char *name)
+static const char *any_format_name(const char *name)
 {
   int format;
   format = mus_sound_data_format(name);
@@ -1465,7 +1465,7 @@ static const char *any_format_name(char *name)
 					      mus_sound_header_type(name)));
 }
 
-int snd_translate(char *oldname, char *newname, int type)
+int snd_translate(const char *oldname, const char *newname, int type)
 {
   /* read oldname, translate to newname as 16-bit linear NeXT file */
   /* called from snd-file.c */

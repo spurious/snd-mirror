@@ -30,7 +30,6 @@
   #define HAVE_VPRINTF 1
   #define HAVE_LOCALE_H 1
   #define HAVE_SETLOCALE 1
-  #define HAVE_STRDUP 1
   #define HAVE_MEMMOVE 1
   #define HAVE_STRINGIZE 1
   #if defined(LINUX) && (!(defined(HAVE_SCHED_H)))

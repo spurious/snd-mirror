@@ -217,6 +217,19 @@ you can get these by
     ./snd -xrm '*foreground: Black'
 
 
+---- Fonts: ----
+If you're getting empty boxes where characters should be, or Xt
+warnings about missing font characters, check your LANG and
+SUPPORTED environment variables.  If they're UTF-8, you should
+probably add lines such as:
+
+setenv LANG en_US
+setenv SUPPORTED en_US:en
+
+to your .cshrc file to override the bogus settings.  (In RedHat
+Linux, the bad settings come either from /etc/profile or from 
+the lang.csh file in /etc/profile.d).
+
 
 ---- Compiling: ----
 

@@ -1853,7 +1853,7 @@ static void raw_data_help_callback(Widget w, XtPointer context, XtPointer info)
 static char dfs_str[LABEL_BUFFER_SIZE];
 static char dfc_str[LABEL_BUFFER_SIZE];
 
-static void make_raw_data_dialog(char *filename, snd_state *ss)
+static void make_raw_data_dialog(const char *filename, snd_state *ss)
 {
   XmString *formats;
   XmString xstr1, xstr2, xstr3, xstr4, titlestr;
@@ -2012,7 +2012,7 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   set_dialog_widget(ss, RAW_DATA_DIALOG, raw_data_dialog);
 }
 
-file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const char *title)
+file_info *raw_data_dialog_to_file_info(const char *filename, snd_state *ss, const char *title)
 {
   /* put up dialog for srate, chans, data format */
   XmString xstr;

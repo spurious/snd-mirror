@@ -24,7 +24,6 @@
 #undef HAVE_OPENDIR
 #undef HAVE_SIGNAL
 #undef HAVE_ISNAN
-#undef HAVE_STRDUP
 #undef HAVE_STATFS
 #undef HAVE_STATVFS
 #undef HAVE_CLOCK

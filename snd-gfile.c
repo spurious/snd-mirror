@@ -1420,7 +1420,7 @@ static void make_raw_data_dialog(snd_state *ss)
   set_dialog_widget(ss, RAW_DATA_DIALOG, raw_data_dialog);
 }
 
-file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const char *title)
+file_info *raw_data_dialog_to_file_info(const char *filename, snd_state *ss, const char *title)
 {
   char *str;
   file_info *hdr = NULL;

@@ -299,6 +299,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+28-Jul:  Sun disk space bugfix (thanks to Russell Aspinwall).\n\
 22-Jul:  removed protect-region.\n\
 18-Jul:  removed button-font and buttonFont resource, help-text-font and helpTextFont.\n\
 10-Jul:  record->raw file segfault bugfix (thanks to Russell Aspinwall).\n\
@@ -308,12 +309,6 @@ void news_help(snd_state *ss)
 24-Jun:  moved mix-name and mix-name->id to snd6.scm.\n\
 23-Jun:  mix-amp-env-changed-hook.\n\
          changed mix-amp-changed-hook to take 2nd chan arg.\n\
-18-Jun:  mix-sound moved to mix.scm.\n\
-16-Jun:  mark-drag-triangle-hook.\n\
-         renamed mix-position-changed-hook to mix-dragged-hook.\n\
-         mix.scm name changes (see snd6.scm for old forms).\n\
-         with-mix (ws.scm).\n\
-12-Jun:  bess1.scm and bess1.rb from Michael Scholz.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

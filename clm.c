@@ -4396,15 +4396,13 @@ static char *inspect_wt(mus_any *ptr)
 {
   wt *gen = (wt *)ptr;
   char *arr = NULL, *str = NULL;
-#if HAVE_STRDUP
   str = strdup(inspect_rblk((mus_any *)(gen->b)));
-#endif
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
 	       "wt freq: %f, phase: %f, wave[%d (%s)]: %s, b: %s",
 	       gen->freq, gen->phase, gen->wsize, 
 	       (gen->wave_allocated) ? "local" : "external",
 	       arr = print_array(gen->wave, gen->wsize, 0),
-	       (str) ? str : "rblk...");
+	       str);
   if (str) free(str);
   if (arr) FREE(arr);
   return(describe_buffer);
