@@ -474,6 +474,20 @@ Float channel_maxamp(chan_info *cp, int edpos)
   return(val);
 }
 
+#if HAVE_RUBY
+  #define TO_PROC_NAME(Str) xen_scheme_procedure_to_ruby(Str)
+  #define PROC_OPEN "("
+  #define PROC_SEP ", "
+  #define VECTOR_OPEN "["
+  #define VECTOR_CLOSE "]"
+#else
+  #define TO_PROC_NAME(Str) Str
+  #define PROC_OPEN " "
+  #define PROC_SEP " "
+  #define VECTOR_OPEN "'#("
+  #define VECTOR_CLOSE ")"
+#endif
+
 bool scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool over_selection)
 {
   /* essentially the same as scale-by, but first take into account current maxamps */
