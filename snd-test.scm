@@ -862,7 +862,6 @@
 		  (lambda (base-files)
 		    (if (not (null? base-files))
 			(let ((testf (car base-files)))
-			  
 			  (let ((file (string-append sf-dir (list-ref testf 0))))
 			    (if (file-exists? file)
 				(begin
@@ -1885,7 +1884,11 @@
 	  (sound-data->vct sdata 0 v0) 
 	  (if (fneq (vct-ref v0 10) .1) (snd-display ";sound-data->vct: ~A?" v0))
 	  (vct->sound-data v0 sdata 0) 
-	  (if (fneq (sound-data-ref sdata 0 10) .1) (snd-display ";vct->sound-data: ~A?" (sound-data-ref sdata 0 10))))
+	  (if (fneq (sound-data-ref sdata 0 10) .1) (snd-display ";vct->sound-data: ~A?" (sound-data-ref sdata 0 10)))
+	  (let ((var (catch #t (lambda () (sound-data->vct sdata 2 v0)) (lambda args args))))
+	    (if (not (eq? (car var) 'mus-error))
+		(snd-display ";sound-data->vct bad chan: ~A" var))))
+
 	(let ((v0 (make-vct 10))
 	      (sdata2 (make-sound-data 2 10)))
 	  (do ((i 0 (1+ i)))
@@ -2040,7 +2043,7 @@
 					(cadr df-ht) (mus-header-type-name (cadr df-ht))
 					i k
 					(sound-data-ref sdata k i) (sound-data-ref ndata k i))))))
-		       (lambda args (begin (snd-display args) (car args)))))))
+		       (lambda args (begin (snd-display "~A" args) (car args)))))))
 	  (list (list mus-bshort mus-next)
 		(list mus-bfloat mus-aifc)
 		(list mus-lfloat mus-riff)
@@ -2050,7 +2053,10 @@
 		(list mus-b24int mus-aifc)
 		(list mus-l24int mus-riff)
 		(list mus-bfloat mus-ircam)
-		(list mus-bdouble mus-next))))
+		(list mus-bdouble mus-next)
+		(list mus-ldouble mus-next)
+		(list mus-ulshort mus-next)
+		(list mus-ubshort mus-next))))
        (list 1 2 4 8))
       
       (let ((ind (open-sound "oboe.snd")))
@@ -2139,8 +2145,38 @@
 	    (if (fneq (maxamp ind 0) .228) (snd-display ";32bit max: ~A" (maxamp ind 0)))
 	    (close-sound ind)))
 
-      ))
-      ))
+      (let ((test-data (lambda (file beg dur data)
+			 (let* ((ind (open-sound file))
+				(ndata (samples->vct beg dur ind 0)))
+			   (if (not (vequal data ndata))
+			       (snd-display ";~A: ~A != ~A" file data ndata))
+			   (close-sound ind)))))
+	(test-data (string-append sf-dir "next-dbl.snd") 10 10 (vct 0.475 0.491 0.499 0.499 0.492 0.476 0.453 0.423 0.387 0.344))
+
+	(test-data (string-append sf-dir "next-flt.snd") 10 10 (vct 0.475 0.491 0.499 0.499 0.492 0.476 0.453 0.423 0.387 0.344))
+	(test-data (string-append sf-dir "clbonef.wav") 1000 10 (vct 0.111 0.101 0.070 0.032 -0.014 -0.060 -0.085 -0.108 -0.129 -0.152))
+
+	(test-data (string-append sf-dir "next-8.snd") 10 10 (vct 0.898 0.945 0.977 0.992 0.992 0.977 0.945 0.906 0.844 0.773))
+	(test-data (string-append sf-dir "o2_u8.wave") 1000 10 (vct -0.164 -0.219 -0.258 -0.242 -0.180 -0.102 -0.047 0.000 0.039 0.055))
+
+	(test-data (string-append sf-dir "next-16.snd") 1000 10 (vct -0.026 -0.022 -0.024 -0.030 -0.041 -0.048 -0.050 -0.055 -0.048 -0.033))
+	(test-data (string-append sf-dir "o2.wave") 1000 10 (vct -0.160 -0.216 -0.254 -0.239 -0.175 -0.102 -0.042 0.005 0.041 0.059))
+
+	(test-data (string-append sf-dir "o2_18bit.aiff") 1000 10 (vct -0.160 -0.216 -0.254 -0.239 -0.175 -0.102 -0.042 0.005 0.041 0.059))
+	(test-data (string-append sf-dir "o2_12bit.aiff") 1000 10 (vct -0.160 -0.216 -0.254 -0.239 -0.175 -0.102 -0.042 0.005 0.041 0.059))
+
+	(test-data (string-append sf-dir "next24.snd") 1000 10 (vct -0.160 -0.216 -0.254 -0.239 -0.175 -0.102 -0.042 0.005 0.041 0.059))
+	(test-data (string-append sf-dir "mono24.wav") 1000 10 (vct 0.005 0.010 0.016 0.008 -0.007 -0.018 -0.025 -0.021 -0.005 0.001))
+
+	(test-data (string-append sf-dir "o2_711u.wave") 1000 10 (vct -0.164 -0.219 -0.254 -0.242 -0.172 -0.103 -0.042 0.005 0.042 0.060))
+	(test-data (string-append sf-dir "alaw.wav") 1000 10 (vct -0.024 -0.048 -0.024 0.000 0.008 0.008 0.000 -0.040 -0.064 -0.024))
+
+	(test-data (string-append sf-dir "b32.pvf") 1000 10 (vct -0.160 -0.216 -0.254 -0.239 -0.175 -0.102 -0.042 0.005 0.041 0.059))
+	(test-data (string-append sf-dir "b32.wave") 1000 10 (vct -0.160 -0.216 -0.254 -0.239 -0.175 -0.102 -0.042 0.005 0.041 0.059))
+	(test-data (string-append sf-dir "b32.snd") 1000 10 (vct -0.160 -0.216 -0.254 -0.239 -0.175 -0.102 -0.042 0.005 0.041 0.059))
+	(test-data (string-append sf-dir "32bit.sf") 1000 10 (vct 0.016 0.014 0.013 0.011 0.010 0.010 0.010 0.010 0.012 0.014))
+	)
+      ))))
 
 (define a-ctr 0)
 
@@ -5374,6 +5410,9 @@
       (let ((var (catch #t (lambda () (make-mixer 2 0.0 0.0 0.0 0.0 0.0)) (lambda args args))))
 	(if (not (eq? (car var) 'mus-error))
 	    (snd-display ";make-mixer extra args: ~A" var)))
+      (let ((var (catch #t (lambda () (let ((fr1 (make-frame 2 1.0 0.0))) (frame->sample (make-oscil) fr1))) (lambda args args))))
+	(if (not (eq? (car var) 'mus-error))
+	    (snd-display ";frame->sample bad arg: ~A" var)))
 
       (let ((fr1 (make-frame 1 1))
 	    (fr2 (make-frame 2 1 2))
@@ -5590,6 +5629,12 @@
 	  (set! (mus-location gen) 6)
 	  (let ((val (env gen)))
 	    (if (fneq val 0.8) (snd-display ";mus-set-location 6 -> ~A (0.8)?" val)))))
+ 
+      (let ((gen (make-env '(0 0 1 1) :base .032 :end 10)))
+	(set! (mus-location gen) 5)
+	(let ((val (env gen)))
+	  (if (fneq val 0.817)
+	      (snd-display "set env location with base: ~A ~A" val gen))))
 
       (test-gen-equal (make-env '(0 0 1 1 2 0) :scaler 0.5 :end 9) (make-env '(0 0 1 1 2 0) :scaler 0.5 :end 9) (make-env '(0 0 1 1 2 0) :scaler 0.25 :end 9))
       (test-gen-equal (make-env '(0 0 1 1 2 0) :scaler 0.5 :end 9) (make-env '(0 0 1 1 2 0) :scaler 0.5 :end 9) (make-env '(0 0 1 1 2 0) :scaler 0.5 :end 10))
@@ -6017,6 +6062,21 @@
       (let ((var (catch #t (lambda () (make-locsig :revout 1)) (lambda args args))))
 	(if (not (eq? (car var) 'wrong-type-arg))
 	    (snd-display ";make-locsig bad revout: ~A" var)))
+      (let ((var (catch #t (lambda () (let ((locs (make-locsig :output 1))) (locsig-ref locs -1))) (lambda args args))))
+	(if (not (eq? (car var) 'wrong-type-arg))
+	    (snd-display ";locsig-ref bad chan: ~A" var)))
+      (let ((var (catch #t (lambda () (let ((locs (make-locsig :output 1))) (locsig-ref locs 2))) (lambda args args))))
+	(if (not (eq? (car var) 'wrong-type-arg))
+	    (snd-display ";locsig-ref bad chan (2): ~A" var)))
+      (let ((var (catch #t (lambda () (let ((locs (make-locsig :output 1))) (set! (locsig-ref locs 2) .1))) (lambda args args))))
+	(if (not (eq? (car var) 'wrong-type-arg))
+	    (snd-display ";locsig-set! bad chan (2): ~A" var)))
+      (let ((var (catch #t (lambda () (let ((locs (make-locsig :output 1 :reverb .1))) (locsig-reverb-ref locs 2))) (lambda args args))))
+	(if (not (eq? (car var) 'wrong-type-arg))
+	    (snd-display ";locsig-reverb-ref bad reverb chan (2): ~A" var)))
+      (let ((var (catch #t (lambda () (let ((locs (make-locsig :output 1 :reverb .1))) (set! (locsig-reverb-ref locs 2) .1))) (lambda args args))))
+	(if (not (eq? (car var) 'wrong-type-arg))
+	    (snd-display ";locsig-reverb-set! bad reverb chan (2): ~A" var)))
 
       (if (file-exists? "fmv4.snd") (delete-file "fmv4.snd"))
       (if (file-exists? "fmv4.reverb") (delete-file "fmv4.reverb"))
@@ -7809,8 +7869,10 @@
 			 (set! ctr (+ ctr 1)))
 		     #t))
 
+	(set! (with-background-processes) #t)
 	(without-errors
 	 (test-menus)) ; built-in self-test function
+	(set! (with-background-processes) #f)
 
 	(revert-sound fd)
 	(close-sound fd)
@@ -11366,7 +11428,7 @@ EDITS: 3
 		      (snd-display ";C-x C-u: ~A?" (edits)))
 		  (key-event cwin (char->integer #\l) 4) (force-event)		  
 		  (if (fneq (/ (cursor) (srate)) (/ (* .5 (+ (left-sample) (right-sample))) (srate)))
-		      (snd-display ";C-l: ~A ~A?" (/ (cursor) (srate) (/ (* .5 (+ (left-sample) (right-sample))) (srate)))))
+		      (snd-display ";C-l: ~A ~A?" (/ (cursor) (srate)) (/ (* .5 (+ (left-sample) (right-sample))) (srate))))
 		  )
 
 		(revert-sound ind)
@@ -11808,11 +11870,17 @@ EDITS: 3
 		  ;need click event here, not just pushbutton callback
 		  (close-sound ind))
 
-		(if (not (car (dialog-widgets))) (test-menus))
+		(if (not (car (dialog-widgets))) 
+		    (begin 
+		      (set! (with-background-processes) #t)
+		      (without-errors (test-menus)) 
+		      (dismiss-all-dialogs)
+		      (set! (with-background-processes) #f)))
 
 		;; ---------------- color dialog ----------------
 		(let* ((colord (|Widget (list-ref (dialog-widgets) 0)))
 		       (inv (find-child colord "invert")))
+		  (|XtManageChild colord)
 		  (if (and inv (|Widget? inv))
 		      (begin
 			(|XmToggleButtonSetState inv #f #t)
@@ -11828,7 +11896,8 @@ EDITS: 3
 			(snd-display ";color dialog list 7: ~A" (colormap)))
 		    (|XmListSelectPos lst 4 #t)
 		    (if (not (= (colormap) 3))
-			(snd-display ";color dialog list 4: ~A" (colormap)))))
+			(snd-display ";color dialog list 4: ~A" (colormap))))
+		  (click-button (cadr (|XmMessageBoxGetChild colord |XmDIALOG_CANCEL_BUTTON))) (force-event))
 
                 ;; ---------------- orientation dialog ----------------
 		(orientation-dialog)
@@ -11992,8 +12061,6 @@ EDITS: 3
 			 (types (find-child saved "header type")) ; list
 			 (formats (find-child saved "data format")) ; list
 			 (srtxt (find-child saved "srate-text")) 
-			 ;(chtxt (find-child saved "chans-text")) ; null
-			 ;(loctxt (find-child saved "location-text")) ; null
 			 (comtxt (find-child saved "comment-text"))
 			 (cancel (|XmFileSelectionBoxGetChild saved |XmDIALOG_CANCEL_BUTTON))
 			 (ok (|XmFileSelectionBoxGetChild saved |XmDIALOG_OK_BUTTON))
@@ -12153,10 +12220,11 @@ EDITS: 3
 		    (snd-display ";no mix file dialog?"))
 
 		;; ---------------- edit header dialog ----------------
-                (let ((ind1 (open-sound "oboe.snd")))
-		  (save-sound-as "fmv.snd" ind1)
-		  (close-sound ind1)
-		  (set! ind1 (open-sound "fmv.snd"))
+                (let ((ind (open-sound "oboe.snd")))
+		  (if (file-exists? "fmv.snd") (delete-file "fmv.snd"))
+		  (save-sound-as "fmv.snd" ind)
+		  (close-sound ind)
+		  (set! ind (open-sound "fmv.snd"))
 		  (edit-header-dialog)
 		  (let* ((editd (|Widget (list-ref (dialog-widgets) 12)))
 			 ;; cancel ok=save 
@@ -12166,10 +12234,27 @@ EDITS: 3
 			 (chtxt (find-child editd "chans-text"))
 			 (loctxt (find-child editd "location-text"))
 			 (comtxt (find-child editd "comment-text")))
-
-
+		    (|XmListSelectPos types 3 #t)
+		    (|XmListSelectPos formats 6 #t)
+		    (|XmTextSetString srtxt "8000")
+		    (|XmTextSetString loctxt "44")
+		    (|XmTextSetString comtxt "saved from edit-header dialog")
+		    (click-button (cadr (|XmMessageBoxGetChild editd |XmDIALOG_OK_BUTTON))) (force-event)
+		    (update-sound ind)
+		    (if (not (= (header-type ind) mus-riff))
+			(snd-display ";edit-header -> riff? ~A" (mus-header-type-name (header-type ind))))
+		    (if (not (= (data-format ind) mus-lfloat))
+			  (snd-display ";edit-header -> lfloat? ~A" (mus-data-format-name (data-format ind))))
+		    (if (not (= (srate ind) 8000))
+			(snd-display ";edit-header -> 8000? ~A" (srate ind)))
+		    (if (or (not (string? (comment ind)))
+			    (not (string=? (comment ind) "saved from edit-header dialog")))
+			(snd-display ";edit header comment: ~A" (comment ind)))
+		    (if (|XtIsManaged editd)
+			(snd-display "why is edit header dialog active?"))
+		    (edit-header-dialog)
 		    (click-button (cadr (|XmMessageBoxGetChild editd |XmDIALOG_CANCEL_BUTTON))) (force-event)
-		    (close-sound ind1)))
+		    (close-sound ind)))
 
 		;; ---------------- edit:find dialog ----------------
 		(edit-find-dialog)
@@ -12250,6 +12335,29 @@ EDITS: 3
 		    (if (|XtIsManaged printd)
 			(snd-display ";why is print dialog alive?"))
 		    (close-sound ind)))
+
+		;; ---------------- region dialog ----------------
+                (region-dialog)
+                (let* ((regd (|Widget (list-ref (dialog-widgets) 19)))
+		       (prtb (find-child regd "print"))
+		       (frm (find-child regd "formw"))
+		       (rw1 (find-child frm "rw"))
+		       (sv1 (find-child rw1 "sv"))
+		       (pl1 (find-child rw1 "pl"))
+		       (nm1 (find-child rw1 "nm"))
+		       (name (cadr (|XmStringGetLtoR (cadr (|XtVaGetValues nm1 (list |XmNlabelString 0))) "bold_button_font"))))
+		  (|XmToggleButtonSetState pl1 #t #t)
+		  (|XmToggleButtonSetState pl1 #f #t)
+		  (|XmToggleButtonSetState sv1 #t #t)
+		  (|XmToggleButtonSetState sv1 #f #t)
+		  (click-button (cadr nm1))
+		  (click-button (cadr (|XmMessageBoxGetChild regd |XmDIALOG_CANCEL_BUTTON))) (force-event)		  
+		  (let ((name1 (cadr (|XmStringGetLtoR (cadr (|XtVaGetValues nm1 (list |XmNlabelString 0))) "bold_button_font"))))
+		    (if (string=? name1 name)
+			(snd-display ";delete in region dialog: ~A?" name)))
+		  (click-button (cadr (|XmMessageBoxGetChild regd |XmDIALOG_OK_BUTTON))) (force-event)		  
+		  (if (|XtIsManaged regd)
+		      (snd-display ";region dialog is still active?")))
 
 		;; ---------------- stats dialog ----------------
 		(let ((statsd (|Widget (list-ref (dialog-widgets) 20))))

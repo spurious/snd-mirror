@@ -294,12 +294,12 @@ unsigned short mus_char_to_ulshort (const unsigned char *inp)
 double mus_char_to_ldouble (const unsigned char *inp)
 {
   double o;
-#if (!MUS_LITTLE_ENDIAN)
+#if (MUS_LITTLE_ENDIAN)
   int i;
 #endif
   unsigned char *outp;
   outp=(unsigned char *)&o;
-#if (!MUS_LITTLE_ENDIAN)
+#if (MUS_LITTLE_ENDIAN)
   for (i = 0; i < 8; i++) outp[i] = inp[i];
 #else
   outp[0] = inp[7]; outp[1] = inp[6]; outp[2] = inp[5]; outp[3] = inp[4]; outp[4] = inp[3]; outp[5] = inp[2]; outp[6] = inp[1]; outp[7] = inp[0];
@@ -310,12 +310,12 @@ double mus_char_to_ldouble (const unsigned char *inp)
 double mus_char_to_bdouble (const unsigned char *inp)
 {
   double o;
-#if MUS_LITTLE_ENDIAN
+#if (!MUS_LITTLE_ENDIAN)
   int i;
 #endif
   unsigned char *outp;
   outp=(unsigned char *)&o;
-#if (!MUS_LITTLE_ENDIAN)
+#if (MUS_LITTLE_ENDIAN)
   outp[0] = inp[7]; outp[1] = inp[6]; outp[2] = inp[5]; outp[3] = inp[4]; outp[4] = inp[3]; outp[5] = inp[2]; outp[6] = inp[1]; outp[7] = inp[0];
 #else
   for (i = 0; i < 8; i++) outp[i] = inp[i];
@@ -325,12 +325,12 @@ double mus_char_to_bdouble (const unsigned char *inp)
 
 void mus_bdouble_to_char(unsigned char *j, double x)
 {
-#if MUS_LITTLE_ENDIAN
+#if (!MUS_LITTLE_ENDIAN)
   int i;
 #endif
   unsigned char *ox;
   ox=(unsigned char *)&x;
-#if (!MUS_LITTLE_ENDIAN)
+#if (MUS_LITTLE_ENDIAN)
   j[0] = ox[7]; j[1] = ox[6]; j[2] = ox[5]; j[3] = ox[4]; j[4] = ox[3]; j[5] = ox[2]; j[6] = ox[1]; j[7] = ox[0];
 #else
   for (i = 0; i < 8; i++) j[i] = ox[i];
@@ -339,12 +339,12 @@ void mus_bdouble_to_char(unsigned char *j, double x)
 
 void mus_ldouble_to_char(unsigned char *j, double x)
 {
-#if (!MUS_LITTLE_ENDIAN)
+#if (MUS_LITTLE_ENDIAN)
   int i;
 #endif
   unsigned char *ox;
   ox=(unsigned char *)&x;
-#if (!MUS_LITTLE_ENDIAN)
+#if (MUS_LITTLE_ENDIAN)
   for (i = 0; i < 8; i++) j[i] = ox[i];
 #else
   j[0] = ox[7]; j[1] = ox[6]; j[2] = ox[5]; j[3] = ox[4]; j[4] = ox[3]; j[5] = ox[2]; j[6] = ox[1]; j[7] = ox[0];

@@ -161,6 +161,7 @@ The ESD support is thanks to Nick Bailey.
 The BSD port is thanks to Steven Schultz.
 The Mac-OSX port is thanks to Ludger Brummer.
 effects.scm is largely thanks to Dave Phillips.
+The contrib/dlp directory is thanks to dave Phillips.
 
 
 ----------------------------------------------------------------

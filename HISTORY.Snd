@@ -1,5 +1,6 @@
 snd change log
 
+  29-Oct:    added contrib/dlp directory with Dave Phillips' ladspa plugin stuff.
   15-Oct:    multichannel ladspa plugins, ladspa-dir.
   12-Oct:    various regularized *-channel functions.
   8-Oct:     snap-mix|mark-to-beat.

@@ -602,6 +602,12 @@ static int read_next_header (int chan)
     case 32: data_format = MUS_BINTN;       break; /* ditto */
     case 33: data_format = MUS_LINTN;       break; /* ditto */
     case 34: data_format = MUS_LDOUBLE;     break; /* ditto */
+    case 35: data_format = MUS_ULSHORT;     break; /* ditto */
+    case 36: data_format = MUS_UBSHORT;     break; /* ditto */
+    case 37: data_format = MUS_LFLOAT_UNSCALED; break; /* ditto */
+    case 38: data_format = MUS_BFLOAT_UNSCALED; break; /* ditto */
+    case 39: data_format = MUS_LDOUBLE_UNSCALED; break; /* ditto */
+    case 40: data_format = MUS_BDOUBLE_UNSCALED; break; /* ditto */
     default: data_format = MUS_UNSUPPORTED; break;
     }
   srate = mus_char_to_bint((unsigned char *)(hdrbuf + 16));
@@ -654,6 +660,14 @@ int mus_header_write_next_header (int chan, int wsrate, int wchans, int loc, int
     case MUS_LINTN:   mus_bint_to_char((unsigned char *)(hdrbuf + 12), 33); break; /* see above */
     case MUS_LDOUBLE: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 34); break; /* see above */
     case MUS_ALAW:    mus_bint_to_char((unsigned char *)(hdrbuf + 12), 27); break;
+      
+    case MUS_ULSHORT: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 35); break; /* etc */
+    case MUS_UBSHORT: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 36); break;
+    case MUS_LFLOAT_UNSCALED: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 37); break;
+    case MUS_BFLOAT_UNSCALED: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 38); break;
+    case MUS_LDOUBLE_UNSCALED: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 39); break;
+    case MUS_BDOUBLE_UNSCALED: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 40); break;
+
     default: 
       mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
 		"can't write NeXT/Sun data format: %d (%s)\n  [%s[%d] %s]",
@@ -5254,17 +5268,11 @@ int mus_header_writable(int type, int format) /* -2 to ignore format for this ca
   switch (type)
     {
     case MUS_NEXT:
-      if (format == -2) return(TRUE);
       switch (format)
 	{
-	case MUS_MULAW: case MUS_BYTE: case MUS_BSHORT: case MUS_B24INT:
-	case MUS_BINT: case MUS_BFLOAT: case MUS_BDOUBLE: case MUS_ALAW: 
-	case MUS_LINT: case MUS_LFLOAT: case MUS_BINTN: case MUS_LINTN:
-	case MUS_LDOUBLE:
-	  return(TRUE); break;
-	default: 
-	  return(FALSE); break;
+	case MUS_UBYTE: MUS_L12INT: return(FALSE); break;
 	}
+      return(TRUE);
       break;
     case MUS_NIST:
       if (format == -2) return(TRUE);

@@ -267,6 +267,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+29-Oct:  added contrib/dlp directory with Dave Phillips' ladspa plugin stuff.\n\
 16-Oct:  multichannel ladspa plugins, ladspa-dir.\n\
 12-Oct:  various regularized *-channel functions.\n\
 8-Oct:   snap-mix|mark-to-beat.\n\
