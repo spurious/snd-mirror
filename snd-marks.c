@@ -1880,14 +1880,13 @@ static XEN g_mark_home(XEN mark_n)
   return(mark_get(mark_n, MARK_HOME, XEN_UNDEFINED, S_mark_home));
 }
 
-static XEN g_find_mark(XEN samp_n, XEN snd_n, XEN chn_n) 
+static XEN g_find_mark(XEN samp_n, XEN snd_n, XEN chn_n, XEN edpos) 
 {
-  #define H_find_mark "(" S_find_mark " samp-or-name &optional snd chn)\n\
+  #define H_find_mark "(" S_find_mark " samp-or-name &optional snd chn edpos)\n\
 finds the mark in snd's channel chn at samp (if a number) or with the given name (if a string), returning the mark id; returns #f if no mark found."
 
-  /* TODO: add edit-pos arg to find-mark */
   mark **mps;
-  int i;
+  int i, pos;
   off_t samp = 0;
   char *name = NULL;
   chan_info *cp = NULL;
@@ -1896,7 +1895,8 @@ finds the mark in snd's channel chn at samp (if a number) or with the given name
   cp = get_cp(snd_n, chn_n, S_find_mark);
   if (cp->marks == NULL) 
     return(XEN_FALSE);
-  mps = cp->marks[cp->edit_ctr];
+  pos = to_c_edit_position(cp, edpos, S_find_mark, 4);
+  mps = cp->marks[pos];
   if (mps)
     {
       if (XEN_STRING_P(samp_n))
@@ -1904,7 +1904,7 @@ finds the mark in snd's channel chn at samp (if a number) or with the given name
       else samp = XEN_TO_C_OFF_T_OR_ELSE(samp_n, 0);
       if (name)
 	{
-	  for (i = 0; i <= cp->mark_ctr[cp->edit_ctr]; i++) 
+	  for (i = 0; i <= cp->mark_ctr[pos]; i++) 
 	    if ((mps[i]) && 
 		(mps[i]->name) && 
 		(strcmp(name, mps[i]->name) == 0))
@@ -1912,7 +1912,7 @@ finds the mark in snd's channel chn at samp (if a number) or with the given name
 	}
       else
 	{
-	  for (i = 0; i <= cp->mark_ctr[cp->edit_ctr]; i++)
+	  for (i = 0; i <= cp->mark_ctr[pos]; i++)
 	    if ((mps[i]) && 
 		(mps[i]->samp == samp)) 
 	      return(C_TO_XEN_INT(mark_id(mps[i])));
@@ -2208,7 +2208,7 @@ XEN_ARGIFY_3(g_add_mark_w, g_add_mark)
 XEN_ARGIFY_1(g_delete_mark_w, g_delete_mark)
 XEN_ARGIFY_2(g_delete_marks_w, g_delete_marks)
 XEN_NARGIFY_1(g_syncd_marks_w, g_syncd_marks)
-XEN_ARGIFY_3(g_find_mark_w, g_find_mark)
+XEN_ARGIFY_4(g_find_mark_w, g_find_mark)
 XEN_ARGIFY_3(g_forward_mark_w, g_forward_mark)
 XEN_ARGIFY_3(g_backward_mark_w, g_backward_mark)
 XEN_ARGIFY_1(g_save_marks_w, g_save_marks)
@@ -2261,7 +2261,7 @@ void g_init_marks(void)
   XEN_DEFINE_PROCEDURE(S_delete_mark,   g_delete_mark_w, 0, 1, 0,   H_delete_mark);
   XEN_DEFINE_PROCEDURE(S_delete_marks,  g_delete_marks_w, 0, 2, 0,  H_delete_marks);
   XEN_DEFINE_PROCEDURE(S_syncd_marks,   g_syncd_marks_w, 1, 0, 0,   H_syncd_marks);
-  XEN_DEFINE_PROCEDURE(S_find_mark,     g_find_mark_w, 1, 2, 0,     H_find_mark);
+  XEN_DEFINE_PROCEDURE(S_find_mark,     g_find_mark_w, 1, 3, 0,     H_find_mark);
   XEN_DEFINE_PROCEDURE(S_forward_mark,  g_forward_mark_w, 0, 3, 0,  H_forward_mark);
   XEN_DEFINE_PROCEDURE(S_backward_mark, g_backward_mark_w, 0, 3, 0, H_backward_mark);
   XEN_DEFINE_PROCEDURE(S_save_marks,    g_save_marks_w, 0, 1, 0,    H_save_marks);

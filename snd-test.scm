@@ -96,7 +96,7 @@
 (debug-set! stack 0)
 (debug-enable 'debug 'backtrace)
 (read-enable 'positions)
-(define (irandom n) (inexact->exact (random n)))
+(define (irandom n) (if (= n 0) 0 (inexact->exact (random n))))
 (add-hook! bad-header-hook (lambda (n) #t))
 
 (if (file-exists? "optimizer.log")
@@ -9662,6 +9662,13 @@
 	      ((= i mtests))
 	    (let* ((current-marks (marks ind 0))
 		   (current-samples (map mark-sample current-marks)))
+
+	      (if (not (null? current-marks))
+		  (let ((id (list-ref current-marks (irandom (- (length current-marks) 1)))))
+		    (if (not (= id (find-mark (mark-sample id)))) 
+			(snd-display ";two marks at ~A? ~A" (mark-sample id) (map mark-sample current-marks)))
+		    (if (find-mark "not-a-name") (snd-display ";find-bogus-mark: ~A" (find-mark "not-a-name")))))
+
 	      (case (irandom 15)
 		((0) (let* ((beg (irandom (frames)))
 			    (dur (max 1 (irandom 100)))
@@ -9796,9 +9803,32 @@
 	  (IF (forward-mark) (snd-display ";forward-mark when no marks: ~A" (forward-mark)))
 	  (IF (backward-mark) (snd-display ";backward-mark when no marks: ~A" (backward-mark)))
 	  (IF (find-mark 12345) (snd-display ";find-mark when no marks: ~A" (find-mark 12345)))
+	  (let ((m0 (add-mark 123 ind 0)))
+	    (delete-sample 0)
+	    (let ((m1 (add-mark 23 ind 0)))
+	      (set! (mark-name m1) "23")
+	      (delete-sample 0)
+	      (let ((m00 (find-mark 123 ind 0 0))
+		    (m01 (find-mark "23"))
+		    (m02 (find-mark 121)))
+		(if (not m00) (snd-display ";can't find 00th mark"))
+		(if (not m01) (snd-display ";can't find 01th mark"))
+		(if (not m02) (snd-display ";can't find 02th mark"))
+		(delete-mark (find-mark "23"))
+		(scale-by 2.0)
+		(set! m1 (add-mark 1234))
+		(set! (mark-name m1) "23")
+		(let ((m10 (find-mark "23"))
+		      (m11 (find-mark "23" ind 0 1))
+		      (m12 (find-mark "23" ind 0 2)))
+		  (if (not m10) (snd-display ";can't find 10th mark")
+		      (if (not (= (mark-sample m10) 1234)) (snd-display ";mark 10th: ~A" (mark-sample m10))))
+		  (if (not m11) (snd-display ";can't find 11th mark")
+		      (if (not (= (mark-sample m11 1) 23)) (snd-display ";mark 11th: ~A" (mark-sample m11 1))))
+		  (if (mark? m12) (snd-display ";found 12th mark: ~A ~A ~A" m12 (mark-sample m12 2) (mark-name m12 2)))))))
 	  (close-sound ind))
-
-	))))
+	  
+	  ))))
 
 
 ;;; ---------------- test 11: dialogs ----------------
@@ -23058,6 +23088,11 @@ EDITS: 2
 		      (click-button (XmMessageBoxGetChild mixd XmDIALOG_OK_BUTTON)) (force-event)     ;dismiss
 		      (IF (XtIsManaged mixd)
 			  (snd-display ";why is mix-panel dialog alive?"))))
+		  (XtCallCallbacks (menu-option "Mix Panel") XmNactivateCallback (snd-global-state))
+		  (let ((mixd (list-ref (dialog-widgets) 16)))
+		    (IF (not (XtIsManaged mixd))
+			(snd-display ";why isn't mix-panel dialog alive?"))
+		    (XtUnmanageChild mixd))
 		  (close-sound ind))
 
 		;; ---------------- print dialog ----------------
@@ -23157,6 +23192,12 @@ EDITS: 2
 		      (lambda (snd)
 			(if (not (member snd snds)) (close-sound snd)))
 		      new-snds)))
+		  (let ((regs (length (regions))))
+		    (do ((i 0 (1+ i)))
+			((> i regs))
+		      (click-button (XmMessageBoxGetChild regd XmDIALOG_CANCEL_BUTTON)) (force-event))
+		    (if (not (null? (regions)))
+			(snd-display ";click through regions: ~A" (regions))))
 		  (click-button (XmMessageBoxGetChild regd XmDIALOG_OK_BUTTON)) (force-event)		  
 		  (IF (XtIsManaged regd)
 		      (snd-display ";region dialog is still active?")))

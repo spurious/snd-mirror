@@ -710,6 +710,7 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>files-popup-buffer
     <li>Emacs-like C-x b handling
     <li>redirect stdin/stdout: snd-debug, read-listener-line, snd-trace
+    <li>open-next-file-in-directory
   </ul>
 </small>
 <li><a href="#ssmarks">marks</a>
@@ -985,6 +986,17 @@ The "pointer-focus" style of interaction uses similar hooks.  There is also
 a first stab at Emacs-like C-x b support here; the file name in the prompt
 should be a string (i.e. in quotes), unlike Emacs.  This still needs work
 especially for multichannel sounds.
+</p>
+<pre>
+  <em class=def><A NAME="opennextfileindirectory">open-next-file-in-directory</a></em>
+</pre>
+<p>This is a mouse-click-hook function. If you call</p>
+<pre>
+(click-middle-button-to-open-next-file-in-directory)
+</pre>
+<p>it sets up the mouse-click-hook and open-hook so that clicking the middle
+mouse button closes the current file and opens for the next (alphabetical
+by filename) in the current directory.
 </p>
 
 

@@ -925,14 +925,14 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *tempfile, chan_inf
 {
   /* open tempfile, current data, write to new temp file mixed, close others, open and use new as change case */
   /* used for clip-region temp file incoming and C-q in snd-chn.c (i.e. mix in file) so sync not relevant */
-  snd_fd *csf;
+  snd_fd *csf = NULL;
   snd_state *ss;
   snd_info *sp;
   int ofd, ifd;
   char *ofile;
   mus_sample_t **data;
   mus_sample_t *chandata;
-  int in_chans, base, no_space, err = 0;
+  int in_chans, base, err = 0;
   off_t i, j, cursamps, len, size;
   file_info *ihdr, *ohdr;
   ss = cp->state;
@@ -959,16 +959,8 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *tempfile, chan_inf
       snd_error("mix temp file %s: %s", ofile, strerror(errno)); 
       return(NULL);
     }
-  no_space = disk_space_p(sp, num * 4, 0, ofile);
-  if (no_space == GIVE_UP)
-    {
-      if (ihdr) free_file_info(ihdr);
-      mus_file_close(ofd);
-      snd_remove(ofile, TRUE);
-      FREE(ofile);
-      return(NULL);
-    }
-  csf = init_sample_read(beg, cp, READ_FORWARD);
+  if ((disk_space_p(sp, num * 4, 0, ofile)) != GIVE_UP)
+    csf = init_sample_read(beg, cp, READ_FORWARD);
   if (csf == NULL) 
     {
       if (ihdr) free_file_info(ihdr);
@@ -3264,9 +3256,7 @@ static int set_mix_position(int mix_id, off_t val, int from_gui)
 	  else cs->beg = 0;
 	  reflect_mix_in_mix_panel(mix_id);
 	  if (!from_gui)
-	    {
-	      remix_file(md, "set! " S_mix_position); 
-	    }
+	    remix_file(md, "set! " S_mix_position); 
 	  else
 	    if (!(call_mix_position_changed_hook(md, cs->beg - cs->orig)))
 	      remix_file(md, "set! " S_mix_position); 

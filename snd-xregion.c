@@ -84,14 +84,6 @@ static void unhighlight_region(snd_state *ss)
     }
 }
 
-static void unmake_region_labels (void)
-{
-  set_button_label_bold(reg_srtxt, "srate:");
-  set_button_label_bold(reg_chntxt, "chans:");
-  set_button_label_bold(reg_lentxt, "length:");
-  set_button_label_bold(reg_maxtxt, "maxamp:");
-}
-
 static void highlight_region(snd_state *ss)
 {
   regrow *oldr;
@@ -143,19 +135,15 @@ void update_region_browser(snd_state *ss, int grf_too)
       highlight_region(ss);
       goto_window(region_rows[0]->nm);
       cp = rsp->chans[0];
-      cp->sound = rsp;
       if (cp) 
 	{
+	  cp->sound = rsp;
 	  cp->chan = 0;
 	  set_sensitive(channel_f(cp), FALSE);
 	  set_sensitive(channel_w(cp), (region_chans(stack_position_to_id(0)) > 1));
-	  if (region_ok(stack_position_to_id(0))) 
-	    {
-	      rsp->hdr = fixup_region_data(cp, 0, 0);
-	      make_region_labels(rsp->hdr);
-	      region_update_graph(cp);
-	    }
-	  else unmake_region_labels();
+	  rsp->hdr = fixup_region_data(cp, 0, 0);
+	  make_region_labels(rsp->hdr);
+	  region_update_graph(cp);
 	}
     }
 }
