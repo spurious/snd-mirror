@@ -2005,7 +2005,7 @@
 	   (lastfreq (make-vct N2)) ;; last sampled frequency
 	   (ampinc (make-vct N2)) ;; amplitude interpolation increment
 	   (freqinc (make-vct N2)) ;; frequency interpolation increments
-	   ;; expresses the fundamental in terms of radians per OUTPUT sample
+	   ;; expresses the fundamental in terms of radians per output sample
 	   (fundamental (/ pi2 N))
 	   (output interp)      ; count of samples that have been output
 	   (resynth-oscils (make-vector N2))  ; synthesis oscillators
@@ -2649,7 +2649,7 @@
 ;;;   but maybe this will come in handy someday
 
 
-;;; -------- "frequency division" -- an effect from sed_sed@my-dejanews.cmo
+;;; -------- "frequency division" -- an effect from sed_sed@my-dejanews.com
 ;;;
 ;;; (freqdiv n) repeats each nth sample n times (clobbering the intermediate samples)
 

@@ -1719,26 +1719,27 @@ processing on a file, and want to use envelopes, but for whatever reason can't
 easily say how long the output will be.  The envelopes can be defined in terms
 of the input file's length, then applied by watching mus-location:</p>
 <pre><small>
-(definstrument <a name="srctst">srctst</a> (file beg srcenv)
-  (let ((f (open-input file)))
+(definstrument <a name="srctst">srctst</a> (file beg srcenv in-file-start)
+  (let ((f (open-input file :start (floor (* in-file-start (sound-srate file))))))
     (unwind-protect
-	(let* ((st (floor (* beg *srate*)))
-	       (dur (sound-duration file))
-	       (samples (1- (sound-frames file)))
-	       (srcA (make-src :file f :start-time 0.0 :srate 0.0))
-	       (env-val 0.0)
-	       (pass 0)
-	       (senv (make-env :envelope srcenv :duration dur)))
-	  (run
-	   (loop for i from st do
-	     (let ((pos (<em class=red>mus-location</em> srcA)))
-	       (when (/= pass pos)            ;position in input has changed
-		 (let ((passes (- pos pass))) ;move env forward by same amount
-		   (setf pass pos)
-		   (dotimes (k passes) (setf env-val (env senv)))))
-	       (outa i (src srcA env-val))
-	       (if (&gt;= pass samples) (loop-finish))))))
+        (let* ((st (floor (* beg *srate*)))
+               (dur (sound-duration file))
+               (samples (1- (sound-frames file)))
+               (srcA (make-src :input f :srate 0.0))
+               (env-val 0.0)
+               (pass 0)
+               (senv (make-env :envelope srcenv :duration dur)))
+          (run
+           (loop for i from st do
+             (let ((pos (<em class=red>mus-location</em> srcA)))
+               (when (/= pass pos)            ;position in input has changed
+                 (let ((passes (- pos pass))) ;move env forward by same amount
+                   (setf pass pos)
+                   (dotimes (k passes) (setf env-val (env senv)))))
+               (outa i (src srcA env-val))
+               (if (&gt;= pass samples) (loop-finish))))))
       (close-input f))))
+
 </small></pre>
 <p>This instrument puts an envelope on the sampling rate, and defines
 the envelope to apply over the entire input file:</p>
