@@ -463,9 +463,7 @@ static SCM vct_map(SCM obj, SCM proc)
   int i;
   vct *v;
   ASSERT_TYPE(VCT_P(obj), obj, SCM_ARG1, S_vct_mapB, "a vct");
-  ASSERT_TYPE((PROCEDURE_P(proc)), proc, SCM_ARG2, S_vct_mapB, "a thunk");
-  if (!(procedure_fits(proc, 0)))
-    WRONG_TYPE_ERROR(S_vct_mapB, 2, proc, "a thunk");
+  ASSERT_TYPE((PROCEDURE_P(proc)) && (procedure_fits(proc, 0)), proc, SCM_ARG2, S_vct_mapB, "a thunk");
   v = TO_VCT(obj);
   if (v) 
     for (i = 0; i < v->length; i++) 
@@ -479,9 +477,7 @@ static SCM vct_do(SCM obj, SCM proc)
   int i;
   vct *v;
   ASSERT_TYPE(VCT_P(obj), obj, SCM_ARG1, S_vct_doB, "a vct");
-  ASSERT_TYPE((PROCEDURE_P(proc)), proc, SCM_ARG2, S_vct_doB, "a procedure");
-  if (!(procedure_fits(proc, 1)))
-    WRONG_TYPE_ERROR(S_vct_doB, 2, proc, "a procedure");
+  ASSERT_TYPE((PROCEDURE_P(proc)) && (procedure_fits(proc, 1)), proc, SCM_ARG2, S_vct_doB, "a procedure");
   v = TO_VCT(obj);
   if (v) 
     for (i = 0; i < v->length; i++) 
@@ -507,7 +503,7 @@ static SCM vcts_map(SCM args)
       if (!(VCT_P(arg))) 
 	{
 	  FREE(v);
-	  WRONG_TYPE_ERROR(S_vcts_mapB, i, arg, "a vct");
+	  ASSERT_TYPE(0, arg, i, S_vcts_mapB, "a vct");
 	}
       v[i] = TO_VCT(arg);
     }
@@ -554,7 +550,7 @@ static SCM vcts_do(SCM args)
       if (!(VCT_P(arg))) 
 	{
 	  FREE(v);
-	  WRONG_TYPE_ERROR(S_vcts_doB, i, arg, "a vct");
+	  ASSERT_TYPE(0, arg, i, S_vcts_doB, "a vct");
 	}
       v[i] = TO_VCT(arg);
     }

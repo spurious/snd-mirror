@@ -459,7 +459,7 @@
 	   n)))))
 
 
-;;; -------- play sound n times -- (pl 3) for example.
+;;; -------- play sound n times -- (play-often 3) for example.
 
 (define (play-often n) 
   (let ((plays (- n 1)))

@@ -169,7 +169,6 @@ SCM scm_return_first(SCM a, ...);
 #define MAKE_KEYWORD(Arg) 0
 #define YES_WE_HAVE(Feature)
 #define DOCUMENTATION 0
-#define WRONG_TYPE_ERROR(Caller, Position, Arg, Correct_Type) 
 #define ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type)
 #define REVERSE_LIST(a) a
 #define MAKE_PERMANENT(a) a

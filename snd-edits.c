@@ -666,7 +666,7 @@ void remember_temp(char *filename, int chans)
 {
   int i;
   tempfile_ctr *tmp;
-#if DEBUGGING
+#if DEBUGGING_TEMPS
   fprintf(stderr,"remember %s with %d chans\n",filename,chans);
 #endif
   if (tempfiles_size == 0)
@@ -699,25 +699,25 @@ static void forget_temp(char *filename, int chan)
 {
   int i, j, happy = 0;
   tempfile_ctr *tmp;
-#if DEBUGGING
+#if DEBUGGING_TEMPS
   fprintf(stderr,"  forget %s chan %d (%d)\n",filename,chan,tempfiles_size);
 #endif
   for (i = 0; i < tempfiles_size; i++)
     {
       tmp = tempfiles[i];
-#if DEBUGGING
+#if DEBUGGING_TEMPS
       fprintf(stderr,"    [%p: %s] ",tmp, (tmp) ? tmp->name : "nil");
 #endif
       if ((tmp) && (strcmp(filename, tmp->name) == 0))
 	{
 	  tmp->ticks[chan]--;
-#if DEBUGGING
+#if DEBUGGING_TEMPS
 	  fprintf(stderr,"tick: %d (%d chans)\n",tmp->ticks[chan], tmp->chans);
 #endif
 	  for (j = 0; j < tmp->chans; j++)
 	    if (tmp->ticks[j] > 0) 
 	      {
-#if DEBUGGING
+#if DEBUGGING_TEMPS
 		fprintf(stderr,"   don't delete: chan %d = %d\n",j,tmp->ticks[j]);
 #endif
 		happy = 1;
@@ -725,7 +725,7 @@ static void forget_temp(char *filename, int chan)
 	      }
 	  if (happy == 0)
 	    {
-#if DEBUGGING
+#if DEBUGGING_TEMPS
 	      fprintf(stderr,"    remove %s\n",tmp->name);
 #endif
 	      snd_remove(tmp->name);
@@ -749,7 +749,7 @@ static void tick_temp(char *filename, int chan)
       if ((tmp) && (strcmp(filename, tmp->name) == 0))
 	{
 	  tmp->ticks[chan]++;
-#if DEBUGGING
+#if DEBUGGING_TEMPS
 	  fprintf(stderr,"tick %s chan %d to %d\n",filename,chan,tmp->ticks[chan]);
 #endif
 	  return;
@@ -761,7 +761,7 @@ void forget_temps(void)
 {
   int i;
   tempfile_ctr *tmp;
-#if DEBUGGING
+#if DEBUGGING_TEMPS
   fprintf(stderr,"trying to forget...\n");
 #endif
   for (i = 0; i < tempfiles_size; i++)
@@ -769,7 +769,7 @@ void forget_temps(void)
       tmp = tempfiles[i];
       if (tmp) 
 	{
-#if DEBUGGING
+#if DEBUGGING_TEMPS
 	  fprintf(stderr,"   forgetting %s\n",tmp->name);
 #endif
 	snd_remove(tmp->name);
@@ -2464,9 +2464,6 @@ void save_edits(snd_info *sp, void *ptr)
 	  current_write_date = file_write_date(sp->fullname);
 	  if ((current_write_date - sp->write_date) > 1) /* weird!! In Redhat 7.1 these can differ by 1?? Surely this is a bug! */
 	    {
-#if DEBUGGING
-	      fprintf(stderr,"current: %d, sp: %d ",(int)current_write_date, (int)(sp->write_date));
-#endif
 	      err = snd_yes_or_no_p(sp->state, "%s changed on disk! Save anyway?", sp->shortname);
 	      if (err == 0) return;
 	    }
@@ -2807,7 +2804,7 @@ snd can be a filename, a sound index number, or a list with a mix id number."
   ss = get_global_state();
   if (STRING_P(snd))
     {
-      if (!(INTEGER_OR_BOOLEAN_IF_BOUND_P(chn))) WRONG_TYPE_ERROR(S_make_sample_reader, 3, chn, "an integer or boolean");
+      ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(chn), chn, SCM_ARG3, S_make_sample_reader, "an integer or boolean");
       filename = TO_C_STRING(snd);
       if (mus_file_probe(filename))
 	loc_sp = make_sound_readable(ss, filename, FALSE);
@@ -3192,7 +3189,7 @@ MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, const char *caller, int
 	      for (i = 0; i < num; i++) 
 		vals[i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
 	    }
-	  else WRONG_TYPE_ERROR(caller, position, obj, "a vct, vector, or list");
+	  else ASSERT_TYPE(0, obj, position, caller, "a vct, vector, or list");
 	}
     }
   (*size) = num;

@@ -415,6 +415,7 @@ SCM snd_no_such_channel_error(const char *caller, SCM snd, SCM chn)
 #endif
 }
 
+/* TODO: tie these into continution values (and no_such_menu) and finish mus_misc_error cases */
 SCM snd_no_active_selection_error(const char *caller)
 {
 #if HAVE_SCM_MAKE_CONTINUATION
@@ -456,6 +457,36 @@ SCM snd_bad_arity_error(const char *caller, SCM errstr, SCM proc)
   return(SCM_BOOL_F);
 #endif
 }
+
+#if HAVE_SCM_MAKE_CONTINUATION
+SCM snd_wrong_type_arg_msg(SCM arg, int pos, const char *caller, const char *correct_type)
+{
+  int first;
+  SCM con;
+  con = scm_make_continuation(&first);
+  if (first)
+    {
+      if (pos == 0)
+	scm_throw(TO_SCM_SYMBOL("wrong-type-arg"),
+		  SCM_LIST4(TO_SCM_STRING(caller),
+			    TO_SCM_STRING("Wrong type argument (expecting ~A): ~S"),
+			    SCM_LIST2(TO_SCM_STRING(correct_type), 
+				      arg),
+			    SCM_LIST2(ERROR_CONTINUATION,
+				      con)));
+      else
+	scm_throw(TO_SCM_SYMBOL("wrong-type-arg"),
+		  SCM_LIST4(TO_SCM_STRING(caller),
+			    TO_SCM_STRING("Wrong type argument in position ~A (expecting ~A): ~S"),
+			    SCM_LIST3(TO_SMALL_SCM_INT(pos),
+				      TO_SCM_STRING(correct_type), 
+				      arg),
+			    SCM_LIST2(ERROR_CONTINUATION,
+				      con)));
+	}
+  return(con);
+}
+#endif
 
 
 /* -------- various evaluators (within our error handler) -------- */
@@ -1769,17 +1800,20 @@ chan_info *get_cp(SCM scm_snd_n, SCM scm_chn_n, const char *caller)
   snd_info *sp;
   int chn_n;
   sp = get_sp(scm_snd_n);
-  if (sp == NULL) 
-    snd_no_such_sound_error(caller, scm_snd_n); 
-  if (INTEGER_P(scm_chn_n))
-    chn_n = TO_C_INT(scm_chn_n);
-  else
-    if (sp->selected_channel != NO_SELECTION) 
-      chn_n = sp->selected_channel;
-    else chn_n = 0;
-  if ((chn_n >= 0) && (chn_n < sp->nchans)) 
-    return(sp->chans[chn_n]);
-  snd_no_such_channel_error(caller, scm_snd_n, scm_chn_n);
+  while (sp == NULL) 
+    sp = get_sp(scm_snd_n = snd_no_such_sound_error(caller, scm_snd_n)); 
+  while (1)
+    {
+      if (INTEGER_P(scm_chn_n))
+	chn_n = TO_C_INT(scm_chn_n);
+      else
+	if (sp->selected_channel != NO_SELECTION) 
+	  chn_n = sp->selected_channel;
+	else chn_n = 0;
+      if ((chn_n >= 0) && (chn_n < sp->nchans)) 
+	return(sp->chans[chn_n]);
+      scm_chn_n = snd_no_such_channel_error(caller, scm_snd_n, scm_chn_n);
+    }
   return(NULL);
 }
 
@@ -1866,26 +1900,14 @@ subsequent " S_close_sound_file ". data can be written with " S_vct_sound_file
   int type = MUS_NEXT;
   int format = MUS_BFLOAT;
 #endif
-  if (STRING_P(g_name)) 
-    name = TO_C_STRING(g_name); 
-  else 
-    if (BOUND_P(g_name))
-      WRONG_TYPE_ERROR(S_open_sound_file, 1, g_name, "a string");
-  if (NUMBER_P(g_chans)) 
-    chans = TO_C_INT_OR_ELSE(g_chans, 0); 
-  else 
-    if (BOUND_P(g_chans))
-      WRONG_TYPE_ERROR(S_open_sound_file, 2, g_chans, "a number");
-  if (NUMBER_P(g_srate)) 
-    srate = TO_C_INT_OR_ELSE(g_srate, 0); 
-  else
-    if (BOUND_P(g_srate))
-      WRONG_TYPE_ERROR(S_open_sound_file, 3, g_srate, "a number");
-  if (STRING_P(g_comment)) 
-    comment = TO_C_STRING(g_comment);
-  else 
-    if (BOUND_P(g_comment)) 
-      WRONG_TYPE_ERROR(S_open_sound_file, 4, g_comment, "a string");
+  ASSERT_TYPE(STRING_IF_BOUND_P(g_name), g_name, SCM_ARG1, S_open_sound_file, "a string");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(g_chans), g_chans, SCM_ARG2, S_open_sound_file, "an integer");
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(g_srate), g_srate, SCM_ARG3, S_open_sound_file, "a number");
+  ASSERT_TYPE(STRING_IF_BOUND_P(g_comment), g_comment, SCM_ARG4, S_open_sound_file, "a string");
+  if (STRING_P(g_comment)) comment = TO_C_STRING(g_comment);
+  chans = TO_C_INT_OR_ELSE(g_chans, 0); 
+  srate = TO_C_INT_OR_ELSE(g_srate, 0); 
+  if (STRING_P(g_name)) name = TO_C_STRING(g_name); 
   if (name == NULL)
 #if MUS_LITTLE_ENDIAN
     name = "test.wav";
@@ -2186,11 +2208,10 @@ static SCM g_edit_header_dialog(SCM snd_n)
 {
   #define H_edit_header_dialog "(" S_edit_header_dialog " snd) opens the Edit Header dialog on sound snd"
   snd_info *sp; 
-  sp = get_sp(snd_n); 
-  if (sp) 
-    return(SND_WRAP(edit_header(sp))); 
-  else snd_no_such_sound_error(S_edit_header_dialog, snd_n);
-  return(SCM_BOOL_F); /* make compiler happy */
+  sp = get_sp(snd_n);
+  while (sp == NULL)
+    sp = get_sp(snd_n = snd_no_such_sound_error(S_edit_header_dialog, snd_n));
+  return(SND_WRAP(edit_header(sp))); 
 }
 
 static SCM g_yes_or_no_p(SCM msg) 
@@ -2385,10 +2406,10 @@ static SCM g_start_progress_report(SCM snd)
   snd_info *sp;
   SND_ASSERT_SND(S_start_progress_report, snd, 1);
   sp = get_sp(snd);
-  if (sp)
-    start_progress_report(sp, NOT_FROM_ENVED); 
-  else snd_no_such_sound_error(S_start_progress_report, snd);
-  return(SCM_BOOL_T);
+  while (sp == NULL)
+    sp = get_sp(snd = snd_no_such_sound_error(S_start_progress_report, snd));
+  start_progress_report(sp, NOT_FROM_ENVED);
+  return(snd);
 }
 
 static SCM g_finish_progress_report(SCM snd)
@@ -2397,10 +2418,10 @@ static SCM g_finish_progress_report(SCM snd)
   snd_info *sp;
   SND_ASSERT_SND(S_finish_progress_report, snd, 1);
   sp = get_sp(snd);
-  if (sp) 
-    finish_progress_report(sp, NOT_FROM_ENVED); 
-  else snd_no_such_sound_error(S_finish_progress_report, snd);
-  return(SCM_BOOL_T);
+  while (sp == NULL)
+    sp = get_sp(snd = snd_no_such_sound_error(S_finish_progress_report, snd));
+  finish_progress_report(sp, NOT_FROM_ENVED);
+  return(snd); 
 }
 
 static SCM g_progress_report(SCM pct, SCM name, SCM cur_chan, SCM chans, SCM snd)
@@ -2415,15 +2436,15 @@ updates an on-going 'progress report' (e. g. an animated hour-glass icon) in snd
   ASSERT_TYPE(INTEGER_IF_BOUND_P(cur_chan), cur_chan, SCM_ARG3, S_progress_report, "an integer");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(chans), chans, SCM_ARG4, S_progress_report, "an integer");
   sp = get_sp(snd);
-  if (sp) 
-    progress_report(sp,
-		    (STRING_P(name)) ? TO_C_STRING(name) : "something useful",
-		    TO_C_INT_OR_ELSE(cur_chan, 0),
-		    TO_C_INT_OR_ELSE(chans, sp->nchans),
-		    TO_C_DOUBLE(pct),
-		    NOT_FROM_ENVED);
-  else snd_no_such_sound_error(S_progress_report, snd);
-  return(SCM_BOOL_T);
+  while (sp == NULL)
+    sp = get_sp(snd = snd_no_such_sound_error(S_progress_report, snd));
+  progress_report(sp,
+		  (STRING_P(name)) ? TO_C_STRING(name) : "something useful",
+		  TO_C_INT_OR_ELSE(cur_chan, 0),
+		  TO_C_INT_OR_ELSE(chans, sp->nchans),
+		  TO_C_DOUBLE(pct),
+		  NOT_FROM_ENVED);
+  return(snd);
 }
 
 
@@ -3752,3 +3773,4 @@ static Scheme_Object *snd_inner(void *closure_data, int argc, Scheme_Object **ar
 
 */
 #endif
+

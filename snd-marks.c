@@ -1554,11 +1554,11 @@ static SCM iread_mark(SCM n, int fld, SCM pos_n, char *caller)
 {
   int pos;
   chan_info *ncp[1];
-  mark *m;
+  mark *m = NULL;
   pos = TO_C_INT_OR_ELSE_WITH_ORIGIN(pos_n, -1, caller);
   m = find_mark_id(ncp, TO_C_INT_OR_ELSE_WITH_ORIGIN(n, 0, caller), pos);
-  if (m == NULL) 
-    snd_no_such_mark_error(caller, n);
+  while (m == NULL) 
+    m = find_mark_id(ncp, TO_C_INT_OR_ELSE_WITH_ORIGIN(n = snd_no_such_mark_error(caller, n), 0, caller), pos);
   switch (fld)
     {
     case MARK_SAMPLE: 
@@ -1585,8 +1585,8 @@ static SCM iwrite_mark(SCM mark_n, SCM val, int fld, char *caller)
   chan_info *cp[1];
   mark *m;
   m = find_mark_id(cp, TO_C_INT_OR_ELSE_WITH_ORIGIN(mark_n, 0, caller), -1);
-  if (m == NULL) 
-    snd_no_such_mark_error(caller, mark_n);
+  while (m == NULL) 
+    m = find_mark_id(cp, TO_C_INT_OR_ELSE_WITH_ORIGIN(mark_n = snd_no_such_mark_error(caller, mark_n), 0, caller), -1);
   switch (fld)
     {
     case MARK_SAMPLE: 
@@ -1738,8 +1738,8 @@ static SCM g_delete_mark(SCM id_n)
   int id;
   ASSERT_TYPE(INTEGER_IF_BOUND_P(id_n), id_n, SCM_ARGn, S_delete_mark, "an integer");
   m = find_mark_id(cp, id = TO_C_INT_OR_ELSE(id_n, 0), -1);
-  if (m == NULL) 
-    snd_no_such_mark_error(S_delete_mark, id_n);
+  while (m == NULL) 
+    m = find_mark_id(cp, id = TO_C_INT_OR_ELSE(id_n = snd_no_such_mark_error(S_delete_mark, id_n), 0), -1);
   delete_mark_id(id, cp[0]);
   update_graph(cp[0], NULL);
   return(id_n);
@@ -1843,8 +1843,8 @@ static SCM g_marks(SCM snd_n, SCM chn_n, SCM pos_n)
 	else
 	  {
 	    sp = get_sp(snd_n);
-	    if (sp == NULL) 
-	      snd_no_such_sound_error(S_marks, snd_n);
+	    while (sp == NULL) 
+	      sp = get_sp(snd_n = snd_no_such_sound_error(S_marks, snd_n));
 	    for (i = sp->nchans - 1; i >= 0; i--)
 	      {
 		cp = sp->chans[i];
@@ -1951,8 +1951,8 @@ static SCM g_save_marks(SCM snd_n)
   SCM res;
   SND_ASSERT_SND(S_save_marks, snd_n, 1);
   sp = get_sp(snd_n);
-  if (sp == NULL) 
-    snd_no_such_sound_error(S_save_marks, snd_n);
+  while (sp == NULL) 
+    sp = get_sp(snd_n = snd_no_such_sound_error(S_save_marks, snd_n));
   str = save_marks(sp);
   res = TO_SCM_STRING(str);
   FREE(str);

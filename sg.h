@@ -192,15 +192,6 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 
 #define ERROR(Type, Info) scm_throw(Type, Info)
 
-#ifdef SCM_ASSERT_TYPE
-  #define WRONG_TYPE_ERROR(Caller, Position, Arg, Correct_Type) scm_wrong_type_arg_msg(Caller, Position, Arg, Correct_Type)
-  #define ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) SCM_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type)
-  /* TODO: place a continuation here, accepting some new value in place of Arg */
-#else
-  #define WRONG_TYPE_ERROR(Caller, Position, Arg, Correct_Type) scm_wrong_type_arg(Caller, Position, Arg)
-  #define ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) SCM_ASSERT(Assertion, Arg, Position, Caller)
-#endif
-
 #ifndef SCM_BOOLP
   #define SCM_BOOLP(Arg) gh_boolean_p(Arg)
   /* the next exist in 1.3.4 but are not usable in this context (need SCM_NIMP check) */
@@ -266,28 +257,48 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #define CLEAR_HOOK(Arg)           scm_reset_hook_x(Arg)
 
 #ifdef SCM_ASSERT_TYPE
-  #define WRONG_TYPE_ERROR(Caller, Position, Arg, Correct_Type) scm_wrong_type_arg_msg(Caller, Position, Arg, Correct_Type)
-#define SND_ASSERT_SND(Origin, Snd, Offset) \
-  if (!((INTEGER_P(Snd)) || (FALSE_P(Snd)) || (NOT_BOUND_P(Snd)) || (LIST_P(Snd)))) \
-    scm_wrong_type_arg_msg(Origin, Offset, Snd, "an integer (sound index), boolean, or a list");
 
-#define SND_ASSERT_CHAN(Origin, Snd, Chn, Offset) \
-  if (!((INTEGER_P(Snd)) || (FALSE_P(Snd)) || (NOT_BOUND_P(Snd)) || (LIST_P(Snd)))) \
-    scm_wrong_type_arg_msg(Origin, Offset, Snd, "an integer (sound index), boolean, or a list"); \
-  else \
-    if (!((INTEGER_P(Chn)) || (FALSE_P(Chn)) || (NOT_BOUND_P(Chn)))) \
-      scm_wrong_type_arg_msg(Origin, Offset + 1, Chn, "an integer (0-based channel number) or boolean");
 #else
-#define SND_ASSERT_SND(Origin, Snd, Offset) \
-  if (!((INTEGER_P(Snd)) || (FALSE_P(Snd)) || (NOT_BOUND_P(Snd)) || (LIST_P(Snd)))) \
-    scm_wrong_type_arg(Origin, Offset, Snd);
 
-#define SND_ASSERT_CHAN(Origin, Snd, Chn, Offset) \
-  if (!((INTEGER_P(Snd)) || (FALSE_P(Snd)) || (NOT_BOUND_P(Snd)) || (LIST_P(Snd)))) \
-    scm_wrong_type_arg(Origin, Offset, Snd); \
-  else \
-    if (!((INTEGER_P(Chn)) || (FALSE_P(Chn)) || (NOT_BOUND_P(Chn)))) \
-      scm_wrong_type_arg(Origin, Offset + 1, Chn);
+#endif
+
+#ifdef SCM_ASSERT_TYPE
+
+  #if USE_SND && HAVE_SCM_MAKE_CONTINUATION
+    /* not sure this is needed, or a good idea */
+    #define ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
+      while (!(Assertion)) Arg = snd_wrong_type_arg_msg(Arg, Position, Caller, Correct_Type)
+  #else
+    #define ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
+      SCM_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type)
+  #endif
+
+  #define SND_ASSERT_SND(Origin, Snd, Offset) \
+    if (!((INTEGER_P(Snd)) || (FALSE_P(Snd)) || (NOT_BOUND_P(Snd)) || (LIST_P(Snd)))) \
+      scm_wrong_type_arg_msg(Origin, Offset, Snd, "an integer (sound index), boolean, or a list");
+
+  #define SND_ASSERT_CHAN(Origin, Snd, Chn, Offset) \
+    if (!((INTEGER_P(Snd)) || (FALSE_P(Snd)) || (NOT_BOUND_P(Snd)) || (LIST_P(Snd)))) \
+      scm_wrong_type_arg_msg(Origin, Offset, Snd, "an integer (sound index), boolean, or a list"); \
+    else \
+      if (!((INTEGER_P(Chn)) || (FALSE_P(Chn)) || (NOT_BOUND_P(Chn)))) \
+        scm_wrong_type_arg_msg(Origin, Offset + 1, Chn, "an integer (0-based channel number) or boolean");
+
+#else
+
+  #define ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) SCM_ASSERT(Assertion, Arg, Position, Caller)
+
+  #define SND_ASSERT_SND(Origin, Snd, Offset) \
+    if (!((INTEGER_P(Snd)) || (FALSE_P(Snd)) || (NOT_BOUND_P(Snd)) || (LIST_P(Snd)))) \
+      scm_wrong_type_arg(Origin, Offset, Snd);
+
+  #define SND_ASSERT_CHAN(Origin, Snd, Chn, Offset) \
+    if (!((INTEGER_P(Snd)) || (FALSE_P(Snd)) || (NOT_BOUND_P(Snd)) || (LIST_P(Snd)))) \
+      scm_wrong_type_arg(Origin, Offset, Snd); \
+    else \
+      if (!((INTEGER_P(Chn)) || (FALSE_P(Chn)) || (NOT_BOUND_P(Chn)))) \
+        scm_wrong_type_arg(Origin, Offset + 1, Chn);
+
 #endif
 
 #if USE_SND

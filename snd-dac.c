@@ -448,7 +448,7 @@ static mus_any *mus_make_fcomb (Float scaler, int size, Float a0, Float a1)
           #define H_fcomb "(" S_fcomb " gen &optional (val 0.0)) comb filters val with low pass on feeback."
           Float in1 = 0.0;
           ASSERT_TYPE(((mus_scm_p(obj)) && (mus_fcomb_p(TO_CLM(obj)))), obj, SCM_ARG1, S_fcomb, "a comb filter");
-          if (NUMBER_P(input)) in1 = TO_C_DOUBLE(input); else if (BOUND_P(input)) WRONG_TYPE_ERROR(S_fcomb, 2, input, "a number");
+          if (NUMBER_P(input)) in1 = TO_C_DOUBLE(input); else ASSERT_TYPE(NOT_BOUND_P(input), input, SCM_ARG2, S_fcomb, "a number");
           return(TO_SCM_DOUBLE(mus_fcomb(TO_CLM(obj), in1, 0.0)));
         }
         
@@ -2551,8 +2551,8 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
       ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_n), samp_n, SCM_ARG1, caller, "a number");
       SND_ASSERT_CHAN(caller, snd_n, chn_n, 2);
       sp = get_sp(snd_n);
-      if (sp == NULL) 
-	snd_no_such_sound_error(caller, snd_n);
+      while (sp == NULL) 
+	sp = get_sp(snd_n = snd_no_such_sound_error(caller, snd_n));
       samp = TO_C_INT_OR_ELSE(samp_n, 0);
       if ((syncd) && (sp->sync != 0))
 	{
@@ -2707,8 +2707,8 @@ static SCM g_make_player(SCM snd, SCM chn)
   chan_info *cp;
   SND_ASSERT_CHAN(S_make_player, snd, chn, 1);
   true_sp = get_sp(snd);
-  if (true_sp == NULL) 
-    snd_no_such_sound_error(S_make_player, snd);
+  while (true_sp == NULL) 
+    true_sp = get_sp(snd = snd_no_such_sound_error(S_make_player, snd));
   cp = get_cp(snd, chn, S_make_player);
   if (cp)
     {

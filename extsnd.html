@@ -2232,10 +2232,7 @@ All the functions that take sound and channel args ("snd chn" below) can return 
 all the region-related functions can return 'no-such-region; to reduce clutter, I'll omit mention
 of these below.  Many of the errors are continuable, which is to say that you can continue
 from the point of the error if you want, replacing the offending value or whatever with
-a new one.  In the documentation, I'll indicate that an error has a continuation and what
-that continuation can affect with the form [<em class=error>no-such-channel -&gt; channel</em>]
-meaning that the 'no-such-channel error in this case can be continued and the continuation
-argument becomes the new channel number.
+a new one. 
 </p>
 
 <br>
@@ -3259,6 +3256,12 @@ a particular mix object:</p>
 <!-- --><td>selected mix (-1 = none) -- set to select mix.
 <!-- --></td></tr>
 <!-- -->
+<!-- select-mix -->
+<!-- -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndselectmix">select-mix</a></em> (mix)</code></span></td>
+<!-- --><td>set selected mix (-1 = none).
+<!-- --></td></tr>
+<!-- -->
 <!-- --></table>
 
 <p>As an example, say we have a mix active whose "id" is 123.</p>
@@ -3759,7 +3762,7 @@ desired edit history position.
 <!-- --><tr><td></td><td>
 <!-- -->display bomb icon in <i>snd's</i> minibuffer.  Set <i>on</i> to #f to erase bomb.  Each time <i>bomb</i>
 <!-- -->is called, the bomb icon moves to the next image in its sequence (showing the bomb's fuse burning down),
-<!-- -->restarting the sequence whenever it reaches the end.
+<!-- -->restarting the sequence whenever it reaches the end. [<em class=error>no-such-sound</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4660,9 +4663,9 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- min-db -->
+<!-- min-dB -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mindb">min-db</a></em> (<em class=narg>snd chn</em>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="mindb">min-dB</a></em> (<em class=narg>snd chn</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->Sets the minimum dB value displayed in various graphs (default: -60.0).
@@ -5249,7 +5252,7 @@ desired edit history position.
 <!-- --><span class=defbox><code><em class=def><a name="sndselectsound">select-sound</a></em> (<i>snd</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->select sound <i>snd</i> (an index). [<em class=error>no-such-sound -&gt; index</em>].
+<!-- -->select sound <i>snd</i> (an index). [<em class=error>no-such-sound</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

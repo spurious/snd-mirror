@@ -131,7 +131,6 @@ SCM scm_return_first(SCM a, ...);
 #define ERROR_CONTINUATION   TO_SCM_SYMBOL("snd-error-continuation")
 
 #define ERROR(a, b)               Fthrow(a, b)
-#define WRONG_TYPE_ERROR(Caller, Position, Arg, Correct_Type) rep_signal_arg_error(Arg, Position)
 
 #define BOOLEAN_P(Arg)            (((Arg) == Qt) || ((Arg) == Qnil))
 #define NUMBER_P(Arg)             ((Arg) && (rep_NUMBERP(Arg)))

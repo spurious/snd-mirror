@@ -262,24 +262,22 @@ static int decode_keywords(char *caller, int nkeys, SCM *keys, int nargs, SCM *a
   return(rtn_ctr);
 }
 
-static Float fkeyarg (SCM key, char *caller, int n, SCM val, Float def)
+static Float fkeyarg (SCM key, char *caller, int n, Float def)
 {
   if (!(KEYWORD_P(key)))
     {
-      if (NUMBER_P(key))
-	return(TO_C_DOUBLE_WITH_ORIGIN(key, caller));
-      else WRONG_TYPE_ERROR(caller, n, val, "a number or keyword");
+      ASSERT_TYPE(NUMBER_P(key), key, n, caller, "a number or keyword");
+      return(TO_C_DOUBLE_WITH_ORIGIN(key, caller));
     }
   return(def);
 }
 
-static int ikeyarg (SCM key, char *caller, int n, SCM val, int def)
+static int ikeyarg (SCM key, char *caller, int n, int def)
 {
   if (!(KEYWORD_P(key)))
     {
-      if (NUMBER_P(key))
-	return(TO_C_INT_OR_ELSE_WITH_ORIGIN(key, 0, caller));
-      else WRONG_TYPE_ERROR(caller, n, val, "a number or keyword");
+      ASSERT_TYPE(NUMBER_P(key), key, n, caller, "a number or keyword");
+      return(TO_C_INT_OR_ELSE_WITH_ORIGIN(key, 0, caller));
     }
   return(def);
 }
@@ -1044,10 +1042,11 @@ static SCM g_mus_bank(SCM gens, SCM amps, SCM inp, SCM inp2)
   Float *scls = NULL, *invals = NULL, *invals2 = NULL;
   mus_any **gs;
   SCM *data;
+  ASSERT_TYPE(VECTOR_P(gens), gens, SCM_ARG1, S_mus_bank, "a vector of generators");
   size = VECTOR_LENGTH(gens);
   scls = whatever_to_floats(amps, size, S_mus_bank);
   if (scls == NULL)
-    WRONG_TYPE_ERROR(S_mus_bank, 2, amps, "a vct or vector");
+    ASSERT_TYPE(VECTOR_P(amps) || VCT_P(amps), amps, SCM_ARG2, S_mus_bank, "a vct, vector, number, or procedure(!)");
   gs = (mus_any **)CALLOC(size, sizeof(mus_any *));
   data = SCM_VELTS(gens);
   for (i = 0; i < size; i++) 
@@ -1117,8 +1116,8 @@ static SCM g_make_oscil(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
   vals = decode_keywords(S_make_oscil, 2, keys, 4, args, orig_arg);
   if (vals > 0)
     {
-      freq = fkeyarg(keys[0], S_make_oscil, orig_arg[0] + 1, args[orig_arg[0]], freq);
-      phase = fkeyarg(keys[1], S_make_oscil, orig_arg[1] + 1, args[orig_arg[1]], phase);
+      freq = fkeyarg(keys[0], S_make_oscil, orig_arg[0] + 1, freq);
+      phase = fkeyarg(keys[1], S_make_oscil, orig_arg[1] + 1, phase);
     }
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->gen = mus_make_oscil(freq, phase);
@@ -1131,8 +1130,8 @@ static SCM g_oscil(SCM os, SCM fm, SCM pm)
   #define H_oscil "(" S_oscil " gen &optional fm pm) -> next sample from " S_oscil " gen: rtn = sin(phase+pm) phase+=(freq+fm)"
   Float fm1 = 0.0, pm1 = 0.0;
   ASSERT_TYPE((MUS_SCM_P(os)) && (mus_oscil_p(TO_CLM(os))), os, SCM_ARG1, S_oscil, "an oscil");
-  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) WRONG_TYPE_ERROR(S_oscil, 2, fm, "a number");
-  if (NUMBER_P(pm)) pm1 = TO_C_DOUBLE(pm); else if (BOUND_P(pm)) WRONG_TYPE_ERROR(S_oscil, 3, pm, "a number");
+  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else ASSERT_TYPE(NOT_BOUND_P(fm), fm, SCM_ARG2, S_oscil, "a number");
+  if (NUMBER_P(pm)) pm1 = TO_C_DOUBLE(pm); else ASSERT_TYPE(NOT_BOUND_P(pm), pm, SCM_ARG3, S_oscil, "a number");
   return(TO_SCM_DOUBLE(mus_oscil(TO_CLM(os), fm1, pm1)));
 }
 
@@ -1238,17 +1237,17 @@ static SCM g_make_delay_1(int choice, SCM arglist)
 	case G_DELAY: 
 	  break;
 	case G_COMB: case G_NOTCH:
-	  scaler = fkeyarg(keys[keyn], caller, orig_arg[keyn] + 1, args[orig_arg[keyn]], scaler);
+	  scaler = fkeyarg(keys[keyn], caller, orig_arg[keyn] + 1, scaler);
 	  keyn++;
 	  break;
 	case G_ALL_PASS:
-	  feedback = fkeyarg(keys[keyn], caller, orig_arg[keyn] + 1, args[orig_arg[keyn]], feedback);
+	  feedback = fkeyarg(keys[keyn], caller, orig_arg[keyn] + 1, feedback);
 	  keyn++;
-	  feedforward = fkeyarg(keys[keyn], caller, orig_arg[keyn] + 1, args[orig_arg[keyn]], feedforward);
+	  feedforward = fkeyarg(keys[keyn], caller, orig_arg[keyn] + 1, feedforward);
 	  keyn++;
 	  break;
 	}
-      size = ikeyarg(keys[keyn], caller, orig_arg[keyn] + 1, args[orig_arg[keyn]], size);
+      size = ikeyarg(keys[keyn], caller, orig_arg[keyn] + 1, size);
       size_key = keyn;
       keyn++;
       if (!(KEYWORD_P(keys[keyn])))
@@ -1278,7 +1277,7 @@ static SCM g_make_delay_1(int choice, SCM arglist)
 	  else 
 	    {
 	      if (line) FREE(line);
-	      WRONG_TYPE_ERROR(caller, orig_arg[keyn] + 1, args[orig_arg[keyn]], "a number");
+	      ASSERT_TYPE(NUMBER_P(keys[keyn]), keys[keyn], orig_arg[keyn] + 1, caller, "a number");
 	    }
 	}
       keyn++;
@@ -1292,7 +1291,7 @@ static SCM g_make_delay_1(int choice, SCM arglist)
 	  else
 	    {
 	      if (line) FREE(line);
-	      WRONG_TYPE_ERROR(caller, orig_arg[keyn] + 1, args[orig_arg[keyn]], "a number");
+	      ASSERT_TYPE(NUMBER_P(keys[keyn]), keys[keyn], orig_arg[keyn] + 1, caller, "a number");
 	    }
 	}
     }
@@ -1378,8 +1377,8 @@ If pm is greater than 0.0, the max-size argument used to create gen should have 
 
   Float in1 = 0.0, pm1 = 0.0;
   ASSERT_TYPE((MUS_SCM_P(obj)) && (mus_delay_p(TO_CLM(obj))), obj, SCM_ARG1, S_delay, "a delay line");
-  if (NUMBER_P(input)) in1 = TO_C_DOUBLE(input); else if (BOUND_P(input)) WRONG_TYPE_ERROR(S_delay, 2, input, "a number");
-  if (NUMBER_P(pm)) pm1 = TO_C_DOUBLE(pm); else if (BOUND_P(pm)) WRONG_TYPE_ERROR(S_delay, 3, pm, "a number");
+  if (NUMBER_P(input)) in1 = TO_C_DOUBLE(input); else ASSERT_TYPE(NOT_BOUND_P(input), input, SCM_ARG2, S_delay, "a number");
+  if (NUMBER_P(pm)) pm1 = TO_C_DOUBLE(pm); else ASSERT_TYPE(NOT_BOUND_P(pm), pm, SCM_ARG3, S_delay, "a number");
   return(TO_SCM_DOUBLE(mus_delay(TO_CLM(obj), in1, pm1)));
 }
 
@@ -1388,8 +1387,8 @@ static SCM g_notch(SCM obj, SCM input, SCM pm)
   #define H_notch "(" S_notch " gen &optional (val 0.0) (pm 0.0)) notch filters val, pm changes the delay length."
   Float in1 = 0.0, pm1 = 0.0;
   ASSERT_TYPE((MUS_SCM_P(obj)) && (mus_notch_p(TO_CLM(obj))), obj, SCM_ARG1, S_notch, "a notch filter");
-  if (NUMBER_P(input)) in1 = TO_C_DOUBLE(input); else if (BOUND_P(input)) WRONG_TYPE_ERROR(S_notch, 2, input, "a number");
-  if (NUMBER_P(pm)) pm1 = TO_C_DOUBLE(pm); else if (BOUND_P(pm)) WRONG_TYPE_ERROR(S_notch, 3, pm, "a number");
+  if (NUMBER_P(input)) in1 = TO_C_DOUBLE(input); else ASSERT_TYPE(NOT_BOUND_P(input), input, SCM_ARG2, S_notch, "a number");
+  if (NUMBER_P(pm)) pm1 = TO_C_DOUBLE(pm); else ASSERT_TYPE(NOT_BOUND_P(pm), pm, SCM_ARG3, S_notch, "a number");
   return(TO_SCM_DOUBLE(mus_notch(TO_CLM(obj), in1, pm1)));
 }
 
@@ -1398,8 +1397,8 @@ static SCM g_comb(SCM obj, SCM input, SCM pm)
   #define H_comb "(" S_comb " gen &optional (val 0.0) (pm 0.0)) comb filters val, pm changes the delay length."
   Float in1 = 0.0, pm1 = 0.0;
   ASSERT_TYPE((MUS_SCM_P(obj)) && (mus_comb_p(TO_CLM(obj))), obj, SCM_ARG1, S_comb, "a comb filter");
-  if (NUMBER_P(input)) in1 = TO_C_DOUBLE(input); else if (BOUND_P(input)) WRONG_TYPE_ERROR(S_comb, 2, input, "a number");
-  if (NUMBER_P(pm)) pm1 = TO_C_DOUBLE(pm); else if (BOUND_P(pm)) WRONG_TYPE_ERROR(S_comb, 3, pm, "a number");
+  if (NUMBER_P(input)) in1 = TO_C_DOUBLE(input); else ASSERT_TYPE(NOT_BOUND_P(input), input, SCM_ARG2, S_comb, "a number");
+  if (NUMBER_P(pm)) pm1 = TO_C_DOUBLE(pm); else ASSERT_TYPE(NOT_BOUND_P(pm), pm, SCM_ARG3, S_comb, "a number");
   return(TO_SCM_DOUBLE(mus_comb(TO_CLM(obj), in1, pm1)));
 }
 
@@ -1408,8 +1407,8 @@ static SCM g_all_pass(SCM obj, SCM input, SCM pm)
   #define H_all_pass "(" S_all_pass " gen &optional (val 0.0) (pm 0.0)) all-pass filters val, pm changes the delay length."
   Float in1 = 0.0, pm1 = 0.0;
   ASSERT_TYPE((MUS_SCM_P(obj)) && (mus_all_pass_p(TO_CLM(obj))), obj, SCM_ARG1, S_all_pass, "an all-pass filter");
-  if (NUMBER_P(input)) in1 = TO_C_DOUBLE(input); else if (BOUND_P(input)) WRONG_TYPE_ERROR(S_all_pass, 2, input, "a number");
-  if (NUMBER_P(pm)) pm1 = TO_C_DOUBLE(pm); else if (BOUND_P(pm)) WRONG_TYPE_ERROR(S_all_pass, 3, pm, "a number");
+  if (NUMBER_P(input)) in1 = TO_C_DOUBLE(input); else ASSERT_TYPE(NOT_BOUND_P(input), input, SCM_ARG2, S_all_pass, "a number");
+  if (NUMBER_P(pm)) pm1 = TO_C_DOUBLE(pm); else ASSERT_TYPE(NOT_BOUND_P(pm), pm, SCM_ARG3, S_all_pass, "a number");
   return(TO_SCM_DOUBLE(mus_all_pass(TO_CLM(obj), in1, pm1)));
 }
 
@@ -1418,7 +1417,7 @@ static SCM g_tap(SCM obj, SCM loc)
   #define H_tap "(" S_tap " gen &optional (pm 0.0)) taps the " S_delay " generator offset by pm"
   Float dloc = 0.0;
   ASSERT_TYPE((MUS_SCM_P(obj)), obj, SCM_ARG1, S_tap, "a delay line tap");
-  if (NUMBER_P(loc)) dloc = TO_C_DOUBLE(loc); else if (BOUND_P(loc)) WRONG_TYPE_ERROR(S_tap, 2, loc, "a number");
+  if (NUMBER_P(loc)) dloc = TO_C_DOUBLE(loc); else ASSERT_TYPE(NOT_BOUND_P(loc), loc, SCM_ARG3, S_tap, "a number");
   return(TO_SCM_DOUBLE(mus_tap(TO_CLM(obj), dloc)));
 }
 
@@ -1533,9 +1532,9 @@ returns a new " S_sum_of_cosines " generator, producing a band-limited pulse tra
   vals = decode_keywords(S_make_sum_of_cosines, 3, keys, 6, args, orig_arg);
   if (vals > 0)
     {
-      cosines = ikeyarg(keys[0], S_make_sum_of_cosines, orig_arg[0] + 1, args[orig_arg[0]], cosines);
-      freq = fkeyarg(keys[1], S_make_sum_of_cosines, orig_arg[1] + 1, args[orig_arg[1]], freq);
-      phase = fkeyarg(keys[2], S_make_sum_of_cosines, orig_arg[2] + 1, args[orig_arg[2]], phase);
+      cosines = ikeyarg(keys[0], S_make_sum_of_cosines, orig_arg[0] + 1, cosines);
+      freq = fkeyarg(keys[1], S_make_sum_of_cosines, orig_arg[1] + 1, freq);
+      phase = fkeyarg(keys[2], S_make_sum_of_cosines, orig_arg[2] + 1, phase);
     }
   if (cosines <= 0)
     mus_misc_error(S_make_sum_of_cosines, "cosines <= 0?", keys[0]);
@@ -1552,7 +1551,7 @@ gets the next sample of the band-limited pulse-train produced by gen"
 
   Float fm1 = 0.0;
   ASSERT_TYPE((MUS_SCM_P(obj)) && (mus_sum_of_cosines_p(TO_CLM(obj))), obj, SCM_ARG1, S_sum_of_cosines, "a sum-of-cosines gen");
-  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) WRONG_TYPE_ERROR(S_sum_of_cosines, 2, fm, "a number");
+  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else ASSERT_TYPE(NOT_BOUND_P(fm), fm, SCM_ARG2, S_sum_of_cosines, "a number");
   return(TO_SCM_DOUBLE(mus_sum_of_cosines(TO_CLM(obj), fm1)));
 }
 
@@ -1598,8 +1597,8 @@ static SCM g_make_noi(int rand_case, SCM arg1, SCM arg2, SCM arg3, SCM arg4)
   vals = decode_keywords(S_make_rand, 2, keys, 4, args, orig_arg);
   if (vals > 0)
     {
-      freq = fkeyarg(keys[0], S_make_rand, orig_arg[0] + 1, args[orig_arg[0]], freq);
-      base = fkeyarg(keys[1], S_make_rand, orig_arg[1] + 1, args[orig_arg[1]], base);
+      freq = fkeyarg(keys[0], S_make_rand, orig_arg[0] + 1, freq);
+      base = fkeyarg(keys[1], S_make_rand, orig_arg[1] + 1, base);
     }
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   if (rand_case)
@@ -1633,7 +1632,7 @@ fm can modulate the rate at which the current number is changed."
 
   Float fm1 = 0.0;
   ASSERT_TYPE((MUS_SCM_P(obj)) && (mus_rand_p(TO_CLM(obj))), obj, SCM_ARG1, S_rand, " a rand gen");
-  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) WRONG_TYPE_ERROR(S_rand, 2, fm, "a number");
+  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else ASSERT_TYPE(NOT_BOUND_P(fm), fm, SCM_ARG2, S_rand, "a number");
   return(TO_SCM_DOUBLE(mus_rand(TO_CLM(obj), fm1)));
 }
 
@@ -1650,7 +1649,7 @@ fm can modulate the rate at which new segment end-points are chosen."
 
   Float fm1 = 0.0;
   ASSERT_TYPE((MUS_SCM_P(obj)) && (mus_rand_interp_p(TO_CLM(obj))), obj, SCM_ARG1, S_rand_interp, "a rand-interp gen");
-  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) WRONG_TYPE_ERROR(S_rand_interp, 2, fm, "a number");
+  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else ASSERT_TYPE(NOT_BOUND_P(fm), fm, SCM_ARG2, S_rand_interp, "a number");
   return(TO_SCM_DOUBLE(mus_rand_interp(TO_CLM(obj), fm1)));
 }
 
@@ -1796,17 +1795,14 @@ is the same in effect as " S_make_oscil "."
   vals = decode_keywords(S_make_table_lookup, 3, keys, 6, args, orig_arg);
   if (vals > 0)
     {
-      freq = fkeyarg(keys[0], S_make_table_lookup, orig_arg[0] + 1, args[orig_arg[0]], freq);
-      phase = fkeyarg(keys[1], S_make_table_lookup, orig_arg[1] + 1, args[orig_arg[1]], phase);
+      freq = fkeyarg(keys[0], S_make_table_lookup, orig_arg[0] + 1, freq);
+      phase = fkeyarg(keys[1], S_make_table_lookup, orig_arg[1] + 1, phase);
       if (!(KEYWORD_P(keys[2])))
 	{
-	  if (VCT_P(keys[2]))
-	    {
-	      v = TO_VCT(keys[2]);
-	      table = copy_vct_data(v);
-	      table_size = v->length;
-	    }
-	  else WRONG_TYPE_ERROR(S_make_table_lookup, orig_arg[2] + 1, args[orig_arg[2]], "a vct");
+	  ASSERT_TYPE(VCT_P(keys[2]), keys[2], orig_arg[2] + 1, S_make_table_lookup, "a vct");
+	  v = TO_VCT(keys[2]);
+	  table = copy_vct_data(v);
+	  table_size = v->length;
 	}
     }
   if (table == NULL) table = (Float *)CALLOC(table_size, sizeof(Float));
@@ -1824,7 +1820,7 @@ with 'wrap-around' when gen's phase marches off the end of its table."
 
   Float fm1 = 0.0;
   ASSERT_TYPE((MUS_SCM_P(obj)) && (mus_table_lookup_p(TO_CLM(obj))), obj, SCM_ARG1, S_table_lookup, "a table-lookup gen");
-  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm);  else if (BOUND_P(fm)) WRONG_TYPE_ERROR(S_table_lookup, 2, fm, "a number");
+  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm);  else ASSERT_TYPE(NOT_BOUND_P(fm), fm, SCM_ARG2, S_table_lookup, "a number");
   return(TO_SCM_DOUBLE(mus_table_lookup(TO_CLM(obj), fm1)));
 }
 
@@ -1880,9 +1876,9 @@ static SCM g_make_sw(int type, Float def_phase, SCM arg1, SCM arg2, SCM arg3, SC
   vals = decode_keywords(caller, 3, keys, 6, args, orig_arg);
   if (vals > 0)
     {
-      freq = fkeyarg(keys[0], caller, orig_arg[0] + 1, args[orig_arg[0]], freq);
-      base = fkeyarg(keys[1], caller, orig_arg[1] + 1, args[orig_arg[1]], base);
-      phase = fkeyarg(keys[2], caller, orig_arg[2] + 1, args[orig_arg[2]], phase);
+      freq = fkeyarg(keys[0], caller, orig_arg[0] + 1, freq);
+      base = fkeyarg(keys[1], caller, orig_arg[1] + 1, base);
+      phase = fkeyarg(keys[2], caller, orig_arg[2] + 1, phase);
     }
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   switch (type)
@@ -1932,7 +1928,7 @@ static SCM g_sawtooth_wave(SCM obj, SCM fm)
   #define H_sawtooth_wave "(" S_sawtooth_wave " gen &optional (fm 0.0)) -> next sawtooth sample from gen"
   Float fm1 = 0.0;
   ASSERT_TYPE((MUS_SCM_P(obj)) && (mus_sawtooth_wave_p(TO_CLM(obj))), obj, SCM_ARG1, S_sawtooth_wave, "a sawtooth-wave gen");
-  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) WRONG_TYPE_ERROR(S_sawtooth_wave, 2, fm, "a number");
+  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else ASSERT_TYPE(NOT_BOUND_P(fm), fm, SCM_ARG2, S_sawtooth_wave, "a number");
   return(TO_SCM_DOUBLE(mus_sawtooth_wave(TO_CLM(obj), fm1)));
 }
 
@@ -1941,7 +1937,7 @@ static SCM g_square_wave(SCM obj, SCM fm)
   #define H_square_wave "(" S_square_wave " gen &optional (fm 0.0)) -> next square wave sample from gen"
   Float fm1 = 0.0;
   ASSERT_TYPE((MUS_SCM_P(obj)) && (mus_square_wave_p(TO_CLM(obj))), obj, SCM_ARG1, S_square_wave, "a square-wave gen");
-  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) WRONG_TYPE_ERROR(S_square_wave, 2, fm, "a number");
+  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else ASSERT_TYPE(NOT_BOUND_P(fm), fm, SCM_ARG2, S_square_wave, "a number");
   return(TO_SCM_DOUBLE(mus_square_wave(TO_CLM(obj), fm1)));
 }
 
@@ -1950,7 +1946,7 @@ static SCM g_triangle_wave(SCM obj, SCM fm)
   #define H_triangle_wave "(" S_triangle_wave " gen &optional (fm 0.0)) -> next triangle wave sample from gen"
   Float fm1 = 0.0;
   ASSERT_TYPE((MUS_SCM_P(obj)) && (mus_triangle_wave_p(TO_CLM(obj))), obj, SCM_ARG1, S_triangle_wave, "a triangle-wave gen");
-  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) WRONG_TYPE_ERROR(S_triangle_wave, 2, fm, "a number");
+  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else ASSERT_TYPE(NOT_BOUND_P(fm), fm, SCM_ARG2, S_triangle_wave, "a number");
   return(TO_SCM_DOUBLE(mus_triangle_wave(TO_CLM(obj), fm1)));
 }
 
@@ -1959,7 +1955,7 @@ static SCM g_pulse_train(SCM obj, SCM fm)
   #define H_pulse_train "(" S_pulse_train " gen &optional (fm 0.0)) -> next (im)pulse train sample from gen"
   Float fm1 = 0.0;
   ASSERT_TYPE((MUS_SCM_P(obj)) && (mus_pulse_train_p(TO_CLM(obj))), obj, SCM_ARG1, S_pulse_train, "a pulse-train gen");
-  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) WRONG_TYPE_ERROR(S_pulse_train, 2, fm, "a number");
+  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else ASSERT_TYPE(NOT_BOUND_P(fm), fm, SCM_ARG2, S_pulse_train, "a number");
   return(TO_SCM_DOUBLE(mus_pulse_train(TO_CLM(obj), fm1)));
 }
 
@@ -2031,10 +2027,10 @@ returns a new " S_asymmetric_fm " generator."
   vals = decode_keywords(S_make_asymmetric_fm, 4, keys, 8, args, orig_arg);
   if (vals > 0)
     {
-      freq = fkeyarg(keys[0], S_make_asymmetric_fm, orig_arg[0] + 1, args[orig_arg[0]], freq);
-      phase = fkeyarg(keys[1], S_make_asymmetric_fm, orig_arg[1] + 1, args[orig_arg[1]], phase);
-      r = fkeyarg(keys[2], S_make_asymmetric_fm, orig_arg[2] + 1, args[orig_arg[2]], r);
-      ratio = fkeyarg(keys[3], S_make_asymmetric_fm, orig_arg[3] + 1, args[orig_arg[3]], ratio);
+      freq = fkeyarg(keys[0], S_make_asymmetric_fm, orig_arg[0] + 1, freq);
+      phase = fkeyarg(keys[1], S_make_asymmetric_fm, orig_arg[1] + 1, phase);
+      r = fkeyarg(keys[2], S_make_asymmetric_fm, orig_arg[2] + 1, r);
+      ratio = fkeyarg(keys[3], S_make_asymmetric_fm, orig_arg[3] + 1, ratio);
     }
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->gen = mus_make_asymmetric_fm(freq, phase, r, ratio);
@@ -2046,8 +2042,8 @@ static SCM g_asymmetric_fm(SCM obj, SCM index, SCM fm)
   #define H_asymmetric_fm "(" S_asymmetric_fm " gen &optional (index 0.0) (fm 0.0)) -> next sample from asymmetric fm gen"
   Float fm1 = 0.0, index1 = 0.0;
   ASSERT_TYPE((MUS_SCM_P(obj)) && (mus_asymmetric_fm_p(TO_CLM(obj))), obj, SCM_ARG1, S_asymmetric_fm, "an asymmetric-fm gen");
-  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) WRONG_TYPE_ERROR(S_asymmetric_fm, 3, fm, "a number");
-  if (NUMBER_P(index)) index1 = TO_C_DOUBLE(index); else if (BOUND_P(index)) WRONG_TYPE_ERROR(S_asymmetric_fm, 2, index, "a number");
+  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else ASSERT_TYPE(NOT_BOUND_P(fm), fm, SCM_ARG2, S_asymmetric_fm, "a number");
+  if (NUMBER_P(index)) index1 = TO_C_DOUBLE(index); else ASSERT_TYPE(NOT_BOUND_P(index), index, SCM_ARG3, S_asymmetric_fm, "a number");
   return(TO_SCM_DOUBLE(mus_asymmetric_fm(TO_CLM(obj), index1, fm1)));
 }
 
@@ -2115,8 +2111,8 @@ static SCM g_make_smpflt_1(int choice, SCM arg1, SCM arg2, SCM arg3, SCM arg4)
   vals = decode_keywords(smpflts[choice], 2, keys, 4, args, orig_arg);
   if (vals > 0)
     {
-      a0 = fkeyarg(keys[0], smpflts[choice], orig_arg[0] + 1, args[orig_arg[0]], a0);
-      a1 = fkeyarg(keys[1], smpflts[choice], orig_arg[1] + 1, args[orig_arg[1]], a1);
+      a0 = fkeyarg(keys[0], smpflts[choice], orig_arg[0] + 1, a0);
+      a1 = fkeyarg(keys[1], smpflts[choice], orig_arg[1] + 1, a1);
     }
   switch (choice)
     {
@@ -2186,9 +2182,9 @@ static SCM g_make_smpflt_2(int choice, SCM arg1, SCM arg2, SCM arg3, SCM arg4, S
   vals = decode_keywords(smpflts[choice], 3, keys, 6, args, orig_arg);
   if (vals > 0)
     {
-      a0 = fkeyarg(keys[0], smpflts[choice], orig_arg[0] + 1, args[orig_arg[0]], a0);
-      a1 = fkeyarg(keys[1], smpflts[choice], orig_arg[1] + 1, args[orig_arg[1]], a1);
-      a2 = fkeyarg(keys[2], smpflts[choice], orig_arg[2] + 1, args[orig_arg[2]], a2);
+      a0 = fkeyarg(keys[0], smpflts[choice], orig_arg[0] + 1, a0);
+      a1 = fkeyarg(keys[1], smpflts[choice], orig_arg[1] + 1, a1);
+      a2 = fkeyarg(keys[2], smpflts[choice], orig_arg[2] + 1, a2);
     }
   if (choice == G_TWO_ZERO)
     gen = mus_make_two_zero(a0, a1, a2);
@@ -2219,7 +2215,7 @@ static SCM g_one_zero(SCM obj, SCM fm)
   #define H_one_zero "(" S_one_zero " gen &optional (input 0.0)) -> one zero filter of input"
   Float fm1 = 0.0;
   ASSERT_TYPE((MUS_SCM_P(obj)) && (mus_one_zero_p(TO_CLM(obj))), obj, SCM_ARG1, S_one_zero, "a one-zero filter");
-  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) WRONG_TYPE_ERROR(S_one_zero, 2, fm, "a number");
+  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else ASSERT_TYPE(NOT_BOUND_P(fm), fm, SCM_ARG2, S_one_zero, "a number");
   return(TO_SCM_DOUBLE(mus_one_zero(TO_CLM(obj), fm1)));
 }
 
@@ -2228,7 +2224,7 @@ static SCM g_one_pole(SCM obj, SCM fm)
   #define H_one_pole "(" S_one_pole " gen &optional (input 0.0)) -> one pole filter of input"
   Float fm1 = 0.0;
   ASSERT_TYPE((MUS_SCM_P(obj)) && (mus_one_pole_p(TO_CLM(obj))), obj, SCM_ARG1, S_one_pole, "a one-pole filter");
-  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) WRONG_TYPE_ERROR(S_one_pole, 2, fm, "a number");
+  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else ASSERT_TYPE(NOT_BOUND_P(fm), fm, SCM_ARG2, S_one_pole, "a number");
   return(TO_SCM_DOUBLE(mus_one_pole(TO_CLM(obj), fm1)));
 }
 
@@ -2237,7 +2233,7 @@ static SCM g_two_zero(SCM obj, SCM fm)
   #define H_two_zero "(" S_two_zero " gen &optional (input 0.0)) -> two zero filter of input"
   Float fm1 = 0.0;
   ASSERT_TYPE((MUS_SCM_P(obj)) && (mus_two_zero_p(TO_CLM(obj))), obj, SCM_ARG1, S_two_zero, "a two-zero filter");
-  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) WRONG_TYPE_ERROR(S_two_zero, 2, fm, "a number");
+  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else ASSERT_TYPE(NOT_BOUND_P(fm), fm, SCM_ARG2, S_two_zero, "a number");
   return(TO_SCM_DOUBLE(mus_two_zero(TO_CLM(obj), fm1)));
 }
 
@@ -2246,7 +2242,7 @@ static SCM g_two_pole(SCM obj, SCM fm)
   #define H_two_pole "(" S_two_pole " gen &optional (input 0.0)) -> two pole filter of input"
   Float fm1 = 0.0;
   ASSERT_TYPE((MUS_SCM_P(obj)) && (mus_two_pole_p(TO_CLM(obj))), obj, SCM_ARG1, S_two_pole, "a two-pole filter");
-  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) WRONG_TYPE_ERROR(S_two_pole, 2, fm, "a number");
+  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else ASSERT_TYPE(NOT_BOUND_P(fm), fm, SCM_ARG2, S_two_pole, "a number");
   return(TO_SCM_DOUBLE(mus_two_pole(TO_CLM(obj), fm1)));
 }
 
@@ -2408,9 +2404,9 @@ control."
   vals = decode_keywords(S_make_formant, 3, keys, 6, args, orig_arg);
   if (vals > 0)
     {
-      radius = fkeyarg(keys[0], S_make_formant, orig_arg[0] + 1, args[orig_arg[0]], radius);
-      freq = fkeyarg(keys[1], S_make_formant, orig_arg[1] + 1, args[orig_arg[1]], freq);
-      gain = fkeyarg(keys[2], S_make_formant, orig_arg[2] + 1, args[orig_arg[2]], gain);
+      radius = fkeyarg(keys[0], S_make_formant, orig_arg[0] + 1, radius);
+      freq = fkeyarg(keys[1], S_make_formant, orig_arg[1] + 1, freq);
+      gain = fkeyarg(keys[2], S_make_formant, orig_arg[2] + 1, gain);
     }
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->gen = mus_make_formant(radius, freq, gain);
@@ -2423,7 +2419,7 @@ static SCM g_formant(SCM gen, SCM input)
   #define H_formant "(" S_formant " gen &optional (input 0.0)) -> next sample from resonator gen"
   Float in1 = 0.0;
   ASSERT_TYPE((MUS_SCM_P(gen) && (mus_formant_p(TO_CLM(gen)))), gen, SCM_ARG1, S_formant, "a formant gen");
-  if (NUMBER_P(input)) in1 = TO_C_DOUBLE(input); else if (BOUND_P(input)) WRONG_TYPE_ERROR(S_formant, 2, input, "a number");
+  if (NUMBER_P(input)) in1 = TO_C_DOUBLE(input); else ASSERT_TYPE(NOT_BOUND_P(input), input, SCM_ARG2, S_formant, "a number");
   return(TO_SCM_DOUBLE(mus_formant(TO_CLM(gen), in1)));
 }
 
@@ -2507,7 +2503,7 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
   int size = 0, i, len;
   ASSERT_TYPE((LIST_P_WITH_LENGTH(arglist, len)) && (len > 0), arglist, SCM_ARG1, S_make_frame, "a list");
   cararg = SCM_CAR(arglist);
-  if (!(NUMBER_P(cararg))) WRONG_TYPE_ERROR(S_make_frame, 1, cararg, "a number");
+  ASSERT_TYPE(NUMBER_P(cararg), cararg, 1, S_make_frame, "a number");
   size = TO_C_INT_OR_ELSE(cararg, 0);
   if (len > (size + 1)) len = size + 1;
   if (size <= 0)
@@ -2836,8 +2832,8 @@ processing normally involving overlap-adds."
   vals = decode_keywords(S_make_buffer, 2, keys, 4, args, orig_arg);
   if (vals > 0)
     {
-      siz = ikeyarg(keys[0], S_make_buffer, orig_arg[0] + 1, args[orig_arg[0]], siz);
-      filltime = fkeyarg(keys[1], S_make_buffer, orig_arg[1] + 1, args[orig_arg[1]], 0.0);
+      siz = ikeyarg(keys[0], S_make_buffer, orig_arg[0] + 1, siz);
+      filltime = fkeyarg(keys[1], S_make_buffer, orig_arg[1] + 1, 0.0);
     }
   if (siz <= 0) return(SCM_BOOL_F);
   buf = (Float *)CALLOC(siz, sizeof(Float));
@@ -2939,17 +2935,14 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
   vals = decode_keywords(S_make_wave_train, 3, keys, 6, args, orig_arg);
   if (vals > 0)
     {
-      freq = fkeyarg(keys[0], S_make_wave_train, orig_arg[0] + 1, args[orig_arg[0]], freq);
-      phase = fkeyarg(keys[1], S_make_wave_train, orig_arg[1] + 1, args[orig_arg[1]], phase);
+      freq = fkeyarg(keys[0], S_make_wave_train, orig_arg[0] + 1, freq);
+      phase = fkeyarg(keys[1], S_make_wave_train, orig_arg[1] + 1, phase);
       if (!(KEYWORD_P(keys[2])))
         {
-	  if (VCT_P(keys[2]))
-	    {
-	      v = TO_VCT(keys[2]);
-	      wave = copy_vct_data(v);
-	      wsize = v->length;
-	    }
-          else WRONG_TYPE_ERROR(S_make_wave_train, orig_arg[2] + 1, args[orig_arg[2]], "a vct");
+	  ASSERT_TYPE(VCT_P(keys[2]), keys[2], orig_arg[2] + 1, S_make_wave_train, "a vct");
+	  v = TO_VCT(keys[2]);
+	  wave = copy_vct_data(v);
+	  wsize = v->length;
         }
     }
   if (wave == NULL) wave = (Float *)CALLOC(wsize, sizeof(Float));
@@ -2965,7 +2958,7 @@ static SCM g_wave_train(SCM obj, SCM fm)
   #define H_wave_train "(" S_wave_train " gen &optional (fm 0.0)) -> next sample of wave-train"
   Float fm1 = 0.0;
   ASSERT_TYPE((MUS_SCM_P(obj)) && (mus_wave_train_p(TO_CLM(obj))), obj, SCM_ARG1, S_wave_train, "a wave-train gen");
-  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) WRONG_TYPE_ERROR(S_wave_train, 2, fm, "a number");
+  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else ASSERT_TYPE(NOT_BOUND_P(fm), fm, SCM_ARG2, S_wave_train, "a number");
   return(TO_SCM_DOUBLE(mus_wave_train(TO_CLM(obj), fm1)));
 }
 
@@ -3039,17 +3032,14 @@ is basically the same as make-oscil"
   vals = decode_keywords(S_make_waveshape, 4, keys, 8, args, orig_arg);
   if (vals > 0)
     {
-      freq = fkeyarg(keys[0], S_make_waveshape, orig_arg[0] + 1, args[orig_arg[0]], freq);
+      freq = fkeyarg(keys[0], S_make_waveshape, orig_arg[0] + 1, freq);
       if (!(KEYWORD_P(keys[1])))
         {
-	  if (LIST_P(keys[1]))
-	    {
-	      partials = list2partials(keys[1], &npartials);
-	      if (partials == NULL)
-		mus_misc_error(S_make_waveshape, "partials list empty?", keys[1]);
-	      partials_allocated = 1;
-	    }
-          else WRONG_TYPE_ERROR(S_make_waveshape, orig_arg[1] + 1, args[orig_arg[1]], "a list");
+	  ASSERT_TYPE(LIST_P(keys[1]), keys[1], orig_arg[1] + 1, S_make_waveshape, "a list");
+	  partials = list2partials(keys[1], &npartials);
+	  if (partials == NULL)
+	    mus_misc_error(S_make_waveshape, "partials list empty?", keys[1]);
+	  partials_allocated = 1;
         }
       if (!(KEYWORD_P(keys[2])))
 	{
@@ -3058,7 +3048,7 @@ is basically the same as make-oscil"
 	  else
 	    {
 	      if (partials_allocated) {FREE(partials); partials = NULL;}
-	      WRONG_TYPE_ERROR(S_make_waveshape, orig_arg[2] + 1, args[orig_arg[2]], "a number");
+	      ASSERT_TYPE(0, keys[2], orig_arg[2] + 1, S_make_waveshape, "a number");
 	    }
 	}
       if (!(KEYWORD_P(keys[3])))
@@ -3072,7 +3062,7 @@ is basically the same as make-oscil"
           else 
 	    {
 	      if (partials_allocated) {FREE(partials); partials = NULL;}
-	      WRONG_TYPE_ERROR(S_make_waveshape, orig_arg[3] + 1, args[orig_arg[3]], "a vct");
+	      ASSERT_TYPE(0, keys[3], orig_arg[3] + 1, S_make_waveshape, "a vct");
 	    }
         }
     }
@@ -3099,8 +3089,8 @@ static SCM g_waveshape(SCM obj, SCM index, SCM fm)
   #define H_waveshape "(" S_waveshape " gen &optional (index 1.0) (fm 0.0)) -> next sample of waveshaper"
   Float fm1 = 0.0, index1 = 1.0;
   ASSERT_TYPE((MUS_SCM_P(obj)) && (mus_waveshape_p(TO_CLM(obj))), obj, SCM_ARG1, S_waveshape, "a waveshape gen");
-  if (NUMBER_P(index)) index1 = TO_C_DOUBLE(index); else if (BOUND_P(index)) WRONG_TYPE_ERROR(S_waveshape, 2, index, "a number");
-  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) WRONG_TYPE_ERROR(S_waveshape, 3, fm, "a number");
+  if (NUMBER_P(index)) index1 = TO_C_DOUBLE(index); else ASSERT_TYPE(NOT_BOUND_P(index), index, SCM_ARG2, S_waveshape, "a number");
+  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else ASSERT_TYPE(NOT_BOUND_P(fm), fm, SCM_ARG3, S_waveshape, "a number");
   return(TO_SCM_DOUBLE(mus_waveshape(TO_CLM(obj), index1, fm1)));
 }
 
@@ -3185,7 +3175,7 @@ static SCM g_sine_summation(SCM obj, SCM fm)
   #define H_sine_summation "(" S_sine_summation " gen &optional (fm 0.0)) -> next sample of sine summation generator"
   Float fm1 = 0.0;
   ASSERT_TYPE((MUS_SCM_P(obj)) && (mus_sine_summation_p(TO_CLM(obj))), obj, SCM_ARG1, S_sine_summation, "a sine-summation gen");
-  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else if (BOUND_P(fm)) WRONG_TYPE_ERROR(S_sine_summation, 2, fm, "a number");
+  if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm); else ASSERT_TYPE(NOT_BOUND_P(fm), fm, SCM_ARG2, S_sine_summation, "a number");
   return(TO_SCM_DOUBLE(mus_sine_summation(TO_CLM(obj), fm1)));
 }
 
@@ -3211,11 +3201,11 @@ returns a new sine summation synthesis generator."
   vals = decode_keywords(S_make_sine_summation, 5, keys, 10, args, orig_arg);
   if (vals > 0)
     {
-      freq = fkeyarg(keys[0], S_make_sine_summation, orig_arg[0] + 1, args[orig_arg[0]], freq);
-      phase = fkeyarg(keys[1], S_make_sine_summation, orig_arg[1] + 1, args[orig_arg[1]], phase);
-      n = ikeyarg(keys[2], S_make_sine_summation, orig_arg[2] + 1, args[orig_arg[2]], n);
-      a = fkeyarg(keys[3], S_make_sine_summation, orig_arg[3] + 1, args[orig_arg[3]], a);
-      ratio = fkeyarg(keys[4], S_make_sine_summation, orig_arg[4] + 1, args[orig_arg[4]], ratio);
+      freq = fkeyarg(keys[0], S_make_sine_summation, orig_arg[0] + 1, freq);
+      phase = fkeyarg(keys[1], S_make_sine_summation, orig_arg[1] + 1, phase);
+      n = ikeyarg(keys[2], S_make_sine_summation, orig_arg[2] + 1, n);
+      a = fkeyarg(keys[3], S_make_sine_summation, orig_arg[3] + 1, a);
+      ratio = fkeyarg(keys[4], S_make_sine_summation, orig_arg[4] + 1, ratio);
     }
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->gen = mus_make_sine_summation(freq, phase, n, a, ratio);
@@ -3315,25 +3305,19 @@ static SCM g_make_filter_1(int choice, SCM arg1, SCM arg2, SCM arg3, SCM arg4, S
   vals = decode_keywords(caller, nkeys, keys, nkeys * 2, args, orig_arg);
   if (vals > 0)
     {
-      order = ikeyarg(keys[0], caller, orig_arg[0] + 1, args[orig_arg[0]], 0);
+      order = ikeyarg(keys[0], caller, orig_arg[0] + 1, 0);
       if (!(KEYWORD_P(keys[1])))
         {
-	  if (VCT_P(keys[1]))
-	    {
-	      xwave = keys[1];
-	      x = TO_VCT(xwave);
-	    }
-          else WRONG_TYPE_ERROR(caller, orig_arg[1] + 1, args[orig_arg[1]], "a vct");
+	  ASSERT_TYPE(VCT_P(keys[1]), keys[1], orig_arg[1] + 1, caller, "a vct");
+	  xwave = keys[1];
+	  x = TO_VCT(xwave);
         }
       if (nkeys > 2)
 	if (!(KEYWORD_P(keys[2])))
 	  {
-	    if (VCT_P(keys[2]))
-	      {
-		ywave = keys[2];
-		y = TO_VCT(ywave);
-	      }
-	    else WRONG_TYPE_ERROR(caller, orig_arg[2] + 1, args[orig_arg[2]], "a vct");
+	    ASSERT_TYPE(VCT_P(keys[2]), keys[2], orig_arg[2] + 1, caller, "a vct");
+	    ywave = keys[2];
+	    y = TO_VCT(ywave);
 	  }
     }
   if (x == NULL)
@@ -3489,29 +3473,26 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   vals = decode_keywords(S_make_env, 7, keys, 14, args, orig_arg);
   if (vals > 0)
     {
-      scaler = fkeyarg(keys[1], S_make_env, orig_arg[1] + 1, args[orig_arg[1]], 1.0);
-      duration = fkeyarg(keys[2], S_make_env, orig_arg[2] + 1, args[orig_arg[2]], 0.0);
-      offset = fkeyarg(keys[3], S_make_env, orig_arg[3] + 1, args[orig_arg[3]], 0.0);
-      base = fkeyarg(keys[4], S_make_env, orig_arg[4] + 1, args[orig_arg[4]], 1.0);
-      end = ikeyarg(keys[5], S_make_env, orig_arg[5] + 1, args[orig_arg[5]], 0);
-      start = ikeyarg(keys[6], S_make_env, orig_arg[6] + 1, args[orig_arg[6]], 0);
+      scaler = fkeyarg(keys[1], S_make_env, orig_arg[1] + 1, 1.0);
+      duration = fkeyarg(keys[2], S_make_env, orig_arg[2] + 1, 0.0);
+      offset = fkeyarg(keys[3], S_make_env, orig_arg[3] + 1, 0.0);
+      base = fkeyarg(keys[4], S_make_env, orig_arg[4] + 1, 1.0);
+      end = ikeyarg(keys[5], S_make_env, orig_arg[5] + 1, 0);
+      start = ikeyarg(keys[6], S_make_env, orig_arg[6] + 1, 0);
       /* env data is a list, checked last to let the preceding throw wrong-type error before calloc  */
       if (!(KEYWORD_P(keys[0])))
         {
-	  if (LIST_P_WITH_LENGTH(keys[0], len))
+	  ASSERT_TYPE(LIST_P_WITH_LENGTH(keys[0], len), keys[0], orig_arg[0] + 1, S_make_env, "a list");
+	  if (len == 0)
+	    mus_misc_error(S_make_env, "null env?", keys[0]);
+	  npts = len/2;
+	  brkpts = (Float *)CALLOC(len, sizeof(Float));
+	  odata = (Float *)CALLOC(len, sizeof(Float));
+	  for (i = 0, lst = keys[0]; (i < len) && (NOT_NULL_P(lst)); i++, lst = SCM_CDR(lst))
 	    {
-	      if (len == 0)
-		mus_misc_error(S_make_env, "null env?", keys[0]);
-	      npts = len/2;
-	      brkpts = (Float *)CALLOC(len, sizeof(Float));
-	      odata = (Float *)CALLOC(len, sizeof(Float));
-	      for (i = 0, lst = keys[0]; (i < len) && (NOT_NULL_P(lst)); i++, lst = SCM_CDR(lst))
-		{
-		  brkpts[i] = TO_C_DOUBLE(SCM_CAR(lst));
-		  odata[i] = brkpts[i];
-		}
+	      brkpts[i] = TO_C_DOUBLE(SCM_CAR(lst));
+	      odata[i] = brkpts[i];
 	    }
-          else WRONG_TYPE_ERROR(S_make_env, orig_arg[0] + 1, args[orig_arg[0]], "a list");
         }
     }
   if (brkpts == NULL) 
@@ -4015,14 +3996,13 @@ returns a new readin (file input) generator reading the sound file 'file' starti
   vals = decode_keywords(S_make_readin, 4, keys, 8, args, orig_arg);
   if (vals > 0)
     {
-      channel = ikeyarg(keys[1], S_make_readin, orig_arg[1] + 1, args[orig_arg[1]], channel);
-      start = ikeyarg(keys[2], S_make_readin, orig_arg[2] + 1, args[orig_arg[2]], start);
-      direction = ikeyarg(keys[3], S_make_readin, orig_arg[3] + 1, args[orig_arg[3]], direction);
+      channel = ikeyarg(keys[1], S_make_readin, orig_arg[1] + 1, channel);
+      start = ikeyarg(keys[2], S_make_readin, orig_arg[2] + 1, start);
+      direction = ikeyarg(keys[3], S_make_readin, orig_arg[3] + 1, direction);
       if (!(KEYWORD_P(keys[0])))
         {
-	  if (STRING_P(keys[0]))
-	    file = TO_C_STRING(keys[0]);
-	  else WRONG_TYPE_ERROR(S_make_readin, orig_arg[0] + 1, args[orig_arg[0]], "a string");
+	  ASSERT_TYPE(STRING_P(keys[0]), keys[0], orig_arg[0] + 1, S_make_readin, "a string");
+	  file = TO_C_STRING(keys[0]);
 	}
     }
   if (channel < 0)
@@ -4180,9 +4160,9 @@ returns a new generator for signal placement in up to 4 channels.  Channel 0 cor
   vals = decode_keywords(S_make_locsig, 6, keys, 12, args, orig_arg);
   if (vals > 0)
     {
-      degree = fkeyarg(keys[0], S_make_locsig, orig_arg[0] + 1, args[orig_arg[0]], degree);
-      distance = fkeyarg(keys[1], S_make_locsig, orig_arg[1] + 1, args[orig_arg[1]], distance);
-      reverb = fkeyarg(keys[2], S_make_locsig, orig_arg[2] + 1, args[orig_arg[2]], reverb);
+      degree = fkeyarg(keys[0], S_make_locsig, orig_arg[0] + 1, degree);
+      distance = fkeyarg(keys[1], S_make_locsig, orig_arg[1] + 1, distance);
+      reverb = fkeyarg(keys[2], S_make_locsig, orig_arg[2] + 1, reverb);
       if (!(KEYWORD_P(keys[3]))) 
 	{
 	  if ((MUS_SCM_P(keys[3])) && (mus_output_p(TO_CLM(keys[3]))))
@@ -4194,9 +4174,8 @@ returns a new generator for signal placement in up to 4 channels.  Channel 0 cor
 	    }
 	  else 
 	    {
-	      if ((BOUND_P(keys[3])) && (!(BOOLEAN_P(keys[3]))))
-		WRONG_TYPE_ERROR(S_make_locsig, orig_arg[3] + 1, args[orig_arg[3]], "a frame");
-	      else keys[3] = SCM_UNDEFINED;
+	      ASSERT_TYPE((NOT_BOUND_P(keys[3])) || (BOOLEAN_P(keys[3])), keys[3], orig_arg[3] + 1, S_make_locsig, "a frame");
+	      keys[3] = SCM_UNDEFINED;
 	    }
 	}
       if (!(KEYWORD_P(keys[4]))) 
@@ -4209,12 +4188,11 @@ returns a new generator for signal placement in up to 4 channels.  Channel 0 cor
 	    }
 	  else 
 	    {
-	      if ((BOUND_P(keys[4])) && (!(BOOLEAN_P(keys[4]))))
-		WRONG_TYPE_ERROR(S_make_locsig, orig_arg[4] + 1, args[orig_arg[4]], "a frame");
-	      else keys[4] = SCM_UNDEFINED;
+	      ASSERT_TYPE((NOT_BOUND_P(keys[4])) || (BOOLEAN_P(keys[4])), keys[4], orig_arg[4] + 1, S_make_locsig, "a frame");
+	      keys[4] = SCM_UNDEFINED;
 	    }
 	}
-      out_chans = ikeyarg(keys[5], S_make_locsig, orig_arg[5] + 1, args[orig_arg[5]], out_chans);
+      out_chans = ikeyarg(keys[5], S_make_locsig, orig_arg[5] + 1, out_chans);
     }
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   if (vlen > 0)
@@ -4304,7 +4282,7 @@ included an 'input' argument, input-function is ignored."
   mus_scm *gn;
   ASSERT_TYPE((MUS_SCM_P(obj)) && (mus_src_p(TO_CLM(obj))), obj, SCM_ARG1, S_src, "an src gen");
   gn = TO_MUS_SCM(obj);
-  if (NUMBER_P(pm)) pm1 = TO_C_DOUBLE(pm); else if (BOUND_P(pm)) WRONG_TYPE_ERROR(S_src, 2, pm, "a number");
+  if (NUMBER_P(pm)) pm1 = TO_C_DOUBLE(pm); else ASSERT_TYPE(NOT_BOUND_P(pm), pm, SCM_ARG2, S_src, "a number");
   if (procedure_fits(func, 1)) gn->vcts[INPUT_FUNCTION] = func;
   return(TO_SCM_DOUBLE(mus_src(TO_CLM(obj), pm1, 0)));
 }
@@ -4332,12 +4310,11 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
     {
       if (!(KEYWORD_P(keys[0]))) 
 	{
-	  if (procedure_fits(keys[0], 1))
-	    in_obj = keys[0];
-	  else WRONG_TYPE_ERROR(S_make_src, orig_arg[0] + 1, args[orig_arg[0]], " a procedure");
+	  ASSERT_TYPE(PROCEDURE_P(keys[0]) && (procedure_fits(keys[0], 1)), keys[0], orig_arg[0] + 1, S_make_src, "a procedure");
+	  in_obj = keys[0];
 	}
-      srate = fkeyarg(keys[1], S_make_src, orig_arg[1] + 1, args[orig_arg[1]], srate);
-      wid = ikeyarg(keys[2], S_make_src, orig_arg[2] + 1, args[orig_arg[2]], wid);
+      srate = fkeyarg(keys[1], S_make_src, orig_arg[1] + 1, srate);
+      wid = ikeyarg(keys[2], S_make_src, orig_arg[2] + 1, wid);
     }
   if (srate <= 0) mus_misc_error(S_make_src, "srate <= 0.0?", keys[1]);
   if (wid < 0) mus_misc_error(S_make_src, "width < 0?", keys[2]);
@@ -4431,17 +4408,16 @@ jitter controls the randomness in that spacing, input can be a file pointer."
     {
       if (!(KEYWORD_P(keys[0]))) 
 	{
-	  if (procedure_fits(keys[0], 1))
-	    in_obj = keys[0];
-	  else WRONG_TYPE_ERROR(S_make_granulate, orig_arg[0] + 1, args[orig_arg[0]], "a procedure");
+	  ASSERT_TYPE(PROCEDURE_P(keys[0]) && (procedure_fits(keys[0], 1)), keys[0], orig_arg[0] + 1, S_make_granulate, "a procedure");
+	  in_obj = keys[0];
 	}
-      expansion = fkeyarg(keys[1], S_make_granulate, orig_arg[1] + 1, args[orig_arg[1]], expansion);
-      segment_length = fkeyarg(keys[2], S_make_granulate, orig_arg[2] + 1, args[orig_arg[2]], segment_length);
-      segment_scaler = fkeyarg(keys[3], S_make_granulate, orig_arg[3] + 1, args[orig_arg[3]], segment_scaler);
-      output_hop = fkeyarg(keys[4], S_make_granulate, orig_arg[4] + 1, args[orig_arg[4]], output_hop);
-      ramp_time = fkeyarg(keys[5], S_make_granulate, orig_arg[5] + 1, args[orig_arg[5]], ramp_time);
-      jitter = fkeyarg(keys[6], S_make_granulate, orig_arg[6] + 1, args[orig_arg[6]], jitter);
-      maxsize = ikeyarg(keys[7], S_make_granulate, orig_arg[7] + 1, args[orig_arg[7]], maxsize);
+      expansion = fkeyarg(keys[1], S_make_granulate, orig_arg[1] + 1, expansion);
+      segment_length = fkeyarg(keys[2], S_make_granulate, orig_arg[2] + 1, segment_length);
+      segment_scaler = fkeyarg(keys[3], S_make_granulate, orig_arg[3] + 1, segment_scaler);
+      output_hop = fkeyarg(keys[4], S_make_granulate, orig_arg[4] + 1, output_hop);
+      ramp_time = fkeyarg(keys[5], S_make_granulate, orig_arg[5] + 1, ramp_time);
+      jitter = fkeyarg(keys[6], S_make_granulate, orig_arg[6] + 1, jitter);
+      maxsize = ikeyarg(keys[7], S_make_granulate, orig_arg[7] + 1, maxsize);
     }
   if (expansion <= 0.0) mus_misc_error(S_make_granulate, "expansion < 0.0?", keys[1]);
   if (segment_length <= 0.0) mus_misc_error(S_make_granulate, "segment-length <= 0.0?", keys[2]);
@@ -4517,20 +4493,16 @@ returns a new convolution generator which convolves its input with the impulse r
     {
       if (!(KEYWORD_P(keys[0]))) 
 	{
-	  if (procedure_fits(keys[0], 1))
-	    in_obj = keys[0];
-	  else WRONG_TYPE_ERROR(S_make_convolve, orig_arg[0] + 1, args[orig_arg[0]], "a procedure");
+	  ASSERT_TYPE(PROCEDURE_P(keys[0]) && (procedure_fits(keys[0], 1)), keys[0], orig_arg[0] + 1, S_make_convolve, "a procedure");
+	  in_obj = keys[0];
 	}
       if (!(KEYWORD_P(keys[1]))) 
 	{
-	  if (VCT_P(keys[1]))
-	    {
-	      filt = keys[1];
-	      filter = TO_VCT(filt);
-	    }
-          else WRONG_TYPE_ERROR(S_make_convolve, orig_arg[1] + 1, args[orig_arg[1]], "a vct");
+	  ASSERT_TYPE(VCT_P(keys[1]), keys[1], orig_arg[1] + 1, S_make_convolve, "a vct");
+	  filt = keys[1];
+	  filter = TO_VCT(filt);
 	}
-      fft_size = ikeyarg(keys[2], S_make_convolve, orig_arg[2] + 1, args[orig_arg[2]], fft_size);
+      fft_size = ikeyarg(keys[2], S_make_convolve, orig_arg[2] + 1, fft_size);
     }
   if (filter == NULL)
     mus_misc_error(S_make_convolve, "no impulse (filter)?", SCM_BOOL_F);
@@ -4670,10 +4642,10 @@ and interp set the fftsize, the amount of overlap between ffts, and the time bet
   if (vals > 0)
     {
       if (procedure_fits(keys[0], 1)) in_obj = keys[0];
-      fft_size = ikeyarg(keys[1], S_make_phase_vocoder, orig_arg[1] + 1, args[orig_arg[1]], fft_size);
-      overlap = ikeyarg(keys[2], S_make_phase_vocoder, orig_arg[2] + 1, args[orig_arg[2]], overlap);
-      interp = ikeyarg(keys[3], S_make_phase_vocoder, orig_arg[3] + 1, args[orig_arg[3]], interp);
-      pitch = fkeyarg(keys[4], S_make_phase_vocoder, orig_arg[4] + 1, args[orig_arg[4]], pitch);
+      fft_size = ikeyarg(keys[1], S_make_phase_vocoder, orig_arg[1] + 1, fft_size);
+      overlap = ikeyarg(keys[2], S_make_phase_vocoder, orig_arg[2] + 1, overlap);
+      interp = ikeyarg(keys[3], S_make_phase_vocoder, orig_arg[3] + 1, interp);
+      pitch = fkeyarg(keys[4], S_make_phase_vocoder, orig_arg[4] + 1, pitch);
       if (procedure_fits(keys[5], 1)) analyze_obj = keys[5];
       if (procedure_fits(keys[6], 1)) edit_obj = keys[6];
       if (procedure_fits(keys[7], 2)) synthesize_obj = keys[7];

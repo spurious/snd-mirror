@@ -57,8 +57,8 @@ AC_ARG_WITH(esd,[  --with-esd		  use ESD])
 AC_ARG_WITH(alsa,[  --with-alsa		  use ALSA])
 AC_ARG_WITH(static-alsa,[  --with-static-alsa	  use ALSA statically loaded])
 AC_ARG_WITH(gtk,[  --with-gtk		  use Gtk+ to build Snd])
-AC_ARG_WITH(no-gui,[  --with-no-gui	  	  make Snd without any graphics support])
-AC_ARG_WITH(no-guile,[  --with-no-guile	  	  make Snd without any extension language])
+AC_ARG_WITH(no-gui,[  --with-no-gui  	  make Snd without any graphics support])
+AC_ARG_WITH(no-guile,[  --with-no-guile	  make Snd without any extension language])
 AC_ARG_WITH(doubles,[  --with-doubles	  use doubles throughout])
 
 if test "$with_doubles" = yes; then

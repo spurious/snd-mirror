@@ -3615,17 +3615,9 @@ applies envelope 'env' to the currently selected portion of snd's channel chn us
     }
   else
     {
-      if (mus_scm_p(edata))
-	{
-	  egen = mus_scm_to_clm(edata);
-	  if (mus_env_p(egen))
-	    {
-	      apply_env(cp, NULL, 0, 0, 1.0, TRUE, NOT_FROM_ENVED, S_env_selection, egen, TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
-	      return(edata);
-	    }
-	  else WRONG_TYPE_ERROR(S_env_selection, 1, edata, "an env");
-	}
-      else WRONG_TYPE_ERROR(S_env_selection, 1, edata," an env generator or a list");
+      ASSERT_TYPE((mus_scm_p(edata)) && (mus_env_p(egen = mus_scm_to_clm(edata))), edata, SCM_ARG1, S_env_selection, "an env generator or a list");
+      apply_env(cp, NULL, 0, 0, 1.0, TRUE, NOT_FROM_ENVED, S_env_selection, egen, TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
+      return(edata);
     }
   return(SCM_BOOL_F);
 }
@@ -3659,17 +3651,9 @@ either to the end of the sound or for 'samps' samples, with segments interpolati
     }
   else
     {
-      if (mus_scm_p(edata))
-	{
-	  egen = mus_scm_to_clm(edata);
-	  if (mus_env_p(egen))
-	    {
-	      apply_env(cp, NULL, beg, dur, 1.0, FALSE, NOT_FROM_ENVED, S_env_sound, egen, edpos);
-	      return(edata);
-	    }
-	  else WRONG_TYPE_ERROR(S_env_sound, 1, edata, "an env");
-	}
-      else WRONG_TYPE_ERROR(S_env_sound, 1, edata, "an env generator or a list");
+      ASSERT_TYPE((mus_scm_p(edata)) && (mus_env_p(egen = mus_scm_to_clm(edata))), edata, SCM_ARG1, S_env_sound, "an env generator or a list");
+      apply_env(cp, NULL, beg, dur, 1.0, FALSE, NOT_FROM_ENVED, S_env_sound, egen, edpos);
+      return(edata);
     }
   return(SCM_BOOL_F);
 }
@@ -4024,17 +4008,12 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope. Neg
 	}
       else
 	{
-	  if (mus_scm_p(ratio_or_env))
-	    {
-	      egen = mus_scm_to_clm(ratio_or_env);
-	      if (mus_env_p(egen))
-		src_env_or_num(cp->state, cp, NULL, 
-			       (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
-			       FALSE, NOT_FROM_ENVED, S_src_sound, 
-			       FALSE, egen, edpos);
-	      else mus_misc_error(S_src_sound, "clm gen not an envelope handler", ratio_or_env);
-	    }
-	  else WRONG_TYPE_ERROR(S_src_sound, 1, ratio_or_env, "a number, list, or env generator");
+	  ASSERT_TYPE((mus_scm_p(ratio_or_env)) && (mus_env_p(egen = mus_scm_to_clm(ratio_or_env))), 
+		      ratio_or_env, SCM_ARG1, S_src_sound, "a number, list, or env generator");
+	  src_env_or_num(cp->state, cp, NULL, 
+			 (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
+			 FALSE, NOT_FROM_ENVED, S_src_sound, 
+			 FALSE, egen, edpos);
 	}
     }
   return(scm_return_first(ratio_or_env, base));
@@ -4069,17 +4048,12 @@ sampling-rate converts the currently selected data by ratio (which can be an env
 	}
       else
 	{
-	  if (mus_scm_p(ratio_or_env))
-	    {
-	      egen = mus_scm_to_clm(ratio_or_env);
-	      if (mus_env_p(egen))
-		src_env_or_num(cp->state, cp, NULL,
-			       (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
-			       FALSE, NOT_FROM_ENVED, S_src_selection, 
-			       TRUE, egen, TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
-	      else mus_misc_error(S_src_selection, "clm generator not an envelope handler", ratio_or_env);
-	    }
-	  else WRONG_TYPE_ERROR(S_src_selection, 1, ratio_or_env, "a number, list, or env generator");
+	  ASSERT_TYPE((mus_scm_p(ratio_or_env)) && (mus_env_p(egen = mus_scm_to_clm(ratio_or_env))), 
+		      ratio_or_env, SCM_ARG1, S_src_selection, "a number, list, or env generator");
+	  src_env_or_num(cp->state, cp, NULL,
+			 (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
+			 FALSE, NOT_FROM_ENVED, S_src_selection, 
+			 TRUE, egen, TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
 	}
     }
   return(scm_return_first(ratio_or_env, base));
@@ -4122,14 +4096,11 @@ applies FIR filter to snd's channel chn. 'filter' is either the frequency respon
 	}
       else 
 	{
-	  if (VECTOR_P(e) || (LIST_P(e)))
-	    {
-	      apply_filter(cp, len,
-			   ne = get_env(e, TO_SCM_DOUBLE(1.0), S_filter_sound),
-			   NOT_FROM_ENVED, S_filter_sound, FALSE, NULL, NULL, edpos);
-	      if (ne) free_env(ne); 
-	    }
-	  else WRONG_TYPE_ERROR(S_filter_sound, 1, e, "a list, vector, vct, or env generator");
+	  ASSERT_TYPE((VECTOR_P(e) || (LIST_P(e))), e, SCM_ARG1, S_filter_sound, "a list, vector, vct, or env generator");
+	  apply_filter(cp, len,
+		       ne = get_env(e, TO_SCM_DOUBLE(1.0), S_filter_sound),
+		       NOT_FROM_ENVED, S_filter_sound, FALSE, NULL, NULL, edpos);
+	  if (ne) free_env(ne); 
 	}
     }
   return(scm_return_first(SCM_BOOL_T, e));
@@ -4172,15 +4143,12 @@ static SCM g_filter_selection(SCM e, SCM order)
 	}
       else 
 	{
-	  if (VECTOR_P(e) || (LIST_P(e)))
-	    {
-	      apply_filter(cp, len,
-			   ne = get_env(e, TO_SCM_DOUBLE(1.0), S_filter_selection),
-			   NOT_FROM_ENVED, S_filter_selection, TRUE, NULL, NULL, 
-			   TO_SCM_INT(AT_CURRENT_EDIT_POSITION)); 
-	      if (ne) free_env(ne);
-	    }
-	  else WRONG_TYPE_ERROR(S_filter_selection, 1, e, "a list, vector, vct, or env generator");
+	  ASSERT_TYPE((VECTOR_P(e) || (LIST_P(e))), e, SCM_ARG1, S_filter_selection, "a list, vector, vct, or env generator");
+	  apply_filter(cp, len,
+		       ne = get_env(e, TO_SCM_DOUBLE(1.0), S_filter_selection),
+		       NOT_FROM_ENVED, S_filter_selection, TRUE, NULL, NULL, 
+		       TO_SCM_INT(AT_CURRENT_EDIT_POSITION)); 
+	  if (ne) free_env(ne);
 	}
     }
   return(scm_return_first(SCM_BOOL_T, e));
