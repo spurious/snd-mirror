@@ -2,10 +2,12 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 47
-#define MUS_DATE "12-May-01"
+#define MUS_REVISION 48
+#define MUS_DATE "18-May-01"
 
 /* 
+ * 18-May:     mus_describe and mus_inspect returned string should not be freed any more.
+                 (previous version was not usable in gdb and was unneeded due to mus_snprintf)
  * 7-May:      filled in some leftover equal_p methods.
  * 1-Apr:      mus_make_file2sample_with_comment and mus_length for file->sample/sample->file.
  *             mus_file_buffer_size.

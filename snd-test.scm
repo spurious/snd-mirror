@@ -24,10 +24,11 @@
 ;;; test 21: transforms
 
 
-(use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs))
+(use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs))
 
 (define tests 1)
 (define snd-test -1)
+(define keep-going #f)
 (define full-test (< snd-test 0))
 (define total-tests 21)
 
@@ -120,7 +121,7 @@
 
 
 ;;; ---------------- test 0: constants ----------------
-(if (or full-test (= snd-test 0))
+(if (or full-test (= snd-test 0) (and keep-going (<= snd-test 0)))
     (letrec ((test-constants 
 	      (lambda (lst)
 		(if (not (null? lst))
@@ -217,7 +218,7 @@
 
 
 ;;; ---------------- test 1: default values ----------------
-(if (or full-test (= snd-test 1))
+(if (or full-test (= snd-test 1) (and keep-going (<= snd-test 1)))
     (letrec ((test-defaults
 	      (lambda (lst)
 		(if (not (null? lst))
@@ -388,7 +389,7 @@
 
 
 ;;; ---------------- test 2: headers ----------------
-(if (or full-test (= snd-test 2))
+(if (or full-test (= snd-test 2) (and keep-going (<= snd-test 2)))
     (if (string? sf-dir)
 	(letrec ((test-headers
 		  (lambda (base-files)
@@ -638,7 +639,7 @@
 
 
 ;;; ---------------- test 3: can variables be set/reset ----------------
-(if (or full-test (= snd-test 3))
+(if (or full-test (= snd-test 3) (and keep-going (<= snd-test 3)))
     (begin
       (if (procedure? trace-hook) (trace-hook 3))
       (open-sound "oboe.snd")
@@ -988,7 +989,7 @@
 	    (graph (sound-data->vct data our-chan vobj)))
 	  (mus-audio-close in-port)))))
 
-(if (or full-test (= snd-test 4))
+(if (or full-test (= snd-test 4) (and keep-going (<= snd-test 4)))
     (let ((chns (mus-sound-chans "oboe.snd"))
 	  (dl (mus-sound-data-location "oboe.snd"))
 	  (fr (mus-sound-frames "oboe.snd"))
@@ -1420,7 +1421,7 @@
 
 ;;; ---------------- test 5: simple overall checks ----------------
 
-(if (or full-test (= snd-test 5))
+(if (or full-test (= snd-test 5) (and keep-going (<= snd-test 5)))
     (let* ((index (open-sound "oboe.snd"))
 	   (bnds (x-bounds index))
 	   (xp (x-position-slider))
@@ -2279,7 +2280,7 @@
 
 (load "prc95.scm")
 
-(if (or full-test (= snd-test 6))
+(if (or full-test (= snd-test 6) (and keep-going (<= snd-test 6)))
     (let ((v0 (make-vct 10))
 	  (v1 (make-vct 10))
 	  (vlst (make-vct 3)))
@@ -2423,7 +2424,7 @@
 
 
 ;;; ---------------- test 7: colors ----------------
-(if (and (or full-test (= snd-test 7))
+(if (and (or full-test (= snd-test 7) (and keep-going (<= snd-test 7)))
 	 (or (provided? 'snd-gtk)
 	     (provided? 'snd-motif)))
     (letrec ((test-color
@@ -2539,7 +2540,7 @@
 	  (if (equal? g0 g2)
 	      (snd-display (format #f ";run ~A not equal? ~A ~A" (mus-name g0) g0 g2)))))))
     
-(if (or full-test (= snd-test 8))
+(if (or full-test (= snd-test 8) (and keep-going (<= snd-test 8)))
     (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests))
       (if (procedure? trace-hook) (trace-hook 8))
       (log-mem clmtest)
@@ -3180,10 +3181,10 @@
 
       (test-gen-equal (let ((f1 (make-filter 3 (list->vct '(.5 .25 .125)) (list->vct '(.5 .25 .125))))) (filter f1 1.0) f1)
 		      (let ((f2 (make-filter 3 (list->vct '(.5 .25 .125)) (list->vct '(.5 .25 .125))))) (filter f2 1.0) f2)
-		      (let ((f3 (make-filter 3 (list->vct '(.5 .25 .125)) (list->vct '(.5 .5))))) (filter f3 1.0) f3))
+		      (let ((f3 (make-filter 3 (list->vct '(.5 .25 .125)) (list->vct '(.5 .5 .5))))) (filter f3 1.0) f3))
       (test-gen-equal (let ((f1 (make-filter 3 (list->vct '(.5 .25 .125)) (list->vct '(.5 .25 .125))))) (filter f1 1.0) f1)
 		      (let ((f2 (make-filter 3 (list->vct '(.5 .25 .125)) (list->vct '(.5 .25 .125))))) (filter f2 1.0) f2)
-		      (let ((f3 (make-filter 3 (list->vct '(.5 .5 .125)) (list->vct '(.5 .25 .125 .0625))))) (filter f3 1.0) f3))
+		      (let ((f3 (make-filter 3 (list->vct '(.5 .5 .125)) (list->vct '(.5 .25 .0625))))) (filter f3 1.0) f3))
 
       (let ((gen (make-sawtooth-wave 440.0))
 	    (v0 (make-vct 10)))
@@ -3620,7 +3621,7 @@
 	(print-and-check gen 
 			 "wave_train"
 			 "wave_train freq: 440.000Hz, phase: 0.000, size: 20"
-			 "wt freq: 440.000000, phase: 0.000000, wave[20 (external)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], b:rblk buf[20 (local)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], loc: 0, fill_time: 0.000000, empty: 1")
+			 "wt freq: 440.000000, phase: 0.000000, wave[20 (external)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], b: rblk buf[20 (local)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], loc: 0, fill_time: 0.000000, empty: 1")
 	(do ((i 0 (1+ i)))
 	    ((= i 20))
 	  (vct-set! (mus-data gen) i (* i .5)))
@@ -3657,6 +3658,23 @@
 
       (test-gen-equal (make-readin "oboe.snd" 0) (make-readin "oboe.snd" 0) (make-readin "oboe.snd" 0 1230))
       (test-gen-equal (make-readin "oboe.snd" 0) (make-readin "oboe.snd" 0) (make-readin "pistol.snd" 0))
+      (test-gen-equal (make-readin "2.snd" 1) (make-readin "2.snd" 1) (make-readin "2.snd" 0))
+
+      (let ((gen (make-readin "2.snd" 1))
+	    (v0 (make-vct 10)))
+	(print-and-check gen 
+			 "readin"
+			 "readin: 2.snd[chan 1], loc: 0, dir: 1"
+			 "rdin chan: 1, dir: 1, loc: 0, chans: 2, data_start: 0, data_end: -1, file_end: 22051, file_name: 2.snd")
+	(do ((i 0 (1+ i)))
+	    ((= i 10))
+	  (vct-set! v0 i (readin gen)))
+	(if (not (= (mus-channel gen) 1)) (snd-display (format #f ";readin chan 1: ~A?" (mus-channel gen))))
+	(if (or (fneq (vct-ref v0 1) 0.010) (fneq (vct-ref v0 7) -.006)) (snd-display (format #f ";readin 1 output: ~A" v0)))
+	(print-and-check gen 
+			 "readin"
+			 "readin: 2.snd[chan 1], loc: 10, dir: 1"
+			 "rdin chan: 1, dir: 1, loc: 10, chans: 2, data_start: 0, data_end: 8191, file_end: 22051, file_name: 2.snd"))
 
       (let ((gen (make-file->sample "oboe.snd"))
 	    (v0 (make-vct 10)))
@@ -3664,6 +3682,7 @@
 			 "file2sample"
 			 "file2sample: oboe.snd"
 			 "rdin chan: 0, dir: 0, loc: 0, chans: 1, data_start: 0, data_end: -1, file_end: 50828, file_name: oboe.snd")
+	(if (not (mus-input? gen)) (snd-display (format #f ";~A not input?" gen)))
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (file->sample gen (+ 1490 i))))
@@ -3676,6 +3695,7 @@
 			 "file2frame"
 			 "file2frame: oboe.snd"
 			 "rdin chan: 0, dir: 0, loc: 0, chans: 1, data_start: 0, data_end: -1, file_end: 50828, file_name: oboe.snd")
+	(if (not (mus-input? gen)) (snd-display (format #f ";~A not input?" gen)))
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (frame-ref (file->frame gen (+ 1490 i)) 0)))
@@ -4213,7 +4233,7 @@
 
 
 ;;; ---------------- test 9: mix ----------------
-(if (or full-test (= snd-test 9))
+(if (or full-test (= snd-test 9) (and keep-going (<= snd-test 9)))
     (begin
     (do ((test-ctr 0 (1+ test-ctr)))
 	((= test-ctr tests))
@@ -4486,7 +4506,7 @@
 
 
 ;;; ---------------- test 10: marks ----------------
-(if (or full-test (= snd-test 10))
+(if (or full-test (= snd-test 10) (and keep-going (<= snd-test 10)))
     (do ((test-ctr 0 (1+ test-ctr)))
 	((= test-ctr tests))
       (let ((ind0 (view-sound "oboe.snd"))
@@ -4698,7 +4718,7 @@
 
 ;;; ---------------- test 11: dialogs ----------------
 (define env1 '(0 0 1 1))
-(if (or full-test (= snd-test 11))
+(if (or full-test (= snd-test 11) (and keep-going (<= snd-test 11)))
     (begin
       (if (procedure? trace-hook) (trace-hook 11))
      (without-errors (peaks))
@@ -4842,7 +4862,7 @@
       (if (> diff maxok)
 	  (snd-display (format #f ";translate ~A: ~A > ~A?" snd2 diff maxok))))))
 
-(if (or full-test (= snd-test 12))
+(if (or full-test (= snd-test 12) (and keep-going (<= snd-test 12)))
     (if sf-dir-files
 	(let ((open-files '())
 	      (open-ctr 0))
@@ -4955,23 +4975,21 @@
       select)))
 
 (define sndxtest
-   (lambda ()
-     (if (file-exists? "sndxtest")
-	 (let ((data (selection-to-temp)))
-	   (if data
-	       (let* ((str "")
-		      (input-names (temp-filenames data))
-		      (output-name (string-append (tmpnam) ".snd"))
-		      (cmd (string-append "./sndxtest \"" (vector-ref input-names 0) "\" \"" output-name "\""))
-		      (fil (open-pipe cmd "r")))
-		 (do ((val (read-char fil) (read-char fil))) 
-		     ((eof-object? val))
-		   (set! str (string-append str (string val))))
-		 (close-pipe fil)
-		 (temp-to-selection data output-name "(sndxtest)")
-		 str)
-	       (report-in-minibuffer "no current selection")))
-	 (snd-display ";sndxtest does not existA"))))
+   (lambda (func-out func-in)
+     (let ((data (func-out)))
+       (if data
+           (let* ((str "")
+                  (input-names (temp-filenames data))
+                  (output-name (string-append (tmpnam) ".snd"))
+                  (cmd (string-append "./sndxtest \"" (vector-ref input-names 0) "\" \"" output-name "\""))
+                  (fil (open-pipe cmd "r")))
+             (do ((val (read-char fil) (read-char fil))) 
+                 ((eof-object? val))
+               (set! str (string-append str (string val))))
+             (close-pipe fil)
+             (func-in data output-name "(sndxtest)")
+             str)
+           (report-in-minibuffer "no current selection")))))
 
 (define clm-fm-violin
   (lambda (dur frq amp)
@@ -5112,7 +5130,7 @@
   
 ;;; ---------------- test 13: menus, edit lists, hooks, seach/key funcs ----------------
 
-(if (or full-test (= snd-test 13))
+(if (or full-test (= snd-test 13) (and keep-going (<= snd-test 13)))
     (let ((fd (view-sound "oboe.snd"))
 	  (mb (add-to-main-menu "clm")))
       (if (procedure? trace-hook) (trace-hook 13))
@@ -5167,6 +5185,7 @@
 	    (snd-display (format #f ";fft not ready yet: ~A ~A" v0 vc))))
 
       (close-sound fd)
+
       (set! fd (open-sound "2.snd"))
       (let ((fr (frames fd))
 	    (chn (chans fd))
@@ -5175,7 +5194,7 @@
 	    (mx1 (maxamp fd 1)))
 	(set! (sync fd) 1)
 	(select-all)
-	(sndxtest)
+	(sndxtest selection-to-temp temp-to-selection)
 	(if (or (not (= fr (frames fd)))
 		(not (= chn (chans fd)))
 		(fneq (* 2.0 mx0) (maxamp fd 0))
@@ -5190,7 +5209,7 @@
 	    (sr (srate fd))
 	    (mx (maxamp fd)))
 	(select-all)
-	(sndxtest)
+	(sndxtest selection-to-temp temp-to-selection)
 	(if (or (not (= fr (frames fd)))
 		(not (= chn (chans fd)))
 		(fneq (* 2.0 mx) (maxamp fd))
@@ -5200,7 +5219,7 @@
       (let* ((reg (make-region 10000 10020 fd))
 	     (new-data (region-samples->vct))
 	     (old-data (samples->vct 10030 20 fd)))
-	(sndxtest)
+	(sndxtest selection-to-temp temp-to-selection)
 	(let ((newer-data (samples->vct 10000 21 fd))
 	      (new-old-data (samples->vct 10030 20 fd)))
 	  (vct-scale! newer-data 0.5)
@@ -5209,6 +5228,54 @@
 	  (if (not (vequal old-data new-old-data))
 	      (snd-display (format #f ";sndxtest old: ~A ~A" old-data new-old-data)))))
       (revert-sound fd)
+
+      (set! fd (open-alternate-sound "2.snd"))
+      (set! (selection-position fd 1) 1000)
+      (set! (selection-length fd 1) 10)
+      (set! (selection-member? fd 1) #t)
+      (if (selection-member? fd 0) (snd-display (format #f ";chan 0 is selection-member?")))
+      (let ((old0 (samples->vct 1000 10 fd 0))
+	    (old1 (samples->vct 1000 10 fd 1)))
+	(sndxtest selection-to-temp temp-to-selection)
+	(let ((new0 (samples->vct 1000 10 fd 0))
+	      (new1 (vct-scale! (samples->vct 1000 10 fd 1) .5)))
+	  (if (not (vequal new0 old0))
+	      (snd-display (format #f ";sndxtest chan 1 hit chan 0? ~A ~A" old0 new0)))
+	  (if (not (vequal new1 old1))
+	      (snd-display (format #f ";sndxtest chan 1 ? ~A ~A" old1 new1)))))
+      (revert-sound fd)
+      
+      (set! fd (open-alternate-sound "2.snd"))
+      (let ((fr (frames fd))
+	    (chn (chans fd))
+	    (sr (srate fd))
+	    (mx0 (maxamp fd 0))
+	    (mx1 (maxamp fd 1)))
+	(set! (sync fd) 1)
+	(sndxtest sound-to-temp temp-to-sound)
+	(if (or (not (= fr (frames fd)))
+		(not (= chn (chans fd)))
+		(fneq (* 2.0 mx0) (maxamp fd 0))
+		(fneq (* 2.0 mx1) (maxamp fd 1))
+		(fneq sr (srate fd)))
+	    (snd-display (format #f ";sndxtest(snd 2): ~A ~A ~A (~A ~A) (~A ~A)?" (frames fd) (chans fd) (srate fd) mx0 (maxamp fd 0) mx1 (maxamp fd 1)))))
+      (revert-sound fd)
+
+      (set! fd (open-alternate-sound "obtest.snd"))
+      (let ((fr (frames fd))
+	    (chn (chans fd))
+	    (sr (srate fd))
+	    (mx (maxamp fd)))
+	(do ((i 0 (1+ i)))
+	    ((= i 3))
+	  (sndxtest sound-to-temp temp-to-sound)
+	  (scale-by 0.5 fd)
+	  (if (or (not (= fr (frames fd)))
+		  (not (= chn (chans fd)))
+		  (fneq mx (maxamp fd))
+		  (fneq sr (srate fd)))
+	      (snd-display (format #f ";sndxtest snd [~D]: ~A ~A ~A ~A?" i (frames fd) (chans fd) (srate fd) (maxamp fd)))))
+	(revert-sound fd))
 
       (let ((names (short-file-name #t)))
 	(change-property "SND_VERSION" "WM_NAME"
@@ -5588,7 +5655,7 @@
 ;;; ---------------- test 14: all together now ----------------
 (define test14-file #f)
 
-(if (or full-test (= snd-test 14))
+(if (or full-test (= snd-test 14) (and keep-going (<= snd-test 14)))
     (let* ((stereo-files '())
 	   (quad-files '())
 	   (mono-files '())
@@ -6396,7 +6463,7 @@
 (load "rubber.scm")
 
 ;;; ---------------- test 15: chan-local vars ----------------
-(if (or full-test (= snd-test 15))
+(if (or full-test (= snd-test 15) (and keep-going (<= snd-test 15)))
     (let ((obi (open-sound (car (match-sound-files (lambda (file) (= (mus-sound-chans file) 1)))))))
 
       (define (test-selection ind beg len scaler)
@@ -7055,7 +7122,7 @@
       ))
 
 ;;; ---------------- test 16: define-syntax ----------------
-(if (or full-test (= snd-test 16))
+(if (or full-test (= snd-test 16) (and keep-going (<= snd-test 16)))
     (let ((hi 32)
 	  (ho 0))
       (if (procedure? trace-hook) (trace-hook 16))
@@ -7090,7 +7157,7 @@
 		    (inexact->exact (* .8 size))
 		    snd chn)))  
 
-(if (and (or full-test (= snd-test 17))
+(if (and (or full-test (= snd-test 17) (and keep-going (<= snd-test 17)))
 	 (not (provided? 'snd-nogui)))
     (begin
       (if (procedure? trace-hook) (trace-hook 17))
@@ -7148,7 +7215,7 @@
 ;;; ---------------- test 18: enved ----------------
 
 (load "enved.scm")
-(if (and (or full-test (= snd-test 18))
+(if (and (or full-test (= snd-test 18) (and keep-going (<= snd-test 18)))
 	 (not (provided? 'snd-nogui)))
     (begin
       (if (procedure? trace-hook) (trace-hook 18))
@@ -7167,7 +7234,7 @@
 
 (define sfile 0)
 
-(if (or full-test (= snd-test 19))
+(if (or full-test (= snd-test 19) (and keep-going (<= snd-test 19)))
     (let ((nind (open-sound "oboe.snd")))
       (if (procedure? trace-hook) (trace-hook 19))
       (add-mark 123)
@@ -7366,7 +7433,7 @@ EDITS: 3
 		   squelch-update sync temp-dir text-focus-color tiny-font transform-type trap-segfault uniting use-raw-defaults use-sinc-interp verbose-cursor
 		   vu-font vu-font-size vu-size wavelet-type waving wavo-hop wavo-trace with-mix-tags x-axis-style zero-pad zoom-color zoom-focus-style ))
 
-(if (or full-test (= snd-test 20))
+(if (or full-test (= snd-test 20) (and keep-going (<= snd-test 20)))
     (begin
       (if (procedure? trace-hook)  (trace-hook 20))
 
@@ -8459,7 +8526,7 @@ EDITS: 3
   sym2 sym3 sym4 sym5 sym6))
 
 
-(if (or full-test (= snd-test 21))
+(if (or full-test (= snd-test 21) (and keep-going (<= snd-test 21)))
     (let ((d0 #f) (d1 #f) (fn #f))
       (if (procedure? trace-hook) (trace-hook 21))
       
@@ -8871,13 +8938,12 @@ EDITS: 3
 ;;;
 ;;;   edpos args: sound->temp cases
 ;;; only touched upon:
-;;;   sound-to-temp(s) selection-to-temp(s) temp(s)-to-sound temp(s)-to-selection -- especially multichannel cases
 ;;;   convolve-files map-across-all-chans map-chans scan-across-chans map-sound-chans scan-sound-chans scan-chans
-;;;   samples->sound-data forward-mix smooth-selection convolve-selection-with save-state open-alternate-sound
+;;;   samples->sound-data forward-mix smooth-selection convolve-selection-with save-state
 ;;;   mus-sound-reopen-output mus-sound-seek mus-sound-seek-frame close-sound-file vct->sound-file
 ;;;   save-marks save-region save-selection vcts-map!
 ;;;   buffer->frame frame->buffer mixer* mixer-set! frame->frame restart-env locsig-set! locsig-reverb-set!
-;;;   ina inb outc outd mus-channel make-track-sample-reader free-track-sample-reader mix-sound-channel mix-sound-index
+;;;   ina inb outc outd make-track-sample-reader free-track-sample-reader mix-sound-channel mix-sound-index
 ;;;   backward-mix peaks forward-sample backward-sample cursor-position prompt-in-minibuffer
 ;;;   append-to-minibuffer scan-across-sound-chans change-menu-label update-sound erase-rectangle load-font
 ;;;   soundfont-info menu-widgets x->position y->position position->y axis-info listener-selection draw-line draw-string fill-rectangle

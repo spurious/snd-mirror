@@ -1056,7 +1056,7 @@ SCM snd_no_such_sound_error(const char *caller, SCM n);
 void set_speed_style(snd_state *ss, int val);
 void amp_env_scale_by(chan_info *cp, Float scl);
 void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num);
-env_info *amp_env_copy(chan_info *cp, int reversed);
+env_info *amp_env_copy(chan_info *cp, int reversed, int edpos);
 void remember_mini_string(snd_info *sp, char *str);
 void restore_mini_string(snd_info *s, int back);
 void clear_mini_strings(snd_info *sp);

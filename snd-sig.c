@@ -1079,7 +1079,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, SC
 					       mus_sound_header_type(filename));
 		      if (cp == NULL)
 			filesize = selection_len();
-		      else filesize = current_ed_samples(ucp);
+		      else filesize = to_c_edit_samples(ucp, edpos, S_convolve_with);
 		      if (filesize > 0)
 			{
 			  ipow = (int)(ceil(log(filtersize + filesize) / log(2.0))) + 1;
@@ -1440,7 +1440,7 @@ static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c
 
 typedef struct {int selection; int files; char **old_filenames; char **new_filenames; void *sc;} snd_exf;
 
-static snd_exf *snd_to_temp(chan_info *cp, int selection, int one_file, int header_type, int data_format, SCM edpos)
+static snd_exf *snd_to_temp(chan_info *cp, int selection, int one_file, int header_type, int data_format, SCM edpos, const char *caller)
 {
   /* save current state starting at cp and following sync buttons
    *   just current selection if selection, else entire channel
@@ -1484,7 +1484,7 @@ static snd_exf *snd_to_temp(chan_info *cp, int selection, int one_file, int head
     {
       if (selection) 
 	len = sc->dur; 
-      else len = current_ed_samples(cp);
+      else len = to_c_edit_samples(cp, edpos, caller);
       nhdr = copy_header(data->old_filenames[0], sp->hdr);
       /* we have to set universally recognizable defaults here (make_snd_file will use MUS_OUT_FORMAT/MUS_NEXT which can be trouble) */
       if (header_type != MUS_UNSUPPORTED) nhdr->type = header_type; else nhdr->type = MUS_NEXT;
@@ -1499,7 +1499,7 @@ static snd_exf *snd_to_temp(chan_info *cp, int selection, int one_file, int head
 	{
 	  if (selection) 
 	    len = sc->dur; 
-	  else len = current_ed_samples(si->cps[i]);
+	  else len = to_c_edit_samples(si->cps[i], edpos, caller);
 	  nhdr = copy_header(data->old_filenames[i], sp->hdr);
 	  if (header_type != MUS_UNSUPPORTED) nhdr->type = header_type; else nhdr->type = MUS_NEXT;
 	  if (data_format != MUS_UNSUPPORTED) nhdr->format = data_format; else nhdr->format = MUS_BSHORT;
@@ -1756,7 +1756,7 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 	  cur_marks = 0;
 	  new_marks = NULL;
 	  if (scdur == 0) 
-	    dur = current_ed_samples(cp); 
+	    dur = to_c_edit_samples(cp, edpos, origin); 
 	  else dur = scdur;
 	  if (dur == 0) 
 	    {
@@ -2220,7 +2220,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
   chan_info *cp;
   int fsize;
   Float scale;
-  Float *sndrdat, *fltdat;
+  Float *sndrdat = NULL, *fltdat = NULL;
   int pow4;
 
   if ((!e) && (!ur_a) && (!gen)) 
@@ -2245,7 +2245,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
       (!gen) && 
       (!over_selection) && 
       (order >= 256) && 
-      ((int)((current_ed_samples(ncp) + order) / 128) < ss->memory_available))
+      ((int)((to_c_edit_samples(ncp, edpos, origin) + order) / 128) < ss->memory_available))
     {
       /* use convolution if order is large and there's memory available (and not over_selection) */
       /*   probably faster here would be overlap-add */
@@ -2255,7 +2255,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 	  cp = si->cps[i];
 	  sp = cp->sound;
 	  if (scdur == 0) 
-	    dur = current_ed_samples(cp);
+	    dur = to_c_edit_samples(cp, edpos, origin);
 	  else dur = scdur;
 	  if (dur == 0) 
 	    {
@@ -2344,7 +2344,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 	      cp = si->cps[i];
 	      sp = cp->sound;
 	      if (scdur == 0) 
-		dur = current_ed_samples(cp);
+		dur = to_c_edit_samples(cp, edpos, origin);
 	      else dur = scdur;
 	      if (dur == 0) 
 		{
@@ -2486,11 +2486,13 @@ static void reverse_sound(chan_info *ncp, int over_selection, SCM edpos)
   MUS_SAMPLE_TYPE *idata;
   char *ofile = NULL;
   chan_info *cp;
+  char *caller;
   ss = ncp->state;
   sp = ncp->sound;
+  caller = ((over_selection) ? S_reverse_selection : S_reverse_sound);
   sc = get_sync_state(ss, sp, ncp, 0, over_selection, READ_BACKWARD, 
 		      edpos,
-		      (over_selection) ? S_reverse_selection : S_reverse_sound);
+		      caller);
   if (sc == NULL) return;
   si = sc->si;
   sfs = sc->sfs;
@@ -2507,8 +2509,8 @@ static void reverse_sound(chan_info *ncp, int over_selection, SCM edpos)
 	    dur = sc->dur;
 	  else 
 	    {
-	      dur = current_ed_samples(cp);
-	      ep = amp_env_copy(cp, TRUE);
+	      dur = to_c_edit_samples(cp, edpos, caller);
+	      ep = amp_env_copy(cp, TRUE, to_c_edit_position(cp, edpos, caller));
 	    }
 	  if (dur == 0) 
 	    {
@@ -2565,8 +2567,7 @@ static void reverse_sound(chan_info *ncp, int over_selection, SCM edpos)
 	      else file_change_samples(0, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, S_reverse_sound);
 	      if (ofile) {FREE(ofile); ofile = NULL;}
 	    }
-	  else change_samples(si->begs[i], dur, data[0], cp, LOCK_MIXES, 
-			      (char *)((over_selection) ? S_reverse_selection : S_reverse_sound));
+	  else change_samples(si->begs[i], dur, data[0], cp, LOCK_MIXES, caller);
 	  if (ep) cp->amp_envs[cp->edit_ctr] = ep;
 	  ep = NULL;
 	  if (cp->marks)
@@ -3028,7 +3029,7 @@ static SCM g_sound_to_temp_1(SCM ht, SCM df, int selection, int one_file, const 
       type = TO_C_INT_OR_ELSE_WITH_ORIGIN(ht, MUS_UNSUPPORTED, caller);  
       /* mus-next? hmmm --this needs to be readable by external programs that don't know about our secret next-header formats */
       format = TO_C_INT_OR_ELSE_WITH_ORIGIN(df, MUS_UNSUPPORTED, caller); 
-      program_data = snd_to_temp(cp, selection, one_file, type, format, edpos);
+      program_data = snd_to_temp(cp, selection, one_file, type, format, edpos, caller);
       if (program_data)
 	return(SND_WRAP(program_data));
     }
@@ -3445,8 +3446,8 @@ static SCM g_swap_channels(SCM snd0, SCM chn0, SCM snd1, SCM chn1, SCM beg, SCM 
 	  /* common special case -- just setup a new ed-list entry with the channels/sounds swapped */
 	  old_squelch0 = cp0->squelch_update;
 	  old_squelch1 = cp1->squelch_update;
-	  e0 = amp_env_copy(cp0, FALSE);
-	  e1 = amp_env_copy(cp1, FALSE);
+	  e0 = amp_env_copy(cp0, FALSE, cp0->edit_ctr);
+	  e1 = amp_env_copy(cp1, FALSE, cp1->edit_ctr);
 	  cp0->squelch_update = 1;
 	  cp1->squelch_update = 1;
 	  file_override_samples(dur1, cp1->sound->fullname, cp0, cp1->chan, DONT_DELETE_ME, LOCK_MIXES, S_swap_channels);
@@ -3638,7 +3639,7 @@ either to the end of the sound or for 'samps' samples, with segments interpolati
   cp = get_cp(snd_n, chn_n, S_env_sound);
   beg = TO_C_INT_OR_ELSE(samp_n, 0);
   dur = TO_C_INT_OR_ELSE(samps, 0);
-  if (dur == 0) dur = current_ed_samples(cp);
+  if (dur == 0) dur = to_c_edit_samples(cp, edpos, S_env_sound);
   if (LIST_P(edata))
     {
       e = get_env(edata, base, S_env_sound);
@@ -4072,6 +4073,7 @@ applies FIR filter to snd's channel chn. 'filter' is either the frequency respon
   char *error;
   SND_ASSERT_CHAN(S_filter_sound, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_filter_sound);
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(order), order, SCM_ARG2, S_filter_sound, "an integer");
   if (mus_scm_p(e))
     {
       error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, S_filter_sound, FALSE, NULL, mus_scm_to_clm(e), edpos);
@@ -4118,6 +4120,7 @@ static SCM g_filter_selection(SCM e, SCM order)
   if (selection_is_active() == 0) 
     return(snd_no_active_selection_error(S_filter_selection));
   cp = get_cp(SCM_BOOL_F, SCM_BOOL_F, S_filter_selection);
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(order), order, SCM_ARG2, S_filter_selection, "an integer");
   if (mus_scm_p(e))
     {
       error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, S_filter_selection, 

@@ -577,11 +577,11 @@ void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num)
     }
 }
 
-env_info *amp_env_copy(chan_info *cp, int reversed)
+env_info *amp_env_copy(chan_info *cp, int reversed, int edpos)
 {
   env_info *old_ep, *new_ep = NULL;
   int i, j;
-  old_ep = cp->amp_envs[cp->edit_ctr];
+  old_ep = cp->amp_envs[edpos];
   if ((old_ep) && (old_ep->completed))
     {
       new_ep = (env_info *)CALLOC(1, sizeof(env_info));

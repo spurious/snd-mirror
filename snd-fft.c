@@ -1824,6 +1824,7 @@ void *make_sonogram_state(chan_info *cp)
       temp_sg = (sonogram_state *)(cp->temp_sonogram);
       if (temp_sg->fs) free_fft_state(temp_sg->fs);
       FREE(temp_sg);
+      cp->last_sonogram = NULL;
     }
   cp->temp_sonogram = sg; /* background process may never run, so we need a way to find this pointer at cleanup time */
   return((void *)sg);
@@ -1983,7 +1984,7 @@ static int run_all_ffts(sonogram_state *sg)
 			  NOT_FROM_ENVED);
 	  sg->minibuffer_needs_to_be_cleared = 1;
 	  sg->msg_ctr = 8;
-	  if ((cp->ffting == 0) || (cp->temp_sonogram == NULL)) return(1);
+	  if (cp->ffting == 0) return(1);
 	}
       if (cp->transform_type == FOURIER)
 	{
@@ -2041,7 +2042,6 @@ static int cleanup_sonogram(sonogram_state *sg)
       if (sg->outer == sg->outlim) sg->done = 1;
       sg->old_scale = (sg->scp)->scale;
       cp->last_sonogram = sg;
-      cp->temp_sonogram = NULL;
       if (sg->minibuffer_needs_to_be_cleared)
 	{
 	  finish_progress_report(cp->sound, NOT_FROM_ENVED);
@@ -2057,6 +2057,7 @@ BACKGROUND_TYPE sonogram_in_slices(void *sono)
   chan_info *cp;
   int res = 0;
   cp = sg->cp;
+  cp->temp_sonogram = NULL;
   if (cp->ffting == 0) 
     {
       if (sg) cleanup_sonogram(sg);

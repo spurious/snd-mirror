@@ -157,10 +157,12 @@ static SCM g_draw_lines(SCM pts, SCM snd, SCM chn, SCM ax)
 {
   /* pts should be a vector of integers as (x y) pairs */
   POINT *pack_pts;
+  axis_context *ax1;
   SND_ASSERT_CHAN(S_draw_lines, snd, chn, 2);
   ASSERT_TYPE(VECTOR_P(pts), pts, SCM_ARG1, S_draw_lines, "a vector");
+  ax1 = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_lines);
   pack_pts = TO_C_POINTS(pts, S_draw_lines);
-  draw_lines(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_lines), 
+  draw_lines(ax1,
 	     pack_pts, 
 	     VECTOR_LENGTH(pts) / 2);
   FREE(pack_pts);
@@ -171,10 +173,12 @@ static SCM g_draw_dots(SCM pts, SCM size, SCM snd, SCM chn, SCM ax)
 {
   /* pts should be a vector of integers as (x y) pairs */
   POINT *pack_pts;
+  axis_context *ax1;
   SND_ASSERT_CHAN(S_draw_dots, snd, chn, 3);
   ASSERT_TYPE(VECTOR_P(pts), pts, SCM_ARG1, S_draw_dots, "a vector");
+  ax1 = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_dots);
   pack_pts = TO_C_POINTS(pts, S_draw_dots);
-  draw_points(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_dots), 
+  draw_points(ax1,
 	      pack_pts, 
 	      VECTOR_LENGTH(pts) / 2,
 	      TO_C_INT_OR_ELSE(size, 1));

@@ -1903,7 +1903,21 @@ document ge
 Executes (print (eval (read arg))): ge "(+ 1 2)" =&gt; 3
 end
 </pre>
-<p>If you have a pointer to a CLM generator, you can use:
+<p>SCM values are displayed as integers in gdb, so, for example, say
+Snd halts and you notice it's loading some unknown file:
+</p>
+<pre>
+#32 0x081ae8f4 in scm_primitive_load (filename=1112137128) at load.c:129
+</pre>
+<p>You can get the file name with gp:
+</p>
+<pre>
+(gdb) gp 1112137128
+$1 = 0
+$2 = 0x40853fac "\"/home/bil/test/share/guile/1.5.0/ice-9/session.scm\""
+</pre>
+<p>
+If you have a pointer to a CLM generator, you can use:
 </p>
 <pre>
 p mus_describe(arg)  --  show the user-view of arg

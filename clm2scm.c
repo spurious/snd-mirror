@@ -790,15 +790,9 @@ static scm_sizet free_mus_scm(SCM obj)
 
 static int print_mus_scm(SCM obj, SCM port, scm_print_state *pstate)
 {
-  char *buf;
-  buf = mus_describe(TO_CLM(obj));
-  if (buf)
-    {
-      WRITE_STRING("#<", port);
-      WRITE_STRING(buf, port);
-      WRITE_STRING(">", port);
-      FREE(buf);
-    }
+  WRITE_STRING("#<", port);
+  WRITE_STRING(mus_describe(TO_CLM(obj)), port);
+  WRITE_STRING(">", port);
   return(1);
 }
 
@@ -870,25 +864,15 @@ SCM mus_scm_to_smob_with_vct(mus_scm *gn, SCM v)
 static SCM g_inspect(SCM gen)
 {
   #define H_mus_inspect "(" S_mus_inspect " gen) -> the internal state of gen"
-  char *buf;
-  SCM result;
   ASSERT_TYPE((MUS_SCM_P(gen)), gen, SCM_ARGn, S_mus_inspect, "a generator");
-  buf = mus_inspect(TO_CLM(gen));
-  result = TO_SCM_STRING(buf);
-  FREE(buf);
-  return(result);
+  return(TO_SCM_STRING(mus_inspect(TO_CLM(gen))));
 }
 
 static SCM g_describe(SCM gen) 
 {
   #define H_mus_describe "(" S_mus_describe " gen) -> the user's view of the state of gen"
-  char *buf;
-  SCM result;
   ASSERT_TYPE((MUS_SCM_P(gen)), gen, SCM_ARGn, S_mus_describe, "a generator");
-  buf = mus_describe(TO_CLM(gen));
-  result = TO_SCM_STRING(buf);
-  FREE(buf);
-  return(result);
+  return(TO_SCM_STRING(mus_describe(TO_CLM(gen))));
 }
 
 static SCM g_phase(SCM gen) 
@@ -3333,11 +3317,23 @@ static SCM g_make_filter_1(int choice, SCM arg1, SCM arg2, SCM arg3, SCM arg4, S
 	  }
     }
   if (x == NULL)
-    mus_misc_error(caller, "no coefficients?", SCM_BOOL_F);
+    mus_misc_error(caller, "no coeffs?", SCM_BOOL_F);
+  if (order < 0)
+    mus_misc_error(caller, "order < 0?", keys[0]);
   if ((choice == G_FILTER) && (y == NULL))
     {
       choice = G_FIR_FILTER;
       nkeys = 2;
+    }
+  if (order == 0) 
+    order = x->length;
+  else
+    {
+      if (order > x->length)
+	mus_misc_error(caller, "not enough coeffs?", keys[1]);
+      else
+	if ((x) && (y) && (x->length != y->length))
+	  mus_misc_error(caller, "coeffs are not the same length?", SCM_LIST2(keys[1], keys[2]));
     }
   switch (choice)
     {

@@ -137,37 +137,41 @@ char *version_info(void)
 	  " of ",
 	  SND_VERSION,
 	  ": ",
-#if SND_AS_WIDGET
-	  "\n    (compiled as a widget)",
-#endif
 #if HAVE_GUILE
 	  "\n    Guile ",  TO_C_STRING(scm_version()),
-  #ifdef LIBGUILE_VERSION
-	  " libguile.so.", itoa[18] = snd_itoa(LIBGUILE_VERSION),
-  #endif
-#endif
+#else
 #if HAVE_LIBREP
 	  "\n    Librep ", rep_VERSION,
-#endif
+#else
 #if HAVE_MZSCHEME
 	  "\n    mzscheme ", scheme_version(),
+#else
+#if (!HAVE_EXTENSION_LANGUAGE)
+	  "\n    without any extension language",
 #endif
+#endif
+#endif
+#endif
+	  "\n    ", mus_audio_moniker(),
+	  "\n    Sndlib ", itoa[15] = snd_itoa(SNDLIB_VERSION), ".", 
+                           itoa[16] = snd_itoa(SNDLIB_REVISION), 
+                           " (", SNDLIB_DATE,
+#if SNDLIB_USE_FLOATS
+	  ", float samples",
+#else
+	  ", int", itoa[17] = snd_itoa(MUS_SAMPLE_BITS), " samples",
+#endif
+#if LONG_INT_P
+	  " and int* tables",
+#endif
+	  ")", sndlib_consistency_check(),
 	  "\n    CLM ", itoa[0] = snd_itoa(MUS_VERSION), ".", 
 	                itoa[1] = snd_itoa(MUS_REVISION), " (", 
                         MUS_DATE, ")",
-#if ((HAVE_XPM) && (defined(USE_MOTIF)))
-	  "\n    Xpm ", itoa[2] = snd_itoa(XpmFormat), ".", 
-                        itoa[3] = snd_itoa(XpmVersion), ".", 
-                        itoa[4] = snd_itoa(XpmRevision),
-#endif
-#ifdef SND_CONF
-	  "\n    conf: ", SND_CONF,
-#endif
-#if HAVE_HTML
-  #if USE_MOTIF
-	  "\n    XmHTML ", itoa[5] = snd_itoa(XmHTMLVERSION), ".", 
-                           itoa[6] = snd_itoa(XmHTMLREVISION), ".", 
-                           itoa[7] = snd_itoa(XmHTMLUPDATE_LEVEL),
+#if HAVE_GSL
+	  "\n    gsl",
+  #ifdef GSL_VERSION
+          ": ", GSL_VERSION,
   #endif
 #endif
 #if USE_MOTIF
@@ -204,33 +208,29 @@ char *version_info(void)
 #if (!(defined(USE_MOTIF))) && (!(defined(USE_GTK)))
 	  "\n    without any graphics system",
 #endif
-#if WITH_BIG_COLORMAP
-	  ", (with big colormaps)",
+#if HAVE_HTML
+  #if USE_MOTIF
+	  "\n    XmHTML ", itoa[5] = snd_itoa(XmHTMLVERSION), ".", 
+                           itoa[6] = snd_itoa(XmHTMLREVISION), ".", 
+                           itoa[7] = snd_itoa(XmHTMLUPDATE_LEVEL),
+  #endif
+#endif
+#if ((HAVE_XPM) && (defined(USE_MOTIF)))
+	  "\n    Xpm ", itoa[2] = snd_itoa(XpmFormat), ".", 
+                        itoa[3] = snd_itoa(XpmVersion), ".", 
+                        itoa[4] = snd_itoa(XpmRevision),
+#endif
+#ifdef SND_CONF
+	  "\n    conf: ", SND_CONF,
 #endif
 #ifdef CCRMA
 	  "\n    (uses ccrma-specific /zap dirs)",
 #endif
-	  "\n    ", mus_audio_moniker(),
-	  "\n    Sndlib ", itoa[15] = snd_itoa(SNDLIB_VERSION), ".", 
-                           itoa[16] = snd_itoa(SNDLIB_REVISION), 
-                           " (", SNDLIB_DATE,
-#if SNDLIB_USE_FLOATS
-	  ", float samples",
-#else
-	  ", int", itoa[17] = snd_itoa(MUS_SAMPLE_BITS), " samples",
-#endif
-#if LONG_INT_P
-	  " and int* tables",
-#endif
-	  ")", sndlib_consistency_check(),
-#if HAVE_GSL
-	  "\n    gsl",
-  #ifdef GSL_VERSION
-          ": ", GSL_VERSION,
-  #endif
-#endif
 #if HAVE_LADSPA
 	  "\n    with LADSPA",
+#endif
+#if SND_AS_WIDGET
+	  "\n    (compiled as a widget)",
 #endif
 #ifdef __DATE__
 	  "\n    Compiled ", __DATE__, " ", __TIME__,
@@ -264,8 +264,6 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
-14-May:  continuable errors -- deleted the next day (gc troubles).\n\
-11-May:  selection-to-temp was writing files that Sox et al can't read (thanks to Matti Koskinen).\n\
 9-May:   support for GSL 0.7+\n\
 7-May:   added edit-position arg to various play functions, save-sound-as,\n\
            scan/map/find funcs, frames and maxamps.\n\
@@ -275,14 +273,6 @@ void news_help(snd_state *ss)
 25-Apr:  snd.1 (and mandir business in makefile.in)\n\
 24-Apr:  added mouse-enter|leave-text-hook.\n\
 23-Apr:  snd 4.13.\n\
-19-Apr:  use GSL_IEEE_MODE if it exists.\n\
-17-Apr:  Haar transform.\n\
-16-Apr:  mus-out-format, listener-selection.\n\
-9-Apr:   noguile.h, sl.h (moving toward librep support).\n\
-29-Mar:  drop-hook.\n\
-23-Mar:  removed syncing (use sync), and abort? (use c-g?).\n\
-         removed support for Guile 1.3.0 (Snd now needs 1.3.4 or later).\n\
-         select-region-hook, select-mix-hook.\n\
 ",
 NULL);
   FREE(info);

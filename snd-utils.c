@@ -424,6 +424,20 @@ static void remember_pointer(void *ptr, size_t len, const char *func, const char
   last_remembered_ptr = (int)ptr;
 }
 
+static void find_ptr_location(int ptr)
+{
+  int i;
+  for (i = 0; i < mem_size; i++)
+    if (pointers[i] == ptr)
+      {
+	fprintf(stderr,"found it at %d, size: %d, loc: %d, %s[%s: %d]\n",
+		i, sizes[i], locations[i], 
+		functions[locations[i]], files[locations[i]], lines[locations[i]]);
+	return;
+      }
+  fprintf(stderr,"can't find it");
+}
+
 #define MAX_MALLOC (1 << 24)
 
 void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line)

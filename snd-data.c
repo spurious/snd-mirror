@@ -176,6 +176,7 @@ static chan_info *free_chan_info(chan_info *cp)
   if (cp->temp_sonogram) 
     {
       /* special case -- background fft process never got a chance to run */
+      if (cp->temp_sonogram == cp->last_sonogram) cp->last_sonogram = NULL;
       free_sonogram_fft_state(cp->temp_sonogram);
       FREE(cp->temp_sonogram); 
       cp->temp_sonogram = NULL;
