@@ -32,12 +32,13 @@
 ;;; TODO: GL tests, gtk (xg) tests
 ;;; TODO: load-font current-font send-netscape apply-ladspa set-enved-selected-env
 ;;; TODO: mix panel env editor (apply button)
-;;; TODO: loop-samples of large section, scale-to with chn but 0..dur, transform-hook? output-name-hook [requires New dialog]?
+;;; TODO: loop-samples of large section, scale-to with chn but 0..dur, [before-]transform-hook? output-name-hook [requires New dialog]?
 ;;; TODO: make-graph[-data?] of 1 samp, 
 ;;; TODO: lisp-graph-hook with forward proc, linear src moving backwards
 ;;; TODO: srate control change while using semitones
 ;;; TODO: control-panel apply to channel [apply button with ctrl and no active selection]
 ;;; TODO: raw|new data dialog help, delete enved env? ...
+;;; TODO: click fir in enved, activate order text
 
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
@@ -23991,6 +23992,7 @@ EDITS: 5
 	(check-error-tag 'no-such-widget (lambda () (set! (widget-size (list 'Widget 0)) (list 10 10))))
 	(check-error-tag 'no-such-menu (lambda () (main-menu -1)))
 	(check-error-tag 'no-such-menu (lambda () (main-menu 111)))
+	;(check-error-tag 'mus-error (vct-map (lambda () 1.0)))
 	(let ((ind (open-sound "oboe.snd"))) 
 	  (select-all)
 	  (check-error-tag 'no-such-channel (lambda () (mix-selection 0 ind 123)))

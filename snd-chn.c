@@ -747,13 +747,11 @@ static int visible_syncd_cursor(chan_info *cp)
 	{
 	  sp = ss->sounds[j];
 	  if ((sp) && (sp->inuse) && (sp->sync == sync) && (sp != cp->sound))
-	    {
-	      for (i = 0; i < sp->nchans; i++)
-		{
-		  ncp = sp->chans[i];
-		  if (ncp->cursor_visible) return(ncp->cursor);
-		}
-	    }
+	    for (i = 0; i < sp->nchans; i++)
+	      {
+		ncp = sp->chans[i];
+		if (ncp->cursor_visible) return(ncp->cursor);
+	      }
 	}
     }
   return(-1);
@@ -2742,13 +2740,6 @@ static void make_axes(chan_info *cp, axis_info *ap, int x_style, int erase_first
     }
   else ax = ap->ax;
   sp = cp->sound;
-#if DEBUGGING
-  if (sp == NULL)
-    {
-      fprintf(stderr, "make_axes sp is null!");
-      abort();
-    }
-#endif
   setup_axis_context(cp, ax);
   if (erase_first)
     erase_rectangle(cp, ap->ax, ap->graph_x0, ap->y_offset, ap->width, ap->height); 

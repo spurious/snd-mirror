@@ -747,23 +747,23 @@ static void swap_channels(snd_state *ss, off_t beg, off_t dur, snd_fd *c0, snd_f
   data1[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
   idata0 = data0[0];
   idata1 = data1[0];
-  j = 0;
-  for (k = 0; k < dur; k++)
-    {
-      idata0[j] = read_sample(c1);
-      idata1[j] = read_sample(c0);
-      j++;
-      if ((temp_file) && (j == MAX_BUFFER_SIZE))
-	{
-	  err = mus_file_write(ofd0, 0, j - 1, 1, data0);
-	  err = mus_file_write(ofd1, 0, j - 1, 1, data1);
-	  j = 0;
-	  if (err == -1) break;
-	  if (reporting) progress_report(sp0, "scl", 1, 1, (Float)k / (Float)dur, NOT_FROM_ENVED);
-	}
-    }
   if (temp_file)
     {
+      j = 0;
+      for (k = 0; k < dur; k++)
+	{
+	  idata0[j] = read_sample(c1);
+	  idata1[j] = read_sample(c0);
+	  j++;
+	  if (j == MAX_BUFFER_SIZE)
+	    {
+	      err = mus_file_write(ofd0, 0, j - 1, 1, data0);
+	      err = mus_file_write(ofd1, 0, j - 1, 1, data1);
+	      j = 0;
+	      if (err == -1) break;
+	      if (reporting) progress_report(sp0, "scl", 1, 1, (Float)k / (Float)dur, NOT_FROM_ENVED);
+	    }
+	}
       if (j > 0) 
 	{
 	  mus_file_write(ofd0, 0, j - 1, 1, data0);
@@ -781,6 +781,11 @@ static void swap_channels(snd_state *ss, off_t beg, off_t dur, snd_fd *c0, snd_f
     }
   else 
     {
+      for (k = 0; k < dur; k++)
+	{
+	  idata0[k] = read_sample(c1);
+	  idata1[k] = read_sample(c0);
+	}
       change_samples(beg, dur, data0[0], cp0, LOCK_MIXES, S_swap_channels, cp0->edit_ctr);
       change_samples(beg, dur, data1[0], cp1, LOCK_MIXES, S_swap_channels, cp1->edit_ctr);
     }
@@ -1252,16 +1257,25 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
   data = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));
   data[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
   idata = data[0];
-  j = 0;
-  for (k = 0; k < dur; k++)
+  if (temp_file)
     {
-      idata[j++] = MUS_FLOAT_TO_SAMPLE(MUS_RUN(gen, read_sample_to_float(sf), 0.0));
-      if ((temp_file) && (j == MAX_BUFFER_SIZE))
+      j = 0;
+      for (k = 0; k < dur; k++)
 	{
-	  err = mus_file_write(ofd, 0, j - 1, 1, data);
-	  j = 0;
-	  if (err == -1) break;
+	  idata[j++] = MUS_FLOAT_TO_SAMPLE(MUS_RUN(gen, read_sample_to_float(sf), 0.0));
+	  if (j == MAX_BUFFER_SIZE)
+	    {
+	      err = mus_file_write(ofd, 0, j - 1, 1, data);
+	      j = 0;
+	      if (err == -1) break;
+	    }
 	}
+    }
+  else
+    {
+      for (k = 0; k < dur; k++)
+	idata[k] = MUS_FLOAT_TO_SAMPLE(MUS_RUN(gen, read_sample_to_float(sf), 0.0));
+      j = dur;
     }
   for (k = 0; k < overlap; k++)
     {
@@ -1637,20 +1651,19 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
   data = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));
   data[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
   idata = data[0];
-  j = 0;
-  for (k = 0; k < dur; k++)
-    {
-      idata[j] = read_sample(sf);
-      j++;
-      if ((temp_file) && (j == MAX_BUFFER_SIZE))
-	{
-	  err = mus_file_write(ofd, 0, j - 1, 1, data);
-	  j = 0;
-	  if (err == -1) break;
-	}
-    }
   if (temp_file)
     {
+      j = 0;
+      for (k = 0; k < dur; k++)
+	{
+	  idata[j++] = read_sample(sf);
+	  if (j == MAX_BUFFER_SIZE)
+	    {
+	      err = mus_file_write(ofd, 0, j - 1, 1, data);
+	      j = 0;
+	      if (err == -1) break;
+	    }
+	}
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
       close_temp_file(ofd, hdr, dur * datumb, sp);
       hdr = free_file_info(hdr);
@@ -1661,7 +1674,12 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
 	  ofile = NULL;
 	}
     }
-  else change_samples(beg, dur, idata, cp, LOCK_MIXES, caller, cp->edit_ctr);
+  else 
+    {
+      for (k = 0; k < dur; k++)
+	idata[k] = read_sample(sf);
+      change_samples(beg, dur, idata, cp, LOCK_MIXES, caller, cp->edit_ctr);
+    }
   if (ep) cp->amp_envs[cp->edit_ctr] = ep;
   reverse_marks(cp, (section) ? beg : -1, dur);
   update_graph(cp); 
@@ -1984,19 +2002,27 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 	{
 	  sf = sfs[0];
 	  idata = data[0];
-	  for (ioff = 0; ioff < dur; ioff++)
+	  if (temp_file)
 	    {
-	      idata[j] = (mus_sample_t)(read_sample(sf) * mus_env(egen));
-	      j++;
-	      if ((temp_file) && (j == FILE_BUFFER_SIZE))
+	      for (ioff = 0; ioff < dur; ioff++)
 		{
-		  if (reporting)
-		    progress_report(sp, origin, 0, 0, (Float)ioff / ((Float)dur), from_enved);
-		  err = mus_file_write(ofd, 0, j - 1, 1, data);
-		  j = 0;
-		  if (err == -1) break;
-		  if (ss->stopped_explicitly) break;
+		  idata[j] = (mus_sample_t)(read_sample(sf) * mus_env(egen));
+		  j++;
+		  if ((temp_file) && (j == FILE_BUFFER_SIZE))
+		    {
+		      if (reporting)
+			progress_report(sp, origin, 0, 0, (Float)ioff / ((Float)dur), from_enved);
+		      err = mus_file_write(ofd, 0, j - 1, 1, data);
+		      j = 0;
+		      if (err == -1) break;
+		      if (ss->stopped_explicitly) break;
+		    }
 		}
+	    }
+	  else
+	    {
+	      for (ioff = 0; ioff < dur; ioff++)
+		idata[j++] = (mus_sample_t)(read_sample(sf) * mus_env(egen));
 	    }
 	}
       if (temp_file)
@@ -2337,19 +2363,19 @@ static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edp
   data = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));
   data[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
   idata = data[0];
-  j = 0;
-  for (k = 0; k < dur; k++)
-    {
-      idata[j++] = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(upt, read_sample_to_float(sf)));
-      if ((temp_file) && (j == MAX_BUFFER_SIZE))
-	{
-	  err = mus_file_write(ofd, 0, j - 1, 1, data);
-	  j = 0;
-	  if (err == -1) break;
-	}
-    }
   if (temp_file)
     {
+      j = 0;
+      for (k = 0; k < dur; k++)
+	{
+	  idata[j++] = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(upt, read_sample_to_float(sf)));
+	  if ((temp_file) && (j == MAX_BUFFER_SIZE))
+	    {
+	      err = mus_file_write(ofd, 0, j - 1, 1, data);
+	      j = 0;
+	      if (err == -1) break;
+	    }
+	}
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
       close_temp_file(ofd, hdr, dur * datumb, sp);
       hdr = free_file_info(hdr);
@@ -2363,7 +2389,11 @@ static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edp
   else 
     {
       if (dur > 0) 
-	change_samples(beg, dur, idata, cp, LOCK_MIXES, S_map_channel, cp->edit_ctr);
+	{
+	  for (k = 0; k < dur; k++)
+	    idata[k] = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(upt, read_sample_to_float(sf)));
+	  change_samples(beg, dur, idata, cp, LOCK_MIXES, S_map_channel, cp->edit_ctr);
+	}
     }
   update_graph(cp); 
   free_snd_fd(sf);

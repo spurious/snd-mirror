@@ -555,7 +555,7 @@ static color_chooser_info *ccd = NULL;
 static void update_graph_setting_fft_changed(chan_info *cp)
 {
   cp->fft_changed = FFT_CHANGE_LOCKED;
-  return(update_graph(cp));
+  update_graph(cp);
 }
 
 static void invert_color_callback(Widget w, XtPointer context, XtPointer info)

@@ -464,8 +464,8 @@ static void make_command_widget(snd_state *ss, int height)
       else gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), frame);
       listener_text = make_scrolled_text(ss, frame, TRUE, NULL, NULL);
 
-      if (ss->sgx->listener_fnt) gtk_widget_modify_font(listener_text, ss->sgx->listener_fnt);
 #if HAVE_GTK2
+      if (ss->sgx->listener_fnt) gtk_widget_modify_font(listener_text, ss->sgx->listener_fnt);
       {
 	/* sigh... activate Emacs key bindings to some extent */
 	GtkBindingSet *set;
