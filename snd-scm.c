@@ -7435,7 +7435,7 @@ static SCM fft_hook,open_hook,during_open_hook,close_hook,exit_hook,start_hook,m
 static SCM mouse_release_hook,mouse_drag_hook,key_press_hook,stop_playing_hook,stop_playing_region_hook;
 static SCM mark_click_hook,start_playing_hook,output_comment_hook,output_name_hook,multichannel_mix_hook;
 static SCM mix_console_state_changed_hook,mix_speed_changed_hook,mix_amp_changed_hook,mix_position_changed_hook;
-static SCM graph_hook,after_graph_hook,mus_error_hook;
+static SCM graph_hook,after_graph_hook,mus_error_hook,snd_error_hook,snd_warning_hook;
 static SCM memo_sound;
 
 #if HAVE_LADSPA
@@ -8164,6 +8164,8 @@ void g_initialize_gh(snd_state *ss)
   mix_position_changed_hook = scm_create_hook(S_mix_position_changed_hook,2);
   multichannel_mix_hook = scm_create_hook(S_multichannel_mix_hook,1);
   mus_error_hook = scm_create_hook(S_mus_error_hook,2);           /* arg = error-type error-message */
+  snd_error_hook = scm_create_hook(S_snd_error_hook,1);           /* arg = error-message */
+  snd_warning_hook = scm_create_hook(S_snd_warning_hook,1);       /* arg = error-message */
 #else
   open_hook = gh_define(S_open_hook,SCM_BOOL_F);
   during_open_hook = gh_define(S_during_open_hook,SCM_BOOL_F);
@@ -8190,6 +8192,8 @@ void g_initialize_gh(snd_state *ss)
   mix_position_changed_hook = gh_define(S_mix_position_changed_hook,SCM_BOOL_F);
   multichannel_mix_hook = gh_define(S_multichannel_mix_hook,SCM_BOOL_F);
   mus_error_hook = gh_define(S_mus_error_hook,SCM_BOOL_F);
+  snd_error_hook = gh_define(S_snd_error_hook,SCM_BOOL_F);
+  snd_warning_hook = gh_define(S_snd_warning_hook,SCM_BOOL_F);
 #endif
 
   gh_init_marks();
@@ -8309,6 +8313,22 @@ int ignore_mus_error(int type, char *msg)
   SCM result = SCM_BOOL_F;
   if (HOOKED(mus_error_hook))
     result = g_c_run_or_hook(mus_error_hook,SCM_LIST2(gh_int2scm(type),gh_str02scm(msg)));
+  return(SCM_NFALSEP(result));
+}
+
+int ignore_snd_error(char *msg)
+{
+  SCM result = SCM_BOOL_F;
+  if (HOOKED(snd_error_hook))
+    result = g_c_run_or_hook(snd_error_hook,gh_str02scm(msg));
+  return(SCM_NFALSEP(result));
+}
+
+int ignore_snd_warning(char *msg)
+{
+  SCM result = SCM_BOOL_F;
+  if (HOOKED(snd_warning_hook))
+    result = g_c_run_or_hook(snd_warning_hook,gh_str02scm(msg));
   return(SCM_NFALSEP(result));
 }
 
@@ -8565,6 +8585,8 @@ void call_multichannel_mix_hook(snd_state *ss, int *ids, int n) {}
 void during_open(int fd, char *file, int reason) {}
 void after_open(int index) {}
 int ignore_mus_error(int type, char *msg) {return(0);}
+int ignore_snd_error(char *msg) {return(0);}
+int ignore_snd_warning(char *msg) {return(0);}
 char *output_name(snd_state *ss) {return(NULL);}
 #endif
 

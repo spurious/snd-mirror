@@ -1063,7 +1063,7 @@ void filter_env_changed(snd_info *sp, env *e)
   gtk_entry_set_text(GTK_ENTRY(w_snd_filter(sp)),tmpstr);
   if (tmpstr) FREE(tmpstr);
   sp_display_env(sp);
-  /* this is called also from snd-gh */
+  /* this is called also from snd-scm.c */
   sp->filter_changed = 1;
 }
 
@@ -1845,4 +1845,200 @@ void start_progress_report(snd_state *ss, snd_info *sp, int from_enved)
 {
   if (!(from_enved)) snd_file_glasses_icon(sp,TRUE,0);
 }
+
+#if HAVE_GUILE_GTK
+#include <guile-gtk.h>
+
+/* (gtk-label-set-text (sg-sound-amp-label-widget) "bang!") */
+
+#define Sg_sound_pane_widget              "sg-sound-pane-widget"
+#define Sg_sound_pane_box_widget          "sg-sound-pane-box-widget"
+#define Sg_sound_ctrls_widget             "sg-sound-ctrls-widget"
+#define Sg_sound_name_form_widget         "sg-sound-name-form-widget"
+#define Sg_sound_name_widget              "sg-sound-name-widget"
+#define Sg_sound_name_event_widget        "sg-sound-name-event-widget"
+#define Sg_sound_name_icon_widget         "sg-sound-name-icon-widget"
+#define Sg_sound_name_pix_widget          "sg-sound-name-pix-widget"
+#define Sg_sound_info_label_widget        "sg-sound-info-label-widget"
+#define Sg_sound_info_widget              "sg-sound-info-widget"
+#define Sg_sound_play_widget              "sg-sound-play-widget"
+#define Sg_sound_sync_widget              "sg-sound-sync-widget"
+#define Sg_sound_combine_widget           "sg-sound-combine-widget"
+#define Sg_sound_amp_widget               "sg-sound-amp-widget"
+#define Sg_sound_amp_label_widget         "sg-sound-amp-label-widget"
+#define Sg_sound_amp_number_widget        "sg-sound-amp-number-widget"
+#define Sg_sound_srate_widget             "sg-sound-srate-widget"
+#define Sg_sound_srate_label_widget       "sg-sound-srate-label-widget"
+#define Sg_sound_srate_number_widget      "sg-sound-srate-number-widget"
+#define Sg_sound_srate_arrow_widget       "sg-sound-srate-arrow-widget"
+#define Sg_sound_srate_pix_widget         "sg-sound-srate-pix-widget"
+#define Sg_sound_expand_widget            "sg-sound-expand-widget"
+#define Sg_sound_expand_label_widget      "sg-sound-expand-label-widget"
+#define Sg_sound_expand_number_widget     "sg-sound-expand-number-widget"
+#define Sg_sound_expand_button_widget     "sg-sound-expand-button-widget"
+#define Sg_sound_contrast_widget          "sg-sound-contrast-widget"
+#define Sg_sound_contrast_label_widget    "sg-sound-contrast-label-widget"
+#define Sg_sound_contrast_number_widget   "sg-sound-contrast-number-widget"
+#define Sg_sound_contrast_button_widget   "sg-sound-contrast-button-widget"
+#define Sg_sound_revscl_widget            "sg-sound-revscl-widget"
+#define Sg_sound_revscl_label_widget      "sg-sound-revscl-label-widget"
+#define Sg_sound_revscl_number_widget     "sg-sound-revscl-number-widget"
+#define Sg_sound_revlen_widget            "sg-sound-revlen-widget"
+#define Sg_sound_revlen_label_widget      "sg-sound-revlen-label-widget"
+#define Sg_sound_revlen_number_widget     "sg-sound-revlen-number-widget"
+#define Sg_sound_reverb_button_widget     "sg-sound-reverb-button-widget"
+#define Sg_sound_filter_label_widget      "sg-sound-filter-label-widget"
+#define Sg_sound_filter_order_widget      "sg-sound-filter-order-widget"
+#define Sg_sound_filter_env_widget        "sg-sound-filter-env-widget"
+#define Sg_sound_filter_widget            "sg-sound-filter-widget"
+#define Sg_sound_filter_button_widget     "sg-sound-filter-button-widget"
+#define Sg_sound_filter_dB_widget         "sg-sound-filter-dB-widget"
+#define Sg_sound_remember_widget          "sg-sound-remember-widget"
+#define Sg_sound_restore_widget           "sg-sound-restore-widget"
+#define Sg_sound_apply_widget             "sg-sound-apply-widget"
+#define Sg_sound_reset_widget             "sg-sound-reset-widget"
+#define Sg_sound_amp_adjustment           "sg-sound-amp-adjustment"
+#define Sg_sound_srate_adjustment         "sg-sound-srate-adjustment"
+#define Sg_sound_contrast_adjustment      "sg-sound-contrast-adjustment"
+#define Sg_sound_expand_adjustment        "sg-sound-expand-adjustment"
+#define Sg_sound_revscl_adjustment        "sg-sound-revscl-adjustment"
+#define Sg_sound_revlen_adjustment        "sg-sound-revlen-adjustment"
+#define Sg_sound_filter_adjustment        "sg-sound-filter-adjustment"
+
+static snd_info *get_sound_sp(SCM scm_snd_n)
+{
+  int snd_n;
+  snd_state *ss;
+  ss = get_global_state();
+  if (gh_number_p(scm_snd_n))
+    {
+      snd_n = gh_scm2int(scm_snd_n);
+      if ((snd_n >= 0) && (snd_n < ss->max_sounds) && (snd_ok(ss->sounds[snd_n])))
+	return(ss->sounds[snd_n]);
+      else return(NULL);
+    }
+  return(any_selected_sound(ss));
+}
+
+static SCM sg_sound_widget(SCM snd, int n)
+{
+  snd_info *sp; 
+  sp = get_sound_sp(snd); 
+  if (sp) return(sgtk_wrap_gtkobj((GtkObject *)(((snd_context *)(sp->sgx))->snd_widgets[n]))); 
+  return(SCM_BOOL_F);
+}
+
+static SCM sg_sound_pane_widget(SCM snd) {return(sg_sound_widget(snd,W_pane));}
+static SCM sg_sound_pane_box_widget(SCM snd) {return(sg_sound_widget(snd,W_pane_box));}
+static SCM sg_sound_ctrls_widget(SCM snd) {return(sg_sound_widget(snd,W_ctrls));}
+static SCM sg_sound_name_form_widget(SCM snd) {return(sg_sound_widget(snd,W_name_form));}
+static SCM sg_sound_name_widget(SCM snd) {return(sg_sound_widget(snd,W_name));}
+static SCM sg_sound_name_event_widget(SCM snd) {return(sg_sound_widget(snd,W_name_event));}
+static SCM sg_sound_name_icon_widget(SCM snd) {return(sg_sound_widget(snd,W_name_icon));}
+static SCM sg_sound_name_pix_widget(SCM snd) {return(sg_sound_widget(snd,W_name_pix));}
+static SCM sg_sound_info_label_widget(SCM snd) {return(sg_sound_widget(snd,W_info_label));}
+static SCM sg_sound_info_widget(SCM snd) {return(sg_sound_widget(snd,W_info));}
+static SCM sg_sound_play_widget(SCM snd) {return(sg_sound_widget(snd,W_play));}
+static SCM sg_sound_sync_widget(SCM snd) {return(sg_sound_widget(snd,W_sync));}
+static SCM sg_sound_combine_widget(SCM snd) {return(sg_sound_widget(snd,W_combine));}
+static SCM sg_sound_amp_widget(SCM snd) {return(sg_sound_widget(snd,W_amp));}
+static SCM sg_sound_amp_label_widget(SCM snd) {return(sg_sound_widget(snd,W_amp_label));}
+static SCM sg_sound_amp_number_widget(SCM snd) {return(sg_sound_widget(snd,W_amp_number));}
+static SCM sg_sound_srate_widget(SCM snd) {return(sg_sound_widget(snd,W_srate));}
+static SCM sg_sound_srate_label_widget(SCM snd) {return(sg_sound_widget(snd,W_srate_label));}
+static SCM sg_sound_srate_number_widget(SCM snd) {return(sg_sound_widget(snd,W_srate_number));}
+static SCM sg_sound_srate_arrow_widget(SCM snd) {return(sg_sound_widget(snd,W_srate_arrow));}
+static SCM sg_sound_srate_pix_widget(SCM snd) {return(sg_sound_widget(snd,W_srate_pix));}
+static SCM sg_sound_expand_widget(SCM snd) {return(sg_sound_widget(snd,W_expand));}
+static SCM sg_sound_expand_label_widget(SCM snd) {return(sg_sound_widget(snd,W_expand_label));}
+static SCM sg_sound_expand_number_widget(SCM snd) {return(sg_sound_widget(snd,W_expand_number));}
+static SCM sg_sound_expand_button_widget(SCM snd) {return(sg_sound_widget(snd,W_expand_button));}
+static SCM sg_sound_contrast_widget(SCM snd) {return(sg_sound_widget(snd,W_contrast));}
+static SCM sg_sound_contrast_label_widget(SCM snd) {return(sg_sound_widget(snd,W_contrast_label));}
+static SCM sg_sound_contrast_number_widget(SCM snd) {return(sg_sound_widget(snd,W_contrast_number));}
+static SCM sg_sound_contrast_button_widget(SCM snd) {return(sg_sound_widget(snd,W_contrast_button));}
+static SCM sg_sound_revscl_widget(SCM snd) {return(sg_sound_widget(snd,W_revscl));}
+static SCM sg_sound_revscl_label_widget(SCM snd) {return(sg_sound_widget(snd,W_revscl_label));}
+static SCM sg_sound_revscl_number_widget(SCM snd) {return(sg_sound_widget(snd,W_revscl_number));}
+static SCM sg_sound_revlen_widget(SCM snd) {return(sg_sound_widget(snd,W_revlen));}
+static SCM sg_sound_revlen_label_widget(SCM snd) {return(sg_sound_widget(snd,W_revlen_label));}
+static SCM sg_sound_revlen_number_widget(SCM snd) {return(sg_sound_widget(snd,W_revlen_number));}
+static SCM sg_sound_reverb_button_widget(SCM snd) {return(sg_sound_widget(snd,W_reverb_button));}
+static SCM sg_sound_filter_label_widget(SCM snd) {return(sg_sound_widget(snd,W_filter_label));}
+static SCM sg_sound_filter_order_widget(SCM snd) {return(sg_sound_widget(snd,W_filter_order));}
+static SCM sg_sound_filter_env_widget(SCM snd) {return(sg_sound_widget(snd,W_filter_env));}
+static SCM sg_sound_filter_widget(SCM snd) {return(sg_sound_widget(snd,W_filter));}
+static SCM sg_sound_filter_button_widget(SCM snd) {return(sg_sound_widget(snd,W_filter_button));}
+static SCM sg_sound_filter_dB_widget(SCM snd) {return(sg_sound_widget(snd,W_filter_dB));}
+static SCM sg_sound_remember_widget(SCM snd) {return(sg_sound_widget(snd,W_remember));}
+static SCM sg_sound_restore_widget(SCM snd) {return(sg_sound_widget(snd,W_restore));}
+static SCM sg_sound_apply_widget(SCM snd) {return(sg_sound_widget(snd,W_apply));}
+static SCM sg_sound_reset_widget(SCM snd) {return(sg_sound_widget(snd,W_reset));}
+static SCM sg_sound_amp_adjustment(SCM snd) {return(sg_sound_widget(snd,W_amp_adj));}
+static SCM sg_sound_srate_adjustment(SCM snd) {return(sg_sound_widget(snd,W_srate_adj));}
+static SCM sg_sound_contrast_adjustment(SCM snd) {return(sg_sound_widget(snd,W_contrast_adj));}
+static SCM sg_sound_expand_adjustment(SCM snd) {return(sg_sound_widget(snd,W_expand_adj));}
+static SCM sg_sound_revscl_adjustment(SCM snd) {return(sg_sound_widget(snd,W_revscl_adj));}
+static SCM sg_sound_revlen_adjustment(SCM snd) {return(sg_sound_widget(snd,W_revlen_adj));}
+static SCM sg_sound_filter_adjustment(SCM snd) {return(sg_sound_widget(snd,W_filter_adj));}
+
+
+void init_sound_widgets(SCM local_doc)
+{
+  gh_new_procedure0_1(Sg_sound_pane_widget,sg_sound_pane_widget);
+  gh_new_procedure0_1(Sg_sound_pane_box_widget,sg_sound_pane_box_widget);
+  gh_new_procedure0_1(Sg_sound_ctrls_widget,sg_sound_ctrls_widget);
+  gh_new_procedure0_1(Sg_sound_name_form_widget,sg_sound_name_form_widget);
+  gh_new_procedure0_1(Sg_sound_name_widget,sg_sound_name_widget);
+  gh_new_procedure0_1(Sg_sound_name_event_widget,sg_sound_name_event_widget);
+  gh_new_procedure0_1(Sg_sound_name_icon_widget,sg_sound_name_icon_widget);
+  gh_new_procedure0_1(Sg_sound_name_pix_widget,sg_sound_name_pix_widget);
+  gh_new_procedure0_1(Sg_sound_info_label_widget,sg_sound_info_label_widget);
+  gh_new_procedure0_1(Sg_sound_info_widget,sg_sound_info_widget);
+  gh_new_procedure0_1(Sg_sound_play_widget,sg_sound_play_widget);
+  gh_new_procedure0_1(Sg_sound_sync_widget,sg_sound_sync_widget);
+  gh_new_procedure0_1(Sg_sound_combine_widget,sg_sound_combine_widget);
+  gh_new_procedure0_1(Sg_sound_amp_widget,sg_sound_amp_widget);
+  gh_new_procedure0_1(Sg_sound_amp_label_widget,sg_sound_amp_label_widget);
+  gh_new_procedure0_1(Sg_sound_amp_number_widget,sg_sound_amp_number_widget);
+  gh_new_procedure0_1(Sg_sound_srate_widget,sg_sound_srate_widget);
+  gh_new_procedure0_1(Sg_sound_srate_label_widget,sg_sound_srate_label_widget);
+  gh_new_procedure0_1(Sg_sound_srate_number_widget,sg_sound_srate_number_widget);
+  gh_new_procedure0_1(Sg_sound_srate_arrow_widget,sg_sound_srate_arrow_widget);
+  gh_new_procedure0_1(Sg_sound_srate_pix_widget,sg_sound_srate_pix_widget);
+  gh_new_procedure0_1(Sg_sound_expand_widget,sg_sound_expand_widget);
+  gh_new_procedure0_1(Sg_sound_expand_label_widget,sg_sound_expand_label_widget);
+  gh_new_procedure0_1(Sg_sound_expand_number_widget,sg_sound_expand_number_widget);
+  gh_new_procedure0_1(Sg_sound_expand_button_widget,sg_sound_expand_button_widget);
+  gh_new_procedure0_1(Sg_sound_contrast_widget,sg_sound_contrast_widget);
+  gh_new_procedure0_1(Sg_sound_contrast_label_widget,sg_sound_contrast_label_widget);
+  gh_new_procedure0_1(Sg_sound_contrast_number_widget,sg_sound_contrast_number_widget);
+  gh_new_procedure0_1(Sg_sound_contrast_button_widget,sg_sound_contrast_button_widget);
+  gh_new_procedure0_1(Sg_sound_revscl_widget,sg_sound_revscl_widget);
+  gh_new_procedure0_1(Sg_sound_revscl_label_widget,sg_sound_revscl_label_widget);
+  gh_new_procedure0_1(Sg_sound_revscl_number_widget,sg_sound_revscl_number_widget);
+  gh_new_procedure0_1(Sg_sound_revlen_widget,sg_sound_revlen_widget);
+  gh_new_procedure0_1(Sg_sound_revlen_label_widget,sg_sound_revlen_label_widget);
+  gh_new_procedure0_1(Sg_sound_revlen_number_widget,sg_sound_revlen_number_widget);
+  gh_new_procedure0_1(Sg_sound_reverb_button_widget,sg_sound_reverb_button_widget);
+  gh_new_procedure0_1(Sg_sound_filter_label_widget,sg_sound_filter_label_widget);
+  gh_new_procedure0_1(Sg_sound_filter_order_widget,sg_sound_filter_order_widget);
+  gh_new_procedure0_1(Sg_sound_filter_env_widget,sg_sound_filter_env_widget);
+  gh_new_procedure0_1(Sg_sound_filter_widget,sg_sound_filter_widget);
+  gh_new_procedure0_1(Sg_sound_filter_button_widget,sg_sound_filter_button_widget);
+  gh_new_procedure0_1(Sg_sound_filter_dB_widget,sg_sound_filter_dB_widget);
+  gh_new_procedure0_1(Sg_sound_remember_widget,sg_sound_remember_widget);
+  gh_new_procedure0_1(Sg_sound_restore_widget,sg_sound_restore_widget);
+  gh_new_procedure0_1(Sg_sound_apply_widget,sg_sound_apply_widget);
+  gh_new_procedure0_1(Sg_sound_reset_widget,sg_sound_reset_widget);
+  gh_new_procedure0_1(Sg_sound_amp_adjustment,sg_sound_amp_adjustment);
+  gh_new_procedure0_1(Sg_sound_srate_adjustment,sg_sound_srate_adjustment);
+  gh_new_procedure0_1(Sg_sound_contrast_adjustment,sg_sound_contrast_adjustment);
+  gh_new_procedure0_1(Sg_sound_expand_adjustment,sg_sound_expand_adjustment);
+  gh_new_procedure0_1(Sg_sound_revscl_adjustment,sg_sound_revscl_adjustment);
+  gh_new_procedure0_1(Sg_sound_revlen_adjustment,sg_sound_revlen_adjustment);
+  gh_new_procedure0_1(Sg_sound_filter_adjustment,sg_sound_filter_adjustment);
+}
+
+#endif
 

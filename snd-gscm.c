@@ -1111,6 +1111,7 @@ static void init_guile_gtk(SCM local_doc)
   init_help_widgets(local_doc);
   init_chn_widgets(local_doc);
   init_error_widgets(local_doc);
+  init_sound_widgets(local_doc);
 
   DEFINE_PROC(gh_new_procedure0_0(Sg_selected_cursor_gc,sg_selected_cursor_gc),H_sg_selected_cursor_gc);
   DEFINE_PROC(gh_new_procedure0_0(Sg_selected_basic_gc,sg_selected_basic_gc),H_sg_selected_basic_gc);

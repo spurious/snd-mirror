@@ -424,7 +424,13 @@ GtkWidget *add_menu(snd_state *ss)
 {
   /* this mainly passes the global data pointer (ss) to all the menu-related callbacks */
 
-  /* TODO: SND_AS_WIDGET here, accelerators */
+  /* TODO: SND_AS_WIDGET here?
+   *       figure out why accelerator doesn't get displayed
+   */
+
+  GtkAccelGroup *accel_group;
+  accel_group = gtk_accel_group_new();
+  gtk_window_add_accel_group(GTK_WINDOW(MAIN_SHELL(ss)),accel_group);
 
   mw[menu_menu] = gtk_menu_bar_new();
   set_background(mw[menu_menu],(ss->sgx)->highlight_color);
@@ -438,6 +444,8 @@ GtkWidget *add_menu(snd_state *ss)
   gtk_menu_bar_append(GTK_MENU_BAR(mw[menu_menu]),mw[file_menu]);
   set_background(mw[file_menu],(ss->sgx)->highlight_color);
   gtk_widget_show(mw[file_menu]);
+  gtk_widget_add_accelerator(mw[file_menu],"activate",accel_group,GDK_F,GDK_MOD1_MASK,GTK_ACCEL_VISIBLE);
+  /* why doesn't this show up?? */
 
   mw[f_cascade_menu] = gtk_menu_new();
   set_background(mw[f_cascade_menu],(ss->sgx)->basic_color);
@@ -1050,7 +1058,6 @@ GtkWidget *add_menu(snd_state *ss)
 
   return(mw[menu_menu]);
 }
-
 
 static void GH_Callback(GtkWidget *w, gpointer clientData) 
 {

@@ -1204,8 +1204,11 @@ list.
   stop-playing-hook  (snd)            called when a sound finishes playing. (or)
   stop-playing-region-hook  (n)       called when a region finishes playing. (or)
   mus-error-hook (error-type error-message) called upon mus_error. (or)
-                                      If it returns #t, Snd ignores the error (it assumes
-                                      you've handled it via the hook).
+                                      If it returns #t, Snd ignores the error (it assumes you've handled it via the hook).
+  snd-error-hook (error-message)      called upon snd_error. (or)
+                                      If it returns #t, Snd flushes the error (it assumes you've reported it via the hook).
+  snd-warning-hook (warning-message)  called upon snd_warning. (or)
+                                      If it returns #t, Snd flushes the warning (it assumes you've reported it via the hook).
 
 To add a function to a hook, use add-hook!. To remove it, use remove-hook!.
 To clear a hook, use reset-hook!. (These are functions supplied by Guile).

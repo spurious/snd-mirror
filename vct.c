@@ -1,7 +1,7 @@
 /* vct support 
  *
  * a vct is a Guile "smob" containing a Float array and its size
- * we use these in Snd because Guile's floating-point and vector operations are slow
+ * we use these in Snd because Guile's floating-point and vector operations are slow,
  * and Snd/CLM are applications where no user is willing to wait on a multiply.
  *
  * C side:
@@ -496,7 +496,7 @@ static SCM list2vct(SCM lst)
 
 static SCM vector2vct(SCM vect)
 {
-  #define H_vector2vct "(" S_vector2vct " vect) -> a new vct objects with the elements of vector vect"
+  #define H_vector2vct "(" S_vector2vct " vect) -> a new vct object with the elements of vector vect"
   int len,i;
   vct *v;
   SCM scv;

@@ -461,7 +461,9 @@ void start_progress_report(snd_state *ss, snd_info *sp, int from_enved);
 void finish_progress_report(snd_state *ss, snd_info *sp, int from_enved);
 void progress_report(snd_state *ss, snd_info *sp, char *funcname, int curchan, int chans, Float pct, int from_enved);
 void set_apply_button(snd_info *sp, int val);
-
+#if HAVE_GUILE_GTK
+  void init_sound_widgets(SCM local_doc);
+#endif
 
 
 /* -------- snd-gmix.c -------- */

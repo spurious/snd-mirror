@@ -776,6 +776,8 @@ char *added_transform_name(int type);
   SCM parse_proc(char *buf);
   int handle_keymap(chan_info *cp, SCM func);
   int ignore_mus_error(int type, char *msg);
+  int ignore_snd_error(char *msg);
+  int ignore_snd_warning(char *msg);
   void g_initialize_gh(snd_state *ss);
   char *guile_version(void);
   MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, char *caller, int position);

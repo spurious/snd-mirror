@@ -787,6 +787,8 @@ user-interface manipulations.\n\
   " S_mix_console_state_changed_hook "\n\
   " S_multichannel_mix_hook "\n\
   " S_mus_error_hook "\n\
+  " S_snd_error_hook "\n\
+  " S_snd_warning_hook "\n\
 \n\
 ";
 
@@ -1653,6 +1655,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+7-Jun:   snd-error-hook, snd-warning-hook.\n\
 5-Jun:   snd 4.3.\n\
 30-May:  transform-size for glfft, glfft.scm, glfft.c.\n\
 29-May:  mix-sound to help with CLM/Snd explode support.\n\

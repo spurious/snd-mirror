@@ -13,6 +13,9 @@ void snd_warning(char *format, ...)
   va_start(ap,format);
   vsprintf(snd_error_buffer,format,ap);
   va_end(ap);
+#if HAVE_GUILE
+  if (ignore_snd_warning(snd_error_buffer)) return;
+#endif
   ss = get_global_state();
   if (ss)
     {
@@ -38,6 +41,9 @@ void snd_error(char *format, ...)
   va_start(ap,format);
   vsprintf(snd_error_buffer,format,ap);
   va_end(ap);
+#if HAVE_GUILE
+  if (ignore_snd_error(snd_error_buffer)) return;
+#endif
   ss = get_global_state();
   if ((ss) && (ss->sgx))
     {

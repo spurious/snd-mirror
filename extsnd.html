@@ -1249,8 +1249,11 @@ case, the result returned by the hook is the result of the last function in the 
   <a name="stopplayinghook">stop-playing-hook</a>  (snd)            called when a sound finishes playing. (<b>or</b>)
   <a name="stopplayingregionhook">stop-playing-region-hook</a>  (n)       called when a region finishes playing. (<b>or</b>)
   <a name="muserrorhook">mus-error-hook</a> (error-type error-message) called upon mus_error. (<b>or</b>)
-                                      If it returns #t, Snd ignores the error (it assumes 
-                                      you've handled it via the hook).
+                                      If it returns #t, Snd ignores the error (it assumes you've handled it via the hook).
+  <a name="snderrorhook">snd-error-hook</a> (error-message)      called upon snd_error. (<b>or</b>)
+                                      If it returns #t, Snd flushes the error (it assumes you've reported it via the hook).
+  <a name="sndwarninghook">snd-warning-hook</a> (warning-message)  called upon snd_warning. (<b>or</b>)
+                                      If it returns #t, Snd flushes the warning (it assumes you've reported it via the hook).
 
 </small></pre>
 <p>To add a function to a hook, use add-hook!.  To remove it, use remove-hook!.  To clear a hook, use reset-hook!. (These are

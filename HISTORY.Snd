@@ -1,5 +1,6 @@
 snd change log
 
+  7-Jun:     snd-error-hook, snd-warning-hook.
   5-Jun:     snd 4.3.
   30-May:    transform-size for glfft, glfft.scm, glfft.c.
   29-May:    mix-sound to help with CLM/Snd explode support.

@@ -12,9 +12,30 @@ Snd, get the sources from
   ./configure
   make
 
-If this fails, or you want to customize your version of Snd in some
-way, see snd.h for a discussion of the various compile-time switches,
-and fixup the relevant makefile:
+The configure program has several Snd-related arguments:
+
+   --with-motif         use Motif (the default)
+   --with-gtk           use Gtk+	
+   --with-gdbm          use gdbm for sndlib's sound header data base
+   --with-alsa          use ALSA if possible
+   --with-xmhtml        include the XmHTML library
+   --with-big-colormap  use big colormap
+   --with-snd-conf      look for /etc/snd.conf at startup
+   --without-guile      omit Guile even if it is available
+   --with-snd-as-widget make Snd a loadable widget, not a standalone program
+   --with-doubles       use doubles throughout (default is floats)
+   --with-float-samples represent samples internally as floats
+   --with-gsl           use gsl for ffts and whatnot
+   --enable-snd-debug   include Snd internal debugging stuff
+   --with-ladspa        include LADSPA plugin support (Linux)
+
+If the configure/make process fails, please send me
+(bil@ccrma.stanford.edu) the files config.h, config.log, and makefile,
+created (or updated) by configure.
+
+If you want to customize your version of Snd in some special way, see
+snd.h for a discussion of the various compile-time switches, and fixup
+the relevant makefile:
 
 SGI:                   make -f makefile.sgi
 Linux with Motif:      make -f makefile.linux
@@ -35,27 +56,6 @@ Snd with no interface: make -f makefile.nogui
 
 In HPUX, fixup the makefile.hpux include and library paths, then:
   make -f makefile.hpux
-
-If the configure/make process fails, please send me
-(bil@ccrma.stanford.edu) the files config.h, config.log, and makefile,
-created (or updated) by configure.
-
-The configure program has several Snd-related arguments:
-
-   --with-motif         use Motif (the default)
-   --with-gtk           use Gtk+	
-   --with-gdbm          use gdbm for sndlib's sound header data base
-   --with-alsa          use ALSA if possible
-   --with-xmhtml        include the XmHTML library
-   --with-big-colormap  use big colormap
-   --with-snd-conf      look for /etc/snd.conf at startup
-   --without-guile      omit Guile even if it is available
-   --with-snd-as-widget make Snd a loadable widget, not a standalone program
-   --with-doubles       use doubles throughout (default is floats)
-   --with-float-samples represent samples internally as floats
-   --with-gsl           use gsl for ffts and whatnot
-   --enable-snd-debug   include Snd internal debugging stuff
-   --with-ladspa        include LADSPA plugin support
 
 It is not impossible that the 'make' targets clean, install and
 uninstall will also work -- they didn't destroy my disk, but I'm no
@@ -133,9 +133,9 @@ or
 or whatever.
 
 
-The documentation is in snd.html, extsnd.html, grfsnd.html, and
-clm.html.  There's also a fancier wrapper for the documentation:
-snd1.html.  A brief change log is in HISTORY.Snd.
+The documentation is in snd.html, extsnd.html, grfsnd.html,
+sndlib.html, and clm.html.  There's also a fancier wrapper for the
+documentation: snd1.html.  A brief change log is in HISTORY.Snd.
 
 The mailing list for Snd is the same as that for Common Music:
 cmdist@ccrma.stanford.edu.  To get your address added to or removed
@@ -335,6 +335,13 @@ actual desired path is.  In the copious strace output, you should
 be able to find lines like: 
     stat("/usr/local/share/guile/1.3.4/ice-9/boot-9.scm"...)
 
+If you have installed Guile, but the snd image is looking in the wrong
+place, try setting the envinronment variable GUILE_LOAD_PATH to the
+correct directory:
+
+  setenv GUILE_LOAD_PATH /home/jimb/guile-snap
+
+
 If the snd rpm process can't find the guile library, yet you have it
 in /usr/local/lib, try the --nodeps switch to rpm (thanks to Charles
 Waldman for this tip). 
@@ -406,6 +413,7 @@ CCRMA:
 Snd:
   http://www-ccrma.stanford.edu/CCRMA/Software/snd/snd.html
   ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-4.tar.gz
+  http://snd.sourceforge.net
 
   http://www.cosy.sbg.ac.at/~gwesp/mma-sound.html (Mathematica)
   http://www.linuxpower.com/display_item.phtml?id=139 (Movies)
