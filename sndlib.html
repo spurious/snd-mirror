@@ -390,7 +390,8 @@ in subsequent calls on <b>mus_midi_read</b>, <b>mus_midi_write</b>, and
 time its output, etc.  <b>mus_midi_describe</b> returns a decription
 of the available MIDI hardware (its result should be freed, whereas
 the result of <b>mus_midi_device_name</b> should not be freed).
-The "int" result of each of the functions is -1 if some error ocurred.
+The "int" result of each of the functions is -1 if some error ocurred (from
+Guile, they throw 'mus-error).
 The <i>sysdev</i> argument to <b>mus_midi_device_name</b> is a sndlib-style
 integer packing the card number ("system" in the left half, and the
 device number in the right. On the ALSA system I'm testing at the moment,
