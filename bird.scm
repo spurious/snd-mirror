@@ -1198,7 +1198,7 @@
 
 
 (define* (make-birds #:optional (filename "test.snd"))
-  "(make-birds &optional (file \"test.snd\")) calls all the birds in bird.scm"
+  "(make-birds #:optional (file \"test.snd\")) calls all the birds in bird.scm"
   (if (find-sound filename) (close-sound (find-sound filename)))
   (if (file-exists? filename) (delete-file filename))
   (let ((out-file (new-sound filename)))

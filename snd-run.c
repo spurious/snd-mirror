@@ -1835,6 +1835,7 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, int *ints, Float 
 #define INT_ARG_3 ints[args[3]]
 #define INT_ARG_4 ints[args[4]]
 #define INT_ARG_5 ints[args[5]]
+#define INT_ARG_6 ints[args[6]]
 #define FLOAT_ARG_1 dbls[args[1]]
 #define FLOAT_ARG_2 dbls[args[2]]
 #define FLOAT_ARG_3 dbls[args[3]]
@@ -5657,6 +5658,68 @@ static xen_value *frames_1(ptree *pt, xen_value **args, int num_args)
   return(rtn);
 }
 
+
+/* ---------------- samples->vct ---------------- */
+/* samples->vct samp samps snd chn v edpos */
+
+static void samples2vct_v(int *args, int *ints, Float *dbls) 
+{
+  chan_info *cp; 
+  int pos, i, len;
+  snd_fd *sf;
+  Float *fvals;
+  vct *v;
+  v = (vct *)(ints[args[5]]);
+  if (v)
+    {
+      fvals = v->data;
+      cp = run_get_cp(3, args, ints);
+      if (cp)
+	{
+	  if (INT_ARG_6 == AT_CURRENT_EDIT_POSITION)
+	    pos = cp->edit_ctr;
+	  else pos = INT_ARG_6;
+	  sf = init_sample_read_any(INT_ARG_1, cp, READ_FORWARD, pos);
+	  if (sf)
+	    {
+	      len = INT_ARG_2;
+	      for (i = 0; i < len; i++) 
+		fvals[i] = read_sample_to_float(sf);
+	      free_snd_fd(sf);
+	    }
+	}
+    }
+  VCT_RESULT = v;
+}
+
+static char *descr_samples2vct_v(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format( PTR_PT " = samples->vct(" INT_PT ", " INT_PT ", " INT_PT ", " INT_PT ", " PTR_PT ", " INT_PT ")",
+		     args[0], (vct *)INT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2, 
+		     args[3], INT_ARG_3, args[4], INT_ARG_4, args[5], (vct *)INT_ARG_5,
+		     args[6], INT_ARG_6));
+}
+
+static xen_value *samples2vct_1(ptree *pt, xen_value **args, int num_args)
+{
+  xen_value *true_args[7];
+  xen_value *rtn;
+  int k;
+  true_args[0] = args[0];
+  true_args[1] = args[1];
+  true_args[2] = args[2];
+  run_opt_arg(pt, args, num_args, 3, true_args);
+  run_opt_arg(pt, args, num_args, 4, true_args);
+  true_args[5] = args[5]; /* create? */
+  if (num_args < 6)
+    true_args[6] = make_xen_value(R_INT, add_int_to_ptree(pt, AT_CURRENT_EDIT_POSITION), R_CONSTANT);
+  else true_args[6] = args[6];
+  rtn = package(pt, R_VCT, samples2vct_v, descr_samples2vct_v, true_args, 6);
+  for (k = num_args + 1; k <= 6; k++) FREE(true_args[k]);
+  return(rtn);
+}
+
+
 /* ---------------- report-in-minibuffer ---------------- */
 
 static void report_in_minibuffer_s(int *args, int *ints, Float *dbls) 
@@ -7020,39 +7083,66 @@ static xen_value *clm_n(ptree *prog, xen_value **args, int num_args, xen_value *
 }
 
 /* ---------------- spectrum ---------------- */
+static char *descr_mus_spectrum_2v(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format("spectrum(" PTR_PT ", " PTR_PT ")", args[1], (vct *)(INT_ARG_1), args[2], (vct *)(INT_ARG_2)));
+}
+static void mus_spectrum_2v(int *args, int *ints, Float *dbls) 
+{
+  mus_spectrum(((vct *)(INT_ARG_1))->data, ((vct *)(INT_ARG_2))->data, NULL, ((vct *)(INT_ARG_1))->length, 1);
+  VCT_RESULT = (vct *)(INT_ARG_1);
+}
 static char *descr_mus_spectrum_3v(int *args, int *ints, Float *dbls) 
 {
-  return(mus_format("spectrum(" PTR_PT ", " PTR_PT ", " PTR_PT ")", 
-		    args[1], (vct *)(INT_ARG_1), args[2], (vct *)(INT_ARG_2), args[3], (vct *)(INT_ARG_3)));
+  if (INT_ARG_3)
+    return(mus_format("spectrum(" PTR_PT ", " PTR_PT ", " PTR_PT ")", 
+		      args[1], (vct *)(INT_ARG_1), args[2], (vct *)(INT_ARG_2), args[3], (vct *)(INT_ARG_3)));
+  return(mus_format("spectrum(" PTR_PT ", " PTR_PT ", #f)", args[1], (vct *)(INT_ARG_1), args[2], (vct *)(INT_ARG_2)));
 }
 static void mus_spectrum_3v(int *args, int *ints, Float *dbls) 
 {
-  mus_spectrum(((vct *)(INT_ARG_1))->data, ((vct *)(INT_ARG_2))->data, ((vct *)(INT_ARG_3))->data, ((vct *)(INT_ARG_1))->length, 1);
+  mus_spectrum(((vct *)(INT_ARG_1))->data, ((vct *)(INT_ARG_2))->data, 
+	       (INT_ARG_3) ? (((vct *)(INT_ARG_3))->data) : NULL, 
+	       ((vct *)(INT_ARG_1))->length, 1);
+  VCT_RESULT = (vct *)(INT_ARG_1);
 }
 static char *descr_mus_spectrum_4v(int *args, int *ints, Float *dbls) 
 {
-  return(mus_format("spectrum(" PTR_PT ", " PTR_PT ", " PTR_PT ", " INT_PT ")", 
-		    args[1], (vct *)(INT_ARG_1), args[2], (vct *)(INT_ARG_2), args[3], (vct *)(INT_ARG_3), args[4], INT_ARG_4));
+  if (INT_ARG_3)
+    return(mus_format("spectrum(" PTR_PT ", " PTR_PT ", " PTR_PT ", " INT_PT ")", 
+		      args[1], (vct *)(INT_ARG_1), args[2], (vct *)(INT_ARG_2), args[3], (vct *)(INT_ARG_3), args[4], INT_ARG_4));
+  return(mus_format("spectrum(" PTR_PT ", " PTR_PT ", #f, " INT_PT ")", 
+		    args[1], (vct *)(INT_ARG_1), args[2], (vct *)(INT_ARG_2), args[4], INT_ARG_4));
 }
 static void mus_spectrum_4v(int *args, int *ints, Float *dbls) 
 {
-  mus_spectrum(((vct *)(INT_ARG_1))->data, ((vct *)(INT_ARG_2))->data, ((vct *)(INT_ARG_3))->data, INT_ARG_4, 1);
+  mus_spectrum(((vct *)(INT_ARG_1))->data, ((vct *)(INT_ARG_2))->data, 
+	       (INT_ARG_3) ? (((vct *)(INT_ARG_3))->data) : NULL,
+	       INT_ARG_4, 1);
+  VCT_RESULT = (vct *)(INT_ARG_1);
 }
 static char *descr_mus_spectrum_5v(int *args, int *ints, Float *dbls) 
 {
-  return(mus_format("spectrum(" PTR_PT ", " PTR_PT ", " PTR_PT ", " INT_PT ", " INT_PT ")", 
-		    args[1], (vct *)(INT_ARG_1), args[2], (vct *)(INT_ARG_2), args[3], (vct *)(INT_ARG_3), args[4], INT_ARG_4, args[5], INT_ARG_5));
+  if (INT_ARG_3)
+    return(mus_format("spectrum(" PTR_PT ", " PTR_PT ", " PTR_PT ", " INT_PT ", " INT_PT ")", 
+		      args[1], (vct *)(INT_ARG_1), args[2], (vct *)(INT_ARG_2), args[3], (vct *)(INT_ARG_3), args[4], INT_ARG_4, args[5], INT_ARG_5));
+  return(mus_format("spectrum(" PTR_PT ", " PTR_PT ", #f, " INT_PT ", " INT_PT ")", 
+		    args[1], (vct *)(INT_ARG_1), args[2], (vct *)(INT_ARG_2), args[4], INT_ARG_4, args[5], INT_ARG_5));
 }
 static void mus_spectrum_5v(int *args, int *ints, Float *dbls) 
 {
-  mus_spectrum(((vct *)(INT_ARG_1))->data, ((vct *)(INT_ARG_2))->data, ((vct *)(INT_ARG_3))->data, INT_ARG_4, INT_ARG_5);
+  mus_spectrum(((vct *)(INT_ARG_1))->data, ((vct *)(INT_ARG_2))->data, 
+	       (INT_ARG_3) ? (((vct *)(INT_ARG_3))->data) : NULL, 
+	       INT_ARG_4, INT_ARG_5);
+  VCT_RESULT = (vct *)(INT_ARG_1);
 }
 static xen_value *mus_spectrum_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (num_args == 3) return(package(prog, R_BOOL, mus_spectrum_3v, descr_mus_spectrum_3v, args, 3));
+  if (num_args == 2) return(package(prog, R_VCT, mus_spectrum_2v, descr_mus_spectrum_2v, args, 2));
+  if (num_args == 3) return(package(prog, R_VCT, mus_spectrum_3v, descr_mus_spectrum_3v, args, 3));
   if ((num_args == 4) && (args[4]->type == R_INT))
-    return(package(prog, R_BOOL, mus_spectrum_4v, descr_mus_spectrum_4v, args, 4));
-  return(package(prog, R_BOOL, mus_spectrum_5v, descr_mus_spectrum_5v, args, 5));
+    return(package(prog, R_VCT, mus_spectrum_4v, descr_mus_spectrum_4v, args, 4));
+  return(package(prog, R_VCT, mus_spectrum_5v, descr_mus_spectrum_5v, args, 5));
 }
 
 
@@ -9450,7 +9540,7 @@ static void init_walkers(void)
   INIT_WALKER(S_rectangular2polar, make_walker(rectangular2polar_1, NULL, NULL, 2, 2, R_VCT, FALSE, 2, R_VCT, R_VCT));
   INIT_WALKER(S_multiply_arrays, make_walker(multiply_arrays_1, NULL, NULL, 2, 3, R_VCT, FALSE, 3, R_VCT, R_VCT, R_INT));
   INIT_WALKER(S_mus_fft, make_walker(mus_fft_1, NULL, NULL, 2, 4, R_VCT, FALSE, 4, R_VCT, R_VCT, R_INT, R_INT));
-  INIT_WALKER(S_spectrum, make_walker(mus_spectrum_1, NULL, NULL, 2, 5, R_VCT, FALSE, 5, R_VCT, R_VCT, R_VCT, R_INT, R_INT));
+  INIT_WALKER(S_spectrum, make_walker(mus_spectrum_1, NULL, NULL, 2, 5, R_VCT, FALSE, 5, R_VCT, R_VCT, R_ANY, R_INT, R_INT));
   INIT_WALKER(S_convolution, make_walker(convolution_1, NULL, NULL, 2, 3, R_VCT, FALSE, 3, R_VCT, R_VCT, R_INT));
   INIT_WALKER(S_formant_bank, make_walker(formant_bank_1,NULL, NULL, 3, 3, R_FLOAT, FALSE, 1, R_VCT));
   INIT_WALKER(S_frame_add, make_walker(mus_frame_add_1, NULL, NULL, 2, 3, R_CLM, FALSE, 3, R_CLM, R_CLM, R_CLM));
@@ -9566,11 +9656,11 @@ static void init_walkers(void)
   INIT_WALKER(S_channels, make_walker(channels_1, NULL, NULL, 0, 1, R_INT, FALSE, 0));
   INIT_WALKER(S_c_g, make_walker(c_g_p_1, NULL, NULL, 0, 0, R_BOOL, FALSE, 0));
   INIT_WALKER(S_autocorrelate, make_walker(autocorrelate_1, NULL, NULL, 1, 1, R_VCT, FALSE, 1, R_VCT));
+  INIT_WALKER(S_samples2vct, make_walker(samples2vct_1, NULL, NULL, 5, 6, R_VCT, FALSE, 5, R_INT, R_INT, R_ANY, R_ANY, R_VCT));
 
   INIT_WALKER(S_snd_print, make_walker(snd_print_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_STRING));
   INIT_WALKER(S_snd_warning, make_walker(snd_warning_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_STRING));
   INIT_WALKER(S_report_in_minibuffer, make_walker(report_in_minibuffer_1, NULL, NULL, 1, 2, R_BOOL, FALSE, 1, R_STRING));
-  /* TODO: samples->vct */
 }
 #endif
 

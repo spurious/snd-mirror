@@ -3,9 +3,10 @@
 
 #define MUS_VERSION 2
 #define MUS_REVISION 28
-#define MUS_DATE "9-Apr-03"
+#define MUS_DATE "25-Apr-03"
 
 /* 
+ * 25-Apr:     mus_spectrum and mus_convolution now return Float*.
  * 9-Apr:      removed MUS_HANNING_WINDOW (use MUS_HANN_WINDOW).
  * 3-Mar:      mus_delay_line_p for tap error checking.
  * 27-Feb:     mus_length for env -> original duration in samples.
@@ -505,14 +506,14 @@ int mus_src_p(mus_any *ptr);
 int mus_convolve_p(mus_any *ptr);
 Float mus_convolve(mus_any *ptr, Float(*input)(void *arg, int direction));
 mus_any *mus_make_convolve(Float(*input)(void *arg, int direction), Float *filter, int fftsize, int filtersize, void *environ);
-void mus_spectrum(Float *rdat, Float *idat, Float *window, int n, int type);
+Float *mus_spectrum(Float *rdat, Float *idat, Float *window, int n, int type);
 void mus_fft(Float *rl, Float *im, int n, int is);
 #if HAVE_FFTW || HAVE_FFTW3
 void mus_fftw(Float *rl, int n, int dir);
 #endif
 Float *mus_make_fft_window(int type, int size, Float beta);
 Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *window);
-void mus_convolution(Float* rl1, Float* rl2, int n);
+Float *mus_convolution(Float* rl1, Float* rl2, int n);
 void mus_convolve_files(const char *file1, const char *file2, Float maxamp, const char *output_file);
 
 int mus_granulate_p(mus_any *ptr);

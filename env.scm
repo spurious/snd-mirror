@@ -1,6 +1,6 @@
 ;;; various envelope functions
 ;;;
-;;; envelope-interp (x env &optional (base 1.0)) -> value of env at x (base controls connecting segment type)
+;;; envelope-interp (x env #:optional (base 1.0)) -> value of env at x (base controls connecting segment type)
 ;;; window-envelope (beg end env) -> portion of env lying between x axis values beg and end
 ;;; map-envelopes (func env1 env2) maps func over the breakpoints in env1 and env2 returning a new envelope
 ;;;   multiply-envelopes (env1 env2) multiplies break-points of env1 and env2 returning a new envelope
@@ -8,11 +8,11 @@
 ;;; max-envelope (env) -> max y value in env
 ;;; integrate-envelope (env) -> area under env
 ;;; envelope-last-x (env) -> max x axis break point position
-;;; stretch-envelope env old-attack new-attack &optional old-decay new-decay -> divseg-like envelope mangler
-;;; scale-envelope (env scaler &optional offset) scales y axis values by 'scaler' and optionally adds 'offset'
+;;; stretch-envelope env old-attack new-attack #:optional old-decay new-decay -> divseg-like envelope mangler
+;;; scale-envelope (env scaler #:optional offset) scales y axis values by 'scaler' and optionally adds 'offset'
 ;;; reverse-envelope (env) reverses the breakpoints in 'env'
-;;; concatenate-envelopes (&rest envs) concatenates its arguments into a new envelope
-;;; repeat-envelope env repeats &optional (reflected #f) (normalized #f) repeats an envelope
+;;; concatenate-envelopes (#:rest envs) concatenates its arguments into a new envelope
+;;; repeat-envelope env repeats #:optional (reflected #f) (normalized #f) repeats an envelope
 ;;; power-env: generator for extended envelopes (each segment has its own base)
 
 (use-modules (ice-9 format) (ice-9 optargs))
@@ -20,8 +20,8 @@
 ;;; -------- envelope-interp
 
 (define envelope-interp                      ;env is list of x y breakpoint pairs, interpolate at x returning y
-  (lambda args                          ;  (x env &optional (base 1.0)
-    "(envelope-interp x env &optional (base 1.0)) -> value of env at x; base controls connecting segment \
+  (lambda args                          ;  (x env #:optional (base 1.0)
+    "(envelope-interp x env #:optional (base 1.0)) -> value of env at x; base controls connecting segment \
 type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
     (let ((x (car args))
 	  (env (cadr args))
@@ -167,7 +167,7 @@ envelope: (multiply-envelopes '(0 0 2 .5) '(0 0 1 2 2 1)) -> '(0 0 0.5 0.5 1.0 0
 
 (define (stretch-envelope . args)
 
-  "(stretch-envelope env old-attack new-attack &optional old-decay new-decay) takes 'env' and \
+  "(stretch-envelope env old-attack new-attack #:optional old-decay new-decay) takes 'env' and \
 returns a new envelope based on it but with the attack and optionally decay portions stretched \
 or squeezed; 'old-attack' is the original x axis attack end point, 'new-attack' is where that \
 section should end in the new envelope.  Similarly for 'old-decay' and 'new-decay'.  This mimics \
@@ -246,7 +246,7 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
 ;;; -------- scale-envelope
 
 (define* (scale-envelope e scl #:optional (offset 0))
-  "(scale-envelope env scaler &optional offset) scales y axis values by 'scaler' and optionally adds 'offset'"
+  "(scale-envelope env scaler #:optional (offset 0)) scales y axis values by 'scaler' and optionally adds 'offset'"
   (if (null? e)
       '()
       (append (list (car e) (+ offset (* scl (cadr e))))
@@ -275,7 +275,7 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
 ;;; -------- concatenate-envelopes
 
 (define* (concatenate-envelopes #:rest envs)
-  "(concatenate-envelopes &rest envs) concatenates its arguments into a new envelope"
+  "(concatenate-envelopes #:rest envs) concatenates its arguments into a new envelope"
   (define (cat-1 e newe xoff x0)
     (if (null? e)
 	newe
@@ -301,7 +301,7 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
 
 
 (define* (repeat-envelope ur-env repeats #:optional (reflected #f) (normalized #f))
-    "(repeat-envelope env repeats &optional reflected normalized) repeats 'env' 'repeats' \
+    "(repeat-envelope env repeats #:optional (reflected #f) (normalized #f)) repeats 'env' 'repeats' \
 times.  (repeat-envelope '(0 0 100 1) 2) -> (0 0 100 1 101 0 201 1). \
 If the final y value is different from the first y value, a quick ramp is \
 inserted between repeats. 'normalized' causes the new envelope's x axis \

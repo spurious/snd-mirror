@@ -4,8 +4,8 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Mar 25 23:21:37 CET 2003
-# Last: Wed Apr 16 17:53:39 CEST 2003
-# Version: $Revision: 1.13 $
+# Last: Fri Apr 25 02:16:47 CEST 2003
+# Version: $Revision: 1.14 $
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -170,7 +170,9 @@ $dlocsig_speed_of_sound = 344.0           unless defined? $dlocsig_speed_of_soun
 # Sample functions at the end of the file:
 
 # sinewave(start, dur, freq, amp, *args)
-# move(start, file, *args)
+# move_rb(start, file, *args) (pure Ruby version)
+# move(start, file, *args)    (inlined C-code makes it faster)
+# run_move(*args)
 # move_sound(*args) { ... }
 # dlocnrev(startime, dur, *args)
 
@@ -1166,7 +1168,7 @@ compute silently with %d rev_channel%s instead of %d",
                                  1.0
                                end)
     [Dlocs.new(start,
-               ((startime + dur) * $rbm_srate).floor,
+               seconds2samples(startime + dur),
                speakers[:number],
                rev_channels,
                out_delays,
@@ -1218,7 +1220,7 @@ compute silently with %d rev_channel%s instead of %d",
       sloc[:out_channels].times do |chan|
         out_any(dloc,
                 if sloc[:out_delays][chan]
-                  delay(sloc[:out_channels][chan], sample * env(sloc[:gains][chan]))
+                  delay(sloc[:out_delays][chan], sample * env(sloc[:gains][chan]))
                 else
                   sample * env(sloc[:gains][chan])
                 end,
@@ -1226,16 +1228,10 @@ compute silently with %d rev_channel%s instead of %d",
                 $rbm_output)
       end
       if $rbm_reverb
-        if sloc[:rev_channels] == 1
-          outa(dloc, sample * env(sloc[:rev]) * env(sloc[:rev_gains][0]), $rbm_reverb)
-        else
-          amount = env(sloc[:rev])
-          sloc[:rev_channels].times do |chan|
-            out_any(dloc,
-                    sample * amount * env(sloc[:rev_gains][chan]),
-                    sloc[:out_map][chan],
-                    $rbm_reverb)
-          end
+        amount = env(sloc[:rev])
+        sloc[:rev_channels].times do |chan|
+          out_any(dloc, sample * amount * env(sloc[:rev_gains][chan]),
+                  sloc[:out_map][chan], $rbm_reverb)
         end
       end
     end
@@ -2805,7 +2801,7 @@ class Dlocsig_menu
       end
       test_value = lambda do
         ary = @current.dup
-        # no negative velocity values are allowed
+        # no negative velocity values allowed
         vset = false
         @current.each do |x|
           x[-1] = 0 if x[-1] < 0
@@ -2821,7 +2817,7 @@ class Dlocsig_menu
           error("%s: path contains only zeros (%s)", get_func_name(), ary.inspect)
           false
         elsif ary.length < 3
-          error("%s: to draw a path at least three points are recommended (%d)",
+          warn("%s: to draw a path at least three points are recommended (%d)",
                 get_func_name(), ary.length)
           false
         else
@@ -3013,7 +3009,7 @@ def sinewave(start, dur, freq, amp, *args)
   beg.upto(len) do |i| dlocsig(dloc, i, env(aenv) * oscil(osc)) end
 end
 
-def move(start, file, *args)
+def move_rb(start, file, *args)
   amp   = get_args(args, :amp, 1.0)
   paths = get_args(args, :paths, [])
   dur = mus_sound_duration(file)
@@ -3039,13 +3035,113 @@ def move(start, file, *args)
   end
 end
 
+# faster version of move() with C-loop
+
+def move(start, file, *args)
+  amp   = get_args(args, :amp, 1.0)
+  paths = get_args(args, :paths, [])
+  dur = mus_sound_duration(file)
+  sr = mus_sound_srate(file)
+  chns = mus_sound_chans(file)
+  npaths = [paths.length, chns].min
+  inary = Array.new(npaths) do |f| make_readin(:file, file, :channel, f) end
+  loc = Array.new(npaths)
+  beg = Array.new(npaths)
+  fin = Array.new(npaths)
+  min_beg = max_end = 0
+  npaths.times do |d|
+    loc[d], dbeg, dend = make_dlocsig(start, dur, :scaler, amp, :path, paths.shift)
+    beg[d] = dbeg
+    fin[d] = dend
+    min_beg = dbeg if min_beg.zero? or dbeg < min_beg
+    max_end = dend if max_end.zero? or dend > max_end
+  end
+  run_move(min_beg, max_end, npaths, loc, inary, beg, fin)
+end
+
+#
+# C-loop for move()
+#
+
+def run_move(*args)
+  prelude = %Q{
+#include <sndlib.h>
+#include <clm.h>
+
+typedef struct {
+    mus_any *gen;
+    VALUE *vcts;
+    int nvcts;
+    void *input_ptree;
+} mus_xen;
+
+#define RSNDGEN(obj)       (mus_any *)(((mus_xen *)(DATA_PTR(obj)))->gen)
+#define START(obj)         (off_t)FIX2LONG(RSTRUCT(obj)->ptr[0])
+#define END(obj)           (off_t)FIX2LONG(RSTRUCT(obj)->ptr[1])
+#define OUT_CHANNELS(obj)  FIX2INT(RSTRUCT(obj)->ptr[2])
+#define REV_CHANNELS(obj)  FIX2INT(RSTRUCT(obj)->ptr[3])
+#define OUT_DELAYS(obj, x) RSNDGEN(RARRAY(RSTRUCT(obj)->ptr[4])->ptr[x])
+#define OUT_DELAYS_EXIST(obj, x) RARRAY(RSTRUCT(obj)->ptr[4])->ptr[x]
+#define OUT_MAP(obj, x)    FIX2INT(RARRAY(RSTRUCT(obj)->ptr[5])->ptr[x])
+#define GAINS(obj, x)      RSNDGEN(RARRAY(RSTRUCT(obj)->ptr[6])->ptr[x])
+#define REV_GAINS(obj, x)  RSNDGEN(RARRAY(RSTRUCT(obj)->ptr[7])->ptr[x])
+#define DELAY(obj)         RSNDGEN(RSTRUCT(obj)->ptr[8])
+#define PATH(obj)          RSNDGEN(RSTRUCT(obj)->ptr[9])
+#define REV(obj)           RSNDGEN(RSTRUCT(obj)->ptr[10])
+
+static VALUE
+mus_dlocsig(VALUE sloc, off_t loc, Float input) {
+    int i = 0;
+    Float sample, amount;
+    mus_any *out = (rb_gv_get("$rbm_output") != Qfalse) ? RSNDGEN(rb_gv_get("$rbm_output")) : NULL;
+    mus_any *rev = (rb_gv_get("$rbm_reverb") != Qfalse) ? RSNDGEN(rb_gv_get("$rbm_reverb")) : NULL;
+    if(loc > START(sloc)) {
+        mus_delay(PATH(sloc), (loc > END(sloc)) ? 0.0 : input, 0.0);
+        for(i = 0; i < OUT_CHANNELS(sloc); i++)
+	    mus_out_any(loc, 0.0, i, out);
+    }
+    else {
+	sample = mus_delay(PATH(sloc), (loc > END(sloc)) ? 0.0 : input, mus_env(DELAY(sloc)));
+	for(i = 0; i < OUT_CHANNELS(sloc); i++)
+            mus_out_any(loc,
+                        (OUT_DELAYS_EXIST(sloc, i) != Qnil) ?
+                        mus_delay(OUT_DELAYS(sloc, i), sample * mus_env(GAINS(sloc, i)), 0.0) :
+                        (sample * mus_env(GAINS(sloc, i))), OUT_MAP(sloc, i), out);
+	if(rev) {
+ 	    amount = mus_env(REV(sloc));
+	    for(i = 0; i < REV_CHANNELS(sloc); i++)
+                mus_out_any(loc, sample * amount * mus_env(REV_GAINS(sloc, i)),
+                            OUT_MAP(sloc, i), rev);
+	}
+    }
+    return sloc;
+}
+}
+  inline args, prelude, %Q{
+    off_t i = 0;
+    off_t min_beg = FIX2LONG(argv[i++]);
+    off_t max_end = FIX2LONG(argv[i++]);
+    int npaths = FIX2INT(argv[i++]);
+    VALUE dloc = argv[i++];
+    VALUE inary = argv[i++];
+    VALUE beg = argv[i++];
+    VALUE fin = argv[i++];
+    int c = 0;
+    for(i = min_beg; i < max_end; i++)
+	for(c = 0; c < npaths; c++)
+	    if((i >= FIX2LONG(RARRAY(beg)->ptr[c])) && (i <= FIX2LONG(RARRAY(fin)->ptr[c])))
+		mus_dlocsig(RARRAY(dloc)->ptr[c], i, mus_readin(RSNDGEN(RARRAY(inary)->ptr[c])));
+    return Qnil;
+}
+  end
+
 #
 # move_sound(*args, &body)
 #
-# Uses two more options than the original move-sound of
+# Uses three more options than the original move-sound of
 # move-sound.lisp to decide to mix in the intermediate "to_move" file
-# in a permanent file and where to start (in seconds) the mixin in the
-# permanent file.
+# in a permanent file, where to start (in seconds) the mixin in the
+# permanent file, and if it should work in verbose mode.
 #
 
 def move_sound(*args, &body)
@@ -3054,21 +3150,23 @@ def move_sound(*args, &body)
      :paths,    nil
      :srate,    $rbm_srate (#$rbm_srate)
      :channels, nil
+     :verbose,  $rbm_verbose (#$rbm_verbose)
      :output,   false (output file name to mix in)
      :startime, 0     (start time in seconds in output file)") if get_args(args, :help, false)
   path     = get_args(args, :path, nil)
   paths    = get_args(args, :paths, nil)
-  sr       = get_args(args, :srate, $rbm_srate)
+  srate    = get_args(args, :srate, $rbm_srate)
   chns     = get_args(args, :channels, nil)
-  output   = get_args(args, :output, false)
+  verbose  = get_args(args, :verbose, $rbm_verbose)
+  output   = get_args(args, :output, nil)
   startime = get_args(args, :startime, 0)
   if path or paths
     chns = (chns or (path ? 1 : paths.length))
-    sound_let("to_move", :srate, sr, :channels, chns) do |tmp_file|
-      body.call
-      message("Moving sound on %d channel%s... ", chns, (chns > 1 ? "s" : ""))
-      move(0, tmp_file, :paths, (path ? [path] : paths))
-      mus_mix(output, tmp_file, (startime * $rbm_srate).round) if output
+    sound_let([["to_move", :srate, srate, :channels, chns, body]]) do |fary|
+      message("%s: moving sound on %d channel%s",
+              get_func_name(), chns, (chns > 1 ? "s" : "")) if verbose
+      move(0, fary.first, :paths, (path ? [path] : paths))
+      mus_mix(output, fary.first, seconds2samples(startime)) if output
     end
   else
     body.call
@@ -3076,7 +3174,8 @@ def move_sound(*args, &body)
 end
 
 #
-# NREV (see clm-2/dlocsig/dlocsig.lisp)
+# NREV (see clm-2/dlocsig/dlocsig.lisp).
+# For a faster version see nrev(startime, dur, *args) in v.rb.
 #
 
 def dlocnrev(startime, dur, *args)
@@ -3086,8 +3185,7 @@ def dlocnrev(startime, dur, *args)
   output_scale  = get_args(args, :output_scale, 1.0)
   amp_env       = get_args(args, :amp_env, [0, 1, 1, 1])
   volume        = get_args(args, :volume, 1.0)
-  beg = (startime * $rbm_srate).floor
-  len = beg + (dur * $rbm_srate).floor
+  beg, len = times2samples(startime, dur)
   env_a = make_env(:envelope, amp_env, :scaler, output_scale, :duration, dur)
   srscale = $rbm_srate / 25641.0
   val = 0

@@ -1092,6 +1092,7 @@
 	    (list "nist-shortpack.wav" 1 16000 4.53824996948242 "NIST" "unsupported")
 	    (list "none.aifc" 1 44100 0.0367800444364548 "AIFC" "big endian short (16 bits)")
 	    (list "nylon2.wav" 2 22050 1.14376413822174 "RIFF" "unsupported")
+	    (list "o2.adf" 1 44100 0.036780 "CSRE adf" "little endian short (16 bits)")
 	    (list "o2.avr" 1 44100 0.0183900222182274 "AVR" "big endian short (16 bits)")
 	    (list "o2.bicsf" 1 44100 0.0367800444364548 "IRCAM" "big endian short (16 bits)")
 	    (list "o2.mpeg1" 2 44100 0.00709750549867749 "raw (no header)" "big endian short (16 bits)")
@@ -22551,7 +22552,7 @@ EDITS: 2
 
 	 (set! d1 (snd-spectrum d0 rectangular-window))
 	 (IF (fneq (vct-ref d1 0) 1.0)
-	     (snd-display (format ";snd-spectrum back (1.0 ~D): ~A?" size (vct-ref d1 0))))
+	     (snd-display ";snd-spectrum back (1.0 ~D): ~A?" size (vct-ref d1 0)))
 	 (call-with-current-continuation
 	  (lambda (break)
 	    (do ((i 1 (1+ i)))
@@ -22587,7 +22588,7 @@ EDITS: 2
 		  ((= i len2))
 		(if (fneq (vct-ref rl i) (vct-ref xrl i))
 		    (begin
-		      (snd-display "flat fft: ~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
+		      (snd-display ";flat fft: ~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
 		      (break))))))
 	   (IF (fneq (vct-ref rl 0) (* len len)) (snd-display ";~A at 0: ~A" len (vct-ref rl 0)))
 	   (vct-set! rl 0 0.0)
@@ -22609,7 +22610,7 @@ EDITS: 2
 		  ((= i len2))
 		(if (fneq (vct-ref rl i) (vct-ref xrl i))
 		    (begin
-		      (snd-display "impulse fft: ~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
+		      (snd-display ";impulse fft: ~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
 		      (break))))))
 	   (IF (fneq (vct-ref rl 0) 1.0) (snd-display ";flat ~A at 0: ~A" len (vct-ref rl 0)))))
        (list 16 128 512 1024))
@@ -22634,7 +22635,7 @@ EDITS: 2
 		  ((= i len2))
 		(if (fneq (vct-ref rl i) (vct-ref xrl i))
 		    (begin
-		      (snd-display "random fft: ~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
+		      (snd-display ";random fft: ~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
 		      (break))))))))
        (list 16 128 512 1024 4096))
       
@@ -22674,14 +22675,14 @@ EDITS: 2
 	   (vct-set! rl 0 1.0)
 	   (vct-set! rl 4 1.0)
 	   (snd-transform autocorrelation rl 0) ; this is exactly the same as (autocorrelate rl)
-	   (IF (fneq (vct-ref rl 0) 2.0) (snd-display "autocorrelation ~A 0: ~A" len (vct-ref rl 0)))
-	   (IF (fneq (vct-ref rl 4) 1.0) (snd-display "autocorrelation ~A 4: ~A" len (vct-ref rl 4)))
+	   (IF (fneq (vct-ref rl 0) 2.0) (snd-display ";autocorrelation ~A 0: ~A" len (vct-ref rl 0)))
+	   (IF (fneq (vct-ref rl 4) 1.0) (snd-display ";autocorrelation ~A 4: ~A" len (vct-ref rl 4)))
 
 	   (vct-set! rla 0 1.0)
 	   (vct-set! rla 4 1.0)
 	   (autocorrelate rla)
-	   (IF (fneq (vct-ref rla 0) 2.0) (snd-display "autocorrelate ~A 0: ~A" len (vct-ref rla 0)))
-	   (IF (fneq (vct-ref rla 4) 1.0) (snd-display "autocorrelate ~A 4: ~A" len (vct-ref rla 4)))
+	   (IF (fneq (vct-ref rla 0) 2.0) (snd-display ";autocorrelate ~A 0: ~A" len (vct-ref rla 0)))
+	   (IF (fneq (vct-ref rla 4) 1.0) (snd-display ";autocorrelate ~A 4: ~A" len (vct-ref rla 4)))
 	   
 	   (vct-set! xrl 0 1.0)
 	   (vct-set! xrl 4 1.0)
@@ -22703,7 +22704,7 @@ EDITS: 2
 		  ((= i len2))
 		(if (fneq (vct-ref rl i) (vct-ref xrl i))
 		    (begin
-		      (snd-display "~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
+		      (snd-display ";~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
 		      (break))))))
 	   (vct-set! rl 0 0.0)
 	   (vct-set! rl 4 0.0)
@@ -22741,7 +22742,7 @@ EDITS: 2
 		  ((= i len2))
 		(if (fneq (vct-ref rl i) (vct-ref xrl i))
 		    (begin
-		      (snd-display "random ~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
+		      (snd-display ";random ~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
 		      (break))))))))
        (list 16 64 256 512))
 
@@ -22783,7 +22784,7 @@ EDITS: 2
 		  ((= i len2))
 		(if (fneq (vct-ref rl i) (vct-ref xrl i))
 		    (begin
-		      (snd-display "~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
+		      (snd-display ";~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
 		      (break))))))))
        (list 16 64 256 512))
 
@@ -26705,6 +26706,22 @@ EDITS: 2
       (let ((val (run-eval '(oscil (efunc-7 efunc-gen)))))
 	(if (fneq val .248) (snd-display ";embedded func 18: ~A" val)))
       
+      (let ((ind (open-sound "oboe.snd")))
+	(let ((val (run (lambda () (samples->vct 1000 10 ind 0 (make-vct 10))))))
+	  (if (not (vequal val (vct 0.033 0.035 0.034 0.031 0.026 0.020 0.013 0.009 0.005 0.004)))
+	      (snd-display ";run samples->vct: ~A" val)))
+	(close-sound ind))
+
+      (let ((rla (make-vct 16)))
+	(let ((val (run (lambda () 
+			  (vct-set! rla 0 1.0)
+			  (vct-set! rla 4 1.0)
+			  (autocorrelate rla)
+			  rla))))
+	  (IF (fneq (vct-ref val 0) 2.0) (snd-display ";run autocorrelate 0: ~A" (vct-ref rla 0)))
+	  (IF (fneq (vct-ref val 4) 1.0) (snd-display ";run autocorrelate 4: ~A" (vct-ref rla 4)))))
+
+
       ))))
 
 

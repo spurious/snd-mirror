@@ -716,7 +716,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 ;;; -------- select-file --------
 ;;;
-;;; (select-file func &optional title dir filter help)
+;;; (select-file func #:optional title dir filter help)
 ;;;   starts a File Selection Dialog, runs func if a file is selected
 ;;;
 ;;; (add-to-menu 0 "Insert File" 

@@ -132,7 +132,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
       (throw 'no-active-selection (list "selection-rms"))))
 
 (define* (region-rms #:optional (n 0))
-  "(region-rms &optional n) -> rms of region n's data (chan 0)"
+  "(region-rms #:optional (n 0)) -> rms of region n's data (chan 0)"
   (if (region? n)
       (let* ((data (region-samples->vct 0 0 n)))
 	(sqrt (/ (dot-product data data) (vct-length data))))
@@ -140,7 +140,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 
 (define* (window-samples #:optional snd chn)
-  "(window-samples &optional snd chn) -> sample in snd channel chn in current graph window"
+  "(window-samples #:optional snd chn) -> sample in snd channel chn in current graph window"
   (let ((wl (left-sample snd chn))
 	(wr (right-sample snd chn)))
     (samples wl (+ 1 (- wr wl)) snd chn)))
@@ -813,7 +813,7 @@ then inverse ffts."
     val))
 
 (define* (make-ramp #:optional (size 128))
-  "(make-ramp &optional size) returns a ramp generator"
+  "(make-ramp #:optional (size 128)) returns a ramp generator"
   (list 0 size))
 
 (define (squelch-vowels)
@@ -1644,7 +1644,7 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
 
 (define make-sound-interp 
   (lambda (start . rest)
-    "(make-sound-interp start &optional snd chn) -> an interpolating reader for snd's channel chn"
+    "(make-sound-interp start #:optional snd chn) -> an interpolating reader for snd's channel chn"
     (let* ((snd (if (> (length rest) 0) (car rest) #f))
 	   (chn (if (> (length rest) 1) (cadr rest) #f))
 	   (bufsize 2048)
@@ -1697,7 +1697,7 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
 
 (define env-sound-interp
   (lambda (envelope . rest)
-    "(env-sound-interp env &optional (time-scale 1.0) snd chn) reads snd's channel chn according to env and time-scale"
+    "(env-sound-interp env #:optional (time-scale 1.0) snd chn) reads snd's channel chn according to env and time-scale"
     ;; since the old/new sounds can be any length, we'll write a temp file rather than trying to use map-chan or vct-map!
     (let* ((time-scale (if (not (null? rest)) (car rest) 1.0))
 	   (snd (if (> (length rest) 1) (cadr rest) #f))
@@ -2340,7 +2340,7 @@ In most cases, this will be slightly offset from the true beginning of the note"
     data))
 
 (define (add-notes notes)
-  "(add-notes notes) adds (mixes) 'notes' which is a list of lists of the form: file &optional (offset 0.0) (amp 1.0) \
+  "(add-notes notes) adds (mixes) 'notes' which is a list of lists of the form: file #:optional (offset 0.0) (amp 1.0) \
 starting at the cursor in the currently selected channel: (add-notes '(("oboe.snd") ("pistol.snd" 1.0 2.0)))"
   (let* ((snd (or (selected-sound) (car (sounds))))
 	 (chn (or (selected-channel) 0))

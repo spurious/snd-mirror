@@ -4011,7 +4011,7 @@ static int read_adf_header(int chan)
       else data_format = MUS_ULSHORT;
     }
   else data_format = MUS_UNSUPPORTED;
-  srate = (int)mus_char_to_lfloat((unsigned char *)(hdrbuf + 22));
+  srate = (int)(1000 * mus_char_to_lfloat((unsigned char *)(hdrbuf + 22)));
   data_size = mus_char_to_lint((unsigned char *)(hdrbuf + 8));
   data_location = 512;
   true_file_length = SEEK_FILE_LENGTH(chan);

@@ -15,7 +15,7 @@
 (use-modules (ice-9 format) (ice-9 optargs))
 
 (define* (play-sound #:optional func)
-  "(play-sound &optional func) plays the currently selected sound, calling func on each data buffer, if func exists"
+  "(play-sound #:optional func) plays the currently selected sound, calling func on each data buffer, if func exists"
   ;;   this is essentially what the built-in play function is doing
   ;;
   ;; first try the simple case(s) -- most sound systems can handle short (16-bit) data and 1 or 2 channels
@@ -285,7 +285,7 @@ read, even if not playing.  'files' is a list of files to be played."
 
 (define play-with-amps
   (lambda (sound . amps)
-    "(play-with-amps snd &rest amps) plays snd with each channel scaled by the corresponding \
+    "(play-with-amps snd #:rest amps) plays snd with each channel scaled by the corresponding \
 amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitude"
     (let ((chans (chans sound)))
       (do ((chan 0 (1+ chan)))

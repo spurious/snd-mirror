@@ -309,6 +309,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+25-Apr:  check-for-unsaved-edits arg defaults to #t now.\n\
 22-Apr:  samples function returns a vct, not a vector.\n\
 15-Apr:  removed fix-bar, makefile.motif.osx, and makefile.gtk.osx\n\
 11-Apr:  moved dismiss-all-dialogs to snd6.scm.\n\
@@ -322,12 +323,6 @@ void news_help(snd_state *ss)
            mus_file_data_clipped, and mus_file_set_prescaler.\n\
 28-Mar:  added file arg to save-macros.\n\
 26-Mar:  maxf.scm and maxf.rb from Michael Scholz.\n\
-21-Mar:  snd 6.7.\n\
-19-Mar:  xm-enved.rb and rubber.rb thanks to Michael Scholz.\n\
-         added listener-click-hook with click-for-listener-help in draw.scm.\n\
-17-Mar:  Mac OSX Record implemented.\n\
-         piano.rb, rgb.rb, strad.scm, and strad.rb thanks to Michael Scholz.\n\
-         moved contrib/* to the main directory.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

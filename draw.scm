@@ -44,7 +44,7 @@ whenever they're in the current view."
 	 colors))))
 
 (define* (color-samples color #:optional ubeg udur usnd uchn)
-  "(color-samples color &optional beg dur snd chn) causes samples from beg to beg+dur to be displayed in color"
+  "(color-samples color #:optional beg dur snd chn) causes samples from beg to beg+dur to be displayed in color"
   (if (not (member display-samples-in-color (hook->list after-graph-hook)))
       (add-hook! after-graph-hook display-samples-in-color))
   (let* ((beg (or ubeg 0))
@@ -56,7 +56,7 @@ whenever they're in the current view."
     (update-time-graph snd chn)))
 
 (define* (uncolor-samples #:optional usnd uchn)
-  "(uncolor-samples &optional snd chn) cancels sample coloring in the given channel"
+  "(uncolor-samples #:optional snd chn) cancels sample coloring in the given channel"
   (let*	((snd (or usnd (selected-sound) (car (sounds))))
 	 (chn (or uchn (selected-channel snd) 0)))
     (set! (channel-property 'colored-samples snd chn) '())

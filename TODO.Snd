@@ -24,11 +24,6 @@ A "master volume" control in the recorder.
 
 noise reduction.
 
-user-interface extension projects from snd-motif.scm:
-    bess-translations (first case is bess.scm)
-    radar scope style region cue list
-    spatial envelope dialog
-
 In snd-test.scm, the gtk (xg) section needs to be completed.
   Similarly for OpenGL.
 
@@ -44,13 +39,3 @@ Both versions could be rewritten to take advantage of the optimizer.
 
 A nice user-interface to the track mechanism, perhaps as an
   extension of the current Mix Panel.
-
-For some kind soul who enjoys surfing the net, I need more
-audio file examples for testing sndlib.  Examples I'd love
-to get:  
-  riff (rifx) using big endian data of any kind
-  bicsf with header extensions like "COMM"
-  voc using mulaw or alaw data
-  voc "extended" header
-  CSRE adf
-  And any others that aren't currently handled (and that accept uncompressed samples)

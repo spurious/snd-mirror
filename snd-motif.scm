@@ -15,7 +15,7 @@
 ;;; (make-level-meter parent width height args), (display-level data), (with-level-meters n) -- VU meters
 ;;; (make-channel-drop-site snd chn) -- add a drop site
 ;;; (set-channel-drop drop snd chn) -- change given graph drop callback to drop
-;;; (select-file func &optional title dir filter help) starts a Snd-like File Selection Dialog running func if a file is selected
+;;; (select-file func #:optional title dir filter help) starts a Snd-like File Selection Dialog running func if a file is selected
 ;;; (show-disk-space) adds a label to the minibuffer area showing the current free space 
 ;;; (keep-file-dialog-open-upon-ok) changes File:Open so that clicking "ok" does not "unmanage" the dialog
 ;;;   also keep-mix-file-dialog-open-upon-ok
@@ -120,7 +120,7 @@
 Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
   (define match-sound-files
     (lambda args
-      "(match-sound-files func &optional dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"
+      "(match-sound-files func #:optional dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"
       (let* ((func (car args))
 	     (matches '()))
 	(for-each
@@ -1068,7 +1068,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 ;;; -------- select-file --------
 ;;;
-;;; (select-file func &optional title dir filter help)
+;;; (select-file func #:optional title dir filter help)
 ;;;   starts a Snd-like File Selection Dialog, runs func if a file is selected
 ;;;
 ;;; (add-to-menu 0 "Insert File" 

@@ -1,7 +1,7 @@
 (use-modules (ice-9 optargs))
 
 (define* (fm-bell startime dur frequency amplitude #:optional amp-env index-env index)
-  "(fm-bell startime dur frequency amplitude &optional amp-env index-env index) mixes in one fm bell note"
+  "(fm-bell startime dur frequency amplitude #:optional amp-env index-env index) mixes in one fm bell note"
   (let* ((beg (inexact->exact (* startime (srate))))
 	 (len (inexact->exact (* dur (srate))))
 	 (end (+ beg len))

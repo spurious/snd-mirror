@@ -142,13 +142,13 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 (define map-sound-files
   (lambda args
-    "(map-sound-files func &optional dir) applies func to each sound file in dir"
+    "(map-sound-files func #:optional dir) applies func to each sound file in dir"
     (map (car args) 
 	 (sound-files-in-directory (if (null? (cdr args)) "." (cadr args))))))
 
 (define for-each-sound-file
   (lambda args
-    "(for-each-sound-file func &optional dir) applies func to each sound file in dir"
+    "(for-each-sound-file func #:optional dir) applies func to each sound file in dir"
     (for-each 
      (car args) 
      (sound-files-in-directory (if (null? (cdr args)) "." (cadr args))))))
@@ -166,7 +166,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 (define match-sound-files
   (lambda args
-    "(match-sound-files func &optional dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"
+    "(match-sound-files func #:optional dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"
     (let* ((func (car args))
 	   (matches '()))
       (for-each
@@ -255,7 +255,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;; the regularized form of this would use dur not end
 
 (define* (make-selection #:optional beg end snd chn)
-  "(make-selection &optional beg end snd chn) makes a selection like make-region but without creating a region. \
+  "(make-selection #:optional beg end snd chn) makes a selection like make-region but without creating a region. \
 make-selection follows snd's sync field, and applies to all snd's channels if chn is not specified. end defaults
 to end of channel, beg defaults to 0, snd defaults to the currently selected sound."
   (let ((current-sound (or snd (selected-sound) (car (sounds)))))
@@ -437,12 +437,12 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 
 ;;; -------- check-for-unsaved-edits
 ;;;
-;;; (check-for-unsaved-edits &optional on): if 'on', add a function to the close-hook and exit-hook
+;;; (check-for-unsaved-edits #:optional (on #t)): if 'on', add a function to the close-hook and exit-hook
 ;;;    that asks the user for confirmation before closing a sound if there are unsaved
 ;;;    edits on that sound.  if 'on' is #f, remove those hooks.
 
-(define* (check-for-unsaved-edits #:optional check)
-  "(check-for-unsaved-edits &optional check) -> sets up hooks to check for and ask about unsaved edits when a sound is closed. \
+(define* (check-for-unsaved-edits #:optional (check #t))
+  "(check-for-unsaved-edits #:optional (check #t)) -> sets up hooks to check for and ask about unsaved edits when a sound is closed. \
 If 'check' is #f, the hooks are removed."
   (define (unsaved-edits-at-close? ind)
     (letrec ((unsaved-edits-in-chan? 
@@ -548,7 +548,7 @@ If 'check' is #f, the hooks are removed."
 ;;; -------- mix-channel, insert-channel, c-channel
 
 (define* (mix-channel file-data #:optional beg dur snd chn edpos)
-  "(mix-channel file &optional beg dur snd chn edpos) mixes in file. file can be the file name or a list (file-name [beg [channel]])"
+  "(mix-channel file #:optional beg dur snd chn edpos) mixes in file. file can be the file name or a list (file-name [beg [channel]])"
   ;; should this create and return a mix instead?
   (let* ((file-name (if (string? file-data) file-data (car file-data)))
 	 (file-beg (if (or (string? file-data) 
@@ -569,7 +569,7 @@ If 'check' is #f, the hooks are removed."
 		       start len snd chn edpos "mix-channel")))))
 
 (define* (insert-channel file-data #:optional beg dur snd chn edpos)
-  "(insert-channel file &optional beg dur snd chn edpos) inserts the file. file can be the file name or a list (file-name [beg [channel]])"
+  "(insert-channel file #:optional beg dur snd chn edpos) inserts the file. file can be the file name or a list (file-name [beg [channel]])"
   (let* ((file-name (if (string? file-data) file-data (car file-data)))
 	 (file-beg (if (or (string? file-data) 
 			   (< (length file-data) 2)) 

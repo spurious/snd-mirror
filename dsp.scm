@@ -383,7 +383,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 (define spot-freq
   (lambda args
-    "(spot-freq samp &optional snd chn) tries to determine the current pitch: (spot-freq (left-sample))"
+    "(spot-freq samp #:optional snd chn) tries to determine the current pitch: (spot-freq (left-sample))"
     (let* ((s0 (car args))
 	   (snd (if (> (length args) 1) (list-ref args 1) #f))
 	   (chn (if (> (length args) 2) (list-ref args 2) #f))

@@ -5,7 +5,7 @@
 (use-modules (ice-9 optargs))
 
 (define* (make-zipper ramp-env #:optional frame-size frame-env)
-  "(make-zipper ramp-env &optional frame-size frame-env) makes a zipper generator.  'ramp-env' is \
+  "(make-zipper ramp-env #:optional frame-size frame-env) makes a zipper generator.  'ramp-env' is \
 a thunk (normally a ramp from 0 to 1) which sets where we are in the zipping process, \
 'frame-size' is the maximum frame length during the zip in seconds (defaults to 0.05), and \
 'frame-env' is a thunk returning the current frame size during the zip process."
@@ -97,7 +97,7 @@ a thunk (normally a ramp from 0 to 1) which sets where we are in the zipping pro
 ;; (zip-sound 0 3 "mb.snd" "fyow.snd" '(0 0 1.0 0 1.5 1.0 3.0 1.0) .025)
 
 (define* (zip-sound beg dur file1 file2 #:optional ramp size)
-  "(zip-sound beg dur file1 file2 &optional ramp-env size) zips the two files and mixes the result into the current sound"
+  "(zip-sound beg dur file1 file2 #:optional ramp-env size) zips the two files and mixes the result into the current sound"
   (let ((zip (make-zipper (let ((e (make-env (or ramp (list 0 0 1 1)) :end dur)))
 			    (lambda ()
 			      (env e)))

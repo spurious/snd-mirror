@@ -6671,7 +6671,7 @@ Float *mus_make_fft_window(int type, int size, Float beta)
   return(mus_make_fft_window_with_window(type, size, beta, (Float *)clm_calloc(size, sizeof(Float), "fft window")));
 }
 
-void mus_spectrum(Float *rdat, Float *idat, Float *window, int n, int type)
+Float *mus_spectrum(Float *rdat, Float *idat, Float *window, int n, int type)
 {
   int i;
   Float maxa, todb, lowest;
@@ -6713,9 +6713,10 @@ void mus_spectrum(Float *rdat, Float *idat, Float *window, int n, int type)
 	      rdat[i] *= maxa;
 	}
     }
+  return(rdat);
 }
 
-void mus_convolution (Float* rl1, Float* rl2, int n)
+Float *mus_convolution (Float* rl1, Float* rl2, int n)
 {
   /* convolves two real arrays.                                           */
   /* rl1 and rl2 are assumed to be set up correctly for the convolution   */
@@ -6750,6 +6751,7 @@ void mus_convolution (Float* rl1, Float* rl2, int n)
     }
   
   mus_fft(rl1, rl2, n, -1);
+  return(rl1);
 }
 
 
