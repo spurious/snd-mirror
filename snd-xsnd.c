@@ -62,8 +62,6 @@ Widget w_snd_name(snd_info *sp)   {return((sp->sgx)->snd_widgets[W_name]);}
 #define MINIBUFFER_TEXT(Sp)      (Sp->sgx)->snd_widgets[W_info]
 #define SYNC_BUTTON(Sp)          (Sp->sgx)->snd_widgets[W_sync]
 
-#define MAX_NOTEBOOK_TAB_LENGTH 5
-
 void goto_minibuffer(snd_info *sp)
 {
   if (sp) goto_window(MINIBUFFER_TEXT(sp));
@@ -2490,13 +2488,14 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
 #if (XmVERSION > 1)
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	{
-	  char name[MAX_NOTEBOOK_TAB_LENGTH + 11];
-	  strncpy(name, just_filename(sp->short_filename), MAX_NOTEBOOK_TAB_LENGTH);
-	  name[MAX_NOTEBOOK_TAB_LENGTH] ='\0';
+	  char* name;
+	  name = just_filename(sp->short_filename); /* copies */
+	  if (strlen(name) > 8) name[8] = '\0';
 	  n = 0;
 	  if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->graph_color); n++;}
 	  XtSetArg(args[n], XmNnotebookChildType, XmMAJOR_TAB); n++;
 	  sx->tab = XtCreateManagedWidget(name, xmPushButtonWidgetClass, SOUND_PANE(ss), args, n);
+	  FREE(name);
 	}
 #endif
       if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)

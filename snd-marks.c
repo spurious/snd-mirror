@@ -1900,7 +1900,7 @@ static XEN g_set_mark_sample(XEN mark_n, XEN samp_n)
 
 static XEN g_mark_sync(XEN mark_n) 
 {
-  #define H_mark_sync "(" S_mark_sync " id): mark's sync value"
+  #define H_mark_sync "(" S_mark_sync " id): mark's sync value (default: 0)"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ONLY_ARG, S_mark_sync, "an integer");
   return(mark_get(mark_n, MARK_SYNC, XEN_UNDEFINED, S_mark_sync));
 }

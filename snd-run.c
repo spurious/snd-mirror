@@ -5587,6 +5587,7 @@ static xen_value *channels_1(ptree *pt, xen_value **args, int num_args)
 
 static void c_g_p(int *args, Int *ints, Float *dbls) 
 {
+  /* explicit check here speeds this up by about a factor of 3! but it's still slow */
 #if USE_GTK
   if (gtk_events_pending())
 #else

@@ -37,7 +37,7 @@
 #define CHANNEL_SASH_SIZE 0
 /* 0 means: use Motif default size */
 #define ENVED_POINT_SIZE 10
-#define NOTEBOOK_BINDING_WIDTH 20
+#define NOTEBOOK_BINDING_WIDTH 16
 
 #define NO_ICON 0
 #define PLAIN_ICON 1
@@ -652,44 +652,9 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 
   ss->batch_mode = batch;
   if (batch) XtSetMappedWhenManaged(shell, False);
-
   set_html_dir(ss, copy_string(snd_rs.html_dir));
-  if ((html_dir(ss)) && (strcmp(html_dir(ss), DEFAULT_HTML_DIR) == 0))
-    {
-      char *tmpstr;
-      /* default wasn't changed by user -- check to see if default should have been /usr/doc/snd-n instead */
-      tmpstr = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(tmpstr, PRINT_BUFFER_SIZE, "%s/snd.html", html_dir(ss));
-      if (!(mus_file_probe(tmpstr)))
-	{
-	  mus_snprintf(tmpstr, PRINT_BUFFER_SIZE, "/usr/doc/snd-%d/snd.html", SND_MAJOR_VERSION);
-	  if (mus_file_probe(tmpstr))
-	    mus_snprintf(tmpstr, PRINT_BUFFER_SIZE, "/usr/doc/snd-%d", SND_MAJOR_VERSION);
-	  else
-	    {
-	      mus_snprintf(tmpstr, PRINT_BUFFER_SIZE, "/usr/share/doc/snd-%d/snd.html", SND_MAJOR_VERSION);
-	      if (mus_file_probe(tmpstr))
-		mus_snprintf(tmpstr, PRINT_BUFFER_SIZE, "/usr/share/doc/snd-%d", SND_MAJOR_VERSION);
-	      else
-		{
-		  mus_snprintf(tmpstr, PRINT_BUFFER_SIZE, "/usr/local/share/doc/snd-%d/snd.html", SND_MAJOR_VERSION);
-		  if (mus_file_probe(tmpstr))
-		    mus_snprintf(tmpstr, PRINT_BUFFER_SIZE, "/usr/local/share/doc/snd-%d", SND_MAJOR_VERSION);
-		  else 
-		    {
-		      /* add_to_error_history(ss, _("can't find Snd doc directory"), FALSE); */
-		      mus_snprintf(tmpstr, PRINT_BUFFER_SIZE, DEFAULT_HTML_DIR);
-		    }
-		}
-	    }
-	  set_html_dir(ss, copy_string(tmpstr));
-	}
-      FREE(tmpstr);
-    }
-
   ss->using_schemes = ((snd_rs.use_schemes) &&
 		       ((strcmp(snd_rs.use_schemes, "all") == 0) || (strcmp(snd_rs.use_schemes, "All") == 0)));
-
   set_auto_resize(ss, snd_rs.auto_resize);
   ss->zoom_slider_width = snd_rs.zoom_slider_width;
   ss->position_slider_width = snd_rs.position_slider_width;

@@ -30,16 +30,15 @@ and if one is found, and the Snd documentation can be found, calls (html-program
 	      ;; snd.html is what we'll search for
 	      (let ((dir (if (file-exists? "snd.html") 
 			     (getcwd)
-			     (if (file-exists? "/usr/share/doc/snd-6/snd.html")
-				 "/usr/share/doc/snd-6"
-				 (if (file-exists? "/usr/doc/snd-6/snd.html")
-				     "/usr/doc/snd-6"
-				     (if (file-exists? "/usr/doc/snd-5/snd.html")
-					 "/usr/doc/snd-5"
-					 (if (and (defined? 'html-dir) 
-						  (string? (html-dir))
-						  (file-exists? (string-append (html-dir) "/snd.html")))
-					     (html-dir)
+			     (if (and (string? (html-dir))
+				      (file-exists? (string-append (html-dir) "/snd.html")))
+				 (html-dir)
+				 (if (file-exists? "/usr/share/doc/snd-6/snd.html")
+				     "/usr/share/doc/snd-6"
+				     (if (file-exists? "/usr/local/share/doc/snd-6/snd.html")
+					 "/usr/local/share/doc/snd-6"
+					 (if (file-exists? "/usr/doc/snd-6/snd.html")
+					     "/usr/doc/snd-6"
 					     #f)))))))
 		(if dir
 		    (if (or (string=? (html-program) "netscape")

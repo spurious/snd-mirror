@@ -54,6 +54,7 @@ void add_to_error_history(snd_state *ss, char *msg, int popup)
   time_t ts;
 #endif
   XmTextPosition pos;
+  if ((ss == NULL) || (ss->sgx == NULL)) return; /* an attempt to call this before X/Motif is ready */
   if (!snd_error_dialog) 
     create_snd_error_dialog(ss, popup);
   else

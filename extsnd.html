@@ -455,7 +455,7 @@ The actual values of the optimization switch are:
 <tr><td>3:  </td><td>if undefined global variable encountered, try to determine eventual type from context</td></tr>
 <tr><td>4:  </td><td>make dangerous assumptions about variable types</td></tr>
 <tr><td>5:  </td><td>make dangerous assumptions about variable locations (for set!)</td></tr>
-<tr><td>6:  </td><td>try to splice in user-defined functions</td></tr>
+<tr><td>6:  </td><td>try to splice in user-defined functions (buggy!)</td></tr>
 </table><br></td></tr>
 <tr><td></td><td colspan=2><small>Currently, the optimizer is able to speed up Scheme code by factors between
 8 and 20; see snd-run.c for what is implemented, what the major limitations are, and so on.
@@ -1061,7 +1061,8 @@ See click-for-listener-help in draw.scm.
 <span class=defbox><code><em class=def><a name="markclickhook">mark-click-hook</a></em> (id)</code></span></td><td align=right><b>progn</b>
 </td></tr>
 <tr><td></td><td colspan=2>
-called when a mark is clicked; return #t to squelch default minibuffer mark identification.
+called when a mark is clicked; return #t to squelch default minibuffer mark identification.  The following 
+hook function is used in with-marked-sound in ws.scm to display arbitrary info about a note.
 </td></tr>
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
@@ -1069,19 +1070,21 @@ called when a mark is clicked; return #t to squelch default minibuffer mark iden
   (lambda (n) 
     (if (not (defined? 'mark-properties)) (load "marks.scm"))
     (help-dialog "Mark Help"
-                 (format #f "Mark ~D~A:~%  sample: ~D = ~,3F secs~%  sync: ~A~%~A"
+                 (format #f "Mark ~D~A:~%  sample: ~D = ~,3F secs~A~A"
 			 n 
 			 (let ((name (mark-name n)))
 			   (if (&gt; (string-length name) 0)
-			       (format " (~S)" name)
+			       (format #f " (~S)" name)
 			       ""))
 			 (mark-sample n)
 			 (/ (mark-sample n) (srate (car (mark-home n))))
-			 (mark-sync n)
+			 (if (not (= (mark-sync n) 0))
+			     (format #f "~%  sync: ~A" (mark-sync n))
+			     "")
 			 (let ((props (mark-properties n)))
 			   (if (and (list? props)
 				    (not (null? props)))
-			       (format #f "  properties: '~A" props)
+			       (format #f "~%  properties: '~A" props)
 			       ""))))
     #t))
 </pre></td></tr></table></td></tr>
@@ -2866,7 +2869,7 @@ that a mark follows its sample around as a sound is edited; that is, it marks a 
 
 <!-- mark-sync -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmarksync">mark-sync</a></em> (<i>id</i>)</code></span></td></tr>
-<tr><td></td><td>mark <i>id</i>'s sync value.
+<tr><td></td><td>mark <i>id</i>'s sync value (default is 0).
 The sync value is very similar to
 the mix track number or the sound sync field; it provides a way to group marks for simultaneous
 changes.  Marks that share the same sync value (if not 0), move together when any one of them is

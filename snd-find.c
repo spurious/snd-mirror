@@ -3,6 +3,8 @@
 static int search_in_progress = FALSE;
 typedef struct {int n; int direction; int chans; off_t inc; chan_info **cps; snd_fd **fds;} gfd;
 
+#define MANY_PASSES 1000
+
 static void prepare_global_search (chan_info *cp, void *g0)
 {
   gfd *g = (gfd *)g0;
@@ -150,7 +152,7 @@ char *global_search(snd_state *ss, int direction)
       while (!(run_global_search(ss, fd)))
 	{
 	  passes++;
-	  if (passes >= 100)
+	  if (passes >= MANY_PASSES)
 	    {
 	      check_for_event(ss);
 	      passes = 0;
@@ -234,7 +236,7 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
 	      count--; 
 	      if (count == 0) break;
 	    }
-	  if (passes >= 100)
+	  if (passes >= MANY_PASSES)
 	    {
 	      check_for_event(ss);
 	      /* if user types C-s during an active search, we risk stomping on our current pointers */
@@ -299,7 +301,7 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 	      count--; 
 	      if (count == 0) break;
 	    }
-	  if (passes >= 100)
+	  if (passes >= MANY_PASSES)
 	    {
 	      check_for_event(ss);
 	      /* if user types C-s during an active search, we risk stomping on our current pointers */

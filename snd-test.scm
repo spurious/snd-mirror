@@ -37,7 +37,7 @@
 ;;; TODO: xemacs style top list of sounds, current takes whole screen [make-top-row tmp18.scm, files-popup-buffer in examp.scm]
 ;;; TOOD: extend the mix-as-list syntax to list-of-ids (tracks) (are these all rationalized now?)
 ;;; effects crossref + tests + clm translations, interface crossref
-
+;;; TODO: coverage tests of scm files
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 
@@ -27451,7 +27451,6 @@ EDITS: 2
 	(reson 14.0 1.0 440 .1 2 '(0 0 100 1) '(0 0 100 1) .1 .1 .1 5 .01 5 .01 0 1.0 0.01
 	       '(((0 0 100 1) 1200 .5 .1 .1 0 1.0 .1 .1)
 		 ((0 1 100 0) 2400 .5 .1 .1 0 1.0 .1 .1)))
-	(touch-tone 14 '(7 2 3 4 9 7 1))
 	(cellon 14.5 1 220 .1 
 		'(0 0 25 1 75 1 100 0) 
 		'(0 0 25 1 75 1 100 0) .75 1.0 0 0 0 0 1 0 0 220 
@@ -27460,9 +27459,9 @@ EDITS: 2
 	(two-tab 15 1 440 .1)
 	(gran-synth 15.5 1 300 .0189 .03 .4)
 	(spectra 16 1 440.0 .1 '(1.0 .4 2.0 .2 3.0 .2 4.0 .1 6.0 .1) '(0.0 0.0 1.0 1.0 5.0 0.9 12.0 0.5 25.0 0.25 100.0 0.0))
-	(lbj-piano 17 1 440.0 .2)
-	(resflt 18 1.0 0 0 0 nil .1 200 230 10 '(0 0 50 1 100 0) '(0 0 100 1) 500 .995 .1 1000 .995 .1 2000 .995 .1)
-	(resflt 19 1.0 1 10000 .01 '(0 0 50 1 100 0) 0 0 0 0 nil nil 500 .995 .1 1000 .995 .1 2000 .995 .1)
+	(lbj-piano 16.5 1 440.0 .2)
+	(resflt 17 1.0 0 0 0 nil .1 200 230 10 '(0 0 50 1 100 0) '(0 0 100 1) 500 .995 .1 1000 .995 .1 2000 .995 .1)
+	(resflt 17.5 1.0 1 10000 .01 '(0 0 50 1 100 0) 0 0 0 0 nil nil 500 .995 .1 1000 .995 .1 2000 .995 .1)
 
 	)
       (let ((ind (find-sound "test.snd")))

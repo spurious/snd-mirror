@@ -5,15 +5,12 @@
 ;;; TODO: with-mix
 ;;; TODO: definstrument state readback (display panel etc)
 ;;; TODO: continuation from interrupt? (caller could check vals, then resume -- can this be from C as well?)
-;;; TODO: GUI for ins display/control (this could work in any algo)
+;;;       could this be done via snd-debug (extensions.scm) and a with-sound wrapper?
+;;; TODO: GUI for ins display/control (this could work in any algo) -- see wsx.scm
 ;;;       make-panel name -> widget
 ;;;       panel-display wid label val -> val
 ;;;       panel-control wid label type-or-range?) -> current value
 ;;;       some way to include gen as "val" in display
-;;; TODO: *explode* -> each note as tagged mix with property holding original notelist call
-;;;       (but mix properties are defined in mix.scm -- move to extensions?)
-;;; TODO: note-hook :mark (mark-prop for call)/:explode (mix-prop for call)
-;;; TODO: does C-g work outside run (ie opt=0)?
 
 ;;; changed default variable names 3-Apr-03 for Common Music's benefit
 ;;;   *clm-channels* is the default number of with-sound output chans in
@@ -52,8 +49,8 @@
 				  (to-snd *to-snd*)
 				  (scaled-by #f))
   (let ((old-srate (mus-srate))
-	(old-output *output*)
-	(old-reverb *reverb*)
+	(old-*output* *output*)
+	(old-*reverb* *reverb*)
 	(output-1 output)) ; protect during nesting
     (dynamic-wind 
 
@@ -117,11 +114,11 @@
        (if *reverb*
 	   (begin
 	     (mus-close *reverb*)
-	     (set! *reverb* old-reverb)))
+	     (set! *reverb* old-*reverb*)))
        (if *output*
 	   (begin
 	     (mus-close *output*)
-	     (set! *output* old-output)))
+	     (set! *output* old-*output*)))
        (set! (mus-srate) old-srate)))))
 
 (defmacro with-sound (args . body)
@@ -340,7 +337,7 @@
   (let ((fd (open filename (logior O_RDWR O_APPEND))))
     ;; open in Guile throws 'system-error (I think) if anything goes wrong
     ;; fd is a Scheme port at this point (not an integer), so we can use format etc
-    ;; should the save-state file load this file if it hasn't been loaded?
+    ;; should the save-state file load this file if it hasn't been loaded? (what path?)
     (format fd "~%~%;;; from ws.scm~%")
     (format fd "(if (defined? '*clm-srate*)~%")
     (format fd "    (begin~%")
@@ -354,6 +351,59 @@
 (add-hook! after-save-state-hook ws-save-state)
 
 
+#!
+;;; the following code places a mark at the start of each note in the with-sound body
+;;;    with arbitrary info in the :ws mark-property, displayed in the help dialog
+;;;    when the mark is clicked.  The corresponding code in the instrument is:
+;;;          (if (defined? '*note-hook*)
+;;;	         (run-hook *note-hook* beg (list 'fm-violin dur frequency amplitude)))
 
+(load "marks.scm")
+(define *note-hook* (make-hook 2)) ; args = beg[sample] comment[anything]
 
+(if (hook-empty? mark-click-hook)
+    ;; set up mark-click-hook to display the comment if clicked
+    (add-hook! mark-click-hook
+	       (lambda (n) 
+		 (help-dialog "Mark Help"
+			      (format #f "Mark ~D~A:~%  sample: ~D = ~,3F secs~A~A"
+				      n 
+				      (let ((name (mark-name n)))
+					(if (> (string-length name) 0)
+					     (format #f " (~S)" name)
+					     ""))
+				      (mark-sample n)
+				      (/ (mark-sample n) (srate (car (mark-home n))))
+				      (if (not (= (mark-sync n) 0))
+					  (format #f "~%  sync: ~A" (mark-sync n))
+					  "")
+				      (let ((props (mark-properties n)))
+					(if (and (list? props)
+						 (not (null? props)))
+					    (format #f "~%  properties: '~A" props)
+					    ""))))
+		 #t)))
 
+(defmacro with-marked-sound (args . body)
+  ;; a wrapper around with-sound to set up the marks
+  `(let ((*ws-prog* '())
+	 (old-*note-hook* (hook->list *note-hook*))) ; save old *note-hook* (nested with-sound)
+     (define (list->hook hook l)
+       (if (not (null? l))
+	   (begin
+	     (add-hook! hook (car l))
+	     (list->hook hook (cdr l)))))
+     (reset-hook! *note-hook*)
+     (add-hook! *note-hook*                          ; current hook saves mark data in *ws-prog*
+		(lambda (beg comment)
+		  (set! *ws-prog* (cons (list beg comment) *ws-prog*))))
+     (let* ((name (with-sound-helper (lambda () ,@body) ,@args)) ; with-sound itself
+	    (snd (find-sound name)))
+       (reset-hook! *note-hook*)
+       (list->hook *note-hook* old-*note-hook*)      ; restore previous *note-hook*, if any
+       (for-each 
+	(lambda (m)
+	  (let ((mk (add-mark (car m) snd)))         ; put a mark at each note begin sample
+	    (set! (mark-property :ws mk) (cadr m)))) ; and set its :ws property to the other info
+	*ws-prog*))))
+!#
