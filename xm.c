@@ -5,10 +5,11 @@
 
 #include <config.h>
 
-#define XM_DATE "22-June-04"
+#define XM_DATE "12-Aug-04"
 
 /* HISTORY: 
  *
+ *   12-Aug:    some changes to accommodate new Guile names.
  *   22-June:   XmColorSelector resources.
  *   19-May:    plug several memory leaks.
  *   21-Apr:    XmMultiList, XmTabStack.
@@ -10760,10 +10761,10 @@ actually returned."
 			   &a, &ret, &len, &bytes, &data);
   if ((a != (Atom)None) && (len > 0))
     {
-#if HAVE_GUILE && HAVE_SCM_MEM2STRING
+#if HAVE_GUILE && (HAVE_SCM_MEM2STRING || HAVE_SCM_C_MAKE_RECTANGULAR)
       if (a == XA_STRING)
 	result = C_TO_XEN_STRING((char *)data);
-      else result = scm_mem2string((char *)data, len * ret / 8); /* apparently ret is in bits? */
+      else result = C_TO_XEN_STRINGN((char *)data, len * ret / 8); /* is this a good idea? -- perhaps a void pointer here? */
 #else
       result = C_TO_XEN_STRING((char *)data);
 #endif
@@ -24092,14 +24093,14 @@ static void define_strings(void)
 
 #if HAVE_GUILE
 #if HAVE_SCM_C_DEFINE
-  #define DEFINE_STRING(Name) scm_c_define(XM_PREFIX #Name XM_POSTFIX, scm_makfrom0str(Name))
+  #define DEFINE_STRING(Name) scm_c_define(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_STRING(Name))
   #define DEFINE_RESOURCE(Name, Type) \
-            scm_c_define(XM_PREFIX #Name XM_POSTFIX, scm_makfrom0str(Name)); \
+            scm_c_define(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_STRING(Name)); \
             hash_resource(Name, Type)
 #else
-  #define DEFINE_STRING(Name) gh_define(XM_PREFIX #Name XM_POSTFIX, scm_makfrom0str(Name))
+  #define DEFINE_STRING(Name) gh_define(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_STRING(Name))
   #define DEFINE_RESOURCE(Name, Type) \
-            gh_define(XM_PREFIX #Name XM_POSTFIX, scm_makfrom0str(Name)); \
+            gh_define(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_STRING(Name)); \
             hash_resource(Name, Type)
 #endif
 #else

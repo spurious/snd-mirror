@@ -261,6 +261,28 @@ XEN xen_guile_dbg_new_procedure(const char *name, XEN (*func)(), int req, int op
 }
 #endif
 
+#if HAVE_SCM_C_MAKE_RECTANGULAR
+static char **xen_temp_strings = NULL;
+static int xen_temp_strings_ctr = 0;
+#define XEN_TEMP_STRINGS_SIZE 32
+
+char *xen_guile_to_c_string_with_eventual_free(XEN str)
+{
+  char *result;
+  if (!xen_temp_strings)
+    xen_temp_strings = (char **)CALLOC(XEN_TEMP_STRINGS_SIZE, sizeof(char *));
+  else
+    {
+      if (xen_temp_strings[xen_temp_strings_ctr]) FREE(xen_temp_strings[xen_temp_strings_ctr]);
+    }
+  result = XEN_TO_C_STRING(str);
+  xen_temp_strings[xen_temp_strings_ctr] = result;
+  xen_temp_strings_ctr++;
+  if (xen_temp_strings_ctr >= XEN_TEMP_STRINGS_SIZE) xen_temp_strings_ctr = 0;
+  return(result);
+}
+#endif
+
 #endif
 
 

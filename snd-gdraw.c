@@ -661,9 +661,10 @@ static void help_color_callback(GtkWidget *w, gpointer context)
   color_dialog_help();
 }
 
-static void delete_color_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
+static gint delete_color_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(ccd->dialog);
+  return(true);
 }
 
 void reflect_color_list(bool setup_time)

@@ -382,6 +382,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+12-Aug:  major gtk-version bugfix thanks to Kjetil\n\
 2-Aug:   players: returns list of active players\n\
          run-safety: add error checking to run macro code\n\
          clm-table-size: default table size in clm\n\

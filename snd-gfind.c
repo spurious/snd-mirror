@@ -11,9 +11,10 @@ static void edit_find_dismiss(GtkWidget *w, gpointer context)
   else gtk_widget_hide(edit_find_dialog);
 } 
 
-static void edit_find_delete(GtkWidget *w, GdkEvent *event, gpointer context)
+static gint edit_find_delete(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(edit_find_dialog);
+  return(true);
 }
 
 static void edit_find_help(GtkWidget *w, gpointer context) 

@@ -129,10 +129,10 @@ static void dismiss_enved_callback(GtkWidget *w, gpointer context)
   gtk_widget_hide(enved_dialog);
 }
 
-static gboolean delete_enved_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
+static gint delete_enved_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(enved_dialog);
-  return(false);
+  return(true);
 }
 
 static void help_enved_callback(GtkWidget *w, gpointer context)

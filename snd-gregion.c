@@ -141,9 +141,10 @@ void update_region_browser(bool grf_too)
     }
 }
 
-static void region_browser_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
+static gint region_browser_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(region_dialog);
+  return(true);
 }
 
 static void region_ok_callback(GtkWidget *w, gpointer context)

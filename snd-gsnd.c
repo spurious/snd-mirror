@@ -1270,11 +1270,12 @@ void reflect_amp_env_in_progress(snd_info *sp)
     }
 }
 
-static void close_sound_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
+static gint close_sound_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
   if (sp) snd_close_file(sp);
   gtk_widget_hide(sp->sgx->dialog); 
+  return(true);
 } 
 
 

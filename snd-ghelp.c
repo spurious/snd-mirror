@@ -10,7 +10,12 @@
 
 static GtkWidget *help_dialog = NULL;
 static void dismiss_help_dialog(GtkWidget *w, gpointer context) {gtk_widget_hide(help_dialog);}
-static void delete_help_dialog(GtkWidget *w, GdkEvent *event, gpointer context) {gtk_widget_hide(help_dialog);}
+
+static gint delete_help_dialog(GtkWidget *w, GdkEvent *event, gpointer context) 
+{
+  gtk_widget_hide(help_dialog);
+  return(true);
+}
 
 
 /* ---------------- HELP MONOLOG ---------------- */

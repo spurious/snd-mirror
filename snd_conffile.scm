@@ -600,6 +600,7 @@
 (define c-playtype 'all)
 
 (define* (c-play-selection #:optional pos)
+  (c-put (selected-sound) 'playtype 'selection)
   (set! c-playtype 'selection)
   (set! c-playstartpos (if (< (speed-control) 0) (+ (c-selection-position) (c-selection-frames)) (c-selection-position)))
   (if pos
@@ -616,6 +617,7 @@
 
 
 (define* (c-play pos #:optional dontsetstartpos)
+  (c-put (selected-sound) 'playtype 'all)
   (set! c-playtype 'all)
   (if (not dontsetstartpos)
       (set! c-playstartpos pos))
@@ -632,7 +634,8 @@
   (c-stop-playing c-pause-pos))
 
 (define* (c-stop-pause #:optional pausepos)
-  (if (eq? 'all c-playtype)
+  (if (eq? 'all (c-get (selected-sound) 'playtype 'all))
+;  (if (eq? 'all c-playtype)
       (c-play (if pausepos pausepos c-pause-pos) #t)
       (if pausepos
 	  (c-play-selection pausepos)
@@ -1633,8 +1636,8 @@ Does not work.
 	       ;;(c-display (selected-sound) selpos)
 	       (if selpos
 		   (begin
-		     (c-set-selection-position! (selected-sound) ch selpos)
-		     (c-set-selection-frames! (selected-sound) ch (c-get (selected-sound) 'selection-frames)))))))))
+		     (c-set-selection-position! (selected-sound) 0 selpos #t)
+		     (c-set-selection-frames! (selected-sound) 0 (c-get (selected-sound) 'selection-frames) #t))))))))
 
       
       ;;(set! (widget-size (car (sound-widgets (car current-buffer)))) (list 1000 1000) )

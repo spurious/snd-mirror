@@ -3463,10 +3463,10 @@ guchar** [data])"
                                                 &ref_actual_property_type, &ref_actual_format, &ref_actual_length, &ref_data));
     {
       XEN data_val = XEN_FALSE;
-#if HAVE_GUILE && HAVE_SCM_MEM2STRING
+#if HAVE_GUILE && (HAVE_SCM_MEM2STRING || HAVE_SCM_C_MAKE_RECTANGULAR)
       if (ref_actual_property_type == GDK_TARGET_STRING)
 	data_val = C_TO_XEN_STRING((char *)ref_data);
-      else if (ref_actual_length > 0) data_val = scm_mem2string((char *)ref_data, ref_actual_length * ref_actual_format / 8);
+      else if (ref_actual_length > 0) data_val = C_TO_XEN_STRINGN((char *)ref_data, ref_actual_length * ref_actual_format / 8);
 #else
       data_val = C_TO_XEN_STRING((char *)ref_data);
 #endif
@@ -30839,9 +30839,9 @@ static void define_strings(void)
   
 #if HAVE_GUILE
 #if HAVE_SCM_C_DEFINE
-  #define DEFINE_STRING(Name) scm_c_define(XG_PRE #Name XG_POST, scm_makfrom0str(Name))
+  #define DEFINE_STRING(Name) scm_c_define(XG_PRE #Name XG_POST, C_TO_XEN_STRING(Name))
 #else
-  #define DEFINE_STRING(Name) gh_define(XG_PRE #Name XG_POST, scm_makfrom0str(Name))
+  #define DEFINE_STRING(Name) gh_define(XG_PRE #Name XG_POST, C_TO_XEN_STRING(Name))
 #endif
 #else
   #define DEFINE_STRING(Name) rb_define_global_const(XG_PRE #Name XG_POST, C_TO_XEN_STRING(Name))
@@ -30984,10 +30984,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"10-Aug-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"11-Aug-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("10-Aug-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("11-Aug-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

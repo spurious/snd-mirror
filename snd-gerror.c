@@ -10,9 +10,10 @@ static void dismiss_snd_error(GtkWidget *w, gpointer context)
   gtk_widget_hide(snd_error_dialog);
 }
 
-static void delete_snd_error(GtkWidget *w, GdkEvent *event, gpointer context)
+static gint delete_snd_error(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(snd_error_dialog);
+  return(true);
 }
 
 static void create_snd_error_dialog(bool popup)
@@ -95,7 +96,13 @@ static GtkWidget *yes_button, *no_button;
 
 static void yes_callback(GtkWidget *w, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = true;}
 static void no_callback(GtkWidget *w, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = false;}
-static void delete_yes_or_no_dialog(GtkWidget *w, GdkEvent *event, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = true;}
+
+static gint delete_yes_or_no_dialog(GtkWidget *w, GdkEvent *event, gpointer context) 
+{
+  gtk_widget_hide(yes_or_no_dialog); 
+  yes_or_no = true;
+  return(true);
+}
 
 #define YES_OR_NO_BUFFER_SIZE 1024
 

@@ -606,10 +606,11 @@ static void file_mix_help_callback(GtkWidget *w, gpointer context)
 }
 #endif
 
-static void file_mix_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
+static gint file_mix_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   file_dialog_stop_playing(mix_dialog);
   gtk_widget_hide(mix_dialog->dialog);
+  return(true);
 }
 
 static void file_mix_ok_callback(GtkWidget *w, gpointer context)
@@ -849,9 +850,10 @@ static void save_as_help_callback(GtkWidget *w, gpointer data)
 }
 #endif
 
-static void save_as_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
+static gint save_as_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(save_as_dialog);
+  return(true);
 }
 
 static void make_save_as_dialog(char *sound_name, int header_type, int format_type)
@@ -1177,9 +1179,10 @@ static void view_files_dismiss_callback(GtkWidget *w, gpointer context)
   gtk_widget_hide(view_files_dialog);
 }
 
-static void view_files_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
+static gint view_files_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(view_files_dialog);
+  return(true);
 }
 
 static void view_files_clear_callback(GtkWidget *w, gpointer context) 
@@ -1536,7 +1539,13 @@ static bool raw_cancelled = false, raw_done = false;
 
 static void raw_data_ok_callback(GtkWidget *w, gpointer context) {raw_cancelled = false; raw_done = true;}
 static void raw_data_cancel_callback(GtkWidget *w, gpointer context) {raw_cancelled = true; raw_done = true;}
-static void raw_data_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context) {raw_cancelled = true; raw_done = true;}
+
+static gint raw_data_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context) 
+{
+  raw_cancelled = true; 
+  raw_done = true;
+  return(true);
+}
 
 static void raw_data_default_callback(GtkWidget *w, gpointer context) 
 {
@@ -1739,7 +1748,13 @@ static file_data *new_dialog_data = NULL;
 
 static void new_file_ok_callback(GtkWidget *w, gpointer context) {new_file_cancelled = false; new_file_done = true;}
 static void new_file_cancel_callback(GtkWidget *w, gpointer context) {new_file_cancelled = true; new_file_done = true;}
-static void new_file_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context) {new_file_cancelled = true; new_file_done = true;}
+
+static gint new_file_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context) 
+{
+  new_file_cancelled = true; 
+  new_file_done = true;
+  return(true);
+}
 
 static void new_file_help_callback(GtkWidget *w, gpointer context) 
 {
@@ -1856,9 +1871,10 @@ static void edit_header_cancel_callback(GtkWidget *w, gpointer context)
   gtk_widget_hide(edit_header_dialog);
 }
 
-static void edit_header_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
+static gint edit_header_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(edit_header_dialog);
+  return(true);
 }
 
 static void edit_header_ok_callback(GtkWidget *w, gpointer context) 
@@ -1948,7 +1964,12 @@ GtkWidget *edit_header(snd_info *sp)
 static GtkWidget *post_it_text = NULL, *post_it_dialog = NULL;
 
 static void dismiss_post_it(GtkWidget *w, gpointer context) {gtk_widget_hide(post_it_dialog);}
-static void delete_post_it(GtkWidget *w, GdkEvent *event, gpointer context) {gtk_widget_hide(post_it_dialog);}
+
+static gint delete_post_it(GtkWidget *w, GdkEvent *event, gpointer context) 
+{
+  gtk_widget_hide(post_it_dialog);
+  return(true);
+}
 
 static void create_post_it_monolog(void)
 {

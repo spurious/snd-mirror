@@ -392,9 +392,10 @@ static void color_transform_callback(GtkWidget *w, gpointer context)
   start_color_dialog(true);
 }
 
-static void delete_transform_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
+static gint delete_transform_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(transform_dialog);
+  return(true);
 }
 
 static void help_transform_callback(GtkWidget *w, gpointer context)

@@ -120,7 +120,7 @@ static void snd_callback(GtkWidget *w, gpointer data)
 static gint window_close(GtkWidget *w, GdkEvent *event, gpointer clientData)
 {
   gtk_main_quit();
-  return(false);
+  return(true);
 }
 
 static void gsnd_main (int argc, char **argv )

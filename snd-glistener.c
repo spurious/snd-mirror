@@ -53,9 +53,10 @@ static void help_completion_callback(GtkWidget *w, gpointer context)
   completion_dialog_help();
 }
 
-static void delete_completion_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
+static gint delete_completion_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(completion_dialog);
+  return(true);
 }
 
 static void start_completion_dialog(int num_items, char **items)

@@ -19,9 +19,10 @@ static void file_print_cancel_callback(GtkWidget *w, gpointer context)
   gtk_widget_hide(file_print_dialog);
 }
 
-static void file_print_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
+static gint file_print_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(file_print_dialog);
+  return(true);
 }
 
 static int lpr (char *name)

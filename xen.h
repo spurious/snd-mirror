@@ -14,18 +14,19 @@
  *   Python doesn't strike me as very different from Ruby.
  *   SCM, like MIT_Scheme, isn't really oriented toward extending C programs.
  *   I've also looked briefly at Haskell (FFI too primitive), Lua (looks ok, though minimal, but lots of
- *     work to fit into the Xen mode), ocaml (FFI in flux, apparently, and I think it
+ *     work to fit into the Xen model), ocaml (FFI in flux, apparently, and I think it
  *     insists on being the main program).
  *
  * "xen" from Greek xenos (guest, foreigner)
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 16
-#define XEN_VERSION "1.16"
+#define XEN_MINOR_VERSION 17
+#define XEN_VERSION "1.17"
 
 /* HISTORY:
  *
+ *  12-Aug-04: more Guile name changes, C_TO_XEN_STRINGN (Guile)
  *  3-Aug-04:  xen_to_c_int bugfix thanks to Kjetil S. Matheussen.
  *  29-Jul-04: deprecated XEN_TO_C_BOOLEAN_OR_TRUE.
  *  21-Jul-04: deprecated XEN_TO_SMALL_C_INT and C_TO_SMALL_XEN_INT.
@@ -290,13 +291,21 @@
 
 /* there is SCM_CONTINUATIONP -- why doesn't scheme have continuation? */
 
-#ifndef SCM_STRING_CHARS
-  #define XEN_TO_C_STRING(STR)        SCM_CHARS(STR)
+#if HAVE_SCM_C_MAKE_RECTANGULAR
+  /* TODO: this is temporary memory -- need to check all XEN_TO_C_STRING to make sure they're protected */
+  #define XEN_TO_C_STRING(Str)        xen_guile_to_c_string_with_eventual_free(Str)
+  #define C_TO_XEN_STRING(a)          ((a) ? scm_from_locale_string(a) : XEN_FALSE)
+  #define C_TO_XEN_STRINGN(Str, Len)  scm_from_locale_stringn(Str, Len)
 #else
-  #define XEN_TO_C_STRING(STR)        SCM_STRING_CHARS(STR)
-  /* this assumes its argument is a XEN string and does not allocate new space */
+  #ifndef SCM_STRING_CHARS
+    #define XEN_TO_C_STRING(STR)      SCM_CHARS(STR)
+  #else
+    #define XEN_TO_C_STRING(STR)      SCM_STRING_CHARS(STR)
+    /* this assumes its argument is a XEN string and does not allocate new space */
+  #endif
+  #define C_TO_XEN_STRING(a)          scm_makfrom0str((const char *)(a))
+  #define C_TO_XEN_STRINGN(Str, Len)  scm_mem2string(Str, Len)
 #endif
-#define C_TO_XEN_STRING(a)            scm_makfrom0str((const char *)(a))
 
 #define C_TO_XEN_BOOLEAN(a)           ((a) ? XEN_TRUE : XEN_FALSE)
 #define XEN_TO_C_BOOLEAN(a)           (!(XEN_FALSE_P(a)))
@@ -435,7 +444,11 @@
 
 #define XEN_SYMBOL_P(Arg)             (SCM_SYMBOLP(Arg))
 #define XEN_PROCEDURE_P(Arg)          (XEN_NOT_FALSE_P(scm_procedure_p(Arg)))
-#define XEN_STRING_P(Arg)             (SCM_STRINGP(Arg))
+#if HAVE_SCM_C_MAKE_RECTANGULAR
+  #define XEN_STRING_P(Arg)           scm_is_string(Arg)
+#else
+  #define XEN_STRING_P(Arg)           (SCM_STRINGP(Arg))
+#endif
 #define XEN_VECTOR_P(Arg)             (SCM_VECTORP(Arg))
 #define XEN_LIST_P(Arg)               (scm_ilength(Arg) >= 0)
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((Len = ((int)scm_ilength(Arg))) >= 0)
@@ -651,6 +664,10 @@ XEN xen_guile_dbg_new_procedure(const char *name, XEN (*func)(), int req, int op
   #define XEN_CATCH_BODY_TYPE scm_t_catch_body
 #else
   #define XEN_CATCH_BODY_TYPE scm_catch_body_t
+#endif
+
+#if HAVE_SCM_C_MAKE_RECTANGULAR
+char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #endif
 
 #endif

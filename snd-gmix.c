@@ -516,9 +516,10 @@ static void dismiss_mix_dialog(GtkWidget *w, gpointer context)
   gtk_widget_hide(mix_dialog);
 }
 
-static void delete_mix_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
+static gint delete_mix_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(mix_dialog);
+  return(true);
 }
 
 static GtkWidget *nextb, *previousb, *apply_button;
@@ -1573,9 +1574,10 @@ static void dismiss_track_dialog(GtkWidget *w, gpointer context)
   gtk_widget_hide(track_dialog);
 }
 
-static void delete_track_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
+static gint delete_track_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(track_dialog);
+  return(true);
 }
 
 static GtkWidget *track_nextb, *track_previousb;

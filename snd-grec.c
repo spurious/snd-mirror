@@ -1926,9 +1926,10 @@ static GtkWidget *rec_panes, *file_info_pane;
 
 #define AUDVAL_SIZE 64
 
-static void recorder_delete(GtkWidget *w, GdkEvent *event, gpointer context)
+static gint recorder_delete(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   dismiss_record_callback(w, context);
+  return(true);
 }
 
 widget_t snd_record_file(void)
