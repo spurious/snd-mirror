@@ -199,7 +199,7 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 
 void start_env_state(chan_info *cp)
 {
-  cp->cgx->amp_env_state = make_env_state(cp, current_ed_samples(cp));
+  cp->cgx->amp_env_state = make_env_state(cp, CURRENT_SAMPLES(cp));
 }
 
 static int tick_amp_env(chan_info *cp, env_state *es)
@@ -292,7 +292,7 @@ BACKGROUND_TYPE get_amp_env(GUI_POINTER ptr)
       return(BACKGROUND_QUIT);
     }
   if (!(cgx->amp_env_state)) 
-    cgx->amp_env_state = make_env_state(cp, current_ed_samples(cp));
+    cgx->amp_env_state = make_env_state(cp, CURRENT_SAMPLES(cp));
   es = (env_state *)(cgx->amp_env_state);
   if (tick_amp_env(cp, es))
     {
@@ -350,7 +350,7 @@ int amp_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, int sta
     }
   if ((start_new) &&
       (!(cgx->amp_env_in_progress)) && 
-      (current_ed_samples(cp) > AMP_ENV_CUTOFF)) 
+      (CURRENT_SAMPLES(cp) > AMP_ENV_CUTOFF)) 
     start_amp_env(cp);
   return(FALSE);
 }
@@ -881,9 +881,9 @@ static void check_env(chan_info *cp, env_info *new_ep)
 env_info *make_mix_input_amp_env(chan_info *cp)
 {
   env_state *es;
-  if (current_ed_samples(cp) > AMP_ENV_CUTOFF)
+  if (CURRENT_SAMPLES(cp) > AMP_ENV_CUTOFF)
     {
-      es = make_env_state(cp, current_ed_samples(cp)); /* sets cp->amp_envs[pos] */
+      es = make_env_state(cp, CURRENT_SAMPLES(cp)); /* sets cp->amp_envs[pos] */
       while (!(tick_amp_env(cp, es)));
       if (es->sf) es->sf = free_snd_fd(es->sf);
       FREE(es);
@@ -1402,12 +1402,12 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	      if (sp->selected_channel != NO_SELECTION) 
 		curchan = sp->selected_channel;
 	      if (apply_dur == 0)
-		apply_dur = current_ed_samples(sp->chans[curchan]) - apply_beg;
+		apply_dur = CURRENT_SAMPLES(sp->chans[curchan]) - apply_beg;
 	      break;
 	    case APPLY_TO_SOUND:     
 	      ap->hdr->chans = sp->nchans; 
 	      if (apply_dur == 0)
-		apply_dur = current_ed_samples(sp->chans[0]) - apply_beg;
+		apply_dur = CURRENT_SAMPLES(sp->chans[0]) - apply_beg;
 	      break;
 	    case APPLY_TO_SELECTION: 
 	      ap->hdr->chans = selection_chans();

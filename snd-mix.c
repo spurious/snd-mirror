@@ -458,7 +458,7 @@ static int mix_input_amp_env_usable(mix_info *md, Float samples_per_pixel)
 	  if ((cp == NULL) || (cp->amp_envs == NULL)) return(FALSE);
 	  ep = cp->amp_envs[cp->edit_ctr];
 	  if ((ep == NULL) && 
-	      (current_ed_samples(cp) > AMP_ENV_CUTOFF))
+	      (CURRENT_SAMPLES(cp) > AMP_ENV_CUTOFF))
 	    ep = make_mix_input_amp_env(cp);
 	  if ((ep) && 
 	      (samps_per_bin == 0.0)) 
@@ -602,7 +602,7 @@ static Float next_mix_sample(mix_fd *mf)
 
 static off_t amp_env_len(mix_info *md, int chan)
 {
-  return(current_ed_samples((md->add_snd)->chans[chan]));
+  return(CURRENT_SAMPLES((md->add_snd)->chans[chan]));
 }
 
 static mix_fd *init_mix_read_any(mix_info *md, int old, int type)
@@ -746,7 +746,7 @@ static mix_fd *init_mix_input_amp_env_read(mix_info *md, int old, int hi)
     {
       cp = sp->chans[i];
       mf->ctr[i] = -1; /* preincremented */
-      mf->samples[i] = current_ed_samples(cp);
+      mf->samples[i] = CURRENT_SAMPLES(cp);
       ep = cp->amp_envs[cp->edit_ctr];
       mf->samps_per_bin = ep->samps_per_bin;
       if (hi)
@@ -938,7 +938,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *tempfile, chan_inf
   file_info *ihdr, *ohdr;
   ss = cp->state;
   if (num <= 0) return(NULL); /* a no-op -- mixing in an empty file */
-  len = current_ed_samples(cp);
+  len = CURRENT_SAMPLES(cp);
   if (beg >= len)
     extend_with_zeros(cp, len, beg - len + 1, "(mix-extend)", cp->edit_ctr);
   /* might set flag here that we need backup after file_mix_samples below (backup_edit_list(cp)) */
@@ -2262,7 +2262,7 @@ static void move_mix(mix_info *md)
       md->nx = nx;
       samp = (off_t)(ungrf_x(ap, nx) * SND_SRATE(cp->sound));
       if (samp < 0) samp = 0;
-      samps = current_ed_samples(cp);
+      samps = CURRENT_SAMPLES(cp);
       if (samp > samps) samp = samps;
       /* now redraw the mix and reset its notion of begin time */
       /* actually should make a new state if cp->edit_ctr has changed ?? */
@@ -2764,7 +2764,7 @@ static track_fd *init_track_reader(chan_info *cp, int track_num, int global) /* 
   off_t track_beg;
   mix_info *md;
   console_state *cs;
-  track_beg = current_ed_samples(cp);
+  track_beg = CURRENT_SAMPLES(cp);
   for (i = 0; i < mix_infos_ctr; i++) 
     if (mix_ok(i))
       {

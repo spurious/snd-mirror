@@ -520,7 +520,7 @@ void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *
 	  cp->sounds[0] = make_snd_data_file(filename, io, chdr, DONT_DELETE_ME, cp->edit_ctr, chn);
 	}
     }
-  if ((current_ed_samples(cp) > AMP_ENV_CUTOFF) &&
+  if ((CURRENT_SAMPLES(cp) > AMP_ENV_CUTOFF) &&
       (cp->amp_envs[0] == NULL))                      /* perhaps created in initial-graph-hook by read-peak-env-info-file */
     start_amp_env(cp);
 }
@@ -831,7 +831,7 @@ void zx_incremented(chan_info *cp, double amount)
 { /* kbd arrows etc -- needs to be able to return to original */
   axis_info *ap;
   off_t samps;
-  samps = current_ed_samples(cp);
+  samps = CURRENT_SAMPLES(cp);
   ap = cp->axis;
   if ((amount >= 1.0) || ((samps > 0) && ((ap->zx * (double)samps) > (amount / 2.0))))
     {
@@ -1106,7 +1106,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	j = amp_env_graph(cp, ap, samples_per_pixel, (sp) ? ((int)SND_SRATE(sp)) : 1);
       else
 	{
-	  if ((ap->hisamp - ap->losamp) > (current_ed_samples(cp) / 4))
+	  if ((ap->hisamp - ap->losamp) > (CURRENT_SAMPLES(cp) / 4))
 	    {                                /* we're trying to view a large portion of the (large) sound */
 	      cgx = cp->cgx;
 	      if (cgx->amp_env_in_progress)
@@ -3165,7 +3165,7 @@ static void draw_graph_cursor(chan_info *cp)
 int cursor_decision(chan_info *cp)
 {
   off_t len;
-  len = current_ed_samples(cp);
+  len = CURRENT_SAMPLES(cp);
   if (cp->cursor >= len) cp->cursor = len - 1; /* zero based, but in 0-length files, len = 0 */
   if (cp->cursor < 0) cp->cursor = 0;        /* perhaps the cursor should be forced off in empty files? */
   if (cp->cursor < (cp->axis)->losamp)
@@ -3786,7 +3786,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		    {
 		      /* zoom request -> each added key zooms closer, as does each successive click */
 		      ap = cp->axis;
-		      samps = current_ed_samples(cp);
+		      samps = CURRENT_SAMPLES(cp);
 		      if ((samps > 0) && ((ap->zx * (double)samps) > 1.0))
 			{
 			  if (key_state & snd_ShiftMask) ap->zx *= .5;
@@ -4145,7 +4145,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, int fld, char *caller)
 	    case CP_GRAPH_TRANSFORM_P:  return(C_TO_XEN_BOOLEAN(cp->graph_transform_p));             break;
 	    case CP_GRAPH_TIME_P:       return(C_TO_XEN_BOOLEAN(cp->graph_time_p));                  break;
 	    case CP_CURSOR:             return(C_TO_XEN_OFF_T(cp->cursor));                          break;
-	    case CP_FRAMES:             return(C_TO_XEN_OFF_T(current_ed_samples(cp)));              break;
+	    case CP_FRAMES:             return(C_TO_XEN_OFF_T(CURRENT_SAMPLES(cp)));                 break;
 	    case CP_GRAPH_LISP_P:       return(C_TO_XEN_BOOLEAN(cp->graph_lisp_p));                  break;
 	    case CP_AP_LOSAMP:          if (cp->axis) return(C_TO_XEN_OFF_T((cp->axis)->losamp));    break;
 	    case CP_AP_HISAMP:          if (cp->axis) return(C_TO_XEN_OFF_T((cp->axis)->hisamp));    break;
@@ -4497,7 +4497,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       break;
     case CP_FRAMES:
       /* if less than current, delete, else zero pad */
-      curlen = current_ed_samples(cp);
+      curlen = CURRENT_SAMPLES(cp);
       newlen = XEN_TO_C_OFF_T_OR_ELSE(on, curlen);
       if (curlen > newlen)
 	{
@@ -5633,7 +5633,7 @@ static XEN g_set_dot_size(XEN size, XEN snd, XEN chn)
   else
     {
       ss = get_global_state();
-      set_dot_size(ss, (Latus)XEN_TO_C_INT_OR_ELSE(size, 0));
+      set_dot_size(ss, XEN_TO_C_INT_OR_ELSE(size, 0));
       return(C_TO_XEN_INT(dot_size(ss)));
     }
 }

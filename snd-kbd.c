@@ -768,7 +768,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 			  sp->amping, 1.0, sp->reging, NOT_FROM_ENVED,
 			  (char *)((sp->reging) ? "C-x a" : "C-x C-a"), NULL,
 			  C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, 1.0);
-	      else apply_env(active_chan, e, 0, current_ed_samples(active_chan), 1.0, 
+	      else apply_env(active_chan, e, 0, CURRENT_SAMPLES(active_chan), 1.0, 
 			     sp->reging, NOT_FROM_ENVED,
 			     (char *)((sp->reging) ? "C-x a" : "C-x C-a"), NULL,
 			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, 1.0);
@@ -821,7 +821,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
   else clear_minibuffer(sp);
 }
 
-static int stop_fft_in_progress(chan_info *cp, void *ptr)
+static void stop_fft_in_progress(chan_info *cp)
 {
   chan_context *cx;
   if ((cp) && (cp->cgx))
@@ -834,12 +834,11 @@ static int stop_fft_in_progress(chan_info *cp, void *ptr)
 	  cx->fft_in_progress = 0;
 	}
     }
-  return(0);
 }
 
 static void cursor_moveto_end(chan_info *cp)
 {
-  cursor_moveto(cp, current_ed_samples(cp) - 1);
+  cursor_moveto(cp, CURRENT_SAMPLES(cp) - 1);
 }
 
 static void set_window_bounds(chan_info *cp, int count) 
@@ -982,7 +981,7 @@ void control_g(snd_state *ss, snd_info *sp)
     {
       if (sp->playing) stop_playing_all_sounds();
       if (sp->applying) stop_applying(sp);
-      map_over_sound_chans(sp, stop_fft_in_progress, NULL);
+      for_each_sound_chan(sp, stop_fft_in_progress);
       clear_minibuffer(sp);
     }
   ss->error_lock = 0;

@@ -374,7 +374,7 @@ static int move_mark_1(chan_info *cp, mark *mp, int x)
     }
   mp->samp = (off_t)(ungrf_x(ap, nx) * SND_SRATE(cp->sound));
   if (mp->samp < 0) mp->samp = 0;
-  samps = current_ed_samples(cp);
+  samps = CURRENT_SAMPLES(cp);
   if (mp->samp > samps) mp->samp = samps;
   if (XEN_HOOKED(mark_drag_hook))
     run_hook(mark_drag_hook,
@@ -1018,7 +1018,7 @@ void reverse_marks(chan_info *cp, off_t beg, off_t dur) /* beg -1 for full sound
   mps = cp->marks[ed];
   if (beg == -1)
     {
-      m = make_mark_1(current_ed_samples(cp) - 1, NULL, 0, 0);
+      m = make_mark_1(CURRENT_SAMPLES(cp) - 1, NULL, 0, 0);
       map_over_marks(cp, reverse_mark_1, (void *)m, READ_FORWARD);
       free_mark(m);
     }
@@ -1363,7 +1363,7 @@ static int move_syncd_mark(chan_info *cp, mark *m, int x)
 		    erase_mark(ncp, ap, mp);
 		  mp->samp += diff;
 		  if (mp->samp < 0) mp->samp = 0;
-		  samps = current_ed_samples(ncp);
+		  samps = CURRENT_SAMPLES(ncp);
 		  if (mp->samp > samps) mp->samp = samps;
 		  if (mark_control_clicked)
 		    make_mark_graph(ncp, ncp->sound, mark_sd->initial_samples[i], mp->samp, i);
@@ -1798,7 +1798,7 @@ static XEN mark_set(XEN mark_n, XEN val, int fld, char *caller)
     case MARK_SAMPLE: 
       m->samp = mus_oclamp(0, 
 			   XEN_TO_C_OFF_T_OR_ELSE(val, 0),
-			   current_ed_samples(cp[0]));
+			   CURRENT_SAMPLES(cp[0]));
       sort_marks(cp[0]); /* update and re-sort current mark list */
       run_mark_hook(cp[0], mark_id(m), MARK_MOVE);
       update_graph(cp[0]);
@@ -1931,7 +1931,7 @@ static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n)
   ASSERT_CHANNEL(S_add_mark, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_add_mark);
   loc = XEN_TO_C_OFF_T_OR_ELSE(samp_n, 0);
-  if ((loc >= 0) && (loc < current_ed_samples(cp)))
+  if ((loc >= 0) && (loc < CURRENT_SAMPLES(cp)))
     {
       m = add_mark(loc, NULL, cp);
       if (m)

@@ -176,7 +176,7 @@ static void apply_enved(snd_state *ss)
 		  active_channel = current_channel(ss);
 		}
 	      else apply_env(active_channel, active_env, 0, 
-			     current_ed_samples(active_channel), 1.0, 
+			     CURRENT_SAMPLES(active_channel), 1.0, 
 			     apply_to_selection, FROM_ENVED, 
 			     "Enved: amp", NULL,
 			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, active_env_base); 

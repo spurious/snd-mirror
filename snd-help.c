@@ -271,6 +271,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+16-Aug:  added IBM adpcm from Perry Cook's adpcmdec.c.\n\
 15-Aug:  set-channel-drop in snd-motif.scm.\n\
 13-Aug:  snd 6.0.\n\
 1-Aug:   def-clm-struct (ws.scm).\n\
@@ -819,7 +820,7 @@ read-only (in selected data formats):\n\
      ----\n\
 automatically translated to Sun 16-bit, then read/write:\n\
      IEEE text, Mus10 SAM 16-bit (modes 1 and 4), IBM CVSD, AVI\n\
-     NIST shortpack, HCOM, Intel and Oki (Dialogic) ADPCM, MIDI sample dump\n\
+     NIST shortpack, HCOM, Intel, IBM, and Oki (Dialogic) ADPCM, MIDI sample dump\n\
      G721, G723_24, G723_40, IFF Fibonacci and Exponential\n\
 \n\
 'Linear' here means 2's complement integer.\n\
@@ -2247,7 +2248,6 @@ if returns a string, it replaces 'help-string' (the default help)"
 
 #if HAVE_HTML && (!USE_NO_GUI)
   XEN_YES_WE_HAVE("snd-html");
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_html_dir, g_html_dir_w, H_html_dir,
-				   "set-" S_html_dir, g_set_html_dir_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_html_dir, g_html_dir_w, H_html_dir, "set-" S_html_dir, g_set_html_dir_w,  0, 0, 1, 0);
 #endif
 }

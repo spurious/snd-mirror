@@ -256,6 +256,8 @@ typedef struct chan__info {
 #endif
 } chan_info;
 
+#define CURRENT_SAMPLES(Cp) (Cp)->samples[(Cp)->edit_ctr]
+
 typedef struct snd__info {
   int inuse;
   int index;
@@ -685,7 +687,6 @@ void backup_edit_list(chan_info *cp);
 void as_one_edit(chan_info *cp, int one_edit, char *one_edit_origin);
 void free_sound_list (chan_info *cp);
 void free_ptree_list(chan_info *cp);
-off_t current_ed_samples(chan_info *cp);
 void extend_with_zeros(chan_info *cp, off_t beg, off_t num, const char *origin, int edpos);
 void file_insert_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, int auto_delete, const char *origin, int edpos);
 void delete_samples(off_t beg, off_t num, chan_info *cp, const char *origin, int edpos);

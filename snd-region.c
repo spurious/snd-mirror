@@ -1117,7 +1117,7 @@ void save_region_backpointer(snd_info *sp)
 	  free_region(r, CLEAR_REGION_DATA);
 	  r->use_temp_file = REGION_FILE;
 	  r->maxamp = 0.0;
-	  r->frames = current_ed_samples(sp->chans[0]);
+	  r->frames = CURRENT_SAMPLES(sp->chans[0]);
 	  for (i = 0; i < sp->nchans; i++)
 	    {
 	      val = get_maxamp(sp, sp->chans[i], AT_CURRENT_EDIT_POSITION);
@@ -1353,8 +1353,8 @@ static XEN g_make_region(XEN beg, XEN end, XEN snd_n, XEN chn_n)
       cp = get_cp(snd_n, chn_n, S_make_region);
       ibeg = XEN_TO_C_OFF_T_OR_ELSE(beg, 0);
       ends[0] = XEN_TO_C_OFF_T_OR_ELSE(end, 0);
-      if (current_ed_samples(cp) - 1 < ends[0]) 
-	ends[0] = current_ed_samples(cp) - 1;
+      if (CURRENT_SAMPLES(cp) - 1 < ends[0]) 
+	ends[0] = CURRENT_SAMPLES(cp) - 1;
       if (ends[0] < ibeg) 
 	XEN_ERROR(IMPOSSIBLE_BOUNDS,
 		  XEN_LIST_5(C_TO_XEN_STRING(S_make_region),

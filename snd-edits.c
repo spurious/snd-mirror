@@ -185,13 +185,6 @@ static void prepare_edit_list(chan_info *cp, off_t len)
   cp->samples[cp->edit_ctr] = len;
 }
 
-off_t current_ed_samples(chan_info *cp)
-{
-  if (cp) 
-    return(cp->samples[cp->edit_ctr]);
-  else return(0);
-}
-
 static void reflect_sample_change_in_axis(chan_info *cp)
 {
   axis_info *ap;
@@ -199,7 +192,7 @@ static void reflect_sample_change_in_axis(chan_info *cp)
   ap = cp->axis;
   if (ap)
     {
-      samps = current_ed_samples(cp);
+      samps = CURRENT_SAMPLES(cp);
       ap->xmax = (double)samps / (double)SND_SRATE(cp->sound);
       ap->x_ambit = ap->xmax - ap->xmin;
       if (ap->x1 > ap->xmax) ap->x1 = ap->xmax;
@@ -1048,7 +1041,7 @@ void file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
     {
       extend_with_zeros(cp, len, beg - len + 1, "(insert-extend)", edpos);
       edpos = cp->edit_ctr;
-      len = current_ed_samples(cp);
+      len = CURRENT_SAMPLES(cp);
     }
   ss = cp->state;
   prepare_edit_list(cp, len + num);
@@ -1096,7 +1089,7 @@ static void insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *
     {
       extend_with_zeros(cp, len, beg - len + 1, "(insert-extend)", edpos);
       edpos = cp->edit_ctr;
-      len = current_ed_samples(cp);
+      len = CURRENT_SAMPLES(cp);
     }
   prepare_edit_list(cp, len + num);
   cp->edits[cp->edit_ctr] = insert_samples_1(beg, num, cp->edits[edpos], cp, &cb, origin, 1.0);
@@ -1309,7 +1302,7 @@ void file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, in
 	{
 	  extend_with_zeros(cp, prev_len, beg - prev_len + 1, "(change-extend)", edpos);
 	  edpos = cp->edit_ctr;
-	  prev_len = current_ed_samples(cp);
+	  prev_len = CURRENT_SAMPLES(cp);
 	}
       new_len = beg + num;
       if (new_len < prev_len) new_len = prev_len;
@@ -1408,7 +1401,7 @@ void change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, int
     {
       extend_with_zeros(cp, prev_len, beg - prev_len + 1, "(change-extend)", edpos);
       edpos = cp->edit_ctr;
-      prev_len = current_ed_samples(cp);
+      prev_len = CURRENT_SAMPLES(cp);
     }
   new_len = beg + num;
   if (new_len < prev_len) new_len = prev_len;
@@ -2528,8 +2521,8 @@ static int save_edits_and_update_display(snd_info *sp)
     {
       sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD);
       if (sf[i] == NULL) err = MUS_ERROR;
-      if (samples < current_ed_samples(sp->chans[i]))
-	samples = current_ed_samples(sp->chans[i]);
+      if (samples < CURRENT_SAMPLES(sp->chans[i]))
+	samples = CURRENT_SAMPLES(sp->chans[i]);
     }
   if (err == MUS_NO_ERROR)
     {
@@ -3611,7 +3604,7 @@ between beg and beg + num to peak value norm.  If channel is omitted, the scalin
       cp = get_cp(snd, chn, S_scale_sound_by);
       samps = dur_to_samples(num, samp, cp, cp->edit_ctr, 3, S_scale_sound_to);
       if ((samp == 0) &&
-	  (samps >= current_ed_samples(cp)))
+	  (samps >= CURRENT_SAMPLES(cp)))
 	maxamp = get_maxamp(sp, cp, AT_CURRENT_EDIT_POSITION);
       else maxamp = local_maxamp(cp, samp, samps, cp->edit_ctr);
       if (maxamp > 0.0)
@@ -3627,7 +3620,7 @@ between beg and beg + num to peak value norm.  If channel is omitted, the scalin
 	  cp = sp->chans[i];
 	  samps = dur_to_samples(num, samp, cp, cp->edit_ctr, 3, S_scale_sound_to);
 	  if ((samp == 0) &&
-	      (samps >= current_ed_samples(cp)))
+	      (samps >= CURRENT_SAMPLES(cp)))
 	    maxamp = get_maxamp(sp, cp, AT_CURRENT_EDIT_POSITION);
 	  else maxamp = local_maxamp(cp, samp, samps, cp->edit_ctr);
 	}
@@ -3775,7 +3768,7 @@ the new data's end."
   override = XEN_TRUE_P(truncate);
   if (XEN_STRING_P(vect))
     {
-      curlen = current_ed_samples(cp);
+      curlen = CURRENT_SAMPLES(cp);
       fname = XEN_TO_C_STRING(vect);
       inchan = XEN_TO_C_INT_OR_ELSE(infile_chan, 0);
       if ((beg == 0) && 
@@ -4083,7 +4076,7 @@ static XEN g_delete_sample(XEN samp_n, XEN snd_n, XEN chn_n, XEN edpos)
   cp = get_cp(snd_n, chn_n, S_delete_sample);
   samp = XEN_TO_C_OFF_T_OR_ELSE(samp_n, 0);
   pos = to_c_edit_position(cp, edpos, S_delete_sample, 4);
-  if ((samp >= 0) && (samp <= current_ed_samples(cp)))
+  if ((samp >= 0) && (samp <= CURRENT_SAMPLES(cp)))
     {
       delete_samples(samp, 1, cp, S_delete_sample, pos);
       update_graph(cp);
@@ -4313,6 +4306,8 @@ XEN_ARGIFY_9(g_set_samples_w, g_set_samples)
 #define g_set_samples_w g_set_samples
 #endif
 
+
+/* -------------------------------- internal doc test -------------------------------- */
 #if DEBUGGING && HAVE_GUILE
 static float test_a2(float b) {return(b * 2.0);}
 static XEN g_get_test_a2(void) {return(XEN_WRAP_C_POINTER(test_a2));}
@@ -4513,6 +4508,8 @@ static void init_fcomb(void)
   XEN_DEFINE_PROCEDURE("dfcomb", g_fcomb, 2, 0, 0, "(fcomb gen input) returns result of running fcomb gen");
 }
 #endif
+/* -------------------------------- end of internal doc test -------------------------------- */
+
 
 void g_init_edits(void)
 {

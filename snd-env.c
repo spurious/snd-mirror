@@ -941,7 +941,7 @@ void enved_show_background_waveform(snd_state *ss, axis_info *ap, axis_info *gra
       if (!apply_to_selection)
 	{
 	  if ((active_channel->fft) &&
-	      (active_channel->transform_size >= current_ed_samples(active_channel)))
+	      (active_channel->transform_size >= CURRENT_SAMPLES(active_channel)))
 	    {
 	      gray_ap->losamp = 0;
 	      gray_ap->hisamp = active_channel->transform_size - 1;
@@ -976,7 +976,7 @@ void enved_show_background_waveform(snd_state *ss, axis_info *ap, axis_info *gra
       else
 	{
 	  /* show current channel overall view in gray scale */
-	  samps = current_ed_samples(active_channel);
+	  samps = CURRENT_SAMPLES(active_channel);
 	  srate = SND_SRATE(active_channel->sound);
 	  gray_ap->losamp = 0;
 	  gray_ap->hisamp = samps - 1;

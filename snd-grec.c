@@ -1,5 +1,5 @@
 /* TODO  buttons that choose which devices to display are no-ops
- * TODO  vertical slider labels aren't centered correctly
+ * TODO  vertical slider labels aren't centered correctly (actually nothing is right -- this code should be deleted)
  */
 
 #include "snd.h"

@@ -1653,7 +1653,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		  (.dragContext i)
 		  (list XmNdropTransfers (list (XInternAtom (XtDisplay (cadr (main-widgets))) "FILE_NAME" #f))
 
-			;; this is saying that the in-coming drag-and-drop is passing us a FILE_NAME atom
+			;; this is saying that the in-coming drag-and-drop is expected to pass us a FILE_NAME atom
 			;; to find out what Atoms the selection translator can handle, use
 			;;   (XtVaGetValues (.dragContext i) (list XmNexportTargets 0))
 			;; which will return a list of acceptable Atoms

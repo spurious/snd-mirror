@@ -90,7 +90,8 @@
  * so where does the speed-up come from? We're not getting/freeing any Guile memory so the gc is never
  *   triggered, we're doing math ops direct and normally using float (not double),
  *   no function args are cons'd, no run-time types are checked, no values are boxed/unboxed,
- *   no symbols are looked-up in the current environment.
+ *   no symbols are looked-up in the current environment, wherever possible we pre-convert
+ *   args to same type (i.e. int->float done just once, if possible)
  */
 
 #include "snd.h"
@@ -7693,6 +7694,7 @@ static xen_value *lookup_generalized_set(ptree *prog, char *accessor, xen_value 
   /* TODO: (set! (vct-ref...)) and frame-ref, locsig-ref etc in run */
   /*       these would require that set_form pass us the 2nd (and 3rd) arg(s) to the accessor as well */
   /*       then something like set_dbl_gen0 as the call */
+  /*       or set_form needs to notice and translate to vct-set! et al */
   if (v == NULL) run_warn("can't set! %s", accessor);
   if (in_v) FREE(in_v);
   if (accessor) FREE(accessor);

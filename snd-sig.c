@@ -575,7 +575,7 @@ void scale_by(chan_info *cp, Float *ur_scalers, int len, int selection)
       else
 	{
 	  beg = 0;
-	  frames = current_ed_samples(ncp);
+	  frames = CURRENT_SAMPLES(ncp);
 	}
       scale_channel(ncp, ur_scalers[j], beg, frames, ncp->edit_ctr);
       j++;
@@ -690,7 +690,7 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
       else
 	{
 	  beg = 0;
-	  frames = current_ed_samples(ncp);
+	  frames = CURRENT_SAMPLES(ncp);
 	}
       scale_channel(ncp, scalers[i], beg, frames, ncp->edit_ctr);
     }
@@ -1810,7 +1810,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
       if (scalable)
 	{
 	  val[0] *= scaler;
-	  if ((beg == 0) && (dur >= current_ed_samples(cp)))
+	  if ((beg == 0) && (dur >= CURRENT_SAMPLES(cp)))
 	    {
 	      scale_by(cp, val, 1, regexpr);
 	      return;
@@ -2195,7 +2195,7 @@ void cursor_insert(chan_info *cp, off_t beg, off_t count, const char *origin)
       for (i = 0; i < si->chans; i++)
 	{
 	  extend_with_zeros(cps[i], 
-			    mus_oclamp(0, beg, current_ed_samples(si->cps[i]) - 1), 
+			    mus_oclamp(0, beg, CURRENT_SAMPLES(si->cps[i]) - 1), 
 			    count, origin,
 			    cps[i]->edit_ctr);
 	  update_graph(cps[i]);
@@ -2205,7 +2205,7 @@ void cursor_insert(chan_info *cp, off_t beg, off_t count, const char *origin)
   else 
     {
       extend_with_zeros(cp, 
-			mus_oclamp(0, beg, current_ed_samples(cp)), 
+			mus_oclamp(0, beg, CURRENT_SAMPLES(cp)), 
 			count, origin,
 			cp->edit_ctr);
       update_graph(cp);
@@ -2243,7 +2243,7 @@ void cursor_zeros(chan_info *cp, off_t count, int regexpr)
       /* if zeroing entire sound, set scalers and remake amp_env */
       ncp = si->cps[i];
       if ((si->begs[i] == 0) && 
-	  (num >= current_ed_samples(ncp)))
+	  (num >= CURRENT_SAMPLES(ncp)))
 	{
 	  nsp = ncp->sound;
 	  old_sync = nsp->sync;
@@ -2259,7 +2259,7 @@ void cursor_zeros(chan_info *cp, off_t count, int regexpr)
 	  else beg = si->begs[i] + count;
 	  /* special case 1 sample -- if already 0, treat as no-op */
 	  if ((count != 1) || 
-	      (beg >= current_ed_samples(ncp)) || 
+	      (beg >= CURRENT_SAMPLES(ncp)) || 
 	      (chn_sample(beg, ncp, ncp->edit_ctr) != 0.0))
 	    scale_channel(ncp, 0.0, beg, num, ncp->edit_ctr);
 	}
@@ -2445,12 +2445,12 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	  pt = form_to_ptree_1f2f(proc_and_list);
 	  if (pt)
 	    {
-	      char *errstr;
-	      errstr = run_channel(cp, pt, beg, num, pos);
+	      char *err_str;
+	      err_str = run_channel(cp, pt, beg, num, pos);
 	      free_ptree(pt);
-	      if (errstr == NULL)
+	      if (err_str == NULL)
 		return(XEN_ZERO);
-	      else FREE(errstr); /* and fallback on normal evaluator */
+	      else FREE(err_str); /* and fallback on normal evaluator */
 	    }
 	}
       sp = cp->sound;
@@ -3086,8 +3086,8 @@ static XEN g_swap_channels(XEN snd0, XEN chn0, XEN snd1, XEN chn1, XEN beg, XEN 
 	num = XEN_TO_C_OFF_T(dur);
       else
 	{
-	  dur0 = current_ed_samples(cp0);
-	  dur1 = current_ed_samples(cp1);
+	  dur0 = CURRENT_SAMPLES(cp0);
+	  dur1 = CURRENT_SAMPLES(cp1);
 	  if (dur0 > dur1) num = dur1; else num = dur0;
 	}
       if ((beg0 == 0) && ((num == dur0) || (num == dur1)) &&

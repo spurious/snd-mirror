@@ -271,7 +271,8 @@ typedef struct {
 #define snd_K_Left GDK_Left		 
 #define snd_K_Up GDK_Up		 
 #define snd_K_Right GDK_Right	 
-#define snd_K_Down GDK_Down		 
+#define snd_K_Down GDK_Down
+#define snd_K_question GDK_question		 
 
 #define snd_keypad_PageUp GDK_KP_Page_Up
 #define snd_keypad_PageDown GDK_KP_Page_Down

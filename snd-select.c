@@ -84,7 +84,7 @@ static void cp_set_selection_beg(chan_info *cp, off_t beg)
   ed_list *ed;
   off_t len;
   ed = cp->edits[cp->edit_ctr];
-  len = current_ed_samples(cp);
+  len = CURRENT_SAMPLES(cp);
   if (beg < len)
     ed->selection_beg = beg;
   else ed->selection_beg = len - 1;
@@ -133,7 +133,7 @@ static void cp_set_selection_len(chan_info *cp, off_t len)
   ed_list *ed;
   off_t cplen;
   ed = cp->edits[cp->edit_ctr];
-  cplen = current_ed_samples(cp);
+  cplen = CURRENT_SAMPLES(cp);
   ed->selection_end = ed->selection_beg + len - 1;
   if (ed->selection_end >= cplen) ed->selection_end = cplen - 1;
   ed->selection_maxamp = -1.0;
@@ -234,7 +234,7 @@ void reactivate_selection(chan_info *cp, off_t beg, off_t end)
   ed_list *ed;
   off_t len;
   ed = cp->edits[cp->edit_ctr];
-  len = current_ed_samples(cp) - 1;
+  len = CURRENT_SAMPLES(cp) - 1;
   if (beg < 0) beg = 0;
   if (end < 0) end = 0;
   if (beg > len) beg = len;
@@ -263,7 +263,7 @@ static void update_selection(chan_info *cp, off_t newend)
 	}
       else 
 	{
-	  samps = current_ed_samples(cp);
+	  samps = CURRENT_SAMPLES(cp);
 	  if (newend < samps)
 	    ed->selection_end = newend;
 	  else ed->selection_end = samps - 1;
@@ -522,7 +522,7 @@ int select_all(chan_info *cp)
       si = sync_to_chan(cp);
       for (i = 0; i < si->chans; i++)
 	{
-	  reactivate_selection(si->cps[i], 0, current_ed_samples(si->cps[i]));
+	  reactivate_selection(si->cps[i], 0, CURRENT_SAMPLES(si->cps[i]));
 	  update_graph(si->cps[i]);
 	}
       si = free_sync_info(si);

@@ -11,6 +11,7 @@
  *   Dvi-Intel (IMA) ADPCM RIFF (comes in 3 and 4 bit flavors, but just 4-bit here) (MS and Apple are variations of this)
  *   MIDI sample dump
  *   Oki (Dialogic) ADPCM (RIFF)
+ *   IBM ADPCM (as per Perry Cook)
  *   Yamaha TX-16 12-bit
  *   IFF Fibonacci and Exponential (untested)
  *   NeXT/Sun G721, G723 3 and 5 bit versions (also RIFF) (AIFC cases could be handled if they exist)
@@ -821,6 +822,68 @@ static int read_nist_shortpack(char *oldname, char *newname, char *hdr)
 }
 
 
+/* -------------------------------- IBM ADPCM --------------------------------
+ *
+ * taken from Perry Cook's adpcmdec.c
+ */
+
+static int read_ibm_adpcm(char *oldname, char *newname, char *hdr)
+{
+  short MAX_STEP = 2048, MIN_STEP = 16;
+  int totalin, i, j, k, fs = -1, fd = -1;
+  unsigned char *buf = NULL;
+  short *buf1;
+  off_t loc;
+  short XHAT1 = 0, delndec, del1dec = 8, ln1dec, temp;
+  unsigned short data_in;
+  float M[16] = {0.909, 0.909, 0.909, 0.909, 1.21, 1.4641, 1.771561, 2.143589, 0.909, 0.909, 0.909, 0.909, 1.21, 1.4641, 1.771561, 2.143589};
+  float del_table[16] = {0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 0.0, -0.25, -0.5, -0.75, -1.0, -1.25, -1.5, -1.75};
+  loc = mus_sound_data_location(oldname);
+  mus_bint_to_char((unsigned char *)(hdr + 16), mus_sound_srate(oldname));
+  mus_bint_to_char((unsigned char *)(hdr + 20), 1);
+  STARTUP(oldname, newname, TRANS_BUF_SIZE, unsigned char);
+  if (snd_checked_write(fs, (unsigned char *)hdr, 28, newname) == MUS_ERROR)
+    {
+      CLEANUP();
+      RETURN_MUS_WRITE_ERROR(oldname, newname);
+    }
+  lseek(fd, loc, SEEK_SET);
+  buf1 = (short *)CALLOC(TRANS_BUF_SIZE, sizeof(short));
+  while (1)
+    {
+      totalin = read(fd, buf, TRANS_BUF_SIZE / 4);
+      if (totalin <= 0) break;
+      for (i = 0, j = 0; i < totalin; i += 2, j += 4)
+	{
+	  data_in = (*((short *)(buf + i)));
+	  for (k = 0; k < 4; k++)
+	    {
+	      ln1dec = data_in >> 12;
+	      data_in = data_in << 4;
+	      delndec = (short)(del1dec * M[ln1dec]);
+	      temp = delndec - MIN_STEP;
+	      if (temp < 0) delndec = MIN_STEP; 
+	      temp = MAX_STEP - delndec;
+	      if (temp < 0) delndec = MAX_STEP;
+	      del1dec = delndec;
+	      XHAT1 += (short)(delndec * del_table[ln1dec]);
+	      if (XHAT1 > 32000 || XHAT1 < -32000) XHAT1 = (short)(XHAT1 * 0.95);
+	      buf1[j + k] = XHAT1;
+	    }
+	}
+      if (be_snd_checked_write(fs, (unsigned char *)buf1, j * 2, newname) == MUS_ERROR) 
+	{
+	  FREE(buf1);
+	  CLEANUP();
+	  RETURN_MUS_WRITE_ERROR(oldname, newname);
+	}
+    }
+  FREE(buf1);
+  CLEANUP();
+  return(MUS_NO_ERROR);
+}
+
+
 /* -------------------------------- Intel ADPCM --------------------------------
  *
  * described in detail Microsoft RIFF docs.  This code assumes bits = 4.
@@ -1567,6 +1630,7 @@ static int read_g72x_adpcm(char *oldname, char *newname, char *hdr, int which_g)
 #define RIFF_G721 0x40
 #define RIFF_MPEG 0x50
 #define RIFF_MS_ADPCM 2
+#define RIFF_IBM_ADPCM 0x103
 #define NeXT_G721 23
 #define NeXT_G722 24
 #define NeXT_G723 25
@@ -1613,6 +1677,7 @@ int snd_translate(char *oldname, char *newname, int type)
 	{
 	case RIFF_IBM_CVSD: err = read_ibm_cvsd(oldname, newname, hdr); break;
 	case RIFF_MS_ADPCM: case RIFF_Intel_ADPCM: err = read_dvi_adpcm(oldname, newname, hdr, 0); break;
+	case RIFF_IBM_ADPCM: err = read_ibm_adpcm(oldname, newname, hdr); break;
 	case RIFF_Oki_ADPCM: err = read_oki_adpcm(oldname, newname, hdr); break;
 	case RIFF_G721: err = read_g72x_adpcm(oldname, newname, hdr, 0); break; /* untested */
 	case RIFF_G723: case RIFF_MS_G723: case RIFF_Lucent_G723: case RIFF_Vivo_G723: /* untested */

@@ -2,7 +2,6 @@
 
 /* TODO: make completions list mouse sensitive as in Motif version (requires dialog etc)
  *        -> use click(select) callback!
- * TODO: C-? for help
  */
 
 static GtkWidget *listener_text = NULL;
@@ -204,6 +203,45 @@ static void clear_back_to_prompt(GtkWidget *w)
   SG_TEXT_DELETE(w, beg, end);
 }
 
+static void listener_help(snd_state *ss)
+{
+  char *source, *prompt, *name;
+  int len, i, j, start_of_name;
+  XEN result;
+  source = SG_TEXT_CHARS(listener_text, 0, -1);
+  if (source)
+    {
+      len = SG_TEXT_LENGTH(listener_text);
+      /* look for "(name...)" or "\n>name" */
+      prompt = listener_prompt(ss);
+      for (i = len - 1; i >= 0; i--)
+	{
+	  if ((source[i] == '(') || 
+	      ((source[i] == prompt[0]) && ((i == 0) || (source[i - 1] == '\n'))))
+	    {
+	      start_of_name = i + 1;
+	      /* look forward for a name */
+	      for (j = i + 2; j < len; j++)
+		if (is_separator_char(source[j]))
+		  {
+		    name = (char *)CALLOC(j - i + 1, sizeof(char));
+		    strncpy(name, (char *)(source + i + 1), j - i - 1);
+                    result = g_snd_help(C_TO_XEN_STRING(name), listener_width());
+		    FREE(name);
+		    if (XEN_STRING_P(result))
+		      {
+			listener_append("\n;");
+			listener_append_and_prompt(XEN_TO_C_STRING(result));
+			g_free(source);
+			return;
+		      }
+		  }
+	    }
+	}
+      g_free(source);
+    }
+}
+
 static int last_highlight_position = -1;
 
 static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
@@ -311,8 +349,14 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 						}
 					      else 
 						{
-						  return(FALSE);
-						}}}}}}}}}}}}
+						  if ((event->keyval == snd_K_question) && (event->state & snd_ControlMask))
+						    {
+						      listener_help(ss);
+						    }
+						  else
+						    {
+						      return(FALSE);
+						    }}}}}}}}}}}}}
   SG_SIGNAL_EMIT_STOP_BY_NAME(GTK_OBJECT(w), "key_press_event");
   return(FALSE);
 }

@@ -5,7 +5,6 @@
 
 /* SOMEDAY: finish selection-oriented Xt callbacks
  * SOMEDAY: callback struct print (and tie makers into Ruby)
- * SOMEDAY: finish the -> converters
  * SOMEDAY: get Xprt to work and test the Xp stuff
  */
 

@@ -210,7 +210,7 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
       search_in_progress = 0;
       return(-1);
     }
-  end = current_ed_samples(cp);
+  end = CURRENT_SAMPLES(cp);
   if (sp->search_tree)
     {
       for (i = start; i < end; i++)
