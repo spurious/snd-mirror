@@ -6070,8 +6070,8 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
   int xi, xs;
   bool int_ok = false;
   lim = srp->lim;
-#if HAVE_DECL_ISNAN
-  if (isnan(sr_change)) sr_change = 0.0;
+#if HAVE_DECL_ISNAN && HAVE_DECL_ISINF
+  if ((isnan(sr_change)) || (isinf(sr_change))) sr_change = 0.0;
 #endif
   srx = srp->incr + sr_change;
   if (srp->x >= 1.0)

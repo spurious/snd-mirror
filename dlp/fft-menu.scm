@@ -132,4 +132,4 @@
 
 (add-to-menu fft-menu #f #f)
 
-(add-to-menu fft-menu "Squelch vowels" squelch-vowels)
+(add-to-menu fft-menu "Squelch vowels" (lambda () (squelch-vowels)))

@@ -4,7 +4,7 @@
 (provide 'snd-oscope.scm)
 
 
-(define audio-srate 22050) ; graph's sampling rate
+(define audio-srate 44100) ; graph's sampling rate
 (define max-cycle 8192)    ; maximum size in samples of the displayed buffer
 (define cycle-length 1024) ; initial cycle length
 
@@ -69,7 +69,7 @@
 		    (set! bytes (* bps oscope-input-frames chans))
 		    (set! oscope-input-port (catch #t
 					 (lambda ()
-					   (mus-audio-open-output mus-audio-line-in audio-srate chans fmt bytes))
+					   (mus-audio-open-input mus-audio-line-in audio-srate chans fmt bytes))
 					 (lambda args -1)))
 		    (if (not (= oscope-input-port -1))
 			(begin

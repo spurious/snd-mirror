@@ -1470,7 +1470,16 @@ AC_ARG_ENABLE(deprecated,
     AC_DEFINE(XEN_DISABLE_DEPRECATED)
   fi)
 
-CFLAGS="-I. $CFLAGS"
+if test "$enable_snd_debug" = yes ; then
+  CFLAGS="-I. $CFLAGS"
+else
+  # this taken from swh-plugins-0.3.7/configure.in (with minor changes)
+  # MACHINE="-mcpu=${build_cpu} -march=${build_cpu}"
+  # if test ${build_cpu} = "powerpc"; then MACHINE=""; fi
+  # CFLAGS="-I. $CFLAGS ${MACHINE}"
+  CFLAGS="-I. $CFLAGS"
+fi
+
 if test "$with_profiling" = yes; then
   CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage -fbranch-probabilities"
 fi
@@ -1478,3 +1487,4 @@ fi
 AC_SUBST(CFLAGS)
 AC_SUBST(MAKE_TARGET)
 AC_OUTPUT
+

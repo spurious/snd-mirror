@@ -2796,8 +2796,8 @@ void display_channel_mixes(chan_info *cp)
 {
   /* called in display_channel_data if show_mix_mix_states(ss) and cp->have_mixes
    * this needs to spin through the mixes, 
-   *   un-manage those whose mix has wandered off screen, and release the associated widgets,
-   *   and re-manage those that are now active, grabbing widgets if necessary.
+   *   un-manage those whose mix has wandered off screen
+   *   and re-manage those that are now active
    */
   axis_info *ap;
   off_t lo, hi;

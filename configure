@@ -19388,7 +19388,16 @@ _ACEOF
   fi
 fi;
 
-CFLAGS="-I. $CFLAGS"
+if test "$enable_snd_debug" = yes ; then
+  CFLAGS="-I. $CFLAGS"
+else
+  # this taken from swh-plugins-0.3.7/configure.in (with minor changes)
+  # MACHINE="-mcpu=${build_cpu} -march=${build_cpu}"
+  # if test ${build_cpu} = "powerpc"; then MACHINE=""; fi
+  # CFLAGS="-I. $CFLAGS ${MACHINE}"
+  CFLAGS="-I. $CFLAGS"
+fi
+
 if test "$with_profiling" = yes; then
   CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage -fbranch-probabilities"
 fi
@@ -20798,4 +20807,5 @@ if test "$no_create" != yes; then
   # would make configure fail if this is the last instruction.
   $ac_cs_success || { (exit 1); exit 1; }
 fi
+
 

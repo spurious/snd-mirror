@@ -16559,6 +16559,10 @@ EDITS: 5
 	  ((= i 10))
 	(make-src (lambda (y) 1.0) 1.5 :width (+ 5 (* i 10))))
       (clear-sincs)
+
+      (let ((s1 (make-src (lambda (dir) 1.0))))
+	(let ((val (src s1 (log 0))))
+	  (if (fneq val 1.0) (snd-display ";inf as sr-change: ~A" val))))
       
       (let ((gen (make-granulate :expansion 2.0))
 	    (v0 (make-vct 1000))
@@ -52258,8 +52262,8 @@ EDITS: 2
 			    (set! color-95 (make-two-pole .6 .1 .1))
 			    (set! vector-0 (make-formant .1 100 1))
 			    (set! vct-3 (make-waveshape :frequency 300 :partials '(1 1 2 1)))
-			    (set! car-main (make-src :srate .1))
-			    (set! cadr-main (make-granulate :expansion .1))
+			    (set! car-main (make-src (lambda (dir) 1.0) :srate .1))
+			    (set! cadr-main (make-granulate (lambda (dir) 1.0) :expansion .1))
 			    (set! sound-data-23 (make-wave-train 100))
 			    (set! a-hook (make-frame 2 .2 .1)))
 			  (if (= test-28 4)
@@ -52276,8 +52280,11 @@ EDITS: 2
 				  (begin
 				    (set! delay-32 (make-delay 32))
 				    (set! color-95 (make-color .9 .9 .9))
-				    (set! vector-0 (make-vector 1))))))))
-#!
+				    (set! vector-0 (make-vector 1))
+				    (set! car-main (make-average 3))
+				    (set! cadr-main (make-phase-vocoder (lambda (dir) 1.0)))
+				    ))))))
+
 	    (for-each (lambda (n)
 			(let ((tag
 			       (catch #t
@@ -53534,11 +53541,11 @@ EDITS: 2
 		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
 		       (sqrt -1.0) delay-32 :frequency -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
 	    (gc)(gc)
-!#
+
 	    (if all-args
 		;; these can take awhile...
 		(begin
-#!
+
 		  (snd-display "3 args")
 		  ;; ---------------- 3 Args
 		  (for-each 
@@ -53619,7 +53626,7 @@ EDITS: 2
 		   (list 1.5 "/hiho" (list 0 1) 1234 vct-5 (sqrt -1.0) 3/4 '#(0 1) -1.0
 			 -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan)))
 		  (gc)(gc)
-!#
+
 		  (snd-display "set 4 args")
 		  ;; ---------------- set! 4 Args
 		  (for-each 

@@ -3343,7 +3343,6 @@ If it returns some non-false result, Snd assumes you've sent the text out yourse
   g_init_env();
   g_init_recorder();
   g_init_find();
-  g_init_run();
   g_init_track();
 #if (!USE_NO_GUI)
   g_init_gxutils();
@@ -3364,6 +3363,8 @@ If it returns some non-false result, Snd assumes you've sent the text out yourse
   g_init_gxrec();
   g_init_gxfind();
 #endif
+  g_init_run();
+
 #if HAVE_GUILE && HAVE_DLFCN_H
   XEN_DEFINE_PROCEDURE("dlopen", g_dlopen_w, 1, 0 ,0, "");
   XEN_DEFINE_PROCEDURE("dlclose", g_dlclose_w, 1, 0 ,0, "");

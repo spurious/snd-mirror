@@ -1333,7 +1333,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	}
     } 
   /* here size can be (user-set to) 0 */
-  if (max_size == -1)
+  if (max_size <= 0)
     {
       if (size == 0)
 	max_size = 1;
@@ -1352,6 +1352,10 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
       if (line) FREE(line);
       XEN_OUT_OF_RANGE_ERROR(caller, 0, C_TO_XEN_INT(max_size), "max_size is irrelevant to the " S_average " generator");
     }
+#if DEBUGGING
+  if (max_size <= 0) {fprintf(stderr, "delay max size: %d\n", max_size); abort();}
+  if (size < 0) {fprintf(stderr, "delay size: %d\n", size); abort();}
+#endif
   if (line == NULL)
     {
       line = (Float *)CALLOC(max_size, sizeof(Float));
@@ -4961,6 +4965,8 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
 		  {
 		    for (i = 0; i < in_size; i++) if (envs1[i]) FREE(envs1[i]);
 		    FREE(envs1);
+		    if (infile) free(infile);
+		    if (outfile) free(outfile);
 		    XEN_ERROR(BAD_TYPE,
 			      XEN_LIST_5(C_TO_XEN_STRING(S_mus_mix),
 					 vdata1[j],

@@ -102,6 +102,9 @@ double xen_to_c_double(XEN a)
 #if HAVE_DECL_ISNAN
   if (isnan(num)) return(0.0);
 #endif
+#if HAVE_DECL_ISINF
+  if (isinf(num)) return(0.0);
+#endif
   return(num);
 }
 
