@@ -122,6 +122,9 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
 static chan_info *free_chan_info(chan_info *cp)
 {
   /* this does not free the associated widgets -- they are merely unmanaged */
+#if DEBUGGING
+  if (cp->edit_hook_checked) fprintf(stderr, "%s[%d] edit hook set", (cp->sound) ? (cp->sound->short_filename) : "some sound", cp->chan);
+#endif
   cp->active = false;
   /* need an indication right away that this channel is being deleted -- during free_snd_info (close-sound),
    *   an error may occur (an edit list temp file might have vanished for example), and normally Snd
@@ -184,6 +187,7 @@ static chan_info *free_chan_info(chan_info *cp)
   if (cp->lisp_info) cp->lisp_info = free_lisp_info(cp);
   cp->graph_lisp_p = false;
   cp->selection_transform_size = 0;
+  cp->edit_hook_checked = false;
   XEN_CLEAR_HOOK(cp->edit_hook);
   XEN_CLEAR_HOOK(cp->after_edit_hook);
   XEN_CLEAR_HOOK(cp->undo_hook);
@@ -372,7 +376,7 @@ void free_snd_info(snd_info *sp)
   clear_mini_strings(sp);
   clear_filter_strings(sp);
   clear_players();
-  reflect_mix_in_menu();
+  reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID);
 }
 
 snd_info *completely_free_snd_info(snd_info *sp)

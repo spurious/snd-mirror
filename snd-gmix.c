@@ -766,7 +766,7 @@ static void update_mix_dialog(int mix_id)
   char lab[LABEL_BUFFER_SIZE];
   if (mix_id == INVALID_MIX_ID) return;
   if (!(mix_ok(mix_dialog_id))) mix_dialog_id = mix_id;
-  if (!(mix_ok(mix_dialog_id))) mix_dialog_id = any_mix_id();
+  if (!(mix_ok(mix_dialog_id))) {mix_dialog_id = any_mix_id(); mix_id = mix_dialog_id;}
   if (mix_id == mix_dialog_id)
     {
       if (mix_dialog == NULL) 
@@ -827,38 +827,6 @@ static void update_mix_dialog(int mix_id)
     }
 }
 
-void reflect_mix_in_mix_dialog(int mix_id)
-{
-  if ((mix_dialog) &&
-      (GTK_WIDGET_VISIBLE(mix_dialog)))
-    {
-      if (mix_dialog_id == mix_id)
-	update_mix_dialog(mix_id);
-      if (mix_id != INVALID_MIX_ID)
-	{
-	  set_sensitive(nextb, (next_mix_id(mix_dialog_id) != INVALID_MIX_ID));
-	  set_sensitive(previousb, (previous_mix_id(mix_dialog_id) != INVALID_MIX_ID));
-	}
-    }
-}
-
-void reflect_undo_in_mix_dialog(void)
-{
-  if ((mix_dialog) && 
-      (GTK_WIDGET_VISIBLE(mix_dialog)))
-    {
-      /* check that currently displayed mix controls match the current edit state */
-      reflect_edit_in_mix_dialog_envs(mix_dialog_id);
-      update_mix_dialog(mix_dialog_id);
-    }
-}
-
-void reflect_no_mix_in_mix_dialog(void)
-{
-  if ((mix_dialog) &&
-      (GTK_WIDGET_VISIBLE(mix_dialog)))
-    gtk_widget_hide(mix_dialog);
-}
 
 /* ---------------- track dialog ---------------- */
 
@@ -1081,7 +1049,7 @@ static gboolean track_amp_env_resize_callback(GtkWidget *w, GdkEventConfigure *e
 
 static GtkWidget *w_track_id = NULL, *w_track_beg = NULL, *w_track_id_label = NULL;
 static GtkWidget *w_track_track_label = NULL, *w_track_play_pix = NULL, *w_track_play = NULL;
-static GdkPixmap *track_speaker_pix, *track_speaker_pix;
+static GdkPixmap *track_speaker_pix;
 
 static void track_id_activated(GtkWidget *w, gpointer context)
 {
@@ -1164,14 +1132,9 @@ static gboolean w_track_play_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpoint
 
 static void apply_track_dialog(GtkWidget *w, gpointer context)
 {
-  /* set all mix amp envs, last one should remix */
   env *e;
   e = track_dialog_env(track_dialog_id);
-	/*
-      set_track_amp_env_without_edit(track_dialog_id, e);
-  set_track_amp_env(track_dialog_id, e);
-	*/
-
+  track_dialog_set_amp_env(track_dialog_id, e);
   track_amp_env_resize(w_track_env);
 }
 
@@ -1554,36 +1517,40 @@ static void update_track_dialog(int track_id)
     }
 }
 
-void reflect_track_in_track_dialog(int track_id)
+
+
+/* ---------------- reflection ---------------- */
+
+void reflect_mix_or_track_change(int mix_id, int track_id)
 {
+  if ((mix_dialog) &&
+      (GTK_WIDGET_VISIBLE(mix_dialog)))
+    {
+      if (mix_dialog_id == mix_id)
+	{
+	  /* reflect_edit_in_mix_dialog_envs(mix_dialog_id); */
+	  update_mix_dialog(mix_id);
+	}
+      if (mix_id != INVALID_MIX_ID)
+	{
+	  set_sensitive(nextb, (next_mix_id(mix_dialog_id) != INVALID_MIX_ID));
+	  set_sensitive(previousb, (previous_mix_id(mix_dialog_id) != INVALID_MIX_ID));
+	}
+    }
   if ((track_dialog) &&
       (GTK_WIDGET_VISIBLE(track_dialog)))
     {
       if (track_dialog_id == track_id)
-	update_track_dialog(track_id);
+	{
+	  /* reflect_edit_in_track_dialog_env(track_dialog_id); */
+	  update_track_dialog(track_id);
+	}
       if (track_id != INVALID_TRACK_ID)
 	{
 	  set_sensitive(track_nextb, (next_track_id(track_dialog_id) != INVALID_TRACK_ID));
 	  set_sensitive(track_previousb, (previous_track_id(track_dialog_id) != INVALID_TRACK_ID));
 	}
     }
-}
-
-void reflect_undo_in_track_dialog(void)
-{
-  if ((track_dialog) && 
-      (GTK_WIDGET_VISIBLE(track_dialog)))
-    {
-      reflect_edit_in_track_dialog_env(track_dialog_id);
-      update_track_dialog(track_dialog_id);
-    }
-}
-
-void reflect_no_track_in_track_dialog(void)
-{
-  if ((track_dialog) &&
-      (GTK_WIDGET_VISIBLE(track_dialog)))
-    gtk_widget_hide(track_dialog);
 }
 
 

@@ -131,8 +131,6 @@ Widget edit_find_menu(void);
 Widget edit_select_all_menu(void);
 Widget edit_header_menu(void);
 Widget view_equalize_panes_menu(void);
-Widget view_mix_dialog_menu(void);
-Widget view_track_dialog_menu(void);
 Widget view_region_menu(void);
 Widget view_combine_separate_menu(void);
 Widget view_combine_combined_menu(void);
@@ -504,18 +502,14 @@ void g_init_gxenv(void);
 
 /* -------- snd-xmix.c -------- */
 
-void reflect_mix_in_mix_dialog(int mix_id);
+void reflect_mix_or_track_change(int mix_id, int track_id);
 Widget make_mix_dialog(void);
 Widget make_track_dialog(void);
 bool mix_play_stopped(void);
+bool track_play_stopped(void);
 void reflect_mix_play_stop(void);
-void reflect_no_mix_in_mix_dialog(void);
-void make_mixer_icons_transparent_again(Pixel old_color, Pixel new_color);
-void reflect_undo_in_mix_dialog(void);
-void reflect_track_in_track_dialog(int track_id);
-void reflect_undo_in_track_dialog(void);
-void reflect_no_track_in_track_dialog(void);
 void reflect_track_play_stop(void);
+void make_mixer_icons_transparent_again(Pixel old_color, Pixel new_color);
 void g_init_gxmix(void);
 
 

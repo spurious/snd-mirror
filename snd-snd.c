@@ -1716,20 +1716,20 @@ Cessate apply_controls(Indicium ptr)
 		    {
 		      for (i = 0; i < sp->nchans; i++)
 			{
-			  file_change_samples(apply_beg, apply_dur, ap->ofile, sp->chans[i], i,
-					      (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-					      LOCK_MIXES, "Apply to sound", sp->chans[i]->edit_ctr);
-			  update_graph(sp->chans[i]);
+			  if (file_change_samples(apply_beg, apply_dur, ap->ofile, sp->chans[i], i,
+						  (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
+						  LOCK_MIXES, "Apply to sound", sp->chans[i]->edit_ctr))
+			    update_graph(sp->chans[i]);
 			}
 		    }
 		  else
 		    {
 		      for (i = 0; i < sp->nchans; i++)
 			{
-			  file_override_samples(apply_dur, ap->ofile, sp->chans[i], i,
-						(sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-						LOCK_MIXES, "Apply to sound");
-			  update_graph(sp->chans[i]);
+			  if (file_override_samples(apply_dur, ap->ofile, sp->chans[i], i,
+						    (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
+						    LOCK_MIXES, "Apply to sound"))
+			    update_graph(sp->chans[i]);
 			}
 		    }
 		  break;
@@ -1751,10 +1751,10 @@ Cessate apply_controls(Indicium ptr)
 		    {
 		      for (i = 0; i < si->chans; i++)
 			{
-			  file_change_samples(si->begs[i], apply_dur, ap->ofile, si->cps[i], i,
-					      (si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-					      LOCK_MIXES, "Apply to selection", si->cps[i]->edit_ctr);
-			  update_graph(si->cps[i]);
+			  if (file_change_samples(si->begs[i], apply_dur, ap->ofile, si->cps[i], i,
+						  (si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
+						  LOCK_MIXES, "Apply to selection", si->cps[i]->edit_ctr))
+			    update_graph(si->cps[i]);
 			}
 		    }
 		  else

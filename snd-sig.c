@@ -255,7 +255,11 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
   dataformat = mus_sound_data_format(filename);
 
   sc = get_sync_state_without_snd_fds(sp, ncp, 0, (cp == NULL));
-  if (sc == NULL) return(NULL);
+  if (sc == NULL) 
+    {
+      cp->edit_hook_checked = false;
+      return(NULL);
+    }
   si = sc->si;
 
   origin = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
@@ -269,6 +273,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 	{
 	  ok = false;
       	  ucp = si->cps[ip];
+	  if (!(editable_p(ucp))) continue;
 	  sp = ucp->sound;
 	  if ((ip > 0) && (sp != gsp)) 
 	    finish_progress_report(gsp, NOT_FROM_ENVED);
@@ -285,7 +290,9 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 	  err = save_channel_edits(ucp, saved_chan_file, edpos, S_convolve_with, arg_pos);
 	  if (err != MUS_NO_ERROR)
 	    {
-	      FREE(ofile);
+	      if (ofile) FREE(ofile);
+	      free_sync_state(sc);
+	      ucp->edit_hook_checked = false;
 	      return(mus_format(_("convolve: save chan (%s[%d]) in %s hit error: %s\n"),
 				sp->short_filename, ucp->chan, 
 				saved_chan_file, strerror(errno)));
@@ -294,9 +301,14 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 	    {
 	      scfd = mus_file_open_read(saved_chan_file);
 	      if (scfd == -1) 
-		return(mus_format(_("convolve: open saved chan (%s[%d]) file %s hit error: %s\n"),
-				  sp->short_filename, ucp->chan, 
-				  saved_chan_file, strerror(errno)));
+		{
+		  if (ofile) FREE(ofile);
+		  free_sync_state(sc);
+		  ucp->edit_hook_checked = false;
+		  return(mus_format(_("convolve: open saved chan (%s[%d]) file %s hit error: %s\n"),
+				    sp->short_filename, ucp->chan, 
+				    saved_chan_file, strerror(errno)));
+		}
 	      else
 		{
 		  hdr = sp->hdr;
@@ -308,8 +320,13 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 					    1, hdr->type); /* ??? */
 		  fltfd = mus_file_open_read(filename);
 		  if (fltfd == -1) 
-		    return(mus_format(_("convolve: open filter file %s hit error: %s\n"), 
-				      filename, strerror(errno)));
+		    {
+		      if (ofile) FREE(ofile);
+		      ucp->edit_hook_checked = false;
+		      free_sync_state(sc);
+		      return(mus_format(_("convolve: open filter file %s hit error: %s\n"), 
+					filename, strerror(errno)));
+		    }
 		  else
 		    {
 		      mus_file_open_descriptors(fltfd,
@@ -337,14 +354,24 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 			    impulse_chan = 0;
 			}
 		      if (mus_file_close(fltfd) != 0)
-			return(mus_format(_("convolve: close filter file %s hit error: %s\n"), 
-					  filename, strerror(errno)));
+			{
+			  if (ofile) FREE(ofile);
+			  free_sync_state(sc);
+			  ucp->edit_hook_checked = false;
+			  return(mus_format(_("convolve: close filter file %s hit error: %s\n"), 
+					    filename, strerror(errno)));
+			}
 		    }
 		}
 	      if (mus_file_close(scfd) != 0)
-		return(mus_format(_("convolve: close saved chan (%s[%d]) file %s hit error: %s\n"),
-				  sp->short_filename, ucp->chan, 
-				  saved_chan_file, strerror(errno)));
+		{
+		  if (ofile) FREE(ofile);
+		  free_sync_state(sc);
+		  ucp->edit_hook_checked = false;
+		  return(mus_format(_("convolve: close saved chan (%s[%d]) file %s hit error: %s\n"),
+				    sp->short_filename, ucp->chan, 
+				    saved_chan_file, strerror(errno)));
+		}
 	    }
 	  snd_remove(saved_chan_file, REMOVE_FROM_CACHE);
 	  FREE(saved_chan_file);
@@ -366,6 +393,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 		}
 	      else file_override_samples(filtersize + filesize, ofile, ucp, 0, DELETE_ME, LOCK_MIXES, origin);
 	    }
+	  ucp->edit_hook_checked = false;
 	  if (ofile) FREE(ofile);
 	  check_for_event();
 	  if (ss->stopped_explicitly) 
@@ -458,7 +486,8 @@ void scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool sele
   if ((!selection) && (cp == NULL)) return;
   if (selection) 
     {
-      if (!(selection_is_active())) return;
+      if (!(selection_is_active())) 
+	return;
       si = selection_sync();
       sp = si->cps[0]->sound;
     }
@@ -555,6 +584,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
   bool reporting = false;
   char *ofile0 = NULL, *ofile1 = NULL;
   if (dur <= 0) return;
+  if ((!(editable_p(cp0))) || (!(editable_p(cp1)))) return;
   sp0 = cp0->sound;
   reporting = ((sp0) && (dur > REPORTING_SIZE));
   if (reporting) start_progress_report(sp0, NOT_FROM_ENVED);
@@ -566,6 +596,8 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
       ofd0 = open_temp_file(ofile0, 1, hdr0);
       if (ofd0 == -1)
 	{
+	  cp0->edit_hook_checked = false;
+	  cp1->edit_hook_checked = false;
 	  free_file_info(hdr0);
 	  snd_error(_("can't open swap-channels temp file %s: %s\n"), ofile0, strerror(errno));
 	  return;
@@ -576,6 +608,8 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
       ofd1 = open_temp_file(ofile1, 1, hdr1);
       if (ofd1 == -1)
 	{
+	  cp0->edit_hook_checked = false;
+	  cp1->edit_hook_checked = false;
 	  close_temp_file(ofd0, hdr0, 0, sp0);
 	  free_file_info(hdr0);
 	  free_file_info(hdr1);
@@ -646,6 +680,8 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
   FREE(data1);
   free_snd_fd(c0);
   free_snd_fd(c1);
+  cp0->edit_hook_checked = false;
+  cp1->edit_hook_checked = false;
 }
 
 /* -------- src -------- */
@@ -715,6 +751,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   Float env_val;
   off_t next_pass;
   if ((ratio == 1.0) && (egen == NULL)) return(NULL);
+  if (!(editable_p(cp))) return(NULL);
   sp = cp->sound;
   full_chan = ((beg == 0) && (dur == CURRENT_SAMPLES(cp)));
   cur_marks = 0;
@@ -725,7 +762,10 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, (char *)origin);
   ofd = open_temp_file(ofile, 1, hdr);
   if (ofd == -1)
-    return(mus_format(_("can't open %s temp file %s: %s\n"), origin, ofile, strerror(errno)));
+    {
+      cp->edit_hook_checked = false;
+      return(mus_format(_("can't open %s temp file %s: %s\n"), origin, ofile, strerror(errno)));
+    }
   data = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));
   data[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
   datumb = mus_bytes_per_sample(hdr->format);
@@ -901,6 +941,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   ofile = NULL;
   FREE(data[0]);
   FREE(data);
+  cp->edit_hook_checked = false;
   return(NULL);
 }
 
@@ -1098,8 +1139,13 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
     return(mus_format(_("clm-channel: %s can't handle %s generators"),
 		      caller,
 		      mus_name(gen)));
+  if (!(editable_p(cp))) return(NULL);
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
-  if (sf == NULL) return(mus_format(_("%s: can't read %s[%d] channel data!"), caller, sp->short_filename, cp->chan));
+  if (sf == NULL)
+    {
+      cp->edit_hook_checked = false;
+      return(mus_format(_("%s: can't read %s[%d] channel data!"), caller, sp->short_filename, cp->chan));
+    }
   if ((dur + overlap) > MAX_BUFFER_SIZE)
     {
       temp_file = true; 
@@ -1108,6 +1154,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
       ofd = open_temp_file(ofile, 1, hdr);
       if (ofd == -1)
 	{
+	  cp->edit_hook_checked = false;
 	  free_snd_fd(sf); 
 	  return(mus_format(_("can't open %s temp file %s: %s\n"), caller, ofile, strerror(errno)));
 	}
@@ -1169,6 +1216,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
   free_snd_fd(sf);
   FREE(data[0]);
   FREE(data);
+  cp->edit_hook_checked = false;
   return(NULL);
 }
 
@@ -1235,6 +1283,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 	      if (sfs[i]) {free_snd_fd(sfs[i]); sfs[i] = NULL;}
 	      continue;
 	    }
+	  if (!(editable_p(cp))) continue;
 	  dur += order;
 	  fsize = snd_2pow2(dur);
 	  sndrdat = (Float *)CALLOC(fsize, sizeof(Float));
@@ -1253,6 +1302,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 	      report_in_minibuffer(sp, _("stopped"));
 	      FREE(sndrdat);
 	      FREE(fltdat);
+	      cp->edit_hook_checked = false;
 	      break;
 	    }
 	  scale = 1.0 / (Float)fsize;
@@ -1274,6 +1324,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 	  ofd = open_temp_file(ofile, 1, hdr);
 	  if (ofd == -1)
 	    {
+	      cp->edit_hook_checked = false;
 	      snd_error(_("can't open %s temp file %s: %s\n"), origin, ofile, strerror(errno));
 	      break;
 	    }
@@ -1285,6 +1336,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 	  update_graph(cp);
 	  FREE(sndrdat);
 	  FREE(fltdat);
+	  cp->edit_hook_checked = false;
 	  check_for_event();
 	  if (ss->stopped_explicitly)
 	    {
@@ -1331,6 +1383,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 		  if (sfs[i]) {free_snd_fd(sfs[i]); sfs[i] = NULL;}
 		  continue;
 		}
+	      if (!(editable_p(cp))) continue;
 	      dur += order;
 	      reporting = ((sp) && (dur > REPORTING_SIZE));
 	      if (reporting) start_progress_report(sp, from_enved);
@@ -1343,6 +1396,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 		  if (ofd == -1)
 		    {
 		      snd_error(_("can't open %s temp file %s: %s\n"), origin, ofile, strerror(errno));
+		      cp->edit_hook_checked = false;
 		      break;
 		    }
 		  datumb = mus_bytes_per_sample(hdr->format);
@@ -1410,6 +1464,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 	      else change_samples(si->begs[i], dur, data[0], cp, LOCK_MIXES, origin, cp->edit_ctr);
 	      update_graph(cp); 
 	      sfs[i] = free_snd_fd(sfs[i]);
+	      cp->edit_hook_checked = false;
 	      if (ss->stopped_explicitly) 
 		{
 		  stop_point = i;
@@ -1460,6 +1515,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
   mus_sample_t *idata;
   char *ofile = NULL;
   if ((beg < 0) || (dur <= 0)) return(NULL);
+  if (!(editable_p(cp))) return(NULL);
   sp = cp->sound;
   edpos = to_c_edit_position(cp, edp, caller, arg_pos);
   if (dur > cp->samples[edpos]) dur = cp->samples[edpos];
@@ -1470,7 +1526,11 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
       hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, caller);
       ofd = open_temp_file(ofile, 1, hdr);
       if (ofd == -1)
-	return(mus_format(_("can't open %s temp file %s: %s\n"), caller, ofile, strerror(errno)));
+	{
+	  if (ofile) FREE(ofile);
+	  cp->edit_hook_checked = false;	  
+	  return(mus_format(_("can't open %s temp file %s: %s\n"), caller, ofile, strerror(errno)));
+	}
       datumb = mus_bytes_per_sample(hdr->format);
     }
   else temp_file = false;
@@ -1538,6 +1598,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
   update_graph(cp); 
   FREE(data[0]);
   FREE(data);
+  cp->edit_hook_checked = false;	  
   return(NULL);
 }
 
@@ -1712,6 +1773,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr,
       si = sc->si;
       for (i = 0; i < si->chans; i++) 
 	{
+	  if (!(editable_p(si->cps[i]))) continue;
 	  segbeg = si->begs[i];
 	  segend = si->begs[i] + dur;
 	  segnum = passes[0] + 1;
@@ -1743,6 +1805,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr,
 	  free_env(newe);
 	  as_one_edit(si->cps[i], local_edpos + 1, new_origin);
 	  FREE(new_origin);
+	  si->cps[i]->edit_hook_checked = false;	  
 	}
       free_sync_state(sc);
       if (e) mus_free(egen);
@@ -1935,6 +1998,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr,
       si = sc->si;
       for (i = 0; i < si->chans; i++) 
 	{
+	  if (!(editable_p(si->cps[i]))) continue;
 	  segbeg = si->begs[i];
 	  segend = si->begs[i] + dur;
 	  segnum = passes[0] + 1;
@@ -2006,6 +2070,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr,
 	  free_env(newe);
 	  as_one_edit(si->cps[i], local_edpos + 1, new_origin);
 	  update_graph(si->cps[i]);
+	  si->cps[i]->edit_hook_checked = false;	  
 	  FREE(new_origin);
 	}
     }
@@ -2042,17 +2107,21 @@ void cursor_delete(chan_info *cp, off_t count, const char *origin)
       cps = si->cps;
       for (i = 0; i < si->chans; i++)
 	{
-	  delete_samples(beg, count, cps[i], origin, cps[i]->edit_ctr); 
-	  CURSOR(cps[i]) = beg;
-	  update_graph(si->cps[i]);
+	  if (delete_samples(beg, count, cps[i], origin, cps[i]->edit_ctr))
+	    {
+	      CURSOR(cps[i]) = beg;
+	      update_graph(si->cps[i]);
+	    }
 	}
       si = free_sync_info(si);
     }
   else
     {
-      delete_samples(beg, count, cp, origin, cp->edit_ctr);
-      CURSOR(cp) = beg;
-      update_graph(cp);
+      if (delete_samples(beg, count, cp, origin, cp->edit_ctr))
+	{
+	  CURSOR(cp) = beg;
+	  update_graph(cp);
+	}
     }
 }
 
@@ -2076,21 +2145,21 @@ void cursor_insert(chan_info *cp, off_t beg, off_t count, const char *origin)
       cps = si->cps;
       for (i = 0; i < si->chans; i++)
 	{
-	  extend_with_zeros(cps[i], 
-			    mus_oclamp(0, beg, CURRENT_SAMPLES(si->cps[i])), 
-			    count, origin,
-			    cps[i]->edit_ctr);
-	  update_graph(cps[i]);
+	  if (extend_with_zeros(cps[i], 
+				mus_oclamp(0, beg, CURRENT_SAMPLES(si->cps[i])), 
+				count, origin,
+				cps[i]->edit_ctr))
+	    update_graph(cps[i]);
 	}
       si = free_sync_info(si);
     }
   else 
     {
-      extend_with_zeros(cp, 
-			mus_oclamp(0, beg, CURRENT_SAMPLES(cp)), 
-			count, origin,
-			cp->edit_ctr);
-      update_graph(cp);
+      if (extend_with_zeros(cp, 
+			    mus_oclamp(0, beg, CURRENT_SAMPLES(cp)), 
+			    count, origin,
+			    cp->edit_ctr))
+	update_graph(cp);
     }
 }
 
@@ -2155,6 +2224,7 @@ static void smooth_channel(chan_info *cp, off_t beg, off_t dur, int edpos, const
   off_t k;
   Float y0, y1, angle, incr, off, scale;
   if ((beg < 0) || (dur <= 0)) return;
+  if (!(editable_p(cp))) return;
   if ((beg + dur) > cp->samples[edpos]) 
     {
       dur = cp->samples[edpos] - beg;
@@ -2171,6 +2241,7 @@ static void smooth_channel(chan_info *cp, off_t beg, off_t dur, int edpos, const
     data[k] = MUS_FLOAT_TO_SAMPLE(off + scale * cos(angle));
   change_samples(beg, dur, data, cp, LOCK_MIXES, origin, cp->edit_ctr);
   update_graph(cp);
+  cp->edit_hook_checked = false;
   FREE(data);
 }
 
@@ -2204,9 +2275,14 @@ static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edp
   char *ofile = NULL;
   snd_fd *sf;
   if ((beg < 0) || (dur <= 0)) return(NULL);
+  if (!(editable_p(cp))) return(NULL);
   sp = cp->sound;
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
-  if (sf == NULL) return(mus_format(_("run-channel: can't read %s[%d] channel data!"), sp->short_filename, cp->chan));
+  if (sf == NULL) 
+    {
+      cp->edit_hook_checked = false;
+      return(mus_format(_("run-channel: can't read %s[%d] channel data!"), sp->short_filename, cp->chan));
+    }
   if (dur > MAX_BUFFER_SIZE)
     {
       temp_file = true; 
@@ -2216,6 +2292,7 @@ static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edp
       if (ofd == -1)
 	{
 	  free_snd_fd(sf); 
+	  cp->edit_hook_checked = false;
 	  return(mus_format(_("can't open run-channel temp file %s: %s\n"), ofile, strerror(errno)));
 	}
       datumb = mus_bytes_per_sample(hdr->format);
@@ -2261,6 +2338,7 @@ static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edp
   free_snd_fd(sf);
   FREE(data[0]);
   FREE(data);
+  cp->edit_hook_checked = false;
   return(NULL);
 }
 
@@ -2304,6 +2382,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
     XEN_ERROR(NO_SUCH_SAMPLE,
 	      XEN_LIST_2(C_TO_XEN_STRING(caller),
 			 s_beg));
+  if (!(editable_p(cp))) return(XEN_FALSE);
   if (XEN_FALSE_P(s_dur))
     end = end_to_sample(s_end, cp, pos, caller);
   else dur = dur_to_samples(s_dur, beg, cp, pos, 8, caller);
@@ -2321,6 +2400,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	{
 	  errstr = C_TO_XEN_STRING(errmsg);
 	  FREE(errmsg);
+	  cp->edit_hook_checked = false;
 	  return(snd_bad_arity_error(caller, errstr, proc));
 	}
 
@@ -2333,7 +2413,10 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	      err_str = run_channel(cp, pt, beg, num, pos);
 	      free_ptree(pt);
 	      if (err_str == NULL)
-		return(XEN_ZERO);
+		{
+		  cp->edit_hook_checked = false;
+		  return(XEN_ZERO);
+		}
 	      else FREE(err_str); /* and fallback on normal evaluator */
 	    }
 	}
@@ -2341,7 +2424,11 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
       reporting = (num > REPORTING_SIZE);
       if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
       sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
-      if (sf == NULL) return(XEN_TRUE);
+      if (sf == NULL) 
+	{
+	  cp->edit_hook_checked = false;
+	  return(XEN_TRUE);
+	}
       rpt4 = MAX_BUFFER_SIZE / 4;
       filename = snd_tempnam();
       outgen = mus_make_sample2file(filename, 1, MUS_OUT_FORMAT, MUS_NEXT);
@@ -2393,6 +2480,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 				  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
 				  snd_remove(filename, REMOVE_FROM_CACHE);
 				  FREE(filename);
+				  cp->edit_hook_checked = false;
 				  XEN_ERROR(BAD_TYPE,
 					    XEN_LIST_3(C_TO_XEN_STRING(caller),
 						       C_TO_XEN_STRING("result of procedure must be a number, boolean, vct, list, or vector:"),
@@ -2442,6 +2530,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	}
       FREE(filename);
     }
+  cp->edit_hook_checked = false;
   return(res);
 }
 
@@ -2455,8 +2544,13 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
   mus_any *outgen = NULL;
   XEN v;
   mus_sample_t *data = NULL;
+  if (!(editable_p(cp))) return(XEN_FALSE);
   sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
-  if (sf == NULL) return(XEN_TRUE);
+  if (sf == NULL) 
+    {
+      cp->edit_hook_checked = false;
+      return(XEN_TRUE);
+    }
   temp_file = (num > MAX_BUFFER_SIZE);
   if (temp_file)
     {
@@ -2538,6 +2632,7 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
       FREE(data);
     }
   update_graph(cp); 
+  cp->edit_hook_checked = false;
   return(proc);
 }
 
@@ -3051,12 +3146,12 @@ static XEN g_pad_channel(XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
   cp = get_cp(snd, chn, S_pad_channel);
   bg = beg_to_sample(beg, S_pad_channel);
   pos = to_c_edit_position(cp, edpos, S_pad_channel, 5);
-  extend_with_zeros(cp, 
-		    bg,
-		    XEN_TO_C_OFF_T_OR_ELSE(num, cp->samples[pos] - bg),
-		    S_pad_channel,
-		    pos);
-  update_graph(cp);
+  if (extend_with_zeros(cp, 
+			bg,
+			XEN_TO_C_OFF_T_OR_ELSE(num, cp->samples[pos] - bg),
+			S_pad_channel,
+			pos))
+    update_graph(cp);
   return(beg);
 }
 
@@ -3118,15 +3213,20 @@ swap the indicated channels"
 	    {
 	      /* common special case -- just setup a new ed-list entry with the channels/sounds swapped */
 	      if ((dur0 == 0) && (dur1 == 0)) return(XEN_FALSE);
-	      e0 = amp_env_copy(cp0, false, cp0->edit_ctr);
-	      e1 = amp_env_copy(cp1, false, cp1->edit_ctr);
-	      file_override_samples(dur1, cp1->sound->filename, cp0, cp1->chan, DONT_DELETE_ME, LOCK_MIXES, S_swap_channels);
-	      file_override_samples(dur0, cp0->sound->filename, cp1, cp0->chan, DONT_DELETE_ME, LOCK_MIXES, S_swap_channels);
-	      cp0->amp_envs[cp0->edit_ctr] = e1;
-	      cp1->amp_envs[cp1->edit_ctr] = e0;
-	      swap_marks(cp0, cp1);
-	      update_graph(cp0);
-	      update_graph(cp1);
+	      if ((editable_p(cp0)) && (editable_p(cp1)))
+		{
+		  e0 = amp_env_copy(cp0, false, cp0->edit_ctr);
+		  e1 = amp_env_copy(cp1, false, cp1->edit_ctr);
+		  file_override_samples(dur1, cp1->sound->filename, cp0, cp1->chan, DONT_DELETE_ME, LOCK_MIXES, S_swap_channels);
+		  file_override_samples(dur0, cp0->sound->filename, cp1, cp0->chan, DONT_DELETE_ME, LOCK_MIXES, S_swap_channels);
+		  cp0->amp_envs[cp0->edit_ctr] = e1;
+		  cp1->amp_envs[cp1->edit_ctr] = e0;
+		  swap_marks(cp0, cp1);
+		  update_graph(cp0);
+		  update_graph(cp1);
+		  cp0->edit_hook_checked = false;
+		  cp1->edit_hook_checked = false;
+		}
 	    }
 	  else
 	    {
@@ -3395,26 +3495,28 @@ scale samples in the given sound/channel between beg and beg + num by a ramp goi
       sp->sync = old_sync;
       return(val);
     }
-  ramp_channel(cp, XEN_TO_C_DOUBLE(rmp0), XEN_TO_C_DOUBLE(rmp1), samp, samps, pos, false);
-  if (cp->amp_envs[pos])
+  if (ramp_channel(cp, XEN_TO_C_DOUBLE(rmp0), XEN_TO_C_DOUBLE(rmp1), samp, samps, pos, false))
     {
-      Float data[4];
-      data[0] = 0.0;
-      data[1] = XEN_TO_C_DOUBLE(rmp0);
-      data[2] = 1.0;
-      data[3] = XEN_TO_C_DOUBLE(rmp1);
-      if ((samp == 0) && 
-	  (samps >= cp->samples[pos]))
-	amp_env_env(cp, data, 2, pos, 1.0, 1.0, 0.0);
-      else 
+      if (cp->amp_envs[pos])
 	{
-	  mus_any *egen;
-	  egen = mus_make_env(data, 2, 1.0, 0.0, 1.0, 0.0, 0, samps - 1, NULL);
-	  amp_env_env_selection_by(cp, egen, samp, samps, pos);
-	  mus_free(egen);
+	  Float data[4];
+	  data[0] = 0.0;
+	  data[1] = XEN_TO_C_DOUBLE(rmp0);
+	  data[2] = 1.0;
+	  data[3] = XEN_TO_C_DOUBLE(rmp1);
+	  if ((samp == 0) && 
+	      (samps >= cp->samples[pos]))
+	    amp_env_env(cp, data, 2, pos, 1.0, 1.0, 0.0);
+	  else 
+	    {
+	      mus_any *egen;
+	      egen = mus_make_env(data, 2, 1.0, 0.0, 1.0, 0.0, 0, samps - 1, NULL);
+	      amp_env_env_selection_by(cp, egen, samp, samps, pos);
+	      mus_free(egen);
+	    }
 	}
+      update_graph(cp);
     }
-  update_graph(cp);
   return(rmp0);
 }			  
 
@@ -3482,18 +3584,20 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
 	      rates = mus_env_rates(e);
 	      passes = mus_env_passes(e);
 	      r1 = r0 + passes[0] * rates[0];
-	      xramp_channel(cp, r0, r1, mus_env_scaler(e), mus_env_offset(e), samp, samps, pos, false, e, 0);
-	      if (cp->amp_envs[pos])
+	      if (xramp_channel(cp, r0, r1, mus_env_scaler(e), mus_env_offset(e), samp, samps, pos, false, e, 0))
 		{
-		  if ((samp == 0) && 
-		      (samps >= cp->samples[pos]))
-		    amp_env_env(cp, data, 2, pos, ebase, mus_env_scaler(e), mus_env_offset(e));
-		  else 
+		  if (cp->amp_envs[pos])
 		    {
-		      mus_any *egen;
-		      egen = mus_make_env(data, 2, 1.0, 0.0, ebase, 0.0, 0, samps - 1, NULL);
-		      amp_env_env_selection_by(cp, egen, samp, samps, pos);
-		      mus_free(egen);
+		      if ((samp == 0) && 
+			  (samps >= cp->samples[pos]))
+			amp_env_env(cp, data, 2, pos, ebase, mus_env_scaler(e), mus_env_offset(e));
+		      else 
+			{
+			  mus_any *egen;
+			  egen = mus_make_env(data, 2, 1.0, 0.0, ebase, 0.0, 0, samps - 1, NULL);
+			  amp_env_env_selection_by(cp, egen, samp, samps, pos);
+			  mus_free(egen);
+			}
 		    }
 		}
 	      FREE(data);

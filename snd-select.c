@@ -352,11 +352,11 @@ static int insert_selection(chan_info *cp, off_t beg, const char *origin)
 	  cp_out = si_out->cps[i]; /* currently syncd chan that we might paste to */
 	  cp_in = si_in->cps[i];   /* selection chan to paste in (no wrap-around here) */
 	  len = cp_selection_len(cp_in, NULL);
-	  file_insert_samples(beg, len,
-			      tempfile, cp_out, i,
-			      (si_in->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-			      origin, cp_out->edit_ctr);
-	  update_graph(cp_out);
+	  if (file_insert_samples(beg, len,
+				  tempfile, cp_out, i,
+				  (si_in->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
+				  origin, cp_out->edit_ctr))
+	    update_graph(cp_out);
 	}
       free_sync_info(si_in);
       free_sync_info(si_out);

@@ -71,8 +71,6 @@ GtkWidget *edit_find_menu(void) {return(mw[e_find_menu]);}
 GtkWidget *edit_select_all_menu(void) {return(mw[e_select_all_menu]);}
 GtkWidget *edit_header_menu(void) {return(mw[e_header_menu]);}
 
-GtkWidget *view_mix_dialog_menu(void) {return(mw[v_mix_dialog_menu]);}
-GtkWidget *view_track_dialog_menu(void) {return(mw[v_track_dialog_menu]);}
 GtkWidget *view_region_menu(void) {return(mw[v_region_menu]);}
 GtkWidget *view_combine_separate_menu(void) {return(mw[v_combine_separate_menu]);}
 GtkWidget *view_combine_combined_menu(void) {return(mw[v_combine_combined_menu]);}
@@ -602,7 +600,6 @@ GtkWidget *add_menu(void)
 				 0,
 				 g_cclosure_new(GTK_SIGNAL_FUNC(view_mix_dialog_callback), NULL, 0),
 				 0);
-  set_sensitive(mw[v_mix_dialog_menu], false);
 
   mw[v_track_dialog_menu] = gtk_menu_item_new_with_label(_("Tracks"));
   ml[v_track_dialog_menu] = _("Tracks");

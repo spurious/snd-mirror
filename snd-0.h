@@ -180,6 +180,8 @@ typedef enum {FILE_SAVE_AS, EDIT_SAVE_AS} save_dialog_t;
 #define INVALID_MIX_CHANNEL -2
 #define SAVE_ALL_CHANS -1
 #define INVALID_TRACK_ID -1
+#define ANY_MIX_ID -2
+#define ANY_TRACK_ID -2
 
 typedef enum {NOT_IN_BACKGROUND, IN_BACKGROUND} play_process_t;
 typedef enum {WITHOUT_VIRTUAL_CHANNELS, WITH_VIRTUAL_CHANNELS} virtual_channels_t;

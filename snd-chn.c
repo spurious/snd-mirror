@@ -5183,15 +5183,20 @@ static XEN g_edit_hook(XEN snd_n, XEN chn_n)
   #define H_edit_hook "(" S_edit_hook " (snd #f) (chn #f)): snd's channel chn's edit-hook. \
 This is a channel-specific hook variable; the hook procedures are thunks -- they should take no \
 arguments. " S_edit_hook " is called just before any attempt to edit the channel's data; if it returns #t, \
-the edit is aborted."
+the edit is aborted. \n\
+  (add-hook! (edit-hook snd chn) (lambda () (snd-print \"about to edit\") #f))"
+
   return(channel_get(snd_n, chn_n, CP_EDIT_HOOK, S_edit_hook));
 }
+
+/* TODO: listener trouble: :(snd-print \"hi\") no error */
 
 static XEN g_after_edit_hook(XEN snd_n, XEN chn_n) 
 {
   #define H_after_edit_hook "(" S_after_edit_hook " (snd #f) (chn #f)): snd's channel chn's after-edit-hook. \
 This is a channel-specific hook variable; the hook procedures are thunks -- they should take no \
-arguments. " S_after_edit_hook " is called after an edit, but before " S_after_graph_hook "."
+arguments. " S_after_edit_hook " is called after an edit, but before " S_after_graph_hook ". \n\
+  (add-hook! (after-edit-hook snd chn) (lambda () (snd-print \"just edited\")))"
 
   return(channel_get(snd_n, chn_n, CP_AFTER_EDIT_HOOK, S_after_edit_hook));
 }

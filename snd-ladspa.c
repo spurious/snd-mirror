@@ -788,16 +788,16 @@ Information about about parameters can be acquired using analyse-ladspa."
       for (i = 0, j = 0; i < outchans; i++)
 	{
 	  ncp = sf[j]->cp;
-	  file_change_samples(sf[j]->initial_samp,
-			      num,
-			      ofile,
-			      ncp,
-			      i,
-			      (outchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-			      LOCK_MIXES,
-			      XEN_TO_C_STRING(origin),
-			      ncp->edit_ctr);
-	  update_graph(ncp);
+	  if (file_change_samples(sf[j]->initial_samp,
+				  num,
+				  ofile,
+				  ncp,
+				  i,
+				  (outchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
+				  LOCK_MIXES,
+				  XEN_TO_C_STRING(origin),
+				  ncp->edit_ctr))
+	    update_graph(ncp);
 	  j++;
 	  if (j >= inchans) j = 0;
 	}

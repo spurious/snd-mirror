@@ -443,6 +443,8 @@ void make_mixer_icons_transparent_again(Pixel old_color, Pixel new_color)
 
 static Widget w_sep1;
 
+/* TODO: if no mix display "no active mix" as id, and put up minimal controls */
+
 Widget make_mix_dialog(void) 
 {
   Widget mainform, mix_row, track_row, last_label, last_number, mix_frame, track_frame, sep;
@@ -804,10 +806,11 @@ Widget make_mix_dialog(void)
       reflect_edit_in_mix_dialog_envs(mix_dialog_id);
     }
   if (!(XtIsManaged(mix_dialog))) XtManageChild(mix_dialog);
-
   update_mix_dialog(mix_dialog_id);
   return(mix_dialog);
 }
+
+/* TODO: protect against no mix case */
 
 static void update_mix_dialog(int mix_id) 
 {
@@ -817,8 +820,8 @@ static void update_mix_dialog(int mix_id)
   Float val;
   char lab[LABEL_BUFFER_SIZE];
   if (mix_id == INVALID_MIX_ID) return;
-  if (!(mix_ok(mix_dialog_id))) mix_dialog_id = mix_id;
-  if (!(mix_ok(mix_dialog_id))) mix_dialog_id = any_mix_id();
+  if (!(mix_ok(mix_dialog_id))) mix_dialog_id = mix_id; /* close-sound kills current mix, for example */
+  if (!(mix_ok(mix_dialog_id))) {mix_dialog_id = any_mix_id(); mix_id = mix_dialog_id;}
   if (mix_id == mix_dialog_id)
     {
       if (mix_dialog == NULL) 
@@ -885,48 +888,19 @@ static void update_mix_dialog(int mix_id)
     }
 }
 
-void reflect_mix_in_mix_dialog(int mix_id)
-{
-  if ((mix_dialog) && 
-      (XtIsManaged(mix_dialog)))
-    {
-      if (mix_dialog_id == mix_id)
-	update_mix_dialog(mix_id);
-      if (mix_id != INVALID_MIX_ID)
-	{
-	  set_sensitive(nextb, (next_mix_id(mix_dialog_id) != INVALID_MIX_ID));
-	  set_sensitive(previousb, (previous_mix_id(mix_dialog_id) != INVALID_MIX_ID));
-	}
-    }
-}
 
-void reflect_undo_in_mix_dialog(void) /* also redo */
-{
-  if ((mix_dialog) && 
-      (XtIsManaged(mix_dialog)))
-    {
-      /* check that currently displayed mix controls match the current edit state */
-      reflect_edit_in_mix_dialog_envs(mix_dialog_id);
-      update_mix_dialog(mix_dialog_id);
-    }
-}
 
-void reflect_no_mix_in_mix_dialog(void)
-{
-  if ((mix_dialog) &&
-      (XtIsManaged(mix_dialog)))
-    XtUnmanageChild(mix_dialog);
-}
+
+/* TODO: if current mix dialog mix goes away (close-sound), does mix dialog do something reasonable? */
+/* just one reflection mix/track */
 
 
 /* -------------------------------- track dialog -------------------------------- */
 
 /* TODO: mix list of track (and color?)
    TODO: tie in various auto-updates
-   TODO: track play stopped reset icon color
    TODO: speed change->amp env, pos change->amp env? (drag), amp-env itself
    TODO: multimix drag of any kind doesn't erase initial state correctly
-   TODO: track amp env not tied in yet
  */
 
 static void update_track_dialog(int track_id);
@@ -1112,7 +1086,7 @@ static void track_track_activated(void)
 	{
 	  if (!(set_track_track(track_dialog_id, id)))
 	    {
-	      /* TODO: post error and undo */
+	      /* TODO: post error and undo (similarly for the others) */
 	    }
 	}
       XtFree(val);
@@ -1123,7 +1097,7 @@ static void track_id_activated(void)
 {
   char *val;
   int id;
-  val = XmTextGetString(w_track_id);
+  val = XmTextGetString(w_track_id); /* post if no id (-1 etc) */
   if (val)
     {
       id = string2int(val);
@@ -1140,7 +1114,7 @@ static void track_beg_activated(void)
 {
   char *val;
   chan_info *cp;
-  val = XmTextGetString(w_track_beg);
+  val = XmTextGetString(w_track_beg); /* post if < 0 etc */
   if (val)
     {
       cp = track_channel(track_dialog_id, 0);
@@ -1152,12 +1126,9 @@ static void track_beg_activated(void)
 
 static void apply_track_dialog_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  /* set all track amp envs, last one should retrack */
   env *e;
   e = track_dialog_env(track_dialog_id);
-  /* WHY NO EDIT
-  set_track_amp_env_without_edit(track_dialog_id, e);
-  */
+  track_dialog_set_amp_env(track_dialog_id, e);
   track_amp_env_resize(w_track_env, NULL, NULL);
 }
 
@@ -1661,37 +1632,47 @@ static void update_track_dialog(int track_id)
     }
 }
 
-void reflect_track_in_track_dialog(int track_id)
+
+
+/* ---------------- reflection ---------------- */
+
+void reflect_mix_or_track_change(int mix_id, int track_id)
 {
+  /* TODO: if squelch updates? */
+  /* TODO: if edit then this is already updated -- how to check */
+
+  if ((mix_dialog) && 
+      (XtIsManaged(mix_dialog)))
+    {
+      if (mix_dialog_id == mix_id)
+	{
+	  /* TODO: from undo: reflect_edit_in_mix_dialog_envs(mix_dialog_id); -- should be in update */
+
+	  /* TODO: look for some change that warrants redisplay */
+	  update_mix_dialog(mix_id);
+	}
+      if (mix_id != INVALID_MIX_ID)
+	{
+	  set_sensitive(nextb, (next_mix_id(mix_dialog_id) != INVALID_MIX_ID));
+	  set_sensitive(previousb, (previous_mix_id(mix_dialog_id) != INVALID_MIX_ID));
+	}
+    }
   if ((track_dialog) && 
       (XtIsManaged(track_dialog)))
     {
       if (track_dialog_id == track_id)
-	update_track_dialog(track_id);
+	{
+	  /* TODO: undo:       reflect_edit_in_track_dialog_env(track_dialog_id); */
+
+	  /* TODO: all track change ops need reflection if no edit */
+	  update_track_dialog(track_id);
+	}
       if (track_id != INVALID_TRACK_ID)
 	{
 	  set_sensitive(track_nextb, (next_track_id(track_dialog_id) != INVALID_TRACK_ID));
 	  set_sensitive(track_previousb, (previous_track_id(track_dialog_id) != INVALID_TRACK_ID));
 	}
     }
-}
-
-void reflect_undo_in_track_dialog(void)
-{
-  if ((track_dialog) && 
-      (XtIsManaged(track_dialog)))
-    {
-      /* check that currently displayed track controls match the current edit state */
-      reflect_edit_in_track_dialog_env(track_dialog_id);
-      update_track_dialog(track_dialog_id);
-    }
-}
-
-void reflect_no_track_in_track_dialog(void)
-{
-  if ((track_dialog) &&
-      (XtIsManaged(track_dialog)))
-    XtUnmanageChild(track_dialog);
 }
 
 

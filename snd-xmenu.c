@@ -71,8 +71,6 @@ Widget edit_select_all_menu(void) {return(mw[e_select_all_menu]);}
 Widget edit_header_menu(void) {return(mw[e_header_menu]);}
 
 Widget view_equalize_panes_menu(void) {return(mw[v_equalize_panes_menu]);}
-Widget view_mix_dialog_menu(void) {return(mw[v_mix_dialog_menu]);}
-Widget view_track_dialog_menu(void) {return(mw[v_track_dialog_menu]);}
 Widget view_region_menu(void) {return(mw[v_region_menu]);}
 Widget view_combine_separate_menu(void) {return(mw[v_combine_separate_menu]);}
 Widget view_combine_combined_menu(void) {return(mw[v_combine_combined_menu]);}
@@ -465,14 +463,10 @@ Widget add_menu(void)
   XtVaSetValues(mw[v_listener_menu], XmNmnemonic, 'L', NULL);
 #endif
 
-  mw[v_mix_dialog_menu] = XtCreateManagedWidget(_("Mixes"), xmPushButtonWidgetClass, mw[view_menu], in_args, in_n);
+  mw[v_mix_dialog_menu] = XtCreateManagedWidget(_("Mixes"), xmPushButtonWidgetClass, mw[view_menu], main_args, main_n);
   XtAddCallback(mw[v_mix_dialog_menu], XmNactivateCallback, view_mix_dialog_callback, NULL);
 
-#if DEBUGGING
   mw[v_track_dialog_menu] = XtCreateManagedWidget(_("Tracks"), xmPushButtonWidgetClass, mw[view_menu], main_args, main_n);
-#else
-  mw[v_track_dialog_menu] = XtCreateManagedWidget(_("Tracks"), xmPushButtonWidgetClass, mw[view_menu], in_args, in_n);
-#endif
   XtAddCallback(mw[v_track_dialog_menu], XmNactivateCallback, view_track_dialog_callback, NULL);
 
   mw[v_region_menu] = XtCreateManagedWidget(_("Regions"), xmPushButtonWidgetClass, mw[view_menu], in_args, in_n);

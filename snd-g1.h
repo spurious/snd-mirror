@@ -132,8 +132,6 @@ GtkWidget *edit_redo_menu(void);
 GtkWidget *edit_find_menu(void);
 GtkWidget *edit_select_all_menu(void);
 GtkWidget *edit_header_menu(void);
-GtkWidget *view_mix_dialog_menu(void);
-GtkWidget *view_track_dialog_menu(void);
 GtkWidget *view_region_menu(void);
 GtkWidget *view_combine_separate_menu(void);
 GtkWidget *view_combine_combined_menu(void);
@@ -443,16 +441,12 @@ void g_init_gxsnd(void);
 
 /* -------- snd-gmix.c -------- */
 
-void reflect_mix_in_mix_dialog(int mix_id);
+void reflect_mix_or_track_change(int mix_id, int track_id);
 GtkWidget *make_mix_dialog(void);
 GtkWidget *make_track_dialog(void);
 bool mix_play_stopped(void);
+bool track_play_stopped(void);
 void reflect_mix_play_stop(void);
-void reflect_no_mix_in_mix_dialog(void);
-void reflect_undo_in_mix_dialog(void);
-void reflect_track_in_track_dialog(int track_id);
-void reflect_undo_in_track_dialog(void);
-void reflect_no_track_in_track_dialog(void);
 void reflect_track_play_stop(void);
 void g_init_gxmix(void);
 

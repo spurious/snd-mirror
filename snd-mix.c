@@ -1075,8 +1075,7 @@ static mix_info *add_mix(chan_info *cp, int chan, off_t beg, off_t num, char *fu
   gather_as_built(md, cs);
   make_current_mix_state(md);
   md->in_filename = copy_string(full_original_file);
-  reflect_mix_in_menu();
-  reflect_mix_in_mix_dialog(md->id);
+  reflect_mix_or_track_change(md->id, ANY_TRACK_ID);
   return(md);
 }
 
@@ -1098,8 +1097,9 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
   file_info *ihdr, *ohdr;
   if (num <= 0) return(NULL); /* a no-op -- mixing in an empty file */
   len = CURRENT_SAMPLES(cp);
-  if (beg >= len)
-    extend_with_zeros(cp, len, beg - len + 1, "(mix-extend)", cp->edit_ctr);
+  if ((beg >= len) &&
+      (!(extend_with_zeros(cp, len, beg - len + 1, "(mix-extend)", cp->edit_ctr))))
+    return(NULL);
   if (beg < 0) beg = 0;
   sp = cp->sound;
   ihdr = make_file_info(mixfile);
@@ -1174,7 +1174,8 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
   FREE(data);
   free_file_info(ihdr);
   free_file_info(ohdr);
-  file_change_samples(beg, num, ofile, cp, 0, DELETE_ME, DONT_LOCK_MIXES, origin, cp->edit_ctr);
+  if (!(file_change_samples(beg, num, ofile, cp, 0, DELETE_ME, DONT_LOCK_MIXES, origin, cp->edit_ctr)))
+    with_tag = false;
   if (ofile) FREE(ofile);
   if (with_tag)
     {
@@ -1449,6 +1450,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
   int err = 0;
   mix_state *cs;
   mix_track_state *ms;
+  if (!(editable_p(md->cp))) return;
   release_pending_mix_states(md);
   cs = md->active_mix_state;
   ms = gather_as_built(md, cs);
@@ -1484,17 +1486,35 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
       ofd = open_temp_file(ofile, 1, ohdr);
       if (ofd == -1)
 	{
+	  cp->edit_hook_checked = false;
 	  snd_error(_("can't write mix temp file %s: %s\n"), ofile, strerror(errno));
 	  return;
 	}
     }
   add = init_mix_read(md, CURRENT_MIX, 0);
-  if (!add) return;
+  if (!add)
+    {
+      cp->edit_hook_checked = false;
+      close_temp_file(ofd, ohdr, 0, cursp);
+      return;
+    }
   sub = init_mix_read(md, PREVIOUS_MIX, 0);
-  if (!sub) return;
+  if (!sub) 
+    {
+      free_mix_fd(add);
+      cp->edit_hook_checked = false;
+      close_temp_file(ofd, ohdr, 0, cursp);
+      return;
+    }
   cur = init_sample_read(beg, cp, READ_FORWARD);
-  if (cur == NULL) return;
-
+  if (cur == NULL) 
+    {
+      free_mix_fd(add);
+      free_mix_fd(sub);
+      cp->edit_hook_checked = false;
+      close_temp_file(ofd, ohdr, 0, cursp);
+      return;
+    }
   if (use_temp_file)
     {
       no_space = disk_space_p(cursp, num * 4, num * 2, ofile);
@@ -1508,6 +1528,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 	  free_file_info(ohdr);
 	  snd_remove(ofile, REMOVE_FROM_CACHE);
 	  FREE(ofile);
+	  cp->edit_hook_checked = false;
 	  return;
 	  break;
 	case HUNKER_DOWN:
@@ -1622,6 +1643,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
   else change_samples(beg, num, data[0], cp, DONT_LOCK_MIXES, origin, cp->edit_ctr);
   FREE(data[0]);
   FREE(data);
+  cp->edit_hook_checked = false;
  
   extend_mix_state_list(md);
   cs = copy_mix_state(cs);
@@ -2434,7 +2456,7 @@ void finish_moving_mix_tag(int mix_tag, int x)
       ms = md->wg;
       ms->lastpj = 0;
       if (cs->beg == cs->orig) return;
-      reflect_mix_in_mix_dialog(md->id);
+      reflect_mix_or_track_change(md->id, ANY_TRACK_ID);
       if (!(XEN_TRUE_P(res)))
 	remix_file(md, "Mix: drag", true);
     }
@@ -2558,7 +2580,7 @@ static void move_mix(mix_info *md)
 	  cs->beg = 0; 
 	  cs->tag_position = samp;
 	}
-      reflect_mix_in_mix_dialog(md->id);
+      reflect_mix_or_track_change(md->id, ANY_TRACK_ID);
       if (show_mix_waveforms(ss)) draw_mix_waveform(md);
       /* can't easily use work proc here because the erasure gets complicated */
       make_temporary_graph(cp, md, cs);
@@ -2786,7 +2808,6 @@ void lock_affected_mixes(chan_info *cp, off_t beg, off_t end)
   lt.lt_beg = beg;
   lt.lt_end = end;
   map_over_channel_mixes(cp, lock_affected_mixes_1, (void *)(&lt));
-  reflect_mix_in_menu();
 }
 
 void release_pending_mixes(chan_info *cp, int edit_ctr)
@@ -2983,7 +3004,6 @@ int any_mix_id(void)
   for (i = 0; i < mix_infos_ctr; i++) 
     if (mix_ok_and_unlocked(i)) 
       return(i);
-  reflect_no_mix_in_mix_dialog();
   return(INVALID_MIX_ID);
 }
 
@@ -3172,7 +3192,7 @@ static int set_mix_amp(int mix_id, int chan, Float val, bool from_gui, bool remi
 		      (md->cp->sound->sync == 0))
 		    return(mix_id);
 		  cs->scalers[chan] = val;
-		  reflect_mix_in_mix_dialog(mix_id);
+		  reflect_mix_or_track_change(mix_id, ANY_TRACK_ID);
 		  remix_file(md, S_setB S_mix_amp, true);
 		}
 	      else
@@ -3301,7 +3321,7 @@ static int set_mix_speed(int mix_id, Float val, bool from_gui, bool remix)
 		}
 	    }
 	  if (!from_gui)
-	    reflect_mix_in_mix_dialog(mix_id);
+	    reflect_mix_or_track_change(mix_id, ANY_TRACK_ID);
 	}
       return(mix_id);
     }
@@ -3406,7 +3426,7 @@ int set_mix_position(int mix_id, off_t val)
 	      cs->beg = val; 
 	      remix_file(md, S_setB S_mix_position, true); 
 	    }
-	  reflect_mix_in_mix_dialog(mix_id);
+	  reflect_mix_or_track_change(mix_id, ANY_TRACK_ID);
 	}
       return(mix_id);
     }
@@ -3802,7 +3822,7 @@ static bool delete_mix_1(int mix_id, bool redisplay, char *origin)
       for (i = 0; i < md->in_chans; i++)
 	cs->scalers[i] = 0.0;
       set_mix_locked(md, true, redisplay, origin);
-      reflect_mix_in_mix_dialog(mix_id);
+      reflect_mix_or_track_change(mix_id, ANY_TRACK_ID);
       return(true);
     }
   return(false);
@@ -3852,7 +3872,7 @@ static XEN g_set_mix_track(XEN n, XEN val)
   if (mix_ok_and_unlocked(md->id))
     {
       set_mix_track(md, XEN_TO_C_INT(val), true);
-      reflect_mix_in_mix_dialog(md->id);
+      reflect_mix_or_track_change(md->id, ANY_TRACK_ID);
     }
   return(val);
 }
@@ -5925,16 +5945,11 @@ void track_dialog_set_amp(int track_id, Float val, bool dragging)
   track_slider_drag_in_progress = dragging;
 }
 
-/*
-static void set_track_amp(int id, Float amp)
+void track_dialog_set_amp_env(int id, env *e)
 {
-  if ((track_p(id)) && (active_track_amp(id) != amp))
-    {
-      set_active_track_amp(id, amp);
-      remix_track(id, set_track_amp_1, NULL);
-    }
+  set_track_amp_env(id, e);
 }
-*/
+
 
 
 /* ---------------- xen side ---------------- */
@@ -6532,7 +6547,7 @@ static int copy_mix(int id, off_t beg)
 	    }
 	  else cs->amp_envs = NULL;
 	  cs->len = old_cs->len;
-	  reflect_mix_in_mix_dialog(new_id);
+	  reflect_mix_or_track_change(new_id, ANY_TRACK_ID);
 	  remix_file(new_md, S_copy_mix, true);
 	  while (cp->edit_ctr > edpos) backup_edit_list(cp);
 	  backup_mix_list(cp, edpos); /* needed if track exists and imposes changes on mixed-in data */
@@ -6928,7 +6943,7 @@ static int play_track(int track_num, int chan, off_t beg, bool from_gui)
 	      mus_audio_write(playfd, (char *)buf, frames * datum_bytes * chans);
 #endif
 	      check_for_event();
-	      if ((ss->stopped_explicitly) || ((from_gui) && (mix_play_stopped())))
+	      if ((ss->stopped_explicitly) || ((from_gui) && (track_play_stopped())))
 		{
 		  ss->stopped_explicitly = false;
 		  report_in_minibuffer(sp, _("stopped"));
@@ -6939,7 +6954,7 @@ static int play_track(int track_num, int chan, off_t beg, bool from_gui)
 	}
     }
   for (i = 0; i < chans; i++) free_track_fd(fds[i]);
-  reflect_mix_play_stop();
+  reflect_track_play_stop();
   FREE(fds);
 #if HAVE_ALSA
   for (i = 0; i < chans; i++) if (buf[i]) FREE(buf[i]);
@@ -7232,10 +7247,8 @@ void g_init_track(void)
    TODO: mix|track-change(edit)-hook?
    TODO: prune unreachable track states
    TODO: in track settings (both dialogs) protect against circles
-   TODO: track dialog apply env noop
    TODO: mix waveform not fixed up alongside waveform if track dragging (and lags in mix dialog)
    TODO: in gmix, display is confused until update
    TODO: if bad track id, replace after activation and post error message showing circle (via text widget under top row -- could also show track mixes)
-   TODO: fix up icons if track play (stops)
    SOMEDAY: describe-* [mix|mark|selection|sound|channel|track|region, gen|(mix,track)reader|player|(sound)file|key|plugin|hook|dialog(i.e. recorder)|audio]
 */

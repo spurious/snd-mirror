@@ -244,7 +244,7 @@ typedef struct chan_info {
   Latus dot_size;
   fft_normalize_t transform_normalization;
   int transform_type, spectro_hop, edhist_base;
-  bool show_mix_waveforms, graphs_horizontal;
+  bool show_mix_waveforms, graphs_horizontal, edit_hook_checked;
   XEN edit_hook;
   XEN undo_hook;
   XEN cursor_proc;
@@ -518,7 +518,6 @@ char **help_name_to_xrefs(const char *name);
 void reflect_file_open_in_menu (void);
 void reflect_file_change_in_menu (void);
 void reflect_file_lack_in_menu (void);
-void reflect_mix_in_menu(void);
 void reflect_equalize_panes_in_menu(bool on);
 void reflect_file_revert_in_menu (void);
 void reflect_file_save_in_menu (void);
@@ -726,15 +725,16 @@ void as_one_edit(chan_info *cp, int one_edit, const char *one_edit_origin);
 void free_sound_list (chan_info *cp);
 void free_ptree_list(chan_info *cp);
 void release_dangling_readers(chan_info *cp, int edit_ctr);
-void extend_with_zeros(chan_info *cp, off_t beg, off_t num, const char *origin, int edpos);
-void file_insert_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos);
-void delete_samples(off_t beg, off_t num, chan_info *cp, const char *origin, int edpos);
-void change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, lock_mix_t lock, const char *origin, int edpos);
-void file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, 
+bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, const char *origin, int edpos);
+bool file_insert_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos);
+bool delete_samples(off_t beg, off_t num, chan_info *cp, const char *origin, int edpos);
+bool change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, lock_mix_t lock, const char *origin, int edpos);
+bool file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, 
 			 file_delete_t auto_delete, lock_mix_t lock, const char *origin, int edpos);
-void file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, 
+bool file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, 
 			   file_delete_t auto_delete, lock_mix_t lock, const char *origin);
 Float chn_sample(off_t samp, chan_info *cp, int pos);
+bool editable_p(chan_info *cp);
 /* void extend_edit_list(chan_info *cp, const char *origin, int edpos); */
 snd_fd *free_snd_fd(snd_fd *sf);
 char *sf_to_string(snd_fd *fd);
@@ -742,11 +742,11 @@ void release_region_readers(int reg);
 bool sf_p(XEN obj);
 snd_fd *get_sf(XEN obj);
 snd_fd *free_snd_fd_almost(snd_fd *sf);
-void scale_channel(chan_info *cp, Float scaler, off_t beg, off_t num, int pos, bool in_as_one_edit);
-void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, int pos, bool in_as_one_edit);
-void xramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, 
+bool scale_channel(chan_info *cp, Float scaler, off_t beg, off_t num, int pos, bool in_as_one_edit);
+bool ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, int pos, bool in_as_one_edit);
+bool xramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, 
 		   off_t beg, off_t num, int pos, bool in_as_one_edit, mus_any *e, int e_pos);
-void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bool env_it, XEN init_func, bool is_xen);
+bool ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bool env_it, XEN init_func, bool is_xen);
 snd_fd *init_sample_read(off_t samp, chan_info *cp, read_direction_t direction);
 snd_fd *init_sample_read_any(off_t samp, chan_info *cp, read_direction_t direction, int edit_position);
 void read_sample_change_direction(snd_fd *sf, read_direction_t dir);
@@ -772,7 +772,7 @@ void set_ed_maxamp(chan_info *cp, int edpos, Float val);
 Float ed_maxamp(chan_info *cp, int edpos);
 void set_ed_selection_maxamp(chan_info *cp, Float val);
 Float ed_selection_maxamp(chan_info *cp);
-void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1);
+bool copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1);
 void reflect_file_change_in_label(chan_info *cp);
 void update_track_lists(chan_info *cp, int top_ctr);
 
@@ -1343,10 +1343,10 @@ void track_dialog_play(int track_id);
 void track_dialog_set_amp(int track_id, Float val, bool dragging);
 void track_dialog_start_slider_drag(int id);
 void track_dialog_set_speed(int id, Float val, bool dragging);
+void track_dialog_set_amp_env(int id, env *e);
 void reflect_edit_in_track_dialog_env(int n);
 bool set_track_track(int id, int trk);
 void set_track_position(int id, off_t pos);
-bool track_play_stopped(void);
 int any_track_id(void);
 int next_track_id(int id);
 int previous_track_id(int id);
