@@ -25,12 +25,12 @@ void draw_arc(axis_context *ax, int x, int y, int size);
 void set_grf_points(int xi, int j, int ymin, int ymax);
 void set_grf_point(int xi, int j, int yi);
 void allocate_grf_points(void);
-void draw_grf_points(snd_state *ss, axis_context *ax, int j, axis_info *ap, Float y0);
-void draw_both_grf_points(snd_state *ss, axis_context *ax, int j, axis_info *ap);
+void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Float y0);
+void draw_both_grf_points(chan_info *cp, axis_context *ax, int j);
 void draw_both_grfs(axis_context *ax, int j);
 void mix_save_graph(snd_state *ss, mix_context *ms,int j);
-void erase_and_draw_grf_points(snd_state *ss,mix_context *ms,chan_info *cp, int j);
-void erase_and_draw_both_grf_points(snd_state *ss,mix_context *ms,chan_info *cp, int j);
+void erase_and_draw_grf_points(mix_context *ms,chan_info *cp, int j);
+void erase_and_draw_both_grf_points(mix_context *ms,chan_info *cp, int j);
 void make_axes(chan_info *cp, axis_info *ap, int x_style);
 void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1);
 void allocate_color_map(snd_state *ss, int colormap);
@@ -152,7 +152,7 @@ void set_wavelet_type(snd_state *ss, int val);
 void fire_up_transform_dialog(snd_state *ss);
 int transform_dialog_is_active(void);
 #if HAVE_GUILE
-char *transform_type_name(snd_state *ss);
+char *transform_type_name(int choice);
 int add_transform_to_list(char *name);
 int max_transform_type(void);
 #endif
@@ -316,7 +316,7 @@ void x_bomb(snd_info *sp, int on);
 snd_info *add_sound_window (char *filename, snd_state *state);
 void set_sound_pane_file_label(snd_info *sp, char *str);
 void unlock_ctrls(snd_info *sp);
-void normalize_sound(snd_state *ss, snd_info *sp, snd_info *osp, chan_info *ncp);
+void normalize_sound(snd_state *ss, snd_info *sp, chan_info *ncp);
 void reflect_amp_env_completion(snd_info *sp);
 void normalize_all_sounds(snd_state *ss);
 void sound_show_ctrls(snd_info *sp);
@@ -415,6 +415,7 @@ void set_recorder_trigger(snd_state *ss,Float val);
 void set_recorder_max_duration(snd_state *ss,Float val);
 int record_dialog_is_active(void);
 void set_recorder_srate(snd_state *ss, int val);
+int fire_up_recorder(snd_state *ss);
 
 
 /* -------- snd-xprint.c -------- */

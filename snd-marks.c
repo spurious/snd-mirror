@@ -1136,20 +1136,6 @@ static syncdata *free_syncdata(syncdata *sd)
   return(NULL);
 }
 
-static int *syncd_marks(snd_state *ss, int sync)
-{
-  syncdata *sd;
-  int *ids;
-  int i;
-  sd = make_syncdata(sync);
-  map_over_chans(ss,gather_chan_syncd_marks,(void *)sd);
-  ids = (int *)CALLOC(1+sd->mark_ctr,sizeof(int));
-  ids[0] = sd->mark_ctr;
-  for (i=0;i<sd->mark_ctr;i++) ids[i+1] = mark_id(sd->marks[i]);
-  free_syncdata(sd);
-  return(ids);
-}
-
 static int mark_control_clicked = 0; /* C-click of mark -> drag data as mark is dragged */
 static int mark_initial_sample = 0;
 static syncdata *mark_sd = NULL;
@@ -1215,7 +1201,7 @@ mark *hit_mark(chan_info *cp, int x, int y, int key_state)
   return(mp);
 }
 
-static int make_mark_graph(chan_info *cp, snd_info *sp, snd_state *ss, int initial_sample, int current_sample, int which);
+static int make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int current_sample, int which);
 
 static int move_syncd_mark(chan_info *cp, mark *m, int x)
 {
@@ -1243,7 +1229,7 @@ static int move_syncd_mark(chan_info *cp, mark *m, int x)
 		  samps = current_ed_samples(ncp);
 		  if (mp->samp > samps) mp->samp = samps;
 		  if (mark_control_clicked)
-		    make_mark_graph(ncp,ncp->sound,ncp->state,mark_sd->initial_samples[i],mp->samp,i);
+		    make_mark_graph(ncp,ncp->sound,mark_sd->initial_samples[i],mp->samp,i);
 		  if ((mp->samp >= ap->losamp) && (mp->samp <= ap->hisamp)) draw_mark(ncp,ap,mp);
 		}
 	    }
@@ -1272,7 +1258,7 @@ void move_mark(chan_info *cp, mark *mp, int x) /* from mouse drag callback in sn
     redraw = move_syncd_mark(cp,mp,x);
   else redraw = move_mark_1(cp,mp,x);
   if (mark_control_clicked)
-    make_mark_graph(cp,cp->sound,cp->state,mark_initial_sample,mp->samp,0);
+    make_mark_graph(cp,cp->sound,mark_initial_sample,mp->samp,0);
   if (redraw) draw_mark(cp,cp->axis,mp);
 }
 
@@ -1366,7 +1352,7 @@ void play_syncd_mark(chan_info *cp, mark *m)
   if (sd) free_syncdata(sd);
 }
 
-static int make_mark_graph(chan_info *cp, snd_info *sp, snd_state *ss, int initial_sample, int current_sample, int which)
+static int make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int current_sample, int which)
 {
   int i,j=0,samps,xi,k;
   axis_info *ap;
@@ -1420,7 +1406,7 @@ static int make_mark_graph(chan_info *cp, snd_info *sp, snd_state *ss, int initi
 	      set_grf_point(grf_x(x,ap),j,grf_y(MUS_SAMPLE_TO_FLOAT(ina),ap));
 	    }
 	}
-      erase_and_draw_grf_points(ss,mark_movers[which],cp,j);
+      erase_and_draw_grf_points(mark_movers[which],cp,j);
     }
   else
     {
@@ -1472,7 +1458,7 @@ static int make_mark_graph(chan_info *cp, snd_info *sp, snd_state *ss, int initi
 		}
 	    }
 	}
-      erase_and_draw_both_grf_points(ss,mark_movers[which],cp,j);
+      erase_and_draw_both_grf_points(mark_movers[which],cp,j);
     }
   if (sf) {free_snd_fd(sf); sf = NULL;}
   return(j);
@@ -1742,6 +1728,20 @@ static SCM int_array_to_list(int *arr, int i, int len)
   if (i < len)
     return(gh_cons(gh_int2scm(arr[i]),int_array_to_list(arr,i+1,len)));
   else return(gh_cons(gh_int2scm(arr[i]),SCM_EOL));
+}
+
+static int *syncd_marks(snd_state *ss, int sync)
+{
+  syncdata *sd;
+  int *ids;
+  int i;
+  sd = make_syncdata(sync);
+  map_over_chans(ss,gather_chan_syncd_marks,(void *)sd);
+  ids = (int *)CALLOC(1+sd->mark_ctr,sizeof(int));
+  ids[0] = sd->mark_ctr;
+  for (i=0;i<sd->mark_ctr;i++) ids[i+1] = mark_id(sd->marks[i]);
+  free_syncdata(sd);
+  return(ids);
 }
 
 static SCM g_syncd_marks(SCM sync)

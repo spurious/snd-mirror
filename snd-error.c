@@ -1,8 +1,10 @@
 #include "snd.h"
 
 static char *snd_error_buffer = NULL;
-static int ignore_snd_error(char *msg);
-static int ignore_snd_warning(char *msg);
+#if HAVE_GUILE
+  static int ignore_snd_error(char *msg);
+  static int ignore_snd_warning(char *msg);
+#endif
 
 void snd_warning(char *format, ...)
 {

@@ -41,12 +41,12 @@ void draw_arc(axis_context *ax, int x, int y, int size);
 void set_grf_points(int xi, int j, int ymin, int ymax);
 void set_grf_point(int xi, int j, int yi);
 void allocate_grf_points(void);
-void draw_grf_points(snd_state *ss, axis_context *ax, int j, axis_info *ap, Float y0);
-void draw_both_grf_points(snd_state *ss, axis_context *ax, int j, axis_info *ap);
+void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Float y0);
+void draw_both_grf_points(chan_info *cp, axis_context *ax, int j);
 void draw_both_grfs(axis_context *ax, int j);
 void mix_save_graph(snd_state *ss, mix_context *ms,int j);
-void erase_and_draw_grf_points(snd_state *ss,mix_context *ms,chan_info *cp, int j);
-void erase_and_draw_both_grf_points(snd_state *ss,mix_context *ms,chan_info *cp, int j);
+void erase_and_draw_grf_points(mix_context *ms,chan_info *cp, int j);
+void erase_and_draw_both_grf_points(mix_context *ms,chan_info *cp, int j);
 void make_axes(chan_info *cp, axis_info *ap, int x_style);
 void start_color_dialog(snd_state *ss, int width, int height);
 void start_orientation_dialog(snd_state *ss, int width, int height);
@@ -185,7 +185,7 @@ void set_wavelet_type(snd_state *ss, int val);
 void fire_up_transform_dialog(snd_state *ss);
 int transform_dialog_is_active(void);
 #if HAVE_GUILE
-char *transform_type_name(snd_state *ss);
+char *transform_type_name(int choice);
 int add_transform_to_list(char *name);
 int max_transform_type(void);
 #endif
@@ -450,7 +450,7 @@ int sound_unlock_ctrls(snd_info *sp, void *ptr);
 int sound_lock_ctrls(snd_info *sp, void *ptr);
 void snd_info_cleanup(snd_info *sp);
 void unlock_ctrls(snd_info *sp);
-void normalize_sound(snd_state *ss, snd_info *sp, snd_info *osp, chan_info *ncp);
+void normalize_sound(snd_state *ss, snd_info *sp, chan_info *ncp);
 void normalize_all_sounds(snd_state *ss);
 void sound_show_ctrls(snd_info *sp);
 void sound_hide_ctrls(snd_info *sp);
@@ -512,7 +512,7 @@ void env_redisplay(snd_state *ss);
 void enved_display_point_label(snd_state *ss, Float x, Float y);
 void display_enved_progress(snd_state *ss, char *str, GdkPixmap *pix, GdkBitmap *mask);
 void set_enved_click_to_delete(int n);
-void enved_print(snd_state *ss, char *name);
+void enved_print(char *name);
 void create_envelope_editor (snd_state *ss);
 void set_enved_clipping(snd_state *ss, int val);
 void set_enved_exping(snd_state *ss, int val);
@@ -556,6 +556,7 @@ void set_recorder_srate(snd_state *ss, int val);
 #if HAVE_GUILE_GTK
   void init_recorder_widgets(SCM local_doc);
 #endif
+int fire_up_recorder(snd_state *ss);
 
 
 

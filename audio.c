@@ -6962,7 +6962,9 @@ int mus_audio_initialize(void)
 #ifdef BEOS
 #define AUDIO_OK
 
+#if 0
 #include <be/media/SoundPlayer.h>
+#endif
 
 char *mus_audio_error_name(int err) {return(audio_error_name_1(err));}
 int mus_audio_systems(void) {return(1);}
@@ -6984,7 +6986,7 @@ static float *data = NULL;
 #define SOUND_INITIALIZED 1
 #define SOUND_RUNNING 2
 static int sound_state = SOUND_UNREADY;
-
+#if 0
 static BSoundPlayer player;
 
 static void write_callback(void *ignored, void *buffer, size_t size, const media_raw_audio_format &format)
@@ -6998,9 +7000,11 @@ static void write_callback(void *ignored, void *buffer, size_t size, const media
       data_status = DATA_WRITTEN;
     }
 }
+#endif
 
 int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size) 
 {
+#if 0
   BSoundPlayer pl("hiho",write_callback,NULL,NULL);
   AUDIO_ERROR = MUS_AUDIO_NO_ERROR;
   player = pl;
@@ -7008,6 +7012,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
   pl.SetHasData(true);
   data_status = DATA_EMPTY;
   sound_state = SOUND_INITIALIZED;
+#endif
   return(1);
 }
 
@@ -7017,6 +7022,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
 
 int mus_audio_write(int line, char *buf, int bytes) 
 {
+#if 0
   size_t size;
   if (line != 1) {AUDIO_ERROR = MUS_AUDIO_CANT_WRITE; return(-1);}
   AUDIO_ERROR = MUS_AUDIO_NO_ERROR;
@@ -7029,18 +7035,21 @@ int mus_audio_write(int line, char *buf, int bytes)
     {
       
     }
+#endif
   return(0);
 
 }
 
 int mus_audio_close(int line) 
 {
+#if 0
   AUDIO_ERROR = MUS_AUDIO_NO_ERROR;
   if (line == 1)
     {
       player.Stop();
       sound_state = SOUND_UNREADY;
     }
+#endif
   return(0);
 }
 

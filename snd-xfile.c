@@ -762,7 +762,7 @@ file_data *sndCreateFileDataForm(snd_state *ss, Widget parent, char *name, Arg *
   return(fdat);
 }
 
-static void make_save_as_dialog(snd_state *ss, char *sound_name, int save_type, int header_type, int format_type)
+static void make_save_as_dialog(snd_state *ss, char *sound_name, int header_type, int format_type)
 {
   /* save old as new, close old, open new */
   Arg args[32];
@@ -845,7 +845,7 @@ void make_file_save_as_dialog(snd_state *ss)
   save_as_dialog_type = FILE_SAVE_AS;
   sp = any_selected_sound(ss);
   if (sp) hdr = sp->hdr;
-  make_save_as_dialog(ss,(sp) ? sp->shortname : "",FILE_SAVE_AS,
+  make_save_as_dialog(ss,(sp) ? sp->shortname : "",
 		      default_output_type(ss),
 		      default_output_format(ss));
 
@@ -861,7 +861,7 @@ void make_file_save_as_dialog(snd_state *ss)
 void make_edit_save_as_dialog(snd_state *ss)
 {
   save_as_dialog_type = EDIT_SAVE_AS;
-  make_save_as_dialog(ss,STR_current_selection,EDIT_SAVE_AS,-1,-1);
+  make_save_as_dialog(ss,STR_current_selection,-1,-1);
   load_header_and_data_lists(save_as_file_data,
 			     save_as_file_data->current_type,
 			     save_as_file_data->current_format,
@@ -1381,7 +1381,7 @@ static void View_CurFiles_Select_Callback(Widget w,XtPointer clientData,XtPointe
   if (sp != osp)
     {
       select_channel(sp,0);
-      normalize_sound(ss,sp,osp,sp->chans[0]);
+      normalize_sound(ss,sp,sp->chans[0]);
       /* goto_graph(sp->chans[0]); */
     }
 }

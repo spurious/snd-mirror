@@ -275,7 +275,6 @@ snd_info *make_mix_readable(mixdata *md)
 {
   chan_info *cp;
   int i;
-  snd_state *ss;
   snd_info *add_sp;
   if (!md->add_snd) 
     {
@@ -288,14 +287,13 @@ snd_info *make_mix_readable(mixdata *md)
 	  add_sp = md->add_snd;
 	  add_sp->fullname = copy_string(md->in_filename);
 	  add_sp->shortname = filename_without_home_directory(add_sp->fullname);
-	  ss = add_sp->state;
 	  for (i=0;i<add_sp->nchans;i++) 
 	    {
 	      cp = add_sp->chans[i];
 	      if (cp) 
 		{
 		  cp->mix_md = md;
-		  if (show_mix_waveforms(ss)) make_mix_input_amp_env(cp);
+		  if (cp->show_mix_waveforms) make_mix_input_amp_env(cp);
 		}
 	    }
 	}
@@ -1438,7 +1436,7 @@ static int make_temporary_amp_env_mixed_graph(chan_info *cp, axis_info *ap, mixd
 
     }
 
-  erase_and_draw_both_grf_points(md->ss,md->wg,cp,j);
+  erase_and_draw_both_grf_points(md->wg,cp,j);
 
   free_mix_fd(new_fd);
   free_mix_fd(old_fd);
@@ -1564,7 +1562,7 @@ static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mixdata *m
 
     }
 
-  erase_and_draw_both_grf_points(md->ss,md->wg,cp,j);
+  erase_and_draw_both_grf_points(md->wg,cp,j);
 
   free_mix_fd(new_min_fd);
   free_mix_fd(new_max_fd);
@@ -1640,7 +1638,7 @@ void make_temporary_graph(chan_info *cp, mixdata *md, console_state *cs)
 	    set_grf_point((int)x,j,grf_y(MUS_SAMPLE_TO_FLOAT(ina),ap));
 	  else set_grf_point(grf_x(x,ap),j,grf_y(MUS_SAMPLE_TO_FLOAT(ina),ap));
 	}
-      erase_and_draw_grf_points(ss,md->wg,cp,j);
+      erase_and_draw_grf_points(md->wg,cp,j);
     }
   else
     {
@@ -1733,7 +1731,7 @@ void make_temporary_graph(chan_info *cp, mixdata *md, console_state *cs)
 		    }
 		}
 	    }
-	  erase_and_draw_both_grf_points(ss,md->wg,cp,j);
+	  erase_and_draw_both_grf_points(md->wg,cp,j);
 	}
     }
   if (sf) free_snd_fd(sf);
@@ -1802,7 +1800,7 @@ static int display_mix_amp_env(mixdata *md, Float scl, int yoff, int newbeg, int
 	  if (low < ymin) ymin = low;
 	}
     }
-  draw_both_grf_points(md->ss,(draw) ? mix_waveform_context(cp) : erase_context(cp),j,ap);
+  draw_both_grf_points(cp,(draw) ? mix_waveform_context(cp) : erase_context(cp),j);
   free_mix_fd(min_fd);
   free_mix_fd(max_fd);
   return(j);
@@ -1816,7 +1814,6 @@ int display_mix_waveform(chan_info *cp, mixdata *md, console_state *cs, int yoff
   int widely_spaced;
   axis_info *ap;
   snd_info *sp;
-  snd_state *ss;
   Float samples_per_pixel,xf;
   double x,incr,initial_x;
   MUS_SAMPLE_TYPE ina,ymin,ymax;
@@ -1824,7 +1821,6 @@ int display_mix_waveform(chan_info *cp, mixdata *md, console_state *cs, int yoff
   mix_fd *add = NULL;
   int x_start,x_end;
   double start_time,cur_srate;
-  ss = cp->state;
   newbeg = cs->beg;
   newend = newbeg + cs->len;
   sp = cp->sound;
@@ -1872,7 +1868,7 @@ int display_mix_waveform(chan_info *cp, mixdata *md, console_state *cs, int yoff
 	  else set_grf_point(grf_x(x,ap),j, (int)(yoff - scl*MUS_SAMPLE_TO_FLOAT(ina)));
 	}
       if (sp)
-	draw_grf_points(ss,(draw) ? mix_waveform_context(cp) : erase_context(cp),j,ap,ungrf_y(ap,yoff));
+	draw_grf_points(cp,(draw) ? mix_waveform_context(cp) : erase_context(cp),j,ap,ungrf_y(ap,yoff));
     }
   else
     {
@@ -1919,7 +1915,7 @@ int display_mix_waveform(chan_info *cp, mixdata *md, console_state *cs, int yoff
 		}
 	    }
 	  if (sp) 
-	    draw_both_grf_points(ss,(draw) ? mix_waveform_context(cp) : erase_context(cp),j,ap);
+	    draw_both_grf_points(cp,(draw) ? mix_waveform_context(cp) : erase_context(cp),j);
 	}
     }
   if (sp) copy_context(cp);
@@ -2066,14 +2062,12 @@ void display_channel_mixes(chan_info *cp)
    *   un-manage those whose mix has wandered off screen, and release the associated widgets,
    *   and re-manage those that are now active, grabbing widgets if necessary.
    */
-  snd_state *ss;
   mixdata *md;
   mixmark *m;
   console_state *cs;
   axis_info *ap;
   int lo,hi,spot,i,xspot,turnover,y,yspot,combined;
   combined = (((snd_info *)(cp->sound))->combining != CHANNELS_SEPARATE);
-  ss = cp->state;
   ap = cp->axis;
   lo = ap->losamp;
   hi = ap->hisamp;
@@ -2114,7 +2108,7 @@ void display_channel_mixes(chan_info *cp)
 			    }
 			  move_mixmark(m,xspot,yspot);
 			  color_mix(md,(void *)(cp->state));
-			  if (show_mix_waveforms(ss)) draw_mix_waveform(md,yspot);
+			  if (cp->show_mix_waveforms) draw_mix_waveform(md,yspot);
 			  y += MIX_Y_INCR;
 			  if (y >= turnover) y=0;
 			  if (md->changed) 
@@ -2257,7 +2251,6 @@ static int ripple_mixes_1(mixdata *md, void *ptr)
   console_state *cs,*ncs;
   mixmark *m;
   int xspot;
-  snd_state *ss;
   mixrip *data;
   chan_info *cp;
   data = (mixrip *)ptr;
@@ -2265,14 +2258,13 @@ static int ripple_mixes_1(mixdata *md, void *ptr)
   cs = md->current_cs;
   if ((cs) && (!(cs->locked)) && (cs->beg > data->beg) && (ready_mix(md)))
     {
-      ss = md->ss;
       ncs = copy_console(cs);
       ncs->edit_ctr = cp->edit_ctr;
       ncs->orig = cs->beg + data->change;
       ncs->beg = ncs->orig;
       ncs->end = ncs->beg + cs->len - 1;
       m = md->mixer;
-      if ((m) && (show_mix_waveforms(ss))) erase_mix_waveform(md,m->y);
+      if ((m) && (cp->show_mix_waveforms)) erase_mix_waveform(md,m->y);
       extend_console_list(md);
       md->states[md->curcons] = ncs;
       make_current_console(md);
@@ -2281,7 +2273,7 @@ static int ripple_mixes_1(mixdata *md, void *ptr)
 	  xspot = grf_x((double)(ncs->beg)/(double)SND_SRATE(cp->sound),data->ap);
 	  move_mix_x(m,xspot);
 	  set_mix_title_beg(md,m);
-	  if (show_mix_waveforms(ss)) draw_mix_waveform(md,m->y);
+	  if (cp->show_mix_waveforms) draw_mix_waveform(md,m->y);
 	}
     }
   return(0);

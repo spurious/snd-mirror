@@ -897,7 +897,11 @@ static void set_reverb_decay(snd_state *ss, Float val)
 	sp->reverb_decay = val;
     }
 }
-      
+
+static int map_sounds_speed_tones(snd_info *sp, void *val) {sp->speed_tones = (int)val; return(0);}
+static void set_speed_tones(snd_state *ss, int val) {in_set_speed_tones(ss,val); map_over_sounds(ss,map_sounds_speed_tones,(void *)val);}      
+static int map_sounds_speed_style(snd_info *sp, void *val) {sp->speed_style = (int)val; return(0);}
+void set_speed_style(snd_state *ss, int val) {in_set_speed_style(ss,val); map_over_sounds(ss,map_sounds_speed_style,(void *)val);}      
 
 
 #if HAVE_GUILE
@@ -926,7 +930,7 @@ static SCM g_select_sound(SCM snd_n)
   #define H_select_sound "(" S_select_sound " &optional snd) makes snd the selected (active) sound"
   int val;
   snd_state *ss;
-  snd_info *osp,*sp;
+  snd_info *sp;
   ERRSP(S_select_sound,snd_n,1);
   ss = get_global_state();
   val = g_scm2intdef(snd_n,0);
@@ -935,10 +939,8 @@ static SCM g_select_sound(SCM snd_n)
       sp = ss->sounds[val];
       if (snd_ok(sp))
 	{
-	  osp = any_selected_sound(ss);
 	  select_channel(sp,0);
-	  normalize_sound(ss,sp,osp,sp->chans[0]);
-	  /* goto_graph(sp->chans[0]); */
+	  normalize_sound(ss,sp,sp->chans[0]);
 	  map_over_chans(ss,update_graph,NULL);
 	  return(snd_n);
 	}
@@ -993,7 +995,7 @@ static SCM g_bomb(SCM snd, SCM on)
 enum {SYNCF,UNITEF,READONLYF,NCHANSF,CONTRASTINGF,EXPANDINGF,REVERBINGF,FILTERINGF,FILTERORDERF,
       SRATEF,DATAFORMATF,DATALOCATIONF,HEADERTYPEF,CONTROLPANELSAVEF,CONTROLPANELRESTOREF,SELECTEDCHANNELF,
       COMMENTF,FILENAMEF,SHORTFILENAMEF,CLOSEF,UPDATEF,SAVEF,CURSORFOLLOWSPLAYF,SHOWCONTROLSF,
-      FILTERDBING
+      FILTERDBING,SPEEDTONESF,SPEEDSTYLEF
 };
 
 static SCM sp_iread(SCM snd_n, int fld, char *caller)
@@ -1044,6 +1046,8 @@ static SCM sp_iread(SCM snd_n, int fld, char *caller)
 	case UPDATEF: snd_update(sp->state,sp); break;
 	case CURSORFOLLOWSPLAYF: RTNBOOL(sp->cursor_follows_play); break;
 	case SHOWCONTROLSF: RTNBOOL(control_panel_open(sp)); break;
+	case SPEEDTONESF: RTNINT(sp->speed_tones); break;
+	case SPEEDSTYLEF: RTNINT(sp->speed_style); break;
 	}
     }
   return(SCM_BOOL_F);
@@ -1083,6 +1087,8 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
 	case FILTERORDERF: set_snd_filter_order(sp,ival); break;
 	case CURSORFOLLOWSPLAYF: sp->cursor_follows_play = ival; break;
 	case SHOWCONTROLSF: if (ival) sound_show_ctrls(sp); else sound_hide_ctrls(sp); break;
+	case SPEEDTONESF: sp->speed_tones = ival; break;
+	case SPEEDSTYLEF: sp->speed_style = ival; break;
 	}
     }
   RTNBOOL(ival);
@@ -1300,6 +1306,56 @@ static SCM g_short_file_name(SCM snd_n)
   #define H_short_file_name "(" S_short_file_name " &optional snd) -> short form of snd's file name (no directory)"
   ERRSPT(S_short_file_name,snd_n,1);
   return(sp_iread(snd_n,SHORTFILENAMEF,S_short_file_name));
+}
+
+static SCM g_speed_style(SCM snd)
+{
+  #define H_speed_style "(" S_speed_style " (snd #t)) -> speed control panel interpretation choice (speed-as-float)"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(sp_iread(snd,SPEEDSTYLEF,S_speed_style));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_speed_style);
+  RTNINT(speed_style(get_global_state()));
+}
+
+static SCM g_set_speed_style(SCM speed, SCM snd) 
+{
+  #define H_set_speed_style "(" S_set_speed_style " val) sets " S_speed_style
+  snd_state *ss;
+  ERRN1(speed,S_set_speed_style); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(sp_iwrite(snd,speed,SPEEDSTYLEF,S_set_speed_style));
+  else
+    {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_speed_style);
+      ss = get_global_state();
+      activate_speed_in_menu(ss,iclamp(SPEED_AS_FLOAT,g_scm2int(speed),SPEED_AS_SEMITONE));
+      RTNINT(speed_style(ss));
+    }
+}
+
+static SCM g_speed_tones(SCM snd)
+{
+  #define H_speed_tones "(" S_speed_tones " (snd #t)) -> if speed-style is speed-as-semitone, this chooses the octave divisions (12)"
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(sp_iread(snd,SPEEDTONESF,S_speed_tones));
+  SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_speed_tones);
+  RTNINT(speed_tones(get_global_state()));
+}
+
+static SCM g_set_speed_tones(SCM val, SCM snd)
+{
+  #define H_set_speed_tones "(" S_set_speed_tones " val (snd #t)) sets " S_speed_tones
+  snd_state *ss;
+  ERRN1(val,S_set_speed_tones); 
+  if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
+    return(sp_iwrite(snd,val,SPEEDTONESF,S_set_speed_tones));
+  else
+    {
+      SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,S_set_speed_tones);
+      ss = get_global_state();
+      set_speed_tones(ss,g_scm2int(val));
+      RTNINT(speed_tones(ss));
+    }
 }
 
 
@@ -1672,11 +1728,11 @@ static SCM sp_fwrite(SCM snd_n, SCM val, int fld, char *caller)
 	{
 	case AMPF: if (fval >= 0.0) set_snd_amp(sp,fval); break;
 	case CONTRASTF: set_snd_contrast(sp,fval); break;
-	case CONTRASTAMPF: sp->contrast_amp = fval; if (sp->playing) dac_set_contrast_amp(sp->state,sp,fval); break;
+	case CONTRASTAMPF: sp->contrast_amp = fval; if (sp->playing) dac_set_contrast_amp(sp,fval); break;
 	case EXPANDF: if (fval > 0.0) set_snd_expand(sp,fval); break;
-	case EXPANDLENGTHF: if (fval > 0.0) sp->expand_length = fval; if (sp->playing) dac_set_expand_length(sp->state,sp,fval); break;
-	case EXPANDRAMPF: if ((fval >= 0.0) && (fval < 0.5)) sp->expand_ramp = fval; if (sp->playing) dac_set_expand_ramp(sp->state,sp,fval); break;
-	case EXPANDHOPF: if (fval > 0.0) sp->expand_hop = fval; if (sp->playing) dac_set_expand_hop(sp->state,sp,fval); break;
+	case EXPANDLENGTHF: if (fval > 0.0) sp->expand_length = fval; if (sp->playing) dac_set_expand_length(sp,fval); break;
+	case EXPANDRAMPF: if ((fval >= 0.0) && (fval < 0.5)) sp->expand_ramp = fval; if (sp->playing) dac_set_expand_ramp(sp,fval); break;
+	case EXPANDHOPF: if (fval > 0.0) sp->expand_hop = fval; if (sp->playing) dac_set_expand_hop(sp,fval); break;
 	case SPEEDF: 
 	  if (fval != 0.0)
 	    {
@@ -1686,9 +1742,9 @@ static SCM sp_fwrite(SCM snd_n, SCM val, int fld, char *caller)
 	    }
 	  break;
 	case REVERBLENGTHF: if (fval >= 0.0) set_snd_revlen(sp,fval); break;
-	case REVERBFEEDBACKF: sp->revfb = fval; if (sp->playing) dac_set_reverb_feedback(sp->state,sp,fval); break;
+	case REVERBFEEDBACKF: sp->revfb = fval; if (sp->playing) dac_set_reverb_feedback(sp,fval); break;
 	case REVERBSCALEF: set_snd_revscl(sp,fval); break;
-	case REVERBLOWPASSF: sp->revlp = fval; if (sp->playing) dac_set_reverb_lowpass(sp->state,sp,fval); break;
+	case REVERBLOWPASSF: sp->revlp = fval; if (sp->playing) dac_set_reverb_lowpass(sp,fval); break;
 	case SP_REVERB_DECAY: sp->reverb_decay = fval; break;
 	}
     }
@@ -2054,6 +2110,10 @@ void g_init_snd(SCM local_doc)
 
   DEFINE_PROC(gh_new_procedure(S_reverb_decay,SCM_FNC g_reverb_decay,0,1,0),H_reverb_decay);
   DEFINE_PROC(gh_new_procedure(S_set_reverb_decay,SCM_FNC g_set_reverb_decay,0,2,0),H_set_reverb_decay);
+  DEFINE_PROC(gh_new_procedure(S_speed_style,SCM_FNC g_speed_style,0,1,0),H_speed_style);
+  DEFINE_PROC(gh_new_procedure(S_set_speed_style,SCM_FNC g_set_speed_style,0,2,0),H_set_speed_style);
+  DEFINE_PROC(gh_new_procedure(S_speed_tones,SCM_FNC g_speed_tones,0,1,0),H_speed_tones);
+  DEFINE_PROC(gh_new_procedure(S_set_speed_tones,SCM_FNC g_set_speed_tones,0,2,0),H_set_speed_tones);
 }
 
 #endif

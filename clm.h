@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 26
-#define MUS_DATE "31-Jul-00"
+#define MUS_REVISION 27
+#define MUS_DATE "10-Aug-00"
 
 /* 
+ * 10-Aug:     removed built-in setf support (clm2scm.c).
  * 31-Jul:     mus_granulate tries to protect against illegal length and ramp values.
  * 24-Jul:     mus_make_fir_coeffs.
  * 20-Jul:     sum_of_sines, atan2 to rectangular->polar, phase_vocoder gen.

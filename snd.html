@@ -104,7 +104,6 @@ href="ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-4.tar.gz">snd-4.tar.gz</a>.</p>
       <ul>
       <li><a href="extsnd.html#colors">Colors</a>
       <li><a href="extsnd.html#fonts">Fonts</a>
-      <li><a href="extsnd.html#otherappearance">Other appearance-related stuff</a>
       </ul>
     <li><a href="extsnd.html#behavior">Customizing Snd's behavior</a>
       <ul>
@@ -416,7 +415,7 @@ use a ".scm" extension, or precede the file name with <a name="minusl">"-l"</a> 
 <pre>
   snd oboe.snd -l examp.scm
 </pre>
-<p>opens the sound file oboe.snd and loads the Guile/Scheme code in examp.scm.</p>
+<p>opens the sound file oboe.snd and loads the Scheme code in examp.scm.</p>
 
         <!-- I(preload directory):O(-p switch to Snd)(minusp) --><!-- I(preload directory):A(minusp) -->
         <!-- I(continue session):O(-l switch to Snd)(minusl) -->
@@ -439,8 +438,8 @@ displayed.
 To position sounds horizontally (adding on the right), use the "-h" (or "-horizontal") flag,
 or the <a href="grfsnd.html#horizontalpanes">horizontalPanes</a> resource.
 (This only works on systems with Motif 2.0 or later).  Other overall layout
-choices include the Notebook widget (horizontalPanes: 2, -notebook), an outer scroller
-widget (horizontalPanes: 3, or -scroller), and separate windows for each sound (-separate).  
+choices include the Notebook widget (horizontalPanes: 2, -notebook), 
+and separate windows for each sound (-separate).  
 These special choices need to be set either
 in the resource file, or in the invocation line.
 </p>
@@ -451,15 +450,14 @@ in the resource file, or in the invocation line.
 or View.  <a name="viewfile">View</a> opens the file read-only, whereas Open
 <!-- I(open file read-only):A(viewfile) -->
 will allow it to be changed.  The equivalent keyboard
-command is C-x C-f.  You can also drag a sound file's
-icon and drop it on top of the Snd icon or the Snd menubar.
+command is C-x C-f.  
 If a file cannot be written (either it was opened read-only
 or you don't have write permission on it), a lock appears
 next to the file name.  <a name="updatefile"></a>Similarly, if Snd notices that
 the file on the disk no longer matches the original,
 a bomb appears (this can happen if some other program
 writes a sound while you are editing an earlier version
-of it; see also <a href="#overwrite">overwrite-check</a> and <a href="extsnd.html#corruptiontime">corruption-time</a>).
+of it; see also <a href="#overwrite">ask-before-overwrite</a> and <a href="extsnd.html#corruptiontime">corruption-time</a>).
 If the variable <a href="extsnd.html#autoupdate">auto-update</a> is #t (default is #f), Snd
 automatically updates any such file (this is also useful if
 you're editing the same file in two separate panes).
@@ -471,7 +469,7 @@ you're editing the same file in two separate panes).
 to be sound files are included in the directory listing.
 Currently Snd uses the file extension to decide whether
 it is a sound file -- the initial extensions are
-snd, wav, aiff, aif, au, aifc, voc, and wve. To add
+"snd", "wav", "aiff", "aif", "au", "aifc", "voc", and "wve". To add
 an extension to this list, use <a href="extsnd.html#addsoundfileextension">add-sound-file-extension</a>.
 </p>
 <a name="formats"></a>
@@ -517,9 +515,9 @@ and friends, or from a dialog that pops up when not every decision has been
 made in advance.
 A raw data file gets its srate, chans,
 and data format information either from the variables
-<a href="extsnd.html#rawsrate">raw-srate</a> and friends (if raw-defaults == 1), or
+<a href="extsnd.html#rawsrate">raw-srate</a> and friends (if <a href="extsnd.html#userawdefaults">use-raw-defaults</a> is #t), or
 from a dialog window that pops up when such a file
-is opened. The files listed as "automatically translated" are
+is opened. The file types listed above as "automatically translated" are
 decoded upon being opened, rewritten in Sun 16-bit format
 to a new file with an added (possibly redundant) extension .snd,
 and that form is the one the editor sees from then on. To read
@@ -531,7 +529,7 @@ mepg files, see the mpg function in examp.scm.
 screen space; within that section, each channel
 has a pane, and below the channels is the 'control
 pane', normally hidden except for the file name
-and 'minibuffer'.  At the very bottom (or far right)
+and 'minibuffer'.  At the very bottom
 of the Snd window is the lisp listener, if any (see
 the View menu "Open listener" option).
 The panes can all be independently
@@ -551,7 +549,7 @@ you get an empty display.  <a name="panecontrol">For</a> each sound there is
 a control panel containing the file name, in parentheses if
 the file is actually a link, with an
 asterisk if there are unsaved edits, a 'minibuffer'
-for various kinds of text-based interactions,
+for various kinds of simple text-based interactions,
 a 'sync' button for grouped display and edit
 operations, a 'unite' button (if the sound has more than one channel),
 and a 'play' button to play the
@@ -619,7 +617,7 @@ To record a file, see <a href="#recordfile">"Record Files"</a>.</p>
 <a name="exitfile"></a><p>Finally, to exit Snd cleanly (that is, removing any
 temporary files, and cleaning up some system stuff),
 use the Exit option.  Unsaved edits are silently
-flushed.</p>
+flushed (but see the function unsaved-edits? in examp.scm).</p>
         <!-- I(close file):K(C-x k)(cxk) --><!-- I(close file):A(closefile) --><!-- I(save file):A(savefile) --><!-- I(exit Snd):A(exitfile) -->
         <!-- I(save file):K(C-x C-s)(cxcs) --><!-- I(save selection):K(C-x w)(cxw) --><!-- I(save channel):K(C-x C-w)(cxcw) -->
 	<!-- I(extract channel):K(C-x C-w)(cxcw) --><!-- I(extract channel):A(cxcw) -->
@@ -635,7 +633,7 @@ flushed.</p>
     <a href="#viewnormalize">Normalize</a>:        cleanup current Snd display
     <a href="extsnd.html#lisplistener">Open listener</a>:    show/hide lisp listener
     <a href="#unitebutton">Channel style</a>:    separate, combined or superimposed channels
-    <a href="#viewdots">Graph style</a>:      use dots, lines, or filled polygons in the data displays
+    <a href="#viewdots">Graph style</a>:      use dots, lines, filled polygons etc in the data displays
     <a href="extsnd.html#verbosecursor">Verbose cursor</a>:   describe the current sample every time the cursor moves
     <a href="#regionbrowser">Regions</a>:          a browser to examine the region stack
     <a href="#prevfiles">Files</a>:            a browser of currently and previously loaded files
@@ -665,8 +663,8 @@ dots rather than connected lines, use the Dots option in
 the View menu's Graph style option (see also <a href="extsnd.html#dotsize">set-dot-size</a>).  <a name="viewy0"></a>Similarly, to show (or hide) the line
 Y = 0, use the y=0 option.  The Region browser is described under
 <a href="#regions">Regions</a>.  To open the control panel, use Show Controls.
-Similarly, to open or close the lisp listener panel, use Open listener.
-You can also drag the associated pane button.  When
+To open or close the lisp listener panel, use Open listener.
+When
 many files are displayed, and the pane buttons have
 been in use, the overall display can become a bit of
 a mess.  <a name="viewnormalize"></a>To return to a state where each file and channel
@@ -677,12 +675,9 @@ has a 'normal' amount of space, use the Normalize option.
 <p>The <a name="colorbrowser">Color</a> and 
 <a name="orientationbrowser">Orientation</a>
 options activate windows that set various aspects of the sonogram, spectrogram,
-and wavogram displays.  There are eight or nine colormaps available along with
+and wavogram displays.  There are fifteen or so colormaps available along with
 ways to invert the maps, and scale (darken) them differently according to screen or
-printer characteristics.  And the graphs themselves can be rotated and resized.
-The color variable default settings produce good output on the SGI but
-looks cluttered on some Linuces -- you may have to play around with the
-lightness scaler and so on to find reasonable values for your system.
+printer characteristics.
 </p>
         <!-- I(color):A(colorbrowser) --><!-- I(orientation):A(colorbrowser) -->
 
@@ -1169,12 +1164,6 @@ applies to the underlying sound, not to the selection as a separate entity).
 <p>Also if the 'selection' button is set in the transform options dialog,
 (or equivalently, <a href="extsnd.html#lshowselectiontransform">show-selection-transform</a>
 is #t), the fft display, if any, displays the transform of the selected portion.
-Save-selection is not always the same as save-region with the region argument
-set to 0; a few functions, such as reverse-selection, reverse the selected
-data, but leave the region copy alone, so save-selection saves the reversed
-form, but save-region saves the original version.  This can be confusing if
-you use C-x p to play the selection; it will actually play the original region,
-not the reversed form.  
 </p>
 <hr>
 
@@ -1192,11 +1181,12 @@ edit list (equivalent to some number of undo's or
 redo's).  To move to a given edit point and follow
 the sync chain (if any), use control-click.</p>
 
-<p>If Guile is loaded,
-the function <a href="extsnd.html#sndsaveedithistory">save-edit-history</a> saves the current
+<p>
+The function <a href="extsnd.html#sndsaveedithistory">save-edit-history</a> saves the current
 edit list as a loadable program (assuming the base sounds haven't changed in the
 meantime).  The file can be edited (it's just a text file with comments).
-<small>(more to come...)</small></p>
+See <a href="extsnd.html#editlists">Edit Lists</a> for more details.
+</p>
 
 <hr>
 <h3><a name="howtoedit">How to...</a></h3>
@@ -1270,7 +1260,7 @@ associated keyboard commands are:</p>
 <p>Insertion takes place just ahead of the cursor; to insert after the
 cursor, define a command something like:</p>
 <pre>
-  (bind-key (char-&gt;integer #\i) 0 "(insert-region (1+ (cursor)))")
+  (bind-key (char-&gt;integer #\i) 0 (lambda () (insert-region (1+ (cursor)))))
 </pre>
 
 <h4><a name="multichannel">Multi-channel operations</a></h4>
@@ -1377,7 +1367,7 @@ the actual scaled-to value is just less than 1.0 to avoid the
 in general, patterned after Emacs.  When you type
 C-s or C-r, the minibuffer below the graph is
 activated and you are asked for the search expression.
-The expression is 
+The expression is a
 Scheme function that takes one argument, the current
 sample value, and returns #t when it finds a match.  For example,
 to look for the next sample that is greater than
@@ -1502,7 +1492,9 @@ type C-q several times in succession, you'll hear several
 simultaneous renditions of the sound.  The various 'play'
 buttons scattered around Snd on the other hand, interrupt
 the current play if you click them during a run.  C-g stops
-any current playing.
+any current playing.  If no numeric argument is supplied,
+C-x p plays the currently active selection; to get region 0
+use C-u 0 C-x p.
 </p>
 
 
@@ -1755,7 +1747,7 @@ a slider.  If the button is on (green), the corresponding slider
 is displayed.
 Press one of the buttons to toggle whether its slider is displayed or
 hidden.
-It is also possible to drag the mouse through
+It is also (supposed to be) possible to drag the mouse through
 the box of buttons, setting (button 1) or unsetting (button 2)
 buttons as you go.  Click in the corner (the '/' label) to
 set all (button 1) or unset all (button 2). Similarly, click
@@ -1856,7 +1848,7 @@ data; the new header is blindly written out; any unsaved edits are
 ignored. If you specify 'raw' as the type, any existing header is
 removed.  This dialog is aimed at adding or removing an entire header,
 or editing the header comments; anything else is obviously dangerous.
-If you don't mess with the data location, it will be updated to
+If you don't change the data location, it will be updated to
 reflect any header changes; that is, unless you intervene, the
 resultant header will be syntactically correct. 
 After writing the new header, you should either close or update the
@@ -1888,15 +1880,18 @@ window.  Use the <a href="extsnd.html#sndsetybounds">set-y-bounds</a> function t
 small number, then use the position scroller to find the signal.
 For example, if your signal is a very soft recording setting only the lowest two bits
 of a 16 bit signal but with DC offset due to the recording conditions,
-M-x (set-y-axis -.01 .01) and try the scroller.</p>
+M-x (set-y-bounds -.01 .01) and try the scroller.</p>
 
 	<!-- I(center tiny signal):A(centeryaxis) --><!-- I(center tiny signal):L(set-y-bounds)(sndsetybounds) -->
 
 <h4><a name="misccommands">Miscellaneous commands</a></h4>
 
 <p><a name="kgc">C-g</a> at any point aborts the current keyboard command
-sequence, as does any mouse click.  C-g can also interrupt some long
-computations (search, eval expression, and the various envelope applications).</p>
+sequence, as does any mouse click.  C-g can also interrupt most long
+computations (search, eval expression, and the various envelope applications).
+If you notice one that is not interruptible, send me a note -- I probably just
+forgot about it.
+</p>
 <!-- I(interrupt Snd):A(kgc) --><!-- I(interrupt Snd):O(edit env)(editenvelope) -->
 <!-- I(interrupt Snd):K(C-g)(kgc) -->
 
@@ -1930,8 +1925,7 @@ panel.</p>
 that tries to figure out what the rest of the text probably should be.  If it finds no matches,
 the text flashes red; if it finds multiple matches and can't extend the current text, it flashes green,
 and (eventually) a list of possible completions appears in the help window.
-If there is no completion routine active, Tab is a no-op (i.e. it doesn't activate the "next" widget,
-as in the normal Motif program). 
+If there is no completion routine active, Tab is a no-op.
 </p>
 
         <!-- I(abort command):K(C-g)(kgc) --><!-- I(abort command):O(mouse click) --><!-- I(abort command):A(kgc) -->
@@ -2093,14 +2087,10 @@ reverb, and filter.</p>
 <p><a name="speed"></a>'Speed' here refers to the rate at which the
 sound data is consumed during playback.
 Another term might be 'srate'.  Snd normally uses
-linear interpolation to perform the speed
-change (this was necessary on older machines that could not hope to
-perform high quality sampling rate conversion in "real-time"); 
-the <a href="extsnd.html#sndsrc">src-sound</a> function and the envelope editor
-always use sinc interpolation instead (the better method).  If you
-have a fast enough machine, set the <a href="extsnd.html#usesincinterp">use-sinc-interp</a>
-variable to #t.  This can make a huge difference in sound quality if you're resampling
-at a much lower rate.
+sinc interpolation to perform the speed
+change, but slow machines may not be able to handle the computational
+burden; in that case, <code>(set-use-sinc-interp #f)</code>; the
+fallback method is linear interpolation.
 The arrow button on the right determines
 the direction we move through the data.
 The scroll bar position is normally interpreted

@@ -2882,7 +2882,7 @@ Float *mus_partials2polynomial(int npartials, Float *partials, int kind)
   Cc1 = (Float *)CALLOC(npartials+1,sizeof(Float));
   if (Cc1 == NULL) 
     {
-      mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't get %d bytes for Cc1 in mus_partials2polynomial!",npartials * sizeof(Float));
+      mus_error(MUS_MEMORY_ALLOCATION_FAILED,"can't get %d bytes for Cc1 in mus_partials2polynomial!",(int)(npartials * sizeof(Float)));
       FREE(T0); 
       FREE(T1); 
       FREE(Tn); 

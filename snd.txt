@@ -51,7 +51,6 @@ Contents
              + Customizing Snd's appearance
                   + Colors
                   + Fonts
-                  + Other appearance-related stuff
              + Customizing Snd's behavior
                   + Global variables
                   + Hooks
@@ -62,8 +61,7 @@ Contents
                   + Marks
                   + Mixes
                   + Regions
-                  + Sounds
-                  + Channels
+                  + Sounds and Channels
                   + Edit Lists
                   + Scanning Data
                   + Transforms
@@ -206,7 +204,7 @@ or "-load".
 
   snd oboe.snd -l examp.scm
 
-opens the sound file oboe.snd and loads the Guile/Scheme code in examp.scm.
+opens the sound file oboe.snd and loads the Scheme code in examp.scm.
 
           Each sound file in the argument list can include start
           up information about the size and location of the
@@ -220,30 +218,27 @@ Normally Snd adds each new sound below those currently being displayed. To
 position sounds horizontally (adding on the right), use the "-h" (or
 "-horizontal") flag, or the horizontalPanes resource. (This only works on
 systems with Motif 2.0 or later). Other overall layout choices include the
-Notebook widget (horizontalPanes: 2, -notebook), an outer scroller widget
-(horizontalPanes: 3, or -scroller), and separate windows for each sound
-(-separate). These special choices need to be set either in the resource
-file, or in the invocation line.
+Notebook widget (horizontalPanes: 2, -notebook), and separate windows for
+each sound (-separate). These special choices need to be set either in the
+resource file, or in the invocation line.
 
 A file can be opened from the File menu via Open or View. View opens the
 file read-only, whereas Open will allow it to be changed. The equivalent
-keyboard command is C-x C-f. You can also drag a sound file's icon and drop
-it on top of the Snd icon or the Snd menubar. If a file cannot be written
-(either it was opened read-only or you don't have write permission on it), a
-lock appears next to the file name. Similarly, if Snd notices that the file
-on the disk no longer matches the original, a bomb appears (this can happen
-if some other program writes a sound while you are editing an earlier
-version of it; see also overwrite-check and corruption-time). If the
-variable auto-update is #t (default is #f), Snd automatically updates any
-such file (this is also useful if you're editing the same file in two
-separate panes).
+keyboard command is C-x C-f. If a file cannot be written (either it was
+opened read-only or you don't have write permission on it), a lock appears
+next to the file name. Similarly, if Snd notices that the file on the disk
+no longer matches the original, a bomb appears (this can happen if some
+other program writes a sound while you are editing an earlier version of it;
+see also ask-before-overwrite and corruption-time). If the variable
+auto-update is #t (default is #f), Snd automatically updates any such file
+(this is also useful if you're editing the same file in two separate panes).
 
 In the file selection dialog, there's a button marked 'Sound files only'.
-This can be set by default (see Customization). If it is set, only files
-that appear to be sound files are included in the directory listing.
-Currently Snd uses the file extension to decide whether it is a sound file
--- the initial extensions are snd, wav, aiff, aif, au, aifc, voc, and wve.
-To add an extension to this list, use add-sound-file-extension.
+This can be set by default (see Dialogs). If it is set, only files that
+appear to be sound files are included in the directory listing. Currently
+Snd uses the file extension to decide whether it is a sound file -- the
+initial extensions are "snd", "wav", "aiff", "aif", "au", "aifc", "voc", and
+"wve". To add an extension to this list, use add-sound-file-extension.
 
 Snd can handle the following file and data types:
 
@@ -276,32 +271,32 @@ endian. A 'New' file can get its type and so on from the variables
 default-output-type and friends, or from a dialog that pops up when not
 every decision has been made in advance. A raw data file gets its srate,
 chans, and data format information either from the variables raw-srate and
-friends (if raw-defaults == 1), or from a dialog window that pops up when
-such a file is opened. The files listed as "automatically translated" are
-decoded upon being opened, rewritten in Sun 16-bit format to a new file with
-an added (possibly redundant) extension .snd, and that form is the one the
-editor sees from then on. To read mepg files, see the mpg function in
-examp.scm.
+friends (if use-raw-defaults is #t), or from a dialog window that pops up
+when such a file is opened. The file types listed above as "automatically
+translated" are decoded upon being opened, rewritten in Sun 16-bit format to
+a new file with an added (possibly redundant) extension .snd, and that form
+is the one the editor sees from then on. To read mepg files, see the mpg
+function in examp.scm.
 
 Each file has its own 'pane', a horizontal section of the overall Snd screen
 space; within that section, each channel has a pane, and below the channels
 is the 'control pane', normally hidden except for the file name and
-'minibuffer'. At the very bottom (or far right) of the Snd window is the
-lisp listener, if any (see the View menu "Open listener" option). The panes
-can all be independently raised and lowered by dragging the pane buttons on
-the right. The channel that is currently active (receiving keyboard
-commands) has a thin black border around the display portion. Each channel
-has the four scrollbars setting what portion of the data is displayed; the
-'w' button (normally set) which causes the time domain waveform to be
-displayed; and the 'f' button (normally unset) which includes the frequency
-domain (FFT) display. There is a third display settable by user-provided
-functions; if both the 'w' and 'f' buttons are off and there is no active
-user-display function, you get an empty display. For each sound there is a
-control panel containing the file name, in parentheses if the file is
-actually a link, with an asterisk if there are unsaved edits, a 'minibuffer'
-for various kinds of text-based interactions, a 'sync' button for grouped
-display and edit operations, a 'unite' button (if the sound has more than
-one channel), and a 'play' button to play the current (edited) state of the
+'minibuffer'. At the very bottom of the Snd window is the lisp listener, if
+any (see the View menu "Open listener" option). The panes can all be
+independently raised and lowered by dragging the pane buttons on the right.
+The channel that is currently active (receiving keyboard commands) has a
+thin black border around the display portion. Each channel has the four
+scrollbars setting what portion of the data is displayed; the 'w' button
+(normally set) which causes the time domain waveform to be displayed; and
+the 'f' button (normally unset) which includes the frequency domain (FFT)
+display. There is a third display settable by user-provided functions; if
+both the 'w' and 'f' buttons are off and there is no active user-display
+function, you get an empty display. For each sound there is a control panel
+containing the file name, in parentheses if the file is actually a link,
+with an asterisk if there are unsaved edits, a 'minibuffer' for various
+kinds of simple text-based interactions, a 'sync' button for grouped display
+and edit operations, a 'unite' button (if the sound has more than one
+channel), and a 'play' button to play the current (edited) state of the
 file. Any number of files can be played at the same time. The rest of the
 control panel modifies how the file is played.
 
@@ -345,7 +340,7 @@ To mix files, see "Mix Files". To record a file, see "Record Files".
 
 Finally, to exit Snd cleanly (that is, removing any temporary files, and
 cleaning up some system stuff), use the Exit option. Unsaved edits are
-silently flushed.
+silently flushed (but see the function unsaved-edits? in examp.scm).
 
   ------------------------------------------------------------------------
 
@@ -357,7 +352,7 @@ The Display
     Normalize:        cleanup current Snd display
     Open listener:    show/hide lisp listener
     Channel style:    separate, combined or superimposed channels
-    Graph style:      use dots, lines, or filled polygons in the data displays
+    Graph style:      use dots, lines, filled polygons etc in the data displays
     Verbose cursor:   describe the current sample every time the cursor moves
     Regions:          a browser to examine the region stack
     Files:            a browser of currently and previously loaded files
@@ -372,21 +367,16 @@ The file display can be modified in various ways. To use dots rather than
 connected lines, use the Dots option in the View menu's Graph style option
 (see also set-dot-size). Similarly, to show (or hide) the line Y = 0, use
 the y=0 option. The Region browser is described under Regions. To open the
-control panel, use Show Controls. Similarly, to open or close the lisp
-listener panel, use Open listener. You can also drag the associated pane
-button. When many files are displayed, and the pane buttons have been in
-use, the overall display can become a bit of a mess. To return to a state
-where each file and channel has a 'normal' amount of space, use the
+control panel, use Show Controls. To open or close the lisp listener panel,
+use Open listener. When many files are displayed, and the pane buttons have
+been in use, the overall display can become a bit of a mess. To return to a
+state where each file and channel has a 'normal' amount of space, use the
 Normalize option.
 
 The Color and Orientation options activate windows that set various aspects
-of the sonogram, spectrogram, and wavogram displays. There are eight or nine
+of the sonogram, spectrogram, and wavogram displays. There are fifteen or so
 colormaps available along with ways to invert the maps, and scale (darken)
-them differently according to screen or printer characteristics. And the
-graphs themselves can be rotated and resized. The color variable default
-settings produce good output on the SGI but looks cluttered on some Linuces
--- you may have to play around with the lightness scaler and so on to find
-reasonable values for your system.
+them differently according to screen or printer characteristics.
 
 The Popup menu's Info dialog can be left in view and updated with M-v i to
 reflect the currently active sound. Except for the header comment, the same
@@ -747,12 +737,7 @@ to the selection as a separate entity).
 
 Also if the 'selection' button is set in the transform options dialog, (or
 equivalently, show-selection-transform is #t), the fft display, if any,
-displays the transform of the selected portion. Save-selection is not always
-the same as save-region with the region argument set to 0; a few functions,
-such as reverse-selection, reverse the selected data, but leave the region
-copy alone, so save-selection saves the reversed form, but save-region saves
-the original version. This can be confusing if you use C-x p to play the
-selection; it will actually play the original region, not the reversed form.
+displays the transform of the selected portion.
 
   ------------------------------------------------------------------------
 
@@ -767,10 +752,10 @@ move to that point in the edit list (equivalent to some number of undo's or
 redo's). To move to a given edit point and follow the sync chain (if any),
 use control-click.
 
-If Guile is loaded, the function save-edit-history saves the current edit
-list as a loadable program (assuming the base sounds haven't changed in the
-meantime). The file can be edited (it's just a text file with comments).
-(more to come...)
+The function save-edit-history saves the current edit list as a loadable
+program (assuming the base sounds haven't changed in the meantime). The file
+can be edited (it's just a text file with comments). See Edit Lists for more
+details.
 
   ------------------------------------------------------------------------
 
@@ -836,7 +821,7 @@ button. The associated keyboard commands are:
 Insertion takes place just ahead of the cursor; to insert after the cursor,
 define a command something like:
 
-  (bind-key (char->integer #\i) 0 "(insert-region (1+ (cursor)))")
+  (bind-key (char->integer #\i) 0 (lambda () (insert-region (1+ (cursor)))))
 
 Multi-channel operations
 
@@ -913,7 +898,7 @@ Find
 
 Searches in Snd refer to the sound data, and are, in general, patterned
 after Emacs. When you type C-s or C-r, the minibuffer below the graph is
-activated and you are asked for the search expression. The expression is
+activated and you are asked for the search expression. The expression is a
 Scheme function that takes one argument, the current sample value, and
 returns #t when it finds a match. For example, to look for the next sample
 that is greater than .1, (lambda (y) (> y .1)). The cursor then moves to the
@@ -1006,7 +991,8 @@ control panel. Both C-q and C-x p allow overlapped plays; that is, if you
 type C-q several times in succession, you'll hear several simultaneous
 renditions of the sound. The various 'play' buttons scattered around Snd on
 the other hand, interrupt the current play if you click them during a run.
-C-g stops any current playing.
+C-g stops any current playing. If no numeric argument is supplied, C-x p
+plays the currently active selection; to get region 0 use C-u 0 C-x p.
 
 Mix Files
 
@@ -1195,14 +1181,14 @@ value). In this case, the button is labelled "Triggered Record".
           slider. If the button is on (green), the corresponding
           slider is displayed. Press one of the buttons to toggle
           whether its slider is displayed or hidden. It is also
-          possible to drag the mouse through the box of buttons,
-          setting (button 1) or unsetting (button 2) buttons as
-          you go. Click in the corner (the '/' label) to set all
-          (button 1) or unset all (button 2). Similarly, click
-          above a column or to the left of a row to set (button 1)
-          or unset (button 2) the entire column or row.
-          Control-click in the corner to return to the default
-          settings.
+          (supposed to be) possible to drag the mouse through the
+          box of buttons, setting (button 1) or unsetting (button
+          2) buttons as you go. Click in the corner (the '/'
+          label) to set all (button 1) or unset all (button 2).
+          Similarly, click above a column or to the left of a row
+          to set (button 1) or unset (button 2) the entire column
+          or row. Control-click in the corner to return to the
+          default settings.
 
 Edit or View an Envelope
 
@@ -1266,11 +1252,10 @@ the sound's header. No change is made to the actual sound data; the new
 header is blindly written out; any unsaved edits are ignored. If you specify
 'raw' as the type, any existing header is removed. This dialog is aimed at
 adding or removing an entire header, or editing the header comments;
-anything else is obviously dangerous. If you don't mess with the data
-location, it will be updated to reflect any header changes; that is, unless
-you intervene, the resultant header will be syntactically correct. After
-writing the new header, you should either close or update the associated
-sound.
+anything else is obviously dangerous. If you don't change the data location,
+it will be updated to reflect any header changes; that is, unless you
+intervene, the resultant header will be syntactically correct. After writing
+the new header, you should either close or update the associated sound.
 
 Save state
 
@@ -1288,14 +1273,15 @@ that is not centered on 0 can be a pain to position in the window. Use the
 set-y-bounds function to set the y axis bounds to some small number, then
 use the position scroller to find the signal. For example, if your signal is
 a very soft recording setting only the lowest two bits of a 16 bit signal
-but with DC offset due to the recording conditions, M-x (set-y-axis -.01
+but with DC offset due to the recording conditions, M-x (set-y-bounds -.01
 .01) and try the scroller.
 
 Miscellaneous commands
 
 C-g at any point aborts the current keyboard command sequence, as does any
-mouse click. C-g can also interrupt some long computations (search, eval
-expression, and the various envelope applications).
+mouse click. C-g can also interrupt most long computations (search, eval
+expression, and the various envelope applications). If you notice one that
+is not interruptible, send me a note -- I probably just forgot about it.
 
 C-u introduces a numeric argument. Besides the integer and float cases
 mentioned several times above, you can also use marks to set the argument.
@@ -1321,8 +1307,7 @@ completion function that tries to figure out what the rest of the text
 probably should be. If it finds no matches, the text flashes red; if it
 finds multiple matches and can't extend the current text, it flashes green,
 and (eventually) a list of possible completions appears in the help window.
-If there is no completion routine active, Tab is a no-op (i.e. it doesn't
-activate the "next" widget, as in the normal Motif program).
+If there is no completion routine active, Tab is a no-op.
 
   ------------------------------------------------------------------------
 
@@ -1454,19 +1439,16 @@ between that opens into a text window when activated).
                                    contrast, reverb, and filter.
 
 'Speed' here refers to the rate at which the sound data is consumed during
-playback. Another term might be 'srate'. Snd normally uses linear
-interpolation to perform the speed change (this was necessary on older
-machines that could not hope to perform high quality sampling rate
-conversion in "real-time"); the src-sound function and the envelope editor
-always use sinc interpolation instead (the better method). If you have a
-fast enough machine, set the use-sinc-interp variable to #t. This can make a
-huge difference in sound quality if you're resampling at a much lower rate.
-The arrow button on the right determines the direction we move through the
-data. The scroll bar position is normally interpreted as a float between .05
-and 20. The Options Speed Style menu (or the speed-style variable) can
-change this to use semitones (actually microtones) or just-intonation
-ratios. The number of equal divisions to the octave in the semitone case is
-set by the variable speed-tones (normally 12).
+playback. Another term might be 'srate'. Snd normally uses sinc
+interpolation to perform the speed change, but slow machines may not be able
+to handle the computational burden; in that case, (set-use-sinc-interp #f);
+the fallback method is linear interpolation. The arrow button on the right
+determines the direction we move through the data. The scroll bar position
+is normally interpreted as a float between .05 and 20. The Options Speed
+Style menu (or the speed-style variable) can change this to use semitones
+(actually microtones) or just-intonation ratios. The number of equal
+divisions to the octave in the semitone case is set by the variable
+speed-tones (normally 12).
 
 'Expand' refers to a kind of granular synthesis used to change the tempo of
 events in the sound without changing pitch. Successive short slices of the

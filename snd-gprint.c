@@ -61,7 +61,7 @@ static void file_print_ok_callback(GtkWidget *w,gpointer clientData)
 	  switch (ss->print_choice)
 	    {
 	    case PRINT_SND: snd_print(ss,name,1); break;
-	    case PRINT_ENV: enved_print(ss,name); break;
+	    case PRINT_ENV: enved_print(name); break;
 	    }
 	  err = lpr(name);
 	  remove(name);
@@ -74,7 +74,7 @@ static void file_print_ok_callback(GtkWidget *w,gpointer clientData)
 	  switch (ss->print_choice)
 	    {
 	    case PRINT_SND: snd_print(ss,gtk_entry_get_text(GTK_ENTRY(file_print_name)),1); break;
-	    case PRINT_ENV: enved_print(ss,gtk_entry_get_text(GTK_ENTRY(file_print_name))); break;
+	    case PRINT_ENV: enved_print(gtk_entry_get_text(GTK_ENTRY(file_print_name))); break;
 	    }
 	}
     }

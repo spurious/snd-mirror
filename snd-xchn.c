@@ -1027,9 +1027,9 @@ int calculate_fft(chan_info *cp, void *ptr)
       if (!(chan_fft_in_progress(cp)))
 	{
 	  w = channel_graph(cp);
-	  if (fft_style(ss) == NORMAL_FFT)
+	  if (cp->fft_style == NORMAL_FFT)
 	    {
-	      if (fft_size(ss) >= 65536) start_progress_report(ss,cp->sound,NOT_FROM_ENVED);
+	      if (cp->fft_size >= 65536) start_progress_report(ss,cp->sound,NOT_FROM_ENVED);
 	      set_chan_fft_in_progress(cp,XtAppAddWorkProc(XtWidgetToApplicationContext(w),safe_fft_in_slices,(XtPointer)make_fft_state(cp,1)));
 	    }
 	  else 

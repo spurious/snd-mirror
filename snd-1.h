@@ -197,7 +197,7 @@ typedef struct chan__info {
   Float lin_dB,min_dB,fft_beta;
   int show_y_zero,show_marks,wavo,wavo_hop,wavo_trace,zero_pad,x_axis_style,wavelet_type,verbose_cursor,max_fft_peaks;
   int show_fft_peaks,show_axes,line_size,graph_style,fft_log_frequency,fft_log_magnitude,fft_size,fft_style,fft_window;
-  int dot_size,normalize_fft,transform_type,show_mix_consoles,show_mix_waveforms,spectro_hop;
+  int dot_size,normalize_fft,transform_type,show_mix_consoles,show_mix_waveforms,spectro_hop,graphs_horizontal;
   void *mix_md;
 #if FILE_PER_CHAN
   char *filename;
@@ -265,7 +265,7 @@ typedef struct snd__info {
   int chan_type;
 #endif
   /* moved from global to channel-local 4-Aug-00 */
-  int speed_style,speed_tones,auto_update,ask_before_overwrite;
+  int speed_style,speed_tones;
   Float reverb_decay;
 } snd_info;
 
@@ -311,7 +311,7 @@ typedef struct snd__state {
    *              completed via the table in snd-completion.c
    *              brought out to user in snd-scm.c (and possibly snd-noscm.c)
    */
-  int Show_Fft_Peaks,Show_Y_Zero,Erase_Zeros,Show_Marks,Fft_Log_Frequency,Fft_Log_Magnitude,Channel_Style,Sound_Style,Show_Wave_In_Enved,Show_Axes;
+  int Show_Fft_Peaks,Show_Y_Zero,Show_Marks,Fft_Log_Frequency,Fft_Log_Magnitude,Channel_Style,Sound_Style,Show_Wave_In_Enved,Show_Axes;
   char *Eps_File,*Temp_Dir,*Audio_State_File,*Save_Dir;
   char *Listener_Font,*Help_Text_Font,*Axis_Label_Font,*Axis_Numbers_Font,*Bold_Button_Font,*Button_Font,*Tiny_Font;
   int Verbose_Cursor,Show_Usage_Stats,Trap_Segfault;
@@ -602,8 +602,8 @@ char *info_completer(char *text);
 void ps_set_grf_points(double x, int j, Float ymin, Float ymax);
 void ps_set_grf_point(double x, int j, Float y);
 void ps_allocate_grf_points(void);
-void ps_draw_grf_points(snd_state *ss,chan_info *cp, axis_info *ap, int j, Float y0);
-void ps_draw_both_grf_points(snd_state *ss,chan_info *cp, axis_info *ap, int j);
+void ps_draw_grf_points(chan_info *cp, axis_info *ap, int j, Float y0);
+void ps_draw_both_grf_points(chan_info *cp, axis_info *ap, int j);
 void ps_draw_sono_rectangle(chan_info *cp, axis_info *ap, int color, Float x, Float y, Float width, Float height);
 void ps_reset_color(chan_info *cp);
 void ps_recolor(chan_info *cp);
@@ -758,7 +758,6 @@ int sono_update(chan_info *cp, void *ptr);
 void set_spectro_cutoff_and_redisplay(snd_state *ss,Float val);
 void c_convolve(snd_state *ss, char *fname, Float amp, int filec, int filehdr,int filterc, int filterhdr, int filtersize,
 		 int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, int from_enved, int ip, int total_chans);
-int default_fft_window(snd_state *ss);
 void *make_sonogram_state(chan_info *cp);
 BACKGROUND_TYPE safe_fft_in_slices(void *fftData);
 BACKGROUND_TYPE sonogram_in_slices(void *sono);
@@ -933,7 +932,7 @@ BACKGROUND_TYPE feed_dac(dac_manager *tm);
 void start_playing(void *ptr, int start, int end);
 void play_to_end(void *ptr, int start, int end);
 void start_playing_chan_syncd(chan_info *cp, int start, int background, int pause, int end);
-void play_selection(snd_state *ss);
+void play_selection(void);
 void toggle_dac_pausing(snd_state *ss); /* snd-dac.c */
 int play_in_progress(void);
 int apply_duration(void);
@@ -943,20 +942,22 @@ int run_apply(snd_info *sp, int ofd);
 #if HAVE_GUILE
   void g_init_dac(SCM local_doc);
 #endif
-void dac_set_expand(snd_state *ss, snd_info *sp, Float newval);
-void dac_set_expand_length(snd_state *ss, snd_info *sp, Float newval);
-void dac_set_expand_ramp(snd_state *ss, snd_info *sp, Float newval);
-void dac_set_expand_hop(snd_state *ss, snd_info *sp, Float newval);
-void dac_set_expand_scaler(snd_state *ss, snd_info *sp, Float newval);
-void dac_set_contrast_amp(snd_state *ss, snd_info *sp, Float newval);
-void dac_set_reverb_feedback(snd_state *ss, snd_info *sp, Float newval);
-void dac_set_reverb_lowpass(snd_state *ss, snd_info *sp, Float newval);
+void dac_set_expand(snd_info *sp, Float newval);
+void dac_set_expand_length(snd_info *sp, Float newval);
+void dac_set_expand_ramp(snd_info *sp, Float newval);
+void dac_set_expand_hop(snd_info *sp, Float newval);
+void dac_set_expand_scaler(snd_info *sp, Float newval);
+void dac_set_contrast_amp(snd_info *sp, Float newval);
+void dac_set_reverb_feedback(snd_info *sp, Float newval);
+void dac_set_reverb_lowpass(snd_info *sp, Float newval);
 
 
 
 /* -------- snd-chn.c -------- */
 
 void map_chans_field(snd_state *ss, int field, Float val);
+void in_set_fft_style(snd_state *ss, int val);
+void in_set_fft_window(snd_state *ss, int val);
 void report_in_minibuffer(snd_info *sp, char *message);
 void clear_minibuffer(snd_info *sp);
 void clear_minibuffer_prompt(snd_info *sp);
@@ -1004,7 +1005,7 @@ void f_button_callback(chan_info *cp, int on, int with_control);
 void w_button_callback(chan_info *cp, int on, int with_control);
 void edit_select_callback(chan_info *cp, int ed, int with_control);
 void draw_graph_border(chan_info *cp);
-void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_context *gax, int order, int dBing);
+void display_frequency_response(env *e, axis_info *ap, axis_context *gax, int order, int dBing);
 
 
 
@@ -1056,6 +1057,7 @@ multifile_info *sort_multifile_channels(snd_state *ss, char *filename);
   void g_init_snd(SCM local_doc);
   SCM array_to_list(Float *arr, int i, int len);
 #endif
+void set_speed_style(snd_state *ss, int val);
 
 
 

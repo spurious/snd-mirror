@@ -5,23 +5,7 @@
  */
 
 #include "snd.h"
-
-#ifdef SGI
-  #include <audio.h>
-  #ifdef AL_RESOURCE
-    #define NEW_SGI_AL 1
-    #define OLD_SGI_AL 0
-  #else
-    #define NEW_SGI_AL 0
-    #define OLD_SGI_AL 1
-  #endif
-#else
-  #define NEW_SGI_AL 0
-  #define OLD_SGI_AL 0
-#endif
-
-#define MAX_OUT_CHANS 32
-#define MAX_SOUNDCARDS 8
+#include "snd-rec.h"
 
 typedef struct {
   GtkWidget *meter;
@@ -80,11 +64,6 @@ typedef struct {
 } Wdesc;
 
 static GdkGC *draw_gc,*vu_gc;
-
-#define SMALL_FONT_CUTOFF .85
-#define SMALLER_FONT_CUTOFF .7
-#define SMALL_FONT "6x10"
-#define SMALLER_FONT "5x7"
 
 static char timbuf[TIME_STR_SIZE];
 static char *msgbuf = NULL;
@@ -197,8 +176,6 @@ static void set_label_font(GtkWidget *w)
   gtk_widget_set_style(w,style);
 }
 
-static Float degrees_to_radians(Float x) {return(x * 3.14159265 / 180.0);}
-
 static Float get_audio_gain(Wdesc *wd)
 {
   /* read and set local audio_gains value as well (for snd-clm connection) */
@@ -268,8 +245,6 @@ static void record_report(snd_state *ss, GtkWidget *text, ...)
   va_end(ap);
 }
 
-static int fire_up_recorder(snd_state *ss);
-
 #if OLD_SGI_AL
 static void set_line_source(snd_state *ss, int in_digital)
 {
@@ -294,18 +269,6 @@ static void set_line_source(snd_state *ss, int in_digital)
 }
 #endif
 
-static void set_audio_srate(snd_state *ss, int device, int srate, int system)
-{
-  float g[1];
-  int aud;
-#if (!NEW_SGI_AL)
-  aud = audio_open;
-  if (aud) close_recorder_audio();
-  g[0] = (Float)srate;
-  mus_audio_mixer_write(MUS_AUDIO_PACK_SYSTEM(system) | device,MUS_AUDIO_SRATE,0,g);
-  if (aud) fire_up_recorder(ss);
-#endif
-}
 
 
 /* -------------------------------- ICONS -------------------------------- */
@@ -611,7 +574,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
   /* draw the axis ticks */
   for (i=0;i<5;i++)
     {
-      rdeg = degrees_to_radians(45-i*22.5);
+      rdeg = mus_degrees2radians(45-i*22.5);
       x0 = (int)(CENTER_X*size+120*size*sin(rdeg));
       y0 = (int)(CENTER_Y*size-120*size*cos(rdeg));
       x1 = (int)(CENTER_X*size+130*size*sin(rdeg));
@@ -626,7 +589,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 	{
 	  for (j=1;j<6;j++)
 	    {
-	      rdeg = degrees_to_radians(45-i*22.5-j*(90.0/20.0));
+	      rdeg = mus_degrees2radians(45-i*22.5-j*(90.0/20.0));
 	      x0 = (int)(CENTER_X*size+120*size*sin(rdeg));
 	      y0 = (int)(CENTER_Y*size-120*size*cos(rdeg));
 	      x1 = (int)(CENTER_X*size+126*size*sin(rdeg));
@@ -728,8 +691,8 @@ static void display_vu_meter(VU *vu)
   vu->last_val = val;
   deg = -45.0 + val*90.0;
   /* if (deg < -45.0) deg = -45.0; else if (deg > 45.0) deg = 45.0; */
-  rdeg = degrees_to_radians(deg);
-  nx0 = vu->center_x - (int)((Float)(vu->center_y - vu->light_y) / tan(degrees_to_radians(deg+90)));
+  rdeg = mus_degrees2radians(deg);
+  nx0 = vu->center_x - (int)((Float)(vu->center_y - vu->light_y) / tan(mus_degrees2radians(deg+90)));
   ny0 = vu->light_y;
   nx1 = (int)(vu->center_x + 130*size*sin(rdeg));
   ny1 = (int)(vu->center_y - 130*size*cos(rdeg));
@@ -925,79 +888,6 @@ static GtkWidget *make_message_pane(snd_state *ss)
 
 /* ---------------- FILE INFO PANE ---------------- */
 
-static char *Device_Name(int dev)
-{
-  /* format label at top of pane */
-  switch (dev)
-    {
-    case MUS_AUDIO_DIGITAL_OUT: return(STR_Digital_Out); break;
-    case MUS_AUDIO_LINE_OUT:    return(STR_Line_Out); break;
-    case MUS_AUDIO_DEFAULT: 
-    case MUS_AUDIO_DAC_OUT:     return(STR_Output); break;
-    case MUS_AUDIO_DUPLEX_DEFAULT: 
-    case MUS_AUDIO_SPEAKERS:    return(STR_Speakers); break;
-    case MUS_AUDIO_ADAT_IN:     return(STR_Adat_In); break;
-    case MUS_AUDIO_AES_IN:      return(STR_Aes_In); break;
-#if (HAVE_OSS || HAVE_ALSA)
-    case MUS_AUDIO_LINE_IN:     return(STR_Analog_In); break;
-#else
-    case MUS_AUDIO_LINE_IN:     return(STR_Line_In); break;
-#endif
-    case MUS_AUDIO_MICROPHONE:  return(STR_Microphone); break;
-    case MUS_AUDIO_DIGITAL_IN:  return(STR_Digital_In); break;
-    case MUS_AUDIO_ADAT_OUT:    return(STR_Adat_Out); break;
-    case MUS_AUDIO_AES_OUT:     return(STR_Aes_Out); break;
-    case MUS_AUDIO_DAC_FILTER:  return("Tone"); break;
-    case MUS_AUDIO_MIXER:       return("Mixer"); break;
-    case MUS_AUDIO_AUX_INPUT:   return("Aux Input"); break;
-    case MUS_AUDIO_CD:       return("CD"); break;
-    case MUS_AUDIO_AUX_OUTPUT:  return("Aux Output"); break;
-    case MUS_AUDIO_SPDIF_IN:    return("S/PDIF In"); break;
-    case MUS_AUDIO_SPDIF_OUT:   return("S/PDIF Out"); break;
-    default: snd_error("%s[%d] %s: unknown device: %d",__FILE__,__LINE__,__FUNCTION__,dev); return(STR_Input); break;
-    }
-}
-
-static char sysdevstr[32];
-static char *System_and_Device_Name(int sys, int dev)
-{
-  if (strcmp("OSS",mus_audio_system_name(sys)) == 0) return(Device_Name(dev));
-  sprintf(sysdevstr,"%s: %s",mus_audio_system_name(sys),Device_Name(dev));
-  return(sysdevstr);
-}
-
-static int input_device(int dev)
-{
-  switch (dev)
-    {
-    case MUS_AUDIO_DIGITAL_OUT:
-    case MUS_AUDIO_LINE_OUT:
-    case MUS_AUDIO_DEFAULT:
-    case MUS_AUDIO_ADAT_OUT:
-    case MUS_AUDIO_AES_OUT:
-    case MUS_AUDIO_SPDIF_OUT:
-    case MUS_AUDIO_SPEAKERS:
-    case MUS_AUDIO_MIXER:
-    case MUS_AUDIO_DAC_FILTER:
-    case MUS_AUDIO_DAC_OUT: return(0); break;
-    case MUS_AUDIO_DUPLEX_DEFAULT: 
-    case MUS_AUDIO_ADAT_IN: 
-    case MUS_AUDIO_AES_IN:
-    case MUS_AUDIO_SPDIF_IN:
-    case MUS_AUDIO_LINE_IN: 
-    case MUS_AUDIO_MICROPHONE: 
-    case MUS_AUDIO_DIGITAL_IN: 
-    case MUS_AUDIO_CD:
-    default: return(1); break;
-    }
-  snd_error("%s[%d] %s: uncategorized device: %d",__FILE__,__LINE__,__FUNCTION__,dev);
-  return(0);
-}
-
-static int output_device(int dev)
-{
-  return((dev != MUS_AUDIO_DAC_FILTER) && (dev != MUS_AUDIO_MIXER) && (!(input_device(dev))));
-}
 
 
 static void Help_Record_Callback(GtkWidget *w,gpointer clientData) 
@@ -1067,7 +957,7 @@ static void device_button_callback(GtkWidget *w,gpointer clientData)
     }
 #endif
 #if NEW_SGI_AL || defined(SUN)
-  output = (!(input_device(p->device)));
+  output = (!(recorder_input_device(p->device)));
   if (!output)
     {
       if (on)
@@ -1096,7 +986,7 @@ static void device_button_callback(GtkWidget *w,gpointer clientData)
 	  record_fd[0] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(0) | p->device,
 					  recorder_srate(ss),input_channels[0],recorder_in_format(ss),recorder_buffer_size(ss));
 	  if (record_fd[0] == -1)
-	    record_report(ss,messages,Device_Name(p->device),": ",mus_audio_error_name(mus_audio_error()),NULL);
+	    record_report(ss,messages,recorder_device_name(p->device),": ",mus_audio_error_name(mus_audio_error()),NULL);
 	  else
 	    {
 	      audio_open = 1;
@@ -1160,7 +1050,7 @@ static void Srate_Changed_Callback(GtkWidget *w,gpointer clientData)
       if ((n>0) && (n != recorder_srate(ss)))
 	{
 	  in_set_recorder_srate(ss,n);
-	  set_audio_srate(ss,MUS_AUDIO_DEFAULT,recorder_srate(ss),0);
+	  recorder_set_audio_srate(ss,MUS_AUDIO_DEFAULT,recorder_srate(ss),0,audio_open);
 	}
       FREE(str);
     }
@@ -1304,9 +1194,9 @@ static void make_file_info_pane(snd_state *ss, GtkWidget *file_pane, int *ordere
 
   for (i=0;i<ndevs;i++)
     {
-      if ((systems == 1) || (!(input_device(ordered_devices[i]))))
-	name = Device_Name(ordered_devices[i]);
-      else name = System_and_Device_Name(ordered_systems[i],ordered_devices[i]);
+      if ((systems == 1) || (!(recorder_input_device(ordered_devices[i]))))
+	name = recorder_device_name(ordered_devices[i]);
+      else name = recorder_system_and_device_name(ordered_systems[i],ordered_devices[i]);
       device_buttons[i] = gtk_check_button_new_with_label(name);
       gtk_box_pack_start(GTK_BOX(button_holder),device_buttons[i],TRUE,TRUE,0);
       gtk_widget_show(device_buttons[i]);
@@ -1471,7 +1361,7 @@ static void Meter_Button_Callback(GtkWidget *w,gpointer clientData)
   display_vu_meter(vu);
   val = (vu->on_off == VU_ON);
   p->active[wd->chan] = val;
-  if (output_device(p->device))
+  if (recorder_output_device(p->device))
     {
       rec_out_active[wd->chan] = val;
       str = copy_string(gtk_entry_get_text(GTK_ENTRY(recdat->chans_text))); 
@@ -1792,7 +1682,7 @@ static PANE *make_pane(snd_state *ss, GtkWidget *paned_window, int device, int s
 #endif
   p->ss = ss;
   vu_meters = device_channels(MUS_AUDIO_PACK_SYSTEM(system) | device);
-  input = (input_device(device));
+  input = (recorder_input_device(device));
   num_audio_gains = device_gains(MUS_AUDIO_PACK_SYSTEM(system) | device);
 #if (HAVE_OSS || HAVE_ALSA)
   last_device = -1;
@@ -1967,7 +1857,7 @@ static PANE *make_pane(snd_state *ss, GtkWidget *paned_window, int device, int s
   gtk_widget_show(btab);
 
   if ((systems == 1) || (!input))
-    button_label = gtk_label_new(Device_Name(device));
+    button_label = gtk_label_new(recorder_device_name(device));
   else button_label = gtk_label_new(mus_audio_system_name(system));
   gtk_box_pack_start(GTK_BOX(btab),button_label,FALSE,FALSE,0);
   gtk_widget_show(button_label);
@@ -2662,7 +2552,7 @@ static int in_chans_active(void)
   for (k=0;k<all_panes_size;k++)
     {
       p = all_panes[k];
-      if ((p) && (input_device(p->device)))
+      if ((p) && (recorder_input_device(p->device)))
 	{
 	  for (i=0;i<p->active_size;i++) {if (p->active[i]) val++;}
 	}
@@ -2678,7 +2568,7 @@ static int out_chans_active(void)
   for (k=0;k<all_panes_size;k++)
     {
       p = all_panes[k];
-      if ((p) && (!(input_device(p->device))))
+      if ((p) && (!(recorder_input_device(p->device))))
 	{
 	  for (i=0;i<p->active_size;i++) {if (p->active[i]) val++;}
 	}
@@ -2741,7 +2631,7 @@ static void Record_Button_Callback(GtkWidget *w,gpointer clientData)
 	  if (rs != old_srate) 
 	    {
 	      in_set_recorder_srate(ss,rs);
-	      set_audio_srate(ss,MUS_AUDIO_DEFAULT,recorder_srate(ss),0);
+	      recorder_set_audio_srate(ss,MUS_AUDIO_DEFAULT,recorder_srate(ss),0,audio_open);
 	    }
 
 	  if (recorder_out_chans(ss) <= 0)
@@ -2885,11 +2775,11 @@ void snd_record_file(snd_state *ss)
 	  for (i=0;i<cur_devices;i++) 
 	    {
 	      device = (int)(audval[i+1]);
-	      if (input_device(device))
+	      if (recorder_input_device(device))
 		input_devices++;
 	      else 
 		{
-		  if ((system == 0) && (output_device(device)))
+		  if ((system == 0) && (recorder_output_device(device)))
 		    output_devices++;
 		}
 	      audio_gains_size += device_gains(MUS_AUDIO_PACK_SYSTEM(system) | device);
@@ -2926,7 +2816,7 @@ void snd_record_file(snd_state *ss)
 	      if ((err=mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system)|device,MUS_AUDIO_DIRECTION,0,&direction))==0 &&
 		  (int)direction == 1)
 #else
-	      if (input_device(device))
+	      if (recorder_input_device(device))
 #endif
 		{
 		  n = device_channels(MUS_AUDIO_PACK_SYSTEM(system) | device);
@@ -3219,7 +3109,7 @@ static void initialize_recorder(snd_state *ss)
     {
       if (device_buttons[i])
 	{
-	  if ((i != microphone_button) && (input_device(all_panes[i]->device)))
+	  if ((i != microphone_button) && (recorder_input_device(all_panes[i]->device)))
 	    {
 	      set_toggle_button(device_buttons[i],FALSE,TRUE,(void *)(all_panes[i])); 
 	    }
@@ -3236,7 +3126,7 @@ static void initialize_recorder(snd_state *ss)
 
 #if HAVE_ALSA
 
-static int fire_up_recorder(snd_state *ss)
+int fire_up_recorder(snd_state *ss)
 {
   int i, j;
   PANE *p;
@@ -3416,7 +3306,7 @@ static int fire_up_recorder(snd_state *ss)
 
 #else /* not ALSA */
 
-static int fire_up_recorder(snd_state *ss)
+int fire_up_recorder(snd_state *ss)
 {
   int i;
 #if NEW_SGI_AL
@@ -3495,7 +3385,7 @@ static int fire_up_recorder(snd_state *ss)
     for (i=0;i<all_panes_size;i++)
       {
 	p = all_panes[i];
-	if (input_device(p->device))
+	if (recorder_input_device(p->device))
 	  {
 	    for (j=p->in_chan_loc,n=0;n<p->in_chans;n++,j++) 
 	      {

@@ -791,7 +791,7 @@ static void View_CurFiles_Select_Callback(GtkWidget *w,gpointer clientData)
   if (sp != osp)
     {
       select_channel(sp,0);
-      normalize_sound(ss,sp,osp,sp->chans[0]);
+      normalize_sound(ss,sp,sp->chans[0]);
       /* goto_graph(sp->chans[0]); */
     }
 }

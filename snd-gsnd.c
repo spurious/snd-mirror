@@ -1,7 +1,6 @@
 /* TODO: 
  *       slider trough color?
  *       if controls close, drag main sash should keep it closed
- *       speed_tones not tied into speed calc
  */
 
 #include "snd.h"
@@ -577,34 +576,19 @@ static void amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data
 
 static char srate_number_buffer[5]={'1',STR_decimal,'0','0','\0'};
 
-static void set_snd_srate_1(snd_info *sp, Float val, int setadj)
+void set_snd_srate(snd_info *sp, Float amp)
 {
   Float scrollval;
-  char *sfs;
   GtkObject *adj;
-  sp->srate = val;
-  if (val > 0.0)
-    scrollval = .45 + .15 * log(val);
+  sp->srate = amp;
+  if (amp > 0.0)
+    scrollval = .45 + .15 * log(amp);
   else scrollval = 0.0;
-  sfs=prettyf(sp->srate,2);
-  fill_number(sfs,srate_number_buffer);
+  sprintf(srate_number_buffer,"%.3f",amp);
   gtk_label_set_text(GTK_LABEL(w_snd_srate_number(sp)),srate_number_buffer);
-  FREE(sfs);
-  if (setadj)
-    {
-      adj = w_srate_adj(sp);
-      GTK_ADJUSTMENT(adj)->value = scrollval;
-      gtk_adjustment_value_changed(GTK_ADJUSTMENT(adj));
-    }
-
-}
-
-void set_snd_srate(snd_info *sp, Float amp) {set_snd_srate_1(sp,amp,TRUE);}
-
-static Float get_snd_srate(Float scrollval)
-{
-  return(exp((scrollval - .45)/.15));
-  /* return(srate_changed(exp((Float)(ival-450)/150.0),srcbuf,style,tones)); */
+  adj = w_srate_adj(sp);
+  GTK_ADJUSTMENT(adj)->value = scrollval;
+  gtk_adjustment_value_changed(GTK_ADJUSTMENT(adj));
 }
 
 static void srate_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -619,7 +603,14 @@ static void srate_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data
 
 static void srate_changed_callback(GtkAdjustment *adj, gpointer data)
 {
-  set_snd_srate_1((snd_info *)data,get_snd_srate((Float)(adj->value)),FALSE);
+  Float scrollval,val;
+  snd_info *sp = (snd_info *)data;
+  val = srate_changed(exp((GTK_ADJUSTMENT(adj)->value-.45)/.15),srate_number_buffer,sp->speed_style,sp->speed_tones);
+  sp->srate = val;
+  if (val > 0.0)
+    scrollval = .45 + .15 * log(val);
+  else scrollval = 0.0;
+  gtk_label_set_text(GTK_LABEL(w_snd_srate_number(sp)),srate_number_buffer);
 }
 
 static void srate_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -668,7 +659,7 @@ static void set_snd_expand_1(snd_info *sp, Float expand, int setadj)
   char *sfs;
   GtkObject *adj;
   sp->expand = expand;
-  if (sp->playing) dac_set_expand(sp->state, sp, sp->expand);
+  if (sp->playing) dac_set_expand(sp, sp->expand);
   if (expand < .1)
     scrollval = expand * 1.03;
   else scrollval = .45 + .15 * log(expand);
@@ -1817,7 +1808,7 @@ void set_apply_button(snd_info *sp, int val)
   gtk_widget_set_sensitive(w_snd_apply(sp),val);
 }
 
-void normalize_sound(snd_state *ss, snd_info *sp, snd_info *osp, chan_info *ncp)
+void normalize_sound(snd_state *ss, snd_info *sp, chan_info *ncp)
 {
   return;
 }

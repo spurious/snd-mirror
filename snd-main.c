@@ -67,9 +67,9 @@ static char *show_axes2string(int ax)
 }
 
 #if HAVE_GUILE
-static char *zoom_focus_style_name(snd_state *ss)
+static char *zoom_focus_style_name(int choice)
 {
-  switch (zoom_focus_style(ss))
+  switch (choice)
     {
     case FOCUS_LEFT: return(S_focus_left); break;
     case FOCUS_RIGHT: return(S_focus_right); break;
@@ -78,9 +78,9 @@ static char *zoom_focus_style_name(snd_state *ss)
     }
 }
 
-static char *normalize_fft_name(snd_state *ss)
+static char *normalize_fft_name(int choice)
 {
-  switch (normalize_fft(ss))
+  switch (choice)
     {
     case DONT_NORMALIZE: return(S_dont_normalize); break;
     case NORMALIZE_BY_CHANNEL:return(S_normalize_by_channel); break;
@@ -90,9 +90,9 @@ static char *normalize_fft_name(snd_state *ss)
     }
 }
 
-static char *graph_style_name(snd_state *ss)
+static char *graph_style_name(int choice)
 {
-  switch (graph_style(ss))
+  switch (choice)
     {
     case GRAPH_DOTS: return(S_graph_dots); break;
     case GRAPH_DOTS_AND_LINES: return(S_graph_dots_and_lines); break;
@@ -100,6 +100,56 @@ static char *graph_style_name(snd_state *ss)
     case GRAPH_FILLED: return(S_graph_filled); break;
     case GRAPH_LINES: 
     default: return(S_graph_lines); break;
+    }
+}
+
+static char *fft_style_name(int choice)
+{
+  switch (choice)
+    {
+    case SONOGRAM: return(S_sonogram); break;
+    case SPECTROGRAM: return(S_spectrogram); break;
+    default: return(S_normal_fft); break;
+    }
+}
+
+static char *x_axis_style_name(int choice)
+{
+  switch(choice)
+    {
+    case X_IN_SAMPLES: return(S_x_in_samples); break;
+    case X_TO_ONE: return(S_x_to_one); break;
+    default: return(S_x_in_seconds); break;
+    }
+}
+
+static char *speed_style_name(int choice)
+{
+  switch (choice)
+    {
+    case SPEED_AS_RATIO: return(S_speed_as_ratio); break;
+    case SPEED_AS_SEMITONE: return(S_speed_as_semitone); break;
+    default: return(S_speed_as_float); break;
+    }
+}
+
+static char *channel_style_name(int choice)
+{
+  switch (choice)
+    {
+    case CHANNELS_COMBINED: return(S_channels_combined); break;
+    case CHANNELS_SUPERIMPOSED: return(S_channels_superimposed); break;
+    default: return(S_channels_separate); break;
+    }
+}
+
+static char *enved_target_name(int choice)
+{
+  switch (choice)
+    {
+    case SPECTRUM_ENV: return(S_spectrum_env); break;
+    case SRATE_ENV: return(S_srate_env); break;
+    default: return(S_amplitude_env); break;
     }
 }
 
@@ -131,29 +181,19 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
 
   if (fft_size(ss) != DEFAULT_FFT_SIZE) fprintf(fd,"(%s %d)\n",S_set_fft_size,fft_size(ss));
 #if HAVE_GUILE
-  if (fft_window(ss) != default_fft_window(NULL)) 
-    fprintf(fd,"(%s %s)\n",S_set_fft_window,mus_fft_window_name(fft_window(ss)));
-  if (fft_style(ss) != NORMAL_FFT) 
-    fprintf(fd,"(%s %s)\n",S_set_fft_style,(fft_style(ss) == SONOGRAM) ? S_sonogram : S_spectrogram);
-  if (x_axis_style(ss) != DEFAULT_AXIS_STYLE) 
-    fprintf(fd,"(%s %s)\n",S_set_x_axis_style,(x_axis_style(ss) == X_IN_SAMPLES) ? S_x_in_samples : S_x_to_one);
-  if (graph_style(ss) != DEFAULT_GRAPH_STYLE) 
-    fprintf(fd,"(%s %s)\n",S_set_graph_style,graph_style_name(ss));
-  if (speed_style(ss) != DEFAULT_SPEED_STYLE) 
-    fprintf(fd,"(%s %s)\n",S_set_speed_style,(speed_style(ss) == SPEED_AS_RATIO) ? S_speed_as_ratio : S_speed_as_semitone);
-  if (channel_style(ss) != DEFAULT_CHANNEL_STYLE) 
-    fprintf(fd,"(%s %s)\n",S_set_channel_style,(channel_style(ss) == CHANNELS_SUPERIMPOSED) ? S_channels_superimposed : S_channels_combined);
-  if (enved_target(ss) != DEFAULT_ENVED_TARGET) 
-    fprintf(fd,"(%s %s)\n",S_set_enved_target,(enved_target(ss) == SPECTRUM_ENV) ? S_spectrum_env : S_srate_env);
-  if (transform_type(ss) != FOURIER) 
-    fprintf(fd,"(%s %s)\n",S_set_transform_type,transform_type_name(ss));
-  if (zoom_focus_style(ss) != FOCUS_ACTIVE) 
-    fprintf(fd,"(%s %s)\n",S_set_zoom_focus_style,zoom_focus_style_name(ss));
-  if (normalize_fft(ss) != DEFAULT_NORMALIZE_FFT) 
-    fprintf(fd,"(%s %s)\n",S_set_normalize_fft,normalize_fft_name(ss));
+  if (fft_window(ss) != DEFAULT_FFT_WINDOW) fprintf(fd,"(%s %s)\n",S_set_fft_window,mus_fft_window_name(fft_window(ss)));
+  if (fft_style(ss) != DEFAULT_FFT_STYLE) fprintf(fd,"(%s %s)\n",S_set_fft_style,fft_style_name(fft_style(ss)));
+  if (x_axis_style(ss) != DEFAULT_AXIS_STYLE) fprintf(fd,"(%s %s)\n",S_set_x_axis_style,x_axis_style_name(x_axis_style(ss)));
+  if (graph_style(ss) != DEFAULT_GRAPH_STYLE) fprintf(fd,"(%s %s)\n",S_set_graph_style,graph_style_name(graph_style(ss)));
+  if (speed_style(ss) != DEFAULT_SPEED_STYLE) fprintf(fd,"(%s %s)\n",S_set_speed_style,speed_style_name(speed_style(ss)));
+  if (channel_style(ss) != DEFAULT_CHANNEL_STYLE) fprintf(fd,"(%s %s)\n",S_set_channel_style,channel_style_name(channel_style(ss)));
+  if (enved_target(ss) != DEFAULT_ENVED_TARGET) fprintf(fd,"(%s %s)\n",S_set_enved_target,enved_target_name(enved_target(ss)));
+  if (transform_type(ss) != DEFAULT_TRANSFORM_TYPE) fprintf(fd,"(%s %s)\n",S_set_transform_type,transform_type_name(transform_type(ss)));
+  if (zoom_focus_style(ss) != FOCUS_ACTIVE) fprintf(fd,"(%s %s)\n",S_set_zoom_focus_style,zoom_focus_style_name(zoom_focus_style(ss)));
+  if (normalize_fft(ss) != DEFAULT_NORMALIZE_FFT) fprintf(fd,"(%s %s)\n",S_set_normalize_fft,normalize_fft_name(normalize_fft(ss)));
 #else
-  if (fft_window(ss) != default_fft_window(NULL)) fprintf(fd,"(%s %d)\n",S_set_fft_window,fft_window(ss));
-  if (fft_style(ss) != NORMAL_FFT) fprintf(fd,"(%s %d)\n",S_set_fft_style,fft_style(ss));
+  if (fft_window(ss) != DEFAULT_FFT_WINDOW) fprintf(fd,"(%s %d)\n",S_set_fft_window,fft_window(ss));
+  if (fft_style(ss) != DEFAULT_FFT_STYLE) fprintf(fd,"(%s %d)\n",S_set_fft_style,fft_style(ss));
   if (x_axis_style(ss) != DEFAULT_AXIS_STYLE) fprintf(fd,"(%s %d)\n",S_set_x_axis_style,x_axis_style(ss));
   if (graph_style(ss) != DEFAULT_GRAPH_STYLE) fprintf(fd,"(%s %d)\n",S_set_graph_style,graph_style(ss));
   if (speed_style(ss) != DEFAULT_SPEED_STYLE) fprintf(fd,"(%s %d)\n",S_set_speed_style,speed_style(ss));
@@ -342,6 +382,12 @@ static int save_sound_state (snd_info *sp, void *ptr)
   if (sp->expand_hop != DEFAULT_EXPAND_HOP) fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_expand_hop,sp->expand_hop);
   if (sp->expand_length != DEFAULT_EXPAND_LENGTH) fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_expand_length,sp->expand_length);
   if (sp->srate != DEFAULT_SPEED) fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_speed,sp->srate);
+  if (sp->speed_tones != DEFAULT_SPEED_TONES) fprintf(fd,"%s(%s %d sfile)\n",white_space,S_set_speed_tones,sp->speed_tones);
+#if HAVE_GUILE
+  if (sp->speed_style != DEFAULT_SPEED_STYLE) fprintf(fd,"%s(%s %s sfile)\n",white_space,S_set_speed_style,speed_style_name(sp->speed_style));
+#else
+  if (sp->speed_style != DEFAULT_SPEED_STYLE) fprintf(fd,"%s(%s %d sfile)\n",white_space,S_set_speed_style,sp->speed_style);
+#endif
   if (sp->reverbing != DEFAULT_REVERBING) fprintf(fd,"%s(%s %s sfile)\n",white_space,S_set_reverbing,b2s(sp->reverbing));
   if (sp->revscl != DEFAULT_REVERB_SCALE) fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_reverb_scale,sp->revscl);
   if (sp->revlen != DEFAULT_REVERB_LENGTH) fprintf(fd,"%s(%s %.4f sfile)\n",white_space,S_set_reverb_length,sp->revlen);
@@ -395,6 +441,25 @@ static int save_sound_state (snd_info *sp, void *ptr)
       if (fneq(cp->spectro_start,DEFAULT_SPECTRO_START)) fprintf(fd,"%s(%s %.4f sfile %d)\n",white_space,S_set_spectro_start,cp->spectro_start,chan);
       if (fneq(cp->fft_beta,DEFAULT_FFT_BETA)) fprintf(fd,"%s(%s %.4f sfile %d)\n",white_space,S_set_fft_beta,cp->fft_beta,chan);
       if (cp->spectro_hop != DEFAULT_SPECTRO_HOP) fprintf(fd,"%s(%s %d sfile %d)\n",white_space,S_set_spectro_hop,cp->spectro_hop,chan);
+      if (cp->fft_size != DEFAULT_FFT_SIZE) fprintf(fd,"%s(%s %d sfile %d)\n",white_space,S_set_fft_size,cp->fft_size,chan);
+#if HAVE_GUILE
+      if (cp->fft_style != DEFAULT_FFT_STYLE) fprintf(fd,"%s(%s %s sfile %d)\n",white_space,S_set_fft_style,fft_style_name(cp->fft_style),chan);
+      if (cp->fft_window != DEFAULT_FFT_WINDOW) fprintf(fd,"%s(%s %s sfile %d)\n",white_space,S_set_fft_window,mus_fft_window_name(cp->fft_window),chan);
+      if (cp->transform_type != DEFAULT_TRANSFORM_TYPE) fprintf(fd,"%s(%s %s sfile %d)\n",white_space,S_set_transform_type,transform_type_name(cp->transform_type),chan);
+      if (cp->normalize_fft != DEFAULT_NORMALIZE_FFT) fprintf(fd,"%s(%s %s sfile %d)\n",white_space,S_set_normalize_fft,normalize_fft_name(cp->normalize_fft),chan);
+      if (cp->graph_style != DEFAULT_GRAPH_STYLE) fprintf(fd,"%s(%s %s sfile %d)\n",white_space,S_set_graph_style,graph_style_name(cp->graph_style),chan);
+#else
+      if (cp->fft_style != DEFAULT_FFT_STYLE) fprintf(fd,"%s(%s %d sfile %d)\n",white_space,S_set_fft_style,cp->fft_style,chan);
+      if (cp->fft_window != DEFAULT_FFT_WINDOW) fprintf(fd,"%s(%s %d sfile %d)\n",white_space,S_set_fft_window,cp->fft_window,chan);
+      if (cp->transform_type != DEFAULT_TRANSFORM_TYPE) fprintf(fd,"%s(%s %d sfile %d)\n",white_space,S_set_transform_type,cp->transform_type,chan);
+      if (cp->normalize_fft != DEFAULT_NORMALIZE_FFT) fprintf(fd,"%s(%s %d sfile %d)\n",white_space,S_set_normalize_fft,cp->normalize_fft,chan);
+      if (cp->graph_style != DEFAULT_GRAPH_STYLE) fprintf(fd,"%s(%s %d sfile %d)\n",white_space,S_set_graph_style,cp->graph_style,chan);
+#endif
+      if (cp->show_mix_consoles != DEFAULT_SHOW_MIX_CONSOLES) fprintf(fd,"%s(%s %s sfile %d)\n",white_space,S_set_show_mix_consoles,b2s(cp->show_mix_consoles),chan);
+      if (cp->show_mix_waveforms != DEFAULT_SHOW_MIX_WAVEFORMS) fprintf(fd,"%s(%s %s sfile %d)\n",white_space,S_set_show_mix_waveforms,b2s(cp->show_mix_waveforms),chan);
+      if (cp->dot_size != DEFAULT_DOT_SIZE) fprintf(fd,"%s(%s %d sfile %d)\n",white_space,S_set_dot_size,cp->dot_size,chan);
+      if (cp->show_axes != DEFAULT_SHOW_AXES) fprintf(fd,"%s(%s %d sfile %d)\n",white_space,S_set_show_axes,cp->show_axes,chan);
+      if (cp->graphs_horizontal != DEFAULT_GRAPHS_HORIZONTAL) fprintf(fd,"(%s %s sfile %d)\n",S_set_graphs_horizontal,b2s(cp->graphs_horizontal),chan);
       if (cp->edit_ctr > 0) edit_history_to_file(fd,cp);
     }
   fprintf(fd,"      )))\n");

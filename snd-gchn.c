@@ -713,9 +713,9 @@ int calculate_fft(chan_info *cp, void *ptr)
       ss = cp->state;
       if (!(chan_fft_in_progress(cp)))
 	{
-	  if (fft_style(ss) == NORMAL_FFT)
+	  if (cp->fft_style == NORMAL_FFT)
 	    {
-	      if (fft_size(ss) >= 65536) start_progress_report(ss,cp->sound,NOT_FROM_ENVED);
+	      if (cp->fft_size >= 65536) start_progress_report(ss,cp->sound,NOT_FROM_ENVED);
 	      set_chan_fft_in_progress(cp,gtk_idle_add(safe_fft_in_slices,(gpointer)make_fft_state(cp,1)));
 	    }
 	  else 

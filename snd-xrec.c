@@ -1,4 +1,6 @@
 /* TODO: split out stuff that is not widget-dependent into snd-rec.c
+ *         see snd-rec.h/c -- next step is to put all the non-GUI globals in a struct,
+ *           then pass a pointer to that.
  *         (there's a trap here -- record_report has different args in g/x)
  *       re-merge with snd-grec.c
  *       multiple inputs in new sgi al on properly equipped machines (how do Indys behave in this case?)
@@ -15,29 +17,11 @@
  */
 
 #include "snd.h"
+#include "snd-rec.h"
 
 #if HAVE_XPM
   #include <X11/xpm.h>
 #endif
-
-
-#ifdef SGI
-  #include <audio.h>
-  #ifdef AL_RESOURCE
-    #define NEW_SGI_AL 1
-    #define OLD_SGI_AL 0
-  #else
-    #define NEW_SGI_AL 0
-    #define OLD_SGI_AL 1
-  #endif
-#else
-  #define NEW_SGI_AL 0
-  #define OLD_SGI_AL 0
-#endif
-
-
-#define MAX_OUT_CHANS 32
-#define MAX_SOUNDCARDS 8
 
 typedef struct {
   Widget meter;
@@ -92,12 +76,6 @@ typedef struct {
   Widget wg;
 } Wdesc;
 
-
-
-#define SMALL_FONT_CUTOFF .85
-#define SMALLER_FONT_CUTOFF .7
-#define SMALL_FONT "6x10"
-#define SMALLER_FONT "5x7"
 
 static char timbuf[TIME_STR_SIZE];
 static char *msgbuf = NULL;
@@ -286,8 +264,6 @@ static void record_report(Widget text, ...)
   va_end(ap);
 }
 
-static int fire_up_recorder(snd_state *ss);
-
 #if OLD_SGI_AL
 static void set_line_source(snd_state *ss, int in_digital)
 {
@@ -312,28 +288,6 @@ static void set_line_source(snd_state *ss, int in_digital)
 }
 #endif
 
-static void set_audio_srate(snd_state *ss, int device, int srate, int system)
-{
-  float g[1];
-  int aud;
-#if (!NEW_SGI_AL)
-  aud = audio_open;
-  if (aud) close_recorder_audio();
-  g[0] = (Float)srate;
-  mus_audio_mixer_write(MUS_AUDIO_PACK_SYSTEM(system) | device,MUS_AUDIO_SRATE,0,g);
-  if (aud) fire_up_recorder(ss);
-#endif
-}
-
-#if 0
-static int full_duplex(int system)
-{
-  float val[1];
-  mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_DUPLEX_DEFAULT,MUS_AUDIO_CHANNEL,0,val);
-  return((int)(val[0]));
-}
-#endif
-
 #if HAVE_XPM
 static void attach_error(char *msg)
 {
@@ -353,8 +307,6 @@ static void attach_error(char *msg)
 
 /* -------------------------------- ROTATE TEXT -------------------------------- */
 /* rotate and scale text */
-
-static Float degrees_to_radians(Float x) {return(x * 3.14159265 / 180.0);}
 
 static GC draw_gc,vu_gc;
 
@@ -381,7 +333,7 @@ static Pixmap transform_text (Widget w, char *str, XFontStruct *font, Float angl
   int i,j;
   if (str == NULL) return(0);
   /* set up transformation matrix */
-  angle_in_radians = degrees_to_radians(angle_in_degrees);
+  angle_in_radians = mus_degrees2radians(angle_in_degrees);
   matrix[0] = cos(angle_in_radians) * xscl;
   matrix[1] = sin(angle_in_radians) * xscl;
   matrix[2] = -sin(angle_in_radians) * yscl;
@@ -892,7 +844,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
   /* draw the axis ticks */
   for (i=0;i<5;i++)
     {
-      rdeg = degrees_to_radians(45-i*22.5);
+      rdeg = mus_degrees2radians(45-i*22.5);
       x0 = (int)(CENTER_X*size+120*size*sin(rdeg));
       y0 = (int)(CENTER_Y*size-120*size*cos(rdeg));
       x1 = (int)(CENTER_X*size+130*size*sin(rdeg));
@@ -907,7 +859,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 	{
 	  for (j=1;j<6;j++)
 	    {
-	      rdeg = degrees_to_radians(45-i*22.5-j*(90.0/20.0));
+	      rdeg = mus_degrees2radians(45-i*22.5-j*(90.0/20.0));
 	      x0 = (int)(CENTER_X*size+120*size*sin(rdeg));
 	      y0 = (int)(CENTER_Y*size-120*size*cos(rdeg));
 	      x1 = (int)(CENTER_X*size+126*size*sin(rdeg));
@@ -1010,8 +962,8 @@ static void display_vu_meter(VU *vu)
   vu->last_val = val;
   deg = -45.0 + val*90.0;
   /* if (deg < -45.0) deg = -45.0; else if (deg > 45.0) deg = 45.0; */
-  rdeg = degrees_to_radians(deg);
-  nx0 = vu->center_x - (int)((Float)(vu->center_y - vu->light_y) / tan(degrees_to_radians(deg+90)));
+  rdeg = mus_degrees2radians(deg);
+  nx0 = vu->center_x - (int)((Float)(vu->center_y - vu->light_y) / tan(mus_degrees2radians(deg+90)));
   ny0 = vu->light_y;
   nx1 = (int)(vu->center_x + 130*size*sin(rdeg));
   ny1 = (int)(vu->center_y - 130*size*cos(rdeg));
@@ -1237,82 +1189,6 @@ static Widget make_message_pane(snd_state *ss, Widget message_pane)
 
 /* ---------------- FILE INFO PANE ---------------- */
 
-static char *Device_Name(int dev)
-{
-  /* format label at top of pane */
-  switch (dev)
-    {
-    case MUS_AUDIO_DIGITAL_OUT: return(STR_Digital_Out); break;
-    case MUS_AUDIO_LINE_OUT:    return(STR_Line_Out); break;
-    case MUS_AUDIO_DEFAULT: 
-    case MUS_AUDIO_DAC_OUT:     return(STR_Output); break; /* default here means that linuxppc reports "Output" as analog-in pane name */
-    case MUS_AUDIO_DUPLEX_DEFAULT: 
-    case MUS_AUDIO_SPEAKERS:    return(STR_Speakers); break;
-    case MUS_AUDIO_ADAT_IN:     return(STR_Adat_In); break;
-    case MUS_AUDIO_AES_IN:      return(STR_Aes_In); break;
-#if (HAVE_OSS || HAVE_ALSA)
-    case MUS_AUDIO_LINE_IN:     return(STR_Analog_In); break;
-#else
-    case MUS_AUDIO_LINE_IN:     return(STR_Line_In); break;
-#endif
-    case MUS_AUDIO_MICROPHONE:  return(STR_Microphone); break;
-    case MUS_AUDIO_DIGITAL_IN:  return(STR_Digital_In); break;
-    case MUS_AUDIO_ADAT_OUT:    return(STR_Adat_Out); break;
-    case MUS_AUDIO_AES_OUT:     return(STR_Aes_Out); break;
-    case MUS_AUDIO_DAC_FILTER:  return("Tone"); break;
-    case MUS_AUDIO_MIXER:       return("Mixer"); break;
-    case MUS_AUDIO_AUX_INPUT:   return("Aux Input"); break;
-    case MUS_AUDIO_CD:          return("CD"); break;
-    case MUS_AUDIO_AUX_OUTPUT:  return("Aux Output"); break;
-    case MUS_AUDIO_SPDIF_IN:    return("S/PDIF In"); break;
-    case MUS_AUDIO_SPDIF_OUT:   return("S/PDIF Out"); break;
-    default: snd_error("%s[%d] %s: unknown device: %d",__FILE__,__LINE__,__FUNCTION__,dev); return(STR_Input); break;
-    }
-}
-
-static char sysdevstr[32];
-static char *System_and_Device_Name(int sys, int dev)
-{
-  if (strcmp("OSS",mus_audio_system_name(sys)) == 0) return(Device_Name(dev));
-  sprintf(sysdevstr,"%s: %s",mus_audio_system_name(sys),Device_Name(dev));
-  return(sysdevstr);
-}
-
-static int input_device(int dev)
-{
-  switch (dev)
-    {
-    case MUS_AUDIO_DIGITAL_OUT:
-    case MUS_AUDIO_LINE_OUT:
-    case MUS_AUDIO_DEFAULT:
-    case MUS_AUDIO_ADAT_OUT:
-    case MUS_AUDIO_AES_OUT:
-    case MUS_AUDIO_SPDIF_OUT:
-    case MUS_AUDIO_SPEAKERS:
-    case MUS_AUDIO_MIXER:
-    case MUS_AUDIO_DAC_FILTER:
-    case MUS_AUDIO_AUX_OUTPUT:
-    case MUS_AUDIO_DAC_OUT: return(0); break;
-    case MUS_AUDIO_DUPLEX_DEFAULT: 
-    case MUS_AUDIO_ADAT_IN: 
-    case MUS_AUDIO_AES_IN:
-    case MUS_AUDIO_SPDIF_IN:
-    case MUS_AUDIO_LINE_IN: 
-    case MUS_AUDIO_MICROPHONE: 
-    case MUS_AUDIO_DIGITAL_IN: 
-    case MUS_AUDIO_CD:
-    default: return(1); break;
-    }
-  snd_error("%s[%d] %s: uncategorized device: %d",__FILE__,__LINE__,__FUNCTION__,dev);
-  return(0);
-}
-
-static int output_device(int dev)
-{
-  return((dev != MUS_AUDIO_DAC_FILTER) && (dev != MUS_AUDIO_MIXER) && (!(input_device(dev))));
-}
-
-
 static void file_label_help_callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
   snd_state *ss = (snd_state *)clientData;
@@ -1478,7 +1354,7 @@ static void device_button_callback(Widget w,XtPointer clientData,XtPointer callD
     }
 #endif
 #if NEW_SGI_AL || defined(SUN)
-  output = (!(input_device(p->device)));
+  output = (!(recorder_input_device(p->device)));
   if (!output)
     {
       if (on)
@@ -1510,7 +1386,7 @@ static void device_button_callback(Widget w,XtPointer clientData,XtPointer callD
 	  record_fd[0] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(0) | p->device,
 					  recorder_srate(ss),input_channels[0],recorder_in_format(ss),recorder_buffer_size(ss));
 	  if (record_fd[0] == -1)
-	    record_report(messages,Device_Name(p->device),": ",mus_audio_error_name(mus_audio_error()),NULL);
+	    record_report(messages,recorder_device_name(p->device),": ",mus_audio_error_name(mus_audio_error()),NULL);
 	  else
 	    {
 	      audio_open = 1;
@@ -1590,7 +1466,7 @@ static void Srate_Changed_Callback(Widget w,XtPointer clientData,XtPointer callD
       if ((n>0) && (n != recorder_srate(ss)))
 	{
 	  in_set_recorder_srate(ss,n);
-	  set_audio_srate(ss,MUS_AUDIO_DEFAULT,recorder_srate(ss),0);
+	  recorder_set_audio_srate(ss,MUS_AUDIO_DEFAULT,recorder_srate(ss),0,audio_open);
 	}
       XtFree(str);
     }
@@ -1881,13 +1757,13 @@ static int make_file_info_pane(snd_state *ss, Widget file_pane, int *ordered_dev
       else {XtSetArg(args[n],XmNindicatorType,XmN_OF_MANY); n++;}
 #endif
 #if NEW_SGI_AL || defined(SUN)
-      if (input_device(ordered_devices[i]))
+      if (recorder_input_device(ordered_devices[i]))
 	{XtSetArg(args[n],XmNindicatorType,XmONE_OF_MANY); n++;}
       else {XtSetArg(args[n],XmNindicatorType,XmN_OF_MANY); n++;}
 #endif
-      if ((systems == 1) || (!(input_device(ordered_devices[i]))))
-	name = Device_Name(ordered_devices[i]);
-      else name = System_and_Device_Name(ordered_systems[i],ordered_devices[i]);
+      if ((systems == 1) || (!(recorder_input_device(ordered_devices[i]))))
+	name = recorder_device_name(ordered_devices[i]);
+      else name = recorder_system_and_device_name(ordered_systems[i],ordered_devices[i]);
       device_buttons[i] = sndCreateToggleButtonWidget(name,button_holder,args,n);
       XtAddCallback(device_buttons[i],XmNhelpCallback,button_holder_help_callback,ss);
       XtAddCallback(device_buttons[i],XmNvalueChangedCallback,device_button_callback,(XtPointer)all_panes[i]);
@@ -1949,43 +1825,16 @@ void unlock_recording_audio(void)
 /* -------------------------------- DEVICE PANE -------------------------------- */
 
 
-static char *device_name(PANE *p)
-{
-  /* informal aw shucks reference in help window */
-  switch (p->device)
-    {
-    case MUS_AUDIO_DIGITAL_OUT:
-    case MUS_AUDIO_LINE_OUT:
-    case MUS_AUDIO_DEFAULT:
-    case MUS_AUDIO_DAC_OUT:
-    case MUS_AUDIO_DUPLEX_DEFAULT: return("the output");                break;
-    case MUS_AUDIO_SPEAKERS:   return("the speakers");                  break;
-    case MUS_AUDIO_ADAT_OUT: 
-    case MUS_AUDIO_ADAT_IN:    return("the Adat");                      break;
-    case MUS_AUDIO_AES_OUT: 
-    case MUS_AUDIO_AES_IN:     return("the Aes");                       break;
-    case MUS_AUDIO_SPDIF_IN:
-    case MUS_AUDIO_SPDIF_OUT:  return("the S/PDIF");                    break;
-    case MUS_AUDIO_LINE_IN:    return("line in");                       break;
-    case MUS_AUDIO_MICROPHONE: return("the microphone");                break;
-    case MUS_AUDIO_DIGITAL_IN: return("digital in");                    break;
-    case MUS_AUDIO_DAC_FILTER: return("the analog tone control");       break;
-    case MUS_AUDIO_MIXER:      return("various analog volume controls");break;
-    case MUS_AUDIO_CD:         return("the internal CD");               break;
-    default:                   return("the input");                     break;
-    }
-}
-
 #if (!(HAVE_OSS || HAVE_ALSA))
 static char *channel_function(PANE *p)
 {
-  if (input_device(p->device)) return("gain"); else return("volume");
+  if (recorder_input_device(p->device)) return("gain"); else return("volume");
 }
 
 static char funbuf[16];
 static char *device_function(PANE *p)
 {
-  sprintf(funbuf,"%s %s",Device_Name(p->device),channel_function(p));
+  sprintf(funbuf,"%s %s",recorder_device_name(p->device),channel_function(p));
   return(funbuf);
 }
 #endif
@@ -2038,7 +1887,7 @@ static void VU_Max_Help_Callback(Widget w,XtPointer clientData,XtPointer callDat
 	   "Max Amp Indicator",
 	    "This number indicates the max amp encountered\n\
 since the last reset in ",
-	    device_name(wd->p),"'s",
+	    pane_device_name(wd->p->device),"'s",
 	    " channel ",
 	    channel_name(wd->p,wd->chan),
 	    ".\n\
@@ -2052,7 +1901,7 @@ static void VU_On_Help_Callback(Widget w,XtPointer clientData,XtPointer callData
   ssnd_help(wd->ss,
 	    "On/Off Button",
 	    "This button causes ",
-	    device_name(wd->p),"'s",
+	    pane_device_name(wd->p->device),"'s",
 	    " channel ",
 	    channel_name(wd->p,wd->chan),
 	    " to be included\n\
@@ -2060,73 +1909,6 @@ in or removed from the recording. The button\n\
 is red when the signal is active.\n",
 	    NULL);
 }
-
-#if (HAVE_OSS || HAVE_ALSA)
-static char *field_abbreviation(int fld)
-{
-  switch (fld)
-    {
-    case MUS_AUDIO_IMIX:   return("imx"); break;
-    case MUS_AUDIO_IGAIN:  return("ign"); break;
-    case MUS_AUDIO_RECLEV: return("rec"); break;
-    case MUS_AUDIO_PCM:    return("pcm"); break;
-    case MUS_AUDIO_PCM2:   return("pc2"); break;
-    case MUS_AUDIO_OGAIN:  return("ogn"); break;
-    case MUS_AUDIO_LINE:   return("lin"); break;
-    case MUS_AUDIO_MICROPHONE:    return("mic"); break;
-    case MUS_AUDIO_LINE1:  return("l1");  break;
-    case MUS_AUDIO_LINE2:  return("l2");  break;
-    case MUS_AUDIO_LINE3:  return("l3");  break;
-    case MUS_AUDIO_SYNTH:  return("syn"); break;
-    case MUS_AUDIO_BASS:   return("ton"); break;
-    case MUS_AUDIO_TREBLE: return("ton"); break;
-    case MUS_AUDIO_CD:     return("cd"); break;
-    }
-  return("oops");
-}
-
-static char *field_name(int fld)
-{
-  switch (fld)
-    {
-    case MUS_AUDIO_IMIX:   return("imix"); break;
-    case MUS_AUDIO_IGAIN:  return("igain"); break;
-    case MUS_AUDIO_RECLEV: return("reclev"); break;
-    case MUS_AUDIO_PCM:    return("pcm"); break;
-    case MUS_AUDIO_PCM2:   return("pcm2"); break;
-    case MUS_AUDIO_OGAIN:  return("ogain"); break;
-    case MUS_AUDIO_LINE:   return("line-in"); break;
-    case MUS_AUDIO_MICROPHONE:    return("mic"); break;
-    case MUS_AUDIO_LINE1:  return("line1"); break;
-    case MUS_AUDIO_LINE2:  return("line2"); break; 
-    case MUS_AUDIO_LINE3:  return("line3"); break;
-    case MUS_AUDIO_SYNTH:  return("synth"); break;
-    case MUS_AUDIO_CD:     return("cd"); break;
-    default: return("?"); break;
-    }
-}
-
-static char *field_function(int fld)
-{
-  switch (fld)
-    {
-    case MUS_AUDIO_IMIX:   return("the pre-adc mix of mic and line-in"); break;
-    case MUS_AUDIO_IGAIN:  return("input gain"); break;
-    case MUS_AUDIO_RECLEV: return("recording level"); break;
-    case MUS_AUDIO_PCM:    return("the speaker level, perhaps"); break;
-    case MUS_AUDIO_PCM2:   return("nothing in particular"); break;
-    case MUS_AUDIO_OGAIN:  return("output gain"); break;
-    case MUS_AUDIO_LINE:   return("analog line-in"); break;
-    case MUS_AUDIO_MICROPHONE:    return("the microphone"); break;
-    case MUS_AUDIO_LINE1:  
-    case MUS_AUDIO_LINE2:  
-    case MUS_AUDIO_LINE3:  return("extra line inputs"); break;
-    case MUS_AUDIO_SYNTH:  return("the on-card synthesizer, if any"); break;
-    case MUS_AUDIO_CD:     return("the cd gain"); break;
-    default: return("?"); break;
-    }
-}
-#endif
 
 static void volume_help_callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
@@ -2178,9 +1960,9 @@ line-in channel ",
 particular slider claims to control channel ",
 			  channel_name(wd->p,channel),
 			  "'s\n",
-			  field_name(field),
+			  recorder_field_name(field),
 " field, which I believe has something to do with\n",
-			  field_function(field),
+			  recorder_field_function(field),
 			  ".\n",
 			  NULL);
 	    }
@@ -2194,9 +1976,9 @@ particular slider claims to control channel ",
 	    " of channel ",
 	    channel_name(wd->p,wd->chan),
 	    " of ",
-	    device_name(wd->p),
+	    pane_device_name(wd->p->device),
 	    "\n",
-	    (input_device(((PANE *)(wd->p))->device)) ? "This scales the in-coming signal before it\n\
+	    (recorder_input_device(((PANE *)(wd->p))->device)) ? "This scales the in-coming signal before it\n\
 is reflected in the meters or the audio data.\n" : "",
 	    NULL);
 #endif
@@ -2212,12 +1994,12 @@ static void amp_slider_help_Callback(Widget w,XtPointer clientData,XtPointer cal
   ssnd_help(wd->ss,
 	    "Volume Slider",
 	    "This slider scales ",
-	    (input_device(((PANE *)(wd->p))->device)) ? "the contribution of " : "",
-	    device_name(wd->p),"'s\n",
+	    (recorder_input_device(((PANE *)(wd->p))->device)) ? "the contribution of " : "",
+	    pane_device_name(wd->p->device),"'s\n",
 	    "channel ",
 	    channel_name(wd->p,a->in),
-	    (input_device(((PANE *)(wd->p))->device)) ? " to the output file's channel " : ".",
-	    (input_device(((PANE *)(wd->p))->device)) ? (out_channel_name(wd->ss,a->out)) : "",
+	    (recorder_input_device(((PANE *)(wd->p))->device)) ? " to the output file's channel " : ".",
+	    (recorder_input_device(((PANE *)(wd->p))->device)) ? (out_channel_name(wd->ss,a->out)) : "",
 	    NULL);
 }
 
@@ -2227,7 +2009,7 @@ static void Meter_Help_Callback(Widget w,XtPointer clientData,XtPointer callData
   ssnd_help(wd->ss,
 	    "VU Meter",
 	    "This meter shows the current volume of ",
-	    device_name(wd->p),"'s",
+	    pane_device_name(wd->p->device),"'s",
 	    " channel ",
 	    channel_name(wd->p,wd->chan),
 	    ".\n\
@@ -2274,7 +2056,7 @@ static void Meter_Button_Callback(Widget w,XtPointer clientData,XtPointer callDa
   display_vu_meter(vu);
   val = (vu->on_off == VU_ON);
   p->active[wd->chan] = val;
-  if (output_device(p->device))
+  if (recorder_output_device(p->device))
     {
       rec_out_active[wd->chan] = val;
       str = XmTextGetString(recdat->chans_text); 
@@ -2772,7 +2554,7 @@ static PANE *make_pane(snd_state *ss, Widget paned_window, int device, int syste
 #endif
   p->ss = ss;
   vu_meters = device_channels(MUS_AUDIO_PACK_SYSTEM(system) | device);
-  input = (input_device(device));
+  input = (recorder_input_device(device));
   num_audio_gains = device_gains(MUS_AUDIO_PACK_SYSTEM(system) | device);
 #if (HAVE_OSS || HAVE_ALSA)
   if (num_audio_gains == 0)
@@ -3126,7 +2908,7 @@ static PANE *make_pane(snd_state *ss, Widget paned_window, int device, int syste
 		{
 		  if ((!input) && (this_device == MUS_AUDIO_DAC_FILTER))
 		    slabel = XmStringCreate("ton","small_font");
-		  else slabel = XmStringCreate(field_abbreviation(this_device),"small_font");
+		  else slabel = XmStringCreate(recorder_field_abbreviation(this_device),"small_font");
 		  XtSetArg(args[n],XmNlabelString,slabel); n++;
 		}
 	      XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
@@ -3216,7 +2998,7 @@ static PANE *make_pane(snd_state *ss, Widget paned_window, int device, int syste
   XtSetArg(args[n],XmNrightWidget,p->button_vertical_sep); n++;
   if (meter_size<SMALL_FONT_CUTOFF) {XtSetArg(args[n],XM_FONT_RESOURCE,small_fontlist); n++;}
   if ((systems == 1) || (!input))
-    button_label = XtCreateManagedWidget(Device_Name(device),xmLabelWidgetClass,p->pane,args,n);
+    button_label = XtCreateManagedWidget(recorder_device_name(device),xmLabelWidgetClass,p->pane,args,n);
   else 
     {
       button1_label = XtCreateManagedWidget(mus_audio_system_name(system),xmLabelWidgetClass,p->pane,args,n);
@@ -3231,7 +3013,7 @@ static PANE *make_pane(snd_state *ss, Widget paned_window, int device, int syste
       XtSetArg(args[n],XmNrightAttachment,XmATTACH_WIDGET); n++;
       XtSetArg(args[n],XmNrightWidget,p->button_vertical_sep); n++;
       if (meter_size<SMALL_FONT_CUTOFF) {XtSetArg(args[n],XM_FONT_RESOURCE,small_fontlist); n++;}
-      button_label = XtCreateManagedWidget(Device_Name(device),xmLabelWidgetClass,p->pane,args,n);
+      button_label = XtCreateManagedWidget(recorder_device_name(device),xmLabelWidgetClass,p->pane,args,n);
     }
   
   /* all the buttons and labels except the top device name are contained in a separate box (form widget) */
@@ -3906,7 +3688,7 @@ static int in_chans_active(void)
   for (k=0;k<all_panes_size;k++)
     {
       p = all_panes[k];
-      if ((p) && (input_device(p->device)))
+      if ((p) && (recorder_input_device(p->device)))
 	{
 	  for (i=0;i<p->active_size;i++) {if (p->active[i]) val++;}
 	}
@@ -3922,7 +3704,7 @@ static int out_chans_active(void)
   for (k=0;k<all_panes_size;k++)
     {
       p = all_panes[k];
-      if ((p) && (!(input_device(p->device))))
+      if ((p) && (!(recorder_input_device(p->device))))
 	{
 	  for (i=0;i<p->active_size;i++) {if (p->active[i]) val++;}
 	}
@@ -3992,7 +3774,7 @@ static void Record_Button_Callback(Widget w,XtPointer clientData,XtPointer callD
 	  if (rs != old_srate) 
 	    {
 	      in_set_recorder_srate(ss,rs);
-	      set_audio_srate(ss,MUS_AUDIO_DEFAULT,recorder_srate(ss),0);
+	      recorder_set_audio_srate(ss,MUS_AUDIO_DEFAULT,recorder_srate(ss),0,audio_open);
 	    }
 	  if (recorder_out_chans(ss) <= 0)
 	    {
@@ -4137,11 +3919,11 @@ void snd_record_file(snd_state *ss)
 	  for (i=0;i<cur_devices;i++) 
 	    {
 	      device = (int)(audval[i+1]);
-	      if (input_device(device))
+	      if (recorder_input_device(device))
 		input_devices++;
 	      else 
 		{
-		  if ((system == 0) && (output_device(device)))
+		  if ((system == 0) && (recorder_output_device(device)))
 		    output_devices++;
 		}
 	      audio_gains_size += device_gains(MUS_AUDIO_PACK_SYSTEM(system) | device);
@@ -4179,10 +3961,10 @@ void snd_record_file(snd_state *ss)
 		   (int)direction == 1) 
 		  ||
 		  (mus_audio_api() == OSS_API &&
-		   input_device(device)))
+		   recorder_input_device(device)))
 #else
 	      device = (int)audval[i+1];
-	      if (input_device(device))
+	      if (recorder_input_device(device))
 #endif
 		{
 		  n = device_channels(MUS_AUDIO_PACK_SYSTEM(system) | device);
@@ -4570,7 +4352,7 @@ static void initialize_recorder(snd_state *ss)
     {
       if (device_buttons[i])
 	{
-	  if ((i != microphone_button) && (input_device(all_panes[i]->device)))
+	  if ((i != microphone_button) && (recorder_input_device(all_panes[i]->device)))
 	    {
 	      XmToggleButtonSetState(device_buttons[i],FALSE,TRUE); 
 	    }
@@ -4587,7 +4369,7 @@ static void initialize_recorder(snd_state *ss)
 
 #if (HAVE_ALSA || HAVE_OSS)
 
-static int fire_up_recorder(snd_state *ss)
+int fire_up_recorder(snd_state *ss)
 {
   int i, j;
   PANE *p;
@@ -4837,7 +4619,7 @@ static int fire_up_recorder(snd_state *ss)
 
 #else /* not ALSA or OSS */
 
-static int fire_up_recorder(snd_state *ss)
+int fire_up_recorder(snd_state *ss)
 {
   int i;
 #if NEW_SGI_AL
@@ -4916,7 +4698,7 @@ static int fire_up_recorder(snd_state *ss)
     for (i=0;i<all_panes_size;i++)
       {
 	p = all_panes[i];
-	if (input_device(p->device))
+	if (recorder_input_device(p->device))
 	  {
 	    for (j=p->in_chan_loc,n=0;n<p->in_chans;n++,j++) 
 	      {

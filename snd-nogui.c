@@ -13,13 +13,13 @@ void draw_arc(axis_context *ax, int x, int y, int size) {}
 void set_grf_points(int xi, int j, int ymin, int ymax) {}
 void set_grf_point(int xi, int j, int yi) {}
 void allocate_grf_points(void) {}
-void draw_grf_points(snd_state *ss, axis_context *ax, int j, axis_info *ap, Float y0) {}
-void draw_both_grf_points(snd_state *ss, axis_context *ax, int j, axis_info *ap) {}
+void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Float y0) {}
+void draw_both_grf_points(chan_info *cp, axis_context *ax, int j) {}
 void draw_both_grfs(axis_context *ax, int j) {}
 void mix_save_graph(snd_state *ss, mix_context *ms,int j) {}
 void erase_rectangle (chan_info *cp, axis_context *ax,int x0, int y0, int width, int height) {}
-void erase_and_draw_grf_points(snd_state *ss,mix_context *ms,chan_info *cp, int j) {}
-void erase_and_draw_both_grf_points(snd_state *ss,mix_context *ms,chan_info *cp, int j) {}
+void erase_and_draw_grf_points(mix_context *ms,chan_info *cp, int j) {}
+void erase_and_draw_both_grf_points(mix_context *ms,chan_info *cp, int j) {}
 void make_axes(chan_info *cp, axis_info *ap, int x_style) {}
 void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1) {}
 void allocate_color_map(snd_state *ss, int colormap) {}
@@ -130,7 +130,7 @@ void set_region_protect(int reg, int protect) {}
 int region_dialog_is_active(void) {return(0);}
 void allocate_region_rows(snd_state *ss, int n) {}
 void set_play_in_progress (snd_state *ss, dac_manager *dac_m) {}
-axis_context *free_axis_context(axis_context *ax) {}
+axis_context *free_axis_context(axis_context *ax) {return(NULL);}
 int set_help_text_font(snd_state *ss, char *font) {return(0);}
 int set_tiny_font(snd_state *ss, char *font) {return(0);}
 int set_listener_font(snd_state *ss, char *font) {return(0);}
@@ -169,7 +169,7 @@ int widget_x(int w) {return(0);}
 int widget_y(int w) {return(0);}
 void set_widget_x(int w, int x) {}
 void set_widget_y(int w, int y) {}
-axis_context *fixup_axis_context(axis_context *ax, int w, int gc) {}
+axis_context *fixup_axis_context(axis_context *ax, int w, int gc) {return(NULL);}
 int channel_w(chan_info *cp) {return(0);}
 int channel_f(chan_info *cp) {return(0);}
 int channel_graph(chan_info *cp) {return(0);}
@@ -194,13 +194,13 @@ void set_bold_peak_numbers_font(chan_info *cp) {}
 void set_tiny_numbers_font(chan_info *cp) {}
 unsigned long get_foreground_color(chan_info *cp, axis_context *ax) {}
 void set_foreground_color(chan_info *cp, axis_context *ax, int color) {}
-axis_context *copy_context (chan_info *cp) {}
-axis_context *erase_context (chan_info *cp) {}
-axis_context *selection_context (chan_info *cp) {}
-axis_context *cursor_context (chan_info *cp) {}
-axis_context *mark_context (chan_info *cp) {}
-axis_context *mix_waveform_context (chan_info *cp) {}
-axis_context *combined_context (chan_info *cp) {}
+axis_context *copy_context (chan_info *cp) {return(NULL);}
+axis_context *erase_context (chan_info *cp) {return(NULL);}
+axis_context *selection_context (chan_info *cp) {return(NULL);}
+axis_context *cursor_context (chan_info *cp) {return(NULL);}
+axis_context *mark_context (chan_info *cp) {return(NULL);}
+axis_context *mix_waveform_context (chan_info *cp) {return(NULL);}
+axis_context *combined_context (chan_info *cp) {return(NULL);}
 void stop_amp_env(chan_info *cp) {}
 void start_amp_env(chan_info *cp) {}
 void chan_info_cleanup(chan_info *cp) {}
@@ -239,7 +239,7 @@ void snd_file_bomb_icon(snd_info *sp, int on) {}
 void x_bomb(snd_info *sp, int on) {}
 void set_sound_pane_file_label(snd_info *sp, char *str) {}
 void unlock_ctrls(snd_info *sp) {}
-void normalize_sound(snd_state *ss, snd_info *sp, snd_info *osp, chan_info *ncp) {}
+void normalize_sound(snd_state *ss, snd_info *sp, chan_info *ncp) {}
 void reflect_amp_env_completion(snd_info *sp) {}
 void normalize_all_sounds(snd_state *ss) {}
 void sound_show_ctrls(snd_info *sp) {}
@@ -265,8 +265,8 @@ void set_file_browser_play_button(char *name, int state) {}
 void highlight_selected_sound(snd_state *ss) {}
 void start_file_dialog(snd_state *ss, int width, int height) {}
 int file_dialog_is_active(void) {return(0);}
-file_info *get_raw_file_info(char *filename, snd_state *ss) {}
-file_info *get_reasonable_file_info(char *filename, snd_state *ss, file_info *hdr) {}
+file_info *get_raw_file_info(char *filename, snd_state *ss) {return(NULL);}
+file_info *get_reasonable_file_info(char *filename, snd_state *ss, file_info *hdr) {return(NULL);}
 void edit_header(snd_info *sp) {}
 void enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax, int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax) {}
 void display_enved_env_with_selection(snd_state *ss, env *e, char *name, int x0, int y0, int width, int height, int dots) {}
@@ -321,6 +321,8 @@ void set_recorder_trigger(snd_state *ss,Float val) {}
 void set_recorder_max_duration(snd_state *ss,Float val) {}
 int record_dialog_is_active(void) {return(0);}
 void set_recorder_srate(snd_state *ss, int val) {}
+int fire_up_recorder(snd_state *ss) {return(0);}
+void close_recorder_audio(void) {}
 char *ps_rgb(snd_state *ss, int pchan) {return(NULL);}
 #if HAVE_GUILE
 void g_initialize_xgh(snd_state *ss, SCM local_doc) {}
@@ -331,7 +333,7 @@ void update_stats(snd_state *ss) {}
 void update_stats_display(snd_state *ss, int all) {}
 void check_stats_window(snd_state *ss, int val) {}
 void get_current_color(int colormap, int j, int *r, int *g, int *b) {}
-char *transform_type_name(snd_state *ss) {return(NULL);}
+char *transform_type_name(int choice) {return(NULL);}
 int add_transform_to_list(char *name) {return(0);}
 void set_filter_text(snd_info *sp, char *str) {}
 int max_transform_type(void) {return(19);}

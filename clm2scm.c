@@ -4719,38 +4719,7 @@ void init_mus2scm_module(void)
 
   DEFINE_PROC(gh_new_procedure(S_mus_mix,SCM_FNC g_mus_mix,2,5,0),H_mus_mix);
 
-  /* this next code implements (setf (mus-frequency gen) val) constructs */
-  /* it is from the guile mailing list, written by Maciej Stachowiak <mstachow@mit.edu> */
-  /*   original used 'setter property, but that collides with goops */
-  gh_eval_str("(defmacro setf (place value) (if (pair? place) `((clm-setter ,(car place)) ,@(cdr place) ,value) `(set! place value)))\n\
-               (define (clm-setter proc) (procedure-property proc 'clm-setter))\n\
-               (set-procedure-property! clm-setter 'clm-setter (lambda (proc clm-setter) (set-procedure-property! proc 'clm-setter clm-setter)))\n\
-\n\
-               (setf (clm-setter " S_mus_phase ") " S_mus_set_phase ")\n\
-               (setf (clm-setter " S_mus_data ") " S_mus_set_data ")\n\
-               (setf (clm-setter " S_mus_length ") " S_mus_set_length ")\n\
-               (setf (clm-setter " S_mus_frequency ") " S_mus_set_frequency ")\n\
-               (setf (clm-setter " S_mus_scaler ") " S_mus_set_scaler ")\n\
-               (setf (clm-setter " S_mus_a0 ") " S_mus_set_a0 ")\n\
-               (setf (clm-setter " S_mus_a1 ") " S_mus_set_a1 ")\n\
-               (setf (clm-setter " S_mus_a2 ") " S_mus_set_a2 ")\n\
-               (setf (clm-setter " S_mus_b1 ") " S_mus_set_b1 ")\n\
-               (setf (clm-setter " S_mus_b2 ") " S_mus_set_b2 ")\n\
-               (setf (clm-setter " S_mus_formant_radius ") " S_mus_set_formant_radius ")\n\
-               (setf (clm-setter " S_mus_feedback ") " S_mus_set_feedback ")\n\
-               (setf (clm-setter " S_mus_feedforward ") " S_mus_set_feedforward ")\n\
-               (setf (clm-setter " S_mus_location ") " S_mus_set_location ")\n\
-               (setf (clm-setter " S_mus_increment ") " S_mus_set_increment ")\n\
-               (setf (clm-setter " S_mus_ramp ") " S_mus_set_ramp ")\n\
-               (setf (clm-setter " S_mus_hop ") " S_mus_set_hop ")\n\
-               (setf (clm-setter " S_frame_ref ") " S_frame_set ")\n\
-               (setf (clm-setter " S_mixer_ref ") " S_mixer_set ")\n\
-               (setf (clm-setter " S_locsig_ref ") " S_locsig_set ")\n\
-               (setf (clm-setter " S_locsig_reverb_ref ") " S_locsig_reverb_set ")\n\
-\n\
-");
   scm_add_feature("clm");
-
 }
 
 

@@ -5,6 +5,7 @@
 <!-- 
 	EM.red {color:red; font-style:normal}
         EM.error {color:chocolate; font-style:normal}
+        EM.narg {color:chocolate; font-style:italic}
         EM.targ {color:darkgreen; font-style:italic}
         EM.typing {color:maroon; font-style: normal}
         EM.listener {color:darkblue; font-style: normal}
@@ -28,7 +29,6 @@
     <ul>
     <li><a href="#colors">Colors</a>
     <li><a href="#fonts">Fonts</a>
-    <li><a href="#otherappearance">Other appearance-related stuff</a>
     </ul>
   <li><a href="#behavior">Customizing Snd's behavior</a>
     <ul>
@@ -200,7 +200,7 @@ are:</p>
   <a name="cursorcolor">cursor-color</a>          red             cursor color.
   <a name="datacolor">data-color</a>            black           color of data in unselected graph.	
   enved-waveform-color  blue            color of waveform displayed in envelope editor.
-  filter-waveform-color blue            color of control panel filter waveform.
+  <a name="filterwaveformcolor">filter-waveform-color</a> blue    color of control panel filter waveform.
   <a name="graphcolor">graph-color</a>           white           background color of unselected graph.
   <a name="highlightcolor">highlight-color</a>       ivory1          highlighting color.
   listener-color        aliceblue       background color of lisp listener.
@@ -271,21 +271,6 @@ The font variables are:
 </pre>
 <hr>
 
-<h4><a name="otherappearance">Other appearance-related stuff</a></h4>
-
-<p>Some of the channel graph related entities are in a state of
-flux; I'm changing them from being globals that affected every
-graph to being local to a given graph.  
-Currently the global variables are:
-<pre>
-  <a name="graphcursor">graph-cursor</a>          XC_crosshair (34) cursor displayed following mouse in graph
-<small>
-        The X cursors are declared in /usr/X11R6/include/X11/cursorfont.h or some such file.
-</small>
-  <a name="graphshorizontal">graphs-horizontal</a>     #t      determines whether graphs are arranged vertically or horizontally.
-</pre>
-
-<hr>
 
 <h3><a name="behavior">Customizing Snd's behavior</a></h3>
 
@@ -325,9 +310,14 @@ when you save a sound via the "save" dialog.</p>
 <p>The main variables affecting Snd's overall behavior are:</p>
 
 <pre>
+  <a name="askbeforeoverwrite">ask-before-overwrite</a>  #f      (Save-as): ask before <a href="snd.html#overwrite">overwriting</a> an existing file
+  <a name="autoupdate">auto-update</a>           #f      should Snd <a href="snd.html#updatefile">update</a> a file automatically.
   <a name="audiooutputdevice">audio-output-device</a>   <i>sndlib-default-device</i> Audio output device (for the play button)
   <a name="audiostatefile">audio-state-file</a>      ".snd-mixer"  Name of file in which current audio hardware settings are saved.
   <a name="autoresize">auto-resize</a>           #t      should Snd window resize upon open/close (see <a href="grfsnd.html#xautoresize">AutoResize</a>)
+  <a name="channelstyle">channel-style</a>         <i>channels-separate</i>
+                                The default state of the '<a href="snd.html#unitebutton">unite</a>' button in multi-channel files.  
+                                  Other values are <i>channels-combined</i> and <i>channels-superimposed</i>.  
   <a name="corruptiontime">corruption-time</a>       60      Time (seconds) between background checks for changed file on disk 
                                   (see <a href="#autoupdate">auto-update</a>). If less than 0.0, background process is turned off.
   <a name="dacfolding">dac-folding</a>           #t      channels folded upon dac output if not enough dac channels are available.
@@ -346,8 +336,16 @@ when you save a sound via the "save" dialog.</p>
                                   or a save dialog is opened. -1 means use the current sound's type.
   <a name="epsfile">eps-file</a>              "snd.eps"  Name of the Postscript file produced by the <a href="snd.html#printfile">File Print</a> option.
                                 See also the <a href="grfsnd.html#epsresource">epsFile</a> resource.
-  <a name="fitdataonopen">fit-data-on-open</a>     #f       If #t, the initial time-domain display of a sound shows
+  <a name="fitdataonopen">fit-data-on-open</a>      #f      If #t, the initial time-domain display of a sound shows
                                 its entire duration, with the Y-axis set to show its maxamp.
+  <a name="graphcursor">graph-cursor</a>          XC_crosshair (34) cursor displayed following mouse in graph
+<small>
+        The X cursors are declared in /usr/X11R6/include/X11/cursorfont.h or some such file.
+</small>
+  <a name="initialx0">initial-x0</a>            0.0     Initial time domain window left bound (seconds).
+  <a name="initialx1">initial-x1</a>            0.1     Same, but on the right.
+  <a name="initialy0">initial-y0</a>           -1.0     Initial window y axis minimum.
+  <a name="initialy1">initial-y1</a>            1.0     Same, but maximum.
   <a name="movies">movies</a>                #t      If #t, the mix graphs are updated constantly as the 
                                   mouse drags the mix console.
   <a name="normalizeonopen">normalize-on-open</a>     #t      When a new sound is added to the Snd window, the resultant
@@ -373,6 +371,7 @@ when you save a sound via the "save" dialog.</p>
   <a name="savestateonexit">save-state-on-exit</a>    #f      If #t, Snd saves its current state in <a href="#lsavestatefile">save-state-file</a>.
   <a name="lsavestatefile">save-state-file</a>       "saved-snd.scm" The default <a href="snd.html#savedstate">saved state</a> file name.
   <a name="showindices">show-indices</a>          #f      If #t, each sound's name is preceded by its index.
+  <a name="lshowselectiontransform">show-selection-transform</a> #f   If #t, display the transform of the current active selection, if any.
   <a name="showusagestats">show-usage-stats</a>      #f      If #t, show approximate memory and disk space usage of current edit trees.
   <a name="sincwidth">sinc-width</a>            10      Width (in samples) of the sampling rate conversion sinc interpolation.
 <small>
@@ -382,6 +381,7 @@ when you save a sound via the "save" dialog.</p>
                                   a sine wave at (say) 55 Hz, then (src-sound '(0 3 1 1)) with sinc-width at 4.
 </small>
   <a name="tempdir">temp-dir</a>              nil     Name of directory for temporary files.  nil usually means "/var/tmp".
+  <a name="sndtempfilenames">temp-filenames</a>    (data)        return vector of temp file names (see <a href="grfsnd.html#programs">external programs</a>).
   <a name="trapsegfault">trap-segfault</a>         #t      If #t, try to catch segfaults and continue anyway.
   <a name="userawdefaults">use-raw-defaults</a>      #f      If #t, the "raw-" variables' values are used automatically
                                   when a headerless file is encountered.  If #f, Snd fires up the 
@@ -400,6 +400,8 @@ when you save a sound via the "save" dialog.</p>
   <a name="windowx">window-x</a>             -1       The current Snd window left side in pixels.
   <a name="windowy">window-y</a>             -1       The current Snd window upper side in pixels (X numbering starts 
                                   at 0 at the top).
+  <a name="setzoomfocusstyle"></a><a name="zoomfocusstyle">zoom-focus-style</a>      <i>focus-active</i>
+                                This determines what a zoom action focuses (centers) on.  See <a href="snd.html#zoomoption">Zoom options</a>.
 </pre>
 <hr>
 
@@ -764,19 +766,19 @@ call set-samples with the new sound file's name; otherwise call insert-samples.
 functions are available, as well as all of (<a href="grfsnd.html#clmfuncs">CLM</a>).
 The most important Sndlib functions for Snd are:</p>
 <pre>
-  mus-audio-close (line)                   close audio port <i>line</i>
+  mus-audio-close (line)              close audio port <i>line</i>
   <a name="describeaudiostate">mus-audio-describe</a> ()               describe audio hardware state (in help window)
   <a name="audioerror">mus-audio-error</a> ()                  returns error code indicated by preceding audio call
   <a name="audioerror-name">mus-audio-error-name</a>(err)           string decription of error code
   mus-audio-open-input (device srate chans format bufsize)
-                                           open audio port <i>device</i> ready for input with the indicated attributes
+                                      open audio port <i>device</i> ready for input with indicated attributes
   mus-audio-open-output (device srate chans format bufsize)
-                                           open audio port <i>device</i> ready for output with the indicated attributes
-  <a name="sndaudiooutputs">mus-audio-outputs</a>     (speakers headphones line-out) (Sun only) set which output devices are active.
-  mus-audio-read (line sdata frames)       read <i>frames</i> of data into sound-data object <i>sdata</i> from port <i>line</i>
-  mus-audio-write (line sdata frames)      write <i>frames</i> of data from sound-data object <i>sdata</i> to port <i>line</i>
-  mus-sound-close-input (fd)               close sound file
-  mus-sound-close-output (fd bytes)        close sound file and update its length indication, if any
+                                      open audio port <i>device</i> ready for output with indicated attributes
+  <a name="sndaudiooutputs">mus-audio-outputs</a>     (speakers headphones line-out) (Sun only) set active outputs
+  mus-audio-read (line sdata frames)  read <i>frames</i> of data into sound-data object <i>sdata</i> from port <i>line</i>
+  mus-audio-write (line sdata frames) write <i>frames</i> of data from sound-data object <i>sdata</i> to port <i>line</i>
+  mus-sound-close-input (fd)          close sound file
+  mus-sound-close-output (fd bytes)   close sound file and update its length indication, if any
   <a name="soundcomment">mus-sound-comment</a> (filename)        header comment, if any
   <a name="soundformatname">mus-data-format-name</a> (format)       e.g. "16-bit big endian linear"
   <a name="soundtypename">mus-header-type-name</a> (type)         e.g. "AIFF"
@@ -787,23 +789,25 @@ The most important Sndlib functions for Snd are:</p>
   <a name="soundchans">mus-sound-chans</a> (filename)          number of channels (samples are interleaved)
   <a name="soundheadertype">mus-sound-header-type</a> (filename)    header type (e.g. <i>mus-aifc</i>)
   <a name="soundlength">mus-sound-length</a> (filename)         true file length (bytes)
-  mus-sound-max-amp(filename)              returns a vector of max amps and locations thereof
-  mus-sound-open-input (filename)          open filename (a sound file) returning an integer ("fd" below)
+  mus-sound-max-amp(filename)         returns a vector of max amps and locations thereof
+  mus-sound-open-input (filename)     open filename (a sound file) returning an integer ("fd" below)
   mus-sound-open-output (filename srate chans data-format header-type comment)
-                                           create a new sound file with the indicated attributes, return "fd"
-  mus-sound-read (fd beg end chans sdata)  read data from sound file <i>fd</i> loading the data array from beg to end
-                                           <i>sdata</i> is a sound-data object that should be able to accomodate the read
+                                      create a new sound file with the indicated attributes, return "fd"
+  mus-sound-read (fd beg end chans sdata)  
+                                      read data from sound file <i>fd</i> loading the data array from beg 
+                                      to end. <i>sdata</i> is a sound-data object that should be able to 
+                                      accomodate the read
   mus-sound-reopen-output (filename chans data-format header-type data-location)
-                                           reopen (without disturbing) filename, ready to be written
+                                      reopen (without disturbing) filename, ready to be written
   <a name="soundsamples">mus-sound-samples</a> (filename)        samples of sound according to header (can be incorrect)
-  mus-sound-seek (fd offset origin)        complicated -- see mus_sound_seek above
-  mus-sound-seek-frame (fd frame)          move to <i>frame</i> in sound file <i>fd</i>
+  mus-sound-seek (fd offset origin)   complicated -- see mus_sound_seek above
+  mus-sound-seek-frame (fd frame)     move to <i>frame</i> in sound file <i>fd</i>
   <a name="soundsrate">mus-sound-srate</a> (filename)          sampling rate
   <a name="setossbuffers">set-oss-buffers</a> (num size) in Linux (OSS) sets the number and size of the OSS "fragments"
   <a name="soundloopinfo">mus-sound-loop-info</a> (filename)      loop info (for an example, see examp.scm mark-loops)
   <a name="setsoundloopinfo">set-sound-loop-info</a> (start0 end0 <i>start1 end1 snd</i>)   
-                                           set loop points in header -- start0 refers to the "sustain" loop, 
-                                           start1 to the "release".
+                                      set loop points in header -- start0 refers to the "sustain" loop, 
+                                      start1 to the "release".
   mus-sound-write (fd beg end chans sdata) write data to sound file <i>fd</i>
 </pre>
 <p>See <a href="sndlib.html">Sndlib</a> for more information on these functions. 
@@ -1060,9 +1064,8 @@ a particular mix object (the "set-" form prepends "set-" and places the new valu
   <a name="sndplaytrack">play-track</a>        (<i>track snd chn</i>) play track <i>track</i>. If snd is #t, play all associated chans.
   <a name="sndselectmix">select-mix</a>        (<i>id</i>)          select mix <i>id</i>.
   <a name="sndselectedmix">selected-mix</a>      ()            selected mix (-1 = none).
-  <a href="#showmixconsoles">show-mix-consoles</a>     #t      If #t, mix consoles are displayed.  This is the '<a href="snd.html#consoles">Show consoles</a>'
-                                View menu option.
-  <a href="#showmixwaveforms">show-mix-waveforms</a>    #t      If #t, mixer console displays the waveform of the sound being mixed.
+  <a href="#showmixconsoles">show-mix-consoles</a>
+  <a href="#showmixwaveforms">show-mix-waveforms</a>
 </pre>
 <p>As an example, say we have a mix active whose "id" is 123.</p>
 <pre>
@@ -1099,8 +1102,6 @@ To mix data in such a way as to create an associated mix object:</p>
                       If <i>with-mix-consoles</i> is #f (default is #t), the data is simply
                       mixed without creating any mix consoles.
 </pre>
-<p>
-
 <hr>
 
 <h3><a name="sndregions">Regions</a></h3>
@@ -1121,7 +1122,7 @@ these are indicated as <em class=targ>reg</em> below.
   <a name="sndinsertregion">insert-region</a>     (<i>beg reg snd chn</i>) insert region <i>reg</i> at sample <i>beg</i> in <i>snd</i>'s channel <i>chn</i>.
   <a name="sndmakeregion">make-region</a>       (beg end <i>snd chn</i>)
                                   create a new region spanning samples <i>beg</i> to <i>end</i> in <i>snd</i>'s channel <i>chn</i>.
-                                  returns region's id.
+                                    returns region's id.
   <a href="#makeregionsamplereader">make-region-sample-reader</a>(<i>start reg chn dir</i>) 
                                   create a <a href="#samplereaders">sample-reader</a> object reading region <i>reg</i>'s channel <i>chn</i>
   <a name="maxregions">max-regions</a>       16            Size of region stack.
@@ -1133,7 +1134,8 @@ these are indicated as <em class=targ>reg</em> below.
   <a name="sndregionmaxamp">region-maxamp</a>     (<em class=targ>reg</em>)         maximum amplitude of region <i>reg</i>.
   <a name="sndregionsample">region-sample</a>     (<i>samp reg chn</i>) value of sample <i>samp</i> in region <i>reg</i> in channel <i>chn</i>.
   <a name="sndregionsamples">region-samples</a>    (<i>samp samps reg chn</i>)
-                                  return vector of <i>samps</i> samples starting at <i>samp</i> in region <i>reg</i>'s channel <i>chn</i>.
+                                  return vector of <i>samps</i> samples starting at <i>samp</i> in region <i>reg</i>'s 
+                                  channel <i>chn</i>.
   <a name="sndregionsamples2vct">region-samples-&gt;vct</a> (<i>samp samps reg chn v</i>)
                                   return vct struct of <i>samps</i> samples starting at <i>samp</i> in region <i>reg</i>'s 
                                     channel <i>chn</i>. If v (a vct object) is provided, it is filled, 
@@ -1142,39 +1144,40 @@ these are indicated as <em class=targ>reg</em> below.
   <a name="eregions">regions</a>           ()            list of ids of regions currently active.
   <a name="regionok">region?</a>           (<i>reg</i>)         #t if region <i>reg</i> has data.
   <a name="sndsaveregion">save-region</a>       (reg filename <i>format</i>) 
-                                  save region <i>reg</i> in <i>filename</i> in data format <i>format</i> (default mus-bshort) [<em class=error>cannot-save</em>].
+                                  save region <i>reg</i> in <i>filename</i> in data format <i>format</i> (default mus-bshort) 
+                                    [<em class=error>cannot-save</em>].
   <a name="sndselectall">select-all</a>        (<i>snd chn</i>)     create a new region spanning all samples in <i>snd</i>'s channel <i>chn</i>.
-                                  returns region's id.
+                                    returns region's id.
   <a name="sndselectregion">select-region</a>     (<i>reg</i>)         select region <i>reg</i> (i.e make it region 0).
 </pre>
 
-<p>These are specific to the current selection:</p>
+<p>These are specific to the current selection (these can return the error 'no-active-selection):</p>
 <pre>
   <a name="sndconvolveselectionwith">convolve-selection-with</a> (file <i>amp</i>)     
-                                  convolve the current selection with <i>file</i> [<em class=error>no-active-selection, no-such-file</em>].
-  <a name="sndcut">cut</a>               ()            cut the current selection (a no-op if no active selection) [<em class=error>no-active-selection</em>].
+                                  convolve the current selection with <i>file</i> 
+  <a name="sndcut">cut</a>               ()            cut the current selection (a no-op if no active selection) 
   <a name="sndenvselection">env-selection</a>     (envelope <i>env-base snd chn</i>)
-                                  apply <i>envelope</i> to the currently selected portion of <i>snd</i>'s channel <i>chn</i> [<em class=error>no-active-selection</em>].
+                                  apply <i>envelope</i> to the currently selected portion of <i>snd</i>'s channel <i>chn</i> 
   <a name="sndfilterselection">filter-selection</a>  (env order)   apply an FIR filter of order <i>order</i> and frequency response <i>env</i>
                                     to the current selection.  <i>env</i> can also be the filter coefficients
-                                    themselves, in a vct object with at least order elements [<em class=error>no-active-selection</em>].
-  <a name="sndplayselection">play-selection</a>    ()            play the currently selected data [<em class=error>no-active-selection</em>].
-  <a name="sndreverseselection">reverse-selection</a> ()            reverse data delineated by current selection [<em class=error>no-active-selection</em>].
+                                    themselves, in a vct object with at least order elements 
+  <a name="sndplayselection">play-selection</a>    ()            play the currently selected data 
+  <a name="sndreverseselection">reverse-selection</a> ()            reverse data delineated by current selection 
   <a name="sndsaveselection">save-selection</a>    (file <i>header-type data-format srate comment</i>)
-                                  save the currently selected data in <i>file</i> [<em class=error>no-active-selection</em>].
+                                  save the currently selected data in <i>file</i> 
   <a name="sndscaleselectionby">scale-selection-by</a>(<i>scalers</i>)     <a href="snd.html#scaling">scale</a> the current selection by <i>scalers</i> which can be either a float, 
-                                    or a vector of floats [<em class=error>no-active-selection</em>].
+                                    or a vector of floats 
   <a name="sndscaleselectionto">scale-selection-to</a>(<i>scalers</i>)     <a href="snd.html#scaling">normalize</a> the current selection to <i>scalers</i> which can be either a float, 
-                                    or a vector of floats [<em class=error>no-active-selection</em>].
-  <a name="selectionbeg">selection-beg</a>     ()            selection begin sample number [<em class=error>no-active-selection</em>].
-  <a name="selectionlength">selection-length</a>  ()            selection frames [<em class=error>no-active-selection</em>].
+                                    or a vector of floats 
+  <a name="selectionbeg">selection-beg</a>     ()            selection begin sample number 
+  <a name="selectionlength">selection-length</a>  ()            selection frames 
   <a name="selectionmember">selection-member</a>  (<i>snd chn</i>)     #t if snd's chn is member of active selection.
-  <a name="selectiontotemp">selection-to-temp</a> (<i>type format</i>) write out selected data as a temp file (see <a href="grfsnd.html#programs">external programs</a>) [<em class=error>no-active-selection</em>].
-  <a name="selectiontotemps">selection-to-temps</a>(<i>type format</i>) write out selected data as temp files (see <a href="grfsnd.html#programs">external programs</a>) [<em class=error>no-active-selection</em>].
+  <a name="selectiontotemp">selection-to-temp</a> (<i>type format</i>) write out selected data as a temp file (see <a href="grfsnd.html#programs">external programs</a>) 
+  <a name="selectiontotemps">selection-to-temps</a>(<i>type format</i>) write out selected data as temp files (see <a href="grfsnd.html#programs">external programs</a>) 
   <a name="selectionok">selection?</a>        ()            #t if selection is active.
-  <a name="sndsmoothselection">smooth-selection</a>  ()            apply a smoothing function to the current selection [<em class=error>no-active-selection</em>].
+  <a name="sndsmoothselection">smooth-selection</a>  ()            apply a smoothing function to the current selection 
   <a name="sndsrcselection">src-selection</a>     (num-or-env <i>base</i>) 
-                                  same as <i>src</i> but applied to current selection [<em class=error>no-active-selection</em>].
+                                  same as <i>src</i> but applied to current selection 
   <a name="temptoselection">temp-to-selection</a> (data name origin) 
                                   read selected data from temp file (see <a href="grfsnd.html#programs">external programs</a>).
   <a name="tempstoselection">temps-to-selection</a>(data names origin) 
@@ -1186,44 +1189,51 @@ these are indicated as <em class=targ>reg</em> below.
 <h3><a name="sndsounds">Sounds and channels</a></h3>
 
 <p>Some of the <i>snd</i> and <i>chan</i> arguments can be #t, referring to all current sounds or all channels of a sound; 
-these are indicated as <em class=targ>snd</em> or <em class=targ>snd chn</em> below.
+of these, some default to the currently selected sound if no argument is given, whereas others
+(mainly for historical reasons) default to all sounds and channels;
+the former are indicated as <em class=targ>snd</em> or <em class=targ>snd chn</em> below,
+and the latter as <em class=narg>snd</em> or <em class=narg>snd chn</em>.
 Also, in most of the signal-processing functions, the <i>snd</i> argument can also be
-a list; in this case it refers to a mix.
-<p>
+a list; in this case it refers to a mix.  For example, the <b>cursor</b> function,
+which refers to the current cursor location, is listed here as:
+</p>
+<pre>
+  cursor           (<em class=targ>snd chn</em>)     cursor location
+</pre>
+<p>which indicates that <code>(cursor 0 0)</code> returns the cursor location in sound 0, channel 0,
+<code>(cursor)</code> returns the location in the currently selected sound, <code>(cursor #t #t)</code>
+returns a list of lists of all the cursor locations, and <code>(set-cursor 0)</code> sets (just) the
+cursor in the currently selected channel;
+on the other hand, the <b>fft-size</b> function
+is listed as:</p>
+<pre>
+  fft-size         (<em class=narg>snd chn</em>)     FFT size.
+</pre>
+<p>which means that <code>(fft-size 0 0)</code> returns the fft size used in sound 0, channel 0,
+<code>(fft-size)</code> returns the globally effective fft size, <code>(fft-size #t #t)</code>
+returns a list of lists of all the fft sizes, and <code>(set-fft-size 512)</code> sets all
+fft sizes to 512.</p>
 
 <p>The variables are local to each sound or each channel. Those that are settable prepend "set-" to the accessor name and place
-the new value as the first argument.  That is, (amp snd) returns the control-panel amp setting, and (set-amp val snd)
+the new value as the first argument.  That is, <code>(amp snd)</code> returns the control-panel amp setting, and <code>(set-amp val snd)</code>
 sets its value to val. 
 </p>
 
-<p>I am in the process of making it possible to specify
-some of these variables local to a channel, rather
-than always being applied across all channels.  To retain backwards
-compatibility, in these cases the "variable" can be
-treated as a function with two optional trailing arguments,
-the sound index (default #t = all sounds), and the channel
-(default #t = all channels). 
-So, (set-show-y-zero #t)
-turns on the y-zero line for all channels (as before), whereas
-(set-show-y-zero #t 0 1) turns it on only in sound 0's channel 1.
-(This will eventually coalesce with the #t arguments in the "functions"
-such as <a href="#sndffting">ffting</a> below so that all these things will be handled in the
-same way.)
-</p>
 
 <pre>
   <a name="sndamp">amp</a>               (<em class=targ>snd</em>)         current amp (control panel slider) value.
+<small>
                                   It is possible to use these controls (in "real-time") in your own functions.
-                                  See amprt in examp.scm for a simple example.  In all the control-panel functions,
-                                  the <i>snd</i> argument can be #t meaning "all sounds".
+                                  See amprt in examp.scm for a simple example, and snd-gtk.scm for a complicated one. 
+</small>
   <a name="sndappendtominibuffer">append-to-minibuffer</a> (msg <i>snd</i>)  append <i>msg</i> to whatever is in <i>snd</i>'s minibuffer [<em class=error>no-such-sound</em>].
-  <a name="askbeforeoverwrite">ask-before-overwrite</a>  #f      (Save-as): ask before <a href="snd.html#overwrite">overwriting</a> an existing file
-  <a name="autoupdate">auto-update</a>           #f      should Snd <a href="snd.html#updatefile">update</a> a file automatically.
-  <a name="sndbackwardgraph">backward-graph</a>    (<i>count snd chn</i>) move back (up or left) <i>count</i> graphs (C-x C-o).
-  <a name="sndbackwardsample">backward-sample</a>   (<i>count snd chn</i>) move back <i>count</i> samples (C-b), return new cursor position.
-  <a name="bomb">bomb</a>              (<i>snd on</i>)      display bomb icon in <i>snd's</i> minibuffer.  If <i>on</i> (default #t) is #f, the 
-                                  bomb is erased.
+  <a name="sndbackwardgraph">backward-graph</a>    (<i>count snd chn</i>) 
+                                  move back (up or left) <i>count</i> graphs (C-x C-o).
+  <a name="sndbackwardsample">backward-sample</a>   (<i>count snd chn</i>) 
+                                  move back <i>count</i> samples (C-b), return new cursor position.
+  <a name="bomb">bomb</a>              (<i>snd on</i>)      display bomb icon in <i>snd's</i> minibuffer.  Set <i>on</i> to #f to erase bomb.
   <a name="callapply">call-apply</a>        (<i>snd</i>)         equivalent to pushing <i>snd</i>'s 'apply' button.
+<small>
                                   This can be used in conjunction with the various control panel variables:
 
                                     (define expnd 
@@ -1231,11 +1241,8 @@ same way.)
                                         (set-expanding #t) 
                                         (set-expand amt) 
                                         (<em class=red>call-apply</em>)))
-
+</small>
   <a name="channels">channels</a>          (<em class=targ>snd</em>)         number of channels in <i>snd</i>.
-  <a name="channelstyle">channel-style</a>         <i>channels-separate</i>
-                                The default state of the '<a href="snd.html#unitebutton">unite</a>' button in multi-channel files.  
-                                Other values are <i>channels-combined</i> and <i>channels-superimposed</i>.  
   <a name="sndchans">chans</a>             (<em class=targ>snd</em>)         same as <i>channels</i> (the forgetful programmer's friend).
   <a name="sndclose">close-sound</a>       (<em class=targ>snd</em>)         close <i>snd</i> (same as File menu Close).
   <a name="sndcomment">comment</a>           (<em class=targ>snd</em>)         <i>snd</i>'s comment, if any.
@@ -1244,8 +1251,10 @@ same way.)
   <a name="sndcontrasting">contrasting</a>       (<em class=targ>snd</em>)         #t if <i>snd</i> has <a href="snd.html#contrast">contrast</a> turned on (control panel)
   <a name="sndconvolvewith">convolve-with</a>     (file <i>amp snd chn</i>)     
                                   convolve <i>snd</i>'s channel <i>chn</i> (or the currently sync'd data)
-                                  with the data in the sound file <i>file</i>. <i>amp</i> is the resultant peak amplitude
-                                  (leave <i>amp</i> unset, or set it to #f to get the unnormalized result) [<em class=error>no-such-file</em>].
+                                  with the data in the sound file <i>file</i>. <i>amp</i> is the resultant 
+                                  peak amplitude (leave <i>amp</i> unset, or set it to #f to get the 
+                                  unnormalized result) [<em class=error>no-such-file</em>].
+<small>
                                   Convolve-with in conjunction with mix can provide high-quality reverb:
 
                                      (define conrev
@@ -1254,10 +1263,11 @@ same way.)
                                          (save-sound-as "reverb.snd") ;let mix console scalers set reverb amount
                                          (revert-sound)
                                          (<em class=red>mix</em> "reverb.snd")))
-
+</small>
   <a name="sndcursor">cursor</a>            (<em class=targ>snd chn</em>)     cursor location (samples) of channel <i>chn</i> of <i>snd</i>.
-  <a name="sndcursorfollowsplay">cursor-follows-play</a> (<em class=targ>snd</em>)       #t if cursor is following along in the sound as it plays.
-  <a name="cursorstyle">cursor-style</a>      (<em class=targ>snd chn</em>)     cursor style (cursor-cross or cursor-line)
+  <a name="sndcursorfollowsplay">cursor-follows-play</a>(<em class=targ>snd</em>)        #t if cursor is following along in the sound as it plays.
+  <a name="cursorstyle">cursor-style</a>      (<em class=targ>snd chn</em>)     cursor style (<i>cursor-cross</i> or <i>cursor-line</i>)
+<small>
                                   The following hooks set the cursor-style to cursor-line while playing if
                                   cursor-follows-play is #t:
 
@@ -1271,18 +1281,20 @@ same way.)
                                       (lambda (snd) (if (cursor-follows-play snd) (set-sound-cursor snd <em class=red>cursor-line</em>))))
                                     (add-hook! stop-playing-hook 
                                       (lambda (snd) (set-sound-cursor snd <em class=red>cursor-cross</em>)))
-
+</small>
   <a name="snddataformat">data-format</a>       (<em class=targ>snd</em>)         <i>snd</i>'s data format (a list of the format number and its name).
   <a name="snddatalocation">data-location</a>     (<em class=targ>snd</em>)         <i>snd</i>'s data location (bytes).
   <a name="snddeletesample">delete-sample</a>     (samp <i>snd chn</i>) delete sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i> [<em class=error>no-such-sample</em>].
-  <a name="snddeletesamples">delete-samples</a>    (samp samps <i>snd chn</i>) delete <i>samps</i> samples starting at sample <i>samp</i>.
-  <a name="dotsize">dot-size</a>              1       Size in pixels of dots when graphing with dots (see auto-dot in examp.scm).
+  <a name="snddeletesamples">delete-samples</a>    (samp samps <i>snd chn</i>) 
+                                  delete <i>samps</i> samples starting at sample <i>samp</i>.
+  <a name="dotsize">dot-size</a>          (<em class=narg>snd chn</em>)     size in pixels of dots when graphing with dots (default: 1)
   <a name="sndenv">env-sound</a>         (envelope <i>samp samps env-base snd chn</i>)
                                   apply (in amplitude) <i>envelope</i> to <i>snd</i>'s channel <i>chn</i> starting
                                   at sample <i>samp</i> for <i>samps</i> samples with connecting segments
                                   based on <i>env-base</i>.  <i>env-base</i> defaults to 1.0 (line segments).
                                   <i>samp</i> defaults to 0.  <i>samps</i> defaults to the full duration.
-                                  <i>envelope</i> is a list or vector containing the breakpoint values (as in CLM).
+                                  <i>envelope</i> is a list or vector containing the breakpoint values 
+                                  (as in CLM).
 
                                       (env-sound '(0 0 1 1 2 0))
 
@@ -1290,18 +1302,24 @@ same way.)
   <a name="sndexpandhop">expand-hop</a>        (<em class=targ>snd</em>)         <i>snd</i>'s <a href="snd.html#expand">expansion</a> hop amount (seconds).
   <a name="sndexpandlength">expand-length</a>     (<em class=targ>snd</em>)         <i>snd</i>'s <a href="snd.html#expand">expansion</a> segment length (seconds).
   <a name="sndexpandramp">expand-ramp</a>       (<em class=targ>snd</em>)         <i>snd</i>'s <a href="snd.html#expand">expansion</a> ramp amount (between 0 and .5).
+<small>
                                   This affects the smoothness of the grain overlaps -- .001 gives a 
                                   rattling effect (see make-control-dialog in snd-gtk.scm).
+</small>
   <a name="sndexpanding">expanding</a>         (<em class=targ>snd</em>)         #t if <i>snd</i>'s expand button is on.
-  <a name="fftbeta">fft-beta</a>          <i>(snd #t) (chn #t)</i>   The fft data <a href="snd.html#Xfftbeta">window parameter</a>, if relevant.  If any of the FFT
-                                variables is set to a new value, call <a href="#sndupdatefft">update-fft</a> to see the effect (default 0.0).
-  <a name="fftlogfrequency">fft-log-frequency</a>     <i>(snd #t) (chn #t)</i>  If #t, the spectrum frequency axis is logarithmic, not linear (default: #f).
-  <a name="fftlogmagnitude">fft-log-magnitude</a>     <i>(snd #t) (chn #t)</i>  If #t, the spectrum magnitude axis is in decibels (default #f).
-  <a name="lfftsize">fft-size</a>              256     FFT size.
-  <a name="lfftstyle">fft-style</a>             <i>normal-fft</i>
-                                The other choices are <i>sonogram</i> and <i>spectrogram</i>.
-  <a name="lfftwindow">fft-window</a>            <i>blackman2-window</i>
-                                FFT data window. See the long list <a href="#fftwindowchoices">above</a> for other choices.
+  <a name="fftbeta">fft-beta</a>          (<em class=narg>snd chn</em>)     The fft data <a href="snd.html#Xfftbeta">window parameter</a>, if relevant.
+  <a name="fftlogfrequency">fft-log-frequency</a> (<em class=narg>snd chn</em>)     spectrum frequency axis is logarithmic (#t) or linear (#f) (default #f).
+  <a name="fftlogmagnitude">fft-log-magnitude</a> (<em class=narg>snd chn</em>)     spectrum magnitude axis is in decibels (#t) or linear (#f) (default #f).
+  <a name="lfftsize">fft-size</a>          (<em class=narg>snd chn</em>)     FFT size (default = 256).
+  <a name="lfftstyle">fft-style</a>         (<em class=narg>snd chn</em>)     choice of spectral display.  The choices are (default) <i>normal-fft</i>, 
+                                  <i>sonogram</i>, and <i>spectrogram</i>.
+  <a name="lfftwindow">fft-window</a>        (<em class=narg>snd chn</em>)     fft data window (default: <i>blackman2-window</i>)
+<small>
+                                  rectangular-window hanning-window     welch-window      parzen-window
+                                  bartlett-window    hamming-window     blackman2-window  blackman3-window
+                                  blackman4-window   exponential-window riemann-window    kaiser-window
+                                  cauchy-window      poisson-window     gaussian-window   tukey-window
+</small>
   <a name="sndffting">ffting</a>            (<em class=targ>snd chn</em>)     #t if <i>snd</i>'s channel <i>chn</i> is displaying a spectrum (the 'f' button).
   <a name="sndfilename">file-name</a>         (<em class=targ>snd</em>)         <i>snd</i>'s complete file name.
   <a name="sndfilterenv">filter-env</a>        (<em class=targ>snd</em>)         <i>snd</i>'s <a href="snd.html#filter">filter</a> envelope (control panel).
@@ -1311,13 +1329,14 @@ same way.)
                                   apply an FIR filter of order <i>order</i> and frequency response <i>env</i>
                                   to <i>snd</i>'s channel <i>chn</i>.  <i>env</i> can also be the filter coefficients
                                   themselves, in a vct object with at least order elements (see <a href="grfsnd.html#gmeteor">gmeteor</a>).
-  <a name="filterwaveformcolor">filter-waveform-color</a> blue    color of control panel filter waveform.
   <a name="sndfiltering">filtering</a>         (<em class=targ>snd</em>)         #t if <i>snd</i> is filtering (control panel filter button).
   <a name="sndfindsound">find-sound</a>        (filename)    returns the index of <i>filename</i> (used as <i>snd</i> throughout).
-                                  return #f if no sound is found that matches <i>filename</i>.
+                                  returns #f if no sound is found that matches <i>filename</i>.
   <a name="finishprogressreport">finish-progress-report</a> (<i>snd</i>)    see <a href="#progressreport">progress-report</a>.
-  <a name="sndforwardgraph">forward-graph</a>     (<i>count snd chn</i>) move forward (down or right) <i>count</i> graphs (C-x C-o).
-  <a name="sndforwardsample">forward-sample</a>    (<i>count snd chn</i>) move forward <i>count</i> samples (C-f), return new cursor position.
+  <a name="sndforwardgraph">forward-graph</a>     (<i>count snd chn</i>) 
+                                  move forward (down or right) <i>count</i> graphs (C-x C-o).
+  <a name="sndforwardsample">forward-sample</a>    (<i>count snd chn</i>) 
+                                  move forward <i>count</i> samples (C-f), return new cursor position.
   <a name="sndframes">frames</a>            (<em class=targ>snd chn</em>)     <i>chn</i>'s current length in samples.
   <a name="sndgraph">graph</a>             (data <i>xlabel x0 x1 y0 y1 snd chn</i>)
                                   Display a graph of <i>data</i> in a separate display per channel.  The x axis
@@ -1330,91 +1349,110 @@ same way.)
                                   The current slider values can be read from <a href="#xpositionslider">x-position-slider</a>, 
                                   <a href="#xzoomslider">x-zoom-slider</a>, etc.  The <i>data</i> argument can be a list of vectors or
                                   vcts; each is graphed at the same time, following the sequence of
-                                  colors used when channels are superimposed.  See superimpose-ffts in examp.scm.
-  <a name="graphstyle">graph-style</a>           <i>graph-lines</i>
-                                The other choices are <i>graph-dots</i>, <i>graph-filled</i> etc.
+                                  colors used when channels are superimposed.  See examp.scm.
+  <a name="graphstyle">graph-style</a>       (<em class=narg>snd chn</em>)     how sound data is displayed (default: <i>graph-lines</i>)
+                                  The choices are:
+<small>
+                                  graph-lines        graph-dots         graph-filled      graph-lollipops   graph-dots-and-lines 
+</small>
   <a name="sndgraphing">graphing</a>          (<i>snd chn</i>)     #t if (lisp) graph data is being displayed.
+  <a name="graphshorizontal">graphs-horizontal</a> (<em class=narg>snd chn</em>)     determines whether channel graphs (time domain, spectrum, lisp graph) 
+                                  are arranged vertically or horizontally.
   <a name="sndheadertype">header-type</a>       (<em class=targ>snd</em>)         return (type . name)
-
-
-  <a name="initialx0">initial-x0</a>            0.0     Initial time domain window left bound (seconds).
-  <a name="initialx1">initial-x1</a>            0.1     Same, but on the right.
-  <a name="initialy0">initial-y0</a>           -1.0     Initial window y axis minimum.
-  <a name="initialy1">initial-y1</a>            1.0     Same, but maximum.
-
   <a name="sndinsertfile">insert-sound</a>      (file <i>in_chan snd chn</i>)
-                                  insert channel <i>in_chan</i> of <i>file</i> at the cursor in <i>snd</i>'s channel <i>chn</i> [<em class=error>no-such-file</em>].
+                                  insert channel <i>in_chan</i> of <i>file</i> at the cursor in <i>snd</i>'s channel <i>chn</i> 
+                                  [<em class=error>no-such-file</em>].
   <a name="sndinsertsample">insert-sample</a>     (samp value <i>snd chn</i>)
-                                  insert sample <i>value</i> at sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i> [<em class=error>no-such-sample</em>].
+                                  insert sample <i>value</i> at sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i> 
+                                  [<em class=error>no-such-sample</em>].
   <a name="sndinsertsamples">insert-samples</a>    (samp samps data <i>snd chn</i>)
                                   insert <i>samps</i> samples of <i>data</i> starting at sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
                                   <i>data</i> can be a filename; Snd assumes any such file is temporary; 
                                   it will be deleted when no longer needed.
   <a name="sndleftsample">left-sample</a>       (<em class=targ>snd chn</em>)     return the position in samples of the left edge of the time domain
                                   waveform for <i>snd</i>'s channel <i>chn</i>.
-  <a name="linesize">line-size</a>  <i>(snd #t) (chn #t)</i>          Number of samples considered to be a 'line' (<a href="snd.html#cn">C-n</a> and <a href="snd.html#cp">C-p</a> commands). (default=128)
+  <a name="linesize">line-size</a>         (<em class=narg>snd chn</em>)     Number of samples considered to be a 'line' (<a href="snd.html#cn">C-n</a> and <a href="snd.html#cp">C-p</a> commands). 
+                                  default: 128.
   <a name="loopsamples">loop-samples</a>      (reader function calls origin)
                                   This calls external C functions while moving through the data accessed
                                   by the sample reader. loop-samples takes a sample reader, a pointer to a 
                                   (C) float function that takes one float argument (the current sample), 
                                   the number of times to call that function, and a name for the editing 
                                   operation for the edit history list.
-  <a name="mapacrossallchans">map-across-all-chans</a> (func <i>start end edname</i>) apply func to all open channels in parallel 
-                                  (see <a href="#scanning">Scanning Data</a>).
-  <a name="mapacrosschans">map-across-chans</a>  (func <i>start end edname</i>) apply func to currently syncd channels in parallel
-  <a name="mapacrosssoundchans">map-across-sound-chans</a> (func <i>start end edname snd</i>) apply func to sound's channels in parallel
-  <a name="mapallchans">map-all-chans</a>     (func <i>start end edname</i>) apply func to all open channels
-  <a name="mapchan">map-chan</a>          (func <i>start end edname snd chn</i>) apply func to samples in current channel 
-                                  (see <a href="#scanning">Scanning Data</a>).
-  <a name="mapchans">map-chans</a>         (func <i>start end edname</i>) apply func to currently syncd channels
-  <a name="mapsoundchan">map-sound-chans</a>   (func <i>start end edname snd</i>) apply func to current sound's channels
+  <a name="mapacrossallchans">map-across-all-chans</a> (func <i>start end edname</i>) 
+                                  apply func to all open channels in parallel (see <a href="#scanning">Scanning Data</a>).
+  <a name="mapacrosschans">map-across-chans</a>  (func <i>start end edname</i>) 
+                                  apply func to currently syncd channels in parallel
+  <a name="mapacrosssoundchans">map-across-sound-chans</a> (func <i>start end edname snd</i>) 
+                                  apply func to sound's channels in parallel
+  <a name="mapallchans">map-all-chans</a>     (func <i>start end edname</i>) 
+                                  apply func to all open channels
+  <a name="mapchan">map-chan</a>          (func <i>start end edname snd chn</i>) 
+                                  apply func to samples in current channel 
+  <a name="mapchans">map-chans</a>         (func <i>start end edname</i>) 
+                                  apply func to currently syncd channels
+  <a name="mapsoundchan">map-sound-chans</a>   (func <i>start end edname snd</i>) 
+                                  apply func to current sound's channels
   <a name="sndmaxamp">maxamp</a>            (<em class=targ>snd chn</em>)     max amp of <i>snd</i>'s channel <i>chn</i>.
-  <a name="maxfftpeaks">max-fft-peaks</a>  <i>(snd #t) (chn #t)</i>   Max number of fft peaks reported (default=100).
-  <a name="sndmaxsounds">max-sounds</a>        ()            current size of sound array (grows as required, may contain holes).
-
-  <a name="memosound">memo-sound</a>            #f      When a sound file is opened, Snd looks for a file with the same 
-                                name but with an appended ".scm" extension.  If such a file is found, 
-                                it is loaded automatically.  The variable <i>memo-sound</i> is set to 
-                                the newly opened sound's index.  This supports the "snd-memo" feature 
-                                in CLM, but can be used independently of CLM to store marks, selections,
-                                or whatever that you want associated with a particular sound. Confusingly
-                                enough, this is a Scheme variable, unlike all the others -- that is, you
-                                refer to it directly, not as a procedure call.
-
-  <a name="mindb">min-dB</a>       <i>(snd #t) (chn #t)</i>   Sets the minimum dB value displayed in various graphs (default = -60.0).
+  <a name="maxfftpeaks">max-fft-peaks</a>     (<em class=narg>snd chn</em>)     max number of fft peaks reported (default: 100).
+  <a name="sndmaxsounds">max-sounds</a>        ()            current size of sound array (grows as required).
+  <a name="memosound">memo-sound</a>        #f            When a sound file is opened, Snd looks for a file with the same 
+                                  name but with an appended ".scm" extension.  If such a file is found, 
+                                  it is loaded automatically.  The variable <i>memo-sound</i> is set to 
+                                  the newly opened sound's index.  This supports the "snd-memo" feature 
+                                  in CLM, but can be used independently of CLM to store marks, selections,
+                                  or whatever that you want associated with a particular sound. Confusingly
+                                  enough, this is a Scheme variable, unlike all the others -- that is, you
+                                  refer to it directly, not as a procedure call.
+  <a name="mindb">min-dB</a>            (<em class=narg>snd chn</em>)     Sets the minimum dB value displayed in various graphs (default: -60.0).
   <a name="sndnew">new-sound</a>         (name <i>header-type data-format srate chans comment</i>)
                                   create a new (empty) sound named <i>name</i>.  If the <i>type</i> and other 
                                   arguments are not specified, a dialog is posted to get the needed 
                                   values which default to the current <a href="#defaultoutputtype">default-output-type</a> and 
-                                  related settings.
-  <a name="normalizefft">normalize-fft</a>         <i>normalize-by-channel</i>
-                                If normalize-by-channel (#t) or normalize-by-sound, spectral data is normalized to 1.0 before display.
-                                If dont-normalize (#f), you get the raw data values, which can reflect amplitude changes.  
-                                Snd tries to choose a y axis limit that makes successive displays move smoothly.
-  <a name="sndopenalternate">open-alternate-sound</a>(name)      close the currently selected file, if any, and open <i>name</i>.
-  <a name="sndrawopen">open-raw-sound</a>    (name chans srate format) open <i>name</i> as a raw (no header) sound in the layout specified.
-                                  If the file has a header, it is not ignored (use override-data-format etc 
-                                  if you want to ignore the header).
+                                  related settings.  Data formats are (b=big-endian, l=little, u=unsigned):
+<small>
+                                  mus-bshort  mus-lshort mus-mulaw  mus-alaw   mus-byte   mus-ubyte   mus-bfloat
+                                  mus-lfloat  mus-bint   mus-lint   mus-b24int mus-l24int mus-bdouble mus-ldouble
+                                  mus-ubshort mus-ulshort
+</small>
+                                  Header-types are:
+<small>
+                                  mus-next mus-aifc mus-riff mus-nist mus-raw mus-ircam mus-aiff
+</small>
+  <a name="normalizefft">normalize-fft</a>     (<em class=narg>snd chn</em>)     FFT normalization choice (default: <i>normalize-by-channel</i>)
+                                  If normalize-by-channel (#t) or normalize-by-sound, spectral data is 
+                                  normalized to 1.0 before display. If dont-normalize (#f), you get the 
+                                  raw data values, which can reflect amplitude changes.  Snd tries to 
+                                  choose a y axis limit that makes successive displays move smoothly.
+  <a name="sndopenalternate">open-alternate-sound</a> (name)     close the currently selected file, if any, and open <i>name</i>.
+                                  Returns #f if it can't open <i>name</i>, otherwise the new index.
+  <a name="sndrawopen">open-raw-sound</a>    (name chans srate format) 
+                                  open <i>name</i> as a raw (no header) sound in the layout specified.
+                                  If the file has a header, it is not ignored (use override-data-format
+                                  and friends if you want to ignore the header).
   <a name="sndopen">open-sound</a>        (name)        open <i>name</i> as in File menu Open option.
-  <a name="overridedataformat">override-data-format</a>(format <i>snd</i>)force data format (ignore header)
-  <a name="overridedatalocation">override-data-location</a>(loc <i>snd</i>) force data location (ignore header)
-  <a name="overridedatasize">override-data-size</a>(samps <i>snd</i>)   force data size (ignore header)
-  <a name="sndpeaks">peaks</a>             (<i>file snd chn</i>) display fft peak information.  If <i>file</i> is not null, write the information 
-                                  to that file, else post it in a help window (where it can be selected and 
-                                  pasted elsewhere). This function follows the state of the various 'sync'
-                                  buttons, given <i>snd</i> and <i>chn</i>.
-
-  <a name="sndplay">play</a>              (<i>samp snd chn sync end</i>) play <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i>. 
-                                 If 'sync' is #t, play all sounds syncd to snd.  If 'end' is not given, play until end of sound.
-                                  If 'end' is given (as a sample number), the actual end point may be off by a few samples; Snd
-                                  only checks on dac-buffer boundaries (normally around 256 samples) [<em class=error>no-such-file, no-such-sound</em>].
-  <a name="sndplayandwait">play-and-wait</a>     (<i>samp snd chn sync end</i>) play <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i> and wait for it to finish.
+  <a name="overridedataformat">override-data-format</a> (format <i>snd</i>)force data format (ignore header)
+  <a name="overridedatalocation">override-data-location</a> (loc <i>snd</i>) force data location (ignore header)
+  <a name="overridedatasize">override-data-size</a> (samps <i>snd</i>)   force data size (ignore header)
+  <a name="sndpeaks">peaks</a>             (<i>file snd chn</i>) display fft peak information.  If <i>file</i> is not null, write 
+                                  the information to that file, else post it in a help window 
+                                  (where it can be selected and pasted elsewhere).
+  <a name="sndplay">play</a>              (<i>samp snd chn sync end</i>) 
+                                  play <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i>. 
+                                  If 'sync' is #t, play all sounds syncd to snd.  If 'end' is not given, 
+                                  play until end of sound. If 'end' is given (as a sample number), the 
+                                  actual end point may be off by a few samples; Snd only checks on 
+                                  dac-buffer boundaries (normally around 256 samples).
+                                  [<em class=error>no-such-file, no-such-sound</em>]
+  <a name="sndplayandwait">play-and-wait</a>     (<i>samp snd chn sync end</i>) 
+                                  play <i>snd</i>'s channel <i>chn</i> starting from sample <i>samp</i> and wait 
+                                  for it to finish.
   <a name="progressreport">progress-report</a>   (pct <i>name current-channel channels snd</i>)
                                   The functions <i>start-progress-report</i>, <i>progress-report</i>, and 
                                   <i>finish-progress-report</i> handle the animated hour-glass icon used 
-                                  to amuse the idle user while some long computation is allegedly in progress.  
+                                  to amuse the idle user while some long computation is in progress.  
                                   The <i>pct</i> argument is a float between 0.0 and 1.0 which indicates how 
-                                  far along we are in the computation (there are actually only 15 or 20 separate 
+                                  far along we are in the computation (there are actually only 20 separate 
                                   icons, so there's no point in calling this more often than that).  
                                   start-progress-report posts the initial icon, and finish-progress-report 
                                   removes it.  If the icons are not available, a message is posted in 
@@ -1422,8 +1460,9 @@ same way.)
   <a name="sndpromptinminibuffer">prompt-in-minibuffer</a> (msg <i>callback snd</i>)
                                   Post <i>msg</i> in <i>snd</i>'s minibuffer, and when the user responds,
                                   call <i>callback</i> with the result and the <i>snd</i> (the sound's index).
-                                  If <i>callback</i> is specified it should be either #f or a function of two arguments [<em class=error>no-such-sound</em>].
-
+                                  If <i>callback</i> is specified it should be either #f or a function of 
+                                  two arguments [<em class=error>no-such-sound</em>].
+<small>
                                     (define prompt-callback (lambda (func snd) (set-sample 0 (func (sample 0)))))
                                     ;; here we're assuming the user will type a function in response to the prompt
                                     ;;   the value returned by the function will be the new sample 0 value
@@ -1433,13 +1472,13 @@ same way.)
                                     ;; sample 0 will be set to itself + .5
 
                                   See eval-over-selection in examp.scm for a more useful example.
-
+</small>
   <a name="sndreadonly">read-only</a>         (<em class=targ>snd</em>)         #t if <i>snd</i> is read-only, #f otherwise.
   redo              (<i>edits snd chn</i>) redo <i>edits</i> edits (default is 1) in <i>snd</i>'s channel <i>chn</i>.
   <a name="sndreportinminibuffer">report-in-minibuffer</a> (msg <i>snd</i>)  post <i>msg</i> in <i>snd</i>'s minibuffer [<em class=error>no-such-sound</em>].
   <a name="sndcontrolpanelrestore">restore-control-panel</a> (<em class=targ>snd</em>)     same as pushing the control panel '<a href="snd.html#savcontrols">r</a>' button.
-  <a name="reverbdecay">reverb-decay</a>          &optional (snd #t) The length (seconds) of the reverberation after the sound has finished (default 1.0).
-
+  <a name="reverbdecay">reverb-decay</a>      (<em class=narg>snd</em>)         The length (seconds) of the reverberation after the sound has 
+                                  finished (default: 1.0).
   <a name="sndreverbfeedback">reverb-feedback</a>   (<em class=targ>snd</em>)         <i>snd</i>'s reverb feedback coefficient.
   <a name="sndreverblength">reverb-length</a>     (<em class=targ>snd</em>)         <a href="snd.html#reverb">reverb</a> delay line length scaler (control panel).
   <a name="sndreverblowpass">reverb-lowpass</a>    (<em class=targ>snd</em>)         reverb low pass filter coefficient.
@@ -1449,7 +1488,7 @@ same way.)
   <a name="sndrevert">revert-sound</a>      (<i>snd</i>)         revert <i>snd</i> to saved state (undo all edits).
   <a name="sndrightsample">right-sample</a>      (<em class=targ>snd chn</em>)     position (samples) of right edge of time domain waveform.
   <a name="sndsample">sample</a>            (samp <i>snd chn</i>) value of sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
-                                  If the desired sample happens to fall outside the current in-core buffer 
+                                  If the desired sample happens to fall outside the current buffer 
                                   for the indicated channel, this function grinds to a halt -- if you're 
                                   running a loop through a bunch of samples, use the <a href="#samplereaders">sample-readers</a> 
                                   or samples-&gt;vct instead.
@@ -1460,9 +1499,9 @@ same way.)
   <a name="samples2sounddata">samples-&gt;sound-data</a> (<i>samp samps snd chn v pos sdchan</i>)  
                                   similar to samples-&gt;vct, but fill a sound-data object [<em class=error>no-such-edit</em>].
   <a name="samples2vct">samples-&gt;vct</a>      (<i>samp samps snd chn v pos</i>)  
-                                  return vct struct with same data as in <i>samples</i> call above.  If v (a vct object)
-                                  is provided, it is filled, rather than creating a new vct object.
-                                  <i>pos</i> is the edit history position to read (defaults to current position).
+                                  return vct struct with same data as in <i>samples</i> call above.  
+                                  If v (a vct object) is provided, it is filled, rather than creating 
+                                  a new vct object. <i>pos</i> is the edit history position to read.
   <a name="sndcontrolpanelsave">save-control-panel</a>(<em class=targ>snd</em>)         same as pushing the control panel '<a href="snd.html#savcontrols">s</a>' button.
   <a name="sndsave">save-sound</a>        (<em class=targ>snd</em>)         save <i>snd</i>; same as File menu's Save option.
   <a name="sndsaveas">save-sound-as</a>     (filename <i>snd header-type data-format srate channel</i>) 
@@ -1475,42 +1514,52 @@ same way.)
                                   In the latter case, the values are used one by one, applying each as 
                                   scale-by moves through the channels. If 'sync' is off, channel <i>chn</i> 
                                   is scaled (defaults to the currently selected channel).
-  <a name="sndscaleto">scale-to</a>          (<i>scalers snd chn</i>) <a href="snd.html#scaling">normalize</a> <i>snd</i> to <i>scalers</i>.
-  <a name="scanacrossallchans">scan-across-all-chans</a> (func <i>start end</i>) apply func to all open channels in parallel (see <a href="#scanning">Scanning Data</a>).
-  <a name="scanacrosschans">scan-across-chans</a> (func <i>start end</i>) apply func to currently syncd channels in parallel
-  <a name="scanacrosssoundchans">scan-across-sound-chans</a> (func <i>start end snd</i>) apply func to sound's channels in parallel
-  <a name="scanallchans">scan-all-chans</a>    (func <i>start end</i>) apply func to all open channels
-  <a name="scanchan">scan-chan</a>         (func <i>start end snd chn</i>) apply func to samples in current channel (see <a href="#scanning">Scanning Data</a>).
-  <a name="scanchans">scan-chans</a>        (func <i>start end</i>) apply func to currently syncd channels
-  <a name="scansoundchan">scan-sound-chans</a>  (func <i>start end snd</i>) apply func to current sound's channels
+  <a name="sndscaleto">scale-to</a>          (<i>scalers snd chn</i>) 
+                                  (see scale-by) -- <a href="snd.html#scaling">normalize</a> <i>snd</i> to <i>scalers</i>.
+  <a name="scanacrossallchans">scan-across-all-chans</a> (func <i>start end</i>)
+                                  apply func to all open channels in parallel (see <a href="#scanning">Scanning Data</a>).
+  <a name="scanacrosschans">scan-across-chans</a> (func <i>start end</i>) 
+                                  apply func to currently syncd channels in parallel
+  <a name="scanacrosssoundchans">scan-across-sound-chans</a> (func <i>start end snd</i>) 
+                                  apply func to sound's channels in parallel
+  <a name="scanallchans">scan-all-chans</a>    (func <i>start end</i>) 
+                                  apply func to all open channels
+  <a name="scanchan">scan-chan</a>         (func <i>start end snd chn</i>) 
+                                  apply func to samples in current channel (see <a href="#scanning">Scanning Data</a>).
+  <a name="scanchans">scan-chans</a>        (func <i>start end</i>) 
+                                  apply func to currently syncd channels
+  <a name="scansoundchan">scan-sound-chans</a>  (func <i>start end snd</i>) 
+                                  apply func to current sound's channels
   <a name="sndselectchannel">select-channel</a>    (<i>chn</i>)         select channel <i>chn</i>.
   <a name="sndselectsound">select-sound</a>      (<i>snd</i>)         select sound <i>snd</i>.
   <a name="sndselectedchannel">selected-channel</a>  (<i>snd</i>)         selected channel in <i>snd</i>.
   <a name="sndselectedsound">selected-sound</a>    ()            selected sound (index).
-  <a name="contrastfunc">set-contrast-func</a> (func)              <i>func</i>, a function of two arguments, the current sample
-                                 and the current 'contrast' slider setting, returns a new sample, the result of the
-                                 control panel contrast function; <i>func</i> replaces the built-in contrast function.
-                                 Pass #f to return to the built-in version. Contrast-func returns this function.
-
+  <a name="contrastfunc">set-contrast-func</a> (func)        set contrast function to <i>func</i>, a function of two arguments, 
+                                  the current sample and the current 'contrast' slider setting, 
+                                  returning a new sample, the result of the control panel contrast 
+                                  function; <i>func</i> replaces the built-in contrast function.
+                                  Pass #f to return to the built-in version. Contrast-func returns 
+                                  this function.
   <a name="expandfuncs">set-expand-funcs</a>  (expand make-expand free-expand)
-                                 This function replaces the built-in Snd (control panel) expand with your own.
-                                 See set-reverb-funcs below for an example.  The three arguments are
-                                 the expand replacement, the function that makes or initializes any
-                                 state the new expand function will need, and the function to free that
-                                 state.  Set these to #f to return to the built-in versions.  The
-                                 make-expand function takes three arguments, the current sound index,
-                                 the current sampling-rate, and the initial expansion value (from the
-                                 control panel); it can return an SCM object that is subsequently
-                                 passed to the expand and free-expand functions.  The expand function
-                                 takes 3 arguments, the thing returned by make-expand, the current
-                                 sample (a float), and the current expansion slider value; it should
-                                 return a float representing the new sample value.  The corresponding
-                                 function reverb-funcs returns a list containing the three functions.
-                                 expand-funcs returns a list containing these three functions.
-  <a name="sndsetreadonly">set-read-only</a>     (<i>read-only</i> <em class=targ>snd</em>)     set <i>snd</i>'s write-protection to be <i>read-only</i> (default #t).
+                                  This function replaces the built-in Snd (control panel) expand with your own.
+                                  See set-reverb-funcs below for an example.  The three arguments are
+                                  the expand replacement, the function that makes or initializes any
+                                  state the new expand function will need, and the function to free that
+                                  state.  Set these to #f to return to the built-in versions.  The
+                                  make-expand function takes three arguments, the current sound index,
+                                  the current sampling-rate, and the initial expansion value (from the
+                                  control panel); it can return an SCM object that is subsequently
+                                  passed to the expand and free-expand functions.  The expand function
+                                  takes 3 arguments, the thing returned by make-expand, the current
+                                  sample (a float), and the current expansion slider value; it should
+                                  return a float representing the new sample value.  The corresponding
+                                  function reverb-funcs returns a list containing the three functions.
+                                  expand-funcs returns a list containing these three functions.
+  <a name="sndsetreadonly">set-read-only</a>     (<i>read-only</i> <em class=targ>snd</em>)     
+                                  set <i>snd</i>'s write-protection to be <i>read-only</i> (default #t).
   <a name="reverbfuncs">set-reverb-funcs</a>  (reverb make-reverb free-reverb)
                                   This function replaces the built-in Snd reverb with your own.
-
+<small>
                                    (define outputs (make-vector 4))
                                    (define delay-line #f)
                                    (define delay-time 0.5)
@@ -1525,50 +1574,56 @@ same way.)
                                      (lambda (ptr)
                                        ptr)
                                      )
-
-                                 The three arguments are the reverb, the function that makes or
-                                 initializes the reverb, and the function to free the reverb.  Set
-                                 these to #f to return to the built-in versions.  The make-reverb
-                                 function takes three arguments, the current value of the "len" slider,
-                                 the current sampling-rate and the number of output channels active; it
-                                 returns an SCM object that is subsequently passed to the reverb and
-                                 free-reverb functions (ignored in the example above, as is the chans
-                                 argument to the reverb function).  The reverb function takes 3
-                                 arguments, the thing returned by make-reverb, the current reverb input
-                                 sample, and the number of channels of output needed; it should return
-                                 a vector of output reverb contributions.
-
-  <a name="sndsetsample">set-sample</a>        (samp value <i>snd chn</i>) set <i>snd</i>'s channel <i>chn</i>'s sample <i>samp</i> to <i>value</i>.
-  <a name="sndsetsamples">set-samples</a>       (samp samps data <i>snd chn trunc</i>) set <i>snd</i>'s channel <i>chn</i>'s samples starting from
-                                sample <i>samp</i> for <i>samps</i> samples to the values in <i>data</i>.
-                                <small>(If <i>samp</i> is beyond the end of the file, the file is first zero-padded to reach it).</small>
-                                <i>data</i> can be a filename; Snd assumes any such file is temporary; it will be 
-                                deleted when no longer needed.  If <i>trunc</i> is #t and <i>samp</i> is 0, the
-                                sound is truncated (if necessary) to reflect the end of <i>data</i>.
-  <a name="sndsetxbounds">set-x-bounds</a>      (x0 x1 <i>snd chn</i>)     set the display window x axis bounds to x0 and x1 (seconds) [<em class=error>impossible-bounds</em>].
-  <a name="sndsetybounds">set-y-bounds</a>      (<i>y0 y1 snd chn</i>)     set the display window y axis bounds to y0 and y1. If y1 is 
-                                omitted, it is set from y0; if y0 is also omitted, the y axis bounds 
-                                are set to reflect the channel's current max amp [<em class=error>impossible-bounds</em>].
-
+</small>
+                                  The three arguments are the reverb, the function that makes or
+                                  initializes the reverb, and the function to free the reverb.  Set
+                                  these to #f to return to the built-in versions.  The make-reverb
+                                  function takes three arguments, the current value of the "len" slider,
+                                  the current sampling-rate and the number of output channels active; it
+                                  returns an SCM object that is subsequently passed to the reverb and
+                                  free-reverb functions (ignored in the example above, as is the chans
+                                  argument to the reverb function).  The reverb function takes 3
+                                  arguments, the thing returned by make-reverb, the current reverb input
+                                  sample, and the number of channels of output needed; it should return
+                                  a vector of output reverb contributions.
+  <a name="sndsetsample">set-sample</a>        (samp value <i>snd chn</i>) 
+                                  set <i>snd</i>'s channel <i>chn</i>'s sample <i>samp</i> to <i>value</i>.
+  <a name="sndsetsamples">set-samples</a>       (samp samps data <i>snd chn trunc</i>) 
+                                  set <i>snd</i>'s channel <i>chn</i>'s samples starting from
+                                  sample <i>samp</i> for <i>samps</i> samples to the values in <i>data</i>.
+                                  <small>(If <i>samp</i> is beyond the end of the file, the file is first zero-padded to reach it).</small>
+                                  <i>data</i> can be a filename; Snd assumes any such file is temporary; it will
+                                  be deleted when no longer needed.  If <i>trunc</i> is #t and <i>samp</i> is 0, the
+                                  sound is truncated (if necessary) to reflect the end of <i>data</i>.
+  <a name="sndsetxbounds">set-x-bounds</a>      (x0 x1 <i>snd chn</i>)     
+                                  set the display window x axis bounds to x0 and x1 (seconds) 
+                                  [<em class=error>impossible-bounds</em>].
+  <a name="sndsetybounds">set-y-bounds</a>      (<i>y0 y1 snd chn</i>)     
+                                  set the display window y axis bounds to y0 and y1. If y1 is 
+                                  omitted, it is set from y0; if y0 is also omitted, the y axis bounds 
+                                  are set to reflect the channel's current max amp [<em class=error>impossible-bounds</em>].
   <a name="sndshortfilename">short-file-name</a>   (<em class=targ>snd</em>)         return the brief (no directory) form of <i>snd</i>'s filename.
-  <a name="showaxes">show-axes</a>             show-all-axes
-                                If show-all-axes, display x and y axes; if show-ax-axis, just one (bottom) x axis is 
-                                displayed, reducing screen clutter. The other choice is show-no-axes.
-
-  <a name="showfftpeaks">show-fft-peaks</a>    <i>(snd #t) (chn #t)</i>      If #t, fft peak information is included in the fft display (default: #f).
-                                (This is the 'peaks' button in the <a href="snd.html#viewfft">Transform</a> options dialog).
-  <a name="showmarks">show-marks</a>    <i>(snd #t) (chn #t)</i>          If #t, marks are displayed.  This is the '<a href="snd.html#marks">Show marks</a>' View menu option.
-  <a name="showmixconsoles">show-mix-consoles</a>     #t      If #t, mix consoles are displayed.  This is the '<a href="snd.html#consoles">Show consoles</a>'
-                                View menu option.
-  <a name="showmixwaveforms">show-mix-waveforms</a>    #t      If #t, mixer console displays the waveform of the sound being mixed.
-  <a name="lshowselectiontransform">show-selection-transform</a> #f   If #t, display the transform of the current active selection, if any.
-  <a name="showyzero">show-y-zero</a>  <i>(snd #t) (chn #t)</i>      If #t, the y=0 axis is displayed.  This is the '<a href="snd.html#viewy0">Show Y=0</a>' View menu option.
+  <a name="showaxes">show-axes</a>         (<em class=narg>snd chn</em>)     (default: show-all-axes)
+                                  If show-all-axes, display x and y axes; if show-x-axis, 
+                                  just one (bottom) x axis is displayed, reducing screen clutter. 
+                                  The other choice is show-no-axes.
+  <a name="showfftpeaks">show-fft-peaks</a>    (<em class=narg>snd chn</em>)     If #t, fft peak information is included in the fft display (default: #f).
+                                  (This is the 'peaks' button in the <a href="snd.html#viewfft">Transform</a> options dialog).
+  <a name="showmarks">show-marks</a>        (<em class=narg>snd chn</em>)     If #t, marks are displayed.  This is the '<a href="snd.html#marks">Show marks</a>' View menu option.
+  <a name="showmixconsoles">show-mix-consoles</a> (<em class=narg>snd chn</em>)     If #t (the default), mix consoles are displayed.  This is 
+                                  the '<a href="snd.html#consoles">Show consoles</a>' View menu option.
+  <a name="showmixwaveforms">show-mix-waveforms</a>(<em class=narg>snd chn</em>)     If #t (default = #f), mixer console displays the waveform of the sound
+                                  being mixed.
+  <a name="showyzero">show-y-zero</a>       (<em class=narg>snd chn</em>)     If #t, the y=0 axis is displayed.  This is the '<a href="snd.html#viewy0">Show Y=0</a>' View menu option.
   <a name="sndshowingcontrols">showing-controls</a>  (<em class=targ>snd</em>)         #t if <i>snd</i>'s control panel is open.
-  <a name="sndsmooth">smooth</a>            (beg num <i>snd chn</i>) apply a smoothing function to the indicated data.
+  <a name="sndsmooth">smooth</a>            (beg num <i>snd chn</i>) 
+                                  apply a smoothing function to the indicated data.
   <a name="sndok">sound?</a>            (<i>snd</i>)         #t if <i>snd</i> (an index) is active.
   <a name="soundfontinfo">soundfont-info</a>    (<i>snd</i>)         return a list of lists describing <i>snd</i> as a soundfont.  Each inner list
-                                  consists of the sound name, start point, loop start, and loop end.  To set
-                                  a named mark at the start of each sound with un-named marks at the loop points:
+                                  consists of the sound name, start point, loop start, and loop end.
+<small>  
+                                  To set a named mark at the start of each sound with un-named marks 
+                                  at the loop points:
 
                                     (define mark-sf2 
                                       (lambda ()
@@ -1581,7 +1636,9 @@ same way.)
                                                                 (add-mark (cadddr vals))
                                                                 (sf2it (cdr lst)))))))
                                            (sf2it (<em class=red>soundfont-info</em>)))))
+</small>
   <a name="sounds">sounds</a>            ()            list of currently active sounds (id numbers).
+<small>
                                   A common Snd trope is (map func (sounds)): (map maxamp (sounds)).  This can be
                                   extended to provide a complete list of sounds and channels (since many Snd functions
                                   take the "snd chn" arguments:
@@ -1599,34 +1656,35 @@ same way.)
                                              (list sndlist chnlist))))
 
                                       (apply map maxamp (all-chans))
-
+</small>
   <a name="soundtotemp">sound-to-temp</a>     (<i>type format</i>) write out sync'd edit state as a temp file (see <a href="grfsnd.html#programs">external programs</a>).
   <a name="soundtotemps">sound-to-temps</a>    (<i>type format</i>) write out sync'd edit state as temp files (see <a href="grfsnd.html#programs">external programs</a>).
 
-  <a name="spectrocutoff">spectro-cutoff</a>    <i>(snd #t) (chn #t)</i>   The amount of the frequency domain to include in the spectrum display (default = 1.0).
-                                This number changes as you drag the frequency axis, for example.  
-                                This is the slider labelled '% of spectrum' in the View Orientation dialog.
-  <a name="spectrohop">spectro-hop</a>         <i>(snd #t) (chn #t)</i> The distance (pixels) moved between successive spectrogram traces (default = 4).
-                                This is the slider labelled 'hop' in the Orientation dialog.
-  <a name="spectrostart">spectro-start</a>     <i>(snd #t) (chn #t)</i>   The start point of the frequency domain to include in the spectrum display (default 0.0).
-  <a name="spectroxangle">spectro-x-angle</a>   <i>(snd #t) (chn #t)</i>   Default spectrogram x-axis viewing angle (default 90.0).
-  <a name="spectroxscale">spectro-x-scale</a>   <i>(snd #t) (chn #t)</i>   Default scaler (stretch) along the spectrogram x axis (default 1.0).
-  <a name="spectroyangle">spectro-y-angle</a>   <i>(snd #t) (chn #t)</i>   Same for y-axis (default 0.0).
-  <a name="spectroyscale">spectro-y-scale</a>   <i>(snd #t) (chn #t)</i>   Same for y-axis (default 1.0).
-  <a name="spectrozangle">spectro-z-angle</a>  <i>(snd #t) (chn #t)</i>    Same for z-axis (default -2.0).
-  <a name="spectrozscale">spectro-z-scale</a>   <i>(snd #t) (chn #t)</i>   Same for z-axis (default 0.1). For all of these variables, the easiest way to
-                                see what they refer to is to run the Orientation dialog with a 
-                                spectrogram displayed.
+  <a name="spectrocutoff">spectro-cutoff</a>    (<em class=narg>snd chn</em>)     The amount of the frequency domain to include in the spectrum 
+                                  display (default: 1.0). This number changes as you drag the frequency
+                                  axis. This is the slider labelled '% of spectrum' in the View 
+                                  Orientation dialog.
+  <a name="spectrohop">spectro-hop</a>       (<em class=narg>snd chn</em>)     The distance (pixels) moved between successive spectrogram traces 
+                                  (default = 4).  This is the 'hop' slider in the Orientation dialog.
+  <a name="spectrostart">spectro-start</a>     (<em class=narg>snd chn</em>)     The start point of the frequency domain to include in the spectrum
+                                  display (default 0.0).
+  <a name="spectroxangle">spectro-x-angle</a>   (<em class=narg>snd chn</em>)     Default spectrogram x-axis viewing angle (default 90.0).
+  <a name="spectroxscale">spectro-x-scale</a>   (<em class=narg>snd chn</em>)     Default scaler (stretch) along the spectrogram x axis (default 1.0).
+  <a name="spectroyangle">spectro-y-angle</a>   (<em class=narg>snd chn</em>)     Same for y-axis (default 0.0).
+  <a name="spectroyscale">spectro-y-scale</a>   (<em class=narg>snd chn</em>)     Same for y-axis (default 1.0).
+  <a name="spectrozangle">spectro-z-angle</a>   (<em class=narg>snd chn</em>)     Same for z-axis (default -2.0).
+  <a name="spectrozscale">spectro-z-scale</a>   (<em class=narg>snd chn</em>)     Same for z-axis (default 0.1).
   <a name="sndspeed">speed</a>             (<em class=targ>snd</em>)         current <a href="snd.html#speed">speed</a> (control panel).
-  <a name="lspeedstyle">speed-style</a>           <i>speed-as-float</i>
-                                In the control panel, the 'speed' control can be interpreted as a continuum 
-                                (<i>speed-as-float</i>), as a just-intonation ratio of relatively small integers 
-                                (<i>speed-as-ratio</i>) or as a step in a microtonal scale (<i>speed-as-semitone</i>).  
-                                The default is 12 tones to the octave.  See the Speed style Options menu option.
-  <a name="speedtones">speed-tones</a>           12      The number of tones per octave in the <i>speed-as-semitone</i> speed style.
+  <a name="lspeedstyle">speed-style</a>       (<em class=narg>snd</em>)         In the control panel, the 'speed' control can be interpreted as a 
+                                  float, (<i>speed-as-float</i>, the default), as a just-intonation ratio 
+                                  of relatively small integers (<i>speed-as-ratio</i>) or as a step in a 
+                                  microtonal scale (<i>speed-as-semitone</i>).  
+  <a name="speedtones">speed-tones</a>       (<em class=narg>snd</em>)         The number of tones per octave in the <i>speed-as-semitone</i> speed 
+                                  style (default: 12).
   <a name="squelchupdate">squelch-update</a>    (<em class=targ>snd chn</em>)     #t graphic updates are currently squelched (turned off).
   <a name="sndsrate">srate</a>             (<em class=targ>snd</em>)         <i>snd</i>'s sampling rate.
-  <a name="sndsrc">src-sound</a>         (num-or-env <i>base snd chn</i>) sampling rate conversion using 'warped sinc interpolation'.  The
+  <a name="sndsrc">src-sound</a>         (num-or-env <i>base snd chn</i>) 
+                                  sampling rate conversion using 'warped sinc interpolation'.  The
                                   argument <i>num-or-env</i> can be either a number or an envelope.  In 
                                   the latter case, <i>base</i> sets the segment base (default is 1.0 = linear).
                                   A value greater than 1.0 causes the sound to be transposed up.
@@ -1637,53 +1695,58 @@ same way.)
   <a name="startprogressreport">start-progress-report</a> (<i>snd</i>)     see <a href="#progressreport">progress-report</a>.
   <a name="sndstop">stop-playing</a>      (<i>snd</i>)         if <i>snd</i> is playing, stop [<em class=error>no-such-sound</em>].
   <a name="swapchannels">swap-channels</a>     (<i>snd1 chn1 snd2 chn2 beg dur</i>)
-                                  Swap the indicated channels, between beg and beg+dur (default is whole channel).
+                                  Swap the indicated channels, between beg and beg+dur.
   <a name="sndsyncing">syncing</a>           (<em class=targ>snd</em>)         <i>snd</i>'s 'sync' value (an integer, 0=off)
-  <a name="sndtempfilenames">temp-filenames</a>    (data)        return vector of temp file names (see <a href="grfsnd.html#programs">external programs</a>).
-
-  <a name="temptosound">temp-to-sound</a>     (data name origin) read sync'd edit state from temp file (see <a href="grfsnd.html#programs">external programs</a>).
-  <a name="tempstosound">temps-to-sound</a>    (data names origin) read sync'd edit state from temp files (see <a href="grfsnd.html#programs">external programs</a>).
+  <a name="temptosound">temp-to-sound</a>     (data name origin) 
+                                  read sync'd edit state from temp file (see <a href="grfsnd.html#programs">external programs</a>).
+  <a name="tempstosound">temps-to-sound</a>    (data names origin) 
+                                  read sync'd edit state from temp files (see <a href="grfsnd.html#programs">external programs</a>).
   <a name="sndtransformsample">transform-sample</a>  (<i>bin slice snd chn</i>)
                                   return the current value of the transform (if any) in <i>bin</i> and (if a 
                                   sonogram or spectrogram) <i>slice</i> in <i>snd</i>'s channel <i>chn</i> [<em class=error>no-such-sample</em>].
   <a name="sndtransformsamples">transform-samples</a> (<i>snd chn</i>)     return the transform data currently in <i>snd</i>'s channel <i>chn</i>.
-  <a name="transformsamples2vct">transform-samples-&gt;vct</a> (<i>snd chn v</i>) return vct struct with the transform data currently in <i>snd</i>'s channel <i>chn</i>.
-                                  If v (a vct object) is provided, it is filled, rather than creating a new vct object.
+  <a name="transformsamples2vct">transform-samples-&gt;vct</a> (<i>snd chn v</i>) 
+                                  return vct struct with the transform data currently in <i>snd</i>'s channel <i>chn</i>.
+                                  If v (a vct) is provided, it is filled, rather than creating a new vct.
   <a name="transformsize">transform-size</a>    (<i>snd chn</i>)     returns either 0 if no transform, fft-size if normal-fft, 
                                   or (list full-size bins slices) if sonogram or spectrogram.
-  <a name="ltransformtype">transform-type</a>        <i>fourier-transform</i>
-                                The spectrum transform type.  Other types are given <a href="#fouriertransform">above</a>.
+  <a name="ltransformtype">transform-type</a>    (<em class=narg>snd chn</em>)     The spectrum transform type (default: <i>fourier-transform</i>).
+<small>
+                                  fourier-transform  wavelet-transform   hankel-transform    chebyshev-transform
+                                  autocorrelation    walsh-transform     hadamard-transform  cepstrum
+</small>
   undo              (<i>edits snd chn</i>) undo <i>edits</i> edits (default 1) in <i>snd</i>'s channel <i>chn</i>.
-  <a name="snduniting">uniting</a>           (<em class=targ>snd</em>)         0 if channels are not superimposed or combined ('unite' button is off).
+  <a name="snduniting">uniting</a>           (<em class=targ>snd</em>)         #f if channels are not superimposed or combined ('unite' button is off).
+                                  The global name of this is channel-style.
   <a name="sndupdatefft">update-fft</a>        (<i>snd chn</i>)     recalculate <i>chn's</i> fft.
   <a name="sndupdategraph">update-graph</a>      (<i>snd chn</i>)     redisplay <i>chn's</i> graph(s).
   <a name="sndupdate">update-sound</a>      (snd)         update <i>snd</i> (re-reads data from disk, flushing any pending edits).
   <a name="sndview">view-sound</a>        (filename)    open <i>filename</i> read-only.
-  <a name="verbosecursor">verbose-cursor</a>   <i>(snd #t) (chn #t)</i>     If #t, the cursor's position and other information is
-                                constantly displayed in the minibuffer.  This is the View menu's Verbose cursor option (default: #f).
-  <a name="wavelettype">wavelet-type</a>     <i>(snd #t) (chn #t)</i> If <i><a href="#ltransformtype">transform-type</a></i> is <i>wavelet-transform</i>, <i>wavelet-type</i> selects which 
-                                wavelet is used.  The list of available wavelets is in the Transform Dialog.
-                                There are currently 20 choices, so this variable goes from 0 to 19 (default = 0).
+  <a name="verbosecursor">verbose-cursor</a>    (<em class=narg>snd chn</em>)     If #t, the cursor's position and other information is constantly 
+                                  displayed in the minibuffer.  This is the View:Verbose cursor option 
+                                  (default: #f).
+  <a name="wavelettype">wavelet-type</a>      (<em class=narg>snd chn</em>)     If <i><a href="#ltransformtype">transform-type</a></i> is <i>wavelet-transform</i>, <i>wavelet-type</i> selects which 
+                                  wavelet is used.  The list of available wavelets is in the Transform 
+                                  Dialog. There are currently 20 choices, so this variable goes from 
+                                  0 to 19 (default: 0).
   <a name="sndwaving">waving</a>            (<em class=targ>snd chn</em>)     the state of <i>snd</i>'s channel <i>chn</i>'s 'w' button.
-  <a name="wavo">wavo</a>      <i>(snd #t) (chn #t)</i>      If #t, the time domain waveform is displayed as a '<a href="snd.html#wavogram">wavogram</a>'.
-  <a name="wavohop">wavo-hop</a> <i>(snd #t) (chn #t)</i>                    This sets the distance upward between wavogram traces; that is,
-                                the smaller this number, the more traces can be displayed (default=3).
-  <a name="wavotrace">wavo-trace</a>       <i>(snd #t) (chn #t)</i>      This sets the length (samples) of each wavogram trace (default=64).
-  <a name="xaxisstyle">x-axis-style</a>          <i>x-in-seconds</i>
-                                The x axis labelling of the time domain waveform can be in seconds
-                                (<i>x-in-seconds</i>), in samples (<i>x-in-samples</i>), or expressed
-                                as a percentage of the overall duration (useful in envelope definitions).
-                                The latter is <i>x-to-one</i>. This is the View menu 'X-axis units' option.
+  <a name="wavo">wavo</a>              (<em class=narg>snd chn</em>)     If #t, the time domain waveform is displayed as a '<a href="snd.html#wavogram">wavogram</a>'.
+  <a name="wavohop">wavo-hop</a>          (<em class=narg>snd chn</em>)     This sets the distance upward between wavogram traces; that is,
+                                  the smaller this number, the more traces can be displayed (default: 3).
+  <a name="wavotrace">wavo-trace</a>        (<em class=narg>snd chn</em>)     This sets the length (samples) of each wavogram trace (default: 64).
+  <a name="xaxisstyle">x-axis-style</a>      (<em class=narg>snd chn</em>)     The x axis labelling of the time domain waveform can be in seconds
+                                  (<i>x-in-seconds</i>), in samples (<i>x-in-samples</i>), or expressed
+                                  as a percentage of the overall duration (useful in envelope definitions).
+                                  The latter is <i>x-to-one</i>. This is the View menu 'X-axis units' option.
+                                  (default: <i>x-in-seconds</i>). 
   <a name="sndxbounds">x-bounds</a>          (<i>snd chn</i>)     return (x0 . x1) -- current x axis time domain bounds in seconds.
   <a name="xpositionslider">x-position-slider</a> (<em class=targ>snd chn</em>)     value of x axis position slider.
   <a name="xzoomslider">x-zoom-slider</a>     (<em class=targ>snd chn</em>)     value of x axis zoom slider.
   <a name="sndybounds">y-bounds</a>          (<i>snd chn</i>)     return (y0 . y1) -- current y axis bounds.
   <a name="ypositionslider">y-position-slider</a> (<em class=targ>snd chn</em>)     value of y axis position slider.
   <a name="yzoomslider">y-zoom-slider</a>     (<em class=targ>snd chn</em>)     value of y axis zoom slider.
-  <a name="zeropad">zero-pad</a>        <i>(snd #t) (chn #t)</i>   fft zero pad size as a multiple of the fft size; (set-zero-pad 1) gives you
-                                half data, half zeros (default: 0).
-  <a name="setzoomfocusstyle"></a><a name="zoomfocusstyle">zoom-focus-style</a>      <i>focus-active</i>
-                                This determines what a zoom action focuses (centers) on.  See <a href="snd.html#zoomoption">Zoom options</a>.
+  <a name="zeropad">zero-pad</a>          (<em class=narg>snd chn</em>)     fft zero pad size as a multiple of the fft size; 
+                                  (set-zero-pad 1) gives you half data, half zeros (default: 0).
 </pre>
 
 <h4><a name="customcontrols">the control panel</a></h4>
@@ -1747,7 +1810,8 @@ one, and are exposed in many functions described above as the <i>pos</i> argumen
                                 If <i>chn</i> is omitted, all <i>snd</i>'s channels are saved; if <i>snd</i> is omitted,
                                 all edit list are saved.  If the underlying files are not subsequently 
                                 changed, you can load this file to restore the current edit list state.
-                                Returns #t if successful (file opened ok); if something went wrong [<em class=error>cannot-save</em>].
+                                Returns #t if successful (file opened ok); if something went wrong 
+                                [<em class=error>cannot-save</em>].
   <a name="sndredo">redo</a>        (<i>edits snd chn</i>) redo <i>edits</i> edits (default is 1) in <i>snd</i>'s channel <i>chn</i>.
   <a name="sndundo">undo</a>        (<i>edits snd chn</i>) undo <i>edits</i> edits (default 1) in <i>snd</i>'s channel <i>chn</i>.
 </pre>
@@ -2324,39 +2388,39 @@ Axis choice:
 <p>These functions don't seem to fit anywhere else:</p>
 <pre>
   <a name="sndclearaudioinputs">clear-audio-inputs</a>()            in Linux/OSS, try to reduce soundcard background racket.
-  <a name="sndclosesoundfile">close-sound-file</a>  (fd bytes)    close file updating header to report <i>bytes</i> bytes of data. (See <a href="#sndopensoundfile">open-sound-file</a>).
+  <a name="sndclosesoundfile">close-sound-file</a>  (fd bytes)    close file updating header to report <i>bytes</i> bytes of data.
   <a name="sndopensoundfile">open-sound-file</a>   (<i>name chans srate comment</i>)        
                                   Open (create) a sound file <i>name</i> (defaults to "test.snd" or "test.wav").  
                                   It is assumed that the data will be floats in the native format (written by 
                                   the caller interleaving channels), and that the file will be closed by 
-                                  <a href="#sndclosesoundfile">close-sound-file</a>. One simple way to write the data is to call 
+                                  close-sound-file. One simple way to write the data is to call 
                                   <a href="#vct2soundfile">vct-&gt;sound-file</a>.
-
-
   <a name="abort">abort</a>             ()            drop into gdb
   <a name="sndabort">abort?</a>            ()            check for C-g to interrupt on-going computation (and let other UI 
                                   events through).
   <a name="addsoundfileextension">add-sound-file-extension</a> (ext)  add <i>ext</i> to the list of sound file extensions.
+                                  The initial list is ("snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve")
   <a name="sndautocorrelate">autocorrelate</a>     (data)        return (in place) autocorrelation of <i>data</i>
   <a name="sndbindkey">bind-key</a>          (key state func <i>ignore-prefix</i>) 
                                   Cause <i>key</i> (an integer) with modifiers <i>state</i> to evaluate <i>code</i>.
-                                  as in the hook functions: 
-
+<small>
                                       (bind-key (char-&gt;integer #\a) 4 (lambda () (snd-print \"hi\")))
 
                                   The modifier state is a combination of shift: 1, control: 4, meta: 8, 
                                   so this call causes C-a to print "hi" in the lisp listener.  The 
-                                  value returned should be one of the <a href="#cursorchoices">cursor choices</a> telling Snd what 
+                                  value returned should be one of the cursor choices (see below) telling Snd what 
                                   action (if any) to take after evaluating <i>code</i>.  If <i>ignore-prefix</i> is 
                                   #t, Snd does not repeat the key based on the prefix argument (<a href="snd.html#kcu">C-u</a>) --
                                   in this case, the <i>code</i> can examine <a href="#prefixarg">prefix-arg</a> if desired.
-                                  See examp.scm for several examples.
+                                  Possible return values are:
 
+                                  cursor-in-view     cursor-on-left     cursor-on-right   cursor-in-middle 
+                                  cursor-update-display cursor-no-action cursor-claim-selection keyboard-no-action
+</small>
   <a name="sndconvolve">convolve-arrays</a>   (rl1 rl2)     convolve vectors <i>rl1</i> with <i>rl2</i>.  Result returned in rl1.
                                   rl1 should be large enough to hold the full convolution result.
                                   As a special dispensation for forgetful users, if rl1 is a file
                                   name and rl2 is not a vector, <i>convolve-with</i> is called instead.
-
   <a name="lcountmatches">count-matches</a>     (expr <i>sample snd chn</i>) 
                                   return how many samples satisfy the expression <i>expr</i>.  <i>expr</i>
                                   is a Scheme function of one argument (the current sample value). <i>sample</i> 
@@ -2365,8 +2429,8 @@ Axis choice:
                                      (count-matches (lambda (y) (&gt; (or y 0.0) .1)))
 
   <a name="sndexit">exit</a>              ()            exit Snd.
-  <a name="sndfft">fft</a>               (rl im <i>sgn</i>)   perform an FFT on <i>rl</i> and <i>im</i> (the real and imaginary parts 
-                                  of the input data. <i>sgn</i> is 1 for an FFT, -1 for an inverse FFT; (default 1).
+  <a name="sndfft">fft</a>               (rl im <i>sgn</i>)   perform an FFT on <i>rl</i> and <i>im</i> (the real and imaginary parts of the
+                                  input data. <i>sgn</i> is 1 for an FFT, -1 for an inverse FFT; (default 1).
   <a name="lfind">find</a>              (expr <i>sample snd chn</i>) 
                                   find the sample that satisfies the Scheme function <i>expr</i>. <i>sample</i>
                                   determines where to start the search.
@@ -2374,23 +2438,26 @@ Axis choice:
   <a name="gin">in</a>                (ms thunk)    <i>ms</i> milliseconds from now, evaluate <i>thunk</i>, a function of no arguments.
   <a name="sndkey">key</a>               (key state <i>snd chn</i>) 
                                   execute the keyboard command <i>key</i> with modifier keys <i>state</i>.
-                                  shift: 1, control: 4, meta: 8 (see /usr/include/X11/X.h ControlMask et al).
+                                  shift: 1, control: 4, meta: 8
   <a name="sndnormalizeview">normalize-view</a>    ()            normalize Snd display as in View menu <a href="snd.html#viewnormalize">Normalize</a> option.
   <a name="sndpreloaddirectory">preload-directory</a> (dir)         preload sound files from directory <i>dir</i> (see -<a href="snd.html#minusp">p</a>).
   <a name="sndpreloadfile">preload-file</a>      (file)        preload <i>file</i> (see View menu's <a href="snd.html#prevfiles">View Files</a> option).
   <a name="sndsaveenvelopes">save-envelopes</a>    (filename)    save envelope editor contents in <i>filename</i> [<em class=error>cannot-save</em>].
-  <a name="sndsavemacros">save-macros</a>       ()            save <a href="snd.html#kbdmacros">keyboard macros</a> in Snd's init file (.snd).
+  <a name="sndsavemacros">save-macros</a>       ()            save <a href="snd.html#kbdmacros">keyboard macros</a> in Snd's init file (~/.snd).
   <a name="sndsaveoptions">save-options</a>      (filename)    save options in <i>filename</i> [<em class=error>cannot-save</em>].
   <a name="sndsavestate">save-state</a>        (filename)    save current state of Snd in <i>filename</i>.
   <a name="sndapropos">snd-apropos</a>       (name)        return possible completions of <i>name</i> (a string or a symbol).
   <a name="snderror">snd-error</a>         (str)         report error message <i>str</i>, return <i>str</i>.
-  <a name="sndhelp">snd-help</a>          (obj)         returns (as a string) the help text associated with <i>obj</i>, (snd-help vct-ref).
+  <a name="sndhelp">snd-help</a>          (obj)         returns (as a string) the help text associated with <i>obj</i>,
+                                  for example: (snd-help vct-ref).
+<small>
                                   For scheme functions, this returns the procedure-documentation, if any.  To go to the
                                   HTML documentation for a given procedure, load index.scm and use the html function.
                                   To get a more global help function, (use-modules (ice-9 session)).  This loads Guile's
                                   help (and apropos) support which uses 'regexps' and so forth.
-  <a name="sndprint">snd-print</a>         (str)         display <i>str</i> in lisp listener, return <i>str</i>.  (This is intended
-                                  as a debugging aid -- there's still nothing like a lowly print statement).
+</small>
+  <a name="sndprint">snd-print</a>         (str)         display <i>str</i> in lisp listener, return <i>str</i>.  (This is intended as a
+                                  debugging aid -- there's still nothing like a lowly print statement).
   <a name="sndspectrum">snd-spectrum</a>      (data window length <i>linear</i>)
                                   return spectrum of <i>data</i> (type vct) using fft-window <i>win</i>.
                                   length of data (and fft) is <i>length</i>.
@@ -2398,6 +2465,7 @@ Axis choice:
   <a name="sndversion">snd-version</a>       ()            Snd version (a string).
   <a name="sndwarning">snd-warning</a>       (str)         report warning message <i>str</i>, return <i>str</i>.
   <a name="soundfilesindirectory">sound-files-in-directory</a> (dir)  return a vector of sound file names.
+<small>
                                   This is useful for "batch" processing of sounds.  The following,
                                   for example, prints the names of all the stereo AIFC files it finds:
 
@@ -2410,14 +2478,15 @@ Axis choice:
                                                (snd-print filename)))))
 
                                   See also map-sound-files in examp.scm.
-
+</small>
   <a name="sndunbindkey">unbind-key</a>  (key state) cause <i>key</i> with modifiers <i>state</i> to be a no-op.
 
   <a name="ldefvar">defvar</a>            (var val)     same as (define var val) except that the envelope editor keeps track
                                   of <i>var</i> thereafter and treats lists as envelopes. (<i>defvar</i> is a macro).
+<small>
                                   I'm using <i>defvar</i> here rather than some more perspicuous name like def-envelope
                                   so that Snd and CLM can share envelope files.
-
+</small>
 </pre>
 <hr>
 
@@ -2429,7 +2498,6 @@ examp.scm also has examples that add and remove menu items, set variables via th
 perform correlation on the current data, 
 make a system call from the listener, and so on.  The following function computes the rms amplitude of a region:</p>
 <pre>
-<small>
 (define region-rms
  (lambda (n)
   (let* ((data (<a href="#sndregionsamples">region-samples</a> 0 0 n))
@@ -2437,21 +2505,19 @@ make a system call from the listener, and so on.  The following function compute
 	 (sum 0.0))
    (do ((i 0 (1+ i))) ((= i len) (sqrt (/ sum len))) 
     (set! sum (+ sum (* (vector-ref data i) (vector-ref data i))))))))
-</small></pre>
+</pre>
 <p>To get the data currently displayed in the time domain window:</p>
 <pre>
-<small>
 (define <a name="windowsamples">window-samples</a>
  (lambda ()
   (let ((wl (<a href="#sndleftsample">left-sample</a>))
 	(wr (<a href="#sndrightsample">right-sample</a>)))
    (<a href="#sndsamples">samples</a> wl (+ 1 (- wr wl))))))
-</small></pre>
+</pre>
 <p>Now we can use <i>window-samples</i> and <i>graph-hook</i>
 to show a running graph of the
 time domain energy:</p>
 <pre>
-<small>
 (define <a name="displayenergy">displaye-nergy</a>
  (lambda ()
   (let* ((data (window-samples))
@@ -2461,14 +2527,13 @@ time domain energy:</p>
    (<a href="#sndgraph">graph</a> data))))
 
 (set! <a href="#graphhook">graph-hook</a> display-energy)
-</small></pre>
+</pre>
 <p>As the time domain window is moved, the lisp window automatically
 updates itself.  The same thing can show the spectral energy
 (via <i>transform-samples</i>).  
 The functions graph, fft, insert-samples, and set-samples know about vcts,
 so we can rewrite display-energy:</p>
 <pre>
-<small>
 (define display-energy
   (lambda (snd chn y0 y1)
     (let* ((ls (left-sample snd chn))
@@ -2478,12 +2543,11 @@ so we can rewrite display-energy:</p>
 	   (sr (srate snd)))
       (vct-multiply! data data)
       (graph data "energy" (/ ls sr) (/ rs sr) 0.0 (* y1 y1) snd chn))))
-</small></pre>
+</pre>
 
 <p>See examp.scm for more examples of using the vct structure.
 Say we want Snd to refuse to exit if there are unsaved edits.</p>
 <pre>
-<small>
 (define <a name="unsavededits">unsaved-edits?</a>
   (lambda (ind)
     (and (&lt; ind (max-sounds))
@@ -2494,11 +2558,10 @@ Say we want Snd to refuse to exit if there are unsaved edits.</p>
 	     (unsaved-edits? (+ ind 1))))))
 
 (add-hook! exit-hook (lambda () (report-in-minibuffer "") (unsaved-edits? 0)))
-</small></pre>
+</pre>
 
 <p>Here's somewhat brute-force code to play a sound a given number of times:</p>
 <pre>
-<small>
 (define plays 0)
 
 (define pl1
@@ -2515,13 +2578,12 @@ Say we want Snd to refuse to exit if there are unsaved edits.</p>
   (play))
 
 (bind-key (char-&gt;integer #\p) 0 (lambda () (pl (max 1 (prefix-arg)))) #t)
-</small></pre>
+</pre>
 
 <p>Say we are so annoyed by the X/Motif file browser that we want
 Snd to exit back to the shell if its file argument is not
 found (this code obviously has to be in the init file):</p>
 <pre>
-<small>
 (define no-startup-file?
   (lambda (ind file)
     (if (= ind (max-sounds))
@@ -2534,11 +2596,10 @@ found (this code obviously has to be in the init file):</p>
 	    (no-startup-file? (+ ind 1) file)))))
 
 (add-hook! start-hook (lambda (file) (if (&gt; (string-length file) 0) (no-startup-file? 0 file) #f)))
-</small></pre>
+</pre>
 <p>And just for completeness, here's an example of using the fft-hook.
 </p>
 <pre>
-<small>
 (define fft-peak
   (lambda (snd chn scale)
     (if (and (ffting) (= (fft-style) normal-fft))
@@ -2552,10 +2613,9 @@ found (this code obviously has to be in the init file):</p>
       #f)))
 	
 (add-hook! fft-hook fft-peak)
-</small></pre>
+</pre>
 <p>The following function uses the sndlib functions to mimic the 'info' popup menu option (see examp.scm for a version that uses format):</p>
 <pre>
-<small>
 <a name="sndinfo"></a>
 (define info 
   (lambda (file)
@@ -2568,7 +2628,7 @@ found (this code obviously has to be in the init file):</p>
      ", len: " (number-&gt;string 
                 (/ (<a href="#soundsamples">mus-sound-samples</a> file) 
                    (* (<a href="#soundchans">mus-sound-chans</a> file) (<a href="#soundsrate">mus-sound-srate</a> file)))))))
-</small></pre>
+</pre>
 
 <img src="energy.png" alt="picture of examp.scm in action">
 <br><br>

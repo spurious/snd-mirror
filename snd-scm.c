@@ -717,16 +717,6 @@ static SCM g_set_auto_update(SCM val)
   RTNBOOL(auto_update(state));
 }
 
-static SCM g_graphs_horizontal(void) {RTNBOOL(graphs_horizontal(state));}
-static SCM g_set_graphs_horizontal(SCM val) 
-{
-  #define H_graphs_horizontal "(" S_graphs_horizontal ") -> #t if the time domain, fft, and lisp graphs are layed out horizontally (#t)"
-  #define H_set_graphs_horizontal "(" S_set_graphs_horizontal " &optional (val #t)) sets " S_graphs_horizontal
-  ERRB1(val,S_set_graphs_horizontal); 
-  set_graphs_horizontal(state,bool_int_or_one(val)); 
-  RTNBOOL(graphs_horizontal(state));
-}
-
 static SCM g_channel_style(void) {RTNINT(channel_style(state));}
 static SCM g_set_channel_style(SCM style) 
 {
@@ -936,39 +926,6 @@ static SCM g_set_audio_state_file(SCM val)
   RTNSTR(audio_state_file(state));
 }
 
-static SCM g_fft_size(void) {RTNINT(fft_size(state));}
-static SCM g_set_fft_size(SCM val) 
-{
-  #define H_fft_size "(" S_fft_size ") -> current fft size (256)"
-  #define H_set_fft_size "(" S_set_fft_size " val) sets " S_fft_size
-  int len;
-  ERRN1(val,S_set_fft_size); 
-  len = g_scm2int(val);
-  if (len > 0)
-    set_fft_size(state,(int)pow(2,(ceil(log((double)(len))/log(2.0)))));
-  RTNINT(fft_size(state));
-}
-
-static SCM g_fft_style(void) {RTNINT(fft_style(state));}
-static SCM g_set_fft_style(SCM val) 
-{
-  #define H_fft_style "(" S_fft_style ") -> normal-fft, sonogram, or spectrogram"
-  #define H_set_fft_style "(" S_set_fft_style " val) sets " S_fft_style
-  ERRN1(val,S_set_fft_style); 
-  set_fft_style(state,iclamp(NORMAL_FFT,g_scm2int(val),SPECTROGRAM));
-  RTNINT(fft_style(state));
-}
-
-static SCM g_fft_window(void) {RTNINT(fft_window(state));}
-static SCM g_set_fft_window(SCM val) 
-{
-  #define H_fft_window "(" S_fft_window ") -> current fft data window choice (e.g. blackman2-window)"
-  #define H_set_fft_window "(" S_set_fft_window " val) sets " S_fft_window
-  ERRN1(val,S_set_fft_window); 
-  set_fft_window(state,iclamp(0,g_scm2int(val),NUM_FFT_WINDOWS-1));
-  RTNINT(fft_window(state));
-}
-
 static SCM g_filter_env_order(void) {RTNINT(filter_env_order(state));}
 static SCM g_set_filter_env_order(SCM val) 
 {
@@ -987,17 +944,6 @@ static SCM g_set_fit_data_on_open(SCM val)
   ERRB1(val,S_set_fit_data_on_open); 
   set_fit_data_on_open(state,bool_int_or_one(val));
   RTNBOOL(fit_data_on_open(state));
-}
-
-static SCM g_graph_style(void) {RTNINT(graph_style(state));}
-static SCM g_set_graph_style(SCM style) 
-{
-  #define H_graph_style "(" S_graph_style ") -> one of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lollipops " " S_graph_filled ")\n\
-  determines how graphs are drawn (default: " S_graph_lines ")"
-  #define H_set_graph_style "(" S_set_graph_style " val) sets " S_graph_style
-  ERRN1(style,S_set_graph_style); 
-  set_graph_style(state,iclamp(GRAPH_LINES,g_scm2int(style),GRAPH_LOLLIPOPS));
-  RTNINT(graph_style(state));
 }
 
 static SCM g_initial_x0(void) {RTNFLT(initial_x0(state));}
@@ -1068,17 +1014,6 @@ static SCM g_set_movies(SCM val)
   ERRB1(val,S_set_movies); 
   set_movies(state,bool_int_or_one(val));
   RTNBOOL(movies(state));
-}
-
-static SCM g_normalize_fft(void) {RTNINT(normalize_fft(state));}
-static SCM g_set_normalize_fft(SCM val) 
-{
-  #define H_normalize_fft "(" S_normalize_fft ") -> one of '(" S_dont_normalize " " S_normalize_by_channel " " S_normalize_by_sound " " S_normalize_globally ")\n\
-  decides whether spectral data is normalized before display (default: " S_normalize_by_channel ")"
-  #define H_set_normalize_fft "(" S_set_normalize_fft " &optional (val " S_normalize_by_channel ")) sets " S_normalize_fft
-  ERRB1(val,S_set_normalize_fft); 
-  set_normalize_fft(state,bool_int_or_one(val));
-  RTNINT(normalize_fft(state));
 }
 
 static SCM g_normalize_on_open(void) {RTNBOOL(normalize_on_open(state));}
@@ -1280,47 +1215,6 @@ static SCM g_update_usage_stats(void)
   return(SCM_BOOL_T);
 }
 
-static SCM g_show_mix_consoles(void) {RTNBOOL(show_mix_consoles(state));}
-static SCM g_set_show_mix_consoles(SCM on) 
-{
-  #define H_show_mix_consoles "(" S_show_mix_consoles ") -> #t if Snd shoul display mix consoles"
-  #define H_set_show_mix_consoles "(" S_set_show_mix_consoles " &optional (val #t)) sets " S_show_mix_consoles
-  ERRB1(on,S_set_show_mix_consoles); 
-  set_show_mix_consoles(state,bool_int_or_one(on));
-  RTNBOOL(show_mix_consoles(state));
-}
-
-static SCM g_show_mix_waveforms(void) {RTNBOOL(show_mix_waveforms(state));}
-static SCM g_set_show_mix_waveforms(SCM on) 
-{
-  #define H_show_mix_waveforms "(" S_show_mix_waveforms ") -> #t if Snd should display mix waveforms"
-  #define H_set_show_mix_waveforms "(" S_set_show_mix_waveforms " &optional (val #t)) sets " S_show_mix_waveforms
-  ERRB1(on,S_set_show_mix_waveforms); 
-  set_show_mix_waveforms(state,bool_int_or_one(on));
-  RTNBOOL(show_mix_waveforms(state));
-}
-
-static SCM g_erase_zeros(void) {RTNBOOL(erase_zeros(state));}
-static SCM g_set_erase_zeros(SCM on) 
-{
-  #define H_erase_zeros "(" S_erase_zeros ") -> #t if Snd should (try to) erase silences"
-  #define H_set_erase_zeros "(" S_set_erase_zeros " &optional (val #t)) sets " S_erase_zeros
-  ERRB1(on,S_set_erase_zeros); 
-  set_erase_zeros(state,bool_int_or_one(on));
-  RTNBOOL(erase_zeros(state));
-}
-
-static SCM g_show_axes(void) {RTNINT(show_axes(state));}
-static SCM g_set_show_axes(SCM on) 
-{
-  #define H_show_axes "(" S_show_axes ") -> show-all-axes if Snd should display axes"
-  #define H_set_show_axes "(" S_set_show_axes " &optional (val show-all-axes)) sets " S_show_axes
-  ERRB1(on,S_set_show_axes); 
-  set_show_axes(state,iclamp(SHOW_NO_AXES,g_scm2intdef(on,SHOW_ALL_AXES),SHOW_X_AXIS));
-  map_over_chans(state,update_graph,NULL);
-  RTNINT(show_axes(state));
-}
-
 static SCM g_sinc_width(void) {RTNINT(sinc_width(state));}
 static SCM g_set_sinc_width(SCM val) 
 {
@@ -1352,26 +1246,6 @@ static SCM g_set_color_map(SCM val)
   RTNINT(color_map(state));
 }
 
-static SCM g_speed_style(void) {RTNINT(speed_style(state));}
-static SCM g_set_speed_style(SCM speed) 
-{
-  #define H_speed_style "(" S_speed_style ") -> speed control panel interpretation choice (speed-as-float)"
-  #define H_set_speed_style "(" S_set_speed_style " val) sets " S_speed_style
-  ERRN1(speed,S_set_speed_style); 
-  activate_speed_in_menu(state,iclamp(SPEED_AS_FLOAT,g_scm2int(speed),SPEED_AS_SEMITONE));
-  RTNINT(speed_style(state));
-}
-
-static SCM g_speed_tones(void) {RTNINT(speed_tones(state));}
-static SCM g_set_speed_tones(SCM val) 
-{
-  #define H_speed_tones "(" S_speed_tones ") -> if speed-style is speed-as-semitone, this chooses the octave divisions (12)"
-  #define H_set_speed_tones "(" S_set_speed_tones " val) sets " S_speed_tones
-  ERRN1(val,S_set_speed_tones); 
-  set_speed_tones(state,g_scm2int(val));
-  RTNINT(speed_tones(state));
-}
-
 static SCM g_temp_dir(void) {RTNSTR(temp_dir(state));}
 static SCM g_set_temp_dir(SCM val) 
 {
@@ -1396,16 +1270,6 @@ static SCM g_set_save_dir(SCM val)
   ERRS1(val,S_set_save_dir); 
   set_save_dir(state,gh_scm2newstr(val,0));
   RTNSTR(save_dir(state));
-}
-
-static SCM g_transform_type(void) {RTNINT(transform_type(state));}
-static SCM g_set_transform_type(SCM val) 
-{
-  #define H_transform_type "(" S_transform_type ") -> transform type, e.g. fourier-transform"
-  #define H_set_transform_type "(" S_set_transform_type " val) sets " S_transform_type
-  ERRN1(val,S_set_transform_type); 
-  set_transform_type(state,iclamp(0,g_scm2int(val),max_transform_type()));
-  RTNINT(transform_type(state));
 }
 
 static SCM g_trap_segfault(void) {RTNBOOL(trap_segfault(state));}
@@ -2570,7 +2434,7 @@ static SCM g_cut(void)
 {
   #define H_cut "(" S_cut ") cuts (deletes) the currently selected portion"
   finish_keyboard_selection();
-  if (region_ok(0))
+  if (selection_is_current())
     {
       delete_selection(S_cut,UPDATE_DISPLAY);
       return(SCM_BOOL_T);
@@ -2902,7 +2766,7 @@ static SCM g_scale_selection_to(SCM scalers)
   #define H_scale_selection_to "(" S_scale_selection_to " norms &optional chn) normalizes current selected portion to norms"
   int len[1];
   Float *scls;
-  if (region_ok(0))
+  if (selection_is_current())
     {
       scls = load_Floats(scalers,len);
       scale_to(state,NULL,NULL,scls,len[0],TRUE);
@@ -2917,7 +2781,7 @@ static SCM g_scale_selection_by(SCM scalers)
   #define H_scale_selection_by "(" S_scale_selection_by " scalers &optional chn) scales current selected portion by scalers"
   int len[1];
   Float *scls;
-  if (region_ok(0))
+  if (selection_is_current())
     {
       scls = load_Floats(scalers,len);
       scale_by(state,NULL,NULL,scls,len[0],TRUE);
@@ -3681,8 +3545,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure0_1(S_set_auto_resize,g_set_auto_resize),H_set_auto_resize);
   DEFINE_PROC(gh_new_procedure0_0(S_auto_update,g_auto_update),H_auto_update);
   DEFINE_PROC(gh_new_procedure0_1(S_set_auto_update,g_set_auto_update),H_set_auto_update);
-  DEFINE_PROC(gh_new_procedure0_0(S_graphs_horizontal,g_graphs_horizontal),H_graphs_horizontal);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_graphs_horizontal,g_set_graphs_horizontal),H_set_graphs_horizontal);
   DEFINE_PROC(gh_new_procedure0_0(S_channel_style,g_channel_style),H_channel_style);
   DEFINE_PROC(gh_new_procedure1_0(S_set_channel_style,g_set_channel_style),H_set_channel_style);
   DEFINE_PROC(gh_new_procedure0_0(S_color_cutoff,g_color_cutoff),H_color_cutoff);
@@ -3721,18 +3583,10 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure1_0(S_set_listener_prompt,g_set_listener_prompt),H_set_listener_prompt);
   DEFINE_PROC(gh_new_procedure0_0(S_audio_state_file,g_audio_state_file),H_audio_state_file);
   DEFINE_PROC(gh_new_procedure1_0(S_set_audio_state_file,g_set_audio_state_file),H_set_audio_state_file);
-  DEFINE_PROC(gh_new_procedure0_0(S_fft_size,g_fft_size),H_fft_size);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_fft_size,g_set_fft_size),H_set_fft_size);
-  DEFINE_PROC(gh_new_procedure0_0(S_fft_style,g_fft_style),H_fft_style);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_fft_style,g_set_fft_style),H_set_fft_style);
-  DEFINE_PROC(gh_new_procedure0_0(S_fft_window,g_fft_window),H_fft_window);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_fft_window,g_set_fft_window),H_set_fft_window);
   DEFINE_PROC(gh_new_procedure0_0(S_filter_env_order,g_filter_env_order),H_filter_env_order);
   DEFINE_PROC(gh_new_procedure1_0(S_set_filter_env_order,g_set_filter_env_order),H_set_filter_env_order);
   DEFINE_PROC(gh_new_procedure0_0(S_fit_data_on_open,g_fit_data_on_open),H_fit_data_on_open);
   DEFINE_PROC(gh_new_procedure0_1(S_set_fit_data_on_open,g_set_fit_data_on_open),H_set_fit_data_on_open);
-  DEFINE_PROC(gh_new_procedure0_0(S_graph_style,g_graph_style),H_graph_style);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_graph_style,g_set_graph_style),H_set_graph_style);
   DEFINE_PROC(gh_new_procedure0_0(S_initial_x0,g_initial_x0),H_initial_x0);
   DEFINE_PROC(gh_new_procedure1_0(S_set_initial_x0,g_set_initial_x0),H_set_initial_x0);
   DEFINE_PROC(gh_new_procedure0_0(S_initial_x1,g_initial_x1),H_initial_x1);
@@ -3747,8 +3601,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure1_0(S_set_mix_console_speed_scaler,g_set_mix_console_speed_scaler),H_set_mix_console_speed_scaler);
   DEFINE_PROC(gh_new_procedure0_0(S_movies,g_movies),H_movies);
   DEFINE_PROC(gh_new_procedure0_1(S_set_movies,g_set_movies),H_set_movies);
-  DEFINE_PROC(gh_new_procedure0_0(S_normalize_fft,g_normalize_fft),H_normalize_fft);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_normalize_fft,g_set_normalize_fft),H_set_normalize_fft);
   DEFINE_PROC(gh_new_procedure0_0(S_normalize_on_open,g_normalize_on_open),H_normalize_on_open);
   DEFINE_PROC(gh_new_procedure0_1(S_set_normalize_on_open,g_set_normalize_on_open),H_set_normalize_on_open);
   DEFINE_PROC(gh_new_procedure0_0(S_prefix_arg,g_prefix_arg),H_prefix_arg);
@@ -3787,29 +3639,15 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure0_1(S_set_show_indices,g_set_show_indices),H_set_show_indices);
   DEFINE_PROC(gh_new_procedure0_0(S_show_usage_stats,g_show_usage_stats),H_show_usage_stats);
   DEFINE_PROC(gh_new_procedure0_1(S_set_show_usage_stats,g_set_show_usage_stats),H_set_show_usage_stats);
-  DEFINE_PROC(gh_new_procedure0_0(S_show_mix_consoles,g_show_mix_consoles),H_show_mix_consoles);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_show_mix_consoles,g_set_show_mix_consoles),H_set_show_mix_consoles);
-  DEFINE_PROC(gh_new_procedure0_0(S_show_mix_waveforms,g_show_mix_waveforms),H_show_mix_waveforms);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_show_mix_waveforms,g_set_show_mix_waveforms),H_set_show_mix_waveforms);
-  DEFINE_PROC(gh_new_procedure0_0(S_erase_zeros,g_erase_zeros),H_erase_zeros);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_erase_zeros,g_set_erase_zeros),H_set_erase_zeros);
-  DEFINE_PROC(gh_new_procedure0_0(S_show_axes,g_show_axes),H_show_axes);
-  DEFINE_PROC(gh_new_procedure0_1(S_set_show_axes,g_set_show_axes),H_set_show_axes);
   DEFINE_PROC(gh_new_procedure0_0(S_sinc_width,g_sinc_width),H_sinc_width);
   DEFINE_PROC(gh_new_procedure1_0(S_set_sinc_width,g_set_sinc_width),H_set_sinc_width);
   DEFINE_PROC(gh_new_procedure0_0(S_colormap,g_color_map),H_colormap);
   DEFINE_PROC(gh_new_procedure1_0(S_set_colormap,g_set_color_map),H_set_colormap);
-  DEFINE_PROC(gh_new_procedure0_0(S_speed_style,g_speed_style),H_speed_style);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_speed_style,g_set_speed_style),H_set_speed_style);
-  DEFINE_PROC(gh_new_procedure0_0(S_speed_tones,g_speed_tones),H_speed_tones);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_speed_tones,g_set_speed_tones),H_set_speed_tones);
   DEFINE_PROC(gh_new_procedure0_0(S_temp_dir,g_temp_dir),H_temp_dir);
   DEFINE_PROC(gh_new_procedure1_0(S_set_temp_dir,g_set_temp_dir),H_set_temp_dir);
   DEFINE_PROC(gh_new_procedure0_0(S_snd_tempnam,g_snd_tempnam),H_snd_tempnam);
   DEFINE_PROC(gh_new_procedure0_0(S_save_dir,g_save_dir),H_save_dir);
   DEFINE_PROC(gh_new_procedure1_0(S_set_save_dir,g_set_save_dir),H_set_save_dir);
-  DEFINE_PROC(gh_new_procedure0_0(S_transform_type,g_transform_type),H_transform_type);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_transform_type,g_set_transform_type),H_set_transform_type);
   DEFINE_PROC(gh_new_procedure0_0(S_trap_segfault,g_trap_segfault),H_trap_segfault);
   DEFINE_PROC(gh_new_procedure0_1(S_set_trap_segfault,g_set_trap_segfault),H_set_trap_segfault);
   DEFINE_PROC(gh_new_procedure0_0(S_show_selection_transform,g_show_selection_transform),H_show_selection_transform);

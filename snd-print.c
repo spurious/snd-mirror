@@ -139,11 +139,11 @@ static void ps_draw_lines(chan_info *cp, axis_info *ap, int j, Float *xpts, Floa
   ps_write(cp->ps_fd,pbuf);
 }
 
-static void ps_draw_dots(snd_state *ss, chan_info *cp, axis_info *ap, int j, Float *xpts, Float *ypts)
+static void ps_draw_dots(chan_info *cp, axis_info *ap, int j, Float *xpts, Float *ypts)
 {
   int i;
   Float arc_size;
-  arc_size = .5 * dot_size(ss); /* radius here, diameter in X */
+  arc_size = .5 * cp->dot_size; /* radius here, diameter in X */
   for (i=0;i<j;i++)
     {
       sprintf(pbuf," %.2f %.2f %.2f 0 360 NAF\n",ps_grf_x(ap,xpts[i]),ps_grf_y(ap,ypts[i]),arc_size);
@@ -169,29 +169,29 @@ static void ps_fill_polygons(chan_info *cp, axis_info *ap, int j, Float *xpts, F
     }
 }
 
-void ps_draw_grf_points(snd_state *ss, chan_info *cp, axis_info *ap, int j, Float y0) 
+void ps_draw_grf_points(chan_info *cp, axis_info *ap, int j, Float y0) 
 {
   int i,gy0,size8,size4;
-  switch (graph_style(ss))
+  switch (cp->graph_style)
     {
     case GRAPH_LINES:
       ps_draw_lines(cp,ap,j,xpts,ypts);
       break;
     case GRAPH_DOTS:
-      ps_draw_dots(ss,cp,ap,j,xpts,ypts);
+      ps_draw_dots(cp,ap,j,xpts,ypts);
       break;
     case GRAPH_FILLED:
       ps_fill_polygons(cp,ap,j,xpts,ypts,y0);
       break;
     case GRAPH_DOTS_AND_LINES:
       ps_draw_lines(cp,ap,j,xpts,ypts);
-      if (dot_size(ss) > 1) ps_draw_dots(ss,cp,ap,j,xpts,ypts);
+      if (cp->dot_size > 1) ps_draw_dots(cp,ap,j,xpts,ypts);
       break;
     case GRAPH_LOLLIPOPS:
-      if (dot_size(ss) > 1) ps_draw_dots(ss,cp,ap,j,xpts,ypts);
+      if (cp->dot_size > 1) ps_draw_dots(cp,ap,j,xpts,ypts);
       gy0 = (int)ps_grf_y(ap,y0);
-      size8 = dot_size(ss)/8;
-      size4 = dot_size(ss)/4;
+      size8 = cp->dot_size/8;
+      size4 = cp->dot_size/4;
       if (size4 < 1) size4 = 1;
       for (i=0;i<j;i++)
 	{
@@ -202,18 +202,18 @@ void ps_draw_grf_points(snd_state *ss, chan_info *cp, axis_info *ap, int j, Floa
     }
 }
 
-void ps_draw_both_grf_points(snd_state *ss,chan_info *cp, axis_info *ap, int j) 
+void ps_draw_both_grf_points(chan_info *cp, axis_info *ap, int j) 
 {
   int i,size8,size4;
-  switch (graph_style(ss))
+  switch (cp->graph_style)
     {
     case GRAPH_LINES:
       ps_draw_lines(cp,ap,j,xpts,ypts);
       ps_draw_lines(cp,ap,j,xpts,ypts1);
       break;
     case GRAPH_DOTS:
-      ps_draw_dots(ss,cp,ap,j,xpts,ypts);
-      ps_draw_dots(ss,cp,ap,j,xpts,ypts1);
+      ps_draw_dots(cp,ap,j,xpts,ypts);
+      ps_draw_dots(cp,ap,j,xpts,ypts1);
       break;
     case GRAPH_FILLED:
       for (i=1;i<j;i++)
@@ -231,22 +231,22 @@ void ps_draw_both_grf_points(snd_state *ss,chan_info *cp, axis_info *ap, int j)
 	}
       break;
     case GRAPH_DOTS_AND_LINES:
-      if (dot_size(ss) > 1)
+      if (cp->dot_size > 1)
 	{
-	  ps_draw_dots(ss,cp,ap,j,xpts,ypts);
-	  ps_draw_dots(ss,cp,ap,j,xpts,ypts1);
+	  ps_draw_dots(cp,ap,j,xpts,ypts);
+	  ps_draw_dots(cp,ap,j,xpts,ypts1);
 	}
       ps_draw_lines(cp,ap,j,xpts,ypts);
       ps_draw_lines(cp,ap,j,xpts,ypts1);
       break;
     case GRAPH_LOLLIPOPS:
-      if (dot_size(ss) > 1)
+      if (cp->dot_size > 1)
 	{
-	  ps_draw_dots(ss,cp,ap,j,xpts,ypts);
-	  ps_draw_dots(ss,cp,ap,j,xpts,ypts1);
+	  ps_draw_dots(cp,ap,j,xpts,ypts);
+	  ps_draw_dots(cp,ap,j,xpts,ypts1);
 	}
-      size8 = dot_size(ss)/8;
-      size4 = dot_size(ss)/4;
+      size8 = cp->dot_size/8;
+      size4 = cp->dot_size/4;
       if (size4 < 1) size4 = 1;
       for (i=0;i<j;i++)
 	{

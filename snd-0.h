@@ -190,7 +190,7 @@ enum {SND_NO_ERROR,SND_CANNOT_WRITE_HEADER,SND_CANNOT_OPEN_TEMP_FILE,
 enum {ALPHABET,VALS_GREATER,VALS_LESS};
 
 enum {FILE_PER_SOUND,FILE_PER_CHANNEL};
-enum {F_X_ANGLE,F_X_SCALE,F_Y_ANGLE,F_Y_SCALE,F_Z_ANGLE,F_Z_SCALE,F_CUTOFF};
+enum {FCP_X_ANGLE,FCP_X_SCALE,FCP_Y_ANGLE,FCP_Y_SCALE,FCP_Z_ANGLE,FCP_Z_SCALE,FCP_CUTOFF,FCP_START,FCP_BETA};
 
 enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define AUDIO_STATE_FILE ".snd-mixer"
@@ -295,10 +295,12 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define DEFAULT_FFT_SIZE 256
 
 #define fft_style(ss) ss->Fft_Style
-#define in_set_fft_style(ss,a) ss->Fft_Style = a
+#define in_set_fft_style_1(ss,a) ss->Fft_Style = a
+#define DEFAULT_FFT_STYLE NORMAL_FFT
 
 #define fft_window(ss) ss->Fft_Window
-#define in_set_fft_window(ss,a) ss->Fft_Window = a
+#define in_set_fft_window_1(ss,a) ss->Fft_Window = a
+#define DEFAULT_FFT_WINDOW MUS_BLACKMAN2_WINDOW
 
 #define trap_segfault(ss) ss->Trap_Segfault
 #define set_trap_segfault(ss,a) ss->Trap_Segfault = a
@@ -377,7 +379,7 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define DEFAULT_COLOR_MAP -1
 
 #define speed_tones(ss) ss->Speed_Tones
-#define set_speed_tones(ss,a) ss->Speed_Tones = a
+#define in_set_speed_tones(ss,a) ss->Speed_Tones = a
 #define DEFAULT_SPEED_TONES 12
 
 #define speed_style(ss) ss->Speed_Style
@@ -519,12 +521,8 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define in_set_show_y_zero(ss,a) ss->Show_Y_Zero = a
 #define DEFAULT_SHOW_Y_ZERO 0
 
-#define erase_zeros(ss) ss->Erase_Zeros
-#define set_erase_zeros(ss,a) ss->Erase_Zeros = a
-#define DEFAULT_ERASE_ZEROS 0
-
 #define show_axes(ss) ss->Show_Axes
-#define set_show_axes(ss,a) ss->Show_Axes = a
+#define in_set_show_axes(ss,a) ss->Show_Axes = a
 #define DEFAULT_SHOW_AXES SHOW_ALL_AXES
 
 #define show_usage_stats(ss) ss->Show_Usage_Stats
@@ -536,7 +534,7 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define DEFAULT_SHOW_MIX_CONSOLES 1
 
 #define show_mix_waveforms(ss) ss->Show_Mix_Waveforms
-#define set_show_mix_waveforms(ss,a) ss->Show_Mix_Waveforms = a
+#define in_set_show_mix_waveforms(ss,a) ss->Show_Mix_Waveforms = a
 #define DEFAULT_SHOW_MIX_WAVEFORMS 0
 
 #define mix_waveform_height(ss) ss->Mix_Waveform_Height
@@ -696,7 +694,7 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #endif
 
 #define graphs_horizontal(ss) ss->Graphs_Horizontal
-#define set_graphs_horizontal(ss,a) ss->Graphs_Horizontal = a
+#define in_set_graphs_horizontal(ss,a) ss->Graphs_Horizontal = a
 #define DEFAULT_GRAPHS_HORIZONTAL 1
 
 #if NONINTERLEAVED_AUDIO

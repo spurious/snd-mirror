@@ -214,13 +214,6 @@ void reflect_raw_pending_in_menu(void)
   set_sensitive(file_new_menu(),FALSE);
 }
 
-
-static void set_save_state_file(snd_state *ss, char *name)
-{
-  in_set_save_state_file(ss,name);
-  set_sensitive(options_save_state_menu(),(snd_strlen(name) > 0));
-}
-
 void set_show_usage_stats(snd_state *ss, int val)
 {
   in_set_show_usage_stats(ss,val);
@@ -383,6 +376,8 @@ void save_state_from_menu(snd_state *ss)
     }
 }
 
+static int map_chans_graph_style(chan_info *cp, void *ptr) {cp->graph_style = (int)ptr; update_graph(cp,NULL); return(0);}
+
 void set_graph_style(snd_state *ss, int val)
 {
   switch (graph_style(ss))
@@ -394,7 +389,7 @@ void set_graph_style(snd_state *ss, int val)
     case GRAPH_LOLLIPOPS: set_sensitive(view_lollipops_menu(),TRUE); break;
     }
   in_set_graph_style(ss,val);
-  map_over_chans(ss,update_graph,NULL);
+  map_over_chans(ss,map_chans_graph_style,(void *)val);
   switch (val)
     {
     case GRAPH_LINES: set_sensitive(view_lines_menu(),FALSE); break;
@@ -461,9 +456,12 @@ void set_view_listener_label(char *lab)
   set_menu_label(view_listener_menu(),lab);
 }
 
+static int map_chans_show_mix_consoles(chan_info *cp, void *ptr) {cp->show_mix_consoles = (int)ptr; return(0);}
+
 void set_show_mix_consoles(snd_state *ss, int on)
 {
   in_set_show_mix_consoles(ss,on);
+  map_over_chans(ss,map_chans_show_mix_consoles,(void *)on);
   set_menu_label(view_consoles_menu(),(on) ? STR_Hide_consoles : STR_Show_consoles);
   update_all_consoles(ss);
 }
@@ -504,7 +502,7 @@ void activate_speed_in_menu(snd_state *ss, int newval)
 	default: set_sensitive(options_speed_float_menu(),TRUE); break;
 	}
     }
-  in_set_speed_style(ss,newval);
+  set_speed_style(ss,newval);
   if (options_speed_ratio_menu())
     {
       switch (speed_style(ss))
@@ -605,6 +603,12 @@ static SCM g_save_state_file(void)
   snd_state *ss;
   ss = get_global_state();
   RTNSTR(save_state_file(ss));
+}
+
+static void set_save_state_file(snd_state *ss, char *name)
+{
+  in_set_save_state_file(ss,name);
+  set_sensitive(options_save_state_menu(),(snd_strlen(name) > 0));
 }
 
 static SCM g_set_save_state_file(SCM val) 

@@ -192,11 +192,12 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
-7-Aug:   extsnd.html re-organized.\n\
-         wavo,wavo-hop,wavo-trace,line-size,max-fft-peaks,show-fft-peaks,zero-pad,\n\
-           verbose-cursor,fft-log-frequency,fft-log-magnitude,min-dB,wavelet-type
+10-Aug:  extsnd.html re-organized.\n\
+         wavo,wavo-hop,wavo-trace,line-size,max-fft-peaks,fft-size,show-fft-peaks,zero-pad,fft-window,\n\
+           verbose-cursor,fft-log-frequency,fft-log-magnitude,min-dB,fft-beta,wavelet-type,fft-style,transform-type,\n\
+           normalize-fft,show-mix-consoles,show-mix-waveforms,graph-style,dot-size,show-axes,graphs-horizontal,\n\
            spectro-x|y|z-angle|scale,spectro-hop,spectro-cutoff,spectro-start can be treated as channel-local.\n\
-         reverb-decay can be treated as sound-local.\n\
+         reverb-decay,speed-tones,speed-style can be treated as sound-local.\n\
          Snd builds and runs in Mac OS-X.\n\
 3-Aug:   C-q with moving cursor bug, extended normalize-fft choices (Daniel Aronovitch).\n\
          show-y-zero, show-marks can be local to a given sound or channel.\n\
@@ -876,7 +877,7 @@ new value via (" S_set_auto_resize " #t). \n\
   " S_dac_folding "           #t\n\
   " S_dac_size "              256\n\
   " S_data_color "            black\n\
-  " S_dot_size "              1\n\
+  " S_dot_size "              1 (snd #t) (chn #t)\n\
   " S_enved_base "            1.0\n\
   " S_enved_clipping "        #f\n\
   " S_enved_dBing "           #f\n\
@@ -886,32 +887,32 @@ new value via (" S_set_auto_resize " #t). \n\
   " S_enved_waveform_color "  blue\n\
   " S_enved_waving "          #f\n\
   " S_eps_file "              \"snd.eps\"\n\
-  " S_fft_beta "              0.0 &optional (snd #t) (chn #t)\n\
-  " S_fft_log_frequency "     #f &optional (snd #t) (chn #t)\n\
-  " S_fft_log_magnitude "     #f &optional (snd #t) (chn #t)\n\
-  " S_fft_size "              256\n\
-  " S_fft_style "             " S_normal_fft "\n\
-  " S_fft_window "            blackman2-window\n\
+  " S_fft_beta "              0.0 (snd #t) (chn #t)\n\
+  " S_fft_log_frequency "     #f (snd #t) (chn #t)\n\
+  " S_fft_log_magnitude "     #f (snd #t) (chn #t)\n\
+  " S_fft_size "              256 (snd #t) (chn #t)\n\
+  " S_fft_style "             " S_normal_fft " (snd #t) (chn #t)\n\
+  " S_fft_window "            blackman2-window (snd #t) (chn #t)\n\
   " S_filter_env_order "      40\n\
   " S_filter_waveform_color " blue\n\
   " S_fit_data_on_open "      #f\n\
   " S_graph_color "           white\n\
   " S_graph_cursor "          XC_crosshair (34)\n\
-  " S_graph_style "           " S_graph_lines "\n\
-  " S_graphs_horizontal "     #t\n\
+  " S_graph_style "           " S_graph_lines " (snd #t) (chn #t)\n\
+  " S_graphs_horizontal "     #t (snd #t) (chn #t)\n\
   " S_help_text_font "        varies\n\
   " S_highlight_color "       ivory1\n\
   " S_initial_x0 "            0.0\n\
   " S_initial_x1 "            0.1\n\
   " S_initial_y0 "           -1.0\n\
   " S_initial_y1 "            1.0\n\
-  " S_line_size "             128 &optional (snd #t) (chn #t)\n\
+  " S_line_size "             128 (snd #t) (chn #t)\n\
   " S_listener_color "        aliceblue\n\
   " S_listener_font "         varies\n\
   " S_listener_prompt "       \">\"\n\
   " S_mark_color "            red\n\
-  " S_max_fft_peaks "         100 &optional (snd #t) (chn #t)\n\
-  " S_min_dB "               -60.0 &optional (snd #t) (chn #t)\n\
+  " S_max_fft_peaks "         100 (snd #t) (chn #t)\n\
+  " S_min_dB "               -60.0 (snd #t) (chn #t)\n\
   " S_mix_color "             lightgreen\n\
   " S_mix_console_amp_scaler " 1.0\n\
   " S_mix_console_speed_scaler " 1.0\n\
@@ -919,7 +920,7 @@ new value via (" S_set_auto_resize " #t). \n\
   " S_mix_waveform_color "    darkgray\n\
   " S_mix_waveform_height "   20\n\
   " S_movies "                #t\n\
-  " S_normalize_fft "         normalize-by-channel\n\
+  " S_normalize_fft "         normalize-by-channel (snd #t) (chn #t)\n\
   " S_normalize_on_open "     #t\n\
   " S_position_color "        ivory3\n\
   " S_prefix_arg "            nil\n\
@@ -944,48 +945,48 @@ new value via (" S_set_auto_resize " #t). \n\
   " S_selected_data_color "   black\n\
   " S_selected_graph_color "  white\n\
   " S_selection_color "       lightsteelblue1\n\
-  " S_show_axes "             show-all-axes\n\
-  " S_show_fft_peaks "        #f &optional (snd #t) (chn #t)\n\
+  " S_show_axes "             show-all-axes (snd #t) (chn #t)\n\
+  " S_show_fft_peaks "        #f (snd #t) (chn #t)\n\
   " S_show_indices "          #f\n\
-  " S_show_marks "            #t &optional (snd #t) (chn #t)\n\
-  " S_show_mix_consoles "     #t\n\
-  " S_show_mix_waveforms "    #f\n\
+  " S_show_marks "            #t (snd #t) (chn #t)\n\
+  " S_show_mix_consoles "     #t (snd #t) (chn #t)\n\
+  " S_show_mix_waveforms "    #f (snd #t) (chn #t)\n\
   " S_show_selection_transform " #f\n\
   " S_show_usage_stats "      #f\n\
-  " S_show_y_zero "           #f &optional (snd #t) (chn #t)\n\
+  " S_show_y_zero "           #f (snd #t) (chn #t)\n\
   " S_sinc_width "            10\n\
-  " S_spectro_cutoff "        1.0 &optional (snd #t) (chn #t)\n\
-  " S_spectro_hop "           4 &optional (snd #t) (chn #t)\n\
-  " S_spectro_start "         0.0 &optional (snd #t) (chn #t)\n\
-  " S_spectro_x_angle "       90.0 &optional (snd #t) (chn #t)\n\
-  " S_spectro_x_scale "       1.0 &optional (snd #t) (chn #t)\n\
-  " S_spectro_y_angle "       0.0 &optional (snd #t) (chn #t)\n\
-  " S_spectro_y_scale "       1.0 &optional (snd #t) (chn #t)\n\
-  " S_spectro_z_angle "      -2.0 &optional (snd #t) (chn #t)\n\
-  " S_spectro_z_scale "       0.1 &optional (snd #t) (chn #t)\n\
-  " S_speed_style "           " S_speed_as_float "\n\
-  " S_speed_tones "           12\n\
+  " S_spectro_cutoff "        1.0 (snd #t) (chn #t)\n\
+  " S_spectro_hop "           4 (snd #t) (chn #t)\n\
+  " S_spectro_start "         0.0 (snd #t) (chn #t)\n\
+  " S_spectro_x_angle "       90.0 (snd #t) (chn #t)\n\
+  " S_spectro_x_scale "       1.0 (snd #t) (chn #t)\n\
+  " S_spectro_y_angle "       0.0 (snd #t) (chn #t)\n\
+  " S_spectro_y_scale "       1.0 (snd #t) (chn #t)\n\
+  " S_spectro_z_angle "      -2.0 (snd #t) (chn #t)\n\
+  " S_spectro_z_scale "       0.1 (snd #t) (chn #t)\n\
+  " S_speed_style "           " S_speed_as_float " (snd #t)\n\
+  " S_speed_tones "           12 (snd #t)\n\
   " S_temp_dir "              nil\n\
   " S_text_focus_color "      white\n\
-  " S_transform_type "        " S_fourier_transform "\n\
+  " S_transform_type "        " S_fourier_transform " (snd #t) (chn #t)\n\
   " S_trap_segfault "         #t\n\
   " S_use_raw_defaults "      #f\n\
   " S_use_sinc_interp "       #f\n\
-  " S_verbose_cursor "        #f &optional (snd #t) (chn #t)\n\
+  " S_verbose_cursor "        #f (snd #t) (chn #t)\n\
   " S_vu_font "               nil\n\
   " S_vu_font_size "          1.0\n\
   " S_vu_size "               1.0\n\
-  " S_wavelet_type "          0 &optional (snd #t) (chn #t)\n\
-  " S_wavo "                  #f &optional (snd #t) (chn #t)\n\
-  " S_wavo_hop "              3 &optional (snd #t) (chn #t)\n\
-  " S_wavo_trace "            64 &optional (snd #t) (chn #t)\n\
+  " S_wavelet_type "          0 (snd #t) (chn #t)\n\
+  " S_wavo "                  #f (snd #t) (chn #t)\n\
+  " S_wavo_hop "              3 (snd #t) (chn #t)\n\
+  " S_wavo_trace "            64 (snd #t) (chn #t)\n\
   " S_window_height "         0\n\
   " S_window_width "          0\n\
   " S_window_x "             -1\n\
   " S_window_y "             -1\n\
   " S_with_mix_consoles "     #t\n\
   " S_x_axis_style "          " S_x_in_seconds "\n\
-  " S_zero_pad "              0 &optional (snd #t) (chn #t)\n\
+  " S_zero_pad "              0 (snd #t) (chn #t)\n\
   " S_zoom_color "            ivory4\n\
   " S_zoom_focus_style "      " S_focus_active "\n\
 \n\

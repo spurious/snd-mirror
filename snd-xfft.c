@@ -10,7 +10,6 @@ static Widget type_list,
               wavelet_list,
               graph_label,graph_drawer;
 static GC gc,fgc;
-static int fft_window_choice;
 
 #define GRAPH_SIZE 128
 static Float current_graph_data[GRAPH_SIZE]; /* fft window graph in transform options dialog */
@@ -39,35 +38,15 @@ static char *TRANSFORM_TYPE_CONSTANTS[NUM_TRANSFORM_TYPES]={
   S_fourier_transform,S_wavelet_transform,S_hankel_transform,S_walsh_transform,
   S_autocorrelation,S_chebyshev_transform,S_cepstrum,S_hadamard_transform};
 
-char *transform_type_name(snd_state *ss) 
+char *transform_type_name(int choice) 
 {
-  if (transform_type(ss) < NUM_TRANSFORM_TYPES)
-    return(TRANSFORM_TYPE_CONSTANTS[transform_type(ss)]);
-  else return(added_transform_name(transform_type(ss)));
+  if (choice < NUM_TRANSFORM_TYPES)
+    return(TRANSFORM_TYPE_CONSTANTS[choice]);
+  else return(added_transform_name(choice));
 }
 
 int max_transform_type(void) {return(num_transform_types - 1);}
 #endif
-
-static int set_ffts_size (chan_info *cp, void *p_size)
-{
-  fft_info *fp;
-  int flen;
-  if (cp->fft) 
-    {
-      flen = (*((int *)p_size));
-      fp=cp->fft;
-      if (fp->size < flen) fp->ok = 0; /* "dirty" flag for fft data array = needs REALLOCation */
-      fp->size = flen;
-    }
-  return(0);
-}
-
-static int set_ffts_window (chan_info *cp, void *fd)
-{
-  if (cp->fft) (cp->fft)->window = fft_window_choice;
-  return(0);
-}
 
 static int force_fft_clear(chan_info *cp, void *ptr)
 {
@@ -204,6 +183,19 @@ static void get_fft_window_data(snd_state *ss)
     current_graph_fftr[i] = (current_graph_fftr[i] + 80.0)/80.0;
 }
 
+static int map_chans_fft_size(chan_info *cp, void *ptr) 
+{
+  fft_info *fp;
+  cp->fft_size = (int)ptr; 
+  if (cp->fft) 
+    {
+      fp = cp->fft;
+      if (fp->size < (int)ptr) fp->ok = 0; /* "dirty" flag for fft data array = needs REALLOCation */
+      fp->size = (int)ptr;
+    }
+  return(0);
+}
+
 static void size_browse_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
   snd_state *ss = (snd_state *)clientData;
@@ -211,7 +203,7 @@ static void size_browse_Callback(Widget w,XtPointer clientData,XtPointer callDat
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)callData;
   in_set_fft_size(ss,fft_sizes[cbs->item_position - 1]);
   size = fft_size(ss);
-  map_over_chans(ss,set_ffts_size,(void *)(&size));
+  map_over_chans(ss,map_chans_fft_size,(void *)size);
   map_over_chans(ss,calculate_fft,NULL);
   set_label(graph_label,FFT_WINDOWS[fft_window(ss)]);
   get_fft_window_data(ss);
@@ -244,10 +236,10 @@ The actual coefficients are in snd-fft.c.\n\
 static void window_browse_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)callData;
+  int fft_window_choice;
   snd_state *ss = (snd_state *)clientData;
   fft_window_choice = (cbs->item_position - 1); /* make these numbers 0-based as in mus.lisp */
   in_set_fft_window(ss,fft_window_choice);
-  map_over_chans(ss,set_ffts_window,NULL);
   map_over_chans(ss,calculate_fft,NULL);
   set_label(graph_label,FFT_WINDOWS[fft_window(ss)]);
   get_fft_window_data(ss);
@@ -272,13 +264,17 @@ is a second order Blackman window.\n\
 }
 
 
+static int map_chans_transform_type(chan_info *cp, void *ptr) {cp->transform_type = (int)ptr; return(0);}
 
 static void transform_type_browse_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
   snd_state *ss = (snd_state *)clientData;
+  int type;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)callData;
+  type = cbs->item_position - 1;
   map_over_chans(ss,force_fft_clear,NULL);
-  in_set_transform_type(ss,cbs->item_position - 1);
+  in_set_transform_type(ss,type);
+  map_over_chans(ss,map_chans_transform_type,(void *)type);
   map_over_chans(ss,calculate_fft,NULL);
 }
 
@@ -383,11 +379,16 @@ static void logfreq_Callback(Widget w,XtPointer clientData,XtPointer callData)
   map_over_chans(ss,calculate_fft,NULL);
 }
 
+static int map_chans_normalize_fft(chan_info *cp, void *ptr) {cp->normalize_fft = (int)ptr; return(0);}
+
 static void normalize_Callback(Widget w,XtPointer clientData,XtPointer callData)
 {
+  int choice;
   snd_state *ss = (snd_state *)clientData;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)callData;
-  in_set_normalize_fft(ss,(cb->set) ? NORMALIZE_BY_CHANNEL : DONT_NORMALIZE);
+  choice = (cb->set) ? NORMALIZE_BY_CHANNEL : DONT_NORMALIZE;
+  in_set_normalize_fft(ss,choice);
+  map_over_chans(ss,map_chans_normalize_fft,(void *)choice);
   map_over_chans(ss,calculate_fft,NULL);
 }
 
@@ -415,7 +416,8 @@ static void beta_Callback(Widget w,XtPointer clientData,XtPointer callData)
 {
   snd_state *ss = (snd_state *)clientData;
   XmScaleCallbackStruct *cb = (XmScaleCallbackStruct *)callData;
-  in_set_fft_beta(ss,(Float)cb->value/100.0);
+  in_set_fft_beta(ss,(Float)(cb->value)/100.0);
+  map_chans_field(ss,FCP_BETA,(Float)(cb->value)/100.0);
   if (fft_window_beta_in_use(fft_window(ss)))
     {
       get_fft_window_data(ss);
@@ -903,9 +905,7 @@ void fire_up_transform_dialog(snd_state *ss)
       XtSetArg(args[n],XmNtopAttachment,XmATTACH_NONE); n++;
       XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
       XtSetArg(args[n],XmNshowValue,TRUE); n++;
-#ifdef LESSTIF_VERSION
       XtSetArg(args[n],XmNdecimalPoints,2); n++;
-#endif
       XtSetArg(args[n],XmNvalue,100 * fft_beta(ss)); n++;
       XtSetArg(args[n],XmNdragCallback,make_callback_list(beta_Callback,(XtPointer)ss)); n++;
       XtSetArg(args[n],XmNvalueChangedCallback,make_callback_list(beta_Callback,(XtPointer)ss)); n++;
@@ -1038,6 +1038,7 @@ int transform_dialog_is_active(void)
 void set_fft_beta(snd_state *ss, Float val)
 {
   in_set_fft_beta(ss,val);
+  map_chans_field(ss,FCP_BETA,val);
   if (transform_dialog) 
     {
       XmScaleSetValue(window_beta_scale,(int)(100*val));
@@ -1076,6 +1077,7 @@ void set_fft_size(snd_state *ss, int val)
 {
   int i;
   in_set_fft_size(ss,val);
+  map_over_chans(ss,map_chans_fft_size,(void *)val);
   if (transform_dialog)
     {
       for (i=0;i<NUM_FFT_SIZES;i++)
@@ -1091,12 +1093,7 @@ void set_fft_size(snd_state *ss, int val)
 void set_fft_window(snd_state *ss, int val)
 {
   in_set_fft_window(ss,val);
-  fft_window_choice = val;
-  if (!(ss->graph_hook_active)) 
-    {
-      map_over_chans(ss,set_ffts_window,NULL);
-      map_over_chans(ss,calculate_fft,NULL);
-    }
+  if (!(ss->graph_hook_active)) map_over_chans(ss,calculate_fft,NULL);
   if (transform_dialog)
     {
       XmListSelectPos(window_list,val+1,FALSE);
@@ -1113,6 +1110,7 @@ void set_transform_type(snd_state *ss, int val)
 {
   if (!(ss->graph_hook_active)) map_over_chans(ss,force_fft_clear,NULL);
   in_set_transform_type(ss,val);
+  map_over_chans(ss,map_chans_transform_type,(void *)val);
   if (!(ss->graph_hook_active)) map_over_chans(ss,calculate_fft,NULL);
   if (transform_dialog) XmListSelectPos(type_list,val+1,FALSE);
 }
@@ -1156,6 +1154,7 @@ void set_fft_log_magnitude(snd_state *ss, int val)
 void set_normalize_fft(snd_state *ss, int val)
 {
   in_set_normalize_fft(ss,val);
+  map_over_chans(ss,map_chans_normalize_fft,(void *)val);
   if (transform_dialog) 
     set_toggle_button(normalize_button,val,FALSE,(void *)ss);
   if (!(ss->graph_hook_active)) map_over_chans(ss,calculate_fft,NULL);

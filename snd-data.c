@@ -93,6 +93,17 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->spectro_start = spectro_start(ss);
   cp->spectro_hop = spectro_hop(ss);
   cp->fft_beta = fft_beta(ss);
+  cp->fft_size = fft_size(ss);
+  cp->fft_style = fft_style(ss);
+  cp->fft_window = fft_window(ss);
+  cp->transform_type = transform_type(ss);
+  cp->normalize_fft = normalize_fft(ss);
+  cp->show_mix_consoles = show_mix_consoles(ss);
+  cp->show_mix_waveforms = show_mix_waveforms(ss);
+  cp->graph_style = graph_style(ss);
+  cp->graphs_horizontal = graphs_horizontal(ss);
+  cp->dot_size = dot_size(ss);
+  cp->show_axes = show_axes(ss);
   cp->waving = 1; /* the default state (button is set when we start) */
   cp->ffting = 0;
   cp->printing = 0;
@@ -247,6 +258,8 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->revlp = DEFAULT_REVERB_LOWPASS;
   sp->revscl = DEFAULT_REVERB_SCALE;
   sp->reverb_decay = reverb_decay(ss);
+  sp->speed_tones = speed_tones(ss);
+  sp->speed_style = speed_style(ss);
   sp->last_revscl = 0.0;
   sp->saved_revscl = 0.0;
   sp->revlen = DEFAULT_REVERB_LENGTH;

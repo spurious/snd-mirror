@@ -399,29 +399,6 @@ char *complete_text(char *text, int func)
 
 void clear_possible_completions(void) {possible_completions_ctr = 0;}
 
-static char *snd_apropos(char *old_text)
-{
-  int i,matches=0,len=0;
-  char *new_text=NULL,*buffer=NULL;
-  clear_possible_completions();
-  set_save_completions(TRUE);
-  new_text = command_completer(old_text);
-  matches = get_completion_matches();
-  if (new_text) {FREE(new_text); new_text = NULL;}
-  if ((matches > 0) && (possible_completions_ctr > 0))
-    {
-      for (i=0;i<possible_completions_ctr;i++) len += (snd_strlen(possible_completions[i]) + 3);
-      buffer = (char *)CALLOC(len,sizeof(char));
-      for (i=0;i<possible_completions_ctr;i++)
-	{
-	  strcat(buffer,possible_completions[i]);
-	  strcat(buffer," ");
-	}
-    }
-  set_save_completions(FALSE);
-  return(buffer);
-}
-
 char *filename_completer(char *text)
 {
 #if HAVE_OPENDIR
@@ -581,6 +558,29 @@ char *info_completer(char *text)
 
 #if HAVE_GUILE
 #include "sg.h"
+
+static char *snd_apropos(char *old_text)
+{
+  int i,matches=0,len=0;
+  char *new_text=NULL,*buffer=NULL;
+  clear_possible_completions();
+  set_save_completions(TRUE);
+  new_text = command_completer(old_text);
+  matches = get_completion_matches();
+  if (new_text) {FREE(new_text); new_text = NULL;}
+  if ((matches > 0) && (possible_completions_ctr > 0))
+    {
+      for (i=0;i<possible_completions_ctr;i++) len += (snd_strlen(possible_completions[i]) + 3);
+      buffer = (char *)CALLOC(len,sizeof(char));
+      for (i=0;i<possible_completions_ctr;i++)
+	{
+	  strcat(buffer,possible_completions[i]);
+	  strcat(buffer," ");
+	}
+    }
+  set_save_completions(FALSE);
+  return(buffer);
+}
 
 static SCM g_apropos(SCM text)
 {

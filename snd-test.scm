@@ -7,7 +7,7 @@
 
 (define tests 1)
 (set! full-test #t)
-;(set! snd-test 14)
+;(set! snd-test 16)
 ;;; to run a specific test: ./snd -e "(set! snd-test 4) (set! full-test #f)" -l snd-test.scm
 (define include-clm #f)
 (define original-prompt (listener-prompt))
@@ -3383,82 +3383,85 @@
 	    (report-in-minibuffer "hi")
 	    (append-to-minibuffer "ho")
 	  
-	    (let ((cfd (choose-fd)))
-	      (make-region 1000 2000 cfd)
-	      (src-selection .5)
-	      (undo 1 cfd))
-	    (let ((cfd (choose-fd)))
-	      (make-region 1000 2000 cfd)
-	      (src-selection -1.5)
-	      (undo 1 cfd))
-	    (let ((cfd (choose-fd)))
-	      (make-region 1000 2000 cfd)
-	      (scale-selection-by .5)
-	      (undo 1 cfd))
-	    (let ((cfd (choose-fd)))
-	      (make-region 1000 2000 cfd)
-	      (env-selection '(0 0 1 1 2 0))
-	      (undo 1 cfd))
-	    (let ((cfd (choose-fd)))
-	      (scale-selection-to .5)
-	      (reverse-selection)
-	      (undo 2 cfd))
-	    (if (> (length (regions)) 2) (delete-region 2))
-	    (if (> (length (regions)) 2) (select-region 2))
+	    (without-errors
+	     (begin
+	       (let ((cfd (choose-fd)))
+		 (make-region 1000 2000 cfd)
+		 (src-selection .5)
+		 (undo 1 cfd))
+	       (let ((cfd (choose-fd)))
+		 (make-region 1000 2000 cfd)
+		 (src-selection -1.5)
+		 (undo 1 cfd))
+	       (let ((cfd (choose-fd)))
+		 (make-region 1000 2000 cfd)
+		 (scale-selection-by .5)
+		 (undo 1 cfd))
+	       (let ((cfd (choose-fd)))
+		 (make-region 1000 2000 cfd)
+		 (env-selection '(0 0 1 1 2 0))
+		 (undo 1 cfd))
+	       (let ((cfd (choose-fd)))
+		 (scale-selection-to .5)
+		 (reverse-selection)
+		 (undo 2 cfd))
+	       (if (> (length (regions)) 2) (delete-region 2))
+	       (if (> (length (regions)) 2) (select-region 2))))
 	    (map revert-sound open-files)
 
-	    (let ((cfd (car open-files)))
-	      (set-syncing 1 cfd)
-	      (if (not (null? (cdr open-files))) (set-syncing 1 (cadr open-files)))
-	      (if (rs 0.5)
-		  (begin
-		   (make-region 1000 2000 cfd)
-		   (src-selection .5)
-		   (undo 1 cfd)))
-	      (if (rs 0.5)
-		  (begin
-		   (make-region 1000 2000 cfd)
-		   (src-selection -1.5)
-		   (undo 1 cfd)))
-	      (if (rs 0.5)
-		  (begin
-		   (make-region 1000 2000 cfd)
-		   (env-selection '(0 0 1 1 2 0))
-		   (undo 1 cfd)))
-	      (if (rs 0.5)
-		  (begin
-		   (make-region 1000 2000 cfd)
-		   (reverse-selection)
-		   (undo 1 cfd)))
-	      (if (rs 0.5)
-		  (begin
-		   (make-region 1000 2000 cfd)
-		   (filter-selection '(0 0 .1 1 1 0) 40)
-		   (undo 1 cfd)))
-	      (if (rs 0.5)
-		  (begin
-		   (make-region 1000 2000 cfd)
-		   (convolve-selection-with "oboe.snd")
-		   (undo 1 cfd)))
-	      (if (rs 0.5)
-		  (begin
-		   (make-region 1000 2000 cfd)
-		   (smooth-selection)
-		   (undo 1 cfd)))
-	      (if (rs 0.5)
-		  (begin
-		   (make-region 1000 2000 cfd)
-		   (scale-selection-by .5)
-		   (undo 1 cfd)))
-	      (if (rs 0.5)
-		  (begin
-		   (scale-selection-to .5)
-		   (reverse-selection)
-		   (undo 2)
-		   (src-selection '(.5 0 1 1))
-		   (undo)))
-	      (revert-sound cfd)
-	      (if (not (null? (cdr open-files))) (revert-sound (cadr open-files))))
+	    (without-errors
+	     (let ((cfd (car open-files)))
+	       (set-syncing 1 cfd)
+	       (if (not (null? (cdr open-files))) (set-syncing 1 (cadr open-files)))
+	       (if (rs 0.5)
+		   (begin
+		     (make-region 1000 2000 cfd)
+		     (src-selection .5)
+		     (undo 1 cfd)))
+	       (if (rs 0.5)
+		   (begin
+		     (make-region 1000 2000 cfd)
+		     (src-selection -1.5)
+		     (undo 1 cfd)))
+	       (if (rs 0.5)
+		   (begin
+		     (make-region 1000 2000 cfd)
+		     (env-selection '(0 0 1 1 2 0))
+		     (undo 1 cfd)))
+	       (if (rs 0.5)
+		   (begin
+		     (make-region 1000 2000 cfd)
+		     (reverse-selection)
+		     (undo 1 cfd)))
+	       (if (rs 0.5)
+		   (begin
+		     (make-region 1000 2000 cfd)
+		     (filter-selection '(0 0 .1 1 1 0) 40)
+		     (undo 1 cfd)))
+	       (if (rs 0.5)
+		   (begin
+		     (make-region 1000 2000 cfd)
+		     (convolve-selection-with "oboe.snd")
+		     (undo 1 cfd)))
+	       (if (rs 0.5)
+		   (begin
+		     (make-region 1000 2000 cfd)
+		     (smooth-selection)
+		     (undo 1 cfd)))
+	       (if (rs 0.5)
+		   (begin
+		     (make-region 1000 2000 cfd)
+		     (scale-selection-by .5)
+		     (undo 1 cfd)))
+	       (if (rs 0.5)
+		   (begin
+		     (scale-selection-to .5)
+		     (reverse-selection)
+		     (undo 2)
+		     (src-selection '(.5 0 1 1))
+		     (undo)))
+	       (revert-sound cfd)
+	       (if (not (null? (cdr open-files))) (revert-sound (cadr open-files)))))
 	  
 	    (make-region 0 (frames))
 	    (convolve-selection-with "fyow.snd" .5)
@@ -3857,6 +3860,76 @@
 	  ((= i digits))
 	(key (char->integer (string-ref ns i)) 0 id)))))
 
+(define funcs (list wavo wavo-hop wavo-trace line-size max-fft-peaks show-fft-peaks zero-pad fft-style fft-window 
+		    verbose-cursor fft-log-frequency fft-log-magnitude min-dB wavelet-type fft-size fft-beta transform-type 
+		    normalize-fft show-mix-consoles show-mix-waveforms graph-style dot-size show-axes 
+		    spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
+		    spectro-hop spectro-cutoff spectro-start graphs-horizontal
+		    ))
+(define set-funcs (list set-wavo set-wavo-hop set-wavo-trace set-line-size set-max-fft-peaks set-show-fft-peaks set-zero-pad set-fft-style set-fft-window 
+		    set-verbose-cursor set-fft-log-frequency set-fft-log-magnitude set-min-dB set-wavelet-type set-fft-size set-fft-beta set-transform-type 
+		    set-normalize-fft set-show-mix-consoles set-show-mix-waveforms set-graph-style set-dot-size set-show-axes 
+		    set-spectro-x-angle set-spectro-x-scale set-spectro-y-angle set-spectro-y-scale set-spectro-z-angle set-spectro-z-scale
+		    set-spectro-hop set-spectro-cutoff set-spectro-start set-graphs-horizontal
+		    ))
+(define func-names (list 'wavo 'wavo-hop 'wavo-trace 'line-size 'max-fft-peaks 'show-fft-peaks 'zero-pad 'fft-style 'fft-window
+			 'verbose-cursor 'fft-log-frequency 'fft-log-magnitude 'min-dB 'wavelet-type 'fft-size 'fft-beta 'transform-type
+			 'normalize-fft 'show-mix-consoles 'show-mix-waveforms 'graph-style 'dot-size 'show-axes 
+			 'spectro-x-angle 'spectro-x-scale 'spectro-y-angle 'spectro-y-scale 'spectro-z-angle 'spectro-z-scale
+			 'spectro-hop 'spectro-cutoff 'spectro-start 'graphs-horizontal
+			 ))
+(define new-values (list #t 12 512 1024 3 #t 32 sonogram cauchy-window
+			 #t #t #t -120.0 3 32 .5 autocorrelation
+			 0 #f #t graph-lollipops 8 show-no-axes
+			 32.0 .5 32.0 .5 32.0 .5
+			 14 .3 .1 #f
+			 ))
+
+(define test-history-channel
+  (lambda (func set-func name new-value snd1 snd2 snd3)
+    (define next-chan
+      (lambda (snd chn)
+	(if (< chn (channels snd))
+	    (cons (func snd chn) (next-chan snd (1+ chn)))
+	    '())))
+    (define next-snd-case 
+      (lambda (snd)
+	(if (< snd (max-sounds))
+	    (if (sound? snd)
+		(cons (next-chan snd 0) (next-snd-case (1+ snd)))
+		(next-snd-case (1+ snd)))
+	    '())))
+    (define test-equal
+      (lambda (nv new-value)
+	(if (and (number? nv)
+		 (inexact? nv))
+	    (not (fneq nv new-value))
+	    (equal? nv new-value))))
+    (if (not (equal? (func #t #t) (next-snd-case 0)))
+	(snd-print (format #f "test-history-channel ~A[0]: ~A ~A?" name (func #t #t) (next-snd-case 0))))
+    (let ((old-value (func))
+	  (old-chan-value (func snd1 0)))
+      (set-func new-value snd1 0)
+      (let ((nv (func snd1 0)))
+	(if (not (test-equal nv new-value))
+	    (snd-print (format #f "test-history-channel set-~A[1]: ~A ~A?" name new-value (func snd1 0)))))
+      (set-func new-value snd3 2)
+      (let ((nv (func snd3 2)))
+	(if (not (test-equal nv new-value))
+	    (snd-print (format #f "test-history-channel set-~A[2]: ~A ~A?" name new-value (func snd3 2)))))
+      (if (not (test-equal old-value new-value))
+	  (let ((nv (func snd3 1)))
+	    (if (test-equal nv new-value)
+		(snd-print (format #f "test-history-channel set-~A[3]: ~A ~A?" name new-value (func snd3 1))))))
+      (set-func new-value snd2 #t)
+      (let ((nv (func snd2 1)))
+	(if (not (test-equal nv new-value))
+	    (snd-print (format #f "test-history-channel set-~A[4]: ~A ~A?" name new-value (func snd2 1)))))
+      (set-func new-value)
+      (if (not (equal? (func #t #t) (next-snd-case 0)))
+	  (snd-print (format #f "test-history-channel ~A[5]: ~A ~A?" name (func #t #t) (next-snd-case 0))))
+      )))
+      
 (if (or full-test (= snd-test 15))
     (let ((obi (open-sound (car (match-sound-files (lambda (file) (= (mus-sound-chans file) 1)))))))
       (if (not (equal? (all-chans) (list (list obi) (list 0)))) (snd-print (format #f ";all-chans: ~A?" (all-chans))))
@@ -4165,8 +4238,35 @@
 		  (fneq (cadr x0) (cadr x1)))
 	      (snd-print (format #f "C-X v: ~A ~A?" x0 x1))))
 	(close-sound id))
+
+      (let ((snd1 (open-sound "oboe.snd"))
+	    (snd2 (or (open-sound "2.snd") (open-sound "4.aiff")))
+	    (snd3 (open-sound "4.aiff")))
+	(define tests 
+	  (lambda (f sf fn nv)
+	    (if (not (null? f))
+		(begin
+		  (test-history-channel (car f) (car sf) (car fn) (car nv) snd1 snd2 snd3)
+		  (tests (cdr f) (cdr sf) (cdr fn) (cdr nv))))))
+	(tests funcs set-funcs func-names new-values)
+	(close-sound snd1)
+	(close-sound snd2)
+	(close-sound snd3))
       ))
 
+(load "setf.scm")
+(if (or full-test (= snd-test 16))
+    ;; test setfs
+    (let ((snd1 (open-sound "oboe.snd"))
+	  (hiho 2))
+      (setf (amp) 0.5)
+      (if (> (abs (- (amp) 0.5)) .01) (snd-print (format #f "setf (amp) 0.5: ~A" (amp))))
+      (setf (amp snd1) 0.25)
+      (if (> (abs (- (amp snd1) 0.25)) .01) (snd-print (format #f "setf (amp snd1) 0.25: ~A" (amp snd1))))
+      (close-sound snd1)
+      (setf hiho 32)
+      (if (not (= hiho 32)) (snd-print (format #f "setf hiho 32: ~A" hiho)))
+      ))
 
 ;;; these are just the right size to hit an bug in 4.4's amp-env subsampling
 ; (with-sound (:channels 4 :output "/zap/sounds/big4.snd" :play nil) 

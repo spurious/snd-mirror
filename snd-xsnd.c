@@ -375,9 +375,7 @@ static Float xsrate_changed(int ival, char *srcbuf, int style, int tones)
 
 static int snd_srate_changed(snd_info *sp, int ival)
 {
-  snd_state *ss;
-  ss = sp->state;
-  sp->srate = xsrate_changed(ival,srate_number_buffer,speed_style(ss),speed_tones(ss));
+  sp->srate = xsrate_changed(ival,srate_number_buffer,sp->speed_style,sp->speed_tones);
   set_label(w_snd_srate_number(sp),srate_number_buffer);
   return(ival);
 }
@@ -441,7 +439,7 @@ static int snd_expand_changed(snd_info *sp, int val)
   if (val < 100)
     sp->expand = (Float)val * .0009697;
   else sp->expand = exp((Float)(val-450)/150.0);
-  if (sp->playing) dac_set_expand(sp->state, sp, sp->expand);
+  if (sp->playing) dac_set_expand(sp, sp->expand);
   sfs=prettyf(sp->expand,2);
   fill_number(sfs,expand_number_buffer);
   set_label(w_snd_expand_number(sp),expand_number_buffer);
@@ -2532,7 +2530,7 @@ void unlock_ctrls(snd_info *sp) {XtVaSetValues(w_snd_ctrls(sp),XmNpaneMinimum,1,
 
 void set_apply_button(snd_info *sp, int val) {XmToggleButtonSetState(w_snd_apply(sp),val,FALSE);}
 
-void normalize_sound(snd_state *ss, snd_info *sp, snd_info *osp, chan_info *ncp)
+void normalize_sound(snd_state *ss, snd_info *sp, chan_info *ncp)
 {
   /* make sp look ok, squeezing others if needed; called only if normalize_on_open(ss) */
   /* if there's already enough (i.e. ss->channel_min_height), just return */

@@ -427,7 +427,7 @@ void display_filter_graph(snd_state *ss, snd_info *sp, axis_context *ax, int wid
     }
   if (spf->edited)
     {
-      display_frequency_response(ss,e,ap,(spf->gray_ap)->ax,sp->filter_order,sp->filter_dBing);
+      display_frequency_response(e,ap,(spf->gray_ap)->ax,sp->filter_order,sp->filter_dBing);
     }
 }
 

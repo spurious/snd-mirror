@@ -9,6 +9,7 @@ dnl       sun (solaris 7)
 dnl       w95/98 with cygwin
 dnl       beos release 5 (intel)
 dnl       next m68k and next i386
+dnl       Mac OS-X (Darwin 1.1)
 
 AC_INIT(snd.c)
 AC_CANONICAL_HOST
@@ -522,6 +523,7 @@ AC_MSG_RESULT($trap_segfault)
 dnl config.guess:
 dnl   m68k-next-nextstep3  mips-sgi-irix6.2  i386-next-nextstep3  mips-sgi-irix6.3  i586-pc-beos
 dnl   i686-pc-linux-gnu  powerpc-unknown-linux-gnu   sparc-sun-solaris2.7 i386-pc-cygwin32
+dnl   powerpc-apple-darwin1.1
 
 
 AC_SUBST(MAKE_TARGET)

@@ -145,22 +145,6 @@ static char *sstr(char *val)
   return(val);
 }
 
-static void lsym(snd_state *ss, env *e)
-{
-  char *news;
-  if (e)
-    {
-      news = env_to_string(e);
-      if (news)
-	{
-	  if (ss->mx_sp)
-	    report_in_minibuffer(ss->mx_sp,news);
-	  FREE(news);
-	}
-    }
-}
-
-
 typedef struct {
   char *name;
   env *val;
@@ -320,13 +304,6 @@ void add_or_edit_symbol(char *name, env *val)
   else add_symbol(name,val);
 }
 
-static int prefix_fix(char *str)
-{
-  int val = 1;
-  if ((str) && (*str)) sscanf(str,"%d",&val);
-  return(val);
-}
-
 static int symit(snd_state *ss,char **str);
 
 int snd_eval_listener_str(snd_state *ss, char *buf) 
@@ -348,8 +325,6 @@ static int handle_set(snd_state *ss, char *tok, char **str)
 {
   snd_info *sp;
   chan_info *cp;
-  mark *m;
-  Float f0,f1;
   int ival;
   MUS_SAMPLE_TYPE samp_vals[2];
   if (strcmp(tok,S_set_ask_before_overwrite) == 0) {set_ask_before_overwrite(ss,istr(str[1])); isym(ss,0); return(0);}
@@ -419,7 +394,6 @@ static int handle_set(snd_state *ss, char *tok, char **str)
   if (strcmp(tok,S_set_graph_style) == 0) {in_set_graph_style(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_graph_style) == 0) {set_graph_style(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_graphing) == 0) {cp = get_cp(ss,str[2],str[3]); if (cp) cp->lisp_graphing = istr(str[1]); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_graphs_horizontal) == 0) {set_graphs_horizontal(ss,istr(str[1])); isym(ss,0); return(0);}
 #if HAVE_HTML
   if (strcmp(tok,S_set_html_dir) == 0) {set_html_dir(ss,sstr(str[1])); isym(ss,0); return(0);}
 #endif
@@ -477,7 +451,6 @@ static int handle_set(snd_state *ss, char *tok, char **str)
   if (strcmp(tok,S_set_show_fft_peaks) == 0) {set_show_fft_peaks(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_show_marks) == 0) {set_show_marks(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_show_mix_consoles) == 0) {set_show_mix_consoles(ss,istr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_show_mix_waveforms) == 0) {set_show_mix_waveforms(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_show_selection_transform) == 0) {set_show_selection_transform(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_show_usage_stats) == 0) {set_show_usage_stats(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_show_y_zero) == 0) {set_show_y_zero(ss,istr(str[1])); isym(ss,0); return(0);}
@@ -500,7 +473,6 @@ static int handle_set(snd_state *ss, char *tok, char **str)
       return(0);
     }
   if (strcmp(tok,S_set_speed_style) == 0) {activate_speed_in_menu(ss,istr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_speed_tones) == 0) {set_speed_tones(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_squelch_update) == 0) {cp = get_cp(ss,str[2],str[3]); if (cp) cp->squelch_update = istr(str[1]); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_syncing) == 0) {sp = get_sp(ss,str[2]); if (sp) syncb(sp,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_temp_dir) == 0) {set_temp_dir(ss,sstr(str[1])); isym(ss,0); return(0);}
@@ -584,7 +556,7 @@ static int handle_set(snd_state *ss, char *tok, char **str)
 
 int snd_eval_str(snd_state *ss, char *buf, int count)
 {
-  int i,err = 0,ctr;
+  int i,err = 0;
   char *tmp;
   char *tok[10];
   snd_info *sp;
@@ -619,12 +591,10 @@ int snd_eval_str(snd_state *ss, char *buf, int count)
 
 static int symit(snd_state *ss,char **str)
 {
-  char *tok,*filename = NULL,*tempfile,*mcf=NULL;
-  int ival,i,num,len,beg,id;
+  char *tok,*filename = NULL;
+  int ival,i;
   chan_info *cp;
   snd_info *sp;
-  mark *m;
-  mixdata *md;
   Float scls[1];
   MUS_SAMPLE_TYPE samp_vals[2];
   tok = str[0];
@@ -1332,7 +1302,7 @@ void snd_load_init_file(snd_state *ss, int nog, int noi)
 
 int snd_load_file(char *filename)
 {
-  int fd,old_progress;
+  int fd;
   char *str,*saved_buf;
   snd_state *ss;
   str=filename;

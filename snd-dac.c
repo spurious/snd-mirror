@@ -779,7 +779,7 @@ void stop_playing_region(int n)
 
 enum {DAC_EXPAND,DAC_EXPAND_RAMP,DAC_EXPAND_LENGTH,DAC_EXPAND_HOP,DAC_EXPAND_SCALER,DAC_CONTRAST_AMP,DAC_REVERB_FEEDBACK,DAC_REVERB_LOWPASS};
 
-static void dac_set_field(snd_state *ss, snd_info *sp, Float newval, int field)
+static void dac_set_field(snd_info *sp, Float newval, int field)
 {
   /* if sp == NULL, sets globally */
   int i,j,val;
@@ -862,14 +862,14 @@ static void dac_set_field(snd_state *ss, snd_info *sp, Float newval, int field)
     }
 }
 
-void dac_set_expand(snd_state *ss, snd_info *sp, Float newval) {dac_set_field(ss,sp,newval,DAC_EXPAND);}
-void dac_set_expand_length(snd_state *ss, snd_info *sp, Float newval) {dac_set_field(ss,sp,newval,DAC_EXPAND_LENGTH);}
-void dac_set_expand_ramp(snd_state *ss, snd_info *sp, Float newval) {dac_set_field(ss,sp,newval,DAC_EXPAND_RAMP);}
-void dac_set_expand_hop(snd_state *ss, snd_info *sp, Float newval) {dac_set_field(ss,sp,newval,DAC_EXPAND_HOP);}
-void dac_set_expand_scaler(snd_state *ss, snd_info *sp, Float newval) {dac_set_field(ss,sp,newval,DAC_EXPAND_SCALER);} /* not currently accessible */
-void dac_set_contrast_amp(snd_state *ss, snd_info *sp, Float newval) {dac_set_field(ss,sp,newval,DAC_CONTRAST_AMP);}
-void dac_set_reverb_feedback(snd_state *ss, snd_info *sp, Float newval) {dac_set_field(ss,sp,newval,DAC_REVERB_FEEDBACK);}
-void dac_set_reverb_lowpass(snd_state *ss, snd_info *sp, Float newval) {dac_set_field(ss,sp,newval,DAC_REVERB_LOWPASS);}
+void dac_set_expand(snd_info *sp, Float newval) {dac_set_field(sp,newval,DAC_EXPAND);}
+void dac_set_expand_length(snd_info *sp, Float newval) {dac_set_field(sp,newval,DAC_EXPAND_LENGTH);}
+void dac_set_expand_ramp(snd_info *sp, Float newval) {dac_set_field(sp,newval,DAC_EXPAND_RAMP);}
+void dac_set_expand_hop(snd_info *sp, Float newval) {dac_set_field(sp,newval,DAC_EXPAND_HOP);}
+void dac_set_expand_scaler(snd_info *sp, Float newval) {dac_set_field(sp,newval,DAC_EXPAND_SCALER);} /* not currently accessible */
+void dac_set_contrast_amp(snd_info *sp, Float newval) {dac_set_field(sp,newval,DAC_CONTRAST_AMP);}
+void dac_set_reverb_feedback(snd_info *sp, Float newval) {dac_set_field(sp,newval,DAC_REVERB_FEEDBACK);}
+void dac_set_reverb_lowpass(snd_info *sp, Float newval) {dac_set_field(sp,newval,DAC_REVERB_LOWPASS);}
 
 
 static int find_slot_to_play(void)
@@ -1108,7 +1108,7 @@ void start_playing_chan_syncd(chan_info *cp, int start, int background, int paus
   sp->syncing = old_syncing;
 }
 
-void play_selection(snd_state *ss)
+void play_selection(void)
 {
   int i,dur;
   sync_info *si = NULL;
@@ -2085,7 +2085,7 @@ static SCM g_play_selection(void)
   #define H_play_selection "(" S_play_selection ") plays the current selection"
   if (selection_is_current())
     {
-      play_selection(get_global_state());
+      play_selection();
       return(SCM_BOOL_T);
     }
   return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_play_selection))));

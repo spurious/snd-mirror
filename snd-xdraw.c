@@ -169,49 +169,44 @@ void set_grf_point(int xi, int j, int yi)
   points[j].y = yi;
 }
 
-void draw_both_grf_points(snd_state *ss, axis_context *ax, int j, axis_info *ap)
+void draw_both_grf_points(chan_info *cp, axis_context *ax, int j)
 {
   int i,size8,size4;
-  switch (graph_style(ss))
+  switch (cp->graph_style)
     {
     case GRAPH_LINES:
       XDrawLines(ax->dp,ax->wn,ax->gc,points,j,CoordModeOrigin);
       XDrawLines(ax->dp,ax->wn,ax->gc,points1,j,CoordModeOrigin);
-      if ((erase_zeros(ss)) && (!(show_y_zero(ss))))
-	{
-	  erase_context(ap->cp);
-	  XDrawLine(ax->dp,ax->wn,ax->gc,ap->x_axis_x0,grf_y(0.0,ap),ap->x_axis_x1,grf_y(0.0,ap));
-	}
       break;
     case GRAPH_DOTS:
-      draw_points(ax,points,j,dot_size(ss));
-      draw_points(ax,points1,j,dot_size(ss));
+      draw_points(ax,points,j,cp->dot_size);
+      draw_points(ax,points1,j,cp->dot_size);
       break;
     case GRAPH_FILLED:
       fill_two_sided_polygons(ax,points,points1,j);
       break;
     case GRAPH_DOTS_AND_LINES:
-      if (dot_size(ss) > 1)
+      if (cp->dot_size > 1)
 	{
-	  draw_points(ax,points,j,dot_size(ss));
-	  draw_points(ax,points1,j,dot_size(ss));
+	  draw_points(ax,points,j,cp->dot_size);
+	  draw_points(ax,points1,j,cp->dot_size);
 	}
       XDrawLines(ax->dp,ax->wn,ax->gc,points,j,CoordModeOrigin);
       XDrawLines(ax->dp,ax->wn,ax->gc,points1,j,CoordModeOrigin);
       break;
     case GRAPH_LOLLIPOPS:
-      if (dot_size(ss) == 1)
+      if (cp->dot_size == 1)
 	{
 	  for (i=0;i<j;i++)
 	    XDrawLine(ax->dp,ax->wn,ax->gc,points[i].x,points[i].y,points1[i].x,points1[i].y);
 	}
       else
 	{
-	  size8 = dot_size(ss)/8;
-	  size4 = dot_size(ss)/4;
+	  size8 = cp->dot_size/8;
+	  size4 = cp->dot_size/4;
 	  if (size4 < 1) size4 = 1;
-	  draw_points(ax,points,j,dot_size(ss));
-	  draw_points(ax,points1,j,dot_size(ss));
+	  draw_points(ax,points,j,cp->dot_size);
+	  draw_points(ax,points1,j,cp->dot_size);
 	  for (i=0;i<j;i++)
 	    XFillRectangle(ax->dp,ax->wn,ax->gc,points[i].x - size8,points[i].y,size4,points1[i].y - points[i].y);
 	}
@@ -219,31 +214,31 @@ void draw_both_grf_points(snd_state *ss, axis_context *ax, int j, axis_info *ap)
     }
 }
 
-void draw_grf_points(snd_state *ss, axis_context *ax, int j, axis_info *ap, Float y0)
+void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Float y0)
 {
   int i,gy0,size8,size4;
-  switch (graph_style(ss))
+  switch (cp->graph_style)
     {
     case GRAPH_LINES: draw_lines(ax,points,j); break;
-    case GRAPH_DOTS: draw_points(ax,points,j,dot_size(ss)); break;
+    case GRAPH_DOTS: draw_points(ax,points,j,cp->dot_size); break;
     case GRAPH_FILLED: fill_polygons(ax,points,j,grf_y(y0,ap)); break;
     case GRAPH_DOTS_AND_LINES: 
-      if (dot_size(ss) > 1) draw_points(ax,points,j,dot_size(ss)); 
+      if (cp->dot_size > 1) draw_points(ax,points,j,cp->dot_size); 
       draw_lines(ax,points,j); 
       break;
     case GRAPH_LOLLIPOPS:
       gy0 = grf_y(y0,ap);
-      if (dot_size(ss) == 1)
+      if (cp->dot_size == 1)
 	{
 	  for (i=0;i<j;i++)
 	    XDrawLine(ax->dp,ax->wn,ax->gc,points[i].x,points[i].y,points[i].x,gy0);
 	}
       else
 	{
-	  size8 = dot_size(ss)/8;
-	  size4 = dot_size(ss)/4;
+	  size8 = cp->dot_size/8;
+	  size4 = cp->dot_size/4;
 	  if (size4 < 1) size4 = 1;
-	  draw_points(ax,points,j,dot_size(ss));
+	  draw_points(ax,points,j,cp->dot_size);
 	  for (i=0;i<j;i++)
 	    if (points[i].y > gy0) /* unsigned int height */
 	      XFillRectangle(ax->dp,ax->wn,ax->gc,points[i].x - size8,gy0,size4,points[i].y - gy0);
@@ -291,7 +286,7 @@ void mix_save_graph(snd_state *ss, mix_context *ms,int j)
     }
 }
 
-void erase_and_draw_grf_points(snd_state *ss, mix_context *ms, chan_info *cp, int nj)
+void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int nj)
 {
   int i,j,min,previous_j;
   chan_context *cx;
@@ -310,7 +305,7 @@ void erase_and_draw_grf_points(snd_state *ss, mix_context *ms, chan_info *cp, in
   draw_gc = copy_GC(cp);
   undraw_gc = erase_GC(cp);
   min = ((nj < previous_j) ? nj : previous_j);
-  if (graph_style(ss) == GRAPH_LINES)
+  if (cp->graph_style == GRAPH_LINES)
     {
       for (i=0,j=1;i<min-1;i++,j++)
 	{
@@ -333,25 +328,25 @@ void erase_and_draw_grf_points(snd_state *ss, mix_context *ms, chan_info *cp, in
     {
       for (i=0;i<min;i++)
 	{
-	  draw_point(dpy,wn,undraw_gc,ms->p0[i],dot_size(ss));
-	  draw_point(dpy,wn,draw_gc,points[i],dot_size(ss));
+	  draw_point(dpy,wn,undraw_gc,ms->p0[i],cp->dot_size);
+	  draw_point(dpy,wn,draw_gc,points[i],cp->dot_size);
 	}
       if (nj > previous_j)
 	{
-	  for (i=min;i<nj;i++) draw_point(dpy,wn,draw_gc,points[i],dot_size(ss));
+	  for (i=min;i<nj;i++) draw_point(dpy,wn,draw_gc,points[i],cp->dot_size);
 	}
       else
 	{
 	  if (previous_j > nj)
 	    {
-	      for (i=min;i<previous_j;i++) draw_point(dpy,wn,undraw_gc,ms->p0[i],dot_size(ss));
+	      for (i=min;i<previous_j;i++) draw_point(dpy,wn,undraw_gc,ms->p0[i],cp->dot_size);
 	    }
 	}
     }
   backup_erase_grf_points(ms,nj);
 }
 
-void erase_and_draw_both_grf_points(snd_state *ss, mix_context *ms, chan_info *cp, int nj)
+void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
 {
   int i,j,min,previous_j;
   chan_context *cx;
@@ -371,7 +366,7 @@ void erase_and_draw_both_grf_points(snd_state *ss, mix_context *ms, chan_info *c
   draw_gc = copy_GC(cp);
   undraw_gc = erase_GC(cp);
   min = ((nj < previous_j) ? nj : previous_j);
-  if (graph_style(ss) == GRAPH_LINES)
+  if (cp->graph_style == GRAPH_LINES)
     {
       for (i=0,j=1;i<min-1;i++,j++)
 	{
@@ -402,17 +397,17 @@ void erase_and_draw_both_grf_points(snd_state *ss, mix_context *ms, chan_info *c
     {
       for (i=0;i<min;i++)
 	{
-	  draw_point(dpy,wn,undraw_gc,ms->p0[i],dot_size(ss));
-	  draw_point(dpy,wn,draw_gc,points[i],dot_size(ss));
-	  draw_point(dpy,wn,undraw_gc,ms->p1[i],dot_size(ss));
-	  draw_point(dpy,wn,draw_gc,points1[i],dot_size(ss));
+	  draw_point(dpy,wn,undraw_gc,ms->p0[i],cp->dot_size);
+	  draw_point(dpy,wn,draw_gc,points[i],cp->dot_size);
+	  draw_point(dpy,wn,undraw_gc,ms->p1[i],cp->dot_size);
+	  draw_point(dpy,wn,draw_gc,points1[i],cp->dot_size);
 	}
       if (nj > previous_j)
 	{
 	  for (i=min;i<nj;i++) 
 	    {
-	      draw_point(dpy,wn,draw_gc,points[i],dot_size(ss));
-	      draw_point(dpy,wn,draw_gc,points1[i],dot_size(ss));
+	      draw_point(dpy,wn,draw_gc,points[i],cp->dot_size);
+	      draw_point(dpy,wn,draw_gc,points1[i],cp->dot_size);
 	    }
 	}
       else
@@ -421,8 +416,8 @@ void erase_and_draw_both_grf_points(snd_state *ss, mix_context *ms, chan_info *c
 	    {
 	      for (i=min;i<previous_j;i++) 
 		{
-		  draw_point(dpy,wn,undraw_gc,ms->p0[i],dot_size(ss));
-		  draw_point(dpy,wn,undraw_gc,ms->p1[i],dot_size(ss));
+		  draw_point(dpy,wn,undraw_gc,ms->p0[i],cp->dot_size);
+		  draw_point(dpy,wn,undraw_gc,ms->p1[i],cp->dot_size);
 		}
 	    }
 	}
@@ -468,7 +463,7 @@ void make_axes(chan_info *cp, axis_info *ap, int x_style)
 	  break;
 	case CHANNELS_COMBINED:         /* clear only our (full width) portion of the window */
 	  erase_rectangle(cp,ap->ax,0,ap->y_offset,ap->window_width,ap->height); 
-	  if (!(graphs_horizontal(ss)))
+	  if (!(cp->graphs_horizontal))
 	    {
 	      if ((cp->ffting) && (cp->fft))
 		{
@@ -928,7 +923,7 @@ static void AX_Orientation_Callback(Widget w,XtPointer clientData,XtPointer call
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
   in_set_spectro_x_angle(ss,(Float)(cbs->value));
-  map_chans_field(ss,F_X_ANGLE,(Float)(cbs->value));
+  map_chans_field(ss,FCP_X_ANGLE,(Float)(cbs->value));
   map_over_chans(ss,update_graph,NULL);
 }
 
@@ -936,7 +931,7 @@ void set_spectro_x_angle(snd_state *ss, Float val)
 {
   in_set_spectro_x_angle(ss,val);
   if (oid) XmScaleSetValue(oid->ax,(int)val);
-  map_chans_field(ss,F_X_ANGLE,val);
+  map_chans_field(ss,FCP_X_ANGLE,val);
   if (!(ss->graph_hook_active)) map_over_chans(ss,update_graph,NULL);
 }
 
@@ -952,7 +947,7 @@ static void AY_Orientation_Callback(Widget w,XtPointer clientData,XtPointer call
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
   in_set_spectro_y_angle(ss,(Float)(cbs->value));
-  map_chans_field(ss,F_Y_ANGLE,(Float)(cbs->value));
+  map_chans_field(ss,FCP_Y_ANGLE,(Float)(cbs->value));
   map_over_chans(ss,update_graph,NULL);
 }
 
@@ -960,7 +955,7 @@ void set_spectro_y_angle(snd_state *ss, Float val)
 {
   in_set_spectro_y_angle(ss,val);
   if (oid) XmScaleSetValue(oid->ay,(int)val);
-  map_chans_field(ss,F_Y_ANGLE,val);
+  map_chans_field(ss,FCP_Y_ANGLE,val);
   if (!(ss->graph_hook_active)) map_over_chans(ss,update_graph,NULL);
 }
 
@@ -976,7 +971,7 @@ static void AZ_Orientation_Callback(Widget w,XtPointer clientData,XtPointer call
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
   in_set_spectro_z_angle(ss,(Float)(cbs->value));
-  map_chans_field(ss,F_Z_ANGLE,(Float)(cbs->value));
+  map_chans_field(ss,FCP_Z_ANGLE,(Float)(cbs->value));
   map_over_chans(ss,update_graph,NULL);
 }
 
@@ -984,7 +979,7 @@ void set_spectro_z_angle(snd_state *ss, Float val)
 {
   in_set_spectro_z_angle(ss,val);
   if (oid) XmScaleSetValue(oid->az,(int)val);
-  map_chans_field(ss,F_Z_ANGLE,val);
+  map_chans_field(ss,FCP_Z_ANGLE,val);
   if (!(ss->graph_hook_active)) map_over_chans(ss,update_graph,NULL);
 }
 
@@ -1000,7 +995,7 @@ static void SX_Orientation_Callback(Widget w,XtPointer clientData,XtPointer call
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
   in_set_spectro_x_scale(ss,(Float)(cbs->value)*0.01);
-  map_chans_field(ss,F_X_SCALE,(Float)(cbs->value)*0.01);
+  map_chans_field(ss,FCP_X_SCALE,(Float)(cbs->value)*0.01);
   map_over_chans(ss,update_graph,NULL);
 }
 
@@ -1008,7 +1003,7 @@ void set_spectro_x_scale(snd_state *ss, Float val)
 {
   in_set_spectro_x_scale(ss,val);
   if (oid) XmScaleSetValue(oid->sx,(int)(val*100));
-  map_chans_field(ss,F_X_SCALE,val);
+  map_chans_field(ss,FCP_X_SCALE,val);
   if (!(ss->graph_hook_active)) map_over_chans(ss,update_graph,NULL);
 }
 
@@ -1024,7 +1019,7 @@ static void SY_Orientation_Callback(Widget w,XtPointer clientData,XtPointer call
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
   in_set_spectro_y_scale(ss,(Float)(cbs->value)*0.01);
-  map_chans_field(ss,F_Y_SCALE,(Float)(cbs->value)*0.01);
+  map_chans_field(ss,FCP_Y_SCALE,(Float)(cbs->value)*0.01);
   map_over_chans(ss,update_graph,NULL);
 }
 
@@ -1032,7 +1027,7 @@ void set_spectro_y_scale(snd_state *ss, Float val)
 {
   in_set_spectro_y_scale(ss,val);
   if (oid) XmScaleSetValue(oid->sy,(int)(val*100));
-  map_chans_field(ss,F_Y_SCALE,val);
+  map_chans_field(ss,FCP_Y_SCALE,val);
   if (!(ss->graph_hook_active)) map_over_chans(ss,update_graph,NULL);
 }
 
@@ -1048,7 +1043,7 @@ static void SZ_Orientation_Callback(Widget w,XtPointer clientData,XtPointer call
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
   in_set_spectro_z_scale(ss,(Float)(cbs->value)*0.01);
-  map_chans_field(ss,F_Z_SCALE,(Float)(cbs->value)*0.01);
+  map_chans_field(ss,FCP_Z_SCALE,(Float)(cbs->value)*0.01);
   map_over_chans(ss,update_graph,NULL);
 }
 
@@ -1056,7 +1051,7 @@ void set_spectro_z_scale(snd_state *ss, Float val)
 {
   in_set_spectro_z_scale(ss,val);
   if (oid) XmScaleSetValue(oid->sz,(int)(val*100));
-  map_chans_field(ss,F_Z_SCALE,val);
+  map_chans_field(ss,FCP_Z_SCALE,val);
   if (!(ss->graph_hook_active)) map_over_chans(ss,update_graph,NULL);
 }
 
@@ -1103,7 +1098,7 @@ static void Cut_Orientation_Callback(Widget w,XtPointer clientData,XtPointer cal
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)callData;
   orientation_info *od = (orientation_info *)clientData;
   ss = od->state;
-  map_chans_field(ss,F_CUTOFF,(Float)(cbs->value)*0.01);
+  map_chans_field(ss,FCP_CUTOFF,(Float)(cbs->value)*0.01);
   set_spectro_cutoff_and_redisplay(ss,(Float)(cbs->value)*0.01); /* calls in_set... */
 } 
 
@@ -1111,7 +1106,7 @@ void set_spectro_cutoff(snd_state *ss, Float val)
 {
   in_set_spectro_cutoff(ss,val);
   if (oid) XmScaleSetValue(oid->cut,(int)(val*100));
-  map_chans_field(ss,F_CUTOFF,val);
+  map_chans_field(ss,FCP_CUTOFF,val);
   if (!(ss->graph_hook_active)) map_over_chans(ss,update_graph,NULL);
 }
 

@@ -1,10 +1,11 @@
 snd change log
 
-  7-Aug:     extsnd.html re-organized.
-             wavo,wavo-hop,wavo-trace,line-size,max-fft-peaks,show-fft-peaks,zero-pad,
-               verbose-cursor,fft-log-frequency,fft-log-magnitude,min-dB,wavelet-type,
+  10-Aug:    extsnd.html re-organized.
+             wavo,wavo-hop,wavo-trace,line-size,max-fft-peaks,show-fft-peaks,zero-pad,fft-style,fft-window,
+               verbose-cursor,fft-log-frequency,fft-log-magnitude,min-dB,wavelet-type,fft-size,fft-beta,transform-type,
+               normalize-fft,show-mix-consoles,show-mix-waveforms,graph-style,dot-size,show-axes,graphs-horizontal,
                spectro-x|y|z-angle|scale,spectro-hop,spectro-cutoff,spectro-start can be treated as channel-local.
-             reverb-decay can be treated as sound-local.
+             reverb-decay,speed-tones,speed-style can be treated as sound-local.
              Snd builds and runs in Mac OS-X.
   3-Aug:     C-q with moving cursor bug, extended normalize-fft choices (Daniel Aronovitch).
              show-y-zero, show-marks can be local to a given sound or channel.
