@@ -207,7 +207,7 @@ char *listener_prompt_with_cr(void)
   return(listener_prompt_buffer);
 }
 
-static XEN provide_listener_help_1(char *source, int start, int end)
+static void provide_listener_help_1(char *source, int start, int end)
 {
   XEN result = XEN_FALSE;
   char *name;
@@ -220,10 +220,9 @@ static XEN provide_listener_help_1(char *source, int start, int end)
       listener_append("\n;");
       listener_append_and_prompt(XEN_TO_C_STRING(result));
     }
-  return(result);
 }
 
-XEN provide_listener_help(char *source)
+void provide_listener_help(char *source)
 {
   if (source)
     {
@@ -243,11 +242,11 @@ XEN provide_listener_help(char *source)
 	      for (j = i + 2; j < len; j++)
 		if (separator_char_p(source[j]))
 		  return(provide_listener_help_1(source, start_of_name, j));
-	      return(provide_listener_help_1(source, start_of_name, len)); /* ran off end with no separator (cursor is at end) */
+	      provide_listener_help_1(source, start_of_name, len); /* ran off end with no separator (cursor is at end) */
+	      return;
 	    }
 	}
     }
-  return(XEN_FALSE);
 }
 
 #if (!USE_NO_GUI)

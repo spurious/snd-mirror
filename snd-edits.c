@@ -4158,7 +4158,7 @@ static void choose_accessor(snd_fd *sf)
 #define EDIT_LIST_ZERO_MARK -1
 
 enum {INSERTION_EDIT, DELETION_EDIT, CHANGE_EDIT, INITIALIZE_EDIT, SCALED_EDIT, ZERO_EDIT, RAMP_EDIT, PTREE_EDIT, EXTEND_EDIT};
-static char *edit_names[11] = {"insert", "delete", "set", "init", "scale", "zero", "env", "ptree", "extend", ""};
+static char *edit_names[10] = {"insert", "delete", "set", "init", "scale", "zero", "env", "ptree", "extend", ""};
 
 static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool with_source)
 {
@@ -5331,14 +5331,14 @@ bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos)
   return(true);
 }
 
-bool extend_edit_list(chan_info *cp, int edpos)
+void extend_edit_list(chan_info *cp, int edpos)
 {
   /* called by drag-mix (remix_file) in snd-mix.c to provide an "undo point" for mix reposition */
   /*   when both sides of the mix are currently zeroed out -- that is, no edit takes place, */
   /*   but it's confusing to the user not to have the position change show up in the history list */
   int i;
   ed_list *new_ed, *old_ed;
-  if (!(prepare_edit_list(cp, cp->samples[edpos], edpos, S_pad_channel))) return(false);
+  if (!(prepare_edit_list(cp, cp->samples[edpos], edpos, S_pad_channel))) return;
   old_ed = cp->edits[edpos];
   new_ed = make_ed_list(cp->edits[edpos]->size);
   new_ed->beg = 0;
@@ -5358,7 +5358,6 @@ bool extend_edit_list(chan_info *cp, int edpos)
   ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
   cp->amp_envs[cp->edit_ctr] = amp_env_copy(cp, false, edpos);
   after_edit(cp);
-  return(true);
 }
 
 bool file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos)
@@ -6727,7 +6726,7 @@ static Float next_sound_as_float(snd_fd *sf)
 }
 
 
-bool copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
+void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
 {
   int i, fd, new0, new1;
   char *name;
@@ -6737,7 +6736,7 @@ bool copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
 
   if ((!(prepare_edit_list(cp0, cp1->samples[pos1], AT_CURRENT_EDIT_POSITION, S_swap_channels))) ||
       (!(prepare_edit_list(cp1, cp0->samples[pos0], AT_CURRENT_EDIT_POSITION, S_swap_channels))))
-    return(false);
+    return;
 
   name = cp0->sound->filename;
   hdr0 = copy_header(name, cp0->sound->hdr);
@@ -6820,7 +6819,6 @@ bool copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   after_edit(cp1);
   update_graph(cp0);
   update_graph(cp1);
-  return(true);
 }
 
 static bool save_edits_and_update_display(snd_info *sp)

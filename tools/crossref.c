@@ -1,3 +1,5 @@
+/* gcc -o crossref crossref.c -g3 */
+
 #include <ctype.h>
 #include <stddef.h>
 #include <math.h>
@@ -11,6 +13,9 @@ char **names;
 char **files;
 char **headers;
 int **counts;
+char ***lines;
+#define MAX_LINES 16
+int *voids;
 
 int names_size=0,names_ctr=0;
 int files_size=0,files_ctr=0;
@@ -36,11 +41,11 @@ void add_header(char *name)
   if (headers_ctr == headers_size) fprintf(stderr,"oops headers");
 }
 
-void add_name(char *name)
+int add_name(char *name)
 {
   int i;
-  if (name == NULL) return;
-  if ((isdigit(name[0])) || (strlen(name) == 1)) return;
+  if (name == NULL) return(-1);
+  if ((isdigit(name[0])) || (strlen(name) == 1)) return(-1);
   if ((strlen(name) > 2) && ((strncmp(name, "SCM", 3) == 0) ||
 			     (strncmp(name, "scm", 3) == 0) ||
 			     (strncmp(name, "rb_", 3) == 0) ||
@@ -50,10 +55,11 @@ void add_name(char *name)
 			     (strncmp(name, "XEN", 3) == 0) ||
 			     (strncmp(name, "xen", 3) == 0)))
 
-    return;
-  for (i=0;i<names_ctr;i++) if (strcmp(names[i],name) == 0) return;
+    return(-1);
+  for (i=0;i<names_ctr;i++) if (strcmp(names[i],name) == 0) return(-1);
   names[names_ctr++] = name;
   if (names_ctr == names_size) fprintf(stderr,"oops names");
+  return(names_ctr - 1);
 }
 
 void add_file(char *name)
@@ -64,7 +70,7 @@ void add_file(char *name)
   if (files_ctr == files_size) fprintf(stderr,"oops files");
 }
 
-void add_count(char *name, int curfile)
+static int add_count(char *name, int curfile)
 {
   int i;
   for (i=0;i<names_ctr;i++)
@@ -72,13 +78,53 @@ void add_count(char *name, int curfile)
       {
 	if (counts[i] == NULL) counts[i] = (int *)calloc(files_size,sizeof(int));
 	counts[i][curfile] += 1;
-	return;
+	return(i);
       }
+  return(-1);
+}
+
+#define MAX_CHARS 1048576
+static char *get_call(char *input, int input_loc, int curname_len, char *curname, int chars)
+{
+  int start = 0, end = 0, i;
+  for (i = input_loc - curname_len; i >= 0; i--)
+    if (input[i] == '\n')
+      {
+	start = i+1;
+	break;
+      }
+  if (start == 0)
+    fprintf(stderr, "%s at %d found no begin cr\n", curname, input_loc);
+  for (i = input_loc; i < chars; i++)
+    {
+      if (input[i] == ')')
+	{
+	  end = i+1;
+	  break;
+	}
+      if (input[i] == '\n')
+	{
+	  end = i;
+	  break;
+	}
+    }
+  if (end == 0)
+    fprintf(stderr,"%s at %d found no end\n", curname, input_loc);
+  if ((start != 0) && (end > start))
+    {
+      char *value;
+      int n, k;
+      value = (char *)calloc(end - start + 1, sizeof(char));
+      for (n = start, k = 0; n < end; n++, k++)
+	value[k] = input[n];
+      return(value);
+    }
+  return(NULL);
 }
 
 typedef struct {
   char *name;
-  int i, calls;
+  int i, calls, v;
 } qdata;
 
 static int greater_compare(const void *a, const void *b)
@@ -100,20 +146,22 @@ int main(int argc, char **argv)
   int i,j,fd,curfile,chars,k,in_comment=0,in_white = 0, calls=0, in_parens=0, in_quotes=0;
   int maxc[8192],maxf[8192],maxg[8192], mcalls[8192];
   qdata **qs;
-  char input[1048576];
+  char input[MAX_CHARS];
   char curname[128];
   FILE *FD;
   
   names_size = 8192;
   names = (char **)calloc(names_size,sizeof(char *));
+  voids = (int *)calloc(names_size,sizeof(int));
   files_size = 128;
   files = (char **)calloc(files_size,sizeof(char *));
   headers_size = 32;
   headers = (char **)calloc(headers_size,sizeof(char *));
   counts = (int **)calloc(names_size,sizeof(int *));
+  lines = (char ***)calloc(names_size, sizeof(char **));
 
-  add_header("sndlib.h");
-  add_header("clm.h");
+  /* add_header("sndlib.h"); */
+  /* add_header("clm.h"); */
   add_header("vct.h");
   add_header("sndlib2xen.h");
   add_header("clm2xen.h");
@@ -131,6 +179,8 @@ int main(int argc, char **argv)
   add_header("snd-nogui1.h");
   add_header("snd-rec.h");
   add_header("xen.h");
+  
+  /* add_header("fake.h"); */
 
   add_file("headers.c");
   add_file("audio.c");
@@ -138,7 +188,7 @@ int main(int argc, char **argv)
   add_file("sound.c");
   add_file("clm.c");
   add_file("vct.c");
-  add_file("cmus.c");
+  /* add_file("cmus.c"); */
   add_file("sndlib2xen.c");
   add_file("clm2xen.c");
   add_file("midi.c");
@@ -227,8 +277,10 @@ int main(int argc, char **argv)
   add_file("gl-ruby.c");
   add_file("xg-ruby.c");
 
+  /*
   add_file("cmus.c");
   add_file("sc.c");
+  */
   add_file("ffi.lisp");
   add_file("sndlib2clm.lisp");
 
@@ -242,7 +294,7 @@ int main(int argc, char **argv)
       fd = open(headers[i],O_RDONLY,0);
       do 
 	{
-	  chars = read(fd,input,1048576);
+	  chars = read(fd,input,MAX_CHARS);
 	  for (j = 0; j < chars; j++)
 	    {
 	      if (in_comment == 0)
@@ -256,8 +308,26 @@ int main(int argc, char **argv)
 		    {
 		      in_white = 1;
 		      curname[k] = 0;
-		      if ((k > 0) && (in_parens == 0) && (in_quotes == 0)) 
-			add_name(copy_string(curname));
+		      if ((k > 0) && (in_parens == 0) && (in_quotes == 0))
+			{
+			  int loc;
+			  loc = add_name(copy_string(curname));
+			  if (loc >= 0)
+			    {
+			      int start;
+			      start = j - strlen(curname) - 6;
+			      if (start >= 0)
+				{
+				  int m;
+				  for (m = 0; m < 3; m++)
+				    if (strncmp((char *)(input + start + m), "void", 4) == 0)
+				      {
+					voids[loc] = 1;
+					break;
+				      }
+				}
+			    }
+			}
 		      /* else if (k > 0) fprintf(stderr,"drop %s %d %d\n",curname,in_parens, in_quotes); */
 		      k = 0;
 		      if ((input[j] == '/') && (input[j+1] == '*'))
@@ -282,7 +352,7 @@ int main(int argc, char **argv)
 		}
 	    }
 	}
-      while (chars == 1048576);
+      while (chars == MAX_CHARS);
       close(fd);
     }
   fprintf(stderr,"%d names ",names_ctr);
@@ -295,7 +365,7 @@ int main(int argc, char **argv)
       fd = open(files[i],O_RDONLY,0);
       do 
 	{
-	  chars = read(fd,input,1048576);
+	  chars = read(fd,input,MAX_CHARS);
 	  for (j=0;j<chars;j++)
 	    {
 	      if (in_comment == 0)
@@ -311,7 +381,29 @@ int main(int argc, char **argv)
 		      if (k>0)
 			{
 			  curname[k] = 0;
-			  if (k<128) add_count(curname,i);
+			  if (k<128)
+			    {
+			      int loc;
+			      loc = add_count(curname,i);
+			      if (loc >= 0)
+				{
+				  if (lines[loc] == NULL)
+				    {
+				      lines[loc] = (char **)calloc(MAX_LINES, sizeof(char *));
+				      lines[loc][0] = get_call(input, j, k, curname, chars);
+				    }
+				  else
+				    {
+				      int m;
+				      for (m = 0; m < MAX_LINES; m++)
+					if (lines[loc][m] == NULL)
+					  {
+					    lines[loc][m] = get_call(input, j, k, curname, chars);
+					    break;
+					  }
+				    }
+				}
+			    }
 			  k=0;
 			}
 		    }
@@ -323,7 +415,7 @@ int main(int argc, char **argv)
 		}
 	    }
 	}
-      while (chars == 1048576);
+      while (chars == MAX_CHARS);
       close(fd);
     }
   FD = fopen("xref.data","w");
@@ -396,6 +488,7 @@ int main(int argc, char **argv)
       q = calloc(1, sizeof(qdata));
       qs[i] = q;
       q->i = i;
+      q->v = voids[i];
       q->name = names[i];
       q->calls = mcalls[i];
     }
@@ -405,6 +498,7 @@ int main(int argc, char **argv)
       int nfiles;
       nfiles = 0;
       fprintf(FD, "\n\n%s: %d", qs[i]->name, qs[i]->calls);
+      if (qs[i]->v) fprintf(FD, " (void)");
       for (j=0;j<files_ctr;j++)
 	{
 	  if ((counts[qs[i]->i]) && (counts[qs[i]->i][j] > 0))
@@ -413,7 +507,19 @@ int main(int argc, char **argv)
 	      nfiles++;
 	    }
 	}
-      if (nfiles < 2) fprintf(FD, "----------------------------------------");
+      {
+	int m;
+	if ((nfiles > 0) && (lines[qs[i]->i]))
+	  {
+	    fprintf(FD, "\n");
+	    for (m = 0; m < MAX_LINES; m++)
+	      {
+		if (lines[qs[i]->i][m] == NULL) break;
+		fprintf(FD, "\n        %s", lines[qs[i]->i][m]);
+	      }
+	  }
+      }
+      if (nfiles < 2) fprintf(FD, "\n----------------------------------------");
     }
   fclose(FD);
 }

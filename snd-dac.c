@@ -2170,7 +2170,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
   snd_info *sp;
   chan_info *cp = NULL;
   sync_info *si = NULL;
-  char *name = NULL;
+  static char *play_name = NULL;
   int i;
   off_t samp = 0;
   off_t end = NO_END_SPECIFIED;
@@ -2186,6 +2186,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
 		  (XEN_NOT_BOUND_P(stop_proc)) || 
 		  (XEN_FALSE_P(stop_proc)), 
 		  stop_proc, arg_pos + 1, caller, "a procedure of 1 arg");
+  if (play_name) {FREE(play_name); play_name = NULL;}
 
   /* if even samp_n is XEN_UNDEFINED, start_dac? */
 
@@ -2196,28 +2197,28 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
       if (samp < 0) XEN_ERROR(NO_SUCH_SAMPLE,
 			      XEN_LIST_2(C_TO_XEN_STRING(caller),
 					 snd_n));
-      name = mus_expand_filename(XEN_TO_C_STRING(samp_n));
-      if (!(mus_file_probe(name)))
-	{
-	  FREE(name);
-	  return(snd_no_such_file_error(caller, samp_n));
-	}
-      if (!(MUS_HEADER_TYPE_OK(mus_sound_header_type(name))))
+
+      play_name = mus_expand_filename(XEN_TO_C_STRING(samp_n));
+
+      if (!(mus_file_probe(play_name)))
+	return(snd_no_such_file_error(caller, samp_n));
+
+      if (!(MUS_HEADER_TYPE_OK(mus_sound_header_type(play_name))))
 	mus_misc_error(caller, "can't read header", 
 		       XEN_LIST_2(samp_n, 
 				  C_TO_XEN_STRING(mus_header_type_name(mus_header_type()))));
-      if (!(MUS_DATA_FORMAT_OK(mus_sound_data_format(name))))
+
+      if (!(MUS_DATA_FORMAT_OK(mus_sound_data_format(play_name))))
 	mus_misc_error(caller, "can't read data", 
 		       XEN_LIST_2(samp_n, 
-				  C_TO_XEN_STRING(mus_header_original_format_name(mus_sound_original_format(name),
-										  mus_sound_header_type(name)))));
-      sp = make_sound_readable(name, false);
-      sp->short_filename = filename_without_home_directory(name);
+				  C_TO_XEN_STRING(mus_header_original_format_name(mus_sound_original_format(play_name),
+										  mus_sound_header_type(play_name)))));
+      sp = make_sound_readable(play_name, false);
+      sp->short_filename = filename_without_home_directory(play_name);
       sp->filename = NULL;
       sp->delete_me = (void *)1;
       if (XEN_OFF_T_P(chn_n)) end = XEN_TO_C_OFF_T(chn_n);
       play_sound_1(sp, samp, end, background, 0, stop_proc);
-      if (name) FREE(name);
     }
   else
     {

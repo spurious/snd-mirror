@@ -905,12 +905,12 @@ static char *gl_print(XEN result)
   return(newbuf);
 }
 
-XEN snd_eval_str(char *buf)
+void snd_eval_str(char *buf)
 {
-  return(snd_report_result(snd_catch_any(eval_str_wrapper, (void *)buf, buf), buf));
+  snd_report_result(snd_catch_any(eval_str_wrapper, (void *)buf, buf), buf);
 }
 
-XEN snd_report_result(XEN result, char *buf)
+void snd_report_result(XEN result, char *buf)
 {
   char *str = NULL;
   str = gl_print(result);
@@ -927,10 +927,9 @@ XEN snd_report_result(XEN result, char *buf)
       listener_append_and_prompt(str);
     }
   if (str) FREE(str);
-  return(result);
 }
 
-XEN snd_report_listener_result(XEN form)
+void snd_report_listener_result(XEN form)
 {
   char *str = NULL;
   XEN result;
@@ -945,7 +944,6 @@ XEN snd_report_listener_result(XEN form)
   if (listener_height() > 5)
     listener_append_and_prompt(str);
   if (str) FREE(str);
-  return(result);
 }
 
 void snd_eval_property_str(char *buf)

@@ -39432,6 +39432,12 @@ EDITS: 2
       (let ((val (catch #t (lambda () (run-eval '(lambda () (let ((os (make-oscil)) (ts (make-table-lookup))) (oscil ts))))) (lambda args (car args)))))
 	(if (not (equal? val 'mus-error)) (snd-display ";run-safety tbl osc: ~A" val)))
       (fm-violin-opt 0 .01 440 .1)
+      (let ((val (catch #t (lambda () (run-eval '(lambda () (let ((v (make-vct 1))) (vct-ref v 2))))) (lambda args (car args)))))
+	(if (not (equal? val 'mus-error)) (snd-display ";run-safety vct 2: ~A" val)))
+      (let ((val (catch #t (lambda () (run-eval '(lambda () (let ((v (make-vct 1))) (vct-ref v 1))))) (lambda args (car args)))))
+	(if (not (equal? val 'mus-error)) (snd-display ";run-safety vct 1: ~A" val)))
+      (let ((val (catch #t (lambda () (run-eval '(lambda () (let ((v (make-vct 4)) (i 5)) (vct-ref v i))))) (lambda args (car args)))))
+	(if (not (equal? val 'mus-error)) (snd-display ";run-safety vct i: ~A" val)))
       (set! (run-safety) 0)
 
       (run-hook after-test-hook 22)

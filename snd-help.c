@@ -369,6 +369,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+26-Jan:  removed useless edpos arg to controls->channel.\n\
 20-Jan:  translation of CLM scentroid (B Battey) in dsp.scm.\n\
 19-Jan:  changed send-netscape to send-mozilla.\n\
          transform?, delete-transform\n\
@@ -549,7 +550,7 @@ variable " S_transform_normalization " to " S_dont_normalize ".",
 		      snd_xref_urls("FFT"));
 }
 
-static char *control_xrefs[10] = {
+static char *control_xrefs[9] = {
   "various control panel variables: {Control panel}",
   "amplitude: {scale-by}",
   "speed or srate: {src-sound}",
@@ -1546,7 +1547,7 @@ static char **xref_url_tables[NUM_XREFS] = {
   Deletions_urls, Envelopes_urls, Filters_urls, Searching_urls, Insertions_urls, Maxamps_urls,
   Playing_urls, Reversing_urls, Saving_urls, Smoothing_urls, Resampling_urls, FFTs_urls, Reverb_urls,
   Resampling_urls, Searching_urls, Undo_and_Redo_urls, Undo_and_Redo_urls, 
-  NULL, NULL, NULL, NULL, Tracks_urls, Copying_urls, 
+  NULL, NULL, NULL, NULL, NULL, Tracks_urls, Copying_urls, 
   Noise_Reduction_urls, Window_size_and_position_urls, Colors_urls, NULL, Random_Numbers_urls,
 };
 

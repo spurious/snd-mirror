@@ -533,7 +533,7 @@ static int data_length(mus_any *ge)
 {
   if (mus_env_p(ge))
     return(mus_env_breakpoints(ge) * 2);
-  return(mus_length(ge));
+  return((int)mus_length(ge));
 }
 
 void *_mus_wrap_one_vct(mus_any *ge)

@@ -1592,7 +1592,6 @@ static off_t apply_dur = 0, orig_dur, apply_beg = 0;
 
 static bool apply_controls(apply_state *ap)
 {
-  snd_context *sgx;
   snd_info *sp;
   chan_info *cp;
   sync_info *si;
@@ -1907,7 +1906,6 @@ static bool apply_controls(apply_state *ap)
 	}
     }
   apply_unset_controls(sp);
-  sgx = sp->sgx;
   if (XEN_HOOKED(after_apply_hook))
     run_hook(after_apply_hook, 
 	     XEN_LIST_1(C_TO_XEN_INT(sp->index)),
@@ -3851,9 +3849,9 @@ static XEN controls_to_channel_body(void *context)
 }
 #endif
 
-static XEN g_controls_to_channel(XEN settings, XEN beg, XEN dur, XEN snd, XEN chn, XEN edpos, XEN origin)
+static XEN g_controls_to_channel(XEN settings, XEN beg, XEN dur, XEN snd, XEN chn, XEN origin)
 {
-  #define H_controls_to_channel "(" S_controls_to_channel " settings beg dur snd chn edpos origin) sets up \
+  #define H_controls_to_channel "(" S_controls_to_channel " settings beg dur snd chn origin) sets up \
 snd's controls to reflect 'settings' (unspecified settings are not changed), then applies the controls as \
 an edit of channel 'chn'. The 'settings' argument is a list:\n\
 \n\
@@ -3867,7 +3865,6 @@ where each inner list entry can also be #f."
 
   snd_info *sp;
   chan_info *cp;
-  int pos;
   ASSERT_CHANNEL(S_controls_to_channel, snd, chn, 4);
   XEN_ASSERT_TYPE(XEN_OFF_T_P(beg) || XEN_BOOLEAN_P(beg) || XEN_NOT_BOUND_P(beg), beg, XEN_ARG_2, S_controls_to_channel, "an integer");
   XEN_ASSERT_TYPE(XEN_OFF_T_P(dur) || XEN_BOOLEAN_P(dur) || XEN_NOT_BOUND_P(dur), dur, XEN_ARG_3, S_controls_to_channel, "an integer");
@@ -3890,7 +3887,6 @@ where each inner list entry can also be #f."
       cp = get_cp(snd, chn, S_controls_to_channel);
       old_selected_channel = sp->selected_channel;
       sp->selected_channel = cp->chan;
-      pos = to_c_edit_position(cp, edpos, S_controls_to_channel, XEN_ARG_6);
       saved_settings = current_control_settings(sp, NULL);
       /* now read the 'settings' list for any new settings */
       if ((XEN_LIST_P(settings)) && (XEN_NOT_NULL_P(settings)))
@@ -5028,7 +5024,7 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
   XEN_DEFINE_PROCEDURE(S_revert_sound,           g_revert_sound_w,            0, 1, 0, H_revert_sound);
   XEN_DEFINE_PROCEDURE(S_save_sound_as,          g_save_sound_as_w,           0, 0, 1, H_save_sound_as);
   XEN_DEFINE_PROCEDURE(S_apply_controls,         g_apply_controls_w,          0, 4, 0, H_apply_controls);
-  XEN_DEFINE_PROCEDURE(S_controls_to_channel,    g_controls_to_channel_w,     0, 7, 0, H_controls_to_channel);
+  XEN_DEFINE_PROCEDURE(S_controls_to_channel,    g_controls_to_channel_w,     0, 6, 0, H_controls_to_channel);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_filter_control_envelope, g_filter_control_envelope_w, H_filter_control_envelope,
 					    S_setB S_filter_control_envelope, g_set_filter_control_envelope_w, g_set_filter_control_envelope_reversed, 

@@ -2924,9 +2924,14 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
   if (if_value == NULL) return(run_warn("if: bad selector? %s", XEN_AS_STRING(XEN_CADR(form))));
   if ((if_value->type != R_BOOL) &&
       (if_value->type != R_CLM))
-    return(run_warn("if: selector type not boolean or clm gen: %s %s", 
-		    XEN_AS_STRING(XEN_CADR(form)), 
-		    type_name(if_value->type)));
+    {
+      char *name;
+      name = type_name(if_value->type);
+      FREE(if_value);
+      return(run_warn("if: selector type not boolean or clm gen: %s %s", 
+		      XEN_AS_STRING(XEN_CADR(form)), 
+		      name));
+    }
   if (if_value->constant == R_CONSTANT)
     {
       /* just ignore branch that can't be evaluated anyway */
@@ -3044,6 +3049,7 @@ static xen_value *cond_form(ptree *prog, XEN form, walk_result_t need_result)
 	  for (i = 0; i < clause_ctr; i++) 
 	    if (fixups[i]) FREE(fixups[i]);
 	  FREE(fixups);
+	  if (test_value) FREE(test_value);
 	  return(run_warn("cond test: %s", XEN_AS_STRING(XEN_CAR(clause))));
 	}
       /* test was #t */
@@ -3111,6 +3117,7 @@ static xen_value *cond_form(ptree *prog, XEN form, walk_result_t need_result)
   if (fixups) FREE(fixups);
   if (need_result != DONT_NEED_RESULT)
     return(result);
+  if (result) FREE(result);
   return(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT));
 }
 
@@ -8720,7 +8727,7 @@ static char *descr_granulate_0f(int *args, ptree *pt)
 static void granulate_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_granulate(CLM_ARG_1, NULL);}
 static xen_value *granulate_1(ptree *prog, xen_value **args, int num_args)
 {
-  bool got_edit = false, got_input = false;
+  bool got_input = false;
   if (num_args >= 2)
     {
       if (num_args == 3)
@@ -8730,7 +8737,6 @@ static xen_value *granulate_1(ptree *prog, xen_value **args, int num_args)
 	      ptree *pt;
 	      pt = ((ptree **)(prog->fncs))[args[3]->addr];
 	      if (pt->arity != 1) return(run_warn("granulate: wrong number of args to edit function"));
-	      got_edit = true;
 	    }
 	  else num_args = 2;
 	}
@@ -10571,7 +10577,7 @@ static xen_value *lookup_generalized_set(ptree *prog, XEN acc_form, xen_value *i
 		    xen_var *lst;
 		    triple *trp;
 		    trp = set_var(prog, sv, v);
-		    if (trp == NULL) {happy = 0; break;}
+		    if (trp == NULL) {happy = 0; FREE(sv); sv = NULL; break;}
 		    trp->no_opt = true;
 		    lst = find_var_in_ptree_via_addr(prog, in_v->type, in_v->addr);
 		    if (lst) lst->unclean = true;

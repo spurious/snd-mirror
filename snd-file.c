@@ -1035,11 +1035,10 @@ void *make_axes_data(snd_info *sp)
   return((void *)sa);
 }
 
-bool restore_axes_data(snd_info *sp, void *usa, Float new_duration, bool need_edit_history_update)
+void restore_axes_data(snd_info *sp, void *usa, Float new_duration, bool need_edit_history_update)
 {
   axes_data *sa = (axes_data *)usa;
   int i, j;
-  bool need_update = false;
   for (i = 0, j = 0; i < sp->nchans; i++)
     {
       Float old_duration;
@@ -1070,20 +1069,13 @@ bool restore_axes_data(snd_info *sp, void *usa, Float new_duration, bool need_ed
 	       sa->axis_data[loc + SA_Y1]);
       update_graph(cp); /* get normalized state before messing with it */
       if (sa->fftp[j]) 
-	{
-	  fftb(cp, true); 
-	  need_update = true;
-	}
+	fftb(cp, true); 
       if (!(sa->wavep[j])) 
-	{
-	  waveb(cp, false); 
-	  need_update = true;
-	}
+	waveb(cp, false); 
       if (need_edit_history_update) 
 	reflect_edit_history_change(cp);
       if (j < (sa->chans - 1)) j++;
     }
-  return(need_update);
 }
 
 static void copy_chan_info(chan_info *ncp, chan_info *ocp)

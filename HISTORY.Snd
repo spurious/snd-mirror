@@ -1,5 +1,6 @@
 Snd change log
 
+  26-Jan:    removed useless edpos arg to controls->channel.
   20-Jan:    translation of CLM scentroid (B Battey) in dsp.scm.
   19-Jan:    changed send-netscape to send-mozilla.
              transform?, delete-transform.

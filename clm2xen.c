@@ -236,7 +236,7 @@ static XEN kw_frequency, kw_initial_phase, kw_wave, kw_cosines, kw_amplitude,
   kw_r, kw_ratio, kw_size, kw_a0, kw_a1, kw_a2, kw_b1, kw_b2, kw_max_size,
   kw_input, kw_srate, kw_file, kw_channel, kw_start,
   kw_initial_contents, kw_initial_element, kw_scaler, kw_feedforward, kw_feedback,
-  kw_radius, kw_gain, kw_partials, kw_fill_time, kw_a, kw_n,
+  kw_radius, kw_gain, kw_partials, kw_a, kw_n,
   kw_order, kw_x_coeffs, kw_y_coeffs, kw_envelope, kw_base, kw_duration, kw_offset, kw_end,
   kw_direction, kw_degree, kw_distance, kw_reverb, kw_output, kw_fft_size,
   kw_expansion, kw_length, kw_hop, kw_ramp, kw_jitter,
@@ -274,7 +274,6 @@ static void init_keywords(void)
   kw_radius = XEN_MAKE_KEYWORD("radius");
   kw_gain = XEN_MAKE_KEYWORD("gain");
   kw_partials = XEN_MAKE_KEYWORD("partials");
-  kw_fill_time = XEN_MAKE_KEYWORD("fill-time");
   kw_a = XEN_MAKE_KEYWORD("a");
   kw_n = XEN_MAKE_KEYWORD("n");
   kw_order = XEN_MAKE_KEYWORD("order");

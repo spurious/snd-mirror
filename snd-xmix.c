@@ -1181,7 +1181,6 @@ static void track_tempo_valuechanged_callback(Widget w, XtPointer context, XtPoi
 
 /* -------- amp -------- */
 static Widget w_track_amp_number, w_track_amp_label, w_track_amp;
-static Float current_track_amp = 1.0;
 
 static void change_track_amp(int track_id, Float val)
 {
@@ -2097,7 +2096,6 @@ static void update_track_dialog(int track_id)
 	  set_label(w_track_tempo_number, lab);
 	  val = track_dialog_track_amp(track_dialog_id);
 	  XtVaSetValues(w_track_amp, XmNvalue, track_amp_to_scroll(val), NULL);
-	  current_track_amp = val;
 	  track_amp_env_resize(w_track_env, NULL, NULL);
 	  cp = track_channel(track_dialog_id, 0); /* can be NULL */
 	  if (cp)

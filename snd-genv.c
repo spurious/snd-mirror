@@ -1130,7 +1130,7 @@ static XEN g_set_enved_envelope(XEN e)
   XEN_ASSERT_TYPE(XEN_LIST_P(e) || XEN_STRING_P(e) || XEN_SYMBOL_P(e), e, XEN_ONLY_ARG, S_setB S_enved_envelope, "a list, symbol, or string");
   if (active_env) active_env = free_env(active_env);
   if ((XEN_STRING_P(e)) || (XEN_SYMBOL_P(e)))
-    active_env = copy_env(name_to_env((XEN_STRING_P(e)) ? XEN_TO_C_STRING(e) : XEN_SYMBOL_TO_C_STRING(e)));
+    active_env = name_to_env((XEN_STRING_P(e)) ? XEN_TO_C_STRING(e) : XEN_SYMBOL_TO_C_STRING(e));
   else active_env = xen_to_env(e);
   if ((!active_env) && (!(XEN_LIST_P(e))))
     XEN_ERROR(NO_SUCH_ENVELOPE,

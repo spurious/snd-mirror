@@ -940,11 +940,9 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 	}
       else
 	{
-	  Float base, scaler, offset;
+	  Float base;
 	  char *envstr;
 	  env *newe;
-	  scaler = mus_env_scaler(egen); /* fixed-up versions if base != 1.0 */
-	  offset = mus_env_offset(egen);
 	  base = mus_increment(egen);
 	  newe = make_envelope_with_offset_and_scaler(mus_data(egen), mus_env_breakpoints(egen) * 2, mus_offset(egen), mus_scaler(egen));
 	  envstr = env_to_string(newe);
@@ -1942,9 +1940,7 @@ static char *edit_list_envelope(mus_any *egen, off_t beg, off_t env_dur, off_t c
     }
   else 
     {
-      int len;
       /* env dur was apparently not chan dur, or called dur was not full sound? */
-      len = mus_env_breakpoints(egen);
       new_origin = mus_format("env-channel (make-env %s :base %.4f :end " OFF_TD ") " OFF_TD " " OFF_TD,
 			      envstr, base, env_dur, beg, called_dur);
     }

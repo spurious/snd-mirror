@@ -556,7 +556,7 @@ void for_each_sound_chan(snd_info *sp, void (*func)(chan_info *))
       (*func)(cp);
 }
 
-bool map_over_sounds(bool (*func)(snd_info *, void *), void *userptr)
+void map_over_sounds(bool (*func)(snd_info *, void *), void *userptr)
 {
   /* argument to func is snd_info pointer, return true = abort map, skips inactive sounds */
   int i;
@@ -568,10 +568,9 @@ bool map_over_sounds(bool (*func)(snd_info *, void *), void *userptr)
       if ((sp) && (sp->inuse == SOUND_NORMAL))
 	{
 	  val = (*func)(sp, userptr);
-	  if (val) return(val);
+	  if (val) return;
 	}
     }
-  return(val);
 }
 
 void for_each_sound(void (*func)(snd_info *, void *), void *userptr)
@@ -893,7 +892,7 @@ static char *display_maxamps(const char *filename, int chans)
   ampstr = (char *)CALLOC(len, sizeof(char));
   vals = (mus_sample_t *)CALLOC(chans, sizeof(mus_sample_t));
   times = (off_t *)CALLOC(chans, sizeof(off_t));
-  sprintf(ampstr, _("\nmax amp: "));
+  mus_snprintf(ampstr, len, _("\nmax amp: "));
   mus_sound_maxamps(filename, chans, vals, times);
   for (i = 0; i < chans; i++)
     {
