@@ -1,4 +1,7 @@
 #include "snd.h"
+#if HAVE_GUILE
+  #include "sg.h"
+#endif
 
 typedef struct {int n; int direction; int chans; int inc; chan_info **cps; snd_fd **fds;} gfd;
 
@@ -33,7 +36,7 @@ static int run_global_search (snd_state *ss, gfd *g)
 	  if (gh_procedure_p(ss->search_proc))
 	    {
 	      res = g_call1(ss->search_proc,gh_double2scm((double)(MUS_SAMPLE_TO_FLOAT(sf->current_value))));
-	      if (ss->eval_error)
+	      if (SCM_SYMBOLP(res))
 		{
 		  for (j=i;j<g->chans;j++) free_snd_fd(g->fds[j]);
 		  return(0);
@@ -185,7 +188,7 @@ static int cursor_find(snd_info *sp, chan_info *cp, int count, int end_sample)
 	next_sample_1(sf);
       else previous_sample_1(sf);
       res = g_call1(sp->search_proc,gh_double2scm((double)(MUS_SAMPLE_TO_FLOAT(sf->current_value))));
-      if (ss->eval_error) break;
+      if (SCM_SYMBOLP(res)) break;
       if (SCM_NFALSEP(res)) {c--; if (c == 0) break;}
       i+=inc;
       passes++;
@@ -200,7 +203,6 @@ static int cursor_find(snd_info *sp, chan_info *cp, int count, int end_sample)
   ss->stopped_explicitly = 0;
   free_snd_fd(sf);
   ss->search_in_progress = 0;
-  ss->eval_error = 0;
   if (c != 0) return(-1); /* impossible sample number, so => failure */
   return(i);
 #else
@@ -294,9 +296,6 @@ int snd_find_1(chan_info *cp, char *c_expr, int start, int count_matches)
 	    {
 	      sp->search_proc = proc;
 	      snd_protect(proc);
-	    }
-	  if (gh_procedure_p(sp->search_proc))
-	    {
 	      if (count_matches)
 		{
 		  matches = 0;
@@ -313,6 +312,7 @@ int snd_find_1(chan_info *cp, char *c_expr, int start, int count_matches)
 		  val = matches;
 		}
 	      else val = cursor_find(sp,cp,1,0);
+	      snd_unprotect(sp->search_proc);
 	      sp->search_proc = SCM_UNDEFINED;
 	    }
 	  FREE(c_expr);

@@ -2680,16 +2680,13 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 	    {
 	      NEXT_SAMPLE(val,sf);
 	      res = g_call1(proc,gh_double2scm((double)(MUS_SAMPLE_TO_FLOAT(val))));
-	      if ((SCM_NFALSEP(res)) || (ss->eval_error))
+	      if ((SCM_NFALSEP(res)) || (SCM_SYMBOLP(res)))
 		{
 		  for (j=ip;j<si->chans;j++) free_snd_fd(sfs[j]);
 		  free_sync_state(sc); 
 		  if (reporting) finish_progress_report(ss,sp,NOT_FROM_ENVED);
-		  if (ss->eval_error)
-		    {
-		      ss->eval_error = 0;
-		      return(scm_throw(SND_EVAL_ERROR,SCM_LIST1(gh_str02scm(origin))));
-		    }
+		  if (SCM_SYMBOLP(res))
+		    return(scm_throw(res,SCM_LIST1(gh_str02scm(origin))));
 		  return(gh_list(res,gh_int2scm(kp+beg),gh_int2scm(cp->chan),gh_int2scm(sp->index),SCM_UNDEFINED));
 		}
 	      if (reporting) 
@@ -2721,7 +2718,7 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 	}
     }
   free_sync_state(sc);
-  return(g_call1(proc,SCM_BOOL_F));
+  return(SCM_BOOL_F);
 }
 
 static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, char *origin)
@@ -2772,7 +2769,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
 	  NEXT_SAMPLE(val,sfs[0]);
 	  gh_vector_set_x(args,zero,gh_double2scm((double)(MUS_SAMPLE_TO_FLOAT(val))));
 	  res = g_call2(proc,args,gh_chans);
-	  if ((SCM_NFALSEP(res)) || (ss->eval_error)) {pos = kp+beg; break;}
+	  if ((SCM_NFALSEP(res)) || (SCM_SYMBOLP(res))) {pos = kp+beg; break;}
 	  if (reporting) 
 	    {
 	      rpt++;
@@ -2796,7 +2793,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
 	      gh_vector_set_x(args,gh_int2scm(ip),gh_double2scm((double)(MUS_SAMPLE_TO_FLOAT(val))));
 	    }
 	  res = g_call2(proc,args,gh_chans);
-	  if ((SCM_NFALSEP(res)) || (ss->eval_error)) {pos = kp+beg; break;}
+	  if ((SCM_NFALSEP(res)) || (SCM_SYMBOLP(res))) {pos = kp+beg; break;}
 	  if (reporting) 
 	    {
 	      rpt++;
@@ -2819,22 +2816,18 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
       report_in_minibuffer(sp,cgbuf);
       FREE(cgbuf);
       ss->stopped_explicitly = 0;
-      return(SCM_BOOL_F);
     }
   else
     {
-      if (ss->eval_error)
-	{
-	  ss->eval_error = 0;
-	  return(scm_throw(SND_EVAL_ERROR,SCM_LIST1(gh_str02scm(origin))));
-	}
+      if (SCM_SYMBOLP(res))
+	return(scm_throw(res,SCM_LIST1(gh_str02scm(origin))));
       else
 	{
-	  if (SCM_FALSEP(res))
-	    return(g_call2(proc,SCM_BOOL_F,SCM_BOOL_F));
-	  else return(gh_int2scm(pos));
+	  if (SCM_NFALSEP(res))
+	    return(gh_int2scm(pos));
 	}
     }
+  return(SCM_BOOL_F);
 }
 
 /* someday it might be good to tie this into the rest of this file */
@@ -2969,19 +2962,18 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 	    {
 	      NEXT_SAMPLE(val,sf);
 	      res = g_call1(proc,gh_double2scm((double)(MUS_SAMPLE_TO_FLOAT(val))));
-	      if (ss->eval_error)
-		{
-		  end_output(os,beg,cp,origin);
-		  for (j=ip;j<si->chans;j++) free_snd_fd(sfs[j]);    
-		  free_sync_state(sc); 
-		  if (reporting) finish_progress_report(ss,sp,NOT_FROM_ENVED);
-		  ss->eval_error = 0;
-		  return(scm_throw(SND_EVAL_ERROR,SCM_LIST1(gh_str02scm(origin))));
-		}
 	      if (SCM_NFALSEP(res)) /* if #f, no output on this pass */
 		{
 		  if (res != SCM_BOOL_T) /* if #t we halt the entire map */
 		    {
+		      if (SCM_SYMBOLP(res))
+			{
+			  end_output(os,beg,cp,origin);
+			  for (j=ip;j<si->chans;j++) free_snd_fd(sfs[j]);    
+			  free_sync_state(sc); 
+			  if (reporting) finish_progress_report(ss,sp,NOT_FROM_ENVED);
+			  return(scm_throw(res,SCM_LIST1(gh_str02scm(origin))));
+			}
 		      if (gh_number_p(res)) /* one number -> replace current sample */
 			output_sample(ss,os,MUS_FLOAT_TO_SAMPLE(gh_scm2double(res)));
 		      else /* list or vector or vct, splice in data */
@@ -3029,7 +3021,7 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 	}
     }
   free_sync_state(sc);
-  return(g_call1(proc,SCM_BOOL_F));
+  return(SCM_BOOL_F);
 }
 
 
@@ -3082,11 +3074,11 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
 	}
       res = g_call2(proc,args,gh_chans);
       /* #f -> no output in any channel, #t -> halt */
-      if (ss->eval_error) break;
       if (SCM_NFALSEP(res)) /* if #f, no output on this pass */
 	{
 	  if (res != SCM_BOOL_T) /* if #t we halt the entire map */
 	    {
+	      if (SCM_SYMBOLP(res)) break;
 	      /* assume res here is a vector */
 	      if (gh_vector_p(res))
 		{
@@ -3133,11 +3125,8 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
     }
   FREE(os_arr);
   free_sync_state(sc);
-  if (ss->eval_error)
-    {
-      ss->eval_error = 0;
-      return(scm_throw(SND_EVAL_ERROR,SCM_LIST1(gh_str02scm(origin))));
-    }
+  if (SCM_SYMBOLP(res))
+    return(scm_throw(res,SCM_LIST1(gh_str02scm(origin))));
   if (ss->stopped_explicitly)
     {
       ss->stopped_explicitly = 0;
@@ -3145,14 +3134,13 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
       sprintf(cgbuf,"C-G stopped map at sample %d",kp+beg);
       report_in_minibuffer(sp,cgbuf);
       FREE(cgbuf);
-      return(SCM_BOOL_F);
     }
   else
     {
-      if (SCM_FALSEP(res))
-	return(g_call2(proc,SCM_BOOL_F,SCM_BOOL_F));
-      else return(gh_int2scm(kp+beg));
+      if (SCM_NFALSEP(res))
+	return(gh_int2scm(kp+beg));
     }
+  return(SCM_BOOL_F);
 }
 
 #endif /* HAVE_GUILE */
@@ -5072,11 +5060,11 @@ static void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
 	      for (k=0;k<chan_dur;k++)
 		{
 		  res = g_call1(sp->eval_proc,gh_double2scm((double)(MUS_SAMPLE_TO_FLOAT(sf->current_value))));
-		  if (ss->eval_error)
+		  if (SCM_SYMBOLP(res))
 		    {
-		      ss->eval_error = 0;
 		      for (j=chan;j<si->chans;j++) free_snd_fd(sfs[j]);
 		      free_sync_state(sc);
+		      scm_throw(res,SCM_LIST1(gh_str02scm("eval expression")));
 		      return;
 		    }
 		  next_sample_1(sf);
@@ -7221,8 +7209,7 @@ static SCM g_find(SCM expr, SCM sample, SCM snd_n, SCM chn_n)
       cp = get_cp(snd_n,chn_n,S_find);
       RTNINT(snd_find_1(cp,gh_scm2newstr(expr,NULL),g_scm2intdef(sample,0),FALSE)); 
     }
-  else return(g_scan_chan(expr,sample,SCM_BOOL_F,snd_n,chn_n));
-  return(SCM_BOOL_F);
+  else return(g_sp_scan(expr,SCAN_CURRENT_CHAN,sample,SCM_BOOL_F,TRUE,TRUE,SCM_BOOL_F,snd_n,chn_n));
 }
 
 static SCM g_count_matches(SCM expr, SCM sample, SCM snd_n, SCM chn_n)
@@ -7247,7 +7234,7 @@ static SCM g_count_matches(SCM expr, SCM sample, SCM snd_n, SCM chn_n)
       while (samp < lim)
 	{
 	  cursamp = gh_int2scm(samp);
-	  match = g_scan_chan(expr,cursamp,SCM_BOOL_F,snd_n,chn_n);
+	  match = g_sp_scan(expr,SCAN_CURRENT_CHAN,cursamp,SCM_BOOL_F,TRUE,TRUE,SCM_BOOL_F,snd_n,chn_n);
 	  if ((gh_list_p(match)) && (SCM_TRUE_P(scm_list_ref(match,gh_int2scm(0)))))
 	    {
 	      matches++;
@@ -7271,7 +7258,7 @@ static SCM g_prompt_in_minibuffer(SCM msg, SCM callback, SCM snd_n)
   SCM_ASSERT((SCM_UNBNDP(callback)) || (gh_boolean_p(callback)) || gh_procedure_p(callback),callback,SCM_ARG2,S_prompt_in_minibuffer);
   ERRSP(S_prompt_in_minibuffer,snd_n,3);
   sp = get_sp(snd_n);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_prompt_in_minibuffer))));
+  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_prompt_in_minibuffer),snd_n)));
   if ((sp->prompt_callback) && (gh_procedure_p(sp->prompt_callback))) snd_unprotect(sp->prompt_callback);
   if (gh_procedure_p(callback)) 
     {
@@ -7293,7 +7280,7 @@ static SCM g_report_in_minibuffer(SCM msg, SCM snd_n)
   ERRS1(msg,S_report_in_minibuffer);
   ERRSP(S_report_in_minibuffer,snd_n,2);
   sp = get_sp(snd_n);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_report_in_minibuffer))));
+  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_report_in_minibuffer),snd_n)));
   str = gh_scm2newstr(msg,NULL);
   report_in_minibuffer(sp,str);
   free(str);
@@ -7308,7 +7295,7 @@ static SCM g_append_to_minibuffer(SCM msg, SCM snd_n)
   ERRS1(msg,S_append_to_minibuffer);
   ERRSP(S_append_to_minibuffer,snd_n,2);
   sp = get_sp(snd_n);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_append_to_minibuffer))));
+  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_append_to_minibuffer),snd_n)));
   str = gh_scm2newstr(msg,NULL);
   append_to_minibuffer(sp,str);
   free(str);

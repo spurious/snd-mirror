@@ -1783,7 +1783,7 @@ static SCM g_marks(SCM snd_n, SCM chn_n, SCM pos_n)
 	else
 	  {
 	    sp = get_sp(snd_n);
-	    if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_marks))));
+	    if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_marks),snd_n)));
 	    for (i=sp->nchans-1;i>=0;i--)
 	      {
 		cp = sp->chans[i];
@@ -1841,7 +1841,7 @@ static SCM g_save_marks(SCM snd_n)
   snd_info *sp;
   ERRSP(S_save_marks,snd_n,1);
   sp = get_sp(snd_n);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_save_marks))));
+  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_save_marks),snd_n)));
   RTNSTR(save_marks(sp)); /* memory leak here... */
 }
 

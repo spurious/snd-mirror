@@ -884,7 +884,7 @@ static void Meter_Display_Callback(Widget w,XtPointer clientData,XtPointer callD
   display_vu_meter((VU *)clientData);
 }
 
-static VU *make_vu_meter(Widget meter, int light_x, int light_y, int center_x, int center_y, Pixel needle_color, snd_state *ss, Float size)
+static VU *make_vu_meter(Widget meter, int light_x, int light_y, int center_x, int center_y, snd_state *ss, Float size)
 {
   VU *vu;
   vu_label *vl;
@@ -2510,6 +2510,13 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
   pane_max = make_amp_sliders(ss,rp,p,first_frame[0],input,overall_input_ctr);
 
   p->in_chan_loc = overall_input_ctr;
+
+#if NEW_SGI_AL
+  if (p->device == MUS_AUDIO_MICROPHONE)
+    for (i=p->in_chan_loc,k=0;k<p->in_chans;i++,k++) 
+      rp->input_channel_active[i] = 1;
+#endif
+
   if (input) overall_input_ctr += p->in_chans;
 #if (HAVE_OSS || HAVE_ALSA)
   p->pane_size = pane_max+20;
@@ -2595,7 +2602,7 @@ static Widget make_vu_meters(snd_state *ss, PANE *p, int vu_meters, Widget *fram
       XtSetArg(args[n],XmNheight,LIGHT_Y*meter_size); n++;
       XtSetArg(args[n],XmNallowResize,FALSE); n++;
       meter = sndCreateDrawingAreaWidget("vu",frame,args,n);
-      p->meters[i] = make_vu_meter(meter,LIGHT_X,LIGHT_Y,CENTER_X,CENTER_Y,(ss->sgx)->black,ss,meter_size);
+      p->meters[i] = make_vu_meter(meter,LIGHT_X,LIGHT_Y,CENTER_X,CENTER_Y,ss,meter_size);
       vu = p->meters[i];
 
       if (input)
@@ -3145,7 +3152,7 @@ static Position make_amp_sliders(snd_state *ss, recorder_info *rp, PANE *p, Widg
 	  a->in = temp_in_chan + overall_input_ctr;
 	  a->device_in_chan = temp_in_chan;
 	  a->out = temp_out_chan;
-	  if (temp_in_chan == temp_out_chan)  /* CHECK ACTIVE_SLIDERS HERE OR SIMILAR TABLE (RP->IN_AMPS??) */
+	  if (temp_in_chan == temp_out_chan)
 	    rp->in_amps[a->in][a->out] = 1.0;
 	  else rp->in_amps[a->in][a->out] = 0.0;
 	  AMP_rec_ins[a->in][a->out] = p->amps[i];
@@ -3182,7 +3189,7 @@ static Position make_amp_sliders(snd_state *ss, recorder_info *rp, PANE *p, Widg
   return(pane_max);
 }
 
-static void sensitize_control_buttons(void)
+void sensitize_control_buttons(void)
 {
   int i;
   for (i=0;i<device_buttons_size-1;i++) /* last button is autoload_file */
@@ -3199,23 +3206,6 @@ void unsensitize_control_buttons(void)
     {
       if (device_buttons[i])
 	set_sensitive(device_buttons[i],FALSE);
-    }
-}
-
-void cleanup_recording (void)
-{
-  recorder_info *rp;
-  rp = get_recorder_info();
-  if (rp->taking_input) close_recorder_audio();
-#if (!(HAVE_OSS || HAVE_ALSA))
-  if (recorder) mus_audio_restore();
-#endif
-  if ((recorder) && (rp->recording) && (rp->output_file_descriptor > 0)) 
-    {
-      rp->recording = 0;
-      rp->triggered = (!rp->triggering);
-      sensitize_control_buttons();
-      snd_close(rp->output_file_descriptor);
     }
 }
 
@@ -3296,7 +3286,7 @@ static void Dismiss_Record_Callback(Widget w,XtPointer clientData,XtPointer call
     }
 }
 
-static void finish_recording(snd_state *ss, recorder_info *rp)
+void finish_recording(snd_state *ss, recorder_info *rp)
 {
   XmString s1 = NULL,s2 = NULL;
   char *str;
@@ -3332,47 +3322,9 @@ static void finish_recording(snd_state *ss, recorder_info *rp)
     }
 }
 
-static BACKGROUND_TYPE run_adc(XtPointer ss)  /* X wrapper for read_adc */
-{
-  BACKGROUND_TYPE val;
-  recorder_info *rp;
-  rp = get_recorder_info();
-  val = read_adc((snd_state *)ss);
-  if (val == BACKGROUND_QUIT) 
-    {
-      rp->recording = 0;
-      finish_recording((snd_state *)ss,rp);
-    }
-  return(val);
-}
-
 void set_read_in_progress (snd_state *ss, recorder_info *rp)
 {
-#ifdef DEBUGGING
-  int in_chan;
-  char *str;
-  str = (char *)CALLOC(512,sizeof(char));
-  sprintf(str,"open: srate: %d, format: %s, size: %d, in_chans: %d %d, input_ports: %d %d",
-	  rp->srate,
-	  mus_data_format_name(rp->in_format),
-	  rp->buffer_size,
-	  rp->input_channels[0],rp->input_channels[1],
-	  rp->input_ports[0],rp->input_ports[1]);
-  record_report(messages,str,NULL);
-  for (in_chan=0;in_chan<rp->possible_input_chans;in_chan++)
-    {
-      sprintf(str,"in[%d] %s (%s): %.3f -> (VU *)%p",
-	      in_chan,
-	      (rp->input_channel_active[in_chan]) ? "on" : "off",
-	      (rp->chan_in_active[in_chan]) ? "active" : "idle",
-	      MUS_SAMPLE_TO_FLOAT(rp->input_vu_maxes[in_chan]),
-	      rec_in_VU[in_chan]);
-      record_report(messages,str,NULL);
-    }
-  FREE(str);
-#endif
   ever_read = XtAppAddWorkProc((ss->sgx)->mainapp,run_adc,(XtPointer)ss);
-  /* ever_read will be explicitly stopped if the recorder is closed */
 }
 
 static void Record_Button_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -3513,9 +3465,7 @@ void snd_record_file(snd_state *ss)
 
       AMP_rec_ins = (AMP ***)CALLOC(rp->possible_input_chans,sizeof(AMP **));
       for (i=0;i<rp->possible_input_chans;i++) 
-	{
-	  AMP_rec_ins[i] = (AMP **)CALLOC(MAX_OUT_CHANS,sizeof(AMP *));
-	}
+	AMP_rec_ins[i] = (AMP **)CALLOC(MAX_OUT_CHANS,sizeof(AMP *));
       AMP_rec_outs = (AMP **)CALLOC(MAX_OUT_CHANS,sizeof(AMP *));
 
       /* now create recording dialog using the info gathered above */

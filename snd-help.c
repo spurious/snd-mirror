@@ -192,7 +192,10 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
-17-Aug:    recorder work (one serious bug fixed).\n\
+18-Aug:  scan and map-chan and friends (including find and count-matches)\n\
+           no longer call the function with #f at the end --\n\
+           this is a non-backwards-compatible change.\n\
+17-Aug:  recorder work (one serious bug fixed).\n\
 14-Aug:  snd 4.5.\n\
 10-Aug:  extsnd.html re-organized.\n\
          wavo,wavo-hop,wavo-trace,line-size,max-fft-peaks,fft-size,show-fft-peaks,zero-pad,fft-window,\n\

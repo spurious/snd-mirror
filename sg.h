@@ -68,8 +68,11 @@
  * I'm not sure which is "the right thing":  (help vct?) or (help 'vct?)
  * the problem with setting the symbol's property is that there apparently isn't a Scheme version of defconstant
  */
+/* properties are apparently about to be deprecated in guile, so perhaps we should use a hashtable,
+ *   in this case, the constants could also be used as keys
+ */
 
-/* error indications (probably temporary) */
+/* error indications */
 
 #define NO_SUCH_CHANNEL gh_symbol2scm("no-such-channel")
 #define NO_SUCH_SOUND gh_symbol2scm("no-such-sound")
@@ -84,7 +87,6 @@
 #define CANNOT_SAVE gh_symbol2scm("cannot-save")
 #define IMPOSSIBLE_BOUNDS gh_symbol2scm("impossible-bounds")
 #define NO_ACTIVE_SELECTION gh_symbol2scm("no-active-selection")
-#define SND_EVAL_ERROR gh_symbol2scm("snd-eval-error")
 #define MUS_ERROR gh_symbol2scm("mus-error")
 
 #endif

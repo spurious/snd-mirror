@@ -121,7 +121,7 @@ files. The horizontalPanes resource is equivalent to the -h flag; if 1,
 sounds are layed out horizontally rather than vertically; if 2, you get a
 notebook widget holding the sounds.
 
-The various colors are:
+The various color resources are:
 
 basiccolor          default background color everywhere;    basic-color
 cursorcolor         color of the cursor;                    cursor-color
@@ -729,8 +729,7 @@ sounds, and so on. Say we want an echo effect:
   (lambda (scaler secs)
     (let ((del (make-delay (round (* secs (srate))))))
       (lambda (inval)
-        (if inval
-            (+ inval (delay del (* scaler (+ (tap del) inval))))))))))
+        (+ inval (delay del (* scaler (+ (tap del) inval))))))))
 
 For readers who are new to Scheme, echo is a function of two arguments,
 scaler and secs. Scaler sets how loud subsequent echos are, and secs sets
@@ -1015,7 +1014,7 @@ in the all-vector case. Here are a few more examples, taken from examp.scm.
 (define comb-filter
   (lambda (scaler size)
     (let ((cmb (make-comb scaler size)))
-      (lambda (x) (if x (comb cmb x))))))
+      (lambda (x) (comb cmb x)))))
 
 ; (map-chan (comb-filter .8 32))
 
@@ -1026,7 +1025,8 @@ in the all-vector case. Here are a few more examples, taken from examp.scm.
     (let ((c1 (make-comb scaler size))
           (c2 (make-comb scaler (* size .75)))
           (c3 (make-comb scaler (* size 1.2))))
-      (lambda (x) (if x (* amp (+ (comb c1 x) (comb c2 x) (comb c3 x))))))))
+      (lambda (x)
+        (* amp (+ (comb c1 x) (comb c2 x) (comb c3 x)))))))
 
 ; (map-chan (comb-chord .95 60 .3))
 
@@ -1042,7 +1042,7 @@ in the all-vector case. Here are a few more examples, taken from examp.scm.
   (lambda (scaler size pm)
     (let ((cmb (make-comb scaler size :max-size (+ size 1 (max-envelope pm 0))))
           (penv (make-env :envelope pm :end (frames))))
-      (lambda (x) (if x (comb cmb x (env penv)))))))
+      (lambda (x) (comb cmb x (env penv))))))
 
 ; (map-chan (zcomb .8 32 '(0 0 1 10)))
 
@@ -1054,9 +1054,9 @@ in the all-vector case. Here are a few more examples, taken from examp.scm.
           (fr2 (make-formant r2 f2))
           (fr3 (make-formant r3 f3)))
       (lambda (x)
-        (if x (+ (formant fr1 x)
-                 (formant fr2 x)
-                 (formant fr3 x)))))))
+        (+ (formant fr1 x)
+           (formant fr2 x)
+           (formant fr3 x))))))
 
 ; (map-chan (formants .01 900 .02 1800 .01 2700))
 
@@ -1067,10 +1067,9 @@ in the all-vector case. Here are a few more examples, taken from examp.scm.
     (let ((frm (make-formant radius (cadr move)))
           (menv (make-env :envelope move :end (frames))))
       (lambda (x)
-        (if x
-            (let ((val (formant frm x)))
-              (mus-set-frequency frm (env menv))
-              val))))))
+        (let ((val (formant frm x)))
+          (mus-set-frequency frm (env menv))
+          val)))))
 
 ; (map-chan (moving-formant .01 '(0 1200 1 2400)))
 
@@ -1109,19 +1108,18 @@ in the all-vector case. Here are a few more examples, taken from examp.scm.
            (v (samples->vct 0 vsize))
            (inctr 0))
       (lambda (inval)
-        (if inval
-            (src sr 0.0
-                 (lambda (dir)
-                   (granulate gr
-                              (lambda (dir)
-                                (let ((val (vct-ref v inctr)))
-                                  (set! inctr (+ inctr dir))
-                                  (if (>= inctr vsize)
-                                      (begin
-                                        (set! vbeg (+ vbeg inctr))
-                                        (set! inctr 0)
-                                        (samples->vct vbeg vsize 0 0 v)))
-                                  val))))))))))
+        (src sr 0.0
+          (lambda (dir)
+            (granulate gr
+              (lambda (dir)
+                (let ((val (vct-ref v inctr)))
+                  (set! inctr (+ inctr dir))
+                  (if (>= inctr vsize)
+                      (begin
+                        (set! vbeg (+ vbeg inctr))
+                        (set! inctr 0)
+                        (samples->vct vbeg vsize 0 0 v)))
+                  val)))))))))
 
 Geez, I haven't had this much fun in a long time! Check out examp.scm and
 snd-test.scm for more.
@@ -1486,234 +1484,221 @@ spectrograms, load glfft.scm, and (start-gl).
 
 Customization Index
 
-abort                      frame->file?               mus-set-raw-header-defaults set-mark-name
-abort?                     frame->frame               mus-sound-chans            set-mark-sample
-activate-listener          frame->list                mus-sound-comment          set-mark-sync
-add-clm-method             frame->sample              mus-sound-data-format      set-menu-sensitive
-add-mark                   frame-ref                  mus-sound-data-location    set-mix-amp
-add-mark                   frame-set!                 mus-sound-datum-size       set-mix-amp-env
-add-region                 frame?                     mus-sound-duration         set-mix-anchor
-add-sound-file-extension   frames                     mus-sound-frames           set-mix-console-state
-add-to-main-menu           free-mix-sample-reader     mus-sound-header-type      set-mix-console-y
-add-to-menu                free-sample-reader         mus-sound-length           set-mix-length
-add-transform              free-track-sample-reader   mus-sound-loop-info        set-mix-locked
-after-graph-hook           gmeteor                    mus-sound-samples          set-mix-name
-after-open-hook            granulate                  mus-sound-srate            set-mix-position
-all-pass                   granulate?                 mus-sound-type-specifier   set-mix-speed
-all-pass?                  graph                      mus-sun                    set-mix-track
-amp                        graph->ps                  mus-xcoeffs                set-read-only
-amplitude-modulate         graph-color                mus-ycoeffs                set-recorder-gain
-append-to-minibuffer       graph-cursor               name-click-hook            set-recorder-in-amp
-array->file                graph-hook                 new-sound                  set-recorder-out-amp
-array-interp               graph-style                next-mix-sample            set-reverb-feedback
-as-one-edit                graphing                   next-sample                set-reverb-funcs
-ask-before-overwrite       graphs-horizontal          next-track-sample          set-reverb-length
-asymmetric-fm              header-type                normalize-envelope         set-reverb-lowpass
-asymmetric-fm?             headers                    normalize-fft              set-reverb-scale
-audio-output-device        help-dialog                normalize-on-open          set-reverbing
-audio-state-file           help-text-font             normalize-view             set-right-sample
-auto-resize                hide-listener              notch                      set-sample
-auto-update                highlight-color            notch?                     set-samples
-autocorrelate              hobbit                     notehook                   set-showing-controls
-axis-label-font            html-dir                   one-pole                   set-sound-loop-info
-axis-numbers-font          hz->radians                one-pole?                  set-speed
-backward-graph             id-region                  one-zero                   set-squelch-update
-backward-mark              IIR-filter                 one-zero?                  set-syncing
-backward-mix               IIR-filter?                open-alternate-sound       set-uniting
-backward-sample            in                         open-controls              set-waving
-basic-color                in-any                     open-hook                  set-x-bounds
-be-helpful                 ina                        open-input                 set-y-bounds
-bind-key                   inb                        open-input*                short-file-name
-bold-button-font           initial-x0                 *open-input-pathname*      show-axes
-bomb                       initial-x1                 *open-input-truename*      show-fft-peaks
-buffer->frame              initial-y0                 *open-input-verbose*       show-indices
-buffer->sample             initial-y1                 open-output                show-listener
-buffer-empty?              *input*                    open-raw-sound             show-marks
-buffer-full?               ins-var                    open-sound                 show-mix-consoles
-buffer?                    insert-region              open-sound-file            show-mix-waveforms
-button-font                insert-sample              optional-key               show-selection-transform
-call-apply                 insert-samples             orientation-dialog         show-usage-stats
-centered-random            insert-sound               oscil                      show-y-zero
-change-menu-label          instrument-let             oscil-bank                 showing-controls
-channel-style              key                        oscil?                     sinc-width
-channels                   key-press-hook             out-any                    sine-summation
-channels-separate          left-sample                outa                       sine-summation?
-chans                      line-size                  outb                       smooth
-clear-array                linux-help                 outc                       smooth-selection
-clear-audio-inputs         list->vct                  outd                       snd-apropos
-*clm-array-print-length*   listener-color             *output*                   snd-cleanup
-*clm-binary-directory*     listener-font              output-comment-hook        snd-edit
-*clm-channels*             listener-prompt            output-name-hook           snd-edit-sound
-*clm-clipped*              load-colormap              override-data-format       snd-envelope
-*clm-data-format*          locsig                     override-data-location     snd-error
-*clm-date*                 locsig-ref                 override-data-size         snd-error-hook
-clm-envelope               locsig-reverb-ref          partials->polynomial       snd-help
-*clm-file-buffer-size*     locsig-reverb-set!         partials->wave             snd-memo
-*clm-file-name*            locsig-set!                partials->waveshape        snd-print
-*clm-header-type*          locsig?                    peaks                      snd-region
-clm-help                   loop-samples               phase-partials->wave       snd-sound
-*clm-help-browser*         make-all-pass              phase-vocoder              snd-spectrum
-*clm-init*                 make-asymmetric-fm         phase-vocoder?             snd-tempnam
-clm-load                   make-buffer                play-and-wait              snd-version
-*clm-news*                 make-color                 play-mix                   snd-warning
-*clm-notehook*             make-comb                  play-region                snd-warning-hook
-*clm-play*                 make-controller            play-selection             sound-chans
-*clm-player*               make-convolve              play-track                 sound-data-format
-clm-print                  make-delay                 polynomial                 sound-data-location
-clm-random                 make-empty-frame           position-color             sound-datum-size
-*clm-safety*               make-empty-mixer           prefix-arg                 sound-duration
-*clm-search-list*          make-env                   preload-directory          sound-files-in-directory
-*clm-source-directory*     make-fcontrol              preload-file               sound-format-name
-*clm-srate*                make-fft-graph             previous-files-sort        sound-frames
-*clm-table-size*           make-fft-window            previous-sample            sound-header-type
-*clm-verbose*              make-file->frame           print-length               sound-length
-*clm-version*              make-file->sample          progress-report            sound-let
-close-controls             make-filter                prompt-in-minibuffer       sound-loop-info
-close-hook                 make-fir-filter            protect-region             sound-max-amp
-close-input                make-formant               pulse-train                sound-samples
-close-output               make-frame                 pulse-train?               sound-set-loop-info
-close-sound                make-frame->file           pushed-button-color        sound-srate
-close-sound-file           make-granulate             radians->degrees           sound-to-temp
-color->list                make-graph                 radians->hz                sound-to-temps
-color-cutoff               make-identity-mixer        rand                       sound-type-name
-color-dialog               make-iir-filter            rand-interp                sound?
-color-inverted             make-locsig                rand-interp?               soundfont-info
-color-scale                make-mix-sample-reader     rand?                      sounds
-color?                     make-mixer                 raw-chans                  spectro-cutoff
-colormap                   make-notch                 raw-format                 spectro-hop
-comb                       make-one-pole              raw-srate                  spectro-start
-comb?                      make-one-zero              rc                         spectro-x-angle
-comment                    make-oscil                 read-only                  spectro-x-scale
-contrast                   make-phase-vocoder         readin                     spectro-y-angle
-contrast-amp               make-ppolar                readin?                    spectro-y-scale
-contrast-enhancement       make-pulse-train           rec-any                    spectro-z-angle
-contrasting                make-rand                  receive-snd                spectro-z-scale
-control                    make-rand-interp           recorder-autoload          spectrum
-control-allocate           make-readin                recorder-buffer-size       speed
-control-free               make-region                recorder-file              speed-style
-convolution                make-region-sample-reader  recorder-gain              speed-tones
-convolve                   make-roomsig               recorder-in-amp            square-wave
-convolve-arrays            make-sample->file          recorder-in-format         square-wave?
-convolve-files             make-sample-reader         recorder-max-duration      squelch-update
-convolve-selection-with    make-sawtooth-wave         recorder-out-amp           srate
-convolve-with              make-sine-summation        recorder-out-chans         src
-convolve?                  make-square-wave           recorder-out-format        src-selection
-corruption-time            make-sum-of-cosines        recorder-srate             src-sound
-count-matches              make-table-lookup          recorder-trigger           src?
-cursor                     make-track-sample-reader   rectangular->polar         start-hook
-cursor-color               make-triangle-wave         redo                       start-playing-hook
-cursor-follows-play        make-two-pole              region-chans               start-progress-report
-cursor-style               make-two-zero              region-dialog              start-snd
-cut                        make-vct                   region-id                  stop-dac
-dac                        make-wave-train            region-length              stop-helper
-dac-folding                make-waveshape             region-maxamp              stop-helpers
-dac-size                   make-zpolar                region-sample              stop-playing
-data-color                 map-across-all-chans       region-samples             stop-playing-hook
-data-format                map-across-chans           region-samples->vct        stop-playing-region-hook
-data-location              map-across-envelopes       region-srate               sum-of-cosines
-def-clm-fun                map-across-sound-chans     region?                    sum-of-cosines?
-def-clm-struct             map-all-chans              regions                    sum-of-sines
-default-output-chans       map-chan                   remote-read                swap-channels
-default-output-format      map-chans                  remote-write               syncd-marks
-default-output-srate       map-sound-chans            remove-from-menu           syncing
-default-output-type        mark->sound                reopen-output              table-lookup
-definstrument              mark-click-hook            report-in-minibuffer       table-lookup?
-defpinstrument             mark-color                 restart-clm                tap
-defvar                     mark-name                  restart-env                tell-helpers
-degrees->radians           mark-sample                restore-control-panel      temp-dir
-delay                      mark-sync                  *reverb*                   temp-filenames
-delay?                     mark-sync-max              reverb-decay               temp-to-selection
-delete-mark                mark?                      reverb-feedback            temp-to-sound
-delete-marks               marks                      reverb-length              temps-to-selection
-delete-region              marks                      reverb-lowpass             temps-to-sound
-delete-sample              max-fft-peaks              reverb-scale               text-focus-color
-delete-samples             max-regions                reverbing                  times->samples
-describe-instrument        max-sounds                 reverse-selection          tiny-font
-dismiss-all-dialogs        maxamp                     reverse-sound              to-snd
-dlocsig                    meld-envelopes             revert-sound               track-sample-reader?
-dot-product                memo-sound                 right-sample               transform-dialog
-dot-size                   min-dB                     ring-modulate              transform-sample
-during-open-hook           mix                        run*                       transform-samples
-edit-fragment              mix                        sample                     transform-samples->vct
-edit-header-dialog         mix-amp                    sample->buffer             transform-size
-edit-hook                  mix-amp-changed-hook       sample->file               transform-type
-edit-position              mix-amp-env                sample->file?              trap-segfault
-edits                      mix-anchor                 sample->frame              triangle-wave
-env                        mix-chans                  sample-reader-at-end?      triangle-wave?
-env-interp                 mix-color                  sample-reader?             two-pi
-env-selection              mix-console-amp-scaler     samples                    two-pole
-env-sound                  mix-console-speed-scaler   samples->sound-data        two-pole?
-env-sound                  mix-console-state          samples->vct               two-zero
-env?                       mix-console-state-changed-hook save-control-panel     two-zero?
-enved-base                 mix-console-y              save-dir                   unbind-key
-enved-clipping             mix-focus-color            save-edit-history          undo
-enved-dBing                mix-length                 save-envelopes             undo-hook
-enved-dialog               mix-locked                 save-hook                  uniting
-enved-exping               mix-name                   save-macros                update-fft
-enved-power                mix-position               save-marks                 update-graph
-enved-target               mix-position-changed-hook  save-options               update-sound
-enved-waveform-color       mix-region                 save-region                use-raw-defaults
-enved-waving               mix-sample-reader?         save-selection             use-sinc-interp
-envelope*                  mix-sound                  save-signal                vct->list
-envelope+                  mix-sound-channel          save-sound                 vct->samples
-envelope->coeffs           mix-speed                  save-sound-as              vct->sound-file
-envelope-concatenate       mix-speed-changed-hook     save-state                 vct-add!
-envelope-exp               mix-track                  save-state-file            vct-copy
-envelope-interp            mix-vct                    save-state-on-exit         vct-do!
-envelope-repeat            mix-waveform-color         sawtooth-wave              vct-fill!
-envelope-reverse           mix-waveform-height        sawtooth-wave?             vct-length
-envelope-simplify          mix?                       scale-by                   vct-map!
-eps-file                   mixer*                     scale-envelope             vct-move!
-errors                     mixer-ref                  scale-selection-by         vct-multiply!
-exit                       mixer-set!                 scale-selection-to         vct-offset!
-exit-hook                  mixer?                     scale-to                   vct-peak
-expand                     mixes                      scaled-by                  vct-ref
-expand-hop                 mouse-drag-hook            scaled-to                  vct-scale!
-expand-length              mouse-press-hook           scan-across-all-chans      vct-set!
-expand-ramp                mouse-release-hook         scan-across-chans          vct-subtract!
-expanding                  movies                     scan-across-sound-chans    vct?
-fcontrol                   multichannel-mix-hook      scan-all-chans             vcts-do!
-fft                        multiply-arrays            scan-chan                  vcts-map!
-fft-graph                  mus-a0                     scan-chans                 vector->vct
-fft-hook                   mus-a1                     scan-sound-chans           verbose-cursor
-fft-log-frequency          mus-a2                     seconds->samples           view
-fft-log-magnitude          mus-aifc                   select-all                 volume
-fft-size                   mus-aiff                   select-channel             vu-font
-fft-style                  mus-audio-describe         select-mix                 vu-font-size
-fft-window                 mus-audio-error            select-region              vu-size
-ffting                     mus-audio-error-name       select-sound               wave-train
-file->array                mus-audio-outputs          selected-channel           wave-train?
-file->frame                mus-audio-set-oss-buffers  selected-data-color        wavelet-type
-file->frame?               mus-b1                     selected-graph-color       waveshape
-file->sample               mus-b2                     selected-mix               waveshape?
-file->sample?              mus-bshort                 selected-sound             waving
-file-dialog                mus-bshort                 selection-beg              wavo
-file-name                  mus-channel                selection-color            wavo-hop
-filter                     mus-channels               selection-length           wavo-trace
-filter-dBing               mus-close                  selection-member           window-envelope
-filter-env                 mus-cosines                selection-to-temp          window-height
-filter-env-order           mus-create                 selection-to-temps         window-width
-filter-order               mus-data-format-bytes-per-sample selection?           window-x
-filter-selection           mus-data-format-name       send-and-receive-snd       window-y
-filter-sound               mus-error-hook             send-snd                   with-current-sound
-filter-waveform-color      mus-feedback               set-amp                    with-dac
-filter?                    mus-feedforward            set-contrast               with-mix
-filtering                  mus-formant-radius         set-contrast-amp           with-mix-consoles
-find                       mus-frequency              set-contrast-func          with-offset
-find-mark                  mus-header-type-name       set-contrasting            with-psound
-find-sound                 mus-hop                    set-cursor                 with-sound
-finish-progress-report     mus-increment              set-cursor-follows-play    x-axis-style
-FIR-filter                 mus-input?                 set-cursor-style           x-bounds
-FIR-filter?                mus-ircam                  set-expand                 x-position-slider
-fit-data-on-open           mus-length                 set-expand-funcs           x-zoom-slider
-fixup-helpers              mus-location               set-expand-hop             y-bounds
-formant                    mus-next                   set-expand-length          y-position-slider
-formant?                   mus-open-read              set-expand-ramp            y-zoom-slider
-forward-graph              mus-open-write             set-expanding              yes-or-no-p
-forward-mark               mus-order                  set-ffting                 zero-pad
-forward-mix                mus-output?                set-filter-dBing           zoom-color
-forward-sample             mus-phase                  set-filter-env             zoom-focus-style
-fourier-transform          mus-ramp                   set-filter-order
-frame*                     mus-reopen-write           set-filtering
-frame+                     mus-riff                   set-graphing
-frame->buffer              mus-scaler                 set-just-sounds
+abort                      fit-data-on-open           mus-error-hook             selected-channel
+abort?                     fixup-helpers              mus-feedback               selected-data-color
+activate-listener          formant                    mus-feedforward            selected-graph-color
+add-clm-method             formant?                   mus-formant-radius         selected-mix
+add-mark                   forward-graph              mus-frequency              selected-sound
+add-mark                   forward-mark               mus-header-type-name       selection-beg
+add-region                 forward-mix                mus-hop                    selection-color
+add-sound-file-extension   forward-sample             mus-increment              selection-length
+add-to-main-menu           fourier-transform          mus-input?                 selection-member
+add-to-menu                frame*                     mus-ircam                  selection-to-temp
+add-transform              frame+                     mus-length                 selection-to-temps
+after-graph-hook           frame->buffer              mus-location               selection?
+after-open-hook            frame->file                mus-next                   send-and-receive-snd
+all-pass                   frame->file?               mus-open-read              send-snd
+all-pass?                  frame->frame               mus-open-write             set-contrast-func
+amp                        frame->list                mus-order                  set-expand-funcs
+amplitude-modulate         frame->sample              mus-output?                set-just-sounds
+append-to-minibuffer       frame-ref                  mus-phase                  set-menu-sensitive
+array->file                frame-set!                 mus-ramp                   set-oss-buffers
+array-interp               frame?                     mus-random                 set-read-only
+as-one-edit                frames                     mus-reopen-write           set-reverb-funcs
+ask-before-overwrite       free-mix-sample-reader     mus-riff                   set-sample
+asymmetric-fm              free-sample-reader         mus-scaler                 set-samples
+asymmetric-fm?             free-track-sample-reader   mus-set-rand-seed          set-sound-loop-info
+audio-output-device        gmeteor                    mus-set-raw-header-defaults set-x-bounds
+audio-state-file           granulate                  mus-sound-chans            set-y-bounds
+auto-resize                granulate?                 mus-sound-comment          short-file-name
+auto-update                graph                      mus-sound-data-format      show-axes
+autocorrelate              graph->ps                  mus-sound-data-location    show-fft-peaks
+axis-label-font            graph-cursor               mus-sound-duration         show-indices
+axis-numbers-font          graph-hook                 mus-sound-frames           show-listener
+backward-graph             graph-lines                mus-sound-header-type      show-marks
+backward-mark              graph-style                mus-sound-length           show-mix-consoles
+backward-mix               graphing                   mus-sound-loop-info        show-mix-waveforms
+backward-sample            graphs-horizontal          mus-sound-samples          show-selection-transform
+basic-color                header-type                mus-sound-srate            show-usage-stats
+be-helpful                 headers                    mus-sun                    show-y-zero
+bind-key                   help-dialog                mus-xcoeffs                showing-controls
+bold-button-font           help-text-font             mus-ycoeffs                sinc-width
+bomb                       hide-listener              name-click-hook            sine-summation
+buffer->frame              highlight-color            new-sound                  sine-summation?
+buffer->sample             hobbit                     next-mix-sample            smooth
+buffer-empty?              html-dir                   next-sample                smooth-selection
+buffer-full?               hz->radians                next-track-sample          snd's objects
+buffer?                    id-region                  normalize-envelope         snd-apropos
+button-font                IIR-filter                 normalize-fft              snd-cleanup
+call-apply                 IIR-filter?                normalize-on-open          snd-edit
+centered-random            in                         normalize-view             snd-edit-sound
+change-menu-label          in-any                     notch                      snd-envelope
+channel-style              ina                        notch?                     snd-error
+channels                   inb                        notehook                   snd-error-hook
+channels-separate          initial-x0                 one-pole                   snd-help
+chans                      initial-x1                 one-pole?                  snd-memo
+clear-array                initial-y0                 one-zero                   snd-print
+clear-audio-inputs         initial-y1                 one-zero?                  snd-region
+*clm-array-print-length*   *input*                    open-alternate-sound       snd-sound
+*clm-binary-directory*     ins-var                    open-controls              snd-spectrum
+*clm-channels*             insert-region              open-hook                  snd-tempnam
+*clm-clipped*              insert-sample              open-input                 snd-version
+*clm-data-format*          insert-samples             open-input*                snd-warning
+*clm-date*                 insert-sound               *open-input-pathname*      snd-warning-hook
+clm-envelope               instrument-let             *open-input-truename*      sound-chans
+*clm-file-buffer-size*     key                        *open-input-verbose*       sound-data-format
+*clm-file-name*            key-press-hook             open-output                sound-data-location
+*clm-header-type*          left-sample                open-raw-sound             sound-datum-size
+clm-help                   line-size                  open-sound                 sound-duration
+*clm-help-browser*         linux-help                 open-sound-file            sound-files-in-directory
+*clm-init*                 list->vct                  optional-key               sound-format-name
+clm-load                   listener-color             orientation-dialog         sound-frames
+*clm-news*                 listener-font              oscil                      sound-header-type
+*clm-notehook*             listener-prompt            oscil-bank                 sound-length
+*clm-play*                 load-colormap              oscil?                     sound-let
+*clm-player*               locsig                     out-any                    sound-loop-info
+clm-print                  locsig-ref                 outa                       sound-max-amp
+clm-random                 locsig-reverb-ref          outb                       sound-samples
+*clm-safety*               locsig-reverb-set!         outc                       sound-set-loop-info
+*clm-search-list*          locsig-set!                outd                       sound-srate
+*clm-source-directory*     locsig?                    *output*                   sound-to-temp
+*clm-srate*                loop-samples               output-comment-hook        sound-to-temps
+*clm-table-size*           make-all-pass              output-name-hook           sound-type-name
+*clm-verbose*              make-asymmetric-fm         override-data-format       sound?
+*clm-version*              make-buffer                override-data-location     soundfont-info
+close-controls             make-color                 override-data-size         sounds
+close-hook                 make-comb                  partials->polynomial       spectro-cutoff
+close-input                make-controller            partials->wave             spectro-hop
+close-output               make-convolve              partials->waveshape        spectro-start
+close-sound                make-delay                 peaks                      spectro-x-angle
+close-sound-file           make-empty-frame           phase-partials->wave       spectro-x-scale
+color->list                make-empty-mixer           phase-vocoder              spectro-y-angle
+color-cutoff               make-env                   phase-vocoder?             spectro-y-scale
+color-dialog               make-fcontrol              play                       spectro-z-angle
+color-inverted             make-fft-graph             play-and-wait              spectro-z-scale
+color-scale                make-fft-window            play-region                spectrum
+color?                     make-file->frame           play-selection             speed
+colormap                   make-file->sample          play-track                 speed-style
+comb                       make-filter                polynomial                 speed-tones
+comb?                      make-fir-filter            position-color             square-wave
+comment                    make-formant               prefix-arg                 square-wave?
+contrast                   make-frame                 preload-directory          squelch-update
+contrast-amp               make-frame->file           preload-file               srate
+contrast-enhancement       make-granulate             previous-files-sort        src
+contrasting                make-graph                 previous-sample            src-selection
+control                    make-identity-mixer        print-length               src-sound
+control-allocate           make-iir-filter            progress-report            src?
+control-free               make-locsig                prompt-in-minibuffer       start-hook
+convolution                make-mix-sample-reader     protect-region             start-playing-hook
+convolve                   make-mixer                 pulse-train                start-progress-report
+convolve-arrays            make-notch                 pulse-train?               start-snd
+convolve-files             make-one-pole              pushed-button-color        stop-dac
+convolve-selection-with    make-one-zero              radians->degrees           stop-helper
+convolve-with              make-oscil                 radians->hz                stop-helpers
+convolve?                  make-phase-vocoder         rand                       stop-playing
+corruption-time            make-ppolar                rand-interp                stop-playing-hook
+count-matches              make-pulse-train           rand-interp?               stop-playing-region-hook
+cursor                     make-rand                  rand?                      sum-of-cosines
+cursor-follows-play        make-rand-interp           raw-chans                  sum-of-cosines?
+cursor-in-view             make-readin                raw-format                 sum-of-sines
+cursor-style               make-region                raw-srate                  swap-channels
+cut                        make-region-sample-reader  rc                         syncd-marks
+dac                        make-roomsig               read-only                  syncing
+dac-folding                make-sample->file          readin                     table-lookup
+dac-size                   make-sample-reader         readin?                    table-lookup?
+data-clipped               make-sawtooth-wave         rec-any                    tap
+data-format                make-sine-summation        receive-snd                tell-helpers
+data-location              make-square-wave           recorder-autoload          temp-dir
+def-clm-fun                make-sum-of-cosines        recorder-buffer-size       temp-filenames
+def-clm-struct             make-table-lookup          recorder-file              temp-to-selection
+default-output-chans       make-track-sample-reader   recorder-gain              temp-to-sound
+default-output-format      make-triangle-wave         recorder-in-amp            temps-to-selection
+default-output-srate       make-two-pole              recorder-in-format         temps-to-sound
+default-output-type        make-two-zero              recorder-max-duration      text-focus-color
+definstrument              make-vct                   recorder-out-amp           times->samples
+defpinstrument             make-wave-train            recorder-out-chans         tiny-font
+defvar                     make-waveshape             recorder-out-format        to-snd
+degrees->radians           make-zpolar                recorder-srate             track-sample-reader?
+delay                      map-across-all-chans       recorder-trigger           transform-dialog
+delay?                     map-across-chans           rectangular->polar         transform-samples
+delete-mark                map-across-envelopes       redo                       transform-samples->vct
+delete-marks               map-across-sound-chans     region-chans               transform-size
+delete-region              map-all-chans              region-dialog              transform-type
+delete-sample              map-chan                   region-id                  transforms
+delete-samples             map-chans                  region-length              trap-segfault
+describe-instrument        map-sound-chans            region-maxamp              triangle-wave
+dismiss-all-dialogs        mark->sound                region-sample              triangle-wave?
+dlocsig                    mark-click-hook            region-samples             two-pi
+dot-product                mark-color                 region-samples->vct        two-pole
+dot-size                   mark-name                  region-srate               two-pole?
+during-open-hook           mark-sync                  region?                    two-zero
+edit-fragment              mark-sync-max              regions                    two-zero?
+edit-header-dialog         mark?                      remote-read                unbind-key
+edit-hook                  marks                      remote-write               undo
+edit-position              max-fft-peaks              remove-from-menu           undo-hook
+edits                      max-regions                reopen-output              uniting
+env                        max-sounds                 report-in-minibuffer       update-fft
+env-interp                 maxamp                     restart-clm                update-graph
+env-selection              meld-envelopes             restart-env                update-sound
+env-sound                  memo-sound                 restore-control-panel      use-raw-defaults
+env-sound                  min-dB                     *reverb*                   use-sinc-interp
+env?                       mix                        reverb-decay               vct->list
+enved-base                 mix                        reverb-feedback            vct->samples
+enved-clipping             mix-amp                    reverb-length              vct->sound-file
+enved-dBing                mix-amp-changed-hook       reverb-lowpass             vct-add!
+enved-dialog               mix-amp-env                reverb-scale               vct-copy
+enved-exping               mix-anchor                 reverbing                  vct-do!
+enved-power                mix-chans                  reverse-selection          vct-fill!
+enved-target               mix-color                  reverse-sound              vct-length
+enved-waveform-color       mix-console-amp-scaler     revert-sound               vct-map!
+enved-waving               mix-console-speed-scaler   right-sample               vct-move!
+envelope*                  mix-console-state          ring-modulate              vct-multiply!
+envelope+                  mix-console-state-changed-hook run*                   vct-offset!
+envelope->coeffs           mix-console-y              sample                     vct-peak
+envelope-concatenate       mix-focus-color            sample->buffer             vct-ref
+envelope-exp               mix-length                 sample->file               vct-set!
+envelope-interp            mix-locked                 sample->file?              vct-subtract!
+envelope-repeat            mix-name                   sample->frame              vct?
+envelope-reverse           mix-position               sample-reader-at-end?      vcts-do!
+envelope-simplify          mix-position-changed-hook  sample-reader?             vcts-map!
+eps-file                   mix-region                 samples                    vector->vct
+exit                       mix-sample-reader?         samples->sound-data        verbose-cursor
+exit-hook                  mix-sound                  samples->vct               view-sound
+expand                     mix-sound-channel          save-control-panel         volume
+expand-hop                 mix-speed                  save-dir                   vu-font
+expand-length              mix-speed-changed-hook     save-edit-history          vu-font-size
+expand-ramp                mix-track                  save-envelopes             vu-size
+expanding                  mix-vct                    save-hook                  wave-train
+fcontrol                   mix-waveform-color         save-macros                wave-train?
+fft                        mix-waveform-height        save-marks                 wavelet-type
+fft-beta                   mix?                       save-options               waveshape
+fft-graph                  mixer*                     save-region                waveshape?
+fft-log-frequency          mixer-ref                  save-selection             waving
+fft-log-magnitude          mixer-set!                 save-signal                wavo
+fft-size                   mixer?                     save-sound                 wavo-hop
+fft-style                  mixes                      save-sound-as              wavo-trace
+fft-window                 mouse-drag-hook            save-state                 window-envelope
+ffting                     mouse-press-hook           save-state-file            window-height
+file->array                mouse-release-hook         save-state-on-exit         window-width
+file->frame                movies                     sawtooth-wave              window-x
+file->frame?               multichannel-mix-hook      sawtooth-wave?             window-y
+file->sample               multiply-arrays            scale-by                   with-current-sound
+file->sample?              mus-a0                     scale-envelope             with-dac
+file-dialog                mus-a1                     scale-selection-by         with-mix
+file-name                  mus-a2                     scale-selection-to         with-mix-consoles
+filter                     mus-aifc                   scale-to                   with-offset
+filter-dBing               mus-aiff                   scaled-by                  with-psound
+filter-env                 mus-audio-describe         scaled-to                  with-sound
+filter-env-order           mus-audio-error            scan-across-all-chans      x-axis-style
+filter-order               mus-audio-error-name       scan-across-chans          x-bounds
+filter-selection           mus-audio-outputs          scan-across-sound-chans    x-position-slider
+filter-sound               mus-b1                     scan-all-chans             x-zoom-slider
+filter-waveform-color      mus-b2                     scan-chan                  y-bounds
+filter?                    mus-bshort                 scan-chans                 y-position-slider
+filtering                  mus-bshort                 scan-sound-chans           y-zoom-slider
+find                       mus-channel                seconds->samples           yes-or-no-p
+find-mark                  mus-channels               select-all                 zero-pad
+find-sound                 mus-close                  select-channel             zoom-color
+finish-progress-report     mus-cosines                select-mix                 zoom-focus-style
+FIR-filter                 mus-create                 select-region
+FIR-filter?                mus-data-format-name

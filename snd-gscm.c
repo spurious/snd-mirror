@@ -664,7 +664,7 @@ static void init_guile_gtk(SCM local_doc);
 
 static SCM gtk_catch_scm_error(void *data, SCM tag, SCM throw_args)
 {
-  return(SND_EVAL_ERROR);
+  return(tag);
 }
 
 static SCM eval_str_wrapper(void *data)

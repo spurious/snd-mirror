@@ -2801,7 +2801,7 @@ static SCM g_mixes(SCM snd, SCM chn)
       else
 	{
 	  sp = get_sp(snd);
-	  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_mixes))));
+	  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_mixes),snd)));
 	  for (i=sp->nchans-1;i>=0;i--)
 	    res1 = gh_cons(g_mixes(snd,gh_int2scm(i)),res1);
 	}

@@ -1,5 +1,9 @@
 snd change log
 
+  18-Aug:    scan and map-chan and friends (including find and count-matches)
+               no longer call the function with #f at the end -- this is a non-backwards-compatible change.
+               The #f call can be implemented using closures (see data-max example), the early exit
+               with continuations, and the possible end-extension with insert and as-one-edit.
   17-Aug:    recorder work (one serious bug fixed).
   14-Aug:    snd 4.5.
   10-Aug:    extsnd.html re-organized.

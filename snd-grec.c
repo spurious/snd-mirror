@@ -622,7 +622,7 @@ static void Meter_Resize_Callback(GtkWidget *w, GdkEventConfigure *ev, gpointer 
   display_vu_meter((VU *)data);
 }
 
-static VU *make_vu_meter(GtkWidget *meter, int light_x, int light_y, int center_x, int center_y, GdkColor *needle_color, snd_state *ss, Float size)
+static VU *make_vu_meter(GtkWidget *meter, int light_x, int light_y, int center_x, int center_y, snd_state *ss, Float size)
 {
   VU *vu;
   vu_label *vl;
@@ -1476,6 +1476,21 @@ static GtkWidget *sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, GtkW
 
 /* -------- I/O pane -------- */
 
+static int make_amp_sliders(snd_state *ss, recorder_info *rp, PANE *p, GtkWidget *first_frame, int input, int overall_input_ctr);
+
+#if 0
+/* these functions are used only by make_pane */
+static void make_reset_button(snd_state *ss, PANE *p, Float meter_size, GtkWidget *button_box, GtkWidget *vu_vertical_sep);
+static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float meter_size,
+			      int input, int overall_input_ctr, int vu_meters, GtkWidget *vu_vertical_sep, GtkWidget **frames);
+static void make_gain_separator(snd_state *ss, PANE *p, int num_gains, int vu_meters, GtkWidget *last_slider);
+static GtkWidget *make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p, 
+					     int num_gains, int gain_ctr, int *mixflds, int input, int last_device);
+static GtkWidget *make_vertical_gain_separator(snd_state *ss, PANE *p, int vu_meters, GtkWidget *last_frame);
+static GtkWidget *make_vu_meters(snd_state *ss, PANE *p, int vu_meters, GtkWidget **frames, GtkWidget *in_last_frame, GtkWidget *in_left_frame,
+			   int overall_input_ctr, Float meter_size, int input, GtkWidget **out_frame);
+#endif
+
 #define MAX_AUDIO_FIELD (MUS_AUDIO_DIRECTION+1)
 
 static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window, int device, int system)
@@ -1483,13 +1498,12 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
   /* VU meters (frame, then drawing area widget) */
   /* Linux OSS complication -- the top input panel also has all the "mixer" input volume controls and the output pane has the tone controls, if any */
   Wdesc *wd;
-  int i,k,chan,amp_sliders,temp_out_chan,temp_in_chan,in_chan,out_chan;
-  AMP *a;
+  int i,k,chan;
   PANE *p;
   GtkWidget **frames = NULL;
-  GtkWidget *frame,*meter,*last_frame,*last_slider,*max_label,*matrix_frame,
+  GtkWidget *frame,*meter,*last_frame,*max_label,*matrix_frame,
     *button_label,*button_box,*first_frame,*left_frame,*spix;
-  GtkWidget *vuh,*vuv,*gv,*sbox,*btab,*slabel,*amp_sep;
+  GtkWidget *vuh,*vuv,*gv,*sbox,*btab,*slabel;
 
   VU *vu;
   int vu_meters,num_gains,input;
@@ -1597,7 +1611,6 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
       for (i=0;i<p->in_chans;i++) 
 	for (k=0;k<p->out_chans;k++) 
 	  if (i == k) p->active_sliders[i][k] = 1;
-      /* PICKUP DEFAULTS HERE */
 
       /* rather than default to posting 64 (or 256!) sliders, set up a channel matrix where desired sliders can be set */
 #if 0
@@ -1615,7 +1628,6 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
       for (i=0;i<p->in_chans;i++) 
 	for (k=0;k<p->out_chans;k++) 
 	  p->active_sliders[i][k]=1;
-      /* DEFAULTS?? */
     }
 
   if ((vu_meters%4) == 0)
@@ -1649,7 +1661,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
       gtk_drawing_area_size(GTK_DRAWING_AREA(meter),(int)(240*meter_size),(int)(100*meter_size));
       gtk_widget_show(meter);
 
-      p->meters[i] = make_vu_meter(meter,LIGHT_X,LIGHT_Y,CENTER_X,CENTER_Y,sx->black,ss,meter_size);
+      p->meters[i] = make_vu_meter(meter,LIGHT_X,LIGHT_Y,CENTER_X,CENTER_Y,ss,meter_size);
       vu = p->meters[i];
       if (input)
 	rec_in_VU[overall_input_ctr+i] = vu;
@@ -1899,6 +1911,25 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
     }
 
   /* now the amp sliders across the bottom of the pane, with 'mixer' info on the right */
+  pane_max = make_amp_sliders(ss,rp,p,vuv,input,overall_input_ctr);
+
+  p->in_chan_loc = overall_input_ctr;
+  if (input) overall_input_ctr += p->in_chans;
+#if (HAVE_OSS || HAVE_ALSA)
+  p->pane_size = pane_max+20;
+#else
+  p->pane_size = pane_max+50;
+#endif
+
+  return(p);
+}
+
+static int make_amp_sliders(snd_state *ss, recorder_info *rp, PANE *p, GtkWidget *vuv, int input, int overall_input_ctr)
+{
+  Wdesc *wd;
+  int i,amp_sliders,temp_out_chan,temp_in_chan,in_chan,out_chan;
+  AMP *a;
+  GtkWidget *last_slider,*amp_sep;
 
   amp_sep = gtk_hseparator_new();
   gtk_box_pack_start(GTK_BOX(vuv),amp_sep,FALSE,FALSE,6);
@@ -1924,7 +1955,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
       wd->ss = ss;
       wd->p = p;
       wd->device = p->device;
-      wd->system = system;
+      wd->system = p->system;
       wd->field = MUS_AUDIO_AMP;
       p->amps[i] = (AMP *)CALLOC(1,sizeof(AMP));
       a = p->amps[i];
@@ -1967,18 +1998,10 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
 	  a->slider = NULL;
 	}
     }
-  p->in_chan_loc = overall_input_ctr;
-  if (input) overall_input_ctr += p->in_chans;
-#if (HAVE_OSS || HAVE_ALSA)
-  p->pane_size = pane_max+20;
-#else
-  p->pane_size = pane_max+50;
-#endif
-
-  return(p);
+  return(0);
 }
 
-static void sensitize_control_buttons(void)
+void sensitize_control_buttons(void)
 {
   int i;
   for (i=0;i<device_buttons_size-1;i++) /* last button is autoload_file */
@@ -1995,23 +2018,6 @@ void unsensitize_control_buttons(void)
     {
       if (device_buttons[i])
 	set_sensitive(device_buttons[i],FALSE);
-    }
-}
-
-void cleanup_recording (void)
-{
-  recorder_info *rp;
-  rp = get_recorder_info();
-  if (rp->taking_input) close_recorder_audio();
-#if (!(HAVE_OSS || HAVE_ALSA))
-  if (recorder) mus_audio_restore();
-#endif
-  if ((recorder) && (rp->recording) && (rp->output_file_descriptor > 0)) 
-    {
-      rp->recording = 0;
-      rp->triggered = (!rp->triggering);
-      sensitize_control_buttons();
-      snd_close(rp->output_file_descriptor);
     }
 }
 
@@ -2076,7 +2082,7 @@ static void Dismiss_Record_Callback(GtkWidget *w, gpointer clientData)
 #endif
 }
 
-static void finish_recording(snd_state *ss, recorder_info *rp)
+void finish_recording(snd_state *ss, recorder_info *rp)
 {
   char *str;
   snd_info *sp;
@@ -2106,47 +2112,9 @@ static void finish_recording(snd_state *ss, recorder_info *rp)
     }
 }
 
-static BACKGROUND_TYPE run_adc(gpointer ss)  /* X wrapper for read_adc */
-{
-  BACKGROUND_TYPE val;
-  recorder_info *rp;
-  rp = get_recorder_info();
-  val = read_adc((snd_state *)ss);
-  if (val == BACKGROUND_QUIT) 
-    {
-      rp->recording = 0;
-      finish_recording((snd_state *)ss,rp);
-    }
-  return(val);
-}
-
 void set_read_in_progress (snd_state *ss, recorder_info *rp)
 {
-#ifdef DEBUGGING
-  int in_chan;
-  char *str;
-  str = (char *)CALLOC(512,sizeof(char));
-  sprintf(str,"open: srate: %d, format: %s, size: %d, in_chans: %d %d, input_ports: %d %d",
-	  rp->srate,
-	  mus_data_format_name(rp->in_format),
-	  rp->buffer_size,
-	  rp->input_channels[0],rp->input_channels[1],
-	  rp->input_ports[0],rp->input_ports[1]);
-  record_report(ss,messages,str,NULL);
-  for (in_chan=0;in_chan<rp->possible_input_chans;in_chan++)
-    {
-      sprintf(str,"in[%d] %s (%s): %.3f -> (VU *)%p",
-	      in_chan,
-	      (rp->input_channel_active[in_chan]) ? "on" : "off",
-	      (rp->chan_in_active[in_chan]) ? "active" : "idle",
-	      MUS_SAMPLE_TO_FLOAT(rp->input_vu_maxes[in_chan]),
-	      rec_in_VU[in_chan]);
-      record_report(ss,messages,str,NULL);
-    }
-  FREE(str);
-#endif
   ever_read = gtk_idle_add(run_adc,(gpointer)ss);
-  /* ever_read will be explicitly stopped if the recorder is closed */
 }
 
 static void Record_Button_Callback(GtkWidget *w,gpointer clientData) 

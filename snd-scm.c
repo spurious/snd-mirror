@@ -139,42 +139,34 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
       scm_puts(": ", port);
       if (gh_length(throw_args) > 1)
 	{
-	  stmp = gh_cadr(throw_args);
 	  if (SCM_EQ_P(tag,NO_SUCH_FILE))
 	    {
 	      scm_display(tag,port);
 	      scm_puts(" \"",port);
-	      scm_display(stmp,port);
+	      scm_display(gh_cadr(throw_args),port);
 	      scm_puts("\"",port);
 	    }
 	  else
 	    {
 	      if ((SCM_EQ_P(tag,NO_SUCH_SOUND)) || (SCM_EQ_P(tag,NO_SUCH_MIX)) || (SCM_EQ_P(tag,NO_SUCH_MARK)) ||
-		  (SCM_EQ_P(tag,NO_SUCH_MENU)) || (SCM_EQ_P(tag,NO_SUCH_REGION)))
+		  (SCM_EQ_P(tag,NO_SUCH_MENU)) || (SCM_EQ_P(tag,NO_SUCH_REGION)) ||
+		  (SCM_EQ_P(tag,NO_SUCH_CHANNEL)) || (SCM_EQ_P(tag,NO_SUCH_EDIT)) || (SCM_EQ_P(tag,MUS_ERROR)) ||
+		  (SCM_EQ_P(tag,IMPOSSIBLE_BOUNDS)) || (SCM_EQ_P(tag,NO_SUCH_SAMPLE)))
 		{
 		  scm_display(tag,port);
 		  scm_puts(" ",port);
-		  scm_display(stmp,port);
+		  scm_display(gh_cdr(throw_args),port);
 		}
 	      else
 		{
-		  if ((SCM_EQ_P(tag,NO_SUCH_CHANNEL)) || (SCM_EQ_P(tag,NO_SUCH_EDIT)) || (SCM_EQ_P(tag,MUS_ERROR)) ||
-		      (SCM_EQ_P(tag,IMPOSSIBLE_BOUNDS)) || (SCM_EQ_P(tag,NO_SUCH_SAMPLE)))
-		    {
-		      scm_display(tag,port);
-		      scm_puts(" ",port);
-		      scm_display(gh_cdr(throw_args),port);
-		    }
-		  else
-		    {
-		      if (gh_string_p(stmp)) 
-			scm_display_error_message(stmp, gh_caddr(throw_args), port);
-		      else scm_display(tag, port);
+		  stmp = gh_cadr(throw_args);
+		  if (gh_string_p(stmp)) 
+		    scm_display_error_message(stmp, gh_caddr(throw_args), port);
+		  else scm_display(tag, port);
 #if (!HAVE_GUILE_1_3)
-		      stack = scm_fluid_ref(SCM_CDR(scm_the_last_stack_fluid));
-		      if (SCM_NFALSEP(stack)) scm_display_backtrace(stack,port,SCM_UNDEFINED,SCM_UNDEFINED);
+		  stack = scm_fluid_ref(SCM_CDR(scm_the_last_stack_fluid));
+		  if (SCM_NFALSEP(stack)) scm_display_backtrace(stack,port,SCM_UNDEFINED,SCM_UNDEFINED);
 #endif
-		    }
 		}
 	    }
 	}
@@ -212,8 +204,7 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
       snd_error(name_buf);
   g_error_occurred = 1;
   if (name_buf) free(name_buf);
-  state->eval_error = 1;
-  return(SND_EVAL_ERROR);
+  return(tag);
 }
 
 int procedure_ok(SCM proc, int req_args, int opt_args, char *caller, char *arg_name, int argn)
@@ -490,12 +481,6 @@ SCM parse_proc(char *buf)
 
 int snd_eval_str(snd_state *ss, char *buf, int count)
 {
-  /* scm_set_current_output_port? Even if we could re-direct display and notice output
-   *   here, how could we re-direct input correctly? For example, use drops has a Snd
-   *   procedure that drops into the Scheme debugger -- currently output can go to stdout
-   *   as well as being trapped here (in Snd's listener); how to tell that subsequent
-   *   strings should head to the debugger? Or would they be handled before this point?
-   */
   snd_info *sp = NULL;
   SCM result = SCM_UNDEFINED;
   int ctr;
@@ -2709,7 +2694,7 @@ static SCM g_edit_header_dialog(SCM snd_n)
   #define H_edit_header_dialog "(" S_edit_header_dialog " snd) opens the Edit Header dialog on sound snd"
   snd_info *sp; 
   sp = get_sp(snd_n); 
-  if (sp) edit_header(sp); else return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_edit_header_dialog))));
+  if (sp) edit_header(sp); else return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_edit_header_dialog),snd_n)));
   return(SCM_BOOL_F);
 }
 
@@ -3262,7 +3247,9 @@ static SCM g_start_progress_report(SCM snd)
   ERRB1(snd,S_start_progress_report);
   ERRSP(S_start_progress_report,snd,1);
   sp = get_sp(snd);
-  if (sp) start_progress_report(state,sp,NOT_FROM_ENVED); else return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_start_progress_report))));
+  if (sp)
+    start_progress_report(state,sp,NOT_FROM_ENVED); 
+  else return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_start_progress_report),snd)));
   return(SCM_BOOL_T);
 }
 
@@ -3273,7 +3260,9 @@ static SCM g_finish_progress_report(SCM snd)
   ERRB1(snd,S_finish_progress_report);
   ERRSP(S_finish_progress_report,snd,1);
   sp = get_sp(snd);
-  if (sp) finish_progress_report(state,sp,NOT_FROM_ENVED); else return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_finish_progress_report))));
+  if (sp) 
+    finish_progress_report(state,sp,NOT_FROM_ENVED); 
+  else return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_finish_progress_report),snd)));
   return(SCM_BOOL_T);
 }
 
@@ -3297,7 +3286,7 @@ static SCM g_progress_report(SCM pct, SCM name, SCM cur_chan, SCM chans, SCM snd
 		      NOT_FROM_ENVED);
       free(str);
     }
-  else return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_progress_report))));
+  else return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_progress_report),snd)));
   return(SCM_BOOL_T);
 }
 

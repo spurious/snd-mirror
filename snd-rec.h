@@ -43,6 +43,16 @@
   #define DEFAULT_RECORDER_SRATE 22050
 #endif
 
+#if USE_MOTIF
+  #define POINTER XtPointer
+#else
+  #if USE_GTK
+    #define POINTER gpointer
+  #else
+    #define POINTER int
+  #endif
+#endif
+
 void recorder_set_audio_srate(snd_state *ss, int device, int srate, int system, int aud);
 char *recorder_device_name(int dev);
 char *recorder_system_and_device_name(int sys, int dev);
@@ -138,12 +148,14 @@ void stop_background_read(void);
 int in_chans_active(void);
 int out_chans_active(void);
 void recorder_characterize_devices(int devs, int output_devices);
-BACKGROUND_TYPE read_adc(snd_state *ss);
 void recorder_set_vu_in_val(int chan, MUS_SAMPLE_TYPE val);
 void recorder_set_vu_out_val(int chan, MUS_SAMPLE_TYPE val);
 
+void sensitize_control_buttons(void);
 void unsensitize_control_buttons(void);
 int recorder_start_output_file(snd_state *ss, char *comment);
+BACKGROUND_TYPE run_adc(POINTER ss);
+void finish_recording(snd_state *ss, recorder_info *rp);
 
 #if OLD_SGI_AL
   void set_line_source(snd_state *ss, int in_digital);

@@ -96,7 +96,7 @@ puts each sound on a separate page of a notebook widget. Similarly
 -horizontal and -vertical determine which way the outer panes are layed out.
 As panes (sounds) come and go, Snd's overall size may change (this is partly
 determined by the window manager, but is to some extent also up to Snd);
-many people find this distracting -- the would rather the overall window
+many people find this distracting -- they would rather the overall window
 size try to stay the same. The Snd variable associated with this is
 "auto-resize"; it can be accessed as follows (we're typing to the listener
 here, as described above):
@@ -574,7 +574,7 @@ of built-in functions:
   (vct-fill! hi 3.14)
   (vct-scale! hi -1.0)
 
-Now our vct object hi is has 100 -3.14's.
+Now our vct object hi has 100 -3.14's.
 
   list->vct         (lst)             return vct object with elements of list lst
   make-vct          (len)             create vct struct of size len.
@@ -742,7 +742,7 @@ view of the data, it has to access the sample, which can sometimes involve
 opening, reading, and closing a sound file. The result is that in some
 cases, sample will bring your function to a grinding halt. There are two
 alternatives, leaving aside the scanning and mapping functions mentioned
-above. One involves keeping the buffer of data around explicitly
+below. One involves keeping the buffer of data around explicitly
 (samples->vct), and the other involves the use of a special object known as
 a sample-reader. The former is better if you're jumping around in the data,
 the latter if you're treating it generally as a stream of samples, read in
@@ -802,7 +802,7 @@ be accessed by a normal sample-reader.
                                                (edit-pos (edit-position index))
                                                (previous-edit (make-sample-reader 0 0 index 1 (1- edit-pos))))
                                           (lambda (x)
-                                            (if x (- x (next-sample previous-edit)) #f)))))
+                                            (- x (next-sample previous-edit)) #f))))
                                     (map-chan (snd-diff))
 
                                   snd can also be a filename (a string); in this way a sample-reader
@@ -931,7 +931,7 @@ See marks.scm for more examples.
 
 Mixes
 
-A mix is an objects that controls one channel of a sound mix; it normally
+A mix is an object that controls one channel of a sound mix; it normally
 includes a "console" of widgets that can be pushed and poked to change
 various aspects of the mix. In addition, all the signal-processing functions
 can be applied to the mix data. These variables affect all mixes:
@@ -1747,6 +1747,8 @@ edits. Similarly, when you save Snd's state (via the Save State menu option
 or by calling the function save-state), the result is a Scheme program that
 can be edited just like any other such text.
 
+  ------------------------------------------------------------------------
+
 Scanning Data
 
 Sound files can be enormous, far larger than available memory, so vector
@@ -1799,50 +1801,39 @@ scanning in parallel). If the function returns something other than #f, the
 scan is stopped and (in the series case) a list is returned to the caller
 containing the non-#f value returned, the current sample position of the
 scan, the current channel number, and the current sound index; in the
-parallel case, the current sample position is returned. If the scan reaches
-the end of its data without ever getting a value other than #f from its
-function, it calls the function once more, passing #f as the first argument,
-and returns whatever the function returns. So, for example, the following
-call scans the current channel from sample 0 to the end looking for any
-sample greater than .1:
+parallel case, the current sample position is returned. So, for example, the
+following call scans the current channel from sample 0 to the end looking
+for any sample greater than .1:
 
->(scan-chan (lambda (y) (> (or y 0.0) .1)))
+>(scan-chan (lambda (y) (> y .1)))
 (#t 4423 0 0)
 
 In this case, we found such a sample at position 4423 of the first channel
-of the sound whose index is 0. The '(or y 0.0)' form protects the '>'
-operation against the #f passed in the case of failure. Here's an example of
-scanning across all channels, returning the maximum sample value found:
+of the sound whose index is 0. Here's an example of scanning across all
+channels, returning the maximum sample value found:
 
 (define data-max
   (lambda ()
     (let ((maxval 0.0))
-      (lambda (data len)
-        (if data
-            (do ((i 0 (1+ i)))
-                ((= i len) #f)
-              (let ((curval (abs (vector-ref data i))))
-                (if (> curval maxval) (set! maxval curval))))
-            maxval)))))
+      (scan-across-all-chans
+        (lambda (data len)
+          (do ((i 0 (1+ i)))
+              ((= i len) #f)
+            (let ((curval (abs (vector-ref data i))))
+              (if (> curval maxval) (set! maxval curval))))))
+      maxval)))
 
->(scan-across-all-chans (data-max))
+>(data-max)
 0.492675779232
 
 (define every-sample?
   (lambda (proc)
-    (let ((baddy (scan-chan (lambda (y) (if y (not (proc y)) #f)))))
+    (let ((baddy (scan-chan (lambda (y) (not (proc y))))))
       (if baddy (set-cursor (cadr baddy)))
       (not baddy))))
 
 >(every-sample? (lambda (y) (< y .5)))
 #t
-
-The function 'data-max' returns a closure that includes the function we'll
-actually apply to the data (the inner lambda with the 'data' and 'len'
-arguments), and the variable that tracks the maxamp through the current call
-on 'scan-across-all-chans'. We include the extra layer of 'lambda' so that a
-subsequent call on '(data-max)' will start with a newly zeroed version of
-'maxval'.
 
 The mapping operations are slightly more complicated because they can edit
 the data. The fourth argument edname is the name of the editing operation
@@ -1858,23 +1849,21 @@ numbers), or #t which halts the mapping operation, leaving trailing samples
 unaffected, or a list, vct object, or vector of numbers (in the parallel
 case, an embedded array as an element of the outer array); in this case, the
 numbers are spliced into the edited version, effectively replacing the
-current sample with any number of samples. At the end of the map, the same
-function is called again with the first argument #f, and any returned values
-are spliced in. This sounds more complicated than it is! Basically, a map in
-series receives each sample and returns either #f (no corresponding output),
-a number (the new output), or a list of numbers; a map in parallel does the
-same for each sample in the array passed to it. If every value returned for
-a given channel is #f, the data is not edited. This makes it possible to run
-through all current channels in parallel, changing only one channel (or a
-subset of them).
+current sample with any number of samples. This sounds more complicated than
+it is! Basically, a map in series receives each sample and returns either #f
+(no corresponding output), a number (the new output), or a list of numbers;
+a map in parallel does the same for each sample in the array passed to it.
+If every value returned for a given channel is #f, the data is not edited.
+This makes it possible to run through all current channels in parallel,
+changing only one channel (or a subset of them).
 
->(map-chan (lambda (y) (if y (+ y .2) 'done)))
-done
+>(map-chan (lambda (y) (+ y .2)))
+#f
 
->(map-chan (lambda (y) (if y (cos y) )) #f #f "(cos y)")
-#<unspecified>
+>(map-chan (lambda (y) (cos y)) #f #f "(cos y)")
+#f
 
->(map-chan (lambda (y) (if (and y (> y .1)) (list .1 .2 .3) y)))
+>(map-chan (lambda (y) (if (> y .1) (list .1 .2 .3) y)))
 #f
 
 (define swap-channels
@@ -1882,12 +1871,10 @@ done
     (if (= (channels) 2)
         (map-across-sound-chans
          (lambda (data chans)
-           (if data
-               (let ((chan0-sample (vector-ref data 0)))
-                 (vector-set! data 0 (vector-ref data 1))
-                 (vector-set! data 1 chan0-sample)
-                 data)
-               #f))
+           (let ((chan0-sample (vector-ref data 0)))
+             (vector-set! data 0 (vector-ref data 1))
+             (vector-set! data 1 chan0-sample)
+             data))
          #f #f "swap-channels")
         (string-append (short-file-name) " is not stereo!"))))
 
@@ -1906,27 +1893,25 @@ that finds silences and replaces them with something:
           (current-sample 0)
           (chan-samples (frames)))
       (lambda (y)
-        (if y
-            (let ((old-y (vector-ref buffer position)))
-              (set! sum-of-squares (- (+ sum-of-squares (* y y)) (* old-y old-y)))
-              (vector-set! buffer position y)
-              (set! position (1+ position))
-              (if (= position 128) (set! position 0))
-              (set! current-sample (1+ current-sample))
-              (if (> sum-of-squares silence)
-                  (if (= current-sample chan-samples)
-                      ;; at end return trailing samples as long as it looks like sound
-                      (let ((temp-buffer (make-vector 128 0.0)))
-                        (do ((i 0 (1+ i)))
-                            ((= i 128) temp-buffer)
-                          (let ((final-y (vector-ref buffer position)))
-                            (vector-set! temp-buffer i (if (> sum-of-squares silence) final-y 0.0))
-                            (set! sum-of-squares (- sum-of-squares (* final-y final-y)))
-                            (set! position (1+ position))
-                            (if (= position 128) (set! position 0)))))
-                      old-y)
-                  replacement))
-            #f)))))
+        (let ((old-y (vector-ref buffer position)))
+          (set! sum-of-squares (- (+ sum-of-squares (* y y)) (* old-y old-y)))
+          (vector-set! buffer position y)
+          (set! position (1+ position))
+          (if (= position 128) (set! position 0))
+          (set! current-sample (1+ current-sample))
+          (if (> sum-of-squares silence)
+              (if (= current-sample chan-samples)
+                  ;; at end return trailing samples as long as it looks like sound
+                  (let ((temp-buffer (make-vector 128 0.0)))
+                    (do ((i 0 (1+ i)))
+                        ((= i 128) temp-buffer)
+                      (let ((final-y (vector-ref buffer position)))
+                        (vector-set! temp-buffer i (if (> sum-of-squares silence) final-y 0.0))
+                        (set! sum-of-squares (- sum-of-squares (* final-y final-y)))
+                        (set! position (1+ position))
+                        (if (= position 128) (set! position 0)))))
+                  old-y)
+            replacement))))))
 
 (map-chan (map-silence .01 0.0))  ; squelch background noise
 (map-chan (map-silence .001 #f))   ; remove silences altogether
@@ -1949,9 +1934,6 @@ call-with-current-continuation:
                   (return "quitting!")
                   val)))))
 
-Perhaps the scanning functions should use this mechanism rather than fooling
-around with booleans.
-
 If the editing action is not mapping something over the current sound, it is
 safest to write a temp file with the new data, then pass that to set-samples
 with the trunc argument set to #t. This way you don't assume the new sound
@@ -1966,7 +1948,7 @@ of this.
 Transforms
 
 Except for add-transform, the transform functions and variables have been
-treated above, so this is just s list of them with cross-references.
+treated above, so this is just a list of them with cross-references.
 
   add-transform   (name xlabel lo hi transform)
 
@@ -2161,10 +2143,11 @@ functions:
 Errors
 
 When something goes awry, the various functions can "throw" an error (a
-symbol) which is normally "caught" by the default error handler; it prints
-out some message, and in some cases appends a stack trace. So, as a simple
-example, selection-beg throws 'no-active-selection is there isn't a
-selection. In the default case, you get behavior like this:
+symbol) which is normally "caught" by the default error handler (this is a
+kind of "goto" but without the embarassment); it prints out some message,
+and in some cases appends a stack trace. So, as a simple example,
+selection-beg throws 'no-active-selection is there isn't a selection. In the
+default case, you get behavior like this:
 
 >(selection-beg)
 selection-beg: no-active-selection
@@ -2308,7 +2291,7 @@ These functions don't seem to fit anywhere else:
                                   is a Scheme function of one argument (the current sample value). sample
                                   determines where to start the search.
 
-                                     (count-matches (lambda (y) (> (or y 0.0) .1)))
+                                     (count-matches (lambda (y) (> y .1)))
 
   exit              ()            exit Snd.
   fft               (rl im sgn)   perform an FFT on rl and im (the real and imaginary parts of the
@@ -2316,6 +2299,9 @@ These functions don't seem to fit anywhere else:
   find              (expr sample snd chn)
                                   find the sample that satisfies the Scheme function expr. sample
                                   determines where to start the search.
+
+                                     (find (lambda (y) (> y .1)))
+
   graph->ps         ()            create Postscript description of current display (see eps-file).
   in                (ms thunk)    ms milliseconds from now, evaluate thunk, a function of no arguments.
   key               (key state snd chn)

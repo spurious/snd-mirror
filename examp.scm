@@ -867,7 +867,7 @@
 		 (map-chan func #f #f origin snd chn))
 	   (all-chans))))
 
-;; (do-all-chans (lambda (val) (if val (* 2.0 val) #f)) "double all samples") 
+;; (do-all-chans (lambda (val) (* 2.0 val)) "double all samples") 
 
 (define update-graphs
   (lambda ()
@@ -903,7 +903,9 @@
   (lambda (proc)
     "(every-sample func) -> #t if func is not #f for all samples in the current channel,
   otherwise it moves the cursor to the first offending sample"
-    (let ((baddy (scan-chan (lambda (y) (if y (not (proc y)) #f)))))
+    (let ((baddy (scan-chan 
+		  (lambda (y) 
+		    (not (proc y))))))
       (if baddy (set-cursor (cadr baddy)))
       (not baddy))))
 
@@ -911,12 +913,12 @@
   (lambda (nbins)
     "(sort-samples bins) provides a histogram in bins bins"
     (let ((bins (make-vector nbins 0)))
-      (lambda (y)
-	(if y
-	    (let ((bin (inexact->exact (floor (* (abs y) nbins)))))
-	      (vector-set! bins bin (+ (vector-ref bins bin) 1))
-	      #f)
-	    bins)))))
+      (scan-chan
+       (lambda (y)
+	 (let ((bin (inexact->exact (floor (* (abs y) nbins)))))
+	   (vector-set! bins bin (+ (vector-ref bins bin) 1))
+	   #f)))
+      bins)))
 
 
 
@@ -1055,15 +1057,13 @@
 		  (stereo (if (> stereo-sound mono-sound) 1 0)))
 	      (map-across-chans
 	       (lambda (data chans)
-		 (if data
-		     (let ((samp (vector-ref data mono))
-			   (y (envelope-interp (/ current-samp samps) panning-envelope)))
-		       (set! current-samp (1+ current-samp))
-		       (vector-set! data mono #f) ;don't edit the mono file
-		       (vector-set! data stereo (+ (vector-ref data stereo) (* (- 1.0 y) samp)))
-		       (vector-set! data (1+ stereo) (+ (vector-ref data (1+ stereo)) (* y samp)))
-		       data)
-		   #f)))))))))
+		 (let ((samp (vector-ref data mono))
+		       (y (envelope-interp (/ current-samp samps) panning-envelope)))
+		   (set! current-samp (1+ current-samp))
+		   (vector-set! data mono #f) ;don't edit the mono file
+		   (vector-set! data stereo (+ (vector-ref data stereo) (* (- 1.0 y) samp)))
+		   (vector-set! data (1+ stereo) (+ (vector-ref data (1+ stereo)) (* y samp)))
+		   data)))))))))
 
 ;;; a similar function using the CLM module:
 (define place
@@ -1142,13 +1142,11 @@
     (let ((delay-line (make-vector size 0.0))
 	  (delay-loc 0))
       (lambda (x)
-	(if x
-	    (let ((result (vector-ref delay-line delay-loc)))
-	      (vector-set! delay-line delay-loc (+ x (* scaler result)))
-	      (set! delay-loc (1+ delay-loc))
-	      (if (= delay-loc size) (set! delay-loc 0))
-	      result)
-	    #f)))))
+	(let ((result (vector-ref delay-line delay-loc)))
+	  (vector-set! delay-line delay-loc (+ x (* scaler result)))
+	  (set! delay-loc (1+ delay-loc))
+	  (if (= delay-loc size) (set! delay-loc 0))
+	  result)))))
 
 ; (map-chan (comb-filter .8 32))
 
@@ -1157,7 +1155,8 @@
 (define comb-filter 
   (lambda (scaler size)
     (let ((cmb (make-comb scaler size)))
-      (lambda (x) (if x (comb cmb x) #f)))))
+      (lambda (x) 
+	(comb cmb x)))))
 
 ;;; by using filters at harmonically related sizes, we can get chords:
 
@@ -1166,7 +1165,8 @@
     (let ((c1 (make-comb scaler size))
 	  (c2 (make-comb scaler (* size .75)))
 	  (c3 (make-comb scaler (* size 1.2))))
-      (lambda (x) (if x (* amp (+ (comb c1 x) (comb c2 x) (comb c3 x))) #f)))))
+      (lambda (x) 
+	(* amp (+ (comb c1 x) (comb c2 x) (comb c3 x)))))))
 
 ; (map-chan (comb-chord .95 100 .3))
 ; (map-chan (comb-chord .95 60 .3))
@@ -1183,7 +1183,8 @@
   (lambda (scaler size pm)
     (let ((cmb (make-comb scaler size :max-size (+ size 1 (max-envelope pm 0))))
 	  (penv (make-env :envelope pm :end (frames))))
-      (lambda (x) (if x (comb cmb x (env penv)) #f)))))
+      (lambda (x)
+	(comb cmb x (env penv))))))
 
 ; (map-chan (zcomb .8 32 '(0 0 1 10)))
 
@@ -1192,7 +1193,8 @@
 (define notch-filter 
   (lambda (scaler size)
     (let ((cmb (make-notch scaler size)))
-      (lambda (x) (if x (notch cmb x) #f)))))
+      (lambda (x) 
+	(notch cmb x)))))
 
 ; (map-chan (notch-filter .8 32))
 
@@ -1201,7 +1203,8 @@
 (define formant-filter
   (lambda (radius frequency)
     (let ((frm (make-formant radius frequency)))
-      (lambda (x) (if x (formant frm x) #f)))))
+      (lambda (x) 
+	(formant frm x)))))
 
 ; (map-chan (formant-filter .99 2400))
 
@@ -1213,10 +1216,9 @@
 	  (fr2 (make-formant r2 f2))
 	  (fr3 (make-formant r3 f3)))
       (lambda (x)
-	(if x (+ (formant fr1 x)
-		 (formant fr2 x)
-		 (formant fr3 x))
-	    #f)))))
+	(+ (formant fr1 x)
+	   (formant fr2 x)
+	   (formant fr3 x))))))
 
 ; (map-chan (formants .99 900 .98 1800 .99 2700))
 
@@ -1227,11 +1229,9 @@
     (let ((frm (make-formant radius (cadr move)))
 	  (menv (make-env :envelope move :end (frames))))
       (lambda (x)
-	(if x
-	    (let ((val (formant frm x)))
-	      (mus-set-frequency frm (env menv))
-	      val)
-	    #f)))))
+	(let ((val (formant frm x)))
+	  (mus-set-frequency frm (env menv))
+	  val)))))
 
 ; (map-chan (moving-formant .99 '(0 1200 1 2400)))
 
@@ -1242,7 +1242,7 @@
   (lambda (scaler secs)
     (let ((del (make-delay (round (* secs (srate))))))
       (lambda (inval)
-	(if inval (+ inval (delay del (* scaler (+ (tap del) inval)))) #f)))))
+	(+ inval (delay del (* scaler (+ (tap del) inval))))))))
 
 ; (map-chan (echo .5 .5) 0 44100)
 
@@ -1259,13 +1259,11 @@
 	(vector-set! dels i (make-delay (round (* secs (srate))))))
       (map-across-sound-chans
        (lambda (invals chans)
-	 (if invals
-	     (do ((i 0 (1+ i)))
-		 ((= i chans) invals)
-	       (let ((inval (vector-ref invals i))
-		     (del (vector-ref dels i)))
-		 (vector-set! invals i (+ inval (delay del (* scaler (+ (tap del) inval)))))))
-	     #f))
+	 (do ((i 0 (1+ i)))
+	     ((= i chans) invals)
+	   (let ((inval (vector-ref invals i))
+		 (del (vector-ref dels i)))
+	     (vector-set! invals i (+ inval (delay del (* scaler (+ (tap del) inval))))))))
        0 total-len
        (string-append "(echoes "
 		      (number->string scaler) " "
@@ -1282,12 +1280,10 @@
 	   (len (round (* secs (srate))))
 	   (del (make-delay len :max-size (+ len amp 1))))
       (lambda (inval)
-	(if inval 
-	    (+ inval 
-	       (delay del 
-		      (* scaler (+ (tap del) inval))
-		      (* amp (oscil os))))
-	    #f)))))
+	(+ inval 
+	   (delay del 
+		  (* scaler (+ (tap del) inval))
+		  (* amp (oscil os))))))))
 
 ; (map-chan (zecho .5 .75 6 10.0) 0 65000)
 
@@ -1298,11 +1294,9 @@
     (let* ((flt (make-fir-filter :order 4 :xcoeffs (list->vct '(.125 .25 .25 .125))))
 	   (del (make-delay  (round (* secs (srate))))))
       (lambda (inval)
-	(if inval 
-	    (+ inval 
-	       (delay del 
-		      (fir-filter flt (* scaler (+ (tap del) inval)))))
-	    #f)))))
+	(+ inval 
+	   (delay del 
+		  (fir-filter flt (* scaler (+ (tap del) inval)))))))))
 
 ; (map-chan (flecho .5 .9) 0 75000)
 
@@ -1317,7 +1311,7 @@
 	   (len (frames))
 	   (genv (make-env :envelope gliss-env :end len)))
       (lambda (inval)
-	(if inval (* (oscil os (env genv)) inval) #f)))))
+	(* (oscil os (env genv)) inval)))))
 
 ; (map-chan (ring-mod 100 '(0 0 1 0)))
 ; (map-chan (ring-mod 10 (list 0 0 1 (hz->radians 100))))
@@ -1326,8 +1320,7 @@
   (lambda (freq) 
     (let ((os (make-oscil freq))) 
       (lambda (inval) 
-	(if inval 
-	    (amplitude-modulate 1.0 inval (oscil os)) #f)))))
+	(amplitude-modulate 1.0 inval (oscil os))))))
 
 ; (map-chan (am 440))
 
@@ -1400,10 +1393,8 @@
 		     0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000)))
       ;; (we're eye-balling the curve on p55 of Steiglitz's "a DSP Primer")
       (lambda (inval)
-	(if inval
-	    (let ((index (+ 8.0 (* 8.0 inval))))
-	      (array-interp tbl index 17))
-	    #f)))))
+	(let ((index (+ 8.0 (* 8.0 inval))))
+	  (array-interp tbl index 17))))))
 
 ; (map-chan (compand))
 
@@ -1440,20 +1431,18 @@
 	   (v (samples->vct 0 vsize))
 	   (inctr 0))
       (lambda (inval)
-	(if inval
-	    (src sr 0.0
-		 (lambda (dir)
-		   (granulate gr
-			      (lambda (dir)
-				(let ((val (vct-ref v inctr)))
-				  (set! inctr (+ inctr dir))
-				  (if (>= inctr vsize)
-				      (begin
-					(set! vbeg (+ vbeg inctr))
-					(set! inctr 0)
-					(samples->vct vbeg vsize 0 0 v)))
-				  val)))))
-	    #f)))))
+	(src sr 0.0
+	     (lambda (dir)
+	       (granulate gr
+			  (lambda (dir)
+			    (let ((val (vct-ref v inctr)))
+			      (set! inctr (+ inctr dir))
+			      (if (>= inctr vsize)
+				  (begin
+				    (set! vbeg (+ vbeg inctr))
+				    (set! inctr 0)
+				    (samples->vct vbeg vsize 0 0 v)))
+			      val)))))))))
 
 ;;; the next (expsnd) changes the tempo according to an envelope; the new duration
 ;;; will depend on the expansion envelope -- we integrate it to get
@@ -1509,20 +1498,18 @@
 	  ((= i freq-inc))
 	(vector-set! formants i (make-formant radius (* i bin))))
       (lambda (inval)
-	(if inval
-	    (let ((outval 0.0))
-	      (if (= ctr freq-inc)
-		  (begin
-		    (samples->vct inctr fftsize cross-snd 0 fdr)
-		    (set! inctr (+ inctr freq-inc))
-		    (spectrum fdr fdi #f fftsize 2)
-		    (vct-subtract! fdr spectr)
-		    (vct-scale! fdr (/ 1.0 freq-inc))
-		    (set! ctr 0)))
-	      (set! ctr (+ ctr 1))
-	      (vct-add! spectr fdr)
-	      (* amp (formant-bank spectr formants inval)))
-	    #f)))))
+	(let ((outval 0.0))
+	  (if (= ctr freq-inc)
+	      (begin
+		(samples->vct inctr fftsize cross-snd 0 fdr)
+		(set! inctr (+ inctr freq-inc))
+		(spectrum fdr fdi #f fftsize 2)
+		(vct-subtract! fdr spectr)
+		(vct-scale! fdr (/ 1.0 freq-inc))
+		(set! ctr 0)))
+	  (set! ctr (+ ctr 1))
+	  (vct-add! spectr fdr)
+	  (* amp (formant-bank spectr formants inval)))))))
 
 ; (map-chan (cross-synthesis 1 .5 128 6.0))
 
@@ -1627,23 +1614,21 @@
 	   (len (round (* dur (srate)))))
       (map-chan
        (lambda (inval)
-	 (if inval
-	     (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 inval)))))
-	       (set! comb-sum-2 comb-sum-1)
-	       (set! comb-sum-1 comb-sum)
-	       (set! comb-sum 
-		     (+ (comb comb1 allpass-sum)
-			(comb comb2 allpass-sum)
-			(comb comb3 allpass-sum)
-			(comb comb4 allpass-sum)))
-	       (if low-pass
-		   (set! all-sums (+ (* .25 (+ comb-sum comb-sum-2)) (* .5 comb-sum-1)))
-		 (set! all-sums comb-sum))
-	       (+ inval
-		  (if envA
-		      (* (env envA) (delay outdel1 all-sums))
-		    (* volume (delay outdel1 all-sums)))))
-	     #f))
+	 (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 inval)))))
+	   (set! comb-sum-2 comb-sum-1)
+	   (set! comb-sum-1 comb-sum)
+	   (set! comb-sum 
+		 (+ (comb comb1 allpass-sum)
+		    (comb comb2 allpass-sum)
+		    (comb comb3 allpass-sum)
+		    (comb comb4 allpass-sum)))
+	   (if low-pass
+	       (set! all-sums (+ (* .25 (+ comb-sum comb-sum-2)) (* .5 comb-sum-1)))
+	       (set! all-sums comb-sum))
+	   (+ inval
+	      (if envA
+		  (* (env envA) (delay outdel1 all-sums))
+		  (* volume (delay outdel1 all-sums))))))
        0 (round (* dur (srate)))))))
 
 ; (jc-reverb 2.0 #f .1 #f)
@@ -1709,6 +1694,8 @@
 ;;; here we're using the keyword stuff in guile/ice-9/optargs.scm
 ;;; CLM version is v.ins, C version is in sndlib.html
 ;;; a version treating the entire violin as a generator is in fmv.scm.
+
+;;; recently (guile 1.4.1), the #& syntax was changed to use #: instead (i.e. #:key etc)
 
 (define pi 3.141592653589793)
 
@@ -2138,14 +2125,12 @@
 	(vector-set! es i (make-env (list 0 (list-ref coeffs i) 1 0) :end 100)))
       (vector-set! es 5 (make-env '(0 .4 1 1) :duration 1.0))
       (lambda (x)
-	(if x
-	    (let ((val (fir-filter flt x))
-		  (xcof (mus-data flt)))
-	      (do ((i 0 (1+ i)))
-		  ((= i 8))
-		(vct-set! xcof i (env (vector-ref es i))))
-	      val)
-	    #f)))))
+	(let ((val (fir-filter flt x))
+	      (xcof (mus-data flt)))
+	  (do ((i 0 (1+ i)))
+	      ((= i 8))
+	    (vct-set! xcof i (env (vector-ref es i))))
+	  val)))))
 
 ;(map-chan (fltit))
 
@@ -2177,9 +2162,7 @@
     (let* ((coeffs (spectrum->coeffs order spectr))
 	   (flt (make-fir-filter order coeffs)))
       (lambda (x)
-	(if x
-	    (fir-filter flt x)
-	    #f)))))
+	(fir-filter flt x)))))
 
 ;(map-chan (fltit-1 10 (list->vct '(0 1.0 0 0 0 0 0 0 1.0 0))))
 ;
@@ -2194,7 +2177,7 @@
 ;
 ;;; this is a strong notch filter centered at 550 Hz
 ;
-;(map-chan (lambda (x) (if x (two-zero flt x) #f)))
+;(map-chan (lambda (x) (two-zero flt x)))
 ;
 ;;; similarly make-ppolar/two-pole (or better, make-formant)
 ;;; can be used for resonances.
@@ -2353,9 +2336,7 @@
 	  (reader (make-sound-interp 0 0 0)) 
 	  (len (frames 0 0)))
       (map-chan (lambda (val) 
-		  (if val 
-		      (sound-interp reader (* len (+ 0.5 (* 0.5 (oscil osc)))))
-		      #f))))))
+		  (sound-interp reader (* len (+ 0.5 (* 0.5 (oscil osc))))))))))
 
 ;;; (test-interp 0.5)
 

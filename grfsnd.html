@@ -800,8 +800,7 @@ to edit sounds, and so on.  Say we want an echo effect:</p>
   (lambda (scaler secs)
     (let ((del (make-delay (round (* secs (srate))))))
       (lambda (inval)
-	(if inval 
-            (+ inval (delay del (* scaler (+ (tap del) inval)))))))))
+        (+ inval (delay del (* scaler (+ (tap del) inval))))))))
 </small></pre>
 <p>For readers who are new to Scheme, <i>echo</i> is a function
 of two arguments, <i>scaler</i> and <i>secs</i>.  Scaler sets
@@ -1096,7 +1095,7 @@ Here are a few more examples, taken from examp.scm.
 (define comb-filter 
   (lambda (scaler size)
     (let ((cmb (make-comb scaler size)))
-      (lambda (x) (if x (comb cmb x))))))
+      (lambda (x) (comb cmb x)))))
 
 ; (map-chan (comb-filter .8 32))
 
@@ -1107,7 +1106,8 @@ Here are a few more examples, taken from examp.scm.
     (let ((c1 (make-comb scaler size))
 	  (c2 (make-comb scaler (* size .75)))
 	  (c3 (make-comb scaler (* size 1.2))))
-      (lambda (x) (if x (* amp (+ (comb c1 x) (comb c2 x) (comb c3 x))))))))
+      (lambda (x)
+        (* amp (+ (comb c1 x) (comb c2 x) (comb c3 x)))))))
 
 ; (map-chan (comb-chord .95 60 .3))
 
@@ -1123,7 +1123,7 @@ Here are a few more examples, taken from examp.scm.
   (lambda (scaler size pm)
     (let ((cmb (make-comb scaler size :max-size (+ size 1 (max-envelope pm 0))))
 	  (penv (make-env :envelope pm :end (frames))))
-      (lambda (x) (if x (comb cmb x (env penv)))))))
+      (lambda (x) (comb cmb x (env penv))))))
 
 ; (map-chan (zcomb .8 32 '(0 0 1 10)))
 
@@ -1135,9 +1135,9 @@ Here are a few more examples, taken from examp.scm.
 	  (fr2 (make-formant r2 f2))
 	  (fr3 (make-formant r3 f3)))
       (lambda (x)
-	(if x (+ (formant fr1 x)
-		 (formant fr2 x)
-		 (formant fr3 x)))))))
+	(+ (formant fr1 x)
+	   (formant fr2 x)
+	   (formant fr3 x))))))
 
 ; (map-chan (formants .01 900 .02 1800 .01 2700))
 
@@ -1148,10 +1148,9 @@ Here are a few more examples, taken from examp.scm.
     (let ((frm (make-formant radius (cadr move)))
 	  (menv (make-env :envelope move :end (frames))))
       (lambda (x)
-	(if x
-	    (let ((val (formant frm x)))
-	      (mus-set-frequency frm (env menv))
-	      val))))))
+        (let ((val (formant frm x)))
+	  (mus-set-frequency frm (env menv))
+	  val)))))
 
 ; (map-chan (moving-formant .01 '(0 1200 1 2400)))
 
@@ -1191,19 +1190,18 @@ Here are a few more examples, taken from examp.scm.
 	   (v (samples-&gt;vct 0 vsize))
 	   (inctr 0))
       (lambda (inval)
-	(if inval
-	    (src sr 0.0
-		 (lambda (dir)
-		   (granulate gr
-			      (lambda (dir)
-				(let ((val (vct-ref v inctr)))
-				  (set! inctr (+ inctr dir))
-				  (if (&gt;= inctr vsize)
-				      (begin
-					(set! vbeg (+ vbeg inctr))
-					(set! inctr 0)
-					(samples-&gt;vct vbeg vsize 0 0 v)))
-				  val))))))))))
+        (src sr 0.0
+	  (lambda (dir)
+	    (granulate gr
+	      (lambda (dir)
+		(let ((val (vct-ref v inctr)))
+		  (set! inctr (+ inctr dir))
+		  (if (&gt;= inctr vsize)
+		      (begin
+			(set! vbeg (+ vbeg inctr))
+			(set! inctr 0)
+			(samples-&gt;vct vbeg vsize 0 0 v)))
+		  val)))))))))
 
 </small></pre>
 <p>Geez, I haven't had this much fun in a long time!  Check out examp.scm and snd-test.scm for more.</p>

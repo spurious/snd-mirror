@@ -295,18 +295,30 @@ GUILE_CFLAGS=""
 
 if test "$use_guile" = y || test "$use_guile" = yes; then
   dnl guile-1.3/guile.m4
+  GUILE_CONFIG_path=""
+  GUILE_LIB_path=""
+
+  AC_CHECK_FILE(/usr/lib/snd/bin/guile-config,[
+    GUILE_CONFIG_path=/usr/lib/snd/bin/
+    GUILE_LIB_path=/usr/lib/snd/lib
+	])
+
   AC_MSG_CHECKING(for Guile)
-  if (guile-config link > /dev/null) 2>&1; then
+  if (${GUILE_CONFIG_path}guile-config link > /dev/null) 2>&1; then
     GUILE_CONFIG_works=yes
   else
     GUILE_CONFIG_works=no
   fi
+
   AC_MSG_RESULT($GUILE_CONFIG_works)
 
   if test $GUILE_CONFIG_works = yes; then
-    GUILE_CFLAGS="`guile-config compile`"
-    GUILE_LIBS="`guile-config link`"
-    
+    GUILE_CFLAGS="`${GUILE_CONFIG_path}guile-config compile`"
+    if test "$GUILE_LIB_path" != "" ; then
+      GUILE_LIBS="-Xlinker -rpath -Xlinker $GUILE_LIB_path `${GUILE_CONFIG_path}guile-config link`"
+    else
+      GUILE_LIBS="`${GUILE_CONFIG_path}guile-config link`"
+    fi
     if test "`guile -c '(display (string>=? (version) "1.3"))'`" != "#t"; then
       echo "Snd needs Guile 1.3 or later";
       AC_DEFINE(HAVE_GUILE,0)

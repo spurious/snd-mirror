@@ -111,13 +111,11 @@
 	  (reader0 (make-sample-reader 0 0 0))
 	  (reader1 (make-sample-reader 0 1 0)))
       (map-chan (lambda (val)
-	          (if val
-		      (zipper zp 
-			      (lambda () 
-				(next-sample reader0)) 
-			      (lambda () 
-				(next-sample reader1)))
-		      #f))))))
+		  (zipper zp 
+			  (lambda () 
+			    (next-sample reader0)) 
+			  (lambda () 
+			    (next-sample reader1))))))))
 
 ;;; this is also good if the same file is used twice -- sort of like a CD player gone berserk
 

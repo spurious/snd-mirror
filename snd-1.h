@@ -295,7 +295,7 @@ typedef struct snd__state {
   snd_info *mx_sp;
   char *pending_change;
   int print_choice,apply_choice;
-  int stopped_explicitly,checking_explicitly,eval_error;
+  int stopped_explicitly,checking_explicitly;
   int result_printout,listening,init_window_width,init_window_height,init_window_x,init_window_y;
   int open_hook_active,close_hook_active,fft_hook_active,graph_hook_active,exit_hook_active,start_hook_active,save_hook_active;
 

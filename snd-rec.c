@@ -643,7 +643,6 @@ int fire_up_recorder(snd_state *ss)
   int i;
 #if NEW_SGI_AL
   int j,n;
-  PANE *p;
 #endif
   float val[8];
   int err,new_srate = 0;
@@ -712,16 +711,6 @@ int fire_up_recorder(snd_state *ss)
     if (!err) 
       if ((new_srate > 0) && (rp->srate != new_srate)) set_recorder_srate(rp,new_srate);
     rp->monitor_chans = 2;
-    for (i=0;i<rp->ordered_devices_size;i++)
-      {
-	if (recorder_input_device(rp->ordered_devices[i]))
-	  {
-	    for (j=p->in_chan_loc,n=0;n<p->in_chans;n++,j++) 
-	      {
-		rp->input_channel_active[j]=(rp->ordered_devices[i] == MUS_AUDIO_MICROPHONE);
-	      }
-	  }
-      }
   #endif
 #else /* not SGI */
     if (rp->srate <= 0) rp->srate = 22050;
@@ -940,7 +929,7 @@ void recorder_characterize_devices(int devs, int output_devices)
 
 #if (HAVE_ALSA || HAVE_OSS)
 
-BACKGROUND_TYPE read_adc(snd_state *ss) 
+static BACKGROUND_TYPE read_adc(snd_state *ss) 
 {
   int in_chan,out_chan,i,k,m,n,out_frame,inchn,offset,active_in_chans,ochns,sr,buffer_size,in_datum_size;
   MUS_SAMPLE_TYPE val;
@@ -1061,7 +1050,7 @@ BACKGROUND_TYPE read_adc(snd_state *ss)
 
 #else
 
-BACKGROUND_TYPE read_adc(snd_state *ss)
+static BACKGROUND_TYPE read_adc(snd_state *ss)
 {
   int in_chan,out_chan,i,k,m,n,out_frame,inchn,offset,active_in_chans,cur_size,ochns,sr,sz,ifmt,in_datum_size;
   MUS_SAMPLE_TYPE val;
@@ -1245,6 +1234,31 @@ int recorder_get_devices(snd_state *ss, recorder_info *rp, int *outs)
   (*outs) = output_devices;
   return(input_devices);
 }
+
+void cleanup_recording (void)
+{
+  if (rp->taking_input) close_recorder_audio();
+  if ((record_in_progress()) && (rp->output_file_descriptor > 0))
+    {
+      rp->recording = 0;
+      rp->triggered = (!rp->triggering);
+      sensitize_control_buttons();
+      snd_close(rp->output_file_descriptor);
+    }
+}
+
+BACKGROUND_TYPE run_adc(POINTER ss)
+{
+  BACKGROUND_TYPE val;
+  val = read_adc((snd_state *)ss);
+  if (val == BACKGROUND_QUIT) 
+    {
+      rp->recording = 0;
+      finish_recording((snd_state *)ss,rp);
+    }
+  return(val);
+}
+
 
 
 #if HAVE_GUILE
@@ -1440,5 +1454,8 @@ void g_init_recorder(SCM local_doc)
   void set_recorder_autoload(recorder_info *rp, int val) {}
   void recorder_set_vu_in_val(int chan, MUS_SAMPLE_TYPE val) {}
   void recorder_set_vu_out_val(int chan, MUS_SAMPLE_TYPE val) {}
+  void finish_recording(snd_state *ss, recorder_info *rp) {}
   void set_read_in_progress (snd_state *ss, recorder_info *rp) {}
+  void sensitize_control_buttons(void) {}
+  int record_in_progress(void) {return(0);}
 #endif

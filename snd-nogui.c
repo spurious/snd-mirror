@@ -312,7 +312,6 @@ void move_mix_y(mixmark *m, int yspot) {}
 void use_mixmark(mixdata *md, int x, int y) {}
 void lock_recording_audio(void) {}
 void unlock_recording_audio(void) {}
-void cleanup_recording (void) {}
 void snd_record_file(snd_state *ss) {}
 int record_dialog_is_active(void) {return(0);}
 void recorder_error(char *msg) {}

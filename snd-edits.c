@@ -2550,7 +2550,7 @@ static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir1, SCM pos)
       loc_name = gh_scm2newstr(snd,NULL);
       loc_sp = make_sound_readable(ss,loc_name,FALSE);
       free(loc_name);
-      if (loc_sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_make_sample_reader))));
+      if (loc_sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_make_sample_reader),snd)));
       chan = g_scm2intdef(chn,0);
       if ((chan < 0) || (chan > loc_sp->nchans))
 	{

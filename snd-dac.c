@@ -2040,7 +2040,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
       ERRB1(samp_n,S_play);
       ERRCP(S_play,snd_n,chn_n,2);
       sp = get_sp(snd_n);
-      if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_play))));
+      if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_play),snd_n)));
       samp = g_scm2intdef(samp_n,0);
       if (!(gh_number_p(chn_n)))
 	{
@@ -2105,7 +2105,7 @@ static SCM g_stop_playing(SCM snd_n)
   snd_info *sp;
   ERRSP(S_stop_playing,snd_n,1);
   sp = get_sp(snd_n);
-  if (sp) stop_playing_sound(sp); else return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_stop_playing))));
+  if (sp) stop_playing_sound(sp); else return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_stop_playing),snd_n)));
   return(SCM_BOOL_F);
 }
 

@@ -945,7 +945,7 @@ static SCM g_select_sound(SCM snd_n)
 	  return(snd_n);
 	}
     }
-  return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_select_sound))));
+  return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_select_sound),snd_n)));
 }
 
 static SCM g_select_channel(SCM chn_n)
@@ -987,7 +987,7 @@ static SCM g_bomb(SCM snd, SCM on)
   #define H_bomb "(" S_bomb " &optional snd (on #t)) displays (or erases if on=#f) the bomb icon"
   snd_info *sp;
   sp = get_sp(snd);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_bomb))));
+  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_bomb),snd)));
   x_bomb(sp,bool_int_or_one(on));
   return(on);
 }
@@ -1373,7 +1373,7 @@ static SCM g_file_names(SCM snd_n)
   snd_info *sp;
   ERRSPT(S_file_names,snd_n,1);
   sp = get_sp(snd_n);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_file_names))));
+  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_file_names),snd_n)));
   if (sp->chan_type == FILE_PER_SOUND) return(sp_iread(snd_n,FILENAMEF,S_file_names));
   return(string_array_to_list(sp->channel_filenames,0,sp->nchans));
 }
@@ -1387,7 +1387,7 @@ static SCM g_short_file_names(SCM snd_n)
   char **strs;
   ERRSPT(S_short_file_names,snd_n,1);
   sp = get_sp(snd_n);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_short_file_names))));
+  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_short_file_names),snd_n)));
   if (sp->chan_type == FILE_PER_SOUND) return(sp_iread(snd_n,SHORTFILENAMEF,S_short_file_names));
   strs = (char **)CALLOC(sp->nchans,sizeof(char *));
   for (i=0;i<sp->nchans;i++) strs[i] = filename_without_home_directory(sp->channel_filenames[i]);
@@ -1425,7 +1425,7 @@ static SCM g_revert_sound(SCM index)
   snd_info *sp;
   int i;
   sp = get_sp(index);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_revert_sound))));
+  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_revert_sound),index)));
   for (i=0;i<sp->nchans;i++) 
     {
       revert_edits(sp->chans[i],NULL); 
@@ -1547,7 +1547,7 @@ static SCM g_save_sound_as(SCM newfile, SCM index, SCM type, SCM format, SCM sra
   char *fname = NULL;
   ERRS1(newfile,S_save_sound_as);
   sp = get_sp(index);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_save_sound_as))));
+  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_save_sound_as),index)));
   fname = full_filename(newfile);
   hdr = sp->hdr;
   ht = g_scm2intdef(type,hdr->type);
@@ -1682,7 +1682,7 @@ static SCM sp_fread(SCM snd_n, int fld, char *caller)
   else
     {
       sp = get_sp(snd_n);
-      if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(caller))));
+      if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
       switch (fld)
 	{
 	case AMPF: RTNFLT(sp->amp); break;
@@ -1722,7 +1722,7 @@ static SCM sp_fwrite(SCM snd_n, SCM val, int fld, char *caller)
   else
     {
       sp = get_sp(snd_n);
-      if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(caller))));
+      if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
       fval = gh_scm2double(val);
       switch (fld)
 	{
@@ -1964,7 +1964,7 @@ static SCM g_set_filter_env(SCM edata, SCM snd_n)
   #define H_set_filter_env "(" S_set_filter_env " val &optional snd) sets snd's filter envelope (in the control panel)"
   snd_info *sp;
   sp = get_sp(snd_n);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_set_filter_env))));
+  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_set_filter_env),snd_n)));
   if (sp->filter_env) free_env(sp->filter_env);
   sp->filter_env = get_env(edata,SCM_BOOL_F,S_set_filter_env);
   filter_env_changed(sp,sp->filter_env);
@@ -1978,7 +1978,7 @@ static SCM g_filter_env(SCM snd_n)
   ERRSP(S_filter_env,snd_n,1);
   sp = get_sp(snd_n);
   if (sp) return(env2scm(sp->filter_env)); 
-  return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_filter_env))));
+  return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_filter_env),snd_n)));
 }
 
 static SCM g_call_apply(SCM snd)
@@ -1995,7 +1995,7 @@ static SCM g_call_apply(SCM snd)
       run_apply_to_completion(sp); 
       return(SCM_BOOL_F);
     }
-  return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_call_apply))));
+  return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(S_call_apply),snd)));
 }
 
 static SCM name_click_hook;
