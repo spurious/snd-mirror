@@ -4,6 +4,12 @@
 ;;; -Kjetil S. Matheussen.
 
 
+(if (provided? 'snd-gui.scm)
+    (begin
+      (display "Very warning: gui.scm has already been loaded. (This is not good.)")
+      (newline)))
+
+
 (provide 'snd-gui.scm)
 
 (use-modules (ice-9 optargs)
@@ -88,10 +94,18 @@
 
 ;; C-like for-iterator
 (define (c-for init pred least add proc)
+  (do ((n init (+ n add)))
+      ((not (pred n least)))
+    (proc n)))
+
+#!
+(define (c-for init pred least add proc)
   (let ((n init))
     (while (pred n least)
 	   (proc n)
 	   (set! n (+ add n)))))
+!#
+
 #!
 (c-for 2 < 7 1
        (lambda (n) (display n)(newline)))
@@ -104,6 +118,12 @@
 			    (apply func (cons n els))
 			    (set! n (1+ n)))
 			  lists))))
+
+(define (c-scale x x1 x2 y1 y2)
+  (+ y1
+     (/ (* (- x x1)
+	   (- y2 y1))
+	(- x2 x1))))
 
 ;; Snd has its own filter function (a clm function) overriding the guile filter function.
 (define (filter-org pred list)
@@ -130,11 +150,32 @@
   (newline))
 
 
+
+;; Eval c-code on the fly. Code must have a void()-function called "das_init".
+(define* (c-eval-c #:key (compile-options "") . codestrings)
+  (let* ((evalstring "")
+	(sourcefile (string-append (tmpnam) ".c"))
+	(libfile (string-append sourcefile ".so"))
+	(fd (open-file sourcefile "w")))
+    (for-each (lambda (s)
+		(write-line s fd))
+	      (if (eq? (car codestrings) '#:compile-options)
+		  (cddr codestrings)
+		  codestrings))
+    (close fd)
+    (system (string-append "gcc -Wall -O2 -shared -o " libfile " " sourcefile " " compile-options))
+    (dynamic-call "das_init" (dynamic-link libfile))
+    (system (string-append "rm " libfile " " sourcefile))))
+
+
 ;; define-toplevel is like define, but at the toplevel.
-(system "echo 'extern scm_c_define_gsubr(),scm_define();void init_dt(){scm_c_define_gsubr(\"define-toplevel\",2,0,0,scm_define);}' >/tmp/tmp.c")
-(system "gcc -shared -o /tmp/tmp.so /tmp/tmp.c")
-(dynamic-call "init_dt" (dynamic-link "/tmp/tmp.so"))
-(system "rm /tmp/tmp.so /tmp/tmp.c")
+(c-eval-c
+"
+#include <libguile.h>
+void das_init(){
+  scm_c_define_gsubr(\"define-toplevel\",2,0,0,scm_define);
+}
+")
 
 
 (define-macro (add-call-hook! funcname func)
@@ -153,6 +194,30 @@
 
 
 
+;; A function to remove the default motion_notify_event handler for gtk.
+
+(define (c-remove-motionhandler widget)
+(if (not use-gtk)
+    (c-display "c-remove-motionhandler not implemented for motif")
+    (begin
+      (c-eval-c #:compile-options "\`pkg-config --cflags glib-2.0\`"
+"
+#include <libguile.h>
+#include <glib.h>
+#include <glib-object.h>
+SCM das_func(SCM w){
+  gpointer g=(gpointer)scm_num2ulong(SCM_CAR(SCM_CDR(w)),0,\"remove-motionhanders\");
+  g_signal_handler_disconnect(g,g_signal_handler_find(g,
+						      G_SIGNAL_MATCH_ID,
+						      g_signal_lookup(\"motion_notify_event\",G_OBJECT_TYPE(g)),
+						      0,0,0,0));
+  return SCM_UNSPECIFIED;
+}
+void das_init(){
+  scm_c_define_gsubr(\"c-remove-motionhandler\",1,0,0,das_func);
+}
+")
+      (c-remove-motionhandler widget))))
 
 
 
@@ -228,7 +293,7 @@
 	       (or (eq? class-name this->class-name)
 		   (any (lambda (super) (-> super instance? class-name))
 			supers)))
-	     
+
 	     (define (this name . rest)
 	       (apply (or (hashq-ref methods name)
 			  (any (lambda (super) (-> super get-method name))
@@ -313,7 +378,27 @@
        (set! supers (list ,@rest))
        (set! super (car supers)))))
 
+
+
+;; The -> macro caches the function pointer. Generally a little bit faster than ->2.
 (define-macro (-> object method . args)
+  (if (number? object)
+      `(list-set! ,method ,object ,(car args))
+      (let ((funcname (symbol-append '-> method (gensym))))
+	(define-toplevel funcname
+	  (let ((func #f)
+		(lastobj #f))
+	    (lambda (object . args)
+	      (if (not (eq? lastobj object))
+		  (begin
+		    (set! lastobj object)
+		    (set! func (object 'get-method method))))
+	      (apply func args))))
+	`(,funcname ,object ,@args))))
+
+
+;; This one works just the same as ->, but doesn't cache the function pointer. Could be a tiny tiny little bit faster than -> in some situations.
+(define-macro (->2 object method . args)
   (if (number? object)
       `(list-set! ,method ,object ,(car args))
       `(,object ',method ,@args)))
@@ -325,6 +410,7 @@
 
 
 #!
+
 (define-class (<super1> sum)
   (var avar 2)
   (define-method (super1)
@@ -484,6 +570,55 @@
 
 
 ;;##############################################################
+;; Mouse-hooks for the channel widgets.
+;;##############################################################
+
+
+(define mouse-button-press-hook (make-hook 4))
+(define mouse-move-hook (make-hook 4))
+(define mouse-drag2-hook (make-hook 4))
+(define mouse-button-release-hook (make-hook 4))
+
+
+(add-hook! after-open-hook
+	   (lambda (snd)
+	     (let ((w (list-ref (channel-widgets snd 0) 0)))
+	       (if (not use-gtk)	     
+		   (begin
+		     (XtAddEventHandler w ButtonPressMask #f 
+					(lambda (w c e f)
+					  (run-hook mouse-button-press-hook snd (.x e) (.y e) (.state e))))
+		     (XtAddEventHandler w ButtonMotionMask #f 
+					(lambda (w c e f)
+					  (run-hook mouse-drag2-hook snd (.x e) (.y e) (.state e))))
+		     (XtAddEventHandler w ButtonReleaseMask #f 
+					(lambda (w c e f)
+					  (run-hook mouse-button-release-hook snd (.x e) (.y e) (.state e)))))
+		   (let ((ispressed #f))
+		     (g_signal_connect w "button_press_event"
+				       (lambda (w e i)
+					 (set! ispressed #t)
+					 (run-hook mouse-button-press-hook snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e)))))
+		     (g_signal_connect w "motion_notify_event"
+				       (lambda (w e i)
+					 (let ((args (if (.is_hint (GDK_EVENT_MOTION e))
+							 (cons snd (cdr (gdk_window_get_pointer (.window e))))
+							 (list snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e))))))
+					   (apply run-hook (cons mouse-move-hook args))
+					   (if ispressed
+					       (apply run-hook (cons mouse-drag2-hook args))))
+					 #f))
+		     (g_signal_connect w "button_release_event"
+				       (lambda (w e i)
+					 (set! ispressed #f)
+					 (run-hook mouse-button-release-hook snd (.x (GDK_EVENT_BUTTON e)) (.y (GDK_EVENT_BUTTON e)) (.state (GDK_EVENT_BUTTON e))))))))))
+
+
+
+(define mouse-click2-hook (make-hook 4))
+
+
+;;##############################################################
 ;; Paint (not usable yet)
 ;;##############################################################
 
@@ -540,11 +675,163 @@
   
   (gtk_signal_connect (GTK_OBJECT parent) "expose_event"
 		      (lambda (w e)
-			(update-all))
+			(this->update-all))
 		      #f)
 
   )
 
+
+
+
+
+
+;;##############################################################
+;; Nodeline
+;;##############################################################
+
+
+(define-class (<nodeline> dasnodes linefunc boxfunc clearfunc)
+
+  (define nodes (map list-copy dasnodes))
+
+  (define lines '())
+  (define boxes '())
+
+  (define minx 0)
+  (define maxx 1)
+  (define miny 0)
+  (define maxy 0)
+  (define proportion 1)
+
+  (var boxsize 0.02)
+
+  (define (for-each-node func)
+    (let ((prev #f)
+	  (next #f)
+	  (i 0))
+      (for-each (lambda (n)
+		  (if prev
+		      (func i
+			    (car prev) (cadr prev)
+			    (car n) (cadr n)))
+		  (set! i (1+ i))
+		  (set! prev n))
+		nodes)))
+
+  (define (for-each-box func)
+    (for-each (lambda (n)
+		(func (n 0) (n 1) (n 2) (n 3)))
+	      boxes))
+
+  (define-method (find-node x y xrange yrange)
+    (let* ((x05 (- x (/ xrange 2)))
+	   (y05 (- y (/ yrange 2)))
+	   (ret (find (lambda (n)
+			(let ((nx (car n))
+			      (ny (cadr n)))
+			  (and (>= (+ x05 xrange) nx) (<= x05 nx)
+			       (>= (+ y05 yrange) ny) (<= y05 ny))))
+		      nodes)))
+      (if ret
+	  (car ret)
+	  #f)))
+
+  (define (make-lines-and-boxes)
+    (set! lines '())
+    (set! boxes '())
+    (for-each-node (lambda (i x1 y1 x2 y2)
+		     (if (and (< x1 maxx) (> x2 minx))
+			 (let ((nx1 x1)
+			       (nx2 x2)
+			       (ny1 y1)
+			       (ny2 y2))
+			   (if (< nx1 minx)
+			       (begin
+				 (set! nx1 minx)
+				 (set! ny1 (c-scale nx1 x1 x2 y1 y2))))
+			   (if (< ny1 miny)
+			       (begin
+				 (set! ny1 miny)
+				 (set! nx1 (c-scale ny1 y1 y2 x1 x2))))
+			   (if (> nx2 maxx)
+			       (begin
+				 (set! nx2 maxx)
+				 (set! ny2 (c-scale nx2 x1 x2 y1 y2))))
+			   (if (> ny2 maxy)
+			       (begin
+				 (set! ny2 maxy)
+				 (set! nx2 (c-scale ny2 y1 y2 x1 x2))))
+			   (set! lines (cons (<array> (c-scale nx1 minx maxx 0 1)
+						      (c-scale ny1 miny maxy 0 1)
+						      (c-scale nx2 minx maxx 0 1)
+						      (c-scale ny2 miny maxy 0 1))
+					     lines))))))
+
+    (for-each-node (lambda (i x1 y1 x2 y2)
+		     (let ((makebox (lambda (x y)
+				      (if (and (<= x maxx) (>= x minx))
+					  (let ((nx (c-scale x minx maxx 0 1))
+						(ny (c-scale y miny maxy 0 1))
+						(ax (* this->boxsize proportion)))
+					    (set! boxes (cons (<array> (- nx ax)
+								       (- ny this->boxsize)
+								       (+ nx ax)
+								       (+ ny this->boxsize))
+							      boxes)))))))
+		       (if (= i 1)
+			   (makebox x1 y1))
+		       (makebox x2 y2)))))
+
+
+  (define-method (set-bounds! dasminx dasmaxx dasminy dasmaxy dasproportion)
+    (set! minx dasminx)
+    (set! maxx dasmaxx)
+    (set! miny dasminy)
+    (set! maxy dasmaxy)
+    (set! proportion dasproportion)
+    (make-lines-and-boxes))
+
+
+  (define-method (paint)
+    (for-each (lambda (line)
+		(linefunc (line 0) (line 1) (line 2) (line 3)))
+	      lines)
+    (for-each-box (lambda (x1 y1 x2 y2)
+		    (linefunc x1 y1 x2 y1)
+		    (linefunc x2 y1 x2 y2)
+		    (linefunc x2 y2 x1 y2)
+		    (linefunc x1 y2 x1 y1))))
+  
+  (define-method (add-node! x y)
+    (let ((newnodes '())
+	  (foundit #f))
+      (for-each-node (lambda (i x1 y1 x2 y2)
+		       (if (and (not foundit) (>= x x1) (<= x x2))
+			   (begin
+			     (set! newnodes (cons (list x1 x2) (list x y) newnodes))
+			     (set! foundit #t))
+			   (set! newnodes (cons (list x1 x2) newnodes)))
+		       (if (= i (- (length nodes 1)))
+			   (set! newnodes (cons (list y1 y2))))))
+      (set! nodes (reverse newnodes))))
+
+  (define ispressed #f)
+
+  (define-method (mouse-press x y)
+    (c-display x y)
+    (set! ispressed (<array> x y)))
+
+  (define-method (mouse-move x y)
+    #t)
+
+  (define-method (mouse-release x y)
+    (if ispressed
+	(begin
+	  (set! ispressed #f))))
+
+  )
+		     
+		  
 
 
 
