@@ -27,7 +27,7 @@ static SCM g_set_html_dir(SCM val)
 static SCM g_region_dialog(void) 
 {
   #define H_region_dialog "(" S_region_dialog ") starts the region dialog"
-  if (snd_regions() > 0) View_Region_Callback(MAIN_PANE(state),(XtPointer)state,NULL); 
+  if (snd_regions() > 0) View_Region_Callback(MAIN_PANE(state),(XtPointer)state,NULL);  /* needs to be here (not in snd-scm.c) due to XtPointer */
   return(SCM_BOOL_F);
 }
 

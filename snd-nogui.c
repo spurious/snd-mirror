@@ -44,9 +44,9 @@ void set_spectro_cutoff(snd_state *ss, Float val) {}
 int color_dialog_is_active(void) {return(0);}
 int orientation_dialog_is_active(void) {return(0);}
 void reflect_spectro(snd_state *ss) {}
-void snd_append_command(snd_state *ss, char *msg) {}
+void snd_append_command(snd_state *ss, char *msg) {fprintf(stderr,"%s",msg);}
 void goto_listener(void) {}
-void snd_append_char(snd_state *ss, char *msg) {}
+void snd_append_char(snd_state *ss, char *msg) {fprintf(stderr,"%s",msg);}
 void handle_listener(snd_state *ss, int new_state) {}
 int listener_height(void) {return(0);}
 int file_open_menu(void) {return(0);}
@@ -215,7 +215,7 @@ int w_snd_play(snd_info *sp) {return(0);}
 int w_snd_filter_env(snd_info *sp) {return(0);}
 void make_minibuffer_label(snd_info *sp,char *str) {}
 void goto_minibuffer(snd_info *sp) {}
-void set_minibuffer_string(snd_info *sp, char *str) {}
+void set_minibuffer_string(snd_info *sp, char *str) {fprintf(stderr,"%s",str);}
 void set_minibuffer_cursor_position(snd_info *sp, int pos) {}
 char *get_minibuffer_string(snd_info *sp) {return(NULL);}
 void snd_info_cleanup(snd_info *sp) {}

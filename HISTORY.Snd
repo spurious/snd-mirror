@@ -1,5 +1,6 @@
 snd change log
 
+  17-Aug:    recorder work (one serious bug fixed).
   14-Aug:    snd 4.5.
   10-Aug:    extsnd.html re-organized.
              wavo,wavo-hop,wavo-trace,line-size,max-fft-peaks,show-fft-peaks,zero-pad,fft-style,fft-window,

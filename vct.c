@@ -594,6 +594,5 @@ void init_vct(void)
   DEFINE_PROC(gh_new_procedure(S_vcts_mapB,SCM_FNC vcts_map,0,0,1),H_vcts_mapB);
   DEFINE_PROC(gh_new_procedure(S_vcts_doB, SCM_FNC vcts_do,0,0,1), H_vcts_doB);
   DEFINE_PROC(gh_new_procedure3_0(S_vct_moveB,     vct_move),      H_vct_moveB);
-  scm_add_feature("vct");
 }
 #endif

@@ -16,6 +16,7 @@
  *       dB in VUs
  *       syncd sliders ("master" volume control basically)
  *       in kde, recorder not redrawn upon desktop switch
+ *       if mono microphone, both chans of analog in are seeing input?
  */
 
 #include "snd.h"
@@ -1218,7 +1219,7 @@ static void device_button_callback(Widget w,XtPointer clientData,XtPointer callD
   /* on the older SGI's (and maybe newer Indy's?) digital input disables mic/line-in and vice versa */
   if (button == rp->digital_in_button)
     {
-      set_line_source(p->ss,on);
+      set_line_source(ss,on);
       if (on == (XmToggleButtonGetState(device_buttons[rp->microphone_button])))
 	XmToggleButtonSetState(device_buttons[rp->microphone_button],!on,TRUE); 
       if (on == (XmToggleButtonGetState(device_buttons[rp->line_in_button])))
@@ -2351,44 +2352,50 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
 
 /* -------- I/O pane -------- */
 
+/* these functions are used only by make_pane */
+static Position make_amp_sliders(snd_state *ss, recorder_info *rp, PANE *p, Widget first_frame, int input, int overall_input_ctr);
+static void make_reset_button(snd_state *ss, PANE *p, Float meter_size, Widget button_box, Widget vu_vertical_sep);
+static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float meter_size,
+			      int input, int overall_input_ctr, int vu_meters, Widget vu_vertical_sep, Widget *frames);
+static void make_gain_separator(snd_state *ss, PANE *p, int num_gains, int vu_meters, Widget last_slider);
+static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p, 
+					 int num_gains, int gain_ctr, int *mixflds, int input, int last_device);
+static Widget make_vertical_gain_separator(snd_state *ss, PANE *p, int vu_meters, Widget last_frame);
+static Widget make_vu_meters(snd_state *ss, PANE *p, int vu_meters, Widget *frames, Widget in_last_frame, Widget in_left_frame,
+			   int overall_input_ctr, Float meter_size, int input, Widget *out_frame);
+
+#define MAX_AUDIO_FIELD (MUS_AUDIO_DIRECTION+1)
+
 static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, int device, int system)
 {
   /* VU meters (frame, then drawing area widget) */
   /* Linux OSS complication -- the top input panel also has all the "mixer" input volume controls and the output pane has the tone controls, if any */
-  Wdesc *wd;
-  int n,i,k,chan,amp_sliders,temp_out_chan,temp_in_chan,in_chan,out_chan;
+  int n,i,k;
   Arg args[32];
-  AMP *a;
   PANE *p;
   Widget *frames = NULL;
-  Widget frame,meter,last_frame,vu_vertical_sep,icon_label,last_slider=NULL,max_label,matrix_frame,
-    button_label,button_box,button1_label,last_button,slider_sep,first_frame,last_max,left_frame;
-  VU *vu;
-  int vu_meters,num_gains,button_size,input,special_cases = 0;
-  int row,columns;
-  XmString labelstr;
+  Widget last_frame,vu_vertical_sep,last_slider=NULL,matrix_frame,
+    button_box,left_frame;
+  Widget first_frame[1];
+  int vu_meters,num_gains,input;
   Position pane_max;
-  Float meter_size,vol;
-  state_context *sx;
+  Float meter_size;
+  int mixflds[MAX_AUDIO_FIELD];
 #if (HAVE_OSS || HAVE_ALSA)
-  float mixer_field_chans[32];
-  int mixflds[32];
-  int last_device,this_device=0;
-  XmString slabel = NULL;
+  float mixer_field_chans[MAX_AUDIO_FIELD];
 #endif
+  int last_device=0;
   static int overall_input_ctr = 0;
   static int gain_ctr = 0;
 
-  sx = ss->sgx;
   p = (PANE *)CALLOC(1,sizeof(PANE));
   p->device = device;
-#if (HAVE_ALSA || HAVE_OSS)
   p->system = system;
-#endif
   p->ss = ss;
   vu_meters = device_channels(MUS_AUDIO_PACK_SYSTEM(system) | device);
   input = (recorder_input_device(device));
   num_gains = device_gains(MUS_AUDIO_PACK_SYSTEM(system) | device);
+
 #if (HAVE_OSS || HAVE_ALSA)
   if (num_gains == 0)
     {
@@ -2400,18 +2407,16 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
     {
       if ((input) && (!mixer_gains_posted[system]))
 	{
-	  for (k=0;k<32;k++) mixer_field_chans[k] = 0.0;
-	  mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_MIXER,MUS_AUDIO_FORMAT,32,mixer_field_chans);
-	  for (k=0;k<32;k++) mixflds[k] = (int)mixer_field_chans[k]; /* simplify life later */
+	  for (k=0;k<MAX_AUDIO_FIELD;k++) mixer_field_chans[k] = 0.0;
+	  mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_MIXER,MUS_AUDIO_FORMAT,MAX_AUDIO_FIELD,mixer_field_chans);
+	  for (k=0;k<MAX_AUDIO_FIELD;k++) mixflds[k] = (int)mixer_field_chans[k]; /* simplify life later */
 	  mixer_gains_posted[system] = device_gains(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_MIXER);
 	  num_gains = mixer_gains_posted[system]; /* includes the MUS_AUDIO_LINE_IN gains */
-	  special_cases = mixer_gains_posted[system];
 	}
       if ((!input) && (!tone_controls_posted[system]))
 	{
 	  tone_controls_posted[system] = device_gains(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_DAC_FILTER);
 	  num_gains += tone_controls_posted[system];
-	  special_cases = tone_controls_posted[system];
 	}
     }
   last_device = MUS_AUDIO_MICROPHONE;
@@ -2452,7 +2457,6 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
   p->pane = sndCreateFormWidget("pane",paned_window,args,n);
   
   last_frame = NULL;
-  first_frame = NULL;
   left_frame = NULL;
   meter_size = vu_size(ss);
   if (vu_meters > 4) meter_size *= .6; else if (vu_meters > 2) meter_size *= .8;
@@ -2463,7 +2467,6 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
       for (i=0;i<p->in_chans;i++) 
 	for (k=0;k<p->out_chans;k++) 
 	  if (i == k) p->active_sliders[i][k] = 1;
-      /* PICKUP DEFAULTS HERE */
 
       /* rather than default to posting 64 (or 256!) sliders, set up a channel matrix where desired sliders can be set */
       n=0;
@@ -2481,8 +2484,53 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
       for (i=0;i<p->in_chans;i++) 
 	for (k=0;k<p->out_chans;k++) 
 	  p->active_sliders[i][k]=1;
-      /* DEFAULTS?? */
     }
+
+  last_frame = make_vu_meters(ss,p,vu_meters,frames,last_frame,left_frame,overall_input_ctr,meter_size,input,first_frame);
+  
+  /* if no audio (hardware) gains, we have the vu separator and the control buttons */
+  vu_vertical_sep = make_vertical_gain_separator(ss,p,vu_meters,last_frame);
+  if (num_gains > 0)
+    {
+      last_slider = make_vertical_gain_sliders(ss,rp,p,num_gains,gain_ctr,mixflds,input,last_device);
+      gain_ctr += num_gains;
+    }
+
+  /* separator between vertical sliders and buttons */
+  make_gain_separator(ss,p,num_gains,vu_meters,last_slider);
+  
+  /* control buttons with label */
+  button_box = make_button_box(ss,rp,p,meter_size,input,overall_input_ctr,vu_meters,vu_vertical_sep,frames);
+
+  if (frames) {FREE(frames); frames = NULL;}
+
+  make_reset_button(ss,p,meter_size,button_box,vu_vertical_sep);
+  
+  /* now the amp sliders across the bottom of the pane, with 'mixer' info on the right */
+  pane_max = make_amp_sliders(ss,rp,p,first_frame[0],input,overall_input_ctr);
+
+  p->in_chan_loc = overall_input_ctr;
+  if (input) overall_input_ctr += p->in_chans;
+#if (HAVE_OSS || HAVE_ALSA)
+  p->pane_size = pane_max+20;
+#else
+  p->pane_size = pane_max+50;
+#endif
+
+  return(p);
+}
+
+static Widget make_vu_meters(snd_state *ss, PANE *p, int vu_meters, Widget *frames, Widget in_last_frame, Widget in_left_frame,
+			   int overall_input_ctr, Float meter_size, int input, Widget *out_frame)
+{
+  int i,n,columns,row;
+  Widget first_frame = NULL,frame,meter,last_frame,left_frame;
+  Wdesc *wd;
+  VU *vu;
+  Arg args[32];
+
+  last_frame = in_last_frame;
+  left_frame = in_left_frame;
 
   if ((vu_meters%4) == 0)
     columns = 4;
@@ -2497,7 +2545,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
   for (i=0;i<vu_meters;i++)
     {
       n=0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,sx->black); n++;}
+      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->black); n++;}
       if (row == 0)
 	{
 	  /* this is the top row of meters, attached to the top of the pane */
@@ -2537,8 +2585,8 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
       if (!first_frame) first_frame = frame;
 
       n=0;
-      XtSetArg(args[n],XmNbackground,sx->white); n++;
-      XtSetArg(args[n],XmNforeground,sx->black); n++;
+      XtSetArg(args[n],XmNbackground,(ss->sgx)->white); n++;
+      XtSetArg(args[n],XmNforeground,(ss->sgx)->black); n++;
       XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
       XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
       XtSetArg(args[n],XmNleftAttachment,XmATTACH_FORM); n++;
@@ -2547,7 +2595,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
       XtSetArg(args[n],XmNheight,LIGHT_Y*meter_size); n++;
       XtSetArg(args[n],XmNallowResize,FALSE); n++;
       meter = sndCreateDrawingAreaWidget("vu",frame,args,n);
-      p->meters[i] = make_vu_meter(meter,LIGHT_X,LIGHT_Y,CENTER_X,CENTER_Y,sx->black,ss,meter_size);
+      p->meters[i] = make_vu_meter(meter,LIGHT_X,LIGHT_Y,CENTER_X,CENTER_Y,(ss->sgx)->black,ss,meter_size);
       vu = p->meters[i];
 
       if (input)
@@ -2560,8 +2608,8 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
       wd->ss = ss;
       wd->p = p;
       wd->field = MUS_AUDIO_AMP;
-      wd->device = device;
-      wd->system = system;
+      wd->device = p->device;
+      wd->system = p->system;
       XtAddCallback(meter,XmNhelpCallback,Meter_Help_Callback,wd);
       last_frame = frame;
       if ((i == (columns*(row+1) - 1)) && (vu_meters > (i+1))) 
@@ -2571,10 +2619,15 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
 	  row++;
 	}
     }
-  
-  /* if no audio (hardware) gains, we have the vu separator and the control buttons */
+  out_frame[0] = first_frame;
+  return(last_frame);
+}
 
-  /* vertical scalers on the right (with icon) */
+static Widget make_vertical_gain_separator(snd_state *ss, PANE *p, int vu_meters, Widget last_frame)
+{
+  int n;
+  Arg args[32];
+
   n=0;
   if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
   XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
@@ -2588,217 +2641,233 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
   if (vu_meters < 4)
     {XtSetArg(args[n],XmNwidth,10); n++;}
   else {XtSetArg(args[n],XmNwidth,4); n++;}
-  vu_vertical_sep = XtCreateManagedWidget("sep",xmSeparatorWidgetClass,p->pane,args,n);
+  return(XtCreateManagedWidget("sep",xmSeparatorWidgetClass,p->pane,args,n));
+}
 
-  if (num_gains > 0)
+static Widget make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p, 
+					 int num_gains, int gain_ctr, int *mixflds, int input,int in_last_device)
+{
+  /* vertical scalers on the right (with icon) */
+  int n,i,k,chan,this_device=0,last_device;
+  Arg args[32];
+  Widget icon_label, last_slider;
+  Wdesc *wd;
+  XmString slabel = NULL;
+  Float vol;
+
+  last_device = in_last_device;
+  n=0;
+  if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
+  XtSetArg(args[n],XmNlabelType,XmPIXMAP); n++;
+#if (HAVE_OSS || HAVE_ALSA)
+  if (input)
+    {XtSetArg(args[n],XmNlabelPixmap,device_icon((mixflds[MUS_AUDIO_MICROPHONE]>0) ? MUS_AUDIO_MICROPHONE : MUS_AUDIO_LINE_IN)); n++;}
+  else {XtSetArg(args[n],XmNlabelPixmap,device_icon(p->device)); n++;}
+  if (input)
     {
-      n=0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-      XtSetArg(args[n],XmNlabelType,XmPIXMAP); n++;
-#if (HAVE_OSS || HAVE_ALSA)
-      if (input)
-	{XtSetArg(args[n],XmNlabelPixmap,device_icon((mixflds[MUS_AUDIO_MICROPHONE]>0) ? MUS_AUDIO_MICROPHONE : MUS_AUDIO_LINE_IN)); n++;}
-      else {XtSetArg(args[n],XmNlabelPixmap,device_icon(device)); n++;}
-      if (input)
-	{
-	  if (mixflds[MUS_AUDIO_MICROPHONE]<=0)
-	    last_device = MUS_AUDIO_LINE;
-	}
-      else last_device = MUS_AUDIO_DAC_OUT;
+      if (mixflds[MUS_AUDIO_MICROPHONE]<=0)
+	last_device = MUS_AUDIO_LINE;
+    }
+  else last_device = MUS_AUDIO_DAC_OUT;
 #else
-      XtSetArg(args[n],XmNlabelPixmap,device_icon(device)); n++;
+  XtSetArg(args[n],XmNlabelPixmap,device_icon(p->device)); n++;
 #endif
-      XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
-      XtSetArg(args[n],XmNbottomAttachment,XmATTACH_NONE); n++;
-      XtSetArg(args[n],XmNleftAttachment,XmATTACH_NONE); n++;
-      XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
-      if (num_gains > 1)
-	{XtSetArg(args[n],XmNalignment,XmALIGNMENT_CENTER); n++;}
-      else {XtSetArg(args[n],XmNalignment,XmALIGNMENT_END); n++;}
+  XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
+  XtSetArg(args[n],XmNbottomAttachment,XmATTACH_NONE); n++;
+  XtSetArg(args[n],XmNleftAttachment,XmATTACH_NONE); n++;
+  XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
+  if (num_gains > 1)
+    {XtSetArg(args[n],XmNalignment,XmALIGNMENT_CENTER); n++;}
+  else {XtSetArg(args[n],XmNalignment,XmALIGNMENT_END); n++;}
 #if (HAVE_OSS || HAVE_ALSA)
-      if (input)
-	{XtSetArg(args[n],XmNwidth,(mixflds[last_device] == 2) ? 30 : 15); n++;}
-      else {XtSetArg(args[n],XmNwidth,30); n++;}
+  if (input)
+    {XtSetArg(args[n],XmNwidth,(mixflds[last_device] == 2) ? 30 : 15); n++;}
+  else {XtSetArg(args[n],XmNwidth,30); n++;}
 #else
-      XtSetArg(args[n],XmNwidth,30); n++;
+  XtSetArg(args[n],XmNwidth,30); n++;
 #endif
-      icon_label = XtCreateManagedWidget("icon",xmLabelWidgetClass,p->pane,args,n);
+  icon_label = XtCreateManagedWidget("icon",xmLabelWidgetClass,p->pane,args,n);
       
-      last_slider = NULL;
-      for (i=0,chan=num_gains-1;i<num_gains;i++,chan--)
-	{
-	  /* we're moving right to left here, so the first slider represents the highest channel */
-	  /* in the Linux case, as each new device pops up, we need some indication above it */
-	  wd = (Wdesc *)CALLOC(1,sizeof(Wdesc));
-	  wd->system = system;
+  last_slider = NULL;
+  for (i=0,chan=num_gains-1;i<num_gains;i++,chan--)
+    {
+      /* we're moving right to left here, so the first slider represents the highest channel */
+      /* in the Linux case, as each new device pops up, we need some indication above it */
+      wd = (Wdesc *)CALLOC(1,sizeof(Wdesc));
+      wd->system = p->system;
 #if (HAVE_OSS || HAVE_ALSA)
-	  /* we're moving right to left here, chan is counting down, we need to fill out MIXER|MUS_AUDIO_DAC_FILTER fields and channels */
-	  /* and also handle whatever else comes along */
-	  /* treble and bass are actually stereo -- we'll do both at once */
-	  if (!input)
+      /* we're moving right to left here, chan is counting down, we need to fill out MIXER|MUS_AUDIO_DAC_FILTER fields and channels */
+      /* and also handle whatever else comes along */
+      /* treble and bass are actually stereo -- we'll do both at once */
+      if (!input)
+	{
+	  if (mus_audio_api() == ALSA_API) 
 	    {
-	      if (mus_audio_api() == ALSA_API) 
-		{
-		  /* the existing code assumes there are tone controls and that
-		   * a certain device is the output (MUS_AUDIO_DAC_OUT), for now
-		   * no tone controls at all */
-		  wd->chan = 1;
-		  wd->field = MUS_AUDIO_AMP;
-		  wd->device = device;
-		  this_device = device;
-		}
-	      else
-		{
-		  /* count back from speaker 1 0 treble bass */
-		  switch (i)
-		    {
-		    case 0: 
-		      wd->chan = 1;
-		      wd->field = MUS_AUDIO_AMP;
-		      wd->device = MUS_AUDIO_DAC_OUT;
-		      break;
-		    case 1: 
-		      wd->chan = 0;
-		      wd->field = MUS_AUDIO_AMP;
-		      wd->device = MUS_AUDIO_DAC_OUT;
-		      break;
-		    case 2: 
-		      wd->chan = 0;
-		      wd->field = MUS_AUDIO_TREBLE;
-		      wd->device = MUS_AUDIO_DAC_FILTER;
-		      break;
-		    case 3: 
-		      wd->chan =0;
-		      wd->field = MUS_AUDIO_BASS;
-		      wd->device = MUS_AUDIO_DAC_FILTER;
-		      break;
-		    }
-		  if (i>1) this_device = MUS_AUDIO_DAC_FILTER; else this_device = MUS_AUDIO_DAC_OUT;
-		}
+	      /* the existing code assumes there are tone controls and that
+	       * a certain device is the output (MUS_AUDIO_DAC_OUT), for now
+	       * no tone controls at all */
+	      wd->chan = 1;
+	      wd->field = MUS_AUDIO_AMP;
+	      wd->device = p->device;
+	      this_device = p->device;
 	    }
 	  else
 	    {
-	      /* we want speaker/line-in gains on the far right, then whatever else */
-	      if (mixflds[MUS_AUDIO_MICROPHONE] > 0)
+	      /* count back from speaker 1 0 treble bass */
+	      switch (i)
 		{
-		  wd->chan = mixflds[MUS_AUDIO_MICROPHONE]-1;
+		case 0: 
+		  wd->chan = 1;
 		  wd->field = MUS_AUDIO_AMP;
-		  wd->device = MUS_AUDIO_MICROPHONE;
-		  mixflds[MUS_AUDIO_MICROPHONE]--;
-		  this_device = MUS_AUDIO_MICROPHONE;
+		  wd->device = MUS_AUDIO_DAC_OUT;
+		  break;
+		case 1: 
+		  wd->chan = 0;
+		  wd->field = MUS_AUDIO_AMP;
+		  wd->device = MUS_AUDIO_DAC_OUT;
+		  break;
+		case 2: 
+		  wd->chan = 0;
+		  wd->field = MUS_AUDIO_TREBLE;
+		  wd->device = MUS_AUDIO_DAC_FILTER;
+		  break;
+		case 3: 
+		  wd->chan =0;
+		  wd->field = MUS_AUDIO_BASS;
+		  wd->device = MUS_AUDIO_DAC_FILTER;
+		  break;
+		}
+	      if (i>1) this_device = MUS_AUDIO_DAC_FILTER; else this_device = MUS_AUDIO_DAC_OUT;
+	    }
+	}
+      else
+	{
+	  /* we want speaker/line-in gains on the far right, then whatever else */
+	  if (mixflds[MUS_AUDIO_MICROPHONE] > 0)
+	    {
+	      wd->chan = mixflds[MUS_AUDIO_MICROPHONE]-1;
+	      wd->field = MUS_AUDIO_AMP;
+	      wd->device = MUS_AUDIO_MICROPHONE;
+	      mixflds[MUS_AUDIO_MICROPHONE]--;
+	      this_device = MUS_AUDIO_MICROPHONE;
+	    }
+	  else
+	    {
+	      if (mixflds[MUS_AUDIO_LINE] > 0)
+		{
+		  wd->chan = mixflds[MUS_AUDIO_LINE]-1;
+		  wd->field = MUS_AUDIO_AMP;
+		  wd->device = MUS_AUDIO_LINE_IN;
+		  mixflds[MUS_AUDIO_LINE]--;
+		  this_device = MUS_AUDIO_LINE;
 		}
 	      else
 		{
-		  if (mixflds[MUS_AUDIO_LINE] > 0)
+		  wd->chan = 0;
+		  for (k=0;k<MAX_AUDIO_FIELD;k++)
 		    {
-		      wd->chan = mixflds[MUS_AUDIO_LINE]-1;
-		      wd->field = MUS_AUDIO_AMP;
-		      wd->device = MUS_AUDIO_LINE_IN;
-		      mixflds[MUS_AUDIO_LINE]--;
-		      this_device = MUS_AUDIO_LINE;
-		    }
-		  else
-		    {
-		      wd->chan = 0;
-		      for (k=0;k<32;k++) /* MIXER_SIZE used for 32 in audio.c */
+		      if (mixflds[k] > 0)
 			{
-			  if (mixflds[k] > 0)
-			    {
-			      wd->chan = mixflds[k]-1;
-			      wd->field = k;
-			      wd->device = MUS_AUDIO_MIXER;
-			      mixflds[k]--;
-			      this_device = k;
-			      break;
-			    }
+			  wd->chan = mixflds[k]-1;
+			  wd->field = k;
+			  wd->device = MUS_AUDIO_MIXER;
+			  mixflds[k]--;
+			  this_device = k;
+			  break;
 			}
 		    }
 		}
 	    }
+	}
 #else
-	  wd->chan = chan;
-	  wd->field = MUS_AUDIO_AMP;
-	  wd->device = p->device;
+      wd->chan = chan;
+      wd->field = MUS_AUDIO_AMP;
+      wd->device = p->device;
 #endif
-	  wd->ss = ss;
-	  wd->p = p;
-	  wd->gain = gain_ctr+chan;
-	  if (wd->gain > rp->num_mixer_gains) 
-	    snd_error("%s[%d] %s: overflow %d > %d",__FILE__,__LINE__,__FUNCTION__,wd->gain,rp->num_mixer_gains);
-	  gain_sliders[wd->gain] = wd;
-	  vol = mixer_gain(wd->system,wd->device,wd->chan,wd->gain,wd->field);
+      wd->ss = ss;
+      wd->p = p;
+      wd->gain = gain_ctr+chan;
+      if (wd->gain > rp->num_mixer_gains) 
+	snd_error("%s[%d] %s: overflow %d > %d",__FILE__,__LINE__,__FUNCTION__,wd->gain,rp->num_mixer_gains);
+      gain_sliders[wd->gain] = wd;
+      vol = mixer_gain(wd->system,wd->device,wd->chan,wd->gain,wd->field);
+
 #if (HAVE_OSS || HAVE_ALSA)
-	  if (last_device != this_device)
-	    {
-	      n=0;
-	      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
-	      if (this_device == MUS_AUDIO_LINE)
-		{
-		  XtSetArg(args[n],XmNlabelType,XmPIXMAP); n++;
-		  XtSetArg(args[n],XmNlabelPixmap,device_icon(MUS_AUDIO_LINE_IN)); n++;
-		}
-	      else
-		{
-		  if ((!input) && (this_device == MUS_AUDIO_DAC_FILTER))
-		    slabel = XmStringCreate("ton","small_font");
-		  else slabel = XmStringCreate(recorder_field_abbreviation(this_device),"small_font");
-		  XtSetArg(args[n],XmNlabelString,slabel); n++;
-		}
-	      XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
-	      XtSetArg(args[n],XmNbottomAttachment,XmATTACH_NONE); n++;
-	      XtSetArg(args[n],XmNleftAttachment,XmATTACH_NONE); n++;
-	      XtSetArg(args[n],XmNrightAttachment,XmATTACH_WIDGET); n++;
-	      XtSetArg(args[n],XmNrightWidget,icon_label); n++;
-	      XtSetArg(args[n],XM_FONT_RESOURCE,small_fontlist); n++;
-	      XtSetArg(args[n],XmNalignment,XmALIGNMENT_CENTER); n++;
-	      XtSetArg(args[n],XmNwidth,30); n++;
-	      if (input)
-		{XtSetArg(args[n],XmNwidth,(mixflds[this_device] == 1) ? 30 : 15); n++;} /* 1 because we subtracted one already above */
-	      else {XtSetArg(args[n],XmNwidth,30); n++;}
-	      icon_label = XtCreateManagedWidget("icon",xmLabelWidgetClass,p->pane,args,n);
-	      if ((this_device != MUS_AUDIO_LINE) && (slabel)) {XmStringFree(slabel); slabel=NULL;}
-	    }
-#endif
+      if (last_device != this_device)
+	{
 	  n=0;
-	  if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->zoom_color); n++;}
-	  if (last_slider)
+	  if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
+	  if (this_device == MUS_AUDIO_LINE_IN)
 	    {
-	      XtSetArg(args[n],XmNtopAttachment,XmATTACH_OPPOSITE_WIDGET); n++;
-	      XtSetArg(args[n],XmNtopWidget,last_slider); n++;
-	      XtSetArg(args[n],XmNrightAttachment,XmATTACH_WIDGET); n++;
-	      XtSetArg(args[n],XmNrightWidget,last_slider); n++;
+	      XtSetArg(args[n],XmNlabelType,XmPIXMAP); n++;
+	      XtSetArg(args[n],XmNlabelPixmap,device_icon(MUS_AUDIO_LINE_IN)); n++;
 	    }
 	  else
 	    {
-	      XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
-	      XtSetArg(args[n],XmNtopWidget,icon_label); n++;
-	      XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
+	      if ((!input) && (this_device == MUS_AUDIO_DAC_FILTER))
+		slabel = XmStringCreate("ton","small_font");
+	      else slabel = XmStringCreate(recorder_field_abbreviation(this_device),"small_font");
+	      XtSetArg(args[n],XmNlabelString,slabel); n++;
 	    }
-	  XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
+	  XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
+	  XtSetArg(args[n],XmNbottomAttachment,XmATTACH_NONE); n++;
 	  XtSetArg(args[n],XmNleftAttachment,XmATTACH_NONE); n++;
-	  XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
-#ifdef LESSTIF_VERSION
-	  XtSetArg(args[n],XmNscaleWidth,15); n++;
-#else
-	  XtSetArg(args[n],XmNwidth,15); n++;
-#endif
-	  if (vol < 0.0) vol = 0.0;
-	  if (vol > 1.0) vol = 1.0;
-	  XtSetArg(args[n],XmNvalue,(int)(vol*100)); n++;
-	  XtSetArg(args[n],XmNshowValue,FALSE); n++;
-	  wd->wg = XtCreateManagedWidget("mon",xmScaleWidgetClass,p->pane,args,n);
-	  last_slider = wd->wg;
-	  XtAddCallback(last_slider,XmNvalueChangedCallback,volume_callback,wd);
-	  XtAddCallback(last_slider,XmNdragCallback,volume_callback,wd);
-	  XtAddCallback(last_slider,XmNhelpCallback,volume_help_callback,wd);
-#if (HAVE_OSS || HAVE_ALSA)
-	  last_device = this_device;
-#endif
+	  XtSetArg(args[n],XmNrightAttachment,XmATTACH_WIDGET); n++;
+	  XtSetArg(args[n],XmNrightWidget,icon_label); n++;
+	  XtSetArg(args[n],XM_FONT_RESOURCE,small_fontlist); n++;
+	  XtSetArg(args[n],XmNalignment,XmALIGNMENT_CENTER); n++;
+	  XtSetArg(args[n],XmNwidth,30); n++;
+	  if (input)
+	    {XtSetArg(args[n],XmNwidth,(mixflds[this_device] == 1) ? 30 : 15); n++;} /* 1 because we subtracted one already above */
+	  else {XtSetArg(args[n],XmNwidth,30); n++;}
+	  icon_label = XtCreateManagedWidget("icon",xmLabelWidgetClass,p->pane,args,n);
+	  if ((this_device != MUS_AUDIO_LINE_IN) && (slabel)) {XmStringFree(slabel); slabel=NULL;}
 	}
-      gain_ctr += num_gains;
+#endif
+      n=0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->zoom_color); n++;}
+      if (last_slider)
+	{
+	  XtSetArg(args[n],XmNtopAttachment,XmATTACH_OPPOSITE_WIDGET); n++;
+	  XtSetArg(args[n],XmNtopWidget,last_slider); n++;
+	  XtSetArg(args[n],XmNrightAttachment,XmATTACH_WIDGET); n++;
+	  XtSetArg(args[n],XmNrightWidget,last_slider); n++;
+	}
+      else
+	{
+	  XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
+	  XtSetArg(args[n],XmNtopWidget,icon_label); n++;
+	  XtSetArg(args[n],XmNrightAttachment,XmATTACH_FORM); n++;
+	}
+      XtSetArg(args[n],XmNbottomAttachment,XmATTACH_FORM); n++;
+      XtSetArg(args[n],XmNleftAttachment,XmATTACH_NONE); n++;
+      XtSetArg(args[n],XmNorientation,XmVERTICAL); n++;
+#ifdef LESSTIF_VERSION
+      XtSetArg(args[n],XmNscaleWidth,15); n++;
+#else
+      XtSetArg(args[n],XmNwidth,15); n++;
+#endif
+      if (vol < 0.0) vol = 0.0;
+      if (vol > 1.0) vol = 1.0;
+      XtSetArg(args[n],XmNvalue,(int)(vol*100)); n++;
+      XtSetArg(args[n],XmNshowValue,FALSE); n++;
+      wd->wg = XtCreateManagedWidget("mon",xmScaleWidgetClass,p->pane,args,n);
+      last_slider = wd->wg;
+      XtAddCallback(last_slider,XmNvalueChangedCallback,volume_callback,wd);
+      XtAddCallback(last_slider,XmNdragCallback,volume_callback,wd);
+      XtAddCallback(last_slider,XmNhelpCallback,volume_help_callback,wd);
+#if (HAVE_OSS || HAVE_ALSA)
+      last_device = this_device;
+#endif
     }
+  return(last_slider);
+}
 
-  /* separator between vertical sliders and buttons */
+static void make_gain_separator(snd_state *ss, PANE *p, int num_gains, int vu_meters, Widget last_slider)
+{
+  int n;
+  Arg args[32];
+
   n=0;
   if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
   XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
@@ -2819,8 +2888,17 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
   else {XtSetArg(args[n],XmNwidth,4); n++;}
   XtSetArg(args[n],XmNseparatorType,XmNO_LINE); n++;
   p->button_vertical_sep = XtCreateManagedWidget("ff-sep5",xmSeparatorWidgetClass,p->pane,args,n);      
-  
-  /* controls buttons with label */
+}
+
+static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float meter_size,
+			      int input, int overall_input_ctr, int vu_meters, Widget vu_vertical_sep, Widget *frames)
+{
+  int i,n,row,columns,button_size;
+  Arg args[32];
+  Widget button_label,button1_label,last_button,last_max,max_label,button_box;
+  Wdesc *wd;
+  VU *vu;
+
   n=0;
   if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->highlight_color); n++;}
   XtSetArg(args[n],XmNtopAttachment,XmATTACH_FORM); n++;
@@ -2831,10 +2909,10 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
   XtSetArg(args[n],XmNrightWidget,p->button_vertical_sep); n++;
   if (meter_size<SMALL_FONT_CUTOFF) {XtSetArg(args[n],XM_FONT_RESOURCE,small_fontlist); n++;}
   if ((rp->systems == 1) || (!input))
-    button_label = XtCreateManagedWidget(recorder_device_name(device),xmLabelWidgetClass,p->pane,args,n);
+    button_label = XtCreateManagedWidget(recorder_device_name(p->device),xmLabelWidgetClass,p->pane,args,n);
   else 
     {
-      button1_label = XtCreateManagedWidget(mus_audio_system_name(system),xmLabelWidgetClass,p->pane,args,n);
+      button1_label = XtCreateManagedWidget(mus_audio_system_name(p->system),xmLabelWidgetClass,p->pane,args,n);
       /* using 2 labels here because there is no way to get a multiline label (at least in Metroworks Motif) */
       n=0;
       if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->highlight_color); n++;}
@@ -2846,7 +2924,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
       XtSetArg(args[n],XmNrightAttachment,XmATTACH_WIDGET); n++;
       XtSetArg(args[n],XmNrightWidget,p->button_vertical_sep); n++;
       if (meter_size<SMALL_FONT_CUTOFF) {XtSetArg(args[n],XM_FONT_RESOURCE,small_fontlist); n++;}
-      button_label = XtCreateManagedWidget(recorder_device_name(device),xmLabelWidgetClass,p->pane,args,n);
+      button_label = XtCreateManagedWidget(recorder_device_name(p->device),xmLabelWidgetClass,p->pane,args,n);
     }
   
   /* all the buttons and labels except the top device name are contained in a separate box (form widget) */
@@ -2921,7 +2999,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
       wd->ss = ss;
       wd->p = p;
       wd->device = p->device;
-      wd->system = system;
+      wd->system = p->system;
       wd->field = MUS_AUDIO_AMP;
       XtAddCallback(last_button,XmNactivateCallback,Meter_Button_Callback,wd);
       XtAddCallback(last_button,XmNhelpCallback,VU_On_Help_Callback,wd);
@@ -2965,7 +3043,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
       wd->ss = ss;
       wd->p = p;
       wd->device = p->device;
-      wd->system = system;
+      wd->system = p->system;
       wd->field = MUS_AUDIO_AMP;
       vu = p->meters[i];
       vu->max_button = max_label;
@@ -2979,7 +3057,14 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
 	  row++;
 	}
     }
-  if (frames) {FREE(frames); frames = NULL;}
+  return(button_box);
+}
+
+static void make_reset_button(snd_state *ss, PANE *p, Float meter_size, Widget button_box, Widget vu_vertical_sep)
+{
+  XmString labelstr;
+  int n;
+  Arg args[32];
 
   if (meter_size<SMALL_FONT_CUTOFF)
     labelstr = XmStringCreate(STR_Reset,"small_font");
@@ -2988,7 +3073,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
   if (!(ss->using_schemes)) 
     {
       XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;
-      XtSetArg(args[n],XmNarmColor,sx->pushed_button_color); n++;
+      XtSetArg(args[n],XmNarmColor,(ss->sgx)->pushed_button_color); n++;
     }
   XtSetArg(args[n],XmNtopAttachment,XmATTACH_WIDGET); n++;
   XtSetArg(args[n],XmNtopWidget,button_box); n++;
@@ -3004,9 +3089,17 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
   XtAddCallback(p->reset_button,XmNactivateCallback,VU_Reset_Callback,p);
   XtAddCallback(p->reset_button,XmNhelpCallback,VU_Reset_Help_Callback,ss);
   XmStringFree(labelstr);
+}
 
-  /* now the amp sliders across the bottom of the pane, with 'mixer' info on the right */
-  
+static Position make_amp_sliders(snd_state *ss, recorder_info *rp, PANE *p, Widget first_frame, int input, int overall_input_ctr)
+{
+  Widget last_slider,slider_sep;
+  int i,n,amp_sliders,temp_out_chan,temp_in_chan,out_chan,in_chan,system;
+  Position pane_max;
+  Arg args[32];
+  AMP *a;
+  Wdesc *wd;
+  system = p->system;
   last_slider = NULL;
   n=0;
   if (!(ss->using_schemes)) {XtSetArg(args[n],XmNbackground,(ss->sgx)->basic_color); n++;}
@@ -3021,13 +3114,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
   XtSetArg(args[n],XmNheight,10); n++;
   slider_sep = XtCreateManagedWidget("amp-sep",xmSeparatorWidgetClass,p->pane,args,n);
   last_slider = slider_sep;
-#if 0
-  if (rp->ordered_devices_size > 4) 
-    {
-      XtVaGetValues(slider_sep,XmNy,&pane_max,NULL);
-      p->pane_size = pane_max;
-    }
-#endif  
+
   if (input) 
     amp_sliders = p->in_chans * p->out_chans;
   else amp_sliders = p->out_chans;
@@ -3092,60 +3179,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
 	  a->slider = NULL;
 	}
     }
-  p->in_chan_loc = overall_input_ctr;
-  if (input) overall_input_ctr += p->in_chans;
-#if (HAVE_OSS || HAVE_ALSA)
-  p->pane_size = pane_max+20;
-#else
-  p->pane_size = pane_max+50;
-#endif
-
-  return(p);
-}
-
-static void finish_recording(snd_state *ss, recorder_info *rp);
-
-static BACKGROUND_TYPE run_adc(XtPointer ss)  /* X wrapper for read_adc */
-{
-  BACKGROUND_TYPE val;
-  recorder_info *rp;
-  rp = get_recorder_info();
-  val = read_adc((snd_state *)ss);
-  if (val == BACKGROUND_QUIT) 
-    {
-      rp->recording = 0;
-      finish_recording((snd_state *)ss,rp);
-    }
-  return(val);
-}
-
-void set_read_in_progress (snd_state *ss, recorder_info *rp)
-{
-#ifdef DEBUGGING
-  int in_chan;
-  char *str;
-  str = (char *)CALLOC(512,sizeof(char));
-  sprintf(str,"open: srate: %d, format: %s, size: %d, in_chans: %d %d, input_ports: %d %d",
-	  rp->srate,
-	  mus_data_format_name(rp->in_format),
-	  rp->buffer_size,
-	  rp->input_channels[0],rp->input_channels[1],
-	  rp->input_ports[0],rp->input_ports[1]);
-  record_report(messages,str,NULL);
-  for (in_chan=0;in_chan<rp->possible_input_chans;in_chan++)
-    {
-      sprintf(str,"in[%d] %s (%s): %.3f -> (VU *)%p",
-	      in_chan,
-	      (rp->input_channel_active[in_chan]) ? "on" : "off",
-	      (rp->chan_in_active[in_chan]) ? "active" : "idle",
-	      MUS_SAMPLE_TO_FLOAT(rp->input_vu_maxes[in_chan]),
-	      rec_in_VU[in_chan]);
-      record_report(messages,str,NULL);
-    }
-  FREE(str);
-#endif
-  ever_read = XtAppAddWorkProc((ss->sgx)->mainapp,run_adc,(XtPointer)ss);
-  /* ever_read will be explicitly stopped if the recorder is closed */
+  return(pane_max);
 }
 
 static void sensitize_control_buttons(void)
@@ -3298,6 +3332,49 @@ static void finish_recording(snd_state *ss, recorder_info *rp)
     }
 }
 
+static BACKGROUND_TYPE run_adc(XtPointer ss)  /* X wrapper for read_adc */
+{
+  BACKGROUND_TYPE val;
+  recorder_info *rp;
+  rp = get_recorder_info();
+  val = read_adc((snd_state *)ss);
+  if (val == BACKGROUND_QUIT) 
+    {
+      rp->recording = 0;
+      finish_recording((snd_state *)ss,rp);
+    }
+  return(val);
+}
+
+void set_read_in_progress (snd_state *ss, recorder_info *rp)
+{
+#ifdef DEBUGGING
+  int in_chan;
+  char *str;
+  str = (char *)CALLOC(512,sizeof(char));
+  sprintf(str,"open: srate: %d, format: %s, size: %d, in_chans: %d %d, input_ports: %d %d",
+	  rp->srate,
+	  mus_data_format_name(rp->in_format),
+	  rp->buffer_size,
+	  rp->input_channels[0],rp->input_channels[1],
+	  rp->input_ports[0],rp->input_ports[1]);
+  record_report(messages,str,NULL);
+  for (in_chan=0;in_chan<rp->possible_input_chans;in_chan++)
+    {
+      sprintf(str,"in[%d] %s (%s): %.3f -> (VU *)%p",
+	      in_chan,
+	      (rp->input_channel_active[in_chan]) ? "on" : "off",
+	      (rp->chan_in_active[in_chan]) ? "active" : "idle",
+	      MUS_SAMPLE_TO_FLOAT(rp->input_vu_maxes[in_chan]),
+	      rec_in_VU[in_chan]);
+      record_report(messages,str,NULL);
+    }
+  FREE(str);
+#endif
+  ever_read = XtAppAddWorkProc((ss->sgx)->mainapp,run_adc,(XtPointer)ss);
+  /* ever_read will be explicitly stopped if the recorder is closed */
+}
+
 static void Record_Button_Callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
   snd_state *ss = (snd_state *)clientData;
@@ -3396,10 +3473,9 @@ static Widget rec_panes,message_pane,file_info_pane;
 void snd_record_file(snd_state *ss)
 {
   Arg args[32];
-  int n,i,device,all_devices,input_devices,output_devices,def_out,system,cur_devices,err;
+  int n,i,device,input_devices,output_devices,system;
   XmString xdismiss,xhelp,xreset,titlestr;
   XFontStruct *small_fontstruct;
-  float audval[AUDVAL_SIZE];
   Atom wm_delete;
   XGCValues v;
   Display *dpy;
@@ -3421,39 +3497,9 @@ void snd_record_file(snd_state *ss)
       v.foreground = sx->black;
       vu_gc = XCreateGC(dpy,wn,GCForeground | GCBackground,&v);
 
-      rp->systems = mus_audio_systems();
-      input_devices = 0;
-      output_devices = 0;
-      all_devices = 0;
-#if (HAVE_OSS || HAVE_ALSA)
-      mus_audio_mixer_restore(AUDIO_STATE_FILE);
-#endif
-      for (system=0;system<rp->systems;system++)
-	{
-#if (HAVE_OSS || HAVE_ALSA)
-	  mixer_gains_posted[system] = 0;
-	  tone_controls_posted[system] = 0;
-#endif
-	  /* look for audio input devices -- if none, report problem and quit */
-	  err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_DEFAULT,MUS_AUDIO_PORT,AUDVAL_SIZE,audval);
-	  if (err != 0) snd_error("%s[%d] %s: read audio state: %s ",__FILE__,__LINE__,__FUNCTION__,mus_audio_error_name(mus_audio_error()));
-	  cur_devices = (int)(audval[0]);
-	  if (cur_devices == 0) {snd_error("no audio devices available"); return;}
-	  for (i=0;i<cur_devices;i++) 
-	    {
-	      device = (int)(audval[i+1]);
-	      if (recorder_input_device(device))
-		input_devices++;
-	      else 
-		{
-		  if ((system == 0) && (recorder_output_device(device)))
-		    output_devices++;
-		}
-	      rp->num_mixer_gains += device_gains(MUS_AUDIO_PACK_SYSTEM(system) | device);
-	    }
-	  all_devices += cur_devices;
-	}
-      if (input_devices == 0) {snd_error("no audio input devices available"); return;}
+      input_devices = recorder_get_devices(ss,rp,&output_devices);
+      if (input_devices == -1) return;
+
       all_panes = (PANE **)CALLOC(input_devices+1,sizeof(PANE *));
       device_buttons_size = input_devices + 2; /* inputs, one output, autoload_file */
       device_buttons = (Widget *)CALLOC(device_buttons_size,sizeof(Widget));
@@ -3471,8 +3517,6 @@ void snd_record_file(snd_state *ss)
 	  AMP_rec_ins[i] = (AMP **)CALLOC(MAX_OUT_CHANS,sizeof(AMP *));
 	}
       AMP_rec_outs = (AMP **)CALLOC(MAX_OUT_CHANS,sizeof(AMP *));
-      /* out chans defaults to def_out = parallel to the maximal input choice or 2 whichever is more */
-      if (def_out < 2) def_out = 2;
 
       /* now create recording dialog using the info gathered above */
       small_fontstruct = XLoadQueryFont(MAIN_DISPLAY(ss),(vu_size(ss) < SMALLER_FONT_CUTOFF) ? SMALLER_FONT : SMALL_FONT);
@@ -3709,7 +3753,14 @@ static void initialize_recorder(recorder_info *rp)
   int err;
   int in_digital = 0;
 #endif
-  for (i=0;i<MAX_SOUNDCARDS;i++) rp->raw_input_bufs[i] = NULL;
+  for (i=0;i<MAX_SOUNDCARDS;i++)
+    {
+      rp->raw_input_bufs[i] = NULL;
+#if (HAVE_OSS || HAVE_ALSA)
+      mixer_gains_posted[i] = 0;
+      tone_controls_posted[i] = 0;
+#endif
+    }
 #if OLD_SGI_AL
   sb[0] = AL_INPUT_SOURCE;
   err = ALgetparams(AL_DEFAULT_DEVICE,sb,2);

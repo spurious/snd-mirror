@@ -801,7 +801,7 @@ to edit sounds, and so on.  Say we want an echo effect:</p>
     (let ((del (make-delay (round (* secs (srate))))))
       (lambda (inval)
 	(if inval 
-            (+ inval (delay del (* scaler (+ (tap del) inval))))))))))
+            (+ inval (delay del (* scaler (+ (tap del) inval)))))))))
 </small></pre>
 <p>For readers who are new to Scheme, <i>echo</i> is a function
 of two arguments, <i>scaler</i> and <i>secs</i>.  Scaler sets

@@ -1212,6 +1212,40 @@ int recorder_start_output_file(snd_state *ss, char *comment)
   return(FALSE);
 }
 
+int recorder_get_devices(snd_state *ss, recorder_info *rp, int *outs)
+{
+  int i,err,input_devices=0,output_devices=0,system,cur_devices,device;
+  float audval[AUDVAL_SIZE];
+
+  rp->systems = mus_audio_systems();
+#if (HAVE_OSS || HAVE_ALSA)
+  mus_audio_mixer_restore(AUDIO_STATE_FILE);
+#endif
+  for (system=0;system<rp->systems;system++)
+    {
+      /* look for audio input devices -- if none, report problem and quit */
+      err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_DEFAULT,MUS_AUDIO_PORT,AUDVAL_SIZE,audval);
+      if (err != 0) snd_error("%s[%d] %s: read audio state: %s ",__FILE__,__LINE__,__FUNCTION__,mus_audio_error_name(mus_audio_error()));
+      cur_devices = (int)(audval[0]);
+      if (cur_devices == 0) {snd_error("no audio devices available"); return(-1);}
+      for (i=0;i<cur_devices;i++) 
+	{
+	  device = (int)(audval[i+1]);
+	  if (recorder_input_device(device))
+	    input_devices++;
+	  else 
+	    {
+	      if ((system == 0) && (recorder_output_device(device)))
+		output_devices++;
+	    }
+	  rp->num_mixer_gains += device_gains(MUS_AUDIO_PACK_SYSTEM(system) | device);
+	}
+    }
+  if (input_devices == 0) {snd_error("no audio input devices available"); return(-1);}
+  (*outs) = output_devices;
+  return(input_devices);
+}
+
 
 #if HAVE_GUILE
 #include "sg.h"

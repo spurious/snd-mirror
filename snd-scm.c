@@ -3716,10 +3716,14 @@ the functions html and ? can be used in place of help to go to the HTML descript
 
     gh_eval_str("(read-set! keywords 'prefix)");
 
-#if DEBUGGING
-  #if HAVE_GTK
-    scm_add_feature("gtk");
-  #endif
+#if USE_MOTIF
+  scm_add_feature("snd-motif");
+#endif
+#if USE_GTK
+  scm_add_feature("snd-gtk");
+#endif
+#if USE_NO_GUI
+  scm_add_feature("snd-nogui");
 #endif
 
   scm_add_feature("snd");

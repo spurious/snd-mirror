@@ -40,6 +40,8 @@
 (define w (lambda () (do ((i 0 (1+ i))) ((= i waits)) (abort?)))) ;let interface run
 (define rs (lambda (n) (< (my-random 1.0) n)))
 
+(if (provided? 'snd-nogui) (load "nog.scm"))
+
 ;;; preliminaries -- check constants, default variable values (assumes -noinit), sndlib and clm stuff
 
 (snd-print (format #f ";;~A" (snd-version)))
@@ -1339,7 +1341,9 @@
     )
 
 ;;; colors
-(if (or full-test (= snd-test 7))
+(if (and (or full-test (= snd-test 7))
+	 (or (provided? 'snd-gtk)
+	     (provided? 'snd-motif)))
     (letrec ((test-color
 	      (lambda (lst)
 		(if (not (null? lst))
@@ -2909,7 +2913,7 @@
      (file-dialog) (w)
      (region-dialog) (w)
      (without-errors (edit-header-dialog)) (w)
-     (if (and (not (provided? 'gtk))
+     (if (and (not (provided? 'snd-gtk))
 	      (not (provided? 'snd-guile-gtk)))
 	 (begin
 	   ;(recorder-dialog) (w)
@@ -4284,6 +4288,14 @@
       (if (not (= ho 16)) (snd-print (format #f "loop: ~A?" ho)))
       (set! hi (prog1 (+ 2 ho) (set! ho 3)))
       (if (not (= hi 18)) (snd-print (format #f "prog1: ~A?" hi)))))
+
+(if (or full-test (= snd-test 18))
+    (if (and (provided? 'snd-gtk)
+	     (provided? 'snd-guile-gtk))
+	(begin
+	  (load "snd-gtk.scm")
+	  (make-control-dialog)
+	  (make-amp-dialog))))
 
 
 ;;; these are just the right size to hit a bug in 4.4's amp-env subsampling

@@ -192,6 +192,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+17-Aug:    recorder work (one serious bug fixed).\n\
 14-Aug:  snd 4.5.\n\
 10-Aug:  extsnd.html re-organized.\n\
          wavo,wavo-hop,wavo-trace,line-size,max-fft-peaks,fft-size,show-fft-peaks,zero-pad,fft-window,\n\
@@ -216,7 +217,6 @@ void news_help(snd_state *ss)
 20-Jul:  added sum-of-sines, phase-vocoder.\n\
 18-Jul:  play-selection and added end arg to play etc.\n\
          C-u 0 C-x p -> play region 0, C-x p -> play selection.\n\
-17-Jul:  optargs keyword bug was caused by string-length which existed for guile 1.3.0 (fixed).\n\
 ",
 NULL);
   FREE(info);

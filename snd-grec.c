@@ -1476,6 +1476,8 @@ static GtkWidget *sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, GtkW
 
 /* -------- I/O pane -------- */
 
+#define MAX_AUDIO_FIELD (MUS_AUDIO_DIRECTION+1)
+
 static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window, int device, int system)
 {
   /* VU meters (frame, then drawing area widget) */
@@ -1490,14 +1492,14 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
   GtkWidget *vuh,*vuv,*gv,*sbox,*btab,*slabel,*amp_sep;
 
   VU *vu;
-  int vu_meters,num_gains,input,special_cases = 0;
+  int vu_meters,num_gains,input;
   int row,columns;
   int pane_max;
   Float meter_size,vol;
   state_context *sx;
 #if (HAVE_OSS || HAVE_ALSA)
-  float mixer_field_chans[32];
-  int mixflds[32];
+  float mixer_field_chans[MAX_AUDIO_FIELD];
+  int mixflds[MAX_AUDIO_FIELD];
   int last_device,this_device=0;
 #endif
   static int gain_ctr = 0;
@@ -1506,13 +1508,12 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
   sx = ss->sgx;
   p = (PANE *)CALLOC(1,sizeof(PANE));
   p->device = device;
-#ifdef HAVE_ALSA
   p->system = system;
-#endif
   p->ss = ss;
   vu_meters = device_channels(MUS_AUDIO_PACK_SYSTEM(system) | device);
   input = (recorder_input_device(device));
   num_gains = device_gains(MUS_AUDIO_PACK_SYSTEM(system) | device);
+
 #if (HAVE_OSS || HAVE_ALSA)
   last_device = -1;
   if (num_gains == 0)
@@ -1525,18 +1526,16 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
     {
       if ((input) && (!mixer_gains_posted[system]))
 	{
-	  for (k=0;k<32;k++) mixer_field_chans[k] = 0.0;
-	  mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_MIXER,MUS_AUDIO_FORMAT,32,mixer_field_chans);
-	  for (k=0;k<32;k++) mixflds[k] = (int)mixer_field_chans[k]; /* simplify life later */
+	  for (k=0;k<MAX_AUDIO_FIELD;k++) mixer_field_chans[k] = 0.0;
+	  mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_MIXER,MUS_AUDIO_FORMAT,MAX_AUDIO_FIELD,mixer_field_chans);
+	  for (k=0;k<MAX_AUDIO_FIELD;k++) mixflds[k] = (int)mixer_field_chans[k]; /* simplify life later */
 	  mixer_gains_posted[system] = device_gains(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_MIXER);
 	  num_gains = mixer_gains_posted[system]; /* includes the MUS_AUDIO_LINE_IN gains */
-	  special_cases = mixer_gains_posted[system];
 	}
       if ((!input) && (!tone_controls_posted[system]))
 	{
 	  tone_controls_posted[system] = device_gains(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_DAC_FILTER);
 	  num_gains += tone_controls_posted[system];
-	  special_cases = tone_controls_posted[system];
 	}
     }
   last_device = MUS_AUDIO_MICROPHONE;
@@ -1815,7 +1814,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
 		  else
 		    {
 		      wd->chan = 0;
-		      for (k=0;k<32;k++) /* MIXER_SIZE used for 32 in audio.c */
+		      for (k=0;k<MAX_AUDIO_FIELD;k++)
 			{
 			  if (mixflds[k] > 0)
 			    {
@@ -1979,51 +1978,6 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
   return(p);
 }
 
-static void finish_recording(snd_state *ss, recorder_info *rp);
-
-static BACKGROUND_TYPE run_adc(gpointer ss)  /* X wrapper for read_adc */
-{
-  BACKGROUND_TYPE val;
-  recorder_info *rp;
-  rp = get_recorder_info();
-  val = read_adc((snd_state *)ss);
-  if (val == BACKGROUND_QUIT) 
-    {
-      rp->recording = 0;
-      finish_recording((snd_state *)ss,rp);
-    }
-  return(val);
-}
-
-void set_read_in_progress (snd_state *ss, recorder_info *rp)
-{
-#ifdef DEBUGGING
-  int in_chan;
-  char *str;
-  str = (char *)CALLOC(512,sizeof(char));
-  sprintf(str,"open: srate: %d, format: %s, size: %d, in_chans: %d %d, input_ports: %d %d",
-	  rp->srate,
-	  mus_data_format_name(rp->in_format),
-	  rp->buffer_size,
-	  rp->input_channels[0],rp->input_channels[1],
-	  rp->input_ports[0],rp->input_ports[1]);
-  record_report(ss,messages,str,NULL);
-  for (in_chan=0;in_chan<rp->possible_input_chans;in_chan++)
-    {
-      sprintf(str,"in[%d] %s (%s): %.3f -> (VU *)%p",
-	      in_chan,
-	      (rp->input_channel_active[in_chan]) ? "on" : "off",
-	      (rp->chan_in_active[in_chan]) ? "active" : "idle",
-	      MUS_SAMPLE_TO_FLOAT(rp->input_vu_maxes[in_chan]),
-	      rec_in_VU[in_chan]);
-      record_report(ss,messages,str,NULL);
-    }
-  FREE(str);
-#endif
-  ever_read = gtk_idle_add(run_adc,(gpointer)ss);
-  /* ever_read will be explicitly stopped if the recorder is closed */
-}
-
 static void sensitize_control_buttons(void)
 {
   int i;
@@ -2152,6 +2106,49 @@ static void finish_recording(snd_state *ss, recorder_info *rp)
     }
 }
 
+static BACKGROUND_TYPE run_adc(gpointer ss)  /* X wrapper for read_adc */
+{
+  BACKGROUND_TYPE val;
+  recorder_info *rp;
+  rp = get_recorder_info();
+  val = read_adc((snd_state *)ss);
+  if (val == BACKGROUND_QUIT) 
+    {
+      rp->recording = 0;
+      finish_recording((snd_state *)ss,rp);
+    }
+  return(val);
+}
+
+void set_read_in_progress (snd_state *ss, recorder_info *rp)
+{
+#ifdef DEBUGGING
+  int in_chan;
+  char *str;
+  str = (char *)CALLOC(512,sizeof(char));
+  sprintf(str,"open: srate: %d, format: %s, size: %d, in_chans: %d %d, input_ports: %d %d",
+	  rp->srate,
+	  mus_data_format_name(rp->in_format),
+	  rp->buffer_size,
+	  rp->input_channels[0],rp->input_channels[1],
+	  rp->input_ports[0],rp->input_ports[1]);
+  record_report(ss,messages,str,NULL);
+  for (in_chan=0;in_chan<rp->possible_input_chans;in_chan++)
+    {
+      sprintf(str,"in[%d] %s (%s): %.3f -> (VU *)%p",
+	      in_chan,
+	      (rp->input_channel_active[in_chan]) ? "on" : "off",
+	      (rp->chan_in_active[in_chan]) ? "active" : "idle",
+	      MUS_SAMPLE_TO_FLOAT(rp->input_vu_maxes[in_chan]),
+	      rec_in_VU[in_chan]);
+      record_report(ss,messages,str,NULL);
+    }
+  FREE(str);
+#endif
+  ever_read = gtk_idle_add(run_adc,(gpointer)ss);
+  /* ever_read will be explicitly stopped if the recorder is closed */
+}
+
 static void Record_Button_Callback(GtkWidget *w,gpointer clientData) 
 {
   snd_state *ss = (snd_state *)clientData;
@@ -2254,8 +2251,7 @@ static void recorder_delete(GtkWidget *w,GdkEvent *event,gpointer clientData)
 
 void snd_record_file(snd_state *ss)
 {
-  int n,i,device,all_devices,input_devices,output_devices,def_out,system,cur_devices,err;
-  float audval[AUDVAL_SIZE];
+  int n,i,device,all_devices,input_devices,output_devices,system;
   GdkDrawable *wn;
   state_context *sx;
   GtkWidget *rec_panes_box,*help_button,*dismiss_button,*messagetab;
@@ -2276,39 +2272,8 @@ void snd_record_file(snd_state *ss)
       gdk_gc_set_foreground(vu_gc,sx->black);
       gdk_gc_set_function(vu_gc,GDK_COPY);
 
-      rp->systems = mus_audio_systems();
-      input_devices = 0;
-      output_devices = 0;
-      all_devices = 0;
-#if (HAVE_OSS || HAVE_ALSA)
-      mus_audio_mixer_restore(AUDIO_STATE_FILE);
-#endif
-      for (system=0;system<rp->systems;system++)
-	{
-#if (HAVE_OSS || HAVE_ALSA)
-	  mixer_gains_posted[system] = 0;
-	  tone_controls_posted[system] = 0;
-#endif
-	  /* look for audio input devices -- if none, report problem and quit */
-	  err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system) | MUS_AUDIO_DEFAULT,MUS_AUDIO_PORT,AUDVAL_SIZE,audval);
-	  if (err != 0) snd_error("%s[%d] %s: read audio state: %s ",__FILE__,__LINE__,__FUNCTION__,mus_audio_error_name(mus_audio_error()));
-	  cur_devices = (int)(audval[0]);
-	  if (cur_devices == 0) {snd_error("no audio devices available"); return;}
-	  for (i=0;i<cur_devices;i++) 
-	    {
-	      device = (int)(audval[i+1]);
-	      if (recorder_input_device(device))
-		input_devices++;
-	      else 
-		{
-		  if ((system == 0) && (recorder_output_device(device)))
-		    output_devices++;
-		}
-	      rp->num_mixer_gains += device_gains(MUS_AUDIO_PACK_SYSTEM(system) | device);
-	    }
-	  all_devices += cur_devices;
-	}
-      if (input_devices == 0) {snd_error("no audio input devices available"); return;}
+      input_devices = recorder_get_devices(ss,rp,&output_devices);
+      if (input_devices == -1) return;
 
       all_panes = (PANE **)CALLOC(input_devices+1,sizeof(PANE *));
       device_buttons_size = input_devices + 2; /* inputs, one output, autoload_file */
@@ -2327,8 +2292,6 @@ void snd_record_file(snd_state *ss)
 	  AMP_rec_ins[i] = (AMP **)CALLOC(MAX_OUT_CHANS,sizeof(AMP *));
 	}
       AMP_rec_outs = (AMP **)CALLOC(MAX_OUT_CHANS,sizeof(AMP *));
-      /* out chans defaults to def_out = parallel to the maximal input choice or 2 whichever is more */
-      if (def_out < 2) def_out = 2;
       small_font = gdk_font_load((vu_size(ss) < SMALLER_FONT_CUTOFF) ? SMALLER_FONT : SMALL_FONT);
 
       recorder = gtk_dialog_new();

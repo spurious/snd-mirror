@@ -111,6 +111,7 @@ typedef struct {
 } recorder_info;
 
 recorder_info *get_recorder_info(void);
+int recorder_get_devices(snd_state *ss, recorder_info *rp, int *outs);
 void set_recorder_autoload(recorder_info *rp, int val);
 void set_recorder_trigger(recorder_info *rp, Float val);
 void set_recorder_srate(recorder_info *rp, int val);
