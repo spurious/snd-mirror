@@ -686,6 +686,7 @@ static void read_snd_opened_sound_file(snd_info *sp)
 }
 
 static XEN snd_opened_sound;
+static XEN snd_memo_sound;
 static XEN open_hook;
 static XEN close_hook;
 
@@ -769,6 +770,7 @@ static snd_info *snd_open_file_1 (const char *filename, bool select, bool read_o
       XEN_VARIABLE_SET(S_snd_opened_sound, C_TO_XEN_INT(sp->index));
 #else
       XEN_VARIABLE_SET(snd_opened_sound, C_TO_XEN_INT(sp->index));
+      XEN_VARIABLE_SET(snd_memo_sound, C_TO_XEN_INT(sp->index)); /* backwards compatibility */
 #endif
       sp->write_date = file_write_date(sp->filename);
       sp->need_update = false;
@@ -2751,6 +2753,7 @@ void g_init_file(void)
 				   S_setB S_previous_files_sort, g_set_previous_files_sort_w,  0, 0, 1, 0);
 
   XEN_DEFINE_VARIABLE(S_snd_opened_sound, snd_opened_sound, XEN_FALSE);
+  XEN_DEFINE_VARIABLE("memo-sound", snd_memo_sound, XEN_FALSE); /* backwards compatibility */
 
   #define H_open_hook S_open_hook " (filename): called each time a file is opened (before the actual open). \
 If it returns #t, the file is not opened."

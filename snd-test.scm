@@ -37,6 +37,47 @@
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
+
+(define original-save-dir (or (save-dir) "/zap/snd"))
+(define original-temp-dir (or (temp-dir) "/zap/tmp"))
+
+(define home-dir "/home/bil")
+(define sf-dir "/sf1")
+
+(if (not (file-exists? (string-append home-dir "/cl/oboe.snd")))
+    (if (file-exists? "/export/home/bil/cl/oboe.snd")
+	(set! home-dir "/export/home/bil")
+	(if (file-exists? "/Users/bill/cl/oboe.snd")
+	    (set! home-dir "/Users/bill")
+	    (if (file-exists? "/users/b/bil/cl/oboe.snd")
+		(set! home-dir "/users/b/bil")))))
+(system (string-append "cp " home-dir "/.snd " home-dir "/dot-snd"))
+(define cwd (string-append (getcwd) "/"))
+
+(define sf-dir1 (string-append home-dir sf-dir "/"))
+(if (not (file-exists? (string-append sf-dir1 "alaw.wav")))
+    (begin
+      (set! sf-dir "/sf")
+      (set! sf-dir1 (string-append home-dir sf-dir "/"))
+      (if (not (file-exists? (string-append sf-dir1 "alaw.wav")))
+	  (begin
+	    (snd-display ";;;can't find sf directory!")
+	    (set! sf-dir1 #f)))))
+(set! sf-dir sf-dir1)
+
+(if (not (string=? (getcwd) (string-append home-dir "/cl")))
+    (for-each
+     (lambda (file)
+       (if (not (file-exists? file))
+	   (begin
+	     (display (format #f "copying ~A~%" file))
+	     (copy-file (string-append home-dir "/cl/" file) (string-append (getcwd) "/" file)))))
+     (list "4.aiff" "2.snd" "obtest.snd" "oboe.snd" "pistol.snd" "1a.snd" "now.snd" "fyow.snd"
+	   "storm.snd" "z.snd" "1.snd" "cardinal.snd" "now.snd.scm" "2a.snd" "4a.snd" "zero.snd"
+	   "loop.scm" "cmn-glyphs.lisp" "bullet.xpm" "mb.snd" "funcs.cl")))
+
+
+
 ;(setlocale LC_ALL "de_DE")
 
 (define tests 1)
@@ -88,19 +129,7 @@
 (define playback-amp 0.0)
 (set! (mus-audio-playback-amp) playback-amp)
 
-(define home-dir "/home/bil")
-(if (file-exists? "/export/home/bil/cl/oboe.snd")
-    (set! home-dir "/export/home/bil")
-    (if (file-exists? "/Users/bill/cl/oboe.snd")
-	(set! home-dir "/Users/bill")
-	(if (file-exists? "/users/b/bil/cl/oboe.snd")
-	    (set! home-dir "/users/b/bil"))))
-(system (string-append "cp " home-dir "/.snd " home-dir "/dot-snd"))
-(define cwd (string-append (getcwd) "/"))
-(define sf-dir "/sf1")
 (define sample-reader-tests 300)
-(define original-save-dir (or (save-dir) "/zap/snd"))
-(define original-temp-dir (or (temp-dir) "/zap/tmp"))
 (debug-set! stack 0)
 (debug-enable 'debug 'backtrace)
 (read-enable 'positions)
@@ -118,28 +147,6 @@
 	   (lambda (msg)
 	     (display msg optimizer-log)
 	     (newline optimizer-log)))
-
-(define sf-dir1 (string-append home-dir sf-dir "/"))
-(if (not (file-exists? (string-append sf-dir1 "alaw.wav")))
-    (begin
-      (set! sf-dir "/sf")
-      (set! sf-dir1 (string-append home-dir sf-dir "/"))
-      (if (not (file-exists? (string-append sf-dir1 "alaw.wav")))
-	  (begin
-	    (snd-display ";;;can't find sf directory!")
-	    (set! sf-dir1 #f)))))
-(set! sf-dir sf-dir1)
-
-(if (not (string=? (getcwd) (string-append home-dir "/cl")))
-    (for-each
-     (lambda (file)
-       (if (not (file-exists? file))
-	   (begin
-	     (display (format #f "copying ~A~%" file))
-	     (copy-file (string-append home-dir "/cl/" file) (string-append (getcwd) "/" file)))))
-     (list "4.aiff" "2.snd" "obtest.snd" "oboe.snd" "pistol.snd" "1a.snd" "now.snd" "fyow.snd"
-	   "storm.snd" "z.snd" "1.snd" "cardinal.snd" "now.snd.scm" "2a.snd" "4a.snd" "zero.snd"
-	   "loop.scm" "cmn-glyphs.lisp" "bullet.xpm" "mb.snd" "funcs.cl")))
 
 (define (real-time) (exact->inexact (/ (get-internal-real-time) internal-time-units-per-second)))
 (define (hundred n) (inexact->exact (round (* 100 n))))
@@ -251,7 +258,16 @@
 ;(define rs (lambda (n) (< (my-random 1.0) n)))
 (define rs (lambda (n) #t))
 
+(define have-log-0 (or (string=? (version) "1.7.0") (string=? (version) "1.7.1")))
+(define (log0) (if have-log-0 (log 0) 0.0))
+
 (if (not (defined? 'nan)) (define (nan) 0.0))
+
+(define safe-color (make-color 1 0 0))
+(define (make-color-with-catch c1 c2 c3)
+  (catch 'no-such-color
+	 (lambda () (make-color c1 c2 c3))
+	 (lambda args safe-color)))
 
 (define timings (make-vector (+ total-tests 1) 0))
 
@@ -2503,18 +2519,18 @@
 						 (sound? ind))
 					    (close-sound ind))))
 				 (lambda args (car args)))))
-		      (list "/home/bil/sf1/bad_chans.snd"
-			    "/home/bil/sf1/bad_srate.snd"
-			    "/home/bil/sf1/bad_chans.aifc"
-			    "/home/bil/sf1/bad_srate.aifc"
-			    "/home/bil/sf1/bad_length.aifc"
-			    "/home/bil/sf1/bad_chans.riff"
-			    "/home/bil/sf1/bad_srate.riff"
-			    "/home/bil/sf1/bad_chans.nist"
-			    "/home/bil/sf1/bad_location.nist"
-			    "/home/bil/sf1/bad_field.nist"
-			    "/home/bil/sf1/bad_srate.nist"
-			    "/home/bil/sf1/bad_length.nist"))
+		      (list (string-append sf-dir "bad_chans.snd")
+			    (string-append sf-dir "bad_srate.snd")
+			    (string-append sf-dir "bad_chans.aifc")
+			    (string-append sf-dir "bad_srate.aifc")
+			    (string-append sf-dir "bad_length.aifc")
+			    (string-append sf-dir "bad_chans.riff")
+			    (string-append sf-dir "bad_srate.riff")
+			    (string-append sf-dir "bad_chans.nist")
+			    (string-append sf-dir "bad_location.nist")
+			    (string-append sf-dir "bad_field.nist")
+			    (string-append sf-dir "bad_srate.nist")
+			    (string-append sf-dir "bad_length.nist")))
 	    (close-sound ind))
 	  
 	  (let* ((ob (open-sound (string-append "~/baddy/" home-dir "/cl/oboe.snd")))
@@ -11259,7 +11275,7 @@ EDITS: 5
 		      (setfnc initval)
 		      (test-color (cdr lst)))))))
       (run-hook before-test-hook 7)
-      (if (not (provided? 'snd-rgb.scm)) (load "rgb.scm"))
+      (if (not (provided? 'snd-rgb.scm)) (catch 'no-such-color (lambda () (load "rgb.scm")) (lambda args args)))
       (let* ((c1 (catch 'no-such-color
 			(lambda () (make-color 0 0 1))
 			(lambda args #f)))
@@ -11285,7 +11301,7 @@ EDITS: 5
 				      i)))
 	      (if (not (feql val true-val))
 		  (snd-display ";colormap-ref ~A: ~A (~A)" i val true-val)))))
-      (catch 'no-such-color
+      (catch #t ; might be undefined var as well as no-such-color
 	     (lambda () 
 	       (test-color
 		(list
@@ -11320,7 +11336,7 @@ EDITS: 5
 		 (set! (selected-data-color) light-green)
 		 (set! (data-color) blue)
 		 (set! (selected-graph-color) black)
-		 (let ((red (make-color 1.0 0.0 0.0)))
+		 (let ((red (make-color-with-catch 1.0 0.0 0.0)))
 		   (set! (foreground-color ind 0 cursor-context) red)
 		   (let ((col (foreground-color ind 0 cursor-context)))
 		     (if (not (equal? col red))
@@ -11333,7 +11349,7 @@ EDITS: 5
 		   (let ((col (foreground-color ind)))
 		     (if (not (equal? col black))
 			 (snd-display ";set foreground-color with ind: ~A ~A" col black))))
-		 (set! (selected-graph-color) (make-color 0.96 0.96 0.86))
+		 (set! (selected-graph-color) (make-color-with-catch 0.96 0.96 0.86))
 		 (set! (data-color) black)
 		 (set! (selected-data-color) blue)
 		 (set! (graph-color) white)
@@ -12021,7 +12037,7 @@ EDITS: 5
   (set! (mus-phase gen) 0.0)
   (gen 1234567812345678)
   (gen -1234567812345678)
-  (gen (log 0))
+  (gen (log0))
   (set! (mus-frequency gen) 0.0)
   (set! (mus-phase gen) 0.0)
   (gen -2.0)
@@ -16708,7 +16724,7 @@ EDITS: 5
       (clear-sincs)
 
       (let ((s1 (make-src (lambda (dir) 1.0))))
-	(let ((val (src s1 (log 0))))
+	(let ((val (src s1 (log0))))
 	  (if (fneq val 1.0) (snd-display ";inf as sr-change: ~A" val))))
       
       (let ((gen (make-granulate :expansion 2.0))
@@ -18252,19 +18268,19 @@ EDITS: 5
 		      (for-each
 		       (lambda (arg2)
 			 (catch #t (lambda () (runp gen arg1 arg2)) (lambda args (car args))))
-		       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
+		       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 			     (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
 			     '() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
-			     12345678901234567890 (log 0) (nan))))
-		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
+			     12345678901234567890 (log0) (nan))))
+		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 			  (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
 			  '() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
-			  12345678901234567890 (log 0) (nan)))))
+			  12345678901234567890 (log0) (nan)))))
 	       make-procs run-procs)
 	      
 	      (let ((random-args (list 
 				  (expt 2.0 21.5) (expt 2.0 -18.0) 12345678901234567890
-				  1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .1 .2 .3)  '#(0 1) 3/4 (sqrt -1.0) (make-delay 32)
+				  1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .1 .2 .3)  '#(0 1) 3/4 (sqrt -1.0) (make-delay 32)
 				  (lambda () 0.0) (lambda (dir) 1.0) (lambda (a b c) 1.0) 0 1 -1 #f #t #\c 0.0 1.0 -1.0 '() 32 '(1 . 2)
 				  ))
 		    (gen-make-procs (list make-all-pass make-asymmetric-fm make-average make-table-lookup make-triangle-wave
@@ -18510,15 +18526,11 @@ EDITS: 5
 		(snd-display ";track-tempo: ~D (~D, ~A ~A)?" 
 			     (track-frames trk) (/ (+ 4000 50828) 2)
 			     (track trk) (map mix-frames (track trk))))
-	    (catch 'no-such-color
-		   (lambda () (set! (track-color trk) (make-color .8 .8 .8)))
-		   (lambda args args))
+	    (set! (track-color trk) (make-color-with-catch .8 .8 .8))
 	    (let ((trk2 (make-track)))
 	      (set! (mix-track (vector-ref mix-ids 1)) trk2)
 	      (set! (mix-track (vector-ref mix-ids 3)) trk2)
-	      (catch 'no-such-color 
-		     (lambda () (set! (track-color trk2) (make-color .2 .8 0)))
-		     (lambda args args))
+	      (set! (track-color trk2) (make-color-with-catch .2 .8 0))
 	      (let ((t2 (track->vct trk2))
 		    (t3 (mix->vct (vector-ref mix-ids 5))))
 		(if (or (fneq (vct-ref t2 1000) (vct-ref t3 1000))
@@ -19269,10 +19281,10 @@ EDITS: 5
 	(let* ((mix1 (mix-vct (make-vct 10 .5) 10))
 	       (copy-mix1 (copy-mix mix1)))
 	  (let ((old-color (mix-color mix1)))
-	    (set! (mix-color mix1) (make-color 0 1 1))
+	    (set! (mix-color mix1) (make-color-with-catch 0 1 1))
 	    (let ((new-color (mix-color mix1)))
-	      (if (not (equal? new-color (make-color 0 1 1)))
-		  (snd-display ";mix-color ~A ~A = ~A (~A)?" mix1 (make-color 0 1 1) new-color old-color))))
+	      (if (not (equal? new-color (make-color-with-catch 0 1 1)))
+		  (snd-display ";mix-color ~A ~A = ~A (~A)?" mix1 (make-color-with-catch 0 1 1) new-color old-color))))
 	  (check-copied-mix mix1 copy-mix1 10)
 	  (set! (mix-amp mix1) 2.0)
 	  (set! copy-mix1 (copy-mix mix1 20))
@@ -19309,11 +19321,11 @@ EDITS: 5
 
       (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 "copy-mix tests" 300))
 	    (old-color (mix-color)))
-	(set! (mix-color) (make-color 1 1 0))
+	(set! (mix-color) (make-color-with-catch 1 1 0))
 	(let ((mix1 (mix-vct (make-vct 10 .5) 10)))
-	  (if (or (not (equal? (mix-color) (make-color 1 1 0)))
-		  (not (equal? (mix-color mix1) (make-color 1 1 0))))
-	      (snd-display ";set mix-color: ~A ~A ~A ~A" (mix-color) (mix-color mix1) (make-color 1 1 0) old-color))
+	  (if (or (not (equal? (mix-color) (make-color-with-catch 1 1 0)))
+		  (not (equal? (mix-color mix1) (make-color-with-catch 1 1 0))))
+	      (snd-display ";set mix-color: ~A ~A ~A ~A" (mix-color) (mix-color mix1) (make-color-with-catch 1 1 0) old-color))
 	  (set! (mix-color) old-color)
 	  (save-mix mix1 "test.snd")
 	  (let ((ind1 (open-sound "test.snd")))
@@ -19694,7 +19706,7 @@ EDITS: 5
 			  (not (vequal tv mv))
 			  (not (vequal tv (make-vct 10 0.8))))
 		      (snd-display ";no amp env track1 mix1: ~A ~A" tv mv)))
-		(let ((color (make-color 0 1 0)))
+		(let ((color (make-color-with-catch 0 1 0)))
 		  (set! (track-color track1) color)
 		  (if (not (equal? (track-color track1) color))
 		      (snd-display ";track color green: ~A" (track-color track1)))
@@ -19810,7 +19822,7 @@ EDITS: 5
 		  (let ((old-track-color (track-color track1))
 			(old-mix1-color (mix-color mix1))
 			(old-mix2-color (mix-color mix2))
-			(color (make-color 0 1 1)))
+			(color (make-color-with-catch 0 1 1)))
 		    (set! (track-color track1) color)
 		    (if (not (= (edit-position ind 0) edpos))
 			(snd-display ";track color set was an edit?: ~A ~A" edpos (edit-position ind 0)))
@@ -21401,9 +21413,7 @@ EDITS: 5
 		(t1 (make-track (vector-ref vc 2) (vector-ref vc 6) (vector-ref vc 8))))
 	    (set! (track-amp t0) .5)
 	    (time (transpose-track t1 3))
-	    (catch 'no-such-color
-		   (lambda () (set! (track-color t1) (make-color 0 0 1)))
-		   (lambda args args))
+	    (set! (track-color t1) (make-color-with-catch 0 0 1))
 	    (let ((t0e (track-end t0)))
 	      (set! (track-position t0) 1000)
 	      (if (not (= (track-position t0) 1000)) (snd-display ";track-position: ~A?" (track-position t0)))
@@ -23337,7 +23347,7 @@ EDITS: 5
 	  (reset-hook! after-save-as-hook)
 	  (if save-as-dialog (snd-display ";after-save-as-hook dialog: ~A" save-as-dialog))
 	  (if (not (= ind save-as-index)) (snd-display ";after-save-as-hook index: ~A ~A" ind save-as-index))
-	  (if (not (string=? "/home/bil/cl/test.snd" save-as-name)) (snd-display ";after-save-as-hook name: ~A" save-as-name))
+	  (if (not (string=? (string-append home-dir "/test.snd") save-as-name)) (snd-display ";after-save-as-hook name: ~A" save-as-name))
 	  (add-hook! open-raw-sound-hook 
 		     (lambda (file choice)
 		       (if (not (string=? (substring file (- (string-length file) 8)) "test.snd"))
@@ -33521,7 +33531,7 @@ EDITS: 2
   (let ((left (left-sample snd chn))
 	(right (right-sample snd chn))
 	(old-color (foreground-color snd chn))
-	(red (make-color 1 0 0)))
+	(red (make-color-with-catch 1 0 0)))
     (if (and (< left 2000)
 	     (> right 1000))
 	(let* ((data (make-graph-data snd chn)))
@@ -33568,9 +33578,9 @@ EDITS: 2
                (> rs 1000))
 	  (let ((pos (x->position (/ 1000.0 (srate))))
 		(old-color (foreground-color)))
-	    (set! (foreground-color) (make-color .75 .75 .75))
+	    (set! (foreground-color) (make-color-with-catch .75 .75 .75))
             (fill-rectangle pos 10 50 20)
-	    (set! (foreground-color) (make-color 1 0 0))
+	    (set! (foreground-color) (make-color-with-catch 1 0 0))
 ;	    (if new-font (set! (current-font) new-font))
             (draw-string "hiho" (+ pos 5) 24)
 	    (set! (foreground-color) old-color))))))
@@ -43640,7 +43650,7 @@ EDITS: 2
 	 (cmap (DefaultColormap dpy scr)))
     (if (= (XAllocNamedColor dpy cmap color-name col col) 0)
         (snd-error (format #f "can't allocate ~A" color-name))
-	(make-color (/ (.red col) 65535.0)
+	(make-color-with-catch (/ (.red col) 65535.0)
 		    (/ (.green col) 65535.0)
 		    (/ (.blue col) 65535.0)))))
 
@@ -47951,7 +47961,7 @@ EDITS: 2
 			   (lambda () (n arg))
 			   (lambda args (car args))))
 		  xm-procs1))
-	       (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
+	       (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 		     (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() (make-vector 0) 12345678901234567890))
 
 	      ;; ---------------- 2 Args
@@ -47965,9 +47975,9 @@ EDITS: 2
 			      (lambda () (n arg1 arg2))
 			      (lambda args (car args))))
 		     xm-procs2))
-		  (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) '#(0 1) 3/4 
+		  (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95) '#(0 1) 3/4 
 			(sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
-	       (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) '#(0 1) 3/4 
+	       (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95) '#(0 1) 3/4 
 		     (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() (make-vector 0) 12345678901234567890))
 	      
 	      (if all-args
@@ -49678,20 +49688,20 @@ EDITS: 2
 	      (if (not _gboolean4) (snd-display ";dialog not local"))
 	      (if _gboolean5 (snd-display ";dialog sel mult"))
 	      (if _gchar_5 (snd-display ";dialog filename: ~A" _gchar_5))
-	      (if (not (string=? _gchar_6 "/home/bil/cl")) (snd-display ";dialog folder: ~A" _gchar_6))
+	      (if (not (string=? _gchar_6 home-dir)) (snd-display ";dialog folder: ~A" _gchar_6))
 	      (if _gchar_7 (snd-display ";dialog uri: ~A" _gchar_7))
 	      (if (not (string=? _gchar_8 "file:///home/bil/cl")) (snd-display ";dialog folder uri: ~A" _gchar_8))
 	      (if (not _gboolean6) (snd-display ";dialog not active"))
 	      (if (not _gboolean7) (snd-display ";dialog not use preview"))
-	      (if (not (string=? _gchar_9 "/home/bil/cl")) (snd-display ";dialog sel filename: ~A" _gchar_9))
+	      (if (not (string=? _gchar_9 home-dir)) (snd-display ";dialog sel filename: ~A" _gchar_9))
 	      (if _gboolean8 (snd-display ";dialog has sel mult"))
 	      (gtk_file_selection_show_fileop_buttons _GtkFileSelection_)
 	      (gtk_file_selection_hide_fileop_buttons _GtkFileSelection_)
 	      (gtk_dialog_set_has_separator _GtkDialog_ #t)
-	      (gtk_file_selection_set_filename _GtkFileSelection_ "/home/bil/cl/test.snd")
+	      (gtk_file_selection_set_filename _GtkFileSelection_ (string-append home-dir "/test.snd"))
 	      (set! _gchar_9 (gtk_file_selection_get_filename _GtkFileSelection_))
-	      (if (not (string=? _gchar_9 "/home/bil/cl/test.snd")) (snd-display ";set dialog filename: ~A" _gchar_9))
-	      (gtk_file_chooser_set_filename _GtkFileChooser_ "/home/bil/cl/test.snd")
+	      (if (not (string=? _gchar_9 (string-append home-dir "/test.snd"))) (snd-display ";set dialog filename: ~A" _gchar_9))
+	      (gtk_file_chooser_set_filename _GtkFileChooser_ (string-append home-dir "/test.snd"))
 	      (let ((_gboolean (gtk_file_chooser_set_current_folder _GtkFileChooser_ "/home/bil/sf1")))
 		(set! _gchar_6 (gtk_file_chooser_get_current_folder _GtkFileChooser_))
 		(if (not (string=? _gchar_6 "/home/bil/sf1")) (snd-display ";set dialog chooser folder: ~A" _gchar_6)))
@@ -49716,18 +49726,18 @@ EDITS: 2
 	      (gtk_color_selection_get_previous_color _GtkColorSelection_ _GdkColor_)
 	      (gtk_color_selection_palette_to_string _GdkColor_ 0)
 	      (gtk_file_selection_complete _GtkFileSelection_ "/home/bil/cl/test.sn")
-	      (gtk_file_chooser_select_filename _GtkFileChooser_ "/home/bil/cl/test.snd")
-	      (gtk_file_chooser_set_uri _GtkFileChooser_ "/home/bil/cl/test.snd")
-	      (gtk_file_chooser_select_uri _GtkFileChooser_ "/home/bil/cl/test.snd")
-	      (gtk_file_chooser_set_current_folder_uri _GtkFileChooser_ "/home/bil/cl")
+	      (gtk_file_chooser_select_filename _GtkFileChooser_ (string-append home-dir "/test.snd"))
+	      (gtk_file_chooser_set_uri _GtkFileChooser_ (string-append home-dir "/test.snd"))
+	      (gtk_file_chooser_select_uri _GtkFileChooser_ (string-append home-dir "/test.snd"))
+	      (gtk_file_chooser_set_current_folder_uri _GtkFileChooser_ home-dir)
 ;	      (gtk_file_filter_get_name _GtkFileFilter_)
 	      (gtk_file_filter_get_needed _GtkFileFilter_)
 	      (gtk_font_selection_dialog_set_font_name _GtkFontSelectionDialog_ "Monospace 10")
 	      (gtk_dialog_add_buttons _GtkDialog_ (list GTK_STOCK_CANCEL GTK_RESPONSE_REJECT))
 	      (gtk_file_chooser_set_select_multiple _GtkFileChooser_ #f)
-	      (gtk_file_chooser_set_current_name _GtkFileChooser_ "/home/bil/cl/test.snd")
-	      (gtk_file_chooser_unselect_filename _GtkFileChooser_ "/home/bil/cl/test.snd")
-	      (gtk_file_chooser_unselect_uri _GtkFileChooser_ "/home/bil/cl/test.snd")
+	      (gtk_file_chooser_set_current_name _GtkFileChooser_ (string-append home-dir "/test.snd"))
+	      (gtk_file_chooser_unselect_filename _GtkFileChooser_ (string-append home-dir "/test.snd"))
+	      (gtk_file_chooser_unselect_uri _GtkFileChooser_ (string-append home-dir "/test.snd"))
 	      (gtk_file_chooser_set_preview_widget _GtkFileChooser_ (gtk_label_new "preview"))
 	      (gtk_file_chooser_set_preview_widget_active _GtkFileChooser_ #f)
 	      (gtk_file_chooser_set_extra_widget _GtkFileChooser_ (gtk_label_new "hiho"))
@@ -49737,12 +49747,12 @@ EDITS: 2
 	      (gtk_file_filter_add_pattern _GtkFileFilter_ "*.snd")
 	      (gtk_file_selection_set_select_multiple _GtkFileSelection_ #f)
 	      (gtk_dialog_set_response_sensitive _GtkDialog_ 0 #f)
-	      (let ((vals (gtk_file_chooser_add_shortcut_folder _GtkFileChooser_ "/home/bil/cl")))
+	      (let ((vals (gtk_file_chooser_add_shortcut_folder _GtkFileChooser_ home-dir)))
 		(if (not (equal? vals (list #t #f))) (snd-display ";add shortcut: ~A" vals)))
-	      (let ((vals (gtk_file_chooser_remove_shortcut_folder _GtkFileChooser_ "/home/bil/cl")))
+	      (let ((vals (gtk_file_chooser_remove_shortcut_folder _GtkFileChooser_ home-dir)))
 		(if (not (equal? vals (list #t #f))) (snd-display ";remove shortcut: ~A" vals)))
-	      (gtk_file_chooser_add_shortcut_folder_uri _GtkFileChooser_ "/home/bil/cl")
-	      (gtk_file_chooser_remove_shortcut_folder_uri _GtkFileChooser_ "/home/bil/cl")
+	      (gtk_file_chooser_add_shortcut_folder_uri _GtkFileChooser_ home-dir)
+	      (gtk_file_chooser_remove_shortcut_folder_uri _GtkFileChooser_ home-dir)
 	      (gtk_color_selection_palette_from_string "hiho")
 	      (gtk_dialog_response _GtkDialog_ 0)
 	      (gtk_dialog_add_action_widget _GtkDialog_ (gtk_button_new_with_label "hi") 0))
@@ -49775,7 +49785,7 @@ EDITS: 2
 	      (gtk_ui_manager_insert_action_group _GtkUIManager_ _GtkActionGroup_ 0)
 	      (gtk_ui_manager_set_add_tearoffs _GtkUIManager_ #f)
 	      (gtk_ui_manager_remove_action_group _GtkUIManager_ _GtkActionGroup_)
-	      (gtk_ui_manager_add_ui _GtkUIManager_ _guint "/home/bil/cl" "hiho" #f GTK_UI_MANAGER_SEPARATOR #f)
+	      (gtk_ui_manager_add_ui _GtkUIManager_ _guint home-dir "hiho" #f GTK_UI_MANAGER_SEPARATOR #f)
 	      (gtk_ui_manager_get_action_groups _GtkUIManager_)
 	      (gtk_ui_manager_get_accel_group _GtkUIManager_)
 	      (gtk_ui_manager_get_ui _GtkUIManager_)
@@ -50501,7 +50511,7 @@ EDITS: 2
 	      (gtk_icon_factory_add _GtkIconFactory_ "away" _GtkIconSet_)
 	      (gtk_icon_info_set_raw_coordinates _GtkIconInfo_ #f)
 	      (gtk_icon_source_free _GtkIconSource_)
-	      (gtk_icon_theme_append_search_path _GtkIconTheme_ "/home/bil/cl")
+	      (gtk_icon_theme_append_search_path _GtkIconTheme_ home-dir)
 	      (gtk_icon_theme_prepend_search_path _GtkIconTheme_ "/usr/local")
 	      (gtk_icon_theme_set_custom_theme _GtkIconTheme_ "custom"))
 
@@ -50623,8 +50633,8 @@ EDITS: 2
 		
 		(gtk_accel_map_foreach #f (lambda (a b c d e) #f))
 		(gtk_accel_map_foreach_unfiltered #f (lambda (a b c d e) #f)))
-	      (gtk_accel_map_save "/home/bil/cl/accelmap")
-	      (gtk_accel_map_load "/home/bil/cl/accelmap")
+	      (gtk_accel_map_save (string-append home-dir "/accelmap"))
+	      (gtk_accel_map_load (string-append home-dir "/accelmap"))
 	      (gtk_menu_set_monitor _GtkMenu_ 0)
 	      (gtk_menu_shell_select_first _GtkMenuShell_ #f)
 	      (gtk_menu_shell_deselect _GtkMenuShell_)
@@ -52334,7 +52344,7 @@ EDITS: 2
 
 (defvar env3 '(0 0 1 1))
 (define delay-32 (make-delay 32))
-(define color-95 (make-color .95 .95 .95))
+(define color-95 (make-color-with-catch .95 .95 .95))
 (define vector-0 (make-vector 0))
 (define vct-3 (make-vct 3))
 (define vct-5 (make-vct 5))
@@ -52662,7 +52672,7 @@ EDITS: 2
 			      (if (= test-28 5)
 				  (begin
 				    (set! delay-32 (make-delay 32))
-				    (set! color-95 (make-color .9 .9 .9))
+				    (set! color-95 (make-color-with-catch .9 .9 .9))
 				    (set! vector-0 (make-vector 1))
 				    (set! car-main (make-average 3))
 				    (set! cadr-main (make-phase-vocoder (lambda (dir) 1.0)))
@@ -52885,7 +52895,7 @@ EDITS: 2
 			    (if (not (eq? tag 'no-such-track))
 				(snd-display ";set track ~A: ~A" n tag))))
 			(list track-amp track-position track-speed track-tempo track-amp-env track-track track-color)
-			(list 1.0 0 1.0 1.0 '(0 0 1 1) (1- trk) (make-color 1 0 0))))
+			(list 1.0 0 1.0 1.0 '(0 0 1 1) (1- trk) (make-color-with-catch 1 0 0))))
 
 	    (for-each (lambda (arg)
 			(let ((ctr 0))
@@ -52931,7 +52941,7 @@ EDITS: 2
 		      (list all-pass array-interp asymmetric-fm comb contrast-enhancement convolution convolve average
 			    convolve-files delay dot-product env-interp file->frame file->sample snd->sample xen->sample filter fir-filter formant
 			    formant-bank frame* frame+ frame->frame frame-ref frame->sample granulate iir-filter ina
-			    inb locsig-ref locsig-reverb-ref make-all-pass make-asymmetric-fm make-comb make-convolve
+			    inb locsig-ref locsig-reverb-ref make-all-pass make-asymmetric-fm make-comb 
 			    make-delay make-env make-fft-window make-filter make-fir-filter make-formant make-frame make-granulate
 			    make-iir-filter make-locsig make-notch make-one-pole make-one-zero make-oscil make-phase-vocoder
 			    make-ppolar make-pulse-train make-rand make-rand-interp make-readin make-sawtooth-wave make-average
@@ -53653,7 +53663,7 @@ EDITS: 2
 	      (check-error-tag 'out-of-range (lambda () (set! (reverb-control-length-bounds ind) (list .1 .01))))
 	      (check-error-tag 'out-of-range (lambda () (set! (reverb-control-scale-bounds ind) (list .1 .01))))
 	      (let ((eds (edits)))
-		(catch #t (lambda () (undo (log 0))) (lambda args args))
+		(catch #t (lambda () (undo (log0))) (lambda args args))
 		(if (not (equal? (edits) eds)) (snd-display ";undo -inf): ~A" (edits))))
 	      (check-error-tag 'wrong-type-arg (lambda () (scale-by #f)))
 	      (check-error-tag 'wrong-type-arg (lambda () (scale-by (make-mixer 2 .1 .1 .2 .2))))
@@ -53688,8 +53698,8 @@ EDITS: 2
 	    (check-error-tag 'no-such-key (lambda () (key-binding 12 17)))
 	    (check-error-tag 'no-such-key (lambda () (key-binding 12 -1)))
 	    (check-error-tag 'wrong-type-arg (lambda () (send-mozilla -1)))
-	    (check-error-tag 'bad-header (lambda () (file->array "/home/bil/sf1/bad_chans.snd" 0 0 123 (make-vct 123))))
-	    (check-error-tag 'bad-header (lambda () (make-readin "/home/bil/sf1/bad_chans.snd")))
+	    (check-error-tag 'bad-header (lambda () (file->array (string-append sf-dir "bad_chans.snd") 0 0 123 (make-vct 123))))
+	    (check-error-tag 'bad-header (lambda () (make-readin (string-append sf-dir "bad_chans.snd"))))
 	    (check-error-tag 'wrong-type-arg (lambda () (make-iir-filter 30 (make-vct 3))))
 	    (check-error-tag 'out-of-range (lambda () (make-wave-train :size (expt 2 30))))
 	    (check-error-tag 'out-of-range (lambda () (set! (mus-srate) 0.0)))
@@ -53763,7 +53773,7 @@ EDITS: 2
 			    (lambda () (n arg1 arg2))
 			    (lambda args (car args))))
 		   make-procs))
-		(list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
+		(list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 	     keyargs)
 
 	    (if all-args
@@ -53780,9 +53790,9 @@ EDITS: 2
 				     (lambda () (n arg1 arg2 arg3))
 				     (lambda args (car args))))
 			    make-procs))
-			 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
+			 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 		      keyargs))
-		   (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log 0) (nan)))
+		   (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) (nan)))
 		  
 		  (for-each
 		   (lambda (arg1)
@@ -53799,9 +53809,9 @@ EDITS: 2
 					(lambda args (car args))))
 			       make-procs))
 			    keyargs))
-			 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
+			 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 		      keyargs))
-		   (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log 0) (nan)))))
+		   (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) (nan)))))
 
 	    (gc)(gc)
 	    
@@ -53832,7 +53842,7 @@ EDITS: 2
 	     (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
 		   (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
 		   '() '3 4 2 8 16 32 64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
-		   12345678901234567890 (log 0) (nan)))
+		   12345678901234567890 (log0) (nan)))
 	    (gc)(gc)
 	    
 	    ;; ---------------- 2 Args
@@ -53852,16 +53862,16 @@ EDITS: 2
 		    (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
 			  (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
 			  '() '3 4 2 8 16 32 64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
-			  12345678901234567890 (log 0) (nan))
+			  12345678901234567890 (log0) (nan))
 		    (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
-			  (sqrt -1.0) delay-32 :feedback -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan)))))
+			  (sqrt -1.0) delay-32 :feedback -1 0 #f #t '() vector-0 12345678901234567890 (log0) (nan)))))
 	     (if all-args
 		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
 		       (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
 		       '() '3 4 2 8 16 32 64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
-		       12345678901234567890 (log 0) (nan))
+		       12345678901234567890 (log0) (nan))
 		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
-		       (sqrt -1.0) delay-32 :frequency -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
+		       (sqrt -1.0) delay-32 :frequency -1 0 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 	    (gc)(gc)
 	    
 	    ;; ---------------- set! no Args
@@ -53879,9 +53889,9 @@ EDITS: 2
 		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
 		       (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
 		       '() '3 4 2 8 16 32 64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
-		       12345678901234567890 (log 0) (nan))
+		       12345678901234567890 (log0) (nan))
 		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
-		       (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
+		       (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 	    (gc)(gc)
 	    
 	    ;; ---------------- set! 1 Arg
@@ -53901,16 +53911,16 @@ EDITS: 2
 		    (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
 			  (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
 			  '() '3 4 2 8 16 32 64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
-			  12345678901234567890 (log 0) (nan))
+			  12345678901234567890 (log0) (nan))
 		    (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
-			  (sqrt -1.0) delay-32 :feedback -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan)))))
+			  (sqrt -1.0) delay-32 :feedback -1 0 #f #t '() vector-0 12345678901234567890 (log0) (nan)))))
 	     (if all-args
 		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
 		       (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
 		       '() '3 4 2 8 16 32 64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
-		       12345678901234567890 (log 0) (nan))
+		       12345678901234567890 (log0) (nan))
 		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
-		       (sqrt -1.0) delay-32 :frequency -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
+		       (sqrt -1.0) delay-32 :frequency -1 0 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 	    (gc)(gc)
 	    
 	    ;; ---------------- set! 2 Args
@@ -53932,23 +53942,23 @@ EDITS: 2
 		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
 			     (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
 			     '() '3 4 2 8 16 32 64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
-			     12345678901234567890 (log 0) (nan))
+			     12345678901234567890 (log0) (nan))
 		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
-			     (sqrt -1.0) delay-32 :feedback -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan)))))
+			     (sqrt -1.0) delay-32 :feedback -1 0 #f #t '() vector-0 12345678901234567890 (log0) (nan)))))
 		(if all-args
 		    (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
 			  (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
 			  '() '3 4 2 8 16 32 64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
-			  12345678901234567890 (log 0) (nan))
+			  12345678901234567890 (log0) (nan))
 		    (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
-			  (sqrt -1.0) delay-32 :frequency -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan)))))
+			  (sqrt -1.0) delay-32 :frequency -1 0 #f #t '() vector-0 12345678901234567890 (log0) (nan)))))
 	     (if all-args
 		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
 		       (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
 		       '() '3 4 2 8 16 32 64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
-		       12345678901234567890 (log 0) (nan))
+		       12345678901234567890 (log0) (nan))
 		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
-		       (sqrt -1.0) delay-32 :frequency -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
+		       (sqrt -1.0) delay-32 :frequency -1 0 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 	    (gc)(gc)
 
 
@@ -53974,11 +53984,11 @@ EDITS: 2
 				      (snd-display ";procs3: ~A ~A" err (procedure-property n 'documentation)))))
 			      procs3))
 			   (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 '#(0 1) (sqrt -1.0) delay-32 3/4 -1.0
-				 :start -1 0 3 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
+				 :start -1 0 3 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 			(list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 '#(0 1) (sqrt -1.0) delay-32 3/4 -1.0
-			      :channels -1 0 3 #f #t '() vector-0 12345678901234567890 (log 0) (nan)))))
+			      :channels -1 0 3 #f #t '() vector-0 12345678901234567890 (log0) (nan)))))
 		   (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 '#(0 1) (sqrt -1.0) delay-32 3/4 -1.0
-			 -1 0 3 #f #t '() vector-0 12345678901234567890 (log 0) (nan)))
+			 -1 0 3 #f #t '() vector-0 12345678901234567890 (log0) (nan)))
 		  (gc)(gc)
 
 		  (snd-display "set 3 args")
@@ -54000,13 +54010,13 @@ EDITS: 2
 				       (snd-display ";set-procs3: ~A ~A" err (procedure-property n 'documentation)))))
 			       set-procs3))
 			    (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-				  :wave -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
+				  :wave -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 			 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-			       :initial-contents -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
+			       :initial-contents -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 		      (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-			    :input -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
+			    :input -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 		   (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-			 -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log 0) (nan)))
+			 -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log0) (nan)))
 		  (gc)(gc)
 
 		  (snd-display "4 args")
@@ -54028,13 +54038,13 @@ EDITS: 2
 				       (snd-display ";procs4: ~A ~A ~A" err n (procedure-property n 'documentation)))))
 			       procs4))
 			    (list 1.5 "/hiho" (list 0 1) 1234 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-				  :wave -1 0 #f #t '() 12345678901234567890 (log 0) (nan))))
+				  :wave -1 0 #f #t '() 12345678901234567890 (log0) (nan))))
 			 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 (sqrt -1.0) 3/4 '#(0 1) -1.0
-			       :initial-contents -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
+			       :initial-contents -1 0 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 		      (list 1.5 "/hiho" (list 0 1) 1234 vct-3 (sqrt -1.0) 3/4 '#(0 1) -1.0
-			    -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
+			    -1 0 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 		   (list 1.5 "/hiho" (list 0 1) 1234 vct-5 (sqrt -1.0) 3/4 '#(0 1) -1.0
-			 -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan)))
+			 -1 0 #f #t '() vector-0 12345678901234567890 (log0) (nan)))
 		  (gc)(gc)
 
 		  (snd-display "set 4 args")
@@ -54058,15 +54068,15 @@ EDITS: 2
 					  (snd-display ";set-procs4: ~A ~A" err (procedure-property n 'documentation)))))
 				  set-procs4))
 			       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-				     :wave -1 0 3 16 #f #t '() 12345678901234567890 (log 0) (nan))))
+				     :wave -1 0 3 16 #f #t '() 12345678901234567890 (log0) (nan))))
 			    (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-				  :initial-contents -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
+				  :initial-contents -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 			 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-			       :srate -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
+			       :srate -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 		      (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-			    :input -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
+			    :input -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 		   (list 1.5 "/hiho" (list 0 1) 1234 vct-3 vct-5 (sqrt -1.0) delay-32 3/4 '#(0 1) -1.0
-			 -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log 0) (nan)))
+			 -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log0) (nan)))
 		  (gc)(gc)
 
 		  (clear-sincs)
@@ -54092,11 +54102,11 @@ EDITS: 2
 				      (if (eq? err 'wrong-number-of-args)
 					  (snd-display ";procs5: ~A ~A ~A" err n (procedure-property n 'documentation)))))
 				  procs5))
-			       (list 1.5 "/hiho" 1234 :wave vct-3 vct-5 (sqrt -1.0) -1 0 #f #t '() 3/4 12345678901234567890 (log 0) (nan))))
-			    (list 1.5 "/hiho" 1234 :size vct-3 vct-5 (sqrt -1.0) -1 0 #f #t '() 3/4 12345678901234567890 (log 0) (nan))))
-			 (list 1.5 "/hiho" 1234 vct-3 vct-5 (sqrt -1.0) -1 0 #f #t '() 3/4 12345678901234567890 (log 0) (nan))))
-		      (list 1.5 "/hiho" 1234 vct-3 vct-5 (sqrt -1.0) -1 0 #f #t '() 3/4 12345678901234567890 (log 0) (nan))))
-		   (list 1.5 "/hiho" 1234 vct-3 vct-5 (sqrt -1.0) -1 0 #f #t '() 3/4 12345678901234567890 (log 0) (nan)))
+			       (list 1.5 "/hiho" 1234 :wave vct-3 vct-5 (sqrt -1.0) -1 0 #f #t '() 3/4 12345678901234567890 (log0) (nan))))
+			    (list 1.5 "/hiho" 1234 :size vct-3 vct-5 (sqrt -1.0) -1 0 #f #t '() 3/4 12345678901234567890 (log0) (nan))))
+			 (list 1.5 "/hiho" 1234 vct-3 vct-5 (sqrt -1.0) -1 0 #f #t '() 3/4 12345678901234567890 (log0) (nan))))
+		      (list 1.5 "/hiho" 1234 vct-3 vct-5 (sqrt -1.0) -1 0 #f #t '() 3/4 12345678901234567890 (log0) (nan))))
+		   (list 1.5 "/hiho" 1234 vct-3 vct-5 (sqrt -1.0) -1 0 #f #t '() 3/4 12345678901234567890 (log0) (nan)))
 		  (gc)(gc)
 
 		  (clear-sincs)
@@ -54123,7 +54133,7 @@ EDITS: 2
 					 (if (eq? err 'wrong-number-of-args)
 					     (snd-display ";procs6: ~A ~A" err (procedure-property n 'documentation)))))
 				     procs6))
-				  (list 1.5 "/hiho" -1234 -1 0 #f #t '() vct-3 (log 0))))
+				  (list 1.5 "/hiho" -1234 -1 0 #f #t '() vct-3 (log0))))
 			       (list 1.5 "/hiho" -1234 0 vct-5 #f #t)))
 			    (list 1.5 "/hiho" -1234 vct-3 #f #t)))
 			 (list 1.5 "/hiho" 1234 vct-3 -1 #f #t)))
@@ -54157,7 +54167,7 @@ EDITS: 2
 					       (if (eq? err 'wrong-number-of-args)
 						   (snd-display ";procs8: ~A ~A" err (procedure-property n 'documentation)))))
 					   procs8))
-					(list 1.5 -1 #f (log 0))))
+					(list 1.5 -1 #f (log0))))
 				     (list "/hiho" -1 1234 vct-5)))
 				  (list #t #f -1 vct-3)))
 			       (list (sqrt -1.0) 0 1)))
@@ -54420,6 +54430,7 @@ EDITS: 2
   "with-mix.snd"
   "1"
   "gtk-errors"
+  "accelmap"
 
   (string-append sf-dir "mus10.snd.snd")
   (string-append sf-dir "ieee-text-16.snd.snd")

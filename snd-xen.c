@@ -79,7 +79,8 @@ int snd_protect(XEN obj)
 	  gc_last_cleared = -1;
 	  return(gc_last_set);
 	}
-      for (i = 0; i < gc_protection_size; i++)
+
+      for (i = gc_last_set; i < gc_protection_size; i++)
 	if (XEN_EQ_P(XEN_VECTOR_REF(gc_protection, i), DEFAULT_GC_VALUE))
 	  {
 	    XEN_VECTOR_SET(gc_protection, i, obj);
@@ -92,6 +93,20 @@ int snd_protect(XEN obj)
 #endif
 	    return(gc_last_set);
 	  }
+      for (i = 0; i < gc_last_set; i++)
+	if (XEN_EQ_P(XEN_VECTOR_REF(gc_protection, i), DEFAULT_GC_VALUE))
+	  {
+	    XEN_VECTOR_SET(gc_protection, i, obj);
+#if DEBUGGING
+	    snd_protect_callers[i] = (char *)caller;
+#endif
+	    gc_last_set = i;
+#if DEBUGGING
+	    if (i > max_gc_index) max_gc_index = i;
+#endif
+	    return(gc_last_set);
+	  }
+
       tmp = gc_protection;
       old_size = gc_protection_size;
       gc_protection_size *= 2;
