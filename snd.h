@@ -27,9 +27,7 @@
  *                 These determine the internal representation of sample values. The default
  *                 is 0 for SNDLIB_USE_FLOATS (so 32-bit ints are used), and 24 for
  *                 MUS_SAMPLE_BITS (this sets the size of the "fraction").  Floats are
- *                 slightly faster on the Pentium.  Someday I may have Snd maintain the
- *                 external data type as long as possible (i.e. have three possible
- *                 internal representations).
+ *                 slightly faster on the Pentium.
  *
  *   HAVE_ALSA     In Linux, OSS is the default audio system; HAVE_ALSA overrides this.
  *                 There are many other similar audio choices (SGI, ESD, etc)
@@ -134,7 +132,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "28-Oct-02"
+#define SND_VERSION "29-Oct-02"
 #define SND_RPM_VERSION "6.3"
 #define SND_MAJOR_VERSION 6
 #define SND_MINOR_VERSION 3

@@ -1,7 +1,3 @@
-/* DIFFS: no "just-sounds" button since the search proc is apparently a simple string
- *        no forced re-read of directory when file is written (update button?)
- */
-
 #include "snd.h"
 
 /* most of these dialogs present a view of the various file header possibilities */
@@ -121,15 +117,6 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
     }
 }
 
-
-static char *last_filename = NULL;
-
-static char *snd_gtk_get_filename(GtkWidget *dialog)
-{
-  last_filename = (char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(dialog));
-  return(last_filename);
-}
-
 static GtkWidget *snd_gtk_file_selection_new(snd_state *ss, char *title, GtkSignalFunc gdelete, GtkSignalFunc ok, GtkSignalFunc cancel)
 {
   GtkWidget *new_dialog;
@@ -150,7 +137,6 @@ static GtkWidget *snd_gtk_file_selection_new(snd_state *ss, char *title, GtkSign
 				 0,
 				 g_cclosure_new_swap(cancel, (GtkObject *)ss, 0),
 				 0);
-  if (last_filename) gtk_file_selection_set_filename(GTK_FILE_SELECTION(new_dialog), last_filename);
   gtk_file_selection_hide_fileop_buttons(GTK_FILE_SELECTION(new_dialog));
   return(new_dialog);
 }
@@ -183,7 +169,7 @@ static void dialog_select_callback(GtkTreeSelection *selection, gpointer context
   char timestr[64];
   time_t date;
   file_dialog_info *fd = (file_dialog_info *)context;
-  filename = snd_gtk_get_filename(fd->dialog);
+  filename = (char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(fd->dialog));
   if ((filename) && (is_sound_file(filename)))
     {
       buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
@@ -230,7 +216,7 @@ static void play_selected_callback(GtkWidget *w, gpointer data)
     {
       if ((fd->file_play_sp) && (fd->file_play_sp->playing)) 
 	stop_playing_sound(fd->file_play_sp);
-      filename = snd_gtk_get_filename(fd->dialog);
+      filename = (char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(fd->dialog));
       fd->file_play_sp = make_sound_readable(get_global_state(), filename, FALSE);
       fd->file_play_sp->delete_me = 1;
       if (fd->file_play_sp)
@@ -297,19 +283,16 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
 {
   snd_info *sp;
   snd_state *ss = (snd_state *)data;
-  last_filename = snd_gtk_get_filename(open_dialog->dialog);
+  char *filename;
+  filename = (char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(open_dialog->dialog));
   gtk_widget_hide(open_dialog->dialog);
   file_dialog_stop_playing(open_dialog);
-  if (!(is_directory(last_filename)))
+  if (!(is_directory(filename)))
     {
-      sp = snd_open_file(last_filename, ss, open_dialog->file_dialog_read_only);
+      sp = snd_open_file(filename, ss, open_dialog->file_dialog_read_only);
       if (sp) select_channel(sp, 0);           /* add_sound_window (snd-xsnd.c) will report reason for error, if any */
     }
-  else
-    {
-      snd_error("%s is a directory", last_filename);
-      last_filename = NULL;
-    }
+  else snd_error("%s is a directory", filename);
 }
 
 static void file_open_dialog_dismiss(GtkWidget *w, gpointer context)
@@ -357,7 +340,7 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
   gtk_widget_hide(mix_dialog->dialog);
   file_dialog_stop_playing(mix_dialog);
   mix_complete_file_at_cursor(any_selected_sound(ss),
-			      snd_gtk_get_filename(mix_dialog->dialog),
+			      (char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(mix_dialog->dialog)),
 			      "File: mix", with_mix_tags(ss));
 }
 
@@ -583,7 +566,6 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int save_type, 
 				     0,
 				     g_cclosure_new_swap((GtkSignalFunc)save_as_cancel_callback, (GtkObject *)ss, 0),
 				     0);
-      if (last_filename) gtk_file_selection_set_filename(GTK_FILE_SELECTION(open_dialog), last_filename);
       gtk_file_selection_hide_fileop_buttons(GTK_FILE_SELECTION(save_as_dialog));
 
       fbox = gtk_vbox_new(FALSE, 0);

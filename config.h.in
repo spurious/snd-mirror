@@ -81,14 +81,12 @@
 
 #undef LINUX
 #undef SGI
-#undef NEXT
 #undef ALPHA
 #undef HPUX
 #undef SUN
 #undef SCO5
 #undef OPENBSD
 #undef WINDOZE
-#undef AIX
 #undef HAVE_OSS
 #undef HAVE_ALSA
 #undef HAVE_SAM_9407

@@ -1,11 +1,133 @@
 #include "snd.h"
 
-/* TODO: make completions list mouse sensitive as in Motif version (requires dialog etc)
- *        -> use click(select) callback!
- */
-
-static GtkWidget *listener_text = NULL;
+static GtkWidget *completion_dialog = NULL;
+static int first_time = TRUE;
+static GtkWidget *listener_text = NULL, *completion_list = NULL;
 static int printout_end;
+#define LISTENER_BUFFER gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text))
+
+static void list_completions_callback(GtkTreeSelection *selection, gpointer *gp)
+{
+  GtkTreeIter iter;
+  gchar *value;
+  GtkTreeModel *model;
+  GtkTreeSelection *tree;
+  int beg, end, i, j, old_len, new_len;
+  char *old_text;
+  snd_state *ss = (snd_state *)gp;
+  if (first_time)
+    {
+      first_time = FALSE;
+      tree = gtk_tree_view_get_selection(GTK_TREE_VIEW(completion_list));
+      gtk_tree_selection_unselect_all(tree);
+      return;
+    }
+  if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
+  gtk_tree_model_get(model, &iter, 0, &value, -1);
+  beg = printout_end + 1;
+  end = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
+  old_text = sg_get_text(listener_text, beg, end);
+  old_len = snd_strlen(old_text);
+  new_len = snd_strlen(value);
+  for (i = old_len - 1, j = new_len - 1; j >= 0; j--)
+    {
+      if (old_text[i] != value[j])
+	{
+	  i = old_len - 1;
+	  if (old_text[i] == value[j]) i--;
+	}
+      else i--;
+    }
+  append_listener_text(0, (char *)(value - 1 + old_len - i));
+  if (old_text) g_free(old_text);
+  gtk_widget_hide(completion_dialog);
+}
+
+static void dismiss_completion_callback(GtkWidget *w, gpointer context)
+{
+  gtk_widget_hide(completion_dialog);
+}
+
+static void help_completion_callback(GtkWidget *w, gpointer context)
+{
+  snd_help(get_global_state(), "completion",
+"These are the completions that Snd thinks might be likely.\n\
+If you select one, it will be used to complete the current name.\n\
+");
+}
+
+static void delete_completion_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
+{
+  gtk_widget_hide(completion_dialog);
+}
+
+static void start_completion_dialog(int num_items, char **items)
+{
+  GtkWidget *help_button, *dismiss_button;
+  snd_state *ss;
+  GtkTreeSelection *tree;
+  if (!completion_dialog)
+    {
+      ss = get_global_state();
+      completion_dialog = gtk_dialog_new();
+      g_signal_connect_closure_by_id(GTK_OBJECT(completion_dialog),
+				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(completion_dialog))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(delete_completion_dialog), (gpointer)ss, 0),
+				     0);
+      gtk_window_set_title(GTK_WINDOW(completion_dialog), "Completions");
+      sg_make_resizable(completion_dialog);
+      set_background(completion_dialog, (ss->sgx)->basic_color);
+      gtk_container_set_border_width (GTK_CONTAINER(completion_dialog), 4);
+      gtk_widget_realize(completion_dialog);
+      gtk_window_resize(GTK_WINDOW(completion_dialog), 260, 200);
+
+      help_button = gtk_button_new_with_label("Help");
+      dismiss_button = gtk_button_new_with_label("Dismiss");
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(completion_dialog)->action_area), dismiss_button, FALSE, TRUE, 10);
+      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(completion_dialog)->action_area), help_button, FALSE, TRUE, 10);
+      g_signal_connect_closure_by_id(GTK_OBJECT(dismiss_button),
+				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(dismiss_button))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(dismiss_completion_callback), (gpointer)ss, 0),
+				     0);
+      g_signal_connect_closure_by_id(GTK_OBJECT(help_button),
+				     g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(help_button))),
+				     0,
+				     g_cclosure_new(GTK_SIGNAL_FUNC(help_completion_callback), (gpointer)ss, 0),
+				     0);
+      gtk_widget_show(dismiss_button);
+      gtk_widget_show(help_button);
+      first_time = TRUE;
+      completion_list = sg_make_list("Completions", 
+				     GTK_DIALOG(completion_dialog)->vbox,
+				     0, /* use container_add */
+				     (gpointer)ss,
+				     num_items, items,
+				     GTK_SIGNAL_FUNC(list_completions_callback),
+				     0, 0, 0, 0);
+
+      set_dialog_widget(ss, COMPLETION_DIALOG, completion_dialog);
+    }
+  else 
+    {
+      int i;
+      GtkTreeIter iter;
+      GtkTreeModel *model;
+      model = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(completion_list)));
+      gtk_list_store_clear(model);
+      for (i = 0; i < num_items; i++) 
+	{
+	  gtk_list_store_append(model, &iter);
+	  gtk_list_store_set(model, &iter, 0, items[i], -1);
+	}
+      raise_dialog(completion_dialog);
+    }
+  tree = gtk_tree_view_get_selection(GTK_TREE_VIEW(completion_list));
+  gtk_tree_selection_unselect_all(tree);
+  gtk_widget_show(completion_dialog);
+}
+
 
 void save_listener_text(FILE *fp)
 {
@@ -26,7 +148,7 @@ void append_listener_text(int end, char *msg)
   if (listener_print_p(msg))
     {
       ss = get_global_state();
-      chars = gtk_text_buffer_get_char_count(gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text)));
+      chars = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
       if (chars > 0) sg_set_cursor(listener_text, chars + 1);
       sg_text_insert(listener_text, msg);
     }
@@ -38,7 +160,7 @@ static void listener_completion(snd_state *ss)
   char *old_text, *new_text = NULL, *file_text = NULL;
   int try_completion = 1;
   beg = printout_end + 1;
-  end = gtk_text_buffer_get_char_count(gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text)));
+  end = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
   if (end <= beg) return;
   old_text = sg_get_text(listener_text, beg, end);
   /* now old_text is the stuff typed since the last prompt */
@@ -52,8 +174,15 @@ static void listener_completion(snd_state *ss)
 	}
       if (strcmp(old_text, new_text) == 0) 
 	matches = get_completion_matches();
-      sg_text_delete(listener_text, sg_cursor_position(listener_text) - (end - beg), end - beg);
+      sg_text_delete(listener_text, beg, end);
       append_listener_text(0, new_text);
+      /*
+      fprintf(stderr,"old: %s (%d %d), new: %s, delete from %d %d\n",
+	      old_text,
+	      beg,end,
+	      new_text,
+	      sg_cursor_position(listener_text) - (end - beg), end - beg);
+      */
       if (new_text) 
 	{
 	  FREE(new_text); 
@@ -81,22 +210,8 @@ static void listener_completion(snd_state *ss)
 
 void snd_completion_help(snd_state *ss, int matches, char **pbuffer) 
 {
-  int i, len;
-  char *buffer;
   if (matches > 0)
-    {
-      len = 0;
-      for (i = 0; i < matches; i++) 
-	len += (snd_strlen(pbuffer[i]) + 3);
-      buffer = (char *)CALLOC(len, sizeof(char));
-      for (i = 0; i < matches; i++)
-	{
-	  strcat(buffer, pbuffer[i]);
-	  strcat(buffer, "\n");
-	}
-      snd_help(ss, "completions", buffer);
-      FREE(buffer);
-    }
+    start_completion_dialog(matches, pbuffer);
 }
 
 
@@ -111,7 +226,7 @@ void listener_append(char *msg)
       if ((ss->sgx)->graph_is_active)
 	(ss->sgx)->graph_is_active = FALSE;
       append_listener_text(0, msg);
-      printout_end = gtk_text_buffer_get_char_count(gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text))) - 1;
+      printout_end = gtk_text_buffer_get_char_count(LISTENER_BUFFER) - 1;
     }
 }
 
@@ -123,7 +238,7 @@ void listener_append_and_prompt(char *msg)
       if (msg)
 	append_listener_text(0, msg);
       append_listener_text(0, listener_prompt_with_cr(get_global_state()));
-      cmd_eot = gtk_text_buffer_get_char_count(gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text)));
+      cmd_eot = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
       printout_end = cmd_eot - 1;
     }
 }
@@ -141,7 +256,7 @@ static void grab_line(snd_state *ss)
   int current_position, last_position, i, j, k;
   full_str = sg_get_text(listener_text, 0, -1);
   current_position = sg_cursor_position(listener_text);
-  last_position = gtk_text_buffer_get_char_count(gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text)));
+  last_position = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
   for (i = current_position; i < last_position; i++)
     if (full_str[i] == '\n')
       break;
@@ -201,7 +316,7 @@ static void listener_help(snd_state *ss)
   source = sg_get_text(listener_text, 0, -1);
   if (source)
     {
-      len = gtk_text_buffer_get_char_count(gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text)));
+      len = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
       /* look for "(name...)" or "\n>name" */
       prompt = listener_prompt(ss);
       for (i = len - 1; i >= 0; i--)
@@ -314,7 +429,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 				{
 				  if ((event->keyval == snd_K_greater) && (event->state & snd_MetaMask))
 				    {
-				      end = gtk_text_buffer_get_char_count(gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text)));
+				      end = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
 				      sg_set_cursor(listener_text, end + 1);
 				    }
 				  else
@@ -658,9 +773,9 @@ static XEN g_listener_selected_text(void)
   if (listener_text)
     {
       GtkTextIter start, end;
-      if (gtk_text_buffer_get_selection_bounds(gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text)), &start, &end))
+      if (gtk_text_buffer_get_selection_bounds(LISTENER_BUFFER, &start, &end))
 	{
-	  txt = gtk_text_buffer_get_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text)), &start, &end, TRUE);
+	  txt = gtk_text_buffer_get_text(LISTENER_BUFFER, &start, &end, TRUE);
 	  if (txt) 
 	    {
 	      res = C_TO_XEN_STRING(txt);
