@@ -189,6 +189,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+17-Jul:  optargs keyword bug was caused by string-length which existed for guile 1.3.0 (fixed).\n\
 14-Jul:  Snd appears to work in FreeBSD (thanks to Heiko Recktenwald).\n\
          pvoc.scm, loop.scm, fmv.scm.\n\
          -l no longer necessary -- if file has .scm extension, it is assumed to be Scheme.\n\
@@ -1331,6 +1332,7 @@ all refer to the same thing.\n\
   " S_vct_fillB "         (vobj val)\n\
   " S_vct_length "        (vobj)\n\
   " S_vct_mapB "          (obj proc)\n\
+  " S_vct_moveB "         (obj new old)\n\
   " S_vct_multiplyB "     (vobj1 vobj2)\n\
   " S_vct_offsetB "       (vobj val)\n\
   " S_vct_ref "           (vobj pos)\n\

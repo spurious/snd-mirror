@@ -142,6 +142,7 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
   if (gh_string_p(stmp)) 
     scm_display_error_message(stmp, gh_caddr(throw_args), port);
   else scm_display(tag, port);
+
 #if 1
   /* scm_display(gh_car(gh_cdddr(throw_args)), port); */
   /* scm_display_error (scm_the_last_stack_fluid, port, gh_car(throw_args), SCM_CADR(throw_args), SCM_CADDR(throw_args), SCM_EOL); */
@@ -179,7 +180,7 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
   g_error_occurred = 1;
   if (name_buf) free(name_buf);
   state->eval_error = 1;
-  return(gh_symbol2scm("snd-eval-error"));
+  return(SND_EVAL_ERROR);
 }
 
 int procedure_ok(SCM proc, int req_args, int opt_args, char *caller, char *arg_name, int argn)
@@ -3787,6 +3788,7 @@ static SCM g_describe_audio(void)
   return(SCM_BOOL_T);
 }
 
+#if HAVE_GUILE_1_3_0
 static SCM g_string_length(SCM str)
 {
   #define H_string_length "(" S_string_length " str) -> length of string str"
@@ -3799,6 +3801,7 @@ static SCM g_string_length(SCM str)
     }
   RTNINT(0);
 }
+#endif
 
 
 static SCM g_start_progress_report(SCM snd)
@@ -4248,7 +4251,9 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure2_0(S_filter_selection,g_filter_selection),H_filter_selection);
   DEFINE_PROC(gh_new_procedure2_0(S_define_envelope,g_define_envelope),H_define_envelope);
   DEFINE_PROC(gh_new_procedure1_7(S_graph,g_graph),H_graph);
+#if HAVE_GUILE_1_3_0
   DEFINE_PROC(gh_new_procedure1_0(S_string_length,g_string_length),H_string_length);
+#endif
   DEFINE_PROC(gh_new_procedure0_6(S_samples_vct,samples2vct),H_samples2vct);
   DEFINE_PROC(gh_new_procedure0_7(S_samples2sound_data,samples2sound_data),H_samples2sound_data);
   DEFINE_PROC(gh_new_procedure0_3(S_transform_samples_vct,transform_samples2vct),H_transform_samples2vct);

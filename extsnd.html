@@ -1212,6 +1212,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="vctfill">vct-fill!</a>         (vobj val)    vobj[i] = val, returns vobj.
   <a name="vctlength">vct-length</a>        (vobj)        length of data array in vobj.
   <a name="vctmap">vct-map!</a>          (vobj proc)   vobj[i] = (funcall proc).
+  <a name="vctmove">vct-move!<a/>         (vobj new old) v[new++] = v[old++], returns v
   <a name="vctmultiply">vct-multiply!</a>     (vobj1 vobj2) vobj1[i] *= vobj2[i], returns vobj1.
   <a name="vctoffset">vct-offset!</a>       (vobj val)    vobj[i] += val, returns vobj.
   <a name="vctpeak">vct-peak</a>          (vobj)        abs max val in vobj
@@ -1238,8 +1239,6 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                   of <i>var</i> thereafter and treats lists as envelopes. (<i>defvar</i> is a macro).
                                   I'm using <i>defvar</i> here rather than some more perspicuous name like def-envelope
                                   so that Snd and CLM can share envelope files.
-  <a name="lload">load</a>              (file)        load <i>file</i> (containing lisp code -- this is Scheme's load function if Guile is loaded).
-  string-length     (str)         length of <i>str</i>
 </small></pre><hr>
 
 <h3><a name="sndhooks">Hooks</a></h3>

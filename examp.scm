@@ -1741,12 +1741,6 @@
 ;;; CLM version is v.ins, C version is in sndlib.html
 ;;; a version treating the entire violin as a generator is in fmv.scm.
 
-(define (keyword->symbol kw)
-  (let ((sym (symbol->string (keyword-dash-symbol kw))))
-    (string->symbol (substring sym 1 (string-length sym)))))
-;;; this is needed to get around a bug in optargs
-
-
 (define pi 3.141592653589793)
 
 (define fm-violin 

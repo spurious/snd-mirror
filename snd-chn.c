@@ -15,6 +15,7 @@
 #endif
 
 #if HAVE_GUILE
+#include "sg.h"
 static int after_fft(snd_state *ss, chan_info *cp, Float scaler);
 static int dont_graph(snd_state *ss, chan_info *cp);
 static void after_graph(chan_info *cp);
@@ -2599,10 +2600,14 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 	      res = g_call1(proc,gh_double2scm((double)(MUS_SAMPLE_TO_FLOAT(val))));
 	      if ((SCM_NFALSEP(res)) || (ss->eval_error))
 		{
-		  ss->eval_error = 0;
 		  for (j=ip;j<si->chans;j++) free_snd_fd(sfs[j]);
 		  free_sync_state(sc); 
 		  if (reporting) finish_progress_report(ss,sp,NOT_FROM_ENVED);
+		  if (ss->eval_error)
+		    {
+		      ss->eval_error = 0;
+		      return(SND_EVAL_ERROR);
+		    }
 		  return(gh_list(res,gh_int2scm(kp+beg),gh_int2scm(cp->chan),gh_int2scm(sp->index),SCM_UNDEFINED));
 		}
 	      if (reporting) 
@@ -2725,24 +2730,28 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
   if (reporting) finish_progress_report(ss,sp,NOT_FROM_ENVED);
   for (ip=0;ip<si->chans;ip++) free_snd_fd(sfs[ip]);
   free_sync_state(sc); 
-  if ((ss->stopped_explicitly) || (ss->eval_error))
+  if (ss->stopped_explicitly)
     {
+      cgbuf = (char *)CALLOC(128,sizeof(char));
+      sprintf(cgbuf,"C-G stopped scan at sample %d",kp+beg);
+      report_in_minibuffer(sp,cgbuf);
+      FREE(cgbuf);
       ss->stopped_explicitly = 0;
-      ss->eval_error = 0;
-      if (ss->stopped_explicitly)
-	{
-	  cgbuf = (char *)CALLOC(128,sizeof(char));
-	  sprintf(cgbuf,"C-G stopped scan at sample %d",kp+beg);
-	  report_in_minibuffer(sp,cgbuf);
-	  FREE(cgbuf);
-	}
       return(SCM_BOOL_F);
     }
   else
     {
-      if (SCM_FALSEP(res))
-	return(g_call2(proc,SCM_BOOL_F,SCM_BOOL_F));
-      else return(gh_int2scm(pos));
+      if (ss->eval_error)
+	{
+	  ss->eval_error = 0;
+	  return(SND_EVAL_ERROR);
+	}
+      else
+	{
+	  if (SCM_FALSEP(res))
+	    return(g_call2(proc,SCM_BOOL_F,SCM_BOOL_F));
+	  else return(gh_int2scm(pos));
+	}
     }
 }
 
@@ -2885,7 +2894,7 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 		  free_sync_state(sc); 
 		  if (reporting) finish_progress_report(ss,sp,NOT_FROM_ENVED);
 		  ss->eval_error = 0;
-		  return(SCM_BOOL_F);
+		  return(SND_EVAL_ERROR);
 		}
 	      if (SCM_NFALSEP(res)) /* if #f, no output on this pass */
 		{
@@ -3045,7 +3054,7 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
   if (ss->eval_error)
     {
       ss->eval_error = 0;
-      return(SCM_BOOL_F);
+      return(SND_EVAL_ERROR);
     }
   if (ss->stopped_explicitly)
     {

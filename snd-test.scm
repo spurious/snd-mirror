@@ -7,8 +7,8 @@
 (read-set! keywords 'prefix)
 
 (define tests 1)
-(set! full-test #t)
-;(set! snd-test 13)
+(set! full-test #f)
+(set! snd-test 8)
 ;;; to run a specific test: ./snd -e "(set! snd-test 4) (set! full-test #f)" -l snd-test.scm
 (define include-clm #f)
 (define original-prompt (listener-prompt))
@@ -1415,6 +1415,18 @@
 	(if (not (fveql v3 '(1.000 2.000 -8.000 0.000 16.000 0.000) 0)) (snd-print (format #f "partials->polynomial(4): ~A?" v3)))
 	(if (not (fveql v4 '(-0.510 0.700 1.180 0.400 -0.480 0.000 0.320) 0)) (snd-print (format #f "partials->polynomial(5): ~A?" v4)))
 	(if (not (fveql v5 '(0.900 1.060 0.400 -0.320 0.000 0.320 0.000) 0)) (snd-print (format #f "partials->polynomial(6): ~A?" v5))))
+
+      (let* ((amps (list->vct '(1.0)))
+	     (phases (list->vct '(0.0)))
+	     (val (sum-of-sines amps phases)))
+	(if (fneq val 0.0) (snd-print (format #f "sum-of-sines: ~A 0.0?" val)))
+	(vct-set! phases 0 (/ pi 2))
+	(set! val (sum-of-sines amps phases))
+	(if (fneq val 1.0) (snd-print (format #f "sum-of-sines: ~A 1.0?" val)))
+	(set! amps (list->vct '(0.5 0.25 1.0)))
+	(set! phases (list->vct '(1.0 0.5 2.0)))
+	(set! val (sum-of-sines amps phases))
+	(if (fneq val 1.44989) (snd-print (format #f "sum-of-sines: ~A 1.449?" val))))
 
       (let ((rdat (make-vct 16))
 	    (idat (make-vct 16))

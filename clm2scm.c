@@ -468,6 +468,7 @@ static SCM local_doc;
 #define S_convolution            "convolution"
 #define S_rectangular2polar      "rectangular->polar"
 #define S_array_interp           "array-interp"
+#define S_sum_of_sines           "sum-of-sines"
 
 #define S_bartlett_window        "bartlett-window"
 #define S_blackman2_window       "blackman2-window"
@@ -600,6 +601,17 @@ static SCM g_dot_product(SCM val1, SCM val2)
   v1 = get_vct(val1);
   v2 = get_vct(val2);
   return(scm_return_first(gh_double2scm(mus_dot_product(v1->data,v2->data,v1->length)),val1,val2));
+}
+
+static SCM g_sum_of_sines(SCM amps, SCM phases)
+{
+  #define H_sum_of_sines "(" S_sum_of_sines " amps phases) -> sum of amps[i] * sin(phases[i])"
+  vct *v1,*v2;
+  SCM_ASSERT(vct_p(amps),amps,SCM_ARG1,S_sum_of_sines);
+  SCM_ASSERT(vct_p(phases),phases,SCM_ARG2,S_sum_of_sines);
+  v1 = get_vct(amps);
+  v2 = get_vct(phases);
+  return(scm_return_first(gh_double2scm(mus_sum_of_sines(v1->data,v2->data,v1->length)),amps,phases));
 }
 
 static SCM g_fft_window_1(char *caller, int choice, SCM val1, SCM val2, SCM ulen) 
@@ -777,6 +789,7 @@ static void init_simple_stuff(void)
   DEFINE_PROC(gh_new_procedure2_1(S_convolution,g_convolution),H_mus_convolution);
   DEFINE_PROC(gh_new_procedure2_0(S_rectangular2polar,g_rectangular2polar),H_rectangular2polar);
   DEFINE_PROC(gh_new_procedure(S_array_interp,SCM_FNC g_array_interp,2,1,0),H_array_interp);
+  DEFINE_PROC(gh_new_procedure2_0(S_sum_of_sines,g_sum_of_sines),H_sum_of_sines);
 
   gh_define(S_rectangular_window,gh_int2scm(MUS_RECTANGULAR_WINDOW));
   gh_define(S_hanning_window,gh_int2scm(MUS_HANNING_WINDOW));
@@ -4236,7 +4249,7 @@ static void init_locs(void)
 
 /* ---------------- src ---------------- */
 
-static Float funcall_reader (void *ptr, int direction)
+static Float funcall1 (void *ptr, int direction) /* intended for "as-needed" input funcs */
 {
   /* if this is called, it's a callback from C, where ptr is a mus_scm object whose vcts[0]
    * field is an SCM procedure to be called, the result being returned back to C.  In the
@@ -4316,7 +4329,7 @@ static SCM g_make_src(SCM arg1, SCM arg2, SCM arg3, SCM arg4, SCM arg5, SCM arg6
   gn->vcts = (SCM *)CALLOC(1,sizeof(SCM));
   if (!(SCM_UNBNDP(in_obj))) gn->vcts[0] = in_obj; else gn->vcts[0] = SCM_EOL;
   gn->nvcts = 1;
-  gn->gen = mus_make_src(funcall_reader,srate,wid,gn);
+  gn->gen = mus_make_src(funcall1,srate,wid,gn);
 #if (!HAVE_GUILE_1_3_0)
   SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
 #else
@@ -4441,7 +4454,7 @@ static SCM g_make_granulate(SCM arglist)
   gn->vcts = (SCM *)CALLOC(1,sizeof(SCM));
   if (!(SCM_UNBNDP(in_obj))) gn->vcts[0] = in_obj; else gn->vcts[0] = SCM_EOL;
   gn->nvcts = 1;
-  gn->gen = mus_make_granulate(funcall_reader,expansion,segment_length,segment_scaler,output_hop,ramp_time,jitter,maxsize,gn);
+  gn->gen = mus_make_granulate(funcall1,expansion,segment_length,segment_scaler,output_hop,ramp_time,jitter,maxsize,gn);
 #if (!HAVE_GUILE_1_3_0)
   SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
 #else
@@ -4537,7 +4550,7 @@ static SCM g_make_convolve(SCM arglist)
   gn->vcts = (SCM *)CALLOC(2,sizeof(SCM));
   if (!(SCM_UNBNDP(in_obj))) gn->vcts[0] = in_obj; else gn->vcts[0] = SCM_EOL;
   gn->vcts[1] = filt;
-  gn->gen = mus_make_convolve(funcall_reader,filter->data,fft_size,filter->length,gn);
+  gn->gen = mus_make_convolve(funcall1,filter->data,fft_size,filter->length,gn);
 #if (!HAVE_GUILE_1_3_0)
   SCM_RETURN_NEWSMOB(mus_scm_tag,gn);
 #else
@@ -4708,7 +4721,7 @@ void init_mus2scm_module(void)
 }
 
 
-#define NUM_CLM_NAMES 242
+#define NUM_CLM_NAMES 243
 static char *clm_names[NUM_CLM_NAMES] = {
 S_all_pass,S_all_pass_p,S_amplitude_modulate,S_array2file,S_array_interp,S_asymmetric_fm,S_asymmetric_fm_p,S_bartlett_window,
 S_blackman2_window,S_blackman3_window,S_blackman4_window,S_buffer2frame,S_buffer2sample,S_buffer_empty_p,S_buffer_full_p,
@@ -4735,7 +4748,7 @@ S_out_any,S_outa,S_outb,S_outc,S_outd,S_partials2polynomial,S_partials2wave,S_pa
 S_poisson_window,S_polynomial,S_pulse_train,S_pulse_train_p,S_radians_degrees,S_radians_hz,S_rand,S_rand_interp,S_rand_interp_p,S_rand_p,
 S_readin,S_readin_p,S_rectangular2polar,S_rectangular_window,S_restart_env,S_riemann_window,S_ring_modulate,S_sample2buffer,S_sample2file,
 S_sample2file_p,S_sample2frame,S_sawtooth_wave,S_sawtooth_wave_p,S_sine_summation,S_sine_summation_p,S_spectrum,S_square_wave,
-S_square_wave_p,S_src,S_src_p,S_sum_of_cosines,S_sum_of_cosines_p,S_table_lookup,S_table_lookup_p,S_tap,S_triangle_wave,S_triangle_wave_p,
+S_square_wave_p,S_src,S_src_p,S_sum_of_cosines,S_sum_of_cosines_p,S_sum_of_sines,S_table_lookup,S_table_lookup_p,S_tap,S_triangle_wave,S_triangle_wave_p,
 S_tukey_window,S_two_pole,S_two_pole_p,S_two_zero,S_two_zero_p,S_wave_train,S_wave_train_p,S_waveshape,S_waveshape_p,S_welch_window
 };
 
@@ -4939,6 +4952,7 @@ static char CLM_help_string[] =
   src?                (gen)                #t if gen is sample-rate converter\n\
   sum-of-cosines      (gen fm)             sum-of-cosines (pulse-train) generator\n\
   sum-of-cosines?     (gen)                #t if gen is sum-of-cosines generator\n\
+  sum-of-sines        (amps phases)        additive synthesis\n\
   table-lookup        (gen fm)             table-lookup generator\n\
   table-lookup?       (gen)                #t if gen is table-lookup generator\n\
   tap                 (gen pm)             delay line tap\n\

@@ -12,9 +12,6 @@
 
 (use-modules (ice-9 optargs))
 (read-set! keywords 'prefix)
-(define (keyword->symbol kw)
-  (let ((sym (symbol->string (keyword-dash-symbol kw))))
-    (string->symbol (substring sym 1 (string-length sym)))))
 
 (define pi 3.141592653589793)
 
@@ -42,7 +39,8 @@
 	    (fm1-index #f) 
 	    (fm2-index #f) 
 	    (fm3-index #f)
-	    (base 1.0))
+	    (base 1.0)
+	    #&allow-other-keys)
     (let* ((frq-scl (hz->radians frequency))
 	   (modulate (not (zero? fm-index)))
 	   (maxdev (* frq-scl fm-index))
@@ -131,7 +129,7 @@
 	      :amp-env (let ((e (make-env :envelope (or amp-env '(0 0 1 1 2 0)) 
 					  :scaler amp 
 					  :end dur)))
-					(lambda () (env e)))))
+			 (lambda () (env e)))))
 	  (data (samples->vct beg dur)))
       (do ((i 0 (1+ i)))
 	  ((= i dur))
@@ -147,7 +145,7 @@
 	      :amp-env (let ((e (make-env :envelope (or amp-env '(0 0 1 1 2 0)) 
 					  :scaler amp 
 					  :end dur)))
-					(lambda () (env e)))
+			 (lambda () (env e)))
 	      :fm1-env (let ((osc (make-oscil 100.0)))
 			 (lambda () (oscil osc)))))
 	  (data (samples->vct beg dur)))

@@ -15,7 +15,7 @@
 #endif
       
 
-#define NUM_COMMANDS 745
+#define NUM_COMMANDS 746
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_abortQ,S_activate_listener,S_add_mark,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -179,7 +179,7 @@ static char *snd_commands[NUM_COMMANDS]={
 
   S_unbind_key,S_undo,S_undo_hook,S_uniting,S_update_fft,S_update_graph,S_update_sound,S_use_raw_defaults,S_use_sinc_interp,
 
-  S_vct_samples,S_vct_sound_file,S_vct_addB,S_vct_copy,S_vct_doB,S_vct_fillB,S_vct_length,S_vct_mapB,
+  S_vct_samples,S_vct_sound_file,S_vct_addB,S_vct_copy,S_vct_doB,S_vct_fillB,S_vct_length,S_vct_mapB,S_vct_moveB,
   S_vct_multiplyB,S_vct_offsetB,S_vct_peak,S_vct_ref,S_vct_scaleB,S_vct_setB,S_vct_subtractB,S_vct_p,S_vcts_doB,S_vcts_mapB,
   S_verbose_cursor,S_view_sound,S_vu_font,S_vu_font_size,S_vu_size,
 

@@ -939,6 +939,7 @@ The CLM (common lisp) version might be something like:</p>
   <a href="clm.html#make-one-pole">make-one-pole</a>       (a0 b1)
   <a href="clm.html#make-one-zero">make-one-zero</a>       (a0 a1)
   <a href="clm.html#make-oscil">make-oscil</a>          (frequency initial-phase)
+  <a href="clm.html#make-phase-vocoder">make-phase-vocoder</a>  (fftsize overlap interp analyze edit synthesize)
   <a href="clm.html#make-ppolar">make-ppolar</a>         (radius frequency)
   <a href="clm.html#make-pulse-train">make-pulse-train</a>    (frequency amplitude initial-phase)
   <a href="clm.html#make-rand">make-rand</a>           (frequency amplitude)
@@ -1016,6 +1017,8 @@ The CLM (common lisp) version might be something like:</p>
   <a href="clm.html#partials-&gt;wave">partials-&gt;wave</a>      (synth-data table <i>norm</i>)      load table from synth-data
   <a href="clm.html#partials-&gt;waveshape">partials-&gt;waveshape</a> (partials <i>norm size</i>)         create waveshaping table from partials
   <a href="clm.html#phase-partials-&gt;wave">phase-partials-&gt;wave</a>(synth-data table <i>norm</i>)      load table from synth-data
+  <a href="clm.html#phase-vocoder">phase-vocoder</a>       (pv input)                   phase vocoder generator
+  <a href="clm.html#phase-vocoder?">phase-vocoder?</a>      (pv)                         #t if pv is phase vocoder generator
   <a href="clm.html#polynomial">polynomial</a>          (coeffs x)                   evaluate polynomial at x
   <a href="clm.html#pulse-train">pulse-train</a>         (gen <i>fm</i>)                     pulse-train generator
   <a href="clm.html#pulse-train?">pulse-train?</a>        (gen)                        #t if gen is pulse-train generator
@@ -1045,6 +1048,7 @@ The CLM (common lisp) version might be something like:</p>
   <a href="clm.html#src?">src?</a>                (gen)                        #t if gen is sample-rate converter
   <a href="clm.html#sum-of-cosines">sum-of-cosines</a>      (gen <i>fm</i>)                     sum-of-cosines (pulse-train) generator
   <a href="clm.html#sum-of-cosines?">sum-of-cosines?</a>     (gen)                        #t if gen is sum-of-cosines generator
+  <a href="clm.html#sum-of-sines">sum-of-sines</a>        (amps phases)                additive synthesis
   <a href="clm.html#table-lookup">table-lookup</a>        (gen <i>fm</i>)                     table-lookup generator
   <a href="clm.html#table-lookup?">table-lookup?</a>       (gen)                        #t if gen is table-lookup generator
   <a href="clm.html#tap">tap</a>                 (gen <i>pm</i>)                     delay line tap

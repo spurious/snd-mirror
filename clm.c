@@ -167,6 +167,17 @@ Float mus_sin(Float phase)
   Float mus_sin(Float phase) {return(sin(phase));}
 #endif
 
+Float mus_sum_of_sines(Float *amps, Float *phases, int size)
+{
+  int i;
+  Float sum = 0.0;
+  for (i=0;i<size;i++) 
+    if (amps[i] != 0.0)
+      sum += (amps[i] * mus_sin(phases[i]));
+  return(sum);
+}
+
+
 int mus_type(mus_any *ptr) {return((ptr->core)->type);}
 char *mus_name(mus_any *ptr) {return((ptr->core)->name);}
 
@@ -508,6 +519,7 @@ void mus_rectangular2polar(Float *rl, Float *im, int size)
   for (i=0;i<size;i++)
     {
       temp = rl[i]*rl[i]+im[i]*im[i];
+      im[i] = -atan2(im[i],rl[i]);
       if (temp < .0000001) 
 	rl[i] = 0.0;
       else rl[i] = sqrt(temp);
@@ -6254,3 +6266,7 @@ Float mus_apply(mus_any *gen, ...)
     }
   return(0.0);
 }
+
+#if 0
+Float mus_phase_vocoder(
+#endif

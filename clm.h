@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 1
-#define MUS_REVISION 22
-#define MUS_DATE "22-Jun-00"
+#define MUS_REVISION 23
+#define MUS_DATE "17-Jul-00"
 
 /* 
+ * 17-Jul:     added sum_of_sines, atan2 to rectangular->polar, phase_vocoder gen.
  * 22-June:    made mus_bessi0 local again.
  * 1-June:     bugfixes for linuxppc 2000.
  * 19-May:     added mus_apply.
@@ -186,7 +187,7 @@ enum {MUS_OSCIL,MUS_SUM_OF_COSINES,MUS_DELAY,MUS_COMB,MUS_NOTCH,MUS_ALL_PASS,
       MUS_WAVESHAPE,MUS_SRC,MUS_GRANULATE,MUS_SINE_SUMMATION,MUS_WAVE_TRAIN,MUS_BUFFER,
       MUS_FILTER,MUS_FIR_FILTER,MUS_IIR_FILTER,MUS_CONVOLVE,MUS_ENV,MUS_LOCSIG,
       MUS_FRAME,MUS_READIN,MUS_OUTPUT,MUS_INPUT,MUS_FILE2SAMPLE,MUS_FILE2FRAME,
-      MUS_SAMPLE2FILE,MUS_FRAME2FILE,MUS_MIXER,
+      MUS_SAMPLE2FILE,MUS_FRAME2FILE,MUS_MIXER,MUS_PHASE_VOCODER,
       MUS_INITIAL_GEN_TAG};
 
 enum {MUS_RECTANGULAR_WINDOW,MUS_HANNING_WINDOW,MUS_WELCH_WINDOW,MUS_PARZEN_WINDOW,MUS_BARTLETT_WINDOW,
@@ -221,6 +222,7 @@ Float mus_set_srate             PROTO((Float val));
 int mus_array_print_length      PROTO((void));
 int mus_set_array_print_length  PROTO((int val));
 Float mus_sin                   PROTO((Float phase));
+Float mus_sum_of_sines          PROTO((Float *amps, Float *phases, int size));
 
 Float mus_ring_modulate         PROTO((Float s1,Float s2));
 Float mus_amplitude_modulate    PROTO((Float s1,Float s2, Float s3));

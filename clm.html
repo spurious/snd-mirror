@@ -284,8 +284,8 @@ in the resultant C code these become either integers or doubles.
 <h3><a name="generators">Generators</a></h3>
 
 <table border>
-  <tr><td><small><a href="#all-pass">all-pass</a></small><td><small>all-pass filter</small><td><td><small><a href="#oscil">oscil</a></small><td><small>sine wave and FM</small><td>
-  <tr><td><small><a href="#asymmetric-fm">asymmetric-fm</a></small><td><small>asymmetric fm</small><td><td><small><a href="#out-any">out-any</a></small><td><small>sound output</small><td>
+  <tr><td><small><a href="#all-pass">all-pass</a></small><td><small>all-pass filter</small><td><td><small><a href="#out-any">out-any</a></small><td><small>sound output</small><td>
+  <tr><td><small><a href="#asymmetric-fm">asymmetric-fm</a></small><td><small>asymmetric fm</small><td><td><small><a href="#phase-vocoder">phase-vocoder</a></small><td><small>vocoder analysis and resynthesis</small><td>
   <tr><td><small><a href="#make-buffer">buffer</a></small><td><small>block oriented processing</small><td><td><small><a href="#pulse-train">pulse-train</a></small><td><small>pulse train</small>
   <tr><td><small><a href="#comb">comb</a></small><td><small>comb filter</small><td><td><small><a href="#rand">rand,rand-interp</a></small><td><small>random numbers, noise</small>
   <tr><td><small><a href="#convolve">convolve</a></small><td><small>convolution</small><td><td><small><a href="#readin">readin</a></small><td><small>sound input</small>
@@ -301,6 +301,7 @@ in the resultant C code these become either integers or doubles.
   <tr><td><small><a href="#notch">notch</a></small><td><small>notch filter</small><td><td><small><a href="#two-zero">two-zero</a></small><td><small>two zero filter</small>
   <tr><td><small><a href="#one-pole">one-pole</a></small><td><small>one pole filter</small><td><td><small><a href="#wave-train">wave-train</a></small><td><small>wave train</small>
   <tr><td><small><a href="#one-zero">one-zero</a></small><td><small>one zero filter</small><td><td><small><a href="#waveshape">waveshape</a></small><td><small>waveshaping</small>
+  <tr><td><small><a href="#oscil">oscil</a></small><td><small>sine wave and FM</small><td>
 </table>
 <br><br>
 
@@ -1489,6 +1490,57 @@ close to the original speed.
 <p>See expsrc.ins for examples.</p>
 <hr>
 
+<!-- TOPIC phase-vocoder -->
+<h4>PHASE-VOCODER</h4>
+<pre>
+  <a name="make-phase-vocoder"><em class=def>make-phase-vocoder</em></a> <a href="#optional-key">&amp;optional-key</a> (<i>fftsize</i> 512) (<i>overlap</i> 4) <i>interp analyze edit synthesize</i>
+  <a name="phase-vocoder"><em class=def>phase-vocoder</em></a> <i>pv input</i>
+  <a name="phase-vocoder?"><em class=def>phase-vocoder?</em></a> <i>pv</i>
+</pre>
+<p>phase-vocoder provides a generator to perform phase-vocoder analysis and resynthesis.  The process is
+split into three pieces, the analysis stage, editing of the amplitudes and phases, then the resynthesis.
+Each stage has a default that is invoked if the <i>analyze</i>, <i>edit</i>, or <i>synthesize</i>
+arguments are omitted from make-phase-vocoder.  Each of these is a function of one argument, the
+phase-vocoder generator.  The default is to read input (from the input function, an "as-needed"
+input source as in src or granulate), take the fft, get the new amplitudes and phases (as the edit
+function default), then resynthesize using sum-of-sines (the synthesize function default); so, the
+default case simply returns a resynthesis of the original input.  <i>interp</i> sets the time between
+ffts (for time stretching etc).  Here's an example that changes the edit function to provide
+control over the resynthesis pitch:
+</p>
+<pre>
+<small>
+(defun test-pv (freq)
+  (with-sound ()
+    (let ((pv (make-phase-vocoder 
+                512 4 (/ 512 4)
+                nil ;no change to analysis
+		(lambda (v)
+		  ; new editing func changes pitch
+		  (let* ((N (clm::pv-N v))         ; this could be mus-length, but the others need names
+		         (D (clm::pv-D v))
+			 (amps (clm::pv-ampinc v))
+		         (freqs (clm::pv-freqs v)))
+		    (do ((k 0 (1+ k))
+			 (pscl (/ 1.0 D))
+			 (kscl (/ (* 2.0 pi) N)))
+		        ((= k (floor N 2)))
+                     (let ((phasediff (- (aref freqs k) (aref (clm::pv-lastphase v) k))))
+                       (setf (aref (clm::pv-lastphase v) k) (aref freqs k))
+                       (if (&gt; phasediff pi) (do () ((&lt;= phasediff pi)) (setf phasediff (- phasediff (* 2 pi)))))
+                       (if (&lt; phasediff (- pi)) (do () ((&gt;= phasediff (- pi))) (setf phasediff (+ phasediff (* 2 pi)))))
+                       (setf (aref freqs k) (* freq (+ (* pscl phasediff) (* k kscl))))))))
+                nil)) ; no change to synthesis
+	  (fil (open-input "oboe.snd")))
+      (let ((ctr 0))
+	(dotimes (i (* 22050 2.3))
+	  (outa i (phase-vocoder pv (lambda () (let ((val (ina ctr fil))) (incf ctr) val)))))))))
+
+(test-pv 0.5)
+</small>
+</pre>
+<hr>
+
 <!-- TOPIC buffer -->
 <h4>BUFFER-&gt;SAMPLE</h4>
 <pre>
@@ -2038,10 +2090,11 @@ treasure-trove of interesting polynomials.</p>
 <br>
 
 <!-- TOPIC array-interp -->
-<h4>ARRAY-INTERP, DOT-PRODUCT</h4>
+<h4>ARRAY-INTERP, DOT-PRODUCT, SUM-OF-SINES</h4>
 <pre>
   <a name="array-interp"><em class=def>array-interp</em></a> <i>fn x</i> &amp;optional <i>size</i>
   <a name="dot-product"><em class=def>dot-product</em></a> <i>in1 in2</i> &amp;optional (<i>start</i> 0)
+  <a name="sum-of-sines"><em class-def>sum-of-sines</em></a> <i>amps phases</i>
 </pre>
 <p>These simple functions underlie some of the generators, and can be
 called within run, if you want to roll your own.  See <a href="mus.lisp">mus.lisp</a> for
@@ -2055,6 +2108,8 @@ of the companding function, then:
     (* (signum in-val) 
        (array-interp compander (abs (* in-val (1- func-len))) func-len)))
 </pre>
+<p>sum-of-sines simply loops through its arrays of amps and phases, summing
+(* amp (sin phase)) -- it is mostly a convenience function for additive synthesis.
 <br>
 
 

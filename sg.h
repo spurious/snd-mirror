@@ -83,6 +83,6 @@
 #define CANNOT_SAVE gh_symbol2scm("cannot-save")
 #define IMPOSSIBLE_BOUNDS gh_symbol2scm("impossible-bounds")
 #define NO_ACTIVE_SELECTION gh_symbol2scm("no-active-selection")
-
+#define SND_EVAL_ERROR gh_symbol2scm("snd-eval-error")
 
 #endif

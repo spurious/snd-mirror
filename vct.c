@@ -31,6 +31,7 @@
  *   (vct-peak v1)                         max val (abs) in v
  *   (list->vct lst)                       return vct with elements of list lst
  *   (vector->vct vect)                    return vct with elements of vector vect
+ *   (vct-move! v new old)                 v[new++]=v[old++] -> v
  *
  * The intended use is a sort of latter-day array-processing system that handles huge
  * one-dimensional vectors -- fft's, etc.  Some of these functions can be found in
@@ -201,6 +202,19 @@ static SCM copy_vct(SCM obj)
       return(make_vct(len,copied_data));
     }
   return(scm_return_first(SCM_BOOL_F,obj));
+}
+
+static SCM vct_move(SCM obj, SCM new, SCM old)
+{
+  #define H_vct_moveB "(" S_vct_moveB " obj new old) moves obj data from old (back) to new"
+  vct *v;
+  int i,j;
+  ERRVCT1(obj,S_vct_moveB);
+  ERRN2(new,S_vct_moveB);
+  ERRN3(old,S_vct_moveB);
+  v = get_vct(obj);
+  if (v) for (i=SCM_INUM(new),j=SCM_INUM(old);j<v->length;i++,j++) v->data[i] = v->data[j];
+  return(obj);
 }
 
 static SCM vct_length(SCM obj)
@@ -559,6 +573,7 @@ void init_vct(void)
   DEFINE_PROC(gh_new_procedure1_0(S_vct_peak,vct_peak),H_vct_peak);
   DEFINE_PROC(gh_new_procedure(S_vcts_mapB,SCM_FNC vcts_map,0,0,1),H_vcts_mapB);
   DEFINE_PROC(gh_new_procedure(S_vcts_doB,SCM_FNC vcts_do,0,0,1),H_vcts_doB);
+  DEFINE_PROC(gh_new_procedure3_0(S_vct_moveB,vct_move),H_vct_moveB);
   scm_add_feature("vct");
 }
 #endif

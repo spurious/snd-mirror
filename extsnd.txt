@@ -1166,6 +1166,7 @@ Snd is currently in flux.
   vct-fill!         (vobj val)    vobj[i] = val, returns vobj.
   vct-length        (vobj)        length of data array in vobj.
   vct-map!          (vobj proc)   vobj[i] = (funcall proc).
+  vct-move!         (vobj new old) v[new++] = v[old++], returns v
   vct-multiply!     (vobj1 vobj2) vobj1[i] *= vobj2[i], returns vobj1.
   vct-offset!       (vobj val)    vobj[i] += val, returns vobj.
   vct-peak          (vobj)        abs max val in vobj
@@ -1192,8 +1193,6 @@ Snd is currently in flux.
                                   of var thereafter and treats lists as envelopes. (defvar is a macro).
                                   I'm using defvar here rather than some more perspicuous name like def-envelope
                                   so that Snd and CLM can share envelope files.
-  load              (file)        load file (containing lisp code -- this is Scheme's load function if Guile is loaded).
-  string-length     (str)         length of str
 
   ------------------------------------------------------------------------
 
