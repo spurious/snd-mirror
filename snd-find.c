@@ -237,6 +237,7 @@ static int cursor_find_forward(snd_info *sp, chan_info *cp, int count)
       if (err) 
 	{
 	  snd_error("find: %s", err);
+	  FREE(err);
 	  return(-1);
 	}
       for (i = start; i < end; i++)
@@ -310,6 +311,7 @@ static int cursor_find_backward(snd_info *sp, chan_info *cp, int count)
       if (err) 
 	{
 	  snd_error("find: %s", err);
+	  FREE(err);
 	  return(-1);
 	}
       for (i = start; i >= 0; i--)

@@ -1805,14 +1805,14 @@ void read_sample_change_direction(snd_fd *sf, int dir)
 Float protected_next_sample_to_float(snd_fd *sf)
 {
   if (sf->direction == READ_BACKWARD) 
-    read_sample_change_direction(sf, READ_BACKWARD);
+    read_sample_change_direction(sf, READ_FORWARD);
   return(read_sample_to_float(sf));
 }
 
 Float protected_previous_sample_to_float(snd_fd *sf)
 {
   if (sf->direction == READ_FORWARD) 
-    read_sample_change_direction(sf, READ_FORWARD);
+    read_sample_change_direction(sf, READ_BACKWARD);
   return(read_sample_to_float(sf));
 }
 

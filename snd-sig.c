@@ -2276,7 +2276,7 @@ static char *run_channel(chan_info *cp, void *upt, int beg, int dur, int edpos)
   ss = cp->state;
   sp = cp->sound;
   errstr = initialize_ptree(upt);
-  if (errstr) return(copy_string(errstr));
+  if (errstr) return(errstr);
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
   if (sf == NULL) return(mus_format("run-channel: can't read %s[%d] channel data!", sp->short_filename, cp->chan));
   if (dur > MAX_BUFFER_SIZE)
@@ -2408,7 +2408,6 @@ static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN ch
 	}
     }
 #endif
-
       sp = cp->sound;
       reporting = (num > MAX_BUFFER_SIZE);
       if (reporting) start_progress_report(sp, NOT_FROM_ENVED);

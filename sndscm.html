@@ -3474,7 +3474,9 @@ static void init_fcomb(void)
 
 <span class=box><h2><A NAME="continuations">About Continuations</a></h2></span>
 
-<p>Here are a few simple examples of Scheme continuations:</p>
+<p>A continuation is essentially a GOTO, a jump to the end of the 
+defining call-with-current-continuation form. 
+Here are a few simple examples:</p>
 <pre>
 
 (define (con-return)
@@ -3535,6 +3537,36 @@ static void init_fcomb(void)
 
 ;;; (con-go-on)
 ;;;   prints "012345got a real error"
+
+;;; here's an example that is not just a simple exit:
+
+(let ((a 1)
+      (b 1))
+  (let ((cont1 #f)
+	(cont2 #f))
+    (call-with-current-continuation
+     (lambda (x) 
+       (set! cont1 x)))      ; set cont1
+    ;; this is now where (cont1) will jump: label it CONT1
+    (set! a (+ a 2))
+    (display "a")
+    (if cont2
+	(cont2) ; if cont2 has been set, use it to jump to CONT2 below
+	(begin
+	  (call-with-current-continuation
+	   (lambda (x) 
+	     (set! cont2 x)  ; set cont2
+	     (set! b (+ b 1))
+	     (display "b")))
+	  ;; this is where (cont2) will jump: CONT2
+	  (set! b (+ b 2))
+	  (display "!")
+	  (if (&lt; b 6) 
+	      (cont1)        ; goto CONT1 above
+              #f)))))
+
+;;; this prints "ab!a!"
+
 </pre>
 
 <center>

@@ -1058,6 +1058,13 @@ when you save a sound via the "save" dialog.</p>
 <!-- --><tr><td>3:  </td><td> if undefined global variable encountered, try to determine eventual type from context</td></tr>
 <!-- --><tr><td>4:  </td><td> make dangerous assumptions about variable types, try to use procedure source</td></tr>
 <!-- --></table><br></td></tr>
+<!-- --><tr><td></td><td colspan=2><small>Currently, the optimizer is able to speed up Scheme code by factors between
+<!-- -->8 and 20; see snd-run.c for what is implemented, what the major limitations are, and so on.
+<!-- -->A major problem is that Guile is not a clear and simple piece of code, so it is a major
+<!-- -->research project to figure out where local variables are.  I may someday jettison Guile,
+<!-- -->and limit Snd's extensions to whatever Scheme functions I support directly.  I no longer
+<!-- -->see any prospect of a Scheme compiler, and Guile itself is in a parlous state.
+<!-- --><br><br></small></td></tr>
 <!-- -->
 <!-- save-dir -->
 <!-- --><tr><td valign=top><code><em class=def><a name="savedir">save-dir</a></em></code></td>

@@ -572,18 +572,7 @@ is a sketch using the Snd internal "srate" function:</p>
   scm_eval_str0("(open-sound \"oboe.snd\")");
   srate = scm_num2int(scm_eval_str0("(srate)"), 0, "");
 </pre>
-<p>There is a Scheme to C compiler named <A NAME="hobbit">Hobbit</A>, but it's not
-very useful in our context.  If you have pure Scheme functions,
-it may be able to speed them up, but if you want to call Snd/CLM/Sndlib
-functions, special support is needed, and even with that support
-my timing tests did not get more than a 50% improvement in speed.
-Recently, however, Keisuke Nishida started work on a Guile compiler
-that promises to speed up Snd-Scheme code by at least an order of
-magnitude.  When it becomes available, I'll probably move the
-vct support stuff back into Scheme, and reduce some of the
-clutter of functions aimed at fast data access.  I think all
-that's really needed from Snd are the sample-reader functions.
-</p>
+
 
 <p><A NAME="sndsndlib"></a>
 To use sndlib (clm) functions from a shared object file can be a bit
@@ -1488,10 +1477,13 @@ Here are a few more examples, taken from <a href="sndscm.html#exampdoc">examp.sc
 		  val)))))))))
 
 </pre>
-<p>Geez, I haven't had this much fun in a long time!  Check out <a href="sndscm.html#exampdoc">examp.scm</a> and <a href="sndscm.html#sndtestdoc">snd-test.scm</a> for more.  CLM-in-CL users will be disappointed with the CLM-in-Scheme performance; my tests indicate that
+<p>Geez, I haven't had this much fun in a long time!  Check out <a href="sndscm.html#exampdoc">examp.scm</a> and <a href="sndscm.html#sndtestdoc">snd-test.scm</a> for more.  
+CLM-in-CL users will be disappointed with the CLM-in-Scheme performance; my tests indicate that
 interpreted Scheme (as in Snd currently) is about 30 to 100 times slower than CLM instruments using
-the "run" macro.  I may translate that macro to Scheme, but I'm waiting to see if there's
-any demand -- there is CLM-in-CL after all, and it's about 8000 lines of Lisp...
+the "run" macro.  I am translating that macro for use in Snd; see the <a href="extsnd.html#optimization">optimization</a>
+variable for a brief discussion.  Currently, I can speed up most CLM-related Scheme code
+by factors between 8 and 20.  This is still slightly slower than CLM, but it's certainly
+an improvement!
 </p>
 <br>
 
