@@ -73,7 +73,6 @@
  *       (define hi 3.0)
  *       (let ((hi 0.0)) (every-sample? (lambda (y) (> hi 1.0))))
  *       -> probably when func-as-arg is expanded, we should search its env (closure) -- is this accessible?
- * TODO: variable-display support in run
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
  *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)
@@ -7920,7 +7919,7 @@ static void clm_print_s(int *args, Int *ints, Float *dbls)
   if (STRING_RESULT) FREE(STRING_RESULT);
   STRING_RESULT = copy_string(XEN_TO_C_STRING(XEN_APPLY(format_func, 
 							xen_values_to_list(PTREE, ints[args[1]], args, ints),
-							"format")));
+							"clm-print")));
   listener_append(STRING_RESULT);
 }
 
@@ -7964,6 +7963,8 @@ static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, int
     }
   return(run_warn("format not defined"));
 }
+
+/* -------- CLM make functions -------- */
 
 #define CLM_MAKE_FUNC(Name) \
 static void make_ ## Name ## _0(int *args, Int *ints, Float *dbls) \
@@ -9713,7 +9714,6 @@ static void init_walkers(void)
   INIT_WALKER(S_snd_print, make_walker(snd_print_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_STRING));
   INIT_WALKER(S_snd_warning, make_walker(snd_warning_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_STRING));
   INIT_WALKER(S_report_in_minibuffer, make_walker(report_in_minibuffer_1, NULL, NULL, 1, 2, R_BOOL, FALSE, 1, R_STRING));
-  /* INIT_WALKER(S_variable_display, make_walker(variable_display_1, NULL, NULL, 2, 2, R_ANY, FALSE, 0); */
 }
 #endif
 

@@ -5,6 +5,7 @@
 ;;; TODO: with-mix
 ;;; TODO: continuation from interrupt? (caller could check vals, then resume -- can this be from C as well?)
 ;;;       could this be done via snd-debug (extensions.scm) and a with-sound wrapper?
+;;; TODO: clm-style *offset* support
 
 ;;; changed default variable names 3-Apr-03 for Common Music's benefit
 ;;;   *clm-channels* is the default number of with-sound output chans in
@@ -75,9 +76,6 @@
 		    (set! intp #t)
 		    (if (not (null? (cdr args)))
 			(snd-print (format #f "with-sound interrupted: ~{~A~^ ~}" (cdr args)))
-			;; here we could look for a procedure as the 2nd arg and apply it to the rest of the args.
-			;;   the (good-natured!) user could then implement a debugger, and a way to continue from
-			;;   the interrupt by passing a continuation as well.
 			(snd-print "with-sound interrupted"))
 		    args)))
 	 (if (and reverb (not intp))
@@ -386,4 +384,27 @@
 	  (let ((mk (add-mark (car m) snd)))         ; put a mark at each note begin sample
 	    (set! (mark-property :ws mk) (cadr m)))) ; and set its :ws property to the other info
 	*ws-prog*))))
+!#
+
+
+
+#!
+;;; with-mix beginnings...
+(define *with-mix-options* #f)
+(define *with-mix-calls* #f)
+
+(define (make-with-mix-comment options calls)
+  (format #f "(begin~%;; written ~A (Snd: ~A)~%(set! *with-mix-options* '~A)~%(set! *with-mix-calls* '~A))~%"
+	  (strftime "%a %d-%b-%Y %H:%M %Z" (localtime (current-time)))
+	  (snd-version)
+	  options
+	  calls))
+
+(define (with-mix-comment file)
+  (let ((comment (mus-sound-comment file)))
+    (if (string? comment)
+	(begin
+	  (eval-string comment)
+	  #t)
+	#f)))
 !#

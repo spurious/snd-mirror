@@ -277,6 +277,8 @@ XEN provide_listener_help(char *source)
 
 static XEN read_hook;
 
+/* TODO: am I assuming the listener prompt is 1 char?? */
+
 void command_return(widget_t w, snd_state *ss, int last_prompt)
 {
 #if (!USE_NO_GUI)

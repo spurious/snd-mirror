@@ -2487,6 +2487,9 @@ putting it in a text display:
       (oscil (variable-display osc wid2) 0.0))))
 (simp)
 </pre>
+<p>variable-display doesn't work within the run macro, but if you're debugging
+an instrument, you're presumably not primarily concerned with optimization.
+</p>
 <br>
 
 <A NAME="sndtestdoc"></a><span class=box><h2>snd-test.scm and event.scm</h2></span>

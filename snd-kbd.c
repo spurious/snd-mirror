@@ -444,6 +444,7 @@ static chan_info *goto_previous_graph (chan_info *cp, int count)
   int i, k, j, chan;
   if (count == 0) return(cp);
   sp = cp->sound;
+  if (sp->inuse != SOUND_NORMAL) return(cp);
   ss = cp->state;
   vcp = virtual_selected_channel(cp);
   chan = vcp->chan;
@@ -500,6 +501,7 @@ static chan_info *goto_next_graph (chan_info *cp, int count)
   int i, k, j, chan;
   if (count == 0) return(cp);
   sp = cp->sound;
+  if (sp->inuse != SOUND_NORMAL) return(cp);
   ss = cp->state;
   vcp = virtual_selected_channel(cp);
   chan = vcp->chan;

@@ -1974,7 +1974,7 @@ is a physical model of a flute:\n\
     (run
      (lambda ()
        (do ((i beg (1+ i)))
-	   ((= turn-i turns))
+	   ((>= turn-i turns))
 	 (let ((val (src rd 0.0
 			 (lambda (dir)
 			   (let ((inval (file->sample f cur-sample)))
@@ -1990,9 +1990,11 @@ is a physical model of a flute:\n\
 		       (and (>= last-val2 last-val) (<= last-val val)))
 		   (begin
 		     (set! turn-i (1+ turn-i))
-		     (set! turn-sample (inexact->exact (* (mus-srate) (vct-ref turntable turn-i))))
-		     (set! forwards (not forwards))
-		     (set! (mus-increment rd) (- (mus-increment rd)))
+		     (if (< turn-i turns)
+			 (begin
+			   (set! turn-sample (inexact->exact (* (mus-srate) (vct-ref turntable turn-i))))
+			   (set! forwards (not forwards))
+			   (set! (mus-increment rd) (- (mus-increment rd)))))
 		     (set! turning 0))))
 	   (set! last-val2 last-val)
 	   (set! last-val val)
