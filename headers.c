@@ -4745,6 +4745,17 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
   return(read_no_header(chan));
 }
 
+static int local_error_type = MUS_NO_ERROR;
+static char *local_error_msg = NULL;
+static mus_error_handler_t *old_error_handler;
+
+static void local_mus_error(int type, char *msg)
+{
+  local_error_type = type;
+  if (local_error_msg) FREE(local_error_msg);
+  local_error_msg = copy_string(msg);
+}
+
 int mus_header_read(const char *name)
 {
   int chan, err = 0;
@@ -4755,9 +4766,13 @@ int mus_header_read(const char *name)
   chan = mus_file_open_read(name);
   if (chan == -1) 
     return(mus_error(MUS_CANT_OPEN_FILE, "mus_header_read: can't open %s: %s", name, strerror(errno)));
+  old_error_handler = mus_error_set_handler(local_mus_error);
   err = mus_header_read_with_fd_and_name(chan, name);
+  mus_error_set_handler(old_error_handler);
   if (CLOSE(chan) != 0)
     return(mus_error(MUS_CANT_CLOSE_FILE, "mus_header_read: can't close %s: %s", name, strerror(errno)));
+  if (err != MUS_NO_ERROR)
+    return(mus_error(local_error_type, local_error_msg)); /* pass error info on up the chain now that we've cleaned up the open file descriptor */
   return(err);
 }
 

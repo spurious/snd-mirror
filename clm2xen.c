@@ -62,7 +62,8 @@ static mus_error_handler_t *old_error_handler;
 static void local_mus_error(int type, char *msg)
 {
   local_error_type = type;
-  local_error_msg = msg;
+  if (local_error_msg) FREE(local_error_msg);
+  local_error_msg = copy_string(msg);
 }
 
 

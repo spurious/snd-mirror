@@ -367,9 +367,6 @@ void cursor_search(chan_info *cp, int count)
 	    { 
 	      report_in_minibuffer(sp, "%s%snot found%s", 
 				   (sp->search_expr) ? sp->search_expr : "", 
-				   /* SOMEDAY: if not ptree get string from Guile */
-				   /* SOMEDAY:   also in global seach, pre-load text window with current global searhc proc is any */
-				   /* SOMEDAY:   also if user types proc in text window, it should be the new global seach proc */
 				   (sp->search_expr) ? ": " : "",
 				   (cp->last_search_result == SEARCH_FAILED) ? " (wrapped)" : "");
 	      cp->last_search_result = SEARCH_FAILED;
@@ -413,29 +410,29 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 {
   snd_state *ss;
   snd_info *sp;
-  char *error = NULL, *expr = NULL;
+  char *error = NULL;
   XEN errstr;
+  ss = get_global_state();
   if (XEN_INTEGER_P(snd)) /* could be the proc arg if no snd */
     {
       ASSERT_SOUND("set! " S_search_procedure, snd, 1);
       sp = get_sp(snd);
       if (sp)
 	{
-	  if (XEN_PROCEDURE_P(sp->search_proc))
-	    snd_unprotect(sp->search_proc);
-	  sp->search_proc = XEN_UNDEFINED;
-	  if (XEN_STRING_P(proc))
-	    {
-	      expr = copy_string(XEN_TO_C_STRING(proc));
-	      proc = snd_catch_any(eval_str_wrapper, expr, expr);
-	    }
-	  error = procedure_ok(proc, 1, "find", "find", 1);
+	  error = procedure_ok(proc, 1, "set! " S_search_procedure, "proc", 1);
 	  if (error == NULL)
 	    {
+	      if (XEN_PROCEDURE_P(sp->search_proc)) snd_unprotect(sp->search_proc);
+	      sp->search_proc = XEN_UNDEFINED;
+	      if (sp->search_tree)
+		sp->search_tree = free_ptree(sp->search_tree);
+	      if (optimization(ss) > 0)
+		sp->search_tree = form_to_ptree_1f2b_without_env(proc);
 	      sp->search_proc = proc;
 	      snd_protect(proc);
 	      if (sp->search_expr) FREE(sp->search_expr);
-	      sp->search_expr = expr;
+	      /* sp->search_expr = copy_string(XEN_AS_STRING(proc)); */
+	      sp->search_expr = NULL;
 	      return(proc);
 	    }
 	  else 
@@ -450,22 +447,19 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
     }
   else 
     {
-      ss = get_global_state();
-      if (XEN_PROCEDURE_P(ss->search_proc))
-	snd_unprotect(ss->search_proc);
-      ss->search_proc = XEN_UNDEFINED;
-      if (XEN_STRING_P(snd))
-	{
-	  expr = copy_string(XEN_TO_C_STRING(snd));
-	  snd = snd_catch_any(eval_str_wrapper, expr, expr);
-	}
-      error = procedure_ok(snd, 1, "find", "find", 1);
+      error = procedure_ok(snd, 1, "set! " S_search_procedure, "proc", 1);
       if (error == NULL)
 	{
+	  if (XEN_PROCEDURE_P(ss->search_proc)) snd_unprotect(ss->search_proc);
+	  ss->search_proc = XEN_UNDEFINED;
+	  if (ss->search_expr) FREE(ss->search_expr);
+	  ss->search_expr = NULL;
+	  if (ss->search_tree) ss->search_tree = free_ptree(ss->search_tree);
+	  if (optimization(ss) > 0)
+	    ss->search_tree = form_to_ptree_1f2b_without_env(snd);
 	  ss->search_proc = snd;
 	  snd_protect(snd);
-	  if (ss->search_expr) FREE(ss->search_expr);
-	  ss->search_expr = expr;
+	  /* ss->search_expr = copy_string(XEN_AS_STRING(snd)); */
 	}
       else 
 	{
@@ -476,6 +470,7 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
     }
   return(snd);
 }
+
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_1(g_search_procedure_w, g_search_procedure)

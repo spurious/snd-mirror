@@ -39,22 +39,32 @@ static void edit_find_find(int direction, GtkWidget *w, gpointer context)
       ss->search_proc = XEN_UNDEFINED;
       if (ss->search_tree)
 	ss->search_tree = free_ptree(ss->search_tree);
-      if (optimization(ss) > 0)
-	ss->search_tree = form_to_ptree_1f2b_without_env(C_STRING_TO_XEN_FORM(str));
-      if (ss->search_tree == NULL)
+      proc = snd_catch_any(eval_str_wrapper, str, str);
+      if ((XEN_PROCEDURE_P(proc)) &&
+	  (XEN_TO_C_INT(XEN_CAR(XEN_ARITY(proc))) == 1))
 	{
-	  proc = snd_catch_any(eval_str_wrapper, str, str);
-	  if (procedure_ok_with_error(proc, 1, "find", "find", 1))
-	    {
-	      ss->search_proc = proc;
-	      snd_protect(proc);
-	    }
+	  ss->search_proc = proc;
+	  snd_protect(proc);
+	  if (optimization(ss) > 0)
+	    ss->search_tree = form_to_ptree_1f2b_without_env(C_STRING_TO_XEN_FORM(str));
+	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	  mus_snprintf(buf, PRINT_BUFFER_SIZE, "find: %s", str);
+	  set_label(edit_find_label, buf);
+	  gtk_entry_set_text(GTK_ENTRY(edit_find_text), "");
+	  FREE(buf);
 	}
-      buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(buf, PRINT_BUFFER_SIZE, "find: %s", str);
-      set_label(edit_find_label, buf);
-      gtk_entry_set_text(GTK_ENTRY(edit_find_text), "");
-      FREE(buf);
+    }
+  else
+    {
+      if (ss->search_expr == NULL)
+	{
+	  /* using global search_proc set by user */
+	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	  mus_snprintf(buf, PRINT_BUFFER_SIZE, "find: %s", XEN_AS_STRING(ss->search_proc));
+	  set_label(edit_find_label, buf);
+	  gtk_entry_set_text(GTK_ENTRY(edit_find_text), "");
+	  FREE(buf);
+	}
     }
   if ((XEN_PROCEDURE_P(ss->search_proc)) || (ss->search_tree))
     {

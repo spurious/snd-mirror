@@ -1441,20 +1441,18 @@ int ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos)
 {
   ed_list *ed;
   int i, typ;
-  off_t end, loc;
+  off_t end, loc, next_loc;
   ed = cp->edits[pos];
   end = beg + dur - 1;
-  loc = FRAGMENT_GLOBAL_POSITION(ed, 0);
   for (i = 0; i < ed->size - 1; i++) 
     {
-      if ((loc > end) || (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK))
-	return(FALSE);
+      if (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK) return(FALSE);
+      loc = FRAGMENT_GLOBAL_POSITION(ed, i);
+      if (loc > end) return(FALSE);
       typ = FRAGMENT_TYPE(ed, i);
-      if ((typ != ED_SIMPLE) && (loc >= beg))                 /* loc not beyond end, but is beyond beg, so this ramp falls into our segment */
-	return(TRUE);
-      loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);              /* i.e. next loc = current fragment end point */
-      if ((typ != ED_SIMPLE) && (loc >= beg) && (loc <= end))  /* current ramp fragment ends in segment */
-	return(TRUE);
+      next_loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);         /* i.e. next loc = current fragment end point */
+      /* fragment starts at loc, ends just before next_loc, is of type typ */
+      if ((typ != ED_SIMPLE) && (next_loc > beg)) return(TRUE);
     }
   return(FALSE);
 }
@@ -1463,20 +1461,18 @@ static int ramp_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos)
 {
   ed_list *ed;
   int i, typ;
-  off_t end, loc;
+  off_t end, loc, next_loc;
   ed = cp->edits[pos];
   end = beg + dur - 1;
-  loc = FRAGMENT_GLOBAL_POSITION(ed, 0);
   for (i = 0; i < ed->size - 1; i++) 
     {
-      if ((loc > end) || (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK))
-	return(FALSE);
+      if (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK) return(FALSE);
+      loc = FRAGMENT_GLOBAL_POSITION(ed, i);
+      if (loc > end) return(FALSE);
       typ = FRAGMENT_TYPE(ed, i);
-      if ((typ == ED_RAMP) && (loc >= beg))                 /* loc not beyond end, but is beyond beg, so this ramp falls into our segment */
-	return(TRUE);
-      loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);            /* i.e. next loc = current fragment end point */
-      if ((typ == ED_RAMP) && (loc >= beg) && (loc <= end)) /* current ramp fragment ends in segment */
-	return(TRUE);
+      next_loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);         /* i.e. next loc = current fragment end point */
+      /* fragment starts at loc, ends just before next_loc, is of type typ */
+      if ((typ == ED_RAMP) && (next_loc > beg)) return(TRUE);
     }
   return(FALSE);
 }

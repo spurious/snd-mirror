@@ -543,6 +543,12 @@ from grfsnd.html to your initialization file:
 
 See also the cmdist archives for tips from Juan Pampin and others.
 
+If you want to use fftw, first copy Snd's versions of config.sub
+and config.guess to the main fftw directory (clobbering its ancient
+versions), then configure --disable-shared, and ignore the (bogus)
+error messages.
+
+
 
 ---- Motif: ----
 If you installed OpenMotif, then upgraded to RedHat 7.2, Redhat

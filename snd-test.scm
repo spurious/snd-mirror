@@ -10472,11 +10472,9 @@
 	(key (char->integer #\s) 4 ind 0)
 	(IF (not (= (cursor ind 0) 4423))
 	    (snd-display ";search-procedure C-s C-s cursor: ~D?" (cursor ind 0)))
-
-	;;; TODO: add minibuffer check
-	;;; TODO: global find with failure
-	;;; TODO: global find with minibuffer and cursor checks
-
+	(let ((str (widget-text (list-ref (sound-widgets ind) 3))))
+	  (IF (not (string=? str "y = .101 at .201 (4423)"))
+	      (snd-display ";C-s 4423 report-in-minibuffer: ~A?" str)))
 	(let ((str (with-output-to-string (lambda () (display (search-procedure ind))))))
 	  (IF (not (string=? str "#<procedure #f ((n) (> n 0.1))>"))
 	      (snd-display ";search-procedure: ~A?" str)))
@@ -10488,8 +10486,8 @@
 	(IF (not (= (cursor ind 0) 0))
 	    (snd-display ";search-procedure C-s C-s cursor failed: ~D?" (cursor ind 0)))
 	(let ((str (widget-text (list-ref (sound-widgets ind) 3))))
-	  (IF (not (or (string=? str (format #f "not found")) ; the lack of search expr is a bug
-		       (string=? str (format #f "not found (wrapped)"))))
+	  (IF (not (or (string=? str "not found") ; the lack of search expr is a bug
+		       (string=? str "not found (wrapped)")))
 	      (snd-display ";C-s failure report-in-minibuffer: ~A?" str)))
 	(let ((str (with-output-to-string (lambda () (display (search-procedure ind))))))
 	  (IF (not (string=? str "#<procedure #f ((n) (> n 0.2))>"))
@@ -10760,7 +10758,11 @@
 			   (snd-display ";dac-hook data length: ~A?" (sound-data-length n)))
 		       (set! ph1 #t)))
 
+	  (set! (expand-control? ind) #t)
+	  (set! (reverb-control? ind) #t)
 	  (play-and-wait 0 ind)
+	  (set! (reverb-control? ind) #f)
+	  (set! (expand-control? ind) #f)
 
 	  (IF (not spl) (snd-display ";start-playing-hook not called?"))
 	  (IF (not stl) (snd-display ";stop-playing-hook not called?"))
@@ -13057,8 +13059,27 @@
       ((11) (let ((beg (random (+ (frames cursnd curchn) 100))))
 	      (pad-channel beg (+ 10 (random 100)) cursnd curchn)))
 
-      ((12) (let ((beg (random (- (frames cursnd curchn) 100))))
-	      (ptree-channel (lambda (y) (* y 2.0)) beg (+ 10 (random 100)) cursnd curchn #f #t)))
+      ((12) (let* ((beg (random (- (frames cursnd curchn) 210)))
+		   (dur (+ 10 (random 200)))
+		   (preader0 (make-sample-reader (+ beg dur -1) cursnd curchn -1))
+		   (reader0 (make-sample-reader beg cursnd curchn)))
+	      (ptree-channel (lambda (y) (* y 2.0)) beg dur cursnd curchn #f #t)
+	      (let* ((preader1 (make-sample-reader (+ beg dur -1) cursnd curchn -1))
+		     (reader1 (make-sample-reader beg cursnd curchn)))
+		(do ((i 0 (1+ i)))
+		    ((= i dur))
+		  (let ((pval0 (preader0))
+			(val0 (reader0))
+			(pval1 (preader1))
+			(val1 (reader1)))
+		    (if (or (fneq (* val0 2) val1)
+			    (fneq (* pval0 2) pval1))
+			(begin
+			  (snd-display ";read ptree at ~A: ~A ~A ~A ~A (~A ~A ~A ~A): ~A" 
+				       i val0 val1 pval0 pval1
+				       reader0 reader1 preader0 preader1
+				       (display-edits cursnd curchn))
+			  (throw 'mus-error))))))))
 
       ((13) (let ((beg (random (- (frames cursnd curchn) 100))))
 	      (scale-channel .5 beg (+ 10 (random 100)) cursnd curchn)))
@@ -13089,6 +13110,38 @@
 
       ((20) (let ((beg (random (- (frames cursnd curchn) 200))))
 	      (ramp-channel (- (random 2.0) 1.0) (- (random 2.0) 1.0) beg (+ 10 (random 100)) cursnd curchn)))
+      
+      ((21) (let* ((pts (1+ (random 8)))
+		   (maxpt 0.0)
+		   (e (let ((e1 '())
+			    (x 0.0)
+			    (y 0.0))
+			(do ((i 0 (1+ i)))
+			    ((= i pts))
+			  (set! e1 (cons x e1))
+			  (if (> (random 3) 0)
+			      (set! y (- (random 2.0) 1.0)))
+			  (set! e1 (cons y e1))
+			  (if (> (abs y) maxpt) (set! maxpt (abs y)))
+			  (set! x (+ x (+ .01 (random 1.0)))))
+			(reverse e1)))
+		   (beg (random (- (frames cursnd curchn) 300)))
+		   (dur (+ 80 (random 200)))
+		   (reader0 (make-sample-reader beg cursnd curchn)))
+	      (env-channel e beg dur cursnd curchn)
+	      (let* ((reader1 (make-sample-reader beg cursnd curchn))
+		     (en (make-env e :end (1- dur))))
+		(do ((i 0 (1+ i)))
+		    ((= i dur))
+		  (let ((val0 (* (env en) (reader0)))
+			(val1 (reader1)))
+		    (if (fneq val0 val1)
+			(begin
+			  (snd-display ";read env at ~A: ~A ~A (~A ~A): ~A" 
+					  i val0 val1
+					  reader0 reader1
+					  (display-edits cursnd curchn))
+			     (throw 'mus-error))))))))
       
       ;; env-channel
       ((2) (let* ((pts (1+ (random 6)))
@@ -15329,7 +15382,7 @@ EDITS: 6
 		     (set! (sync ind1) (random 3))
 		     (set! (sync ind2) (random 3))
 		     
-		     (opt-test (random 21)))
+		     (opt-test (random 22)))
 		   
 		   (close-sound ind0)
 		   (close-sound ind1)
@@ -20109,6 +20162,11 @@ EDITS: 5
 		    (IF (not (= (1+ hop) (wavo-trace))) (snd-display ";add wavo-trace ~A -> ~A" hop (wavo-trace)))
 		    (key-event cwid snd-kp-subtract-key 0) (force-event)
 		    (IF (not (= hop (wavo-trace))) (snd-display ";subtract wavo-trace ~A -> ~A" hop (wavo-trace))))
+		  (update-time-graph)
+		  (set! (colormap) -1)
+		  (key-event cwid snd-kp-add-key 0) (force-event)
+		  (update-time-graph)
+		  (set! (colormap) 2)
 		  (set! (time-graph-type) graph-once)
 
 		  (take-keyboard-focus cwid)
@@ -21182,6 +21240,7 @@ EDITS: 5
 			  (click-button dismiss-button))))))
 	      
 	    ;; -------- edit find dialog
+
 	    (if (defined? 'edit-find-dialog)
 		(begin
 		  (edit-find-dialog)
@@ -21212,6 +21271,11 @@ EDITS: 5
 			  (snd-display ";edit find (~A): ~A ~A" (+ i 3) (cursor) (sample (cursor)))))
 		    (IF (not (= (cursor) 4741))
 			(snd-display ";edit find end: ~A?" (cursor)))
+		    (set! (cursor) 0)
+		    (widget-string text-widget "(lambda (n) (> n 1.1))")
+		    (key-event text-widget snd-return-key 0) (force-event)
+		    (IF (not (= (cursor) 0))
+			(snd-display ";edit no find: ~A?" (cursor)))
 		    (click-button cancel-button) (force-event)
 		    (close-sound ind))))
 
@@ -27103,7 +27167,7 @@ EDITS: 5
 	  (check-error-tag 'mus-error (lambda () (mix-vct (vct 0.1 0.2 0.3) -1 ind 0 #t)))
 	  (check-error-tag 'mus-error (lambda () (snd-spectrum (make-vct 8) 0 -123)))
 	  (check-error-tag 'mus-error (lambda () (snd-spectrum (make-vct 8) 0 0)))
-	  (check-error-tag 'no-such-file (lambda () (insert-sound (string-append sf-dir "mus10.snd"))))
+	  (check-error-tag 'mus-error (lambda () (insert-sound (string-append sf-dir "mus10.snd"))))
 	  (check-error-tag 'no-such-file (lambda () (play "/baddy/hiho")))
 	  (check-error-tag 'mus-error (lambda () (play (string-append sf-dir "mus10.snd"))))
 	  (check-error-tag 'mus-error (lambda () (play (string-append sf-dir "nist-shortpack.wav"))))
