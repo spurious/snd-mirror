@@ -20220,6 +20220,10 @@ EDITS: 2
 	  (itst (list 'cursor) 100)
 	  (itst (list 'cursor ind 0) 100)
 	  (etst '(edit-position ind 0 0))
+	  (let ((m (run-eval '(add-mark 100))))
+	    (if (or (not (mark? m))
+		    (not (= (mark-sample m) 100)))
+		(snd-display ";run add-mark: ~A" (and (mark? m) (mark-sample m)))))
 	  (close-sound ind)))
 
       (let ((ind0 (new-sound "fmv0.snd" mus-next mus-bfloat 22050 1 "map tests"))

@@ -3,7 +3,7 @@
 /* check_balance originally from scwm-0.9/utilities/scwmrepl/scwmrepl.c, 
  *   revised by bil 9-Oct-02:
  *   original did not handle #\) (and many others) correctly or #()
- *            had support for #{} which doesn't seem to mean anything in Scheme
+ *            had support for #{} which is (apparently) a Guile documentation kludge
  *            mishandled \" in a quoted string
  *            and more changes followed
  */
@@ -17,8 +17,6 @@
   (char->integer #\))
   )
 */
-
-/* TODO: equivalent form-finder for Ruby listener */
 
 int find_matching_paren(char *str, int parens, int pos, char *prompt, int *highlight_pos)
 {

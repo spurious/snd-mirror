@@ -185,11 +185,6 @@ The tutorial was written by Dave Phillips.
 TROUBLES:
 
 
----- Alpha audio: ----
-There's no support yet for playing or recording sounds on the Alpha --
-I don't have any idea how audio works on this system.
-
-
 ---- Linux audio: ----
 In Linux, Snd sometimes can't seem to play or record when other
 applications are happy -- if this happens, please run the function

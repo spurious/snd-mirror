@@ -63,14 +63,7 @@
  *
  * tests in snd-test.scm, test 22
  *
- *
- * TODO: procedure property 'ptree -> saved ptree (currently run parses the tree on every call)
- *         (set-object-property! <func> 'ptree pt) [scm_set_object_property_x in objprop]
- *              procedure-property? -- this has name and arity
- *         would also need an initialization process(?)
- *         timing tests indicate that the walk portion is either lost in the noise (i.e. 0), or less than 10% (singer.scm being the bad case)
- * TODO: possible Snd additions: set-cursor sample samples(2vct) add-mark sample-reader-position
- * TODO: split Scheme from Snd/Clm here and do the latter via an FFI of some sort
+ * SOMEDAY: split Scheme from Snd/Clm here and do the latter via an FFI of some sort
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
  *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)
@@ -297,7 +290,7 @@ typedef struct {
   int gc;
 } xen_value;
 
-
+#if 1
 static xen_value *make_xen_value(int typ, int address, int constant)
 {
   xen_value *v;
@@ -309,7 +302,8 @@ static xen_value *make_xen_value(int typ, int address, int constant)
   return(v);
 }
 
-#if 0
+#else
+
 static xen_value *make_xen_value_1(int typ, int address, int constant, const char *func, int line)
 {
   xen_value *v;
@@ -317,11 +311,16 @@ static xen_value *make_xen_value_1(int typ, int address, int constant, const cha
   buf = (char *)malloc(64);
   sprintf(buf, "%s: %d", func, line);
   set_encloser(buf);
-  v = make_xen_value_2(typ, address, constant);
+  v = (xen_value *)CALLOC(1, sizeof(xen_value));
+  v->type = typ;
+  v->addr = address;
+  v->constant = constant;
+  v->gc = 0;
   set_encloser(NULL);
   return(v);
 }
-#define make_xen_value(a,b,c) make_xen_value_1(a,b,c,__FUNCTION__,__LINE__)
+
+#define make_xen_value(a,b,c) make_xen_value_1(a, b, c, __FUNCTION__, __LINE__)
 #endif
 
 #define OPTIMIZER_WARNING_BUFFER_SIZE 1024
@@ -5200,6 +5199,43 @@ static xen_value *cursor_1(ptree *pt, xen_value **args, int num_args)
 }
 
 
+/* ---------------- add_mark ---------------- */
+
+static void add_mark_i(int *args, int *ints, Float *dbls) 
+{
+  chan_info *cp; 
+  mark *m = NULL;
+  cp = run_get_cp(2, args, ints);
+  if (cp) 
+    {
+      m = add_mark(INT_ARG_1, NULL, cp);
+      if (m) INT_RESULT = mark_id(m);
+    }
+}
+
+static char *descr_add_mark_i(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format( INT_PT " = add-mark(" INT_PT ", " INT_PT ", " INT_PT ")", 
+		     args[0], INT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
+}
+
+static xen_value *add_mark_1(ptree *pt, xen_value **args, int num_args)
+{
+  xen_value *true_args[4];
+  xen_value *rtn;
+  int k;
+  if ((num_args == 0) || (num_args > 3))
+    return(run_warn("add-mark: wrong number of args"));
+  run_opt_arg(pt, args, num_args, 2, true_args);
+  run_opt_arg(pt, args, num_args, 3, true_args);
+  true_args[0] = args[0];
+  true_args[1] = args[1];
+  rtn = package(pt, R_INT, add_mark_i, descr_add_mark_i, true_args, 3);
+  for (k = num_args + 1; k <= 3; k++) FREE(true_args[k]);
+  return(rtn);
+}
+
+
 /* ---------------- maxamp ---------------- */
 
 static void maxamp_f(int *args, int *ints, Float *dbls) 
@@ -7776,6 +7812,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       /* no readers or CLM gens from here on */
       if (strcmp(funcname, "edit-position") == 0) return(clean_up(edit_position_1(prog, args, num_args), args, num_args));
       if (strcmp(funcname, "cursor") == 0) return(clean_up(cursor_1(prog, args, num_args), args, num_args));
+      if (strcmp(funcname, "add-mark") == 0) return(clean_up(add_mark_1(prog, args, num_args), args, num_args));
       if (strcmp(funcname, "maxamp") == 0) return(clean_up(maxamp_1(prog, args, num_args), args, num_args));
       if (strcmp(funcname, "frames") == 0) return(clean_up(frames_1(prog, args, num_args), args, num_args));
 
@@ -7918,7 +7955,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 static xen_value *lookup_generalized_set(ptree *prog, char *accessor, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
 {
   xen_value *sv = NULL;
-  int k;
+  int k, free_sv = FALSE;
   if (in_v1 == NULL)
     {
       if (v->type == R_FLOAT)
@@ -7945,7 +7982,11 @@ static xen_value *lookup_generalized_set(ptree *prog, char *accessor, xen_value 
 	}
       if (in_v == NULL)
 	{
-	  if (strcmp(accessor, "mus-srate") == 0) sv = mus_set_srate_1(prog, v);
+	  if (strcmp(accessor, "mus-srate") == 0) 
+	    {
+	      sv = mus_set_srate_1(prog, v);
+	      if (sv) free_sv = TRUE;
+	    }
 	}
     }
 
@@ -7989,8 +8030,13 @@ static xen_value *lookup_generalized_set(ptree *prog, char *accessor, xen_value 
 		triple *trp;
 		trp = set_var(prog, sv, v);
 		trp->no_opt = TRUE;
+		free_sv = TRUE;
 	      }
-	    else sv = NULL;
+	    else 
+	      {
+		FREE(sv);
+		sv = NULL;
+	      }
 	  }
 	if (sv)
 	  {
@@ -8012,6 +8058,7 @@ static xen_value *lookup_generalized_set(ptree *prog, char *accessor, xen_value 
   if (in_v1) FREE(in_v1);
   if (accessor) FREE(accessor);
   if ((sv == NULL) && (v)) {FREE(v); v = NULL;}
+  if (free_sv) FREE(sv);
   return(v);
 }
 
@@ -8320,6 +8367,8 @@ static XEN g_set_optimization(XEN val)
   return(C_TO_XEN_INT(optimization(ss)));
 }
 
+#define SAVE_PTREES 0
+
 #if WITH_RUN
 static XEN g_run(XEN proc_and_code)
 {
@@ -8331,6 +8380,30 @@ to Guile and is equivalent to (thunk)."
   ptree *pt = NULL;
   code = XEN_CADR(proc_and_code);
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS(code) == 0), code, XEN_ARG_1, S_run, "a thunk");
+#if SAVE_PTREES
+  {
+    /* this doesn't work -- where to hang the ptree property?  Can't be the
+     *   enclosing function because it may have more than one run macro.
+     *   Also how to handle GC -- need to know when to call free_ptree.
+     */ 
+    XEN ptree_property;
+    ptree_property = scm_object_property(code, scm_string_to_symbol(C_TO_XEN_STRING("ptree")));
+    fprintf(stderr,"ptree: %s\n", XEN_AS_STRING(ptree_property));
+    if (XEN_FALSE_P(ptree_property))
+      {
+	pt = (ptree *)form_to_ptree(proc_and_code);
+	if (pt) 
+	  {
+	    scm_set_object_property_x(code, scm_string_to_symbol(C_TO_XEN_STRING("ptree")), C_TO_XEN_ULONG(pt));
+	    fprintf(stderr,"set ptree: %s\n", XEN_AS_STRING(scm_object_property(code, scm_string_to_symbol(C_TO_XEN_STRING("ptree")))));
+	  }
+      }
+    else pt = (ptree *)(XEN_TO_C_ULONG(ptree_property));
+    if (pt)
+      eval_ptree(pt);
+    else XEN_CALL_0(code, S_run);
+  }
+#else
   pt = (ptree *)form_to_ptree(proc_and_code);
   if (pt)
     {
@@ -8338,6 +8411,7 @@ to Guile and is equivalent to (thunk)."
       free_ptree(pt);
     }
   else XEN_CALL_0(code, S_run);
+#endif
   return(XEN_FALSE);
 }
 #endif

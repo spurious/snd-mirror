@@ -1,57 +1,6 @@
 #ifndef SND_H
 #define SND_H
 
-/* 
- * there are several compile-time options:
- *
- *   USE_GTK, USE_MOTIF, USE_NO_GUI
- *                 Motif is the default; the Gtk+ port is usable, but still has rough edges.
- *                 In the sources, snd-x* refers to Motif specific code, snd-g* is Gtk+ specific.
- *                   snd-gx* is used by both, but is X-specific.  If neither is defined,
- *                   you get a version of snd with no graphical user-interface (it is
- *                   driven by input from stdin -- use the flag USE_NO_GUI for this).
- *
- *   HAVE_GUILE    define if the guile library is available (adds lisp extension/customization language)
- *                 see http://www.gnu.org/software/guile. 
- *                 To get a version of Snd without any extension language, -DHAVE_EXTENSION_LANGUAGE=0
- *
- *   HAVE_RUBY     define if you would rather use Ruby as the extension language.
- *                   see ftp://ftp.netlab.co.jp/pub/lang/ruby/
- *
- *   HAVE_GL       include support for OpenGL.  include JUST_GL to omit gl.o (the GL/Guile bindings)
- *                 In Motif, this uses the built-in glX support; in Gtk it needs libgtkglext.
- *
- *   HAVE_LADSPA   include support for LADSPA.
- *
- *   SNDLIB_USE_FLOATS and MUS_SAMPLE_BITS
- *                 These determine the internal representation of sample values. The default
- *                 is 0 for SNDLIB_USE_FLOATS (so 32-bit ints are used), and 24 for
- *                 MUS_SAMPLE_BITS (this sets the size of the "fraction").  Floats are
- *                 slightly faster on the Pentium.
- *
- *   HAVE_ALSA     In Linux, OSS is the default audio system; HAVE_ALSA overrides this.
- *                 There are many other similar audio choices (SGI, ESD, etc)
- *
- *   HAVE_CONFIG_H define if you're trying to build Snd via autoconf config files
- *                 (automatic if you use ./configure followed by make)
- *
- *   SND_AS_WIDGET This causes the entire Snd editor to become a module loadable
- *                 into some other program as a kind of enormous widget (see saw.c).
- *
- *   HAVE_HTML     define if an HTML browser is available (used by help functions).
- *
- *   Float         This can be defined to double in CFLAGS if you want Snd to use 
- *                 doubles throughout (i.e. -DFloat=double).
- *
- *   HAVE_GSL      use GSL (Gnu Scientific Library).
- *                 The intention is to use GSL for most of the standard math stuff that
- *                 isn't in the math library.  Currently this means the Bessel I0 function
- *                 (for the Kaiser window), the Hankel transform, the complex trig support
- *                 (for the Dolph-Chebyshev window), etc.
- *
- *  Many others are set by configure -- see config.h.in.
- */
-
 #if defined(HAVE_CONFIG_H)
   #include <config.h>
 #else
@@ -132,7 +81,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "1-Dec-02"
+#define SND_VERSION "3-Dec-02"
 #define SND_RPM_VERSION "6.4"
 #define SND_MAJOR_VERSION 6
 #define SND_MINOR_VERSION 4

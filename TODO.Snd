@@ -1,5 +1,7 @@
-A list of some things-to-do in Snd (these are some projects that strike
-me as straightforward, but not necessarily easy).
+A list of some things-to-do in Snd (these are some projects that
+strike me as straightforward, but not necessarily easy).  Known bugs
+can be listed by searching the sources for "TODO".  Long-term stuff is
+marked with "SOMEDAY".
 
 
 A more direct connection to gmeteor (perhaps using the control-panel filter
@@ -31,9 +33,6 @@ More Ruby examples, translations, etc. (snd.rb is snd-test.scm
   stuff in bess.rb and examp.rb).
 
 The configure script should be able to use libsndlib if it exists.
-
-Known bugs can be listed by searching the sources for "TODO".
-Long-term stuff is marked with "SOMEDAY".
 
 I'd like Snd to work in Windoze -- I think the current CVS guile
   is buildable even in MS C, and there are rumors that gtk works
