@@ -393,6 +393,10 @@ in the other channel. 'chn' is the start channel for all this (logical channel 0
 
 ;;; filter-track 
 
+#!
+
+;;; TODO: rewrite filter-track to use mix-sample-reader and lock afterwards 
+
 (define (filter-track track fir-filter-coeffs)
   "(filter-track track coeffs) filters track data using FIR filter coeffs by appling \
 the filter to the underlying mixes: (filter-track (track 1) '(.1 .2 .3 .3 .2 .1))"
@@ -415,6 +419,7 @@ the filter to the underlying mixes: (filter-track (track 1) '(.1 .2 .3 .3 .2 .1)
 				 (vct->samples 0 newlen samps (list a) chan))))))
 		     track))))
       (throw 'no-such-track (list "filter-track" track))))
+!#
 
 
 ;;; track-position

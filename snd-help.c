@@ -359,6 +359,8 @@ char *version_info(void)
   return(result);
 }
 
+/* TODO: might be nice to make "news" clickable -> more details about a given change */
+
 void about_snd_help(void)
 {
   char *info = NULL, *features = NULL;
@@ -373,6 +375,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+9-Oct:   removed the mix-id in list option for various functions.\n\
 8-Oct:   optional filename arg for save-marks (and Ruby case implemented).\n\
 6-Oct:   cursor-style and cursor-size can be set globally.\n\
 24-Sep:  snd 6.12.\n\

@@ -8418,7 +8418,7 @@ static XEN g_make_sample_reader(XEN samp_n, XEN snd, XEN chn, XEN dir1, XEN pos)
   #define H_make_sample_reader "(" S_make_sample_reader " (start-samp 0) (snd #f) (chn #f) (dir 1) (edpos #f)): \
 return a reader ready to access snd's channel chn's data starting at start-samp, going in direction dir (1 = \
 forward, -1 = backward), reading the version of the data indicated by edpos which defaults to the current version. \
-snd can be a filename, a sound index number, or a list with a mix id number."
+snd can be a filename, or a sound index number."
 
   snd_fd *fd = NULL;
   int chan, edpos, direction = 1; /* in Scheme 1=forward, -1=backward */
@@ -8621,11 +8621,13 @@ static XEN g_undo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
   #define H_undo "(" S_undo " (count 1) (snd #f) (chn #f)): undo 'count' edits in snd's channel chn"
   chan_info *cp;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ed_n), ed_n, XEN_ARG_1, S_undo, "an integer");
+#if 0
   if (XEN_LIST_P(snd_n))
     XEN_ERROR(NO_SUCH_EDIT,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_undo),
 			 snd_n,
 			 C_TO_XEN_STRING(_("can't undo an underlying mix edit except through the outer (mixed-into) sound"))));
+#endif
   ASSERT_CHANNEL(S_undo, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_undo);
   if (XEN_INTEGER_P(ed_n))
@@ -8643,11 +8645,13 @@ static XEN g_redo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
   #define H_redo "(" S_redo " (count 1) (snd #f) (chn #f)): redo 'count' edits in snd's channel chn"
   chan_info *cp;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ed_n), ed_n, XEN_ARG_1, S_redo, "an integer");
+#if 0
   if (XEN_LIST_P(snd_n))
     XEN_ERROR(NO_SUCH_EDIT,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_redo),
 			 snd_n,
 			 C_TO_XEN_STRING(_("can't redo an underlying mix edit except through the outer (mixed-into) sound"))));
+#endif
   ASSERT_CHANNEL(S_redo, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_redo);
   if (XEN_INTEGER_P(ed_n))

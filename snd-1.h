@@ -2,12 +2,12 @@
 #define SND_1_H
 
 #define ASSERT_SOUND(Origin, Snd, Offset) \
-  if (!((XEN_INTEGER_P(Snd)) || (XEN_BOOLEAN_P(Snd)) || (XEN_NOT_BOUND_P(Snd)) || (XEN_LIST_P(Snd)))) \
-    XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset, Snd, "an integer (sound index), boolean, or a list");
+  if (!((XEN_INTEGER_P(Snd)) || (XEN_BOOLEAN_P(Snd)) || (XEN_NOT_BOUND_P(Snd)))) \
+    XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset, Snd, "an integer (sound index), or a boolean");
 
 #define ASSERT_CHANNEL(Origin, Snd, Chn, Offset) \
-  if (!((XEN_INTEGER_P(Snd)) || (XEN_BOOLEAN_P(Snd)) || (XEN_NOT_BOUND_P(Snd)) || (XEN_LIST_P(Snd)))) \
-    XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset, Snd, "an integer (sound index), boolean, or a list"); \
+  if (!((XEN_INTEGER_P(Snd)) || (XEN_BOOLEAN_P(Snd)) || (XEN_NOT_BOUND_P(Snd)))) \
+    XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset, Snd, "an integer (sound index), or a boolean"); \
   else \
     if (!((XEN_INTEGER_P(Chn)) || (XEN_BOOLEAN_P(Chn)) || (XEN_NOT_BOUND_P(Chn)))) \
       XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset + 1, Chn, "an integer (0-based channel number) or boolean");

@@ -1,5 +1,6 @@
 Snd change log
 
+  9-Oct:     removed the mix-id in list option for various functions.
   8-Oct:     optional filename arg for save-marks (and Ruby case implemented).
   6-Oct:     cursor-style and cursor-size can be set globally.
   24-Sep:    snd 6.12.
@@ -11,11 +12,11 @@ Snd change log
   15-Sep:    just-sounds support in Gtk.
   12-Sep:    quit-button-color, help-button-color, reset-button-color,
                doit-button-color, doit-again-button-color.
-  8-Sep:     added show-all-axes-unlabelled and show-x-axis-unlabelled.
+  8-Sep:     show-all-axes-unlabelled and show-x-axis-unlabelled.
              removed parse-rc-file, added support for Snd.gtkrc.
   2-Sep:     removed bold-button-font and boldbuttonFont resource.
   29-Aug:    gcc complex trig replaces GSL if it's available.
-  21-Aug:    added snd->sample and xen->sample (Snd-specific) generators to redirect
+  21-Aug:    snd->sample and xen->sample (Snd-specific) generators to redirect
                ina and friends automatically to Snd data.
   19-Aug:    removed mouse-release-hook (use mouse-click-hook).
   15-Aug:    snd 6.11.
@@ -29,8 +30,8 @@ Snd change log
   22-Jul:    removed protect-region.
   18-Jul:    removed button-font and buttonFont resource, help-text-font and helpTextFont.
   10-Jul:    record->raw file segfault bugfix (thanks to Russell Aspinwall).
-  1-July:    added optional 'nth' arg to find-sound.
-             added optional begin time to make-track-sample-reader, play-track, and play-mix.
+  1-July:    optional 'nth' arg to find-sound.
+             optional begin time to make-track-sample-reader, play-track, and play-mix.
   30-Jun:    snd 6.10.
   24-Jun:    moved mix-name and mix-name->id to snd6.scm.
   23-Jun:    mix-amp-env-changed-hook.
@@ -41,12 +42,12 @@ Snd change log
              mix.scm name changes (see snd6.scm for old forms).
              with-mix (ws.scm).
   12-Jun:    bess1.scm and bess1.rb from Michael Scholz.
-  10-Jun:    added initial-length arg to new-sound.
+  10-Jun:    initial-length arg to new-sound.
   2-June:    debug.scm and with-sound debugger in ws.scm.
   28-May:    snd 6.9.
   26-May:    x-axis-label.
   20-May:    make-variable-display in snd-motif.scm.
-  16-May:    definstrument changes, added clm-ins.scm.
+  16-May:    definstrument changes, clm-ins.scm.
   14-May:    optional begin-time arg to make-mix-sample-reader.
   12-May:    removed --with-html and associated variables. added html-program.
   7-May:     or-hooks now run all functions on the hook list.
@@ -71,11 +72,11 @@ Snd change log
   31-Mar:    removed audio-state-file.
              mus_set_srate -> set_mus_srate in Ruby, mus-set-srate removed from Guile.
              similarly for mus_sound_set_maxamp, mus_set_rand_seed, mus_file_data_clipped, and mus_file_set_prescaler.
-  28-Mar:    added file arg to save-macros.
+  28-Mar:    file arg to save-macros.
   26-Mar:    maxf.scm and maxf.rb from Michael Scholz.
   21-Mar:    snd 6.7.
   19-Mar:    xm-enved.rb and rubber.rb thanks to Michael Scholz.
-             added listener-click-hook with click-for-listener-help in draw.scm.
+             listener-click-hook with click-for-listener-help in draw.scm.
   17-Mar:    Mac OSX Record implemented.
              piano.rb, rgb.rb, strad.scm, and strad.rb thanks to Michael Scholz.
              moved contrib/* to the main directory.
@@ -95,7 +96,7 @@ Snd change log
   30-Jan:    gettext changes.
   12-Jan:    snd 6.5.
   8-Jan:     removed loop-samples.
-  7-Jan:     added various simple FIR filters to dsp.scm.
+  7-Jan:     various simple FIR filters to dsp.scm.
   6-Jan:     xramp-channel for virtual exp envs.
              edpos args for swap-channels.
              map-channel arg for ptree-channel (xen-channel) for generalized virtual ops.
@@ -139,7 +140,7 @@ Snd change log
              graph-time-once -> graph-once, graph-transform-once -> graph-once
              graph-time-as-wavogram -> graph-as-wavogram, graph-transform-as-sonogram -> graph-as-sonogram
              graph-transform-as-spectrogram -> graph-as-spectrogram.
-	     added snd6.scm.
+	     snd6.scm.
              ccrma-ftp: old-cmdist.html.
              dont-normalize-transform -> dont-normalize
              normalize-transform-by-channel -> normalize-by-channel
@@ -176,7 +177,7 @@ Snd change log
   23-May:    gl1.png (spectrogram uses GL now if mono and HAVE_GL).
   20-May:    removed glfft.c and glfft.scm
              snd-gxl-context on -DHAVE_GL switch (configure --with-gl)
-             added gl.c, makegl.scm, gldata.scm. (GL example in grfsnd.html).
+             gl.c, makegl.scm, gldata.scm. (GL example in grfsnd.html).
   15-May:    update-hook.
   13-May:    snd 5.10.
   9-May:     sound-loop-info bugfix (thanks to Dave Phillips).
@@ -197,7 +198,7 @@ Snd change log
   24-Mar:    removed ALSA 0.5 support.
              cosine-summation, legendre-summation in dsp.scm.
              mus-sound-forget and mus-sound-prune bindings.
-             clear-listener (bound to C-M-g). C-? tries to invoke snd-help. added help-hook.
+             clear-listener (bound to C-M-g). C-? tries to invoke snd-help. help-hook.
              M-p and M-n now work in the listener (it has a history of previous forms).
              added bad-type error and removed internal catch from map-chan et al
              removed cursor-no-action, cursor-update-display.

@@ -1716,9 +1716,8 @@ static XEN g_abortq(void)
 
 snd_info *get_sp(XEN x_snd_n, sp_sound_t accept_player)
 {
-  int snd_n, len;
+  int snd_n;
   /* if x_snd_n is a number, it is sp->index
-     if it's a (non-empty) list, car is mix id (perhaps someday treat list as track if more than one member)
   */
   if (XEN_INTEGER_P(x_snd_n))
     {
@@ -1736,8 +1735,10 @@ snd_info *get_sp(XEN x_snd_n, sp_sound_t accept_player)
 	}
       return(NULL);
     }
+#if 0
   else
     {
+      int len;
       if (XEN_LIST_P_WITH_LENGTH(x_snd_n, len))
 	{
 	  /* a mix input sound */
@@ -1752,6 +1753,7 @@ snd_info *get_sp(XEN x_snd_n, sp_sound_t accept_player)
 		    x_snd_n);
 	}
     }
+#endif
   /* use default sound, if any */
   return(any_selected_sound());
 }

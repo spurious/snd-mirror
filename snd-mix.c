@@ -1,49 +1,19 @@
 #include "snd.h"
 
-/* SOMEDAY: extend the mix-as-list syntax to list-of-ids (tracks) (are these all rationalized now?)
- * this seems to include scale_sound scale_channel ramp_channel xramp_channel revert_sound save_sound_as snd2sample
- * and some in snd_snd field: {:channels, srate, data_location, data_size, data_format, header_type, comment, (short)file_name}
- *   surely none of the latter matter
- * and any that just assert channel (not sound) -- this is most channel ops
- *
- * why not remove mix|track sample readers and vector all that through sample-reader?
- *   extra work in next-sample?
- * does the distinction matter? mix-frames? mix-position (would need snd side)?
- *
- * if region encoded as bit 17 (or whatever), region index is implicit, and make-region-sample-reader is not needed
- *    mix/track also?
- * make-sample-reader (mix 0) | (region 9) | (sound 1) | (track 2 -- or list of ids?)... | (channel (...) n)
- *   with sound the default so make-mix-sample-reader n -> make-sample-reader (list 'mix n)
- *   xm.c uses type 'Region, so this depends on type-sensitive symbol names
- *
- * (region n) could be used as well for region-chans | frames | maxamp | graph_style | sample|->vct | srate
- *   or return id as smob in each case -- region|mix|track|sound|channel|selection
- *
- * these could be packaged at the Scheme level: (make-reader '(region 0) ...) (reader ...)
- */
-/* mix waveform in amp env as in enved (this requires 1-chan mix readers, not currently implemented)
- * SOMEDAY: sync multichan mixes should change together in graph
- *          currently the sync move is handled by mix.scm mix-dragged-hook -- either
- *          build in that code, or add mix-dragging-hook (but it would need a start-drag case as well)
- *          or mix-clicked would need a way to alert this code to drag a set
- *
- * actually, all the track ops from either drag or mix-panel should affect all together
- *
- * MIX FIX:
+/* MIX FIX:
  * xenv has make_mix_readable_from_id for bg wave (I assume)
- * xen has get_sp case 
- * --> remove both, xenv should use mix envs/mix drawers
- * -->   add xenv over track
+ * --> xenv should use mix envs/mix drawers, add xenv over track
  * --> scaling use mix-amp, env->mix amp env, src->mix speed
  * --> if track here, add maps for amp/amp-env(global)/speed, perhaps tempo
- * --> all else, get_sp should return mix_reader and lock result (so filter etc still work, but no underlying edit)
  * --> all else, if track, track reader -- this automates track editing
- * --> remove notion of underlying edits (doc, possible lists below), remove list case from edits/edit-fragment etc
  * --> add mix/track button to mix-panel to automate track edits (tempo slider), or add new track panel
  * --> if drag track, all drag together (track edits should undo/redo together, even across all outputs?)
  * --> add track funcs from mix.scm
  * --> add easy pan choices with linear, sinusoidal, exponential envs
  * --> add easy synchronization across mixes ("snap")
+ * --> mix-maxamp, (mix-frames), filter-track in mix.scm
+ * --> flatten to handle indefinitely nested tracks
+ * --> sync multichan mixes should change together in graph
  */
 
 #define NO_SUCH_TRACK XEN_ERROR_TYPE("no-such-track")
@@ -56,6 +26,7 @@ typedef struct {         /* save one mix console state */
   Float *scalers;
   Float speed;
   env **amp_envs;
+  /* TODO: remove mix_edit_ctr */
   int *mix_edit_ctr;     /* edit_ctr's in underlying mix sound */
 } console_state;
 

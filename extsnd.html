@@ -2057,21 +2057,6 @@ one channel, (cursor) (cursor 0), and (cursor 0 0) all refer to the same
 thing.  If you want to refer to the currently selected sound, either use #f
 as the sound index or <a href="#sndselectedsound">selected-sound</a>.
 </p>
-<p>
-If the <i>snd</i> argument is a list, the first element of the list is
-taken to be a mix id number, and the reference is to the underlying mix input
-sound data.  That is, (frames 1) returns the number of frames (samples per channel)
-in the sound whose current index is 1; (frames (list 1)) returns the frames in
-the sound that underlies the mix whose id is 1.  Similarly (scale-by .5) scales
-the currently selected sound by .5; (scale-by .5 (list 0) 2) scales the 3rd channel
-of mix 0's input sound by .5.  I keep saying "underlying" because normally a
-mix is viewed after it has gone through its panel of controls (the set of widgets displayed
-in the Mix Panel dialog -- these can affect the
-amplitude, amplitude envelope, and sampling rate).  next-mix-sample, for
-example, refers to the processed form of the mix data, whereas next-sample
-would refer to the original form.  I may extend this to accept a list of mixes (i.e. a "track" 
-in the terminology of mix.scm).
-</p>
 
 <p>In many cases, the <i>snd</i>, <i>chn</i>, and <i>reg</i> arguments
 can be #t (for backwards compatibility, a few of them default to #t).
@@ -2693,9 +2678,6 @@ data is:</p>
 the output), and <i>free-mix-sample-reader</i> releases a reader.
 Mixes can be collected into tracks, so there are also <i>make-track-sample-reader</i>, <i>track-sample-reader?</i>,
 <i>next-track-sample</i>, and <i>free-track-sample-reader</i>.
-As mentioned above, the mix-sample-reader refers to the mix data after
-it has been processed through its control panel.  The original (possibly
-edited) sound can be accessed by a normal sample-reader.
 </p>
 
 <!-- -------------------------------- SAMPLE-READER TABLE -------------------------------- -->
@@ -3119,14 +3101,7 @@ Say we have a mix whose id is 123:</p>
 <p>This 
 sets mix 123's channel 0 amplitude scaler to .5.
 </p>
-<p>
-All of the signal-processing functions can be applied to its data.
-In the functions that refer to a given sound, the form <code>(list mix-id)</code> refers to the
-underlying mix's sound.  So, <code>(src-sound 2.0 1.0 (list 0) 0)</code> performs
-sampling-rate conversion on mix 0's sound's channel 0; <code>(display-edits (list 0) 0)</code>
-shows the edit list of that sound.  To undo or redo an edit that actually applied to the underlying
-mix sound, call undo or redo on the outer (resultant, mixed-into) sound.
-</p>
+
 
 <!-- -------------------------------- MIX FUNCTION TABLE -------------------------------- -->
 
@@ -3339,8 +3314,7 @@ enveloped mix: see <a href="sndscm.html#exenvelopedmix">enveloped-mix</a> in ext
 pan mono into stereo: see <a href="sndscm.html#placesound">place-sound</a> in examp.scm<br>
 the mix dialog: <a href="snd.html#mixpanel">Mix Panel</a><br>
 mix menu: see dlp/mix-menu.scm<br>
-filter mix (or any other such operation): use list with mix id as 'snd' arg.<br>
-read pre-mix samples: <a href="#makemixsamplereader">make-mix-sample-reader</a><br>
+read mix samples: <a href="#makemixsamplereader">make-mix-sample-reader</a><br>
 mix property list: <a href="sndscm.html#mixproperty">mix-property</a> in mix.scm<br>
 cross-fade in frequency: <i>cross-fade</i> and <i>dissolve-fade</i> in <a href="sndscm.html#fadedoc">fade.scm</a><br>
 zipper cross-fade: <a href="sndscm.html#zipdoc">zipper.scm</a><br>
@@ -5845,7 +5819,7 @@ of the speed of CL+run+C in CLM.
 This optimization is also hidden in many contexts (map-channel, find, etc).  Internally the Snd run macro
 uses 64-bit ints and doubles, so large sounds should not present any numerical problems.
 See <a href="#optimization">optimization</a>
-for some timings.  In Ruby, it's possible to use the <a href="http://www.zenspider.com/Languages/Ruby/">RubyInline</a> module instead.
+for some timings.  In Ruby, its possible to use the <a href="http://www.zenspider.com/Languages/Ruby/">RubyInline</a> module instead.
 </td></tr><tr><td colspan=2></td></tr>
 
 
@@ -6592,7 +6566,7 @@ This is the <a href="#regularizedargs">regularized</a> version of <a href="#snds
 <small><blockquote>
 resample all chans: <a href="#sndsrc">src-sound</a><br>
 resample selection: <a href="#sndsrcselection">src-selection</a><br>
-resample mix: speed control in <a href="snd.html#mixpanel">Mix dialog</a> (also <a href="#applycontrols">apply-controls</a>) or src-channel with mix id in list<br>
+resample mix: speed control in <a href="snd.html#mixpanel">Mix dialog</a> (also <a href="#applycontrols">apply-controls</a>)<br>
 resample via drawn envelope: srate in <a href="snd.html#editenvelope">Envelope editor</a><br>
 resample via CLM gen: <a href="clm.html#src">src</a><br>
 resample with independent time control: expand in <a href="#customcontrols">control panel</a>, <a href="sndscm.html#exexpsrc">expsrc</a> and <a href="sndscm.html#exexpsnd">expsnd</a><br>

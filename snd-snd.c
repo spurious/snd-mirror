@@ -1960,6 +1960,7 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller, bool just_sound)
 	}
       return(res);
     }
+  /* TODO: all the "just_sound assert_sound args can go */
   if (just_sound)
     {
       ASSERT_JUST_SOUND(caller, snd_n, 1);
@@ -2733,11 +2734,13 @@ static XEN g_revert_sound(XEN index)
   #define H_revert_sound "("  S_revert_sound " (snd #f)): revert snd to its unedited state (undo all)"
   snd_info *sp;
   int i;
+#if 0
   if (XEN_LIST_P(index))
     XEN_ERROR(NO_SUCH_EDIT,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_revert_sound),
 			 index,
 			 C_TO_XEN_STRING("can't revert an underlying mix edit except through the outer (mixed-into) sound")));
+#endif
   ASSERT_SOUND(S_revert_sound, index, 1);
   sp = get_sp(index, NO_PLAYERS);
   if (sp == NULL) 
