@@ -440,9 +440,13 @@
 	'mus-svx mus-svx 8
 	'mus-soundfont mus-soundfont 25
 
-	'mus-interp-linear mus-interp-linear 0
-	'mus-interp-sinusoidal mus-interp-sinusoidal 1
-	'mus-interp-all-pass mus-interp-all-pass 2
+	'mus-interp-none mus-interp-none 0
+	'mus-interp-linear mus-interp-linear 1
+	'mus-interp-sinusoidal mus-interp-sinusoidal 2
+	'mus-interp-all-pass mus-interp-all-pass 3
+	'mus-interp-lagrange mus-interp-lagrange 4
+	'mus-interp-bezier mus-interp-bezier 5
+	'mus-interp-hermite mus-interp-hermite 6
 
 	'mus-unknown mus-unknown 0
 	'mus-bshort mus-bshort 1
@@ -11570,8 +11574,8 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "delay" 
-			 "delay: line[3]: [0.000 0.000 0.000]"
-			 "dly line[3,3 at 0,0 (external)]: [0.000 0.000 0.000], xscl: 0.000000, yscl: 0.000000")
+			 "delay: line[3, step]: [0.000 0.000 0.000]"
+			 "dly line[3,3 at 0,0 (external)]: [0.000 0.000 0.000], xscl: 0.000000, yscl: 0.000000, type: step")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (delay gen i)))
@@ -11642,9 +11646,10 @@ EDITS: 5
 	      (snd-display ";zdelay: ~A" v0))
 	  (delay del 1.0)
 	  (delay del 0.0 0.4)
-	  (if (not (string=? (mus-describe del) "delay: line[5,8]: [0.000 0.000 0.000 1.000 0.000]"))
+	  (if (not (string=? (mus-describe del) "delay: line[5,8, linear]: [0.000 0.000 0.000 1.000 0.000]"))
 	      (snd-display ";describe zdelay: ~A" (mus-describe del)))
-	  (if (not (string=? (mus-inspect del) "dly line[5,8 at 4,7 (external)]: [0.000 0.000 0.000 1.000 0.000], xscl: 0.000000, yscl: 0.000000"))
+	  (if (not (string=? (mus-inspect del) 
+			     "dly line[5,8 at 4,7 (external)]: [0.000 0.000 0.000 1.000 0.000], xscl: 0.000000, yscl: 0.000000, type: linear"))
 	      (snd-display ";inspect zdelay: ~A" (mus-inspect del)))))
       (let ((tag (catch #t (lambda () 
 			     (let ((gen (make-oscil)))
@@ -11678,9 +11683,10 @@ EDITS: 5
 	    (v (make-vct 20))
 	    (inval 1.0))
 	(vct-map! v (lambda ()
-		      (let ((res (delay dly (+ inval (tap dly -2)))))
+		      (let ((res (delay dly (+ inval (tap dly -2.0)))))
 			(set! inval 0.0)
 			res)))
+	(set! (print-length) (max 20 (print-length)))
 	(if (not (vequal v (vct 0.0 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 0.0)))
 	    (snd-display ";tap back 2: ~A" v)))
       
@@ -11696,14 +11702,68 @@ EDITS: 5
 	(if (not (vequal v (vct 0.0 0.0 0.0 1.0 0.0 0.0 0.300 0.240 0.0 0.090 0.144 0.058 0.027 0.065 0.052 0.022 0.026 0.031 0.019 0.013)))
 	    (snd-display ";tap with low pass: ~A" v)))
       
+      (let ((d1 (make-delay 4))
+	    (d2 (make-delay 4 :max-size 5 :type mus-interp-linear))
+	    (d3 (make-delay 4 :max-size 5 :type mus-interp-all-pass))
+	    (d4 (make-delay 4 :max-size 5 :type mus-interp-none))
+	    (d5 (make-delay 4 :max-size 4 :type mus-interp-lagrange))
+	    (d6 (make-delay 4 :max-size 4 :type mus-interp-hermite))
+	    (d7 (make-delay 4 :max-size 4 :type mus-interp-linear))
+	    (v1 (make-vct 20))
+	    (v2 (make-vct 20))
+	    (v3 (make-vct 20))
+	    (v4 (make-vct 20))
+	    (v5 (make-vct 20))
+	    (v6 (make-vct 20))
+	    (v7 (make-vct 20)))
+	(vct-set! v1 0 (delay d1 1.0))
+	(vct-set! v2 0 (delay d2 1.0))
+	(vct-set! v3 0 (delay d3 1.0))
+	(vct-set! v4 0 (delay d4 1.0))
+	(vct-set! v5 0 (delay d5 1.0))
+	(vct-set! v6 0 (delay d6 1.0))
+	(vct-set! v7 0 (delay d7 1.0))
+	(delay-tick d1 0.0)
+	(delay-tick d2 0.0)
+	(delay-tick d3 0.0)
+	(delay-tick d4 0.0)
+	(delay-tick d5 0.0)
+	(delay-tick d6 0.0)
+	(delay-tick d7 0.0)
+	(do ((i 1 (1+ i))
+	     (j -0.2 (- j 0.2)))
+	    ((= i 20))
+	  (vct-set! v1 i (tap d1 j))
+	  (vct-set! v2 i (tap d2 j))
+	  (vct-set! v3 i (tap d3 j))
+	  (vct-set! v4 i (tap d4 j))
+	  (vct-set! v5 i (tap d5 j))
+	  (vct-set! v6 i (tap d6 j))
+	  (vct-set! v7 i (tap d7 j)))
+	(set! (print-length) (max 20 (print-length)))
+	(if (not (vequal v1 (vct 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 1.0 1.0 1.0 1.0 0.0 0.0 0.0 0.0 0.0)))
+	    (snd-display ";delay interp none (1): ~A" v1))
+	(if (not (vequal v2 (vct 0.0 0.0 0.0 0.0 0.0 0.0 0.200 0.400 0.600 0.800 1.0 0.800 0.600 0.400 0.200 0.0 0.0 0.0 0.0 0.0)))
+	    (snd-display ";delay interp linear (2): ~A" v2))
+	(if (not (vequal v3 (vct 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.429 0.143 0.095 0.905 0.397 0.830 0.793 0.912 -0.912 0.608 -0.261 0.065 -0.007)))
+	    (snd-display ";delay interp all-pass (3): ~A" v3))
+	(if (not (vequal v4 (vct 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 1.0 1.0 1.0 1.0 0.0 0.0 0.0 0.0 0.0)))
+	    (snd-display ";delay interp none (4): ~A" v4))
+	(if (not (vequal v5 (vct 0.0 0.0 0.0 -0.120 -0.080 0.0 0.120 0.280 0.840 0.960 1.0 0.960 0.840 0.280 0.120 0.0 -0.080 -0.120 0.0 0.0)))
+	    (snd-display ";delay interp lagrange (5): ~A" v5))
+	(if (not (vequal v6 (vct 0.0 -0.016 -0.048 -0.072 -0.064 0.0 0.168 0.424 0.696 0.912 1.0 0.912 0.696 0.424 0.168 0.0 -0.064 -0.072 -0.048 -0.016)))
+	    (snd-display ";delay interp hermite (6): ~A" v6))
+	(if (not (vequal v7 (vct 0.0 0.0 0.0 0.0 0.0 0.0 0.200 0.400 0.600 0.800 1.0 0.800 0.600 0.400 0.200 0.0 0.0 0.0 0.0 0.0)))
+	    (snd-display ";delay interp linear (7): ~A" v7)))
+
       (let ((gen (make-all-pass .4 .6 3))
 	    (v0 (make-vct 10))
 	    (gen1 (make-all-pass .4 .6 3))
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "all-pass"
-			 "all-pass: feedback: 0.400, feedforward: 0.600, line[3]:[0.000 0.000 0.000]"
-			 "dly line[3,3 at 0,0 (external)]: [0.000 0.000 0.000], xscl: 0.600000, yscl: 0.400000")
+			 "all-pass: feedback: 0.400, feedforward: 0.600, line[3, step]:[0.000 0.000 0.000]"
+			 "dly line[3,3 at 0,0 (external)]: [0.000 0.000 0.000], xscl: 0.600000, yscl: 0.400000, type: step")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (all-pass gen 1.0)))
@@ -11747,7 +11807,7 @@ EDITS: 5
 	(print-and-check gen 
 			 "average"
 			 "average: 0.000, line[4]:[0.000 0.000 0.000 0.000]"
-			 "dly line[4,4 at 0,0 (external)]: [0.000 0.000 0.000 0.000], xscl: 0.000000, yscl: 0.250000")
+			 "dly line[4,4 at 0,0 (external)]: [0.000 0.000 0.000 0.000], xscl: 0.000000, yscl: 0.250000, type: step")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (average gen 1.0)))
@@ -11809,8 +11869,8 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "comb"
-			 "comb: scaler: 0.400, line[3]: [0.000 0.000 0.000]"
-			 "dly line[3,3 at 0,0 (external)]: [0.000 0.000 0.000], xscl: 0.000000, yscl: 0.400000")
+			 "comb: scaler: 0.400, line[3, step]: [0.000 0.000 0.000]"
+			 "dly line[3,3 at 0,0 (external)]: [0.000 0.000 0.000], xscl: 0.000000, yscl: 0.400000, type: step")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (comb gen 1.0)))
@@ -11847,9 +11907,10 @@ EDITS: 5
 	      (snd-display ";zcomb: ~A" v0))
 	  (comb del 1.0)
 	  (comb del 0.0 0.4)
-	  (if (not (string=? (mus-describe del) "comb: scaler: 0.000, line[5,8]: [0.000 0.000 0.000 1.000 0.000]"))
+	  (if (not (string=? (mus-describe del) "comb: scaler: 0.000, line[5,8, linear]: [0.000 0.000 0.000 1.000 0.000]"))
 	      (snd-display ";describe zcomb: ~A" (mus-describe del)))
-	  (if (not (string=? (mus-inspect del) "dly line[5,8 at 4,7 (external)]: [0.000 0.000 0.000 1.000 0.000], xscl: 0.000000, yscl: 0.000000"))
+	  (if (not (string=? (mus-inspect del) 
+			     "dly line[5,8 at 4,7 (external)]: [0.000 0.000 0.000 1.000 0.000], xscl: 0.000000, yscl: 0.000000, type: linear"))
 	      (snd-display ";inspect zcomb: ~A" (mus-inspect del))))
 	(set! (mus-feedback del) 1.0)
 	(if (fneq (mus-feedback del) 1.0)
@@ -11861,8 +11922,8 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "notch"
-			 "notch: scaler: 0.400, line[3]: [0.000 0.000 0.000]"
-			 "dly line[3,3 at 0,0 (external)]: [0.000 0.000 0.000], xscl: 0.400000, yscl: 0.000000")
+			 "notch: scaler: 0.400, line[3, step]: [0.000 0.000 0.000]"
+			 "dly line[3,3 at 0,0 (external)]: [0.000 0.000 0.000], xscl: 0.400000, yscl: 0.000000, type: step")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (notch gen 1.0)))
@@ -14147,7 +14208,7 @@ EDITS: 5
 	    (v2 (make-vct 10)))
 	(print-and-check gen 
 			 "table-lookup"
-			 "table-lookup: freq: 440.000Hz, phase: 0.000, length: 512"
+			 "table-lookup: freq: 440.000Hz, phase: 0.000, length: 512, interp: linear"
 			 (mus-inspect gen))
 	;; problem with mus-inspect here is that it includes the table pointer itself
 	(if (not (= (mus-length gen) 512)) (snd-display ";table-lookup length: ~A?" (mus-length gen)))
@@ -14348,8 +14409,8 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "wave-train"
-			 "wave-train freq: 440.000Hz, phase: 0.000, size: 20"
-			 "wt freq: 440.000000, phase: 0.000000, wave[20 (external)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], b: rblk buf[20 (local)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], loc: 0, fill_time: 0.000000, empty: true")
+			 "wave-train freq: 440.000Hz, phase: 0.000, size: 20, interp: linear"
+			 "wt freq: 440.000000, phase: 0.000000, wave[20 (external)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], type: linear, b: rblk buf[20 (local)]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], loc: 0, fill_time: 0.000000, empty: true")
 	(do ((i 0 (1+ i)))
 	    ((= i 20))
 	  (vct-set! (mus-data gen) i (* i .5))
@@ -14990,8 +15051,8 @@ EDITS: 5
 	     (fr0 (locsig gen 0 1.0)))
 	(print-and-check gen 
 			 "locsig"
-			 "locsig: chans 2, outn: [0.667 0.333]"
-			 "locs outn[2]: [0.667 0.333], revn[0]: nil")
+			 "locsig: chans 2, outn: [0.667 0.333], interp: linear"
+			 "locs outn[2]: [0.667 0.333], revn[0]: nil, interp: linear")
 	(if (not (locsig? gen)) (snd-display ";~A not locsig?" gen))
 	(if (not (eq? gen1 gen3)) (snd-display ";locsig eq? ~A ~A" gen1 gen3))
 	(if (not (equal? gen1 gen3)) (snd-display ";locsig equal? ~A ~A" gen1 gen3))
@@ -15120,8 +15181,8 @@ EDITS: 5
 	     (lc (make-locsig 60.0 :reverb .1 :channels 4 :distance 4.0 :output gen :revout rev)))
 	(print-and-check lc
 			 "locsig"
-			 "locsig: chans 4, outn: [0.083 0.167 0.000 0.000], revn: [0.017 0.033 0.000 0.000]"
-			 "locs outn[4]: [0.083 0.167 0.000 0.000], revn[4]: [0.017 0.033 0.000 0.000]")
+			 "locsig: chans 4, outn: [0.083 0.167 0.000 0.000], revn: [0.017 0.033 0.000 0.000], interp: linear"
+			 "locs outn[4]: [0.083 0.167 0.000 0.000], revn[4]: [0.017 0.033 0.000 0.000], interp: linear")
 	(do ((i 0 (1+ i)))
 	    ((= i 100))
 	  (locsig lc i 1.0))
@@ -15132,8 +15193,8 @@ EDITS: 5
 	      (snd-display ";locsig reverb set![~A]: ~A?" i (locsig-reverb-ref lc i))))
 	(print-and-check lc
 			 "locsig"
-			 "locsig: chans 4, outn: [0.083 0.167 0.000 0.000], revn: [0.000 0.100 0.200 0.300]"
-			 "locs outn[4]: [0.083 0.167 0.000 0.000], revn[4]: [0.000 0.100 0.200 0.300]")
+			 "locsig: chans 4, outn: [0.083 0.167 0.000 0.000], revn: [0.000 0.100 0.200 0.300], interp: linear"
+			 "locs outn[4]: [0.083 0.167 0.000 0.000], revn[4]: [0.000 0.100 0.200 0.300], interp: linear")
 	(if (not (vct? (mus-data lc))) (snd-display ";out data locsig: ~A" (mus-data lc)))
 	(if (not (vct? (mus-xcoeffs lc))) (snd-display ";rev data locsig: ~A" (mus-xcoeffs lc)))
 	(mus-close gen)
@@ -15141,32 +15202,32 @@ EDITS: 5
       
       (print-and-check (make-locsig 160 :channels 4)
 		       "locsig"
-		       "locsig: chans 4, outn: [0.000 0.222 0.778 0.000]"
-		       "locs outn[4]: [0.000 0.222 0.778 0.000], revn[0]: nil")
+		       "locsig: chans 4, outn: [0.000 0.222 0.778 0.000], interp: linear"
+		       "locs outn[4]: [0.000 0.222 0.778 0.000], revn[0]: nil, interp: linear")
       (print-and-check (make-locsig -200 :channels 4)
 		       "locsig"
-		       "locsig: chans 4, outn: [0.000 0.222 0.778 0.000]"
-		       "locs outn[4]: [0.000 0.222 0.778 0.000], revn[0]: nil")
+		       "locsig: chans 4, outn: [0.000 0.222 0.778 0.000], interp: linear"
+		       "locs outn[4]: [0.000 0.222 0.778 0.000], revn[0]: nil, interp: linear")
       (print-and-check (make-locsig 160 :channels 4 :distance .5)
 		       "locsig"
-		       "locsig: chans 4, outn: [0.000 0.222 0.778 0.000]"
-		       "locs outn[4]: [0.000 0.222 0.778 0.000], revn[0]: nil")
+		       "locsig: chans 4, outn: [0.000 0.222 0.778 0.000], interp: linear"
+		       "locs outn[4]: [0.000 0.222 0.778 0.000], revn[0]: nil, interp: linear")
       (print-and-check (make-locsig 320 :channels 4)
 		       "locsig"
-		       "locsig: chans 4, outn: [0.556 0.000 0.000 0.444]"
-		       "locs outn[4]: [0.556 0.000 0.000 0.444], revn[0]: nil")
+		       "locsig: chans 4, outn: [0.556 0.000 0.000 0.444], interp: linear"
+		       "locs outn[4]: [0.556 0.000 0.000 0.444], revn[0]: nil, interp: linear")
       (print-and-check (make-locsig -40 :channels 4)
 		       "locsig"
-		       "locsig: chans 4, outn: [0.556 0.000 0.000 0.444]"
-		       "locs outn[4]: [0.556 0.000 0.000 0.444], revn[0]: nil")
+		       "locsig: chans 4, outn: [0.556 0.000 0.000 0.444], interp: linear"
+		       "locs outn[4]: [0.556 0.000 0.000 0.444], revn[0]: nil, interp: linear")
       (print-and-check (make-locsig 320 :channels 2)
 		       "locsig"
-		       "locsig: chans 2, outn: [0.000 1.000]"
-		       "locs outn[2]: [0.000 1.000], revn[0]: nil")
+		       "locsig: chans 2, outn: [0.000 1.000], interp: linear"
+		       "locs outn[2]: [0.000 1.000], revn[0]: nil, interp: linear")
       (print-and-check (make-locsig -40 :channels 2)
 		       "locsig"
-		       "locsig: chans 2, outn: [0.000 1.000]"
-		       "locs outn[2]: [0.000 1.000], revn[0]: nil")
+		       "locsig: chans 2, outn: [0.000 1.000], interp: linear"
+		       "locs outn[2]: [0.000 1.000], revn[0]: nil, interp: linear")
       (letrec ((locsig-data
 		(lambda (gen)
 		  (let* ((chans (mus-channels gen))

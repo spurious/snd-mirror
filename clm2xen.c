@@ -45,6 +45,8 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
+#define MAX_ARGLIST_LEN 24
+/* try to accomodate &other-keys essentially */
 
 static int local_error_type = MUS_NO_ERROR;
 static char *local_error_msg = NULL;
@@ -1085,6 +1087,7 @@ static XEN g_mus_apply(XEN arglist)
 
 /* ---------------- delay ---------------- */
 
+
 typedef enum {G_DELAY, G_COMB, G_NOTCH, G_ALL_PASS, G_AVERAGE} xclm_delay_t;
 
 static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
@@ -1092,11 +1095,11 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
   mus_xen *gn;
   mus_any *ge = NULL;
   char *caller = NULL;
-  XEN args[16]; 
+  XEN args[MAX_ARGLIST_LEN]; 
   XEN keys[8];
-  int orig_arg[8] = {0, 0, 0, 0, 0, 0, 0, (int)MUS_INTERP_LINEAR};
+  int orig_arg[8] = {0, 0, 0, 0, 0, 0, 0, (int)MUS_INTERP_NONE};
   int vals, i, argn = 0, len = 0, arglist_len, keyn, max_size = -1;
-  mus_interp_t interp_type = MUS_INTERP_LINEAR;
+  mus_interp_t interp_type = MUS_INTERP_NONE;
   int size = 1;
   Float *line = NULL;
   Float scaler = 0.0, feedback = 0.0, feedforward = 0.0;
@@ -1116,9 +1119,14 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
   keys[argn++] = kw_initial_element;
   keys[argn++] = kw_max_size;
   keys[argn++] = kw_type;
-  for (i = 0; i < 16; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
+  if (arglist_len > MAX_ARGLIST_LEN)
+    XEN_ERROR(MUS_MISC_ERROR,
+	      XEN_LIST_3(C_TO_XEN_STRING(caller), 
+			 C_TO_XEN_STRING("too many args!"),
+			 arglist));
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
+  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
   vals = mus_optkey_unscramble(caller, argn, keys, args, orig_arg);
   if (vals > 0)
     {
@@ -1209,7 +1217,12 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	}
       keyn++;
       if (XEN_KEYWORD_P(keys[keyn]))
-	interp_type = MUS_INTERP_LINEAR;
+	{
+	  /* if type not given, if max_size, assume linear interp (for possible tap), else no interp */
+	  if (max_size != size)
+	    interp_type = MUS_INTERP_LINEAR;
+	  else interp_type = MUS_INTERP_NONE;
+	}
       else
 	{
 	  if (XEN_NUMBER_P(keys[keyn]))
@@ -1840,9 +1853,9 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
   return(xen_return_first(table, partials, utable));
 }
 
-static XEN g_make_table_lookup (XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
+static XEN g_make_table_lookup (XEN arglist)
 {
-  #define H_make_table_lookup "(" S_make_table_lookup " (:frequency 440.0) (:initial-phase 0.0) :wave :size): \
+  #define H_make_table_lookup "(" S_make_table_lookup " (:frequency 440.0) (:initial-phase 0.0) :wave :size :type): \
 return a new " S_table_lookup " generator.  This is known as an oscillator in other synthesis systems. \
 The default table size is 512; use :size to set some other size, or pass your own vct as the 'wave'.\n\
    (set! gen (make-table-lookup 440.0 :wave (partials->wave '(1 1.0)))\n\
@@ -1850,20 +1863,29 @@ is the same in effect as " S_make_oscil "."
 
   mus_xen *gn;
   mus_any *ge;
-  int vals, table_size = DEFAULT_TABLE_SIZE;
+  int vals, i, arglist_len, table_size = DEFAULT_TABLE_SIZE;
   bool need_free = false;
-  XEN args[8]; 
-  XEN keys[4];
-  int orig_arg[4] = {0, 0, 0, 0};
+  XEN args[MAX_ARGLIST_LEN]; 
+  XEN keys[5];
+  int orig_arg[5] = {0, 0, 0, 0, MUS_INTERP_LINEAR};
   Float freq = 440.0, phase = 0.0;
   Float *table = NULL;
   vct *v = NULL;
+  mus_interp_t type = MUS_INTERP_LINEAR;
   keys[0] = kw_frequency;
   keys[1] = kw_initial_phase;
   keys[2] = kw_wave;
   keys[3] = kw_size;
-  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = arg7; args[7] = arg8;
-  vals = mus_optkey_unscramble(S_make_table_lookup, 4, keys, args, orig_arg);
+  keys[4] = kw_type;
+  arglist_len = XEN_LIST_LENGTH(arglist);
+  if (arglist_len > MAX_ARGLIST_LEN)
+    XEN_ERROR(MUS_MISC_ERROR,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_make_table_lookup), 
+			 C_TO_XEN_STRING("too many args!"),
+			 arglist));
+  for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
+  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
+  vals = mus_optkey_unscramble(S_make_table_lookup, 5, keys, args, orig_arg);
   if (vals > 0)
     {
       freq = mus_optkey_to_float(keys[0], S_make_table_lookup, orig_arg[0], freq);
@@ -1874,6 +1896,9 @@ is the same in effect as " S_make_oscil "."
 	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, orig_arg[3], keys[3], "size ~A <= 0?");
       if (table_size > MAX_TABLE_SIZE)
 	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, orig_arg[3], keys[3], "size ~A too large");
+      type = (mus_interp_t)mus_optkey_to_int(keys[4], S_make_table_lookup, orig_arg[4], type);
+      if (!(MUS_INTERP_TYPE_OK(type)))
+	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, orig_arg[4], keys[4], "no such interp-type: ~A");
       if (v)
 	{
 	  table = copy_vct_data(v);
@@ -1888,7 +1913,7 @@ is the same in effect as " S_make_oscil "."
       need_free = true;
     }
   old_error_handler = mus_error_set_handler(local_mus_error); /* currently not needed (no recoverable errors from mus_make_table_lookup) */
-  ge = mus_make_table_lookup(freq, phase, table, table_size);
+  ge = mus_make_table_lookup(freq, phase, table, table_size, type);
   mus_error_set_handler(old_error_handler);
   if (ge)
     {
@@ -2896,29 +2921,38 @@ static XEN g_frame_to_buffer(XEN obj, XEN val)
 
 /* ---------------- wave-train ---------------- */
 
-static XEN g_make_wave_train(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
+static XEN g_make_wave_train(XEN arglist)
 {
-  #define H_make_wave_train "(" S_make_wave_train " (:frequency 440.0) (:initial-phase 0.0) :wave :size): \
+  #define H_make_wave_train "(" S_make_wave_train " (:frequency 440.0) (:initial-phase 0.0) :wave :size :type): \
 return a new wave-train generator (an extension of pulse-train).   Frequency is \
 the repetition rate of the wave found in wave. Successive waves can overlap."
 
   mus_xen *gn;
   mus_any *ge;
-  XEN args[8]; 
-  XEN keys[4];
-  int orig_arg[4] = {0, 0, 0, 0};
-  int vals, wsize = DEFAULT_TABLE_SIZE;
+  XEN args[MAX_ARGLIST_LEN]; 
+  XEN keys[5];
+  int orig_arg[5] = {0, 0, 0, 0, MUS_INTERP_LINEAR};
+  int vals, i, arglist_len, wsize = DEFAULT_TABLE_SIZE;
   bool need_free = false;
   vct *v = NULL;
   Float freq = 440.0;
   Float phase = 0.0;
   Float *wave = NULL;
+  mus_interp_t type = MUS_INTERP_LINEAR;
   keys[0] = kw_frequency;
   keys[1] = kw_initial_phase;
   keys[2] = kw_wave;
   keys[3] = kw_size;
-  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = arg7; args[7] = arg8;
-  vals = mus_optkey_unscramble(S_make_wave_train, 4, keys, args, orig_arg);
+  keys[4] = kw_type;
+  arglist_len = XEN_LIST_LENGTH(arglist);
+  if (arglist_len > MAX_ARGLIST_LEN)
+    XEN_ERROR(MUS_MISC_ERROR,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_make_wave_train), 
+			 C_TO_XEN_STRING("too many args!"),
+			 arglist));
+  for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
+  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
+  vals = mus_optkey_unscramble(S_make_wave_train, 5, keys, args, orig_arg);
   if (vals > 0)
     {
       freq = mus_optkey_to_float(keys[0], S_make_wave_train, orig_arg[0], freq);
@@ -2929,6 +2963,9 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
 	XEN_OUT_OF_RANGE_ERROR(S_make_wave_train, orig_arg[3], keys[3], "size ~A <= 0?");
       if (wsize > MAX_TABLE_SIZE)
 	XEN_OUT_OF_RANGE_ERROR(S_make_wave_train, orig_arg[3], keys[3], "size ~A too large");
+      type = (mus_interp_t)mus_optkey_to_int(keys[4], S_make_wave_train, orig_arg[4], type);
+      if (!(MUS_INTERP_TYPE_OK(type)))
+	XEN_OUT_OF_RANGE_ERROR(S_make_wave_train, orig_arg[4], keys[4], "no such interp-type: ~A");
       if (v)
         {
 	  wave = copy_vct_data(v);
@@ -2943,7 +2980,7 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
       need_free = true;
     }
   old_error_handler = mus_error_set_handler(local_mus_error); /* currently not needed */
-  ge = mus_make_wave_train(freq, phase, wave, wsize);
+  ge = mus_make_wave_train(freq, phase, wave, wsize, type);
   mus_error_set_handler(old_error_handler);
   if (ge)
     {
@@ -3175,7 +3212,7 @@ return a new sine summation synthesis generator."
 
   mus_xen *gn;
   mus_any *ge;
-  XEN args[10]; 
+  XEN args[MAX_ARGLIST_LEN]; 
   XEN keys[5];
   int orig_arg[5] = {0, 0, 0, 0, 0};
   int vals, i, arglist_len;
@@ -3186,9 +3223,14 @@ return a new sine summation synthesis generator."
   keys[2] = kw_n;
   keys[3] = kw_a;
   keys[4] = kw_ratio;
-  for (i = 0; i < 10; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
+  if (arglist_len > MAX_ARGLIST_LEN)
+    XEN_ERROR(MUS_MISC_ERROR,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_make_sine_summation), 
+			 C_TO_XEN_STRING("too many args!"),
+			 arglist));
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
+  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
   vals = mus_optkey_unscramble(S_make_sine_summation, 5, keys, args, orig_arg);
   if (vals > 0)
     {
@@ -3455,7 +3497,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 
   mus_xen *gn;
   mus_any *ge;
-  XEN args[16]; 
+  XEN args[MAX_ARGLIST_LEN]; 
   XEN keys[8];
   int orig_arg[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   int vals, i, len = 0, arglist_len;
@@ -3472,9 +3514,14 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   keys[5] = kw_end;
   keys[6] = kw_start;
   keys[7] = kw_dur;
-  for (i = 0; i < 16; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
+  if (arglist_len > MAX_ARGLIST_LEN)
+    XEN_ERROR(MUS_MISC_ERROR,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_make_env), 
+			 C_TO_XEN_STRING("too many args!"),
+			 arglist));
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
+  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
   vals = mus_optkey_unscramble(S_make_env, 8, keys, args, orig_arg);
   if (vals > 0)
     {
@@ -4060,6 +4107,13 @@ static XEN g_mus_channel(XEN obj)
   return(C_TO_SMALL_XEN_INT(mus_channel((mus_any *)XEN_TO_MUS_ANY(obj))));
 }
 
+static XEN g_mus_interp_type(XEN obj)
+{
+  #define H_mus_interp_type "(" S_mus_interp_type " gen): gen's " S_mus_interp_type " field, if any"
+  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_interp_type, "a generator");
+  return(C_TO_SMALL_XEN_INT(mus_interp_type((mus_any *)XEN_TO_MUS_ANY(obj))));
+}
+
 
 
 /* ---------------- locsig ---------------- */
@@ -4147,7 +4201,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
   mus_xen *gn;
   mus_any *ge;
   mus_any *outp = NULL, *revp = NULL;
-  XEN args[14]; 
+  XEN args[MAX_ARGLIST_LEN]; 
   XEN keys[7];
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
   int vals, i, arglist_len, vlen = 0, out_chans = 1;
@@ -4161,9 +4215,14 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
   keys[4] = kw_revout;
   keys[5] = kw_channels;
   keys[6] = kw_type;
-  for (i = 0; i < 14; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
+  if (arglist_len > MAX_ARGLIST_LEN)
+    XEN_ERROR(MUS_MISC_ERROR,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_make_locsig), 
+			 C_TO_XEN_STRING("too many args!"),
+			 arglist));
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
+  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
   vals = mus_optkey_unscramble(S_make_locsig, 7, keys, args, orig_arg);
   if (vals > 0)
     {
@@ -4416,7 +4475,7 @@ The edit function, if any, should return the length in samples of the grain, or 
   XEN in_obj = XEN_UNDEFINED;
   mus_xen *gn;
   mus_any *ge;
-  XEN args[18]; 
+  XEN args[MAX_ARGLIST_LEN]; 
   XEN keys[9];
   int orig_arg[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
   int vals, i, arglist_len, maxsize = 0;
@@ -4432,9 +4491,14 @@ The edit function, if any, should return the length in samples of the grain, or 
   keys[6] = kw_jitter;
   keys[7] = kw_max_size;
   keys[8] = kw_edit;
-  for (i = 0; i < 18; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
+  if (arglist_len > MAX_ARGLIST_LEN)
+    XEN_ERROR(MUS_MISC_ERROR,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_make_granulate), 
+			 C_TO_XEN_STRING("too many args!"),
+			 arglist));
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
+  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
   vals = mus_optkey_unscramble(S_make_granulate, 9, keys, args, orig_arg);
   if (vals > 0)
     {
@@ -4516,7 +4580,7 @@ return a new convolution generator which convolves its input with the impulse re
 
   mus_xen *gn;
   mus_any *ge;
-  XEN args[6]; 
+  XEN args[MAX_ARGLIST_LEN]; 
   XEN keys[3];
   int orig_arg[3] = {0, 0, 0};
   int vals, i, arglist_len, fftlen;
@@ -4526,9 +4590,14 @@ return a new convolution generator which convolves its input with the impulse re
   keys[0] = kw_input;
   keys[1] = kw_filter;
   keys[2] = kw_fft_size;
-  for (i = 0; i < 6; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
+  if (arglist_len > MAX_ARGLIST_LEN)
+    XEN_ERROR(MUS_MISC_ERROR,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_make_convolve), 
+			 C_TO_XEN_STRING("too many args!"),
+			 arglist));
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
+  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
   vals = mus_optkey_unscramble(S_make_convolve, 3, keys, args, orig_arg);
   if (vals > 0)
     {
@@ -4669,7 +4738,7 @@ is run.  'synthesize' is a function of 1 arg, the generator; it is called to get
   XEN in_obj = XEN_UNDEFINED, edit_obj = XEN_UNDEFINED, synthesize_obj = XEN_UNDEFINED, analyze_obj = XEN_UNDEFINED;
   mus_xen *gn;
   mus_any *ge;
-  XEN args[16]; 
+  XEN args[MAX_ARGLIST_LEN]; 
   XEN keys[8];
   XEN pv_obj;
   int orig_arg[8] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -4684,9 +4753,14 @@ is run.  'synthesize' is a function of 1 arg, the generator; it is called to get
   keys[5] = kw_analyze;
   keys[6] = kw_edit;
   keys[7] = kw_synthesize;
-  for (i = 0; i < 16; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
+  if (arglist_len > MAX_ARGLIST_LEN)
+    XEN_ERROR(MUS_MISC_ERROR,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_make_phase_vocoder), 
+			 C_TO_XEN_STRING("too many args!"),
+			 arglist));
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
+  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
   vals = mus_optkey_unscramble(S_make_phase_vocoder, 8, keys, args, orig_arg);
   if (vals > 0)
     {
@@ -5044,7 +5118,7 @@ XEN_NARGIFY_1(g_mus_random_w, g_mus_random)
 XEN_NARGIFY_0(g_mus_rand_seed_w, g_mus_rand_seed)
 XEN_NARGIFY_1(g_mus_set_rand_seed_w, g_mus_set_rand_seed)
 XEN_NARGIFY_1(g_table_lookup_p_w, g_table_lookup_p)
-XEN_ARGIFY_8(g_make_table_lookup_w, g_make_table_lookup)
+XEN_VARGIFY(g_make_table_lookup_w, g_make_table_lookup)
 XEN_ARGIFY_2(g_table_lookup_w, g_table_lookup)
 XEN_ARGIFY_3(g_partials_to_wave_w, g_partials_to_wave)
 XEN_ARGIFY_3(g_phase_partials_to_wave_w, g_phase_partials_to_wave)
@@ -5119,7 +5193,7 @@ XEN_NARGIFY_1(g_buffer_to_sample_w, g_buffer_to_sample)
 XEN_ARGIFY_2(g_buffer_to_frame_w, g_buffer_to_frame)
 XEN_NARGIFY_2(g_sample_to_buffer_w, g_sample_to_buffer)
 XEN_NARGIFY_2(g_frame_to_buffer_w, g_frame_to_buffer)
-XEN_ARGIFY_8(g_make_wave_train_w, g_make_wave_train)
+XEN_VARGIFY(g_make_wave_train_w, g_make_wave_train)
 XEN_ARGIFY_2(g_wave_train_w, g_wave_train)
 XEN_NARGIFY_1(g_wave_train_p_w, g_wave_train_p)
 XEN_ARGIFY_8(g_make_waveshape_w, g_make_waveshape)
@@ -5179,6 +5253,7 @@ XEN_NARGIFY_1(g_readin_p_w, g_readin_p)
 XEN_NARGIFY_1(g_readin_w, g_readin)
 XEN_ARGIFY_8(g_make_readin_w, g_make_readin)
 XEN_NARGIFY_1(g_mus_channel_w, g_mus_channel)
+XEN_NARGIFY_1(g_mus_interp_type_w, g_mus_interp_type)
 XEN_NARGIFY_1(g_mus_location_w, g_mus_location)
 XEN_NARGIFY_2(g_mus_set_location_w, g_mus_set_location)
 XEN_NARGIFY_1(g_mus_increment_w, g_mus_increment)
@@ -5440,6 +5515,7 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_readin_w g_readin
 #define g_make_readin_w g_make_readin
 #define g_mus_channel_w g_mus_channel
+#define g_mus_interp_type_w g_mus_interp_type
 #define g_mus_location_w g_mus_location
 #define g_mus_set_location_w g_mus_set_location
 #define g_mus_increment_w g_mus_increment
@@ -5520,6 +5596,7 @@ void mus_xen_init(void)
   rb_define_method(mus_xen_tag, "increment", XEN_PROCEDURE_CAST g_mus_increment, 0);
   rb_define_method(mus_xen_tag, "channels", XEN_PROCEDURE_CAST g_mus_channels, 0);
   rb_define_method(mus_xen_tag, "channel", XEN_PROCEDURE_CAST g_mus_channel, 0);
+  rb_define_method(mus_xen_tag, "interp_type", XEN_PROCEDURE_CAST g_mus_interp_type, 0);
   rb_define_method(mus_xen_tag, "xcoeffs", XEN_PROCEDURE_CAST g_mus_xcoeffs, 0);
   rb_define_method(mus_xen_tag, "ycoeffs", XEN_PROCEDURE_CAST g_mus_ycoeffs, 0);
   rb_define_method(mus_xen_tag, "ramp", XEN_PROCEDURE_CAST g_mus_ramp, 0);
@@ -5607,6 +5684,10 @@ void mus_xen_init(void)
   XEN_DEFINE_CONSTANT(S_mus_interp_linear,      MUS_INTERP_LINEAR,          "locsig/delay linear interpolation");
   XEN_DEFINE_CONSTANT(S_mus_interp_sinusoidal,  MUS_INTERP_SINUSOIDAL,      "locsig sinusoidal interpolation");
   XEN_DEFINE_CONSTANT(S_mus_interp_all_pass,    MUS_INTERP_ALL_PASS,        "delay interpolation");
+  XEN_DEFINE_CONSTANT(S_mus_interp_lagrange,    MUS_INTERP_LAGRANGE,        "2nd order lagrange interpolation");
+  XEN_DEFINE_CONSTANT(S_mus_interp_hermite,     MUS_INTERP_HERMITE,         "3rd order hermite interpolation");
+  XEN_DEFINE_CONSTANT(S_mus_interp_none,        MUS_INTERP_NONE,            "no interpolation -- step func");
+  XEN_DEFINE_CONSTANT(S_mus_interp_bezier,      MUS_INTERP_BEZIER,          "bezier interpolation");
 
   XEN_DEFINE_PROCEDURE(S_mus_inspect,   g_mus_inspect_w, 1, 0, 0,   H_mus_inspect);
   XEN_DEFINE_PROCEDURE(S_mus_describe,  g_mus_describe_w, 1, 0, 0,  H_mus_describe);
@@ -5682,7 +5763,7 @@ void mus_xen_init(void)
 
 
   XEN_DEFINE_PROCEDURE(S_table_lookup_p,     g_table_lookup_p_w,     1, 0, 0, H_table_lookup_p);
-  XEN_DEFINE_PROCEDURE(S_make_table_lookup,  g_make_table_lookup_w,  0, 8, 0, H_make_table_lookup);
+  XEN_DEFINE_PROCEDURE(S_make_table_lookup,  g_make_table_lookup_w,  0, 0, 1, H_make_table_lookup);
   XEN_DEFINE_PROCEDURE(S_table_lookup,       g_table_lookup_w,       1, 1, 0, H_table_lookup);
   XEN_DEFINE_PROCEDURE(S_partials_to_wave,   g_partials_to_wave_w,   1, 2, 0, H_partials_to_wave);
   XEN_DEFINE_PROCEDURE(S_phase_partials_to_wave, g_phase_partials_to_wave_w, 1, 2, 0, H_phase_partials_to_wave);
@@ -5735,7 +5816,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_y1, g_mus_y1_w, H_mus_y1, S_setB S_mus_y1, g_mus_set_y1_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_y2, g_mus_y2_w, H_mus_y2, S_setB S_mus_y2, g_mus_set_y2_w,  1, 0, 2, 0);
 
-  XEN_DEFINE_PROCEDURE(S_make_wave_train, g_make_wave_train_w, 0, 8, 0, H_make_wave_train);
+  XEN_DEFINE_PROCEDURE(S_make_wave_train, g_make_wave_train_w, 0, 0, 1, H_make_wave_train);
   XEN_DEFINE_PROCEDURE(S_wave_train,      g_wave_train_w,      1, 1, 0, H_wave_train);
   XEN_DEFINE_PROCEDURE(S_wave_train_p,    g_wave_train_p_w,    1, 0, 0, H_wave_train_p);
 
@@ -5881,10 +5962,11 @@ the closer the radius is to 1.0, the narrower the resonance."
 				   S_setB S_mus_file_buffer_size, g_mus_set_file_buffer_size_w,  0, 0, 1, 0);
 
 
-  XEN_DEFINE_PROCEDURE(S_readin_p,    g_readin_p_w,    1, 0, 0, H_readin_p);
-  XEN_DEFINE_PROCEDURE(S_readin,      g_readin_w,      1, 0, 0, H_readin);
-  XEN_DEFINE_PROCEDURE(S_make_readin, g_make_readin_w, 0, 8, 0, H_make_readin);
-  XEN_DEFINE_PROCEDURE(S_mus_channel, g_mus_channel_w, 1, 0, 0, H_mus_channel);
+  XEN_DEFINE_PROCEDURE(S_readin_p,        g_readin_p_w,        1, 0, 0, H_readin_p);
+  XEN_DEFINE_PROCEDURE(S_readin,          g_readin_w,          1, 0, 0, H_readin);
+  XEN_DEFINE_PROCEDURE(S_make_readin,     g_make_readin_w,     0, 8, 0, H_make_readin);
+  XEN_DEFINE_PROCEDURE(S_mus_channel,     g_mus_channel_w,     1, 0, 0, H_mus_channel);
+  XEN_DEFINE_PROCEDURE(S_mus_interp_type, g_mus_interp_type_w, 1, 0, 0, H_mus_interp_type);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_location, g_mus_location_w, H_mus_location, S_setB S_mus_location, g_mus_set_location_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_increment, g_mus_increment_w, H_mus_increment, S_setB S_mus_increment, g_mus_set_increment_w,  1, 0, 2, 0);
@@ -5923,6 +6005,7 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_mus_mix, g_mus_mix_w, 2, 5, 0, H_mus_mix);
 
   XEN_YES_WE_HAVE("clm");
+
 #if WITH_MODULES
   scm_c_export(
 	       S_all_pass,
@@ -6088,7 +6171,11 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_mus_inspect,
 	       S_mus_length,
 	       S_mus_interp_all_pass,
+	       S_mus_interp_bezier,
+	       S_mus_interp_hermite,
+	       S_mus_interp_lagrange,
 	       S_mus_interp_linear,
+	       S_mus_interp_none,
 	       S_mus_interp_sinusoidal,
 	       S_mus_location,
 	       S_mus_mix,

@@ -5,6 +5,10 @@
  *   or add-to-existing would need access to current
  */
 
+/* TODO: mus-interp-type -- doc[method tables too]/test etc */
+/* TODO: tests for table-lookup|wave-train interps */
+/* TODO: some independent test for lagrange/hermite interpolations */
+
 #if defined(HAVE_CONFIG_H)
   #include <config.h>
 #endif
@@ -56,6 +60,8 @@ enum {MUS_OSCIL, MUS_SUM_OF_COSINES, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PAS
       MUS_SAMPLE_TO_FILE, MUS_FRAME_TO_FILE, MUS_MIXER, MUS_PHASE_VOCODER,
       MUS_AVERAGE, MUS_SUM_OF_SINES,
       MUS_INITIAL_GEN_TAG};
+
+static char *interp_name[] = {"step", "linear", "sinusoidal", "all-pass", "lagrange", "bezier", "hermite"};
 
 static int mus_class_tag = MUS_INITIAL_GEN_TAG;
 int mus_make_class_tag(void) {return(mus_class_tag++);}
@@ -582,6 +588,83 @@ Float mus_array_interp(Float *wave, Float phase, int size)
     }
 }
 
+static Float mus_array_all_pass_interp(Float *wave, Float phase, int size, Float yn1)
+{
+  /* from Perry Cook */
+  int int_part, inx;
+  Float frac_part;
+  if ((phase < 0.0) || (phase > size))
+    {
+      phase = fmod((double)phase, (double)size);
+      if (phase < 0.0) phase += size;
+    }
+  int_part = (int)floor(phase);
+  frac_part = phase - int_part;
+  if (int_part == size) int_part = 0;
+  inx = int_part + 1;
+  if (inx >= size) inx -= size;
+  if (frac_part == 0.0) 
+    return(wave[int_part] + wave[inx] - yn1);
+  else return(wave[int_part] + ((1.0 - frac_part) / (1 + frac_part)) * (wave[inx] - yn1));
+}
+
+static Float mus_array_lagrange_interp(Float *wave, Float x, int size)
+{
+  /* Abramovitz and Stegun 25.2.11 -- everyone badmouths this poor formula */
+  int x0, xp1, xm1;
+  Float p, pp;
+  if ((x < 0.0) || (x > size))
+    {
+      x = fmod((double)x, (double)size);
+      if (x < 0.0) x += size;
+    }
+  x0 = (int)floor(x); /* goddamn C doesn't provide "round"?? */
+  if ((x - x0) > 0.5) x0++;
+  p = x - x0;
+  if (x0 >= size) x0 -= size;
+  if (p == 0.0) return(wave[x0]);
+  xp1 = x0 + 1;
+  if (xp1 >= size) xp1 -= size;
+  xm1 = x0 - 1;
+  if (xm1 < 0) xm1 = size - 1;
+  pp = p * p;
+  return((wave[xm1] * 0.5 * (pp - p)) + 
+	 (wave[x0] * (1.0 - pp)) + 
+	 (wave[xp1] * 0.5 * (p + pp)));
+}
+
+static Float mus_array_hermite_interp(Float *wave, Float x, int size)
+{
+  /* from James McCartney */
+  int x0, x1, x2, x3;
+  Float p, c0, c1, c2, c3, y0, y1, y2, y3;
+  if ((x < 0.0) || (x > size))
+    {
+      x = fmod((double)x, (double)size);
+      if (x < 0.0) x += size;
+    }
+  x1 = (int)floor(x); 
+  p = x - x1;
+  if (x1 == size) x1 = 0;
+  if (p == 0.0) return(wave[x1]);
+  x2 = x1 + 1;
+  if (x2 == size) x2 = 0;
+  x3 = x2 + 1;
+  if (x3 == size) x3 = 0;
+  x0 = x1 - 1;
+  if (x0 < 0) x0 = size - 1;
+  y0 = wave[x0];
+  y1 = wave[x1];
+  y2 = wave[x2];
+  y3 = wave[x3];
+  c0 = y1;
+  c1 = 0.5 * (y2 - y0);
+  c3 = 1.5 * (y1 - y2) + 0.5 * (y3 - y0);
+  c2 = y0 - y1 + c1 - c3;
+  return(((c3 * p + c2) * p + c1) * p + c0);
+}
+
+
 static Float *array_normalize(Float *table, int table_size)
 {
   Float amp = 0.0;
@@ -1001,35 +1084,12 @@ Float mus_delay_1(mus_any *ptr, Float input)
 {
   dly *gen = (dly *)ptr;
   Float result;
-  result = gen->line[gen->loc];
-  gen->line[gen->loc] = input;
-  gen->loc++;
-  if (gen->loc >= gen->size) gen->loc = 0;
+  if (gen->zdly) 
+    result = gen->line[gen->zloc];
+  else result = gen->line[gen->loc];
+  mus_delay_tick(ptr, input);
   return(result);
 }
-
-static Float mus_array_all_pass_interp(Float *wave, Float phase, int size, Float yn1)
-{
-  int int_part, inx;
-  Float frac_part;
-  if ((phase < 0.0) || (phase > size))
-    {
-      phase = fmod((double)phase, (double)size);
-      if (phase < 0.0) phase += size;
-    }
-  int_part = (int)floor(phase);
-  frac_part = phase - int_part;
-  if (int_part == size) int_part = 0;
-  inx = int_part +1;
-  if (inx >= size) inx -= size;
-  if (frac_part == 0.0) 
-    return(wave[int_part] + wave[inx] - yn1);
-  else return(wave[int_part] + ((1.0 - frac_part) / (1 + frac_part)) * (wave[inx] - yn1));
-}
-
-/* TODO: table-lookup type [waveshaping, wave-train]? 
-   TODO: tests for delay-tick and all-pass interp
-*/
 
 Float mus_tap(mus_any *ptr, Float loc)
 {
@@ -1037,16 +1097,29 @@ Float mus_tap(mus_any *ptr, Float loc)
   int taploc;
   if (gen->zdly)
     {
-      if (gen->type == MUS_INTERP_LINEAR)
+      switch (gen->type)
 	{
+	case MUS_INTERP_ALL_PASS:
+	  gen->yn1 = mus_array_all_pass_interp(gen->line, gen->zloc - loc, gen->zsize, gen->yn1);
+	  return(gen->yn1);
+	  break;
+	case MUS_INTERP_NONE:
+	  taploc = (int)(gen->loc - (int)loc) % gen->size;
+	  if (taploc < 0) taploc += gen->size;
+	  return(gen->line[taploc]);
+	  break;
+	case MUS_INTERP_LAGRANGE:
+	  return(mus_array_lagrange_interp(gen->line, gen->zloc - loc, gen->zsize));
+	  break;
+	case MUS_INTERP_HERMITE:
+	  return(mus_array_hermite_interp(gen->line, gen->zloc - loc, gen->zsize));
+	  break;
+	case MUS_INTERP_LINEAR:
+	default:
 	  if (loc == 0.0) 
 	    return(gen->line[gen->zloc]);
 	  else return(mus_array_interp(gen->line, gen->zloc - loc, gen->zsize));
-	}
-      else 
-	{
-	  gen->yn1 = mus_array_all_pass_interp(gen->line, gen->zloc - loc, gen->zsize, gen->yn1);
-	  return(gen->yn1);
+	  break;
 	}
     }
   else
@@ -1083,15 +1156,16 @@ static char *inspect_delay(mus_any *ptr)
 {
   dly *gen = (dly *)ptr;
   char *arr = NULL;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "dly line[%d,%d at %d,%d (%s)]: %s, xscl: %f, yscl: %f",
-	  gen->size,
-	  gen->zsize,
-	  gen->loc,
-	  gen->zloc,
-	  (gen->line_allocated) ? "local" : "external",
-	  arr = print_array(gen->line, gen->size, (gen->zdly) ? gen->zloc : gen->loc),
-	  gen->xscl,
-	  gen->yscl);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "dly line[%d,%d at %d,%d (%s)]: %s, xscl: %f, yscl: %f, type: %s",
+	       gen->size,
+	       gen->zsize,
+	       gen->loc,
+	       gen->zloc,
+	       (gen->line_allocated) ? "local" : "external",
+	       arr = print_array(gen->line, gen->size, (gen->zdly) ? gen->zloc : gen->loc),
+	       gen->xscl,
+	       gen->yscl,
+	       interp_name[gen->type]);
   if (arr) FREE(arr);
   return(describe_buffer);
 }
@@ -1102,11 +1176,13 @@ static char *describe_delay(mus_any *ptr)
   dly *gen = (dly *)ptr;
   if (gen->zdly)
     mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		 S_delay ": line[%d,%d]: %s", 
-		 gen->size, gen->zsize, str = print_array(gen->line, gen->size, gen->zloc));
+		 S_delay ": line[%d,%d, %s]: %s", 
+		 gen->size, gen->zsize, 
+		 interp_name[gen->type],
+		 str = print_array(gen->line, gen->size, gen->zloc));
   else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		    S_delay ": line[%d]: %s", 
-		    gen->size, str = print_array(gen->line, gen->size, gen->loc));
+		    S_delay ": line[%d, %s]: %s", 
+		    gen->size, interp_name[gen->type], str = print_array(gen->line, gen->size, gen->loc));
   if (str) FREE(str);
   return(describe_buffer);
 }
@@ -1117,12 +1193,14 @@ static char *describe_comb(mus_any *ptr)
   dly *gen = (dly *)ptr;
   if (gen->zdly)
     mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		 S_comb ": scaler: %.3f, line[%d,%d]: %s", 
+		 S_comb ": scaler: %.3f, line[%d,%d, %s]: %s", 
 		 gen->yscl, gen->size, gen->zsize, 
+		 interp_name[gen->type],
 		 str = print_array(gen->line, gen->size, gen->zloc));
   else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		    S_comb ": scaler: %.3f, line[%d]: %s", 
+		    S_comb ": scaler: %.3f, line[%d, %s]: %s", 
 		    gen->yscl, gen->size, 
+		    interp_name[gen->type],
 		    str = print_array(gen->line, gen->size, gen->loc));
   if (str) FREE(str);
   return(describe_buffer);
@@ -1134,12 +1212,14 @@ static char *describe_notch(mus_any *ptr)
   dly *gen = (dly *)ptr;
   if (gen->zdly)
     mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		 S_notch ": scaler: %.3f, line[%d,%d]: %s", 
+		 S_notch ": scaler: %.3f, line[%d,%d, %s]: %s", 
 		 gen->xscl, gen->size, gen->zsize, 
+		 interp_name[gen->type],
 		 str = print_array(gen->line, gen->size, gen->zloc));
   else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		    S_notch ": scaler: %.3f, line[%d]: %s", 
+		    S_notch ": scaler: %.3f, line[%d, %s]: %s", 
 		    gen->xscl, gen->size, 
+		    interp_name[gen->type],
 		    str = print_array(gen->line, gen->size, gen->loc));
   if (str) FREE(str);
   return(describe_buffer);
@@ -1151,12 +1231,14 @@ static char *describe_all_pass(mus_any *ptr)
   dly *gen = (dly *)ptr;
   if (gen->zdly)
     mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		 S_all_pass ": feedback: %.3f, feedforward: %.3f, line[%d,%d]:%s",
+		 S_all_pass ": feedback: %.3f, feedforward: %.3f, line[%d,%d, %s]:%s",
 		 gen->yscl, gen->xscl, gen->size, gen->zsize, 
+		 interp_name[gen->type],
 		 str = print_array(gen->line, gen->size, gen->zloc));
   else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		    S_all_pass ": feedback: %.3f, feedforward: %.3f, line[%d]:%s",
+		    S_all_pass ": feedback: %.3f, feedforward: %.3f, line[%d, %s]:%s",
 		    gen->yscl, gen->xscl, gen->size, 
+		    interp_name[gen->type],
 		    str = print_array(gen->line, gen->size, gen->loc));
   if (str) FREE(str);
   return(describe_buffer);
@@ -1207,6 +1289,7 @@ static Float delay_scaler(mus_any *ptr) {return(((dly *)ptr)->xscl);}
 static Float set_delay_scaler(mus_any *ptr, Float val) {((dly *)ptr)->xscl = val; return(val);}
 static Float delay_fb(mus_any *ptr) {return(((dly *)ptr)->yscl);}
 static Float set_delay_fb(mus_any *ptr, Float val) {((dly *)ptr)->yscl = val; return(val);}
+static int delay_interp_type(mus_any *ptr) {return((int)(((dly *)ptr)->type));}
 
 static Float *delay_set_data(mus_any *ptr, Float *val) 
 {
@@ -1236,7 +1319,8 @@ static mus_any_class DELAY_CLASS = {
   0, 0,
   &mus_delay,
   MUS_DELAY_LINE,
-  NULL, 0,
+  NULL, 
+  &delay_interp_type,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
@@ -1251,7 +1335,7 @@ mus_any *mus_make_delay(int size, Float *preloaded_line, int line_size, mus_inte
   gen->loc = 0;
   gen->size = size;
   gen->zsize = line_size;
-  gen->zdly = (line_size != size);
+  gen->zdly = ((line_size != size) || (type != MUS_INTERP_NONE));
   gen->type = type;
   if (preloaded_line)
     {
@@ -1308,7 +1392,8 @@ static mus_any_class COMB_CLASS = {
   &set_delay_fb,
   &mus_comb,
   MUS_DELAY_LINE,
-  NULL, 0,
+  NULL,
+  &delay_interp_type,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
@@ -1345,7 +1430,8 @@ static mus_any_class NOTCH_CLASS = {
   0, 0,
   &mus_notch,
   MUS_DELAY_LINE,
-  NULL, 0,
+  NULL,
+  &delay_interp_type,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
@@ -1414,7 +1500,8 @@ static mus_any_class ALL_PASS_CLASS = {
   &set_delay_fb,
   &mus_all_pass,
   MUS_DELAY_LINE,
-  NULL, 0,
+  NULL,
+  &delay_interp_type,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
@@ -1470,7 +1557,7 @@ static mus_any_class AVERAGE_CLASS = {
 mus_any *mus_make_average(int size, Float *line)
 {
   dly *gen;
-  gen = (dly *)mus_make_delay(size, line, size, MUS_INTERP_LINEAR);
+  gen = (dly *)mus_make_delay(size, line, size, MUS_INTERP_NONE);
   if (gen)
     {
       int i;
@@ -1494,6 +1581,7 @@ typedef struct {
   Float phase;
   Float *table;
   int table_size;
+  mus_interp_t type;
   bool table_allocated;
 } tbl;
 
@@ -1537,11 +1625,34 @@ Float *mus_phase_partials_to_wave(Float *partial_data, int partials, Float *tabl
   return(table);
 }
 
+static Float table_lookup_interp(mus_interp_t type, Float x, Float *table, int table_size)
+{
+  int x0;
+  switch (type)
+    {
+    case MUS_INTERP_NONE:
+      x0 = ((int)x) % table_size;
+      if (x0 < 0) x0 += table_size;
+      return(table[x0]);
+      break;
+    case MUS_INTERP_LAGRANGE:
+      return(mus_array_lagrange_interp(table, x, table_size));
+      break;
+    case MUS_INTERP_HERMITE:
+      return(mus_array_hermite_interp(table, x, table_size));
+      break;
+    case MUS_INTERP_LINEAR:
+    default:
+      return(mus_array_interp(table, x, table_size));
+      break;
+    }
+}
+
 Float mus_table_lookup(mus_any *ptr, Float fm)
 {
   tbl *gen = (tbl *)ptr;
   Float result;
-  result = mus_array_interp(gen->table, gen->phase, gen->table_size);
+  result = table_lookup_interp(gen->type, gen->phase, gen->table, gen->table_size);
   gen->phase += (gen->freq + (fm * gen->internal_mag));
   while (gen->phase >= gen->table_size) gen->phase -= gen->table_size;
   while (gen->phase < 0.0) gen->phase += gen->table_size;
@@ -1552,7 +1663,7 @@ Float mus_table_lookup_1(mus_any *ptr)
 {
   tbl *gen = (tbl *)ptr;
   Float result;
-  result = mus_array_interp(gen->table, gen->phase, gen->table_size);
+  result = table_lookup_interp(gen->type, gen->phase, gen->table, gen->table_size);
   gen->phase += gen->freq;
   while (gen->phase >= gen->table_size) gen->phase -= gen->table_size;
   while (gen->phase < 0.0) gen->phase += gen->table_size;
@@ -1567,23 +1678,26 @@ static Float table_lookup_freq(mus_any *ptr) {return((((tbl *)ptr)->freq * sampl
 static Float set_table_lookup_freq(mus_any *ptr, Float val) {((tbl *)ptr)->freq = (val * ((tbl *)ptr)->table_size) / sampling_rate; return(val);}
 static Float table_lookup_phase(mus_any *ptr) {return(fmod(((TWO_PI * ((tbl *)ptr)->phase) / ((tbl *)ptr)->table_size), TWO_PI));}
 static Float set_table_lookup_phase(mus_any *ptr, Float val) {((tbl *)ptr)->phase = (val * ((tbl *)ptr)->table_size) / TWO_PI; return(val);}
+static int table_lookup_interp_type(mus_any *ptr) {return((int)(((tbl *)ptr)->type));}
 
 static char *describe_table_lookup(mus_any *ptr)
 {
   tbl *gen = (tbl *)ptr;
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       S_table_lookup ": freq: %.3fHz, phase: %.3f, length: %d",
+	       S_table_lookup ": freq: %.3fHz, phase: %.3f, length: %d, interp: %s",
 	       gen->freq * sampling_rate / gen->table_size, 
-	       gen->phase, gen->table_size);
+	       gen->phase, gen->table_size,
+	       interp_name[gen->type]);
   return(describe_buffer);
 }
 
 static char *inspect_table_lookup(mus_any *ptr)
 {
   tbl *gen = (tbl *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "tbl freq: %f, phase: %f, length: %d, mag: %f, table: %s",
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "tbl freq: %f, phase: %f, length: %d, mag: %f, table: %s, type: %s",
 	       gen->freq, gen->phase, gen->table_size, gen->internal_mag, 
-	       (gen->table_allocated) ? "local" : "external");
+	       (gen->table_allocated) ? "local" : "external",
+	       interp_name[gen->type]);
   return(describe_buffer);
 }
 
@@ -1598,6 +1712,7 @@ static bool table_lookup_equalp(mus_any *p1, mus_any *p2)
       (t1->table_size == t2->table_size) &&
       (t1->freq == t2->freq) &&
       (t1->phase == t2->phase) &&
+      (t1->type == t2->type) &&
       (t1->internal_mag == t2->internal_mag))
     {
       for (i = 0; i < t1->table_size; i++)
@@ -1646,12 +1761,13 @@ static mus_any_class TABLE_LOOKUP_CLASS = {
   0, 0,
   &run_table_lookup,
   MUS_NOT_SPECIAL, 
-  NULL, 0,
+  NULL,
+  &table_lookup_interp_type,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
 
-mus_any *mus_make_table_lookup (Float freq, Float phase, Float *table, int table_size)
+mus_any *mus_make_table_lookup (Float freq, Float phase, Float *table, int table_size, mus_interp_t type)
 {
   tbl *gen;
   gen = (tbl *)clm_calloc(1, sizeof(tbl), S_make_table_lookup);
@@ -1660,6 +1776,7 @@ mus_any *mus_make_table_lookup (Float freq, Float phase, Float *table, int table
   gen->internal_mag = (Float)table_size / TWO_PI;
   gen->freq = (freq * table_size) / sampling_rate;
   gen->phase = (phase * table_size) / TWO_PI;
+  gen->type = type;
   if (table)
     {
       gen->table = table;
@@ -4554,6 +4671,7 @@ typedef struct {
   int wsize;
   rblk *b;
   bool wave_allocated;
+  mus_interp_t type;
 } wt;
 
 static char *inspect_wt(mus_any *ptr)
@@ -4562,10 +4680,11 @@ static char *inspect_wt(mus_any *ptr)
   char *arr = NULL, *str = NULL;
   str = strdup(inspect_rblk((mus_any *)(gen->b)));
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       "wt freq: %f, phase: %f, wave[%d (%s)]: %s, b: %s",
+	       "wt freq: %f, phase: %f, wave[%d (%s)]: %s, type: %s, b: %s",
 	       gen->freq, gen->phase, gen->wsize, 
 	       (gen->wave_allocated) ? "local" : "external",
 	       arr = print_array(gen->wave, gen->wsize, 0),
+	       interp_name[gen->type],
 	       str);
   if (str) free(str);
   if (arr) FREE(arr);
@@ -4579,6 +4698,7 @@ static Float set_wt_phase(mus_any *ptr, Float val) {((wt *)ptr)->phase = (fmod(v
 static off_t wt_length(mus_any *ptr) {return(((wt *)ptr)->wsize);}
 static off_t wt_set_length(mus_any *ptr, off_t val) {((wt *)ptr)->wsize = (int)val; return(val);}
 static Float *wt_data(mus_any *ptr) {return(((wt *)ptr)->wave);}
+static int wt_interp_type(mus_any *ptr) {return((int)(((wt *)ptr)->type));}
 
 static bool wt_equalp(mus_any *p1, mus_any *p2)
 {
@@ -4590,6 +4710,7 @@ static bool wt_equalp(mus_any *p1, mus_any *p2)
       (w1->core->type == w2->core->type) &&
       (w1->freq == w2->freq) &&
       (w1->phase == w2->phase) &&
+      (w1->type == w2->type) &&
       (w1->wsize == w2->wsize))
     {
       for (i = 0; i < w1->wsize; i++)
@@ -4611,8 +4732,8 @@ static Float *wt_set_data(mus_any *ptr, Float *data)
 static char *describe_wt(mus_any *ptr)
 {
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       S_wave_train " freq: %.3fHz, phase: %.3f, size: " OFF_TD,
-	       wt_freq(ptr), wt_phase(ptr), wt_length(ptr));
+	       S_wave_train " freq: %.3fHz, phase: %.3f, size: " OFF_TD ", interp: %s",
+	       wt_freq(ptr), wt_phase(ptr), wt_length(ptr), interp_name[((wt *)ptr)->type]);
   return(describe_buffer);
 }
 
@@ -4625,7 +4746,7 @@ Float mus_wave_train(mus_any *ptr, Float fm)
   if (b->empty)
     {
       for (i = 0; i < b->size; i++) 
-	b->buf[i] += mus_array_interp(gen->wave, gen->phase + i, gen->wsize);
+	b->buf[i] += table_lookup_interp(gen->type, gen->phase + i, gen->wave, gen->wsize);
       b->fill_time += ((Float)sampling_rate / (gen->freq + (fm / w_rate)));
       b->empty = false;
     }
@@ -4641,7 +4762,7 @@ Float mus_wave_train_1(mus_any *ptr)
   if (b->empty)
     {
       for (i = 0; i < b->size; i++) 
-	b->buf[i] += mus_array_interp(gen->wave, gen->phase + i, gen->wsize);
+	b->buf[i] += table_lookup_interp(gen->type, gen->phase + i, gen->wave, gen->wsize);
       b->fill_time += ((Float)sampling_rate / gen->freq);
       b->empty = false;
     }
@@ -4681,12 +4802,13 @@ static mus_any_class WAVE_TRAIN_CLASS = {
   0, 0,
   &run_wave_train,
   MUS_NOT_SPECIAL, 
-  NULL, 0,
+  NULL,
+  &wt_interp_type,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0
 };
 
-mus_any *mus_make_wave_train(Float freq, Float phase, Float *wave, int wsize)
+mus_any *mus_make_wave_train(Float freq, Float phase, Float *wave, int wsize, mus_interp_t type)
 {
  wt *gen;
  gen = (wt *)clm_calloc(1, sizeof(wt), S_make_wave_train);
@@ -4695,6 +4817,7 @@ mus_any *mus_make_wave_train(Float freq, Float phase, Float *wave, int wsize)
  gen->phase = (wsize * phase) / TWO_PI;
  gen->wave = wave;
  gen->wsize = wsize;
+ gen->type = type;
  gen->b = (rblk *)mus_make_buffer(NULL, wsize, 0.0);
  return((mus_any *)gen);
 }
@@ -5495,11 +5618,12 @@ static char *inspect_locs(mus_any *ptr)
   locs *gen = (locs *)ptr;
   char *arr1 = NULL, *arr2 = NULL;
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       "locs outn[%d]: %s, revn[%d]: %s",
+	       "locs outn[%d]: %s, revn[%d]: %s, interp: %s",
 	       gen->chans,
 	       arr1 = print_array(gen->outn, gen->chans, 0),
 	       gen->rev_chans,
-	       arr2 = print_array(gen->revn, gen->rev_chans, 0));
+	       arr2 = print_array(gen->revn, gen->rev_chans, 0),
+	       interp_name[gen->type]);
   if (arr1) FREE(arr1);
   if (arr2) FREE(arr2);
   return(describe_buffer);
@@ -5568,6 +5692,8 @@ static char *describe_locsig(mus_any *ptr)
       mus_snprintf(str, STR_SIZE, "%.3f]", gen->revn[gen->rev_chans - 1]);
       strcat(describe_buffer, str);
     }
+  mus_snprintf(str, STR_SIZE, ", interp: %s", interp_name[gen->type]);
+  strcat(describe_buffer, str);
   FREE(str);
   return(describe_buffer);
 }

@@ -677,17 +677,21 @@ duration), it's simplest to use make-env:
         (<i>initial-phase</i> 0.0) ; in radians 
         <i>wave</i>                ; double-float array
         <i>size</i>                ; table size if wave not specified
+        <i>type</i>                ; interpolation type (mus-interp-linear)
   <a class=def name="table-lookup">table-lookup</a> <i>tl</i> &amp;optional (<i>fm-input</i> 0.0)
   <a class=def name="table-lookup?">table-lookup?</a> <i>tl</i>
 </pre>
 
 <p><b>table-lookup</b> performs interpolating table lookup.  Indices are first
 made to fit in the current table (fm input can produce negative indices), then
-linear interpolation returns the table value.  Table-lookup scales its
+interpolation returns the table value.  Table-lookup scales its
 frequency change argument (<i>fm-input</i>) to fit whatever its table size is
 (that is, it assumes the caller is thinking in terms of a table size of two pi,
 and fixes it up).  The wave table should be an array of double-floats (the function
-make-double-float-array can be used to create it).</p>
+make-double-float-array can be used to create it).
+<i>type</i> sets the type of interpolation used: mus-interp-none,
+mus-interp-linear, mus-interp-lagrange, or mus-interp-hermite.
+</p>
 <br>
 
 <table border align=left hspace=40 cellpadding=4>
@@ -887,7 +891,7 @@ based on:
 <!-- TOPIC wave-train -->
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4>WAVE-TRAIN</h4></td></tr></table>
 <pre>
-  <a class=def name="make-wave-train">make-wave-train</a> <a href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>initial-phase</i> 0.0) <i>wave</i> <i>size</i>
+  <a class=def name="make-wave-train">make-wave-train</a> <a href="#optional-key">&amp;optional-key</a> (<i>frequency</i> 440.0) (<i>initial-phase</i> 0.0) <i>wave size type</i>
   <a class=def name="wave-train">wave-train</a> <i>w</i> &amp;optional (<i>fm</i> 0.0)
   <a class=def name="wave-train?">wave-train?</a> <i>w</i>
 </pre>
@@ -1390,7 +1394,8 @@ The <i>pm</i> argument is difference between the nominal
 delay length (<i>size</i>) and the current actual delay length (<i>size</i>
 + <i>pm</i>) -- a positive <i>pm</i> corresponds to a longer
 delay line.  The <i>type</i> argument sets the interpolation type:
-mus-interp-linear or mus-interp-all-pass.
+mus-interp-none, mus-interp-linear, mus-interp-all-pass, 
+mus-interp-lagrange, or mus-interp-hermite.
 <b>delay-tick</b> just puts a sample in the delay line and 'ticks' it forward.
 The value returned is the 'input' argument.
 </p>

@@ -2,10 +2,12 @@
 #define CLM_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 47
-#define MUS_DATE "10-May-04"
+#define MUS_REVISION 48
+#define MUS_DATE "11-May-04"
 
 /*
+ * 11-May:     type arg to mus_make_table_lookup|wave_train, MUS_INTERP_NONE, MUS_INTERP_HERMITE.
+ *             mus-interp-type.
  * 10-May:     changed MUS_LINEAR and MUS_SINUSOIDAL to MUS_INTERP_LINEAR and MUS_INTERP_SINUSOIDAL.
  *             mus-linear renamed mus-interp-linear, mus-sinusoidal renamed mus-interp-sinusoidal.
  *             added type arg to mus_make_delay|all_pass|comb|notch.
@@ -197,10 +199,11 @@ typedef struct mus_any_class {
 } mus_any_class;
 
 #ifndef CLM_DISABLE_DEPRECATED
-  #define MUS_LINEAR 0
-  #define MUS_SINUSOIDAL 1
+  #define MUS_LINEAR 1
+  #define MUS_SINUSOIDAL 2
 #endif
-typedef enum {MUS_INTERP_LINEAR, MUS_INTERP_SINUSOIDAL, MUS_INTERP_ALL_PASS, MUS_INTERP_LAGRANGE, MUS_INTERP_BEZIER} mus_interp_t;
+typedef enum {MUS_INTERP_NONE, MUS_INTERP_LINEAR, MUS_INTERP_SINUSOIDAL, MUS_INTERP_ALL_PASS, 
+	      MUS_INTERP_LAGRANGE, MUS_INTERP_BEZIER, MUS_INTERP_HERMITE} mus_interp_t;
 
 typedef enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PARZEN_WINDOW, MUS_BARTLETT_WINDOW,
 	      MUS_HAMMING_WINDOW, MUS_BLACKMAN2_WINDOW, MUS_BLACKMAN3_WINDOW, MUS_BLACKMAN4_WINDOW,
@@ -210,13 +213,13 @@ typedef enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PAR
 
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
   #define MUS_INTERP_TYPE_OK(Interp) ({ mus_interp_t _clm_h_2 = Interp; \
-                                       ((_clm_h_2 >= MUS_INTERP_LINEAR) && (_clm_h_2 <= MUS_INTERP_BEZIER)); })
+                                       ((_clm_h_2 >= MUS_INTERP_NONE) && (_clm_h_2 <= MUS_INTERP_HERMITE)); })
   #define MUS_FFT_WINDOW_OK(Window) ({ mus_fft_window_t _clm_h_0 = Window; \
                                        ((_clm_h_0 >= MUS_RECTANGULAR_WINDOW) && (_clm_h_0 <= MUS_CONNES_WINDOW)); })
   #define MUS_RUN(GEN, ARG_1, ARG_2) ({ mus_any *_clm_h_1 = (mus_any *)(GEN); \
                                        ((*((_clm_h_1->core)->run))(_clm_h_1, ARG_1, ARG_2)); })
 #else
-  #define MUS_INTERP_TYPE_OK(Interp) (((Interp) >= MUS_INTERP_LINEAR) && ((Interp) <= MUS_INTERP_BEZIER))
+  #define MUS_INTERP_TYPE_OK(Interp) (((Interp) >= MUS_INTERP_NONE) && ((Interp) <= MUS_INTERP_HERMITE))
   #define MUS_FFT_WINDOW_OK(Window) (((Window) >= MUS_RECTANGULAR_WINDOW) && ((Window) <= MUS_CONNES_WINDOW))
   #define MUS_RUN(GEN, ARG_1, ARG_2) ((*(((GEN)->core)->run))(GEN, ARG_1, ARG_2))
 #endif
@@ -276,6 +279,7 @@ Float mus_set_offset(mus_any *gen, Float val);
 Float mus_width(mus_any *gen);
 Float mus_set_width(mus_any *gen, Float val);
 char *mus_file_name(mus_any *ptr);
+#define mus_interp_type(Gen) mus_channel(Gen)
 
 Float mus_oscil(mus_any *o, Float fm, Float pm);
 Float mus_oscil_0(mus_any *ptr);
@@ -328,7 +332,7 @@ Float mus_average(mus_any *ptr, Float input);
 
 Float mus_table_lookup(mus_any *gen, Float fm);
 Float mus_table_lookup_1(mus_any *gen);
-mus_any *mus_make_table_lookup(Float freq, Float phase, Float *wave, int wave_size);
+mus_any *mus_make_table_lookup(Float freq, Float phase, Float *wave, int wave_size, mus_interp_t type);
 bool mus_table_lookup_p(mus_any *ptr);
 Float *mus_partials_to_wave(Float *partial_data, int partials, Float *table, int table_size, bool normalize);
 Float *mus_phase_partials_to_wave(Float *partial_data, int partials, Float *table, int table_size, bool normalize);
@@ -440,7 +444,7 @@ void mus_clear_filter_state(mus_any *gen);
 
 Float mus_wave_train(mus_any *gen, Float fm);
 Float mus_wave_train_1(mus_any *gen);
-mus_any *mus_make_wave_train(Float freq, Float phase, Float *wave, int wsize);
+mus_any *mus_make_wave_train(Float freq, Float phase, Float *wave, int wsize, mus_interp_t type);
 bool mus_wave_train_p(mus_any *gen);
 
 Float mus_buffer_to_sample(mus_any *ptr);
