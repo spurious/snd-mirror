@@ -38,26 +38,19 @@
 
 (define plug-menu (main-menu plugins-menu))
 
-;;; create the submenu
-
-
-;;; DELAY EFFECTS
-;;;
-
-(define ladspa-delay-menu (XmCreatePulldownMenu plug-menu "Delay Effects"
-                                        (list XmNbackground (basic-color))))
-(define ladspa-delay-cascade (XtCreateManagedWidget "Delay Effects" xmCascadeButtonWidgetClass plug-menu
-                                            (list XmNsubMenuId ladspa-delay-menu
-                                                  XmNbackground (basic-color))))
-(define ladspa-delay-menu-list '()) ; just for testing
 ;(define delay-menu (main-menu (add-to-main-menu "Delay Testing" (lambda () #f)))) ; just to test this
+(define ladspa-delay-menu-list '()) ; just for testing
+(define ladspa-mod-menu-list '()) ; just for testing
+(define ladspa-freq-menu-list '()) ; just for testing
+(define ladspa-distort-menu-list '()) ; just for testing
+(define ladspa-reverb-menu-list '()) ; just for testing
+
 
 ;; this definition only needs to occur once in the entire file
 (define (change-label widget new-label)
   (let ((str (XmStringCreateLocalized new-label)))
     (XtSetValues widget (list XmNlabelString str))
     (XmStringFree str)))
-
 
 
 (define (apply-ladspa-over-target-with-sync ladspa-description target origin decay)
@@ -107,6 +100,16 @@
                (all-chans)
                (list (list (selected-sound))
                      (list (selected-channel)))))))
+
+
+;;; DELAY EFFECTS
+;;;
+
+(define ladspa-delay-menu (XmCreatePulldownMenu plug-menu "Delay Effects"
+                                        (list XmNbackground (basic-color))))
+(define ladspa-delay-cascade (XtCreateManagedWidget "Delay Effects" xmCascadeButtonWidgetClass plug-menu
+                                            (list XmNsubMenuId ladspa-delay-menu
+                                                  XmNbackground (basic-color))))
 
 
 
@@ -763,209 +766,242 @@
                                                   XmNbackground (basic-color))))
 
 
-;;; Decimator
+
+;;; LADSPA Decimator
 ;;;
 
-(define decimator-bit-depth 5)
-(define decimator-sample-rate .5)
+(define decimator-bit-depth 24)
+(define decimator-sample-rate 1.0)
 (define decimator-dialog #f)
 (define decimator-label "Decimator")
+(define decimator-target 'sound)
+(define decimator-menu-widget #f)
 
-(define (cp-decimator)
- (let* ((snd (selected-sound))
-        (sr (srate snd))
-        (dsr (* decimator-sample-rate sr)))
- (apply-ladspa (make-sample-reader (cursor))
-               (list "decimator_1202" "decimator" decimator-bit-depth dsr)
-               (- (frames) (cursor))
-               "decimator")))
+(define (post-decimator-dialog)
+  (if (not decimator-dialog)
+      ;; if decimator-dialog doesn't exist, create it
+      (let ((initial-decimator-bit-depth 24)
+            (initial-decimator-sample-rate 1.0)
+            (sliders '()))
+        (set! decimator-dialog
+              (make-effect-dialog
+               decimator-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "decimator_1202" "decimator" decimator-bit-depth (* (srate) decimator-sample-rate))
+                  decimator-target
+                  "Decimator" #f))
+               (lambda (w context info) (XtUnmanageChild decimator-dialog)) ; not needed in new-effects.scm version
 
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
+               (lambda (w context info)
+                 (help-dialog "Decimator" "Decimates by reducing the effective sample rate and reducing the bit depth of the input signal. Allows non-integer values for smooth transitions between clean and low-fidelity signals.\n\ Bit depth: The bit depth that the signal will be reduced to.\n\ Sample rate scalar: Multiplies (scales) the signal sample rate by this value."))
 
-    (define (post-decimator-dialog)
-       (if (not (Widget? decimator-dialog))
-           ;; if decimator-dialog doesn't exist, create it
-           (let ((sliders '()))
-             (set! decimator-dialog
-                   (make-effect-dialog "decimator ladspa plugin"
-                                       (lambda (w context info) (cp-decimator))
-                                       (lambda (w context info) (XtUnmanageChild decimator-dialog))
+               (lambda (w c i)
+                 (set! decimator-bit-depth initial-decimator-bit-depth)
+                 (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* decimator-bit-depth 1))))
+                 (set! decimator-sample-rate initial-decimator-sample-rate)
+                 (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* decimator-sample-rate 1000)))))))
+        (set! sliders
+              (add-sliders decimator-dialog
+                           (list (list "bit depth" 1 initial-decimator-bit-depth 24 
                                        (lambda (w context info)
-                                         (help-dialog "Decimator"
-                                                      "Reduces the effective sample rate, reduces the input signal, and allows non-integer values for smooth transitions between clean and low-fidelity signals.\n\ Bit-depth: The bit-depth that the signal will be reduced to.\n\ Sample rate (Hz): The sample rate that the signal will be resampled at."))
-                                       (lambda (w c i)
-                                         (set! decimator-bit-depth 5)
-                                         (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* decimator-bit-depth 1))))
-				         (set! decimator-sample-rate .5)
-				         (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* decimator-sample-rate 1000)))))))
-             (set! sliders
-                   (add-sliders decimator-dialog
-                                (list (list "bit depth" 1 5 24
-                                            (lambda (w context info)
-                                              (set! decimator-bit-depth (/ (.value info) 1)))
-                                            1)
-                                      (list "sample rate (Hz)" 0.001 0.5 1.0
-                                            (lambda (w context info)
-                                              (set! decimator-sample-rate (/ (.value info) 1000)))
-                                            1000))))))
-       (activate-dialog decimator-dialog))))
+                                         (set! decimator-bit-depth (/ (.value info) 1)))
+                                       1)
+				 (list "sample rate scalar" 0.001 initial-decimator-sample-rate 1.0
+                                       (lambda (w context info)
+                                         (set! decimator-sample-rate (/ (.value info) 1000)))
+                                       1000))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! decimator-target target)) #f)))
 
-      (let ((child (XtCreateManagedWidget "Decimator" xmPushButtonWidgetClass ladspa-distort-menu
-                                           (list XmNbackground (basic-color)))))
-        (XtAddCallback child XmNactivateCallback
-                        (lambda (w c i)
-                          (post-decimator-dialog))))
+  (activate-dialog decimator-dialog))
+
+(let ((child (XtCreateManagedWidget "Decimator" xmPushButtonWidgetClass ladspa-distort-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-decimator-dialog)))
+  (set! ladspa-distort-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "Decimator (~1,2D ~1,2F)" decimator-bit-depth decimator-sample-rate)))
+                  (change-label child new-label)))
+              ladspa-distort-menu-list)))
 
 
 
-;;; Diode processor
+;;; LADSPA Diode
 ;;;
 
 (define diode-mode 0.0)
 (define diode-dialog #f)
 (define diode-label "Diode processor")
+(define diode-target 'sound)
+(define diode-menu-widget #f)
 
-(define (cp-diode)
- (apply-ladspa (make-sample-reader (cursor))
-               (list "diode_1185" "diode" diode-mode)
-               (- (frames) (cursor))
-               "diode processor"))
+(define (post-diode-dialog)
+  (if (not diode-dialog)
+      ;; if diode-dialog doesn't exist, create it
+      (let ((initial-diode-mode 0.0)
+            (sliders '()))
+        (set! diode-dialog
+              (make-effect-dialog
+               diode-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "diode_1185" "diode" diode-mode)
+                  diode-target
+                  "Diode processor" #f))
+               (lambda (w context info) (XtUnmanageChild diode-dialog)) ; not needed in new-effects.scm version
 
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
+               (lambda (w context info)
+                 (help-dialog "Diode" "Mangles the signal as if it had been passed through a diode rectifier network. You should probably follow this with a DC offset remover, unless you want the offset.\n\ Mode: 0 for none, 1 for half wave, 2 for full wave, 3 for silence. The mode parameter is continuously variable from through to half-wave rectification to full-wave to silence."))
 
-    (define (post-diode-dialog)
-       (if (not (Widget? diode-dialog))
-           (let ((sliders '()))
-             (set! diode-dialog
-                   (make-effect-dialog "diode processor ladspa plugin"
-                                       (lambda (w context info) (cp-diode))
-                                       (lambda (w context info) (XtUnmanageChild diode-dialog))
+               (lambda (w c i)
+                 (set! diode-mode initial-diode-mode)
+                 (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* diode-mode 100)))))))
+        (set! sliders
+              (add-sliders diode-dialog
+                           (list (list "bit depth" 0.0 initial-diode-mode 3.0
                                        (lambda (w context info)
-                                         (help-dialog "Diode processor"
-                                                      "Mangles the signal as if it had been passed through a diode rectifier network. You should probably follow this with a DC offset remover, unless you want the offset.\n\ Mode: 0 for none, 1 for half wave, 2 for full wave, 3 for silence. The mode parameter is continuously variable from thru to half-wave rectification to full-wave to silence."))
-                                       (lambda (w c i)
-                                         (set! diode-mode 0.0)
-                                         (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* diode-mode 100)))))))
-             (set! sliders
-                   (add-sliders diode-dialog
-                                (list
-                                      (list "mode" 0.0 0.0 3.0
-                                            (lambda (w context info)
-                                              (set! diode-mode (/ (.value info) 100)))
-                                            100))))))
-       (activate-dialog diode-dialog))))
+                                         (set! diode-mode (/ (.value info) 100)))
+                                       100))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! diode-target target)) #f)))
 
-      (let ((child (XtCreateManagedWidget "Diode processor" xmPushButtonWidgetClass ladspa-distort-menu
-                                           (list XmNbackground (basic-color)))))
-        (XtAddCallback child XmNactivateCallback
-                        (lambda (w c i)
-                          (post-diode-dialog))))
+  (activate-dialog diode-dialog))
 
-;;; Fast overdrive
+(let ((child (XtCreateManagedWidget "Diode processor" xmPushButtonWidgetClass ladspa-distort-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-diode-dialog)))
+  (set! ladspa-distort-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "Diode processor (~1,2F)" diode-mode)))
+                  (change-label child new-label)))
+              ladspa-distort-menu-list)))
+
+
+
+
+;;; LADSPA Fast overdrive
 ;;;
 
-(define foverdrive-level 0.0)
+(define foverdrive-level 1.0)
 (define foverdrive-dialog #f)
 (define foverdrive-label "Fast overdrive")
+(define foverdrive-target 'sound)
+(define foverdrive-menu-widget #f)
 
-(define (cp-foverdrive)
-   (apply-ladspa (make-sample-reader (cursor))
-      (list "foverdrive_1196" "overdrive" foverdrive-level)
-         (- (frames) (cursor))
-         "fast overdrive"))
+(define (post-foverdrive-dialog)
+  (if (not foverdrive-dialog)
+      ;; if foverdrive-dialog doesn't exist, create it
+      (let ((initial-foverdrive-level 1.0)
+            (sliders '()))
+        (set! foverdrive-dialog
+              (make-effect-dialog
+               foverdrive-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "foverdrive_1196" "foverdrive" foverdrive-level)
+                  foverdrive-target
+                  "Fast overdrive" #f))
+               (lambda (w context info) (XtUnmanageChild foverdrive-dialog)) ; not needed in new-effects.scm version
 
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
+               (lambda (w context info)
+                 (help-dialog "Fast overdrive" "A simple overdrive. Compresses the extreme peaks to make a sound similar to an overdriven amplifier.\n\ Level: Controls the point at which the signal starts to distort and the degree of distortion."))
 
-    (define (post-foverdrive-dialog)
-       (if (not (Widget? foverdrive-dialog))
-           (let ((sliders '()))
-             (set! foverdrive-dialog
-                   (make-effect-dialog "fast overdrive ladspa plugin"
-                                       (lambda (w context info) (cp-foverdrive))
-                                       (lambda (w context info) (XtUnmanageChild foverdrive-dialog))
+               (lambda (w c i)
+                 (set! foverdrive-level initial-foverdrive-level)
+                 (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* foverdrive-level 100)))))))
+        (set! sliders
+              (add-sliders foverdrive-dialog
+                           (list (list "level" 1.0 initial-foverdrive-level 3.0
                                        (lambda (w context info)
-                                         (help-dialog "Fast overdrive" 
-						"A simple overdrive. Compresses the extreme peaks to make a sound similar to an overdriven amplifier.\n\ Drive level: Controls the point at which the signal starts to compress, and the degree of compression."))
-                                       (lambda (w c i)
-                                         (set! foverdrive-level 0.0)
-                                         (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* foverdrive-level 100)))))))
-             (set! sliders
-                   (add-sliders foverdrive-dialog
-                                (list 
-				      (list "drive level" 1.0 0.0 3.0
-                                            (lambda (w context info)
-                                              (set! foverdrive-level (/ (.value info) 100)))
-                                            100))))))
-       (activate-dialog foverdrive-dialog))))
+                                         (set! foverdrive-level (/ (.value info) 100)))
+                                       100))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! foverdrive-target target)) #f )))
 
-      (let ((child (XtCreateManagedWidget "Fast overdrive" xmPushButtonWidgetClass ladspa-distort-menu
-                                           (list XmNbackground (basic-color)))))
-        (XtAddCallback child XmNactivateCallback
-                        (lambda (w c i)
-                          (post-foverdrive-dialog))))
+  (activate-dialog foverdrive-dialog))
+
+(let ((child (XtCreateManagedWidget "Fast overdrive" xmPushButtonWidgetClass ladspa-distort-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-foverdrive-dialog)))
+  (set! ladspa-distort-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "Fast overdrive (~1,2F)" foverdrive-level)))
+                  (change-label child new-label)))
+              ladspa-distort-menu-list)))
 
 
-;;; Foldover distortion
+
+;;; LADSPA Foldover distortion
 ;;;
-
 
 (define foldover-drive 0.0)
 (define foldover-skew 0.0)
 (define foldover-dialog #f)
 (define foldover-label "Foldover distortion")
+(define foldover-target 'sound)
+(define foldover-menu-widget #f)
 
-(define (cp-foldover)
- (apply-ladspa (make-sample-reader (cursor))
-               (list "foldover_1213" "foldover" foldover-drive foldover-skew)
-               (- (frames) (cursor))
-               "foldover distortion"))
+(define (post-foldover-dialog)
+  (if (not foldover-dialog)
+      ;; if foldover-dialog doesn't exist, create it
+      (let ((initial-foldover-drive 0.0)
+            (initial-foldover-skew 0.0)
+            (sliders '()))
+        (set! foldover-dialog
+              (make-effect-dialog
+               foldover-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "foldover_1213" "foldover" foldover-drive foldover-skew)
+                  foldover-target
+                  "Foldover distortion" #f ))
+               (lambda (w context info) (XtUnmanageChild foldover-dialog)) ; not needed in new-effects.scm version
 
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin 
+               (lambda (w context info)
+                 (help-dialog "Foldover distortion" "Uses a sine wave approximation to simulate valve-style foldover distortion. Probably should have a DC offset remover on the output, but it's not always necessary.\n\ Drive: Controls the degree of distortion.\n\ Skew: Controls the asymmetry of the waveform."))
 
-    (define (post-foldover-dialog)
-       (if (not (Widget? foldover-dialog))
-           (let ((sliders '()))
-             (set! foldover-dialog
-                   (make-effect-dialog "foldover distortion ladspa plugin"
-                                       (lambda (w context info) (cp-foldover))
-                                       (lambda (w context info) (XtUnmanageChild foldover-dialog))
+               (lambda (w c i)
+                 (set! foldover-drive initial-foldover-drive)
+                 (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* foldover-drive 100))))
+                 (set! foldover-skew initial-foldover-skew)
+                 (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* foldover-skew 100)))))))
+        (set! sliders
+              (add-sliders foldover-dialog
+                           (list (list "drive" 0.0 initial-foldover-drive 1.0
                                        (lambda (w context info)
-                                         (help-dialog "Foldover distortion"
-                                                      "Uses a sine wave approximation to simulate valve-style foldover distortion. Probably should have a DC offset remover on the output, but it's not always necessary.\n\ Drive: Controls the degree of distortion.\n\ Skew: Controls the asymmetry of the waveform."))
-                                       (lambda (w c i)
-                                         (set! foldover-drive 0.0)
-                                         (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* foldover-drive 100))))
-                                         (set! foldover-skew 0.0)
-                                         (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* foldover-skew 100)))))))
-             (set! sliders
-                   (add-sliders foldover-dialog
-                                (list 
-                                      (list "drive" 0.0 0.0 1.0
-                                            (lambda (w context info)
-                                              (set! foldover-drive (/ (.value info) 100)))
-                                            100)
- 				      (list "skew" 0.0 0.0 1.0
-                                            (lambda (w context info)
-                                              (set! foldover-skew (/ (.value info) 100)))
-                                            100))))))
-       (activate-dialog foldover-dialog))))
+                                         (set! foldover-drive (/ (.value info) 100)))
+                                       100)
+				 (list "skew" 0.0 initial-foldover-skew 1.0
+                                       (lambda (w context info)
+                                         (set! foldover-skew (/ (.value info) 100)))
+                                       100))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! foldover-target target)) #f )))
 
-      (let ((child (XtCreateManagedWidget "Foldover distortion" xmPushButtonWidgetClass ladspa-distort-menu
-                                           (list XmNbackground (basic-color)))))
-        (XtAddCallback child XmNactivateCallback
-                        (lambda (w c i)
-                          (post-foldover-dialog))))
+  (activate-dialog foldover-dialog))
+
+(let ((child (XtCreateManagedWidget "Foldover distortion" xmPushButtonWidgetClass ladspa-distort-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-foldover-dialog)))
+  (set! ladspa-distort-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "Foldover distortion (~1,2F ~1,2F)" foldover-drive foldover-skew)))
+                  (change-label child new-label)))
+              ladspa-distort-menu-list)))
 
 
-;;; GSM simulator
+
+
+;;; LADSPA GSM simulator
 ;;;
 
 (define gsm-simulator-mix .50)
@@ -973,59 +1009,71 @@
 (define gsm-simulator-error-rate 10)
 (define gsm-simulator-dialog #f)
 (define gsm-simulator-label "GSM simulator")
+(define gsm-simulator-target 'sound)
+(define gsm-simulator-menu-widget #f)
 
-(define (cp-gsm-simulator)
-  (apply-ladspa (make-sample-reader (cursor))
-                (list "gsm_1215" "gsm" gsm-simulator-mix gsm-simulator-passes gsm-simulator-error-rate)
-                (- (frames) (cursor))
-                "gsm-simulator"))
+(define (post-gsm-simulator-dialog)
+  (if (not gsm-simulator-dialog)
+      ;; if gsm-simulator-dialog doesn't exist, create it
+      (let ((initial-gsm-simulator-mix .50)
+	    (initial-gsm-simulator-passes 5)
+	    (initial-gsm-simulator-error-rate 10)
+            (sliders '()))
+        (set! gsm-simulator-dialog
+              (make-effect-dialog
+               gsm-simulator-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "gsm_1215" "gsm" gsm-simulator-mix gsm-simulator-passes gsm-simulator-error-rate)
+                  gsm-simulator-target
+                  "GSM simulator" #f))
+               (lambda (w context info) (XtUnmanageChild gsm-simulator-dialog)) ; not needed in new-effects.scm version
 
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
+               (lambda (w context info)
+                 (help-dialog "GSM simulator" "Encodes and decodes a signal using the GSM voice compression system. Has the effect of making the signal sound like it is being sent over a European mobile phone network.\n\ Dry/wet mix: 0 will give you the dry signal (but with the appropriate amount of delay), 1 will give you a totally wet signal.\n\  Number of passes: The number of times the signal is sent through the encode/decode process. Increases the CPU consumption almost linearly, and it will become more peaky so less friendly to realtime processing.\n\  Error rate (bits/block): The number of simulated bits that get changed during the transmission process."))
 
-    (define (post-gsm-simulator-dialog)
-       (if (not (Widget? gsm-simulator-dialog))
-           ;; if gsm-simulator-dialog doesn't exist, create it
-           (let ((sliders '()))
-             (set! gsm-simulator-dialog
-                   (make-effect-dialog "gsm-simulator ladspa plugin"
-                                       (lambda (w context info) (cp-gsm-simulator))
-                                       (lambda (w context info) (XtUnmanageChild gsm-simulator-dialog))
-                                       (lambda (w context info)
-                                         (help-dialog "GSM simulator"
-                                                      "Encodes and decodes a signal using the GSM voice compression system. Has the effect of making the signal sound like it is being sent over a European mobile phone network.\n\ Dry/wet mix: 0 will give you the dry signal (but with the appropriate amount of delay), 1 will give you a totally wet signal.\n\  Number of passes: The number of times the signal is sent through the encode/decode process. Increases the CPU consumption almost linearly, and it will become more peaky so less friendly to realtime processing.\n\  Error rate (bits/block): The number of simulated bits that get changed during the transmission process."))
-                                       (lambda (w c i)
-				         (set! gsm-simulator-mix .50) 
-					 (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* gsm-simulator-mix 100))))
-                                         (set! gsm-simulator-passes 5) 
-					 (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* gsm-simulator-passes 1))))
-                                         (set! gsm-simulator-error-rate 10)
-                                         (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (* gsm-simulator-error-rate 1)))))))
-             (set! sliders
-                   (add-sliders gsm-simulator-dialog
-                                (list 
-                                      (list "wet/dry mix" 0.0 .50 1.0
-                                            (lambda (w context info)
-                                              (set! gsm-simulator-mix (/ (.value info) 100)))
-                                            100)
-				      (list "number of passes" 0 5 10
-                                            (lambda (w context info)
-                                              (set! gsm-simulator-passes (/ (.value info) 1)))
-                                            1)
-                                      (list "error rate (bits/block)" 0 10 30
-                                            (lambda (w context info)
-                                              (set! gsm-simulator-error-rate (/ (.value info) 1)))
-                                            1))))))
-       (activate-dialog gsm-simulator-dialog))))
+               (lambda (w c i)
+                 (set! gsm-simulator-mix initial-gsm-simulator-mix)
+                 (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* gsm-simulator-mix 100))))
+                 (set! gsm-simulator-passes initial-gsm-simulator-passes)
+                 (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* gsm-simulator-passes 1))))
+                 (set! gsm-simulator-error-rate initial-gsm-simulator-error-rate)
+                 (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (* gsm-simulator-error-rate 1)))))))
+        (set! sliders
+              (add-sliders gsm-simulator-dialog
+                           (list 
+                                 (list "wet/dry mix" 0.0 initial-gsm-simulator-mix 1.0
+                                        (lambda (w context info)
+                                          (set! gsm-simulator-mix (/ (.value info) 100)))
+                                          100)
+                                 (list "number of passes" 0 initial-gsm-simulator-passes 10
+                                         (lambda (w context info)
+                                          (set! gsm-simulator-passes (/ (.value info) 1)))
+                                          1)
+                                 (list "error rate (bits/block)" 0 initial-gsm-simulator-error-rate 30
+                                          (lambda (w context info)
+                                           (set! gsm-simulator-error-rate (/ (.value info) 1)))
+                                           1))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! gsm-simulator-target target)) #f)))
 
-      (let ((child (XtCreateManagedWidget "GSM simulator" xmPushButtonWidgetClass ladspa-distort-menu
-                                           (list XmNbackground (basic-color)))))
-        (XtAddCallback child XmNactivateCallback
-                        (lambda (w c i)
-                          (post-gsm-simulator-dialog))))
+  (activate-dialog gsm-simulator-dialog))
 
-;;; Mono overdrive
+(let ((child (XtCreateManagedWidget "GSM simulator" xmPushButtonWidgetClass ladspa-distort-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-gsm-simulator-dialog)))
+  (set! ladspa-distort-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "GSM simulator (~1,2F ~1,2D ~1,2D)" gsm-simulator-mix gsm-simulator-passes gsm-simulator-error-rate)))
+                  (change-label child new-label)))
+              ladspa-distort-menu-list)))
+
+
+
+
+;;; LADSPA Mono overdrive
 ;;;
 
 (define overdrive-amp-limit 0)
@@ -1034,164 +1082,199 @@
 (define overdrive-high-density-color 0)
 (define overdrive-dialog #f)
 (define overdrive-label "Mono overdrive")
+(define overdrive-target 'sound)
+(define overdrive-menu-widget #f)
 
-(define (cp-overdrive)
-   (apply-ladspa (make-sample-reader (cursor))
-      (list "overdrive_1182" "overdrive" overdrive-amp-limit overdrive-level overdrive-low-density-color overdrive-high-density-color)
-         (- (frames) (cursor))
-         "mono overdrive"))
+(define (post-overdrive-dialog)
+  (if (not overdrive-dialog)
+      ;; if overdrive-dialog doesn't exist, create it
+      (let ((initial-overdrive-amp-limit 0)
+	    (initial-overdrive-level 0.0)
+	    (initial-overdrive-low-density-color 0)
+	    (initial-overdrive-high-density-color 0)
+            (sliders '()))
+        (set! overdrive-dialog
+              (make-effect-dialog
+               overdrive-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "overdrive_1182" "overdrive" overdrive-amp-limit overdrive-level overdrive-low-density-color overdrive-high-density-color)
+                  overdrive-target
+                  "Mono overdrive" #f))
+               (lambda (w context info) (XtUnmanageChild overdrive-dialog)) ; not needed in new-effects.scm version
 
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
+               (lambda (w context info)
+                 (help-dialog "Mono overdrive" "A basic overdrive effect, with controls for the degree of compression and for the distortion.\n\ Amps limit (in dB relative to nominal 0): Mostly this parameter is used to artificially lower the headroom of the amp, but it can also be used to counteract the effects of hosts that ignore the audio input range hints. If the host is using 16-bit int WAV files then a good guess for limit is +80dB.\n\ Drive level: This controls the degree of amplifier compression. Values above 1.0 will work, but they produce unpredictable output levels. Lowering the limit is a better way of increasing the distortion.\n\ Low-density coloration: Controls the amplitude of some low (input space) frequency amplitude distortion.\n\ High-density coloration: Controls the amplitude of some high (input space) frequency amplitude distortion."))
 
-    (define (post-overdrive-dialog)
-       (if (not (Widget? overdrive-dialog))
-           (let ((sliders '()))
-             (set! overdrive-dialog
-                   (make-effect-dialog "mono overdrive ladspa plugin"
-                                       (lambda (w context info) (cp-overdrive))
-                                       (lambda (w context info) (XtUnmanageChild overdrive-dialog))
-                                       (lambda (w context info)
-                                         (help-dialog "Mono overdrive" 
-						"A basic overdrive effect, with controls for the degree of compression and for the distortion.\n\ Amps limit (in dB relative to nominal 0): Mostly this parameter is used to artificially lower the headroom of the amp, but it can also be used to counteract the effects of hosts that ignore the audio input range hints. If the host is using 16-bit int WAV files then a good guess for limit is +80dB.\n\ Drive level: This controls the degree of amplifier compression. Values above 1.0 will work, but they produce unpredictable output levels. Lowering the limit is a better way of increasing the distortion.\n\ Low-density coloration: Controls the amplitude of some low (input space) frequency amplitude distortion.\n\ High-density coloration: Controls the amplitude of some high (input space) frequency amplitude distortion."))
-                                       (lambda (w c i)
-                                         (set! overdrive-amp-limit 0)
-                                         (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* overdrive-amp-limit 1))))
-                                         (set! overdrive-level 0.0)
-                                         (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* overdrive-level 100))))
-                                         (set! overdrive-low-density-color 0)
-                                         (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (* overdrive-low-density-color 1))))
-                                         (set! overdrive-high-density-color 0)
-                                         (XtSetValues (list-ref sliders 3) (list XmNvalue (inexact->exact (* overdrive-high-density-color 1)))))))
-             (set! sliders
-                   (add-sliders overdrive-dialog
-                                (list 
-                                      (list "amp limit (dB relative to nominal 0)" -100 0 100
-                                            (lambda (w context info)
-                                              (set! overdrive-amp-limit (/ (.value info) 1)))
-                                            1)
-                                      (list "drive level" 0.0 0.0 1.0
-                                            (lambda (w context info)
-                                              (set! overdrive-level (/ (.value info) 100)))
-                                            100)
-                                      (list "low density coloration" 0 0 100
-                                            (lambda (w context info)
-                                              (set! overdrive-low-density-color (/ (.value info) 1)))
-                                            1)
-                                      (list "high density coloration" 0 0 100
-                                            (lambda (w context info)
-                                              (set! overdrive-high-density-color (/ (.value info) 1)))
-                                            1))))))
-       (activate-dialog overdrive-dialog))))
+               (lambda (w c i)
+                 (set! overdrive-amp-limit initial-overdrive-amp-limit)
+                 (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* overdrive-amp-limit 100))))
+                 (set! overdrive-level initial-overdrive-level)
+                 (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* overdrive-level 1))))
+                 (set! overdrive-low-density-color initial-overdrive-low-density-color)
+                 (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (* overdrive-low-density-color 1))))
+                 (set! overdrive-high-density-color initial-overdrive-high-density-color)
+                 (XtSetValues (list-ref sliders 3) (list XmNvalue (inexact->exact (* overdrive-high-density-color 1)))))))
+        (set! sliders
+              (add-sliders overdrive-dialog
+                           (list 
+                                 (list "amp limit (dB relative to nominal 0)" -100 initial-overdrive-amp-limit 100
+                                        (lambda (w context info)
+                                          (set! overdrive-amp-limit (/ (.value info) 100)))
+                                          1)
+                                 (list "drive level" 0.0 initial-overdrive-level 1.0
+                                         (lambda (w context info)
+                                          (set! overdrive-level (/ (.value info) 1)))
+                                          100)
+                                 (list "low-density coloration" 0 initial-overdrive-low-density-color 100
+                                          (lambda (w context info)
+                                           (set! overdrive-low-density-color (/ (.value info) 1)))
+                                           1)
+                                 (list "high-density coloration" 0 initial-overdrive-high-density-color 100
+                                          (lambda (w context info)
+                                           (set! overdrive-high-density-color (/ (.value info) 1)))
+                                           1))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! overdrive-target target)) #f )))
 
-      (let ((child (XtCreateManagedWidget "Mono overdrive" xmPushButtonWidgetClass ladspa-distort-menu
-                                           (list XmNbackground (basic-color)))))
-        (XtAddCallback child XmNactivateCallback
-                        (lambda (w c i)
-                          (post-overdrive-dialog))))
+  (activate-dialog overdrive-dialog))
+
+(let ((child (XtCreateManagedWidget "Mono overdrive" xmPushButtonWidgetClass ladspa-distort-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-overdrive-dialog)))
+  (set! ladspa-distort-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "Mono overdrive (~1,2D ~1,2F ~1,2D ~1,2D)" overdrive-amp-limit overdrive-level overdrive-low-density-color overdrive-level overdrive-hig-density-color)))
+                  (change-label child new-label)))
+              ladspa-distort-menu-list)))
 
 
 
-;;; Barry's Satan maximiser
+
+
+;;; LADSPA Barry's Satan maximizer
 ;;;
 
 (define satan-decay-time 10)
 (define satan-knee-point 0)
 (define satan-dialog #f)
-(define satan-label "Satan maximiser")
+(define satan-label "Barry's Satan maximizer")
+(define satan-target 'sound)
+(define satan-menu-widget #f)
 
-(define (cp-satan)
-   (apply-ladspa (make-sample-reader (cursor))
-      (list "satan_maximiser_1408" "satanMaximiser" satan-decay-time satan-knee-point)
-         (- (frames) (cursor))
-         "Satan maximiser"))
+(define (post-satan-dialog)
+  (if (not satan-dialog)
+      ;; if satan-dialog doesn't exist, create it
+      (let ((initial-satan-decay-time 10)
+	    (initial-satan-knee-point 0)
+            (sliders '()))
+        (set! satan-dialog
+              (make-effect-dialog
+               satan-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "satan_maximiser_1408" "satanMaximiser" satan-decay-time satan-knee-point)
+                  satan-target
+                  "Satan maximizer" #f))
+               (lambda (w context info) (XtUnmanageChild satan-dialog)) ; not needed in new-effects.scm version
 
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
+               (lambda (w context info)
+                 (help-dialog "Barry's Satan maximizer" "Compresses signals with a stupidly short attack and decay, infinite ratio and hard knee. Not really a compressor, but good harsh distortion.\n\ Decay time (samples): Controls the envelope decay time.\n\ Knee point (dB): Controls the knee roll-off point, i.e. the point above which the compression kicks in. 0 will have no effect, -90 will remove virtually the entire dynamic range."))
 
-    (define (post-satan-dialog)
-       (if (not (Widget? satan-dialog))
-           (let ((sliders '()))
-             (set! satan-dialog
-                   (make-effect-dialog "satan ladspa plugin"
-                                       (lambda (w context info) (cp-satan))
-                                       (lambda (w context info) (XtUnmanageChild satan-dialog))
-                                       (lambda (w context info)
-                                         (help-dialog "Satan maximiser"
-                                                      "Compresses signals with a stupidly short attack and decay, infinite ratio and hard knee. Not really a compressor, but good harsh distortion.\n\ Decay time (samples): Controls the envelope decay time.\n\ Knee point (dB): Controls the knee roll-off point, i.e. the point above which the compression kicks in. 0 will have no effect, -90 will remove virtually the entire dynamic range."))
-                                       (lambda (w c i)
-                                         (set! satan-decay-time 10)
-                                         (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* satan-decay-time 1))))
-                                         (set! satan-knee-point 0)
-                                         (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* satan-knee-point 1)))))))
-             (set! sliders
-                   (add-sliders satan-dialog
-                                (list (list "decay time (samples)" 2 10 30
-                                            (lambda (w context info)
-                                              (set! satan-decay-time (/ (.value info) 1)))
-                                            1)
-                                      (list "knee point (dB)" -90 0 0
-                                            (lambda (w context info)
-                                              (set! satan-knee-point (/ (.value info) 1)))
-                                            1))))))
-       (activate-dialog satan-dialog))))
+               (lambda (w c i)
+                 (set! satan-decay-time initial-satan-decay-time)
+                 (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* satan-decay-time 1))))
+                 (set! satan-knee-point initial-satan-knee-point)
+                 (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* satan-knee-point 1)))))))
+        (set! sliders
+              (add-sliders satan-dialog
+                           (list 
+                                 (list "decay time (samples)" 2 initial-satan-decay-time 30
+                                        (lambda (w context info)
+                                          (set! satan-decay-time (/ (.value info) 1)))
+                                          1)
+                                 (list "knee point (dB)" -90 initial-satan-knee-point 0
+                                         (lambda (w context info)
+                                          (set! satan-knee-point (/ (.value info) 1)))
+                                          1))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! satan-target target)) #f)))
 
-      (let ((child (XtCreateManagedWidget "Satan maximiser" xmPushButtonWidgetClass ladspa-distort-menu
-                                           (list XmNbackground (basic-color)))))
-        (XtAddCallback child XmNactivateCallback
-                        (lambda (w c i)
-                          (post-satan-dialog))))
+  (activate-dialog satan-dialog))
+
+(let ((child (XtCreateManagedWidget "Barry's Satan maximizer" xmPushButtonWidgetClass ladspa-distort-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-satan-dialog)))
+  (set! ladspa-distort-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "Barry's Satan maximizer (~1,2D ~1,2D )" satan-decay-time satan-knee-point)))
+                  (change-label child new-label)))
+              ladspa-distort-menu-list)))
 
 
 
-;;; Signal sifter
+
+
+;;; LADSPA Signal sifter
 ;;;
 
 (define sifter-size 100)
 (define sifter-dialog #f)
 (define sifter-label "Signal sifter")
+(define sifter-target 'sound)
+(define sifter-menu-widget #f)
 
-(define (cp-sifter)
- (apply-ladspa (make-sample-reader (cursor))
-               (list "sifter_1210.so" "sifter" sifter-size)
-               (- (frames) (cursor))
-               "sifter"))
+(define (post-sifter-dialog)
+  (if (not sifter-dialog)
+      ;; if sifter-dialog doesn't exist, create it
+      (let ((initial-sifter-size 100)
+            (sliders '()))
+        (set! sifter-dialog
+              (make-effect-dialog
+               sifter-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "sifter_1210" "sifter" sifter-size)
+                  sifter-target
+                  "signal sifter" #f))
+               (lambda (w context info) (XtUnmanageChild sifter-dialog)) ; not needed in new-effects.scm version
 
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
+               (lambda (w context info)
+                 (help-dialog "Signal sifter" "Sorts and mixes blocks of the input signal to give a 'bumpy ramp' effect.\n\ Certain types of input will produce silence on the output (mostly ones with only low frequency components).\n\ This is a very odd effect, and doesn't really have any music applications, but can produce some interesting noises."))
 
-    (define (post-sifter-dialog)
-       (if (not (Widget? sifter-dialog))
-           (let ((sliders '()))
-             (set! sifter-dialog
-                   (make-effect-dialog "sifter ladspa plugin"
-                                       (lambda (w context info) (cp-sifter))
-                                       (lambda (w context info) (XtUnmanageChild sifter-dialog))
-                                       (lambda (w context info)
-                                         (help-dialog "Signal sifter"
-                                                      "Sorts and mixes blocks of the input signal to give a 'bumpy ramp' effect.\n\ Certain types of input will produce silence on the output (mostly ones with only low frequency components).\n\ This is a very odd effect, and doesn't really have any music applications, but can produce some interesting noises."))
-                                       (lambda (w c i)
-                                         (set! sifter-size 100)
-                                         (XtSetValues (car sliders) (list XmNvalue (inexact->exact (* sifter-size 1)))))))
-             (set! sliders
-                   (add-sliders sifter-dialog
-                                (list (list "sifter size" 1 100 2000 
-                                            (lambda (w context info)
-                                              (set! sifter-size (/ (.value info) 1)))
-                                            1))))))
-       (activate-dialog sifter-dialog))))
+               (lambda (w c i)
+                 (set! sifter-size initial-sifter-size)
+                 (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* sifter-size 1)))))))
+        (set! sliders
+              (add-sliders sifter-dialog
+                           (list 
+                                 (list "block size"  1 initial-sifter-size 2000
+                                        (lambda (w context info)
+                                          (set! sifter-size (/ (.value info) 1)))
+                                          1))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! sifter-target target)) #f)))
 
-      (let ((child (XtCreateManagedWidget "Signal sifter" xmPushButtonWidgetClass ladspa-distort-menu
-                                           (list XmNbackground (basic-color)))))
-        (XtAddCallback child XmNactivateCallback
-                        (lambda (w c i)
-                          (post-sifter-dialog))))
+  (activate-dialog sifter-dialog))
+
+(let ((child (XtCreateManagedWidget "Signal sifter" xmPushButtonWidgetClass ladspa-distort-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-sifter-dialog)))
+  (set! ladspa-distort-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "Signal sifter (~1,2D)" sifter-size)))
+                  (change-label child new-label)))
+              ladspa-distort-menu-list)))
 
 
-;;; Stereo overdrive
+
+;;; LADSPA Stereo overdrive
 ;;;
 
 (define overdrive_s-amp-limit 0)
@@ -1200,210 +1283,260 @@
 (define overdrive_s-high-density-color 0)
 (define overdrive_s-dialog #f)
 (define overdrive_s-label "Stereo overdrive")
+(define overdrive_s-target 'sound)
+(define overdrive_s-menu-widget #f)
 
-(define (cp-overdrive_s)
-   (apply-ladspa (make-sample-reader (cursor))
-      (list "overdrive_1183" "overdrive_s" overdrive_s-amp-limit overdrive_s-level overdrive_s-low-density-color overdrive_s-high-density-color)
-         (- (frames) (cursor))
-         "stereo overdrive"))
+(define (post-overdrive_s-dialog)
+  (if (not overdrive_s-dialog)
+      ;; if overdrive_s-dialog doesn't exist, create it
+      (let ((initial-overdrive_s-amp-limit 0)
+	    (initial-overdrive_s-level 0.0)
+	    (initial-overdrive_s-low-density-color 0)
+	    (initial-overdrive_s-high-density-color 0)
+            (sliders '()))
+        (set! overdrive_s-dialog
+              (make-effect-dialog
+               overdrive_s-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "overdrive_s_1183" "overdrive_s" overdrive_s-amp-limit overdrive_s-level overdrive_s-low-density-color overdrive_s-high-density-color)
+                  overdrive_s-target
+                  "Stereo overdrive" #f))
+               (lambda (w context info) (XtUnmanageChild overdrive_s-dialog)) ; not needed in new-effects.scm version
 
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
+               (lambda (w context info)
+                 (help-dialog "Stereo overdrive" "A basic overdrive_s effect, with controls for the degree of compression and for the distortion.\n\ Amps limit (in dB relative to nominal 0): Mostly this parameter is used to artificially lower the headroom of the amp, but it can also be used to counteract the effects of hosts that ignore the audio input range hints. If the host is using 16-bit int WAV files then a good guess for limit is +80dB.\n\ Drive level: This controls the degree of amplifier compression. Values above 1.0 will work, but they produce unpredictable output levels. Lowering the limit is a better way of increasing the distortion.\n\ Low-density coloration: Controls the amplitude of some low (input space) frequency amplitude distortion.\n\ High-density coloration: Controls the amplitude of some high (input space) frequency amplitude distortion."))
 
-    (define (post-overdrive_s-dialog)
-       (if (not (Widget? overdrive_s-dialog))
-           (let ((sliders '()))
-             (set! overdrive_s-dialog
-                   (make-effect-dialog "stereo overdrive ladspa plugin"
-                                       (lambda (w context info) (cp-overdrive_s))
-                                       (lambda (w context info) (XtUnmanageChild overdrive_s-dialog))
-                                       (lambda (w context info)
-                                         (help-dialog "Stereo overdrive" 
-						"A basic overdrive effect, with controls for the degree of compression and for the distortion.\n\ Amps limit (in dB relative to nominal 0): Mostly this parameter is used to artificially lower the headroom of the amp, but it can also be used to counteract the effects of hosts that ignore the audio input range hints. If the host is using 16-bit int WAV files then a good guess for limit is +80dB.\n\ Drive level: This controls the degree of amplifier compression. Values above 1.0 will work, but they produce unpredictable output levels. Lowering the limit is a better way of increasing the distortion.\n\ Low-density coloration: Controls the amplitude of some low (input space) frequency amplitude distortion.\n\ High-density coloration: Controls the amplitude of some high (input space) frequency amplitude distortion."))
-                                       (lambda (w c i)
-                                         (set! overdrive_s-amp-limit 0)
-                                         (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* overdrive_s-amp-limit 1))))
-                                         (set! overdrive_s-level 0.0)
-                                         (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* overdrive_s-level 100))))
-                                         (set! overdrive_s-low-density-color 0)
-                                         (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (* overdrive_s-low-density-color 1))))
-                                         (set! overdrive_s-high-density-color 0)
-                                         (XtSetValues (list-ref sliders 3) (list XmNvalue (inexact->exact (* overdrive_s-high-density-color 1)))))))
-             (set! sliders
-                   (add-sliders overdrive_s-dialog
-                                (list 
-                                      (list "amp limit (dB relative to nominal 0)" -100 0 100
-                                            (lambda (w context info)
-                                              (set! overdrive_s-amp-limit (/ (.value info) 1)))
-                                            1)
-                                      (list "drive level" 0.0 0.0 1.0
-                                            (lambda (w context info)
-                                              (set! overdrive_s-level (/ (.value info) 100)))
-                                            100)
-                                      (list "low density coloration" 0 0 100
-                                            (lambda (w context info)
-                                              (set! overdrive_s-low-density-color (/ (.value info) 1)))
-                                            1)
-                                      (list "high density coloration" 0 0 100
-                                            (lambda (w context info)
-                                              (set! overdrive_s-high-density-color (/ (.value info) 1)))
-                                            1))))))
-       (activate-dialog overdrive_s-dialog))))
+               (lambda (w c i)
+                 (set! overdrive_s-amp-limit initial-overdrive_s-amp-limit)
+                 (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* overdrive_s-amp-limit 100))))
+                 (set! overdrive_s-level initial-overdrive_s-level)
+                 (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* overdrive_s-level 1))))
+                 (set! overdrive_s-low-density-color initial-overdrive_s-low-density-color)
+                 (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (* overdrive_s-low-density-color 1))))
+                 (set! overdrive_s-high-density-color initial-overdrive_s-high-density-color)
+                 (XtSetValues (list-ref sliders 3) (list XmNvalue (inexact->exact (* overdrive_s-high-density-color 1)))))))
+        (set! sliders
+              (add-sliders overdrive_s-dialog
+                           (list 
+                                 (list "amp limit (dB relative to nominal 0)" -100 initial-overdrive_s-amp-limit 100
+                                        (lambda (w context info)
+                                          (set! overdrive_s-amp-limit (/ (.value info) 100)))
+                                          1)
+                                 (list "drive level" 0.0 initial-overdrive_s-level 1.0
+                                         (lambda (w context info)
+                                          (set! overdrive_s-level (/ (.value info) 1)))
+                                          100)
+                                 (list "low-density coloration" 0 initial-overdrive_s-low-density-color 100
+                                          (lambda (w context info)
+                                           (set! overdrive_s-low-density-color (/ (.value info) 1)))
+                                           1)
+                                 (list "high-density coloration" 0 initial-overdrive_s-high-density-color 100
+                                          (lambda (w context info)
+                                           (set! overdrive_s-high-density-color (/ (.value info) 1)))
+                                           1))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! overdrive_s-target target)) #f)))
 
-      (let ((child (XtCreateManagedWidget "Stereo overdrive" xmPushButtonWidgetClass ladspa-distort-menu
-                                           (list XmNbackground (basic-color)))))
-        (XtAddCallback child XmNactivateCallback
-                        (lambda (w c i)
-                          (post-overdrive_s-dialog))))
+  (activate-dialog overdrive_s-dialog))
 
-;;; Transient mangler
+(let ((child (XtCreateManagedWidget "Stereo overdrive" xmPushButtonWidgetClass ladspa-distort-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-overdrive_s-dialog)))
+  (set! ladspa-distort-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "Stereo overdrive (~1,2D ~1,2F ~1,2D ~1,2D)" overdrive_s-amp-limit overdrive_s-level overdrive_s-low-density-color overdrive_s-level overdrive_s-hig-density-color)))
+                  (change-label child new-label)))
+              ladspa-distort-menu-list)))
+
+
+
+
+
+;;; LADSPA Transient mangler
 ;;;
 
 (define transient-attack-speed 1)
-(define transient-sustain-time 1)
+(define transient-knee-point 1)
 (define transient-dialog #f)
 (define transient-label "Transient mangler")
+(define transient-target 'sound)
+(define transient-menu-widget #f)
 
-(define (cp-transient)
-   (apply-ladspa (make-sample-reader (cursor))
-                 (list "transient_1206" "transient" transient-attack-speed transient-sustain-time)
-                 (- (frames) (cursor))
-                 "transient"))
+(define (post-transient-dialog)
+  (if (not transient-dialog)
+      ;; if transient-dialog doesn't exist, create it
+      (let ((initial-transient-attack-speed 1)
+	    (initial-transient-knee-point 1)
+            (sliders '()))
+        (set! transient-dialog
+              (make-effect-dialog
+               transient-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "transient_1206" "transient" transient-attack-speed transient-knee-point)
+                  transient-target
+                  "transient mangler" #f))
+               (lambda (w context info) (XtUnmanageChild transient-dialog)) ; not needed in new-effects.scm version
 
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
+               (lambda (w context info)
+                 (help-dialog "Transient mangler" "No help yet, sorry"))
 
-    (define (post-transient-dialog)
-       (if (not (Widget? transient-dialog))
-           ;; if transient-dialog doesn't exist, create it
-           (let ((sliders '()))
-             (set! transient-dialog
-                   (make-effect-dialog "transient mangler ladspa plugin"
-                                       (lambda (w context info) (cp-transient))
-                                       (lambda (w context info) (XtUnmanageChild transient-dialog))
-                                       (lambda (w context info)
-                                         (help-dialog "Transient mangler"
-                                                      "Move the sliders to set the mangler parameters."))
-                                       (lambda (w c i)
-                                         (set! transient-attack-speed 1)
-                                         (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* transient-attack-speed 100))))
-                                         (set! transient-sustain-time 1)
-                                         (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* transient-sustain-time 100)))))))
-             (set! sliders
-                   (add-sliders transient-dialog
-                                (list (list "attack speed" -1 1 1
-                                            (lambda (w context info)
-                                              (set! transient-attack-speed (/ (.value info) 100)))
-                                            100)
-                                      (list "sustain time" -1 1 1
-                                            (lambda (w context info)
-                                              (set! transient-sustain-time (/ (.value info) 100)))
-                                            100))))))
-       (activate-dialog transient-dialog))))
+               (lambda (w c i)
+                 (set! transient-attack-speed initial-transient-attack-speed)
+                 (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* transient-attack-speed 100))))
+                 (set! transient-knee-point initial-transient-knee-point)
+                 (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* transient-knee-point 100)))))))
+        (set! sliders
+              (add-sliders transient-dialog
+                           (list 
+                                 (list "attack speed" -1 initial-transient-attack-speed 1
+                                        (lambda (w context info)
+                                          (set! transient-attack-speed (/ (.value info) 100)))
+                                          100)
+                                 (list "sustain time" -1 initial-transient-knee-point 1
+                                         (lambda (w context info)
+                                          (set! transient-knee-point (/ (.value info) 100)))
+                                          100))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! transient-target target)) #f)))
 
-      (let ((child (XtCreateManagedWidget "Transient mangler" xmPushButtonWidgetClass ladspa-distort-menu
-                                           (list XmNbackground (basic-color)))))
-        (XtAddCallback child XmNactivateCallback
-                        (lambda (w c i)
-                          (post-transient-dialog))))
+  (activate-dialog transient-dialog))
 
-;;; Valve (tube) saturation
+(let ((child (XtCreateManagedWidget "Transient mangler" xmPushButtonWidgetClass ladspa-distort-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-transient-dialog)))
+  (set! ladspa-distort-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "Transient mangler (~1,2F ~1,2F )" transient-attack-speed transient-knee-point)))
+                  (change-label child new-label)))
+              ladspa-distort-menu-list)))
+
+
+
+
+
+;;; LADSPA Valve saturation
 ;;;
 
 (define valve-distortion-level .5)
 (define valve-distortion-character .5)
-(define valve-saturation-dialog #f)
-(define valve-saturation-label "Valve (tube) saturation")
+(define valve-distortion-dialog #f)
+(define valve-distortion-label "Valve saturation")
+(define valve-distortion-target 'sound)
+(define valve-distortion-menu-widget #f)
 
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
+(define (post-valve-distortion-dialog)
+  (if (not valve-distortion-dialog)
+      ;; if valve-distortion-dialog doesn't exist, create it
+      (let ((initial-valve-distortion-level .5)
+	    (initial-valve-distortion-character .5)
+            (sliders '()))
+        (set! valve-distortion-dialog
+              (make-effect-dialog
+               valve-distortion-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "valve_1209" "valve" valve-distortion-level valve-distortion-character)
+                  valve-distortion-target
+                  "valve saturation" #f))
+               (lambda (w context info) (XtUnmanageChild valve-distortion-dialog)) ; not needed in new-effects.scm version
 
-     (define (post-valve-saturation-dialog)
-       (if (not (Widget? valve-saturation-dialog))
-           ;; if valve-saturation-dialog doesn't exist, create it
-           (let ((sliders '()))
-             (set! valve-saturation-dialog
-                   (make-effect-dialog "valve saturation ladspa plugin"
-                                       (lambda (w context info)
-                                         (apply-ladspa (make-sample-reader (cursor))
-                                                       (list "valve_1209" "valve" valve-distortion-level valve-distortion-character)
-                                                       (- (frames) (cursor))
-                                                       "valve saturation"))
-                                       (lambda (w context info) (XtUnmanageChild valve-saturation-dialog))
-                                       (lambda (w context info)
-                                         (help-dialog "Valve (tube) saturation"
-                                                      "A model of valve (tube) distortion, lacking some of the harmonics you would get in a real tube amp, but sounds good nonetheless.\n\ Distortion level: How hard the signal is driven against the limit of the amplifier.\n\ Distortion character: The hardness of the sound, low for softer, high for harder."))
-                                       (lambda (w c i)
-                                         (set! valve-distortion-level .5)
-                                         (XtSetValues (list-ref sliders 0)
-                                            (list XmNvalue (inexact->exact (* valve-distortion-level 100))))
-				         (set! valve-distortion-character .5)
-				         (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* valve-distortion-character 100)))))))
-             (set! sliders
-                   (add-sliders valve-saturation-dialog
-                                (list (list "distortion level" 0.0 0.5 1.0
-                                            (lambda (w context info)
-                                              (set! valve-distortion-level (/ (.value info) 100.0)))
-                                            100)
-                                      (list "distortion character" 0.0 0.5 1.0
-                                            (lambda (w context info)
-                                              (set! valve-distortion-character (/ (.value info) 100.0)))
-                                            100))))))
-       (activate-dialog valve-saturation-dialog))))
+               (lambda (w context info)
+                 (help-dialog "Valve saturation" "A model of valve (tube) distortion, lacking some of the harmonics you would get in a real tube amp, but sounds good nonetheless.\n\ Distortion level: How hard the signal is driven against the limit of the amplifier.\n\ Distortion character: The hardness of the sound, low for softer, high for harder."))
 
-      (let ((child (XtCreateManagedWidget "Valve saturation" xmPushButtonWidgetClass ladspa-distort-menu
-                                           (list XmNbackground (basic-color)))))
-        (XtAddCallback child XmNactivateCallback
-                        (lambda (w c i)
-                          (post-valve-saturation-dialog))))
+               (lambda (w c i)
+                 (set! valve-distortion-level initial-valve-distortion-level)
+                 (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* valve-distortion-level 100))))
+                 (set! valve-distortion-character initial-valve-distortion-character)
+                 (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* valve-distortion-character 100)))))))
+        (set! sliders
+              (add-sliders valve-distortion-dialog
+                           (list 
+                                 (list "distortion level"  0.0 initial-valve-distortion-level 1.0
+                                        (lambda (w context info)
+                                          (set! valve-distortion-level (/ (.value info) 100.0)))
+                                          100)
+                                 (list "distortion character" 0.0 initial-valve-distortion-character 1.0
+                                         (lambda (w context info)
+                                          (set! valve-distortion-character (/ (.value info) 100.0)))
+                                          100))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! valve-distortion-target target)) #f)))
 
-;;; Wave shaper
+  (activate-dialog valve-distortion-dialog))
+
+(let ((child (XtCreateManagedWidget "Valve saturation" xmPushButtonWidgetClass ladspa-distort-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-valve-distortion-dialog)))
+  (set! ladspa-distort-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "Valve saturation (~1,2F ~1,2F )" valve-distortion-level valve-distortion-character)))
+                  (change-label child new-label)))
+              ladspa-distort-menu-list)))
+
+
+
+
+;;; LADSPA Wave shaper
 ;;;
 
 (define waveshaper-waveshape 0.0)
 (define waveshaper-dialog #f)
 (define waveshaper-label "Wave shaper")
+(define waveshaper-target 'sound)
+(define waveshaper-menu-widget #f)
 
-(define (cp-waveshaper)
-  (apply-ladspa (make-sample-reader (cursor))
-                (list "shaper_1187" "shaper" waveshaper-waveshape)
-                (- (frames) (cursor))
-                "wave shaper"))
+(define (post-waveshaper-dialog)
+  (if (not waveshaper-dialog)
+      ;; if waveshaper-dialog doesn't exist, create it
+      (let ((initial-waveshaper-waveshape 0.0)
+            (sliders '()))
+        (set! waveshaper-dialog
+              (make-effect-dialog
+               waveshaper-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "shaper_1187" "shaper" waveshaper-waveshape)
+                  waveshaper-target
+                  "wave shaper" #f))
+               (lambda (w context info) (XtUnmanageChild waveshaper-dialog)) ; not needed in new-effects.scm version
 
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
+               (lambda (w context info)
+                 (help-dialog "Wave shaper" "Reshapes the wave by an exponential function. Inspiration was taken from the Nord module of the same name.\n\ If you are getting rubbish out then it's probably because the host isn't using the input/output range hints, which are very important for this plugin.\n\ Waveshape: Positive values have an expanding effect, negative values have a compressing effect."))
 
-     (define (post-waveshaper-dialog)
-       (if (not (Widget? waveshaper-dialog))
-           ;; if waveshaper-dialog doesn't exist, create it
-           (let ((sliders '()))
-             (set! waveshaper-dialog
-                   (make-effect-dialog "wave shaper ladspa plugin"
-                                       (lambda (w context info) (cp-waveshaper))
-                                       (lambda (w context info) (XtUnmanageChild waveshaper-dialog))
-                                       (lambda (w context info)
-                                         (help-dialog "Wave shaper"
-                                                      "Reshapes the wave by an exponential function. Inspiration was taken from the Nord module of the same name.\n\ If you are getting rubbish out then it's probably because the host isn't using the input/output range hints, which are very important for this plugin.\n\ Waveshape: Positive values have an expanding effect, negative values have a compressing effect."))
-                                       (lambda (w c i)
-                                         (set! waveshaper-waveshape 0.0)
-                                         (XtSetValues (car sliders) (list XmNvalue (inexact->exact (* waveshaper-waveshape 100)))))))
-             (set! sliders
-                   (add-sliders waveshaper-dialog
-                                (list (list "waveshape" -10.0 0.0 10.0
-                                            (lambda (w context info)
-                                              (set! waveshaper-waveshape (/ (.value info) 100)))
-                                            100))))))
-       (activate-dialog waveshaper-dialog))))
+               (lambda (w c i)
+                 (set! waveshaper-waveshape initial-waveshaper-waveshape)
+                 (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* waveshaper-waveshape 100)))))))
+        (set! sliders
+              (add-sliders waveshaper-dialog
+                           (list 
+                                 (list "waveshape" -10.0 initial-waveshaper-waveshape 10.0
+                                        (lambda (w context info)
+                                          (set! waveshaper-waveshape (/ (.value info) 100)))
+                                          100))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! waveshaper-target target)) #f)))
 
-      (let ((child (XtCreateManagedWidget "Wave shaper" xmPushButtonWidgetClass ladspa-distort-menu
-                                           (list XmNbackground (basic-color)))))
-        (XtAddCallback child XmNactivateCallback
-                        (lambda (w c i)
-                          (post-waveshaper-dialog))))
+  (activate-dialog waveshaper-dialog))
+
+(let ((child (XtCreateManagedWidget "Wave shaper" xmPushButtonWidgetClass ladspa-distort-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-waveshaper-dialog)))
+  (set! ladspa-distort-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "Wave shaper (~1,2F)" waveshaper-waveshape)))
+                  (change-label child new-label)))
+              ladspa-distort-menu-list)))
+
 
 
 
@@ -1650,9 +1783,9 @@
                               ;XmNborderWidth  1
                               XmNlabelString  s1))))
                 (XmStringFree s1)
-                (XtAddCallback toggle XmNvalueChangedCallback (lambda (w c i) (set! vcf-303-trigger (if (.set i) 1 0))))))
+                (XtAddCallback toggle XmNvalueChangedCallback (lambda (w c i) (set! vcf-303-trigger (if (.set i) 1 0)))))))
 
-       (activate-dialog vcf-303-dialog)))))
+       (activate-dialog vcf-303-dialog))))
 
       (let ((child (XtCreateManagedWidget "VCF303" xmPushButtonWidgetClass ladspa-filter-menu
                                            (list XmNbackground (basic-color)))))
@@ -2286,6 +2419,72 @@
                                             (list XmNsubMenuId ladspa-freq-menu
                                                   XmNbackground (basic-color))))
 
+
+;;; LADSPA AM Pitchshifter 
+;;;
+
+(define am-pitchshifter-pitch-shift 1.0)
+(define am-pitchshifter-buffer-size 4)
+(define am-pitchshifter-dialog #f)
+(define am-pitchshifter-label "AM Pitchshifter")
+(define am-pitchshifter-target 'sound)
+(define am-pitchshifter-truncate #t)
+(define am-pitchshifter-menu-widget #f)
+
+(define (post-am-pitchshifter-dialog)
+  (if (not am-pitchshifter-dialog)
+      ;; if am-pitchshifter-dialog doesn't exist, create it
+      (let ((initial-am-pitchshifter-pitch-shift 1.0)
+            (initial-am-pitchshifter-buffer-size 4)
+            (sliders '()))
+        (set! am-pitchshifter-dialog
+              (make-effect-dialog
+               am-pitchshifter-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "am_pitchshift_1433" "amPitchshift" am-pitchshifter-pitch-shift am-pitchshifter-buffer-size)
+                  am-pitchshifter-target
+                  "AM Pitchshifter"
+                  (and am-pitchshifter-truncate
+                       (* 4 am-pitchshifter-pitch-shift))))
+               (lambda (w context info) (XtUnmanageChild am-pitchshifter-dialog)) ; not needed in new-effects.scm version
+
+               (lambda (w context info)
+                 (help-dialog "AM Pitchshifter" "This plugin works by running a single write pointer (monotonic) and two read pointers (pitchscaled) over a ringbuffer. The output is faded between the two read pointers according to the sine of the distance from the write pointer. The design is based on the mechanism of a mechanical pitchshifter I saw in the Gemeentemuseum in Den Haag, though I'm sure it is a common enough algorithm.\n\ Pitch shift: The multiple of the output pitch. Thus, a value of 2.0 will increase the pitch by one octave.\n\ Buffer size: The order of magnitude of the buffer size. Small buffers will sound fluttery, large buffers will have flangey sounding echoes. I recommend a buffer size of 3 for a reasonable compromise, with wideband material at around 48KHz. For drums you might have to lower it, and for voiced background noises it can go higher."))
+
+               (lambda (w c i)
+                 (set! am-pitchshifter-pitch-shift initial-am-pitchshifter-pitch-shift)
+                 (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* am-pitchshifter-pitch-shift 100))))
+                 (set! am-pitchshifter-buffer-size initial-am-pitchshifter-buffer-size)
+                 (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* am-pitchshifter-buffer-size 1)))))))
+        (set! sliders
+              (add-sliders am-pitchshifter-dialog
+                           (list (list "Pitch shift" 0.25 initial-am-pitchshifter-pitch-shift 4.0
+                                       (lambda (w context info)
+                                         (set! am-pitchshifter-pitch-shift (/ (.value info) 100)))
+                                       100)
+                                 (list "Buffer size" 1 initial-am-pitchshifter-buffer-size 7
+                                       (lambda (w context info)
+                                         (set! am-pitchshifter-buffer-size (/ (.value info) 1)))
+                                       1))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! am-pitchshifter-target target))
+                    (lambda (truncate) (set! am-pitchshifter-truncate truncate)))))
+
+  (activate-dialog am-pitchshifter-dialog))
+
+(let ((child (XtCreateManagedWidget "AM Pitchshifter" xmPushButtonWidgetClass ladspa-freq-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-am-pitchshifter-dialog)))
+  (set! ladspa-freq-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "AM Pitchshifter (~1,2F ~1,2D)" am-pitchshifter-pitch-shift am-pitchshifter-buffer-size)))
+                  (change-label child new-label)))
+              ladspa-freq-menu-list)))
+
+
 ;;; Harmonic generator
 ;;;
 
@@ -2395,51 +2594,63 @@
                           (post-hg-dialog))))
 
 
-;;; Pitch scaler
+
+;;; LADSPA Pitch scaler 
 ;;;
 
-(define pitch-coefficient 1.0)
-(define pitch-scale-dialog #f)
-(define pitch-scale-label "Pitch scaler")
+(define pitch-scaler-coefficient 1.0)
+(define pitch-scaler-dialog #f)
+(define pitch-scaler-label "Pitch scaler")
+(define pitch-scaler-target 'sound)
+(define pitch-scaler-truncate #t)
+(define pitch-scaler-menu-widget #f)
 
-(define (cp-pitch-scale)
-  (apply-ladspa (make-sample-reader (cursor))
-                (list "pitch_scale_1194" "pitchScaleHQ" pitch-coefficient)
-                (- (frames) (cursor))
-                "pitch-scale"))
+(define (post-pitch-scaler-dialog)
+  (if (not pitch-scaler-dialog)
+      ;; if pitch-scaler-dialog doesn't exist, create it
+      (let ((initial-pitch-scaler-coefficient 1.0)
+            (sliders '()))
+        (set! pitch-scaler-dialog
+              (make-effect-dialog
+               pitch-scaler-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "pitch_scale_1194" "pitchScaleHQ" pitch-scaler-coefficient)
+                  pitch-scaler-target
+                  "Pitch scaler"
+                  (and pitch-scaler-truncate
+                       (* 4 pitch-scaler-coefficient))))
+               (lambda (w context info) (XtUnmanageChild pitch-scaler-dialog)) ; not needed in new-effects.scm version
 
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
+               (lambda (w context info)
+                 (help-dialog "Pitch scaler" "A pitch shifter implementation that scales the harmonics appropriately with the base frequencies.\n\ It is an implementation of Stephen M. Sprenger's pitch scaler design. It gives reasonable, general purpose results for small changes, but won't give Antares or Eventide anything to worry about.\n\ The FFT block size and oversampling has been kept at reasonable levels to keep the CPU usage low.\n\ Pitch coefficient: The pitch scaling factor. A value of 2.0 will increase the pitch by one octave, .50 will lower it by one octave, etc."))
 
-     (define (post-pitch-scale-dialog)
-       (if (not (Widget? pitch-scale-dialog))
-           ;; if pitch-scale-dialog doesn't exist, create it
-           (let ((sliders '()))
-             (set! pitch-scale-dialog
-                   (make-effect-dialog "pitch-scale (high-quality) ladspa plugin"
-                                       (lambda (w context info) (cp-pitch-scale))
-                                       (lambda (w context info) (XtUnmanageChild pitch-scale-dialog))
+               (lambda (w c i)
+                 (set! pitch-scaler-coefficient initial-pitch-scaler-coefficient)
+                 (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* pitch-scaler-coefficient 100)))))))
+        (set! sliders
+              (add-sliders pitch-scaler-dialog
+                           (list (list "coefficient" 0.5 initial-pitch-scaler-coefficient 2.0
                                        (lambda (w context info)
-                                         (help-dialog "Pitch scaler"
-                                                      "A pitch shifter implementation that scales the harmonics appropriately with the base frequencies.\n\ It is an implementation of Stephen M. Sprengler's pitch scaler design. It gives reasonable, general purpose results for small changes, but won't give Antares or Eventide anything to worry about.\n\ The FFT block size and oversampling has been kept at reasonable levels to keep the CPU usage low.\n\ Pitch coefficient: The pitch scaling factor, a value of 2.0 will increase the pitch by one octave, etc."))
-                                       (lambda (w c i)
-                                         (set! pitch-coefficient .5)
-                                         (XtSetValues (car sliders)
-                                            (list XmNvalue (inexact->exact (* pitch-coefficient 100)))))))
-             (set! sliders
-                   (add-sliders pitch-scale-dialog
-                                (list (list "pitch coefficient" 0.5 1.0 2.0
-                                            (lambda (w context info)
-                                              (set! pitch-coefficient (/ (.value info) 100.0)))
-                                            100))))))
-       (activate-dialog pitch-scale-dialog))))
+                                         (set! pitch-scaler-coefficient (/ (.value info) 100)))
+                                       100))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! pitch-scaler-target target))
+                    (lambda (truncate) (set! pitch-scaler-truncate truncate)))))
 
-      (let ((child (XtCreateManagedWidget "Pitch scaler" xmPushButtonWidgetClass ladspa-freq-menu
-                                           (list XmNbackground (basic-color)))))
-        (XtAddCallback child XmNactivateCallback
-                        (lambda (w c i)
-                          (post-pitch-scale-dialog))))
+  (activate-dialog pitch-scaler-dialog))
+
+(let ((child (XtCreateManagedWidget "Pitch scaler" xmPushButtonWidgetClass ladspa-freq-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-pitch-scaler-dialog)))
+  (set! ladspa-freq-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "Pitch scaler (~1,2F)" pitch-scaler-coefficient)))
+                  (change-label child new-label)))
+              ladspa-freq-menu-list)))
+
 
 ;;; Pitch scaler
 ;;; by semitones
@@ -2576,6 +2787,87 @@
         (XtAddCallback child XmNactivateCallback
                         (lambda (w c i)
                           (post-mvChorus-dialog))))
+
+
+;;; LADSPA DJ Flanger
+;;;
+
+(define dj-flanger-lfo-sync 0)
+(define dj-flanger-lfo-period 1.0)
+(define dj-flanger-lfo-depth 4.0)
+(define dj-flanger-feedback 0)
+(define dj-flanger-dialog #f)
+(define dj-flanger-label "DJ Flanger")
+(define dj-flanger-target 'sound)
+(define dj-flanger-truncate #t)
+(define dj-flanger-menu-widget #f)
+
+(define (post-dj-flanger-dialog)
+  (if (not dj-flanger-dialog)
+      ;; if dj-flanger-dialog doesn't exist, create it
+      (let ((initial-dj-flanger-lfo-sync 0)
+            (initial-dj-flanger-lfo-period 1.0)
+            (initial-dj-flanger-lfo-depth 4.0)
+            (initial-dj-flanger-feedback 0)
+            (sliders '()))
+        (set! dj-flanger-dialog
+              (make-effect-dialog
+               dj-flanger-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "dj_flanger_1438" "djFlanger" dj-flanger-lfo-sync dj-flanger-lfo-period dj-flanger-lfo-depth dj-flanger-feedback)
+                  dj-flanger-target
+                  "DJ Flanger"
+                  (and dj-flanger-truncate
+                       (* 4 dj-flanger-lfo-sync))))
+               (lambda (w context info) (XtUnmanageChild dj-flanger-dialog)) ; not needed in new-effects.scm version
+
+               (lambda (w context info)
+                 (help-dialog "DJ Flanger" "This is a flanger which is more or less typical of DJ mixing desks. Requested by Patrick Shirkey.\n\ LFO Sync: When turned from off to on it resets the phase of the LFO back to the start of the cycle. Used to sync the LFO to the track.\n\ LFO Period: The cycle period of the LFO in seconds.\n\ LFO Depth: The maximum delay the LFO will use to flange, in milliseconds.\n\ Feedback: The amount of the delayed output that is mixed back into the delay."))
+
+               (lambda (w c i)
+                 (set! dj-flanger-lfo-sync initial-dj-flanger-lfo-sync)
+                 (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* dj-flanger-lfo-sync 1))))
+                 (set! dj-flanger-lfo-period initial-dj-flanger-lfo-period)
+                 (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* dj-flanger-lfo-period 100))))
+                 (set! dj-flanger-lfo-depth initial-dj-flanger-lfo-depth)
+                 (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (* dj-flanger-lfo-depth 100))))   
+                 (set! dj-flanger-feedback initial-dj-flanger-feedback)
+                 (XtSetValues (list-ref sliders 3) (list XmNvalue (inexact->exact (* dj-flanger-feedback 1)))))))
+        (set! sliders
+              (add-sliders dj-flanger-dialog
+                           (list (list "LFO sync" -1 initial-dj-flanger-lfo-sync 1
+                                       (lambda (w context info)
+                                         (set! dj-flanger-lfo-sync (/ (.value info) 1)))
+                                       1)
+                                 (list "LFO period (s)" 0.1 initial-dj-flanger-lfo-period 32.0
+                                       (lambda (w context info)
+                                         (set! dj-flanger-lfo-period (/ (.value info) 100.0)))
+                                       100)
+                                 (list "LFO depth (ms)" 1.0 initial-dj-flanger-lfo-depth 5.0
+                                       (lambda (w context info)
+                                         (set! dj-flanger-lfo-depth (/ (.value info) 100.0)))
+                                       100)   
+                                 (list "Feedback (%)" -100 initial-dj-flanger-feedback 100
+                                       (lambda (w context info)
+                                         (set! dj-flanger-feedback (/ (.value info) 1)))
+                                       1))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! dj-flanger-target target))
+                    (lambda (truncate) (set! dj-flanger-truncate truncate)))))
+
+  (activate-dialog dj-flanger-dialog))
+
+(let ((child (XtCreateManagedWidget "DJ Flanger" xmPushButtonWidgetClass ladspa-mod-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-dj-flanger-dialog)))
+  (set! ladspa-mod-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "DJ Flanger (~1,2D ~1,2F ~1,2F ~1,2D)" dj-flanger-lfo-sync dj-flanger-lfo-period dj-flanger-lfo-depth dj-flanger-feedback)))
+                  (change-label child new-label)))
+              ladspa-mod-menu-list)))
 
 
 ;;; Flanger
@@ -2853,69 +3145,71 @@
                                             (list XmNsubMenuId ladspa-reverb-menu
                                                   XmNbackground (basic-color))))
 
-;;; Freeverb3
+
+
+;;; LADSPA Freeverb3 
 ;;;
 
-(define freeverb-room-size .5)
+(define freeverb-roomsize .5)
 (define freeverb-damping .5)
 (define freeverb-wet-level .5)
 (define freeverb-dry-level .5)
 (define freeverb-width .5)
 (define freeverb-freeze-mode 0)
 (define freeverb-dialog #f)
-(define freeverb-label "Freeverb3 (stereo)")
+(define freeverb-label "Freeverb3")
+(define freeverb-target 'sound)
+(define freeverb-truncate #t)
+(define freeverb-menu-widget #f)
 
-(define (cp-freeverb3)
-  (let* ((snd (selected-sound))
-         (chns (channels snd))
-         (readers (if (= chns 1)
-                  (make-sample-reader 0 snd 0)
-                  ;; assume stereo -- this could collect an arbitrary list
-                  (list (make-sample-reader 0 snd 0)
-                        (make-sample-reader 0 snd 1)))))
-  (apply-ladspa readers
-    (list "cmt" "freeverb3" freeverb-freeze-mode freeverb-room-size freeverb-damping freeverb-wet-level freeverb-dry-level freeverb-width)
-    (- (frames) (cursor))
-    "freeverb")))
+(define (post-freeverb-dialog)
+  (if (not freeverb-dialog)
+      ;; if freeverb-dialog doesn't exist, create it
+      (let ((initial-freeverb-roomsize .5)
+            (initial-freeverb-damping .5)
+            (initial-freeverb-wet-level .5)
+            (initial-freeverb-dry-level .5)
+            (initial-freeverb-width 0)
+            (initial-freeverb-freeze-mode 0)
+            (sliders '()))
+        (set! freeverb-dialog
+              (make-effect-dialog
+               freeverb-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "cmt" "freeverb3" freeverb-freeze-mode freeverb-roomsize freeverb-damping freeverb-wet-level freeverb-dry-level freeverb-width)
+                  freeverb-target
+                  "Freeverb3" 
+		  (and freeverb-truncate
+                       (* 4 freeverb-roomsize))))
+               (lambda (w context info) (XtUnmanageChild freeverb-dialog)) ; not needed in new-effects.scm version
 
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
+               (lambda (w context info)
+                 (help-dialog "Freeverb3" "Jezar's famous reverb. Move the sliders to set the reverb parameters.\n\ This effect works only with stereo soundfiles!\n\ See the Freeverb Web page at http://www.jw015a0732.pwp.blueyonder.co.uk/freeverb.htm for more information."))
 
-     (define (post-freeverb3-dialog)
-       (if (not (Widget? freeverb-dialog))
-           (let ((sliders '()))
-             (set! freeverb-dialog
-                   (make-effect-dialog "freeverb ladspa plugin"
-                                       (lambda (w context info) (cp-freeverb3))
-                                       (lambda (w context info) (XtUnmanageChild freeverb-dialog))
-                                       (lambda (w context info)
-                                         (help-dialog "Freeverb3 Help"
-                                                      "Jezar's famous reverb. Move the sliders to set the reverb parameters.\n\ This effect works only with stereo soundfiles!\n\ See the Freeverb Web page at http://www.jw015a0732.pwp.blueyonder.co.uk/freeverb.htm for more information."))
-                                       (lambda (w c i)
-                                         (set! freeverb-room-size .5)
-                                         (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* freeverb-room-size 100))))
-                                         (set! freeverb-damping .5)
-                                         (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* freeverb-damping 100))))
-                                         (set! freeverb-wet-level .5)
-                                         (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (* freeverb-wet-level 100))))
-                                         (set! freeverb-dry-level .5)
-                                         (XtSetValues (list-ref sliders 3) (list XmNvalue (inexact->exact (* freeverb-dry-level 100))))
-                                         (set! freeverb-width .5)
-                                         (XtSetValues (list-ref sliders 4) (list XmNvalue (inexact->exact (* freeverb-width 100)))))))
+               (lambda (w c i)
+                 (set! freeverb-roomsize .5)
+                 (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* freeverb-roomsize 100))))
+                 (set! freeverb-damping .5)
+                 (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* freeverb-damping 100))))
+                 (set! freeverb-wet-level .5)
+                 (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (* freeverb-wet-level 100))))
+                 (set! freeverb-dry-level .5)
+                 (XtSetValues (list-ref sliders 3) (list XmNvalue (inexact->exact (* freeverb-dry-level 100))))
+                 (set! freeverb-width .5)
+                 (XtSetValues (list-ref sliders 4) (list XmNvalue (inexact->exact (* freeverb-width 100)))))))
+
              (set! sliders
                    (add-sliders freeverb-dialog
-                                (list 
-
-				      (list "room size" 0 .5 1
+                                (list (list "room size" 0 .5 1
                                             (lambda (w context info)
-                                              (set! freeverb-room-size (/ (.value info) 100)))
+                                              (set! freeverb-roomsize (/ (.value info) 100)))
                                             100)
                                       (list "damping" 0 .5 1
                                             (lambda (w context info)
                                               (set! freeverb-damping (/ (.value info) 100)))
                                             100)
- 				      (list "wet level" 0 .5 1
+                                      (list "wet level" 0 .5 1
                                             (lambda (w context info)
                                               (set! freeverb-wet-level (/ (.value info) 100)))
                                             100)
@@ -2927,6 +3221,7 @@
                                             (lambda (w context info)
                                               (set! freeverb-width (/ (.value info) 100)))
                                             100))))
+
              (let* ((s1 (XmStringCreateLocalized "Freeze mode"))
                      (toggle
 
@@ -2938,19 +3233,28 @@
                               ;XmNborderWidth  1
                               XmNlabelString  s1))))
                 (XmStringFree s1)
-                (XtAddCallback toggle XmNvalueChangedCallback (lambda (w c i) (set! freeverb-freeze-mode (if (.set i) 1 0))))))
+                (XtAddCallback toggle XmNvalueChangedCallback (lambda (w c i) (set! freeverb-freeze-mode (if (.set i) 1 0)))))
 
-       (activate-dialog freeverb-dialog)))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! freeverb-target target)) 
+		    (lambda (truncate) (set! freeverb-truncate truncate)))))
 
-      (let ((child (XtCreateManagedWidget "Freeverb3 (stereo)" xmPushButtonWidgetClass ladspa-reverb-menu
-                                           (list XmNbackground (basic-color)))))
-        (XtAddCallback child XmNactivateCallback
-                        (lambda (w c i)
-                          (post-freeverb3-dialog))))
+  (activate-dialog freeverb-dialog))
+
+(let ((child (XtCreateManagedWidget "Freeverb3" xmPushButtonWidgetClass ladspa-reverb-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-freeverb-dialog)))
+  (set! ladspa-reverb-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "Freeverb3 (~1,2F ~1,2F ~1,2F ~1,2F ~1,2F)" freeverb-roomsize freeverb-damping freeverb-wet-level freeverb-dry-level freeverb-width)))
+                  (change-label child new-label)))
+              ladspa-reverb-menu-list)))
 
 
-;;; Gverb
-;;; plugin by Juhana Sadeharju
+
+;;; LADSPA Gverb 
 ;;;
 
 (define gverb-roomsize 30)
@@ -2962,44 +3266,53 @@
 (define gverb-tail-level 0)
 (define gverb-dialog #f)
 (define gverb-label "Gverb")
+(define gverb-target 'sound)
+(define gverb-truncate #t)
+(define gverb-menu-widget #f)
 
-(define (cp-gverb)
-   (apply-ladspa (make-sample-reader (cursor))
-      (list "gverb_1216" "gverb" gverb-roomsize gverb-reverb-time gverb-damping gverb-bandwidth gverb-dry-level gverb-early-reflect-level gverb-tail-level)
-         (- (frames) (cursor))
-         "gverb"))
+(define (post-gverb-dialog)
+  (if (not gverb-dialog)
+      ;; if gverb-dialog doesn't exist, create it
+      (let ((initial-gverb-roomsize 30)
+            (initial-gverb-reverb-time 7.0)
+            (initial-gverb-damping 0.5)
+            (initial-gverb-bandwidth 0.5)
+            (initial-gverb-dry-level 0)
+            (initial-gverb-early-reflect-level 0)
+            (initial-gverb-tail-level 0)
+            (sliders '()))
+        (set! gverb-dialog
+              (make-effect-dialog
+               gverb-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "gverb_1216" "gverb" gverb-roomsize gverb-reverb-time gverb-damping gverb-bandwidth gverb-dry-level gverb-early-reflect-level gverb-tail-level)
+                  gverb-target
+                  "Gverb" 
+		  (and gverb-truncate
+                       (* 4 gverb-roomsize))))
+               (lambda (w context info) (XtUnmanageChild gverb-dialog)) ; not needed in new-effects.scm version
 
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
+               (lambda (w context info)
+                 (help-dialog "Gverb" "A mono in, stereo out reverb implementation by Juhana Sadeharju (kouhia at nic.funet.fi). Steve Harris ported it to LADSPA and did some testing. Please contact Juhana directly regarding any bugs you find.\n\ Roomsize (m): The size of the room, in meters. Excessivly large, and excessivly small values will make it sound a bit unrealistic. Values of around 30 sound good.\n\ Reverb time (s): Reverb decay time, in seconds. 7 is a good place to start.\n\ Damping: This controls the high-frequency damping (a lowpass filter). Values near 1 will make it sound very bright, values near 0 will make it sound very dark.\n\ Input bandwidth: This is like a damping control for the input. It has a similar effect to the damping control, but is subtly different.\n\ Dry signal level (dB): The amount of dry signal to be mixed with the reverbed signal.\n\ Early reflection level (dB): The quantity of early reflections (scatter reflections directly from the source). Think of Lexicon's ambience patches.\n\ Tail level (dB): The level of the classic reverb tail reflections."))
 
-    (define (post-gverb-dialog)
-       (if (not (Widget? gverb-dialog))
-           (let ((sliders '()))
-             (set! gverb-dialog
-                   (make-effect-dialog "gverb ladspa plugin"
-                                       (lambda (w context info) (cp-gverb))
-                                       (lambda (w context info) (XtUnmanageChild gverb-dialog))
-                                       (lambda (w context info)
-                                         (help-dialog "Gverb"
-                                                      "A mono in, stereo out reverb implementation by Juhana Sadeharju (kouhia at nic.funet.fi). Steve Harris ported it to LADSPA and did some testing. Please contact Juhana directly regarding any bugs you find.\n\ Roomsize (m): The size of the room, in meters. Excessivly large, and excessivly small values will make it sound a bit unrealistic. Values of around 30 sound good.\n\ Reverb time (s): Reverb decay time, in seconds. 7 is a good place to start.\n\ Damping: This controls the high-frequency damping (a lowpass filter). Values near 1 will make it sound very bright, values near 0 will make it sound very dark.\n\ Input bandwidth: This is like a damping control for the input. It has a similar effect to the damping control, but is subtly different.\n\ Dry signal level (dB): The amount of dry signal to be mixed with the reverbed signal.\n\ Early reflection level (dB): The quantity of early reflections (scatter reflections directly from the source). Think of Lexicon's ambience patches.\n\ Tail level (dB): The level of the classic reverb tail reflections."))
-                                       (lambda (w c i)
-                                         (set! gverb-roomsize 30)
-                                         (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* gverb-roomsize 1))))
-                                         (set! gverb-reverb-time 7.0)
-                                         (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* gverb-reverb-time 100))))
-                                         (set! gverb-damping 0.5)
-                                         (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (* gverb-damping 100))))
-                                         (set! gverb-bandwidth 0.5)
-                                         (XtSetValues (list-ref sliders 3) (list XmNvalue (inexact->exact (* gverb-bandwidth 100))))
-                                         (set! gverb-dry-level 0)
-                                         (XtSetValues (list-ref sliders 4) (list XmNvalue (inexact->exact (* gverb-dry-level 1))))
-                                         (set! gverb-early-reflect-level 0)
-                                         (XtSetValues (list-ref sliders 5) (list XmNvalue (inexact->exact (* gverb-early-reflect-level 1))))
-                                         (set! gverb-tail-level 0)
-                                         (XtSetValues (list-ref sliders 6) (list XmNvalue (inexact->exact (* gverb-tail-level 1)))))))
-             (set! sliders
-                   (add-sliders gverb-dialog
+               (lambda (w c i)
+                 (set! gverb-roomsize 30)
+                 (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* gverb-roomsize 1))))
+                 (set! gverb-reverb-time 7.0)
+                 (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* gverb-reverb-time 100))))
+                 (set! gverb-damping 0.5)
+                 (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (* gverb-damping 100))))
+                 (set! gverb-bandwidth 0.5)
+                 (XtSetValues (list-ref sliders 3) (list XmNvalue (inexact->exact (* gverb-bandwidth 100))))
+                 (set! gverb-dry-level 0)
+                 (XtSetValues (list-ref sliders 4) (list XmNvalue (inexact->exact (* gverb-dry-level 1))))
+                 (set! gverb-early-reflect-level 0)
+                 (XtSetValues (list-ref sliders 5) (list XmNvalue (inexact->exact (* gverb-early-reflect-level 1))))
+                 (set! gverb-tail-level 0)
+                 (XtSetValues (list-ref sliders 6) (list XmNvalue (inexact->exact (* gverb-tail-level 1)))))))
+        (set! sliders
+              (add-sliders gverb-dialog
                                 (list (list "room size (m)" 1 30 300
                                             (lambda (w context info)
                                               (set! gverb-roomsize (/ (.value info) 1)))
@@ -3027,18 +3340,28 @@
                                       (list "tail level (dB)" -70 0 0
                                             (lambda (w context info)
                                               (set! gverb-tail-level (/ (.value info) 1)))
-                                            1))))))
-       (activate-dialog gverb-dialog))))
+                                            1))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! gverb-target target)) 
+		    (lambda (truncate) (set! gverb-truncate truncate)))))
 
-      (let ((child (XtCreateManagedWidget "Gverb" xmPushButtonWidgetClass ladspa-reverb-menu
-                                           (list XmNbackground (basic-color)))))
-        (XtAddCallback child XmNactivateCallback
-                        (lambda (w c i)
-                          (post-gverb-dialog))))
+  (activate-dialog gverb-dialog))
+
+(let ((child (XtCreateManagedWidget "Gverb" xmPushButtonWidgetClass ladspa-reverb-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-gverb-dialog)))
+  (set! ladspa-reverb-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "Gverb (~1,2D ~1,2F ~1,2F ~1,2F ~1,2D ~1,2D ~1,2D)" gverb-roomsize gverb-reverb-time gverb-damping gverb-bandwidth gverb-dry-level gverb-early-reflect-level gverb-tail-level)))
+                  (change-label child new-label)))
+              ladspa-reverb-menu-list)))
 
 
 
-;;; Plate reverb
+
+;;; LADSPA Plate reverb
 ;;;
 
 (define plate-reverb-time 1.0)
@@ -3046,59 +3369,75 @@
 (define plate-reverb-mix 0.5)
 (define plate-reverb-dialog #f)
 (define plate-reverb-label "Plate reverb")
+(define plate-reverb-target 'sound)
+(define plate-reverb-truncate #t)
+(define plate-reverb-menu-widget #f)
 
-(define (cp-plate-reverb)
-  (apply-ladspa (make-sample-reader (cursor))
-                (list "plate_1423" "plate" plate-reverb-time plate-reverb-damping plate-reverb-mix)
-                (- (frames) (cursor))
-                "plate reverb"))
+(define (post-plate-reverb-dialog)
+  (if (not plate-reverb-dialog)
+      ;; if plate-reverb-dialog doesn't exist, create it
+      (let ((initial-plate-reverb-time 1.0)
+            (initial-plate-reverb-damping 0.5)
+            (initial-plate-reverb-mix 0.5)
+            (sliders '()))
+        (set! plate-reverb-dialog
+              (make-effect-dialog
+               plate-reverb-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "plate_1423" "plate" plate-reverb-time plate-reverb-damping plate-reverb-mix)
+                  plate-reverb-target
+                  "Plate reverb" 
+		  (and plate-reverb-truncate
+                       (* 4 plate-reverb-time))))
+               (lambda (w context info) (XtUnmanageChild plate-reverb-dialog)) ; not needed in new-effects.scm version
 
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
+               (lambda (w context info)
+                 (help-dialog "Plate reverb" "A physical model of a steel plate reverb. Based on Josep Comajuncosas' gong model, it uses 8 linear waveguides to model the plate.\n\ Reverb time: Controls the RT60 time of the reverb. Actually controls the size of the plate. The mapping betwwen plate size and RT60 time is just a heuristic, so it's not very accurate.\n\ Damping: Controls the degree that the surface of the plate is damped.\n\ Dry/wet mix: Controls the balance between the dry and wet signals."))
 
-     (define (post-plate-reverb-dialog)
-       (if (not (Widget? plate-reverb-dialog))
-           (let ((sliders '()))
-             (set! plate-reverb-dialog
-                   (make-effect-dialog "plate reverb ladspa plugin"
-                                       (lambda (w context info) (cp-plate-reverb))
-                                       (lambda (w context info) (XtUnmanageChild plate-reverb-dialog))
-                                       (lambda (w context info)
-                                         (help-dialog "Plate reverb" "A physical model of a steel plate reverb. Based on Josep Comajuncosas' gong model, it uses 8 linear waveguides to model the plate.\n\ Reverb time: Controls the RT60 time of the reverb. Actually controls the size of the plate. The mapping betwwen plate size and RT60 time is just a heuristic, so it's not very accurate.\n\ Damping: Controls the degree that the surface of the plate is damped.\n\ Dry/wet mix: Controls the balance between the dry and wet signals."))
-                                       (lambda (w c i)
-                                         (set! plate-reverb-time 1.0)
-                                         (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* plate-reverb-time 100))))
-                                         (set! plate-reverb-damping 0.5)
-                                         (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* plate-reverb-damping 100))))
-					 (set! plate-reverb-mix 0.5) 
-                                         (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (* plate-reverb-mix 100)))))))
-             (set! sliders
-                   (add-sliders plate-reverb-dialog
-                                (list
-                                      (list "reverb time" 0.01 1.0 8.5
-                                            (lambda (w context info)
-                                              (set! plate-reverb-time (/ (.value info) 100)))
-                                            100)
-                                      (list "damping" 0.0 0.5 1.0
-                                            (lambda (w context info)
-                                              (set! plate-reverb-damping (/ (.value info) 100)))
-                                            100)
-				      (list "dry/wet mix" 0.0 0.5 1.0
-                                            (lambda (w context info)
-                                              (set! plate-reverb-mix (/ (.value info) 100)))
-                                            100))))))
-       (activate-dialog plate-reverb-dialog))))
+               (lambda (w c i)
+                 (set! plate-reverb-time initial-plate-reverb-time)
+                 (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* plate-reverb-time 100))))
+                 (set! plate-reverb-damping initial-plate-reverb-damping)
+                 (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* plate-reverb-damping 100))))
+                 (set! plate-reverb-mix initial-plate-reverb-mix)
+                 (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (* plate-reverb-mix 100)))))))
+        (set! sliders
+              (add-sliders plate-reverb-dialog
+                           (list
+                                 (list "reverb time" 0.01 initial-plate-reverb-time 8.5
+                                        (lambda (w context info)
+                                          (set! plate-reverb-time (/ (.value info) 100)))
+                                          100)
+                                 (list "damping" 0.0 initial-plate-reverb-damping 1.0
+                                         (lambda (w context info)
+                                          (set! plate-reverb-damping (/ (.value info) 100)))
+                                          100)
+                                 (list "dry/wet mix" 0.0 initial-plate-reverb-mix 1.0
+                                          (lambda (w context info)
+                                           (set! plate-reverb-mix (/ (.value info) 100)))
+                                           100))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! plate-reverb-target target)) 
+		    (lambda (truncate) (set! plate-reverb-truncate truncate)))))
 
-      (let ((child (XtCreateManagedWidget "Plate reverb" xmPushButtonWidgetClass ladspa-reverb-menu
-                                           (list XmNbackground (basic-color)))))
-        (XtAddCallback child XmNactivateCallback
-                        (lambda (w c i)
-                          (post-plate-reverb-dialog))))
+  (activate-dialog plate-reverb-dialog))
 
+(let ((child (XtCreateManagedWidget "Plate reverb" xmPushButtonWidgetClass ladspa-reverb-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-plate-reverb-dialog)))
+  (set! ladspa-reverb-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "Plate reverb (~1,2F ~1,2F ~1,2F)" plate-reverb-time plate-reverb-damping plate-reverb-mix)))
+                  (change-label child new-label)))
+              ladspa-reverb-menu-list)))
 
 
-;;; Impulse convolver
+
+
+;;; LADSPA Impulse convolver
 ;;;
 
 (define impulse-convolver-id 1)
@@ -3106,27 +3445,31 @@
 (define impulse-convolver-gain 0)
 (define impulse-convolver-dialog #f)
 (define impulse-convolver-label "Impulse convolver")
+(define impulse-convolver-target 'sound)
+(define impulse-convolver-truncate #t)
+(define impulse-convolver-menu-widget #f)
 
-(define (cp-impulse-convolver)
-   (apply-ladspa (make-sample-reader (cursor))
-      (list "imp_1199" "imp" impulse-convolver-id impulse-convolver-high-latency-mode impulse-convolver-gain)
-         (- (frames) (cursor))
-         "impulse convolver"))
+(define (post-impulse-convolver-dialog)
+  (if (not impulse-convolver-dialog)
+      ;; if impulse-convolver-dialog doesn't exist, create it
+      (let ((initial-impulse-convolver-id 1.0)
+            (initial-impulse-convolver-high-latency-mode 0.5)
+            (initial-impulse-convolver-gain 0.5)
+            (sliders '()))
+        (set! impulse-convolver-dialog
+              (make-effect-dialog
+               impulse-convolver-label
+               (lambda (w context info)
+                 (apply-ladspa-over-target-with-sync
+                  (list "imp_1199" "imp" impulse-convolver-id impulse-convolver-high-latency-mode impulse-convolver-gain)
+                  impulse-convolver-target
+                  "impulse convolver"
+                  (and impulse-convolver-truncate
+                       (* 4 impulse-convolver-id))))
+               (lambda (w context info) (XtUnmanageChild impulse-convolver-dialog)) ; not needed in new-effects.scm version
 
-(if (and (provided? 'snd-ladspa)
-         (provided? 'xm))
-  (begin
-
-    (define (post-impulse-convolver-dialog)
-       (if (not (Widget? impulse-convolver-dialog))
-           (let ((sliders '()))
-             (set! impulse-convolver-dialog
-                   (make-effect-dialog "impulse convolver ladspa plugin"
-                                       (lambda (w context info) (cp-impulse-convolver))
-                                       (lambda (w context info) (XtUnmanageChild impulse-convolver-dialog))
-                                       (lambda (w context info)
-                                         (help-dialog "Impulse convolver"
-                                                      "This is a convolver for a set of fairly short impulses. The set of impulses has to be compiled in; currently they are:\n\
+               (lambda (w context info)
+                 (help-dialog "Impulse convolver" "This is a convolver for a set of fairly short impulses. The set of impulses has to be compiled in; currently they are:\n\
 ID   Impulse source\n\
 \n\
 1 Unit impulse (identity)\n\
@@ -3151,34 +3494,45 @@ ID   Impulse source\n\
 20 Matchless Chieftain (SM57 on axis)\n\
 21 Matchless Chieftain (SM57 off axis)\n\
 \n\
-The impulse ID selects the impulse to convolve with.\n\ High latency mode: If you are running with blocks that are not whole powers of two long, or you are hearing distortion, try changing this to 1.\n\ Gain (dB): Controls the gain of the output signal in decibels."))
-                                       (lambda (w c i)
-                                         (set! impulse-convolver-id 1)
-                                         (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* impulse-convolver-id 1))))
-                                         (set! impulse-convolver-high-latency-mode 0)
-                                         (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* impulse-convolver-high-latency-mode 1))))
-                                         (set! impulse-convolver-gain 0)
-                                         (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (* impulse-convolver-gain 1)))))))
+The impulse ID selects the impulse to convolve with.\n\ High latency mode: If you are running with blocks that are not whole powers of two long, or you are hearing distortion, try changing this to 1.\n\ Gain (dB): Controls the gain of the output signal in decibels." ))
+
+                (lambda (w c i)
+                 (set! impulse-convolver-id 1)
+                 (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* impulse-convolver-id 1))))
+                 (set! impulse-convolver-high-latency-mode 0)
+                 (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* impulse-convolver-high-latency-mode 1))))
+                 (set! impulse-convolver-gain 0)
+                 (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (* impulse-convolver-gain 1)))))))
              (set! sliders
-                   (add-sliders impulse-convolver-dialog
-                                (list (list "impulse ID" 1 1 21
+
+              (add-sliders impulse-convolver-dialog
+                                (list (list "impulse ID" 1 initial-impulse-convolver-id 21
                                             (lambda (w context info)
                                               (set! impulse-convolver-id (/ (.value info) 1)))
                                             1)
-                                      (list "high latency mode" 0 0 1
+                                      (list "high latency mode" 0 initial-impulse-convolver-high-latency-mode 1
                                             (lambda (w context info)
                                               (set! impulse-convolver-high-latency-mode (/ (.value info) 1)))
                                             1)
-                                      (list "gain" -90 0 24
+                                      (list "gain" -90 initial-impulse-convolver-gain 24
                                             (lambda (w context info)
                                               (set! impulse-convolver-gain (/ (.value info) 1)))
-                                            1))))))
-       (activate-dialog impulse-convolver-dialog))))
+                                            1))))
 
-      (let ((child (XtCreateManagedWidget "Impulse convolver" xmPushButtonWidgetClass ladspa-reverb-menu
-                                           (list XmNbackground (basic-color)))))
-        (XtAddCallback child XmNactivateCallback
-                        (lambda (w c i)
-                          (post-impulse-convolver-dialog))))
+        (add-target (XtParent (car sliders))
+                    (lambda (target) (set! impulse-convolver-target target))
+                    (lambda (truncate) (set! impulse-convolver-truncate truncate)))))
 
+  (activate-dialog impulse-convolver-dialog))
+
+(let ((child (XtCreateManagedWidget "Impulse convolver" xmPushButtonWidgetClass ladspa-reverb-menu
+                                    (list XmNbackground (basic-color)))))
+  (XtAddCallback child XmNactivateCallback
+                 (lambda (w c i)
+                   (post-impulse-convolver-dialog)))
+  (set! ladspa-reverb-menu-list
+        (cons (lambda ()
+                (let ((new-label (format #f "Impulse convolver (~1,2D ~1,2D ~1,2D)" impulse-convolver-id impulse-convolver-high-latency-mode impulse-convolver-gain)))
+                  (change-label child new-label)))
+              ladspa-reverb-menu-list)))
 

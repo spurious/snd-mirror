@@ -31,13 +31,15 @@
 		 (all-chans))
 	  (map-chan (func) #f #f origin)))))
 
+;;; -------- Insert/append file
+;;;
 
 (add-to-menu special-menu "Insert file"
   (lambda ()
     (select-file
       (lambda (filename)
         (insert-sound filename))
-      "Insert file" "." "*" "file will be inserted at cursor")))
+      "Insert file" "." "*" "File will be inserted at cursor location.")))
 
 (define (append-sound name)
   ;; appends sound file
@@ -47,7 +49,20 @@
 
 (add-to-menu special-menu #f #f)
 
-;(add-to-menu special-menu #f #f)
+;;; -------- MIDI to WAV
+;;;
+
+(add-to-menu special-menu "MIDI to WAV"
+  (lambda ()
+    (select-file
+      (lambda (filename)
+;        (shell (format #f "timidity -Ow -c /home/dlphilp/timidity-sf2.cfg -EFchorus=0 ~a" filename)))
+;      "Select MIDI file" "/home/dlphilp/midfiles/" "*.mid" "Converts MIDI file to WAV using TiMidity. Output will be named after the original MIDI file.")))
+        (shell (format #f "timidity -Ow ~a" filename)))
+      "Select MIDI file" "." "*.mid" "Converts MIDI file to WAV using TiMidity. Output will be named after the original MIDI file, i.e., foo.mid converts to foo.wav.\n\ You must have TiMidity and a patch set installed for this function to work. See the TiMidity home page at http://www.onicos.com/staff/iz/timidity/ for more details.")))
+
+(add-to-menu special-menu #f #f)
+
 
 ;;; -------- Record input channel
 ;;;
@@ -313,5 +328,4 @@
 (add-to-menu special-menu #f #f)
 
 (add-to-menu special-menu "Explode SF2" explode-sf2) 
-
 
