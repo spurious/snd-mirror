@@ -1235,6 +1235,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
 	}
     }
   dur += overlap;
+  sf = free_snd_fd(sf);
   if (temp_file)
     {
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
@@ -1253,7 +1254,6 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
 	change_samples(beg, dur, idata, cp, LOCK_MIXES, origin, cp->edit_ctr);
     }
   update_graph(cp); 
-  free_snd_fd(sf);
   FREE(data[0]);
   FREE(data);
   cp->edit_hook_checked = false;

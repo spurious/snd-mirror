@@ -433,60 +433,82 @@ void finish_selection_creation(void)
       if (selection_creates_region(ss)) 
 	make_region_from_selection();
       reflect_edit_with_selection_in_menu();
-      if (XEN_HOOKED(selection_changed_hook)) run_hook(selection_changed_hook, XEN_EMPTY_LIST, S_selection_changed_hook);
+      if (XEN_HOOKED(selection_changed_hook)) 
+	run_hook(selection_changed_hook, 
+		 XEN_EMPTY_LIST, 
+		 S_selection_changed_hook);
       selection_creation_chans = free_sync_info(selection_creation_chans);      
     }
 }
 
-static void cp_redraw_selection(chan_info *cp, void *with_fft)
+static void cp_redraw_selection(chan_info *cp)
 {
-  if (selection_is_visible(cp))
-    {
-      Locus x0, x1;
-      off_t beg, end;
-      axis_info *ap;
-      double sp_srate;
-      ap = cp->axis;
-      beg = selection_beg(cp);
-      end = selection_end(cp);
-      sp_srate = (double)SND_SRATE(cp->sound);
-      if (ap->losamp < beg)
-	x0 = grf_x((double)beg / sp_srate, ap);
-      else x0 = ap->x_axis_x0;
-      if (ap->hisamp > end)
-	x1 = grf_x((double)end / sp_srate, ap);
-      else x1 = ap->x_axis_x1;
-      if (cp->selection_visible)
-	fill_rectangle(selection_context(cp),
-		       cp->old_x0,
-		       ap->y_axis_y1,
-		       cp->old_x1 - cp->old_x0,
-		       (int)(ap->y_axis_y0 - ap->y_axis_y1));
-      fill_rectangle(selection_context(cp),
-		     x0,
-		     ap->y_axis_y1,
-		     x1 - x0,
-		     (int)(ap->y_axis_y0 - ap->y_axis_y1));
-      cp->old_x0 = x0;
-      cp->old_x1 = x1;
-      cp->selection_visible = true;
-    }
-  if ((with_fft) && (cp->graph_transform_p) && (cp_has_selection(cp, NULL)) && (!(chan_fft_in_progress(cp))))
-    {
-      if (show_selection_transform(ss)) 
-	calculate_fft(cp);
-    }
+  Locus x0, x1;
+  off_t beg, end;
+  axis_info *ap;
+  double sp_srate;
+  ap = cp->axis;
+  beg = selection_beg(cp);
+  end = selection_end(cp);
+  sp_srate = (double)SND_SRATE(cp->sound);
+  if (ap->losamp < beg)
+    x0 = grf_x((double)beg / sp_srate, ap);
+  else x0 = ap->x_axis_x0;
+  if (ap->hisamp > end)
+    x1 = grf_x((double)end / sp_srate, ap);
+  else x1 = ap->x_axis_x1;
+  if (cp->selection_visible)
+    fill_rectangle(selection_context(cp),
+		   cp->old_x0,
+		   ap->y_axis_y1,
+		   cp->old_x1 - cp->old_x0,
+		   (int)(ap->y_axis_y0 - ap->y_axis_y1));
+  fill_rectangle(selection_context(cp),
+		 x0,
+		 ap->y_axis_y1,
+		 x1 - x0,
+		 (int)(ap->y_axis_y0 - ap->y_axis_y1));
+  cp->old_x0 = x0;
+  cp->old_x1 = x1;
+  cp->selection_visible = true;
 }
 
 static void redraw_selection(void)
 {
-  /* selection transform while synced redraw */
-  for_each_normal_chan_1(cp_redraw_selection, (void *)1);
+  int i;
+  for (i = 0; i < ss->max_sounds; i++)
+    {
+      snd_info *sp;
+      sp = ss->sounds[i];
+      if (sp)
+	{
+	  if (sp->inuse == SOUND_NORMAL)
+	    {
+	      int j;
+	      for (j = 0; j < sp->nchans; j++)
+		{
+		  chan_info *cp;
+		  cp = sp->chans[j];
+		  if ((cp) && (selection_is_visible(cp)))
+		    {
+		      cp_redraw_selection(cp);
+		      if ((cp->graph_transform_p) && 
+			  (!(chan_fft_in_progress(cp))) &&
+			  (show_selection_transform(ss)))
+			calculate_fft(cp);
+		      if (sp->channel_style == CHANNELS_SUPERIMPOSED)
+			break;
+		    }
+		}
+	    }
+	}
+    }
 }
 
 void display_selection(chan_info *cp)
 { 
-  cp_redraw_selection(cp, NULL);
+  if (selection_is_visible(cp))
+    cp_redraw_selection(cp); /* draw just this chan */
 }
 
 int make_region_from_selection(void)

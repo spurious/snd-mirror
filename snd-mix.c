@@ -497,7 +497,7 @@ static snd_info *make_mix_readable(mix_info *md)
 	md->add_snd = make_sound_readable(md->in_filename, true);
       else 
 	{
-	  snd_error(_("can't find file %s: %s"), md->in_filename, strerror(errno));
+	  snd_error(_("mix reader can't find file %s: %s"), md->in_filename, strerror(errno));
 	  return(NULL);
 	}
       add_sp = md->add_snd;

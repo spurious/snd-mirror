@@ -6415,6 +6415,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
   ed = (ed_list *)(cp->edits[edit_position]);
   if (!ed) return(NULL);
   sp = cp->sound;
+  if (sp->inuse == SOUND_IDLE) return(NULL);
   if (sp->need_update) 
     {
       if (mus_file_probe(sp->filename) == 0)
@@ -8241,6 +8242,8 @@ the new data's end."
       char *fname;
       curlen = CURRENT_SAMPLES(cp);
       fname = XEN_TO_C_STRING(vect);
+      if (!mus_file_probe(fname))
+	return(snd_no_such_file_error(caller, vect));
       inchan = XEN_TO_C_INT_OR_ELSE(infile_chan, 0);
       if (XEN_BOOLEAN_P(auto_delete)) delete_file = XEN_TO_C_BOOLEAN(auto_delete);
       if ((beg == 0) && 
@@ -8501,6 +8504,8 @@ inserts all of oboe.snd starting at sample 1000."
   if (XEN_BOOLEAN_P(auto_delete)) delete_file = XEN_TO_C_BOOLEAN(auto_delete);
   if (filename) FREE(filename);
   filename = mus_expand_filename(XEN_TO_C_STRING(file));
+  if (!mus_file_probe(filename))
+    return(snd_no_such_file_error(S_insert_sound, file));
   nc = mus_sound_chans(filename);
   if (nc <= 0)
     {
@@ -8649,6 +8654,11 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
     {
       char *filename;
       filename = mus_expand_filename(XEN_TO_C_STRING(vect));
+      if (!mus_file_probe(filename))
+	{
+	  FREE(filename);
+	  return(snd_no_such_file_error(S_insert_samples, vect));
+	}
       if (!origin) origin = mus_format("%s " OFF_TD " " OFF_TD " \"%s\"", S_insert_samples, beg, len, filename);
       file_insert_samples(beg, len, filename, cp, 0, (delete_file) ? DELETE_ME : DONT_DELETE_ME, origin, pos);
       if (filename) FREE(filename);

@@ -2,34 +2,34 @@
 ;;;
 ;;;  test 0: constants                          [366]
 ;;;  test 1: defaults                           [921]
-;;;  test 2: headers                            [1096]
-;;;  test 3: variables                          [1396]
-;;;  test 4: sndlib                             [1786]
-;;;  test 5: simple overall checks              [3583]
-;;;  test 6: vcts                               [10911]
-;;;  test 7: colors                             [11145]
-;;;  test 8: clm                                [11641]
-;;;  test 9: mix                                [18212]
-;;;  test 10: marks                             [21273]
-;;;  test 11: dialogs                           [21970]
-;;;  test 12: extensions                        [22287]
-;;;  test 13: menus, edit lists, hooks, etc     [22702]
-;;;  test 14: all together now                  [23995]
-;;;  test 15: chan-local vars                   [25073]
-;;;  test 16: regularized funcs                 [26333]
-;;;  test 17: dialogs and graphics              [30697]
-;;;  test 18: enved                             [30772]
-;;;  test 19: save and restore                  [30792]
-;;;  test 20: transforms                        [32258]
-;;;  test 21: new stuff                         [33342]
-;;;  test 22: run                               [34202]
-;;;  test 23: with-sound                        [39287]
-;;;  test 24: user-interface                    [40279]
-;;;  test 25: X/Xt/Xm                           [43437]
-;;;  test 26: Gtk                               [47933]
-;;;  test 27: GL                                [51923]
-;;;  test 28: errors                            [52027]
-;;;  test all done                              [54071]
+;;;  test 2: headers                            [1115]
+;;;  test 3: variables                          [1415]
+;;;  test 4: sndlib                             [1806]
+;;;  test 5: simple overall checks              [3603]
+;;;  test 6: vcts                               [10935]
+;;;  test 7: colors                             [11169]
+;;;  test 8: clm                                [11671]
+;;;  test 9: mix                                [18242]
+;;;  test 10: marks                             [21304]
+;;;  test 11: dialogs                           [22002]
+;;;  test 12: extensions                        [22319]
+;;;  test 13: menus, edit lists, hooks, etc     [22734]
+;;;  test 14: all together now                  [24029]
+;;;  test 15: chan-local vars                   [25114]
+;;;  test 16: regularized funcs                 [26374]
+;;;  test 17: dialogs and graphics              [30741]
+;;;  test 18: enved                             [30816]
+;;;  test 19: save and restore                  [30836]
+;;;  test 20: transforms                        [32310]
+;;;  test 21: new stuff                         [33395]
+;;;  test 22: run                               [34255]
+;;;  test 23: with-sound                        [39340]
+;;;  test 24: user-interface                    [40332]
+;;;  test 25: X/Xt/Xm                           [43490]
+;;;  test 26: Gtk                               [47986]
+;;;  test 27: GL                                [51978]
+;;;  test 28: errors                            [52082]
+;;;  test all done                              [54143]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -41,8 +41,8 @@
 ;(setlocale LC_ALL "de_DE")
 
 (define tests 1)
-(define keep-going #f)
-(define all-args #f) ; huge arg testing
+(define keep-going #t)
+(define all-args #t) ; huge arg testing
 (define with-big-file #t)
 
 (define (snd-display . args)
@@ -52199,8 +52199,8 @@ EDITS: 2
 (if with-gui
     (begin
       (define procs (list 
-		     add-mark add-player add-sound-file-extension add-to-main-menu add-to-menu add-transform amp-control
-		     as-one-edit ask-before-overwrite audio-input-device audio-output-device
+		     add-mark add-sound-file-extension add-to-main-menu add-to-menu add-transform amp-control
+		     as-one-edit ask-before-overwrite audio-input-device audio-output-device ; add-player
 		     auto-resize auto-update autocorrelate axis-info axis-label-font axis-numbers-font
 		     basic-color bind-key bomb c-g? apply-controls change-samples-with-origin channel-style
 		     channel-widgets channels chans peaks-font bold-peaks-font close-sound ;close-sound-file 
@@ -52531,7 +52531,8 @@ EDITS: 2
 		      (list amp-control bomb apply-controls channels chans close-sound comment contrast-control 
 			    amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
 			    reverb-control-length-bounds reverb-control-scale-bounds
-			    contrast-control-amp contrast-control? data-format data-location data-size expand-control expand-control-hop expand-control-jitter
+			    contrast-control-amp contrast-control? data-format data-location data-size 
+			    expand-control expand-control-hop expand-control-jitter
 			    expand-control-length expand-control-ramp expand-control? file-name filter-control-in-dB filter-control-in-hz
 			    filter-control-envelope filter-control-order filter-control?  finish-progress-report frames header-type
 			    progress-report read-only reset-controls restore-controls reverb-control-decay reverb-control-feedback
@@ -52896,7 +52897,8 @@ EDITS: 2
 			      make-graph-data map-chan max-transform-peaks maxamp min-dB mix-region transform-normalization
 			      peak-env-info peaks play play-and-wait position->x position->y reverse-sound right-sample sample
 			      samples->sound-data save-sound-as scan-chan show-axes show-transform-peaks show-marks
-			      show-mix-waveforms show-y-zero show-grid show-sonogram-cursor spectro-cutoff spectro-hop spectro-start spectro-x-angle
+			      show-mix-waveforms show-y-zero show-grid show-sonogram-cursor 
+			      spectro-cutoff spectro-hop spectro-start spectro-x-angle
 			      spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update  grid-density
 			      transform-sample transform->vct transform-frames transform-type
 			      update-transform-graph update-time-graph update-lisp-graph wavelet-type time-graph? time-graph-type
@@ -52922,7 +52924,8 @@ EDITS: 2
 			      make-graph-data max-transform-peaks maxamp min-dB transform-normalization peak-env-info play
 			      play-and-wait position->x position->y redo reverse-sound revert-sound right-sample sample
 			      samples->sound-data save-sound scale-by scale-to show-axes show-transform-peaks
-			      show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor spectro-cutoff spectro-hop spectro-start spectro-x-angle
+			      show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor 
+			      spectro-cutoff spectro-hop spectro-start spectro-x-angle
 			      spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update  grid-density
 			      src-sound transform-sample transform->vct
 			      transform-frames transform-type undo update-transform-graph update-time-graph update-lisp-graph
@@ -53578,6 +53581,12 @@ EDITS: 2
 ;	    (reset-hook! snd-error-hook)
 ;	    (add-hook! snd-error-hook (lambda (msg) (snd-display msg) #t))
 
+	    (if (defined? 'mem-report) 
+		(begin
+		  (gc)(gc)
+		  (mem-report)
+		  (if (file-exists? "memlog")
+		      (system "mv memlog memlog.key"))))
 
 	    ;; ---------------- key args
 	    (for-each
@@ -53778,6 +53787,7 @@ EDITS: 2
 		       (sqrt -1.0) delay-32 :frequency -1 0 #f #t '() vector-0 12345678901234567890 (log 0) (nan))))
 	    (gc)(gc)
 
+
 	    (if all-args
 		;; these can take awhile...
 		(begin
@@ -53895,6 +53905,9 @@ EDITS: 2
 			 -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log 0) (nan)))
 		  (gc)(gc)
 
+		  (clear-sincs)
+		  (stop-playing)
+
 		  (snd-display "5 args")
 		  ;; ---------------- 5 Args
 		  (for-each 
@@ -53921,6 +53934,8 @@ EDITS: 2
 		      (list 1.5 "/hiho" 1234 vct-3 vct-5 (sqrt -1.0) -1 0 #f #t '() 3/4 12345678901234567890 (log 0) (nan))))
 		   (list 1.5 "/hiho" 1234 vct-3 vct-5 (sqrt -1.0) -1 0 #f #t '() 3/4 12345678901234567890 (log 0) (nan)))
 		  (gc)(gc)
+
+		  (clear-sincs)
 
 		  (snd-display "6 args")
 		  ;; ---------------- 6 Args
@@ -53987,6 +54002,8 @@ EDITS: 2
 		      (list #f #t -1)))
 		   (list 1.5 -1 '() "/hiho"))
 		  (gc)(gc)
+
+		  (clear-sincs)
 
 		  (snd-display "10 args")
 		  ;; ---------------- 10 Args
@@ -54136,6 +54153,7 @@ EDITS: 2
 (if (file-exists? "saved-snd.scm") (delete-file "saved-snd.scm"))
 (gc)(gc)
 (clear-sincs)
+(stop-playing)
 (reset-almost-all-hooks)
 (for-each free-track (tracks))
 

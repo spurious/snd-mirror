@@ -1147,10 +1147,10 @@ static enved_fft *make_enved_spectrum(chan_info *cp)
       int i, fsize, data_len;
       Float data_max = 0.0;
       snd_fd *sf;
-      sf = init_sample_read(0, cp, READ_FORWARD);
-      if (sf == NULL) return(NULL);
       data_len = (int)(CURRENT_SAMPLES(cp)); /* known to be int here (size check below) */
       if (data_len == 0) return(NULL);
+      sf = init_sample_read(0, cp, READ_FORWARD);
+      if (sf == NULL) return(NULL);
       fsize = snd_2pow2(data_len);
       if (fsize <= enved_max_fft_size)
 	{
