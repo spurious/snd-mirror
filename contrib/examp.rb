@@ -1,8 +1,8 @@
 ## examp.rb -- Guile -> Ruby translation
 
 ## Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-## Last: Wed Nov 20 04:26:41 CET 2002
-## Version: $Revision: 1.6 $
+## Last: Fri Dec 06 01:47:22 CET 2002
+## Version: $Revision: 1.7 $
 
 ##
 ## Utilities
@@ -26,8 +26,8 @@
 ## FM
 ## 
 ## fm_bell(start, dur, freq, amp, *args)
-## fm_violin(start, dur, freq, amp, *args)
-## jc_reverb(*args)
+## fm_violin_rb(start, dur, freq, amp, *args)
+## jc_reverb_rb(*args)
 ## with_sound(*args) { ... }
 ##
 ## fm_play(func, outfile, play_f)
@@ -74,8 +74,8 @@ def help(func = false)
 ## FM
 ## 
 ## fm_bell(start, dur, freq, amp, *args) [*]
-## fm_violin(start, dur, freq, amp, *args) [*]
-## jc_reverb(*args) [*]
+## fm_violin_rb(start, dur, freq, amp, *args) [*]
+## jc_reverb_rb(*args) [*]
 ## with_sound(*args) { ... } [*]
 ##
 ## fm_play(func, outfile, play_f)
@@ -109,7 +109,6 @@ def help(func = false)
 ## Example: help :with_sound
 ##      or: with_sound :help")
   end
-  false
 end
 
 ##
@@ -135,10 +134,9 @@ def warn(str = "Warning")
     snd_print("\n#{str}#{$! ? ": #{$!}" : ""}")
     snd_print("\n[#{$@.join("\n")}]") if $@ and $DEBUG
   else
-    STDERR.print("#{str}#{$! ? ": #{$!}" : ""}\n")
-    STDERR.print("#{$@.join("\n")}") if $@ and $DEBUG
+    print("#{str}#{$! ? ": #{$!}" : ""}\n")
+    print("#{$@.join("\n")}") if $@ and $DEBUG
   end
-  false
 end
 
 # die([str="Error"[, n=1]])
@@ -160,9 +158,8 @@ def message(*args)
   if $IN_SND
     snd_print "\n" << format(*args)
   else
-    print format(*args) << "\n"
+    STDOUT.print format(*args) << "\n"
   end
-  false
 end
 
 # shell(cmd)
@@ -321,7 +318,7 @@ end
 ##
 
 #
-# *clm-like variables used by fm_bell(), fm_violin(), jc_reverb(), and
+# *clm-like variables used by fm_bell(), fm_violin_rb(), jc_reverb_rb(), and
 # with_sound()
 #
 
@@ -426,14 +423,15 @@ rescue
 end
 
 #
-# fm_violin([start=0.0[, dur=1.0[, freq=440.0[, amp=0.3[, *args]]]]])
+# fm_violin_rb([start=0.0[, dur=1.0[, freq=440.0[, amp=0.3[, *args]]]]])
 #
+# for a faster version see v.rb
 
-def fm_violin(start = 0.0, dur = 1.0, freq = 440.0, amp = 0.3, *args)
+def fm_violin_rb(start = 0.0, dur = 1.0, freq = 440.0, amp = 0.3, *args)
   func_name = "\n" + get_func_name() + "()"
-  usage = "fm_violin([start=0.0[, dur=1.0[, freq=440.0[, amp=0.3[, *args]]]]])
+  usage = "fm_violin_rb([start=0.0[, dur=1.0[, freq=440.0[, amp=0.3[, *args]]]]])
 
-fm_violin(:help)
+fm_violin_rb(:help)
 
 	:fm_index,              1.0
 	:amp_env,               [0, 0, 25, 1, 75, 1, 100, 0]
@@ -466,10 +464,10 @@ fm_violin(:help)
 	:degrees,               false
 	:help
 
-   Ruby: fm_violin(0, 1, 440, .1, :fm_index, 2.0)
+   Ruby: fm_violin_rb(0, 1, 440, .1, :fm_index, 2.0)
   Guile: (fm-violin 0 1 440 .1 :fm-index 2.0)
 
-Example: with_sound { fm_violin(0, 1, 440, .1, :fm_index, 2.0) }\n"
+Example: with_sound { fm_violin_rb(0, 1, 440, .1, :fm_index, 2.0) }\n"
 
   unless(start == :help or get_args(args, :help, false))
     fm_index              = get_args(args, :fm_index, 1.0)
@@ -577,14 +575,15 @@ rescue
 end
 
 #
-# jc_reverb([args=[]])
+# jc_reverb_rb([args=[]])
 #
+# for a faster version see v.rb
 
-def jc_reverb(args = [])
+def jc_reverb_rb(args = [])
   func_name = "\n" + get_func_name() + "()"
-  usage = "jc_reverb([args=[]])
+  usage = "jc_reverb_rb([args=[]])
 
-jc_reverb(:help)
+jc_reverb_rb(:help)
 
 	:decay,    1.0
 	:low_pass, false
@@ -597,7 +596,7 @@ jc_reverb(:help)
 
 The old Chowning reverberator (see examp.scm).
 
-Usage: jc_reverb(:decay, 2.0, :volume, .1)
+Usage: jc_reverb_rb(:decay, 2.0, :volume, .1)
        with_sound(:reverb, :jc_reverb) { fm_violin }\n"
 
   unless(get_args(args, :help, false))
@@ -736,37 +735,37 @@ Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n"
     
     $rbm_play = play
 
-    (close_sound(find_sound(output)) rescue false) if $IN_SND
-
-    unless(continue_old_file)
-      old_srate = mus_srate()
+    if $IN_SND and (snd = find_sound(output))
+      close_sound(snd)
+    end
+    
+    unless continue_old_file
+      old_srate = mus_srate
       mus_set_srate(srate)
-      $rbm_output, $rbm_reverb = false, false
-      File::unlink(output) if File::exist?(output)
+      $rbm_output = $rbm_reverb = false
+      File.unlink(output) if File.exist?(output)
       $rbm_output = make_sample2file(output, channels, data_format, header_type, comment)
       
-      if(reverb)
-	File::unlink(revfile) if File::exist?(revfile)
+      if reverb
+	File.unlink(revfile) if File.exist?(revfile)
 	$rbm_reverb = make_sample2file(revfile, reverb_channels, data_format, header_type, "rev")
       end
     else
       $rbm_output = continue_sample2file(output)
-      if(reverb)
-	$rbm_reverb = continue_sample2file(revfile)
-      end
+      $rbm_reverb = continue_sample2file(revfile) if reverb
     end
 
     atime = Time.new if statistics
-    yield()
+    yield
 
-    if(reverb)
+    if reverb
       mus_close($rbm_reverb)
       $rbm_reverb = make_file2sample(revfile)
       (reverb.class == Proc) ? reverb.call(reverb_data) : send(reverb, reverb_data)
     end
     
-    unless(continue_old_file)
-      if(reverb)
+    unless continue_old_file
+      if reverb
 	mus_close($rbm_reverb)
 	$rbm_reverb = false
       end
@@ -775,7 +774,7 @@ Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n"
       mus_set_srate(old_srate)
     end
 
-    if($IN_SND)
+    if $IN_SND
       snd = open_sound(output)
       olds = sync(snd)
       set_sync(true, snd)
@@ -785,27 +784,25 @@ Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n"
       set_sync(olds, snd)
     end
 
-    if(statistics)
+    if statistics
       rtime = Time.new - atime
       samps = mus_sound_samples(output)
       max_amp = mus_sound_maxamp(output)
       srate = srate.to_f
 
-      message(format("    Sound File: %s", output))
-      message(format("      Duration: %.4f", (samps / srate / channels)))
-      message(format("  Compute time: %.3f, Compute ratio: %.2f", rtime, 
-		     rtime * (srate / samps) * channels))
-      message(format("  OutA max amp: %.3f (near %.3f secs)", 
-		     max_amp[1], max_amp[0] / srate))
-      message(format("  OutB max amp: %.3f (near %.3f secs)",
-		     max_amp[3], max_amp[2] / srate)) if channels == 2
+      message("    Sound File: %s", output)
+      message("      Duration: %.4f", (samps / srate / channels))
+      message("  Compute time: %.3f, Compute ratio: %.2f", rtime,
+	      rtime * (srate / samps) * channels)
+      message("  OutA max amp: %.3f (near %.3f secs)", max_amp[1], max_amp[0] / srate)
+      message("  OutB max amp: %.3f (near %.3f secs)",
+		     max_amp[3], max_amp[2] / srate) if channels == 2
       if(reverb)
 	max_amp = mus_sound_maxamp(revfile)
 	
-	message(format("  RevA max amp: %.3f (near %.3f secs)", 
-		       max_amp[1], max_amp[0] / srate))
-	message(format("  RevB max amp: %.3f (near %.3f secs)",
-		       max_amp[3], max_amp[2] / srate)) if reverb_channels == 2
+	message("  RevA max amp: %.3f (near %.3f secs)", max_amp[1], max_amp[0] / srate)
+	message("  RevB max amp: %.3f (near %.3f secs)",
+		       max_amp[3], max_amp[2] / srate) if reverb_channels == 2
       end
     end
 
@@ -830,7 +827,7 @@ with_sound(:channels, 2,
 	   :reverb, :jc_reverb,	# or :reverb, "jc_reverb",
 	   :reverb_data, [:decay, .8, :volume, .3],
 	   :reverb_channels, 1) { 
-  0.upto(3) { |i| fm_violin(i, 1, 220 * (i + 1), .3, :distance, i * .4) }
+  0.upto(3) { |i| fm_violin_rb(i, 1, 220 * (i + 1), .3, :distance, i * .4) }
 }
 
 with_sound(:play, 1,
@@ -841,26 +838,26 @@ with_sound(:play, 1,
   0.upto(20) { |i| 
     metalamp = [0, 0, 0.5, 1, 5, 1, 10, 0.5, 15, 0.25, 35, 0.1, 100, 0]
 
-    fm_violin(i * 0.1, 1, 220 + i * 10, 0.1, 
+    fm_violin_rb(i * 0.1, 1, 220 + i * 10, 0.1, 
 	      :fm_index, i * 0.5, :distance, i * 0.05, :amp_env, metalamp)
 
-    fm_violin(i * 0.1, 1, 2200 - i * 10, 0.1, 
+    fm_violin_rb(i * 0.1, 1, 2200 - i * 10, 0.1, 
 	      :fm_index, i * 0.5, :distance, i * -0.05, :amp_env, metalamp)
   }
 }
 
 with_sound(:play, 1) { 
-  fm_violin(0, 1, 440)
+  fm_violin_rb(0, 1, 440)
   with_sound(:continue_old_file, true, :play, 0) {
-    fm_violin(1, 1, 220)
+    fm_violin_rb(1, 1, 220)
   }
   with_sound(:continue_old_file, true, :play, 0) {
-    fm_violin(2, 1, 880)
+    fm_violin_rb(2, 1, 880)
     with_sound(:continue_old_file, true, :play, 0) {
-      fm_violin(3, 1, 660)
+      fm_violin_rb(3, 1, 660)
     }
   }
-  fm_violin(4, 1, 440)
+  fm_violin_rb(4, 1, 440)
 }
 
 =end
