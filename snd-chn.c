@@ -2077,6 +2077,7 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss)
       for (graph=0;graph<up->graphs;graph++)
 	{
 	  /* check for up->len[graph] > pixels available and use ymin ymax if needed */
+	  /* TODO: provide a way to turn this (lisp graph color) off */
 	  switch (graph)
 	    {
 	    case 0: break;
@@ -7338,16 +7339,17 @@ void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_conte
   int height,width,i,pts,x0,y0,x1,y1;
   Float samps_per_pixel,invpts,resp,frq,pix;
   if (order&1) order++;
-  coeffs = get_filter_coeffs(order,e);
-  if (!coeffs) return;
   height = (ap->y_axis_y1 - ap->y_axis_y0);
   width = (ap->x_axis_x1 - ap->x_axis_x0);
   pts = order*4;
-  if (width<50) pts = width; else if (pts < 50) pts = 50;
+  if (pts > (width * 10)) return; /* no point in the graph since it just duplicates the current envelope and slows everything to a halt */
+  if (pts > width) pts = width;
   if (pts <= 0) pts = 1;
   invpts = 1.0/(Float)pts;
   samps_per_pixel = (Float)(ap->x_axis_x1 - ap->x_axis_x0) * invpts;
   x1 = ap->x_axis_x0;
+  coeffs = get_filter_coeffs(order,e);
+  if (!coeffs) return;
   resp = frequency_response(coeffs,order,0.0);
   if (dBing)
     y1 = (int)(ap->y_axis_y0 + (ss->min_dB - dB(ss,resp)) * height / ss->min_dB);
@@ -7355,8 +7357,8 @@ void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_conte
   for (i=1,pix=x1,frq=invpts;i<pts;i++,pix+=samps_per_pixel,frq+=invpts)
     {
       x0 = x1;
-      x1 = (int)(pix);
       y0 = y1;
+      x1 = (int)(pix);
       resp = frequency_response(coeffs,order,frq);
       if (dBing)
 	y1 = (int)(ap->y_axis_y0 + (ss->min_dB - dB(ss,resp)) * height / ss->min_dB);

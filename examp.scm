@@ -72,12 +72,13 @@
 ;;; accessors for graph-style fields
 ;;; Butterworth filters
 ;;; locsig using fancier placement choice (Michael Edwards)
+;;; lisp graph with draggable x axis
 
 
 ;;; TODO: pitch tracker
-;;;       adaptive notch filter
-;;;       ins: singer piano flute fade
-;;;       data-file rw case for pvoc.scm
+;;; TODO: adaptive notch filter
+;;; TODO: ins: singer piano flute fade
+;;; TODO: data-file rw case for pvoc.scm
 
 
 (use-modules (ice-9 debug))
@@ -571,6 +572,9 @@
 ;;; to simply make a system call, you can use the system function
 ;;;   (system "ls *.snd")
 ;;; but output goes to stdout.
+
+;;; see also Thien-Thi Nguyen's shell-command-to-string in his package of useful Scheme code at
+;;;   http://www.glug.org/people/ttn/software/ttn-pers-scheme/
 
 
 
@@ -2974,4 +2978,33 @@
     locgen))
 
 (define cpp-locsig locsig)
+
+
+;;; -------- lisp graph with draggable x axis
+
+(define mouse-down 0)
+(define mouse-pos 0.0)
+(define x1 1.0)
+
+(define (show-draggable-graph)
+  (let* ((pts (inexact->exact (* 100 x1)))
+	 (data (make-vct pts)))
+    (do ((i 0 (1+ i)))
+	((= i pts))
+      (vct-set! data i (* i .01)))
+    (graph data "ramp" 0.0 x1)))
+
+(define (mouse-press chn snd button state x y)
+  (set! mouse-pos (/ x x1))
+  (set! mouse-down x1))
+
+(define (mouse-drag snd chn button state x y)
+  (let* ((xnew (/ x x1))
+	 (lim (min 1.0 (max 0.1 (+ mouse-down (- mouse-pos xnew))))))
+    (set! x1 lim)
+    (show-draggable-graph)))
+
+;(add-hook! mouse-drag-hook mouse-drag)
+;(add-hook! mouse-press-hook mouse-press)
+
 

@@ -448,6 +448,7 @@ between these examples, other .scm files, and discussions in other documents.
     <li>multi-colored rxvt printout
     <li>accessors for graph-style fields
     <li>auto-save
+    <li>lisp graph with draggable x axis
   </ul>
 </small>
 <li><a href="#ssmarks">marks</a>
@@ -730,7 +731,10 @@ To return to this mode after setting a specific field, set that field to -1.
 :<em class=typing>(fft-graph-style 0 0)</em>
 <em class=listener>0</em>
 </pre>
-<p>Two of the examples are imitations of Xemacs: a "Buffers" menu and an auto-save hook.</p>
+<p><i>show-draggable-graph</i>, in imitation of Snd's FFT display, implements a
+draggable X axis in the "lisp" graph window.  (This is slightly messier than
+it ought to be).
+Two of the examples are imitations of Xemacs: a "Buffers" menu and an auto-save hook.</p>
 <pre>
   <b><A NAME="exopenbuffer">open-buffer</a></b> filename
   <b><A NAME="exclosebuffer">close-buffer</a></b> snd
@@ -1586,13 +1590,15 @@ reason to limit these numbers to bytes.
 <pre>
   <b><A NAME="exshowinput">show-input</a></b> &amp;optional (in-sys 0)
   <b><A NAME="exshowinputfft">show-input-fft</a></b> &amp;optional (in-sys 0)
+  <b><A NAME="exshowinputfft">show-draggable-input-fft</a></b> &amp;optional (in-sys 0)
   <b><A NAME="exinout">in-out</a></b> func in-sys out-sys
 </pre>
 <p>These three functions show how to read incoming data (from the adc),
 write data (to the dac), and interpose a function while reading and
-writing data.  The example interposed functions filter the data or
+writing data.  There are several example functions (for the "func" argument) that filter the data or
 change its amplitude. <i>show-input-fft</i> displays the input data's
-spectrum.  
+spectrum.  <i>show-draggable-input-fft</i> is the same, but the X axis
+(the frequency axis in this case) is draggable, as in Snd's FFT display.
 </p>
 
 <A NAME="rubberdoc"></a><span class=box><h2>rubber.scm</h2></span>

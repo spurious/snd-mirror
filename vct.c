@@ -220,17 +220,43 @@ static SCM copy_vct(SCM obj)
   return(scm_return_first(SCM_BOOL_F,obj));
 }
 
-static SCM vct_move(SCM obj, SCM newi, SCM oldi)
+static SCM vct_move(SCM obj, SCM newi, SCM oldi, SCM backwards)
 {
-  #define H_vct_moveB "(" S_vct_moveB " obj new old) moves obj data from old (back) to new"
+  #define H_vct_moveB "(" S_vct_moveB " obj new old backwards) moves obj data from old to new"
   vct *v;
-  int i,j;
+  int i,j,ni,nj;
   SCM_ASSERT(vct_p(obj),obj,SCM_ARG1,S_vct_moveB);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(newi)),newi,SCM_ARG2,S_vct_moveB);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(oldi)),oldi,SCM_ARG3,S_vct_moveB);
   v = get_vct(obj);
-  if (v) for (i=SCM_INUM(newi),j=SCM_INUM(oldi);(j<v->length) && (i<v->length);i++,j++) 
-    v->data[i] = v->data[j];
+  ni = SCM_INUM(newi);
+  nj = SCM_INUM(oldi);
+  if ((gh_boolean_p(backwards)) && (SCM_NFALSEP(backwards)))
+    {
+      if (ni >= v->length) 
+	scm_misc_error(S_vct_moveB,
+		       "new-index: ~A (len: ~A)?",
+		       SCM_LIST2(newi,gh_int2scm(v->length)));
+      if (nj >= v->length)
+	scm_misc_error(S_vct_moveB,
+		       "old-index: ~A (len: ~A)?",
+		       SCM_LIST2(oldi,gh_int2scm(v->length)));
+      if (v) for (i=ni,j=nj;(j>=0) && (i>=0);i--,j--) 
+	v->data[i] = v->data[j];
+    }
+  else
+    {
+      if (ni < 0)
+	scm_misc_error(S_vct_moveB,
+		       "new-index: ~A?",
+		       SCM_LIST1(newi));
+      if (nj < 0)
+	scm_misc_error(S_vct_moveB,
+		       "old-index: ~A?",
+		       SCM_LIST1(oldi));
+      if (v) for (i=ni,j=nj;(j<v->length) && (i<v->length);i++,j++) 
+	v->data[i] = v->data[j];
+    }
   return(obj);
 }
 
@@ -666,7 +692,7 @@ void init_vct(void)
   DEFINE_PROC(gh_new_procedure1_0(S_vct_peak,      vct_peak),      H_vct_peak);
   DEFINE_PROC(gh_new_procedure(S_vcts_mapB,SCM_FNC vcts_map,0,0,1),H_vcts_mapB);
   DEFINE_PROC(gh_new_procedure(S_vcts_doB, SCM_FNC vcts_do,0,0,1), H_vcts_doB);
-  DEFINE_PROC(gh_new_procedure3_0(S_vct_moveB,     vct_move),      H_vct_moveB);
+  DEFINE_PROC(gh_new_procedure(S_vct_moveB,SCM_FNC vct_move,3,1,0),H_vct_moveB);
   DEFINE_PROC(gh_new_procedure2_2(S_vct_subseq,    vct_subseq),    H_vct_subseq);
 #if USE_SND
   define_procedure_with_setter(S_vct_ref,SCM_FNC vct_ref,H_vct_ref,

@@ -1154,6 +1154,7 @@ char *kmg (int num);
 
 /* -------- snd-mix.c -------- */
 
+int disk_space_p(snd_info *sp, int fd, int bytes, int other_bytes);
 mix_context *cp_to_mix_context(chan_info *cp);
 mix_context *make_mix_context(chan_info *cp);
 mix_context *free_mix_context(mix_context *ms);

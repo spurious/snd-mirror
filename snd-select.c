@@ -538,22 +538,23 @@ void move_selection(chan_info *cp, int x)
 
 int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, char *comment)
 {
-  int ofd,oloc,comlen,err=MUS_NO_ERROR,reporting=0;
+  int ofd,oloc,comlen,err=MUS_NO_ERROR,reporting=0,no_space,num,bps;
   sync_info *si;
   int *ends;
   int i,dur,j,k;
   snd_fd **sfs;
+  snd_info *sp = NULL;
   MUS_SAMPLE_TYPE **data;
-
-  /* TODO: check for disk space (snd-mix.c has disk_space_p) */
 
   if (MUS_DATA_FORMAT_OK(format))
     {
       if (MUS_HEADER_TYPE_OK(type))
 	{
 	  si = selection_sync();
+	  if ((si) && (si->cps) && (si->cps[0])) sp = si->cps[0]->sound;
 	  comlen = snd_strlen(comment);
 	  dur = selection_len();
+
 	  if ((snd_write_header(ss,ofile,type,srate,si->chans,28,si->chans*dur,format,comment,comlen,NULL)) == -1) 
 	    {
 	      si = free_sync_info(si);
@@ -565,8 +566,21 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	      si = free_sync_info(si);
 	      return(MUS_CANT_OPEN_TEMP_FILE);
 	    }
-	  reporting = ((si->cps[0]) && (si->cps[0]->sound) && (dur > 1000000));
-	  if (reporting) start_progress_report(si->cps[0]->sound,NOT_FROM_ENVED);
+	  if (sp)
+	    {
+	      bps = mus_data_format_to_bytes_per_sample(format);
+	      num = dur * bps * si->chans;
+	      no_space = disk_space_p(sp,ofd,num,0);
+	      if (no_space == GIVE_UP)
+		{
+		  /* has already interacted with user about disk problem */
+		  close(ofd);
+		  si = free_sync_info(si);
+		  return(MUS_WRITE_ERROR);
+		}
+	    }
+	  reporting = ((sp) && (dur > 1000000));
+	  if (reporting) start_progress_report(sp,NOT_FROM_ENVED);
 	  ends = (int *)CALLOC(si->chans,sizeof(int));
 	  sfs = (snd_fd **)CALLOC(si->chans,sizeof(snd_fd *));
 	  for (i=0;i<si->chans;i++) 
@@ -594,7 +608,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 		  err = mus_file_write(ofd,0,j-1,si->chans,data);
 		  j = 0;
 		  if (err == MUS_ERROR) break; /* error message already posted */
-		  if (reporting) progress_report(si->cps[0]->sound,"save-selection",si->chans-1,si->chans,(Float)i / (Float)dur,NOT_FROM_ENVED);
+		  if (reporting) progress_report(sp,"save-selection",si->chans-1,si->chans,(Float)i / (Float)dur,NOT_FROM_ENVED);
 		  if (ss->stopped_explicitly)
 		    {
 		      ss->stopped_explicitly = 0;
@@ -604,7 +618,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 		}
 	    }
 	  if ((err == MUS_NO_ERROR) && (j > 0)) mus_file_write(ofd,0,j-1,si->chans,data);
-	  if (reporting) finish_progress_report(si->cps[0]->sound,NOT_FROM_ENVED);
+	  if (reporting) finish_progress_report(sp,NOT_FROM_ENVED);
 	  for (i=0;i<si->chans;i++)
 	    {
 	      free_snd_fd(sfs[i]);

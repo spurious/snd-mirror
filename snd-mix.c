@@ -813,9 +813,7 @@ void free_mixes(chan_info *cp)
   cp->mixes = 0;
 }
 
-enum {NO_PROBLEM,BLIND_LEAP,GIVE_UP,HUNKER_DOWN};
-
-static int disk_space_p(snd_info *sp, int fd, int bytes, int other_bytes)
+int disk_space_p(snd_info *sp, int fd, int bytes, int other_bytes)
 {
   int kfree,kneeded,kother,go_on;
   kfree = disk_kspace(fd);
@@ -1237,7 +1235,19 @@ static void remix_file(mix_info *md, char *origin)
 	  break;
 	case HUNKER_DOWN:
 	  close_temp_file(ofd,ohdr,0,cursp);
-	  ohdr->format = MUS_OUT_FORMAT;
+	  if (mus_data_format_to_bytes_per_sample(MUS_OUT_FORMAT) == 2)
+	    ohdr->format = MUS_OUT_FORMAT;
+	  else
+	    {
+	      if (mus_data_format_to_bytes_per_sample(MUS_COMPATIBLE_FORMAT) == 2)
+		ohdr->format = MUS_COMPATIBLE_FORMAT;
+	      else
+#ifdef MUS_LITTLE_ENDIAN
+		ohdr->format = MUS_LSHORT;
+#else
+		ohdr->format = MUS_BSHORT;
+#endif
+	    }
 	  ofd = open_temp_file(ofile,1,ohdr,ss);
 	  break;
 	case NO_PROBLEM: case BLIND_LEAP: break;

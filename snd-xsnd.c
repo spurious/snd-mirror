@@ -819,7 +819,7 @@ void set_snd_filter_order(snd_info *sp, int order)
   sp->filter_order = order;
   if (!(IS_PLAYER(sp)))
     {
-      fltorder = (char *)CALLOC(4,sizeof(char));
+      fltorder = (char *)CALLOC(8,sizeof(char));
       sprintf(fltorder,"%d",order);
       XmTextSetString(w_snd_filter_order(sp),fltorder);
       FREE(fltorder);

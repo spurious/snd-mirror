@@ -379,6 +379,7 @@ documents.
         o multi-colored rxvt printout
         o accessors for graph-style fields
         o auto-save
+        o lisp graph with draggable x axis
    * marks
         o use loop info (if any) to set marks at loop points
         o move window left edge to mark upon 'm' key
@@ -611,8 +612,10 @@ that field to -1.
 :(fft-graph-style 0 0)
 0
 
-Two of the examples are imitations of Xemacs: a "Buffers" menu and an
-auto-save hook.
+show-draggable-graph, in imitation of Snd's FFT display, implements a
+draggable X axis in the "lisp" graph window. (This is slightly messier than
+it ought to be). Two of the examples are imitations of Xemacs: a "Buffers"
+menu and an auto-save hook.
 
   open-buffer filename
   close-buffer snd
@@ -1423,11 +1426,15 @@ operations.
 
   show-input &optional (in-sys 0)
   show-input-fft &optional (in-sys 0)
+  show-draggable-input-fft &optional (in-sys 0)
   in-out func in-sys out-sys
 
 These three functions show how to read incoming data (from the adc), write
 data (to the dac), and interpose a function while reading and writing data.
-show-input-fft displays the input data's spectrum.
+There are several example functions (for the "func" argument) that filter
+the data or change its amplitude. show-input-fft displays the input data's
+spectrum. show-draggable-input-fft is the same, but the X axis (the
+frequency axis in this case) is draggable, as in Snd's FFT display.
 
 rubber.scm
 

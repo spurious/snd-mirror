@@ -807,7 +807,7 @@ functions:</p>
   <b><a name="vctfill">vct-fill!</a></b>         (vobj val)        vobj[i] = val, returns vobj.
   <b><a name="vctlength">vct-length</a></b>        (vobj)            length of data array in vobj.
   <b><a name="vctmap">vct-map!</a></b>          (vobj proc)       vobj[i] = (funcall proc).
-  <b><a name="vctmove">vct-move!</a></b>         (vobj new old)    v[new++] = v[old++], returns v
+  <b><a name="vctmove">vct-move!</a></b>         (vobj new old <i>back</i>) v[new++] = v[old++], returns v (if back, v[new--] = v[old--])
   <b><a name="vctmultiply">vct-multiply!</a></b>     (vobj1 vobj2)     vobj1[i] *= vobj2[i], returns vobj1.
   <b><a name="vctoffset">vct-offset!</a></b>       (vobj val)        vobj[i] += val, returns vobj.
   <b><a name="vctpeak">vct-peak</a></b>          (vobj)            abs max val in vobj

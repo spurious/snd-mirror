@@ -710,7 +710,7 @@ Now our vct object hi has 100 -3.14's.
   vct-fill!         (vobj val)        vobj[i] = val, returns vobj.
   vct-length        (vobj)            length of data array in vobj.
   vct-map!          (vobj proc)       vobj[i] = (funcall proc).
-  vct-move!         (vobj new old)    v[new++] = v[old++], returns v
+  vct-move!         (vobj new old back) v[new++] = v[old++], returns v (if back, v[new--] = v[old--])
   vct-multiply!     (vobj1 vobj2)     vobj1[i] *= vobj2[i], returns vobj1.
   vct-offset!       (vobj val)        vobj[i] += val, returns vobj.
   vct-peak          (vobj)            abs max val in vobj

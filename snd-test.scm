@@ -22,6 +22,8 @@
 ;;; test 19: save and restore
 ;;; test 20: transforms
 
+;;; TODO: vct-move with back arg 
+
 (use-modules (ice-9 format) (ice-9 debug))
 
 (if (file-exists? "sndlib.gdbm") (delete-file "sndlib.gdbm"))
