@@ -394,7 +394,7 @@ void cursor_search(chan_info *cp, int count)
 
 static XEN g_search_procedure(XEN snd)
 {
-  #define H_search_procedure "(" S_search_procedure " &optional index) -> global or sound-local search function"
+  #define H_search_procedure "(" S_search_procedure " (snd #f)): global (if no 'snd' specified) or sound-local search function"
   snd_state *ss;
   snd_info *sp;
   if (XEN_BOUND_P(snd))

@@ -33,17 +33,17 @@
 <ul>
   <li><a href="#autosavedoc">autosave.scm: auto-save support</a>
   <li><a href="#belldoc">bell.scm: the fm-bell from CLM</a>
-  <li><a href="#bessdoc">bess.scm, contrib/bess.rb: FM demo</a>
+  <li><a href="#bessdoc">bess.scm, bess.rb: FM demo</a>
   <li><a href="#birddoc">bird.scm, bird.rb: North-American birds</a>
-  <li><a href="#contribdoc">contrib directory contents</a>
+  <li><a href="#dlpdoc">dlp and tutorial directories from Dave Phillips</a>
   <li><a href="#drawdoc">draw.scm: graphics additions</a>
   <li><a href="#dspdoc">dsp.scm: various DSP-related procedures</a>
   <li><a href="#editmenudoc">edit-menu.scm: Edit menu additions</a>
-  <li><a href="#effectsdoc">new-effects.scm, gtk-effects.scm, contrib/effects.rb: an Effects menu</a>
+  <li><a href="#effectsdoc">new-effects.scm, gtk-effects.scm, effects.rb: an Effects menu</a>
   <li><a href="#envdoc">env.scm: envelope functions</a>
   <li><a href="#enveddoc">enved.scm: envelope editor</a>
   <li><a href="#eventdoc">event.scm: xm module stuff</a>
-  <li><a href="#exampdoc">examp.scm, contrib/examp.rb: many examples</a>
+  <li><a href="#exampdoc">examp.scm, examp.rb: many examples</a>
   <li><a href="#extensionsdoc">extensions.scm: various generally useful Snd extensions</a>
   <li><a href="#fadedoc">fade.scm: frequency-domain cross-fades</a>
   <li><a href="#fmvdoc">fmv.scm: a controller for the fm-violin</a>
@@ -58,12 +58,13 @@
   <li><a href="#musglyphs">musglyphs.scm: Music notation symbols (from CMN)</a>
   <li><a href="#nbdoc">nb.scm: Popup File info etc</a>
   <li><a href="#peakenvdoc">peak-env.scm: peak envelope support</a>
+  <li><a href="#pianodoc">piano.scm, piano.rb: piano physical model</a>
   <li><a href="#playdoc">play.scm: play-related functions</a>
-  <li><a href="#popupdoc">popup.scm, gtk-popup.scm, contrib/popup.rb: Popup menu specializations</a>
+  <li><a href="#popupdoc">popup.scm, gtk-popup.scm, popup.rb: Popup menu specializations</a>
   <li><a href="#pqwvoxdoc">pqwvox.scm: phase-quadrature waveshaping</a>
   <li><a href="#prc95doc">prc95.scm: Perry Cook's physical model examples</a>
   <li><a href="#pvocdoc">pvoc.scm: phase-vocoder</a>
-  <li><a href="#rgbdoc">rgb.scm: colors</a>
+  <li><a href="#rgbdoc">rgb.scm, rgb.rb: colors</a>
   <li><a href="#rtiodoc">rtio.scm: real-time stuff</a>
   <li><a href="#rubberdoc">rubber.scm: rubber-sound</a>
   <li><a href="#singerdoc">singer.scm: Perry Cook's vocal-tract physical model</a>
@@ -73,7 +74,8 @@
   <li><a href="#sndgldoc">snd-gl.scm: OpenGL examples (gl.c)</a>
   <li><a href="#sndmotifdoc">snd-motif.scm, snd-gtk.scm: Motif/Gtk module (xm.c, xg.c)</a>
   <li><a href="#sndtestdoc">snd-test.scm, snd_test.rb, and event.scm: Snd regression tests</a>
-  <li><a href="#vdoc">v.scm, contrib/v.rb: fm-violin</a>
+  <li><a href="#straddoc">strad.scm: string physical model</a>
+  <li><a href="#vdoc">v.scm, v.rb: fm-violin</a>
   <li><a href="#wsdoc">ws.scm: with-sound</a>
   <li><a href="#xmenveddoc">xm-enved.scm</a>
   <li><a href="#zipdoc">zip.scm: the zipper (a cross-fader)</a>
@@ -251,39 +253,36 @@ end
 </pre>
 <br>
 
-<A NAME="contribdoc"></a><span class=box><h2>contrib directory entries</h2></span>
+<A NAME="dlpdoc"></a><span class=box><h2>dlp directory entries</h2></span>
 
-<p>The contrib directory contains a variety of useful additions.  These
+<p>The dlp directory contains a variety of useful additions written by Dave Phillips.  These
 include:
 </p>
 <pre>
-  <em class=def>bess.rb</em>                Ruby version of bess.scm (Michael Scholz)
-  <em class=def>dlp/</em>                   User-interface enhancements (Dave Phillips)
-    <em class=def>dp-new-effects.scm</em>     a version of new-effects.scm 
-    <em class=def>misc.scm</em>               loads files for enhanced interface, many new menu options
-    <em class=def>new-icons.scm</em>          icon box entries
-    <em class=def>special-menu.scm</em>       the Special menu (OGG/MP3 etc)
-    <em class=def>mix-menu.scm</em>           the Mix menu
-    <em class=def>panic.scm</em>              the Panic menu (to stop sound output)
-    <em class=def>track-colors.scm</em>       track color choices (for mixing)
-    <em class=def>fft-menu.scm</em>           FFT-based editing
-    <em class=def>new-backgrounds.scm</em>    background choices (granite Snd!)
-    <em class=def>plugins-menu.scm</em>       ladspa menu
-    <em class=def>marks-menu.scm</em>         the Marks menu
-    <em class=def>new-buttons.scm</em>        sets the icon box actions
-    <em class=def>README</em>                 loading info
+  <em class=def>dp-new-effects.scm</em>     a version of new-effects.scm 
+  <em class=def>misc.scm</em>               loads files for enhanced interface, many new menu options
+  <em class=def>new-icons.scm</em>          icon box entries
+  <em class=def>special-menu.scm</em>       the Special menu (OGG/MP3 etc)
+  <em class=def>mix-menu.scm</em>           the Mix menu
+  <em class=def>panic.scm</em>              the Panic menu (to stop sound output)
+  <em class=def>track-colors.scm</em>       track color choices (for mixing)
+  <em class=def>fft-menu.scm</em>           FFT-based editing
+  <em class=def>new-backgrounds.scm</em>    background choices (granite Snd!)
+  <em class=def>plugins-menu.scm</em>       ladspa menu
+  <em class=def>marks-menu.scm</em>         the Marks menu
+  <em class=def>new-buttons.scm</em>        sets the icon box actions
+  <em class=def>README</em>                 loading info
+</pre>
+<p>See the individual files and Dave's tutorial (in the tutorial directory) for more details.
+</p>
+
+<p>There are a few other files in the main directory that I haven't documented yet:</p>
+<pre>
   <em class=def>DotEmacs</em>               Emacs init file (Fernando Lopez-Lezcano)
   <em class=def>edit123.scm</em>            Handy editing sequences (Tom Roth)
-  <em class=def>effects.rb</em>             Ruby version of new-effects.scm (Michael Scholz)
-  <em class=def>examp.rb</em>               Ruby version of examp.scm (Michael Scholz)
   <em class=def>inf-snd.el</em>             Ruby/Guile Emacs connection (Michael Scholz)
-  <em class=def>popup.rb</em>               Ruby version of popup.scm (Michael Scholz)
   <em class=def>rmsgain.scm</em>            amplitude via rms (Fabio Furlanete)
-  <em class=def>tutorial/</em>              Snd tutorial (Dave Phillips)
-  <em class=def>v.rb</em>                   Ruby version of v.scm (and more) (Michael Scholz)
 </pre>
-<p>See the individual files and the tutorial for more details.
-</p>
 
 
 <A NAME="drawdoc"></a><span class=box><h2>draw.scm</h2></span>
@@ -440,7 +439,7 @@ Polynomials driven by a cosine). Three other similar functions are <i>sum-of-n-s
 <i>make-bandstop</i> and <i>bandstop</i> provide FIR notch filtering.
 <i>make-differentiator</i> and <i>differentiator</i> provide an FIR filter-based differentiator.
 </p>
-<p>The Ruby version of this is in contrib/examp.rb.
+<p>The Ruby version of this is in examp.rb.
 </p>
 
 <A NAME="editmenudoc"></a><span class=box><h2>edit-menu.scm</h2></span>
@@ -540,7 +539,7 @@ adds its update function to the effects-list when it is loaded:
 effects in more detail.  The code is mostly straightforward, and
 it's not hard to try them out.
 </p>	
-<p>The Ruby/Motif version of this is in contrib/effects.rb.
+<p>The Ruby/Motif version of this is in effects.rb.
 </p>
 <br>
 
@@ -1562,7 +1561,7 @@ for details.
 <p>goopsnd.scm goofs around with goops, the Guile Object System.  As it stands, it
 might provide simple examples of goops syntax, but I'm not sure it's of any value
 yet. 
-Fabio Furlanete's rmsgain.scm in the contrib directory uses goops.
+Fabio Furlanete's rmsgain.scm uses goops.
 </p>
 
 
@@ -1836,7 +1835,7 @@ faster.
 
   (map-chan (moog 1200.0 .7))
 </pre>
-<p>The Ruby version of this is in contrib/examp.rb.
+<p>The Ruby version of this is in examp.rb.
 </p>
 
 <A NAME="musglyphs"></a><span class=box><h2>musglyphs.scm</h2></span>
@@ -1878,7 +1877,7 @@ associated with "test.snd".  <code>(prune-db)</code> erases anything associated 
 any files that no longer exist.  (nb.scm will work fine without guile-gdbm; to load
 guile-gdbm, set the variable <b>use-gdbm</b> to #t).
 </p>
-<p>Michael Scholz's translation of this to Ruby is included in contrib/examp.rb.
+<p>Michael Scholz's translation of this to Ruby is included in examp.rb.
 </p>
 
 <A NAME="peakenvdoc"></a><span class=box><h2>peak-env.scm</h2></span>
@@ -1902,6 +1901,11 @@ case, it looks for the directory ~/peaks, but obviously this
 could be changed to suit your situation.
 </p>
 
+<A NAME="pianodoc"></a><span class=box><h2>piano.scm, piano.rb</h2></span>
+
+<p>These files are translations of CLM's piano.ins, a piano physical
+model by Scott van Duyne.
+</p>
 
 <A NAME="playdoc"></a><span class=box><h2>play.scm</h2></span>
 
@@ -2071,7 +2075,7 @@ the gate value will not be synthesized), <i>hoffset</i> is a pitch offset in Hz.
 </p>
 
 <A NAME="rgbdoc"></a><span class=box><h2>rgb.scm</h2></span>
-<p>rgb.scm is a simple translation of the standard X11 color names into Snd
+<p>rgb.scm (rgb.rb) is a simple translation of the standard X11 color names into Snd
 color objects.
 </p>
 <pre>
@@ -2362,7 +2366,7 @@ on the partition of the associated sound.
 <b>add-amp-controls</b> adds amp sliders to the control panel
 for multi-channel sounds.
 <b>add-very-useful-icons</b> adds some very useful icons. (It is now commented out, replaced 
-by contrib/dlp/new-buttons.scm).
+by dlp/new-buttons.scm).
 <b>add-rename-option</b> adds a "Rename" option to the File menu; similarly
 <b>add-delete-option</b> adds a "Delete" option.
 <b>mark-sync-color</b> uses the draw-mark-hook to set the color of sync'd marks.
@@ -2394,6 +2398,12 @@ snd -l snd-test
 which will run all the tests, assuming you have the various sound files it is expecting to find.
 event.scm has some XEvent-related functions used by snd-test.scm.  The Ruby version (very incomplete) is
 snd_test.rb.
+</p>
+
+<A NAME="straddoc"></a><span class=box><h2>strad.scm</h2></span>
+
+<p>strad.scm is a translation (by Michael Scholz) of CLM's strad.ins (by Juan Reyes).
+It implements a physical model of a bowed string with stiffness.
 </p>
 
 <A NAME="vdoc"></a><span class=box><h2>v.scm</h2></span>
@@ -2894,7 +2904,7 @@ in C/CLM is:
                          mus_oscil(carrier, vib + indfuzz * modulation, 0.0));
 </pre>
 
-<p>And here is the Ruby version, written by Michael Scholz (see contrib/examp.rb):</p>
+<p>And here is the Ruby version, written by Michael Scholz (see examp.rb):</p>
 <pre>
 #
 # fm_violin([start=0.0[, dur=1.0[, freq=440.0[, amp=0.3[, *args]]]]])

@@ -43,8 +43,8 @@ void add_drop(snd_state *ss, GtkWidget *w)
 
 void g_init_gxdrop(void)
 {
-  #define H_drop_hook S_drop_hook " (filename) is called whenever Snd receives a drag-and-drop \
-event. If the returns #t, the file is not opened by Snd."
+  #define H_drop_hook S_drop_hook " (filename): called whenever Snd receives a drag-and-drop \
+event. If it returns #t, the file is not opened by Snd."
 
   XEN_DEFINE_HOOK(drop_hook, S_drop_hook, 1, H_drop_hook); /* arg = filename */
 }

@@ -671,7 +671,7 @@ XEN_NARGIFY_1(g_parse_rc_file_w, g_parse_rc_file)
 
 void g_init_gxmain(void)
 {
-  #define H_property_changed_hook S_property_changed_hook "(command) is called upon receipt of a SND_COMMAND"
+  #define H_property_changed_hook S_property_changed_hook "(command): called upon receipt of a change in SND_COMMAND (an X window property)"
   XEN_DEFINE_HOOK(property_changed_hook, S_property_changed_hook, 1, H_property_changed_hook);
 
   XEN_DEFINE_PROCEDURE("parse-rc-file", g_parse_rc_file_w, 1, 0, 0, "(parse-rc-file name) -> read gtk rc file");

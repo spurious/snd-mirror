@@ -6268,7 +6268,7 @@ static int data_status = DATA_EMPTY;
 static int data_bytes = 0;
 static char *data = NULL;
 
-#ifdef CLM
+/* for CLM */
 #ifdef MCL_PPC
   static void reset_db(void) 
     {
@@ -6278,7 +6278,7 @@ static char *data = NULL;
       data_bytes = 0;
     }
 #endif
-#endif
+
 
 static pascal void nextbuffer(SndChannelPtr cp, SndDoubleBufferPtr db)
 {
@@ -9175,7 +9175,7 @@ void mus_audio_describe(void)
   describe_audio_state_1();
 }
 
-#ifdef CLM
+/* for CLM */
 void reset_audio_c (void)
 {
   audio_initialized = FALSE;
@@ -9190,7 +9190,6 @@ void reset_audio_c (void)
   reset_db();
 #endif
 }
-#endif
 
 
 int mus_audio_compatible_format(int dev) 

@@ -53,6 +53,7 @@ exec_prefix = @exec_prefix@
 bindir = @bindir@
 srcdir = @srcdir@
 mandir = @mandir@
+VPATH = @srcdir@
 
 include $(srcdir)/makesnd.files
 

@@ -1315,7 +1315,7 @@ void create_popup_menu(snd_state *ss)
 
 static XEN g_menu_widgets(void)
 {
-  #define H_menu_widgets "(" S_menu_widgets ") returns list of top level menu widgets ((0)main (1)file (2)edit (3)view (4)options (5)help)"
+  #define H_menu_widgets "(" S_menu_widgets "): a list of top level menu widgets: ((0)main (1)file (2)edit (3)view (4)options (5)help)"
   return(XEN_CONS(XEN_WRAP_WIDGET(mw[menu_menu]),
 	  XEN_CONS(XEN_WRAP_WIDGET(mw[f_cascade_menu]),
            XEN_CONS(XEN_WRAP_WIDGET(mw[e_cascade_menu]),
@@ -1333,9 +1333,9 @@ XEN_NARGIFY_0(g_menu_widgets_w, g_menu_widgets)
 
 void g_init_gxmenu(void)
 {
-  #define H_menu_hook S_menu_hook " (name option) is called each time a menu item is \
+  #define H_menu_hook S_menu_hook " (name option): called each time a menu item is \
 selected; its entries should be functions of two arguments, the top menu \
-name and the option selected (both as strings), and should return #f if it \
+name and the option selected (both as strings), and it should return #f if it \
 wants to override the default menu action:\n\
   (add-hook! menu-hook\n\
     (lambda (name option)\n\

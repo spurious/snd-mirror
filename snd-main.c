@@ -619,14 +619,14 @@ static char **script_args;
 
 static XEN g_script_arg(void) 
 {
-  #define H_script_arg "(" S_script_arg ") -> where we are in the startup arg list"
+  #define H_script_arg "(" S_script_arg "): where we are in the startup arg list"
   return(C_TO_XEN_INT(script_arg));
 }
 
 static XEN g_set_script_arg(XEN arg) {script_arg = XEN_TO_C_INT(arg); return(arg);}
 static XEN g_script_args(void)
 {
-  #define H_script_args "(" S_script_args ") -> the args passed to Snd at startup as a list of strings"
+  #define H_script_args "(" S_script_args "): the args passed to Snd at startup as a list of strings"
   XEN lst = XEN_EMPTY_LIST;
   int i;
   for (i = script_argn - 1; i >= 0; i--)
@@ -756,7 +756,7 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 
 static XEN g_save_state(XEN filename) 
 {
-  #define H_save_state "(" S_save_state " filename) saves the current Snd state in filename; (load filename) restores it)"
+  #define H_save_state "(" S_save_state " filename): save the current Snd state in filename; (load filename) restores it)"
 
   char *error;
   XEN result;
@@ -777,7 +777,7 @@ static XEN g_save_state(XEN filename)
 
 static XEN g_save_options(XEN filename)
 {
-  #define H_save_options "(" S_save_options " filename) saves Snd options in filename"
+  #define H_save_options "(" S_save_options " filename): save Snd options in filename"
   char *name = NULL;
   FILE *fd;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_save_options, "a string");
@@ -797,7 +797,7 @@ static XEN g_save_options(XEN filename)
 
 static XEN g_exit(XEN val) 
 {
-  #define H_exit "(" S_exit ") exits Snd"
+  #define H_exit "(" S_exit "): exit Snd"
   if (snd_exit_cleanly(get_global_state(), FALSE))
     snd_exit(XEN_TO_C_INT_OR_ELSE(val,1)); 
   return(XEN_FALSE);
@@ -837,10 +837,10 @@ void g_init_main(void)
 
   XEN_DEFINE_PROCEDURE("mem-report",   g_mem_report_w, 0, 0, 0, "(mem-report) writes memory usage stats to memlog");
 
-  #define H_start_hook S_start_hook " (filename) is called upon start-up. If it returns #t, snd exits immediately."
+  #define H_start_hook S_start_hook " (filename): called upon start-up. If it returns #t, snd exits immediately."
   XEN_DEFINE_HOOK(start_hook, S_start_hook, 1, H_start_hook);                   /* arg = argv filename if any */
 
-  #define H_exit_hook S_exit_hook " () is called upon exit. \
+  #define H_exit_hook S_exit_hook " (): called upon exit. \
 If it returns #t, Snd does not exit.  This can be used to check for unsaved edits, or to perform cleanup activities."
 
   XEN_DEFINE_HOOK(exit_hook, S_exit_hook, 0, H_exit_hook);

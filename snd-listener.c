@@ -505,7 +505,7 @@ void command_return(widget_t w, snd_state *ss, int last_prompt)
 
 static XEN g_save_listener(XEN filename)
 {
-  #define H_save_listener "(" S_save_listener " filename) saves the current listener text in filename"
+  #define H_save_listener "(" S_save_listener " filename): saves the current listener text in filename"
   FILE *fp = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_save_listener, "a string");
   fp = FOPEN(XEN_TO_C_STRING(filename), "w");
@@ -520,14 +520,14 @@ static XEN g_save_listener(XEN filename)
 
 static XEN g_clear_listener(void)
 {
-  #define H_clear_listener "(" S_clear_listener ") removes listener text from the beginning to the cursor"
+  #define H_clear_listener "(" S_clear_listener "): removes listener text from the beginning to the cursor"
   clear_listener();
   return(XEN_FALSE);
 }
 
 static XEN g_show_listener(void) 
 {
-  #define H_show_listener "(" S_show_listener ") opens the lisp listener pane"
+  #define H_show_listener "(" S_show_listener "): opens the lisp listener pane"
   snd_state *ss;
   ss = get_global_state();
   handle_listener(ss, TRUE); 
@@ -546,7 +546,7 @@ static XEN g_set_show_listener(XEN val)
 static XEN g_listener_prompt(void) {return(C_TO_XEN_STRING(listener_prompt(get_global_state())));}
 static XEN g_set_listener_prompt(XEN val) 
 {
-  #define H_listener_prompt "(" S_listener_prompt ") -> the current lisp listener prompt character ('>') "
+  #define H_listener_prompt "(" S_listener_prompt "): the current lisp listener prompt character ('>') "
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_listener_prompt, "a string"); 
@@ -594,7 +594,7 @@ void g_init_listener(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_prompt, g_listener_prompt_w, H_listener_prompt,
 				   S_setB S_listener_prompt, g_set_listener_prompt_w,  0, 0, 0, 1);
 
-  #define H_read_hook S_read_hook " (text) is called each time a line is typed into the listener (triggered by the carriage return). \
+  #define H_read_hook S_read_hook " (text): called each time a line is typed into the listener (triggered by the carriage return). \
 If it returns #t, Snd assumes you've dealt the text yourself, and does not try to evaluate it. \n\
 (define (read-listener-line prompt) \n\
   (let ((res #f)) \n\

@@ -1,6 +1,8 @@
 Snd change log
 
   17-Mar:    Mac OSX Record implemented.
+             piano.rb, rgb.rb, strad.scm thanks to Michael Scholz.
+             moved contrib/* to the main directory.
   13-Mar:    removed use-sinc-interp.
   12-Mar:    select-mix, clear-audio-inputs and append-to-minibuffer moved to snd6.scm.
   10-Mar:    Ruby-related bugfixes thanks to Michael Scholz.

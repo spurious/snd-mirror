@@ -203,7 +203,7 @@ static int in_user_keymap(int key, int state, int extended)
 
 static XEN g_key_binding(XEN key, XEN state, XEN extended)
 {
-  #define H_key_binding "(" S_key_binding " key state extended) -> function bound to this key"
+  #define H_key_binding "(" S_key_binding " key state (extended #f)): function bound to this key"
   int i, k, s;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(key), key, XEN_ARG_1, S_key_binding, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(state), state, XEN_ARG_2, S_key_binding, "an integer");
@@ -1738,7 +1738,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 
 static XEN g_bind_key(XEN key, XEN state, XEN code, XEN extended, XEN origin)
 {
-  #define H_bind_key "(" S_bind_key " key modifiers func (extended #f) (origin \"user key func\")\n\
+  #define H_bind_key "(" S_bind_key " key modifiers func (extended #f) (origin \"user key func\"): \
 causes 'key' (an integer) \
 when typed with 'modifiers' (1:shift, 4:control, 8:meta) (and C-x if extended) to invoke 'func', a function of \
 zero or one arguments. If the function takes one argument, it is passed the preceding C-u number, if any. \
@@ -1780,13 +1780,13 @@ the name reported if an error occurs."
 
 static XEN g_unbind_key(XEN key, XEN state, XEN extended)
 {
-  #define H_unbind_key "(" S_unbind_key " key state &optional extended) undoes the effect of a prior bind-key call."
+  #define H_unbind_key "(" S_unbind_key " key state (extended #f)): undo the effect of a prior bind-key call."
   return(g_bind_key(key, state, XEN_FALSE, extended, XEN_UNDEFINED));
 }
 
 static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
 {
-  #define H_key "(" S_key " key modifiers &optional snd chn) simulates typing 'key' with 'modifiers' in snd's channel chn"
+  #define H_key "(" S_key " key modifiers (snd #f) (chn #f)): simulate typing 'key' with 'modifiers' in snd's channel chn"
   chan_info *cp;
   int k, s;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(kbd), kbd, XEN_ARG_1, S_key, "an integer");
@@ -1807,7 +1807,7 @@ static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
 
 static XEN g_save_macros(void) 
 {
-  #define H_save_macros "(" S_save_macros ") saves keyboard macros in Snd's init file (.snd)"
+  #define H_save_macros "(" S_save_macros "): save keyboard macros in Snd's init file (~/.snd)"
   FILE *fd = NULL;
   snd_state *ss;
   ss = get_global_state();
@@ -1823,8 +1823,8 @@ static XEN g_save_macros(void)
 
 static XEN g_prompt_in_minibuffer(XEN msg, XEN callback, XEN snd_n, XEN raw)
 {
-  #define H_prompt_in_minibuffer "(" S_prompt_in_minibuffer " msg callback &optional snd (raw #f)) posts msg in snd's minibuffer \
-then when the user eventually responds, invokes the function callback with the response.  If 'raw' is #t, the response is \
+  #define H_prompt_in_minibuffer "(" S_prompt_in_minibuffer " msg (callback #f) (snd #f) (raw #f)): post msg in snd's minibuffer \
+then when the user eventually responds, invoke the function callback, if any, with the response.  If 'raw' is #t, the response is \
 returned as a string; otherwise it is evaluated first as Scheme code"
 
   snd_info *sp;
@@ -1865,7 +1865,7 @@ returned as a string; otherwise it is evaluated first as Scheme code"
 
 static XEN g_report_in_minibuffer(XEN msg, XEN snd_n)
 {
-  #define H_report_in_minibuffer "(" S_report_in_minibuffer " msg &optional snd) displays msg in snd's minibuffer"
+  #define H_report_in_minibuffer "(" S_report_in_minibuffer " msg (snd #f)): display msg in snd's minibuffer"
   snd_info *sp;
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_1, S_report_in_minibuffer, "a string");
   ASSERT_SOUND(S_report_in_minibuffer, snd_n, 2);
@@ -1878,7 +1878,7 @@ static XEN g_report_in_minibuffer(XEN msg, XEN snd_n)
 
 static XEN g_forward_graph(XEN count, XEN snd, XEN chn) 
 {
-  #define H_forward_graph "(" S_forward_graph " &optional (count 1) snd chn) moves the 'selected' graph forward by count"
+  #define H_forward_graph "(" S_forward_graph " (count 1) (snd #f) (chn #f)): move the 'selected' graph forward by count"
   int val;
   chan_info *cp;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_forward_graph, "an integer");
@@ -1892,7 +1892,7 @@ static XEN g_forward_graph(XEN count, XEN snd, XEN chn)
 
 static XEN g_backward_graph(XEN count, XEN snd, XEN chn) 
 {
-  #define H_backward_graph "(" S_backward_graph " &optional (count 1) snd chn) moves the 'selected' graph back by count"
+  #define H_backward_graph "(" S_backward_graph " (count 1) (snd #f) (chn #f)): move the 'selected' graph back by count"
   int val;
   chan_info *cp;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_backward_graph, "an integer");
@@ -1906,7 +1906,7 @@ static XEN g_backward_graph(XEN count, XEN snd, XEN chn)
 
 static XEN g_control_g_x(void)
 {
-  #define H_control_g_x "(" S_c_g_x ") simulates typing C-g"
+  #define H_control_g_x "(" S_c_g_x "): simulate C-g"
   snd_state *ss;
   ss = get_global_state();
   control_g(ss, any_selected_sound(ss));

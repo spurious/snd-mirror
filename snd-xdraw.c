@@ -1430,9 +1430,9 @@ Widget start_orientation_dialog(snd_state *ss, int width, int height)
 
 void g_init_gxdraw(void)
 {
-  #define H_orientation_hook S_orientation_hook " () called whenever one of the variables associated with the \
+  #define H_orientation_hook S_orientation_hook " (): called whenever one of the variables associated with the \
 orientation dialog changes"
-  #define H_color_hook S_color_hook " () called whenever one of the variables associated with the \
+  #define H_color_hook S_color_hook " (): called whenever one of the variables associated with the \
 color dialog changes"
 
   XEN_DEFINE_HOOK(orientation_hook, S_orientation_hook, 0, H_orientation_hook);

@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 17
-#define SNDLIB_REVISION 8
-#define SNDLIB_DATE "12-Mar-03"
+#define SNDLIB_REVISION 9
+#define SNDLIB_DATE "17-Mar-03"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -542,13 +542,12 @@ int mus_iclamp(int lo, int val, int hi);
 off_t mus_oclamp(off_t lo, off_t val, off_t hi);
 Float mus_fclamp(Float lo, Float val, Float hi);
 
-#ifdef CLM
-  /* these are needed to clear a saved lisp image to the just-initialized state */
-  void reset_io_c(void);
-  void reset_headers_c(void);
-  void reset_audio_c(void);
-  void set_rt_audio_p(int rt);
-#endif
+/* for CLM */
+/* these are needed to clear a saved lisp image to the just-initialized state */
+void reset_io_c(void);
+void reset_headers_c(void);
+void reset_audio_c(void);
+void set_rt_audio_p(int rt);
 
 
 

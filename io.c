@@ -437,12 +437,11 @@ void mus_ldouble_to_char(unsigned char *j, double x)
 
 static int rt_ap_out;   /* address of RT audio ports, if any */
 
-#ifdef CLM
+/* for CLM */
 void set_rt_audio_p (int rt)
 {
   rt_ap_out = rt;
 }
-#endif
 
 typedef struct {
   char *name;
@@ -1394,7 +1393,7 @@ int mus_file_write_buffer(int charbuf_data_format, int beg, int end, int chans, 
 }
 
 
-#ifdef CLM
+/* for CLM */
 void reset_io_c(void) 
 {
   io_fd_size = 0;
@@ -1404,7 +1403,7 @@ void reset_io_c(void)
   long_int_p_table_size = 0;
 #endif
 }
-#endif
+
 
 #ifdef MPW_C
 /* this taken from libit-0.7 */

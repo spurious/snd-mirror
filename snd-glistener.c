@@ -923,7 +923,7 @@ int listener_width(void)
 
 static XEN g_listener_selected_text(void)
 {
-  #define H_listener_selection "returns current selection in listener or #f"
+  #define H_listener_selection "(" S_listener_selection "): currently selected text in listener or #f"
   char *txt;
   XEN res = XEN_FALSE;
   if (listener_text)
@@ -944,7 +944,7 @@ static XEN g_listener_selected_text(void)
 
 static XEN g_reset_listener_cursor(void)
 {
-  #define H_reset_listener_cursor "resets listener cursor to default pointer"
+  #define H_reset_listener_cursor "(" S_reset_listener_cursor "): reset listener cursor to the default pointer"
   snd_state *ss;
   if (listener_text)
     {
@@ -970,24 +970,24 @@ XEN_NARGIFY_0(g_reset_listener_cursor_w, g_reset_listener_cursor)
 
 void g_init_gxlistener(void)
 {
-  #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (listener) is called when the mouse \
+  #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (listener): called when the mouse \
 enters the lisp listener pane:\n\
   (add-hook! mouse-enter-listener-hook\n\
     (lambda (widget)\n\
       (focus-widget widget)))"
 
-  #define H_mouse_leave_listener_hook S_mouse_leave_listener_hook " (listener) is called when the mouse \
+  #define H_mouse_leave_listener_hook S_mouse_leave_listener_hook " (listener): called when the mouse \
 leaves the lisp listener pane"
 
   XEN_DEFINE_HOOK(mouse_enter_listener_hook, S_mouse_enter_listener_hook, 1, H_mouse_enter_listener_hook);    /* arg = listener_text widget */
   XEN_DEFINE_HOOK(mouse_leave_listener_hook, S_mouse_leave_listener_hook, 1, H_mouse_leave_listener_hook);    /* arg = listener_text widget */
 
-  #define H_mouse_enter_text_hook S_mouse_enter_text_hook " (widget) is called when the mouse enters a text widget:\n\
+  #define H_mouse_enter_text_hook S_mouse_enter_text_hook " (widget): called when the mouse enters a text widget:\n\
 (add-hook! mouse-enter-text-hook\n\
   (lambda (w)\n\
     (focus-widget w)))"
 
-  #define H_mouse_leave_text_hook S_mouse_leave_text_hook " (widget) is called when the mouse leaves a text widget"
+  #define H_mouse_leave_text_hook S_mouse_leave_text_hook " (widget): called when the mouse leaves a text widget"
 
   XEN_DEFINE_HOOK(mouse_enter_text_hook, S_mouse_enter_text_hook, 1, H_mouse_enter_text_hook);    /* arg = text widget */
   XEN_DEFINE_HOOK(mouse_leave_text_hook, S_mouse_leave_text_hook, 1, H_mouse_leave_text_hook);    /* arg = text widget */

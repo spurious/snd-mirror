@@ -1749,7 +1749,7 @@ void make_prevfiles_list_1(snd_state *ss)
 
 static XEN g_previous_files_sort_procedure(void)
 {
-  #define H_previous_files_sort_procedure "(" S_previous_files_sort_procedure ") -> file sort procedure for the current files viewer"
+  #define H_previous_files_sort_procedure "(" S_previous_files_sort_procedure "): sort procedure for the current files viewer"
   snd_state *ss;
   ss = get_global_state();
   return(ss->file_sort_proc);
@@ -2283,7 +2283,7 @@ static char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
 
 static XEN g_add_sound_file_extension(XEN ext)
 {
-  #define H_add_sound_file_extension "(" S_add_sound_file_extension " ext)  adds the file extension ext to the list of sound file extensions"
+  #define H_add_sound_file_extension "(" S_add_sound_file_extension " ext):  add the file extension 'ext' to the list of sound file extensions"
   XEN_ASSERT_TYPE(XEN_STRING_P(ext), ext, XEN_ONLY_ARG, S_add_sound_file_extension, "a string");
   add_sound_file_extension(XEN_TO_C_STRING(ext));
   return(ext);
@@ -2293,7 +2293,7 @@ static XEN g_file_write_date(XEN file)
 {
   #define S_file_write_date "file-write-date"
 #ifndef __GNUC__
-  #define H_file_write_date "(" S_file_write_date " file) -> write date of file"
+  #define H_file_write_date "(" S_file_write_date " file): write date of file"
 #else
   #define H_file_write_date "(" S_file_write_date " file) -> write date in the same format as \
 current-time:\n(strftime \"%a %d-%b-%Y %H:%M %Z\" (localtime (file-write-date \"oboe.snd\")))\n\
@@ -2308,7 +2308,7 @@ Equivalent to Guile (stat:mtime (stat file))"
 
 static XEN g_sound_loop_info(XEN snd)
 {
-  #define H_sound_loop_info "(" S_sound_loop_info " snd) returns the sound's loop points as a \
+  #define H_sound_loop_info "(" S_sound_loop_info " (snd #f)): return the sound's loop points as a \
 list: (sustain-start sustain-end release-start release-end baseNote detune)"
   int *res;
   snd_info *sp;
@@ -2429,7 +2429,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
 static XEN g_soundfont_info(XEN snd)
 {
   /* return all soundfont descriptors as list of lists: ((name start loopstart loopend)) */
-  #define H_soundfont_info "(" S_soundfont_info " &optional snd) -> list of lists describing snd as a soundfont. \
+  #define H_soundfont_info "(" S_soundfont_info " (snd #f)): list of lists describing snd as a soundfont. \
 each inner list has the form: (name start loopstart loopend)"
 
   XEN inlist = XEN_EMPTY_LIST; XEN outlist = XEN_EMPTY_LIST;
@@ -2458,7 +2458,7 @@ each inner list has the form: (name start loopstart loopend)"
 
 static XEN g_preload_directory(XEN directory) 
 {
-  #define H_preload_directory "(" S_preload_directory " dir) preloads (into the View:Files dialog) any sounds in dir"
+  #define H_preload_directory "(" S_preload_directory " dir): preload into the View:Files dialog any sounds in dir"
   XEN_ASSERT_TYPE(XEN_STRING_P(directory), directory, XEN_ONLY_ARG, S_preload_directory, "a string");
   add_directory_to_prevlist(get_global_state(), 
 			    XEN_TO_C_STRING(directory));
@@ -2467,7 +2467,7 @@ static XEN g_preload_directory(XEN directory)
 
 static XEN g_preload_file(XEN file) 
 {
-  #define H_preload_file "(" S_preload_file " file) preloads file (into the View:Files dialog)"
+  #define H_preload_file "(" S_preload_file " file): preload file into the View:Files dialog"
   char *name = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_preload_file, "a string");
   name = mus_expand_filename(XEN_TO_C_STRING(file));
@@ -2481,7 +2481,7 @@ static XEN g_preload_file(XEN file)
 
 static XEN g_sound_files_in_directory(XEN dirname)
 {
-  #define H_sound_files_in_directory "(" S_sound_files_in_directory " directory) returns a list of sound files in directory"
+  #define H_sound_files_in_directory "(" S_sound_files_in_directory " (directory \".\")): return a list of the sound files in 'directory'"
   dir *dp = NULL;
   char *name = NULL;
   int i;
@@ -2506,22 +2506,22 @@ static XEN g_sound_files_in_directory(XEN dirname)
 #define S_disk_kspace "disk-kspace"
 static XEN g_disk_kspace(XEN name)
 {
-  #define H_disk_kspace "(" S_disk_kspace " filename) -> kbytes of space available on partition containing 'filename'"
+  #define H_disk_kspace "(" S_disk_kspace " filename): kbytes of space available on partition containing 'filename'"
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_disk_kspace, "a string");
   return(C_TO_XEN_OFF_T(disk_kspace(XEN_TO_C_STRING(name))));
 }
 
 static XEN g_open_file_dialog(XEN managed)
 {
-  #define H_open_file_dialog "(" S_open_file_dialog " managed) creates the file dialog if needed and displays it if managed"
+  #define H_open_file_dialog "(" S_open_file_dialog " (managed #t)): create the file dialog if needed and display it if 'managed'"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_open_file_dialog, "a boolean");
-  make_open_file_dialog(get_global_state(), FALSE, (XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : 1);
+  make_open_file_dialog(get_global_state(), FALSE, (XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : TRUE);
   return(managed);
 }
 
 static XEN g_mix_file_dialog(XEN managed)
 {
-  #define H_mix_file_dialog "(" S_mix_file_dialog " managed) creates the mix file dialog if needed and displays it if managed"
+  #define H_mix_file_dialog "(" S_mix_file_dialog " (managed #t)): create the mix file dialog if needed and display it if 'managed'"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_mix_file_dialog, "a boolean");
   make_mix_file_dialog(get_global_state(), (XEN_BOUND_P(managed)) ? XEN_TO_C_BOOLEAN(managed) : TRUE);
   return(managed);
@@ -2530,7 +2530,7 @@ static XEN g_mix_file_dialog(XEN managed)
 static XEN g_previous_files_sort(void) {return(C_TO_XEN_INT(previous_files_sort(get_global_state())));}
 static XEN g_set_previous_files_sort(XEN val) 
 {
-  #define H_previous_files_sort "(" S_previous_files_sort ") -> sort choice in view files (0 = unsorted, 1 = by name, etc)"
+  #define H_previous_files_sort "(" S_previous_files_sort "): sort choice in view files (0 = unsorted, 1 = by name, etc)"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_previous_files_sort, "an integer"); 
@@ -2596,16 +2596,16 @@ void g_init_file(void)
 
   XEN_DEFINE_VARIABLE(S_memo_sound, memo_sound, XEN_FALSE);
 
-  #define H_open_hook S_open_hook " (filename) is called each time a file is opened (before the actual open). \
+  #define H_open_hook S_open_hook " (filename): called each time a file is opened (before the actual open). \
 If it returns #t, the file is not opened."
 
-  #define H_close_hook S_close_hook " (snd) is called each time a file is closed (before the close). \
+  #define H_close_hook S_close_hook " (snd): called each time a file is closed (before the close). \
 If it returns #t, the file is not closed."
 
-  #define H_just_sounds_hook S_just_sounds_hook " (filename) is called on each file (after the sound file extension check) if the \
+  #define H_just_sounds_hook S_just_sounds_hook " (filename): called on each file (after the sound file extension check) if the \
 just-sounds button is set. Return #f to filter out filename. "
 
-  #define H_bad_header_hook S_bad_header_hook " (filename) is called if a file has some bogus-looking header. \
+  #define H_bad_header_hook S_bad_header_hook " (filename): called if a file has some bogus-looking header. \
 Return #t to give up on that file."
 
   XEN_DEFINE_HOOK(open_hook, S_open_hook, 1, H_open_hook);                        /* arg = filename */
@@ -2613,7 +2613,7 @@ Return #t to give up on that file."
   XEN_DEFINE_HOOK(just_sounds_hook, S_just_sounds_hook, 1, H_just_sounds_hook);   /* arg = filename */
   XEN_DEFINE_HOOK(bad_header_hook, S_bad_header_hook, 1, H_bad_header_hook);      /* arg = filename */
 
-  #define H_open_raw_sound_hook S_open_raw_sound_hook " (filename current-choices) is called when a headerless sound file is opened. \
+  #define H_open_raw_sound_hook S_open_raw_sound_hook " (filename current-choices): called when a headerless sound file is opened. \
 Its result can be a list describing the raw file's attributes (thereby bypassing the Raw File Dialog and so on). \
 The list (passed to subsequent hook functions as 'current-choice') is interpreted as \
 (list chans srate data-format data-location data-length) where trailing elements can \
@@ -2621,7 +2621,7 @@ be omitted (location defaults to 0, and length defaults to the file length in by
 
   XEN_DEFINE_HOOK(open_raw_sound_hook, S_open_raw_sound_hook, 2, H_open_raw_sound_hook);    /* args = filename current-result */
 
-  #define H_update_hook S_update_hook " (snd) is called just before update-sound is called. \
+  #define H_update_hook S_update_hook " (snd): called just before update-sound is called. \
 The update process can  be triggered by a variety of situations, not just by update-sound. \
 The hook is passed the sound's index.  If it returns #t, the update is cancelled (this is not \
 recommended!); if it returns a procedure of one argument, that procedure is called upon \
@@ -2634,7 +2634,7 @@ the newly updated sound may have a different index."
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_previous_files_sort_procedure, g_previous_files_sort_procedure_w, H_previous_files_sort_procedure,
                                    S_setB S_previous_files_sort_procedure, g_set_previous_files_sort_procedure_w,  0, 0, 1, 0);
 
-  #define H_previous_files_select_hook S_previous_files_select_hook "(filename) called when a file is selected in the \
+  #define H_previous_files_select_hook S_previous_files_select_hook "(filename): called when a file is selected in the \
 previous files list of the View Files dialog.  If it returns #t, the default action, opening the file, is omitted."
 
   XEN_DEFINE_HOOK(previous_files_select_hook, S_previous_files_select_hook, 1, H_previous_files_select_hook); /* arg = filename */

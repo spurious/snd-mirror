@@ -116,13 +116,12 @@ static int *loop_modes = NULL, *loop_starts = NULL, *loop_ends = NULL;
 static int markers = 0;
 static int *marker_ids = NULL, *marker_positions = NULL;
 
-#ifdef CLM
+/* for CLM */
 void reset_headers_c(void) 
 {
   hdrbuf_is_inited = FALSE; 
   markers = 0;
 }
-#endif
 
 int mus_header_initialize (void)
 {

@@ -91,7 +91,7 @@ int vct_p(XEN obj)
 
 static XEN g_vct_p(XEN obj) 
 {
-  #define H_vct_p "(" S_vct_p " obj) -> #t if obj is a vct object, else #f"
+  #define H_vct_p "(" S_vct_p " obj): is obj a vct"
   return(C_TO_XEN_BOOLEAN(VCT_P(obj)));
 }
 
@@ -206,7 +206,7 @@ static XEN vct_fill(XEN obj1, XEN obj2);
 
 static XEN g_make_vct(XEN len, XEN filler)
 {
-  #define H_make_vct "(" S_make_vct " len &optional initial-element) -> a new vct object of length len"
+  #define H_make_vct "(" S_make_vct " len (initial-element 0)): returns a new vct of length len filled with initial-element"
   int size;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(len), len, XEN_ONLY_ARG, S_make_vct, "an integer");
   size = XEN_TO_C_INT(len);
@@ -219,7 +219,7 @@ static XEN g_make_vct(XEN len, XEN filler)
 
 static XEN copy_vct(XEN obj)
 {
-  #define H_vct_copy "(" S_vct_copy " v) -> a copy of vct v"
+  #define H_vct_copy "(" S_vct_copy " v): returns a copy of vct v"
   vct *v;
   Float *copied_data;
   int len;
@@ -233,7 +233,8 @@ static XEN copy_vct(XEN obj)
 
 static XEN vct_move(XEN obj, XEN newi, XEN oldi, XEN backwards)
 {
-  #define H_vct_moveB "(" S_vct_moveB " obj new old backwards) moves obj data from old to new"
+  #define H_vct_moveB "(" S_vct_moveB " obj new old (backwards #f)): moves vct obj data from old to new: v[new++] = v[old++], or \
+v[new--] = v[old--] if backwards is #t"
   vct *v;
   int i, j, ni, nj;
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_vct_moveB, "a vct");
@@ -267,7 +268,7 @@ static XEN vct_move(XEN obj, XEN newi, XEN oldi, XEN backwards)
 
 static XEN vct_length(XEN obj)
 {
-  #define H_vct_length "(" S_vct_length " v) -> length of vct v"
+  #define H_vct_length "(" S_vct_length " v): length of vct v"
   vct *v;
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ONLY_ARG, S_vct_length, "a vct");
   v = TO_VCT(obj);
@@ -279,7 +280,7 @@ static XEN vct_length(XEN obj)
 
 static XEN vct_ref(XEN obj, XEN pos)
 {
-  #define H_vct_ref "(" S_vct_ref " v n) -> element n of vct v, v[n]"
+  #define H_vct_ref "(" S_vct_ref " v n): element n of vct v, v[n]"
   vct *v;
   int loc;
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_vct_ref, "a vct");
@@ -295,7 +296,7 @@ static XEN vct_ref(XEN obj, XEN pos)
 
 static XEN vct_set(XEN obj, XEN pos, XEN val)
 {
-  #define H_vct_setB "(" S_vct_setB " v n val) sets element n of vct v to val, v[n] = val"
+  #define H_vct_setB "(" S_vct_setB " v n val): sets element of vct v to val, v[n] = val"
   vct *v;
   int loc;
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_vct_setB, "a vct");
@@ -313,7 +314,7 @@ static XEN vct_set(XEN obj, XEN pos, XEN val)
 
 static XEN vct_multiply(XEN obj1, XEN obj2)
 {
-  #define H_vct_multiplyB "(" S_vct_multiplyB " v1 v2) -> v1 with element-wise multiply of vcts v1 and v2: v1[i] *= v2[i]"
+  #define H_vct_multiplyB "(" S_vct_multiplyB " v1 v2): element-wise multiply of vcts v1 and v2: v1[i] *= v2[i], returns v1"
   int i, lim;
   vct *v1, *v2;
   XEN_ASSERT_TYPE(VCT_P(obj1), obj1, XEN_ARG_1, S_vct_multiplyB, "a vct");
@@ -327,7 +328,7 @@ static XEN vct_multiply(XEN obj1, XEN obj2)
 
 static XEN vct_add(XEN obj1, XEN obj2, XEN offs)
 {
-  #define H_vct_addB "(" S_vct_addB " v1 v2 &optional (offset 0)) -> v1 with element-wise add of vcts v1 and v2: v1[i + offset] += v2[i]"
+  #define H_vct_addB "(" S_vct_addB " v1 v2 (offset 0)): element-wise add of vcts v1 and v2: v1[i + offset] += v2[i], returns v1"
   int i, lim, j;
   vct *v1, *v2;
   XEN_ASSERT_TYPE(VCT_P(obj1), obj1, XEN_ARG_1, S_vct_addB, "a vct");
@@ -352,7 +353,7 @@ static XEN vct_add(XEN obj1, XEN obj2, XEN offs)
 
 static XEN vct_subtract(XEN obj1, XEN obj2)
 {
-  #define H_vct_subtractB "(" S_vct_subtractB " v1 v2) -> v1 with element-wise subtract of vcts v1 and v2: v1[i] -= v2[i]"
+  #define H_vct_subtractB "(" S_vct_subtractB " v1 v2): element-wise subtract of vcts v1 and v2: v1[i] -= v2[i], returns v1"
   int i, lim;
   vct *v1, *v2;
   XEN_ASSERT_TYPE(VCT_P(obj1), obj1, XEN_ARG_1, S_vct_subtractB, "a vct");
@@ -366,7 +367,7 @@ static XEN vct_subtract(XEN obj1, XEN obj2)
 
 static XEN vct_scale(XEN obj1, XEN obj2)
 {
-  #define H_vct_scaleB "(" S_vct_scaleB " v val) -> v with each element scaled by val: v[i] *= val"
+  #define H_vct_scaleB "(" S_vct_scaleB " v val): scale each element of v by val: v[i] *= val, returns v"
   int i;
   vct *v1;
   Float scl;
@@ -380,7 +381,7 @@ static XEN vct_scale(XEN obj1, XEN obj2)
 
 static XEN vct_offset(XEN obj1, XEN obj2)
 {
-  #define H_vct_offsetB "(" S_vct_offsetB " v val) -> v with val added to each element: v[i] += val"
+  #define H_vct_offsetB "(" S_vct_offsetB " v val): add val to each element of v: v[i] += val, returns v"
   int i;
   vct *v1;
   Float scl;
@@ -394,7 +395,7 @@ static XEN vct_offset(XEN obj1, XEN obj2)
 
 static XEN vct_fill(XEN obj1, XEN obj2)
 {
-  #define H_vct_fillB "(" S_vct_fillB " v val) -> v with each element set to val: v[i] = val"
+  #define H_vct_fillB "(" S_vct_fillB " v val): set each element of v to val: v[i] = val, returns v"
   int i;
   vct *v1;
   Float scl;
@@ -408,7 +409,8 @@ static XEN vct_fill(XEN obj1, XEN obj2)
 
 static XEN vct_mapB(XEN obj, XEN proc)
 {
-  #define H_vct_mapB "(" S_vct_mapB " v proc) -> v with each element set to value of proc: v[i] = (proc)"
+  #define H_vct_mapB "(" S_vct_mapB " v proc): set each element of v to value of proc (a thunk): v[i] = (proc), returns \
+v. (" S_vct_mapB " v (lambda () 3.0)) is the same as (" S_vct_fillB " v 3.0)"
   int i;
   vct *v;
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_vct_mapB, "a vct");
@@ -442,7 +444,7 @@ static XEN vct_mapB(XEN obj, XEN proc)
 
 static XEN vct_peak(XEN obj)
 {
-  #define H_vct_peak "(" S_vct_peak " v) -> max of abs of elements of v"
+  #define H_vct_peak "(" S_vct_peak " v): max of abs of elements of v"
   int i;
   Float val = 0.0, absv;
   vct *v;
@@ -459,7 +461,7 @@ static XEN vct_peak(XEN obj)
 
 static XEN vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
 {
-  #define H_vct_subseq "(" S_vct_subseq " v start end &optional vnew) -> vnew with vals v[start..end]"
+  #define H_vct_subseq "(" S_vct_subseq " v start (end len) (vnew #f)): v[start..end], placed in vnew if given or new vct"
   vct *vold, *vnew;
   XEN res;
   int i, old_len, new_len, j;
@@ -486,7 +488,7 @@ static XEN vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
 
 static XEN list2vct(XEN lst)
 {
-  #define H_list2vct "(" S_list2vct " lst) -> a new vct object filled with elements of list lst"
+  #define H_list2vct "(" S_list2vct " lst): returns a new vct filled with elements of list lst"
   int len, i;
   vct *v;
   XEN scv; XEN lst1;
@@ -502,7 +504,7 @@ static XEN list2vct(XEN lst)
 
 static XEN g_vct(XEN args) 
 {
-  #define H_vct "(" S_vct " args -> vct with contents as args"
+  #define H_vct "(" S_vct " args...) returns a new vct with args as contents; same as " S_list2vct ": (vct 1 2 3)"
   return(list2vct(args));
 }
 
@@ -517,7 +519,7 @@ XEN mus_array_to_list(Float *arr, int i, int len)
 
 static XEN vct2list(XEN vobj)
 {
-  #define H_vct2list "(" S_vct2list " v) -> a new list with elements of vct v"
+  #define H_vct2list "(" S_vct2list " v): returns a new list with elements of vct v"
   vct *v;
   XEN_ASSERT_TYPE(VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct2list, "a vct");
   v = TO_VCT(vobj);
@@ -526,7 +528,7 @@ static XEN vct2list(XEN vobj)
 
 static XEN vector2vct(XEN vect)
 {
-  #define H_vector2vct "(" S_vector2vct " vect) -> a new vct object with the elements of vector vect"
+  #define H_vector2vct "(" S_vector2vct " vect): returns a new vct with the elements of vector vect"
   int len, i;
   vct *v;
   XEN *vdata;
@@ -544,7 +546,7 @@ static XEN vector2vct(XEN vect)
 
 XEN vct2vector(XEN vobj)
 {
-  #define H_vct2vector "(" S_vct2vector " vct) -> a new vector with the elements of vct"
+  #define H_vct2vector "(" S_vct2vector " vct): returns a new vector with the elements of vct"
   vct *v;
   int i, len;
   XEN new_vect;

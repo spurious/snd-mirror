@@ -54,8 +54,8 @@ static Window find_window(Display *display,
 
 static XEN send_netscape(XEN cmd)
 {
-  #define H_send_netscape "(send-netscape cmd) finds netscape (or starts it if necessary), and sends it the \
-string 'cmd', assumed to be a URL.  This is used by index.scm."
+  #define H_send_netscape "(send-netscape cmd): find netscape (or start it if necessary), and send it the \
+string 'cmd'.  cmd should be a URL.  This is used by index.scm."
   Window window;
   snd_state *ss;
   Display *dpy;
@@ -92,8 +92,8 @@ string 'cmd', assumed to be a URL.  This is used by index.scm."
 
 static void change_property(snd_state *ss, char *winat, char *name, char *command)
 {
-  #define H_change_property "(" S_change_property " version-name command-name command) looks for the \
-X atom 'version-name', and if it is found, sets the property 'command-name' to the string 'command'.\n\
+  #define H_change_property "(" S_change_property " version-name command-name command): look for the \
+X atom 'version-name', and if it is found, set the property 'command-name' to the string 'command'.\n\
 (change-property \"SND_VERSION\" \"SND_COMMAND\" \"(snd-print (+ 1 2))\"\n\
 for example"
 

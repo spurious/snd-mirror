@@ -2071,9 +2071,9 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
 
 static XEN g_play(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_n, XEN edpos) 
 {
-  #define H_play "(" S_play " &optional (start 0) snd chn sync end pos) plays snd or snd's channel chn starting at start. \
+  #define H_play "(" S_play " (start 0) (snd #f) (chn #f) (sync 0) (end #f) (pos -1)): play snd or snd's channel chn starting at start. \
 'start' can also be a filename: (" S_play " \"oboe.snd\").  If 'sync' is true, all sounds syncd to snd are played. \
-if 'end' is not given, it plays to the end of the sound.  If 'pos' is -1 or not given, the current edit position is \
+If 'end' is not given, " S_play " plays to the end of the sound.  If 'pos' is -1 or not given, the current edit position is \
 played."
 
   return(g_play_1(samp_n, snd_n, chn_n, TRUE, TO_C_BOOLEAN_OR_F(syncd), end_n, edpos, S_play, 6));
@@ -2081,7 +2081,8 @@ played."
 
 static XEN g_play_channel(XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos) 
 {
-  #define H_play_channel "(" S_play_channel " &optional beg dur snd chn pos) plays snd or snd's channel chn starting at beg for dur samps."
+  #define H_play_channel "(" S_play_channel " (beg 0) (dur len) (snd #f) (chn #f) (pos -1)): \
+play snd or snd's channel chn starting at beg for dur samps."
   XEN end = XEN_FALSE;
   off_t len;
   if (XEN_INTEGER_P(dur))
@@ -2095,7 +2096,9 @@ static XEN g_play_channel(XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos)
 
 static XEN g_play_selection(XEN wait, XEN edpos) 
 {
-  #define H_play_selection "(" S_play_selection " &optional (wait #f) pos) plays the selection"
+  #define H_play_selection "(" S_play_selection " (wait #f) (pos -1)): play the selection. 'pos' refers \
+to the edit position, 'wait', if #t, causes " S_play_selection " to wait until the playing is finished \
+before returning."
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(wait), wait, XEN_ARG_1, S_play_selection, "a boolean");
   if (selection_is_active())
     {
@@ -2107,7 +2110,8 @@ static XEN g_play_selection(XEN wait, XEN edpos)
 
 static XEN g_play_and_wait(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_n, XEN edpos) 
 {
-  #define H_play_and_wait "(" S_play_and_wait " &optional (start 0) snd chn end pos) plays snd or snd's channel chn starting at start \
+  #define H_play_and_wait "(" S_play_and_wait " (start 0) (snd #f) (chn #f) (end #f) (pos -1)): \
+play snd or snd's channel chn starting at start \
 and waiting for the play to complete before returning.  'start' can also be a filename: (" S_play_and_wait " \"oboe.snd\")"
 
   return(g_play_1(samp_n, snd_n, chn_n, FALSE, TO_C_BOOLEAN_OR_F(syncd), end_n, edpos, S_play_and_wait, 6));
@@ -2115,7 +2119,7 @@ and waiting for the play to complete before returning.  'start' can also be a fi
 
 static XEN g_stop_playing(XEN snd_n)
 {
-  #define H_stop_playing "(" S_stop_playing " &optional snd) stops play in progress"
+  #define H_stop_playing "(" S_stop_playing " (snd #f)): stop play in progress"
   snd_info *sp = NULL;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(snd_n), snd_n, XEN_ARG_1, S_stop_playing, "an integer");
   if (XEN_INTEGER_P(snd_n)) sp = get_sp(snd_n, PLAYERS_OK);
@@ -2226,7 +2230,14 @@ static XEN snd_no_such_player_error(const char *caller, XEN index)
 
 static XEN g_make_player(XEN snd, XEN chn)
 {
-  #define H_make_player "(" S_make_player " &optional snd chn) prepares snd's channel chn for " S_add_player
+  #define H_make_player "(" S_make_player " (snd #f) (chn #f)): \
+make a new player associated with snd's channel chn. \
+A player is a sort of wrapper for a channel of a sound that supports \
+all the control-panel functions.  Once created, you can set these \
+fields, then call add-player to add this channel to the list of \
+channels either being played (if a play is in progress) or about \
+to be played (via " S_start_playing ")."
+
   snd_info *true_sp, *new_sp;
   chan_info *cp;
   ASSERT_CHANNEL(S_make_player, snd, chn, 1);
@@ -2247,7 +2258,7 @@ static XEN g_make_player(XEN snd, XEN chn)
 
 static XEN g_player_home(XEN snd_chn)
 {
-  #define H_player_home "(" S_player_home " player) returns a list of the sound index and channel number associated with player"
+  #define H_player_home "(" S_player_home " player): a list of the sound index and channel number associated with player"
   int index;
   chan_info *cp;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ARG_1, S_player_home, "an integer");
@@ -2270,7 +2281,10 @@ static XEN g_player_home(XEN snd_chn)
 
 static XEN g_add_player(XEN snd_chn, XEN start, XEN end, XEN edpos)
 {
-  #define H_add_player "(" S_add_player " &optional player start end pos) snd's channel chn to the play list"
+  #define H_add_player "(" S_add_player " player (start 0) (end len) (pos -1)): \
+add snd's channel chn to the play list; the play begins when " S_start_playing " is called. \
+The start, end, and edit-position of the portion played can be specified."
+
   snd_info *sp = NULL;
   chan_info *cp;
   dac_info *dp = NULL;
@@ -2305,7 +2319,9 @@ static XEN g_add_player(XEN snd_chn, XEN start, XEN end, XEN edpos)
 
 static XEN g_start_playing(XEN Chans, XEN Srate, XEN In_Background)
 {
-  #define H_start_playing "(" S_start_playing " &optional chans srate in-background)"
+  #define H_start_playing "(" S_start_playing " (chans 1) (srate 44100) (in-background #t)): \
+If a play-list is waiting, start it."
+
   int chans, srate;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(Chans), Chans, XEN_ARG_1, S_start_playing, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(Srate), Srate, XEN_ARG_2, S_start_playing, "a number");
@@ -2322,7 +2338,7 @@ static XEN g_start_playing(XEN Chans, XEN Srate, XEN In_Background)
 
 static XEN g_stop_player(XEN snd_chn)
 {
-  #define H_stop_player "(" S_stop_player " player) stops player"
+  #define H_stop_player "(" S_stop_player " player): stop player"
   int index;
   snd_info *sp = NULL;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ARG_1, S_stop_player, "an integer");
@@ -2338,7 +2354,7 @@ static XEN g_stop_player(XEN snd_chn)
 
 static XEN g_player_p(XEN snd_chn)
 {
-  #define H_player_p "(" S_player_p " obj) -> is obj an active player"
+  #define H_player_p "(" S_player_p " obj): is 'obj' an active player"
   int index;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ARG_1, S_player_p, "an integer");
   index = -XEN_TO_SMALL_C_INT(snd_chn);
@@ -2350,7 +2366,7 @@ static XEN g_player_p(XEN snd_chn)
 static XEN g_dac_size(void) {return(C_TO_XEN_INT(dac_size(get_global_state())));}
 static XEN g_set_dac_size(XEN val) 
 {
-  #define H_dac_size "(" S_dac_size ") is the current DAC buffer size (256)"
+  #define H_dac_size "(" S_dac_size "): the current DAC buffer size in frames (256)"
   int len;
   snd_state *ss;
   ss = get_global_state();
@@ -2364,7 +2380,9 @@ static XEN g_set_dac_size(XEN val)
 static XEN g_dac_combines_channels(void) {return(C_TO_XEN_BOOLEAN(dac_combines_channels(get_global_state())));}
 static XEN g_set_dac_combines_channels(XEN val) 
 {
-  #define H_dac_combines_channels "(" S_dac_combines_channels ") should be #t if extra channels are to be mixed into available ones during playing (#t)"
+  #define H_dac_combines_channels "(" S_dac_combines_channels "): #t if extra channels are to be mixed into available ones during playing. \
+That is, if the sound to be played has 4 channels, but the DAC can only handle 2, if this \
+variable is #t, the extra channels are mixed into the available ones; otherwise they are ignored."
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_dac_combines_channels, "a boolean");
@@ -2432,15 +2450,15 @@ void g_init_dac(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_dac_combines_channels, g_dac_combines_channels_w, H_dac_combines_channels,
 				   S_setB S_dac_combines_channels, g_set_dac_combines_channels_w,  0, 0, 0, 1);
 
-  #define H_stop_playing_hook S_stop_playing_hook " (snd) is called when a sound finishes playing."
-  #define H_stop_playing_channel_hook S_stop_playing_channel_hook " (snd chn) is called when a channel finishes playing."
-  #define H_stop_playing_region_hook S_stop_playing_region_hook " (reg) is called when a region finishes playing."
-  #define H_play_hook S_play_hook " (samps) is called each time a buffer is sent to the DAC."
-  #define H_start_playing_hook S_start_playing_hook " (snd) is called when a play request is triggered. \
+  #define H_stop_playing_hook S_stop_playing_hook " (snd): called when a sound finishes playing."
+  #define H_stop_playing_channel_hook S_stop_playing_channel_hook " (snd chn): called when a channel finishes playing."
+  #define H_stop_playing_region_hook S_stop_playing_region_hook " (reg): called when a region finishes playing."
+  #define H_play_hook S_play_hook " (samps): called each time a buffer is sent to the DAC."
+  #define H_start_playing_hook S_start_playing_hook " (snd): called when a play request is triggered. \
 If it returns #t, the sound is not played."
-  #define H_dac_hook S_dac_hook " (sdobj) called just before data is sent to DAC passing data as sound-data object"
-  #define H_stop_dac_hook S_stop_dac_hook " () called upon mus_audio_close (when DAC is turned off)"
-  #define H_stop_playing_selection_hook S_stop_playing_selection_hook " () called when the selection stops playing"
+  #define H_dac_hook S_dac_hook " (sdobj): called just before data is sent to DAC passing data as sound-data object"
+  #define H_stop_dac_hook S_stop_dac_hook " (): called upon mus_audio_close (when DAC is turned off)"
+  #define H_stop_playing_selection_hook S_stop_playing_selection_hook " (): called when the selection stops playing"
 
   XEN_DEFINE_HOOK(stop_playing_hook, S_stop_playing_hook, 1, H_stop_playing_hook);                         /* arg = sound */
   XEN_DEFINE_HOOK(stop_playing_channel_hook, S_stop_playing_channel_hook, 2, H_stop_playing_channel_hook); /* args = sound channel */

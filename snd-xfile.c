@@ -2328,7 +2328,7 @@ Widget edit_header(snd_info *sp)
 
 static XEN g_just_sounds(void)
 {
-  #define H_just_sounds "(" S_just_sounds ") reflects the 'just sounds' button in the file chooser dialog"
+  #define H_just_sounds "(" S_just_sounds "): the 'just sounds' button in the file chooser dialog"
   return(C_TO_XEN_BOOLEAN(just_sounds_state));
 }
 
@@ -2369,8 +2369,8 @@ void g_init_gxfile(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds,
 				   S_setB S_just_sounds, g_set_just_sounds_w,  0, 0, 0, 1);
 
-  #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label) is called when a file viewer or region label \
-is entered by the mouse. The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \
+  #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
+The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \
 is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.scm \
 to popup file info as follows: \n\
 (add-hook! mouse-enter-label-hook\n\
@@ -2379,7 +2379,7 @@ to popup file info as follows: \n\
         (help-dialog name (finfo name)))))\n\
 See also nb.scm."
 
-  #define H_mouse_leave_label_hook S_mouse_leave_label_hook " (type position label) is called when a file viewer or region label is exited by the mouse"
+  #define H_mouse_leave_label_hook S_mouse_leave_label_hook " (type position label): called when the mouse leaves a file viewer or region label"
 
   XEN_DEFINE_HOOK(mouse_enter_label_hook, S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook);
   XEN_DEFINE_HOOK(mouse_leave_label_hook, S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);

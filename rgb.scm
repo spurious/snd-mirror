@@ -2,6 +2,26 @@
 
 ;; tan -> tawny 24-Aug-01
 
+;;; colormap names
+;;; e.g. (set! (colormap) color-map-jet)
+(define color-map-black-and-white -1)
+(define color-map-gray 0)
+(define color-map-hsv 1)
+(define color-map-hot 2)
+(define color-map-cool 3)
+(define color-map-bone 4)
+(define color-map-copper 5)
+(define color-map-pink 6)
+(define color-map-jet 7)
+(define color-map-prism 8)
+(define color-map-autumn 9)
+(define color-map-winter 10)
+(define color-map-spring 11)
+(define color-map-summer 12)
+(define color-map-colorcube 13)
+(define color-map-flag 14)
+(define color-map-lines 15)
+
 (define snow (make-color 1.00 0.98 0.98))
 (define ghost-white (make-color 0.97 0.97 1.00))
 (define white-smoke (make-color 0.96 0.96 0.96))

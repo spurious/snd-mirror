@@ -973,7 +973,7 @@ axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, Float ymin, 
 
 static XEN g_grf_x(XEN val, XEN snd, XEN chn, XEN ap)
 {
-  #define H_x2position "(" S_x2position " val snd chn ax) -> x pixel loc of val"
+  #define H_x2position "(" S_x2position " val (snd #f) (chn #f) (ax #f)): x pixel loc of val"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_x2position, "a number");
   ASSERT_CHANNEL(S_x2position, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_x2position, "an integer");
@@ -983,7 +983,7 @@ static XEN g_grf_x(XEN val, XEN snd, XEN chn, XEN ap)
 
 static XEN g_grf_y(XEN val, XEN snd, XEN chn, XEN ap)
 {
-#define H_y2position "(" S_y2position " val snd chn ax) -> y pixel loc of val"
+#define H_y2position "(" S_y2position " val (snd #f) (chn #f) (ax #f)): y pixel loc of val"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_y2position, "a number");
   ASSERT_CHANNEL(S_y2position, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_y2position, "an integer");
@@ -993,7 +993,7 @@ static XEN g_grf_y(XEN val, XEN snd, XEN chn, XEN ap)
 
 static XEN g_ungrf_x(XEN val, XEN snd, XEN chn, XEN ap)
 {
-  #define H_position2x "(" S_position2x " val snd chn ax) -> x in axis of pixel val"
+  #define H_position2x "(" S_position2x " val (snd #f) (chn #f) (ax #f)): x axis value corresponding to pixel val"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_position2x, "an integer");
   ASSERT_CHANNEL(S_position2x, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_position2x, "an integer");
@@ -1003,7 +1003,7 @@ static XEN g_ungrf_x(XEN val, XEN snd, XEN chn, XEN ap)
 
 static XEN g_ungrf_y(XEN val, XEN snd, XEN chn, XEN ap)
 {
-  #define H_position2y "(" S_position2y " val snd chn ax) -> y in axis of pixel val"
+  #define H_position2y "(" S_position2y " val (snd #f) (chn #f) (ax #f)): y axis value corresponding to pixel val"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_position2y, "an integer");
   ASSERT_CHANNEL(S_position2y, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_position2y, "an integer");
@@ -1013,7 +1013,8 @@ static XEN g_ungrf_y(XEN val, XEN snd, XEN chn, XEN ap)
 
 static XEN g_axis_info(XEN snd, XEN chn, XEN ap_id)
 {
-  #define H_axis_info "(" S_axis_info " snd chn grf) -> (list losamp hisamp x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset)"
+  #define H_axis_info "(" S_axis_info " (snd #f) (chn #f) (grf #f)): info about axis: (list losamp hisamp \
+x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset)"
   axis_info *ap;
   ASSERT_CHANNEL(S_axis_info, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap_id), ap_id, XEN_ARG_3, S_axis_info, "an integer");
@@ -1044,12 +1045,11 @@ static XEN g_axis_info(XEN snd, XEN chn, XEN ap_id)
 #if (!USE_NO_GUI)
 static XEN g_draw_axes(XEN args)
 {
-  #define H_draw_axes "(draw-axes wid gc label x0 x1 y0 y1 style axes) draws axes \
+  #define H_draw_axes "(draw-axes wid gc label (x0 0.0) (x1 1.0) (y0 -1.0) (y1 1.0) (style x-axis-in-seconds) (axes #t)): draws axes \
 in the widget 'wid', using the graphics context 'gc', with the x-axis label 'label' \
 going from x0 to x1 (floats) along the x axis, y0 to y1 along the y axis, with x-axis-style \
-'style' (x-axis-in-seconds etc); whether the axes are actually displayed or just implied \
-depends on 'axes'. Returns actual (pixel) axis bounds.  Defaults are label time, \
-x0 0.0, x1 1.0, y0 -1.0, y1 1.0, style x-axis-in-seconds, axes #t."
+'style' (x-axis-in-seconds etc); the axes are actually displayed if 'axes' is #t.\
+Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   XEN val;
 #if USE_MOTIF
   Widget w; GC gc; 

@@ -39,7 +39,7 @@ axis_info *get_ap(chan_info *cp, int ap_id, const char *caller)
 
 static XEN g_draw_line(XEN x0, XEN y0, XEN x1, XEN y1, XEN snd, XEN chn, XEN ax)
 {
-  #define H_draw_line "(" S_draw_line " x0 y0 x1 y1 snd chn ax) draws a line"
+  #define H_draw_line "(" S_draw_line " x0 y0 x1 y1 (snd #f) (chn #f) (ax #f)): draw a line"
 
   ASSERT_CHANNEL(S_draw_line, snd, chn, 5);
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, XEN_ARG_1, S_draw_line, "a number");
@@ -56,7 +56,7 @@ static XEN g_draw_line(XEN x0, XEN y0, XEN x1, XEN y1, XEN snd, XEN chn, XEN ax)
 
 static XEN g_draw_dot(XEN x0, XEN y0, XEN size, XEN snd, XEN chn, XEN ax)
 {
-  #define H_draw_dot "(" S_draw_dot " x0 y0 size snd chn ax) draws a dot"
+  #define H_draw_dot "(" S_draw_dot " x0 y0 size (snd #f) (chn #f) (ax #f)): draw a dot"
  
   ASSERT_CHANNEL(S_draw_dot, snd, chn, 4);
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, XEN_ARG_1, S_draw_dot, "a number");
@@ -71,7 +71,7 @@ static XEN g_draw_dot(XEN x0, XEN y0, XEN size, XEN snd, XEN chn, XEN ax)
 
 static XEN g_fill_rectangle(XEN x0, XEN y0, XEN width, XEN height, XEN snd, XEN chn, XEN ax)
 {
-  #define H_fill_rectangle "(" S_fill_rectangle " x0 y0 width height snd chn ax) draws a filled rectangle"
+  #define H_fill_rectangle "(" S_fill_rectangle " x0 y0 width height (snd #f) (chn #f) (ax #f)): draw a filled rectangle"
 
   ASSERT_CHANNEL(S_fill_rectangle, snd, chn, 5);
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, XEN_ARG_1, S_fill_rectangle, "a number");
@@ -88,7 +88,7 @@ static XEN g_fill_rectangle(XEN x0, XEN y0, XEN width, XEN height, XEN snd, XEN 
 
 static XEN g_draw_string(XEN text, XEN x0, XEN y0, XEN snd, XEN chn, XEN ax)
 {
-  #define H_draw_string "(" S_draw_string " text x0 y0 snd chn ax) draws a string"
+  #define H_draw_string "(" S_draw_string " text x0 y0 (snd #f) (chn #f) (ax #f)): draw a string"
 
   ASSERT_CHANNEL(S_draw_string, snd, chn, 4);
   XEN_ASSERT_TYPE(XEN_STRING_P(text), text, XEN_ARG_1, S_draw_string, "a string");
@@ -132,7 +132,7 @@ static POINT *TO_C_POINTS(XEN pts, const char *caller)
 static XEN g_draw_lines(XEN pts, XEN snd, XEN chn, XEN ax)
 {
   /* pts should be a vector of integers as (x y) pairs */
-  #define H_draw_lines "(" S_draw_lines " lines snd chn ax) draws a vector of lines"
+  #define H_draw_lines "(" S_draw_lines " lines (snd #f) (chn #f) (ax #f)): draw a vector of lines"
 
   POINT *pack_pts;
   axis_context *ax1;
@@ -150,7 +150,7 @@ static XEN g_draw_lines(XEN pts, XEN snd, XEN chn, XEN ax)
 static XEN g_draw_dots(XEN pts, XEN size, XEN snd, XEN chn, XEN ax)
 {
   /* pts should be a vector of integers as (x y) pairs */
-  #define H_draw_dots "(" S_draw_dots " positions dot-size snd chn ax) draws a vector of dots"
+  #define H_draw_dots "(" S_draw_dots " positions dot-size (snd #f) (chn #f) (ax #f)): draw a vector of dots"
  
   POINT *pack_pts;
   axis_context *ax1;
@@ -168,7 +168,7 @@ static XEN g_draw_dots(XEN pts, XEN size, XEN snd, XEN chn, XEN ax)
 
 static XEN g_fill_polygon(XEN pts, XEN snd, XEN chn, XEN ax_id)
 { 
-  #define H_fill_polygon "(" S_fill_polygon " points snd chn ax) draws a filled polygon"
+  #define H_fill_polygon "(" S_fill_polygon " points (snd #f) (chn #f) (ax #f)): draw a filled polygon"
 
   POINT *pack_pts;
   axis_context *ax;
@@ -188,7 +188,8 @@ static XEN g_fill_polygon(XEN pts, XEN snd, XEN chn, XEN ax_id)
 static XEN g_make_bezier(XEN args1)
 {
   #define S_make_bezier "make-bezier"
-  #define H_make_bezier "(" S_make_bezier " x0 y0 x1 y1 x2 y2 x3 y3 n) -> vector of points"
+  #define H_make_bezier "(" S_make_bezier " x0 y0 x1 y1 x2 y2 x3 y3 n): return a vector of points corresponding to the bezier curve \
+defined by the 4 controlling points x0..y3; 'n' is how many points to return"
   /* XDrawBezier from cmn's glfed.c (where it was assuming PostScript coordinates) */
   int ax, ay, bx, by, cx, cy, i;
   float incr, val;
@@ -241,7 +242,7 @@ static XEN g_foreground_color(XEN snd, XEN chn, XEN ax)
 
 static XEN g_set_foreground_color(XEN color, XEN snd, XEN chn, XEN ax)
 {
-  #define H_foreground_color "(" S_foreground_color " snd chn ax) -> current drawing color"
+  #define H_foreground_color "(" S_foreground_color " (snd #f) (chn #f) (ax #f)): current drawing color"
 
   chan_info *cp;
   ASSERT_CHANNEL(S_setB S_foreground_color, snd, chn, 2);
@@ -277,7 +278,7 @@ static XEN g_set_foreground_color_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg
 
 static XEN g_load_font(XEN font)
 {
-  #define H_load_font "(" S_load_font " name) -> load font 'name' and return font-id"
+  #define H_load_font "(" S_load_font " name): load font 'name' and return its font-id"
   XFontStruct *fs = NULL;
   snd_state *ss;
   XEN_ASSERT_TYPE(XEN_STRING_P(font), font, XEN_ONLY_ARG, S_load_font, "a string");
@@ -306,7 +307,7 @@ static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
 
 static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
 {
-  #define H_current_font "(" S_current_font " snd chn ax) -> current font id"
+  #define H_current_font "(" S_current_font " (snd #f) (chn #f) (ax #f)): current font id"
   axis_context *ax;
   chan_info *cp;
   ASSERT_CHANNEL(S_current_font, snd, chn, 1);
@@ -327,7 +328,7 @@ static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
 
 static XEN g_load_font(XEN font)
 {
-  #define H_load_font "(" S_load_font " name) -> load font 'name' and return font-id"
+  #define H_load_font "(" S_load_font " name): load font 'name' and return its font-id"
   PangoFontDescription *fs = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(font), font, XEN_ONLY_ARG, S_load_font, "a string");
   fs = pango_font_description_from_string(XEN_TO_C_STRING(font));
@@ -349,7 +350,7 @@ static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
 
 static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
 {
-  #define H_current_font "(" S_current_font " snd chn ax) -> current font id"
+  #define H_current_font "(" S_current_font " (snd #f) (chn #f) (ax #f)): current font id"
   axis_context *ax;
   ASSERT_CHANNEL(S_current_font, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_3, S_current_font, "an integer");
@@ -378,9 +379,9 @@ static XEN g_set_current_font_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 static XEN g_make_graph_data(XEN snd, XEN chn, XEN edpos, XEN lo, XEN hi)
 {
-  #define H_make_graph_data "(" S_make_graph_data " snd chn edit-pos low high)\n\
-returns either a vct (if the graph has one trace), or a list of two vcts (the two sides of the envelope graph). \
-'edit-position' defaults to the current-edit-position, 'low' defaults to the current window left sample, and \
+  #define H_make_graph_data "(" S_make_graph_data " (snd #f) (chn #f) (edpos #f) (low #f) (high #f)): \
+return either a vct (if the graph has one trace), or a list of two vcts (the two sides of the envelope graph). \
+'edpos' defaults to the current-edit-position, 'low' defaults to the current window left sample, and \
 'high' defaults to the current rightmost sample. (graph-data (make-graph-data)) reimplements the time domain graph."
 
   chan_info *cp;
@@ -396,8 +397,8 @@ returns either a vct (if the graph has one trace), or a list of two vcts (the tw
 
 static XEN g_graph_data(XEN data, XEN snd, XEN chn, XEN ax, XEN lo, XEN hi, XEN style)
 {
-  #define H_graph_data "(" S_graph_data " snd chn context low high graph-style)\n\
-displays data in the time domain graph of snd's channel chn using the graphics context context (normally copy-context), placing the \
+  #define H_graph_data "(" S_graph_data " data (snd #f) (chn #f) (context #f) (low #f) (high #f) (graph-style #f)): \
+display 'data' in the time domain graph of snd's channel chn using the graphics context context (normally copy-context), placing the \
 data in the recipient's graph between points low and high in the drawing mode graphic-style."
 
   chan_info *cp;
@@ -433,7 +434,7 @@ data in the recipient's graph between points low and high in the drawing mode gr
 
 static XEN g_main_widgets(void)
 {
-  #define H_main_widgets "(" S_main_widgets ") -> top level \
+  #define H_main_widgets "(" S_main_widgets "): top level \
 widgets (list (0)main-app (1)main-shell (2)main-pane (3)sound-pane (4)listener-pane or #f (5)notebook-outer-pane or #f)"
   snd_state *ss;
   XEN main_win;
@@ -472,7 +473,7 @@ static void check_dialog_widget_table(void)
 
 static XEN g_dialog_widgets(void)
 {
-  #define H_dialog_widgets "(" S_dialog_widgets ") -> dialogs (each #f if not yet created) (list \
+  #define H_dialog_widgets "(" S_dialog_widgets "): dialog widgets (each #f if not yet created): (list \
 (0)color (1)orientation (2)enved (3)error (4)yes_or_no (5)transform \
 (6)file_open (7)file_save_as (8)view_files (9)raw_data (10)new_file \
 (11)file_mix (12)edit_header (13)find (14)help (15)completion (16)mix_panel \
@@ -498,7 +499,7 @@ void set_dialog_widget(snd_state *ss, int which, widget_t wid)
 
 static XEN g_widget_position(XEN wid)
 {
-  #define H_widget_position "(" S_widget_position " wid) -> '(x y) in pixels"
+  #define H_widget_position "(" S_widget_position " wid): widget's position, (list x y), in pixels"
   widget_t w;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ONLY_ARG, S_widget_position, "a Widget");  
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
@@ -529,7 +530,7 @@ static XEN g_set_widget_position(XEN wid, XEN xy)
 
 static XEN g_widget_size(XEN wid)
 {
-  #define H_widget_size "(" S_widget_size " wid) -> '(width height) in pixels"
+  #define H_widget_size "(" S_widget_size " wid): widget's size, (list width height), in pixels"
   widget_t w;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ONLY_ARG, S_widget_size, "a Widget"); 
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
@@ -560,7 +561,7 @@ static XEN g_set_widget_size(XEN wid, XEN wh)
 
 static XEN g_widget_text(XEN wid)
 {
-  #define H_widget_text "(" S_widget_text " wid) -> text)"
+  #define H_widget_text "(" S_widget_text " wid): widget's text or label"
   widget_t w;
   XEN res = XEN_FALSE;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ARG_1, S_widget_text, "a Widget");
@@ -639,7 +640,7 @@ static XEN g_set_widget_text(XEN wid, XEN text)
 
 static XEN g_recolor_widget(XEN wid, XEN color)
 {
-  #define H_recolor_widget "(" S_recolor_widget " wid color) resets widget color"
+  #define H_recolor_widget "(" S_recolor_widget " wid color): reset widget's color"
   widget_t w;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ARG_1, S_recolor_widget, "a Widget");  
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ARG_2, S_recolor_widget, "a color"); 
@@ -662,7 +663,7 @@ static XEN g_recolor_widget(XEN wid, XEN color)
 
 static XEN g_hide_widget(XEN wid)
 {
-  #define H_hide_widget "(" S_hide_widget " widget) undisplays widget"
+  #define H_hide_widget "(" S_hide_widget " widget): hide or undisplay widget"
   widget_t w;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ONLY_ARG, S_hide_widget, "a Widget");  
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
@@ -682,7 +683,7 @@ static XEN g_hide_widget(XEN wid)
 
 static XEN g_show_widget(XEN wid)
 {
-  #define H_show_widget "(" S_show_widget " widget) displays widget"
+  #define H_show_widget "(" S_show_widget " widget): show or display widget"
   widget_t w;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ONLY_ARG, S_show_widget, "a Widget");  
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
@@ -702,7 +703,7 @@ static XEN g_show_widget(XEN wid)
 
 static XEN g_focus_widget(XEN wid)
 {
-  #define H_focus_widget "(" S_focus_widget " widget) causes widget to receive input ('focus')"
+  #define H_focus_widget "(" S_focus_widget " widget): cause widget to receive input focus"
   widget_t w;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ONLY_ARG, S_focus_widget, "a Widget");
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
@@ -716,7 +717,7 @@ static XEN g_focus_widget(XEN wid)
 
 static XEN g_snd_gcs(void)
 {
-  #define H_snd_gcs "(" S_snd_gcs ") -> list of Snd graphics contexts (basic selected_basic combined \
+  #define H_snd_gcs "(" S_snd_gcs "): a list of Snd graphics contexts (basic selected_basic combined \
 cursor selected_cursor selection selected_selection erase selected_erase mark selected_mark mix \
 selected_mix fltenv_basic fltenv_data)"
 
@@ -894,7 +895,7 @@ void g_init_draw(void)
   XEN_DEFINE_PROCEDURE(S_make_bezier,     g_make_bezier_w, 0, 0, 1,     H_make_bezier);
   XEN_DEFINE_PROCEDURE(S_snd_gcs,         g_snd_gcs_w, 0, 0, 0,         H_snd_gcs);
 
-  #define H_new_widget_hook S_new_widget_hook " (widget) is called each time a dialog or \
+  #define H_new_widget_hook S_new_widget_hook " (widget): called each time a dialog or \
 a new set of channel or sound widgets is created."
 
   XEN_DEFINE_HOOK(new_widget_hook, S_new_widget_hook, 1, H_new_widget_hook);      /* arg = widget */

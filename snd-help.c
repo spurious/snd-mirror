@@ -305,6 +305,8 @@ void news_help(snd_state *ss)
 	    "\nRecent changes include:\n\
 \n\
 17-Mar:  Mac OSX Record implemented.\n\
+         piano.rb, rgb.rb, strad.scm thanks to Michael Scholz.\n\
+         moved contrib/* to the main directory.\n\
 13-Mar:  removed use-sinc-interp.\n\
 12-Mar:  select-mix, clear-audio-inputs and append-to-minibuffer moved to snd6.scm.\n\
 10-Mar:  Ruby-related bugfixes thanks to Michael Scholz.\n\
@@ -313,8 +315,6 @@ void news_help(snd_state *ss)
 3-Mar:   contrib/effects.rb from Michael Scholz.\n\
 1-Mar:   make-power-env and power-env in env.scm.\n\
 28-Feb:  new-effects.scm bugfixes from Michael Scholz.\n\
-21-Feb:  convolve-arrays renamed vct-convolve!.\n\
-20-Feb:  removed transform-samples and region-samples.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -2172,11 +2172,11 @@ char *output_comment(file_info *hdr)
 
 XEN g_snd_help(XEN text, int widget_wid)
 {
-  #define H_snd_help "(" S_snd_help " arg) returns the documentation associated with its argument. (snd-help make-vct) \
+  #define H_snd_help "(" S_snd_help " (arg 'snd-help)): return the documentation associated with its argument. (snd-help 'make-vct) \
 for example, prints out a brief description of make-vct. \
 The argument can be a string, a symbol, or the object itself.  In some cases, only the symbol has the documentation. \
-In the help descriptions, '&optional' marks optional arguments, and \
-'&opt-key' marks CLM-style optional keyword arguments.  If you load index.scm \
+In the help descriptions, optional arguments are in parens with the default value as the 2nd entry. \
+a ':' as the start of the argument name marks a CLM-style optional keyword arguments.  If you load index.scm \
 the functions html and ? can be used in place of help to go to the HTML description, \
 and the location of the associated C code will be displayed, if it can be found. \
 If help-hook is not empty, it is invoked with the subject and the snd-help result \
@@ -2259,7 +2259,7 @@ void set_html_dir(snd_state *ss, char *new_dir)
 #if HAVE_HTML && (!USE_NO_GUI)
 static XEN g_html_dir(void) 
 {
-  #define H_html_dir "(" S_html_dir ") -> location of Snd documentation"
+  #define H_html_dir "(" S_html_dir "): location of Snd documentation"
   return(C_TO_XEN_STRING(html_dir(get_global_state())));
 }
 
@@ -2290,12 +2290,12 @@ void g_init_help(void)
 {
   XEN_DEFINE_PROCEDURE(S_snd_help, g_listener_help_w, 0, 1, 0, H_snd_help);
 
-  #define H_help_hook S_help_hook "(subject help-string) is called from snd-help.  If \
+  #define H_help_hook S_help_hook "(subject help-string): called from snd-help.  If \
 if returns a string, it replaces 'help-string' (the default help)"
 
   XEN_DEFINE_HOOK(help_hook, S_help_hook, 2, H_help_hook);    /* args = subject help-string */
 
-  #define H_output_comment_hook S_output_comment_hook " (str) is called in Save-As dialog, passed current sound's comment, if any. \
+  #define H_output_comment_hook S_output_comment_hook " (str): called in Save-As dialog, passed current sound's comment, if any. \
 If more than one hook function, results are concatenated. If none, the current comment is used.\n\
   (add-hook! output-comment-hook\n\
     (lambda (str)\n\

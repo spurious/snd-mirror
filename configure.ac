@@ -14,7 +14,7 @@ audio_system="unknown"
 MAKE_TARGET="snd"
 
 PACKAGE=snd
-VERSION=6.6
+VERSION=6.7
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
 AC_SUBST(PACKAGE)
@@ -1034,6 +1034,8 @@ fi
 # look for sndlib-config, check mus_sample_bits against current choice [with-float-sample, with-sample-width]
 # check against needed version (17.2 for now -- need c_vct_copy in vct.c)
 # set SNDLIB_FILES and SNDLIB_LIB
+
+# TODO: make SNDLIB_CONFIG settable by caller (or add SNDLIB_CONFIG_path as in guile case above)
 
 SNDLIB_FILES="SNDLIB_O_FILES"
 SNDLIB_LIB=""

@@ -9,7 +9,7 @@ static gint timed_eval(gpointer in_code)
 
 static XEN g_in(XEN ms, XEN code)
 {
-  #define H_in "(" S_in " msecs thunk) invokes thunk in msecs milliseconds"
+  #define H_in "(" S_in " msecs thunk): invoke thunk in msecs milliseconds"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(ms), ms, XEN_ARG_1, S_in, "a number");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code), code, XEN_ARG_2, S_in, "a procedure");
   if (XEN_REQUIRED_ARGS(code) == 0)
@@ -24,7 +24,7 @@ static XEN g_in(XEN ms, XEN code)
 
 static XEN g_color2list(XEN obj)
 {
-  #define H_color2list "(" S_color2list " obj) -> color rgb values as a list of floats"
+  #define H_color2list "(" S_color2list " obj): 'obj' rgb values as a list of floats"
   GdkColor *v;
   XEN_ASSERT_TYPE(XEN_PIXEL_P(obj), obj, XEN_ONLY_ARG, S_color2list, "a color"); 
   v = XEN_UNWRAP_PIXEL(obj);
@@ -36,7 +36,7 @@ static XEN g_color2list(XEN obj)
 
 static XEN g_make_snd_color(XEN r, XEN g, XEN b)
 {
-  #define H_make_color "(" S_make_color " r g b) -> a color with the indicated rgb values"
+  #define H_make_color "(" S_make_color " r g b): return a color object with the indicated rgb values"
   GdkColor gcolor;
   GdkColor *ccolor;
   Float rf, gf, bf;
@@ -114,7 +114,7 @@ void color_chan_components(color_t color, int which_component)
 
 static XEN g_graph_cursor(void)
 {
-  #define H_graph_cursor "(" S_graph_cursor ") -> current graph cursor shape"
+  #define H_graph_cursor "(" S_graph_cursor "): current graph cursor shape"
   return(C_TO_SMALL_XEN_INT(in_graph_cursor(get_global_state())));
 }
 

@@ -3,7 +3,7 @@
 
 (use-modules (ice-9 format))
 
-;;;   for the Ruby version, see contrib/bess.rb by Michael Scholz
+;;;   for the Ruby version, see bess.rb by Michael Scholz
 
 ;;; load sndlib and xmlib
 (let ((sndlib (dynamic-link "sndlib.so")))

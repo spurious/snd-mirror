@@ -260,7 +260,7 @@ static void loadLADSPA() {
     {
       pcLADSPAPath = getenv("LADSPA_PATH");
       if (!pcLADSPAPath) {
-	snd_warning(_("Warning: You have not set " S_ladspa_dir " or the environment variable LADSPA_PATH."));
+	snd_warning(_("Warning: You have not set ladspa-dir or the environment variable LADSPA_PATH."));
 	return;
       }
     }
@@ -298,7 +298,7 @@ static void loadLADSPA() {
 
 static XEN g_init_ladspa() {
 
-#define H_init_ladspa "(" S_init_ladspa ") reinitialises LADSPA. This is not \
+#define H_init_ladspa "(" S_init_ladspa "): reinitialise LADSPA. This is not \
 normally necessary as LADSPA automatically initialises itself, however \
 it can be useful when the plugins on the system have changed."
 
@@ -316,7 +316,7 @@ it can be useful when the plugins on the system have changed."
 
 static XEN g_list_ladspa() {
 
-#define H_list_ladspa "(" S_list_ladspa ") returns a list of lists containing \
+#define H_list_ladspa "(" S_list_ladspa "): return a list of lists containing \
 information of the LADSPA plugins currently available. For each plugin a \
 list containing the plugin-file and plugin-label is included."
 
@@ -347,7 +347,7 @@ list containing the plugin-file and plugin-label is included."
 static XEN g_analyse_ladspa(XEN ladspa_plugin_filename,
 			    XEN ladspa_plugin_label) {
 
-#define H_analyse_ladspa "(" S_analyse_ladspa " library plugin) returns a list of information about \
+#define H_analyse_ladspa "(" S_analyse_ladspa " library plugin): return a list of information about \
 a LADSPA plugin. The plugin is identified by library and plugin. \
 The items are: plugin-name, plugin-maker, \
 plugin-copyright, plugin-parameter-list. The plugin-port-list contains a \
@@ -436,7 +436,7 @@ static XEN g_apply_ladspa(XEN reader,
 			  XEN samples,
 			  XEN origin)
 {
-#define H_apply_ladspa "(" S_apply_ladspa " reader (list library plugin pars) dur edname) applies a LADSPA plugin to process a \
+#define H_apply_ladspa "(" S_apply_ladspa " reader (list library plugin pars) dur origin): apply a LADSPA plugin to process a \
 sound. The parameters are soundfile-reader, a ladspa-plugin-configuration, \
 the number of samples to process, and an `origin' for edit lists. The \
 ladspa-plugin-configuration is a list containing the plugin-file and \

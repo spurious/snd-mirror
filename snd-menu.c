@@ -571,7 +571,7 @@ static void set_save_state_file(snd_state *ss, char *name)
 
 static XEN g_set_save_state_file(XEN val) 
 {
-  #define H_save_state_file "(" S_save_state_file ") -> name of saved state file (\"saved-snd." XEN_FILE_EXTENSION "\")"
+  #define H_save_state_file "(" S_save_state_file "): the name of the saved state file (\"saved-snd." XEN_FILE_EXTENSION "\")"
   snd_state *ss;
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_save_state_file, "a string"); 
   ss = get_global_state();
@@ -624,7 +624,7 @@ void unprotect_callback(int slot)
 
 static XEN gl_add_to_main_menu(XEN label, XEN callback)
 {
-  #define H_add_to_main_menu "(" S_add_to_main_menu " label &optional callback) adds label to the main (top-level) menu, returning its index"
+  #define H_add_to_main_menu "(" S_add_to_main_menu " label (callback #f)): adds label to the main (top-level) menu, returning its index"
   int val = -1, slot = -1;
   char *err;
   XEN errm;
@@ -650,8 +650,8 @@ static XEN gl_add_to_main_menu(XEN label, XEN callback)
 
 static XEN gl_add_to_menu(XEN menu, XEN label, XEN callback, XEN gpos)
 {
-  #define H_add_to_menu "(" S_add_to_menu " menu label func position) adds label to menu invoking func when activated \
-menu is the index returned by add-to-main-menu, func should be a function of no arguments"
+  #define H_add_to_menu "(" S_add_to_menu " menu label func (position #f): adds label to menu (a main menu index), invokes \
+func (a function of no args) when the new menu is activated."
 
   int err = 0, slot = -1, m, position = -1;
   char *errmsg = NULL;
@@ -695,7 +695,7 @@ void g_snd_callback(int callb)
 
 static XEN gl_remove_from_menu(XEN menu, XEN label)
 {
-  #define H_remove_from_menu "(" S_remove_from_menu " menu label) removes menu item label from menu"
+  #define H_remove_from_menu "(" S_remove_from_menu " menu label): removes menu item label from menu"
   int val, m;
   XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_2, S_remove_from_menu, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, XEN_ARG_1, S_remove_from_menu, "an integer");
@@ -709,7 +709,7 @@ static XEN gl_remove_from_menu(XEN menu, XEN label)
 
 static XEN gl_change_menu_label(XEN menu, XEN old_label, XEN new_label)
 {
-  #define H_change_menu_label "(" S_change_menu_label " menu old-label new-label) changes menu's label"
+  #define H_change_menu_label "(" S_change_menu_label " menu old-label new-label): changes menu's label"
   int val, m;
   XEN_ASSERT_TYPE(XEN_STRING_P(old_label), old_label, XEN_ARG_2, S_change_menu_label, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(new_label), new_label, XEN_ARG_3, S_change_menu_label, "a string");
@@ -725,7 +725,7 @@ static XEN gl_change_menu_label(XEN menu, XEN old_label, XEN new_label)
 
 static XEN gl_menu_sensitive(XEN menu, XEN label)
 {
-  #define H_menu_sensitive "(" S_menu_sensitive " menu label) reflects whether item label in menu is sensitive"
+  #define H_menu_sensitive "(" S_menu_sensitive " menu label): #t if item label in menu is sensitive"
   int val, m;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, XEN_ARG_1, S_setB S_menu_sensitive, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_2, S_setB S_menu_sensitive, "a string");
@@ -754,7 +754,7 @@ static XEN gl_set_menu_sensitive(XEN menu, XEN label, XEN on)
 
 static XEN g_main_menu(XEN which)
 {
-  #define H_main_menu "(" S_main_menu " menu) returns the top-level menu widget referred to by menu"
+  #define H_main_menu "(" S_main_menu " menu): the top-level menu widget referred to by menu"
   int which_menu;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(which), which, XEN_ONLY_ARG, S_main_menu, "an integer");
   which_menu = XEN_TO_C_INT(which);
@@ -790,7 +790,7 @@ XEN_NARGIFY_1(g_main_menu_w, g_main_menu)
 
 void g_init_menu(void)
 {
-  #define H_output_name_hook S_output_name_hook " () is called from the File:New dialog"
+  #define H_output_name_hook S_output_name_hook " (): called from the File:New dialog"
   XEN_DEFINE_HOOK(output_name_hook, S_output_name_hook, 0, H_output_name_hook);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_save_state_file, g_save_state_file_w, H_save_state_file,

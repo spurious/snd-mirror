@@ -8978,7 +8978,7 @@ vct-map! provides."
 
 static XEN g_vct_map(XEN proc_and_code, XEN arglist)
 {
-  #define H_vct_map "(" S_vct_map " thunk v ...) calls 'thunk' which should return a frame; the frame result \
+  #define H_vct_map "(" S_vct_map " thunk v ...): call 'thunk' which should return a frame; the frame result \
 is then parcelled out to the vcts passed as the trailing arguments.  This is intended for use with locsig \
 in multi-channel situations where you want the optimization that vct-map! provides."
   int i, j, len, min_len = 0;
@@ -9060,7 +9060,7 @@ in multi-channel situations where you want the optimization that vct-map! provid
 static XEN g_optimization(void) {return(C_TO_XEN_INT(optimization(get_global_state())));}
 static XEN g_set_optimization(XEN val) 
 {
-  #define H_optimization "(" S_optimization ") is the current 'run' optimization level (default 0 = off)"
+  #define H_optimization "(" S_optimization "): the current 'run' optimization level (default 0 = off, max is 6)"
   snd_state *ss;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set! " S_optimization, "an integer");
@@ -9071,8 +9071,8 @@ static XEN g_set_optimization(XEN val)
 #if WITH_RUN
 static XEN g_run(XEN proc_and_code)
 {
-  #define H_run "(" S_run " thunk) tries to optimize the procedure passed as its argument, \
-then evaluates it; if the optimizer can't handle something in the procedure, it is passed \
+  #define H_run "(" S_run " thunk): try to optimize the procedure passed as its argument, \
+then evaluate it; if the optimizer can't handle something in the procedure, it is passed \
 to Guile and is equivalent to (thunk)."
 
   XEN code, result = XEN_FALSE;
@@ -9573,8 +9573,8 @@ void g_init_run(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_optimization, g_optimization_w, H_optimization,
 				   S_setB S_optimization, g_set_optimization_w,  0, 0, 1, 0);
 
-  #define H_optimization_hook S_optimization_hook " (msg) is called if the run macro encountered \
-something it couldn't optimize.  'msg' is a string description of the offending form:\n\
+  #define H_optimization_hook S_optimization_hook " (msg): called if the run macro encounters \
+something it can't optimize.  'msg' is a string description of the offending form:\n\
   (add-hook! optimization-hook (lambda (msg) (snd-print msg)))\n\
 You can often slightly rewrite the form to make run happy."
 

@@ -136,7 +136,7 @@ be of interest: sndplay, sndrecord, sndinfo, sndsine, and audinfo:
 The documentation is in snd.html, extsnd.html, grfsnd.html, sndscm.html,
 sndlib.html, and clm.html.  There's also a fancier wrapper for the
 documentation: snd1.html.  A brief change log is in HISTORY.Snd.
-Dave Phillips has written a tutorial: see contrib/tutorial.
+Dave Phillips has written a tutorial: see the tutorial directory.
 
 
 The mailing list for Snd is the same as that for Common Music:
@@ -168,7 +168,7 @@ Steven Schultz provided the BSD port.
 Ludger Brummer and Charles Nichols provided the Mac-OSX port.
 Dave Phillips provided the tutorial, effects.scm, and many other files.
 Michael Scholz provided the German translation and much of the Ruby code.
-The contrib directory has contributions from 
+Plus many other contributions from
   Dave Phillips, 
   Fernando Lopez-Lezcano, 
   Tom Roth,

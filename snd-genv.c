@@ -1399,7 +1399,7 @@ static int find_named_env(XEN name)
 
 static XEN g_enved_active_env(void)
 {
-  #define H_enved_active_env "(" S_enved_active_env ") -> current envelope editor env"
+  #define H_enved_active_env "(" S_enved_active_env "): current envelope editor displayed (active) envelope"
   return(env_to_xen(active_env));
 }
 
@@ -1417,7 +1417,7 @@ static XEN g_set_enved_active_env(XEN e)
 
 static XEN g_enved_selected_env(void)
 {
-  #define H_enved_selected_env "(" S_enved_selected_env ") -> current envelope editor selected env"
+  #define H_enved_selected_env "(" S_enved_selected_env "): current envelope editor selected envelope"
   return(env_to_xen(selected_env));
 }
 
@@ -1443,7 +1443,7 @@ static XEN g_set_enved_selected_env(XEN name)
 
 static XEN g_enved_filter(void)
 {
-  #define H_enved_filter "(" S_enved_filter ") -> FIR/FFT filter type choice (#t: FIR)"
+  #define H_enved_filter "(" S_enved_filter "): envelope editor FIR/FFT filter choice (#t: FIR)"
   return(C_TO_XEN_BOOLEAN(FIR_p));
 }
 

@@ -1058,7 +1058,7 @@ XEN_NARGIFY_0(g_snd_glx_context_w, g_snd_glx_context)
 
 void g_init_gxmain(void)
 {
-  #define H_property_changed_hook S_property_changed_hook "(command) is called upon receipt of a SND_COMMAND"
+  #define H_property_changed_hook S_property_changed_hook "(command): called upon receipt of a change in SND_COMMAND (an X window property)"
   XEN_DEFINE_HOOK(property_changed_hook, S_property_changed_hook, 1, H_property_changed_hook);
 
 #if HAVE_GL

@@ -680,28 +680,28 @@ char *mus_midi_describe(void) {return(NULL);}            /* result should be fre
 
 static XEN g_mus_midi_open_read(XEN name)
 {
-  #define H_mus_midi_open_read "(" S_mus_midi_open_read " name) opens midi input port, returns int id"
+  #define H_mus_midi_open_read "(" S_mus_midi_open_read " name): opens midi input port, returns int id"
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_mus_midi_open_read, "a string");
   return(C_TO_XEN_INT(mus_midi_open_read(XEN_TO_C_STRING(name))));
 }
 
 static XEN g_mus_midi_open_write(XEN name)
 {
-  #define H_mus_midi_open_write "(" S_mus_midi_open_write " name) opens midi output port, returns int id"
+  #define H_mus_midi_open_write "(" S_mus_midi_open_write " name): opens midi output port, returns int id"
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_mus_midi_open_write, "a string");
   return(C_TO_XEN_INT(mus_midi_open_write(XEN_TO_C_STRING(name))));
 }
 
 static XEN g_mus_midi_close(XEN line)
 {
-  #define H_mus_midi_close "(" S_mus_midi_close " line) closes midi port"
+  #define H_mus_midi_close "(" S_mus_midi_close " line): closes midi port"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(line), line, XEN_ONLY_ARG, S_mus_midi_close, "an integer");
   return(C_TO_XEN_INT(mus_midi_close(XEN_TO_C_INT(line))));
 }
 
 static XEN g_mus_midi_read(XEN line, XEN bytes) /* returns list of midi bytes */
 {
-  #define H_mus_midi_read "(" S_mus_midi_read " line bytes) reads bytes from midi port, returns list"
+  #define H_mus_midi_read "(" S_mus_midi_read " line bytes): reads bytes from midi port, returns list"
   int i, len, err;
   unsigned char *buf;
   XEN lst = XEN_EMPTY_LIST;
@@ -723,7 +723,7 @@ static XEN g_mus_midi_read(XEN line, XEN bytes) /* returns list of midi bytes */
 
 static XEN g_mus_midi_write(XEN line, XEN buffer)
 {
-  #define H_mus_midi_write "(" S_mus_midi_write " line byte-list) sends byte-list to midi port"
+  #define H_mus_midi_write "(" S_mus_midi_write " line byte-list): sends byte-list to midi port"
   int i, len, err;
   unsigned char *buf;
   XEN lst;
@@ -743,14 +743,14 @@ static XEN g_mus_midi_write(XEN line, XEN buffer)
 static XEN g_mus_midi_device_name(XEN dev)
 {
   /* sndlib style sys|dev packing, dev optional */
-  #define H_mus_midi_device_name "(" S_mus_midi_device_name " &optional sys-dev) returns a name suitable for " S_mus_midi_open_read " and write"
+  #define H_mus_midi_device_name "(" S_mus_midi_device_name " (sys-dev 0)): returns a name suitable for " S_mus_midi_open_read " and write"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(dev), dev, XEN_ONLY_ARG, S_mus_midi_device_name, "and integer");
   return(C_TO_XEN_STRING(mus_midi_device_name(XEN_TO_C_INT_OR_ELSE(dev, 0))));
 }
 
 static XEN g_mus_midi_describe(void)
 {
-  #define H_mus_midi_describe "(" S_mus_midi_describe ") returns a description of the midi hardware"
+  #define H_mus_midi_describe "(" S_mus_midi_describe "): returns a description of the midi hardware"
   char *str;
   XEN res = XEN_FALSE;
   str = mus_midi_describe();

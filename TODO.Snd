@@ -19,7 +19,7 @@ dB display in VU meters (in the record dialog -- the dB value is ready
   background (perhaps from OpenGL?).
 
 dlocsig from CLM + a path envelope editor dialog
-maxf.ins and strad.ins -> scm
+maxf.ins -> scm
 
 A "master volume" control in the recorder.
 
@@ -37,11 +37,11 @@ In snd-test.scm, the gtk (xg) section needs to be completed.
 A jack connection (the Linux Jack library).
 
 Gtk versions of bess.scm and Dave Phillips' extensions
-    contrib/dlp/fft-menu.scm
-    contrib/dlp/misc.scm
-    contrib/dlp/plugins-menu.scm
-    contrib/dlp/new-buttons.scm
-    contrib/dlp/marks-menu.scm
+    dlp/fft-menu.scm
+    dlp/misc.scm
+    dlp/plugins-menu.scm
+    dlp/new-buttons.scm
+    dlp/marks-menu.scm
 Both versions could be rewritten to take advantage of the optimizer.
 
 A nice user-interface to the track mechanism, perhaps as an

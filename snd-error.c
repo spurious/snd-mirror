@@ -119,7 +119,7 @@ void snd_error(char *format, ...)
 
 static XEN g_snd_error(XEN msg)
 {
-  #define H_snd_error "(" S_snd_error " str) reports error message str"
+  #define H_snd_error "(" S_snd_error " str): reports error message str (normally in the error dialog)"
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ONLY_ARG, S_snd_error, "a string");
   direct_snd_error_call = TRUE;
   snd_error(XEN_TO_C_STRING(msg));
@@ -129,7 +129,7 @@ static XEN g_snd_error(XEN msg)
   
 static XEN g_snd_warning(XEN msg)
 {
-  #define H_snd_warning "(" S_snd_warning " str) reports warning message str"
+  #define H_snd_warning "(" S_snd_warning " str): reports warning message str (normally in the minibuffer)"
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ONLY_ARG, S_snd_warning, "a string");
   snd_warning(XEN_TO_C_STRING(msg));
   return(msg);
@@ -148,12 +148,12 @@ void g_init_errors(void)
   XEN_DEFINE_PROCEDURE(S_snd_error, g_snd_error_w, 1, 0, 0, H_snd_error);
   XEN_DEFINE_PROCEDURE(S_snd_warning, g_snd_warning_w, 1, 0, 0, H_snd_warning);
 
-  #define H_snd_error_hook S_snd_error_hook " (error-message) is called upon snd_error. \
+  #define H_snd_error_hook S_snd_error_hook " (error-message): called upon snd_error. \
 If it returns #t, Snd flushes the error (it assumes you've reported it via the hook:\n\
   (add-hook! snd-error-hook\n\
     (lambda (msg) (play \"bong.snd\") #f))"
 
-  #define H_snd_warning_hook S_snd_warning_hook " (warning-message) is called upon snd_warning. \
+  #define H_snd_warning_hook S_snd_warning_hook " (warning-message): called upon snd_warning. \
 If it returns #t, Snd flushes the warning (it assumes you've reported it via the hook):\n\
   (define without-warnings\n\
     (lambda (thunk)\n\

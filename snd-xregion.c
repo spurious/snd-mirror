@@ -559,7 +559,7 @@ static regrow *region_row(int n)
 
 static XEN g_region_dialog(void) 
 {
-  #define H_region_dialog "(" S_region_dialog ") starts the region dialog"
+  #define H_region_dialog "(" S_region_dialog "): start the region dialog"
   snd_state *ss;
   ss = get_global_state();
   if (snd_regions() > 0) 

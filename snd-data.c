@@ -924,10 +924,9 @@ static XEN g_display_info(void)
 
 void g_init_data(void)
 {
-  #define H_select_sound_hook S_select_sound_hook " is called whenever a sound is selected. \
-Its argument is the sound index."
+  #define H_select_sound_hook S_select_sound_hook " (snd): called whenever a sound is selected."
 
-  #define H_select_channel_hook S_select_channel_hook " is called whenever a channel is selected. \
+  #define H_select_channel_hook S_select_channel_hook "(snd chn): called whenever a channel is selected. \
 Its arguments are the sound index and the channel number."
 
   XEN_DEFINE_HOOK(select_sound_hook, S_select_sound_hook, 1, H_select_sound_hook);       /* arg = sound index */

@@ -1529,6 +1529,7 @@ static int remove_option(int which_menu, char *label)
 	(strcmp(label, added_options_names[i]) == 0) && 
 	(added_options[i]))
       {
+	unprotect_callback(added_options_callb[i]);
 	gtk_widget_hide(added_options[i]); /* destroy here causes segfault in gtk2? */
 	added_options[i] = NULL;
 	added_options_menus[i] = -1;
@@ -1837,7 +1838,7 @@ void popup_menu_from(GtkWidget *w, GdkEventButton *ev, gpointer data, int snd, i
 
 static XEN g_menu_widgets(void)
 {
-  #define H_menu_widgets "(" S_menu_widgets ") returns list of top level menu widgets ((0)main (1)file (2)edit (3)view (4)options (5)help)"
+  #define H_menu_widgets "(" S_menu_widgets "): a list of the top level menu widgets: ((0)main (1)file (2)edit (3)view (4)options (5)help)"
   return(XEN_CONS(XEN_WRAP_WIDGET(mw[menu_menu]),
 	  XEN_CONS(XEN_WRAP_WIDGET(mw[file_menu]),
            XEN_CONS(XEN_WRAP_WIDGET(mw[edit_menu]),
@@ -1855,9 +1856,9 @@ XEN_NARGIFY_0(g_menu_widgets_w, g_menu_widgets)
 
 void g_init_gxmenu(void)
 {
-  #define H_menu_hook S_menu_hook " (name option) is called each time a menu item is \
+  #define H_menu_hook S_menu_hook " (name option): called each time a menu item is \
 selected; its entries should be functions of two arguments, the top menu \
-name and the option selected (both as strings), and should return #f if it \
+name and the option selected (both as strings), and it should return #f if it \
 wants to override the default menu action:\n\
   (add-hook! menu-hook\n\
     (lambda (name option)\n\
@@ -1868,7 +1869,7 @@ wants to override the default menu action:\n\
           #f)\n\
         #t))) ; #t to make sure other menu items remain active"
 
-  #define H_gtk_popup_hook "gtk-popup-hook (widget event data snd chn) is called upon middle button click. \
+  #define H_gtk_popup_hook "gtk-popup-hook (widget event data snd chn): called upon middle button click. \
 If it returns other than #t, the normal Snd popup menu is posted."
 
   XEN_DEFINE_HOOK(menu_hook, S_menu_hook, 2, H_menu_hook);
