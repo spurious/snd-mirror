@@ -6669,9 +6669,57 @@ argument <i>num-or-env</i> can be either a number or an envelope.  In
 the latter case, <i>base</i> sets the segment base (default is 1.0 = linear).
 A value greater than 1.0 causes the sound to be transposed up.
 A value less than 0.0 causes the sound to be reversed. 
-<br>
+<br><br>
 <i>num-or-env</i> can also be a CLM env generator (its duration should
-be the same as the original sound).
+be the same as the original sound).  The following function can be used to predict
+how long the resultant note will be given an src envelope:
+</td></tr>
+<tr><td></td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+
+;;; find new duration of sound after using env as srate.
+;;; the envelope gives the per-sample increment, so the "tempo"
+;;;   is the inverse of that. To get the total new duration,
+;;;   we need to integrate the inverse envelope, but a straight
+;;;   line in the increment envelope becomes a 1/x curve in the
+;;;   tempo curve, so we use log(x) as integral of 1/x and
+;;;   take into account the local notion of "x".
+
+(define (src-duration e)
+  (let* ((len (length e))
+	 (ex0 (car e))
+	 (ex1 (list-ref e (- len 2)))
+	 (all-x (- ex1 ex0))
+	 (dur 0.0))
+    (do ((i 0 (+ i 2)))
+	((&gt;= i (- len 2)) dur)
+      (let* ((x0 (list-ref e i))
+	     (x1 (list-ref e (+ i 2)))
+	     (xy0 (list-ref e (+ i 1))) ; 1/x x points
+	     (y0 (/ 1.0 xy0))           ; related y value
+	     (xy1 (list-ref e (+ i 3)))
+	     (y1 (/ 1.0 xy1))
+	     (area (if (&lt; (abs (- xy0 xy1)) .0001)
+		       (* y0 (/ (- x1 x0) all-x))
+		       (* (/ (- (log y1) (log y0)) 
+			     (- xy0 xy1)) 
+			  (/ (- x1 x0) all-x)))))
+	(set! dur (+ dur (abs area)))))))
+
+;;; (src-duration '(0 1 1 2)) -&gt; 0.693147180559945
+:;; (src-duration '(0 1 1 .5)) -&gt; 1.38629436111989
+;;; (src-duration '(0 .5 .5 3 .6 1 .7 .1 .8 1.5 1 1)) -&gt; 1.02474349685432
+
+;;; here we're using this in the Snd listener:
+<em class=listener>&gt;</em><em class=typing>(frames)</em>
+<em class=listener>220501</em>
+<em class=listener>&gt;</em><em class=typing>(src-sound '(0 1 1 2))</em> ; should be about .693 * 220500 frames 
+<em class=listener>(0 1 1 2)</em>
+<em class=listener>&gt;</em><em class=typing>(frames)</em>
+<em class=listener>152842</em>
+<em class=listener>&gt;</em><em class=typing>(/ 152842.0 220501)</em>
+<em class=listener>0.693157854159392</em><em class=typing></em>       ; tada!
+</pre></td></tr></table>
 </td></tr>
 <tr><td colspan=2></td></tr>
 

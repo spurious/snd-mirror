@@ -1,3 +1,5 @@
+;;; TODO: all the gtk 2.3 additions
+
 ;;; [] for ref args, @ for ptr args that can be null, # are optional (default #f)
 ;;; || for ref arg list, {} for ref arg int as list len
 ;;; & in struct for settable field

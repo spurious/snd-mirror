@@ -2,18 +2,12 @@
 
 /* MIX FIX:
  * --> add mix/track button to mix-panel to automate track edits (tempo slider), or add new track panel
- * --> if drag track, all drag together (track edits should undo/redo together, even across all outputs?)
  * --> add easy pan choices with linear, sinusoidal, exponential envs
  * --> add easy synchronization across mixes ("snap")
  * --> mix-maxamp, filter-track in mix.scm
  * --> sync multichan mixes should change together in graph
  * track-tempo?
- *
  * copy_mix|track
- * get rid of (most?) multichannel-mix hooks
- * hooks: track_press|drag|release (if mix-track), mix_press|drag|release (mix-track=0)
- *   in mix_panel: each field hookable
- *   in track panel also? 
  * filter_track
  * choice of y-style (i.e. split out tracks vertically -- track all at same height)
  * timing grid
@@ -98,6 +92,9 @@ static void release_dangling_mix_readers(mix_info *md);
 static void set_mix_track(mix_info *md, int trk, bool redisplay);
 static int new_track(void);
 /* static void map_over_track_mixes(int track_id, void (*func)(mix_info *, void *), void *val); */
+static void redisplay_track(int id);
+static void remix_track(int id, void (*func)(mix_info *, void *), void *val);
+static void set_track_position_1(mix_info *md, void *val);
 
 static XEN mix_release_hook;
 static XEN mix_drag_hook;
@@ -181,7 +178,7 @@ static mix_state *make_mix_state(int chans, int edit_ctr, off_t beg, off_t end)
   cs = (mix_state *)CALLOC(1, sizeof(mix_state));
   cs->chans = chans;
   cs->edit_ctr = edit_ctr;
-  /* fprintf(stderr,"make_mix_state set orig to " OFF_TD "\n", beg); */
+  /* fprintf(stderr,"make_mix_state set orig to " OFF_TD " -> " OFF_TD "\n", beg, end); */
   cs->orig = beg;
   cs->beg = beg;
   cs->end = end;
@@ -1353,6 +1350,9 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
   ms = gather_as_built(md, cs); /* copied after mix, so needs to be freed */ /* TODO: this in make_temporary_graph as well, I think */
   cp = md->cp;
   ap = cp->axis;
+  /*
+  fprintf(stderr,"remix %d from " OFF_TD " to " OFF_TD " (" OFF_TD ":" OFF_TD ")\n", md->id, cs->orig, cs->beg, cs->end, cs->len);
+  */
   old_beg = cs->orig;
   old_end = cs->end;
   new_beg = cs->beg;
@@ -2251,10 +2251,11 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, mix_state *cs, bool
 
 /* -------------------------------- moving mix tags -------------------------------- */
 
-typedef struct {int *xs; int orig, x;} track_graph_t;
+typedef struct {int *xs; int orig, x; off_t *origs;} track_graph_t;
 static track_graph_t *track_drag_data;
 static track_graph_t *track_save_graph(mix_info *orig_md);
-static void finish_dragging_track(int track_id, track_graph_t *data);
+static void finish_dragging_track(int track_id, track_graph_t *data, bool remix);
+static track_graph_t *free_track_graph(track_graph_t *ptr);
 static bool mix_dragged = false;
 
 static int clear_mix_tags_1(mix_info *md, void *ignore)
@@ -2306,7 +2307,7 @@ void finish_moving_mix_tag(int mix_tag, int x)
 {
   /* from mouse release after tag drag in snd-chn.c only */
   mix_info *md;
-  mix_state *cs;
+  mix_state *cs = NULL;
   mix_context *ms;
   XEN res = XEN_FALSE;
   if (watch_mix_proc) 
@@ -2316,28 +2317,27 @@ void finish_moving_mix_tag(int mix_tag, int x)
     }
   md = md_from_id(mix_tag);
   mix_dragged = false;
+  if (XEN_HOOKED(mix_release_hook))
+    res = run_progn_hook(mix_release_hook,
+			 XEN_LIST_2(C_TO_XEN_INT(md->id),
+				    C_TO_XEN_OFF_T(cs->beg - cs->orig)),
+			 S_mix_release_hook);
   if (md->track == 0)
     {
-  md->x = x;
-  cs = md->active_mix_state;
-  ms = md->wg;
-  ms->lastpj = 0;
-  if (cs->beg == cs->orig) return;
-  if (XEN_HOOKED(mix_release_hook)) /* TODO: for track case too */
-    {
-      res = run_progn_hook(mix_release_hook,
-			   XEN_LIST_2(C_TO_XEN_INT(md->id),
-				      C_TO_XEN_OFF_T(cs->beg - cs->orig)),
-			   S_mix_release_hook);
+      md->x = x;
+      cs = md->active_mix_state;
+      ms = md->wg;
+      ms->lastpj = 0;
+      if (cs->beg == cs->orig) return;
       reflect_mix_in_mix_panel(md->id);
-    }
-  if (!(XEN_TRUE_P(res)))
-    remix_file(md, "Mix: drag", true);
+      if (!(XEN_TRUE_P(res)))
+	remix_file(md, "Mix: drag", true);
     }
   else
     {
       track_drag_data->x = x;
-      finish_dragging_track(md->track, track_drag_data);
+      finish_dragging_track(md->track, track_drag_data, (!(XEN_TRUE_P(res))));
+      track_drag_data = free_track_graph(track_drag_data);
     }
 }
 
@@ -2414,6 +2414,7 @@ static void move_mix(mix_info *md)
   if (!cp) return;
   ap = cp->axis;
   if (!ap) return;
+  /* fprintf(stderr,"move %d to %d\n", md->id, md->x); */
   x = md->x;
   if ((x > ap->x_axis_x1) || (x < ap->x_axis_x0)) 
     {
@@ -2760,7 +2761,7 @@ static int ripple_mixes_1(mix_info *md, void *ptr)
       ncs = copy_mix_state(cs);
       ncs->edit_ctr = cp->edit_ctr;
       ncs->orig = cs->beg + data->change;
-      /* fprintf(stderr,"ripple set orig to " OFF_TD "\n", ncs->orig); */
+      /* fprintf(stderr,"ripple set %d orig to " OFF_TD "\n", md->id, ncs->orig); */
       ncs->beg = ncs->orig;
       ncs->end = ncs->beg + cs->len - 1;
       if (cp->show_mix_waveforms) erase_mix_waveform(md);
@@ -5238,6 +5239,7 @@ static track_graph_t *track_save_graph(mix_info *orig_md)
   track_graph_t *tg = NULL;
   track_mix_list_t *trk;
   mix_info *md;
+  mix_state *cs;
   chan_info *cp = NULL;
   int i, pts = 0, track_id;
   track_id = orig_md->track;
@@ -5246,9 +5248,12 @@ static track_graph_t *track_save_graph(mix_info *orig_md)
     {
       tg = (track_graph_t *)CALLOC(1, sizeof(track_graph_t));
       tg->xs = (int *)CALLOC(trk->lst_ctr, sizeof(int));
+      tg->origs = (off_t *)CALLOC(trk->lst_ctr, sizeof(off_t));
       for (i = 0; i < trk->lst_ctr; i++)
 	{
 	  md = md_from_id(trk->lst[i]);
+	  cs = md->active_mix_state;
+	  tg->origs[i] = cs->orig;
 	  tg->xs[i] = md->x;
 	  if (md == orig_md) tg->orig = i;
 	  if (cp != md->cp)
@@ -5281,27 +5286,47 @@ static void move_track(int track_id, track_graph_t *data)
   free_track_mix_list(trk);
 }
 
-static void finish_dragging_track(int track_id, track_graph_t *data)
+static void finish_dragging_track(int track_id, track_graph_t *data, bool remix)
 {
   track_mix_list_t *trk;
-  int i, diff;
+  int i;
   mix_info *md;
   mix_context *ms;
+  mix_state *cs;
+  off_t change = 0;
   trk = track_mixes(track_id);
-  diff = data->x - data->xs[data->orig];
   for (i = 0; i < trk->lst_ctr; i++)
     {
       md = md_from_id(trk->lst[i]);
       ms = md->wg;
       ms->lastpj = 0;
       if (i == data->orig)
-	md->x = data->x;
-      else md->x = data->xs[i] + diff;
-      remix_file(md, "Track: drag", false);
+	{
+	  /* TODO: finish drag still broken if drag past end */
+	  md->x = data->x;
+	  move_mix(md);          /* update to last beg */
+	  cs = md->active_mix_state; 
+	  change = cs->beg - cs->orig;
+	}
+      cs = md->active_mix_state;
+      cs->orig = data->origs[i]; /* clear out temp drag-related changes */
+      cs->beg = data->origs[i];
     }
   free_track_mix_list(trk);
+  remix_track(track_id, set_track_position_1, (void *)(&change));
+  /* redisplay_track(track_id); */
 }
 
+static track_graph_t *free_track_graph(track_graph_t *ptr)
+{
+  if (ptr)
+    {
+      if (ptr->origs) FREE(ptr->origs);
+      if (ptr->xs) FREE(ptr->xs);
+      FREE(ptr);
+    }
+  return(NULL);
+}
 
 
 static void record_track_info_given_track(int track_id)
