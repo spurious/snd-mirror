@@ -89,6 +89,11 @@ static SCM send_netscape(SCM cmd)
 
 static void change_property(snd_state *ss, char *winat, char *name, char *command)
 {
+  #define H_change_property "(" S_change_property " version-name command-name command) looks for the \
+X atom 'version-name', and if it is found, sets the property 'command-name' to the string 'command'.\n\
+(change-property \"SND_VERSION\" \"SND_COMMAND\" \"(snd-print (+ 1 2))\"\n\
+for example"
+
   Window window;
   Display *dpy;
   dpy = MAIN_DISPLAY(ss);
@@ -433,7 +438,7 @@ static SCM g_select_item(SCM wid, SCM pos)
 void g_init_gxutils(SCM local_doc)
 {
   DEFINE_PROC("send-netscape", send_netscape, 1, 0, 0, "");
-  DEFINE_PROC(S_change_property, g_change_property, 3, 0, 0, "");
+  DEFINE_PROC(S_change_property, g_change_property, 3, 0, 0, H_change_property);
 #if DEBUGGING
   DEFINE_PROC("key-event", g_key_event, 3, 0, 0, "");
   DEFINE_PROC("click-event", g_click_event, 5, 0, 0, "");

@@ -624,6 +624,7 @@
 #define S_property_changed_hook         "property-changed-hook"
 #define S_protect_region                "protect-region"
 #define S_pushed_button_color           "pushed-button-col" STR_OR
+#define S_read_hook                     "read-hook"
 #define S_read_only                     "read-only"
 #define S_read_peak_env_info_file       "read-peak-env-info-file"
 #define S_recolor_widget                "recol" STR_OR "-widget"

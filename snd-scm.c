@@ -616,7 +616,7 @@ SCM snd_report_result(snd_state *ss, SCM result, char *buf, int check_mini)
 	res = g_c_run_or_hook(print_hook, 
 			      SCM_LIST1(TO_SCM_STRING(str)),
 			      S_print_hook);
-      if (!(STRING_P(res)))
+      if (FALSE_P(res))
 	{
 	  ss->result_printout = MESSAGE_WITH_PROMPT;
 	  snd_append_command(ss, str);
@@ -754,7 +754,7 @@ static SCM g_snd_print(SCM msg)
 {
   #define H_snd_print "(" S_snd_print " str) displays str in the lisp listener window"
   char *str = NULL;
-  state->result_printout = MESSAGE_WITHOUT_PROMPT;
+  state->result_printout = PLAIN_MESSAGE;
   if (STRING_P(msg))
     str = TO_NEW_C_STRING(msg);
   else

@@ -181,6 +181,8 @@ static SCM read_str_wrapper(void *data)
   return(TO_SCM_FORM((char *)data));
 }
 
+static SCM read_hook;
+
 void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
 {
 #if (!USE_NO_GUI)
@@ -195,11 +197,24 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
   start_of_text = current_position;
   end_of_text = current_position;
   last_position = GUI_TEXT_END(w);
+  
+  if (HOOKED(read_hook))
+    {
+      SCM result;
+      str = (char *)CALLOC(last_position - last_prompt + 1, sizeof(char));
+      for (i = last_prompt + 1, j = 0; i < last_position; i++, j++) str[j] = full_str[i];
+      result = g_c_run_or_hook(read_hook, 
+			       SCM_LIST1(TO_SCM_STRING(str)),
+			       S_read_hook);
+      FREE(str);
+      if (TRUE_P(result)) return;
+    }
+
   prompt = listener_prompt(ss);
   /* first look for a form just before the current mouse location,
    *   independent of everything (i.e. user may have made changes
    *   in a form included in a comment, then typed return, expecting
-   *   use to use the new version, but the check_balance procedure
+   *   us to use the new version, but the check_balance procedure
    *   tries to ignore comments).
    */
   str = NULL;
@@ -514,5 +529,9 @@ static SCM g_save_listener(SCM filename)
 void g_init_listener(SCM local_doc)
 {
   DEFINE_PROC(S_save_listener, g_save_listener, 1, 0, 0, H_save_listener);
+
+  read_hook = MAKE_HOOK(S_read_hook, 1, "hook into typed input in listener, hook func gets the typing");
+
 }
 
+/* (add-hook! read-hook (lambda (str) (snd-print (format #f "got ~A" str)) #f)) */

@@ -72,15 +72,13 @@
 ;;; Butterworth filters
 ;;; locsig using fancier placement choice (Michael Edwards)
 ;;; lisp graph with draggable x axis
-;;; describe-hook
 ;;; easily-fooled autocorrelation-based pitch tracker 
-;;; local hook
 ;;; pointer focus within Snd
 ;;; View: Files dialog chooses which sound is displayed
 ;;; "vector synthesis"
 ;;; make-selection
-;;; snd-hooks and reset-all-hooks
 ;;; remove-clicks
+;;; snd-debug
 
 ;;; TODO: split this file into 10 or 20 pieces!
 ;;; TODO: robust pitch tracker
@@ -93,8 +91,6 @@
 ;;; TODO: input from pipe
 ;;; TODO: timed record
 ;;; TODO: notation following location (as in display-current-window-location)
-;;;       we could add a new output type to cmn producing an Snd program
-;;;       or incorporate xcmnw.c into snd, but then need handshakes
 
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
@@ -2984,15 +2980,6 @@
 ;(add-hook! mouse-press-hook mouse-press)
 
 
-;;; -------- describe-hook
-
-(define (describe-hook hook)
-  (for-each 
-    (lambda (n) 
-      (snd-print n))
-    (reverse (hook->list hook))))
-
-
 ;;; -------- easily-fooled autocorrelation-based pitch tracker 
 
 (define spot-freq
@@ -3022,27 +3009,6 @@
 ;(add-hook! graph-hook 
 ;	   (lambda (snd chn y0 y1) 
 ;	     (report-in-minibuffer (format #f "~A" (spot-freq (left-sample))))))
-
-
-;;; -------- local hook
-
-(define (with-local-hook hook local-hook-procs thunk)
-  "evaluate thunk with hook set to local-hook-procs (a list), then restore hook to previous state"
-  (define (list->hook hook lst)
-    (define (list->hook-1 hook l)
-      (if (not (null? l))
-	  (begin
-	    (add-hook! hook (car l))
-	    (list->hook-1 hook (cdr l)))))
-    (reset-hook! hook)
-    (list->hook-1 hook lst)
-    hook)
-
-  (let ((old-hook-procs (hook->list hook)))
-    (list->hook hook local-hook-procs)
-    (let ((result (thunk)))
-      (list->hook hook old-hook-procs)
-      result)))
 
 
 ;;; -------- pointer focus within Snd
@@ -3318,24 +3284,6 @@ read, even if not playing.  'files' is a list of files to be played."
 	   (sounds))))))
 
 
-;;; -------- snd-hooks
-
-(define (snd-hooks)
-  (list after-graph-hook lisp-graph-hook before-transform-hook mix-position-changed-hook stop-playing-channel-hook save-hook mus-error-hook
-	mouse-enter-graph-hook mouse-leave-graph-hook open-raw-sound-hook select-channel-hook after-open-hook close-hook drop-hook
-	just-sounds-hook mark-click-hook mark-drag-hook mix-amp-changed-hook mix-speed-changed-hook name-click-hook open-hook
-	output-comment-hook multichannel-mix-hook play-hook snd-error-hook snd-warning-hook start-hook start-playing-hook stop-playing-hook
-	stop-playing-region-hook mouse-enter-listener-hook mouse-leave-listener-hook property-changed-hook select-sound-hook select-mix-hook
-	print-hook exit-hook output-name-hook during-open-hook transform-hook mouse-enter-label-hook mouse-leave-label-hook initial-graph-hook
-	graph-hook key-press-hook mouse-drag-hook mouse-press-hook mouse-release-hook enved-hook))
-
-(define (reset-all-hooks)
-  (for-each 
-   (lambda (n)
-     (reset-hook! n))
-   (snd-hooks)))
-
-
 ;;; -------- remove-clicks 
 
 (define (find-click loc)
@@ -3350,7 +3298,7 @@ read, even if not playing.  'files' is a list of files to be played."
     (call-with-current-continuation
      (lambda (return)
        (do ((ctr loc (1+ ctr)))
-	   ((= ctr len) #f)
+	   ((or (c-g?) (= ctr len)) #f)
 	 (set! samp0 samp1)
 	 (set! samp1 samp2)
 	 (set! samp2 (next-sample reader))
@@ -3373,3 +3321,69 @@ read, even if not playing.  'files' is a list of files to be played."
 	    (smooth-sound (- click 2) 4)
 	    (remove-click (+ click 2))))))
   (remove-click 0))
+
+
+;;; --------- snd-debug
+;;;
+;;; this redirects the Guile debugger input/output to the Snd listener.
+;;; If you hit an error, type (snd-debug) rather than (debug).
+
+(use-modules (ice-9 debugger))
+
+(define in-debugger #f)
+(define debugger-input "")
+(define debugger-char 0)
+(define debugger-strlen 0)
+
+(add-hook! read-hook
+  (lambda (str)
+    (if in-debugger
+	(begin
+	  (snd-print "\n")
+	  (set! debugger-input (string-append str "\n"))
+	  (set! debugger-char 0)
+	  (set! debugger-strlen (string-length debugger-input))
+	  #t)
+	#f)))
+
+(define (snd-debug)
+  (let ((stdout (current-output-port))
+	(stdin (current-input-port))
+	(snd-out (make-soft-port
+		  (vector
+		   (lambda (c) (snd-print c))
+		   (lambda (s) (snd-print s))
+		   (lambda () #f)
+		   
+		   (lambda ()
+		     (do () ((or (and (>= debugger-char 0)
+				      (< debugger-char debugger-strlen))
+				 (c-g?))))
+		     (let ((ch (string-ref debugger-input debugger-char)))
+		       (set! debugger-char (+ debugger-char 1))
+		       ch))
+	      
+		   (lambda () #f))
+		  "rw")))
+
+    (snd-print "\n")
+    ;; might want to use dynamic-wind here to make sure the ports are reset
+    (set-current-output-port snd-out)
+    (set-current-input-port snd-out)
+    (set! in-debugger #t)
+    (debug)
+    (set-current-output-port stdout)
+    (set-current-input-port stdin)
+    (set! in-debugger #f)))
+
+		 
+
+;;; -------- read-listener-line
+
+(define (read-listener-line prompt)
+  (let ((res #f))
+    (add-hook! read-hook (lambda (str) (set! res str) #t))
+    (snd-print prompt)
+    (do () ((or (c-g?) res)))
+    (reset-hook! read-hook)
+    res))

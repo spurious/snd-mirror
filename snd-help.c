@@ -268,6 +268,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+20-Jun:  read-hook. hooks.scm\n\
 19-Jun:  removed snd-main-shell -- use (cadr (main-widgets)) instead.\n\
          make-pixmap and set-pixmap.\n\
          moved Snd-4 stuff from examp.scm to snd4.scm.\n\

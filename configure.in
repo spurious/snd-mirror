@@ -51,6 +51,7 @@ MAKE_TARGET="snd"
 #   --with-no-gui         make Snd without any graphics support
 #   --with-motif-prefix   set location of Motif (untested as yet)
 #   --with-no-guile       build without Guile (for autotesting sequence)
+#   --with-static-gsl     try to statically load GSL
 #--------------------------------------------------------------------------------
 
 AC_ARG_WITH(esd,[  --with-esd		  use ESD])
@@ -60,6 +61,7 @@ AC_ARG_WITH(gtk,[  --with-gtk		  use Gtk+ to build Snd])
 AC_ARG_WITH(no-gui,[  --with-no-gui  	  make Snd without any graphics support])
 AC_ARG_WITH(no-guile,[  --with-no-guile	  make Snd without any extension language])
 AC_ARG_WITH(doubles,[  --with-doubles	  use doubles throughout])
+AC_ARG_WITH(static-gsl,[  --with-static-gsl	  use libgsl.a to build Snd])
 
 if test "$with_doubles" = yes; then
   AC_DEFINE(Float,double)
@@ -119,16 +121,38 @@ if test "$GSL_CONFIG" = "no" ; then
   AC_MSG_RESULT(no)
 else
   GSL_CFLAGS=`$GSL_CONFIG --cflags`
-  GSL_LIBS=`$GSL_CONFIG --libs`
+  GSL_PREFIX=`$GSL_CONFIG --prefix`
+  if test "$with_static_gsl" = yes ; then
+    AC_CHECK_FILE($GSL_PREFIX/lib/libgsl.a,
+	[GSL_LIBS="$GSL_PREFIX/lib/libgsl.a"],
+	[GSL_LIBS=`$GSL_CONFIG --libs`
+	 with_static_gsl=no
+	 AC_MSG_WARN([can't find libgsl.a])])
+  else
+    GSL_LIBS=`$GSL_CONFIG --libs`
+  fi
   AC_DEFINE(HAVE_GSL)
   gsl_version="`$GSL_CONFIG --version`"
   AC_MSG_RESULT($gsl_version)
   AC_DEFINE_UNQUOTED(GSL_VERSION,"${gsl_version}")
   if test "`$GSL_CONFIG --version`" = "0.6"; then
-    GSL_LIBS="$GSL_LIBS -lgslblasnative"
+    if test "$with_static_gsl" = yes ; then
+      GSL_LIBS="$GSL_LIBS $GSL_PREFIX/lib/libgslblasnative.a"
+    else
+      GSL_LIBS="$GSL_LIBS -lgslblasnative"
+    fi
   fi
   if test "`gsl-config --version`" = "0.7"; then
-    GSL_LIBS="$GSL_LIBS -lgslblas"
+    if test "$with_static_gsl" = yes ; then
+      GSL_LIBS="$GSL_LIBS $GSL_PREFIX/lib/libgslblas.a"
+    else
+      GSL_LIBS="$GSL_LIBS -lgslblas"
+    fi
+  fi
+  if test "`gsl-config --version`" = "0.8"; then
+    if test "$with_static_gsl" = yes ; then
+      GSL_LIBS="$GSL_LIBS $GSL_PREFIX/lib/libgslcblas.a"
+    fi
   fi
   AC_CHECK_LIB(gsl, gsl_dht_new, [AC_DEFINE(HAVE_GSL_DHT_NEW)], , $GSL_LIBS)
 fi

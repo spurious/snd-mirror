@@ -1173,7 +1173,7 @@ static SCM g_regions(void)
   return(result);
 }
 
-static SCM g_make_region (SCM beg, SCM end, SCM snd_n, SCM chn_n)
+static SCM g_make_region(SCM beg, SCM end, SCM snd_n, SCM chn_n)
 {
   #define H_make_region "(" S_make_region " beg end &optional snd chn) makes a new region between beg and end in snd, returning its id"
   chan_info *cp;

@@ -118,7 +118,7 @@
 (define timings (make-vector (+ total-tests 1)))
 
 (snd-display (format #f ";;~A" (snd-version)))
-(define trace-hook (lambda (n)
+(define test-hook (lambda (n)
 		     ;(let ((fd (open-sound-file (format #f "/tmp/test~D.snd" n))))
 		     ;  (close-sound-file fd 0))
 		     (if (and (> n 0) (number? (vector-ref timings (- n 1))))
@@ -172,7 +172,7 @@
 			  (snd-display (format #f ";~A /= ~A (~A)~%"
 					     (car lst) (cadr lst) (caddr lst))))
 		      (test-constants (cdddr lst)))))))
-      (if (procedure? trace-hook) (trace-hook 0))
+      (if (procedure? test-hook) (test-hook 0))
       (test-constants
        (list
 	'enved-amplitude enved-amplitude 0 
@@ -577,7 +577,7 @@
 				  (snd-display (format #f ";~A /= ~A (~A)~%" (car lst) (caddr lst) (cadr lst))))
 			      (snd-display (format #f ";~A /= ~A (~A)~%" (car lst) (caddr lst) (cadr lst)))))
 		      (test-defaults (cdddr lst)))))))
-      (if (procedure? trace-hook) (trace-hook 1))
+      (if (procedure? test-hook) (test-hook 1))
       (test-defaults
        (list
 	'amp-control (without-errors (amp-control)) 'no-such-sound
@@ -796,7 +796,7 @@
 					    (snd-display (format #f ";~A thinks it has loop info: ~A" file lst))))))
 				(snd-display (format #f ";~A missing?" file)))
 			    (test-headers (cdr base-files))))))))
-	  (if (procedure? trace-hook) (trace-hook 2))
+	  (if (procedure? test-hook) (test-hook 2))
 	  (test-headers
 	   (list
 	    (list "8svx-8.snd" 1 22050 1.88766443729401 "SVX8" "signed byte (8 bits)")
@@ -986,7 +986,7 @@
 ;;; ---------------- test 3: can variables be set/reset ----------------
 (if (or full-test (= snd-test 3) (and keep-going (<= snd-test 3)))
     (begin
-      (if (procedure? trace-hook) (trace-hook 3))
+      (if (procedure? test-hook) (test-hook 3))
       (open-sound "oboe.snd")
       (if (file-exists? "funcs.cl") (load "funcs.cl"))
       (let ((td (temp-dir)))
@@ -1338,7 +1338,7 @@
 
 (if (or full-test (= snd-test 4) (and keep-going (<= snd-test 4)))
     (begin
-      (if (procedure? trace-hook) (trace-hook 4))
+      (if (procedure? test-hook) (test-hook 4))
       (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests)) (if (> tests 1) (snd-display (format #f ";test ~D " clmtest)))
     (let ((chns (mus-sound-chans "oboe.snd"))
 	  (dl (mus-sound-data-location "oboe.snd"))
@@ -1837,6 +1837,7 @@
 
 (load "examp.scm")
 (load "snd4.scm")
+(load "hooks.scm")
 
 (define (our-x->position ind x) 
   (let ((ax (axis-info ind)))
@@ -1854,7 +1855,7 @@
 	   (yp (y-position-slider))
 	   (xz (x-zoom-slider))
 	   (yz (y-zoom-slider)))
-      (if (procedure? trace-hook) (trace-hook 5))
+      (if (procedure? test-hook) (test-hook 5))
       (play-and-wait "oboe.snd")
       (play-and-wait "oboe.snd" 12000)
       (play-and-wait "oboe.snd" 12000 15000)
@@ -2526,6 +2527,14 @@
 	(let ((ma (maxamp ind1)))
 	  (convolve-selection-with "pistol.snd" ma)
 	  (if (fneq (maxamp ind1) ma) (snd-display (format #f ";convolve-selection-with 1000: ~A ~A?" ma (maxamp ind1)))))
+	(make-selection 1000 2000 ind1)
+	(let ((id (make-region)))
+	  (if (not (region? id))
+	      (snd-display (format #f ";make-region argless: ~A" id)))
+	  (if (not (= (region-length id) (selection-length)))
+	      (snd-display (format #f ";region/selection-lengths: ~A ~A?" (region-length id) (selection-length id))))
+	  (if (fneq (region-sample 0 id) (sample 1000 ind1))
+	      (snd-display (format #f ";region-sample from make-region: ~A ~A?" (region-sample 0 id) (sample 1000 ind1)))))
 	(close-sound ind1))
 
       (let ((ind1 (open-sound "2.snd")))
@@ -2859,7 +2868,7 @@
 
 (if (or full-test (= snd-test 6) (and keep-going (<= snd-test 6)))
     (begin 
-      (if (procedure? trace-hook) (trace-hook 6))
+      (if (procedure? test-hook) (test-hook 6))
     (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests)) (if (> tests 1) (snd-display (format #f ";test ~D " clmtest)))
     (let ((v0 (make-vct 10))
 	  (v1 (make-vct 10))
@@ -3021,7 +3030,7 @@
 			  (snd-display (format #f ";set-~A /= beige (~A)?~%" name (getfnc))))
 		      (setfnc initval)
 		      (test-color (cdr lst)))))))
-      (if (procedure? trace-hook) (trace-hook 7))
+      (if (procedure? test-hook) (test-hook 7))
       (let* ((c1 (make-color 0 0 1))
 	     (c2 c1)
 	     (c3 (make-color 0 0 1)))
@@ -3117,7 +3126,7 @@
     
 (if (or full-test (= snd-test 8) (and keep-going (<= snd-test 8)))
     (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests))
-      (if (procedure? trace-hook) (trace-hook 8))
+      (if (procedure? test-hook) (test-hook 8))
       (log-mem clmtest)
       (if (> tests 1) (snd-display (format #f ";clm test ~D " clmtest)))
       (set! (mus-srate) 22050)
@@ -4862,7 +4871,9 @@
 	(reverse-sound nind) 
 	(play-and-wait 0 nind)
 	(revert-sound nind)
-	(mix-sound "pistol.snd" 0) 
+	(let ((mid (mix-sound "pistol.snd" 0)))
+	  (if (not (equal? (mix-home mid) (list (selected-sound) 0)))
+	      (snd-display (format #f ";mix-sound mix-home: ~A (~A or ~A 0)" (mix-home mid) (selected-sound) nind))))
 	(hello-dentist 40.0 .1) 
 	(fp 1.0 .3 20) 
 	(play-and-wait 0 nind)
@@ -5021,7 +5032,7 @@
     (do ((test-ctr 0 (1+ test-ctr)))
 	((= test-ctr tests))
       (let ((new-index (new-sound "hiho.wave" mus-next mus-bshort 22050 1)))
-	(if (procedure? trace-hook) (trace-hook 9))
+	(if (procedure? test-hook) (test-hook 9))
 	(log-mem test-ctr)
 	(select-sound new-index)
 	(let ((mix-id (mix "pistol.snd" 100)))
@@ -5293,7 +5304,7 @@
 	    (ind1 (view-sound "pistol.snd"))
 	    (v0 (make-vct 100))
 	    (vc (make-vector 10)))
-	(if (procedure? trace-hook) (trace-hook 10))
+	(if (procedure? test-hook) (test-hook 10))
 	(log-mem test-ctr)
 	(vct-fill! v0 .1)
 	(vector-set! vc 0 (mix-vct v0 0 ind0))
@@ -5523,7 +5534,7 @@
 (if (and (not (provided? 'snd-nogui))
 	 (or full-test (= snd-test 11) (and keep-going (<= snd-test 11))))
     (begin
-      (if (procedure? trace-hook) (trace-hook 11))
+      (if (procedure? test-hook) (test-hook 11))
      (without-errors (peaks))
      (mus-audio-describe) 
      (define-envelope "env1" '(0 1 1 0)) 
@@ -5702,7 +5713,7 @@
     (if sf-dir-files
 	(let ((open-files '())
 	      (open-ctr 0))
-	  (if (procedure? trace-hook) (trace-hook 12))
+	  (if (procedure? test-hook) (test-hook 12))
 	  (add-sound-file-extension "wave")
 	  (do ()
 	      ((= open-ctr 32))
@@ -5947,6 +5958,7 @@
   (add-hook! select-sound-hook arg1) (carg1 select-sound-hook)
   (add-hook! select-mix-hook arg1) (carg1 select-mix-hook)
   (add-hook! print-hook arg1) (carg1 print-hook)
+  (add-hook! read-hook arg1) (carg1 read-hook)
 
   (add-hook! exit-hook arg0) (carg0 exit-hook)
   (add-hook! output-name-hook arg0) (carg0 output-name-hook)
@@ -5973,7 +5985,7 @@
 (if (or full-test (= snd-test 13) (and keep-going (<= snd-test 13)))
     (let ((fd (view-sound "oboe.snd"))
 	  (mb (add-to-main-menu "clm")))
-      (if (procedure? trace-hook) (trace-hook 13))
+      (if (procedure? test-hook) (test-hook 13))
       (set! (cursor fd) 2000)
       (set! (transform-graph-type) graph-transform-once)
       (set! (graph-transform? fd) #t)
@@ -6562,6 +6574,21 @@
 		(make-region beg (1- len) snd)
 		(make-region 0 (1- len) snd))))))
 
+(define sfile 0)
+
+(define* (clone-sound-as new-name #:optional snd)
+  (let* ((tmpf (snd-tempnam))
+	 (scm (string-append (substring tmpf 0 (- (string-length tmpf) 3)) "scm"))
+	 (oldsnd (or snd (selected-sound))))
+    (if (not (string? (save-dir))) (set! (save-dir) "/tmp"))
+    (save-edit-history scm oldsnd)
+    (copy-file (file-name oldsnd) new-name)
+    (set! sfile (open-sound new-name))
+    (load scm)
+    (delete-file scm)
+    sfile))
+
+
 ;;; ---------------- test 14: all together now ----------------
 
 (if (or full-test (= snd-test 14) (and keep-going (<= snd-test 14)))
@@ -6572,7 +6599,7 @@
 	   (open-files '())
 	   (s8-snd (if (file-exists? "s8.snd") "s8.snd" "oboe.snd"))
 	   (open-ctr 0))
-      (if (procedure? trace-hook) (trace-hook 14))
+      (if (procedure? test-hook) (test-hook 14))
       (do ((i 0 (1+ i)))
 	  ((= i cur-dir-len))
 	(let* ((name (vector-ref cur-dir-files i))
@@ -7020,6 +7047,22 @@
 	      (if (fneq (expand-control-hop cfd2) .025) (snd-display (format #f ";set-expand-control-hop .025 #t -> ~A?" (expand-control-hop cfd2))))
 	      (set! (expand-control-ramp #t) .025)
 	      (if (fneq (expand-control-ramp cfd2) .025) (snd-display (format #f ";set-expand-control-ramp .025 #t -> ~A?" (expand-control-ramp cfd2))))
+	      (let ((clone (clone-sound-as "/tmp/cloned.snd" cfd2)))
+		(if (not (= (frames cfd2) (frames clone)))
+		    (snd-display (format #f ";clone frames: ~A ~A" (frames cfd2) (frames clone))))
+		(if (not (equal? (edits cfd2) (edits clone)))
+		    (snd-display (format #f ";clone edits: ~A ~A" (edits cfd2) (edits clone))))
+		(let ((eds (apply + (edits))))
+		  (call-with-current-continuation
+		   (lambda (break)
+		     (do ((i 0 (1+ i)))
+			 ((= i eds))
+		       (if (not (equal? (edit-fragment i cfd2) (edit-fragment i clone)))
+			   (begin
+			     (snd-display (format #f ";clone fragment[~A]: ~A ~A?" i (edit-fragment i cfd2) (edit-fragment i clone)))
+			     (break)))))))
+		(close-sound clone))
+	      (delete-file "/tmp/cloned.snd")
 	      (close-sound cfd2)
 	      (close-sound cfd)
 	      (set! (use-sinc-interp) #f)))
@@ -7460,7 +7503,7 @@
 		(add-player player)))
 	    (start-playing chans (srate sound) #f))))
 
-      (if (procedure? trace-hook) (trace-hook 15))
+      (if (procedure? test-hook) (test-hook 15))
       (set! (show-usage-stats) #t)
       (if (not (equal? (all-chans) (list (list obi) (list 0)))) (snd-display (format #f ";all-chans: ~A?" (all-chans))))
       (let ((s2i (open-sound (car (match-sound-files-1 (lambda (file) (= (mus-sound-chans file) 2)))))))
@@ -8009,12 +8052,16 @@
 	  (let ((reg-mix-id (mix-region 1500 id ind 0)))
 	    (if (not (= (mix-length reg-mix-id) (region-length id)))
 		(snd-display (format #f ";mix-region: ~A != ~A?" (region-length id) (mix-length reg-mix-id))))
+	    (if (not (equal? (mix-home reg-mix-id) (list ind 0)))
+		(snd-display (format #f ";mix-region mix-home ~A (~A 0)?" (mix-home reg-mix-id) ind)))
 	    (let ((sel-mix-id (mix-selection 2500 ind 0)))
 	      (if (not (= (selection-length) (mix-length sel-mix-id)))
 		  (snd-display (format #f ";mix-selection: ~A != ~A?" (selection-length) (mix-length sel-mix-id))))
 	      (if (> (abs (- (* 2 (mix-length reg-mix-id)) (mix-length sel-mix-id))) 3)
 		  (snd-display (format #f ";mix selection and region: ~A ~A (~A ~A)?" 
 				       (mix-length reg-mix-id) (mix-length sel-mix-id) (region-length id) (selection-length))))
+	      (if (not (equal? (mix-home sel-mix-id) (list ind 0)))
+		  (snd-display (format #f ";mix-selection mix-home: ~A (~A 0)?" (mix-home sel-mix-id) ind)))
 	      (insert-selection 3000 ind 0)
 	      (delete-selection)
 	      (revert-sound ind))))
@@ -8095,7 +8142,7 @@
 (if (or full-test (= snd-test 16) (and keep-going (<= snd-test 16)))
     (let ((hi 32)
 	  (ho 0))
-      (if (procedure? trace-hook) (trace-hook 16))
+      (if (procedure? test-hook) (test-hook 16))
       (load "loop.scm")
       (set! hi (progn (dotimes (k 3) (set! ho (1+ ho))) ho))
       (if (not (= hi 3)) (snd-display (format #f ";dotimes: ~A ~A?" ho hi)))
@@ -8129,7 +8176,7 @@
 (if (and (or full-test (= snd-test 17) (and keep-going (<= snd-test 17)))
 	 (not (provided? 'snd-nogui)))
     (begin
-      (if (procedure? trace-hook) (trace-hook 17))
+      (if (procedure? test-hook) (test-hook 17))
       (if (and (provided? 'snd-gtk)
 	       (provided? 'snd-guile-gtk))
 	  (begin
@@ -8186,7 +8233,7 @@
 (if (and (or full-test (= snd-test 18) (and keep-going (<= snd-test 18)))
 	 (not (provided? 'snd-nogui)))
     (begin
-      (if (procedure? trace-hook) (trace-hook 18))
+      (if (procedure? test-hook) (test-hook 18))
       (start-enveloping)
       (let ((nind (open-sound "oboe.snd")))
 	(if (not (equal? (channel-envelope nind 0) (list 0.0 1.0 1.0 1.0)))
@@ -8204,7 +8251,7 @@
 
 (if (or full-test (= snd-test 19) (and keep-going (<= snd-test 19)))
     (let ((nind (open-sound "oboe.snd")))
-      (if (procedure? trace-hook) (trace-hook 19))
+      (if (procedure? test-hook) (test-hook 19))
       (add-mark 123)
       (delete-sample 12)
       (set! (x-bounds) (list .2 .4))
@@ -8502,7 +8549,7 @@ EDITS: 3
 		   Battle-Lemarie Burt-Adelson Beylkin coif2 coif4 coif6
 		   sym2 sym3 sym4 sym5 sym6))
 
-      (if (procedure? trace-hook) (trace-hook 20))
+      (if (procedure? test-hook) (test-hook 20))
     (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests)) (if (> tests 1) (snd-display (format #f ";test ~D " clmtest)))
     (let ((d0 #f) (d1 #f) (fn #f))
       ;; -------- fft
@@ -8872,7 +8919,7 @@ EDITS: 3
 
 (if (or full-test (= snd-test 21) (and keep-going (<= snd-test 21)))
     (begin
-      (if (procedure? trace-hook) (trace-hook 21))
+      (if (procedure? test-hook) (test-hook 21))
       (load "goopsnd.scm")
       (let ((f0 (make fcmb :length 4 :feedback 0.7))
 	    (g0 (make-gcomb 4 0.7 0.5 0.5)))
@@ -8909,7 +8956,7 @@ EDITS: 3
 
 (if (or full-test (= snd-test 22) (and keep-going (<= snd-test 22)))
     (begin
-      (if (procedure? trace-hook) (trace-hook 22))
+      (if (procedure? test-hook) (test-hook 22))
     (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests)) (if (> tests 1) (snd-display (format #f ";test ~D " clmtest)))
       (if (provided? 'snd-events)
 	  (let ((snd-return-key #xFF0D)
@@ -9880,7 +9927,7 @@ EDITS: 3
 
 (if (or full-test (= snd-test 23) (and keep-going (<= snd-test 23)))
     (begin
-      (if (procedure? trace-hook)  (trace-hook 23))
+      (if (procedure? test-hook)  (test-hook 23))
 
       (for-each (lambda (n)
 		  (let ((tag
@@ -10827,11 +10874,12 @@ EDITS: 3
 ;;; these need further testing
 ;;; TODO:  forward-mix save-state mus-sound-reopen-output close-sound-file vct->sound-file
 ;;; TODO:  save-marks save-region vcts-map! update-sound make-track-sample-reader free-track-sample-reader 
-;;; TODO:  backward-mix peaks cursor-position y->position position->y mix-home
+;;; TODO:  backward-mix peaks cursor-position y->position position->y
 ;;; TODO:  play-track? equalize-panes
 ;;; TODO:  edpos in sound->temp graph-data
 ;;; TODO:  apply from mark etc
 ;;; TODO:  run overall (14 etc) with various hooks set (current-window-location etc)
+;;; TODO:  track down temps that popped up
 
 ;; we have mus-sound-srate in sndlib, mus-srate in clm.c, sound-srate and *clm-srate* in clm, mus-sound-srate and srate in snd
 ;;    perhaps a mus module, giving mus:sound-srate in scm, mus:sound-srate in clm, mus_sound_srate in C?
