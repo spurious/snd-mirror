@@ -57,7 +57,7 @@ install -m 755 -o 0 -g 0 snd %{prefix}/local/bin
 #   rpm -ba snd.spec
 #   /usr/src/redhat/BUILD/snd-4 is where the build occurs
 #   end result in /usr/src/redhat/RPMS/i386 (binary) and /usr/src/redhat/SRPMS (source)
-#   update version references in README.Snd, ftp:LISP.README, web:snd.html, snd.h
+#   update version references in README.Snd, ftp:LISP.README, web:snd.html, snd.h, sourceforge index.html
 #   linux-snd:  makefile.guile-static
 #   xlinux-snd: makefile.xlinux
 #   sun-snd:    makefile.solaris

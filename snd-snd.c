@@ -1799,10 +1799,17 @@ static SCM g_call_apply(SCM snd)
 {
   #define H_call_apply "(" S_call_apply " &optional snd) is equivalent to clicking the control panel 'Apply' button"
   snd_info *sp;
+  snd_state *ss;
   ERRSP(S_call_apply,snd,1);
   sp = get_sp(snd);
-  if (sp) run_apply_to_completion(sp); else return(NO_SUCH_SOUND);
-  return(SCM_BOOL_F);
+  if (sp) 
+    {
+      ss = sp->state;
+      ss->apply_choice = APPLY_TO_SOUND;
+      run_apply_to_completion(sp); 
+      return(SCM_BOOL_F);
+    }
+  return(NO_SUCH_SOUND);
 }
 
 

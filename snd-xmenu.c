@@ -869,7 +869,7 @@ static void GH_Callback(Widget w,XtPointer clientData,XtPointer callData)
 {
   int callb;
   XtVaGetValues(w,XmNuserData,&callb,NULL);
-  g_snd_callback((snd_state *)clientData,callb);
+  g_snd_callback(callb);
 }
 
 #define MAX_MAIN_MENUS 12
@@ -1005,7 +1005,7 @@ int gh_add_to_menu(snd_state *ss, int which_menu, char *label, int callb)
   return(0);
 }
 
-int gh_remove_from_menu(snd_state *ss, int which_menu, char *label)
+int gh_remove_from_menu(int which_menu, char *label)
 {
   return(remove_option(which_menu,label));
 }

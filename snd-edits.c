@@ -943,7 +943,7 @@ static void reflect_file_change_in_label (chan_info *cp)
   else starred_name[len-2]='*';
   starred_name[len-1]='\0';
   set_sound_pane_file_label(sp,starred_name);
-  make_a_big_star_outa_me(sp->state,sp->shortname,1);
+  make_a_big_star_outa_me(sp->shortname,1);
   FREE(starred_name);
 }
 

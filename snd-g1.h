@@ -166,7 +166,7 @@ int gh_change_menu_label(int which_menu,char *old_label, char *new_label);
 int gh_set_menu_sensitive(int which_menu,char *old_label, int on);
 int gh_add_to_main_menu(snd_state *ss, char *label);
 int gh_add_to_menu(snd_state *ss, int which_menu, char *label, int callb);
-int gh_remove_from_menu(snd_state *ss, int which_menu, char *label);
+int gh_remove_from_menu(int which_menu, char *label);
 GtkWidget *add_menu(snd_state *state);
 GtkWidget *get_menubar(void);
 #if HAVE_GUILE_GTK
@@ -586,7 +586,7 @@ void remember_me(snd_state *ss, char *shortname, char *fullname);
 void make_cur_name_row(int old_size, int new_size);
 void make_prev_name_row(int old_size, int new_size);
 void greet_me(snd_state *ss, char *shortname);
-void make_a_big_star_outa_me(snd_state *ss, char *shortname, int big_star);
+void make_a_big_star_outa_me(char *shortname, int big_star);
 void set_file_browser_play_button(char *name, int state);
 void highlight_selected_sound(snd_state *ss);
 void View_Files_Callback(GtkWidget *w,gpointer clientData);

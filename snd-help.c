@@ -218,9 +218,6 @@ void news_help(snd_state *ss)
          cursor-style (default cursor-cross, also cursor-line).\n\
          channel-specific edit-hook and undo-hook.\n\
 12-Jun:  experimental multifile-sound support (under FILE_PER_CHAN switch).\n\
-9-Jun:   bugfixes and improvements from Paul Barton-Davis.\n\
-8-Jun:   OSS/ALSA choice at run-time (snd-xrec/snd-dac changes).\n\
-7-Jun:   snd-error-hook, snd-warning-hook.\n\
 ",
 NULL);
   FREE(info);

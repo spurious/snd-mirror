@@ -1147,7 +1147,7 @@ static void start_selection_watching(chan_info *cp)
   watching_selection = 1;
 }
 
-static void cancel_selection_watch(chan_info *cp)
+static void cancel_selection_watch(void)
 {
   CancelSelectionWatch();
   watching_selection = 0;
@@ -1169,7 +1169,7 @@ static void move_selection_1(chan_info *cp, int x)
   else 
     {
       nx = x;
-      if (watching_selection) cancel_selection_watch(cp);
+      if (watching_selection) cancel_selection_watch();
     }
   redraw_selection(cp,nx);
 }
@@ -1192,7 +1192,7 @@ void define_selection(chan_info *cp)
   region *r;
   region_context *rg;
   Float tmp;
-  if (watching_selection) cancel_selection_watch(cp);
+  if (watching_selection) cancel_selection_watch();
   keyboard_selecting = 0; /* mouse click might have interrupted kbd definition */
   r = regions[0];
   rg = region_member(cp,r);

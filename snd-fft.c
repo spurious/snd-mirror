@@ -1832,7 +1832,7 @@ BACKGROUND_TYPE sonogram_in_slices(void *sono)
   return(BACKGROUND_CONTINUE);
 }
 
-int sono_update(chan_info *cp, void *ptr)
+int sono_update(chan_info *cp, void *ignore)
 {
   make_sonogram_axes(cp);
   update_graph(cp,NULL);

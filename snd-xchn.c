@@ -559,11 +559,9 @@ void reflect_edit_history_change(chan_info *cp)
   /* new edit so it is added, and any trailing lines removed */
   chan_context *cx;
   Widget lst;
-  snd_state *ss;
   snd_info *sp;
   int i,eds;
   XmString *edits;
-  ss = cp->state;
 #if (XmVERSION == 1)
   if (0)
 #endif
@@ -630,8 +628,6 @@ void reflect_edit_counter_change(chan_info *cp)
   chan_context *cx;
   Widget lst;
   int len,top;
-  snd_state *ss;
-  ss = cp->state;
 #if (XmVERSION == 1)
   if (0)
 #endif

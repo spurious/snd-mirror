@@ -744,7 +744,7 @@ Snd is currently in flux.
                                   mix-region returns the id of the first channel's mix (subsequent channels simply
                                   increment this number). id of -1 means some error occurred.
   mix-sample-reader?(obj)         #t if obj is a mix-sample-reader.
-  mix-sound         (file start scaler) mix file into selected sound at start scaled by scaler.
+  mix-sound         (file start)  mix file into selected sound at start.
   mix-sound-channel (mix)         channel affected by mix.
   mix-sound-index   (mix)         index of sound affected by mix.
   mix-speed         (mix)         speed of mix.

@@ -802,7 +802,7 @@ int snd_load_file(char *filename);
 int snd_eval_str(snd_state *ss, char *buf, int count);
 int snd_eval_listener_str(snd_state *ss, char *buf);
 void snd_eval_stdin_str(snd_state *ss, char *buf);
-void g_snd_callback(snd_state *ss, int callb);
+void g_snd_callback(int callb);
 void add_or_edit_symbol(char *name, env *val);
 
 
@@ -1175,8 +1175,8 @@ int any_mix_id(void);
 env *set_mix_amp_env(int n, int chan, env *val);
 env *mix_amp_env(int n, int chan);
 void play_mix(snd_state *ss, mixdata *md);
-void draw_mix_waveform(mixdata *md, int xspot, int yspot);
-void erase_mix_waveform(mixdata *md, int xspot, int yspot);
+void draw_mix_waveform(mixdata *md, int yspot);
+void erase_mix_waveform(mixdata *md, int yspot);
 void reflect_mix_edit(chan_info *input_cp, char *origin);
 #if HAVE_GUILE
   void g_init_mix(SCM local_doc);

@@ -449,7 +449,7 @@ static int amp_env_len(mixdata *md, int chan)
   return(current_ed_samples((md->add_snd)->chans[chan]));
 }
 
-static mix_fd *init_mix_read_1(mixdata *md, int old, int type, int hi)
+static mix_fd *init_mix_read_1(mixdata *md, int old, int type)
 {
   mix_fd *mf;
   env *e;
@@ -563,7 +563,7 @@ static mix_fd *init_mix_read_1(mixdata *md, int old, int type, int hi)
 
 static mix_fd *init_mix_read(mixdata *md, int old)
 {
-  return(init_mix_read_1(md,old,MIX_INPUT_SOUND,0));
+  return(init_mix_read_1(md,old,MIX_INPUT_SOUND));
 }
 
 static mix_fd *init_mix_input_amp_env_read(mixdata *md, int old, int hi)
@@ -573,7 +573,7 @@ static mix_fd *init_mix_input_amp_env_read(mixdata *md, int old, int hi)
   snd_info *sp;
   chan_info *cp;
   env_info *ep;
-  mf = init_mix_read_1(md,old,MIX_INPUT_AMP_ENV,hi);
+  mf = init_mix_read_1(md,old,MIX_INPUT_AMP_ENV);
   sp = md->add_snd;
   mf->ctr = (int *)CALLOC(sp->nchans,sizeof(int));
   mf->samples = (int *)CALLOC(sp->nchans,sizeof(int));
@@ -821,7 +821,7 @@ static char *save_as_temp_file(snd_state *ss, MUS_SAMPLE_TYPE **raw_data, int ch
 
 static mixdata *add_mix(chan_info *cp, int chan, int beg, int num, 
 			char *mixed_chan_file, char *full_original_file, 
-			int past_end, int input_chans, int temp, int out_chans, Float scaler)
+			int input_chans, int temp, int out_chans, Float scaler)
 { /* temp -> delete original file also */
   mixdata *md;
   mixmark *m = NULL;
@@ -983,7 +983,7 @@ static mixdata *file_mix_samples(int beg, int num, char *tempfile, chan_info *cp
   free_file_info(ohdr);
   file_change_samples(beg,num,ofile,cp,0,DELETE_ME,DONT_LOCK_MIXES,origin);
   if (with_console)
-    return(add_mix(cp,chan,beg,num,ofile,tempfile,0,in_chans,temp,out_chans,1.0));
+    return(add_mix(cp,chan,beg,num,ofile,tempfile,in_chans,temp,out_chans,1.0));
   else return(NULL);
 }
 
@@ -1001,7 +1001,7 @@ static void call_multichannel_mix_hook(int *ids, int n);
 void call_multichannel_mix_hook(int *ids, int n) {}
 #endif
 
-static int mix(int beg, int num, int chans, chan_info **cps, char *mixinfile, int temp, char *origin, Float scaler, int with_console)
+static int mix(int beg, int num, int chans, chan_info **cps, char *mixinfile, int temp, char *origin, int with_console)
 {
   /* loop through out_chans cps writing the new mixed temp files and fixing up the edit trees */
   int i,id=-1,j=0;
@@ -1036,7 +1036,7 @@ int mix_array(int beg, int num, MUS_SAMPLE_TYPE **data, chan_info **out_cps, int
   newname = save_as_temp_file(ss,data,in_chans,num,nominal_srate);
   if (newname) 
     {
-      id = mix(beg,num,out_chans,out_cps,newname,DELETE_ME,origin,1.0,with_console);
+      id = mix(beg,num,out_chans,out_cps,newname,DELETE_ME,origin,with_console);
       if (with_console == 0) remove(newname);
       FREE(newname);
     }
@@ -1057,7 +1057,7 @@ int mix_file(int beg, int num, char *file, chan_info **cps, int out_chans, char 
   if (err != SND_NO_ERROR)
     snd_error("can't save mix temp file (%s: %s)",newname,strerror(errno));
   else
-    id = mix(beg,num,out_chans,cps,newname,DELETE_ME,origin,1.0,with_console);
+    id = mix(beg,num,out_chans,cps,newname,DELETE_ME,origin,with_console);
   if (newname) FREE(newname);
   return(id);
 }
@@ -1090,7 +1090,7 @@ int mix_complete_file(snd_info *sp, char *str, char *origin, int with_console)
 	      cps[0] = cp;
 	      chans = 1;
 	    }
-	  id = mix(cp->cursor,len,chans,cps,fullname,DONT_DELETE_ME,origin,1.0,with_console);
+	  id = mix(cp->cursor,len,chans,cps,fullname,DONT_DELETE_ME,origin,with_console);
 	  if (si) free_sync_info(si); else if (cps) FREE(cps);
 	}
       else 
@@ -2116,7 +2116,7 @@ void display_channel_mixes(chan_info *cp)
 			    }
 			  move_mixmark(m,xspot,yspot);
 			  color_mix(md,(void *)(cp->state));
-			  if (show_mix_waveforms(ss)) draw_mix_waveform(md,xspot,yspot);
+			  if (show_mix_waveforms(ss)) draw_mix_waveform(md,yspot);
 			  y += MIX_Y_INCR;
 			  if (y >= turnover) y=0;
 			  if (md->changed) 
@@ -2235,24 +2235,6 @@ void reset_mix_list(chan_info *cp)
   map_over_channel_mixes(cp,update_mix,NULL);
 }
 
-static int mix_sound(snd_state *ss, snd_info *sp, char *file, int beg, Float scaler)
-{
-  /* returns mix id, or -1 if failure */
-  char *buf;
-  if (snd_probe_file(file) == FILE_EXISTS)
-    {
-      return(mix(beg,mus_sound_frames(file),sp->nchans,sp->chans,file,DONT_DELETE_ME,S_mix_sound,scaler,with_mix_consoles(ss))); 
-    }
-  else 
-    {
-      buf = (char *)CALLOC(256,sizeof(char));
-      sprintf(buf,"mix_overlay can't find %s!",file);
-      report_in_minibuffer(sp,buf);
-      FREE(buf);
-    }
-  return(-1);
-}
-
 
 
 /* ---------------- paste/delete move affected mixes ---------------- */
@@ -2292,7 +2274,7 @@ static int ripple_mixes_1(mixdata *md, void *ptr)
       ncs->beg = ncs->orig;
       ncs->end = ncs->beg + cs->len - 1;
       m = md->mixer;
-      if ((m) && (show_mix_waveforms(ss))) erase_mix_waveform(md,m->x,m->y);
+      if ((m) && (show_mix_waveforms(ss))) erase_mix_waveform(md,m->y);
       extend_console_list(md);
       md->states[md->curcons] = ncs;
       make_current_console(md);
@@ -2301,7 +2283,7 @@ static int ripple_mixes_1(mixdata *md, void *ptr)
 	  xspot = grf_x((double)(ncs->beg)/(double)SND_SRATE(cp->sound),data->ap);
 	  move_mix_x(m,xspot);
 	  set_mix_title_beg(md,m);
-	  if (show_mix_waveforms(ss)) draw_mix_waveform(md,m->x,m->y);
+	  if (show_mix_waveforms(ss)) draw_mix_waveform(md,m->y);
 	}
     }
   return(0);
@@ -2402,12 +2384,12 @@ int any_mix_id(void)
   return(-1);
 }
 
-void draw_mix_waveform(mixdata *md, int xspot, int yspot) 
+void draw_mix_waveform(mixdata *md, int yspot) 
 {
   display_mix_waveform(md->cp,md,md->current_cs,yspot+20,mix_waveform_height(md->ss),TRUE);
 }
 
-void erase_mix_waveform(mixdata *md, int xspot, int yspot) 
+void erase_mix_waveform(mixdata *md, int yspot) 
 {
   display_mix_waveform(md->cp,md,md->current_cs,yspot+20,mix_waveform_height(md->ss),FALSE);
 }
@@ -3097,13 +3079,14 @@ static SCM g_set_mix_amp_env(SCM n, SCM chan, SCM val)
   return(val);
 }
 
-static SCM g_mix_sound(SCM file, SCM start_samp, SCM scaler)
+static SCM g_mix_sound(SCM file, SCM start_samp)
 {
-  #define H_mix_sound "(" S_mix_sound " file start_samp &optional (scaler 1.0)) mixes file (all channels)\n\
-   into the currently selected sound at start_samp, scaled by scaler."
+  #define H_mix_sound "(" S_mix_sound " file start_samp) mixes file (all channels)\n\
+   into the currently selected sound at start_samp."
 
   char *urn,*filename;
-  Float scl = 1.0;
+  snd_state *ss;
+  snd_info *sp;
   int beg,err=0;
   ERRS1(file,S_mix_sound);
   ERRN1(start_samp,S_mix_sound);
@@ -3111,8 +3094,11 @@ static SCM g_mix_sound(SCM file, SCM start_samp, SCM scaler)
   filename = mus_file_full_name(urn);
   free(urn);
   beg = g_scm2int(start_samp);
-  if (gh_number_p(scaler)) scl = gh_scm2double(scaler);
-  err = mix_sound(get_global_state(),any_selected_sound(get_global_state()),filename,beg,scl);
+  ss = get_global_state();
+  sp = any_selected_sound(ss);  /* why not as arg?? -- apparently this is assuming CLM with-sound explode */
+  if (snd_probe_file(filename) == FILE_EXISTS)
+    err = mix(beg,mus_sound_frames(filename),sp->nchans,sp->chans,filename,DONT_DELETE_ME,S_mix_sound,with_mix_consoles(ss)); 
+  else err = -1;
   if (filename) free(filename);
   if (err == -1) return(NO_SUCH_FILE);
   RTNINT(err);
@@ -3560,7 +3546,7 @@ void g_init_mix(SCM local_doc)
   DEFINE_PROC(gh_new_procedure3_0(S_set_mix_amp,g_set_mix_amp),H_set_mix_amp);
   DEFINE_PROC(gh_new_procedure3_0(S_set_mix_amp_env,g_set_mix_amp_env),H_set_mix_amp_env);
   DEFINE_PROC(gh_new_procedure2_0(S_set_mix_name,g_set_mix_name),H_set_mix_name);
-  DEFINE_PROC(gh_new_procedure2_1(S_mix_sound,g_mix_sound),H_mix_sound);
+  DEFINE_PROC(gh_new_procedure2_0(S_mix_sound,g_mix_sound),H_mix_sound);
   DEFINE_PROC(gh_new_procedure1_0(S_set_mix_waveform_height,g_set_mix_waveform_height),H_set_mix_waveform_height);
   DEFINE_PROC(gh_new_procedure0_0(S_mix_waveform_height,g_mix_waveform_height),H_mix_waveform_height);
   DEFINE_PROC(gh_new_procedure1_0(S_select_mix,g_select_mix),H_select_mix);

@@ -1229,7 +1229,6 @@ static int fill_dac(snd_state *ss, int write_ok)
 		}
 	      switch (choose_dac_op(dp,sp))
 		{
-		  
 		case NO_CHANGE:
 		  /* simplest case -- no changes at all */
 		  if (dp_chans == 1) 
@@ -1924,6 +1923,7 @@ void initialize_apply(snd_info *sp)
   dp->cur_rev = sp->revscl;
   apply_dac_op = choose_dac_op(dp,sp);
   dac_chans = chans;
+  dac_decay = (int)(reverb_decay(ss) * SND_SRATE(sp));
   apply_reporting = (apply_dur > (MAX_BUFFER_SIZE * 4));
   if (apply_reporting) 
     {

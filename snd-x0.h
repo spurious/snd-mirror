@@ -248,14 +248,6 @@ typedef struct {
   #define snd_MetaMask (Mod1Mask | Mod4Mask)
 #endif
 
-#if (XmVERSION == 1)
-  #define show_edit_history(ss) ss->Show_Edit_History
-  #define set_show_edit_history(ss,a) ss->Show_Edit_History = a
-
-  #define edit_history_width(ss) ss->Edit_History_Width
-  #define in_set_edit_history_width(ss,a) ss->Edit_History_Width = a
-#endif
-
 #define MAIN_SHELL(a) (a->sgx)->mainshell
 #define MAIN_PANE(a) (a->sgx)->mainpane
 #define SOUND_PANE(a) (a->sgx)->soundpane

@@ -242,7 +242,7 @@ static void g_save_envelopes(char *name)
 }
 
 
-void g_snd_callback(snd_state *ss, int callb) {}
+void g_snd_callback(int callb) {}
 
 env *name_to_env(char *str) 
 {

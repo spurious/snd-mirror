@@ -659,7 +659,7 @@ void greet_me(snd_state *ss, char *shortname)
     }
 }
 
-void make_a_big_star_outa_me(snd_state *ss, char *shortname, int big_star)
+void make_a_big_star_outa_me(char *shortname, int big_star)
 {
   int i;
   regrow *r;

@@ -536,11 +536,11 @@ static void speed_drag_callback(GtkAdjustment *adj, gpointer data)
   cs->scl_speed = scale_speed_to_Float(adj->value);
   cs ->speed = change_speed_label(m->w[mm_speed_label],md->ss,cs->scl_speed);
   if (!(ms->lastpj)) {ms->lastpj = make_graph(cp,cp->sound,cp->state); mix_save_graph(md->ss,md->wg,ms->lastpj);}
-  if (show_mix_waveforms(ss)) erase_mix_waveform(md,m->x,m->y);      
+  if (show_mix_waveforms(ss)) erase_mix_waveform(md,m->y);      
   cs->len = (int)(ceil(md->in_samps / cs->speed));
   make_temporary_graph(cp,md,cs);
   set_mix_title_beg(md,m);
-  if (show_mix_waveforms(ss)) draw_mix_waveform(md,m->x,m->y);      
+  if (show_mix_waveforms(ss)) draw_mix_waveform(md,m->y);      
 }
 
 static void speed_value_changed_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -816,7 +816,7 @@ static int move_mix(mixmark *m, int evx)
   old_beg = cs->beg;
   if (m->x != nx)
     {
-      if (show_mix_waveforms(ss)) erase_mix_waveform(md,m->x,m->y);
+      if (show_mix_waveforms(ss)) erase_mix_waveform(md,m->y);
       kx = m->x;
       m->x = nx;
       w = m->w[mm_main];
@@ -845,7 +845,7 @@ static int move_mix(mixmark *m, int evx)
       /* actually should make a new state if cp->edit_ctr has changed ?? */
       cs->beg = samp - md->anchor;
       if (cs->beg < 0) {cs->beg = 0; md->anchor = samp;}
-      if (show_mix_waveforms(ss)) draw_mix_waveform(md,m->x,m->y);
+      if (show_mix_waveforms(ss)) draw_mix_waveform(md,m->y);
 
       /* can't easily use work proc here because the erasure gets complicated */
       make_temporary_graph(cp,md,cs);

@@ -104,7 +104,7 @@ void draw_arc(axis_context *ax, int x, int y, int size)
 
 static XPoint polypts[4];
 
-static void fill_polygons (axis_context *ax,XPoint *points,int num,axis_info *ap, int y0)
+static void fill_polygons (axis_context *ax,XPoint *points,int num, int y0)
 {
   int i;
   for (i=1;i<num;i++)
@@ -226,7 +226,7 @@ void draw_grf_points(snd_state *ss, axis_context *ax, int j, axis_info *ap, Floa
     {
     case GRAPH_LINES: draw_lines(ax,points,j); break;
     case GRAPH_DOTS: draw_points(ax,points,j,dot_size(ss)); break;
-    case GRAPH_FILLED: fill_polygons(ax,points,j,ap,grf_y(y0,ap)); break;
+    case GRAPH_FILLED: fill_polygons(ax,points,j,grf_y(y0,ap)); break;
     case GRAPH_DOTS_AND_LINES: 
       if (dot_size(ss) > 1) draw_points(ax,points,j,dot_size(ss)); 
       draw_lines(ax,points,j); 

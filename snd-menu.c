@@ -68,12 +68,12 @@ void reflect_normalize_in_menu(int on)
   set_sensitive(view_normalize_menu(),on);
 }
 
-static int find_any_edits (chan_info *cp, void *ptr)
+static int find_any_edits (chan_info *cp, void *ignore)
 {
   return(cp->edit_ctr);
 }
 
-static int find_any_possible_edits (chan_info *cp, void *ptr)
+static int find_any_possible_edits (chan_info *cp, void *ignore)
 {
   return(cp->edit_size);
 }
@@ -126,7 +126,7 @@ void reflect_file_revert_in_label (snd_info *sp)
       if (!editing)
 	{
 	  set_sound_pane_file_label(sp,shortname(sp));
-	  make_a_big_star_outa_me(sp->state,sp->shortname,0);
+	  make_a_big_star_outa_me(sp->shortname,0);
 	}
     }
 }
@@ -425,7 +425,7 @@ void set_show_y_zero(snd_state *ss, int val)
     }
 }
 
-static int clrmini(snd_info *sp, void *ptr) {clear_minibuffer(sp); return(0);}
+static int clrmini(snd_info *sp, void *ignore) {clear_minibuffer(sp); return(0);}
 
 void set_verbose_cursor(snd_state *ss, int val)
 {
@@ -664,7 +664,7 @@ static SCM g_add_to_menu(SCM menu, SCM label, SCM callstr)
   return(label);
 }
 
-void g_snd_callback(snd_state *ss, int callb)
+void g_snd_callback(int callb)
 {
   if (menu_functions[callb])
     g_call0(menu_functions[callb]);
@@ -678,7 +678,7 @@ static SCM g_remove_from_menu(SCM menu, SCM label)
   ERRS2(label,S_remove_from_menu);
   ERRN1(menu,S_remove_from_menu);
   name = gh_scm2newstr(label,NULL);
-  val = gh_remove_from_menu(get_global_state(),g_scm2int(menu),name);
+  val = gh_remove_from_menu(g_scm2int(menu),name);
   free(name);
   RTNINT(val);
 }

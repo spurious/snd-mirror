@@ -1051,9 +1051,7 @@ GtkWidget *add_menu(snd_state *ss)
 
 static void GH_Callback(GtkWidget *w, gpointer clientData) 
 {
-  int callb;
-  callb = (int)gtk_object_get_user_data(GTK_OBJECT(w));
-  g_snd_callback((snd_state *)clientData,callb);
+  g_snd_callback((int)gtk_object_get_user_data(GTK_OBJECT(w)));
 }
 
 #define MAX_MAIN_MENUS 12
@@ -1186,7 +1184,7 @@ int gh_add_to_menu(snd_state *ss, int which_menu, char *label, int callb)
   return(0);
 }
 
-int gh_remove_from_menu(snd_state *ss, int which_menu, char *label)
+int gh_remove_from_menu(int which_menu, char *label)
 {
   return(remove_option(which_menu,label));
 }
