@@ -26,12 +26,23 @@ static void edit_find_ok_callback(int direction, Widget w, XtPointer context, Xt
       ss->search_expr = copy_string(str);
       if (XEN_PROCEDURE_P(ss->search_proc)) snd_unprotect(ss->search_proc);
       ss->search_proc = XEN_UNDEFINED;
+#if WITH_RUN
+      if (ss->search_tree)
+	ss->search_tree = free_ptree(ss->search_tree);
+      if (optimization(ss) > 0)
+	ss->search_tree = form_to_ptree_1f2b(C_STRING_TO_XEN_FORM(str));
+      if (ss->search_tree == NULL)
+	{
+#endif
       proc = snd_catch_any(eval_str_wrapper, str, str);
       if (procedure_ok_with_error(proc, 1, "find", "find", 1))
 	{
 	  ss->search_proc = proc;
 	  snd_protect(proc);
 	}
+#if WITH_RUN
+	}
+#endif
       buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
       mus_snprintf(buf, PRINT_BUFFER_SIZE, "find: %s", str);
       set_label(edit_find_label, buf);
@@ -39,7 +50,11 @@ static void edit_find_ok_callback(int direction, Widget w, XtPointer context, Xt
       FREE(buf);
       if (str) XtFree(str);
     }
+#if WITH_RUN
+  if ((XEN_PROCEDURE_P(ss->search_proc)) || (ss->search_tree))
+#else
   if (XEN_PROCEDURE_P(ss->search_proc))
+#endif
     {
       s1 = XmStringCreate(STR_Stop, XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(cancelB, XmNlabelString, s1, NULL);

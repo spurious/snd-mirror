@@ -389,7 +389,6 @@ static XEN vct_map(XEN obj, XEN proc)
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_vct_mapB, "a vct");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS(proc) == 0), proc, XEN_ARG_2, S_vct_mapB, "a thunk");
   v = TO_VCT(obj);
-  /* TODO: vct-map ptree */
   for (i = 0; i < v->length; i++) 
     v->data[i] = XEN_TO_C_DOUBLE(XEN_CALL_0_NO_CATCH(proc, S_vct_mapB));
   return(xen_return_first(obj, proc));
@@ -403,7 +402,6 @@ static XEN vct_do(XEN obj, XEN proc)
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_vct_doB, "a vct");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS(proc) == 1), proc, XEN_ARG_2, S_vct_doB, "a procedure of one arg");
   v = TO_VCT(obj);
-  /* TODO: vct-do with 2 args ptree */
   for (i = 0; i < v->length; i++) 
     v->data[i] = XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(proc, C_TO_SMALL_XEN_INT(i), S_vct_doB));
   return(xen_return_first(obj, proc));

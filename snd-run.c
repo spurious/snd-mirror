@@ -3,13 +3,7 @@
  *   Rather than write/compile (via gcc) a C source file, as in CLM, this
  *   produces the intermediate "triples" on the fly, packaging them into
  *   a "program" (a list of triples), and precomputing all function, program,
- *   and data addresses (as if a loader were at work); a kind of byte-compiler
- *   without the bytes or the compiler (that is, the function search is
- *   done at read time, not eval time).  This can work in general except
- *   for recursion, call/cc where the continuation is actually saved,
- *   and variables that have more than 1 type (not to mention delay, 
- *   define-syntax etc).  I could handle run-time types through 
- *   some kludgery, but the whole point is to run fast in a DSP context.
+ *   and data addresses.
  *
  * The evaluator is eval_ptree.  The code walker is walk.  A program
  *   is a list of triples. Each triple has a function pointer and a
@@ -32,7 +26,7 @@
  *
  * currently handled, at least partially:
  *
- *   types: float int boolean [vct]
+ *   types: float int boolean [vct] [snd_fd]
  *
  *   lambda [assuming float arg(s) for now]["declare" for types?]
  *   call-with-current-continuation [as goto with result value][this could fully implemented]
@@ -44,12 +38,12 @@
  *   odd? even? zero? positive? negative? eq? eqv? equal?
  *   round truncate floor ceiling exact->inexact inexact->exact
  *   gcd lcm logand logior logxor lognot ash modulo remainder quotient
- *   vct?
+ *   vct? sample-reader? read-sample next-sample previous-sample
  *
  * tests in snd-test.scm, test 22
  *
  *
- * todo: cond[not => of course] case[not symbols] do rationalize[in slib] defined?
+ * todo: cond[not => of course] case[not symbols] do rationalize[in slib] defined? random
  *       vct clm sndlib
  *         R_VCT R_CLM R_SND -- optargs are main problem here (and repeated code -- everything is wrapped in XEN procs)
  *       snd procs? (need ffi or something to avoid repeating opt args handles etc) snd-print needed at least
@@ -60,7 +54,6 @@
  *       vectors of floats
  *         load into local vct and use that, unloading at end
  *       lists? -- this opens a huge can of worms
- *       tie into Snd on optimization switch
  *       rest of snd-test 22, and overall test
  *       ptree as fragment edit op
  *       lambda with other types?
@@ -136,10 +129,11 @@ static char *describe_xen_value(xen_value *v, int *ints, Float *dbls)
   buf = (char *)CALLOC(32, sizeof(char));
   switch (v->type)
     {
-    case R_BOOL:  snprintf(buf, 32, "i%d(%s)", v->addr, (ints[v->addr] == 0) ? "#f" : "#t"); break;
-    case R_INT:   snprintf(buf, 32, "i%d(%d)", v->addr, ints[v->addr]); break;
-    case R_FLOAT: snprintf(buf, 32, "d%d(%.4f)", v->addr, dbls[v->addr]); break;
-    case R_VCT:   FREE(buf); buf = vct_to_string((vct *)(ints[v->addr])); break;
+    case R_BOOL:    snprintf(buf, 32, "i%d(%s)", v->addr, (ints[v->addr] == 0) ? "#f" : "#t"); break;
+    case R_INT:     snprintf(buf, 32, "i%d(%d)", v->addr, ints[v->addr]);                      break;
+    case R_FLOAT:   snprintf(buf, 32, "d%d(%.4f)", v->addr, dbls[v->addr]);                    break;
+    case R_VCT:     FREE(buf); buf = vct_to_string((vct *)(ints[v->addr]));                    break;
+    case R_READER:  FREE(buf); buf = sf_to_string((snd_fd *)(ints[v->addr]));                  break;
     }
   return(buf);
 }
@@ -211,7 +205,7 @@ static void describe_ptree(ptree *p)
   for (i = 0; i < p->var_ctr; i++)
     {
       temp = describe_xen_var(p->vars[i], p->ints, p->dbls);
-      fprintf(stderr, temp);
+      fprintf(stderr, "%s\n", temp);
       FREE(temp);
     }
   temp = describe_xen_value(p->result, p->ints, p->dbls);
@@ -420,6 +414,18 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form)
 							     add_int_to_ptree(prog, 
 									      (int)(get_vct(val))),
 							     FALSE));
+		}
+	      else
+		{
+		  if (sf_p(val))
+		    {
+		      addr = add_var_to_ptree(prog,
+					      varname,
+					      v = make_xen_value(R_READER, 
+								 add_int_to_ptree(prog, 
+										  (int)(get_sf(val))),
+								 FALSE));
+		    }
 		}
 	    }
 	}
@@ -1063,9 +1069,6 @@ static xen_value *set_form(ptree *prog, XEN form, int need_result)
       var->unclean = TRUE;
       return(v);
     }
-#if DEBUGGING
-  else fprintf(stderr,"run: can't find %s\n", varname);
-#endif
   return(NULL);
 }
 
@@ -1402,12 +1405,17 @@ static xen_value *subtract(ptree *prog, int float_result, xen_value **args, int 
 	    args[cons_loc] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, fscl + iscl), TRUE);
 	  else args[cons_loc] = make_xen_value(R_INT, add_int_to_ptree(prog, iscl), TRUE);
 	}
+      else
+	{
+	  if ((num_args == 2) && (!(args[1]->constant)))
+	    return(copy_xen_value(args[1]));
+	}
       if (constants == num_args) 
 	{
 	  if (float_result)
 	    {
 	      if (args[1]->type == R_INT)
-		return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, prog->dbls[args[1]->addr] - iscl), TRUE));
+		return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, prog->ints[args[1]->addr] - (fscl + iscl)), TRUE));
 	      else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, prog->dbls[args[1]->addr] - (fscl + iscl)), TRUE));
 	    }
 	  else return(make_xen_value(R_INT, add_int_to_ptree(prog, prog->ints[args[1]->addr] - iscl), TRUE));
@@ -1550,12 +1558,12 @@ static void float_rel_constant_args(ptree *prog, int num_args, xen_value **args)
       }
 }
 
-static void float_rel_args(ptree *prog, int num_args, xen_value **args, int float_result)
+static void float_rel_args(ptree *prog, int num_args, xen_value **args)
 {
   int i;
   xen_value *old_loc;
   for (i = 1; i <= num_args; i++)
-    if ((float_result) && (args[i]->type == R_INT))
+    if (args[i]->type == R_INT)
       {
 	old_loc = args[i];
 	args[i] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, 0.0), FALSE);
@@ -1613,9 +1621,9 @@ static xen_value *greater_than(ptree *prog, int float_result, xen_value **args, 
 	  }
       return(make_xen_value(R_BOOL, add_int_to_ptree(prog, 1), TRUE));
     }
-  float_rel_args(prog, num_args, args, float_result);
   if (float_result)
     {
+      float_rel_args(prog, num_args, args);
       if (num_args == 2) return(package(prog, R_BOOL, gt_f2, descr_gt_f2, args, num_args));
       return(package_n(prog, R_BOOL, gt_fn, descr_gt_fn, args, num_args));
     }
@@ -1676,9 +1684,9 @@ static xen_value *greater_than_or_equal(ptree *prog, int float_result, xen_value
 	  }
       return(make_xen_value(R_BOOL, add_int_to_ptree(prog, 1), TRUE));
     }
-  float_rel_args(prog, num_args, args, float_result);
   if (float_result)
     {
+      float_rel_args(prog, num_args, args);
       if (num_args == 2) return(package(prog, R_BOOL, geq_f2, descr_geq_f2, args, num_args));
       return(package_n(prog, R_BOOL, geq_fn, descr_geq_fn, args, num_args));
     }
@@ -1738,9 +1746,9 @@ static xen_value *less_than(ptree *prog, int float_result, xen_value **args, int
 	  }
       return(make_xen_value(R_BOOL, add_int_to_ptree(prog, 1), TRUE));
     }
-  float_rel_args(prog, num_args, args, float_result);
   if (float_result)
     {
+      float_rel_args(prog, num_args, args);
       if (num_args == 2) return(package(prog, R_BOOL, lt_f2, descr_lt_f2, args, num_args));
       return(package_n(prog, R_BOOL, lt_fn, descr_lt_fn, args, num_args));
     }
@@ -1800,9 +1808,9 @@ static xen_value *less_than_or_equal(ptree *prog, int float_result, xen_value **
 	  }
       return(make_xen_value(R_BOOL, add_int_to_ptree(prog, 1), TRUE));
     }
-  float_rel_args(prog, num_args, args, float_result);
   if (float_result)
     {
+      float_rel_args(prog, num_args, args);
       if (num_args == 2) return(package(prog, R_BOOL, leq_f2, descr_leq_f2, args, num_args));
       return(package_n(prog, R_BOOL, leq_fn, descr_leq_fn, args, num_args));
     }
@@ -1862,9 +1870,9 @@ static xen_value *numbers_equal(ptree *prog, int float_result, xen_value **args,
 	  }
       return(make_xen_value(R_BOOL, add_int_to_ptree(prog, 1), TRUE));
     }
-  float_rel_args(prog, num_args, args, float_result);
   if (float_result)
     {
+      float_rel_args(prog, num_args, args);
       if (num_args == 2) return(package(prog, R_BOOL, equal_f2, descr_equal_f2, args, num_args));
       return(package_n(prog, R_BOOL, equal_fn, descr_equal_fn, args, num_args));
     }
@@ -1971,9 +1979,9 @@ static xen_value *max_1(ptree *prog, int float_result, xen_value **args, int num
 	  return(make_xen_value(R_INT, add_int_to_ptree(prog, imx), TRUE));
 	}
     }
-  float_rel_args(prog, num_args, args, float_result);
   if (float_result)
     {
+      float_rel_args(prog, num_args, args);
       if (num_args == 2) return(package(prog, R_FLOAT, max_f2, descr_max_f2, args, num_args));
       return(package_n(prog, R_FLOAT, max_fn, descr_max_fn, args, num_args));
     }
@@ -2044,9 +2052,9 @@ static xen_value *min_1(ptree *prog, int float_result, xen_value **args, int num
 	  return(make_xen_value(R_INT, add_int_to_ptree(prog, imx), TRUE));
 	}
     }
-  float_rel_args(prog, num_args, args, float_result);
   if (float_result)
     {
+      float_rel_args(prog, num_args, args);
       if (num_args == 2) return(package(prog, R_FLOAT, min_f2, descr_min_f2, args, num_args));
       return(package_n(prog, R_FLOAT, min_fn, descr_min_fn, args, num_args));
     }
@@ -2825,9 +2833,34 @@ static xen_value *abs_1(ptree *prog, xen_value **args, int constants)
 }
 
 
+/* ---------------- sample-reader ---------------- */
+
+static void reader_f(int *args, int *ints, Float *dbls) {DBL_RESULT = read_sample_to_float(((snd_fd *)(INT_ARG_1)));}
+static char *descr_reader(int *args, int *ints, Float *dbls, char *which) 
+{
+  return(mus_format("d%d(%.4f) = %s(i%d(%d))", args[0], DBL_RESULT, which, args[1], INT_ARG_1));
+}
+static char *descr_reader_f(int *args, int *ints, Float *dbls) {return(descr_reader(args, ints, dbls, "read-sample"));}
+static xen_value *reader_0(ptree *prog, xen_value **args, xen_value *sf)
+{
+  if (args[0]) FREE(args[0]);
+  args[0] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, 0.0), FALSE);
+  add_triple_to_ptree(prog, va_make_triple(reader_f, descr_reader_f, 2, args[0], sf));
+  return(args[0]);
+}
+static xen_value *reader_1(ptree *prog, xen_value **args) {return(package(prog, R_READER, reader_f, descr_reader_f, args, 1));}
+
+static char *descr_next_reader_f(int *args, int *ints, Float *dbls) {return(descr_reader(args, ints, dbls, "next-sample"));}
+static void next_reader_f(int *args, int *ints, Float *dbls) {DBL_RESULT = protected_next_sample_to_float(((snd_fd *)(INT_ARG_1)));}
+static xen_value *next_sample_1(ptree *prog, xen_value **args) {return(package(prog, R_FLOAT, next_reader_f, descr_next_reader_f, args, 1));}
+
+static char *descr_previous_reader_f(int *args, int *ints, Float *dbls) {return(descr_reader(args, ints, dbls, "previous-sample"));}
+static void previous_reader_f(int *args, int *ints, Float *dbls) {DBL_RESULT = protected_previous_sample_to_float(((snd_fd *)(INT_ARG_1)));}
+static xen_value *previous_sample_1(ptree *prog, xen_value **args) {return(package(prog, R_FLOAT, previous_reader_f, descr_previous_reader_f, args, 1));}
+
+
 static void quit(int *args, int *ints, Float *dbls) {ALL_DONE = TRUE;}
-static char *descr_quit(int *args, int *ints, Float *dbls)
-{return(copy_string("quit"));}
+static char *descr_quit(int *args, int *ints, Float *dbls) {return(copy_string("quit"));}
 
 
 static xen_value *clean_up(xen_value *result, xen_value **args, int args_size)
@@ -2866,7 +2899,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       XEN function, all_args;
       char funcname[32];
       xen_value **args = NULL;
-      int i, num_args, float_result = FALSE, constants = 0, booleans = 0, vcts = 0;
+      int i, num_args, float_result = FALSE, constants = 0, booleans = 0, vcts = 0, readers = 0;
       function = XEN_CAR(form);
       snprintf(funcname, 32, "%s", XEN_TO_C_STRING(XEN_TO_STRING(function))); /* protect from gc... */
 
@@ -2906,16 +2939,17 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	    {
 	      args[i + 1] = walk(prog, XEN_CAR(all_args), TRUE);
 	      if (args[i + 1] == NULL) return(clean_up(NULL, args, num_args));
-	      if (args[i + 1]->type == R_FLOAT) float_result = TRUE;
-	      if (args[i + 1]->type == R_BOOL) booleans++;
 	      if (args[i + 1]->constant) constants++;
-	      if (args[i + 1]->type == R_VCT) vcts++;
+	      if (args[i + 1]->type == R_FLOAT) float_result = TRUE; else
+	      if (args[i + 1]->type == R_BOOL) booleans++; else
+	      if (args[i + 1]->type == R_VCT) vcts++; else
+	      if (args[i + 1]->type == R_READER) readers++;
 	    }
 	}
 
       if ((!need_result) && (prog->goto_ctr == 0)) /* continuation might return from anywhere in the body */
 	return(clean_up(make_xen_value(R_BOOL, -1, TRUE), args, num_args));
-      if ((booleans == 0) && (vcts == 0))
+      if ((booleans == 0) && (vcts == 0) && (readers == 0))
 	{
 	  if (strcmp(funcname, "*") == 0) return(clean_up(multiply(prog, float_result, args, num_args, constants), args, num_args));
 	  if (strcmp(funcname, "+") == 0) return(clean_up(add(prog, float_result, args, num_args, constants), args, num_args));
@@ -2955,7 +2989,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       if (num_args == 1)
 	{
 	  if (strcmp(funcname, "not") == 0) return(clean_up(not_p(prog, args, constants), args, num_args));
-	  if ((booleans == 0) && (vcts == 0))
+	  if ((booleans == 0) && (vcts == 0) && (readers == 0))
 	    {
 	      if (strcmp(funcname, "lognot") == 0) return(clean_up(lognot_1(prog, args, constants), args, num_args));
 	      if (strcmp(funcname, "abs") == 0) return(clean_up(abs_1(prog, args, constants), args, num_args));
@@ -2980,6 +3014,13 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	      if (strcmp(funcname, "positive?") == 0) return(clean_up(positive_p(prog, args, constants), args, num_args));
 	      if (strcmp(funcname, "negative?") == 0) return(clean_up(negative_p(prog, args, constants), args, num_args));
 	    }
+	  if (readers == 1)
+	    {
+	      if (strcmp(funcname, "next-sample") == 0) return(clean_up(next_sample_1(prog, args), args, num_args));
+	      if (strcmp(funcname, "previous-sample") == 0) return(clean_up(previous_sample_1(prog, args), args, num_args));
+	      if (strcmp(funcname, "read-sample") == 0) return(clean_up(reader_1(prog, args), args, num_args));
+	      return(NULL);
+	    }
 	  /* these are known in advance in this context */
 	  if (strcmp(funcname, "boolean?") == 0) 
 	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_BOOL), TRUE), args, num_args));
@@ -2993,10 +3034,33 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_INT), TRUE), args, num_args));
 	  if (strcmp(funcname, "inexact?") == 0) 
 	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_FLOAT), TRUE), args, num_args));
+
 	  if (strcmp(funcname, "vct?") == 0) 
 	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_VCT), TRUE), args, num_args));
+	  if (strcmp(funcname, "sample-reader?") == 0) 
+	    return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_READER), TRUE), args, num_args));
+	}
+      if (num_args == 0)
+	{
+	  xen_var *var;
+	  xen_value *v = NULL;
+	  var = find_var_in_ptree(prog, funcname);
+	  if (var == NULL)
+	    {
+	      XEN val;
+	      val = XEN_SYMBOL_TO_VALUE(function);
+	      if (sf_p(val))
+		v = add_global_var_to_ptree(prog, function);
+	    }
+	  else v = var->v;
+	  if (v) 
+	    {
+	      if (v->type == R_READER)
+		return(clean_up(reader_0(prog, args, v), args, num_args));
+	    }
 	}
       /* TODO: if func is vct var, it's either vct-ref or generalized vct-set! */
+      /*       similarly for reader */
       if (prog->goto_ctr > 0)
 	{
 	  /* possibly continuation procedure */
@@ -3233,13 +3297,7 @@ evaluates form (a lambda form of one arg) on each sample of snd's channel chn st
       if (dur == 0) return(XEN_FALSE);
       errmsg = run_channel(cp, upt, beg, dur, pos);
     }
-  else
-    {
-#if DEBUGGING
-      fprintf(stderr, "fallback on map-channel\n");
-#endif
-      return(g_map_channel(XEN_CADR(form), samp_n, samps, snd_n, chn_n, edpos, C_TO_XEN_STRING(S_map_channel)));
-    }
+  else return(g_map_channel(XEN_CADR(form), samp_n, samps, snd_n, chn_n, edpos, C_TO_XEN_STRING(S_map_channel)));
   if (errmsg)
     {
       str = C_TO_XEN_STRING(errmsg);

@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO: lambda -> run to precompile simple forms
- */
-
 static int search_in_progress = 0;
 typedef struct {int n; int direction; int chans; int inc; chan_info **cps; snd_fd **fds;} gfd;
 
@@ -25,7 +22,11 @@ static int run_global_search (snd_state *ss, gfd *g)
   Float samp;
   XEN res;
   snd_fd *sf;
+#if WITH_RUN
+  if ((XEN_PROCEDURE_P(ss->search_proc)) || (ss->search_tree))
+#else
   if (XEN_PROCEDURE_P(ss->search_proc))
+#endif
     {
       for (i = 0; i < g->chans; i++)
 	{
@@ -34,7 +35,18 @@ static int run_global_search (snd_state *ss, gfd *g)
 	      if (!((g->cps[i])->sound)) return(-1);
 	      sf = g->fds[i]; 
 	      samp = read_sample_to_float(sf);
-	      /* TODO: search proc as ptree */
+#if WITH_RUN
+	      if (ss->search_tree)
+		{
+		  if (evaluate_ptree_1f2b(ss->search_tree, samp))
+		    {
+		      g->n = i;
+		      return(1);
+		    }
+		}
+	      else
+		{
+#endif
 	      res = XEN_CALL_1(ss->search_proc,
 			       C_TO_XEN_DOUBLE((double)(samp)), 
 			       "global search func");
@@ -54,6 +66,9 @@ static int run_global_search (snd_state *ss, gfd *g)
 		      return(1);
 		    }
 		}
+#if WITH_RUN
+		}
+#endif
 	      if (read_sample_eof(sf))
 		{
 		  free_snd_fd(sf);
@@ -110,14 +125,26 @@ char *global_search(snd_state *ss, int direction)
    *   the notion of the previous sample will never be cleared.
    * But we do know that the expression is ok otherwise.
    * (This causes one redundant evaluation the first time around)
+   *    perhaps its should save the form, and evaluate that?
    */
+#if WITH_RUN
+  if (ss->search_tree == NULL)
+    {
+#endif
   if (ss->search_expr)
     {
       /* search_expr can be null if user set search_proc directly */
-      snd_unprotect(ss->search_proc);
+      if (XEN_PROCEDURE_P(ss->search_proc))
+	{
+	  snd_unprotect(ss->search_proc);
+	  ss->search_proc = XEN_UNDEFINED;
+	}
       ss->search_proc = snd_catch_any(eval_str_wrapper, ss->search_expr, ss->search_expr);
       snd_protect(ss->search_proc);
     }
+#if WITH_RUN
+    }
+#endif
   search_in_progress = 1;
   chans = active_channels(ss, WITH_VIRTUAL_CHANNELS);
   search_message[0] = '\0';
@@ -196,6 +223,19 @@ static int cursor_find_forward(snd_info *sp, chan_info *cp, int count)
       return(-1);
     }
   end = current_ed_samples(cp);
+#if WITH_RUN
+  if (sp->search_tree)
+    for (i = start; i < end; i++)
+      {
+	if (evaluate_ptree_1f2b(sp->search_tree, read_sample_to_float(sf)))
+	  {
+	    count--; 
+	    if (count == 0) break;
+	  }
+      }
+  else
+    {
+#endif
   for (i = start, passes = 0; i < end; i++, passes++)
     {
       /* sp search proc as ptree */
@@ -216,6 +256,9 @@ static int cursor_find_forward(snd_info *sp, chan_info *cp, int count)
 	}
       if (ss->stopped_explicitly) break;
     }
+#if WITH_RUN
+    }
+#endif
   ss->stopped_explicitly = 0;
   free_snd_fd(sf);
   search_in_progress = 0;
@@ -247,6 +290,19 @@ static int cursor_find_backward(snd_info *sp, chan_info *cp, int count)
       search_in_progress = 0;
       return(-1);
     }
+#if WITH_RUN
+  if (sp->search_tree)
+    for (i = start; i >= 0; i--)
+      {
+	if (evaluate_ptree_1f2b(sp->search_tree, read_sample_to_float(sf)))
+	  {
+	    count--; 
+	    if (count == 0) break;
+	  }
+      }
+  else
+    {
+#endif
   for (i = start, passes = 0; i >= 0; i--, passes++)
     {
       /* sp search proc as ptree */
@@ -267,6 +323,9 @@ static int cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 	}
       if (ss->stopped_explicitly) break;
     }
+#if WITH_RUN
+    }
+#endif  
   ss->stopped_explicitly = 0;
   free_snd_fd(sf);
   search_in_progress = 0;
@@ -290,6 +349,7 @@ static void get_find_expression(snd_info *sp, int count)
 void cursor_search(chan_info *cp, int count)
 {
   int samp;
+  snd_state *ss;
   snd_info *sp;
   char *s1, *s2;
   sp = cp->sound;
@@ -299,14 +359,33 @@ void cursor_search(chan_info *cp, int count)
     {
       if (sp->searching)
 	{
-	  if (!(XEN_PROCEDURE_P(sp->search_proc))) return; /* no search expr */
-	  
+#if WITH_RUN
+	  if ((!(XEN_PROCEDURE_P(sp->search_proc))) && (sp->search_tree == NULL)) return; /* no search expr */
+#else
+	  if (!(XEN_PROCEDURE_P(sp->search_proc)))
+#endif
 	  if (sp->search_expr)
 	    {
 	      /* see note above about closures */
-	      snd_unprotect(sp->search_proc);
+	      if (XEN_PROCEDURE_P(sp->search_proc))
+		{
+		  snd_unprotect(sp->search_proc);
+		  sp->search_proc = XEN_UNDEFINED;
+		}
+#if WITH_RUN
+	      ss = sp->state;
+	      if (sp->search_tree)
+		sp->search_tree = free_ptree(sp->search_tree);
+	      if (optimization(ss) > 0)
+		sp->search_tree = form_to_ptree_1f2b(C_STRING_TO_XEN_FORM(sp->search_expr));
+	      if (sp->search_tree == NULL)
+		{
+#endif
 	      sp->search_proc = snd_catch_any(eval_str_wrapper, sp->search_expr, sp->search_expr);
 	      snd_protect(sp->search_proc);
+#if WITH_RUN
+		}
+#endif
 	    }
 
 	  if (count > 0)

@@ -37,19 +37,34 @@ static void edit_find_find(int direction, GtkWidget *w, gpointer context)
       ss->search_expr = copy_string(str);
       if (XEN_PROCEDURE_P(ss->search_proc)) snd_unprotect(ss->search_proc);
       ss->search_proc = XEN_UNDEFINED;
+#if WITH_RUN
+      if (ss->search_tree)
+	ss->search_tree = free_ptree(ss->search_tree);
+      if (optimization(ss) > 0)
+	ss->search_tree = form_to_ptree_1f2b(C_STRING_TO_XEN_FORM(str));
+      if (ss->search_tree == NULL)
+	{
+#endif
       proc = snd_catch_any(eval_str_wrapper, str, str);
       if (procedure_ok_with_error(proc, 1, "find", "find", 1))
 	{
 	  ss->search_proc = proc;
 	  snd_protect(proc);
 	}
+#if WITH_RUN
+	}
+#endif
       buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
       mus_snprintf(buf, PRINT_BUFFER_SIZE, "find: %s", str);
       set_label(edit_find_label, buf);
       gtk_entry_set_text(GTK_ENTRY(edit_find_text), "");
       FREE(buf);
     }
+#if WITH_RUN
+  if ((XEN_PROCEDURE_P(ss->search_proc)) || (ss->search_tree))
+#else
   if (XEN_PROCEDURE_P(ss->search_proc))
+#endif
     {
       set_button_label(cancelB, STR_Stop);
       str = global_search(ss, direction);

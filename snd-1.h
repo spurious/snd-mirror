@@ -664,6 +664,9 @@ void file_change_samples(int beg, int num, char *tempfile, chan_info *cp, int ch
 void file_override_samples(int num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, const char *origin);
 Float chn_sample(int samp, chan_info *cp, int pos);
 snd_fd *free_snd_fd(snd_fd *sf);
+char *sf_to_string(snd_fd *fd);
+int sf_p(XEN obj);
+snd_fd *get_sf(XEN obj);
 int sf_initial_samp(snd_fd *sf);
 snd_fd *free_snd_fd_almost(snd_fd *sf);
 MUS_SAMPLE_TYPE previous_sound (snd_fd *sf);

@@ -29,7 +29,12 @@ static void completion_help_browse_callback(Widget w, XtPointer context, XtPoint
   for (i = old_len - 1, j = new_len - 1; j >= 0; j--)
     {
       if (old_text[i] != text[j])
-	i = old_len - 1;
+	{
+	  i = old_len - 1;
+	  if (old_text[i] == text[j]) i--;
+	  /* this added 15-Apr-02 for case like map-chan(nel) */
+	  /*   probably should go back new_len and scan forwards instead */
+	}
       else i--;
     }
   if ((ss->sgx->completion_requestor == NULL) || (ss->sgx->completion_requestor == listener_text))

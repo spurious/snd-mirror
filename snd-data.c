@@ -314,6 +314,9 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->env_anew = 0;
   sp->search_expr = NULL;
   sp->lacp = NULL;
+#if WITH_RUN
+  sp->search_tree = NULL;
+#endif
   sp->search_proc = XEN_UNDEFINED;
   sp->prompt_callback = XEN_UNDEFINED;
   sp->delete_me = 0;
@@ -368,6 +371,11 @@ void free_snd_info(snd_info *sp)
       FREE(sp->search_expr); 
       sp->search_expr = NULL;
     }
+#if WITH_RUN
+  if (sp->search_tree)
+    free_ptree(sp->search_tree);
+  sp->search_tree = NULL;
+#endif
   if (XEN_PROCEDURE_P(sp->search_proc))
     snd_unprotect(sp->search_proc);
   sp->search_proc = XEN_UNDEFINED;

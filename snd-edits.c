@@ -2791,7 +2791,6 @@ static XEN g_edit_tree(XEN snd, XEN chn, XEN upos)
 /* ---------------- sample readers ---------------- */
 
 static XEN_OBJECT_TYPE sf_tag;
-int sf_p(XEN obj); /* currently for snd-ladspa.c */
 int sf_p(XEN obj) {return(XEN_OBJECT_TYPE_P(obj, sf_tag));}
 #define SAMPLE_READER_P(Obj) XEN_OBJECT_TYPE_P(Obj, sf_tag)
 
@@ -2801,11 +2800,10 @@ static XEN g_sf_p(XEN obj)
   return(C_TO_XEN_BOOLEAN(SAMPLE_READER_P(obj)));
 }
 
-snd_fd *get_sf(XEN obj); /* currently for snd-ladspa.c */
 snd_fd *get_sf(XEN obj) {if (SAMPLE_READER_P(obj)) return((snd_fd *)XEN_OBJECT_REF(obj)); else return(NULL);}
 #define TO_SAMPLE_READER(obj) ((snd_fd *)XEN_OBJECT_REF(obj))
 
-static char *sf_to_string(snd_fd *fd)
+char *sf_to_string(snd_fd *fd)
 {
   char *desc, *name;
   chan_info *cp;
