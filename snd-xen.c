@@ -332,7 +332,7 @@ static XEN snd_format_if_needed(XEN args)
 #endif
 
 #if HAVE_GUILE
-static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error handler */
+static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error handler, data = handler_data = caller's name */
 {
   snd_info *sp;
   char *possible_code;
@@ -441,7 +441,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 	  last_file_loaded = NULL;
 	}
     }
-  possible_code = (char *)data;
+  possible_code = (char *)data; /* or is this the caller's name? */
   if ((possible_code) && 
       (snd_strlen(possible_code) < PRINT_BUFFER_SIZE))
     {
@@ -752,7 +752,7 @@ static XEN eval_file_wrapper(void *data)
 #if HAVE_GUILE
 static XEN g_call0_1(void *arg)
 {
-  return(XEN_CALL_0_NO_CATCH((XEN)arg, "call0"));
+  return(XEN_CALL_0_NO_CATCH((XEN)arg));
 }
 #endif
 
@@ -768,7 +768,7 @@ XEN g_call0(XEN proc, const char *caller) /* replacement for gh_call0 -- protect
 #if HAVE_GUILE
 static XEN g_call1_1(void *arg)
 {
-  return(XEN_CALL_1_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1], "call1"));
+  return(XEN_CALL_1_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1]));
 }
 #endif
 
@@ -787,7 +787,7 @@ XEN g_call1(XEN proc, XEN arg, const char *caller)
 #if HAVE_GUILE
 static XEN g_call_any_1(void *arg)
 {
-  return(XEN_APPLY_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1], "call any"));
+  return(XEN_APPLY_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1]));
 }
 #endif
 
@@ -806,7 +806,7 @@ XEN g_call_any(XEN proc, XEN arglist, const char *caller)
 #if HAVE_GUILE
 static XEN g_call2_1(void *arg)
 {
-  return(XEN_CALL_2_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1], ((XEN *)arg)[2], "call2"));
+  return(XEN_CALL_2_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1], ((XEN *)arg)[2]));
 }
 #endif
 
@@ -826,7 +826,7 @@ XEN g_call2(XEN proc, XEN arg1, XEN arg2, const char *caller)
 #if HAVE_GUILE
 static XEN g_call3_1(void *arg)
 {
-  return(XEN_CALL_3_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1], ((XEN *)arg)[2], ((XEN *)arg)[3], "call3"));
+  return(XEN_CALL_3_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1], ((XEN *)arg)[2], ((XEN *)arg)[3]));
 }
 #endif
 

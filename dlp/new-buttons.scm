@@ -76,11 +76,11 @@
      (list
            (list (lambda (w c i) (open-file-dialog)) "Open file")
            (list (lambda (w c i) (close-sound)) "Close file")
-           (list (lambda (w c i) (file-save-as-dialog)) "Save file")
+           (list (lambda (w c i) (save-sound-dialog)) "Save file")
            (list (lambda (w c i) (mix-file-dialog)) "Mix file")
            (list (lambda (w c i) (recorder-dialog)) "Recorder")
 	   (list (lambda (w c i) (enved-dialog)) "Envelope editor")
-           (list (lambda (w c i) (region-dialog)) "Region editor")
+           (list (lambda (w c i) (view-regions-dialog)) "Region editor")
            (list (lambda (w c i) (mix-dialog)) "Mix editor")
            (list (lambda (w c i) (undo)) #f)
            (list (lambda (w c i) (redo)) #f)

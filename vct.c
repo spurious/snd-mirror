@@ -105,23 +105,10 @@ static void vct_free(vct *v)
 {
   if (v)
     {
-#if DEBUGGING
-      if ((v->length == -999) ||
-	  (v->data == (void *)0x99999999))
-	{
-	  fprintf(stderr, "this vct %p has already been freed!", v);
-	  abort();
-	}
-#endif
       if ((!(v->dont_free)) && 
 	  (v->data)) 
 	FREE(v->data);
       v->data = NULL;
-#if DEBUGGING
-      v->length = -999;
-      v->data = (void *)0x99999999;
-      v->dont_free = true;
-#endif
       FREE(v);
     }
 }
@@ -478,12 +465,12 @@ v. (" S_vct_mapB " v (lambda () 3.0)) is the same as (" S_vct_fillB " v 3.0)"
     proc = XEN_CADR(proc);
     XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS_OK(proc, 0)), proc, XEN_ARG_2, S_vct_mapB, "a thunk");
     for (i = 0; i < v->length; i++) 
-      v->data[i] = XEN_TO_C_DOUBLE(XEN_CALL_0_NO_CATCH(proc, S_vct_mapB));
+      v->data[i] = XEN_TO_C_DOUBLE(XEN_CALL_0_NO_CATCH(proc));
   }
 #else
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS_OK(proc, 0)), proc, XEN_ARG_2, S_vct_mapB, "a thunk");
   for (i = 0; i < v->length; i++) 
-    v->data[i] = XEN_TO_C_DOUBLE(XEN_CALL_0_NO_CATCH(proc, S_vct_mapB));
+    v->data[i] = XEN_TO_C_DOUBLE(XEN_CALL_0_NO_CATCH(proc));
 #endif
   return(xen_return_first(obj, proc));
 }

@@ -1,4 +1,5 @@
 (provide 'snd-track-colors.scm)
+
 (if (not (provided? 'snd-rgb.scm)) (load-from-path "rgb.scm"))
 
 (catch 'no-such-track

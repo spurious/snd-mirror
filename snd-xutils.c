@@ -24,7 +24,7 @@ static XmRenderTable get_xm_font(XFontStruct *ignore, char *font, char *tag)
   XtSetArg(args[n], XmNloadModel, XmLOAD_IMMEDIATE); n++;
   tmp = XmRenditionCreate(MAIN_SHELL(ss), tag, args, n);
   tabl = XmRenderTableAddRenditions(NULL, &tmp, 1, XmMERGE_NEW);
-  XmRenditionFree(tmp);
+  /* XmRenditionFree(tmp); */ /* valgrind thinks this is a bad idea */
   return(tabl);
 }
 #else

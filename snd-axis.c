@@ -30,7 +30,7 @@ static tick_descriptor *free_tick_descriptor (tick_descriptor *td)
 
 static tick_descriptor *describe_ticks(tick_descriptor *gd_td, double lo, double hi, int max_ticks, Float grid_scale)
 {
-  /* given absolute (unchangeable) axis bounds lo and hi, and abolute maximum number of ticks to use, find a "pretty" tick placement */
+  /* given absolute (unchangeable) axis bounds lo and hi, and maximum number of ticks to use, find a "pretty" tick placement */
   /* much of the work here involves floating point rounding problems.  We assume the tick labeller will round as well */
   tick_descriptor *td;
   int ten, hib, lob, offset = 0;

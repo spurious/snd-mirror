@@ -369,6 +369,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+3-Jan:   removed next-to-last (xen fallback) arg to ptree-channel,\n\
+           and associated xen-channel stuff.\n\
 29-Dec:  eval-c.scm (Kjetil Matheussen).\n\
 7-Dec:   after-save-as-hook, replacing emacs-style-save-as (see snd7.scm).\n\
 3-Dec:   mark-tag-width|height.\n\

@@ -2739,9 +2739,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
       for (kp = 0; kp < num; kp++)
 	{
 	  /* changed here to remove catch 24-Mar-02 */
-	  res = XEN_CALL_1_NO_CATCH(proc, 
-				    C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
-				    caller);
+	  res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)));
 	  if (XEN_NUMBER_P(res))                         /* one number -> replace current sample */
 	    MUS_OUTA_1(j++, XEN_TO_C_DOUBLE(res), outgen);
 	  else
@@ -2921,9 +2919,9 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
 }
 
 static XEN g_ptree_channel(XEN proc_and_list, XEN s_beg, XEN s_dur, XEN snd, XEN chn, 
-			   XEN edpos, XEN env_too, XEN init_func, XEN use_map_channel_fallback, XEN origin)
+			   XEN edpos, XEN env_too, XEN init_func, XEN origin)
 {
-  #define H_ptree_channel "(" S_ptree_channel " proc (beg 0) (dur len) (snd #f) (chn #f) (edpos #f) (peak-env-also #f) (init-func #f) (use-map-channel-fallback #t) origin): \
+  #define H_ptree_channel "(" S_ptree_channel " proc (beg 0) (dur len) (snd #f) (chn #f) (edpos #f) (peak-env-also #f) (init-func #f) origin): \
 apply 'proc' as a 'virtual edit'; that is, the effect of 'proc' (a function of one argument, the \
 current sample, if init-func is not specified), comes about as an implicit change in the way the data is read.  \
 This is similar to scaling and some envelope operations in that no data actually changes.  If 'peak-env-also' is #t, \
@@ -2931,10 +2929,7 @@ the same function is applied to the peak env values to get the new version. \
 If 'proc' needs some state, it can be supplied in a vct returned by 'init-func'. \
 'init-func' is a function of 2 args, the current fragment-relative begin position, \
 and the overall fragment duration. In this case, 'proc' is a function of 3 args: \
-the current sample, the vct returned by 'init-func', and the current read direction. \
-'map-fallback', can be set to #f if you want to try out a more general virtual operator: 'proc' and 'init-func' can \
-be anything legal in Snd, and the actual forms are evaluated as virtual ops \
-at run-time.  See extsnd.html for the gory details."
+the current sample, the vct returned by 'init-func', and the current read direction."
 
   chan_info *cp;
   char *caller = NULL;
@@ -2984,7 +2979,7 @@ at run-time.  See extsnd.html for the gory details."
   g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos, caller);
   if (caller) {FREE(caller); caller = NULL;}
 #else
-  ptrees_present = ptree_fragments_in_use(cp, beg, dur, pos, XEN_FALSE_P(use_map_channel_fallback));
+  ptrees_present = ptree_fragments_in_use(cp, beg, dur, pos);
   if (XEN_PROCEDURE_P(init_func))
     {
       if (!(XEN_REQUIRED_ARGS_OK(init_func, 2)))
@@ -2997,14 +2992,7 @@ at run-time.  See extsnd.html for the gory details."
 	  pt = form_to_ptree_3_f(proc_and_list);
 	  if (pt)
 	    {
-	      ptree_channel(cp, pt, beg, dur, pos, XEN_TRUE_P(env_too), init_func, false, XEN_FALSE, caller);
-	      if (caller) {FREE(caller); caller = NULL;}
-	      return(proc_and_list);
-	    }
-	  /* ptree not ok -- use map chan? */
-	  if (XEN_FALSE_P(use_map_channel_fallback))
-	    {
-	      ptree_channel(cp, NULL, beg, dur, pos, XEN_TRUE_P(env_too), init_func, true, proc, caller);
+	      ptree_channel(cp, pt, beg, dur, pos, XEN_TRUE_P(env_too), init_func, caller);
 	      if (caller) {FREE(caller); caller = NULL;}
 	      return(proc_and_list);
 	    }
@@ -3024,21 +3012,9 @@ at run-time.  See extsnd.html for the gory details."
 	  run_channel(cp, pt, beg, dur, pos, caller, S_ptree_channel);
 	  pt = free_ptree(pt);
 	}
-      else ptree_channel(cp, pt, beg, dur, pos, XEN_TRUE_P(env_too), init_func, false, XEN_FALSE, caller);
+      else ptree_channel(cp, pt, beg, dur, pos, XEN_TRUE_P(env_too), init_func, caller);
     }
-  else
-    {
-      if ((XEN_FALSE_P(use_map_channel_fallback)) && (!ptrees_present))
-	{
-	  if (!(XEN_PROCEDURE_P(init_func)))
-	    {
-	      if (!(XEN_REQUIRED_ARGS_OK(proc, 3)))
-		XEN_BAD_ARITY_ERROR(S_ptree_channel, 1, proc, "main func must take 3 args if it can't be optimized");
-	    }
-	  ptree_channel(cp, NULL, beg, dur, pos, XEN_TRUE_P(env_too), init_func, true, proc, caller);
-	}
-      else g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos, caller);
-    }
+  else g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos, caller);
   if (caller) {FREE(caller); caller = NULL;}
 #endif
   return(proc_and_list);
@@ -3089,9 +3065,7 @@ static XEN scan_body(void *context)
   for (kp = 0; kp < sc->num; kp++)
     {
       XEN res;
-      res = XEN_CALL_1_NO_CATCH(sc->proc,
-				C_TO_XEN_DOUBLE((double)read_sample_to_float(sc->sf)),
-				sc->caller);
+      res = XEN_CALL_1_NO_CATCH(sc->proc, C_TO_XEN_DOUBLE((double)read_sample_to_float(sc->sf)));
       if (XEN_NOT_FALSE_P(res))
 	{
 	  if ((sc->counting) &&
@@ -3230,9 +3204,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   for (kp = 0; kp < num; kp++)
     {
       XEN res;
-      res = XEN_CALL_1_NO_CATCH(proc,
-				C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
-				caller);
+      res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)));
       /* leak here -- if reader active and error occurs, we jump out without cleanup */
       /* see dynamic_wind above */
       if (XEN_NOT_FALSE_P(res))
@@ -4520,7 +4492,7 @@ XEN_ARGIFY_3(g_filter_selection_w, g_filter_selection)
 XEN_ARGIFY_8(g_clm_channel_w, g_clm_channel)
 XEN_NARGIFY_0(g_sinc_width_w, g_sinc_width)
 XEN_NARGIFY_1(g_set_sinc_width_w, g_set_sinc_width)
-XEN_ARGIFY_10(g_ptree_channel_w, g_ptree_channel)
+XEN_ARGIFY_9(g_ptree_channel_w, g_ptree_channel)
 #else
 #define g_scan_chan_w g_scan_chan
 #define g_map_chan_w g_map_chan
@@ -4573,7 +4545,7 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_count_matches "-1",      g_count_matches_w, 1, 4, 0, H_count_matches);
   XEN_DEFINE_PROCEDURE(S_map_chan "-1",           g_map_chan_w,      1, 6, 0, H_map_chan);
   XEN_DEFINE_PROCEDURE(S_map_channel "-1",        g_map_channel_w,   1, 6, 0, H_map_channel);
-  XEN_DEFINE_PROCEDURE(S_ptree_channel "-1",      g_ptree_channel_w, 1, 9, 0, H_ptree_channel);
+  XEN_DEFINE_PROCEDURE(S_ptree_channel "-1",      g_ptree_channel_w, 1, 8, 0, H_ptree_channel);
 
   XEN_EVAL_C_STRING("(defmacro* scan-channel (form #:rest args) `(apply scan-channel-1 (list (list ',form ,form) ,@args)))");
   XEN_SET_DOCUMENTATION(S_scan_channel, H_scan_channel);
@@ -4596,7 +4568,7 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_count_matches,           g_count_matches_w,           1, 4, 0, H_count_matches);
   XEN_DEFINE_PROCEDURE(S_map_chan,                g_map_chan_w,                1, 6, 0, H_map_chan);
   XEN_DEFINE_PROCEDURE(S_map_channel,             g_map_channel_w,             1, 6, 0, H_map_channel);
-  XEN_DEFINE_PROCEDURE(S_ptree_channel,           g_ptree_channel_w,           1, 9, 0, H_ptree_channel);
+  XEN_DEFINE_PROCEDURE(S_ptree_channel,           g_ptree_channel_w,           1, 8, 0, H_ptree_channel);
 #endif
 
   XEN_DEFINE_PROCEDURE(S_smooth_sound,            g_smooth_sound_w,            0, 4, 0, H_smooth_sound);

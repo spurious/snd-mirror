@@ -5939,7 +5939,7 @@ more like Emacs (which prompts for confirmation first):
 <!-- INDEX ptreechannel:Virtual Edits -->
 <!-- ptree-channel -->
 <tr><td colspan=2>
-<code><a class=def name="ptreechannel">ptree-channel</a> (proc <i>beg dur snd chn edpos env-too init-func (map-fallback #t) origin</i>)</code>
+<code><a class=def name="ptreechannel">ptree-channel</a> (proc <i>beg dur snd chn edpos env-too init-func origin</i>)</code>
 </td></tr>
 <tr><td></td><td>
 <b>ptree-channel</b>
@@ -6143,26 +6143,6 @@ could in this case be:
 		     (<a class=quiet href="#vct">vct</a> (if (= pos 0) 0.0
 			      (<a class=quiet href="#sample">sample</a> (1- pos) ind 0 edpos))))))
 </pre>
-The (highly experimental) <i>map-fallback</i> argument can be set
-to #f if you want to try a more general virtual operator: in this case, 'proc' and 'init-func' can
-be anything legal in Snd, and the actual forms will be evaluated as virtual ops
-at run-time. This should also work in Ruby, whereas the optimized cases (those that
-depend on the run macro) will work only in Guile.  We could define xen-channel:
-<pre>
-  (define* (<a name="xenchannel">xen-channel</a> proc #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f) (env-too #f) (init-func #f))
-    (<em class=red>ptree-channel</em> proc beg dur snd chn edpos env-too init-func #f))
-</pre>Then reverse-channel as a virtual op could be:
-<pre>
-(<A NAME="virtualreverse">xen-channel</a> (lambda (y data forward)
-	       (if forward
-		   (<a class=quiet href="#previoussample">previous-sample</a> data)
-		   (<a class=quiet href="#nextsample">next-sample</a> data)))
-	     0 (<a class=quiet href="#frames">frames</a>) ind 0 #f #f
-	     (let ((edpos (<a class=quiet href="#editposition">edit-position</a> ind 0))
-		   (orig-last (1- (<a class=quiet href="#frames">frames</a>))))
-	       (lambda (pos dur)
-		 (<a class=quiet href="#makesamplereader">make-sample-reader</a> (- orig-last pos) ind 0 -1 edpos))))
-</pre>
 Here are a couple more examples:
 </td></tr>
 <tr><td></td><td>
@@ -6254,7 +6234,6 @@ sinusoidal ramp: <a href="sndscm.html#sineramp">sine-ramp</a> (extensions.scm)<b
 sinusoidal envelope: <a href="sndscm.html#sineenvchannel">sine-env-channel</a> (extensions.scm)<br>
 CLM-style contrast-enhancement: <a href="sndscm.html#contrastchannel">contrast-channel</a> (extensions.scm)<br>
 add a constant to every sample: <a href="sndscm.html#offsetchannel">offset-channel</a> (extensions.scm)<br>
-reverse-channel: <a href="#virtualreverse">xen-channel</a> (extsnd.html)<br>
 ring modulation: ring-modulate-channel (examp.scm)<br>
 delay by n samples (an experiment!): delay-channel in extensions.scm<br>
 dithering: <a href="sndscm.html#ditherchannel">dither-channel</a> (extensions.scm)<br>
@@ -6355,7 +6334,6 @@ reverse at new sampling rate: use <a href="#srcchannel">src-channel</a> with a n
 Reverse in control panel: <a href="snd.html#speed">control panel</a> and <a href="#speedcontrol">speed-control</a> variable<br>
 reverse a track: <a href="sndscm.html#reversetrack">reverse-track</a><br>
 reverse an envelope: <a href="sndscm.html#reverseenvelope">reverse-envelope</a><br>
-Virtual reverse-channel: <a href="#virtualreverse">xen-channel</a><br>
 reverse via FFT: <a href="#sillyreverse">silly-reverse</a><br>
 reverse order of channels: <a href="#reversechannels">reverse-channels</a><br>
 reverse a list: reverse and reverse!<br>
@@ -6449,7 +6427,8 @@ causes nothing but confusion.  To get this code to work right:
 For more examples see <a href="#ptreechannel">Virtual Edits</a> and, in
 particular, <a href="#cosinechannelviaptree">cosine-channel-via-ptree</a>.
 <br><br>
-This optimization is also hidden in many contexts (map-channel, find, etc).  Internally the Snd run macro
+This optimization is also hidden in many contexts (<a class=quiet href="#mapchannel">map-channel</a>, 
+<a class=quiet href="#find">find</a>, etc).  Internally the Snd run macro
 uses 64-bit ints and doubles, so large sounds should not present any numerical problems.
 See <a href="#optimization">optimization</a>
 for some timings.  In Ruby, it's possible to use the <a href="http://www.zenspider.com/Languages/Ruby/">RubyInline</a> module instead.
@@ -6601,7 +6580,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 (begin (<a class=quiet href="#savesoundas">save-sound-as</a> "temp.snd") (<a class=quiet href="#mix">mix</a> "temp.snd" 0) (delete-file "temp.snd"))
 
 (<a class=quiet href="#ptreechannel">ptree-channel</a> (lambda (y data forward) (data y)) 0 (<a class=quiet href="#frames">frames</a>) 0 0 #f #t
-	       (lambda (pos dur) (lambda (y) (* 2.0 y))) #f)
+	       (lambda (pos dur) (lambda (y) (* 2.0 y))))
 
 (let ((sd (<a class=quiet href="#samples2sounddata">samples-&gt;sound-data</a>)))
   (do ((i 0 (1+ i))) 

@@ -3271,6 +3271,7 @@ static XEN gxm_XmCvtXmStringToByteStream(XEN str)
   xstr = XEN_TO_C_XmString(str);
   if (!(XmStringEmpty(xstr)))
     res = XmCvtXmStringToByteStream(xstr, &prop);
+  /* here there is apparently no trailing 0, so this function worries Valgrind */
   return(XEN_LIST_2(C_TO_XEN_INT(res), C_TO_XEN_STRING((const char *)prop)));
 }
 

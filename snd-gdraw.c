@@ -1337,8 +1337,9 @@ bool set_with_gl(bool val)
   in_set_with_gl(val);
 #if HAVE_GL
   sgl_set_currents();
-  set_toggle_button(oid->glbutton, val, false, NULL);
-  for_each_chan(update_graph);
+  if (oid)
+    set_toggle_button(oid->glbutton, val, false, NULL);
+  /* for_each_chan(update_graph); */
 #endif
   return(with_gl(ss));
 }

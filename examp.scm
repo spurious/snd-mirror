@@ -1256,7 +1256,7 @@ formants: (map-channel (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3
   (ptree-channel (lambda (inval)
 		   (let ((index (+ 8.0 (* 8.0 inval))))
 		     (array-interp compand-table index 17)))
-		 beg dur snd chn edpos #t #f #t
+		 beg dur snd chn edpos #t #f
 		 (format #f "compand-channel ~A ~A" beg dur)))
 
 
@@ -2242,7 +2242,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 	 (vct-set! data 1 incr)
 	 (vct-set! data 0 (* frag-beg incr))
 	 data))
-     #t (format #f "smooth-channel-via-ptree ~A ~A" beg dur))))
+     (format #f "smooth-channel-via-ptree ~A ~A" beg dur))))
 
 
 ;;; -------- ring-modulate-channel (ring-mod as virtual op)
@@ -2262,7 +2262,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
    (lambda (frag-beg frag-dur)
      (let ((incr (/ (* 2 pi freq) (srate))))
        (vct (fmod (* frag-beg incr) (* 2 pi)) incr)))
-   #t (format #f "ring-modulate-channel ~A ~A ~A" freq beg dur)))
+   (format #f "ring-modulate-channel ~A ~A ~A" freq beg dur)))
 
 ;;; amplitude-modulate-channel could be (lambda (y data forward) (* y 0.5 (+ 1.0 (sin angle))) etc ...)
 

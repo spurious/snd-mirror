@@ -774,12 +774,12 @@
 
 (defun check-all ()
   (html-check '("sndlib.html" "snd.html" "clm.html" "extsnd.html" "grfsnd.html"
-		"sndscm.html" "fm.html" "balance.html"
+		"sndscm.html" "fm.html" "balance.html" "quick.html"
 		"xen.html" "libxm.html" "cmn.html" "index.html")))
 
 (defun make-index ()
   (check-all)
-  (index '("snd.html" "extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "clm.html" "fm.html")
+  (index '("snd.html" "extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "clm.html" "fm.html" "quick.html")
 	 "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t))
 
 

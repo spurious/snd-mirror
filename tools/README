@@ -1,4 +1,4 @@
-This directory contains various random script, scraps, snippets;
+This directory contains various random scripts, scraps, snippets;
 a collection of tools used in Snd maintenance and development.
 The interested reader needs to keep in mind that these are quick
 hacks to do boring tasks; they are not intended for enshrinement
@@ -18,11 +18,8 @@ gcat				get profiling info
 crossref.c			simple-minded cross referencer
 .gbdinit			gbd stuff
 sed-href			sed script to add silent urls
-snd.supp			Valgrind suppressions
-
-
-Other scripts in the main directory:
-
-makexg.scm + xgdata.scm      	Build xg.c
-makegl.scm                   	Build gl.c
+makexg.scm + xgdata.scm      	Build xg.c, xg-ruby.c, xg-x11.h
+makegl.scm + gldata.scm        	Build gl.c
 index.cl              		Build index.html, snd-xref.c, elaborate html error checking
+snd-index.cl                    Build the index at the end of snd.html
+snd.supp			Valgrind suppressions

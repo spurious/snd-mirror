@@ -20,11 +20,12 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 23
-#define XEN_VERSION "1.23"
+#define XEN_MINOR_VERSION 24
+#define XEN_VERSION "1.24"
 
 /* HISTORY:
  *
+ *  31-Dec-04: removed "caller" arg from *_NO_CATCH.
  *  10-Nov-04: scm_c_vector* (new Guile functions)
  *  21-Oct-04: XEN_LIST_REVERSE, (using rb_ary_dup available in 1.8)
  *  7-Oct-04:  keyword changes for new Guile.
@@ -667,11 +668,11 @@
   #define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller) \
      scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, scm_cons2(Arg4, Arg5, scm_cons(Arg6, XEN_APPLY_ARG_LIST_END))))
 #endif
-#define XEN_APPLY_NO_CATCH(Func, Args, Caller)              scm_apply(Func, Args, XEN_EMPTY_LIST)
-#define XEN_CALL_0_NO_CATCH(Func, Caller)                   scm_apply(Func, XEN_EMPTY_LIST, XEN_EMPTY_LIST)
-#define XEN_CALL_1_NO_CATCH(Func, Arg1, Caller)             scm_apply(Func, Arg1, XEN_APPLY_ARG_LIST_END)
-#define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2, Caller)       scm_apply(Func, Arg1, scm_cons(Arg2, XEN_APPLY_ARG_LIST_END))
-#define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3, Caller) scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, XEN_APPLY_ARG_LIST_END))
+#define XEN_APPLY_NO_CATCH(Func, Args)              scm_apply(Func, Args, XEN_EMPTY_LIST)
+#define XEN_CALL_0_NO_CATCH(Func)                   scm_apply(Func, XEN_EMPTY_LIST, XEN_EMPTY_LIST)
+#define XEN_CALL_1_NO_CATCH(Func, Arg1)             scm_apply(Func, Arg1, XEN_APPLY_ARG_LIST_END)
+#define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2)       scm_apply(Func, Arg1, scm_cons(Arg2, XEN_APPLY_ARG_LIST_END))
+#define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3) scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, XEN_APPLY_ARG_LIST_END))
 
 #define XEN_PUTS(Str, Port)      scm_puts(Str, Port)
 #define XEN_DISPLAY(Val, Port)   scm_display(Val, Port)
@@ -975,11 +976,11 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller) rb_funcall(Func, rb_intern("call"), 6, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6)
 #define XEN_APPLY(Func, Args, Caller)              xen_rb_apply(Func, Args)
 #define XEN_APPLY_ARG_LIST_END          Qnil
-#define XEN_CALL_0_NO_CATCH(Func, Caller)                   xen_rb_funcall_0(Func)
-#define XEN_CALL_1_NO_CATCH(Func, Arg1, Caller)             rb_funcall(Func, rb_intern("call"), 1, Arg1)
-#define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2, Caller)       rb_funcall(Func, rb_intern("call"), 2, Arg1, Arg2)
-#define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3, Caller) rb_funcall(Func, rb_intern("call"), 3, Arg1, Arg2, Arg3)
-#define XEN_APPLY_NO_CATCH(Func, Args, Caller)              xen_rb_apply(Func, Args)
+#define XEN_CALL_0_NO_CATCH(Func)                   xen_rb_funcall_0(Func)
+#define XEN_CALL_1_NO_CATCH(Func, Arg1)             rb_funcall(Func, rb_intern("call"), 1, Arg1)
+#define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2)       rb_funcall(Func, rb_intern("call"), 2, Arg1, Arg2)
+#define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3) rb_funcall(Func, rb_intern("call"), 3, Arg1, Arg2, Arg3)
+#define XEN_APPLY_NO_CATCH(Func, Args)              xen_rb_apply(Func, Args)
 
 #define XEN_ARITY(Func)                 rb_funcall(Func, rb_intern("arity"), 0)
 #define XEN_REQUIRED_ARGS(Func)         xen_rb_required_args(XEN_ARITY(Func))
@@ -1502,11 +1503,11 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller) 0
 #define XEN_APPLY(Func, Args, Caller) 0
 #define XEN_APPLY_ARG_LIST_END 0
-#define XEN_CALL_0_NO_CATCH(Func, Caller) 0
-#define XEN_CALL_1_NO_CATCH(Func, Arg1, Caller) 0
-#define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2, Caller) 0
-#define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3, Caller) 0
-#define XEN_APPLY_NO_CATCH(Func, Args, Caller) 0
+#define XEN_CALL_0_NO_CATCH(Func) 0
+#define XEN_CALL_1_NO_CATCH(Func, Arg1) 0
+#define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2) 0
+#define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3) 0
+#define XEN_APPLY_NO_CATCH(Func, Args) 0
 #define XEN_ARITY(Func) 0
 #define XEN_REQUIRED_ARGS(Func) 0
 #define XEN_REQUIRED_ARGS_OK(Func, Args) false

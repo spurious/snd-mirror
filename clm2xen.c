@@ -613,6 +613,8 @@ the real and imaginary parts of the data, len should be a power of 2, dir = 1 fo
 	n = v1->length;
     }
   else n = v1->length;
+  if (n > v2->length)
+    n = v2->length;
   if (!(POWER_OF_2_P(n)))
     {
       nf = (log(n) / log(2.0));
@@ -664,6 +666,10 @@ and type determines how the spectral data is scaled:\n\
   v2 = TO_VCT(uim);
   if (XEN_NOT_FALSE_P(uwin)) v3 = TO_VCT(uwin);
   n = v1->length;
+  if (n > v2->length)
+    n = v2->length;
+  if ((v3) && (n > v3->length))
+    n = v3->length;
   if (!(POWER_OF_2_P(n)))
     {
       Float nf;
@@ -675,6 +681,13 @@ and type determines how the spectral data is scaled:\n\
   if (XEN_INTEGER_P(utype)) type = XEN_TO_C_INT(utype); else type = 1; /* linear normalized */
   if ((type < 0) || (type > 2))
     XEN_OUT_OF_RANGE_ERROR(S_spectrum, 4, utype, "type must be 0..2");
+#if DEBUGGING
+  if ((n > v1->length) || (n > v2->length))
+    {
+      fprintf(stderr,"spectrum %d > %d %d\n", n, v1->length, v2->length);
+      abort();
+    }
+#endif  
   mus_spectrum(v1->data, v2->data, (v3) ? (v3->data) : NULL, n, type);
   return(xen_return_first(url, uim, uwin));
 }
@@ -697,10 +710,10 @@ of (vcts) v1 with v2, using fft of size len (a power of 2), result in v1"
 	XEN_OUT_OF_RANGE_ERROR(S_convolution, 3, un, "size ~A <= 0?");
       if (n > v1->length)
 	n = v1->length;
-      if (n > v2->length)
-	n = v2->length;
     }
   else n = v1->length;
+  if (n > v2->length)
+    n = v2->length;
   if (!(POWER_OF_2_P(n)))
     {
       Float nf;
@@ -709,6 +722,13 @@ of (vcts) v1 with v2, using fft of size len (a power of 2), result in v1"
       np = (int)nf;
       n = (int)pow(2.0, np);
     }
+#if DEBUGGING
+  if ((n > v1->length) || (n > v2->length))
+    {
+      fprintf(stderr,"convolution %d > %d %d\n", n, v1->length, v2->length);
+      abort();
+    }
+#endif  
   mus_convolution(v1->data, v2->data, n);
   return(xen_return_first(url1, url2));
 }
@@ -4254,7 +4274,7 @@ static Float funcall1 (void *ptr, int direction) /* intended for "as-needed" inp
   mus_xen *gn = (mus_xen *)ptr;
   if ((gn) && (gn->vcts) && (XEN_BOUND_P(gn->vcts[MUS_INPUT_FUNCTION])) && (XEN_PROCEDURE_P(gn->vcts[MUS_INPUT_FUNCTION])))
     /* the gh_procedure_p call can be confused by 0 -> segfault! */
-    return(XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_INPUT_FUNCTION], C_TO_XEN_INT(direction), "as-needed-input")));
+    return(XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_INPUT_FUNCTION], C_TO_XEN_INT(direction))));
   else return(0.0);
 }
 
@@ -4363,9 +4383,7 @@ static XEN g_granulate_p(XEN obj)
 static int grnedit(void *ptr)
 {
   mus_xen *gn = (mus_xen *)ptr;
-  return(XEN_TO_C_INT(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_EDIT_FUNCTION], 
-					  gn->vcts[MUS_SELF_WRAPPER],
-					  "granulate edit function")));
+  return(XEN_TO_C_INT(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_EDIT_FUNCTION], gn->vcts[MUS_SELF_WRAPPER])));
 }
 
 static XEN g_granulate(XEN obj, XEN func, XEN edit_func) 
@@ -4635,17 +4653,13 @@ file1 and file2 writing outfile after scaling the convolution result to maxamp."
 static int pvedit (void *ptr)
 {
   mus_xen *gn = (mus_xen *)ptr;
-  return(XEN_TO_C_BOOLEAN(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_EDIT_FUNCTION], 
-					      gn->vcts[MUS_SELF_WRAPPER],
-					      "phase-vocoder edit function")));
+  return(XEN_TO_C_BOOLEAN(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_EDIT_FUNCTION], gn->vcts[MUS_SELF_WRAPPER])));
 }
 
 static Float pvsynthesize (void *ptr)
 {
   mus_xen *gn = (mus_xen *)ptr;
-  return(XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_SYNTHESIZE_FUNCTION], 
-					     gn->vcts[MUS_SELF_WRAPPER], 
-					     "phase-vocoder synthesis function")));
+  return(XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_SYNTHESIZE_FUNCTION], gn->vcts[MUS_SELF_WRAPPER])));
 }
 
 static bool pvanalyze (void *ptr, Float (*input)(void *arg1, int direction))
@@ -4654,8 +4668,7 @@ static bool pvanalyze (void *ptr, Float (*input)(void *arg1, int direction))
   /* we can only get input func if it's already set up by the outer gen call, so (?) we can use that function here */
   return(XEN_TO_C_BOOLEAN(XEN_CALL_2_NO_CATCH(gn->vcts[MUS_ANALYZE_FUNCTION], 
 					      gn->vcts[MUS_SELF_WRAPPER], 
-					      gn->vcts[MUS_INPUT_FUNCTION], 
-					      "phase-vocoder analysis function")));
+					      gn->vcts[MUS_INPUT_FUNCTION])));
 }
 
 static XEN g_phase_vocoder_p(XEN obj) 

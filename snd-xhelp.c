@@ -424,9 +424,12 @@ static void create_help_monolog(void)
   XtSetArg(args[n - 1], XmNrenditionForeground, ss->sgx->black); 
   texts[1] = XmRenditionCreate(help_text, "normal_text", args, n);
   rs = XmRenderTableCopy(XmRenderTableAddRenditions(rs, texts, 2, XmMERGE_NEW), NULL, 0);
+  /*
+   * valgrind says this data is used later
   XmRenditionFree(texts[0]);
   XmRenditionFree(texts[1]);
-  
+  */
+
   n = 0;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, XtParent(help_text)); n++;

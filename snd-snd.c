@@ -813,17 +813,14 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, i
     }
 }
 
-void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func, bool is_xen, XEN code)
+void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func)
 {
   env_info *old_ep;
   old_ep = cp->amp_envs[pos];
   if ((old_ep) && (old_ep->completed))
     {
       int i;
-      bool need_unprotect = false;
       vct *vlo = NULL, *vhi = NULL;
-      XEN init_lo = XEN_UNDEFINED, init_hi = XEN_UNDEFINED;
-      int hi_loc = 0, lo_loc = 0;
       mus_sample_t fmin, fmax, dmin, dmax;
       env_info *new_ep;
       new_ep = cp->amp_envs[cp->edit_ctr];
@@ -842,52 +839,24 @@ void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func, bool is_xen,
       fmax = MUS_SAMPLE_MIN;
       if (XEN_PROCEDURE_P(init_func))
 	{
-	  if (is_xen)
-	    {
-	      init_lo = XEN_CALL_2(init_func,
-				   C_TO_XEN_OFF_T(0),
-				   C_TO_XEN_OFF_T(new_ep->amp_env_size),
-				   "xen-channel init func");
-	      lo_loc = snd_protect(init_lo);
-	      init_hi = XEN_CALL_2(init_func,
-				   C_TO_XEN_OFF_T(0),
-				   C_TO_XEN_OFF_T(new_ep->amp_env_size),
-				   "xen-channel init func");
-	      hi_loc = snd_protect(init_hi);
-	      need_unprotect = true;
-	    }
-	  else
-	    {
-	      /* probably faster to copy locally than protect from GC */
-	      vlo = c_vct_copy((vct *)(XEN_OBJECT_REF(XEN_CALL_2(init_func,
-								 C_TO_XEN_OFF_T(0),
-								 C_TO_XEN_OFF_T(new_ep->amp_env_size),
-								 "ptree-channel init func"))));
-	      vhi = c_vct_copy(vlo);
-	    }
+	  /* probably faster to copy locally than protect from GC */
+	  vlo = c_vct_copy((vct *)(XEN_OBJECT_REF(XEN_CALL_2(init_func,
+							     C_TO_XEN_OFF_T(0),
+							     C_TO_XEN_OFF_T(new_ep->amp_env_size),
+							     "ptree-channel init func"))));
+	  vhi = c_vct_copy(vlo);
 	}
       for (i = 0; i < new_ep->amp_env_size; i++) 
 	{
-	  if (is_xen)
+	  if (vlo)
 	    {
-	      XEN val;
-	      val = XEN_CALL_3(code, C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i])), init_lo, XEN_TRUE, "xen-channel");
-	      dmin = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE_OR_ELSE(val, 0.0));
-	      val = XEN_CALL_3(code, C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i])), init_hi, XEN_TRUE, "xen-channel");
-	      dmax = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE_OR_ELSE(val, 0.0));
+	      dmin = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f1v1b2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i]), vlo, true));
+	      dmax = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f1v1b2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i]), vhi, true));
 	    }
 	  else
 	    {
-	      if (vlo)
-		{
-		  dmin = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f1v1b2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i]), vlo, true));
-		  dmax = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f1v1b2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i]), vhi, true));
-		}
-	      else
-		{
-		  dmin = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i])));
-		  dmax = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i])));
-		}
+	      dmin = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i])));
+	      dmax = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i])));
 	    }
 	  if (dmin <= dmax)
 	    {
@@ -902,19 +871,8 @@ void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func, bool is_xen,
 	  if (new_ep->data_min[i] < fmin) fmin = new_ep->data_min[i];
 	  if (new_ep->data_max[i] > fmax) fmax = new_ep->data_max[i];
 	}
-      if (is_xen)
-	{
-	  if (need_unprotect)
-	    {
-	      snd_unprotect_at(lo_loc);
-	      snd_unprotect_at(hi_loc);
-	    }
-	}
-      else
-	{
-	  if (vlo) c_free_vct(vlo);
-	  if (vhi) c_free_vct(vhi);
-	}
+      if (vlo) c_free_vct(vlo);
+      if (vhi) c_free_vct(vhi);
       new_ep->fmin = fmin;
       new_ep->fmax = fmax;
       new_ep->completed = true;
@@ -924,7 +882,7 @@ void amp_env_ptree(chan_info *cp, void *pt, int pos, XEN init_func, bool is_xen,
     }
 }
 
-void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos, XEN init_func, bool is_xen, XEN code)
+void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int pos, XEN init_func)
 {
   env_info *old_ep;
   old_ep = cp->amp_envs[pos];
@@ -933,11 +891,9 @@ void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int 
       env_info *new_ep;
       mus_sample_t fmax = MUS_SAMPLE_MIN, fmin = MUS_SAMPLE_MAX, dmin, dmax;
       int i;
-      bool closure = false, inited = false, need_unprotect = false;
+      bool closure = false, inited = false;
       vct *vlo = NULL, *vhi = NULL;
       off_t cursamp, start, end;
-      XEN init_lo = XEN_FALSE, init_hi = XEN_FALSE;
-      int hi_loc = 0, lo_loc = 0;
       new_ep = cp->amp_envs[cp->edit_ctr];
       if ((new_ep) && 
 	  (new_ep->amp_env_size != old_ep->amp_env_size)) 
@@ -964,50 +920,24 @@ void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int 
 	    {
 	      if ((cursamp >= beg) && ((cursamp + new_ep->samps_per_bin) <= end))
 		{
-		  if (is_xen)
+		  if (closure)
 		    {
-		      XEN val;
-		      if ((!inited) && (closure))
+		      if (!inited)
 			{
-			  init_lo = XEN_CALL_2(init_func,
-					       C_TO_XEN_OFF_T((off_t)((Float)(cursamp - beg) / (Float)(num))),
-					       C_TO_XEN_OFF_T((off_t)(num / new_ep->samps_per_bin)),
-					       "xen-channel init-func");
-			  lo_loc = snd_protect(init_lo);
-			  init_hi = XEN_CALL_2(init_func,
-					       C_TO_XEN_OFF_T((off_t)((Float)(cursamp - beg) / (Float)(num))),
-					       C_TO_XEN_OFF_T((off_t)(num / new_ep->samps_per_bin)),
-					       "xen-channel init-func");
-			  hi_loc = snd_protect(init_hi);
-			  need_unprotect = true;
+			  vlo = c_vct_copy((vct *)(XEN_OBJECT_REF(XEN_CALL_2(init_func,
+									     C_TO_XEN_OFF_T((off_t)((Float)(cursamp - beg) / (Float)(num))),
+									     C_TO_XEN_OFF_T((off_t)(num / new_ep->samps_per_bin)),
+									     "ptree-channel init func"))));
+			  vhi = c_vct_copy(vlo);
 			  inited = true;
 			}
-		      val = XEN_CALL_3(code, C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i])), init_lo, XEN_TRUE, "xen-channel");
-		      dmin = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE_OR_ELSE(val, 0.0));
-		      val = XEN_CALL_3(code, C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i])), init_hi, XEN_TRUE, "xen-channel");
-		      dmax = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE_OR_ELSE(val, 0.0));
+		      dmin = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f1v1b2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i]), vlo, true));
+		      dmax = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f1v1b2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i]), vhi, true));
 		    }
 		  else
 		    {
-		      if (closure)
-			{
-			  if (!inited)
-			    {
-			      vlo = c_vct_copy((vct *)(XEN_OBJECT_REF(XEN_CALL_2(init_func,
-										 C_TO_XEN_OFF_T((off_t)((Float)(cursamp - beg) / (Float)(num))),
-										 C_TO_XEN_OFF_T((off_t)(num / new_ep->samps_per_bin)),
-										 "ptree-channel init func"))));
-			      vhi = c_vct_copy(vlo);
-			      inited = true;
-			    }
-			  dmin = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f1v1b2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i]), vlo, true));
-			  dmax = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f1v1b2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i]), vhi, true));
-			}
-		      else
-			{
-			  dmin = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i])));
-			  dmax = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i])));
-			}
+		      dmin = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_min[i])));
+		      dmax = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, MUS_SAMPLE_TO_FLOAT(old_ep->data_max[i])));
 		    }
 		  if (dmin <= dmax)
 		    {
@@ -1025,19 +955,8 @@ void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int 
 	  if (fmin > new_ep->data_min[i]) fmin = new_ep->data_min[i];
 	  if (fmax < new_ep->data_max[i]) fmax = new_ep->data_max[i];
 	}
-      if (is_xen)
-	{
-	  if (need_unprotect)
-	    {
-	      snd_unprotect_at(lo_loc);
-	      snd_unprotect_at(hi_loc);
-	    }
-	}
-      else
-	{
-	  if (vlo) c_free_vct(vlo);
-	  if (vhi) c_free_vct(vhi);
-	}
+      if (vlo) c_free_vct(vlo);
+      if (vhi) c_free_vct(vhi);
       new_ep->fmin = fmin;
       new_ep->fmax = fmax;
       new_ep->completed = true;

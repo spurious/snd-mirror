@@ -9108,12 +9108,6 @@ MUS_VCT_1(data, 0)
 MUS_VCT_1(xcoeffs, 1)
 MUS_VCT_1(ycoeffs, 2)
 
-  /* these ought to add_obj_to_gcs (pv cases also above), but we assume currently
-   * that we can return the vct result to scheme, so we can't actually clean up correctly --
-   * surely this is a bug...
-   * TODO:  maybe we can see that we're in an embedded ptree?
-   */
-
 static xen_value *boolean_p_1(ptree *prog, xen_value **args, int num_args)
 {
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_BOOL), R_CONSTANT));
@@ -10917,7 +10911,7 @@ in multi-channel situations where you want the optimization that vct-map! provid
 
   for (i = 0; i < min_len; i++) 
     {
-      obj = XEN_CALL_0_NO_CATCH(code, S_vct_map);
+      obj = XEN_CALL_0_NO_CATCH(code);
       if (mus_xen_p(obj))
 	{
 	  f = XEN_TO_MUS_ANY(obj);

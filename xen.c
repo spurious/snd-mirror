@@ -284,7 +284,7 @@ XEN xen_guile_dbg_new_procedure(const char *name, XEN (*func)(), int req, int op
 #if HAVE_SCM_C_MAKE_RECTANGULAR
 static char **xen_temp_strings = NULL;
 static int xen_temp_strings_ctr = 0;
-#define XEN_TEMP_STRINGS_SIZE 128
+#define XEN_TEMP_STRINGS_SIZE 512
 
 #if DEBUGGING
 static char **stored_strings = NULL;

@@ -1,5 +1,9 @@
 Snd change log
 
+  3-Jan:     removed next-to-last (xen fallback) arg to ptree-channel, and associated xen-channel stuff.
+
+2005 ----------------------------------------------------------------
+
   29-Dec:    eval-c.scm (Kjetil Matheussen).
   7-Dec:     after-save-as-hook, replacing emacs-style-save-as.
   3-Dec:     mark-tag-width|height.

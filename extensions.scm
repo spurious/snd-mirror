@@ -596,7 +596,7 @@ If 'check' is #f, the hooks are removed."
 	    incr
 	    rmp0
 	    (- rmp1 rmp0))))
-   #t (format #f "sine-ramp ~A ~A ~A ~A" rmp0 rmp1 beg dur)))
+   (format #f "sine-ramp ~A ~A ~A ~A" rmp0 rmp1 beg dur)))
 
 (define* (sine-env-channel env #:optional (beg 0) dur snd chn edpos)
   "(sine-env-channel env #:optional (beg 0) dur snd chn edpos) connects env's dots with sinusoids"
@@ -632,7 +632,7 @@ If 'check' is #f, the hooks are removed."
 	    incr
 	    rmp0
 	    (- rmp1 rmp0))))
-   #t (format #f "blackman4-ramp ~A ~A ~A ~A" rmp0 rmp1 beg dur)))
+   (format #f "blackman4-ramp ~A ~A ~A ~A" rmp0 rmp1 beg dur)))
 
 (define* (blackman4-env-channel env #:optional (beg 0) dur snd chn edpos)
   (any-env-channel env blackman4-ramp beg dur snd chn edpos (format #f "blackman4-env-channel '~A ~A ~A" env beg dur)))
@@ -665,7 +665,7 @@ If 'check' is #f, the hooks are removed."
 		(< rmp1 rmp0))
 	   (vct (* (- frag-dur frag-beg) incr) (- incr) rmp1 (- rmp0 rmp1))
 	   (vct (* frag-beg incr) incr rmp0 (- rmp1 rmp0)))))
-   #t (format #f "ramp-squared ~A ~A ~A ~A ~A" rmp0 rmp1 symmetric beg dur)))
+   (format #f "ramp-squared ~A ~A ~A ~A ~A" rmp0 rmp1 symmetric beg dur)))
 
 (define* (env-squared-channel env #:optional (symmetric #t) (beg 0) dur snd chn edpos)
   "(env-squared-channel env #:optional (symmetric #t) (beg 0) dur snd chn edpos) connects env's dots with x^2 curves"
@@ -700,7 +700,7 @@ If 'check' is #f, the hooks are removed."
 		(< rmp1 rmp0))
 	   (vct (* (- frag-dur frag-beg) incr) (- incr) rmp1 (- rmp0 rmp1) exponent)
 	   (vct (* frag-beg incr) incr rmp0 (- rmp1 rmp0) exponent))))
-   #t (format #f "ramp-expt ~A ~A ~A ~A ~A ~A" rmp0 rmp1 exponent symmetric beg dur)))
+   (format #f "ramp-expt ~A ~A ~A ~A ~A ~A" rmp0 rmp1 exponent symmetric beg dur)))
 
 (define* (env-expt-channel env exponent #:optional (symmetric #t) (beg 0) dur snd chn edpos)
   "(env-expt-channel env exponent #:optional (symmetric #t) (beg 0) dur snd chn edpos) connects env'e dots with x^exponent curves"
@@ -717,7 +717,7 @@ If 'check' is #f, the hooks are removed."
 (define* (offset-channel amount #:optional (beg 0) dur snd chn edpos)
   "(offset-channel amount #:optional (beg 0) dur snd chn edpos) adds amount to each sample"
   (let ((dc amount))
-    (ptree-channel (lambda (y) (+ y dc)) beg dur snd chn edpos #t #f #t 
+    (ptree-channel (lambda (y) (+ y dc)) beg dur snd chn edpos #t #f
 		   (format #f "offset-channel ~A ~A ~A" amount beg dur))))
 
 
@@ -726,7 +726,7 @@ If 'check' is #f, the hooks are removed."
 (define* (dither-channel #:optional (amount .00006) (beg 0) dur snd chn edpos)
   "(dither-channel #:optional (amount .00006) (beg 0) dur snd chn edpos) adds amount dither to each sample"
   (let ((dither (* .5 amount)))
-    (ptree-channel (lambda (y) (+ y (mus-random dither) (mus-random dither))) beg dur snd chn edpos #t #f #t
+    (ptree-channel (lambda (y) (+ y (mus-random dither) (mus-random dither))) beg dur snd chn edpos #t #f
 		   (format #f "dither-channel ~,8F ~A ~A" amount beg dur))))
 
 
@@ -738,7 +738,7 @@ If 'check' is #f, the hooks are removed."
     (ptree-channel
      (lambda (y)
        (sin (+ (* y 0.5 pi) (* ind (sin (* y 2.0 pi))))))
-     beg dur snd chn edpos #f #f #t 
+     beg dur snd chn edpos #f #f
      (format #f "contrast-channel ~A ~A ~A" index beg dur))))
 
 #!
