@@ -1376,7 +1376,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       tmpstr = read_file_data_choices(new_dialog_data, &srate, &chans, &header_type, &data_format, &loc);
       newer_name = gtk_entry_get_text(GTK_ENTRY(new_file_name));
       if (newer_name == NULL) return(NULL);
-      sp = finish_new_file(ss, newer_name, header_type, data_format, srate, chans, tmpstr);
+      sp = snd_new_file(ss, newer_name, header_type, data_format, srate, chans, tmpstr);
       if (tmpstr) FREE(tmpstr);
     }
   return(sp);

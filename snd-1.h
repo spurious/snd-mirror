@@ -742,6 +742,10 @@ char *added_transform_name(int type);
   SCM snd_catch_any(scm_catch_body_t body, void *body_data, const char *caller);
   SCM snd_set_object_property(SCM obj, SCM key, SCM val);
   int ignore_mus_error(int type, char *msg);
+  void snd_no_such_file_error(const char *caller, SCM filename);
+  void snd_no_such_channel_error(const char *caller, SCM snd, SCM chn);
+  void snd_bad_arity_error(const char *caller, SCM errstr, SCM proc);
+  void snd_no_active_selection_error(const char *caller);
   void g_initialize_gh(snd_state *ss);
   SCM eval_str_wrapper(void *data);
   char *gh_print_1(SCM obj, const char *caller);
@@ -1050,6 +1054,7 @@ void remove_apply(snd_info *sp);
 BACKGROUND_TYPE apply_controls(GUI_POINTER xp);
 #if HAVE_GUILE
   void g_init_snd(SCM local_doc);
+  void snd_no_such_sound_error(const char *caller, SCM n);
 #endif
 void set_speed_style(snd_state *ss, int val);
 void amp_env_scale_by(chan_info *cp, Float scl);
@@ -1123,8 +1128,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 char *header_short_name(int i);
 void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_data);
 char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr);
-snd_info *finish_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *new_comment);
-snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment, int with_dialog);
+snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *new_comment);
 
 int header_type_from_position(int pos);
 int data_format_from_position(int header, int pos);

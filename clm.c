@@ -522,8 +522,12 @@ Float mus_array_interp(Float *wave, Float phase, int size)
   /* changed 26-Sep-00 to be closer to mus.lisp */
   int int_part, inx;
   Float frac_part;
-  while (phase < 0.0) phase += size;
-  while (phase >= size) phase -= size;
+  if ((phase < 0.0) || (phase > size))
+    {
+      /* 28-Mar-01 changed to fmod; I was hoping to avoid this... */
+      phase = fmod((double)phase, (double)size);
+      if (phase < 0.0) phase += size;
+    }
   int_part = (int)floor(phase);
   frac_part = phase - int_part;
   if (frac_part == 0.0) 

@@ -377,6 +377,7 @@
 #define S_draw_line                     "draw-line"
 #define S_draw_lines                    "draw-lines"
 #define S_draw_string                   "draw-string"
+#define S_drop_hook                     "drop-hook"
 #define S_during_open_hook              "during-open-hook"
 #define S_edit_header_dialog            "edit-header-dialog"
 #define S_edit_fragment                 "edit-fragment"

@@ -6,15 +6,29 @@ static GtkTargetEntry target_table[] = {
   { "text/plain", 0, 0}
 };
 
+#if HAVE_GUILE
+static SCM drop_hook;
+#endif
+
 static void drag_data_received (GtkWidget *widget, GdkDragContext *context, gint x, gint y, 
 				GtkSelectionData *data, guint info, guint time)
 {
-  snd_info *sp;
+  snd_info *sp = NULL;
   if ((data->length >= 0) && 
       (data->format == 8))
     {
-      sp = snd_open_file((char *)(data->data), get_global_state());
-      if (sp) select_channel(sp, 0);
+#if HAVE_GUILE
+      if ((!(HOOKED(drop_hook))) || 
+	  (!(SCM_TRUE_P(g_c_run_or_hook(drop_hook,
+					SCM_LIST1(TO_SCM_STRING((char *)(data->data))),
+					"drop")))))
+	{
+#endif
+	  sp = snd_open_file((char *)(data->data), get_global_state());
+	  if (sp) select_channel(sp, 0);
+#if HAVE_GUILE
+	}
+#endif
       gtk_drag_finish (context, TRUE, FALSE, time);
       return;
     }
@@ -30,3 +44,13 @@ void InitializeDrop(snd_state *ss)
 
 
 /* on the guile-gtk side, drag-and-drop is apparently not supported yet (version 0.19) */
+
+#if HAVE_GUILE
+void g_init_gxdrop(SCM local_doc)
+{
+  #define H_drop_hook S_drop_hook " (filename) is called whenever Snd receives a drag-and-drop \
+event. If the returns #t, the file is not opened by Snd."
+
+  drop_hook = MAKE_HOOK(S_drop_hook, 1, H_drop_hook); /* arg = filename */
+}
+#endif

@@ -265,6 +265,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+29-Mar:  drop-hook.\n\
 23-Mar:  removed syncing (use sync), and abort? (use c-g?).\n\
          removed support for Guile 1.3.0 (Snd now needs 1.3.4 or later).\n\
          select-region-hook, select-mix-hook.\n\
@@ -1087,6 +1088,7 @@ user-interface manipulations.\n\
   " S_after_open_hook " (snd)\n\
   " S_before_fft_hook " (snd chn)\n\
   " S_close_hook " (snd)\n\
+  " S_drop_hook " (filename\n\
   " S_during_open_hook " (fd name reason)\n\
   " S_edit_hook " (snd chn)\n\
   " S_enved_hook " (env pt new-x new-y)\n\

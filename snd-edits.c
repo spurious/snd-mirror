@@ -2772,18 +2772,13 @@ snd can be a filename, a sound index number, or a list with a mix id number."
       filename = TO_C_STRING(snd);
       if (mus_file_probe(filename))
 	loc_sp = make_sound_readable(ss, filename, FALSE);
-      else scm_throw(NO_SUCH_FILE,
-		     SCM_LIST3(TO_SCM_STRING(S_make_sample_reader),
-			       snd,
-			       TO_SCM_STRING(strerror(errno))));
+      else snd_no_such_file_error(S_make_sample_reader, snd);
       chan = TO_C_INT_OR_ELSE(chn, 0);
       if ((chan < 0) || 
 	  (chan > loc_sp->nchans))
 	{
 	  completely_free_snd_info(loc_sp);
-	  scm_throw(NO_SUCH_CHANNEL,
-		    SCM_LIST3(TO_SCM_STRING(S_make_sample_reader),
-			      snd, chn));
+	  snd_no_such_channel_error(S_make_sample_reader, snd, chn);	
 	}
       cp = loc_sp->chans[chan];
     }
@@ -2823,10 +2818,7 @@ returns a reader ready to access region's channel chn data starting at 'start-sa
 			reg));
   chn_n = TO_C_INT_OR_ELSE(chn, 0);
   if (chn_n >= region_chans(reg_n)) 
-    scm_throw(NO_SUCH_CHANNEL,
-	      SCM_LIST3(TO_SCM_STRING(S_make_region_sample_reader),
-			SCM_LIST1(reg),
-			chn));
+    snd_no_such_channel_error(S_make_region_sample_reader, SCM_LIST1(reg), chn);
 
   fd = init_region_read(get_global_state(), 
 			TO_C_INT_OR_ELSE(samp_n, 0), 
@@ -3344,9 +3336,7 @@ inserts channel 'file-chan' of 'file' (or all chans file-chan not given) into sn
   if (nc == -1)
     {
       if (filename) FREE(filename);
-      scm_throw(NO_SUCH_FILE,
-		SCM_LIST2(TO_SCM_STRING(S_insert_sound),
-			  file));
+      snd_no_such_file_error(S_insert_sound, file);
     }
   len = mus_sound_samples(filename) / nc;
   if (NUMBER_P(ubeg))
@@ -3365,9 +3355,7 @@ inserts channel 'file-chan' of 'file' (or all chans file-chan not given) into sn
       else 
 	{
 	  if (filename) FREE(filename);
-	  scm_throw(NO_SUCH_CHANNEL,
-		    SCM_LIST3(TO_SCM_STRING(S_insert_sound),
-			      file, file_chn));
+	  snd_no_such_channel_error(S_insert_sound, file, file_chn);	
 	}
     }
   else

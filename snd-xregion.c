@@ -546,13 +546,16 @@ int region_dialog_is_active(void)
 
 void allocate_region_rows(snd_state *ss, int n)
 {
-  Widget last_row;
-  regrow *r;
+  Widget last_row = NULL;
+  regrow *r = NULL;
   int i;
   if ((region_dialog) && (n > max_regions(ss)))
     {
-      r = region_rows[max_regions(ss) - 1];
-      last_row = r->rw;
+      if (max_regions(ss) > 0)
+	{
+	  r = region_rows[max_regions(ss) - 1];
+	  last_row = r->rw;
+	}
       region_rows = (regrow **)REALLOC(region_rows, n * sizeof(regrow *));
       for (i = max_regions(ss); i < n; i++)
 	{

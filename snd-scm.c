@@ -7,7 +7,6 @@
 
 #if HAVE_GUILE
 
-#include "sndlib2scm.h"
 #include "clm2scm.h"
 #include "sndlib-strings.h"
 
@@ -330,6 +329,36 @@ int procedure_ok_with_error(SCM proc, int req_args, int opt_args, const char *ca
       return(0);
     }
   return(1);
+}
+
+void snd_no_such_file_error(const char *caller, SCM filename)
+{
+  scm_throw(NO_SUCH_FILE,
+	    SCM_LIST3(TO_SCM_STRING(caller),
+		      filename,
+		      TO_SCM_STRING(strerror(errno))));
+}
+
+void snd_no_such_channel_error(const char *caller, SCM snd, SCM chn)
+{
+  scm_throw(NO_SUCH_CHANNEL,
+	    SCM_LIST3(TO_SCM_STRING(caller),
+		      snd,
+		      chn));
+}
+
+void snd_no_active_selection_error(const char *caller)
+{
+  scm_throw(NO_ACTIVE_SELECTION,
+	    SCM_LIST1(TO_SCM_STRING(caller)));
+}
+
+void snd_bad_arity_error(const char *caller, SCM errstr, SCM proc)
+{
+  scm_throw(BAD_ARITY,
+	    SCM_LIST3(TO_SCM_STRING(caller),
+		      errstr,
+		      proc));
 }
 
 
@@ -824,8 +853,10 @@ Other writable headers include " S_mus_aiff ", " S_mus_riff ", " S_mus_ircam ", 
   typ = TO_C_INT(val);
   if (mus_header_writable(typ, -2))
     set_default_output_type(state, typ); 
-  else snd_warning("can't write %s headers",
-		   mus_header_type_name(typ));
+  else mus_misc_error("set-" S_default_output_type, 
+		      "can't write this header type", 
+		      SCM_LIST2(val, 
+				TO_SCM_STRING(mus_header_type_name(typ))));
   return(TO_SCM_INT(default_output_type(state)));
 }
 
@@ -839,11 +870,7 @@ are available, but not all are compatible with all header types"
 
   SCM_ASSERT(INTEGER_P(val), val, SCM_ARG1, "set-" S_default_output_format); 
   format = TO_C_INT(val);
-  if (mus_header_writable(default_output_type(state), format))
-    set_default_output_format(state, format); 
-  else snd_warning("can't write %s data to %s headers",
-		   mus_data_format_name(format),
-		   mus_header_type_name(default_output_type(state)));
+  set_default_output_format(state, format); 
   return(TO_SCM_INT(default_output_format(state)));
 }
 
@@ -1524,16 +1551,11 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
 	    {
 	      errstr = TO_SCM_STRING(error);
 	      FREE(error);
-	      scm_throw(BAD_ARITY,
-			SCM_LIST3(TO_SCM_STRING("set-" S_search_procedure),
-				  errstr,
-				  proc));
+	      snd_bad_arity_error("set-" S_search_procedure, errstr, proc);
 	    }
 	}
       else
-	scm_throw(NO_SUCH_SOUND,
-		  SCM_LIST2(TO_SCM_STRING("set-" S_search_procedure),
-			    snd));
+	snd_no_such_sound_error("set-" S_search_procedure, snd);
     }
   else 
     {
@@ -1554,10 +1576,7 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
 	{
 	  errstr = TO_SCM_STRING(error);
 	  FREE(error);
-	  scm_throw(BAD_ARITY,
-		    SCM_LIST3(TO_SCM_STRING("set-" S_search_procedure),
-			      errstr,
-			      proc));
+	  snd_bad_arity_error("set-" S_search_procedure, errstr, proc);
 	}
     }
   return(snd);
@@ -1629,12 +1648,7 @@ chan_info *get_cp(SCM scm_snd_n, SCM scm_chn_n, const char *caller)
   int chn_n;
   sp = get_sp(scm_snd_n);
   if (sp == NULL) 
-    {
-      scm_throw(NO_SUCH_SOUND,
-		SCM_LIST2(TO_SCM_STRING(caller),
-			  scm_snd_n)); 
-      return(NULL);
-    }
+    snd_no_such_sound_error(caller, scm_snd_n); 
   if (INTEGER_P(scm_chn_n))
     chn_n = TO_C_INT(scm_chn_n);
   else
@@ -1643,10 +1657,7 @@ chan_info *get_cp(SCM scm_snd_n, SCM scm_chn_n, const char *caller)
     else chn_n = 0;
   if ((chn_n >= 0) && (chn_n < sp->nchans)) 
     return(sp->chans[chn_n]);
-  scm_throw(NO_SUCH_CHANNEL,
-	    SCM_LIST3(TO_SCM_STRING(caller),
-		      scm_snd_n,
-		      scm_chn_n));
+  snd_no_such_channel_error(caller, scm_snd_n, scm_chn_n);
   return(NULL);
 }
 
@@ -1773,10 +1784,7 @@ subsequent " S_close_sound_file ". data can be written with " S_vct_sound_file
   mus_error_set_handler(old_mus_error);
   free(name);
   if (result == -1) 
-    scm_throw(NO_SUCH_FILE,
-	      SCM_LIST3(TO_SCM_STRING(S_open_sound_file),
-			g_name,
-			TO_SCM_STRING(strerror(errno))));
+    snd_no_such_file_error(S_open_sound_file, g_name);
   set_temp_fd(result, hdr);
   return(TO_SCM_INT(result));
 }
@@ -1794,10 +1802,7 @@ static SCM g_close_sound_file(SCM g_fd, SCM g_bytes)
   if (hdr == NULL) 
     {
       close(fd);
-      scm_throw(NO_SUCH_FILE,
-		SCM_LIST3(TO_SCM_STRING(S_close_sound_file),
-			  g_fd,
-			  TO_SCM_STRING(strerror(errno))));
+      snd_no_such_file_error(S_close_sound_file, g_fd);
     }
   result = close_temp_file(fd, hdr, bytes, any_selected_sound(state));
   unset_temp_fd(fd);
@@ -2044,9 +2049,7 @@ static SCM g_edit_header_dialog(SCM snd_n)
   sp = get_sp(snd_n); 
   if (sp) 
     edit_header(sp); 
-  else scm_throw(NO_SUCH_SOUND,
-		 SCM_LIST2(TO_SCM_STRING(S_edit_header_dialog),
-			   snd_n));
+  else snd_no_such_sound_error(S_edit_header_dialog, snd_n);
   return(SCM_BOOL_F);
 }
 
@@ -2247,9 +2250,7 @@ static SCM g_start_progress_report(SCM snd)
   sp = get_sp(snd);
   if (sp)
     start_progress_report(sp, NOT_FROM_ENVED); 
-  else scm_throw(NO_SUCH_SOUND,
-		 SCM_LIST2(TO_SCM_STRING(S_start_progress_report),
-			   snd));
+  else snd_no_such_sound_error(S_start_progress_report, snd);
   return(SCM_BOOL_T);
 }
 
@@ -2261,9 +2262,7 @@ static SCM g_finish_progress_report(SCM snd)
   sp = get_sp(snd);
   if (sp) 
     finish_progress_report(sp, NOT_FROM_ENVED); 
-  else scm_throw(NO_SUCH_SOUND,
-		 SCM_LIST2(TO_SCM_STRING(S_finish_progress_report),
-			   snd));
+  else snd_no_such_sound_error(S_finish_progress_report, snd);
   return(SCM_BOOL_T);
 }
 
@@ -2283,9 +2282,7 @@ updates an on-going 'progress report' (e. g. an animated hour-glass icon) in snd
 		    TO_C_INT_OR_ELSE(chans, sp->nchans),
 		    TO_C_DOUBLE(pct),
 		    NOT_FROM_ENVED);
-  else scm_throw(NO_SUCH_SOUND,
-		 SCM_LIST2(TO_SCM_STRING(S_progress_report),
-			   snd));
+  else snd_no_such_sound_error(S_progress_report, snd);
   return(SCM_BOOL_T);
 }
 
@@ -3267,13 +3264,12 @@ If more than one hook function, results are concatenated. If none, the current c
   g_init_recorder(local_doc);
   g_init_gxenv(local_doc);
   g_init_gxmenu(local_doc);
-  #if (!USE_NO_GUI)
-    g_init_gxmain(local_doc);
-    g_init_gxlistener(local_doc);
-    g_init_gxchn(local_doc);
-  #endif
 #if (!USE_NO_GUI)
+  g_init_gxmain(local_doc);
+  g_init_gxlistener(local_doc);
+  g_init_gxchn(local_doc);
   g_init_draw(local_doc);
+  g_init_gxdrop(local_doc);
 #endif
 
 #if HAVE_LADSPA

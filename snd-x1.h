@@ -223,6 +223,9 @@ void set_fft_style(snd_state *ss, int val);
 /* -------- snd-xdrop.c -------- */
 
 void InitializeDrop(snd_state *ss);
+#if HAVE_GUILE
+  void g_init_gxdrop(SCM local_doc);
+#endif
 
 
 /* -------- snd-xregion.c -------- */

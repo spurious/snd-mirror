@@ -48,10 +48,7 @@ static SCM g_in(SCM ms, SCM code)
 		    TO_C_UNSIGNED_LONG(ms), 
 		    (XtTimerCallbackProc)timed_eval, 
 		    (XtPointer)code);
-  else scm_throw(MUS_MISC_ERROR,
-		 SCM_LIST3(TO_SCM_STRING(S_in),
-			   TO_SCM_STRING("2nd argument should be a procedure of no args"),
-			   code));
+  else mus_misc_error(S_in, "2nd argument should be a procedure of no args", code);
   return(ms);
 }
 
@@ -287,10 +284,11 @@ static SCM g_load_colormap(SCM colors)
     {
       if (snd_color_p(vdata[i]))
 	v = get_snd_color(vdata[i]);
-      else scm_throw(MUS_MISC_ERROR,
-		     SCM_LIST3(TO_SCM_STRING(S_load_colormap),
-			       TO_SCM_STRING("invalid color:"),
-			       vdata[i]));
+      else 
+	{
+	  FREE(xcs);
+	  mus_misc_error(S_load_colormap, "invalid color:", vdata[i]);
+	}
       xcs[i] = v->color;
     }
   x_load_colormap(xcs);
@@ -304,11 +302,20 @@ static SCM g_graph_cursor(void)
   return(TO_SCM_INT(in_graph_cursor(state)));
 }
 
+#include <X11/cursorfont.h>
 static SCM g_set_graph_cursor(SCM curs)
 {
+  int val;
   SCM_ASSERT(NUMBER_P(curs), curs, SCM_ARG1, "set-" S_graph_cursor);
-  state->Graph_Cursor = TO_C_INT(curs);
-  (state->sgx)->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(state)), in_graph_cursor(state));
+  /* X11/cursorfont.h has various even-numbered glyphs, but the odd numbers are ok, and XC_num_glyphs is a lie */
+  /*   if you use too high a number here, Goddamn X dies */
+  val = TO_C_INT(curs);
+  if ((val >= 0) && (val <= XC_xterm))
+    {
+      state->Graph_Cursor = val;
+      (state->sgx)->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(state)), in_graph_cursor(state));
+    }
+  else mus_misc_error("set-" S_graph_cursor, "invalid cursor", curs);
   return(curs);
 }
 

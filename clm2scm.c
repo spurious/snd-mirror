@@ -199,9 +199,7 @@ static int decode_keywords(char *caller, int nkeys, SCM *keys, int nargs, SCM *a
 	    mus_misc_error(caller, "unmatched value within keyword section?", args[arg_ctr]);
 	  /* type checking on the actual values has to be the caller's problem */
 	  if (arg_ctr > nkeys) 
-	    scm_throw(MUS_MISC_ERROR,
-		      SCM_LIST2(TO_SCM_STRING(caller),
-				TO_SCM_STRING("ran out of keyword space!")));
+	    mus_misc_error(caller, "ran out of keyword space!", args[arg_ctr]);
 	  keys[arg_ctr] = args[arg_ctr];
 	  orig[arg_ctr] = arg_ctr;
 	  arg_ctr++;
@@ -212,22 +210,13 @@ static int decode_keywords(char *caller, int nkeys, SCM *keys, int nargs, SCM *a
 	{
 	  if ((arg_ctr == (nargs - 1)) ||
 	      (!(BOUND_P(args[arg_ctr + 1]))))
-	    scm_throw(MUS_MISC_ERROR,
-		      SCM_LIST3(TO_SCM_STRING(caller),
-				TO_SCM_STRING("keyword without value?"),
-				(arg_ctr > 0) ? args[arg_ctr - 1] : TO_SCM_STRING("hmmm... this should not happen")));
+	    mus_misc_error(caller, "keyword without value?", (arg_ctr > 0) ? args[arg_ctr - 1] : TO_SCM_STRING("hmmm... this should not happen"));
 	  keying = 1;
 	  key = args[arg_ctr];
 	  if (keyword_p(args[arg_ctr + 1])) 
-	    scm_throw(MUS_MISC_ERROR,
-		      SCM_LIST4(TO_SCM_STRING(caller),
-				TO_SCM_STRING("two keywords in a row?"),
-				key,
-				args[arg_ctr + 1]));
+	    mus_misc_error(caller, "two keywords in a row?", key);
 	  if (key_start > nkeys) 
-	    scm_throw(MUS_MISC_ERROR,
-		      SCM_LIST2(TO_SCM_STRING(caller),
-				TO_SCM_STRING("extra trailing args?")));
+	    mus_misc_error(caller, "extra trailing args?", key);
 	  key_found = 0;
 	  for (i = key_start; i < nkeys; i++)
 	    {
@@ -270,6 +259,28 @@ static int ikeyarg (SCM key, char *caller, int n, SCM val, int def)
       if (NUMBER_P(key))
 	return(TO_C_INT_OR_ELSE(key, 0));
       else scm_wrong_type_arg(caller, n, val);
+    }
+  return(def);
+}
+
+static Float fkeyarg_or_error (SCM key, char *caller, int n, SCM val, Float def)
+{
+  if (!(keyword_p(key)))
+    {
+      if (NUMBER_P(key))
+	return(TO_C_DOUBLE(key));
+      else return(MUS_MISC_ERROR);
+    }
+  return(def);
+}
+
+static int ikeyarg_or_error (SCM key, char *caller, int n, SCM val, int def)
+{
+  if (!(keyword_p(key)))
+    {
+      if (NUMBER_P(key))
+	return(TO_C_INT_OR_ELSE(key, 0));
+      else return(MUS_MISC_ERROR);
     }
   return(def);
 }
@@ -1087,8 +1098,8 @@ static SCM g_make_oscil(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
   vals = decode_keywords(S_make_oscil, 2, keys, 4, args, orig_arg);
   if (vals > 0)
     {
-      freq = fkeyarg(keys[0], S_make_oscil, orig_arg[0]+1, args[orig_arg[0]], freq);
-      phase = fkeyarg(keys[1], S_make_oscil, orig_arg[1]+1, args[orig_arg[1]], phase);
+      freq = fkeyarg(keys[0], S_make_oscil, orig_arg[0] + 1, args[orig_arg[0]], freq);
+      phase = fkeyarg(keys[1], S_make_oscil, orig_arg[1] + 1, args[orig_arg[1]], phase);
     }
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->gen = mus_make_oscil(freq, phase);
@@ -1190,14 +1201,14 @@ enum {G_DELAY, G_COMB, G_NOTCH, G_ALL_PASS};
 static SCM g_make_delay_1(int choice, SCM arglist)
 {
   mus_scm *gn;
-  char *caller = NULL, *errstr;
+  char *caller = NULL;
   SCM args[14], keys[7];
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
   int vals, i, argn = 0, len, arglist_len, keyn, max_size = -1;
   int size = 1, size_key;
   Float *line = NULL;
   Float scaler = 0.0, feedback = 0.0, feedforward = 0.0;
-  SCM initial_contents = SCM_UNDEFINED, lst, msg;
+  SCM initial_contents = SCM_UNDEFINED, lst;
   Float initial_element = 0.0;
   
   switch (choice)
@@ -1223,17 +1234,17 @@ static SCM g_make_delay_1(int choice, SCM arglist)
 	case G_DELAY: 
 	  break;
 	case G_COMB: case G_NOTCH:
-	  scaler = fkeyarg(keys[keyn], caller, orig_arg[keyn]+1, args[orig_arg[keyn]], scaler);
+	  scaler = fkeyarg(keys[keyn], caller, orig_arg[keyn] + 1, args[orig_arg[keyn]], scaler);
 	  keyn++;
 	  break;
 	case G_ALL_PASS:
-	  feedback = fkeyarg(keys[keyn], caller, orig_arg[keyn]+1, args[orig_arg[keyn]], feedback);
+	  feedback = fkeyarg(keys[keyn], caller, orig_arg[keyn] + 1, args[orig_arg[keyn]], feedback);
 	  keyn++;
-	  feedforward = fkeyarg(keys[keyn], caller, orig_arg[keyn]+1, args[orig_arg[keyn]], feedforward);
+	  feedforward = fkeyarg(keys[keyn], caller, orig_arg[keyn] + 1, args[orig_arg[keyn]], feedforward);
 	  keyn++;
 	  break;
 	}
-      size = ikeyarg(keys[keyn], caller, orig_arg[keyn]+1, args[orig_arg[keyn]], size);
+      size = ikeyarg(keys[keyn], caller, orig_arg[keyn] + 1, args[orig_arg[keyn]], size);
       size_key = keyn;
       keyn++;
       if (!(keyword_p(keys[keyn])))
@@ -1246,6 +1257,8 @@ static SCM g_make_delay_1(int choice, SCM arglist)
 	      if (gh_list_p(initial_contents))
 		{
 		  len = gh_length(initial_contents);
+		  if (len == 0) 
+		    mus_misc_error(caller, "initial-contents empty?", initial_contents);
 		  line = (Float *)CALLOC(len, sizeof(Float));
 		  for (i = 0, lst = initial_contents; (i < len) && (SCM_NNULLP(lst)); i++, lst = SCM_CDR(lst)) 
 		    line[i] = TO_C_DOUBLE(SCM_CAR(lst));
@@ -1253,23 +1266,30 @@ static SCM g_make_delay_1(int choice, SCM arglist)
 	    }
 	}
       keyn++;
-      initial_element = fkeyarg(keys[keyn], caller, orig_arg[keyn]+1, args[orig_arg[keyn]], 0.0);
+      initial_element = fkeyarg_or_error(keys[keyn], caller, orig_arg[keyn] + 1, args[orig_arg[keyn]], 0.0);
+      if (SCM_EQ_P(initial_element, MUS_MISC_ERROR))
+	{
+	  if (line) FREE(line);
+	  scm_wrong_type_arg(caller, orig_arg[keyn] + 1, args[orig_arg[keyn]]);
+	}
       keyn++;
-      max_size = ikeyarg(keys[keyn], caller, orig_arg[keyn]+1, args[orig_arg[keyn]], size);
+      max_size = ikeyarg_or_error(keys[keyn], caller, orig_arg[keyn] + 1, args[orig_arg[keyn]], size);
+      if (SCM_EQ_P(max_size, MUS_MISC_ERROR))
+	{
+	  if (line) FREE(line);
+	  scm_wrong_type_arg(caller, orig_arg[keyn] + 1, args[orig_arg[keyn]]);
+	}
     }
   if (size < 0)
-    mus_misc_error(caller, "size < 0?", keys[size_key]);
+    {
+      if (line) FREE(line);
+      mus_misc_error(caller, "size < 0?", keys[size_key]);
+    }
   if (max_size == -1) max_size = size;
   if (max_size <= 0)
     {
-      errstr = (char *)CALLOC(64, sizeof(char));
-      sprintf(errstr, "%s: delay line length is %d?", caller, max_size);
-      msg = TO_SCM_STRING(errstr);
-      FREE(errstr);
       if (line) FREE(line);
-      scm_throw(MUS_MISC_ERROR,
-		SCM_LIST2(TO_SCM_STRING(caller),
-			  msg));
+      mus_misc_error(caller, "invalid delay length", TO_SCM_INT(max_size));
     }
   if (line == NULL)
     {
@@ -1496,9 +1516,9 @@ returns a new " S_sum_of_cosines " generator, producing a band-limited pulse tra
   vals = decode_keywords(S_make_sum_of_cosines, 3, keys, 6, args, orig_arg);
   if (vals > 0)
     {
-      cosines = ikeyarg(keys[0], S_make_sum_of_cosines, orig_arg[0]+1, args[orig_arg[0]], cosines);
-      freq = fkeyarg(keys[1], S_make_sum_of_cosines, orig_arg[1]+1, args[orig_arg[1]], freq);
-      phase = fkeyarg(keys[2], S_make_sum_of_cosines, orig_arg[2]+1, args[orig_arg[2]], phase);
+      cosines = ikeyarg(keys[0], S_make_sum_of_cosines, orig_arg[0] + 1, args[orig_arg[0]], cosines);
+      freq = fkeyarg(keys[1], S_make_sum_of_cosines, orig_arg[1] + 1, args[orig_arg[1]], freq);
+      phase = fkeyarg(keys[2], S_make_sum_of_cosines, orig_arg[2] + 1, args[orig_arg[2]], phase);
     }
   if (cosines <= 0)
     mus_misc_error(S_make_sum_of_cosines, "cosines <= 0?", keys[0]);
@@ -1561,8 +1581,8 @@ static SCM g_make_noi(int rand_case, SCM arg1, SCM arg2, SCM arg3, SCM arg4)
   vals = decode_keywords(S_make_rand, 2, keys, 4, args, orig_arg);
   if (vals > 0)
     {
-      freq = fkeyarg(keys[0], S_make_rand, orig_arg[0]+1, args[orig_arg[0]], freq);
-      base = fkeyarg(keys[1], S_make_rand, orig_arg[1]+1, args[orig_arg[1]], base);
+      freq = fkeyarg(keys[0], S_make_rand, orig_arg[0] + 1, args[orig_arg[0]], freq);
+      base = fkeyarg(keys[1], S_make_rand, orig_arg[1] + 1, args[orig_arg[1]], base);
     }
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   if (rand_case)
@@ -1685,6 +1705,11 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
   Float *partial_data, *wave;
   int len, i;
   SCM_ASSERT(gh_list_p(partials), partials, SCM_ARG1, S_partials2wave);
+  SCM_ASSERT(vct_p(utable) || SCM_FALSEP(utable) || (!(BOUND_P(utable))), utable, SCM_ARG2, S_partials2wave);
+  SCM_ASSERT(BOOLEAN_IF_BOUND_P(normalize), normalize, SCM_ARG3, S_partials2wave);
+  len = gh_length(partials);
+  if (len == 0)
+    mus_misc_error(S_partials2wave, "partials list empty?", partials);
   if ((SCM_UNBNDP(utable)) || (!(vct_p(utable))))
     {
       wave = (Float *)CALLOC(DEFAULT_TABLE_SIZE, sizeof(Float));
@@ -1692,7 +1717,6 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
     }
   else table = utable;
   f = get_vct(table);
-  len = gh_length(partials);
   partial_data = (Float *)CALLOC(len, sizeof(Float));
   for (i = 0, lst = partials; i < len; i++, lst = SCM_CDR(lst)) 
     partial_data[i] = TO_C_DOUBLE(SCM_CAR(lst));
@@ -1715,6 +1739,11 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
   (set! gen (make-table-lookup 440.0 :wave (phase-partials->wave (list 1 .75 0.0 2 .25 (* pi .5)))))"
 
   SCM_ASSERT(gh_list_p(partials), partials, SCM_ARG1, S_phasepartials2wave);
+  SCM_ASSERT(vct_p(utable) || SCM_FALSEP(utable) || (!(BOUND_P(utable))), utable, SCM_ARG2, S_phasepartials2wave);
+  SCM_ASSERT(BOOLEAN_IF_BOUND_P(normalize), normalize, SCM_ARG3, S_phasepartials2wave);
+  len = gh_length(partials);
+  if (len == 0)
+    mus_misc_error(S_partials2wave, "partials list empty?", partials);
   if ((SCM_UNBNDP(utable)) || (!(vct_p(utable))))
     {
       wave = (Float *)CALLOC(DEFAULT_TABLE_SIZE, sizeof(Float));
@@ -1722,7 +1751,6 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
     }
   else table = utable;
   f = get_vct(table);
-  len = gh_length(partials);
   partial_data = (Float *)CALLOC(len, sizeof(Float));
   for (i = 0, lst = partials; i < len; i++, lst = SCM_CDR(lst)) 
     partial_data[i] = TO_C_DOUBLE(SCM_CAR(lst));
@@ -1753,8 +1781,8 @@ is the same in effect as " S_make_oscil "."
   vals = decode_keywords(S_make_table_lookup, 3, keys, 6, args, orig_arg);
   if (vals > 0)
     {
-      freq = fkeyarg(keys[0], S_make_table_lookup, orig_arg[0]+1, args[orig_arg[0]], freq);
-      phase = fkeyarg(keys[1], S_make_table_lookup, orig_arg[1]+1, args[orig_arg[1]], phase);
+      freq = fkeyarg(keys[0], S_make_table_lookup, orig_arg[0] + 1, args[orig_arg[0]], freq);
+      phase = fkeyarg(keys[1], S_make_table_lookup, orig_arg[1] + 1, args[orig_arg[1]], phase);
       if (!(keyword_p(keys[2])))
 	{
 	  if (vct_p(keys[2]))
@@ -1763,7 +1791,7 @@ is the same in effect as " S_make_oscil "."
 	      table = copy_vct_data(v);
 	      table_size = v->length;
 	    }
-	  else scm_wrong_type_arg(S_make_table_lookup, orig_arg[2]+1, args[orig_arg[2]]);
+	  else scm_wrong_type_arg(S_make_table_lookup, orig_arg[2] + 1, args[orig_arg[2]]);
 	}
     }
   if (table == NULL) table = (Float *)CALLOC(table_size, sizeof(Float));
@@ -1838,9 +1866,9 @@ static SCM g_make_sw(int type, Float def_phase, SCM arg1, SCM arg2, SCM arg3, SC
   vals = decode_keywords(caller, 3, keys, 6, args, orig_arg);
   if (vals > 0)
     {
-      freq = fkeyarg(keys[0], caller, orig_arg[0]+1, args[orig_arg[0]], freq);
-      base = fkeyarg(keys[1], caller, orig_arg[1]+1, args[orig_arg[1]], base);
-      phase = fkeyarg(keys[2], caller, orig_arg[2]+1, args[orig_arg[2]], phase);
+      freq = fkeyarg(keys[0], caller, orig_arg[0] + 1, args[orig_arg[0]], freq);
+      base = fkeyarg(keys[1], caller, orig_arg[1] + 1, args[orig_arg[1]], base);
+      phase = fkeyarg(keys[2], caller, orig_arg[2] + 1, args[orig_arg[2]], phase);
     }
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   switch (type)
@@ -1989,10 +2017,10 @@ returns a new " S_asymmetric_fm " generator."
   vals = decode_keywords(S_make_asymmetric_fm, 4, keys, 8, args, orig_arg);
   if (vals > 0)
     {
-      freq = fkeyarg(keys[0], S_make_asymmetric_fm, orig_arg[0]+1, args[orig_arg[0]], freq);
-      phase = fkeyarg(keys[1], S_make_asymmetric_fm, orig_arg[1]+1, args[orig_arg[1]], phase);
-      r = fkeyarg(keys[2], S_make_asymmetric_fm, orig_arg[2]+1, args[orig_arg[2]], r);
-      ratio = fkeyarg(keys[3], S_make_asymmetric_fm, orig_arg[3]+1, args[orig_arg[3]], ratio);
+      freq = fkeyarg(keys[0], S_make_asymmetric_fm, orig_arg[0] + 1, args[orig_arg[0]], freq);
+      phase = fkeyarg(keys[1], S_make_asymmetric_fm, orig_arg[1] + 1, args[orig_arg[1]], phase);
+      r = fkeyarg(keys[2], S_make_asymmetric_fm, orig_arg[2] + 1, args[orig_arg[2]], r);
+      ratio = fkeyarg(keys[3], S_make_asymmetric_fm, orig_arg[3] + 1, args[orig_arg[3]], ratio);
     }
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->gen = mus_make_asymmetric_fm(freq, phase, r, ratio);
@@ -2072,8 +2100,8 @@ static SCM g_make_smpflt_1(int choice, SCM arg1, SCM arg2, SCM arg3, SCM arg4)
   vals = decode_keywords(smpflts[choice], 2, keys, 4, args, orig_arg);
   if (vals > 0)
     {
-      a0 = fkeyarg(keys[0], smpflts[choice], orig_arg[0]+1, args[orig_arg[0]], a0);
-      a1 = fkeyarg(keys[1], smpflts[choice], orig_arg[1]+1, args[orig_arg[1]], a1);
+      a0 = fkeyarg(keys[0], smpflts[choice], orig_arg[0] + 1, args[orig_arg[0]], a0);
+      a1 = fkeyarg(keys[1], smpflts[choice], orig_arg[1] + 1, args[orig_arg[1]], a1);
     }
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   switch (choice)
@@ -2141,9 +2169,9 @@ static SCM g_make_smpflt_2(int choice, SCM arg1, SCM arg2, SCM arg3, SCM arg4, S
   vals = decode_keywords(smpflts[choice], 3, keys, 6, args, orig_arg);
   if (vals > 0)
     {
-      a0 = fkeyarg(keys[0], smpflts[choice], orig_arg[0]+1, args[orig_arg[0]], a0);
-      a1 = fkeyarg(keys[1], smpflts[choice], orig_arg[1]+1, args[orig_arg[1]], a1);
-      a2 = fkeyarg(keys[2], smpflts[choice], orig_arg[2]+1, args[orig_arg[2]], a2);
+      a0 = fkeyarg(keys[0], smpflts[choice], orig_arg[0] + 1, args[orig_arg[0]], a0);
+      a1 = fkeyarg(keys[1], smpflts[choice], orig_arg[1] + 1, args[orig_arg[1]], a1);
+      a2 = fkeyarg(keys[2], smpflts[choice], orig_arg[2] + 1, args[orig_arg[2]], a2);
     }
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   if (choice == G_TWO_ZERO)
@@ -2362,9 +2390,9 @@ control."
   vals = decode_keywords(S_make_formant, 3, keys, 6, args, orig_arg);
   if (vals > 0)
     {
-      radius = fkeyarg(keys[0], S_make_formant, orig_arg[0]+1, args[orig_arg[0]], radius);
-      freq = fkeyarg(keys[1], S_make_formant, orig_arg[1]+1, args[orig_arg[1]], freq);
-      gain = fkeyarg(keys[2], S_make_formant, orig_arg[2]+1, args[orig_arg[2]], gain);
+      radius = fkeyarg(keys[0], S_make_formant, orig_arg[0] + 1, args[orig_arg[0]], radius);
+      freq = fkeyarg(keys[1], S_make_formant, orig_arg[1] + 1, args[orig_arg[1]], freq);
+      gain = fkeyarg(keys[2], S_make_formant, orig_arg[2] + 1, args[orig_arg[2]], gain);
     }
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->gen = mus_make_formant(radius, freq, gain);
@@ -2796,8 +2824,8 @@ processing normally involving overlap-adds."
   vals = decode_keywords(S_make_buffer, 2, keys, 4, args, orig_arg);
   if (vals > 0)
     {
-      siz = ikeyarg(keys[0], S_make_buffer, orig_arg[0]+1, args[orig_arg[0]], siz);
-      filltime = fkeyarg(keys[1], S_make_buffer, orig_arg[1]+1, args[orig_arg[1]], 0.0);
+      siz = ikeyarg(keys[0], S_make_buffer, orig_arg[0] + 1, args[orig_arg[0]], siz);
+      filltime = fkeyarg(keys[1], S_make_buffer, orig_arg[1] + 1, args[orig_arg[1]], 0.0);
     }
   if (siz <= 0) return(SCM_BOOL_F);
   buf = (Float *)CALLOC(siz, sizeof(Float));
@@ -2900,8 +2928,8 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
   vals = decode_keywords(S_make_wave_train, 3, keys, 6, args, orig_arg);
   if (vals > 0)
     {
-      freq = fkeyarg(keys[0], S_make_wave_train, orig_arg[0]+1, args[orig_arg[0]], freq);
-      phase = fkeyarg(keys[1], S_make_wave_train, orig_arg[1]+1, args[orig_arg[1]], phase);
+      freq = fkeyarg(keys[0], S_make_wave_train, orig_arg[0] + 1, args[orig_arg[0]], freq);
+      phase = fkeyarg(keys[1], S_make_wave_train, orig_arg[1] + 1, args[orig_arg[1]], phase);
       if (!(keyword_p(keys[2])))
         {
 	  if (vct_p(keys[2]))
@@ -2910,7 +2938,7 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
 	      wave = copy_vct_data(v);
 	      wsize = v->length;
 	    }
-          else scm_wrong_type_arg(S_make_wave_train, orig_arg[2]+1, args[orig_arg[2]]);
+          else scm_wrong_type_arg(S_make_wave_train, orig_arg[2] + 1, args[orig_arg[2]]);
         }
     }
   if (wave == NULL) wave = (Float *)CALLOC(wsize, sizeof(Float));
@@ -2959,6 +2987,7 @@ static Float *list2partials(SCM harms, int *npartials)
   Float *partials = NULL;
   SCM lst;
   listlen = gh_length(harms);
+  if (listlen == 0) return(NULL);
   /* the list is '(partial-number partial-amp ... ) */
   maxpartial = TO_C_INT_OR_ELSE(SCM_CAR(harms), 0);
   for (i = 2, lst = SCM_CDDR(harms); i < listlen; i+=2, lst = SCM_CDDR(lst))
@@ -2966,7 +2995,8 @@ static Float *list2partials(SCM harms, int *npartials)
       curpartial = TO_C_INT_OR_ELSE(SCM_CAR(lst), 0);
       if (curpartial > maxpartial) maxpartial = curpartial;
     }
-  partials = (Float *)CALLOC(maxpartial+1, sizeof(Float));
+  if (maxpartial < 0) return(NULL);
+  partials = (Float *)CALLOC(maxpartial + 1, sizeof(Float));
   (*npartials) = maxpartial+1;
   for (i = 0, lst = harms; i < listlen; i+=2, lst = SCM_CDDR(lst))
     {
@@ -2999,17 +3029,24 @@ is basically the same as make-oscil"
   vals = decode_keywords(S_make_waveshape, 4, keys, 8, args, orig_arg);
   if (vals > 0)
     {
-      freq = fkeyarg(keys[0], S_make_waveshape, orig_arg[0]+1, args[orig_arg[0]], freq);
+      freq = fkeyarg(keys[0], S_make_waveshape, orig_arg[0] + 1, args[orig_arg[0]], freq);
       if (!(keyword_p(keys[1])))
         {
 	  if (gh_list_p(keys[1]))
 	    {
 	      partials = list2partials(keys[1], &npartials);
+	      if (partials == NULL)
+		mus_misc_error(S_make_waveshape, "partials list empty?", keys[1]);
 	      partials_allocated = 1;
 	    }
-          else scm_wrong_type_arg(S_make_waveshape, orig_arg[1]+1, args[orig_arg[1]]);
+          else scm_wrong_type_arg(S_make_waveshape, orig_arg[1] + 1, args[orig_arg[1]]);
         }
-      wsize = ikeyarg(keys[2], S_make_waveshape, orig_arg[2]+1, args[orig_arg[2]], wsize);
+      wsize = ikeyarg_or_error(keys[2], S_make_waveshape, orig_arg[2] + 1, args[orig_arg[2]], wsize);
+      if (SCM_EQ_P(wsize, MUS_MISC_ERROR))
+	{
+	  if (partials_allocated) {FREE(partials); partials = NULL;}
+	  scm_wrong_type_arg(S_make_waveshape, orig_arg[2] + 1, args[orig_arg[2]]);
+	}
       if (!(keyword_p(keys[3])))
         {
 	  if (vct_p(keys[3]))
@@ -3018,7 +3055,11 @@ is basically the same as make-oscil"
 	      wave = copy_vct_data(v);
 	      wsize = v->length;
 	    }
-          else scm_wrong_type_arg(S_make_waveshape, orig_arg[3]+1, args[orig_arg[3]]);
+          else 
+	    {
+	      if (partials_allocated) {FREE(partials); partials = NULL;}
+	      scm_wrong_type_arg(S_make_waveshape, orig_arg[3] + 1, args[orig_arg[3]]);
+	    }
         }
     }
   if (wsize <= 0)
@@ -3062,11 +3103,15 @@ that will produce the harmonic spectrum given by the partials argument"
   int npartials, size;
   Float *partials, *wave;
   SCM gwave;
+  SCM_ASSERT(gh_list_p(amps), amps, SCM_ARG1, S_partials2waveshape);
+  SCM_ASSERT(INTEGER_IF_BOUND_P(s_size), s_size, SCM_ARG2, S_partials2waveshape);
   if (INTEGER_P(s_size))
     size = TO_C_INT(s_size);
   else size = DEFAULT_TABLE_SIZE;
   if (size <= 0)
     mus_misc_error(S_partials2waveshape, "size <= 0?", s_size);
+  if (gh_length(amps) == 0)
+    mus_misc_error(S_partials2waveshape, "partials list empty?", amps);
   partials = list2partials(amps, &npartials);
   wave = mus_partials2waveshape(npartials, partials, size, (Float *)CALLOC(size, sizeof(Float)));
   gwave = make_vct(size, wave);
@@ -3085,9 +3130,13 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
 
   int npartials, kind;
   Float *partials, *wave;
+  SCM_ASSERT(gh_list_p(amps), amps, SCM_ARG1, S_partials2polynomial);
+  SCM_ASSERT(INTEGER_IF_BOUND_P(ukind), ukind, SCM_ARG2, S_partials2polynomial);
   if (INTEGER_P(ukind))
     kind = TO_C_INT(ukind);
   else kind = 1;
+  if (gh_length(amps) == 0)
+    mus_misc_error(S_partials2polynomial, "partials list empty?", amps);
   partials = list2partials(amps, &npartials);
   wave = mus_partials2polynomial(npartials, partials, kind);
   return(make_vct(npartials, wave));
@@ -3146,11 +3195,11 @@ returns a new sine summation synthesis generator."
   vals = decode_keywords(S_make_sine_summation, 5, keys, 10, args, orig_arg);
   if (vals > 0)
     {
-      freq = fkeyarg(keys[0], S_make_sine_summation, orig_arg[0]+1, args[orig_arg[0]], freq);
-      phase = fkeyarg(keys[1], S_make_sine_summation, orig_arg[1]+1, args[orig_arg[1]], phase);
-      n = ikeyarg(keys[2], S_make_sine_summation, orig_arg[2]+1, args[orig_arg[2]], n);
-      a = fkeyarg(keys[3], S_make_sine_summation, orig_arg[3]+1, args[orig_arg[3]], a);
-      ratio = fkeyarg(keys[4], S_make_sine_summation, orig_arg[4]+1, args[orig_arg[4]], ratio);
+      freq = fkeyarg(keys[0], S_make_sine_summation, orig_arg[0] + 1, args[orig_arg[0]], freq);
+      phase = fkeyarg(keys[1], S_make_sine_summation, orig_arg[1] + 1, args[orig_arg[1]], phase);
+      n = ikeyarg(keys[2], S_make_sine_summation, orig_arg[2] + 1, args[orig_arg[2]], n);
+      a = fkeyarg(keys[3], S_make_sine_summation, orig_arg[3] + 1, args[orig_arg[3]], a);
+      ratio = fkeyarg(keys[4], S_make_sine_summation, orig_arg[4] + 1, args[orig_arg[4]], ratio);
     }
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->gen = mus_make_sine_summation(freq, phase, n, a, ratio);
@@ -3271,9 +3320,7 @@ static SCM g_make_filter_1(int choice, SCM arg1, SCM arg2, SCM arg3, SCM arg4, S
 	  }
     }
   if (x == NULL)
-    scm_throw(MUS_MISC_ERROR,
-	      SCM_LIST2(TO_SCM_STRING(caller),
-			TO_SCM_STRING("no coefficients?")));
+    mus_misc_error(caller, "no coefficients?", SCM_BOOL_F);
   if ((choice == G_FILTER) && (y == NULL))
     {
       choice = G_FIR_FILTER;
@@ -3328,7 +3375,7 @@ static SCM g_mus_xcoeffs(SCM gen)
   ms = mus_get_scm(gen);
   if (ms->vcts)
     return(ms->vcts[0]); 
-  else return(SCM_BOOL_F);
+  return(SCM_BOOL_F);
 }
 
 static SCM g_mus_ycoeffs(SCM gen) 
@@ -3341,9 +3388,13 @@ static SCM g_mus_ycoeffs(SCM gen)
     {
       if (mus_iir_filter_p(mus_get_any(gen)))  
 	return(ms->vcts[0]);
-      else return(ms->vcts[1]); 
+      else
+	{
+	  if (mus_filter_p(mus_get_any(gen)))
+	    return(ms->vcts[1]); 
+	}
     }
-  else return(SCM_BOOL_F);
+  return(SCM_BOOL_F);
 }
 
 static void init_flt(void)
@@ -3422,12 +3473,20 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   vals = decode_keywords(S_make_env, 7, keys, 14, args, orig_arg);
   if (vals > 0)
     {
-      /* env data is a list */
+      scaler = fkeyarg(keys[1], S_make_env, orig_arg[1] + 1, args[orig_arg[1]], 1.0);
+      duration = fkeyarg(keys[2], S_make_env, orig_arg[2] + 1, args[orig_arg[2]], 0.0);
+      offset = fkeyarg(keys[3], S_make_env, orig_arg[3] + 1, args[orig_arg[3]], 0.0);
+      base = fkeyarg(keys[4], S_make_env, orig_arg[4] + 1, args[orig_arg[4]], 1.0);
+      end = ikeyarg(keys[5], S_make_env, orig_arg[5] + 1, args[orig_arg[5]], 0);
+      start = ikeyarg(keys[6], S_make_env, orig_arg[6] + 1, args[orig_arg[6]], 0);
+      /* env data is a list, checked last to let the preceding throw wrong-type error before calloc  */
       if (!(keyword_p(keys[0])))
         {
 	  if (gh_list_p(keys[0]))
 	    {
 	      len = gh_length(keys[0]);
+	      if (len == 0)
+		mus_misc_error(S_make_env, "null env?", keys[0]);
 	      npts = len/2;
 	      brkpts = (Float *)CALLOC(len, sizeof(Float));
 	      odata = (Float *)CALLOC(len, sizeof(Float));
@@ -3437,14 +3496,8 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 		  odata[i] = brkpts[i];
 		}
 	    }
-          else scm_wrong_type_arg(S_make_env, orig_arg[0]+1, args[orig_arg[0]]);
+          else scm_wrong_type_arg(S_make_env, orig_arg[0] + 1, args[orig_arg[0]]);
         }
-      scaler = fkeyarg(keys[1], S_make_env, orig_arg[1]+1, args[orig_arg[1]], 1.0);
-      duration = fkeyarg(keys[2], S_make_env, orig_arg[2]+1, args[orig_arg[2]], 0.0);
-      offset = fkeyarg(keys[3], S_make_env, orig_arg[3]+1, args[orig_arg[3]], 0.0);
-      base = fkeyarg(keys[4], S_make_env, orig_arg[4]+1, args[orig_arg[4]], 1.0);
-      end = ikeyarg(keys[5], S_make_env, orig_arg[5]+1, args[orig_arg[5]], 0);
-      start = ikeyarg(keys[6], S_make_env, orig_arg[6]+1, args[orig_arg[6]], 0);
     }
   if (brkpts == NULL) 
     scm_misc_error(S_make_env, "no envelope?", SCM_EOL);
@@ -3452,10 +3505,10 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
     {
       if (brkpts) FREE(brkpts);
       if (odata) FREE(odata);
-      scm_throw(MUS_MISC_ERROR,
-		SCM_LIST3(TO_SCM_STRING(S_make_env),
-			  TO_SCM_STRING((end < 0) ? "end < 0?" : ((start < 0) ? "start < 0?" :  ((base < 0.0) ? "base < 0.0?" : "duration < 0.0?"))),
-			  (end < 0) ? keys[5] : ((start < 0) ? keys[6] : ((base < 0.0) ? keys[4] : keys[2]))));
+      if (end < 0) mus_misc_error(S_make_env, "end < 0?", keys[5]);
+      if (base < 0.0) mus_misc_error(S_make_env, "base < 0.0?", keys[4]);
+      if (duration < 0.0) mus_misc_error(S_make_env, "duration < 0.0?", keys[2]);
+      if (start < 0) mus_misc_error(S_make_env, "start < 0?", keys[6]);
     }
   /* odata = vct->data in this context [vcts[0]] */
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
@@ -3464,6 +3517,13 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   gn->nvcts = 1;
   gn->gen = mus_make_env(brkpts, npts, scaler, offset, base, duration, start, end, odata);
   FREE(brkpts);
+  if (gn->gen == NULL)
+    {
+      FREE(gn->vcts);
+      FREE(gn);
+      if (odata) FREE(odata);
+      return(SCM_BOOL_F);
+    }
   return(mus_scm_to_smob_with_vct(gn, make_vct(len, odata)));
 }
 
@@ -3919,23 +3979,29 @@ returns a new readin (file input) generator reading the sound file 'file' starti
   vals = decode_keywords(S_make_readin, 4, keys, 8, args, orig_arg);
   if (vals > 0)
     {
+      channel = ikeyarg(keys[1], S_make_readin, orig_arg[1] + 1, args[orig_arg[1]], channel);
+      start = ikeyarg(keys[2], S_make_readin, orig_arg[2] + 1, args[orig_arg[2]], start);
+      direction = ikeyarg(keys[3], S_make_readin, orig_arg[3] + 1, args[orig_arg[3]], direction);
       if (!(keyword_p(keys[0])))
         {
 	  if (gh_string_p(keys[0]))
 	    file = TO_NEW_C_STRING(keys[0]);
-	  else scm_wrong_type_arg(S_make_readin, orig_arg[0]+1, args[orig_arg[0]]);
+	  else scm_wrong_type_arg(S_make_readin, orig_arg[0] + 1, args[orig_arg[0]]);
 	}
-      channel = ikeyarg(keys[1], S_make_readin, orig_arg[1]+1, args[orig_arg[1]], channel);
-      start = ikeyarg(keys[2], S_make_readin, orig_arg[2]+1, args[orig_arg[2]], start);
-      direction = ikeyarg(keys[3], S_make_readin, orig_arg[3]+1, args[orig_arg[3]], direction);
     }
   if (channel < 0)
-    mus_misc_error(S_make_readin, "channel < 0?", keys[1]);
+    {
+      if (file) free(file);
+      mus_misc_error(S_make_readin, "channel < 0?", keys[1]);
+    }
   if (!(mus_file_probe(file)))
-    scm_throw(NO_SUCH_FILE,
-	      SCM_LIST3(TO_SCM_STRING(S_make_readin),
-			TO_SCM_STRING(file),
-			TO_SCM_STRING(strerror(errno))));
+    {
+      if (file) free(file);
+      scm_throw(NO_SUCH_FILE,
+		SCM_LIST3(TO_SCM_STRING(S_make_readin),
+			  TO_SCM_STRING(file),
+			  TO_SCM_STRING(strerror(errno))));
+    }
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->gen = mus_make_readin(file, channel, start, direction);
   if (file) free(file);
@@ -4083,9 +4149,9 @@ returns a new generator for signal placement in up to 4 channels.  Channel 0 cor
   vals = decode_keywords(S_make_locsig, 6, keys, 12, args, orig_arg);
   if (vals > 0)
     {
-      degree = fkeyarg(keys[0], S_make_locsig, orig_arg[0]+1, args[orig_arg[0]], degree);
-      distance = fkeyarg(keys[1], S_make_locsig, orig_arg[1]+1, args[orig_arg[1]], distance);
-      reverb = fkeyarg(keys[2], S_make_locsig, orig_arg[2]+1, args[orig_arg[2]], reverb);
+      degree = fkeyarg(keys[0], S_make_locsig, orig_arg[0] + 1, args[orig_arg[0]], degree);
+      distance = fkeyarg(keys[1], S_make_locsig, orig_arg[1] + 1, args[orig_arg[1]], distance);
+      reverb = fkeyarg(keys[2], S_make_locsig, orig_arg[2] + 1, args[orig_arg[2]], reverb);
       if (!(keyword_p(keys[3]))) 
 	{
 	  if ((mus_scm_p(keys[3])) && (mus_output_p(mus_get_any(keys[3]))))
@@ -4095,7 +4161,7 @@ returns a new generator for signal placement in up to 4 channels.  Channel 0 cor
 	      outp = (mus_output *)mus_get_any(keys[3]);
 	      out_chans = mus_channels((mus_any *)outp);
 	    }
-	  else scm_wrong_type_arg(S_make_locsig, orig_arg[3]+1, args[orig_arg[3]]);
+	  else scm_wrong_type_arg(S_make_locsig, orig_arg[3] + 1, args[orig_arg[3]]);
 	}
       if (!(keyword_p(keys[4]))) 
 	{
@@ -4105,9 +4171,9 @@ returns a new generator for signal placement in up to 4 channels.  Channel 0 cor
 	      vlen++;
 	      revp = (mus_output *)mus_get_any(keys[4]);
 	    }
-	  else scm_wrong_type_arg(S_make_locsig, orig_arg[4]+1, args[orig_arg[4]]);
+	  else scm_wrong_type_arg(S_make_locsig, orig_arg[4] + 1, args[orig_arg[4]]);
 	}
-      out_chans = ikeyarg(keys[5], S_make_locsig, orig_arg[5]+1, args[orig_arg[5]], out_chans);
+      out_chans = ikeyarg(keys[5], S_make_locsig, orig_arg[5] + 1, args[orig_arg[5]], out_chans);
     }
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   if (vlen > 0)
@@ -4231,16 +4297,13 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
 	{
 	  if (procedure_fits(keys[0], 1))
 	    in_obj = keys[0];
-	  else scm_wrong_type_arg(S_make_src, orig_arg[0]+1, args[orig_arg[0]]);
+	  else scm_wrong_type_arg(S_make_src, orig_arg[0] + 1, args[orig_arg[0]]);
 	}
-      srate = fkeyarg(keys[1], S_make_src, orig_arg[1]+1, args[orig_arg[1]], srate);
-      wid = ikeyarg(keys[2], S_make_src, orig_arg[2]+1, args[orig_arg[2]], wid);
+      srate = fkeyarg(keys[1], S_make_src, orig_arg[1] + 1, args[orig_arg[1]], srate);
+      wid = ikeyarg(keys[2], S_make_src, orig_arg[2] + 1, args[orig_arg[2]], wid);
     }
-  if ((srate <= 0) || (wid < 0))
-    scm_throw(MUS_MISC_ERROR,
-	      SCM_LIST3(TO_SCM_STRING(S_make_src),
-			TO_SCM_STRING((srate <= 0) ? "srate <= 0?" : "width < 0?"),
-			(srate <= 0) ? keys[1] : keys[2]));
+  if (srate <= 0) mus_misc_error(S_make_src, "srate <= 0.0?", keys[1]);
+  if (wid < 0) mus_misc_error(S_make_src, "width < 0?", keys[2]);
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->vcts = (SCM *)CALLOC(1, sizeof(SCM));
   if (BOUND_P(in_obj)) gn->vcts[INPUT_FUNCTION] = in_obj; else gn->vcts[INPUT_FUNCTION] = SCM_EOL;
@@ -4332,28 +4395,22 @@ jitter controls the randomness in that spacing, input can be a file pointer."
 	{
 	  if (procedure_fits(keys[0], 1))
 	    in_obj = keys[0];
-	  else scm_wrong_type_arg(S_make_granulate, orig_arg[0]+1, args[orig_arg[0]]);
+	  else scm_wrong_type_arg(S_make_granulate, orig_arg[0] + 1, args[orig_arg[0]]);
 	}
-      expansion = fkeyarg(keys[1], S_make_granulate, orig_arg[1]+1, args[orig_arg[1]], expansion);
-      segment_length = fkeyarg(keys[2], S_make_granulate, orig_arg[2]+1, args[orig_arg[2]], segment_length);
-      segment_scaler = fkeyarg(keys[3], S_make_granulate, orig_arg[3]+1, args[orig_arg[3]], segment_scaler);
-      output_hop = fkeyarg(keys[4], S_make_granulate, orig_arg[4]+1, args[orig_arg[4]], output_hop);
-      ramp_time = fkeyarg(keys[5], S_make_granulate, orig_arg[5]+1, args[orig_arg[5]], ramp_time);
-      jitter = fkeyarg(keys[6], S_make_granulate, orig_arg[6]+1, args[orig_arg[6]], jitter);
-      maxsize = ikeyarg(keys[7], S_make_granulate, orig_arg[7]+1, args[orig_arg[7]], maxsize);
+      expansion = fkeyarg(keys[1], S_make_granulate, orig_arg[1] + 1, args[orig_arg[1]], expansion);
+      segment_length = fkeyarg(keys[2], S_make_granulate, orig_arg[2] + 1, args[orig_arg[2]], segment_length);
+      segment_scaler = fkeyarg(keys[3], S_make_granulate, orig_arg[3] + 1, args[orig_arg[3]], segment_scaler);
+      output_hop = fkeyarg(keys[4], S_make_granulate, orig_arg[4] + 1, args[orig_arg[4]], output_hop);
+      ramp_time = fkeyarg(keys[5], S_make_granulate, orig_arg[5] + 1, args[orig_arg[5]], ramp_time);
+      jitter = fkeyarg(keys[6], S_make_granulate, orig_arg[6] + 1, args[orig_arg[6]], jitter);
+      maxsize = ikeyarg(keys[7], S_make_granulate, orig_arg[7] + 1, args[orig_arg[7]], maxsize);
     }
-  if ((expansion <= 0.0) || (segment_length <= 0.0) || (segment_scaler == 0.0))
-    scm_throw(MUS_MISC_ERROR,
-	      SCM_LIST3(TO_SCM_STRING(S_make_granulate),
-			TO_SCM_STRING((expansion <= 0.0) ? "expansion < 0.0?" : 
-				      ((segment_length <= 0.0) ? "segment-length <= 0.0?" :
-				       "segment-scaler: 0.0?")),
-			(expansion <= 0.0) ? keys[1] : ((segment_length <= 0.0) ? keys[2] : keys[3])));
+  if (expansion <= 0.0) mus_misc_error(S_make_granulate, "expansion < 0.0?", keys[1]);
+  if (segment_length <= 0.0) mus_misc_error(S_make_granulate, "segment-length <= 0.0?", keys[2]);
+  if (segment_scaler == 0.0) mus_misc_error(S_make_granulate, "segment-scaler: 0.0?", keys[3]);
+  if (output_hop < 0.0) mus_misc_error(S_make_granulate, "hop < 0?", keys[4]);
   if ((segment_length + output_hop) > 60.0) /* multiplied by srate in mus_make_granulate in array allocation */
-    scm_throw(MUS_MISC_ERROR,
-	      SCM_LIST2(TO_SCM_STRING(S_make_granulate),
-			TO_SCM_STRING("segment_length + output_hop too large!")));
-
+    mus_misc_error(S_make_granulate, "segment_length + output_hop too large!", SCM_LIST2(keys[2], keys[4]));
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->vcts = (SCM *)CALLOC(1, sizeof(SCM));
   if (BOUND_P(in_obj)) gn->vcts[INPUT_FUNCTION] = in_obj; else gn->vcts[INPUT_FUNCTION] = SCM_EOL;
@@ -4424,7 +4481,7 @@ returns a new convolution generator which convolves its input with the impulse r
 	{
 	  if (procedure_fits(keys[0], 1))
 	    in_obj = keys[0];
-	  else scm_wrong_type_arg(S_make_convolve, orig_arg[0]+1, args[orig_arg[0]]);
+	  else scm_wrong_type_arg(S_make_convolve, orig_arg[0] + 1, args[orig_arg[0]]);
 	}
       if (!(keyword_p(keys[1]))) 
 	{
@@ -4433,14 +4490,12 @@ returns a new convolution generator which convolves its input with the impulse r
 	      filt = keys[1];
 	      filter = get_vct(filt);
 	    }
-          else scm_wrong_type_arg(S_make_convolve, orig_arg[1]+1, args[orig_arg[1]]);
+          else scm_wrong_type_arg(S_make_convolve, orig_arg[1] + 1, args[orig_arg[1]]);
 	}
-      fft_size = ikeyarg(keys[2], S_make_convolve, orig_arg[2]+1, args[orig_arg[2]], fft_size);
+      fft_size = ikeyarg(keys[2], S_make_convolve, orig_arg[2] + 1, args[orig_arg[2]], fft_size);
     }
   if (filter == NULL)
-    scm_throw(MUS_MISC_ERROR,
-	      SCM_LIST2(TO_SCM_STRING(S_make_convolve),
-			TO_SCM_STRING("no impulse (filter)?")));
+    mus_misc_error(S_make_convolve, "no impulse (filter)?", SCM_BOOL_F);
   fftlen = (int)pow(2.0, 1 + (int)ceil(log((Float)(filter->length)) / log(2.0)));
   if (fft_size < fftlen) fft_size = fftlen;
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
@@ -4592,10 +4647,10 @@ and interp set the fftsize, the amount of overlap between ffts, and the time bet
   if (vals > 0)
     {
       if (procedure_fits(keys[0], 1)) in_obj = keys[0];
-      fft_size = ikeyarg(keys[1], S_make_phase_vocoder, orig_arg[1]+1, args[orig_arg[1]], fft_size);
-      overlap = ikeyarg(keys[2], S_make_phase_vocoder, orig_arg[2]+1, args[orig_arg[2]], overlap);
-      interp = ikeyarg(keys[3], S_make_phase_vocoder, orig_arg[3]+1, args[orig_arg[3]], interp);
-      pitch = fkeyarg(keys[4], S_make_phase_vocoder, orig_arg[4]+1, args[orig_arg[4]], pitch);
+      fft_size = ikeyarg(keys[1], S_make_phase_vocoder, orig_arg[1] + 1, args[orig_arg[1]], fft_size);
+      overlap = ikeyarg(keys[2], S_make_phase_vocoder, orig_arg[2] + 1, args[orig_arg[2]], overlap);
+      interp = ikeyarg(keys[3], S_make_phase_vocoder, orig_arg[3] + 1, args[orig_arg[3]], interp);
+      pitch = fkeyarg(keys[4], S_make_phase_vocoder, orig_arg[4] + 1, args[orig_arg[4]], pitch);
       if (procedure_fits(keys[5], 1)) analyze_obj = keys[5];
       if (procedure_fits(keys[6], 1)) edit_obj = keys[6];
       if (procedure_fits(keys[7], 2)) synthesize_obj = keys[7];
@@ -4619,13 +4674,13 @@ and interp set the fftsize, the amount of overlap between ffts, and the time bet
   return(pv_obj);
 }
 
-/* TODO: arg type checks for pvoc fields */
 /* these names are all wrong!! */
 static SCM g_pv_amps(SCM pv, SCM ind) 
 {
   Float *amps; 
   mus_scm *gn;
   SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
+  SCM_ASSERT(INTEGER_P(ind), ind, SCM_ARG2, __FUNCTION__);
   gn = mus_get_scm(pv);
   amps = mus_phase_vocoder_amps((void *)(gn->gen)); 
   return(TO_SCM_DOUBLE(amps[TO_SMALL_C_INT(ind)]));
@@ -4636,6 +4691,8 @@ static SCM g_set_pv_amps(SCM pv, SCM ind, SCM val)
   Float *amps; 
   mus_scm *gn;
   SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
+  SCM_ASSERT(INTEGER_P(ind), ind, SCM_ARG2, __FUNCTION__);
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG3, __FUNCTION__);
   gn = mus_get_scm(pv);
   amps = mus_phase_vocoder_amps((void *)(gn->gen)); 
   amps[TO_SMALL_C_INT(ind)] = TO_C_DOUBLE(val); 
@@ -4659,6 +4716,7 @@ static SCM g_pv_freqs(SCM pv, SCM ind)
   Float *freqs; 
   mus_scm *gn;
   SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
+  SCM_ASSERT(INTEGER_P(ind), ind, SCM_ARG2, __FUNCTION__);
   gn = mus_get_scm(pv);
   freqs = mus_phase_vocoder_freqs((void *)(gn->gen));
   return(TO_SCM_DOUBLE(freqs[TO_SMALL_C_INT(ind)]));
@@ -4669,6 +4727,8 @@ static SCM g_set_pv_freqs(SCM pv, SCM ind, SCM val)
   Float *freqs; 
   mus_scm *gn;
   SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
+  SCM_ASSERT(INTEGER_P(ind), ind, SCM_ARG2, __FUNCTION__);
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG3, __FUNCTION__);
   gn = mus_get_scm(pv);
   freqs = mus_phase_vocoder_freqs((void *)(gn->gen)); 
   freqs[TO_SMALL_C_INT(ind)] = TO_C_DOUBLE(val);
@@ -4692,6 +4752,7 @@ static SCM g_pv_phases(SCM pv, SCM ind)
   Float *phases; 
   mus_scm *gn;
   SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
+  SCM_ASSERT(INTEGER_P(ind), ind, SCM_ARG2, __FUNCTION__);
   gn = mus_get_scm(pv);
   phases = mus_phase_vocoder_phases((void *)(gn->gen)); 
   return(TO_SCM_DOUBLE(phases[TO_SMALL_C_INT(ind)]));
@@ -4702,6 +4763,8 @@ static SCM g_set_pv_phases(SCM pv, SCM ind, SCM val)
   Float *phases; 
   mus_scm *gn;
   SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
+  SCM_ASSERT(INTEGER_P(ind), ind, SCM_ARG2, __FUNCTION__);
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG3, __FUNCTION__);
   gn = mus_get_scm(pv);
   phases = mus_phase_vocoder_phases((void *)(gn->gen)); 
   phases[TO_SMALL_C_INT(ind)] = TO_C_DOUBLE(val); 
@@ -4726,6 +4789,7 @@ static SCM g_pv_ampinc(SCM pv, SCM ind)
   Float *ampinc; 
   mus_scm *gn;
   SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
+  SCM_ASSERT(INTEGER_P(ind), ind, SCM_ARG2, __FUNCTION__);
   gn = mus_get_scm(pv);
   ampinc = mus_phase_vocoder_ampinc((void *)(gn->gen)); 
   return(TO_SCM_DOUBLE(ampinc[TO_SMALL_C_INT(ind)]));
@@ -4736,6 +4800,8 @@ static SCM g_set_pv_ampinc(SCM pv, SCM ind, SCM val)
   Float *ampinc; 
   mus_scm *gn;
   SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
+  SCM_ASSERT(INTEGER_P(ind), ind, SCM_ARG2, __FUNCTION__);
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG3, __FUNCTION__);
   gn = mus_get_scm(pv);
   ampinc = mus_phase_vocoder_ampinc((void *)(gn->gen)); 
   ampinc[TO_SMALL_C_INT(ind)] = TO_C_DOUBLE(val); 
@@ -4759,6 +4825,7 @@ static SCM g_pv_phaseinc(SCM pv, SCM ind)
   Float *phaseinc; 
   mus_scm *gn;
   SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
+  SCM_ASSERT(INTEGER_P(ind), ind, SCM_ARG2, __FUNCTION__);
   gn = mus_get_scm(pv);
   phaseinc = mus_phase_vocoder_phaseinc((void *)(gn->gen)); 
   return(TO_SCM_DOUBLE(phaseinc[TO_SMALL_C_INT(ind)]));
@@ -4769,6 +4836,8 @@ static SCM g_set_pv_phaseinc(SCM pv, SCM ind, SCM val)
   Float *phaseinc; 
   mus_scm *gn;
   SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
+  SCM_ASSERT(INTEGER_P(ind), ind, SCM_ARG2, __FUNCTION__);
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG3, __FUNCTION__);
   gn = mus_get_scm(pv);
   phaseinc = mus_phase_vocoder_phaseinc((void *)(gn->gen)); 
   phaseinc[TO_SMALL_C_INT(ind)] = TO_C_DOUBLE(val); 
@@ -4792,6 +4861,7 @@ static SCM g_pv_lastphase(SCM pv, SCM ind)
   Float *lastphase; 
   mus_scm *gn;
   SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
+  SCM_ASSERT(INTEGER_P(ind), ind, SCM_ARG2, __FUNCTION__);
   gn = mus_get_scm(pv);
   lastphase = mus_phase_vocoder_lastphase((void *)(gn->gen)); 
   return(TO_SCM_DOUBLE(lastphase[TO_SMALL_C_INT(ind)]));
@@ -4802,6 +4872,8 @@ static SCM g_set_pv_lastphase(SCM pv, SCM ind, SCM val)
   Float *lastphase; 
   mus_scm *gn;
   SCM_ASSERT((mus_scm_p(pv)) && (mus_phase_vocoder_p(mus_get_any(pv))), pv, SCM_ARG1, __FUNCTION__);
+  SCM_ASSERT(INTEGER_P(ind), ind, SCM_ARG2, __FUNCTION__);
+  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG3, __FUNCTION__);
   gn = mus_get_scm(pv);
   lastphase = mus_phase_vocoder_lastphase((void *)(gn->gen));
   lastphase[TO_SMALL_C_INT(ind)] = TO_C_DOUBLE(val); 

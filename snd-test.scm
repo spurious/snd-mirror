@@ -26,7 +26,7 @@
 (use-modules (ice-9 format) (ice-9 debug))
 
 (define tests 1)
-(define snd-test -1)
+(define snd-test 20)
 (define full-test (< snd-test 0))
 
 (if (and (not (file-exists? "4.aiff"))
@@ -2077,7 +2077,18 @@
       (let ((v0 (make-vct 10)))
 	(do ((i 0 (1+ i))) ((= i 10))
 	  (vct-set! v0 i i))
-	(if (fneq (array-interp v0 3.5) 3.5) (snd-display (format #f ";array-interp: ~F?" (array-interp v0 3.5)))))
+	(if (fneq (array-interp v0 3.5) 3.5) (snd-display (format #f ";array-interp: ~F?" (array-interp v0 3.5))))
+	(if (fneq (array-interp v0 13.5) 3.5) (snd-display (format #f ";array-interp(13.5): ~F?" (array-interp v0 13.5))))
+	(if (fneq (array-interp v0 -6.5) 3.5) (snd-display (format #f ";array-interp(-6.5): ~F?" (array-interp v0 -6.5))))
+	(if (fneq (array-interp v0 103.6) 3.6) (snd-display (format #f ";array-interp(103.5): ~F?" (array-interp v0 103.6))))
+	(if (fneq (array-interp v0 -106.6) 3.4) (snd-display (format #f ";array-interp(-106.6): ~F?" (array-interp v0 -106.6))))
+	(if (fneq (array-interp v0 -0.5) 4.5) (snd-display (format #f ";array-interp(-0.5): ~F?" (array-interp v0 -0.5))))
+	;; interpolating between 9 and 0 here (confusing...)
+	(if (fneq (array-interp v0 -0.9) 8.1) (snd-display (format #f ";array-interp(-0.9): ~F?" (array-interp v0 -0.9))))
+	(if (fneq (array-interp v0 -0.1) 0.9) (snd-display (format #f ";array-interp(-0.1): ~F?" (array-interp v0 -0.1))))
+	(if (fneq (array-interp v0 9.1) 8.1) (snd-display (format #f ";array-interp(9.1): ~F?" (array-interp v0 9.1))))
+	(if (fneq (array-interp v0 9.9) 0.9) (snd-display (format #f ";array-interp(9.9): ~F?" (array-interp v0 9.9))))
+	(if (fneq (array-interp v0 10.1) 0.1) (snd-display (format #f ";array-interp(10.1): ~F?" (array-interp v0 10.1)))))
       
       (let ((gen (make-delay 3))
 	    (gen1 (make-delay 4 :initial-contents '(1.0 0.5 0.25 0.0)))
@@ -4145,6 +4156,7 @@
 
   (reset-hook! after-open-hook) (add-hook! after-open-hook arg1) (carg1 after-open-hook) (reset-hook! after-open-hook)
   (reset-hook! close-hook) (add-hook! close-hook arg1) (carg1 close-hook) (reset-hook! close-hook)
+  (reset-hook! drop-hook) (add-hook! drop-hook arg1) (carg1 drop-hook) (reset-hook! drop-hook)
   (reset-hook! just-sounds-hook) (add-hook! just-sounds-hook arg1) (carg1 just-sounds-hook) (reset-hook! just-sounds-hook)
   (reset-hook! mark-click-hook) (add-hook! mark-click-hook arg1) (carg1 mark-click-hook) (reset-hook! mark-click-hook)
   (reset-hook! mark-drag-hook) (add-hook! mark-drag-hook arg1) (carg1 mark-drag-hook) (reset-hook! mark-drag-hook)
@@ -4983,7 +4995,7 @@
 	      (if (rs 0.5) (revert-sound cfd))
 	      (if (rs 0.5) (src-sound -.5 1.0 cfd))
 	      (if (rs 0.5) (src-sound '(0 .5 1 1.5) 1.0 cfd))
-	      (if (rs 0.5) (src-sound (make-env '(0 .5 1 1.5) :end (1- (frames cfd))) 1.0 cfd))
+	      (if (rs 0.5) (if (> (frames cfd) 0) (src-sound (make-env '(0 .5 1 1.5) :end (1- (frames cfd))) 1.0 cfd)))
 	      (if (rs 0.5) (revert-sound cfd))
 	      (if (rs 0.5) (filter-sound '(0 1 .2 0 .5 1 1 0) 20 cfd))      ; FIR direct form
 	      (if (rs 0.5) (filter-sound '(0 0 .1 0 .11 1 .12 0 1 0) 2048 cfd)) ; convolution
@@ -6249,6 +6261,29 @@
 	       make-vct vct-add! vct-subtract! vct-copy vct-length vct-multiply! vct-offset! vct-ref vct-scale! vct-fill! vct-set!
 	       vct-peak vct? list->vct vct->list vector->vct vct-move! vct-subseq vct))
 
+(define set-procs (list 
+		   amp ask-before-overwrite audio-input-device audio-output-device audio-state-file auto-resize auto-update
+		   axis-label-font axis-numbers-font basic-color bold-button-font button-font channel-style channel-sync color-cutoff color-inverted
+		   color-scale contrast contrast-amp contrast-func contrasting corruption-time current-font cursor cursor-color cursor-follows-play
+		   cursor-size cursor-style dac-folding dac-size data-clipped data-color default-output-chans default-output-format default-output-srate
+		   default-output-type dot-size env-base enved-active-env enved-base enved-clipping enved-dBing enved-exping enved-power enved-selected-env
+		   enved-target enved-waveform-color enved-waving eps-file eps-left-margin eps-bottom-margin expand expand-hop expand-length
+		   expand-ramp expanding fft-beta fft-log-frequency fft-log-magnitude fft-size fft-style fft-window ffting filter-dBing filter-env
+		   filter-env-order filter-env-in-hz filter-order filter-waveform-color filtering fit-data-on-open foreground-color graph-color graph-cursor
+		   graph-style graphing graphs-horizontal help-text-font highlight-color just-sounds left-sample line-size listener-color listener-font
+		   listener-prompt listener-text-color mark-color mark-name mark-sample mark-sync max-fft-peaks max-regions menu-sensitive min-dB mix-amp
+		   mix-amp-env mix-anchor mix-chans mix-color mix-track mix-length mix-locked mix-name mix-position mix-speed mix-tag-height
+		   mix-tag-width mix-tag-y mix-waveform-height movies normalize-fft normalize-on-open normalize-view position-color prefix-arg
+		   previous-files-sort print-length pushed-button-color recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain
+		   recorder-in-amp recorder-in-format recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format recorder-srate
+		   recorder-trigger reverb-decay reverb-feedback reverb-funcs reverb-length reverb-lowpass reverb-scale reverbing sash-color
+		   save-dir save-state-file save-state-on-exit search-procedure selected-data-color selected-graph-color selected-mix-color
+		   selection-color selection-creates-region show-axes show-backtrace show-controls show-fft-peaks show-indices show-marks
+		   show-mix-waveforms show-selection-transform show-usage-stats show-y-zero sinc-width spectro-cutoff spectro-hop spectro-start
+		   spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed speed-style speed-tones
+		   squelch-update sync temp-dir text-focus-color tiny-font transform-type trap-segfault uniting use-raw-defaults use-sinc-interp verbose-cursor
+		   vu-font vu-font-size vu-size wavelet-type waving wavo-hop wavo-trace with-mix-tags x-axis-style zero-pad zoom-color zoom-focus-style ))
+
 (if (or full-test (= snd-test 20))
     (begin
       (if tracing (snd-display ";test 20"))
@@ -6940,6 +6975,9 @@
 	(check-error-tag 'no-such-region (lambda () (make-region-sample-reader 0 1234567)))
 
 	;; now try everything! (all we care about here is that Snd keeps running)
+	
+	;; ---------------- 0 Args
+	(display ";; ---------------- 0 Args")
 	(for-each 
 	 (lambda (n)
 	   (catch #t
@@ -6949,6 +6987,8 @@
 	(dismiss-all-dialogs)
 	(gc)
 
+	;; ---------------- 1 Arg
+	(display ";; ---------------- 1 Arg")
 	(for-each 
 	 (lambda (arg)
 	   (for-each 
@@ -6959,9 +6999,11 @@
 		     (lambda args (car args))))
 	    procs))
 	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color 1 0 0)  #(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
-	       (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2)))
+	       (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() 12345678901234567890))
 	(gc)
 
+	;; ---------------- 2 Args
+	(display ";; ---------------- 2 Args")
 	(for-each 
 	 (lambda (arg1)
 	   (for-each 
@@ -6972,17 +7014,84 @@
 		 ;(display (format #f "(~A ~A ~A)~%" n arg1 arg2))
 		 (catch #t
 			(lambda () (n arg1 arg2))
-			(lambda args (car args))))
+			(lambda args (car args)))
+		 ;(gc)
+		 )
 	       procs))
-	    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color 1 0 0) #(0 1) 3/4 (sqrt -1.0) (make-delay 32) :feedback -1 0)))
-	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color 1 0 0) #(0 1) 3/4 (sqrt -1.0) (make-delay 32) :frequency -1 0))
+	    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color 1 0 0) #(0 1) 3/4 
+		  (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() 12345678901234567890)))
+	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color 1 0 0) #(0 1) 3/4 
+	       (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() 12345678901234567890))
 	(gc)
 
-	(if (> tests 1)
+	;; ---------------- set! no Args
+	(display ";; ---------------- set! no Args")
+	(for-each 
+	 (lambda (arg)
+	   (for-each 
+	    (lambda (n)
+	      ;(display (format #f "(3 ~A ~A)~%" n arg))
+	      (catch #t
+		     (lambda () (set! (n) arg))
+		     (lambda args (car args))))
+	    set-procs))
+	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color 1 0 0)  #(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
+	       (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() 12345678901234567890))
+	(gc)
+
+	;; ---------------- set! 1 Arg
+	(display ";; ---------------- set! 1 Arg")
+	(for-each 
+	 (lambda (arg1)
+	   (for-each 
+	    (lambda (arg2)
+	      ;(display (format #f "(4 ~A ~A)~%" arg1 arg2))
+	      (for-each 
+	       (lambda (n)
+		 ;(display (format #f "(~A ~A ~A)~%" n arg1 arg2))
+		 (catch #t
+			(lambda () (set! (n arg1) arg2))
+			(lambda args (car args))))
+	       set-procs))
+	    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color 1 0 0) #(0 1) 3/4 
+		  (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() 12345678901234567890)))
+	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color 1 0 0) #(0 1) 3/4 
+	       (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() 12345678901234567890))
+	(gc)
+
+	;; ---------------- set! 2 Args
+	(display ";; ---------------- set! 2 Args")
+	(for-each 
+	 (lambda (arg1)
+	   (display (format #f "2: ~A " arg1))
+	   (for-each 
+	    (lambda (arg2)
+	      ;(display (format #f "(~A ~A ~)~%" arg1 arg2 arg3))
+	      (for-each 
+	       (lambda (arg3)
+		 ;(display (format #f "(~A ~A ~A )~%" arg1 arg2 arg3))
+		 (for-each 
+		  (lambda (n)
+		    (catch #t
+			   (lambda () (set! (n arg1 arg2) arg3))
+			   (lambda args (car args))))
+		  set-procs))
+	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color 1 0 0) #(0 1) 3/4 
+		     (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() 12345678901234567890)))
+	    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color 1 0 0) #(0 1) 3/4 
+		  (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() 12345678901234567890)))
+	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color 1 0 0) #(0 1) 3/4 
+	       (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() 12345678901234567890))
+	(gc)
+
+	(if (or #t (> tests 1))
+	    ;; these can take awhile...
 	    (begin
+	      ;; ---------------- 3 Args
 	      (for-each 
 	       (lambda (arg1)
 		 (begin
+		   (display (format #f "3: ~A " arg1))
 		   (for-each
 		    (lambda (arg2)
 		      (for-each 
@@ -6996,14 +7105,15 @@
 				   (lambda args (car args))))
 			  procs))
 		       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :start -1 0)))
-		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0))
-		   (gc)))
+		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0))))
 	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0))
 	      (gc)
 	      
+	      ;; ---------------- 4 Args
 	      (for-each 
 	       (lambda (arg1)
 		 (begin
+		   (display (format #f "4: ~A " arg1))
 		   (for-each 
 		    (lambda (arg2)
 		      (for-each 
@@ -7024,31 +7134,32 @@
 		   (gc)))
 	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :input -1 0))
 
-	      (if #f
-		  (for-each 
-		   (lambda (arg1)
-		     (for-each 
-		      (lambda (arg2)
-			(for-each 
-			 (lambda (arg3)
-			   (for-each 
-			    (lambda (arg4)
-			      (for-each
-			       (lambda (arg5)
-				 ;(display (format #f "(~A ~A ~A ~A ~A)~%" arg1 arg2 arg3 arg4 arg5))
-				 (for-each 
-				  (lambda (n)
-				    (catch #t
-					   (lambda () (n arg1 arg2 arg3 arg4 arg5))
-					   (lambda args (car args))))
-				  procs))
-			       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :wave -1 0 1)))
-			    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :initial-contents -1 0 1)))
-			 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :srate -1 0 1)))
-		      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :input -1 0 1)))
-		   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :order -1 0 1)))
-	      (gc)
-	      ))
+	      ;; ---------------- 5 Args
+	      (for-each 
+	       (lambda (arg1)
+		 (display (format #f "5: ~A " arg1))
+		 (for-each 
+		  (lambda (arg2)
+		    (for-each 
+		     (lambda (arg3)
+		       (for-each 
+			(lambda (arg4)
+			  (for-each
+			   (lambda (arg5)
+			     ;(display (format #f "(~A ~A ~A ~A ~A)~%" arg1 arg2 arg3 arg4 arg5))
+			     (for-each 
+			      (lambda (n)
+				(catch #t
+				       (lambda () (n arg1 arg2 arg3 arg4 arg5))
+				       (lambda args (car args))))
+			      procs))
+			   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :wave -1 0 1)))
+			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :initial-contents -1 0 1)))
+		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :srate -1 0 1)))
+		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :input -1 0 1)))
+	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :order -1 0 1))
+	    (gc)
+	    ))
       ))
 
 

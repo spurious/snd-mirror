@@ -38,12 +38,17 @@ static int to_c_int_or_else(SCM obj, int fallback, char *origin)
 }
 #endif
 
-void mus_misc_error(char *caller, char *msg, SCM val)
+void mus_misc_error(const char *caller, char *msg, SCM val)
 {
-  scm_throw(MUS_MISC_ERROR,
-	    SCM_LIST3(TO_SCM_STRING(caller),
-		      TO_SCM_STRING(msg),
-		      val));
+  if (msg)
+    scm_throw(MUS_MISC_ERROR,
+	      SCM_LIST3(TO_SCM_STRING(caller),
+			TO_SCM_STRING(msg),
+			val));
+  else
+    scm_throw(MUS_MISC_ERROR,
+	      SCM_LIST2(TO_SCM_STRING(caller),
+			val));
 }
 
 static SCM g_sound_loop_info(SCM filename)
@@ -279,16 +284,16 @@ static SCM g_sound_max_amp(SCM file)
   chans = mus_sound_chans(filename);
   if (chans > 0)
     {
-      vals = (MUS_SAMPLE_TYPE *)CALLOC(chans*2, sizeof(MUS_SAMPLE_TYPE));
+      vals = (MUS_SAMPLE_TYPE *)CALLOC(chans * 2, sizeof(MUS_SAMPLE_TYPE));
       rtn = mus_sound_max_amp(filename, vals);
       if (rtn > 0)
 	{
-	  vect = gh_make_vector(TO_SMALL_SCM_INT(chans*2), TO_SMALL_SCM_INT(0));
+	  vect = gh_make_vector(TO_SMALL_SCM_INT(chans * 2), TO_SMALL_SCM_INT(0));
 	  vdata = SCM_VELTS(vect);
-	  for (i = 0; i < chans*2; i+=2)
+	  for (i = 0; i < chans * 2; i += 2)
 	    {
 	      vdata[i] = TO_SCM_INT((int)(vals[i]));
-	      vdata[i+1] = TO_SCM_DOUBLE(MUS_SAMPLE_TO_FLOAT(vals[i+1]));
+	      vdata[i + 1] = TO_SCM_DOUBLE(MUS_SAMPLE_TO_FLOAT(vals[i + 1]));
 	    }
 	}
       FREE(vals);
@@ -397,10 +402,6 @@ SCM make_sound_data(int chans, int frames)
   #define H_make_sound_data "(" S_make_sound_data " chans frames) -> new sound-data object with chans channels, each having frames samples"
   int i;
   sound_data *new_sound_data;
-  if (chans <= 0)
-    mus_misc_error(S_make_sound_data, "chans <= 0?", chans);
-  if (frames <= 0)
-    mus_misc_error(S_make_sound_data, "frames <= 0?", frames);
   new_sound_data = (sound_data *)CALLOC(1, sizeof(sound_data));
   new_sound_data->length = frames;
   new_sound_data->chans = chans;
@@ -412,10 +413,17 @@ SCM make_sound_data(int chans, int frames)
 
 static SCM g_make_sound_data(SCM chans, SCM frames)
 {
+  int chns, frms;
   SCM_ASSERT(INTEGER_P(chans), chans, SCM_ARG1, S_make_sound_data);
   SCM_ASSERT(INTEGER_P(frames), frames, SCM_ARG1, S_make_sound_data);
-  return(make_sound_data(TO_C_INT(chans),
-			 TO_C_INT(frames)));
+  chns = TO_C_INT(chans);
+  frms = TO_C_INT(frames);
+  if (chns <= 0)
+    mus_misc_error(S_make_sound_data, "chans <= 0?", chans);
+  if (frms <= 0)
+    mus_misc_error(S_make_sound_data, "frames <= 0?", frames);
+  return(make_sound_data(chns, frms));
+			 
 }
 
 static SCM sound_data_ref(SCM obj, SCM chan, SCM frame)
@@ -799,9 +807,9 @@ to the audio line from the sound-data object sdata."
     }
   else
     {
-      for (k = 0, j = 0; k < frms; k++, j+=sd->chans)
+      for (k = 0, j = 0; k < frms; k++, j += sd->chans)
 	for (i = 0; i < sd->chans; i++) 
-	  obuf[j+i] = MUS_SAMPLE_TO_SHORT(bufs[i][k]);
+	  obuf[j + i] = MUS_SAMPLE_TO_SHORT(bufs[i][k]);
     }
   val = mus_audio_write(TO_C_INT(line), (char *)obuf, outbytes);
   FREE(obuf);
@@ -833,9 +841,9 @@ from the audio line into the sound-data object sdata."
     }
   else
     {
-      for (k = 0, j = 0; k < frms; k++, j+=sd->chans)
+      for (k = 0, j = 0; k < frms; k++, j += sd->chans)
 	for (i = 0; i < sd->chans; i++) 
-	  bufs[i][k] = MUS_SHORT_TO_SAMPLE(inbuf[j+i]);
+	  bufs[i][k] = MUS_SHORT_TO_SAMPLE(inbuf[j + i]);
     }
   FREE(inbuf);
   return(scm_return_first(TO_SCM_INT(val), sdata));

@@ -2023,54 +2023,6 @@ char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
 }
 
 
-/* new file funcs */
-
-snd_info *finish_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *new_comment)
-{
-  snd_info *sp;
-  int chan, size;
-  unsigned char* buf;
-  if (snd_overwrite_ok(ss, newname))
-    {
-      if (mus_header_writable(header_type, data_format))
-	{
-	  snd_write_header(ss, newname, header_type, srate, chans, 0, 
-			   chans * 2, data_format, new_comment, 
-			   snd_strlen(new_comment), NULL);
-	  chan = snd_reopen_write(ss, newname);
-	  lseek(chan, mus_header_data_location(), SEEK_SET);
-	  size = chans * mus_samples_to_bytes(data_format, 2); /* why 2 samples? */
-	  buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
-	  write(chan, buf, size);
-	  if (close(chan) != 0)
-	    snd_error("can't close %d (%s): %s [%s[%d] %s]",
-		      chan, newname, strerror(errno),
-		      __FILE__, __LINE__, __FUNCTION__);
-	  FREE(buf);
-	  sp = snd_open_file(newname, ss);
-	  return(sp);
-	}
-      else 
-	{
-	  snd_error("can't write %s %s file with %s data format",
-		    ((header_type != MUS_RIFF) && (header_type != MUS_NEXT)) ? "an" : "a",
-		    mus_header_type_name(header_type),
-		    data_format_name(data_format));
-	}
-    }
-  return(NULL);
-}
-
-snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment, int with_dialog)
-{
-  /* first post dialog if needed to fill in defaults, then create the thing and make room in Snd */
-  mus_sound_forget(newname);
-  if (with_dialog)
-    return(make_new_file_dialog(ss, newname, header_type, data_format, srate, chans, comment));
-  else return(finish_new_file(ss, newname, header_type, data_format, srate, chans, comment));
-}
-
-
 #if HAVE_GUILE
 
 static SCM g_add_sound_file_extension(SCM ext)
@@ -2099,9 +2051,7 @@ static SCM g_sound_loop_info(SCM snd)
   SND_ASSERT_SND(S_sound_loop_info, snd, 1);
   sp = get_sp(snd);
   if (sp == NULL) 
-    scm_throw(NO_SUCH_SOUND,
-	      SCM_LIST2(TO_SCM_STRING(S_sound_loop_info),
-			snd));
+    snd_no_such_sound_error(S_sound_loop_info, snd);
   res = mus_sound_loop_info(sp->fullname);
   if (res)
     {
@@ -2129,9 +2079,7 @@ static SCM g_set_sound_loop_info(SCM snd, SCM vals)
     }
   else sp = get_sp(snd);
   if (sp == NULL) 
-    scm_throw(NO_SUCH_SOUND,
-	      SCM_LIST2(TO_SCM_STRING("set-" S_sound_loop_info),
-			snd));
+    snd_no_such_sound_error("set-" S_sound_loop_info, snd);
   hdr = sp->hdr;
   len = gh_length(vals);
   if (len > 0) start0 = SCM_CAR(vals);
@@ -2177,9 +2125,7 @@ each inner list has the form: (name start loopstart loopend)"
   SND_ASSERT_SND(S_soundfont_info, snd, 1);
   sp = get_sp(snd);
   if (sp == NULL) 
-    scm_throw(NO_SUCH_SOUND,
-	      SCM_LIST2(TO_SCM_STRING(S_soundfont_info),
-			snd));
+    snd_no_such_sound_error(S_soundfont_info, snd);
   mus_header_read(sp->fullname);
   if (mus_header_type() == MUS_SOUNDFONT)
     {

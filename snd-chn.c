@@ -3590,9 +3590,7 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
       if (SCM_EQ_P(chn_n, SCM_BOOL_T))
 	{
 	  sp = get_sp(snd_n);
-	  if (sp == NULL) scm_throw(NO_SUCH_SOUND,
-				    SCM_LIST2(TO_SCM_STRING(caller),
-					      snd_n));
+	  if (sp == NULL) snd_no_such_sound_error(caller, snd_n);
 	  for (i = 0; i < sp->nchans; i++)
 	    res = gh_cons(cp_iread(snd_n, TO_SMALL_SCM_INT(i), fld, caller), res);
 	  return(scm_reverse(res));
@@ -3685,9 +3683,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
     {
       sp = get_sp(snd_n);
       if (sp == NULL) 
-	scm_throw(NO_SUCH_SOUND,
-		  SCM_LIST2(TO_SCM_STRING(caller),
-			    snd_n));
+	snd_no_such_sound_error(caller, snd_n);
       for (i = 0; i < sp->nchans; i++)
 	res = gh_cons(cp_iwrite(snd_n, TO_SMALL_SCM_INT(i), on, fld, caller), res);
       return(scm_reverse(res));
@@ -3754,10 +3750,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 	    {
 	      errstr = TO_SCM_STRING(error);
 	      FREE(error);
-	      scm_throw(BAD_ARITY,
-			SCM_LIST3(TO_SCM_STRING("set-" S_cursor_style),
-				  errstr,
-				  on));
+	      snd_bad_arity_error("set-" S_cursor_style, errstr, on);
 	    }
 	}
       else
@@ -3883,7 +3876,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       return(TO_SCM_BOOLEAN(cp->show_mix_waveforms));
       break;
     case CP_GRAPH_STYLE:
-      cp->graph_style = TO_C_INT_OR_ELSE(on, DEFAULT_GRAPH_STYLE); 
+      cp->graph_style = TO_C_INT_OR_ELSE(on, DEFAULT_GRAPH_STYLE);
       update_graph(cp, NULL); 
       return(TO_SCM_INT(cp->graph_style));
       break;
@@ -3962,9 +3955,7 @@ static SCM cp_fread(SCM snd_n, SCM chn_n, int fld, char *caller)
     {
       sp = get_sp(snd_n);
       if (sp == NULL) 
-	scm_throw(NO_SUCH_SOUND,
-		  SCM_LIST2(TO_SCM_STRING(caller),
-			    snd_n));
+	snd_no_such_sound_error(caller, snd_n);
       for (i = 0; i < sp->nchans; i++)
 	res = gh_cons(cp_fread(snd_n, TO_SMALL_SCM_INT(i), fld, caller), res);
       return(scm_reverse(res));
@@ -4016,9 +4007,7 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
     {
       sp = get_sp(snd_n);
       if (sp == NULL) 
-	scm_throw(NO_SUCH_SOUND,
-		  SCM_LIST2(TO_SCM_STRING(caller),
-			    snd_n));
+	snd_no_such_sound_error(caller, snd_n);
       for (i = 0; i < sp->nchans; i++)
 	res = gh_cons(cp_fwrite(snd_n, TO_SMALL_SCM_INT(i), on, fld, caller), res);
       return(scm_reverse(res));
@@ -5065,15 +5054,27 @@ determines how graphs are drawn (default: " S_graph_lines ")"
 static SCM g_set_graph_style(SCM style, SCM snd, SCM chn)
 {
   snd_state *ss;
+  int val;
   SCM_ASSERT(INTEGER_P(style), style, SCM_ARG1, "set-" S_graph_style); 
+  val = TO_C_INT_OR_ELSE(style, DEFAULT_GRAPH_STYLE); 
   if (BOUND_P(snd))
-    return(cp_iwrite(snd, chn, style, CP_GRAPH_STYLE, "set-" S_graph_style));
+    {
+      if ((GRAPH_STYLE_OK((val & 0xf))) &&
+	  (GRAPH_STYLE_OK(((val >> 8) & 0xf))) &&
+	  (GRAPH_STYLE_OK(((val >> 16) & 0xf))))
+	return(cp_iwrite(snd, chn, style, CP_GRAPH_STYLE, "set-" S_graph_style));
+    }
   else
     {
-      ss = get_global_state();
-      set_graph_style(ss, TO_C_INT_OR_ELSE(style, 0));
-      return(TO_SCM_INT(graph_style(ss)));
+      if (GRAPH_STYLE_OK(val))
+	{
+	  ss = get_global_state();
+	  set_graph_style(ss, val);
+	  return(TO_SCM_INT(graph_style(ss)));
+	}
     }
+  mus_misc_error("set-" S_graph_style, "invalid style", style);
+  return(SCM_BOOL_F);
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_graph_style_reversed, g_set_graph_style)

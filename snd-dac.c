@@ -246,10 +246,7 @@ static SCM g_set_reverb_funcs(SCM rev, SCM make_rev, SCM free_rev)
     {
       errstr = TO_SCM_STRING(errmsg);
       FREE(errmsg);
-      scm_throw(BAD_ARITY,
-		SCM_LIST3(TO_SCM_STRING(S_reverb_funcs),
-			  bad_func,
-			  errstr));
+      snd_bad_arity_error(S_reverb_funcs, errstr, bad_func);
     }
   if (gh_procedure_p(g_reverb)) snd_unprotect(g_reverb);
   if (gh_procedure_p(g_make_reverb)) snd_unprotect(g_make_reverb);
@@ -305,10 +302,7 @@ static SCM g_set_contrast_func(SCM func)
     {
       errstr = TO_SCM_STRING(errmsg);
       FREE(errmsg);
-      scm_throw(BAD_ARITY,
-		SCM_LIST3(TO_SCM_STRING(S_contrast_func),
-			  func,
-			  errstr));
+      snd_bad_arity_error(S_contrast_func, errstr, func);
     }
 
   if (gh_procedure_p(g_contrast)) snd_unprotect(g_contrast);
@@ -326,11 +320,7 @@ static SCM g_set_contrast_func(SCM func)
   return(func);
 }
 
-static void call_stop_playing_hook(snd_info *sp);
-static void call_stop_playing_region_hook(int n);
-static void call_stop_playing_channel_hook(snd_info *sp, chan_info *cp);
-static int call_start_playing_hook(snd_info *sp);
-static SCM play_hook;
+static SCM play_hook, start_playing_hook, stop_playing_hook, stop_playing_region_hook, stop_playing_channel_hook;
 
 #endif
 
@@ -1156,12 +1146,26 @@ static void stop_playing_with_toggle(dac_info *dp, int toggle)
   if (dp->slot == max_active_slot) max_active_slot--;
 #if HAVE_GUILE
   if (dp->region >= 0)
-    call_stop_playing_region_hook(dp->region); 
+    {
+      if (HOOKED(stop_playing_region_hook))
+	g_c_run_or_hook(stop_playing_region_hook,
+			SCM_LIST1(TO_SMALL_SCM_INT(dp->region)),
+			S_stop_playing_region_hook);
+    }
   else
     {
       if (sp_stopping)
-	call_stop_playing_hook(sp);
-      call_stop_playing_channel_hook(sp, cp);
+	{
+	  if (HOOKED(stop_playing_hook))
+	    g_c_run_or_hook(stop_playing_hook,
+			    SCM_LIST1(TO_SMALL_SCM_INT(sp->index)),
+			    S_stop_playing_hook);
+	}
+      if (HOOKED(stop_playing_channel_hook))
+	g_c_run_or_hook(stop_playing_channel_hook,
+			SCM_LIST2(TO_SMALL_SCM_INT(sp->index),
+				  TO_SMALL_SCM_INT(cp->chan)),
+			S_stop_playing_channel_hook);
       if (sp->index < 0) {free_player(sp); sp = NULL;}
     }
 #endif
@@ -1440,7 +1444,10 @@ void play_sound(snd_info *sp, int start, int end, int background)
     return;
   if (!(sp->inuse)) return;
 #if HAVE_GUILE
-  if (call_start_playing_hook(sp))
+  if ((HOOKED(start_playing_hook)) &&
+      (SCM_TRUE_P(g_c_run_or_hook(start_playing_hook,
+				  SCM_LIST1(TO_SMALL_SCM_INT(sp->index)),
+				  S_start_playing_hook))))
     {
       reflect_play_stop(sp);           /* turns off buttons */
       if (sp->delete_me) 
@@ -2549,28 +2556,20 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
       if (!(mus_file_probe(name)))
 	{
 	  FREE(name);
-	  scm_throw(NO_SUCH_FILE,
-		    SCM_LIST2(TO_SCM_STRING(S_play),
-			      samp_n));
+	  snd_no_such_file_error(S_play, samp_n);
 	}
       if (!(MUS_HEADER_TYPE_OK(mus_sound_header_type(name))))
 	{
 	  FREE(name);
-	  scm_throw(MUS_MISC_ERROR,
-		    SCM_LIST4(TO_SCM_STRING(S_play),
-			      samp_n,
-			      TO_SCM_STRING("can't read header"),
-			      TO_SCM_STRING(mus_header_type_name(mus_header_type()))));
+	  mus_misc_error(S_play, "can't read header", SCM_LIST2(samp_n, TO_SCM_STRING(mus_header_type_name(mus_header_type()))));
 	}
       if (!(MUS_DATA_FORMAT_OK(mus_sound_data_format(name))))
 	{
 	  FREE(name);
-	  scm_throw(MUS_MISC_ERROR,
-		    SCM_LIST4(TO_SCM_STRING(S_play),
-			      samp_n,
-			      TO_SCM_STRING("can't read data"),
-			      TO_SCM_STRING(mus_header_original_format_name(mus_sound_original_format(name),
-									    mus_sound_header_type(name)))));
+	  mus_misc_error(S_play, "can't read data", 
+			 SCM_LIST2(samp_n, 
+				   TO_SCM_STRING(mus_header_original_format_name(mus_sound_original_format(name),
+										 mus_sound_header_type(name)))));
 	}
       sp = make_sound_readable(get_global_state(), name, FALSE);
       sp->shortname = filename_without_home_directory(name);
@@ -2587,9 +2586,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
       SND_ASSERT_CHAN(S_play, snd_n, chn_n, 2);
       sp = get_sp(snd_n);
       if (sp == NULL) 
-	scm_throw(NO_SUCH_SOUND,
-		  SCM_LIST2(TO_SCM_STRING(S_play),
-			    snd_n));
+	snd_no_such_sound_error(S_play, snd_n);
       samp = TO_C_INT_OR_ELSE(samp_n, 0);
       if ((syncd) && (sp->syncing != 0))
 	{
@@ -2612,9 +2609,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
 	      cp = get_cp(snd_n, chn_n, S_play);
 	      if (cp) 
 		play_channel(cp, samp, end, background);
-	      else scm_throw(NO_SUCH_CHANNEL,
-			     SCM_LIST3(TO_SCM_STRING(S_play),
-				       snd_n, chn_n));
+	      else snd_no_such_channel_error(S_play, snd_n, chn_n);
 	    }
 	}
     }
@@ -2641,8 +2636,7 @@ static SCM g_play_selection(SCM wait)
       play_selection(!(TO_C_BOOLEAN_OR_F(wait)));
       return(SCM_BOOL_T);
     }
-  scm_throw(NO_ACTIVE_SELECTION,
-	    SCM_LIST1(TO_SCM_STRING(S_play_selection)));
+  snd_no_active_selection_error(S_play_selection);
   return(wait);
 }
 
@@ -2736,9 +2730,7 @@ static SCM g_make_player(SCM snd, SCM chn)
   SND_ASSERT_CHAN(S_make_player, snd, chn, 1);
   true_sp = get_sp(snd);
   if (true_sp == NULL) 
-    scm_throw(NO_SUCH_SOUND,
-	      SCM_LIST2(TO_SCM_STRING(S_make_player),
-			snd));
+    snd_no_such_sound_error(S_make_player, snd);
   cp = get_cp(snd, chn, S_make_player);
   if (cp)
     {
@@ -2748,9 +2740,7 @@ static SCM g_make_player(SCM snd, SCM chn)
       new_sp->chans[cp->chan] = cp;
       return(TO_SCM_INT(make_player(new_sp, cp)));
     }
-  scm_throw(NO_SUCH_CHANNEL,
-	    SCM_LIST3(TO_SCM_STRING(S_make_player),
-			     snd, chn));
+  snd_no_such_channel_error(S_make_player, snd, chn);  
   return(snd);
 }
 
@@ -2773,35 +2763,24 @@ static SCM g_add_player(SCM snd_chn, SCM start, SCM end)
 			       TO_C_INT_OR_ELSE(end, NO_END_SPECIFIED));
     }
   /* else no such player? */
-  else scm_throw(NO_SUCH_SOUND,
-		 SCM_LIST2(TO_SCM_STRING(S_add_player),
-			   snd_chn));
+  else snd_no_such_sound_error(S_add_player, snd_chn);
   return(snd_chn);
 }
 
-static SCM g_start_playing(SCM chans, SCM srate, SCM in_background)
+static SCM g_start_playing(SCM Chans, SCM Srate, SCM In_Background)
 {
   #define H_start_playing "(" S_start_playing " &optional chans srate in-background)"
-  int c, s;
-  SCM_ASSERT(INTEGER_IF_BOUND_P(chans), chans, SCM_ARG1, S_start_playing);
-  SCM_ASSERT(NUMBER_IF_BOUND_P(srate), srate, SCM_ARG2, S_start_playing);
-  SCM_ASSERT(BOOLEAN_IF_BOUND_P(in_background), in_background, SCM_ARG3, S_start_playing);
-  c = TO_C_INT_OR_ELSE(chans, 1);
-  if (c <= 0)
-    scm_throw(MUS_MISC_ERROR,
-	      SCM_LIST3(TO_SCM_STRING(S_start_playing),
-			TO_SCM_STRING("invalid chans arg"),
-			chans));
-  s = TO_C_INT_OR_ELSE(srate, 44100);
-  if (s <= 0)
-    scm_throw(MUS_MISC_ERROR,
-	      SCM_LIST3(TO_SCM_STRING(S_start_playing),
-			TO_SCM_STRING("invalid srate arg"),
-			srate));
-  start_dac(get_global_state(),
-	    s,
-	    c,
-	    TO_C_BOOLEAN_OR_T(in_background));
+  int chans, srate;
+  SCM_ASSERT(INTEGER_IF_BOUND_P(Chans), Chans, SCM_ARG1, S_start_playing);
+  SCM_ASSERT(NUMBER_IF_BOUND_P(Srate), Srate, SCM_ARG2, S_start_playing);
+  SCM_ASSERT(BOOLEAN_IF_BOUND_P(In_Background), In_Background, SCM_ARG3, S_start_playing);
+  chans = TO_C_INT_OR_ELSE(Chans, 1);
+  if (chans <= 0)
+    mus_misc_error(S_start_playing, "invalid chans arg", Chans);
+  srate = TO_C_INT_OR_ELSE(Srate, 44100);
+  if (srate <= 0)
+    mus_misc_error(S_start_playing, "invalid srate arg", Srate);
+  start_dac(get_global_state(), srate, chans, TO_C_BOOLEAN_OR_T(In_Background));
   return(SCM_BOOL_F);
 }
 
@@ -2815,9 +2794,7 @@ static SCM g_stop_player(SCM snd_chn)
   if ((index > 0) && (index < players_size)) sp = players[index];
   if (sp) 
     stop_playing_sound(sp);
-  else scm_throw(NO_SUCH_SOUND,
-		 SCM_LIST2(TO_SCM_STRING(S_stop_player),
-			   snd_chn)); /* should this be NO_SUCH_PLAYER? */
+  else snd_no_such_sound_error(S_stop_player, snd_chn); /* should this be NO_SUCH_PLAYER? */
   return(snd_chn);
 }
 
@@ -2834,43 +2811,6 @@ static SCM g_player_p(SCM snd_chn)
 			(players[index])));
 }
 
-
-static SCM start_playing_hook, stop_playing_hook, stop_playing_region_hook, stop_playing_channel_hook;
-
-static void call_stop_playing_hook(snd_info *sp)
-{
-  if (HOOKED(stop_playing_hook))
-    g_c_run_or_hook(stop_playing_hook,
-		    SCM_LIST1(TO_SMALL_SCM_INT(sp->index)),
-		    S_stop_playing_hook);
-}
-
-static void call_stop_playing_channel_hook(snd_info *sp, chan_info *cp)
-{
-  if (HOOKED(stop_playing_channel_hook))
-    g_c_run_or_hook(stop_playing_channel_hook,
-		    SCM_LIST2(TO_SMALL_SCM_INT(sp->index),
-			      TO_SMALL_SCM_INT(cp->chan)),
-		    S_stop_playing_channel_hook);
-}
-
-static void call_stop_playing_region_hook(int n)
-{
-  if (HOOKED(stop_playing_region_hook))
-    g_c_run_or_hook(stop_playing_region_hook,
-		    SCM_LIST1(TO_SMALL_SCM_INT(n)),
-		    S_stop_playing_region_hook);
-}
-
-static int call_start_playing_hook(snd_info *sp)
-{
-  SCM stop = SCM_BOOL_F;
-  if (HOOKED(start_playing_hook))
-    stop = g_c_run_or_hook(start_playing_hook,
-			   SCM_LIST1(TO_SMALL_SCM_INT(sp->index)),
-			   S_start_playing_hook);
-  return(SCM_TRUE_P(stop));
-}
 
 void g_init_dac(SCM local_doc)
 {

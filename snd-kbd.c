@@ -1929,10 +1929,7 @@ The function should return one of the cursor choices (e.g. cursor-no-action)."
 	{
 	  errstr = TO_SCM_STRING(errmsg);
 	  FREE(errmsg);
-	  scm_throw(BAD_ARITY,
-		    SCM_LIST3(TO_SCM_STRING(S_bind_key),
-			      code,
-			      errstr));
+	  snd_bad_arity_error(S_bind_key, errstr, code);
 	}
       set_keymap_entry(TO_C_INT_OR_ELSE(key, 0), 
 		       TO_C_INT_OR_ELSE(state, 0), 
@@ -1981,9 +1978,7 @@ then when the user eventually responds, invokes the function callback with the r
   SND_ASSERT_SND(S_prompt_in_minibuffer, snd_n, 3);
   sp = get_sp(snd_n);
   if (sp == NULL) 
-    scm_throw(NO_SUCH_SOUND,
-	      SCM_LIST2(TO_SCM_STRING(S_prompt_in_minibuffer),
-			snd_n));
+    snd_no_such_sound_error(S_prompt_in_minibuffer, snd_n);
   if ((sp->prompt_callback) && 
       (gh_procedure_p(sp->prompt_callback))) 
     snd_unprotect(sp->prompt_callback);
@@ -2009,9 +2004,7 @@ static SCM g_report_in_minibuffer(SCM msg, SCM snd_n)
   SND_ASSERT_SND(S_report_in_minibuffer, snd_n, 2);
   sp = get_sp(snd_n);
   if (sp == NULL) 
-    scm_throw(NO_SUCH_SOUND,
-	      SCM_LIST2(TO_SCM_STRING(S_report_in_minibuffer),
-			snd_n));
+    snd_no_such_sound_error(S_report_in_minibuffer, snd_n);
   report_in_minibuffer(sp, TO_C_STRING(msg));
   return(msg);
 }
@@ -2025,9 +2018,7 @@ static SCM g_append_to_minibuffer(SCM msg, SCM snd_n)
   SND_ASSERT_SND(S_append_to_minibuffer, snd_n, 2);
   sp = get_sp(snd_n);
   if (sp == NULL) 
-    scm_throw(NO_SUCH_SOUND,
-	      SCM_LIST2(TO_SCM_STRING(S_append_to_minibuffer),
-			snd_n));
+    snd_no_such_sound_error(S_append_to_minibuffer, snd_n);
   sprintf(expr_str, "%s%s", str1 = get_minibuffer_string(sp), TO_C_STRING(msg));
   set_minibuffer_string(sp, expr_str);
   sp->minibuffer_temp = 1;

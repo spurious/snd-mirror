@@ -41,10 +41,7 @@ static SCM g_in(SCM ms, SCM code)
   SCM_ASSERT(NUMBER_P(ms), ms, SCM_ARG1, S_in);
   if (procedure_fits(code, 0))
     gtk_timeout_add((guint32)TO_C_UNSIGNED_LONG(ms), timed_eval, (gpointer)code);
-  else scm_throw(MUS_MISC_ERROR,
-		 SCM_LIST3(TO_SCM_STRING(S_in),
-			   TO_SCM_STRING("2nd argument should be a procedure of no args"),
-			   code));
+  else mus_misc_error(S_in, "2nd argument should be a procedure of no args", code);
   return(ms);
 }
 
@@ -219,12 +216,20 @@ static SCM g_load_colormap(SCM colors)
   int i, len;
   GdkColor **xcs;
   snd_color *v;
+  SCM *vdata;
   SCM_ASSERT(gh_vector_p(colors), colors, SCM_ARG1, S_load_colormap);
   len = gh_vector_length(colors);
   xcs = (GdkColor **)CALLOC(len, sizeof(GdkColor *));
+  vdata = SCM_VELTS(colors);
   for (i = 0; i < len; i++)
     {
-      v = get_snd_color(gh_vector_ref(colors, TO_SCM_INT(i)));
+      if (snd_color_p(vdata[i]))
+	v = get_snd_color(vdata[i]);
+      else 
+	{
+	  FREE(xcs);
+	  mus_misc_error(S_load_colormap, "invalid color:", vdata[i]);
+	}
       xcs[i] = v->color;
     }
   /* TODO: colormaps? x_load_colormap(xcs); */
@@ -240,9 +245,18 @@ static SCM g_graph_cursor(void)
 
 static SCM g_set_graph_cursor(SCM curs)
 {
+  int val;
   SCM_ASSERT(NUMBER_P(curs), curs, SCM_ARG1, "set-" S_graph_cursor);
-  state->Graph_Cursor = TO_C_INT(curs);
-  (state->sgx)->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(state));
+  /* X11/cursorfont.h has various even-numbered glyphs, but the odd numbers are ok, and XC_num_glyphs is a lie */
+  /*   if you use too high a number here, Goddamn X dies */
+  /* gdk/gdkcursors.h is just a capitalization of the original so I assume it has the same great features */
+  val = TO_C_INT(curs);
+  if ((val >= 0) && (val <= GDK_XTERM))
+    {
+      state->Graph_Cursor = val;
+      (state->sgx)->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(state));
+    }
+  else mus_misc_error("set-" S_graph_cursor, "invalid cursor", curs);
   return(curs);
 }
 

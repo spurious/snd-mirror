@@ -1152,7 +1152,7 @@ static void make_trigger_label(Float val)
   if (trigger_label)
     {
       buf = (char *)CALLOC(32, sizeof(char));
-      sprintf(buf, "%s %.3f", "trigger:", val);
+      sprintf(buf, "trigger: %.3f", val);
       s1 = XmStringCreate(buf, XmFONTLIST_DEFAULT_TAG);
       FREE(buf);
       XtVaSetValues(trigger_label, XmNlabelString, s1, NULL);

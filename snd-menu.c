@@ -286,7 +286,8 @@ void new_file_from_menu(snd_state *ss)
   data_format = default_output_format(ss);
   srate = default_output_srate(ss);
   new_comment = output_comment(NULL);
-  snd_new_file(ss, new_file_name, header_type, data_format, srate, chans, new_comment, WITH_DIALOG);
+  mus_sound_forget(new_file_name);
+  make_new_file_dialog(ss, new_file_name, header_type, data_format, srate, chans, new_comment);
   if (new_comment) FREE(new_comment);
   if (new_file_name) FREE(new_file_name);
 }
@@ -535,6 +536,13 @@ void set_channel_style(snd_state *ss, int val)
 
 #if HAVE_GUILE
 
+static void snd_no_such_menu_error(const char *caller, int id)
+{
+  scm_throw(NO_SUCH_MENU,
+	    SCM_LIST2(TO_SCM_STRING(caller),
+		      id));
+}
+
 static SCM output_name_hook;
 
 static char *output_name(void)
@@ -631,10 +639,7 @@ static void add_callback(int slot, SCM callstr, char *caller, int argn)
 	{
 	  errstr = TO_SCM_STRING(error);
 	  FREE(error);
-	  scm_throw(BAD_ARITY,
-		    SCM_LIST3(TO_SCM_STRING(caller),
-			      errstr,
-			      callstr));
+	  snd_bad_arity_error(caller, errstr, callstr);
 	}
     }
 }
@@ -665,18 +670,14 @@ menu is the index returned by add-to-main-menu, func should be a function of no 
   SCM_ASSERT(INTEGER_P(menu), menu, SCM_ARG1, S_add_to_menu);
   m = TO_C_INT(menu);
   if (m < 0)
-    scm_throw(NO_SUCH_MENU,
-	      SCM_LIST2(TO_SCM_STRING(S_add_to_menu),
-			menu));
+    snd_no_such_menu_error(S_add_to_menu, menu);
   slot = make_callback_slot();
   err = gh_add_to_menu(get_global_state(), 
 		       m,
 		       TO_C_STRING(label),
 		       slot);
   if (err == -1) 
-    scm_throw(NO_SUCH_MENU,
-	      SCM_LIST2(TO_SCM_STRING(S_add_to_menu),
-			menu));
+    snd_no_such_menu_error(S_add_to_menu, menu);
   add_callback(slot, callstr, S_add_to_menu, 3);
   return(label);
 }
@@ -695,9 +696,7 @@ static SCM g_remove_from_menu(SCM menu, SCM label)
   SCM_ASSERT(INTEGER_P(menu), menu, SCM_ARG1, S_remove_from_menu);
   m = TO_C_INT(menu);
   if (m < 0) 
-    scm_throw(NO_SUCH_MENU,
-	      SCM_LIST2(TO_SCM_STRING(S_remove_from_menu),
-			menu));
+    snd_no_such_menu_error(S_remove_from_menu, menu);
   val = gh_remove_from_menu(m,
 			    TO_C_STRING(label));
   return(TO_SCM_INT(val));
@@ -712,9 +711,7 @@ static SCM g_change_menu_label(SCM menu, SCM old_label, SCM new_label)
   SCM_ASSERT(INTEGER_P(menu), menu, SCM_ARG1, S_change_menu_label);
   m = TO_C_INT(menu);
   if (m < 0) 
-    scm_throw(NO_SUCH_MENU,
-	      SCM_LIST2(TO_SCM_STRING(S_change_menu_label),
-			menu));
+    snd_no_such_menu_error(S_change_menu_label,	menu);
   val = gh_change_menu_label(m,
 			     TO_C_STRING(old_label), 
 			     TO_C_STRING(new_label));
@@ -729,9 +726,7 @@ static SCM g_menu_sensitive(SCM menu, SCM label)
   SCM_ASSERT(gh_string_p(label), label, SCM_ARG2, "set-" S_menu_sensitive);
   m = TO_C_INT(menu);
   if (m < 0) 
-    scm_throw(NO_SUCH_MENU,
-	      SCM_LIST2(TO_SCM_STRING(S_menu_sensitive),
-			menu));
+    snd_no_such_menu_error(S_menu_sensitive, menu);
   val = gh_menu_is_sensitive(m,
 			     TO_C_STRING(label));
   return(TO_SCM_BOOLEAN(val));
@@ -745,9 +740,7 @@ static SCM g_set_menu_sensitive(SCM menu, SCM label, SCM on)
   SCM_ASSERT(BOOLEAN_IF_BOUND_P(on), on, SCM_ARG3, "set-" S_menu_sensitive);
   m = TO_C_INT(menu);
   if (m < 0) 
-    scm_throw(NO_SUCH_MENU,
-	      SCM_LIST2(TO_SCM_STRING("set-" S_menu_sensitive),
-			menu));
+    snd_no_such_menu_error("set-" S_menu_sensitive, menu);
   val = gh_set_menu_sensitive(m,
 			      TO_C_STRING(label), 
 			      TO_C_BOOLEAN_OR_T(on));

@@ -10347,6 +10347,7 @@ static void pprint(char *str)
 
 char *mus_audio_report(void)
 {
+  mus_audio_initialize();
   if (!(save_it)) 
     {
       save_it_len = 1024;
@@ -10360,6 +10361,7 @@ char *mus_audio_report(void)
 
 void mus_audio_describe(void)
 {
+  mus_audio_initialize();
   print_it = 1;
   describe_audio_state_1();
 }

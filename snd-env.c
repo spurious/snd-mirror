@@ -894,7 +894,8 @@ static int find_env(char *name)
   int i;
   if ((all_envs) && (name))
     for (i = 0; i < all_envs_top; i++)
-      if (strcmp(name, all_names[i]) == 0) 
+      if ((all_names[i]) &&
+	  (strcmp(name, all_names[i]) == 0)) 
 	return(i);
   return(-1);
 }
@@ -961,6 +962,7 @@ void alert_envelope_editor(snd_state *ss, char *name, env *val)
 {
   /* whenever an envelope is defined or setf'd, we get notification through this function */
   int i;
+  if (val == NULL) return;
   i = find_env(name);
   if (i != -1)
     {
@@ -1268,7 +1270,8 @@ static SCM g_env_base(SCM name)
   else urn = TO_NEW_C_STRING(scm_symbol_to_string(name));
   i = find_env(urn);
   free(urn);
-  if (i != -1) 
+  urn = NULL;
+  if ((i != -1) && (all_envs[i]))
     return(TO_SCM_DOUBLE(all_envs[i]->base));
   else scm_throw(NO_SUCH_ENVELOPE, 
 		 SCM_LIST1(name));
@@ -1285,8 +1288,9 @@ static SCM g_set_env_base(SCM name, SCM val)
     urn = TO_NEW_C_STRING(name);
   else urn = TO_NEW_C_STRING(scm_symbol_to_string(name));
   i = find_env(urn);
-  free(urn);
-  if (i != -1) 
+  free(urn); 
+  urn = NULL;
+  if ((i != -1) && (all_envs[i]))
     all_envs[i]->base = TO_C_DOUBLE(val);
   else scm_throw(NO_SUCH_ENVELOPE, 
 		 SCM_LIST1(name));
@@ -1340,10 +1344,7 @@ env *get_env(SCM e, SCM base, char *origin) /* list or vector in e */
     {
       len = gh_vector_length(e);
       if (len == 0)
-	scm_throw(MUS_MISC_ERROR,
-		  SCM_LIST3(TO_SCM_STRING(origin),
-			    TO_SCM_STRING("null env"),
-			    e));
+	mus_misc_error(origin, "null env", e);
       buf = (Float *)CALLOC(len, sizeof(Float));
       vdata = SCM_VELTS(e);
       for (i = 0; i < len; i++) 
@@ -1353,13 +1354,10 @@ env *get_env(SCM e, SCM base, char *origin) /* list or vector in e */
     if (gh_list_p(e))
       {
 	len = gh_length(e);
-      if (len == 0)
-	scm_throw(MUS_MISC_ERROR,
-		  SCM_LIST3(TO_SCM_STRING(origin),
-			    TO_SCM_STRING("null env"),
-			    e));
+	if (len == 0)
+	  mus_misc_error(origin, "null env", e);
 	buf = (Float *)CALLOC(len, sizeof(Float));
-        for (i = 0, lst = e; i < len; i++, lst = SCM_CDR(lst)) 
+	for (i = 0, lst = e; i < len; i++, lst = SCM_CDR(lst)) 
 	  buf[i] = TO_C_DOUBLE(SCM_CAR(lst));
       }
     else return(NULL);

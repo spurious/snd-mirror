@@ -1548,9 +1548,13 @@ static SCM g_set_recorder_srate(SCM val)
 static SCM g_recorder_trigger(void) {return(TO_SCM_DOUBLE(rp->trigger));}
 static SCM g_set_recorder_trigger(SCM val) 
 {
+  Float trigger;
   #define H_recorder_trigger "(" S_recorder_trigger ") -> if doing triggered record, min amp that can trigger recording"
   SCM_ASSERT(NUMBER_P(val), val, SCM_ARG1, "set-" S_recorder_trigger); 
-  set_recorder_trigger(rp, TO_C_DOUBLE(val));
+  trigger = TO_C_DOUBLE(val);
+  if (trigger > 1.0) trigger = 1.0;
+  if (trigger < 0.0) trigger = 0.0;
+  set_recorder_trigger(rp, trigger);
   return(TO_SCM_DOUBLE(rp->trigger));
 }
 
@@ -1569,7 +1573,7 @@ static SCM g_recorder_gain (SCM num)
   int g;
   SCM_ASSERT(INTEGER_P(num), num, SCM_ARG1, S_recorder_gain);
   g = TO_C_INT(num);
-  if (g < MAX_MIXER_GAINS)
+  if ((g >= 0) && (g < MAX_MIXER_GAINS))
     return(TO_SCM_DOUBLE(rp->mixer_gains[g]));
   return(TO_SCM_DOUBLE(0.0));
 }
@@ -1605,8 +1609,11 @@ static SCM g_set_recorder_gain (SCM num, SCM amp)
   SCM_ASSERT(INTEGER_P(num), num, SCM_ARG1, "set-" S_recorder_gain);
   SCM_ASSERT(NUMBER_P(amp), amp, SCM_ARG2, "set-" S_recorder_gain); 
   ind = TO_C_INT(num);
-  rp->mixer_gains[ind] = TO_C_DOUBLE(amp);
-  reflect_recorder_mixer_gain(ind, rp->mixer_gains[ind]);
+  if ((ind >= 0) && (ind < MAX_MIXER_GAINS))
+    {
+      rp->mixer_gains[ind] = TO_C_DOUBLE(amp);
+      reflect_recorder_mixer_gain(ind, rp->mixer_gains[ind]);
+    }
   return(amp);
 }
 

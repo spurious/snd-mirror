@@ -10,7 +10,7 @@ typedef struct {
 
 int sound_data_p(SCM obj);
 SCM make_sound_data(int chans, int frames);
-void mus_misc_error(char *caller, char *msg, SCM val);
+void mus_misc_error(const char *caller, char *msg, SCM val);
 
 #endif
 #endif

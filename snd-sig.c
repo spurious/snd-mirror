@@ -288,10 +288,7 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
     {
       errstr = TO_SCM_STRING(errmsg);
       FREE(errmsg);
-      scm_throw(BAD_ARITY,
-		SCM_LIST3(TO_SCM_STRING(origin),
-			  proc,
-			  errstr));
+      snd_bad_arity_error(origin, errstr, proc);
     }
   sp = cp->sound;
   switch (chan_choice)
@@ -405,10 +402,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
     {
       errstr = TO_SCM_STRING(errmsg);
       FREE(errmsg);
-      scm_throw(BAD_ARITY,
-		SCM_LIST3(TO_SCM_STRING(origin),
-			  proc,
-			  errstr));
+      snd_bad_arity_error(origin, errstr, proc);
     }
   sp = cp->sound;
   switch (chan_choice)
@@ -635,10 +629,7 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
     {
       errstr = TO_SCM_STRING(errmsg);
       FREE(errmsg);
-      scm_throw(BAD_ARITY,
-		SCM_LIST3(TO_SCM_STRING(origin),
-			  proc,
-			  errstr));
+      snd_bad_arity_error(origin, errstr, proc);
     }
   sp = cp->sound;
   switch (chan_choice)
@@ -762,10 +753,7 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
     {
       errstr = TO_SCM_STRING(errmsg);
       FREE(errmsg);
-      scm_throw(BAD_ARITY,
-		SCM_LIST3(TO_SCM_STRING(origin),
-			  proc,
-			  errstr));
+      snd_bad_arity_error(origin, errstr, proc);
     }
   sp = cp->sound;
   switch (chan_choice)
@@ -2445,14 +2433,11 @@ static void reverse_sound(chan_info *ncp, int over_selection)
 		{
 		  idata[j] = previous_sample_unscaled(sf);
 		  j++;
-		  if (temp_file)
+		  if ((temp_file) && (j == MAX_BUFFER_SIZE))
 		    {
-		      if (j == MAX_BUFFER_SIZE)
-			{
-			  err = mus_file_write(ofd, 0, j - 1, 1, data);
-			  j = 0;
-			  if (err == -1) break;
-			}
+		      err = mus_file_write(ofd, 0, j - 1, 1, data);
+		      j = 0;
+		      if (err == -1) break;
 		    }
 		}
 	    }
@@ -2462,14 +2447,11 @@ static void reverse_sound(chan_info *ncp, int over_selection)
 		{
 		  idata[j] = previous_sample(sf);
 		  j++;
-		  if (temp_file)
+		  if ((temp_file) && (j == MAX_BUFFER_SIZE))
 		    {
-		      if (j == MAX_BUFFER_SIZE)
-			{
-			  err = mus_file_write(ofd, 0, j - 1, 1, data);
-			  j = 0;
-			  if (err == -1) break;
-			}
+		      err = mus_file_write(ofd, 0, j - 1, 1, data);
+		      j = 0;
+		      if (err == -1) break;
 		    }
 		}
 	    }
@@ -2616,17 +2598,14 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	  for (k = 0; k < si->chans; k++)
 	    data[k][j] = MUS_FLOAT_TO_SAMPLE(next_sample_to_float(sfs[k]) * egen_val);
 	  j++;
-	  if (temp_file)
+	  if ((temp_file) && (j == FILE_BUFFER_SIZE))
 	    {
-	      if (j == FILE_BUFFER_SIZE)
-		{
-		  if (reporting) 
-		    progress_report(sp, S_env_sound, 0, 0, (Float)i / ((Float)dur), from_enved);
-		  err = mus_file_write(ofd, 0, j - 1, si->chans, data);
-		  j = 0;
-		  if (err == -1) break;
-		  if (ss->stopped_explicitly) break;
-		}
+	      if (reporting) 
+		progress_report(sp, S_env_sound, 0, 0, (Float)i / ((Float)dur), from_enved);
+	      err = mus_file_write(ofd, 0, j - 1, si->chans, data);
+	      j = 0;
+	      if (err == -1) break;
+	      if (ss->stopped_explicitly) break;
 	    }
 	}
     }
@@ -2638,17 +2617,14 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
 	{
 	  idata[j] = MUS_FLOAT_TO_SAMPLE(next_sample_to_float(sf) * mus_env(egen));
 	  j++;
-	  if (temp_file)
+	  if ((temp_file) && (j == FILE_BUFFER_SIZE))
 	    {
-	      if (j == FILE_BUFFER_SIZE)
-		{
-		  if (reporting)
-		    progress_report(sp, S_env_sound, 0, 0, (Float)i / ((Float)dur), from_enved);
-		  err = mus_file_write(ofd, 0, j - 1, 1, data);
-		  j = 0;
-		  if (err == -1) break;
-		  if (ss->stopped_explicitly) break;
-		}
+	      if (reporting)
+		progress_report(sp, S_env_sound, 0, 0, (Float)i / ((Float)dur), from_enved);
+	      err = mus_file_write(ofd, 0, j - 1, 1, data);
+	      j = 0;
+	      if (err == -1) break;
+	      if (ss->stopped_explicitly) break;
 	    }
 	}
     }
@@ -2866,9 +2842,7 @@ static sync_state *get_sync_state_without_snd_fds(snd_state *ss, snd_info *sp, c
 	}
     }
   if (si == NULL) 
-    {
-      si = make_simple_sync(cp, beg);
-    }
+    si = make_simple_sync(cp, beg);
   sc = (sync_state *)CALLOC(1, sizeof(sync_state));
   sc->dur = dur;
   sc->si = si;
@@ -2945,8 +2919,7 @@ static SCM g_sound_to_temp_1(SCM ht, SCM df, int selection, int one_file)
   int type, format;
   snd_state *ss;
   if ((selection) && (selection_is_active() == 0)) 
-    scm_throw(NO_ACTIVE_SELECTION,
-	      SCM_LIST1(TO_SCM_STRING((one_file) ? S_selection_to_temp : S_selection_to_temps)));
+    snd_no_active_selection_error((one_file) ? S_selection_to_temp : S_selection_to_temps);
   ss = get_global_state();
   cp = current_channel(ss);
   if (cp)
@@ -3267,8 +3240,7 @@ static SCM g_smooth_selection(void)
   #define H_smooth_selection "(" S_smooth_selection ") smooths the data in the currently selected portion"
   chan_info *cp;
   if (selection_is_active() == 0) 
-    scm_throw(NO_ACTIVE_SELECTION,
-	      SCM_LIST1(TO_SCM_STRING(S_smooth_selection)));
+    snd_no_active_selection_error(S_smooth_selection);
   cp = get_cp(SCM_BOOL_F, SCM_BOOL_F, S_smooth_selection);
   cos_smooth(cp, 0, 0, TRUE, S_smooth_selection);
   return(SCM_BOOL_T);
@@ -3289,8 +3261,7 @@ static SCM g_reverse_selection(void)
   #define H_reverse_selection "(" S_reverse_selection ") reverses the data in the currently selected portion"
   chan_info *cp;
   if (selection_is_active() == 0) 
-    scm_throw(NO_ACTIVE_SELECTION,
-	      SCM_LIST1(TO_SCM_STRING(S_reverse_selection)));
+    snd_no_active_selection_error(S_reverse_selection);
   cp = get_cp(SCM_BOOL_F, SCM_BOOL_F, S_reverse_selection);
   reverse_sound(cp, TRUE);
   return(SCM_BOOL_F);
@@ -3484,8 +3455,7 @@ static SCM g_scale_selection_to(SCM scalers)
       FREE(scls);
       return(scalers);
     }
-  scm_throw(NO_ACTIVE_SELECTION,
-	    SCM_LIST1(TO_SCM_STRING(S_scale_selection_to)));
+  snd_no_active_selection_error(S_scale_selection_to);
   return(scalers);
 }
 
@@ -3501,8 +3471,7 @@ static SCM g_scale_selection_by(SCM scalers)
       FREE(scls);
       return(scalers);
     }
-  scm_throw(NO_ACTIVE_SELECTION,
-	    SCM_LIST1(TO_SCM_STRING(S_scale_selection_by)));
+  snd_no_active_selection_error(S_scale_selection_by);
   return(scalers);
 }
 
@@ -3516,8 +3485,7 @@ applies envelope 'env' to the currently selected portion of snd's channel chn us
   mus_any *egen;
   SND_ASSERT_CHAN(S_env_selection, snd_n, chn_n, 3);
   if (selection_is_active() == 0) 
-    scm_throw(NO_ACTIVE_SELECTION,
-	      SCM_LIST1(TO_SCM_STRING(S_env_selection)));
+    snd_no_active_selection_error(S_env_selection);
   cp = get_cp(snd_n, chn_n, S_env_selection);
   if (gh_list_p(edata))
     {
@@ -3727,18 +3695,13 @@ convolves file with snd's channel chn (or the currently sync'd channels), amp is
 	  if (fname) FREE(fname);
 	  errstr = TO_SCM_STRING(error);
 	  FREE(error);
-	  scm_throw(MUS_MISC_ERROR,
-		    SCM_LIST3(TO_SCM_STRING(S_convolve_with),
-			      file,
-			      errstr));
+	  mus_misc_error(S_convolve_with, NULL, errstr);
 	}
     }
   else 
     {
       if (fname) FREE(fname);
-      scm_throw(NO_SUCH_FILE,
-		SCM_LIST2(TO_SCM_STRING(S_convolve_with),
-			  file));
+      snd_no_such_file_error(S_convolve_with, file);
     }
   if (fname) FREE(fname);
   return(scm_return_first(file, new_amp));
@@ -3813,8 +3776,7 @@ convolves the current selection with file; amp is the resultant peak amp"
   char *fname = NULL, *error;
   SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_convolve_selection_with);
   if (selection_is_active() == 0) 
-    scm_throw(NO_ACTIVE_SELECTION,
-	      SCM_LIST1(TO_SCM_STRING(S_convolve_selection_with)));
+    snd_no_active_selection_error(S_convolve_selection_with);
   if (gh_number_p(new_amp)) 
     amp = TO_C_DOUBLE(new_amp);
   else
@@ -3832,18 +3794,13 @@ convolves the current selection with file; amp is the resultant peak amp"
 	  if (fname) FREE(fname);
 	  errstr = TO_SCM_STRING(error);
 	  FREE(error);
-	  scm_throw(MUS_MISC_ERROR,
-		    SCM_LIST3(TO_SCM_STRING(S_convolve_selection_with),
-			      file,
-			      errstr));
+	  mus_misc_error(S_convolve_selection_with, NULL, errstr);
 	}
     }
   else 
     {
       if (fname) FREE(fname);
-      scm_throw(NO_SUCH_FILE,
-		SCM_LIST2(TO_SCM_STRING(S_convolve_selection_with),
-			  file));
+      snd_no_such_file_error(S_convolve_selection_with, file);
     }
   if (fname) FREE(fname);
   return(scm_return_first(file, new_amp));
@@ -3868,30 +3825,20 @@ static Float check_src_envelope(env *e, char *caller)
     {
 
       if (e->data[i + 1] == 0.0)
-	scm_throw(MUS_MISC_ERROR,
-		  SCM_LIST4(TO_SCM_STRING("src envelope is 0.0 at "),
-			    TO_SCM_INT(i / 2),
-			    env2scm(e),
-			    TO_SCM_STRING(caller)));
+	mus_misc_error(caller, "src envelope hits 0.0", env2scm(e));
       else
 	{
 	  if (e->data[i + 1] < 0.0)
 	    {
 	      if (res <= 0.0)
 		res = -1.0;
-	      else scm_throw(MUS_MISC_ERROR,
-			     SCM_LIST3(TO_SCM_STRING("src envelope passes through 0.0"),
-				       env2scm(e),
-				       TO_SCM_STRING(caller)));
+	      else mus_misc_error(caller, "src envelope passes through 0.0", env2scm(e));
 	    }
 	  else
 	    {
 	      if (res >= 0)
 		res = 1.0;
-	      else scm_throw(MUS_MISC_ERROR,
-			     SCM_LIST3(TO_SCM_STRING("src envelope passes through 0.0"),
-				       env2scm(e),
-				       TO_SCM_STRING(caller)));
+	      else mus_misc_error(caller, "src envelope passes through 0.0", env2scm(e));
 	    }
 	}
     }
@@ -3930,10 +3877,7 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope. Neg
 		src_env_or_num(cp->state, cp, NULL, 
 			       (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
 			       FALSE, NOT_FROM_ENVED, S_src_sound, FALSE, egen);
-	      else scm_throw(MUS_MISC_ERROR,
-			     SCM_LIST3(TO_SCM_STRING(S_src_sound),
-				       TO_SCM_STRING("clm gen not an envelope handler"),
-				       ratio_or_env));
+	      else mus_misc_error(S_src_sound, "clm gen not an envelope handler", ratio_or_env);
 	    }
 	  else scm_wrong_type_arg(S_src_sound, 1, ratio_or_env);
 	}
@@ -3950,8 +3894,7 @@ sampling-rate converts the currently selected data by ratio (which can be an env
   Float e_ratio = 1.0;
   chan_info *cp;
   if (selection_is_active() == 0) 
-    scm_throw(NO_ACTIVE_SELECTION,
-	      SCM_LIST1(TO_SCM_STRING(S_src_selection)));
+    snd_no_active_selection_error(S_src_selection);
   cp = get_cp(SCM_BOOL_F, SCM_BOOL_F, S_src_selection);
   if (gh_number_p(ratio_or_env))
     src_env_or_num(cp->state, cp, 
@@ -3976,10 +3919,7 @@ sampling-rate converts the currently selected data by ratio (which can be an env
 		src_env_or_num(cp->state, cp, NULL,
 			       (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
 			       FALSE, NOT_FROM_ENVED, S_src_selection, TRUE, egen);
-	      else scm_throw(MUS_MISC_ERROR,
-			     SCM_LIST3(TO_SCM_STRING(S_src_selection),
-				       TO_SCM_STRING("clm generator not an envelope handler"),
-				       ratio_or_env));
+	      else mus_misc_error(S_src_selection, "clm generator not an envelope handler", ratio_or_env);
 	    }
 	  else scm_wrong_type_arg(S_src_selection, 1, ratio_or_env);
 	}
@@ -4007,11 +3947,7 @@ applies FIR filter to snd's channel chn. 'filter' is either the frequency respon
 	{
 	  errstr = TO_SCM_STRING(error);
 	  FREE(error);
-	  scm_throw(MUS_MISC_ERROR,
-		    SCM_LIST4(TO_SCM_STRING(S_filter_sound),
-			      e, 
-			      order,
-			      errstr));
+	  mus_misc_error(S_filter_sound, NULL, errstr);
 	}
     }
   else
@@ -4055,8 +3991,7 @@ static SCM g_filter_selection(SCM e, SCM order)
   SCM errstr;
   env *ne = NULL;
   if (selection_is_active() == 0) 
-    scm_throw(NO_ACTIVE_SELECTION,
-	      SCM_LIST1(TO_SCM_STRING(S_filter_selection)));
+    snd_no_active_selection_error(S_filter_selection);
   cp = get_cp(SCM_BOOL_F, SCM_BOOL_F, S_filter_selection);
   if (mus_scm_p(e))
     {
@@ -4065,11 +4000,7 @@ static SCM g_filter_selection(SCM e, SCM order)
 	{
 	  errstr = TO_SCM_STRING(error);
 	  FREE(error);
-	  scm_throw(MUS_MISC_ERROR,
-		    SCM_LIST4(TO_SCM_STRING(S_filter_selection),
-			      e, 
-			      order,
-			      errstr));
+	  mus_misc_error(S_filter_selection, NULL, errstr);
 	}
     }
   else

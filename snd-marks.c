@@ -21,7 +21,7 @@
 typedef mark *mark_map_func(chan_info *cp, mark *mp, void *m);
 
 #if HAVE_GUILE
-  static void call_mark_drag_hook(int id);
+  static SCM mark_drag_hook;
 #endif
 
 #define MARK_ID_MASK   0x0fffffff
@@ -372,7 +372,10 @@ static int move_mark_1(chan_info *cp, mark *mp, int x)
   samps = current_ed_samples(cp);
   if (mp->samp > samps) mp->samp = samps;
 #if HAVE_GUILE
-  call_mark_drag_hook(mark_id(mp));
+  if (HOOKED(mark_drag_hook))
+    g_c_run_progn_hook(mark_drag_hook,
+		       SCM_LIST1(TO_SMALL_SCM_INT(mark_id(mp))),
+		       S_mark_drag_hook);
 #endif
   return(redraw);
 }
@@ -1465,6 +1468,13 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
 /* -------------------------------- SCM connection -------------------------------- */
 #if HAVE_GUILE
 
+static void snd_no_such_mark_error(const char *caller, int id)
+{
+  scm_throw(NO_SUCH_MARK,
+	    SCM_LIST2(TO_SCM_STRING(caller),
+		      id));
+}
+
 static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)
 {
   SCM lst, el, nm, sm, mlst, olst, molst;
@@ -1537,9 +1547,7 @@ static SCM iread_mark(SCM n, int fld, int pos_n, char *caller)
   pos = TO_C_INT_OR_ELSE(pos_n, -1);
   m = find_mark_id(ncp, TO_C_INT_OR_ELSE(n, 0), pos);
   if (m == NULL) 
-    scm_throw(NO_SUCH_MARK,
-	      SCM_LIST2(TO_SCM_STRING(caller),
-			n));
+    snd_no_such_mark_error(caller, n);
   switch (fld)
     {
     case MARK_SAMPLE: 
@@ -1567,9 +1575,7 @@ static SCM iwrite_mark(SCM mark_n, SCM val, int fld, char *caller)
   mark *m;
   m = find_mark_id(cp, TO_C_INT_OR_ELSE(mark_n, 0), -1);
   if (m == NULL) 
-    scm_throw(NO_SUCH_MARK,
-	      SCM_LIST2(TO_SCM_STRING(caller),
-			mark_n));
+    snd_no_such_mark_error(caller, mark_n);
   switch (fld)
     {
     case MARK_SAMPLE: 
@@ -1668,9 +1674,7 @@ finds the mark in snd's channel chn at samp (if a number) or with the given name
   SND_ASSERT_CHAN(S_find_mark, snd_n, chn_n, 2); 
   cp = get_cp(snd_n, chn_n, S_find_mark);
   if (cp->marks == NULL) 
-    scm_throw(NO_SUCH_MARK,
-	      SCM_LIST2(TO_SCM_STRING(S_find_mark),
-			samp_n));
+    snd_no_such_mark_error(S_find_mark,	samp_n);
   mps = cp->marks[cp->edit_ctr];
   if (mps)
     {
@@ -1693,9 +1697,7 @@ finds the mark in snd's channel chn at samp (if a number) or with the given name
 	      return(TO_SCM_INT(mark_id(mps[i])));
 	}
     }
-  scm_throw(NO_SUCH_MARK,
-	    SCM_LIST2(TO_SCM_STRING(S_find_mark),
-		      samp_n));
+  snd_no_such_mark_error(S_find_mark, samp_n);
   return(samp_n);
 }
 
@@ -1726,9 +1728,7 @@ static SCM g_delete_mark(SCM id_n)
   SCM_ASSERT(INTEGER_IF_BOUND_P(id_n), id_n, SCM_ARG1, S_delete_mark);
   m = find_mark_id(cp, id = TO_C_INT_OR_ELSE(id_n, 0), -1);
   if (m == NULL) 
-    scm_throw(NO_SUCH_MARK,
-	      SCM_LIST2(TO_SCM_STRING(S_delete_mark),
-			id_n));
+    snd_no_such_mark_error(S_delete_mark, id_n);
   delete_mark_id(id, cp[0]);
   update_graph(cp[0], NULL);
   return(id_n);
@@ -1833,9 +1833,7 @@ static SCM g_marks(SCM snd_n, SCM chn_n, SCM pos_n)
 	  {
 	    sp = get_sp(snd_n);
 	    if (sp == NULL) 
-	      scm_throw(NO_SUCH_SOUND,
-			SCM_LIST2(TO_SCM_STRING(S_marks),
-				  snd_n));
+	      snd_no_such_sound_error(S_marks, snd_n);
 	    for (i = sp->nchans-1; i >= 0; i--)
 	      {
 		cp = sp->chans[i];
@@ -1887,15 +1885,6 @@ static SCM g_backward_mark(SCM count, SCM snd, SCM chn)
   val = -(TO_C_INT_OR_ELSE(count, 1)); 
   handle_cursor(cp, goto_mark(cp, val));
   return(TO_SCM_INT(val));
-}
-
-static SCM mark_drag_hook;
-static void call_mark_drag_hook(int id)
-{
-  if (HOOKED(mark_drag_hook))
-    g_c_run_progn_hook(mark_drag_hook,
-		       SCM_LIST1(TO_SMALL_SCM_INT(id)),
-		       S_mark_drag_hook);
 }
 
 static char *mark_file_name(snd_info *sp)
@@ -1952,9 +1941,7 @@ static SCM g_save_marks(SCM snd_n)
   SND_ASSERT_SND(S_save_marks, snd_n, 1);
   sp = get_sp(snd_n);
   if (sp == NULL) 
-    scm_throw(NO_SUCH_SOUND,
-	      SCM_LIST2(TO_SCM_STRING(S_save_marks),
-			snd_n));
+    snd_no_such_sound_error(S_save_marks, snd_n);
   str = save_marks(sp);
   res = TO_SCM_STRING(str);
   FREE(str);

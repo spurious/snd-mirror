@@ -2210,10 +2210,7 @@ to be displayed goes from low to high (normally 0.0 to 1.0)"
     {
       errstr = TO_SCM_STRING(errmsg);
       FREE(errmsg);
-      scm_throw(BAD_ARITY,
-		SCM_LIST3(TO_SCM_STRING(S_add_transform),
-			  proc,
-			  errstr));
+      snd_bad_arity_error(S_add_transform, errstr, proc);
     }
   SCM_ASSERT(gh_string_p(name), name, SCM_ARG1, S_add_transform);
   SCM_ASSERT(gh_string_p(xlabel), xlabel, SCM_ARG2, S_add_transform);

@@ -676,8 +676,7 @@ static SCM g_cut(void)
       delete_selection(S_cut, UPDATE_DISPLAY);
       return(SCM_BOOL_T);
     }
-  scm_throw(NO_ACTIVE_SELECTION,
-	    SCM_LIST1(TO_SCM_STRING(S_cut)));
+  snd_no_active_selection_error(S_cut);
   return(SCM_BOOL_F);
 }
 
@@ -696,16 +695,13 @@ static SCM g_insert_selection(SCM beg, SCM snd, SCM chn)
       if (cp == NULL) 
 	cp = selected_channel(ss);
       if (cp == NULL) 
-	scm_throw(NO_SUCH_CHANNEL,
-		  SCM_LIST3(TO_SCM_STRING(S_insert_selection),
-			    snd, chn));
+	snd_no_such_channel_error(S_insert_selection, snd, chn);
       err = insert_selection(ss, cp, 
 			     TO_C_INT_OR_ELSE(beg, 0), 
 			     S_insert_selection);
       return(TO_SCM_BOOLEAN((err == MUS_NO_ERROR)));
     }
-  scm_throw(NO_ACTIVE_SELECTION,
-	    SCM_LIST1(TO_SCM_STRING(S_insert_selection)));
+  snd_no_active_selection_error(S_insert_selection);
   return(beg);
 }
 
@@ -723,15 +719,12 @@ static SCM g_mix_selection(SCM beg, SCM snd, SCM chn)
       if (cp == NULL) 
 	cp = selected_channel(ss);
       if (cp == NULL) 
-	scm_throw(NO_SUCH_CHANNEL,
-		  SCM_LIST3(TO_SCM_STRING(S_mix_selection),
-			    snd, chn));
+	snd_no_such_channel_error(S_mix_selection, snd, chn);
       return(TO_SCM_INT(mix_selection(ss, cp, 
 				      TO_C_INT_OR_ELSE(beg, 0), 
 				      S_mix_selection)));
     }
-  scm_throw(NO_ACTIVE_SELECTION,
-	    SCM_LIST1(TO_SCM_STRING(S_mix_selection)));
+  snd_no_active_selection_error(S_mix_selection);
   return(beg);
 }
 
@@ -756,8 +749,7 @@ static SCM g_selection_position(SCM snd, SCM chn)
 	  return(TO_SCM_INT(selection_beg(cp)));
 	}
     }
-  scm_throw(NO_ACTIVE_SELECTION,
-	    SCM_LIST1(TO_SCM_STRING(S_selection_position)));
+  snd_no_active_selection_error(S_selection_position);
   return(snd);
 }
 
@@ -811,8 +803,7 @@ static SCM g_selection_length(SCM snd, SCM chn)
 	  return(TO_SCM_INT(cp_selection_len(cp, NULL)));
 	}
     }
-  scm_throw(NO_ACTIVE_SELECTION,
-	    SCM_LIST1(TO_SCM_STRING(S_selection_length)));
+  snd_no_active_selection_error(S_selection_length);
   return(snd);
 }
 
@@ -917,8 +908,7 @@ saves the current selection in filename using the indicated file attributes"
   SCM_ASSERT(INTEGER_IF_BOUND_P(data_format), data_format, SCM_ARG3, S_save_selection);
   SCM_ASSERT(NUMBER_IF_BOUND_P(srate), srate, SCM_ARG4, S_save_selection);
   if (selection_is_active() == 0)
-    scm_throw(NO_ACTIVE_SELECTION,
-	      SCM_LIST1(TO_SCM_STRING(S_save_selection)));
+    snd_no_active_selection_error(S_save_selection);
   ss = get_global_state();
   if (INTEGER_P(header_type)) 
     type = TO_C_INT_OR_ELSE(header_type, 0); 
