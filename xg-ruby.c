@@ -2760,6 +2760,33 @@ XEN_NARGIFY_0(gxg_gtk_cell_renderer_progress_new_w, gxg_gtk_cell_renderer_progre
 XEN_NARGIFY_4(gxg_gtk_combo_box_set_row_separator_func_w, gxg_gtk_combo_box_set_row_separator_func)
 XEN_NARGIFY_2(gxg_gtk_label_set_ellipsize_w, gxg_gtk_label_set_ellipsize)
 XEN_NARGIFY_1(gxg_gtk_label_get_ellipsize_w, gxg_gtk_label_get_ellipsize)
+XEN_NARGIFY_1(gxg_pango_attr_fallback_new_w, gxg_pango_attr_fallback_new)
+XEN_NARGIFY_1(gxg_pango_attr_letter_spacing_new_w, gxg_pango_attr_letter_spacing_new)
+XEN_NARGIFY_3(gxg_pango_attr_list_filter_w, gxg_pango_attr_list_filter)
+XEN_NARGIFY_1(gxg_pango_attr_iterator_get_attrs_w, gxg_pango_attr_iterator_get_attrs)
+XEN_NARGIFY_2(gxg_pango_context_set_matrix_w, gxg_pango_context_set_matrix)
+XEN_NARGIFY_1(gxg_pango_font_metrics_get_underline_position_w, gxg_pango_font_metrics_get_underline_position)
+XEN_NARGIFY_1(gxg_pango_font_metrics_get_underline_thickness_w, gxg_pango_font_metrics_get_underline_thickness)
+XEN_NARGIFY_1(gxg_pango_font_metrics_get_strikethrough_position_w, gxg_pango_font_metrics_get_strikethrough_position)
+XEN_NARGIFY_1(gxg_pango_font_metrics_get_strikethrough_thickness_w, gxg_pango_font_metrics_get_strikethrough_thickness)
+XEN_NARGIFY_1(gxg_pango_font_family_is_monospace_w, gxg_pango_font_family_is_monospace)
+XEN_ARGIFY_3(gxg_pango_font_face_list_sizes_w, gxg_pango_font_face_list_sizes)
+XEN_NARGIFY_2(gxg_pango_layout_set_auto_dir_w, gxg_pango_layout_set_auto_dir)
+XEN_NARGIFY_1(gxg_pango_layout_get_auto_dir_w, gxg_pango_layout_get_auto_dir)
+XEN_NARGIFY_0(gxg_pango_matrix_get_type_w, gxg_pango_matrix_get_type)
+XEN_NARGIFY_1(gxg_pango_matrix_copy_w, gxg_pango_matrix_copy)
+XEN_NARGIFY_1(gxg_pango_matrix_free_w, gxg_pango_matrix_free)
+XEN_NARGIFY_3(gxg_pango_matrix_translate_w, gxg_pango_matrix_translate)
+XEN_NARGIFY_3(gxg_pango_matrix_scale_w, gxg_pango_matrix_scale)
+XEN_NARGIFY_2(gxg_pango_matrix_rotate_w, gxg_pango_matrix_rotate)
+XEN_NARGIFY_2(gxg_pango_matrix_concat_w, gxg_pango_matrix_concat)
+XEN_NARGIFY_1(gxg_pango_script_for_unichar_w, gxg_pango_script_for_unichar)
+XEN_NARGIFY_2(gxg_pango_script_iter_new_w, gxg_pango_script_iter_new)
+XEN_ARGIFY_4(gxg_pango_script_iter_get_range_w, gxg_pango_script_iter_get_range)
+XEN_NARGIFY_1(gxg_pango_script_iter_next_w, gxg_pango_script_iter_next)
+XEN_NARGIFY_1(gxg_pango_script_iter_free_w, gxg_pango_script_iter_free)
+XEN_NARGIFY_1(gxg_pango_script_get_sample_language_w, gxg_pango_script_get_sample_language)
+XEN_NARGIFY_2(gxg_pango_language_includes_script_w, gxg_pango_language_includes_script)
 #endif
 
 XEN_NARGIFY_1(gxg_GDK_COLORMAP_w, gxg_GDK_COLORMAP)
@@ -6150,6 +6177,33 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_combo_box_set_row_separator_func, gxg_gtk_combo_box_set_row_separator_func_w, 4, 0, 0, H_gtk_combo_box_set_row_separator_func);
   XG_DEFINE_PROCEDURE(gtk_label_set_ellipsize, gxg_gtk_label_set_ellipsize_w, 2, 0, 0, H_gtk_label_set_ellipsize);
   XG_DEFINE_PROCEDURE(gtk_label_get_ellipsize, gxg_gtk_label_get_ellipsize_w, 1, 0, 0, H_gtk_label_get_ellipsize);
+  XG_DEFINE_PROCEDURE(pango_attr_fallback_new, gxg_pango_attr_fallback_new_w, 1, 0, 0, H_pango_attr_fallback_new);
+  XG_DEFINE_PROCEDURE(pango_attr_letter_spacing_new, gxg_pango_attr_letter_spacing_new_w, 1, 0, 0, H_pango_attr_letter_spacing_new);
+  XG_DEFINE_PROCEDURE(pango_attr_list_filter, gxg_pango_attr_list_filter_w, 3, 0, 0, H_pango_attr_list_filter);
+  XG_DEFINE_PROCEDURE(pango_attr_iterator_get_attrs, gxg_pango_attr_iterator_get_attrs_w, 1, 0, 0, H_pango_attr_iterator_get_attrs);
+  XG_DEFINE_PROCEDURE(pango_context_set_matrix, gxg_pango_context_set_matrix_w, 2, 0, 0, H_pango_context_set_matrix);
+  XG_DEFINE_PROCEDURE(pango_font_metrics_get_underline_position, gxg_pango_font_metrics_get_underline_position_w, 1, 0, 0, H_pango_font_metrics_get_underline_position);
+  XG_DEFINE_PROCEDURE(pango_font_metrics_get_underline_thickness, gxg_pango_font_metrics_get_underline_thickness_w, 1, 0, 0, H_pango_font_metrics_get_underline_thickness);
+  XG_DEFINE_PROCEDURE(pango_font_metrics_get_strikethrough_position, gxg_pango_font_metrics_get_strikethrough_position_w, 1, 0, 0, H_pango_font_metrics_get_strikethrough_position);
+  XG_DEFINE_PROCEDURE(pango_font_metrics_get_strikethrough_thickness, gxg_pango_font_metrics_get_strikethrough_thickness_w, 1, 0, 0, H_pango_font_metrics_get_strikethrough_thickness);
+  XG_DEFINE_PROCEDURE(pango_font_family_is_monospace, gxg_pango_font_family_is_monospace_w, 1, 0, 0, H_pango_font_family_is_monospace);
+  XG_DEFINE_PROCEDURE(pango_font_face_list_sizes, gxg_pango_font_face_list_sizes_w, 1, 2, 0, H_pango_font_face_list_sizes);
+  XG_DEFINE_PROCEDURE(pango_layout_set_auto_dir, gxg_pango_layout_set_auto_dir_w, 2, 0, 0, H_pango_layout_set_auto_dir);
+  XG_DEFINE_PROCEDURE(pango_layout_get_auto_dir, gxg_pango_layout_get_auto_dir_w, 1, 0, 0, H_pango_layout_get_auto_dir);
+  XG_DEFINE_PROCEDURE(pango_matrix_get_type, gxg_pango_matrix_get_type_w, 0, 0, 0, H_pango_matrix_get_type);
+  XG_DEFINE_PROCEDURE(pango_matrix_copy, gxg_pango_matrix_copy_w, 1, 0, 0, H_pango_matrix_copy);
+  XG_DEFINE_PROCEDURE(pango_matrix_free, gxg_pango_matrix_free_w, 1, 0, 0, H_pango_matrix_free);
+  XG_DEFINE_PROCEDURE(pango_matrix_translate, gxg_pango_matrix_translate_w, 3, 0, 0, H_pango_matrix_translate);
+  XG_DEFINE_PROCEDURE(pango_matrix_scale, gxg_pango_matrix_scale_w, 3, 0, 0, H_pango_matrix_scale);
+  XG_DEFINE_PROCEDURE(pango_matrix_rotate, gxg_pango_matrix_rotate_w, 2, 0, 0, H_pango_matrix_rotate);
+  XG_DEFINE_PROCEDURE(pango_matrix_concat, gxg_pango_matrix_concat_w, 2, 0, 0, H_pango_matrix_concat);
+  XG_DEFINE_PROCEDURE(pango_script_for_unichar, gxg_pango_script_for_unichar_w, 1, 0, 0, H_pango_script_for_unichar);
+  XG_DEFINE_PROCEDURE(pango_script_iter_new, gxg_pango_script_iter_new_w, 2, 0, 0, H_pango_script_iter_new);
+  XG_DEFINE_PROCEDURE(pango_script_iter_get_range, gxg_pango_script_iter_get_range_w, 2, 2, 0, H_pango_script_iter_get_range);
+  XG_DEFINE_PROCEDURE(pango_script_iter_next, gxg_pango_script_iter_next_w, 1, 0, 0, H_pango_script_iter_next);
+  XG_DEFINE_PROCEDURE(pango_script_iter_free, gxg_pango_script_iter_free_w, 1, 0, 0, H_pango_script_iter_free);
+  XG_DEFINE_PROCEDURE(pango_script_get_sample_language, gxg_pango_script_get_sample_language_w, 1, 0, 0, H_pango_script_get_sample_language);
+  XG_DEFINE_PROCEDURE(pango_language_includes_script, gxg_pango_language_includes_script_w, 2, 0, 0, H_pango_language_includes_script);
 #endif
 
   XG_DEFINE_PROCEDURE(GDK_COLORMAP, gxg_GDK_COLORMAP_w, 1, 0, 0, NULL);

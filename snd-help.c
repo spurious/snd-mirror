@@ -274,6 +274,9 @@ char *version_info(void)
 	  ", Glib ",     snd_itoa(GLIB_MAJOR_VERSION), ".", 
                          snd_itoa(GLIB_MINOR_VERSION), ".", 
                          snd_itoa(GLIB_MICRO_VERSION),
+  #ifdef PANGO_VERSION
+	  ", Pango ", PANGO_VERSION,
+  #endif
 #endif
 	  xm_version(), /* omitted if --version/--help because the init procs haven't run at that point */
 #if WITH_GTK_AND_X11

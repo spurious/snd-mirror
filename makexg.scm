@@ -964,7 +964,7 @@
 	    (set! funcs-250 (cons (list name type strs args) funcs-250))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
-(define* (CFNC-251 data)
+(define* (CFNC-251 data #:optional spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -979,7 +979,9 @@
 		   (not (member type types-251)))
 	      (set! types-251 (cons type types-251)))
 	  (let ((strs (parse-args args '251)))
-	    (set! funcs-251 (cons (list name type strs args) funcs-251))
+	    (if spec
+		(set! funcs-251 (cons (list name type strs args spec) funcs-251))
+		(set! funcs-251 (cons (list name type strs args) funcs-251)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
 (define* (CFNC-22 data)

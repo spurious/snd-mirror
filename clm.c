@@ -1829,8 +1829,11 @@ Float mus_table_lookup(mus_any *ptr, Float fm)
   Float result;
   result = table_lookup_interp(gen->type, gen->phase, gen->table, gen->table_size);
   gen->phase += (gen->freq + (fm * gen->internal_mag));
-  while (gen->phase >= gen->table_size) gen->phase -= gen->table_size;
-  while (gen->phase < 0.0) gen->phase += gen->table_size;
+  if ((gen->phase >= gen->table_size) || (gen->phase < 0.0))
+    {
+      gen->phase = fmod(gen->phase, (double)(gen->table_size));
+      if (gen->phase < 0.0) gen->phase += gen->table_size;
+    }
   return(result);
 }
 
@@ -1840,8 +1843,11 @@ Float mus_table_lookup_1(mus_any *ptr)
   Float result;
   result = table_lookup_interp(gen->type, gen->phase, gen->table, gen->table_size);
   gen->phase += gen->freq;
-  while (gen->phase >= gen->table_size) gen->phase -= gen->table_size;
-  while (gen->phase < 0.0) gen->phase += gen->table_size;
+  if ((gen->phase >= gen->table_size) || (gen->phase < 0.0))
+    {
+      gen->phase = fmod(gen->phase, (double)(gen->table_size));
+      if (gen->phase < 0.0) gen->phase += gen->table_size;
+    }
   return(result);
 }
 
@@ -2001,8 +2007,11 @@ Float mus_sawtooth_wave(mus_any *ptr, Float fm)
   Float result;
   result = gen->current_value;
   gen->phase += (gen->freq + fm);
-  while (gen->phase >= TWO_PI) gen->phase -= TWO_PI;
-  while (gen->phase < 0.0) gen->phase += TWO_PI;
+  if ((gen->phase >= TWO_PI) || (gen->phase < 0.0))
+    {
+      gen->phase = fmod(gen->phase, TWO_PI);
+      if (gen->phase < 0.0) gen->phase += TWO_PI;
+    }
   gen->current_value = gen->base * (gen->phase - M_PI);
   return(result);
 }
@@ -2084,8 +2093,11 @@ Float mus_square_wave(mus_any *ptr, Float fm)
   Float result;
   result = gen->current_value;
   gen->phase += (gen->freq + fm);
-  while (gen->phase >= TWO_PI) gen->phase -= TWO_PI;
-  while (gen->phase < 0.0) gen->phase += TWO_PI;
+  if ((gen->phase >= TWO_PI) || (gen->phase < 0.0))
+    {
+      gen->phase = fmod(gen->phase, TWO_PI);
+      if (gen->phase < 0.0) gen->phase += TWO_PI;
+    }
   if (gen->phase < gen->width) gen->current_value = gen->base; else gen->current_value = 0.0;
   return(result);
 }
@@ -2154,8 +2166,11 @@ Float mus_triangle_wave(mus_any *ptr, Float fm)
   Float result;
   result = gen->current_value;
   gen->phase += (gen->freq + fm);
-  while (gen->phase >= TWO_PI) gen->phase -= TWO_PI;
-  while (gen->phase < 0.0) gen->phase += TWO_PI;
+  if ((gen->phase >= TWO_PI) || (gen->phase < 0.0))
+    {
+      gen->phase = fmod(gen->phase, TWO_PI);
+      if (gen->phase < 0.0) gen->phase += TWO_PI;
+    }
   if (gen->phase < (M_PI / 2.0)) 
     gen->current_value = gen->base * gen->phase;
   else
@@ -2224,10 +2239,10 @@ mus_any *mus_make_triangle_wave(Float freq, Float amp, Float phase)
 Float mus_pulse_train(mus_any *ptr, Float fm)
 {
   sw *gen = (sw *)ptr;
-  if (fabs(gen->phase) >= TWO_PI)
+  if ((gen->phase >= TWO_PI) || (gen->phase < 0.0))
     {
-      while (gen->phase >= TWO_PI) gen->phase -= TWO_PI;
-      while (gen->phase < 0.0) gen->phase += TWO_PI;
+      gen->phase = fmod(gen->phase, TWO_PI);
+      if (gen->phase < 0.0) gen->phase += TWO_PI;
       gen->current_value = gen->base;
     }
   else gen->current_value = 0.0;
@@ -2363,13 +2378,13 @@ static Float random_any(noi *gen) /* -amp to amp possibly through distribution *
 Float mus_rand(mus_any *ptr, Float fm)
 {
   noi *gen = (noi *)ptr;
-  if (gen->phase >= TWO_PI)
+  if ((gen->phase >= TWO_PI) || (gen->phase < 0.0))
     {
-      while (gen->phase >= TWO_PI) gen->phase -= TWO_PI;
+      gen->phase = fmod(gen->phase, TWO_PI);
+      if (gen->phase < 0.0) gen->phase += TWO_PI;
       gen->output = random_any(gen);
     }
   gen->phase += (gen->freq + fm);
-  while (gen->phase < 0.0) gen->phase += TWO_PI;
   return(gen->output);
 }
 
@@ -2385,13 +2400,13 @@ Float mus_rand_interp(mus_any *ptr, Float fm)
       if (gen->output < -gen->base)
 	gen->output = -gen->base;
     }
-  if (gen->phase >= TWO_PI)
+  if ((gen->phase >= TWO_PI) || (gen->phase < 0.0))
     {
-      while (gen->phase >= TWO_PI) gen->phase -= TWO_PI;
+      gen->phase = fmod(gen->phase, TWO_PI);
+      if (gen->phase < 0.0) gen->phase += TWO_PI;
       gen->incr = (random_any(gen) - gen->output) / (ceil(TWO_PI / (gen->freq + fm)));
     }
   gen->phase += (gen->freq + fm);
-  while (gen->phase < 0.0) gen->phase += TWO_PI;
   return(gen->output);
 }
 

@@ -1154,28 +1154,29 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 		  (sp->nchans > 1) &&
 		  (sp->channel_style == CHANNELS_SEPARATE))
 		outer_panes++;
-	      if (outer_panes > 0)
+	    }
+	  if (outer_panes > 0)
+	    {
+	      inner_panes = (int *)CALLOC(outer_panes, sizeof(int));
+	      outer_sizes = (int *)CALLOC(outer_panes, sizeof(int));
+	      inner_sizes = (int **)CALLOC(outer_panes, sizeof(int *));
+	      outer_ctr = 0;
+	      for (i = 0; i < ss->max_sounds; i++)
 		{
-		  inner_panes = (int *)CALLOC(outer_panes, sizeof(int));
-		  outer_sizes = (int *)CALLOC(outer_panes, sizeof(int));
-		  inner_sizes = (int **)CALLOC(outer_panes, sizeof(int *));
-		  outer_ctr = 0;
-		  for (i = 0; i < ss->max_sounds; i++)
+		  sp = ss->sounds[i];
+		  if ((sp) &&
+		      (sp->inuse == SOUND_NORMAL) &&
+		      (sp->nchans > 1) &&
+		      (sp->channel_style == CHANNELS_SEPARATE))
 		    {
-		      sp = ss->sounds[i];
-		      if ((sp) &&
-			  (sp->inuse == SOUND_NORMAL) &&
-			  (sp->nchans > 1) &&
-			  (sp->channel_style == CHANNELS_SEPARATE))
-			{
-			  child = w_snd_pane(sp);
-			  inner_panes[outer_ctr] = sp->nchans;
-			  inner_sizes[outer_ctr] = (int *)CALLOC(sp->nchans, sizeof(int));
-			  XtVaGetValues(child, XmNheight, &(outer_sizes[outer_ctr]), NULL);
-			  for (k = 0; k < sp->nchans; k++)
-			    XtVaGetValues(channel_main_pane(sp->chans[k]), XmNheight, &(inner_sizes[outer_ctr][k]), NULL);
-			  outer_ctr++;
-			}
+		      child = w_snd_pane(sp);
+		      inner_panes[outer_ctr] = sp->nchans;
+		      inner_sizes[outer_ctr] = (int *)CALLOC(sp->nchans, sizeof(int));
+		      XtVaGetValues(child, XmNheight, &(outer_sizes[outer_ctr]), NULL);
+		      for (k = 0; k < sp->nchans; k++)
+			XtVaGetValues(channel_main_pane(sp->chans[k]), XmNheight, &(inner_sizes[outer_ctr][k]), NULL);
+		      outer_ctr++;
+		      if (outer_ctr >= outer_panes) break;
 		    }
 		}
 	    }

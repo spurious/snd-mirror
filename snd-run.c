@@ -96,12 +96,6 @@ static int run_safety = RUN_UNSAFE;
 
 #if HAVE_GUILE && WITH_RUN && HAVE_STRINGIZE
 
-/* TODO:  [*clm-safety*] -- needs implementation/test
- *         any (non-vct) array ref: check arr ok and index against bounds (vct latter too)
- *         any possibly complex result? -- sqrt of neg, acos > 1 etc -- are these worth tracking down? -- these are arg checks HAVE_DECL_ISNAN
- *         any NaNs? -- these do happen -- isnan in each arith op or perhaps just gen inputs?
- */
-
 #define Int off_t
 #define INT_PT  "i%d(%lld)"
 #define INT_STR "%lld"
@@ -3808,6 +3802,66 @@ static xen_value *package(ptree *prog,
   args[0] = add_empty_var_to_ptree(prog, type);
   add_triple_to_ptree(prog, make_triple(function, descr, args, num_args + 1));
   return(args[0]);
+}
+
+static void dbl_check_1(int *args, ptree *pt)
+{
+#if HAVE_DECL_ISNAN
+  if (isnan(FLOAT_ARG_1)) mus_error(MUS_ARG_OUT_OF_RANGE, "float arg 1 is NaN");
+#endif
+}
+static char *descr_dbl_check_1(int *args, ptree *pt)
+{
+  return(mus_format("if (isnan(" FLT_PT ") mus-error", args[1], FLOAT_ARG_1));
+}
+
+static void dbl_check_2(int *args, ptree *pt)
+{
+#if HAVE_DECL_ISNAN
+  if (isnan(FLOAT_ARG_2)) mus_error(MUS_ARG_OUT_OF_RANGE, "float arg 2 is NaN");
+#endif
+}
+static char *descr_dbl_check_2(int *args, ptree *pt)
+{
+  return(mus_format("if (isnan(" FLT_PT ") mus-error", args[2], FLOAT_ARG_2));
+}
+
+static void dbl_check_3(int *args, ptree *pt)
+{
+#if HAVE_DECL_ISNAN
+  if (isnan(FLOAT_ARG_3)) mus_error(MUS_ARG_OUT_OF_RANGE, "float arg 3 is NaN");
+#endif
+}
+static char *descr_dbl_check_3(int *args, ptree *pt)
+{
+  return(mus_format("if (isnan(" FLT_PT ") mus-error", args[3], FLOAT_ARG_3));
+}
+
+static xen_value *safe_package(ptree *prog,
+			       int type, 
+			       void (*function)(int *arg_addrs, ptree *pt),
+			       char *(*descr)(int *arg_addrs, ptree *pt),
+			       xen_value **args,
+			       int num_args)
+{
+  /* package with added float arg checks for NaN; run_safety already checked */
+  xen_value *result;
+  result = package(prog, type, function, descr, args, num_args);
+#if HAVE_DECL_ISNAN
+  if (num_args >= 1)
+    {
+      if (args[1]->type == R_FLOAT) package(prog, R_BOOL, dbl_check_1, descr_dbl_check_1, args, num_args);
+      if (num_args >= 2)
+	{
+	  if (args[2]->type == R_FLOAT) package(prog, R_BOOL, dbl_check_2, descr_dbl_check_2, args, num_args);
+	  if (num_args >= 3)
+	    {
+	      if (args[3]->type == R_FLOAT) package(prog, R_BOOL, dbl_check_3, descr_dbl_check_3, args, num_args);
+	    }
+	}
+    }
+#endif
+  return(result);
 }
 
 static xen_value *package_n(ptree *prog,
@@ -7566,7 +7620,7 @@ static char *descr_gen(int *args, ptree *pt, const char *which, int num_args)
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if (run_safety == RUN_SAFE) package(prog, R_BOOL, Name ## _check, descr_ ## Name ## _check, args, 1); \
+    if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, descr_ ## Name ## _check, args, num_args); \
     if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2); \
     if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3); \
     if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, descr_ ## Name ## _0f, args, 1)); \
@@ -7582,17 +7636,9 @@ static char *descr_oscil_2f(int *args, ptree *pt) {return(descr_gen(args, pt, "o
 static void oscil_2f(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
 GEN_P(oscil)
 
-/* TODO: run-safety in snd-test with actual error + with-sound redirect -- also stack trace somehow
- * (run-eval '(lambda () (let ((os (make-oscil))) (oscil #f))))
- * (run-eval '(lambda () (let ((os (make-oscil)) (ts (make-table-lookup))) (oscil ts))))
- * (define (os bad) (run (lambda () (do ((i 0 (1+ i))) ((= i 3)) (out-any i (oscil bad) 0 *output*)))))
- *    (with-sound () (os (make-oscil))) -> no error
- *    (with-sound () (os (make-table-lookup))) -> with-sound mus-error: oscil arg not an oscil: table-lookup
- */
-
 static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, oscil_check, descr_oscil_check, args, 1);
+  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, oscil_check, descr_oscil_check, args, num_args);
   if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2);
   if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3);
   if ((num_args == 1) || ((num_args == 2) && (args[2]->constant == R_CONSTANT) && (prog->dbls[args[2]->addr] == 0.0)))
@@ -7608,7 +7654,7 @@ static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if (run_safety == RUN_SAFE) package(prog, R_BOOL, Name ## _check, descr_ ## Name ## _check, args, 1); \
+    if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, descr_ ## Name ## _check, args, 1); \
     if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2); \
     if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, descr_ ## Name ## _0f, args, 1)); \
     return(package(prog, R_FLOAT, Name ## _1f, descr_ ## Name ## _1f, args, 2)); \
@@ -7619,7 +7665,7 @@ static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if (run_safety == RUN_SAFE) package(prog, R_BOOL, Name ## _check, descr_ ## Name ## _check, args, 1); \
+    if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, descr_ ## Name ## _check, args, 1); \
     if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2); \
     if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, descr_ ## Name ## _0f, args, 1)); \
     return(package(prog, R_FLOAT, Name ## _1f, descr_ ## Name ## _1f, args, 2)); \
@@ -7630,7 +7676,7 @@ static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if (run_safety == RUN_SAFE) package(prog, R_BOOL, Name ## _check, descr_ ## Name ## _check, args, 1); \
+    if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, descr_ ## Name ## _check, args, 1); \
     return(package(prog, R_FLOAT, Name ## _0f, descr_ ## Name ## _0f, args, 1)); \
   }
 
@@ -7691,7 +7737,7 @@ static void tap_1f(int *args, ptree *pt) {FLOAT_RESULT = mus_tap(CLM_ARG_1, FLOA
 
 static xen_value *tap_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, delay_check, descr_delay_check, args, 1);
+  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, delay_check, descr_delay_check, args, 1);
   if (num_args == 1)
     return(package(prog, R_FLOAT, tap_0f, descr_tap_0f, args, 1));
   if (args[2]->type == R_INT) single_to_float(prog, args, 2);
@@ -7734,7 +7780,7 @@ GEN_P_1(output)
 GEN2_1(sample_to_buffer)
 static xen_value *sample_to_buffer_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, buffer_check, descr_buffer_check, args, 1);
+  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, buffer_check, descr_buffer_check, args, 1);
   if (args[2]->type == R_INT) single_to_float(prog, args, 2);
   return(package(prog, R_FLOAT, sample_to_buffer_1f, descr_sample_to_buffer_1f, args, 2));
 }
@@ -7760,7 +7806,7 @@ static void set_formant_radius_and_frequency_2f(int *args, ptree *pt)
 }  
 static xen_value *set_formant_radius_and_frequency_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, formant_check, descr_formant_check, args, 1);
+  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, formant_check, descr_formant_check, args, 1);
   if (args[2]->type == R_INT) single_to_float(prog, args, 2);
   if (args[3]->type == R_INT) single_to_float(prog, args, 3);
   return(package(prog, R_BOOL, set_formant_radius_and_frequency_2f, descr_set_formant_radius_and_frequency_2f, args, 3));
@@ -7771,7 +7817,7 @@ static char *descr_move_locsig_2f(int *args, ptree *pt) {return(descr_gen(args, 
 static void move_locsig_2f(int *args, ptree *pt) {mus_move_locsig(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}  
 static xen_value *move_locsig_1(ptree *prog, xen_value **args, int num_args)
 { 
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, locsig_check, descr_locsig_check, args, 1);
+  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, locsig_check, descr_locsig_check, args, 1);
   return(package(prog, R_BOOL, move_locsig_2f, descr_move_locsig_2f, args, 3));
 }
 
@@ -7831,7 +7877,7 @@ static char *descr_set_gen0_i(int *args, ptree *pt, const char *which)
   static void Name ## _ir(int *args, ptree *pt) {mus_ ## Name (CLM_ARG_1, INT_ARG_2, (Float)(INT_ARG_3));} \
   static xen_value * Name ## _2(ptree *prog, xen_value **args, int num_args) \
   { \
-    if (run_safety == RUN_SAFE) package(prog, R_BOOL, SName ## _check, descr_ ## SName ## _check, args, 1); \
+    if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, SName ## _check, descr_ ## SName ## _check, args, 1); \
     if (args[3]->type == R_FLOAT) \
       return(package(prog, R_FLOAT, Name ## _0r, descr_ ## Name ## _0r, args, 3)); \
     return(package(prog, R_FLOAT, Name ## _ir, descr_ ## Name ## _ir, args, 3)); \
@@ -7878,7 +7924,7 @@ static void mixer_set_i(int *args, ptree *pt)
 static xen_value *mixer_set_2(ptree *prog, xen_value **args, int num_args)
 {
   /* mixer-set! */
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, mixer_check, descr_mixer_check, args, 1);
+  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, mixer_check, descr_mixer_check, args, 1);
   if (args[4]->type == R_FLOAT)
     return(package(prog, R_FLOAT, mixer_set_0, descr_mixer_set_0, args, 4));
   return(package(prog, R_FLOAT, mixer_set_i, descr_mixer_set_i, args, 4));
@@ -8145,7 +8191,7 @@ static char *descr_sample_to_file_4(int *args, ptree *pt)
 static void sample_to_file_4(int *args, ptree *pt) {FLOAT_RESULT = mus_sample_to_file(CLM_ARG_1, INT_ARG_2, INT_ARG_3, FLOAT_ARG_4);}
 static xen_value *sample_to_file_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, sample_to_file_check, descr_sample_to_file_check, args, 1);
+  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, sample_to_file_check, descr_sample_to_file_check, args, 1);
   return(package(prog, R_FLOAT, sample_to_file_4, descr_sample_to_file_4, args, 4));
 }
 
@@ -8163,7 +8209,7 @@ static void locsig_3(int *args, ptree *pt)
 }
 static xen_value *locsig_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, locsig_check, descr_locsig_check, args, 1);
+  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, locsig_check, descr_locsig_check, args, 1);
   return(package(prog, R_CLM, locsig_3, descr_locsig_3, args, 3));
 }
 
@@ -8229,7 +8275,7 @@ static char *descr_mixer_scale_3(int *args, ptree *pt)
 static void mixer_scale_3(int *args, ptree *pt) {CLM_RESULT = mus_mixer_scale(CLM_ARG_1, FLOAT_ARG_2, CLM_ARG_3);}
 static xen_value *mixer_scale_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) package(prog, R_BOOL, mixer_check, descr_mixer_check, args, 1);
+  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, mixer_check, descr_mixer_check, args, 1);
   if (num_args == 2)
     return(package(prog, R_CLM, mixer_scale_2, descr_mixer_scale_2, args, 2));
   return(package(prog, R_CLM, mixer_scale_3, descr_mixer_scale_3, args, 3));

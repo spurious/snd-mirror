@@ -260,6 +260,8 @@ AC_CHECK_SIZEOF(float)
 AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(off_t)
 
+AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+
 SAVELIBS=$LIBS
 FFTW_LIBS=""
 if test "$with_fftw" != no; then
@@ -733,9 +735,10 @@ else
       	AC_DEFINE(USE_GTK)
 
 	GTK_LD_LIBS="$GTK_LIBS"
-	AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 	if test x$PKG_CONFIG != xno ; then
           GTK_LD_LIBS="`$PKG_CONFIG gtk+-2.0 --libs-only-L` `$PKG_CONFIG gtk+-2.0 --libs-only-l`"
+          pango_version="`$PKG_CONFIG pango --modversion`"
+          AC_DEFINE_UNQUOTED(PANGO_VERSION,"${pango_version}")
         fi
       	AC_SUBST(GTK_LD_LIBS)
 
@@ -853,7 +856,6 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
 	  ;;
       esac
       if test "$with_gtk" = yes ; then
-	AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 	if test x$PKG_CONFIG != xno && $PKG_CONFIG gtkglext-1.0 --exists ; then
           GL_LIBS="$GL_LIBS `$PKG_CONFIG gtkglext-1.0 --libs`"
           GL_FLAGS="$GL_FLAGS `$PKG_CONFIG gtkglext-1.0 --cflags`"
@@ -1118,7 +1120,6 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
               [with_jack=no
 	       AC_MSG_WARN(can't find the samplerate library. JACK will not be used.)])
             if test $with_jack = yes ; then
-	       AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 	       if test x$PKG_CONFIG != xno ; then
                  jack_version="`$PKG_CONFIG jack --modversion`"
                  AC_DEFINE_UNQUOTED(JACK_VERSION,"${jack_version}")

@@ -286,7 +286,7 @@
   #if HAVE_SCM_C_MAKE_RECTANGULAR
     #if defined(__GNUC__) && (!(defined(__cplusplus)))
       #define XEN_TO_C_COMPLEX(a)       ({ XEN _xen_h_23_ = a; (scm_c_real_part(_xen_h_23_) + scm_c_imag_part(_xen_h_23_) * 1.0fi); })    
-      #define C_TO_XEN_COMPLEX(a)       ({ XEN _xen_h_24_ = a; scm_c_make_rectangular(__real__ _xen_h_24_, __imag__ _xen_h_24_); })
+      #define C_TO_XEN_COMPLEX(a)       ({ complex _xen_h_24_ = a; scm_c_make_rectangular(__real__ _xen_h_24_, __imag__ _xen_h_24_); })
       #define XEN_COMPLEX_P(Arg)        scm_is_complex(Arg)
     #else
       #define XEN_TO_C_COMPLEX(a)       (scm_c_real_part(a) + scm_c_imag_part(a) * 1.0fi)

@@ -36,6 +36,35 @@
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
+(define tests 1)
+(define keep-going #f)
+(define all-args #f) ; huge arg testing
+(define with-big-file #t)
+
+(define (snd-display . args)
+  (let ((str (if (null? (cdr args))
+		 (car args)
+		 (apply format #f args))))
+    (newline) 
+    (display str)
+    (if (not (provided? 'snd-nogui))
+	(begin
+	  (snd-print #\newline)
+	  (snd-print str)))))
+
+(if (not (defined? 'snd-test)) (define snd-test -1))
+(define full-test (< snd-test 0))
+(define total-tests 28)
+(if (not (defined? 'with-exit)) (define with-exit (< snd-test 0)))
+
+(set! (with-background-processes) #f)
+(set! (show-backtrace) #t)
+
+(define debugging-device-channels 2)
+
+(define pi 3.141592653589793)
+(define max-optimization 6)
+
 ;; start-playing-hook is only called when an indexed sound is played, not if play-mix etc -- need a way to hit all possible playback
 (define mus-audio-playback-amp
   (make-procedure-with-setter
@@ -56,34 +85,6 @@
 (define playback-amp 0.0)
 (define old-playback-amp (mus-audio-playback-amp))
 (set! (mus-audio-playback-amp) playback-amp)
-
-(define (snd-display . args)
-  (let ((str (if (null? (cdr args))
-		 (car args)
-		 (apply format #f args))))
-    (newline) 
-    (display str)
-    (if (not (provided? 'snd-nogui))
-	(begin
-	  (snd-print #\newline)
-	  (snd-print str)))))
-
-(define tests 1)
-(if (not (defined? 'snd-test)) (define snd-test -1))
-(define keep-going #f)
-(define full-test (< snd-test 0))
-(define total-tests 28)
-(if (not (defined? 'with-exit)) (define with-exit (< snd-test 0)))
-
-(set! (with-background-processes) #f)
-(define all-args #f) ; huge arg testing
-(define with-big-file #t)
-(set! (show-backtrace) #t)
-
-(define debugging-device-channels 2)
-
-(define pi 3.141592653589793)
-(define max-optimization 6)
 
 (define home-dir "/home/bil")
 (if (file-exists? "/export/home/bil/cl/oboe.snd")
@@ -243,6 +244,8 @@
 
 ;(define rs (lambda (n) (< (my-random 1.0) n)))
 (define rs (lambda (n) #t))
+
+(if (not (defined? 'nan)) (define (nan) 0.0))
 
 (define timings (make-vector (+ total-tests 1) 0))
 
@@ -11591,8 +11594,8 @@ EDITS: 5
 		     (reverb-amount 0.01)
 		     (degree #f) (distance 1.0) (degrees #f)
 		     #:allow-other-keys)
-	   (let* ((beg (inexact->exact (floor (* startime (srate)))))
-		  (len (inexact->exact (floor (* dur (srate)))))
+	   (let* ((beg (inexact->exact (floor (* startime (mus-srate)))))
+		  (len (inexact->exact (floor (* dur (mus-srate)))))
 		  (end (+ beg len))
 		  (frq-scl (hz->radians frequency))
 		  (modulate (not (zero? fm-index)))
@@ -11788,6 +11791,7 @@ EDITS: 5
     (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests))
       (if (= clmtest 0) (run-hook before-test-hook 8))
       (log-mem clmtest)
+      (if (odd? clmtest) (set! (run-safety) 1) (set! (run-safety) 0))
       (set! (mus-srate) 22050)
       (let ((samps (seconds->samples 1.0))
 	    (secs (samples->seconds 22050)))
@@ -17328,7 +17332,27 @@ EDITS: 5
 				 (not (eq? tag1 'mus-error)))
 			    (snd-display ";~A set ~A ~A ~A -> ~A" name genname gen tag tag1))))))
 	      generic-procs generic-names)))
-	 make-procs run-procs ques-procs gen-args func-names))
+	 make-procs run-procs ques-procs gen-args func-names)
+
+	(if all-args
+	    (for-each
+	     (lambda (make runp)
+	       (let ((gen (make)))
+		 (for-each 
+		  (lambda (arg1)
+		    (catch #t (lambda () (runp gen arg1)) (lambda args (car args)))
+		    (for-each
+		     (lambda (arg2)
+		       (catch #t (lambda () (runp gen arg1 arg2)) (lambda args (car args))))
+		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
+			   (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
+			   '() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) (car (main-widgets)) (cadr (main-widgets)) 
+			   12345678901234567890 (nan))))
+		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
+			(lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
+			'() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) (car (main-widgets)) (cadr (main-widgets)) 
+			12345678901234567890 (nan)))))
+	     make-procs run-procs)))
       
       (run-hook after-test-hook 8)
       ))
@@ -37309,10 +37333,16 @@ EDITS: 2
 			      (let ((b (mus-data sr))) 
 				(vct-ref b 2))))))
 	(if (fneq val 1.0) (snd-display ";mus-data -> vct opt: ~A" val)))
+      
+      (if (> (run-safety) 0)
+	  (begin
+	    (let ((val (catch #t (lambda () (run-eval '(lambda () (let ((os (make-oscil))) (oscil #f))))) (lambda args (car args)))))
+	      (if (not (equal? val 'mus-error)) (snd-display ";run-safety #f osc: ~A" val)))
+	    (let ((val (catch #t (lambda () (run-eval '(lambda () (let ((os (make-oscil)) (ts (make-table-lookup))) (oscil ts))))) (lambda args (car args)))))
+	      (if (not (equal? val 'mus-error)) (snd-display ";run-safety tbl osc: ~A" val)))))
 
       (run-hook after-test-hook 22)
       ))
-
 
 
 ;;; ---------------- test 23: with-sound ----------------
@@ -49202,7 +49232,8 @@ EDITS: 2
 		     sound-loop-info sound-widgets soundfont-info sound? sounds spectro-cutoff spectro-hop spectro-start
 		     spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
 		     speed-control speed-control-style speed-control-tones squelch-update srate src-sound src-selection
-		     start-playing start-progress-report stop-player stop-playing swap-channels syncd-marks sync sound-properties temp-dir
+		     ;start-playing 
+		     start-progress-report stop-player stop-playing swap-channels syncd-marks sync sound-properties temp-dir
 		     text-focus-color tiny-font track-sample-reader?  region-sample-reader? transform-dialog transform-sample
 		     transform-samples->vct transform-samples-size transform-type trap-segfault optimization unbind-key undo
 		     update-transform-graph update-time-graph update-lisp-graph update-sound run-safety clm-table-size
@@ -50445,7 +50476,7 @@ EDITS: 2
 			    (lambda () (n arg1 arg2))
 			    (lambda args (car args))))
 		   make-procs))
-		(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) :wave -1 0 1 #f #t '() (make-vector 0) 12345678901234567890)))
+		(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) :wave -1 0 1 #f #t '() (make-vector 0) 12345678901234567890 (nan))))
 	     keyargs)
 
 	    (if all-args
@@ -50462,9 +50493,9 @@ EDITS: 2
 				     (lambda () (n arg1 arg2 arg3))
 				     (lambda args (car args))))
 			    make-procs))
-			 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) :wave -1 0 1 #f #t '() (make-vector 0) 12345678901234567890)))
+			 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) :wave -1 0 1 #f #t '() (make-vector 0) 12345678901234567890 (nan))))
 		      keyargs))
-		   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) :wave -1 0 1 #f #t '() (make-vector 0) 12345678901234567890))
+		   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) :wave -1 0 1 #f #t '() (make-vector 0) 12345678901234567890 (nan)))
 		  
 		  (for-each
 		   (lambda (arg1)
@@ -50481,9 +50512,9 @@ EDITS: 2
 					(lambda args (car args))))
 			       make-procs))
 			    keyargs))
-			 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) :wave -1 0 1 #f #t '() (make-vector 0) 12345678901234567890)))
+			 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) :wave -1 0 1 #f #t '() (make-vector 0) 12345678901234567890 (nan))))
 		      keyargs))
-		   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) :wave -1 0 1 #f #t '() (make-vector 0) 12345678901234567890))))
+		   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) :wave -1 0 1 #f #t '() (make-vector 0) 12345678901234567890 (nan)))))
 
 	    (gc)
 	    
@@ -50514,7 +50545,7 @@ EDITS: 2
 	     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 		   (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
 		   '() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) (car (main-widgets)) (cadr (main-widgets)) 
-		   12345678901234567890))
+		   12345678901234567890 (nan)))
 	    (gc)
 	    
 	    ;; ---------------- 2 Args
@@ -50534,16 +50565,16 @@ EDITS: 2
 		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 			  (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
 			  '() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) (car (main-widgets)) (cadr (main-widgets)) 
-			  12345678901234567890)
+			  12345678901234567890 (nan))
 		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) '#(0 1) 3/4 
-			  (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() (make-vector 0) 12345678901234567890))))
+			  (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() (make-vector 0) 12345678901234567890 (nan)))))
 	     (if all-args
 		 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 		       (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
 		       '() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) (car (main-widgets)) (cadr (main-widgets)) 
-		       12345678901234567890)
+		       12345678901234567890 (nan))
 		 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) '#(0 1) 3/4 
-		       (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
+		       (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() (make-vector 0) 12345678901234567890 (nan))))
 	    (gc)
 	    
 	    ;; ---------------- set! no Args
@@ -50561,9 +50592,9 @@ EDITS: 2
 		 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 		       (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
 		       '() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) (car (main-widgets)) (cadr (main-widgets)) 
-		       12345678901234567890)
+		       12345678901234567890 (nan))
 		 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
-		       (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() (make-vector 0) 12345678901234567890)))
+		       (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() (make-vector 0) 12345678901234567890 (nan))))
 	    (gc)
 	    
 	    ;; ---------------- set! 1 Arg
@@ -50583,16 +50614,16 @@ EDITS: 2
 		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 			  (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
 			  '() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) (car (main-widgets)) (cadr (main-widgets)) 
-			  12345678901234567890)
+			  12345678901234567890 (nan))
 		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) '#(0 1) 3/4 
-			  (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() (make-vector 0) 12345678901234567890))))
+			  (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() (make-vector 0) 12345678901234567890 (nan)))))
 	     (if all-args
 		 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 		       (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
 		       '() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) (car (main-widgets)) (cadr (main-widgets)) 
-		       12345678901234567890)
+		       12345678901234567890 (nan))
 		 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) '#(0 1) 3/4 
-		       (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
+		       (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() (make-vector 0) 12345678901234567890 (nan))))
 	    (gc)
 	    
 	    ;; ---------------- set! 2 Args
@@ -50614,23 +50645,23 @@ EDITS: 2
 		       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 			     (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
 			     '() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) (car (main-widgets)) (cadr (main-widgets)) 
-			     12345678901234567890)
+			     12345678901234567890 (nan))
 		       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) '#(0 1) 3/4 
-			     (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() (make-vector 0) 12345678901234567890))))
+			     (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() (make-vector 0) 12345678901234567890 (nan)))))
 		(if all-args
 		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 			  (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
 			  '() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) (car (main-widgets)) (cadr (main-widgets)) 
-			  12345678901234567890)
+			  12345678901234567890 (nan))
 		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) '#(0 1) 3/4 
-			  (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() (make-vector 0) 12345678901234567890))))
+			  (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() (make-vector 0) 12345678901234567890 (nan)))))
 	     (if all-args
 		 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 		       (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
 		       '() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) (car (main-widgets)) (cadr (main-widgets)) 
-		       12345678901234567890)
+		       12345678901234567890 (nan))
 		 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) '#(0 1) 3/4 
-		       (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
+		       (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() (make-vector 0) 12345678901234567890 (nan))))
 	    (gc)
 	    
 	    (if all-args
@@ -50653,11 +50684,11 @@ EDITS: 2
 				      (snd-display ";procs3: ~A ~A" err (procedure-property n 'documentation)))))
 			      procs3))
 			   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
-				 :start -1 0 3 #f #t '() (make-vector 0) 12345678901234567890)))
+				 :start -1 0 3 #f #t '() (make-vector 0) 12345678901234567890 (nan))))
 			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
-			      :phase -1 0 3 #f #t '() (make-vector 0) 12345678901234567890))))
+			      :phase -1 0 3 #f #t '() (make-vector 0) 12345678901234567890 (nan)))))
 		   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
-			 :channels -1 0 3 #f #t '() (make-vector 0) 12345678901234567890))
+			 :channels -1 0 3 #f #t '() (make-vector 0) 12345678901234567890 (nan)))
 		  (gc)
 		  
 		  ;; ---------------- set! 3 Args
@@ -50678,13 +50709,13 @@ EDITS: 2
 				       (snd-display ";set-procs3: ~A ~A" err (procedure-property n 'documentation)))))
 			       set-procs3))
 			    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
-				  :wave -1 0 3 16 #f #t '() (make-vector 0) 12345678901234567890)))
+				  :wave -1 0 3 16 #f #t '() (make-vector 0) 12345678901234567890 (nan))))
 			 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
-			       :initial-contents -1 0 3 16 #f #t '() (make-vector 0) 12345678901234567890)))
+			       :initial-contents -1 0 3 16 #f #t '() (make-vector 0) 12345678901234567890 (nan))))
 		      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
-			    :srate -1 0 3 16 #f #t '() (make-vector 0) 12345678901234567890)))
+			    :srate -1 0 3 16 #f #t '() (make-vector 0) 12345678901234567890 (nan))))
 		   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
-			 :input -1 0 3 16 #f #t '() (make-vector 0) 12345678901234567890))
+			 :input -1 0 3 16 #f #t '() (make-vector 0) 12345678901234567890 (nan)))
 		  
 		  
 		  ;; ---------------- 4 Args
@@ -50706,13 +50737,13 @@ EDITS: 2
 					 (snd-display ";procs4: ~A ~A" err (procedure-property n 'documentation)))))
 				 procs4))
 			      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
-				    :wave -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
+				    :wave -1 0 #f #t '() (make-vector 0) 12345678901234567890 (nan))))
 			   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
-				 :initial-contents -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
+				 :initial-contents -1 0 #f #t '() (make-vector 0) 12345678901234567890 (nan))))
 			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32)
-			      :srate -1 0 #f #t '() (make-vector 0) 12345678901234567890))))
+			      :srate -1 0 #f #t '() (make-vector 0) 12345678901234567890 (nan)))))
 		   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
-			 :input -1 0 #f #t '() (make-vector 0) 12345678901234567890))
+			 :input -1 0 #f #t '() (make-vector 0) 12345678901234567890 (nan)))
 		  
 		  ;; ---------------- set! 4 Args
 		  (for-each 
@@ -50734,15 +50765,15 @@ EDITS: 2
 					  (snd-display ";set-procs4: ~A ~A" err (procedure-property n 'documentation)))))
 				  set-procs4))
 			       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
-				     :wave -1 0 3 16 #f #t '() (make-vector 0) 12345678901234567890)))
+				     :wave -1 0 3 16 #f #t '() (make-vector 0) 12345678901234567890 (nan))))
 			    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
-				  :initial-contents -1 0 3 16 #f #t '() (make-vector 0) 12345678901234567890)))
+				  :initial-contents -1 0 3 16 #f #t '() (make-vector 0) 12345678901234567890 (nan))))
 			 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
-			       :srate -1 0 3 16 #f #t '() (make-vector 0) 12345678901234567890)))
+			       :srate -1 0 3 16 #f #t '() (make-vector 0) 12345678901234567890 (nan))))
 		      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
-			    :input -1 0 3 16 #f #t '() (make-vector 0) 12345678901234567890)))
+			    :input -1 0 3 16 #f #t '() (make-vector 0) 12345678901234567890 (nan))))
 		   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) 
-			 :input -1 0 3 16 #f #t '() (make-vector 0) 12345678901234567890))
+			 :input -1 0 3 16 #f #t '() (make-vector 0) 12345678901234567890 (nan)))
 		  
 		  ;; ---------------- 5 Args
 		  (for-each 
@@ -50763,11 +50794,11 @@ EDITS: 2
 				      (if (eq? err 'wrong-number-of-args)
 					  (snd-display ";procs5: ~A ~A" err (procedure-property n 'documentation)))))
 				  procs5))
-			       (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f 12345678901234567890)))
-			    (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f 12345678901234567890)))
-			 (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f 12345678901234567890)))
-		      (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f 12345678901234567890)))
-		   (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f 12345678901234567890))
+			       (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f 12345678901234567890 (nan))))
+			    (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f 12345678901234567890 (nan))))
+			 (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f 12345678901234567890 (nan))))
+		      (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f 12345678901234567890 (nan))))
+		   (list 1.5 "/hiho" 1234 (make-vct 3) (sqrt -1.0) -1 0 #f 12345678901234567890 (nan)))
 		  
 		  ;; ---------------- 6 Args
 		  (for-each 

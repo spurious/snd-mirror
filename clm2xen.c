@@ -2583,6 +2583,7 @@ static XEN g_frame_p(XEN obj)
 static XEN g_wrap_frame(mus_any *val, bool dealloc)
 {
   mus_xen *gn;
+  if (!val) return(XEN_FALSE);
   gn = (mus_xen *)mus_wrapper(val);
   if (gn)
     {
@@ -2683,9 +2684,14 @@ static XEN g_set_mixer_ref(XEN uf1, XEN in, XEN out, XEN val)
 static XEN g_wrap_mixer(mus_any *val, bool dealloc)
 {
   mus_xen *gn;
+  if (!val) return(XEN_FALSE);
   gn = (mus_xen *)mus_wrapper(val);
-  gn->dont_free_gen = dealloc;
-  return(mus_xen_to_object(gn));
+  if (gn)
+    {
+      gn->dont_free_gen = dealloc;
+      return(mus_xen_to_object(gn));
+    }
+  return(XEN_FALSE);
 }
 
 static XEN g_mixer_multiply(XEN uf1, XEN uf2, XEN ures) /* optional res */
