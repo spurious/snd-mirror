@@ -3399,6 +3399,30 @@
       (delete-file "test.aif")
       (mus-sound-forget "test.aif")
       
+      (with-output-to-file "test.aif"
+	(lambda ()
+	  (display "FORM")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\040) ; len
+	  (display "AIFC")
+	  (display "SSND")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\014) ; SSND chunk size
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; SSND data loc
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; block size?
+	  (write-char #\000) (write-char #\101) (write-char #\000) (write-char #\100) ; two samples
+	  ))
+      (let ((tag (catch #t
+			(lambda ()
+			  (open-sound "test.aif"))
+			(lambda args (car args)))))
+	(if (not (eq? tag 'mus-error))
+	    (begin
+	      (snd-display ";open-sound aifc no comm chunk ~A?" tag)
+	      (if (and (number? tag)
+		       (sound? tag))
+		  (close-sound tag)))))
+      (delete-file "test.aif")
+      (mus-sound-forget "test.aif")
+
       (reset-hook! bad-header-hook)
       (reset-hook! open-raw-sound-hook)
       (if (not (null? (sounds))) (map close-sound (sounds)))
@@ -43256,7 +43280,7 @@ EDITS: 2
 	    (check-error-tag 'bad-arity (lambda () (bind-key (char->integer #\p) 0 (lambda (a b) (play-often (max 1 a))))))
 	    (check-error-tag 'bad-type (lambda () (mus-mix "oboe.snd" "pistol.snd" 0 12 0 (make-mixer 1 1.0) (make-vector 0))))
 	    (check-error-tag 'bad-header (lambda () (mus-mix "test.snd" (string-append sf-dir "bad_chans.aifc"))))
-	    (check-error-tag 'bad-header (lambda () (mus-mix "test.snd" (string-append sf-dir "bad_length.aifc"))))
+	    (check-error-tag 'mus-error (lambda () (mus-mix "test.snd" (string-append sf-dir "bad_length.aifc"))))
 	    (check-error-tag 'bad-header (lambda () (mus-mix (string-append sf-dir "bad_chans.aifc") "oboe.snd")))
 	    (check-error-tag 'no-such-sound (lambda () (set! (sound-loop-info 123) '(0 0 1 1))))
 	    (check-error-tag 'mus-error (lambda () (new-sound "fmv.snd" mus-nist mus-bfloat 22050 2 "this is a comment")))

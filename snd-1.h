@@ -492,7 +492,7 @@ snd_data *free_snd_data(snd_data *sf);
 snd_data *make_snd_data_buffer(mus_sample_t *data, int len, int ctr);
 snd_data *make_snd_data_buffer_for_simple_channel(int len);
 int open_temp_file(const char *ofile, int chans, file_info *hdr);
-int close_temp_file(int ofd, file_info *hdr, off_t bytes, snd_info *sp);
+int close_temp_file(const char *filename, int ofd, int type, off_t bytes, snd_info *sp);
 
 
 /* -------- snd-help.c -------- */

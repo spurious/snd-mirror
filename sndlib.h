@@ -1,9 +1,9 @@
 #ifndef SNDLIB_H
 #define SNDLIB_H
 
-#define SNDLIB_VERSION 18
-#define SNDLIB_REVISION 15
-#define SNDLIB_DATE "15-Mar-04"
+#define SNDLIB_VERSION 19
+#define SNDLIB_REVISION 0
+#define SNDLIB_DATE "29-Mar-04"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -589,10 +589,8 @@ int mus_header_original_format(void);
 off_t mus_samples_to_bytes(int format, off_t size);
 off_t mus_bytes_to_samples(int format, off_t size);
 int mus_header_write_next_header(int chan, int srate, int chans, int loc, int siz, int format, const char *comment, int len);
-int mus_header_read_with_fd(int chan);
 int mus_header_read(const char *name);
 int mus_header_write(const char *name, int type, int srate, int chans, off_t loc, off_t size_in_samples, int format, const char *comment, int len);
-int mus_header_update_with_fd(int chan, int type, off_t siz);
 off_t mus_header_aux_comment_start(int n);
 off_t mus_header_aux_comment_end(int n);
 int mus_header_initialize(void);
@@ -610,13 +608,13 @@ bool mus_header_no_header(const char *name);
 char *mus_header_riff_aux_comment(const char *name, off_t *starts, off_t *ends);
 char *mus_header_aiff_aux_comment(const char *name, off_t *starts, off_t *ends);
 
-int mus_header_change_chans(const char *filename, int new_chans);
-int mus_header_change_srate(const char *filename, int new_srate);
+int mus_header_change_chans(const char *filename, int type, int new_chans);
+int mus_header_change_srate(const char *filename, int type, int new_srate);
 int mus_header_change_type(const char *filename, int new_type, int new_format);
-int mus_header_change_format(const char *filename, int new_format);
-int mus_header_change_location(const char *filename, off_t new_location);
-int mus_header_change_comment(const char *filename, char *new_comment);
-int mus_header_change_samples(const char *filename, off_t new_samples);
+int mus_header_change_format(const char *filename, int type, int new_format);
+int mus_header_change_location(const char *filename, int type, off_t new_location);
+int mus_header_change_comment(const char *filename, int type, char *new_comment);
+int mus_header_change_data_size(const char *filename, int type, off_t bytes);
 
 typedef void mus_header_write_hook_t(const char *filename);
 mus_header_write_hook_t *mus_header_write_set_hook(mus_header_write_hook_t *new_hook);

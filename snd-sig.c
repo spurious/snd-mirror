@@ -620,7 +620,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
 	{
 	  cp0->edit_hook_checked = false;
 	  cp1->edit_hook_checked = false;
-	  close_temp_file(ofd0, hdr0, 0, sp0);
+	  close_temp_file(ofile0, ofd0, hdr0->type, 0, sp0);
 	  free_file_info(hdr0);
 	  free_file_info(hdr1);
 	  if (ofile0) FREE(ofile0);
@@ -659,8 +659,8 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
 	  mus_file_write(ofd0, 0, j - 1, 1, data0);
 	  mus_file_write(ofd1, 0, j - 1, 1, data1);
 	}
-      close_temp_file(ofd0, hdr0, dur * datumb, sp0);
-      close_temp_file(ofd1, hdr1, dur * datumb, sp0); /* sp0 used here in case of error report */
+      close_temp_file(ofile0, ofd0, hdr0->type, dur * datumb, sp0);
+      close_temp_file(ofile1, ofd1, hdr1->type, dur * datumb, sp0); /* sp0 used here in case of error report */
       free_file_info(hdr0);
       free_file_info(hdr1);
       file_change_samples(beg, dur, ofile0, cp0, 0, DELETE_ME, LOCK_MIXES, S_swap_channels, cp0->edit_ctr);
@@ -904,7 +904,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   if (reporting) finish_progress_report(sp, from_enved);
   sr = free_src(sr);
   if ((!(ss->stopped_explicitly)) && (j > 0)) mus_file_write(ofd, 0, j - 1, 1, data);
-  close_temp_file(ofd, hdr, k * datumb, sp);
+  close_temp_file(ofile, ofd, hdr->type, k * datumb, sp);
   hdr = free_file_info(hdr);
   if (!(ss->stopped_explicitly))
     {
@@ -1187,7 +1187,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
   if (temp_file)
     {
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
-      close_temp_file(ofd, hdr, dur * datumb, sp);
+      close_temp_file(ofile, ofd, hdr->type, dur * datumb, sp);
       hdr = free_file_info(hdr);
       file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, caller, cp->edit_ctr);
       if (ofile) 
@@ -1291,7 +1291,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
 	}
       if (reporting) finish_progress_report(sp, from_enved);
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
-      close_temp_file(ofd, hdr, dur * datumb, sp);
+      close_temp_file(ofile, ofd, hdr->type, dur * datumb, sp);
       file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
       mus_free(gen);
       FREE(data[0]);
@@ -1314,13 +1314,13 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
 	    sndrdat[k] *= (scale * fltdat[k]);         /* fltdat is already reflected around midpoint */
 	  mus_fftw(sndrdat, fsize, -1);
 	  write(ofd, sndrdat, fsize * sizeof(Float));
-	  close_temp_file(ofd, hdr, fsize * sizeof(Float), sp);
+	  close_temp_file(ofile, ofd, hdr->type, fsize * sizeof(Float), sp);
 	  file_change_samples(beg, dur + order, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
 	  FREE(sndrdat);
 	}
       else 
 	{
-	  close_temp_file(ofd, hdr, 0, sp);
+	  close_temp_file(ofile, ofd, hdr->type, 0, sp);
 	  snd_remove(ofile, REMOVE_FROM_CACHE);
 	}
     }
@@ -1466,7 +1466,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
   if (temp_file)
     {
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
-      close_temp_file(ofd, hdr, dur * datumb, sp);
+      close_temp_file(ofile, ofd, hdr->type, dur * datumb, sp);
       hdr = free_file_info(hdr);
       file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
       if (ofile) {FREE(ofile); ofile = NULL;}
@@ -1714,7 +1714,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
 	    }
 	}
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
-      close_temp_file(ofd, hdr, dur * datumb, sp);
+      close_temp_file(ofile, ofd, hdr->type, dur * datumb, sp);
       hdr = free_file_info(hdr);
       file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, caller, cp->edit_ctr);
       if (ofile) 
@@ -2055,7 +2055,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
       if (temp_file)
 	{
 	  if (j > 0) mus_file_write(ofd, 0, j - 1, si->chans, data);
-	  close_temp_file(ofd, hdr, dur * si->chans * datumb, sp);
+	  close_temp_file(ofile, ofd, hdr->type, dur * si->chans * datumb, sp);
 	  free_file_info(hdr);
 	}
       if (reporting) finish_progress_report(sp, from_enved);
@@ -2441,7 +2441,7 @@ static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edp
 	    }
 	}
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
-      close_temp_file(ofd, hdr, dur * datumb, sp);
+      close_temp_file(ofile, ofd, hdr->type, dur * datumb, sp);
       hdr = free_file_info(hdr);
       if (err != -1)
 	file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, S_map_channel, cp->edit_ctr);

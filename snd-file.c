@@ -1,5 +1,18 @@
 #include "snd.h"
 
+/* TODO: what if start with outsider's AIFC where data chunk is embedded, then user
+ *        extends data, and asks for "save" -- doesn't this clobber the trailing chunks?
+ *        what if the trailer is the COMM chunk?  Similarly for riff.
+ */
+/* TODO: the read header at sample update (sound-close) time could be avoided if the
+ *        ssnd_location (etc) were saved and passed in -- perhaps an added optimized
+ *        header change data size?  Means saving the relevant data, and exporting it
+ *        from headers.c. Can we guarantee consistency here?
+ */
+/* TODO: bad header decision starts dialog even if opened from code -- this should
+ *        throw an error!
+ */
+
 #if HAVE_DIRENT_H
   #include <dirent.h>
 #else
@@ -2225,26 +2238,26 @@ void edit_header_callback(snd_info *sp, file_data *edit_header_data)
       mus_sound_forget(sp->filename);
       /* find out which fields changed -- if possible don't touch the sound data */
       comment = read_file_data_choices(edit_header_data, &srate, &chans, &type, &format, &loc, &samples);
-      if (hdr->chans != chans)
-	mus_header_change_chans(sp->filename, chans);
-      if (hdr->srate != srate)
-	mus_header_change_srate(sp->filename, srate);
-      if (hdr->samples != samples)
-	mus_header_change_samples(sp->filename, samples);
       if (hdr->type != type)
 	mus_header_change_type(sp->filename, type, format);
       else
 	{
 	  if (hdr->format != format)
-	    mus_header_change_format(sp->filename, format);
+	    mus_header_change_format(sp->filename, type, format);
 	}
+      if (hdr->chans != chans)
+	mus_header_change_chans(sp->filename, type, chans);
+      if (hdr->srate != srate)
+	mus_header_change_srate(sp->filename, type, srate);
+      if (hdr->samples != samples)
+	mus_header_change_data_size(sp->filename, type, mus_samples_to_bytes(format, samples));
       if ((type == MUS_NEXT) &&
 	  (hdr->data_location != loc))
-	mus_header_change_location(sp->filename, loc);
+	mus_header_change_location(sp->filename, MUS_NEXT, loc);
       if (((comment) && (original_comment) && (strcmp(comment, original_comment) != 0)) ||
 	  ((comment) && (original_comment == NULL)) ||
 	  ((comment == NULL) && (original_comment)))
-	mus_header_change_comment(sp->filename, comment);
+	mus_header_change_comment(sp->filename, type, comment);
       if (comment) FREE(comment);
       if (original_comment) FREE(original_comment);
       snd_update(sp);

@@ -567,11 +567,13 @@ int open_temp_file(const char *ofile, int chans, file_info *hdr)
   return(ofd);
 }
 
-int close_temp_file(int ofd, file_info *hdr, off_t bytes, snd_info *sp)
+int close_temp_file(const char *filename, int ofd, int type, off_t bytes, snd_info *sp)
 {
   off_t kleft, kused;
-  mus_header_update_with_fd(ofd, hdr->type, bytes);
-  kleft = disk_kspace(hdr->name);
+  int err;
+  err = mus_file_close(ofd);
+  mus_header_change_data_size(filename, type, bytes);
+  kleft = disk_kspace(filename);
   if (kleft < 0)
     snd_error(_("disk full?: %s"), strerror(errno));
   else
@@ -580,6 +582,6 @@ int close_temp_file(int ofd, file_info *hdr, off_t bytes, snd_info *sp)
       if ((kused > kleft) && (sp))
 	report_in_minibuffer_and_save(sp, _("disk nearly full: used " PRId64 " Kbytes in the last operation, leaving " PRId64), kused, kleft);
     }
-  return(mus_file_close(ofd));
+  return(err);
 }
 

@@ -13,14 +13,15 @@ snd_info *snd_new_file(char *newname, int header_type, int data_format, int srat
     {
       if (mus_header_writable(header_type, data_format))
 	{
-	  err = snd_write_header(newname, header_type, srate, chans, 0, 
-				 chans /* one sample in each chan */, 
+	  err = snd_write_header(newname, header_type, srate, chans, 0, /* 0 is loc? */
+				 samples * chans, /* total samples apparently */
 				 data_format, new_comment, 
 				 snd_strlen(new_comment), NULL);
 	  if (err == -1)
 	    snd_error(_("can't write %s"),newname);
 	  else
 	    {
+	      /* send out the initial samples */
 	      chan = snd_reopen_write(newname);
 	      lseek(chan, mus_header_data_location(), SEEK_SET);
 	      size = chans * mus_samples_to_bytes(data_format, samples);
@@ -1734,8 +1735,9 @@ Cessate apply_controls(Indicium ptr)
 	case 2:
 	  finalize_apply(sp);
 	  if (apply_reporting) finish_progress_report(sp, NOT_FROM_ENVED);
-	  close_temp_file(ap->ofd,
-			  ap->hdr,
+	  close_temp_file(ap->ofile,
+			  ap->ofd,
+			  ap->hdr->type,
 			  apply_dur * (ap->hdr->chans) * mus_bytes_per_sample((ap->hdr)->format),
 			  sp);
 	  if ((sp->apply_ok) && (apply_dur > 0))
@@ -4375,7 +4377,7 @@ static XEN g_close_sound_file(XEN g_fd, XEN g_bytes)
       snd_close(fd, "sound file");
       return(snd_no_such_file_error(S_close_sound_file, g_fd));
     }
-  result = close_temp_file(fd, hdr, bytes, any_selected_sound());
+  result = close_temp_file(hdr->name, fd, hdr->type, bytes, any_selected_sound());
   unset_temp_fd(fd);
   free_file_info(hdr);
   return(C_TO_XEN_INT(result));

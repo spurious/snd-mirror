@@ -1181,7 +1181,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
       j++;
     }
   if (j > 0) mus_file_write(ofd, 0, j - 1, 1, &chandata);
-  close_temp_file(ofd, ohdr, num * mus_bytes_per_sample(ohdr->format), sp);
+  close_temp_file(ofile, ofd, ohdr->type, num * mus_bytes_per_sample(ohdr->format), sp);
   mus_file_close(ifd);
   free_snd_fd(csf);
   FREE(data[chan]);
@@ -1527,7 +1527,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
       switch (no_space)
 	{
 	case GIVE_UP:
-	  close_temp_file(ofd, ohdr, 0, cursp);
+	  close_temp_file(ofile, ofd, ohdr->type, 0, cursp);
 	  free_file_info(ohdr);
 	  snd_remove(ofile, REMOVE_FROM_CACHE);
 	  FREE(ofile);
@@ -1535,7 +1535,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 	  return;
 	  break;
 	case HUNKER_DOWN:
-	  close_temp_file(ofd, ohdr, 0, cursp);
+	  close_temp_file(ofile, ofd, ohdr->type, 0, cursp);
 	  if (mus_bytes_per_sample(MUS_OUT_FORMAT) == 2)
 	    ohdr->format = MUS_OUT_FORMAT;
 	  else
@@ -1568,7 +1568,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 	      /* not actually a no-op unless true_old_beg == true_new_beg */
 	      if (use_temp_file) 
 		{
-		  close_temp_file(ofd, ohdr, 0, cursp);
+		  close_temp_file(ofile, ofd, ohdr->type, 0, cursp);
 		  free_file_info(ohdr);
 		  snd_remove(ofile, REMOVE_FROM_CACHE);
 		}
@@ -1607,7 +1607,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
       cp->edit_hook_checked = false;
       if (use_temp_file) 
 	{
-	  close_temp_file(ofd, ohdr, 0, cursp);
+	  close_temp_file(ofile, ofd, ohdr->type, 0, cursp);
 	  free_file_info(ohdr);
 	  snd_remove(ofile, REMOVE_FROM_CACHE);
 	}
@@ -1721,7 +1721,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
   if (use_temp_file)
     {
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, &chandata);
-      close_temp_file(ofd, ohdr, num * mus_bytes_per_sample(ohdr->format), cursp);
+      close_temp_file(ofile, ofd, ohdr->type, num * mus_bytes_per_sample(ohdr->format), cursp);
       free_file_info(ohdr);
       file_change_samples(beg, num, ofile, cp, 0, DELETE_ME, DONT_LOCK_MIXES, origin, cp->edit_ctr);
     }

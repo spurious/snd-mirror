@@ -1780,11 +1780,9 @@ void finish_recording(recorder_info *rp)
   set_button_label(reset_button, _("Reset"));
   set_button_label(record_button, (rp->triggering) ? _("Triggered Record") : _("Record"));
   mus_file_close(rp->output_file_descriptor);
-  rp->output_file_descriptor = mus_file_reopen_write(rp->output_file);
-  mus_header_update_with_fd(rp->output_file_descriptor,
-			    rp->output_header_type,
-			    rp->total_output_frames * rp->out_chans * mus_bytes_per_sample(rp->output_data_format)); 
-  CLOSE(rp->output_file_descriptor);
+  mus_header_change_data_size(rp->output_file,
+			      rp->output_header_type,
+			      rp->total_output_frames * rp->out_chans * mus_bytes_per_sample(rp->output_data_format)); 
   rp->output_file_descriptor = -1;
   duration = (Float)((double)(rp->total_output_frames) / (Float)(rp->srate));
   reflect_recorder_duration(duration);

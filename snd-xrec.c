@@ -2899,15 +2899,9 @@ void finish_recording(recorder_info *rp)
     snd_error(_("Record Done: can't close %s: %s!"),
 	      rp->output_file,
 	      strerror(errno));
-  rp->output_file_descriptor = mus_file_reopen_write(rp->output_file);
-  if (rp->output_file_descriptor == -1)
-    snd_error(_("Record Done: can't update %s: %s"),
-	      rp->output_file,
-	      strerror(errno));
-  mus_header_update_with_fd(rp->output_file_descriptor,
-			    rp->output_header_type,
-			    rp->total_output_frames * rp->out_chans * mus_bytes_per_sample(rp->output_data_format));
-  snd_close(rp->output_file_descriptor, rp->output_file);
+  mus_header_change_data_size(rp->output_file,
+			      rp->output_header_type,
+			      rp->total_output_frames * rp->out_chans * mus_bytes_per_sample(rp->output_data_format));
   rp->output_file_descriptor = -1;
   duration = (Float)((double)(rp->total_output_frames) / (Float)(rp->srate));
   /* 25-Jun-00: this used to divide by chans, but rp->total_output_frames is in terms of frames (it was named total_out_samps) */

@@ -572,14 +572,7 @@ static sound_file *fill_sf_record(const char *name, sound_file *sf)
   return(sf);
 }
 
-static sound_file *read_sound_file_header_with_fd(int fd, const char *arg)
-{
-  mus_sound_initialize();
-  if ((mus_header_read_with_fd(fd)) == MUS_ERROR) return(NULL);
-  return(fill_sf_record(arg, add_to_sound_table(arg)));
-}
-
-static sound_file *read_sound_file_header_with_name(const char *name)
+static sound_file *read_sound_file_header(const char *name)
 {
   mus_sound_initialize();
   if (mus_header_read(name) != MUS_ERROR)
@@ -592,7 +585,7 @@ static sound_file *getsf(const char *arg)
   sound_file *sf = NULL;
   if (arg == NULL) return(NULL);
   if ((sf = find_sound_file(arg)) == NULL)
-    return(read_sound_file_header_with_name(arg));
+    return(read_sound_file_header(arg));
   return(sf);
 }
 
@@ -758,26 +751,23 @@ char *mus_sound_comment(const char *name)
 
 int mus_sound_open_input (const char *arg) 
 {
-  int fd;
+  int fd = -1;
   sound_file *sf = NULL;
-  mus_sound_initialize();
-  fd = mus_file_open_read(arg);
-  if (fd != -1)
+  if (!(mus_file_probe(arg)))
+    mus_error(MUS_CANT_OPEN_FILE, S_mus_sound_open_input " can't open %s: %s", arg, strerror(errno));
+  else
     {
-      if ((sf = find_sound_file(arg)) == NULL)
-	sf = read_sound_file_header_with_fd(fd, arg);
-      if (sf == NULL)
+      mus_sound_initialize();
+      sf = find_sound_file(arg);
+      if (!sf)
+	sf = read_sound_file_header(arg);
+      if (sf) 
 	{
-	  CLOSE(fd);
-	  fd = -1;
+	  fd = mus_file_open_read(arg);
+	  mus_file_open_descriptors(fd, arg, sf->data_format, sf->datum_size, sf->data_location, sf->chans, sf->header_type);
+	  lseek(fd, sf->data_location, SEEK_SET);
 	}
     }
-  if (sf) 
-    {
-      mus_file_open_descriptors(fd, arg, sf->data_format, sf->datum_size, sf->data_location, sf->chans, sf->header_type);
-      lseek(fd, sf->data_location, SEEK_SET);
-    }
-  else mus_error(MUS_CANT_OPEN_FILE, S_mus_sound_open_input " can't open %s: %s", arg, strerror(errno));
   return(fd);
 }
 
@@ -813,25 +803,32 @@ int mus_sound_reopen_output(const char *arg, int chans, int format, int type, of
   return(fd);
 }
 
-int mus_sound_close_input (int fd) 
+int mus_sound_close_input(int fd) 
 {
   return(mus_file_close(fd)); /* this closes the clm file descriptors */
 }
 
-int mus_sound_close_output (int fd, off_t bytes_of_data) 
+int mus_sound_close_output(int fd, off_t bytes_of_data) 
 {
   char *name;
+  int err = MUS_ERROR, old_type;
   name = mus_file_fd_name(fd);
   if (name)
     {
-      mus_sound_forget(name);
-      mus_header_update_with_fd(fd, mus_file_header_type(fd), bytes_of_data);
-      return(mus_file_close(fd));
+      char *fname;
+      fname = strdup(name); /* strdup defined, if necessary, in io.c */
+      old_type = mus_file_header_type(fd);
+      err = mus_file_close(fd);        /* this frees the original fd->name, so we copied above */
+      /* fd is NULL now */
+      mus_sound_forget(fname);
+      mus_header_change_data_size(fname, old_type, bytes_of_data);
+      free(fname);
+      return(err);
     }
   return(MUS_ERROR);
 }
 
-int mus_sound_read (int fd, int beg, int end, int chans, mus_sample_t **bufs) 
+int mus_sound_read(int fd, int beg, int end, int chans, mus_sample_t **bufs) 
 {
   return(mus_file_read(fd, beg, end, chans, bufs));
 }

@@ -569,7 +569,7 @@ static int snd_make_file(const char *ofile, int chans, file_info *hdr, snd_fd **
     mus_file_write(ofd, 0, j - 1, chans, obufs);
   if (err == MUS_NO_ERROR)
     {
-      err = close_temp_file(ofd, hdr, len * chans * datumb, any_selected_sound());
+      err = close_temp_file(ofile, ofd, hdr->type, len * chans * datumb, any_selected_sound());
       alert_new_file();
     }
   else err = mus_file_close(ofd);

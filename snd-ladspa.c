@@ -776,8 +776,8 @@ Information about about parameters can be acquired using analyse-ladspa."
 
   psDescriptor->cleanup(psHandle);
 
-  close_temp_file(ofd,
-		  hdr,
+  close_temp_file(ofile, ofd,
+		  hdr->type,
 		  num * datumb * outchans,
 		  sp);
 

@@ -1408,8 +1408,8 @@ bool recorder_start_output_file(const char *comment)
     }
   unsensitize_control_buttons();
 
+  if (rp->output_header_type != MUS_RAW) mus_header_read(rp->output_file);
   rp->output_file_descriptor = snd_reopen_write(rp->output_file);
-  if (rp->output_header_type != MUS_RAW) mus_header_read_with_fd(rp->output_file_descriptor);
   mus_file_open_descriptors(rp->output_file_descriptor, 
 			    rp->output_file,
 			    rp->output_data_format, 
