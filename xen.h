@@ -358,6 +358,7 @@
 #endif
 
 #define XEN_ARITY(Func)               scm_i_procedure_arity(Func)
+#define XEN_REQUIRED_ARGS(Func)       XEN_TO_SMALL_C_INT(XEN_CAR(XEN_ARITY(Func)))
 #define XEN_KEYWORD_P(Obj)            (SCM_KEYWORDP(Obj))
 #define XEN_KEYWORD_EQ_P(k1, k2)      XEN_EQ_P(k1, k2)
 #define XEN_MAKE_KEYWORD(Arg)         scm_c_make_keyword(Arg)
@@ -386,6 +387,7 @@
 #endif
 
 #if USE_SND
+  /* take advantage of Snd's elaborate error handling */
   #define XEN_CALL_0(Func, Caller)                   g_call0(Func, Caller)
   #define XEN_CALL_1(Func, Arg1, Caller)             g_call1(Func, Arg1, Caller)
   #define XEN_CALL_2(Func, Arg1, Arg2, Caller)       g_call2(Func, Arg1, Arg2, Caller)
@@ -397,6 +399,12 @@
   #define XEN_CALL_2(Func, Arg1, Arg2, Caller)       scm_apply(Func, Arg1, scm_cons(Arg2, scm_listofnull))
   #define XEN_CALL_3(Func, Arg1, Arg2, Arg3, Caller) scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, scm_listofnull))
   #define XEN_APPLY(Func, Args, Caller)              scm_apply(Func, Args, XEN_EMPTY_LIST)
+  #define XEN_CALL_4(Func, Arg1, Arg2, Arg3, Arg4, Caller) \
+     scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, scm_cons(Arg4, scm_listofnull)))
+  #define XEN_CALL_5(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Caller) \
+     scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, scm_cons2(Arg4, Arg5, scm_listofnull)))
+  #define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller) \
+     scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, scm_cons2(Arg4, Arg5, scm_cons(Arg6, scm_listofnull))))
 #endif
 
 #define XEN_APPLY_ARG_LIST_END            scm_listofnull
@@ -609,10 +617,14 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_CALL_1(Func, Arg1, Caller)             rb_funcall(Func, rb_intern("call"), 1, Arg1)
 #define XEN_CALL_2(Func, Arg1, Arg2, Caller)       rb_funcall(Func, rb_intern("call"), 2, Arg1, Arg2)
 #define XEN_CALL_3(Func, Arg1, Arg2, Arg3, Caller) rb_funcall(Func, rb_intern("call"), 3, Arg1, Arg2, Arg3)
+#define XEN_CALL_4(Func, Arg1, Arg2, Arg3, Arg4, Caller) rb_funcall(Func, rb_intern("call"), 4, Arg1, Arg2, Arg3, Arg4)
+#define XEN_CALL_5(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Caller) rb_funcall(Func, rb_intern("call"), 5, Arg1, Arg2, Arg3, Arg4, Arg5)
+#define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller) rb_funcall(Func, rb_intern("call"), 6, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6)
 #define XEN_APPLY(Func, Args, Caller)              xen_rb_apply(Func, Args)
 #define XEN_APPLY_ARG_LIST_END          Qnil
 
 #define XEN_ARITY(Func)                 rb_funcall(Func, rb_intern("arity"), 0)
+#define XEN_REQUIRED_ARGS(Func)         XEN_TO_SMALL_C_INT(XEN_ARITY(Func))
 #define XEN_KEYWORD_P(Obj)              (XEN_BOUND_P(Obj) && SYMBOL_P(Obj))
 #define XEN_KEYWORD_EQ_P(k1, k2)        (k1 == k2)
 #define XEN_MAKE_KEYWORD(Arg)           C_STRING_TO_XEN_SYMBOL(Arg)
@@ -875,9 +887,13 @@ XEN xen_rb_funcall_0(XEN func);
 #define XEN_CALL_1(Func, Arg1, Caller) 0
 #define XEN_CALL_2(Func, Arg1, Arg2, Caller) 0
 #define XEN_CALL_3(Func, Arg1, Arg2, Arg3, Caller) 0
+#define XEN_CALL_4(Func, Arg1, Arg2, Arg3, Arg4, Caller) 0
+#define XEN_CALL_5(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Caller) 0
+#define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller) 0
 #define XEN_APPLY(Func, Args, Caller) 0
 #define XEN_APPLY_ARG_LIST_END 0
 #define XEN_ARITY(Func) 0
+#define XEN_REQUIRED_ARGS(Func) 0
 #define XEN_KEYWORD_P(Obj) 0
 #define XEN_KEYWORD_EQ_P(k1, k2) 0
 #define XEN_MAKE_KEYWORD(Arg) 0

@@ -1829,7 +1829,7 @@ The function should return one of the cursor choices (e.g. cursor-no-action)."
 
   int args;
   char *errstr;
-  XEN arity_list; XEN errmsg;
+  XEN errmsg;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(key), key, XEN_ARG_1, S_bind_key, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(state), state, XEN_ARG_2, S_bind_key, "an integer");
   XEN_ASSERT_TYPE((XEN_FALSE_P(code) || XEN_PROCEDURE_P(code)), code, XEN_ARG_3, S_bind_key, "#f or a procedure");
@@ -1841,12 +1841,7 @@ The function should return one of the cursor choices (e.g. cursor-no-action)."
 		     0);
   else 
     {
-      arity_list = XEN_ARITY(code);
-#if HAVE_RUBY
-      args = XEN_TO_SMALL_C_INT(arity_list);
-#else
-      args = XEN_TO_SMALL_C_INT(XEN_CAR(arity_list));
-#endif
+      args = XEN_REQUIRED_ARGS(code);
       if (args > 1)
 	{
 	  errstr = mus_format("bind-key function arg should take either zero or one args, not %d", args);

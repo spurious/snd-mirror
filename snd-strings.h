@@ -260,8 +260,6 @@
 
 
 #define S_abort                         "abort"
-#define S_add_idler                     "add-idler"
-#define S_add_input                     "add-input"
 #define S_add_mark                      "add-mark"
 #define S_add_player                    "add-player"
 #define S_add_sound_file_extension      "add-sound-file-extension"
@@ -655,8 +653,6 @@
 #define S_region_srate                  "region-srate"
 #define S_regions                       "regions"
 #define S_remove_from_menu              "remove-from-menu"
-#define S_remove_idler                  "remove-idler"
-#define S_remove_input                  "remove-input"
 #define S_report_in_minibuffer          "report-in-minibuffer"
 #define S_reset_controls                "reset-controls"
 #define S_reset_listener_cursor         "reset-listener-cursor"

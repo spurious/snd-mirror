@@ -41,7 +41,7 @@
   <li><a href="#enveddoc">enved.scm: envelope editor</a>
   <li><a href="#exampdoc">examp.scm: many examples</a>
   <li><a href="#extensionsdoc">extensions.scm: various generally useful Snd extensions</a>
-  <li><a href="#fmvdoc">fmv.scm: the fm-violin in Guile-gtk</a>
+  <li><a href="#fmvdoc">fmv.scm: a controller for the fm-violin</a>
   <li><a href="#glfftdoc">glfft.scm: OpenGL for spectra</a>
   <li><a href="#gmdoc">gm.scm: gmeteor support</a>
   <li><a href="#goopsnddoc">goopsnd.scm: look at Goops</a>
@@ -60,7 +60,6 @@
   <li><a href="#rtiodoc">rtio.scm: real-time stuff</a>
   <li><a href="#rubberdoc">rubber.scm: rubber-sound</a>
   <li><a href="#snd4doc">snd4.scm: Backwards compatibility stuff</a>
-  <li><a href="#sndgtkdoc">snd-gtk.scm: Guile-Gtk examples</a>
   <li><a href="#sndtestdoc">snd-test.scm: Snd regression tests</a>
   <li><a href="#vdoc">v.scm: fm-violin</a>
   <li><a href="#wsdoc">ws.scm: with-sound</a>
@@ -1336,7 +1335,7 @@ amplitude envelope over the mixed-in data.
 <p>fmv.scm implements the fm-violin (v.scm) as a CLM-style generator, making it possible
 to call the violin anywhere a generator could be called; since each call on the fm-violin
 function produces the next sample of the given violin, this form of the fm-violin is easy
-to call in "real-time" situations (see snd-gtk.scm).  Any other CLM-style instrument could
+to call in "real-time" situations.  Any other CLM-style instrument could
 be rewritten in the same form.
 <pre>
   <em class=def><A NAME="fmakefmviolin">make-fm-violin</a></em>
@@ -1710,7 +1709,6 @@ before loading this file.
 <br>
 <p>(The dot size bug in this picture has been fixed, but I'm too lazy
 to make a new version of the picture).
-In the indefinite future, I'll probably translate CMN to guile-gtk.
 </p>
 <br>
 
@@ -1913,36 +1911,6 @@ shortened.
 <p>The Snd-4 compatibilty file contains a number of the procedures
 that were removed from or renamed in Snd-5.  
 </p>
-
-<A NAME="sndgtkdoc"></a><span class=box><h2>snd-gtk.scm</h2></span>
-<pre>
-  <em class=def><A NAME="makeampdialog">make-amp-dialog</a></em>
-  <em class=def><A NAME="makecontroldialog">make-control-dialog</a></em>
-  <em class=def><A NAME="makefmvdialog">make-fmv-dialog</a></em>
-  <em class=def><A NAME="makeampcontrols">make-amp-controls</a></em>
-</pre>
-<p>These functions are examples of using Guile-Gtk in Snd.  First you need to build Snd
-with Gtk and Guile-gtk loaded. 
-<i>make-amp-dialog</i> creates a dialog with an amplitude control on playback and a play button,
-providing a simple example of "real-time" controls in Snd.</p>
-<img src="ggctrl.png" alt="guile-gtk controls" align=left hspace=20><p>
-<i>make-control-dialog</i> creates a dialog that controls all the "hidden" control-panel variables.
-The "expand-hop" control sets the hop size (per grain), "expand-length"
-sets the grain length, "expand-ramp" sets the slope, essentially, of the grain amplitude envelope,
-"contrast-amp" sets the prescaler for the contrast effect, "reverb-feedback" sets the feedback
-amount in the reverberator (it sets all the comb filter scalers), and "reverb-lowpass" sets
-the lowpass filter coefficient in the reverberator.  <code>(make-control-dialog)</code>
-adds the "control" option to the Options menu.
-</p>
-<p><i>make-fmv-dialog</i> is based on the version of the fm-violin in fmv.scm; it
-provides a dialog to control the violin's amplitude.  Since the entire path is
-interpreted here (Guile does not yet have a compiler), this is asking a lot even
-of a fast machine.  <i>make-amp-controls</i> provides a slider controlling each
-channel's amplitude; this is an extension of the built-in control panel where
-each control affects all channels at once.
-</p>
-<br clear=left>
-<br>
 
 <A NAME="sndtestdoc"></a><span class=box><h2>snd-test.scm</h2></span>
 <p>

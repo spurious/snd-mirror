@@ -11,7 +11,7 @@ Sawfish connection: it should be possible to send commands to sawfish,
 A more direct connection to gmeteor (perhaps using the control-panel filter
   text widget).  use (filter-sound(make-filter ...)).
 
-A graphic-EQ effect (effects.scm) -- this could use guile-gtk and the
+A graphic-EQ effect (effects.scm) -- this could use the
   CLM formant generator.  The other effects in that file could use
   some sort of dialog to set the various variables, and ideally a
   C module (effects.c -> effects.so) autoloaded by the effects module.
@@ -54,7 +54,7 @@ Translate the rest of env.lisp to env.scm.
 
 A "master volume" control in the recorder.  Also a running spectrogram display.
 
-A guile-gtk controller dialog for the scanned-synthesis procedures.
+A controller dialog for the scanned-synthesis procedures.
 
 A data file mechanism for the phase vocoder (i.e. save/reuse analysis pass).
 

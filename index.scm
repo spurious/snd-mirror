@@ -4,8 +4,6 @@
   (list
     (list "abort" "extsnd.html#abort" "snd-xen.c" 1561 "g_abort")
     (list "add-clm-method" "clm.html#add-clm-method")
-    (list "add-idler" "extsnd.html#addidler" "snd-draw.c" 536 "g_add_idler")
-    (list "add-input" "extsnd.html#addinput" "snd-draw.c" 442 "g_add_input")
     (list "add-mark" "extsnd.html#sndaddmark" "snd-marks.c" 1707 "g_add_mark")
     (list "add-mark (clm)" "clm.html#add-mark")
     (list "add-player" "extsnd.html#addplayer" "snd-dac.c" 2735 "g_add_player")
@@ -727,8 +725,6 @@
     (list "remote-read" "clm.html#remote-read")
     (list "remote-write" "clm.html#remote-write")
     (list "remove-from-menu" "extsnd.html#sndremovefrommenu" "snd-menu.c" 689 "gl_remove_from_menu")
-    (list "remove-idler" "extsnd.html#removeidler" "snd-draw.c" 548 "g_remove_idler")
-    (list "remove-input" "extsnd.html#removeinput" "snd-draw.c" 458 "g_remove_input")
     (list "reopen-output" "clm.html#reopen-output")
     (list "report-in-minibuffer" "extsnd.html#sndreportinminibuffer" "snd-kbd.c" 1944 "g_report_in_minibuffer")
     (list "reset-all-hooks" "sndscm.html#resetallhooks")

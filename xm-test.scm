@@ -10,6 +10,14 @@
 
 (init-xm)
 
+(define (for-each-child w func)
+  (func w)
+  (if (|XtIsComposite w)
+      (for-each 
+       (lambda (n)
+	 (for-each-child n func))
+       (cadr (|XtGetValues w (list |XmNchildren 0) 1)))))
+
 (define c1 #f)
 
 (define scale-dialog #f)
@@ -29,14 +37,18 @@
 		      |XmNresizePolicy        |XmRESIZE_GROW
 	              |XmNnoResize            #f
 		      |XmNtransient           #f) ))
+
+	(|XtVaSetValues (|XmMessageBoxGetChild scale-dialog |XmDIALOG_HELP_BUTTON) 
+			(list |XmNarmColor (|WhitePixelOfScreen 
+					     (|DefaultScreenOfDisplay 
+					       (|XtDisplay (|Widget (cadr (main-widgets))))))))
+
 	(|XtAddCallback scale-dialog 
 			|XmNcancelCallback (lambda (w context info)
-					     (|XtUnmanageChild scale-dialog))
-			 #f)
+					     (|XtUnmanageChild scale-dialog)))
 	(|XtAddCallback scale-dialog 
 			|XmNhelpCallback (lambda (w context info)
-					   (snd-print "move the slider to affect the volume"))
-			 #f)
+					   (snd-print "move the slider to affect the volume")))
 	(|XmStringFree xhelp)
 	(|XmStringFree xdismiss)
 	(|XmStringFree titlestr)
@@ -58,11 +70,9 @@
 
       (|XtAddCallback scale 
 		      |XmNvalueChangedCallback (lambda (w context info)
-						 (set! current-scaler (/ (|value info) 100.0)))
-		       #f)
+						 (set! current-scaler (/ (|value info) 100.0))))
       (|XtAddCallback scale |XmNdragCallback (lambda (w context info)
-						 (set! current-scaler (/ (|value info) 100.0)))
-		      #f))))
+						 (set! current-scaler (/ (|value info) 100.0)))))))
   (|XtManageChild scale-dialog))
 
 (let* ((wids (main-widgets))
@@ -157,8 +167,7 @@
 				       (begin
 					 (display ctr)
 					 (set! ctr (+ ctr 1))
-					 #f))))
-			   #f)
+					 #f)))))
 
 	(|XtAddCallback button |XmNactivateCallback 
 			(lambda (widget context event-info)
@@ -173,13 +182,15 @@
 			(lambda (widget context info)
 			  (display info)
 			  (|XDrawLine draw-display draw-window gc 0 0 120 100)
-			  (display (|set info)))
-			#f)
+			  (display (|set info))))
+
 	(|XtAddEventHandler drawer |EnterWindowMask #f
 			    (lambda (w context ev flag)
-			      (display "hi"))
-			    #f)
+			      (display "hi")))
+
 
 	(create-scale-dialog shell)
     
       ))))
+
+;;; ex: change pos/range scrollbar algorithm, change action of ypos, add wave to vu

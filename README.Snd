@@ -260,20 +260,6 @@ sound file extension list are omitted.
 
 (I've tried snd+gtk in Linux, Sun, and SGI).
 
-If you try to use the snd/guile-gtk interface and get:
-
-  GLib-CRITICAL **: file gmem.c: line 563 (g_mem_chunk_alloc): assertion `mem_chunk != NULL' failed.
-  Segmentation fault (core dumped)
-
-you probably forgot to (use-modules (gtk gtk) (gtk gdk))
-
-If you're using guile 1.4 and gtk and guile-gtk, and get some
-compiler error (I forgot to write it down), it's probably that
-your version of guile-gtk is not in sync with guile -- for
-Guile version 1.4, you need guile-gtk version 0.19 (there's
-currently a pre-0.19 version that works at: http://erin.netpedia.net/guile-gtk --
-look for something like ftp://erin.netpedia.net/download/guile-gtk-0.19pre.tar.gz)
-
 If you get an error like:
 
   Gtk-WARNING **: <much useless mumbling>
@@ -495,9 +481,6 @@ Motif:
 Gtk+:
   http://www.gtk.org
   ftp://ftp.gtk.org/pub/gtk/
-
-Guile-gtk:
-  http://www.ping.de/sites/zagadka/guile-gtk/
 
 Guile-gdbm:
   http://www.pintus.de/mgrabmue/guile/guile-gdbm-0.0.2.tar.gz

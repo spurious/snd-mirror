@@ -17,7 +17,7 @@
 ;;; test 14: all functions
 ;;; test 15: chan-local vars 
 ;;; test 16: define-syntax
-;;; test 17: guile-gtk dialogs and graphics
+;;; test 17: graphics
 ;;; test 18: enved
 ;;; test 19: save and restore
 ;;; test 20: transforms
@@ -8436,7 +8436,7 @@
       (if (not (= hi 18)) (snd-display ";prog1: ~A?" hi))))
 
 
-;;; ---------------- test 17: guile-gtk dialogs and graphics ----------------
+;;; ---------------- test 17: dialogs and graphics ----------------
 
 (define (-> x0 y0 size snd chn)
   "draw an arrow pointing (from the left) at the point (x0 y0)"
@@ -8457,16 +8457,9 @@
 		    (inexact->exact (* .8 size))
 		    snd chn)))  
 
-(if (and (or full-test (= snd-test 17) (and keep-going (<= snd-test 17)))
-	 (not (provided? 'snd-nogui)))
+(if (not (provided? 'snd-no-gui))
     (begin
       (if (procedure? test-hook) (test-hook 17))
-      (if (and (provided? 'snd-gtk)
-	       (provided? 'snd-guile-gtk))
-	  (begin
-	    (load "snd-gtk.scm")
-	    (make-control-dialog)
-	    (make-amp-dialog)))
       (load "musglyphs.scm")
       (load "draw.scm")
       (add-hook! after-graph-hook display-previous-edits)

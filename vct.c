@@ -411,32 +411,6 @@ static XEN vct_fill(XEN obj1, XEN obj2)
   return(xen_return_first(obj1, obj2));
 }
 
-int procedure_fits(XEN proc, int args)
-{
-  XEN arity;
-  if (XEN_PROCEDURE_P(proc))
-    {
-      arity = XEN_ARITY(proc);
-#if HAVE_RUBY
-      return(XEN_TO_C_INT(arity) == args);
-#else
-#if HAVE_GUILE
-      return(XEN_NOT_FALSE_P(arity) && 
-	     (XEN_TO_C_INT(XEN_CAR(arity)) == args));
-#else
-      if (XEN_INTEGER_P(arity))
-	return(XEN_TO_C_INT(arity) == args);
-      else
-	if ((XEN_LIST_P(arity)) && (XEN_LIST_LENGTH(arity) == 2))
-	  return((XEN_TO_C_INT(XEN_CAR(arity)) <= args) &&
-		 (XEN_TO_C_INT(XEN_CADR(arity)) >= args));
-	else return(0);
-#endif
-#endif
-    }
-  return(0);
-}
-
 static XEN vct_map(XEN obj, XEN proc)
 {
   #define H_vct_mapB "(" S_vct_mapB " v proc) -> v with each element set to value of proc: v[i] = (proc)"
@@ -444,7 +418,7 @@ static XEN vct_map(XEN obj, XEN proc)
   vct *v;
   XEN val;
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_vct_mapB, "a vct");
-  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)) && (procedure_fits(proc, 0)), proc, XEN_ARG_2, S_vct_mapB, "a thunk");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS(proc) == 0), proc, XEN_ARG_2, S_vct_mapB, "a thunk");
   v = TO_VCT(obj);
   if (v) 
     for (i = 0; i < v->length; i++) 
@@ -464,7 +438,7 @@ static XEN vct_do(XEN obj, XEN proc)
   vct *v;
   XEN val;
   XEN_ASSERT_TYPE(VCT_P(obj), obj, XEN_ARG_1, S_vct_doB, "a vct");
-  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)) && (procedure_fits(proc, 1)), proc, XEN_ARG_2, S_vct_doB, "a procedure");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS(proc) == 1), proc, XEN_ARG_2, S_vct_doB, "a procedure");
   v = TO_VCT(obj);
   if (v) 
     for (i = 0; i < v->length; i++) 
@@ -500,7 +474,7 @@ static XEN vcts_map(XEN args)
       v[i] = TO_VCT(arg);
     }
   proc = XEN_LIST_REF(args, vnum);
-  if (!(procedure_fits(proc, 1)))
+  if ((!(XEN_PROCEDURE_P(proc))) || (!(XEN_REQUIRED_ARGS(proc) == 1)))
     {
       FREE(v);
       mus_misc_error(S_vcts_mapB,
@@ -550,7 +524,7 @@ static XEN vcts_do(XEN args)
       v[i] = TO_VCT(arg);
     }
   proc = XEN_LIST_REF(args, vnum);
-  if (!(procedure_fits(proc, 2)))
+  if ((!(XEN_PROCEDURE_P(proc))) || (!(XEN_REQUIRED_ARGS(proc) == 2)))
     {
       FREE(v);
       mus_misc_error(S_vcts_doB,

@@ -192,7 +192,6 @@ various examples of and extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#rtiodoc">rtio.scm</a></td>      <td>real-time stuff</td></tr>
 <tr><td><a href="sndscm.html#rubberdoc">rubber.scm</a></td>  <td>rubber-sound</td></tr>
 <tr><td><a href="sndscm.html#snd4doc">snd4.scm</a></td>      <td>backwards compatibility stuff</td></tr>
-<tr><td><a href="sndscm.html#sndgtkdoc">snd-gtk.scm</a></td> <td>various Guile-Gtk examples</td></tr>
 <tr><td><a href="sndscm.html#vdoc">v.scm</a></td>            <td>fm-violin (from CLM)</td></tr>
 <tr><td><a href="sndscm.html#wsdoc">ws.scm</a></td>          <td>with-sound implementation</td></tr>
 <tr><td><a href="sndscm.html#zipdoc">zip.scm</a></td>        <td>the zipper (a cross-fader, sort of) (from CLM)</td></tr>
@@ -5982,7 +5981,7 @@ the reverb.  The control panel procedures are:
 <!-- --><tr><td><spacer type=horizontal size=40><br></td><td>
 <!-- -->current amp (control panel slider) value.
 <!-- -->It is possible to use these controls (in "real-time") in your own functions.
-<!-- -->See amprt in <a href="sndscm.html#exampdoc">examp.scm</a> for a simple example, and <a href="sndscm.html#sndgtkdoc">snd-gtk.scm</a> for a complicated one. 
+<!-- -->See amprt in <a href="sndscm.html#exampdoc">examp.scm</a> for a simple example.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6077,7 +6076,7 @@ the reverb.  The control panel procedures are:
 <!-- --><tr><td></td><td>
 <!-- --><i>snd</i>'s <a href="snd.html#expand">expansion</a> ramp amount (between 0 and .5).
 <!-- -->This affects the smoothness of the grain overlaps -- .001 gives a 
-<!-- -->rattling effect (see make-control-dialog in <a href="sndscm.html#sndgtkdoc">snd-gtk.scm</a>).
+<!-- -->rattling effect.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7841,50 +7840,13 @@ variable %load-verbosely to #t.
 
 <hr>
 <pre>
-<!-- add-input -->
-<!-- remove-input -->
-  <b><a name="addinput">add-input</a></b> (file callback)
-  <b><a name="removeinput">remove-input</a></b> (id)
-
-  <b><a name="addidler">add-idler</a></b> (code)
-  <b><a name="removeidler">remove-idler</a></b> (id)
-
   <b><a name="changeproperty">change-property</a></b> (known-atom property value)
-
   <b><a name="listenerselection">listener-selection</a></b> ()
-
   <b><a name="makepixmap">make-pixmap</a></b> (list-of-xpm-style-strings)
   <b><a name="setpixmap">set-pixmap</a></b> (widget pixmap)
   <b><a name="colormapref">colormap-ref</a></b> (map position)
 </pre>
-<p>These are still experimental; <i>add-input</i> causes <i>callback</i> (a function of one argument, the file number)
-to be called whenever input is available on <i>file</i> (a file number, as returned by C's open). <i>remove-input</i>
-removes the callback.  Eventually I hope to add MIDI controls to Snd, using these two functions.
-Here's a somewhat contrived example; since Scheme uses ports, not bare Unix file numbers, we
-have to translate back and forth:
-</p>
-<pre>
-(let ((p (open-input-pipe "ls -l *.h"))
-      (func #f))
-  (set! func (add-input 
-	      (fileno p) 
-	      (lambda (f) 
-		(let ((instr (read-line (fdes-&gt;inport f))))
-		  (if (string? instr)
-		      (display (format #f "~%~S" instr))
-		      (remove-input func)))))))
-</pre>
-<p>
-<i>add-idler</i> adds a background process running <i>code</i> (a Scheme function of no arguments).
-As long as the function returns #t, the process keeps calling it; <i>remove-idler</i> takes as its
-argument the thing returned by <i>add-idler</i> (the identifier of that process), and kills the
-associated background process.
-</p>
-<pre>
-  (<em class=red>add-idler</em> (let ((ctr 0)) (lambda () (snd-print "hi") (set! ctr (1+ ctr)) (&lt; ctr 3))))
-</pre>
-<p>prints "hi" three times, then quits.
-<i>change-property</i> changes an X-window's property; there's an example in examp.scm. <i>listener-selection</i>
+<p><i>change-property</i> changes an X-window's property; there's an example in examp.scm. <i>listener-selection</i>
 returns the currently selected text in the listener, or #f if there isn't any.  The following posts help related
 to the selection if "h" is typed in the graph:
 </p>

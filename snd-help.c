@@ -253,6 +253,9 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+25-Jul:  snd 5.1.\n\
+         removed snd-gtk.scm (guile-gtk is no longer supported).\n\
+         removed add/remove-idler/input.\n\
 23-Jul:  xm.c (Motif module).\n\
 12-Jul:  ALSA 0.9 support from Fernando.\n\
 9-Jul:   xen.c, xen.html.\n\
@@ -266,23 +269,6 @@ void news_help(snd_state *ss)
          snd-trace in extensions.scm.\n\
 28-Jun:  find enhancements (see snd.html and examp.scm); find-pitch.\n\
          colormap-ref, colormap-size.\n\
-26-Jun:  sound-files-in-directory returns a list, not a vector (to be consistent with CLM).\n\
-24-Jun:  added type and comment args to save-region,\n\
-           and moved format arg after type (to be consistent with other such calls).\n\
-         mouse-click-hook.\n\
-         reverse-track (mix.scm).\n\
-         mus-sound-max-amp now returns (and takes) a list, not a vector.\n\
-21-Jun:  dsp.scm, autosave.scm, extensions.scm.\n\
-         find-mix.\n\
-20-Jun:  read-hook. hooks.scm. snd-debug in extensions.scm.\n\
-19-Jun:  removed snd-main-shell -- use (cadr (main-widgets)) instead.\n\
-         make-pixmap and set-pixmap.\n\
-         moved Snd-4 stuff from examp.scm to snd4.scm.\n\
-         clone-sound-as in extsnd.html, remove-clicks in examp.scm.\n\
-18-Jun:  GSL 0.8. Gtk+-1.2.10.\n\
-         display-current-window-location in draw.scm.\n\
-         example of Snd as script engine in grfsnd.html, with added script-arg and script-args.\n\
-16-Jun:  snd 5.0.\n\
 ",
 NULL);
   FREE(info);
@@ -1112,7 +1098,6 @@ it has only one channel, (" S_cursor ") (" S_cursor " 0), and (" S_cursor " 0 0)
 all refer to the same thing.\n\
 \n\
   " S_abort "             ()\n\
-  " S_add_idler "         (code)\n\
   " S_add_mark "          (sample snd chn)\n\
   " S_add_player "        (player start end)\n\
   " S_add_to_main_menu "  (menu-label)\n\
@@ -1283,7 +1268,6 @@ all refer to the same thing.\n\
   " S_region_srate "      (reg)\n\
   " S_regions "           ()\n\
   " S_region_p "          (id)\n\
-  " S_remove_idler "      (id)\n\
   " S_report_in_minibuffer "(msg snd)\n\
   " S_reset_controls "    (snd)\n\
   " S_restore_controls "  (snd)\n\

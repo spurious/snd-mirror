@@ -1513,14 +1513,18 @@ any demand -- there is CLM-in-CL after all, and it's about 8000 lines of Lisp...
 <span class=bbox><h3><A NAME="sndwithmotif">Snd and Motif</a></h3></span>
 
 <p>It is possible to add your own user-interface elements using the xm module
-included with Snd.  The Snd build process for Motif should (someday) create
-a shared library named xm.so; you can load this at any time into Snd, then
-call (init-xm) to define all the X/Motif entities. These can then be
-tied into Snd in many ways,
-As a very simple example, let's make a dialog window with a slider:</p>
+included with Snd.  'make xm' should create
+a shared library named xm.so; you can load this at any time into Snd:
+</p>
 <pre>
-(init-xm)
-
+&gt; <em class=typing>(define hxm (dlopen "/home/bil/snd-5/xm.so"))</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+&gt; <em class=typing>(dlinit hxm "init_xm")</em>
+<em class=listener>#t</em>
+</pre>
+<p>and now we have access to all of X and Motif.
+As a very simple example, here's dialog window with a slider:</p>
+<pre>
 (define scale-dialog #f)
 (define current-scaler 1.0)
 
@@ -1540,12 +1544,10 @@ As a very simple example, let's make a dialog window with a slider:</p>
 		      |XmNtransient           #f) ))
 	(|XtAddCallback scale-dialog 
 			|XmNcancelCallback (lambda (w context info)
-					     (|XtUnmanageChild scale-dialog))
-			 #f)
+					     (|XtUnmanageChild scale-dialog)))
 	(|XtAddCallback scale-dialog 
 			|XmNhelpCallback (lambda (w context info)
-					   (snd-print "move the slider to affect the volume"))
-			 #f)
+					   (snd-print "move the slider to affect the volume")))
 	(|XmStringFree xhelp)
 	(|XmStringFree xdismiss)
 	(|XmStringFree titlestr)
@@ -1567,11 +1569,9 @@ As a very simple example, let's make a dialog window with a slider:</p>
 
       (|XtAddCallback scale 
 		      |XmNvalueChangedCallback (lambda (w context info)
-						 (set! current-scaler (/ (|value info) 100.0)))
-		       #f)
+						 (set! current-scaler (/ (|value info) 100.0))))
       (|XtAddCallback scale |XmNdragCallback (lambda (w context info)
-						 (set! current-scaler (/ (|value info) 100.0)))
-		      #f))))
+						 (set! current-scaler (/ (|value info) 100.0)))))))
   (|XtManageChild scale-dialog))
 
 (create-scale-dialog (|Widget (cadr (main-widgets))))
@@ -1580,97 +1580,7 @@ As a very simple example, let's make a dialog window with a slider:</p>
 
 <span class=bbox><h3><A NAME="sndwithgtk">Snd and Gtk+</a></h3></span>
 
-<p>In the Gtk+ version of Snd, 
-the easiest way to add your own user interface widgets
-to Snd is through guile-gtk.  This package ties gtk into guile which is already tied
-into Snd.  It's available from http://www.ping.de/sites/zagadka/guile-gtk/ or possibly
-from the various guile sites.  As a quick example, take the file simple.scm included
-in the guile-gtk examples directory; in its original form, it assumes it is the top-level
-program, but it is very easy to modify it to be a dialog in Snd (my changes are in red):
-</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="beige"><pre>
-(use-modules (gtk gtk))
-(<em class=red>define hiho 
-  (lambda ()</em>
-    (let* ((window (gtk-widget-new 'GtkWindow
-				   :type         <em class=red>'dialog</em>
-				   :title        "hello world"
-				   :allow_grow   #f
-				   :allow_shrink #f
-				   :GtkContainer::border_width 10))
-	   (label  (gtk-widget-new 'GtkLabel
-				   :label        "hello world"
-				   :visible      #t))
-	   (button (gtk-widget-new 'GtkButton
-				   :child        label
-				   :parent       window
-				   :visible      #t)))
-      (gtk-signal-connect button "clicked" 
-			  (lambda ()
-			    (display (gtk-object-get label :label))
-			    (newline)
-			    (gtk-widget-set label :label "yo!")))
-      (gtk-widget-show window))))
-      <em class=red>;deleted the line (gtk-standalone-main window)</em>
-</pre></td></tr></table>
-
-<p>Now rather than making a top-level window, this little example creates
-a dialog in Snd; say we have saved it as simple.scm.  We can load it into
-Snd at any time using the "load" function, or in the Snd invocation using
-the "-l" switch: <code>snd oboe.snd -l simple.scm</code>.
-Now call the function <code>(hiho)</code> and the dialog appears! A more
-useful dialog might play the current sound with a scaler to change the
-output amplitude (we're placing a "play" menu option in the options menu;
-when that is activated, the dialog fires up):</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="beige"><pre>
-(use-modules (gtk gtk) (gtk gdk))
-(define amp 1.0)
-
-(define play-dialog-menu (gtk-menu-item-new-with-label "play"))
-(gtk-menu-append (sg-options-menu-widget) play-dialog-menu)
-(gtk-widget-show play-dialog-menu)
-
-(gtk-signal-connect play-dialog-menu "activate" 
- (lambda ()
-   (let* ((window (gtk-dialog-new))
-	  (adj (gtk-adjustment-new 1.0 0.0 1.01 .01 .01 .01))
-	  (scale (gtk-hscale-new adj))
-	  (button (gtk-button-new-with-label "play")))
-     (gtk-box-pack-start (gtk-dialog-action-area window) scale #t #t 2)
-     (gtk-range-set-update-policy scale 'continuous)
-     (gtk-scale-set-digits scale 2)
-     (gtk-scale-set-draw-value scale #t)
-     (gtk-widget-show scale)
-     (gtk-signal-connect adj "value_changed" 
-       (lambda () 
-         (set! amp (gtk-adjustment-value adj))))
-     (gtk-box-pack-start (gtk-dialog-action-area window) button #f #f 2)
-     (gtk-signal-connect button "clicked" 
-      (lambda () 
-	(let* ((size 256)
-	       (data (make-sound-data 1 size))
-	       (bytes (* size 2))
-	       (len (frames))
-	       (beg 0)
-	       (audio-fd (mus-audio-open-output mus-audio-default 22050 1 mus-lshort bytes)))
-	  (if (not (= audio-fd -1))
-	      (do ()
-		  ((or (c-g?) (&gt;= beg len))
-		   (mus-audio-close audio-fd))
-		(vct-&gt;sound-data 
-                  (vct-scale! 
-                    (samples-&gt;vct beg size) 
-                    amp) 
-                  data 0)
-		(mus-audio-write audio-fd data size)
-		(set! beg (+ beg size)))))))
-     (gtk-widget-show button)
-     (gtk-widget-show window))))
-</pre></td></tr></table>
-
-<p>See <a href="sndscm.html#sndgtkdoc">snd-gtk.scm</a> for more examples.</p>
+<p>This part of Snd is currently broken.</p>
 <br>
 
 <span class=bbox><h3><A NAME="sndwithnogui">Snd with no GUI and scripting</a></h3></span>

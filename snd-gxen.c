@@ -14,7 +14,8 @@ static XEN g_in(XEN ms, XEN code)
 {
   #define H_in "(" S_in " msecs thunk) invokes thunk in msecs milliseconds"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(ms), ms, XEN_ARG_1, S_in, "a number");
-  if (procedure_fits(code, 0))
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code), code, XEN_ARG_2, S_in, "a procedure");
+  if (XEN_REQUIRED_ARGS(code) == 0)
     {
       gtk_timeout_add((guint32)XEN_TO_C_UNSIGNED_LONG(ms), timed_eval, (gpointer)code);
       snd_protect(code);

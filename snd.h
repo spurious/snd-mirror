@@ -21,11 +21,6 @@
  *                   see ftp://ftp.netlab.co.jp/pub/lang/ruby/
  *                 This part of Snd is brand-new and has many bugs/omissions/etc.
  *
- *   HAVE_GUILE_GTK
- *                 define if you're using Gtk+ and have libguilegtk.  The configure script
- *                 will define this if it can find the guile-gtk library and you're using Gtk+.
- *                 With guile 1.4, you need guile-gtk-0.19.
- *
  *   HAVE_XPM      define if you have the XPM library (the default in Linux and Gtk+)
  *                 (used to make cute icons in various places)
  *
@@ -168,7 +163,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "24-July-01"
+#define SND_VERSION "25-July-01"
 #define SND_RPM_VERSION "5.1"
 #define SND_MAJOR_VERSION 5
 #define SND_MINOR_VERSION 1

@@ -877,7 +877,7 @@ static Float *whatever_to_floats(XEN inp, int size, const char *caller)
 	    }
 	  else
 	    {
-	      if (procedure_fits(inp, 1))
+	      if ((XEN_PROCEDURE_P(inp)) && (XEN_REQUIRED_ARGS(inp) == 1))
 		{
 		  invals = (Float *)MALLOC(size * sizeof(Float));
 		  for (i = 0; i < size; i++) 
@@ -3881,7 +3881,7 @@ included an 'input' argument, input-function is ignored."
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_src_p(MUS_XEN_TO_CLM(obj))), obj, XEN_ARG_1, S_src, "an src gen");
   gn = CLM_TO_MUS_XEN(obj);
   if (XEN_NUMBER_P(pm)) pm1 = XEN_TO_C_DOUBLE(pm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(pm), pm, XEN_ARG_2, S_src, "a number");
-  if (procedure_fits(func, 1)) gn->vcts[INPUT_FUNCTION] = func;
+  if ((XEN_PROCEDURE_P(func)) && (XEN_REQUIRED_ARGS(func) == 1)) gn->vcts[INPUT_FUNCTION] = func;
   return(C_TO_XEN_DOUBLE(mus_src(MUS_XEN_TO_CLM(obj), pm1, 0)));
 }
 
@@ -3908,7 +3908,7 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
     {
       if (!(XEN_KEYWORD_P(keys[0]))) 
 	{
-	  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(keys[0]) && (procedure_fits(keys[0], 1)), keys[0], orig_arg[0] + 1, S_make_src, "a procedure");
+	  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(keys[0]) && (XEN_REQUIRED_ARGS(keys[0]) == 1), keys[0], orig_arg[0] + 1, S_make_src, "a procedure");
 	  in_obj = keys[0];
 	}
       srate = fkeyarg(keys[1], S_make_src, orig_arg[1] + 1, srate);
@@ -3949,7 +3949,7 @@ static XEN g_granulate(XEN obj, XEN func)
   mus_xen *gn;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_granulate_p(MUS_XEN_TO_CLM(obj))), obj, XEN_ARG_1, S_granulate, "a granulate gen");
   gn = CLM_TO_MUS_XEN(obj);
-  if (procedure_fits(func, 1)) gn->vcts[INPUT_FUNCTION] = func;
+  if ((XEN_PROCEDURE_P(func)) && (XEN_REQUIRED_ARGS(func) == 1)) gn->vcts[INPUT_FUNCTION] = func;
   return(C_TO_XEN_DOUBLE(mus_granulate(MUS_XEN_TO_CLM(obj), 0)));
 }
 
@@ -3999,7 +3999,7 @@ jitter controls the randomness in that spacing, input can be a file pointer."
     {
       if (!(XEN_KEYWORD_P(keys[0]))) 
 	{
-	  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(keys[0]) && (procedure_fits(keys[0], 1)), keys[0], orig_arg[0] + 1, S_make_granulate, "a procedure");
+	  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(keys[0]) && (XEN_REQUIRED_ARGS(keys[0]) == 1), keys[0], orig_arg[0] + 1, S_make_granulate, "a procedure");
 	  in_obj = keys[0];
 	}
       expansion = fkeyarg(keys[1], S_make_granulate, orig_arg[1] + 1, expansion);
@@ -4046,7 +4046,7 @@ static XEN g_convolve(XEN obj, XEN func)
   mus_xen *gn;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_convolve_p(MUS_XEN_TO_CLM(obj))), obj, XEN_ARG_1, S_convolve, "a convolve gen");
   gn = CLM_TO_MUS_XEN(obj);
-  if (procedure_fits(func, 1)) gn->vcts[INPUT_FUNCTION] = func;
+  if ((XEN_PROCEDURE_P(func)) && (XEN_REQUIRED_ARGS(func) == 1)) gn->vcts[INPUT_FUNCTION] = func;
   return(C_TO_XEN_DOUBLE(mus_convolve(MUS_XEN_TO_CLM(obj), 0)));
 }
 
@@ -4075,7 +4075,7 @@ returns a new convolution generator which convolves its input with the impulse r
     {
       if (!(XEN_KEYWORD_P(keys[0]))) 
 	{
-	  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(keys[0]) && (procedure_fits(keys[0], 1)), keys[0], orig_arg[0] + 1, S_make_convolve, "a procedure");
+	  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(keys[0]) && (XEN_REQUIRED_ARGS(keys[0]) == 1), keys[0], orig_arg[0] + 1, S_make_convolve, "a procedure");
 	  in_obj = keys[0];
 	}
       if (!(XEN_KEYWORD_P(keys[1]))) 
@@ -4183,7 +4183,7 @@ static XEN g_phase_vocoder(XEN obj, XEN func)
   mus_xen *gn;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_phase_vocoder_p(MUS_XEN_TO_CLM(obj))), obj, XEN_ARG_1, S_phase_vocoder, "a phase-vocoder gen");
   gn = CLM_TO_MUS_XEN(obj);
-  if (procedure_fits(func, 1)) gn->vcts[INPUT_FUNCTION] = func;
+  if ((XEN_PROCEDURE_P(func)) && (XEN_REQUIRED_ARGS(func) == 1)) gn->vcts[INPUT_FUNCTION] = func;
   return(C_TO_XEN_DOUBLE(mus_phase_vocoder(MUS_XEN_TO_CLM(obj), 0)));
 }
 
@@ -4216,14 +4216,14 @@ and interp set the fftsize, the amount of overlap between ffts, and the time bet
   vals = decode_keywords(S_make_phase_vocoder, 8, keys, 16, args, orig_arg);
   if (vals > 0)
     {
-      if (procedure_fits(keys[0], 1)) in_obj = keys[0];
+      if ((XEN_PROCEDURE_P(keys[0])) && (XEN_REQUIRED_ARGS(keys[0]) == 1)) in_obj = keys[0];
       fft_size = ikeyarg(keys[1], S_make_phase_vocoder, orig_arg[1] + 1, fft_size);
       overlap = ikeyarg(keys[2], S_make_phase_vocoder, orig_arg[2] + 1, overlap);
       interp = ikeyarg(keys[3], S_make_phase_vocoder, orig_arg[3] + 1, interp);
       pitch = fkeyarg(keys[4], S_make_phase_vocoder, orig_arg[4] + 1, pitch);
-      if (procedure_fits(keys[5], 1)) analyze_obj = keys[5];
-      if (procedure_fits(keys[6], 1)) edit_obj = keys[6];
-      if (procedure_fits(keys[7], 2)) synthesize_obj = keys[7];
+      if ((XEN_PROCEDURE_P(keys[5])) && (XEN_REQUIRED_ARGS(keys[5]) == 1)) analyze_obj = keys[5];
+      if ((XEN_PROCEDURE_P(keys[6])) && (XEN_REQUIRED_ARGS(keys[6]) == 1)) edit_obj = keys[6];
+      if ((XEN_PROCEDURE_P(keys[7])) && (XEN_REQUIRED_ARGS(keys[7]) == 2)) synthesize_obj = keys[7];
     }
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   gn->nvcts = 5;

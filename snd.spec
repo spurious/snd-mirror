@@ -181,7 +181,7 @@ Prefix:         %{prefix}
 Snd is a sound editor modelled loosely after Emacs and an old, sorely-missed
 PDP-10 sound editor named Dpysnd. It can accomodate any number of sounds
 each with any number of channels, and can be customized and extended
-using guile and guile-gtk. Snd is free (LGPL); the code is available via
+using Guile or Ruby. Snd is free (LGPL); the code is available via
 anonymous ftp at ccrma-ftp.stanford.edu as pub/Lisp/snd-4.tar.gz.
 
 %package oss

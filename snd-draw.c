@@ -284,53 +284,6 @@ static XEN g_set_foreground_color_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg
 }
 
 #if USE_MOTIF
-  #define INPUT_TYPE XtInputId
-#else
-  #define INPUT_TYPE gint
-#endif
-/* these should be in snd-xscm and snd-gscm once tested etc */
-
-static int num_inputs = 0;
-static XEN *added_input_callbacks = NULL;
-static INPUT_TYPE *added_inputs = NULL;
-
-static int get_callback_slot(void)
-{
-  int i, old_len;
-  if (num_inputs == 0)
-    {
-      num_inputs = 4;
-      added_input_callbacks = (XEN *)CALLOC(num_inputs, sizeof(XEN));
-      added_inputs = (INPUT_TYPE *)CALLOC(num_inputs, sizeof(INPUT_TYPE));
-      for (i = 0; i < num_inputs; i++) added_input_callbacks[i] = XEN_UNDEFINED;
-      return(0);
-    }
-  for (i = 0; i < num_inputs; i++)
-    if (XEN_NOT_BOUND_P(added_input_callbacks[i]))
-      return(i);
-  old_len = num_inputs;
-  num_inputs += 4;
-  added_input_callbacks = (XEN *)REALLOC(added_input_callbacks, num_inputs * sizeof(XEN));
-  added_inputs = (INPUT_TYPE *)REALLOC(added_inputs, num_inputs * sizeof(INPUT_TYPE));
-  for (i = old_len; i < num_inputs; i++)
-    added_input_callbacks[i] = XEN_UNDEFINED;
-  return(old_len);
-}
-
-#if USE_MOTIF
-
-#define ADD_INPUT(File, Callback) \
-  XtAppAddInput(MAIN_APP(ss), File, (XtPointer)XtInputReadMask, handle_input, (XtPointer)Callback)
-
-#define REMOVE_INPUT(Id) XtRemoveInput((XtInputId)Id)
-
-static void handle_input(XtPointer context, int *fd, XtInputId *id)
-{
-  int input_index = (int)context;  /* TODO: is this legal on the Alpha?  if not, can we use long here? */
-  XEN_CALL_1(added_input_callbacks[input_index],
-	C_TO_XEN_INT(*fd),
-	"input callback");
-}
 
 static XEN g_load_font(XEN font)
 {
@@ -374,19 +327,6 @@ static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
 
 
 #else
-
-#define ADD_INPUT(File, Callback) \
-  gdk_input_add(File, GDK_INPUT_READ, handle_input, (gpointer)Callback)
-
-#define REMOVE_INPUT(Id) gdk_input_remove((gint)Id)
-
-static void handle_input(gpointer context, gint fd, GdkInputCondition condition)
-{
-  int input_index = (int)context;
-  XEN_CALL_1(added_input_callbacks[input_index],
-	C_TO_XEN_INT(fd),
-	"input callback");
-}
 
 static XEN g_load_font(XEN font)
 {
@@ -438,123 +378,6 @@ static XEN g_set_current_font_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 	}
     }
 }
-
-static XEN g_add_input(XEN file, XEN callback)
-{
-  #define H_add_input "(" S_add_input " file callback) -> id adds file to the set being watched for input, calling callback if any is received"
-  snd_state *ss;
-  int loc;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(file), file, XEN_ARG_1, S_add_input, "an integer");
-  if (!(procedure_fits(callback, 1)))
-    mus_misc_error(S_add_input, "2nd argument should be a procedure of one arg", callback);
-  ss = get_global_state();
-  snd_protect(callback);
-  loc = get_callback_slot();
-  added_inputs[loc] = ADD_INPUT(XEN_TO_C_INT(file), loc);
-  added_input_callbacks[loc] = callback;
-  return(C_TO_XEN_INT(loc));
-}
-
-static XEN g_remove_input(XEN id)
-{
-  #define H_remove_input "(" S_remove_input " id) removes id from the set of files watched for input"
-  int index;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(id), id, XEN_ONLY_ARG, S_remove_input, "an integer");
-  index = XEN_TO_C_INT(id);
-  REMOVE_INPUT(added_inputs[index]);
-  snd_unprotect(added_input_callbacks[index]);
-  added_input_callbacks[index] = XEN_UNDEFINED;
-  return(id);
-}
-
-static XEN *idler_code = NULL;
-static BACKGROUND_FUNCTION_TYPE *idler_id = NULL;
-static int idlers = 0;
-static BACKGROUND_FUNCTION_TYPE remember_idler(XEN code, BACKGROUND_FUNCTION_TYPE id)
-{
-  int i, loc = -1;
-  if (idlers == 0)
-    {
-      idlers = 4;
-      idler_code = (XEN *)MALLOC(idlers * sizeof(XEN));
-      for (i = 0; i< idlers; i++) idler_code[i] = XEN_UNDEFINED;
-      idler_id = (BACKGROUND_FUNCTION_TYPE *)CALLOC(idlers, sizeof(BACKGROUND_FUNCTION_TYPE));
-      loc = 0;
-    }
-  else
-    {
-      for (i = 0; i < idlers; i++)
-	if (idler_id[i] == 0)
-	  {
-	    loc = i;
-	    break;
-	  }
-      if (loc < 0)
-	{
-	  loc = idlers;
-	  idlers *= 2;
-	  idler_code = (XEN *)REALLOC(idler_code, idlers * sizeof(XEN));
-	  idler_id = (BACKGROUND_FUNCTION_TYPE *)REALLOC(idler_id, idlers * sizeof(BACKGROUND_FUNCTION_TYPE));
-	  for (i = loc; i < idlers; i++) 
-	    {
-	      idler_id[i] = 0;
-	      idler_code[i] = XEN_UNDEFINED;
-	    }
-	}
-    }
-  idler_code[loc] = code;
-  snd_protect(code);
-  idler_id[loc] = id;
-  return(id);
-}
-
-static BACKGROUND_FUNCTION_TYPE forget_idler(XEN code, BACKGROUND_FUNCTION_TYPE id)
-{
-  int i;
-  for (i = 0; i < idlers; i++)
-    if (((id != 0) && (id == idler_id[i])) ||
-	((XEN_BOUND_P(code)) && (XEN_EQ_P(code, idler_code[i]))))
-      {
-	idler_id[i] = 0;
-	if (XEN_BOUND_P(idler_code[i]))
-	  snd_unprotect(idler_code[i]);
-	return(id);
-      }
-  return(id);
-}
-
-static BACKGROUND_TYPE call_idler(GUI_POINTER code)
-{
-#if (SCM_DEBUG_TYPING_STRICTNESS != 2)
-  if (XEN_TRUE_P(XEN_CALL_0((XEN)code, "idler callback")))
-    return(BACKGROUND_CONTINUE);
-  forget_idler((XEN)code, (BACKGROUND_FUNCTION_TYPE)0);
-#endif
-  return(BACKGROUND_QUIT);
-}
-
-static XEN g_add_idler(XEN code)
-{
-  #define H_add_idler "(" S_add_idler " code) -> id causing code to run as a background process"
-#if (SCM_DEBUG_TYPING_STRICTNESS != 2)
-  if (!(procedure_fits(code, 0)))
-    mus_misc_error(S_add_idler, "argument should be a procedure of no args", code);
-  return(XEN_WRAP_C_POINTER(remember_idler(code, BACKGROUND_ADD(get_global_state(), 
-								call_idler, 
-								(GUI_POINTER)code))));
-#endif
-}
-
-static XEN g_remove_idler(XEN id)
-{
-  #define H_remove_idler "(" S_remove_idler " id) removes background process"
-#if (SCM_DEBUG_TYPING_STRICTNESS != 2)
-  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(id), id, XEN_ONLY_ARG, S_remove_idler, "a wrapped object");
-  BACKGROUND_REMOVE(forget_idler(XEN_UNDEFINED, (BACKGROUND_FUNCTION_TYPE)(XEN_UNWRAP_C_POINTER(id))));
-#endif
-  return(id);
-}
-
 
 static XEN g_make_graph_data(XEN snd, XEN chn, XEN edpos, XEN lo, XEN hi)
 {
@@ -1021,12 +844,8 @@ XEN_NARGIFY_2(g_recolor_widget_w, g_recolor_widget)
 XEN_NARGIFY_1(g_hide_widget_w, g_hide_widget)
 XEN_NARGIFY_1(g_show_widget_w, g_show_widget)
 XEN_NARGIFY_1(g_focus_widget_w, g_focus_widget)
-XEN_NARGIFY_1(g_add_idler_w, g_add_idler)
-XEN_NARGIFY_1(g_remove_idler_w, g_remove_idler)
 XEN_ARGIFY_5(g_make_graph_data_w, g_make_graph_data)
 XEN_ARGIFY_7(g_graph_data_w, g_graph_data)
-XEN_NARGIFY_2(g_add_input_w, g_add_input)
-XEN_NARGIFY_1(g_remove_input_w, g_remove_input)
 XEN_NARGIFY_2(g_set_widget_foreground_w, g_set_widget_foreground)
 XEN_VARGIFY(g_make_bezier_w, g_make_bezier)
 XEN_NARGIFY_1(g_make_pixmap_w, g_make_pixmap)
@@ -1057,12 +876,8 @@ XEN_NARGIFY_2(g_colormap_ref_w, g_colormap_ref)
 #define g_hide_widget_w g_hide_widget
 #define g_show_widget_w g_show_widget
 #define g_focus_widget_w g_focus_widget
-#define g_add_idler_w g_add_idler
-#define g_remove_idler_w g_remove_idler
 #define g_make_graph_data_w g_make_graph_data
 #define g_graph_data_w g_graph_data
-#define g_add_input_w g_add_input
-#define g_remove_input_w g_remove_input
 #define g_set_widget_foreground_w g_set_widget_foreground
 #define g_make_bezier_w g_make_bezier
 #define g_make_pixmap_w g_make_pixmap
@@ -1113,9 +928,6 @@ void g_init_draw(void)
   XEN_DEFINE_PROCEDURE(S_show_widget,     g_show_widget_w, 1, 0, 0,     H_show_widget);
   XEN_DEFINE_PROCEDURE(S_focus_widget,    g_focus_widget_w, 1, 0, 0,    H_focus_widget);
 
-  XEN_DEFINE_PROCEDURE(S_add_idler,       g_add_idler_w, 1, 0, 0,       H_add_idler);
-  XEN_DEFINE_PROCEDURE(S_remove_idler,    g_remove_idler_w, 1, 0, 0,    H_remove_idler);
-
   XEN_DEFINE_PROCEDURE(S_make_graph_data, g_make_graph_data_w, 0, 5, 0, H_make_graph_data);
   XEN_DEFINE_PROCEDURE(S_graph_data,      g_graph_data_w, 1, 6, 0,      H_graph_data);
 
@@ -1129,9 +941,6 @@ void g_init_draw(void)
   XEN_DEFINE_CONSTANT("selected-mix-context", CHAN_SELMXGC,   "graphics context for selected mix waveforms");
   XEN_DEFINE_CONSTANT("combined-context",     CHAN_TMPGC,     "graphics context for superimposed graphics");
 #endif
-
-  XEN_DEFINE_PROCEDURE(S_add_input,       g_add_input_w, 2, 0, 0,       H_add_input);
-  XEN_DEFINE_PROCEDURE(S_remove_input,    g_remove_input_w, 1, 0, 0,    H_remove_input);
 
   XEN_DEFINE_PROCEDURE("set-widget-foreground", g_set_widget_foreground_w, 2, 0, 0, H_set_widget_foreground);
   XEN_DEFINE_PROCEDURE(S_make_bezier,     g_make_bezier_w, 0, 0, 1,     H_make_bezier);

@@ -1,9 +1,11 @@
 snd change log
 
+  25-Jul:    snd 5.1.
+             removed snd-gtk.scm (guile-gtk is no longer supported).
+             removed add/remove-idler/input.
   23-Jul:    xm.c (Motif module).
   12-Jul:    ALSA 0.9 support from Fernando.
   9-Jul:     xen.c, xen.html.  
-             MzScheme support.
   6-Jul:     sg.h, sl.h, noguile.h, sr.h, sz.h -> xen.h.
              snd-scm.c, clm2scm.[ch], sndlib2scm.[ch] -> xen for scm.
              many internal name changes to change scm to xen.
