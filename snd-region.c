@@ -177,7 +177,7 @@ int region_ok(int id)
   return(id_to_region(id) != NULL);
 }
 
-static off_t region_len(int n) 
+off_t region_len(int n) 
 {
   region *r;
   r = id_to_region(n);
@@ -302,42 +302,6 @@ static int check_regions(void)
   return(act);
 }
 
-snd_info *make_initial_region_sp(snd_state *ss, widget_t region_grf)
-{
-  int id;
-  snd_info *reg_sp;
-  chan_info *cp;
-  file_info *hdr;
-  id = stack_position_to_id(0);
-  reg_sp = make_basic_snd_info(1);
-  reg_sp->nchans = 1;
-  reg_sp->inuse = TRUE;
-  reg_sp->active = TRUE;
-  reg_sp->hdr = (file_info *)CALLOC(1, sizeof(file_info));
-  reg_sp->search_proc = XEN_UNDEFINED;
-  reg_sp->prompt_callback = XEN_UNDEFINED;
-  hdr = reg_sp->hdr;
-  hdr->samples = region_len(id);
-  hdr->srate = region_srate(id);
-  hdr->comment = NULL;
-  hdr->chans = 1;
-  add_channel_window(reg_sp, 0, ss, 0, 0, region_grf, WITH_ARROWS);
-  cp = reg_sp->chans[0];
-  cp->sound = reg_sp;
-  cp->edit_size = 1;
-  cp->edit_ctr = 0;
-  allocate_ed_list(cp);
-  cp->samples = (off_t *)CALLOC(cp->edit_size, sizeof(off_t));
-  cp->cursors = (off_t *)CALLOC(cp->edit_size, sizeof(off_t));
-  cp->sound_size = 1;
-  cp->sound_ctr = 0;
-  cp->sounds = (snd_data **)CALLOC(cp->sound_size, sizeof(snd_data *));
-  cp->samples[0] = region_len(id);
-  cp->time_graph_style = region_graph_style(ss); /* added 8-Aug-01 */
-  cp->dot_size = dot_size(ss);
-  return(reg_sp);
-}
-
 static void make_region_readable(region *r)
 {
   snd_info *regsp;
@@ -358,6 +322,7 @@ static void make_region_readable(region *r)
   regsp->hdr = (file_info *)CALLOC(1, sizeof(file_info));
   regsp->search_proc = XEN_UNDEFINED;
   regsp->prompt_callback = XEN_UNDEFINED;
+  regsp->inuse = SOUND_READER;
   hdr = regsp->hdr;
   hdr->samples = r->frames * r->chans;
   hdr->srate = r->srate;
@@ -367,7 +332,7 @@ static void make_region_readable(region *r)
     {
       cp = make_chan_info(NULL, i, regsp, ss);
       regsp->chans[i] = cp;
-      add_channel_data_1(cp, regsp, WITHOUT_GRAPH);
+      add_channel_data_1(cp, r->srate, r->frames, WITHOUT_GRAPH);
       cp->edits[0] = initial_ed_list(0, r->frames - 1);
       cp->edit_size = 1;
       cp->sound_size = 1;

@@ -271,7 +271,7 @@ static gboolean minibuffer_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpoin
 {
   snd_info *sp = (snd_info *)data;
   snd_state *ss;
-  if ((sp) && (sp->inuse))
+  if ((sp) && (sp->inuse == SOUND_NORMAL))
     {
       ss = sp->state;
       if (ss)
@@ -287,7 +287,7 @@ static gboolean minibuffer_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpoin
 {
   snd_info *sp = (snd_info *)data;
   snd_state *ss;
-  if ((sp) && (sp->inuse))
+  if ((sp) && (sp->inuse == SOUND_NORMAL))
     {
       ss = sp->state;
       if (ss)
@@ -1161,7 +1161,7 @@ void color_filter_waveform(snd_state *ss, GdkColor *color)
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
-      if ((sp) && (sp->inuse)) 
+      if ((sp) && (sp->inuse == SOUND_NORMAL))
 	display_filter_env(sp);
     }
 }
@@ -1340,7 +1340,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
   make_widgets = (ss->sounds[snd_slot] == NULL);
   ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot], ss, filename, hdr, snd_slot, read_only);
   sp = ss->sounds[snd_slot];
-  sp->inuse = TRUE;
+  sp->inuse = SOUND_NORMAL;
   sx = sp->sgx;
   sx->controls_fixed = FALSE;
   sx->file_pix = blank;
@@ -1363,7 +1363,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
   if ((!make_widgets) && (old_chans < nchans))
     {
       for (i = old_chans; i < nchans; i++) 
-	add_channel_window(sp, i, ss, chan_min_y, 1, NULL, WITH_FW_BUTTONS);
+	add_channel_window(sp, i, ss, chan_min_y, 1, NULL, WITH_FW_BUTTONS, TRUE);
     }
 
   if (make_widgets)
@@ -1403,7 +1403,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       gtk_box_pack_end(GTK_BOX(sw[W_pane_box]), sw[W_name_form], FALSE, FALSE, 0);
       
       for (i = 0; i < nchans; i++) 
-	add_channel_window(sp, i, ss, chan_min_y, 0, NULL, WITH_FW_BUTTONS);
+	add_channel_window(sp, i, ss, chan_min_y, 0, NULL, WITH_FW_BUTTONS, TRUE);
 
       /* controls etc */
 
@@ -1966,7 +1966,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       gtk_widget_show(sw[W_unite]);
       gtk_widget_show(w_snd_pane(sp));
       for (k = 0; k < nchans; k++) 
-	add_channel_window(sp, k, ss, chan_min_y, 0, NULL, WITH_FW_BUTTONS);
+	add_channel_window(sp, k, ss, chan_min_y, 0, NULL, WITH_FW_BUTTONS, TRUE);
       gtk_label_set_text(GTK_LABEL(sw[W_name]), shortname_indexed(sp));
 
       reset_controls(sp);
@@ -1989,7 +1989,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 
   if (sp->nchans == 1) 
     gtk_widget_hide(sw[W_unite]);
-  add_sound_data(filename, sp, ss, WITH_GRAPH);
+  add_sound_data(filename, sp, WITH_GRAPH);
 
   snd_file_lock_icon(sp, (sp->read_only || (cant_write(sp->filename))));
   if (old_name)
@@ -2073,7 +2073,7 @@ void show_controls(snd_state *ss)
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
-      if ((sp) && (sp->inuse)) 
+      if ((sp) && (sp->inuse == SOUND_NORMAL))
 	sound_show_ctrls(sp);
     }
 }
@@ -2087,7 +2087,7 @@ void hide_controls(snd_state *ss)
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
-      if ((sp) && (sp->inuse)) 
+      if ((sp) && (sp->inuse == SOUND_NORMAL))
 	sound_hide_ctrls(sp);
     }
 }

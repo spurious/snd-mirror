@@ -270,7 +270,7 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->index = snd_slot;
   sp->nchans = chans;
   sp->hdr = hdr;
-  sp->inuse = TRUE;
+  sp->inuse = SOUND_NORMAL;
   sp->filename = copy_string(filename);
   sp->short_filename = filename_without_home_directory(sp->filename); /* a pointer into filename, not a new string */
   sp->state = ss;
@@ -335,7 +335,7 @@ void free_snd_info(snd_info *sp)
     if (sp->chans[i]) 
       sp->chans[i] = free_chan_info(sp->chans[i]);
   sp->state = NULL;
-  sp->inuse = FALSE;
+  sp->inuse = SOUND_IDLE;
   sp->playing_mark = NULL;
   sp->playing = 0;
   sp->searching = 0;
@@ -413,7 +413,7 @@ snd_info *completely_free_snd_info(snd_info *sp)
   return(NULL);
 }
 
-int map_over_chans (snd_state *ss, int (*func)(chan_info *, void *), void *userptr)
+int map_over_chans(snd_state *ss, int (*func)(chan_info *, void *), void *userptr)
 {
   /* argument to func is chan_info pointer+void pointer of user spec, return non-zero = abort map, skips inactive sounds */
   int i, j, val;
@@ -424,7 +424,7 @@ int map_over_chans (snd_state *ss, int (*func)(chan_info *, void *), void *userp
     for (i = 0; i < ss->max_sounds; i++)
       {
 	sp = ss->sounds[i];
-	if ((sp) && (sp->inuse))
+	if ((sp) && (sp->inuse == SOUND_NORMAL))
 	  for (j = 0; j < sp->nchans; j++)
 	    if ((cp = ((chan_info *)(sp->chans[j]))))
 	      {
@@ -444,7 +444,7 @@ void for_each_chan_1(snd_state *ss, void (*func)(chan_info *, void *), void *use
     for (i = 0; i < ss->max_sounds; i++)
       {
 	sp = ss->sounds[i];
-	if ((sp) && (sp->inuse))
+	if ((sp) && (sp->inuse == SOUND_NORMAL))
 	  for (j = 0; j < sp->nchans; j++)
 	    if ((cp = ((chan_info *)(sp->chans[j]))))
 	      (*func)(cp, userptr);
@@ -460,7 +460,7 @@ void for_each_chan(snd_state *ss, void (*func)(chan_info *))
     for (i = 0; i < ss->max_sounds; i++)
       {
 	sp = ss->sounds[i];
-	if ((sp) && (sp->inuse))
+	if ((sp) && (sp->inuse == SOUND_NORMAL))
 	  for (j = 0; j < sp->nchans; j++)
 	    if ((cp = ((chan_info *)(sp->chans[j]))))
 	      (*func)(cp);
@@ -501,7 +501,7 @@ int map_over_sounds(snd_state *ss, int (*func)(snd_info *, void *), void *userpt
     for (i = 0; i < ss->max_sounds; i++)
       {
 	sp = ss->sounds[i];
-	if ((sp) && (sp->inuse))
+	if ((sp) && (sp->inuse == SOUND_NORMAL))
 	  {
 	    val = (*func)(sp, userptr);
 	    if (val) return(val);
@@ -518,7 +518,7 @@ void for_each_sound(snd_state *ss, void (*func)(snd_info *, void *), void *userp
     for (i = 0; i < ss->max_sounds; i++)
       {
 	sp = ss->sounds[i];
-	if ((sp) && (sp->inuse))
+	if ((sp) && (sp->inuse == SOUND_NORMAL))
 	  (*func)(sp, userptr);
       }
 }
@@ -532,7 +532,7 @@ int map_over_separate_chans(snd_state *ss, int (*func)(chan_info *, void *), voi
     for (i = 0; i < ss->max_sounds; i++)
       {
 	sp = ss->sounds[i];
-	if ((sp) && (sp->inuse))
+	if ((sp) && (sp->inuse == SOUND_NORMAL))
 	  {
 	    if (sp->channel_style != CHANNELS_SEPARATE)
 	      val = (*func)(sp->chans[0], userptr);
@@ -543,9 +543,9 @@ int map_over_separate_chans(snd_state *ss, int (*func)(chan_info *, void *), voi
   return(val);
 }
 
-int snd_ok (snd_info *sp) {return((sp) && (sp->inuse) && (sp->active));}
+int snd_ok(snd_info *sp) {return((sp) && (sp->inuse != SOUND_IDLE) && (sp->active));}
 
-int active_channels (snd_state *ss, int count_virtual_channels)
+int active_channels(snd_state *ss, int count_virtual_channels)
 {
   int chans, i;
   snd_info *sp;
@@ -553,7 +553,7 @@ int active_channels (snd_state *ss, int count_virtual_channels)
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
-      if (snd_ok(sp))
+      if (snd_ok(sp) && (sp->inuse != SOUND_WRAPPER))
 	{
 	  if ((count_virtual_channels == WITH_VIRTUAL_CHANNELS) ||
 	      (sp->channel_style == CHANNELS_SEPARATE))
@@ -566,7 +566,7 @@ int active_channels (snd_state *ss, int count_virtual_channels)
 
 #define SOUNDS_ALLOC_SIZE 4
 
-int find_free_sound_slot (snd_state *ss, int desired_chans)
+int find_free_sound_slot(snd_state *ss, int desired_chans)
 {
   int i, j;
   snd_info *sp;
@@ -576,25 +576,37 @@ int find_free_sound_slot (snd_state *ss, int desired_chans)
       /* snd_update should change the underlying slot only when it has to (user increased chans) */
       sp = ss->sounds[ss->reloading_updated_file - 1];
       if ((sp == NULL) ||
-	  ((sp->inuse == 0) && (sp->allocated_chans >= desired_chans)))
+	  ((sp->inuse == SOUND_IDLE) && (sp->allocated_chans >= desired_chans)))
 	return(ss->reloading_updated_file - 1);
     }
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
-      if ((sp) && (sp->inuse == 0) && (sp->allocated_chans == desired_chans)) return(i);
+      if ((sp) && (sp->inuse == SOUND_IDLE) && (sp->allocated_chans == desired_chans)) return(i);
     }
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
-      if ((sp) && (sp->inuse == 0) && (sp->allocated_chans > desired_chans)) return(i);
+      if ((sp) && (sp->inuse == SOUND_IDLE) && (sp->allocated_chans > desired_chans)) return(i);
     }
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
       if (sp == NULL) return(i);
-      if (sp->inuse == 0) return(i);
+      if (sp->inuse == SOUND_IDLE) return(i);
     }
+  j = ss->max_sounds;
+  ss->max_sounds += SOUNDS_ALLOC_SIZE;
+  ss->sounds = (snd_info **)REALLOC(ss->sounds, ss->max_sounds * sizeof(snd_info *));
+  for (i = j; i < ss->max_sounds; i++) ss->sounds[i] = NULL;
+  return(j);
+}
+
+int find_free_sound_slot_for_channel_display(snd_state *ss)
+{
+  int i, j;
+  for (i = 0; i < ss->max_sounds; i++)
+    if (ss->sounds[i] == NULL) return(i);
   j = ss->max_sounds;
   ss->max_sounds += SOUNDS_ALLOC_SIZE;
   ss->sounds = (snd_info **)REALLOC(ss->sounds, ss->max_sounds * sizeof(snd_info *));
@@ -609,7 +621,7 @@ static snd_info *any_active_sound(snd_state *ss)
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
-      if ((sp) && (sp->inuse))
+      if ((sp) && (sp->inuse == SOUND_NORMAL))
 	return(sp);
     }
   return(NULL);
@@ -643,7 +655,7 @@ chan_info *selected_channel(snd_state *ss)
   if (ss->selected_sound != NO_SELECTION)
     {
       sp = ss->sounds[ss->selected_sound];
-      if ((sp->inuse) && (sp->selected_channel != NO_SELECTION))
+      if ((sp->inuse == SOUND_NORMAL) && (sp->selected_channel != NO_SELECTION))
 	return(sp->chans[sp->selected_channel]);
     }
   return(NULL);
@@ -652,7 +664,7 @@ chan_info *selected_channel(snd_state *ss)
 static XEN select_sound_hook;
 static XEN select_channel_hook;
 
-static void select_sound (snd_state *ss, snd_info *sp)
+static void select_sound(snd_state *ss, snd_info *sp)
 {
   snd_info *osp = NULL;
   if (XEN_HOOKED(select_sound_hook))
@@ -666,7 +678,7 @@ static void select_sound (snd_state *ss, snd_info *sp)
 #endif
 	{
 	  if (ss->selected_sound != NO_SELECTION) osp = ss->sounds[ss->selected_sound];
-	  if ((osp) && (sp != osp) && (osp->inuse)) 
+	  if ((osp) && (sp != osp) && (osp->inuse == SOUND_NORMAL)) 
 	    {
 	      highlight_color(ss, w_snd_name(osp));
 #if ((USE_MOTIF) && (XmVERSION > 1))
@@ -752,7 +764,7 @@ sync_info *snd_sync(snd_state *ss, int sync)
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
-      if ((sp) && (sp->inuse) && (sp->sync == sync)) 
+      if ((sp) && (sp->inuse == SOUND_NORMAL) && (sp->sync == sync)) 
 	chans += sp->nchans;
     }
   if (chans > 0)
@@ -765,7 +777,7 @@ sync_info *snd_sync(snd_state *ss, int sync)
       for (i = 0; i < ss->max_sounds; i++)
 	{
 	  sp = ss->sounds[i];
-	  if ((sp) && (sp->inuse) && (sp->sync == sync))
+	  if ((sp) && (sp->inuse == SOUND_NORMAL) && (sp->sync == sync))
 	    for (k = 0; k < sp->nchans; k++, j++)
 	      si->cps[j] = sp->chans[k];
 	}
@@ -774,7 +786,7 @@ sync_info *snd_sync(snd_state *ss, int sync)
   return(NULL);
 }
 
-sync_info *make_simple_sync (chan_info *cp, off_t beg)
+sync_info *make_simple_sync(chan_info *cp, off_t beg)
 {
   sync_info *si;
   si = (sync_info *)CALLOC(1, sizeof(sync_info));
@@ -804,7 +816,7 @@ snd_info *find_sound(snd_state *ss, char *name)
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
-      if ((sp) && (sp->inuse))
+      if ((sp) && (sp->inuse == SOUND_NORMAL))
 	if ((strcmp(name, sp->short_filename) == 0) || 
 	    (strcmp(name, sp->filename) == 0)) 
 	  return(sp);
@@ -813,7 +825,7 @@ snd_info *find_sound(snd_state *ss, char *name)
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
-      if ((sp) && (sp->inuse) && (strcmp(sname, sp->short_filename) == 0))
+      if ((sp) && (sp->inuse == SOUND_NORMAL) && (strcmp(sname, sp->short_filename) == 0))
 	return(sp);
     }
   return(NULL);

@@ -328,17 +328,17 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 
 ;;; -------- add our own pane to the channel section --------
 
-(define (add-channel-pane snd chn name type args)
+(define* (add-channel-pane snd chn name type #:optional (args '()))
   (XtCreateManagedWidget name type (XtParent (XtParent (list-ref (channel-widgets snd chn) 7))) args))
 
 ;;; -------- add our own pane to the sound section (underneath the controls in this case) --------
 
-(define (add-sound-pane snd name type args)
+(define* (add-sound-pane snd name type #:optional (args '()))
   (XtCreateManagedWidget name type (car (sound-widgets snd)) args))
 
 ;;; -------- add our own pane to the overall Snd window (underneath the listener in this case) --------
 
-(define (add-main-pane name type args)
+(define* (add-main-pane name type #:optional (args '()))
   (XtCreateManagedWidget name type (or (list-ref (main-widgets) 5) (list-ref (main-widgets) 3)) args))
 
 ;;; -------- add a widget at the top of the listener
@@ -2441,7 +2441,6 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	#f)))
 	  
 
-
 ;;; -------- state display panel --------
 
 (define variables-dialog #f)
@@ -2532,14 +2531,22 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		(label (XtCreateManagedWidget var-label xmLabelWidgetClass page
 					      (list XmNbackground  (basic-color)))))
 	   (make-level-meter page width height '() #f)))
-	;; TODO: graph/spectrum variable display
-	((graph) #f)
-	((spectrum) #f)
+	((graph)
+	 (let* ((form (XtCreateManagedWidget var-label xmFormWidgetClass page '()))
+		(snd (make-variable-graph form variable-name 2048 (mus-srate))))
+	   (list snd (channel-data snd 0))))
+	((spectrum)
+	 (let* ((form (XtCreateManagedWidget var-label xmFormWidgetClass page '()))
+		(snd (make-variable-graph form variable-name 2048 (mus-srate))))
+	   (set! (time-graph? snd 0) #f)
+	   (set! (transform-graph? snd 0) #t)
+	   (list snd (channel-data snd 0))))
 	(else #f))))
 
 (define (dpy var widget)
   (if (Widget? widget)
       (if (XmIsTextField widget)
+	  ;; text representation
 	  (let ((old-str (XmTextFieldGetString widget))
 		(new-str (if (number? var)
 			     (number->string var)
@@ -2552,13 +2559,25 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		  (if (XtIsManaged widget)
 		      (XmUpdateDisplay widget)))))
 	  (if (XmIsScale widget)
+	      ;; thermometer
 	      (XmScaleSetValue widget (inexact->exact (* 100 var)))))
-      (if (and (list? widget)
-	       (XmIsDrawingArea (car widget)))
-	  (begin
-	    (list-set! widget 1 var)
-	    (display-level widget)
-	    (XmUpdateDisplay (car widget)))))
+      (if (list? widget)
+	  (if (number? (car widget))
+	      ;; graph/spectrum -- does this need an explicit update?
+	      (let* ((snd (car widget))
+		     (data (cadr widget))
+		     (frames (sound-data-length data))
+		     (loc (cursor snd 0)))
+		(sound-data-set! data 0 loc var)
+		(if (= (+ loc 1) frames)
+		    (set! (cursor snd 0) 0)
+		    (set! (cursor snd 0) (+ loc 1))))
+	      (if (XmIsDrawingArea (car widget))
+		  ;; level meter
+		  (begin
+		    (list-set! widget 1 var)
+		    (display-level widget)
+		    (XmUpdateDisplay (car widget)))))))
   var)
 
 #!

@@ -421,6 +421,7 @@ snd_data *make_snd_data_file(char *name, snd_io *io, file_info *hdr, int temp, i
 snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize);
 snd_data *free_snd_data(snd_data *sf);
 snd_data *make_snd_data_buffer(mus_sample_t *data, int len, int ctr);
+snd_data *make_snd_data_buffer_for_simple_channel(int len);
 int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss);
 int close_temp_file(int ofd, file_info *hdr, off_t bytes, snd_info *sp);
 
@@ -639,6 +640,7 @@ int map_over_separate_chans(snd_state *ss, int (*func)(chan_info *, void *), voi
 int snd_ok (snd_info *sp);
 int active_channels (snd_state *ss, int count_virtual_channels);
 int find_free_sound_slot (snd_state *state, int desired_chans);
+int find_free_sound_slot_for_channel_display (snd_state *ss);
 snd_info *selected_sound(snd_state *ss);
 chan_info *selected_channel(snd_state *ss);
 snd_info *any_selected_sound (snd_state *ss);
@@ -833,6 +835,7 @@ void allocate_regions(snd_state *ss, int numreg);
 int region_ok(int n);
 int region_chans(int n);
 int region_srate(int n);
+off_t region_len(int n);
 Float region_maxamp(int n);
 int stack_position_to_id(int n);
 int id_to_stack_position(int id);
@@ -846,7 +849,6 @@ void paste_region(int n, chan_info *cp, const char *origin);
 void add_region(int n, chan_info *cp, const char *origin);
 int define_region(sync_info *si, off_t *ends);
 snd_fd *init_region_read (off_t beg, int n, int chan, int direction);
-snd_info *make_initial_region_sp(snd_state *ss, widget_t region_grf);
 void cleanup_region_temp_files(void);
 int snd_regions(void);
 void save_regions(snd_state *ss, FILE *fd);
@@ -947,6 +949,7 @@ void dac_set_reverb_lowpass(snd_info *sp, Float newval);
 
 /* -------- snd-chn.c -------- */
 
+snd_info *make_simple_channel_display(snd_state *ss, int srate, int initial_length, int with_arrows, int grf_style, widget_t container, int with_events);
 axis_info *lisp_info_axis(chan_info *cp);
 void *free_lisp_info(chan_info *cp);
 void zx_incremented(chan_info *cp, double amount);
@@ -974,8 +977,8 @@ int chan_fft_in_progress(chan_info *cp);
 void force_fft_clear(chan_info *cp);
 void chan_info_cleanup(chan_info *cp);
 void update_graph(chan_info *cp);
-void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *ss, int graphed);
-void add_channel_data_1(chan_info *cp, snd_info *sp, int graphed);
+void add_channel_data(char *filename, chan_info *cp, int graphed);
+void add_channel_data_1(chan_info *cp, int srate, off_t frames, int graphed);
 void set_x_bounds(axis_info *ap);
 void display_channel_data (chan_info *cp, snd_info *sp, snd_state *ss);
 void display_channel_fft_data (chan_info *cp, snd_info *sp, snd_state *ss);
@@ -1050,7 +1053,7 @@ int amp_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, int sta
 int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int srate);
 char *shortname(snd_info *sp);
 char *shortname_indexed(snd_info *sp);
-void add_sound_data(char *filename, snd_info *sp, snd_state *ss, int graphed);
+void add_sound_data(char *filename, snd_info *sp, int graphed);
 Float srate_changed(Float ival, char *srcbuf, int style, int tones);
 void sp_name_click(snd_info *sp);
 void free_controls(snd_info *sp);

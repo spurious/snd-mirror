@@ -70,8 +70,8 @@ void color_unselected_graphs(color_t color)
   ss = get_global_state();
   for (i = 0; i < ss->max_sounds; i++)
     {
-      sp = (snd_info *)(ss->sounds[i]);
-      if (sp)
+      sp = ss->sounds[i];
+      if ((sp) && (sp->inuse != SOUND_WRAPPER))
 	for (j = 0; j < sp->allocated_chans; j++)
 	  {
 	    cp = sp->chans[j];
@@ -90,8 +90,8 @@ void color_chan_components(color_t color, int which_component)
   ss = get_global_state();
   for (i = 0; i < ss->max_sounds; i++)
     {
-      sp = (snd_info *)(ss->sounds[i]);
-      if (sp)
+      sp = ss->sounds[i];
+      if ((sp) && (sp->inuse != SOUND_WRAPPER))
 	for (j = 0; j < sp->allocated_chans; j++)
 	  {
 	    cp = sp->chans[j];

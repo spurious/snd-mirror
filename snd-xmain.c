@@ -451,7 +451,7 @@ static Cessate startup_funcs(XtPointer context)
 	{
 	  sp = ss->sounds[0];
 	  if ((sp) && 
-	      (sp->inuse) &&
+	      (sp->inuse == SOUND_NORMAL) &&
 	      (sp->selected_channel == NO_SELECTION)) /* don't clobber possible select-channel in loaded startup files */
 	    select_channel(sp, 0);
 	}

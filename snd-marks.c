@@ -112,7 +112,7 @@ static mark *find_mark_from_id(int id, chan_info **cps, int pos)
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
-      if ((sp) && (sp->inuse))
+      if ((sp) && (sp->inuse == SOUND_NORMAL))
 	for (j = 0; j<(sp->nchans); j++)
 	  if ((cp = ((chan_info *)(sp->chans[j]))))
 	    {
@@ -2146,7 +2146,7 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
       for (j = ss->max_sounds - 1; j >= 0; j--)
 	{
 	  sp = ss->sounds[j];
-	  if ((sp) && (sp->inuse))
+	  if ((sp) && (sp->inuse == SOUND_NORMAL))
 	    res1 = XEN_CONS(g_marks(C_TO_SMALL_XEN_INT(j), XEN_UNDEFINED, XEN_UNDEFINED), 
 			    res1);
 	}

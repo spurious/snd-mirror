@@ -36,7 +36,7 @@ env *copy_env(env *e)
 /* mus_describe(e) */
 char *env_to_string(env *e)
 {
-  int i, j;
+  int i, j, first = TRUE;
   char *expr_buf;
   char *news = NULL;
   if (e)
@@ -52,11 +52,12 @@ char *env_to_string(env *e)
       for (i = 0, j = 0; i < e->pts; i++, j += 2)
 	{
 #if HAVE_RUBY
-	  mus_snprintf(expr_buf, PRINT_BUFFER_SIZE, "%.3f, %.3f, ", e->data[j], e->data[j + 1]);
+	  mus_snprintf(expr_buf, PRINT_BUFFER_SIZE, "%s%.3f, %.3f", (first) ? "" : ", ", e->data[j], e->data[j + 1]);
 #else
-	  mus_snprintf(expr_buf, PRINT_BUFFER_SIZE, "%.3f %.3f ", e->data[j], e->data[j + 1]);
+	  mus_snprintf(expr_buf, PRINT_BUFFER_SIZE, "%s%.3f %.3f", (first) ? "" : " ", e->data[j], e->data[j + 1]);
 #endif
 	  strcat(news, expr_buf);
+	  first = FALSE;
 	}
       FREE(expr_buf);
 #if HAVE_RUBY

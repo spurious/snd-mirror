@@ -5,7 +5,6 @@
 /* SOMEDAY: user-directable snd/chn display (place current snd-handler in any widget) (reuse?) */
 /* TODO: if background pixmap, icon field is not also set (and probably not during use as well) */
 /* TODO: in all dialogs, some of the buttons (the extras?) don't get the background pixmap? ditto the menus, and effects dialogs */
-/* TODO: in filter env list Ruby case, extra comma at end:  1.000, ] */
 
 #if HAVE_XPM
   #include <X11/xpm.h>
@@ -77,7 +76,7 @@ void goto_minibuffer(snd_info *sp)
 void set_minibuffer_string(snd_info *sp, char *str) 
 {
   XmTextSetString(MINIBUFFER_TEXT(sp), str);
-  if (sp->inuse) XmUpdateDisplay(MINIBUFFER_TEXT(sp));
+  if (sp->inuse == SOUND_NORMAL) XmUpdateDisplay(MINIBUFFER_TEXT(sp));
 }
 
 void set_minibuffer_cursor_position(snd_info *sp, int pos)
@@ -1164,7 +1163,7 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 	    {
 	      sp = ss->sounds[i];
 	      if ((sp) &&
-		  (sp->inuse) &&
+		  (sp->inuse == SOUND_NORMAL) &&
 		  (sp->nchans > 1) &&
 		  (sp->channel_style == CHANNELS_SEPARATE))
 		outer_panes++;
@@ -1178,7 +1177,7 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 		    {
 		      sp = ss->sounds[i];
 		      if ((sp) &&
-			  (sp->inuse) &&
+			  (sp->inuse == SOUND_NORMAL) &&
 			  (sp->nchans > 1) &&
 			  (sp->channel_style == CHANNELS_SEPARATE))
 			{
@@ -1204,7 +1203,7 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 		{
 		  sp = ss->sounds[i];
 		  if ((sp) &&
-		      (sp->inuse) &&
+		      (sp->inuse == SOUND_NORMAL) &&
 		      (sp->nchans > 1) &&
 		      (sp->channel_style == CHANNELS_SEPARATE))
 		    {
@@ -1522,7 +1521,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
   make_widgets = (ss->sounds[snd_slot] == NULL);
   ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot], ss, filename, hdr, snd_slot, read_only);
   sp = ss->sounds[snd_slot];
-  sp->inuse = TRUE;
+  sp->inuse = SOUND_NORMAL;
   sx = sp->sgx;
 #if HAVE_XPM
   sx->file_pix = blank_pixmap;
@@ -1536,7 +1535,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
   if ((!make_widgets) && (old_chans < nchans))
     {
       for (i = old_chans; i < nchans; i++) 
-	add_channel_window(sp, i, ss, chan_min_y, 1, NULL, WITH_FW_BUTTONS);
+	add_channel_window(sp, i, ss, chan_min_y, 1, NULL, WITH_FW_BUTTONS, TRUE);
     }
 
   if (make_widgets)
@@ -1602,7 +1601,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       /* all widgets in the control-pane that would otherwise intercept the key events get this event handler */
 
       for (i = 0; i < nchans; i++)
-	add_channel_window(sp, i, ss, chan_min_y, 0, NULL, WITH_FW_BUTTONS);
+	add_channel_window(sp, i, ss, chan_min_y, 0, NULL, WITH_FW_BUTTONS, TRUE);
       
       n = 0;      
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -2534,7 +2533,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
 	if ((sw[i]) && (!XtIsManaged(sw[i]))) 
 	  XtManageChild(sw[i]);
       for (k = 0; k < nchans; k++) 
-	add_channel_window(sp, k, ss, chan_min_y, 0, NULL, WITH_FW_BUTTONS);
+	add_channel_window(sp, k, ss, chan_min_y, 0, NULL, WITH_FW_BUTTONS, TRUE);
       set_button_label(sw[W_name], shortname_indexed(sp));
       if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
 	XtVaSetValues(sw[W_control_panel],
@@ -2556,7 +2555,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XmToggleButtonSetState(unite_button(sp), FALSE, FALSE);
       XtUnmanageChild(unite_button(sp));
     }
-  add_sound_data(filename, sp, ss, WITH_GRAPH);
+  add_sound_data(filename, sp, WITH_GRAPH);
   snd_file_lock_icon(sp, (sp->read_only || (cant_write(sp->filename))));
   if (old_name)
     report_in_minibuffer(sp, _("(translated %s)"), old_name);
@@ -2800,7 +2799,8 @@ void color_filter_waveform(snd_state *ss, Pixel color)
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
-      if ((sp) && (sp->inuse)) display_filter_env(sp);
+      if ((sp) && (sp->inuse == SOUND_NORMAL))
+	display_filter_env(sp);
     }
 }
 
@@ -2840,20 +2840,24 @@ void equalize_all_panes(snd_state *ss)
   if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
     {
       for (i = 0; i < ss->max_sounds; i++)
-	if (snd_ok(ss->sounds[i]))
-	  {
-	    nsp = ss->sounds[i];
-	    if (nsp->nchans > 1)
-	      {
-		height = widget_height(w_snd_pane(nsp));
-		even_channels(nsp, (void *)(&height));
-		map_over_sound_chans(nsp, channel_open_pane, NULL);
-		map_over_sound_chans(nsp, channel_unlock_pane, NULL);
-	      }
-	  }
+	{
+	  nsp = ss->sounds[i];
+	  if ((snd_ok(nsp)) && (nsp->inuse == SOUND_NORMAL))
+	    {
+	      if (nsp->nchans > 1)
+		{
+		  height = widget_height(w_snd_pane(nsp));
+		  even_channels(nsp, (void *)(&height));
+		  map_over_sound_chans(nsp, channel_open_pane, NULL);
+		  map_over_sound_chans(nsp, channel_unlock_pane, NULL);
+		}
+	    }
+	}
       return;
     }
-  for (i = 0; i < ss->max_sounds; i++) if (snd_ok(ss->sounds[i])) sounds++;
+  for (i = 0; i < ss->max_sounds; i++) 
+    if ((snd_ok(ss->sounds[i])) && (ss->sounds[i]->inuse == SOUND_NORMAL))
+      sounds++;
   if (sound_style(ss) == SOUNDS_VERTICAL)
     {
       height = widget_height(SOUND_PANE(ss)) - listener_height();
@@ -2949,7 +2953,7 @@ void show_controls(snd_state *ss)
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
-      if ((sp) && (sp->inuse)) 
+      if ((sp) && (sp->inuse == SOUND_NORMAL))
 	sound_show_ctrls(sp);
     }
 }
@@ -2963,7 +2967,7 @@ void hide_controls(snd_state *ss)
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
-      if ((sp) && (sp->inuse)) 
+      if ((sp) && (sp->inuse == SOUND_NORMAL))
 	sound_hide_ctrls(sp);
     }
 }

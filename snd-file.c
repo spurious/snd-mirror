@@ -738,7 +738,7 @@ void snd_close_file(snd_info *sp, snd_state *ss)
 		      XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
 		      S_close_hook);
   if (XEN_TRUE_P(res)) return;
-  sp->inuse = FALSE;
+  sp->inuse = SOUND_IDLE;
   for (i = 0; i < sp->nchans; i++) sp->chans[i]->squelch_update = TRUE;
   add_to_previous_files(ss, sp->short_filename, sp->filename);
   if (sp->playing) stop_playing_sound(sp);
@@ -837,7 +837,7 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   sp = make_basic_snd_info(chans);
   sp->nchans = chans;
   sp->hdr = hdr;
-  sp->inuse = TRUE;
+  sp->inuse = SOUND_READER;
   sp->state = ss;
   initialize_control_panel(ss, sp);
   sp->search_proc = XEN_UNDEFINED;
@@ -852,7 +852,7 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
       FREE(cp->cgx);
       cp->cgx = NULL;
       sp->chans[i] = cp;
-      add_channel_data_1(cp, sp, WITHOUT_GRAPH);
+      add_channel_data_1(cp, hdr->srate, len, WITHOUT_GRAPH);
       cp->edits[0] = initial_ed_list(0, len - 1);
       cp->edit_size = 1;
       cp->sound_size = 1;

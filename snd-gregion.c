@@ -310,7 +310,7 @@ static GtkWidget *dismiss_button, *help_button, *delete_button;
 
 static void make_region_dialog(snd_state *ss)
 {
-  int i;
+  int i, id;
   regrow *r;
   chan_info *cp;
   ww_info *wwl;
@@ -381,7 +381,6 @@ static void make_region_dialog(snd_state *ss)
 
   update_region_browser(ss, 0);
 
-
   /* in Gtk, apparently, labels are just the text, not the background (i.e. they're transparent) */
   /* we need a button simply to get the background color, then a vbox to put four labels on the button */
   /* but we get a button which flashes whenever the mouse comes near it and has "relief" */
@@ -441,20 +440,15 @@ static void make_region_dialog(snd_state *ss)
   gtk_widget_show(print_button);
 
   region_grf = wwl->panes;
-
   gtk_widget_show(region_dialog);
 
-  if (!rsp) 
-    { 
-      rsp = make_initial_region_sp(ss, region_grf);
-      current_region = 0;
-    }
-  else add_channel_window(rsp, 0, ss, 0, 0, region_grf, WITH_ARROWS);
+  id = stack_position_to_id(0);
+  rsp = make_simple_channel_display(ss, region_srate(id), region_len(id), WITH_ARROWS, region_graph_style(ss), region_grf, FALSE);
+  rsp->inuse = SOUND_REGION;
+  current_region = 0;
   cp = rsp->chans[0];
 
   gtk_paned_set_position(GTK_PANED(region_grf), 150);
-
-  cp->hookable = FALSE;
   g_signal_connect_closure_by_id(GTK_OBJECT(channel_graph(cp)),
 				 g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(channel_graph(cp)))),
 				 0,

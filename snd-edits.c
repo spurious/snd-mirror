@@ -7740,7 +7740,7 @@ static int save_edits_and_update_display(snd_info *sp)
     }
   else saved_errno = errno;
   sp->write_date = file_write_date(sp->filename);
-  add_sound_data(sp->filename, sp, ss, WITHOUT_INITIAL_GRAPH_HOOK);
+  add_sound_data(sp->filename, sp, WITHOUT_INITIAL_GRAPH_HOOK);
   restore_axes_data(sp, sa, mus_sound_duration(sp->filename), TRUE);
   sa = free_axes_data(sa);
   for (i = 0; i < sp->nchans; i++)
@@ -8576,7 +8576,7 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
 	      for (i = 0; i < ss->max_sounds; i++)
 		{
 		  sp = ss->sounds[i];
-		  if ((sp) && (sp->inuse))
+		  if ((sp) && (sp->inuse == SOUND_NORMAL))
 		    for (j = 0; j < sp->nchans; j++)
 		      edit_history_to_file(fd, sp->chans[j]);
 		}

@@ -1283,7 +1283,7 @@ selected sound: (map-chan (cross-synthesis 1 .5 128 6.0))"
 	       (begin
 		 (if (c-g?)               ; let interface run
 		     (break "interrupted")) ;   if C-g exit the loop returning the string "interrupted"
-		 (samples->vct inctr fftsize 0 0 fdr)
+		 (samples->vct inctr fftsize (selected-sound) 0 fdr)
 		 (let ((pk (vct-peak fdr)))
 		   (if (> pk old-peak-amp) (set! old-peak-amp pk)))
 		 (spectrum fdr fdi #f fftsize 2)

@@ -1,7 +1,7 @@
 #include "snd.h"
 
 void check_menu_labels(int key, int state, int extended) {}
-void add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, widget_t main, int arrows) {}
+void add_channel_window(snd_info *sound, int channel, snd_state *ss, int chan_y, int insertion, widget_t main, int arrows, int with_events) {}
 int snd_help(snd_state *ss, char *subject, char *help, int with_wrap) {fprintf(stdout, help); return(0);}
 void add_to_error_history(snd_state *ss, char *msg, int popup) {}
 void post_error_dialog(snd_state *ss, char *msg) {}
@@ -350,7 +350,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
   ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot], ss, filename, hdr, snd_slot, read_only);
   sp = ss->sounds[snd_slot];
   for (i = 0; i < nchans; i++) sp->chans[i] = make_chan_info(sp->chans[i], i, sp, ss);
-  add_sound_data(filename, sp, ss, WITHOUT_GRAPH);
+  add_sound_data(filename, sp, WITHOUT_GRAPH);
   after_open(sp->index);
   if (free_filename) FREE(filename);
   return(sp);
@@ -530,7 +530,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 #if TRAP_SEGFAULT
   if (trap_segfault(ss)) signal(SIGSEGV, segv);
 #endif
-  if ((ss->sounds) && (ss->sounds[0]) && ((ss->sounds[0])->inuse)) 
+  if ((ss->sounds) && (ss->sounds[0]) && ((ss->sounds[0])->inuse == SOUND_NORMAL))
     select_channel(ss->sounds[0], 0);
 
 #if TRAP_SEGFAULT

@@ -463,6 +463,19 @@ snd_data *make_snd_data_buffer(mus_sample_t *data, int len, int ctr)
   return(sf);
 }
 
+snd_data *make_snd_data_buffer_for_simple_channel(int len)
+{
+  snd_data *sf;
+  sf = (snd_data *)CALLOC(1, sizeof(snd_data));
+  sf->type = SND_DATA_BUFFER;
+  sf->buffered_data = (mus_sample_t *)CALLOC(len, sizeof(mus_sample_t));
+  sf->edit_ctr = 0;
+  sf->copy = FALSE;
+  sf->inuse = FALSE;
+  sf->len = len * 4;
+  return(sf);
+}
+
 snd_data *free_snd_data(snd_data *sd)
 {
   if (sd)

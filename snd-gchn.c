@@ -591,7 +591,7 @@ static const gint config_attributes[] = {
 };
 #endif
 
-void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int insertion, GtkWidget *main, int button_style)
+void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int insertion, GtkWidget *main, int button_style, int with_events)
 {
   GtkWidget **cw;
   GtkObject **adjs;
@@ -657,7 +657,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       set_background(cw[W_graph], (ss->sgx)->graph_color);
       set_foreground(cw[W_graph], (ss->sgx)->data_color);
       gtk_widget_show(cw[W_graph]);
-      if (button_style == WITH_FW_BUTTONS)
+      if (with_events)
 	{
 	  g_signal_connect_closure_by_id(GTK_OBJECT(cw[W_graph]),
 					 g_signal_lookup("expose_event", G_OBJECT_TYPE(GTK_OBJECT(cw[W_graph]))),
@@ -669,6 +669,9 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 					 0,
 					 g_cclosure_new(GTK_SIGNAL_FUNC(channel_resize_callback), (gpointer)cp, 0),
 					 0);
+	}
+      if (main == NULL)
+	{
 	  g_signal_connect_closure_by_id(GTK_OBJECT(cw[W_graph]),
 					 g_signal_lookup("enter_notify_event", G_OBJECT_TYPE(GTK_OBJECT(cw[W_graph]))),
 					 0,

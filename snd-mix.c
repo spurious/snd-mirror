@@ -3557,7 +3557,7 @@ static XEN g_mixes(XEN snd, XEN chn)
       for (j = ss->max_sounds - 1; j >= 0; j--)
 	{
 	  sp = ss->sounds[j];
-	  if ((sp) && (sp->inuse))
+	  if ((sp) && (sp->inuse == SOUND_NORMAL))
 	    res1 = XEN_CONS(g_mixes(C_TO_XEN_INT(j), 
 				    XEN_UNDEFINED), 
 			    res1);

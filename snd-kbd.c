@@ -463,7 +463,7 @@ static chan_info *goto_previous_graph (chan_info *cp, int count)
       /* look for previous sound, (wrap around) */
       /* goto channel n */
       for (i = (sp->index - 1); i >= 0; i--)
-	if (snd_ok(ss->sounds[i]))
+	if ((snd_ok(ss->sounds[i])) && (ss->sounds[i]->inuse == SOUND_NORMAL))
 	  {
 	    sp = (snd_info *)(ss->sounds[i]);
 	    j = k;
@@ -474,7 +474,7 @@ static chan_info *goto_previous_graph (chan_info *cp, int count)
 	  }
       if (k > 0)
 	for (i = ss->max_sounds - 1; i >= sp->index; i--)
-	  if (snd_ok(ss->sounds[i]))
+	  if ((snd_ok(ss->sounds[i])) && (ss->sounds[i]->inuse == SOUND_NORMAL))
 	    {
 	      sp = (snd_info *)(ss->sounds[i]);
 	      j = k;
@@ -519,7 +519,7 @@ static chan_info *goto_next_graph (chan_info *cp, int count)
       /* look for next sound, (wrap around) */
       /* goto channel 0 */
       for (i = (sp->index + 1); i < ss->max_sounds; i++)
-	if (snd_ok(ss->sounds[i]))
+	if ((snd_ok(ss->sounds[i])) && (ss->sounds[i]->inuse == SOUND_NORMAL))
 	  {
 	    sp = (snd_info *)(ss->sounds[i]);
 	    j = k;
@@ -530,7 +530,7 @@ static chan_info *goto_next_graph (chan_info *cp, int count)
 	  }
       if (k > 0)
 	for (i = 0; i <= sp->index; i++)
-	  if (snd_ok(ss->sounds[i]))
+	  if ((snd_ok(ss->sounds[i])) && (ss->sounds[i]->inuse == SOUND_NORMAL))
 	    {
 	      sp = (snd_info *)(ss->sounds[i]);
 	      j = k;
@@ -897,7 +897,7 @@ static void window_frames_selection(chan_info *cp)
     {
       sp = ss->sounds[i];
       if ((sp) && 
-	  (sp->inuse) && 
+	  (sp->inuse == SOUND_NORMAL) && 
 	  (cp->sound != sp) && 
 	  (selection_is_active_in_channel(sp->chans[0])) && 
 	  (sp->sync != (cp->sound->sync)))

@@ -48,7 +48,7 @@ static off_t off_t_map_over_chans(snd_state *ss, off_t (*func)(chan_info *, off_
     for (i = 0; i < ss->max_sounds; i++)
       {
 	sp = ss->sounds[i];
-	if ((sp) && (sp->inuse))
+	if ((sp) && (sp->inuse == SOUND_NORMAL))
 	  for (j = 0; j < sp->nchans; j++)
 	    if ((cp = ((chan_info *)(sp->chans[j]))))
 	      {

@@ -300,7 +300,7 @@ static Widget prtb, editb;
 
 static void make_region_dialog(snd_state *ss)
 {
-  int n, i;
+  int n, i, id;
   Arg args[32];
   Widget formw, last_row, ww, infosep;
   XmString xok, xdelete, xhelp, titlestr;
@@ -471,11 +471,11 @@ static void make_region_dialog(snd_state *ss)
   XtManageChild(region_dialog);
   if (widget_width(region_dialog) < 400) set_widget_width(region_dialog, 400);
 
-  rsp = make_initial_region_sp(ss, region_grf);
+  id = stack_position_to_id(0);
+  rsp = make_simple_channel_display(ss, region_srate(id), region_len(id), WITH_ARROWS, region_graph_style(ss), region_grf, FALSE);
+  rsp->inuse = SOUND_REGION;
   current_region = 0;
   cp = rsp->chans[0];
-
-  cp->hookable = FALSE;
   if (!(ss->using_schemes)) 
     {
       XtVaSetValues(region_rows[0]->nm, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);

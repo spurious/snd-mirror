@@ -57,7 +57,7 @@
 (define tests 1)
 (define snd-test -1)
 (if (defined? 'disable-play) (disable-play))
-(define keep-going #f)
+(define keep-going #t)
 (define full-test (< snd-test 0))
 (define total-tests 28)
 (define with-exit (< snd-test 0))
@@ -280,7 +280,6 @@
 	  (begin
 	    (load "snd-motif.scm")
 	    (load "popup.scm")))))
-
 
 
 ;;; ---------------- test 0: constants ----------------
@@ -1224,9 +1223,9 @@
 
 ;;; ---------------- test 3: can variables be set/reset ----------------
 (if (or full-test (= snd-test 3) (and keep-going (<= snd-test 3)))
-    (begin
+    (let ((ind #f))
       (if (procedure? test-hook) (test-hook 3))
-      (open-sound "oboe.snd")
+      (set! ind (open-sound "oboe.snd"))
       (if (file-exists? "funcs.cl") (load "funcs.cl"))
       (let ((td (temp-dir)))
 	(catch #t
@@ -1564,7 +1563,7 @@
 	    (if (not (feql (enved-active-env) zero_to_one)) (snd-display ";set symbol enved-active-env: ~A ~A" (enved-active-env) zero_to_one))
 	    (set! (enved-active-env) "mod_down")
 	    (if (not (feql (enved-active-env) mod_down)) (snd-display ";set string enved-active-env: ~A ~A" (enved-active-env) mod_down))))
-      (close-sound 0) 
+      (close-sound ind) 
       (dismiss-all-dialogs)
 
       (if (provided? 'snd-debug)
@@ -12328,7 +12327,9 @@ EDITS: 5
 	(scissor 2.0) 
 	(play-and-wait 0 nind)
 	(save-sound nind)
+	(if (not (sound? nind)) (snd-display "save sound clobbered ~A?" nind))
 	(let ((oboe-index (or (find-sound "oboe.snd") (open-sound "oboe.snd"))))
+	  (if (= oboe-index nind) (snd-display ";find-sound found bogus case: ~A" oboe-index))
 	  (cnvtest oboe-index nind .1) 
 	  (select-sound nind)
 	  (select-channel 0)
@@ -12339,6 +12340,7 @@ EDITS: 5
 	  (voiced->unvoiced 1.0 256 2.0 2.0) 
 	  (map-chan (fltit))
 	  (close-sound oboe-index))
+	(if (not (sound? nind)) (snd-display "close sound clobbered ~A?" nind))
 	(let ((fr (frames nind 0)))
 	  (do ((k 0 (1+ k)))
 	      ((= k 10))

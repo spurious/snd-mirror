@@ -1148,11 +1148,11 @@ char *shortname_indexed(snd_info *sp)
   return(shortname(sp));
 }
 
-void add_sound_data(char *filename, snd_info *sp, snd_state *ss, int graphed)
+void add_sound_data(char *filename, snd_info *sp, int graphed)
 {
   int i;
   for (i = 0; i < sp->nchans; i++) 
-    add_channel_data(filename, sp->chans[i], sp->hdr, ss, graphed);
+    add_channel_data(filename, sp->chans[i], graphed);
 }
 
 
@@ -1791,7 +1791,7 @@ static void set_reverb_decay(snd_state *ss, Float val)
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
-      if ((sp) && (sp->inuse))
+      if ((sp) && (sp->inuse == SOUND_NORMAL))
 	sp->reverb_control_decay = val;
     }
 }
@@ -1930,7 +1930,7 @@ static XEN sound_get(XEN snd_n, int fld, char *caller, int just_sound)
       for (i = ss->max_sounds - 1; i >= 0; i--)
 	{
 	  sp = ss->sounds[i];
-	  if ((sp) && (sp->inuse))
+	  if ((sp) && (sp->inuse == SOUND_NORMAL))
 	    res = XEN_CONS(sound_get(C_TO_SMALL_XEN_INT(i), fld, caller, just_sound), res);
 	}
       return(res);
@@ -2035,7 +2035,7 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
       for (i = 0; i < ss->max_sounds; i++)
 	{
 	  sp = ss->sounds[i];
-	  if ((sp) && (sp->inuse))
+	  if ((sp) && (sp->inuse == SOUND_NORMAL))
 	    sound_set(C_TO_SMALL_XEN_INT(i), val, fld, caller);
 	}
       return(val);

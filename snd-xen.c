@@ -1563,8 +1563,8 @@ static XEN g_sounds(void)
   result = XEN_EMPTY_LIST;
   for (i = 0; i < ss->max_sounds; i++)
     {
-      sp = ((snd_info *)(ss->sounds[i]));
-      if ((sp) && (sp->inuse))
+      sp = ss->sounds[i];
+      if ((sp) && (sp->inuse == SOUND_NORMAL))
 	result = XEN_CONS(C_TO_SMALL_XEN_INT(i),
 			  result);
     }

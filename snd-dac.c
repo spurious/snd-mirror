@@ -548,7 +548,7 @@ static int stop_playing_with_toggle(dac_info *dp, int toggle)
       sp->playing_mark = NULL;
       if (sp->playing > 0) sp->playing--;
       if (sp->playing == 0) sp_stopping = TRUE;
-      if ((sp->inuse) && (sp->cursor_follows_play != DONT_FOLLOW))
+      if ((sp->inuse == SOUND_NORMAL) && (sp->cursor_follows_play != DONT_FOLLOW))
 	cursor_moveto_without_verbosity(cp, cp->original_cursor);
       if ((sp_stopping) && (sp->cursor_follows_play == FOLLOW_ONCE)) 
 	sp->cursor_follows_play = DONT_FOLLOW;
@@ -870,7 +870,7 @@ void play_channel(chan_info *cp, off_t start, off_t end, int background, XEN edp
   dac_info *dp;
   if ((background == NOT_IN_BACKGROUND) && (play_list_members > 0)) return;
   sp = cp->sound;
-  if (!(sp->inuse)) return;
+  if (sp->inuse == SOUND_IDLE) return;
   dp = add_channel_to_play_list(cp, sp, start, end, edpos, caller, arg_pos);
   if (dp) 
     {
@@ -887,7 +887,7 @@ void play_sound(snd_info *sp, off_t start, off_t end, int background, XEN edpos,
   if ((background == NOT_IN_BACKGROUND) && 
       (play_list_members > 0)) 
     return;
-  if (!(sp->inuse)) return;
+  if (sp->inuse == SOUND_IDLE) return;
   if ((XEN_HOOKED(start_playing_hook)) &&
       (XEN_TRUE_P(run_or_hook(start_playing_hook,
 			      XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
@@ -1084,7 +1084,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 
 	      /* check for moving cursor */
 	      sp = dp->sp; /* can be nil if region playing */
-	      if ((sp) && ((!(sp->inuse)) || (sp->playing == 0))) 
+	      if ((sp) && ((sp->inuse == SOUND_IDLE) || (sp->playing == 0)))
 		{
 		  stop_playing(dp); 
 		  return(frames);

@@ -180,7 +180,7 @@ void chans_field(snd_state *ss, int field, Float val)
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
-      if ((sp) && (sp->inuse))
+      if ((sp) && (sp->inuse == SOUND_NORMAL))
 	for (j = 0; j < sp->nchans; j++)
 	  switch (field)
 	    {
@@ -382,18 +382,14 @@ void update_graph(chan_info *cp)
 
 static XEN initial_graph_hook;
 
-void add_channel_data_1(chan_info *cp, snd_info *sp, int graphed)
+void add_channel_data_1(chan_info *cp, int srate, off_t frames, int graphed)
 {
   /* initialize channel, including edit/sound lists */
   axis_info *ap;
   Float ymin = 0.0, ymax = 0.0, y0, y1;
   double xmax, x0, x1, dur, gdur;
   char *label;
-  file_info *hdr;
-  off_t samples_per_channel;
   int ymin_set = FALSE, ymax_set = FALSE;
-  hdr = sp->hdr;
-  samples_per_channel = hdr->samples / hdr->chans;
   x0 = 0.0;
   x1 = 0.1;
   y0 = -1.0;
@@ -405,7 +401,7 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, int graphed)
     case X_AXIS_AS_PERCENTAGE: label = _("time (percent)"); break;
     default:                   label = _("time");           break;
     }
-  dur = (double)samples_per_channel / (double)(hdr->srate);
+  dur = (double)frames / (double)(srate);
 
   cp->edit_size = INITIAL_EDIT_SIZE;
   cp->edit_ctr = 0;
@@ -416,9 +412,10 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, int graphed)
   cp->sound_size = INITIAL_EDIT_SIZE;
   cp->sound_ctr = 0;
   cp->sounds = (snd_data **)CALLOC(cp->sound_size, sizeof(snd_data *));
-  cp->samples[0] = samples_per_channel;
+  cp->samples[0] = frames;
 
-  if ((graphed == WITH_GRAPH) &&    
+  if ((cp->hookable) && 
+      (graphed == WITH_GRAPH) &&    
       /* can also be WITHOUT_GRAPH and WITHOUT_INITIAL_GRAPH_HOOK
        *   the former is called in snd-nogui, and in the make_readable calls in snd-regions and snd-snd
        *   the latter is from snd-edits where we are updating an already displayed sound (and keeping its axis settings across the update)
@@ -429,7 +426,7 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, int graphed)
       XEN res;
       int len;
       res = run_or_hook(initial_graph_hook,
-			XEN_LIST_3(C_TO_SMALL_XEN_INT(sp->index),
+			XEN_LIST_3(C_TO_SMALL_XEN_INT(cp->sound->index),
 				   C_TO_SMALL_XEN_INT(cp->chan),
 				   C_TO_XEN_DOUBLE(dur)),
 			S_initial_graph_hook);
@@ -508,20 +505,23 @@ void start_amp_env(chan_info *cp)
     }
 }
 
-void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *ss, int graphed)
+void add_channel_data(char *filename, chan_info *cp, int graphed)
 {
   int fd, chn = 0;
+  off_t frames;
   snd_io *io;
   snd_info *sp;
-  file_info *chdr;
+  file_info *chdr, *hdr;
   sp = cp->sound;
-  add_channel_data_1(cp, sp, graphed);
-  cp->edits[0] = initial_ed_list(0, (hdr->samples / hdr->chans) - 1);
-  chdr = copy_header(filename, sp->hdr); /* need one separate from snd_info case */
+  hdr = sp->hdr;
+  frames = hdr->samples / hdr->chans;
+  add_channel_data_1(cp, hdr->srate, frames, graphed);
+  cp->edits[0] = initial_ed_list(0, frames - 1);
+  chdr = copy_header(filename, hdr); /* need one separate from snd_info case */
   chn = cp->chan;
   if (chdr)
     {
-      fd = snd_open_read(ss, filename);
+      fd = snd_open_read(get_global_state(), filename);
       if (fd != -1)
 	{
 	  mus_file_open_descriptors(fd,
@@ -734,7 +734,7 @@ static off_t visible_syncd_cursor(chan_info *cp)
       for (j = 0; j < ss->max_sounds; j++)
 	{
 	  sp = ss->sounds[j];
-	  if ((sp) && (sp->inuse) && (sp->sync == sync) && (sp != cp->sound))
+	  if ((sp) && (sp->inuse == SOUND_NORMAL) && (sp->sync == sync) && (sp != cp->sound))
 	    for (i = 0; i < sp->nchans; i++)
 	      {
 		ncp = sp->chans[i];
@@ -980,6 +980,33 @@ static void display_selection_transform_size (chan_info *cp, axis_info *fap)
 	       cp->selection_transform_size);
   draw_string(copy_context(cp), x0, y0, chn_id_str, strlen(chn_id_str));
   if (cp->printing) ps_draw_string(fap, x0, y0, chn_id_str);
+}
+
+snd_info *make_simple_channel_display(snd_state *ss, int srate, int initial_length, int with_arrows, int grf_style, widget_t container, int with_events)
+{
+  snd_info *sp;
+  chan_info *cp;
+  file_info *hdr;
+  sp = make_basic_snd_info(1); /* 1 chan */
+  sp->nchans = 1;
+  sp->inuse = SOUND_WRAPPER;
+  sp->active = TRUE;
+  sp->hdr = (file_info *)CALLOC(1, sizeof(file_info));
+  sp->search_proc = XEN_UNDEFINED;
+  sp->prompt_callback = XEN_UNDEFINED;
+  hdr = sp->hdr;
+  hdr->samples = initial_length;
+  hdr->srate = srate;
+  hdr->comment = NULL;
+  hdr->chans = 1;
+  add_channel_window(sp, 0, ss, 0, 0, container, with_arrows, with_events);
+  cp = sp->chans[0];
+  cp->sound = sp;
+  cp->hookable = FALSE;
+  add_channel_data_1(cp, srate, initial_length, WITH_GRAPH);
+  cp->time_graph_style = grf_style;
+  cp->dot_size = dot_size(ss);
+  return(sp);
 }
 
 static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss);
@@ -3073,7 +3100,7 @@ static void display_channel_data_1 (chan_info *cp, snd_info *sp, snd_state *ss, 
   int width, height, offset, full_height, y0, y1, bottom, top;
   Float val, size, chan_height;
   axis_info *ap;
-  if ((!(sp->inuse)) ||
+  if ((sp->inuse == SOUND_IDLE) ||
       (!(cp->active)) ||
       (!(sp->active)))
     return;
@@ -4185,7 +4212,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, int fld, char *caller)
       for (i = ss->max_sounds - 1; i >= 0; i--)
 	{
 	  sp = ss->sounds[i];
-	  if ((sp) && (sp->inuse))
+	  if ((sp) && (sp->inuse == SOUND_NORMAL))
 	    res = XEN_CONS(channel_get(C_TO_SMALL_XEN_INT(i), chn_n, fld, caller), res);
 	}
       return(res);
@@ -4350,7 +4377,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       for (i = ss->max_sounds - 1; i >= 0; i--)
 	{
 	  sp = ss->sounds[i];
-	  if ((sp) && (sp->inuse))
+	  if ((sp) && (sp->inuse == SOUND_NORMAL))
 	    res = XEN_CONS(channel_set(C_TO_SMALL_XEN_INT(i), chn_n, on, fld, caller), res);
 	}
       return(res);
@@ -6452,8 +6479,68 @@ data and passes it to openGL.  See snd-gl.scm for an example."
 }
 #endif
 
+/*
+   (define pane (add-main-pane "hi" xmFormWidgetClass '())
+   (make-variable-graph hi)
+
+   this should be a circle vector, fft an display from n-back of current cursor (which also wraps around)
+ */
+
+#define S_channel_data "channel-data"
+static XEN g_channel_data(XEN snd, XEN chn)
+{
+  #define H_channel_data "(" S_channel_data " snd (chn 0)) returns the in-core samples associated with the \
+given channel.  Currently, this must be a channel (sound) created by " S_make_variable_graph "."
+  chan_info *cp;
+  ASSERT_CHANNEL(S_channel_data, snd, chn, 1);
+  cp = get_cp(snd, chn, S_channel_data);
+  if ((cp) && (cp->sound) && (cp->sound->inuse == SOUND_WRAPPER))
+    return(wrap_sound_data(1, cp->samples[0], &(cp->sounds[0]->buffered_data)));
+  return(XEN_FALSE);
+}
+
+#define S_make_variable_graph "make-variable-graph"
+static XEN g_make_variable_graph(XEN container, XEN name, XEN length, XEN srate)
+{
+  #define H_make_variable_graph "(" S_make_variable_graph " container (srate)) returns a sound index referring \
+to a standard Snd channel graph placed in the widget 'container'."
+  snd_state *ss;
+  snd_info *sp;
+  chan_info *cp;
+  int rate, initial_length;
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(container), container, XEN_ARG_1, S_make_variable_graph, "a widget");
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name), name, XEN_ARG_2, S_make_variable_graph, "a string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(length), length, XEN_ARG_3, S_make_variable_graph, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(srate), srate, XEN_ARG_4, S_make_variable_graph, "an integer");
+  rate = XEN_TO_C_INT_OR_ELSE(srate, (int)mus_srate());
+  initial_length = XEN_TO_C_INT_OR_ELSE(length, 8192);
+  ss = get_global_state();
+  sp = make_simple_channel_display(ss, rate, initial_length, WITH_FW_BUTTONS, graph_style(ss), (widget_t)(XEN_UNWRAP_WIDGET(container)), TRUE);
+  sp->read_only = TRUE;
+  sp->state = ss;
+  sp->index = find_free_sound_slot_for_channel_display(ss);
+  if (XEN_STRING_P(name))
+    {
+      sp->filename = copy_string(XEN_TO_C_STRING(name));
+      sp->short_filename = copy_string(sp->filename);
+    }
+  else
+    {
+      sp->filename = copy_string("variable");
+      sp->short_filename = copy_string("var");
+    }
+  ss->sounds[sp->index] = sp;
+  cp = sp->chans[0];
+  cp->sounds[0] = make_snd_data_buffer_for_simple_channel(initial_length);
+  cp->edits[0] = initial_ed_list(0, initial_length - 1);
+  return(C_TO_XEN_INT(sp->index));
+}
+
 
 #ifdef XEN_ARGIFY_1
+XEN_ARGIFY_4(g_make_variable_graph_w, g_make_variable_graph)
+XEN_ARGIFY_2(g_channel_data_w, g_channel_data)
+
 XEN_ARGIFY_9(g_graph_w, g_graph)
 XEN_ARGIFY_2(g_edits_w, g_edits)
 XEN_ARGIFY_3(g_peaks_w, g_peaks)
@@ -6583,6 +6670,9 @@ XEN_ARGIFY_2(g_colormap_ref_w, g_colormap_ref)
   XEN_NARGIFY_9(g_gl_spectrogram_w, g_gl_spectrogram)
 #endif
 #else
+#define g_make_variable_graph_w g_make_variable_graph
+#define g_channel_data_w g_channel_data
+
 #define g_graph_w g_graph
 #define g_edits_w g_edits
 #define g_peaks_w g_peaks
@@ -6716,6 +6806,9 @@ XEN_ARGIFY_2(g_colormap_ref_w, g_colormap_ref)
 void g_init_chn(void)
 {
   cp_edpos = XEN_UNDEFINED;
+
+  XEN_DEFINE_PROCEDURE(S_make_variable_graph,     g_make_variable_graph_w, 1, 3, 0,     H_make_variable_graph);
+  XEN_DEFINE_PROCEDURE(S_channel_data,            g_channel_data, 1, 1, 0,              H_channel_data);
 
   XEN_DEFINE_PROCEDURE(S_graph,                   g_graph_w, 1, 8, 0,                   H_graph);
   XEN_DEFINE_PROCEDURE(S_edits,                   g_edits_w, 0, 2, 0,                   H_edits);

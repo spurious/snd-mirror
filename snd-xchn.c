@@ -733,7 +733,7 @@ void reflect_edit_counter_change(chan_info *cp)
 
 static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont);
 
-void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int insertion, Widget main, int button_style)
+void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, int insertion, Widget main, int button_style, int with_events)
 {
   Widget *cw;
   XtCallbackList n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14;
@@ -973,16 +973,20 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       XtSetArg(args[n], XmNnavigationType, XmNONE); n++;
       cw[W_graph] = XtCreateManagedWidget("chn-graph", xmDrawingAreaWidgetClass, cw[W_main_window], args, n);
 
-      if (!main)
+      if (with_events)
 	{
 	  XtAddCallback(cw[W_graph], XmNresizeCallback, channel_resize_callback, (XtPointer)cp);
 	  XtAddCallback(cw[W_graph], XmNexposeCallback, channel_expose_callback, (XtPointer)cp);
+	}
+      if (main == NULL)
+	{
 	  XtAddEventHandler(cw[W_graph], EnterWindowMask, FALSE, graph_mouse_enter, (XtPointer)ss);
 	  XtAddEventHandler(cw[W_graph], LeaveWindowMask, FALSE, graph_mouse_leave, (XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph], ButtonPressMask, FALSE, graph_button_press, (XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph], ButtonMotionMask, FALSE, graph_button_motion, (XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph], ButtonReleaseMask, FALSE, graph_button_release, (XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph], KeyPressMask, FALSE, cp_graph_key_press, (XtPointer)cp);
+	  add_drop(ss, cw[W_graph]);
 	}
       FREE(n1);
       FREE(n2);
@@ -994,7 +998,6 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       FREE(n8);
       FREE(n9);
       FREE(n10);
-      add_drop(ss, cw[W_graph]);
 
       if (need_extra_scrollbars)
 	{
