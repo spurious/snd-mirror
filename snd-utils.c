@@ -583,7 +583,7 @@ void mem_report(void)
   int *sums,*ptrs;
   FILE *Fp;
   time_t ts;
-  char time_buf[64];
+  char time_buf[TIME_STR_SIZE];
 
   sums = (int *)calloc(mem_location+1,sizeof(int));
   ptrs = (int *)calloc(mem_location+1,sizeof(int));
@@ -605,7 +605,7 @@ void mem_report(void)
   Fp=fopen("memlog","w");
 
   time(&ts);
-  strftime(time_buf,64,STRFTIME_FORMAT,localtime(&ts));
+  strftime(time_buf,TIME_STR_SIZE,STRFTIME_FORMAT,localtime(&ts));
   fprintf(Fp,"memlog: %s\n\n",time_buf);
 
   for (i=0;i<=mem_location;i++)

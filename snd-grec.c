@@ -86,7 +86,7 @@ static GdkGC *draw_gc,*vu_gc;
 #define SMALL_FONT "6x10"
 #define SMALLER_FONT "5x7"
 
-static char timbuf[64];
+static char timbuf[TIME_STR_SIZE];
 static char *msgbuf = NULL;
 
 static int systems = 1;             /* multi-card setups */
@@ -258,7 +258,7 @@ static void record_report(snd_state *ss, GtkWidget *text, ...)
   if (msgbuf == NULL) msgbuf = (char *)CALLOC(512,sizeof(char));
 #if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
   time(&ts);
-  strftime(timbuf,64,"%H:%M:%S",localtime(&ts));
+  strftime(timbuf,TIME_STR_SIZE,"%H:%M:%S",localtime(&ts));
   sprintf(msgbuf,"\n[%s] ",timbuf);
 #endif
   gtk_text_insert(GTK_TEXT(text),(ss->sgx)->help_text_fnt,(ss->sgx)->black,(ss->sgx)->light_blue,msgbuf,-1);

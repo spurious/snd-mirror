@@ -74,10 +74,10 @@ void add_to_error_history(snd_state *ss, char *msg)
   if (pos > 0) gtk_text_set_point(GTK_TEXT(snd_error_history),pos);
 
 #if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
-  tim = (char *)CALLOC(32,sizeof(char));
-  buf = (char *)CALLOC(32,sizeof(char));
+  tim = (char *)CALLOC(TIME_STR_SIZE,sizeof(char));
+  buf = (char *)CALLOC(TIME_STR_SIZE,sizeof(char));
   time(&ts);
-  strftime(tim,32,"%H:%M:%S",localtime(&ts));
+  strftime(tim,TIME_STR_SIZE,"%H:%M:%S",localtime(&ts));
   sprintf(buf,"\n[%s] ",tim);
   gtk_text_insert(GTK_TEXT(snd_error_history),(ss->sgx)->help_text_fnt,(ss->sgx)->black,(ss->sgx)->white,buf,-1);
   FREE(buf);

@@ -718,7 +718,6 @@ snd_info *find_sound(snd_state *ss, char *name)
   return(NULL);
 }
 
-#define TIME_STR_SIZE 64
 static char timestr[TIME_STR_SIZE];
 #define INFO_BUFFER_SIZE 1024
 

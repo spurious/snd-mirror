@@ -189,6 +189,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+25-Jul:  Snd now uses clm for all control-panel functions (play/apply).\n\
+         added name-click-hook.\n\
 24-Jul:  snd-tempnam, sound-interp gen in examp.scm and env-sound-interp.\n\
 20-Jul:  added sum-of-sines, phase-vocoder.\n\
 18-Jul:  play-selection and added end arg to play etc.\n\
@@ -1012,6 +1014,7 @@ user-interface manipulations.\n\
   " S_mouse_drag_hook "(snd chn button state x y)\n\
   " S_mouse_press_hook "(snd chn button state x y)\n\
   " S_mouse_release_hook "(snd chn button state x y)\n\
+  " S_name_click_hook "(snd-index)\n\
 \n\
 ";
 
@@ -1726,7 +1729,7 @@ char *CLM_help(void);
 static char *CLM_help(void) {return("");}
 #endif
 
-void clm_help(snd_state *ss) {snd_help_with_url(ss,STR_CLM,"extsnd.html#sndwithclm",CLM_help());}
+void clm_help(snd_state *ss) {snd_help_with_url(ss,STR_CLM,"grfsnd.html#sndwithclm",CLM_help());}
 
 #if HAVE_CLICK_FOR_HELP
 

@@ -564,27 +564,27 @@ void init_vct(void)
 #endif
   local_doc = scm_permanent_object(scm_string_to_symbol(gh_str02scm("documentation")));
 
-  DEFINE_PROC(gh_new_procedure1_0(S_make_vct,g_make_vct),H_make_vct);
-  DEFINE_PROC(gh_new_procedure1_0(S_vct_copy,copy_vct),H_vct_copy);
-  DEFINE_PROC(gh_new_procedure1_0(S_vct_p,g_vct_p),H_vct_p);
-  DEFINE_PROC(gh_new_procedure1_0(S_list2vct,list2vct),H_list2vct);
-  DEFINE_PROC(gh_new_procedure1_0(S_vct2list,vct2list),H_vct2list);
-  DEFINE_PROC(gh_new_procedure1_0(S_vector2vct,vector2vct),H_vector2vct);
-  DEFINE_PROC(gh_new_procedure1_0(S_vct_length,vct_length),H_vct_length);
-  DEFINE_PROC(gh_new_procedure2_0(S_vct_ref,vct_ref),H_vct_ref);
-  DEFINE_PROC(gh_new_procedure3_0(S_vct_setB,vct_set),H_vct_setB);
-  DEFINE_PROC(gh_new_procedure2_0(S_vct_multiplyB,vct_multiply),H_vct_multiplyB);
-  DEFINE_PROC(gh_new_procedure2_0(S_vct_scaleB,vct_scale),H_vct_scaleB);
-  DEFINE_PROC(gh_new_procedure2_0(S_vct_fillB,vct_fill),H_vct_fillB);
-  DEFINE_PROC(gh_new_procedure2_0(S_vct_addB,vct_add),H_vct_addB);
-  DEFINE_PROC(gh_new_procedure2_0(S_vct_subtractB,vct_subtract),H_vct_subtractB);
-  DEFINE_PROC(gh_new_procedure2_0(S_vct_offsetB,vct_offset),H_vct_offsetB);
-  DEFINE_PROC(gh_new_procedure2_0(S_vct_mapB,vct_map),H_vct_mapB);
-  DEFINE_PROC(gh_new_procedure2_0(S_vct_doB,vct_do),H_vct_doB);
-  DEFINE_PROC(gh_new_procedure1_0(S_vct_peak,vct_peak),H_vct_peak);
+  DEFINE_PROC(gh_new_procedure1_0(S_make_vct,      g_make_vct),    H_make_vct);
+  DEFINE_PROC(gh_new_procedure1_0(S_vct_copy,      copy_vct),      H_vct_copy);
+  DEFINE_PROC(gh_new_procedure1_0(S_vct_p,         g_vct_p),       H_vct_p);
+  DEFINE_PROC(gh_new_procedure1_0(S_list2vct,      list2vct),      H_list2vct);
+  DEFINE_PROC(gh_new_procedure1_0(S_vct2list,      vct2list),      H_vct2list);
+  DEFINE_PROC(gh_new_procedure1_0(S_vector2vct,    vector2vct),    H_vector2vct);
+  DEFINE_PROC(gh_new_procedure1_0(S_vct_length,    vct_length),    H_vct_length);
+  DEFINE_PROC(gh_new_procedure2_0(S_vct_ref,       vct_ref),       H_vct_ref);
+  DEFINE_PROC(gh_new_procedure3_0(S_vct_setB,      vct_set),       H_vct_setB);
+  DEFINE_PROC(gh_new_procedure2_0(S_vct_multiplyB, vct_multiply),  H_vct_multiplyB);
+  DEFINE_PROC(gh_new_procedure2_0(S_vct_scaleB,    vct_scale),     H_vct_scaleB);
+  DEFINE_PROC(gh_new_procedure2_0(S_vct_fillB,     vct_fill),      H_vct_fillB);
+  DEFINE_PROC(gh_new_procedure2_0(S_vct_addB,      vct_add),       H_vct_addB);
+  DEFINE_PROC(gh_new_procedure2_0(S_vct_subtractB, vct_subtract),  H_vct_subtractB);
+  DEFINE_PROC(gh_new_procedure2_0(S_vct_offsetB,   vct_offset),    H_vct_offsetB);
+  DEFINE_PROC(gh_new_procedure2_0(S_vct_mapB,      vct_map),       H_vct_mapB);
+  DEFINE_PROC(gh_new_procedure2_0(S_vct_doB,       vct_do),        H_vct_doB);
+  DEFINE_PROC(gh_new_procedure1_0(S_vct_peak,      vct_peak),      H_vct_peak);
   DEFINE_PROC(gh_new_procedure(S_vcts_mapB,SCM_FNC vcts_map,0,0,1),H_vcts_mapB);
-  DEFINE_PROC(gh_new_procedure(S_vcts_doB,SCM_FNC vcts_do,0,0,1),H_vcts_doB);
-  DEFINE_PROC(gh_new_procedure3_0(S_vct_moveB,vct_move),H_vct_moveB);
+  DEFINE_PROC(gh_new_procedure(S_vcts_doB, SCM_FNC vcts_do,0,0,1), H_vcts_doB);
+  DEFINE_PROC(gh_new_procedure3_0(S_vct_moveB,     vct_move),      H_vct_moveB);
   scm_add_feature("vct");
 }
 #endif

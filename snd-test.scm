@@ -520,6 +520,7 @@
 ;;; check that variables can be set/reset
 (if (or full-test (= snd-test 3))
     (begin
+      (if (file-exists? "funcs.cl") (load "funcs.cl"))
       (open-sound "oboe.snd")
       (if (fneq (sample 1000) 0.0328) (snd-print (format #f ";sample: ~A?" (sample 1000))))
       (if (or (not (hook? output-name-hook)) (not (hook-empty? output-name-hook)))
@@ -1247,7 +1248,7 @@
 		(call-apply obind)
 		(let ((expamp (maxamp obind))
 		      (expdur (frames obind)))
-		  (if (fneq expamp .145) (snd-print (format #f ";apply expand scale: ~A?" expamp)))
+		  (if (fneq expamp .152) (snd-print (format #f ";apply expand scale: ~A?" expamp)))
 		  (if (not (> expdur (* 1.25 50828))) (snd-print (format #f ";apply expand length: ~A?" expdur)))
 		  (undo 1 obind)
 		  (set-filtering #t obind)
@@ -2924,6 +2925,16 @@
 	   (set-recorder-in-amp 0 0 0.5)
 	   (if (> (abs (- (recorder-in-amp 0 0) 0.5)) .01) (snd-print (format #f ";set-recorder-in-amp: ~A?" (recorder-in-amp 0 0))))))
      (help-dialog "Test" "snd-test here") (w)
+     (if (member 'snd-xmhtml *features*)
+	 (begin
+	   ;; these are trying to flush out html syntax errors
+	   (help-dialog "Find" "#find")
+	   (help-dialog "CLM" "grfsnd.html#sndwithclm")
+	   (help-dialog "Find" "snd.html#find")
+	   (help-dialog "Constants" "extsnd.html#sndconstants")
+	   (help-dialog "Sndinfo" "sndlib.html#sndinfo")
+	   (help-dialog "Generators" "clm.html#generators")
+	   ))
      (save-envelopes "hiho.env")
      (load "hiho.env")
      (if (not (equal? env1 (list 0.0 1.0 1.0 0.0))) (snd-print (format #f ";save-envelopes: ~A?" env1)))

@@ -1,5 +1,7 @@
 snd change log
 
+  25-Jul:    Snd now uses clm for all control-panel functions (play/apply).
+             name-click-hook.
   24-Jul:    snd-tempnam, sound-interp gen in examp.scm and env-sound-interp
   20-Jul:    sum-of-sines, phase-vocoder.
   18-Jul:    play-selection and added end arg to play etc.

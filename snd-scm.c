@@ -587,7 +587,7 @@ static SCM g_snd_print(SCM msg)
   #define H_snd_print "(" S_snd_print " str) displays str in the lisp listener window"
   int fd;
   char *str=NULL,*buf;
-  char time_buf[64];
+  char time_buf[TIME_STR_SIZE];
   time_t ts;
   SCM val;
   ERRS1(msg,S_snd_print);
@@ -604,9 +604,9 @@ static SCM g_snd_print(SCM msg)
 	  fd = mus_file_reopen_write("test.errors");
 	  lseek(fd,0L,SEEK_END);
 	}
-      buf = (char *)CALLOC(snd_strlen(str)+64+2,sizeof(char));
+      buf = (char *)CALLOC(snd_strlen(str)+TIME_STR_SIZE+2,sizeof(char));
       time(&ts);
-      strftime(time_buf,64,STRFTIME_FORMAT,localtime(&ts));
+      strftime(time_buf,TIME_STR_SIZE,STRFTIME_FORMAT,localtime(&ts));
       sprintf(buf,"[%s]:%s\n",time_buf,str);
       write(fd,buf,snd_strlen(buf));
       close(fd);

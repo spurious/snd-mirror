@@ -1,4 +1,4 @@
-/* TODO: use clm for expsrc
+/* TODO: 
  *       make revlen follow slider in "real-time":
  *         set up line_size in mus_make_comb to 5.0*srate/25641, then
  *         then as running, at each block reset to initial - new scaled
@@ -151,88 +151,13 @@ void cleanup_dac(void)
   for (i=0;i<MAX_DEV_FD;i++) dev_fd[i] = -1;
 }
 
-#if (!USE_CLM_EXPAND)
-
-typedef struct {
-  int s20;
-  int s50;
-  int rmp;
-  Float amp;
-  int len;
-  int cur_out;
-  int cur_in;
-  int input_hop;
-  int ctr;
-  int output_hop;
-  Float *b;
-  Float *buf;
-  int bufptr;
-  int buflen;
-  int bufbeg;
-} spd_info;
-
-static void *make_expand(snd_info *sp,Float sampling_rate,Float initial_ex)
-{
-  spd_info *spd;
-  int outlen;
-  Float segment_length,ramp_time,segment_scaler,output_hop,accuracy;
-#if HAVE_GUILE
-  if (use_g_expand)
-    return((void *)g_call3(g_make_expand,gh_int2scm(sp->index),gh_double2scm(sampling_rate),gh_double2scm(initial_ex)));
-#endif
-  segment_length = sp->local_explen;
-  ramp_time = sp->local_exprmp;
-  segment_scaler = .6;
-  output_hop = sp->local_exphop;
-  accuracy = 10.0;
-  spd = (spd_info *)CALLOC(1,sizeof(spd_info));
-  spd->cur_out = 0;
-  spd->len = (int)(ceil(segment_length * sampling_rate));
-  spd->rmp = (int)(ramp_time * spd->len);
-  spd->amp = segment_scaler;
-  spd->output_hop = (int)(output_hop * sampling_rate);
-  spd->input_hop = (int)((Float)spd->output_hop / initial_ex);
-  spd->s20 = (int)(sampling_rate/(accuracy*20));
-  spd->s50 = (int)(sampling_rate/(accuracy*50));
-  spd->ctr = 0;
-  if (segment_length > (output_hop + .02)) outlen = spd->len; else outlen = (int)(((output_hop + .1)*sampling_rate));
-  spd->b = (Float *)CALLOC(outlen,sizeof(Float));
-  spd->buflen = outlen;
-  spd->bufptr = 0;
-  spd->buf = (Float *)CALLOC(spd->buflen,sizeof(Float));
-  spd->bufbeg = 0;
-  spd->cur_in = 0;
-  return(spd);
-}
-
-static void free_expand(void *ur_spd)
-{
-  spd_info *spd = (spd_info *)ur_spd;
-  if (ur_spd)
-    {
-#if HAVE_GUILE
-      if (use_g_expand)
-	g_call1(g_free_expand,(SCM)ur_spd);
-      else
-	{
-#endif
-	  if (spd->b) FREE(spd->b);
-	  if (spd->buf) FREE(spd->buf);
-	  FREE(spd);
-#if HAVE_GUILE
-	}
-#endif
-    }
-}
-#else
-
 typedef struct {
   mus_any *gen;
-  dac_info *dp;
-  int jump;
+  struct dac__info *dp;
+  int chan;
+  int speeding;
+  Float sr;
 } spd_info;
-
-#endif
 
 typedef struct {
   int num_combs;
@@ -245,7 +170,7 @@ typedef struct {
 static void *global_reverb = NULL;
 static int global_reverbing = 0;
 
-typedef struct {
+typedef struct dac__info {
   Float cur_index;
   Float cur_amp;
   Float cur_srate;
@@ -286,17 +211,18 @@ static mus_any **make_flt(dac_info *dp, int order, int chans, Float *env)
 #define ADD_NEXT_SAMPLE(val,sf)  do {if (sf->data > sf->last) val += next_sound(sf); else val += (*sf->data++);} while(0)
 #define SCALE_NEXT_SAMPLE(val,sf,amp)  do {if (sf->data > sf->last) val += (MUS_SAMPLE_TYPE)(amp*next_sound(sf)); else val += (MUS_SAMPLE_TYPE)(amp*(*sf->data++));} while(0)
 
-static void speed_1(dac_info *dp, Float sr, int chan)
+static Float speed_1(dac_info *dp, Float sr, int chan)
 {
   int move,i;
+  Float result = 0.0;
   MUS_SAMPLE_TYPE tmp;
   if ((use_sinc_interp((dp->state))) && (dp->srcs))
-    dp->fvals[chan] = run_src(dp->srcs[chan],sr);
+    result = run_src(dp->srcs[chan],sr);
   else
     {
       if (sr > 0.0) 
 	{
-	  dp->fvals[chan] = dp->lst[chan] + dp->x[chan] * (dp->nxt[chan] - dp->lst[chan]);
+	  result = dp->lst[chan] + dp->x[chan] * (dp->nxt[chan] - dp->lst[chan]);
 	  dp->x[chan] += sr;
 	  move = (int)(dp->x[chan]);
 	  if (move != 0)
@@ -312,7 +238,7 @@ static void speed_1(dac_info *dp, Float sr, int chan)
 	}
       else
 	{
-	  dp->fvals[chan] = dp->lst[chan] + dp->x[chan] * (dp->nxt[chan] - dp->lst[chan]);
+	  result = dp->lst[chan] + dp->x[chan] * (dp->nxt[chan] - dp->lst[chan]);
 	  dp->x[chan] -= sr;
 	  move = (int)(dp->x[chan]);
 	  if (move != 0)
@@ -327,47 +253,81 @@ static void speed_1(dac_info *dp, Float sr, int chan)
 	    }
 	}
     }
+  return(result);
 }
 
 static void speed(dac_info *dp, Float sr)
 {
   int chan;
-  for (chan=0;chan<dp->chans;chan++) speed_1(dp,sr,chan);
+  for (chan=0;chan<dp->chans;chan++) dp->fvals[chan] = speed_1(dp,sr,chan);
 }
 
-#if (!USE_CLM_EXPAND)
-
-static unsigned long randx = 1;
-#define INVERSE_MAX_RAND 0.0000305185
-
-#if 0
-static void c_srand(int val) {randx = val;} 
-#endif
-
-static int ci_frandom(int amp)
+static Float expand_input_as_needed(void *arg, int dir) 
 {
-  int val;
-  randx=randx*1103515245 + 12345;
-  val=(unsigned int)(randx >> 16) & 32767;
-  return((int)(amp * (((Float)val)*INVERSE_MAX_RAND)));
+  MUS_SAMPLE_TYPE val; 
+  spd_info *spd = (spd_info *)arg;
+  dac_info *dp;
+  dp = spd->dp;
+  if (spd->speeding)
+    return(speed_1(dp,spd->sr,spd->chan));
+  else 
+    {
+      NEXT_SAMPLE(val,dp->chn_fds[spd->chan]);
+      return(MUS_SAMPLE_TO_FLOAT(val));
+    }
+}
+
+static void *make_expand(snd_info *sp,Float sampling_rate,Float initial_ex, dac_info *dp, int chan)
+{
+  spd_info *spd;
+#if HAVE_GUILE
+  if (use_g_expand)
+    return((void *)g_call3(g_make_expand,gh_int2scm(sp->index),gh_double2scm(sampling_rate),gh_double2scm(initial_ex)));
+#endif
+  spd = (spd_info *)CALLOC(1,sizeof(spd_info));
+  spd->gen = mus_make_granulate(&expand_input_as_needed,
+				initial_ex,sp->local_explen,
+				.6,sp->local_exphop,sp->local_exprmp,.1,
+				0,(void *)spd);
+  spd->dp = dp;
+  spd->chan = chan;
+  spd->speeding = 0;
+  spd->sr = 0.0;
+  return(spd);
+}
+
+static void free_expand(void *ur_spd)
+{
+  spd_info *spd = (spd_info *)ur_spd;
+  if (ur_spd)
+    {
+#if HAVE_GUILE
+      if (use_g_expand)
+	g_call1(g_free_expand,(SCM)ur_spd);
+      else
+	{
+#endif
+	  mus_free(spd->gen);
+	  FREE(spd);
+#if HAVE_GUILE
+	}
+#endif
+    }
 }
 
 static void expand(dac_info *dp, Float sr, Float ex)
-{ 
-  /* from Mixer, used in "Leviathan", 1986 */
-  spd_info *spd;
-  snd_fd *sf;
-  int end,i,j,jump,chan,speeding,loc,trig_time,iloc,k,ramp_time;
-  Float curamp,incr;
-  Float saved_val;
+{
+  /* from mixer.sai, used in "Leviathan", 1986 */
+  int chan,speeding;
   snd_info *sp;
+  spd_info *spd;
   MUS_SAMPLE_TYPE tmp;
-  sp=dp->sp;
+  sp = dp->sp;
   speeding = ((sp->play_direction != 1) || (sp->srate != 1.0) || (dp->cur_srate != 1.0));
 #if HAVE_GUILE
   if (use_g_expand)
     {
-      /* if speeding, pick up speed vals first, else read direct (working at vals level here) */
+      /* if speeding, pick up speed vals first, else read direct */
       if (speeding) 
 	speed(dp,sr);
       else
@@ -384,71 +344,17 @@ static void expand(dac_info *dp, Float sr, Float ex)
   else
     {
 #endif
-  for (chan=0;chan<dp->chans;chan++)
-    {
-      spd = (spd_info *)(dp->spds[chan]);
-      dp->fvals[chan] = spd->b[spd->ctr];
-      spd->ctr++;
-      if (spd->ctr >= spd->cur_out)
+      for (chan=0;chan<dp->chans;chan++)
 	{
-	  saved_val = dp->fvals[chan]; /* fvals is clobbered (possibly) by speed_1, so need to protect it */
-	  end = spd->len - spd->cur_out;
-	  if (end>0) 
-	    {
-	      for (i=0,j=spd->cur_out;i<end;i++,j++) spd->b[i] = spd->b[j];
-	      for (i=end;i<spd->len;i++) spd->b[i] = 0.0;
-	    }
-	  else
-	    for (i=0;i<spd->cur_out;i++) spd->b[i] = 0.0;
-	  ramp_time = spd->rmp;
-	  incr = spd->amp / (Float)ramp_time;  /* precomputable */
-	  trig_time = spd->len - ramp_time;
-	  if (spd->cur_out > 0)
-	    {
-	      jump = spd->input_hop + ci_frandom(spd->s20);
-	      spd->cur_in += jump;
-	    }
-	  else jump = spd->buflen;
-	  sf = dp->chn_fds[chan];
-	  if (speeding) 
-	    {
-	      for (i=0;i<jump;i++)
-		{
-		  speed_1(dp,sr,chan);
-		  spd->buf[spd->bufptr] = dp->fvals[chan];
-		  spd->bufptr++;
-		  if (spd->bufptr >= spd->buflen) {spd->bufbeg += spd->buflen; spd->bufptr = 0;}
-		}
-	    }
-	  else 
-	    {
-	      for (i=0;i<jump;i++) 
-		{
-		  NEXT_SAMPLE(tmp,sf); 
-		  spd->buf[spd->bufptr] = MUS_SAMPLE_TO_FLOAT(tmp);
-		  spd->bufptr++;
-		  if (spd->bufptr >= spd->buflen) {spd->bufbeg += spd->buflen; spd->bufptr = 0;}
-		}
-	    }
-	  for (i=0,k=0,curamp=0.0,loc=spd->cur_in;i<spd->len;i++,k++,loc++)
-	    {
-	      if (i<ramp_time) curamp+=incr; else if (i>trig_time) curamp-=incr;
-	      iloc = loc - spd->bufbeg;
-	      if (iloc >= 0) spd->b[k] += curamp * (Float)(spd->buf[iloc]);
-	      else spd->b[k] += curamp * (Float)(spd->buf[iloc+spd->buflen]);
-	    }
-	  spd->ctr -= spd->cur_out;
-	  spd->cur_out = spd->output_hop + ci_frandom(spd->s50);
-	  spd->input_hop = (int)((Float)spd->output_hop / ex);
-	  dp->fvals[chan] = saved_val;
+	  spd = (spd_info *)(dp->spds[chan]);
+	  spd->speeding = speeding;
+	  spd->sr = sr;
+	  dp->fvals[chan] = mus_granulate(spd->gen,&expand_input_as_needed);
 	}
-    }
 #if HAVE_GUILE
     }
 #endif
 }
-#else
-#endif
 
 static void filter(dac_info *dp)
 {
@@ -575,19 +481,19 @@ static void reverb(void *ur, Float rin, MUS_SAMPLE_TYPE *outs, int chans)
     {
 #endif
       rout = mus_all_pass(r->allpasses[3],
-			  mus_one_pole(r->onep,
-				       mus_all_pass(r->allpasses[2],
-						    mus_all_pass(r->allpasses[1],
-								 mus_all_pass(r->allpasses[0],
-									      mus_comb(r->combs[0],rin,0.0) + 
-									      mus_comb(r->combs[1],rin,0.0) + 
-									      mus_comb(r->combs[2],rin,0.0) + 
-									      mus_comb(r->combs[3],rin,0.0) + 
-									      mus_comb(r->combs[4],rin,0.0) + 
-									      mus_comb(r->combs[5],rin,0.0),
-									      0.0),
-								 0.0),
-						    0.0)),
+	       mus_one_pole(r->onep,
+		 mus_all_pass(r->allpasses[2],
+		   mus_all_pass(r->allpasses[1],
+		     mus_all_pass(r->allpasses[0],
+				  mus_comb(r->combs[0],rin,0.0) + 
+				  mus_comb(r->combs[1],rin,0.0) + 
+				  mus_comb(r->combs[2],rin,0.0) + 
+				  mus_comb(r->combs[3],rin,0.0) + 
+				  mus_comb(r->combs[4],rin,0.0) + 
+				  mus_comb(r->combs[5],rin,0.0),
+				  0.0),
+				0.0),
+			      0.0)),
 			  0.0);
       for (i=0;i<chans;i++)
         outs[i] += MUS_FLOAT_TO_SAMPLE(mus_all_pass(r->allpasses[i+4],rout,0.0));
@@ -738,7 +644,7 @@ static dac_info *make_dac_info(snd_info *sp, int chans, snd_fd **fds)
 	  dp->spds = (void **)CALLOC(chans,sizeof(void *));
 	  for (i=0;i<chans;i++)
 	    {
-	      dp->spds[i] = make_expand(sp,(Float)SND_SRATE(sp),sp->expand);
+	      dp->spds[i] = make_expand(sp,(Float)SND_SRATE(sp),sp->expand,dp,i);
 	    }
 	}
       if (dp->reverbing)

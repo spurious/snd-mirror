@@ -1,6 +1,3 @@
-/* TODO: envs/filter from clm?
- */
-
 #include "snd.h"
 
 #if defined(NEXT) || defined(HAVE_SYS_DIR_H)
@@ -1381,9 +1378,9 @@ static int display_fft_peaks(chan_info *ucp, char *filename)
   if (fd) 
     {
 #if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
-      timbuf = (char *)CALLOC(64,sizeof(char));
+      timbuf = (char *)CALLOC(TIME_STR_SIZE,sizeof(char));
       time(&ts);
-      strftime(timbuf,64,STRFTIME_FORMAT,localtime(&ts));
+      strftime(timbuf,TIME_STR_SIZE,STRFTIME_FORMAT,localtime(&ts));
       fprintf(fd,"Snd: fft peaks (%s)\n\n",timbuf);
       FREE(timbuf);
 #else

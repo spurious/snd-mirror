@@ -291,6 +291,7 @@ void snd_help(snd_state *ss, char *subject, char *helpstr)
 {
   /* place help string in scrollable help window */
   /* if window is already active, add this help at the top and reposition */
+  /* if XmHTML, this is writing the text to the root window if called from Guile?!? */
   XmString xstr1;
 #if HAVE_XmHTML
   char *newhelp;
@@ -303,6 +304,7 @@ void snd_help(snd_state *ss, char *subject, char *helpstr)
       /* this causes segfaults for no reason that I can see */
       raise_dialog(help_dialog);
     }
+
   sprintf(help_window_label,"%s help",subject);
   xstr1 = XmStringCreate(help_window_label,XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(help_dialog,XmNmessageString,xstr1,NULL);

@@ -454,7 +454,7 @@ static char *short_sound_format (int format, int type)
     }
 }
 
-static char timebuf[64];
+static char timebuf[TIME_STR_SIZE];
 static char *link_file = NULL;
 
 static char *linked_file(char *link_name)
@@ -473,6 +473,10 @@ static char *linked_file(char *link_name)
     return("?");
 }
 
+#if HAVE_GUILE
+  static int dont_babble_info(snd_info *sp);
+#endif
+
 void sp_name_click(snd_info *sp)
 {
   char *str;
@@ -481,6 +485,9 @@ void sp_name_click(snd_info *sp)
   int linked = 0;
   if (sp)
     {
+#if HAVE_GUILE
+      if (dont_babble_info(sp)) return;
+#endif
       hdr = sp->hdr;
       if (hdr)
 	{
@@ -488,7 +495,7 @@ void sp_name_click(snd_info *sp)
 	  dur = (Float)(hdr->samples)/(Float)(hdr->chans * hdr->srate);
 	  str = (char *)CALLOC(256,sizeof(char));
 #if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
-	  strftime(timebuf,64,STRFTIME_FORMAT,localtime(&(sp->write_date)));
+	  strftime(timebuf,TIME_STR_SIZE,STRFTIME_FORMAT,localtime(&(sp->write_date)));
 #else
 	  sprintf(timebuf,"");
 #endif
@@ -1815,9 +1822,29 @@ static SCM g_call_apply(SCM snd)
   return(NO_SUCH_SOUND);
 }
 
+static SCM name_click_hook;
+static int dont_babble_info(snd_info *sp)
+{
+  /* call name-click-hook (if any) return #t = don't print info in minibuffer */
+#if (HAVE_GUILE && (!HAVE_GUILE_1_3_0))
+  SCM res = SCM_BOOL_F,ind;
+  ind = gh_int2scm(sp->index);
+  if (HOOKED(name_click_hook))
+    res = g_c_run_or_hook(name_click_hook,SCM_LIST1(ind));
+  return(SCM_TRUE_P(res));
+#else
+  return(0);
+#endif  
+}
 
 void g_init_snd(SCM local_doc)
 {
+#if (!HAVE_GUILE_1_3_0)
+  name_click_hook = scm_create_hook(S_name_click_hook,1);       /* args = snd-index */
+#else
+  name_click_hook = gh_define(S_name_click_hook,SCM_BOOL_F);
+#endif
+
   DEFINE_PROC(gh_new_procedure0_1(S_soundQ,SCM_FNC g_soundQ),H_soundQ);
   DEFINE_PROC(gh_new_procedure0_2(S_bomb,SCM_FNC g_bomb),H_bomb);
   DEFINE_PROC(gh_new_procedure1_0(S_find_sound,SCM_FNC g_find_sound),H_find_sound);

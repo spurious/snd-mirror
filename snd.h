@@ -13,7 +13,8 @@
  *
  *   HAVE_GUILE    define if the guile library is available (adds lisp extension/customization language)
  *                 see http://www.gnu.org/software/guile (this is now a standard part of the Gnu distribution)
- *                 if you have Guile 1.4, include -DHAVE_GUILE_1_4, if 1.3 -DHAVE_GUILE_1_3_0.
+ *                 if you have Guile 1.3.4, include -DHAVE_GUILE_1_3, if 1.3 -DHAVE_GUILE_1_3_0.
+ *                 (The default is Guile 1.4, versions before 1.3 are no longer supported).
  * 
  *   HAVE_GUILE_GTK
  *                 define if you're using Gtk+ and have libguilegtk.  The configure script
@@ -30,7 +31,8 @@
  *   SNDLIB_USE_FLOATS and MUS_SAMPLE_BITS
  *                 These determine the internal representation of sample values. The default
  *                 is 0 for SNDLIB_USE_FLOATS (so 32-bit ints are used), and 24 for
- *                 MUS_SAMPLE_BITS (this sets the size of the "fraction").
+ *                 MUS_SAMPLE_BITS (this sets the size of the "fraction").  Floats are
+ *                 slightly faster on the Pentium.
  *
  *   USR_LIB_OSS    
  *   USR_LOCAL_LIB_OSS 
@@ -169,7 +171,7 @@
 #endif
 #include "snd-strings.h"
 
-#define SND_VERSION "24-Jul-00"
+#define SND_VERSION "25-Jul-00"
 #define SND_RPM_VERSION "4.4"
 #define SND_MAJOR_VERSION 4
 #define SND_MINOR_VERSION 4

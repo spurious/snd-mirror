@@ -15,7 +15,7 @@
 #endif
       
 
-#define NUM_COMMANDS 749
+#define NUM_COMMANDS 750
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_abortQ,S_activate_listener,S_add_mark,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -81,7 +81,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_mix_vct,S_mix_waveform_color,S_mix_waveform_height,S_mixQ,S_mixes,
   S_mouse_drag_hook,S_mouse_press_hook,S_mouse_release_hook,S_movies,S_multichannel_mix_hook,S_mus_error_hook,
 
-  S_new_sound,S_next_mix_sample,S_next_sample,S_next_track_sample,S_normal_fft,S_normalize_fft,S_normalize_on_open,S_normalize_view,
+  S_name_click_hook,S_new_sound,S_next_mix_sample,S_next_sample,S_next_track_sample,S_normal_fft,S_normalize_fft,S_normalize_on_open,S_normalize_view,
 
   S_open_alternate_sound,S_open_hook,S_open_multifile_sound_hook,S_open_raw_sound,S_open_sound,S_open_sound_file,S_orientation_dialog,
   S_output_comment_hook,S_output_name_hook,

@@ -1352,6 +1352,9 @@ case, the result returned by the hook is the result of the last function in the 
 
   <a name="outputnamehook">output-name-hook</a> ()                 called in File New dialog
 
+  <a name="nameclickhook">name-click-hook</a> (snd)               called when sound name clicked (<b>or</b>).
+                                      If it returns #t, the usual informative minibuffer babbling is squelched.
+
   <a name="starthook">start-hook</a>         (filename)       called upon start-up. (<b>or</b>)
                                       If it returns #t, snd exits immediately.
 
@@ -2362,5 +2365,7 @@ found (this code obviously has to be in the init file):</p>
 	<!-- I(change colors):L(make-color)(aboutcolors) --><!-- I(change colors):A(aboutcolors) --><!-- I(change colors):O(resources)(sndresources) -->
 	<!-- I(create new file):O(default-output-srate)(defaultoutputsrate) -->
 	<!-- I(autocorrelation):L(autocorrelate)(sndautocorrelate) -->
+
+<center><small><a href="snd.html#overview">snd.html</a>    <a href="grfsnd.html#grfsndcontents">grfsnd.html</a>    <a href="clm.html#introduction">clm.html</a>    <a href="sndlib.html#introduction">sndlib.html</a></small></center>
 
 </body></html>

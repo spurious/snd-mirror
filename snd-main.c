@@ -89,7 +89,7 @@ char *mus_fft_window_name(int i); /* from clm2scm.c */
 static void save_snd_state_options (snd_state *ss, FILE *fd)
 { /* for save options menu choice (.snd) -- mostly saving snd_state info */
   time_t ts;
-  char time_buf[64];
+  char time_buf[TIME_STR_SIZE];
   char *locale = NULL;
 
 #if HAVE_SETLOCALE
@@ -98,7 +98,7 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
 
 #if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
   time(&ts);
-  strftime(time_buf,64,STRFTIME_FORMAT,localtime(&ts));
+  strftime(time_buf,TIME_STR_SIZE,STRFTIME_FORMAT,localtime(&ts));
   fprintf(fd,"\n;;; Snd %s (%s) options saved %s\n",SND_RPM_VERSION,SND_VERSION,time_buf);
 #else
   fprintf(fd,"\n;;; Snd %s (%s)\n",SND_RPM_VERSION,SND_VERSION);

@@ -1306,6 +1306,9 @@ list.
 
   output-name-hook ()                 called in File New dialog
 
+  name-click-hook (snd)               called when sound name clicked (or).
+                                      If it returns #t, the usual informative minibuffer babbling is squelched.
+
   start-hook         (filename)       called upon start-up. (or)
                                       If it returns #t, snd exits immediately.
 
@@ -2140,3 +2143,5 @@ menu option (see examp.scm for a version that uses format):
                    (* (mus-sound-chans file) (mus-sound-srate file)))))))
 
 [picture of examp.scm in action]
+
+                  snd.html grfsnd.html clm.html sndlib.html

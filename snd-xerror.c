@@ -70,10 +70,10 @@ void add_to_error_history(snd_state *ss, char *msg)
     if (!(XtIsManaged(snd_error_dialog)))
       XtManageChild(snd_error_dialog);
 #if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
-  tim = (char *)CALLOC(32,sizeof(char));
-  buf = (char *)CALLOC(32,sizeof(char));
+  tim = (char *)CALLOC(TIME_STR_SIZE,sizeof(char));
+  buf = (char *)CALLOC(TIME_STR_SIZE,sizeof(char));
   time(&ts);
-  strftime(tim,32,"%H:%M:%S",localtime(&ts));
+  strftime(tim,TIME_STR_SIZE,"%H:%M:%S",localtime(&ts));
   sprintf(buf,"\n[%s] ",tim);
   pos = XmTextGetLastPosition(snd_error_history);
   if (pos == 0) 

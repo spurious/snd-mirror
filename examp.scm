@@ -568,6 +568,8 @@
     (set-use-raw-defaults #t)
     (open-sound rawfile)))
 
+;;; (mpg "mpeg.mpg" "mpeg.raw" 1)
+
 
 ;;; -------- make dot size dependent on number of samples being displayed
 ;;; 
@@ -2293,15 +2295,16 @@
     "(swap-selection-channels) swaps the currently selected data's channels"
     (define find-selection-sound 
       (lambda (not-this)
-	(call-with-current-continuation
-	 (lambda (return)
-	   (apply map (lambda (snd chn)
-			(if (and (selection-member snd chn)
-				 (or (null? not-this)
-				     (not (= snd (car not-this)))
-				     (not (= chn (cadr not-this)))))
-			    (return (list snd chn))))
-		  (all-chans))))))
+	(catch 'return ; could also use call-with-current-continuation
+	  (lambda ()
+	    (apply map (lambda (snd chn)
+			 (if (and (selection-member snd chn)
+				  (or (null? not-this)
+				      (not (= snd (car not-this)))
+				      (not (= chn (cadr not-this)))))
+			     (throw 'return (list snd chn))))
+		  (all-chans)))
+	  (lambda (tag val) val))))
     (if (selection?)
 	(if (= (region-chans 0) 2)
 	    (let* ((beg (selection-beg))
@@ -2321,9 +2324,11 @@
 ;;;   interpolating between samples if necessary, the corresponding "generator" is sound-interp
 
 (define make-sound-interp 
-  (lambda (start snd chn)
-    "(make-sound-interp start snd chn) -> an interpolating reader for snd's channel chn"
-    (let* ((bufsize 2048)
+  (lambda (start . rest)
+    "(make-sound-interp start &optional snd chn) -> an interpolating reader for snd's channel chn"
+    (let* ((snd (if (> (length rest) 0) (car rest) #f))
+	   (chn (if (> (length rest) 1) (cadr rest) #f))
+	   (bufsize 2048)
 	   (buf4size 128)
 	   (data (samples->vct start bufsize snd chn))
 	   (curbeg start)
@@ -2365,8 +2370,8 @@
 ;;   (1.0 = original length) and returns a new version of the data in the specified channel
 ;;   that follows that envelope (that is, when the envelope is 0 we get sample 0, when the
 ;;   envelope is 1 we get the last sample, envelope = .5 we get the middle sample of the 
-;;   sound and so on. (env-sound-interp '(0 0 1 1) 1.0 0 0) will return a copy of the
-;;   current sound; (env-sound-interp '(0 0 1 1 2 0) 2.0 0 0) will return a new sound 
+;;   sound and so on. (env-sound-interp '(0 0 1 1)) will return a copy of the
+;;   current sound; (env-sound-interp '(0 0 1 1 2 0) 2.0) will return a new sound 
 ;;   with the sound copied first in normal order, then reversed.  src-sound with an
 ;;   envelope could be used for this effect, but it is much more direct to apply the
 ;;   envelope to sound sample positions.
