@@ -913,12 +913,14 @@ void g_init_draw(SCM local_doc)
   DEFINE_PROC(S_make_graph_data, g_make_graph_data, 0, 5, 0, H_make_graph_data);
   DEFINE_PROC(S_graph_data, g_graph_data, 1, 6, 0, H_graph_data);
 
+#if DEBUGGING
   DEFINE_VAR("erase-context",        CHAN_IGC,       "graphics context to erase a line");
   DEFINE_VAR("selection-context",    CHAN_SELGC,     "graphics context to draw a line in a selection");
   DEFINE_VAR("mark-context",         CHAN_MGC,       "graphics context for a mark");
   DEFINE_VAR("mix-context",          CHAN_GC,        "graphics context for mix waveforms");
   DEFINE_VAR("selected-mix-context", CHAN_SELMXGC,   "graphics context for selected mix waveforms");
   DEFINE_VAR("combined-context",     CHAN_TMPGC,     "graphics context for superimposed graphics");
+#endif
 
   DEFINE_PROC(S_add_input,       g_add_input, 2, 0, 0,       "(" S_add_input " file callback) -> id");
   DEFINE_PROC(S_remove_input,    g_remove_input, 1, 0, 0,    "(" S_remove_input " id)");

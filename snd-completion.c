@@ -115,7 +115,7 @@ static char *snd_commands[NUM_COMMANDS] ={
   S_after_graph_hook, S_after_open_hook,
   S_amp_control, S_append_to_minibuffer, S_apply_controls, S_as_one_edit, S_ask_before_overwrite,
   S_audio_input_device, S_audio_output_device, S_audio_state_file,
-  S_auto_resize, S_auto_update, S_autocorrelate, S_autocorrelation,
+  S_auto_resize, S_auto_update, S_auto_update_interval, S_autocorrelate, S_autocorrelation,
   S_axis_label_font, S_axis_numbers_font,
 
   S_backward_graph, S_backward_mark, S_backward_mix, S_backward_sample, 
@@ -128,7 +128,7 @@ static char *snd_commands[NUM_COMMANDS] ={
   S_close_hook, S_close_sound, S_close_sound_file, 
   S_color2list, S_color_cutoff, S_color_dialog, S_color_inverted, S_color_scale, S_color_p, S_colormap,
   S_comment, S_contrast_control, S_contrast_control_amp, S_contrast_control_procedure, S_contrast_control_p,
-  S_convolve_arrays, S_convolve_selection_with, S_convolve_with, S_corruption_time, S_count_matches,
+  S_convolve_arrays, S_convolve_selection_with, S_convolve_with, S_count_matches,
   S_cursor, S_cursor_color, S_cursor_cross,
   S_cursor_follows_play, S_cursor_in_middle, S_cursor_in_view, S_cursor_line, S_cursor_no_action,
   S_cursor_on_left, S_cursor_on_right, S_cursor_style, S_cursor_update_display, 

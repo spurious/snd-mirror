@@ -279,7 +279,8 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 		hdr = make_file_info_1(fullname);
 	      else hdr = translate_file(fullname, ss, type);
 	    }
-	  else snd_error("%s does not seem to be a sound file?", fullname);
+	  else 
+	    snd_error("%s does not seem to be a sound file?", fullname);
 	}
     }
   else
@@ -744,6 +745,14 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   int i, fd, len;
   /* we've already checked that filename exists */
   hdr = make_file_info_1(filename);
+  if (hdr == NULL)
+    {
+      if (ss->catch_exists)
+	ERROR(NO_SUCH_FILE,
+	      SCM_LIST2(TO_SCM_STRING(__FUNCTION__),
+			TO_SCM_STRING(ss->catch_message)));
+      return(NULL);
+    }
   sp = (snd_info *)CALLOC(1, sizeof(snd_info));
   sp->nchans = mus_sound_chans(filename);
   sp->allocated_chans = sp->nchans;
@@ -1113,9 +1122,9 @@ static void file_prevlist(char *filename, char *fullname)
     }
   for (k = prevfile_end; k > 0; k--) 
     {
-      prevnames[k] = prevnames[k-1]; 
-      prevfullnames[k] = prevfullnames[k-1];
-      prevtimes[k] = prevtimes[k-1];
+      prevnames[k] = prevnames[k - 1]; 
+      prevfullnames[k] = prevfullnames[k - 1];
+      prevtimes[k] = prevtimes[k - 1];
     }
   prevnames[0] = copy_string(filename);
   prevfullnames[0] = copy_string(fullname);
@@ -2075,7 +2084,10 @@ static SCM g_add_sound_file_extension(SCM ext)
 static SCM g_file_write_date(SCM file)
 {
   #define S_file_write_date "file-write-date"
-  #define H_file_write_date "(" S_file_write_date " file) -> write date"
+  #define H_file_write_date "(" S_file_write_date " file) -> write date in the same format as current-time:\n\
+(strftime \"%a %d-%b-%Y %H:%M %Z\" (localtime (file-write-date \"oboe.snd\")))\n\
+Equivalent to Guile (stat:mtime (stat file))"
+
   time_t date;
   ASSERT_TYPE(STRING_P(file), file, SCM_ARGn, S_file_write_date, "a string");
   date = file_write_date(TO_C_STRING(file));

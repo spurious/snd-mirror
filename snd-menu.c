@@ -283,7 +283,7 @@ void new_file_from_menu(snd_state *ss)
   mus_sound_forget(new_file_name);
   make_new_file_dialog(ss, new_file_name, header_type, data_format, srate, chans, new_comment);
   if (new_comment) FREE(new_comment);
-  if (new_file_name) FREE(new_file_name);
+  if (new_file_name) free(new_file_name); /* could be output of output-name-hook -- we'll just ignore the memlog mess-up */
 }
 
 void revert_file_from_menu(snd_state *ss)

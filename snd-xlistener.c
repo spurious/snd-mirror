@@ -1,9 +1,5 @@
 #include "snd.h"
 
-/* TODO:   add minihistory support in listener
- * TODO    bubble args help if tab at end of name? (or click name?)
- */
-
 static Widget listener_text = NULL;
 
 static Widget completion_help_dialog = NULL, completion_help_list = NULL;

@@ -201,3 +201,5 @@
 	  (set! ind (+ ind 1))
 	  (if (>= ind traces) (set! ind 0))))
       (mus-audio-close in-port))))
+
+;;; TODO  continuous record (flushing output until some indication) or start/stop recording upon receiving sound

@@ -27,8 +27,8 @@
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs))
 
-(define tests 101)
-(define snd-test 23)
+(define tests 1)
+(define snd-test -1)
 (define keep-going #f)
 (define full-test (< snd-test 0))
 (define total-tests 23)
@@ -258,9 +258,9 @@
       (set! (color-scale) (color-scale))
       (if (fneq (color-scale)  1.0 )
 	  (snd-display (format #f ";color-scale set def: ~A" (color-scale))))
-      (set! (corruption-time) (corruption-time))
-      (if (fneq (corruption-time)  60.0 )
-	  (snd-display (format #f ";corruption-time set def: ~A" (corruption-time))))
+      (set! (auto-update-interval) (auto-update-interval))
+      (if (fneq (auto-update-interval)  60.0 )
+	  (snd-display (format #f ";auto-update-interval set def: ~A" (auto-update-interval))))
       (set! (dac-combines-channels) (dac-combines-channels))
       (if (not (equal? (dac-combines-channels)  #t)) 
 	  (snd-display (format #f ";dac-combines-channels set def: ~A" (dac-combines-channels))))
@@ -574,7 +574,7 @@
 	'contrast-control (without-errors (contrast-control)) 'no-such-sound
 	'contrast-control-amp (without-errors (contrast-control-amp)) 'no-such-sound
 	'contrast-control? (without-errors (contrast-control?)) 'no-such-sound
-	'corruption-time (corruption-time) 60.0 
+	'auto-update-interval (auto-update-interval) 60.0 
 	'cursor-follows-play (without-errors (cursor-follows-play)) 'no-such-sound
 	'dac-combines-channels (dac-combines-channels) #t
 	'dac-size (dac-size) 256 
@@ -1073,7 +1073,7 @@
 	  (list 'contrast-control contrast-control 0.0 set-contrast-control 0.5)
 	  (list 'contrast-control-amp contrast-control-amp 1.0 set-contrast-control-amp 0.5)
 	  (list 'contrast-control? contrast-control? #f set-contrast-control? #t)
-	  (list 'corruption-time corruption-time 60.0 set-corruption-time 120.0)
+	  (list 'auto-update-interval auto-update-interval 60.0 set-auto-update-interval 120.0)
 	  (list 'cursor-follows-play cursor-follows-play #f set-cursor-follows-play #t)
 	  (list 'dac-combines-channels dac-combines-channels #t set-dac-combines-channels #f)
 	  (list 'dac-size dac-size 256 set-dac-size 512)
@@ -2810,7 +2810,24 @@
 	(test-edpos-1 (lambda (snd pos) (filter-sound (make-fir-filter 6 (list->vct '(.1 .2 .3 .3 .2 .1))) 6 snd 0 pos)) 'filter-sound ind1)
 	(test-edpos-1 (lambda (snd pos) (convolve-with "pistol.snd" .5 snd 0 pos)) 'convolve-with ind1)
 
-	(close-sound ind1))
+	(set! (previous-files-sort-procedure)
+	      (lambda (lst)
+		(sort lst 
+		      (lambda (a b)
+			(define (mxall mxcur mxlst)
+			  (if (null? mxlst)
+			      mxcur
+			      (mxall (max mxcur (cadr mxlst)) (cddr mxlst))))
+			(let ((mxa (mus-sound-max-amp a))
+			      (mxb (mus-sound-max-amp b)))
+			  (or (not mxb)
+			      (and mxa
+				   (> (mxall 0.0 (vector->list mxa))
+				      (mxall 0.0 (vector->list mxb))))))))))
+	(set! (previous-files-sort) 5)
+	(close-sound ind1)
+	(set! (previous-files-sort) 1)
+	)
 
       ))
 
@@ -7143,7 +7160,7 @@
 		    (list 'contrast-control #t 0.0 set-contrast-control 1.0)
 		    (list 'contrast-control-amp #t 0.0 set-contrast-control-amp 1.0)
 		    (list 'contrast-control? #t #f set-contrast-control? #t)
-		    (list 'corruption-time #f 60.0 set-corruption-time 120.0)
+		    (list 'auto-update-interval #f 60.0 set-auto-update-interval 120.0)
 		    (list 'cursor-follows-play #f #f set-cursor-follows-play #t)
 		    (list 'data-clipped #f #f set-data-clipped #t)
 		    (list 'default-output-chans #f 1 set-default-output-chans 8)
@@ -7182,7 +7199,7 @@
 		    (list 'movies #f #f set-movies #t)
 		    (list 'selection-creates-region #f #f set-selection-creates-region #t)
 		    (list 'transform-normalization #f dont-normalize-transform set-transform-normalization normalize-transform-globally)
-		    (list 'previous-files-sort #f 0 set-previous-files-sort 3)
+		    (list 'previous-files-sort #f 0 set-previous-files-sort 5)
 		    (list 'print-length #f 2 set-print-length 32)
 		    (list 'reverb-control-decay #f 0.0 set-reverb-control-decay 2.0)
 		    (list 'reverb-control-feedback #t 1.00 set-reverb-control-feedback 1.1)
@@ -9731,7 +9748,7 @@ EDITS: 3
 	       bomb button-font c-g? apply-controls change-menu-label change-samples-with-origin channel-style channel-sync channel-widgets channels
 	       chans clear-audio-inputs close-sound close-sound-file color-cutoff color-dialog color-inverted color-scale color->list colormap
 	       color? comment contrast-control contrast-control-amp contrast-control-procedure contrast-control? convolve-arrays 
-	       convolve-selection-with convolve-with corruption-time
+	       convolve-selection-with convolve-with auto-update-interval
 	       count-matches current-font cursor cursor-color cursor-follows-play cursor-size cursor-style dac-combines-channels dac-size data-clipped
 	       data-color data-format data-location default-output-chans default-output-format default-output-srate default-output-type define-envelope
 	       delete-mark delete-marks forget-region delete-sample delete-samples delete-samples-with-origin delete-selection dialog-widgets
@@ -9813,7 +9830,7 @@ EDITS: 3
 (define set-procs (list 
 		   amp-control ask-before-overwrite audio-input-device audio-output-device audio-state-file auto-resize auto-update
 		   axis-label-font axis-numbers-font basic-color bold-button-font button-font channel-style channel-sync color-cutoff color-inverted
-		   color-scale contrast-control contrast-control-amp contrast-control-procedure contrast-control? corruption-time 
+		   color-scale contrast-control contrast-control-amp contrast-control-procedure contrast-control? auto-update-interval 
 		   current-font cursor cursor-color cursor-follows-play
 		   cursor-size cursor-style dac-combines-channels dac-size data-clipped data-color 
 		   default-output-chans default-output-format default-output-srate
@@ -10513,7 +10530,7 @@ EDITS: 3
 	  (check-error-tag 'no-such-file (lambda () (play "/bad/baddy.snd")))
 	  (check-error-tag 'no-such-sound (lambda () (play 0 1234)))
 	  (check-error-tag 'no-such-channel (lambda () (play 0 ind 1234)))
-	  (check-error-tag 'cannot-save (lambda () (save-sound-as "/bad/baddy.snd")))
+	  (check-error-tag 'mus-error (lambda () (save-sound-as "/bad/baddy.snd")))
 	  (check-error-tag 'no-such-sound (lambda () (transform-sample 0 1 1234)))
 	  (check-error-tag 'no-such-channel (lambda () (transform-sample 0 1 ind 1234)))
 	  (check-error-tag 'no-such-sound (lambda () (samples->vct 0 100 1234)))
@@ -10525,8 +10542,8 @@ EDITS: 3
 	  (check-error-tag 'no-active-selection (lambda () (save-selection "/bad/baddy.snd")))
 	  (check-error-tag 'no-such-region (lambda () (save-region 1234 "/bad/baddy.snd")))
 	  (make-region 0 100 ind 0)
-	  (check-error-tag 'cannot-save (lambda () (save-selection "/bad/baddy.snd")))
-	  (check-error-tag 'cannot-save (lambda () (save-region (car (regions)) "/bad/baddy.snd")))
+	  (check-error-tag 'mus-error (lambda () (save-selection "/bad/baddy.snd")))
+	  (check-error-tag 'mus-error (lambda () (save-region (car (regions)) "/bad/baddy.snd")))
 	  (check-error-tag 'no-such-sound (lambda () (make-track-sample-reader 0 0 1234 0)))
 	  (check-error-tag 'no-such-track (lambda () (make-track-sample-reader 0 0 ind 0)))
 	  (check-error-tag 'no-such-mix (lambda () (make-mix-sample-reader 1234)))
@@ -10540,7 +10557,7 @@ EDITS: 3
 	(check-error-tag 'no-such-menu (lambda () (add-to-menu 1234 "hi" (lambda () #f))))
 	(check-error-tag 'bad-arity (lambda () (add-to-main-menu "hi" (lambda (a b) #f))))
 	(check-error-tag 'bad-arity (lambda () (add-to-menu 1 "hi" (lambda (a b) #f))))
-	(check-error-tag 'cannot-save (lambda () (open-sound-file "/bad/baddy.snd")))
+	(check-error-tag 'mus-error (lambda () (open-sound-file "/bad/baddy.snd")))
 	(check-error-tag 'no-such-file (lambda () (close-sound-file 1234 0)))
 	(check-error-tag 'wrong-type-arg (lambda () (help-dialog (list 0 1) "hiho")))
 	(check-error-tag 'no-such-sound (lambda () (edit-header-dialog 1234)))
@@ -10743,6 +10760,7 @@ EDITS: 3
    (lambda (n)
      (forget-region n))
    regs))
+(set! (previous-files-sort) 0)
 
 (if (file-exists? "saved-snd.scm") (delete-file "saved-snd.scm"))
 (gc)

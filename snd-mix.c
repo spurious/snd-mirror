@@ -922,6 +922,7 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
   MUS_SAMPLE_TYPE *chandata;
   int i, size, j, cursamps, in_chans, base, no_space, len, err = 0;
   file_info *ihdr, *ohdr;
+  ss = cp->state;
   if (num <= 0) 
     {
       snd_error("mix %s which has %d samples?", tempfile, num);
@@ -933,12 +934,9 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
   /* might set flag here that we need backup after file_mix_samples below (backup_edit_list(cp)) */
   /* otherwise user sees unexplained mix-extend in edit history list */
   if (beg < 0) beg = 0;
-  csf = init_sample_read(beg, cp, READ_FORWARD);
-  if (csf == NULL) return(NULL);
-  sp = cp->sound;
-  ss = cp->state;
   ihdr = make_file_info(tempfile, ss);
   if (!ihdr) return(NULL);
+  sp = cp->sound;
   in_chans = ihdr->chans;
   if (in_chans <= chan) 
     {
@@ -955,12 +953,23 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
   ofd = open_temp_file(ofile, 1, ohdr, ss);
   if (ofd == -1) 
     {
+      if (ihdr) free_file_info(ihdr);
       snd_error("mix temp file %s: %s", ofile, strerror(errno)); 
       return(NULL);
     }
-  no_space = disk_space_p(cp->sound, ofd, num * 4, 0);
+  no_space = disk_space_p(sp, ofd, num * 4, 0);
   if (no_space == GIVE_UP)
     {
+      if (ihdr) free_file_info(ihdr);
+      mus_file_close(ofd);
+      snd_remove(ofile);
+      FREE(ofile);
+      return(NULL);
+    }
+  csf = init_sample_read(beg, cp, READ_FORWARD);
+  if (csf == NULL) 
+    {
+      if (ihdr) free_file_info(ihdr);
       mus_file_close(ofd);
       snd_remove(ofile);
       FREE(ofile);
@@ -3612,6 +3621,7 @@ static SCM g_mix_sound(SCM file, SCM start_samp)
   if (sp == NULL) mus_misc_error(S_mix_sound, "no sound to mix into!", file);
   filename = mus_expand_filename(TO_C_STRING(file));
   beg = TO_C_INT_OR_ELSE(start_samp, 0);
+  ss->catch_message = NULL;
   if (mus_file_probe(filename))
     err = mix(beg, 
 	      mus_sound_frames(filename), 
@@ -3621,7 +3631,13 @@ static SCM g_mix_sound(SCM file, SCM start_samp)
   else err = -1;
   if (filename) FREE(filename);
   if (err == -1) 
-    snd_no_such_file_error(S_mix_sound, file);
+    {
+      if (ss->catch_message)
+	ERROR(MUS_MISC_ERROR,
+	      SCM_LIST2(TO_SCM_STRING(S_mix),
+			TO_SCM_STRING(ss->catch_message)));
+      snd_no_such_file_error(S_mix_sound, file);
+    }
   return(TO_SCM_INT(err));
 }
 
@@ -3749,6 +3765,7 @@ If chn is omitted, file's channels are mixed until snd runs out of channels"
       return(snd_no_such_file_error(S_mix, file));
     }
   ss = get_global_state();
+  ss->catch_message = NULL;
   if (NOT_BOUND_P(console))
     with_mixer = with_mix_tags(ss);
   else with_mixer = TO_C_BOOLEAN_OR_T(console);
@@ -3758,6 +3775,10 @@ If chn is omitted, file's channels are mixed until snd runs out of channels"
       if (id == -1) 
 	{
 	  if (name) FREE(name);
+	  if (ss->catch_message)
+	    ERROR(MUS_MISC_ERROR,
+		  SCM_LIST2(TO_SCM_STRING(S_mix),
+			    TO_SCM_STRING(ss->catch_message)));
 	  return(snd_no_such_file_error(S_mix, file));
 	}
     }
@@ -3767,6 +3788,7 @@ If chn is omitted, file's channels are mixed until snd runs out of channels"
       chans = mus_sound_chans(name);
       if (chans > 0)
 	{
+	  ss->catch_message = NULL;
 	  md = file_mix_samples(TO_C_INT_OR_ELSE(chn_samp_n, 0),
 				mus_sound_samples(name) / chans, 
 				name,
@@ -3775,7 +3797,14 @@ If chn is omitted, file's channels are mixed until snd runs out of channels"
 				DONT_DELETE_ME, 
 				S_mix,
 				with_mixer);
-	  if (md) id = md->id;
+	  if (md) 
+	    id = md->id;
+	  else
+	    if (ss->catch_message)
+	      ERROR(MUS_MISC_ERROR,
+		    SCM_LIST2(TO_SCM_STRING(S_mix),
+			      TO_SCM_STRING(ss->catch_message)));
+
 	}
       else 
 	{

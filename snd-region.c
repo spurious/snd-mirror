@@ -301,6 +301,7 @@ static void make_region_readable(region *r, snd_state *ss)
 	}
       else
 	{
+	  ss->catch_message = NULL;
 	  hdr = make_file_info(r->filename, ss);
 	  if (hdr)
 	    {
@@ -316,6 +317,13 @@ static void make_region_readable(region *r, snd_state *ss)
 	      cp->sounds[0] = make_snd_data_file(r->filename, datai,
 						 MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(i)]),
 						 hdr, DONT_DELETE_ME, cp->edit_ctr, i); /* don't auto-delete! */
+	    }
+	  else
+	    {
+	      if ((ss->catch_exists) && (ss->catch_message))
+		ERROR(MUS_MISC_ERROR,
+		      SCM_LIST2(TO_SCM_STRING("can't read region file!!"),
+				TO_SCM_STRING(ss->catch_message)));
 	    }
 	}
     }
@@ -1197,20 +1205,11 @@ static SCM g_make_region (SCM beg, SCM end, SCM snd_n, SCM chn_n)
   return(TO_SCM_INT(id));
 }
 
-static mus_error_handler_t *old_mus_error;
-
-static void mus_local_error(int type, char *msg)
-{
-  mus_error_set_handler(old_mus_error);           /* make sure subsequent errors are handled by the default handler */
-  ERROR(CANNOT_SAVE,
-	SCM_LIST2(TO_SCM_STRING(S_save_sound_as),
-		  TO_SCM_STRING(msg)));
-}
-
 static SCM g_save_region (SCM n, SCM filename, SCM format) 
 {
   #define H_save_region "(" S_save_region " region filename &optional format) saves region in filename using data format (mus-bshort)"
   char *name = NULL;
+  snd_state *ss;
   int res = MUS_NO_ERROR, rg;
   ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, S_save_region, "an integer");
   ASSERT_TYPE(STRING_P(filename), filename, SCM_ARG2, S_save_region, "a string");
@@ -1219,13 +1218,14 @@ static SCM g_save_region (SCM n, SCM filename, SCM format)
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_save_region, n));
   name = mus_expand_filename(TO_C_STRING(filename));
-  old_mus_error = mus_error_set_handler(mus_local_error);
+  ss = get_global_state();
+  ss->catch_message = NULL;
   res = save_region(get_global_state(), rg, name, TO_C_INT_OR_ELSE(format, 0));
-  mus_error_set_handler(old_mus_error);
   if (name) FREE(name);
   if (res != MUS_NO_ERROR)
     ERROR(CANNOT_SAVE,
-	  SCM_LIST1(TO_SCM_STRING(S_save_region)));
+	  SCM_LIST2(TO_SCM_STRING(S_save_region),
+		    TO_SCM_STRING(ss->catch_message)));
   return(n);
 }
 
@@ -1243,8 +1243,13 @@ mixes region into snd's channel chn starting at chn-samp; returns new mix id."
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_mix_region, reg_n));
   cp = get_cp(snd_n, chn_n, S_mix_region);
+  cp->state->catch_message = NULL;
   id = mix_region(rg, cp,
 		  TO_C_INT_OR_ELSE(chn_samp_n, cp->cursor));
+  if (id == INVALID_MIX_ID)
+    ERROR(MUS_MISC_ERROR,
+	  SCM_LIST2(TO_SCM_STRING(S_mix_region),
+		    TO_SCM_STRING(cp->state->catch_message)));
   return(TO_SCM_INT(id));
 }
 

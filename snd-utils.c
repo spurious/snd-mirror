@@ -8,23 +8,13 @@ int snd_round(Float x)
   return(i);
 }
 
-#if DEBUGGING
-char *copy_string_1(const char *str, const char *caller)
-#else
 char *copy_string(const char *str)
-#endif
 {
 #if DEBUG_MEMORY || (!HAVE_STRDUP)
   char *newstr = NULL;
   if (str)
     {
-#if DEBUGGING
-      set_encloser(caller);
-#endif
       newstr = (char *)MALLOC((strlen(str) + 1) * sizeof(char));
-#if DEBUGGING
-      set_encloser(NULL);
-#endif
       strcpy(newstr, str);
     }
   return(newstr);
@@ -629,6 +619,7 @@ void mem_report(void)
   fprintf(Fp,"\n\n--------------------------------\n");
   report_times_1(Fp);
 #endif
+  fprintf(Fp, "\n\nprevlist: %d %d\n", get_prevfile_end(), get_max_prevfile_end());
   fclose(Fp);
 }
 

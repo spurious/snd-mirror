@@ -62,15 +62,15 @@ static gint Window_Close(GtkWidget *w, GdkEvent *event, gpointer context)
 }
 #endif
 
-static gint corruption_check(gpointer context)
+static gint auto_update_check(gpointer context)
 {
   snd_state *ss = (snd_state *)context;
-  if (corruption_time(ss) > 0.0)
+  if (auto_update_interval(ss) > 0.0)
     {
       if ((!(play_in_progress())) && 
 	  (!(record_in_progress())))
 	map_over_sounds(ss, snd_not_current, NULL);
-      gtk_timeout_add((guint32)(corruption_time(ss) * 1000), corruption_check, context);
+      gtk_timeout_add((guint32)(auto_update_interval(ss) * 1000), auto_update_check, context);
     }
   return(0);
 }
@@ -362,7 +362,7 @@ static BACKGROUND_TYPE startup_funcs(gpointer context)
 	  if (ss->init_window_y != DEFAULT_INIT_WINDOW_Y) set_widget_y(MAIN_SHELL(ss), ss->init_window_y);
 	}
 #endif
-      gtk_timeout_add((guint32)(corruption_time(ss)*1000), corruption_check, (gpointer)ss);
+      gtk_timeout_add((guint32)(auto_update_interval(ss)*1000), auto_update_check, (gpointer)ss);
       break;
     case 4: 
 #if TRAP_SEGFAULT

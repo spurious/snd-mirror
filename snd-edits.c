@@ -1370,6 +1370,7 @@ void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, i
   int *datai;
   ed_list *ed;
   file_info *hdr;
+  snd_state *ss;
   if (num <= 0) 
     {
       if ((inserted_file) && (auto_delete == DELETE_ME)) snd_remove(inserted_file);
@@ -1383,14 +1384,16 @@ void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, i
       extend_with_zeros(cp, len, beg - len + 1, "(insert-extend)");
       len = current_ed_samples(cp);
     }
+  ss = cp->state;
   k = cp->edit_ctr;
-  prepare_edit_list(cp, len+num);
+  prepare_edit_list(cp, len + num);
   cp->edits[cp->edit_ctr] = insert_samples_1(beg, num, NULL, cp->edits[k], cp, &cb, origin);
   reflect_edit_history_change(cp);
-  hdr = make_file_info(inserted_file, cp->state);
+  ss->catch_message = NULL;
+  hdr = make_file_info(inserted_file, ss);
   if (hdr)
     {
-      fd = snd_open_read(cp->state, inserted_file);
+      fd = snd_open_read(ss, inserted_file);
       mus_file_open_descriptors(fd,
 			       inserted_file,
 			       hdr->format,
@@ -1407,6 +1410,13 @@ void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, i
       ed->sfnum = PACK_EDIT(INSERTION_EDIT, cb[ED_SND]);
       lock_affected_mixes(cp, beg, beg + num);
       if (cp->mix_md) reflect_mix_edit(cp, origin);
+    }
+  else
+    {
+      if (ss->catch_exists)
+	ERROR(NO_SUCH_FILE,
+	      SCM_LIST2(TO_SCM_STRING(origin),
+			TO_SCM_STRING(ss->catch_message)));
     }
 }
 
@@ -1639,6 +1649,7 @@ void file_change_samples(int beg, int num, char *tempfile,
   int *datai;
   ed_list *ed;
   file_info *hdr;
+  snd_state *ss;
   if (num <= 0) 
     {
       if ((tempfile) && (auto_delete == DELETE_ME)) snd_remove(tempfile);
@@ -1647,13 +1658,12 @@ void file_change_samples(int beg, int num, char *tempfile,
     }
   if (dont_edit(cp)) return;
   prev_len = current_ed_samples(cp);
-
+  ss = cp->state;
   if (beg >= prev_len)
     {
-      extend_with_zeros(cp, prev_len, beg-prev_len + 1, "(change-extend)");
+      extend_with_zeros(cp, prev_len, beg - prev_len + 1, "(change-extend)");
       prev_len = current_ed_samples(cp);
     }
-
   new_len = beg + num;
   if (new_len < prev_len) new_len = prev_len;
   k = cp->edit_ctr;
@@ -1661,10 +1671,11 @@ void file_change_samples(int beg, int num, char *tempfile,
   cp->edits[cp->edit_ctr] = change_samples_1(beg, num, NULL, cp->edits[k], cp, &cb, new_len - prev_len, origin);
   reflect_edit_history_change(cp);
   if (lock == LOCK_MIXES) lock_affected_mixes(cp, beg, beg + num);
-  hdr = make_file_info(tempfile, cp->state);
+  ss->catch_message = NULL;
+  hdr = make_file_info(tempfile, ss);
   if (hdr)
     {
-      fd = snd_open_read(cp->state, tempfile);
+      fd = snd_open_read(ss, tempfile);
       mus_file_open_descriptors(fd,
 			       tempfile,
 			       hdr->format,
@@ -1680,6 +1691,13 @@ void file_change_samples(int beg, int num, char *tempfile,
       ed = cp->edits[cp->edit_ctr];
       ed->sfnum = PACK_EDIT(CHANGE_EDIT, cb[ED_SND]);
       if (cp->mix_md) reflect_mix_edit(cp, origin);
+    }
+  else
+    {
+      if (ss->catch_exists)
+	ERROR(NO_SUCH_FILE,
+	      SCM_LIST2(TO_SCM_STRING(origin),
+			TO_SCM_STRING(ss->catch_message)));
     }
 }
 
@@ -1699,6 +1717,7 @@ void file_override_samples(int num, char *tempfile,
     }
   if (dont_edit(cp)) return;
   ss = cp->state;
+  ss->catch_message = NULL;
   hdr = make_file_info(tempfile, ss);
   if (hdr) 
     {
@@ -1728,6 +1747,13 @@ void file_override_samples(int num, char *tempfile,
       check_for_first_edit(cp);
       update_graph(cp, NULL);
       if (cp->mix_md) reflect_mix_edit(cp, origin);
+    }
+  else
+    {
+      if (ss->catch_exists)
+	ERROR(NO_SUCH_FILE,
+	      SCM_LIST2(TO_SCM_STRING(origin),
+			TO_SCM_STRING(ss->catch_message)));
     }
 }
 

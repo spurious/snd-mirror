@@ -315,9 +315,9 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 #define set_auto_update(ss, a) ss->Auto_Update = a
 #define DEFAULT_AUTO_UPDATE 0
 
-#define corruption_time(ss) ss->Corruption_Time
-#define set_corruption_time(ss, a) ss->Corruption_Time = a
-#define DEFAULT_CORRUPTION_TIME 60.0
+#define auto_update_interval(ss) ss->Auto_Update_Interval
+#define set_auto_update_interval(ss, a) ss->Auto_Update_Interval = a
+#define DEFAULT_AUTO_UPDATE_INTERVAL 60.0
 
 #define color_cutoff(ss) ss->Color_Cutoff
 #define in_set_color_cutoff(ss, a) ss->Color_Cutoff = a

@@ -1,11 +1,8 @@
 /* 
- * TODO  on-going output sonogram (this is just an fft+running display)?
- * TODO  continuous record (flushing output until some indication)
  * TODO  output panel should support max chans found in all output devices, and have some way to send output anywhere
  * TODO  recorder-defaults device {function} -> layout, chans, whether included and active, etc (using sndlib device numbers)
  * TODO  dB in VUs
  * TODO  syncd sliders ("master" volume control basically)
- * TODO  if mono microphone, both chans of analog in are seeing input?
  */
 
 #include "snd.h"

@@ -48,6 +48,8 @@ void set_snd_error_display (void (*func)(const char *))
 }
 #endif
 
+static int direct_snd_error_call = 0;
+
 void snd_error(char *format, ...)
 {
 #if HAVE_VPRINTF
@@ -63,11 +65,11 @@ void snd_error(char *format, ...)
   vsprintf(snd_error_buffer, format, ap);
 #endif
   va_end(ap);
-    if ((HOOKED(snd_error_hook)) &&
-	(NOT_FALSE_P(g_c_run_or_hook(snd_error_hook, 
-				     SCM_LIST1(TO_SCM_STRING(snd_error_buffer)),
-				     S_snd_error_hook))))
-      return;
+  if ((HOOKED(snd_error_hook)) &&
+      (NOT_FALSE_P(g_c_run_or_hook(snd_error_hook, 
+				   SCM_LIST1(TO_SCM_STRING(snd_error_buffer)),
+				   S_snd_error_hook))))
+    return;
   ss = get_global_state();
   if ((ss) && (ss->sgx))
     {
@@ -89,9 +91,14 @@ void snd_error(char *format, ...)
 #endif
       add_to_error_history(ss, snd_error_buffer, TRUE);
       sp = selected_sound(ss);
-      if ((sp) && (sp->active))
-	report_in_minibuffer(sp, snd_error_buffer);
-      else post_error_dialog(ss, snd_error_buffer);
+      ss->catch_message = snd_error_buffer;
+      if ((direct_snd_error_call) ||
+	  (ss->catch_exists == 0))
+	{
+	  if ((sp) && (sp->active))
+	    report_in_minibuffer(sp, snd_error_buffer);
+	  else post_error_dialog(ss, snd_error_buffer);
+	}
 #ifdef SND_AS_WIDGET
 	}
 #endif
@@ -112,7 +119,9 @@ static SCM g_snd_error(SCM msg)
 {
   #define H_snd_error "(" S_snd_error " str) reports error message str"
   ASSERT_TYPE(STRING_P(msg), msg, SCM_ARGn, S_snd_error, "a string");
+  direct_snd_error_call = 1;
   snd_error(TO_C_STRING(msg));
+  direct_snd_error_call = 0;
   return(msg);
 }
   

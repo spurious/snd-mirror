@@ -1027,7 +1027,7 @@ typedef struct {
   file_info *hdr;
 } apply_state;
 
-void *make_apply_state(void *xp)
+static void *make_apply_state(void *xp)
 {
   /* set up initial state for apply_controls */
   apply_state *ap;
@@ -1996,11 +1996,6 @@ static SCM g_selected_sound(void)
   return(TO_SMALL_SCM_INT(NO_SELECTION));
 }
 
-/* TODO: open-sound (et al) should throw NO-SUCH-FILE or whatever, not call snd_error (via make_file_info) 
- *         this either requires homogenizing snd_error/mus_error or making snd_error redirectable,
- *         or setting and restoring the snd_error_hook or splitting make_file_info into the _with_error parts
- */
-
 static SCM g_open_sound(SCM filename)
 { /* returns index of new sound if successful */
   #define H_open_sound "(" S_open_sound " filename)\n\
@@ -2016,9 +2011,15 @@ opens filename (as if opened from File:Open menu option), and returns the new fi
       if (fname) FREE(fname);
       return(snd_no_such_file_error(S_open_sound, filename));
     }
+  ss->catch_message = NULL;
   sp = snd_open_file(fname, ss, FALSE);
   if (fname) FREE(fname);
-  if (sp) return(TO_SCM_INT(sp->index));
+  if (sp) 
+    return(TO_SCM_INT(sp->index));
+  else
+    ERROR(MUS_MISC_ERROR,
+	  SCM_LIST2(TO_SCM_STRING(S_open_sound),
+		    TO_SCM_STRING(ss->catch_message)));
   return(SCM_BOOL_F);
 }
 
@@ -2047,12 +2048,18 @@ opens filename assuming the data matches the attributes indicated unless the fil
 			      TO_C_INT_OR_ELSE(chans, oc),
 			      TO_C_INT_OR_ELSE(format, ofr));
   ss->reloading_updated_file = TRUE;
+  ss->catch_message = NULL;
   sp = snd_open_file(fname, ss, FALSE);
   ss->reloading_updated_file = FALSE;
   /* snd_open_file -> snd_open_file_1 -> add_sound_window -> make_file_info -> raw_data_dialog_to_file_info */
   /*   so here if hooked, we'd need to save the current hook, make it return the current args, open, then restore */
   if (fname) FREE(fname);
-  if (sp) return(TO_SCM_INT(sp->index));
+  if (sp) 
+    return(TO_SCM_INT(sp->index));
+  else
+    ERROR(MUS_MISC_ERROR,
+	  SCM_LIST2(TO_SCM_STRING(S_open_raw_sound),
+		    TO_SCM_STRING(ss->catch_message)));
   return(SCM_BOOL_F);
 }
 
@@ -2071,24 +2078,16 @@ You can subsequently make it writable by (set! (read-only) #f)."
       if (fname) FREE(fname);
       return(snd_no_such_file_error(S_view_sound, filename));
     }
-  if (fname)
-    {
-      sp = snd_open_file(fname, ss, TRUE);
-      FREE(fname);
-      if (sp) return(TO_SCM_INT(sp->index));
-    }
-  /* TODO: should this return -1 (others like open-sound also)? */
+  ss->catch_message = NULL;
+  sp = snd_open_file(fname, ss, TRUE);
+  FREE(fname);
+  if (sp) 
+    return(TO_SCM_INT(sp->index));
+  else 
+    ERROR(MUS_MISC_ERROR,
+	  SCM_LIST2(TO_SCM_STRING(S_view_sound),
+		    TO_SCM_STRING(ss->catch_message)));
   return(SCM_BOOL_F);
-}
-
-static mus_error_handler_t *old_mus_error;
-
-static void mus_local_error(int type, char *msg)
-{
-  mus_error_set_handler(old_mus_error);           /* make sure subsequent errors are handled by the default handler */
-  ERROR(CANNOT_SAVE,
-	SCM_LIST2(TO_SCM_STRING(S_save_sound_as),
-		  TO_SCM_STRING(msg)));
 }
 
 static SCM g_save_sound_as(SCM newfile, SCM index, SCM type, SCM format, SCM srate, SCM channel, SCM edpos)
@@ -2101,7 +2100,7 @@ Any argument can be #f which causes its value to be taken from the sound being s
   snd_info *sp;
   chan_info *cp;
   file_info *hdr;
-  int ht, df, sr, chan;
+  int ht, df, sr, chan, err;
   char *fname = NULL;
   ASSERT_TYPE(STRING_P(newfile), newfile, SCM_ARG1, S_save_sound_as, "a string");
   SND_ASSERT_SND(S_save_sound_as, index, 2);
@@ -2116,6 +2115,7 @@ Any argument can be #f which causes its value to be taken from the sound being s
   hdr = sp->hdr;
   ht = TO_C_INT_OR_ELSE_WITH_ORIGIN(type, hdr->type, S_save_sound_as);
   sr = TO_C_INT_OR_ELSE_WITH_ORIGIN(srate, hdr->srate, S_save_sound_as);
+  sp->state->catch_message = NULL;
   if (INTEGER_P(format)) 
     df = TO_C_INT(format);
   else    
@@ -2124,12 +2124,6 @@ Any argument can be #f which causes its value to be taken from the sound being s
 	df = hdr->format;
       else df = MUS_OUT_FORMAT;
     }
-
-  old_mus_error = mus_error_set_handler(mus_local_error);
-  /* errors here can be so deeply nested in the various file save funcs that 
-   * there's little hope of passing a flag around to say "throw a scheme error"
-   * where the default throughout the path is to call snd_error
-   */
   if (INTEGER_P(channel))
     {
       chan = TO_C_INT(channel);
@@ -2142,24 +2136,16 @@ Any argument can be #f which causes its value to be taken from the sound being s
       else 
 	{
 	  cp = sp->chans[chan];
-	  save_channel_edits(cp, fname, edpos, S_save_sound_as, 7);
+	  err = save_channel_edits(cp, fname, edpos, S_save_sound_as, 7);
 	}
     }
-  else save_edits_without_display(sp, fname, ht, df, sr, NULL, edpos, S_save_sound_as, 7);
-  mus_error_set_handler(old_mus_error);
-
+  else err = save_edits_without_display(sp, fname, ht, df, sr, NULL, edpos, S_save_sound_as, 7);
   if (fname) FREE(fname);
+  if (err != MUS_NO_ERROR)
+    ERROR(CANNOT_SAVE,
+	  SCM_LIST2(TO_SCM_STRING(S_save_sound_as),
+		    TO_SCM_STRING(sp->state->catch_message)));
   return(newfile);
-}
-
-static mus_error_handler_t *local_error;
-static char *toss_this = NULL;
-static SCM scm_this;
-static void new_local_error(int type, char *msg)
-{
-  mus_error_set_handler(local_error);           /* make sure subsequent errors are handled by the default handler */
-  if (toss_this) {FREE(toss_this); toss_this = NULL;}
-  mus_misc_error(S_new_sound, msg, scm_this);
 }
 
 static SCM g_new_sound(SCM name, SCM type, SCM format, SCM srate, SCM chans, SCM comment) 
@@ -2203,16 +2189,14 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
 		    }
 		  if (STRING_P(comment))
 		    com = TO_C_STRING(comment);
-		  toss_this = str;
-		  scm_this = name;
-		  local_error = mus_error_set_handler(new_local_error);
+		  ss->catch_message = NULL;
 		  err = snd_write_header(ss, str, ht, sr, ch, 0, ch * 2, df, com, snd_strlen(com), NULL);
-		  mus_error_set_handler(local_error);
-		  toss_this = NULL;
 		  if (err == -1)
 		    {
 		      if (str) FREE(str);
-		      mus_misc_error(S_new_sound, strerror(errno), name);
+		      if (ss->catch_message)
+			mus_misc_error(S_new_sound, ss->catch_message, name);
+		      else mus_misc_error(S_new_sound, strerror(errno), name);
 		    }
 		  chan = snd_reopen_write(ss, str);
 		  lseek(chan, mus_header_data_location(), SEEK_SET);

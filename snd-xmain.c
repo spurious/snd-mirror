@@ -226,17 +226,17 @@ static void Window_Close(Widget w, XtPointer context, XtPointer callData)
 }
 #endif
 
-static void corruption_check(XtPointer context, XtIntervalId *id)
+static void auto_update_check(XtPointer context, XtIntervalId *id)
 {
   snd_state *ss = (snd_state *)context;
-  if (corruption_time(ss) > 0.0)
+  if (auto_update_interval(ss) > 0.0)
     {
       if ((!(play_in_progress())) && 
 	  (!(record_in_progress())))
 	map_over_sounds(ss, snd_not_current, NULL);
       XtAppAddTimeOut(MAIN_APP(ss),
-		      (unsigned long)(corruption_time(ss)*1000),
-		      (XtTimerCallbackProc)corruption_check,
+		      (unsigned long)(auto_update_interval(ss)*1000),
+		      (XtTimerCallbackProc)auto_update_check,
 		      context);
     }
 }
@@ -431,8 +431,8 @@ static BACKGROUND_TYPE startup_funcs(XtPointer context)
       if (ss->init_window_x != DEFAULT_INIT_WINDOW_X) set_widget_x(MAIN_SHELL(ss), ss->init_window_x);
       if (ss->init_window_y != DEFAULT_INIT_WINDOW_Y) set_widget_y(MAIN_SHELL(ss), ss->init_window_y);
       XtAppAddTimeOut(MAIN_APP(ss), 
-		      (unsigned long)(corruption_time(ss) * 1000), 
-		      corruption_check, 
+		      (unsigned long)(auto_update_interval(ss) * 1000), 
+		      auto_update_check, 
 		      (XtPointer)ss);
 #if TRAP_SEGFAULT
       if (trap_segfault(ss)) signal(SIGSEGV, segv);

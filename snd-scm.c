@@ -882,17 +882,17 @@ static SCM g_set_color_scale(SCM val)
   return(TO_SCM_DOUBLE(color_scale(state)));
 }
 
-static SCM g_corruption_time(void) {return(TO_SCM_DOUBLE(corruption_time(state)));}
-static SCM g_set_corruption_time(SCM val) 
+static SCM g_auto_update_interval(void) {return(TO_SCM_DOUBLE(auto_update_interval(state)));}
+static SCM g_set_auto_update_interval(SCM val) 
 {
   Float ctime;
-  #define H_corruption_time "(" S_corruption_time ") -> time (seconds) between background checks for changed file on disk (60)"
-  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_corruption_time, "a number"); 
+  #define H_auto_update_interval "(" S_auto_update_interval ") -> time (seconds) between background checks for changed file on disk (60)"
+  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_auto_update_interval, "a number"); 
   ctime = TO_C_DOUBLE(val);
   if ((ctime < 0.0) || (ctime > (24 * 3600)))
-    mus_misc_error("set-" S_corruption_time, "invalid time:", val);
-  set_corruption_time(state, TO_C_DOUBLE(val)); 
-  return(TO_SCM_DOUBLE(corruption_time(state)));
+    mus_misc_error("set-" S_auto_update_interval, "invalid time:", val);
+  set_auto_update_interval(state, TO_C_DOUBLE(val)); 
+  return(TO_SCM_DOUBLE(auto_update_interval(state)));
 }
 
 static SCM g_default_output_chans(void) {return(TO_SCM_INT(default_output_chans(state)));}
@@ -1568,18 +1568,6 @@ static void unset_temp_fd(int fd)
       }
 }
 
-static mus_error_handler_t *old_mus_error;
-static file_info *open_hdr = NULL;
-
-static void mus_local_error(int type, char *msg)
-{
-  if (open_hdr) open_hdr = free_file_info(open_hdr);
-  mus_error_set_handler(old_mus_error);           /* make sure subsequent errors are handled by the default handler */
-  ERROR(CANNOT_SAVE,
-	SCM_LIST2(TO_SCM_STRING(S_save_sound_as),
-		  TO_SCM_STRING(msg)));
-}
-
 static SCM g_open_sound_file(SCM g_name, SCM g_chans, SCM g_srate, SCM g_comment)
 {
   #define H_open_sound_file "(" S_open_sound_file " &optional (name \"test.snd\")\n    (chans 1) (srate 22050) comment)\n\
@@ -1589,6 +1577,7 @@ subsequent " S_close_sound_file ". data can be written with " S_vct2sound_file
   /* assume user temp files are writing floats in native format */
   char *name = NULL, *comment = NULL;
   file_info *hdr;
+  snd_state *ss;
   int chans = 1, srate = 22050, result;
 #if MUS_LITTLE_ENDIAN
   int type = MUS_RIFF;
@@ -1621,15 +1610,18 @@ subsequent " S_close_sound_file ". data can be written with " S_vct2sound_file
   hdr->type = type;
   if (comment)
     hdr->comment = copy_string(comment);
-  open_hdr = hdr;
-  old_mus_error = mus_error_set_handler(mus_local_error);
+  ss = get_global_state();
+  ss->catch_message = NULL;
   result = open_temp_file(name, chans, hdr, state);
-  mus_error_set_handler(old_mus_error);
-  open_hdr = NULL;
   if (result == -1) 
     {
       free_file_info(hdr);
-      return(snd_no_such_file_error(S_open_sound_file, g_name));
+      if (ss->catch_message)
+	ERROR(MUS_MISC_ERROR,
+	      SCM_LIST2(TO_SCM_STRING(S_open_sound_file),
+			TO_SCM_STRING(ss->catch_message)));
+      else
+	return(snd_no_such_file_error(S_open_sound_file, g_name));
     }
   set_temp_fd(result, hdr);
   return(TO_SCM_INT(result));
@@ -2913,8 +2905,8 @@ void g_initialize_gh(snd_state *ss)
   define_procedure_with_setter(S_color_scale, SCM_FNC g_color_scale, H_color_scale,
 			       "set-" S_color_scale, SCM_FNC g_set_color_scale, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_corruption_time, SCM_FNC g_corruption_time, H_corruption_time,
-			       "set-" S_corruption_time, SCM_FNC g_set_corruption_time, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_auto_update_interval, SCM_FNC g_auto_update_interval, H_auto_update_interval,
+			       "set-" S_auto_update_interval, SCM_FNC g_set_auto_update_interval, local_doc, 0, 0, 0, 1);
 
   define_procedure_with_setter(S_default_output_chans, SCM_FNC g_default_output_chans, H_default_output_chans,
 			       "set-" S_default_output_chans, SCM_FNC g_set_default_output_chans, local_doc, 0, 0, 0, 1);
@@ -3323,6 +3315,7 @@ If more than one hook function, results are concatenated. If none, the current c
                (define update-graph      update-time-graph)\
                (define wavo              time-graph-type)\
                (define yes-or-no-p       yes-or-no?)\
+               (define corruption-time   auto-update-interval)\
                (define uniting \
                  (make-procedure-with-setter \
                    (lambda arg \

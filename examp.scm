@@ -3393,6 +3393,7 @@ read, even if not playing.  'files' is a list of files to be played."
       (define fft-size          transform-size)
       (define wavo              time-graph-type) ;not quite right since wavo used booleans
       (define yes-or-no-p       yes-or-no?)
+      (define corruption-time   auto-update-interval)
 
       (define uniting 
 	(make-procedure-with-setter 

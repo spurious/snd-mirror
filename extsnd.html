@@ -20,9 +20,6 @@
 -->
 </style>
 </head>
-<!-- TODO: change remaining <i> and <b> into <em class=mumble> -->
-<!-- TODO: more of the js extended discussions -->
-
 
 <!-- -------------------------------------------------------------------------------- -->
 <!-- an experiment: click button to post an example; I'd like the buttons on the right to take less space somehow -->
@@ -322,6 +319,14 @@ are:</p>
     <td>zoom slider color.</td></tr>
 </table>
 
+<br>
+<!-- --><center><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define beige (make-color 0.96 0.96 0.86))
+(define blue (make-color 0 0 1))
+(set! (selected-graph-color) beige)
+(set! (selected-data-color) blue)
+<!-- --></pre></td></tr></table></center>
+
 <p>In addition, the various transforms can be displayed using colormaps.  The following
 variables and functions control this:</p>
 
@@ -432,6 +437,15 @@ The font variables are:
 <tr><td><code><em class=def>listener-font</em></code></td><td>listener font</td></tr>
 <tr><td><code><em class=def><a name="tinyfont">tiny-font</a></em></code></td><td>smallest font used</td></tr>
 </table>
+<br>
+<!-- --><center><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(set! (listener-font) "9x15")
+(set! (help-text-font) "9x15")
+(set! (button-font) "-adobe-times-medium-r-*-*-14-*-*-*-*-*-*-*")
+(set! (bold-button-font) "-adobe-times-bold-r-*-*-14-*-*-*-*-*-*-*")
+(set! (axis-label-font) "-adobe-times-medium-r-normal-*-18-*-*-*-*-*-*-*")
+(set! (axis-numbers-font) "9x15")
+<!-- --></pre></td></tr></table></center>
 
 <p>See also <a href="#loadfont">load-font</a> and <a href="#currentfont">current-font</a> below.
 </p>
@@ -716,7 +730,7 @@ The result can be use in the "lisp graph":
 </p>
 
 <table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define display-db
+(define <A NAME="displaydb">display-db</A>
   (lambda (snd chn)
     "(display-db snd chn) is a lisp-graph-hook function to display the time domain data in dB"
     (let* ((datal (<em class=red>make-graph-data</em> snd chn))
@@ -773,7 +787,7 @@ sound over another at an arbitrary point, and so on:
 		     base chn <em class=red>copy-context</em> #f #f graph-dots)))
 	      (cdr args)))))))
 
-(define (display-samps-in-red snd chn)
+(define (<A NAME="displaysampsinred">display-samps-in-red</A> snd chn)
   "display samples 1000 to 2000 in red whenever they're in the current view"
   (let ((left (left-sample snd chn))
 	(right (right-sample snd chn))
@@ -838,8 +852,6 @@ sound over another at an arbitrary point, and so on:
 <p>This only scratches the surface of these functions; I'll eventually 
 collect more examples into draw.scm.
 </p>
-<!-- TODO: info procedures -->
-<!-- TODO: rest of contexts etc -->
 
 <br>
 <span class=bbox><h3><A NAME="behavior">Customizing Snd's behavior</a></h3></span>
@@ -855,7 +867,7 @@ on the exit-hook list are evaluated; if any of them returns #t,
 Snd does not exit.</p>
 
 <table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define unsaved-edits?
+(define <A NAME="unsavededitsp">unsaved-edits?</A>
   (lambda (ind)
     (and (&lt; ind (max-sounds))
 	 (or (and (sound? ind)
@@ -924,15 +936,15 @@ when you save a sound via the "save" dialog.</p>
 <!-- auto-update -->
 <!-- --><tr><td><code><em class=def><a name="autoupdate">auto-update</a></em></code></td>
 <!-- --><td><code>#f</code></td>
-<!-- --><td>should Snd <a href="snd.html#updatefile">update</a> a file automatically.
+<!-- --><td>should Snd <a href="snd.html#updatefile">update</a> a file automatically if it changes on disk due to some other process.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
-<!-- corruption-time -->
-<!-- --><tr><td valign=top><code><em class=def><a name="corruptiontime">corruption-time</a></em></code></td>
+<!-- auto-update-interval -->
+<!-- --><tr><td valign=top><code><em class=def><a name="corruptiontime">auto-update-interval</a></em></code></td>
 <!-- --><td valign=top><code>60</code></td>
 <!-- --><td>Time (seconds) between background checks for changed file on 
-<!-- -->disk (see <a href="#autoupdate">auto-update</a>). If less than 0.0, background process 
+<!-- -->disk (see <a href="#autoupdate">auto-update</a>). If less than 0.0, the auto-update background process 
 <!-- -->is turned off.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
@@ -970,9 +982,9 @@ when you save a sound via the "save" dialog.</p>
 <!-- -->
 <!-- default-output-format -->
 <!-- --><tr><td valign=top><code><em class=def><a name="defaultoutputformat">default-output-format</a></em></code></td>
-<!-- --><td valign=top><code>1</code></td>
+<!-- --><td valign=top><code>mus-bshort</code></td>
 <!-- --><td>The default data format when a new or temporary file is created, 
-<!-- -->or a save dialog is opened. (1 = mus-bshort).  Use mus-out-format for fastest IO.
+<!-- -->or a save dialog is opened. (mus-bshort is from sndlib, standing for 16-bit big-endian data).  Use mus-out-format for fastest IO.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -986,9 +998,9 @@ when you save a sound via the "save" dialog.</p>
 <!-- -->
 <!-- default-output-type -->
 <!-- --><tr><td valign=top><code><em class=def><a name="defaultoutputtype">default-output-type</a></em></code></td>
-<!-- --><td valign=top><code>0</code></td>
+<!-- --><td valign=top><code>mus-next</code></td>
 <!-- --><td>The default header type when a new or temporary file is created, 
-<!-- -->or a save dialog is opened. (0 = mus-next).
+<!-- -->or a save dialog is opened. (mus-next is from sndlib, standing for the NeXT/Sun sound file header).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -1075,10 +1087,10 @@ when you save a sound via the "save" dialog.</p>
 <!-- -->
 <!-- save-dir -->
 <!-- --><tr><td valign=top><code><em class=def><a name="savedir">save-dir</a></em></code></td>
-<!-- --><td valign=top><code>""</code></td>
+<!-- --><td valign=top><code>#f</code></td>
 <!-- --><td>Name of directory for saved-state files.  
-<!-- --><br>
-<!-- -->If nil, all saved-state is placed (as text) in the saved-state.scm
+<!-- --><br><br>
+<!-- -->If #f, all saved-state is placed (as text) in the saved-state.scm
 <!-- -->file.  If you've edited a file, this can be unwieldy.  By setting
 <!-- -->save-dir, Snd instead places the necessary intermediate files in
 <!-- -->save-dir, with the file names in the saved-state file.  The assumption
@@ -1106,21 +1118,13 @@ when you save a sound via the "save" dialog.</p>
 <!-- --><tr><td valign=top><code><em class=def><a name="showbacktrace">show-backtrace</a></em></code></td>
 <!-- --><td valign=top><code>#f</code></td>
 <!-- --><td>If #t, show backtrace automatically upon error.
-<!-- --><br>
-<!-- -->The backtrace feature in Guile has been problematic; it still 
-<!-- -->sometimes segfaults deep in the scheme world somewhere, causing 
-<!-- -->in the process far more pain than it might have saved if it had 
-<!-- -->worked.  It takes me about a half day to isolate these bugs so 
-<!-- -->that I can report them to the Guile developers, so I usually 
-<!-- -->just throw up my hands and comment out the backtrace call.  
-<!-- -->I finally added this switch to speed up that part of the process!  
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- show-indices -->
 <!-- --><tr><td><code><em class=def><a name="showindices">show-indices</a></em></code></td>
 <!-- --><td><code>#f</code></td>
-<!-- --><td>If #t, each sound's name is preceded by its index.
+<!-- --><td>If #t, each sound's name is preceded by its index (in the sound pane).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -1142,7 +1146,7 @@ when you save a sound via the "save" dialog.</p>
 <!-- --><tr><td valign=top><code><em class=def><a name="sincwidth">sinc-width</a></em></code></td>
 <!-- --><td valign=top><code>10</code></td>
 <!-- --><td>Width (in samples) of the sampling rate conversion sinc interpolation.
-<!-- --><br>
+<!-- --><br><br>
 <!-- -->The higher this number, the better the src low-pass filter, but the slower
 <!-- -->src runs.  If you use too low a setting, you can sometimes hear high 
 <!-- -->frequency "whistles" leaking through. To hear these on purpose, make 
@@ -1152,8 +1156,8 @@ when you save a sound via the "save" dialog.</p>
 <!-- -->
 <!-- temp-dir -->
 <!-- --><tr><td><code><em class=def><a name="tempdir">temp-dir</a></em></code></td>
-<!-- --><td><code>nil</code></td>
-<!-- --><td>Name of directory for temporary files.  nil usually means "/var/tmp".
+<!-- --><td><code>#f</code></td>
+<!-- --><td>Name of directory for temporary files.  #f usually means "/tmp" or "/var/tmp".
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
@@ -1168,12 +1172,12 @@ when you save a sound via the "save" dialog.</p>
 <!-- --><tr><td valign=top><code><em class=def><a name="usesincinterp">use-sinc-interp</a></em></code></td>
 <!-- --><td valign=top><code>#t</code></td>
 <!-- --><td>If #t, use high quality src, rather linear interpolation.
-<!-- --><br>
+<!-- --><br><br>
 <!-- -->This can significantly increase the computational burden on the
 <!-- -->computer; if you're trying to play 8 channel 44Khz sounds on an older
 <!-- -->machine, It may help to set use-sinc-interp to #f.  In fact, if you're
 <!-- -->running a machine in the 100 MHz range, even stereo 44.1kHz can be a
-<!-- -->problem -- if the sound has clicks or seems horribly distorted when
+<!-- -->problem -- if the sound has clicks or stutters or seems horribly distorted when
 <!-- -->the "speed" control is not at 1.0, try setting this variable to #f.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
@@ -1256,7 +1260,7 @@ the hook.
 <!-- --><span class=defbox><code><em class=def><a name="aftergraphhook">after-graph-hook</a></em> (snd chn)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td width=150></td><td>
-<!-- -->called after a graph is updated or redisplayed.
+<!-- -->called after a graph is updated or redisplayed (see, for example, <a href="#displaysampsinred">display-samps-in-red</a>).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -1332,7 +1336,8 @@ the hook.
 <!-- -->
 <!-- --><tr><td></td><td>
 <!-- -->called each time Snd receives a drag-and-drop event, passing the hook the filename. (<b>or hook</b>)
-<!-- -->If it returns #t, the file is not opened. <pre><code>
+<!-- -->If it returns #t, the file is not opened.  (Drag-and-drop only sort-of works in Snd -- try dropping
+<!-- -->the file icon on the menu bar).
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- during-open-hook -->
@@ -1404,7 +1409,7 @@ the hook.
 <!-- --><tr><td></td><td>
 <!-- -->called upon exit. (<b>or hook</b>)
 <!-- -->If it returns #t, Snd does not exit.  This can be used to check 
-<!-- -->for unsaved edits, or to perform cleanup activities.
+<!-- -->for unsaved edits, or to perform cleanup activities (see, for example, <a href="#unsavededitsp">unsaved-edits?</a>).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -1594,7 +1599,7 @@ the hook.
 <!-- --><span class=defbox><code><em class=def><a name="lispgraphhook">lisp-graph-hook</a></em> (snd chn)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->called just before the lisp graph is updated or redisplayed.
+<!-- -->called just before the lisp graph is updated or redisplayed (see, for example, <a href="#displaydb">display-db</a>).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -1656,7 +1661,7 @@ the hook.
 <!-- --><tr><td></td><td>
 <!-- -->called when mix moves via mouse (id = mix id, 
 <!-- -->samps = samps moved). (<b>progn hook</b>) If #t, the actual remix is the 
-<!-- -->hook's responsibility.
+<!-- -->hook's responsibility (see, for example, reposition-track in mix.scm).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -1666,7 +1671,7 @@ the hook.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->called when mix speed changes via mouse (id = mix id).
-<!-- -->If #t, the actual remix is the hook's responsibility.
+<!-- -->If #t, the actual remix is the hook's responsibility (see, for example, respeed-track in mix.scm).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -1675,7 +1680,7 @@ the hook.
 <!-- --><span class=defbox><code><em class=def><a name="mousedraghook">mouse-drag-hook</a></em> (snd chn button state x y) </code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->called upon mouse motion (with button pressed) within lisp graph.
+<!-- -->called upon mouse motion (with button pressed) within lisp graph (see, for example, enved.scm).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -1746,7 +1751,13 @@ the hook.
 <!-- --><span class=defbox><code><em class=def><a name="mouseentertexthook">mouse-enter-text-hook</a></em> (widget) </code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->called when the mouse enters a text widget.
+<!-- -->called when the mouse enters a text widget (this is the third of the pointer-focus hooks).
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(add-hook! <em class=red>mouse-enter-text-hook</em>
+  (lambda (w)
+    (focus-widget w)))
+<!-- --></pre></td></tr></table></td></tr>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -1791,7 +1802,7 @@ the hook.
 <!-- --><span class=defbox><code><em class=def><a name="mousepresshook">mouse-press-hook</a></em> (snd chn button state x y) </code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->called upon mouse button press within lisp graph.
+<!-- -->called upon mouse button press within lisp graph (see, for example, enved.scm).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -1800,7 +1811,7 @@ the hook.
 <!-- --><span class=defbox><code><em class=def><a name="mousereleasehook">mouse-release-hook</a></em> (snd chn button state x y) </code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->called upon mouse button release within lisp graph.
+<!-- -->called upon mouse button release within lisp graph (see, for example, enved.scm).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -1840,7 +1851,7 @@ the hook.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->called each time a file is opened (before the actual open).  (<b>or hook</b>)
-<!-- -->If it returns #t, the file is not opened.
+<!-- -->If it returns #t, the file is not opened (see the Buffer Menu code in examp.scm).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -1884,8 +1895,18 @@ the hook.
 <!-- --><span class=defbox><code><em class=def><a name="outputnamehook">output-name-hook</a></em> ()</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->called in File New dialog
+<!-- -->called in File New dialog, setting the file name in the associated text widget.
 <!-- --></td></tr>
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(let ((file-ctr -1))
+  (add-hook! <em class=red>output-name-hook</em>
+    (lambda ()
+      (set! file-ctr (+ file-ctr 1))
+      (format #f "~A-~D.snd" 
+	(strftime "%b-%d" (localtime (current-time)))
+        file-ctr))))
+<!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- play-hook -->
@@ -1945,7 +1966,7 @@ the hook.
 <!-- --><tr><td></td><td>
 <!-- -->called each time a file is about to be saved. (<b>or hook</b>)
 <!-- -->If it returns #t, the file is not saved.  <i>name</i> is #f unless 
-<!-- -->the file is being saved under a new name (as in sound-save-as).
+<!-- -->the file is being saved under a new name (as in sound-save-as).  (See the auto-save code in examp.scm).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -2020,7 +2041,7 @@ the hook.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->called upon start-up. (<b>or hook</b>)
-<!-- -->If it returns #t, snd exits immediately.
+<!-- -->If it returns #t, snd exits immediately (see, for example, <a href="#nostartupfilep">no-startup-file?</a>).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -2030,7 +2051,7 @@ the hook.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->called when a play request is triggered. (<b>or hook</b>)
-<!-- -->If it returns #t, snd does not play.
+<!-- -->If it returns #t, snd does not play (see, for example, report-mark-names in marks.scm).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7037,35 +7058,6 @@ variable %load-verbosely to #t.
 <!-- -->
 <!-- --><table border=0 cellspacing=8>
 <!-- -->
-<!-- clear-audio-inputs -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndclearaudioinputs">clear-audio-inputs</a></em> ()</code></span></td></tr>
-<!-- --><tr><td width=150></td><td>
-<!-- -->in Linux/OSS, try to reduce soundcard background racket.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- close-sound-file -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndclosesoundfile">close-sound-file</a></em> (fd bytes)</code></span></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->close file updating header to report <i>bytes</i> bytes of data.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- open-sound-file -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndopensoundfile">open-sound-file</a></em> (<i>name chans srate comment</i>)</code></span></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->Open (create) a sound file <i>name</i> (defaults to "test.snd" or "test.wav").  
-<!-- -->It is assumed that the data will be floats in the native format (written by 
-<!-- -->the caller interleaving channels), and that the file will be closed by 
-<!-- -->close-sound-file. One simple way to write the data is to call 
-<!-- --><a href="#vct2soundfile">vct-&gt;sound-file</a>.  <i>open-sound-file</i> opens a file external to Snd, where <i>open-sound</i>
-<!-- -->loads a file into Snd for editing.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
 <!-- abort -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="abort">abort</a></em> ()</code></span></td></tr>
@@ -7211,6 +7203,22 @@ variable %load-verbosely to #t.
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td></td><td>Most of the predefined key definitions are given in <a href="snd.html#builtinkeys">Keyboard Commands</a>.</td></tr>
 <!-- -->
+<!-- clear-audio-inputs -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndclearaudioinputs">clear-audio-inputs</a></em> ()</code></span></td></tr>
+<!-- --><tr><td width=150></td><td>
+<!-- -->in Linux/OSS, try to reduce soundcard background racket.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- close-sound-file -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndclosesoundfile">close-sound-file</a></em> (fd bytes)</code></span></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->close file updating header to report <i>bytes</i> bytes of data.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
 <!-- c-g? -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndabort">c-g?</a></em> ()</code></span></td></tr>
@@ -7227,6 +7235,16 @@ variable %load-verbosely to #t.
 <!-- -->simulate typing C-g (intended for use with bind-key to remap C-g).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- defvar -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="ldefvar">defvar</a></em> (var val)</code></span></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->same as <code>(define var val)</code> except that the envelope editor keeps track
+<!-- -->of <i>var</i> thereafter and treats lists as envelopes. (<i>defvar</i> is a macro).
+<!-- -->I'm using <i>defvar</i> here rather than some more perspicuous name like def-envelope
+<!-- -->so that Snd and CLM can share envelope files.
+<!-- --></td></tr>
 <!-- -->
 <!-- equalize-panes -->
 <!-- --><tr><td colspan=2>
@@ -7297,6 +7315,19 @@ variable %load-verbosely to #t.
 <!-- -->or whatever that you want associated with a particular sound. Confusingly
 <!-- -->enough, this is a Scheme variable, unlike all the others -- that is, you
 <!-- -->refer to it directly, not as a procedure call.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- open-sound-file -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndopensoundfile">open-sound-file</a></em> (<i>name chans srate comment</i>)</code></span></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->Open (create) a sound file <i>name</i> (defaults to "test.snd" or "test.wav").  
+<!-- -->It is assumed that the data will be floats in the native format (written by 
+<!-- -->the caller interleaving channels), and that the file will be closed by 
+<!-- -->close-sound-file. One simple way to write the data is to call 
+<!-- --><a href="#vct2soundfile">vct-&gt;sound-file</a>.  <i>open-sound-file</i> opens a file external to Snd, where <i>open-sound</i>
+<!-- -->loads a file into Snd for editing.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7480,16 +7511,6 @@ variable %load-verbosely to #t.
 <!-- -->return a list giving the widget width and height.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- defvar -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="ldefvar">defvar</a></em> (var val)</code></span></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->same as <code>(define var val)</code> except that the envelope editor keeps track
-<!-- -->of <i>var</i> thereafter and treats lists as envelopes. (<i>defvar</i> is a macro).
-<!-- -->I'm using <i>defvar</i> here rather than some more perspicuous name like def-envelope
-<!-- -->so that Snd and CLM can share envelope files.
-<!-- --></td></tr>
 <!-- -->
 <!-- --></table>
 
@@ -7681,7 +7702,7 @@ Snd to exit back to the shell if its file argument is not
 found (this code obviously has to be in the init file):</p>
 
 <table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define no-startup-file?
+(define <A NAME="nostartupfilep">no-startup-file?</a>
   (lambda (ind file)
     (if (= ind (max-sounds))
 	(begin

@@ -268,6 +268,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+18-Jun:  corruption-time -> auto-update-interval.\n\
 13-Jun:  previous-files-sort-procedure (for View:Files dialog).\n\
 12-Jun:  x-axis-style can be channel-local.\n\
 7-June:  added Reset button to envelope editor (to return to initial state).\n\

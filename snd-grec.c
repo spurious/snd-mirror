@@ -1,9 +1,6 @@
 /* TODO  buttons that choose which devices to display are no-ops
- * TODO  vu meter frames aren't filled by the vu meter pixmaps
- * TODO  icons cause vertical sliders to be wrong length
  * TODO  vertical slider labels aren't centered correctly
  * TODO  vu-button box (if > 2 chans) place sliders as they're chosen, not in chan order
- * TODO  message pane is too big
  */
 
 #include "snd.h"
@@ -627,10 +624,10 @@ static VU *make_vu_meter(GtkWidget *meter, int light_x, int light_y, int center_
   vu->last_val = 0.0;
   vu->clipped = 0;
   vu->max_val = 0.0;
-  vu->light_x = (int)(light_x*size);
-  vu->light_y = (int)(light_y*size);
-  vu->center_x = (int)(center_x*size);
-  vu->center_y = (int)(center_y*size);
+  vu->light_x = (int)(light_x * size);
+  vu->light_y = (int)(light_y * size);
+  vu->center_x = (int)(center_x * size);
+  vu->center_y = (int)(center_y * size);
   vu->ss = ss;
 
   for (i = 0; i < current_vu_label; i++)
@@ -1093,7 +1090,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
 
   /* buttons */
   
-  button_frame = gtk_frame_new("");
+  button_frame = gtk_frame_new(NULL);
   gtk_box_pack_start(GTK_BOX(right_form), button_frame, TRUE, TRUE, 0);
   gtk_widget_show(button_frame);
 
@@ -1330,7 +1327,7 @@ static GtkWidget *sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, GtkW
   height = (int)(vu_rows*(3 * 2 + LIGHT_Y * meter_size));
   width = height;
 
-  outer_frame = gtk_frame_new("");
+  outer_frame = gtk_frame_new(NULL);
   gtk_box_pack_start(GTK_BOX(parent), outer_frame, FALSE, FALSE, 0);
   gtk_widget_show(outer_frame);
 
@@ -1564,11 +1561,10 @@ static void make_vu_meters(snd_state *ss, PANE *p, int vu_meters,
   for (i = 0; i < vu_meters; i++)
     {
 
-      frame = gtk_frame_new("");
+      frame = gtk_frame_new(NULL);
 
       gtk_box_pack_start(GTK_BOX(hboxes[row]), frame, TRUE, TRUE, 0);
       gtk_container_set_border_width(GTK_CONTAINER(frame), 4);
-      /* TODO: There's still empty space at the top?? */
       gtk_widget_show(frame);
 
       meter = gtk_drawing_area_new();
@@ -2164,7 +2160,7 @@ void snd_record_file(snd_state *ss)
 	}
 
       /* then make file_info_pane and messages at the bottom */
-      file_info_pane = gtk_frame_new("");
+      file_info_pane = gtk_frame_new(NULL);
       gtk_box_pack_end(GTK_BOX(rec_panes_box), file_info_pane, FALSE, FALSE, 0);
       gtk_widget_show(file_info_pane);
 

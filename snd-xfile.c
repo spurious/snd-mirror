@@ -1,6 +1,7 @@
 #include "snd.h"
 
-/* TODO: user-defined sort proc for file dialog(s)? */
+/* TODO: user-defined sort proc for file dialog(s)? and (not the same thing) user-defined filter proc?  */
+/*       if defaults to proc that checks list, add-to=sound-file-extension becomes easier */
 
 /* most the dialogs present a view of the various file header possibilities */
 
@@ -1936,8 +1937,6 @@ file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const cha
 
 /* -------------------------------- New File -------------------------------- */
 
-/* no longer shares with raw data -- 11-Nov-99 */
-
 static int new_file_cancelled = 0;
 static Widget new_dialog = NULL;
 static file_data *new_dialog_data = NULL;
@@ -2250,6 +2249,56 @@ static SCM g_set_just_sounds(SCM on)
   return(TO_SCM_BOOLEAN(n));
 }
 
+
+#if DEBUGGING
+static SCM file_data_dialog_widgets(Widget main_widget, file_data *fd)
+{
+  if (main_widget)
+    return(CONS(SND_WRAP(main_widget),
+	     CONS(SND_WRAP(XmMessageBoxGetChild(main_widget, XmDIALOG_OK_BUTTON)),
+	       CONS(SND_WRAP(XmMessageBoxGetChild(main_widget, XmDIALOG_CANCEL_BUTTON)),
+		 CONS(SND_WRAP(XmMessageBoxGetChild(main_widget, XmDIALOG_HELP_BUTTON)),
+		   CONS((fd->header_list) ? SND_WRAP(fd->header_list) : SCM_BOOL_F,
+		     CONS((fd->format_list) ? SND_WRAP(fd->format_list) : SCM_BOOL_F,
+		       CONS((fd->srate_text) ? SND_WRAP(fd->srate_text) : SCM_BOOL_F,
+			 CONS((fd->chans_text) ? SND_WRAP(fd->chans_text) : SCM_BOOL_F,
+			   CONS((fd->comment_text) ? SND_WRAP(fd->comment_text) : SCM_BOOL_F,
+			     CONS((fd->location_text) ? SND_WRAP(fd->location_text) : SCM_BOOL_F,
+                               SCM_EOL)))))))))));
+return(SCM_EOL);
+}
+
+static SCM g_new_file_dialog_widgets(void)
+{
+  if (new_dialog)
+    return(scm_append(SCM_LIST2(file_data_dialog_widgets(new_dialog, new_dialog_data),
+				SCM_LIST1(SND_WRAP(new_file_name)))));
+  return(SCM_EOL);
+}
+
+static SCM g_edit_header_dialog_widgets(void)
+{
+  if (edit_header_dialog)
+    return(file_data_dialog_widgets(edit_header_dialog, edit_header_data));
+  return(SCM_EOL);
+}
+
+static SCM g_save_as_dialog_widgets(void)
+{
+  if (save_as_dialog)
+    return(scm_append(SCM_LIST2(file_data_dialog_widgets(save_as_dialog, save_as_file_data),
+				SCM_LIST1(SND_WRAP(file_save_as_file_name)))));
+  return(SCM_EOL);
+}
+
+static SCM g_new_file_dialog(void) 
+{
+  if (new_dialog == NULL)
+    new_file_from_menu(get_global_state());
+  return(g_new_file_dialog_widgets());
+}
+#endif
+
 void g_initialize_xgfile(SCM local_doc)
 {
   define_procedure_with_setter(S_just_sounds, SCM_FNC g_just_sounds, H_just_sounds,
@@ -2269,6 +2318,12 @@ See also nb.scm."
 
   mouse_name_enter_hook = MAKE_HOOK(S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook);
   mouse_name_leave_hook = MAKE_HOOK(S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);
-}
 
+#if DEBUGGING
+  DEFINE_PROC("new-file-dialog-widgets", g_new_file_dialog_widgets, 0, 0, 0, "");
+  DEFINE_PROC("new-file-dialog", g_new_file_dialog, 0, 0, 0, "");
+  DEFINE_PROC("edit-header-dialog-widgets", g_edit_header_dialog_widgets, 0, 0, 0, "");
+  DEFINE_PROC("save-as-dialog-widgets", g_save_as_dialog_widgets, 0, 0, 0, "");
+#endif
+}
 

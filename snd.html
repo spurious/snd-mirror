@@ -414,7 +414,7 @@ listener available under the View:Open Listener menu option.
         <!-- I(print file):M(File: Print)(printfile) --><!-- I(exit Snd):M(File: Exit)(exitfile) -->
         <!-- I(file formats):M(File: Save as)(savefileas) --><!-- I(exit Snd):O(window menu: close or exit) -->
         <!-- I(update file):M(File: Update)(updatefile) --><!-- I(update file):K([Home]) --><!-- I(update file):A(updatefile) -->
-	<!-- I(update file):O(corruption-time, auto-update)(corruptiontime) -->
+	<!-- I(update file):O(auto-update)(corruptiontime) -->
         <!-- I(mix file):M(File: Mix)(mixingfiles) --> <!-- I(mix file):A(mixingfiles) -->
         <!-- I(record sound):M(File: Record)(recordfile) --> <!-- I(record sound):A(recordfile) -->
         <!-- I(change format):M(File: Save as)(savefileas) -->
@@ -464,7 +464,7 @@ next to the file name.  <A NAME="updatefile"></a>Similarly, if Snd notices that
 the file on the disk no longer matches the original,
 a bomb appears (this can happen if some other program
 writes a sound while you are editing an earlier version
-of it; see also <a href="#overwrite">ask-before-overwrite</a> and <a href="extsnd.html#corruptiontime">corruption-time</a>).
+of it; see also <a href="#overwrite">ask-before-overwrite</a> and <a href="extsnd.html#corruptiontime">auto-update-interval</a>).
 If the variable <a href="extsnd.html#autoupdate">auto-update</a> is #t (default is #f), Snd
 automatically updates any such file (this is also useful if
 you're editing the same file in two separate panes).
@@ -2335,7 +2335,7 @@ panel are:</p>
   <tr><td>transform normalization</td><td><br></td><td><br></td><td><a href="extsnd.html#normalizefft"><small>transform-normalization</small></a></td><td><br></td></tr>
   <tr><td><a href="sndscm.html#effectsdoc">trim sound</a></td><td><small>Effects: <a href="sndscm.html#effectsdoc">Trim</a></small></td><td><br></td><td><br></td><td><br></td></tr>
   <tr><td><a href="#undoredo">undo edit</a></td><td><small>Edit: <a href="#undoredo">Undo</a></small></td><td><a href="#cxcu"><small>C_ or Cx Cu</small></a></td><td><a href="extsnd.html#sndundo"><small>undo</small></a></td><td><small>Popup: Undo</small></td></tr>
-  <tr><td><a href="#updatefile">update file</a></td><td><small>File: <a href="#updatefile">Update</a></small></td><td><small>[Home]</small></td><td><a href="extsnd.html#sndupdate"><small>update</small></a></td><td><a href="extsnd.html#corruptiontime"><small>corruption-time, auto-update</small></a></td></tr>
+  <tr><td><a href="#updatefile">update file</a></td><td><small>File: <a href="#updatefile">Update</a></small></td><td><small>[Home]</small></td><td><a href="extsnd.html#sndupdate"><small>update</small></a></td><td><a href="extsnd.html#corruptiontime"><small>auto-update</small></a></td></tr>
   <tr><td><a href="#editenvelope">view envs</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><br></td><td><a href="extsnd.html#sndenveddialog"><small>enved-dialog</small></a></td><td><br></td></tr>
   <tr><td><a href="#transformtype">wavelets</a></td><td><small>Options: <a href="#transformtype">Transform</a></small></td><td><br></td><td><a href="extsnd.html#wavelettype"><small>wavelet-type</small></a></td><td><br></td></tr>
   <tr><td><a href="#wavogram">wavogram</a></td><td><br></td><td><br></td><td><a href="#wavogram"><small>time-graph-type</small></a></td><td><a href="extsnd.html#wavohop"><small>wavo-trace, wavo-hop</small></a></td></tr>

@@ -238,7 +238,7 @@ static repv snd_rep_main(repv arg)
   ss->Enved_Target = DEFAULT_ENVED_TARGET;
   ss->Dac_Size = DEFAULT_DAC_SIZE;
   ss->Dac_Combines_Channels = DEFAULT_DAC_COMBINES_CHANNELS;
-  ss->Corruption_Time = DEFAULT_CORRUPTION_TIME;
+  ss->Auto_Update_Interval = DEFAULT_AUTO_UPDATE_INTERVAL;
   ss->Max_Regions = DEFAULT_MAX_REGIONS;
   ss->Max_Transform_Peaks = DEFAULT_MAX_TRANSFORM_PEAKS;
   ss->Reverb_Control_Decay = DEFAULT_REVERB_CONTROL_DECAY;

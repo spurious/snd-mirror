@@ -272,6 +272,7 @@ typedef struct snd__state {
   char *search_expr, *startup_title;
   SCM search_proc, file_sort_proc;
   int catch_exists;
+  char *catch_message;
   int search_in_progress;
   int using_schemes;
   state_context *sgx;
@@ -318,7 +319,7 @@ typedef struct snd__state {
   int Audio_Output_Device, Audio_Input_Device, Show_Backtrace;
   int Print_Length, Dac_Size, Dac_Combines_Channels, Previous_Files_Sort, Show_Selection_Transform, With_Mix_Tags, Selection_Creates_Region;
   char *Save_State_File, *Listener_Prompt;
-  Float Enved_Base, Enved_Power, Corruption_Time;
+  Float Enved_Base, Enved_Power, Auto_Update_Interval;
   int Enved_Clip_p, Enved_Exp_p, Enved_Target, Enved_Wave_p, Enved_in_dB, Graphs_Horizontal;
   int Graph_Cursor, Use_Sinc_Interp, Data_Clipped, Show_Indices, Mix_Tag_Width, Mix_Tag_Height, Minibuffer_History_Length;
   Float min_dB, lin_dB, Hankel_Jn;
@@ -1062,7 +1063,6 @@ void save_controls(snd_info *sp);
 void restore_controls(snd_info *sp);
 void reset_controls(snd_info *sp);
 void stop_applying(snd_info *sp);
-void *make_apply_state(void *xp);
 void remove_apply(snd_info *sp);
 BACKGROUND_TYPE apply_controls(GUI_POINTER xp);
 void *make_apply_state_with_implied_beg_and_dur(void *xp);
@@ -1156,12 +1156,7 @@ void g_init_file(SCM local_doc);
 /* -------- snd-utils -------- */
 
 int snd_round(Float x);
-#if DEBUGGING
-  char *copy_string_1(const char *str, const char *caller);
-  #define copy_string(Str) copy_string_1(Str, __FUNCTION__)
-#else
-  char *copy_string(const char *str);
-#endif
+char *copy_string(const char *str);
 char *snd_strdup(const char *str);
 int snd_strlen(char *str);
 char *filename_without_home_directory(char *name);
