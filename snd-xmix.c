@@ -638,7 +638,7 @@ static void update_mix_panel(int mix_id)
   if (mix_id == current_mix_id(ss))
     {
       if (mix_panel == NULL) 
-	make_mix_panel(get_global_state());
+	make_mix_panel(ss);
       
       /* now reflect current mix state in mix panel controls */
       cp = mix_channel_from_id(mix_id);
@@ -689,7 +689,7 @@ static void update_mix_panel(int mix_id)
 	      XtUnmanageChild(w_amps[i]);
 	    }
 	}
-      XtVaSetValues(w_env_frame, XmNtopWidget, w_amp_labels[chans-1], NULL);
+      XtVaSetValues(w_env_frame, XmNtopWidget, w_amp_labels[chans - 1], NULL);
 
       mix_amp_env_resize(w_env, (XtPointer)ss, NULL);
 

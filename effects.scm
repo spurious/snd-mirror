@@ -1523,7 +1523,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		    (add-sliders contrast-dialog
 				 (list (list "contrast enhancement" 0.0 initial-contrast-amount 10.0
 					     (lambda (w context info)
-					       (set! contrast-maount (/ (|value info) 100.0)))
+					       (set! contrast-amount (/ (|value info) 100.0)))
 					     100))))
               (add-target (|XtParent (car sliders)) (lambda (target) (set! contrast-target target)) #f)))
 

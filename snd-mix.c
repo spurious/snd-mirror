@@ -126,7 +126,7 @@ static console_state *make_console_state(int chans, int edit_ctr, int beg, int e
   cs->orig = beg;
   cs->beg = beg;
   cs->end = end;
-  cs->len = end-beg + 1;
+  cs->len = end - beg + 1;
   cs->locked = 0;
   cs->mix_edit_ctr = (int *)CALLOC(chans, sizeof(int));
   cs->scalers = (Float *)CALLOC(chans, sizeof(Float));
@@ -2460,6 +2460,7 @@ static int lock_mixes(mix_info *md, void *ptr)
 {
   console_state *cs;
   chan_info *cp;
+  snd_state *ss;
   /* find affected console, extend and lock */
   cs = md->states[md->curcons];
   if (!(cs->locked))
@@ -2473,6 +2474,8 @@ static int lock_mixes(mix_info *md, void *ptr)
 	  md->states[md->curcons] = (console_state *)CALLOC(1, sizeof(console_state));
 	  cs = md->states[md->curcons];
 	  cs->locked = 1;
+	  ss = get_global_state();
+	  if (ss->selected_mix == md->id) ss->selected_mix = NO_SELECTION;
 	  cp = md->cp;
 	  cs->edit_ctr = cp->edit_ctr;
 	  cs = md->current_cs;
@@ -2711,11 +2714,24 @@ int mix_ok(int n)
 	 (((md->states[0])->edit_ctr) <= ((md->cp)->edit_ctr)));
 }
 
+static int mix_active(int n) 
+{
+  mix_info *md; 
+  md = md_from_id(n); 
+  return((md) && 
+	 (md->current_cs) &&
+	 (md->current_cs->locked == 0) &&
+	 (md->states) && 
+	 (md->states[0]) && 
+	 (md->cp) &&
+	 (((md->states[0])->edit_ctr) <= ((md->cp)->edit_ctr)));
+}
+
 int any_mix_id(void)
 {
   int i;
   for (i = 0; i < mix_infos_ctr; i++) 
-    if (mix_ok(i)) 
+    if (mix_active(i)) 
       return(i);
   return(INVALID_MIX_ID);
 }
@@ -3640,6 +3656,7 @@ static XEN g_set_mix_locked(XEN n, XEN val)
   console_state *cs;
   mix_info *md;
   int on;
+  snd_state *ss;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, "set-" S_mix_locked, "an integer");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ARG_2, "set-" S_mix_locked, "a boolean");
   md = md_from_id(XEN_TO_C_INT(n));
@@ -3650,6 +3667,8 @@ static XEN g_set_mix_locked(XEN n, XEN val)
   cs->locked = on;
   cs = md->current_cs;
   cs->locked = on;
+  ss = get_global_state();
+  if ((on) && (ss->selected_mix == md->id)) ss->selected_mix = NO_SELECTION;
   display_channel_mixes(md->cp);
   return(val);
 }

@@ -918,7 +918,6 @@ int check_enved_hook(env *e, int pos, Float x, Float y, int reason);
 /* -------- snd-dac.c -------- */
 
 char *reverb_name(void);
-int mus_audio_compatible_format(int dev);
 void cleanup_dac(void);
 Float list_interp(Float x, Float *e, int pts);
 void stop_playing_sound(snd_info *sp);
