@@ -574,8 +574,8 @@
 	(-> ladspa apply!
 	    (lambda (snd pos)
 	      (hash-fold (lambda (portnum nodeline s)
-			   (let ((-> ladspa get-lo portnum)
-				 (-> ladspa get-hi portnum))
+			   (let ((lo (-> ladspa get-lo portnum))
+				 (hi (-> ladspa get-hi portnum)))
 			     (-> ladspa input-control-set!
 				 portnum
 				 (c-scale (-> nodeline get-val (c-scale pos 0 (frames snd 0) 0 1))
