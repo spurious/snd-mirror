@@ -34,7 +34,7 @@
 (define total-tests 23)
 (define with-exit (< snd-test 0))
 (set! (with-background-processes) #f)
-(define all-args #t) ; huge arg testing
+(define all-args #f) ; huge arg testing
 
 (define home-dir "/home")
 (define sf-dir "/sf1")

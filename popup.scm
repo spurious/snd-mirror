@@ -336,6 +336,12 @@
       (list "To last mark"       |xmPushButtonWidgetClass every-menu
             (lambda (w c i)
               (backward-mark 1 graph-popup-snd graph-popup-chn)))
+      (list "To next mix"        |xmPushButtonWidgetClass every-menu
+            (lambda (w c i)
+              (forward-mix 1 graph-popup-snd graph-popup-chn)))
+      (list "To last mix"        |xmPushButtonWidgetClass every-menu
+            (lambda (w c i)
+              (backward-mix 1 graph-popup-snd graph-popup-chn)))
       (list "sep"                |xmSeparatorWidgetClass  every-menu)
       (list "Exit"               |xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
@@ -375,10 +381,13 @@
 				     ((if (> (cursor snd chn) 0) |XtManageChild |XtUnmanageChild) w)
 				     (if (string=? name "Play original")
 					 ((if (> (car eds) 1) |XtManageChild |XtUnmanageChild) w)
-					 (if (or (string=? name "Delete mark")
-						 (string=? name "To next mark")
-						 (string=? name "To last mark"))
-					     ((if (null? (marks snd chn)) |XtUnmanageChild |XtManageChild) w)))))))))))))))
+					 (if (or (string=? name "To next mix")
+						 (string=? name "To last mix"))
+					     ((if (null? (mixes snd chn)) |XtUnmanageChild |XtManageChild) w)
+					     (if (or (string=? name "Delete mark")
+						     (string=? name "To next mark")
+						     (string=? name "To last mark"))
+						 ((if (null? (marks snd chn)) |XtUnmanageChild |XtManageChild) w))))))))))))))))
 
 
 ;;; -------- fft popup (easier to access than Options:Transform)
@@ -570,7 +579,19 @@
 		     ;; xe is where the mouse-click occurred in the graph window's (local) coordinates
 		     (set! graph-popup-snd snd)
 		     (set! graph-popup-chn chn)
-		     ;; TODO: if chans united, this needs to be the virtual channel
+
+		     (if (= (channel-style snd) channels-combined)
+			 (let ((ye (|y e))) ; y axis location of mouse-down
+			   (call-with-current-continuation
+			    (lambda (break)
+			      (do ((i 0 (1+ i)))
+				  ((= i (chans snd)))
+				(let ((off (list-ref (axis-info snd i) 14)))
+				  (if (< ye off)
+				      (begin
+					(set! graph-popup-chn (- i 1))
+					(break)))))
+                              (set! graph-popup-chn (- (chans snd) 1))))))
 		     
 		     (let ((fax (if (graph-transform? snd chn) (axis-info snd chn transform-graph) #f))
 			   (lax (if (graph-lisp? snd chn) (axis-info snd chn lisp-graph) #f)))
@@ -591,14 +612,14 @@
 			       #f ; just a place-holder
 			       
 			       (if (and (selection?)
-					(let* ((beg (/ (selection-position snd chn) (srate snd)))
-					       (end (/ (+ (selection-position snd chn) (selection-length snd chn)) (srate snd))))
+					(let* ((beg (/ (selection-position snd graph-popup-chn) (srate snd)))
+					       (end (/ (+ (selection-position snd graph-popup-chn) (selection-length snd graph-popup-chn)) (srate snd))))
 					  (and (>= xe (x->position beg snd chn))
 					       (<= xe (x->position end snd chn)))))
 				   (set! (|menuToPost info) selection-popup-menu)
 
 				   (begin
-				     (edit-graph-popup-menu snd chn)
+				     (edit-graph-popup-menu graph-popup-snd graph-popup-chn)
 				     (set! (|menuToPost info) graph-popup-menu)))))))))))))
 
     (add-hook! after-open-hook add-popup)

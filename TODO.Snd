@@ -21,6 +21,8 @@ loop syntax filled in (loop.scm).
 Translate more CLM instruments to Scheme: 
   singer piano flute fade maraca
 
+dlocsig from CLM + a path envelope editor dialog
+
 Add Gnome tie-ins.  (The main useful one, I think, is the "save-yourself"
   signal (no one can save himself...)).
 #include <gnome.h>
@@ -29,16 +31,14 @@ GnomeClient *client = gnome_master_client();
 gtk_signal_connect(GTK_OBJECT(client),"save_yourself",GTK_SIGNAL_FUNC(save_snd_state),"snd");
 gtk_signal_connect(GTK_OBJECT(client),"die",GTK_SIGNAL_FUNC(exit_cleanly),NULL);
 
-
 Gettext support, if there's interest. How does gettext handle Scheme-style
   string formatting as in scm_misc_error?  Say we have 
 
-    scm_misc_error(S_vct_ref,"index: ~A but vct length: ~A?", SCM_LIST2(pos, gh_int2scm(v->length)));
+    scm_misc_error(S_vct_ref,"index: ~A but vct length: ~A?", scm_list_2(pos, gh_int2scm(v->length)));
 
   but if translation requires that the args be reversed (as in the %2$d msgfmt business),
-  does msgfmt know about things like ~A and SCM_LIST2?  Gnucash uses guile and gettext --
+  does msgfmt know about things like ~A and scm_list_2?  Gnucash uses guile and gettext --
   maybe they've solved this problem.
-
 
 Translate the rest of env.lisp to env.scm.
 
@@ -51,3 +51,12 @@ A "sox-script" -- use Snd script as sox replacement.
 A sndinfo script?
 
 A Gtk module paralleling the Motif version in xm.c.
+
+See snd-motif.scm for other user-interface extension projects.
+
+Finish the glfft tie-in to openGL.
+
+More Ruby examples, translations, etc.
+
+
+Known bugs can be listed by searching the sources for "TODO".

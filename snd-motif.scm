@@ -73,6 +73,16 @@
 	     (|XmChangeColor n (|Pixel (snd-pixel (position-color))))
 	     (|XmChangeColor n (|Pixel (snd-pixel (basic-color)))))))))
 
+(define (x->snd-color color-name)
+  (let* ((col (|XColor))
+	 (dpy (|XtDisplay (|Widget (cadr (main-widgets)))))
+	 (scr (|DefaultScreen dpy))
+	 (cmap (|DefaultColormap dpy scr)))
+    (if (= (|XAllocNamedColor dpy cmap color-name col col) 0)
+        (snd-error "can't allocate ~S" color-name)
+	(make-color (/ (|red col) 65535.0)
+		    (/ (|green col) 65535.0)
+		    (/ (|blue col) 65535.0)))))
 
 
 

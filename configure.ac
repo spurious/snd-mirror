@@ -348,7 +348,6 @@ AC_CACHE_CHECK([for long longs], snd_cv_long_longs,
 			      snd_cv_long_longs=no))
 if test "$snd_cv_long_longs" = yes; then
   AC_DEFINE(HAVE_LLONGS)
-  # goddamn guile is now defining HAVE_LONG_LONGS in a non-compatible way!
 fi
 
 dnl from gsl's configure.in

@@ -25,10 +25,14 @@
   #include <console.h>
 #endif
 
-#if defined(NEXT) || defined(MAC_OSX)
+#if defined(NEXT) 
   #define BUFFER_SIZE 1024
 #else
-  #define BUFFER_SIZE 4096
+  #if defined(MAC_OSX)
+    #define BUFFER_SIZE 512
+  #else
+    #define BUFFER_SIZE 4096
+  #endif
 #endif
 
 #if MAC_OSX
@@ -166,26 +170,29 @@ int main(int argc, char *argv[])
 	  bufs = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
 	  for (i = 0; i < chans; i++) bufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
 	  obuf = (OutSample *)CALLOC(BUFFER_SIZE * out_chans, sizeof(OutSample));
-	  for (i = 0; i < frames; i += BUFFER_SIZE)
-	    {
-	      if ((i + BUFFER_SIZE) <= frames)
-		curframes = BUFFER_SIZE;
-	      else curframes = frames - i;
 #if MAC_OSX
-	      if (srate == 22050) curframes /= 2;
+	  buffer_size = 512;
+	  if (srate == 22050) buffer_size = 256;
+#else
+	  buffer_size = BUFFER_SIZE;
 #endif
+	  for (i = 0; i < frames; i += buffer_size)
+	    {
+	      if ((i + buffer_size) <= frames)
+		curframes = buffer_size;
+	      else curframes = frames - i;
 	      mus_sound_read(fd, 0, curframes - 1, chans, bufs); 
 	      /* some systems are happier if we read the file before opening the dac */
 	      /* at this point the data is in separate arrays of ints */
+#if MAC_OSX
 	      if (chans == 1)
 		{
-#if MAC_OSX
 		  if (srate == 44100)
 		    {
 		      for (k = 0, n = 0; k < curframes; k++, n += 2) 
 			{
 			  obuf[n] = MUS_SAMPLE_TO_FLOAT(bufs[0][k]);
-			  obuf[n + 1] = 0.0;
+			  obuf[n + 1] = obuf[n];
 			}
 		    }
 		  else
@@ -193,22 +200,16 @@ int main(int argc, char *argv[])
 		      for (k = 0, n = 0; k < curframes; k++, n += 4) 
 			{
 			  obuf[n] = MUS_SAMPLE_TO_FLOAT(bufs[0][k]);
-			  obuf[n + 1] = 0.0;
+			  obuf[n + 1] = obuf[n];
 			  obuf[n + 2] = obuf[n];
-			  obuf[n + 3] = 0.0;
+			  obuf[n + 3] = obuf[n];
 			}
 		    }
-		  
-#else
-		  for (k = 0; k < curframes; k++) 
-		    obuf[k] = MUS_SAMPLE_TO_SHORT(bufs[0][k]);
-#endif
 		}
 	      else
 		{
 		  if (chans == 2)
 		    {
-#if MAC_OSX
 		      if (srate == 44100)
 			{
 			  for (k = 0, n = 0; k < curframes; k++, n += 2) 
@@ -227,13 +228,24 @@ int main(int argc, char *argv[])
 			      obuf[n + 3] = obuf[n + 1];
 			    }
 			}
+		    }
+		}
 #else
+	      /* not OSX */
+	      if (chans == 1)
+		{
+		  for (k = 0; k < curframes; k++) 
+		    obuf[k] = MUS_SAMPLE_TO_SHORT(bufs[0][k]);
+		}
+	      else
+		{
+		  if (chans == 2)
+		    {
 		      for (k = 0, n = 0; k < curframes; k++, n += 2) 
 			{
 			  obuf[n] = MUS_SAMPLE_TO_SHORT(bufs[0][k]); 
 			  obuf[n + 1] = MUS_SAMPLE_TO_SHORT(bufs[1][k]);
 			}
-#endif
 		    }
 		  else
 		    {
@@ -244,6 +256,7 @@ int main(int argc, char *argv[])
 			}
 		    }
 		}
+#endif
 	      if (afd == -1)
 		{
 #if defined(LINUX) && defined(PPC)
@@ -253,7 +266,7 @@ int main(int argc, char *argv[])
 #endif
 		  if (afd == -1) break;
 		}
-	      outbytes = curframes * out_chans * 2;
+	      outbytes = curframes * out_chans * sample_size;
 	      mus_audio_write(afd, (char *)obuf, outbytes);
 	    }
 	  if (afd != -1) mus_audio_close(afd);

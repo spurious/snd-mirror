@@ -1531,12 +1531,12 @@ static XEN stop_dac_hook;
 static XEN sdobj = XEN_FALSE;
 static void cleanup_dac_hook(void)
 {
+  if (XEN_HOOKED(stop_dac_hook))
+    g_c_run_progn_hook(stop_dac_hook, 
+		       XEN_EMPTY_LIST,
+		       S_stop_dac_hook);
   if (!(XEN_FALSE_P(sdobj)))
     {
-      if (XEN_HOOKED(stop_dac_hook))
-	g_c_run_progn_hook(stop_dac_hook, 
-			   XEN_EMPTY_LIST,
-			   S_stop_dac_hook);
       snd_unprotect(sdobj);
       sdobj = XEN_FALSE;
     }

@@ -711,7 +711,7 @@ static XEN g_ungrf_y(XEN val, XEN snd, XEN chn, XEN ap)
 
 static XEN g_axis_info(XEN snd, XEN chn, XEN ap_id)
 {
-  #define H_axis_info "(" S_axis_info " snd chn grf) -> (list losamp hisamp x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1)"
+  #define H_axis_info "(" S_axis_info " snd chn grf) -> (list losamp hisamp x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset)"
   axis_info *ap;
   ap = TO_C_AXIS_INFO(snd, chn, ap_id, "axis-info");
   return(XEN_CONS(C_TO_XEN_INT(ap->losamp),
@@ -728,7 +728,8 @@ static XEN g_axis_info(XEN snd, XEN chn, XEN ap_id)
                     XEN_CONS(C_TO_XEN_INT(ap->y_axis_y0),
                      XEN_CONS(C_TO_XEN_INT(ap->x_axis_x1),
 		      XEN_CONS(C_TO_XEN_INT(ap->y_axis_y1),
-		       XEN_EMPTY_LIST)))))))))))))));
+                       XEN_CONS(C_TO_XEN_INT(ap->y_offset),
+		        XEN_EMPTY_LIST))))))))))))))));
 }
 
 #if HAVE_MOTIF
