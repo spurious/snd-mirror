@@ -1458,12 +1458,12 @@ an instrument that provides time-varying sampling rate conversion (see also the
   (let ((fil (open-input* file)))
     (when fil
       (unwind-protect
-        (let ((rd (make-src :input fil))
+        (let ((rd (<em class=red>make-src</em> :input fil))
               (rn (make-rand-interp :frequency frq :amplitude amp))
               (end (+ beg dur)))
 	(run
           (loop for i from beg below end do
-                 (outa i (src rd (rand-interp rn)))))
+                 (outa i (<em class=red>src</em> rd (rand-interp rn)))))
         (close-input fil))))))
 </small></pre>
 <p>The <i>input</i> argument to make-src and the <i>input-function</i> argument
@@ -1586,12 +1586,12 @@ argument to granulate.  It cause the granulation to run backwards through the fi
 </p>
 <pre><small>
 (definstrument grev (beg dur exp-amt file file-beg)
-  (let* ((exA (make-granulate :expansion exp-amt))
+  (let* ((exA (<em class=red>make-granulate</em> :expansion exp-amt))
 	 (fil (open-input* file file-beg))
 	 (ctr file-beg))
     (run
      (loop for i from beg to (+ beg dur) do
-       (outa i (granulate exA
+       (outa i (<em class=red>granulate</em> exA
 			  #'(lambda (dir)
 			      (let ((inval (ina ctr fil)))
 				(if (&gt; ctr 0) (setf ctr (1- ctr)))
@@ -2151,7 +2151,7 @@ to make-locsig, or the number of channels in the output sound).
     (run
      (loop for i from beg to end do
        (let ((ut (* amp (oscil car))))
-	 (move-locsig loc (env pan-env) dist)
+	 (<em class=red>move-locsig</em> loc (env pan-env) dist)
          (locsig loc i ut))))))
 </small></pre>
 <br>
@@ -3436,7 +3436,7 @@ Here's another instrument that implements legato between notes by using the prev
 		      (make-oscil))))
     (setf (mus-frequency carrier) frq)
     (setf (mus-frequency modulator) frq)
-    (run* (carrier modulator)
+    (<em class=red>run*</em> (carrier modulator)
      (loop for i from start below end do
        (outa i (* amp (oscil carrier (* ind (oscil modulator)))))))
     (if previous-oscils
@@ -3693,7 +3693,7 @@ seconds as they go by in Snd's minibuffer:</p>
        (when (&gt;= ctr *srate*)
 	 (incf secs)
 	 (setf ctr 0)
-	 (send-snd "(report-in-minibuffer (number-&gt;string ~D))" secs))
+	 (<em class=red>send-snd</em> "(report-in-minibuffer (number-&gt;string ~D))" secs))
        (outa i (oscil o))))))
 </pre>
 <p>In this case, if send-snd has extra arguments, they are treated like

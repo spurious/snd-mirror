@@ -1037,7 +1037,7 @@ If it returns a function (of no arguments), that function is called rather than 
 </td></tr>
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(add-hook! lisp-graph-hook
+(add-hook! <em class=red>lisp-graph-hook</em>
 	   (lambda (snd chn)
 	     (lambda ()
 	       (draw-string "hi" 
@@ -1230,7 +1230,7 @@ called when a mix is dragged.
 </td></tr>
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(add-hook! mix-drag-hook 
+(add-hook! <em class=red>mix-drag-hook</em>
   (lambda (n) 
     (report-in-minibuffer 
       (format #f "mix ~A at ~D: ~,3F" n (mix-position n) (/ (mix-position n) (srate))))))
@@ -2940,7 +2940,7 @@ instead; you type (start-sync), then click the set of marks to sync, then (stop-
 (define mark-sync-number 0)
 (define (start-sync) (set! mark-sync-number (+ (mark-sync-max) 1)))
 (define (stop-sync) (set! mark-sync-number 0))
-(define (click-to-sync id) (set! (mark-sync id) mark-sync-number) #f)
+(define (click-to-sync id) (set! (<em class=red>mark-sync</em> id) mark-sync-number) #f)
 (add-hook! mark-click-hook click-to-sync)
 </pre></td></tr></table>
 </td></tr>
@@ -4432,11 +4432,11 @@ CLM filtering to a sound. (The regularized version of this is <a href="#clmchann
 
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(filter-sound '(0 1 1 0) 1024)                       ;FIR filter given frequency response
-(filter-sound (list-&gt;vct '(.1 .2 .3 .3 .2 .1)) 6)    ;FIR filter given actual coefficients
-(filter-sound (make-fir-filter 6 (list-&gt;vct '(.1 .2 .3 .3 .2 .1)))) ;CLM FIR filter
-(filter-sound (make-delay 120))                      ;CLM delay (same as insert-silence)
-(filter-sound (make-formant .99 1200))               ;CLM formant
+(<em class=red>filter-sound</em> '(0 1 1 0) 1024)                       ;FIR filter given frequency response
+(<em class=red>filter-sound</em> (list-&gt;vct '(.1 .2 .3 .3 .2 .1)) 6)    ;FIR filter given actual coefficients
+(<em class=red>filter-sound</em> (make-fir-filter 6 (list-&gt;vct '(.1 .2 .3 .3 .2 .1)))) ;CLM FIR filter
+(<em class=red>filter-sound</em> (make-delay 120))                      ;CLM delay (same as insert-silence)
+(<em class=red>filter-sound</em> (make-formant .99 1200))               ;CLM formant
 </pre></td></tr></table>
 <p>
 If you want to use the cascade filter structure, rather than the canonical
@@ -4734,7 +4734,7 @@ To get the data currently displayed in the time domain window:
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (window-samples)
-  (let ((wl (<a href="#sndleftsample">left-sample</a>))
+  (let ((wl (<em class=red>left-sample</em>))
 	(wr (<a href="#sndrightsample">right-sample</a>)))
    (<a href="#sndsamples">samples</a> wl (+ 1 (- wr wl)))))
 </pre></td></tr></table>
@@ -7772,7 +7772,7 @@ as the default:
 
 <tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (enved-fft)
-  (set! (enved-filter) #f)
+  (set! (<em class=red>enved-filter)</em> #f)
   (set! (enved-wave?) #t)
   (set! (enved-target) enved-spectrum)
   (add-hook! after-open-hook (lambda (snd)
@@ -9379,7 +9379,7 @@ currently in the time-domain graph:
 	     (let ((xpos (x-&gt;position (/ samp (srate))))
 		   (ypos (y-&gt;position (sample samp))))
 	       (draw-line xpos 20 xpos (- ypos 4))
-	       (draw-string text (- xpos (/ text-width 2)) 18)))))
+	       (<em class=red>draw-string</em> text (- xpos (/ text-width 2)) 18)))))
      comments)))
 
 (add-hook! after-graph-hook show-comments)

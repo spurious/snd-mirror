@@ -273,16 +273,6 @@ AC_CHECK_SIZEOF(float)
 AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(off_t)
 
-dnl this taken from Guile's configure.in
-AC_CACHE_CHECK([for long longs], 
-               snd_cv_long_longs, 
-               [AC_COMPILE_IFELSE([AC_LANG_PROGRAM(,[long long a])], 
-                                  snd_cv_long_longs=yes, 
-                                  snd_cv_long_longs=no)])
-if test "$snd_cv_long_longs" = yes; then
-  AC_DEFINE(HAVE_LLONGS)
-fi
-
 dnl from gsl's configure.in
 AC_CHECK_FUNCS(isnan, ,[
     AC_MSG_CHECKING([for isnan with <math.h>])

@@ -1,12 +1,12 @@
 #include "snd.h"
 
 /* TODO: multichan case can get in state where initial expose updates are ignored in chan>0 */
-/* TODO: if superimposed chans, edit, click in edit-history, need to redisplay all chans, not just 1st */
+/* TODO: if superimposed chans, edit, click in edit-history, need to redisplay all chans, not just 1st (and axes are messed up) */
+/*          ambiguity here caused by syncd edits/undo (sync is not on, but all chans get selection, etc) */
 /* TODO: if united chans, select chan should set edit_history to reflect selected chan (label also to show which is affected) */
 /* TODO: if superimposed, how to see edit history pane of >1 chan (more panes? arrows?) */
-/* TODO: if superimposed, selected portion is wrong color */
+/* TODO: if superimposed, selected portion is wrong color (white) */
 /* TODO: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both */
-/* TODO: if superimposed and 2chn has mark, no way to drag/click it */
 /* TODO: if superimposed and selections differ, no way to see that */
 
 enum {NOGRAPH, WAVE, FFT_AXIS, LISP, FFT_MAIN};    /* for marks, regions, mouse click detection */
@@ -3087,7 +3087,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
       if ((with_time) && (cp->hookable)) /* hookable if not region graph */
 	{
 	  display_selection(cp);
-	  display_channel_marks(cp);
+	  if ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) display_channel_marks(cp);
 	  if (cp->show_y_zero) display_zero(cp);
 	  if ((cp->mixes)) display_channel_mixes(cp);
 	}
@@ -3149,6 +3149,10 @@ static void display_channel_data_1 (chan_info *cp, snd_info *sp, snd_state *ss, 
 	      chan_height += offset;
 	      offset = 0;
 	    }
+#if USE_GTK
+	  /* this only needed because Gtk signal blocking is screwed up */
+	  if ((cp->chan > 0) && (cp->mixes) && (cp->axis->height != height)) clear_mix_y(cp);
+#endif
 	  if ((cp->chan == (sp->nchans - 1)) && 
 	      ((offset + chan_height) < height))
 	    chan_height = height - offset;
@@ -3866,7 +3870,6 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		  cursor_moveto(cp, 
 				snd_round_off_t(ungrf_x(cp->axis, x) * 
 						(double)SND_SRATE(sp)));
-		  /* draw_graph_cursor(cp); */
 		  paste_region(stack_position_to_id(0), cp, "Btn2");
 		}
 	      else 

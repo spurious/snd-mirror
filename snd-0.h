@@ -60,9 +60,6 @@
     #define HAVE_STRFTIME 1
     #define HAVE_CLOCK 1
   #endif
-  #ifdef __GNUC__
-    #define HAVE_LLONGS 1
-  #endif
   #if defined(LINUX) || defined(__bsdi__)
     #define HAVE_ISNAN 1
   #endif

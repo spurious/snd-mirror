@@ -33,7 +33,6 @@
 ;;; TODO: mouse-drag in time/fft graph hook?
 ;;; TODO: find/"fix" clipping
 ;;; TODO: xemacs style top list of sounds, current takes whole screen [make-top-row snd-motif.scm, files-popup-buffer in examp.scm]
-;;; TODO: coverage tests for next/previous mix-panel buttons, track-play button
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 
@@ -300,6 +299,11 @@
 				       (car lst) (cadr lst) (caddr lst)))
 		      (test-constants (cdddr lst)))))))
       (run-hook before-test-hook 0)
+      (if (or (not (null? (sounds)))
+	      (not (null? (mixes)))
+	      (not (null? (marks)))
+	      (not (null? (regions))))
+	  (snd-display ";start up: ~A ~A ~A ~A" (sounds) (mixes) (marks) (regions)))
       (test-constants
        (list
 	'enved-amplitude enved-amplitude 0 
@@ -2852,6 +2856,7 @@
 
 ;;; ---------------- test 5: simple overall checks ----------------
 
+(load "snd4.scm") ; needed for various scan/map extensions
 (define a-ctr 0)
 
 (define (test-edpos test-func func-name change-thunk ind1)
@@ -2919,8 +2924,6 @@
 
 (load "extensions.scm")
 (load "examp.scm")
-(load "snd4.scm") ; needed for various scan/map extensions, external program testers etc
-;(load "snd5.scm")
 (load "dsp.scm")
 (load "pvoc.scm")
 (load "edit-menu.scm")
@@ -15140,7 +15143,29 @@ EDITS: 5
 	      (snd-display ";previous-mix-in-track (1): ~A ~A ~A ~A" nm mix1 (mix-track mix1) (selected-mix)))
 	  (set! nm (previous-mix-in-track (mix-track mix1)))
 	  (if nm (snd-display ";previous-mix-in-track (2): ~A ~A ~A" nm (mix-track mix1) (selected-mix)))
-	  )
+
+	  (mix-panel)
+	  (set! (selected-mix) mix1)
+	  (let* ((mixd (list-ref (dialog-widgets) 16))
+		 (nxt (find-child mixd "Next"))
+		 (prev (find-child mixd "Previous"))
+		 (tplay (find-child mixd "track-play")))
+	    (click-button tplay) (force-event)
+	    (if (or (not (XtIsSensitive nxt))
+		    (XtIsSensitive prev))
+		(snd-display ";mix-panel next/previous: ~A ~A ~A ~A" nxt (XtIsSensitive nxt) prev (XtIsSensitive prev)))
+	    (click-button nxt) (force-event)
+	    (click-button nxt) (force-event)
+	    (if (or (not (selected-mix)) (not (= (selected-mix) mix3)))
+		(snd-display ";mix-panel Next: ~A ~A" (selected-mix) mix3))
+	    (if (or (XtIsSensitive nxt)
+		    (not (XtIsSensitive prev)))
+		(snd-display ";mix-panel (1) next/previous: ~A ~A ~A ~A" nxt (XtIsSensitive nxt) prev (XtIsSensitive prev)))
+	    (click-button prev) (force-event)
+	    (click-button prev) (force-event)
+	    (if (or (not (selected-mix)) (not (= (selected-mix) mix1)))
+		(snd-display ";mix-panel Previous: ~A ~A" (selected-mix) mix1)))
+	  (dismiss-all-dialogs))
 	(close-sound ind))
       
       (run-hook after-test-hook 9)

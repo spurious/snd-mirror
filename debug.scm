@@ -1,6 +1,6 @@
 (use-modules (ice-9 debug) (ice-9 optargs) (ice-9 format))
 
-;;; TODO: help dialog for environment (how are showdowed vars handled?) (click to expand?)
+;;; TODO: help dialog for environment (how are shawdowed vars handled?) (click to expand?)
 ;;;       similarly stack with click to show locals + args?
 ;;;       or multi-level display stack|vars|local|expanded
 

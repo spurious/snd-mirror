@@ -1,6 +1,5 @@
 #include "snd.h"
 
-/* TODO: in gtk mix tag chan2 combined can be in chan0 graph */
 /* SOMEDAY: extend the mix-as-list syntax to list-of-ids (tracks) (are these all rationalized now?) */
 /* this seems to include only scale_sound scale_channel ramp_channel xramp_channel revert_sound save_sound_as and some in snd_snd field:
  * :channels, srate, data_location, data_size, data_format, header_type, comment, sync, (short)file_name

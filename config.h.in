@@ -13,8 +13,6 @@
 #undef off_t
 
 #undef WORDS_BIGENDIAN
-#undef HAVE_LLONGS
-
 #undef HAVE_GETCWD
 #undef HAVE_STRFTIME
 #undef HAVE_STRERROR

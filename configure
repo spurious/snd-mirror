@@ -2922,6 +2922,7 @@ if test "${with_x11+set}" = set; then
 
 fi;
 
+# these are primarily for testing
 
 # Check whether --with-gsl or --without-gsl was given.
 if test "${with_gsl+set}" = set; then
@@ -9201,57 +9202,6 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-
-echo "$as_me:$LINENO: checking for long longs" >&5
-echo $ECHO_N "checking for long longs... $ECHO_C" >&6
-if test "${snd_cv_long_longs+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-int
-main ()
-{
-long long a
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  snd_cv_long_longs=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-snd_cv_long_longs=no
-fi
-rm -f conftest.$ac_objext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: $snd_cv_long_longs" >&5
-echo "${ECHO_T}$snd_cv_long_longs" >&6
-if test "$snd_cv_long_longs" = yes; then
-  cat >>confdefs.h <<\_ACEOF
-#define HAVE_LLONGS 1
-_ACEOF
-
-fi
 
 
 for ac_func in isnan
@@ -15590,6 +15540,8 @@ fi
 # look for sndlib-config, check mus_sample_bits against current choice [with-float-sample, with-sample-width]
 # check against needed version (17.2 for now -- need c_vct_copy in vct.c)
 # set SNDLIB_FILES and SNDLIB_LIB
+
+# TODO: does with_shared_sndlib work if it was built with_modules? (how to tell?)
 
 SNDLIB_FILES="SNDLIB_O_FILES"
 if test "$enable_snd_debug" != yes ; then
