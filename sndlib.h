@@ -144,10 +144,13 @@
 
 #if (!defined(M_PI))
   #define M_PI 3.14159265358979323846264338327
-  #define M_PI_2 (M_PI/2.0)
+  #define M_PI_2 (M_PI / 2.0)
 #endif
 
-#define TWO_PI (2.0*M_PI)
+#define TWO_PI (2.0 * M_PI)
+
+#define POWER_OF_2_P(x)	((((x) - 1) & (x)) == 0)
+/* from sys/param.h */
 
 #ifndef SEEK_SET
   #define SEEK_SET 0

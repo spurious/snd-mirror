@@ -119,21 +119,21 @@ axis_info *free_axis_info(axis_info *ap)
   return(NULL);
 }
 
-short grf_x(double val, axis_info *ap)
+Locus grf_x(double val, axis_info *ap)
 {
   if (val >= ap->x1) return(ap->x_axis_x1);
   if (val <= ap->x0) return(ap->x_axis_x0);
-  return((short)(ap->x_base + val * ap->x_scale));
+  return((Locus)(ap->x_base + val * ap->x_scale));
 }
 
-short grf_y(Float val, axis_info *ap)
+Locus grf_y(Float val, axis_info *ap)
 {
   if (val >= ap->y1) return(ap->y_axis_y1);
   if (val <= ap->y0) return(ap->y_axis_y0);
-  return((short)(ap->y_base + val * ap->y_scale));
+  return((Locus)(ap->y_base + val * ap->y_scale));
 }
 
-static short tick_grf_x(double val, axis_info *ap, int style, int srate)
+static Locus tick_grf_x(double val, axis_info *ap, int style, int srate)
 {
   int res;
   switch (style)

@@ -821,24 +821,24 @@ void set_axes(chan_info *cp, Float x0, Float x1, Float y0, Float y1)
 
 
 /* these are copies from snd-axis.c; didn't want to use macros here */
-static short local_grf_x(double val, axis_info *ap)
+static Locus local_grf_x(double val, axis_info *ap)
 {
   if (val >= ap->x1) return(ap->x_axis_x1);
   if (val <= ap->x0) return(ap->x_axis_x0);
-  return((short)(ap->x_base + val * ap->x_scale));
+  return((Locus)(ap->x_base + val * ap->x_scale));
 }
 
-static short local_grf_y(Float val, axis_info *ap)
+static Locus local_grf_y(Float val, axis_info *ap)
 {
   if (val >= ap->y1) return(ap->y_axis_y1);
   if (val <= ap->y0) return(ap->y_axis_y0);
-  return((short)(ap->y_base + val * ap->y_scale));
+  return((Locus)(ap->y_base + val * ap->y_scale));
 }
 
 static void display_zero (chan_info *cp)
 {
   axis_info *ap;
-  short zero;
+  Locus zero;
   ap = cp->axis;
   if ((ap->y0 < 0.0) && (ap->y1 > 0.0))
     {
@@ -911,7 +911,8 @@ static axis_context *combined_context(chan_info *cp);
 int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 {
   /* axes are already set, determining the data we will show -- do we need explicit clipping ? */
-  int i = 0, j = 0, samps, xi;
+  int i = 0, j = 0, samps;
+  Locus xi;
   axis_info *ap;
   Float samples_per_pixel, xf, pinc = 0.0;
   double x, incr;  
@@ -1394,7 +1395,7 @@ static void make_fft_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   Float incr, x, scale;
   int i, j, hisamp, losamp = 0;
   Float samples_per_pixel, xf, ina, ymax, scaler;
-  short logx, logy;
+  Locus logx, logy;
   Float pslogx, pslogy;
   fp = cp->fft;
   if (chan_fft_in_progress(cp)) return;
@@ -1708,13 +1709,14 @@ static int js[GRAY_SCALES];
 static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
 { /* colormap allocated in snd-fft via allocate_sono_rects in snd-xchn */
   sono_info *si;
-  int i, slice, fwidth, fheight, rectw, recth, j, bins;
+  int i, slice, fwidth, fheight, j, bins;
+  Latus rectw, recth;
   fft_info *fp;
   axis_info *fap;
   Float *fdata;
   Float binval, xf, xfincr, yf, yfincr, scaler = 0.0, frectw, frecth, xscl, scl = 1.0;
   Float *hfdata;
-  int *hidata;
+  Locus *hidata;
   axis_context *ax;
   if (chan_fft_in_progress(cp)) return;
   si = (sono_info *)(cp->sonogram_data);
@@ -1732,12 +1734,12 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
       frectw = (Float)fwidth / (Float)(si->target_slices);
       frecth = (Float)fheight / (Float)bins;
       xscl = (Float)(fap->x1 - fap->x0) / (Float)(si->target_slices);
-      rectw = (int)(ceil(frectw));
-      recth = (int)(ceil(frecth));
+      rectw = (Latus)(ceil(frectw));
+      recth = (Latus)(ceil(frecth));
       if (rectw == 0) rectw = 1;
       if (recth == 0) recth = 1;
       hfdata = (Float *)MALLOC((bins + 1) * sizeof(Float));
-      hidata = (int *)MALLOC((bins + 1) * sizeof(int));
+      hidata = (Locus *)MALLOC((bins + 1) * sizeof(Locus));
       if (cp->transform_type == FOURIER)
 	{
 	  if (cp->fft_log_frequency)
@@ -1784,8 +1786,8 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		  else j = (int)(skew_color(binval, color_scale(ss)) * GRAY_SCALES);
 		  if (j > 0) j--; else j = 0;
 		  if (cp->fft_log_frequency)
-		    set_sono_rectangle(js[j], j, (int)xf, hidata[i + 1], rectw, hidata[i] - hidata[i + 1]);
-		  else set_sono_rectangle(js[j], j, (int)xf, hidata[i + 1], rectw, recth);
+		    set_sono_rectangle(js[j], j, (Locus)xf, hidata[i + 1], rectw, hidata[i] - hidata[i + 1]);
+		  else set_sono_rectangle(js[j], j, (Locus)xf, hidata[i + 1], rectw, recth);
 		  if (cp->printing)
 		    {
 		      if (cp->fft_log_frequency) 

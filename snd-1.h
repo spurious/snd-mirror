@@ -77,26 +77,27 @@ typedef struct {Float freq; Float amp;} fft_peak;
 typedef struct {
   Float y0, y1;                         /* scroller-dependent axis bounds */
   double x0, x1;
-  Float xmin, xmax, ymin, ymax;           /* data-dependent absolute limits */
+  Float xmin, xmax, ymin, ymax;         /* data-dependent absolute limits */
   Float y_scale, y_base, y_ambit;
   double x_scale, x_base, x_ambit;
   char *xlabel;
   int x_label_x, x_label_y;
-  int y_axis_x0, x_axis_x0,
-      y_axis_y0, x_axis_y0,
-      x_axis_x1,
-      y_axis_y1;
+  Locus y_axis_x0, x_axis_x0,
+        y_axis_y0, x_axis_y0,
+        x_axis_x1,
+        y_axis_y1;
   int graph_active;
   int losamp, hisamp;                   /* displayed x-axis bounds in terms of sound sample numbers */
-  int graph_x0;                        /* x axis offset relative to window (for double graphs) */
+  Locus graph_x0;                       /* x axis offset relative to window (for double graphs) */
   void *x_ticks, *y_ticks;              /* actual type is tick_descriptor local to snd-axis.c */
   axis_context *ax;
-  int width, height;
+  Latus width, height;
   struct snd__state *ss;               /* back pointers for debugging and whatnot */
   struct chan__info *cp;
   Float sy, zy;                         /* as set by user, 0.0 - 1.0 */
   double sx, zx;
-  int y_offset, window_width;
+  Locus y_offset;
+  Latus window_width;
   int no_data;
 } axis_info;
 
@@ -1001,8 +1002,8 @@ int calculate_fft(chan_info *cp, void *ptr);
 /* -------- snd-axis.c -------- */
 
 axis_info *free_axis_info(axis_info *ap);
-short grf_x(double val, axis_info *ap);
-short grf_y(Float val, axis_info *ap);
+Locus grf_x(double val, axis_info *ap);
+Locus grf_y(Float val, axis_info *ap);
 void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate);
 
 #define ungrf_x(AP, X) (((X) - (AP)->x_base) / (AP)->x_scale)

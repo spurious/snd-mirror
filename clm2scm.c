@@ -534,9 +534,12 @@ the real and imaginary parts of the data, len should be a power of 2, dir = 1 fo
 	n = v1->length;
     }
   else n = v1->length;
-  nf = (log(n) / log(2.0));
-  np = (int)nf;
-  if (np != nf) n = (int)pow(2.0, np);
+  if (!(POWER_OF_2_P(n)))
+    {
+      nf = (log(n) / log(2.0));
+      np = (int)nf;
+      n = (int)pow(2.0, np);
+    }
   mus_fft(v1->data, v2->data, n, sign);
   return(scm_return_first(url, uim));
 }
@@ -590,9 +593,12 @@ and type determines how the spectral data is scaled:\n\
 	n = v1->length;
     }
   else n = v1->length;
-  nf = (log(n) / log(2.0));
-  np = (int)nf;
-  if (np != nf) n = (int)pow(2.0, np);
+  if (!(POWER_OF_2_P(n)))
+    {
+      nf = (log(n) / log(2.0));
+      np = (int)nf;
+      n = (int)pow(2.0, np);
+    }
   if (INTEGER_P(utype)) type = TO_C_INT(utype); else type = 1; /* linear normalized */
   mus_spectrum(v1->data, v2->data, (v3) ? (v3->data) : NULL, n, type);
   return(scm_return_first(url, uim, uwin));
@@ -621,9 +627,12 @@ of (vcts) v1 with v2, using fft of size len (a power of 2), result in v1"
 	n = v2->length;
     }
   else n = v1->length;
-  nf = (log(n) / log(2.0));
-  np = (int)nf;
-  if (np != nf) n = (int)pow(2.0, np);
+  if (!(POWER_OF_2_P(n)))
+    {
+      nf = (log(n) / log(2.0));
+      np = (int)nf;
+      n = (int)pow(2.0, np);
+    }
   mus_convolution(v1->data, v2->data, n);
   return(scm_return_first(url1, url2));
 }

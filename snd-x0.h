@@ -105,6 +105,9 @@
 #define NUM_BOMBS 15
 #define NUM_COLORMAPS 16
 
+#define Locus short
+#define Latus unsigned short
+
 typedef struct {
   GC gc;
   Display *dp;

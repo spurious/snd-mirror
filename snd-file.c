@@ -21,7 +21,7 @@
 #if HAVE_SYS_VFS_H
   #include <sys/vfs.h>
 #endif
-#ifdef __bsdi__
+#if (__bsdi__ || HAVE_SYS_PARAM_H)
   #include <sys/param.h>
 #endif
 #if (defined(HAVE_SYS_MOUNT_H) || defined(__APPLE__) || defined(__bsdi__))

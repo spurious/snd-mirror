@@ -111,7 +111,7 @@ void draw_arc(axis_context *ax, int x, int y, int size)
 
 static XPoint polypts[4];
 
-static void fill_polygons (axis_context *ax, XPoint *points, int num, int y0)
+static void fill_polygons (axis_context *ax, XPoint *points, int num, Locus y0)
 {
   int i;
   for (i = 1; i < num; i++)
@@ -156,7 +156,7 @@ void allocate_grf_points(void)
   if (!points1) points1 = (XPoint *)CALLOC(POINT_BUFFER_SIZE, sizeof(XPoint));
 }
 
-void set_grf_points(int xi, int j, int ymin, int ymax)
+void set_grf_points(Locus xi, int j, Locus ymin, Locus ymax)
 {
   points[j].x = xi;
   points1[j].x = xi;
@@ -164,7 +164,7 @@ void set_grf_points(int xi, int j, int ymin, int ymax)
   points1[j].y = ymin;
 }
 
-void set_grf_point(int xi, int j, int yi)
+void set_grf_point(Locus xi, int j, Locus yi)
 {
   points[j].x = xi;
   points[j].y = yi;
@@ -486,7 +486,7 @@ void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int 
   XDrawLine(ax->dp, ax->wn, colormap_GC, x0, y0, x1, y1);
 }
 
-void set_sono_rectangle(int j, int color, int x, int y, int width, int height)
+void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus height)
 {
   XRectangle *r;
   r = sono_data[color];
@@ -511,9 +511,7 @@ void allocate_sono_rects(snd_state *ss, int size)
 	  sono_data[i] = NULL;
 	}
       for (i = 0; i < GRAY_SCALES; i++)
-	{
-	  sono_data[i] = (XRectangle *)CALLOC(size, sizeof(XRectangle));
-	}
+	sono_data[i] = (XRectangle *)CALLOC(size, sizeof(XRectangle));
       sono_size = size;
     }
 }

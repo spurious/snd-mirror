@@ -39,6 +39,7 @@
 
 #undef STDC_HEADERS
 #undef TM_IN_SYS_TIME
+#undef HAVE_SYS_MOUNT_H
 #undef HAVE_DIRENT_H
 #undef HAVE_NDIR_H
 #undef HAVE_SYS_DIR_H
@@ -68,6 +69,7 @@
 #undef HAVE_LADSPA_H
 #undef HAVE_LOCALE_H
 #undef HAVE_SYS_FPU_H
+#undef HAVE_SYS_PARAM_H
 
 #define SIZEOF_INT 0
 #define SIZEOF_CHAR 0

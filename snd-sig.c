@@ -3616,8 +3616,13 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
     }
   else
     n = VECTOR_LENGTH(reals);
-  ipow = (int)ceil(log((Float)n) / log(2.0));
-  n2 = (int)pow(2.0, (Float)ipow);
+  if (POWER_OF_2_P(n))
+    n2 = n;
+  else
+    {
+      ipow = (int)ceil(log((Float)n) / log(2.0));
+      n2 = (int)pow(2.0, (Float)ipow);
+    }
   if ((!v1) || (n != n2))
     {
       rl = (Float *)CALLOC(n2, sizeof(Float));

@@ -10,8 +10,8 @@ void fill_polygon(axis_context *ax, int points, ...) {}
 void draw_polygon(axis_context *ax, int points, ...) {}
 void draw_string (axis_context *ax, int x0, int y0, char *str, int len) {}
 void draw_arc(axis_context *ax, int x, int y, int size) {}
-void set_grf_points(int xi, int j, int ymin, int ymax) {}
-void set_grf_point(int xi, int j, int yi) {}
+void set_grf_points(Locus xi, int j, Locus ymin, Locus ymax) {}
+void set_grf_point(Locus xi, int j, Locus yi) {}
 void allocate_grf_points(void) {}
 void draw_grf_points(chan_info *cp, axis_context *ax, int j, axis_info *ap, Float y0, int graph_style) {}
 void draw_both_grf_points(chan_info *cp, axis_context *ax, int j, int graph_style) {}
@@ -24,7 +24,7 @@ void setup_axis_context(chan_info *cp, axis_context *ax) {}
 void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1) {}
 void allocate_color_map(snd_state *ss, int colormap) {}
 void allocate_sono_rects(snd_state *ss, int size) {}
-void set_sono_rectangle(int j, int color, int x, int y, int width, int height) {}
+void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus height) {}
 void draw_sono_rectangles(axis_context *ax, int color, int jmax) {}
 void x_load_colormap(int *colors) {}
 void start_color_dialog(snd_state *ss, int width, int height) {}

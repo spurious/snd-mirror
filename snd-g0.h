@@ -45,6 +45,9 @@
 #define GUI_POINTER gpointer
 #define GUI_WIDGET GtkWidget*
 
+#define Locus gint16
+#define Latus guint16
+
 typedef struct {
   GdkGC *gc;
   GdkDrawable *wn;

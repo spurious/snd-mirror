@@ -24,6 +24,9 @@
 #define BUTTON_3 2
 #define NUM_COLORMAPS 0
 
+#define Locus int
+#define Latus int
+
 typedef struct {
   void *ss;
   int wn;
