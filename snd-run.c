@@ -90,8 +90,6 @@
 
 static XEN optimization_hook;
 
-#if HAVE_GUILE && WITH_RUN && HAVE_STRINGIZE
-
 #define S_run_safety "run-safety"
 typedef enum {RUN_UNSAFE, RUN_SAFE} run_safety_t;
 static run_safety_t run_safety = RUN_UNSAFE;
@@ -113,6 +111,8 @@ static run_safety_t run_safety = RUN_UNSAFE;
  *         any possibly complex result? -- sqrt of neg, acos > 1 etc -- are these worth tracking down?
  *         any NaNs? -- these do happen
  */
+
+#if HAVE_GUILE && WITH_RUN && HAVE_STRINGIZE
 
 #define Int off_t
 #define INT_PT  "i%d(%lld)"
