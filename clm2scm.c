@@ -45,6 +45,10 @@
   #define HAVE_SNDLIB 1
 #endif
 
+#if USE_SND
+  #include "snd.h"
+#endif
+
 #include "clm.h"
 #include "vct.h"
 #include "sg.h"
@@ -1037,7 +1041,11 @@ static SCM g_mus_bank1(SCM amps, SCM gens, SCM inp, int type, char *caller)
 	    {
 	      if (gh_procedure_p(inp))
 		{
+#if USE_SND
+		  for (i=0;i<size;i++) invals[i] = gh_scm2double(g_call1(inp,gh_int2scm(i)));
+#else
 		  for (i=0;i<size;i++) invals[i] = gh_scm2double(gh_call1(inp,gh_int2scm(i)));
+#endif
 		}
 	      else scm_misc_error("mus_bank","invalid input arg: ~S",SCM_LIST1(inp));
 	    }
@@ -1069,7 +1077,11 @@ static SCM g_mus_bank1(SCM amps, SCM gens, SCM inp, int type, char *caller)
 	    {
 	      if (gh_procedure_p(amps))
 		{
+#if USE_SND
+		  for (i=0;i<size;i++) scls[i] = gh_scm2double(g_call1(amps,gh_int2scm(i)));
+#else
 		  for (i=0;i<size;i++) scls[i] = gh_scm2double(gh_call1(amps,gh_int2scm(i)));
+#endif
 		}
 	      else scm_misc_error("mus_bank","invalid scaler arg: ~S",SCM_LIST1(amps));
 	    }
@@ -4231,7 +4243,11 @@ static Float funcall_reader (void *ptr, int direction)
   mus_scm *gn = (mus_scm *)ptr;
   if ((gn) && (gn->vcts) && (gn->vcts[0]) && (gh_procedure_p(gn->vcts[0])))
     /* the gh_procedure_p call can be confused by 0 -> segfault! */
+#if USE_SND
+    return(gh_scm2double(g_call1(gn->vcts[0],gh_int2scm(direction))));
+#else
     return(gh_scm2double(gh_call1(gn->vcts[0],gh_int2scm(direction))));
+#endif
   else return(0.0);
 }
 

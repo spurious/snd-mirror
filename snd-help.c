@@ -189,6 +189,9 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+6-Jul:   snd 4.4.\n\
+         user-specified menu callbacks must be functions (not strings).\n\
+         removed dsp-devices.\n\
 5-Jul:   experimental erase-zeros flag.\n\
          swap-channels\n\
 3-Jul:   save-hook and auto-save (examp.scm) improvements.\n\
@@ -218,7 +221,6 @@ void news_help(snd_state *ss)
 9-Jun:   bugfixes and improvements from Paul Barton-Davis.\n\
 8-Jun:   OSS/ALSA choice at run-time (snd-xrec/snd-dac changes).\n\
 7-Jun:   snd-error-hook, snd-warning-hook.\n\
-5-Jun:   snd 4.3.\n\
 ",
 NULL);
   FREE(info);

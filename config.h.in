@@ -109,4 +109,5 @@
 #undef FILE_PER_CHAN
 #undef GSL_VERSION
 
+#define USE_SND 1
 #endif

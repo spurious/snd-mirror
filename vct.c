@@ -45,6 +45,10 @@
   #define HAVE_GUILE 1
 #endif
 
+#if USE_SND
+  #include "snd.h"
+#endif
+
 #include "vct.h"
 #include "sg.h"
 
@@ -349,7 +353,11 @@ static SCM vct_map(SCM obj, SCM proc)
   ERRVCT1(obj,S_vct_mapB);
   SCM_ASSERT((gh_procedure_p(proc)),proc,SCM_ARG2,S_vct_mapB);
   v = get_vct(obj);
+#if USE_SND
+  if (v) for (i=0;i<v->length;i++) v->data[i] = gh_scm2double(g_call0(proc));
+#else
   if (v) for (i=0;i<v->length;i++) v->data[i] = gh_scm2double(gh_call0(proc));
+#endif
   return(obj);
 }
 
@@ -361,7 +369,11 @@ static SCM vct_do(SCM obj, SCM proc)
   ERRVCT1(obj,S_vct_doB);
   SCM_ASSERT((gh_procedure_p(proc)),proc,SCM_ARG2,S_vct_doB);
   v = get_vct(obj);
+#if USE_SND
+  if (v) for (i=0;i<v->length;i++) v->data[i] = gh_scm2double(g_call1(proc,gh_int2scm(i)));
+#else
   if (v) for (i=0;i<v->length;i++) v->data[i] = gh_scm2double(gh_call1(proc,gh_int2scm(i)));
+#endif
   return(obj);
 }
 
@@ -402,7 +414,11 @@ static SCM vcts_map(SCM args)
   for (i=1;i<vnum;i++) if (vsize > v[i]->length) vsize = v[i]->length;
   for (i=0;i<vsize;i++)
     {
+#if USE_SND
+      arg = g_call1(proc,svi);
+#else
       arg = gh_call1(proc,svi);
+#endif
       if (gh_list_p(arg))
 	{
 	  for (vi=0;vi<vnum;vi++)
@@ -450,7 +466,11 @@ static SCM vcts_do(SCM args)
   for (i=1;i<vnum;i++) if (vsize > v[i]->length) vsize = v[i]->length;
   for (i=0;i<vsize;i++)
     {
+#if USE_SND
+      arg = g_call2(proc,svi,gh_int2scm(i));
+#else
       arg = gh_call2(proc,svi,gh_int2scm(i));
+#endif
       if (gh_list_p(arg))
 	{
 	  for (vi=0;vi<vnum;vi++)

@@ -488,6 +488,18 @@ would refer to the original form.  I may extend this to accept a list of (more t
                                                 (do ((j 0 (1+ j))) ((= j steps))
                                                   (vct-set! v (+ j bin) (+ step (vct-ref v (+ j bin))))))))))
 
+                                 And an example that lets us see the result of filtering the waveform:
+
+                                     (add-transform "low-pass" "filtered" 0.0 1.0
+                                       (lambda (len fd)
+                                         (let ((v (make-vct len))
+                                               (flt (make-fir-filter :order 80 
+                                                                     :xcoeffs (let ((v1 (make-vct 80)))
+                                                                                (vct-fill! v1 .0125)
+                                                                                v1))))
+                                           (do ((i 0 (1+ i))) ((= i len) v)
+       	                                     (vct-set! v i (fir-filter flt (next-sample fd)))))))
+
   <a name="sndamp">amp</a>               (<i>snd</i>)         current amp (control panel slider) value.
                                   It is possible to use these controls (in "real-time") in your own functions.
                                   See amprt in examp.scm for a simple example.

@@ -3106,7 +3106,7 @@ Here's another example that implements legato between notes by using the previou
 </p>
 <pre><small>
 (defstruct fmins carrier modulator)
-(definstrument fmsimp (beg dur frq amp ind &optional previous-oscils)
+(definstrument fmsimp (beg dur frq amp ind &amp;optional previous-oscils)
   (let* ((start (floor (* *srate* beg)))
 	 (end (+ start (floor (* *srate* dur))))
 	 (carrier (if previous-oscils

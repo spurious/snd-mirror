@@ -2097,111 +2097,6 @@ chan_info *get_cp(SCM scm_snd_n, SCM scm_chn_n)
 }
 
 
-static SCM g_override_data_location(SCM loc, SCM snd) 
-{
-  #define H_override_data_location "(" S_override_data_location " loc &optional snd) overrides snd's notion of its data location"
-  snd_info *sp;
-  ERRN1(loc,S_override_data_location);
-  ERRSP(S_override_data_location,snd,2);
-  sp = get_sp(snd);
-  if (sp == NULL) return(NO_SUCH_SOUND);
-  mus_sound_override_header(sp->fullname,-1,-1,-1,-1,g_scm2int(loc),-1);
-  snd_update(sp->state,sp);
-  return(loc);
-}
-
-static SCM g_override_data_format(SCM frm, SCM snd) 
-{
-  #define H_override_data_format "(" S_override_data_format " format &optional snd) overrides snd's notion of its data format"
-  snd_info *sp;
-  ERRN1(frm,S_override_data_format);
-  ERRSP(S_override_data_format,snd,2);
-  sp = get_sp(snd);
-  if (sp == NULL) return(NO_SUCH_SOUND);
-  mus_sound_override_header(sp->fullname,-1,-1,g_scm2int(frm),-1,-1,-1);
-  snd_update(sp->state,sp);
-  return(frm);
-}
-
-static SCM g_override_data_size(SCM over, SCM snd) 
-{
-  #define H_override_data_size "(" S_override_data_size " samples &optional snd) overrides snd's notion of its data size"
-  snd_info *sp;
-  ERRN1(over,S_override_data_size);
-  ERRSP(S_override_data_size,snd,2);
-  sp = get_sp(snd);
-  if (sp == NULL) return(NO_SUCH_SOUND);
-  mus_sound_override_header(sp->fullname,-1,-1,-1,-1,-1,g_scm2int(over));
-  snd_update(sp->state,sp);
-  return(over);
-}
-
-static SCM g_set_sound_loop_info(SCM start0, SCM end0, SCM start1, SCM end1, SCM snd)
-{
-  #define H_set_sound_loop_info "(" S_set_sound_loop_info " start0 end0 &optional start1 end1 snd) sets loop points"
-  snd_info *sp;
-  char *tmp_file;
-  int type;
-  ERRN1(start0,S_set_sound_loop_info);
-  ERRN2(end0,S_set_sound_loop_info);
-  ERRB3(start1,S_set_sound_loop_info);
-  ERRB4(end1,S_set_sound_loop_info);
-  ERRSP(S_set_sound_loop_info,snd,5);
-  sp = get_sp(snd);
-  if (sp == NULL) return(NO_SUCH_SOUND);
-  if ((sp->hdr)->loops == NULL)
-    (sp->hdr)->loops = (int *)CALLOC(6,sizeof(int));
-  (sp->hdr)->loops[0] = g_scm2int(start0);
-  (sp->hdr)->loops[1] = g_scm2int(end0);
-  (sp->hdr)->loops[2] = g_scm2intdef(start1,0);
-  (sp->hdr)->loops[3] = g_scm2intdef(end1,0);
-  mus_sound_set_loop_info(sp->fullname,(sp->hdr)->loops);
-  type = (sp->hdr)->type;
-  if ((type != MUS_AIFF) && (type != MUS_AIFC))
-    {
-      snd_warning("changing %s header from %s to aifc to accomodate loop info",sp->shortname,mus_header_type_name(type));
-      type = MUS_AIFC;
-    }
-  tmp_file = snd_tempnam(sp->state);
-  save_edits_2(sp,tmp_file,type,(sp->hdr)->format,(sp->hdr)->srate,(sp->hdr)->comment);
-  snd_copy_file(tmp_file,sp->fullname);
-  remove(tmp_file);
-  free(tmp_file);
-  snd_update(sp->state,sp);
-  return(SCM_BOOL_T);
-}
-
-static SCM g_soundfont_info(SCM snd)
-{
-  /* return all soundfont descriptors as list of lists: ((name start loopstart loopend)) */
-  #define H_soundfont_info "(" S_soundfont_info " &optional snd) -> list of lists describing snd as a soundfont.\n\
-   each inner list has the form: (name start loopstart loopend)"
-
-  SCM inlist = SCM_EOL,outlist = SCM_EOL;
-  int i,lim;
-  snd_info *sp;
-  ERRSP(S_soundfont_info,snd,1);
-  sp = get_sp(snd);
-  if (sp == NULL) return(NO_SUCH_SOUND);
-  mus_header_read(sp->fullname);
-  if (mus_header_type() == MUS_SOUNDFONT)
-    {
-      lim = mus_header_sf2_entries();
-      if (lim > 0)
-	{
-	  for (i=lim-1;i>=0;i--)
-	    {
-	      inlist = SCM_LIST4(gh_str02scm(mus_header_sf2_name(i)),
-				 gh_int2scm(mus_header_sf2_start(i)),
-				 gh_int2scm(mus_header_sf2_loop_start(i)),
-				 gh_int2scm(mus_header_sf2_end(i)));
-	      outlist = gh_cons(inlist,outlist);
-	    }
-	}
-    }
-  return(outlist);
-}
-
 static file_info **temp_sound_headers = NULL;
 static int *temp_sound_fds = NULL;
 static int temp_sound_size = 0;
@@ -3292,53 +3187,6 @@ static SCM g_scale_selection_by(SCM scalers)
   return(NO_ACTIVE_SELECTION);
 }
 
-static SCM g_preload_directory(SCM directory) 
-{
-  #define H_preload_directory "(" S_preload_directory " dir) preloads (into the View:Files dialog) any sounds in dir"
-  char *str;
-  ERRS1(directory,S_preload_directory);
-  str = gh_scm2newstr(directory,NULL);
-  if (str) add_directory_to_prevlist(state,str);
-  free(str);
-  return(directory);
-}
-
-static SCM g_preload_file(SCM file) 
-{
-  #define H_preload_file "(" S_preload_file " file) preloads file (into the View:Files dialog)"
-  char *name = NULL;
-  ERRS1(file,S_preload_file);
-  name = full_filename(file);
-  remember_me(state,filename_without_home_directory(name),name);
-  if (name) FREE(name);
-  return(file);
-}
-
-static SCM g_sound_files_in_directory(SCM dirname)
-{
-  #define H_sound_files_in_directory "(" S_sound_files_in_directory " directory) returns a vector of sound files in directory"
-  dir *dp = NULL;
-  char *name = NULL;
-  int i,numfiles;
-  SCM vect = SCM_BOOL_F;
-  ERRS1(dirname,S_sound_files_in_directory);
-  name = gh_scm2newstr(dirname,NULL);
-  if (name)
-    {
-      dp = find_sound_files_in_dir(name);
-      free(name);
-      if (dp)
-	{
-	  numfiles = dp->len;
-	  vect = gh_make_vector(gh_int2scm(numfiles),SCM_BOOL_F);
-	  for (i=0;i<numfiles;i++)
-	    gh_vector_set_x(vect,gh_int2scm(i),gh_str02scm(dp->files[i]));
-	  free_dir(dp);
-	}
-    }
-  return(vect);
-}
-
 static SCM g_help_dialog(SCM subject, SCM msg)
 {
   #define H_help_dialog "(" S_help_dialog " subject message) fires up the Help window with subject and message"
@@ -3418,51 +3266,6 @@ static SCM g_clear_audio_inputs (void)
   mus_audio_clear_soundcard_inputs(); 
   return(SCM_BOOL_F);
 }
-
-static SCM g_dsp_devices(SCM cards, SCM dsps, SCM mixers)
-{
-  #define H_dsp_devices "(" S_dsp_devices " cards dsps mixers) is a horrible kludge; it will go away anyday now"
-  int i,ncards;
-  int *gdsps,*gmixers;
-  SCM_ASSERT((gh_number_p(cards)),cards,SCM_ARG1,S_dsp_devices);
-  SCM_ASSERT((gh_vector_p(dsps)),dsps,SCM_ARG2,S_dsp_devices);
-  SCM_ASSERT((gh_vector_p(mixers)),mixers,SCM_ARG3,S_dsp_devices);
-  ncards = g_scm2int(cards);
-  gdsps = (int *)CALLOC(ncards,sizeof(int));
-  gmixers = (int *)CALLOC(ncards,sizeof(int));
-  mus_audio_dsp_devices(ncards,gdsps,gmixers);
-  for (i=0;i<ncards;i++)
-    {
-      gh_vector_set_x(dsps,gh_int2scm(i),gh_int2scm(gdsps[i]));
-      gh_vector_set_x(mixers,gh_int2scm(i),gh_int2scm(gmixers[i]));
-    }
-  FREE(gdsps);
-  FREE(gmixers);
-  return(cards);
-}
-  
-static SCM g_set_dsp_devices(SCM cards, SCM dsps, SCM mixers)
-{
-  #define H_set_dsp_devices "(" S_set_dsp_devices " cards dsps mixers) is a horrible kludge; it will go away anyday now"
-  int i,ncards;
-  int *gdsps,*gmixers;
-  SCM_ASSERT((gh_number_p(cards)),cards,SCM_ARG1,S_dsp_devices);
-  SCM_ASSERT((gh_vector_p(dsps)),dsps,SCM_ARG2,S_dsp_devices);
-  SCM_ASSERT((gh_vector_p(mixers)),mixers,SCM_ARG3,S_dsp_devices);
-  ncards = g_scm2int(cards);
-  gdsps = (int *)CALLOC(ncards,sizeof(int));
-  gmixers = (int *)CALLOC(ncards,sizeof(int));
-  for (i=0;i<ncards;i++)
-    {
-      gdsps[i] = gh_vector_ref(dsps,gh_int2scm(i));
-      gmixers[i] = gh_vector_ref(mixers,gh_int2scm(i));
-    }
-  mus_audio_set_dsp_devices(ncards,gdsps,gmixers);
-  FREE(gdsps);
-  FREE(gmixers);
-  return(cards);
-}
-  
 #endif
 
 static SCM g_env_selection(SCM edata, SCM base, SCM snd_n, SCM chn_n)
@@ -3510,118 +3313,6 @@ static SCM g_env_sound(SCM edata, SCM samp_n, SCM samps, SCM base, SCM snd_n, SC
       return(SCM_BOOL_T);
     }
   return(SCM_BOOL_F);
-}
-
-static SCM g_add_to_main_menu(SCM label)
-{
-  #define H_add_to_main_menu "(" S_add_to_main_menu " label) adds label to the main (top-level) menu, returning its index"
-  char *name = NULL;
-  int val;
-  ERRS1(label,S_add_to_main_menu);
-  name = gh_scm2newstr(label,NULL);
-  val = gh_add_to_main_menu(state,name);
-  free(name);
-  RTNINT(val);
-}
-
-static char **menu_strings = NULL; /* backwards compatibility */
-static SCM *menu_functions = NULL;
-static int callbacks_size = 0;
-static int callb = 0;
-#define CALLBACK_INCR 16
-
-static SCM g_add_to_menu(SCM menu, SCM label, SCM callstr)
-{
-  #define H_add_to_menu "(" S_add_to_menu " menu label func) adds label to menu invoking func when activated\n\
-   menu is the index returned by add-to-main-menu, func should be a function of no arguments"
-
-  char *name;
-  int i,err=0;
-  ERRS2(label,S_add_to_menu);
-  ERRN1(menu,S_add_to_menu);
-  if (callbacks_size == callb)
-    {
-      callbacks_size += CALLBACK_INCR;
-      if (callb == 0)
-	{
-	  menu_strings = (char **)CALLOC(callbacks_size,sizeof(char *));
-	  menu_functions = (SCM *)CALLOC(callbacks_size,sizeof(SCM));
-	}
-      else 
-	{
-	  menu_strings = (char **)REALLOC(menu_strings,callbacks_size * sizeof(char *));
-	  menu_functions = (SCM *)REALLOC(menu_functions,callbacks_size * sizeof(SCM));
-	  for (i=callbacks_size - CALLBACK_INCR;i<callbacks_size;i++)
-	    {
-	      menu_strings[i] = NULL;
-	      menu_functions[i] = 0;
-	    }
-	}
-    }
-  name = gh_scm2newstr(label,NULL);
-  err = gh_add_to_menu(state,g_scm2int(menu),name,callb);
-  free(name);
-  if (err == -1) return(NO_SUCH_MENU);
-  if (gh_string_p(callstr))
-    menu_strings[callb] = gh_scm2newstr(callstr,NULL);
-  else 
-    {
-      if ((menu_functions[callb]) && (gh_procedure_p(menu_functions[callb]))) snd_unprotect(menu_functions[callb]);
-      menu_functions[callb] = callstr;
-      snd_protect(callstr);
-    }
-  callb++;
-  return(label);
-}
-
-void g_snd_callback(snd_state *ss, int callb)
-{
-  if (menu_functions[callb])
-    g_call0(menu_functions[callb]);
-  else scm_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,menu_strings[callb],snd_catch_scm_error,menu_strings[callb]);
-}
-
-static SCM g_remove_from_menu(SCM menu, SCM label)
-{
-  #define H_remove_from_menu "(" S_remove_from_menu " menu label) removes menu item label from menu"
-  char *name;
-  int val;
-  ERRS2(label,S_remove_from_menu);
-  ERRN1(menu,S_remove_from_menu);
-  name = gh_scm2newstr(label,NULL);
-  val = gh_remove_from_menu(state,g_scm2int(menu),name);
-  free(name);
-  RTNINT(val);
-}
-
-static SCM g_change_menu_label(SCM menu, SCM old_label, SCM new_label)
-{
-  #define H_change_menu_label "(" S_change_menu_label " menu old-label new-label) changes menu's label"
-  char *old_name,*new_name;
-  int val;
-  ERRS2(old_label,S_change_menu_label);
-  ERRS3(new_label,S_change_menu_label);
-  ERRN1(menu,S_change_menu_label);
-  old_name = gh_scm2newstr(old_label,NULL);
-  new_name = gh_scm2newstr(new_label,NULL);
-  val = gh_change_menu_label(g_scm2int(menu),old_name,new_name);
-  free(old_name);
-  free(new_name);
-  RTNINT(val);
-}
-
-static SCM g_set_menu_sensitive(SCM menu, SCM label, SCM on)
-{
-  #define H_set_menu_sensitive "(" S_set_menu_sensitive " menu label &optional (on #t)) sets whether item label in menu is sensitive"
-  char *name;
-  int val;
-  ERRN1(menu,S_set_menu_sensitive);
-  ERRS2(label,S_set_menu_sensitive);
-  ERRB3(on,S_set_menu_sensitive);
-  name = gh_scm2newstr(label,NULL);
-  val = gh_set_menu_sensitive(g_scm2int(menu),name,bool_int_or_one(on));
-  free(name);
-  RTNINT(val);
 }
 
 static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
@@ -4124,50 +3815,6 @@ static SCM g_progress_report(SCM pct, SCM name, SCM cur_chan, SCM chans, SCM snd
   return(SCM_BOOL_T);
 }
 
-static int chan_ctr=0;
-
-static int init_as_one_edit(chan_info *cp, void *ptr) 
-{
-  ((int *)ptr)[chan_ctr] = cp->edit_ctr; 
-  chan_ctr++; 
-  return(0);
-}
-
-static int finish_as_one_edit(chan_info *cp, void *ptr) 
-{
-  int one_edit;
-  one_edit = (((int *)ptr)[chan_ctr]+1);
-  if (cp->edit_ctr > one_edit)
-    {
-      while (cp->edit_ctr > one_edit) backup_edit_list(cp);
-      if (cp->mixes) backup_mix_list(cp,one_edit);
-    }
-  update_graph(cp,NULL); 
-  chan_ctr++; 
-  return(0);
-}
-
-static SCM g_as_one_edit(SCM proc)
-{
-  #define H_as_one_edit "(" S_as_one_edit " func) runs func, collecting all edits into one from the edit historys' point of view"
-  int chans;
-  int *cur_edits;
-  SCM result = SCM_BOOL_F;
-  SCM_ASSERT(gh_procedure_p(proc),proc,SCM_ARG1,S_as_one_edit);
-  chans = active_channels(state,TRUE);
-  if (chans > 0)
-    {
-      cur_edits = (int *)CALLOC(chans,sizeof(int));
-      chan_ctr = 0;
-      map_over_chans(state,init_as_one_edit,(void *)cur_edits);
-      result = g_call0(proc);
-      chan_ctr = 0;
-      map_over_chans(state,finish_as_one_edit,(void *)cur_edits);
-      FREE(cur_edits);
-    }
-  return(result);
-}
-
 void init_mus2scm_module(void);
 
 static SCM during_open_hook,exit_hook,start_hook,after_open_hook;
@@ -4496,8 +4143,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure2_0(S_set_recorder_out_amp,g_set_recorder_out_amp),H_set_recorder_out_amp);
 #if HAVE_OSS
   DEFINE_PROC(gh_new_procedure0_0(S_clear_audio_inputs,g_clear_audio_inputs),H_clear_audio_inputs);
-  DEFINE_PROC(gh_new_procedure3_0(S_dsp_devices,g_dsp_devices),H_dsp_devices);
-  DEFINE_PROC(gh_new_procedure3_0(S_set_dsp_devices,g_set_dsp_devices),H_set_dsp_devices);
 #endif
   DEFINE_PROC(gh_new_procedure0_1(S_set_just_sounds,g_set_just_sounds),H_set_just_sounds);
   DEFINE_PROC(gh_new_procedure0_0(S_enved_dialog,g_enved_dialog),H_enved_dialog);
@@ -4523,9 +4168,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure1_0(S_set_max_fft_peaks,g_set_max_fft_peaks),H_set_max_fft_peaks);
   DEFINE_PROC(gh_new_procedure0_0(S_cut,g_cut),H_cut);
   DEFINE_PROC(gh_new_procedure1_3(S_insert_sound,g_insert_sound),H_insert_sound);
-  DEFINE_PROC(gh_new_procedure1_0(S_preload_directory,g_preload_directory),H_preload_directory);
-  DEFINE_PROC(gh_new_procedure1_0(S_preload_file,g_preload_file),H_preload_file);
-  DEFINE_PROC(gh_new_procedure1_0(S_sound_files_in_directory,g_sound_files_in_directory),H_sound_files_in_directory);
   DEFINE_PROC(gh_new_procedure1_0(S_yes_or_no_p,g_yes_or_no_p),H_yes_or_no_p);
   DEFINE_PROC(gh_new_procedure0_1(S_scale_selection_to,g_scale_selection_to),H_scale_selection_to);
   DEFINE_PROC(gh_new_procedure0_1(S_scale_selection_by,g_scale_selection_by),H_scale_selection_by);
@@ -4550,9 +4192,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure1_0(S_set_window_height,g_set_window_height),H_set_window_height);
   DEFINE_PROC(gh_new_procedure0_0(S_normalize_view,g_normalize_view),H_normalize_view);
   DEFINE_PROC(gh_new_procedure2_0(S_set_env_base,g_set_env_base),H_set_env_base);
-  DEFINE_PROC(gh_new_procedure1_1(S_override_data_location,g_override_data_location),H_override_data_location);
-  DEFINE_PROC(gh_new_procedure1_1(S_override_data_format,g_override_data_format),H_override_data_format);
-  DEFINE_PROC(gh_new_procedure1_1(S_override_data_size,g_override_data_size),H_override_data_size);
   DEFINE_PROC(gh_new_procedure0_4(S_open_sound_file,g_open_sound_file),H_open_sound_file);
   DEFINE_PROC(gh_new_procedure2_0(S_close_sound_file,g_close_sound_file),H_close_sound_file);
   DEFINE_PROC(gh_new_procedure3_0(S_vct_sound_file,vct2soundfile),H_vct_sound_file);
@@ -4572,11 +4211,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure1_1(S_src_selection,g_src_selection),H_src_selection);
   DEFINE_PROC(gh_new_procedure2_2(S_filter_sound,g_filter_sound),H_filter_sound);
   DEFINE_PROC(gh_new_procedure2_0(S_filter_selection,g_filter_selection),H_filter_selection);
-  DEFINE_PROC(gh_new_procedure1_0(S_add_to_main_menu,g_add_to_main_menu),H_add_to_main_menu);
-  DEFINE_PROC(gh_new_procedure3_0(S_add_to_menu,g_add_to_menu),H_add_to_menu);
-  DEFINE_PROC(gh_new_procedure2_0(S_remove_from_menu,g_remove_from_menu),H_remove_from_menu);
-  DEFINE_PROC(gh_new_procedure3_0(S_change_menu_label,g_change_menu_label),H_change_menu_label);
-  DEFINE_PROC(gh_new_procedure3_0(S_set_menu_sensitive,g_set_menu_sensitive),H_set_menu_sensitive);
   DEFINE_PROC(gh_new_procedure2_0(S_define_envelope,g_define_envelope),H_define_envelope);
   DEFINE_PROC(gh_new_procedure1_7(S_graph,g_graph),H_graph);
   DEFINE_PROC(gh_new_procedure1_0(S_string_length,g_string_length),H_string_length);
@@ -4589,9 +4223,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure1_0(S_snd_print,g_snd_print),H_snd_print);
   DEFINE_PROC(gh_new_procedure0_0(S_describe_audio,g_describe_audio),H_describe_audio);
   DEFINE_PROC(gh_new_procedure0_0("mus-audio-describe",g_describe_audio),H_describe_audio);
-  DEFINE_PROC(gh_new_procedure1_0(S_as_one_edit,g_as_one_edit),H_as_one_edit);
-  DEFINE_PROC(gh_new_procedure2_3(S_set_sound_loop_info,g_set_sound_loop_info),H_set_sound_loop_info);
-  DEFINE_PROC(gh_new_procedure0_1(S_soundfont_info,g_soundfont_info),H_soundfont_info);
 
   /* semi-internal functions (restore-state) */
   gh_new_procedure4_2(S_change_samples_with_origin,g_change_samples_with_origin);

@@ -67,44 +67,61 @@
 ;;;
 ;;; this mainly involves keeping track of the current sound/channel
 
-(define region-rms
+(define region-rms-1
   (lambda (n)
     "(region-rms n) -> rms of region n's data (chan 0)"
-    (let* ((data (region-samples 0 0 n))
-	   (len (vector-length data))
-	   (sum 0.0))
-      (do ((i 0 (1+ i))) 
-	  ((= i len) (sqrt (/ sum len)))
-	(set! sum (+ sum (* (vector-ref data i) (vector-ref data i))))))))
+    (if (region? n)
+	(let* ((data (region-samples 0 0 n))
+	       (len (vector-length data))
+	       (sum 0.0))
+	  (do ((i 0 (1+ i))) 
+	      ((= i len) (sqrt (/ sum len)))
+	    (set! sum (+ sum (* (vector-ref data i) (vector-ref data i)))))))))
 
-(define selection-rms
+(define selection-rms-1
   (lambda ()
     "(selection-rms) -> rms of selection data"
-    (let* ((reader (make-sample-reader (selection-beg)))
-	   (len (selection-length))
-	   (sum 0.0))
-      (do ((i 0 (1+ i))) 
-	  ((= i len) 
-	   (begin 
-	     (free-sample-reader reader) 
-	     (sqrt (/ sum len))))
-	(let ((val (next-sample reader)))
-	  (set! sum (+ sum (* val val))))))))
+    (if (selection?)
+	(let* ((reader (make-sample-reader (selection-beg)))
+	       (len (selection-length))
+	       (sum 0.0))
+	  (do ((i 0 (1+ i))) 
+	      ((= i len) 
+	       (begin 
+		 (free-sample-reader reader) 
+		 (sqrt (/ sum len))))
+	    (let ((val (next-sample reader)))
+	      (set! sum (+ sum (* val val)))))))))
 
 ;;; if you'd rather use recursion:
-(define selection-rms-1
+(define selection-rms-2
   (lambda ()
     ;; this is actually slightly faster than selection-rms
     ;; all the DO loops in this file could be re-written in this form, but I find loops easier to read
-    (let* ((reader (make-sample-reader (selection-beg)))
-	   (len (selection-length)))
-      (define rsum 
-	(lambda (leng sum)
-	  (if (= leng 0)
-	      (sqrt (/ sum len))
-	      (let ((val (next-sample reader)))
-		(rsum (1- leng) (+ sum (* val val)))))))
-      (rsum len 0.0))))
+    (if (selection?)
+	(let* ((reader (make-sample-reader (selection-beg)))
+	       (len (selection-length)))
+	  (define rsum 
+	    (lambda (leng sum)
+	      (if (= leng 0)
+		  (sqrt (/ sum len))
+		  (let ((val (next-sample reader)))
+		    (rsum (1- leng) (+ sum (* val val)))))))
+	  (rsum len 0.0)))))
+
+;;; but by far the fastest is:
+(define selection-rms
+  (lambda ()
+    (if (selection?)
+	(let* ((data (region-samples->vct 0 0 0)))
+	  (sqrt (/ (dot-product data data) (vct-length data)))))))
+
+(define region-rms
+  (lambda (n)
+    "(region-rms n) -> rms of region n's data (chan 0)"
+    (if (region? n)
+	(let* ((data (region-samples->vct 0 0 n)))
+	  (sqrt (/ (dot-product data data) (vct-length data)))))))
 
 
 (define window-samples

@@ -1884,10 +1884,173 @@ static SCM g_file_write_date(SCM file)
   return(gh_int2scm(date));
 }
 
+static SCM g_override_data_location(SCM loc, SCM snd) 
+{
+  #define H_override_data_location "(" S_override_data_location " loc &optional snd) overrides snd's notion of its data location"
+  snd_info *sp;
+  ERRN1(loc,S_override_data_location);
+  ERRSP(S_override_data_location,snd,2);
+  sp = get_sp(snd);
+  if (sp == NULL) return(NO_SUCH_SOUND);
+  mus_sound_override_header(sp->fullname,-1,-1,-1,-1,g_scm2int(loc),-1);
+  snd_update(sp->state,sp);
+  return(loc);
+}
+
+static SCM g_override_data_format(SCM frm, SCM snd) 
+{
+  #define H_override_data_format "(" S_override_data_format " format &optional snd) overrides snd's notion of its data format"
+  snd_info *sp;
+  ERRN1(frm,S_override_data_format);
+  ERRSP(S_override_data_format,snd,2);
+  sp = get_sp(snd);
+  if (sp == NULL) return(NO_SUCH_SOUND);
+  mus_sound_override_header(sp->fullname,-1,-1,g_scm2int(frm),-1,-1,-1);
+  snd_update(sp->state,sp);
+  return(frm);
+}
+
+static SCM g_override_data_size(SCM over, SCM snd) 
+{
+  #define H_override_data_size "(" S_override_data_size " samples &optional snd) overrides snd's notion of its data size"
+  snd_info *sp;
+  ERRN1(over,S_override_data_size);
+  ERRSP(S_override_data_size,snd,2);
+  sp = get_sp(snd);
+  if (sp == NULL) return(NO_SUCH_SOUND);
+  mus_sound_override_header(sp->fullname,-1,-1,-1,-1,-1,g_scm2int(over));
+  snd_update(sp->state,sp);
+  return(over);
+}
+
+static SCM g_set_sound_loop_info(SCM start0, SCM end0, SCM start1, SCM end1, SCM snd)
+{
+  #define H_set_sound_loop_info "(" S_set_sound_loop_info " start0 end0 &optional start1 end1 snd) sets loop points"
+  snd_info *sp;
+  char *tmp_file;
+  int type;
+  ERRN1(start0,S_set_sound_loop_info);
+  ERRN2(end0,S_set_sound_loop_info);
+  ERRB3(start1,S_set_sound_loop_info);
+  ERRB4(end1,S_set_sound_loop_info);
+  ERRSP(S_set_sound_loop_info,snd,5);
+  sp = get_sp(snd);
+  if (sp == NULL) return(NO_SUCH_SOUND);
+  if ((sp->hdr)->loops == NULL)
+    (sp->hdr)->loops = (int *)CALLOC(6,sizeof(int));
+  (sp->hdr)->loops[0] = g_scm2int(start0);
+  (sp->hdr)->loops[1] = g_scm2int(end0);
+  (sp->hdr)->loops[2] = g_scm2intdef(start1,0);
+  (sp->hdr)->loops[3] = g_scm2intdef(end1,0);
+  mus_sound_set_loop_info(sp->fullname,(sp->hdr)->loops);
+  type = (sp->hdr)->type;
+  if ((type != MUS_AIFF) && (type != MUS_AIFC))
+    {
+      snd_warning("changing %s header from %s to aifc to accomodate loop info",sp->shortname,mus_header_type_name(type));
+      type = MUS_AIFC;
+    }
+  tmp_file = snd_tempnam(sp->state);
+  save_edits_2(sp,tmp_file,type,(sp->hdr)->format,(sp->hdr)->srate,(sp->hdr)->comment);
+  snd_copy_file(tmp_file,sp->fullname);
+  remove(tmp_file);
+  free(tmp_file);
+  snd_update(sp->state,sp);
+  return(SCM_BOOL_T);
+}
+
+static SCM g_soundfont_info(SCM snd)
+{
+  /* return all soundfont descriptors as list of lists: ((name start loopstart loopend)) */
+  #define H_soundfont_info "(" S_soundfont_info " &optional snd) -> list of lists describing snd as a soundfont.\n\
+   each inner list has the form: (name start loopstart loopend)"
+
+  SCM inlist = SCM_EOL,outlist = SCM_EOL;
+  int i,lim;
+  snd_info *sp;
+  ERRSP(S_soundfont_info,snd,1);
+  sp = get_sp(snd);
+  if (sp == NULL) return(NO_SUCH_SOUND);
+  mus_header_read(sp->fullname);
+  if (mus_header_type() == MUS_SOUNDFONT)
+    {
+      lim = mus_header_sf2_entries();
+      if (lim > 0)
+	{
+	  for (i=lim-1;i>=0;i--)
+	    {
+	      inlist = SCM_LIST4(gh_str02scm(mus_header_sf2_name(i)),
+				 gh_int2scm(mus_header_sf2_start(i)),
+				 gh_int2scm(mus_header_sf2_loop_start(i)),
+				 gh_int2scm(mus_header_sf2_end(i)));
+	      outlist = gh_cons(inlist,outlist);
+	    }
+	}
+    }
+  return(outlist);
+}
+
+static SCM g_preload_directory(SCM directory) 
+{
+  #define H_preload_directory "(" S_preload_directory " dir) preloads (into the View:Files dialog) any sounds in dir"
+  char *str;
+  ERRS1(directory,S_preload_directory);
+  str = gh_scm2newstr(directory,NULL);
+  if (str) add_directory_to_prevlist(get_global_state(),str);
+  free(str);
+  return(directory);
+}
+
+static SCM g_preload_file(SCM file) 
+{
+  #define H_preload_file "(" S_preload_file " file) preloads file (into the View:Files dialog)"
+  char *name = NULL,*urn;
+  ERRS1(file,S_preload_file);
+  urn = gh_scm2newstr(file,NULL);
+  name = mus_file_full_name(urn);
+  free(urn);
+  remember_me(get_global_state(),filename_without_home_directory(name),name);
+  if (name) FREE(name);
+  return(file);
+}
+
+static SCM g_sound_files_in_directory(SCM dirname)
+{
+  #define H_sound_files_in_directory "(" S_sound_files_in_directory " directory) returns a vector of sound files in directory"
+  dir *dp = NULL;
+  char *name = NULL;
+  int i,numfiles;
+  SCM vect = SCM_BOOL_F;
+  ERRS1(dirname,S_sound_files_in_directory);
+  name = gh_scm2newstr(dirname,NULL);
+  if (name)
+    {
+      dp = find_sound_files_in_dir(name);
+      free(name);
+      if (dp)
+	{
+	  numfiles = dp->len;
+	  vect = gh_make_vector(gh_int2scm(numfiles),SCM_BOOL_F);
+	  for (i=0;i<numfiles;i++)
+	    gh_vector_set_x(vect,gh_int2scm(i),gh_str02scm(dp->files[i]));
+	  free_dir(dp);
+	}
+    }
+  return(vect);
+}
+
+
 void g_init_file(SCM local_doc)
 {
   DEFINE_PROC(gh_new_procedure1_0(S_add_sound_file_extension,g_add_sound_file_extension),H_add_sound_file_extension);
   DEFINE_PROC(gh_new_procedure1_0(S_file_write_date,g_file_write_date),H_file_write_date);
+  DEFINE_PROC(gh_new_procedure(S_set_sound_loop_info,SCM_FNC g_set_sound_loop_info,2,3,0),H_set_sound_loop_info);
+  DEFINE_PROC(gh_new_procedure0_1(S_soundfont_info,g_soundfont_info),H_soundfont_info);
+  DEFINE_PROC(gh_new_procedure1_1(S_override_data_location,g_override_data_location),H_override_data_location);
+  DEFINE_PROC(gh_new_procedure1_1(S_override_data_format,g_override_data_format),H_override_data_format);
+  DEFINE_PROC(gh_new_procedure1_1(S_override_data_size,g_override_data_size),H_override_data_size);
+  DEFINE_PROC(gh_new_procedure1_0(S_preload_directory,g_preload_directory),H_preload_directory);
+  DEFINE_PROC(gh_new_procedure1_0(S_preload_file,g_preload_file),H_preload_file);
+  DEFINE_PROC(gh_new_procedure1_0(S_sound_files_in_directory,g_sound_files_in_directory),H_sound_files_in_directory);
 
   memo_sound = gh_define(S_memo_sound,SCM_BOOL_F);
 

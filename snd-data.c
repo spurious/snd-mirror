@@ -500,7 +500,7 @@ int find_free_sound_slot (snd_state *state, int desired_chans)
   return(j);
 }
 
-snd_info *any_active_sound(snd_state *ss)
+static snd_info *any_active_sound(snd_state *ss)
 {
   snd_info *sp;
   int i;

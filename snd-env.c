@@ -1029,7 +1029,7 @@ void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info
   axis_info *ap,*active_ap;
   chan_info *active_channel,*ncp;
 
-  if (!(any_active_sound(ss))) return;
+  if (!(any_selected_sound(ss))) return;
   set_grf_points(-1,0,0,0); /* this is a kludge to handle one-sided graphs (snd-xchn.c) */
   ap = axis_cp->axis;
   gray_ap->x_axis_x0 = ap->x_axis_x0;

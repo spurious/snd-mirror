@@ -2794,6 +2794,52 @@ static SCM g_redo(SCM ed_n, SCM snd_n, SCM chn_n) /* opt ed_n */
   return(SCM_BOOL_T);
 }
 
+static int chan_ctr=0;
+
+static int init_as_one_edit(chan_info *cp, void *ptr) 
+{
+  ((int *)ptr)[chan_ctr] = cp->edit_ctr; 
+  chan_ctr++; 
+  return(0);
+}
+
+static int finish_as_one_edit(chan_info *cp, void *ptr) 
+{
+  int one_edit;
+  one_edit = (((int *)ptr)[chan_ctr]+1);
+  if (cp->edit_ctr > one_edit)
+    {
+      while (cp->edit_ctr > one_edit) backup_edit_list(cp);
+      if (cp->mixes) backup_mix_list(cp,one_edit);
+    }
+  update_graph(cp,NULL); 
+  chan_ctr++; 
+  return(0);
+}
+
+static SCM g_as_one_edit(SCM proc)
+{
+  #define H_as_one_edit "(" S_as_one_edit " func) runs func, collecting all edits into one from the edit historys' point of view"
+  int chans;
+  int *cur_edits;
+  snd_state *ss;
+  SCM result = SCM_BOOL_F;
+  SCM_ASSERT(gh_procedure_p(proc),proc,SCM_ARG1,S_as_one_edit);
+  ss = get_global_state();
+  chans = active_channels(ss,TRUE);
+  if (chans > 0)
+    {
+      cur_edits = (int *)CALLOC(chans,sizeof(int));
+      chan_ctr = 0;
+      map_over_chans(ss,init_as_one_edit,(void *)cur_edits);
+      result = g_call0(proc);
+      chan_ctr = 0;
+      map_over_chans(ss,finish_as_one_edit,(void *)cur_edits);
+      FREE(cur_edits);
+    }
+  return(result);
+}
+
 #if (!HAVE_GUILE_1_3_0)
 static int dont_edit(chan_info *cp) 
 {
@@ -2853,6 +2899,7 @@ void g_init_edits(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_edit_fragment,SCM_FNC g_edit_fragment,0,3,0),H_edit_fragment);
   DEFINE_PROC(gh_new_procedure(S_undo,SCM_FNC g_undo,0,3,0),H_undo);
   DEFINE_PROC(gh_new_procedure(S_redo,SCM_FNC g_redo,0,3,0),H_redo);
+  DEFINE_PROC(gh_new_procedure1_0(S_as_one_edit,g_as_one_edit),H_as_one_edit);
 
 #if DEBUGGING
   DEFINE_PROC(gh_new_procedure("display-edits",SCM_FNC g_display_edits,0,2,0),H_display_edits);

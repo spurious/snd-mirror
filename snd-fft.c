@@ -1327,7 +1327,7 @@ static int apply_fft_window(fft_state *fs)
 	vct *v;
 	int len,i;
 	sfd = g_c_make_sample_reader(sf);
-	res = gh_call2(added_transform_proc(transform_type(ss)),gh_int2scm(data_len),sfd);
+	res = g_call2(added_transform_proc(transform_type(ss)),gh_int2scm(data_len),sfd);
 	snd_protect(res);
 	if (vct_p(res))
 	  {

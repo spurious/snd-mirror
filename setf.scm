@@ -48,7 +48,6 @@
 (setf (setter set-default-output-srate) set-set-default-output-srate)
 (setf (setter set-default-output-type) set-set-default-output-type)
 (setf (setter set-dot-size) set-set-dot-size)
-(setf (setter set-dsp-devices) set-set-dsp-devices)
 (setf (setter set-env-base) set-set-env-base)
 (setf (setter set-enved-base) set-set-enved-base)
 (setf (setter set-enved-clipping) set-set-enved-clipping)

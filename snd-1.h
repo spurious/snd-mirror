@@ -654,7 +654,6 @@ int map_over_sound_chans (snd_info *sp, int (*func)(chan_info *,void *), void *u
 int map_over_separate_chans(snd_state *ss, int (*func)(chan_info *,void *), void *userptr);
 int snd_ok (snd_info *sp);
 int active_channels (snd_state *ss,int count_virtual_channels);
-snd_info *any_active_sound(snd_state *ss);
 int find_free_sound_slot (snd_state *state, int desired_chans);
 snd_info *selected_sound(snd_state *ss);
 chan_info *selected_channel(snd_state *ss);
