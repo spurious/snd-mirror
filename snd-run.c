@@ -141,8 +141,10 @@ static int run_safety = RUN_UNSAFE;
 #define XEN_LIST_REF_WRAPPED(a, b)          scm_list_ref(a, b)
 #define XEN_OBJECT_PROPERTY(Obj, Prop)      scm_object_property(Obj, Prop)
 #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val) scm_set_object_property_x(Obj, Prop, Val)
+#if 0
 #define XEN_PROCEDURE_PROPERTY(Obj, Prop)   scm_procedure_property(Obj, Prop)
 #define XEN_SET_PROCEDURE_PROPERTY(Obj, Prop, Val) scm_set_procedure_property_x(Obj, Prop, Val)
+#endif
 #define XEN_PROCEDURE_WITH_SETTER_P(Proc)   scm_procedure_with_setter_p(Proc)
 
 #define FLT_PT  "d%d(%.4f)"
@@ -226,7 +228,7 @@ static XEN symbol_to_value(XEN code, XEN sym, bool *local)
   return(new_val);
 }
 
-static XEN symbol_set_value(XEN code, XEN sym, XEN new_val)
+static void symbol_set_value(XEN code, XEN sym, XEN new_val)
 {
   XEN var = XEN_FALSE;
   /* fprintf(stderr, "set %s to %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(new_val)); */
@@ -251,13 +253,13 @@ static XEN symbol_set_value(XEN code, XEN sym, XEN new_val)
 		    if (XEN_EQ_P(XEN_LIST_REF(names, i), sym))
 		      {
 			XEN_LIST_SET(values, i, new_val);
-			return(new_val);
+			return;
 		      }
 		}
 	      if ((XEN_PAIR_P(pair)) && (XEN_EQ_P(XEN_CAR(pair), sym)))
 		{
 		  XEN_SET_CDR(pair, new_val);
-		  return(new_val);
+		  return;
 		}
 	      code_env = XEN_CDR(code_env);
 	    }
@@ -266,7 +268,6 @@ static XEN symbol_set_value(XEN code, XEN sym, XEN new_val)
   var = XEN_SYMBOL_TO_VARIABLE(sym);
   if (!(XEN_FALSE_P(var)))
     XEN_VARIABLE_SET(var, new_val);
-  return(new_val);
 }
 
 enum {R_UNSPECIFIED, R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_LIST, R_PAIR, 
@@ -1724,7 +1725,7 @@ static xen_var *new_xen_var(const char *name, xen_value *v)
   return(var);
 }
 
-static int add_var_to_ptree(ptree *pt, const char *name, xen_value *v)
+static void add_var_to_ptree(ptree *pt, const char *name, xen_value *v)
 {
   int cur;
   /*
@@ -1743,7 +1744,6 @@ static int add_var_to_ptree(ptree *pt, const char *name, xen_value *v)
       else pt->vars = (xen_var **)CALLOC(pt->vars_size, sizeof(xen_var *));
     }
   pt->vars[pt->var_ctr++] = new_xen_var(name, v);
-  return(cur);
 }
 
 static int add_outer_var_to_ptree(ptree *pt, const char *name, xen_value *v)

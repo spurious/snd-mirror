@@ -1452,7 +1452,7 @@ static Cessate read_adc(void)
 }
 #endif
 
-bool recorder_start_output_file(const char *comment)
+void recorder_start_output_file(const char *comment)
 {
   int comlen, err, i;
   off_t oloc = 0;
@@ -1472,7 +1472,7 @@ bool recorder_start_output_file(const char *comment)
       FREE(msg);
       rp->recording = false;
       rp->triggered = (!rp->triggering);
-      return(true);
+      return;
     }
   oloc = mus_header_data_location();
   unsensitize_control_buttons();
@@ -1495,7 +1495,6 @@ bool recorder_start_output_file(const char *comment)
   for (i = 0; i < rp->out_chans; i++) 
     if (!output_bufs[i])
       output_bufs[i] = (mus_sample_t *)CALLOC(rp->buffer_size, sizeof(mus_sample_t));
-  return(false);
 }
 
 int recorder_get_devices(recorder_info *rp, int *outs)

@@ -7882,7 +7882,7 @@ static void gxm_ProtocolProc(Widget w, XtPointer context, XtPointer info)
 
 #define C_TO_XEN_XM_ProtocolHook(Code, Context, PropertyAtom, ProtocolAtom) \
   XEN_LIST_5(C_STRING_TO_XEN_SYMBOL("ProtocolHook"), Code, Context, PropertyAtom, ProtocolAtom)
-#define XM_ProtocolHook_P(Arg) WRAP_P("ProtocolHook", Arg)
+/* #define XM_ProtocolHook_P(Arg) WRAP_P("ProtocolHook", Arg) */
 
 #define C_TO_XEN_XM_ProtocolProc(Code, Context, PropertyAtom, ProtocolAtom) \
   XEN_LIST_5(C_STRING_TO_XEN_SYMBOL("ProtocolProc"), Code, Context, PropertyAtom, ProtocolAtom)
@@ -19067,14 +19067,14 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XClearWindow, gxm_XClearWindow, 2, 0, 0, H_XClearWindow);
   XM_DEFINE_PROCEDURE(XCloseDisplay, gxm_XCloseDisplay, 1, 0, 0, H_XCloseDisplay);
   XM_DEFINE_PROCEDURE(XConfigureWindow, gxm_XConfigureWindow, 4, 0, 0, H_XConfigureWindow);
-  XM_DEFINE_PROCEDURE(XConnectionNumber, gxm_XConnectionNumber, 1, 0, 0, H_XConnectionNumber);
+  XM_DEFINE_PROCEDURE(XConnectionNumber, gxm_XConnectionNumber, 1, 0, 0, H_XConnectionNumber); /* CHECK: ConnectionNumber? */
   XM_DEFINE_PROCEDURE(XConvertSelection, gxm_XConvertSelection, 6, 0, 0, H_XConvertSelection);
   XM_DEFINE_PROCEDURE(XCopyArea, gxm_XCopyArea, 0, 0, 1, H_XCopyArea);
   XM_DEFINE_PROCEDURE(XCopyGC, gxm_XCopyGC, 4, 0, 0, H_XCopyGC);
   XM_DEFINE_PROCEDURE(XCopyPlane, gxm_XCopyPlane, 0, 0, 1, H_XCopyPlane);
-  XM_DEFINE_PROCEDURE(XDefaultDepth, gxm_XDefaultDepth, 2, 0, 0, H_DefaultDepth);
-  XM_DEFINE_PROCEDURE(XDefaultDepthOfScreen, gxm_XDefaultDepthOfScreen, 1, 0, 0, H_DefaultDepthOfScreen);
-  XM_DEFINE_PROCEDURE(XDefaultScreen, gxm_XDefaultScreen, 1, 0, 0, H_DefaultScreen);
+  XM_DEFINE_PROCEDURE(XDefaultDepth, gxm_XDefaultDepth, 2, 0, 0, H_XDefaultDepth);
+  XM_DEFINE_PROCEDURE(XDefaultDepthOfScreen, gxm_XDefaultDepthOfScreen, 1, 0, 0, H_XDefaultDepthOfScreen);
+  XM_DEFINE_PROCEDURE(XDefaultScreen, gxm_XDefaultScreen, 1, 0, 0, H_XDefaultScreen);
   XM_DEFINE_PROCEDURE(XDefineCursor, gxm_XDefineCursor, 3, 0, 0, H_XDefineCursor);
   XM_DEFINE_PROCEDURE(XDeleteProperty, gxm_XDeleteProperty, 3, 0, 0, H_XDeleteProperty);
   XM_DEFINE_PROCEDURE(XDestroyWindow, gxm_XDestroyWindow, 2, 0, 0, H_XDestroyWindow);
@@ -20015,11 +20015,11 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XpmCreateXpmImageFromPixmap, gxm_XpmCreateXpmImageFromPixmap, 4, 0, 0, NULL);
 #endif
 #endif
-  XM_DEFINE_PROCEDURE(XGetPixel, gxm_XGetPixel, 3, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XDestroyImage, gxm_XDestroyImage, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XPutPixel, gxm_XPutPixel, 4, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XSubImage, gxm_XSubImage, 5, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XAddPixel, gxm_XAddPixel, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XGetPixel, gxm_XGetPixel, 3, 0, 0, H_XGetPixel);
+  XM_DEFINE_PROCEDURE(XDestroyImage, gxm_XDestroyImage, 1, 0, 0, H_XDestroyImage);
+  XM_DEFINE_PROCEDURE(XPutPixel, gxm_XPutPixel, 4, 0, 0, H_XPutPixel);
+  XM_DEFINE_PROCEDURE(XSubImage, gxm_XSubImage, 5, 0, 0, H_XSubImage);
+  XM_DEFINE_PROCEDURE(XAddPixel, gxm_XAddPixel, 2, 0, 0, H_XAddPixel);
 
 #if HAVE_MOTIF
   XM_DEFINE_PROCEDURE(XtAppContext?, XEN_XtAppContext_p, 1, 0, 0, NULL);

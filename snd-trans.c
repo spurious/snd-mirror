@@ -1379,20 +1379,23 @@ static int read_g72x_adpcm(const char *oldname, const char *newname, char *hdr, 
 
 #define RIFF_Intel_ADPCM 0x11
 #define RIFF_Oki_ADPCM 0x10
-#define RIFF_G721 0x40
 #define RIFF_G723 0x14
 #define RIFF_MS_G723 0x42
 #define RIFF_Lucent_G723 0x59
 #define RIFF_Vivo_G723 0x111
-#define RIFF_Gsm610 0x31
 #define RIFF_G721 0x40
-#define RIFF_MPEG 0x50
 #define RIFF_MS_ADPCM 2
 #define RIFF_IBM_ADPCM 0x103
 #define NeXT_G721 23
-#define NeXT_G722 24
 #define NeXT_G723 25
 #define NeXT_G723_5 26
+
+#if 0
+#define RIFF_G721 0x40
+#define RIFF_Gsm610 0x31
+#define RIFF_MPEG 0x50
+#define NeXT_G722 24
+#endif
 
 static int MUS_CANT_TRANSLATE = 0;
 

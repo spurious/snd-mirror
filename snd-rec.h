@@ -103,7 +103,7 @@ void recorder_set_vu_out_val(int chan, mus_sample_t val);
 
 void sensitize_control_buttons(void);
 void unsensitize_control_buttons(void);
-bool recorder_start_output_file(const char *comment);
+void recorder_start_output_file(const char *comment);
 void finish_recording(recorder_info *rp);
 
 #if OLD_SGI_AL

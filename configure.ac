@@ -322,7 +322,7 @@ AC_MSG_CHECKING(for __func__)
 AC_LINK_IFELSE(
   [AC_LANG_PROGRAM(,
     [ char *s; 
-      s = __func__
+      s = (char *)__func__
     ])],
   [AC_DEFINE(HAVE___FUNC__)
    AC_MSG_RESULT(yes)
@@ -801,7 +801,7 @@ else
 	AC_CHECK_LIB(m, gdk_pango_renderer_new, [AC_DEFINE(HAVE_GDK_PANGO_RENDERER_NEW)],  ,$GTK_LIBS)
 	# gtk 2.5.6
 	AC_CHECK_LIB(m, gtk_text_layout_get_iter_at_position, [AC_DEFINE(HAVE_GTK_TEXT_LAYOUT_GET_ITER_AT_POSITION)],  ,$GTK_LIBS)
-	# gtk 2.6.0
+	# gtk 2.6.0|1
 
         if test "$with_x11" = yes ; then
 	  AC_DEFINE(WITH_GTK_AND_X11)
@@ -1045,8 +1045,8 @@ if test $GUILE_CONFIG_works = yes; then
                                                  if test "$with_modules" = yes; then
 						   AC_DEFINE(WITH_MODULES)
 						 fi])
-    AC_CHECK_TYPE(scm_t_catch_body,             [AC_DEFINE(HAVE_SCM_T_CATCH_BODY)], , [#include <guile/gh.h>])
-    AC_CHECK_TYPE(scm_t_guard,                  [AC_DEFINE(HAVE_GUILE_DYNAMIC_WIND)], , [#include <guile/gh.h>])
+    AC_CHECK_TYPE(scm_t_catch_body,              [AC_DEFINE(HAVE_SCM_T_CATCH_BODY)], , [#include <libguile.h>]) # not gh.h here -> g++ dies
+    AC_CHECK_TYPE(scm_t_guard,                   [AC_DEFINE(HAVE_GUILE_DYNAMIC_WIND)], , [#include <libguile.h>])
 
     AC_MSG_CHECKING([for call/cc])
     if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (defined? (quote call/cc)))'`" = "#t"; then

@@ -44,9 +44,6 @@
 #define CHANNEL_SASH_INDENT -10
 #define CHANNEL_SASH_SIZE 0
 /* 0 means: use Motif default size */
-#define NOTEBOOK_BINDING_WIDTH 16
-
-#define NO_ICON 0
 #define PLAIN_ICON 1
 #define XPM_ICON 2
 
@@ -892,7 +889,6 @@ void snd_doit(int argc, char **argv)
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNframeBackground, sx->zoom_color); n++;
-      /* XtSetArg(args[n], XmNbindingWidth, NOTEBOOK_BINDING_WIDTH); n++; */
       XtSetArg(args[n], XmNbindingType, XmNONE); n++;
       XtSetArg(args[n], XmNbackPagePlacement, XmTOP_RIGHT); n++;
       XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;

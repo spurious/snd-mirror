@@ -16,6 +16,8 @@ int **counts;
 char ***lines;
 #define MAX_LINES 16
 int *voids;
+int *results;
+int *procs;
 
 int names_size=0,names_ctr=0;
 int files_size=0,files_ctr=0;
@@ -122,9 +124,23 @@ static char *get_call(char *input, int input_loc, int curname_len, char *curname
   return(NULL);
 }
 
+static int get_result(char *input, int input_loc, int curname_len)
+{
+  int i;
+  for (i = input_loc - curname_len; i >= 0; i--)
+    {
+      /* if ((input[i] == '=') || (input[i] == '(') || (input[i] == ',') || (input[i] == ')')) return(1); */
+      if ((input[i] == '=') || (input[i] == '(') || (input[i] == ',')) return(1);
+      if ((input[i] == '+') || (input[i] == '-') || (input[i] == '*') || (input[i] == '/')) return(1);
+      if ((input[i] == '&') || (input[i] == '|') || (input[i] == '^') || (input[i] == '!')) return(1);
+      if ((input[i] == ';') || (input[i] == '{')) return(0);
+    }
+  return(1);
+}
+
 typedef struct {
   char *name;
-  int i, calls, v;
+  int i, calls, v, results, proc;
 } qdata;
 
 static int greater_compare(const void *a, const void *b)
@@ -159,6 +175,8 @@ int main(int argc, char **argv)
   headers = (char **)calloc(headers_size,sizeof(char *));
   counts = (int **)calloc(names_size,sizeof(int *));
   lines = (char ***)calloc(names_size, sizeof(char **));
+  results = (int *)calloc(names_size, sizeof(int));
+  procs = (int *)calloc(names_size, sizeof(int));
 
   /* add_header("sndlib.h"); */
   /* add_header("clm.h"); */
@@ -180,7 +198,7 @@ int main(int argc, char **argv)
   add_header("snd-rec.h");
   add_header("xen.h");
   
-  /* add_header("fake.h"); */
+  add_header("fake.h");
 
   add_file("headers.c");
   add_file("audio.c");
@@ -188,7 +206,7 @@ int main(int argc, char **argv)
   add_file("sound.c");
   add_file("clm.c");
   add_file("vct.c");
-  /* add_file("cmus.c"); */
+  add_file("cmus.c");
   add_file("sndlib2xen.c");
   add_file("clm2xen.c");
   add_file("midi.c");
@@ -314,7 +332,14 @@ int main(int argc, char **argv)
 			  loc = add_name(copy_string(curname));
 			  if (loc >= 0)
 			    {
-			      int start;
+			      int start, n, maybe_proc = 1;
+			      for (n = 0; n < k; n++)
+				if (isupper(curname[n]))
+				  {
+				    maybe_proc = 0;
+				    break;
+				  }
+			      procs[loc] = maybe_proc;
 			      start = j - strlen(curname) - 6;
 			      if (start >= 0)
 				{
@@ -387,6 +412,8 @@ int main(int argc, char **argv)
 			      loc = add_count(curname,i);
 			      if (loc >= 0)
 				{
+				  if (procs[loc])
+				    results[loc] += get_result(input, j, k);
 				  if (lines[loc] == NULL)
 				    {
 				      lines[loc] = (char **)calloc(MAX_LINES, sizeof(char *));
@@ -491,6 +518,8 @@ int main(int argc, char **argv)
       q->v = voids[i];
       q->name = names[i];
       q->calls = mcalls[i];
+      q->results = results[i];
+      q->proc = procs[i];
     }
   qsort((void *)qs, names_ctr, sizeof(qdata *), greater_compare);
   for (i=0; i< names_ctr; i++)
@@ -498,7 +527,15 @@ int main(int argc, char **argv)
       int nfiles;
       nfiles = 0;
       fprintf(FD, "\n\n%s: %d", qs[i]->name, qs[i]->calls);
-      if (qs[i]->v) fprintf(FD, " (void)");
+      if (qs[i]->v) 
+	{
+	  fprintf(FD, " (void)");
+	}
+      else
+	{
+	  if ((qs[i]->results == 0) && (qs[i]->proc > 0))
+	    fprintf(FD, " (not void but result not used?)");
+	}
       for (j=0;j<files_ctr;j++)
 	{
 	  if ((counts[qs[i]->i]) && (counts[qs[i]->i][j] > 0))

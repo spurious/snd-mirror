@@ -1812,8 +1812,8 @@ void reflect_mix_or_track_change(int mix_id, int track_id, bool forced)
 }
 
 int mix_dialog_mix(void) {return(mix_dialog_id);}
-int mix_dialog_set_mix(int id) {mix_dialog_id = id; update_mix_dialog(mix_dialog_id); return(id);}
+void mix_dialog_set_mix(int id) {mix_dialog_id = id; update_mix_dialog(mix_dialog_id);}
 int track_dialog_track(void) {return(track_dialog_id);}
-int track_dialog_set_track(int id) {track_dialog_id = id; update_track_dialog(track_dialog_id); return(id);}
+void track_dialog_set_track(int id) {track_dialog_id = id; update_track_dialog(track_dialog_id);}
 
 

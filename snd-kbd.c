@@ -225,7 +225,7 @@ static int in_user_keymap(int key, int state, bool cx_extended)
   return(-1);
 }
 
-bool map_over_key_bindings(bool (*func)(int, int, bool, XEN))
+void map_over_key_bindings(bool (*func)(int, int, bool, XEN))
 {
   int i;
   for (i = 0; i < keymap_top; i++)
@@ -233,9 +233,8 @@ bool map_over_key_bindings(bool (*func)(int, int, bool, XEN))
       {
 	bool val;
 	val = (*func)(user_keymap[i].key, user_keymap[i].state, user_keymap[i].cx_extended, user_keymap[i].func);
-	if (val) return(val);
+	if (val) return;
       }
-  return(false);
 }
 
 #define NUM_BUILT_IN_KEY_BINDINGS 76

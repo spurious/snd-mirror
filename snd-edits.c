@@ -474,7 +474,6 @@ typedef struct {
 #define READER_PTREE_POSITION(Sf)   ((ed_fragment *)((Sf)->cb))->ptree_pos
 #define READER_PTREE2_POSITION(Sf)  ((ed_fragment *)((Sf)->cb))->ptree_pos2
 #define READER_PTREE3_POSITION(Sf)  ((ed_fragment *)((Sf)->cb))->ptree_pos3
-#define READER_LENGTH(Sf)           (READER_LOCAL_END(Sf) - READER_LOCAL_POSITION(Sf) + 1)
 
 #define ED_GLOBAL_POSITION(Ed)  (Ed)->out
 #define ED_LOCAL_POSITION(Ed)   (Ed)->beg
@@ -494,6 +493,7 @@ typedef struct {
 #define ED_XRAMP_OFFSET(Ed)     (Ed)->offset
 #define ED_XRAMP_SCALER2(Ed)    (Ed)->scaler2
 #define ED_XRAMP_OFFSET2(Ed)    (Ed)->offset2
+#if 0
 #define ED_PTREE_SCALER(Ed)     (Ed)->ptree_scl
 #define ED_PTREE2_SCALER(Ed)    (Ed)->ptree_scl2
 #define ED_PTREE3_SCALER(Ed)    (Ed)->ptree_scl3
@@ -503,10 +503,12 @@ typedef struct {
 #define ED_PTREE_DUR(Ed)        (Ed)->ptree_dur
 #define ED_PTREE2_DUR(Ed)       (Ed)->ptree_dur2
 #define ED_PTREE3_DUR(Ed)       (Ed)->ptree_dur3
+#define ED_LENGTH(Ed)           (ED_LOCAL_END(Ed) - ED_LOCAL_POSITION(Ed) + 1)
+#define READER_LENGTH(Sf)           (READER_LOCAL_END(Sf) - READER_LOCAL_POSITION(Sf) + 1)
+#endif
 #define ED_PTREE_POSITION(Ed)   (Ed)->ptree_pos
 #define ED_PTREE2_POSITION(Ed)  (Ed)->ptree_pos2
 #define ED_PTREE3_POSITION(Ed)  (Ed)->ptree_pos3
-#define ED_LENGTH(Ed)           (ED_LOCAL_END(Ed) - ED_LOCAL_POSITION(Ed) + 1)
 
 
 /* -------------------------------- fragment accessors --------------------------------
@@ -4903,12 +4905,11 @@ static ed_list *make_ed_list(int size)
   ed = (ed_list *)CALLOC(1, sizeof(ed_list));
   ed->size = size;
   ed->allocated_size = size;
-#if (!(defined(__GNUC__))) || (!(defined(__cplusplus)))
+#if defined(__GNUC__) && defined(__cplusplus)
+  ed->fragments = (void **)MALLOC(size * sizeof(ed_fragment *));
+#else
   /* this form required by the several compilers */
   ed->fragments = (void *)MALLOC(size * sizeof(ed_fragment *));
-#else
-  /* this form apparently required by g++ */
-  FRAGMENTS(ed) = (ed_fragment **)MALLOC(size * sizeof(ed_fragment *));
 #endif
   for (i = 0; i < size; i++)
     FRAGMENT(ed, i) = (ed_fragment *)calloc(1, sizeof(ed_fragment)); /* remove this from the memory tracker -- it's glomming up everything */

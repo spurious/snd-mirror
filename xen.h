@@ -26,6 +26,7 @@
 /* HISTORY:
  *
  *  4-Jan-05:  more guile changes, deprecated XEN_VECTOR_ELEMENTS.
+ *  --------
  *  31-Dec-04: removed "caller" arg from *_NO_CATCH.
  *  10-Nov-04: scm_c_vector* (new Guile functions)
  *  21-Oct-04: XEN_LIST_REVERSE, (using rb_ary_dup available in 1.8)

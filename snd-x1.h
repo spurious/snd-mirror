@@ -520,9 +520,9 @@ void reflect_mix_play_stop(void);
 void reflect_track_play_stop(void);
 void make_mixer_icons_transparent_again(Pixel old_color, Pixel new_color);
 int mix_dialog_mix(void);
-int mix_dialog_set_mix(int id);
+void mix_dialog_set_mix(int id);
 int track_dialog_track(void);
-int track_dialog_set_track(int id);
+void track_dialog_set_track(int id);
 void show_track_background_wave(int pts, bool two_sided);
 
 

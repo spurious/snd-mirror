@@ -288,13 +288,12 @@ int snd_close(int fd, const char *name)
   return(val);
 }
 
-int snd_fclose(FILE *fd, const char *name)
+void snd_fclose(FILE *fd, const char *name)
 {
   int val;
   val = FCLOSE(fd);
   if (val != 0)
     snd_warning(_("can't close file %s: %s"), name, strerror(errno));
-  return(val);
 }
 
 

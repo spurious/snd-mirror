@@ -32,10 +32,6 @@ vct *mus_optkey_to_vct(XEN key, const char *caller, int n, vct *def);
 XEN mus_optkey_to_procedure(XEN key, const char *caller, int n, XEN def, int required_args, const char *err);
 XEN mus_wrap_generator(mus_any *val);
 
-#ifndef CLM_DISABLE_DEPRECATED
-  int mus_decode_keywords(const char *caller, int nkeys, XEN *keys, int nargs, XEN *args, int *orig);
-#endif
-
 #if HAVE_RUBY
 void Init_sndlib(void);
 #else

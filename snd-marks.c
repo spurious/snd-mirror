@@ -77,12 +77,11 @@ static int sync_max = 0;
 
 int mark_sync_max(void) {return(sync_max);}
 
-int set_mark_sync(mark *m, int val) 
+void set_mark_sync(mark *m, int val) 
 {
   m->sync = (unsigned int)val; 
   if (val > sync_max) 
     sync_max = val; 
-  return(val);
 }
 
 static mark *free_mark (mark *mp)

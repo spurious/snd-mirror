@@ -135,13 +135,6 @@ int mus_optkey_unscramble(const char *caller, int nkeys, XEN *keys, XEN *args, i
   return(rtn_ctr);
 }
 
-#ifndef CLM_DISABLE_DEPRECATED
-int mus_decode_keywords(const char *caller, int nkeys, XEN *keys, int nargs, XEN *args, int *orig) 
-{
-  return(mus_optkey_unscramble(caller, nkeys, keys, args, orig));
-}
-#endif
-
 Float mus_optkey_to_float(XEN key, const char *caller, int n, Float def)
 {
   if (!(XEN_KEYWORD_P(key)))
@@ -1090,7 +1083,6 @@ static XEN g_mus_xcoeff(XEN gen, XEN index)
 
 static XEN g_mus_set_xcoeff(XEN gen, XEN index, XEN val)
 {
-  #define H_mus_set_xcoeff "(" S_mus_xcoeff " gen index val): set gen's filter xcoeff value at index (0-based) to val"
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_mus_xcoeff, "a generator");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, XEN_ARG_2, S_mus_xcoeff, "an int");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_mus_xcoeff, "a number");
@@ -1107,7 +1099,6 @@ static XEN g_mus_ycoeff(XEN gen, XEN index)
 
 static XEN g_mus_set_ycoeff(XEN gen, XEN index, XEN val)
 {
-  #define H_mus_set_ycoeff "(" S_mus_ycoeff " gen index val): set gen's filter ycoeff value at index (0-based) to val"
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_mus_ycoeff, "a generator");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, XEN_ARG_2, S_mus_ycoeff, "an int");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_mus_ycoeff, "a number");
@@ -2724,9 +2715,6 @@ static XEN g_set_mixer_ref(XEN uf1, XEN in, XEN out, XEN val)
 				       XEN_TO_C_INT(out),
 				       XEN_TO_C_DOUBLE(val))));
 }
-
-#define DONT_FREE_MIXER -1
-#define FREE_MIXER 1
 
 static XEN g_wrap_mixer(mus_any *val, bool dealloc)
 {

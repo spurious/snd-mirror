@@ -369,7 +369,7 @@ static int map_over_mixes(int (*func)(mix_info *, void *), void *ptr)
   return(0);
 }
 
-static int map_over_active_mixes(int (*func)(mix_info *, void *), void *ptr)
+static void map_over_active_mixes(int (*func)(mix_info *, void *), void *ptr)
 {
   int i;
   for (i = 0; i < mix_infos_ctr; i++)
@@ -380,10 +380,9 @@ static int map_over_active_mixes(int (*func)(mix_info *, void *), void *ptr)
 	{
 	  int val;
 	  val = (*func)(md, ptr);
-	  if (val) return(val);
+	  if (val) return;
 	}
     }
-  return(0);
 }
 
 static int look_for_mix_tempfile(mix_info *md, void *in_name) /* int rtn type for map_over_mixes */
@@ -3305,7 +3304,7 @@ static int set_mix_amp(int mix_id, int chan, Float val, bool from_gui, bool remi
   return(INVALID_MIX_ID);
 }
 
-int mix_dialog_set_mix_amp(int mix_id, int chan, Float val, bool dragging)
+void mix_dialog_set_mix_amp(int mix_id, int chan, Float val, bool dragging)
 {
   int id;
   mix_info *md;
@@ -3330,7 +3329,6 @@ int mix_dialog_set_mix_amp(int mix_id, int chan, Float val, bool dragging)
 	}
       update_graph(md->cp);
     }
-return(id);
 }
 
 Float mix_dialog_mix_amp(int mix_id, int chan)
@@ -3456,7 +3454,7 @@ static int set_mix_speed(int mix_id, Float val, bool from_gui, bool remix)
   return(INVALID_MIX_ID);
 }
 
-int mix_dialog_set_mix_speed(int mix_id, Float val, bool dragging) 
+void mix_dialog_set_mix_speed(int mix_id, Float val, bool dragging) 
 {
   int id;
   mix_info *md;
@@ -3481,7 +3479,6 @@ int mix_dialog_set_mix_speed(int mix_id, Float val, bool dragging)
 	}
       update_graph(md->cp);
     }
-  return(id);
 }
 
 Float mix_dialog_mix_speed(int mix_id)
@@ -5172,28 +5169,25 @@ static track_state *extend_track_list(int trk, bool copy_amp_env)
   return(tl->states[new_loc]);
 }
 
-static int set_active_track_track(int id, int trk)
+static void set_active_track_track(int id, int trk)
 {
   track_state *ts;
   ts = extend_track_list(id, true);
   if (ts) ts->track = trk;
-  return(trk);
 }
 
-static Float set_active_track_amp(int id, Float amp)
+static void set_active_track_amp(int id, Float amp)
 {
   track_state *ts;
   ts = extend_track_list(id, true);
   if (ts) ts->amp = amp;
-  return(amp);
 }
 
-static Float set_active_track_speed(int id, Float speed)
+static void set_active_track_speed(int id, Float speed)
 {
   track_state *ts;
   ts = extend_track_list(id, true);
   if (ts) ts->speed = speed;
-  return(speed);
 }
 
 static Float set_active_track_tempo(int id, Float tempo)
@@ -5212,7 +5206,7 @@ static env *set_active_track_amp_env(int id, env *e)
   return(e);
 }
 
-static color_t set_active_track_color(int id, color_t c)
+static void set_active_track_color(int id, color_t c)
 {
   track_state *ts;
   ts = extend_track_list(id, true);
@@ -5221,7 +5215,6 @@ static color_t set_active_track_color(int id, color_t c)
       ts->color = c;
       ts->color_set = true;
     }
-  return(c);
 }
 
 

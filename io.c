@@ -626,12 +626,8 @@ off_t mus_file_seek_frame(int tfd, off_t frame)
  */
 
 /* from sox g711.c */
-
-#define	SIGN_BIT	(0x80)		/* Sign bit for a A-law byte. */
 #define	QUANT_MASK	(0xf)		/* Quantization field mask. */
-#define	NSEGS		(8)		/* Number of A-law segments. */
 #define	SEG_SHIFT	(4)		/* Left shift for segment number. */
-#define	SEG_MASK	(0x70)		/* Segment field mask. */
 
 static short seg_end[8] = {0xFF, 0x1FF, 0x3FF, 0x7FF,  0xFFF, 0x1FFF, 0x3FFF, 0x7FFF};
 

@@ -8404,7 +8404,7 @@ int
 main ()
 {
  char *s;
-      s = __func__
+      s = (char *)__func__
 
   ;
   return 0;
@@ -15350,7 +15350,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include <guile/gh.h>
+#include <libguile.h>
 
 int
 main ()
@@ -15402,7 +15402,7 @@ if test $ac_cv_type_scm_t_catch_body = yes; then
 _ACEOF
 
 fi
-
+ # not gh.h here -> g++ dies
     echo "$as_me:$LINENO: checking for scm_t_guard" >&5
 echo $ECHO_N "checking for scm_t_guard... $ECHO_C" >&6
 if test "${ac_cv_type_scm_t_guard+set}" = set; then
@@ -15414,7 +15414,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include <guile/gh.h>
+#include <libguile.h>
 
 int
 main ()
@@ -19576,6 +19576,8 @@ else
   # CFLAGS="-I. $CFLAGS ${MACHINE}"
   CFLAGS="-I. $CFLAGS"
 fi
+
+# -ffast-math appears to make exp about twice as fast, but slows down filtering by the same amount -- kinda strange
 
 if test "$with_profiling" = yes; then
   CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage -fbranch-probabilities"
