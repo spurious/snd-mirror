@@ -144,7 +144,7 @@
 	  (array-set! allpasses
 		      (make-all-pass :size len :feedforward -1 :feedback 0.5)
 		      c i))))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i beg (1+ i)))

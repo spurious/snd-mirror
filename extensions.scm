@@ -8,9 +8,6 @@
 ;;; map-sound-files, for-each-sound-file, match-sound-files, directory->list
 ;;; selection-members
 ;;; make-selection
-;;; snd-debug
-;;; read-listener-line
-;;; snd-trace
 ;;; check-for-unsaved-edits
 ;;; remember-sound-state
 ;;; mix-channel, insert-channel
@@ -338,103 +335,6 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 
 
 
-;;; --------- snd-debug
-;;;
-;;; this redirects the Guile debugger input/output to the Snd listener.
-;;; If you hit an error, type (snd-debug) rather than (debug).
-
-(use-modules (ice-9 debugger))
-
-(define (snd-debug)
-  "(snd-debug) is a replacement for Guile's debug function which redirects the Guile debugger input/output to the Snd listener."
-  (let* ((debugger-input "")
-	 (debugger-char 0)
-	 (debugger-strlen 0)
-	 (stdout (current-output-port))
-	 (stdin (current-input-port))
-	 (snd-out (make-soft-port
-		   (vector
-		    (lambda (c) (snd-print c))
-		    (lambda (s) (snd-print s))
-
-		    (lambda () #f)
-		    
-		    (lambda ()
-		      (do () ((or (and (>= debugger-char 0)
-				       (< debugger-char debugger-strlen))
-				  (c-g?))))
-		      (let ((ch (string-ref debugger-input debugger-char)))
-			(set! debugger-char (+ debugger-char 1))
-			ch))
-	      
-		    (lambda () #f))
-		   "rw")))
-
-    (define (snd-debug-read str)
-      (snd-print "\n")
-      (set! debugger-input (string-append str "\n"))
-      (set! debugger-char 0)
-      (set! debugger-strlen (string-length debugger-input))
-      #t)
-
-    (dynamic-wind
-     (lambda ()
-       (snd-print "\n")
-       (set-current-output-port snd-out)
-       (set-current-input-port snd-out)
-       (add-hook! read-hook snd-debug-read)
-       (reset-listener-cursor)) ; going into snd-debug causes the cursor to change to the clock (wait) cursor which we don't want here
-     (lambda ()
-       (debug))
-     (lambda ()
-       (remove-hook! read-hook snd-debug-read)
-       (set-current-output-port stdout)
-       (set-current-input-port stdin)))))
-
-
-;;; -------- read-listener-line
-
-(define (read-listener-line prompt)
-  "(read-listener-line prompt) prompts for input and returns it in Snd's listener"
-  (let ((res #f))
-    (define (reader str) (set! res str) #t)
-    (add-hook! read-hook reader)
-    (reset-listener-cursor)
-    (snd-print "\n")
-    (snd-print prompt)
-    (do () ((or (c-g?) res)))
-    (remove-hook! read-hook reader)
-    res))
-
-
-;;; -------- with-trace 
-;;; 
-;;; this activates tracing and redirects its output to the Snd listener
-
-(defmacro snd-trace (body)
-  "(snd-trace body) activates tracing and redirects its output to the Snd listener"
-  `(let* ((stderr (current-error-port))
-	  (snd-err (make-soft-port
-		    (vector
-		     (lambda (c) (snd-print c))
-		     (lambda (s) (snd-print s))
-		     (lambda () #f)
-		     #f
-		     (lambda () #f))
-		    "w")))
-     (dynamic-wind
-      (lambda ()
-	(snd-print "\n")
-	(set-current-error-port snd-err))
-      (lambda ()
-	(with-traps 
-	 (lambda ()
-	   (start-stack 'repl-stack ,body))))
-      (lambda ()
-	(set-current-error-port stderr)))))
-
-       
-
 ;;; -------- check-for-unsaved-edits
 ;;;
 ;;; (check-for-unsaved-edits #:optional (on #t)): if 'on', add a function to the close-hook and exit-hook
@@ -603,11 +503,13 @@ If 'check' is #f, the hooks are removed."
 ;;; -------- redo-channel, undo-channel
 
 (define* (redo-channel #:optional (edits 1) snd chn)
+  "(redo-channel (edits 1) snd chn) is the regularized version of redo"
   (if (and snd (not (= (sync snd) 0)) chn)
       (set! (edit-position snd chn) (+ (edit-position snd chn) edits))
       (redo edits snd)))
 
 (define* (undo-channel #:optional (edits 1) snd chn)
+  "(undo-channel (edits 1) snd chn) is the regularized version of undo"
   (if (and snd (not (= (sync snd) 0)) chn)
       (set! (edit-position snd chn) (max 0 (- (edit-position snd chn) edits)))
       (undo edits snd)))

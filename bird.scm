@@ -29,7 +29,7 @@
 	 (beg (inexact->exact (round (* (mus-srate) start))))
 	 (len (inexact->exact (round (* (mus-srate) dur))))
 	 (end (+ beg len)))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i beg (1+ i)))
@@ -47,7 +47,7 @@
 	 (len (inexact->exact (round (* (mus-srate) dur))))
 	 (beg (inexact->exact (round (* (mus-srate) start))))
 	 (end (+ beg len)))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i beg (1+ i)))

@@ -92,7 +92,7 @@
 			   :duration dur :scaler (hz->radians (- freq1 freq0))))
 	 (rfreq-f (make-env :envelope (stretch-envelope rfreqfun 25 rfreq-attack 75 rfreq-decay)
 			    :duration dur :scaler (hz->radians (- rfreq1 rfreq0)))))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i beg (1+ i)))

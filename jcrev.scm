@@ -23,7 +23,7 @@
 	 (decay-dur (mus-srate))
 	 (envA (if amp-env (make-env :envelope amp-env :scaler volume :duration dur) #f))
 	 (len (+ decay-dur (mus-sound-frames (mus-file-name *reverb*)))))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (if (or amp-env low-pass)
 	(run
 	 (lambda ()

@@ -1,16 +1,110 @@
 ;;; with-sound and friends
 
 (use-modules (ice-9 optargs) (ice-9 format))
+(if (not (defined? 'local-variables)) (load-from-path "debug.scm"))
 
 ;;; TODO: with-mix
-;;; TODO: continuation from interrupt? (caller could check vals, then resume -- can this be from C as well?)
-;;;       could this be done via snd-debug (extensions.scm) and a with-sound wrapper?
 ;;; TODO: clm-style *offset* support
 
 ;;; changed default variable names 3-Apr-03 for Common Music's benefit
 ;;;   *clm-channels* is the default number of with-sound output chans in
 ;;;   both CL and Scheme now.  *channels* (the old name) was a dynamic
 ;;;   binding in CL to implement dynamic-wind by hand, I think.
+
+
+;;; (with-sound () (fm-violin 0 1 440 .1) (sleep 1) (fm-violin 1 1 440 .1) (sleep 1) (fm-violin 2 1 440 .1) (sleep 1))
+
+
+;;; -------- with-sound debugger --------
+;;;
+;;; slightly different from the snd-break debugger because there are several
+;;;  ways one might want to get out of the with-sound, and we need a way to
+;;;  escape n levels of recursive with-sounds
+
+(define *ws-level* 0)
+(define *ws-stack* #f)
+(define *ws-continuation* #f)
+(define *ws-finish* #f)
+
+(define* (ws-go #:optional result) (*ws-continuation* result))
+
+(define (ws-quit) (*ws-finish* #f))
+(define (ws-quit!) (*ws-finish* *ws-level*))
+(define (ws-stop) (*ws-finish* #t))
+(define (ws-stop!) (*ws-finish* *ws-level*))
+
+(define* (ws-backtrace #:optional all) (backtrace *ws-stack* all))
+(define* (ws-locals #:optional (index 0)) (local-variables *ws-stack* index))
+(define* (ws-local obj #:optional (index 0)) (local-variable *ws-stack* obj index))
+
+(define (ws-location)
+  (if (stack? *ws-stack*)
+      (let ((len (stack-length *ws-stack*)))
+	(call-with-current-continuation
+	 (lambda (ok)
+	   (do ((i 3 (1+ i)))
+	       ((= i len))
+	     (let ((fr (stack-ref *ws-stack* i)))
+	       (if (frame-procedure? fr) ; TODO: even better here would be (procedure-property 'definstrument) or some such test
+		   (let ((source (frame-source fr)))
+		     (if (memoized? source)
+			 (ok (unmemoize source))
+			 (ok source)))))))))
+      ""))
+  
+(define (ws-help)
+  "\n\
+;The '?' prompt means you're in the with-sound debugger.\n\
+;This is the standard Snd listener, so anything is ok at this level, but\n\
+;there are also several additional functions:\n\
+;  (ws-go) continues from the point of the interrupt.\n\
+;  (ws-quit) finishes with-sound, ignoring any reverb request.\n\
+;  (ws-stop) runs the reverb, then finishes with-sound.\n\
+;  (ws-quit!) and (ws-stop!) are similar, but if you're nested several\n\
+;     levels deep in the debugger (the prompt has more than one '?')\n\
+;     these two will pop you back to the top level.\n\
+;  (ws-locals) shows the local variables and their values.\n\
+;  (ws-local obj) shows the value of obj.\n\
+;  (ws-backtrace) shows the backtrace at the point of the interrupt.\n\
+")
+
+(define (ws-debug args)
+  (let ((old-prompt (listener-prompt))
+	(old-continuation *ws-continuation*)
+	(old-finish *ws-finish*)
+	(old-stack *ws-stack*))
+    (set! *ws-stack* (caddr args))
+    (set! *ws-continuation* (car args))
+    (set! *ws-finish* (cadr args))
+    (set! *ws-level* (1+ *ws-level*))
+    (reset-listener-cursor)
+    (dynamic-wind
+     (lambda ()
+       (set! (listener-prompt) (make-string *ws-level* #\?))
+       (snd-print (format #f ";with-sound interrupted at: ~A~%" (ws-location)))
+       (snd-print (format #f ";ws-debug...[(ws-go): continue, (ws-quit): quit, (ws-locals): local vars]~%~A" (listener-prompt)))
+       (goto-listener-end))
+     (lambda ()
+       (event-loop)) 
+     ;; TODO: no-gui case would need a nested repl?
+     ;; TODO: in gtk, damned glib exits because it's confused about a key-press event!
+     (lambda ()
+       (set! *ws-level* (max 0 (1- *ws-level*)))
+       (set! (listener-prompt) old-prompt)
+       (set! *ws-continuation* old-continuation)
+       (set! *ws-finish* old-finish)))
+    #f))
+
+;;; this goes in the instrument, but not in the run macro body (run doesn't (yet?) handle code this complex)
+(defmacro ws-interrupt? ()
+  `(let ((stack (make-stack #t)))
+     (if (c-g?) 
+	 (call-with-current-continuation
+	  (lambda (continue)
+	    (throw 'with-sound-interrupt continue stack))))))
+
+
+;;; -------- with-sound --------
 
 (define *clm-srate* (default-output-srate))
 (define *clm-file-name* "test.snd")
@@ -67,18 +161,32 @@
 	     (set! *output* (make-sample->file output-1 channels data-format header-type comment))
 	     (if reverb (set! *reverb* (make-sample->file revfile 1 data-format header-type)))))
        (let ((start (if statistics (get-internal-real-time)))
-	     (intp #f)
+	     (flush-reverb #f)
 	     (cycles 0))
 	 (catch 'with-sound-interrupt
 		thunk
 		(lambda args 
 		  (begin
-		    (set! intp #t)
-		    (if (not (null? (cdr args)))
-			(snd-print (format #f "with-sound interrupted: ~{~A~^ ~}" (cdr args)))
-			(snd-print "with-sound interrupted"))
+		    (if (and (not (null? (cdr args)))
+			     (continuation? (cadr args)))
+			;; instrument passed us a way to continue, so drop into the with-sound debugger
+			(let ((val (call-with-current-continuation
+				    (lambda (finish)
+				      (ws-debug (list (cadr args) 
+						      finish 
+						      (if (not (null? (cddr args))) 
+							  (caddr args) 
+							  #f)))))))
+			  (set! flush-reverb (eq? val #f))
+			  (if (and (continuation? *ws-finish*)
+				   (number? val) 
+				   (> val 0))
+			      (*ws-finish* (1- val))))
+			(begin
+			  (snd-print (format #f "with-sound interrupted: ~{~A~^ ~}" (cdr args)))
+			  (set! flush-reverb #t)))
 		    args)))
-	 (if (and reverb (not intp))
+	 (if (and reverb (not flush-reverb))
 	     (begin
 	       (mus-close *reverb*)
 	       (set! *reverb* (make-file->sample revfile))
@@ -132,6 +240,8 @@
        (set! *clm-file-name* old-file-name)
        val)))
 
+
+;;; -------- def-clm-struct --------
 ;;; second stab at def-clm-struct
 ;;; TODO: if file with def-clm-struct reloaded, struct defs are not updated
 ;;; TODO: tmp27.scm infinite loop if opt=6
@@ -180,7 +290,8 @@
 		    val)))
 	      field-names field-types))))
 
-;;; sound-let
+
+;;; -------- sound-let --------
 ;;;
 ;;; (with-sound () (sound-let ((a () (fm-violin 0 .1 440 .1))) (mus-mix "test.snd" a)))
 
@@ -211,7 +322,7 @@
 
 
 
-;;; ---------------- Common Music ----------------
+;;; -------- Common Music --------
 
 (define* (init-with-sound #:key 
 			  (srate *clm-srate*) 
@@ -295,6 +406,8 @@
       (throw 'wrong-type-arg
 	     (list "finish-with-sound" wsd))))
 
+
+;;; -------- with-sound save state --------
 (define (mus-data-format->string df)
   (cond ((= df mus-bshort) "mus-bshort")
 	((= df mus-mulaw) "mus-mulaw")
@@ -350,6 +463,7 @@
 (add-hook! after-save-state-hook ws-save-state)
 
 
+;;; -------- with-marked-sound --------
 #!
 ;;; the following code places a mark at the start of each note in the with-sound body
 ;;;    with arbitrary info in the :ws mark-property, displayed in the help dialog
@@ -387,7 +501,7 @@
 !#
 
 
-
+;;; -------- with-mix --------
 #!
 ;;; with-mix beginnings...
 (define *with-mix-options* #f)
@@ -408,3 +522,4 @@
 	  #t)
 	#f)))
 !#
+

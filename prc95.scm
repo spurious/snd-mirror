@@ -132,7 +132,7 @@
 	((= i len))
       (set! dout (delaya delayline (+ (* 0.99 dout)
 				      (* maxa (- 1.0 (random 2.0)))))))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i start (1+ i)))
@@ -166,7 +166,7 @@
 	 (neckout 0.0))
     (set-pole filt 0.6)
     (set-gain filt 0.3)
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i st (1+ i)))
@@ -219,7 +219,7 @@
 	 (ctr 0)
 	 (dout 0.0))
     (lip-set-freq lipfilter freq)
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i st (1+ i)))
@@ -261,7 +261,7 @@
 	 (ctr 0)
 	 (release (inexact->exact (floor (* .8 durlen))))
 	 (dlyout 0.0))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i st (1+ i)))
@@ -313,7 +313,7 @@
 	 (boreout 0.0))
     (set-pole filter 0.8)
     (set-gain filter -1.0)
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i st (1+ i)))

@@ -234,7 +234,7 @@
     (set! posl (modulo (inexact->exact (+ end posl)) bufsize))
     (set! posrt (modulo (inexact->exact (+ end posrt)) bufsize))
     (set! poslt (modulo (inexact->exact (+ end poslt)) bufsize))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i beg (1+ i)))

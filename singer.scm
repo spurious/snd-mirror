@@ -236,7 +236,7 @@
       (vct-set! radii-pole-gains 4 tong-hump-gain)
       (vct-set! radii-pole-gains 5 tong-tip-gain)
 
-      (if (c-g?) (throw 'with-sound-interrupt))
+      (ws-interrupt?)
       (run
        (lambda ()
 	 (do ((i bg (1+ i)))

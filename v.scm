@@ -1,5 +1,6 @@
 (use-modules (ice-9 optargs))
 (if (not (defined? '*output*)) (load-from-path "ws.scm"))
+(if (not (defined? 'ws-interrupt?)) (define (ws-interrupt?) #f)) ; remove this line eventually
 
 ;;; this version of the fm-violin assumes it is running within with-sound (where *output* and *reverb* are defined)
 ;;; see fmv.scm for a version that runs more easily in Snd
@@ -100,11 +101,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 	   (fuzz 0.0)
 	   (ind-fuzz 1.0)
 	   (amp-fuzz 1.0))
-      (if (c-g?)
-	  (let ((stack (make-stack #t)))
-	    (call-with-current-continuation
-	     (lambda (continue)
-	       (throw 'with-sound-interrupt continue stack)))))
+      (ws-interrupt?)
       (if (or (not easy-case) ind-noi amp-noi (> noise-amount 0.0))
 	  (run
 	   (lambda ()

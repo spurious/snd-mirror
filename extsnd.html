@@ -135,6 +135,7 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#bessdoc">bess.scm, bess.rb</a></td>     <td>FM demo (from bess.cl in CLM)</td></tr>
 <tr><td><a href="sndscm.html#birddoc">bird.scm, bird.rb</a></td>     <td>various North-American birds (from bird.clm)</td></tr>
 <tr><td><a href="sndscm.html#clminsdoc">clm-ins.scm</a></td>         <td>various CLM instruments translated to Snd</td></tr>
+<tr><td><a href="sndscm.html#debugdoc">debug.scm</a></td>            <td>debugging aids</td></tr>
 <tr><td><a href="sndscm.html#dlocsigdoc">dlocsig.rb</a></td>         <td>CLM's dlocsig in Ruby (Michael Scholz)</td></tr>
 <tr><td><a href="sndscm.html#dlpdoc">dlp directory entries</a></td>  <td>various contributions from Dave Phillips</td></tr>
 <tr><td><a href="sndscm.html#drawdoc">draw.scm</a></td>              <td>graphics additions</td></tr>
@@ -1622,14 +1623,18 @@ This is intended to make it possible to read user-typing in the listener.
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (read-listener-line prompt)
+  "(read-listener-line prompt) prompts for input and returns it in Snd's listener"
   (let ((res #f))
     (add-hook! <em class=red>read-hook</em> (lambda (str) (set! res str) #t))
+    (reset-listener-cursor)
+    (snd-print "\n")
     (snd-print prompt)
     (do () ((or (c-g?) res)))
     (reset-hook! <em class=red>read-hook</em>)
     res))
 </pre></td></tr></table></td></tr>
-<tr><td></td><td colspan=2>See also snd-debug in extensions.scm.</td></tr>
+<tr><td></td><td colspan=2>
+</td></tr>
 
 <!-- save-hook -->
 <tr><td colspan=2>
@@ -4018,7 +4023,8 @@ Display data about sample under cursor: <a href="#verbosecursor">verbose cursor<
 <tr><td></td><td>
 #t if cursor is following along in the sound as it plays.  To make this the default:<br><br>
 <code>(add-hook! after-open-hook (lambda (sp) (set! (cursor-follows-play sp) #t)))</code>.<br><br>
-A better name for this might be <i>with-tracking-cursor</i>, but the word "track" already has too many meanings in this context.
+A better name for this might be <i>with-tracking-cursor</i>, but the word "track" already has too many meanings in this context;
+I wonder whether "track" or "frame" has the most uses.
 
 <!-- INDEX trackingcursors:Tracking cursors -->
 <A NAME="trackingcursors"></a>
@@ -8492,8 +8498,7 @@ a previous file (as if you had opened and closed it).
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="resetlistenercursor">reset-listener-cursor</a></em></code></span></td></tr>
 <tr><td></td><td>
-reset the listener cursor to the default pointer shape; this is used by <a href="sndscm.html#exsnddebug">snd-debug</a>
-to cancel the wait cursor.
+reset the listener cursor to the default pointer shape
 </td></tr>
 
 <!-- save-envelopes -->

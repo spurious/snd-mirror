@@ -295,6 +295,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+2-June:  debug.scm and with-sound debugger in ws.scm.\n\
 28-May:  snd 6.9.\n\
 26-May:  x-axis-label.\n\
 20-May:  make-variable-display in snd-motif.scm.\n\

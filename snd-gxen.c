@@ -134,18 +134,30 @@ static XEN g_set_graph_cursor(XEN curs)
   return(curs);
 }
 
+static XEN g_event_loop(void)
+{
+  while (1)
+    {
+      if (gtk_events_pending())
+	gtk_main_iteration();
+    }
+  return(XEN_FALSE);
+}
+
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_2(g_in_w, g_in)
 XEN_NARGIFY_3(g_make_snd_color_w, g_make_snd_color)
 XEN_NARGIFY_1(g_color2list_w, g_color2list)
 XEN_NARGIFY_0(g_graph_cursor_w, g_graph_cursor)
 XEN_NARGIFY_1(g_set_graph_cursor_w, g_set_graph_cursor)
+XEN_NARGIFY_0(g_event_loop_w, g_event_loop)
 #else
 #define g_in_w g_in
 #define g_make_snd_color_w g_make_snd_color
 #define g_color2list_w g_color2list
 #define g_graph_cursor_w g_graph_cursor
 #define g_set_graph_cursor_w g_set_graph_cursor
+#define g_event_loop_w g_event_loop
 #endif
 
 void g_init_gxen(void)
@@ -153,6 +165,8 @@ void g_init_gxen(void)
   XEN_DEFINE_PROCEDURE(S_in,            g_in_w, 2, 0, 0,             H_in);
   XEN_DEFINE_PROCEDURE(S_make_color,    g_make_snd_color_w, 3, 0, 0, H_make_color);
   XEN_DEFINE_PROCEDURE(S_color2list,    g_color2list_w, 1, 0, 0,     H_color2list);
+  XEN_DEFINE_PROCEDURE("event-loop",    g_event_loop_w, 0, 0, 0,     "event loop for listener debugger");
+
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,
 				   S_setB S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0);

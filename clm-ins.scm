@@ -65,7 +65,7 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. \
     (do ((i 0 (1+ i)))
 	((= i dlen))
       (vct-set! tab i (- 1.0 (random 2.0))))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run 
      (lambda ()
        (do ((i beg (1+ i)))
@@ -149,7 +149,7 @@ voice: (vox 0 2 110 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 UH 2
 	     (frm 0.0)
 	     (frq0 0.0) (frq1 0.0) (frq2 0.0) (frq3 0.0) (frq4 0.0) (frq5 0.0)
 	     (amp0 0.0) (amp1 0.0) (amp2 0.0) (amp3 0.0) (amp4 0.0) (amp5 0.0))
-	(if (c-g?) (throw 'with-sound-interrupt))
+	(ws-interrupt?)
 
 	(run
 	 (lambda ()
@@ -238,7 +238,7 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
 				 (* a1 (sin (* i frq1)))
 				 (* a2 (sin (* i frq2))))
 			      .5 (- 1.0 (cos (* i win-freq))))))
-      (if (c-g?) (throw 'with-sound-interrupt))
+      (ws-interrupt?)
       (run
        (lambda ()
 	 (do ((i start (1+ i)))
@@ -290,7 +290,7 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
 	 (car-incr (hz->radians freq))
 	 (mod-incr (* ratio car-incr))
 	 (ampenv (make-env :envelope '(0 0 25 1 75 1 100 0) :scaler amp :end dur)))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i beg (1+ i)))
@@ -370,7 +370,7 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
 	 (car2-f (make-env :envelope (stretch-envelope ampenv2 25 ampattpt2 75 ampdecpt2)
 			   :scaler amp2 :duration dur)))
     
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i beg (1+ i)))
@@ -467,7 +467,7 @@ vocal sounds using phase quadrature waveshaping"
 	(vector-set! cos-coeffs i (partials->polynomial shape 1))
 	(vector-set! sin-coeffs i (partials->polynomial shape 0))
 	(vector-set! frmfs i (make-env :envelope (vox-fun phonemes i '()) :duration dur))))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i start (1+ i)))
@@ -568,7 +568,7 @@ is a physical model of a flute:\n\
 	 (bore (make-delay period-samples))
 	 (offset (floor (* period-samples offset-pos)))
 	 (reflection-lowpass-filter (make-one-pole a0 b1)))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i beg (1+ i)))
@@ -621,7 +621,7 @@ is a physical model of a flute:\n\
 	 (ampf (make-env (or amp-env 
 			     (list 0 0 .1 1 10 .6 25 .3 50 .15 90 .1 100 0))
 			 amplitude dur)))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i beg (1+ i)))
@@ -660,7 +660,7 @@ is a physical model of a flute:\n\
 	 (indf (make-env :envelope mod-index-env :scaler (hz->radians mod-index) :duration dur))
 	 (modfrqf (make-env :envelope mod-freq-env :scaler (hz->radians mod-skew) :duration dur))
 	 (fm2-amp (hz->radians (* fm-index fm-ratio frequency))))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i beg (1+ i)))
@@ -725,7 +725,7 @@ is a physical model of a flute:\n\
 	 (carrier (make-oscil :frequency frequency))
 	 (fmosc (make-oscil :frequency (* frequency fmrat)))
 	 (cascade (make-oscil :frequency (* frequency casrat))))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i beg (1+ i)))
@@ -782,7 +782,7 @@ is a physical model of a flute:\n\
 	 (mod3 (make-oscil :frequency mfq3))
 	 (beg (inexact->exact (floor (* start-time (mus-srate)))))
 	 (end (+ beg (inexact->exact (floor (* duration (mus-srate)))))))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i beg (1+ i)))
@@ -802,7 +802,7 @@ is a physical model of a flute:\n\
 	 (c c-1) (a .2) (b .2) (dt .04)
 	 (scale (/ (* .5 amp) c))
 	 (x -1.0) (y 0.0) (z 0.0))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i st (1+ i)))
@@ -845,7 +845,7 @@ is a physical model of a flute:\n\
 	 (rn (make-rand-interp :frequency 12 :amplitude (hz->radians (* .005 spacing-freq))))
 	 (beg (inexact->exact (floor (* start (mus-srate)))))
 	 (end (+ beg (inexact->exact (floor (* dur (mus-srate)))))))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i beg (1+ i)))
@@ -881,7 +881,7 @@ is a physical model of a flute:\n\
 	 (g3 .144)
 	 (st (inexact->exact (floor (* beg (mus-srate)))))
 	 (nd (+ st (inexact->exact (floor (* dur (mus-srate)))))))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i st (1+ i)))
@@ -907,7 +907,7 @@ is a physical model of a flute:\n\
 	 (resenv (make-env (list 0 0 .001 1 .25 0 dur 0) :duration dur))
 	 (st (inexact->exact (floor (* beg (mus-srate)))))
 	 (nd (+ st (inexact->exact (floor (* dur (mus-srate)))))))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i st (1+ i)))
@@ -933,7 +933,7 @@ is a physical model of a flute:\n\
 	 (g3 .109)
 	 (st (inexact->exact (floor (* beg (mus-srate)))))
 	 (nd (+ st (inexact->exact (floor (* dur (mus-srate)))))))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i st (1+ i)))
@@ -957,7 +957,7 @@ is a physical model of a flute:\n\
 	 (g3 (* .5 .75 amp))
 	 (st (inexact->exact (floor (* beg (mus-srate)))))
 	 (nd (+ st (inexact->exact (floor (* dur (mus-srate)))))))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i st (1+ i)))
@@ -985,7 +985,7 @@ is a physical model of a flute:\n\
 	 (g3 .116)
 	 (st (inexact->exact (floor (* beg (mus-srate)))))
 	 (nd (+ st (inexact->exact (floor (* dur (mus-srate)))))))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i st (1+ i)))
@@ -1013,7 +1013,7 @@ is a physical model of a flute:\n\
 	 (ran-vib (make-rand :frequency rvibfreq 
 			     :amplitude (hz->radians (* rvibamt freq))))
 	 (loc (make-locsig deg dis amtrev *output* *reverb* (mus-channels *output*))))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run 
      (lambda ()
        (do ((i beg (1+ i)))
@@ -1066,7 +1066,7 @@ is a physical model of a flute:\n\
 	 (gen4 (make-oscil :frequency (* pitch harm4)))
 	 (ranvib (make-rand :frequency ranfreq :amplitude (hz->radians (* ranpc pitch))))
 	 (loc (make-locsig deg dis pcrev *output* *reverb* (mus-channels *output*))))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i start (1+ i)))
@@ -1127,7 +1127,7 @@ is a physical model of a flute:\n\
 	   (allpass6 (if chan2 (make-all-pass -0.700 0.700 (list-ref dly-len 12)) #f))
 	   (allpass7 (if chan4 (make-all-pass -0.700 0.700 (list-ref dly-len 13)) #f))
 	   (allpass8 (if chan4 (make-all-pass -0.700 0.700 (list-ref dly-len 14)) #f)))
-      (if (c-g?) (throw 'with-sound-interrupt))
+      (ws-interrupt?)
       (run
        (lambda ()
 	 (do ((i 0 (1+ i)))
@@ -1197,7 +1197,7 @@ is a physical model of a flute:\n\
 				       :scaler (* rsamp amp (/ rfamp totalamp))))
 	(vector-set! c-rats i harm)
 	(vector-set! carriers i (make-oscil :frequency cfq))))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i beg (1+ i)))
@@ -1249,7 +1249,7 @@ is a physical model of a flute:\n\
 	 (amplenv (make-env :envelope (stretch-envelope ampfun 25 ampap 75 ampdp) :scaler amp :duration dur))
 	 (betaenv (make-env :envelope (stretch-envelope betafun 25 betap 75 betdp) :duration dur
 			     :scaler (- beta1 beta0) :offset beta0)))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run 
      (lambda ()
        (do ((i st (1+ i)))
@@ -1280,7 +1280,7 @@ is a physical model of a flute:\n\
 	 (delB 0.0)
 	 (decay-dur (mus-srate))
 	 (len (+ decay-dur (mus-sound-frames (mus-file-name *reverb*)))))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i 0 (1+ i)))
@@ -1305,7 +1305,7 @@ is a physical model of a flute:\n\
     (do ((i 0 (1+ i)))
 	((= i grain-size))
       (vct-set! grain i (* (env grain-env) (oscil carrier))))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i beg (1+ i)))
@@ -1331,7 +1331,7 @@ is a physical model of a flute:\n\
 			12)))
 	     (frq1 (make-oscil :frequency (list-ref touch-tab-1 i)))
 	     (frq2 (make-oscil :frequency (list-ref touch-tab-2 i))))
-	(if (c-g?) (throw 'with-sound-interrupt))
+	(ws-interrupt?)
 	(run
 	 (lambda ()
 	   (do ((j beg (1+ j)))
@@ -1360,7 +1360,7 @@ is a physical model of a flute:\n\
 	 (loc (make-locsig degree distance reverb-amount *output* *reverb* (mus-channels *output*)))
 	 (ran-vib (make-rand-interp :frequency (+ vibrato-speed 1.0)
 				    :amplitude (* vibrato-amplitude freq))))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run 
      (lambda ()
        (do ((i beg (1+ i)))
@@ -1398,7 +1398,7 @@ is a physical model of a flute:\n\
 				      :amplitude (* vibrato-amplitude freq)))
 	 (ran-vib (make-rand-interp :frequency (+ vibrato-speed 1.0)
 				    :amplitude (* vibrato-amplitude freq))))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i beg (1+ i)))
@@ -1882,7 +1882,7 @@ is a physical model of a flute:\n\
 	  ((= i (length partials)))
 	(vct-set! alist j (list-ref partials (+ i 1)))
 	(vector-set! oscils j (make-oscil :frequency (* (list-ref partials i) frequency))))
-      (if (c-g?) (throw 'with-sound-interrupt))
+      (ws-interrupt?)
     (run
      (lambda ()
        (do ((i beg (1+ i)))
@@ -1939,7 +1939,7 @@ is a physical model of a flute:\n\
 	 (cn (if (not with-noise)
 		 (make-sum-of-cosines :frequency cosfreq0 :cosines cosnum)
 		 #f)))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i beg (1+ i)))
@@ -1971,6 +1971,7 @@ is a physical model of a flute:\n\
 	 (forwards (> src-ratio 0.0)))
     (if (and forwards (< turn-sample cur-sample))
 	(set! (mus-increment rd) (- src-ratio)))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i beg (1+ i)))
@@ -2068,6 +2069,7 @@ is a physical model of a flute:\n\
       (vector-set! resynth-oscils i (make-oscil :frequency 0)))
     (set! trigger outhop)
     (vct-scale! window fftscale)
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i start (1+ i)))
@@ -2237,6 +2239,7 @@ is a physical model of a flute:\n\
 	 (s (make-pulse-train :frequency freq))
 	 (d0 (make-comb :size length1 :max-size (1+ (max length1 length2)) :scaler feedback))
 	 (zenv (make-env :envelope '(0 0 1 1) :scaler (- length2 length1) :duration dur)))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i beg (1+ i)))
@@ -2256,6 +2259,7 @@ is a physical model of a flute:\n\
 	 (s (make-pulse-train :frequency freq))
 	 (d0 (make-notch :size length1 :max-size (1+ (max length1 length2)) :scaler feedforward))
 	 (zenv (make-env :envelope '(0 0 1 1) :scaler (- length2 length1) :duration dur)))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i beg (1+ i)))
@@ -2272,6 +2276,7 @@ is a physical model of a flute:\n\
 	 (s (make-pulse-train :frequency freq))
 	 (d0 (make-all-pass feedback feedforward :size length1 :max-size (1+ (max length1 length2))))
 	 (zenv (make-env :envelope '(0 0 1 1) :scaler (- length2 length1) :duration dur)))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i beg (1+ i)))
@@ -2329,6 +2334,7 @@ is a physical model of a flute:\n\
 	 (vol (env ampe))
 	 (valA0 (* vol (granulate exA (lambda (dir) (readin f0)))))
 	 (valA1 (* vol (granulate exA (lambda (dir) (readin f0))))))
+    (ws-interrupt?)
     (if (or (<= (min-envelope rampdata) 0.0)
 	    (>= (max-envelope rampdata) 0.5))
 	(snd-warning (format #f "ramp argument to expsnd must always be between 0.0 and 0.5: ~A" ramp))
@@ -2389,6 +2395,7 @@ is a physical model of a flute:\n\
 	 (end (+ beg (inexact->exact (floor (* duration (mus-srate))))))
 	 (out1 beg)
 	 (out2 (+ hop beg)))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i beg (1+ i)))
@@ -2550,6 +2557,7 @@ nil doesnt print anything, which will speed up a bit the process.
 	  (vector-set! frm-size k (make-formant a1 fval
 						(if (< (+ offset-gain gval) 0) 0
 						    (+ offset-gain gval)))))))
+    (ws-interrupt?)
     (run
      (lambda ()
        (do ((i st (1+ i)))
@@ -2595,6 +2603,7 @@ nil doesnt print anything, which will speed up a bit the process.
     (do ((ctr 0 (1+ ctr)))
 	((= ctr freq-inc))
       (vector-set! fs ctr (make-formant radius (* ctr bin))))
+    (ws-interrupt?)
     (run 
      (lambda ()
        (do ((i beg (1+ i)))

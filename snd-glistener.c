@@ -963,12 +963,22 @@ void clear_listener(void)
     sg_text_delete(listener_text, 1, sg_cursor_position(listener_text));
 }
 
+static XEN g_goto_listener_end(void)
+{
+  int chars;
+  chars = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
+  if (chars > 0) sg_set_cursor(listener_text, chars + 1);
+  return(XEN_FALSE);
+}
+
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_listener_selected_text_w, g_listener_selected_text)
 XEN_NARGIFY_0(g_reset_listener_cursor_w, g_reset_listener_cursor)
+XEN_NARGIFY_0(g_goto_listener_end_w, g_goto_listener_end)
 #else
 #define g_listener_selected_text_w g_listener_selected_text
 #define g_reset_listener_cursor_w g_reset_listener_cursor
+#define g_goto_listener_end_w g_goto_listener_end
 #endif
 
 void g_init_gxlistener(void)
@@ -997,6 +1007,7 @@ leaves the lisp listener pane"
 
   XEN_DEFINE_PROCEDURE(S_listener_selection, g_listener_selected_text_w, 0, 0, 0, H_listener_selection);
   XEN_DEFINE_PROCEDURE(S_reset_listener_cursor, g_reset_listener_cursor_w, 0, 0, 0, H_reset_listener_cursor);
+  XEN_DEFINE_PROCEDURE("goto-listener-end", g_goto_listener_end_w, 0, 0, 0, "move cursor and scroll to bottom of listener pane");
 
   #define H_listener_click_hook S_listener_click_hook " (pos): called when listener clicked; pos is text pos of click in listener"
   XEN_DEFINE_HOOK(listener_click_hook,    S_listener_click_hook, 1,    H_listener_click_hook);    /* arg = pos */

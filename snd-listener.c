@@ -277,15 +277,13 @@ XEN provide_listener_help(char *source)
 
 static XEN read_hook;
 
-/* TODO: am I assuming the listener prompt is 1 char?? */
-
 void command_return(widget_t w, snd_state *ss, int last_prompt)
 {
 #if (!USE_NO_GUI)
   /* try to find complete form either enclosing current cursor, or just before it */
   GUI_TEXT_POSITION_TYPE new_eot = 0, cmd_eot = 0;
   char *str = NULL, *full_str = NULL, *prompt;
-  int i, j;
+  int i, j, prompt_length = 1;
   XEN form = XEN_UNDEFINED;
   GUI_TEXT_POSITION_TYPE end_of_text = 0, start_of_text = 0, last_position = 0, current_position = 0;
 #if (!HAVE_RUBY)
@@ -300,16 +298,23 @@ void command_return(widget_t w, snd_state *ss, int last_prompt)
   if (XEN_HOOKED(read_hook))
     {
       XEN result;
-      str = (char *)CALLOC(last_position - last_prompt + 1, sizeof(char));
-      for (i = last_prompt + 1, j = 0; i < last_position; i++, j++) str[j] = full_str[i];
-      result = run_or_hook(read_hook, 
-			   XEN_LIST_1(C_TO_XEN_STRING(str)),
-			   S_read_hook);
-      FREE(str);
-      if (XEN_TRUE_P(result)) return;
+      int len;
+      len = last_position - last_prompt + 1;
+      if (len > 0)
+	{
+	  str = (char *)CALLOC(len, sizeof(char));
+	  for (i = last_prompt + 1, j = 0; i < last_position; i++, j++) str[j] = full_str[i];
+	  result = run_or_hook(read_hook, 
+			       XEN_LIST_1(C_TO_XEN_STRING(str)),
+			       S_read_hook);
+	  FREE(str);
+	  if (XEN_TRUE_P(result)) return;
+	}
     }
 
   prompt = listener_prompt(ss);
+  prompt_length = snd_strlen(prompt);
+
   /* first look for a form just before the current mouse location,
    *   independent of everything (i.e. user may have made changes
    *   in a form included in a comment, then typed return, expecting
@@ -392,7 +397,7 @@ void command_return(widget_t w, snd_state *ss, int last_prompt)
 		((i == 0) || 
 		 (full_str[i - 1] == '\n')))
 	      {
-		start_of_text = i + 1;
+		start_of_text = i + prompt_length;
 		break;
 	      }
 	}
@@ -570,7 +575,6 @@ static XEN g_set_listener_prompt(XEN val)
 #endif
   return(C_TO_XEN_STRING(listener_prompt(ss)));
 }
-
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_save_listener_w, g_save_listener)

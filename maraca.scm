@@ -24,7 +24,7 @@
 	 (sndamp (/ amp 16384.0))
 	 (srate4 (inexact->exact (floor (/ (mus-srate) 4))))
 	 (gain (/ (* (/ (log num-beans) (log 4.0)) 40) num-beans)))
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     ;; gourd resonance filter
     (vct-set! coeffs 0 (* -2.0 shell-reso (cos (hz->radians shell-freq))))
     (vct-set! coeffs 1 (* shell-reso shell-reso))
@@ -93,7 +93,7 @@
 	 (srate4 (floor (/ (mus-srate) 4)))
 	 (gain (/ (* (/ (log num-beans) (log 4)) 40) num-beans)))
     ;; gourd resonance filters
-    (if (c-g?) (throw 'with-sound-interrupt))
+    (ws-interrupt?)
     (do ((i 0 (1+ i)))
 	((= i resn))
       (vct-set! coeffs (+ (* i 2) 0) (* -2.0 (list-ref shell-resos i) (cos (hz->radians (list-ref shell-freqs i)))))

@@ -1,5 +1,6 @@
 Snd change log
 
+  2-June:    debug.scm and with-sound debugger in ws.scm.
   28-May:    snd 6.9.
   26-May:    x-axis-label.
   20-May:    make-variable-display in snd-motif.scm.

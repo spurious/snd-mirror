@@ -35,6 +35,7 @@
   <li><a href="#bessdoc">bess.scm, bess.rb: FM demo</a>
   <li><a href="#birddoc">bird.scm, bird.rb: North-American birds</a>
   <li><a href="#clminsdoc">clm-ins.scm: more CLM instruments</a>
+  <li><a href="#debugdoc">debug.scm: debugging aids</a>
   <li><a href="#dlocsigdoc">dlocsig.rb (Michael Scholz)</a>
   <li><a href="#dlpdoc">dlp and tutorial directories from Dave Phillips</a>
   <li><a href="#drawdoc">draw.scm: graphics additions</a>
@@ -303,6 +304,56 @@ generators, with an optional envelope on each formant.
 <i>anoi</i> is a stab at noise reduction
 based on Perry Cook's Scrubber.m.
 </p>
+<br>
+
+<A NAME="debugdoc"></a><span class=box><h2>debug.scm</h2></span>
+
+<pre>
+  <em class=def><a name="exsnddebug">snd-debug</a></em>
+  <em class=def><a name="exsndtrace">snd-trace</a></em>
+  <em class=def><a name="exsndbreak">snd-break</a></em>
+</pre>
+
+<p>debug.scm is a package of debugging aids.
+<b>snd-break</b> sets a breakpoint; if it is called, you drop into the Snd debugger.
+You can continue from the breakpoint, optionally returning any value you like.
+While in the break context (while the listener prompt says "break"), there are
+these functions available:
+</p>
+<pre>
+  <em class=def>break-go</em> (returned-value #f)
+  <em class=def>break-locals</em> (stack-location 0)
+  <em class=def>break-local</em> local-var (stack-location 0)
+  <em class=def>break-backtrace</em> (all #f)
+  <em class=def>break-help</em>
+</pre>
+<p><i>break-go</i> continues from the point of the breakpoint.
+<i>break-locals</i> prints out the local variables and their values.
+<i>break-local</i> prints one such variable's value (the <i>local-var</i> argument should be a symbol or a string).
+<i>break-help</i> prints out help.
+<i>break-backtrace</i> shows the stack at the point of the snd-break call.  The stack trace
+is normally truncated to show just the 5 or so inner frames; to get the full
+backtrace, call break-backtrace with an argument of #t.
+</p>
+<b>snd-debug</b> sets up a debugger. You can examine the stack or local variables etc.
+After calling snd-debug, there are functions similar to the break functions listed above:
+</p>
+<pre>
+  <em class=def>bt</em> -- show backtrace
+  <em class=def>lv (obj)</em> -- show local vars
+</pre>
+<p><b>snd-trace</b> activates any tracing
+that you may have requested and redirects its output to the Snd listener.
+Here's how to trace fm-violin calls in a notelist:
+</p>
+<pre>
+(trace fm-violin)
+(<em class=red>snd-trace</em> (with-sound () (fm-violin 0 1 440 .1)))
+</pre>
+<p>To turn off the trace,</p>
+<pre>
+(untrace fm-violin)
+</pre>
 <br>
 
 <A NAME="dlocsigdoc"></a><span class=box><h2>dlocsig.rb</h2></span>
@@ -843,7 +894,6 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>pointer-focus
     <li>files-popup-buffer
     <li>Emacs-like C-x b handling
-    <li>redirect stdin/stdout: snd-debug, read-listener-line, snd-trace
     <li>open-next-file-in-directory
   </ul>
 </small>
@@ -1070,7 +1120,7 @@ that actually calls <a href="extsnd.html#sndprint">snd-print</a> instead:
 </pre>
 <p>You could also <code>(set! display snd-print)</code>, if you're willing to
 live dangerously; this replaces Guile's built-in <i>display</i> procedure with
-Snd's <i>snd-print</i>.  Another example of this is snd-debug. 
+Snd's <i>snd-print</i>.
 </p>
 
 <p>There are also a few brief examples showing simple display customizations.
@@ -1373,10 +1423,6 @@ convenient if they were in one file.
   <em class=def><a name="exchannelproperty">channel-property</a></em> key snd chn
   <em class=def><a name="exsoundproperty">sound-property</a></em> key snd
 
-  <em class=def><a name="exsnddebug">snd-debug</a></em>
-  <em class=def><a name="readlistenerline">read-listener-line</a></em> prompt
-  <em class=def><a name="exsndtrace">snd-trace</a></em>
-
   <em class=def><a name="exmakeselection">make-selection</a></em> #:optional beg end snd chn
   <em class=def><a name="exdeleteselectionandsmooth">delete-selection-and-smooth</a></em>
   <em class=def><a name="exevaloverselection">eval-over-selection</a></em> func snd
@@ -1402,14 +1448,6 @@ convenient if they were in one file.
 <p><i>channel-property</i> returns the value associated with <i>key</i> in the given channel's
 property list.  To add or change a property, use set! with this procedure.  Similarly,
 <i>sound-property</i> provides access to a sound's property list.
-</p>
-
-<p>In <i>snd-debug</i> we're 
-redirecting the Guile debugger's stdin and stdout IO via a read-write soft-port
-and Snd's read-hook.  If you hit an error, call (snd-debug) rather than (debug).
-<i>read-listener-line</i> is somewhat like read-line
-but gets its input from the listener.  <i>snd-trace</i> activates any tracing
-that you may have requested and redirects its output to the Snd listener.
 </p>
 
 <p><i>selection-members</i> returns a list of lists of (snd chn) indicating the channels participating in the current selection.

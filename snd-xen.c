@@ -2761,14 +2761,16 @@ static XEN g_snd_stdin_test(XEN str)
 static SCM g_gc_off(void) {++scm_block_gc; return(XEN_FALSE);}
 static SCM g_gc_on(void) {--scm_block_gc; return(XEN_FALSE);}
 
+#endif
+
+#endif 
+
+#if HAVE_GUILE
 static SCM g_continuation_p(XEN obj)
 {
   return(C_TO_XEN_BOOLEAN(SCM_NIMP(obj) && (SCM_CONTINUATIONP(obj))));
 }
 #endif
-
-#endif 
-
 
 #ifdef XEN_ARGIFY_1
 #if HAVE_GUILE && HAVE_DLFCN_H
@@ -3127,8 +3129,11 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE("gc-off", g_gc_off, 0, 0, 0, "turns off the garbage collector");
   XEN_DEFINE_PROCEDURE("gc-on", g_gc_on, 0, 0, 0, "turns on the garbage collector");
   XEN_DEFINE_PROCEDURE("snd-stdin-test", g_snd_stdin_test, 1, 0, 0, "internal testing function");
-  XEN_DEFINE_PROCEDURE("continuation?", g_continuation_p, 1, 0, 0, "#t if arg is a continuation");
 #endif
+#endif
+
+#if HAVE_GUILE
+  XEN_DEFINE_PROCEDURE("continuation?", g_continuation_p, 1, 0, 0, "#t if arg is a continuation");
 #endif
 
 #if HAVE_RUBY
