@@ -1466,12 +1466,13 @@ void reset_io_c(void)
 }
 #endif
 
-char *mus_file_full_name(char *tok)
+char *mus_file_full_name(char *utok)
 {
   /* fill out under-specified library pathnames and check for the damned '//' business (SGI file selection box uses this) */
   /* what about "../" and "./" ? these work, but perhaps we should handle them explicitly) */
-  char *file_name_buf;
+  char *file_name_buf,*tok;
   int i,j,len;
+  tok = utok;
   if ((tok) && (*tok)) 
     len = strlen(tok); 
   else return(NULL);

@@ -19,7 +19,7 @@ static int apply_to_mix = 0;
 static int env_window_width = 0;
 static int env_window_height = 0;
 
-static chan_info *active_channel = NULL;
+static chan_info *active_channel = NULL, *last_active_channel = NULL;
 
 static env* selected_env = NULL; /* if during view, one env is clicked, it is "selected" and can be pasted elsewhere */
 static env* active_env = NULL;   /* env currently being edited */
@@ -126,7 +126,8 @@ static void Help_Enved_Callback(GtkWidget *w, gpointer clientData)
 
 static void apply_enved(snd_state *ss)
 {
-  int mix_id=0;
+  int mix_id=0,i,j;
+  env *max_env = NULL;
   mixdata *md;
   snd_info *sp;
   if (active_env)
@@ -154,7 +155,10 @@ static void apply_enved(snd_state *ss)
 	    {
 	    case AMPLITUDE_ENV:
 	      if (apply_to_mix)
-		set_mix_amp_env(mix_id,NO_SELECTION,active_env); /* chan = NO_SELECTION: use selected chan if more than 1 */
+		{
+		  set_mix_amp_env(mix_id,NO_SELECTION,active_env); /* chan = NO_SELECTION: use selected chan if more than 1 */
+		  active_channel = current_channel(ss);
+		}
 	      else apply_env(active_channel,active_env,0,current_ed_samples(active_channel),1.0,apply_to_selection,FROM_ENVED,"Enved: amp"); 
 	      /* calls update_graph, I think, but in short files that doesn't update the amp-env */
 	      if (enved_waving(ss)) env_redisplay(ss);
@@ -163,7 +167,11 @@ static void apply_enved(snd_state *ss)
 	      apply_filter(active_channel,filter_env_order(ss),active_env,FROM_ENVED,"Enved: flt",apply_to_selection,NULL);
 	      break;
 	    case SRATE_ENV:
-	      src_env_or_num(ss,active_channel,active_env,0.0,FALSE,FROM_ENVED,"Enved: src",apply_to_selection);
+	      max_env = copy_env(active_env);
+	      for (i=0,j=1;i<max_env->pts;i++,j+=2)
+		if (max_env->data[j] < .01) max_env->data[j] = .01;
+	      src_env_or_num(ss,active_channel,max_env,0.0,FALSE,FROM_ENVED,"Enved: src",apply_to_selection);
+	      max_env = free_env(max_env);
 	      if (enved_waving(ss)) env_redisplay(ss);
 	      break;
 	    }
@@ -260,6 +268,7 @@ static void Apply_Enved_Callback(GtkWidget *w, gpointer clientData)
 {
   /* apply current envs to currently sync'd channels */
   apply_enved((snd_state *)clientData);
+  last_active_channel = active_channel;
 }
 
 static void Undo_and_Apply_Enved_Callback(GtkWidget *w, gpointer clientData)
@@ -267,11 +276,10 @@ static void Undo_and_Apply_Enved_Callback(GtkWidget *w, gpointer clientData)
   /* undo upto previous amp env, then apply */
   /* this blindly undoes the previous edit (assumed to be an envelope) -- if the user made some other change in the meantime, too bad */
   snd_state *ss = (snd_state *)clientData;
-  if ((active_channel) && (active_channel == current_channel(ss)))
-    {
-      undo_edit_with_sync(active_channel,1);
-    }
+  if ((active_channel) && (active_channel == last_active_channel))
+    undo_edit_with_sync(active_channel,1);
   apply_enved(ss);
+  last_active_channel = active_channel;
 }
 
 static void reflect_segment_state (snd_state *ss)
@@ -468,7 +476,7 @@ static void selection_button_pressed(GtkWidget *w, gpointer clientData)
   if ((enved_target(ss) != SPECTRUM_ENV) && (enved_waving(ss)) && (!showing_all_envs)) env_redisplay(ss);
 }
 
-static void mix_button_pressed(GtkWidget *w, GdkEventButton *ev, gpointer data)
+static void mix_button_pressed(GtkWidget *w, gpointer data)
 {
   snd_state *ss = (snd_state *)data;
   int chan = 0;
@@ -478,29 +486,26 @@ static void mix_button_pressed(GtkWidget *w, GdkEventButton *ev, gpointer data)
     {
       if (apply_to_selection) set_backgrounds(selectionB,(ss->sgx)->highlight_color);
       apply_to_selection = 0;
-      if (ev->state & snd_ControlMask) 
+      if (ss->selected_mix != NO_SELECTION) 
+	md = md_from_int(ss->selected_mix); 
+      else
 	{
-	  if (ss->selected_mix != NO_SELECTION) 
-	    md = md_from_int(ss->selected_mix); 
-	  else
+	  md = md_from_int(any_mix_id());
+	  if (md) select_mix(ss,md);
+	}
+      if (md)
+	{
+	  if (md->selected_chan != NO_SELECTION) chan = md->selected_chan;
+	  if (mix_amp_env(md->id,chan))
 	    {
-	      md = md_from_int(any_mix_id());
-	      if (md) select_mix(ss,md);
-	    }
-	  if (md)
-	    {
-	      if (md->selected_chan != NO_SELECTION) chan = md->selected_chan;
-	      if (mix_amp_env(md->id,chan))
-		{
-		  if (active_env) active_env = free_env(active_env);
-		  active_env = copy_env(mix_amp_env(md->id,chan));
-		  set_enved_env_list_top(0);
-		  do_env_edit(active_env,TRUE);
-		  set_sensitive(undoB,FALSE);
-		  set_sensitive(revertB,FALSE);
-		  set_sensitive(saveB,FALSE);
-		  env_redisplay(ss);
-		}
+	      if (active_env) active_env = free_env(active_env);
+	      active_env = copy_env(mix_amp_env(md->id,chan));
+	      set_enved_env_list_top(0);
+	      do_env_edit(active_env,TRUE);
+	      set_sensitive(undoB,FALSE);
+	      set_sensitive(revertB,FALSE);
+	      set_sensitive(saveB,FALSE);
+	      env_redisplay(ss);
 	    }
 	}
     }
@@ -720,7 +725,7 @@ static void base_changed_callback(GtkAdjustment *adj, gpointer clientData)
 
 void create_envelope_editor (snd_state *ss)
 {
-  GtkWidget *mainform,*helpB,*leftbox,*bottombox,*leftframe,*toprow,*bottomrow,*mixevent,*brkbox;
+  GtkWidget *mainform,*helpB,*leftbox,*bottombox,*leftframe,*toprow,*bottomrow,*brkbox;
   if (!enved_dialog)
     {
       enved_dialog = gtk_dialog_new();
@@ -899,14 +904,10 @@ void create_envelope_editor (snd_state *ss)
       gtk_signal_connect(GTK_OBJECT(selectionB),"clicked",GTK_SIGNAL_FUNC(selection_button_pressed),(gpointer)ss);
       gtk_widget_show(selectionB);
 
-      mixevent = gtk_event_box_new();
-      gtk_box_pack_start(GTK_BOX(selrow),mixevent,TRUE,TRUE,0);
-      gtk_widget_show(mixevent);
-      gtk_signal_connect(GTK_OBJECT(mixevent),"button_press_event",GTK_SIGNAL_FUNC(mix_button_pressed),(gpointer)ss);
-
       mixB = gtk_button_new_with_label("mix");
       set_backgrounds(mixB,(ss->sgx)->highlight_color);
-      gtk_container_add(GTK_CONTAINER(mixevent),mixB);
+      gtk_box_pack_start(GTK_BOX(selrow),mixB,TRUE,TRUE,0);
+      gtk_signal_connect(GTK_OBJECT(mixB),"clicked",GTK_SIGNAL_FUNC(mix_button_pressed),(gpointer)ss);
       gtk_widget_show(mixB);
 
 

@@ -5729,6 +5729,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
 	{
 	  switch (sp->filing)
 	    {
+	      /* don't free(str) locally in this switch statement without setting it to null as well */
 	    case INPUT_FILING:
 	      nsp = snd_open_file(str,ss); /* will post error if any */
 	      if (nsp) 
@@ -5739,10 +5740,16 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
 	      break;
 	    case REGION_FILING:
 	      str1 = mus_file_full_name(str);
-	      if (!(snd_overwrite_ok(ss,str1))) {free(str); FREE(str1); return;}
-	      save_region(ss,region_count,str1,((file_info *)(sp->hdr))->format);
+	      if (!(snd_overwrite_ok(ss,str1))) 
+		{
+		  free(str); 
+		  FREE(str1); 
+		  return;
+		}
+	      if ((region_count == 0) && (selection_is_active()))
+		save_selection(ss,str1,MUS_NEXT,MUS_OUT_FORMAT,SND_SRATE(sp),NULL);
+	      else save_region(ss,region_count,str1,MUS_OUT_FORMAT);
 	      clear_minibuffer(sp);
-	      free(str);
 	      FREE(str1);
 	      break;
 	    case CHANNEL_FILING:
@@ -5813,8 +5820,10 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
 	  if (e)
 	    {
 	      if (sp->amping != 1)
-		apply_env(active_chan,e,active_chan->cursor,sp->amping,1.0,sp->reging,NOT_FROM_ENVED,(sp->reging) ? "C-x a" : "C-x C-a");
-	      else apply_env(active_chan,e,0,current_ed_samples(active_chan),1.0,sp->reging,NOT_FROM_ENVED,(sp->reging) ? "C-x a" : "C-x C-a");
+		apply_env(active_chan,e,active_chan->cursor,sp->amping,1.0,sp->reging,NOT_FROM_ENVED,
+			  (sp->reging) ? "C-x a" : "C-x C-a");
+	      else apply_env(active_chan,e,0,current_ed_samples(active_chan),1.0,sp->reging,NOT_FROM_ENVED,
+			     (sp->reging) ? "C-x a" : "C-x C-a");
 	    }
 	  sp->reging = 0;
 	  sp->amping = 0;
@@ -5995,7 +6004,10 @@ int keyboard_command (chan_info *cp, int keysym, int state)
       ((extended_mode) || (stop_selecting(keysym,state))))
     finish_selection_creation();
 
-  if ((counting) && (((keysym < snd_K_0) || (keysym > snd_K_9)) && (keysym != snd_K_minus) && (keysym != snd_K_period) && (keysym != snd_K_plus)))
+  if ((counting) && (((keysym < snd_K_0) || (keysym > snd_K_9)) && 
+		     (keysym != snd_K_minus) && 
+		     (keysym != snd_K_period) && 
+		     (keysym != snd_K_plus)))
     {
       m = ((u_count) && ((keysym == snd_K_M) || (keysym == snd_K_m)));
       count = get_count(number_buffer,number_ctr,dot_seen,cp,m);
@@ -6322,7 +6334,11 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_W: case snd_K_w: redisplay = prompt(sp,STR_file_p,NULL); sp->filing = CHANNEL_FILING; searching = 1; break;
 	    case snd_K_X: case snd_K_x: get_eval_expression(sp,ext_count,0); searching = 1; redisplay = CURSOR_IN_VIEW; break;
 	    case snd_K_Y: case snd_K_y: break;
-	    case snd_K_Z: case snd_K_z: cp->cursor_on = 1; cos_smooth(cp,cp->cursor,ext_count,0,"C-x C-z"); redisplay = CURSOR_UPDATE_DISPLAY; break;
+	    case snd_K_Z: case snd_K_z: 
+	      cp->cursor_on = 1; 
+	      cos_smooth(cp,cp->cursor,ext_count,0,"C-x C-z"); 
+	      redisplay = CURSOR_UPDATE_DISPLAY; 
+	      break;
 	    case snd_K_Right: sx_incremented(cp,state_amount(state)); break;
 	    case snd_K_Left:  sx_incremented(cp,-state_amount(state)); break;
 	    case snd_K_Up: zx_incremented(cp,1.0+state_amount(state)); break;
@@ -6352,11 +6368,13 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_minus: counting=1; number_buffer[0]='-'; number_ctr=1; break;
 	    case snd_K_Right: sx_incremented(cp,state_amount(state)); break;
 	    case snd_K_Left:  sx_incremented(cp,-state_amount(state)); break;
-	    case snd_K_Up: zx_incremented(cp,1.0+state_amount(state)); break;
-	    case snd_K_Down: zx_incremented(cp,1.0/(1.0+state_amount(state))); break;
+	    case snd_K_Up:    zx_incremented(cp,1.0+state_amount(state)); break;
+	    case snd_K_Down:  zx_incremented(cp,1.0/(1.0+state_amount(state))); break;
 	    case snd_K_Home: snd_update(ss,sp); break;
 	    case snd_K_space: 
-	      if (play_in_progress()) toggle_dac_pausing(ss); else deactivate_selection();
+	      if (play_in_progress())
+		toggle_dac_pausing(ss); 
+	      else deactivate_selection();
 	      break;
 
 	      /* fUn WiTh KeYpAd! */
@@ -6424,34 +6442,63 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      reflect_spectro(ss); 
 	      break;
-	    case snd_keypad_Multiply: set_fft_size(ss,fft_size(ss) * 2); redisplay = CURSOR_UPDATE_DISPLAY; break;
+	    case snd_keypad_Multiply: 
+	      set_fft_size(ss,fft_size(ss) * 2); 
+	      redisplay = CURSOR_UPDATE_DISPLAY; 
+	      break;
 	    case snd_keypad_Divide: 
 	      if (fft_size(ss) > 4) set_fft_size(ss,fft_size(ss) / 2); 
 	      redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 #if !defined(NEXT) && !defined(UW2)
-	    case snd_keypad_Delete: case snd_keypad_Decimal: set_dot_size(ss,dot_size(ss)+1); redisplay = KEYBOARD_NO_ACTION; break;
-	    case snd_keypad_Insert: case snd_keypad_0: if (dot_size(ss) > 1) set_dot_size(ss,dot_size(ss)-1); redisplay = KEYBOARD_NO_ACTION; break;
+	    case snd_keypad_Delete: case snd_keypad_Decimal: 
+	      set_dot_size(ss,dot_size(ss)+1); 
+	      redisplay = KEYBOARD_NO_ACTION; 
+	      break;
+	    case snd_keypad_Insert: case snd_keypad_0: 
+	      if (dot_size(ss) > 1) 
+		set_dot_size(ss,dot_size(ss)-1); 
+	      redisplay = KEYBOARD_NO_ACTION; 
+	      break;
 	    case snd_keypad_PageDown: case snd_keypad_3: 
-	      set_spectro_cutoff(ss,spectro_cutoff(ss)*.95); redisplay = CURSOR_UPDATE_DISPLAY; reflect_spectro(ss); break;
+	      set_spectro_cutoff(ss,spectro_cutoff(ss)*.95); 
+	      redisplay = CURSOR_UPDATE_DISPLAY; 
+	      reflect_spectro(ss); 
+	      break;
 	    case snd_keypad_PageUp: case snd_keypad_9: 
-	      if (spectro_cutoff(ss) < 1.0) set_spectro_cutoff(ss,spectro_cutoff(ss)/.95); 
+	      if (spectro_cutoff(ss) < 1.0) 
+		set_spectro_cutoff(ss,spectro_cutoff(ss)/.95); 
 	      redisplay = CURSOR_UPDATE_DISPLAY; reflect_spectro(ss); 
 	      break;
 #else
-	    case snd_keypad_Decimal: set_dot_size(ss,dot_size(ss)+1); redisplay = KEYBOARD_NO_ACTION; break;
-	    case_snd_keypad_0: if (dot_size(ss) > 1) set_dot_size(ss,dot_size(ss)-1); redisplay = KEYBOARD_NO_ACTION; break;
+	    case snd_keypad_Decimal: 
+	      set_dot_size(ss,dot_size(ss)+1);
+	      redisplay = KEYBOARD_NO_ACTION; 
+	      break;
+	    case_snd_keypad_0: 
+	      if (dot_size(ss) > 1) 
+		set_dot_size(ss,dot_size(ss)-1); 
+	      redisplay = KEYBOARD_NO_ACTION;
+	      break;
 	    case snd_keypad_3: 
-	      set_spectro_cutoff(ss,spectro_cutoff(ss)*.95); redisplay = CURSOR_UPDATE_DISPLAY; reflect_spectro(ss); break;
+	      set_spectro_cutoff(ss,spectro_cutoff(ss)*.95); 
+	      redisplay = CURSOR_UPDATE_DISPLAY;
+	      reflect_spectro(ss); 
+	      break;
 	    case snd_keypad_9: 
-	      if (spectro_cutoff(ss) < 1.0) set_spectro_cutoff(ss,spectro_cutoff(ss)/.95); 
-	      redisplay = CURSOR_UPDATE_DISPLAY; reflect_spectro(ss); 
+	      if (spectro_cutoff(ss) < 1.0) 
+		set_spectro_cutoff(ss,spectro_cutoff(ss)/.95); 
+	      redisplay = CURSOR_UPDATE_DISPLAY; 
+	      reflect_spectro(ss); 
 	      break;
 #endif
-	    case snd_keypad_Enter: reset_spectro(ss); redisplay = CURSOR_UPDATE_DISPLAY; reflect_spectro(ss); break;
+	    case snd_keypad_Enter: 
+	      reset_spectro(ss); 
+	      redisplay = CURSOR_UPDATE_DISPLAY; 
+	      reflect_spectro(ss); 
+	      break;
 	    default:
 	      /* try to send unbuckified random keyboard input to the lisp listener */
-	      ss = cp->state;
 	      if (ss->listening != LISTENER_CLOSED)
 		{
 		  if (listener_height() > 5)
@@ -6478,7 +6525,12 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    }
 	}
-      else /* extended mode with ctrl up -- where not an emacs analogy, related to the current selection */
+      else 
+	/* extended mode with ctrl up -- where not an emacs analogy, related to the current selection */
+	/*   the active selection now follows the edit list, so there may be no relation between
+	 *   region 0 and the active selection -- in ambiguous cases, we need to look explicitly
+	 *   for the selection first.
+	 */
 	{
 	  /* -------------------------------- C-x key -------------------------------- */
 	  extended_mode = 0;
@@ -6493,9 +6545,19 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 		} 
 	      else no_selection_error(sp); 
 	      break;
-	    case snd_K_B: case snd_K_b: cp->cursor_on = 1; redisplay = CURSOR_ON_LEFT; break;
-	    case snd_K_C: case snd_K_c: mark_define_region(cp,(ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); redisplay = CURSOR_CLAIM_SELECTION; break;
-	    case snd_K_D: case snd_K_d: redisplay = prompt(sp,"temp dir:",NULL); sp->filing = TEMP_FILING; searching = 1; break;
+	    case snd_K_B: case snd_K_b: 
+	      cp->cursor_on = 1; 
+	      redisplay = CURSOR_ON_LEFT; 
+	      break;
+	    case snd_K_C: case snd_K_c: 
+	      mark_define_region(cp,(ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); 
+	      redisplay = CURSOR_CLAIM_SELECTION; 
+	      break;
+	    case snd_K_D: case snd_K_d: 
+	      redisplay = prompt(sp,"temp dir:",NULL); 
+	      sp->filing = TEMP_FILING; 
+	      searching = 1; 
+	      break;
 #if HAVE_GUILE
 	    case snd_K_E: case snd_K_e: 
 	      execute_last_macro(cp,(ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count);
@@ -6503,12 +6565,26 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      if (redisplay == CURSOR_IN_VIEW) redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
 #endif
-	    case snd_K_F: case snd_K_f: cp->cursor_on = 1; redisplay = CURSOR_ON_RIGHT; break;
-	    case snd_K_H: case snd_K_h: 
+	    case snd_K_F: case snd_K_f: 
+	      cp->cursor_on = 1; 
+	      redisplay = CURSOR_ON_RIGHT; 
 	      break;
-	    case snd_K_I: case snd_K_i: paste_region((ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count,cp,"C-x i"); redisplay = CURSOR_UPDATE_DISPLAY; break;
-	    case snd_K_J: case snd_K_j: redisplay = prompt(sp,"mark:",NULL); sp->finding_mark = 1; searching = 1; break;
-	    case snd_K_K: case snd_K_k: snd_close_file(sp,ss); redisplay = CURSOR_NO_ACTION; break;
+	    case snd_K_I: case snd_K_i: 
+	      paste_selection_or_region(ss,
+					(ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count,
+					cp,
+					"C-x i");
+	      redisplay = CURSOR_UPDATE_DISPLAY; 
+	      break;
+	    case snd_K_J: case snd_K_j: 
+	      redisplay = prompt(sp,"mark:",NULL); 
+	      sp->finding_mark = 1; 
+	      searching = 1; 
+	      break;
+	    case snd_K_K: case snd_K_k: 
+	      snd_close_file(sp,ss); 
+	      redisplay = CURSOR_NO_ACTION; 
+	      break;
 	    case snd_K_L: case snd_K_l: 
 	      cp->cursor_on = 1;
 	      if (selection_is_active_in_channel(cp))
@@ -6522,17 +6598,34 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      else no_selection_error(sp); 
 	      break;
 	    case snd_K_O: case snd_K_o: 
-	      if (ext_count > 0) goto_next_graph(cp,ext_count); else goto_previous_graph(cp,ext_count); redisplay = CURSOR_NO_ACTION; break;
+	      if (ext_count > 0) 
+		goto_next_graph(cp,ext_count); 
+	      else goto_previous_graph(cp,ext_count); 
+	      redisplay = CURSOR_NO_ACTION; 
+	      break;
 	    case snd_K_P: case snd_K_p: 
 	      if (ext_count == NO_CX_ARG_SPECIFIED)
 		play_selection(IN_BACKGROUND);
 	      else play_region(ss,ext_count,IN_BACKGROUND);  /* was false?? */
 	      redisplay = NO_ACTION;
 	      break;
-	    case snd_K_Q: case snd_K_q: add_region((ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count,cp,"C-x q"); redisplay = CURSOR_UPDATE_DISPLAY; break;
-	      /* if count is Float, it becomes the scaler on the added data */
-	    case snd_K_R: case snd_K_r: redo_edit_with_sync(cp,(ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); redisplay = CURSOR_UPDATE_DISPLAY; break;
-	    case snd_K_U: case snd_K_u: undo_edit_with_sync(cp,(ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); redisplay = CURSOR_UPDATE_DISPLAY; break;
+	    case snd_K_Q: case snd_K_q: 
+	      add_selection_or_region(ss,
+				      (ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count,
+				      cp,
+				      "C-x q"); 
+	      redisplay = CURSOR_UPDATE_DISPLAY; 
+	      break;
+	    case snd_K_R: case snd_K_r: 
+	      redo_edit_with_sync(cp,
+				  (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); 
+	      redisplay = CURSOR_UPDATE_DISPLAY; 
+	      break;
+	    case snd_K_U: case snd_K_u: 
+	      undo_edit_with_sync(cp,
+				  (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); 
+	      redisplay = CURSOR_UPDATE_DISPLAY; 
+	      break;
 	    case snd_K_V: case snd_K_v: 
 	      if (selection_is_active_in_channel(cp))
 		{
@@ -6541,7 +6634,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 		}
 	      else no_selection_error(sp); 
 	      break;
-	    case snd_K_W: case snd_K_w: 
+	    case snd_K_W: case snd_K_w:
 	      region_count = (ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count;
 	      redisplay = prompt(sp,STR_file_p,NULL); 
 	      sp->filing = REGION_FILING; 
@@ -6564,11 +6657,11 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 		}
 	      else no_selection_error(sp); 
 	      break;
-	    case snd_K_Right: sx_incremented(cp,state_amount(state)); break;
-	    case snd_K_Left:  sx_incremented(cp,-state_amount(state)); break;
-	    case snd_K_Up: zx_incremented(cp,1.0+state_amount(state)); break;
-	    case snd_K_Down: zx_incremented(cp,1.0/(1.0+state_amount(state))); break;
-	    case snd_K_less: cp->cursor_on = 1; redisplay = cursor_moveto_beginning(cp); break;
+	    case snd_K_Right:   sx_incremented(cp,state_amount(state)); break;
+	    case snd_K_Left:    sx_incremented(cp,-state_amount(state)); break;
+	    case snd_K_Up:      zx_incremented(cp,1.0+state_amount(state)); break;
+	    case snd_K_Down:    zx_incremented(cp,1.0/(1.0+state_amount(state))); break;
+	    case snd_K_less:    cp->cursor_on = 1; redisplay = cursor_moveto_beginning(cp); break;
 	    case snd_K_greater: cp->cursor_on = 1; redisplay = cursor_moveto_end(cp); break;
 	    case snd_K_openparen:
 #if HAVE_GUILE
@@ -6882,7 +6975,10 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
     }
   else
     if (click_within_graph == LISP)
-      handle_mouse_press(sp,cp,ungrf_x((cp->lisp_info)->axis,x),ungrf_y((cp->lisp_info)->axis,y),button,key_state);
+      handle_mouse_press(sp,cp,
+			 ungrf_x((cp->lisp_info)->axis,x),
+			 ungrf_y((cp->lisp_info)->axis,y),
+			 button,key_state);
 }
 
 static Float fft_axis_extent(chan_info *cp)
@@ -6997,7 +7093,10 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		report_in_minibuffer(sp,describe_fft_point(cp,x,y));
 	      else
 		if (actax == LISP)
-		  handle_mouse_release(sp,cp,ungrf_x((cp->lisp_info)->axis,x),ungrf_y((cp->lisp_info)->axis,y),button,key_state);
+		  handle_mouse_release(sp,cp,
+				       ungrf_x((cp->lisp_info)->axis,x),
+				       ungrf_y((cp->lisp_info)->axis,y),
+				       button,key_state);
 	    }
 	}
     }

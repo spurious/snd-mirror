@@ -83,7 +83,7 @@
 
 static char *edit_names[6] = {"insert","delete","set","init","lambda",""};
 
-static void display_ed_list(chan_info *cp, int i, ed_list *ed)
+static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
 {
   int len,j,type,index;
   snd_data *sd;
@@ -91,17 +91,17 @@ static void display_ed_list(chan_info *cp, int i, ed_list *ed)
   type = EDIT_TYPE(ed->sfnum);
   switch (type)
     {
-    case INSERTION_EDIT:  fprintf(stderr,"\n (insert %d %d) ",ed->beg,ed->len);        break;
-    case DELETION_EDIT:   fprintf(stderr,"\n (delete %d %d) ",ed->beg,ed->len);        break;
-    case CHANGE_EDIT:     fprintf(stderr,"\n (set %d %d) ",ed->beg,ed->len);           break;
-    case PARSED_EDIT:     fprintf(stderr,"\n (%s %d %d) ",ed->origin,ed->beg,ed->len); break;
-    case INITIALIZE_EDIT: fprintf(stderr,"\n (begin) ");                               break;
+    case INSERTION_EDIT:  fprintf(outp,"\n (insert %d %d) ",ed->beg,ed->len);        break;
+    case DELETION_EDIT:   fprintf(outp,"\n (delete %d %d) ",ed->beg,ed->len);        break;
+    case CHANGE_EDIT:     fprintf(outp,"\n (set %d %d) ",ed->beg,ed->len);           break;
+    case PARSED_EDIT:     fprintf(outp,"\n (%s %d %d) ",ed->origin,ed->beg,ed->len); break;
+    case INITIALIZE_EDIT: fprintf(outp,"\n (begin) ");                               break;
     }
-  if (ed->origin) fprintf(stderr,"; %s ",ed->origin);
-  fprintf(stderr,"[%d:%d]:",i,len);
+  if (ed->origin) fprintf(outp,"; %s ",ed->origin);
+  fprintf(outp,"[%d:%d]:",i,len);
   for (j=0;j<len;j++)
     {
-      fprintf(stderr,"\n   (at %d, cp->sounds[%d][%d:%d, %f])",
+      fprintf(outp,"\n   (at %d, cp->sounds[%d][%d:%d, %f])",
 	      ed->fragments[j*ED_SIZE+ED_OUT],
 	      index = ed->fragments[j*ED_SIZE+ED_SND],
 	      ed->fragments[j*ED_SIZE+ED_BEG],
@@ -111,18 +111,18 @@ static void display_ed_list(chan_info *cp, int i, ed_list *ed)
 	{
 	  sd = cp->sounds[index];
 	  if (sd == NULL) 
-	    fprintf(stderr," [nil!]");
+	    fprintf(outp," [nil!]");
 	  else 
 	    if (sd->type == SND_DATA_FILE)
-	      fprintf(stderr," [file: %s[%d]]",
+	      fprintf(outp," [file: %s[%d]]",
 		      sd->filename,sd->chan);
 	    else 
 	      if (sd->type == SND_DATA_BUFFER)
-		fprintf(stderr," [buf: %d] ",sd->len/4);
-	      else fprintf(stderr," [bogus!]");
+		fprintf(outp," [buf: %d] ",sd->len/4);
+	      else fprintf(outp," [bogus!]");
 	}
     }
-  fprintf(stderr,"\n");
+  fprintf(outp,"\n");
 }
 
 int no_ed_scalers(chan_info *cp)
@@ -196,18 +196,18 @@ char *edit_to_string(chan_info *cp, int edit)
   return(edbuf);
 }
 
-static void display_edits(chan_info *cp)
+static void display_edits(chan_info *cp, FILE *outp)
 {
   int eds,i;
   ed_list *ed;
   eds = cp->edit_ctr;
-  fprintf(stderr,"\nEDITS: %d\n",eds);
+  fprintf(outp,"\nEDITS: %d\n",eds);
   for (i=0;i<=eds;i++)
     {
       ed = cp->edits[i];
       if (!ed) 
-	fprintf(stderr,"\nedit_ctr is %d, but [%d] is nil!",eds,i);
-      else display_ed_list(cp,i,ed);
+	fprintf(outp,"\nedit_ctr is %d, but [%d] is nil!",eds,i);
+      else display_ed_list(cp,outp,i,ed);
     }
 }
 
@@ -497,22 +497,8 @@ void set_initial_ed_list(chan_info *cp,int len)
 static int find_split_loc (chan_info *cp, int samp, ed_list *current_state)
 {
   int i,k;
-  if (!current_state) 
-#if DEBUGGING
-    {fprintf(stderr,"%s[%d] %s: current state missing!",__FILE__,__LINE__,__FUNCTION__); abort();}
-#else
-    return(0);
-#endif
   for (i=0,k=0;i<current_state->size;i++,k+=ED_SIZE)
-    {
-      if (current_state->fragments[k+ED_OUT] >= samp) return(i);
-    }
-  fprintf(stderr,"%s[%d] %s: failed at %d!\n",__FILE__,__LINE__,__FUNCTION__,samp); 
-  fprintf(stderr,"looking at: ");
-  display_ed_list(cp,-1,current_state);
-  fprintf(stderr,"\n in: \n");
-  display_edits(cp);
-  abort();
+    if (current_state->fragments[k+ED_OUT] >= samp) return(i);
   return(0); /* make sgi compiler happy */
 }
 
@@ -2408,7 +2394,25 @@ void redo_edit_with_sync(chan_info *cp, int count)
 static SCM g_display_edits(SCM snd, SCM chn)
 {
   #define H_display_edits " prints current edit tree state"
-  display_edits(get_cp(snd,chn,"display-edits"));
+  FILE *tmp;
+  char *buf,*name;
+  int len,fd;
+  snd_state *ss;
+  ss = get_global_state();
+  name = snd_tempnam(ss);
+  display_edits(get_cp(snd,chn,"display-edits"),stderr);
+  tmp = fopen(name,"w");
+  display_edits(get_cp(snd,chn,"display-edits"),tmp);
+  fclose(tmp);
+  fd = mus_file_open_read(name);
+  len = lseek(fd,0L,SEEK_END);
+  buf = (char *)CALLOC(len+1,sizeof(char));
+  lseek(fd,0L,SEEK_SET);
+  read(fd,buf,len);
+  close(fd);
+  remove(name);
+  snd_append_command(ss,buf);
+  FREE(buf);
   return(SCM_BOOL_F);
 }
 

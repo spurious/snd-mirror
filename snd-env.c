@@ -1,7 +1,8 @@
 #include "snd.h"
 
 /* TODO  if enved wave button set and associated chan has wavo set, graph goes to wrong window
- * TODO  enved mix flt and src undo&apply cases untested (also clean undo of selection src)
+ * TODO  enved mix flt and src undo&apply cases need more testing (also clean undo of selection src)
+ * TODO  edit of mix sound doesn't follow undo chains?
  */
 
 Float un_dB(snd_state *ss, Float py)

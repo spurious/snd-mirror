@@ -21,10 +21,6 @@
 #endif
 
 #define HAVE_CLICK_FOR_HELP 1
-#if HAVE_XmHTML
-  /* backwards compatibility -- HAVE_XmHTML removed 2-Sep-00 */
-  #define HAVE_HTML 1
-#endif
 
 #if defined(LINUX) || defined(SCO5) || defined(UW2) || defined(SOLARIS) || defined(HPUX) || defined(ALPHA) || defined(WINDOZE)
   #define RESIZE_DIALOG 1

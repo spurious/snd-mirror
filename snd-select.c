@@ -242,46 +242,45 @@ sync_info *selection_sync(void)
   return(si);
 }
 
-
-
-void mix_selection_from_menu(snd_state *ss)
+void add_selection_or_region(snd_state *ss, int reg, chan_info *cp, char *origin)
 {
-  chan_info *cp;
   char *tempfile = NULL;
   sync_info *si_out;
   int err;
-  cp = selected_channel(ss);
   if (cp) 
     {
-      if (selection_is_active())
+      if ((reg == 0) && (selection_is_active()))
 	{
 	  tempfile = snd_tempnam(ss);
-	  err = save_selection(ss,tempfile,MUS_NEXT,MUS_BINT,SND_SRATE(cp->sound),NULL);
+	  err = save_selection(ss,tempfile,MUS_NEXT,MUS_OUT_FORMAT,SND_SRATE(cp->sound),NULL);
 	  if (err == MUS_NO_ERROR)
 	    {
 	      si_out = sync_to_chan(cp);
-	      mix_file_and_delete(cp->cursor,selection_len(),tempfile,si_out->cps,si_out->chans,"Edit: mix",with_mix_consoles(ss));
+	      mix_file_and_delete(cp->cursor,selection_len(),tempfile,si_out->cps,si_out->chans,origin,with_mix_consoles(ss));
 	      free_sync_info(si_out);	      
 	    }
 	}
-      else add_region(0,cp,"Edit: mix");
+      else add_region(reg,cp,origin);
     }
 }
 
-void paste_selection_from_menu(snd_state *ss)
+void mix_selection_from_menu(snd_state *ss)
 {
-  chan_info *cp;
+  add_selection_or_region(ss,0,selected_channel(ss),"Edit: mix");
+}
+
+void paste_selection_or_region(snd_state *ss, int reg, chan_info *cp, char *origin)
+{
   char *tempfile = NULL;
   sync_info *si_out,*si_in;
   chan_info *cp_in,*cp_out;
   int i,err;
-  cp = selected_channel(ss);
   if (cp) 
     {
-      if (selection_is_active())
+      if ((reg == 0) && (selection_is_active()))
 	{
 	  tempfile = snd_tempnam(ss);
-	  err = save_selection(ss,tempfile,MUS_NEXT,MUS_BINT,SND_SRATE(cp->sound),NULL);
+	  err = save_selection(ss,tempfile,MUS_NEXT,MUS_OUT_FORMAT,SND_SRATE(cp->sound),NULL);
 	  if (err == MUS_NO_ERROR)
 	    {
 	      si_out = sync_to_chan(cp);
@@ -296,7 +295,7 @@ void paste_selection_from_menu(snd_state *ss)
 				      cp_selection_len(cp_in,NULL),
 				      tempfile,cp_out,i,
 				      (si_in->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-				      "Edit: Paste");
+				      origin);
 		  update_graph(cp_out,NULL);
 		}
 	      free_sync_info(si_in);
@@ -304,10 +303,14 @@ void paste_selection_from_menu(snd_state *ss)
 	    }
 	  /* else assume save_selection already posted an error message */
 	}
-      else paste_region(0,cp,"Edit: Paste");
+      else paste_region(reg,cp,origin);
     }
 }
 
+void paste_selection_from_menu(snd_state *ss)
+{
+  paste_selection_or_region(ss,0,selected_channel(ss),"Edit: Paste");
+}
 
 
 /* we're drawing the selection in one channel, but others may be sync'd to it */
@@ -404,12 +407,18 @@ void display_selection(chan_info *cp)
 void make_region_from_selection(void)
 {
   int *ends;
-  int i;
+  int i,happy = 0;
   sync_info *si;
   si = selection_sync();
   ends = (int *)CALLOC(si->chans,sizeof(int));
-  for (i=0;i<si->chans;i++) ends[i] = selection_end(si->cps[i]);
-  define_region(si,ends);
+  for (i=0;i<si->chans;i++) 
+    {
+      ends[i] = selection_end(si->cps[i]);
+      if (ends[i] > si->begs[i]) happy = 1;
+      /* C-space followed by mouse click causes a bogus selection-creation event */
+    }
+  if (happy)
+    define_region(si,ends);
   si = free_sync_info(si);
 }
 

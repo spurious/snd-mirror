@@ -151,9 +151,6 @@ void allocate_grf_points(void)
 
 void set_grf_points(int xi, int j, int ymin, int ymax)
 {
-#if DEBUGGING
-  if (j >= POINT_BUFFER_SIZE) {fprintf(stderr,"overran points!"); abort();}
-#endif
   points[j].x = xi;
   points1[j].x = xi;
   points[j].y = ymax;
@@ -162,9 +159,6 @@ void set_grf_points(int xi, int j, int ymin, int ymax)
 
 void set_grf_point(int xi, int j, int yi)
 {
-#if DEBUGGING
-  if (j >= POINT_BUFFER_SIZE) {fprintf(stderr,"overran points!"); abort();}
-#endif
   points[j].x = xi;
   points[j].y = yi;
 }

@@ -20,9 +20,6 @@ void erase_rectangle (chan_info *cp, axis_context *ax,int x0, int y0, int width,
 
 void draw_string (axis_context *ax, int x0, int y0, char *str, int len)
 {
-#if DEBUGGING
-  if (ax->current_font == NULL) abort();
-#endif
   gdk_draw_string(ax->wn,ax->current_font,ax->gc,(gint)x0,(gint)y0,(const gchar *)str);
 }
 
@@ -144,9 +141,6 @@ void allocate_grf_points(void)
 
 void set_grf_points(int xi, int j, int ymin, int ymax)
 {
-#if DEBUGGING
-  if (j >= POINT_BUFFER_SIZE) {fprintf(stderr,"overran points!"); abort();}
-#endif
   points[j].x = xi;
   points1[j].x = xi;
   points[j].y = ymax;
@@ -155,9 +149,6 @@ void set_grf_points(int xi, int j, int ymin, int ymax)
 
 void set_grf_point(int xi, int j, int yi)
 {
-#if DEBUGGING
-  if (j >= POINT_BUFFER_SIZE) {fprintf(stderr,"overran points!"); abort();}
-#endif
   points[j].x = xi;
   points[j].y = yi;
 }

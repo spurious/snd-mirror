@@ -770,7 +770,7 @@ void region_edit(snd_state *ss, int reg)
 	  temp_region_name = shorter_tempnam(temp_dir(ss),"region-");
 	  if (r->use_temp_file == REGION_FILE)
 	    err = copy_file(r->filename,temp_region_name);
-	  else err = save_region(ss, reg, temp_region_name, MUS_BINT);
+	  else err = save_region(ss, reg, temp_region_name, MUS_OUT_FORMAT);
 	  if (err == MUS_NO_ERROR)
 	    {
 	      sp = snd_open_file(temp_region_name,ss);

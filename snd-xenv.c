@@ -22,7 +22,7 @@ static int apply_to_mix = 0;
 static int env_window_width = 0;
 static int env_window_height = 0;
 
-static chan_info *active_channel = NULL;
+static chan_info *active_channel = NULL, *last_active_channel = NULL;
 
 static env* selected_env = NULL; /* if during view, one env is clicked, it is "selected" and can be pasted elsewhere */
 static env* active_env = NULL;   /* env currently being edited */
@@ -128,7 +128,8 @@ static void Help_Enved_Callback(Widget w,XtPointer clientData,XtPointer callData
 
 static void apply_enved(snd_state *ss)
 {
-  int mix_id=0;
+  int mix_id=0,i,j;
+  env *max_env = NULL;
   mixdata *md;
   snd_info *sp;
   if (active_env)
@@ -156,7 +157,10 @@ static void apply_enved(snd_state *ss)
 	    {
 	    case AMPLITUDE_ENV:
 	      if (apply_to_mix)
-		set_mix_amp_env(mix_id,NO_SELECTION,active_env); /* chan = NO_SELECTION: use selected chan if more than 1 */
+		{
+		  set_mix_amp_env(mix_id,NO_SELECTION,active_env); /* chan = NO_SELECTION: use selected chan if more than 1 */
+		  active_channel = current_channel(ss);
+		}
 	      else apply_env(active_channel,active_env,0,current_ed_samples(active_channel),1.0,apply_to_selection,FROM_ENVED,"Enved: amp"); 
 	      /* calls update_graph, I think, but in short files that doesn't update the amp-env */
 	      if (enved_waving(ss)) env_redisplay(ss);
@@ -165,7 +169,12 @@ static void apply_enved(snd_state *ss)
 	      apply_filter(active_channel,filter_env_order(ss),active_env,FROM_ENVED,"Enved: flt",apply_to_selection,NULL);
 	      break;
 	    case SRATE_ENV:
-	      src_env_or_num(ss,active_channel,active_env,0.0,FALSE,FROM_ENVED,"Enved: src",apply_to_selection);
+	      /* mus_src no longer protects against 0 srate */
+	      max_env = copy_env(active_env);
+	      for (i=0,j=1;i<max_env->pts;i++,j+=2)
+		if (max_env->data[j] < .01) max_env->data[j] = .01;
+	      src_env_or_num(ss,active_channel,max_env,0.0,FALSE,FROM_ENVED,"Enved: src",apply_to_selection);
+	      max_env = free_env(max_env);
 	      if (enved_waving(ss)) env_redisplay(ss);
 	      break;
 	    }
@@ -291,7 +300,10 @@ static void Apply_Enved_Callback(Widget w,XtPointer clientData,XtPointer callDat
    * cr in text => save under that name
    */
   if (cb->event != sgx->text_activate_event)
-    apply_enved((snd_state *)clientData);
+    {
+      apply_enved((snd_state *)clientData);
+      last_active_channel = active_channel;
+    }
   else 
     {
       if (sgx->text_widget == textL)
@@ -305,11 +317,10 @@ static void Undo_and_Apply_Enved_Callback(Widget w,XtPointer clientData,XtPointe
   /* undo upto previous amp env, then apply */
   /* this blindly undoes the previous edit (assumed to be an envelope) -- if the user made some other change in the meantime, too bad */
   snd_state *ss = (snd_state *)clientData;
-  if ((active_channel) && (active_channel == current_channel(ss)))
-    {
-      undo_edit_with_sync(active_channel,1);
-    }
+  if ((active_channel) && (active_channel == last_active_channel))
+    undo_edit_with_sync(active_channel,1);
   apply_enved(ss);
+  last_active_channel = active_channel;
 }
 
 static void Undo_and_Apply_Help_Callback(Widget w,XtPointer clientData,XtPointer callData) 
