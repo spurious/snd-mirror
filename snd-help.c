@@ -253,6 +253,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+23-Jan:  no-gui version now reads ~/.snd (thanks to Eliot Handelman)\n\
 16-Jan:  fm.html, sndscm.html.\n\
 15-Jan:  snd 4.10.\n\
 9-Jan:   rubber-sound in rubber.scm.\n\
@@ -260,12 +261,6 @@ void news_help(snd_state *ss)
 21-Dec:  env|src-sound|selection can be passed CLM env.\n\
 18-Dec:  enved.scm (suggested by Anders Vinjar).\n\
          play-hook, player?.\n\
-15-Dec:  update-lisp-graph. graph data arg can be envelope.\n\
-         graph-style can apply to time, transform, and lisp graphs independently.\n\
-13-Dec:  prc95.scm (Perry Cook's physical modelling examples).\n\
-12-Dec:  ws.scm (more elaborate with-sound implementation).\n\
-         save-listener.\n\
-         play-syncd-marks (marks.scm)\n\
 ",
 NULL);
   FREE(info);

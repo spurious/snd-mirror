@@ -1,3 +1,6 @@
+/* TODO: should this implement all the GUI-specific scm functions? (make-color etc)
+ */
+
 #include "snd.h"
 
 void snd_help(snd_state *ss, char *subject, char *help) {}
@@ -349,11 +352,63 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
 }
 
 #if HAVE_GUILE
+static char **auto_open_file_names = NULL;
+static int auto_open_files = 0;
+static int noglob = 0, noinit = 0;
+
+#if TRAP_SEGFAULT
+#include <setjmp.h>
+/* stolen from scwm.c */
+static sigjmp_buf envHandleEventsLoop;
+
+static RETSIGTYPE segv(int ignored)
+{
+  siglongjmp(envHandleEventsLoop,1);
+}
+#endif
+
 void snd_doit(snd_state *ss,int argc, char **argv)
 {
+  static int auto_open_ctr = 0;
+  int i;
   ss->sgx = (state_context *)CALLOC(1,sizeof(state_context));
+
+  ss->init_file = getenv(SND_INIT_FILE_ENVIRONMENT_NAME);
+  if (ss->init_file == NULL)
+    ss->init_file = INIT_FILE_NAME;
+  set_eps_file(ss,EPS_FILE_NAME);
+
+  for (i=1;i<argc;i++)
+    {
+      if (strcmp(argv[i],"-noglob") == 0)
+	noglob = 1;
+      else
+	if (strcmp(argv[i],"-noinit") == 0)
+	  noinit = 1;
+    }
+  snd_load_init_file(ss,noglob,noinit);
+  auto_open_files = argc-1;
+  if (argc > 1) auto_open_file_names = (char **)(argv+1);
+  while (auto_open_ctr < auto_open_files)
+    {
+      auto_open_ctr = handle_next_startup_arg(ss,auto_open_ctr,auto_open_file_names,FALSE);
+    }
+#if TRAP_SEGFAULT
+  if (trap_segfault(ss)) signal(SIGSEGV,segv);
+#endif
+  if ((ss->sounds) && (ss->sounds[0]) && ((ss->sounds[0])->inuse)) 
+    {
+      select_channel(ss->sounds[0],0);
+    }
+
   gh_eval_str("(set! scm-repl-prompt \"snd> \")");
-  gh_repl(argc,argv);
+
+#if TRAP_SEGFAULT
+  if (sigsetjmp(envHandleEventsLoop,1))
+    snd_error("Caught seg fault; trying to continue...");
+#endif
+
+  gh_repl(1,argv); /* not argc because damned scm_shell tries to interpret all args! */
 }
 #else
   void snd_doit(snd_state *ss,int argc, char **argv) {}

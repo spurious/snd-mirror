@@ -1943,6 +1943,9 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
   int end = NO_END_SPECIFIED;
   int *ends = NULL;
   if (SCM_INUMP(end_n)) end = SCM_INUM(end_n);
+#if USE_NO_GUI
+  background = 0;
+#endif
 
   /* if even samp_n is SCM_UNDEFINED, start_dac? */
 

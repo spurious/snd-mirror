@@ -1196,10 +1196,10 @@ static SCM g_mus_bank1(SCM amps, SCM gens, SCM inp, int type, char *caller)
 /* ---------------- oscil ---------------- */
 
 #define S_make_oscil "make-oscil"
-#define S_oscil "oscil"
+#define S_oscil      "oscil"
 #define S_oscil_bank "oscil-bank"
-#define S_oscil_p "oscil?"
-#define S_mus_apply "mus-apply"
+#define S_oscil_p    "oscil?"
+#define S_mus_apply  "mus-apply"
 
 static SCM g_make_oscil(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
 {
@@ -1586,9 +1586,9 @@ static void init_dly(void)
 /* -------- sum-of-cosines -------- */
 
 #define S_make_sum_of_cosines "make-sum-of-cosines"
-#define S_sum_of_cosines "sum-of-cosines"
-#define S_sum_of_cosines_p "sum-of-cosines?"
-#define S_mus_cosines "mus-cosines"
+#define S_sum_of_cosines      "sum-of-cosines"
+#define S_sum_of_cosines_p    "sum-of-cosines?"
+#define S_mus_cosines         "mus-cosines"
 
 static SCM g_sum_of_cosines_p(SCM obj) 
 {
@@ -1777,10 +1777,10 @@ static void init_noi(void)
 
 static int DEFAULT_TABLE_SIZE = 512;
 
-#define S_table_lookup_p "table-lookup?"
-#define S_make_table_lookup "make-table-lookup"
-#define S_table_lookup "table-lookup"
-#define S_partials2wave "partials->wave"
+#define S_table_lookup_p     "table-lookup?"
+#define S_make_table_lookup  "make-table-lookup"
+#define S_table_lookup       "table-lookup"
+#define S_partials2wave      "partials->wave"
 #define S_phasepartials2wave "phase-partials->wave"
 
 static SCM g_table_lookup_p(SCM obj) 
@@ -1919,17 +1919,17 @@ static void init_tbl(void)
 /* ---------------- sawtooth et al ---------------- */
 
 #define S_make_sawtooth_wave "make-sawtooth-wave"
-#define S_sawtooth_wave "sawtooth-wave"
-#define S_sawtooth_wave_p "sawtooth-wave?"
-#define S_make_square_wave "make-square-wave"
-#define S_square_wave "square-wave"
-#define S_square_wave_p "square-wave?"
+#define S_sawtooth_wave      "sawtooth-wave"
+#define S_sawtooth_wave_p    "sawtooth-wave?"
+#define S_make_square_wave   "make-square-wave"
+#define S_square_wave        "square-wave"
+#define S_square_wave_p      "square-wave?"
 #define S_make_triangle_wave "make-triangle-wave"
-#define S_triangle_wave "triangle-wave"
-#define S_triangle_wave_p "triangle-wave?"
-#define S_make_pulse_train "make-pulse-train"
-#define S_pulse_train "pulse-train"
-#define S_pulse_train_p "pulse-train?"
+#define S_triangle_wave      "triangle-wave"
+#define S_triangle_wave_p    "triangle-wave?"
+#define S_make_pulse_train   "make-pulse-train"
+#define S_pulse_train        "pulse-train"
+#define S_pulse_train_p      "pulse-train?"
 
 enum {G_SAWTOOTH_WAVE,G_SQUARE_WAVE,G_TRIANGLE_WAVE,G_PULSE_TRAIN};
 
@@ -2160,16 +2160,16 @@ static void init_asyfm(void)
 #define S_two_pole_p    "two-pole?"
 #define S_make_zpolar   "make-zpolar"
 #define S_make_ppolar   "make-ppolar"
-#define S_mus_a0            "mus-a0"
-#define S_mus_a1            "mus-a1"
-#define S_mus_a2            "mus-a2"
-#define S_mus_b1            "mus-b1"
-#define S_mus_b2            "mus-b2"
-#define S_mus_set_a0        "mus-set-a0"
-#define S_mus_set_a1        "mus-set-a1"
-#define S_mus_set_a2        "mus-set-a2"
-#define S_mus_set_b1        "mus-set-b1"
-#define S_mus_set_b2        "mus-set-b2"
+#define S_mus_a0        "mus-a0"
+#define S_mus_a1        "mus-a1"
+#define S_mus_a2        "mus-a2"
+#define S_mus_b1        "mus-b1"
+#define S_mus_b2        "mus-b2"
+#define S_mus_set_a0    "mus-set-a0"
+#define S_mus_set_a1    "mus-set-a1"
+#define S_mus_set_a2    "mus-set-a2"
+#define S_mus_set_b1    "mus-set-b1"
+#define S_mus_set_b2    "mus-set-b2"
 
 enum {G_ONE_POLE,G_ONE_ZERO,G_TWO_POLE,G_TWO_ZERO,G_ZPOLAR,G_PPOLAR};
 static char *smpflts[6] = {S_make_one_pole,S_make_one_zero,S_make_two_pole,S_make_two_zero,S_make_zpolar,S_make_ppolar};
@@ -2991,11 +2991,11 @@ static void init_wt(void)
 
 /* ---------------- waveshape ---------------- */
 
-#define S_make_waveshape           "make-waveshape"
-#define S_waveshape                "waveshape"
-#define S_waveshape_p              "waveshape?"
-#define S_partials2waveshape       "partials->waveshape"
-#define S_partials2polynomial      "partials->polynomial"
+#define S_make_waveshape       "make-waveshape"
+#define S_waveshape            "waveshape"
+#define S_waveshape_p          "waveshape?"
+#define S_partials2waveshape   "partials->waveshape"
+#define S_partials2polynomial  "partials->polynomial"
 
 static Float *list2partials(SCM harms, int *npartials)
 {
@@ -3523,8 +3523,8 @@ static void init_env(void)
 #define S_frame2file       "frame->file"
 #define S_frame2file_p     "frame->file?"
 #define S_make_frame2file  "make-frame->file"
-#define S_mus_input_p          "mus-input?"
-#define S_mus_output_p         "mus-output?"
+#define S_mus_input_p      "mus-input?"
+#define S_mus_output_p     "mus-output?"
 #define S_in_any           "in-any"
 #define S_out_any          "out-any"
 #define S_ina              "ina"
@@ -3837,9 +3837,9 @@ static void init_io(void)
 
 /* ---------------- readin ---------------- */
 
-#define S_readin        "readin"
-#define S_readin_p      "readin?"
-#define S_make_readin   "make-readin"
+#define S_readin            "readin"
+#define S_readin_p          "readin?"
+#define S_make_readin       "make-readin"
 #define S_mus_increment     "mus-increment"
 #define S_mus_set_increment "mus-set-increment"
 #define S_mus_location      "mus-location"
@@ -4119,9 +4119,9 @@ static Float funcall1 (void *ptr, int direction) /* intended for "as-needed" inp
   else return(0.0);
 }
 
-#define S_src       "src"
-#define S_src_p     "src?"
-#define S_make_src  "make-src"
+#define S_src         "src"
+#define S_src_p       "src?"
+#define S_make_src    "make-src"
 #define S_clear_sincs "clear-sincs"
 
 static SCM g_clear_sincs(void)
@@ -4204,10 +4204,10 @@ static void init_sr(void)
 #define S_granulate_p    "granulate?"
 #define S_granulate      "granulate"
 #define S_make_granulate "make-granulate"
-#define S_mus_ramp           "mus-ramp"
-#define S_mus_set_ramp       "mus-set-ramp"
-#define S_mus_hop            "mus-hop"
-#define S_mus_set_hop        "mus-set-hop"
+#define S_mus_ramp       "mus-ramp"
+#define S_mus_set_ramp   "mus-set-ramp"
+#define S_mus_hop        "mus-hop"
+#define S_mus_set_hop    "mus-set-hop"
 
 static SCM g_granulate_p(SCM obj) 
 {

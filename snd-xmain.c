@@ -17,12 +17,6 @@
 
 #include <X11/cursorfont.h>
 
-#ifndef WINDOZE
-  #define INIT_FILE_NAME "~/.snd"
-#else
-  #define INIT_FILE_NAME "snd-init"
-#endif
-#define EPS_FILE_NAME "snd.eps"
 #define FALLBACK_FONT "fixed"
 
 /* our default basic colors (resource file can override these): */

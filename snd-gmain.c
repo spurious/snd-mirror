@@ -11,12 +11,6 @@
   #endif
 #endif
 
-#ifndef WINDOZE
-  #define INIT_FILE_NAME "~/.snd"
-#else
-  #define INIT_FILE_NAME "snd-init"
-#endif
-#define EPS_FILE_NAME "snd.eps"
 #define FALLBACK_FONT "fixed"
 #define HIGHLIGHT_COLOR      "ivory1"
 #define BASIC_COLOR          "ivory2"

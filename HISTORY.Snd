@@ -1,5 +1,6 @@
 snd change log
 
+  23-Jan:    no-gui version now reads ~/.snd (thanks to Eliot Handelman).
   16-Jan:    fm.html, sndscm.html.
   15-Jan:    snd 4.10.
   9-Jan:     rubber-sound in rubber.scm.

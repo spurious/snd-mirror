@@ -91,6 +91,12 @@
 #endif
 
 #define SND_INIT_FILE_ENVIRONMENT_NAME "SND_INIT_FILE"
+#ifndef WINDOZE
+  #define INIT_FILE_NAME "~/.snd"
+#else
+  #define INIT_FILE_NAME "snd-init"
+#endif
+#define EPS_FILE_NAME "snd.eps"
 
 #define XOR(a,b) ((~((a) & (b))) & ((a) | (b)))
 

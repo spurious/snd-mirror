@@ -96,7 +96,7 @@ ccrma-ftp.stanford.edu; the Snd editor is <a href="ftp://ccrma-ftp.stanford.edu/
 </ul>
 <br>
 
-<span class=box><h2><a name="introduction">Introduction</a></h2></span>
+<span class=box><h2><A NAME="introduction">Introduction</a></h2></span>
 
 <p>CLM provides functions to experiment with sounds.
 The easiest way to make a new sound is 
@@ -235,7 +235,7 @@ on.  The envelope is then actually applied by calling <a href="#env">env</a>.</p
 <br>
 
 
-<span class=box><h2><a name="instruments">CLM instruments</a></h2></span>
+<span class=box><h2><A NAME="instruments">CLM instruments</a></h2></span>
 
 <p>The normal structure of an instrument is:</p>
 <pre>
@@ -247,7 +247,7 @@ The run-time code can contain any of the lisp functions, generators, or other
 special functions described in the next several sections.  Since life is short,
 not every feature of lisp is supported by the run macro; if you want to use
 the Lisp-to-C translation feature, only the following 
-<a name="lisp-functions"></a>
+<A NAME="lisp-functions"></a>
 <!-- TOPIC lisp-functions -->
 <!-- INDEX lisp-functions:Run support for Lisp -->
 Lisp functions can occur within the body of the run macro:</p>
@@ -288,7 +288,7 @@ in the resultant C code these become either integers or doubles.
 <br>
 
 <!-- INDEX generators:Generators -->
-<span class=bbox><h3><a name="generators">Generators</a></h3></span>
+<span class=bbox><h3><A NAME="generators">Generators</a></h3></span>
 <br><center>
 <table border=8 bordercolor="lightsteelblue">
   <tr><td><small><a href="#all-pass">all-pass</a></small><td><small>all-pass filter</small><td><td><small><a href="#out-any">out-any</a></small><td><small>sound output</small><td>
@@ -434,7 +434,7 @@ discussion of fm.</p>
 <br>
 
 <!-- TOPIC envelope -->
-<!-- INDEX envelopes:Envelopes --><a name="envelopes"></a>
+<!-- INDEX envelopes:Envelopes --><A NAME="envelopes"></a>
 <span class=cbox><h4>ENV</h4></span>
 
 <pre>
@@ -801,7 +801,7 @@ use this for VOSIM and other related techniques.</p>
 <br>
 
 <!-- TOPIC rand -->
-<!-- INDEX random-numbers:Random numbers --><a name="random-numbers"></a>
+<!-- INDEX random-numbers:Random numbers --><A NAME="random-numbers"></a>
 <span class=cbox><h4>RAND, RAND-INTERP</h4></span>
 
 <pre>
@@ -916,7 +916,7 @@ Another instrument based on similar ideas is:</p>
 <br>
 
 <!-- TOPIC one-pole -->
-<!-- INDEX filters:Filters --><a name="filters"></a>
+<!-- INDEX filters:Filters --><A NAME="filters"></a>
 <span class=cbox><h4>ONE-POLE, ONE-ZERO, TWO-POLE, TWO-ZERO</h4></span>
 
 <pre>
@@ -1039,7 +1039,7 @@ but consider doing cross-synthesis with an equalizer of 128 channels driven
 at the sampling rate by a spectral analyzer:</p>
 <!-- INDEX cross-synthesis:cross synthesis -->
 <pre><small>
-(definstrument <a name="cross-synthesis">cross-synthesis</a> (beg dur file1 file2 amp &amp;optional (fftsize 128) (r two-pi) (lo 2) (hi nil))
+(definstrument <A NAME="cross-synthesis">cross-synthesis</a> (beg dur file1 file2 amp &amp;optional (fftsize 128) (r two-pi) (lo 2) (hi nil))
   ;; file1: input sound, file2: gives spectral shape
   ;; r: controls width of formants (1.0 is another good value here)
   ;; lo and hi: which of the formants are active (a sort of filter on top of the filter)
@@ -1162,7 +1162,7 @@ Say we want to put a spectral envelope on a noise source.</p>
 The <i>order</i> of the filter determines how close you
 get to the envelope.</p>
 
-<p>The <a name="hilbert">Hilbert transform</a> can be implemented with FIR-filter:</p>
+<p>The <A NAME="hilbert">Hilbert transform</a> can be implemented with FIR-filter:</p>
 <pre><small>
 (defun make-hilbert (&amp;optional (len 30))
   ;; create the coefficients of the Hilbert transformer of length <i>len</i>
@@ -1435,7 +1435,7 @@ handier.</p>
 <br>
 
 <!-- TOPIC granulate -->
-<!-- INDEX grains:Granular synthesis --><a name="grains"></a>
+<!-- INDEX grains:Granular synthesis --><A NAME="grains"></a>
 <span class=cbox><h4>GRANULATE</h4></span>
 <pre>
   <a name="make-granulate"><em class=def>make-granulate</em></a> <a href="#optional-key">&amp;optional-key</a>   
@@ -1680,7 +1680,7 @@ butterworth.cl has several Butterworth filters.  </p>
 
 
 <!-- TOPIC generic functions -->
-<span class=cbox><h4><a name="generic-functions">Generic Functions</a></h4></span>
+<span class=cbox><h4><A NAME="generic-functions">Generic Functions</a></h4></span>
 
 <p>The generators have internal fields that are sometimes of interest at run-time.  To get or
 set these fields, use these functions (they are described in conjunction with the associated generators):</p>
@@ -1698,7 +1698,7 @@ sets osc1's current frequency to (hz-&gt;radians 440.0).
 
 </p>
 <pre><small>
-(definstrument <a name="backandforth">backandforth</a> (onset duration file src-ratio)
+(definstrument <A NAME="backandforth">backandforth</a> (onset duration file src-ratio)
   ;; read file forwards and backwards until dur is used up
   ;; a slightly improved version is 'scratch' in ug1.ins
   (let* ((f (open-input file))
@@ -1720,7 +1720,7 @@ processing on a file, and want to use envelopes, but for whatever reason can't
 easily say how long the output will be.  The envelopes can be defined in terms
 of the input file's length, then applied by watching mus-location:</p>
 <pre><small>
-(definstrument <a name="srctst">srctst</a> (file beg srcenv in-file-start)
+(definstrument <A NAME="srctst">srctst</a> (file beg srcenv in-file-start)
   (let ((f (open-input file :start (floor (* in-file-start (sound-srate file))))))
     (unwind-protect
         (let* ((st (floor (* beg *srate*)))
@@ -1764,7 +1764,7 @@ function.</p>
 <br>
 
 
-<span class=bbox><h3><a name="sound IO">Frames, Mixers, Sound IO</a></h3></span>
+<span class=bbox><h3><A NAME="sound IO">Frames, Mixers, Sound IO</a></h3></span>
 <!-- TOPIC frames -->
 <span class=cbox><h4>Frames and Mixers</h4></span>
 
@@ -1862,7 +1862,7 @@ run-time memory management).
 <p>These functions underly the more commonly used IO functions, outa and friends:</p>
 
 <!-- TOPIC outa -->
-<!-- INDEX ina-outa:Input and output --><a name="ina-outa"></a>
+<!-- INDEX ina-outa:Input and output --><A NAME="ina-outa"></a>
 <span class=cbox><h4>OUTA, OUTB, OUTC, OUTD, OUT-ANY</h4></span>
 <pre>
   <a name="outa"><em class=def>outa</em></a> <i>loc</i> <i>data</i> &amp;optional (<i>o-stream</i> *output*)
@@ -1928,7 +1928,7 @@ or with-dac (0=microphone, 1=analog line in, 2=digital line in).
 Here is an instrument that applies an envelope to a sound file using
 readin and <a href="#env">env</a> (see also the fullmix instrument in fullmix.ins):</p>
 <pre><small>
-(definstrument <a name="envsound">env-sound</a> (file beg &amp;optional (amp 1.0) (amp-env '(0 1 100 1)))
+(definstrument <A NAME="envsound">env-sound</a> (file beg &amp;optional (amp 1.0) (amp-env '(0 1 100 1)))
   (let ((f (open-input* file)))
     (when f
       (unwind-protect
@@ -2030,7 +2030,7 @@ source, see Fernando Lopez Lezcano's <a name="dlocsig"><em class=def>dlocsig</em
 <br>
 
 
-<span class=bbox><h3><a name="functions">Useful functions</a></h3></span>
+<span class=bbox><h3><A NAME="functions">Useful functions</a></h3></span>
 
 <p>There are several commonly-used functions that can occur in the run macro. These include
 a few that look for all the world like generators.</p>
@@ -2095,7 +2095,7 @@ waveshaping, use the function <a href="#partials-&gt;polynomial">partials-&gt;po
 Abramowitz and Stegun, "A Handbook of Mathematical Functions" is a
 treasure-trove of interesting polynomials.</p>
 <pre><small>
-(definstrument <a name="bigbird">BigBird</a> (start duration frequency freqskew amplitude
+(definstrument <A NAME="bigbird">BigBird</a> (start duration frequency freqskew amplitude
                           freq-env amp-env partials)
   (multiple-value-bind (beg end) (times-&gt;samples start duration)
     (let* ((gls-env (make-env freq-env (hz-&gt;radians freqskew) duration))
@@ -2150,7 +2150,7 @@ sound, helping it cut through a huge mix.</p>
 <p><small>
 Waveshaping can provide a similar effect:</p>
 <pre>
-(definstrument <a name="brighten">brighten</a> (start duration file file-maxamp partials)
+(definstrument <A NAME="brighten">brighten</a> (start duration file file-maxamp partials)
   (multiple-value-bind (beg end) (times-&gt;samples start duration)
     (let ((fil (open-input* file)))
       (when fil
@@ -2234,7 +2234,7 @@ of scaling the various spectral components to filter a sound, it reverses a port
 of the spectrum, a distortion that can be effective with speech sounds.</p>
 <pre>
 <small>
-(definstrument <a name="inside-out">inside-out</a> (beg dur file amp lo hi &amp;optional (fftsize 1024))
+(definstrument <A NAME="inside-out">inside-out</a> (beg dur file amp lo hi &amp;optional (fftsize 1024))
   ;; fft overlap-add (and buffer), but the fft bins between lo and hi are reversed
   (let ((fil (open-input* file)))
     (when fil
@@ -2389,7 +2389,7 @@ Obviously, calls on these
 instruments must be ordered by begin-time.</p>
 
 <!-- TOPIC instruments -->
-<!-- INDEX ins-files:Instruments --><a name="ins-files"></a>
+<!-- INDEX ins-files:Instruments --><A NAME="ins-files"></a>
 <p>The following instruments are included as separate .ins files in the clm
 directory (see also <a href="ins">ins</a>):</p>
 
@@ -2496,7 +2496,7 @@ any of the run-oriented functions in with-sound:</p>
 </pre>
 <br>
 
-<span class=box><h2><a name="note-lists">Note Lists</a></h2></span>
+<span class=box><h2><A NAME="note-lists">Note Lists</a></h2></span>
 <!-- INDEX note-lists:Note lists  -->
 
 <p>A note list in CLM is any lisp expression that opens an output sound file and calls an instrument.  The simplest way to
@@ -2624,7 +2624,7 @@ be scaled (in amplitude) by its value.</p>
 (with-sound (<em class=red>:scaled-by</em> 2.0) (fm-violin 0 1 440 .1)) 
 </pre>
 <p>produces a note that is .2 in amplitude.
-<a name="scaled-by"><em class=def>scaled-by</em></a> scales its body by
+<A NAME="scaled-by"><em class=def>scaled-by</em></a> scales its body by
 its first argument (much like <a href="#with-offset">with-offset</a>):</p>
 <pre>
   (with-sound () 
@@ -2633,7 +2633,7 @@ its first argument (much like <a href="#with-offset">with-offset</a>):</p>
       (fm-violin 0 .25 660 .1)) ;actual amp is .2
     (fm-violin .5 440 .1))
 </pre>
-<p>There is also the parallel macro <a name="scaled-to"><em class=def>scaled-to</em></a>.
+<p>There is also the parallel macro <A NAME="scaled-to"><em class=def>scaled-to</em></a>.
 These are built on the macro <a name="with-current-sound"><em class=def>with-current-sound</em></a>
 which sets up an embedded with-sound call with all the current with-sound arguments in place
 except output, comment, scaled-to, and scaled-by.</p>
@@ -2698,7 +2698,7 @@ to interrupt the dac in those cases, use <b>stop-dac</b>.  To set the dac volume
 (setf (<em class=red>volume</em>) 1.0).  Similarly (<em class=red>volume</em>)
 returns the current volume settings.</p>
 
-<span class=cbox><h4><a name="howtowsm">How to use many machines at once</a></h4></span>
+<span class=cbox><h4><A NAME="howtowsm">How to use many machines at once</a></h4></span>
 <!-- INDEX howtowsm:Multi-host with-sound -->
 
 <p><small>[under construction]</small></p>
@@ -2822,7 +2822,7 @@ call on the run-func.  With-dac currently is limited
 to ACL on the SGI or Linux.</p>
 
 <!-- INDEX realtimecontrols:Realtime Controls -->
-<p><a name="realtimecontrols"></a>
+<p><A NAME="realtimecontrols"></a>
 Realtime control and value readback is handled in CLM through shared memory.
 In the run loop
 (or anywhere else for that matter), the function <b>control</b>
@@ -2885,7 +2885,7 @@ This portion of CLM currently works only on the SGI or
 under Linux (though there's no reason it couldn't also
 work on the Sun).</p>
 
-<p>The :<a name="midi input">midi</a> input sets the associated control location 
+<p>The :<A NAME="midi input">midi</a> input sets the associated control location 
 to the value of the <i>data-byte</i> indicated (byte 1 or 2) if
 something comes along that matches
 the specified <i>channel</i> and <i>status</i>.  The raw data byte
@@ -2913,7 +2913,7 @@ The examples are:
 
 <!-- TOPIC with-mix -->
 <!-- INDEX mix-and-with-mix:Checkpoints -->
-<span class=bbox><h3><a name="mix-and-with-mix">With-mix</a></h3></span>
+<span class=bbox><h3><A NAME="mix-and-with-mix">With-mix</a></h3></span>
 <pre>
   <a name="with-mix"><em class=def>with-mix</em></a> <i>options</i> <i>file</i> <i>begin</i> &amp;body <i>body</i>
 </pre>
@@ -3217,7 +3217,7 @@ Here's another example that implements legato between notes by using the previou
 
 
 <!-- TOPIC debugging -->
-<span class=box><h2><a name="debugging-aids">Debugging</a></h2></span>
+<span class=box><h2><A NAME="debugging-aids">Debugging</a></h2></span>
 <!-- INDEX debugging-aids:Debugging  -->
 
 <p>CLM provides several built-in data display and instrument debugging aids, 
@@ -3233,7 +3233,7 @@ use all of Lisp's debugging features to see what is going wrong.  To run in Lisp
 (definstrument (simp :language :lisp) (args) ...), and then recompile and reload
 the instrument.  </p>
 
-<p>The optimize <a name="safety">safety</a> option can be used to check for array index and null
+<p>The optimize <A NAME="safety">safety</a> option can be used to check for array index and null
 generator problems (these will be reported as bus errors and segmentation
 faults).</p>
 
@@ -3336,7 +3336,7 @@ the may occasionally be useful.</p>
 </pre>
 <br>
 
-<span class=bbox><h3><a name="sndcommunication">CLM and Snd</a></h3></span>
+<span class=bbox><h3><A NAME="sndcommunication">CLM and Snd</a></h3></span>
 
 <p>If the Snd sound editor is available (currently this is the case on the SGI and
 some Linux systems, and should work on the Sun, but I haven't been able to try it), there are a variety of hooks in clm-snd.lisp that enable
@@ -3471,11 +3471,11 @@ or when CLM is exited.  If something goes wrong, just delete any file on
 the temp directory (/tmp or /var/tmp normally) whose name begins with "snd_".</p>
 <br>
 
-<span class=box><h2><a name="appendices">Appendices</a></h2></span>
+<span class=box><h2><A NAME="appendices">Appendices</a></h2></span>
 
 <!-- TOPIC headers -->
 <br>
-<span class=bbox><h3><a name="header-types">Header and data types</a></h3></span>
+<span class=bbox><h3><A NAME="header-types">Header and data types</a></h3></span>
 <!-- INDEX header-types:Sound file formats  -->
 <!-- INDEX header-types:Data formats  -->
 <!-- INDEX header-types:Headers  -->
@@ -3532,7 +3532,7 @@ mus-bfloat, mus-lfloat, mus-mulaw, mus-alaw, mus-byte, mus-ubyte, mus-b24int, mu
 and mus-ldouble.  The "b" stands for big-endian, "l" for little-endian, "u" for unsigned.
 The other header and data format possibilites are listed in initmus.lisp.</p>
 
-<a name="raw-data"></a>
+<A NAME="raw-data"></a>
 <!-- INDEX raw-data:raw data  -->
 <p>If you are trying to read raw (no header) sound files, CLM's default settings for
 the sampling rate, channels, and data format are 44100, 2, and mus-bshort
@@ -3546,7 +3546,7 @@ For example</p>
 
 <br>
 
-<span class=bbox><h3><a name="unwanted-noise">Sources of unwanted noise</a></h3></span>
+<span class=bbox><h3><A NAME="unwanted-noise">Sources of unwanted noise</a></h3></span>
 
 <p>The major source of unwanted noise in computer music is amplitude
 quantization.  This means soft notes are buzzy.  If these are later used as
@@ -3640,7 +3640,7 @@ normally means investing in pro-audio equipment.</p>
 <br>
 
 <!-- TOPIC initialization -->
-<span class=bbox><h3><a name="clm-init.lisp">clm-init.lisp</a></h3></span>
+<span class=bbox><h3><A NAME="clm-init.lisp">clm-init.lisp</a></h3></span>
 <!-- INDEX clm-init.lisp:CLM Initialization  -->
 
 <p>If the file clm-init.lisp exists in the same directory as <a href="all.lisp">all.lisp,</a> or
@@ -3672,7 +3672,7 @@ customizations that can be included, here is my clm-init.lisp:</p>
 </small></pre>
 <br>
 <!-- TOPIC user-defined-gens -->
-<span class=bbox><h3><a name="user-defined-ugs">User-defined generators</a></h3></span>
+<span class=bbox><h3><A NAME="user-defined-ugs">User-defined generators</a></h3></span>
 <!-- INDEX user-defined-ugs:User-defined generators  -->
 
 <p>Most special-case generators can be expressed as macros and defined
@@ -3711,7 +3711,7 @@ Once this code is loaded into CLM,</p>
 </small></pre>
 <br>
 
-<span class=bbox><h3><a name="savedimages">About CLM in saved images</a></h3></span>
+<span class=bbox><h3><A NAME="savedimages">About CLM in saved images</a></h3></span>
 <!-- INDEX savedimages:saved images -->
 
 <p>Many lisps have some mechanism to dump the current lisp image as an
@@ -3751,7 +3751,7 @@ saved images.
 </p>
 <br>
 
-<span class=bbox><h3><a name="how-to-use-clm">How to use CLM outside with-sound or clm-load</a></h3></span>
+<span class=bbox><h3><A NAME="how-to-use-clm">How to use CLM outside with-sound or clm-load</a></h3></span>
 
 <p><a href="#with-sound">With-sound</a> and <a href="#clm-load">clm-load</a> are macros that expand into code similar to the
 following:</p>
@@ -3786,7 +3786,7 @@ See <a href="rmsp.ins">rmsp.ins</a> for an example.</p>
 <br>
 
 
-<span class=bbox><h3><a name="bugs">Misfeatures and Unfinished Business</a></h3></span>
+<span class=bbox><h3><A NAME="bugs">Misfeatures and Unfinished Business</a></h3></span>
 
 <h4>Doubly nested with-mix triggers paranoia</h4>
 <p>With-mix called within with-mix called within with-sound causes the
@@ -3841,7 +3841,7 @@ C clm implementation into lisp. </p>
 
 <br>
 
-<span class=box><h2><a name="index">Index</a></h2></span>
+<span class=box><h2><A NAME="index">Index</a></h2></span>
 <!-- created 15-June-00 -->
 <pre>
 <small>

@@ -45,7 +45,7 @@
 <li><a href="#sndlibcl">Sndlib and Common Lisp</a>
 </ul>
 <br>
-<span class=box><h2><a name="introduction">Introduction</a></h2></span>
+<span class=box><h2><A NAME="introduction">Introduction</a></h2></span>
 
 <p>The sound library is a collection of sound file and audio hardware
 handlers written in C and running currently on SGI (either
@@ -88,7 +88,7 @@ SGI, Sun, and NeXT.  It could conceivably work elsewhere.  For more
 details see <a href="#building">How to Make Sndlib</a> below.</p>
 
 <br>
-<span class=box><h2><a name="headers">Headers</a></h2></span>
+<span class=box><h2><A NAME="headers">Headers</a></h2></span>
 
 <p>Sound files have built-in descriptors known as headers.
 The following functions return the information in the header.
@@ -148,7 +148,7 @@ components that have been found can be read via functions such as
 </p>
 
 <br>
-<span class=box><h2><a name="data">Data</a></h2></span>
+<span class=box><h2><A NAME="data">Data</a></h2></span>
 
 <p>The following functions provide access to
 sound file data:</p>
@@ -218,7 +218,7 @@ which moves to the indicated frame.
 </p>
 
 <br>
-<span class=box><h2><a name="hardware">Hardware</a></h2></span>
+<span class=box><h2><A NAME="hardware">Hardware</a></h2></span>
 
 <p>The following functions provide access to audio harware.  If an
 error occurs, they return -1. </p>
@@ -283,7 +283,7 @@ by that function with channels interleaved.</p>
 port associated with <i>line</i>.  This data is assumed to be in the format
 requested by mus_audio_open_output with channels interleaved.</p>
 
-<p><a name="readaudiostate"><i>mus_audio_mixer_read</i></a> and <i>mus_audio_mixer_write</i> are complicated.  They
+<p><A NAME="readaudiostate"><i>mus_audio_mixer_read</i></a> and <i>mus_audio_mixer_write</i> are complicated.  They
 get and set the audio hardware state.  The audio hardware is treated as a
 set of "systems" (sound cards) each of which has a set of "devices" (dacs, adcs, etc),
 with various "fields" that can be read or set (gain, channels active, etc).
@@ -364,7 +364,7 @@ MUS_AUDIO_PORT      return list of available devices (e.g. MUS_AUDIO_MICROPHONE)
 </pre>
 
 <br>
-<span class=box><h2><a name="music5">MusicV</a></h2></span>
+<span class=box><h2><A NAME="music5">MusicV</a></h2></span>
 
 <p>clm.c and friends implement all the generators found in CLM, a common lisp
 music V implementation, and clm2scm.c ties these into Guile (Scheme).  The
@@ -489,13 +489,13 @@ through mus_error which can be redirected or muffled.  See clm2scm.c for an exam
 </p>
 <br>
 
-<span class=box><h2><a name="examples">Examples</a></h2></span>
+<span class=box><h2><A NAME="examples">Examples</a></h2></span>
 
 <p>In the following examples I've omitted the usual garrulous C-header
 gab and other inessential stuff.  The full
 program code is available as noted below.</p>
 <br>
-<span class=bbox><h3><a name="sndinfo">SndInfo</a></h3></span>
+<span class=bbox><h3><A NAME="sndinfo">SndInfo</a></h3></span>
 
 <p>This program prints out a description of a sound file (sndinfo.c).</p>
 <pre>
@@ -531,7 +531,7 @@ int main(int argc, char *argv[])
 }
 </pre>
 <br>
-<span class=bbox><h3><a name="sndplay">SndPlay</a></h3></span>
+<span class=bbox><h3><A NAME="sndplay">SndPlay</a></h3></span>
 
 <p>This code plays a sound file (sndplay.c):</p>
 
@@ -577,7 +577,7 @@ int main(int argc, char *argv[])
 
 </pre>
 <br>
-<span class=bbox><h3><a name="sndrecord">SndRecord</a></h3></span>
+<span class=bbox><h3><A NAME="sndrecord">SndRecord</a></h3></span>
 
 <p>This code records a couple seconds of sound from a microphone.
 Input formats and sampling rates are dependent on available
@@ -619,7 +619,7 @@ int main(int argc, char *argv[])
 </pre>
 
 <br>
-<span class=bbox><h3><a name="audinfo">AudInfo</a></h3></span>
+<span class=bbox><h3><A NAME="audinfo">AudInfo</a></h3></span>
 
 <p>This program describes the current audio harware state (audinfo.c):</p>
 <pre>
@@ -633,7 +633,7 @@ int main(int argc, char *argv[])
 </pre>
 
 <br>
-<span class=bbox><h3><a name="sndsine">SndSine</a></h3></span>
+<span class=bbox><h3><A NAME="sndsine">SndSine</a></h3></span>
 
 <p>This program writes a one channel NeXT/Sun sound file
 containing a sine wave at 440 Hz.</p>
@@ -673,7 +673,7 @@ int main(int argc, char *argv[])
 </pre>
 
 <br>
-<span class=bbox><h3><a name="clmosc">clmosc</a></h3></span>
+<span class=bbox><h3><A NAME="clmosc">clmosc</a></h3></span>
 
 <p>This is program uses the clm.c oscillator and output functions to write the same sine wave 
 as we wrote in SndSine.<p>
@@ -841,14 +841,14 @@ static SCM call_phase-vocoder(void)
 }
 </pre>
 <br>
-<span class=bbox><h3><a name="otherexamples">Other Examples</a></h3></span>
+<span class=bbox><h3><A NAME="otherexamples">Other Examples</a></h3></span>
 
 <p>The primary impetus for the sound library was the development
 of Snd and CLM, both of which are freely available.</p>
 <br>
 
 
-<span class=bbox><h3><a name="building">How to Make Sndlib and the examples</a></h3></span>
+<span class=bbox><h3><A NAME="building">How to Make Sndlib and the examples</a></h3></span>
 
 <p>The Sndlib files can be used as separate modules or made into a
 library.  The following sequence, for example, builds the sndplay
@@ -923,7 +923,7 @@ ld -shared io.o headers.o audio.o sound.o clm.o -o sndlib.so
 </pre>
 <br>
 
-<span class=box><h2><a name="currentstatus">Current Status</a></h2></span>
+<span class=box><h2><A NAME="currentstatus">Current Status</a></h2></span>
 <br>
 <center>
 <table border=8 bordercolor="lightgreen"> 
@@ -985,7 +985,7 @@ Handled by Snd: Mus10, IEEE text, HCOM, various compression schemes.
 </small>
 </pre>
 <br>
-<span class=box><h2><a name="lowerlevels">Lower Levels</a></h2></span>
+<span class=box><h2><A NAME="lowerlevels">Lower Levels</a></h2></span>
 
 <p>If you'd like to go below the "sound" interface described above,
 the following functions are exported from sndlib.  You need to remember
@@ -1097,7 +1097,7 @@ to and from arrays:</p>
   int mus_array_to_file (const char *filename, MUS_SAMPLE_TYPE *ddata, int len, int srate, int channels)
 </pre>
 <br>
-<span class=box><h2><a name="sndlibguile">Sndlib and Guile</a></h2></span>
+<span class=box><h2><A NAME="sndlibguile">Sndlib and Guile</a></h2></span>
 
 <p>Much of sndlib is accessible at run time in any program that has Guile;
 the modules sndlib2scm and clm2scm tie most of the library into Scheme
@@ -1240,7 +1240,7 @@ constants and functions described above into Scheme.
 	(mus-audio-close audio-fd)))))
 </pre>
 <br>
-<span class=box><h2><a name="sndlibcl">Sndlib and Common Lisp</a></h2></span>
+<span class=box><h2><A NAME="sndlibcl">Sndlib and Common Lisp</a></h2></span>
 
 <p>See CLM's ffi.lisp for a foreign function interface for sndlib to
 ACL, MCL, and CMU-CL.  This could be extracted and expanded if there's interest.

@@ -20,7 +20,7 @@
 </head>
 <body bgcolor=white>
 
-<a name="extsndcontents"></a>
+<A NAME="extsndcontents"></a>
 <span class=box><h1>Snd Customization and Extension</h1></span>
 <br>
 <center>
@@ -65,7 +65,7 @@
 </ul>
 <br>
 <span class=box><h2>Introduction</h2></span>
-<a name="lisplistener"></a>
+<A NAME="lisplistener"></a>
 
 <p>Snd is a highly customizable, extensible program.
 The syntax used is Scheme (a form of lisp) as implemented by the Gnu Guile library.
@@ -101,7 +101,7 @@ in this situation,
 it's actually waiting for a close paren.
 </small></p>
 <br>
-<span class=box><h2><a name="etc">Snd Programming</a></h2></span>
+<span class=box><h2><A NAME="etc">Snd Programming</a></h2></span>
 
 <p>Snd is organized as a list of sounds, each with a list of channels,
 each channel containing lists of edits, marks, mixes, etc.
@@ -144,7 +144,7 @@ various examples of and extensions to Snd can be found in:
 </table>
 
 <br>
-<span class=bbox><h3><a name="appearance">Customizing Snd's appearance</a></h3></span>
+<span class=bbox><h3><A NAME="appearance">Customizing Snd's appearance</a></h3></span>
 
 <p>Snd's overall appearance is controlled first by the startup <a href="grfsnd.html#sndswitches">switches</a> that
 choose the outermost widget; normally this is a paned window with a sound
@@ -187,7 +187,7 @@ description of what it does.  So,
 that its default value is ivory2 (see <a href="sndscm.html#rgbdoc">rgb.scm</a> for a definition of this color), and that
 it is the main Snd color.</p>
 <br>
-<span class=cbox><h4><a name="colors">Colors</a></h4></span>
+<span class=cbox><h4><A NAME="colors">Colors</a></h4></span>
 
 <p>A color in Snd is an object with three fields representing the
 rgb (red green blue) settings as numbers between 0.0 and 1.0.  A color
@@ -263,7 +263,7 @@ variables and functions control this:</p>
 </p>
 
 <br>
-<span class=cbox><h4><a name="fonts">Fonts</a></h4></span>
+<span class=cbox><h4><A NAME="fonts">Fonts</a></h4></span>
 
 <p>Fonts in Snd are strings containing a description of the
 desired font.  These can be the abbreviated forms such as
@@ -282,7 +282,7 @@ The font variables are:
 
 
 <br>
-<span class=bbox><h3><a name="behavior">Customizing Snd's behavior</a></h3></span>
+<span class=bbox><h3><A NAME="behavior">Customizing Snd's behavior</a></h3></span>
 
 <p>Most of Snd's behavior can be customized.  For example,
 when a sound is saved, some people want to be warned if
@@ -318,7 +318,7 @@ these refer to the default file name and comment displayed
 when you save a sound via the "save" dialog.</p>
 
 <br>
-<span class=cbox><h4><a name="sndglobalvars">Global variables</a></h4></span>
+<span class=cbox><h4><A NAME="sndglobalvars">Global variables</a></h4></span>
 
 <p>The main variables affecting Snd's overall behavior are:</p>
 
@@ -483,7 +483,7 @@ when you save a sound via the "save" dialog.</p>
 <br>
 
 
-<span class=cbox><h4><a name="sndhooks">Hooks</a></h4></span>
+<span class=cbox><h4><A NAME="sndhooks">Hooks</a></h4></span>
 
 <p>When some user-interface action takes place, some code is called that responds to that action;
 these functions are sometimes called callbacks; in Guile the variable that holds a list of such
@@ -712,7 +712,7 @@ the hook.
 See also <a href="#menuhook">menu-hook</a> below.</p>
 
 <br>
-<span class=bbox><h3><a name="sndobjects">Snd's objects</a></h3></span>
+<span class=bbox><h3><A NAME="sndobjects">Snd's objects</a></h3></span>
 
 <p>Snd presents its various data structures to the user as a list
 of sounds, each with a list of channels, each with lists of edits,
@@ -773,7 +773,7 @@ of these below.
 </p>
 
 <br>
-<span class=cbox><h3><a name="Vcts">Vcts</a></h3></span>
+<span class=cbox><h3><A NAME="Vcts">Vcts</a></h3></span>
 <p>
 Many of the Snd and CLM functions handle vectors (arrays) of data; 
 by defining a new vector type, named vct, and providing a package
@@ -922,7 +922,7 @@ an oscil or a sawtooth-wave:
 </pre>
 
 <br>
-<span class=cbox><h3><a name="sndsounddata">Sound-data and Sndlib</a></h3></span>
+<span class=cbox><h3><A NAME="sndsounddata">Sound-data and Sndlib</a></h3></span>
 
 <p>Another sound data object is the sound-data array used in Sndlib.</p>
 <pre>
@@ -991,7 +991,7 @@ The most important Sndlib functions for Snd are:</p>
 
 
 <br>
-<span class=cbox><h3><a name="samplereaders">Sample-readers</a></h3></span>
+<span class=cbox><h3><A NAME="samplereaders">Sample-readers</a></h3></span>
 <p>
 The simplest data access function is <i>sample</i>, returning the sample at
 a given position in a sound's channel.  This simplicity, however, comes at
@@ -1101,7 +1101,7 @@ edited) sound can be accessed by a normal sample-reader.
 </pre>
 
 <br>
-<span class=cbox><h3><a name="sndmarks">Marks</a></h3></span>
+<span class=cbox><h3><A NAME="sndmarks">Marks</a></h3></span>
 
 <p>A mark is an object that refers to a particular sample.
 Each mark has an associated sample number (<b>mark-sample</b>), name (<b>mark-name</b>), sync value (<b>mark-sync</b>), and
@@ -1222,7 +1222,7 @@ the respective marks (which need not be in separate channels). See <a href="snds
 more examples.</p>
 
 <br>
-<span class=cbox><h3><a name="sndmixes">Mixes</a></h3></span>
+<span class=cbox><h3><A NAME="sndmixes">Mixes</a></h3></span>
 
 <p>A mix is an object that controls one channel of a sound mix; it normally includes
 a control panel that affects various aspects of the
@@ -1334,7 +1334,7 @@ shows the edit list of that sound, and (set! (edit-position (list 0) 0) 0) rever
 it to its original state.
 </p>
 <br>
-<span class=cbox><h3><a name="sndregions">Regions</a></h3></span>
+<span class=cbox><h3><A NAME="sndregions">Regions</a></h3></span>
 
 <p>A region is a saved portion of sound data.  There is a dialog to browse regions, and
 a notion of a stack of regions.  As regions are added, old ones get pushed off the
@@ -1467,7 +1467,7 @@ these are indicated as <em class=targ>reg</em> below.
 
 
 <br>
-<span class=cbox><h3><a name="sndsounds">Sounds and channels</a></h3></span>
+<span class=cbox><h3><A NAME="sndsounds">Sounds and channels</a></h3></span>
 
 <p>Some of the <i>snd</i> and <i>chan</i> arguments can be #t, referring to all current sounds or all channels of a sound; 
 of these, some default to the currently selected sound if no argument is given, whereas others
@@ -2288,7 +2288,7 @@ sets its value to val.
 </small>
 </pre>
 
-<span class=cbox><h4><a name="customcontrols">the control panel</a></h4></span>
+<span class=cbox><h4><A NAME="customcontrols">the control panel</a></h4></span>
 
 <p>
 The control panel normally processes samples as follows: if the sampling
@@ -2322,7 +2322,7 @@ simplest function causes interruptions and stuttering.
 
 
 <br>
-<span class=cbox><h3><a name="editlists">Edit Lists</a></h3></span>
+<span class=cbox><h3><A NAME="editlists">Edit Lists</a></h3></span>
 
 <p>An edit list describes the edit history of a channel.  When, for example, you type C-d, nothing actually
 happens to any data, despite the fact that the graph no longer shows that sample, it's gone when you play the
@@ -2446,7 +2446,7 @@ operations.
 </p>
 
 <br>
-<span class=bbox><h3><a name="scanning">Scanning Data</a></h3></span>
+<span class=bbox><h3><A NAME="scanning">Scanning Data</a></h3></span>
 
 <p>Sound files can be enormous, far larger than available memory, so vector access to
 sample data (as in <a href="#sndsetsamples">set-samples</a>) is not always very useful.
@@ -2652,7 +2652,7 @@ is an example of this.</p>
 
 
 <br>
-<span class=bbox><h3><a name="sndtransforms">Transforms</a></h3></span>
+<span class=bbox><h3><A NAME="sndtransforms">Transforms</a></h3></span>
 
 <p>Except for add-transform, the transform functions and variables have been treated above, so this is just
 a list of them with cross-references.</p>
@@ -2709,7 +2709,7 @@ a list of them with cross-references.</p>
 </pre>
 
 <br>
-<span class=bbox><h3><a name="snddialogs">Dialogs</a></h3></span>
+<span class=bbox><h3><A NAME="snddialogs">Dialogs</a></h3></span>
 <p>Many aspects of the various dialogs can be customized.  The following is organized by dialog.</p>
 
 <pre>
@@ -2856,7 +2856,7 @@ menu action.</p>
 </pre>
 
 <br>
-<span class=bbox><h3><a name="snderrors">Errors</a></h3></span>
+<span class=bbox><h3><A NAME="snderrors">Errors</a></h3></span>
 <p> When something goes awry, the various functions can "throw" an error (a symbol)
 which is normally "caught" by the default error handler (this is a kind of "goto" 
 but without the embarrassment); it prints out some message,
@@ -2912,7 +2912,7 @@ variable %load-verbosely to #t.
 
 
 <br>
-<span class=bbox><h3><a name="sndconstants">Constants</a></h3></span>
+<span class=bbox><h3><A NAME="sndconstants">Constants</a></h3></span>
 
 <pre>
 
@@ -2974,7 +2974,7 @@ Axis choice:
 
 
 <br>
-<span class=bbox><h3><a name="sndmisc">Miscellaneous functions</a></h3></span>
+<span class=bbox><h3><A NAME="sndmisc">Miscellaneous functions</a></h3></span>
 
 <p>These functions don't seem to fit anywhere else:</p>
 <pre>
@@ -3151,7 +3151,7 @@ Axis choice:
 
 
 <br>
-<span class=bbox><h3><a name="sndexamples">Examples</a></h3></span>
+<span class=bbox><h3><A NAME="sndexamples">Examples</a></h3></span>
 
 <p>These examples are simplified to make the exposition cleaner; see <a href="sndscm.html#exampdoc">examp.scm</a> for more robust versions.
 <a href="sndscm.html#exampdoc">examp.scm</a> also has examples that add and remove menu items, set variables via the special "F" keys,
@@ -3168,7 +3168,7 @@ make a system call from the listener, and so on.  The following function compute
 </pre>
 <p>To get the data currently displayed in the time domain window:</p>
 <pre>
-(define <a name="windowsamples">window-samples</a>
+(define <A NAME="windowsamples">window-samples</a>
  (lambda ()
   (let ((wl (<a href="#sndleftsample">left-sample</a>))
 	(wr (<a href="#sndrightsample">right-sample</a>)))
@@ -3178,7 +3178,7 @@ make a system call from the listener, and so on.  The following function compute
 to show a running graph of the
 time domain energy:</p>
 <pre>
-(define <a name="displayenergy">display-energy</a>
+(define <A NAME="displayenergy">display-energy</a>
  (lambda ()
   (let* ((data (window-samples))
 	 (len (vector-length data)))
@@ -3208,7 +3208,7 @@ so we can rewrite display-energy:</p>
 <p>See <a href="sndscm.html#exampdoc">examp.scm</a> for more examples of using the vct structure.
 Say we want Snd to refuse to exit if there are unsaved edits.</p>
 <pre>
-(define <a name="unsavededits">unsaved-edits?</a>
+(define <A NAME="unsavededits">unsaved-edits?</a>
   (lambda (ind)
     (and (&lt; ind (max-sounds))
 	 (or (and (sound? ind)
@@ -3276,7 +3276,7 @@ found (this code obviously has to be in the init file):</p>
 </pre>
 <p>The following function uses the sndlib functions to mimic the 'info' popup menu option (see <a href="sndscm.html#exampdoc">examp.scm</a> for a version that uses format):</p>
 <pre>
-<a name="sndinfo"></a>
+<A NAME="sndinfo"></a>
 (define info 
   (lambda (file)
     (string-append 

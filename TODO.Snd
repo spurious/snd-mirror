@@ -103,7 +103,8 @@ dnl and we don't want to be global namespace polluters.
 and then make needs a target for glfft.
 --------
 
-Also, HAVE_GSL should be the default in configure.in
+Also, HAVE_GSL should be the default in configure.in (see gsl's gsl.m4,
+but it needs to set gslblas etc).
 
 
 Sawfish connection: it should be possible to send commands to sawfish,
@@ -136,7 +137,7 @@ Translate more CLM instruments to Scheme:
 More effects (see list of suggestions in effects.scm)
 
 Add Gnome tie-ins.  (The main useful one, I think, is the "save-yourself"
-  signal).
+  signal (no one can save himself...)).
 #include <gnome.h>
 /* do we need gnome_init("Snd",argc,argv);? */
 GnomeClient *client = gnome_master_client();
