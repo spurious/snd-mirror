@@ -6083,6 +6083,7 @@ version of cosine-channel given under
 </pre></td></tr></table></td></tr>
 
 <tr><td></td><td>
+<p>
 If the underlying data
 has too many previous ptree operations, map-channel is called instead and the new
 data is saved in the normal manner (that is, I don't currently try to chain any number of these operations
@@ -6092,16 +6093,20 @@ If no 'init-func' is specified, the editing procedure ('proc') should not assume
 the context in which it is called;  in this case, there's no way for 'proc' to know where it starts, or when it is being restarted,
 or which direction it is running, so,
 the following call:
-<pre>
+</p>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
    (let ((ctr 0)) 
      (<em class=red>ptree-channel</em> (lambda (y) 
                       (set! ctr (1+ ctr)) 
                       (* ctr .0001))))
-</pre>
-will never reset ctr to 0!  Every time a portion of the data is read by Snd, the samples will be
+</pre></td></tr></table>
+
+<p>will never reset ctr to 0!  Every time a portion of the data is read by Snd, the samples will be
 higher.  But, the notion of an accessor that returns a different thing each time a sample
 is accessed is not foolish:
-<pre>
+</p>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define* (dither-channel #:optional (amount .00006) beg dur snd chn edpos)
   "(dither-channel #:optional (amount .00006) beg dur snd chn edpos) adds 'amount' dither to each sample"
   (let ((dither (* .5 amount)))
@@ -6109,7 +6114,8 @@ is accessed is not foolish:
       (lambda (y) 
         (+ y (<a class=quiet href="clm.html#mus-random">mus-random</a> dither) (<a class=quiet href="clm.html#mus-random">mus-random</a> dither))) 
       beg dur snd chn edpos #t)))
-</pre>
+</pre></td></tr></table>
+<p>
 This gives a slightly different take on the sound each time you look at it or listen to it;
 the dithering is never exactly the same.  But if the details of the noise don't
 matter (presumably the case with dithering), the difference is unproblematic.  You're editing a sort
@@ -6117,7 +6123,9 @@ of mobile in sound (analogous to mobile sculpture).
 <br><br>
 One major limitation of ptree-channel with an 'init-func' is that <a href="#savestate">save-state</a>
 currently doesn't know how to save the enclosing environment along with the init-func. So,
-<pre>
+</p>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
   (let ((outer 0.5))
     (<em class=red>ptree-channel</em> (lambda (y data forward)
 		     (declare (y real) (data vct) (forward boolean))
@@ -6125,7 +6133,8 @@ currently doesn't know how to save the enclosing environment along with the init
 		   0 #f ind 0 #f #f
 		   (lambda (pos dur)
 		     (<a class=quiet href="#vct">vct</a> outer))))
-</pre>
+</pre></td></tr></table>
+<p>
 will not save the "outer" declaration in the saved state file. 
 This is a general problem with save-state; there's no obvious way in Guile to
 save the current closure as text.
@@ -6143,7 +6152,9 @@ The read direction argument can be ignored if you know you're not going to read 
 The only hidden reverse read is in the src generator where a negative increment can be
 generated in a variety of ways (for example, src driven by oscil).  A one-zero filter
 could in this case be:
-<pre>
+</p>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
   (<em class=red>ptree-channel</em> (lambda (y data forward)
 		   (declare (y real) (data vct) (forward boolean))
 		   (let ((val (* 0.5 (+ y (<a class=quiet href="#vctref">vct-ref</a> data 0)))))
@@ -6154,8 +6165,10 @@ could in this case be:
 		   (lambda (pos dur)
 		     (<a class=quiet href="#vct">vct</a> (if (= pos 0) 0.0
 			      (<a class=quiet href="#sample">sample</a> (1- pos) ind 0 edpos))))))
-</pre>
+</pre></td></tr></table>
+<p>
 Here are a couple more examples:
+</p>
 </td></tr>
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
@@ -6298,12 +6311,15 @@ for the given channel.  This should be called only within <a href="#initialgraph
 <tr><td></td><td>
 redo <i>edits</i> edits (default is 1) in <i>snd</i>'s channel <i>chn</i>. Redo follows the <a class=quiet href="#sync">sync</a> field if it
 is not 0, which sometimes means that the channel arg is simply ignored.  The following might be a more reasonable redo function:
-<br><br><pre>
+<br><br>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define* (<a name="redochannel">redo-channel</a> #:optional (<a class=quiet href="#edits">edits</a> 1) snd chn)
   (if (and snd (not (= (<a class=quiet href="#sync">sync</a> snd) 0)) chn)
       (set! (<a class=quiet href="#editposition">edit-position</a> snd chn) (+ (<a class=quiet href="#editposition">edit-position</a> snd chn) edits))
       (<em class=red>redo</em> edits snd)))
-</pre>  
+</pre></td></tr></table>
+  
 <br>
 <i>redo</i> simply moves forward in the edit history list, whereas 
 <a href="#undo">undo</a> backs up, and <a href="#revertsound">revert-sound</a> resets the current
@@ -6366,7 +6382,8 @@ reverse data.  There are some interesting non-causal effects you can get with th
 take a voice sound, reverse it, reverberate it, reverse it again, and you get the original with
 reversed reverb.  As a hack, you can reverse a sound (modulo a one sample rotation) by doing two ffts
 (DSP-ers call this a "flip"):
-<pre>
+<br>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define* (<A NAME="sillyreverse">silly-reverse</a> #:optional snd)
   (let* ((len (<a class=quiet href="#frames">frames</a> snd 0))
 	 (fsize (expt 2 (ceiling (/ (log len) (log 2)))))
@@ -6376,7 +6393,8 @@ reversed reverb.  As a hack, you can reverse a sound (modulo a one sample rotati
     (<a class=quiet href="clm.html#fft">mus-fft</a> rl im fsize)
     (<a class=quiet href="#vctscale">vct-scale!</a> rl (/ 1.0 fsize))
     (<a class=quiet href="#vct_to_channel">vct-&gt;channel</a> (<a class=quiet href="#vctsubseq">vct-subseq</a> rl (- fsize len) fsize) 0 len snd 0)))
-</pre>
+</pre></td></tr></table>
+
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6411,7 +6429,9 @@ and <a href="#moveonepixel">move-one-pixel</a>.
 block of code, and the result will usually run 10 to 20 times faster.  In the context of with-sound, run is used
 to speed up instrument bodies.  My timing tests indicate that Snd+Run instruments are within a factor of two to four
 of the speed of CL+run+C in CLM.
-<br><pre>
+<br><br>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (ws-sine freq)
   (let ((o (<a class=quiet href="clm.html#make-oscil">make-oscil</a> freq)))
     (<em class=red>run</em>
@@ -6419,7 +6439,8 @@ of the speed of CL+run+C in CLM.
        (do ((i 0 (1+ i)))
 	   ((= i 100))
 	 (<a class=quiet href="clm.html#outa">outa</a> i (<a class=quiet href="clm.html#oscil">oscil</a> o) *output*))))))
-</pre></td></tr>
+</pre></td></tr></table>
+</td></tr>
 
 <tr><td></td><td>
 Functions embedded within run (leaving aside the "thunk" argument itself) need to declare the type of their arguments (the type defaults to integer, and

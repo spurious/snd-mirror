@@ -142,13 +142,6 @@ typedef enum {GRAPH_LINES, GRAPH_DOTS, GRAPH_FILLED, GRAPH_DOTS_AND_LINES, GRAPH
 #else
   #define GRAPH_STYLE_OK(Grf) ((Grf >= GRAPH_LINES) && (Grf <= GRAPH_LOLLIPOPS))
 #endif
- /* using lollipop rather than the suggested popsicle because 
-  *   popsicle is a (capitalized) trade-name in the USA and I want lowercase,
-  *   lollipop is about 200 years older as an English word (1724 vs 1923),
-  *   and I think lollipop is more accurate -- in my experience lollipops have
-  *     circular candies whereas popsicles have a sort of squared-off bottom.
-  */
-
 typedef enum {APPLY_TO_SOUND, APPLY_TO_CHANNEL, APPLY_TO_SELECTION} snd_apply_t;
 typedef enum {GRAPH_ONCE, GRAPH_AS_SONOGRAM, GRAPH_AS_SPECTROGRAM, GRAPH_AS_WAVOGRAM} graph_type_t;
 typedef enum {ZOOM_FOCUS_LEFT, ZOOM_FOCUS_RIGHT, ZOOM_FOCUS_ACTIVE, ZOOM_FOCUS_MIDDLE} zoom_focus_t;

@@ -3,9 +3,10 @@
 
 #define MUS_VERSION 3
 #define MUS_REVISION 10
-#define MUS_DATE "7-Feb-05"
+#define MUS_DATE "14-Feb-05"
 
 /*
+ * 14-Feb:     deprecated mus_restart_env and mus_clear_filter_state.
  * 7-Feb-05:   mus_reset method, replaces mus_restart_env and mus_clear_filter_state.
  * --------
  * 20-Dec:     changed "jitter" handling if hop < .05 in granulate.
@@ -376,6 +377,8 @@ void mus_set_rand_seed(unsigned long seed);
 unsigned long mus_rand_seed(void);
 Float mus_random(Float amp);
 Float mus_frandom(Float amp);
+Float mus_random_1(void);
+Float mus_frandom_1(void);
 int mus_irandom(int amp);
 
 Float mus_rand(mus_any *gen, Float fm);
@@ -443,7 +446,9 @@ Float mus_set_xcoeff(mus_any *ptr, int index, Float val);
 Float mus_ycoeff(mus_any *ptr, int index);
 Float mus_set_ycoeff(mus_any *ptr, int index, Float val);
 #define mus_order(Gen) mus_length(Gen)
-#define mus_clear_filter_state(Gen) mus_reset(Gen)
+#if CLM_DISABLE_DEPRECATED
+  #define mus_clear_filter_state(Gen) mus_reset(Gen)
+#endif
 
 Float mus_wave_train(mus_any *gen, Float fm);
 Float mus_wave_train_1(mus_any *gen);
@@ -462,7 +467,9 @@ Float mus_env_linear(mus_any *ptr);
 mus_any *mus_make_env(Float *brkpts, int pts, Float scaler, Float offset, Float base, Float duration, off_t start, off_t end, Float *odata);
 bool mus_env_p(mus_any *ptr);
 bool mus_env_linear_p(mus_any *ptr);
-#define mus_restart_env(Gen) mus_reset(Gen)
+#if CLM_DISABLE_DEPRECATED
+  #define mus_restart_env(Gen) mus_reset(Gen)
+#endif
 Float mus_env_interp(Float x, mus_any *env);
 off_t *mus_env_passes(mus_any *gen); /* for Snd */
 double *mus_env_rates(mus_any *gen); /* for Snd */

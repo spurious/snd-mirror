@@ -855,7 +855,8 @@ to choose the desired member of that family of windows.
 current window and is updated as the window bounds change.
 If you'd like the fft size to reflect the current time domain
 window size:</p>
-<pre>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <a class=quiet href="extsnd.html#graphhook">graph-hook</a>
   (lambda (snd chn y0 y1)
     (if (and (<a class=quiet href="extsnd.html#transformgraphp">transform-graph?</a>) 
@@ -864,7 +865,8 @@ window size:</p>
         (expt 2 (ceiling (/ (log (- (<a class=quiet href="extsnd.html#rightsample">right-sample</a>) 
                                     (<a class=quiet href="extsnd.html#leftsample">left-sample</a>))) 
                             (log 2.0))))))))
-</pre>
+</pre></td></tr></table>
+
 <br>
 <p>
 The fft data is scaled to fit between 0.0 and 1.0 unless
@@ -1463,7 +1465,8 @@ The search commands are:</p>
 </pre>
 <p>These searching functions can be closures; the following searches for
 the next positive-going zero crossing, placing the cursor just before it:</p>
-<pre>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (zero+)
   (let ((lastn 0.0))
     (lambda (n)
@@ -1472,7 +1475,8 @@ the next positive-going zero crossing, placing the cursor just before it:</p>
 		      -1)))
 	(set! lastn n)
 	rtn))))
-</pre>
+</pre></td></tr></table>
+
 <p>Now C-s (zero+) followed by C-s's moves to successive zero crossings.
 There are more examples in <a href="sndscm.html#exzeroplus">sndscm.html</a>.
 See also the functions <a href="extsnd.html#find">find</a> and <a href="extsnd.html#countmatches">count-matches</a>.

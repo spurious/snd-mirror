@@ -519,7 +519,8 @@ if the loader can't find libguile.so.2 (or whatever), add its directory to
 your LD_LIBRARY_PATH; for example, if
 it's on /usr/local/lib, <code>setenv LD_LIBRARY_PATH /usr/local/lib</code>.  
 Next add Guile wrappers to your C code:</p>
-<pre>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
   /* cscm.c */
   #include &lt;math.h&gt;
   #include &lt;stdio.h&gt;
@@ -540,7 +541,8 @@ Next add Guile wrappers to your C code:</p>
   { /* this declares hiho within Guile calling the wrapper which calls the C function hiho */
     scm_c_define_gsubr("hiho", 1, 0, 0, hiho_wrapper);
   }
-</pre>
+</pre></td></tr></table>
+
 <p>
 Next compile
 your code into a shared object (this is aimed at Linux):
@@ -573,7 +575,8 @@ As a slightly more useful example, let's import the Bessel J0 function
 from GSL (Gnu Scientific Library); in this case, we need to build Snd
 with GSL (the easiest way is to include the --with-gsl option to configure).
 Then make a file (say "gsl-ex.c"):</p>
-<pre>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 #include &lt;libguile.h&gt;
 #include &lt;gsl/gsl_sf_bessel.h&gt;
 
@@ -588,7 +591,8 @@ void init_gsl_j0(void)
 { /* links scm_j0 into Snd under the name j0 */
   scm_c_define_gsubr("j0", 1, 0, 0, scm_j0);
 }
-</pre>
+</pre></td></tr></table>
+
 <p>Now the usual compile, load, link into Snd sequence:</p>
 <pre>
 /home/bil/snd-4/ cc gsl-ex.c -c -Wall
@@ -628,7 +632,8 @@ variable, in the init function set the variable to the
 value of scm_symbol_value0("function-name"), and in the
 rest of the code call it via scm_apply. The following
 is a sketch using the Snd internal "srate" function:</p>
-<pre>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
   #include &lt;libguile.h&gt;
   static SCM g_srate;
   static SCM srate_wrapper(SCM a) {return(scm_call_1(g_srate, a));}
@@ -637,13 +642,16 @@ is a sketch using the Snd internal "srate" function:</p>
     scm_c_define_gsubr("my-srate", 1, 0, 0, srate_wrapper);
     g_srate = scm_symbol_value0("srate");
   }
-</pre>
+</pre></td></tr></table>
+
 <p>Alternatively, you can simply use scm_eval_str0:</p>
-<pre>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
   scm_eval_str0("(<a class=quiet href="extsnd.html#recorderdialog">recorder-dialog</a>)");
   scm_eval_str0("(<a class=quiet href="extsnd.html#opensound">open-sound</a> \"oboe.snd\")");
   srate = scm_num2int(scm_eval_str0("(<a class=quiet href="extsnd.html#srate">srate</a>)"), 0, "");
-</pre>
+</pre></td></tr></table>
+
 
 <br>
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="programs">External Programs</a></h3></td></tr></table>
@@ -1326,7 +1334,8 @@ a shared library named xm.so; you can load this at any time into Snd:
 configure switch --with-static-xm, and the xm module will be included
 in the base Snd image.
 Here's a dialog window with a slider:</p>
-<pre>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define scale-dialog #f)
 (define current-scaler 1.0)
 
@@ -1376,9 +1385,11 @@ Here's a dialog window with a slider:</p>
   (XtManageChild scale-dialog))
 
 (create-scale-dialog (cadr (<a class=quiet href="extsnd.html#mainwidgets">main-widgets</a>)))
-</pre>
+</pre></td></tr></table>
+
 <p>In Ruby, this is:</p>
-<pre>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 $scale_dialog = false
 $current_scaler = 1.0
 
@@ -1425,12 +1436,14 @@ end
 
 $Snd_widgets = main_widgets()
 create_scale_dialog $Snd_widgets[1]
-</pre>
+</pre></td></tr></table>
+
 <p>All of Snd is at your disposal once this module is loaded.
 The next function installs our own file filtering procedure into the File:Open dialog (it uses
 match-sound-files from extensions.scm):
 </p>
-<pre>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (install-searcher proc)
   (define (XmString-&gt;string str)
     (cadr (XmStringGetLtoR str XmFONTLIST_DEFAULT_TAG)))
@@ -1456,7 +1469,8 @@ match-sound-files from extensions.scm):
 
 ;(install-searcher (lambda (file) (= (<a class=quiet href="extsnd.html#soundsrate">mus-sound-srate</a> file) 44100)))
 ;(install-searcher (lambda (file) (= (<a class=quiet href="extsnd.html#soundchans">mus-sound-chans</a> file) 4)))
-</pre>
+</pre></td></tr></table>
+
 <p>Now click the 'Filter' button to see only those files that fit the procedure in
 the dialog's files list.  See snd-motif.scm and popup.scm.
 </p>
@@ -1467,7 +1481,8 @@ the dialog's files list.  See snd-motif.scm and popup.scm.
 <p>
 Here's the scale-dialog in xg/gtk:
 </p>
-<pre>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define scale-dialog #f)
 (define current-scaler 1.0)
 
@@ -1514,7 +1529,8 @@ Here's the scale-dialog in xg/gtk:
   (gtk_widget_show scale-dialog))
 
 (create-scale-dialog (cadr (<a class=quiet href="extsnd.html#mainwidgets">main-widgets</a>)))
-</pre>
+</pre></td></tr></table>
+
 <p>The only change from the C code is the addition of GTK_ADJUSTMENT in the scale value_changed
 callback -- currently the xg module assumes the first argument to the two-argument callback is
 a GtkWidget, so we have to cast a GtkAdjustment back to its original type.
@@ -1554,13 +1570,15 @@ Snd is the same as the guile program with Snd loaded, you
 can treat it as a scripting engine.  For example,
 if you have an executable file with:
 </p>
-<pre>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 #!/home/bil/test/snd-7/snd -l
 !#
 (define a-test 32)
 (display "hiho")
 (newline)
-</pre>
+</pre></td></tr></table>
+
 <p>it can be executed just like any such script.
 </p>
 <pre>
@@ -1578,14 +1596,16 @@ command-line program, and, of course, (<a class=quiet href="extsnd.html#exit">ex
 Here's a script that doubles every sample in "oboe.snd" and
 writes the result as "test.snd":
 </p>
-<pre>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 #!/home/bil/test/snd-7/snd -l
 !#
 (<a class=quiet href="extsnd.html#opensound">open-sound</a> "oboe.snd")
 (<a class=quiet href="extsnd.html#scaleby">scale-by</a> 2.0)
 (<a class=quiet href="extsnd.html#savesoundas">save-sound-as</a> "test.snd")
 (<a class=quiet href="extsnd.html#exit">exit</a>)
-</pre>
+</pre></td></tr></table>
+
 <p>The functions <b>script-args</b> and <b>script-arg</b> can be used
 to access the script's arguments, and if necessary (if not exiting)
 tell Snd to ignore arguments.  script-args returns a list of strings
@@ -1594,7 +1614,8 @@ file name. The current argument is (<a class=quiet href="extsnd.html#scriptarg">
 a higher value, Snd will subsequently ignore the intervening arguments
 as it scans the startup arguments (see snd-test.scm).
 </p>
-<pre>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 #!/home/bil/test/snd-7/snd -l
 !#
 (if (= (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>)) 2) ;i.e. ("-l" "script")
@@ -1604,7 +1625,8 @@ as it scans the startup arguments (see snd-test.scm).
     (<a class=quiet href="extsnd.html#scaleby">scale-by</a> 2.0)
     (<a class=quiet href="extsnd.html#savesoundas">save-sound-as</a> "test.snd")))
 (<a class=quiet href="extsnd.html#exit">exit</a>)
-</pre>
+</pre></td></tr></table>
+
 <p>This either grumbles if no argument is given,
 or scales its argument sound by 2.0:
 </p>
@@ -1615,7 +1637,8 @@ script pistol.snd
 doubling all the sounds or whatever by using a do loop --
 the following displays all the comments it finds:
 </p>
-<pre>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 #!/home/bil/cl/snd -l
 !#
 (use-modules (ice-9 format))
@@ -1626,7 +1649,8 @@ the following displays all the comments it finds:
     (let ((name (list-ref (<a class=quiet href="extsnd.html#scriptargs">script-args</a>) arg)))
       (display (format #f "~A: ~A~%" name (<a class=quiet href="extsnd.html#soundcomment">mus-sound-comment</a> name))))))
 (<a class=quiet href="extsnd.html#exit">exit</a>)
-</pre>
+</pre></td></tr></table>
+
 <p>
 Say we save this as the file "comments".</p>
 <pre>
@@ -1649,7 +1673,8 @@ place of -l.
 Here's another script; it looks for any sounds that are longer
 than 40 seconds in duration, and truncates them to 40 seconds:
 </p>
-<pre>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 #!/usr/local/bin/snd -l
 !#
 (if (= (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>)) 2)
@@ -1663,18 +1688,22 @@ than 40 seconds in duration, and truncates them to 40 seconds:
 	    (<a class=quiet href="extsnd.html#savesound">save-sound</a> ind)
 	    (<a class=quiet href="extsnd.html#closesound">close-sound</a> ind))))))
 (<a class=quiet href="extsnd.html#exit">exit</a>)
-</pre>
+</pre></td></tr></table>
+
 <p>Here's a sndplay replacement script:</p>
-<pre>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 #!snd -b
 !#
 (<a class=quiet href="extsnd.html#playandwait">play-and-wait</a> (list-ref (<a class=quiet href="extsnd.html#scriptargs">script-args</a>) (+ (<a class=quiet href="extsnd.html#scriptarg">script-arg</a>) 1)))
 (<a class=quiet href="extsnd.html#exit">exit</a>)
-</pre>
+</pre></td></tr></table>
+
 <p>And here's a script that splits a multichannel file
 into a bunch of mono files:
 </p>
-<pre>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 #!snd -b
 !#
 (if (= (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>)) 2)
@@ -1694,7 +1723,8 @@ into a bunch of mono files:
 			   i))
 	  (<a class=quiet href="extsnd.html#closesound">close-sound</a> ind)))))
 (<a class=quiet href="extsnd.html#exit">exit</a>)
-</pre>
+</pre></td></tr></table>
+
 <br>
 
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandruby">Snd with Ruby</a></h3></td></tr></table>
@@ -1712,7 +1742,8 @@ are just procedures or nil, not lists of procedures as in Guile.
 Here's the Ruby version of the init file given
 above:
 </p>
-<pre>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 set_window_width 800
 set_window_height 500
 
@@ -1731,7 +1762,8 @@ beige = make_color 0.96, 0.96, 0.86
 blue = make_color 0, 0, 1
 set_selected_graph_color beige
 set_selected_data_color blue
-</pre>
+</pre></td></tr></table>
+
 <p>Procedures are created via Proc.new, so to set the open-hook to print the
 file name,
 </p>
@@ -1798,7 +1830,8 @@ $mouse_enter_listener_hook = Proc.new { |widget|
 </pre>
 <p>Here's one more example, a translation of display-energy in draw.scm:
 </p>
-<pre>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 def display_energy(snd, chn)
   ls = left_sample
   rs = right_sample
@@ -1815,7 +1848,8 @@ def display_energy(snd, chn)
   end
 
 # $lisp_graph_hook = Proc.new {|snd, chn| display_energy(snd, chn)}
-</pre>
+</pre></td></tr></table>
+
 <p>
 In Ruby you make a symbol by prepending ":", so Guile's
 </p>
@@ -2136,7 +2170,8 @@ program:
 <p>Here are some gdb functions (for your ~/.gbdinit file) that might
 come in handy:
 </p>
-<pre>
+
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 define gp
 set gdb_print($arg0)
 print gdb_output
@@ -2163,7 +2198,8 @@ end
 document gh
 Prints help string for arg: gh "enved-target"
 end
-</pre>
+</pre></td></tr></table>
+
 <p>SCM values are displayed as integers in gdb, so say
 Snd halts and you notice it's loading some unknown file:
 </p>

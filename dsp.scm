@@ -617,6 +617,21 @@
 ;;;   and the frequency can be swept without problems.
 
 
+;;; and another...
+(define (band-limited-sawtooth x a N fi)
+  ;; x = current phase, a = amp (more or less), N = 1..10 or thereabouts, fi = phase increment
+  ;;   Alexander Kritov suggests time-varying "a" is good (this is a translation of his code)
+  ;;   from Stilson/Smith apparently -- was named "Discrete Summation Formula" which doesn't convey anything to me
+  (let ((s4 (+ 1.0 (* -2.0 a (cos x)) (* a a))))
+    (if (= s4 0.0)
+	0.0
+	(let* ((s1 (* (expt a (- N 1.0)) (sin (+ (* (- N 1.0) x) fi))))
+	       (s2 (* (expt a N) (sin (+ (* N x) fi))))
+	       (s3 (* a (sin (+ x fi)))))
+	  (/ (+ (sin fi) (- s3) (- s2) s1) s4)))))
+
+
+
 ;;; -------- brighten-slightly
 
 (define* (brighten-slightly amount #:optional snd chn)

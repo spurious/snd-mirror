@@ -2297,9 +2297,19 @@ Float mus_random(Float amp) /* -amp to amp as Float */
   return(amp * (next_random() * INVERSE_MAX_RAND - 1.0));
 }
 
+Float mus_random_1(void) /* -1.0 to 1.0 as Float */
+{
+  return(next_random() * INVERSE_MAX_RAND - 1.0);
+}
+
 Float mus_frandom(Float amp) /* 0.0 to amp as Float */
 {
   return(amp * next_random() * INVERSE_MAX_RAND2);
+}
+
+Float mus_frandom_1(void) /* 0.0 to 1.0 as Float */
+{
+  return(next_random() * INVERSE_MAX_RAND2);
 }
 
 int mus_irandom(int amp)

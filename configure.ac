@@ -1,6 +1,6 @@
 # Configuration script for Snd
 
-AC_INIT(snd, 7.10, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz)
+AC_INIT(snd, 7.11, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz)
 
 INVOKED_PROG="$[0]"
 INVOKED_ARGS="$[@]"
@@ -17,7 +17,7 @@ audio_system="unknown"
 MAKE_TARGET="snd"
 
 PACKAGE=snd
-VERSION=7.10
+VERSION=7.11
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
 AC_SUBST(PACKAGE)
@@ -1529,7 +1529,7 @@ fi
 # -ffast-math appears to make exp about twice as fast, but slows down filtering by the same amount -- kinda strange
 
 if test "$with_profiling" = yes; then
-  CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage -fbranch-probabilities"
+  CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage -fbranch-probabilities -pg"
 fi
 
 AC_SUBST(CFLAGS)

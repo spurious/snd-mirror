@@ -3429,14 +3429,6 @@ static XEN g_env(XEN obj)
   return(C_TO_XEN_DOUBLE(mus_env(XEN_TO_MUS_ANY(obj))));
 }
 
-static XEN g_restart_env(XEN obj) 
-{
-  #define H_restart_env "(" S_restart_env " gen): restart envelope generator"
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_env_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ONLY_ARG, S_restart_env, "an env gen");
-  mus_restart_env(XEN_TO_MUS_ANY(obj));
-  return(obj);
-}
-
 static XEN g_make_env(XEN arglist)
 {
   #define H_make_env "(" S_make_env " :envelope (:scaler 1.0) :duration (:offset 0.0) (:base 1.0) :end (:start 0) :dur): \
@@ -5286,7 +5278,6 @@ XEN_NARGIFY_2(g_mus_ycoeff_w, g_mus_ycoeff)
 XEN_NARGIFY_3(g_mus_set_ycoeff_w, g_mus_set_ycoeff)
 XEN_NARGIFY_1(g_env_p_w, g_env_p)
 XEN_NARGIFY_1(g_env_w, g_env)
-XEN_NARGIFY_1(g_restart_env_w, g_restart_env)
 XEN_VARGIFY(g_make_env_w, g_make_env)
 XEN_NARGIFY_2(g_env_interp_w, g_env_interp)
 XEN_NARGIFY_1(g_file_to_sample_p_w, g_file_to_sample_p)
@@ -5543,7 +5534,6 @@ XEN_NARGIFY_1(g_mus_generator_p_w, g_mus_generator_p)
 #define g_mus_set_ycoeff_w g_mus_set_ycoeff
 #define g_env_p_w g_env_p
 #define g_env_w g_env
-#define g_restart_env_w g_restart_env
 #define g_make_env_w g_make_env
 #define g_env_interp_w g_env_interp
 #define g_file_to_sample_p_w g_file_to_sample_p
@@ -5959,7 +5949,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 
   XEN_DEFINE_PROCEDURE(S_env_p,       g_env_p_w,       1, 0, 0, H_env_p);
   XEN_DEFINE_PROCEDURE(S_env,         g_env_w,         1, 0, 0, H_env);
-  XEN_DEFINE_PROCEDURE(S_restart_env, g_restart_env_w, 1, 0, 0, H_restart_env);
+  XEN_DEFINE_PROCEDURE(S_restart_env, g_mus_reset_w,   1, 0, 0, H_mus_reset); /* backwards compatibility */
   XEN_DEFINE_PROCEDURE(S_make_env,    g_make_env_w,    0, 0, 1, H_make_env);
   XEN_DEFINE_PROCEDURE(S_env_interp,  g_env_interp_w,  2, 0, 0, H_env_interp);
 

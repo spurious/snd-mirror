@@ -1,6 +1,8 @@
 #ifndef CLM_STRINGS_H
 #define CLM_STRINGS_H
 
+/* there's some inconsistency about the mus- prefix: mus-interp-* but *-window etc */
+
 #define S_all_pass                   "all-pass"
 #define S_all_pass_p                 "all-pass?"
 #define S_amplitude_modulate         "amplitude-modulate"
@@ -222,12 +224,12 @@
 #define S_pulse_train                "pulse-train"
 #define S_pulse_train_p              "pulse-train?"
 #define S_phase_vocoder_amp_increments   "phase-vocoder-amp-increments"
-#define S_phase_vocoder_amps             "phase-vocoder-amps"
-#define S_phase_vocoder_freqs            "phase-vocoder-freqs"
-#define S_phase_vocoder_outctr           "phase-vocoder-outctr"
+#define S_phase_vocoder_amps         "phase-vocoder-amps"
+#define S_phase_vocoder_freqs        "phase-vocoder-freqs"
+#define S_phase_vocoder_outctr       "phase-vocoder-outctr"
 #define S_phase_vocoder_phase_increments "phase-vocoder-phase-increments"
-#define S_phase_vocoder_phases           "phase-vocoder-phases"
-#define S_phase_vocoder_set_outctr       "phase-vocoder-set-outctr"
+#define S_phase_vocoder_phases       "phase-vocoder-phases"
+#define S_phase_vocoder_set_outctr   "phase-vocoder-set-outctr"
 #define S_radians_to_degrees         "radians->degrees"
 #define S_radians_to_hz              "radians->hz"
 #define S_rand                       "rand"

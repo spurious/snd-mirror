@@ -134,8 +134,6 @@ static int run_safety = RUN_UNSAFE;
 #define XEN_APPLICABLE_SMOB_P(a)            (SCM_TYP7(a) == scm_tc7_smob)
 #define XEN_ENV(a)                          SCM_ENV(a)
 #define XEN_SET_CDR(pair, new_val)          scm_set_cdr_x(pair, new_val)
-#define XEN_FRANDOM(a)                      mus_frandom(a)
-#define XEN_IRANDOM(a)                      mus_irandom(a)
 #define INTEGER_TO_STRING(a)                XEN_TO_C_STRING(scm_number_to_string(R_C_TO_XEN_INT(a), XEN_UNDEFINED))
 #define INTEGER_TO_STRING_WITH_RADIX(a, b)  XEN_TO_C_STRING(scm_number_to_string(R_C_TO_XEN_INT(a), R_C_TO_XEN_INT(b)))
 #define DOUBLE_TO_STRING(a)                 XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_DOUBLE(a), XEN_UNDEFINED))
@@ -4840,11 +4838,10 @@ FL_OP(mus_degrees_to_radians)
 FL_OP(mus_radians_to_degrees)
 FL_OP(mus_db_to_linear)
 FL_OP(mus_linear_to_db)
-FL_OP(mus_random)
-
 FL_OP(sin)
 FL_OP(cos)
 FL_OP(tan)
+/* only collapsible funcs here -- if constant arg, constant val (not random!) */
 
 #define FL_OP_C(CName) \
 static void CName ## _f(int *args, ptree *pt) {FLOAT_RESULT = CName(FLOAT_ARG_1);} \
@@ -5377,22 +5374,40 @@ static xen_value *abs_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- random ---------------- */
 
-static void random_f(int *args, ptree *pt) {FLOAT_RESULT = XEN_FRANDOM(FLOAT_ARG_1);}
-static char *descr_random_f(int *args, ptree *pt) 
-{
-  return(mus_format( FLT_PT " = random(" FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1));
-}
-static void random_i(int *args, ptree *pt) {INT_RESULT = XEN_IRANDOM(INT_ARG_1);}
-static char *descr_random_i(int *args, ptree *pt) 
-{
-  return(mus_format( INT_PT " = random(" INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1));
-}
+static void random_f(int *args, ptree *pt) {FLOAT_RESULT = mus_frandom(FLOAT_ARG_1);}
+static char *descr_random_f(int *args, ptree *pt) {return(mus_format( FLT_PT " = random(" FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1));}
+
+static void random_f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_frandom_1();}
+static char *descr_random_f_1(int *args, ptree *pt) {return(mus_format( FLT_PT " = random(1.0)", args[0], FLOAT_RESULT));}
+
+static void random_mf(int *args, ptree *pt) {FLOAT_RESULT = mus_random(FLOAT_ARG_1);}
+static char *descr_random_mf(int *args, ptree *pt) {return(mus_format( FLT_PT " = mus-random(" FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1));}
+
+static void random_mf_1(int *args, ptree *pt) {FLOAT_RESULT = mus_random_1();}
+static char *descr_random_mf_1(int *args, ptree *pt) {return(mus_format( FLT_PT " = mus-random(1.0)", args[0], FLOAT_RESULT));}
+
+static void random_i(int *args, ptree *pt) {INT_RESULT = mus_irandom(INT_ARG_1);}
+static char *descr_random_i(int *args, ptree *pt) {return(mus_format( INT_PT " = random(" INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1));}
+
 static xen_value *random_1(ptree *prog, xen_value **args, int num_args)
 {
   if (args[1]->type == R_INT)
     return(package(prog, R_INT, random_i, descr_random_i, args, 1));
+  if ((prog->constants == 1) &&
+      (prog->dbls[args[1]->addr] == 1.0))
+    return(package(prog, R_FLOAT, random_f_1, descr_random_f_1, args, 0));
   return(package(prog, R_FLOAT, random_f, descr_random_f, args, 1));
 }
+
+static xen_value *mus_random_r(ptree *prog, xen_value **args, int num_args)
+{
+  if (args[1]->type == R_INT) single_to_float(prog, args, 1);
+  if ((prog->constants == 1) &&
+      (prog->dbls[args[1]->addr] == 1.0))
+    return(package(prog, R_FLOAT, random_mf_1, descr_random_mf_1, args, 0));
+  return(package(prog, R_FLOAT, random_mf, descr_random_mf, args, 1));
+}
+
 
 
 /* ---------------- chars ---------------- */
@@ -8365,16 +8380,6 @@ static xen_value *clear_array_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
-/* ---------------- restart_env ---------------- */
-static char *descr_restart_env_1f(int *args, ptree *pt) {return(mus_format("restart-env(" CLM_PT ")", args[1], DESC_CLM_ARG_1));}
-static void restart_env_1f(int *args, ptree *pt) {mus_restart_env(CLM_ARG_1); CLM_RESULT = CLM_ARG_1;}
-static xen_value *restart_env_1(ptree *prog, xen_value **args, int num_args) 
-{
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, env_check, descr_env_check, args, 1);
-  return(package(prog, R_CLM, restart_env_1f, descr_restart_env_1f, args, 1));
-}
-
-
 /* ---------------- dot-product etc ---------------- */
 
 #define VCT_2_I(CName, SName) \
@@ -10971,13 +10976,13 @@ static void init_walkers(void)
   INIT_WALKER(S_mus_output_p, make_walker(output_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
   INIT_WALKER(S_snd_to_sample_p, make_walker(snd_to_sample_1p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CLM));
 
-  INIT_WALKER(S_restart_env, make_walker(restart_env_1, NULL, NULL, 1, 1, R_CLM, false, 1, R_CLM));
   INIT_WALKER(S_mus_increment, make_walker(mus_increment_0, NULL, mus_set_increment_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_frequency, make_walker(mus_frequency_0, NULL, mus_set_frequency_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_phase, make_walker(mus_phase_0, NULL, mus_set_phase_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_width, make_walker(mus_width_0, NULL, mus_set_width_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_scaler, make_walker(mus_scaler_0, NULL, mus_set_scaler_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_reset, make_walker(mus_reset_0, NULL, NULL, 1, 1, R_CLM, false, 1, R_CLM));
+  INIT_WALKER(S_restart_env, make_walker(mus_reset_0, NULL, NULL, 1, 1, R_CLM, false, 1, R_CLM)); /* backwards compatibility */
   INIT_WALKER(S_mus_offset, make_walker(mus_offset_0, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_formant_radius, make_walker(mus_formant_radius_0, NULL, mus_set_formant_radius_1, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_mus_data, make_walker(mus_data_1, NULL, NULL, 1, 1, R_VCT, false, 0));
@@ -11101,7 +11106,7 @@ static void init_walkers(void)
   INIT_WALKER(S_radians_to_degrees, make_walker(mus_radians_to_degrees_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER(S_db_to_linear, make_walker(mus_db_to_linear_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER(S_linear_to_db, make_walker(mus_linear_to_db_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER(S_mus_random, make_walker(mus_random_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER(S_mus_random, make_walker(mus_random_r, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
 
   INIT_WALKER(S_make_all_pass, make_walker(make_all_pass_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_average, make_walker(make_average_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
