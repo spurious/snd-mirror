@@ -3920,6 +3920,7 @@ static int read_farandole_header(int chan)
 /* ------------------------------------ Yamaha TX-16 -------------------------------------
  *
  * ftp://ftp.t0.or.at/pub/sound/tx16w/samples.yamaha
+ * ftp://ftp.t0.or.at/pub/sound/tx16w/faq/tx16w.tec
  * http://www.t0.or.at/~mpakesch/tx16w/
  *
  * from tx16w.c sox 12.15: (7-Oct-98) (Mark Lakata and Leigh Smith)
@@ -3950,12 +3951,15 @@ static int read_tx16_header(int chan)
       else if ((hdrbuf[26] & 0xFE) == 0x10) srate = 50000;
       else if ((hdrbuf[26] & 0xFE) == 0xf6) srate = 16000;
     }
-  /*
-  {int i; for (i=0;i<32;i++) fprintf(stderr,"[%d]: %d (%x)\n",i,hdrbuf[i],hdrbuf[i]);}
-  */
   original_data_format = MUS_L12INT; /* can't read this format yet */
   data_format = MUS_UNSUPPORTED;
   data_size = (int)((float)data_size / 1.5);
+  if (hdrbuf[22] == 0x49)
+    {
+      loop_modes[0] = 1;
+      loop_starts[0] = ((hdrbuf[26] & 1) << 16) + (hdrbuf[25] << 8) + hdrbuf[24];
+      loop_ends[0] = loop_starts[0] + ((hdrbuf[29] & 1) << 16) + (hdrbuf[28] << 8) + hdrbuf[27];
+    }
   return(MUS_NO_ERROR);
 }
 

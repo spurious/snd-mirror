@@ -1,29 +1,28 @@
-;;; various startup things and miscellaneous functions
-;;; must sort it all out someday
-;;;
 
-(load "snd-motif.scm")
-(load "effects.scm")
-(load "examp.scm")
-(load "extensions.scm")
-(load "dsp.scm")
-(load "draw.scm")
-(load "env.scm")
-(load "enved.scm")
-(load "marks.scm")
-(load "mix.scm")
-(load "moog.scm")
-(load "popup.scm")
-(load "rubber.scm")
-(load "special-menu.scm") 
-(load "my_backgrounds.scm") 
-(load "marks-menu.scm") 
-(load "mix-menu.scm") 
-(load "new-buttons.scm") 
-(load "panic.scm") 
-(load "plugins-menu.scm") 
-(load "plugins.scm") 
-(load "fft-menu.scm") 
+(load "/home/dlphilp/snd-5/snd-motif.scm")
+;(load "/home/dlphilp/snd-5/effects.scm")
+(load "/home/dlphilp/snd-5/examp.scm")
+(load "/home/dlphilp/snd-5/extensions.scm")
+(load "/home/dlphilp/snd-5/dsp.scm")
+(load "/home/dlphilp/snd-5/draw.scm")
+(load "/home/dlphilp/snd-5/env.scm")
+(load "/home/dlphilp/snd-5/enved.scm")
+(load "/home/dlphilp/snd-5/marks.scm")
+(load "/home/dlphilp/snd-5/mix.scm")
+(load "/home/dlphilp/snd-5/moog.scm")
+(load "/home/dlphilp/snd-5/popup.scm")
+(load "/home/dlphilp/snd-5/rubber.scm")
+(load "/home/dlphilp/my_scm/special-menu.scm") 
+(load "/home/dlphilp/my_scm/new-backgrounds.scm") 
+(load "/home/dlphilp/my_scm/marks-menu.scm") 
+(load "/home/dlphilp/my_scm/mix-menu.scm") 
+(load "/home/dlphilp/my_scm/new-buttons.scm") 
+(load "/home/dlphilp/my_scm/new-effects.scm") 
+(load "/home/dlphilp/my_scm/panic.scm") 
+(load "/home/dlphilp/my_scm/plugins-menu.scm") 
+;(load "/home/dlphilp/my_scm/plugins.scm") 
+(load "/home/dlphilp/my_scm/fft-menu.scm") 
+(load "/home/dlphilp/toms_scm/edit123.scm") 
 
 (title-with-date)
 (keep-file-dialog-open-upon-ok)
@@ -32,14 +31,26 @@
 (check-for-unsaved-edits #t)
 (add-hook! after-open-hook show-disk-space)
 
+;(define wd (make-pixmap (|Widget (cadr (main-widgets))) rough))
+;(for-each-child (|Widget (cadr (main-widgets))) (lambda (w) (|XtSetValues w (list |XmNbackgroundPixmap wd))))
 
 (define wd (make-pixmap (|Widget (cadr (main-widgets))) rough))
 
+;(define (paint-all widget)
+;  (for-each-child
+;    (|Widget widget)
+;    (lambda (w)
+;      (|XtSetValues w (list |XmNbackgroundPixmap wd)))))
+
 (define (paint-all widget)
-  (for-each-child
-    (|Widget widget)
-    (lambda (w)
-      (|XtSetValues w (list |XmNbackgroundPixmap wd)))))
+   (for-each-child
+     (|Widget widget)
+     (lambda (w)
+       (if (not (or (|XmIsPushButton w)))
+;                    (|XmIsArrowButton w)))
+;                    (|XmIsToggleButton w)))
+           (|XtSetValues w (list |XmNbackgroundPixmap wd))))))
+
 (paint-all (cadr (main-widgets)))
 (for-each
  (lambda (w)
@@ -55,6 +66,8 @@
 
 (add-mark-pane)
 
+(add-sound-file-extension "ogg")
+(add-sound-file-extension "OGG")
 (add-sound-file-extension "sf")
 (add-sound-file-extension "SF2")
 (add-sound-file-extension "mp3")
@@ -290,6 +303,7 @@
 
 (add-to-menu 1 "Replace with Selection" replace-with-selection)
 
+;;; (add-to-menu 1 #f #f)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -308,6 +322,25 @@
                    (system (format #f "mpg123 -s ~A > ~A" filename rawfile))
                    rawfile)
                  #f)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; open and convert stereo OGG files automatically
+;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(add-hook! open-raw-sound-hook
+           (lambda (file choices)
+             (list 2 44100 (if (little-endian?) mus-lshort mus-bshort))))
+
+(add-hook! open-hook
+           (lambda (filename)
+             (if (= (mus-sound-header-type filename) mus-raw)
+                 (let ((rawfile (string-append filename ".raw")))
+                   (system (format #f "ogg123 -d raw -f ~A ~A" rawfile filename))
+                   rawfile)
+                 #f)))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

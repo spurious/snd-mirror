@@ -2,7 +2,6 @@
 The following files require explicit load path settings:
 
 	misc.scm
-	plugins.scm
 	mix-menu.scm
 	new-buttons.scm
 

@@ -2134,15 +2134,15 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;;
 ;;; (add-tooltip (|Widget (cadr (channel-widgets))) "the w button")
 
-
 (define with-tooltips #t) ; set to #f to turn these off
+(define tooltip-shell #f)
+(define tooltip-label #f)
 
 (define (add-tooltip widget tip)
   (let ((tool-proc #f)
 	(quit-proc #f)
 	(timeout 500)   ; millisecs after mouse enters widget to tip display 
-	(quittime 3000) ; millisecs to show tip (if pointer not already moved out of widget)
-	(tiplabel #f))
+	(quittime 3000)) ; millisecs to show tip (if pointer not already moved out of widget)
 
     (define (stop-tooltip)
       (if tool-proc
@@ -2153,8 +2153,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	  (begin
 	    (|XtRemoveTimeOut quit-proc)
 	    (set! quit-proc #f)))
-      (if (and tiplabel (|XtIsManaged tiplabel))
-	  (|XtUnmanageChild tiplabel)))
+      (if (and tooltip-shell (|XtIsManaged tooltip-shell))
+	  (|XtUnmanageChild tooltip-shell)))
 
     (define (start-tooltip ev)
       (if (and with-tooltips 
@@ -2163,33 +2163,32 @@ Reverb-feedback sets the scaler on the feedback.\n\
 			    (|XtAppContext (car (main-widgets)))
 			    timeout 
 			    (lambda (data id)
-			      (if (not tiplabel)
+			      (if (not tooltip-shell)
 				  (begin
-				    (set! tiplabel (|XtCreatePopupShell 
+				    (set! tooltip-shell (|XtCreatePopupShell 
 						     tip 
 						     |overrideShellWidgetClass 
 						     (|Widget (cadr (main-widgets))) 
 						     '()))
-				    (|XtCreateManagedWidget 
-				      tip
-				      |xmLabelWidgetClass 
-				      tiplabel
-				      (list |XmNbackground (|Pixel (snd-pixel (highlight-color)))))))
+				    (set! tooltip-label
+					  (|XtCreateManagedWidget 
+					    tip
+					    |xmLabelWidgetClass 
+					     tooltip-shell
+					     (list |XmNbackground (|Pixel (snd-pixel (highlight-color)))))))
+				  (change-label tooltip-label tip))
 			      (let ((loc (|XtTranslateCoords widget (|x ev) (|y ev))))
-				(|XtVaSetValues tiplabel (list |XmNx (car loc) |XmNy (cadr loc))))
-			      (|XtManageChild tiplabel)
+				(|XtVaSetValues tooltip-shell (list |XmNx (car loc) |XmNy (cadr loc))))
+			      (|XtManageChild tooltip-shell)
 			      (set! quit-proc (|XtAppAddTimeOut
 						(|XtAppContext (car (main-widgets)))
 						quittime
 						(lambda (data id)
-						  (|XtUnmanageChild tiplabel)
+						  (|XtUnmanageChild tooltip-shell)
 						  (set! quit-proc #f)))))))))
 
     (|XtAddEventHandler widget |EnterWindowMask #f (lambda (w c ev flag) (start-tooltip ev)))
     (|XtAddEventHandler widget |LeaveWindowMask #f (lambda (w c ev flag) (stop-tooltip)))))
-
-
-
 
 
 

@@ -115,7 +115,7 @@
 
 (define fft-edit-low-frequency 100)
 (define fft-edit-high-frequency 1000)
-(define fft-edit-label "FFT edit")
+(define fft-edit-label "FFT notch filter")
 (define fft-edit-dialog #f)
 
 (define (cp-fft-edit)
@@ -137,7 +137,7 @@
                                         (lambda (w context info)
                                           (|XtUnmanageChild fft-edit-dialog))
                                         (lambda (w context info)
-                                          (help-dialog "FFT edit"
+                                          (help-dialog "FFT notch filter"
                                                        "A simple example of FFT-based editing. It takes an FFT of the entire sound, removes all energy below the low frequency\n\ and above the high frequency, then computes the inverse FFT."))
                                         (lambda (w c i)
                                           (set! fft-edit-low-frequency initial-fft-edit-low-frequency)
@@ -156,12 +156,12 @@
                                              1))))))
         (activate-dialog fft-edit-dialog))
 
-      (add-to-menu fft-menu "FFT edit" (lambda () (post-fft-edit-dialog))))
+      (add-to-menu fft-menu "FFT notch filter" (lambda () (post-fft-edit-dialog))))
 
     (add-to-menu fft-menu fft-edit-label cp-fft-edit))
 
 (set! fft-list (cons (lambda ()
-                           (let ((new-label (format #f "FFT edit (~1,2D ~1,2D)" fft-edit-low-frequency fft-edit-high-frequency)))
+                           (let ((new-label (format #f "FFT notch filter (~1,2D ~1,2D)" fft-edit-low-frequency fft-edit-high-frequency)))
                              (change-menu-label fft-menu fft-edit-label new-label)
                              (set! fft-edit-label new-label)))
                          fft-list))

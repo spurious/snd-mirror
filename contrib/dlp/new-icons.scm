@@ -1018,3 +1018,36 @@
 "................................"))
 
 
+(define open-mix-file (list
+"32 25 5 1"
+"x      c white"
+"       c lightslategrey"
+".      c black"
+"o      c yellow"
+"X      c darkblue"
+"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+"           XX     XX            "
+"           X X   X X            "
+"           X  X X  X            "
+"           X   X   X            "
+"           X       X            "
+"           X       X            "
+"         ..X.......X            "
+"        .ooooooooooo.           "
+"        .oooooXXXoooo.....      "
+"        .ooooooXooooooooo.      "
+"      .........X..........      "
+"      .ooooooooXooooooo...      "
+"       .oooooooXoooooooo..      "
+"       .oooooooXoooooooo..      "
+"        .oooooXXXoooooooo.      "
+"         .ooooooooooooooo.      "
+"          .XX.....XX......      "
+"             X   X              "
+"              X X               "
+"               X                "
+"              X X               "
+"             X   X              "
+"           XX     XX            "
+"................................"))
+

@@ -52,7 +52,7 @@
          (tools (|XtCreateManagedWidget "tools" |xmRowColumnWidgetClass toolscroll
                   (list |XmNbackground (black-pixel)
                         |XmNorientation |XmHORIZONTAL))))
-    (load "new-icons.scm")
+    (load "/home/dlphilp/my_scm/new-icons.scm")
     (let ((play-pixmap (make-pixmap tools full-go))
           (stop-pixmap (make-pixmap tools full-stop))
           (play-forward-pixmap (make-pixmap tools play-direction-forward))
@@ -68,11 +68,12 @@
                       |XmNwidth       32
                       |XmNheight      32))))
          (|XtAddCallback button |XmNactivateCallback callback)))
-     (list open-file close-file save-as rec-pane env-edit regions-browser mix-pane undo-it redo-it full-go play-direction-forward loop-play start-of-file start-of-window back-one-window back-one-sample mid-window forward-one-sample forward-one-window end-of-window end-of-file last-mix-point next-mix-point zooming-in zooming-out exit-it)
+     (list open-file close-file save-as open-mix-file rec-pane env-edit regions-browser mix-pane undo-it redo-it full-go play-direction-forward loop-play start-of-file start-of-window back-one-window back-one-sample mid-window forward-one-sample forward-one-window end-of-window end-of-file last-mix-point next-mix-point zooming-in zooming-out exit-it)
      (list 
            (lambda (w c i) (open-file-dialog))
            (lambda (w c i) (close-sound))
            (lambda (w c i) (file-save-as-dialog))
+           (lambda (w c i) (mix-file-dialog))
            (lambda (w c i) (recorder-dialog))
 	   (lambda (w c i) (enved-dialog))
            (lambda (w c i) (region-dialog))

@@ -14,6 +14,7 @@
 
 /* CHANGES:
  *
+ * bil: 28-Nov-01 input chans need not equal output chans now.
  * bil: 15-Oct-01 added some error returns (rather than snd_error).
  *       multichannel plugin support.
  * bil: 20-Sep-01 changed location of pfInputBuffer to avoid glomming up the
@@ -49,10 +50,10 @@ long g_lLADSPARepositoryCount;
 
 /*****************************************************************************/
 
-/* Snd currently does not support all LADSPA plugins. */
-static char isLADSPAPluginSupported(const LADSPA_Descriptor * psDescriptor) {
+static int lInputCount, lOutputCount;
 
-  long lInputCount, lOutputCount, lIndex;
+static void isLADSPAPluginSupported(const LADSPA_Descriptor * psDescriptor) {
+  int lIndex;
   LADSPA_PortDescriptor iPortDescriptor;
 
   lInputCount = lOutputCount = 0;
@@ -65,10 +66,6 @@ static char isLADSPAPluginSupported(const LADSPA_Descriptor * psDescriptor) {
 	lOutputCount++;
     }
   }
-
-  if (lInputCount != lOutputCount)
-    return(0);
-  return(lInputCount);
 }
 
 /*****************************************************************************/
@@ -121,32 +118,18 @@ static char * packLADSPAFilename(const char * pcFilename) {
 static void unloadLADSPA() {
 
   long lIndex;
-#ifndef __cplusplus
-  void * pvPluginHandle;
-  LADSPAPluginInfo * psInfo;
-  if (g_lLADSPARepositoryCount > 0)
-    pvPluginHandle = g_psLADSPARepository[0]->m_pvPluginHandle + 1;
-#else
   LADSPAPluginInfo *pvPluginHandle;
   LADSPAPluginInfo * psInfo;
   if (g_lLADSPARepositoryCount > 0)
-    {
-      pvPluginHandle = (LADSPAPluginInfo *)(g_psLADSPARepository[0]->m_pvPluginHandle);
-      pvPluginHandle++;
-    }
-#endif
+    pvPluginHandle = (LADSPAPluginInfo *)(g_psLADSPARepository[0]->m_pvPluginHandle);
+  pvPluginHandle++;
   for (lIndex = 0; lIndex < g_lLADSPARepositoryCount; lIndex++) {
     psInfo = g_psLADSPARepository[lIndex];
     free(psInfo->m_pcPackedFilename);
     /* Don't free Label or Descriptor - this memory is owned by the
        relevant plugin library. */
-#ifndef __cplusplus
-    if (pvPluginHandle != psInfo->m_pvPluginHandle) {
-      pvPluginHandle = psInfo->m_pvPluginHandle;
-#else
     if (pvPluginHandle != psInfo->m_pvPluginHandle) {
       pvPluginHandle = (LADSPAPluginInfo *)(psInfo->m_pvPluginHandle);
-#endif
       dlclose(pvPluginHandle);
     }
     free(psInfo);
@@ -394,7 +377,7 @@ a user interface edit the parameter in a useful way."
   pcLabel = XEN_TO_C_STRING(ladspa_plugin_label);
   pcFilename = packLADSPAFilename(pcTmp);
   psDescriptor = findLADSPADescriptor(pcFilename, pcLabel);
-  free(pcFilename);
+  FREE(pcFilename);
 
   if (!psDescriptor) {
     XEN_ERROR(NO_SUCH_PLUGIN,
@@ -472,20 +455,17 @@ Information about about parameters can be acquired using analyse-ladspa."
   LADSPA_PortDescriptor iPortDescriptor;
 
   LADSPA_Data *pfControls = NULL;
-  LADSPA_Data **pfOutputBuffer;
   chan_info *cp, *ncp;
   snd_info *sp;
   char *ofile, *msg;
-  int num, i, ofd, datumb, err = 0, inchans = 1, readers = 1;
+  int num, i, j, ofd, datumb, err = 0, inchans = 1, readers = 1, outchans = 1;
   snd_fd **sf;
   file_info *hdr;
   snd_state *state;
   XEN errmsg;
   MUS_SAMPLE_TYPE **data;
   LADSPA_Data **pfInputBuffer = NULL;
-#if (!SNDLIB_USE_FLOATS)
-  LADSPA_Data **pfBuffer2 = NULL;
-#endif
+  LADSPA_Data **pfOutputBuffer = NULL;
 
   state = get_global_state();
   if (!g_bLADSPAInitialised)
@@ -520,25 +500,26 @@ Information about about parameters can be acquired using analyse-ladspa."
   pcTmp = XEN_TO_C_STRING(XEN_CAR(ladspa_plugin_configuration));
   pcLabel = XEN_TO_C_STRING(XEN_CADR(ladspa_plugin_configuration));
   pcFilename = packLADSPAFilename(pcTmp);
-
   psDescriptor = findLADSPADescriptor(pcFilename, pcLabel);
-  free(pcFilename);
+  FREE(pcFilename);
 
   if (!psDescriptor)
     XEN_ERROR(NO_SUCH_PLUGIN,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_apply_ladspa),
 			 ladspa_plugin_configuration));
 
-  inchans = isLADSPAPluginSupported(psDescriptor);
-  if (inchans == 0)
+  isLADSPAPluginSupported(psDescriptor);
+  inchans = lInputCount;
+  outchans = lOutputCount;
+  if ((inchans == 0) || (outchans == 0))
     XEN_ERROR(PLUGIN_ERROR,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
 			 ladspa_plugin_configuration,
-			 C_TO_XEN_STRING("Snd plugins must have same number of inputs and outputs")));
+			 C_TO_XEN_STRING("Snd plugins must have at least 1 input and output")));
 
   if (inchans != readers)
     {
-      msg = mus_format("%s inputs (%d) != outputs (%d)", pcLabel, readers, inchans);
+      msg = mus_format("%s inputs (%d) != sample-readers (%d)", pcLabel, readers, inchans);
       errmsg = C_TO_XEN_STRING(msg);
       FREE(msg);
       XEN_ERROR(PLUGIN_ERROR,
@@ -602,30 +583,17 @@ Information about about parameters can be acquired using analyse-ladspa."
 			 ladspa_plugin_configuration,
 			 C_TO_XEN_STRING("plugin did not instantiate")));
 
-
   /* this code added 20-Sep-01 */
-  pfInputBuffer = (LADSPA_Data **)CALLOC(readers, sizeof(LADSPA_Data *));
-  for (i = 0; i < readers; i++)
+  pfInputBuffer = (LADSPA_Data **)CALLOC(inchans, sizeof(LADSPA_Data *));
+  for (i = 0; i < inchans; i++)
     pfInputBuffer[i] = (LADSPA_Data *)CALLOC(MAX_BUFFER_SIZE, sizeof(LADSPA_Data));
-#if (!SNDLIB_USE_FLOATS)
-  pfBuffer2 = (LADSPA_Data **)CALLOC(readers, sizeof(LADSPA_Data *));
-  for (i = 0; i < readers; i++)
-    pfBuffer2[i] = (LADSPA_Data *)CALLOC(MAX_BUFFER_SIZE, sizeof(LADSPA_Data));
-#endif
+  pfOutputBuffer = (LADSPA_Data **)CALLOC(outchans, sizeof(LADSPA_Data *));
+  for (i = 0; i < outchans; i++)
+    pfOutputBuffer[i] = (LADSPA_Data *)CALLOC(MAX_BUFFER_SIZE, sizeof(LADSPA_Data));
 
-  /* Allocate buffer to work with (data[] is an audio buffer). */
-  data = (MUS_SAMPLE_TYPE **)CALLOC(readers, sizeof(MUS_SAMPLE_TYPE *));
-  for (i = 0; i < readers; i++)
+  data = (MUS_SAMPLE_TYPE **)CALLOC(outchans, sizeof(MUS_SAMPLE_TYPE *));
+  for (i = 0; i < outchans; i++)
     data[i] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
-
-#if SNDLIB_USE_FLOATS
-  pfOutputBuffer = data;
-#else
-  if (LADSPA_IS_INPLACE_BROKEN(psDescriptor->Properties))
-    pfOutputBuffer = pfBuffer2;
-  else
-    pfOutputBuffer = pfInputBuffer;
-#endif
 
   /* Connect input and output control ports. */
   {
@@ -657,12 +625,12 @@ Information about about parameters can be acquired using analyse-ladspa."
      file. */
   hdr = make_temp_header(ofile,
 			 SND_SRATE(sp),
-			 readers,
+			 outchans,
 			 num,
 			 XEN_TO_C_STRING(origin));
 
   /* Open the output file, using the header we've been working on. */
-  ofd = open_temp_file(ofile, readers, hdr, state);
+  ofd = open_temp_file(ofile, outchans, hdr, state);
   if (ofd == -1)
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
@@ -692,20 +660,16 @@ Information about about parameters can be acquired using analyse-ladspa."
     /* Run the plugin. */
     psDescriptor->run(psHandle, lBlockSize);
 
-#if SNDLIB_USE_FLOATS
-    /* Data was written direct to data[]. */
-#else
     /* Prepare the output data. */
-    for (i = 0; i < readers; i++)
+    for (i = 0; i < outchans; i++)
       for (lSampleIndex = 0; lSampleIndex < lBlockSize; lSampleIndex++)
 	data[i][lSampleIndex] = MUS_FLOAT_TO_SAMPLE(pfOutputBuffer[i][lSampleIndex]);
-#endif
 
     /* Send the output data to the outside world. */
     err = mus_file_write(ofd,
 			 0,
 			 lBlockSize - 1,
-			 readers,
+			 outchans,
 			 data);
     if (err == -1)
       break;
@@ -722,43 +686,42 @@ Information about about parameters can be acquired using analyse-ladspa."
 
   close_temp_file(ofd,
 		  hdr,
-		  num * datumb * readers,
+		  num * datumb * outchans,
 		  sp);
 
   /* Discard tmp header. */
   hdr = free_file_info(hdr);
 
-  for (i = 0; i < readers; i++)
+  for (i = 0, j = 0; i < outchans; i++)
     {
-      ncp = sf[i]->cp;
-      file_change_samples(sf[i]->initial_samp,
+      ncp = sf[j]->cp;
+      file_change_samples(sf[j]->initial_samp,
 			  num,
 			  ofile,
 			  ncp,
 			  i,
-			  (readers > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
+			  (outchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
 			  LOCK_MIXES,
 			  XEN_TO_C_STRING(origin),
 			  ncp->edit_ctr);
       update_graph(ncp, NULL);
+      j++;
+      if (j >= inchans) j = 0;
     }
   if (ofile) FREE(ofile);
-  for (i = 0; i < readers; i++)
+  for (i = 0; i < inchans; i++)
+    FREE(pfInputBuffer[i]);
+  /* sf[i] is directly from scheme, so it will presumably handle reader gc */
+  for (i = 0; i < outchans; i++)
     {
-      FREE(pfInputBuffer[i]);
-#if (!SNDLIB_USE_FLOATS)
-      FREE(pfBuffer2[i]);
-#endif
+      FREE(pfOutputBuffer[i]);
       FREE(data[i]);
     }
   if (sf) FREE(sf);
   if (pfControls) FREE(pfControls);
   FREE(data);
   FREE(pfInputBuffer);
-#if (!SNDLIB_USE_FLOATS)
-  FREE(pfBuffer2);
-#endif
-
+  FREE(pfOutputBuffer);
   return(XEN_FALSE);
 }
 
