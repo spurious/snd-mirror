@@ -207,7 +207,6 @@ void reflect_region_graph_style(snd_state *ss);
 /* -------- snd-xutils.c -------- */
 
 void goto_window(int text);
-axis_context *free_axis_context(axis_context *ax);
 int set_help_text_font(snd_state *ss, char *font);
 int set_tiny_font(snd_state *ss, char *font);
 int set_listener_font(snd_state *ss, char *font);

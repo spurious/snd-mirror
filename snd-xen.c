@@ -711,7 +711,7 @@ void snd_load_init_file(snd_state *ss, int nog, int noi)
   /* called only in snd-xmain.c at initialization time */
   int fd;
   char *str = NULL;
-#ifdef SND_CONF
+  #define SND_CONF "/etc/snd.conf"
   if (nog == 0)
     {
       fd = open(SND_CONF, O_RDONLY, 0);
@@ -721,7 +721,6 @@ void snd_load_init_file(snd_state *ss, int nog, int noi)
 	  snd_catch_any(eval_file_wrapper, (void *)SND_CONF, "(load " SND_CONF ")");
 	}
     }
-#endif
   if ((ss->init_file) && (noi == 0))
     {
       str = mus_expand_filename(ss->init_file);

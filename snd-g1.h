@@ -314,7 +314,6 @@ void Edit_Find_Callback(GtkWidget *w, gpointer clientData);
 
 /* -------- snd-gutils.c -------- */
 
-axis_context *free_axis_context(axis_context *ax);
 int set_help_text_font(snd_state *ss, char *font);
 int set_tiny_font(snd_state *ss, char *font);
 int set_listener_font(snd_state *ss, char *font);

@@ -2363,6 +2363,7 @@ static int read_bicsf_header (int chan)
  * 
  * apparently the byte order depends on the machine.
  * and yet... convert 1.4 makes a .sf file with little endian header, the VAX id, and big endian data?
+ *            Csound also uses the VAX magic number!  Argh. 
  */
 
 static int read_ircam_header (int chan)
@@ -2390,7 +2391,7 @@ static int read_ircam_header (int chan)
       if (little) 
 	{
 	  if (mus_char_to_lint((unsigned char *)hdrbuf) == I_IRCAM_VAX)
-	    data_format = MUS_UNSUPPORTED;
+	    data_format = MUS_BFLOAT;
 	  else data_format = MUS_LFLOAT;
 	}
       else data_format = MUS_BFLOAT;

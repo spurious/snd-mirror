@@ -41,7 +41,6 @@ MAKE_TARGET="snd"
 #   --with-static-alsa    use ALSA statically loaded (for RPM generation)
 #   --with-html           include the XmHTML or mozilla browser library
 #   --with-big-colormap   use big colormap (default = yes)
-#   --with-snd-conf       look for /etc/snd.conf at startup
 #   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
 #   --with-doubles        use doubles throughout (default is floats)
 #   --with-float-samples  represent samples internally as floats 
@@ -108,12 +107,6 @@ AC_ARG_WITH(static-motif,
   	if test "$with_static_motif" = yes ; then
 	    AC_DEFINE(USE_MOTIF)
             with_motif=yes
-	fi)
-
-AC_ARG_WITH(snd-conf,
-	[  --with-snd-conf	  use Snd site config file /etc/snd.conf],
-  	if test "$with_snd_conf" = yes ; then
-	  AC_DEFINE(SND_CONF,"/etc/snd.conf")
 	fi)
 
 AC_ARG_WITH(temp-dir,

@@ -1005,7 +1005,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   else
     {
       /* take min, max */
-      if (amp_env_usable(cp, samples_per_pixel, ap->hisamp,TRUE, cp->edit_ctr)) /* true = start new background amp env process if needed */
+      if (amp_env_usable(cp, samples_per_pixel, ap->hisamp, TRUE, cp->edit_ctr)) /* true = start new background amp env process if needed */
 	j = amp_env_graph(cp, ap, samples_per_pixel, (sp) ? ((int)SND_SRATE(sp)) : 1);
       else
 	{

@@ -5131,14 +5131,14 @@ desired edit history position.
 <!-- -->
 <!-- sample -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndsample">sample</a></em> (samp <i>snd chn</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndsample">sample</a></em> (<i>samp snd chn</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->value of sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
 <!-- -->If the desired sample happens to fall outside the current buffer 
 <!-- -->for the indicated channel, this function grinds to a halt -- if you're 
 <!-- -->running a loop through a bunch of samples, use the <a href="#samplereaders">sample-readers</a> 
-<!-- -->or samples-&gt;vct instead.
+<!-- -->or samples-&gt;vct instead.  <i>samp</i> defaults to the current cursor location.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

@@ -1,7 +1,6 @@
 /* TODO  drag via mark could still use amp-env opts
  * TODO  sync colors? could use 6-7 bits of id+table (or local mark context)
  * TODO  mark fixups -- negative src env mark fixups are broken (move as if positive)
- * TODO  syncd play when syncd triangle dragged?
  * TODO  reverse (or any fixup) if syncd mark, but unsyncd chans -- should other marks move or break sync chain?
  */
 

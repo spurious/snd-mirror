@@ -1,11 +1,5 @@
 #include "snd.h"
 
-axis_context *free_axis_context(axis_context *ax)
-{
-  if (ax) FREE(ax);
-  return(NULL);
-}
-
 int set_help_text_font(snd_state *ss, char *font)
 {
   GdkFont *fs = NULL;

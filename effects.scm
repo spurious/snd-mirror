@@ -1,4 +1,4 @@
-(use-modules (ice-9 format))
+(use-modules (ice-9 format) (ice-9 common-list))
 
 (define pi 3.141592653589793)
 (define effects-list '()) ; menu labels are updated to show current settings
@@ -84,6 +84,7 @@
 		 |XmNtopAttachment       |XmATTACH_FORM
 		 |XmNbottomAttachment    |XmATTACH_WIDGET
 		 |XmNbottomWidget        (|XmMessageBoxGetChild dialog |XmDIALOG_SEPARATOR)
+		 |XmNbackground          (|Pixel (snd-pixel (highlight-color)))
 		 |XmNorientation         |XmVERTICAL))))
     (map 
      (lambda (slider-data)
@@ -102,12 +103,58 @@
 			|XmNvalue         (inexact->exact (* initial scale))
 			|XmNdecimalPoints (if (= scale 1000) 3 (if (= scale 100) 2 (if (= scale 10) 1 0)))
 			|XmNtitleString   title
-			|XmNborderWidth   1
+			;|XmNborderWidth   1
 			|XmNbackground    (|Pixel (snd-pixel (basic-color)))))))
 	 (|XmStringFree title)
 	 (|XtAddCallback new-slider |XmNvalueChangedCallback func)
 	 new-slider))
      sliders)))
+
+(define yellow-pixel
+  (let ((pix #f))
+    (lambda ()
+      (if (not pix)
+	  (let* ((shell (|Widget (cadr (main-widgets))))
+		 (dpy (|XtDisplay shell))
+		 (scr (|DefaultScreen dpy))
+		 (cmap (|DefaultColormap dpy scr))
+		 (col (|XColor)))
+	       (if (= (|XAllocNamedColor dpy cmap "yellow" col col) 0)
+		   (snd-error "can't allocate yellow!")
+		   (set! pix (|pixel col)))))
+      pix)))
+
+(define (add-target mainform target-callback)
+  ;; add a set of 3 radio buttons at the bottom of the main section for choice between sound, selection, between-marks
+  ;;   target-callback should take one arg, a symbol: 'sound, 'selection, 'marks, and apply the effect accordingly (upon "DoIt")
+  ;;   if there are no marks, or no selection, the respective button is insensitive
+  (let* ((sep (|XtCreateManagedWidget "sep" |xmSeparatorWidgetClass mainform
+		(list |XmNorientation      |XmHORIZONTAL
+		      |XmNseparatorType    |XmSHADOW_ETCHED_OUT
+		      ;|XmNheight           4
+		      |XmNbackground       (|Pixel (snd-pixel (basic-color))))))
+	 (rc (|XtCreateManagedWidget "rc"  |xmRowColumnWidgetClass mainform
+                (list |XmNtopAttachment    |XmATTACH_WIDGET
+		      |XmNtopWidget        sep
+		      |XmNbottomAttachment |XmATTACH_FORM
+		      |XmNleftAttachment   |XmATTACH_FORM
+		      |XmNrightAttachment  |XmATTACH_FORM
+		      |XmNorientation      |XmHORIZONTAL
+		      |XmNbackground       (|Pixel (snd-pixel (basic-color)))
+		      |XmNradioBehavior    #t
+		      |XmNradioAlwaysOne   #t
+		      |XmNentryClass       |xmToggleButtonWidgetClass
+		      |XmNisHomogeneous    #t))))
+    (map 
+     (lambda (name type on)
+       (|XtCreateManagedWidget name |xmToggleButtonWidgetClass rc
+                (list |XmNbackground       (|Pixel (snd-pixel (basic-color)))
+		      |XmNset              on
+		      |XmNselectColor      (yellow-pixel)
+		      |XmNarmCallback      (list (lambda (w c i) (target-callback type)) #f))))
+     (list "entire sound" "selection" "between marks")
+     (list 'sound 'selection 'marks)
+     (list #t #f #f))))
 
 (define (activate-dialog dialog)
   (if (not (|XtIsManaged dialog))
@@ -166,10 +213,17 @@
 (define gain-amount 1.0)
 (define gain-label "Gain")
 (define gain-dialog #f)
+(define gain-target 'sound)
 
 (define (cp-gain)
-"gain scales amplitude by gain amount"
- (scale-by gain-amount))
+  "gain scales amplitude by gain amount"
+  (if (eq? gain-target 'sound)
+      (scale-by gain-amount)
+      (if (eq? gain-target 'selection)
+	  (if (selection?)
+	      (scale-selection-by gain-amount)
+	      (snd-print "no selection"))
+	  (snd-print "can't apply gain between marks yet"))))
 
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
@@ -195,7 +249,10 @@
 				 (list (list "gain" 0.0 initial-gain-amount 5.0 
 					     (lambda (w context info)
 					       (set! gain-amount (/ (|value info) 100.0)))
-					     100))))))
+					     100))))
+	      (add-target (|XtParent (car sliders)) 
+			  (lambda (target)
+			    (set! gain-target target)))))
         (activate-dialog gain-dialog))
 
       (add-to-menu effects-menu "Gain" (lambda () (post-gain-dialog))))
@@ -244,6 +301,7 @@
 					     (lambda (w context info)
 					       (set! gain-amount (/ (|value info) 100.0)))
 					     100))))))
+
 	(activate-dialog normalize-dialog))
 
       (add-to-menu effects-menu "Normalize" (lambda () (post-normalize-dialog))))
@@ -368,7 +426,7 @@
 		        (list |XmNselectColor  (|Pixel (snd-pixel (pushed-button-color)))
 			      |XmNbackground   (|Pixel (snd-pixel (basic-color)))
 			      |XmNvalue        omit-silence
-			      |XmNborderWidth  1
+			      ;|XmNborderWidth  1
 			      |XmNlabelString  s1))))
 		(|XmStringFree s1)
 		(|XtAddCallback toggle |XmNvalueChangedCallback (lambda (w c i)
@@ -1477,4 +1535,166 @@
 
 
 
+#!
+;;; -------- Cross synthesis
+;;;
 
+(define cross-synth-sound 1)
+(define cross-synth-amp .5)
+(define cross-synth-fft-size 128)
+(define cross-synth-radius 6.0)
+(define cross-synth-label "Cross synthesis")
+(define cross-synth-dialog #f)
+(define cross-synth-default-fft-widget #f)
+
+(define use-combo-box-for-fft-size #t) ; radio-buttons or combo-box choice
+
+
+(define (cp-cross-synth)
+  (map-chan (cross-synthesis cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius)))
+
+(if (provided? 'xm) ; if xm module is loaded, popup a dialog here
+    (begin
+
+      (define (post-cross-synth-dialog)
+        (if (not (|Widget? cross-synth-dialog))
+            ;; if cross-synth-dialog doesn't exist, create it
+            (let ((initial-cross-synth-sound 1)
+                  (initial-cross-synth-amp .5)
+                  (initial-cross-synth-fft-size 128)
+                  (initial-cross-synth-radius 6.0)
+                  (sliders '()))
+              (set! cross-synth-dialog
+                    (make-effect-dialog cross-synth-label
+                                        (lambda (w context info) (cp-cross-synth))
+                                        (lambda (w context info) (|XtUnmanageChild cross-synth-dialog))
+                                        (lambda (w context info)
+                                          (help-dialog "Cross synthesis Help"
+    					               "Move the sliders to set the number of the soundfile to be cross-synthesized, \
+the synthesis amplitude, the FFT size, and the radius value. The FFT size must be a power of 2."))
+                                        (lambda (w c i)
+                                          (set! cross-synth-sound initial-cross-synth-sound)
+                                          (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* cross-synth-sound 1))))
+                                          (set! cross-synth-amp initial-cross-synth-amp)
+                                          (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* cross-synth-amp 100))))
+                                          (set! cross-synth-fft-size initial-cross-synth-fft-size)
+					  (if use-combo-box-for-fft-size
+					      (|XtSetValues cross-synth-default-fft-widget (list |XmNselectedPosition 1))
+					      (|XmToggleButtonSetState cross-synth-default-fft-widget #t #t))
+                                          (set! cross-synth-radius initial-cross-synth-radius)
+                                          (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* cross-synth-radius 100)))))))
+              (set! sliders
+                    (add-sliders cross-synth-dialog
+                                 (list (list "input sound" 0 initial-cross-synth-sound 20
+                                             (lambda (w context info)
+                                               (set! cross-synth-sound (/ (|value info) 1)))
+                                             1)
+                                       (list "amplitude" 0.0 initial-cross-synth-amp 1.0
+                                             (lambda (w context info)
+                                               (set! cross-synth-amp (/ (|value info) 100)))
+                                             100)
+				       (list "radius" 0.0 initial-cross-synth-radius 360.0
+                                             (lambda (w context info)
+                                               (set! cross-synth-radius (/ (|value info) 100)))
+                                             100))))
+
+	      ;; now add either a radio-button box or a combo-box for the fft size
+	      ;;   need to use XtParent here since "mainform" isn't returned by add-sliders
+
+	      (if use-combo-box-for-fft-size
+		  ;; this block creates a "combo box" to handle the fft size
+		  (let* ((s1 (|XmStringCreateLocalized "FFT size"))
+			 (frame (|XtCreateManagedWidget "frame" |xmFrameWidgetClass (|XtParent (car sliders))
+				   (list ;|XmNborderWidth 1
+					 |XmNshadowType |XmSHADOW_ETCHED_IN
+					 |XmNpositionIndex 2)))
+			 (frm (|XtCreateManagedWidget "frm" |xmFormWidgetClass frame
+				(list |XmNleftAttachment      |XmATTACH_FORM
+				      |XmNrightAttachment     |XmATTACH_FORM
+				      |XmNtopAttachment       |XmATTACH_FORM
+				      |XmNbottomAttachment    |XmATTACH_FORM
+				      |XmNbackground          (|Pixel (snd-pixel (basic-color))))))
+			 (lab (|XtCreateManagedWidget "FFT size" |xmLabelWidgetClass frm
+				   (list |XmNleftAttachment      |XmATTACH_FORM
+					 |XmNrightAttachment     |XmATTACH_NONE
+					 |XmNtopAttachment       |XmATTACH_FORM
+					 |XmNbottomAttachment    |XmATTACH_FORM
+					 |XmNlabelString         s1
+					 |XmNbackground          (|Pixel (snd-pixel (basic-color))))))
+			 (fft-labels (map (lambda (n) (|XmStringCreateLocalized n)) (list "64" "128" "256" "512" "1024" "4096")))
+			 (combo (|XtCreateManagedWidget "fftsize" |xmComboBoxWidgetClass frm
+				   (list |XmNleftAttachment      |XmATTACH_WIDGET
+					 |XmNleftWidget          lab
+					 |XmNrightAttachment     |XmATTACH_FORM
+					 |XmNtopAttachment       |XmATTACH_FORM
+					 |XmNbottomAttachment    |XmATTACH_FORM
+					 |XmNitems               fft-labels
+					 |XmNitemCount           (length fft-labels)
+					 |XmNcomboBoxType        |XmDROP_DOWN_COMBO_BOX
+					 |XmNbackground          (|Pixel (snd-pixel (basic-color)))))))
+		    (set! cross-synth-default-fft-widget combo)
+		    (for-each (lambda (n) (|XmStringFree n)) fft-labels)
+		    (|XmStringFree s1)
+		    (|XtSetValues combo (list |XmNselectedPosition 1))
+		    (|XtAddCallback combo |XmNselectionCallback
+		       (lambda (w c i)
+			 (let* ((selected (|item_or_text i))
+				(size-as-string (cadr (|XmStringGetLtoR selected |XmFONTLIST_DEFAULT_TAG))))
+			   (set! cross-synth-fft-size (string->number size-as-string))))))
+
+		  ;; this block creates a "radio button box"
+		  (let* ((s1 (|XmStringCreateLocalized "FFT size"))
+			 (frame (|XtCreateManagedWidget "frame" |xmFrameWidgetClass (|XtParent (car sliders))
+				   (list ;|XmNborderWidth 1
+					 |XmNshadowType |XmSHADOW_ETCHED_IN
+					 |XmNpositionIndex 2)))
+			 (frm (|XtCreateManagedWidget "frm" |xmFormWidgetClass frame
+				(list |XmNleftAttachment      |XmATTACH_FORM
+				      |XmNrightAttachment     |XmATTACH_FORM
+				      |XmNtopAttachment       |XmATTACH_FORM
+				      |XmNbottomAttachment    |XmATTACH_FORM
+				      |XmNbackground          (|Pixel (snd-pixel (basic-color))))))
+			 (rc (|XtCreateManagedWidget "rc" |xmRowColumnWidgetClass frm
+				   (list |XmNorientation |XmHORIZONTAL
+					 |XmNradioBehavior #t
+					 |XmNradioAlwaysOne #t
+					 |XmNentryClass |xmToggleButtonWidgetClass
+					 |XmNisHomogeneous #t
+					 |XmNleftAttachment      |XmATTACH_FORM
+					 |XmNrightAttachment     |XmATTACH_FORM
+					 |XmNtopAttachment       |XmATTACH_FORM
+					 |XmNbottomAttachment    |XmATTACH_NONE
+					 |XmNbackground          (|Pixel (snd-pixel (basic-color))))))
+			 (lab (|XtCreateManagedWidget "FFT size" |xmLabelWidgetClass frm
+				   (list |XmNleftAttachment      |XmATTACH_FORM
+					 |XmNrightAttachment     |XmATTACH_FORM
+					 |XmNtopAttachment       |XmATTACH_WIDGET
+					 |XmNtopWidget           rc
+					 |XmNbottomAttachment    |XmATTACH_FORM
+					 |XmNlabelString         s1
+					 |XmNalignment           |XmALIGNMENT_BEGINNING
+					 |XmNbackground          (|Pixel (snd-pixel (basic-color)))))))
+		    (for-each 
+		     (lambda (size)
+		       (let ((button (|XtCreateManagedWidget (format #f "~D" size) |xmToggleButtonWidgetClass rc
+				        (list |XmNbackground           (|Pixel (snd-pixel (basic-color)))
+					      |XmNvalueChangedCallback (list (lambda (w c i) (if (|set i) (set! cross-synth-fft-size c))) size)
+					      |XmNset                  (= size cross-synth-fft-size)))))
+			 (if (= size cross-synth-fft-size)
+			     (set! cross-synth-default-fft-widget button))))
+		     (list 64 128 256 512 1024 4096))
+		    (|XmStringFree s1)))))
+        (activate-dialog cross-synth-dialog))
+
+      (add-to-menu effects-menu "Cross synthesis" (lambda () (post-cross-synth-dialog))))
+
+    (add-to-menu effects-menu cross-synth-label cp-cross-synth))
+
+(set! effects-list (cons (lambda ()
+                           (let ((new-label (format #f "Cross synthesis (~1,2D ~1,2F ~1,2D ~1,2F)"
+                                                cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius)))
+                             (change-menu-label effects-menu cross-synth-label new-label)
+                             (set! cross-synth-label new-label)))
+                         effects-list))
+
+!#

@@ -3,6 +3,12 @@
 /* changed to use doubles here 14-Nov-00: very small windows appear to get arithmetic problems otherwise */
 /* removed y-label support 18-Dec-00 */
 
+axis_context *free_axis_context(axis_context *ax)
+{
+  if (ax) FREE(ax);
+  return(NULL);
+}
+
 typedef struct {
   double hi, lo; 
   int max_ticks;

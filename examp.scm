@@ -69,7 +69,6 @@
 ;;; TODO: adaptive notch filter
 ;;; TODO: ins: singer piano flute fade
 ;;; TODO: data-file rw case for pvoc.scm
-;;; TODO: C-s to click (using the int rtn inc case)
 ;;; TODO: C-s wrap-around (as in Emacs)
 ;;; TODO: triggered record
 ;;; TODO: notation following location (as in display-current-window-location)
@@ -2615,7 +2614,6 @@ read, even if not playing.  'files' is a list of files to be played."
 	(samp2 0.0)
 	(samps (make-vct 10))
 	(samps-ctr 0)
-	(diff 1.0)
 	(len (frames)))
     (call-with-current-continuation
      (lambda (return)
@@ -2646,6 +2644,27 @@ read, even if not playing.  'files' is a list of files to be played."
 
 
 ;;; -------- searching examples (zero+, next-peak)
+
+(define (search-for-click)
+  ;; basically the same as find-click, but set up for C-s
+  (let ((samp0 0.0)
+	(samp1 0.0)
+	(samp2 0.0)
+	(samps (make-vct 10))
+	(sctr 0))
+    (lambda (val)
+      (set! samp0 samp1)
+      (set! samp1 samp2)
+      (set! samp2 val)
+      (vct-set! samps sctr val)
+      (set! sctr (+ sctr 1))
+      (if (>= sctr 10) (set! sctr 0))
+      (let ((local-max (max .1 (vct-peak samps))))
+	(if (and (> (abs (- samp0 samp1)) local-max)
+		 (> (abs (- samp1 samp2)) local-max)
+		 (< (abs (- samp0 samp2)) (/ local-max 2)))
+	    -1
+	    #f)))))
 
 (define (zero+)
   ;; find next positive-going zero crossing (if searching forward)

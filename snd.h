@@ -42,8 +42,6 @@
  *                 If the OSS code doesn't work as is, try adding -DHAVE_SAM_9407.
  *       there are many other similar audio choices (SGI, ESD, etc)
  *
- *   SND_CONF      global initialization file; /etc/snd.conf.
- *
  *   HAVE_CONFIG_H define if you're trying to build Snd via autoconf config files
  *                 (automatic if you use ./configure followed by make)
  *
@@ -164,7 +162,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "7-Sep-01"
+#define SND_VERSION "10-Sep-01"
 #define SND_RPM_VERSION "5.3"
 #define SND_MAJOR_VERSION 5
 #define SND_MINOR_VERSION 3

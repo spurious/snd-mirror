@@ -9,12 +9,6 @@
 #endif
 #endif
 
-axis_context *free_axis_context(axis_context *ax)
-{
-  if (ax) FREE(ax);
-  return(NULL);
-}
-
 #if (USE_RENDITIONS)
 static XmRenderTable get_xm_font(snd_state *ss, XFontStruct *fs, char *font, char *tag)
 {

@@ -136,7 +136,6 @@ void set_region_protect(int reg, int protect) {}
 int region_dialog_is_active(void) {return(0);}
 void allocate_region_rows(snd_state *ss, int n) {}
 void reflect_region_graph_style(snd_state *ss) {}
-axis_context *free_axis_context(axis_context *ax) {return(NULL);}
 void snd_completion_help(snd_state *ss, int matches, char **buffer) {}
 int set_help_text_font(snd_state *ss, char *font) {ss->Help_Text_Font = font; return(0);}
 int set_tiny_font(snd_state *ss, char *font) {ss->Tiny_Font = font; return(0);}

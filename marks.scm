@@ -283,7 +283,7 @@
 	      (snd (car m1sc))
 	      (chn (cadr m1sc)))
 	  (if (selection?)
-	      (set! (selection-member #t) #f)) ; clear entire current selection, if any
+	      (set! (selection-member? #t) #f)) ; clear entire current selection, if any
 	  (set! (selection-member? snd chn) #t)
 	  (set! (selection-position snd chn) beg)
 	  (set! (selection-length snd chn) (1+ (- end beg)))))))

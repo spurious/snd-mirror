@@ -280,7 +280,7 @@ int tick_amp_env(chan_info *cp, env_state *es)
 	      val = bufs[nc][m++];
 	      ymin = val;
 	      ymax = val;
-	      for (i = 1; i < ep->samps_per_bin; i+=subsamp, m++)
+	      for (i = 1; i < ep->samps_per_bin; i += subsamp, m++)
 		{
 		  val = bufs[nc][m];
 		  if (ymin > val) ymin = val; else if (ymax < val) ymax = val;
@@ -515,9 +515,9 @@ void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num)
 	}
       new_ep->amp_env_size = old_ep->amp_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
-      end = beg+num-1;
+      end = beg + num - 1;
       start = beg - new_ep->samps_per_bin;
-      for (i = 0, cursamp = 0; i < new_ep->amp_env_size; i++, cursamp+=new_ep->samps_per_bin) 
+      for (i = 0, cursamp = 0; i < new_ep->amp_env_size; i++, cursamp += new_ep->samps_per_bin) 
 	{
 	  if ((cursamp >= end) || (cursamp <= start))
 	    {
@@ -543,28 +543,17 @@ void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num)
 	      else
 		{
 		  snd_fd *sf;
-		  int n, segstart, segend;
+		  int n;
 		  MUS_SAMPLE_TYPE val, ymin, ymax;
 		  /* here we have to read the current bin using the current fragments */
-		  segstart = beg - cursamp;
-		  if (segstart < 0) segstart = 0;
-		  segend = cursamp + new_ep->samps_per_bin - end;
-		  if (segend < 0) segend = new_ep->samps_per_bin;
 		  sf = init_sample_read(cursamp, cp, READ_FORWARD);
 		  if (sf == NULL) return;
 		  ymin = MUS_SAMPLE_0;
 		  ymax = MUS_SAMPLE_0;
 		  for (n = 0; n < new_ep->samps_per_bin; n++)
 		    {
-		      val = next_sample(sf);
-		      if ((n >= segstart) && 
-			  (n <= segend)) 
-			val = (MUS_SAMPLE_TYPE)(val * scl);
-		      if (ymin > val) 
-			ymin = val; 
-		      else 
-			if (ymax < val) 
-			  ymax = val;
+		      val = next_sample(sf); /* not scaled again! (sample reader sees scaled version) */
+		      if (ymin > val) ymin = val; else if (ymax < val) ymax = val;
 		    }
 		  new_ep->data_max[i] = ymax;
 		  new_ep->data_min[i] = ymin;

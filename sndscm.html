@@ -353,9 +353,8 @@ the phazor package of Scott McNab.
 
 <A NAME="effectsdoc"></a><span class=box><h2>effects.scm</h2></span>
 
+<!-- TODO: talk about effects GUI -->
 <p>effects.scm implements a simple "Effects" menu, mimicking other sound editors.
-I think this is a mistake, but new Snd users expect a "real" editor to provide a
-list of sound effects somewhere.
 The effects implemented currently are:
 </p>
 <pre>
@@ -685,7 +684,7 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>translate mpeg input to 16-bit linear and read into Snd
     <li>mapping extensions (map arbitrary single-channel function over various channel collections)
     <li>sound-interp, env-sound-interp
-    <li>searching procedures (find-pitch, zero+, next-peak)
+    <li>searching procedures (search-for-click, find-pitch, zero+, next-peak)
     <li>sound-data->list
   </ul>
 </small>
@@ -970,7 +969,6 @@ graph so that the leftmost visible mark is at the left edge;
 Only a few headers support loop points (these are apparently used in synthesizers
 to mark portions of a waveform that can be looped without causing clicks, thereby lengthening
 a sound as a key is held down). 
-<!-- TODO: document marks.scm -->
 </p>
 
 <!-- -------------------------------- SELECTIONS -------------------------------- -->
@@ -1184,6 +1182,7 @@ envelope could be used for this effect, but it is much more direct to apply the
 envelope to sound sample positions.
 </p>
 <pre>
+  <em class=def><A NAME="exsearchforclick">search-for-click</a></em>
   <em class=def><A NAME="exzeroplus">zero+</a></em>
   <em class=def><A NAME="exnextpeak">next-peak</a></em>
   <em class=def><A NAME="exfindpitch">find-pitch</a></em> pitch
@@ -1547,6 +1546,8 @@ Any additions are welcome!
   <em class=def><a name="movesyncdmarks">move-syncd-marks</a></em> sync samples-to-move
   <em class=def><a name="playsyncdmarks">play-syncd-marks</a></em> sync
   <em class=def><a name="exevalbetweenmarks">eval-between-marks</a></em> func snd
+  <em class=def><a name="exsnapmarks">snap-marks</a></em>
+  <em class=def><a name="exdefineselectionviamarks">define-selection-via-marks</a></em> m1 m2
 </pre>
 <p><i>mark-name-&gt;id</i> is like <a href="extsnd.html#sndfindmark">find-mark</a> but searches all currently accessible channels.
 <i>describe-mark</i> returns a description of the movements of mark id over the channel's edit history:
@@ -1579,6 +1580,9 @@ between the leftmost marks in <i>snd</i>.
 	  (lambda ()
 	    (prompt-in-minibuffer "mark eval:" eval-between-marks)))
 </pre>
+<p><i>snap-marks</i> places marks at the start and end of the current selection.
+<i>define-selection-via-marks</i> selects the portion between the given marks.
+</p>
 
 
 <A NAME="mixdoc"></a><span class=box><h2>mix.scm</h2></span>

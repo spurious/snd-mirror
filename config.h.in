@@ -105,7 +105,6 @@
 #undef TRAP_SEGFAULT
 #undef HAVE_HTML
 #undef WITH_BIG_COLORMAP
-#undef SND_CONF
 #undef SND_AS_WIDGET
 #undef Float
 #undef USE_GTK

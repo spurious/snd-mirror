@@ -3329,10 +3329,10 @@ static XEN g_sample(XEN samp_n, XEN snd_n, XEN chn_n)
 {
   #define H_sample "(" S_sample " samp &optional snd chn) -> sample samp in snd's channel chn (slow access -- use sample-readers for speed)"
   chan_info *cp;
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(samp_n), samp_n, XEN_ARG_1, S_sample, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_sample, "a number");
   ASSERT_CHANNEL(S_sample, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_sample);
-  return(C_TO_XEN_DOUBLE(sample(XEN_TO_C_INT_OR_ELSE(samp_n, 0), cp)));
+  return(C_TO_XEN_DOUBLE(sample(XEN_TO_C_INT_OR_ELSE(samp_n, cp->cursor), cp)));
 }
 
 static XEN g_set_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n)
@@ -3340,12 +3340,12 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n)
   /* each call consitutes a separate edit from the undo/redo point-of-view */
   chan_info *cp;
   MUS_SAMPLE_TYPE ival[1];
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(samp_n), samp_n, XEN_ARG_1, "set-" S_sample, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, "set-" S_sample, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, "set-" S_sample, "a number");
   ASSERT_CHANNEL("set-" S_sample, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, "set-" S_sample);
   ival[0] = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE(val));
-  change_samples(XEN_TO_C_INT_OR_ELSE(samp_n, 0), 1, ival, cp, LOCK_MIXES, "set-" S_sample);
+  change_samples(XEN_TO_C_INT_OR_ELSE(samp_n, cp->cursor), 1, ival, cp, LOCK_MIXES, "set-" S_sample);
   update_graph(cp, NULL);
   return(val);
 }
@@ -3875,7 +3875,7 @@ void g_init_edits(void)
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_sample, g_sample_w, H_sample,
 					"set-" S_sample, g_set_sample_w, g_set_sample_reversed,
-					1, 2, 1, 3);
+					0, 3, 0, 4);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_samples, g_samples_w, H_samples,
 					"set-" S_samples, g_set_samples_w, g_set_samples_reversed,

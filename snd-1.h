@@ -1043,6 +1043,7 @@ int calculate_fft(chan_info *cp, void *ptr);
 /* -------- snd-axis.c -------- */
 
 axis_info *free_axis_info(axis_info *ap);
+axis_context *free_axis_context(axis_context *ax);
 Locus grf_x(double val, axis_info *ap);
 Locus grf_y(Float val, axis_info *ap);
 void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, int show_x_axis);

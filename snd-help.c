@@ -211,9 +211,6 @@ char *version_info(void)
                         itoa[3] = snd_itoa(XpmVersion), ".", 
                         itoa[4] = snd_itoa(XpmRevision),
 #endif
-#ifdef SND_CONF
-	  "\n    conf: ", SND_CONF,
-#endif
 #if HAVE_LADSPA
 	  "\n    with LADSPA",
 #endif

@@ -1,6 +1,7 @@
 snd change log
 
-  7-Sep:     define-selection-via-marks in marks.scm.
+  7-Sep:     define-selection-via-marks in marks.scm. 
+	     removed --with-snd-conf and --with-ccrma, added --with-temp-dir, --with-save-dir.
   4-Sep:     eps-size.
   3-Sep:     mix-file-dialog.
              optional position arg to add-to-menu.
