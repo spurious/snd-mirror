@@ -1670,7 +1670,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 !#
 
 
-;;; TODO: doc/test vct|channel|spectral-polynomial
+;;; TODO: test vct|channel|spectral-polynomial
 
 ;;; channel-polynomial
 
@@ -1697,7 +1697,9 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
   (let* ((len (frames snd chn))
 	 (sound (channel->vct 0 len snd chn))
 	 (num-coeffs (vct-length coeffs))
-	 (fft-len (max 1 (inexact->exact (expt 2 (ceiling (/ (log (* (1- num-coeffs) len)) (log 2)))))))
+	 (fft-len (if (< num-coeffs 2) 
+		      len 
+		      (inexact->exact (expt 2 (ceiling (/ (log (* (1- num-coeffs) len)) (log 2)))))))
 	 (rl1 (make-vct fft-len 0.0))
 	 (rl2 (make-vct fft-len 0.0))
 	 (new-sound (make-vct fft-len)))
@@ -1716,5 +1718,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 		    ((= i num-coeffs))
 		  (convolution rl1 (vct-add! (vct-scale! rl2 0.0) sound) fft-len)
 		  (let ((pk (vct-peak rl1)))
-		    (vct-add! new-sound (vct-scale! (vct-copy rl1) (/ (* (vct-ref coeffs i) peak) pk)))))))))
+		    (vct-add! new-sound (vct-scale! (vct-copy rl1) (/ (* (vct-ref coeffs i) peak) pk)))))
+		(let ((pk (vct-peak new-sound)))
+		  (vct-scale! new-sound (/ peak pk)))))))
     (vct->channel new-sound 0 (max len (* len (1- num-coeffs))) snd chn)))

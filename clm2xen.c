@@ -404,8 +404,12 @@ static XEN g_mus_array_print_length(void)
 
 static XEN g_mus_set_array_print_length(XEN val) 
 {
+  int len;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_mus_array_print_length, "an integer");
-  return(C_TO_XEN_INT(mus_set_array_print_length(XEN_TO_C_INT(val))));
+  len = XEN_TO_C_INT(val);
+  if (len < 0) 
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_array_print_length, XEN_ONLY_ARG, val, "must be >= 0");
+  return(C_TO_XEN_INT(mus_set_array_print_length(len)));
 }
 
 static XEN g_ring_modulate(XEN val1, XEN val2) 

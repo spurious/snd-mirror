@@ -2338,7 +2338,7 @@ static int make_player(snd_info *sp, chan_info *cp)
 
 snd_info *player(int index)
 {
-  if ((index < 0) && ((-index) < players_size))
+  if ((players) && (index < 0) && ((-index) < players_size))
     return(players[-index]);
   return(NULL);
 }

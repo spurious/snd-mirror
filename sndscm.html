@@ -537,7 +537,7 @@ the listener?
   <tr><td><a class=def name="ztransform">z-transform</a> rl size z</td></tr>
   <tr><td><A class=def NAME="exdht">dht</A> data</td><td>slow Hartley transform </td></tr>
   <tr><td><em class=emdef>find-sine</em> freq beg dur</td><td>DFT at a particular frequency</td></tr>
-  <tr><td><em class=emdef>goertzel</em> freq beg dur</td><td>same as find-sine but faster</td></tr>
+  <tr><td><a class=def name="goertzel">goertzel</a> freq beg dur</td><td>same as find-sine but faster</td></tr>
   <tr><td><em class=emdef>make-spencer-filter</em></td><td>return FIR filter with Spencer coefficients</td></tr>
   <tr><td><A class=def NAME="anyrandom">any-random</A></td><td>random numbers of arbitrary distribution using rejection method</td></tr>
   <tr><td><em class=emdef>channel-variance</em> etc</td><td> miscellaneous funcs from Julius Smith, Mathematics of the DFT</td></tr>
@@ -547,6 +547,9 @@ the listener?
   <tr><td><a class=def name="ssbbankenv">ssb-bank-env</a></td><td>time/pitch changes using ssb-am gens and a frequency envelope</td></tr>
   <tr><td><a class=def name="ssbfm">make-ssb-fm, ssb-fm</a></td><td>quasi-single-sideband FM</td></tr>
   <tr><td><em class=emdef>periodogram</em> N</td><td>periodogram displayed in "lisp graph"</td></tr>
+  <tr><td><a class=def name="vctpolynomial">vct-polynomial</a> v coeffs</td><td>polynomial evaluation of entire vct</td></tr>
+  <tr><td><a class=def name="channelpolynomial">channel-polynomial</a> coeffs snd chn</td><td>polynomial evaluation of entire channel</td></tr>
+  <tr><td><a class=def name="spectralpolynomial">spectral-polynomial</a>coeffs snd chn</td><td>polynomial evaluation of entire channel in frequency domain (convolution)</td></tr>
 </table>
 
 <p><b>dolph</b> is the Dolph-Chebyshev fft data window, taken
@@ -673,6 +676,21 @@ DFT" are included:
 <b>channel-mean</b>, <b>channel-rms</b>, <b>channel-variance</b>, etc.
 A similar function is <b>channel-distance</b> that returns the Euclidean distance between two sounds.
 </p>
+
+<p><b>vct-polynomial</b> returns the evaluation of the polynomial (given its coefficients) over an entire
+vct, each element being treated as "x".  <b>channel-polynomial</b> performs the same operation over
+a sound channel.  <b>spectral-polynomial</b> is similar, but operates in the frequency domain (each
+multiply being a convolution).
+</p>
+<pre>
+<em class=listener>:</em><em class=typing>(vct-polynomial (vct 0.0 2.0) (vct 1.0 2.0))</em> ; x*2 + 1
+<em class=listener>#&lt;vct[len=2]: 1.000 5.000&gt;</em>
+<em class=listener>:</em><em class=typing>(channel-polynomial (vct 0.0 1.0 1.0 1.0))</em> ; x*x*x + x*x + x
+</pre>
+<p>The "constant" (coeff 0) term in spectral polynomial is treated as a dither amount (that is,
+it has the given magnitude, but its phase is randomized, rather than being simple DC).
+</p>
+
 
 <p>The ssb-* functions provide single-sideband amplitude modulation, and pitch/time changes
 based on the ssb-am generator.  
