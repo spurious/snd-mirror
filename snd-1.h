@@ -105,10 +105,11 @@ typedef struct snd_fd {
   void *ptree, *ptree1;
   XEN closure, closure1;
   int protect, protect1;
-  double incr2, curval2, incr3, curval3;
+  double incr2, curval2, incr3, curval3, incr4, curval4;
   mus_sample_t (*rev_run)(struct snd_fd *sf);
   Float (*rev_runf)(struct snd_fd *sf);
   int edit_ctr, dangling_loc, region;
+  bool zero;
 } snd_fd;
 
 typedef struct {Float freq; Float amp;} fft_peak;
