@@ -1,5 +1,6 @@
 Snd change log
 
+  2-Aug:     players: returns list of active players
   27-Jul:    --with-hobbit and --with-builtin-gtkrc configure switches
              clm23.scm
   14-Jul:    added new file: NEWS

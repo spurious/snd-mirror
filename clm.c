@@ -94,10 +94,6 @@ static void *clm_calloc(int num, int size, const char* what)
   return(mem);
 }
 
-#ifndef CLM_DISABLE_DEPRECATED
-  Float mus_sin(Float phase) {return(sin(phase));}
-#endif
-
 static bool check_gen(mus_any *ptr, const char *name)
 {
   if (ptr == NULL)
@@ -3315,7 +3311,7 @@ static Float filter_xcoeff(mus_any *ptr, int index)
   if (!(gen->x)) return((Float)mus_error(MUS_NO_XCOEFFS, "no xcoeffs"));
   if ((index >= 0) && (index < gen->order))
     return(gen->x[index]);
-  return((Float)mus_error(MUS_ARG_OUT_OF_RANGE, "invalid index %d, order = %d?", index, gen->order));
+  return((Float)mus_error(MUS_ARG_OUT_OF_RANGE, S_mus_xcoeff ": invalid index %d, order = %d?", index, gen->order));
 }
 
 static Float filter_set_xcoeff(mus_any *ptr, int index, Float val) 
@@ -3327,7 +3323,7 @@ static Float filter_set_xcoeff(mus_any *ptr, int index, Float val)
       gen->x[index] = val;
       return(val);
     }
-  return((Float)mus_error(MUS_ARG_OUT_OF_RANGE, "invalid index %d, order = %d?", index, gen->order));
+  return((Float)mus_error(MUS_ARG_OUT_OF_RANGE, S_setB S_mus_xcoeff ": invalid index %d, order = %d?", index, gen->order));
 }
 
 static Float filter_ycoeff(mus_any *ptr, int index) 
@@ -3336,7 +3332,7 @@ static Float filter_ycoeff(mus_any *ptr, int index)
   if (!(gen->y)) return((Float)mus_error(MUS_NO_YCOEFFS, "no ycoeffs"));
   if ((index >= 0) && (index < gen->order))
     return(gen->y[index]);
-  return((Float)mus_error(MUS_ARG_OUT_OF_RANGE, "invalid index %d, order = %d?", index, gen->order));
+  return((Float)mus_error(MUS_ARG_OUT_OF_RANGE, S_mus_ycoeff ": invalid index %d, order = %d?", index, gen->order));
 }
 
 static Float filter_set_ycoeff(mus_any *ptr, int index, Float val) 
@@ -3348,7 +3344,7 @@ static Float filter_set_ycoeff(mus_any *ptr, int index, Float val)
       gen->y[index] = val;
       return(val);
     }
-  return((Float)mus_error(MUS_ARG_OUT_OF_RANGE, "invalid index %d, order = %d?", index, gen->order));
+  return((Float)mus_error(MUS_ARG_OUT_OF_RANGE, S_setB S_mus_ycoeff ": invalid index %d, order = %d?", index, gen->order));
 }
 
 
@@ -6527,6 +6523,8 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
   srx = srp->incr + sr_change;
   if (srp->x >= 1.0)
     {
+      Float (*sr_input)(void *arg, int direction) = input;
+      if (sr_input == NULL) sr_input = srp->feeder;
       fsx = (int)(srp->x);
       srp->x -= fsx;
       /* realign data, reset srp->x */
@@ -6536,11 +6534,7 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
 	   *   read forward until we reach the new data bounds
 	   */
 	  for (i = lim; i < fsx; i++)
-	    {
-	      if (input)
-		(*input)(srp->closure, (srx >= 0.0) ? 1 : -1);
-	      else (*(srp->feeder))(srp->closure, (srx >= 0.0) ? 1 : -1);
-	    }
+	    (*sr_input)(srp->closure, (srx >= 0.0) ? 1 : -1);
 	  fsx = lim;
 	}
 #if (!HAVE_MEMMOVE)
@@ -6552,11 +6546,7 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
 	memmove((void *)(srp->data), (void *)(srp->data + fsx), sizeof(Float) * loc);
 #endif
       for (i = loc; i < lim; i++) 
-	{
-	  if (input)
-	    srp->data[i] = (*input)(srp->closure, (srx >= 0.0) ? 1 : -1);
-	  else srp->data[i] = (*(srp->feeder))(srp->closure, (srx >= 0.0) ? 1 : -1);
-	}
+	srp->data[i] = (*sr_input)(srp->closure, (srx >= 0.0) ? 1 : -1);
     }
   /* if (srx == 0.0) srx = 0.01; */ /* can't decide about this ... */
   if (srx < 0.0) srx = -srx;
@@ -6614,6 +6604,8 @@ Float mus_src_20(mus_any *srptr, Float (*input)(void *arg, int direction))
   if (srp->x > 0.0)
     {
       /* realign data, reset srp->x */
+      Float (*sr_input)(void *arg, int direction) = input;
+      if (sr_input == NULL) sr_input = srp->feeder;
 #if (!HAVE_MEMMOVE)
       for (i = 2, loc = 0; i < lim; i++, loc++) 
 	srp->data[loc] = srp->data[i];
@@ -6622,11 +6614,7 @@ Float mus_src_20(mus_any *srptr, Float (*input)(void *arg, int direction))
       memmove((void *)(srp->data), (void *)(srp->data + 2), sizeof(Float) * loc);
 #endif
       for (i = loc; i < lim; i++) 
-	{
-	  if (input)
-	    srp->data[i] = (*input)(srp->closure, 1);
-	  else srp->data[i] = (*(srp->feeder))(srp->closure, 1);
-	}
+	srp->data[i] = (*sr_input)(srp->closure, 1);
     }
   else srp->x = 2.0;
   xi = (int)(SRC_SINC_DENSITY / 2);
@@ -6649,6 +6637,8 @@ Float mus_src_05(mus_any *srptr, Float (*input)(void *arg, int direction))
   lim = srp->lim;
   if (srp->x >= 1.0)
     {
+      Float (*sr_input)(void *arg, int direction) = input;
+      if (sr_input == NULL) sr_input = srp->feeder;
 #if (!HAVE_MEMMOVE)
       for (i = 1, loc = 0; i < lim; i++, loc++) 
 	srp->data[loc] = srp->data[i];
@@ -6657,11 +6647,7 @@ Float mus_src_05(mus_any *srptr, Float (*input)(void *arg, int direction))
       memmove((void *)(srp->data), (void *)(srp->data + 1), sizeof(Float) * loc);
 #endif
       for (i = loc; i < lim; i++) 
-	{
-	  if (input)
-	    srp->data[i] = (*input)(srp->closure, 1);
-	  else srp->data[i] = (*(srp->feeder))(srp->closure, 1);
-	}
+	srp->data[i] = (*sr_input)(srp->closure, 1);
       srp->x = 0.0;
     }
   if (srp->x == 0.0)
@@ -6875,40 +6861,44 @@ Float mus_granulate_with_editor(mus_any *ptr, Float (*input)(void *arg, int dire
   spd->ctr++;
   if (spd->ctr >= spd->cur_out)
     {
+      Float (*spd_input)(void *arg, int direction) = input;
+      int (*spd_edit)(void *closure);
+      if (spd_input == NULL) spd_input = spd->rd;
+      spd_edit = edit;
+      if (spd_edit == NULL) spd_edit = spd->edit;
       start = spd->cur_out;
       end = spd->len - start;
       if (end < 0) end = 0;
       if (end > 0) 
 	for (i = 0, j = start; i < end; i++, j++) 
 	  spd->data[i] = spd->data[j];
+#if 0
       for (i = end; i < spd->block_len; i++) 
 	spd->data[i] = 0.0;
+#else
+      memset((void *)(spd->data + end), 0, (spd->block_len - end) * sizeof(Float));
+#endif
 
       start = spd->in_data_start;
       len = spd->in_data_len;
       if (start > len)
 	{
 	  extra = start - len;
-	  if (input)
-	    for (i = 0; i < extra; i++) (*input)(spd->closure, 1);
-	  else for (i = 0; i < extra; i++) (*(spd->rd))(spd->closure, 1);
+	  for (i = 0; i < extra; i++) (*spd_input)(spd->closure, 1);
 	  start = len;
 	}
       if (start < len)
-	{
-	  for (i = 0, k = start; k < len; i++, k++)
-	    spd->in_data[i] = spd->in_data[k];
-	}
-      if (input)
-	for (i = (len - start); i < len; i++) spd->in_data[i] = (*input)(spd->closure, 1);
-      else for (i = (len - start); i < len; i++) spd->in_data[i] = (*(spd->rd))(spd->closure, 1);
+	for (i = 0, k = start; k < len; i++, k++)
+	  spd->in_data[i] = spd->in_data[k];
+      for (i = (len - start); i < len; i++) 
+	spd->in_data[i] = (*spd_input)(spd->closure, 1);
       spd->in_data_start = spd->input_hop;
 
       amp = 0.0;
       incr = (Float)(spd->amp) / (Float)(spd->rmp);
       steady_end = (spd->len - spd->rmp);
       curstart = irandom(spd->s20);
-      if ((edit) || (spd->edit))
+      if (spd_edit)
 	{
 	  if (!(spd->grain))
 	    spd->grain = (Float *)clm_calloc(spd->in_data_len, sizeof(Float), "run-time granulate grain");
@@ -6925,12 +6915,10 @@ Float mus_granulate_with_editor(mus_any *ptr, Float (*input)(void *arg, int dire
 	    if (i > steady_end) 
 	      amp -= incr;
 	}
-      if ((edit) || (spd->edit))
+      if (spd_edit)
 	{
 	  int new_len;
-	  if (edit)
-	    new_len = (*edit)(spd->closure);
-	  else new_len = (*(spd->edit))(spd->closure);
+	  new_len = (*spd_edit)(spd->closure);
 	  if (new_len <= 0) 
 	    new_len = spd->len;
 	  else
@@ -7498,13 +7486,13 @@ Float mus_convolve(mus_any *ptr, Float (*input)(void *arg, int direction))
   int i, j;
   if (gen->ctr >= gen->fftsize2)
     {
+      Float (*conv_input)(void *arg, int direction) = input;
+      if (conv_input == NULL) conv_input = gen->feeder;
       for (i = 0, j = gen->fftsize2; i < gen->fftsize2; i++, j++) 
 	{
 	  gen->buf[i] = gen->buf[j]; 
 	  gen->buf[j] = 0.0;
-	  if (input)
-	    gen->rl1[i] = (*input)(gen->closure, 1);
-	  else gen->rl1[i] = (*(gen->feeder))(gen->closure, 1);
+	  gen->rl1[i] = (*conv_input)(gen->closure, 1);
 	  gen->rl1[j] = 0.0;
 	  gen->rl2[i] = 0.0;
 	  gen->rl2[j] = 0.0;
@@ -8074,7 +8062,6 @@ Float *mus_phase_vocoder_amps(mus_any *ptr) {return(((pv_info *)ptr)->amps);}
 Float *mus_phase_vocoder_freqs(mus_any *ptr) {return(((pv_info *)ptr)->freqs);}
 Float *mus_phase_vocoder_phases(mus_any *ptr) {return(((pv_info *)ptr)->phases);}
 Float *mus_phase_vocoder_phase_increments(mus_any *ptr) {return(((pv_info *)ptr)->phaseinc);}
-Float *mus_phase_vocoder_previous_phases(mus_any *ptr) {return(((pv_info *)ptr)->lastphase);}
 int mus_phase_vocoder_outctr(mus_any *ptr) {return(((pv_info *)ptr)->outctr);}
 int mus_phase_vocoder_set_outctr(mus_any *ptr, int val) {((pv_info *)ptr)->outctr = val; return(val);}
 static Float run_phase_vocoder(mus_any *ptr, Float unused1, Float unused2) {return(mus_phase_vocoder(ptr, NULL));}
@@ -8166,28 +8153,31 @@ Float mus_phase_vocoder_with_editors(mus_any *ptr,
   pv_info *pv = (pv_info *)ptr;
   int N2, i, j, buf;
   Float pscl, kscl, ks, diff, scl;
+  Float (*pv_synthesize)(void *arg) = synthesize;
+  if (pv_synthesize == NULL) pv_synthesize = pv->synthesize;
   N2 = pv->N / 2;
   if (pv->outctr >= pv->interp)
     {
-      if (((pv->analyze == NULL) && (analyze == NULL)) ||
-	  ((analyze) && ((*analyze)(pv->closure, input))) ||
-	  ((pv->analyze) && (*(pv->analyze))(pv->closure, input)))
+      Float (*pv_input)(void *arg, int direction) = input;
+      bool (*pv_analyze)(void *arg, Float (*input)(void *arg1, int direction)) = analyze;
+      int (*pv_edit)(void *arg) = edit;
+      if (pv_input == NULL) pv_input = pv->input;
+      if (pv_analyze == NULL) pv_analyze = pv->analyze;
+      if (pv_edit == NULL) pv_edit = pv->edit;
+
+      pv->outctr = 0;
+      if ((pv_analyze == NULL) || ((*pv_analyze)(pv->closure, pv_input)))
 	{
 	  mus_clear_array(pv->freqs, pv->N);
-	  pv->outctr = 0;
 	  if (pv->in_data == NULL)
 	    {
 	      pv->in_data = (Float *)clm_calloc(pv->N, sizeof(Float), "pvoc indata");
-	      if (input)
-		for (i = 0; i < pv->N; i++) pv->in_data[i] = (*input)(pv->closure, 1);
-	      else for (i = 0; i < pv->N; i++) pv->in_data[i] = (*(pv->input))(pv->closure, 1);
+	      for (i = 0; i < pv->N; i++) pv->in_data[i] = (*pv_input)(pv->closure, 1);
 	    }
 	  else
 	    {
 	      for (i = 0, j = pv->D; j < pv->N; i++, j++) pv->in_data[i] = pv->in_data[j];
-	      if (input)
-		for (i = pv->N - pv->D; i < pv->N; i++) pv->in_data[i] = (*input)(pv->closure, 1);
-	      else for (i = pv->N - pv->D; i < pv->N; i++) pv->in_data[i] = (*(pv->input))(pv->closure, 1);
+	      for (i = pv->N - pv->D; i < pv->N; i++) pv->in_data[i] = (*pv_input)(pv->closure, 1);
 	    }
 	  buf = pv->filptr % pv->N;
 	  for (i = 0; i < pv->N; i++)
@@ -8218,9 +8208,7 @@ Float mus_phase_vocoder_with_editors(mus_any *ptr,
 #endif
 	}
       
-      if (((pv->edit == NULL) && (edit == NULL)) ||
-	  ((edit) && ((*edit)(pv->closure))) ||
-	  ((pv->edit) && (*(pv->edit))(pv->closure)))
+      if ((pv_edit == NULL) || ((*pv_edit)(pv->closure)))
 	{
 	  pscl = 1.0 / (Float)(pv->D);
 	  kscl = TWO_PI / (Float)(pv->N);
@@ -8243,10 +8231,8 @@ Float mus_phase_vocoder_with_editors(mus_any *ptr,
     }
   
   pv->outctr++;
-  if (synthesize)
-    return((*synthesize)(pv->closure));
-  if (pv->synthesize)
-    return((*(pv->synthesize))(pv->closure));
+  if (pv_synthesize)
+    return((*pv_synthesize)(pv->closure));
   for (i = 0; i < N2; i++)
     {
       pv->amps[i] += pv->ampinc[i];

@@ -2563,15 +2563,15 @@ static char *descr_store_s(int *args, ptree *pt)
 }
 
 #if 0
-/* TODO: get vct store to work */
-static void store_v(int *args, ptree *pt)
-{
-  if (VCT_RESULT) c_free_vct(VCT_RESULT);
-  VCT_RESULT = c_vct_copy(VCT_ARG_1);  
-}
+static void store_v(int *args, ptree *pt) {VCT_RESULT = VCT_ARG_1;}
 static char *descr_store_v(int *args, ptree *pt) 
 {
   return(mus_format( VCT_PT " = " VCT_PT ")", args[0], DESC_VCT_RESULT, args[1], DESC_VCT_ARG_1));
+}
+static void store_g(int *args, ptree *pt) {CLM_RESULT = CLM_ARG_1;}
+static char *descr_store_g(int *args, ptree *pt) 
+{
+  return(mus_format( CLM_PT " = " CLM_PT ")", args[0], DESC_CLM_RESULT, args[1], DESC_CLM_ARG_1));
 }
 #endif
 
@@ -2622,15 +2622,22 @@ static triple *set_var(ptree *pt, xen_value *var, xen_value *init_val)
       return(add_triple_to_ptree(pt, va_make_triple(store_x, descr_store_x, 2, var, init_val)));
       break;
 #if 0
+      /* next two are direct -- no copy, no free */
     case R_VCT:
       return(add_triple_to_ptree(pt, va_make_triple(store_v, descr_store_v, 2, var, init_val)));
       break;
+    case R_CLM:
+      return(add_triple_to_ptree(pt, va_make_triple(store_g, descr_store_g, 2, var, init_val)));
+      break;
 #endif
       /* case R_SOUND_DATA: free_sound_data in sndlib2xen.c and sound_data_dup in the RUBY section */
-      /* case R_CLM: mus_free, how to copy? */
       /* case R_READER: case R_MIX_READER: case R_TRACK_READER: free for each + copy_reader? */
       /* case R_FLOAT_VECTOR: case R_INT_VECTOR: case R_VCT_VECTOR: case R_CLM_VECTOR: need free/copy */
     }
+  /* this is not necessarily an error as long as we don't actually allow
+   *   explicit set! of the unhandled types -- a let binding simply
+   *   passes the reference through, which should be ok since it's read-only.
+   */
   /*
   fprintf(stderr,"set: %s(%s. %d) %s(%s, %d) failed\n", 
 	  describe_xen_value(var, pt), type_name(var->type), var->type,
@@ -2768,8 +2775,8 @@ static char *parallel_binds(ptree *prog, XEN old_lets, const char *name)
 	{
 	  var = XEN_CAR(lets);
 	  add_var_to_ptree(prog, XEN_SYMBOL_TO_C_STRING(XEN_CAR(var)), vs[i]);
-	  /* in case called in loop with set! on locals, need to restore upon re-entry */
-	  set_var(prog, vs[i], old_vs[i]);
+	  set_var(prog, vs[i], old_vs[i]); /* establish let binding */
+	  /* (run-eval '(do ((i 0 (1+ i))) ((= i 3)) (let ((a 1)) (set! a (+ a 1)) (display a)))) */
 	  FREE(vs[i]);
 	  FREE(old_vs[i]);
 	}
@@ -3759,7 +3766,6 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t need_result)
 	      return(copy_xen_value(var->v));
 	    }
 	}
-
       set_var(prog, var->v, v);
       var->unclean = true;
       return(v);
@@ -8761,14 +8767,13 @@ static bool pv_analyze(void *arg, Float (*input)(void *arg1, int direction))
     }
 #endif
   outer->clms[pt->args[0]] = gn->gen;
-  /* TODO: how to pass input reader?? -- args[1] = gn->input if its XEN proc? */
+  /* I think the input function is handled by mus_phase_vocoder */
   eval_embedded_ptree(pt, outer);
   return(outer->ints[pt->result->addr]);
 }
 
 static Float pv_synthesize(void *arg)
 {
-  /* TODO: synthesize arg doesn't work? -- run-time pv needs a lot of tests! */
   mus_xen *gn = (mus_xen *)arg;
   ptree *pt, *outer;
   pt = (ptree *)(gn->synthesize_ptree);
@@ -8959,7 +8964,16 @@ PV_VCT_1(phases)
 PV_VCT_1(phase_increments)
 
 INT_GEN0(phase_vocoder_outctr)
-  /* SET_INT_GEN0(phase_vocoder_outctr) -- needs to be mus_phase_vocoder_set_outctr */
+
+static char *descr_pv_set_outctr(int *args, ptree *pt)
+{
+  return(mus_format("phase-vocoder-set-outctr(" CLM_PT ", " INT_PT ")" , args[0], DESC_CLM_RESULT, args[1], INT_ARG_1));
+}
+static void pv_set_outctr(int *args, ptree *pt) {mus_phase_vocoder_set_outctr(CLM_RESULT, INT_ARG_1);}
+static xen_value *mus_phase_vocoder_set_outctr_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(package(prog, R_INT, pv_set_outctr, descr_pv_set_outctr, args, 2));
+}
 
 GEN_P(src)
 GEN_P(convolve)
@@ -11388,6 +11402,7 @@ static void init_walkers(void)
   INIT_WALKER(S_phase_vocoder_phases, make_walker(phase_vocoder_phases_1, NULL, NULL, 1, 1, R_VCT, false, 0));
   INIT_WALKER(S_phase_vocoder_phase_increments, make_walker(phase_vocoder_phase_increments_1, NULL, NULL, 1, 1, R_VCT, false, 0));
   INIT_WALKER(S_phase_vocoder_outctr, make_walker(mus_phase_vocoder_outctr_0, NULL, NULL, 1, 1, R_INT, false, 1, R_CLM));
+  INIT_WALKER(S_phase_vocoder_set_outctr, make_walker(mus_phase_vocoder_set_outctr_1, NULL, NULL, 2, 2, R_INT, false, 2, R_CLM, R_INT));
 
   INIT_WALKER(S_formant, make_walker(formant_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_filter, make_walker(filter_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
@@ -11418,8 +11433,8 @@ static void init_walkers(void)
   INIT_WALKER(S_ring_modulate, make_walker(ring_modulate_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_amplitude_modulate, make_walker(amplitude_modulate_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_contrast_enhancement, make_walker(contrast_enhancement_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_dot_product, make_walker(dot_product_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_VCT, R_VCT));
-  INIT_WALKER(S_sine_bank, make_walker(sine_bank_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_VCT, R_VCT));
+  INIT_WALKER(S_dot_product, make_walker(dot_product_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_VCT, R_VCT, R_INT));
+  INIT_WALKER(S_sine_bank, make_walker(sine_bank_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_VCT, R_VCT, R_INT));
   INIT_WALKER(S_polar_to_rectangular, make_walker(polar_to_rectangular_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
   INIT_WALKER(S_rectangular_to_polar, make_walker(rectangular_to_polar_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
   INIT_WALKER(S_multiply_arrays, make_walker(multiply_arrays_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));

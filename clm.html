@@ -2120,8 +2120,8 @@ split into three pieces, the analysis stage, editing of the amplitudes and phase
 Each stage has a default that is invoked if the <i>analyze</i>, <i>edit</i>, or <i>synthesize</i>
 arguments are omitted from make-phase-vocoder or the phase-vocoder generator.  The edit and synthesize arguments are functions of one argument, the
 phase-vocoder generator.  The analyze argument is a function of two arguments, the generator and
-the input function passed to phase-vocoder at run-time (if any). The default is to read input from the input function (an "as-needed"
-input source as in src or granulate), take the fft, get the new amplitudes and phases (as the edit
+the input function. The default is to read the current input,
+take an fft, get the new amplitudes and phases (as the edit
 function default), then resynthesize using sine-bank (the synthesize function default); so, the
 default case simply returns a resynthesis of the original input.  <i>interp</i> sets the time between
 ffts (for time stretching etc). 
@@ -2139,7 +2139,11 @@ ffts (for time stretching etc).
 </pre>
 </td></tr></table>
 
-<p>See ug3.ins for instruments that use the various function arguments.</p>
+<p>See ug3.ins for instruments that use the various function arguments.  In Snd, clm23.scm
+has a variety of instruments calling the phase-vocoder generator, including pvoc-e that
+specifies all of the functions with their default values (that is, it explicitly passes
+in functions that do what the phase-vocoder would have done without any function arguments).
+</p>
 
 <br>
 

@@ -2011,50 +2011,52 @@ is a physical model of a flute:
 
 ;;; spectral modeling (SMS)
 
+;;; TODO: expsrc paralleling clm
+
 (definstrument (pins beg dur file amp-1
 		     #:key (transposition 1.0) ; this can be used to transpose the sound
 			  (time-scaler 1.0)    ; this can make things happen faster (< 1.0)/slower (> 1.0) in the output
-			  (fftsize-1 256)      ; should be a power of 2
+			  (fftsize 256)        ; should be a power of 2
 			  ;; at 22050 srate, this is ok for sounds above 300Hz or so, below that you need 512 or 1024,
 			  ;; at 44100, probably best to double these sizes -- it takes some searching sometimes.
-			  (highest-bin-1 128)  ; how high in fft data should we search for peaks
-			  (max-peaks-1 16)     ; how many spectral peaks to track at the maximum
+			  (highest-bin 128)    ; how high in fft data should we search for peaks
+			  (max-peaks 16)       ; how many spectral peaks to track at the maximum
 			  attack)	       ; whether to use original attack via time domain splice
   ;; do the sliding fft shuffle, translate to polar coordinates, find spectral peaks,
   ;;   match with current, do some interesting transformation, resynthesize using oscils
   ;;   All the envelopes are created on the fly.  max-peaks is how many of these peaks
   ;;   we are willing to track at any given time.
-  (let* ((max-peaks max-peaks-1)
-	 (fftsize fftsize-1)
-	 (highest-bin highest-bin-1)
+  (let* ((max-peaks-1 max-peaks)
+	 (fftsize-1 fftsize)
+	 (highest-bin-1 highest-bin)
 	 (amp amp-1)
 	 (start (inexact->exact (floor (* beg (mus-srate)))))
 	 (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
 	 (fil (make-file->sample file))
 	 (file-duration (mus-sound-duration file))
-	 (fdr (make-vct fftsize))
-	 (fdi (make-vct fftsize))
-	 (window (make-fft-window blackman2-window fftsize))
-	 (fftamps (make-vct fftsize))
-	 (max-oscils (* 2 max-peaks))
+	 (fdr (make-vct fftsize-1))
+	 (fdi (make-vct fftsize-1))
+	 (window (make-fft-window blackman2-window fftsize-1))
+	 (fftamps (make-vct fftsize-1))
+	 (max-oscils (* 2 max-peaks-1))
 	 (current-peak-freqs (make-vct max-oscils))
 	 (last-peak-freqs (make-vct max-oscils))
 	 (current-peak-amps (make-vct max-oscils))
 	 (last-peak-amps (make-vct max-oscils))
-	 (peak-amps (make-vct max-peaks))
-	 (peak-freqs (make-vct max-peaks))
+	 (peak-amps (make-vct max-peaks-1))
+	 (peak-freqs (make-vct max-peaks-1))
 	 (resynth-oscils (make-vector max-oscils))
 	 (amps (make-vct max-oscils))	;run-time generated amplitude and frequency envelopes
 	 (rates (make-vct max-oscils))
 	 (freqs (make-vct max-oscils))
 	 (sweeps (make-vct max-oscils))
 	 (lowest-magnitude .001)
-	 (hop (inexact->exact (floor (/ fftsize 4))))
+	 (hop (inexact->exact (floor (/ fftsize-1 4))))
 	 (outhop (inexact->exact (floor (* time-scaler hop))))
 	 (ifreq (/ 1.0 outhop))
 	 (ihifreq (hz->radians ifreq))
-	 (fftscale (/ 1.0 (* fftsize .42323))) ;integrate Blackman-Harris window = .42323*window width and shift by fftsize
-	 (fft-mag (/ (mus-srate) fftsize))
+	 (fftscale (/ 1.0 (* fftsize-1 .42323))) ;integrate Blackman-Harris window = .42323*window width and shift by fftsize-1
+	 (fft-mag (/ (mus-srate) fftsize-1))
 	 (furthest-away-accepted .1)
 	 (filptr 0)
 	 (trigger 0)
@@ -2100,16 +2102,16 @@ is a physical model of a flute:
 		     ;; get next block of data and apply window to it
 		     (set! trigger 0)
 		     (do ((k 0 (1+ k)))
-			 ((= k fftsize))
+			 ((= k fftsize-1))
 		       (vct-set! fdr k (* (vct-ref window k) (file->sample fil filptr)))
 		       (set! filptr (1+ filptr)))
 		     (vct-fill! fdi 0.0)
-		     (set! filptr (- filptr (- fftsize hop)))
+		     (set! filptr (- filptr (- fftsize-1 hop)))
 		     ;; get the fft 
-		     (mus-fft fdr fdi fftsize 1)
+		     (mus-fft fdr fdi fftsize-1 1)
 		     ;; change to polar coordinates (ignoring phases)
 		     (do ((k 0 (1+ k)))
-			 ((= k highest-bin))	;no need to paw through the upper half (so (<= highest-bin (floor fft-size 2)))
+			 ((= k highest-bin-1))	;no need to paw through the upper half (so (<= highest-bin-1 (floor fft-size 2)))
 		       (let ((x (vct-ref fdr k))
 			     (y (vct-ref fdi k)))
 			 (vct-set! fftamps k (* 2 (sqrt (+ (* x x) (* y y)))))))
@@ -2126,7 +2128,7 @@ is a physical model of a flute:
 		       ;; "A System for Sound Analysis/Transformation/Synthesis 
 		       ;;      Based on a Deterministic Plus Stochastic Decomposition"
 		       (do ((k 0 (1+ k)))
-			   ((= k highest-bin))
+			   ((= k highest-bin-1))
 			 (set! la ca)
 			 (set! ca ra)
 			 (set! ra (vct-ref fftamps k))
@@ -2140,12 +2142,12 @@ is a physical model of a flute:
 				    (offset (/ (* .5 (- logla logra)) (+ logla (* -2 logca) logra)))
 				    (amp (expt 10.0 (- logca (* .25 (- logla logra) offset))))
 				    (freq (* fft-mag (+ k offset -1))))
-			       (if (= peaks max-peaks)
+			       (if (= peaks max-peaks-1)
 				   ;; gotta either flush this peak, or find current lowest and flush him
 				   (let ((minp 0)
 					 (minpeak (vct-ref peak-amps 0)))
 				     (do ((j 1 (1+ j)))
-					 ((= j max-peaks))
+					 ((= j max-peaks-1))
 				       (if (< (vct-ref peak-amps j) minpeak)
 					   (begin
 					     (set! minp j)
@@ -2167,7 +2169,7 @@ is a physical model of a flute:
 		       (let ((maxp 0)
 			     (maxpk (vct-ref peak-amps 0)))
 			 (do ((j 1 (1+ j)))
-			     ((= j max-peaks))
+			     ((= j max-peaks-1))
 			   (if (> (vct-ref peak-amps j) maxpk)
 			       (begin
 				 (set! maxp j)
@@ -2179,7 +2181,7 @@ is a physical model of a flute:
 				    (current-freq (vct-ref peak-freqs maxp))
 				    (icf (/ 1.0 current-freq)))
 			       (do ((j 0 (1+ j)))
-				   ((= j max-peaks))
+				   ((= j max-peaks-1))
 				 (if (> (vct-ref last-peak-amps j) 0.0)
 				     (let ((closeness (* icf (abs (- (vct-ref last-peak-freqs j) current-freq)))))
 				       (if (< closeness closestamp)
@@ -2193,7 +2195,7 @@ is a physical model of a flute:
 				     (vct-set! peak-amps maxp 0.0)
 				     (vct-set! current-peak-freqs closestp current-freq)))))))
 		     (do ((k 0 (1+ k)))
-			 ((= k max-peaks))
+			 ((= k max-peaks-1))
 		       (if (> (vct-ref peak-amps k) 0.0)
 			   ;; find a place for a new oscil and start it up
 			   (let ((new-place -1))
@@ -2289,6 +2291,30 @@ is a physical model of a flute:
 	 (outa i (all-pass d0 (* amp (pulse-train s)) (env zenv)) *output*))))))
 
 ;;(with-sound () (za 0 1 100 .1 20 100 .95 .95) (za 1.5 1 100 .1 100 20 .95 .95))
+
+
+(define* (clm-expsrc beg dur input-file exp-ratio src-ratio amp-1 #:optional rev start-in-file)
+  (let* ((st (inexact->exact (floor (* beg (mus-srate)))))
+	 (stf (inexact->exact (floor (* (or start-in-file 0) (mus-sound-srate input-file)))))
+	 (fdA (make-readin input-file :channel 0 :start stf))
+	 (exA (make-granulate :expansion exp-ratio))
+	 (two-chans (and (= (mus-sound-chans input-file) 2) (= (mus-channels *output*) 2)))
+	 (fdB (and two-chans (make-readin input-file :channel 1 :start stf)))
+	 (exB (and two-chans (make-granulate :expansion exp-ratio)))
+	 (srcA (make-src :srate src-ratio))
+	 (srcB (and two-chans (make-src :srate src-ratio)))
+	 (revit (and *reverb* rev))
+	 (rev-amp (if revit (if two-chans (* rev .5) rev) 0.0))
+	 (amp amp-1)
+	 (nd (+ st (inexact->exact (floor (* (mus-srate) dur))))))
+    (run
+     (lambda ()
+       (do ((i st (1+ i))) ((= i nd))
+	 (let ((valA               (* amp (src srcA 0.0 (lambda (dir) (granulate exA (lambda (dir) (readin fdA)))))))
+	       (valB (if two-chans (* amp (src srcB 0.0 (lambda (dir) (granulate exB (lambda (dir) (readin fdB)))))) 0.0)))
+	 (out-any i valA 0 *output*)
+	 (if two-chans (out-any i valB 1 *output*))
+	 (if revit (out-any i (* rev-amp (+ valA valB)) 0 *reverb*))))))))
 
 
 (definstrument (exp-snd file beg dur amp #:optional (exp-amt 1.0) (ramp .4) (seglen .15) (sr 1.0) (hop .05) ampenv)

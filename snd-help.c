@@ -379,6 +379,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+2-Aug:   players: returns list of active players\n\
 27-Jul:  --with-hobbit and --with-builtin-gtkrc configure switches\n\
          clm23.scm.\n\
 30-Jun:  snd-hobbit.scm thanks to Kjetil\n\
@@ -389,9 +390,6 @@ void about_snd_help(void)
 10-Jun:  gtk support in fft-menu.scm thanks to Kjetil\n\
          ssb-bank in dsp.scm.\n\
 9-Jun:   ssb-am in CLM.\n\
-4-Jun:   added add-colormap, delete-colormap, colormap-size, colormap-name, changed colormap-ref\n\
-         removed 2 previously built-in colormaps, added rainbow colormap, default colormap is 0\n\
-1-Jun:   read-ascii in examp.scm.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

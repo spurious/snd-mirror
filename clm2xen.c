@@ -433,15 +433,20 @@ static XEN g_contrast_enhancement(XEN val1, XEN val2)
   return(C_TO_XEN_DOUBLE(mus_contrast_enhancement(XEN_TO_C_DOUBLE(val1), XEN_TO_C_DOUBLE(val2))));
 }
 
-static XEN g_dot_product(XEN val1, XEN val2) 
+static XEN g_dot_product(XEN val1, XEN val2, XEN size) 
 {
-  #define H_dot_product "(" S_dot_product " v1 v2): sum of (vcts) v1[i] * v2[i] (scalar product)"
+  #define H_dot_product "(" S_dot_product " v1 v2 (size)): sum of (vcts) v1[i] * v2[i] (scalar product)"
   vct *v1, *v2;
+  int len;  
   XEN_ASSERT_TYPE(VCT_P(val1), val1, XEN_ARG_1, S_dot_product, "a vct");
   XEN_ASSERT_TYPE(VCT_P(val2), val2, XEN_ARG_2, S_dot_product, "a vct");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(size), size, XEN_ARG_3, S_dot_product, "an integer");
   v1 = TO_VCT(val1);
   v2 = TO_VCT(val2);
-  return(xen_return_first(C_TO_XEN_DOUBLE(mus_dot_product(v1->data, v2->data, v1->length)), 
+  if (XEN_INTEGER_P(size))
+    len = XEN_TO_C_INT(size);
+  else len = v1->length;
+  return(xen_return_first(C_TO_XEN_DOUBLE(mus_dot_product(v1->data, v2->data, len)), 
 			  val1, 
 			  val2));
 }
@@ -486,15 +491,20 @@ static XEN g_edot_product(XEN val1, XEN val2)
 }
 #endif
 
-static XEN g_sine_bank(XEN amps, XEN phases)
+static XEN g_sine_bank(XEN amps, XEN phases, XEN size)
 {
-  #define H_sine_bank "(" S_sine_bank " amps phases): sum of amps[i] * sin(phases[i])"
+  #define H_sine_bank "(" S_sine_bank " amps phases (size)): sum of amps[i] * sin(phases[i])"
   vct *v1, *v2;
+  int len;
   XEN_ASSERT_TYPE(VCT_P(amps), amps, XEN_ARG_1, S_sine_bank, "a vct");
   XEN_ASSERT_TYPE(VCT_P(phases), phases, XEN_ARG_2, S_sine_bank, "a vct");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(size), size, XEN_ARG_3, S_sine_bank, "an integer");
   v1 = TO_VCT(amps);
   v2 = TO_VCT(phases);
-  return(xen_return_first(C_TO_XEN_DOUBLE(mus_sine_bank(v1->data, v2->data, v1->length)), 
+  if (XEN_INTEGER_P(size))
+    len = XEN_TO_C_INT(size);
+  else len = v1->length;
+  return(xen_return_first(C_TO_XEN_DOUBLE(mus_sine_bank(v1->data, v2->data, len)),
 			  amps, 
 			  phases));
 }
@@ -886,6 +896,13 @@ static XEN g_mus_offset(XEN gen)
   #define H_mus_offset "(" S_mus_offset " gen): gen's offset, if any"
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ONLY_ARG, S_mus_offset, "a generator");
   return(C_TO_XEN_DOUBLE(mus_offset(XEN_TO_MUS_ANY(gen))));
+}
+
+static XEN g_mus_set_offset(XEN gen, XEN val) 
+{
+  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_setB S_mus_offset, "a generator");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_offset, "a number");
+  return(C_TO_XEN_DOUBLE(mus_set_offset(XEN_TO_MUS_ANY(gen), XEN_TO_C_DOUBLE(val))));
 }
 
 static XEN g_mus_frequency(XEN gen) 
@@ -1755,6 +1772,11 @@ static XEN g_make_noi(bool rand_case, const char *caller, XEN arglist)
     {
       freq = mus_optkey_to_float(keys[0], caller, orig_arg[0], freq);
       base = mus_optkey_to_float(keys[1], caller, orig_arg[1], base);
+      distribution_size = mus_optkey_to_int(keys[4], caller, orig_arg[4], distribution_size);
+      if (distribution_size <= 0)
+	XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[4], keys[4], "distribution size ~A <= 0?");
+      if (distribution_size > MAX_TABLE_SIZE)
+	XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[4], keys[4], "distribution size ~A too large");
       if (!(XEN_KEYWORD_P(keys[2]))) /* i.e. envelope arg was specified */
         {
 	  int len;
@@ -1776,10 +1798,6 @@ static XEN g_make_noi(bool rand_case, const char *caller, XEN arglist)
 		{
 		  v = mus_optkey_to_vct(keys[3], caller, orig_arg[3], NULL);
 		  distribution_size = v->length;
-		  if (distribution_size <= 0)
-		    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[3], keys[3], "distribution size ~A <= 0?");
-		  if (distribution_size > MAX_TABLE_SIZE)
-		    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[3], keys[3], "distribution size ~A too large");
 		  distribution = copy_vct_data(v);
 		}
 	    }
@@ -1808,7 +1826,7 @@ static XEN g_make_noi(bool rand_case, const char *caller, XEN arglist)
 
 static XEN g_make_rand_interp(XEN arglist)
 {
-  #define H_make_rand_interp "(" S_make_rand_interp " (:frequency 440.0) (:amplitude 1.0) :envelope :distribution): \
+  #define H_make_rand_interp "(" S_make_rand_interp " (:frequency 440.0) (:amplitude 1.0) :envelope :distribution :size): \
 return a new " S_rand_interp " generator, producing linearly interpolated random numbers. \
 frequency is the rate at which new end-points are chosen."
 
@@ -1817,7 +1835,7 @@ frequency is the rate at which new end-points are chosen."
 
 static XEN g_make_rand(XEN arglist)
 {
-  #define H_make_rand "(" S_make_rand " (:frequency 440.0) (:amplitude 1.0) :envelope :distribution): \
+  #define H_make_rand "(" S_make_rand " (:frequency 440.0) (:amplitude 1.0) :envelope :distribution :size): \
 return a new " S_rand " generator, producing a sequence of random numbers (a step  function). \
 frequency is the rate at which new numbers are chosen."
 
@@ -5108,7 +5126,7 @@ XEN_NARGIFY_1(g_samples_to_seconds_w, g_samples_to_seconds)
 XEN_NARGIFY_2(g_ring_modulate_w, g_ring_modulate)
 XEN_NARGIFY_3(g_amplitude_modulate_w, g_amplitude_modulate)
 XEN_NARGIFY_2(g_contrast_enhancement_w, g_contrast_enhancement)
-XEN_NARGIFY_2(g_dot_product_w, g_dot_product)
+XEN_ARGIFY_3(g_dot_product_w, g_dot_product)
 #if HAVE_COMPLEX_TRIG && HAVE_SCM_MAKE_COMPLEX
 XEN_NARGIFY_2(g_edot_product_w, g_edot_product)
 #endif
@@ -5122,7 +5140,7 @@ XEN_ARGIFY_3(g_convolution_w, g_convolution)
 XEN_NARGIFY_2(g_rectangular_to_polar_w, g_rectangular_to_polar)
 XEN_NARGIFY_2(g_polar_to_rectangular_w, g_polar_to_rectangular)
 XEN_ARGIFY_3(g_array_interp_w, g_array_interp)
-XEN_NARGIFY_2(g_sine_bank_w, g_sine_bank)
+XEN_ARGIFY_3(g_sine_bank_w, g_sine_bank)
 XEN_NARGIFY_1(g_mus_inspect_w, g_mus_inspect)
 XEN_NARGIFY_1(g_mus_describe_w, g_mus_describe)
 XEN_NARGIFY_1(g_mus_name_w, g_mus_name)
@@ -5135,6 +5153,7 @@ XEN_NARGIFY_2(g_mus_set_width_w, g_mus_set_width)
 XEN_NARGIFY_1(g_mus_scaler_w, g_mus_scaler)
 XEN_NARGIFY_2(g_mus_set_scaler_w, g_mus_set_scaler)
 XEN_NARGIFY_1(g_mus_offset_w, g_mus_offset)
+XEN_NARGIFY_2(g_mus_set_offset_w, g_mus_set_offset)
 XEN_NARGIFY_1(g_mus_frequency_w, g_mus_frequency)
 XEN_NARGIFY_2(g_mus_set_frequency_w, g_mus_set_frequency)
 XEN_NARGIFY_1(g_mus_length_w, g_mus_length)
@@ -5397,6 +5416,7 @@ XEN_NARGIFY_1(g_ssb_am_p_w, g_ssb_am_p)
 #define g_mus_width_w g_mus_width
 #define g_mus_set_width_w g_mus_set_width
 #define g_mus_offset_w g_mus_offset
+#define g_mus_set_offset_w g_mus_set_offset
 #define g_mus_frequency_w g_mus_frequency
 #define g_mus_set_frequency_w g_mus_set_frequency
 #define g_mus_length_w g_mus_length
@@ -5684,7 +5704,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_ring_modulate,        g_ring_modulate_w,        2, 0, 0, H_ring_modulate);
   XEN_DEFINE_PROCEDURE(S_amplitude_modulate,   g_amplitude_modulate_w,   3, 0, 0, H_amplitude_modulate);
   XEN_DEFINE_PROCEDURE(S_contrast_enhancement, g_contrast_enhancement_w, 2, 0, 0, H_contrast_enhancement);
-  XEN_DEFINE_PROCEDURE(S_dot_product,          g_dot_product_w,          2, 0, 0, H_dot_product);
+  XEN_DEFINE_PROCEDURE(S_dot_product,          g_dot_product_w,          2, 1, 0, H_dot_product);
 #if HAVE_COMPLEX_TRIG && HAVE_SCM_MAKE_COMPLEX
   XEN_DEFINE_PROCEDURE(S_edot_product,         g_edot_product_w,         2, 0, 0, H_edot_product);
 #endif
@@ -5698,7 +5718,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_rectangular_to_polar, g_rectangular_to_polar_w, 2, 0, 0, H_rectangular_to_polar);
   XEN_DEFINE_PROCEDURE(S_polar_to_rectangular, g_polar_to_rectangular_w, 2, 0, 0, H_polar_to_rectangular);
   XEN_DEFINE_PROCEDURE(S_array_interp,         g_array_interp_w,         2, 1, 0, H_array_interp);
-  XEN_DEFINE_PROCEDURE(S_sine_bank,         g_sine_bank_w,         2, 0, 0, H_sine_bank);
+  XEN_DEFINE_PROCEDURE(S_sine_bank,            g_sine_bank_w,            2, 1, 0, H_sine_bank);
 
   #define H_rectangular_window     "The un-window, so to speak"
   #define H_hann_window            "A simple raised cosine window"
@@ -5753,7 +5773,6 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_mus_name,      g_mus_name_w, 1, 0, 0,      H_mus_name);
   XEN_DEFINE_PROCEDURE(S_mus_run,       g_mus_run_w, 1, 2, 0,       H_mus_run);
   XEN_DEFINE_PROCEDURE(S_mus_bank,      g_mus_bank_w, 2, 2, 0,      H_mus_bank);
-  XEN_DEFINE_PROCEDURE(S_mus_offset,    g_mus_offset_w, 1, 0, 0,    H_mus_offset);
   XEN_DEFINE_PROCEDURE(S_mus_file_name, g_mus_file_name_w, 1, 0, 0, H_mus_file_name);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_phase,     g_mus_phase_w,     H_mus_phase,     S_setB S_mus_phase,     g_mus_set_phase_w,      1, 0, 2, 0);
@@ -5764,6 +5783,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_data,      g_mus_data_w,      H_mus_data,      S_setB S_mus_data,      g_mus_set_data_w,       1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_xcoeff,    g_mus_xcoeff_w,    H_mus_xcoeff,    S_setB S_mus_xcoeff,    g_mus_set_xcoeff_w,     2, 0, 3, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_ycoeff,    g_mus_ycoeff_w,    H_mus_ycoeff,    S_setB S_mus_ycoeff,    g_mus_set_ycoeff_w,     2, 0, 3, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_offset,    g_mus_offset_w,    H_mus_offset,    S_setB S_mus_offset,    g_mus_set_offset_w,     1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_mus_xcoeffs, g_mus_xcoeffs_w, 1, 0, 0, H_mus_xcoeffs);
   XEN_DEFINE_PROCEDURE(S_mus_ycoeffs, g_mus_ycoeffs_w, 1, 0, 0, H_mus_ycoeffs);

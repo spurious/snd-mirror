@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 2
-#define MUS_DATE "27-July-04"
+#define MUS_REVISION 3
+#define MUS_DATE "2-Aug-04"
 
 /*
  * 27-July:    mus_granulate_with_editor and mus_phase_vocoder_with_editors.
@@ -618,7 +618,6 @@ Float *mus_phase_vocoder_amps(mus_any *ptr);
 Float *mus_phase_vocoder_freqs(mus_any *ptr);
 Float *mus_phase_vocoder_phases(mus_any *ptr);
 Float *mus_phase_vocoder_phase_increments(mus_any *ptr);
-Float *mus_phase_vocoder_previous_phases(mus_any *ptr);
 int mus_phase_vocoder_outctr(mus_any *ptr);
 int mus_phase_vocoder_set_outctr(mus_any *ptr, int val);
 
@@ -674,7 +673,7 @@ void *_mus_wrap_one_vct_wrapped(mus_any *ge);
 #define mus_frame2file(Ptr, Samp, Data) mus_frame_to_file(Ptr, Samp, Data)
 #define mus_file2fltarray(Filename, Chan, Start, Samples, Array) mus_file_to_float_array(Filename, Chan, Start, Samples, Array)
 #define mus_fltarray2file(Filename, Ddata, Len, Srate, Channels) mus_float_array_to_file(Filename, Ddata, Len, Srate, Channels)
-Float mus_sin(Float phase);
+#define mus_sin(Phase) sin(Phase)
 #define MUS_LINEAR 1
 #define MUS_SINUSOIDAL 2
 

@@ -98,10 +98,9 @@ double xen_to_c_double_or_else(XEN a, double b)
 #endif
 }
 
-/* TODO: replace the two SCM_INUM cases if HAVE_SCM_TO_SIGNED_INTEGER */
 bool xen_integer_p(XEN a) 
 {
-#ifndef SCM_PACK
+#if (!defined(SCM_PACK)) || HAVE_SCM_TO_SIGNED_INTEGER
   return(XEN_NOT_FALSE_P(scm_integer_p(a)));
 #else
   if (SCM_INUMP(a)) return(true);
@@ -120,20 +119,26 @@ bool xen_integer_p(XEN a)
 #endif
 }
 
-#if HAVE_SCM_NUM2INT || HAVE_SCM_TO_SIGNED_INTEGER
 int xen_to_c_int(XEN a)
 {
-  if (SCM_INUMP(a)) return(SCM_INUM(a));
-  if (SCM_REALP(a)) return((int)(SCM_REAL_VALUE(a)));
+  /* Scheme integer (possible inexact) to C int without errors */
 #if HAVE_SCM_TO_SIGNED_INTEGER
-  return((int)scm_to_double(a));
+    if ((SCM_INEXACTP(a)) || (SCM_FRACTIONP(a))) /* avoid error if inexact integer! SCM_INUMP deprecated in 1.7 */
+      {
+	if (SCM_REALP(a)) return((int)(SCM_REAL_VALUE(a)));
+	return((int)scm_to_double(a)); 
+      }
+    return(scm_to_int32(a)); 
 #else
-  return((int)scm_num2dbl(a, c__FUNCTION__));
+  #if HAVE_SCM_NUM2INT
+    if (SCM_INUMP(a)) return(SCM_INUM(a));
+    if (SCM_REALP(a)) return((int)(SCM_REAL_VALUE(a)));
+    return((int)scm_num2dbl(a, c__FUNCTION__));
+  #else
+    return((int)gh_scm2int(a));  /* ah for the good old days... */
+  #endif
 #endif
 }
-#else
-int xen_to_c_int(XEN a) {return((int)gh_scm2int(a));}
-#endif
 
 int xen_to_c_int_or_else(XEN obj, int fallback, const char *origin)
 {

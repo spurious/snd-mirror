@@ -29,7 +29,7 @@
   (max -1.0 (min 1.0 (* sample (- (* sample sample) 1.0)))))
 
 
-(define* (make-onezero #:key (gain 0.5) (zerocoeff 1.0) (input 0.0))
+(define* (make-onezero #:key (gain 0.5) (zerocoeff 1.0))
   (make-one-zero gain (* gain zerocoeff)))
 
 

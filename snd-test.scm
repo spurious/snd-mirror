@@ -13219,7 +13219,10 @@ EDITS: 5
 	(set! (mus-data gen) (make-vct 2))
 	(set! (mus-length gen) 2)
 	(if (not (= (mus-length gen) 2)) (snd-display ";set buffer length: ~D?" (mus-length gen))))
-	
+
+      (let ((val (let ((b (make-buffer 3))) (set! (mus-increment b) 1.5) (mus-increment b))))
+	(if (fneq val 1.5) (snd-display ";set buffer increment: ~A" val)))
+
       (let ((gen (make-buffer 6))
 	    (fr1 (make-frame 2 .1 .2))
 	    (fr2 (make-frame 2 .3 .4))
@@ -14689,6 +14692,9 @@ EDITS: 5
       (let ((gen (make-fft-window welch-window 16)))
 	(if (not (vequal gen (vct 0.000 0.234 0.438 0.609 0.750 0.859 0.938 1.000 1.000 0.938 0.859 0.750 0.609 0.438 0.234 0.000)))
 	    (snd-display ";welch window: ~A" gen)))
+      (let ((gen (make-fft-window connes-window 16)))
+	(if (not (vequal gen (vct 0.000 0.055 0.191 0.371 0.562 0.739 0.879 1.000 1.000 0.879 0.739 0.562 0.371 0.191 0.055 0.000)))
+	    (snd-display ";connes window: ~A" gen)))
       (let ((gen (make-fft-window parzen-window 16)))
 	(if (not (vequal gen (vct 0.000 0.125 0.250 0.375 0.500 0.625 0.750 1.000 1.000 0.750 0.625 0.500 0.375 0.250 0.125 0.000)))
 	    (snd-display ";parzen window: ~A" gen)))
@@ -14723,6 +14729,9 @@ EDITS: 5
 	(if (not (vequal gen (vct 0.607 0.682 0.755 0.823 0.882 0.932 0.969 1.000 1.000 0.969 0.932 0.882 0.823 0.755 0.682 0.607)))
 	    (snd-display ";gaussian window: ~A" gen)))
       (let ((gen (make-fft-window tukey-window 16)))
+	(if (not (vequal gen (vct 0.000 0.038 0.146 0.309 0.500 0.691 0.854 1.000 1.000 0.854 0.691 0.500 0.309 0.146 0.038 0.000)))
+	    (snd-display ";tukey window: ~A" gen)))
+      (let ((gen (make-fft-window hann-poisson-window 16)))
 	(if (not (vequal gen (vct 0.000 0.038 0.146 0.309 0.500 0.691 0.854 1.000 1.000 0.854 0.691 0.500 0.309 0.146 0.038 0.000)))
 	    (snd-display ";tukey window: ~A" gen)))
       (without-errors
@@ -14849,6 +14858,9 @@ EDITS: 5
 	  (if (fneq (env-interp 1.0 e) 1.0) (snd-display ";env-interp 0011 2 at 1: ~A" (env-interp 1.0 e)))
 	  (if (fneq (env-interp 0.0 e) 0.0) (snd-display ";env-interp 0011 2 at 0: ~A" (env-interp 0.0 e)))
 	  (if (fneq (env-interp 0.45 e) 0.6387) (snd-display ";env-interp 0011 2 at .45: ~A" (env-interp 0.45 e))))
+
+	(let ((val (let ((e (make-env '(0 0 1 1) :offset 2.0))) (set! (mus-offset e) 3.0) (mus-offset e))))
+	  (if (fneq val 3.0) (snd-display ";set mus-offset env: ~A" val)))
 	
 	(let ((e1 (make-env '(0 0 1 1) :base 32.0 :end 10))
 	      (v (vct 0.000 0.013 0.032 0.059 0.097 0.150 0.226 0.333 0.484 0.698 1.00)))
@@ -16993,6 +17005,10 @@ EDITS: 5
 			 "phase-vocoder"
 			 "phase-vocoder: outctr: 128, interp: 128, filptr: 0, N: 512, D: 128, in_data: nil"
 			 "pv_info outctr: 128, interp: 128, filptr: 0, N: 512, D: 128, in_data: nil, amps: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)], freqs: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]")
+
+	(let ((val (let ((pv (make-phase-vocoder))) (set! (phase-vocoder-outctr pv) 120) (phase-vocoder-outctr pv))))
+	  (if (not (= val 120)) (snd-display ";pv set outctr: ~A" val)))
+
 	(select-sound ind)
 	(map-chan (lambda (val)
  		    (phase-vocoder pv (lambda (dir) 
@@ -22503,6 +22519,7 @@ EDITS: 5
 	  (let ((pl (make-player ind 0))
 		(ctr 0))
 	    (if (not (player? pl)) (snd-display ";make-player: ~A" pl))
+	    (if (= (length (players)) 0) (snd-display ";players: ~A" (players)))
 	    (add-hook! dac-hook
 		       (lambda (n)
 			 (set! ctr (1+ ctr))
@@ -24090,6 +24107,7 @@ EDITS: 5
 		((= chan chans))
 	      (let ((player (make-player sound chan)))
 		(if (not (player? player)) (snd-display ";player? ~A -> #f?" player))
+		(if (not (member player (players))) (snd-display ";player: ~A, but players: ~A" player (players)))
 		(if (not (equal? (player-home player) (list sound chan)))
 		    (snd-display ";player-home ~A ~A?" (player-home player) (list sound chan)))
 		(set! (amp-control player) (list-ref amps chan))
@@ -35823,6 +35841,13 @@ EDITS: 2
 			    (dot-product v0 v1)))
 	      (if (fneq (vct-ref v 0) 2.5) (snd-display ";run dot-product: ~A" (vct-ref v 0))))
 	    
+	    (let ((v (make-vct 1))
+		  (v0 (vct 1.0 2.0))
+		  (v1 (vct 0.5 1.0)))
+	      (vct-map! v (lambda ()
+			    (dot-product v0 v1 2)))
+	      (if (fneq (vct-ref v 0) 2.5) (snd-display ";run dot-product (2): ~A" (vct-ref v 0))))
+	    
 	    (let ((fr1 (make-frame 2 .1 .2))
 		  (fr2 (make-frame 2 .3 .4))
 		  (fr3 (make-frame 2 0.0 0.0))
@@ -35883,6 +35908,12 @@ EDITS: 2
 		  (phases (list->vct '(1.0 0.5 2.0))))
 	      (vct-map! v (lambda () (sine-bank amps phases)))
 	      (if (fneq (vct-ref v 0) 1.44989) (snd-display ";run sine-bank: ~A?" (vct-ref v 0))))
+	    
+	    (let ((v (make-vct 1))
+		  (amps (list->vct '(0.5 0.25 1.0)))
+		  (phases (list->vct '(1.0 0.5 2.0))))
+	      (vct-map! v (lambda () (sine-bank amps phases 3)))
+	      (if (fneq (vct-ref v 0) 1.44989) (snd-display ";run sine-bank (1): ~A?" (vct-ref v 0))))
 	    
 	    (let ((v (make-vct 1))
 		  (amps (list->vct '(1.0)))
@@ -37243,6 +37274,12 @@ EDITS: 2
       (let ((tag (catch #t (lambda ()(run-eval '(if 1 2 3))) (lambda args (car args)))))
 	(if (not (equal? tag 'cannot-parse)) (snd-display ";if not bool: ~A" tag)))
       
+      (let ((val (run-eval '(let* ((sine (make-vct 32 1.0))
+				   (sr (make-table-lookup :wave sine))) 
+			      (let ((b (mus-data sr))) 
+				(vct-ref b 2))))))
+	(if (fneq val 1.0) (snd-display ";mus-data -> vct opt: ~A" val)))
+
       (run-hook after-test-hook 22)
       ))
 
@@ -38093,7 +38130,7 @@ EDITS: 2
 		  (simple-loc 20 .2 440 .1)
 		  (simple-out 20.25 .2 440 .1)		  
 		  (simple-dup 20.5 .2 440 .1)
-		  (simple-dup 20.75 .2 440 .1)
+		  (simple-du1 20.75 .2 440 .1)
 		  (simple-grn-f1 21 .45 .1 2 440)
 		  (simple-grn-f2 21.5 .45 1 2 "oboe.snd")
 		  (simple-grn-f3 22 .45 1 2 "oboe.snd")
@@ -38124,7 +38161,14 @@ EDITS: 2
 		  (sample-if 6.5 .2 440 .1)
 		  (sample-arrfile 6.75 .2 440 .15)
 		  (cndf-ins 7 .2 .1 40.0 6)
+		  (sample-pvoc5 7.25 .2 .1 256 "oboe.snd" 440.0)
 		  )
+
+      (let* ((outfile (with-sound () (pvoc-a 0 2.3 1 256 "oboe.snd") (pvoc-e 0 2.3 -1 256 "oboe.snd")))
+	     (mx (mus-sound-maxamp outfile)))
+	(if (fneq (cadr mx) 0.0)
+	    (snd-display ";pvoc a-e: ~A" mx)))
+
       (if (not (null? (sounds))) (for-each close-sound (sounds)))
       
       (run-hook after-test-hook 23)
@@ -49039,7 +49083,7 @@ EDITS: 2
 					;new-sound 
 		     read-mix-sample read-track-sample next-sample
 		     transform-normalization equalize-panes open-raw-sound open-sound orientation-dialog
-		     peak-env-info peaks play play-and-wait play-mix play-region play-selection play-track player?
+		     peak-env-info peaks play play-and-wait play-mix play-region play-selection play-track player? players
 		     position-color position->x position->y preload-directory preload-file previous-files-sort previous-sample
 		     print-length progress-report prompt-in-minibuffer pushed-button-color read-only
 		     recorder-in-device read-peak-env-info-file recorder-autoload recorder-buffer-size recorder-dialog
@@ -50228,6 +50272,8 @@ EDITS: 2
 	      (check-error-tag 'out-of-range (lambda () (filter-sound (vct 0 0 1 1) 0)))
 	      (check-error-tag 'out-of-range (lambda () (filter-sound (vct 0 0 1 1) 10)))
 	      (check-error-tag 'wrong-type-arg (lambda () (play 0 #f #f #f #f #f (lambda () #f))))
+	      (check-error-tag 'out-of-range (lambda () (set! (reverb-control-length-bounds ind) (list .1 .01))))
+	      (check-error-tag 'out-of-range (lambda () (set! (reverb-control-scale-bounds ind) (list .1 .01))))
 	      (close-sound ind))
 	    (check-error-tag 'bad-arity (lambda () (add-transform "hiho" "time" 0 1 (lambda () 1.0))))
 	    (check-error-tag 'cannot-save (lambda () (save-options "/bad/baddy")))
@@ -50262,7 +50308,23 @@ EDITS: 2
 	    (check-error-tag 'out-of-range (lambda () (make-wave-train :size (expt 2 30))))
 	    (check-error-tag 'out-of-range (lambda () (make-waveshape :size (expt 2 30))))
 	    (check-error-tag 'out-of-range (lambda () (make-granulate :max-size (expt 2 30))))
-	    
+	    (check-error-tag 'mus-error (lambda () (make-rand :envelope '(0 0 1 1) :distribution (make-vct 10))))
+	    (check-error-tag 'mus-error (lambda () (make-rand :envelope '(0 0 1))))
+	    (check-error-tag 'out-of-range (lambda () (make-rand :envelope '(0 0 1 1) :size -2)))
+	    (check-error-tag 'out-of-range (lambda () (make-rand :envelope '(0 0 1 1) :size 1234567890)))
+	    (check-error-tag 'bad-arity (lambda () (let ((grn (make-granulate))) (granulate grn #f (lambda (a s d) #f)))))
+	    (check-error-tag 'bad-arity (lambda () (let ((pv (make-phase-vocoder))) (phase-vocoder pv #f (lambda () #f)))))
+	    (check-error-tag 'bad-arity (lambda () (let ((pv (make-phase-vocoder))) (phase-vocoder pv #f #f (lambda () #f)))))
+	    (check-error-tag 'bad-arity (lambda () (let ((pv (make-phase-vocoder))) (phase-vocoder pv #f #f #f (lambda () #f)))))
+	    (check-error-tag 'mus-error (lambda () (let ((f (make-filter 3 :xcoeffs (make-vct 3) :ycoeffs (make-vct 3)))) (mus-xcoeff f 4))))
+	    (check-error-tag 'mus-error (lambda () (let ((f (make-filter 3 :xcoeffs (make-vct 3) :ycoeffs (make-vct 3)))) (mus-ycoeff f 4))))
+	    (check-error-tag 'mus-error (lambda () (let ((f (make-filter 3 :xcoeffs (make-vct 3) :ycoeffs (make-vct 3)))) (set! (mus-xcoeff f 4) 1.0))))
+	    (check-error-tag 'mus-error (lambda () (let ((f (make-filter 3 :xcoeffs (make-vct 3) :ycoeffs (make-vct 3)))) (set! (mus-ycoeff f 4) 1.0))))
+	    (check-error-tag 'out-of-range (lambda () (make-scalar-mixer 0 .1)))
+	    (check-error-tag 'mus-error (lambda () (let ((m (make-mixer 2))) (mixer-ref m 3 4))))
+	    (check-error-tag 'out-of-range (lambda () (open-sound-file "test.snd" :channels -1)))
+	    (check-error-tag 'out-of-range (lambda () (open-sound-file "test.snd" :srate -1)))
+
 	    (if (provided? 'snd-motif)
 		(for-each
 		 (lambda (n name)

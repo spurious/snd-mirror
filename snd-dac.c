@@ -2546,7 +2546,17 @@ static XEN g_player_p(XEN snd_chn)
 }
 
 /* player-position? -- need quick way from index to dp to its sample-reader, then C_TO_XEN_OFF_T(current_location(fd)) */
-/* players? -- run through players array looking for active players, return list */
+
+static XEN g_players(void)
+{
+  #define H_players "(" S_players ") -> list of currently active players."
+  XEN lst = XEN_EMPTY_LIST;
+  int i;
+  for (i = 0; i < players_size; i++)
+    if (players[i])
+      lst = XEN_CONS(C_TO_XEN_INT(-i), lst);
+  return(lst);
+}
 
 static XEN g_dac_size(void) {return(C_TO_XEN_INT(dac_size(ss)));}
 static XEN g_set_dac_size(XEN val) 
@@ -2564,7 +2574,7 @@ static XEN g_set_dac_size(XEN val)
 #endif
 #endif
   if (len > 0)
-    set_dac_size(len);
+    set_dac_size(len); /* macro in snd-0.h */
   return(C_TO_XEN_INT(dac_size(ss)));
 }
 
@@ -2622,6 +2632,7 @@ XEN_ARGIFY_5(g_add_player_w, g_add_player)
 XEN_NARGIFY_1(g_player_home_w, g_player_home)
 XEN_ARGIFY_3(g_start_playing_w, g_start_playing)
 XEN_NARGIFY_1(g_stop_player_w, g_stop_player)
+XEN_NARGIFY_0(g_players_w, g_players)
 XEN_NARGIFY_1(g_player_p_w, g_player_p)
 XEN_NARGIFY_0(g_dac_size_w, g_dac_size)
 XEN_NARGIFY_1(g_set_dac_size_w, g_set_dac_size)
@@ -2645,6 +2656,7 @@ XEN_NARGIFY_1(g_set_cursor_location_offset_w, g_set_cursor_location_offset)
 #define g_player_home_w g_player_home
 #define g_start_playing_w g_start_playing
 #define g_stop_player_w g_stop_player
+#define g_players_w g_players
 #define g_player_p_w g_player_p
 #define g_dac_size_w g_dac_size
 #define g_set_dac_size_w g_set_dac_size
@@ -2673,6 +2685,7 @@ void g_init_dac(void)
   XEN_DEFINE_PROCEDURE(S_player_home,    g_player_home_w,    1, 0, 0, H_player_home);
   XEN_DEFINE_PROCEDURE(S_start_playing,  g_start_playing_w,  0, 3, 0, H_start_playing);
   XEN_DEFINE_PROCEDURE(S_stop_player,    g_stop_player_w,    1, 0, 0, H_stop_player);
+  XEN_DEFINE_PROCEDURE(S_players,        g_players_w,        0, 0, 0, H_players);
   XEN_DEFINE_PROCEDURE(S_player_p,       g_player_p_w,       1, 0, 0, H_player_p);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_dac_size, g_dac_size_w, H_dac_size,

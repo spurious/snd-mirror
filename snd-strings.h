@@ -378,6 +378,7 @@
 #define S_play_selection                "play-selection"
 #define S_play_track                    "play-track"
 #define S_player_home                   "player-home"
+#define S_players                       "players"
 #define S_player_p                      "player?"
 #define S_position_to_x                 "position->x"
 #define S_position_to_y                 "position->y"

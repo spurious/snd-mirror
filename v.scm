@@ -127,10 +127,10 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 	   (lambda () 
 	     (do ((i beg (1+ i)))
 		 ((= i end))
-	       (let* ((vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
-		      (modulation (* (env indf1) (polynomial coeffs (oscil fmosc1 vib)))))
-		 (locsig locs i (* (env ampf) (oscil carrier (+ vib modulation)))))))))))
-
+	       (let* ((vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib))))
+		 (locsig locs i (* (env ampf) 
+				   (oscil carrier (+ vib (* (env indf1) 
+							    (polynomial coeffs (oscil fmosc1 vib))))))))))))))
 
 
 ; (fm-violin 0 1 440 .1 :fm-index 2.0)
