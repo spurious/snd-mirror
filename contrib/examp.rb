@@ -1,15 +1,18 @@
 # examp.rb -- Guile -> Ruby translation
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Fr  Feb 28 04:40:38 CET 2003
-# Version: $Revision: 1.29 $
+# Last: Tue Mar 04 04:57:57 CET 2003
+# Version: $Revision: 1.31 $
 
 #
 # Utilities
 #
+# Class Hook
+#
 # get_func_name(n)
 # doc(str), putd(func), snd_putd(func)
-# help
+# help()
+# remove_if(func, lst)
 # car(v), cadr(v), caddr(v), cdr(v)
 # warn(str), die(str), message(*args)
 # shell(cmd)
@@ -158,12 +161,75 @@ ensure
   message Kernel.doc(func)
 end
 
+class Hook
+  doc "#{self.class} #{self.name}
+To set, add, and remove named hooks (see popup.rb).
+
+Example:
+
+  if $after_open_hook
+    old_after = $after_open_hook
+    $after_open_hook = Hook.new(\"original\") do |snd|
+      old_after.call(snd) if old_after
+    end
+  else
+    $after_open_hook = Hook.new
+  end
+
+  $after_open_hook.add_hook!(\"my_hook\") do |snd|
+    set_cursor_follows_play(true, snd)
+    set_channel_style(Channels_combined, snd)
+  end
+
+  $after_open_hook.remove_hook!(\"my_hook\")\n"
+  
+  def initialize(name = nil, &func)
+    @hooks = Hash.new
+    add_hook!(name) do |*args|
+      func.call(*args)
+    end if name and func
+  end
+  
+  def add_hook!(name, &func)
+    @hooks.store(name, func)
+    set_hook
+  end
+
+  def remove_hook!(name)
+    @hooks.delete(name)
+    @hooks.rehash
+    set_hook
+  end
+
+  def call(*args)
+    @hooks.each_value do |f|
+      f.call(*args)
+    end
+  end
+
+  def inspect
+    set_hook
+  end
+  
+  def set_hook
+    lambda do |*args|
+      @hooks.each_value do |f|
+        f.call(*args)
+      end
+    end
+  end
+  private :set_hook
+end
+
 def help
   message("## Functions available
 #
+# Class Hook
+#
 # get_func_name(n)
 # doc(str), putd(func), snd_putd(func)
-# help
+# help()
+# remove_if(func, lst)
 # car(v), cadr(v), caddr(v), cdr(v)
 # warn(str), die(str), message(*args)
 # shell(cmd)
@@ -241,6 +307,16 @@ end
 ##
 ## Utilities
 ##
+
+def remove_if(func, lst)
+  if lst.empty?
+    []
+  elsif func.call(lst[0])
+    remove_if(func, lst[1..-1])
+  else
+    [lst[0], remove_if(func, lst[1..-1])]
+  end
+end
 
 def car(v) v[0]; end
 
@@ -1064,9 +1140,10 @@ prune_db()."
 
   @current_file = nil
 
-  def nb(note, file = @current_file)
+  def nb(note, file = nil)
     doc("nb(note[, file=@current_file])
 Adds NOTE to the info associated with FILE.\n") if note == :help
+    file = @current_file unless file
     ptr = DBM.open($nb_database) rescue warn("DBM.open(#{$nb_database}")
     if ptr
       current_note = (ptr.key?(file) ? ptr.fetch(file) : "")
@@ -1107,38 +1184,34 @@ the filename.\n") if type == :help
       d_format = mus_data_format_name(mus_sound_data_format(file))
       h_type = mus_header_type_name(mus_sound_header_type(file))
       date = Time.at(mus_sound_write_date(file)).localtime.strftime "%a %d-%b-%y %H:%M %Z"
-      max_amp = mus_sound_maxamp(file)
+      comm = mus_sound_comment(file)
+      loops = mus_sound_loop_info(file)
       notes = ((ptr and ptr.key?(file)) ? ptr.fetch(file) : "")
-      " #{file}
-    chans: #{chans}, srate: #{srate}
-   length: #{len} (#{mus_sound_frames(file)} samples)
-   format: #{d_format} [#{h_type}]
- maxamp A: #{"%.3f" % max_amp[1]} (near #{"%.3f" % (max_amp[0] / srate)} secs)#{"
- maxamp B: #{"%.3f" % max_amp[3]} (near #{"%.3f" % (max_amp[2] / srate)} secs)" if chans == 2}
-  written: #{date}#{"
-  comment: #{mus_sound_comment(file)}" unless mus_sound_comment(file).empty?}#{"
-
-#{notes}" unless notes.empty?}"
+      format("\
+  chans: %d, srate: %d
+ length: %.3f (%d samples)
+ format: %s [%s]
+written: %s
+%s%s\n%s",
+             chans, srate, len, mus_sound_frames(file), d_format, h_type, date,
+             comm.empty? ? "" : "comment: #{comm}\n",
+             loops ? "   loop: #{loops.inspect}\n" : "", (notes or ""))
     }
     alert_color = make_color(1.0, 1.0, 0.94)
     current_file_viewer = 0
     previous_file_viewer = 1
     region_viewer = 2
     unless type == region_viewer
-      help_exists = dialog_widgets()[14]
       @current_file = name
       help_dialog(name, file_info.call(name))
       help_widget = dialog_widgets()[14]
-      if help_widget
-	unless help_exists
-	  files_dialog = dialog_widgets()[8]
-	  files_position = widget_position(files_dialog)
-	  files_size = widget_size(files_dialog)
-	  set_widget_position(help_widget,
-                              [files_position[0] + files_size[0] + 10, files_position[1] + 10])
-	end
-	recolor_widget(help_widget, alert_color)
+      unless help_widget
+        files_dialog = dialog_widgets()[8]
+        files_position = widget_position(files_dialog)
+        files_size = widget_size(files_dialog)
+        set_widget_position(help_widget, [files_position[0] + 10, files_position[1] + 10])
       end
+      recolor_widget(help_widget, alert_color) if help_widget
     end
     ptr.close if ptr
   end
@@ -1157,7 +1230,6 @@ the associated label.\n") if type == :help
 end
 
 module Dsp
-  
   doc "#{self.class} #{self.name} contains some definitions of dsp.scm\n"
 
   def butter(b, sig = nil)
