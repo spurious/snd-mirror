@@ -332,6 +332,8 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (fneq(vu_font_size(ss),DEFAULT_VU_FONT_SIZE)) pss_sf(fd,S_vu_font_size,vu_font_size(ss));
   if (fneq(enved_base(ss),DEFAULT_ENVED_BASE)) pss_sf(fd,S_enved_base,enved_base(ss));
   if (fneq(enved_power(ss),DEFAULT_ENVED_POWER)) pss_sf(fd,S_enved_power,enved_power(ss));
+  if (fneq(eps_bottom_margin(ss),DEFAULT_EPS_BOTTOM_MARGIN)) pss_sf(fd,S_eps_bottom_margin,eps_bottom_margin(ss));
+  if (fneq(eps_left_margin(ss),DEFAULT_EPS_LEFT_MARGIN)) pss_sf(fd,S_eps_left_margin,eps_left_margin(ss));
   save_recorder_state(fd);
 
   fprintf(fd,";;; end of snd options\n");

@@ -40,6 +40,7 @@ static void ps_write(int fd, char *buf)
 static int start_ps_graph(char *output, char *title) 
 { 
   time_t ts;
+  snd_state *ss;
   ps_fd = creat(output,0666);
   if (ps_fd == -1) return(-1);
   if (!pbuf) pbuf = (char *)CALLOC(PRINT_BUFFER_SIZE,sizeof(char));
@@ -56,6 +57,13 @@ static int start_ps_graph(char *output, char *title)
   ps_write(ps_fd,pbuf);
   sprintf(pbuf,"/LT {lineto} bind def\n/RF {rectfill} bind def\n/RG {setrgbcolor} bind def\n/NAF {newpath arc fill} bind def\n\n");
   ps_write(ps_fd,pbuf);
+  ss = get_global_state();
+  if ((eps_left_margin(ss) != 0) || (eps_bottom_margin(ss) != 0))
+    {
+      sprintf(pbuf,"gsave [1.00 0.00 0.00 1.00 %.3f %.3f] concat\n\n",
+	      eps_left_margin(ss),eps_bottom_margin(ss));
+      ps_write(ps_fd,pbuf);
+    }
   return(0);
 }
 
@@ -72,7 +80,13 @@ static void ps_graph(chan_info *cp, int x0, int y0)
 
 static void end_ps_graph(void)
 {
-  sprintf(pbuf,"\nshowpage\n%%%%Trailer\n%%%%BoundingBox: %d %d %d %d\n",0,0,bbx+10,bby+10);
+  snd_state *ss;
+  ss = get_global_state();
+  sprintf(pbuf,"%s\nshowpage\n%%%%Trailer\n%%%%BoundingBox: %d %d %d %d\n",
+	  ((eps_left_margin(ss) != 0) || (eps_bottom_margin(ss) != 0)) ? "\ngrestore" : "",
+	  0,0,
+	  (int)(bbx +10 +eps_left_margin(ss)),
+	  (int)(bby +10 +eps_bottom_margin(ss)));
   ps_write(ps_fd,pbuf);
   ps_flush(ps_fd);
   close(ps_fd);

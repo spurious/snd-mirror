@@ -352,8 +352,22 @@ when you save a sound via the "save" dialog.</p>
   <b><a name="defaultoutputtype">default-output-type</a></b>   -1      The default header type when a new or temporary file is created, 
                                 or a save dialog is opened. -1 means use the current sound's type.
 
+  <b><a name="epsbottommargin">eps-bottom-margin</a></b>     0.0     bottom margin used in snd.eps (Print command) (PS units).
+                                PostScript units are 1/72 of an inch (a "point" in printer jargon); 
+                                an inch is 2.54 cm:
+<small>
+                                (define (inches-to-ps inches) (* inches 72)
+                                (define (cm-to-ps cm) (* cm (/ 72.0 2.54)))
+</small>
+                                In the resulting .eps file, you'll find a concat statement near the 
+                                top of the file; the first and fourth numbers are scale factors on 
+                                the entire graph, the fifth is the left margin, and the sixth is the 
+                                bottom margin.
+
   <b><a name="epsfile">eps-file</a></b>              "snd.eps"  Name of the Postscript file produced by the <a href="snd.html#printfile">File Print</a> option.
                                 See also the <a href="grfsnd.html#epsresource">epsFile</a> resource.
+
+  <b><a name="epsleftmargin">eps-left-margin</a></b>       0.0     left margin used in snd.eps (Print command) (PS units).
 
   <b><a name="fitdataonopen">fit-data-on-open</a></b>      #f      If #t, the initial time-domain display of a sound shows
                                 its entire duration, with the Y-axis set to show its maxamp.
@@ -646,7 +660,7 @@ the hook.
            (lambda args (reset-hook! (apply edit-hook args))))
 </small>
 </pre>
-
+<p>See also <a href="#menuhook">menu-hook</a> below.</p>
 
 <br>
 <span class=bbox><h3><a name="sndobjects">Snd's objects</a></h3></span>
@@ -2637,6 +2651,20 @@ Error:
                                 remove menu <i>menu-label</i> from the top top-level menu whose index is <i>top-menu</i>.
 
   <b><a name="menusensitive">menu-sensitive</a></b>        (top-menu label)
+</pre>
+<p>In addition, the hook <b><a name="mennuhook">menu-hook</a></b> is checked each time a menu item is selected;
+its entries should be functions of two arguments, the top menu name and the option
+selected (both as strings), and should return #f if it wants to override the default
+menu action.</p>
+<pre>
+  (add-hook! menu-hook
+    (lambda (name option)
+      (if (and (string=? name "File")
+               (string=? option "Exit"))
+        (begin
+          (snd-print "no exit!")
+	  #f)
+        #t))) ; #t to make sure other menu items remain active
 </pre>
 
 <br>

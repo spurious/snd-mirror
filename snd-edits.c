@@ -2,9 +2,9 @@
 
 /* TODO   undo-hook is not very useful until we can make channel-specific GUI indications
  * TODO   add more general SCM func mechanism? or add a way to extend the pre-parsed cases
- * TODO   extend (or insert) zeros: fragment type or special sound file? (amp env here?)
- */
-/* the latter is under the WITH_PARSE_TREES switch.  ed_list has 2 extra fields:
+ * TODO   cursor_zeros should use the auto-zero business. (what about amp_envs in these cases?)
+ *
+ * the latter is under the WITH_PARSE_TREES switch.  ed_list has 2 extra fields:
  *      MUS_SAMPLE_TYPE (*func)(struct chan__info *cp, int pos, struct snd__fd *sf,void *env);
  *      void *environ;
  * where the function (if defined) applies to the entire ed_list fragment list using environ as its state
@@ -121,8 +121,12 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
 	    fprintf(outp," [nil!]");
 	  else 
 	    if (sd->type == SND_DATA_FILE)
-	      fprintf(outp," [file: %s[%d]]",
-		      sd->filename,sd->chan);
+	      {
+		if (sd->just_zeros)
+		  fprintf(outp," [zeros]");
+		else fprintf(outp," [file: %s[%d]]",
+			     sd->filename,sd->chan);
+	      }
 	    else 
 	      if (sd->type == SND_DATA_BUFFER)
 		fprintf(outp," [buf: %d] ",sd->len/4);
@@ -241,6 +245,11 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	}
       else
 	{
+	  if (sf->just_zeros) 
+	    {
+	      fprintf(fd,"#f");
+	      return;
+	    }
 	  ss = cp->state;
 	  if (save_dir(ss))
 	    {
@@ -630,6 +639,28 @@ snd_data *make_snd_data_file(char *name, int *io, MUS_SAMPLE_TYPE *data, file_in
   sf->chan = temp_chan;
   sf->len = (hdr->samples)*(mus_data_format_to_bytes_per_sample(hdr->format)) + hdr->data_location;
   sf->owner = NULL; 
+  sf->just_zeros = 0;
+  return(sf);
+}
+
+static snd_data *make_snd_data_zero_file(int size, int *io, MUS_SAMPLE_TYPE *data, int ctr)
+{
+  snd_data *sf;
+  sf = (snd_data *)CALLOC(1,sizeof(snd_data));
+  sf->type = SND_DATA_FILE;
+  sf->buffered_data = data;
+  sf->io = io;
+  sf->filename = NULL;
+  sf->hdr = NULL;
+  sf->temporary = DONT_DELETE_ME;
+  sf->edit_ctr = ctr;
+  sf->open = FD_CLOSED;
+  sf->inuse = FALSE;
+  sf->copy = FALSE;
+  sf->chan = 0;
+  sf->len = size;
+  sf->owner = NULL; 
+  sf->just_zeros = 1;
   return(sf);
 }
 
@@ -639,6 +670,14 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
   int *datai;
   int fd;
   file_info *hdr;
+  if (sd->just_zeros)
+    {
+      datai = make_zero_file_state(sd->len);
+      return(make_snd_data_zero_file(sd->len,
+				     datai,
+				     MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(0)]),
+				     sd->edit_ctr));
+    }
   hdr = sd->hdr;
   fd = snd_open_read(cp->state,sd->filename);
   if (fd == -1) return(NULL);
@@ -663,6 +702,7 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
   sf->inuse = FALSE;
   sf->copy = TRUE;
   sf->owner = NULL;
+  sf->just_zeros = 0;
   return(sf);
 }
 
@@ -683,6 +723,7 @@ snd_data *make_snd_data_buffer(MUS_SAMPLE_TYPE *data, int len, int ctr)
   sf->inuse = FALSE;
   sf->len = len*4;
   sf->owner = NULL;
+  sf->just_zeros = 0;
   return(sf);
 }
 
@@ -708,7 +749,7 @@ snd_data *free_snd_data(snd_data *sf)
 	      remove(sf->filename);
 	      mus_sound_forget(sf->filename);
 	    }
-	  FREE(sf->filename);
+	  if (sf->filename) FREE(sf->filename);
 	  sf->filename = NULL;
 	}
       sf->temporary = ALREADY_DELETED;
@@ -872,6 +913,18 @@ static int add_sound_file_to_edit_list(chan_info *cp, char *name, int *io, MUS_S
   prepare_sound_list(cp);
   cp->sounds[cp->sound_ctr] = make_snd_data_file(name,io,data,hdr,temp,cp->edit_ctr,chan);
   if (show_usage_stats(cp->state)) gather_usage_stats(cp);
+  return(cp->sound_ctr);
+}
+
+static int add_zero_file_to_edit_list(chan_info *cp, int size)
+{
+  int *datai;
+  prepare_sound_list(cp);
+  datai = make_zero_file_state(size);
+  cp->sounds[cp->sound_ctr] = make_snd_data_zero_file(size,
+						      datai,
+						      MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(0)]),
+						      cp->edit_ctr);
   return(cp->sound_ctr);
 }
 
@@ -1087,15 +1140,26 @@ void extend_with_zeros(chan_info *cp, int beg, int num, char *origin)
   MUS_SAMPLE_TYPE *zeros;
   int k,len;
   int *cb;
+  ed_list *ed;
   if (num <= 0) return;
-  zeros = (MUS_SAMPLE_TYPE *)CALLOC(num,sizeof(MUS_SAMPLE_TYPE));
   len = current_ed_samples(cp);
   k = cp->edit_ctr;
   prepare_edit_list(cp,len+num);
-  cp->edits[cp->edit_ctr] = insert_samples_1(beg,num,zeros,cp->edits[k],cp,&cb,origin);
+  if (num > 1024)
+    {
+      cp->edits[cp->edit_ctr] = insert_samples_1(beg,num,NULL,cp->edits[k],cp,&cb,origin);
+      cb[ED_SND] = add_zero_file_to_edit_list(cp,num);
+      ed = cp->edits[cp->edit_ctr];
+      ed->sfnum = PACK_EDIT(INSERTION_EDIT,cb[ED_SND]);
+    }
+  else
+    {
+      zeros = (MUS_SAMPLE_TYPE *)CALLOC(num,sizeof(MUS_SAMPLE_TYPE));
+      cp->edits[cp->edit_ctr] = insert_samples_1(beg,num,zeros,cp->edits[k],cp,&cb,origin);
+      FREE(zeros);
+    }
   reflect_edit_history_change(cp);
   check_for_first_edit(cp); /* needed to activate revert menu option */
-  FREE(zeros);
 }
 
 void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, int chan, int auto_delete, char *origin)

@@ -32,6 +32,7 @@ The configure program has several Snd-related arguments:
    --with-gsl            use gsl for ffts and whatnot
    --with-ladspa         include LADSPA plugin support (Linux)
    --with-sample-width=N use N bits of samples (default = 24)
+   --with-sndlib         use libsndlib.so if possible
 
 If the configure/make process fails, please send me
 (bil@ccrma.stanford.edu) the files config.h, config.log, and makefile,

@@ -21,13 +21,15 @@
 
 
 ;;; TODO: test of set! selected-mix
-;;;       add to test-spectral-difference set (reading o2 etc)
-;;;       test active selection mix/insert as opposed to region mix/paste
-;;;       also mix-selection (from menu) is untested currently
-;;;       set! of enved-active-env
-;;;       formant-bank
-;;;       cscm + eff test (i.e. dynamically loaded code)
-;;;       mix-tag-width|height+mixes (also mix-amp or whatever with '() as mix indicator)
+;;; TODO  add to test-spectral-difference set (reading o2 etc)
+;;; TODO  test active selection mix/insert as opposed to region mix/paste
+;;; TODO  also mix-selection (from menu) is untested currently
+;;; TODO  set! of enved-active-env
+;;; TODO  formant-bank
+;;; TODO  cscm + eff test (i.e. dynamically loaded code)
+;;; TODO  mix-tag-width|height+mixes (also mix-amp or whatever with '() as mix indicator)
+;;; TODO  all dialogs need more extensive tests (perhaps built-in but undocumented test funcs)
+;;; TODO  menu-hook (how? -- via accelerators?)
 
 
 (use-modules (ice-9 format) (ice-9 debug))
@@ -211,6 +213,8 @@
 	'enved-target (enved-target) 0 
 	'enved-waving (enved-waving) #f 
 	'eps-file (eps-file) "snd.eps" 
+	'eps-bottom-margin (eps-bottom-margin) 0.0
+	'eps-left-margin (eps-left-margin) 0.0
 	'expand (without-errors (expand)) 'no-such-sound
 	'expand-hop (without-errors (expand-hop)) 'no-such-sound
 	'expand-length (without-errors (expand-length)) 'no-such-sound
@@ -657,6 +661,8 @@
 	  (list 'enved-target enved-target 0 set-enved-target 1)
 	  (list 'enved-waving enved-waving #f set-enved-waving #t)
 	  (list 'eps-file eps-file "snd.eps" set-eps-file "snd-1.eps")
+	  (list 'eps-left-margin eps-left-margin 0.0 set-eps-left-margin 72.0)
+	  (list 'eps-bottom-margin eps-bottom-margin 0.0 set-eps-bottom-margin 36.0)
 	  (list 'expand expand 1.0 set-expand 2.0)
 	  (list 'expand-hop expand-hop 0.05 set-expand-hop 0.1)
 	  (list 'expand-length expand-length 0.15 set-expand-length 0.2)

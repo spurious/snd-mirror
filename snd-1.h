@@ -34,6 +34,7 @@ typedef struct {
   int chan;
   int len;
   void *owner;
+  int just_zeros;
 } snd_data;
 
 typedef struct {
@@ -294,7 +295,7 @@ typedef struct snd__state {
   char *Listener_Font,*Help_Text_Font,*Axis_Label_Font,*Axis_Numbers_Font,*Bold_Button_Font,*Button_Font,*Tiny_Font;
   int Verbose_Cursor,Show_Usage_Stats,Trap_Segfault;
   int Filter_Env_Order;  /* for spectral envelopes from the envelope editor */
-  Float Vu_Size,Vu_Font_Size;
+  Float Vu_Size,Vu_Font_Size,Eps_Left_Margin,Eps_Bottom_Margin;
   char *Vu_Font;
   Float Spectro_X_Scale,Spectro_Y_Scale,Spectro_Z_Scale,Spectro_Z_Angle,Spectro_X_Angle,Spectro_Y_Angle,Spectro_Cutoff,Spectro_Start;
   int Default_Output_Type,Default_Output_Format,Default_Output_Chans,Default_Output_Srate;
@@ -370,6 +371,7 @@ void file_buffers_forward(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cu
 void file_buffers_back(int ind0, int ind1, int indx, snd_fd *sf, snd_data *cur_snd);
 MUS_SAMPLE_TYPE snd_file_read_sample(snd_data *ur_sd, int index, chan_info *cp);
 int file_state_buffer_size(int *datai);
+int *make_zero_file_state(int size);
 
 
 /* -------- snd-help.c -------- */

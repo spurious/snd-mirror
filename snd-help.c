@@ -256,6 +256,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+24-Oct:  eps-bottom-margin and eps-left-margin (for Print command).\n\
+         menu-hook\n\
 23-Oct:  interface to mixes changed:\n\
            mix consoles are now in a separate dialog, each mix displayed with a tag and its waveform.\n\
            removed mix-console-state, mix-console-state-changed-hook, show-mix-consoles, mix-waveform-color.\n\
@@ -309,7 +311,7 @@ static char edit_menu_help_string[] =
   Redo: redo the undone edit.\n\
   Find: a global search -- operates across all\n\
      currently sync'd sounds.\n\
-  Cut: store, then delete the selection.\n\
+  Cut: delete selected portion.\n\
   Paste: insert the selection at the current location\n\
   Mix selection: add the selection at the current location\n\
   Play selection: play the current selection.\n\
@@ -317,11 +319,16 @@ static char edit_menu_help_string[] =
   Select all: select entire file (following sync).\n\
   Edit Envelope: start the envelope editor dialog.\n\
   Edit Header: view or edit file's header.\n\
-  Show Edit History: show edits as text.\n\
 ";
 
 static char view_menu_help_string[] =
 "  Show Controls: display the control pane.\n\
+  Show Listener: open lisp listener panel.\n\
+  Mix Panel: open the mix controller.\n\
+  Regions: fire up the region browser.\n\
+  Files: fire up the file browser.\n\
+  Color: color browser for sonogram.\n\
+  Orientation: sonogram orientation.\n\
   Normalize: During editing with multiple\n\
      files and channels, some data may be\n\
      obscured or compressed by changed window\n\
@@ -331,15 +338,8 @@ static char view_menu_help_string[] =
      one graph.\n\
   Graph style: display data as dots, lines or,\n\
      filled polygons.\n\
-  Show Marks: display mark locations using a\n\
-     long vertical line.\n\
   Show Y=0: display the y=0 line.\n\
   Verbose cursor: show cursor loc and sample value.\n\
-  Regions: fire up the region browser.\n\
-  Files: fire up the file browser.\n\
-  Color: color browser for sonogram.\n\
-  Orientation: sonogram orientation.\n\
-  Hide consoles: currently unimplemented.\n\
   X axis units: x axis labels in seconds, samples, ect.\n\
 ";
 
@@ -349,6 +349,7 @@ static char options_menu_help_string[] =
    Zoom focus: where to focus during zooms.\n\
    Save Options: save the current Options and View menu settings.\n\
    Save state: save current state of Snd.\n\
+   Show stats: show some memory and disk usage statistics.\n\
 \n\
 ";
 
@@ -372,8 +373,9 @@ static char help_menu_help_string[] =
   Mixing: about mixing in Snd.\n\
   Formats: Snd-supported formats and headers.\n\
   Customization: how to customize Snd.\n\
-  User functions: how to add your own functions to Snd.\n\
   Recording: how to use the recorder.\n\
+  CLM: brief info about CLM functions.\n\
+  News: description of this version of Snd.\n\
 ";
 
 static char about_snd_help_string[] = 
@@ -945,7 +947,9 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_enved_target "          " S_amplitude_env "\n\
   " S_enved_waveform_color "  blue\n\
   " S_enved_waving "          #f\n\
+  " S_eps_bottom_margin "     0\n\
   " S_eps_file "              \"snd.eps\"\n\
+  " S_eps_left_margin "       0\n\
   " S_fft_beta "              0.0 (snd #t) (chn #t)\n\
   " S_fft_log_frequency "     #f (snd #t) (chn #t)\n\
   " S_fft_log_magnitude "     #f (snd #t) (chn #t)\n\
@@ -1087,6 +1091,7 @@ user-interface manipulations.\n\
   " S_mouse_press_hook "(snd chn button state x y)\n\
   " S_mouse_release_hook "(snd chn button state x y)\n\
   " S_name_click_hook "(snd-index)\n\
+  " S_menu_hook "(name option)\n\
 \n\
 ";
 
@@ -1441,7 +1446,52 @@ sashIndent          -6\n\
 \n";
 
 #ifndef _MSC_VER
-static char mix_help_string[] = "";
+static char mix_help_string[] = 
+"Since mixing is the most common and most\n\
+useful editing operation performed on\n\
+sounds, there is relatively elaborate\n\
+support for it in Snd. To mix in a file,\n\
+use the File Mix menu option, the\n\
+command C-x C-q, or one of the various\n\
+mixing functions. Currently the only\n\
+difference between the first two is that\n\
+the Mix menu option tries to take the\n\
+current sync state into account, whereas\n\
+the C-x C-q command does not. To mix a\n\
+selection, use C-x q. The mix starts at\n\
+the current cursor location. It is\n\
+displayed as a separate waveform above\n\
+the main waveform with a red tag at the\n\
+beginning.  You can drag the tag to\n\
+reposition the mix. The underlying sound\n\
+begin mixed can be edited by the same\n\
+functions used throughout Snd; the mix\n\
+number is used as the first (only)\n\
+member of a list where the functions\n\
+take the sound index argument. It is\n\
+usually handier, however, to adjust the\n\
+mix via the Mix Panel.\n\
+\n\
+The Mix Panel is a dialog (under the\n\
+View Menu) that provides various\n\
+commonly-used controls on the currently\n\
+selected mix. At the top are the mix id,\n\
+name, begin and end times, track number,\n\
+and a play button. Beneath that are\n\
+various sliders controlling the speed\n\
+(sampling rate) of the mix, amplitude of\n\
+each input channel, and the amplitude\n\
+envelope. This part of Snd is in flux\n\
+currently.\n\
+\n\
+To move the cursor from one mix to the\n\
+next, in the same manner as C-j moves\n\
+through marks, use C-x C-j.\n\
+\n\
+It is often handy to collect several\n\
+mixes into a 'track'; mix.scm implements\n\
+a variety of track-related operations.\n\
+";
 #else
 static char mix_help_string[] = "";
 #endif

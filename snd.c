@@ -160,6 +160,8 @@ static void mus_print2snd(char *msg)
   ss->Temp_Dir = DEFAULT_TEMP_DIR;
   ss->Save_Dir = DEFAULT_SAVE_DIR;
   ss->Eps_File = DEFAULT_EPS_FILE;
+  ss->Eps_Bottom_Margin = DEFAULT_EPS_BOTTOM_MARGIN;
+  ss->Eps_Left_Margin = DEFAULT_EPS_LEFT_MARGIN;
   ss->Listener_Prompt = DEFAULT_LISTENER_PROMPT;
   ss->Audio_State_File = AUDIO_STATE_FILE;
   ss->Show_Fft_Peaks = DEFAULT_SHOW_FFT_PEAKS;

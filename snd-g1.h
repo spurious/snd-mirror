@@ -179,6 +179,10 @@ GtkWidget *get_menubar(void);
 #if HAVE_GUILE_GTK
   void init_menu_widgets(SCM local_doc);
 #endif
+#if HAVE_HOOKS
+  void g_init_gxmenu(void);
+#endif
+
 
 
 /* -------- snd-gfft.c -------- */

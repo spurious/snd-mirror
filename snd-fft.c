@@ -1229,9 +1229,25 @@ static void make_sonogram_axes(chan_info *cp)
 	      else xlabel = "frequency";
 	    }
 	  else xlabel = spectro_xlabel(cp);
+	  fp->axis = make_axis_info(cp,
+				    min_freq,max_freq,
+				    ap->x0,ap->x1,
+				    xlabel,
+				    min_freq,max_freq,
+				    ap->x0,ap->x1,
+				    fp->axis);
 	}
-      else xlabel = STR_time;
-      fp->axis = make_axis_info(cp,ap->x0,ap->x1,min_freq,max_freq,xlabel,ap->x0,ap->x1,min_freq,max_freq,fp->axis);
+      else 
+	{
+	  xlabel = STR_time;
+	  fp->axis = make_axis_info(cp,
+				    ap->x0,ap->x1,
+				    min_freq,max_freq,
+				    xlabel,
+				    ap->x0,ap->x1,
+				    min_freq,max_freq,
+				    fp->axis);
+	}
     }
 }
 

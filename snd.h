@@ -149,6 +149,11 @@
 
 #include "sndlib.h"
 #include "clm.h"
+
+#if HAVE_GUILE
+  #include "sg.h"
+#endif
+
 #include "snd-0.h"
 #ifdef USE_MOTIF
   #include "snd-x0.h"
@@ -171,11 +176,7 @@
 #endif
 #include "snd-strings.h"
 
-#if HAVE_GUILE
-  #include "sg.h"
-#endif
-
-#define SND_VERSION "23-Oct-00"
+#define SND_VERSION "24-Oct-00"
 #define SND_RPM_VERSION "4.7"
 #define SND_MAJOR_VERSION 4
 #define SND_MINOR_VERSION 7

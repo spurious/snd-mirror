@@ -489,9 +489,9 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
   if (cp->printing) 
     {
       if (show_x_axis)
-	ps_fill_rectangle(cp,ap->x_axis_x0,ap->x_axis_y0,(unsigned int)(ap->x_axis_x1-ap->x_axis_x0),1);
+	ps_fill_rectangle(cp,ap->x_axis_x0,ap->x_axis_y0,(unsigned int)(ap->x_axis_x1-ap->x_axis_x0),axis_thickness);
       if ((sp == NULL) || (cp->show_axes != SHOW_X_AXIS))
-	ps_fill_rectangle(cp,ap->y_axis_x0,ap->y_axis_y1,1,(unsigned int)(ap->y_axis_y0-ap->y_axis_y1));
+	ps_fill_rectangle(cp,ap->y_axis_x0,ap->y_axis_y1,axis_thickness,(unsigned int)(ap->y_axis_y0-ap->y_axis_y1));
       if ((include_y_tick_labels) || (include_x_tick_labels)) ps_set_number_font(cp);
     }
 

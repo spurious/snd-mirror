@@ -915,7 +915,7 @@
 				       #f)))))
 		  (if dir
 		      (if (string=? *html-reader* "netscape")
-			  (send-netscape (string-append dir "/" n))
+			  (send-netscape (string-append dir "/" n)) ; definition in snd-gxutils.c
 			  (system (string-append *html-reader* " file:" dir "/" n))))))))
 
       (let ((name (if (string? obj) 

@@ -459,7 +459,8 @@ tricky; first you need to build sndlib as a shared library (named
 "libsndlib.so" for loader convenience).  If it's not in a directory
 the loader normally searches, you need to use -rpath in the loader
 arguments to force the loader to look in the right place.  Then, Snd needs
-to be built with the same pointer to sndlib.  Here's an example that
+to be built with the same pointer to sndlib (there's a --with-sndlib switch
+to configure).  Here's an example that
 implements effects.scm's flanger in a file named eff.c:
 </p>
 <pre><small>

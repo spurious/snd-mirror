@@ -407,6 +407,14 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define set_eps_file(ss,a) ss->Eps_File = a
 #define DEFAULT_EPS_FILE NULL
 
+#define eps_left_margin(ss) ss->Eps_Left_Margin
+#define set_eps_left_margin(ss,a) ss->Eps_Left_Margin = a
+#define DEFAULT_EPS_LEFT_MARGIN 0.0
+
+#define eps_bottom_margin(ss) ss->Eps_Bottom_Margin
+#define set_eps_bottom_margin(ss,a) ss->Eps_Bottom_Margin = a
+#define DEFAULT_EPS_BOTTOM_MARGIN 0.0
+
 #define help_text_font(ss) ss->Help_Text_Font
 #define in_set_help_text_font(ss,a) ss->Help_Text_Font = a
 

@@ -44,6 +44,7 @@ MAKE_TARGET="snd"
 #   --enable-snd-debug    include Snd internal debugging stuff
 #   --with-ladspa         include LADSPA plugin support (Linux)
 #   --with-sample-width=N use N bits of samples (default = 24)
+#   --with-sndlib         try to use libsndlib.so
 #--------------------------------------------------------------------------------
 
 if test $audio_system = unknown && test x$use_alsa = x ; then
@@ -116,6 +117,17 @@ AC_ARG_WITH(gsl,
 AC_SUBST(GSL_LIBS)
 AC_SUBST(GSL_FLAGS)
 
+SNDLIB_LIB=""
+SNDLIB_FILES="headers.o audio.o io.o sound.o clm.o vct.o sndlib2scm.o clm2scm.o"
+AC_ARG_WITH(sndlib,
+	[  --with-sndlib		  use libsndlib.so if possible],
+  	if test "$with_sndlib" = y || test "$with_sndlib" = yes; then
+            SNDLIB_LIB="-lsndlib"
+	    SNDLIB_FILES=""
+	fi)
+AC_SUBST(SNDLIB_LIB)
+AC_SUBST(SNDLIB_FILES)
+
 GTKEXTRA_LIBS=""
 GTKEXTRA_FLAGS=""
 AC_ARG_WITH(gtk-extra,
@@ -184,7 +196,6 @@ AC_PROG_CC
 AC_PROG_INSTALL
 
 AC_CHECK_LIB(m,main)
-dnl AC_CHECK_LIB(socket,main)
 AC_CHECK_LIB(c,main)
 AC_CHECK_LIB(ucb,main)
 dnl ucb no longer needed (for early Unixware versions)
@@ -594,4 +605,4 @@ AC_OUTPUT(makefile)
 
 dnl if no motif, search for gtk (could use locate)
 dnl need to be able to set both HAVE_ALSA and HAVE_OSS?
-dnl need support for sndlib.so (this needs to decide whether sndlib has clm2scm as well as clm)
+dnl support for sndlib.so needs to decide whether clm2scm/clm are available

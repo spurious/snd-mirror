@@ -282,8 +282,22 @@ The main variables affecting Snd's overall behavior are:
   default-output-type   -1      The default header type when a new or temporary file is created,
                                 or a save dialog is opened. -1 means use the current sound's type.
 
+  eps-bottom-margin     0.0     bottom margin used in snd.eps (Print command) (PS units).
+                                PostScript units are 1/72 of an inch (a "point" in printer jargon);
+                                an inch is 2.54 cm:
+
+                                (define (inches-to-ps inches) (* inches 72)
+                                (define (cm-to-ps cm) (* cm (/ 72.0 2.54)))
+
+                                In the resulting .eps file, you'll find a concat statement near the
+                                top of the file; the first and fourth numbers are scale factors on
+                                the entire graph, the fifth is the left margin, and the sixth is the
+                                bottom margin.
+
   eps-file              "snd.eps"  Name of the Postscript file produced by the File Print option.
                                 See also the epsFile resource.
+
+  eps-left-margin       0.0     left margin used in snd.eps (Print command) (PS units).
 
   fit-data-on-open      #f      If #t, the initial time-domain display of a sound shows
                                 its entire duration, with the Y-axis set to show its maxamp.
@@ -1790,7 +1804,7 @@ value to val.
 
   show-marks        (snd chn)     If #t, marks are displayed.  This is the 'Show marks' View menu option.
 
-  show-mix-waveforms(snd chn)     If #t (default = #f), mix displays the waveform of the sound
+  show-mix-waveforms(snd chn)     If #t (default = #t), mix displays the waveform of the sound
                                   being mixed.
 
   show-y-zero       (snd chn)     If #t, the y=0 axis is displayed.  This is the 'Show Y=0' View menu option.
@@ -2485,6 +2499,20 @@ functions:
                                 remove menu menu-label from the top top-level menu whose index is top-menu.
 
   menu-sensitive        (top-menu label)
+
+In addition, the hook menu-hook is checked each time a menu item is
+selected; its entries should be functions of two arguments, the top menu
+name and the option selected (both as strings), and should return #f if it
+wants to override the default menu action.
+
+  (add-hook! menu-hook
+    (lambda (name option)
+      (if (and (string=? name "File")
+               (string=? option "Exit"))
+        (begin
+          (snd-print "no exit!")
+          #f)
+        #t))) ; #t to make sure other menu items remain active
 
 Errors
 

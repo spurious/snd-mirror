@@ -19,20 +19,18 @@
 ;;;
 ;;; These follow sync lists starting from current chan
 ;;;
-;;; TODO:
-;;;      filters & EQs
-;;;         ISO center freqs for a ten band EQ are (reported to be) (16), 31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000
-;;;      chorus (see below -- it works on some files)
-;;;      noise reduction -- how?
-;;;      increase/decrease file length -- meaning src or expand?
-;;;      append (selection?)
-;;;      mix/crossfade
-;;;      phase-vocoder time/pitch
-;;;      un-hum (notch)
-;;;      expsrc?
-;;;      unvoice?
-;;;   for some of these, we should write C modules, loaded when this file is loaded -- see grfsnd.html
-;;;     (to speed up flanging etc)
+;;; TODO filters & EQs
+;;; TODO    ISO center freqs for a ten band EQ are (reported to be) (16), 31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000
+;;; TODO chorus (see below -- it works on some files)
+;;; TODO noise reduction -- how?
+;;; TODO increase/decrease file length -- meaning src or expand?
+;;; TODO append (selection?)
+;;; TODO mix/crossfade
+;;; TODO phase-vocoder time/pitch
+;;; TODO un-hum (notch)
+;;; TODO expsrc?
+;;; TODO unvoice?
+;;; TODO  forr some of these, we should write C modules, loaded when this file is loaded -- see grfsnd.html (to speed up flanging etc)
 ;;;
 ;;; to modify, for example, the gain (set! gain-amount .75)
 

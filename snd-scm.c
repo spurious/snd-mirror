@@ -856,6 +856,24 @@ static SCM g_set_eps_file(SCM val)
   RTNSTR(eps_file(state));
 }
 
+static SCM g_eps_left_margin(void) {RTNFLT(eps_left_margin(state));}
+static SCM g_set_eps_left_margin(SCM val) 
+{
+  #define H_eps_left_margin "(" S_eps_left_margin ") -> current eps ('Print' command) left margin"
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_eps_left_margin); 
+  set_eps_left_margin(state,gh_scm2double(val));
+  RTNFLT(eps_left_margin(state));
+}
+
+static SCM g_eps_bottom_margin(void) {RTNFLT(eps_bottom_margin(state));}
+static SCM g_set_eps_bottom_margin(SCM val) 
+{
+  #define H_eps_bottom_margin "(" S_eps_bottom_margin ") -> current eps ('Print' command) bottom margin"
+  SCM_ASSERT(SCM_NFALSEP(scm_real_p(val)),val,SCM_ARG1,"set-" S_eps_bottom_margin); 
+  set_eps_bottom_margin(state,gh_scm2double(val));
+  RTNFLT(eps_bottom_margin(state));
+}
+
 static SCM g_listener_prompt(void) {RTNSTR(listener_prompt(state));}
 static SCM g_set_listener_prompt(SCM val) 
 {
@@ -2107,7 +2125,7 @@ static SCM g_insert_samples_with_origin(SCM samp, SCM samps, SCM origin, SCM vec
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(samp)),samp,SCM_ARG1,S_insert_samples_with_origin);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(samps)),samps,SCM_ARG2,S_insert_samples_with_origin);
   SCM_ASSERT(gh_string_p(origin),origin,SCM_ARG3,S_insert_samples_with_origin);
-  SCM_ASSERT((gh_vector_p(vect)) || (gh_string_p(vect)),vect,SCM_ARG4,S_insert_samples_with_origin);
+  SCM_ASSERT((gh_vector_p(vect)) || (gh_string_p(vect)) || SCM_FALSEP(vect),vect,SCM_ARG4,S_insert_samples_with_origin);
   ERRCP(S_insert_samples_with_origin,snd_n,chn_n,5);
   cp = get_cp(snd_n,chn_n,S_insert_samples_with_origin);
   beg = g_scm2int(samp);
@@ -2126,9 +2144,17 @@ static SCM g_insert_samples_with_origin(SCM samp, SCM samps, SCM origin, SCM vec
     }
   else
     {
-      fstr = gh_scm2newstr(vect,NULL);
-      file_insert_samples(beg,len,fstr,cp,0,0,str);
-      free(fstr);
+      if (gh_string_p(vect))
+	{
+	  fstr = gh_scm2newstr(vect,NULL);
+	  file_insert_samples(beg,len,fstr,cp,0,0,str);
+	  free(fstr);
+	}
+      else
+	{
+	  /* if fstr is #f, it was a zero file indication */     
+	  extend_with_zeros(cp,beg,len,str);
+	}
     }
   free(str);
   update_graph(cp,NULL);
@@ -3222,6 +3248,12 @@ void g_initialize_gh(snd_state *ss)
   define_procedure_with_setter(S_eps_file,SCM_FNC g_eps_file,H_eps_file,
 			       "set-" S_eps_file,SCM_FNC g_set_eps_file,local_doc,0,0,0,1);
 
+  define_procedure_with_setter(S_eps_left_margin,SCM_FNC g_eps_left_margin,H_eps_left_margin,
+			       "set-" S_eps_left_margin,SCM_FNC g_set_eps_left_margin,local_doc,0,0,0,1);
+
+  define_procedure_with_setter(S_eps_bottom_margin,SCM_FNC g_eps_bottom_margin,H_eps_bottom_margin,
+			       "set-" S_eps_bottom_margin,SCM_FNC g_set_eps_bottom_margin,local_doc,0,0,0,1);
+
   define_procedure_with_setter(S_listener_prompt,SCM_FNC g_listener_prompt,H_listener_prompt,
 			       "set-" S_listener_prompt,SCM_FNC g_set_listener_prompt,local_doc,0,0,0,1);
 
@@ -3486,6 +3518,9 @@ void g_initialize_gh(snd_state *ss)
   g_init_env(local_doc);
   g_init_recorder(local_doc);
   g_init_gxenv(local_doc);
+#if HAVE_HOOKS
+  g_init_gxmenu();
+#endif
 
   /* GOOPS */
   /* scm_init_oop_goops_goopscore_module (); */

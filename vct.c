@@ -41,6 +41,7 @@
  */
 
 /* TODO: set! for vct-ref?
+ * TODO  offsets for vct-*?
  */
 
 #if defined(HAVE_CONFIG_H)

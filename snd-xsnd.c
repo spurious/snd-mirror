@@ -4,6 +4,9 @@
  * TODO    Hz in filter-env display
  * TODO    paned windows should use ratios (not doable currently -- need own panedwindow widget)
  * TODO    gmeteor filter coeffs for control-panel filter?
+ * TODO    in -separate mode (and elsewhere?) need to save description (sizes) of window/channels etc 
+ * TODO    amp slider for each chan (as in mix panel)
+ * TODO    make it possible to draw an envelope directly in the time domain graph
  */
 
 #if HAVE_XPM

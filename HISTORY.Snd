@@ -1,5 +1,6 @@
 snd change log
 
+  24-Oct:    added eps-bottom-margin and eps-left-margin (for Print command).
   23-Oct:    interface to mixes changed:
                mix consoles are now in a separate dialog, each mix displayed with a tag and its waveform.
                removed mix-console-state, mix-console-state-changed-hook, show-mix-consoles.
