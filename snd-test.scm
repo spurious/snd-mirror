@@ -9770,7 +9770,7 @@
 		(else (add-mark (irandom (1- (frames))))))))
 	  (close-sound ind))
 
-	(if (provided? 'snd-motif) (mark-sync-color "blue"))
+	(if (and (provided? 'snd-motif) (provided? 'xm)) (mark-sync-color "blue"))
 	(let ((ind (open-sound "oboe.snd")))
 	  (let ((m0 (add-mark 4321)))
 	    (delete-sample 100)
@@ -11237,7 +11237,9 @@
 
 ;;; ---------------- test 14: all together now ----------------
 
-(define cur-dir-files (sound-files-in-directory "."))
+(define cur-dir-files (remove-if 
+		       (lambda (file) (<= (mus-sound-frames file) 0))
+		       (sound-files-in-directory ".")))
 (define cur-dir-len (length cur-dir-files))
 
 (if (or full-test (= snd-test 14) (and keep-going (<= snd-test 14)))
@@ -11325,7 +11327,10 @@
 		(IF (or (fneq (car yb) -0.5) (fneq (cadr yb) 0.5)) (snd-display ";y-bounds: ~A?" yb)))
 	      (set! (cursor curfd) curloc)
 	      (let ((cl (cursor curfd)))
-		(IF (not (= cl curloc)) (snd-display ";cursor ~A /= ~A?" cl curloc)))
+		(IF (not (= cl curloc)) 
+		    (begin
+		      (snd-display ";cursor ~A /= ~A?" cl curloc)
+		      (set! curloc (cursor)))))
 	      (let* ((id (add-mark curloc curfd)))
 		(if (and (number? id) (not (= id -1)))
 		    (let* ((cl (mark-sample id))
@@ -22020,7 +22025,7 @@ EDITS: 2
 			 (fir-button (list-ref enved-widgets 26))
 			 (ewid drawer))
 		    
-		    (click-button reset-button) (force-event)
+		    ;(click-button reset-button) (force-event)
 		    (let* ((axis (enved-axis-info))
 			   (axis-x0 (list-ref axis 0))
 			   (axis-x1 (list-ref axis 2))
@@ -22193,7 +22198,7 @@ EDITS: 2
 
 	    (XSynchronize (XtDisplay (cadr (main-widgets))) #f)
 
-	    (if (provided? 'snd-motif)
+	    (if (and (provided? 'snd-motif) (provided? 'xm))
 	      (let ((move-scroll
 		     (lambda (w val)
 		       (if (and w

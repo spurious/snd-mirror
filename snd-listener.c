@@ -68,8 +68,7 @@ int find_matching_paren(char *str, int parens, int pos, char *prompt, int *highl
 }
 
 void highlight_unbalanced_paren(void);
-/* TODO: #! !# 
- */
+
 int check_balance(char *expr, int start, int end, int in_listener) 
 {
   int i;

@@ -113,11 +113,11 @@ if Mus_riff != 2 then snd_display sprintf("\n# Mus_riff => %d", Mus_riff) end
 if Mus_nist != 4 then snd_display sprintf("\n# Mus_nist => %d", Mus_nist) end
 if Mus_raw != 10 then snd_display sprintf("\n# Mus_raw => %d", Mus_raw) end
 if Mus_ircam != 14 then snd_display sprintf("\n# Mus_ircam => %d", Mus_ircam) end
-if Mus_aiff != 56 then snd_display sprintf("\n# Mus_aiff => %d", Mus_aiff) end
+if Mus_aiff != 54 then snd_display sprintf("\n# Mus_aiff => %d", Mus_aiff) end
 if Mus_bicsf != 3 then snd_display sprintf("\n# Mus_bicsf => %d", Mus_bicsf) end
 if Mus_voc != 8 then snd_display sprintf("\n# Mus_voc => %d", Mus_voc) end
 if Mus_svx != 7 then snd_display sprintf("\n# Mus_svx => %d", Mus_svx) end
-if Mus_soundfont != 31 then snd_display sprintf("\n# Mus_soundfont => %d", Mus_soundfont) end
+if Mus_soundfont != 29 then snd_display sprintf("\n# Mus_soundfont => %d", Mus_soundfont) end
 if Mus_bshort != 1 then snd_display sprintf("\n# Mus_bshort => %d", Mus_bshort) end
 if Mus_lshort != 10 then snd_display sprintf("\n# Mus_lshort => %d", Mus_lshort) end
 if Mus_mulaw != 2 then snd_display sprintf("\n# Mus_mulaw => %d", Mus_mulaw) end
