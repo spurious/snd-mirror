@@ -1,6 +1,6 @@
 #include "snd.h"
 
-int snd_round(Float x)
+int snd_round(double x) /* needs to be double here (not Float) for x axis calcs */
 {
   int i;
   i = (int)x;

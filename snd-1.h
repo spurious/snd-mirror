@@ -108,7 +108,8 @@ typedef struct {Float freq; Float amp;} fft_peak;
 typedef struct {
   Float y0, y1;                         /* scroller-dependent axis bounds */
   double x0, x1;
-  Float xmin, xmax, ymin, ymax;         /* data-dependent absolute limits */
+  double xmin, xmax;
+  Float ymin, ymax;                     /* data-dependent absolute limits */
   Float y_scale, y_base, y_ambit;
   double x_scale, x_base, x_ambit;
   char *xlabel;
@@ -973,12 +974,11 @@ void dac_set_reverb_lowpass(snd_info *sp, Float newval);
 
 /* -------- snd-chn.c -------- */
 
-
 void zx_incremented(chan_info *cp, double amount);
 void handle_cursor_with_sync(chan_info *cp, int decision);
 int cursor_decision(chan_info *cp);
 void reset_x_display(chan_info *cp, double sx, double zx);
-void set_x_axis_x0x1 (chan_info *cp, Float x0, Float x1);
+void set_x_axis_x0x1 (chan_info *cp, double x0, double x1);
 int cursor_move (chan_info *cp, int samps);
 void set_wavo_trace(snd_state *ss, int uval);
 void set_dot_size(snd_state *ss, int val);
@@ -1011,7 +1011,7 @@ void apply_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp);
 void apply_y_axis_change (axis_info *ap, chan_info *cp);
 void sx_incremented(chan_info *cp, double amount);
 int move_axis(chan_info *cp, axis_info *ap, int x);
-void set_axes(chan_info *cp, Float x0, Float x1, Float y0, Float y1);
+void set_axes(chan_info *cp, double x0, double x1, Float y0, Float y1);
 void focus_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp, int focus_style);
 int key_press_callback(chan_info *ur_cp, int x, int y, int key_state, int keysym);
 void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int button, TIME_TYPE time);
@@ -1051,8 +1051,8 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 #define ungrf_x(AP, X) (((X) - (AP)->x_base) / (AP)->x_scale)
 #define ungrf_y(AP, Y) (((Y) - (AP)->y_base) / (AP)->y_scale)
 
-axis_info *make_axis_info (chan_info *cp, Float xmin, Float xmax, Float ymin, Float ymax, 
-			   char *xlabel, Float x0, Float x1, Float y0, Float y1,
+axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, Float ymin, Float ymax, 
+			   char *xlabel, double x0, double x1, Float y0, Float y1,
 			   axis_info *old_ap);
 
 void g_init_axis(void);
@@ -1174,7 +1174,7 @@ void g_init_file(void);
 
 /* -------- snd-utils -------- */
 
-int snd_round(Float x);
+int snd_round(double x);
 char *copy_string(const char *str);
 char *snd_strdup(const char *str);
 int snd_strlen(char *str);

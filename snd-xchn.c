@@ -66,7 +66,7 @@ static void sx_changed(int value, chan_info *cp)
   /* treat as centered with non-slider trough as defining current bounds */
   axis_info *ap;
   snd_info *sp;
-  Float low;
+  double low;
   ap = cp->axis;
   sp = cp->sound;
   low = get_scrollbar(channel_sx(cp), value, sp->sx_scroll_max);

@@ -36,13 +36,13 @@
 ;;;   but that forces us to use Libtool's very poor dlopen wrapper.
 
 
-(define (current-display)
+(define (current-screen)
   (|DefaultScreenOfDisplay 
     (|XtDisplay (|Widget (cadr (main-widgets))))))
 
-(define (white-pixel)  (|WhitePixelOfScreen (current-display)))
-(define (black-pixel)  (|BlackPixelOfScreen (current-display)))
-(define (screen-depth) (|DefaultDepthOfScreen (current-display)))
+(define (white-pixel)  (|WhitePixelOfScreen (current-screen)))
+(define (black-pixel)  (|BlackPixelOfScreen (current-screen)))
+(define (screen-depth) (|DefaultDepthOfScreen (current-screen)))
 
 ;;; -------- apply func to every widget belonging to w (and w) --------
 

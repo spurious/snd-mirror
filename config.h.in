@@ -31,6 +31,7 @@
 #undef HAVE_CLOCK
 #undef HAVE_VSNPRINTF
 #undef HAVE_SNPRINTF
+#undef HAVE_GETRUSAGE
 
 #undef STDC_HEADERS
 #undef TM_IN_SYS_TIME
@@ -66,6 +67,7 @@
 #undef HAVE_LOCALE_H
 #undef HAVE_SYS_FPU_H
 #undef HAVE_SYS_PARAM_H
+#undef HAVE_SYS_RESOURCE_H
 
 #undef SIZEOF_INT
 #undef SIZEOF_CHAR

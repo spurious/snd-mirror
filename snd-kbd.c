@@ -853,7 +853,7 @@ static int set_window_bounds(chan_info *cp, int count)
 {
   /* count = sample number to start at */
   axis_info *ap;
-  Float sx;
+  double sx;
   ap = cp->axis;
   sx = (((double)count / (double)SND_SRATE(cp->sound)) - ap->xmin) / ap->x_ambit;
   reset_x_display(cp, sx, ap->zx);
@@ -864,7 +864,7 @@ static int set_window_size(chan_info *cp, int count)
 {
   /* set samples within window */
   axis_info *ap;
-  Float zx;
+  double zx;
   ap = cp->axis;
   zx = ((double)count / (((double)SND_SRATE(cp->sound)) * ap->x_ambit));
   reset_x_display(cp, ap->sx, zx);
@@ -875,7 +875,7 @@ static int set_window_percentage(chan_info *cp, int count)
 {
   /* set percentage of file within window */
   axis_info *ap;
-  Float zx;
+  double zx;
   ap = cp->axis;
   zx = (double)count / (double)SND_SRATE(cp->sound);
   reset_x_display(cp, ap->sx, zx);
@@ -884,7 +884,7 @@ static int set_window_percentage(chan_info *cp, int count)
 
 static void window_frames_selection(chan_info *cp)
 {
-  Float x0, x1;
+  double x0, x1;
   int i;
   snd_info *sp;
   snd_state *ss;

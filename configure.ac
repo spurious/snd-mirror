@@ -312,7 +312,7 @@ LIBS=""
 AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h soundcard.h machine/soundcard.h)
-AC_CHECK_HEADERS(libc.h sys/vfs.h sys/statfs.h sys/mount.h fpu_control.h setjmp.h sched.h pwd.h ladspa.h locale.h sys/fpu.h dlfcn.h sys/param.h)
+AC_CHECK_HEADERS(libc.h sys/vfs.h sys/statfs.h sys/mount.h fpu_control.h setjmp.h sched.h pwd.h ladspa.h locale.h sys/fpu.h dlfcn.h sys/param.h sys/resource.h)
 AC_CHECK_HEADER(/usr/local/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LOCAL_LIB_OSS)])
 AC_CHECK_HEADER(/usr/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LIB_OSS)])
 AC_CHECK_HEADER(/opt/oss/include/sys/soundcard.h,[AC_DEFINE(OPT_OSS)])
@@ -372,7 +372,7 @@ AC_MSG_RESULT(${ok})
 
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME
-AC_CHECK_FUNCS(getcwd strerror mallinfo readlink setlocale access opendir sleep signal strdup statfs clock vsnprintf snprintf)
+AC_CHECK_FUNCS(getcwd strerror mallinfo readlink setlocale access opendir sleep signal strdup statfs clock vsnprintf snprintf getrusage)
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
 

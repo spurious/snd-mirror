@@ -2329,7 +2329,7 @@ static int save_edits_and_update_display(snd_info *sp)
   chan_info *cp;
   axis_info *ap;
   snd_fd **sf;
-  Float *axis_data;
+  double *axis_data;
   int *ffts, *waves;
   file_info *sphdr = NULL;
   ss = sp->state;
@@ -2338,7 +2338,7 @@ static int save_edits_and_update_display(snd_info *sp)
   err = MUS_NO_ERROR;
   ofile = snd_tempnam(ss); 
   /* this will use user's TMPDIR if temp_dir(ss) is not set, else stdio.h's P_tmpdir else /tmp */
-  axis_data = (Float *)CALLOC(4 * sp->nchans, sizeof(Float));
+  axis_data = (double *)CALLOC(4 * sp->nchans, sizeof(double));
   ffts = (int *)CALLOC(sp->nchans, sizeof(int));
   waves = (int *)CALLOC(sp->nchans, sizeof(int));
   for (i = 0; i < sp->nchans; i++)

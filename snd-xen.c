@@ -1953,7 +1953,8 @@ If 'data' is a list of numbers, it is treated as an envelope."
   vct *v = NULL;
   XEN *vdata;
   int i, len, graph, graphs, need_update = 0;
-  Float ymin, ymax, val, nominal_x0, nominal_x1;
+  Float ymin, ymax, val;
+  double nominal_x0, nominal_x1;
   lisp_grf *old_lp = NULL;
   Latus h = 0, w = 0, ww = 0;
   Locus o = 0, gx0 = 0;

@@ -30,12 +30,12 @@ static tick_descriptor *free_tick_descriptor (tick_descriptor *td)
   return(NULL);
 }
 
-static tick_descriptor *describe_ticks(tick_descriptor *gd_td, Float lo, Float hi, int max_ticks)
+static tick_descriptor *describe_ticks(tick_descriptor *gd_td, double lo, double hi, int max_ticks)
 {
   /* given absolute (unchangeable) axis bounds lo and hi, and abolute maximum number of ticks to use, find a "pretty" tick placement */
   /* much of the work here involves floating point rounding problems.  We assume the tick labeller will round as well */
   tick_descriptor *td;
-  int ten, hib, lob;
+  int ten, hib, lob, offset = 0;
   double flog10, plog10;
   double frac, ften, hilo_diff, eten, flt_ten, flt_ften;
   double inside, mfdiv, mten, mften;
@@ -46,13 +46,21 @@ static tick_descriptor *describe_ticks(tick_descriptor *gd_td, Float lo, Float h
   else 
     {
       td = gd_td;
-      if ((td->hi == hi) && (td->lo == lo) && (td->max_ticks == max_ticks)) 
+      if ((td->hi == hi) && 
+	  (td->lo == lo) && 
+	  (td->max_ticks == max_ticks)) 
 	return(td);
     }
   td->hi = hi;
   td->lo = lo;
-  td->max_ticks = max_ticks;
   hilo_diff = hi - lo;
+  if (hilo_diff < .001) 
+    {
+      offset = (int)hi;
+      hi -= offset;
+      lo -= offset;
+    }
+  td->max_ticks = max_ticks;
   flt_ten = log10(hilo_diff);
   ten = (int)floor(flt_ten);
   frac = flt_ten - ten;
@@ -60,6 +68,7 @@ static tick_descriptor *describe_ticks(tick_descriptor *gd_td, Float lo, Float h
   eten = pow(10, ten);
   hib = (int)floor(hi / eten);
   lob = (int)ceil(lo / eten);
+  /* it's possible to wrap-around here and get negative numbers (so we keep the offset separate above) */
   if (lob != hib) 
     {
       td->mlo = (double)(lob * eten);
@@ -109,6 +118,13 @@ static tick_descriptor *describe_ticks(tick_descriptor *gd_td, Float lo, Float h
   frac = flt_ten - hib;
   if (frac > .9999) hib++;
   td->fhi = hib * mften;
+  if (hilo_diff < .001) 
+    {
+      td->mlo += offset;
+      td->mhi += offset;
+      td->flo += offset;
+      td->fhi += offset;
+    }
   return(td);
 }
 
@@ -602,8 +618,8 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
     }
 }
 
-axis_info *make_axis_info (chan_info *cp, Float xmin, Float xmax, Float ymin, Float ymax, 
-			   char *xlabel, Float x0, Float x1, Float y0, Float y1, 
+axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, Float ymin, Float ymax, 
+			   char *xlabel, double x0, double x1, Float y0, Float y1, 
 			   axis_info *old_ap)
 {
   axis_info *ap;
@@ -653,7 +669,7 @@ static XEN g_grf_x(XEN val, XEN snd, XEN chn, XEN ap)
   #define H_x2position "(" S_x2position " val snd chn ax) -> x pixel loc of val"
   ASSERT_CHANNEL(S_x2position, snd, chn, 2);
   return(C_TO_XEN_INT(grf_x(XEN_TO_C_DOUBLE(val),
-			  TO_C_AXIS_INFO(snd, chn, ap, S_x2position))));
+			    TO_C_AXIS_INFO(snd, chn, ap, S_x2position))));
 }
 
 static XEN g_grf_y(XEN val, XEN snd, XEN chn, XEN ap)
@@ -661,7 +677,7 @@ static XEN g_grf_y(XEN val, XEN snd, XEN chn, XEN ap)
 #define H_y2position "(" S_y2position " val snd chn ax) -> y pixel loc of val"
   ASSERT_CHANNEL(S_y2position, snd, chn, 2);
   return(C_TO_XEN_INT(grf_y(XEN_TO_C_DOUBLE(val),
-			  TO_C_AXIS_INFO(snd, chn, ap, S_y2position))));
+			    TO_C_AXIS_INFO(snd, chn, ap, S_y2position))));
 }
 
 static XEN g_ungrf_x(XEN val, XEN snd, XEN chn, XEN ap)
@@ -669,7 +685,7 @@ static XEN g_ungrf_x(XEN val, XEN snd, XEN chn, XEN ap)
   #define H_position2x "(" S_position2x " val snd chn ax) -> x in axis of pixel val"
   ASSERT_CHANNEL(S_position2x, snd, chn, 2);
   return(C_TO_XEN_DOUBLE(ungrf_x(TO_C_AXIS_INFO(snd, chn, ap, S_position2x),
-			       XEN_TO_C_INT(val))));
+				 XEN_TO_C_INT(val))));
 }
 
 static XEN g_ungrf_y(XEN val, XEN snd, XEN chn, XEN ap)
@@ -677,7 +693,7 @@ static XEN g_ungrf_y(XEN val, XEN snd, XEN chn, XEN ap)
   #define H_position2y "(" S_position2y " val snd chn ax) -> y in axis of pixel val"
   ASSERT_CHANNEL(S_position2y, snd, chn, 2);
   return(C_TO_XEN_DOUBLE(ungrf_y(TO_C_AXIS_INFO(snd, chn, ap, S_position2y),
-			       XEN_TO_C_INT(val))));
+				 XEN_TO_C_INT(val))));
 }
 
 static XEN g_axis_info(XEN snd, XEN chn, XEN ap_id)
@@ -715,7 +731,8 @@ depends on 'axes'. Returns actual (pixel) axis bounds.  Defaults are label time,
 x0 0.0, x1 1.0, y0 -1.0, y1 1.0, style x-axis-in-seconds, axes #t."
   XEN val;
   Widget w; GC gc; char *xlabel; 
-  Float x0 = 0.0; Float x1 = 1.0; Float y0 = -1.0; Float y1 = 1.0; 
+  double x0 = 0.0; double x1 = 1.0; 
+  Float y0 = -1.0; Float y1 = 1.0; 
   int x_style = X_AXIS_IN_SECONDS; int axes = 1;
   axis_context *ax;
   axis_info *ap;

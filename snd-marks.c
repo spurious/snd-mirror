@@ -853,13 +853,11 @@ void ripple_marks(chan_info *cp, int beg, int change)
 	      else
 		{
 		  if (change > 0)
-		    {
-		      for (i = 0; i <= cp->mark_ctr[new_m]; i++)
-			{
-			  mp = mps[i];
-			  if (mp->samp > beg) mp->samp += change;
-			}
-		    }
+		    for (i = 0; i <= cp->mark_ctr[new_m]; i++)
+		      {
+			mp = mps[i];
+			if (mp->samp > beg) mp->samp += change;
+		      }
 		}
 	    }
 	}
@@ -1017,9 +1015,7 @@ void src_marks(chan_info *cp, Float ratio, int old_samps, int new_samps, int beg
 		  else
 		    {
 		      if (m->samp > end)
-			{
-			  m->samp += (new_samps - old_samps);
-			}
+			m->samp += (new_samps - old_samps);
 		    }
 		}
 	    }
@@ -1041,13 +1037,11 @@ void reset_marks(chan_info *cp, int num, int *samps, int end, int extension, int
       if ((mps) && (marks >= 0))
 	{
 	  if (over_selection)
-	    {
-	      for (i = 0; i <= marks; i++) 
-		{
-		  m = mps[i];
-		  if (m->samp > end) m->samp += extension;
-		}
-	    }
+	    for (i = 0; i <= marks; i++) 
+	      {
+		m = mps[i];
+		if (m->samp > end) m->samp += extension;
+	      }
 	  for (i = 0; (i <= marks) && (i < num); i++) 
 	    {
 	      m = mps[i];
@@ -1493,8 +1487,8 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
 static XEN snd_no_such_mark_error(const char *caller, XEN id)
 {
   XEN_ERROR(NO_SUCH_MARK,
-	XEN_LIST_2(C_TO_XEN_STRING(caller),
-		  id));
+	    XEN_LIST_2(C_TO_XEN_STRING(caller),
+		       id));
   return(XEN_FALSE);
 }
 
@@ -1586,7 +1580,7 @@ static XEN iread_mark(XEN n, int fld, XEN pos_n, char *caller)
       break;
     case MARK_HOME:   
       return(XEN_LIST_2(C_TO_SMALL_XEN_INT((ncp[0]->sound)->index),
-		       C_TO_SMALL_XEN_INT(ncp[0]->chan))); 
+			C_TO_SMALL_XEN_INT(ncp[0]->chan))); 
       break;
     }
   return(XEN_FALSE);
@@ -1772,9 +1766,9 @@ static XEN int_array_to_list(int *arr, int i, int len)
 {
   if (i < len)
     return(XEN_CONS(C_TO_XEN_INT(arr[i]), 
-		int_array_to_list(arr, i + 1, len)));
+		    int_array_to_list(arr, i + 1, len)));
   else return(XEN_CONS(C_TO_XEN_INT(arr[i]), 
-		   XEN_EMPTY_LIST));
+		       XEN_EMPTY_LIST));
 }
 
 static int *syncd_marks(snd_state *ss, int sync)
@@ -1865,7 +1859,7 @@ static XEN g_marks(XEN snd_n, XEN chn_n, XEN pos_n)
 		if ((ids == NULL) || (ids[0] == 0))
 		  res1 = XEN_CONS(XEN_EMPTY_LIST, res1);
 		else res1 = XEN_CONS(int_array_to_list(ids, 1, ids[0]), 
-				    res1);
+				     res1);
 		if (ids) FREE(ids);
 	      }
 	  }
@@ -1879,7 +1873,7 @@ static XEN g_marks(XEN snd_n, XEN chn_n, XEN pos_n)
 	  sp = ss->sounds[j];
 	  if ((sp) && (sp->inuse))
 	    res1 = XEN_CONS(g_marks(C_TO_SMALL_XEN_INT(j), XEN_UNDEFINED, XEN_UNDEFINED), 
-			   res1);
+			    res1);
 	}
     }
   return(res1);
@@ -1941,7 +1935,8 @@ static char *mark_file_name(snd_info *sp)
 
 static int find_any_marks (chan_info *cp, void *ptr)
 {
-  if (cp->marks) return(cp->mark_ctr[cp->edit_ctr] + 1); /* initialized to -1 -- 0 is first mark */
+  if (cp->marks) 
+    return(cp->mark_ctr[cp->edit_ctr] + 1); /* initialized to -1 -- 0 is first mark */
   return(0);
 }
 
@@ -2039,16 +2034,16 @@ void g_init_marks(void)
   XEN_DEFINE_HOOK(mark_hook, S_mark_hook, 4, H_mark_hook);                /* args = id snd chn reason */
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_sample, g_mark_sample_w, H_mark_sample,
-			       "set-" S_mark_sample, g_set_mark_sample_w,
-			       0, 2, 1, 1);
+				   "set-" S_mark_sample, g_set_mark_sample_w,
+				   0, 2, 1, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_sync, g_mark_sync_w, H_mark_sync,
-			       "set-" S_mark_sync, g_set_mark_sync_w,
-			       0, 1, 1, 1);
+				   "set-" S_mark_sync, g_set_mark_sync_w,
+				   0, 1, 1, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_name, g_mark_name_w, H_mark_name,
-			       "set-" S_mark_name, g_set_mark_name_w,
-			       0, 1, 1, 1);
+				   "set-" S_mark_name, g_set_mark_name_w,
+				   0, 1, 1, 1);
 
   XEN_DEFINE_PROCEDURE(S_restore_marks, g_restore_marks_w, 4, 0, 0, "internal func");
   XEN_DEFINE_PROCEDURE(S_mark_sync_max, g_mark_sync_max_w, 0, 0, 0, H_mark_sync_max);

@@ -878,7 +878,7 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
 static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
 {
   /* we can't be real smart here because the channel number may have changed and so on */
-  Float *axis_data;
+  double *axis_data;
   int *ffts, *waves;
   int i, j, old_chans, old_sync, old_combine, need_update, read_only;
   Float duration;
@@ -892,7 +892,7 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
   old_sync = sp->sync;
   old_combine = sp->channel_style;
   read_only = sp->read_only;
-  axis_data = (Float *)CALLOC(4 * old_chans, sizeof(Float));
+  axis_data = (double *)CALLOC(4 * old_chans, sizeof(double));
   ffts = (int *)CALLOC(old_chans, sizeof(int));
   waves = (int *)CALLOC(old_chans, sizeof(int));
   for (i = 0; i < old_chans; i++)

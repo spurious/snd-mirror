@@ -562,8 +562,6 @@ void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num)
 	    }
 	  if (fmin > new_ep->data_min[i]) fmin = new_ep->data_min[i];
 	  if (fmax < new_ep->data_max[i]) fmax = new_ep->data_max[i];
-	  fmin = MUS_SAMPLE_0;
-	  fmax = MUS_SAMPLE_0;
 	}
       new_ep->fmin = fmin;
       new_ep->fmax = fmax;
@@ -2949,23 +2947,49 @@ static XEN g_channel_amp_envs(XEN filename, XEN chan, XEN pts, XEN peak_func, XE
   #define H_channel_amp_envs "(" S_channel_amp_envs " file chan size peak-file-func work-proc-func)\n\
 return two vectors of length 'size' containing y vals (min and max) of file's channel chan's amp envs. \
 'peak-file-func' if any is used to get the name of the associated peak_env_info file if the file is very large. \
-'work-proc-func' is called when the amp envs are ready if the amp envs are gathered in the background."
+'work-proc-func' is called when the amp envs are ready if the amp envs are gathered in the background. \
+If 'filename' is a sound index (an integer), pts is an edit-position, and the current amp envs are returned."
 
-  char *fullname, *peakname;
-  int len, chn;
-  snd_info *sp;
-  chan_info *cp;
+  char *fullname = NULL, *peakname;
+  int len, chn, pos;
+  snd_info *sp = NULL;
+  chan_info *cp = NULL;
   XEN peak = XEN_FALSE;
-  env_info *ep;
   env_state *es;
   snd_state *ss;
+  env_info *ep;
   int id;
   env_tick *et;
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_channel_amp_envs, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, S_channel_amp_envs, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(pts), pts, XEN_ARG_3, S_channel_amp_envs, "an integer");
+  XEN_ASSERT_TYPE(XEN_STRING_P(filename) || XEN_INTEGER_P(filename), filename, XEN_ARG_1, S_channel_amp_envs, "a string or sound index");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_channel_amp_envs, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(pts), pts, XEN_ARG_3, S_channel_amp_envs, "an integer");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(peak_func) || XEN_NOT_BOUND_P(peak_func), peak_func, XEN_ARG_4, S_channel_amp_envs, "a procedure");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(done_func) || XEN_NOT_BOUND_P(done_func), done_func, XEN_ARG_5, S_channel_amp_envs, "a procedure");
+
+  if (XEN_INTEGER_P(filename))
+    {
+      sp = get_sp(filename);
+      if (sp)
+	{
+	  cp = sp->chans[XEN_TO_C_INT_OR_ELSE(chan, 0)];
+	  pos = to_c_edit_position(cp, pts, S_channel_amp_envs, 3);
+	  if ((cp->amp_envs) && (ep = cp->amp_envs[pos]))
+	    return(g_env_info_to_vectors(ep, ep->amp_env_size));
+	  /* force amp env to completion */
+	  stop_amp_env(cp);
+	  es = make_env_state(cp, cp->samples[pos]);
+	  if (es)
+	    {
+	      while (tick_amp_env(cp, es) == FALSE);
+	      free_env_state(cp);
+	      ep = cp->amp_envs[pos];
+	      if (ep)
+		return(g_env_info_to_vectors(ep, ep->amp_env_size));
+	    }
+	  return(XEN_EMPTY_LIST);
+	}
+    }
+  /* filename is a string from here down */
   ss = get_global_state();
   fullname = mus_expand_filename(XEN_TO_C_STRING(filename));
   chn = XEN_TO_C_INT(chan);
@@ -3420,6 +3444,6 @@ If it returns #t, the apply is aborted."
   XEN_DEFINE_PROCEDURE(S_peak_env_info, g_peak_env_info_w, 0, 3, 0, H_peak_env_info);
   XEN_DEFINE_PROCEDURE(S_write_peak_env_info_file, g_write_peak_env_info_file_w, 3, 0, 0, H_write_peak_env_info_file);
   XEN_DEFINE_PROCEDURE(S_read_peak_env_info_file,  g_read_peak_env_info_file_w,  3, 0, 0, H_read_peak_env_info_file);
-  XEN_DEFINE_PROCEDURE(S_channel_amp_envs, g_channel_amp_envs_w, 3, 2, 0, H_channel_amp_envs);
+  XEN_DEFINE_PROCEDURE(S_channel_amp_envs, g_channel_amp_envs_w, 1, 4, 0, H_channel_amp_envs);
 }
 

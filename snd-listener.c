@@ -421,6 +421,12 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
   void report_io_stats(int *vals);
 #endif
 
+#if (HAVE_SYS_RESOURCE_H) && (HAVE_GETRUSAGE)
+  #include <sys/time.h>
+  #include <sys/resource.h>
+  #include <unistd.h>
+#endif
+
 #define STATS_BUFFER_SIZE 2048
 
 void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
@@ -478,6 +484,25 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
     if (m2) free(m2);
     if (m3) free(m3);
     FREE(str);
+  }
+#endif
+#if (HAVE_SYS_RESOURCE_H) && (HAVE_GETRUSAGE)
+  {
+    struct rusage usage;
+    int err;
+    err = getrusage(RUSAGE_SELF, &usage);
+    if (err == 0)
+      {
+	str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	mus_snprintf(str, PRINT_BUFFER_SIZE, "user time: %.4f, system time: %.4f, page faults: %ld, swaps: %ld\n",
+		     (float)(usage.ru_utime.tv_sec + ((float)(usage.ru_utime.tv_usec) / 1000000.0)),
+		     (float)(usage.ru_stime.tv_sec + ((float)(usage.ru_stime.tv_usec) / 1000000.0)),
+		     usage.ru_majflt,
+		     usage.ru_nswap);
+	pos = GUI_TEXT_END(stats_form);
+	GUI_STATS_TEXT_INSERT(stats_form, pos, str);
+	FREE(str);
+      }
   }
 #endif
 #ifdef DEBUG_MEMORY

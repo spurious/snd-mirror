@@ -300,7 +300,8 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, int graphed)
 {
   /* initialize channel, including edit/sound lists */
   axis_info *ap;
-  Float ymin = 0.0, ymax = 0.0, xmax, y0, y1, x0, x1, dur, gdur;
+  Float ymin = 0.0, ymax = 0.0, y0, y1;
+  double xmax, x0, x1, dur, gdur;
   char *label;
   file_info *hdr;
   int samples_per_channel, ymin_set = 0, ymax_set = 0;
@@ -316,7 +317,7 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, int graphed)
     case X_AXIS_AS_PERCENTAGE: label = STR_time_percent; break;
     default:                   label = STR_time;         break;
     }
-  dur = (Float)samples_per_channel / (Float)hdr->srate;
+  dur = (double)samples_per_channel / (double)hdr->srate;
 
   cp->edit_size = INITIAL_EDIT_SIZE;
   cp->edit_ctr = 0;
@@ -469,7 +470,7 @@ static void set_y_bounds(axis_info *ap)
 
 void set_x_bounds(axis_info *ap)
 {
-  Float range;
+  double range;
   if (ap->xmax <= ap->xmin) 
     {
       ap->xmax = ap->xmin + .001;
@@ -521,7 +522,7 @@ void apply_y_axis_change (axis_info *ap, chan_info *cp)
     }
 }
 
-void set_x_axis_x0x1 (chan_info *cp, Float x0, Float x1) 
+void set_x_axis_x0x1 (chan_info *cp, double x0, double x1) 
 {
   axis_info *ap;
   ap = cp->axis;
@@ -539,7 +540,7 @@ void set_x_axis_x0x1 (chan_info *cp, Float x0, Float x1)
 
 static void set_x_axis_x0(chan_info *cp, int left)
 {
-  Float x1x0;
+  double x1x0;
   axis_info *ap;
   if (cp)
     {
@@ -558,7 +559,7 @@ static void set_x_axis_x0(chan_info *cp, int left)
 
 static void set_x_axis_x1(chan_info *cp, int right)
 {
-  Float x1x0;
+  double x1x0;
   axis_info *ap;
   if (cp)
     {
@@ -602,7 +603,7 @@ void reset_x_display(chan_info *cp, double sx, double zx)
 
 static void update_xs(chan_info *ncp, axis_info *ap)
 {
-  Float scl;
+  double scl;
   axis_info *nap;
   nap = ncp->axis;
   if ((nap) && (nap->xmax > 0.0))
@@ -611,7 +612,7 @@ static void update_xs(chan_info *ncp, axis_info *ap)
        *   of the first channel of a (brand-new) multi-channel sound with sync set --
        *   chans after the first have not necessarily set up an axis_info struct yet.
        */
-      scl = ap->xmax/nap->xmax;
+      scl = ap->xmax / nap->xmax;
       reset_x_display(ncp, ap->sx * scl, ap->zx * scl);
     }
 }
@@ -684,7 +685,7 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp, int focus_s
    */
   chan_info *ncp;
   int newf;
-  Float loc, pos;
+  double loc, pos;
   if (ap->xmax == 0.0) return;
   if (ap->xmax <= ap->xmin) 
     {
@@ -736,7 +737,7 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp, int focus_s
       if (isnan(ap->x0)) ap->x0 = 0.0;
 #endif
       if (ap->x0 < 0.0) ap->x0 = 0.0;
-      ap->sx = (Float)(ap->x0 - ap->xmin) / (Float)ap->x_ambit;
+      ap->sx = (double)(ap->x0 - ap->xmin) / (double)ap->x_ambit;
     }
   apply_x_axis_change(ap, cp, sp);
 }
@@ -758,7 +759,7 @@ void zx_incremented(chan_info *cp, double amount)
   int samps;
   samps = current_ed_samples(cp);
   ap = cp->axis;
-  if ((amount >= 1.0) || ((samps > 0) && (ap->zx > (1.0 / (double)samps))))
+  if ((amount >= 1.0) || ((samps > 0) && ((ap->zx * (double)samps) > (amount / 2.0))))
     {
       ap->zx *= amount;
       focus_x_axis_change(ap, cp, cp->sound, zoom_focus_style(cp->state));
@@ -771,7 +772,7 @@ void zx_incremented(chan_info *cp, double amount)
 int move_axis(chan_info *cp, axis_info *ap, int x)
 {
   /* need to scroll axis forward or backward -- distance per call depends on x distance from end of axis */
-  Float off;
+  double off;
   int nx;
   if (x > ap->x_axis_x1)
     {
@@ -792,7 +793,7 @@ int move_axis(chan_info *cp, axis_info *ap, int x)
   return(nx);
 }
 
-void set_axes(chan_info *cp, Float x0, Float x1, Float y0, Float y1)
+void set_axes(chan_info *cp, double x0, double x1, Float y0, Float y1)
 {
   axis_info *ap;
   ap = cp->axis;
@@ -2389,7 +2390,7 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 		make_axes(cp, ap, cp->x_axis_style, FALSE); /* first time needs setup */
 	      ap->y0 = ap->x0;
 	      ap->y1 = ap->y0 + (Float)(cp->wavo_trace * (ap->y_axis_y0 - ap->y_axis_y1)) / ((Float)(cp->wavo_hop) * SND_SRATE(sp));
-	      ap->x1 = ap->x0 + (Float)(cp->wavo_trace) / (Float)SND_SRATE(sp);
+	      ap->x1 = ap->x0 + (double)(cp->wavo_trace) / (double)SND_SRATE(sp);
 	    }
 	  make_axes(cp, ap,
 		    cp->x_axis_style,
@@ -2764,7 +2765,7 @@ void handle_cursor(chan_info *cp, int redisplay)
   axis_info *ap;
   axis_context *ax;
   snd_info *sp;
-  Float gx = 0.0;
+  double gx = 0.0;
   if (cp == NULL) return;
   if ((redisplay != CURSOR_NO_ACTION) && (redisplay != KEYBOARD_NO_ACTION))
     {
@@ -3244,7 +3245,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		      /* zoom request -> each added key zooms closer, as does each successive click */
 		      ap = cp->axis;
 		      samps = current_ed_samples(cp);
-		      if ((samps > 0) && (ap->zx > (1.0 / (double)samps)))
+		      if ((samps > 0) && ((ap->zx * (double)samps) > 1.0))
 			{
 			  if (key_state & snd_ShiftMask) ap->zx *= .5;
 			  if (key_state & snd_ControlMask) ap->zx *= .5;
