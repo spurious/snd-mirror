@@ -1,11 +1,12 @@
 #ifndef CLM_H
 #define CLM_H
 
-#define MUS_VERSION 2
-#define MUS_REVISION 55
-#define MUS_DATE "28-June-04"
+#define MUS_VERSION 3
+#define MUS_REVISION 0
+#define MUS_DATE "14-July-04"
 
 /*
+ * 14-July:    clm 3.0!
  * 28-June:    ssb_am + added fm arg (ssb_am_1 is the previous form).
  * 21-June:    wrapper method.
  * 14-June:    ssb_am generator.
@@ -477,6 +478,7 @@ int mus_env_breakpoints(mus_any *gen); /* for Snd */
 bool mus_frame_p(mus_any *ptr);
 mus_any *mus_make_empty_frame(int chans);
 mus_any *mus_make_frame(int chans, ...);
+mus_any *mus_make_frame_with_data(int chans, Float *data);
 mus_any *mus_frame_add(mus_any *f1, mus_any *f2, mus_any *res);
 mus_any *mus_frame_multiply(mus_any *f1, mus_any *f2, mus_any *res);
 Float mus_frame_ref(mus_any *f, int chan);
@@ -487,6 +489,7 @@ bool mus_mixer_p(mus_any *ptr);
 mus_any *mus_make_empty_mixer(int chans);
 mus_any *mus_make_identity_mixer(int chans);
 mus_any *mus_make_mixer(int chans, ...);
+mus_any *mus_make_mixer_with_data(int chans, Float *data);
 Float **mus_mixer_data(mus_any *f);
 Float mus_mixer_ref(mus_any *f, int in, int out);
 Float mus_mixer_set(mus_any *f, int in, int out, Float val);

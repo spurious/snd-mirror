@@ -9629,6 +9629,11 @@ static int jack_mus_audio_initialize(void) {
   vect_describe_audio_state_1 = jack_describe_audio_state_1;
 
   audio_initialized = true;
+
+  /* Locking all future memory shouldn't be that necessary, and might even freeze the machine in certain situations. */
+  /* So remove MCL_FUTURE from the mlockall call. */
+  munlockall();
+  mlockall(MCL_CURRENT);
   
   return MUS_NO_ERROR;
 }

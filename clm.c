@@ -4228,6 +4228,7 @@ typedef struct {
   mus_any_class *core;
   int chans;
   Float *vals;
+  bool data_allocated;
 } mus_frame;
 
 static int free_frame(mus_any *pt)
@@ -4235,7 +4236,7 @@ static int free_frame(mus_any *pt)
   mus_frame *ptr = (mus_frame *)pt;
   if (ptr)
     {
-      if (ptr->vals) FREE(ptr->vals);
+      if ((ptr->vals) && (ptr->data_allocated)) FREE(ptr->vals);
       FREE(ptr);
     }
   return(0);
@@ -4312,6 +4313,18 @@ mus_any *mus_make_empty_frame(int chans)
   nf->core = &FRAME_CLASS;
   nf->chans = chans;
   nf->vals = (Float *)clm_calloc(chans, sizeof(Float), "frame data");
+  nf->data_allocated = true;
+  return((mus_any *)nf);
+}
+
+mus_any *mus_make_frame_with_data(int chans, Float *data)
+{
+  mus_frame *nf;
+  nf = (mus_frame *)clm_calloc(1, sizeof(mus_frame), S_make_frame);
+  nf->core = &FRAME_CLASS;
+  nf->chans = chans;
+  nf->vals = data;
+  nf->data_allocated = false;
   return((mus_any *)nf);
 }
 
@@ -4410,6 +4423,7 @@ typedef struct {
   mus_any_class *core;
   int chans;
   Float **vals;
+  bool data_allocated;
 } mus_mixer;
 
 static int free_mixer(mus_any *pt)
@@ -4418,9 +4432,11 @@ static int free_mixer(mus_any *pt)
   mus_mixer *ptr = (mus_mixer *)pt;
   if (ptr)
     {
-      if (ptr->vals) 
+      if (ptr->vals)
 	{
-	  for (i = 0; i < ptr->chans; i++) FREE(ptr->vals[i]);
+	  if (ptr->data_allocated)
+	    for (i = 0; i < ptr->chans; i++) 
+	      FREE(ptr->vals[i]);
 	  FREE(ptr->vals);
 	}
       FREE(ptr);
@@ -4504,6 +4520,20 @@ static mus_any_class MIXER_CLASS = {
   &_mus_wrap_no_vcts
 };
 
+mus_any *mus_make_mixer_with_data(int chans, Float *data)
+{
+  mus_mixer *nf;
+  int i;
+  nf = (mus_mixer *)clm_calloc(1, sizeof(mus_mixer), S_make_mixer);
+  nf->core = &MIXER_CLASS;
+  nf->chans = chans;
+  nf->vals = (Float **)clm_calloc(chans, sizeof(Float *), "mixer data");
+  for (i = 0; i < chans; i++)
+    nf->vals[i] = (Float *)(data + (i * chans));
+  nf->data_allocated = false;
+  return((mus_any *)nf);
+}
+
 mus_any *mus_make_empty_mixer(int chans)
 {
   mus_mixer *nf;
@@ -4514,6 +4544,7 @@ mus_any *mus_make_empty_mixer(int chans)
   nf->vals = (Float **)clm_calloc(chans, sizeof(Float *), "mixer data");
   for (i = 0; i < chans; i++)
     nf->vals[i] = (Float *)clm_calloc(chans, sizeof(Float), "mixer data");
+  nf->data_allocated = true;
   return((mus_any *)nf);
 }
 
