@@ -5081,8 +5081,8 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
 	      __FILE__, __LINE__, 
 	      info.record.channels, chans);
 
-  info.play.precision = bits;
-  info.play.encoding = encode;
+  info.record.precision = bits; /* was play, changed 10-Jul-03 thanks to Jürgen Keil */
+  info.record.encoding = encode;
   err = ioctl(audio_fd, AUDIO_SETINFO, &info); 
   if (err == -1) 
     RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, audio_fd,
@@ -5208,8 +5208,8 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 			      mus_format("can't get device info on %s (%s)",
 					 dev_name, 
 					 mus_audio_device_name(dev)));
-	  if ((ad.version) && 
-	      (strcmp(ad.version, "a") == 0)) /* is it a SparcStation? */
+	  if (((ad.version) && (strcmp(ad.version, "a") == 0)) || /* is it a SparcStation? */
+	      ((ad.name) && (strcmp(ad.name, "SUNW,CS4231") == 0)))
 	    {
 	      val[port] = MUS_AUDIO_CD; 
 	      port++;
@@ -7061,7 +7061,9 @@ int mus_audio_read(int line, char *buf, int bytes)
 
 #include <windows.h>
 #include <mmsystem.h>
-#include <mmreg.h>
+#if HAVE_MMREG_H
+  #include <mmreg.h>
+#endif
 
 #define BUFFER_FILLED 1
 #define BUFFER_EMPTY 2
@@ -7396,6 +7398,7 @@ static float unlog(unsigned short val)
 
 static char *mfg(int mf)
 {
+#if HAVE_MMREG_H
   switch (mf)
     {
     case MM_MICROSOFT: return("Microsoft"); break;              case MM_CREATIVE: return("Creative Labs"); break; 
@@ -7435,6 +7438,7 @@ static char *mfg(int mf)
     case MM_COMPUSIC: return("Compusic"); break;                case MM_OPTI: return("OPTi Computers"); break;
     case MM_DIALOGIC: return("Dialogic"); break;    
     }
+#endif
   return("");
 }
 

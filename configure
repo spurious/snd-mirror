@@ -3968,7 +3968,8 @@ done
 
 
 
-for ac_header in fcntl.h limits.h unistd.h string.h sys/soundcard.h soundcard.h machine/soundcard.h gsl/gsl_version.h sys/mixer.h
+
+for ac_header in fcntl.h limits.h unistd.h string.h sys/soundcard.h soundcard.h machine/soundcard.h gsl/gsl_version.h sys/mixer.h mmreg.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if eval "test \"\${$as_ac_Header+set}\" = set"; then
@@ -14944,6 +14945,7 @@ _ACEOF
 # odd... this causes an error in the sndlib configure (can't find libdl) but is needed here?
 	audio_system=Sun
 	LDSO_FLAGS="-G"
+# if __SUNPRO_C we could add -xO3
         ;;
     *-*-hpux*)
         cat >>confdefs.h <<\_ACEOF

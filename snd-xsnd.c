@@ -1457,7 +1457,7 @@ void snd_file_bomb_icon(snd_info *sp, int on)
   if (on)
     report_in_minibuffer(sp, _("%s has changed since we last read it!"), sp->short_filename);
 }
-static void snd_file_glasses_icon(snd_info *sp, int on, int glass) {}
+/* static void snd_file_glasses_icon(snd_info *sp, int on, int glass) {} */
 void x_bomb(snd_info *sp, int on) {}
 #endif
 

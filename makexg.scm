@@ -1263,7 +1263,7 @@
 (hey "          idler = XEN_CADDR(cur);~%")
 (hey "          if ((XEN_SYMBOL_P(XEN_CAR(idler))) &&~%")
 (hey "              (strcmp(\"idler\", XEN_SYMBOL_TO_C_STRING(XEN_CAR(idler))) == 0) &&~%")
-(hey "              (id == XEN_TO_C_INT(XEN_CADR(idler))))~%")
+(hey "              (id == (guint)(XEN_TO_C_INT(XEN_CADR(idler)))))~%")
 (hey "            {~%")
 (hey "              velts[i] = XEN_FALSE;~%")
 (hey "              last_xm_unprotect = i;~%")

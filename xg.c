@@ -967,7 +967,7 @@ static void xm_unprotect_idler(guint id)
           idler = XEN_CADDR(cur);
           if ((XEN_SYMBOL_P(XEN_CAR(idler))) &&
               (strcmp("idler", XEN_SYMBOL_TO_C_STRING(XEN_CAR(idler))) == 0) &&
-              (id == XEN_TO_C_INT(XEN_CADR(idler))))
+              (id == (guint)(XEN_TO_C_INT(XEN_CADR(idler)))))
             {
               velts[i] = XEN_FALSE;
               last_xm_unprotect = i;
@@ -30570,10 +30570,10 @@ static int xg_already_inited = FALSE;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"25-May-03\")");
+      XEN_EVAL_C_STRING("(define xm-version \"10-Jul-03\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("25-May-03"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("10-Jul-03"));
 #endif
       xg_already_inited = TRUE;
 #if WITH_GTK_AND_X11

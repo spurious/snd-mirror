@@ -1,9 +1,5 @@
 #include "snd.h"
 
-/* TODO: if chan > 0 edit history is open, then unite, then separate, list is not redisplayed (this is ok in gtk) */
-/*       if scrolled list is placed in frame, it insists on opening its pane */
-/*       explicit size set or un/remanage sequence does not open the list */
-
 enum {
     W_top, W_form,
     W_main_window,
@@ -1294,7 +1290,18 @@ void change_channel_style(snd_info *sp, int new_style)
 			}
 #if (XmVERSION > 1)
 		      if (cw[W_edhist]) 
-			XtVaSetValues(XtParent(cw[W_edhist]), XmNpaneMaximum, LOTSA_PIXELS, NULL);
+			{
+			  XtVaSetValues(XtParent(cw[W_edhist]), XmNpaneMaximum, LOTSA_PIXELS, NULL);
+#if 0
+			  if (widget_width(cw[W_edhist]) > 2)
+			    {
+/* TODO: if chan > 0 edit history is open, then unite, then separate, list is not redisplayed (this is ok in gtk) */
+/*       if scrolled list is placed in frame, it insists on opening its pane */
+/*       explicit size set or un/remanage sequence does not open the list */
+/*       explicit remake_edit_history does not help */
+			    }
+#endif
+			}
 #endif
 		      XmToggleButtonSetState(cw[W_f], (Boolean)(cp->graph_transform_p), FALSE);
 		      XmToggleButtonSetState(cw[W_w], (Boolean)(cp->graph_time_p), FALSE);
