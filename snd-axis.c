@@ -450,9 +450,6 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
   ap->x_label_y += ap->y_offset;
   ap->y_label_y += ap->y_offset;
 
-  /* finally ready to draw ... */
-  if ((sp) && (cp->drawing) && (cp->ffting) && (cp->fft) && (sp->combining == CHANNELS_SUPERIMPOSED) && (ap == cp->fft->axis))
-    erase_rectangle(cp,ax,ap->x_axis_x0,ap->x_axis_y0+2,ap->x_axis_x1 - ap->x_axis_x0,ap->x_label_y + 2 - ap->x_axis_y0);
   if (include_y_label)
     { /* used to use DrawVString here from sciplot, but it causes the display to flash */
       int col,row,len,i;
@@ -478,7 +475,6 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
 	  ps_draw_string(cp,ap->x_label_x,ap->x_label_y+7,ap->xlabel);
 	}
     }
-  if (!(cp->drawing)) return;
 
   if (show_x_axis)
     fill_rectangle(ax,ap->x_axis_x0,ap->x_axis_y0,(unsigned int)(ap->x_axis_x1-ap->x_axis_x0),axis_thickness);
@@ -693,22 +689,3 @@ axis_info *make_axis_info (chan_info *cp, Float xmin, Float xmax, Float ymin, Fl
   return(ap);
 }
 
-void make_axes(chan_info *cp, axis_info *ap, int x_style)
-{
-  snd_state *ss;
-  snd_info *sp;
-  axis_context *ax;
-  ss = cp->state;
-  if (!(ap->ax))
-    {
-      ax = (axis_context *)CALLOC(1,sizeof(axis_context));
-      ap->ax = ax;
-      ax->ss = ss;
-    }
-  else ax = ap->ax;
-  sp = cp->sound;
-  setup_axis_context(cp,ax);
-  if ((cp->chan == 0) || (sp->combining != CHANNELS_SUPERIMPOSED))
-    erase_rectangle(cp,ap->ax,ap->graph_x0,ap->y_offset,ap->width,ap->height); 
-  make_axes_1(cp,ap,x_style,SND_SRATE(sp));
-}

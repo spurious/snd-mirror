@@ -110,7 +110,6 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->lisp_info = NULL;
   cp->mix_md = NULL;
   cp->stats = NULL;
-  cp->drawing = 1;
   cp->hookable = 1;
   cp->gzy = 1.0;
   cp->gsy = 1.0;
@@ -152,7 +151,6 @@ static chan_info *free_chan_info(chan_info *cp)
   cp->selection_visible = 0;
   cp->cursor = 0;
   cp->cursor_style = CURSOR_CROSS;
-  cp->drawing = 1;
   cp->waiting_to_make_graph = 0;
   if (cp->sonogram_data) free_sono_info(cp);
   if (cp->last_sonogram) {FREE(cp->last_sonogram); cp->last_sonogram = NULL;}
@@ -629,7 +627,7 @@ void select_channel(snd_info *sp, int chan)
       (ncp->cgx)->selected = 1;
       if ((ss->sgx)->data_color != (ss->sgx)->selected_data_color) 
 	update_graph(ncp,NULL);
-      else draw_graph_border(ncp);
+      /* else draw_graph_border(ncp); */
       goto_graph(ncp);
     }
 }
@@ -660,7 +658,7 @@ sync_info *free_sync_info (sync_info *si)
 
 sync_info *snd_sync(snd_state *ss, int sync)
 {
-  int i,j,k,chans;
+  int i,j,k,chans=0;
   snd_info *sp;
   sync_info *si;
   for (i=0;i<ss->max_sounds;i++)

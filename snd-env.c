@@ -575,7 +575,6 @@ chan_info *new_env_axis(snd_state *ss)
   axis_context *ax;
   acp = (chan_info *)CALLOC(1,sizeof(chan_info));
   acp->printing = 0;
-  acp->drawing = 1;
   acp->state = ss;
   ap = (axis_info *)CALLOC(1,sizeof(axis_info));
   acp->axis = ap;

@@ -1616,7 +1616,7 @@ static SCM g_new_sound(SCM name, SCM type, SCM format, SCM srate, SCM chans, SCM
   ss = get_global_state();
   str = full_filename(name);
   if ((!(gh_number_p(type))) || (g_scm2int(type) == MUS_UNSUPPORTED))
-    sp = snd_new_file(ss,str,MUS_UNSUPPORTED,MUS_UNSUPPORTED,0,0,NULL);
+    sp = snd_new_file(ss,str,MUS_UNSUPPORTED,MUS_UNSUPPORTED,0,0,NULL,WITH_DIALOG);
   else 
     {
       ht = g_scm2int(type);
@@ -1631,7 +1631,7 @@ static SCM g_new_sound(SCM name, SCM type, SCM format, SCM srate, SCM chans, SCM
 		  ch = g_scm2intdef(chans,1);
 		  if (gh_string_p(comment))
 		    com = gh_scm2newstr(comment,NULL);
-		  sp = snd_new_file(ss,str,ht,df,sr,ch,com);
+		  sp = snd_new_file(ss,str,ht,df,sr,ch,com,WITHOUT_DIALOG);
 		  if (com) free(com);
 		}
 #if HAVE_GUILE_1_3_0

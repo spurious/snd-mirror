@@ -4408,7 +4408,68 @@
 	    (play-with-amps snd2 0.2 0.1))
 	(close-sound snd2))
 
+      (let ((ind (open-sound "pistol.snd")))
+	(if (selection-member ind 0) 
+	    (snd-print (format #f "initial selection-member ~A ~A?" 
+			       (selection-member ind 0)
+			       (selection?))))
+	(set! (selection-member ind 0) #t)
+	(if (or (not (selection-member ind 0))
+		(not (selection-member ind)))
+	    (snd-print (format #f "selection-member ~A ~A ~A?" 
+			       (selection-member ind 0)
+			       (selection-member ind)
+			       (selection?))))
+	(if (not (= (selection-length) 1))
+	    (snd-print (format #f "initial selection-length: ~A?" (selection-length))))
+	(set! (selection-length) 1200)
+	(if (not (= (selection-length) 1200))
+	    (snd-print (format #f "selection-length: 1200 ~A?" (selection-length))))
+	(cut)
+	(if (selection?) (snd-print (format #f "selection active after cut?")))
+	(undo)
+	(if (not (selection?)) (snd-print (format #f "selection inactive after undo?")))
+	(if (or (not (selection-member ind 0))
+		(not (selection-member ind)))
+	    (snd-print (format #f "selection-member after undo ~A ~A ~A?" 
+			       (selection-member ind 0)
+			       (selection-member ind)
+			       (selection?))))
+	(if (or (not (= (selection-length) 1200))
+		(not (= (selection-position) 0)))
+	    (snd-print (format #f "selection after undo: '(0 1200) '(~A ~A)?" 
+			       (selection-position) 
+			       (selection-length))))
+	(set! (selection-position) 1000)
+	(if (or (not (= (selection-length) 200))
+		(not (= (selection-position) 1000)))
+	    (snd-print (format #f "selection after reposition: '(1000 200) '(~A ~A)?" 
+			       (selection-position) 
+			       (selection-length))))
+	(reverse-selection)
+	(if (or (not (= (selection-length) 200))
+		(not (= (selection-position) 1000)))
+	    (snd-print (format #f "selection after reverse: '(1000 200) '(~A ~A)?" 
+			       (selection-position) 
+			       (selection-length))))
+	(let ((old-frames (frames ind)))
+	  (src-selection .5)
+	  (if (or (> (abs (- (frames ind) (+ 200 old-frames))) 5)
+		  (> (abs (- (selection-length) 400)) 5))
+	      (snd-print (format #f "selection after src .5: '(1000 400) '(~A ~A)?" 
+				 (selection-position) 
+				 (selection-length))))
+	  (undo)
+	  (redo)
+	  (if (or (> (abs (- (frames ind) (+ 200 old-frames))) 5)
+		  (> (abs (- (selection-length) 400)) 5))
+	      (snd-print (format #f "selection after src .5 with undo/redo: '(1000 400) '(~A ~A)?" 
+				 (selection-position) 
+				 (selection-length))))
+	  (undo 3))
+	(close-sound ind))
       ))
+
 
 (if #f (begin
 ;;; ---------------- test 16: define-syntax ----------------

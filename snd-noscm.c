@@ -859,13 +859,6 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,"load") == 0) {snd_load_file(filename = mus_file_full_name(sstr(str[1]))); if (filename) FREE(filename); return(0);}
       break;
     case 'm':
-      if (strcmp(tok,S_make_region) == 0) 
-	{
-	  cp = get_cp(ss,str[3],str[4]); 
-	  if (cp) define_region(cp,istr(str[1]),istr(str[2]),DONT_CLEAR_MINIBUFFER); 
-	  isym(ss,0); 
-	  return(0);
-	}
       if (strcmp(tok,S_max_fft_peaks) == 0) {isym(ss,max_fft_peaks(ss)); return(0);}
       if (strcmp(tok,S_max_regions) == 0) {isym(ss,max_regions(ss)); return(0);}
       if (strcmp(tok,S_max_sounds) == 0) {isym(ss,ss->max_sounds); return(0);}
@@ -878,8 +871,8 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_new_sound) == 0) 
 	{
 	  if (str[2] == NULL)
-	    snd_new_file(ss,filename = mus_file_full_name(sstr(str[1])),MUS_UNSUPPORTED,MUS_UNSUPPORTED,0,0,NULL);
-	  else snd_new_file(ss,filename = mus_file_full_name(sstr(str[1])),istr(str[2]),istr(str[3]),istr(str[4]),istr(str[5]),sstr(str[6]));
+	    snd_new_file(ss,filename = mus_file_full_name(sstr(str[1])),MUS_UNSUPPORTED,MUS_UNSUPPORTED,0,0,NULL,WITH_DIALOG);
+	  else snd_new_file(ss,filename = mus_file_full_name(sstr(str[1])),istr(str[2]),istr(str[3]),istr(str[4]),istr(str[5]),sstr(str[6]),WITHOUT_DIALOG);
 	  if (filename) FREE(filename);
 	  isym(ss,0); 
 	  return(0);
@@ -1078,13 +1071,6 @@ static int symit(snd_state *ss,char **str)
 	      scale_by(ss,cp->sound,cp,scls,1,FALSE); 
 	    }
 	  fsym(ss,scls[0]);
-	  return(0);
-	}
-      if (strcmp(tok,S_select_all) == 0) 
-	{
-	  cp = get_cp(ss,str[1],str[2]); 
-	  if (cp) define_region(cp,0,current_ed_samples(cp),DONT_CLEAR_MINIBUFFER); 
-	  isym(ss,0); 
 	  return(0);
 	}
       if (strcmp(tok,S_select_channel) == 0) 

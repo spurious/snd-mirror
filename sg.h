@@ -58,6 +58,17 @@
  *   the assumption is that it will be used with gh_new_procedure and scm_string_to_symbol
  */
 
+#define WITH_REVERSED_CHANNEL_ARGS(name_reversed,name) \
+static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
+{ \
+  if (SCM_UNBNDP(arg2)) \
+    return(name(arg1,SCM_UNDEFINED,SCM_UNDEFINED)); \
+  else { \
+    if (SCM_UNBNDP(arg3)) \
+      return(name(arg2,arg1,SCM_UNDEFINED)); \
+    else return(name(arg3,arg1,arg2)); \
+}}
+
 /* error indications */
 
 #define NO_SUCH_CHANNEL gh_symbol2scm("no-such-channel")

@@ -713,6 +713,7 @@ void snd_close_file(snd_info *sp, snd_state *ss)
   if (files == 0) reflect_file_lack_in_menu();
   reflect_file_change_in_title(ss);
   reflect_normalize_in_menu(active_channels(ss,WITHOUT_VIRTUAL_CHANNELS) > 1);
+  if (!(selection_is_active())) reflect_edit_without_selection_in_menu();
 }
 
 
@@ -1899,11 +1900,11 @@ snd_info *finish_new_file(snd_state *ss,char *newname,int header_type, int data_
   return(NULL);
 }
 
-snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment)
+snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment, int with_dialog)
 {
   /* first post dialog if needed to fill in defaults, then create the thing and make room in Snd */
   mus_sound_forget(newname);
-  if (!(mus_header_writable(header_type,data_format)))
+  if (with_dialog)
     return(make_new_file_dialog(ss,newname,header_type,data_format,srate,chans,comment));
   else return(finish_new_file(ss,newname,header_type,data_format,srate,chans,comment));
 }

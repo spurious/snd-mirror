@@ -171,7 +171,6 @@ typedef struct chan__info {
   void *fft_data;          /* parallels sonogram -- try to avoid repeating large ffts needlessly */
   int ps_fd;
   int printing;
-  int drawing;
   Float gsy,gzy;
   void *mixes;
   void *mix_dragging;
@@ -814,7 +813,6 @@ int selection_is_active(void);
 int selection_is_active_in_channel(chan_info *cp);
 int selection_is_visible_in_channel(chan_info *cp);
 int selection_beg(chan_info *cp);
-int selection_end(chan_info *cp);
 int selection_len(void);
 int selection_chans(void);
 void deactivate_selection(void);
@@ -1038,7 +1036,6 @@ Float ungrf_y(axis_info *ap, int y);
 axis_info *make_axis_info (chan_info *cp, Float xmin, Float xmax, Float ymin, Float ymax, 
 			   char *xlabel, Float x0, Float x1, Float y0, Float y1,
 			   axis_info *old_ap);
-void make_axes(chan_info *cp, axis_info *ap, int x_style);
 
 
 
@@ -1148,7 +1145,7 @@ char *header_short_name(int i);
 void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_data);
 char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr);
 snd_info *finish_new_file(snd_state *ss,char *newname,int header_type, int data_format, int srate, int chans, char *new_comment);
-snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment);
+snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *comment, int with_dialog);
 
 int header_type_from_position(int pos);
 int data_format_from_position(int header, int pos);

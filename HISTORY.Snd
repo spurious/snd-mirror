@@ -1,6 +1,7 @@
 snd change log
 
-  18-Sep:    selection now follows the edit history lists.
+  18-Sep:    snd 4.6.
+	     selection now follows the edit history lists.
              selection-beg is now selection-position (to be consistent with everything else).
   12-Sep:    effects.scm.
   11-Sep:    generalized set! now built-in (the set-* forms still exist for old versions of Guile).

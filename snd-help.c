@@ -251,7 +251,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
-18-Sep:  selection now follows the edit history lists.\n\
+18-Sep:  snd 4.6.\n\
+         selection now follows the edit history lists.\n\
          selection-beg is now selection-position (to be consistent with everything else).\n\
 12-Sep:  effects.scm.\n\
 11-Sep:  generalized set! now built-in.\n\

@@ -58,6 +58,13 @@ int selection_beg(chan_info *cp)
   return(beg[0]);
 }
 
+static void cp_set_selection_beg(chan_info *cp, int beg)
+{
+  ed_list *ed;
+  ed = cp->edits[cp->edit_ctr];
+  ed->selection_beg = beg;
+}
+
 static int cp_selection_end(chan_info *cp, void *begptr) 
 {
   ed_list *ed;
@@ -71,7 +78,7 @@ static int cp_selection_end(chan_info *cp, void *begptr)
   return(0);
 }
 
-int selection_end(chan_info *cp)
+static int selection_end(chan_info *cp)
 {
   int beg[1];
   beg[0] = 0;
@@ -93,6 +100,13 @@ static int cp_selection_len(chan_info *cp, void *ptr)
 int selection_len(void)
 {
   return(map_over_chans(get_global_state(),cp_selection_len,NULL));
+}
+
+static void cp_set_selection_len(chan_info *cp, int len)
+{
+  ed_list *ed;
+  ed = cp->edits[cp->edit_ctr];
+  ed->selection_end = ed->selection_beg + len - 1;
 }
 
 static int selection_chans_1(chan_info *cp, void *count)
@@ -164,20 +178,7 @@ void reactivate_selection(chan_info *cp, int beg, int end)
   ed->selection_beg = beg;
   ed->selection_end = end;
   cp->selection_visible = 0;
-}
-
-static void cp_set_selection_beg(chan_info *cp, int beg)
-{
-  ed_list *ed;
-  ed = cp->edits[cp->edit_ctr];
-  ed->selection_beg = beg;
-}
-
-static void cp_set_selection_len(chan_info *cp, int len)
-{
-  ed_list *ed;
-  ed = cp->edits[cp->edit_ctr];
-  ed->selection_end = ed->selection_beg + len;
+  reflect_edit_with_selection_in_menu();
 }
 
 static void update_selection(chan_info *cp, int newend)
@@ -232,12 +233,16 @@ static int next_selection_chan(chan_info *cp, void *sidata)
 sync_info *selection_sync(void)
 {
   sync_info *si;
+#if DEBUGGING
   int check_chans=0;
+#endif
   si = (sync_info *)CALLOC(1,sizeof(sync_info));
   si->chans = selection_chans();
   si->cps = (chan_info **)CALLOC(si->chans,sizeof(chan_info *));
   si->begs = (int *)CALLOC(si->chans,sizeof(int));
+#if DEBUGGING
   check_chans = si->chans;
+#endif
   si->chans = 0;
   map_over_chans(get_global_state(),next_selection_chan,(void *)si);
 #if DEBUGGING
@@ -390,21 +395,18 @@ static void start_selection_watching(chan_info *cp);
 static void move_selection_1(chan_info *cp, int x)
 {
   axis_info *ap;
-  int nx;
   ap = cp->axis;
   if ((x > ap->x_axis_x1) || (x < ap->x_axis_x0)) 
     {
       if (((x > ap->x_axis_x1) && (ap->x1 == ap->xmax)) ||
 	  ((x < ap->x_axis_x0) && (ap->x0 == ap->xmin)))
 	return;
-      nx = move_axis(cp,ap,x);
+      move_axis(cp,ap,x);
       if (!watch_selection_button) start_selection_watching(cp);
     }
   else 
-    {
-      nx = x;
-      if (watch_selection_button) cancel_selection_watch();
-    }
+    if (watch_selection_button) 
+      cancel_selection_watch();
   redraw_selection();
 }
 
@@ -572,8 +574,11 @@ static SCM g_set_selection_position(SCM pos, SCM snd, SCM chn)
       cp = get_cp(snd,chn,"set-" S_selection_position);
       cp_set_selection_beg(cp,beg);
     }
+  redraw_selection();
   return(pos);
 }
+
+WITH_REVERSED_CHANNEL_ARGS(g_set_selection_position_reversed,g_set_selection_position)
 
 static SCM g_selection_length(SCM snd, SCM chn)
 {
@@ -615,8 +620,11 @@ static SCM g_set_selection_length(SCM samps, SCM snd, SCM chn)
       cp = get_cp(snd,chn,"set-" S_selection_length);
       cp_set_selection_len(cp,len);
     }
+  redraw_selection();
   return(samps);
 }
+
+WITH_REVERSED_CHANNEL_ARGS(g_set_selection_length_reversed,g_set_selection_length)
 
 /* (catch 'no-active-selection (lambda () (+ 1 (selection-beg))) (lambda (tag val) 0)) */
 
@@ -642,8 +650,16 @@ static SCM g_set_selection_member(SCM on, SCM snd, SCM chn)
       else cp_set_selection_beg(cp,0);
     }
   else cp_deactivate_selection(cp,NULL);
+  if (selection_is_active())
+    {
+      reflect_edit_with_selection_in_menu();
+      redraw_selection();
+    }
+  else reflect_edit_without_selection_in_menu();
   return(on);
 }
+
+WITH_REVERSED_CHANNEL_ARGS(g_set_selection_member_reversed,g_set_selection_member)
 
 static SCM g_select_all (SCM snd_n, SCM chn_n)
 {
@@ -686,14 +702,17 @@ static SCM g_save_selection(SCM filename, SCM header_type, SCM data_format, SCM 
 
 void g_init_selection(SCM local_doc)
 {
-  define_procedure_with_setter(S_selection_position,SCM_FNC g_selection_position,H_selection_position,
-			       "set-" S_selection_position,SCM_FNC g_set_selection_position,local_doc,0,2,1,2);
+  define_procedure_with_reversed_setter(S_selection_position,SCM_FNC g_selection_position,H_selection_position,
+					"set-" S_selection_position,SCM_FNC g_set_selection_position,SCM_FNC g_set_selection_position_reversed,
+					local_doc,0,2,1,2);
 
-  define_procedure_with_setter(S_selection_length,SCM_FNC g_selection_length,H_selection_length,
-			       "set-" S_selection_length,SCM_FNC g_set_selection_length,local_doc,0,2,1,2);
+  define_procedure_with_reversed_setter(S_selection_length,SCM_FNC g_selection_length,H_selection_length,
+					"set-" S_selection_length,SCM_FNC g_set_selection_length,SCM_FNC g_set_selection_length_reversed,
+					local_doc,0,2,1,2);
 
-  define_procedure_with_setter(S_selection_member,SCM_FNC g_selection_member,H_selection_member,
-			       "set-" S_selection_member,SCM_FNC g_set_selection_member,local_doc,0,2,1,2);
+  define_procedure_with_reversed_setter(S_selection_member,SCM_FNC g_selection_member,H_selection_member,
+					"set-" S_selection_member,SCM_FNC g_set_selection_member,SCM_FNC g_set_selection_member_reversed,
+					local_doc,0,2,1,2);
 
   DEFINE_PROC(gh_new_procedure(S_selectionQ,SCM_FNC g_selectionQ,0,0,0),H_selectionQ);
   DEFINE_PROC(gh_new_procedure(S_cut,SCM_FNC g_cut,0,0,0),H_cut);

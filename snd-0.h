@@ -128,6 +128,9 @@ enum {AMPLITUDE_ENV,SPECTRUM_ENV,SRATE_ENV};
 #define DONT_CLEAR_MINIBUFFER 0
 #define CLEAR_MINIBUFFER 1
 
+#define WITHOUT_DIALOG 0
+#define WITH_DIALOG 1
+
 enum {CHAN_INFO,SND_INFO,SND_STATE,REGION_INFO};
 enum {GRAPH_LINES,GRAPH_DOTS,GRAPH_FILLED,GRAPH_DOTS_AND_LINES,GRAPH_LOLLIPOPS};
 enum {NORMAL_FFT,SONOGRAM,SPECTROGRAM};
@@ -653,13 +656,13 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
   #define set_html_fixed_font_size_list(ss,a) ss->HTML_Fixed_Font_Size_List = a
 #endif
 
-#endif
-
 #define graphs_horizontal(ss) ss->Graphs_Horizontal
 #define in_set_graphs_horizontal(ss,a) ss->Graphs_Horizontal = a
 #define DEFAULT_GRAPHS_HORIZONTAL 1
 
 #if NONINTERLEAVED_AUDIO
   #define DEFAULT_AUDIO_HW_CHANNELS 2
+#endif
+
 #endif
 

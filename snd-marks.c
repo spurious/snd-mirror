@@ -836,7 +836,7 @@ void ripple_marks(chan_info *cp, int beg, int change)
 
 void mark_define_region(chan_info *cp,int count)
 {
-  int beg,end;
+  int beg,end,i;
   mark *mp;
   sync_info *si;
   int ends[1];
@@ -857,9 +857,15 @@ void mark_define_region(chan_info *cp,int count)
 		      ends[0] = beg;
 		      beg = end;
 		    }
+		  deactivate_selection();
 		  si = sync_to_chan(cp);
 		  si->begs[0] = beg;
 		  define_region(si,ends);
+		  for (i=0;i<si->chans;i++)
+		    {
+		      reactivate_selection(si->cps[i],beg,ends[0]);
+		      update_graph(si->cps[i],NULL);
+		    }
 		  si = free_sync_info(si);
 		}
 	    }

@@ -2113,6 +2113,26 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss)
   if (cp->show_fft_peaks) display_peaks(cp,uap,up->data[0],1,up->len[0]-1,samples_per_pixel,0,0.0);
 }
 
+static void make_axes(chan_info *cp, axis_info *ap, int x_style, int erase_first)
+{
+  snd_state *ss;
+  snd_info *sp;
+  axis_context *ax;
+  ss = cp->state;
+  if (!(ap->ax))
+    {
+      ax = (axis_context *)CALLOC(1,sizeof(axis_context));
+      ap->ax = ax;
+      ax->ss = ss;
+    }
+  else ax = ap->ax;
+  sp = cp->sound;
+  setup_axis_context(cp,ax);
+  if (erase_first)
+    erase_rectangle(cp,ap->ax,ap->graph_x0,ap->y_offset,ap->width,ap->height); 
+  make_axes_1(cp,ap,x_style,SND_SRATE(sp));
+}
+
 static void draw_graph_cursor(chan_info *cp);
 
 static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_state *ss, int width, int height, int offset, int just_fft, int just_lisp)
@@ -2207,12 +2227,15 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	{
 	  if (cp->wavo)
 	    {
-	      if (ap->y_axis_y0 == ap->y_axis_y1) make_axes(cp,ap,x_axis_style(ss)); /* first time needs setup */
+	      if (ap->y_axis_y0 == ap->y_axis_y1) make_axes(cp,ap,x_axis_style(ss),FALSE); /* first time needs setup */
 	      ap->y0 = ap->x0;
 	      ap->y1 = ap->y0+(Float)(cp->wavo_trace * (ap->y_axis_y0 - ap->y_axis_y1)) / ((Float)(cp->wavo_hop)*SND_SRATE(sp));
 	      ap->x1 = ap->x0 + (Float)(cp->wavo_trace)/(Float)SND_SRATE(sp);
 	    }
-	  make_axes(cp,ap,x_axis_style(ss));
+	  make_axes(cp,ap,
+		    x_axis_style(ss),
+		    ((cp->chan == 0) || (sp->combining != CHANNELS_SUPERIMPOSED)));
+  
 	  cp->cursor_visible = 0;
 	  cp->selection_visible = 0;
 	  points = make_graph(cp,sp,ss);
@@ -2226,10 +2249,16 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
     {
       if (with_fft)
 	{
-	  if ((cp->fft_style == SPECTROGRAM) || ((cp->chan > 0) && (sp->combining == CHANNELS_SUPERIMPOSED)))
-	    cp->drawing = 0;
-	  make_axes(cp,fap,(x_axis_style(ss) == X_IN_SAMPLES) ? X_IN_SECONDS : (x_axis_style(ss)));
-	  cp->drawing = 1;
+	  make_axes(cp,fap,
+		    (x_axis_style(ss) == X_IN_SAMPLES) ? X_IN_SECONDS : (x_axis_style(ss)),
+		    ((cp->chan == sp->nchans-1) || (sp->combining != CHANNELS_SUPERIMPOSED)));
+	  /* Xt documentation says the most recently added work proc runs first, but we're
+	   *   adding fft work procs in channel order, normally, so the channel background
+	   *   clear for the superimposed case needs to happen on the highest-numbered 
+	   *   channel, since it will complete its fft first.  It also needs to notice the
+	   *   selected background, if any of the current sound's channels is selected.
+	   */
+
 	  if ((!cp->waving) || (just_fft))
 	    { /* make_graph does this -- sets losamp needed by fft to find its starting point */
 	      ap->losamp = (int)(ap->x0*(double)SND_SRATE(sp));
@@ -2249,7 +2278,10 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
     {
       if (with_lisp)
 	{
-	  make_axes(cp,uap,X_IN_LENGTH);
+	  make_axes(cp,uap,
+		    X_IN_LENGTH,
+		    ((cp->chan == 0) || (sp->combining != CHANNELS_SUPERIMPOSED)));
+
 	  if ((just_lisp) || ((!(cp->waving)) && (!(with_fft))))
 	    {
 	      ap->losamp = (int)(ap->x0*(double)SND_SRATE(sp));
@@ -6353,7 +6385,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      else no_selection_error(sp); 
 	      break;
 	    case snd_K_B: case snd_K_b: cp->cursor_on = 1; redisplay = CURSOR_ON_LEFT; break;
-	    case snd_K_C: case snd_K_c: mark_define_region(cp,(ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count); redisplay = CURSOR_CLAIM_SELECTION; break;
+	    case snd_K_C: case snd_K_c: mark_define_region(cp,(ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); redisplay = CURSOR_CLAIM_SELECTION; break;
 	    case snd_K_D: case snd_K_d: redisplay = prompt(sp,"temp dir:",NULL); sp->filing = TEMP_FILING; searching = 1; break;
 #if HAVE_GUILE
 	    case snd_K_E: case snd_K_e: 
@@ -6584,7 +6616,6 @@ static void propogate_wf_state(snd_info *sp)
   if (sp->combining != CHANNELS_SEPARATE)
     {
       cp = sp->chans[0];
-      if (sp->combining == CHANNELS_SUPERIMPOSED) clear_window(((axis_info *)(cp->axis))->ax);
       w = cp->waving;
       f = cp->ffting;
       for (i=1;i<sp->nchans;i++) 
@@ -6695,10 +6726,7 @@ int key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
     return(FALSE);
   redisplay = keyboard_command(cp,keysym,key_state);
   if (redisplay == CURSOR_CLAIM_SELECTION)
-    {
-      reflect_edit_with_selection_in_menu();
-      redisplay = CURSOR_UPDATE_DISPLAY;
-    }
+    redisplay = CURSOR_UPDATE_DISPLAY;
   /* if lisp graph has cursor? */
   handle_cursor_with_sync(cp,redisplay);
   return(FALSE);
@@ -6903,7 +6931,6 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		  cancel_selection_watch();
 		  finish_selection_creation();
 		  dragged = 0;
-		  reflect_edit_with_selection_in_menu();
 		  if (show_selection_transform(ss)) 
 		    {
 		      if (sp->syncing)
@@ -7889,19 +7916,6 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
         return(name(arg2,arg1,SCM_UNDEFINED)); \
       else return(name(arg3,arg1,arg2)); \
 }}}
-
-
-#define WITH_REVERSED_CHANNEL_ARGS(name_reversed,name) \
-static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
-{ \
-  if (SCM_UNBNDP(arg2)) \
-    return(name(arg1,SCM_UNDEFINED,SCM_UNDEFINED)); \
-  else { \
-    if (SCM_UNBNDP(arg3)) \
-      return(name(arg2,arg1,SCM_UNDEFINED)); \
-    else return(name(arg3,arg1,arg2)); \
-}}
-
 
 static SCM g_ffting(SCM snd_n, SCM chn_n) 
 {

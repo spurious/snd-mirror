@@ -842,7 +842,9 @@ void make_file_save_as_dialog(snd_state *ss)
 void make_edit_save_as_dialog(snd_state *ss)
 {
   save_as_dialog_type = EDIT_SAVE_AS;
-  make_save_as_dialog(ss,STR_current_selection,-1,-1);
+  make_save_as_dialog(ss,STR_current_selection,
+		      default_output_type(ss),
+		      default_output_format(ss));
   load_header_and_data_lists(save_as_file_data,
 			     save_as_file_data->current_type,
 			     save_as_file_data->current_format,

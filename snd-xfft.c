@@ -60,7 +60,6 @@ static axis_context *make_axis_cp(snd_state *ss, Widget w)
       /* axis_cp is just a dummy chan_info struct to hold the axis_info pointer */
       axis_cp = (chan_info *)CALLOC(1,sizeof(chan_info));
       axis_cp->printing = 0;
-      axis_cp->drawing = 1;
       axis_cp->state = ss;
       ap = (axis_info *)CALLOC(1,sizeof(axis_info));
       axis_cp->axis = ap;
