@@ -334,7 +334,9 @@ Lisp-like setf, see setf.scm; if it is loaded you can say (setf
   use-sinc-interp       #t      If #t, the control panel speed slider uses high quality src, rather
                                 than linear interpolation.  This can significantly increase the computational burden
                                 on the computer; if you're trying to play 8 channel 44Khz sounds on an older machine,
-                                it may help to set use-sinc-interp to #f.
+                                it may help to set use-sinc-interp to #f.  In fact, if you're running a machine in the
+                                100 MHz range, even stereo 44.1kHz can be a problem -- if the sound has clicks or seems
+                                horribly distorted when the "speed" control is not at 1.0, try setting this variable to #f.
   verbose-cursor        #f      If #t, the cursor's position and other information is
                                 constantly displayed in the minibuffer.  This is the View menu's Verbose cursor option.
   vu-font               nil     The "vu-" variables refer to the VU meters in the recorder.
@@ -397,6 +399,13 @@ amplitude envelope, and sampling rate) -- next-mix-sample, for example,
 refers to the processed form of the mix data, whereas next-sample would
 refer to the original form. I may extend this to accept a list of (more than
 one) mixes.
+
+In the control panel functions such as amp and set-contrast, the snd
+argument can be #t. In this case the set-<field> functions affect all sounds
+at once, and the <field> functions return a list of all the current control
+panels settings for that field. Similarly for the channel functions such as
+ffting, so (set-ffting #t #t #t) turns on the fft display in all channels of
+all sounds.
 
 When an error occurs, in most cases the function throws a tag such as
 'no-such-sound, 'impossible-bounds, 'no-active-selection, etc. The error tag
@@ -462,7 +471,8 @@ can return 'no-such-mix; all the region-related functions can return
 
   amp               (snd)         current amp (control panel slider) value.
                                   It is possible to use these controls (in "real-time") in your own functions.
-                                  See amprt in examp.scm for a simple example.
+                                  See amprt in examp.scm for a simple example.  In all the control-panel functions,
+                                  the snd argument can be #t meaning "all sounds".
   append-to-minibuffer (msg snd)  append msg to whatever is in snd's minibuffer [no-such-sound].
   as-one-edit       (func)        apply func (a function of no arguments), treating it as
                                   one edit (in all channels) in the edit history mechanism.
@@ -590,7 +600,7 @@ can return 'no-such-mix; all the region-related functions can return
   expand-length     (snd)         snd's expansion segment length (seconds).
   expand-ramp       (snd)         snd's expansion ramp amount (between 0 and .5).
                                   This affects the smoothness of the grain overlaps -- .001 gives a
-                                  rattling effect.
+                                  rattling effect (see make-control-dialog in snd-gtk.scm).
   expanding         (snd)         #t if snd's expand button is on.
   fft               (rl im sgn)   perform an FFT on rl and im (the real and imaginary parts
                                   of the input data. sgn is 1 for an FFT, -1 for an inverse FFT; (default 1).
@@ -1409,18 +1419,27 @@ Here's we've "caught" 'no-active-selection (if it occurs within the first
 'out-of-range, 'wrong-type-arg, 'numerical-overflow, etc. The Snd-specific
 errors are:
 
-'no-such-channel 'no-such-sound 'no-such-mark       'no-such-mix
-'no-such-menu    'no-such-file  'no-such-region     'no-such-sample
-'no-such-edit    'cannot-save   'impossible-bounds  'no-active-selection
-'no-such-widget  'snd-eval-error
+'no-such-channel 'no-such-sound  'no-such-mark       'no-such-mix
+'no-such-menu    'no-such-file   'no-such-region     'no-such-sample
+'no-such-edit    'cannot-save    'impossible-bounds  'no-active-selection
+'no-such-widget  'snd-eval-error 'mus-error          'no-such-track
 
 The symbol #t stands for all errors in this case, so we can run rough-shod
 over any error with:
 
 (defmacro without-errors (func)
   `(catch #t
-          (lambda () ,func)
-          (lambda (tag val) tag)))
+          (lambda ()
+            ,func)
+          (lambda args (car args))))
+
+You can use these errors in your code, if you like. The following throws the
+error 'no-such-file:
+
+(define look-for-file
+  (lambda (file)
+    (or (file-exists? file)
+        (throw 'no-such-file (list "look-for-file" file)))))
 
   ------------------------------------------------------------------------
 
@@ -1815,6 +1834,9 @@ lengths will be more or less the same (as in the mapping operations). Use
 snd-tempnam to get a temporary filename that reflects the current temp-dir
 setting (if any). The env-sound-interp function in examp.scm is an example
 of this.
+
+The mapping and scanning functions may return 'snd-eval-error if something
+went wrong.
 
   ------------------------------------------------------------------------
 

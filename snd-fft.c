@@ -1364,8 +1364,10 @@ static int display_snd_fft(fft_state *fs)
 	case FOURIER: 
 	  if (fft_log_frequency(ss))
 	    {
-	      max_freq = 1.0;
-	      min_freq = 0.0;
+	      /* max_freq = 1.0; */
+	      max_freq = spectro_cutoff(ss);
+	      /* min_freq = 0.0; */
+	      min_freq = spectro_start(ss);
 	    }
 	  else
 	    {

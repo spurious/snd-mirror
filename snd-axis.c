@@ -177,7 +177,6 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
   int curx, cury, curdy, show_x_axis = 1;
   axis_context *ax;
   snd_info *sp;
-
   ss = cp->state;
   sp = cp->sound;
   ax = ap->ax;
@@ -454,6 +453,8 @@ void make_axes_1(chan_info *cp, axis_info *ap, int x_style, int srate)
   ap->y_label_y += ap->y_offset;
 
   /* finally ready to draw ... */
+  if ((sp) && (cp->drawing) && (cp->ffting) && (cp->fft) && (sp->combining == CHANNELS_SUPERIMPOSED) && (ap == cp->fft->axis))
+    erase_rectangle(cp,ax,ap->x_axis_x0,ap->x_axis_y0+2,ap->x_axis_x1 - ap->x_axis_x0,ap->x_label_y + 2 - ap->x_axis_y0);
   if (include_y_label)
     { /* used to use DrawVString here from sciplot, but it causes the display to flash */
       int col,row,len,i;

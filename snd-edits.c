@@ -2403,7 +2403,7 @@ void redo_EDIT(void *ptr, int count)
 static SCM g_display_edits(SCM snd, SCM chn)
 {
   #define H_display_edits " prints current edit tree state"
-  display_edits(get_cp(snd,chn));
+  display_edits(get_cp(snd,chn,"display-edits"));
   return(SCM_BOOL_F);
 }
 #endif
@@ -2418,22 +2418,18 @@ static SCM g_edit_fragment(SCM uctr, SCM snd, SCM chn)
   int ctr;
   ERRCP(S_edit_fragment,snd,chn,2);
   ERRB1(uctr,S_edit_fragment);
-  cp = get_cp(snd,chn);
-  if (cp) 
+  cp = get_cp(snd,chn,S_edit_fragment);
+  ctr = g_scm2intdef(uctr,cp->edit_ctr);
+  if ((ctr < cp->edit_size) && (ctr >= 0))
     {
-      ctr = g_scm2intdef(uctr,cp->edit_ctr);
-      if ((ctr < cp->edit_size) && (ctr >= 0))
-	{
-	  ed = cp->edits[ctr];
-	  if (ed) 
-	    return(SCM_LIST4(gh_str02scm(ed->origin),
-			     gh_str02scm(edit_names[EDIT_TYPE(ed->sfnum)]),
-			     gh_int2scm(ed->beg),
-			     gh_int2scm(ed->len)));
-	}
-      return(scm_throw(NO_SUCH_EDIT,SCM_LIST1(gh_str02scm(S_edit_fragment))));
+      ed = cp->edits[ctr];
+      if (ed) 
+	return(SCM_LIST4(gh_str02scm(ed->origin),
+			 gh_str02scm(edit_names[EDIT_TYPE(ed->sfnum)]),
+			 gh_int2scm(ed->beg),
+			 gh_int2scm(ed->len)));
     }
-  return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_edit_fragment))));
+  return(scm_throw(NO_SUCH_EDIT,SCM_LIST4(gh_str02scm(S_edit_fragment),snd,chn,uctr)));
 }
 
 /* ---------------- sample readers ---------------- */
@@ -2559,15 +2555,14 @@ static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir, SCM pos)
       if ((chan < 0) || (chan > loc_sp->nchans))
 	{
 	  completely_free_snd_info(loc_sp);
-	  return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_make_sample_reader))));
+	  return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(gh_str02scm(S_make_sample_reader),snd,chn)));
 	}
       cp = loc_sp->chans[chan];
     }
   else 
     {
       ERRCP(S_make_sample_reader,snd,chn,2);
-      cp = get_cp(snd,chn);
-      if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_make_sample_reader))));
+      cp = get_cp(snd,chn,S_make_sample_reader);
     }
   edpos = g_scm2intdef(pos,cp->edit_ctr);
   fd = init_sample_read_any(g_scm2intdef(samp_n,0),cp,g_scm2intdef(dir,1),edpos);
@@ -2722,8 +2717,8 @@ static SCM g_save_edit_history(SCM filename, SCM snd, SCM chn)
     {
       if ((gh_number_p(chn)) && (gh_number_p(snd)))
 	{
-	  cp = get_cp(snd,chn);
-	  if (cp) edit_history_to_file(fd,cp);
+	  cp = get_cp(snd,chn,S_save_edit_history);
+	  edit_history_to_file(fd,cp);
 	}
       else
 	{
@@ -2761,8 +2756,7 @@ static SCM g_undo(SCM ed_n, SCM snd_n, SCM chn_n) /* opt ed_n */
   #define H_undo "("  S_undo " &optional (count 1) snd chn) undoes count edits in snd's channel chn"
   chan_info *cp;
   ERRCP(S_undo,snd_n,chn_n,2);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_undo))));
+  cp = get_cp(snd_n,chn_n,S_undo);
   if (gh_number_p(ed_n))
     undo_EDIT(cp,g_scm2int(ed_n));
   else undo_EDIT(cp,1);
@@ -2775,8 +2769,7 @@ static SCM g_redo(SCM ed_n, SCM snd_n, SCM chn_n) /* opt ed_n */
   #define H_redo "("  S_redo " &optional (count 1) snd chn) redoes count edits in snd's channel chn"
   chan_info *cp;
   ERRCP(S_redo,snd_n,chn_n,2);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_redo))));
+  cp = get_cp(snd_n,chn_n,S_redo);
   if (gh_number_p(ed_n))
     redo_EDIT(cp,g_scm2int(ed_n));
   else redo_EDIT(cp,1);

@@ -441,6 +441,7 @@ static int snd_expand_changed(snd_info *sp, int val)
   if (val < 100)
     sp->expand = (Float)val * .0009697;
   else sp->expand = exp((Float)(val-450)/150.0);
+  if (sp->playing) dac_set_expand(sp->state, sp, sp->expand);
   sfs=prettyf(sp->expand,2);
   fill_number(sfs,expand_number_buffer);
   set_label(w_snd_expand_number(sp),expand_number_buffer);

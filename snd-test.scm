@@ -7,7 +7,7 @@
 
 (define tests 1)
 (set! full-test #t)
-;(set! snd-test 15)
+;(set! snd-test 14)
 ;;; to run a specific test: ./snd -e "(set! snd-test 4) (set! full-test #f)" -l snd-test.scm
 (define include-clm #f)
 (define original-prompt (listener-prompt))
@@ -120,7 +120,7 @@
   `(catch #t 
 	  (lambda ()
 	    ,func)
-	  (lambda (tag val) tag)))
+	  (lambda args (car args))))
 
 ;;; defaults
 (if (or full-test (= snd-test 1))
@@ -180,7 +180,7 @@
 	'fft-size (fft-size) 256 
 	'fft-style (fft-style) 0
 	'fft-window (fft-window) 6 
-	'ffting (without-errors (ffting)) 'no-such-channel
+	'ffting (without-errors (ffting)) 'no-such-sound
 	'filter-dBing (without-errors (filter-dBing)) 'no-such-sound
 	'filter-env (without-errors (filter-env)) 'no-such-sound
 	'filter-env-order (filter-env-order) 40
@@ -189,7 +189,7 @@
 	'fit-data-on-open (fit-data-on-open) #f 
 	'graph-cursor (graph-cursor) 34
 	'graph-style (graph-style) 0 
-	'graphing (without-errors (graphing)) 'no-such-channel
+	'graphing (without-errors (graphing)) 'no-such-sound
 	'graphs-horizontal (graphs-horizontal) #t
 	'initial-x0 (initial-x0) 0.0 
 	'initial-x1 (initial-x1) 0.1 
@@ -259,7 +259,7 @@
 	'vu-font-size (vu-font-size) 1.0 
 	'vu-size (vu-size) 1.0 
 	'wavelet-type (wavelet-type) 0 
-	'waving (without-errors (waving)) 'no-such-channel
+	'waving (without-errors (waving)) 'no-such-sound
 	'wavo (wavo) #f 
 	'wavo-hop (wavo-hop) 3 
 	'wavo-trace (wavo-trace) 64 
@@ -2830,7 +2830,7 @@
 	  (if (not (mark? m1)) (snd-print ";mark?"))
 	  (if (not (= (mark-sample m1) 123)) (snd-print (format #f ";add-mark: ~A? " (mark-sample m1))))
 	  (if (not (eq? (without-errors (mark-sample 12345678)) 'no-such-mark)) (snd-print (format #f ";mark-sample err: ~A?" (mark-sample 12345678))))
-	  (if (not (eq? (without-errors (add-mark 123 123)) 'no-such-channel)) (snd-print (format #f ";add-mark err: ~A?" (add-mark 123 123))))
+	  (if (not (eq? (without-errors (add-mark 123 123)) 'no-such-sound)) (snd-print (format #f ";add-mark err: ~A?" (add-mark 123 123))))
 	  (let ((m2 (without-errors (add-mark 12345 fd 0))))
 	    (if (eq? m2 'no-such-mark) (snd-print (format #f ";add-mark failed?")))
 	    (if (not (= (mark-sample m2) 12345)) (snd-print (format #f ";add-mark 0 0: ~A?" (mark-sample m2))))
@@ -3152,9 +3152,39 @@
 		(snd-print (format #f ";fft not ready yet: ~A ~A" v0 vc)))))
       (close-sound fd)))
 
+(define test-panel
+  (lambda (func name)
+    (define next-case 
+      (lambda (snd)
+	(if (< snd (max-sounds))
+	    (if (sound? snd)
+		(cons (func snd) (next-case (1+ snd)))
+		(next-case (1+ snd)))
+	    '())))
+    (if (not (feql (func #t) (next-case 0)))
+	(snd-print (format #f ";test-panel ~A: ~A ~A?" name (func #t) (next-case 0))))))
+
+(define test-channel
+  (lambda (func name)
+    (define next-chan
+      (lambda (snd chn)
+	(if (< chn (channels snd))
+	    (cons (func snd chn) (next-chan snd (1+ chn)))
+	    '())))
+    (define next-snd-case 
+      (lambda (snd)
+	(if (< snd (max-sounds))
+	    (if (sound? snd)
+		(cons (next-chan snd 0) (next-snd-case (1+ snd)))
+		(next-snd-case (1+ snd)))
+	    '())))
+    (if (not (equal? (func #t #t) (next-snd-case 0)))
+	(snd-print (format #f "test-channel ~A: ~A ~A?" name (func #t #t) (next-snd-case 0))))))
+
 (define duration 
   (lambda (ind)
     (/ (frames ind) (srate ind))))
+
 (define outputs (make-vector 24))
 (define delay-line #f)
 (define delay-time 0.5)
@@ -3302,7 +3332,7 @@
 	    (make-region 1000 2000 (choose-fd))
 	    (cut)
 	    (set-cursor 0 (choose-fd))
-	    (insert-region (cursor) (choose-fd))
+	    (insert-region (cursor) 0 (choose-fd))
 	    (revert-sound (choose-fd))
 	    (key (char->integer #\m) 4 (choose-fd))
 	    (key (char->integer #\v) 4 (choose-fd))
@@ -3327,14 +3357,15 @@
 	    (if (rs 0.5) (begin (key (char->integer #\x) 4) (key (char->integer #\u) 4)))
 	    (revert-sound)
 	    (select-all)
-	    (if (and (region? 0) (selection?))
-		(let ((r1 (region-rms 0))
-		      (r2 (selection-rms))
-		      (r3 (selection-rms-1))
-		      (r4 (selection-rms-2))
-		      (r5 (region-rms-1 0)))
-		  (if (or (fneq r1 r2) (fneq r2 r3) (fneq r3 r4) (fneq r4 r5))
-		      (snd-print (format #f ";rms: ~A ~A ~A ~A ~A?" r1 r2 r3 r4 r5)))))
+	    (without-errors
+	     (if (and (region? 0) (selection?))
+		 (let ((r1 (region-rms 0))
+		       (r2 (selection-rms))
+		       (r3 (selection-rms-1))
+		       (r4 (selection-rms-2))
+		       (r5 (region-rms-1 0)))
+		   (if (or (fneq r1 r2) (fneq r2 r3) (fneq r3 r4) (fneq r4 r5))
+		       (snd-print (format #f ";rms: ~A ~A ~A ~A ~A?" r1 r2 r3 r4 r5))))))
 
 	    (forward-graph (choose-fd))
 	    (backward-graph (choose-fd))
@@ -3353,6 +3384,7 @@
 	    (normalize-view)
 	    (save-control-panel)
 	    (set-amp .5)
+	    (test-panel amp 'amp)
 	    (restore-control-panel)
 	    (report-in-minibuffer "hi")
 	    (append-to-minibuffer "ho")
@@ -3463,10 +3495,12 @@
 	      (close-sound zz))
 	    (let ((s8 (view-sound s8-snd)))
 	      (select-sound s8)
-	      (select-channel 5)
-	      (if (or (not (number? (selected-channel)))
-		      (not (= (selected-channel) 5))) 
-		  (snd-print (format #f ";select-channel: ~A?" (selected-channel))))
+	      (if (= (channels s8) 8)
+		  (begin
+		    (select-channel 5)
+		    (if (or (not (number? (selected-channel)))
+			    (not (= (selected-channel) 5))) 
+			(snd-print (format #f ";select-channel: ~A?" (selected-channel))))))
 	      (select-all)
 	      (cut)
 	      (mix "4.aiff")
@@ -3474,7 +3508,8 @@
 	      (mix "oboe.snd" 60000)
 	      (scale-by .1)
 	      (set-syncing 1)
-	      (select-channel 3)
+	      (if (> (channels s8) 3)
+		  (select-channel 3))
 	      (insert-region 80000)
 	      (revert-sound s8)
 	      (close-sound s8))
@@ -3509,30 +3544,54 @@
 		(if (rs 0.5) (set-use-sinc-interp #t))
 		(set-amp .5) (w)
 		(set-speed 2.0) (w)
+		(test-panel speed 'speed)
 		(call-apply) (w)
 		(play-and-wait)
 		(set-reverbing #t)
 		(set-reverb-scale .2) (w)
+		(test-panel reverb-scale 'reverb-scale)
+		(test-panel reverb-length 'reverb-length)
+		(test-panel reverb-lowpass 'reverb-lowpass)
+		(test-panel reverb-feedback 'reverb-feedback)
 		(call-apply) (w)
 		(play-and-wait)
 		(set-contrasting #t)
 		(set-contrast .5) (w)
+		(test-panel contrast 'contrast)
+		(test-panel contrast-amp 'contrast-amp)
 		(call-apply) (w)
 		(play-and-wait)
 		(set-expanding #t)
 		(set-expand 2.5) (w)
+		(test-panel expand 'expand)
+		(test-panel expand-length 'expand-length)
+		(test-panel expand-hop 'expand-hop)
+		(test-panel expand-ramp 'expand-ramp)
 		(call-apply) (w)
 		(play-and-wait)
 		(set-filtering #t)
 		(set-filter-order 40) (w)
+		(test-panel filter-order 'filter-order)
 		(set-filter-env '(0 0 .1 1 .2 0 1 0)) (w)
 		(filter-env) (w)
 		(call-apply) (w)
 		(play-and-wait)
 		(set-amp 1.5) (w)
+		(test-panel amp 'amp)
 		(call-apply) (w)
 		(play-and-wait)
 		(swap-channels cfd1 0 cfd2 0)
+		(set-amp .75 #t)
+		(test-panel amp 'amp)
+		(if (> (abs (- (amp cfd2) .75)) .05) (snd-print (format #f ";set-amp .75 #t -> ~A?" (amp cfd2))))
+		(set-contrast-amp .75 #t)
+		(if (fneq (contrast-amp cfd2) .75) (snd-print (format #f ";set-contrast-amp .75 #t -> ~A?" (contrast-amp cfd2))))
+		(set-expand-length .025 #t)
+		(if (fneq (expand-length cfd2) .025) (snd-print (format #f ";set-expand-length .025 #t -> ~A?" (expand-length cfd2))))
+		(set-expand-hop .025 #t)
+		(if (fneq (expand-hop cfd2) .025) (snd-print (format #f ";set-expand-hop .025 #t -> ~A?" (expand-hop cfd2))))
+		(set-expand-ramp .025 #t)
+		(if (fneq (expand-ramp cfd2) .025) (snd-print (format #f ";set-expand-ramp .025 #t -> ~A?" (expand-ramp cfd2))))
 		(close-sound cfd2)
 		(close-sound cfd1)
 		(set-use-sinc-interp #f))))
@@ -3596,6 +3655,23 @@
 	  (redo 1)
 	  (reset-hook! name-click-hook)
 	  (set-ffting #t)
+	  (test-channel ffting 'ffting)
+	  (test-channel waving 'waving)
+	  (test-channel graphing 'graphing)
+	  (test-channel frames 'frames)
+	  (test-channel cursor 'cursor)
+	  (test-channel cursor-style 'cursor-style)
+	  (test-channel left-sample 'left-sample)
+	  (test-channel right-sample 'right-sample)
+	  (test-channel squelch-update 'squelch-update)
+	  (test-channel x-zoom-slider 'x-zoom-slider)
+	  (test-channel y-zoom-slider 'y-zoom-slider)
+	  (test-channel x-position-slider 'x-position-slider)
+	  (test-channel y-position-slider 'y-position-slider)
+	  (test-channel edit-position 'edit-position)
+	  (test-channel maxamp 'maxamp)
+	  (test-channel edit-hook 'edit-hook)
+	  (test-channel undo-hook 'undo-hook)
 	  (set-transform-type histogram)
 	  (set-x-bounds .1 .2)
 	  (set-transform-type normal-fft)
@@ -4079,7 +4155,35 @@
 	(let ((left (left-sample id))
 	      (right (right-sample id)))
 	  (if (> (abs (- right left (* 22050 1.2))) 2) (snd-print (format #f ";u1.2xp: ~A:~A" left right))))
-	(close-sound id))))
+	(close-sound id))
+      (let ((id (open-sound (car (match-sound-files-1 (lambda (file) 
+							(and (>= (mus-sound-chans file) 2)
+							     (> (mus-sound-frames file) 1000))))))))
+	(set-syncing 1 id)
+	(select-sound id)
+	(make-region 200 500 id)
+	(select-channel 1)
+	(key (char->integer #\x) 4 id)
+	(key (char->integer #\v) 0 id)
+	(let ((x0 (x-bounds id 0))
+	      (x1 (x-bounds id 1)))
+	  (if (or (fneq (car x0) (car x1)) 
+		  (fneq (cadr x0) (cadr x1)))
+	      (snd-print (format #f "C-X v: ~A ~A?" x0 x1))))
+	(close-sound id))
+      ))
+
+
+;;; these are just the right size to hit an bug in 4.4's amp-env subsampling
+; (with-sound (:channels 4 :output "/zap/sounds/big4.snd" :play nil) 
+;  (loop for i from 0 to 10 do (fm-violin (* i 12) 1 440 .5 :degrees 0)) 
+;  (loop for i from 0 to 10 do (fm-violin (+ 120 (* i 12)) 1 440 .25 :degrees 90)) 
+;  (loop for i from 0 to 10 do (fm-violin (+ 240 (* i 12)) 1 440 .125 :degrees 180)) 
+;  (loop for i from 0 to 10 do (fm-violin (+ 360 (* i 12)) 1 440 .95 :degrees 270)))
+;
+; (with-sound (:channels 2 :output "/zap/sounds/big2.snd" :play nil) 
+;  (loop for i from 0 to 10 do (fm-violin (* i 22) 1 440 .5 :degrees 0)) 
+;  (loop for i from 0 to 10 do (fm-violin (+ 220 (* i 22)) 1 440 .25 :degrees 90)))
 
 
 (if include-clm 

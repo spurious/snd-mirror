@@ -5307,7 +5307,12 @@ static int free_granulate(void *ptr)
 }
 
 static int spd_length(void *ptr) {return(((spd_info *)ptr)->len);}
-static int spd_set_length(void *ptr, int val) {((spd_info *)ptr)->len = val; return(val);}
+static int spd_set_length(void *ptr, int val) 
+{
+  spd_info *gen = ((spd_info *)ptr);
+  if (val < gen->block_len) gen->len = val; /* larger -> segfault */
+  return(gen->len);
+}
 static Float spd_scaler(void *ptr) {return(((spd_info *)ptr)->amp);}
 static Float spd_set_scaler(void *ptr, Float val) {((spd_info *)ptr)->amp = val; return(val);}
 static Float spd_frequency(void *ptr) {return(((Float)((spd_info *)ptr)->output_hop) / (Float)sampling_rate);}
@@ -5323,7 +5328,9 @@ int mus_ramp(mus_any *ptr)
 int mus_set_ramp(mus_any *ptr, int val) 
 {
   spd_info *gen = (spd_info *)ptr; 
-  if ((gen) && ((gen->core)->type == MUS_GRANULATE)) gen->rmp = val;
+  if ((gen) && ((gen->core)->type == MUS_GRANULATE)) 
+    if (val < (gen->len * .5))
+      gen->rmp = val;
   return(val);
 }
 

@@ -666,6 +666,7 @@ static void set_snd_expand_1(snd_info *sp, Float expand, int setadj)
   char *sfs;
   GtkObject *adj;
   sp->expand = expand;
+  if (sp->playing) dac_set_expand(sp->state, sp, sp->expand);
   if (expand < .1)
     scrollval = expand * 1.03;
   else scrollval = .45 + .15 * log(expand);

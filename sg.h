@@ -75,6 +75,7 @@
 #define NO_SUCH_SOUND gh_symbol2scm("no-such-sound")
 #define NO_SUCH_MARK gh_symbol2scm("no-such-mark")
 #define NO_SUCH_MIX gh_symbol2scm("no-such-mix")
+#define NO_SUCH_TRACK gh_symbol2scm("no-such-track")
 #define NO_SUCH_MENU gh_symbol2scm("no-such-menu")
 #define NO_SUCH_FILE gh_symbol2scm("no-such-file")
 #define NO_SUCH_REGION gh_symbol2scm("no-such-region")
@@ -84,5 +85,6 @@
 #define IMPOSSIBLE_BOUNDS gh_symbol2scm("impossible-bounds")
 #define NO_ACTIVE_SELECTION gh_symbol2scm("no-active-selection")
 #define SND_EVAL_ERROR gh_symbol2scm("snd-eval-error")
+#define MUS_ERROR gh_symbol2scm("mus-error")
 
 #endif

@@ -1100,9 +1100,8 @@ static SCM sg_sample2x(SCM samp, SCM snd, SCM chn)
   chan_info *cp;
   ERRN1(samp,Sg_sample2x);
   ERRCP(Sg_sample2x,snd,chn,2);
-  cp = get_cp(snd,chn);
-  if (cp) return(gh_int2scm(grf_x((double)(gh_scm2int(samp))/(double)SND_SRATE(cp->sound),cp->axis)));
-  return(gh_int2scm(-1));
+  cp = get_cp(snd,chn,Sg_sample2x);
+  return(gh_int2scm(grf_x((double)(gh_scm2int(samp))/(double)SND_SRATE(cp->sound),cp->axis)));
 }
 
 static SCM sg_sample2y(SCM samp, SCM snd, SCM chn)
@@ -1110,153 +1109,136 @@ static SCM sg_sample2y(SCM samp, SCM snd, SCM chn)
   chan_info *cp;
   ERRN1(samp,Sg_sample2y);
   ERRCP(Sg_sample2y,snd,chn,2);
-  cp = get_cp(snd,chn);
-  if (cp) return(gh_int2scm(grf_y(sample(gh_scm2int(samp),cp),cp->axis)));
-  return(gh_int2scm(-1));
+  cp = get_cp(snd,chn,Sg_sample2y);
+  return(gh_int2scm(grf_y(sample(gh_scm2int(samp),cp),cp->axis)));
 }
 
 static SCM sg_channel_graph_widget(SCM snd, SCM chn)
 {
   chan_info *cp;
   ERRCP(Sg_channel_graph_widget,snd,chn,1);
-  cp = get_cp(snd,chn);
-  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)channel_graph(cp)));
-  return(SCM_BOOL_F);
+  cp = get_cp(snd,chn,Sg_channel_graph_widget);
+  return(sgtk_wrap_gtkobj((GtkObject *)channel_graph(cp)));
 }
 
 static SCM sg_channel_sx(SCM snd, SCM chn)
 {
   chan_info *cp;
   ERRCP(Sg_channel_sx,snd,chn,1);
-  cp = get_cp(snd,chn);
-  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)channel_sx(cp)));
-  return(SCM_BOOL_F);
+  cp = get_cp(snd,chn,Sg_channel_sx);
+  return(sgtk_wrap_gtkobj((GtkObject *)channel_sx(cp)));
 }
 
 static SCM sg_channel_sy(SCM snd, SCM chn)
 {
   chan_info *cp;
-  ERRCP(Sg_channel_sx,snd,chn,1);
-  cp = get_cp(snd,chn);
-  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)channel_sy(cp)));
-  return(SCM_BOOL_F);
+  ERRCP(Sg_channel_sy,snd,chn,1);
+  cp = get_cp(snd,chn,Sg_channel_sy);
+  return(sgtk_wrap_gtkobj((GtkObject *)channel_sy(cp)));
 }
 
 static SCM sg_channel_zx(SCM snd, SCM chn)
 {
   chan_info *cp;
-  ERRCP(Sg_channel_sx,snd,chn,1);
-  cp = get_cp(snd,chn);
-  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)channel_zx(cp)));
-  return(SCM_BOOL_F);
+  ERRCP(Sg_channel_zx,snd,chn,1);
+  cp = get_cp(snd,chn,Sg_channel_zx);
+  return(sgtk_wrap_gtkobj((GtkObject *)channel_zx(cp)));
 }
 
 static SCM sg_channel_zy(SCM snd, SCM chn)
 {
   chan_info *cp;
-  ERRCP(Sg_channel_sx,snd,chn,1);
-  cp = get_cp(snd,chn);
-  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)channel_zy(cp)));
-  return(SCM_BOOL_F);
+  ERRCP(Sg_channel_zy,snd,chn,1);
+  cp = get_cp(snd,chn,Sg_channel_zy);
+  return(sgtk_wrap_gtkobj((GtkObject *)channel_zy(cp)));
 }
 
 static SCM sg_channel_gsy(SCM snd, SCM chn)
 {
   chan_info *cp;
-  ERRCP(Sg_channel_sx,snd,chn,1);
-  cp = get_cp(snd,chn);
-  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)channel_gsy(cp)));
-  return(SCM_BOOL_F);
+  ERRCP(Sg_channel_gsy,snd,chn,1);
+  cp = get_cp(snd,chn,Sg_channel_gsy);
+  return(sgtk_wrap_gtkobj((GtkObject *)channel_gsy(cp)));
 }
 
 static SCM sg_channel_gzy(SCM snd, SCM chn)
 {
   chan_info *cp;
-  ERRCP(Sg_channel_sx,snd,chn,1);
-  cp = get_cp(snd,chn);
-  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)channel_gzy(cp)));
-  return(SCM_BOOL_F);
+  ERRCP(Sg_channel_gzy,snd,chn,1);
+  cp = get_cp(snd,chn,Sg_channel_gzy);
+  return(sgtk_wrap_gtkobj((GtkObject *)channel_gzy(cp)));
 }
 
 static SCM sg_channel_w(SCM snd, SCM chn)
 {
   chan_info *cp;
-  ERRCP(Sg_channel_sx,snd,chn,1);
-  cp = get_cp(snd,chn);
-  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)channel_w(cp)));
-  return(SCM_BOOL_F);
+  ERRCP(Sg_channel_w,snd,chn,1);
+  cp = get_cp(snd,chn,Sg_channel_w);
+  return(sgtk_wrap_gtkobj((GtkObject *)channel_w(cp)));
 }
 
 static SCM sg_channel_f(SCM snd, SCM chn)
 {
   chan_info *cp;
-  ERRCP(Sg_channel_sx,snd,chn,1);
-  cp = get_cp(snd,chn);
-  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)channel_f(cp)));
-  return(SCM_BOOL_F);
+  ERRCP(Sg_channel_f,snd,chn,1);
+  cp = get_cp(snd,chn,Sg_channel_f);
+  return(sgtk_wrap_gtkobj((GtkObject *)channel_f(cp)));
 }
 
 static SCM sg_channel_main_pane(SCM snd, SCM chn)
 {
   chan_info *cp;
-  ERRCP(Sg_channel_sx,snd,chn,1);
-  cp = get_cp(snd,chn);
-  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)channel_main_pane(cp)));
-  return(SCM_BOOL_F);
+  ERRCP(Sg_channel_main_pane,snd,chn,1);
+  cp = get_cp(snd,chn,Sg_channel_main_pane);
+  return(sgtk_wrap_gtkobj((GtkObject *)channel_main_pane(cp)));
 }
 
 static SCM sg_gsy_adj(SCM snd, SCM chn)
 {
   chan_info *cp;
-  ERRCP(Sg_channel_sx,snd,chn,1);
-  cp = get_cp(snd,chn);
-  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)gsy_adj(cp)));
-  return(SCM_BOOL_F);
+  ERRCP(Sg_gsy_adj,snd,chn,1);
+  cp = get_cp(snd,chn,Sg_gsy_adj);
+  return(sgtk_wrap_gtkobj((GtkObject *)gsy_adj(cp)));
 }
 
 static SCM sg_gzy_adj(SCM snd, SCM chn)
 {
   chan_info *cp;
-  ERRCP(Sg_channel_sx,snd,chn,1);
-  cp = get_cp(snd,chn);
-  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)gzy_adj(cp)));
-  return(SCM_BOOL_F);
+  ERRCP(Sg_gzy_adj,snd,chn,1);
+  cp = get_cp(snd,chn,Sg_gzy_adj);
+  return(sgtk_wrap_gtkobj((GtkObject *)gzy_adj(cp)));
 }
 
 static SCM sg_sy_adj(SCM snd, SCM chn)
 {
   chan_info *cp;
-  ERRCP(Sg_channel_sx,snd,chn,1);
-  cp = get_cp(snd,chn);
-  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)sy_adj(cp)));
-  return(SCM_BOOL_F);
+  ERRCP(Sg_sy_adj,snd,chn,1);
+  cp = get_cp(snd,chn,Sg_sy_adj);
+  return(sgtk_wrap_gtkobj((GtkObject *)sy_adj(cp)));
 }
 
 static SCM sg_sx_adj(SCM snd, SCM chn)
 {
   chan_info *cp;
-  ERRCP(Sg_channel_sx,snd,chn,1);
-  cp = get_cp(snd,chn);
-  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)sx_adj(cp)));
-  return(SCM_BOOL_F);
+  ERRCP(Sg_sx_adj,snd,chn,1);
+  cp = get_cp(snd,chn,Sg_sx_adj);
+  return(sgtk_wrap_gtkobj((GtkObject *)sx_adj(cp)));
 }
 
 static SCM sg_zy_adj(SCM snd, SCM chn)
 {
   chan_info *cp;
-  ERRCP(Sg_channel_sx,snd,chn,1);
-  cp = get_cp(snd,chn);
-  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)zy_adj(cp)));
-  return(SCM_BOOL_F);
+  ERRCP(Sg_zy_adj,snd,chn,1);
+  cp = get_cp(snd,chn,Sg_zy_adj);
+  return(sgtk_wrap_gtkobj((GtkObject *)zy_adj(cp)));
 }
 
 static SCM sg_zx_adj(SCM snd, SCM chn)
 {
   chan_info *cp;
-  ERRCP(Sg_channel_sx,snd,chn,1);
-  cp = get_cp(snd,chn);
-  if (cp) return(sgtk_wrap_gtkobj((GtkObject *)zx_adj(cp)));
-  return(SCM_BOOL_F);
+  ERRCP(Sg_zx_adj,snd,chn,1);
+  cp = get_cp(snd,chn,Sg_zx_adj);
+  return(sgtk_wrap_gtkobj((GtkObject *)zx_adj(cp)));
 }
 
 void init_chn_widgets(SCM local_doc)

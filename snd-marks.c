@@ -1551,7 +1551,7 @@ static SCM iread_mark(SCM n, int fld, int pos_n, char *caller)
   mark *m;
   pos = g_scm2intdef(pos_n,-1);
   m = find_mark_id(ncp,g_scm2intdef(n,0),pos);
-  if (m == NULL) return(scm_throw(NO_SUCH_MARK,SCM_LIST1(gh_str02scm(caller))));
+  if (m == NULL) return(scm_throw(NO_SUCH_MARK,SCM_LIST2(gh_str02scm(caller),n)));
   switch (fld)
     {
     case MARK_SAMPLE: RTNINT(m->samp); break;
@@ -1568,7 +1568,7 @@ static SCM iwrite_mark(SCM mark_n, SCM val, int fld, char *caller)
   mark *m;
   char *str;
   m = find_mark_id(cp,g_scm2intdef(mark_n,0),-1);
-  if (m == NULL) return(scm_throw(NO_SUCH_MARK,SCM_LIST1(gh_str02scm(caller))));
+  if (m == NULL) return(scm_throw(NO_SUCH_MARK,SCM_LIST2(gh_str02scm(caller),mark_n)));
   switch (fld)
     {
     case MARK_SAMPLE: 
@@ -1668,9 +1668,8 @@ static SCM g_find_mark(SCM samp_n, SCM snd_n, SCM chn_n)
   chan_info *cp = NULL;
   SCM_ASSERT((gh_number_p(samp_n) || gh_string_p(samp_n) || (SCM_UNBNDP(samp_n)) || (SCM_FALSEP(samp_n))),samp_n,SCM_ARG1,S_find_mark);
   ERRCP(S_find_mark,snd_n,chn_n,2); 
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_find_mark))));
-  if (cp->marks == NULL) return(scm_throw(NO_SUCH_MARK,SCM_LIST1(gh_str02scm(S_find_mark))));
+  cp = get_cp(snd_n,chn_n,S_find_mark);
+  if (cp->marks == NULL) return(scm_throw(NO_SUCH_MARK,SCM_LIST2(gh_str02scm(S_find_mark),samp_n)));
   mps = cp->marks[cp->edit_ctr];
   if (mps)
     {
@@ -1693,7 +1692,7 @@ static SCM g_find_mark(SCM samp_n, SCM snd_n, SCM chn_n)
 	      RTNINT(mark_id(mps[i]));
 	}
     }
-  return(scm_throw(NO_SUCH_MARK,SCM_LIST1(gh_str02scm(S_find_mark))));
+  return(scm_throw(NO_SUCH_MARK,SCM_LIST2(gh_str02scm(S_find_mark),samp_n)));
 }
 
 static SCM g_add_mark(SCM samp_n, SCM snd_n, SCM chn_n) 
@@ -1703,8 +1702,7 @@ static SCM g_add_mark(SCM samp_n, SCM snd_n, SCM chn_n)
   chan_info *cp;
   ERRB1(samp_n,S_add_mark); 
   ERRCP(S_add_mark,snd_n,chn_n,2);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_add_mark))));
+  cp = get_cp(snd_n,chn_n,S_add_mark);
   m = add_mark(g_scm2intdef(samp_n,0),NULL,cp);
   if (m)
     {
@@ -1723,7 +1721,7 @@ static SCM g_delete_mark(SCM id_n)
   int id;
   ERRB1(id_n,S_delete_mark);
   m = find_mark_id(cp,id = g_scm2intdef(id_n,0),-1);
-  if (m == NULL) return(scm_throw(NO_SUCH_MARK,SCM_LIST1(gh_str02scm(S_delete_mark))));
+  if (m == NULL) return(scm_throw(NO_SUCH_MARK,SCM_LIST2(gh_str02scm(S_delete_mark),id_n)));
   delete_mark_id(id,cp[0]);
   update_graph(cp[0],NULL);
   return(id_n);
@@ -1734,8 +1732,8 @@ static SCM g_delete_marks(SCM snd_n, SCM chn_n)
   #define H_delete_marks "(" S_delete_marks " &optional snd chn) delete all marks in snd's channel chn"
   chan_info *cp;
   ERRCP(S_delete_marks,snd_n,chn_n,1);
-  cp = get_cp(snd_n,chn_n);
-  if (cp) delete_marks(cp); else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_delete_marks))));
+  cp = get_cp(snd_n,chn_n,S_delete_marks);
+  delete_marks(cp);
   return(SCM_BOOL_F);
 }
 
@@ -1773,8 +1771,7 @@ static SCM g_marks(SCM snd_n, SCM chn_n, SCM pos_n)
       {
 	if (SCM_INUMP(chn_n))
 	  {
-	    cp = get_cp(snd_n,chn_n);
-	    if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_marks))));
+	    cp = get_cp(snd_n,chn_n,S_marks);
 	    if (SCM_INUMP(pos_n)) pos = SCM_INUM(pos_n); else pos = cp->edit_ctr;
 	    ids = channel_marks(cp,pos);
 	    if (ids == NULL) return(SCM_EOL);
@@ -1819,9 +1816,9 @@ static SCM g_forward_mark(SCM count, SCM snd, SCM chn)
   chan_info *cp;
   ERRB1(count,S_forward_mark);
   ERRCP(S_forward_mark,snd,chn,2);
-  cp = get_cp(snd,chn);
+  cp = get_cp(snd,chn,S_forward_mark);
   val = g_scm2intdef(count,1); 
-  if (cp) handle_cursor(cp,goto_mark(cp,val)); else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_forward_mark))));
+  handle_cursor(cp,goto_mark(cp,val));
   RTNINT(val);
 }
 
@@ -1832,9 +1829,9 @@ static SCM g_backward_mark(SCM count, SCM snd, SCM chn)
   chan_info *cp;
   ERRB1(count,S_backward_mark);
   ERRCP(S_backward_mark,snd,chn,2);
-  cp = get_cp(snd,chn);
+  cp = get_cp(snd,chn,S_backward_mark);
   val = -(g_scm2intdef(count,1)); 
-  if (cp) handle_cursor(cp,goto_mark(cp,val)); else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_backward_mark))));
+  handle_cursor(cp,goto_mark(cp,val));
   RTNINT(val);
 }
 

@@ -74,6 +74,7 @@ static int force_fft_clear(chan_info *cp, void *ptr)
   if ((cp->cgx) && ((cp->cgx)->fft_in_progress))
     {
       XtRemoveWorkProc((cp->cgx)->fft_in_progress);
+      finish_progress_report(cp->state,cp->sound,NOT_FROM_ENVED);
       (cp->cgx)->fft_in_progress = 0;
     }
   if (cp->fft) cp->fft = free_fft_info(cp->fft);

@@ -1285,7 +1285,7 @@ static SCM get_mix_widget(SCM id, int which_widget, char *caller)
 	}
       return(scm_throw(NO_SUCH_WIDGET,SCM_LIST1(gh_str02scm(caller))));
     }
-  return(scm_throw(NO_SUCH_MIX,SCM_LIST1(gh_str02scm(caller))));
+  return(scm_throw(NO_SUCH_MIX,SCM_LIST2(gh_str02scm(caller),id)));
 }
 
 #if 0

@@ -136,6 +136,7 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 #endif
   char *name_buf = NULL;
   port = scm_mkstrport(SCM_INUM0, scm_make_string(SCM_MAKINUM(MAX_ERROR_STRING_LENGTH), SCM_UNDEFINED),SCM_OPN | SCM_WRTNG,"snd-scm-error-handler");
+
   if ((gh_list_p(throw_args)) && (gh_length(throw_args) > 0))
     {
       scm_display(gh_car(throw_args), port);
@@ -143,13 +144,43 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
       if (gh_length(throw_args) > 1)
 	{
 	  stmp = gh_cadr(throw_args);
-	  if (gh_string_p(stmp)) 
-	    scm_display_error_message(stmp, gh_caddr(throw_args), port);
-	  else scm_display(tag, port);
+	  if (SCM_EQ_P(tag,NO_SUCH_FILE))
+	    {
+	      scm_display(tag,port);
+	      scm_puts(" \"",port);
+	      scm_display(stmp,port);
+	      scm_puts("\"",port);
+	    }
+	  else
+	    {
+	      if ((SCM_EQ_P(tag,NO_SUCH_SOUND)) || (SCM_EQ_P(tag,NO_SUCH_MIX)) || (SCM_EQ_P(tag,NO_SUCH_MARK)) ||
+		  (SCM_EQ_P(tag,NO_SUCH_MENU)) || (SCM_EQ_P(tag,NO_SUCH_REGION)))
+		{
+		  scm_display(tag,port);
+		  scm_puts(" ",port);
+		  scm_display(stmp,port);
+		}
+	      else
+		{
+		  if ((SCM_EQ_P(tag,NO_SUCH_CHANNEL)) || (SCM_EQ_P(tag,NO_SUCH_EDIT)) || (SCM_EQ_P(tag,MUS_ERROR)) ||
+		      (SCM_EQ_P(tag,IMPOSSIBLE_BOUNDS)) || (SCM_EQ_P(tag,NO_SUCH_SAMPLE)))
+		    {
+		      scm_display(tag,port);
+		      scm_puts(" ",port);
+		      scm_display(gh_cdr(throw_args),port);
+		    }
+		  else
+		    {
+		      if (gh_string_p(stmp)) 
+			scm_display_error_message(stmp, gh_caddr(throw_args), port);
+		      else scm_display(tag, port);
 #if (!HAVE_GUILE_1_3)
-	  stack = scm_fluid_ref(SCM_CDR(scm_the_last_stack_fluid));
-	  if (SCM_NFALSEP(stack)) scm_display_backtrace(stack,port,SCM_UNDEFINED,SCM_UNDEFINED);
+		      stack = scm_fluid_ref(SCM_CDR(scm_the_last_stack_fluid));
+		      if (SCM_NFALSEP(stack)) scm_display_backtrace(stack,port,SCM_UNDEFINED,SCM_UNDEFINED);
 #endif
+		    }
+		}
+	    }
 	}
       else scm_display(tag,port);
     }
@@ -2126,25 +2157,23 @@ snd_info *get_sp(SCM scm_snd_n)
   return(any_selected_sound(state));
 }
 
-chan_info *get_cp(SCM scm_snd_n, SCM scm_chn_n)
+chan_info *get_cp(SCM scm_snd_n, SCM scm_chn_n, char *caller)
 {
   snd_info *sp;
   int chn_n;
   sp = get_sp(scm_snd_n);
-  if (sp) 
-    {
-      if (gh_number_p(scm_chn_n))
-	chn_n = g_scm2int(scm_chn_n);
-      else
-	if (sp->selected_channel != NO_SELECTION) 
-	  chn_n = sp->selected_channel;
-	else chn_n = 0;
-      if ((chn_n >= 0) && (chn_n < sp->nchans)) 
-	return(sp->chans[chn_n]);
-    }
+  if (sp == NULL) {scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),scm_snd_n)); return(NULL);}
+  if (gh_number_p(scm_chn_n))
+    chn_n = g_scm2int(scm_chn_n);
+  else
+    if (sp->selected_channel != NO_SELECTION) 
+      chn_n = sp->selected_channel;
+    else chn_n = 0;
+  if ((chn_n >= 0) && (chn_n < sp->nchans)) 
+    return(sp->chans[chn_n]);
+  scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(gh_str02scm(caller),scm_snd_n,scm_chn_n));
   return(NULL);
 }
-
 
 static file_info **temp_sound_headers = NULL;
 static int *temp_sound_fds = NULL;
@@ -2297,8 +2326,7 @@ static SCM samples2vct(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM v, SCM p
   ERRB1(samp_0,S_samples_vct);
   ERRB2(samps,S_samples_vct);
   ERRCP(S_samples_vct,snd_n,chn_n,3);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_samples_vct))));
+  cp = get_cp(snd_n,chn_n,S_samples_vct);
   edpos = g_scm2intdef(pos,cp->edit_ctr);
   beg = g_scm2intdef(samp_0,0);
   len = g_scm2intdef(samps,cp->samples[edpos] - beg);
@@ -2334,11 +2362,10 @@ static SCM samples2sound_data(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM s
   ERRB1(samp_0,S_samples2sound_data);
   ERRB2(samps,S_samples2sound_data);
   ERRCP(S_samples2sound_data,snd_n,chn_n,3);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_samples2sound_data))));
+  cp = get_cp(snd_n,chn_n,S_samples2sound_data);
   edpos = g_scm2intdef(pos,cp->edit_ctr);
   if (edpos >= cp->edit_size) 
-    return(scm_throw(NO_SUCH_EDIT,SCM_LIST1(gh_str02scm(S_samples2sound_data))));
+    return(scm_throw(NO_SUCH_EDIT,SCM_LIST4(gh_str02scm(S_samples2sound_data),snd_n,chn_n,pos)));
   beg = g_scm2intdef(samp_0,0);
   len = g_scm2intdef(samps,cp->samples[edpos] - beg);
   if (len > 0)
@@ -2378,8 +2405,7 @@ static SCM transform_samples2vct(SCM snd_n, SCM chn_n, SCM v)
   Float *fvals;
   vct *v1 = get_vct(v);
   ERRCP(S_transform_samples_vct,snd_n,chn_n,1);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_transform_samples_vct))));
+  cp = get_cp(snd_n,chn_n,S_transform_samples_vct);
   if (cp->ffting)
     {
       while (chan_fft_in_progress(cp)) {work_wait(cp->state);}
@@ -2466,8 +2492,7 @@ static SCM mix_vct(SCM obj, SCM beg, SCM in_chans, SCM snd, SCM chn, SCM with_co
   if (v)
     {
       len = v->length;
-      cp[0] = get_cp(snd,chn);
-      if (cp[0] == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_mix_vct))));
+      cp[0] = get_cp(snd,chn,S_mix_vct);
       bg = g_scm2intdef(beg,0);
       chans = g_scm2intdef(in_chans,1);
       if (chans <= 0) 
@@ -2548,10 +2573,8 @@ static SCM g_sample(SCM samp_n, SCM snd_n, SCM chn_n)
   chan_info *cp;
   ERRN1(samp_n,S_sample);
   ERRCP(S_sample,snd_n,chn_n,2);
-  cp = get_cp(snd_n,chn_n);
-  if (cp) 
-    RTNFLT(sample(g_scm2int(samp_n),cp));
-  else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_sample))));
+  cp = get_cp(snd_n,chn_n,S_sample);
+  RTNFLT(sample(g_scm2int(samp_n),cp));
 }
 
 static SCM g_set_sample(SCM samp_n, SCM val, SCM snd_n, SCM chn_n)
@@ -2563,8 +2586,7 @@ static SCM g_set_sample(SCM samp_n, SCM val, SCM snd_n, SCM chn_n)
   ERRN1(samp_n,S_set_sample);
   ERRN2(val,S_set_sample);
   ERRCP(S_set_sample,snd_n,chn_n,3);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_set_sample))));
+  cp = get_cp(snd_n,chn_n,S_set_sample);
   ival[0] = MUS_FLOAT_TO_SAMPLE(gh_scm2double(val));
   change_samples(g_scm2int(samp_n),1,ival,cp,LOCK_MIXES,S_set_sample);
   update_graph(cp,NULL);
@@ -2586,8 +2608,7 @@ static SCM g_samples(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM pos)
   ERRB1(samp_0,S_samples);
   ERRB2(samps,S_samples);
   ERRCP(S_samples,snd_n,chn_n,3);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_samples))));
+  cp = get_cp(snd_n,chn_n,S_samples);
   edpos = g_scm2intdef(pos,cp->edit_ctr);
   beg = g_scm2intdef(samp_0,0);
   len = g_scm2intdef(samps,cp->samples[edpos] - beg);
@@ -2618,8 +2639,7 @@ static SCM g_set_samples(SCM samp_0, SCM samps, SCM vect, SCM snd_n, SCM chn_n, 
   ERRN1(samp_0,S_set_samples);
   ERRN2(samps,S_set_samples);
   ERRCP(S_set_samples,snd_n,chn_n,4);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_set_samples))));
+  cp = get_cp(snd_n,chn_n,S_set_samples);
   beg = g_scm2int(samp_0);
   len = g_scm2int(samps);
   override = SCM_TRUE_P(truncate);
@@ -2653,8 +2673,7 @@ static SCM g_change_samples_with_origin(SCM samp_0, SCM samps, SCM origin, SCM v
   ERRS3(origin,S_change_samples_with_origin);
   SCM_ASSERT((gh_vector_p(vect)) || (gh_string_p(vect)),vect,SCM_ARG4,S_change_samples_with_origin);
   ERRCP(S_change_samples_with_origin,snd_n,chn_n,5);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_change_samples_with_origin))));
+  cp = get_cp(snd_n,chn_n,S_change_samples_with_origin);
   beg = g_scm2int(samp_0);
   len = g_scm2int(samps);
   str = gh_scm2newstr(origin,NULL);
@@ -2688,8 +2707,7 @@ static SCM g_delete_sample(SCM samp_n, SCM snd_n, SCM chn_n)
   int samp;
   ERRN1(samp_n,S_delete_sample);
   ERRCP(S_delete_sample,snd_n,chn_n,2);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_delete_sample))));
+  cp = get_cp(snd_n,chn_n,S_delete_sample);
   samp = g_scm2int(samp_n);
   if ((samp >= 0) && (samp <= current_ed_samples(cp)))
     {
@@ -2697,7 +2715,7 @@ static SCM g_delete_sample(SCM samp_n, SCM snd_n, SCM chn_n)
       update_graph(cp,NULL);
       return(SCM_BOOL_T);
     }
-  return(scm_throw(NO_SUCH_SAMPLE,SCM_LIST1(gh_str02scm(S_delete_sample))));
+  return(scm_throw(NO_SUCH_SAMPLE,SCM_LIST4(gh_str02scm(S_delete_sample),samp_n,snd_n,chn_n)));
 }
 
 static SCM g_delete_samples_1(SCM samp_n, SCM samps, SCM snd_n, SCM chn_n, char *origin)
@@ -2706,8 +2724,7 @@ static SCM g_delete_samples_1(SCM samp_n, SCM samps, SCM snd_n, SCM chn_n, char 
   ERRN1(samp_n,origin);
   ERRN2(samps,origin);
   ERRCP(origin,snd_n,chn_n,3);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(origin))));
+  cp = get_cp(snd_n,chn_n,origin);
   delete_samples(g_scm2int(samp_n),g_scm2int(samps),cp,origin);
   update_graph(cp,NULL);
   return(SCM_BOOL_T);
@@ -2741,10 +2758,9 @@ static SCM g_insert_sample(SCM samp_n, SCM val, SCM snd_n, SCM chn_n)
   ERRN1(samp_n,S_insert_sample);
   ERRN2(val,S_insert_sample);
   ERRCP(S_insert_sample,snd_n,chn_n,3);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_insert_sample))));
+  cp = get_cp(snd_n,chn_n,S_insert_sample);
   beg = g_scm2int(samp_n);
-  if (beg < 0) return(scm_throw(NO_SUCH_SAMPLE,SCM_LIST1(gh_str02scm(S_insert_sample))));
+  if (beg < 0) return(scm_throw(NO_SUCH_SAMPLE,SCM_LIST4(gh_str02scm(S_insert_sample),samp_n,snd_n,chn_n)));
   ival[0] = MUS_FLOAT_TO_SAMPLE(gh_scm2double(val));
   insert_samples(g_scm2int(samp_n),1,ival,cp,S_insert_sample);
   update_graph(cp,NULL);
@@ -2763,8 +2779,7 @@ static SCM g_insert_samples(SCM samp, SCM samps, SCM vect, SCM snd_n, SCM chn_n)
   ERRN1(samp,S_insert_samples);
   ERRN2(samps,S_insert_samples);
   ERRCP(S_insert_samples,snd_n,chn_n,4);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_insert_samples))));
+  cp = get_cp(snd_n,chn_n,S_insert_samples);
   beg = g_scm2int(samp);
   len = g_scm2int(samps);
   if (gh_string_p(vect))
@@ -2794,8 +2809,7 @@ static SCM g_insert_samples_with_origin(SCM samp, SCM samps, SCM origin, SCM vec
   ERRS3(origin,S_insert_samples_with_origin);
   SCM_ASSERT((gh_vector_p(vect)) || (gh_string_p(vect)),vect,SCM_ARG4,S_insert_samples_with_origin);
   ERRCP(S_insert_samples_with_origin,snd_n,chn_n,5);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_insert_samples_with_origin))));
+  cp = get_cp(snd_n,chn_n,S_insert_samples_with_origin);
   beg = g_scm2int(samp);
   len = g_scm2int(samps);
   str = gh_scm2newstr(origin,NULL);
@@ -2832,8 +2846,7 @@ static SCM g_insert_sound(SCM file, SCM file_chn, SCM snd_n, SCM chn_n)
   ERRS1(file,S_insert_sound);
   ERRB2(file_chn,S_insert_sound);
   ERRCP(S_insert_sound,snd_n,chn_n,3);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL)return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_insert_sound))));
+  cp = get_cp(snd_n,chn_n,S_insert_sound);
   filename = full_filename(file);
   nc = mus_sound_chans(filename);
   if (nc != -1)
@@ -2852,7 +2865,7 @@ static SCM g_insert_sound(SCM file, SCM file_chn, SCM snd_n, SCM chn_n)
   else 
     {
       if (filename) FREE(filename);
-      return(scm_throw(NO_SUCH_FILE,SCM_LIST1(gh_str02scm(S_insert_sound))));
+      return(scm_throw(NO_SUCH_FILE,SCM_LIST2(gh_str02scm(S_insert_sound),file)));
     }
   if (filename) FREE(filename);
   return(SCM_BOOL_F);
@@ -3014,8 +3027,8 @@ static SCM g_update_graph(SCM snd, SCM chn)
   #define H_update_graph "(" S_update_graph " &optional snd chn) redraws snd channel chn's graphs"
   chan_info *cp;
   ERRCP(S_update_graph,snd,chn,1); 
-  cp = get_cp(snd,chn);
-  if (cp) update_graph(cp,NULL); else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_update_graph))));
+  cp = get_cp(snd,chn,S_update_graph);
+  update_graph(cp,NULL);
   return(SCM_BOOL_F);
 }
 
@@ -3024,8 +3037,8 @@ static SCM g_update_fft(SCM snd, SCM chn)
   #define H_update_fft "(" S_update_fft " &optional snd chn) recalculates snd channel chn's fft"
   chan_info *cp;
   ERRCP(S_update_fft,snd,chn,1); 
-  cp = get_cp(snd,chn);
-  if (cp) calculate_fft(cp,NULL); else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_update_fft))));
+  cp = get_cp(snd,chn,S_update_fft);
+  calculate_fft(cp,NULL);
   return(SCM_BOOL_F);
 }
 
@@ -3036,8 +3049,7 @@ static SCM g_transform_size(SCM snd, SCM chn)
 
   chan_info *cp;
   sono_info *si;
-  cp = get_cp(snd,chn);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_transform_size))));
+  cp = get_cp(snd,chn,S_transform_size);
   if (!(cp->ffting)) return(SCM_INUM0);
   if (fft_style(state) == NORMAL_FFT) return(gh_int2scm(fft_size(state)));
   si = (sono_info *)(cp->sonogram_data);
@@ -3057,8 +3069,7 @@ static SCM g_transform_sample(SCM bin, SCM slice, SCM snd_n, SCM chn_n)
   ERRB1(bin,S_transform_sample);
   ERRB2(slice,S_transform_sample);
   ERRCP(S_transform_sample,snd_n,chn_n,3);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_transform_sample))));
+  cp = get_cp(snd_n,chn_n,S_transform_sample);
   if (cp->ffting)
     {
       while (chan_fft_in_progress(cp)) {work_wait(cp->state);}
@@ -3074,7 +3085,7 @@ static SCM g_transform_sample(SCM bin, SCM slice, SCM snd_n, SCM chn_n)
 	      si = (sono_info *)(cp->sonogram_data);
 	      if ((si) && (fbin < si->target_bins) && (fslice < si->active_slices))
 		RTNFLT(si->data[fslice][fbin]);
-	      else  return(scm_throw(NO_SUCH_SAMPLE,SCM_LIST1(gh_str02scm(S_transform_sample))));
+	      else  return(scm_throw(NO_SUCH_SAMPLE,SCM_LIST5(gh_str02scm(S_transform_sample),bin,slice,snd_n,chn_n)));
 	    }
 	}
     }
@@ -3090,8 +3101,7 @@ static SCM g_transform_samples(SCM snd_n, SCM chn_n)
   int bins,slices,i,j,len;
   SCM new_vect,tmp_vect;
   ERRCP(S_transform_samples,snd_n,chn_n,1);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL)return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_transform_samples))));
+  cp = get_cp(snd_n,chn_n,S_transform_samples);
   if (cp->ffting)
     {
       while (chan_fft_in_progress(cp)) {work_wait(cp->state);}
@@ -3164,17 +3174,13 @@ static SCM g_scale_to(SCM scalers, SCM snd_n, SCM chn_n)
    norms can be a float or a vector of floats"
 
   /* chn_n irrelevant if syncing */
-  snd_info *sp;
   chan_info *cp;
   int len[1];
   Float *scls;
   ERRCP(S_scale_to,snd_n,chn_n,2);
-  sp = get_sp(snd_n);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_scale_to))));
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL)return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_scale_to))));
+  cp = get_cp(snd_n,chn_n,S_scale_to);
   scls = load_Floats(scalers,len);
-  scale_to(state,sp,cp,scls,len[0],FALSE); /* last arg for selection */
+  scale_to(state,cp->sound,cp,scls,len[0],FALSE); /* last arg for selection */
   FREE(scls);
   return(scalers);
 }
@@ -3185,17 +3191,13 @@ static SCM g_scale_by(SCM scalers, SCM snd_n, SCM chn_n)
    scalers can be a float or a vector of floats"
 
   /* chn_n irrelevant if syncing */
-  snd_info *sp;
   chan_info *cp;
   int len[1];
   Float *scls;
   ERRCP(S_scale_by,snd_n,chn_n,2);
-  sp = get_sp(snd_n);
-  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST1(gh_str02scm(S_scale_by))));
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL)return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_scale_by))));
+  cp = get_cp(snd_n,chn_n,S_scale_by);
   scls = load_Floats(scalers,len);
-  scale_by(state,sp,cp,scls,len[0],FALSE);
+  scale_by(state,cp->sound,cp,scls,len[0],FALSE);
   FREE(scls);
   return(scalers);
 }
@@ -3320,8 +3322,7 @@ static SCM g_env_selection(SCM edata, SCM base, SCM snd_n, SCM chn_n)
   env *e;
   ERRCP(S_env_selection,snd_n,chn_n,3);
   if (selection_is_current() == 0) return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_env_selection))));
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL)return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_env_selection))));
+  cp = get_cp(snd_n,chn_n,S_env_selection);
   e = get_env(edata,base,S_env_selection);
   if (e)
     {
@@ -3344,8 +3345,7 @@ static SCM g_env_sound(SCM edata, SCM samp_n, SCM samps, SCM base, SCM snd_n, SC
   ERRB2(samp_n,S_env_sound);
   ERRB3(samps,S_env_sound);
   ERRCP(S_env_sound,snd_n,chn_n,5);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL)return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_env_sound))));
+  cp = get_cp(snd_n,chn_n,S_env_sound);
   e = get_env(edata,base,S_env_sound);
   if (e)
     {
@@ -3473,8 +3473,7 @@ static SCM g_convolve_with(SCM file, SCM new_amp, SCM snd_n, SCM chn_n)
   char *fname = NULL;
   ERRS1(file,S_convolve_with);
   ERRCP(S_convolve_with,snd_n,chn_n,3);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_convolve_with))));
+  cp = get_cp(snd_n,chn_n,S_convolve_with);
   if (gh_number_p(new_amp)) 
     amp = gh_scm2double(new_amp);
   else
@@ -3486,7 +3485,7 @@ static SCM g_convolve_with(SCM file, SCM new_amp, SCM snd_n, SCM chn_n)
   fname = full_filename(file);
   if (snd_probe_file(fname) == FILE_EXISTS)
     convolve_with(fname,amp,cp);
-  else return(scm_throw(NO_SUCH_FILE,SCM_LIST1(gh_str02scm(S_convolve_with))));
+  else return(scm_throw(NO_SUCH_FILE,SCM_LIST2(gh_str02scm(S_convolve_with),file)));
   if (fname) FREE(fname);
   return(file);
 }
@@ -3561,7 +3560,7 @@ static SCM g_convolve_selection_with(SCM file, SCM new_amp)
   fname = full_filename(file);
   if (snd_probe_file(fname) == FILE_EXISTS)
     convolve_with(fname,amp,NULL);
-  else return(scm_throw(NO_SUCH_FILE,SCM_LIST1(gh_str02scm(S_convolve_selection_with))));
+  else return(scm_throw(NO_SUCH_FILE,SCM_LIST2(gh_str02scm(S_convolve_selection_with),file)));
   if (fname) FREE(fname);
   return(file);
 }
@@ -3583,8 +3582,7 @@ static SCM g_src_sound(SCM ratio_or_env, SCM base, SCM snd_n, SCM chn_n)
 
   chan_info *cp;
   ERRCP(S_src_sound,snd_n,chn_n,3);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_src_sound))));
+  cp = get_cp(snd_n,chn_n,S_src_sound);
   if (gh_number_p(ratio_or_env))
     src_env_or_num(state,cp,NULL,gh_scm2double(ratio_or_env),TRUE,FALSE,S_src_sound,FALSE);
   else src_env_or_num(state,cp,get_env(ratio_or_env,base,S_src_sound),1.0,FALSE,FALSE,S_src_sound,FALSE);
@@ -3598,8 +3596,7 @@ static SCM g_src_selection(SCM ratio_or_env, SCM base)
 
   chan_info *cp;
   if (selection_is_current() == 0) return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_src_selection))));
-  cp = get_cp(SCM_BOOL_F,SCM_BOOL_F);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_src_selection))));
+  cp = get_cp(SCM_BOOL_F,SCM_BOOL_F,S_src_selection);
   if (gh_number_p(ratio_or_env))
     src_env_or_num(state,cp,NULL,gh_scm2double(ratio_or_env),TRUE,FALSE,S_src_selection,TRUE);
   else src_env_or_num(state,cp,get_env(ratio_or_env,base,S_src_selection),1.0,FALSE,FALSE,S_src_selection,TRUE);
@@ -3617,8 +3614,7 @@ static SCM g_filter_sound(SCM e, SCM order, SCM snd_n, SCM chn_n)
   SCM_ASSERT((gh_vector_p(e)) || (gh_list_p(e)) || (vct_p(e)),e,SCM_ARG1,S_filter_sound);
   ERRN2(order,S_filter_sound);
   ERRCP(S_filter_sound,snd_n,chn_n,3);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_filter_sound))));
+  cp = get_cp(snd_n,chn_n,S_filter_sound);
   len = g_scm2int(order);
   if (len <= 0) scm_out_of_range_pos(S_filter_sound,order,SCM_MAKINUM(2));
   if (vct_p(e)) /* the filter coefficients direct */
@@ -3640,8 +3636,7 @@ static SCM g_filter_selection(SCM e, SCM order)
   SCM_ASSERT((gh_vector_p(e)) || (gh_list_p(e)) || (vct_p(e)),e,SCM_ARG1,S_filter_selection);
   ERRN2(order,S_filter_selection);
   if (selection_is_current() == 0) return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_filter_selection))));
-  cp = get_cp(SCM_BOOL_F,SCM_BOOL_F);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_filter_selection))));
+  cp = get_cp(SCM_BOOL_F,SCM_BOOL_F,S_filter_selection);
   len = g_scm2int(order);
   if (len <= 0) scm_out_of_range_pos(S_filter_selection,order,SCM_MAKINUM(2));
   if (vct_p(e)) /* the filter coefficients direct */
@@ -3693,7 +3688,7 @@ static SCM g_pv(void)
   chan_info *cp;
   int i,len;
   MUS_SAMPLE_TYPE *data;
-  cp = get_cp(SCM_UNSPECIFIED,SCM_UNSPECIFIED);
+  cp = get_cp(SCM_UNSPECIFIED,SCM_UNSPECIFIED,"pv");
   sf = init_sample_read(0,cp,READ_FORWARD);
   pv = mus_make_phase_vocoder(NULL,512,4,128,0.5,NULL,NULL,NULL,(void *)sf);
   len = current_ed_samples(cp);
@@ -3720,10 +3715,9 @@ static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM sn
   /* ldata can be a vct object, a vector, or a list of either */
   SCM_ASSERT(((vct_p(ldata)) || (gh_vector_p(ldata)) || (gh_list_p(ldata))),ldata,SCM_ARG1,S_graph);
   ERRCP(S_graph,snd_n,chn_n,7);
-  cp = get_cp(snd_n,chn_n);
+  cp = get_cp(snd_n,chn_n,S_graph);
   ymin = 32768.0;
   ymax = -32768.0;
-  if (cp == NULL)return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_graph))));
   if ((cp->sound_ctr == -1) || 
       (cp->sounds == NULL) || 
       (cp->sounds[cp->sound_ctr] == NULL) ||

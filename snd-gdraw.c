@@ -13,7 +13,7 @@ void fill_rectangle (axis_context *ax,int x0, int y0, int width, int height)
   gdk_draw_rectangle(ax->wn,ax->gc,TRUE,(gint)x0,(gint)y0,(gint)width,(gint)height);
 }
 
-static void erase_rectangle (chan_info *cp, axis_context *ax,int x0, int y0, int width, int height)
+void erase_rectangle (chan_info *cp, axis_context *ax,int x0, int y0, int width, int height)
 {
   gdk_draw_rectangle(ax->wn,erase_GC(cp),TRUE,(gint)x0,(gint)y0,(gint)width,(gint)height);
 }

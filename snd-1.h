@@ -768,7 +768,7 @@ char *added_transform_name(int type);
   MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, char *caller, int position);
   void ERRCP(char *origin, SCM snd, SCM chn, int off);
   void ERRSP(char *origin, SCM snd, int off);
-  chan_info *get_cp(SCM scm_snd_n, SCM scm_chn_n);
+  chan_info *get_cp(SCM scm_snd_n, SCM scm_chn_n, char *caller);
   snd_info *get_sp(SCM scm_snd_n);
   SCM g_c_make_sample_reader(snd_fd *fd);
   SCM g_call0(SCM proc);
@@ -934,6 +934,14 @@ int run_apply(snd_info *sp, int ofd);
 #if HAVE_GUILE
   void g_init_dac(SCM local_doc);
 #endif
+void dac_set_expand(snd_state *ss, snd_info *sp, Float newval);
+void dac_set_expand_length(snd_state *ss, snd_info *sp, Float newval);
+void dac_set_expand_ramp(snd_state *ss, snd_info *sp, Float newval);
+void dac_set_expand_hop(snd_state *ss, snd_info *sp, Float newval);
+void dac_set_expand_scaler(snd_state *ss, snd_info *sp, Float newval);
+void dac_set_contrast_amp(snd_state *ss, snd_info *sp, Float newval);
+void dac_set_reverb_feedback(snd_state *ss, snd_info *sp, Float newval);
+void dac_set_reverb_lowpass(snd_state *ss, snd_info *sp, Float newval);
 
 
 

@@ -1542,11 +1542,10 @@ static SCM g_insert_region(SCM samp_n, SCM reg_n, SCM snd_n, SCM chn_n) /* opt r
   ERRB1(samp_n,S_insert_region);
   ERRB2(reg_n,S_insert_region);
   ERRCP(S_insert_region,snd_n,chn_n,3);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_insert_region))));
+  cp = get_cp(snd_n,chn_n,S_insert_region);
   finish_keyboard_selection();
   rg = g_scm2intdef(reg_n,0);
-  if (!(region_ok(rg))) return(scm_throw(NO_SUCH_REGION,SCM_LIST1(gh_str02scm(S_insert_region))));
+  if (!(region_ok(rg))) return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_insert_region),reg_n)));
   samp = g_scm2intdef(samp_n,0);
   paste_region_1(rg,cp,FALSE,samp,1.0,S_insert_region);
   update_graph(cp,NULL);
@@ -1590,7 +1589,7 @@ static SCM region_read(int field, SCM n, char *caller)
 	case REGION_ID:     RTNINT(region_id(rg)); break;
 	}
     }
-  else return(scm_throw(NO_SUCH_REGION,SCM_LIST1(gh_str02scm(caller))));
+  else return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(caller),n)));
   RTNINT(0);
 }
 
@@ -1635,7 +1634,7 @@ static SCM g_id_region (SCM n)
   int sn;
   ERRB1(n,S_id_region); 
   sn = id_region(g_scm2intdef(n,0));
-  if (sn == -1) return(scm_throw(NO_SUCH_REGION,SCM_LIST1(gh_str02scm(S_id_region))));
+  if (sn == -1) return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_id_region),n)));
   RTNINT(sn);
 }
 
@@ -1669,7 +1668,7 @@ static SCM g_play_region (SCM n, SCM wait)
   rg = g_scm2intdef(n,0);
   if (region_ok(rg))
     play_region(get_global_state(),rg,NULL,g_scm2intdef(wait,0));
-  else return(scm_throw(NO_SUCH_REGION,SCM_LIST1(gh_str02scm(S_play_region))));
+  else return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_play_region),n)));
   return(n);
 }
 
@@ -1703,8 +1702,7 @@ static SCM g_make_region (SCM beg, SCM end, SCM snd_n, SCM chn_n)
   ERRN1(beg,S_make_region);
   ERRN2(end,S_make_region);
   ERRCP(S_make_region,snd_n,chn_n,3);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_make_region))));
+  cp = get_cp(snd_n,chn_n,S_make_region);
   define_region(cp,g_scm2int(beg),g_scm2int(end),FALSE);
   RTNINT(region_id(0));
 }
@@ -1738,8 +1736,8 @@ static SCM g_selection_member(SCM snd, SCM chn)
   #define H_selection_member "(" S_selection_member " &optional snd chn) -> #t if snd's channel chn is a member of the current selection"
   chan_info *cp;
   ERRCP(S_selection_member,snd,chn,1);
-  cp = get_cp(snd,chn);
-  if ((cp) && (selection_is_current_in_channel(cp)))
+  cp = get_cp(snd,chn,S_selection_member);
+  if (selection_is_current_in_channel(cp))
     return(SCM_BOOL_T);
   return(SCM_BOOL_F);
 }
@@ -1749,8 +1747,7 @@ static SCM g_select_all (SCM snd_n, SCM chn_n)
   #define H_select_all "(" S_select_all " &optional snd chn) makes a new selection containing all of snd's channel chn"
   chan_info *cp;
   ERRCP(S_select_all,snd_n,chn_n,1);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_select_all))));
+  cp = get_cp(snd_n,chn_n,S_select_all);
   define_region(cp,0,current_ed_samples(cp),FALSE);
   update_graph(cp,NULL);
   RTNINT(region_id(0));
@@ -1773,7 +1770,7 @@ static SCM g_save_region (SCM n, SCM filename, SCM format)
       res = save_region(get_global_state(),rg,name,g_scm2intdef(format,0));
       if (name) FREE(name);
     }
-  else return(scm_throw(NO_SUCH_REGION,SCM_LIST1(gh_str02scm(S_save_region))));
+  else return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_save_region),n)));
   if (res != SND_NO_ERROR)
     return(SCM_BOOL_F);
   return(scm_throw(CANNOT_SAVE,SCM_LIST1(gh_str02scm(S_save_region))));
@@ -1793,14 +1790,12 @@ static SCM g_mix_region(SCM chn_samp_n, SCM scaler, SCM reg_n, SCM snd_n, SCM ch
   rg = g_scm2intdef(reg_n,0);
   if (region_ok(rg))
     {
-      cp = get_cp(snd_n,chn_n);
-      if (cp)
-	id = mix_region(rg,cp,
-			g_scm2intdef(chn_samp_n,cp->cursor),
-			(gh_number_p(scaler) ? (gh_scm2double(scaler)) : 1.0));
-      else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_mix_region))));
+      cp = get_cp(snd_n,chn_n,S_mix_region);
+      id = mix_region(rg,cp,
+		      g_scm2intdef(chn_samp_n,cp->cursor),
+		      (gh_number_p(scaler) ? (gh_scm2double(scaler)) : 1.0));
     }
-  else return(scm_throw(NO_SUCH_REGION,SCM_LIST1(gh_str02scm(S_mix_region))));
+  else return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_mix_region),reg_n)));
   return(gh_int2scm(id));
 }
 
@@ -1828,7 +1823,7 @@ static SCM g_region_samples(SCM beg_n, SCM num, SCM reg_n, SCM chn_n)
   ERRB4(chn_n,S_region_samples);
   finish_keyboard_selection();
   reg = g_scm2intdef(reg_n,0);
-  if (!(region_ok(reg))) return(scm_throw(NO_SUCH_REGION,SCM_LIST1(gh_str02scm(S_region_samples))));
+  if (!(region_ok(reg))) return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_region_samples),reg_n)));
   chn = g_scm2intdef(chn_n,0);
   if (chn < region_chans(reg))
     {
@@ -1844,7 +1839,7 @@ static SCM g_region_samples(SCM beg_n, SCM num, SCM reg_n, SCM chn_n)
 	  return(new_vect);
 	}
     }
-  else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_region_samples))));
+  else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(gh_str02scm(S_region_samples),SCM_LIST1(reg_n),chn_n)));
   return(SCM_BOOL_F);
 }
 
@@ -1864,9 +1859,9 @@ static SCM g_region_samples2vct(SCM beg_n, SCM num, SCM reg_n, SCM chn_n, SCM v)
   ERRB3(reg_n,S_region_samples_vct);
   ERRB4(chn_n,S_region_samples_vct);
   reg = g_scm2intdef(reg_n,0);
-  if (!(region_ok(reg))) return(scm_throw(NO_SUCH_REGION,SCM_LIST1(gh_str02scm(S_region_samples_vct))));
+  if (!(region_ok(reg))) return(scm_throw(NO_SUCH_REGION,SCM_LIST2(gh_str02scm(S_region_samples_vct),reg_n)));
   chn = g_scm2intdef(chn_n,0);
-  if (chn >= region_chans(reg)) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_region_samples_vct))));
+  if (chn >= region_chans(reg)) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(gh_str02scm(S_region_samples_vct),SCM_LIST1(reg_n),chn_n)));
   len = g_scm2intdef(num,0);
   if (len == 0) len = region_len(reg);
   if (len > 0)

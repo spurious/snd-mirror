@@ -1,5 +1,8 @@
 snd change log
 
+  31-Jul:    amp env subsampling, C-x v, and superimposed fft bugs (thanks to Daniel Aronovitch).
+             control panel funcs (set-amp etc) can take snd arg = #t -> all sounds.
+             snd-gtk.scm make-control-dialog to expose hidden control-panel variables.
   28-Jul:    use throw for error handling.
   27-Jul:    (read-set! keywords 'prefix) is now built-in.
   26-Jul:    Snd now uses clm for all control-panel functions (play/apply).

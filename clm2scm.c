@@ -62,7 +62,7 @@ void init_mus2scm_module(void);
 
 static void mus_error2scm(int type, char *msg)
 {
-  scm_misc_error("mus_error",msg,SCM_EOL);
+  scm_throw(MUS_ERROR,SCM_LIST2(gh_int2scm(type),gh_str02scm(msg)));
 }
 
 #if (!USE_SND)

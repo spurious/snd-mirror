@@ -10,7 +10,7 @@ void fill_rectangle (axis_context *ax,int x0, int y0, int width, int height)
   XFillRectangle(ax->dp,ax->wn,ax->gc,x0,y0,width,height);
 }
 
-static void erase_rectangle (chan_info *cp, axis_context *ax,int x0, int y0, int width, int height)
+void erase_rectangle (chan_info *cp, axis_context *ax,int x0, int y0, int width, int height)
 {
   XFillRectangle(ax->dp,ax->wn,erase_GC(cp),x0,y0,width,height);
 }

@@ -32,6 +32,7 @@ int snd_yes_or_no_p(snd_state *ss,char *question);
 
 void draw_line (axis_context *ax,int x0,int y0,int x1,int y1);
 void fill_rectangle (axis_context *ax,int x0, int y0, int width, int height);
+void erase_rectangle (chan_info *cp, axis_context *ax,int x0, int y0, int width, int height);
 void fill_polygon(axis_context *ax,int points, ...);
 void draw_polygon(axis_context *ax,int points, ...);
 void draw_string (axis_context *ax, int x0, int y0, char *str, int len);

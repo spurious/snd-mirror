@@ -1028,7 +1028,7 @@ static char ampstr[8];
 #define AMP_ROOM_CUTOFF 3.0
 
 #define LOG_FACTOR 25.0
-/* determines how we view the log */
+/* determines how we view the log -- the higher the factor, the more we emphasize the lower octaves (not sure this is a good idea) */
 
 static void display_peaks(chan_info *cp,axis_info *fap,Float *data,int scaler,int samps,Float samps_per_pixel,int fft_data, Float fft_scale)
 {
@@ -2005,7 +2005,8 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
     }
   if (with_fft)
     {
-      if (fft_style(ss) == SPECTROGRAM) cp->drawing = 0;
+      if ((fft_style(ss) == SPECTROGRAM) || ((cp->chan > 0) && (sp->combining == CHANNELS_SUPERIMPOSED)))
+	cp->drawing = 0;
       make_axes(cp,fap,(x_axis_style(ss) == X_IN_SAMPLES) ? X_IN_SECONDS : (x_axis_style(ss)));
       cp->drawing = 1;
       if (!cp->waving)
@@ -2332,12 +2333,20 @@ static int set_window_percentage(chan_info *cp, int count)
 
 static void window_frames_selection(chan_info *cp)
 {
-  axis_info *ap;
-  Float sx,zx;
-  ap = cp->axis;
-  sx = (((double)(selection_beg(cp)))/((double)SND_SRATE(cp->sound)) - ap->xmin) / (ap->xmax - ap->xmin);
-  zx = ((double)(region_len(0)))/(((double)(SND_SRATE(cp->sound))) * (ap->xmax - ap->xmin));
-  reset_x_display(cp,sx,zx);
+  Float x0,x1;
+  int i;
+  snd_info *sp;
+  snd_state *ss;
+  x0 = (((double)(selection_beg(cp)))/((double)SND_SRATE(cp->sound)));
+  x1 = x0 + ((double)(region_len(0)))/((double)(SND_SRATE(cp->sound)));
+  set_x_axis_x0x1(cp,x0,x1);
+  ss = cp->state;
+  for (i=0;i<ss->max_sounds;i++)
+    {
+      sp = ss->sounds[i];
+      if ((sp) && (sp->inuse) && (cp->sound != sp) && (selection_is_current_in_channel(sp->chans[0])) && (sp->syncing != (cp->sound->syncing)))
+	set_x_axis_x0x1(sp->chans[0],x0,x1);
+    }
 }
 
 void handle_cursor(chan_info *cp, int redisplay)
@@ -2548,7 +2557,7 @@ static sync_state *get_active_chans_sync_state(snd_state *ss, int beg)
   return(sc);
 }
 
-static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end)
+static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, char *origin)
 {
   sync_state *sc=NULL;
   sync_info *si;
@@ -2603,7 +2612,7 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 		  if (ss->eval_error)
 		    {
 		      ss->eval_error = 0;
-		      return(SND_EVAL_ERROR);
+		      return(scm_throw(SND_EVAL_ERROR,SCM_LIST1(gh_str02scm(origin))));
 		    }
 		  return(gh_list(res,gh_int2scm(kp+beg),gh_int2scm(cp->chan),gh_int2scm(sp->index),SCM_UNDEFINED));
 		}
@@ -2612,7 +2621,7 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 		  rpt++;
 		  if (rpt > rpt4)
 		    {
-		      progress_report(ss,sp,"scan",ip+1,si->chans,(Float)kp / (Float)num,NOT_FROM_ENVED);
+		      progress_report(ss,sp,origin,ip+1,si->chans,(Float)kp / (Float)num,NOT_FROM_ENVED);
 		      rpt = 0;
 		      if (ss->stopped_explicitly)
 			{
@@ -2620,8 +2629,8 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 			  if (reporting) finish_progress_report(ss,sp,NOT_FROM_ENVED);
 			  cgbuf = (char *)CALLOC(128,sizeof(char));
 			  if (si->chans == 1)
-			    sprintf(cgbuf,"C-G stopped scan at sample %d",kp+beg);
-			  else sprintf(cgbuf,"C-G stopped scan in %s chan %d at sample %d",sp->shortname,cp->chan+1,kp+beg);
+			    sprintf(cgbuf,"C-G stopped %s at sample %d",origin,kp+beg);
+			  else sprintf(cgbuf,"C-G stopped %s in %s chan %d at sample %d",origin,sp->shortname,cp->chan+1,kp+beg);
 			  report_in_minibuffer(sp,cgbuf);
 			  FREE(cgbuf);
 			  for (j=ip;j<si->chans;j++) free_snd_fd(sfs[j]);
@@ -2639,7 +2648,7 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
   return(g_call1(proc,SCM_BOOL_F));
 }
 
-static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end)
+static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, char *origin)
 {
   /* here we need to load the arglist in order */
   sync_state *sc=NULL;
@@ -2693,7 +2702,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
 	      rpt++;
 	      if (rpt > rpt4)
 		{
-		  progress_report(ss,sp,"scan",1,1,(Float)kp / (Float)num,NOT_FROM_ENVED);
+		  progress_report(ss,sp,origin,1,1,(Float)kp / (Float)num,NOT_FROM_ENVED);
 		  rpt = 0;
 		  check_for_event(ss);
  		  if ((ss->stopped_explicitly) || (!(cp->sound))) break;
@@ -2717,7 +2726,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
 	      rpt++;
 	      if (rpt > rpt4)
 		{
-		  progress_report(ss,sp,"scan",1,1,(Float)kp / (Float)num,NOT_FROM_ENVED);
+		  progress_report(ss,sp,origin,1,1,(Float)kp / (Float)num,NOT_FROM_ENVED);
 		  rpt = 0;
  		  if (ss->stopped_explicitly) break;
 		}
@@ -2730,7 +2739,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
   if (ss->stopped_explicitly)
     {
       cgbuf = (char *)CALLOC(128,sizeof(char));
-      sprintf(cgbuf,"C-G stopped scan at sample %d",kp+beg);
+      sprintf(cgbuf,"C-G stopped %s at sample %d",origin,kp+beg);
       report_in_minibuffer(sp,cgbuf);
       FREE(cgbuf);
       ss->stopped_explicitly = 0;
@@ -2741,7 +2750,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
       if (ss->eval_error)
 	{
 	  ss->eval_error = 0;
-	  return(SND_EVAL_ERROR);
+	  return(scm_throw(SND_EVAL_ERROR,SCM_LIST1(gh_str02scm(origin))));
 	}
       else
 	{
@@ -2891,7 +2900,7 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 		  free_sync_state(sc); 
 		  if (reporting) finish_progress_report(ss,sp,NOT_FROM_ENVED);
 		  ss->eval_error = 0;
-		  return(SND_EVAL_ERROR);
+		  return(scm_throw(SND_EVAL_ERROR,SCM_LIST1(gh_str02scm(origin))));
 		}
 	      if (SCM_NFALSEP(res)) /* if #f, no output on this pass */
 		{
@@ -3051,7 +3060,7 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
   if (ss->eval_error)
     {
       ss->eval_error = 0;
-      return(SND_EVAL_ERROR);
+      return(scm_throw(SND_EVAL_ERROR,SCM_LIST1(gh_str02scm(origin))));
     }
   if (ss->stopped_explicitly)
     {
@@ -3443,6 +3452,7 @@ Float get_maxamp(snd_info *sp, chan_info *cp)
   if (!sp) return(0.0);
   if (!cp) cp = sp->chans[0];
   if (amp_env_maxamp_ok(cp)) return(amp_env_maxamp(cp));
+
   sf = init_sample_read(0,cp,READ_FORWARD);
   ymax = 0;
   for (i=0;i<current_ed_samples(cp);i++)
@@ -6277,6 +6287,8 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
   ss = cp->state;
   if (x < ap->x_axis_x0) x = ap->x_axis_x0; else if (x > ap->x_axis_x1) x = ap->x_axis_x1;
   xf = ap->x0 + (ap->x1 - ap->x0) * (Float)(x - ap->x_axis_x0)/(Float)(ap->x_axis_x1 - ap->x_axis_x0);
+  if (fft_log_frequency(ss))
+    xf = ((exp(xf*log(LOG_FACTOR+1.0)) - 1.0)/LOG_FACTOR) * SND_SRATE(cp->sound) * 0.5 * spectro_cutoff(ss);
   if (fft_style(ss) == NORMAL_FFT)        /* fp->data[bins] */
     {
       if (transform_type(ss) == FOURIER)
@@ -6983,15 +6995,14 @@ static SCM g_sp_scan(SCM proc, int chan_choice, SCM s_beg, SCM s_end, int series
   SCM_ASSERT((gh_number_p(s_beg)) || (gh_boolean_p(s_beg)) || (SCM_UNBNDP(s_beg)),s_beg,SCM_ARG2,origin);
   SCM_ASSERT((gh_number_p(s_end)) || (gh_boolean_p(s_end)) || (SCM_UNBNDP(s_end)),s_end,SCM_ARG3,origin);
   ss = get_global_state();
-  cp = get_cp(snd,chn);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(origin))));
+  cp = get_cp(snd,chn,origin);
   beg = g_scm2intdef(s_beg,0);
   end = g_scm2intdef(s_end,0);
   if (scan)
     {
       if (series)
-	return(series_scan(ss,cp,proc,chan_choice,beg,end));
-      else return(parallel_scan(ss,cp,proc,chan_choice,beg,end));
+	return(series_scan(ss,cp,proc,chan_choice,beg,end,origin));
+      else return(parallel_scan(ss,cp,proc,chan_choice,beg,end,origin));
     }
   else
     {
@@ -7136,10 +7147,8 @@ static SCM g_find(SCM expr, SCM sample, SCM snd_n, SCM chn_n)
   ERRCP(S_find,snd_n,chn_n,3);
   if (gh_string_p(expr))
     {
-      cp = get_cp(snd_n,chn_n);
-      if (cp) 
-	RTNINT(snd_find_1(cp,gh_scm2newstr(expr,NULL),g_scm2intdef(sample,0),FALSE)); 
-      else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_find))));
+      cp = get_cp(snd_n,chn_n,S_find);
+      RTNINT(snd_find_1(cp,gh_scm2newstr(expr,NULL),g_scm2intdef(sample,0),FALSE)); 
     }
   else return(g_scan_chan(expr,sample,SCM_BOOL_F,snd_n,chn_n));
   return(SCM_BOOL_F);
@@ -7156,8 +7165,7 @@ static SCM g_count_matches(SCM expr, SCM sample, SCM snd_n, SCM chn_n)
   SCM_ASSERT((gh_string_p(expr) || gh_procedure_p(expr)),expr,SCM_ARG1,S_count_matches);
   ERRB2(sample,S_count_matches);
   ERRCP(S_count_matches,snd_n,chn_n,3);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_count_matches))));
+  cp = get_cp(snd_n,chn_n,S_count_matches);
   samp = g_scm2intdef(sample,0);
   if (gh_string_p(expr))
     RTNINT(snd_find_1(cp,gh_scm2newstr(expr,NULL),g_scm2intdef(sample,0),TRUE));
@@ -7265,8 +7273,7 @@ static SCM g_key(SCM kbd, SCM buckybits, SCM snd, SCM chn)
   chan_info *cp;
   ERRN1(kbd,S_key);
   ERRN2(buckybits,S_key);
-  cp = get_cp(snd,chn);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_key))));
+  cp = get_cp(snd,chn,S_key);
   RTNINT(keyboard_command(cp,g_scm2int(kbd),g_scm2int(buckybits)));
 }
 
@@ -7289,9 +7296,9 @@ static SCM g_forward_graph(SCM count, SCM snd, SCM chn)
   chan_info *cp;
   ERRB1(count,S_forward_graph);
   ERRCP(S_forward_graph,snd,chn,2);
-  cp = get_cp(snd,chn);
+  cp = get_cp(snd,chn,S_forward_graph);
   val = g_scm2intdef(count,1);
-  if (cp) goto_next_graph(cp,val); else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_forward_graph))));
+  goto_next_graph(cp,val);
   RTNINT(val);
 }
 
@@ -7302,9 +7309,9 @@ static SCM g_backward_graph(SCM count, SCM snd, SCM chn)
   chan_info *cp;
   ERRB1(count,S_backward_graph);
   ERRCP(S_backward_graph,snd,chn,2);
-  cp = get_cp(snd,chn);
+  cp = get_cp(snd,chn,S_backward_graph);
   val = -(g_scm2intdef(count,1));
-  if (cp) goto_previous_graph(cp,val); else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_backward_graph))));
+  goto_previous_graph(cp,val);
   RTNINT(val);
 }
 
@@ -7313,27 +7320,55 @@ enum {FFTF,WAVEF,LENGTHF,CURSORF,MAXAMPF,GRAPHINGF,LOSAMPF,HISAMPF,SQUELCH_UPDAT
 static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 {
   chan_info *cp;
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(caller))));
-  switch(fld)
+  snd_info *sp;
+  snd_state *ss;
+  int i;
+  SCM res = SCM_EOL;
+  if (SCM_EQ_P(snd_n,SCM_BOOL_T))
     {
-    case EDITF: RTNINT(cp->edit_ctr); break;
-    case FFTF: RTNBOOL(cp->ffting); break;
-    case WAVEF: RTNBOOL(cp->waving); break;
-    case CURSORF: RTNINT(cp->cursor); break;
-    case LENGTHF: RTNINT(current_ed_samples(cp)); break;
-    case MAXAMPF: RTNFLT(get_maxamp(cp->sound,cp)); break;
-    case GRAPHINGF: RTNBOOL(cp->lisp_graphing); break;
-    case LOSAMPF: if (cp->axis) RTNINT((cp->axis)->losamp); break;
-    case HISAMPF: if (cp->axis) RTNINT((cp->axis)->hisamp); break;
-    case SQUELCH_UPDATE: RTNBOOL(cp->squelch_update); break;
-    case AP_SX: if (cp->axis) RTNFLT((cp->axis)->sx); break;
-    case AP_SY: if (cp->axis) RTNFLT((cp->axis)->sy); break;
-    case AP_ZX: if (cp->axis) RTNFLT((cp->axis)->zx); break;
-    case AP_ZY: if (cp->axis) RTNFLT((cp->axis)->zy); break;
-    case CURSOR_STYLE: RTNINT(cp->cursor_style); break;
-    case EDIT_HOOK: return(cp->edit_hook); break;
-    case UNDO_HOOK: return(cp->undo_hook); break;
+      ss = get_global_state();
+      for (i=0;i<ss->max_sounds;i++)
+	{
+	  sp = ss->sounds[i];
+	  if ((sp) && (sp->inuse))
+	    res = gh_cons(cp_iread(gh_int2scm(i),chn_n,fld,caller),res);
+	}
+      return(scm_reverse(res));
+    }
+  else
+    {
+      if (SCM_EQ_P(chn_n,SCM_BOOL_T))
+	{
+	  sp = get_sp(snd_n);
+	  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
+	  for (i=0;i<sp->nchans;i++)
+	    res = gh_cons(cp_iread(snd_n,gh_int2scm(i),fld,caller),res);
+	  return(scm_reverse(res));
+	}
+      else
+	{
+	  cp = get_cp(snd_n,chn_n,caller);
+	  switch(fld)
+	    {
+	    case EDITF: RTNINT(cp->edit_ctr); break;
+	    case FFTF: RTNBOOL(cp->ffting); break;
+	    case WAVEF: RTNBOOL(cp->waving); break;
+	    case CURSORF: RTNINT(cp->cursor); break;
+	    case LENGTHF: RTNINT(current_ed_samples(cp)); break;
+	    case MAXAMPF: RTNFLT(get_maxamp(cp->sound,cp)); break;
+	    case GRAPHINGF: RTNBOOL(cp->lisp_graphing); break;
+	    case LOSAMPF: if (cp->axis) RTNINT((cp->axis)->losamp); break;
+	    case HISAMPF: if (cp->axis) RTNINT((cp->axis)->hisamp); break;
+	    case SQUELCH_UPDATE: RTNBOOL(cp->squelch_update); break;
+	    case AP_SX: if (cp->axis) RTNFLT((cp->axis)->sx); break;
+	    case AP_SY: if (cp->axis) RTNFLT((cp->axis)->sy); break;
+	    case AP_ZX: if (cp->axis) RTNFLT((cp->axis)->zx); break;
+	    case AP_ZY: if (cp->axis) RTNFLT((cp->axis)->zy); break;
+	    case CURSOR_STYLE: RTNINT(cp->cursor_style); break;
+	    case EDIT_HOOK: return(cp->edit_hook); break;
+	    case UNDO_HOOK: return(cp->undo_hook); break;
+	    }
+	}
     }
   return(SCM_BOOL_F);
 }
@@ -7342,37 +7377,67 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 {
   chan_info *cp;
   int val = 0;
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(caller))));
-  switch (fld)
+  snd_info *sp;
+  snd_state *ss;
+  int i;
+  SCM res = SCM_EOL;
+  if (SCM_EQ_P(snd_n,SCM_BOOL_T))
     {
-    case FFTF: fftb(cp,val = bool_int_or_one(on)); update_graph(cp,NULL); break;
-    case WAVEF: waveb(cp,val = bool_int_or_one(on)); update_graph(cp,NULL); break;
-    case CURSORF: cp->cursor_on = 1; handle_cursor(cp,cursor_moveto(cp,val = g_scm2intdef(on,1))); break;
-    case GRAPHINGF: 
-      cp->lisp_graphing = bool_int_or_one(on); 
-      val = cp->lisp_graphing;
-      update_graph(cp,NULL); 
-      break;
-    case LOSAMPF: set_x_axis_x0(cp,val = g_scm2intdef(on,0)); return(on); break;
-    case HISAMPF: set_x_axis_x1(cp,val = g_scm2intdef(on,1)); return(on); break;
-    case SQUELCH_UPDATE: cp->squelch_update = bool_int_or_one(on); break;
-    case CURSOR_STYLE: cp->cursor_style = g_scm2intdef(on,0); update_graph(cp,NULL); return(on); break;
+      ss = get_global_state();
+      for (i=0;i<ss->max_sounds;i++)
+	{
+	  sp = ss->sounds[i];
+	  if ((sp) && (sp->inuse))
+	    res = gh_cons(cp_iwrite(gh_int2scm(i),chn_n,on,fld,caller),res);
+	}
+      return(scm_reverse(res));
+    }
+  else
+    {
+      if (SCM_EQ_P(chn_n,SCM_BOOL_T))
+	{
+	  sp = get_sp(snd_n);
+	  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
+	  for (i=0;i<sp->nchans;i++)
+	    res = gh_cons(cp_iwrite(snd_n,gh_int2scm(i),on,fld,caller),res);
+	  return(scm_reverse(res));
+	}
+      else
+	{
+	  cp = get_cp(snd_n,chn_n,caller);
+	  switch (fld)
+	    {
+	    case FFTF: fftb(cp,val = bool_int_or_one(on)); update_graph(cp,NULL); break;
+	    case WAVEF: waveb(cp,val = bool_int_or_one(on)); update_graph(cp,NULL); break;
+	    case CURSORF: cp->cursor_on = 1; handle_cursor(cp,cursor_moveto(cp,val = g_scm2intdef(on,1))); break;
+	    case GRAPHINGF: 
+	      cp->lisp_graphing = bool_int_or_one(on); 
+	      val = cp->lisp_graphing;
+	      update_graph(cp,NULL); 
+	      break;
+	    case LOSAMPF: set_x_axis_x0(cp,val = g_scm2intdef(on,0)); return(on); break;
+	    case HISAMPF: set_x_axis_x1(cp,val = g_scm2intdef(on,1)); return(on); break;
+	    case SQUELCH_UPDATE: cp->squelch_update = bool_int_or_one(on); break;
+	    case CURSOR_STYLE: cp->cursor_style = g_scm2intdef(on,0); update_graph(cp,NULL); return(on); break;
+	    }
+	}
     }
   RTNBOOL(val);
 }
 
+#define ERRCPT(caller,snd,chn,argn) if ((!(SCM_EQ_P(snd,SCM_BOOL_T))) && (!(SCM_EQ_P(chn,SCM_BOOL_T)))) ERRCP(caller,snd,chn,argn)
+
 static SCM g_edit_position(SCM snd_n, SCM chn_n) 
 {
   #define H_edit_position "(" S_edit_position " &optional snd chn) -> current edit history position in snd's channel chn"
-  ERRCP(S_edit_position,snd_n,chn_n,1);
+  ERRCPT(S_edit_position,snd_n,chn_n,1);
   return(cp_iread(snd_n,chn_n,EDITF,S_edit_position));
 }
 
 static SCM g_ffting(SCM snd_n, SCM chn_n) 
 {
   #define H_ffting "(" S_ffting " &optional snd chn) -> #t if fft display is active in snd's channel chn"
-  ERRCP(S_ffting,snd_n,chn_n,1); 
+  ERRCPT(S_ffting,snd_n,chn_n,1); 
   return(cp_iread(snd_n,chn_n,FFTF,S_ffting));
 }
 
@@ -7380,14 +7445,14 @@ static SCM g_set_ffting(SCM on, SCM snd_n, SCM chn_n)
 {
   #define H_set_ffting "(" S_set_ffting " &optional (val #t) snd chn) sets whether snd's channel chn is displaying ffts"
   ERRB1(on,S_set_ffting); 
-  ERRCP(S_set_ffting,snd_n,chn_n,2);
+  ERRCPT(S_set_ffting,snd_n,chn_n,2);
   return(cp_iwrite(snd_n,chn_n,on,FFTF,S_set_ffting));
 }
 
 static SCM g_waving(SCM snd_n, SCM chn_n) 
 {
   #define H_waving "(" S_waving " &optional snd chn) -> #t if time domain display is active in snd's channel chn"
-  ERRCP(S_waving,snd_n,chn_n,1); 
+  ERRCPT(S_waving,snd_n,chn_n,1); 
   return(cp_iread(snd_n,chn_n,WAVEF,S_waving));
 }
 
@@ -7395,14 +7460,14 @@ static SCM g_set_waving(SCM on, SCM snd_n, SCM chn_n)
 {
   #define H_set_waving "(" S_set_waving " &optional (val #t) snd chn) sets whether snd's channel chn is displaying time domain data"
   ERRB1(on,S_set_waving); 
-  ERRCP(S_set_waving,snd_n,chn_n,2); 
+  ERRCPT(S_set_waving,snd_n,chn_n,2); 
   return(cp_iwrite(snd_n,chn_n,on,WAVEF,S_set_waving));
 }
 
 static SCM g_graphing(SCM snd_n, SCM chn_n) 
 {
   #define H_graphing "(" S_graphing " &optional snd chn) -> #t if lisp-generated data display is active in snd's channel chn"
-  ERRCP(S_graphing,snd_n,chn_n,1);
+  ERRCPT(S_graphing,snd_n,chn_n,1);
   return(cp_iread(snd_n,chn_n,GRAPHINGF,S_graphing));
 }
 
@@ -7410,14 +7475,14 @@ static SCM g_set_graphing(SCM on, SCM snd_n, SCM chn_n)
 {
   #define H_set_graphing "(" S_set_graphing " &optional (val #t) snd chn) sets whether snd's channel chn is displaying lisp-generated data"
   ERRB1(on,S_set_graphing); 
-  ERRCP(S_set_graphing,snd_n,chn_n,2); 
+  ERRCPT(S_set_graphing,snd_n,chn_n,2); 
   return(cp_iwrite(snd_n,chn_n,on,GRAPHINGF,S_set_graphing));
 }
 
 static SCM g_cursor(SCM snd_n, SCM chn_n) 
 {
   #define H_cursor "(" S_cursor " &optional snd chn) -> current cursor location in snd's channel chn"
-  ERRCP(S_cursor,snd_n,chn_n,1); 
+  ERRCPT(S_cursor,snd_n,chn_n,1); 
   return(cp_iread(snd_n,chn_n,CURSORF,S_cursor));
 }
 
@@ -7425,14 +7490,14 @@ static SCM g_set_cursor(SCM on, SCM snd_n, SCM chn_n)
 {
   #define H_set_cursor "(" S_set_cursor " val &optional snd chn) sets the current cursor location in snd's channel chn"
   ERRB1(on,S_set_cursor); 
-  ERRCP(S_set_cursor,snd_n,chn_n,2); 
+  ERRCPT(S_set_cursor,snd_n,chn_n,2); 
   return(cp_iwrite(snd_n,chn_n,on,CURSORF,S_set_cursor));
 }
 
 static SCM g_cursor_style(SCM snd_n, SCM chn_n) 
 {
   #define H_cursor_style "(" S_cursor_style " &optional snd chn) -> current cursor style in snd's channel chn"
-  ERRCP(S_cursor_style,snd_n,chn_n,1); 
+  ERRCPT(S_cursor_style,snd_n,chn_n,1); 
   return(cp_iread(snd_n,chn_n,CURSOR_STYLE,S_cursor_style));
 }
 
@@ -7440,28 +7505,28 @@ static SCM g_set_cursor_style(SCM on, SCM snd_n, SCM chn_n)
 {
   #define H_set_cursor_style "(" S_set_cursor_style " val &optional snd chn) sets the current cursor style in snd's channel chn"
   ERRB1(on,S_set_cursor_style); 
-  ERRCP(S_set_cursor_style,snd_n,chn_n,2); 
+  ERRCPT(S_set_cursor_style,snd_n,chn_n,2); 
   return(cp_iwrite(snd_n,chn_n,on,CURSOR_STYLE,S_set_cursor_style));
 }
 
 static SCM g_frames(SCM snd_n, SCM chn_n) 
 {
   #define H_frames "(" S_frames " &optional snd chn) -> number of frames of data in snd's channel chn"
-  ERRCP(S_frames,snd_n,chn_n,1); 
+  ERRCPT(S_frames,snd_n,chn_n,1); 
   return(cp_iread(snd_n,chn_n,LENGTHF,S_frames));
 }
 
 static SCM g_maxamp(SCM snd_n, SCM chn_n) 
 {
   #define H_maxamp "(" S_maxamp " &optional snd chn) -> max amp of data in snd's channel chn"
-  ERRCP(S_maxamp,snd_n,chn_n,1); 
+  ERRCPT(S_maxamp,snd_n,chn_n,1); 
   return(cp_iread(snd_n,chn_n,MAXAMPF,S_maxamp));
 }
 
 static SCM g_squelch_update(SCM snd_n, SCM chn_n) 
 {
   #define H_squelch_update "(" S_squelch_update " &optional snd chn) -> #t if updates (redisplays) are off in snd's channel chn"
-  ERRCP(S_squelch_update,snd_n,chn_n,1); 
+  ERRCPT(S_squelch_update,snd_n,chn_n,1); 
   return(cp_iread(snd_n,chn_n,SQUELCH_UPDATE,S_squelch_update));
 }
 
@@ -7469,49 +7534,49 @@ static SCM g_set_squelch_update(SCM on, SCM snd_n, SCM chn_n)
 {
   #define H_set_squelch_update "(" S_set_squelch_update " &optional (on #t) snd chn) sets whether updates (redisplays) are off in snd's channel chn"
   ERRB1(on,S_set_squelch_update); 
-  ERRCP(S_set_squelch_update,snd_n,chn_n,2); 
+  ERRCPT(S_set_squelch_update,snd_n,chn_n,2); 
   return(cp_iwrite(snd_n,chn_n,on,SQUELCH_UPDATE,S_set_squelch_update));
 }
 
 static SCM g_ap_sx(SCM snd_n, SCM chn_n) 
 {
   #define H_x_position_slider "(" S_x_position_slider " &optional snd chn) -> current x axis position slider of snd channel chn"
-  ERRCP(S_x_position_slider,snd_n,chn_n,1); 
+  ERRCPT(S_x_position_slider,snd_n,chn_n,1); 
   return(cp_iread(snd_n,chn_n,AP_SX,S_x_position_slider));
 }
 
 static SCM g_ap_sy(SCM snd_n, SCM chn_n) 
 {
   #define H_y_position_slider "(" S_y_position_slider " &optional snd chn) -> current y axis position slider of snd channel chn"
-  ERRCP(S_y_position_slider,snd_n,chn_n,1); 
+  ERRCPT(S_y_position_slider,snd_n,chn_n,1); 
   return(cp_iread(snd_n,chn_n,AP_SY,S_y_position_slider));
 }
 
 static SCM g_ap_zx(SCM snd_n, SCM chn_n) 
 {
   #define H_x_zoom_slider "(" S_x_zoom_slider " &optional snd chn) -> current x axis zoom slider of snd channel chn"
-  ERRCP(S_x_zoom_slider,snd_n,chn_n,1); 
+  ERRCPT(S_x_zoom_slider,snd_n,chn_n,1); 
   return(cp_iread(snd_n,chn_n,AP_ZX,S_x_zoom_slider));
 }
 
 static SCM g_ap_zy(SCM snd_n, SCM chn_n) 
 {
   #define H_y_zoom_slider "(" S_y_zoom_slider " &optional snd chn) -> current y axis zoom slider of snd channel chn"
-  ERRCP(S_y_zoom_slider,snd_n,chn_n,1); 
+  ERRCPT(S_y_zoom_slider,snd_n,chn_n,1); 
   return(cp_iread(snd_n,chn_n,AP_ZY,S_y_zoom_slider));
 }
 
 static SCM g_edit_hook(SCM snd_n, SCM chn_n) 
 {
   #define H_edit_hook "(" S_edit_hook " &optional snd chn) -> snd's channel chn's edit-hook"
-  ERRCP(S_edit_hook,snd_n,chn_n,1); 
+  ERRCPT(S_edit_hook,snd_n,chn_n,1); 
   return(cp_iread(snd_n,chn_n,EDIT_HOOK,S_edit_hook));
 }
 
 static SCM g_undo_hook(SCM snd_n, SCM chn_n) 
 {
   #define H_undo_hook "(" S_undo_hook " &optional snd chn) -> snd's channel chn's undo-hook"
-  ERRCP(S_undo_hook,snd_n,chn_n,1); 
+  ERRCPT(S_undo_hook,snd_n,chn_n,1); 
   return(cp_iread(snd_n,chn_n,UNDO_HOOK,S_undo_hook));
 }
 
@@ -7525,8 +7590,7 @@ static SCM g_peaks(SCM filename, SCM snd_n, SCM chn_n)
   int err;
   ERRSB1(filename,S_peaks);
   ERRCP(S_peaks,snd_n,chn_n,2);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_peaks))));
+  cp = get_cp(snd_n,chn_n,S_peaks);
   if (gh_string_p(filename))
     {
       urn = gh_scm2newstr(filename,NULL);
@@ -7543,7 +7607,7 @@ static SCM g_peaks(SCM filename, SCM snd_n, SCM chn_n)
 static SCM g_left_sample(SCM snd_n, SCM chn_n) 
 {
   #define H_left_sample "(" S_left_sample " &optional snd chn) -> left sample number in time domain window"
-  ERRCP(S_left_sample,snd_n,chn_n,1); 
+  ERRCPT(S_left_sample,snd_n,chn_n,1); 
   return(cp_iread(snd_n,chn_n,LOSAMPF,S_left_sample));
 }
 
@@ -7551,14 +7615,14 @@ static SCM g_set_left_sample(SCM on, SCM snd_n, SCM chn_n)
 {
   #define H_set_left_sample "(" S_set_left_sample " val &optional snd chn) sets left sample number in time domain window to val"
   ERRB1(on,S_set_left_sample); 
-  ERRCP(S_set_left_sample,snd_n,chn_n,2); 
+  ERRCPT(S_set_left_sample,snd_n,chn_n,2); 
   return(cp_iwrite(snd_n,chn_n,on,LOSAMPF,S_set_left_sample));
 }
 
 static SCM g_right_sample(SCM snd_n, SCM chn_n) 
 {
   #define H_right_sample "(" S_right_sample " &optional snd chn) -> right sample number in time domain window"
-  ERRCP(S_right_sample,snd_n,chn_n,1); 
+  ERRCPT(S_right_sample,snd_n,chn_n,1); 
   return(cp_iread(snd_n,chn_n,HISAMPF,S_right_sample));
 }
 
@@ -7566,7 +7630,7 @@ static SCM g_set_right_sample(SCM on, SCM snd_n, SCM chn_n)
 {
   #define H_set_right_sample "(" S_set_right_sample " val &optional snd chn) sets right sample number in time domain window to val"
   ERRB1(on,S_set_right_sample); 
-  ERRCP(S_set_right_sample,snd_n,chn_n,2); 
+  ERRCPT(S_set_right_sample,snd_n,chn_n,2); 
   return(cp_iwrite(snd_n,chn_n,on,HISAMPF,S_set_right_sample));
 }
 
@@ -7576,8 +7640,7 @@ static SCM g_edits(SCM snd_n, SCM chn_n)
   chan_info *cp;
   int i;
   ERRCP(S_edits,snd_n,chn_n,1);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_edits))));
+  cp = get_cp(snd_n,chn_n,S_edits);
   for (i=cp->edit_ctr+1;i<cp->edit_size;i++)
     if (!(cp->edits[i])) break;
   return(SCM_LIST2(gh_int2scm(cp->edit_ctr),gh_int2scm(i-cp->edit_ctr-1)));
@@ -7591,13 +7654,12 @@ static SCM g_set_x_bounds(SCM beg, SCM end, SCM snd_n, SCM chn_n)
   ERRN1(beg,S_set_x_bounds);
   ERRN2(end,S_set_x_bounds);
   ERRCP(S_set_x_bounds,snd_n,chn_n,3);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_set_x_bounds))));
+  cp = get_cp(snd_n,chn_n,S_set_x_bounds);
   x0 = gh_scm2double(beg);
   x1 = gh_scm2double(end);
   if (x1 > x0)
     set_x_axis_x0x1(cp,x0,x1);
-  else return(scm_throw(IMPOSSIBLE_BOUNDS,SCM_LIST1(gh_str02scm(S_set_x_bounds))));
+  else return(scm_throw(IMPOSSIBLE_BOUNDS,SCM_LIST3(gh_str02scm(S_set_x_bounds),beg,end)));
   return(SCM_BOOL_F);
 }
 
@@ -7611,8 +7673,7 @@ static SCM g_set_y_bounds(SCM y0, SCM y1, SCM snd_n, SCM chn_n)
   ERRB1(y0,S_set_x_bounds);
   ERRB2(y1,S_set_x_bounds);
   ERRCP(S_set_y_bounds,snd_n,chn_n,3);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_set_y_bounds))));
+  cp = get_cp(snd_n,chn_n,S_set_y_bounds);
   if (gh_number_p(y0))
     {
       low = gh_scm2double(y0);
@@ -7639,7 +7700,7 @@ static SCM g_set_y_bounds(SCM y0, SCM y1, SCM snd_n, SCM chn_n)
     }
   if (hi > low)
     set_y_axis_y0y1(cp,low,hi);
-  else return(scm_throw(IMPOSSIBLE_BOUNDS,SCM_LIST1(gh_str02scm(S_set_y_bounds))));
+  else return(scm_throw(IMPOSSIBLE_BOUNDS,SCM_LIST3(gh_str02scm(S_set_y_bounds),y0,y1)));
   return(SCM_BOOL_F);
 }
 
@@ -7649,8 +7710,7 @@ static SCM g_x_bounds(SCM snd_n, SCM chn_n)
   chan_info *cp;
   axis_info *ap;
   ERRCP(S_x_bounds,snd_n,chn_n,1);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_x_bounds))));
+  cp = get_cp(snd_n,chn_n,S_x_bounds);
   ap = cp->axis;
   return(SCM_LIST2(gh_double2scm(ap->x0),gh_double2scm(ap->x1)));
 }
@@ -7661,8 +7721,7 @@ static SCM g_y_bounds(SCM snd_n, SCM chn_n)
   chan_info *cp;
   axis_info *ap;
   ERRCP(S_y_bounds,snd_n,chn_n,1);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_y_bounds))));
+  cp = get_cp(snd_n,chn_n,S_y_bounds);
   ap = cp->axis;
   return(SCM_LIST2(gh_double2scm(ap->y0),gh_double2scm(ap->y1)));
 }
@@ -7704,8 +7763,7 @@ static SCM g_forward_sample(SCM count, SCM snd, SCM chn)
   chan_info *cp;
   ERRB1(count,S_forward_sample); 
   ERRCP(S_forward_sample,snd,chn,2);
-  cp = get_cp(snd,chn);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_forward_sample))));
+  cp = get_cp(snd,chn,S_forward_sample);
   handle_cursor(cp,cursor_move(cp,g_scm2intdef(count,1))); 
   RTNINT(cp->cursor);
 }
@@ -7716,8 +7774,7 @@ static SCM g_backward_sample(SCM count, SCM snd, SCM chn)
   chan_info *cp;
   ERRB1(count,S_backward_sample); 
   ERRCP(S_backward_sample,snd,chn,2);
-  cp = get_cp(snd,chn);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_backward_sample))));
+  cp = get_cp(snd,chn,S_backward_sample);
   handle_cursor(cp,cursor_move(cp,-(g_scm2intdef(count,1)))); 
   RTNINT(cp->cursor);
 }
@@ -7729,8 +7786,7 @@ static SCM g_smooth(SCM beg, SCM num, SCM snd_n, SCM chn_n)
   ERRN1(beg,S_smooth);
   ERRN2(num,S_smooth);
   ERRCP(S_smooth,snd_n,chn_n,3);
-  cp = get_cp(snd_n,chn_n);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_smooth))));
+  cp = get_cp(snd_n,chn_n,S_smooth);
   cos_smooth(cp,g_scm2int(beg),g_scm2int(num),FALSE,S_smooth); 
   return(SCM_BOOL_T);
 }
@@ -7741,8 +7797,7 @@ static SCM g_smooth_selection(void)
   chan_info *cp;
   if (selection_is_current() == 0) 
     return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_smooth_selection))));
-  cp = get_cp(SCM_BOOL_F,SCM_BOOL_F);
-  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_smooth_selection))));
+  cp = get_cp(SCM_BOOL_F,SCM_BOOL_F,S_smooth_selection);
   cos_smooth(cp,0,0,TRUE,S_smooth_selection);
   return(SCM_BOOL_T);
 }
@@ -7752,8 +7807,8 @@ static SCM g_reverse_sound(SCM snd_n, SCM chn_n)
   #define H_reverse_sound "(" S_reverse_sound " &optional snd chn) reverses snd's channel chn"
   chan_info *cp;
   ERRCP(S_reverse_sound,snd_n,chn_n,1);
-  cp = get_cp(snd_n,chn_n);
-  if (cp) reverse_sound(cp,FALSE); else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_reverse_sound))));
+  cp = get_cp(snd_n,chn_n,S_reverse_sound);
+  reverse_sound(cp,FALSE);
   return(SCM_BOOL_F);
 }
 
@@ -7763,24 +7818,24 @@ static SCM g_reverse_selection(void)
   chan_info *cp;
   if (selection_is_current() == 0) 
     return(scm_throw(NO_ACTIVE_SELECTION,SCM_LIST1(gh_str02scm(S_reverse_selection))));
-  cp = get_cp(SCM_BOOL_F,SCM_BOOL_F);
-  if (cp) reverse_sound(cp,TRUE); else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_reverse_selection))));
+  cp = get_cp(SCM_BOOL_F,SCM_BOOL_F,S_reverse_selection);
+  reverse_sound(cp,TRUE);
   return(SCM_BOOL_F);
 }
 
 static SCM g_swap_channels(SCM snd0, SCM chn0, SCM snd1, SCM chn1, SCM beg, SCM dur)
 {
   #define H_swap_channels "(" S_swap_channels " snd0 chn0 snd1 chn1) swaps the indicated channels"
-  chan_info *cp0,*cp1;
+  chan_info *cp0 = NULL,*cp1 = NULL;
   snd_fd *c0,*c1;
   int dur0,dur1,beg0=0,num;
-  snd_info *sp;
+  snd_info *sp = NULL;
   ERRCP(S_swap_channels,snd0,chn0,1);
-  cp0 = get_cp(snd0,chn0);
+  cp0 = get_cp(snd0,chn0,S_swap_channels);
   if (SCM_INUMP(snd1) && SCM_INUMP(chn1)) 
     {
       ERRCP(S_swap_channels,snd1,chn1,3);
-      cp1 = get_cp(snd1,chn1);
+      cp1 = get_cp(snd1,chn1,S_swap_channels);
     }
   else
     {
@@ -7795,25 +7850,24 @@ static SCM g_swap_channels(SCM snd0, SCM chn0, SCM snd1, SCM chn1, SCM beg, SCM 
 	}
       else cp1 = sp->chans[0];
     }
-  if (SCM_INUMP(beg)) beg0 = SCM_INUM(beg);
-  if (SCM_INUMP(dur)) 
-    num = SCM_INUM(dur);
-  else
-    {
-      dur0 = current_ed_samples(cp0);
-      dur1 = current_ed_samples(cp1);
-      if (dur0 > dur1) num = dur1; else num = dur0;
-    }
   if ((cp0) && (cp1))
     {
+      if (SCM_INUMP(beg)) beg0 = SCM_INUM(beg);
+      if (SCM_INUMP(dur)) 
+	num = SCM_INUM(dur);
+      else
+	{
+	  dur0 = current_ed_samples(cp0);
+	  dur1 = current_ed_samples(cp1);
+	  if (dur0 > dur1) num = dur1; else num = dur0;
+	}
       c0 = init_sample_read(beg0,cp0,READ_FORWARD);
       c1 = init_sample_read(beg0,cp1,READ_FORWARD);
       swap_channels(cp0->state,beg0,num,c0,c1);
       free_snd_fd(c0);
       free_snd_fd(c1);
-      return(SCM_BOOL_F);
     }
-  return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_swap_channels))));
+  return(SCM_BOOL_F);
 }
 
 static SCM mouse_press_hook,mark_click_hook;

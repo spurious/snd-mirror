@@ -53,7 +53,7 @@
                 (set! descr (cons (mark-sample id i) descr))
                 (set! descr (cons #f descr))))
           (cons header descr))
-        'cant-find-mark)))
+        (throw 'no-such-mark (list "describe-mark" id)))))
 
 
 ;;; -------- click marks between start-sync and stop-sync to sync them together
@@ -93,34 +93,30 @@
 	   (m2-samp (mark-sample m2))
 	   (m1-home (mark->sound m1))
 	   (m2-home (mark->sound m2)))
-      (if (eq? m1-home 'no-such-mark)
-	  (snd-print (format #f "mark ~A is not accessible" m1))
-	  (if (eq? m2-home 'no-such-mark)
-	      (snd-print (format #f "mark ~A is not accessible" m2))
-	      (if (not (equal? m1-home m2-home))
-		  (snd-print (format #f "mark ~A is in ~A[~A] but mark ~A is in ~A[~A]?" 
-				     m1 (car m1-home) (cadr m1-home)
-				     m2 (car m2-home) (cadr m2-home)))
-		  (let* ((mark-samps (- m2-samp m1-samp))
-			 (selection-samps (selection-length))
-			 (reg-data (region-samples->vct))
-			 (reader (make-sample-reader m1-samp))
-			 (new-data (make-vct mark-samps))
-			 (gr (make-granulate :expansion (/ mark-samps selection-samps)))
-			 (inctr 0))
-		    (do ((i 0 (1+ i)))
-			((= i mark-samps))
-		      (vct-set! new-data i 
-				(+ (next-sample reader)
-				   (granulate gr
-					      (lambda (dir)
-						(if (>= inctr selection-samps)
-						    0.0
-						    (let ((val (vct-ref reg-data inctr)))
-						      (set! inctr (+ inctr dir))
-						      val)))))))
-		    (free-sample-reader reader)
-		    (vct->samples m1-samp mark-samps new-data (car m1-home) (cadr m1-home)))))))))
+      (if (not (equal? m1-home m2-home))
+	  (snd-print (format #f "mark ~A is in ~A[~A] but mark ~A is in ~A[~A]?" 
+			     m1 (car m1-home) (cadr m1-home)
+			     m2 (car m2-home) (cadr m2-home)))
+	  (let* ((mark-samps (- m2-samp m1-samp))
+		 (selection-samps (selection-length))
+		 (reg-data (region-samples->vct))
+		 (reader (make-sample-reader m1-samp))
+		 (new-data (make-vct mark-samps))
+		 (gr (make-granulate :expansion (/ mark-samps selection-samps)))
+		 (inctr 0))
+	    (do ((i 0 (1+ i)))
+		((= i mark-samps))
+	      (vct-set! new-data i 
+			(+ (next-sample reader)
+			   (granulate gr
+				      (lambda (dir)
+					(if (>= inctr selection-samps)
+					    0.0
+					    (let ((val (vct-ref reg-data inctr)))
+					      (set! inctr (+ inctr dir))
+					      val)))))))
+	    (free-sample-reader reader)
+	    (vct->samples m1-samp mark-samps new-data (car m1-home) (cadr m1-home)))))))
 
 
 ;;; -------- pad-marks inserts silence before each in a list of marks

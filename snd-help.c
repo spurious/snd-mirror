@@ -192,6 +192,9 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+31-Jul:  amp env subsampling, C-x v, and superimposed fft bugs (thanks to Daniel Aronovitch).\n\
+         control panel funcs (set-amp etc) can take snd arg = #t -> all sounds.\n\
+         snd-gtk.scm make-control-dialog to expose hidden control-panel variables.\n\
 28-Jul:  use throw for error handling.\n\
 27-Jul:  (read-set! keywords 'prefix) is now built-in.\n\
 26-Jul:  Snd now uses clm for all control-panel functions (play/apply).\n\

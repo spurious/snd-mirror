@@ -53,7 +53,7 @@
 	  (if (string=? name (mix-name n))
 	      (return-name n)))
 	(mixes))
-       'no-such-mix))))
+       (throw 'no-such-mix (list "mix-name->id" name))))))
 
 ;;; pan mix (if input is not mono, only chan 0 is mixed)
 
@@ -92,7 +92,7 @@
 	    (vct-set! v i (next-mix-sample reader)))
 	  (free-mix-sample-reader reader)
 	  v)
-	#f)))
+	#f)))  ;throw 'no-such-mix?
 	  
 
 
@@ -194,7 +194,7 @@
 			(track-pos (cdr trk)))))))
       (let ((pos (track-pos track)))
 	(if (null? pos)
-	    #f
+	    #f                   ;throw 'no-such-track?
 	    (apply min pos))))))
 
 (define set-track-position
@@ -224,7 +224,7 @@
 			(track-pos (cdr trk)))))))
       (let ((pos (track-pos track)))
 	(if (null? pos)
-	    #f
+	    #f                   ;throw 'no-such-track?
 	    (apply max pos))))))
 
 (define track-length

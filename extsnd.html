@@ -381,7 +381,9 @@ you can say (setf (auto-resize) #f) instead of
   <a name="usesincinterp">use-sinc-interp</a>       #t      If #t, the control panel speed slider uses high quality src, rather 
                                 than linear interpolation.  This can significantly increase the computational burden
                                 on the computer; if you're trying to play 8 channel 44Khz sounds on an older machine, 
-                                it may help to set use-sinc-interp to #f.
+                                it may help to set use-sinc-interp to #f.  In fact, if you're running a machine in the
+                                100 MHz range, even stereo 44.1kHz can be a problem -- if the sound has clicks or seems
+                                horribly distorted when the "speed" control is not at 1.0, try setting this variable to #f.
   <a name="verbosecursor">verbose-cursor</a>        #f      If #t, the cursor's position and other information is
                                 constantly displayed in the minibuffer.  This is the View menu's Verbose cursor option.
   <a name="vufont">vu-font</a>               nil     The "vu-" variables refer to the VU meters in the recorder.
@@ -443,6 +445,14 @@ amplitude, amplitude envelope, and sampling rate) -- next-mix-sample, for
 example, refers to the processed form of the mix data, whereas next-sample
 would refer to the original form.  I may extend this to accept a list of (more than one) mixes.
 </p>
+
+<p>In the control panel functions such as amp and set-contrast, the <i>snd</i> argument
+can be #t.  In this case the set-&lt;field&gt; functions affect all sounds at once, and the
+&lt;field&gt; functions return a list of all the current control panels settings for that
+field.  Similarly for the channel functions such as ffting, so <code>(set-ffting #t #t #t)</code>
+turns on the fft display in all channels of all sounds.
+</p>
+
 <p>When an error occurs, in most cases the function throws a tag such as 'no-such-sound,
 'impossible-bounds, 'no-active-selection, etc.
 The error tag is mentioned with the function in the form [<em class=error>no-such-channel</em>].
@@ -510,7 +520,8 @@ of these below.
 
   <a name="sndamp">amp</a>               (<i>snd</i>)         current amp (control panel slider) value.
                                   It is possible to use these controls (in "real-time") in your own functions.
-                                  See amprt in examp.scm for a simple example.
+                                  See amprt in examp.scm for a simple example.  In all the control-panel functions,
+                                  the <i>snd</i> argument can be #t meaning "all sounds".
   <a name="sndappendtominibuffer">append-to-minibuffer</a> (msg <i>snd</i>)  append <i>msg</i> to whatever is in <i>snd</i>'s minibuffer [<em class=error>no-such-sound</em>].
   <a name="asoneedit">as-one-edit</a>       (func)        apply <i>func</i> (a function of no arguments), treating it as
                                   one edit (in all channels) in the edit history mechanism.
@@ -638,7 +649,7 @@ of these below.
   <a name="sndexpandlength">expand-length</a>     (<i>snd</i>)         <i>snd</i>'s <a href="snd.html#expand">expansion</a> segment length (seconds).
   <a name="sndexpandramp">expand-ramp</a>       (<i>snd</i>)         <i>snd</i>'s <a href="snd.html#expand">expansion</a> ramp amount (between 0 and .5).
                                   This affects the smoothness of the grain overlaps -- .001 gives a 
-                                  rattling effect.
+                                  rattling effect (see make-control-dialog in snd-gtk.scm).
   <a name="sndexpanding">expanding</a>         (<i>snd</i>)         #t if <i>snd</i>'s expand button is on.
   <a name="sndfft">fft</a>               (rl im <i>sgn</i>)   perform an FFT on <i>rl</i> and <i>im</i> (the real and imaginary parts 
                                   of the input data. <i>sgn</i> is 1 for an FFT, -1 for an inverse FFT; (default 1).
@@ -1456,18 +1467,27 @@ first "thunk's" body), and return 0 if it occurs; otherwise we return
 of errors such as 'out-of-range, 'wrong-type-arg, 'numerical-overflow,
 etc.  The Snd-specific errors are:</p>
 <pre>
-'no-such-channel 'no-such-sound 'no-such-mark       'no-such-mix
-'no-such-menu    'no-such-file  'no-such-region     'no-such-sample
-'no-such-edit    'cannot-save   'impossible-bounds  'no-active-selection
-'no-such-widget  'snd-eval-error
+'no-such-channel 'no-such-sound  'no-such-mark       'no-such-mix
+'no-such-menu    'no-such-file   'no-such-region     'no-such-sample
+'no-such-edit    'cannot-save    'impossible-bounds  'no-active-selection
+'no-such-widget  'snd-eval-error 'mus-error          'no-such-track
 </pre>
 <p>The symbol #t stands for all errors in this case, so we can 
 run rough-shod over any error with:</p>
 <pre>
 (defmacro without-errors (func)
   `(catch #t 
-	  (lambda () ,func)
-	  (lambda (tag val) tag)))
+	  (lambda ()
+	    ,func)
+	  (lambda args (car args))))
+</pre>
+<p>You can use these errors in your code, if you like.  The following
+throws the error 'no-such-file:</p>
+<pre>
+(define look-for-file
+  (lambda (file)
+    (or (file-exists? file)
+	(throw 'no-such-file (list "look-for-file" file)))))
 </pre>
 <hr>
 
@@ -1907,6 +1927,9 @@ lengths will be more or less the same (as in the mapping operations).
 Use snd-tempnam to get a temporary filename that reflects the current
 temp-dir setting (if any).  The env-sound-interp function in examp.scm
 is an example of this.</p>
+
+<p>The mapping and scanning functions may return 'snd-eval-error if
+something went wrong.</p>
 <hr>
 
 <h4><a name="samplereaders">Sample-readers</a></h4>

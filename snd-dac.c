@@ -3,6 +3,8 @@
  *         set up line_size in mus_make_comb to 5.0*srate/25641, then
  *         then as running, at each block reset to initial - new scaled
  *         (negative pm = longer delay)
+ *
+ * Guile-gtk dialog for explen et al
  */
 
 #include "snd.h"
@@ -277,6 +279,13 @@ static Float expand_input_as_needed(void *arg, int dir)
     }
 }
 
+static int max_expand_len(snd_info *sp)
+{
+  if (sp->local_explen > .5)
+    return(0);
+  return(SND_SRATE(sp) * .5);
+}
+
 static void *make_expand(snd_info *sp,Float sampling_rate,Float initial_ex, dac_info *dp, int chan)
 {
   spd_info *spd;
@@ -288,7 +297,7 @@ static void *make_expand(snd_info *sp,Float sampling_rate,Float initial_ex, dac_
   spd->gen = mus_make_granulate(&expand_input_as_needed,
 				initial_ex,sp->local_explen,
 				.6,sp->local_exphop,sp->local_exprmp,.1,
-				0,(void *)spd);
+				max_expand_len(sp),(void *)spd);
   spd->dp = dp;
   spd->chan = chan;
   spd->speeding = 0;
@@ -349,6 +358,7 @@ static void expand(dac_info *dp, Float sr, Float ex)
 	  spd = (spd_info *)(dp->spds[chan]);
 	  spd->speeding = speeding;
 	  spd->sr = sr;
+	  /* mus_set_increment(spd->gen,ex); */
 	  dp->fvals[chan] = mus_granulate(spd->gen,&expand_input_as_needed);
 	}
 #if HAVE_GUILE
@@ -392,6 +402,7 @@ static int get_prime(int num)
 #define BASE_DLY_LEN 14
 static int base_dly_len[BASE_DLY_LEN] = {1433, 1601, 1867, 2053, 2251, 2399, 347, 113, 37, 59, 43, 37, 29, 19};
 static int dly_len[BASE_DLY_LEN];
+static Float comb_factors[6] = {0.822,0.802,0.773,0.753,0.753,0.733};
 
 static void *make_reverb(snd_info *sp, Float sampling_rate, int chans)
 { 
@@ -421,12 +432,12 @@ static void *make_reverb(snd_info *sp, Float sampling_rate, int chans)
   r->combs = (mus_any **)CALLOC(r->num_combs,sizeof(mus_any *));
   r->num_allpasses = 4+chans;
   r->allpasses = (mus_any **)CALLOC(r->num_allpasses,sizeof(mus_any *));
-  r->combs[0] = mus_make_comb(.822*reverb_factor,dly_len[0],NULL,dly_len[0]);
-  r->combs[1] = mus_make_comb(.802*reverb_factor,dly_len[1],NULL,dly_len[1]);
-  r->combs[2] = mus_make_comb(.773*reverb_factor,dly_len[2],NULL,dly_len[2]);
-  r->combs[3] = mus_make_comb(.753*reverb_factor,dly_len[3],NULL,dly_len[3]);
-  r->combs[4] = mus_make_comb(.753*reverb_factor,dly_len[4],NULL,dly_len[4]);
-  r->combs[5] = mus_make_comb(.733*reverb_factor,dly_len[5],NULL,dly_len[5]);
+  r->combs[0] = mus_make_comb(comb_factors[0]*reverb_factor,dly_len[0],NULL,dly_len[0]);
+  r->combs[1] = mus_make_comb(comb_factors[1]*reverb_factor,dly_len[1],NULL,dly_len[1]);
+  r->combs[2] = mus_make_comb(comb_factors[2]*reverb_factor,dly_len[2],NULL,dly_len[2]);
+  r->combs[3] = mus_make_comb(comb_factors[3]*reverb_factor,dly_len[3],NULL,dly_len[3]);
+  r->combs[4] = mus_make_comb(comb_factors[4]*reverb_factor,dly_len[4],NULL,dly_len[4]);
+  r->combs[5] = mus_make_comb(comb_factors[5]*reverb_factor,dly_len[5],NULL,dly_len[5]);
   r->onep = mus_make_one_pole(lp_coeff,lp_coeff-1.0);
   r->allpasses[0] = mus_make_all_pass(-0.700,0.700,dly_len[6],NULL,dly_len[6]);
   r->allpasses[1] = mus_make_all_pass(-0.700,0.700,dly_len[7],NULL,dly_len[7]);
@@ -780,6 +791,101 @@ void stop_playing_region(int n)
 	}
     }
 }
+
+enum {DAC_EXPAND,DAC_EXPAND_RAMP,DAC_EXPAND_LENGTH,DAC_EXPAND_HOP,DAC_EXPAND_SCALER,DAC_CONTRAST_AMP,DAC_REVERB_FEEDBACK,DAC_REVERB_LOWPASS};
+
+static void dac_set_field(snd_state *ss, snd_info *sp, Float newval, int field)
+{
+  /* if sp == NULL, sets globally */
+  int i,j,val;
+  dac_info *dp;
+  rev_info *r;
+  if (play_list)
+    {
+      if (field == DAC_REVERB_LOWPASS)
+	{
+	  if ((global_reverbing) && (global_reverb))
+	    {
+	      r = (rev_info *)global_reverb;
+	      lp_coeff = newval;
+	      mus_set_a0(r->onep,lp_coeff);
+	      mus_set_b1(r->onep,1.0 - lp_coeff);
+	    }
+	}
+      else
+	{
+	  if (field == DAC_REVERB_FEEDBACK)
+	    {
+	      if ((global_reverbing) && (global_reverb))
+		{
+		  r = (rev_info *)global_reverb;
+		  for (j=0;j<6;j++)
+		    mus_set_feedback(r->combs[j],comb_factors[j]*newval);
+		}
+	    }
+	  else
+	    {
+	      for (i=0;i<=max_active_slot;i++)
+		{
+		  dp = play_list[i];
+		  if ((dp) && ((sp == NULL) || (sp == dp->sp)))
+		    {
+		      switch (field)
+			{
+			case DAC_EXPAND: 
+			  if (dp->spds)
+			    for (j=0;j<dp->chans;j++) 
+			      mus_set_increment(((spd_info *)dp->spds[j])->gen,newval); 
+			  break;
+			case DAC_EXPAND_LENGTH: /* segment length */
+			  val = SND_SRATE(sp) * newval;
+			  if (dp->spds)
+			    for (j=0;j<dp->chans;j++) 
+			      {
+				mus_set_length(((spd_info *)dp->spds[j])->gen,val);
+				mus_set_ramp(((spd_info *)dp->spds[j])->gen,val * sp->local_exprmp);
+			      }
+			  break;
+			case DAC_EXPAND_RAMP: 
+			  val = newval * sp->local_explen * SND_SRATE(sp);
+			  if (dp->spds)
+			    for (j=0;j<dp->chans;j++) 
+			      mus_set_ramp(((spd_info *)dp->spds[j])->gen,val); 
+			  break;
+			case DAC_EXPAND_HOP: /* output hop */
+			  val = SND_SRATE(sp) * newval;
+			  if (dp->spds)
+			    for (j=0;j<dp->chans;j++) 
+			      {
+				mus_set_hop(((spd_info *)dp->spds[j])->gen,val); 
+				mus_set_increment(((spd_info *)dp->spds[j])->gen,sp->expand);
+			      }
+			  break;
+			case DAC_EXPAND_SCALER:
+			  if (dp->spds)
+			    for (j=0;j<dp->chans;j++) 
+			      mus_set_scaler(((spd_info *)dp->spds[j])->gen,newval); 
+			  break;
+			case DAC_CONTRAST_AMP:
+			  dp->contrast_amp = newval;
+			  break;
+			}
+		    }
+		}
+	    }
+	}
+    }
+}
+
+void dac_set_expand(snd_state *ss, snd_info *sp, Float newval) {dac_set_field(ss,sp,newval,DAC_EXPAND);}
+void dac_set_expand_length(snd_state *ss, snd_info *sp, Float newval) {dac_set_field(ss,sp,newval,DAC_EXPAND_LENGTH);}
+void dac_set_expand_ramp(snd_state *ss, snd_info *sp, Float newval) {dac_set_field(ss,sp,newval,DAC_EXPAND_RAMP);}
+void dac_set_expand_hop(snd_state *ss, snd_info *sp, Float newval) {dac_set_field(ss,sp,newval,DAC_EXPAND_HOP);}
+void dac_set_expand_scaler(snd_state *ss, snd_info *sp, Float newval) {dac_set_field(ss,sp,newval,DAC_EXPAND_SCALER);} /* not currently accessible */
+void dac_set_contrast_amp(snd_state *ss, snd_info *sp, Float newval) {dac_set_field(ss,sp,newval,DAC_CONTRAST_AMP);}
+void dac_set_reverb_feedback(snd_state *ss, snd_info *sp, Float newval) {dac_set_field(ss,sp,newval,DAC_REVERB_FEEDBACK);}
+void dac_set_reverb_lowpass(snd_state *ss, snd_info *sp, Float newval) {dac_set_field(ss,sp,newval,DAC_REVERB_LOWPASS);}
+
 
 static int find_slot_to_play(void)
 {
@@ -1931,7 +2037,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
       name = mus_file_full_name(urn);
       free(urn);
       sp = make_sound_readable(get_global_state(),name,FALSE);
-      if (sp == NULL) {if (name) FREE(name); return(scm_throw(NO_SUCH_FILE,SCM_LIST1(gh_str02scm(S_play))));}
+      if (sp == NULL) {if (name) FREE(name); return(scm_throw(NO_SUCH_FILE,SCM_LIST2(gh_str02scm(S_play),samp_n)));}
       sp->shortname = filename_without_home_directory(name);
       sp->fullname = NULL;
       sp->delete_me = 1;
@@ -1960,8 +2066,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
 	}
       else 
 	{
-	  cp = get_cp(snd_n,chn_n);
-	  if (cp == NULL) return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST1(gh_str02scm(S_play))));
+	  cp = get_cp(snd_n,chn_n,S_play);
 	  if (syncd)
 	    start_playing_syncd(cp->sound,samp,background,end);
 	  else
