@@ -311,6 +311,8 @@ static int snd_expand_changed(snd_info *sp, int val)
   if (val < EXPAND_SCROLLBAR_SPLIT)
     sp->expand_control = (Float)val * EXPAND_SCROLLBAR_MULT;
   else sp->expand_control = exp((Float)(val - EXPAND_SCROLLBAR_MID) / EXPAND_SCROLLBAR_BREAK);
+  if (sp->expand_control < MINIMUM_EXPAND_CONTROL)
+    sp->expand_control = MINIMUM_EXPAND_CONTROL;
   if (sp->playing) dac_set_expand(sp, sp->expand_control);
   sfs = prettyf(sp->expand_control, 2);
   fill_number(sfs, expand_number_buffer);
@@ -322,7 +324,11 @@ static int snd_expand_changed(snd_info *sp, int val)
 void set_snd_expand(snd_info *sp, Float val)
 {
   if (IS_PLAYER(sp))
-    sp->expand_control = val;
+    {
+      if (val > MINIMUM_EXPAND_CONTROL)
+	sp->expand_control = val;
+      else sp->expand_control = MINIMUM_EXPAND_CONTROL;
+    }
   else XtVaSetValues(EXPAND_SCROLLBAR(sp),
 		     XmNvalue,
 		     snd_expand_changed(sp, snd_expand_to_int(mus_fclamp(0.0, val, 20.0))),

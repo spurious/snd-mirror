@@ -3119,11 +3119,6 @@ mixed without creating any mix tags.  <i>track</i> is the mix track number.
 <code>(set! (mix-amp-env 0 0) '(0 0 1 1))</code> sets mix 0's 0-chan envelope to a ramp.
 </td></tr>
 
-<!-- mix-anchor -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixanchor">mix-anchor</a></em> (<i>mix</i>)</code></span></td></tr>
-<tr><td></td><td>anchor (tag) position (within the mix) of <i>mix</i>; a sample number.
-</td></tr>
-
 <!-- mix-chans -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixchans">mix-chans</a></em> (<i>mix</i>)</code></span></td></tr>
 <tr><td></td><td>chans in <i>mix</i>.
@@ -3196,6 +3191,11 @@ mix (add) selection starting at beg in snd's channel chn.  Return new mix id.
 <tr><td></td><td>tag height in graph of <i>mix</i> (default 14)
 </td></tr>
 
+<!-- mix-tag-position -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixtagposition">mix-tag-position</a></em> (<i>mix</i>)</code></span></td></tr>
+<tr><td></td><td>tagposition (tag) position (within the mix) of <i>mix</i>; a sample number.
+</td></tr>
+
 <!-- mix-tag-width -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixtagwidth">mix-tag-width</a></em> (<i>mix</i>)</code></span></td></tr>
 <tr><td></td><td>tag width in graph of <i>mix</i> (default 6)
@@ -3203,7 +3203,7 @@ mix (add) selection starting at beg in snd's channel chn.  Return new mix id.
 
 <!-- mix-tag-y -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixtagy">mix-tag-y</a></em> (<i>mix</i>)</code></span></td></tr>
-<tr><td></td><td>tag y offset in graph of <i>mix</i> (default 0).  The x offset of the tag is determined by <a href="sndmixanchor">mix-anchor</a>.
+<tr><td></td><td>tag y offset in graph of <i>mix</i> (default 0).  The x offset of the tag is determined by <a href="sndmixtagposition">mix-tag-position</a>.
 </td></tr>
 
 <!-- mix-track -->

@@ -1,5 +1,7 @@
 Snd change log
 
+  5-Nov:     Jack audio support thanks to Kjetil S. Matheussen.
+             mix-anchor -> mix-tag-position.
   4-Nov:     copy-mix, copy-track.
   31-Oct:    removed 'snd' arg to make-track-sample-reader.
   30-Oct:    added Kjetil S. Matheussen's snd_conffile.scm.

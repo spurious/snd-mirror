@@ -1861,6 +1861,10 @@ a " S_close_sound_file ". data can be written with " S_vct2sound_file
   hdr->type = type;
   if (comment)
     hdr->comment = copy_string(comment);
+#if DEBUGGING
+  else hdr->comment = mus_format("(%s %s %s %s)", 
+				 S_open_sound_file, XEN_AS_STRING(g_name), XEN_AS_STRING(g_chans), XEN_AS_STRING(g_srate));
+#endif
   ss->catch_message = NULL;
   result = open_temp_file(name, chans, hdr);
   if (result == -1) 

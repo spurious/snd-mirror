@@ -6064,6 +6064,11 @@ mus_any *mus_make_granulate(Float (*input)(void *arg, int direction),
   int outlen;
   outlen = (int)(sampling_rate * (hop + length));
   if (max_size > outlen) outlen = max_size;
+  if (expansion <= 0.0)
+    {
+      mus_error(MUS_ARG_OUT_OF_RANGE, S_make_granulate " expansion arg invalid: %f", expansion);
+      return(NULL);
+    }
   if (outlen <= 0) 
     {
       mus_error(MUS_NO_LENGTH, S_make_granulate " size is %d (hop: %f, segment-length: %f)?", outlen, hop, length);

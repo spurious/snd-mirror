@@ -25,6 +25,7 @@ AC_SUBST(VERSION)
 #   --with-static-motif   use Motif statically loaded (for RPM generation)
 #   --with-gtk            use Gtk+	
 #   --with-alsa           use ALSA if possible
+#   --with-jack           use Jack
 #   --with-static-alsa    use ALSA statically loaded (for RPM generation)
 #   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
 #   --with-doubles        use doubles throughout (default is floats)
@@ -62,6 +63,7 @@ AC_SUBST(VERSION)
 
 AC_ARG_WITH(esd,        [  --with-esd		  use ESD])
 AC_ARG_WITH(alsa,       [  --with-alsa		  use ALSA])
+AC_ARG_WITH(jack,       [  --with-jack		  use JACK])
 AC_ARG_WITH(static-alsa,[  --with-static-alsa	  use ALSA statically loaded])
 AC_ARG_WITH(gtk,        [  --with-gtk		  use Gtk+ to build Snd])
 AC_ARG_WITH(no-gui,     [  --with-no-gui  	  make Snd without any graphics support])
@@ -215,6 +217,7 @@ AC_CHECK_HEADER(/var/lib/oss/include/sys/soundcard.h,[AC_DEFINE(VAR_LIB_OSS)])
 AC_CHECK_HEADER(sys/sam9407.h,[AC_DEFINE(HAVE_SAM_9407)])
 AC_CHECK_HEADER(gnu/libc-version.h,[AC_DEFINE(HAVE_GNU_LIBC_VERSION_H)])
 AC_CHECK_HEADER(alsa/asoundlib.h,[AC_DEFINE(HAVE_ALSA_ASOUNDLIB_H)])
+
 AC_HEADER_TIME
 
 AC_CHECK_DECLS(hypot,,,[#include <math.h>]) 
@@ -773,6 +776,7 @@ dnl this only matters for those cases where we've implemented the audio code in 
 dnl test for ALSA courtesy of Paul Barton-Davis
 dnl test for ESD courtesy of Nick Bailey
 dnl test for BSD courtesy of Steven Schultz
+dnl test for Jack courtesy of Kjetil S. Matheussen
 
 if test "$with_esd" = yes ; then
   AC_CHECK_LIB(esd,main,[
@@ -813,6 +817,16 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
                     [audio_system=ALSA],
    	            [AC_MSG_WARN(can't find the ALSA header files)])])],
           [AC_MSG_WARN(can't find the ALSA library)])
+	else
+	  if test "$with_jack" = yes ; then 
+            AC_CHECK_LIB(jack,main,[ 
+	      AC_CHECK_HEADER(jack/jack.h,
+                  [audio_system=JACK],
+   	          [with_jack=no
+                   AC_MSG_WARN(can't find the JACK header files)])],
+              [with_jack=no
+	       AC_MSG_WARN(can't find the JACK library)])
+          fi
         fi
 
 	case $audio_system in
@@ -849,10 +863,23 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
        		      snd_config_get_id_args=2)
                     AC_MSG_RESULT($snd_config_get_id_args)
                     AC_DEFINE_UNQUOTED(SND_CONFIG_GET_ID_ARGS,$snd_config_get_id_args)
-		else
-        	    audio_system=OSS
-		    AC_DEFINE(HAVE_OSS)
-		fi
+
+		    if test "$with_jack" = yes ; then 
+		      if test "$with_static_alsa" = yes ; then
+			 AUDIO_LIB="/usr/lib/libasound.a -ljack"
+		      else
+			 AUDIO_LIB="-lasound -ljack"
+	              fi
+		      AC_DEFINE(HAVE_JACK)
+		    fi
+ 		else
+         	    audio_system=OSS
+ 		    AC_DEFINE(HAVE_OSS)
+ 		fi
+ 		;;
+	    JACK)
+		AC_DEFINE(HAVE_JACK)
+		AUDIO_LIB="-ljack"
 		;;
 	    OSS)
 		AC_DEFINE(HAVE_OSS)
@@ -1132,4 +1159,3 @@ fi
 
 AC_SUBST(MAKE_TARGET)
 AC_OUTPUT
-

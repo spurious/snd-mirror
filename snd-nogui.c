@@ -306,7 +306,7 @@ void set_transform_type(int val) {in_set_transform_type(val);}
 void set_wavelet_type(int val) {in_set_wavelet_type(val);}
 void set_transform_graph_type(graph_type_t val) {in_set_transform_graph_type(val);}
 void set_snd_amp(snd_info *sp, Float val) {sp->amp_control = val;}
-void set_snd_expand(snd_info *sp, Float val) {sp->expand_control = val;}
+void set_snd_expand(snd_info *sp, Float val) {if (val > MINIMUM_EXPAND_CONTROL) sp->expand_control = val; else sp->expand_control = MINIMUM_EXPAND_CONTROL;}
 void set_snd_contrast(snd_info *sp, Float val) {sp->contrast_control = val;}
 void set_snd_srate(snd_info *sp, Float val) {sp->speed_control = val;}
 void set_snd_revlen(snd_info *sp, Float val) {sp->reverb_control_length = val;}

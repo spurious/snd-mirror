@@ -8,7 +8,7 @@
 ;;;
 ;;; (pan-mix file frame envelope) mixes file into current sound starting at frame using envelope to pan (0: all chan 0, 1: all chan 1)
 ;;; (mix->vct id) return mix data in vct
-;;; (snap-mix-to-beat (at-anchor)) forces dragged mix to end up on a beat
+;;; (snap-mix-to-beat (at-tag-position)) forces dragged mix to end up on a beat
 ;;; (delete-all-mixes) removes all mixes
 ;;; (find-mix sample snd chn) returns the id of the mix at the given sample, or #f
 ;;; (save-mix mix filename) saves mix data in file filename
@@ -216,11 +216,11 @@ in the other channel. 'chn' is the start channel for all this (logical channel 0
       (throw 'no-such-mix (list "mix-maxamp" id))))
 	  
 
-(define* (snap-mix-to-beat #:optional (at-anchor #f))
+(define* (snap-mix-to-beat #:optional (at-tag-position #f))
   "(snap-mix-to-beat) forces a dragged mix to end up on a beat (see beats-per-minute).  reset mix-release-hook to cancel"
   (add-hook! mix-release-hook
 	     (lambda (id samps-moved)
-	       (let* ((offset (if at-anchor (mix-anchor id) 0))
+	       (let* ((offset (if at-tag-position (mix-tag-position id) 0))
 		      (samp (+ samps-moved (mix-position id) offset))
 		      (snd (car (mix-home id)))
 		      (chn (cadr (mix-home id)))

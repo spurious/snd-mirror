@@ -606,10 +606,7 @@ void snd_doit(int argc, char **argv)
   ss->Graph_Cursor = XC_crosshair;
 
 #ifndef SND_AS_WIDGET
-#if SCO5 || UW2 || SUN || HPUX || ALPHA
-  /*
-  ** Use of the lower level Xt routines does not work.
-  */
+#if SCO5 || UW2 || ALPHA
   XtSetArg(args[0], XtNwidth, 640);
   XtSetArg(args[1], XtNheight, 256);
   shell = XtAppInitialize(&app, "Snd", NULL, 0, &argc, argv, NULL, args, 2);

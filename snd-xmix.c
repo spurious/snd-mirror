@@ -933,7 +933,6 @@ Widget make_track_panel(void)
 
 static XEN g_set_mix_panel_mix(XEN val)
 {
-  /* TODO: snd-test is claiming this doesn't work? or doesn't reset the mix id entry field */
   mix_panel_id = XEN_TO_C_INT(val);
   update_mix_panel(mix_panel_id);
   return(val);

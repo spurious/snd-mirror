@@ -618,7 +618,9 @@ static void set_snd_expand_1(snd_info *sp, Float expand, bool setadj)
   Float scrollval;
   char *sfs;
   GtkObject *adj;
-  sp->expand_control = expand;
+  if (expand > MINIMUM_EXPAND_CONTROL)
+    sp->expand_control = expand;
+  else sp->expand_control = MINIMUM_EXPAND_CONTROL;
   if (sp->playing) dac_set_expand(sp, sp->expand_control);
   if (expand < .1)
     scrollval = expand * 1.03;
@@ -638,7 +640,11 @@ static void set_snd_expand_1(snd_info *sp, Float expand, bool setadj)
 void set_snd_expand(snd_info *sp, Float val) 
 {
   if (IS_PLAYER(sp))
-    sp->expand_control = val;
+    {
+      if (val > MINIMUM_EXPAND_CONTROL)
+	sp->expand_control = val;
+      else sp->expand_control = MINIMUM_EXPAND_CONTROL;
+    }
   else set_snd_expand_1(sp, val, true);
 }
 

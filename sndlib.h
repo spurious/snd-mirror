@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 18
-#define SNDLIB_REVISION 10
-#define SNDLIB_DATE "24-Oct-03"
+#define SNDLIB_REVISION 11
+#define SNDLIB_DATE "5-Nov-03"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -117,19 +117,10 @@
 /* this block needed because not everyone uses configure, and those who don't often have no clue what audio system they're using */
 /*   so, if nothing is set but we're on a system that looks linux-like and we can find the OSS headers, use OSS */
 
-#ifndef ESD
-#ifndef HAVE_OSS
-#ifndef HAVE_ALSA
+#if (!(defined(ESD))) && (!(defined(HAVE_OSS))) && (!(defined(HAVE_ALSA))) && (!(defined(HAVE_JACK)))
   #if defined(LINUX) || defined(SCO5) || defined(UW2) || defined(HAVE_SOUNDCARD_H) || defined(HAVE_SYS_SOUNDCARD_H) || defined(HAVE_MACHINE_SOUNDCARD_H) || defined(USR_LIB_OSS) || defined(USR_LOCAL_LIB_OSS) || defined(OPT_OSS) || defined(VAR_LIB_OSS) || defined(__FreeBSD__) || defined(__bsdi__)
     #define HAVE_OSS 1
-  #else
-    #define HAVE_OSS 0
   #endif
-#else
-  /* this branch may be obsolete with Fernando's new OSS+Alsa code -- need to test it */
-  #define HAVE_OSS 0
-#endif
-#endif
 #endif
 
 #if (!defined(M_PI))
@@ -459,9 +450,10 @@ char *mus_array_to_file_with_error(const char *filename, mus_sample_t *ddata, in
 
 /* -------- audio.c -------- */
 
-#if (HAVE_OSS || HAVE_ALSA)
+#if (HAVE_OSS || HAVE_ALSA || HAVE_JACK)
   #define ALSA_API 0
   #define OSS_API 1
+  #define JACK_API 2
 #endif
 
 void mus_audio_describe(void);

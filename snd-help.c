@@ -375,6 +375,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+5-Nov:   Jack audio support thanks to Kjetil S. Matheussen.\n\
+         mix-anchor -> mix-tag-position.\n\
 4-Nov:   copy-mix, copy-track.\n\
 31-Oct:  removed 'snd' arg to make-track-sample-reader.\n\
 30-Oct:  added Kjetil S. Matheussen's snd_conffile.scm.\n\

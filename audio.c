@@ -1,4 +1,4 @@
-/* Audio hardware handlers (SGI, OSS, ALSA, Sun, Mac, Windows, HPUX, Mac OSX, ESD) */
+/* Audio hardware handlers (SGI, OSS, ALSA, Sun, Mac, Windows, HPUX, Mac OSX, Jack, ESD) */
 
 /*
  * layout of this file:
@@ -12,10 +12,9 @@
  *    Windows 95/98
  *    OSX
  *    ESD
+ *    JACK
  *    audio describers
  */
-
-/* SOMEDAY: linux jack support */
 
 /*
  * void mus_audio_describe(void) describes the audio hardware state.
@@ -1415,7 +1414,7 @@ void mus_audio_restore (void)
 
 /* ------------------------------- OSS ----------------------------------------- */
 
-#if (HAVE_OSS || HAVE_ALSA)
+#if (HAVE_OSS || HAVE_ALSA || HAVE_JACK)
 /* actually it's not impossible that someday we'll have ALSA but not OSS... */
 #define AUDIO_OK
 
@@ -3370,7 +3369,7 @@ static void oss_mus_audio_restore (void)
 }
 
 
-/* ------------------------------- both ALSA and OSS ----------------------------------- */
+/* ------------------------------- ALSA, OSS, Jack ----------------------------------- */
 /* API being used */
 
 static int api = ALSA_API;
@@ -3493,9 +3492,20 @@ static void describe_audio_state_1(void)
   vect_describe_audio_state_1();
 }
 
+#if HAVE_JACK
+  static int jack_mus_audio_initialize(void);
+#endif
+
 #if (!HAVE_ALSA)
 static int probe_api(void) 
 {
+#if HAVE_JACK
+  {
+    int jackprobe = jack_mus_audio_initialize();
+    if (jackprobe == MUS_ERROR)
+      {
+	printf("Using the OSS API instead.\n");
+#endif
   /* go for the oss api */
   api = OSS_API;
   vect_mus_audio_initialize = oss_mus_audio_initialize;
@@ -3514,6 +3524,11 @@ static int probe_api(void)
   vect_mus_audio_restore = oss_mus_audio_restore;
   vect_describe_audio_state_1 = oss_describe_audio_state_1;
   return(vect_mus_audio_initialize());
+#if HAVE_JACK
+      }
+    return(jackprobe);
+  }
+#endif
 }
 #endif
 
@@ -3642,6 +3657,13 @@ static void  alsa_describe_audio_state_1(void);
 
 static int probe_api(void) 
 {
+#if HAVE_JACK
+  int jackprobe = jack_mus_audio_initialize();
+  if (jackprobe == MUS_ERROR)
+    {
+      printf("Using the ALSA OR OSS API instead.\n");
+      {
+#endif
     int card = -1;
     if (snd_card_next(&card) >= 0 && card >= 0) {
 	/* the alsa library has detected one or more cards */
@@ -3682,6 +3704,11 @@ static int probe_api(void)
     }
     /* will the _real_ mus_audio_initialize please stand up? */
     return(vect_mus_audio_initialize());
+#if HAVE_JACK
+      }
+    }
+  return jackprobe;
+#endif
 }
 
 /* size of buffer in number of samples per channel, 
@@ -9064,67 +9091,459 @@ void describe_audio_state_1(void)
 
 /* ------------------------------- JACK ----------------------------------------- */
 
-#if HAVE_JACK
-#define AUDIO_OK
-#include <jack/jack.h>
+/* Kjetil S. Matheussen. k.s.matheussen@notam02.no */
+/* Based on code from ceres. */
+ 
+ #if HAVE_JACK
+ #define AUDIO_OK
+ #include <jack/jack.h>
+ 
+/*************/
+/* Jack Part */
+/*************/
 
-static jack_client_t *dac = NULL;
-static jack_port_t *dac_port = NULL;
+#define SNDJACK_MAXSNDS 20
 
-static int write_buffer(jack_nframes_t nframes, void *arg)
+#define SNDJACK_BUFFERSIZE 32768
+
+typedef jack_default_audio_sample_t sample_t;
+typedef jack_nframes_t nframes_t;
+
+static pthread_cond_t sndjack_cond={{0}};
+static pthread_mutex_t sndjack_mutex={0};
+
+static jack_client_t *sndjack_client = NULL;
+
+
+struct SndjackChannel{
+  jack_port_t *port;
+
+  sample_t *buffer;
+};
+
+enum{SJ_STOPPED,SJ_RUNNING,SJ_ABOUTTOSTOP};
+
+// Variables for the ringbuffer:
+static  int sj_writeplace;
+static  int sj_readplace;
+static  int sj_unread;
+static  int sj_buffersize;
+static int sj_jackbuffersize; // number of frames sent to sndjack_process.
+static int sj_xrun=0;
+static int sj_status=SJ_STOPPED;
+
+static int sndjack_num_channels_allocated=0;
+static int sndjack_num_channels_inuse=0;
+static struct SndjackChannel *sndjack_channels=NULL;
+
+#define SJ_MAX(a,b) (((a)>(b))?(a):(b))
+
+static int sndjack_process(jack_nframes_t nframes, void *arg)
 {
-  jack_default_audio_sample_t *dac_out = (jack_default_audio_sample_t *)jack_port_get_buffer(dac_port, nframes);
-  /* write to dac_out -- ack_default_audio_sample_t is assumed to be float */
-  
+  int ch,i;
+  sample_t *out;
+
+  if(sj_status==SJ_STOPPED){
+    for(ch=0;ch<sndjack_num_channels_allocated;ch++){
+      out=(sample_t *) jack_port_get_buffer (sndjack_channels[ch].port,nframes);
+      memset(out,0,nframes*sizeof(sample_t));
+    }
+  }else{
+
+    // First null out unused channels, if any.
+    for(ch=sndjack_num_channels_inuse;ch<sndjack_num_channels_allocated;ch++){
+      out=(sample_t *) jack_port_get_buffer (sndjack_channels[ch].port,nframes);
+      memset(out,0,nframes*sizeof(sample_t));
+    }
+
+    for(i=0;i<nframes;i++){
+      if(sj_unread==0){	
+	int i2;
+	if(sj_status==SJ_RUNNING)
+	  sj_xrun+=nframes-i;
+	for(i2=i;i<nframes;i++){
+	  for(ch=0;ch<sndjack_num_channels_inuse;ch++){
+	    struct SndjackChannel *sjc=&sndjack_channels[ch];
+	    sample_t *out=(sample_t *)jack_port_get_buffer(sjc->port,nframes);
+	    out[i]=0.0f;
+	  }
+	}
+	break;
+      }
+      
+      for(ch=0;ch<sndjack_num_channels_inuse;ch++){
+	struct SndjackChannel *sjc=&sndjack_channels[ch];
+	sample_t *out=(sample_t *)jack_port_get_buffer(sjc->port,nframes);
+	out[i]=sjc->buffer[sj_readplace];
+      }
+      sj_unread--;
+      sj_readplace++;
+      if(sj_readplace==sj_buffersize)
+	sj_readplace=0;
+    }
+    
+    pthread_cond_broadcast(&sndjack_cond);
+
+    if(sj_status==SJ_ABOUTTOSTOP && sj_unread==0)
+      sj_status=SJ_STOPPED;
+  }
+
   return(0);
 }
+ 
+static void sndjack_write(sample_t **buf,int nframes,int latencyframes,int chs){
+  int ch;
+  int i;
 
-static void quit_dac(void *arg)
-{
-  mus_audio_close(0);
+  if(sj_xrun>0){
+    if(sj_status==SJ_RUNNING)
+      printf("Warning. %d frames delayed.\n",sj_xrun);
+    sj_xrun=0;
+  }
+
+  for(i=0;i<nframes;i++){
+    while(
+	  sj_unread==sj_buffersize
+	  || sj_unread >= SJ_MAX(sj_jackbuffersize*2, latencyframes)
+	  )
+      {
+	pthread_cond_wait(&sndjack_cond,&sndjack_mutex);
+      }
+
+    for(ch=0;ch<chs;ch++){
+      struct SndjackChannel *sjc=&sndjack_channels[ch];
+      sjc->buffer[sj_writeplace]=buf[ch][i];
+    }
+    sj_unread++;
+    sj_writeplace++;
+    if(sj_writeplace==sj_buffersize)
+      sj_writeplace=0;
+  }
+  sj_status=SJ_RUNNING;
+ }
+ 
+static int sndjack_buffersizecallback(jack_nframes_t nframes, void *arg){
+  sj_jackbuffersize=nframes;
+  return 0;
 }
 
-int mus_audio_open_output(int dev, int srate, int chans, int format, int size) 
-{
-  /* jack_get_sample_rate(dac)
-     but no chans?
-  */
-  dac = jack_client_new(<name...>);
-  if (dac == NULL) return(MUS_ERROR);
-  jack_set_process_callback(dac, write_buffer, 0);
-  jack_on_shutdown(dac, quit_dac, 0);
-  dac_port = jack_port_register(dac, "output", JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
-  jack_activate(dac);
-  jack_connect(dac, "output", "alsa_pcm:out_1"); /* is this channel 0 or something -- how to handle n chans? */
-  return(MUS_NO_ERROR);
+static int sndjack_getnumoutchannels(void){
+  int lokke=0;
+  const char **ports=jack_get_ports(sndjack_client,"alsa_pcm:playback_*","",0);
+  while(ports[lokke]!=NULL){
+    lokke++;
+  }
+  if(lokke<2) return 2;
+  return lokke;
 }
 
-int mus_audio_write(int line, char *buf, int bytes) 
-{
-  return(MUS_ERROR);
+
+static int sndjack_init(void){
+  int ch;
+  int numch;
+  int num=0;
+
+  while(num<SNDJACK_MAXSNDS){
+    char temp[500];
+    sprintf(temp,"sndlib%d",num);
+    if ((sndjack_client=jack_client_new(temp)) != 0) {
+      break;
+    }
+    num++;
+  }
+  if(sndjack_client==NULL){
+    printf("Unable to create new jack_client\n");
+    return -1;
+  }
+
+  pthread_mutex_init(&sndjack_mutex,NULL);
+  pthread_cond_init(&sndjack_cond,NULL);
+
+  jack_set_process_callback(sndjack_client,sndjack_process,NULL);
+
+  sndjack_num_channels_allocated = numch = sndjack_getnumoutchannels();
+
+  sndjack_channels=calloc(sizeof(struct SndjackChannel),numch);
+
+  for(ch=0;ch<numch;ch++){
+    sndjack_channels[ch].buffer=calloc(sizeof(sample_t),SNDJACK_BUFFERSIZE);
+  }
+  sj_buffersize=SNDJACK_BUFFERSIZE;
+
+  for(ch=0;ch<numch;ch++){
+    char temp[500];
+    sprintf(temp,"out_%d",ch+1);
+    if((sndjack_channels[ch].port=jack_port_register(
+						     sndjack_client,
+						     strdup(temp),
+						     JACK_DEFAULT_AUDIO_TYPE,
+						     JackPortIsOutput,
+						     0
+						     ))==NULL)
+      {
+	fprintf(stderr,"Error. Could not register jack port.\n");
+	goto failed_register;
+      }
+  }
+
+  sj_jackbuffersize=jack_get_buffer_size(sndjack_client);
+  jack_set_buffer_size_callback(sndjack_client,sndjack_buffersizecallback,NULL);
+
+  if (jack_activate (sndjack_client)) {
+    fprintf (stderr, "Error. Cannot activate jack client.\n");
+    goto failed_activate;
+  }
+
+  for(ch=0;ch<numch;ch++){
+    char temp[500];
+    sprintf(temp,"alsa_pcm:playback_%d",ch+1);
+    if (
+	jack_connect(
+		     sndjack_client,
+		     jack_port_name(sndjack_channels[ch].port),
+		     strdup(temp)
+		     )
+	)
+      {
+	fprintf (stderr, "Error. Cannot connect jack output port %d: \"%s\".\n",ch,temp);
+	goto failed_connect;
+      }
+  }
+
+  return 0;
+
+ failed_connect:
+  for(ch=0;ch<numch;ch++){
+    char temp[500];
+    sprintf(temp,"alsa_pcm:playback_%d",ch+1);
+
+    jack_disconnect(
+		    sndjack_client,
+		    jack_port_name(sndjack_channels[ch].port),
+		    temp
+		    );
+    
+    jack_port_unregister(
+			 sndjack_client,
+			 sndjack_channels[ch].port
+			 );
+  }
+
+
+ failed_activate:
+  jack_deactivate(sndjack_client);
+
+ failed_register:
+  jack_client_close(sndjack_client);
+  sndjack_client=NULL;
+
+  return -1;
+}
+static void sndjack_cleanup(void){
+  int ch;
+  for(ch=0;ch<sndjack_num_channels_allocated;ch++){
+    char temp[500];
+    sprintf(temp,"alsa_pcm:playback_%d",ch+1);
+    jack_disconnect(
+		    sndjack_client,
+		    jack_port_name(sndjack_channels[ch].port),
+		    temp
+		    );
+    
+    jack_port_unregister(
+			 sndjack_client,
+			 sndjack_channels[ch].port
+			 );
+  }
+  jack_deactivate(sndjack_client);
+  jack_client_close(sndjack_client);
 }
 
-int mus_audio_close(int line) 
+
+
+/***************/
+/* Sndlib Part */
+/***************/
+
+static int sndjack_format;
+static sample_t **sndjack_buffer;
+
+
+/* prototypes for the jack sndlib functions */
+static int   jack_mus_audio_initialize(void);
+static void  jack_mus_audio_set_oss_buffers(int num, int size);
+static int   jack_mus_audio_systems(void);
+static char* jack_mus_audio_system_name(int system);
+static char* jack_mus_audio_moniker(void);
+static int   jack_mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size);
+static int   jack_mus_audio_open_input(int ur_dev, int srate, int chans, int format, int requested_size);
+static int   jack_mus_audio_write(int id, char *buf, int bytes);
+static int   jack_mus_audio_read(int id, char *buf, int bytes);
+static int   jack_mus_audio_close(int id);
+static int   jack_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val);
+static int   jack_mus_audio_mixer_write(int ur_dev, int field, int chan, float *val);
+static void  jack_mus_audio_save(void);
+static void  jack_mus_audio_restore(void);
+static void  jack_describe_audio_state_1(void);
+
+
+static int jack_mus_audio_initialize(void) {
+  int ch;
+
+  if(sndjack_init()!=0)
+    return MUS_ERROR;
+
+  sndjack_buffer=calloc(sizeof(sample_t*),sndjack_num_channels_allocated);
+  for(ch=0;ch<sndjack_num_channels_allocated;ch++)
+    sndjack_buffer[ch]=calloc(sizeof(sample_t),SNDJACK_BUFFERSIZE);
+
+  atexit(sndjack_cleanup);
+
+  api = JACK_API;
+  vect_mus_audio_initialize = jack_mus_audio_initialize;
+  vect_mus_audio_set_oss_buffers = jack_mus_audio_set_oss_buffers;
+  vect_mus_audio_systems = jack_mus_audio_systems;
+  vect_mus_audio_system_name = jack_mus_audio_system_name;
+  vect_mus_audio_moniker = jack_mus_audio_moniker;
+  vect_mus_audio_open_output = jack_mus_audio_open_output;
+  vect_mus_audio_open_input = jack_mus_audio_open_input;
+  vect_mus_audio_write = jack_mus_audio_write;
+  vect_mus_audio_read = jack_mus_audio_read;
+  vect_mus_audio_close = jack_mus_audio_close;
+  vect_mus_audio_mixer_read = jack_mus_audio_mixer_read;
+  vect_mus_audio_mixer_write = jack_mus_audio_mixer_write;
+  vect_mus_audio_save = jack_mus_audio_save;
+  vect_mus_audio_restore = jack_mus_audio_restore;
+  vect_describe_audio_state_1 = jack_describe_audio_state_1;
+  
+  return MUS_NO_ERROR;
+}
+
+// ??
+static void  jack_mus_audio_set_oss_buffers(int num, int size){
+}
+
+int jack_mus_audio_open_output(int dev, int srate, int chans, int format, int size) 
+ {
+
+  if(sndjack_client==NULL){
+    if(jack_mus_audio_initialize()==MUS_ERROR)
+      return MUS_ERROR;
+  }
+
+  if(sndjack_num_channels_allocated<chans){
+    printf("Error. Can not play back %d channels. (Only %d)\n",chans,sndjack_num_channels_allocated);
+    return MUS_ERROR;
+  }
+
+  while(sj_status!=SJ_STOPPED) usleep(5);
+
+  if(srate!=jack_get_sample_rate(sndjack_client)){
+    printf("Warning, sample-rate differs between snd and jack. Sound will not be played correctly! %d/%d\n",srate,jack_get_sample_rate(sndjack_client));
+  }
+  sndjack_format=format;
+  sndjack_num_channels_inuse=chans;
+
+   return(MUS_NO_ERROR);
+ }
+ 
+static int sndjack_from_byte(int ch,int chs,char *buf,int bytes){
+  int i;
+  int len=bytes/chs;
+  if(len>SNDJACK_BUFFERSIZE) return -1;
+
+  for(i=0;i<len;i++){
+    sndjack_buffer[ch][i]=MUS_BYTE_TO_SAMPLE(buf[i*chs+ch]);
+  }
+  return len;
+}
+
+static int sndjack_from_short(int ch,int chs,short *buf,int bytes){
+  int i;
+  int len=bytes/(sizeof(short)*chs);
+  if(len>SNDJACK_BUFFERSIZE) return -1;
+
+  for(i=0;i<len;i++){
+    sndjack_buffer[ch][i]=(float)buf[i*chs+ch]/32768.1f;
+  }
+  return len;
+}
+
+static int sndjack_from_float(int ch,int chs,float *buf,int bytes){
+  int i;
+  int len=bytes/(sizeof(float)*chs);
+  if(len>SNDJACK_BUFFERSIZE) return -1;
+
+  for(i=0;i<len;i++){
+    sndjack_buffer[ch][i]=buf[i*chs+ch];
+  }
+  return len;
+}
+
+
+int jack_mus_audio_write(int line, char *buf, int bytes) 
+{
+  int i;
+  int ch;
+  int len=0;
+
+
+  //  printf("mus_audio_write called. line: %d, bytes: %d format: %s\n",line,bytes,sndjack_format==MUS_LSHORT?"lshort":sndjack_format==MUS_LFLOAT?"lfloat":"unknown");
+
+  for(ch=0;ch<sndjack_num_channels_inuse;ch++){
+    switch(sndjack_format){
+    case MUS_BYTE:
+      len=sndjack_from_byte(ch,sndjack_num_channels_inuse,buf,bytes);
+      break;
+    case MUS_LSHORT:
+      len=sndjack_from_short(ch,sndjack_num_channels_inuse,(short *)buf,bytes);
+      break;
+    case MUS_LFLOAT:
+      len=sndjack_from_float(ch,sndjack_num_channels_inuse,(float *)buf,bytes);
+      break;
+    default:
+      printf("Error, unknown format\n");
+      return MUS_ERROR;
+      break;
+    }
+    if(len<0){
+      printf("Errur. Input buffer to large for mus_audio_write.\n");
+      return MUS_ERROR;
+    }
+
+  }
+
+
+  sndjack_write(sndjack_buffer,len,len*2,sndjack_num_channels_inuse);
+
+  return MUS_NO_ERROR;
+ }
+ 
+int jack_mus_audio_close(int line) 
 {
   jack_deactivate(dac);
   jack_port_unregister(dac, dac_port);
   jack_client_close(dac);
   return(MUS_NO_ERROR);
-}
 
-/* just implement playing (output) */
-static void describe_audio_state_1(void) {pprint("jack audio");}
-int mus_audio_open_input(int dev, int srate, int chans, int format, int size) {return(MUS_ERROR);}
-int mus_audio_read(int line, char *buf, int bytes) {return(MUS_ERROR);}
-int mus_audio_mixer_read(int dev, int field, int chan, float *val) {return(MUS_ERROR);}
-int mus_audio_mixer_write(int dev, int field, int chan, float *val) {return(MUS_ERROR);}
-void mus_audio_save(void) {}
-void mus_audio_restore(void) {}
-int mus_audio_initialize(void) {return(MUS_ERROR);}
-int mus_audio_systems(void) {return(1);}
-char *mus_audio_system_name(int system) {return("linux jack");}
-char *mus_audio_moniker(void) {return("jack");}
+  sj_status=SJ_ABOUTTOSTOP;
+  sndjack_num_channels_inuse=0;
+  return MUS_NO_ERROR;
+ }
+ 
+static void jack_describe_audio_state_1(void) {pprint("jack audio");}
+int jack_mus_audio_open_input(int dev, int srate, int chans, int format, int size) {return(MUS_ERROR);}
+int jack_mus_audio_read(int line, char *buf, int bytes) {return(MUS_ERROR);}
+int jack_mus_audio_mixer_read(int dev, int field, int chan, float *val) {return(MUS_ERROR);}
+int jack_mus_audio_mixer_write(int dev, int field, int chan, float *val) {return(MUS_ERROR);}
+void jack_mus_audio_save(void) {}
+void jack_mus_audio_restore(void) {}
+
+int jack_mus_audio_systems(void) {return(1);}
+char *jack_mus_audio_system_name(int system) {return("linux jack");}
+char *jack_mus_audio_moniker(void) {return("jack");}
 #endif
+ 
 
 
 
