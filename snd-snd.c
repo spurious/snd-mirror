@@ -1315,27 +1315,12 @@ void set_speed_style(snd_state *ss, int val)
   map_over_sounds(ss, map_sounds_speed_style, (void *)(&val));
 }      
 
-
 SCM snd_no_such_sound_error(const char *caller, SCM n)
 {
-  /* TODO: complete all no_such_sound calls (select_sound is the only one useful yet) */
-#if HAVE_SCM_MAKE_CONTINUATION
-  int first;
-  SCM con;
-  con = scm_make_continuation(&first);
-  if (first)
-    ERROR(NO_SUCH_SOUND,
-	  SCM_LIST3(TO_SCM_STRING(caller),
-		    n,
-		    SCM_LIST2(ERROR_CONTINUATION,
-			      con)));
-  return(con);
-#else
   ERROR(NO_SUCH_SOUND,
 	SCM_LIST2(TO_SCM_STRING(caller),
 		  n));
   return(SCM_BOOL_F);
-#endif
 }
 
 static SCM g_soundQ(SCM snd_n)
@@ -1353,25 +1338,21 @@ static SCM g_select_sound(SCM snd_n)
   snd_state *ss;
   snd_info *sp;
   ss = get_global_state();
-  while (1)
+  SND_ASSERT_SND(S_select_sound, snd_n, 1);
+  val = TO_C_INT_OR_ELSE(snd_n, 0);
+  if ((val >= 0) && 
+      (val < ss->max_sounds))
     {
-      SND_ASSERT_SND(S_select_sound, snd_n, 1);
-      val = TO_C_INT_OR_ELSE(snd_n, 0);
-      if ((val >= 0) && 
-	  (val < ss->max_sounds))
+      sp = ss->sounds[val];
+      if (snd_ok(sp))
 	{
-	  sp = ss->sounds[val];
-	  if (snd_ok(sp))
-	    {
-	      select_channel(sp, 0);
-	      normalize_sound(ss, sp, sp->chans[0]);
-	      map_over_chans(ss, update_graph, NULL);
-	      return(snd_n);
-	    }
+	  select_channel(sp, 0);
+	  normalize_sound(ss, sp, sp->chans[0]);
+	  map_over_chans(ss, update_graph, NULL);
+	  return(snd_n);
 	}
-      snd_n = snd_no_such_sound_error(S_select_sound, snd_n);
     }
-  return(snd_n);
+  return(snd_no_such_sound_error(S_select_sound, snd_n));
 }
 
 static SCM g_select_channel(SCM chn_n)
@@ -1381,20 +1362,16 @@ static SCM g_select_channel(SCM chn_n)
   snd_state *ss;
   int chan;
   ss = get_global_state();
-  while (1)
+  SND_ASSERT_SND(S_select_channel, chn_n, 1);
+  chan = TO_C_INT_OR_ELSE(chn_n, 0);
+  sp = any_selected_sound(ss);
+  if ((sp) && 
+      (chan < sp->nchans)) 
     {
-      SND_ASSERT_SND(S_select_channel, chn_n, 1);
-      chan = TO_C_INT_OR_ELSE(chn_n, 0);
-      sp = any_selected_sound(ss);
-      if ((sp) && 
-	  (chan < sp->nchans)) 
-	{
-	  select_channel(sp, chan);
-	  return(chn_n);
-	}
-      chn_n = snd_no_such_channel_error(S_select_channel, TO_SCM_STRING("selected-sound"), chn_n);
+      select_channel(sp, chan);
+      return(chn_n);
     }
-  return(chn_n);
+  return(snd_no_such_channel_error(S_select_channel, TO_SCM_STRING("selected-sound"), chn_n));
 }
 
 static SCM g_find_sound(SCM filename)
@@ -1416,8 +1393,8 @@ static SCM g_bomb(SCM snd, SCM on)
   snd_info *sp;
   SND_ASSERT_SND(S_bomb, snd, 1);
   sp = get_sp(snd);
-  while (sp == NULL) 
-    sp = get_sp(snd = snd_no_such_sound_error(S_bomb, snd));
+  if (sp == NULL)
+    return(snd_no_such_sound_error(S_bomb, snd));
   x_bomb(sp, TO_C_BOOLEAN_OR_T(on));
   return(on);
 }
@@ -1448,8 +1425,8 @@ static SCM sp_iread(SCM snd_n, int fld, char *caller)
     }
   SND_ASSERT_SND(caller, snd_n, 1);
   sp = get_sp(snd_n);
-  while(sp == NULL) 
-    sp = get_sp(snd_n = snd_no_such_sound_error(caller, snd_n));
+  if (sp == NULL) 
+    return(snd_no_such_sound_error(caller, snd_n));
   switch (fld)
     {
     case SP_SYNC:                  return(TO_SCM_INT(sp->sync));                 break;
@@ -1508,8 +1485,8 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
     }
   SND_ASSERT_SND(caller, snd_n, 2); /* 2 from caller's point of view */
   sp = get_sp(snd_n);
-  while (sp == NULL) 
-    sp = get_sp(snd_n = snd_no_such_sound_error(caller, snd_n));
+  if (sp == NULL) 
+    return(snd_no_such_sound_error(caller, snd_n));
   ss = sp->state;
   switch (fld)
     {
@@ -1895,20 +1872,16 @@ static SCM g_set_selected_channel(SCM snd_n, SCM chn_n)
     {
       SND_ASSERT_SND("set-" S_selected_channel, snd_n, 1); 
       sp = get_sp(snd_n);
-      while (sp == NULL) 
-	sp = get_sp(snd_n = snd_no_such_sound_error("set-" S_selected_channel, snd_n));
-      while (1)
+      if (sp == NULL) 
+	return(snd_no_such_sound_error("set-" S_selected_channel, snd_n));
+      chan = TO_C_INT_OR_ELSE(chn_n, 0);
+      if ((sp) && (chan < sp->nchans)) 
 	{
-	  chan = TO_C_INT_OR_ELSE(chn_n, 0);
-	  if ((sp) && (chan < sp->nchans)) 
-	    {
-	      select_channel(sp, chan);
-	      return(chn_n);
-	    }
-	  chn_n = snd_no_such_channel_error("set-" S_selected_channel, snd_n, chn_n);
+	  select_channel(sp, chan);
+	  return(chn_n);
 	}
     }
-  return(chn_n);
+  return(snd_no_such_channel_error("set-" S_selected_channel, snd_n, chn_n));
 }
 
 static SCM g_file_name(SCM snd_n) 
@@ -1948,8 +1921,8 @@ static SCM g_revert_sound(SCM index)
   int i;
   SND_ASSERT_SND(S_revert_sound, index, 1);
   sp = get_sp(index);
-  while (sp == NULL) 
-    sp = get_sp(index = snd_no_such_sound_error(S_revert_sound, index));
+  if (sp == NULL) 
+    return(snd_no_such_sound_error(S_revert_sound, index));
   for (i = 0; i < sp->nchans; i++) 
     {
       revert_edits(sp->chans[i], NULL); 
@@ -1986,12 +1959,10 @@ opens filename (as if opened from File:Open menu option), and returns the new fi
   ss = get_global_state();
   ASSERT_TYPE(STRING_P(filename), filename, SCM_ARGn, S_open_sound, "a string");
   fname = mus_expand_filename(TO_C_STRING(filename));
-  while (!(mus_file_probe(fname)))
+  if (!(mus_file_probe(fname)))
     {
       if (fname) FREE(fname);
-      filename = snd_no_such_file_error(S_open_sound, filename);
-      ASSERT_TYPE(STRING_P(filename), filename, SCM_ARGn, S_open_sound, "a string");
-      fname = mus_expand_filename(TO_C_STRING(filename));
+      return(snd_no_such_file_error(S_open_sound, filename));
     }
   sp = snd_open_file(fname, ss);
   if (fname) FREE(fname);
@@ -2027,12 +1998,10 @@ opens filename assuming the data matches the attributes indicated unless the fil
 			      TO_C_INT(chans),
 			      TO_C_INT(format));
   fname = mus_expand_filename(TO_C_STRING(filename));
-  while (!(mus_file_probe(fname)))
+  if (!(mus_file_probe(fname)))
     {
       if (fname) FREE(fname);
-      filename = snd_no_such_file_error(S_open_raw_sound, filename);
-      ASSERT_TYPE(STRING_P(filename), filename, SCM_ARG1, S_open_raw_sound, "a string");
-      fname = mus_expand_filename(TO_C_STRING(filename));
+      return(snd_no_such_file_error(S_open_raw_sound, filename));
     }
   sp = snd_open_file(fname, ss);
   /* snd_open_file -> snd_open_file_1 -> add_sound_window -> make_file_info -> raw_data_dialog_to_file_info */
@@ -2059,12 +2028,10 @@ static SCM g_open_alternate_sound(SCM filename)
   sp = any_selected_sound(ss);
   if (sp) snd_close_file(sp, ss); /* should we ask about saving edits here? */
   fname = mus_expand_filename(TO_C_STRING(filename));
-  while (!(mus_file_probe(fname)))
+  if (!(mus_file_probe(fname)))
     {
       if (fname) FREE(fname);
-      filename = snd_no_such_file_error(S_open_alternate_sound, filename);
-      ASSERT_TYPE(STRING_P(filename), filename, SCM_ARGn, S_open_alternate_sound, "a string");
-      fname = mus_expand_filename(TO_C_STRING(filename));
+      return(snd_no_such_file_error(S_open_alternate_sound, filename));
     }
   sp = snd_open_file(fname, ss);
   if (fname) FREE(fname);
@@ -2082,12 +2049,10 @@ You can subsequently make it writable by (set! (read-only) #f)."
   ss = get_global_state();
   ASSERT_TYPE(STRING_P(filename), filename, SCM_ARGn, S_view_sound, "a string");
   fname = mus_expand_filename(TO_C_STRING(filename));
-  while (!(mus_file_probe(fname)))
+  if (!(mus_file_probe(fname)))
     {
       if (fname) FREE(fname);
-      filename = snd_no_such_file_error(S_view_sound, filename);
-      ASSERT_TYPE(STRING_P(filename), filename, SCM_ARGn, S_view_sound, "a string");
-      fname = mus_expand_filename(TO_C_STRING(filename));
+      return(snd_no_such_file_error(S_view_sound, filename));
     }
   if (fname)
     {
@@ -2125,8 +2090,8 @@ Any argument can be #f which causes its value to be taken from the sound being s
   ASSERT_TYPE(STRING_P(newfile), newfile, SCM_ARG1, S_save_sound_as, "a string");
   SND_ASSERT_SND(S_save_sound_as, index, 2);
   sp = get_sp(index);
-  while (sp == NULL) 
-    sp = get_sp(index = snd_no_such_sound_error(S_save_sound_as, index));
+  if (sp == NULL) 
+    return(snd_no_such_sound_error(S_save_sound_as, index));
   ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(type), type, SCM_ARG3, S_save_sound_as, "an integer (a header type id)");
   ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(format), format, SCM_ARG4, S_save_sound_as, "an integer (a data format id)");
   ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(srate), srate, SCM_ARG5, S_save_sound_as, "a number");
@@ -2156,7 +2121,7 @@ Any argument can be #f which causes its value to be taken from the sound being s
 	  (chan < 0))
 	{
 	  if (fname) FREE(fname);
-	  channel = mus_iclamp(0, TO_C_INT_OR_ELSE(snd_no_such_channel_error(S_save_sound_as, index, channel), 0), sp->nchans - 1);
+	  return(snd_no_such_channel_error(S_save_sound_as, index, channel));
 	}
       else 
 	{
@@ -2337,8 +2302,8 @@ static SCM sp_fread(SCM snd_n, int fld, char *caller)
     }
   SND_ASSERT_SND(caller, snd_n, 1);
   sp = get_sp(snd_n);
-  while (sp == NULL) 
-    sp = get_sp(snd_n = snd_no_such_sound_error(caller, snd_n));
+  if (sp == NULL) 
+    return(snd_no_such_sound_error(caller, snd_n));
   switch (fld)
     {
     case SP_AMP:             return(TO_SCM_DOUBLE(sp->amp));           break;
@@ -2378,8 +2343,8 @@ static SCM sp_fwrite(SCM snd_n, SCM val, int fld, char *caller)
     {
       SND_ASSERT_SND(caller, snd_n, 2);
       sp = get_sp(snd_n);
-      while (sp == NULL) 
-	sp = get_sp(snd_n = snd_no_such_sound_error(caller, snd_n));
+      if (sp == NULL) 
+	return(snd_no_such_sound_error(caller, snd_n));
       fval = TO_C_DOUBLE_WITH_ORIGIN(val, caller);
       switch (fld)
 	{
@@ -2645,8 +2610,8 @@ static SCM g_set_filter_env(SCM edata, SCM snd_n)
   snd_info *sp;
   SND_ASSERT_SND("set-" S_filter_env, snd_n, 2);
   sp = get_sp(snd_n);
-  while (sp == NULL)
-    sp = get_sp(snd_n = snd_no_such_sound_error("set-" S_filter_env, snd_n));
+  if (sp == NULL)
+    return(snd_no_such_sound_error("set-" S_filter_env, snd_n));
   if (sp->filter_env) sp->filter_env = free_env(sp->filter_env);  /* set to null in case get_env throws error */
   sp->filter_env = get_env(edata, SCM_BOOL_F, "set-" S_filter_env);
   filter_env_changed(sp, sp->filter_env);
@@ -2659,11 +2624,9 @@ static SCM g_filter_env(SCM snd_n)
   snd_info *sp = NULL;
   SND_ASSERT_SND(S_filter_env, snd_n, 1);
   sp = get_sp(snd_n);
-  while (sp == NULL)
-    sp = get_sp(snd_n = snd_no_such_sound_error(S_filter_env, snd_n));
-  if (sp) 
-    return(env2scm(sp->filter_env)); 
-  return(snd_n);
+  if (sp == NULL)
+    return(snd_no_such_sound_error(S_filter_env, snd_n));
+  return(env2scm(sp->filter_env)); 
 }
 
 WITH_REVERSED_ARGS(g_set_filter_env_reversed, g_set_filter_env)
@@ -2675,20 +2638,15 @@ static SCM g_call_apply(SCM snd, SCM choice)
   snd_state *ss;
   SND_ASSERT_SND(S_call_apply, snd, 1);
   ASSERT_TYPE(INTEGER_IF_BOUND_P(choice), choice, SCM_ARG2, S_call_apply, "an integer");
-  while (1)
+  sp = get_sp(snd);
+  if (sp) 
     {
-      sp = get_sp(snd);
-      if (sp) 
-	{
-	  ss = sp->state;
-	  ss->apply_choice = mus_iclamp(0, TO_C_INT_OR_ELSE(choice, 0), 2);
-	  run_apply_to_completion(sp); 
-	  return(SCM_BOOL_F);
-	}
-      snd = snd_no_such_sound_error(S_call_apply, snd);
-      SND_ASSERT_SND(S_call_apply, snd, 1);
+      ss = sp->state;
+      ss->apply_choice = mus_iclamp(0, TO_C_INT_OR_ELSE(choice, 0), 2);
+      run_apply_to_completion(sp); 
+      return(SCM_BOOL_F);
     }
-  return(snd);
+  return(snd_no_such_sound_error(S_call_apply, snd));
 }
 
 static SCM name_click_hook;
@@ -2801,7 +2759,7 @@ static SCM g_read_peak_env_info_file(SCM snd, SCM chn, SCM name)
   fd = mus_file_open_read(fullname);
   if (fullname) FREE(fullname);
   if (fd == -1)
-    snd_no_such_file_error(S_read_peak_env_info_file, name);
+    return(snd_no_such_file_error(S_read_peak_env_info_file, name));
   /* assume cp->amp_envs already exists (needs change to snd-chn) */
   cp->amp_envs[0] = (env_info *)CALLOC(1, sizeof(env_info));
   ep = cp->amp_envs[0];
@@ -3000,6 +2958,5 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
 
   DEFINE_PROC(S_write_peak_env_info_file, g_write_peak_env_info_file, 3, 0, 0, "(" S_write_peak_env_info_file " snd chn filename)");
   DEFINE_PROC(S_read_peak_env_info_file,  g_read_peak_env_info_file,  3, 0, 0, "(" S_read_peak_env_info_file " snd chn filename)");
-
 }
 

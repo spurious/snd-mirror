@@ -67,36 +67,6 @@ void mus_misc_error(const char *caller, char *msg, SCM val)
 		    val));
 }
 
-SCM mus_misc_error_with_continuation(const char *caller, char *msg, SCM val)
-{
-#if HAVE_SCM_MAKE_CONTINUATION
-  int first;
-  SCM con;
-  /* TODO: extend and test these error continuations, also need to check for those that actually aren't continuable */
-  con = scm_make_continuation(&first);
-  if (first)
-    {
-      if (msg)
-	ERROR(MUS_MISC_ERROR,
-	      SCM_LIST4(TO_SCM_STRING(caller),
-			TO_SCM_STRING(msg),
-			val,
-			SCM_LIST2(ERROR_CONTINUATION,
-				  con)));
-      else
-	ERROR(MUS_MISC_ERROR,
-	      SCM_LIST3(TO_SCM_STRING(caller),
-			val,
-			SCM_LIST2(ERROR_CONTINUATION,
-				  con)));
-    }
-  return(con);
-#else
-  mus_misc_error(caller, msg, val);
-  return(val);
-#endif
-}
-
 static SCM g_sound_loop_info(SCM filename)
 {
   #define H_mus_sound_loop_info "(" S_mus_sound_loop_info " filename) -> loop info for sound as a list (start1 end1 start2 end2 base-note base-detune)"
@@ -360,7 +330,7 @@ static SCM g_sound_set_max_amp(SCM file, SCM vals)
   if (chans > 0)
     {
       if ((int)VECTOR_LENGTH(vals) < (chans * 2))
-	mus_misc_error_with_continuation(S_mus_sound_set_max_amp, "max amp vector wrong length", vals);
+	mus_misc_error(S_mus_sound_set_max_amp, "max amp vector wrong length", vals);
       len = VECTOR_LENGTH(vals);
       if (len > chans * 2) len = chans * 2;
       mvals = (MUS_SAMPLE_TYPE *)CALLOC(chans * 2, sizeof(MUS_SAMPLE_TYPE));
@@ -502,12 +472,9 @@ static SCM g_make_sound_data(SCM chans, SCM frames)
   chns = TO_C_INT(chans);
   frms = TO_C_INT(frames);
   if (chns <= 0)
-    chns = mus_iclamp(1, TO_C_INT_OR_ELSE(mus_misc_error_with_continuation(S_make_sound_data, "chans <= 0?", chans), 1), 1024);
+    mus_misc_error(S_make_sound_data, "chans <= 0?", chans);
   if (frms <= 0)
-    {
-      frms = TO_C_INT_OR_ELSE(mus_misc_error_with_continuation(S_make_sound_data, "frames <= 0?", frames), 1);
-      if (frms <= 0) frms = 1;
-    }
+    mus_misc_error(S_make_sound_data, "frames <= 0?", frames);
   return(make_sound_data(chns, frms));
 			 
 }
@@ -525,10 +492,10 @@ static SCM sound_data_ref(SCM obj, SCM chan, SCM frame)
     {
       chn = TO_C_INT(chan);
       if ((chn < 0) || (chn >= v->chans))
-	chn = mus_iclamp(0, TO_C_INT_OR_ELSE(mus_misc_error_with_continuation(S_sound_data_ref, "invalid channel", SCM_LIST2(obj, chan)), 0), v->chans - 1);
+	mus_misc_error(S_sound_data_ref, "invalid channel", SCM_LIST2(obj, chan));
       loc = TO_C_INT(frame);
       if ((loc < 0) || (loc >= v->length))
-	loc = mus_iclamp(0, TO_C_INT_OR_ELSE(mus_misc_error_with_continuation(S_sound_data_ref, "invalid frame", SCM_LIST2(obj, frame)), 0), v->length - 1);
+	mus_misc_error(S_sound_data_ref, "invalid frame", SCM_LIST2(obj, frame));
       return(TO_SCM_DOUBLE(MUS_SAMPLE_TO_DOUBLE(v->data[chn][loc])));
     }
   else mus_misc_error(S_sound_data_ref, "nil sound-data?", SCM_EOL);
@@ -556,10 +523,10 @@ static SCM sound_data_set(SCM obj, SCM chan, SCM frame, SCM val)
     {
       chn = TO_C_INT(chan);
       if ((chn < 0) || (chn >= v->chans))
-	chn = mus_iclamp(0, TO_C_INT_OR_ELSE(mus_misc_error_with_continuation(S_sound_data_setB, "invalid channel", SCM_LIST3(obj, chan, frame)), 0), v->chans - 1);
+	mus_misc_error(S_sound_data_setB, "invalid channel", SCM_LIST3(obj, chan, frame));
       loc = TO_C_INT(frame);
       if ((loc < 0) || (loc >= v->length))
-	loc = mus_iclamp(0, TO_C_INT_OR_ELSE(mus_misc_error_with_continuation(S_sound_data_setB, "invalid frame", SCM_LIST3(obj, chan, frame)), 0), v->length - 1);
+	mus_misc_error(S_sound_data_setB, "invalid frame", SCM_LIST3(obj, chan, frame));
       v->data[chn][loc] = MUS_DOUBLE_TO_SAMPLE(TO_C_DOUBLE(val));
     }
   else mus_misc_error(S_sound_data_setB, "nil sound-data?", SCM_EOL);
@@ -579,7 +546,7 @@ static SCM sound_data2vct(SCM sdobj, SCM chan, SCM vobj)
   sd = (sound_data *)SND_VALUE_OF(sdobj);
   chn = TO_C_INT(chan);
   if (chn >= sd->chans)
-    chn = mus_iclamp(0, TO_C_INT_OR_ELSE(mus_misc_error_with_continuation(S_sound_data2vct, "invalid channel", SCM_LIST3(sdobj, chan, vobj)), 0), sd->chans - 1);
+    mus_misc_error(S_sound_data2vct, "invalid channel", SCM_LIST3(sdobj, chan, vobj));
   if (sd->length < v->length) 
     len = sd->length; 
   else len = v->length;
@@ -601,7 +568,7 @@ static SCM vct2sound_data(SCM vobj, SCM sdobj, SCM chan)
   sd = (sound_data *)SND_VALUE_OF(sdobj);
   chn = TO_C_INT(chan);
   if (chn >= sd->chans)
-    chn = mus_iclamp(0, TO_C_INT_OR_ELSE(mus_misc_error_with_continuation(S_vct2sound_data, "invalid channel", SCM_LIST3(vobj, chan, sdobj)), 0), sd->chans - 1);
+    mus_misc_error(S_vct2sound_data, "invalid channel", SCM_LIST3(vobj, chan, sdobj));
   if (sd->length < v->length) 
     len = sd->length; 
   else len = v->length;

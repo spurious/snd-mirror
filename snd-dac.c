@@ -241,7 +241,7 @@ static SCM g_set_reverb_funcs(SCM rev, SCM make_rev, SCM free_rev)
     {
       errstr = TO_SCM_STRING(errmsg);
       FREE(errmsg);
-      snd_bad_arity_error(S_reverb_funcs, errstr, bad_func);
+      return(snd_bad_arity_error(S_reverb_funcs, errstr, bad_func));
     }
   if (PROCEDURE_P(g_reverb)) snd_unprotect(g_reverb);
   if (PROCEDURE_P(g_make_reverb)) snd_unprotect(g_make_reverb);
@@ -297,7 +297,7 @@ static SCM g_set_contrast_func(SCM func)
     {
       errstr = TO_SCM_STRING(errmsg);
       FREE(errmsg);
-      snd_bad_arity_error(S_contrast_func, errstr, func);
+      return(snd_bad_arity_error(S_contrast_func, errstr, func));
     }
 
   if (PROCEDURE_P(g_contrast)) snd_unprotect(g_contrast);
@@ -2520,7 +2520,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
       if (!(mus_file_probe(name)))
 	{
 	  FREE(name);
-	  snd_no_such_file_error(caller, samp_n);
+	  return(snd_no_such_file_error(caller, samp_n));
 	}
       if (!(MUS_HEADER_TYPE_OK(mus_sound_header_type(name))))
 	{
@@ -2551,8 +2551,8 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
       ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_n), samp_n, SCM_ARG1, caller, "a number");
       SND_ASSERT_CHAN(caller, snd_n, chn_n, 2);
       sp = get_sp(snd_n);
-      while (sp == NULL) 
-	sp = get_sp(snd_n = snd_no_such_sound_error(caller, snd_n));
+      if (sp == NULL) 
+	return(snd_no_such_sound_error(caller, snd_n));
       samp = TO_C_INT_OR_ELSE(samp_n, 0);
       if ((syncd) && (sp->sync != 0))
 	{
@@ -2707,8 +2707,8 @@ static SCM g_make_player(SCM snd, SCM chn)
   chan_info *cp;
   SND_ASSERT_CHAN(S_make_player, snd, chn, 1);
   true_sp = get_sp(snd);
-  while (true_sp == NULL) 
-    true_sp = get_sp(snd = snd_no_such_sound_error(S_make_player, snd));
+  if (true_sp == NULL) 
+    return(snd_no_such_sound_error(S_make_player, snd));
   cp = get_cp(snd, chn, S_make_player);
   if (cp)
     {

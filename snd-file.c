@@ -2034,8 +2034,8 @@ static SCM g_sound_loop_info(SCM snd)
   snd_info *sp;
   SND_ASSERT_SND(S_sound_loop_info, snd, 1);
   sp = get_sp(snd);
-  if (sp == NULL) 
-    snd_no_such_sound_error(S_sound_loop_info, snd);
+  if (sp == NULL)
+    return(snd_no_such_sound_error(S_sound_loop_info, snd));
   res = mus_sound_loop_info(sp->fullname);
   if (res)
     {
@@ -2063,7 +2063,7 @@ static SCM g_set_sound_loop_info(SCM snd, SCM vals)
     }
   else sp = get_sp(snd);
   if (sp == NULL) 
-    snd_no_such_sound_error("set-" S_sound_loop_info, snd);
+    return(snd_no_such_sound_error("set-" S_sound_loop_info, snd));
   hdr = sp->hdr;
   if (len > 0) start0 = SCM_CAR(vals);
   if (len > 1) end0 = SCM_CADR(vals);
@@ -2110,7 +2110,7 @@ each inner list has the form: (name start loopstart loopend)"
   SND_ASSERT_SND(S_soundfont_info, snd, 1);
   sp = get_sp(snd);
   if (sp == NULL) 
-    snd_no_such_sound_error(S_soundfont_info, snd);
+    return(snd_no_such_sound_error(S_soundfont_info, snd));
   mus_header_read(sp->fullname);
   if (mus_header_type() == MUS_SOUNDFONT)
     {

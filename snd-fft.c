@@ -2256,7 +2256,7 @@ to be displayed goes from low to high (normally 0.0 to 1.0)"
     {
       errstr = TO_SCM_STRING(errmsg);
       FREE(errmsg);
-      snd_bad_arity_error(S_add_transform, errstr, proc);
+      return(snd_bad_arity_error(S_add_transform, errstr, proc));
     }
   ASSERT_TYPE(STRING_P(name), name, SCM_ARG1, S_add_transform, "a string");
   ASSERT_TYPE(STRING_P(xlabel), xlabel, SCM_ARG2, S_add_transform, "a string");

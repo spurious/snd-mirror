@@ -695,7 +695,7 @@ static SCM g_insert_selection(SCM beg, SCM snd, SCM chn)
       if (cp == NULL) 
 	cp = selected_channel(ss);
       if (cp == NULL) 
-	snd_no_such_channel_error(S_insert_selection, snd, chn);
+	return(snd_no_such_channel_error(S_insert_selection, snd, chn));
       err = insert_selection(ss, cp, 
 			     TO_C_INT_OR_ELSE(beg, 0), 
 			     S_insert_selection);
@@ -719,7 +719,7 @@ static SCM g_mix_selection(SCM beg, SCM snd, SCM chn)
       if (cp == NULL) 
 	cp = selected_channel(ss);
       if (cp == NULL) 
-	snd_no_such_channel_error(S_mix_selection, snd, chn);
+	return(snd_no_such_channel_error(S_mix_selection, snd, chn));
       return(TO_SCM_INT(mix_selection(ss, cp, 
 				      TO_C_INT_OR_ELSE(beg, 0), 
 				      S_mix_selection)));
@@ -908,7 +908,7 @@ saves the current selection in filename using the indicated file attributes"
   ASSERT_TYPE(INTEGER_IF_BOUND_P(data_format), data_format, SCM_ARG3, S_save_selection, "an integer");
   ASSERT_TYPE(NUMBER_IF_BOUND_P(srate), srate, SCM_ARG4, S_save_selection, "a number");
   if (selection_is_active() == 0)
-    snd_no_active_selection_error(S_save_selection);
+    return(snd_no_active_selection_error(S_save_selection));
   ss = get_global_state();
   if (INTEGER_P(header_type)) 
     type = TO_C_INT(header_type); 

@@ -2230,9 +2230,7 @@ The error tag is mentioned with the function in the form [<em class=error>no-suc
 All the functions that take sound and channel args ("snd chn" below) can return the errors
 'no-such-sound and 'no-such-channel; all the mix-related functions can return 'no-such-mix;
 all the region-related functions can return 'no-such-region; to reduce clutter, I'll omit mention
-of these below.  Many of the errors are continuable, which is to say that you can continue
-from the point of the error if you want, replacing the offending value or whatever with
-a new one. 
+of these below.  
 </p>
 
 <br>
@@ -7107,63 +7105,6 @@ to #t; it defaults to #f because it has been plagued in the past
 with segfaults.
 To see what files are being loaded, set the
 variable %load-verbosely to #t.
-</p>
-<p>As an experiment, some of the Snd-generated errors include a continuation
-procedure as the second element of the last element of the list of 
-arguments passed to the error handler (the first element of that list is the symbol 'snd-error-continuation).  
-You can ask Snd to continue from the point
-of the error as if nothing had gone wrong by invoking that procedure from the
-error handler:
-</p>
-<table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(define (continuable-error? err)
-  (let* ((len (length err))
-	 (last-arg (and (not (null? err)) 
-			(list-ref err (- len 1)))))
-    (and last-arg
-	 (list? last-arg)
-	 (= (length last-arg) 2)
-	 (eq? (car last-arg) 'snd-error-continuation)
-	 (procedure? (cadr last-arg))
-	 (cadr last-arg))))
-
-(define (with-continuations thunk newval)
-  (catch #t
-	 (lambda ()
-	   (lazy-catch #t 
-		       thunk
-		       lazy-handler-dispatch))
-	 (lambda args
-	   (let ((go-on (continuable-error? args)))
-	     (if go-on
-		 (go-on newval)
-		 (apply throw args))))))
-
-(define (with-default-continuations thunk)
-  (with-continuations thunk #f))
-
-(define (select-sound-or-bust n)  ; (select-sound n) with error retry
-  "if 'n' is not a valid sound index, prompt for another, giving up only if a non-number is supplied"
-  (catch 'no-such-sound
-	 (lambda () 
-	   (lazy-catch 'no-such-sound
-		       (lambda () (select-sound n))
-		       lazy-handler-dispatch))
-	 (lambda args
-	   (let ((go-on (continuable-error? args)))
-	     (if go-on
-		 (prompt-in-minibuffer 
-                   "try again: "
-	           (lambda (val snd)
-		     (if (number? val)
-			 (go-on val) ; this replaces the original 'n' with 'val'
-			 (apply throw args)))
-		   (selected-sound))
-		 (apply throw args))))))
-</pre></td></tr></table>
-<!-- TODO: more continuation examples -->
-<p>
-For a brief discussion of continuations, see <a href="sndscm.html#continuations">About Continuations</a>.
 </p>
 
 

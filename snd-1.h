@@ -737,9 +737,6 @@ SCM snd_no_such_file_error(const char *caller, SCM filename);
 SCM snd_no_such_channel_error(const char *caller, SCM snd, SCM chn);
 SCM snd_bad_arity_error(const char *caller, SCM errstr, SCM proc);
 SCM snd_no_active_selection_error(const char *caller);
-#if HAVE_SCM_MAKE_CONTINUATION
-  SCM snd_wrong_type_arg_msg(SCM arg, int pos, const char *caller, const char *correct_type);
-#endif
 void g_initialize_gh(snd_state *ss);
 SCM eval_str_wrapper(void *data);
 SCM eval_form_wrapper(void *data);

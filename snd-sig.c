@@ -39,7 +39,7 @@ int to_c_edit_position(chan_info *cp, SCM edpos, const char *caller)
 	{
 	  errstr = TO_SCM_STRING(errmsg);
 	  FREE(errmsg);
-	  snd_bad_arity_error(caller, errstr, edpos);
+	  return(snd_bad_arity_error(caller, errstr, edpos));
 	}
       pos = TO_C_INT_OR_ELSE_WITH_ORIGIN(CALL2(edpos, 
 					       TO_SMALL_SCM_INT(cp->sound->index), 
@@ -340,7 +340,7 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
     {
       errstr = TO_SCM_STRING(errmsg);
       FREE(errmsg);
-      snd_bad_arity_error(origin, errstr, proc);
+      return(snd_bad_arity_error(origin, errstr, proc));
     }
   sp = cp->sound;
   switch (chan_choice)
@@ -475,7 +475,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
     {
       errstr = TO_SCM_STRING(errmsg);
       FREE(errmsg);
-      snd_bad_arity_error(origin, errstr, proc);
+      return(snd_bad_arity_error(origin, errstr, proc));
     }
   sp = cp->sound;
   switch (chan_choice)
@@ -723,7 +723,7 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
     {
       errstr = TO_SCM_STRING(errmsg);
       FREE(errmsg);
-      snd_bad_arity_error(origin, errstr, proc);
+      return(snd_bad_arity_error(origin, errstr, proc));
     }
   sp = cp->sound;
   switch (chan_choice)
@@ -853,7 +853,7 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
     {
       errstr = TO_SCM_STRING(errmsg);
       FREE(errmsg);
-      snd_bad_arity_error(origin, errstr, proc);
+      return(snd_bad_arity_error(origin, errstr, proc));
     }
   sp = cp->sound;
   switch (chan_choice)
@@ -3020,7 +3020,7 @@ static SCM g_sound_to_temp_1(SCM ht, SCM df, int selection, int one_file, const 
   ASSERT_TYPE(INTEGER_IF_BOUND_P(ht), ht, SCM_ARG1, caller, "an integer (a header type id)");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(df), df, SCM_ARG2, caller, "an integer (a data format id)");
   if ((selection) && (selection_is_active() == 0)) 
-    snd_no_active_selection_error(caller);
+    return(snd_no_active_selection_error(caller));
   ss = get_global_state();
   cp = current_channel(ss);
   if (cp)
@@ -3356,7 +3356,7 @@ static SCM g_smooth_selection(void)
   #define H_smooth_selection "(" S_smooth_selection ") smooths the data in the currently selected portion"
   chan_info *cp;
   if (selection_is_active() == 0) 
-    snd_no_active_selection_error(S_smooth_selection);
+    return(snd_no_active_selection_error(S_smooth_selection));
   cp = get_cp(SCM_BOOL_F, SCM_BOOL_F, S_smooth_selection);
   cos_smooth(cp, 0, 0, TRUE, S_smooth_selection);
   return(SCM_BOOL_T);
@@ -3377,7 +3377,7 @@ static SCM g_reverse_selection(void)
   #define H_reverse_selection "(" S_reverse_selection ") reverses the data in the currently selected portion"
   chan_info *cp;
   if (selection_is_active() == 0) 
-    snd_no_active_selection_error(S_reverse_selection);
+    return(snd_no_active_selection_error(S_reverse_selection));
   cp = get_cp(SCM_BOOL_F, SCM_BOOL_F, S_reverse_selection);
   reverse_sound(cp, TRUE, TO_SCM_INT(AT_CURRENT_EDIT_POSITION));
   return(SCM_BOOL_F);
@@ -3601,7 +3601,7 @@ applies envelope 'env' to the currently selected portion of snd's channel chn us
   mus_any *egen;
   SND_ASSERT_CHAN(S_env_selection, snd_n, chn_n, 3);
   if (selection_is_active() == 0) 
-    snd_no_active_selection_error(S_env_selection);
+    return(snd_no_active_selection_error(S_env_selection));
   cp = get_cp(snd_n, chn_n, S_env_selection);
   if (LIST_P(edata))
     {
@@ -3807,7 +3807,7 @@ convolves file with snd's channel chn (or the currently sync'd channels), amp is
   else 
     {
       if (fname) FREE(fname);
-      snd_no_such_file_error(S_convolve_with, file);
+      return(snd_no_such_file_error(S_convolve_with, file));
     }
   if (fname) FREE(fname);
   return(scm_return_first(file, new_amp));
@@ -3910,7 +3910,7 @@ convolves the current selection with file; amp is the resultant peak amp"
   char *fname = NULL, *error;
   ASSERT_TYPE(STRING_P(file), file, SCM_ARG1, S_convolve_selection_with, "a string");
   if (selection_is_active() == 0) 
-    snd_no_active_selection_error(S_convolve_selection_with);
+    return(snd_no_active_selection_error(S_convolve_selection_with));
   if (NUMBER_P(new_amp)) 
     amp = TO_C_DOUBLE(new_amp);
   else
@@ -3934,7 +3934,7 @@ convolves the current selection with file; amp is the resultant peak amp"
   else 
     {
       if (fname) FREE(fname);
-      snd_no_such_file_error(S_convolve_selection_with, file);
+      return(snd_no_such_file_error(S_convolve_selection_with, file));
     }
   if (fname) FREE(fname);
   return(scm_return_first(file, new_amp));
@@ -4028,7 +4028,7 @@ sampling-rate converts the currently selected data by ratio (which can be an env
   Float e_ratio = 1.0;
   chan_info *cp;
   if (selection_is_active() == 0) 
-    snd_no_active_selection_error(S_src_selection);
+    return(snd_no_active_selection_error(S_src_selection));
   cp = get_cp(SCM_BOOL_F, SCM_BOOL_F, S_src_selection);
   if (NUMBER_P(ratio_or_env))
     src_env_or_num(cp->state, cp, 
@@ -4116,7 +4116,7 @@ static SCM g_filter_selection(SCM e, SCM order)
   SCM errstr;
   env *ne = NULL;
   if (selection_is_active() == 0) 
-    snd_no_active_selection_error(S_filter_selection);
+    return(snd_no_active_selection_error(S_filter_selection));
   cp = get_cp(SCM_BOOL_F, SCM_BOOL_F, S_filter_selection);
   if (mus_scm_p(e))
     {

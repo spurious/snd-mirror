@@ -140,7 +140,6 @@ static POINT *TO_C_POINTS(SCM pts, const char *caller)
   int i, j, len;
   POINT *pack_pts;
   SCM *data;
-  ASSERT_TYPE(VECTOR_P(pts), pts, SCM_ARG1, caller, "a vector");
   len = VECTOR_LENGTH(pts) / 2;
   if (len <= 0) 
     mus_misc_error(caller, "empty vector?", SCM_LIST1(pts));
@@ -159,6 +158,7 @@ static SCM g_draw_lines(SCM pts, SCM snd, SCM chn, SCM ax)
   /* pts should be a vector of integers as (x y) pairs */
   POINT *pack_pts;
   SND_ASSERT_CHAN(S_draw_lines, snd, chn, 2);
+  ASSERT_TYPE(VECTOR_P(pts), pts, SCM_ARG1, S_draw_lines, "a vector");
   pack_pts = TO_C_POINTS(pts, S_draw_lines);
   draw_lines(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_lines), 
 	     pack_pts, 
@@ -172,6 +172,7 @@ static SCM g_draw_dots(SCM pts, SCM size, SCM snd, SCM chn, SCM ax)
   /* pts should be a vector of integers as (x y) pairs */
   POINT *pack_pts;
   SND_ASSERT_CHAN(S_draw_dots, snd, chn, 3);
+  ASSERT_TYPE(VECTOR_P(pts), pts, SCM_ARG1, S_draw_dots, "a vector");
   pack_pts = TO_C_POINTS(pts, S_draw_dots);
   draw_points(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_dots), 
 	      pack_pts, 
@@ -186,6 +187,7 @@ static SCM g_fill_polygon(SCM pts, SCM snd, SCM chn, SCM ax_id)
   POINT *pack_pts;
   axis_context *ax;
   SND_ASSERT_CHAN(S_fill_polygon, snd, chn, 2);
+  ASSERT_TYPE(VECTOR_P(pts), pts, SCM_ARG1, S_fill_polygon, "a vector");
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_fill_polygon);
   pack_pts = TO_C_POINTS(pts, S_fill_polygon);
 #if USE_MOTIF

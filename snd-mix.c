@@ -3220,23 +3220,10 @@ void display_mix_amp_envs(snd_state *ss, chan_info *axis_cp, axis_context *ax, i
 
 static SCM snd_no_such_mix_error(const char *caller, SCM n)
 {
-#if HAVE_SCM_MAKE_CONTINUATION
-  int first;
-  SCM con;
-  con = scm_make_continuation(&first);
-  if (first)
-    ERROR(NO_SUCH_MIX,
-	  SCM_LIST3(TO_SCM_STRING(caller),
-		    n,
-		    SCM_LIST2(ERROR_CONTINUATION,
-			      con)));
-  return(con);
-#else
   ERROR(NO_SUCH_MIX,
 	SCM_LIST2(TO_SCM_STRING(caller),
 		  n));
   return(SCM_BOOL_F);
-#endif
 }
 
 static SCM g_mix_position(SCM n) 
@@ -3245,8 +3232,8 @@ static SCM g_mix_position(SCM n)
   console_state *cs; 
   ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_position, "an integer");
   cs = cs_from_id(TO_C_INT_OR_ELSE(n, 0));
-  while (cs == NULL)
-    cs = cs_from_id(TO_C_INT_OR_ELSE(n = snd_no_such_mix_error(S_mix_position, n), 0));
+  if (cs == NULL)
+    return(snd_no_such_mix_error(S_mix_position, n));
   return(TO_SCM_INT(cs->orig)); 
 }
 
@@ -3256,8 +3243,8 @@ static SCM g_mix_chans(SCM n)
   console_state *cs; 
   ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_chans, "an integer");
   cs = cs_from_id(TO_C_INT_OR_ELSE(n, 0));
-  while (cs == NULL)
-    cs = cs_from_id(TO_C_INT_OR_ELSE(n = snd_no_such_mix_error(S_mix_chans, n), 0));
+  if (cs == NULL)
+    return(snd_no_such_mix_error(S_mix_chans, n));
   return(TO_SCM_INT(cs->chans));
 }
 
@@ -3274,8 +3261,8 @@ static SCM g_mix_length(SCM n)
   int len;
   ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_length, "an integer");
   len = mix_length(TO_C_INT_OR_ELSE(n, 0));
-  while (len == -1) 
-    len = mix_length(TO_C_INT_OR_ELSE(n = snd_no_such_mix_error(S_mix_length, n), 0));
+  if (len == -1) 
+    return(snd_no_such_mix_error(S_mix_length, n));
   return(TO_SCM_INT(len));
 }
 
@@ -3285,8 +3272,8 @@ static SCM g_mix_locked(SCM n)
   mix_info *md;
   ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_locked, "an integer");
   md = md_from_id(TO_C_INT_OR_ELSE(n, 0));
-  while (md == NULL)
-    md = md_from_id(TO_C_INT_OR_ELSE(n = snd_no_such_mix_error(S_mix_locked, n), 0));
+  if (md == NULL)
+    return(snd_no_such_mix_error(S_mix_locked, n));
   return(TO_SCM_BOOLEAN((md->current_cs)->locked));
 }
 
@@ -3296,8 +3283,8 @@ static SCM g_mix_anchor(SCM n)
   mix_info *md; 
   ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_anchor, "an integer");
   md = md_from_id(TO_C_INT_OR_ELSE(n, 0));
-  while (md == NULL)
-    md = md_from_id(TO_C_INT_OR_ELSE(n = snd_no_such_mix_error(S_mix_anchor, n), 0));
+  if (md == NULL)
+    return(snd_no_such_mix_error(S_mix_anchor, n));
   return(TO_SCM_INT(md->anchor));
 }
 
@@ -3307,8 +3294,8 @@ static SCM g_mix_name(SCM n)
   mix_info *md; 
   ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_name, "an integer");
   md = md_from_id(TO_C_INT_OR_ELSE(n, 0));
-  while (md == NULL)
-    md = md_from_id(TO_C_INT_OR_ELSE(n = snd_no_such_mix_error(S_mix_name, n), 0));
+  if (md == NULL)
+    return(snd_no_such_mix_error(S_mix_name, n));
   return(TO_SCM_STRING(md->name));
 }
 
@@ -3318,8 +3305,8 @@ static SCM g_mix_track(SCM n)
   mix_info *md; 
   ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_track, "an integer");
   md = md_from_id(TO_C_INT_OR_ELSE(n, 0));
-  while (md == NULL)
-    md = md_from_id(TO_C_INT_OR_ELSE(n = snd_no_such_mix_error(S_mix_track, n), 0));
+  if (md == NULL)
+    return(snd_no_such_mix_error(S_mix_track, n));
   return(TO_SCM_INT(md->track));
 }
 
@@ -3329,8 +3316,8 @@ static SCM g_mix_tag_y(SCM n)
   mix_info *md; 
   ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_tag_y, "an integer");
   md = md_from_id(TO_C_INT_OR_ELSE(n, 0));
-  while (md == NULL)
-    md = md_from_id(TO_C_INT_OR_ELSE(n = snd_no_such_mix_error(S_mix_tag_y, n), 0));
+  if (md == NULL)
+    return(snd_no_such_mix_error(S_mix_tag_y, n));
   return(TO_SCM_INT(md->tag_y));
 }
 
@@ -3340,8 +3327,8 @@ static SCM g_mix_speed(SCM n)
   console_state *cs; 
   ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_speed, "an integer");
   cs = cs_from_id(TO_C_INT_OR_ELSE(n, 0));
-  while (cs == NULL)
-    cs = cs_from_id(TO_C_INT_OR_ELSE(n = snd_no_such_mix_error(S_mix_speed, n), 0));
+  if (cs == NULL)
+    return(snd_no_such_mix_error(S_mix_speed, n));
   return(TO_SCM_DOUBLE(cs->speed));
 }
 
@@ -3366,8 +3353,8 @@ static SCM g_mixes(SCM snd, SCM chn)
       else
 	{
 	  sp = get_sp(snd);
-	  while (sp == NULL) 
-	    sp = get_sp(snd = snd_no_such_sound_error(S_mixes, snd));
+	  if (sp == NULL) 
+	    return(snd_no_such_sound_error(S_mixes, snd));
 	  for (i = sp->nchans - 1; i >= 0; i--)
 	    res1 = CONS(g_mixes(snd, TO_SMALL_SCM_INT(i)), res1);
 	}
@@ -3391,8 +3378,8 @@ static SCM g_mix_sound_index(SCM n)
   mix_info *md; 
   ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_sound_index, "an integer");
   md = md_from_id(TO_C_INT_OR_ELSE(n, 0));
-  while (md == NULL)
-    md = md_from_id(TO_C_INT_OR_ELSE(n = snd_no_such_mix_error(S_mix_sound_index, n), 0));
+  if (md == NULL)
+    return(snd_no_such_mix_error(S_mix_sound_index, n));
   return(TO_SCM_INT(((md->cp)->sound)->index));
 }
 
@@ -3402,8 +3389,8 @@ static SCM g_mix_sound_channel(SCM n)
   mix_info *md; 
   ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARGn, S_mix_sound_channel, "an integer");
   md = md_from_id(TO_C_INT_OR_ELSE(n, 0));
-  while (md == NULL)
-    md = md_from_id(TO_C_INT_OR_ELSE(n = snd_no_such_mix_error(S_mix_sound_channel, n), 0));
+  if (md == NULL)
+    return(snd_no_such_mix_error(S_mix_sound_channel, n));
   return(TO_SCM_INT((md->cp)->chan));
 }
 
@@ -3417,11 +3404,11 @@ static SCM g_mix_amp(SCM n, SCM uchan)
   ASSERT_TYPE(INTEGER_IF_BOUND_P(n), n, SCM_ARG1, S_mix_amp, "an integer");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(uchan), uchan, SCM_ARG2, S_mix_amp, "an integer");
   cs = cs_from_id(TO_C_INT_OR_ELSE(n, 0));
-  while (cs == NULL)
-    cs = cs_from_id(TO_C_INT_OR_ELSE(n = snd_no_such_mix_error(S_mix_amp, n), 0));
+  if (cs == NULL)
+    return(snd_no_such_mix_error(S_mix_amp, n));
   chan = TO_C_INT_OR_ELSE(uchan, 0);
-  while (chan >= cs->chans)
-    chan = TO_C_INT_OR_ELSE(uchan = snd_no_such_channel_error(S_mix_amp, SCM_LIST1(n), uchan), 0);
+  if (chan >= cs->chans)
+    return(snd_no_such_channel_error(S_mix_amp, SCM_LIST1(n), uchan));
   return(TO_SCM_DOUBLE(cs->scalers[chan]));
 }
 
@@ -3456,8 +3443,8 @@ static SCM g_set_mix_length(SCM n, SCM uval)
   ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, "set-" S_mix_length, "an integer");
   ASSERT_TYPE(NUMBER_P(uval), uval, SCM_ARG2, "set-" S_mix_length, "a number");
   md = md_from_id(TO_C_INT(n));
-  while (md == NULL)
-    md = md_from_id(TO_C_INT(n = snd_no_such_mix_error("set-" S_mix_length, n)));
+  if (md == NULL)
+    return(snd_no_such_mix_error("set-" S_mix_length, n));
   cs = md->current_cs;
   if (cs)
     {
@@ -3480,8 +3467,8 @@ static SCM g_set_mix_locked(SCM n, SCM val)
   ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, "set-" S_mix_locked, "an integer");
   ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARG2, "set-" S_mix_locked, "a boolean");
   md = md_from_id(TO_C_INT(n));
-  while (md == NULL)
-    md = md_from_id(TO_C_INT(n = snd_no_such_mix_error("set-" S_mix_locked, n)));
+  if (md == NULL)
+    return(snd_no_such_mix_error("set-" S_mix_locked, n));
   on = TO_C_BOOLEAN_OR_T(val);
   cs = md->states[md->curcons];
   cs->locked = on;
@@ -3499,8 +3486,8 @@ static SCM g_set_mix_anchor(SCM n, SCM uval)
   ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, "set-" S_mix_anchor, "an integer");
   ASSERT_TYPE(NUMBER_P(uval), uval, SCM_ARG2, "set-" S_mix_anchor, "a number");
   md = md_from_id(TO_C_INT(n));
-  while (md == NULL)
-    md = md_from_id(TO_C_INT(n = snd_no_such_mix_error("set-" S_mix_anchor, n)));
+  if (md == NULL)
+    return(snd_no_such_mix_error("set-" S_mix_anchor, n));
   cs = md->current_cs;
   if (cs)
     {
@@ -3520,8 +3507,8 @@ static SCM g_set_mix_name(SCM n, SCM val)
   ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, "set-" S_mix_name, "an integer");
   ASSERT_TYPE(STRING_P(val), val, SCM_ARG2, "set-" S_mix_name, "a string");
   md = md_from_id(TO_C_INT(n));
-  while (md == NULL)
-    md = md_from_id(TO_C_INT(n = snd_no_such_mix_error("set-" S_mix_name, n)));
+  if (md == NULL)
+    return(snd_no_such_mix_error("set-" S_mix_name, n));
   if (md->name) FREE(md->name);
   md->name = copy_string(TO_C_STRING(val));
   reflect_mix_in_mix_panel(md->id);
@@ -3534,8 +3521,8 @@ static SCM g_set_mix_track(SCM n, SCM val)
   ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, "set-" S_mix_track, "an integer");
   ASSERT_TYPE(INTEGER_P(val), val, SCM_ARG2, "set-" S_mix_track, "an integer");
   md = md_from_id(TO_C_INT(n));
-  while (md == NULL)
-    md = md_from_id(TO_C_INT(n = snd_no_such_mix_error("set-" S_mix_track, n)));
+  if (md == NULL)
+    return(snd_no_such_mix_error("set-" S_mix_track, n));
   md->track = TO_C_INT(val);
   reflect_mix_in_mix_panel(md->id);
   return(val);
@@ -3547,8 +3534,8 @@ static SCM g_set_mix_tag_y(SCM n, SCM val)
   ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, "set-" S_mix_tag_y, "an integer");
   ASSERT_TYPE(NUMBER_P(val), val, SCM_ARG2, "set-" S_mix_tag_y, "a number");
   md = md_from_id(TO_C_INT(n));
-  while (md == NULL)
-    md = md_from_id(TO_C_INT(n = snd_no_such_mix_error("set-" S_mix_tag_y, n)));
+  if (md == NULL)
+    return(snd_no_such_mix_error("set-" S_mix_tag_y, n));
   md->tag_y = TO_C_INT_OR_ELSE(val, 0);
   update_graph(md->cp, NULL);
   return(val);
@@ -3747,7 +3734,7 @@ If chn is omitted, file's channels are mixed until snd runs out of channels"
   if (!(mus_file_probe(name)))
     {
       if (name) FREE(name);
-      snd_no_such_file_error(S_mix, file);
+      return(snd_no_such_file_error(S_mix, file));
     }
   ss = get_global_state();
   if (NOT_BOUND_P(console))
@@ -3759,7 +3746,7 @@ If chn is omitted, file's channels are mixed until snd runs out of channels"
       if (id == -1) 
 	{
 	  if (name) FREE(name);
-	  snd_no_such_file_error(S_mix, file);
+	  return(snd_no_such_file_error(S_mix, file));
 	}
     }
   else
@@ -3781,7 +3768,7 @@ If chn is omitted, file's channels are mixed until snd runs out of channels"
       else 
 	{
 	  if (name) FREE(name);
-	  snd_no_such_file_error(S_mix, file);
+	  return(snd_no_such_file_error(S_mix, file));
 	}
     }
   if (name) FREE(name);
@@ -3853,8 +3840,8 @@ static SCM g_make_mix_sample_reader(SCM mix_id)
   mix_fd *mf = NULL;
   ASSERT_TYPE(INTEGER_P(mix_id), mix_id, SCM_ARGn, S_make_mix_sample_reader, "an integer");
   md = md_from_id(TO_C_INT(mix_id));
-  while (md == NULL)
-    md = md_from_id(TO_C_INT(mix_id = snd_no_such_mix_error(S_make_mix_sample_reader, mix_id)));
+  if (md == NULL)
+    return(snd_no_such_mix_error(S_make_mix_sample_reader, mix_id));
   mf = init_mix_read(md, FALSE); 
   if (mf)
     {
@@ -4027,8 +4014,8 @@ static SCM g_play_mix(SCM num)
   mix_info *md;
   ASSERT_TYPE(INTEGER_P(num), num, SCM_ARGn, S_play_mix, "an integer");
   md = md_from_id(TO_C_INT(num));
-  while (md == NULL)
-    md = md_from_id(TO_C_INT(num = snd_no_such_mix_error(S_play_mix, num)));
+  if (md == NULL)
+    return(snd_no_such_mix_error(S_play_mix, num));
   play_mix(md->ss, md); 
   return(num);
 }

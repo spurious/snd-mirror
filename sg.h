@@ -188,7 +188,6 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #define NO_SUCH_PLAYER       TO_SCM_SYMBOL("no-such-player")
 #define NO_SUCH_AXIS_CONTEXT TO_SCM_SYMBOL("no-such-graphics-context")
 #define BAD_ARITY            TO_SCM_SYMBOL("bad-arity")
-#define ERROR_CONTINUATION   TO_SCM_SYMBOL("snd-error-continuation")
 
 #define ERROR(Type, Info) scm_throw(Type, Info)
 
@@ -258,20 +257,8 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 
 #ifdef SCM_ASSERT_TYPE
 
-#else
-
-#endif
-
-#ifdef SCM_ASSERT_TYPE
-
-  #if USE_SND && HAVE_SCM_MAKE_CONTINUATION
-    /* not sure this is needed, or a good idea */
-    #define ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
-      while (!(Assertion)) Arg = snd_wrong_type_arg_msg(Arg, Position, Caller, Correct_Type)
-  #else
-    #define ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
-      SCM_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type)
-  #endif
+  #define ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
+    SCM_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type)
 
   #define SND_ASSERT_SND(Origin, Snd, Offset) \
     if (!((INTEGER_P(Snd)) || (FALSE_P(Snd)) || (NOT_BOUND_P(Snd)) || (LIST_P(Snd)))) \

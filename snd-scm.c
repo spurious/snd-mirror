@@ -84,6 +84,7 @@ void snd_unprotect(SCM obj)
       VECTOR_SET(gc_protection, gc_last_set, DEFAULT_GC_VALUE);
       gc_last_cleared = gc_last_set;
       gc_last_set = -1;
+      return;
     }
   for (i = 0; i < gc_protection_size; i++)
     if (SCM_EQ_P(gcdata[i], obj))
@@ -204,21 +205,7 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 		{
 		  scm_display(tag, port);
 		  WRITE_STRING(" ", port);
-
-		  {
-		    /* an experiment... */
-		    SCM lst, carlst;
-		    for (lst = SCM_CDR(throw_args); NOT_NULL_P(lst); lst = SCM_CDR(lst))
-		      {
-			carlst = SCM_CAR(lst);
-			if ((!(LIST_P(carlst))) || 
-			    (!(SCM_EQ_P(SCM_CAR(carlst), ERROR_CONTINUATION))))
-			  {
-			    scm_display(carlst, port);
-			    WRITE_STRING(" ", port);
-			  }
-		      }
-		  }
+		  scm_display(throw_args, port);
 		}
 	      else
 		{
@@ -371,122 +358,37 @@ int procedure_ok_with_error(SCM proc, int req_args, int opt_args, const char *ca
 
 SCM snd_no_such_file_error(const char *caller, SCM filename)
 {
-#if HAVE_SCM_MAKE_CONTINUATION
-  int first;
-  SCM con;
-  con = scm_make_continuation(&first);
-  if (first)
-    ERROR(NO_SUCH_FILE,
-	  SCM_LIST4(TO_SCM_STRING(caller),
-		    filename,
-		    TO_SCM_STRING(strerror(errno)),
-		    SCM_LIST2(ERROR_CONTINUATION,
-			      con)));
-  return(con);
-#else
   ERROR(NO_SUCH_FILE,
 	SCM_LIST3(TO_SCM_STRING(caller),
 		  filename,
 		  TO_SCM_STRING(strerror(errno))));
   return(SCM_BOOL_F);
-#endif
 }
 
 SCM snd_no_such_channel_error(const char *caller, SCM snd, SCM chn)
 {
-#if HAVE_SCM_MAKE_CONTINUATION
-  int first;
-  SCM con;
-  con = scm_make_continuation(&first);
-  if (first)
-    ERROR(NO_SUCH_CHANNEL,
-	  SCM_LIST4(TO_SCM_STRING(caller),
-		    snd,
-		    chn,
-		    SCM_LIST2(ERROR_CONTINUATION,
-			      con)));
-  return(con);
-#else
   ERROR(NO_SUCH_CHANNEL,
 	SCM_LIST3(TO_SCM_STRING(caller),
 		  snd,
 		  chn));
   return(SCM_BOOL_F);
-#endif
 }
 
-/* TODO: tie these into continution values (and no_such_menu) and finish mus_misc_error cases */
 SCM snd_no_active_selection_error(const char *caller)
 {
-#if HAVE_SCM_MAKE_CONTINUATION
-  int first;
-  SCM con;
-  con = scm_make_continuation(&first);
-  if (first)
-    ERROR(NO_ACTIVE_SELECTION,
-	  SCM_LIST2(TO_SCM_STRING(caller),
-		    SCM_LIST2(ERROR_CONTINUATION,
-			      con)));
-  return(con);
-#else
   ERROR(NO_ACTIVE_SELECTION,
 	SCM_LIST1(TO_SCM_STRING(caller)));
   return(SCM_BOOL_F);
-#endif
 }
 
 SCM snd_bad_arity_error(const char *caller, SCM errstr, SCM proc)
 {
-#if HAVE_SCM_MAKE_CONTINUATION
-  int first;
-  SCM con;
-  con = scm_make_continuation(&first);
-  if (first)
-    ERROR(BAD_ARITY,
-	  SCM_LIST4(TO_SCM_STRING(caller),
-		    errstr,
-		    proc,
-		    SCM_LIST2(ERROR_CONTINUATION,
-			      con)));
-  return(con);
-#else
   ERROR(BAD_ARITY,
 	SCM_LIST3(TO_SCM_STRING(caller),
 		  errstr,
 		  proc));
   return(SCM_BOOL_F);
-#endif
 }
-
-#if HAVE_SCM_MAKE_CONTINUATION
-SCM snd_wrong_type_arg_msg(SCM arg, int pos, const char *caller, const char *correct_type)
-{
-  int first;
-  SCM con;
-  con = scm_make_continuation(&first);
-  if (first)
-    {
-      if (pos == 0)
-	scm_throw(TO_SCM_SYMBOL("wrong-type-arg"),
-		  SCM_LIST4(TO_SCM_STRING(caller),
-			    TO_SCM_STRING("Wrong type argument (expecting ~A): ~S"),
-			    SCM_LIST2(TO_SCM_STRING(correct_type), 
-				      arg),
-			    SCM_LIST2(ERROR_CONTINUATION,
-				      con)));
-      else
-	scm_throw(TO_SCM_SYMBOL("wrong-type-arg"),
-		  SCM_LIST4(TO_SCM_STRING(caller),
-			    TO_SCM_STRING("Wrong type argument in position ~A (expecting ~A): ~S"),
-			    SCM_LIST3(TO_SMALL_SCM_INT(pos),
-				      TO_SCM_STRING(correct_type), 
-				      arg),
-			    SCM_LIST2(ERROR_CONTINUATION,
-				      con)));
-	}
-  return(con);
-}
-#endif
 
 
 /* -------- various evaluators (within our error handler) -------- */
@@ -1800,20 +1702,17 @@ chan_info *get_cp(SCM scm_snd_n, SCM scm_chn_n, const char *caller)
   snd_info *sp;
   int chn_n;
   sp = get_sp(scm_snd_n);
-  while (sp == NULL) 
-    sp = get_sp(scm_snd_n = snd_no_such_sound_error(caller, scm_snd_n)); 
-  while (1)
-    {
-      if (INTEGER_P(scm_chn_n))
-	chn_n = TO_C_INT(scm_chn_n);
-      else
-	if (sp->selected_channel != NO_SELECTION) 
-	  chn_n = sp->selected_channel;
-	else chn_n = 0;
-      if ((chn_n >= 0) && (chn_n < sp->nchans)) 
-	return(sp->chans[chn_n]);
-      scm_chn_n = snd_no_such_channel_error(caller, scm_snd_n, scm_chn_n);
-    }
+  if (sp == NULL) 
+    snd_no_such_sound_error(caller, scm_snd_n); 
+  if (INTEGER_P(scm_chn_n))
+    chn_n = TO_C_INT(scm_chn_n);
+  else
+    if (sp->selected_channel != NO_SELECTION) 
+      chn_n = sp->selected_channel;
+    else chn_n = 0;
+  if ((chn_n >= 0) && (chn_n < sp->nchans)) 
+    return(sp->chans[chn_n]);
+  snd_no_such_channel_error(caller, scm_snd_n, scm_chn_n);
   return(NULL);
 }
 
@@ -1932,7 +1831,7 @@ subsequent " S_close_sound_file ". data can be written with " S_vct_sound_file
   if (result == -1) 
     {
       free_file_info(hdr);
-      snd_no_such_file_error(S_open_sound_file, g_name);
+      return(snd_no_such_file_error(S_open_sound_file, g_name));
     }
   set_temp_fd(result, hdr);
   return(TO_SCM_INT(result));
@@ -1953,7 +1852,7 @@ static SCM g_close_sound_file(SCM g_fd, SCM g_bytes)
   if (hdr == NULL) 
     {
       close(fd);
-      snd_no_such_file_error(S_close_sound_file, g_fd);
+      return(snd_no_such_file_error(S_close_sound_file, g_fd));
     }
   result = close_temp_file(fd, hdr, bytes, any_selected_sound(state));
   unset_temp_fd(fd);
@@ -2209,8 +2108,8 @@ static SCM g_edit_header_dialog(SCM snd_n)
   #define H_edit_header_dialog "(" S_edit_header_dialog " snd) opens the Edit Header dialog on sound snd"
   snd_info *sp; 
   sp = get_sp(snd_n);
-  while (sp == NULL)
-    sp = get_sp(snd_n = snd_no_such_sound_error(S_edit_header_dialog, snd_n));
+  if (sp == NULL)
+    return(snd_no_such_sound_error(S_edit_header_dialog, snd_n));
   return(SND_WRAP(edit_header(sp))); 
 }
 
@@ -2370,14 +2269,14 @@ If 'data' is a list of numbers, it is treated as an envelope."
 }
 
 
-#if HAVE_OSS
 static SCM g_clear_audio_inputs (void) 
 {
   #define H_clear_audio_inputs "(" S_clear_audio_inputs ") tries to reduce soundcard noise in Linux/OSS"
+#if HAVE_OSS
   mus_audio_clear_soundcard_inputs(); 
+#endif
   return(SCM_BOOL_F);
 }
-#endif
 
 static SCM g_set_oss_buffers(SCM num, SCM size)
 {
@@ -2406,8 +2305,8 @@ static SCM g_start_progress_report(SCM snd)
   snd_info *sp;
   SND_ASSERT_SND(S_start_progress_report, snd, 1);
   sp = get_sp(snd);
-  while (sp == NULL)
-    sp = get_sp(snd = snd_no_such_sound_error(S_start_progress_report, snd));
+  if (sp == NULL)
+    return(snd_no_such_sound_error(S_start_progress_report, snd));
   start_progress_report(sp, NOT_FROM_ENVED);
   return(snd);
 }
@@ -2418,8 +2317,8 @@ static SCM g_finish_progress_report(SCM snd)
   snd_info *sp;
   SND_ASSERT_SND(S_finish_progress_report, snd, 1);
   sp = get_sp(snd);
-  while (sp == NULL)
-    sp = get_sp(snd = snd_no_such_sound_error(S_finish_progress_report, snd));
+  if (sp == NULL)
+    return(snd_no_such_sound_error(S_finish_progress_report, snd));
   finish_progress_report(sp, NOT_FROM_ENVED);
   return(snd); 
 }
@@ -2436,8 +2335,8 @@ updates an on-going 'progress report' (e. g. an animated hour-glass icon) in snd
   ASSERT_TYPE(INTEGER_IF_BOUND_P(cur_chan), cur_chan, SCM_ARG3, S_progress_report, "an integer");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(chans), chans, SCM_ARG4, S_progress_report, "an integer");
   sp = get_sp(snd);
-  while (sp == NULL)
-    sp = get_sp(snd = snd_no_such_sound_error(S_progress_report, snd));
+  if (sp == NULL)
+    return(snd_no_such_sound_error(S_progress_report, snd));
   progress_report(sp,
 		  (STRING_P(name)) ? TO_C_STRING(name) : "something useful",
 		  TO_C_INT_OR_ELSE(cur_chan, 0),
@@ -3497,9 +3396,7 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(S_snd_tempnam,         g_snd_tempnam, 0, 0, 0,         H_snd_tempnam);
   DEFINE_PROC("set-" S_oss_buffers,  g_set_oss_buffers, 2, 0, 0,     H_set_oss_buffers);
   DEFINE_PROC(S_update_usage_stats,  g_update_usage_stats, 0, 0, 0,  H_update_usage_stats);
-#if HAVE_OSS
   DEFINE_PROC(S_clear_audio_inputs,  g_clear_audio_inputs, 0, 0, 0,  H_clear_audio_inputs);
-#endif
   DEFINE_PROC(S_enved_dialog,        g_enved_dialog, 0, 0, 0,        H_enved_dialog);
   DEFINE_PROC(S_color_dialog,        g_color_dialog, 0, 0, 0,        H_color_dialog);
   DEFINE_PROC(S_orientation_dialog,  g_orientation_dialog, 0, 0, 0,  H_orientation_dialog);
@@ -3641,9 +3538,6 @@ If more than one hook function, results are concatenated. If none, the current c
 #endif
 #if HAVE_APPLICABLE_SMOB
   YES_WE_HAVE("snd-new-smob"); /* needed for backwards compatibility in the test suite */
-#endif
-#if HAVE_SCM_MAKE_CONTINUATION
-  YES_WE_HAVE("snd-error-continuations");
 #endif
 
   YES_WE_HAVE("snd");

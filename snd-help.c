@@ -264,7 +264,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
-14-May:  continuable errors.\n\
+14-May:  continuable errors -- deleted the next day (gc troubles).\n\
 11-May:  selection-to-temp was writing files that Sox et al can't read (thanks to Matti Koskinen).\n\
 9-May:   support for GSL 0.7+\n\
 7-May:   added edit-position arg to various play functions, save-sound-as,\n\

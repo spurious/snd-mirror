@@ -365,11 +365,11 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
 	    {
 	      errstr = TO_SCM_STRING(error);
 	      FREE(error);
-	      snd_bad_arity_error("set-" S_search_procedure, errstr, proc);
+	      return(snd_bad_arity_error("set-" S_search_procedure, errstr, proc));
 	    }
 	}
       else
-	snd_no_such_sound_error("set-" S_search_procedure, snd);
+	return(snd_no_such_sound_error("set-" S_search_procedure, snd));
     }
   else 
     {
@@ -389,7 +389,7 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
 	{
 	  errstr = TO_SCM_STRING(error);
 	  FREE(error);
-	  snd_bad_arity_error("set-" S_search_procedure, errstr, proc);
+	  return(snd_bad_arity_error("set-" S_search_procedure, errstr, proc));
 	}
     }
   return(snd);

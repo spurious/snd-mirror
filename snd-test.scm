@@ -22,7 +22,6 @@
 ;;; test 19: save and restore
 ;;; test 20: errors
 ;;; test 21: transforms
-;;; test 22: error continuations
 
 
 (use-modules (ice-9 format) (ice-9 debug))
@@ -30,7 +29,7 @@
 (define tests 1)
 (define snd-test -1)
 (define full-test (< snd-test 0))
-(define total-tests 22)
+(define total-tests 21)
 
 (if (provided? 'gcing) (set! g-gc-step 100))
 
@@ -1239,7 +1238,7 @@
 		(set! err (mus-audio-mixer-write mus-audio-microphone mus-audio-amp 0 vals))
 		(if (= err -1) 
 		    (snd-display (format #f ";mus-audio-mixer-write?")))
-		(if (defined? 'clear-audio-inputs) (clear-audio-inputs))
+		(clear-audio-inputs)
 		(mus-audio-restore)
 		(mus-audio-mixer-read mus-audio-microphone mus-audio-amp 0 vals)
 		(if (fneq (vector-ref vals 0) old-val) (snd-display (format #f ";mus-audio-restore: ~A ~A?" old-val (vector-ref vals 0))))))))
@@ -4906,20 +4905,22 @@
 
 (define sndxtest
    (lambda ()
-     (let ((data (selection-to-temp)))
-       (if data
-           (let* ((str "")
-                  (input-names (temp-filenames data))
-                  (output-name (string-append (tmpnam) ".snd"))
-                  (cmd (string-append "./sndxtest \"" (vector-ref input-names 0) "\" \"" output-name "\""))
-                  (fil (open-pipe cmd "r")))
-             (do ((val (read-char fil) (read-char fil))) 
-                 ((eof-object? val))
-               (set! str (string-append str (string val))))
-             (close-pipe fil)
-             (temp-to-selection data output-name "(sndxtest)")
-             str)
-           (report-in-minibuffer "no current selection")))))
+     (if (file-exists? "sndxtest")
+	 (let ((data (selection-to-temp)))
+	   (if data
+	       (let* ((str "")
+		      (input-names (temp-filenames data))
+		      (output-name (string-append (tmpnam) ".snd"))
+		      (cmd (string-append "./sndxtest \"" (vector-ref input-names 0) "\" \"" output-name "\""))
+		      (fil (open-pipe cmd "r")))
+		 (do ((val (read-char fil) (read-char fil))) 
+		     ((eof-object? val))
+		   (set! str (string-append str (string val))))
+		 (close-pipe fil)
+		 (temp-to-selection data output-name "(sndxtest)")
+		 str)
+	       (report-in-minibuffer "no current selection")))
+	 (snd-display ";sndxtest does not existA"))))
 
 (define clm-fm-violin
   (lambda (dur frq amp)
@@ -8760,88 +8761,6 @@ EDITS: 3
 	(vct-scale! d2 (/ 1.0 64.0))
 	(if (not (vequal d1 d2))
 	    (snd-display (format #f ";random hadamard: ~A ~A" d1 d2))))
-
-      ))
-
-
-;;; ---------------- test 22: error continuations ----------------
-
-(define (continuable-error? err)
-  (let* ((len (length err))
-	 (last-arg (and (not (null? err)) 
-			(list-ref err (- len 1)))))
-    (and last-arg
-	 (list? last-arg)
-	 (= (length last-arg) 2)
-	 (eq? (car last-arg) 'snd-error-continuation)
-	 (procedure? (cadr last-arg))
-	 (cadr last-arg))))
-
-(define (with-continuations thunk newval)
-  (catch #t
-	 (lambda ()
-	   (lazy-catch #t 
-		       thunk
-		       lazy-handler-dispatch))
-	 (lambda args
-	   (let ((go-on (continuable-error? args)))
-	     (if go-on
-		 (go-on newval)
-		 (apply throw args))))))
-
-(define (with-default-continuations thunk)
-  (with-continuations thunk #f))
-
-(if (and (provided? 'snd-error-continuations)
-	 (or full-test (= snd-test 22)))
-    (begin
-      (if (procedure? trace-hook) (trace-hook 22))
-
-      (let ((v (make-vct 4))
-	    (val 0))
-	(with-default-continuations
-	 (lambda ()
-	   (vct-set! v 4 0.0)
-	   (vct-ref v 23)
-	   (set! val 32)))
-	(if (not (= val 32)) 
-	    (snd-display (format #f ";cont 0: ~A?" val)))
-	(vct-fill! v 0.0)
-	
-	(do ((i 0 (1+ i)))
-	    ((= i 5))
-	  (with-continuations (lambda () (vct-set! v -1 i)) i))
-	(if (not (vequal v (vct 0.0 1.0 2.0 4.0)))
-	    (snd-display (format #f ";cont 1: ~A?" v)))
-	
-	(with-default-continuations
-	 (lambda ()
-	   (let ((true-max (mus-sound-max-amp "2.snd")))
-	     (mus-sound-set-max-amp "2.snd" #(12345 .005))
-	     (let ((ma (mus-sound-max-amp "2.snd")))
-	       (if (or (fneq (vector-ref ma 1) .005)
-		       (not (= (vector-ref ma 0) 12345))
-		       (fneq (vector-ref ma 3) 0.0)
-		       (not (= (vector-ref ma 2) 0)))
-		   (snd-display (format #f ";cont 2: set-max-amp: ~A?" ma)))))))
-	
-	(with-default-continuations
-	 (lambda ()
-	   (let ((sd (make-sound-data -1 -1)))
-	     (if (not (= (sound-data-chans sd) 1)) 
-		 (snd-display (format #f ";cont 4: sound-data: ~A?" sd)))
-	     (if (not (= (sound-data-length sd) 1)) 
-		 (snd-display (format #f ";cont 5: sound-data: ~A?" sd)))
-	     
-	     (sound-data-set! sd -1 -1 32.0)
-	     (if (fneq (sound-data-ref sd 0 0) 32.0)
-		 (snd-display (format #f ";cont 6: sound-data[0]: ~A?" (sound-data-ref sd 0 0))))
-	     (if (fneq (sound-data-ref sd -1 -1) 32.0)
-		 (snd-display (format #f ";cont 7: sound-data[0]: ~A?" (sound-data-ref sd 0 0))))
-	     )))
-	
-	)
-
 
       ))
 

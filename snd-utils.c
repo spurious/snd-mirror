@@ -181,6 +181,7 @@ void fill_number(char *fs, char *ps)
 static char *get_tmpdir(void)
 {
   char *tmpdir = NULL;
+  int len;
   tmpdir = getenv("TMPDIR");
 #ifdef CCRMA
   if (tmpdir == NULL) tmpdir = "/zap";
@@ -192,6 +193,8 @@ static char *get_tmpdir(void)
   #endif
 #endif
   if (tmpdir == NULL) tmpdir = ".";
+  len = strlen(tmpdir);
+  if (tmpdir[len - 1] == '/') tmpdir[len - 1] = 0; /* sgi... */
   return(tmpdir);
 }
 

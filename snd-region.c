@@ -908,23 +908,10 @@ void save_region_backpointer(snd_info *sp)
 
 static SCM snd_no_such_region_error(const char *caller, SCM n)
 {
-#if HAVE_SCM_MAKE_CONTINUATION
-  int first;
-  SCM con;
-  con = scm_make_continuation(&first);
-  if (first)
-    ERROR(NO_SUCH_REGION,
-	  SCM_LIST3(TO_SCM_STRING(caller),
-		    n,
-		    SCM_LIST2(ERROR_CONTINUATION,
-			      con)));
-  return(con);
-#else
   ERROR(NO_SUCH_REGION,
 	SCM_LIST2(TO_SCM_STRING(caller),
 		  n));
   return(SCM_BOOL_F);
-#endif
 }
 
 static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SCM name, SCM start, SCM end, SCM data)
@@ -987,8 +974,8 @@ inserts region data into snd's channel chn starting at 'start-samp'"
   SND_ASSERT_CHAN(S_insert_region, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_insert_region);
   rg = TO_C_INT_OR_ELSE(reg_n, 0);
-  while (!(region_ok(rg)))
-    rg = TO_C_INT_OR_ELSE(reg_n = snd_no_such_region_error(S_insert_region, reg_n), 0);
+  if (!(region_ok(rg)))
+    return(snd_no_such_region_error(S_insert_region, reg_n));
   samp = TO_C_INT_OR_ELSE(samp_n, 0);
   paste_region_1(rg, cp, FALSE, samp, S_insert_region);
   update_graph(cp, NULL);
@@ -1033,8 +1020,8 @@ static SCM region_read(int field, SCM n, char *caller)
   else
     {
       rg = TO_C_INT_OR_ELSE_WITH_ORIGIN(n, 0, caller);
-      while (!(region_ok(rg)))
-	rg = TO_C_INT_OR_ELSE_WITH_ORIGIN(n = snd_no_such_region_error(caller, n), 0, caller);
+      if (!(region_ok(rg)))
+	return(snd_no_such_region_error(caller, n));
       switch (field)
 	{
 	case REGION_LENGTH: return(TO_SCM_INT(region_len(rg))); break;
@@ -1125,8 +1112,8 @@ static SCM g_play_region (SCM n, SCM wait)
   ASSERT_TYPE(BOOLEAN_IF_BOUND_P(wait), wait, SCM_ARG2, S_play_region, "a boolean");
   if (TRUE_P(wait)) wt = 1;
   rg = TO_C_INT_OR_ELSE(n, 0);
-  while (!(region_ok(rg)))
-    rg = TO_C_INT_OR_ELSE(n = snd_no_such_region_error(S_play_region, n), 0);
+  if (!(region_ok(rg)))
+    return(snd_no_such_region_error(S_play_region, n));
   play_region(get_global_state(), rg, !wt);
   return(n);
 }
@@ -1140,8 +1127,8 @@ if val is #t protects region n from being pushed off the end of the region list"
   ASSERT_TYPE(INTEGER_P(n), n, SCM_ARG1, S_protect_region, "an integer");
   ASSERT_TYPE(BOOLEAN_IF_BOUND_P(protect), protect, SCM_ARG2, S_protect_region, "a boolean");
   rg = TO_C_INT(n);
-  while (!(region_ok(rg)))
-    rg = TO_C_INT(n = snd_no_such_region_error(S_protect_region, n));
+  if (!(region_ok(rg)))
+    return(snd_no_such_region_error(S_protect_region, n));
   set_region_protect(rg, TO_C_BOOLEAN_OR_T(protect)); 
   return(protect);
 }
@@ -1208,8 +1195,8 @@ static SCM g_save_region (SCM n, SCM filename, SCM format)
   ASSERT_TYPE(STRING_P(filename), filename, SCM_ARG2, S_save_region, "a string");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(format), format, SCM_ARG3, S_save_region, "an integer");
   rg = TO_C_INT(n);
-  while (!(region_ok(rg)))
-    rg = TO_C_INT(n = snd_no_such_region_error(S_save_region, n));
+  if (!(region_ok(rg)))
+    return(snd_no_such_region_error(S_save_region, n));
   name = mus_expand_filename(TO_C_STRING(filename));
   old_mus_error = mus_error_set_handler(mus_local_error);
   res = save_region(get_global_state(), rg, name, TO_C_INT_OR_ELSE(format, 0));
@@ -1232,8 +1219,8 @@ mixes region into snd's channel chn starting at chn-samp; returns new mix id."
   ASSERT_TYPE(INTEGER_IF_BOUND_P(reg_n), reg_n, SCM_ARG2, S_mix_region, "an integer");
   SND_ASSERT_CHAN(S_mix_region, snd_n, chn_n, 3);
   rg = TO_C_INT_OR_ELSE(reg_n, 0);
-  while (!(region_ok(rg)))
-    rg = TO_C_INT_OR_ELSE(reg_n = snd_no_such_region_error(S_mix_region, reg_n), 0);
+  if (!(region_ok(rg)))
+    return(snd_no_such_region_error(S_mix_region, reg_n));
   cp = get_cp(snd_n, chn_n, S_mix_region);
   id = mix_region(rg, cp,
 		  TO_C_INT_OR_ELSE(chn_samp_n, cp->cursor));
@@ -1250,8 +1237,8 @@ static SCM g_region_sample(SCM samp_n, SCM reg_n, SCM chn_n)
   ASSERT_TYPE(INTEGER_IF_BOUND_P(chn_n), chn_n, SCM_ARG3, S_region_sample, "an integer");
   chan = TO_C_INT_OR_ELSE(chn_n, 0);
   rg = TO_C_INT_OR_ELSE(reg_n, 0);
-  while (!(region_ok(rg)))
-    rg = TO_C_INT_OR_ELSE(reg_n = snd_no_such_region_error(S_region_sample, reg_n), 0);
+  if (!(region_ok(rg)))
+    return(snd_no_such_region_error(S_region_sample, reg_n));
   if (chan < region_chans(rg))
     return(TO_SCM_DOUBLE(region_sample(rg, chan, TO_C_INT_OR_ELSE(samp_n, 0))));
   else snd_no_such_channel_error(S_region_sample, SCM_LIST1(reg_n), chn_n);
@@ -1272,8 +1259,8 @@ returns a vector with region's samples starting at samp for samps from channel c
   ASSERT_TYPE(INTEGER_IF_BOUND_P(reg_n), reg_n, SCM_ARG3, S_region_samples, "an integer");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(chn_n), chn_n, SCM_ARG4, S_region_samples, "an integer");
   reg = TO_C_INT_OR_ELSE(reg_n, 0);
-  while (!(region_ok(reg))) 
-    reg = TO_C_INT_OR_ELSE(reg_n = snd_no_such_region_error(S_region_samples, reg_n), 0);
+  if (!(region_ok(reg))) 
+    return(snd_no_such_region_error(S_region_samples, reg_n));
   chn = TO_C_INT_OR_ELSE(chn_n, 0);
   if (chn < region_chans(reg))
     {
@@ -1313,11 +1300,11 @@ writes region's samples starting at beg for samps in channel chan to vct obj, re
   ASSERT_TYPE(INTEGER_IF_BOUND_P(reg_n), reg_n, SCM_ARG3, S_region_samples_vct, "an integer");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(chn_n), chn_n, SCM_ARG4, S_region_samples_vct, "an integer");
   reg = TO_C_INT_OR_ELSE(reg_n, 0);
-  while (!(region_ok(reg)))
-    reg = TO_C_INT_OR_ELSE(reg_n = snd_no_such_region_error(S_region_samples_vct, reg_n), 0);
+  if (!(region_ok(reg)))
+    return(snd_no_such_region_error(S_region_samples_vct, reg_n));
   chn = TO_C_INT_OR_ELSE(chn_n, 0);
-  while (chn >= region_chans(reg)) 
-    chn = TO_C_INT_OR_ELSE(chn_n = snd_no_such_channel_error(S_region_samples_vct, SCM_LIST1(reg_n), chn_n), 0);
+  if (chn >= region_chans(reg)) 
+    return(snd_no_such_channel_error(S_region_samples_vct, SCM_LIST1(reg_n), chn_n));
   len = TO_C_INT_OR_ELSE(num, 0);
   if (len == 0) len = region_len(reg);
   if (len > 0)

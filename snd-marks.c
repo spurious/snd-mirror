@@ -1467,23 +1467,10 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
 
 static SCM snd_no_such_mark_error(const char *caller, SCM id)
 {
-#if HAVE_SCM_MAKE_CONTINUATION
-  int first;
-  SCM con;
-  con = scm_make_continuation(&first);
-  if (first)
-    ERROR(NO_SUCH_MARK,
-	  SCM_LIST3(TO_SCM_STRING(caller),
-		    id,
-		    SCM_LIST2(ERROR_CONTINUATION,
-			      con)));
-  return(con);
-#else
   ERROR(NO_SUCH_MARK,
 	SCM_LIST2(TO_SCM_STRING(caller),
 		  id));
   return(SCM_BOOL_F);
-#endif
 }
 
 static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)
@@ -1557,8 +1544,8 @@ static SCM iread_mark(SCM n, int fld, SCM pos_n, char *caller)
   mark *m = NULL;
   pos = TO_C_INT_OR_ELSE_WITH_ORIGIN(pos_n, -1, caller);
   m = find_mark_id(ncp, TO_C_INT_OR_ELSE_WITH_ORIGIN(n, 0, caller), pos);
-  while (m == NULL) 
-    m = find_mark_id(ncp, TO_C_INT_OR_ELSE_WITH_ORIGIN(n = snd_no_such_mark_error(caller, n), 0, caller), pos);
+  if (m == NULL) 
+    return(snd_no_such_mark_error(caller, n));
   switch (fld)
     {
     case MARK_SAMPLE: 
@@ -1585,8 +1572,8 @@ static SCM iwrite_mark(SCM mark_n, SCM val, int fld, char *caller)
   chan_info *cp[1];
   mark *m;
   m = find_mark_id(cp, TO_C_INT_OR_ELSE_WITH_ORIGIN(mark_n, 0, caller), -1);
-  while (m == NULL) 
-    m = find_mark_id(cp, TO_C_INT_OR_ELSE_WITH_ORIGIN(mark_n = snd_no_such_mark_error(caller, mark_n), 0, caller), -1);
+  if (m == NULL) 
+    return(snd_no_such_mark_error(caller, mark_n));
   switch (fld)
     {
     case MARK_SAMPLE: 
@@ -1685,7 +1672,7 @@ finds the mark in snd's channel chn at samp (if a number) or with the given name
   SND_ASSERT_CHAN(S_find_mark, snd_n, chn_n, 2); 
   cp = get_cp(snd_n, chn_n, S_find_mark);
   if (cp->marks == NULL) 
-    snd_no_such_mark_error(S_find_mark,	samp_n);
+    return(snd_no_such_mark_error(S_find_mark,	samp_n));
   mps = cp->marks[cp->edit_ctr];
   if (mps)
     {
@@ -1738,8 +1725,8 @@ static SCM g_delete_mark(SCM id_n)
   int id;
   ASSERT_TYPE(INTEGER_IF_BOUND_P(id_n), id_n, SCM_ARGn, S_delete_mark, "an integer");
   m = find_mark_id(cp, id = TO_C_INT_OR_ELSE(id_n, 0), -1);
-  while (m == NULL) 
-    m = find_mark_id(cp, id = TO_C_INT_OR_ELSE(id_n = snd_no_such_mark_error(S_delete_mark, id_n), 0), -1);
+  if (m == NULL) 
+    return(snd_no_such_mark_error(S_delete_mark, id_n));
   delete_mark_id(id, cp[0]);
   update_graph(cp[0], NULL);
   return(id_n);
@@ -1843,8 +1830,8 @@ static SCM g_marks(SCM snd_n, SCM chn_n, SCM pos_n)
 	else
 	  {
 	    sp = get_sp(snd_n);
-	    while (sp == NULL) 
-	      sp = get_sp(snd_n = snd_no_such_sound_error(S_marks, snd_n));
+	    if (sp == NULL) 
+	      return(snd_no_such_sound_error(S_marks, snd_n));
 	    for (i = sp->nchans - 1; i >= 0; i--)
 	      {
 		cp = sp->chans[i];
@@ -1951,8 +1938,8 @@ static SCM g_save_marks(SCM snd_n)
   SCM res;
   SND_ASSERT_SND(S_save_marks, snd_n, 1);
   sp = get_sp(snd_n);
-  while (sp == NULL) 
-    sp = get_sp(snd_n = snd_no_such_sound_error(S_save_marks, snd_n));
+  if (sp == NULL) 
+    return(snd_no_such_sound_error(S_save_marks, snd_n));
   str = save_marks(sp);
   res = TO_SCM_STRING(str);
   FREE(str);

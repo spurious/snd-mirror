@@ -3536,8 +3536,8 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
       if (TRUE_P(chn_n))
 	{
 	  sp = get_sp(snd_n);
-	  while (sp == NULL)
-	    sp = get_sp(snd_n = snd_no_such_sound_error(caller, snd_n));
+	  if (sp == NULL)
+	    return(snd_no_such_sound_error(caller, snd_n));
 	  for (i = 0; i < sp->nchans; i++)
 	    res = CONS(cp_iread(snd_n, TO_SMALL_SCM_INT(i), fld, caller), res);
 	  return(REVERSE_LIST(res));
@@ -3630,8 +3630,8 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
   if (SCM_EQ_P(chn_n, SCM_BOOL_T))
     {
       sp = get_sp(snd_n);
-      while (sp == NULL) 
-	sp = get_sp(snd_n = snd_no_such_sound_error(caller, snd_n));
+      if (sp == NULL) 
+	return(snd_no_such_sound_error(caller, snd_n));
       for (i = 0; i < sp->nchans; i++)
 	res = CONS(cp_iwrite(snd_n, TO_SMALL_SCM_INT(i), on, fld, caller), res);
       return(REVERSE_LIST(res));
@@ -3697,7 +3697,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 	    {
 	      errstr = TO_SCM_STRING(error);
 	      FREE(error);
-	      snd_bad_arity_error("set-" S_cursor_style, errstr, on);
+	      return(snd_bad_arity_error("set-" S_cursor_style, errstr, on));
 	    }
 	}
       else
@@ -3900,8 +3900,8 @@ static SCM cp_fread(SCM snd_n, SCM chn_n, int fld, char *caller)
   if (SCM_EQ_P(chn_n, SCM_BOOL_T))
     {
       sp = get_sp(snd_n);
-      while (sp == NULL) 
-	sp = get_sp(snd_n = snd_no_such_sound_error(caller, snd_n));
+      if (sp == NULL) 
+	return(snd_no_such_sound_error(caller, snd_n));
       for (i = 0; i < sp->nchans; i++)
 	res = CONS(cp_fread(snd_n, TO_SMALL_SCM_INT(i), fld, caller), res);
       return(REVERSE_LIST(res));
@@ -3953,8 +3953,8 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
   if (SCM_EQ_P(chn_n, SCM_BOOL_T))
     {
       sp = get_sp(snd_n);
-      while (sp == NULL) 
-	sp = get_sp(snd_n = snd_no_such_sound_error(caller, snd_n));
+      if (sp == NULL) 
+	return(snd_no_such_sound_error(caller, snd_n));
       for (i = 0; i < sp->nchans; i++)
 	res = CONS(cp_fwrite(snd_n, TO_SMALL_SCM_INT(i), on, fld, caller), res);
       return(REVERSE_LIST(res));

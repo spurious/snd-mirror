@@ -182,6 +182,11 @@ char *listener_prompt_with_cr(snd_state *ss)
 #endif
 #endif
 
+static SCM read_str_wrapper(void *data)
+{
+  return(TO_SCM_FORM((char *)data));
+}
+
 void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
 {
 #if (!USE_NO_GUI)
@@ -341,7 +346,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
       GUI_SET_CURSOR(w, (ss->sgx)->wait_cursor);
       GUI_UPDATE(w); /* not sure about this... */
       if ((snd_strlen(str) > 1) || (str[0] != '\n'))
-	form = TO_SCM_FORM(str);
+	form = snd_catch_any(read_str_wrapper, (void *)str, str);  /* needed else #< in input exits Snd! */
       FREE(str);
       str = NULL;
       if (BOUND_P(form))

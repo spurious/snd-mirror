@@ -2808,13 +2808,13 @@ snd can be a filename, a sound index number, or a list with a mix id number."
       filename = TO_C_STRING(snd);
       if (mus_file_probe(filename))
 	loc_sp = make_sound_readable(ss, filename, FALSE);
-      else snd_no_such_file_error(S_make_sample_reader, snd);
+      else return(snd_no_such_file_error(S_make_sample_reader, snd));
       chan = TO_C_INT_OR_ELSE(chn, 0);
       if ((chan < 0) || 
 	  (chan > loc_sp->nchans))
 	{
 	  completely_free_snd_info(loc_sp);
-	  snd_no_such_channel_error(S_make_sample_reader, snd, chn);	
+	  return(snd_no_such_channel_error(S_make_sample_reader, snd, chn));	
 	}
       cp = loc_sp->chans[chan];
     }
@@ -2856,7 +2856,7 @@ returns a reader ready to access region's channel chn data starting at 'start-sa
 		    reg));
   chn_n = TO_C_INT_OR_ELSE(chn, 0);
   if (chn_n >= region_chans(reg_n)) 
-    snd_no_such_channel_error(S_make_region_sample_reader, SCM_LIST1(reg), chn);
+    return(snd_no_such_channel_error(S_make_region_sample_reader, SCM_LIST1(reg), chn));
 
   fd = init_region_read(get_global_state(), 
 			TO_C_INT_OR_ELSE(samp_n, 0), 
@@ -3118,7 +3118,7 @@ static SCM g_as_one_edit(SCM proc, SCM origin)
     {
       errstr = TO_SCM_STRING(errmsg);
       FREE(errmsg);
-      snd_bad_arity_error(S_as_one_edit, errstr, proc);
+      return(snd_bad_arity_error(S_as_one_edit, errstr, proc));
     }
   ss = get_global_state();
   chans = active_channels(ss, WITH_VIRTUAL_CHANNELS);
@@ -3382,7 +3382,7 @@ inserts channel 'file-chan' of 'file' (or all chans file-chan not given) into sn
   if (nc == -1)
     {
       if (filename) FREE(filename);
-      snd_no_such_file_error(S_insert_sound, file);
+      return(snd_no_such_file_error(S_insert_sound, file));
     }
   len = mus_sound_samples(filename) / nc;
   if (NUMBER_P(ubeg))
@@ -3401,7 +3401,7 @@ inserts channel 'file-chan' of 'file' (or all chans file-chan not given) into sn
       else 
 	{
 	  if (filename) FREE(filename);
-	  snd_no_such_channel_error(S_insert_sound, file, file_chn);	
+	  return(snd_no_such_channel_error(S_insert_sound, file, file_chn));	
 	}
     }
   else
