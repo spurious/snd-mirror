@@ -593,75 +593,6 @@ taking into account wrap-around (size = size of data), with linear interpolation
   return(scm_return_first(TO_SCM_DOUBLE(mus_array_interp(v->data, TO_C_DOUBLE(phase), len)), obj));
 }
 
-static void init_simple_stuff(SCM local_doc)
-{
-  define_procedure_with_setter(S_mus_srate, PROCEDURE g_srate, H_mus_srate,
-			       S_mus_set_srate, PROCEDURE g_set_srate, local_doc, 0, 0, 0, 1);
-
-  define_procedure_with_setter(S_mus_array_print_length, PROCEDURE g_array_print_length, H_mus_array_print_length,
-			       S_mus_set_array_print_length, PROCEDURE g_set_array_print_length, local_doc, 0, 0, 0, 1);
-
-  DEFINE_PROC(S_radians_hz,           g_radians2hz, 1, 0, 0,           H_radians_hz);
-  DEFINE_PROC(S_hz_radians,           g_hz2radians, 1, 0, 0,           H_hz_radians);
-  DEFINE_PROC(S_in_hz,                g_hz2radians, 1, 0, 0,           H_in_hz);
-  DEFINE_PROC(S_radians_degrees,      g_radians2degrees, 1, 0, 0,      H_radians_degrees);
-  DEFINE_PROC(S_degrees_radians,      g_degrees2radians, 1, 0, 0,      H_degrees_radians);
-  DEFINE_PROC(S_db_linear,            g_db2linear, 1, 0, 0,            H_db_linear);
-  DEFINE_PROC(S_linear_db,            g_linear2db, 1, 0, 0,            H_linear_db);
-  DEFINE_PROC(S_ring_modulate,        g_ring_modulate, 2, 0, 0,        H_ring_modulate);
-  DEFINE_PROC(S_amplitude_modulate,   g_amplitude_modulate, 3, 0, 0,   H_amplitude_modulate);
-  DEFINE_PROC(S_contrast_enhancement, g_contrast_enhancement, 2, 0, 0, H_contrast_enhancement);
-  DEFINE_PROC(S_dot_product,          g_dot_product, 2, 0, 0,          H_dot_product);
-  DEFINE_PROC(S_clear_array,          g_clear_array, 1, 0, 0,          H_clear_array);
-  DEFINE_PROC(S_polynomial,           g_polynomial, 2, 0, 0,           H_polynomial);
-  DEFINE_PROC(S_multiply_arrays,      g_multiply_arrays, 2, 1, 0,      H_multiply_arrays);
-  DEFINE_PROC(S_make_fft_window,      g_make_fft_window, 2, 1, 0,      H_make_fft_window);
-  DEFINE_PROC(S_mus_fft,              g_mus_fft, 3, 1, 0,              H_mus_fft);
-  DEFINE_PROC(S_spectrum,             g_spectrum, 3, 2, 0,             H_mus_spectrum); 
-  DEFINE_PROC(S_convolution,          g_convolution, 2, 1, 0,          H_mus_convolution);
-  DEFINE_PROC(S_rectangular2polar,    g_rectangular2polar, 2, 0, 0,    H_rectangular2polar);
-  DEFINE_PROC(S_array_interp,         g_array_interp, 2, 1, 0,         H_array_interp);
-  DEFINE_PROC(S_sum_of_sines,         g_sum_of_sines, 2, 0, 0,         H_sum_of_sines);
-
-  #define H_rectangular_window     "The un-window, so to speak"
-  #define H_hann_window            "A simple raised cosine window"
-  #define H_welch_window           "A triangular window squared"
-  #define H_parzen_window          "A triangular window"
-  #define H_bartlett_window        "A triangular window"
-  #define H_hamming_window         "A raised cosine"
-  #define H_blackman2_window       "2nd order cosine window"
-  #define H_blackman3_window       "3rd order cosine window"
-  #define H_blackman4_window       "4th order cosine window"
-  #define H_exponential_window     "An inverted triangle from exp"
-  #define H_riemann_window         "sinc-based window"
-  #define H_kaiser_window          "Bessel I0 based window"
-  #define H_cauchy_window          "window based on 1/(1+sqr(angle)"
-  #define H_poisson_window         "window based on exp(-angle)"
-  #define H_gaussian_window        "window based on exp(-sqr(angle))"
-  #define H_tukey_window           "window based on truncated cosine"
-  #define H_dolph_chebychev_window "window from inverse fft"
-
-  DEFINE_VAR(S_rectangular_window,     MUS_RECTANGULAR_WINDOW,     H_rectangular_window);
-  DEFINE_VAR(S_hann_window,            MUS_HANN_WINDOW,            H_hann_window);
-  DEFINE_VAR("hanning-window",         MUS_HANN_WINDOW,            H_hann_window); /* backwards compatibility */
-  DEFINE_VAR(S_welch_window,           MUS_WELCH_WINDOW,           H_welch_window);
-  DEFINE_VAR(S_parzen_window,          MUS_PARZEN_WINDOW,          H_parzen_window);
-  DEFINE_VAR(S_bartlett_window,        MUS_BARTLETT_WINDOW,        H_bartlett_window);
-  DEFINE_VAR(S_hamming_window,         MUS_HAMMING_WINDOW,         H_hamming_window);
-  DEFINE_VAR(S_blackman2_window,       MUS_BLACKMAN2_WINDOW,       H_blackman2_window);
-  DEFINE_VAR(S_blackman3_window,       MUS_BLACKMAN3_WINDOW,       H_blackman3_window);
-  DEFINE_VAR(S_blackman4_window,       MUS_BLACKMAN4_WINDOW,       H_blackman4_window);
-  DEFINE_VAR(S_exponential_window,     MUS_EXPONENTIAL_WINDOW,     H_exponential_window);
-  DEFINE_VAR(S_riemann_window,         MUS_RIEMANN_WINDOW,         H_riemann_window);
-  DEFINE_VAR(S_kaiser_window,          MUS_KAISER_WINDOW,          H_kaiser_window);
-  DEFINE_VAR(S_cauchy_window,          MUS_CAUCHY_WINDOW,          H_cauchy_window);
-  DEFINE_VAR(S_poisson_window,         MUS_POISSON_WINDOW,         H_poisson_window);
-  DEFINE_VAR(S_gaussian_window,        MUS_GAUSSIAN_WINDOW,        H_gaussian_window);
-  DEFINE_VAR(S_tukey_window,           MUS_TUKEY_WINDOW,           H_tukey_window);
-  DEFINE_VAR(S_dolph_chebyshev_window, MUS_DOLPH_CHEBYSHEV_WINDOW, H_dolph_chebychev_window);
-}
-
-
 /* ---------------- mus-scm struct ---------------- */
 
 static TAG_TYPE mus_scm_tag;
@@ -1002,31 +933,6 @@ static SCM g_mus_bank(SCM gens, SCM amps, SCM inp, SCM inp2)
   return(TO_SCM_DOUBLE(outval));
 }
 
-static void init_generic_funcs(SCM local_doc)
-{
-  DEFINE_PROC(S_mus_inspect,  g_inspect, 1, 0, 0,  H_mus_inspect);
-  DEFINE_PROC(S_mus_describe, g_describe, 1, 0, 0, H_mus_describe);
-  DEFINE_PROC(S_mus_name,     g_name, 1, 0, 0,     H_mus_name);
-  DEFINE_PROC(S_mus_run,      g_run, 1, 2, 0,      H_mus_run);
-  DEFINE_PROC(S_mus_bank,     g_mus_bank, 2, 2, 0, H_mus_bank);
-
-  define_procedure_with_setter(S_mus_phase, PROCEDURE g_phase, H_mus_phase,
-			       S_mus_set_phase, PROCEDURE g_set_phase, local_doc, 1, 0, 2, 0);
-
-  define_procedure_with_setter(S_mus_scaler, PROCEDURE g_scaler, H_mus_scaler,
-			       S_mus_set_scaler, PROCEDURE g_set_scaler, local_doc, 1, 0, 2, 0);
-
-  define_procedure_with_setter(S_mus_frequency, PROCEDURE g_frequency, H_mus_frequency,
-			       S_mus_set_frequency, PROCEDURE g_set_frequency, local_doc, 1, 0, 2, 0);
-
-  define_procedure_with_setter(S_mus_length, PROCEDURE g_length, H_mus_length,
-			       S_mus_set_length, PROCEDURE g_set_length, local_doc, 1, 0, 2, 0);
-
-  define_procedure_with_setter(S_mus_data, PROCEDURE g_data, H_mus_data,
-			       S_mus_set_data, PROCEDURE g_set_data, local_doc, 1, 0, 2, 0);
-}
-
-
 
 /* ---------------- oscil ---------------- */
 
@@ -1100,15 +1006,6 @@ static SCM g_mus_apply(SCM arglist)
   return(TO_SCM_DOUBLE(mus_apply(gen, 
 				 TO_C_DOUBLE(CADR(arglist)), 
 				 TO_C_DOUBLE(CADDR(arglist)))));
-}
-
-static void init_oscil(SCM local_doc)
-{
-  DEFINE_PROC(S_oscil_p,    g_oscil_p, 1, 0, 0,    H_oscil_p);
-  DEFINE_PROC(S_make_oscil, g_make_oscil, 0, 4, 0, H_make_oscil);
-  DEFINE_PROC(S_oscil,      g_oscil, 1, 2, 0,      H_oscil);
-  DEFINE_PROC(S_oscil_bank, g_oscil_bank, 2, 2, 0, H_oscil_bank);
-  DEFINE_PROC(S_mus_apply,  g_mus_apply, 0, 0, 1,  H_mus_apply);
 }
 
 
@@ -1407,32 +1304,6 @@ static SCM g_set_feedforward(SCM obj, SCM val)
   return(TO_SCM_DOUBLE(mus_set_feedforward(TO_CLM(obj), TO_C_DOUBLE(val))));
 }
 
-static void init_dly(SCM local_doc)
-{
-#if HAVE_GUILE
-  EVAL_STRING("(define %delay delay)"); /* protect the original meaning */
-#endif
-  DEFINE_PROC(S_make_delay,    g_make_delay, 0, 0, 1,    H_make_delay);
-  DEFINE_PROC(S_make_comb,     g_make_comb, 0, 0, 1,     H_make_comb);
-  DEFINE_PROC(S_make_notch,    g_make_notch, 0, 0, 1,    H_make_notch); 
-  DEFINE_PROC(S_make_all_pass, g_make_all_pass, 0, 0, 1, H_make_all_pass);
-  DEFINE_PROC(S_delay,         g_delay, 1, 2, 0,         H_delay); 
-  DEFINE_PROC(S_tap,           g_tap, 1, 1, 0,           H_tap);
-  DEFINE_PROC(S_notch,         g_notch, 1, 2, 0,         H_notch);
-  DEFINE_PROC(S_comb,          g_comb, 1, 2, 0,          H_comb);
-  DEFINE_PROC(S_all_pass,      g_all_pass, 1, 2, 0,      H_all_pass);
-  DEFINE_PROC(S_delay_p,       g_delay_p, 1, 0, 0,       H_delay_p);
-  DEFINE_PROC(S_notch_p,       g_notch_p, 1, 0, 0,       H_notch_p);
-  DEFINE_PROC(S_comb_p,        g_comb_p, 1, 0, 0,        H_comb_p);
-  DEFINE_PROC(S_all_pass_p,    g_all_pass_p, 1, 0, 0,    H_all_pass_p);
-
-  define_procedure_with_setter(S_mus_feedback, PROCEDURE g_feedback, H_mus_feedback,
-			       S_mus_set_feedback, PROCEDURE g_set_feedback, local_doc, 1, 0, 2, 0);
-
-  define_procedure_with_setter(S_mus_feedforward, PROCEDURE g_feedforward, H_mus_feedforward,
-			       S_mus_set_feedforward, PROCEDURE g_set_feedforward, local_doc, 1, 0, 2, 0);
-}
-
 
 /* -------- sum-of-cosines -------- */
 
@@ -1494,14 +1365,6 @@ static SCM g_cosines(SCM obj)
   #define H_mus_cosines "(" S_mus_cosines " gen) -> number of cosines produced by gen"
   ASSERT_TYPE(MUS_SCM_P(obj), obj, ARGn, S_mus_cosines, "a generator");
   return(TO_SCM_DOUBLE(mus_cosines(TO_CLM(obj))));
-}
-
-static void init_cosp(SCM local_doc)
-{
-  DEFINE_PROC(S_make_sum_of_cosines, g_make_sum_of_cosines, 0, 6, 0, H_make_sum_of_cosines); 
-  DEFINE_PROC(S_sum_of_cosines,      g_sum_of_cosines, 1, 1, 0,      H_sum_of_cosines);
-  DEFINE_PROC(S_sum_of_cosines_p,    g_sum_of_cosines_p, 1, 0, 0,    H_sum_of_cosines_p);
-  DEFINE_PROC(S_mus_cosines,         g_cosines, 1, 0, 0,             H_mus_cosines);
 }
 
 
@@ -1603,7 +1466,7 @@ the built-in 'random' function returns values between 0 and its argument"
   return(TO_SCM_DOUBLE(mus_random(TO_C_DOUBLE(a))));
 }
 
-static SCM g_rand_seed(SCM a) {return(TO_SCM_UNSIGNED_LONG(mus_rand_seed()));}
+static SCM g_rand_seed(void) {return(TO_SCM_UNSIGNED_LONG(mus_rand_seed()));}
 static SCM g_set_rand_seed(SCM a) 
 {
   #define H_mus_set_rand_seed "(" S_mus_set_rand_seed " val) sets the random number seed, \
@@ -1612,20 +1475,6 @@ this can be used to re-run a particular random number sequence."
   ASSERT_TYPE(NUMBER_P(a), a, ARGn, S_mus_set_rand_seed, "an integer");
   mus_set_rand_seed(TO_C_UNSIGNED_LONG(a)); 
   return(a);
-}
-
-static void init_noi(SCM local_doc)
-{
-  DEFINE_PROC(S_make_rand,        g_make_rand, 0, 4, 0,        H_make_rand);
-  DEFINE_PROC(S_make_rand_interp, g_make_rand_interp, 0, 4, 0, H_make_rand_interp);
-  DEFINE_PROC(S_rand,             g_rand, 1, 1, 0,             H_rand);
-  DEFINE_PROC(S_rand_interp,      g_rand_interp, 1, 1, 0,      H_rand_interp);
-  DEFINE_PROC(S_rand_p,           g_rand_p, 1, 0, 0,           H_rand_p);
-  DEFINE_PROC(S_rand_interp_p,    g_rand_interp_p, 1, 0, 0,    H_rand_interp_p);
-  DEFINE_PROC(S_mus_random,       g_mus_random, 1, 0, 0,       H_mus_random);
-
-  define_procedure_with_setter(S_mus_rand_seed, PROCEDURE g_rand_seed, H_mus_set_rand_seed,
-			       S_mus_set_rand_seed, PROCEDURE g_set_rand_seed, local_doc, 0, 0, 0, 1);
 }
 
 
@@ -1760,15 +1609,6 @@ with 'wrap-around' when gen's phase marches off the end of its table."
   ASSERT_TYPE((MUS_SCM_P(obj)) && (mus_table_lookup_p(TO_CLM(obj))), obj, ARG1, S_table_lookup, "a table-lookup gen");
   if (NUMBER_P(fm)) fm1 = TO_C_DOUBLE(fm);  else ASSERT_TYPE(NOT_BOUND_P(fm), fm, ARG2, S_table_lookup, "a number");
   return(TO_SCM_DOUBLE(mus_table_lookup(TO_CLM(obj), fm1)));
-}
-
-static void init_tbl(SCM local_doc)
-{
-  DEFINE_PROC(S_table_lookup_p,     g_table_lookup_p, 1, 0, 0,     H_table_lookup_p);
-  DEFINE_PROC(S_make_table_lookup,  g_make_table_lookup, 0, 6, 0,  H_make_table_lookup);
-  DEFINE_PROC(S_table_lookup,       g_table_lookup, 1, 1, 0,       H_table_lookup);
-  DEFINE_PROC(S_partials2wave,      g_partials2wave, 1, 2, 0,      H_partials2wave);
-  DEFINE_PROC(S_phasepartials2wave, g_phasepartials2wave, 1, 2, 0, H_phasepartials2wave);
 }
 
 
@@ -1921,21 +1761,6 @@ static SCM g_pulse_train_p(SCM obj)
   return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_pulse_train_p(TO_CLM(obj)))));
 }
 
-static void init_sw(SCM local_doc)
-{
-  DEFINE_PROC(S_make_sawtooth_wave, g_make_sawtooth_wave, 0, 6, 0, H_make_sawtooth_wave);
-  DEFINE_PROC(S_sawtooth_wave,      g_sawtooth_wave, 1, 1, 0,      H_sawtooth_wave);
-  DEFINE_PROC(S_sawtooth_wave_p,    g_sawtooth_wave_p, 1, 0, 0,    H_sawtooth_wave_p);
-  DEFINE_PROC(S_make_triangle_wave, g_make_triangle_wave, 0, 6, 0, H_make_triangle_wave);
-  DEFINE_PROC(S_triangle_wave,      g_triangle_wave, 1, 1, 0,      H_triangle_wave);
-  DEFINE_PROC(S_triangle_wave_p,    g_triangle_wave_p, 1, 0, 0,    H_triangle_wave_p);
-  DEFINE_PROC(S_make_square_wave,   g_make_square_wave, 0, 6, 0,   H_make_square_wave);
-  DEFINE_PROC(S_square_wave,        g_square_wave, 1, 1, 0,        H_square_wave);
-  DEFINE_PROC(S_square_wave_p,      g_square_wave_p, 1, 0, 0,      H_square_wave_p);
-  DEFINE_PROC(S_make_pulse_train,   g_make_pulse_train, 0, 6, 0,   H_make_pulse_train);
-  DEFINE_PROC(S_pulse_train,        g_pulse_train, 1, 1, 0,        H_pulse_train);
-  DEFINE_PROC(S_pulse_train_p,      g_pulse_train_p, 1, 0, 0,      H_pulse_train_p);
-}
 
 
 /* ---------------- asymmetric-fm ---------------- */
@@ -1989,13 +1814,6 @@ static SCM g_asymmetric_fm_p(SCM obj)
 {
   #define H_asymmetric_fm_p "(" S_asymmetric_fm_p " gen) -> #t if gen is a " S_asymmetric_fm " generator, else #f"
   return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_asymmetric_fm_p(TO_CLM(obj)))));
-}
-
-static void init_asyfm(SCM local_doc)
-{
-  DEFINE_PROC(S_make_asymmetric_fm, g_make_asymmetric_fm, 0, 8, 0, H_make_asymmetric_fm);
-  DEFINE_PROC(S_asymmetric_fm,      g_asymmetric_fm, 1, 2, 0,      H_asymmetric_fm);
-  DEFINE_PROC(S_asymmetric_fm_p,    g_asymmetric_fm_p, 1, 0, 0,    H_asymmetric_fm_p);
 }
 
 
@@ -2278,39 +2096,6 @@ static SCM g_set_b2(SCM obj, SCM val)
   return(TO_SCM_DOUBLE(mus_set_b2(TO_CLM(obj), TO_C_DOUBLE(val))));
 }
 
-static void init_smpflt(SCM local_doc)
-{
-  DEFINE_PROC(S_make_one_zero, g_make_one_zero, 0, 4, 0, H_make_one_zero);
-  DEFINE_PROC(S_one_zero,      g_one_zero, 1, 1, 0,      H_one_zero);
-  DEFINE_PROC(S_one_zero_p,    g_one_zero_p, 1, 0, 0,    H_one_zero_p);
-  DEFINE_PROC(S_make_one_pole, g_make_one_pole, 0, 4, 0, H_make_one_pole);
-  DEFINE_PROC(S_one_pole,      g_one_pole, 1, 1, 0,      H_one_pole);
-  DEFINE_PROC(S_one_pole_p,    g_one_pole_p, 1, 0, 0,    H_one_pole_p);
-  DEFINE_PROC(S_make_two_zero, g_make_two_zero, 0, 6, 0, H_make_two_zero);
-  DEFINE_PROC(S_two_zero,      g_two_zero, 1, 1, 0,      H_two_zero);
-  DEFINE_PROC(S_two_zero_p,    g_two_zero_p, 1, 0, 0,    H_two_zero_p);
-  DEFINE_PROC(S_make_two_pole, g_make_two_pole, 0, 6, 0, H_make_two_pole);
-  DEFINE_PROC(S_two_pole,      g_two_pole, 1, 1, 0,      H_two_pole);
-  DEFINE_PROC(S_two_pole_p,    g_two_pole_p, 1, 0, 0,    H_two_pole_p);
-  DEFINE_PROC(S_make_zpolar,   g_make_zpolar, 0, 4, 0,   H_make_zpolar);
-  DEFINE_PROC(S_make_ppolar,   g_make_ppolar, 0, 4, 0,   H_make_ppolar);
-
-  define_procedure_with_setter(S_mus_a0, PROCEDURE g_a0, H_mus_a0,
-			       S_mus_set_a0, PROCEDURE g_set_a0, local_doc, 1, 0, 2, 0);
-
-  define_procedure_with_setter(S_mus_a1, PROCEDURE g_a1, H_mus_a1,
-			       S_mus_set_a1, PROCEDURE g_set_a1, local_doc, 1, 0, 2, 0);
-
-  define_procedure_with_setter(S_mus_b1, PROCEDURE g_b1, H_mus_b1,
-			       S_mus_set_b1, PROCEDURE g_set_b1, local_doc, 1, 0, 2, 0);
-
-  define_procedure_with_setter(S_mus_b2, PROCEDURE g_b2, H_mus_b2,
-			       S_mus_set_b2, PROCEDURE g_set_b2, local_doc, 1, 0, 2, 0);
-
-  define_procedure_with_setter(S_mus_a2, PROCEDURE g_a2, H_mus_a2,
-			       S_mus_set_a2, PROCEDURE g_set_a2, local_doc, 1, 0, 2, 0);
-}
-
 
 
 /* ---------------- formant ---------------- */
@@ -2401,19 +2186,6 @@ generator) gen's radius and frequency"
   ASSERT_TYPE(NUMBER_P(frq), frq, ARG3, S_mus_set_formant_radius_and_frequency, "a number");
   mus_set_formant_radius_and_frequency(TO_CLM(gen), TO_C_DOUBLE(rad), TO_C_DOUBLE(frq));
   return(rad);
-}
-
-static void init_formant(SCM local_doc)
-{
-  DEFINE_PROC(S_formant_bank, g_formant_bank, 2, 1, 0, H_formant_bank);
-  DEFINE_PROC(S_formant_p,    g_formant_p, 1, 0, 0,    H_formant_p);
-  DEFINE_PROC(S_make_formant, g_make_formant, 0, 6, 0, H_make_formant);
-  DEFINE_PROC(S_formant,      g_formant, 1, 1, 0,      H_formant);
-
-  define_procedure_with_setter(S_mus_formant_radius, PROCEDURE g_formant_radius, H_mus_formant_radius,
-			       S_mus_set_formant_radius, PROCEDURE g_set_formant_radius, local_doc, 1, 0, 2, 0);
-
-  DEFINE_PROC(S_mus_set_formant_radius_and_frequency, g_set_formant_radius_and_frequency, 3, 0, 0, H_mus_set_formant_radius_and_frequency);
 }
 
 
@@ -2529,16 +2301,6 @@ static SCM g_set_frame_ref(SCM uf1, SCM uchan, SCM val)
   ASSERT_TYPE(INTEGER_P(uchan), uchan, ARG2, S_frame_set, "an integer");
   ASSERT_TYPE(NUMBER_P(val), val, ARG3, S_frame_set, "a number");
   return(TO_SCM_DOUBLE(mus_frame_set((mus_frame *)TO_CLM(uf1), TO_C_INT(uchan), TO_C_DOUBLE(val))));
-}
-
-static void init_frame(SCM local_doc)
-{
-  DEFINE_PROC(S_make_frame,     g_make_frame, 0, 0, 1,     H_make_frame);
-  DEFINE_PROC(S_frame_p,        g_frame_p, 1, 0, 0,        H_frame_p);
-  DEFINE_PROC(S_frame_add,      g_frame_add, 2, 1, 0,      H_frame_add);
-  DEFINE_PROC(S_frame_multiply, g_frame_multiply, 2, 1, 0, H_frame_multiply);
-  DEFINE_PROC(S_frame_ref,      g_frame_ref, 2, 0, 0,      H_frame_ref);
-  DEFINE_PROC(S_frame_set,      g_set_frame_ref, 3, 0, 0,  H_frame_set);
 }
 
 
@@ -2727,18 +2489,6 @@ giving | (a*.5 + b*.125) (a*.25 + b*1.0) |"
   return(mus_scm_to_smob(gn));
 }
 
-static void init_mixer(SCM local_doc)
-{
-  DEFINE_PROC(S_make_mixer,     g_make_mixer, 0, 0, 1,     H_make_mixer);
-  DEFINE_PROC(S_mixer_p,        g_mixer_p, 1, 0, 0,        H_mixer_p);
-  DEFINE_PROC(S_mixer_multiply, g_mixer_multiply, 2, 1, 0, H_mixer_multiply);
-  DEFINE_PROC(S_mixer_ref,      g_mixer_ref, 3, 0, 0,      H_mixer_ref);
-  DEFINE_PROC(S_mixer_set,      g_set_mixer_ref, 4, 0, 0,  H_mixer_set);
-  DEFINE_PROC(S_frame2sample,   g_frame2sample, 2, 0, 0,   H_frame2sample);
-  DEFINE_PROC(S_frame2list,     g_frame2list, 1, 0, 0,     H_frame2list);
-  DEFINE_PROC(S_frame2frame,    g_frame2frame, 2, 1, 0,    H_frame2frame);
-  DEFINE_PROC(S_sample2frame,   g_sample2frame, 2, 1, 0,   H_sample2frame);
-}
 
 
 /* ---------------- buffer ---------------- */
@@ -2846,17 +2596,6 @@ static SCM g_frame2buffer(SCM obj, SCM val)
 		      DONT_FREE_FRAME));
 }
 
-static void init_rblk(SCM local_doc)
-{
-  DEFINE_PROC(S_make_buffer,    g_make_buffer, 0, 4, 0,    H_make_buffer);
-  DEFINE_PROC(S_buffer_p,       g_buffer_p, 1, 0, 0,       H_buffer_p);
-  DEFINE_PROC(S_buffer_empty_p, g_buffer_empty_p, 1, 0, 0, H_buffer_empty_p);
-  DEFINE_PROC(S_buffer_full_p,  g_buffer_full_p, 1, 0, 0,  H_buffer_full_p);
-  DEFINE_PROC(S_buffer2sample,  g_buffer2sample, 1, 0, 0,  H_buffer2sample);
-  DEFINE_PROC(S_buffer2frame,   g_buffer2frame, 1, 1, 0,   H_buffer2frame);
-  DEFINE_PROC(S_sample2buffer,  g_sample2buffer, 2, 0, 0,  H_sample2buffer);
-  DEFINE_PROC(S_frame2buffer,   g_frame2buffer, 2, 0, 0,   H_frame2buffer);
-}
 
 
 /* ---------------- wave-train ---------------- */
@@ -2920,12 +2659,6 @@ static SCM g_wave_train_p(SCM obj)
   return(TO_SCM_BOOLEAN((MUS_SCM_P(obj)) && (mus_wave_train_p(TO_CLM(obj)))));
 }
 
-static void init_wt(SCM local_doc)
-{
-  DEFINE_PROC(S_make_wave_train, g_make_wave_train, 0, 6, 0, H_make_wave_train);
-  DEFINE_PROC(S_wave_train,      g_wave_train, 1, 1, 0,      H_wave_train);
-  DEFINE_PROC(S_wave_train_p,    g_wave_train_p, 1, 0, 0,    H_wave_train_p);
-}
 
 
 /* ---------------- waveshape ---------------- */
@@ -3100,14 +2833,6 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
   return(make_vct(npartials, wave));
 }
 
-static void init_ws(SCM local_doc)
-{
-  DEFINE_PROC(S_make_waveshape,      g_make_waveshape, 0, 8, 0,      H_make_waveshape);
-  DEFINE_PROC(S_waveshape,           g_waveshape, 1, 2, 0,           H_waveshape);
-  DEFINE_PROC(S_waveshape_p,         g_waveshape_p, 1, 0, 0,         H_waveshape_p);
-  DEFINE_PROC(S_partials2waveshape,  g_partials2waveshape, 1, 1, 0,  H_partials2waveshape);
-  DEFINE_PROC(S_partials2polynomial, g_partials2polynomial, 1, 1, 0, H_partials2polynomial);
-}
 
 
 /* ---------------- sine-summation ---------------- */
@@ -3164,12 +2889,6 @@ returns a new sine summation synthesis generator."
   return(mus_scm_to_smob(gn));
 }
 
-static void init_sss(SCM local_doc)
-{
-  DEFINE_PROC(S_make_sine_summation, g_make_sine_summation, 0, 0, 1, H_make_sine_summation);
-  DEFINE_PROC(S_sine_summation,      g_sine_summation, 1, 1, 0,      H_sine_summation);
-  DEFINE_PROC(S_sine_summation_p,    g_sine_summation_p, 1, 0, 0,    H_sine_summation_p);
-}
 
 
 
@@ -3361,21 +3080,6 @@ static SCM g_mus_ycoeffs(SCM gen)
   return(FALSE_VALUE);
 }
 
-static void init_flt(SCM local_doc)
-{
-  DEFINE_PROC(S_make_filter,     g_make_filter, 0, 6, 0,     H_make_filter);
-  DEFINE_PROC(S_filter,          g_filter, 2, 0, 0,          H_filter);
-  DEFINE_PROC(S_filter_p,        g_filter_p, 1, 0, 0,        H_filter_p);
-  DEFINE_PROC(S_make_fir_filter, g_make_fir_filter, 0, 4, 0, H_make_fir_filter);
-  DEFINE_PROC(S_fir_filter,      g_fir_filter, 2, 0, 0,      H_fir_filter);
-  DEFINE_PROC(S_fir_filter_p,    g_fir_filter_p, 1, 0, 0,    H_fir_filter_p);
-  DEFINE_PROC(S_make_iir_filter, g_make_iir_filter, 0, 4, 0, H_make_iir_filter);
-  DEFINE_PROC(S_iir_filter,      g_iir_filter, 2, 0, 0,      H_iir_filter);
-  DEFINE_PROC(S_iir_filter_p,    g_iir_filter_p, 1, 0, 0,    H_iir_filter_p);
-  DEFINE_PROC(S_mus_order,       g_mus_order, 1, 0, 0,       H_mus_order);
-  DEFINE_PROC(S_mus_xcoeffs,     g_mus_xcoeffs, 1, 0, 0,     H_mus_xcoeffs);
-  DEFINE_PROC(S_mus_ycoeffs,     g_mus_ycoeffs, 1, 0, 0,     H_mus_ycoeffs);
-}
 
 
 
@@ -3494,14 +3198,6 @@ static SCM g_env_interp(SCM x, SCM env1) /* "env" causes trouble in Objective-C!
   return(TO_SCM_DOUBLE(mus_env_interp(TO_C_DOUBLE(x), TO_CLM(env1))));
 }
 
-static void init_env(SCM local_doc)
-{
-  DEFINE_PROC(S_env_p,       g_env_p, 1, 0, 0,       H_env_p);
-  DEFINE_PROC(S_env,         g_env, 1, 0, 0,         H_env);
-  DEFINE_PROC(S_restart_env, g_restart_env, 1, 0, 0, H_restart_env);
-  DEFINE_PROC(S_make_env,    g_make_env, 0, 0, 1,    H_make_env);
-  DEFINE_PROC(S_env_interp,  g_env_interp, 2, 0, 0,  H_env_interp);
-}
 
 
 /* ---------------- io ---------------- */
@@ -3882,37 +3578,6 @@ static SCM g_mus_set_file_buffer_size(SCM val)
 }
 
 
-static void init_io(SCM local_doc)
-{
-  DEFINE_PROC(S_file2sample_p,    g_file2sample_p, 1, 0, 0,    H_file2sample_p);
-  DEFINE_PROC(S_make_file2sample, g_make_file2sample, 1, 0, 0, H_make_file2sample);
-  DEFINE_PROC(S_file2sample,      g_file2sample, 2, 1, 0,      H_file2sample);
-  DEFINE_PROC(S_file2frame_p,     g_file2frame_p, 1, 0, 0,     H_file2frame_p);
-  DEFINE_PROC(S_make_file2frame,  g_make_file2frame, 1, 0, 0,  H_make_file2frame);
-  DEFINE_PROC(S_file2frame,       g_file2frame, 2, 1, 0,       H_file2frame);
-  DEFINE_PROC(S_sample2file_p,    g_sample2file_p, 1, 0, 0,    H_sample2file_p);
-  DEFINE_PROC(S_make_sample2file, g_make_sample2file, 4, 1, 0, H_make_sample2file);
-  DEFINE_PROC(S_sample2file,      g_sample2file, 4, 0, 0,      H_sample2file);
-  DEFINE_PROC(S_frame2file_p,     g_frame2file_p, 1, 0, 0,     H_frame2file_p);
-  DEFINE_PROC(S_frame2file,       g_frame2file, 3, 0, 0,       H_frame2file);
-  DEFINE_PROC(S_make_frame2file,  g_make_frame2file, 4, 0, 0,  H_make_frame2file);
-  DEFINE_PROC(S_mus_input_p,      g_input_p, 1, 0, 0,          H_mus_input_p);
-  DEFINE_PROC(S_mus_output_p,     g_output_p, 1, 0, 0,         H_mus_output_p);
-  DEFINE_PROC(S_in_any,           g_in_any, 3, 0, 0,           H_in_any);
-  DEFINE_PROC(S_ina,              g_ina, 2, 0, 0,              H_ina);  
-  DEFINE_PROC(S_inb,              g_inb, 2, 0, 0,              H_inb);
-  DEFINE_PROC(S_out_any,          g_out_any, 4, 0, 0,          H_out_any);
-  DEFINE_PROC(S_outa,             g_outa, 3, 0, 0,             H_outa);
-  DEFINE_PROC(S_outb,             g_outb, 3, 0, 0,             H_outb);
-  DEFINE_PROC(S_outc,             g_outc, 3, 0, 0,             H_outc);
-  DEFINE_PROC(S_outd,             g_outd, 3, 0, 0,             H_outd);
-  DEFINE_PROC(S_array2file,       g_array2file, 5, 0, 0,       H_array2file);
-  DEFINE_PROC(S_file2array,       g_file2array, 5, 0, 0,       H_file2array);
-  DEFINE_PROC(S_mus_close,        g_mus_close, 1, 0, 0,        H_mus_close);
-
-  define_procedure_with_setter(S_mus_file_buffer_size, PROCEDURE g_mus_file_buffer_size, H_mus_file_buffer_size,
-			       "set-" S_mus_file_buffer_size, PROCEDURE g_mus_set_file_buffer_size, local_doc, 0, 0, 1, 0);
-}
 
 
 /* ---------------- readin ---------------- */
@@ -4018,19 +3683,6 @@ static SCM g_channel(SCM obj)
   return(TO_SMALL_SCM_INT(mus_channel((mus_input *)TO_CLM(obj))));
 }
 
-static void init_rdin(SCM local_doc)
-{
-  DEFINE_PROC(S_readin_p,    g_readin_p, 1, 0, 0,    H_readin_p);
-  DEFINE_PROC(S_readin,      g_readin, 1, 0, 0,      H_readin);
-  DEFINE_PROC(S_make_readin, g_make_readin, 0, 8, 0, H_make_readin);
-  DEFINE_PROC(S_mus_channel, g_channel, 1, 0, 0,     H_mus_channel);
-
-  define_procedure_with_setter(S_mus_location, PROCEDURE g_location, H_mus_location,
-			       S_mus_set_location, PROCEDURE g_set_location, local_doc, 1, 0, 2, 0);
-
-  define_procedure_with_setter(S_mus_increment, PROCEDURE g_increment, H_mus_increment,
-			       S_mus_set_increment, PROCEDURE g_set_increment, local_doc, 1, 0, 2, 0);
-}
 
 
 /* ---------------- locsig ---------------- */
@@ -4178,17 +3830,6 @@ static SCM g_channels(SCM obj)
   return(TO_SMALL_SCM_INT(mus_channels(TO_CLM(obj))));
 }
 
-static void init_locs(SCM local_doc)
-{
-  DEFINE_PROC(S_locsig_p,          g_locsig_p, 1, 0, 0,          H_locsig_p);
-  DEFINE_PROC(S_locsig,            g_locsig, 3, 0, 0,            H_locsig);
-  DEFINE_PROC(S_make_locsig,       g_make_locsig, 0, 0, 1,       H_make_locsig);
-  DEFINE_PROC(S_mus_channels,      g_channels, 1, 0, 0,          H_mus_channels);
-  DEFINE_PROC(S_locsig_ref,        g_locsig_ref, 2, 0, 0,        H_locsig_ref);
-  DEFINE_PROC(S_locsig_reverb_ref, g_locsig_reverb_ref, 2, 0, 0, H_locsig_reverb_ref);
-  DEFINE_PROC(S_locsig_set,        g_locsig_set, 3, 0, 0,        H_locsig_set);
-  DEFINE_PROC(S_locsig_reverb_set, g_locsig_reverb_set, 3, 0, 0, H_locsig_reverb_set);
-}
 
 
 /* ---------------- src ---------------- */
@@ -4291,13 +3932,6 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
 }
 
 
-static void init_sr(SCM local_doc)
-{
-  DEFINE_PROC(S_clear_sincs, g_clear_sincs, 0, 0, 0, "clears out any sinc tables");
-  DEFINE_PROC(S_src_p,       g_src_p, 1, 0, 0,       H_src_p);
-  DEFINE_PROC(S_src,         g_src, 1, 2, 0,         H_src);
-  DEFINE_PROC(S_make_src,    g_make_src, 0, 6, 0,    H_make_src);
-}
 
 
 /* ---------------- granulate ---------------- */
@@ -4397,15 +4031,6 @@ jitter controls the randomness in that spacing, input can be a file pointer."
   return(mus_scm_to_smob(gn));
 }
 
-static void init_spd(SCM local_doc)
-{
-  DEFINE_PROC(S_granulate_p,    g_granulate_p, 1, 0, 0,    H_granulate_p);
-  DEFINE_PROC(S_granulate,      g_granulate, 1, 1, 0,      H_granulate);
-  DEFINE_PROC(S_make_granulate, g_make_granulate, 0, 0, 1, H_make_granulate);
-
-  define_procedure_with_setter(S_mus_ramp, PROCEDURE g_ramp, H_mus_ramp,
-			       S_mus_set_ramp, PROCEDURE g_set_ramp, local_doc, 1, 0, 2, 0);
-}
 
 
 
@@ -4500,13 +4125,6 @@ file1 and file2 writing outfile after scaling the convolution result to maxamp."
   return(FALSE_VALUE);
 }
 
-static void init_conv(SCM local_doc)
-{
-  DEFINE_PROC(S_convolve_p,     g_convolve_p, 1, 0, 0,     H_convolve_p);
-  DEFINE_PROC(S_convolve,       g_convolve, 1, 1, 0,       H_convolve_gen);
-  DEFINE_PROC(S_make_convolve,  g_make_convolve, 0, 0, 1,  H_make_convolve);
-  DEFINE_PROC(S_convolve_files, g_convolve_files, 2, 2, 0, H_convolve_files);
-}
 
 
 /* ---------------- phase-vocoder ---------------- */
@@ -4867,34 +4485,6 @@ static SCM g_set_hop(SCM obj, SCM val)
 
 
 
-static void init_pv(SCM local_doc)
-{
-  DEFINE_PROC(S_phase_vocoder_p,    g_phase_vocoder_p, 1, 0, 0,    H_phase_vocoder_p);
-  DEFINE_PROC(S_phase_vocoder,      g_phase_vocoder, 1, 1, 0,      H_phase_vocoder);
-  DEFINE_PROC(S_make_phase_vocoder, g_make_phase_vocoder, 0, 0, 1, H_make_phase_vocoder);
-
-  DEFINE_PROC("pv-ampinc", g_pv_ampinc, 2, 0, 0, "");
-  DEFINE_PROC("pv-ampinc-1", g_pv_ampinc_1, 1, 0, 0, "");
-  DEFINE_PROC("set-pv-ampinc", g_set_pv_ampinc, 3, 0, 0, "");
-  DEFINE_PROC("pv-amps", g_pv_amps, 2, 0, 0, "");
-  DEFINE_PROC("pv-amps-1", g_pv_amps_1, 1, 0, 0, "");
-  DEFINE_PROC("set-pv-amps", g_set_pv_amps, 3, 0, 0, "");
-  DEFINE_PROC("pv-freqs", g_pv_freqs, 2, 0, 0, "");
-  DEFINE_PROC("pv-freqs-1", g_pv_freqs_1, 1, 0, 0, "");
-  DEFINE_PROC("set-pv-freqs", g_set_pv_freqs, 3, 0, 0, "");
-  DEFINE_PROC("pv-phases", g_pv_phases, 2, 0, 0, "");
-  DEFINE_PROC("pv-phases-1", g_pv_phases_1, 1, 0, 0, "");
-  DEFINE_PROC("set-pv-phases", g_set_pv_phases, 3, 0, 0, "");
-  DEFINE_PROC("pv-phaseinc", g_pv_phaseinc, 2, 0, 0, "");
-  DEFINE_PROC("pv-phaseinc-1", g_pv_phaseinc_1, 1, 0, 0, "");
-  DEFINE_PROC("set-pv-phaseinc", g_set_pv_phaseinc, 3, 0, 0, "");
-  DEFINE_PROC("pv-lastphase", g_pv_lastphase, 2, 0, 0, "");
-  DEFINE_PROC("pv-lastphase-1", g_pv_lastphase_1, 1, 0, 0, "");
-  DEFINE_PROC("set-pv-lastphase", g_set_pv_lastphase, 3, 0, 0, "");
-
-  define_procedure_with_setter(S_mus_hop, PROCEDURE g_hop, H_mus_hop,
-			       S_mus_set_hop, PROCEDURE g_set_hop, local_doc, 1, 0, 2, 0);
-}
 
 
 /* ---------------- mix ---------------- */
@@ -4951,6 +4541,523 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
   return(TRUE_VALUE);
 }
 
+
+#ifdef ARGIFY_1
+NARGIFY_0(g_srate_w, g_srate)
+ARGIFY_1(g_set_srate_w, g_set_srate)
+NARGIFY_0(g_array_print_length_w, g_array_print_length)
+ARGIFY_1(g_set_array_print_length_w, g_set_array_print_length)
+NARGIFY_1(g_radians2hz_w, g_radians2hz)
+NARGIFY_1(g_hz2radians_w, g_hz2radians)
+NARGIFY_1(g_radians2degrees_w, g_radians2degrees)
+NARGIFY_1(g_degrees2radians_w, g_degrees2radians)
+NARGIFY_1(g_db2linear_w, g_db2linear)
+NARGIFY_1(g_linear2db_w, g_linear2db)
+NARGIFY_2(g_ring_modulate_w, g_ring_modulate)
+NARGIFY_3(g_amplitude_modulate_w, g_amplitude_modulate)
+NARGIFY_2(g_contrast_enhancement_w, g_contrast_enhancement)
+NARGIFY_2(g_dot_product_w, g_dot_product)
+NARGIFY_1(g_clear_array_w, g_clear_array)
+NARGIFY_2(g_polynomial_w, g_polynomial)
+ARGIFY_3(g_multiply_arrays_w, g_multiply_arrays)
+ARGIFY_3(g_make_fft_window_w, g_make_fft_window)
+ARGIFY_4(g_mus_fft_w, g_mus_fft)
+ARGIFY_5(g_spectrum_w, g_spectrum)
+ARGIFY_3(g_convolution_w, g_convolution)
+NARGIFY_2(g_rectangular2polar_w, g_rectangular2polar)
+ARGIFY_3(g_array_interp_w, g_array_interp)
+NARGIFY_2(g_sum_of_sines_w, g_sum_of_sines)
+NARGIFY_1(g_inspect_w, g_inspect)
+NARGIFY_1(g_describe_w, g_describe)
+NARGIFY_1(g_name_w, g_name)
+ARGIFY_3(g_run_w, g_run)
+ARGIFY_4(g_mus_bank_w, g_mus_bank)
+NARGIFY_1(g_phase_w, g_phase)
+NARGIFY_2(g_set_phase_w, g_set_phase)
+NARGIFY_1(g_scaler_w, g_scaler)
+NARGIFY_2(g_set_scaler_w, g_set_scaler)
+NARGIFY_1(g_frequency_w, g_frequency)
+NARGIFY_2(g_set_frequency_w, g_set_frequency)
+NARGIFY_1(g_length_w, g_length)
+NARGIFY_2(g_set_length_w, g_set_length)
+NARGIFY_1(g_data_w, g_data)
+NARGIFY_2(g_set_data_w, g_set_data)
+NARGIFY_1(g_oscil_p_w, g_oscil_p)
+ARGIFY_4(g_make_oscil_w, g_make_oscil)
+ARGIFY_3(g_oscil_w, g_oscil)
+ARGIFY_4(g_oscil_bank_w, g_oscil_bank)
+VARGIFY(g_mus_apply_w, g_mus_apply)
+VARGIFY(g_make_delay_w, g_make_delay)
+VARGIFY(g_make_comb_w, g_make_comb)
+VARGIFY(g_make_notch_w, g_make_notch)
+VARGIFY(g_make_all_pass_w, g_make_all_pass)
+ARGIFY_3(g_delay_w, g_delay)
+ARGIFY_2(g_tap_w, g_tap)
+ARGIFY_3(g_notch_w, g_notch)
+ARGIFY_3(g_comb_w, g_comb)
+ARGIFY_3(g_all_pass_w, g_all_pass)
+NARGIFY_1(g_delay_p_w, g_delay_p)
+NARGIFY_1(g_notch_p_w, g_notch_p)
+NARGIFY_1(g_comb_p_w, g_comb_p)
+NARGIFY_1(g_all_pass_p_w, g_all_pass_p)
+NARGIFY_1(g_feedback_w, g_feedback)
+NARGIFY_2(g_set_feedback_w, g_set_feedback)
+NARGIFY_1(g_feedforward_w, g_feedforward)
+NARGIFY_2(g_set_feedforward_w, g_set_feedforward)
+ARGIFY_6(g_make_sum_of_cosines_w, g_make_sum_of_cosines)
+ARGIFY_2(g_sum_of_cosines_w, g_sum_of_cosines)
+NARGIFY_1(g_sum_of_cosines_p_w, g_sum_of_cosines_p)
+NARGIFY_1(g_cosines_w, g_cosines)
+ARGIFY_4(g_make_rand_w, g_make_rand)
+ARGIFY_4(g_make_rand_interp_w, g_make_rand_interp)
+ARGIFY_2(g_rand_w, g_rand)
+ARGIFY_2(g_rand_interp_w, g_rand_interp)
+NARGIFY_1(g_rand_p_w, g_rand_p)
+NARGIFY_1(g_rand_interp_p_w, g_rand_interp_p)
+NARGIFY_1(g_mus_random_w, g_mus_random)
+NARGIFY_0(g_rand_seed_w, g_rand_seed)
+NARGIFY_1(g_set_rand_seed_w, g_set_rand_seed)
+NARGIFY_1(g_table_lookup_p_w, g_table_lookup_p)
+ARGIFY_6(g_make_table_lookup_w, g_make_table_lookup)
+ARGIFY_2(g_table_lookup_w, g_table_lookup)
+ARGIFY_3(g_partials2wave_w, g_partials2wave)
+ARGIFY_3(g_phasepartials2wave_w, g_phasepartials2wave)
+ARGIFY_6(g_make_sawtooth_wave_w, g_make_sawtooth_wave)
+ARGIFY_2(g_sawtooth_wave_w, g_sawtooth_wave)
+NARGIFY_1(g_sawtooth_wave_p_w, g_sawtooth_wave_p)
+ARGIFY_6(g_make_triangle_wave_w, g_make_triangle_wave)
+ARGIFY_2(g_triangle_wave_w, g_triangle_wave)
+NARGIFY_1(g_triangle_wave_p_w, g_triangle_wave_p)
+ARGIFY_6(g_make_square_wave_w, g_make_square_wave)
+ARGIFY_2(g_square_wave_w, g_square_wave)
+NARGIFY_1(g_square_wave_p_w, g_square_wave_p)
+ARGIFY_6(g_make_pulse_train_w, g_make_pulse_train)
+ARGIFY_2(g_pulse_train_w, g_pulse_train)
+NARGIFY_1(g_pulse_train_p_w, g_pulse_train_p)
+ARGIFY_8(g_make_asymmetric_fm_w, g_make_asymmetric_fm)
+ARGIFY_3(g_asymmetric_fm_w, g_asymmetric_fm)
+NARGIFY_1(g_asymmetric_fm_p_w, g_asymmetric_fm_p)
+ARGIFY_4(g_make_one_zero_w, g_make_one_zero)
+ARGIFY_2(g_one_zero_w, g_one_zero)
+NARGIFY_1(g_one_zero_p_w, g_one_zero_p)
+ARGIFY_4(g_make_one_pole_w, g_make_one_pole)
+ARGIFY_2(g_one_pole_w, g_one_pole)
+NARGIFY_1(g_one_pole_p_w, g_one_pole_p)
+ARGIFY_6(g_make_two_zero_w, g_make_two_zero)
+ARGIFY_2(g_two_zero_w, g_two_zero)
+NARGIFY_1(g_two_zero_p_w, g_two_zero_p)
+ARGIFY_6(g_make_two_pole_w, g_make_two_pole)
+ARGIFY_2(g_two_pole_w, g_two_pole)
+NARGIFY_1(g_two_pole_p_w, g_two_pole_p)
+ARGIFY_4(g_make_zpolar_w, g_make_zpolar)
+ARGIFY_4(g_make_ppolar_w, g_make_ppolar)
+NARGIFY_1(g_a0_w, g_a0)
+NARGIFY_2(g_set_a0_w, g_set_a0)
+NARGIFY_1(g_a1_w, g_a1)
+NARGIFY_2(g_set_a1_w, g_set_a1)
+NARGIFY_1(g_b1_w, g_b1)
+NARGIFY_2(g_set_b1_w, g_set_b1)
+NARGIFY_1(g_b2_w, g_b2)
+NARGIFY_2(g_set_b2_w, g_set_b2)
+NARGIFY_1(g_a2_w, g_a2)
+NARGIFY_2(g_set_a2_w, g_set_a2)
+ARGIFY_3(g_formant_bank_w, g_formant_bank)
+NARGIFY_1(g_formant_p_w, g_formant_p)
+ARGIFY_6(g_make_formant_w, g_make_formant)
+ARGIFY_2(g_formant_w, g_formant)
+NARGIFY_1(g_formant_radius_w, g_formant_radius)
+NARGIFY_2(g_set_formant_radius_w, g_set_formant_radius)
+NARGIFY_3(g_set_formant_radius_and_frequency_w, g_set_formant_radius_and_frequency)
+VARGIFY(g_make_frame_w, g_make_frame)
+NARGIFY_1(g_frame_p_w, g_frame_p)
+ARGIFY_3(g_frame_add_w, g_frame_add)
+ARGIFY_3(g_frame_multiply_w, g_frame_multiply)
+NARGIFY_2(g_frame_ref_w, g_frame_ref)
+NARGIFY_3(g_set_frame_ref_w, g_set_frame_ref)
+VARGIFY(g_make_mixer_w, g_make_mixer)
+NARGIFY_1(g_mixer_p_w, g_mixer_p)
+ARGIFY_3(g_mixer_multiply_w, g_mixer_multiply)
+NARGIFY_3(g_mixer_ref_w, g_mixer_ref)
+NARGIFY_4(g_set_mixer_ref_w, g_set_mixer_ref)
+NARGIFY_2(g_frame2sample_w, g_frame2sample)
+NARGIFY_1(g_frame2list_w, g_frame2list)
+ARGIFY_3(g_frame2frame_w, g_frame2frame)
+ARGIFY_3(g_sample2frame_w, g_sample2frame)
+ARGIFY_4(g_make_buffer_w, g_make_buffer)
+NARGIFY_1(g_buffer_p_w, g_buffer_p)
+NARGIFY_1(g_buffer_empty_p_w, g_buffer_empty_p)
+NARGIFY_1(g_buffer_full_p_w, g_buffer_full_p)
+NARGIFY_1(g_buffer2sample_w, g_buffer2sample)
+ARGIFY_2(g_buffer2frame_w, g_buffer2frame)
+NARGIFY_2(g_sample2buffer_w, g_sample2buffer)
+NARGIFY_2(g_frame2buffer_w, g_frame2buffer)
+ARGIFY_6(g_make_wave_train_w, g_make_wave_train)
+ARGIFY_2(g_wave_train_w, g_wave_train)
+NARGIFY_1(g_wave_train_p_w, g_wave_train_p)
+ARGIFY_8(g_make_waveshape_w, g_make_waveshape)
+ARGIFY_3(g_waveshape_w, g_waveshape)
+NARGIFY_1(g_waveshape_p_w, g_waveshape_p)
+ARGIFY_2(g_partials2waveshape_w, g_partials2waveshape)
+ARGIFY_2(g_partials2polynomial_w, g_partials2polynomial)
+VARGIFY(g_make_sine_summation_w, g_make_sine_summation)
+ARGIFY_2(g_sine_summation_w, g_sine_summation)
+NARGIFY_1(g_sine_summation_p_w, g_sine_summation_p)
+ARGIFY_6(g_make_filter_w, g_make_filter)
+NARGIFY_2(g_filter_w, g_filter)
+NARGIFY_1(g_filter_p_w, g_filter_p)
+ARGIFY_4(g_make_fir_filter_w, g_make_fir_filter)
+NARGIFY_2(g_fir_filter_w, g_fir_filter)
+NARGIFY_1(g_fir_filter_p_w, g_fir_filter_p)
+ARGIFY_4(g_make_iir_filter_w, g_make_iir_filter)
+NARGIFY_2(g_iir_filter_w, g_iir_filter)
+NARGIFY_1(g_iir_filter_p_w, g_iir_filter_p)
+NARGIFY_1(g_mus_order_w, g_mus_order)
+NARGIFY_1(g_mus_xcoeffs_w, g_mus_xcoeffs)
+NARGIFY_1(g_mus_ycoeffs_w, g_mus_ycoeffs)
+NARGIFY_1(g_env_p_w, g_env_p)
+NARGIFY_1(g_env_w, g_env)
+NARGIFY_1(g_restart_env_w, g_restart_env)
+VARGIFY(g_make_env_w, g_make_env)
+NARGIFY_2(g_env_interp_w, g_env_interp)
+NARGIFY_1(g_file2sample_p_w, g_file2sample_p)
+NARGIFY_1(g_make_file2sample_w, g_make_file2sample)
+ARGIFY_3(g_file2sample_w, g_file2sample)
+NARGIFY_1(g_file2frame_p_w, g_file2frame_p)
+NARGIFY_1(g_make_file2frame_w, g_make_file2frame)
+ARGIFY_3(g_file2frame_w, g_file2frame)
+NARGIFY_1(g_sample2file_p_w, g_sample2file_p)
+ARGIFY_5(g_make_sample2file_w, g_make_sample2file)
+NARGIFY_4(g_sample2file_w, g_sample2file)
+NARGIFY_1(g_frame2file_p_w, g_frame2file_p)
+NARGIFY_3(g_frame2file_w, g_frame2file)
+NARGIFY_4(g_make_frame2file_w, g_make_frame2file)
+NARGIFY_1(g_input_p_w, g_input_p)
+NARGIFY_1(g_output_p_w, g_output_p)
+NARGIFY_3(g_in_any_w, g_in_any)
+NARGIFY_2(g_ina_w, g_ina)
+NARGIFY_2(g_inb_w, g_inb)
+NARGIFY_4(g_out_any_w, g_out_any)
+NARGIFY_3(g_outa_w, g_outa)
+NARGIFY_3(g_outb_w, g_outb)
+NARGIFY_3(g_outc_w, g_outc)
+NARGIFY_3(g_outd_w, g_outd)
+NARGIFY_5(g_array2file_w, g_array2file)
+NARGIFY_5(g_file2array_w, g_file2array)
+NARGIFY_1(g_mus_close_w, g_mus_close)
+NARGIFY_0(g_mus_file_buffer_size_w, g_mus_file_buffer_size)
+NARGIFY_1(g_mus_set_file_buffer_size_w, g_mus_set_file_buffer_size)
+NARGIFY_1(g_readin_p_w, g_readin_p)
+NARGIFY_1(g_readin_w, g_readin)
+ARGIFY_8(g_make_readin_w, g_make_readin)
+NARGIFY_1(g_channel_w, g_channel)
+NARGIFY_1(g_location_w, g_location)
+NARGIFY_2(g_set_location_w, g_set_location)
+NARGIFY_1(g_increment_w, g_increment)
+NARGIFY_2(g_set_increment_w, g_set_increment)
+NARGIFY_1(g_locsig_p_w, g_locsig_p)
+NARGIFY_3(g_locsig_w, g_locsig)
+VARGIFY(g_make_locsig_w, g_make_locsig)
+NARGIFY_1(g_channels_w, g_channels)
+NARGIFY_2(g_locsig_ref_w, g_locsig_ref)
+NARGIFY_2(g_locsig_reverb_ref_w, g_locsig_reverb_ref)
+NARGIFY_3(g_locsig_set_w, g_locsig_set)
+NARGIFY_3(g_locsig_reverb_set_w, g_locsig_reverb_set)
+NARGIFY_0(g_clear_sincs_w, g_clear_sincs)
+NARGIFY_1(g_src_p_w, g_src_p)
+ARGIFY_3(g_src_w, g_src)
+ARGIFY_6(g_make_src_w, g_make_src)
+NARGIFY_1(g_granulate_p_w, g_granulate_p)
+ARGIFY_2(g_granulate_w, g_granulate)
+VARGIFY(g_make_granulate_w, g_make_granulate)
+NARGIFY_1(g_ramp_w, g_ramp)
+NARGIFY_2(g_set_ramp_w, g_set_ramp)
+NARGIFY_1(g_convolve_p_w, g_convolve_p)
+ARGIFY_2(g_convolve_w, g_convolve)
+VARGIFY(g_make_convolve_w, g_make_convolve)
+ARGIFY_4(g_convolve_files_w, g_convolve_files)
+NARGIFY_1(g_phase_vocoder_p_w, g_phase_vocoder_p)
+ARGIFY_2(g_phase_vocoder_w, g_phase_vocoder)
+VARGIFY(g_make_phase_vocoder_w, g_make_phase_vocoder)
+NARGIFY_2(g_pv_ampinc_w, g_pv_ampinc)
+NARGIFY_1(g_pv_ampinc_1_w, g_pv_ampinc_1)
+NARGIFY_3(g_set_pv_ampinc_w, g_set_pv_ampinc)
+NARGIFY_2(g_pv_amps_w, g_pv_amps)
+NARGIFY_1(g_pv_amps_1_w, g_pv_amps_1)
+NARGIFY_3(g_set_pv_amps_w, g_set_pv_amps)
+NARGIFY_2(g_pv_freqs_w, g_pv_freqs)
+NARGIFY_1(g_pv_freqs_1_w, g_pv_freqs_1)
+NARGIFY_3(g_set_pv_freqs_w, g_set_pv_freqs)
+NARGIFY_2(g_pv_phases_w, g_pv_phases)
+NARGIFY_1(g_pv_phases_1_w, g_pv_phases_1)
+NARGIFY_3(g_set_pv_phases_w, g_set_pv_phases)
+NARGIFY_2(g_pv_phaseinc_w, g_pv_phaseinc)
+NARGIFY_1(g_pv_phaseinc_1_w, g_pv_phaseinc_1)
+NARGIFY_3(g_set_pv_phaseinc_w, g_set_pv_phaseinc)
+NARGIFY_2(g_pv_lastphase_w, g_pv_lastphase)
+NARGIFY_1(g_pv_lastphase_1_w, g_pv_lastphase_1)
+NARGIFY_3(g_set_pv_lastphase_w, g_set_pv_lastphase)
+NARGIFY_1(g_hop_w, g_hop)
+NARGIFY_2(g_set_hop_w, g_set_hop)
+ARGIFY_7(g_mus_mix_w, g_mus_mix)
+#else
+#define g_srate_w g_srate
+#define g_set_srate_w g_set_srate
+#define g_array_print_length_w g_array_print_length
+#define g_set_array_print_length_w g_set_array_print_length
+#define g_radians2hz_w g_radians2hz
+#define g_hz2radians_w g_hz2radians
+#define g_radians2degrees_w g_radians2degrees
+#define g_degrees2radians_w g_degrees2radians
+#define g_db2linear_w g_db2linear
+#define g_linear2db_w g_linear2db
+#define g_ring_modulate_w g_ring_modulate
+#define g_amplitude_modulate_w g_amplitude_modulate
+#define g_contrast_enhancement_w g_contrast_enhancement
+#define g_dot_product_w g_dot_product
+#define g_clear_array_w g_clear_array
+#define g_polynomial_w g_polynomial
+#define g_multiply_arrays_w g_multiply_arrays
+#define g_make_fft_window_w g_make_fft_window
+#define g_mus_fft_w g_mus_fft
+#define g_spectrum_w g_spectrum
+#define g_convolution_w g_convolution
+#define g_rectangular2polar_w g_rectangular2polar
+#define g_array_interp_w g_array_interp
+#define g_sum_of_sines_w g_sum_of_sines
+#define g_inspect_w g_inspect
+#define g_describe_w g_describe
+#define g_name_w g_name
+#define g_run_w g_run
+#define g_mus_bank_w g_mus_bank
+#define g_phase_w g_phase
+#define g_set_phase_w g_set_phase
+#define g_scaler_w g_scaler
+#define g_set_scaler_w g_set_scaler
+#define g_frequency_w g_frequency
+#define g_set_frequency_w g_set_frequency
+#define g_length_w g_length
+#define g_set_length_w g_set_length
+#define g_data_w g_data
+#define g_set_data_w g_set_data
+#define g_oscil_p_w g_oscil_p
+#define g_make_oscil_w g_make_oscil
+#define g_oscil_w g_oscil
+#define g_oscil_bank_w g_oscil_bank
+#define g_mus_apply_w g_mus_apply
+#define g_make_delay_w g_make_delay
+#define g_make_comb_w g_make_comb
+#define g_make_notch_w g_make_notch
+#define g_make_all_pass_w g_make_all_pass
+#define g_delay_w g_delay
+#define g_tap_w g_tap
+#define g_notch_w g_notch
+#define g_comb_w g_comb
+#define g_all_pass_w g_all_pass
+#define g_delay_p_w g_delay_p
+#define g_notch_p_w g_notch_p
+#define g_comb_p_w g_comb_p
+#define g_all_pass_p_w g_all_pass_p
+#define g_feedback_w g_feedback
+#define g_set_feedback_w g_set_feedback
+#define g_feedforward_w g_feedforward
+#define g_set_feedforward_w g_set_feedforward
+#define g_make_sum_of_cosines_w g_make_sum_of_cosines
+#define g_sum_of_cosines_w g_sum_of_cosines
+#define g_sum_of_cosines_p_w g_sum_of_cosines_p
+#define g_cosines_w g_cosines
+#define g_make_rand_w g_make_rand
+#define g_make_rand_interp_w g_make_rand_interp
+#define g_rand_w g_rand
+#define g_rand_interp_w g_rand_interp
+#define g_rand_p_w g_rand_p
+#define g_rand_interp_p_w g_rand_interp_p
+#define g_mus_random_w g_mus_random
+#define g_rand_seed_w g_rand_seed
+#define g_set_rand_seed_w g_set_rand_seed
+#define g_table_lookup_p_w g_table_lookup_p
+#define g_make_table_lookup_w g_make_table_lookup
+#define g_table_lookup_w g_table_lookup
+#define g_partials2wave_w g_partials2wave
+#define g_phasepartials2wave_w g_phasepartials2wave
+#define g_make_sawtooth_wave_w g_make_sawtooth_wave
+#define g_sawtooth_wave_w g_sawtooth_wave
+#define g_sawtooth_wave_p_w g_sawtooth_wave_p
+#define g_make_triangle_wave_w g_make_triangle_wave
+#define g_triangle_wave_w g_triangle_wave
+#define g_triangle_wave_p_w g_triangle_wave_p
+#define g_make_square_wave_w g_make_square_wave
+#define g_square_wave_w g_square_wave
+#define g_square_wave_p_w g_square_wave_p
+#define g_make_pulse_train_w g_make_pulse_train
+#define g_pulse_train_w g_pulse_train
+#define g_pulse_train_p_w g_pulse_train_p
+#define g_make_asymmetric_fm_w g_make_asymmetric_fm
+#define g_asymmetric_fm_w g_asymmetric_fm
+#define g_asymmetric_fm_p_w g_asymmetric_fm_p
+#define g_make_one_zero_w g_make_one_zero
+#define g_one_zero_w g_one_zero
+#define g_one_zero_p_w g_one_zero_p
+#define g_make_one_pole_w g_make_one_pole
+#define g_one_pole_w g_one_pole
+#define g_one_pole_p_w g_one_pole_p
+#define g_make_two_zero_w g_make_two_zero
+#define g_two_zero_w g_two_zero
+#define g_two_zero_p_w g_two_zero_p
+#define g_make_two_pole_w g_make_two_pole
+#define g_two_pole_w g_two_pole
+#define g_two_pole_p_w g_two_pole_p
+#define g_make_zpolar_w g_make_zpolar
+#define g_make_ppolar_w g_make_ppolar
+#define g_a0_w g_a0
+#define g_set_a0_w g_set_a0
+#define g_a1_w g_a1
+#define g_set_a1_w g_set_a1
+#define g_b1_w g_b1
+#define g_set_b1_w g_set_b1
+#define g_b2_w g_b2
+#define g_set_b2_w g_set_b2
+#define g_a2_w g_a2
+#define g_set_a2_w g_set_a2
+#define g_formant_bank_w g_formant_bank
+#define g_formant_p_w g_formant_p
+#define g_make_formant_w g_make_formant
+#define g_formant_w g_formant
+#define g_formant_radius_w g_formant_radius
+#define g_set_formant_radius_w g_set_formant_radius
+#define g_set_formant_radius_and_frequency_w g_set_formant_radius_and_frequency
+#define g_make_frame_w g_make_frame
+#define g_frame_p_w g_frame_p
+#define g_frame_add_w g_frame_add
+#define g_frame_multiply_w g_frame_multiply
+#define g_frame_ref_w g_frame_ref
+#define g_set_frame_ref_w g_set_frame_ref
+#define g_make_mixer_w g_make_mixer
+#define g_mixer_p_w g_mixer_p
+#define g_mixer_multiply_w g_mixer_multiply
+#define g_mixer_ref_w g_mixer_ref
+#define g_set_mixer_ref_w g_set_mixer_ref
+#define g_frame2sample_w g_frame2sample
+#define g_frame2list_w g_frame2list
+#define g_frame2frame_w g_frame2frame
+#define g_sample2frame_w g_sample2frame
+#define g_make_buffer_w g_make_buffer
+#define g_buffer_p_w g_buffer_p
+#define g_buffer_empty_p_w g_buffer_empty_p
+#define g_buffer_full_p_w g_buffer_full_p
+#define g_buffer2sample_w g_buffer2sample
+#define g_buffer2frame_w g_buffer2frame
+#define g_sample2buffer_w g_sample2buffer
+#define g_frame2buffer_w g_frame2buffer
+#define g_make_wave_train_w g_make_wave_train
+#define g_wave_train_w g_wave_train
+#define g_wave_train_p_w g_wave_train_p
+#define g_make_waveshape_w g_make_waveshape
+#define g_waveshape_w g_waveshape
+#define g_waveshape_p_w g_waveshape_p
+#define g_partials2waveshape_w g_partials2waveshape
+#define g_partials2polynomial_w g_partials2polynomial
+#define g_make_sine_summation_w g_make_sine_summation
+#define g_sine_summation_w g_sine_summation
+#define g_sine_summation_p_w g_sine_summation_p
+#define g_make_filter_w g_make_filter
+#define g_filter_w g_filter
+#define g_filter_p_w g_filter_p
+#define g_make_fir_filter_w g_make_fir_filter
+#define g_fir_filter_w g_fir_filter
+#define g_fir_filter_p_w g_fir_filter_p
+#define g_make_iir_filter_w g_make_iir_filter
+#define g_iir_filter_w g_iir_filter
+#define g_iir_filter_p_w g_iir_filter_p
+#define g_mus_order_w g_mus_order
+#define g_mus_xcoeffs_w g_mus_xcoeffs
+#define g_mus_ycoeffs_w g_mus_ycoeffs
+#define g_env_p_w g_env_p
+#define g_env_w g_env
+#define g_restart_env_w g_restart_env
+#define g_make_env_w g_make_env
+#define g_env_interp_w g_env_interp
+#define g_file2sample_p_w g_file2sample_p
+#define g_make_file2sample_w g_make_file2sample
+#define g_file2sample_w g_file2sample
+#define g_file2frame_p_w g_file2frame_p
+#define g_make_file2frame_w g_make_file2frame
+#define g_file2frame_w g_file2frame
+#define g_sample2file_p_w g_sample2file_p
+#define g_make_sample2file_w g_make_sample2file
+#define g_sample2file_w g_sample2file
+#define g_frame2file_p_w g_frame2file_p
+#define g_frame2file_w g_frame2file
+#define g_make_frame2file_w g_make_frame2file
+#define g_input_p_w g_input_p
+#define g_output_p_w g_output_p
+#define g_in_any_w g_in_any
+#define g_ina_w g_ina
+#define g_inb_w g_inb
+#define g_out_any_w g_out_any
+#define g_outa_w g_outa
+#define g_outb_w g_outb
+#define g_outc_w g_outc
+#define g_outd_w g_outd
+#define g_array2file_w g_array2file
+#define g_file2array_w g_file2array
+#define g_mus_close_w g_mus_close
+#define g_mus_file_buffer_size_w g_mus_file_buffer_size
+#define g_mus_set_file_buffer_size_w g_mus_set_file_buffer_size
+#define g_readin_p_w g_readin_p
+#define g_readin_w g_readin
+#define g_make_readin_w g_make_readin
+#define g_channel_w g_channel
+#define g_location_w g_location
+#define g_set_location_w g_set_location
+#define g_increment_w g_increment
+#define g_set_increment_w g_set_increment
+#define g_locsig_p_w g_locsig_p
+#define g_locsig_w g_locsig
+#define g_make_locsig_w g_make_locsig
+#define g_channels_w g_channels
+#define g_locsig_ref_w g_locsig_ref
+#define g_locsig_reverb_ref_w g_locsig_reverb_ref
+#define g_locsig_set_w g_locsig_set
+#define g_locsig_reverb_set_w g_locsig_reverb_set
+#define g_clear_sincs_w g_clear_sincs
+#define g_src_p_w g_src_p
+#define g_src_w g_src
+#define g_make_src_w g_make_src
+#define g_granulate_p_w g_granulate_p
+#define g_granulate_w g_granulate
+#define g_make_granulate_w g_make_granulate
+#define g_ramp_w g_ramp
+#define g_set_ramp_w g_set_ramp
+#define g_convolve_p_w g_convolve_p
+#define g_convolve_w g_convolve
+#define g_make_convolve_w g_make_convolve
+#define g_convolve_files_w g_convolve_files
+#define g_phase_vocoder_p_w g_phase_vocoder_p
+#define g_phase_vocoder_w g_phase_vocoder
+#define g_make_phase_vocoder_w g_make_phase_vocoder
+#define g_pv_ampinc_w g_pv_ampinc
+#define g_pv_ampinc_1_w g_pv_ampinc_1
+#define g_set_pv_ampinc_w g_set_pv_ampinc
+#define g_pv_amps_w g_pv_amps
+#define g_pv_amps_1_w g_pv_amps_1
+#define g_set_pv_amps_w g_set_pv_amps
+#define g_pv_freqs_w g_pv_freqs
+#define g_pv_freqs_1_w g_pv_freqs_1
+#define g_set_pv_freqs_w g_set_pv_freqs
+#define g_pv_phases_w g_pv_phases
+#define g_pv_phases_1_w g_pv_phases_1
+#define g_set_pv_phases_w g_set_pv_phases
+#define g_pv_phaseinc_w g_pv_phaseinc
+#define g_pv_phaseinc_1_w g_pv_phaseinc_1
+#define g_set_pv_phaseinc_w g_set_pv_phaseinc
+#define g_pv_lastphase_w g_pv_lastphase
+#define g_pv_lastphase_1_w g_pv_lastphase_1
+#define g_set_pv_lastphase_w g_set_pv_lastphase
+#define g_hop_w g_hop
+#define g_set_hop_w g_set_hop
+#define g_mus_mix_w g_mus_mix
+#endif
+
 static SCM local_doc;
 
 void init_mus2scm_module(void)
@@ -4960,34 +5067,379 @@ void init_mus2scm_module(void)
   init_mus_module();
   init_mus_scm();
   init_keywords();
-  init_simple_stuff(local_doc);
-  init_generic_funcs(local_doc);
-  init_oscil(local_doc);
-  init_dly(local_doc);
-  init_noi(local_doc);
-  init_cosp(local_doc);
-  init_tbl(local_doc);
-  init_sw(local_doc);
-  init_asyfm(local_doc);
-  init_smpflt(local_doc);
-  init_wt(local_doc);
-  init_rblk(local_doc);
-  init_frame(local_doc);
-  init_mixer(local_doc);
-  init_formant(local_doc);
-  init_ws(local_doc);
-  init_sss(local_doc);
-  init_flt(local_doc);
-  init_env(local_doc);
-  init_locs(local_doc);
-  init_io(local_doc);
-  init_rdin(local_doc);
-  init_spd(local_doc);
-  init_sr(local_doc);
-  init_conv(local_doc);
-  init_pv(local_doc);
 
-  DEFINE_PROC(S_mus_mix, g_mus_mix, 2, 5, 0, H_mus_mix);
+  define_procedure_with_setter(S_mus_srate, PROCEDURE g_srate_w, H_mus_srate,
+			       S_mus_set_srate, PROCEDURE g_set_srate_w, local_doc, 0, 0, 0, 1);
+
+  define_procedure_with_setter(S_mus_array_print_length, PROCEDURE g_array_print_length_w, H_mus_array_print_length,
+			       S_mus_set_array_print_length, PROCEDURE g_set_array_print_length_w, local_doc, 0, 0, 0, 1);
+
+  DEFINE_PROC(S_radians_hz,           g_radians2hz_w, 1, 0, 0,           H_radians_hz);
+  DEFINE_PROC(S_hz_radians,           g_hz2radians_w, 1, 0, 0,           H_hz_radians);
+  DEFINE_PROC(S_in_hz,                g_hz2radians_w, 1, 0, 0,           H_in_hz);
+  DEFINE_PROC(S_radians_degrees,      g_radians2degrees_w, 1, 0, 0,      H_radians_degrees);
+  DEFINE_PROC(S_degrees_radians,      g_degrees2radians_w, 1, 0, 0,      H_degrees_radians);
+  DEFINE_PROC(S_db_linear,            g_db2linear_w, 1, 0, 0,            H_db_linear);
+  DEFINE_PROC(S_linear_db,            g_linear2db_w, 1, 0, 0,            H_linear_db);
+  DEFINE_PROC(S_ring_modulate,        g_ring_modulate_w, 2, 0, 0,        H_ring_modulate);
+  DEFINE_PROC(S_amplitude_modulate,   g_amplitude_modulate_w, 3, 0, 0,   H_amplitude_modulate);
+  DEFINE_PROC(S_contrast_enhancement, g_contrast_enhancement_w, 2, 0, 0, H_contrast_enhancement);
+  DEFINE_PROC(S_dot_product,          g_dot_product_w, 2, 0, 0,          H_dot_product);
+  DEFINE_PROC(S_clear_array,          g_clear_array_w, 1, 0, 0,          H_clear_array);
+  DEFINE_PROC(S_polynomial,           g_polynomial_w, 2, 0, 0,           H_polynomial);
+  DEFINE_PROC(S_multiply_arrays,      g_multiply_arrays_w, 2, 1, 0,      H_multiply_arrays);
+  DEFINE_PROC(S_make_fft_window,      g_make_fft_window_w, 2, 1, 0,      H_make_fft_window);
+  DEFINE_PROC(S_mus_fft,              g_mus_fft_w, 3, 1, 0,              H_mus_fft);
+  DEFINE_PROC(S_spectrum,             g_spectrum_w, 3, 2, 0,             H_mus_spectrum); 
+  DEFINE_PROC(S_convolution,          g_convolution_w, 2, 1, 0,          H_mus_convolution);
+  DEFINE_PROC(S_rectangular2polar,    g_rectangular2polar_w, 2, 0, 0,    H_rectangular2polar);
+  DEFINE_PROC(S_array_interp,         g_array_interp_w, 2, 1, 0,         H_array_interp);
+  DEFINE_PROC(S_sum_of_sines,         g_sum_of_sines_w, 2, 0, 0,         H_sum_of_sines);
+
+  #define H_rectangular_window     "The un-window, so to speak"
+  #define H_hann_window            "A simple raised cosine window"
+  #define H_welch_window           "A triangular window squared"
+  #define H_parzen_window          "A triangular window"
+  #define H_bartlett_window        "A triangular window"
+  #define H_hamming_window         "A raised cosine"
+  #define H_blackman2_window       "2nd order cosine window"
+  #define H_blackman3_window       "3rd order cosine window"
+  #define H_blackman4_window       "4th order cosine window"
+  #define H_exponential_window     "An inverted triangle from exp"
+  #define H_riemann_window         "sinc-based window"
+  #define H_kaiser_window          "Bessel I0 based window"
+  #define H_cauchy_window          "window based on 1/(1+sqr(angle)"
+  #define H_poisson_window         "window based on exp(-angle)"
+  #define H_gaussian_window        "window based on exp(-sqr(angle))"
+  #define H_tukey_window           "window based on truncated cosine"
+  #define H_dolph_chebychev_window "window from inverse fft"
+
+  DEFINE_CONST(S_rectangular_window,     MUS_RECTANGULAR_WINDOW,     H_rectangular_window);
+  DEFINE_CONST(S_hann_window,            MUS_HANN_WINDOW,            H_hann_window);
+  DEFINE_CONST("hanning-window",         MUS_HANN_WINDOW,            H_hann_window); /* backwards compatibility */
+  DEFINE_CONST(S_welch_window,           MUS_WELCH_WINDOW,           H_welch_window);
+  DEFINE_CONST(S_parzen_window,          MUS_PARZEN_WINDOW,          H_parzen_window);
+  DEFINE_CONST(S_bartlett_window,        MUS_BARTLETT_WINDOW,        H_bartlett_window);
+  DEFINE_CONST(S_hamming_window,         MUS_HAMMING_WINDOW,         H_hamming_window);
+  DEFINE_CONST(S_blackman2_window,       MUS_BLACKMAN2_WINDOW,       H_blackman2_window);
+  DEFINE_CONST(S_blackman3_window,       MUS_BLACKMAN3_WINDOW,       H_blackman3_window);
+  DEFINE_CONST(S_blackman4_window,       MUS_BLACKMAN4_WINDOW,       H_blackman4_window);
+  DEFINE_CONST(S_exponential_window,     MUS_EXPONENTIAL_WINDOW,     H_exponential_window);
+  DEFINE_CONST(S_riemann_window,         MUS_RIEMANN_WINDOW,         H_riemann_window);
+  DEFINE_CONST(S_kaiser_window,          MUS_KAISER_WINDOW,          H_kaiser_window);
+  DEFINE_CONST(S_cauchy_window,          MUS_CAUCHY_WINDOW,          H_cauchy_window);
+  DEFINE_CONST(S_poisson_window,         MUS_POISSON_WINDOW,         H_poisson_window);
+  DEFINE_CONST(S_gaussian_window,        MUS_GAUSSIAN_WINDOW,        H_gaussian_window);
+  DEFINE_CONST(S_tukey_window,           MUS_TUKEY_WINDOW,           H_tukey_window);
+  DEFINE_CONST(S_dolph_chebyshev_window, MUS_DOLPH_CHEBYSHEV_WINDOW, H_dolph_chebychev_window);
+
+
+  DEFINE_PROC(S_mus_inspect,  g_inspect_w, 1, 0, 0,  H_mus_inspect);
+  DEFINE_PROC(S_mus_describe, g_describe_w, 1, 0, 0, H_mus_describe);
+  DEFINE_PROC(S_mus_name,     g_name_w, 1, 0, 0,     H_mus_name);
+  DEFINE_PROC(S_mus_run,      g_run_w, 1, 2, 0,      H_mus_run);
+  DEFINE_PROC(S_mus_bank,     g_mus_bank_w, 2, 2, 0, H_mus_bank);
+
+  define_procedure_with_setter(S_mus_phase, PROCEDURE g_phase_w, H_mus_phase,
+			       S_mus_set_phase, PROCEDURE g_set_phase_w, local_doc, 1, 0, 2, 0);
+
+  define_procedure_with_setter(S_mus_scaler, PROCEDURE g_scaler_w, H_mus_scaler,
+			       S_mus_set_scaler, PROCEDURE g_set_scaler_w, local_doc, 1, 0, 2, 0);
+
+  define_procedure_with_setter(S_mus_frequency, PROCEDURE g_frequency_w, H_mus_frequency,
+			       S_mus_set_frequency, PROCEDURE g_set_frequency_w, local_doc, 1, 0, 2, 0);
+
+  define_procedure_with_setter(S_mus_length, PROCEDURE g_length_w, H_mus_length,
+			       S_mus_set_length, PROCEDURE g_set_length_w, local_doc, 1, 0, 2, 0);
+
+  define_procedure_with_setter(S_mus_data, PROCEDURE g_data_w, H_mus_data,
+			       S_mus_set_data, PROCEDURE g_set_data_w, local_doc, 1, 0, 2, 0);
+
+
+  DEFINE_PROC(S_oscil_p,    g_oscil_p_w, 1, 0, 0,    H_oscil_p);
+  DEFINE_PROC(S_make_oscil, g_make_oscil_w, 0, 4, 0, H_make_oscil);
+  DEFINE_PROC(S_oscil,      g_oscil_w, 1, 2, 0,      H_oscil);
+  DEFINE_PROC(S_oscil_bank, g_oscil_bank_w, 2, 2, 0, H_oscil_bank);
+  DEFINE_PROC(S_mus_apply,  g_mus_apply_w, 0, 0, 1,  H_mus_apply);
+
+
+#if HAVE_GUILE
+  EVAL_STRING("(define %delay delay)"); /* protect the original meaning */
+#endif
+  DEFINE_PROC(S_make_delay,    g_make_delay_w, 0, 0, 1,    H_make_delay);
+  DEFINE_PROC(S_make_comb,     g_make_comb_w, 0, 0, 1,     H_make_comb);
+  DEFINE_PROC(S_make_notch,    g_make_notch_w, 0, 0, 1,    H_make_notch); 
+  DEFINE_PROC(S_make_all_pass, g_make_all_pass_w, 0, 0, 1, H_make_all_pass);
+  DEFINE_PROC(S_delay,         g_delay_w, 1, 2, 0,         H_delay); 
+  DEFINE_PROC(S_tap,           g_tap_w, 1, 1, 0,           H_tap);
+  DEFINE_PROC(S_notch,         g_notch_w, 1, 2, 0,         H_notch);
+  DEFINE_PROC(S_comb,          g_comb_w, 1, 2, 0,          H_comb);
+  DEFINE_PROC(S_all_pass,      g_all_pass_w, 1, 2, 0,      H_all_pass);
+  DEFINE_PROC(S_delay_p,       g_delay_p_w, 1, 0, 0,       H_delay_p);
+  DEFINE_PROC(S_notch_p,       g_notch_p_w, 1, 0, 0,       H_notch_p);
+  DEFINE_PROC(S_comb_p,        g_comb_p_w, 1, 0, 0,        H_comb_p);
+  DEFINE_PROC(S_all_pass_p,    g_all_pass_p_w, 1, 0, 0,    H_all_pass_p);
+
+  define_procedure_with_setter(S_mus_feedback, PROCEDURE g_feedback_w, H_mus_feedback,
+			       S_mus_set_feedback, PROCEDURE g_set_feedback_w, local_doc, 1, 0, 2, 0);
+
+  define_procedure_with_setter(S_mus_feedforward, PROCEDURE g_feedforward_w, H_mus_feedforward,
+			       S_mus_set_feedforward, PROCEDURE g_set_feedforward_w, local_doc, 1, 0, 2, 0);
+
+
+  DEFINE_PROC(S_make_rand,        g_make_rand_w, 0, 4, 0,        H_make_rand);
+  DEFINE_PROC(S_make_rand_interp, g_make_rand_interp_w, 0, 4, 0, H_make_rand_interp);
+  DEFINE_PROC(S_rand,             g_rand_w, 1, 1, 0,             H_rand);
+  DEFINE_PROC(S_rand_interp,      g_rand_interp_w, 1, 1, 0,      H_rand_interp);
+  DEFINE_PROC(S_rand_p,           g_rand_p_w, 1, 0, 0,           H_rand_p);
+  DEFINE_PROC(S_rand_interp_p,    g_rand_interp_p_w, 1, 0, 0,    H_rand_interp_p);
+  DEFINE_PROC(S_mus_random,       g_mus_random_w, 1, 0, 0,       H_mus_random);
+
+  define_procedure_with_setter(S_mus_rand_seed, PROCEDURE g_rand_seed_w, H_mus_set_rand_seed,
+			       S_mus_set_rand_seed, PROCEDURE g_set_rand_seed_w, local_doc, 0, 0, 0, 1);
+
+
+  DEFINE_PROC(S_make_sum_of_cosines, g_make_sum_of_cosines_w, 0, 6, 0, H_make_sum_of_cosines); 
+  DEFINE_PROC(S_sum_of_cosines,      g_sum_of_cosines_w, 1, 1, 0,      H_sum_of_cosines);
+  DEFINE_PROC(S_sum_of_cosines_p,    g_sum_of_cosines_p_w, 1, 0, 0,    H_sum_of_cosines_p);
+  DEFINE_PROC(S_mus_cosines,         g_cosines_w, 1, 0, 0,             H_mus_cosines);
+
+
+  DEFINE_PROC(S_table_lookup_p,     g_table_lookup_p_w, 1, 0, 0,     H_table_lookup_p);
+  DEFINE_PROC(S_make_table_lookup,  g_make_table_lookup_w, 0, 6, 0,  H_make_table_lookup);
+  DEFINE_PROC(S_table_lookup,       g_table_lookup_w, 1, 1, 0,       H_table_lookup);
+  DEFINE_PROC(S_partials2wave,      g_partials2wave_w, 1, 2, 0,      H_partials2wave);
+  DEFINE_PROC(S_phasepartials2wave, g_phasepartials2wave_w, 1, 2, 0, H_phasepartials2wave);
+
+
+  DEFINE_PROC(S_make_sawtooth_wave, g_make_sawtooth_wave_w, 0, 6, 0, H_make_sawtooth_wave);
+  DEFINE_PROC(S_sawtooth_wave,      g_sawtooth_wave_w, 1, 1, 0,      H_sawtooth_wave);
+  DEFINE_PROC(S_sawtooth_wave_p,    g_sawtooth_wave_p_w, 1, 0, 0,    H_sawtooth_wave_p);
+  DEFINE_PROC(S_make_triangle_wave, g_make_triangle_wave_w, 0, 6, 0, H_make_triangle_wave);
+  DEFINE_PROC(S_triangle_wave,      g_triangle_wave_w, 1, 1, 0,      H_triangle_wave);
+  DEFINE_PROC(S_triangle_wave_p,    g_triangle_wave_p_w, 1, 0, 0,    H_triangle_wave_p);
+  DEFINE_PROC(S_make_square_wave,   g_make_square_wave_w, 0, 6, 0,   H_make_square_wave);
+  DEFINE_PROC(S_square_wave,        g_square_wave_w, 1, 1, 0,        H_square_wave);
+  DEFINE_PROC(S_square_wave_p,      g_square_wave_p_w, 1, 0, 0,      H_square_wave_p);
+  DEFINE_PROC(S_make_pulse_train,   g_make_pulse_train_w, 0, 6, 0,   H_make_pulse_train);
+  DEFINE_PROC(S_pulse_train,        g_pulse_train_w, 1, 1, 0,        H_pulse_train);
+  DEFINE_PROC(S_pulse_train_p,      g_pulse_train_p_w, 1, 0, 0,      H_pulse_train_p);
+
+
+  DEFINE_PROC(S_make_asymmetric_fm, g_make_asymmetric_fm_w, 0, 8, 0, H_make_asymmetric_fm);
+  DEFINE_PROC(S_asymmetric_fm,      g_asymmetric_fm_w, 1, 2, 0,      H_asymmetric_fm);
+  DEFINE_PROC(S_asymmetric_fm_p,    g_asymmetric_fm_p_w, 1, 0, 0,    H_asymmetric_fm_p);
+
+
+  DEFINE_PROC(S_make_one_zero, g_make_one_zero_w, 0, 4, 0, H_make_one_zero);
+  DEFINE_PROC(S_one_zero,      g_one_zero_w, 1, 1, 0,      H_one_zero);
+  DEFINE_PROC(S_one_zero_p,    g_one_zero_p_w, 1, 0, 0,    H_one_zero_p);
+  DEFINE_PROC(S_make_one_pole, g_make_one_pole_w, 0, 4, 0, H_make_one_pole);
+  DEFINE_PROC(S_one_pole,      g_one_pole_w, 1, 1, 0,      H_one_pole);
+  DEFINE_PROC(S_one_pole_p,    g_one_pole_p_w, 1, 0, 0,    H_one_pole_p);
+  DEFINE_PROC(S_make_two_zero, g_make_two_zero_w, 0, 6, 0, H_make_two_zero);
+  DEFINE_PROC(S_two_zero,      g_two_zero_w, 1, 1, 0,      H_two_zero);
+  DEFINE_PROC(S_two_zero_p,    g_two_zero_p_w, 1, 0, 0,    H_two_zero_p);
+  DEFINE_PROC(S_make_two_pole, g_make_two_pole_w, 0, 6, 0, H_make_two_pole);
+  DEFINE_PROC(S_two_pole,      g_two_pole_w, 1, 1, 0,      H_two_pole);
+  DEFINE_PROC(S_two_pole_p,    g_two_pole_p_w, 1, 0, 0,    H_two_pole_p);
+  DEFINE_PROC(S_make_zpolar,   g_make_zpolar_w, 0, 4, 0,   H_make_zpolar);
+  DEFINE_PROC(S_make_ppolar,   g_make_ppolar_w, 0, 4, 0,   H_make_ppolar);
+
+  define_procedure_with_setter(S_mus_a0, PROCEDURE g_a0_w, H_mus_a0,
+			       S_mus_set_a0, PROCEDURE g_set_a0_w, local_doc, 1, 0, 2, 0);
+
+  define_procedure_with_setter(S_mus_a1, PROCEDURE g_a1_w, H_mus_a1,
+			       S_mus_set_a1, PROCEDURE g_set_a1_w, local_doc, 1, 0, 2, 0);
+
+  define_procedure_with_setter(S_mus_b1, PROCEDURE g_b1_w, H_mus_b1,
+			       S_mus_set_b1, PROCEDURE g_set_b1_w, local_doc, 1, 0, 2, 0);
+
+  define_procedure_with_setter(S_mus_b2, PROCEDURE g_b2_w, H_mus_b2,
+			       S_mus_set_b2, PROCEDURE g_set_b2_w, local_doc, 1, 0, 2, 0);
+
+  define_procedure_with_setter(S_mus_a2, PROCEDURE g_a2_w, H_mus_a2,
+			       S_mus_set_a2, PROCEDURE g_set_a2_w, local_doc, 1, 0, 2, 0);
+
+
+  DEFINE_PROC(S_make_wave_train, g_make_wave_train_w, 0, 6, 0, H_make_wave_train);
+  DEFINE_PROC(S_wave_train,      g_wave_train_w, 1, 1, 0,      H_wave_train);
+  DEFINE_PROC(S_wave_train_p,    g_wave_train_p_w, 1, 0, 0,    H_wave_train_p);
+
+
+  DEFINE_PROC(S_make_buffer,    g_make_buffer_w, 0, 4, 0,    H_make_buffer);
+  DEFINE_PROC(S_buffer_p,       g_buffer_p_w, 1, 0, 0,       H_buffer_p);
+  DEFINE_PROC(S_buffer_empty_p, g_buffer_empty_p_w, 1, 0, 0, H_buffer_empty_p);
+  DEFINE_PROC(S_buffer_full_p,  g_buffer_full_p_w, 1, 0, 0,  H_buffer_full_p);
+  DEFINE_PROC(S_buffer2sample,  g_buffer2sample_w, 1, 0, 0,  H_buffer2sample);
+  DEFINE_PROC(S_buffer2frame,   g_buffer2frame_w, 1, 1, 0,   H_buffer2frame);
+  DEFINE_PROC(S_sample2buffer,  g_sample2buffer_w, 2, 0, 0,  H_sample2buffer);
+  DEFINE_PROC(S_frame2buffer,   g_frame2buffer_w, 2, 0, 0,   H_frame2buffer);
+
+
+  DEFINE_PROC(S_make_frame,     g_make_frame_w, 0, 0, 1,     H_make_frame);
+  DEFINE_PROC(S_frame_p,        g_frame_p_w, 1, 0, 0,        H_frame_p);
+  DEFINE_PROC(S_frame_add,      g_frame_add_w, 2, 1, 0,      H_frame_add);
+  DEFINE_PROC(S_frame_multiply, g_frame_multiply_w, 2, 1, 0, H_frame_multiply);
+  DEFINE_PROC(S_frame_ref,      g_frame_ref_w, 2, 0, 0,      H_frame_ref);
+  DEFINE_PROC(S_frame_set,      g_set_frame_ref_w, 3, 0, 0,  H_frame_set);
+
+
+  DEFINE_PROC(S_make_mixer,     g_make_mixer_w, 0, 0, 1,     H_make_mixer);
+  DEFINE_PROC(S_mixer_p,        g_mixer_p_w, 1, 0, 0,        H_mixer_p);
+  DEFINE_PROC(S_mixer_multiply, g_mixer_multiply_w, 2, 1, 0, H_mixer_multiply);
+  DEFINE_PROC(S_mixer_ref,      g_mixer_ref_w, 3, 0, 0,      H_mixer_ref);
+  DEFINE_PROC(S_mixer_set,      g_set_mixer_ref_w, 4, 0, 0,  H_mixer_set);
+  DEFINE_PROC(S_frame2sample,   g_frame2sample_w, 2, 0, 0,   H_frame2sample);
+  DEFINE_PROC(S_frame2list,     g_frame2list_w, 1, 0, 0,     H_frame2list);
+  DEFINE_PROC(S_frame2frame,    g_frame2frame_w, 2, 1, 0,    H_frame2frame);
+  DEFINE_PROC(S_sample2frame,   g_sample2frame_w, 2, 1, 0,   H_sample2frame);
+
+
+  DEFINE_PROC(S_formant_bank, g_formant_bank_w, 2, 1, 0, H_formant_bank);
+  DEFINE_PROC(S_formant_p,    g_formant_p_w, 1, 0, 0,    H_formant_p);
+  DEFINE_PROC(S_make_formant, g_make_formant_w, 0, 6, 0, H_make_formant);
+  DEFINE_PROC(S_formant,      g_formant_w, 1, 1, 0,      H_formant);
+
+  define_procedure_with_setter(S_mus_formant_radius, PROCEDURE g_formant_radius_w, H_mus_formant_radius,
+			       S_mus_set_formant_radius, PROCEDURE g_set_formant_radius_w, local_doc, 1, 0, 2, 0);
+
+  DEFINE_PROC(S_mus_set_formant_radius_and_frequency, g_set_formant_radius_and_frequency_w, 3, 0, 0, H_mus_set_formant_radius_and_frequency);
+
+
+  DEFINE_PROC(S_make_waveshape,      g_make_waveshape_w, 0, 8, 0,      H_make_waveshape);
+  DEFINE_PROC(S_waveshape,           g_waveshape_w, 1, 2, 0,           H_waveshape);
+  DEFINE_PROC(S_waveshape_p,         g_waveshape_p_w, 1, 0, 0,         H_waveshape_p);
+  DEFINE_PROC(S_partials2waveshape,  g_partials2waveshape_w, 1, 1, 0,  H_partials2waveshape);
+  DEFINE_PROC(S_partials2polynomial, g_partials2polynomial_w, 1, 1, 0, H_partials2polynomial);
+
+
+  DEFINE_PROC(S_make_sine_summation, g_make_sine_summation_w, 0, 0, 1, H_make_sine_summation);
+  DEFINE_PROC(S_sine_summation,      g_sine_summation_w, 1, 1, 0,      H_sine_summation);
+  DEFINE_PROC(S_sine_summation_p,    g_sine_summation_p_w, 1, 0, 0,    H_sine_summation_p);
+
+
+  DEFINE_PROC(S_make_filter,     g_make_filter_w, 0, 6, 0,     H_make_filter);
+  DEFINE_PROC(S_filter,          g_filter_w, 2, 0, 0,          H_filter);
+  DEFINE_PROC(S_filter_p,        g_filter_p_w, 1, 0, 0,        H_filter_p);
+  DEFINE_PROC(S_make_fir_filter, g_make_fir_filter_w, 0, 4, 0, H_make_fir_filter);
+  DEFINE_PROC(S_fir_filter,      g_fir_filter_w, 2, 0, 0,      H_fir_filter);
+  DEFINE_PROC(S_fir_filter_p,    g_fir_filter_p_w, 1, 0, 0,    H_fir_filter_p);
+  DEFINE_PROC(S_make_iir_filter, g_make_iir_filter_w, 0, 4, 0, H_make_iir_filter);
+  DEFINE_PROC(S_iir_filter,      g_iir_filter_w, 2, 0, 0,      H_iir_filter);
+  DEFINE_PROC(S_iir_filter_p,    g_iir_filter_p_w, 1, 0, 0,    H_iir_filter_p);
+  DEFINE_PROC(S_mus_order,       g_mus_order_w, 1, 0, 0,       H_mus_order);
+  DEFINE_PROC(S_mus_xcoeffs,     g_mus_xcoeffs_w, 1, 0, 0,     H_mus_xcoeffs);
+  DEFINE_PROC(S_mus_ycoeffs,     g_mus_ycoeffs_w, 1, 0, 0,     H_mus_ycoeffs);
+
+
+  DEFINE_PROC(S_env_p,       g_env_p_w, 1, 0, 0,       H_env_p);
+  DEFINE_PROC(S_env,         g_env_w, 1, 0, 0,         H_env);
+  DEFINE_PROC(S_restart_env, g_restart_env_w, 1, 0, 0, H_restart_env);
+  DEFINE_PROC(S_make_env,    g_make_env_w, 0, 0, 1,    H_make_env);
+  DEFINE_PROC(S_env_interp,  g_env_interp_w, 2, 0, 0,  H_env_interp);
+
+
+  DEFINE_PROC(S_locsig_p,          g_locsig_p_w, 1, 0, 0,          H_locsig_p);
+  DEFINE_PROC(S_locsig,            g_locsig_w, 3, 0, 0,            H_locsig);
+  DEFINE_PROC(S_make_locsig,       g_make_locsig_w, 0, 0, 1,       H_make_locsig);
+  DEFINE_PROC(S_mus_channels,      g_channels_w, 1, 0, 0,          H_mus_channels);
+  DEFINE_PROC(S_locsig_ref,        g_locsig_ref_w, 2, 0, 0,        H_locsig_ref);
+  DEFINE_PROC(S_locsig_reverb_ref, g_locsig_reverb_ref_w, 2, 0, 0, H_locsig_reverb_ref);
+  DEFINE_PROC(S_locsig_set,        g_locsig_set_w, 3, 0, 0,        H_locsig_set);
+  DEFINE_PROC(S_locsig_reverb_set, g_locsig_reverb_set_w, 3, 0, 0, H_locsig_reverb_set);
+
+
+  DEFINE_PROC(S_file2sample_p,    g_file2sample_p_w, 1, 0, 0,    H_file2sample_p);
+  DEFINE_PROC(S_make_file2sample, g_make_file2sample_w, 1, 0, 0, H_make_file2sample);
+  DEFINE_PROC(S_file2sample,      g_file2sample_w, 2, 1, 0,      H_file2sample);
+  DEFINE_PROC(S_file2frame_p,     g_file2frame_p_w, 1, 0, 0,     H_file2frame_p);
+  DEFINE_PROC(S_make_file2frame,  g_make_file2frame_w, 1, 0, 0,  H_make_file2frame);
+  DEFINE_PROC(S_file2frame,       g_file2frame_w, 2, 1, 0,       H_file2frame);
+  DEFINE_PROC(S_sample2file_p,    g_sample2file_p_w, 1, 0, 0,    H_sample2file_p);
+  DEFINE_PROC(S_make_sample2file, g_make_sample2file_w, 4, 1, 0, H_make_sample2file);
+  DEFINE_PROC(S_sample2file,      g_sample2file_w, 4, 0, 0,      H_sample2file);
+  DEFINE_PROC(S_frame2file_p,     g_frame2file_p_w, 1, 0, 0,     H_frame2file_p);
+  DEFINE_PROC(S_frame2file,       g_frame2file_w, 3, 0, 0,       H_frame2file);
+  DEFINE_PROC(S_make_frame2file,  g_make_frame2file_w, 4, 0, 0,  H_make_frame2file);
+  DEFINE_PROC(S_mus_input_p,      g_input_p_w, 1, 0, 0,          H_mus_input_p);
+  DEFINE_PROC(S_mus_output_p,     g_output_p_w, 1, 0, 0,         H_mus_output_p);
+  DEFINE_PROC(S_in_any,           g_in_any_w, 3, 0, 0,           H_in_any);
+  DEFINE_PROC(S_ina,              g_ina_w, 2, 0, 0,              H_ina);  
+  DEFINE_PROC(S_inb,              g_inb_w, 2, 0, 0,              H_inb);
+  DEFINE_PROC(S_out_any,          g_out_any_w, 4, 0, 0,          H_out_any);
+  DEFINE_PROC(S_outa,             g_outa_w, 3, 0, 0,             H_outa);
+  DEFINE_PROC(S_outb,             g_outb_w, 3, 0, 0,             H_outb);
+  DEFINE_PROC(S_outc,             g_outc_w, 3, 0, 0,             H_outc);
+  DEFINE_PROC(S_outd,             g_outd_w, 3, 0, 0,             H_outd);
+  DEFINE_PROC(S_array2file,       g_array2file_w, 5, 0, 0,       H_array2file);
+  DEFINE_PROC(S_file2array,       g_file2array_w, 5, 0, 0,       H_file2array);
+  DEFINE_PROC(S_mus_close,        g_mus_close_w, 1, 0, 0,        H_mus_close);
+
+  define_procedure_with_setter(S_mus_file_buffer_size, PROCEDURE g_mus_file_buffer_size_w, H_mus_file_buffer_size,
+			       "set-" S_mus_file_buffer_size, PROCEDURE g_mus_set_file_buffer_size_w, local_doc, 0, 0, 1, 0);
+
+
+  DEFINE_PROC(S_readin_p,    g_readin_p_w, 1, 0, 0,    H_readin_p);
+  DEFINE_PROC(S_readin,      g_readin_w, 1, 0, 0,      H_readin);
+  DEFINE_PROC(S_make_readin, g_make_readin_w, 0, 8, 0, H_make_readin);
+  DEFINE_PROC(S_mus_channel, g_channel_w, 1, 0, 0,     H_mus_channel);
+
+  define_procedure_with_setter(S_mus_location, PROCEDURE g_location_w, H_mus_location,
+			       S_mus_set_location, PROCEDURE g_set_location_w, local_doc, 1, 0, 2, 0);
+
+  define_procedure_with_setter(S_mus_increment, PROCEDURE g_increment_w, H_mus_increment,
+			       S_mus_set_increment, PROCEDURE g_set_increment_w, local_doc, 1, 0, 2, 0);
+
+
+  DEFINE_PROC(S_granulate_p,    g_granulate_p_w, 1, 0, 0,    H_granulate_p);
+  DEFINE_PROC(S_granulate,      g_granulate_w, 1, 1, 0,      H_granulate);
+  DEFINE_PROC(S_make_granulate, g_make_granulate_w, 0, 0, 1, H_make_granulate);
+
+  define_procedure_with_setter(S_mus_ramp, PROCEDURE g_ramp_w, H_mus_ramp,
+			       S_mus_set_ramp, PROCEDURE g_set_ramp_w, local_doc, 1, 0, 2, 0);
+
+
+  DEFINE_PROC(S_clear_sincs, g_clear_sincs_w, 0, 0, 0, "clears out any sinc tables");
+  DEFINE_PROC(S_src_p,       g_src_p_w, 1, 0, 0,       H_src_p);
+  DEFINE_PROC(S_src,         g_src_w, 1, 2, 0,         H_src);
+  DEFINE_PROC(S_make_src,    g_make_src_w, 0, 6, 0,    H_make_src);
+
+
+  DEFINE_PROC(S_convolve_p,     g_convolve_p_w, 1, 0, 0,     H_convolve_p);
+  DEFINE_PROC(S_convolve,       g_convolve_w, 1, 1, 0,       H_convolve_gen);
+  DEFINE_PROC(S_make_convolve,  g_make_convolve_w, 0, 0, 1,  H_make_convolve);
+  DEFINE_PROC(S_convolve_files, g_convolve_files_w, 2, 2, 0, H_convolve_files);
+
+
+  DEFINE_PROC(S_phase_vocoder_p,    g_phase_vocoder_p_w, 1, 0, 0,    H_phase_vocoder_p);
+  DEFINE_PROC(S_phase_vocoder,      g_phase_vocoder_w, 1, 1, 0,      H_phase_vocoder);
+  DEFINE_PROC(S_make_phase_vocoder, g_make_phase_vocoder_w, 0, 0, 1, H_make_phase_vocoder);
+
+  DEFINE_PROC("pv-ampinc",        g_pv_ampinc_w, 2, 0, 0, "");
+  DEFINE_PROC("pv-ampinc-1",      g_pv_ampinc_1_w, 1, 0, 0, "");
+  DEFINE_PROC("set-pv-ampinc",    g_set_pv_ampinc_w, 3, 0, 0, "");
+  DEFINE_PROC("pv-amps",          g_pv_amps_w, 2, 0, 0, "");
+  DEFINE_PROC("pv-amps-1",        g_pv_amps_1_w, 1, 0, 0, "");
+  DEFINE_PROC("set-pv-amps",      g_set_pv_amps_w, 3, 0, 0, "");
+  DEFINE_PROC("pv-freqs",         g_pv_freqs_w, 2, 0, 0, "");
+  DEFINE_PROC("pv-freqs-1",       g_pv_freqs_1_w, 1, 0, 0, "");
+  DEFINE_PROC("set-pv-freqs",     g_set_pv_freqs_w, 3, 0, 0, "");
+  DEFINE_PROC("pv-phases",        g_pv_phases_w, 2, 0, 0, "");
+  DEFINE_PROC("pv-phases-1",      g_pv_phases_1_w, 1, 0, 0, "");
+  DEFINE_PROC("set-pv-phases",    g_set_pv_phases_w, 3, 0, 0, "");
+  DEFINE_PROC("pv-phaseinc",      g_pv_phaseinc_w, 2, 0, 0, "");
+  DEFINE_PROC("pv-phaseinc-1",    g_pv_phaseinc_1_w, 1, 0, 0, "");
+  DEFINE_PROC("set-pv-phaseinc",  g_set_pv_phaseinc_w, 3, 0, 0, "");
+  DEFINE_PROC("pv-lastphase",     g_pv_lastphase_w, 2, 0, 0, "");
+  DEFINE_PROC("pv-lastphase-1",   g_pv_lastphase_1_w, 1, 0, 0, "");
+  DEFINE_PROC("set-pv-lastphase", g_set_pv_lastphase_w, 3, 0, 0, "");
+
+  define_procedure_with_setter(S_mus_hop, PROCEDURE g_hop_w, H_mus_hop,
+			       S_mus_set_hop, PROCEDURE g_set_hop_w, local_doc, 1, 0, 2, 0);
+
+
+  DEFINE_PROC(S_mus_mix, g_mus_mix_w, 2, 5, 0, H_mus_mix);
 
   YES_WE_HAVE("clm");
 }

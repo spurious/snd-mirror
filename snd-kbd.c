@@ -1991,19 +1991,45 @@ static SCM g_c_g_x(void)
   return(FALSE_VALUE);
 }
 
+#ifdef ARGIFY_1
+ARGIFY_3(g_forward_graph_w, g_forward_graph)
+ARGIFY_3(g_backward_graph_w, g_backward_graph)
+ARGIFY_3(g_key_binding_w, g_key_binding)
+ARGIFY_4(g_bind_key_w, g_bind_key)
+ARGIFY_3(g_unbind_key_w, g_unbind_key)
+ARGIFY_4(g_key_w, g_key)
+NARGIFY_0(g_save_macros_w, g_save_macros)
+NARGIFY_0(g_c_g_x_w, g_c_g_x)
+ARGIFY_2(g_report_in_minibuffer_w, g_report_in_minibuffer)
+ARGIFY_3(g_prompt_in_minibuffer_w, g_prompt_in_minibuffer)
+ARGIFY_2(g_append_to_minibuffer_w, g_append_to_minibuffer)
+#else
+#define g_forward_graph_w g_forward_graph
+#define g_backward_graph_w g_backward_graph
+#define g_key_binding_w g_key_binding
+#define g_bind_key_w g_bind_key
+#define g_unbind_key_w g_unbind_key
+#define g_key_w g_key
+#define g_save_macros_w g_save_macros
+#define g_c_g_x_w g_c_g_x
+#define g_report_in_minibuffer_w g_report_in_minibuffer
+#define g_prompt_in_minibuffer_w g_prompt_in_minibuffer
+#define g_append_to_minibuffer_w g_append_to_minibuffer
+#endif
+
 void g_init_kbd(SCM local_doc)
 {
-  DEFINE_PROC(S_forward_graph,           g_forward_graph, 0, 3, 0,           H_forward_graph);
-  DEFINE_PROC(S_backward_graph,          g_backward_graph, 0, 3, 0,          H_backward_graph);
+  DEFINE_PROC(S_forward_graph,           g_forward_graph_w, 0, 3, 0,           H_forward_graph);
+  DEFINE_PROC(S_backward_graph,          g_backward_graph_w, 0, 3, 0,          H_backward_graph);
 
-  DEFINE_PROC(S_key_binding,             g_key_binding, 2, 1, 0,             H_key_binding);
-  DEFINE_PROC(S_bind_key,                g_bind_key, 3, 1, 0,                H_bind_key);
-  DEFINE_PROC(S_unbind_key,              g_unbind_key, 2, 1, 0,              H_unbind_key);
-  DEFINE_PROC(S_key,                     g_key, 2, 2, 0,                     H_key);
-  DEFINE_PROC(S_save_macros,             g_save_macros, 0, 0, 0,             H_save_macros);
-  DEFINE_PROC(S_c_g_x,                   g_c_g_x, 0, 0, 0,                   H_c_g_x);  
+  DEFINE_PROC(S_key_binding,             g_key_binding_w, 2, 1, 0,             H_key_binding);
+  DEFINE_PROC(S_bind_key,                g_bind_key_w, 3, 1, 0,                H_bind_key);
+  DEFINE_PROC(S_unbind_key,              g_unbind_key_w, 2, 1, 0,              H_unbind_key);
+  DEFINE_PROC(S_key,                     g_key_w, 2, 2, 0,                     H_key);
+  DEFINE_PROC(S_save_macros,             g_save_macros_w, 0, 0, 0,             H_save_macros);
+  DEFINE_PROC(S_c_g_x,                   g_c_g_x_w, 0, 0, 0,                   H_c_g_x);  
 
-  DEFINE_PROC(S_report_in_minibuffer,    g_report_in_minibuffer, 1, 1, 0,    H_report_in_minibuffer);
-  DEFINE_PROC(S_prompt_in_minibuffer,    g_prompt_in_minibuffer, 1, 2, 0,    H_prompt_in_minibuffer);
-  DEFINE_PROC(S_append_to_minibuffer,    g_append_to_minibuffer, 1, 1, 0,    H_append_to_minibuffer);
+  DEFINE_PROC(S_report_in_minibuffer,    g_report_in_minibuffer_w, 1, 1, 0,    H_report_in_minibuffer);
+  DEFINE_PROC(S_prompt_in_minibuffer,    g_prompt_in_minibuffer_w, 1, 2, 0,    H_prompt_in_minibuffer);
+  DEFINE_PROC(S_append_to_minibuffer,    g_append_to_minibuffer_w, 1, 1, 0,    H_append_to_minibuffer);
 }

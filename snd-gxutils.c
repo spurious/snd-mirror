@@ -435,22 +435,57 @@ static SCM g_select_item(SCM wid, SCM pos)
 
 #endif
 
+
+#ifdef ARGIFY_1
+NARGIFY_1(send_netscape_w, send_netscape)
+NARGIFY_3(g_change_property_w, g_change_property)
+#if DEBUGGING
+NARGIFY_3(g_key_event_w, g_key_event)
+NARGIFY_5(g_click_event_w, g_click_event)
+NARGIFY_5(g_expose_event_w, g_expose_event)
+NARGIFY_3(g_resize_event_w, g_resize_event)
+NARGIFY_7(g_drag_event_w, g_drag_event)
+NARGIFY_1(g_widget_window_w, g_widget_window)
+NARGIFY_0(g_force_event_w, g_force_event)
+NARGIFY_1(g_x_synchronize_w, g_x_synchronize)
+NARGIFY_1(g_click_button_w, g_click_button)
+NARGIFY_2(g_resize_pane_w, g_resize_pane)
+NARGIFY_2(g_select_item_w, g_select_item)
+#endif
+#else
+#define send_netscape_w send_netscape
+#define g_change_property_w g_change_property
+#if DEBUGGING
+#define g_key_event_w g_key_event
+#define g_click_event_w g_click_event
+#define g_expose_event_w g_expose_event
+#define g_resize_event_w g_resize_event
+#define g_drag_event_w g_drag_event
+#define g_widget_window_w g_widget_window
+#define g_force_event_w g_force_event
+#define g_x_synchronize_w g_x_synchronize
+#define g_click_button_w g_click_button
+#define g_resize_pane_w g_resize_pane
+#define g_select_item_w g_select_item
+#endif
+#endif
+
 void g_init_gxutils(SCM local_doc)
 {
-  DEFINE_PROC("send-netscape", send_netscape, 1, 0, 0, "");
-  DEFINE_PROC(S_change_property, g_change_property, 3, 0, 0, H_change_property);
+  DEFINE_PROC("send-netscape", send_netscape_w, 1, 0, 0, "");
+  DEFINE_PROC(S_change_property, g_change_property_w, 3, 0, 0, H_change_property);
 #if DEBUGGING
-  DEFINE_PROC("key-event", g_key_event, 3, 0, 0, "");
-  DEFINE_PROC("click-event", g_click_event, 5, 0, 0, "");
-  DEFINE_PROC("expose-event", g_expose_event, 5, 0, 0, "");
-  DEFINE_PROC("resize-event", g_resize_event, 3, 0, 0, "");
-  DEFINE_PROC("drag-event", g_drag_event, 7, 0, 0, "");
-  DEFINE_PROC("widget-window", g_widget_window, 1, 0, 0, "");
-  DEFINE_PROC("force-event", g_force_event, 0, 0, 0, "");
-  DEFINE_PROC("x-synchronize", g_x_synchronize, 1, 0, 0, "");
-  DEFINE_PROC("click-button", g_click_button, 1, 0, 0, "");
-  DEFINE_PROC("resize-pane", g_resize_pane, 2, 0, 0, "");
-  DEFINE_PROC("select-item", g_select_item, 2, 0, 0, "");
+  DEFINE_PROC("key-event", g_key_event_w, 3, 0, 0, "");
+  DEFINE_PROC("click-event", g_click_event_w, 5, 0, 0, "");
+  DEFINE_PROC("expose-event", g_expose_event_w, 5, 0, 0, "");
+  DEFINE_PROC("resize-event", g_resize_event_w, 3, 0, 0, "");
+  DEFINE_PROC("drag-event", g_drag_event_w, 7, 0, 0, "");
+  DEFINE_PROC("widget-window", g_widget_window_w, 1, 0, 0, "");
+  DEFINE_PROC("force-event", g_force_event_w, 0, 0, 0, "");
+  DEFINE_PROC("x-synchronize", g_x_synchronize_w, 1, 0, 0, "");
+  DEFINE_PROC("click-button", g_click_button_w, 1, 0, 0, "");
+  DEFINE_PROC("resize-pane", g_resize_pane_w, 2, 0, 0, "");
+  DEFINE_PROC("select-item", g_select_item_w, 2, 0, 0, "");
 #if USE_MOTIF
   /* gtk version needs to sort out windows/click-events etc */
   YES_WE_HAVE("snd-events");

@@ -1964,37 +1964,79 @@ static SCM g_save_marks(SCM snd_n)
   return(res);
 }
 
+#ifdef ARGIFY_1
+ARGIFY_2(g_mark_sample_w, g_mark_sample)
+ARGIFY_2(g_set_mark_sample_w, g_set_mark_sample)
+ARGIFY_1(g_mark_sync_w, g_mark_sync)
+ARGIFY_2(g_set_mark_sync_w, g_set_mark_sync)
+ARGIFY_1(g_mark_name_w, g_mark_name)
+ARGIFY_2(g_set_mark_name_w, g_set_mark_name)
+NARGIFY_4(g_restore_marks_w, g_restore_marks)
+NARGIFY_0(g_mark_sync_max_w, g_mark_sync_max)
+ARGIFY_1(g_mark_home_w, g_mark_home)
+ARGIFY_3(g_marks_w, g_marks)
+ARGIFY_3(g_add_mark_w, g_add_mark)
+ARGIFY_1(g_delete_mark_w, g_delete_mark)
+ARGIFY_2(g_delete_marks_w, g_delete_marks)
+NARGIFY_1(g_syncd_marks_w, g_syncd_marks)
+ARGIFY_3(g_find_mark_w, g_find_mark)
+ARGIFY_3(g_forward_mark_w, g_forward_mark)
+ARGIFY_3(g_backward_mark_w, g_backward_mark)
+ARGIFY_1(g_save_marks_w, g_save_marks)
+NARGIFY_1(g_mark_p_w, g_mark_p)
+#else
+#define g_mark_sample_w g_mark_sample
+#define g_set_mark_sample_w g_set_mark_sample
+#define g_mark_sync_w g_mark_sync
+#define g_set_mark_sync_w g_set_mark_sync
+#define g_mark_name_w g_mark_name
+#define g_set_mark_name_w g_set_mark_name
+#define g_restore_marks_w g_restore_marks
+#define g_mark_sync_max_w g_mark_sync_max
+#define g_mark_home_w g_mark_home
+#define g_marks_w g_marks
+#define g_add_mark_w g_add_mark
+#define g_delete_mark_w g_delete_mark
+#define g_delete_marks_w g_delete_marks
+#define g_syncd_marks_w g_syncd_marks
+#define g_find_mark_w g_find_mark
+#define g_forward_mark_w g_forward_mark
+#define g_backward_mark_w g_backward_mark
+#define g_save_marks_w g_save_marks
+#define g_mark_p_w g_mark_p
+#endif
+
 void g_init_marks(SCM local_doc)
 {
   #define H_mark_drag_hook S_mark_drag_hook " (id) is called when a mark is dragged"
 
   mark_drag_hook = MAKE_HOOK(S_mark_drag_hook, 1, H_mark_drag_hook); /* arg = id */
 
-  define_procedure_with_setter(S_mark_sample, PROCEDURE g_mark_sample, H_mark_sample,
-			       "set-" S_mark_sample, PROCEDURE g_set_mark_sample,
+  define_procedure_with_setter(S_mark_sample, PROCEDURE g_mark_sample_w, H_mark_sample,
+			       "set-" S_mark_sample, PROCEDURE g_set_mark_sample_w,
 			       local_doc, 0, 2, 1, 1);
 
-  define_procedure_with_setter(S_mark_sync, PROCEDURE g_mark_sync, H_mark_sync,
-			       "set-" S_mark_sync, PROCEDURE g_set_mark_sync,
+  define_procedure_with_setter(S_mark_sync, PROCEDURE g_mark_sync_w, H_mark_sync,
+			       "set-" S_mark_sync, PROCEDURE g_set_mark_sync_w,
 			       local_doc, 0, 1, 1, 1);
 
-  define_procedure_with_setter(S_mark_name, PROCEDURE g_mark_name, H_mark_name,
-			       "set-" S_mark_name, PROCEDURE g_set_mark_name,
+  define_procedure_with_setter(S_mark_name, PROCEDURE g_mark_name_w, H_mark_name,
+			       "set-" S_mark_name, PROCEDURE g_set_mark_name_w,
 			       local_doc, 0, 1, 1, 1);
 
-  DEFINE_PROC(S_restore_marks, g_restore_marks, 4, 0, 0, "internal func");
-  DEFINE_PROC(S_mark_sync_max, g_mark_sync_max, 0, 0, 0, H_mark_sync_max);
-  DEFINE_PROC(S_mark_home,     g_mark_home, 0, 1, 0,     H_mark_home);
-  DEFINE_PROC(S_marks,         g_marks, 0, 3, 0,         H_marks);
-  DEFINE_PROC(S_add_mark,      g_add_mark, 0, 3, 0,      H_add_mark);
-  DEFINE_PROC(S_delete_mark,   g_delete_mark, 0, 1, 0,   H_delete_mark);
-  DEFINE_PROC(S_delete_marks,  g_delete_marks, 0, 2, 0,  H_delete_marks);
-  DEFINE_PROC(S_syncd_marks,   g_syncd_marks, 1, 0, 0,   H_syncd_marks);
-  DEFINE_PROC(S_find_mark,     g_find_mark, 1, 2, 0,     H_find_mark);
-  DEFINE_PROC(S_forward_mark,  g_forward_mark, 0, 3, 0,  H_forward_mark);
-  DEFINE_PROC(S_backward_mark, g_backward_mark, 0, 3, 0, H_backward_mark);
-  DEFINE_PROC(S_save_marks,    g_save_marks, 0, 1, 0,    H_save_marks);
-  DEFINE_PROC(S_mark_p,        g_mark_p, 1, 0, 0,        H_mark_p);
+  DEFINE_PROC(S_restore_marks, g_restore_marks_w, 4, 0, 0, "internal func");
+  DEFINE_PROC(S_mark_sync_max, g_mark_sync_max_w, 0, 0, 0, H_mark_sync_max);
+  DEFINE_PROC(S_mark_home,     g_mark_home_w, 0, 1, 0,     H_mark_home);
+  DEFINE_PROC(S_marks,         g_marks_w, 0, 3, 0,         H_marks);
+  DEFINE_PROC(S_add_mark,      g_add_mark_w, 0, 3, 0,      H_add_mark);
+  DEFINE_PROC(S_delete_mark,   g_delete_mark_w, 0, 1, 0,   H_delete_mark);
+  DEFINE_PROC(S_delete_marks,  g_delete_marks_w, 0, 2, 0,  H_delete_marks);
+  DEFINE_PROC(S_syncd_marks,   g_syncd_marks_w, 1, 0, 0,   H_syncd_marks);
+  DEFINE_PROC(S_find_mark,     g_find_mark_w, 1, 2, 0,     H_find_mark);
+  DEFINE_PROC(S_forward_mark,  g_forward_mark_w, 0, 3, 0,  H_forward_mark);
+  DEFINE_PROC(S_backward_mark, g_backward_mark_w, 0, 3, 0, H_backward_mark);
+  DEFINE_PROC(S_save_marks,    g_save_marks_w, 0, 1, 0,    H_save_marks);
+  DEFINE_PROC(S_mark_p,        g_mark_p_w, 1, 0, 0,        H_mark_p);
 }
 
 

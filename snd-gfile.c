@@ -1513,10 +1513,18 @@ static SCM g_set_just_sounds(SCM on)
   return(FALSE_VALUE);
 }
 
+#ifdef ARGIFY_1
+NARGIFY_0(g_just_sounds_w, g_just_sounds)
+ARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
+#else
+#define g_just_sounds_w g_just_sounds
+#define g_set_just_sounds_w g_set_just_sounds
+#endif
+
 void g_initialize_xgfile(SCM local_doc)
 {
-  define_procedure_with_setter(S_just_sounds, PROCEDURE g_just_sounds, H_just_sounds,
-			       "set-" S_just_sounds, PROCEDURE g_set_just_sounds, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_just_sounds, PROCEDURE g_just_sounds_w, H_just_sounds,
+			       "set-" S_just_sounds, PROCEDURE g_set_just_sounds_w, local_doc, 0, 0, 0, 1);
 
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label) is called when a file viewer or region label \
 is entered by the mouse. The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \

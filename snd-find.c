@@ -419,8 +419,16 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
   return(snd);
 }
 
+#ifdef ARGIFY_1
+ARGIFY_1(g_search_procedure_w, g_search_procedure)
+ARGIFY_2(g_set_search_procedure_w, g_set_search_procedure)
+#else
+#define g_search_procedure_w g_search_procedure
+#define g_set_search_procedure_w g_set_search_procedure
+#endif
+
 void g_init_find(SCM local_doc)
 {
-  define_procedure_with_setter(S_search_procedure, PROCEDURE g_search_procedure, H_search_procedure,
-			       "set-" S_search_procedure, PROCEDURE g_set_search_procedure, local_doc, 0, 1, 1, 1);
+  define_procedure_with_setter(S_search_procedure, PROCEDURE g_search_procedure_w, H_search_procedure,
+			       "set-" S_search_procedure, PROCEDURE g_set_search_procedure_w, local_doc, 0, 1, 1, 1);
 }

@@ -1367,29 +1367,70 @@ writes region's samples starting at beg for samps in channel chan to vct obj, re
   return(FALSE_VALUE);
 }
 
+#ifdef ARGIFY_1
+NARGIFY_9(g_restore_region_w, g_restore_region)
+ARGIFY_4(g_insert_region_w, g_insert_region)
+NARGIFY_0(g_regions_w, g_regions)
+ARGIFY_1(g_region_length_w, g_region_length)
+ARGIFY_1(g_region_srate_w, g_region_srate)
+ARGIFY_1(g_region_chans_w, g_region_chans)
+ARGIFY_1(g_region_maxamp_w, g_region_maxamp)
+ARGIFY_5(g_save_region_w, g_save_region)
+ARGIFY_1(g_forget_region_w, g_forget_region)
+NARGIFY_2(g_protect_region_w, g_protect_region)
+ARGIFY_2(g_play_region_w, g_play_region)
+ARGIFY_4(g_make_region_w, g_make_region)
+ARGIFY_4(g_mix_region_w, g_mix_region)
+ARGIFY_3(g_region_sample_w, g_region_sample)
+ARGIFY_4(g_region_samples_w, g_region_samples)
+ARGIFY_5(g_region_samples2vct_w, g_region_samples2vct)
+NARGIFY_1(g_region_p_w, g_region_p)
+NARGIFY_0(g_max_regions_w, g_max_regions)
+NARGIFY_1(g_set_max_regions_w, g_set_max_regions)
+#else
+#define g_restore_region_w g_restore_region
+#define g_insert_region_w g_insert_region
+#define g_regions_w g_regions
+#define g_region_length_w g_region_length
+#define g_region_srate_w g_region_srate
+#define g_region_chans_w g_region_chans
+#define g_region_maxamp_w g_region_maxamp
+#define g_save_region_w g_save_region
+#define g_forget_region_w g_forget_region
+#define g_protect_region_w g_protect_region
+#define g_play_region_w g_play_region
+#define g_make_region_w g_make_region
+#define g_mix_region_w g_mix_region
+#define g_region_sample_w g_region_sample
+#define g_region_samples_w g_region_samples
+#define g_region_samples2vct_w g_region_samples2vct
+#define g_region_p_w g_region_p
+#define g_max_regions_w g_max_regions
+#define g_set_max_regions_w g_set_max_regions
+#endif
 
 void g_init_regions(SCM local_doc)
 {
-  DEFINE_PROC(S_restore_region,     g_restore_region, 9, 0, 0,     "restores a region");
-  DEFINE_PROC(S_insert_region,      g_insert_region, 0, 4, 0,      H_insert_region);
-  DEFINE_PROC(S_regions,            g_regions, 0, 0, 0,            H_regions);
-  DEFINE_PROC(S_region_length,      g_region_length, 0, 1, 0,      H_region_length);
-  DEFINE_PROC(S_region_srate,       g_region_srate, 0, 1, 0,       H_region_srate);
-  DEFINE_PROC(S_region_chans,       g_region_chans, 0, 1, 0,       H_region_chans);
-  DEFINE_PROC(S_region_maxamp,      g_region_maxamp, 0, 1, 0,      H_region_maxamp);
-  DEFINE_PROC(S_save_region,        g_save_region, 2, 3, 0,        H_save_region);
-  DEFINE_PROC(S_forget_region,      g_forget_region, 0, 1, 0,      H_forget_region);
-  DEFINE_PROC(S_protect_region,     g_protect_region, 2, 0, 0,     H_protect_region);
-  DEFINE_PROC(S_play_region,        g_play_region, 0, 2, 0,        H_play_region);
-  DEFINE_PROC(S_make_region,        g_make_region, 0, 4, 0,        H_make_region);
-  DEFINE_PROC(S_mix_region,         g_mix_region, 0, 4, 0,         H_mix_region);
-  DEFINE_PROC(S_region_sample,      g_region_sample, 0, 3, 0,      H_region_sample);
-  DEFINE_PROC(S_region_samples,     g_region_samples, 0, 4, 0,     H_region_samples);
-  DEFINE_PROC(S_region_samples2vct, g_region_samples2vct, 0, 5, 0, H_region_samples2vct);
-  DEFINE_PROC(S_region_p,           g_region_p, 1, 0, 0,           H_region_p);
+  DEFINE_PROC(S_restore_region,     g_restore_region_w, 9, 0, 0,     "restores a region");
+  DEFINE_PROC(S_insert_region,      g_insert_region_w, 0, 4, 0,      H_insert_region);
+  DEFINE_PROC(S_regions,            g_regions_w, 0, 0, 0,            H_regions);
+  DEFINE_PROC(S_region_length,      g_region_length_w, 0, 1, 0,      H_region_length);
+  DEFINE_PROC(S_region_srate,       g_region_srate_w, 0, 1, 0,       H_region_srate);
+  DEFINE_PROC(S_region_chans,       g_region_chans_w, 0, 1, 0,       H_region_chans);
+  DEFINE_PROC(S_region_maxamp,      g_region_maxamp_w, 0, 1, 0,      H_region_maxamp);
+  DEFINE_PROC(S_save_region,        g_save_region_w, 2, 3, 0,        H_save_region);
+  DEFINE_PROC(S_forget_region,      g_forget_region_w, 0, 1, 0,      H_forget_region);
+  DEFINE_PROC(S_protect_region,     g_protect_region_w, 2, 0, 0,     H_protect_region);
+  DEFINE_PROC(S_play_region,        g_play_region_w, 0, 2, 0,        H_play_region);
+  DEFINE_PROC(S_make_region,        g_make_region_w, 0, 4, 0,        H_make_region);
+  DEFINE_PROC(S_mix_region,         g_mix_region_w, 0, 4, 0,         H_mix_region);
+  DEFINE_PROC(S_region_sample,      g_region_sample_w, 0, 3, 0,      H_region_sample);
+  DEFINE_PROC(S_region_samples,     g_region_samples_w, 0, 4, 0,     H_region_samples);
+  DEFINE_PROC(S_region_samples2vct, g_region_samples2vct_w, 0, 5, 0, H_region_samples2vct);
+  DEFINE_PROC(S_region_p,           g_region_p_w, 1, 0, 0,           H_region_p);
 
-  define_procedure_with_setter(S_max_regions, PROCEDURE g_max_regions, H_max_regions,
-			       "set-" S_max_regions, PROCEDURE g_set_max_regions,
+  define_procedure_with_setter(S_max_regions, PROCEDURE g_max_regions_w, H_max_regions,
+			       "set-" S_max_regions, PROCEDURE g_set_max_regions_w,
 			       local_doc, 0, 0, 1, 0);
 }
 

@@ -1,5 +1,9 @@
 #include "snd.h"
 
+#if HAVE_READLINE
+  #include <readline/readline.h>
+#endif
+
 int snd_help(snd_state *ss, char *subject, char *help) {return(0);}
 void add_to_error_history(snd_state *ss, char *msg, int popup) {}
 void post_error_dialog(snd_state *ss, char *msg) {}
@@ -517,7 +521,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 #endif
 
 #if HAVE_GUILE
-  /* gh_repl(1, argv); */ 
   scm_shell(1, argv);  /* not argc because scm_shell tries to interpret all args! */
 #endif
 
@@ -527,8 +530,47 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 #endif
 
 #if HAVE_RUBY
-  ruby_script("embedded");
-  while (1) ruby_run();
+  #if HAVE_READLINE
+    {
+      SCM val;
+      int status = 0;
+      char *line_read = NULL;
+      while (1)
+        {
+	  line_read = readline(listener_prompt(ss));
+	  if ((line_read) && (*line_read) )
+	    {
+	      add_history(line_read);
+	      val = rb_eval_string_protect(line_read, &status);
+	      /* val = EVAL_STRING(line_read); */
+	      if (status)
+		fprintf(stdout,"error: %d\n", status);
+	      else fprintf(stdout, "%s\n", g_print_1(val, "ruby repl"));
+	      free (line_read);
+	      line_read = (char *)NULL;
+	    }
+        }
+     }
+  #else
+    {
+      int size = 512;
+      SCM val;
+      int status = 0;
+      char **buffer = NULL;
+      buffer = (char **)calloc(1, sizeof(char *));
+      buffer[0] = (char *)calloc(size, sizeof(char));
+      while (1)
+	{
+	  fprintf(stdout, listener_prompt(ss));
+	  getline(buffer, &size, stdin);
+	  val = rb_eval_string_protect(buffer[0], &status);
+	  /* val = EVAL_STRING(buffer[0]); */
+	  if (status)
+	    fprintf(stdout,"error: %d\n", status);
+	  else fprintf(stdout, "%s\n", g_print_1(val, "ruby repl"));
+	}
+    }
+  #endif
 #endif
 }
 

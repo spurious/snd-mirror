@@ -249,6 +249,24 @@ static SCM g_set_graph_cursor(SCM curs)
   return(curs);
 }
 
+#ifdef ARGIFY_1
+NARGIFY_2(g_in_w, g_in)
+NARGIFY_3(g_make_snd_color_w, g_make_snd_color)
+NARGIFY_1(g_color_p_w, g_color_p)
+NARGIFY_1(g_color2list_w, g_color2list)
+NARGIFY_1(g_load_colormap_w, g_load_colormap)
+NARGIFY_0(g_graph_cursor_w, g_graph_cursor)
+NARGIFY_1(g_set_graph_cursor_w, g_set_graph_cursor)
+#else
+#define g_in_w g_in
+#define g_make_snd_color_w g_make_snd_color
+#define g_color_p_w g_color_p
+#define g_color2list_w g_color2list
+#define g_load_colormap_w g_load_colormap
+#define g_graph_cursor_w g_graph_cursor
+#define g_set_graph_cursor_w g_set_graph_cursor
+#endif
+
 void g_initialize_xgh(snd_state *ss, SCM local_doc)
 {
   state = ss;
@@ -265,13 +283,13 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
   snd_color_tag = rb_define_class("SndColor", rb_cObject);
 #endif
 
-  DEFINE_PROC(S_in,            g_in, 2, 0, 0,             H_in);
-  DEFINE_PROC(S_make_color,    g_make_snd_color, 3, 0, 0, H_make_color);
-  DEFINE_PROC(S_color_p,       g_color_p, 1, 0, 0,        H_color_p);
-  DEFINE_PROC(S_color2list,    g_color2list, 1, 0, 0,     H_color2list);
-  DEFINE_PROC(S_load_colormap, g_load_colormap, 1, 0, 0,  H_load_colormap);
+  DEFINE_PROC(S_in,            g_in_w, 2, 0, 0,             H_in);
+  DEFINE_PROC(S_make_color,    g_make_snd_color_w, 3, 0, 0, H_make_color);
+  DEFINE_PROC(S_color_p,       g_color_p_w, 1, 0, 0,        H_color_p);
+  DEFINE_PROC(S_color2list,    g_color2list_w, 1, 0, 0,     H_color2list);
+  DEFINE_PROC(S_load_colormap, g_load_colormap_w, 1, 0, 0,  H_load_colormap);
 
-  define_procedure_with_setter(S_graph_cursor, PROCEDURE g_graph_cursor, H_graph_cursor,
-			       "set-" S_graph_cursor, PROCEDURE g_set_graph_cursor, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_graph_cursor, PROCEDURE g_graph_cursor_w, H_graph_cursor,
+			       "set-" S_graph_cursor, PROCEDURE g_set_graph_cursor_w, local_doc, 0, 0, 1, 0);
   
 }

@@ -2299,10 +2299,30 @@ static SCM g_new_file_dialog(void)
 }
 #endif
 
+#ifdef ARGIFY_1
+NARGIFY_0(g_just_sounds_w, g_just_sounds)
+ARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
+#if DEBUGGING
+NARGIFY_0(g_new_file_dialog_widgets_w, g_new_file_dialog_widgets)
+NARGIFY_0(g_new_file_dialog_w, g_new_file_dialog)
+NARGIFY_0(g_edit_header_dialog_widgets_w, g_edit_header_dialog_widgets)
+NARGIFY_0(g_save_as_dialog_widgets_w, g_save_as_dialog_widgets)
+#endif
+#else
+#define g_just_sounds_w g_just_sounds
+#define g_set_just_sounds_w g_set_just_sounds
+#if DEBUGGING
+#define g_new_file_dialog_widgets_w g_new_file_dialog_widgets
+#define g_new_file_dialog_w g_new_file_dialog
+#define g_edit_header_dialog_widgets_w g_edit_header_dialog_widgets
+#define g_save_as_dialog_widgets_w g_save_as_dialog_widgets
+#endif
+#endif
+
 void g_initialize_xgfile(SCM local_doc)
 {
-  define_procedure_with_setter(S_just_sounds, PROCEDURE g_just_sounds, H_just_sounds,
-			       "set-" S_just_sounds, PROCEDURE g_set_just_sounds, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_just_sounds, PROCEDURE g_just_sounds_w, H_just_sounds,
+			       "set-" S_just_sounds, PROCEDURE g_set_just_sounds_w, local_doc, 0, 0, 0, 1);
 
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label) is called when a file viewer or region label \
 is entered by the mouse. The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \
@@ -2320,10 +2340,10 @@ See also nb.scm."
   mouse_name_leave_hook = MAKE_HOOK(S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);
 
 #if DEBUGGING
-  DEFINE_PROC("new-file-dialog-widgets", g_new_file_dialog_widgets, 0, 0, 0, "");
-  DEFINE_PROC("new-file-dialog", g_new_file_dialog, 0, 0, 0, "");
-  DEFINE_PROC("edit-header-dialog-widgets", g_edit_header_dialog_widgets, 0, 0, 0, "");
-  DEFINE_PROC("save-as-dialog-widgets", g_save_as_dialog_widgets, 0, 0, 0, "");
+  DEFINE_PROC("new-file-dialog-widgets", g_new_file_dialog_widgets_w, 0, 0, 0, "");
+  DEFINE_PROC("new-file-dialog", g_new_file_dialog_w, 0, 0, 0, "");
+  DEFINE_PROC("edit-header-dialog-widgets", g_edit_header_dialog_widgets_w, 0, 0, 0, "");
+  DEFINE_PROC("save-as-dialog-widgets", g_save_as_dialog_widgets_w, 0, 0, 0, "");
 #endif
 }
 

@@ -17,11 +17,14 @@
  *                 (The default is Guile 1.4, versions before 1.3.4 are no longer supported).
  *                 To get a version of Snd without any extension language, -DHAVE_EXTENSION_LANGUAGE=0
  *
- *                 HAVE_LIBREP to use Librep instead of Guile as the extension language.
- *                     This option is currently on hold.
- * 
- *                 HAVE_MZSCHEME to use mzscheme instead of Guile as the extension language.
- *                     This option is not fully implemented yet.
+ *   HAVE_RUBY     define if you would rather use Ruby as the extension language.
+ *                   see ftp://ftp.netlab.co.jp/pub/lang/ruby/
+ *                 This part of Snd is brand-new and has many bugs/omissions/etc.
+ *
+ *                 Eventually I'll probably add:
+ *                   HAVE_LIBREP to use Librep instead of Guile as the extension language.
+ *                   HAVE_MZSCHEME to use mzscheme instead of Guile as the extension language.
+ *                 but currently neither is operational.
  * 
  *   HAVE_GUILE_GTK
  *                 define if you're using Gtk+ and have libguilegtk.  The configure script
@@ -199,7 +202,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "4-July-01"
+#define SND_VERSION "5-July-01"
 #define SND_RPM_VERSION "5.1"
 #define SND_MAJOR_VERSION 5
 #define SND_MINOR_VERSION 1

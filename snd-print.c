@@ -522,7 +522,13 @@ static SCM g_graph2ps(SCM filename)
   return(TO_SCM_STRING(file));
 }
 
+#ifdef ARGIFY_1
+ARGIFY_1(g_graph2ps_w, g_graph2ps)
+#else
+#define g_graph2ps_w g_graph2ps
+#endif
+
 void g_init_print(SCM local_doc)
 {
-  DEFINE_PROC(S_graph2ps, g_graph2ps, 0, 1, 0, H_graph2ps);
+  DEFINE_PROC(S_graph2ps, g_graph2ps_w, 0, 1, 0, H_graph2ps);
 }

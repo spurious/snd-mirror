@@ -99,6 +99,9 @@ a variant of Lisp; see the urls below for some Scheme tutorials.
 The details of Snd customization are discussed in extsnd.html
 and grfsnd.html.
 
+Recently I added the possibility of using Ruby rather than
+Guile (on the HAVE_RUBY or --with-ruby switches).
+
 
 Another extension is the XmHTML widget available from
 http://www.xs4all.nl/~ripley/XmHTML/XmHTML.html.  If you have this,
@@ -487,6 +490,10 @@ GSL:
 
 Gtk+extra:
   http://gtkextra.sourceforge.net/
+
+Ruby:
+  ftp://ftp.netlab.co.jp/pub/lang/ruby/
+
 
 ----------------------------------------------------------------
 CVS: (I haven't tested this).

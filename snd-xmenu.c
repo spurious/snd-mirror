@@ -1362,6 +1362,14 @@ static SCM g_test_menus(void)
   return(FALSE_VALUE);
 }
 
+#ifdef ARGIFY_1
+NARGIFY_0(g_test_menus_w, g_test_menus)
+NARGIFY_0(g_menu_widgets_w, g_menu_widgets)
+#else
+#define g_test_menus_w g_test_menus
+#define g_menu_widgets_w g_menu_widgets
+#endif
+
 void g_init_gxmenu(SCM local_doc)
 {
   #define H_menu_hook S_menu_hook " (name option) is called each time a menu item is \
@@ -1378,6 +1386,6 @@ wants to override the default menu action:\n\
         #t))) ; #t to make sure other menu items remain active"
 
   menu_hook = MAKE_HOOK(S_menu_hook, 2, H_menu_hook);
-  DEFINE_PROC("test-menus", PROCEDURE g_test_menus, 0, 0, 0, "");
-  DEFINE_PROC(S_menu_widgets, g_menu_widgets, 0, 0, 0, "returns top level menu widgets");
+  DEFINE_PROC("test-menus", PROCEDURE g_test_menus_w, 0, 0, 0, "");
+  DEFINE_PROC(S_menu_widgets, g_menu_widgets_w, 0, 0, 0, "returns top level menu widgets");
 }

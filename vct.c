@@ -605,17 +605,11 @@ static SCM list2vct(SCM lst)
   return(scm_return_first(scv, lst));
 }
 
-static SCM g_vct_1(SCM args) 
+static SCM g_vct(SCM args) 
 {
   #define H_vct "(" S_vct " args -> vct with contents as args"
   return(list2vct(args));
 }
-
-#ifdef VARGIFY
-  VARGIFY(g_vct, g_vct_1)
-#else
-  #define g_vct g_vct_1
-#endif
 
 static SCM array_to_list(Float *arr, int i, int len)
 {
@@ -679,6 +673,57 @@ static SCM vct_subseq(SCM vobj, SCM start, SCM end, SCM newv)
   return(scm_return_first(res, vobj, vnew));
 }
 
+#ifdef ARGIFY_1
+NARGIFY_1(g_make_vct_w, g_make_vct)
+NARGIFY_1(copy_vct_w, copy_vct)
+NARGIFY_1(g_vct_p_w, g_vct_p)
+NARGIFY_1(list2vct_w, list2vct)
+NARGIFY_1(vct2list_w, vct2list)
+NARGIFY_1(vector2vct_w, vector2vct)
+NARGIFY_1(vct_length_w, vct_length)
+NARGIFY_2(vct_ref_w, vct_ref)
+NARGIFY_3(vct_set_w, vct_set)
+NARGIFY_2(vct_multiply_w, vct_multiply)
+NARGIFY_2(vct_scale_w, vct_scale)
+NARGIFY_2(vct_fill_w, vct_fill)
+ARGIFY_3(vct_add_w, vct_add)
+NARGIFY_2(vct_subtract_w, vct_subtract)
+NARGIFY_2(vct_offset_w, vct_offset)
+NARGIFY_2(vct_map_w, vct_map)
+NARGIFY_2(vct_do_w, vct_do)
+NARGIFY_1(vct_peak_w, vct_peak)
+VARGIFY(vcts_map_w, vcts_map)
+VARGIFY(vcts_do_w, vcts_do)
+ARGIFY_4(vct_move_w, vct_move)
+ARGIFY_4(vct_subseq_w, vct_subseq)
+VARGIFY(g_vct_w, g_vct)
+#else
+#define g_make_vct_w g_make_vct
+#define copy_vct_w copy_vct
+#define g_vct_p_w g_vct_p
+#define list2vct_w list2vct
+#define vct2list_w vct2list
+#define vector2vct_w vector2vct
+#define vct_length_w vct_length
+#define vct_ref_w vct_ref
+#define vct_set_w vct_set
+#define vct_multiply_w vct_multiply
+#define vct_scale_w vct_scale
+#define vct_fill_w vct_fill
+#define vct_add_w vct_add
+#define vct_subtract_w vct_subtract
+#define vct_offset_w vct_offset
+#define vct_map_w vct_map
+#define vct_do_w vct_do
+#define vct_peak_w vct_peak
+#define vcts_map_w vcts_map
+#define vcts_do_w vcts_do
+#define vct_move_w vct_move
+#define vct_subseq_w vct_subseq
+#define g_vct_w g_vct
+#define vct_ref_w vct_ref
+#endif
+
 void init_vct(void)
 {
   SCM local_doc;
@@ -697,33 +742,33 @@ void init_vct(void)
 
   local_doc = MAKE_PERMANENT(DOCUMENTATION);
 
-  DEFINE_PROC(S_make_vct,      g_make_vct, 1, 0, 0,    H_make_vct);
-  DEFINE_PROC(S_vct_copy,      copy_vct, 1, 0, 0,      H_vct_copy);
-  DEFINE_PROC(S_vct_p,         g_vct_p, 1, 0, 0,       H_vct_p);
-  DEFINE_PROC(S_list2vct,      list2vct, 1, 0, 0,      H_list2vct);
-  DEFINE_PROC(S_vct2list,      vct2list, 1, 0, 0,      H_vct2list);
-  DEFINE_PROC(S_vector2vct,    vector2vct, 1, 0, 0,    H_vector2vct);
-  DEFINE_PROC(S_vct_length,    vct_length, 1, 0, 0,    H_vct_length);
-  DEFINE_PROC(S_vct_ref,       vct_ref, 2, 0, 0,       H_vct_ref);
-  DEFINE_PROC(S_vct_setB,      vct_set, 3, 0, 0,       H_vct_setB);
-  DEFINE_PROC(S_vct_multiplyB, vct_multiply, 2, 0, 0,  H_vct_multiplyB);
-  DEFINE_PROC(S_vct_scaleB,    vct_scale, 2, 0, 0,     H_vct_scaleB);
-  DEFINE_PROC(S_vct_fillB,     vct_fill, 2, 0, 0,      H_vct_fillB);
-  DEFINE_PROC(S_vct_addB,      vct_add, 2, 1, 0,       H_vct_addB);
-  DEFINE_PROC(S_vct_subtractB, vct_subtract, 2, 0, 0,  H_vct_subtractB);
-  DEFINE_PROC(S_vct_offsetB,   vct_offset, 2, 0, 0,    H_vct_offsetB);
-  DEFINE_PROC(S_vct_mapB,      vct_map, 2, 0, 0,       H_vct_mapB);
-  DEFINE_PROC(S_vct_doB,       vct_do, 2, 0, 0,        H_vct_doB);
-  DEFINE_PROC(S_vct_peak,      vct_peak, 1, 0, 0,      H_vct_peak);
-  DEFINE_PROC(S_vcts_mapB,     vcts_map, 0, 0, 1,      H_vcts_mapB);
-  DEFINE_PROC(S_vcts_doB,      vcts_do, 0, 0, 1,       H_vcts_doB);
-  DEFINE_PROC(S_vct_moveB,     vct_move, 3, 1, 0,      H_vct_moveB);
-  DEFINE_PROC(S_vct_subseq,    vct_subseq, 2, 2, 0,    H_vct_subseq);
-  DEFINE_PROC(S_vct,           g_vct, 0, 0, 1,         H_vct);
+  DEFINE_PROC(S_make_vct,      g_make_vct_w, 1, 0, 0,    H_make_vct);
+  DEFINE_PROC(S_vct_copy,      copy_vct_w, 1, 0, 0,      H_vct_copy);
+  DEFINE_PROC(S_vct_p,         g_vct_p_w, 1, 0, 0,       H_vct_p);
+  DEFINE_PROC(S_list2vct,      list2vct_w, 1, 0, 0,      H_list2vct);
+  DEFINE_PROC(S_vct2list,      vct2list_w, 1, 0, 0,      H_vct2list);
+  DEFINE_PROC(S_vector2vct,    vector2vct_w, 1, 0, 0,    H_vector2vct);
+  DEFINE_PROC(S_vct_length,    vct_length_w, 1, 0, 0,    H_vct_length);
+  DEFINE_PROC(S_vct_ref,       vct_ref_w, 2, 0, 0,       H_vct_ref);
+  DEFINE_PROC(S_vct_setB,      vct_set_w, 3, 0, 0,       H_vct_setB);
+  DEFINE_PROC(S_vct_multiplyB, vct_multiply_w, 2, 0, 0,  H_vct_multiplyB);
+  DEFINE_PROC(S_vct_scaleB,    vct_scale_w, 2, 0, 0,     H_vct_scaleB);
+  DEFINE_PROC(S_vct_fillB,     vct_fill_w, 2, 0, 0,      H_vct_fillB);
+  DEFINE_PROC(S_vct_addB,      vct_add_w, 2, 1, 0,       H_vct_addB);
+  DEFINE_PROC(S_vct_subtractB, vct_subtract_w, 2, 0, 0,  H_vct_subtractB);
+  DEFINE_PROC(S_vct_offsetB,   vct_offset_w, 2, 0, 0,    H_vct_offsetB);
+  DEFINE_PROC(S_vct_mapB,      vct_map_w, 2, 0, 0,       H_vct_mapB);
+  DEFINE_PROC(S_vct_doB,       vct_do_w, 2, 0, 0,        H_vct_doB);
+  DEFINE_PROC(S_vct_peak,      vct_peak_w, 1, 0, 0,      H_vct_peak);
+  DEFINE_PROC(S_vcts_mapB,     vcts_map_w, 0, 0, 1,      H_vcts_mapB);
+  DEFINE_PROC(S_vcts_doB,      vcts_do_w, 0, 0, 1,       H_vcts_doB);
+  DEFINE_PROC(S_vct_moveB,     vct_move_w, 3, 1, 0,      H_vct_moveB);
+  DEFINE_PROC(S_vct_subseq,    vct_subseq_w, 2, 2, 0,    H_vct_subseq);
+  DEFINE_PROC(S_vct,           g_vct_w, 0, 0, 1,         H_vct);
 
 #if USE_SND
-  define_procedure_with_setter(S_vct_ref, PROCEDURE vct_ref, H_vct_ref,
-			       "set-" S_vct_ref, PROCEDURE vct_set, local_doc, 2, 0, 3, 0);
+  define_procedure_with_setter(S_vct_ref, PROCEDURE vct_ref_w, H_vct_ref,
+			       "set-" S_vct_ref, PROCEDURE vct_set_w, local_doc, 2, 0, 3, 0);
 #endif
 }
 

@@ -1297,16 +1297,37 @@ static SCM g_enved_axis_info(void)
 }
 #endif
 
+
+#ifdef ARGIFY_1
+NARGIFY_0(g_enved_active_env_w, g_enved_active_env)
+NARGIFY_1(g_set_enved_active_env_w, g_set_enved_active_env)
+NARGIFY_0(g_enved_selected_env_w, g_enved_selected_env)
+NARGIFY_1(g_set_enved_selected_env_w, g_set_enved_selected_env)
+#if DEBUGGING
+NARGIFY_0(g_enved_dialog_widgets_w, g_enved_dialog_widgets)
+NARGIFY_0(g_enved_axis_info_w, g_enved_axis_info)
+#endif
+#else
+#define g_enved_active_env_w g_enved_active_env
+#define g_set_enved_active_env_w g_set_enved_active_env
+#define g_enved_selected_env_w g_enved_selected_env
+#define g_set_enved_selected_env_w g_set_enved_selected_env
+#if DEBUGGING
+#define g_enved_dialog_widgets_w g_enved_dialog_widgets
+#define g_enved_axis_info_w g_enved_axis_info
+#endif
+#endif
+
 void g_init_gxenv(SCM local_doc)
 {
-  define_procedure_with_setter(S_enved_active_env, PROCEDURE g_enved_active_env, H_enved_active_env,
-			       "set-" S_enved_active_env, PROCEDURE g_set_enved_active_env, local_doc, 0, 0, 1, 0);
-  define_procedure_with_setter(S_enved_selected_env, PROCEDURE g_enved_selected_env, H_enved_selected_env,
-			       "set-" S_enved_selected_env, PROCEDURE g_set_enved_selected_env, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_enved_active_env, PROCEDURE g_enved_active_env_w, H_enved_active_env,
+			       "set-" S_enved_active_env, PROCEDURE g_set_enved_active_env_w, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_enved_selected_env, PROCEDURE g_enved_selected_env_w, H_enved_selected_env,
+			       "set-" S_enved_selected_env, PROCEDURE g_set_enved_selected_env_w, local_doc, 0, 0, 1, 0);
 
 #if DEBUGGING
-  DEFINE_PROC("enved-dialog-widgets", g_enved_dialog_widgets, 0, 0, 0, "");
-  DEFINE_PROC("enved-axis-info",  g_enved_axis_info, 0, 0, 0, "");
+  DEFINE_PROC("enved-dialog-widgets", g_enved_dialog_widgets_w, 0, 0, 0, "");
+  DEFINE_PROC("enved-axis-info",  g_enved_axis_info_w, 0, 0, 0, "");
 #endif
 }
 

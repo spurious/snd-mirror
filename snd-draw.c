@@ -947,76 +947,151 @@ static SCM g_colormap_ref(SCM map, SCM pos)
 		TO_SCM_DOUBLE((float)b / 65535.0)));
 }
 
+
+#ifdef ARGIFY_1
+ARGIFY_7(g_draw_line_w, g_draw_line)
+ARGIFY_6(g_draw_dot_w, g_draw_dot)
+ARGIFY_4(g_draw_lines_w, g_draw_lines)
+ARGIFY_5(g_draw_dots_w, g_draw_dots)
+ARGIFY_6(g_draw_string_w, g_draw_string)
+ARGIFY_7(g_fill_rectangle_w, g_fill_rectangle)
+ARGIFY_4(g_fill_polygon_w, g_fill_polygon)
+ARGIFY_3(g_foreground_color_w, g_foreground_color)
+ARGIFY_4(g_set_foreground_color_w, g_set_foreground_color)
+NARGIFY_1(g_load_font_w, g_load_font)
+ARGIFY_3(g_current_font_w, g_current_font)
+ARGIFY_4(g_set_current_font_w, g_set_current_font)
+NARGIFY_0(g_main_widgets_w, g_main_widgets)
+NARGIFY_0(g_dialog_widgets_w, g_dialog_widgets)
+NARGIFY_1(g_widget_size_w, g_widget_size)
+NARGIFY_2(g_set_widget_size_w, g_set_widget_size)
+NARGIFY_1(g_widget_position_w, g_widget_position)
+NARGIFY_2(g_set_widget_position_w, g_set_widget_position)
+NARGIFY_1(g_widget_text_w, g_widget_text)
+NARGIFY_2(g_set_widget_text_w, g_set_widget_text)
+NARGIFY_2(g_recolor_widget_w, g_recolor_widget)
+NARGIFY_1(g_hide_widget_w, g_hide_widget)
+NARGIFY_1(g_show_widget_w, g_show_widget)
+NARGIFY_1(g_focus_widget_w, g_focus_widget)
+NARGIFY_1(g_add_idler_w, g_add_idler)
+NARGIFY_1(g_remove_idler_w, g_remove_idler)
+ARGIFY_5(g_make_graph_data_w, g_make_graph_data)
+ARGIFY_7(g_graph_data_w, g_graph_data)
+NARGIFY_2(g_add_input_w, g_add_input)
+NARGIFY_1(g_remove_input_w, g_remove_input)
+NARGIFY_2(g_set_widget_foreground_w, g_set_widget_foreground)
+VARGIFY(g_make_bezier_w, g_make_bezier)
+NARGIFY_1(g_make_pixmap_w, g_make_pixmap)
+NARGIFY_2(g_set_pixmap_w, g_set_pixmap)
+NARGIFY_2(g_colormap_ref_w, g_colormap_ref)
+#else
+#define g_draw_line_w g_draw_line
+#define g_draw_dot_w g_draw_dot
+#define g_draw_lines_w g_draw_lines
+#define g_draw_dots_w g_draw_dots
+#define g_draw_string_w g_draw_string
+#define g_fill_rectangle_w g_fill_rectangle
+#define g_fill_polygon_w g_fill_polygon
+#define g_foreground_color_w g_foreground_color
+#define g_set_foreground_color_w g_set_foreground_color
+#define g_load_font_w g_load_font
+#define g_current_font_w g_current_font
+#define g_set_current_font_w g_set_current_font
+#define g_main_widgets_w g_main_widgets
+#define g_dialog_widgets_w g_dialog_widgets
+#define g_widget_size_w g_widget_size
+#define g_set_widget_size_w g_set_widget_size
+#define g_widget_position_w g_widget_position
+#define g_set_widget_position_w g_set_widget_position
+#define g_widget_text_w g_widget_text
+#define g_set_widget_text_w g_set_widget_text
+#define g_recolor_widget_w g_recolor_widget
+#define g_hide_widget_w g_hide_widget
+#define g_show_widget_w g_show_widget
+#define g_focus_widget_w g_focus_widget
+#define g_add_idler_w g_add_idler
+#define g_remove_idler_w g_remove_idler
+#define g_make_graph_data_w g_make_graph_data
+#define g_graph_data_w g_graph_data
+#define g_add_input_w g_add_input
+#define g_remove_input_w g_remove_input
+#define g_set_widget_foreground_w g_set_widget_foreground
+#define g_make_bezier_w g_make_bezier
+#define g_make_pixmap_w g_make_pixmap
+#define g_set_pixmap_w g_set_pixmap
+#define g_colormap_ref_w g_colormap_ref
+#endif
+
 void g_init_draw(SCM local_doc)
 {
   dialog_widgets = UNDEFINED_VALUE;
 
-  DEFINE_VAR(S_copy_context,         CHAN_GC,        "graphics context to draw a line");
-  DEFINE_VAR(S_cursor_context,       CHAN_CGC,       "graphics context for the cursor");
-  DEFINE_VAR(S_selection_context,    CHAN_SELGC,     "graphics context to draw in the selection color");
+  DEFINE_CONST(S_copy_context,         CHAN_GC,        "graphics context to draw a line");
+  DEFINE_CONST(S_cursor_context,       CHAN_CGC,       "graphics context for the cursor");
+  DEFINE_CONST(S_selection_context,    CHAN_SELGC,     "graphics context to draw in the selection color");
 
-  DEFINE_PROC(S_draw_line,        g_draw_line, 4, 3, 0,       "(" S_draw_line " x0 y0 x1 y1 snd chn ax)");
-  DEFINE_PROC(S_draw_dot,         g_draw_dot, 2, 4, 0,        "(" S_draw_dot " x0 y0 size snd chn ax)");
-  DEFINE_PROC(S_draw_lines,       g_draw_lines, 1, 3, 0,      "(" S_draw_lines " lines snd chn ax)");
-  DEFINE_PROC(S_draw_dots,        g_draw_dots, 1, 4, 0,       "(" S_draw_dots " positions dot-size snd chn ax)");
-  DEFINE_PROC(S_draw_string,      g_draw_string, 3, 3, 0,     "(" S_draw_string " text x0 y0 snd chn ax)");
-  DEFINE_PROC(S_fill_rectangle,   g_fill_rectangle, 4, 3, 0,  "(" S_fill_rectangle " x0 y0 width height snd chn ax)");
-  DEFINE_PROC(S_fill_polygon,     g_fill_polygon, 1, 3, 0,    "(" S_fill_polygon " points snd chn ax)");
+  DEFINE_PROC(S_draw_line,        g_draw_line_w, 4, 3, 0,       "(" S_draw_line " x0 y0 x1 y1 snd chn ax)");
+  DEFINE_PROC(S_draw_dot,         g_draw_dot_w, 2, 4, 0,        "(" S_draw_dot " x0 y0 size snd chn ax)");
+  DEFINE_PROC(S_draw_lines,       g_draw_lines_w, 1, 3, 0,      "(" S_draw_lines " lines snd chn ax)");
+  DEFINE_PROC(S_draw_dots,        g_draw_dots_w, 1, 4, 0,       "(" S_draw_dots " positions dot-size snd chn ax)");
+  DEFINE_PROC(S_draw_string,      g_draw_string_w, 3, 3, 0,     "(" S_draw_string " text x0 y0 snd chn ax)");
+  DEFINE_PROC(S_fill_rectangle,   g_fill_rectangle_w, 4, 3, 0,  "(" S_fill_rectangle " x0 y0 width height snd chn ax)");
+  DEFINE_PROC(S_fill_polygon,     g_fill_polygon_w, 1, 3, 0,    "(" S_fill_polygon " points snd chn ax)");
 
-  define_procedure_with_reversed_setter(S_foreground_color, PROCEDURE g_foreground_color, "(" S_foreground_color " snd chn ax) -> current drawing color",
-					"set-" S_foreground_color, PROCEDURE g_set_foreground_color, PROCEDURE g_set_foreground_color_reversed,
+  define_procedure_with_reversed_setter(S_foreground_color, PROCEDURE g_foreground_color_w, "(" S_foreground_color " snd chn ax) -> current drawing color",
+					"set-" S_foreground_color, PROCEDURE g_set_foreground_color_w, PROCEDURE g_set_foreground_color_reversed,
 					local_doc, 0, 3, 1, 3);
 
-  DEFINE_PROC(S_load_font,        g_load_font, 1, 0, 0,        "(" S_load_font " <name>) -> font-id");
+  DEFINE_PROC(S_load_font,        g_load_font_w, 1, 0, 0,        "(" S_load_font " <name>) -> font-id");
 
-  define_procedure_with_reversed_setter(S_current_font, PROCEDURE g_current_font, "(" S_current_font " snd chn ax) -> current font id",
-					"set-" S_current_font, PROCEDURE g_set_current_font, PROCEDURE g_set_current_font_reversed,
+  define_procedure_with_reversed_setter(S_current_font, PROCEDURE g_current_font_w, "(" S_current_font " snd chn ax) -> current font id",
+					"set-" S_current_font, PROCEDURE g_set_current_font_w, PROCEDURE g_set_current_font_reversed,
 					local_doc, 0, 3, 1, 3);
 
-  DEFINE_PROC(S_main_widgets,     g_main_widgets, 0, 0, 0,    "returns top level widgets");
-  DEFINE_PROC(S_dialog_widgets,   g_dialog_widgets, 0, 0, 0,  "returns a list of dialog widgets");
+  DEFINE_PROC(S_main_widgets,     g_main_widgets_w, 0, 0, 0,    "returns top level widgets");
+  DEFINE_PROC(S_dialog_widgets,   g_dialog_widgets_w, 0, 0, 0,  "returns a list of dialog widgets");
 
-  define_procedure_with_setter(S_widget_size, PROCEDURE g_widget_size, "(" S_widget_size " wid) -> '(width height)",
-					"set-" S_widget_size, PROCEDURE g_set_widget_size, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_widget_size, PROCEDURE g_widget_size_w, "(" S_widget_size " wid) -> '(width height)",
+					"set-" S_widget_size, PROCEDURE g_set_widget_size_w, local_doc, 1, 0, 2, 0);
 
-  define_procedure_with_setter(S_widget_position, PROCEDURE g_widget_position, "(" S_widget_position " wid) -> '(x y)",
-					"set-" S_widget_position, PROCEDURE g_set_widget_position, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_widget_position, PROCEDURE g_widget_position_w, "(" S_widget_position " wid) -> '(x y)",
+					"set-" S_widget_position, PROCEDURE g_set_widget_position_w, local_doc, 1, 0, 2, 0);
 
-  define_procedure_with_setter(S_widget_text, PROCEDURE g_widget_text, "(" S_widget_text " wid) -> text)",
-					"set-" S_widget_text, PROCEDURE g_set_widget_text, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_widget_text, PROCEDURE g_widget_text_w, "(" S_widget_text " wid) -> text)",
+					"set-" S_widget_text, PROCEDURE g_set_widget_text_w, local_doc, 1, 0, 2, 0);
 
-  DEFINE_PROC(S_recolor_widget,  g_recolor_widget, 2, 0, 0,  "(" S_recolor_widget " wid color)");
-  DEFINE_PROC(S_hide_widget,     g_hide_widget, 1, 0, 0,     "(" S_hide_widget " widget)");
-  DEFINE_PROC(S_show_widget,     g_show_widget, 1, 0, 0,     "(" S_show_widget " widget)");
-  DEFINE_PROC(S_focus_widget,    g_focus_widget, 1, 0, 0,    "(" S_focus_widget " widget) causes widget to receive input ('focus')");
+  DEFINE_PROC(S_recolor_widget,  g_recolor_widget_w, 2, 0, 0,  "(" S_recolor_widget " wid color)");
+  DEFINE_PROC(S_hide_widget,     g_hide_widget_w, 1, 0, 0,     "(" S_hide_widget " widget)");
+  DEFINE_PROC(S_show_widget,     g_show_widget_w, 1, 0, 0,     "(" S_show_widget " widget)");
+  DEFINE_PROC(S_focus_widget,    g_focus_widget_w, 1, 0, 0,    "(" S_focus_widget " widget) causes widget to receive input ('focus')");
 
-  DEFINE_PROC(S_add_idler,       g_add_idler, 1, 0, 0,       "(" S_add_idler " code) -> id");
-  DEFINE_PROC(S_remove_idler,    g_remove_idler, 1, 0, 0,    "(" S_remove_idler " id)");
+  DEFINE_PROC(S_add_idler,       g_add_idler_w, 1, 0, 0,       "(" S_add_idler " code) -> id");
+  DEFINE_PROC(S_remove_idler,    g_remove_idler_w, 1, 0, 0,    "(" S_remove_idler " id)");
 
-  DEFINE_PROC(S_make_graph_data, g_make_graph_data, 0, 5, 0, H_make_graph_data);
-  DEFINE_PROC(S_graph_data, g_graph_data, 1, 6, 0, H_graph_data);
+  DEFINE_PROC(S_make_graph_data, g_make_graph_data_w, 0, 5, 0, H_make_graph_data);
+  DEFINE_PROC(S_graph_data, g_graph_data_w, 1, 6, 0, H_graph_data);
 
 
   /* ---------------- unstable ---------------- */
 
 #if DEBUGGING
-  DEFINE_VAR("erase-context",        CHAN_IGC,       "graphics context to erase a line");
-  DEFINE_VAR("mark-context",         CHAN_MGC,       "graphics context for a mark");
-  DEFINE_VAR("mix-context",          CHAN_GC,        "graphics context for mix waveforms");
-  DEFINE_VAR("selected-mix-context", CHAN_SELMXGC,   "graphics context for selected mix waveforms");
-  DEFINE_VAR("combined-context",     CHAN_TMPGC,     "graphics context for superimposed graphics");
+  DEFINE_CONST("erase-context",        CHAN_IGC,       "graphics context to erase a line");
+  DEFINE_CONST("mark-context",         CHAN_MGC,       "graphics context for a mark");
+  DEFINE_CONST("mix-context",          CHAN_GC,        "graphics context for mix waveforms");
+  DEFINE_CONST("selected-mix-context", CHAN_SELMXGC,   "graphics context for selected mix waveforms");
+  DEFINE_CONST("combined-context",     CHAN_TMPGC,     "graphics context for superimposed graphics");
 #endif
 
-  DEFINE_PROC(S_add_input,       g_add_input, 2, 0, 0,       "(" S_add_input " file callback) -> id");
-  DEFINE_PROC(S_remove_input,    g_remove_input, 1, 0, 0,    "(" S_remove_input " id)");
+  DEFINE_PROC(S_add_input,       g_add_input_w, 2, 0, 0,       "(" S_add_input " file callback) -> id");
+  DEFINE_PROC(S_remove_input,    g_remove_input_w, 1, 0, 0,    "(" S_remove_input " id)");
 
-  DEFINE_PROC("set-widget-foreground", g_set_widget_foreground, 2, 0, 0, "(set-widget-foreground widget color)");
-  DEFINE_PROC(S_make_bezier,     g_make_bezier, 0, 0, 1,     "(" S_make_bezier " x0 y0 x1 y1 x2 y2 x3 y3 n) -> vector of points");
+  DEFINE_PROC("set-widget-foreground", g_set_widget_foreground_w, 2, 0, 0, "(set-widget-foreground widget color)");
+  DEFINE_PROC(S_make_bezier,     g_make_bezier_w, 0, 0, 1,     "(" S_make_bezier " x0 y0 x1 y1 x2 y2 x3 y3 n) -> vector of points");
 
-  DEFINE_PROC(S_make_pixmap, g_make_pixmap, 1, 0, 0, "(make-pixmap strs)");
-  DEFINE_PROC("set-pixmap", g_set_pixmap, 2, 0, 0, "(set-pixmap widget pixmap)");
+  DEFINE_PROC(S_make_pixmap, g_make_pixmap_w, 1, 0, 0, "(make-pixmap strs)");
+  DEFINE_PROC("set-pixmap", g_set_pixmap_w, 2, 0, 0, "(set-pixmap widget pixmap)");
 
-  DEFINE_PROC("colormap-ref", g_colormap_ref, 2, 0, 0, "(colormap-ref map position) -> (list r g b)");
-  DEFINE_VAR("colormap-size", COLORMAP_SIZE, "colormap size");
+  DEFINE_PROC("colormap-ref", g_colormap_ref_w, 2, 0, 0, "(colormap-ref map position) -> (list r g b)");
+  DEFINE_CONST("colormap-size", COLORMAP_SIZE, "colormap size");
 }
 #endif

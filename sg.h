@@ -43,11 +43,11 @@
 #define NEW_OBJECT(a, b, c, ig1, ig2)  SCM_NEWSMOB(a, b, c)
 
 #if HAVE_SCM_C_DEFINE
-  #define SND_SET(Var, Val)        SCM_VARIABLE_SET(Var, Val)
+  #define SND_SET_VAR(Var, Val)    SCM_VARIABLE_SET(Var, Val)
   #define SND_LOOKUP(a)            VARIABLE_REF(scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure (), TRUE_VALUE))
   /* can't use scm_c_lookup here because it exits the goddamn program if the name is undefined */
 #else
-  #define SND_SET(Var, Val) SCM_SETCDR(Var, Val)
+  #define SND_SET_VAR(Var, Val)    SCM_SETCDR(Var, Val)
   #define SND_LOOKUP(a)            scm_symbol_value0(a)
 #endif
 
@@ -165,7 +165,7 @@
   #define NEW_PROCEDURE(Name, Func, Req, Opt, Rst) gh_new_procedure(Name, PROCEDURE Func, Req, Opt, Rst)
 #endif
 
-#if (!TIMING) && (!GCING) && (!WITH_MCHECK)
+#if (!TIMING) && (!WITH_MCHECK)
 
 #define DEFINE_PROC(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   scm_set_procedure_property_x(NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg), local_doc, TO_SCM_STRING(Doc))
@@ -188,7 +188,6 @@
                             tag, tag)); \
   }
 #else
-#if WITH_MCHECK
 #define DEFINE_PROC(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   NEW_PROCEDURE(Name "-t", PROCEDURE Func, ReqArg, OptArg, RstArg); \
   EVAL_STRING("(define " Name " \
@@ -197,18 +196,6 @@
                      (set! res (apply " Name "-t args)) \
                      (mcheck-all) \
                      res)))");
-#else
-/* pound on gc-related bugs! */
-#define DEFINE_PROC(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  NEW_PROCEDURE(Name "-t", PROCEDURE Func, ReqArg, OptArg, RstArg); \
-  EVAL_STRING("(define " Name " \
-                 (lambda args \
-                   (let ((res #f)) \
-                     (set-last-proc \"" Name "\" args) \
-                     (set! res (apply " Name "-t args)) \
-                     (gc-1) \
-                     res)))");
-#endif
 #endif
 #endif
 
@@ -228,14 +215,20 @@
   #define SND_DEFINE(a, b)         gh_define(a, b)
 #endif
 
-#define DEFINE_VAR(Name, Value, Help) \
+#define DEFINE_CONST(Name, Value, Help) \
   { \
     SND_DEFINE(Name, TO_SMALL_SCM_INT(Value)); \
     scm_set_object_property_x(TO_SCM_SYMBOL(Name), local_doc, TO_SCM_STRING(Help)); \
   }
 
+#if HAVE_SCM_C_DEFINE
+  #define DEFINE_VAR(Name, Var, Value) Var = scm_permanent_object(scm_c_define(Name, Value))
+#else
+  #define DEFINE_VAR(Name, Var, Value) Var = gh_define(Name, Value)
+#endif
+
 /* DEFINE_PROC sets the documentation property of procedure Func to Doc
- * DEFINE_VAR sets the symbol's documentation property (gh_define returned the value in older version of Guile) 
+ * DEFINE_CONST sets the symbol's documentation property (gh_define returned the value in older version of Guile) 
  */
 
 #define WITH_REVERSED_CHANNEL_ARGS(name_reversed, name) \

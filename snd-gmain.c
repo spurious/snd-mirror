@@ -647,10 +647,16 @@ static SCM g_parse_rc_file(SCM name)
   return(FALSE_VALUE);
 }
 
+#ifdef ARGIFY_1
+NARGIFY_1(g_parse_rc_file_w, g_parse_rc_file)
+#else
+#define g_parse_rc_file_w g_parse_rc_file
+#endif
+
 void g_init_gxmain(SCM local_doc)
 {
   #define H_property_changed_hook S_property_changed_hook "(command) is called upon receipt of a SND_COMMAND"
   property_changed_hook = MAKE_HOOK(S_property_changed_hook, 1, H_property_changed_hook);
 
-  DEFINE_PROC("parse-rc-file", g_parse_rc_file, 1, 0, 0, "(parse-rc-file name) -> read gtk rc file");
+  DEFINE_PROC("parse-rc-file", g_parse_rc_file_w, 1, 0, 0, "(parse-rc-file name) -> read gtk rc file");
 }

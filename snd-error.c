@@ -144,10 +144,18 @@ int ignore_mus_error(int type, char *msg)
   return(NOT_FALSE_P(result));
 }
 
+#ifdef ARGIFY_1
+NARGIFY_1(g_snd_error_w, g_snd_error)
+NARGIFY_1(g_snd_warning_w, g_snd_warning)
+#else
+#define g_snd_error_w g_snd_error
+#define g_snd_warning_w g_snd_warning
+#endif
+
 void g_init_errors(SCM local_doc)
 {
-  DEFINE_PROC(S_snd_error, g_snd_error, 1, 0, 0, H_snd_error);
-  DEFINE_PROC(S_snd_warning, g_snd_warning, 1, 0, 0, H_snd_warning);
+  DEFINE_PROC(S_snd_error, g_snd_error_w, 1, 0, 0, H_snd_error);
+  DEFINE_PROC(S_snd_warning, g_snd_warning_w, 1, 0, 0, H_snd_warning);
 
   #define H_mus_error_hook S_mus_error_hook " (error-type error-message) is called upon mus_error. \
 If it returns #t, Snd ignores the error (it assumes you've handled it via the hook)."

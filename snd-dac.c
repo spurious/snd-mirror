@@ -792,23 +792,6 @@ static SCM g_mus_contrast(SCM inval, SCM index)
 #endif
 }
 
-static void init_rev_funcs(SCM local_doc)
-{
-  g_make_reverb = FALSE_VALUE;
-  g_reverb = FALSE_VALUE;
-  g_free_reverb = FALSE_VALUE;
-  g_contrast = FALSE_VALUE;
-  v_ins = FALSE_VALUE;
-  v_outs = FALSE_VALUE;
-  DEFINE_PROC("make-snd-nrev",     g_make_nrev, 2, 0, 0,     "make-snd-nrev is the default reverb make function");
-  DEFINE_PROC("snd-nrev",          g_nrev, 3, 0, 0,          "snd-nrev is the default reverb");
-  DEFINE_PROC("free-snd-nrev",     g_free_rev, 1, 0, 0,      "free-snd-nrev is the default reverb free function");
-  DEFINE_PROC("snd-contrast",      g_mus_contrast, 2, 0, 0,  "snd-contrast is the default contrast function");
-  DEFINE_PROC("make-snd-freeverb", g_make_freeverb, 2, 0, 0, "make-snd-freeverb is the freeverb reverb make function");
-  DEFINE_PROC("snd-freeverb",      g_freeverb, 3, 0, 0,      "snd-freeverb is the freeverb reverb");
-  DEFINE_PROC("free-snd-freeverb", g_free_rev, 1, 0, 0,      "free-snd-freeverb is the freeverb reverb free function");
-}
-
 
 static void set_nrev_filter_coeff(Float newval)
 {
@@ -2812,26 +2795,71 @@ static SCM g_player_p(SCM snd_chn)
 			(players[index])));
 }
 
+
+#ifdef ARGIFY_1
+NARGIFY_2(g_make_nrev_w, g_make_nrev)
+NARGIFY_3(g_nrev_w, g_nrev)
+NARGIFY_1(g_free_rev_w, g_free_rev)
+NARGIFY_2(g_mus_contrast_w, g_mus_contrast)
+NARGIFY_2(g_make_freeverb_w, g_make_freeverb)
+NARGIFY_3(g_freeverb_w, g_freeverb)
+NARGIFY_0(g_reverb_procedures_w, g_reverb_procedures)
+NARGIFY_3(g_set_reverb_procedures_w, g_set_reverb_procedures)
+NARGIFY_0(g_contrast_procedure_w, g_contrast_procedure)
+NARGIFY_1(g_set_contrast_procedure_w, g_set_contrast_procedure)
+ARGIFY_6(g_play_w, g_play)
+ARGIFY_2(g_play_selection_w, g_play_selection)
+ARGIFY_6(g_play_and_wait_w, g_play_and_wait)
+ARGIFY_1(g_stop_playing_w, g_stop_playing)
+ARGIFY_2(g_make_player_w, g_make_player)
+ARGIFY_4(g_add_player_w, g_add_player)
+NARGIFY_1(g_player_home_w, g_player_home)
+ARGIFY_3(g_start_playing_w, g_start_playing)
+NARGIFY_1(g_stop_player_w, g_stop_player)
+NARGIFY_1(g_player_p_w, g_player_p)
+#else
+#define g_make_nrev_w g_make_nrev
+#define g_nrev_w g_nrev
+#define g_free_rev_w g_free_rev
+#define g_mus_contrast_w g_mus_contrast
+#define g_make_freeverb_w g_make_freeverb
+#define g_freeverb_w g_freeverb
+#define g_reverb_procedures_w g_reverb_procedures
+#define g_set_reverb_procedures_w g_set_reverb_procedures
+#define g_contrast_procedure_w g_contrast_procedure
+#define g_set_contrast_procedure_w g_set_contrast_procedure
+#define g_play_w g_play
+#define g_play_selection_w g_play_selection
+#define g_play_and_wait_w g_play_and_wait
+#define g_stop_playing_w g_stop_playing
+#define g_make_player_w g_make_player
+#define g_add_player_w g_add_player
+#define g_player_home_w g_player_home
+#define g_start_playing_w g_start_playing
+#define g_stop_player_w g_stop_player
+#define g_player_p_w g_player_p
+#endif
+
 void g_init_dac(SCM local_doc)
 {
-  DEFINE_PROC(S_reverb_control_procedures, g_reverb_procedures, 0, 0, 0, H_reverb_control_procedures);
-  DEFINE_PROC("set-" S_reverb_control_procedures, g_set_reverb_procedures, 3, 0, 0, H_set_reverb_control_procedures);
+  DEFINE_PROC(S_reverb_control_procedures, g_reverb_procedures_w, 0, 0, 0, H_reverb_control_procedures);
+  DEFINE_PROC("set-" S_reverb_control_procedures, g_set_reverb_procedures_w, 3, 0, 0, H_set_reverb_control_procedures);
   /* can't use generalized set here because it's confused by the 3 args -- perhaps a list would be ok */
 
-  define_procedure_with_setter(S_contrast_control_procedure, PROCEDURE g_contrast_procedure, H_contrast_control_procedure,
-			       "set-" S_contrast_control_procedure, PROCEDURE g_set_contrast_procedure, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_contrast_control_procedure, PROCEDURE g_contrast_procedure_w, H_contrast_control_procedure,
+			       "set-" S_contrast_control_procedure, PROCEDURE g_set_contrast_procedure_w, local_doc, 0, 0, 1, 0);
 
-  DEFINE_PROC(S_play,           g_play, 0, 6, 0,           H_play);
-  DEFINE_PROC(S_play_selection, g_play_selection, 0, 2, 0, H_play_selection);
-  DEFINE_PROC(S_play_and_wait,  g_play_and_wait, 0, 6, 0,  H_play_and_wait);
-  DEFINE_PROC(S_stop_playing,   g_stop_playing, 0, 1, 0,   H_stop_playing);
+  DEFINE_PROC(S_play,           g_play_w, 0, 6, 0,           H_play);
+  DEFINE_PROC(S_play_selection, g_play_selection_w, 0, 2, 0, H_play_selection);
+  DEFINE_PROC(S_play_and_wait,  g_play_and_wait_w, 0, 6, 0,  H_play_and_wait);
+  DEFINE_PROC(S_stop_playing,   g_stop_playing_w, 0, 1, 0,   H_stop_playing);
 
-  DEFINE_PROC(S_make_player,    g_make_player, 0, 2, 0,    H_make_player);
-  DEFINE_PROC(S_add_player,     g_add_player, 1, 3, 0,     H_add_player);
-  DEFINE_PROC(S_player_home,    g_player_home, 1, 0, 0,    H_player_home);
-  DEFINE_PROC(S_start_playing,  g_start_playing, 0, 3, 0,  H_start_playing);
-  DEFINE_PROC(S_stop_player,    g_stop_player, 1, 0, 0,    H_stop_player);
-  DEFINE_PROC(S_player_p,       g_player_p, 1, 0, 0,       H_player_p);
+  DEFINE_PROC(S_make_player,    g_make_player_w, 0, 2, 0,    H_make_player);
+  DEFINE_PROC(S_add_player,     g_add_player_w, 1, 3, 0,     H_add_player);
+  DEFINE_PROC(S_player_home,    g_player_home_w, 1, 0, 0,    H_player_home);
+  DEFINE_PROC(S_start_playing,  g_start_playing_w, 0, 3, 0,  H_start_playing);
+  DEFINE_PROC(S_stop_player,    g_stop_player_w, 1, 0, 0,    H_stop_player);
+  DEFINE_PROC(S_player_p,       g_player_p_w, 1, 0, 0,       H_player_p);
 
   #define H_stop_playing_hook S_stop_playing_hook " (snd) is called when a sound finishes playing."
   #define H_stop_playing_channel_hook S_stop_playing_channel_hook " (snd chn) is called when a channel finishes playing."
@@ -2846,7 +2874,22 @@ If it returns #t, the sound is not played."
   start_playing_hook =        MAKE_HOOK(S_start_playing_hook, 1, H_start_playing_hook);               /* arg = sound */
   play_hook =                 MAKE_HOOK(S_play_hook, 1, H_play_hook);                                 /* args = size */
 
-  init_rev_funcs(local_doc);
+
+  g_make_reverb = FALSE_VALUE;
+  g_reverb = FALSE_VALUE;
+  g_free_reverb = FALSE_VALUE;
+  g_contrast = FALSE_VALUE;
+  v_ins = FALSE_VALUE;
+  v_outs = FALSE_VALUE;
+  DEFINE_PROC("make-snd-nrev",     g_make_nrev_w, 2, 0, 0,     "make-snd-nrev is the default reverb make function");
+  DEFINE_PROC("snd-nrev",          g_nrev_w, 3, 0, 0,          "snd-nrev is the default reverb");
+  DEFINE_PROC("free-snd-nrev",     g_free_rev_w, 1, 0, 0,      "free-snd-nrev is the default reverb free function");
+  DEFINE_PROC("snd-contrast",      g_mus_contrast_w, 2, 0, 0,  "snd-contrast is the default contrast function");
+  DEFINE_PROC("make-snd-freeverb", g_make_freeverb_w, 2, 0, 0, "make-snd-freeverb is the freeverb reverb make function");
+  DEFINE_PROC("snd-freeverb",      g_freeverb_w, 3, 0, 0,      "snd-freeverb is the freeverb reverb");
+  DEFINE_PROC("free-snd-freeverb", g_free_rev_w, 1, 0, 0,      "free-snd-freeverb is the freeverb reverb free function");
+
+
 #if HAVE_GUILE
   EVAL_STRING("(set-reverb-control-procedures snd-nrev make-snd-nrev free-snd-nrev)");
   EVAL_STRING("(set-contrast-control-procedure snd-contrast)");

@@ -718,15 +718,28 @@ static SCM g_axis_info(SCM snd, SCM chn, SCM ap_id)
 			   EMPTY_LIST)))))))))))))));
 }
 
+#ifdef ARGIFY_1
+ARGIFY_4(g_grf_x_w, g_grf_x)
+ARGIFY_4(g_grf_y_w, g_grf_y)
+ARGIFY_4(g_ungrf_x_w, g_ungrf_x)
+ARGIFY_4(g_ungrf_y_w, g_ungrf_y)
+ARGIFY_3(g_axis_info_w, g_axis_info)
+#else
+#define g_grf_x_w g_grf_x
+#define g_grf_y_w g_grf_y
+#define g_ungrf_x_w g_ungrf_x
+#define g_ungrf_y_w g_ungrf_y
+#define g_axis_info_w g_axis_info
+#endif
 
 void g_init_axis(SCM local_doc)
 {
-  DEFINE_PROC(S_x2position, g_grf_x, 1, 3, 0,     "(" S_x2position " val snd chn ax)");
-  DEFINE_PROC(S_y2position, g_grf_y, 1, 3, 0,     "(" S_y2position " val snd chn ax)");
-  DEFINE_PROC(S_position2x, g_ungrf_x, 1, 3, 0,   "(" S_position2x " val snd chn ax)");
-  DEFINE_PROC(S_position2y, g_ungrf_y, 1, 3, 0,   "(" S_position2y " val snd chn ax)");
+  DEFINE_PROC(S_x2position, g_grf_x_w, 1, 3, 0,     "(" S_x2position " val snd chn ax)");
+  DEFINE_PROC(S_y2position, g_grf_y_w, 1, 3, 0,     "(" S_y2position " val snd chn ax)");
+  DEFINE_PROC(S_position2x, g_ungrf_x_w, 1, 3, 0,   "(" S_position2x " val snd chn ax)");
+  DEFINE_PROC(S_position2y, g_ungrf_y_w, 1, 3, 0,   "(" S_position2y " val snd chn ax)");
 
-  DEFINE_PROC(S_axis_info,  g_axis_info, 0, 3, 0, "(" S_axis_info " snd chn grf)");
+  DEFINE_PROC(S_axis_info,  g_axis_info_w, 0, 3, 0, "(" S_axis_info " snd chn grf)");
 
 }
 #endif

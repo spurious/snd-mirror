@@ -522,9 +522,15 @@ static SCM g_save_listener(SCM filename)
   return(filename);
 }
 
+#ifdef ARGIFY_1
+NARGIFY_1(g_save_listener_w, g_save_listener)
+#else
+#define g_save_listener_w g_save_listener
+#endif
+
 void g_init_listener(SCM local_doc)
 {
-  DEFINE_PROC(S_save_listener, g_save_listener, 1, 0, 0, H_save_listener);
+  DEFINE_PROC(S_save_listener, g_save_listener_w, 1, 0, 0, H_save_listener);
 
   #define H_read_hook S_read_hook " (text) is called each time a line is typed into the listener (triggered by the carriage return). \
 If it returns #t, Snd assumes you've dealt the text yourself, and does not try to evaluate it. \n\

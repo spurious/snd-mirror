@@ -689,13 +689,25 @@ by any arguments. (Information about about parameters can be acquired using anal
 }
 
 /*****************************************************************************/
+#ifdef ARGIFY_1
+NARGIFY_2(g_analyse_ladspa_w, g_analyse_ladspa)
+NARGIFY_4(g_apply_ladspa_w, g_apply_ladspa)
+NARGIFY_0(g_init_ladspa_w, g_init_ladspa)
+NARGIFY_0(g_list_ladspa_w, g_list_ladspa)
+#else
+#define g_analyse_ladspa_w g_analyse_ladspa
+#define g_apply_ladspa_w g_apply_ladspa
+#define g_init_ladspa_w g_init_ladspa
+#define g_list_ladspa_w g_list_ladspa
+#endif
+
 void g_ladspa_to_snd(SCM local_doc);
 void g_ladspa_to_snd(SCM local_doc)
 {
-  DEFINE_PROC(S_analyse_ladspa, g_analyse_ladspa, 2, 0, 0, H_analyse_ladspa);
-  DEFINE_PROC(S_apply_ladspa, g_apply_ladspa, 4, 0, 0, H_apply_ladspa);
-  DEFINE_PROC(S_init_ladspa, g_init_ladspa, 0, 0, 0, H_init_ladspa);
-  DEFINE_PROC(S_list_ladspa, g_list_ladspa, 0, 0, 0, H_list_ladspa);
+  DEFINE_PROC(S_analyse_ladspa, g_analyse_ladspa_w, 2, 0, 0, H_analyse_ladspa);
+  DEFINE_PROC(S_apply_ladspa, g_apply_ladspa_w, 4, 0, 0, H_apply_ladspa);
+  DEFINE_PROC(S_init_ladspa, g_init_ladspa_w, 0, 0, 0, H_init_ladspa);
+  DEFINE_PROC(S_list_ladspa, g_list_ladspa_w, 0, 0, 0, H_list_ladspa);
   YES_WE_HAVE("snd-ladspa");
 }
 

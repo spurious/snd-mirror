@@ -52,7 +52,7 @@ SCM scm_return_first(SCM a, ...);
 
 #define MAKE_HOOK(Name, Args, Help)  Qnil
 #define MAKE_HELPLESS_HOOK(a)        Qnil
-#define RETURN_NEW_OBJECT(Tag, Val) Qnil
+#define RETURN_NEW_OBJECT(Tag, Val, ig1, ig2) Qnil
 #define OBJECT_REF(a)              Qnil
 #define SND_LOOKUP(a)                Qnil
 #define TAG_TYPE                 int
@@ -101,6 +101,9 @@ SCM scm_return_first(SCM a, ...);
 
 #define DEFINE_PROC(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   librep_new_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc);
+
+#define DEFINE_CONST(Name, Value, Documentation) \
+  librep_new_variable(Name, Value, Documentation);
 
 #define DEFINE_VAR(Name, Value, Documentation) \
   librep_new_variable(Name, Value, Documentation);

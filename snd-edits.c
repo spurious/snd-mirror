@@ -3755,6 +3755,71 @@ static int dont_save(snd_info *sp, char *newname)
   return(TRUE_P(res));
 }
 
+
+#ifdef ARGIFY_1
+ARGIFY_5(g_make_sample_reader_w, g_make_sample_reader)
+ARGIFY_4(g_make_region_sample_reader_w, g_make_region_sample_reader)
+NARGIFY_1(g_next_sample_w, g_next_sample)
+NARGIFY_1(g_previous_sample_w, g_previous_sample)
+NARGIFY_1(g_free_sample_reader_w, g_free_sample_reader)
+NARGIFY_1(g_sample_reader_home_w, g_sample_reader_home)
+NARGIFY_1(g_sf_p_w, g_sf_p)
+NARGIFY_1(g_sample_reader_at_end_w, g_sample_reader_at_end)
+ARGIFY_5(g_loop_samples_w, g_loop_samples)
+ARGIFY_3(g_save_edit_history_w, g_save_edit_history)
+ARGIFY_3(g_edit_fragment_w, g_edit_fragment)
+ARGIFY_3(g_undo_w, g_undo)
+ARGIFY_3(g_redo_w, g_redo)
+ARGIFY_2(g_as_one_edit_w, g_as_one_edit)
+ARGIFY_2(g_display_edits_w, g_display_edits)
+ARGIFY_3(g_edit_tree_w, g_edit_tree)
+ARGIFY_3(g_delete_sample_w, g_delete_sample)
+ARGIFY_4(g_delete_samples_w, g_delete_samples)
+ARGIFY_4(g_insert_sample_w, g_insert_sample)
+ARGIFY_5(g_insert_samples_w, g_insert_samples)
+ARGIFY_8(g_vct2samples_w, g_vct2samples)
+ARGIFY_5(g_insert_sound_w, g_insert_sound)
+NARGIFY_5(g_section_scale_by_w, g_section_scale_by)
+ARGIFY_6(g_change_samples_with_origin_w, g_change_samples_with_origin)
+ARGIFY_5(g_delete_samples_with_origin_w, g_delete_samples_with_origin)
+ARGIFY_6(g_insert_samples_with_origin_w, g_insert_samples_with_origin)
+ARGIFY_3(g_sample_w, g_sample)
+ARGIFY_4(g_set_sample_w, g_set_sample)
+ARGIFY_5(g_samples_w, g_samples)
+ARGIFY_8(g_set_samples_w, g_set_samples)
+#else
+#define g_make_sample_reader_w g_make_sample_reader
+#define g_make_region_sample_reader_w g_make_region_sample_reader
+#define g_next_sample_w g_next_sample
+#define g_previous_sample_w g_previous_sample
+#define g_free_sample_reader_w g_free_sample_reader
+#define g_sample_reader_home_w g_sample_reader_home
+#define g_sf_p_w g_sf_p
+#define g_sample_reader_at_end_w g_sample_reader_at_end
+#define g_loop_samples_w g_loop_samples
+#define g_save_edit_history_w g_save_edit_history
+#define g_edit_fragment_w g_edit_fragment
+#define g_undo_w g_undo
+#define g_redo_w g_redo
+#define g_as_one_edit_w g_as_one_edit
+#define g_display_edits_w g_display_edits
+#define g_edit_tree_w g_edit_tree
+#define g_delete_sample_w g_delete_sample
+#define g_delete_samples_w g_delete_samples
+#define g_insert_sample_w g_insert_sample
+#define g_insert_samples_w g_insert_samples
+#define g_vct2samples_w g_vct2samples
+#define g_insert_sound_w g_insert_sound
+#define g_section_scale_by_w g_section_scale_by
+#define g_change_samples_with_origin_w g_change_samples_with_origin
+#define g_delete_samples_with_origin_w g_delete_samples_with_origin
+#define g_insert_samples_with_origin_w g_insert_samples_with_origin
+#define g_sample_w g_sample
+#define g_set_sample_w g_set_sample
+#define g_samples_w g_samples
+#define g_set_samples_w g_set_samples
+#endif
+
 void g_init_edits(SCM local_doc)
 {
 #if HAVE_GUILE
@@ -3769,45 +3834,45 @@ void g_init_edits(SCM local_doc)
   sf_tag = rb_define_class("SampleReader", rb_cObject);
 #endif
 
-  DEFINE_VAR(S_current_edit_position,      AT_CURRENT_EDIT_POSITION,             "current edit position indicator for 'edpos' args");
+  DEFINE_CONST(S_current_edit_position,      AT_CURRENT_EDIT_POSITION,             "current edit position indicator for 'edpos' args");
 
-  DEFINE_PROC(S_make_sample_reader,        g_make_sample_reader, 0, 5, 0,        H_make_sample_reader);
-  DEFINE_PROC(S_make_region_sample_reader, g_make_region_sample_reader, 0, 4, 0, H_make_region_sample_reader);
-  DEFINE_PROC(S_next_sample,               g_next_sample, 1, 0, 0,               H_next_sample);
-  DEFINE_PROC(S_previous_sample,           g_previous_sample, 1, 0, 0,           H_previous_sample);
-  DEFINE_PROC(S_free_sample_reader,        g_free_sample_reader, 1, 0, 0,        H_free_sample_reader);
-  DEFINE_PROC(S_sample_reader_home,        g_sample_reader_home, 1, 0, 0,        H_sample_reader_home);
-  DEFINE_PROC(S_sample_reader_p,           g_sf_p, 1, 0, 0,                      H_sf_p);
-  DEFINE_PROC(S_sample_reader_at_end_p,    g_sample_reader_at_end, 1, 0, 0,      H_sample_reader_at_end);
-  DEFINE_PROC(S_loop_samples,              g_loop_samples, 4, 1, 0,              H_loop_samples);
+  DEFINE_PROC(S_make_sample_reader,        g_make_sample_reader_w, 0, 5, 0,        H_make_sample_reader);
+  DEFINE_PROC(S_make_region_sample_reader, g_make_region_sample_reader_w, 0, 4, 0, H_make_region_sample_reader);
+  DEFINE_PROC(S_next_sample,               g_next_sample_w, 1, 0, 0,               H_next_sample);
+  DEFINE_PROC(S_previous_sample,           g_previous_sample_w, 1, 0, 0,           H_previous_sample);
+  DEFINE_PROC(S_free_sample_reader,        g_free_sample_reader_w, 1, 0, 0,        H_free_sample_reader);
+  DEFINE_PROC(S_sample_reader_home,        g_sample_reader_home_w, 1, 0, 0,        H_sample_reader_home);
+  DEFINE_PROC(S_sample_reader_p,           g_sf_p_w, 1, 0, 0,                      H_sf_p);
+  DEFINE_PROC(S_sample_reader_at_end_p,    g_sample_reader_at_end_w, 1, 0, 0,      H_sample_reader_at_end);
+  DEFINE_PROC(S_loop_samples,              g_loop_samples_w, 4, 1, 0,              H_loop_samples);
 
-  DEFINE_PROC(S_save_edit_history,         g_save_edit_history, 1, 2, 0,         H_save_edit_history);
-  DEFINE_PROC(S_edit_fragment,             g_edit_fragment, 0, 3, 0,             H_edit_fragment);
-  DEFINE_PROC(S_undo,                      g_undo, 0, 3, 0,                      H_undo);
-  DEFINE_PROC(S_redo,                      g_redo, 0, 3, 0,                      H_redo);
-  DEFINE_PROC(S_as_one_edit,               g_as_one_edit, 1, 1, 0,               H_as_one_edit);
-  DEFINE_PROC(S_display_edits,             g_display_edits, 0, 2, 0,             H_display_edits);
-  DEFINE_PROC(S_edit_tree,                 g_edit_tree, 0, 3, 0,                 H_edit_tree);
+  DEFINE_PROC(S_save_edit_history,         g_save_edit_history_w, 1, 2, 0,         H_save_edit_history);
+  DEFINE_PROC(S_edit_fragment,             g_edit_fragment_w, 0, 3, 0,             H_edit_fragment);
+  DEFINE_PROC(S_undo,                      g_undo_w, 0, 3, 0,                      H_undo);
+  DEFINE_PROC(S_redo,                      g_redo_w, 0, 3, 0,                      H_redo);
+  DEFINE_PROC(S_as_one_edit,               g_as_one_edit_w, 1, 1, 0,               H_as_one_edit);
+  DEFINE_PROC(S_display_edits,             g_display_edits_w, 0, 2, 0,             H_display_edits);
+  DEFINE_PROC(S_edit_tree,                 g_edit_tree_w, 0, 3, 0,                 H_edit_tree);
 
-  DEFINE_PROC(S_delete_sample,             g_delete_sample, 1, 2, 0,             H_delete_sample);
-  DEFINE_PROC(S_delete_samples,            g_delete_samples, 2, 2, 0,            H_delete_samples);
-  DEFINE_PROC(S_insert_sample,             g_insert_sample, 2, 2, 0,             H_insert_sample);
-  DEFINE_PROC(S_insert_samples,            g_insert_samples, 3, 2, 0,            H_insert_samples);
-  DEFINE_PROC(S_vct2samples,               g_vct2samples, 1, 7, 0,               H_vct2samples);
-  DEFINE_PROC(S_insert_sound,              g_insert_sound, 1, 4, 0,              H_insert_sound);
+  DEFINE_PROC(S_delete_sample,             g_delete_sample_w, 1, 2, 0,             H_delete_sample);
+  DEFINE_PROC(S_delete_samples,            g_delete_samples_w, 2, 2, 0,            H_delete_samples);
+  DEFINE_PROC(S_insert_sample,             g_insert_sample_w, 2, 2, 0,             H_insert_sample);
+  DEFINE_PROC(S_insert_samples,            g_insert_samples_w, 3, 2, 0,            H_insert_samples);
+  DEFINE_PROC(S_vct2samples,               g_vct2samples_w, 1, 7, 0,               H_vct2samples);
+  DEFINE_PROC(S_insert_sound,              g_insert_sound_w, 1, 4, 0,              H_insert_sound);
 
   /* semi-internal functions (restore-state) */
-  DEFINE_PROC("section-scale-by",           g_section_scale_by, 5, 0, 0,          "internal scaling function");
-  DEFINE_PROC(S_change_samples_with_origin, g_change_samples_with_origin, 4, 2, 0, "");
-  DEFINE_PROC(S_delete_samples_with_origin, g_delete_samples_with_origin, 3, 2, 0, "");
-  DEFINE_PROC(S_insert_samples_with_origin, g_insert_samples_with_origin, 4, 2, 0, "");
+  DEFINE_PROC("section-scale-by",           g_section_scale_by_w, 5, 0, 0,          "internal scaling function");
+  DEFINE_PROC(S_change_samples_with_origin, g_change_samples_with_origin_w, 4, 2, 0, "");
+  DEFINE_PROC(S_delete_samples_with_origin, g_delete_samples_with_origin_w, 3, 2, 0, "");
+  DEFINE_PROC(S_insert_samples_with_origin, g_insert_samples_with_origin_w, 4, 2, 0, "");
 
-  define_procedure_with_reversed_setter(S_sample, PROCEDURE g_sample, H_sample,
-					"set-" S_sample, PROCEDURE g_set_sample, PROCEDURE g_set_sample_reversed,
+  define_procedure_with_reversed_setter(S_sample, PROCEDURE g_sample_w, H_sample,
+					"set-" S_sample, PROCEDURE g_set_sample_w, PROCEDURE g_set_sample_reversed,
 					local_doc, 1, 2, 1, 3);
 
-  define_procedure_with_reversed_setter(S_samples, PROCEDURE g_samples, H_samples,
-					"set-" S_samples, PROCEDURE g_set_samples, PROCEDURE g_set_samples_reversed,
+  define_procedure_with_reversed_setter(S_samples, PROCEDURE g_samples_w, H_samples,
+					"set-" S_samples, PROCEDURE g_set_samples_w, PROCEDURE g_set_samples_reversed,
 					local_doc, 2, 3, 3, 5);
 
   #define H_save_hook S_save_hook " (snd name) is called each time a file is about to be saved. \

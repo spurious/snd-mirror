@@ -738,21 +738,41 @@ static SCM gl_set_menu_sensitive(SCM menu, SCM label, SCM on)
   return(TO_SCM_BOOLEAN(val));
 }
 
+#ifdef ARGIFY_1
+NARGIFY_0(g_save_state_file_w, g_save_state_file)
+NARGIFY_1(g_set_save_state_file_w, g_set_save_state_file)
+NARGIFY_2(gl_menu_sensitive_w, gl_menu_sensitive)
+NARGIFY_3(gl_set_menu_sensitive_w, gl_set_menu_sensitive)
+ARGIFY_2(gl_add_to_main_menu_w, gl_add_to_main_menu)
+NARGIFY_3(gl_add_to_menu_w, gl_add_to_menu)
+NARGIFY_2(gl_remove_from_menu_w, gl_remove_from_menu)
+NARGIFY_3(gl_change_menu_label_w, gl_change_menu_label)
+#else
+#define g_save_state_file_w g_save_state_file
+#define g_set_save_state_file_w g_set_save_state_file
+#define gl_menu_sensitive_w gl_menu_sensitive
+#define gl_set_menu_sensitive_w gl_set_menu_sensitive
+#define gl_add_to_main_menu_w gl_add_to_main_menu
+#define gl_add_to_menu_w gl_add_to_menu
+#define gl_remove_from_menu_w gl_remove_from_menu
+#define gl_change_menu_label_w gl_change_menu_label
+#endif
+
 void g_init_menu(SCM local_doc)
 {
   #define H_output_name_hook S_output_name_hook " () is called from the File:New dialog"
   output_name_hook = MAKE_HOOK(S_output_name_hook, 0, H_output_name_hook);
 
-  define_procedure_with_setter(S_save_state_file, PROCEDURE g_save_state_file, H_save_state_file,
-			       "set-" S_save_state_file, PROCEDURE g_set_save_state_file,
+  define_procedure_with_setter(S_save_state_file, PROCEDURE g_save_state_file_w, H_save_state_file,
+			       "set-" S_save_state_file, PROCEDURE g_set_save_state_file_w,
 			       local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_menu_sensitive, PROCEDURE gl_menu_sensitive, H_menu_sensitive,
-			       "set-" S_menu_sensitive, PROCEDURE gl_set_menu_sensitive,
+  define_procedure_with_setter(S_menu_sensitive, PROCEDURE gl_menu_sensitive_w, H_menu_sensitive,
+			       "set-" S_menu_sensitive, PROCEDURE gl_set_menu_sensitive_w,
 			       local_doc, 2, 0, 3, 0);
 
-  DEFINE_PROC(S_add_to_main_menu,  gl_add_to_main_menu, 1, 1, 0,  H_add_to_main_menu);
-  DEFINE_PROC(S_add_to_menu,       gl_add_to_menu, 3, 0, 0,       H_add_to_menu);
-  DEFINE_PROC(S_remove_from_menu,  gl_remove_from_menu, 2, 0, 0,  H_remove_from_menu);
-  DEFINE_PROC(S_change_menu_label, gl_change_menu_label, 3, 0, 0, H_change_menu_label);
+  DEFINE_PROC(S_add_to_main_menu,  gl_add_to_main_menu_w, 1, 1, 0,  H_add_to_main_menu);
+  DEFINE_PROC(S_add_to_menu,       gl_add_to_menu_w, 3, 0, 0,       H_add_to_menu);
+  DEFINE_PROC(S_remove_from_menu,  gl_remove_from_menu_w, 2, 0, 0,  H_remove_from_menu);
+  DEFINE_PROC(S_change_menu_label, gl_change_menu_label_w, 3, 0, 0, H_change_menu_label);
 }

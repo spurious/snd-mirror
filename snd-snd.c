@@ -2805,6 +2805,201 @@ static SCM g_read_peak_env_info_file(SCM snd, SCM chn, SCM name)
   return(name);
 }
 
+
+#ifdef ARGIFY_1
+#if (!USE_NO_GUI)
+ARGIFY_1(g_sound_widgets_w, g_sound_widgets)
+#endif
+ARGIFY_1(g_sound_p_w, g_sound_p)
+ARGIFY_2(g_bomb_w, g_bomb)
+NARGIFY_1(g_find_sound_w, g_find_sound)
+ARGIFY_1(g_channels_w, g_channels)
+ARGIFY_2(g_set_channels_w, g_set_channels)
+ARGIFY_1(g_srate_w, g_srate)
+ARGIFY_2(g_set_srate_w, g_set_srate)
+ARGIFY_1(g_data_location_w, g_data_location)
+ARGIFY_2(g_set_data_location_w, g_set_data_location)
+ARGIFY_1(g_data_format_w, g_data_format)
+ARGIFY_2(g_set_data_format_w, g_set_data_format)
+ARGIFY_1(g_header_type_w, g_header_type)
+ARGIFY_2(g_set_header_type_w, g_set_header_type)
+ARGIFY_1(g_comment_w, g_comment)
+ARGIFY_2(g_set_comment_w, g_set_comment)
+ARGIFY_1(g_file_name_w, g_file_name)
+ARGIFY_1(g_short_file_name_w, g_short_file_name)
+ARGIFY_1(g_save_controls_w, g_save_controls)
+ARGIFY_1(g_restore_controls_w, g_restore_controls)
+ARGIFY_1(g_reset_controls_w, g_reset_controls)
+NARGIFY_0(g_selected_sound_w, g_selected_sound)
+ARGIFY_1(g_selected_channel_w, g_selected_channel)
+ARGIFY_2(g_set_selected_channel_w, g_set_selected_channel)
+ARGIFY_1(g_select_sound_w, g_select_sound)
+ARGIFY_1(g_select_channel_w, g_select_channel)
+ARGIFY_1(g_close_sound_w, g_close_sound)
+ARGIFY_1(g_update_sound_w, g_update_sound)
+ARGIFY_1(g_save_sound_w, g_save_sound)
+NARGIFY_1(g_open_sound_w, g_open_sound)
+NARGIFY_4(g_open_raw_sound_w, g_open_raw_sound)
+NARGIFY_1(g_view_sound_w, g_view_sound)
+ARGIFY_6(g_new_sound_w, g_new_sound)
+ARGIFY_1(g_revert_sound_w, g_revert_sound)
+ARGIFY_7(g_save_sound_as_w, g_save_sound_as)
+ARGIFY_4(g_apply_controls_w, g_apply_controls)
+ARGIFY_1(g_filter_control_env_w, g_filter_control_env)
+ARGIFY_2(g_set_filter_control_env_w, g_set_filter_control_env)
+ARGIFY_1(g_cursor_follows_play_w, g_cursor_follows_play)
+ARGIFY_2(g_set_cursor_follows_play_w, g_set_cursor_follows_play)
+ARGIFY_1(g_show_controls_w, g_show_controls)
+ARGIFY_2(g_set_show_controls_w, g_set_show_controls)
+ARGIFY_1(g_sync_w, g_sync)
+ARGIFY_2(g_set_sync_w, g_set_sync)
+ARGIFY_1(g_channel_style_w, g_channel_style)
+ARGIFY_2(g_set_channel_style_w, g_set_channel_style)
+ARGIFY_1(g_read_only_w, g_read_only)
+ARGIFY_2(g_set_read_only_w, g_set_read_only)
+ARGIFY_1(g_expand_control_p_w, g_expand_control_p)
+ARGIFY_2(g_set_expand_control_p_w, g_set_expand_control_p)
+ARGIFY_1(g_contrast_control_p_w, g_contrast_control_p)
+ARGIFY_2(g_set_contrast_control_p_w, g_set_contrast_control_p)
+ARGIFY_1(g_reverb_control_p_w, g_reverb_control_p)
+ARGIFY_2(g_set_reverb_control_p_w, g_set_reverb_control_p)
+ARGIFY_1(g_filter_control_p_w, g_filter_control_p)
+ARGIFY_2(g_set_filter_control_p_w, g_set_filter_control_p)
+ARGIFY_1(g_filter_control_in_dB_w, g_filter_control_in_dB)
+ARGIFY_2(g_set_filter_control_in_dB_w, g_set_filter_control_in_dB)
+ARGIFY_1(g_filter_control_order_w, g_filter_control_order)
+ARGIFY_2(g_set_filter_control_order_w, g_set_filter_control_order)
+ARGIFY_1(g_contrast_control_w, g_contrast_control)
+ARGIFY_2(g_set_contrast_control_w, g_set_contrast_control)
+ARGIFY_1(g_contrast_control_amp_w, g_contrast_control_amp)
+ARGIFY_2(g_set_contrast_control_amp_w, g_set_contrast_control_amp)
+ARGIFY_1(g_expand_control_w, g_expand_control)
+ARGIFY_2(g_set_expand_control_w, g_set_expand_control)
+ARGIFY_1(g_expand_control_length_w, g_expand_control_length)
+ARGIFY_2(g_set_expand_control_length_w, g_set_expand_control_length)
+ARGIFY_1(g_expand_control_ramp_w, g_expand_control_ramp)
+ARGIFY_2(g_set_expand_control_ramp_w, g_set_expand_control_ramp)
+ARGIFY_1(g_expand_control_hop_w, g_expand_control_hop)
+ARGIFY_2(g_set_expand_control_hop_w, g_set_expand_control_hop)
+ARGIFY_1(g_speed_control_w, g_speed_control)
+ARGIFY_2(g_set_speed_control_w, g_set_speed_control)
+ARGIFY_1(g_reverb_control_length_w, g_reverb_control_length)
+ARGIFY_2(g_set_reverb_control_length_w, g_set_reverb_control_length)
+ARGIFY_1(g_reverb_control_scale_w, g_reverb_control_scale)
+ARGIFY_2(g_set_reverb_control_scale_w, g_set_reverb_control_scale)
+ARGIFY_1(g_reverb_control_feedback_w, g_reverb_control_feedback)
+ARGIFY_2(g_set_reverb_control_feedback_w, g_set_reverb_control_feedback)
+ARGIFY_1(g_reverb_control_lowpass_w, g_reverb_control_lowpass)
+ARGIFY_2(g_set_reverb_control_lowpass_w, g_set_reverb_control_lowpass)
+ARGIFY_1(g_amp_control_w, g_amp_control)
+ARGIFY_2(g_set_amp_control_w, g_set_amp_control)
+ARGIFY_1(g_reverb_control_decay_w, g_reverb_control_decay)
+ARGIFY_2(g_set_reverb_control_decay_w, g_set_reverb_control_decay)
+ARGIFY_1(g_speed_control_style_w, g_speed_control_style)
+ARGIFY_2(g_set_speed_control_style_w, g_set_speed_control_style)
+ARGIFY_1(g_speed_control_tones_w, g_speed_control_tones)
+ARGIFY_2(g_set_speed_control_tones_w, g_set_speed_control_tones)
+ARGIFY_3(g_peak_env_info_w, g_peak_env_info)
+NARGIFY_3(g_write_peak_env_info_file_w, g_write_peak_env_info_file)
+NARGIFY_3(g_read_peak_env_info_file_w, g_read_peak_env_info_file)
+#else
+#if (!USE_NO_GUI)
+#define g_sound_widgets_w g_sound_widgets
+#endif
+#define g_sound_p_w g_sound_p
+#define g_bomb_w g_bomb
+#define g_find_sound_w g_find_sound
+#define g_channels_w g_channels
+#define g_set_channels_w g_set_channels
+#define g_srate_w g_srate
+#define g_set_srate_w g_set_srate
+#define g_data_location_w g_data_location
+#define g_set_data_location_w g_set_data_location
+#define g_data_format_w g_data_format
+#define g_set_data_format_w g_set_data_format
+#define g_header_type_w g_header_type
+#define g_set_header_type_w g_set_header_type
+#define g_comment_w g_comment
+#define g_set_comment_w g_set_comment
+#define g_file_name_w g_file_name
+#define g_short_file_name_w g_short_file_name
+#define g_save_controls_w g_save_controls
+#define g_restore_controls_w g_restore_controls
+#define g_reset_controls_w g_reset_controls
+#define g_selected_sound_w g_selected_sound
+#define g_selected_channel_w g_selected_channel
+#define g_set_selected_channel_w g_set_selected_channel
+#define g_select_sound_w g_select_sound
+#define g_select_channel_w g_select_channel
+#define g_close_sound_w g_close_sound
+#define g_update_sound_w g_update_sound
+#define g_save_sound_w g_save_sound
+#define g_open_sound_w g_open_sound
+#define g_open_raw_sound_w g_open_raw_sound
+#define g_view_sound_w g_view_sound
+#define g_new_sound_w g_new_sound
+#define g_revert_sound_w g_revert_sound
+#define g_save_sound_as_w g_save_sound_as
+#define g_apply_controls_w g_apply_controls
+#define g_filter_control_env_w g_filter_control_env
+#define g_set_filter_control_env_w g_set_filter_control_env
+#define g_cursor_follows_play_w g_cursor_follows_play
+#define g_set_cursor_follows_play_w g_set_cursor_follows_play
+#define g_show_controls_w g_show_controls
+#define g_set_show_controls_w g_set_show_controls
+#define g_sync_w g_sync
+#define g_set_sync_w g_set_sync
+#define g_channel_style_w g_channel_style
+#define g_set_channel_style_w g_set_channel_style
+#define g_read_only_w g_read_only
+#define g_set_read_only_w g_set_read_only
+#define g_expand_control_p_w g_expand_control_p
+#define g_set_expand_control_p_w g_set_expand_control_p
+#define g_contrast_control_p_w g_contrast_control_p
+#define g_set_contrast_control_p_w g_set_contrast_control_p
+#define g_reverb_control_p_w g_reverb_control_p
+#define g_set_reverb_control_p_w g_set_reverb_control_p
+#define g_filter_control_p_w g_filter_control_p
+#define g_set_filter_control_p_w g_set_filter_control_p
+#define g_filter_control_in_dB_w g_filter_control_in_dB
+#define g_set_filter_control_in_dB_w g_set_filter_control_in_dB
+#define g_filter_control_order_w g_filter_control_order
+#define g_set_filter_control_order_w g_set_filter_control_order
+#define g_contrast_control_w g_contrast_control
+#define g_set_contrast_control_w g_set_contrast_control
+#define g_contrast_control_amp_w g_contrast_control_amp
+#define g_set_contrast_control_amp_w g_set_contrast_control_amp
+#define g_expand_control_w g_expand_control
+#define g_set_expand_control_w g_set_expand_control
+#define g_expand_control_length_w g_expand_control_length
+#define g_set_expand_control_length_w g_set_expand_control_length
+#define g_expand_control_ramp_w g_expand_control_ramp
+#define g_set_expand_control_ramp_w g_set_expand_control_ramp
+#define g_expand_control_hop_w g_expand_control_hop
+#define g_set_expand_control_hop_w g_set_expand_control_hop
+#define g_speed_control_w g_speed_control
+#define g_set_speed_control_w g_set_speed_control
+#define g_reverb_control_length_w g_reverb_control_length
+#define g_set_reverb_control_length_w g_set_reverb_control_length
+#define g_reverb_control_scale_w g_reverb_control_scale
+#define g_set_reverb_control_scale_w g_set_reverb_control_scale
+#define g_reverb_control_feedback_w g_reverb_control_feedback
+#define g_set_reverb_control_feedback_w g_set_reverb_control_feedback
+#define g_reverb_control_lowpass_w g_reverb_control_lowpass
+#define g_set_reverb_control_lowpass_w g_set_reverb_control_lowpass
+#define g_amp_control_w g_amp_control
+#define g_set_amp_control_w g_set_amp_control
+#define g_reverb_control_decay_w g_reverb_control_decay
+#define g_set_reverb_control_decay_w g_set_reverb_control_decay
+#define g_speed_control_style_w g_speed_control_style
+#define g_set_speed_control_style_w g_set_speed_control_style
+#define g_speed_control_tones_w g_speed_control_tones
+#define g_set_speed_control_tones_w g_set_speed_control_tones
+#define g_peak_env_info_w g_peak_env_info
+#define g_write_peak_env_info_file_w g_write_peak_env_info_file
+#define g_read_peak_env_info_file_w g_read_peak_env_info_file
+#endif
+
 void g_init_snd(SCM local_doc)
 {
   #define H_name_click_hook S_name_click_hook " (snd) is called when sound name clicked. \
@@ -2816,186 +3011,186 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
   #define H_channels_combined "The value for " S_channel_style " that causes channel graphs to occupy one panes (the 'unite' button)"
   #define H_channels_superimposed "The value for " S_channel_style " that causes channel graphs to occupy one pane and one axis"
 
-  DEFINE_VAR(S_channels_separate,     CHANNELS_SEPARATE,     H_channels_separate);
-  DEFINE_VAR(S_channels_combined,     CHANNELS_COMBINED,     H_channels_combined);
-  DEFINE_VAR(S_channels_superimposed, CHANNELS_SUPERIMPOSED, H_channels_superimposed);
+  DEFINE_CONST(S_channels_separate,     CHANNELS_SEPARATE,     H_channels_separate);
+  DEFINE_CONST(S_channels_combined,     CHANNELS_COMBINED,     H_channels_combined);
+  DEFINE_CONST(S_channels_superimposed, CHANNELS_SUPERIMPOSED, H_channels_superimposed);
 
 #if (!USE_NO_GUI)
-  DEFINE_PROC(S_sound_widgets, g_sound_widgets, 0, 1, 0, "returns sound widgets");
+  DEFINE_PROC(S_sound_widgets, g_sound_widgets_w, 0, 1, 0, "returns sound widgets");
 #endif
 
-  DEFINE_PROC(S_sound_p, g_sound_p, 0, 1, 0, H_sound_p);
-  DEFINE_PROC(S_bomb, g_bomb, 0, 2, 0, H_bomb);
-  DEFINE_PROC(S_find_sound, g_find_sound, 1, 0, 0, H_find_sound);
+  DEFINE_PROC(S_sound_p, g_sound_p_w, 0, 1, 0, H_sound_p);
+  DEFINE_PROC(S_bomb, g_bomb_w, 0, 2, 0, H_bomb);
+  DEFINE_PROC(S_find_sound, g_find_sound_w, 1, 0, 0, H_find_sound);
 
-  define_procedure_with_setter(S_channels, PROCEDURE g_channels, H_channels,
-			       "set-" S_channels, PROCEDURE g_set_channels, local_doc, 0, 1, 0, 2);
+  define_procedure_with_setter(S_channels, PROCEDURE g_channels_w, H_channels,
+			       "set-" S_channels, PROCEDURE g_set_channels_w, local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_setter(S_chans, PROCEDURE g_channels, H_channels,
-			       "set-" S_chans, PROCEDURE g_set_channels, local_doc, 0, 1, 0, 2);
+  define_procedure_with_setter(S_chans, PROCEDURE g_channels_w, H_channels,
+			       "set-" S_chans, PROCEDURE g_set_channels_w, local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_setter(S_srate, PROCEDURE g_srate, H_srate,
-			       "set-" S_srate, PROCEDURE g_set_srate, local_doc, 0, 1, 0, 2);
+  define_procedure_with_setter(S_srate, PROCEDURE g_srate_w, H_srate,
+			       "set-" S_srate, PROCEDURE g_set_srate_w, local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_setter(S_data_location, PROCEDURE g_data_location, H_data_location,
-			       "set-" S_data_location, PROCEDURE g_set_data_location, local_doc, 0, 1, 0, 2);
+  define_procedure_with_setter(S_data_location, PROCEDURE g_data_location_w, H_data_location,
+			       "set-" S_data_location, PROCEDURE g_set_data_location_w, local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_setter(S_data_format, PROCEDURE g_data_format, H_data_format,
-			       "set-" S_data_format, PROCEDURE g_set_data_format, local_doc, 0, 1, 0, 2);
+  define_procedure_with_setter(S_data_format, PROCEDURE g_data_format_w, H_data_format,
+			       "set-" S_data_format, PROCEDURE g_set_data_format_w, local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_setter(S_header_type, PROCEDURE g_header_type, H_header_type,
-			       "set-" S_header_type, PROCEDURE g_set_header_type, local_doc, 0, 1, 0, 2);
+  define_procedure_with_setter(S_header_type, PROCEDURE g_header_type_w, H_header_type,
+			       "set-" S_header_type, PROCEDURE g_set_header_type_w, local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_setter(S_comment, PROCEDURE g_comment, H_comment,
-			       "set-" S_comment, PROCEDURE g_set_comment, local_doc, 0, 1, 0, 2);
+  define_procedure_with_setter(S_comment, PROCEDURE g_comment_w, H_comment,
+			       "set-" S_comment, PROCEDURE g_set_comment_w, local_doc, 0, 1, 0, 2);
 
-  DEFINE_PROC(S_file_name,             g_file_name, 0, 1, 0,             H_file_name);
-  DEFINE_PROC(S_short_file_name,       g_short_file_name, 0, 1, 0,       H_short_file_name);
-  DEFINE_PROC(S_save_controls,         g_save_controls, 0, 1, 0,         H_save_controls);
-  DEFINE_PROC(S_restore_controls,      g_restore_controls, 0, 1, 0,      H_restore_controls);
-  DEFINE_PROC(S_reset_controls,        g_reset_controls, 0, 1, 0,        H_reset_controls);
+  DEFINE_PROC(S_file_name,             g_file_name_w, 0, 1, 0,             H_file_name);
+  DEFINE_PROC(S_short_file_name,       g_short_file_name_w, 0, 1, 0,       H_short_file_name);
+  DEFINE_PROC(S_save_controls,         g_save_controls_w, 0, 1, 0,         H_save_controls);
+  DEFINE_PROC(S_restore_controls,      g_restore_controls_w, 0, 1, 0,      H_restore_controls);
+  DEFINE_PROC(S_reset_controls,        g_reset_controls_w, 0, 1, 0,        H_reset_controls);
 
-  define_procedure_with_setter(S_selected_sound, PROCEDURE g_selected_sound, H_selected_sound,
-			       "set-" S_selected_sound, PROCEDURE g_select_sound, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_selected_sound, PROCEDURE g_selected_sound_w, H_selected_sound,
+			       "set-" S_selected_sound, PROCEDURE g_select_sound_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_selected_channel, PROCEDURE g_selected_channel, H_selected_channel,
-			       "set-" S_selected_channel, PROCEDURE g_set_selected_channel, local_doc, 0, 1, 0, 2);
+  define_procedure_with_setter(S_selected_channel, PROCEDURE g_selected_channel_w, H_selected_channel,
+			       "set-" S_selected_channel, PROCEDURE g_set_selected_channel_w, local_doc, 0, 1, 0, 2);
 
-  DEFINE_PROC(S_select_sound, g_select_sound, 0, 1, 0, H_select_sound);
-  DEFINE_PROC(S_select_channel, g_select_channel, 0, 1, 0, H_select_channel);
+  DEFINE_PROC(S_select_sound, g_select_sound_w, 0, 1, 0, H_select_sound);
+  DEFINE_PROC(S_select_channel, g_select_channel_w, 0, 1, 0, H_select_channel);
 
-  DEFINE_PROC(S_close_sound,          g_close_sound, 0, 1, 0,          H_close_sound);
-  DEFINE_PROC(S_update_sound,         g_update_sound, 0, 1, 0,         H_update_sound);
-  DEFINE_PROC(S_save_sound,           g_save_sound, 0, 1, 0,           H_save_sound);
-  DEFINE_PROC(S_open_sound,           g_open_sound, 1, 0, 0,           H_open_sound);
-  DEFINE_PROC(S_open_raw_sound,       g_open_raw_sound, 4, 0, 0,       H_open_raw_sound);
-  DEFINE_PROC(S_view_sound,           g_view_sound, 1, 0, 0,           H_view_sound);
-  DEFINE_PROC(S_new_sound,            g_new_sound, 0, 6, 0,            H_new_sound);
-  DEFINE_PROC(S_revert_sound,         g_revert_sound, 0, 1, 0,         H_revert_sound);
-  DEFINE_PROC(S_save_sound_as,        g_save_sound_as, 1, 6, 0,        H_save_sound_as);
-  DEFINE_PROC(S_apply_controls,       g_apply_controls, 0, 4, 0,       H_apply_controls);
+  DEFINE_PROC(S_close_sound,          g_close_sound_w, 0, 1, 0,          H_close_sound);
+  DEFINE_PROC(S_update_sound,         g_update_sound_w, 0, 1, 0,         H_update_sound);
+  DEFINE_PROC(S_save_sound,           g_save_sound_w, 0, 1, 0,           H_save_sound);
+  DEFINE_PROC(S_open_sound,           g_open_sound_w, 1, 0, 0,           H_open_sound);
+  DEFINE_PROC(S_open_raw_sound,       g_open_raw_sound_w, 4, 0, 0,       H_open_raw_sound);
+  DEFINE_PROC(S_view_sound,           g_view_sound_w, 1, 0, 0,           H_view_sound);
+  DEFINE_PROC(S_new_sound,            g_new_sound_w, 0, 6, 0,            H_new_sound);
+  DEFINE_PROC(S_revert_sound,         g_revert_sound_w, 0, 1, 0,         H_revert_sound);
+  DEFINE_PROC(S_save_sound_as,        g_save_sound_as_w, 1, 6, 0,        H_save_sound_as);
+  DEFINE_PROC(S_apply_controls,       g_apply_controls_w, 0, 4, 0,       H_apply_controls);
 
 
-  define_procedure_with_reversed_setter(S_filter_control_env, PROCEDURE g_filter_control_env, H_filter_control_env,
-					"set-" S_filter_control_env, PROCEDURE g_set_filter_control_env, PROCEDURE g_set_filter_control_env_reversed,
+  define_procedure_with_reversed_setter(S_filter_control_env, PROCEDURE g_filter_control_env_w, H_filter_control_env,
+					"set-" S_filter_control_env, PROCEDURE g_set_filter_control_env_w, PROCEDURE g_set_filter_control_env_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_cursor_follows_play, PROCEDURE g_cursor_follows_play, H_cursor_follows_play,
-					"set-" S_cursor_follows_play, PROCEDURE g_set_cursor_follows_play, PROCEDURE g_set_cursor_follows_play_reversed,
+  define_procedure_with_reversed_setter(S_cursor_follows_play, PROCEDURE g_cursor_follows_play_w, H_cursor_follows_play,
+					"set-" S_cursor_follows_play, PROCEDURE g_set_cursor_follows_play_w, PROCEDURE g_set_cursor_follows_play_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_show_controls, PROCEDURE g_show_controls, H_show_controls,
-					"set-" S_show_controls, PROCEDURE g_set_show_controls, PROCEDURE g_set_show_controls_reversed,
+  define_procedure_with_reversed_setter(S_show_controls, PROCEDURE g_show_controls_w, H_show_controls,
+					"set-" S_show_controls, PROCEDURE g_set_show_controls_w, PROCEDURE g_set_show_controls_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_sync, PROCEDURE g_sync, H_sync,
-					"set-" S_sync, PROCEDURE g_set_sync, PROCEDURE g_set_sync_reversed,
+  define_procedure_with_reversed_setter(S_sync, PROCEDURE g_sync_w, H_sync,
+					"set-" S_sync, PROCEDURE g_set_sync_w, PROCEDURE g_set_sync_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_channel_style, PROCEDURE g_channel_style, H_channel_style,
-					"set-" S_channel_style, PROCEDURE g_set_channel_style, PROCEDURE g_set_channel_style_reversed,
+  define_procedure_with_reversed_setter(S_channel_style, PROCEDURE g_channel_style_w, H_channel_style,
+					"set-" S_channel_style, PROCEDURE g_set_channel_style_w, PROCEDURE g_set_channel_style_reversed,
 					local_doc, 0, 1, 1, 1);
 
-  define_procedure_with_reversed_setter(S_read_only, PROCEDURE g_read_only, H_read_only,
-					"set-" S_read_only, PROCEDURE g_set_read_only, PROCEDURE g_set_read_only_reversed,
+  define_procedure_with_reversed_setter(S_read_only, PROCEDURE g_read_only_w, H_read_only,
+					"set-" S_read_only, PROCEDURE g_set_read_only_w, PROCEDURE g_set_read_only_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_expand_control_p, PROCEDURE g_expand_control_p, H_expand_control_p,
-					"set-" S_expand_control_p, PROCEDURE g_set_expand_control_p, PROCEDURE g_set_expand_control_p_reversed,
+  define_procedure_with_reversed_setter(S_expand_control_p, PROCEDURE g_expand_control_p_w, H_expand_control_p,
+					"set-" S_expand_control_p, PROCEDURE g_set_expand_control_p_w, PROCEDURE g_set_expand_control_p_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_contrast_control_p, PROCEDURE g_contrast_control_p, H_contrast_control_p,
-					"set-" S_contrast_control_p, PROCEDURE g_set_contrast_control_p, PROCEDURE g_set_contrast_control_p_reversed,
+  define_procedure_with_reversed_setter(S_contrast_control_p, PROCEDURE g_contrast_control_p_w, H_contrast_control_p,
+					"set-" S_contrast_control_p, PROCEDURE g_set_contrast_control_p_w, PROCEDURE g_set_contrast_control_p_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_reverb_control_p, PROCEDURE g_reverb_control_p, H_reverb_control_p,
-					"set-" S_reverb_control_p, PROCEDURE g_set_reverb_control_p, PROCEDURE g_set_reverb_control_p_reversed,
+  define_procedure_with_reversed_setter(S_reverb_control_p, PROCEDURE g_reverb_control_p_w, H_reverb_control_p,
+					"set-" S_reverb_control_p, PROCEDURE g_set_reverb_control_p_w, PROCEDURE g_set_reverb_control_p_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_filter_control_p, PROCEDURE g_filter_control_p, H_filter_control_p,
-					"set-" S_filter_control_p, PROCEDURE g_set_filter_control_p, PROCEDURE g_set_filter_control_p_reversed,
+  define_procedure_with_reversed_setter(S_filter_control_p, PROCEDURE g_filter_control_p_w, H_filter_control_p,
+					"set-" S_filter_control_p, PROCEDURE g_set_filter_control_p_w, PROCEDURE g_set_filter_control_p_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_filter_control_in_dB, PROCEDURE g_filter_control_in_dB, H_filter_control_in_dB,
-					"set-" S_filter_control_in_dB, PROCEDURE g_set_filter_control_in_dB, PROCEDURE g_set_filter_control_in_dB_reversed,
+  define_procedure_with_reversed_setter(S_filter_control_in_dB, PROCEDURE g_filter_control_in_dB_w, H_filter_control_in_dB,
+					"set-" S_filter_control_in_dB, PROCEDURE g_set_filter_control_in_dB_w, PROCEDURE g_set_filter_control_in_dB_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_filter_control_order, PROCEDURE g_filter_control_order, H_filter_control_order,
-					"set-" S_filter_control_order, PROCEDURE g_set_filter_control_order, PROCEDURE g_set_filter_control_order_reversed,
+  define_procedure_with_reversed_setter(S_filter_control_order, PROCEDURE g_filter_control_order_w, H_filter_control_order,
+					"set-" S_filter_control_order, PROCEDURE g_set_filter_control_order_w, PROCEDURE g_set_filter_control_order_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_contrast_control, PROCEDURE g_contrast_control, H_contrast_control,
-					"set-" S_contrast_control, PROCEDURE g_set_contrast_control, PROCEDURE g_set_contrast_control_reversed,
+  define_procedure_with_reversed_setter(S_contrast_control, PROCEDURE g_contrast_control_w, H_contrast_control,
+					"set-" S_contrast_control, PROCEDURE g_set_contrast_control_w, PROCEDURE g_set_contrast_control_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_contrast_control_amp, PROCEDURE g_contrast_control_amp, H_contrast_control_amp,
-					"set-" S_contrast_control_amp, PROCEDURE g_set_contrast_control_amp, PROCEDURE g_set_contrast_control_amp_reversed,
+  define_procedure_with_reversed_setter(S_contrast_control_amp, PROCEDURE g_contrast_control_amp_w, H_contrast_control_amp,
+					"set-" S_contrast_control_amp, PROCEDURE g_set_contrast_control_amp_w, PROCEDURE g_set_contrast_control_amp_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_expand_control, PROCEDURE g_expand_control, H_expand_control,
-					"set-" S_expand_control, PROCEDURE g_set_expand_control, PROCEDURE g_set_expand_control_reversed,
+  define_procedure_with_reversed_setter(S_expand_control, PROCEDURE g_expand_control_w, H_expand_control,
+					"set-" S_expand_control, PROCEDURE g_set_expand_control_w, PROCEDURE g_set_expand_control_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_expand_control_length, PROCEDURE g_expand_control_length, H_expand_control_length,
-					"set-" S_expand_control_length, PROCEDURE g_set_expand_control_length, PROCEDURE g_set_expand_control_length_reversed,
+  define_procedure_with_reversed_setter(S_expand_control_length, PROCEDURE g_expand_control_length_w, H_expand_control_length,
+					"set-" S_expand_control_length, PROCEDURE g_set_expand_control_length_w, PROCEDURE g_set_expand_control_length_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_expand_control_ramp, PROCEDURE g_expand_control_ramp, H_expand_control_ramp,
-					"set-" S_expand_control_ramp, PROCEDURE g_set_expand_control_ramp, PROCEDURE g_set_expand_control_ramp_reversed,
+  define_procedure_with_reversed_setter(S_expand_control_ramp, PROCEDURE g_expand_control_ramp_w, H_expand_control_ramp,
+					"set-" S_expand_control_ramp, PROCEDURE g_set_expand_control_ramp_w, PROCEDURE g_set_expand_control_ramp_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_expand_control_hop, PROCEDURE g_expand_control_hop, H_expand_control_hop,
-					"set-" S_expand_control_hop, PROCEDURE g_set_expand_control_hop, PROCEDURE g_set_expand_control_hop_reversed,
+  define_procedure_with_reversed_setter(S_expand_control_hop, PROCEDURE g_expand_control_hop_w, H_expand_control_hop,
+					"set-" S_expand_control_hop, PROCEDURE g_set_expand_control_hop_w, PROCEDURE g_set_expand_control_hop_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_speed_control, PROCEDURE g_speed_control, H_speed_control,
-					"set-" S_speed_control, PROCEDURE g_set_speed_control, PROCEDURE g_set_speed_control_reversed,
+  define_procedure_with_reversed_setter(S_speed_control, PROCEDURE g_speed_control_w, H_speed_control,
+					"set-" S_speed_control, PROCEDURE g_set_speed_control_w, PROCEDURE g_set_speed_control_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_reverb_control_length, PROCEDURE g_reverb_control_length, H_reverb_control_length,
-					"set-" S_reverb_control_length, PROCEDURE g_set_reverb_control_length, PROCEDURE g_set_reverb_control_length_reversed,
+  define_procedure_with_reversed_setter(S_reverb_control_length, PROCEDURE g_reverb_control_length_w, H_reverb_control_length,
+					"set-" S_reverb_control_length, PROCEDURE g_set_reverb_control_length_w, PROCEDURE g_set_reverb_control_length_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_reverb_control_scale, PROCEDURE g_reverb_control_scale, H_reverb_control_scale,
-					"set-" S_reverb_control_scale, PROCEDURE g_set_reverb_control_scale, PROCEDURE g_set_reverb_control_scale_reversed,
+  define_procedure_with_reversed_setter(S_reverb_control_scale, PROCEDURE g_reverb_control_scale_w, H_reverb_control_scale,
+					"set-" S_reverb_control_scale, PROCEDURE g_set_reverb_control_scale_w, PROCEDURE g_set_reverb_control_scale_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_reverb_control_feedback, PROCEDURE g_reverb_control_feedback, H_reverb_control_feedback,
-					"set-" S_reverb_control_feedback, PROCEDURE g_set_reverb_control_feedback, PROCEDURE g_set_reverb_control_feedback_reversed,
+  define_procedure_with_reversed_setter(S_reverb_control_feedback, PROCEDURE g_reverb_control_feedback_w, H_reverb_control_feedback,
+					"set-" S_reverb_control_feedback, PROCEDURE g_set_reverb_control_feedback_w, PROCEDURE g_set_reverb_control_feedback_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_reverb_control_lowpass, PROCEDURE g_reverb_control_lowpass, H_reverb_control_lowpass,
-					"set-" S_reverb_control_lowpass, PROCEDURE g_set_reverb_control_lowpass, PROCEDURE g_set_reverb_control_lowpass_reversed,
+  define_procedure_with_reversed_setter(S_reverb_control_lowpass, PROCEDURE g_reverb_control_lowpass_w, H_reverb_control_lowpass,
+					"set-" S_reverb_control_lowpass, PROCEDURE g_set_reverb_control_lowpass_w, PROCEDURE g_set_reverb_control_lowpass_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_amp_control, PROCEDURE g_amp_control, H_amp_control,
-					"set-" S_amp_control, PROCEDURE g_set_amp_control, PROCEDURE g_set_amp_control_reversed,
+  define_procedure_with_reversed_setter(S_amp_control, PROCEDURE g_amp_control_w, H_amp_control,
+					"set-" S_amp_control, PROCEDURE g_set_amp_control_w, PROCEDURE g_set_amp_control_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_reverb_control_decay, PROCEDURE g_reverb_control_decay, H_reverb_control_decay,
-					"set-" S_reverb_control_decay, PROCEDURE g_set_reverb_control_decay, PROCEDURE g_set_reverb_control_decay_reversed,
+  define_procedure_with_reversed_setter(S_reverb_control_decay, PROCEDURE g_reverb_control_decay_w, H_reverb_control_decay,
+					"set-" S_reverb_control_decay, PROCEDURE g_set_reverb_control_decay_w, PROCEDURE g_set_reverb_control_decay_reversed,
 					local_doc, 0, 1, 0, 2);
 
   #define H_speed_control_as_float "The value for " S_speed_control_style " that interprets the speed slider as a float"
   #define H_speed_control_as_ratio "The value for " S_speed_control_style " that interprets the speed slider as a just-intonation ratio"
   #define H_speed_control_as_semitone "The value for " S_speed_control_style " that interprets the speed slider as a microtone (via " S_speed_control_tones ")"
 
-  DEFINE_VAR(S_speed_control_as_float,        SPEED_CONTROL_AS_FLOAT,    H_speed_control_as_float);
-  DEFINE_VAR(S_speed_control_as_ratio,        SPEED_CONTROL_AS_RATIO,    H_speed_control_as_ratio);
-  DEFINE_VAR(S_speed_control_as_semitone,     SPEED_CONTROL_AS_SEMITONE, H_speed_control_as_semitone);
+  DEFINE_CONST(S_speed_control_as_float,        SPEED_CONTROL_AS_FLOAT,    H_speed_control_as_float);
+  DEFINE_CONST(S_speed_control_as_ratio,        SPEED_CONTROL_AS_RATIO,    H_speed_control_as_ratio);
+  DEFINE_CONST(S_speed_control_as_semitone,     SPEED_CONTROL_AS_SEMITONE, H_speed_control_as_semitone);
 
-  define_procedure_with_reversed_setter(S_speed_control_style, PROCEDURE g_speed_control_style, H_speed_control_style,
-					"set-" S_speed_control_style, PROCEDURE g_set_speed_control_style, PROCEDURE g_set_speed_control_style_reversed,
+  define_procedure_with_reversed_setter(S_speed_control_style, PROCEDURE g_speed_control_style_w, H_speed_control_style,
+					"set-" S_speed_control_style, PROCEDURE g_set_speed_control_style_w, PROCEDURE g_set_speed_control_style_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  define_procedure_with_reversed_setter(S_speed_control_tones, PROCEDURE g_speed_control_tones, H_speed_control_tones,
-					"set-" S_speed_control_tones, PROCEDURE g_set_speed_control_tones, PROCEDURE g_set_speed_control_tones_reversed,
+  define_procedure_with_reversed_setter(S_speed_control_tones, PROCEDURE g_speed_control_tones_w, H_speed_control_tones,
+					"set-" S_speed_control_tones, PROCEDURE g_set_speed_control_tones_w, PROCEDURE g_set_speed_control_tones_reversed,
 					local_doc, 0, 1, 0, 2);
 
-  DEFINE_PROC(S_peak_env_info, g_peak_env_info, 0, 3, 0, H_peak_env_info);
+  DEFINE_PROC(S_peak_env_info, g_peak_env_info_w, 0, 3, 0, H_peak_env_info);
 
 
-  DEFINE_PROC(S_write_peak_env_info_file, g_write_peak_env_info_file, 3, 0, 0, "(" S_write_peak_env_info_file " snd chn filename)");
+  DEFINE_PROC(S_write_peak_env_info_file, g_write_peak_env_info_file_w, 3, 0, 0, "(" S_write_peak_env_info_file " snd chn filename)");
   DEFINE_PROC(S_read_peak_env_info_file,  g_read_peak_env_info_file,  3, 0, 0, "(" S_read_peak_env_info_file " snd chn filename)");
 }
 

@@ -34,8 +34,6 @@
 (define total-tests 23)
 (define with-exit (< snd-test 0))
 
-(if (provided? 'gcing) (set! g-gc-step 100))
-
 (if (and (not (file-exists? "4.aiff"))
 	 (not (string=? (getcwd) "/home/bil/cl")))
     (copy-file "/home/bil/cl/4.aiff" (string-append (getcwd) "/4.aiff")))
@@ -1703,7 +1701,6 @@
 	(if (not (equal? sd1 sd2)) (snd-display ";1 scaled sound-data->vct->sound-data: ~A ~A" sd1 sd2))
 	(close-sound ind))
 
-      (if (provided? 'gcing) (set! g-gc-step 0))
       (for-each 
        (lambda (chans)
 	 (for-each 
@@ -1839,7 +1836,6 @@
       ))
       ))
 
-(if (provided? 'gcing) (set! g-gc-step 100))
 (define a-ctr 0)
 
 (define (test-edpos test-func func-name change-thunk ind1)
@@ -5491,11 +5487,9 @@
 		(snd-display "external reader trouble")))
 	  (free-sample-reader reader)))
       )
-    (if (provided? 'gcing) (set! g-gc-step 0))
     (load "bird.scm")
     (time (make-birds "fmv.snd"))
     ;(play-and-wait 0 (find-sound "fmv.snd"))
-    (if (provided? 'gcing) (set! g-gc-step 100))
     (close-sound (find-sound "fmv.snd"))
     (dismiss-all-dialogs)
 

@@ -554,6 +554,13 @@ static SCM g_reset_listener_cursor(void)
   return(FALSE_VALUE);
 }
 
+#ifdef ARGIFY_1
+NARGIFY_0(g_listener_selected_text_w, g_listener_selected_text)
+NARGIFY_0(g_reset_listener_cursor_w, g_reset_listener_cursor)
+#else
+#define g_listener_selected_text_w g_listener_selected_text
+#define g_reset_listener_cursor_w g_reset_listener_cursor
+#endif
 
 void g_init_gxlistener(SCM local_doc)
 {
@@ -579,8 +586,8 @@ leaves the lisp listener pane"
   mouse_enter_text_hook = MAKE_HOOK(S_mouse_enter_text_hook, 1, H_mouse_enter_text_hook);    /* arg = text widget */
   mouse_leave_text_hook = MAKE_HOOK(S_mouse_leave_text_hook, 1, H_mouse_leave_text_hook);    /* arg = text widget */
 
-  DEFINE_PROC(S_listener_selection, g_listener_selected_text, 0, 0, 0, "returns current selection in listener or #f");
+  DEFINE_PROC(S_listener_selection, g_listener_selected_text_w, 0, 0, 0, "returns current selection in listener or #f");
 
-  DEFINE_PROC(S_reset_listener_cursor, g_reset_listener_cursor, 0, 0, 0, "resets listener cursor to default pointer");
+  DEFINE_PROC(S_reset_listener_cursor, g_reset_listener_cursor_w, 0, 0, 0, "resets listener cursor to default pointer");
 }
 

@@ -1,5 +1,6 @@
 snd change log
 
+  5-Jul:     Ruby support.
   3-Jul:     added -b (-batch) switch for scripts.
              snd-4 compatibility names are no longer built-in (use snd4.scm).
   1-Jul:     gtk+extra 0.99.15.

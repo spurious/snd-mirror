@@ -715,7 +715,7 @@ static SCM g_save_state(SCM filename)
   return(filename);
 }
 
-static SCM g_save_options_1(SCM filename)
+static SCM g_save_options(SCM filename)
 {
   #define H_save_options "(" S_save_options " filename) saves Snd options in filename"
   char *name = NULL;
@@ -735,25 +735,13 @@ static SCM g_save_options_1(SCM filename)
   return(filename);
 }
 
-#ifdef NARGIFY_1
-  NARGIFY_1(g_save_options, g_save_options_1)
-#else
-  #define g_save_options g_save_options_1
-#endif
-
-static SCM g_exit_1(SCM val) 
+static SCM g_exit(SCM val) 
 {
   #define H_exit "(" S_exit ") exits Snd"
   if (snd_exit_cleanly(get_global_state(), FALSE))
     snd_exit(TO_C_INT_OR_ELSE(val,1)); 
   return(FALSE_VALUE);
 }
-
-#ifdef ARGIFY_1
-  ARGIFY_1(g_exit, g_exit_1)
-#else
-  #define g_exit g_exit_1
-#endif
 
 static SCM g_mem_report(void) 
 {
@@ -763,13 +751,31 @@ static SCM g_mem_report(void)
   return(FALSE_VALUE);
 }
 
+#ifdef ARGIFY_1
+NARGIFY_1(g_save_options_w, g_save_options)
+NARGIFY_1(g_save_state_w, g_save_state)
+ARGIFY_1(g_exit_w, g_exit)
+NARGIFY_0(g_mem_report_w, g_mem_report)
+NARGIFY_0(g_script_arg_w, g_script_arg)
+NARGIFY_1(g_set_script_arg_w, g_set_script_arg)
+NARGIFY_0(g_script_args_w, g_script_args)
+#else
+#define g_save_options_w g_save_options
+#define g_save_state_w g_save_state
+#define g_exit_w g_exit
+#define g_mem_report_w g_mem_report
+#define g_script_arg_w g_script_arg
+#define g_set_script_arg_w g_set_script_arg
+#define g_script_args_w g_script_args
+#endif
+
 void g_init_main(SCM local_doc)
 {
-  DEFINE_PROC(S_save_options, g_save_options, 1, 0, 0, H_save_options);
-  DEFINE_PROC(S_save_state,   g_save_state, 1, 0, 0,   H_save_state);
-  DEFINE_PROC(S_exit,         g_exit, 0, 1, 0,         H_exit);
+  DEFINE_PROC(S_save_options, g_save_options_w, 1, 0, 0, H_save_options);
+  DEFINE_PROC(S_save_state,   g_save_state_w, 1, 0, 0,   H_save_state);
+  DEFINE_PROC(S_exit,         g_exit_w, 0, 1, 0,         H_exit);
 
-  DEFINE_PROC("mem-report",   g_mem_report, 0, 0, 0, "(mem-report) writes memory usage stats to memlog");
+  DEFINE_PROC("mem-report",   g_mem_report_w, 0, 0, 0, "(mem-report) writes memory usage stats to memlog");
 
   #define H_start_hook S_start_hook " (filename) is called upon start-up. If it returns #t, snd exits immediately."
   start_hook = MAKE_HOOK(S_start_hook, 1, H_start_hook);                   /* arg = argv filename if any */
@@ -779,7 +785,7 @@ If it returns #t, Snd does not exit.  This can be used to check for unsaved edit
 
   exit_hook = MAKE_HOOK(S_exit_hook, 0, H_exit_hook);
 
-  define_procedure_with_setter(S_script_arg, PROCEDURE g_script_arg, "where we are in the startup arg list",
-			       "et-" S_script_arg, PROCEDURE g_set_script_arg, local_doc, 0, 0, 1, 0);
-  DEFINE_PROC(S_script_args, g_script_args, 0, 0, 0, "the args passed to Snd at startup");
+  define_procedure_with_setter(S_script_arg, PROCEDURE g_script_arg_w, "where we are in the startup arg list",
+			       "et-" S_script_arg, PROCEDURE g_set_script_arg_w, local_doc, 0, 0, 1, 0);
+  DEFINE_PROC(S_script_args, g_script_args_w, 0, 0, 0, "the args passed to Snd at startup");
 }

@@ -967,26 +967,58 @@ static SCM g_selection_srate(void)
   return(TO_SCM_INT(selection_srate()));
 }
 
+#ifdef ARGIFY_1
+ARGIFY_2(g_selection_position_w, g_selection_position)
+ARGIFY_3(g_set_selection_position_w, g_set_selection_position)
+ARGIFY_2(g_selection_length_w, g_selection_length)
+ARGIFY_3(g_set_selection_length_w, g_set_selection_length)
+ARGIFY_2(g_selection_member_w, g_selection_member)
+ARGIFY_3(g_set_selection_member_w, g_set_selection_member)
+NARGIFY_0(g_selection_p_w, g_selection_p)
+NARGIFY_0(g_selection_chans_w, g_selection_chans)
+NARGIFY_0(g_selection_srate_w, g_selection_srate)
+NARGIFY_0(g_delete_selection_w, g_delete_selection)
+ARGIFY_3(g_insert_selection_w, g_insert_selection)
+ARGIFY_3(g_mix_selection_w, g_mix_selection)
+ARGIFY_2(g_select_all_w, g_select_all)
+ARGIFY_6(g_save_selection_w, g_save_selection)
+#else
+#define g_selection_position_w g_selection_position
+#define g_set_selection_position_w g_set_selection_position
+#define g_selection_length_w g_selection_length
+#define g_set_selection_length_w g_set_selection_length
+#define g_selection_member_w g_selection_member
+#define g_set_selection_member_w g_set_selection_member
+#define g_selection_p_w g_selection_p
+#define g_selection_chans_w g_selection_chans
+#define g_selection_srate_w g_selection_srate
+#define g_delete_selection_w g_delete_selection
+#define g_insert_selection_w g_insert_selection
+#define g_mix_selection_w g_mix_selection
+#define g_select_all_w g_select_all
+#define g_save_selection_w g_save_selection
+#endif
+
 void g_init_selection(SCM local_doc)
 {
-  define_procedure_with_reversed_setter(S_selection_position, PROCEDURE g_selection_position, H_selection_position,
-					"set-" S_selection_position, PROCEDURE g_set_selection_position, PROCEDURE g_set_selection_position_reversed,
+  define_procedure_with_reversed_setter(S_selection_position, PROCEDURE g_selection_position_w, H_selection_position,
+					"set-" S_selection_position, PROCEDURE g_set_selection_position_w, PROCEDURE g_set_selection_position_reversed,
 					local_doc, 0, 2, 1, 2);
 
-  define_procedure_with_reversed_setter(S_selection_length, PROCEDURE g_selection_length, H_selection_length,
-					"set-" S_selection_length, PROCEDURE g_set_selection_length, PROCEDURE g_set_selection_length_reversed,
+  define_procedure_with_reversed_setter(S_selection_length, PROCEDURE g_selection_length_w, H_selection_length,
+					"set-" S_selection_length, PROCEDURE g_set_selection_length_w, PROCEDURE g_set_selection_length_reversed,
 					local_doc, 0, 2, 1, 2);
 
-  define_procedure_with_reversed_setter(S_selection_member, PROCEDURE g_selection_member, H_selection_member,
-					"set-" S_selection_member, PROCEDURE g_set_selection_member, PROCEDURE g_set_selection_member_reversed,
+  define_procedure_with_reversed_setter(S_selection_member, PROCEDURE g_selection_member_w, H_selection_member,
+					"set-" S_selection_member, PROCEDURE g_set_selection_member_w, PROCEDURE g_set_selection_member_reversed,
 					local_doc, 0, 2, 1, 2);
 
-  DEFINE_PROC(S_selection_p,      g_selection_p, 0, 0, 0,      H_selection_p);
-  DEFINE_PROC(S_selection_chans,  g_selection_chans, 0, 0, 0,  H_selection_chans);
-  DEFINE_PROC(S_selection_srate,  g_selection_srate, 0, 0, 0,  H_selection_srate);
-  DEFINE_PROC(S_delete_selection, g_delete_selection, 0, 0, 0, H_delete_selection);
-  DEFINE_PROC(S_insert_selection, g_insert_selection, 0, 3, 0, H_insert_selection);
-  DEFINE_PROC(S_mix_selection,    g_mix_selection, 0, 3, 0,    H_mix_selection);
-  DEFINE_PROC(S_select_all,       g_select_all, 0, 2, 0,       H_select_all);
-  DEFINE_PROC(S_save_selection,   g_save_selection, 1, 5, 0,   H_save_selection);
+  DEFINE_PROC(S_selection_p,      g_selection_p_w, 0, 0, 0,      H_selection_p);
+  DEFINE_PROC(S_selection_chans,  g_selection_chans_w, 0, 0, 0,  H_selection_chans);
+  DEFINE_PROC(S_selection_srate,  g_selection_srate_w, 0, 0, 0,  H_selection_srate);
+  DEFINE_PROC(S_delete_selection, g_delete_selection_w, 0, 0, 0, H_delete_selection);
+  DEFINE_PROC(S_insert_selection, g_insert_selection_w, 0, 3, 0, H_insert_selection);
+  DEFINE_PROC(S_mix_selection,    g_mix_selection_w, 0, 3, 0,    H_mix_selection);
+  DEFINE_PROC(S_select_all,       g_select_all_w, 0, 2, 0,       H_select_all);
+  DEFINE_PROC(S_save_selection,   g_save_selection_w, 1, 5, 0,   H_save_selection);
 }

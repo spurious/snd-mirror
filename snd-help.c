@@ -148,7 +148,7 @@ char *version_info(void)
 	  "\n    mzscheme ", scheme_version(),
 #else
 #if HAVE_RUBY
-	  "\n    Ruby ", TO_C_STRING(EVAL_STRING("RUBY_RELEASE")), " of ", TO_C_STRING(EVAL_STRING("RUBY_RELEASE_DATE")),
+	  "\n    Ruby ", TO_C_STRING(EVAL_STRING("RUBY_VERSION")), " (", TO_C_STRING(EVAL_STRING("RUBY_RELEASE_DATE")), ")",
 #else
 #if (!HAVE_EXTENSION_LANGUAGE)
 	  "\n    without any extension language",
@@ -272,6 +272,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+5-Jul:   Ruby support.\n\
 3-Jul:   added -b (-batch) switch for scripts.\n\
          snd-4 compatibility names are no longer built-in (use snd4.scm).\n\
 1-Jul:   gtk+extra 0.99.15.\n\
@@ -299,7 +300,6 @@ void news_help(snd_state *ss)
 NULL);
   FREE(info);
 }
-
 
 /* ---------------- help menu strings ---------------- */
 
@@ -2705,7 +2705,13 @@ static SCM g_listener_help(SCM arg)
   return(g_help(arg, listener_width()));
 }
 
+#ifdef ARGIFY_1
+ARGIFY_1(g_listener_help_w, g_listener_help)
+#else
+#define g_listener_help_w g_listener_help
+#endif
+
 void g_init_help(SCM local_doc)
 {
-  DEFINE_PROC(S_snd_help, g_listener_help, 0, 1, 0, H_snd_help);
+  DEFINE_PROC(S_snd_help, g_listener_help_w, 0, 1, 0, H_snd_help);
 }

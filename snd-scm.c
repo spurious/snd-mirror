@@ -333,7 +333,7 @@ char *procedure_ok(SCM proc, int args, const char *caller, const char *arg_name,
   /* if string returned, needs to be freed */
   SCM arity_list;
   int rargs, oargs, restargs;
-#if TIMING || GCING
+#if TIMING
   return(NULL);
 #endif
   if (!(PROCEDURE_P(proc)))
@@ -968,7 +968,7 @@ are available, but not all are compatible with all header types"
 }
 
 static SCM g_eps_file(void) {return(TO_SCM_STRING(eps_file(state)));}
-static SCM g_set_eps_file_1(SCM val) 
+static SCM g_set_eps_file(SCM val) 
 {
   #define H_eps_file "(" S_eps_file ") -> current eps ('Print' command) file name (snd.eps)"
   ASSERT_TYPE(STRING_P(val), val, ARGn, "set-" S_eps_file, "a string"); 
@@ -976,12 +976,6 @@ static SCM g_set_eps_file_1(SCM val)
   set_eps_file(state, TO_NEW_C_STRING(val)); 
   return(TO_SCM_STRING(eps_file(state)));
 }
-
-#ifdef NARGIFY_1
-  NARGIFY_1(g_set_eps_file, g_set_eps_file_1)
-#else
-  #define g_set_eps_file g_set_eps_file_1
-#endif
 
 static SCM g_eps_left_margin(void) {return(TO_SCM_DOUBLE(eps_left_margin(state)));}
 static SCM g_set_eps_left_margin(SCM val) 
@@ -2819,14 +2813,6 @@ static SCM g_dlinit(SCM handle, SCM func)
   return(TRUE_VALUE);
 }
 
-static void g_init_dl(SCM local_doc)
-{
-  DEFINE_PROC("dlopen", PROCEDURE g_dlopen, 1, 0 ,0, "");
-  DEFINE_PROC("dlclose", PROCEDURE g_dlclose, 1, 0 ,0, "");
-  DEFINE_PROC("dlerror", PROCEDURE g_dlerror, 0, 0 ,0, "");
-  DEFINE_PROC("dlinit", PROCEDURE g_dlinit, 2, 0 ,0, "");
-  
-}
 #endif
 
 static SCM g_little_endian(void)
@@ -2849,26 +2835,6 @@ static SCM g_gc_off(void) {++scm_block_gc; return(TO_SCM_INT(scm_block_gc));}
 static SCM g_gc_on(void) {--scm_block_gc; return(TO_SCM_INT(scm_block_gc));}
 #endif
 
-#if GCING
-/* need someplace findable in gdb (without knowing much about Guile) to get the last call+args upon segfault */
-static SCM g_gc_hook(void)
-{
-  return(FALSE_VALUE);
-}
-static char *this_proc = NULL, *these_args = NULL;
-static SCM g_set_last_proc(SCM proc, SCM args)
-{
-#if HAVE_SCM_OBJECT_TO_STRING
-  /*
-  if (this_proc) free(this_proc);
-  this_proc = TO_NEW_C_STRING(scm_object_to_string(proc, UNDEFINED_VALUE));
-  if (these_args) free(these_args);
-  these_args = TO_NEW_C_STRING(scm_object_to_string(args, UNDEFINED_VALUE));
-  */
-#endif
-  return(scm_return_first(FALSE_VALUE, proc, args));
-}
-#endif
 #if WITH_MCHECK
 #include <mcheck.h>
 static SCM g_mcheck_check_all(void)
@@ -2878,22 +2844,421 @@ static SCM g_mcheck_check_all(void)
 }
 #endif
 
+
+#ifdef ARGIFY_1
+#if HAVE_GUILE && HAVE_DLFCN_H
+NARGIFY_1(g_dlopen_w, g_dlopen)
+NARGIFY_1(g_dlclose_w, g_dlclose)
+NARGIFY_0(g_dlerror_w, g_dlerror)
+NARGIFY_2(g_dlinit_w, g_dlinit)
+#endif
+NARGIFY_0(g_ask_before_overwrite_w, g_ask_before_overwrite)
+ARGIFY_1(g_set_ask_before_overwrite_w, g_set_ask_before_overwrite)
+NARGIFY_0(g_audio_output_device_w, g_audio_output_device)
+ARGIFY_1(g_set_audio_output_device_w, g_set_audio_output_device)
+NARGIFY_0(g_audio_input_device_w, g_audio_input_device)
+ARGIFY_1(g_set_audio_input_device_w, g_set_audio_input_device)
+NARGIFY_0(g_minibuffer_history_length_w, g_minibuffer_history_length)
+ARGIFY_1(g_set_minibuffer_history_length_w, g_set_minibuffer_history_length)
+NARGIFY_0(g_dac_size_w, g_dac_size)
+ARGIFY_1(g_set_dac_size_w, g_set_dac_size)
+NARGIFY_0(g_dac_combines_channels_w, g_dac_combines_channels)
+ARGIFY_1(g_set_dac_combines_channels_w, g_set_dac_combines_channels)
+NARGIFY_0(g_auto_resize_w, g_auto_resize)
+ARGIFY_1(g_set_auto_resize_w, g_set_auto_resize)
+NARGIFY_0(g_auto_update_w, g_auto_update)
+ARGIFY_1(g_set_auto_update_w, g_set_auto_update)
+NARGIFY_0(g_filter_env_in_hz_w, g_filter_env_in_hz)
+ARGIFY_1(g_set_filter_env_in_hz_w, g_set_filter_env_in_hz)
+NARGIFY_0(g_color_cutoff_w, g_color_cutoff)
+ARGIFY_1(g_set_color_cutoff_w, g_set_color_cutoff)
+NARGIFY_0(g_color_inverted_w, g_color_inverted)
+ARGIFY_1(g_set_color_inverted_w, g_set_color_inverted)
+NARGIFY_0(g_color_scale_w, g_color_scale)
+ARGIFY_1(g_set_color_scale_w, g_set_color_scale)
+NARGIFY_0(g_auto_update_interval_w, g_auto_update_interval)
+ARGIFY_1(g_set_auto_update_interval_w, g_set_auto_update_interval)
+NARGIFY_0(g_default_output_chans_w, g_default_output_chans)
+ARGIFY_1(g_set_default_output_chans_w, g_set_default_output_chans)
+NARGIFY_0(g_default_output_srate_w, g_default_output_srate)
+ARGIFY_1(g_set_default_output_srate_w, g_set_default_output_srate)
+NARGIFY_0(g_default_output_type_w, g_default_output_type)
+ARGIFY_1(g_set_default_output_type_w, g_set_default_output_type)
+NARGIFY_0(g_default_output_format_w, g_default_output_format)
+ARGIFY_1(g_set_default_output_format_w, g_set_default_output_format)
+NARGIFY_0(g_eps_file_w, g_eps_file)
+NARGIFY_1(g_set_eps_file_w, g_set_eps_file)
+NARGIFY_0(g_eps_left_margin_w, g_eps_left_margin)
+ARGIFY_1(g_set_eps_left_margin_w, g_set_eps_left_margin)
+NARGIFY_0(g_eps_bottom_margin_w, g_eps_bottom_margin)
+ARGIFY_1(g_set_eps_bottom_margin_w, g_set_eps_bottom_margin)
+NARGIFY_0(g_listener_prompt_w, g_listener_prompt)
+ARGIFY_1(g_set_listener_prompt_w, g_set_listener_prompt)
+NARGIFY_0(g_audio_state_file_w, g_audio_state_file)
+ARGIFY_1(g_set_audio_state_file_w, g_set_audio_state_file)
+NARGIFY_0(g_movies_w, g_movies)
+ARGIFY_1(g_set_movies_w, g_set_movies)
+NARGIFY_0(g_selection_creates_region_w, g_selection_creates_region)
+ARGIFY_1(g_set_selection_creates_region_w, g_set_selection_creates_region)
+NARGIFY_0(g_print_length_w, g_print_length)
+ARGIFY_1(g_set_print_length_w, g_set_print_length)
+NARGIFY_0(g_previous_files_sort_w, g_previous_files_sort)
+ARGIFY_1(g_set_previous_files_sort_w, g_set_previous_files_sort)
+NARGIFY_0(g_show_listener_w, g_show_listener)
+ARGIFY_1(g_set_show_listener_w, g_set_show_listener)
+NARGIFY_0(g_show_indices_w, g_show_indices)
+ARGIFY_1(g_set_show_indices_w, g_set_show_indices)
+NARGIFY_0(g_show_backtrace_w, g_show_backtrace)
+ARGIFY_1(g_set_show_backtrace_w, g_set_show_backtrace)
+NARGIFY_0(g_show_usage_stats_w, g_show_usage_stats)
+ARGIFY_1(g_set_show_usage_stats_w, g_set_show_usage_stats)
+NARGIFY_0(g_sinc_width_w, g_sinc_width)
+ARGIFY_1(g_set_sinc_width_w, g_set_sinc_width)
+NARGIFY_0(g_hankel_jn_w, g_hankel_jn)
+ARGIFY_1(g_set_hankel_jn_w, g_set_hankel_jn)
+NARGIFY_0(g_color_map_w, g_color_map)
+ARGIFY_1(g_set_color_map_w, g_set_color_map)
+NARGIFY_0(g_temp_dir_w, g_temp_dir)
+ARGIFY_1(g_set_temp_dir_w, g_set_temp_dir)
+NARGIFY_0(g_save_dir_w, g_save_dir)
+ARGIFY_1(g_set_save_dir_w, g_set_save_dir)
+NARGIFY_0(g_trap_segfault_w, g_trap_segfault)
+ARGIFY_1(g_set_trap_segfault_w, g_set_trap_segfault)
+NARGIFY_0(g_show_selection_transform_w, g_show_selection_transform)
+ARGIFY_1(g_set_show_selection_transform_w, g_set_show_selection_transform)
+NARGIFY_0(g_with_mix_tags_w, g_with_mix_tags)
+ARGIFY_1(g_set_with_mix_tags_w, g_set_with_mix_tags)
+NARGIFY_0(g_use_sinc_interp_w, g_use_sinc_interp)
+ARGIFY_1(g_set_use_sinc_interp_w, g_set_use_sinc_interp)
+NARGIFY_0(g_data_clipped_w, g_data_clipped)
+ARGIFY_1(g_set_data_clipped_w, g_set_data_clipped)
+NARGIFY_0(g_vu_font_w, g_vu_font)
+ARGIFY_1(g_set_vu_font_w, g_set_vu_font)
+NARGIFY_0(g_vu_font_size_w, g_vu_font_size)
+ARGIFY_1(g_set_vu_font_size_w, g_set_vu_font_size)
+NARGIFY_0(g_vu_size_w, g_vu_size)
+ARGIFY_1(g_set_vu_size_w, g_set_vu_size)
+NARGIFY_0(g_window_x_w, g_window_x)
+ARGIFY_1(g_set_window_x_w, g_set_window_x)
+NARGIFY_0(g_window_y_w, g_window_y)
+ARGIFY_1(g_set_window_y_w, g_set_window_y)
+NARGIFY_0(g_zoom_focus_style_w, g_zoom_focus_style)
+ARGIFY_1(g_set_zoom_focus_style_w, g_set_zoom_focus_style)
+NARGIFY_0(g_help_text_font_w, g_help_text_font)
+ARGIFY_1(g_set_help_text_font_w, g_set_help_text_font)
+NARGIFY_0(g_tiny_font_w, g_tiny_font)
+ARGIFY_1(g_set_tiny_font_w, g_set_tiny_font)
+NARGIFY_0(g_button_font_w, g_button_font)
+ARGIFY_1(g_set_button_font_w, g_set_button_font)
+NARGIFY_0(g_bold_button_font_w, g_bold_button_font)
+ARGIFY_1(g_set_bold_button_font_w, g_set_bold_button_font)
+NARGIFY_0(g_axis_label_font_w, g_axis_label_font)
+ARGIFY_1(g_set_axis_label_font_w, g_set_axis_label_font)
+NARGIFY_0(g_axis_numbers_font_w, g_axis_numbers_font)
+ARGIFY_1(g_set_axis_numbers_font_w, g_set_axis_numbers_font)
+NARGIFY_0(g_listener_font_w, g_listener_font)
+ARGIFY_1(g_set_listener_font_w, g_set_listener_font)
+NARGIFY_0(g_window_width_w, g_window_width)
+ARGIFY_1(g_set_window_width_w, g_set_window_width)
+NARGIFY_0(g_window_height_w, g_window_height)
+ARGIFY_1(g_set_window_height_w, g_set_window_height)
+#if (!USE_NO_GUI)
+#if HAVE_HTML
+NARGIFY_0(g_html_dir_w, g_html_dir)
+NARGIFY_1(g_set_html_dir_w, g_set_html_dir)
+#endif
+NARGIFY_0(g_selection_color_w, g_selection_color)
+NARGIFY_1(g_set_selection_color_w, g_set_selection_color)
+NARGIFY_0(g_zoom_color_w, g_zoom_color)
+NARGIFY_1(g_set_zoom_color_w, g_set_zoom_color)
+NARGIFY_0(g_position_color_w, g_position_color)
+NARGIFY_1(g_set_position_color_w, g_set_position_color)
+NARGIFY_0(g_mark_color_w, g_mark_color)
+NARGIFY_1(g_set_mark_color_w, g_set_mark_color)
+NARGIFY_0(g_listener_color_w, g_listener_color)
+NARGIFY_1(g_set_listener_color_w, g_set_listener_color)
+NARGIFY_0(g_listener_text_color_w, g_listener_text_color)
+NARGIFY_1(g_set_listener_text_color_w, g_set_listener_text_color)
+NARGIFY_0(g_enved_waveform_color_w, g_enved_waveform_color)
+NARGIFY_1(g_set_enved_waveform_color_w, g_set_enved_waveform_color)
+NARGIFY_0(g_filter_waveform_color_w, g_filter_waveform_color)
+NARGIFY_1(g_set_filter_waveform_color_w, g_set_filter_waveform_color)
+NARGIFY_0(g_highlight_color_w, g_highlight_color)
+NARGIFY_1(g_set_highlight_color_w, g_set_highlight_color)
+NARGIFY_0(g_cursor_color_w, g_cursor_color)
+NARGIFY_1(g_set_cursor_color_w, g_set_cursor_color)
+ARGIFY_1(g_mix_color_w, g_mix_color)
+ARGIFY_2(g_set_mix_color_w, g_set_mix_color)
+NARGIFY_0(g_selected_mix_color_w, g_selected_mix_color)
+ARGIFY_1(g_set_selected_mix_color_w, g_set_selected_mix_color)
+NARGIFY_0(g_text_focus_color_w, g_text_focus_color)
+NARGIFY_1(g_set_text_focus_color_w, g_set_text_focus_color)
+NARGIFY_0(g_sash_color_w, g_sash_color)
+NARGIFY_1(g_set_sash_color_w, g_set_sash_color)
+NARGIFY_0(g_data_color_w, g_data_color)
+NARGIFY_1(g_set_data_color_w, g_set_data_color)
+NARGIFY_0(g_graph_color_w, g_graph_color)
+NARGIFY_1(g_set_graph_color_w, g_set_graph_color)
+NARGIFY_0(g_selected_graph_color_w, g_selected_graph_color)
+NARGIFY_1(g_set_selected_graph_color_w, g_set_selected_graph_color)
+NARGIFY_0(g_selected_data_color_w, g_selected_data_color)
+NARGIFY_1(g_set_selected_data_color_w, g_set_selected_data_color)
+NARGIFY_0(g_basic_color_w, g_basic_color)
+NARGIFY_1(g_set_basic_color_w, g_set_basic_color)
+NARGIFY_0(g_pushed_button_color_w, g_pushed_button_color)
+NARGIFY_1(g_set_pushed_button_color_w, g_set_pushed_button_color)
+#endif
+NARGIFY_0(g_snd_tempnam_w, g_snd_tempnam)
+NARGIFY_2(g_set_oss_buffers_w, g_set_oss_buffers)
+NARGIFY_0(g_update_usage_stats_w, g_update_usage_stats)
+NARGIFY_0(g_clear_audio_inputs_w, g_clear_audio_inputs)
+NARGIFY_0(g_color_dialog_w, g_color_dialog)
+NARGIFY_0(g_orientation_dialog_w, g_orientation_dialog)
+NARGIFY_0(g_transform_dialog_w, g_transform_dialog)
+NARGIFY_0(g_file_dialog_w, g_file_dialog)
+ARGIFY_1(g_edit_header_dialog_w, g_edit_header_dialog)
+NARGIFY_2(g_help_dialog_w, g_help_dialog)
+NARGIFY_0(g_mix_panel_w, g_mix_panel)
+NARGIFY_0(g_max_sounds_w, g_max_sounds)
+NARGIFY_0(g_sounds_w, g_sounds)
+NARGIFY_1(g_yes_or_no_p_w, g_yes_or_no_p)
+ARGIFY_2(g_update_time_graph_w, g_update_time_graph)
+ARGIFY_2(g_update_lisp_graph_w, g_update_lisp_graph)
+ARGIFY_2(g_update_transform_w, g_update_transform)
+NARGIFY_0(g_abort_w, g_abort)
+NARGIFY_0(g_dismiss_all_dialogs_w, g_dismiss_all_dialogs)
+NARGIFY_0(g_abortq_w, g_abortq)
+NARGIFY_0(g_snd_version_w, g_snd_version)
+ARGIFY_1(g_equalize_panes_w, g_equalize_panes)
+ARGIFY_4(g_open_sound_file_w, g_open_sound_file)
+NARGIFY_2(g_close_sound_file_w, g_close_sound_file)
+NARGIFY_3(vct2soundfile_w, vct2soundfile)
+ARGIFY_9(g_graph_w, g_graph)
+ARGIFY_6(samples2vct_w, samples2vct)
+ARGIFY_7(samples2sound_data_w, samples2sound_data)
+ARGIFY_1(g_start_progress_report_w, g_start_progress_report)
+ARGIFY_1(g_finish_progress_report_w, g_finish_progress_report)
+ARGIFY_5(g_progress_report_w, g_progress_report)
+NARGIFY_1(g_snd_print_w, g_snd_print)
+NARGIFY_0(g_mus_audio_describe_w, g_mus_audio_describe)
+NARGIFY_0(g_little_endian_w, g_little_endian)
+NARGIFY_1(g_snd_completion_w, g_snd_completion)
+#if HAVE_GUILE
+NARGIFY_0(g_gc_off_w, g_gc_off)
+NARGIFY_0(g_gc_on_w, g_gc_on)
+#endif
+#else
+#if HAVE_GUILE && HAVE_DLFCN_H
+#define g_dlopen_w g_dlopen
+#define g_dlclose_w g_dlclose
+#define g_dlerror_w g_dlerror
+#define g_dlinit_w g_dlinit
+#endif
+#define g_ask_before_overwrite_w g_ask_before_overwrite
+#define g_set_ask_before_overwrite_w g_set_ask_before_overwrite
+#define g_audio_output_device_w g_audio_output_device
+#define g_set_audio_output_device_w g_set_audio_output_device
+#define g_audio_input_device_w g_audio_input_device
+#define g_set_audio_input_device_w g_set_audio_input_device
+#define g_minibuffer_history_length_w g_minibuffer_history_length
+#define g_set_minibuffer_history_length_w g_set_minibuffer_history_length
+#define g_dac_size_w g_dac_size
+#define g_set_dac_size_w g_set_dac_size
+#define g_dac_combines_channels_w g_dac_combines_channels
+#define g_set_dac_combines_channels_w g_set_dac_combines_channels
+#define g_auto_resize_w g_auto_resize
+#define g_set_auto_resize_w g_set_auto_resize
+#define g_auto_update_w g_auto_update
+#define g_set_auto_update_w g_set_auto_update
+#define g_filter_env_in_hz_w g_filter_env_in_hz
+#define g_set_filter_env_in_hz_w g_set_filter_env_in_hz
+#define g_color_cutoff_w g_color_cutoff
+#define g_set_color_cutoff_w g_set_color_cutoff
+#define g_color_inverted_w g_color_inverted
+#define g_set_color_inverted_w g_set_color_inverted
+#define g_color_scale_w g_color_scale
+#define g_set_color_scale_w g_set_color_scale
+#define g_auto_update_interval_w g_auto_update_interval
+#define g_set_auto_update_interval_w g_set_auto_update_interval
+#define g_default_output_chans_w g_default_output_chans
+#define g_set_default_output_chans_w g_set_default_output_chans
+#define g_default_output_srate_w g_default_output_srate
+#define g_set_default_output_srate_w g_set_default_output_srate
+#define g_default_output_type_w g_default_output_type
+#define g_set_default_output_type_w g_set_default_output_type
+#define g_default_output_format_w g_default_output_format
+#define g_set_default_output_format_w g_set_default_output_format
+#define g_eps_file_w g_eps_file
+#define g_set_eps_file_w g_set_eps_file
+#define g_eps_left_margin_w g_eps_left_margin
+#define g_set_eps_left_margin_w g_set_eps_left_margin
+#define g_eps_bottom_margin_w g_eps_bottom_margin
+#define g_set_eps_bottom_margin_w g_set_eps_bottom_margin
+#define g_listener_prompt_w g_listener_prompt
+#define g_set_listener_prompt_w g_set_listener_prompt
+#define g_audio_state_file_w g_audio_state_file
+#define g_set_audio_state_file_w g_set_audio_state_file
+#define g_movies_w g_movies
+#define g_set_movies_w g_set_movies
+#define g_selection_creates_region_w g_selection_creates_region
+#define g_set_selection_creates_region_w g_set_selection_creates_region
+#define g_print_length_w g_print_length
+#define g_set_print_length_w g_set_print_length
+#define g_previous_files_sort_w g_previous_files_sort
+#define g_set_previous_files_sort_w g_set_previous_files_sort
+#define g_show_listener_w g_show_listener
+#define g_set_show_listener_w g_set_show_listener
+#define g_show_indices_w g_show_indices
+#define g_set_show_indices_w g_set_show_indices
+#define g_show_backtrace_w g_show_backtrace
+#define g_set_show_backtrace_w g_set_show_backtrace
+#define g_show_usage_stats_w g_show_usage_stats
+#define g_set_show_usage_stats_w g_set_show_usage_stats
+#define g_sinc_width_w g_sinc_width
+#define g_set_sinc_width_w g_set_sinc_width
+#define g_hankel_jn_w g_hankel_jn
+#define g_set_hankel_jn_w g_set_hankel_jn
+#define g_color_map_w g_color_map
+#define g_set_color_map_w g_set_color_map
+#define g_temp_dir_w g_temp_dir
+#define g_set_temp_dir_w g_set_temp_dir
+#define g_save_dir_w g_save_dir
+#define g_set_save_dir_w g_set_save_dir
+#define g_trap_segfault_w g_trap_segfault
+#define g_set_trap_segfault_w g_set_trap_segfault
+#define g_show_selection_transform_w g_show_selection_transform
+#define g_set_show_selection_transform_w g_set_show_selection_transform
+#define g_with_mix_tags_w g_with_mix_tags
+#define g_set_with_mix_tags_w g_set_with_mix_tags
+#define g_use_sinc_interp_w g_use_sinc_interp
+#define g_set_use_sinc_interp_w g_set_use_sinc_interp
+#define g_data_clipped_w g_data_clipped
+#define g_set_data_clipped_w g_set_data_clipped
+#define g_vu_font_w g_vu_font
+#define g_set_vu_font_w g_set_vu_font
+#define g_vu_font_size_w g_vu_font_size
+#define g_set_vu_font_size_w g_set_vu_font_size
+#define g_vu_size_w g_vu_size
+#define g_set_vu_size_w g_set_vu_size
+#define g_window_x_w g_window_x
+#define g_set_window_x_w g_set_window_x
+#define g_window_y_w g_window_y
+#define g_set_window_y_w g_set_window_y
+#define g_zoom_focus_style_w g_zoom_focus_style
+#define g_set_zoom_focus_style_w g_set_zoom_focus_style
+#define g_help_text_font_w g_help_text_font
+#define g_set_help_text_font_w g_set_help_text_font
+#define g_tiny_font_w g_tiny_font
+#define g_set_tiny_font_w g_set_tiny_font
+#define g_button_font_w g_button_font
+#define g_set_button_font_w g_set_button_font
+#define g_bold_button_font_w g_bold_button_font
+#define g_set_bold_button_font_w g_set_bold_button_font
+#define g_axis_label_font_w g_axis_label_font
+#define g_set_axis_label_font_w g_set_axis_label_font
+#define g_axis_numbers_font_w g_axis_numbers_font
+#define g_set_axis_numbers_font_w g_set_axis_numbers_font
+#define g_listener_font_w g_listener_font
+#define g_set_listener_font_w g_set_listener_font
+#define g_window_width_w g_window_width
+#define g_set_window_width_w g_set_window_width
+#define g_window_height_w g_window_height
+#define g_set_window_height_w g_set_window_height
+#if (!USE_NO_GUI)
+#if HAVE_HTML
+#define g_html_dir_w g_html_dir
+#define g_set_html_dir_w g_set_html_dir
+#endif
+#define g_selection_color_w g_selection_color
+#define g_set_selection_color_w g_set_selection_color
+#define g_zoom_color_w g_zoom_color
+#define g_set_zoom_color_w g_set_zoom_color
+#define g_position_color_w g_position_color
+#define g_set_position_color_w g_set_position_color
+#define g_mark_color_w g_mark_color
+#define g_set_mark_color_w g_set_mark_color
+#define g_listener_color_w g_listener_color
+#define g_set_listener_color_w g_set_listener_color
+#define g_listener_text_color_w g_listener_text_color
+#define g_set_listener_text_color_w g_set_listener_text_color
+#define g_enved_waveform_color_w g_enved_waveform_color
+#define g_set_enved_waveform_color_w g_set_enved_waveform_color
+#define g_filter_waveform_color_w g_filter_waveform_color
+#define g_set_filter_waveform_color_w g_set_filter_waveform_color
+#define g_highlight_color_w g_highlight_color
+#define g_set_highlight_color_w g_set_highlight_color
+#define g_cursor_color_w g_cursor_color
+#define g_set_cursor_color_w g_set_cursor_color
+#define g_mix_color_w g_mix_color
+#define g_set_mix_color_w g_set_mix_color
+#define g_selected_mix_color_w g_selected_mix_color
+#define g_set_selected_mix_color_w g_set_selected_mix_color
+#define g_text_focus_color_w g_text_focus_color
+#define g_set_text_focus_color_w g_set_text_focus_color
+#define g_sash_color_w g_sash_color
+#define g_set_sash_color_w g_set_sash_color
+#define g_data_color_w g_data_color
+#define g_set_data_color_w g_set_data_color
+#define g_graph_color_w g_graph_color
+#define g_set_graph_color_w g_set_graph_color
+#define g_selected_graph_color_w g_selected_graph_color
+#define g_set_selected_graph_color_w g_set_selected_graph_color
+#define g_selected_data_color_w g_selected_data_color
+#define g_set_selected_data_color_w g_set_selected_data_color
+#define g_basic_color_w g_basic_color
+#define g_set_basic_color_w g_set_basic_color
+#define g_pushed_button_color_w g_pushed_button_color
+#define g_set_pushed_button_color_w g_set_pushed_button_color
+#endif
+#define g_snd_tempnam_w g_snd_tempnam
+#define g_set_oss_buffers_w g_set_oss_buffers
+#define g_update_usage_stats_w g_update_usage_stats
+#define g_clear_audio_inputs_w g_clear_audio_inputs
+#define g_color_dialog_w g_color_dialog
+#define g_orientation_dialog_w g_orientation_dialog
+#define g_transform_dialog_w g_transform_dialog
+#define g_file_dialog_w g_file_dialog
+#define g_edit_header_dialog_w g_edit_header_dialog
+#define g_help_dialog_w g_help_dialog
+#define g_mix_panel_w g_mix_panel
+#define g_max_sounds_w g_max_sounds
+#define g_sounds_w g_sounds
+#define g_yes_or_no_p_w g_yes_or_no_p
+#define g_update_time_graph_w g_update_time_graph
+#define g_update_lisp_graph_w g_update_lisp_graph
+#define g_update_transform_w g_update_transform
+#define g_abort_w g_abort
+#define g_dismiss_all_dialogs_w g_dismiss_all_dialogs
+#define g_abortq_w g_abortq
+#define g_snd_version_w g_snd_version
+#define g_equalize_panes_w g_equalize_panes
+#define g_open_sound_file_w g_open_sound_file
+#define g_close_sound_file_w g_close_sound_file
+#define vct2soundfile_w vct2soundfile
+#define g_graph_w g_graph
+#define samples2vct_w samples2vct
+#define samples2sound_data_w samples2sound_data
+#define g_start_progress_report_w g_start_progress_report
+#define g_finish_progress_report_w g_finish_progress_report
+#define g_progress_report_w g_progress_report
+#define g_snd_print_w g_snd_print
+#define g_mus_audio_describe_w g_mus_audio_describe
+#define g_little_endian_w g_little_endian
+#define g_snd_completion_w g_snd_completion
+#if HAVE_GUILE
+#define g_gc_off_w g_gc_off
+#define g_gc_on_w g_gc_on
+#endif
+#endif
+
 void g_initialize_gh(snd_state *ss)
 {
   SCM local_doc;
   state = ss;
   local_doc = MAKE_PERMANENT(DOCUMENTATION);
 
-#if GCING
-  NEW_PROCEDURE("set-last-proc", PROCEDURE g_set_last_proc, 2, 0, 0);
-  NEW_PROCEDURE("g-gc-hook", PROCEDURE g_gc_hook, 0, 0, 0);
-  DEFINE_VAR("g-gc-step", 10, "");
-  DEFINE_VAR("g-gc-ctr", 0, "");
-  EVAL_STRING("(define (gc-1) (g-gc-hook) (if (> g-gc-step 0) (begin (if (> g-gc-ctr g-gc-step) (begin (set! g-gc-ctr 0) (gc)) (set! g-gc-ctr (1+ g-gc-ctr))))))");
-  YES_WE_HAVE("gcing");
-#endif
 #if WITH_MCHECK
-  NEW_PROCEDURE("mcheck-all", PROCEDURE g_mcheck_check_all, 0, 0, 0);
+  NEW_PROCEDURE("mcheck-all", PROCEDURE g_mcheck_check_all_w, 0, 0, 0);
 #endif
 
 #if TIMING
@@ -2908,10 +3273,10 @@ void g_initialize_gh(snd_state *ss)
   #define H_zoom_focus_middle "The value for " S_zoom_focus_style " that causes zooming to focus on the middle sample"
   #define H_zoom_focus_active "The value for " S_zoom_focus_style " that causes zooming to focus on the currently active object"
 
-  DEFINE_VAR(S_zoom_focus_left,       ZOOM_FOCUS_LEFT,   H_zoom_focus_left);
-  DEFINE_VAR(S_zoom_focus_right,      ZOOM_FOCUS_RIGHT,  H_zoom_focus_right);
-  DEFINE_VAR(S_zoom_focus_active,     ZOOM_FOCUS_ACTIVE, H_zoom_focus_active);
-  DEFINE_VAR(S_zoom_focus_middle,     ZOOM_FOCUS_MIDDLE, H_zoom_focus_middle);
+  DEFINE_CONST(S_zoom_focus_left,       ZOOM_FOCUS_LEFT,   H_zoom_focus_left);
+  DEFINE_CONST(S_zoom_focus_right,      ZOOM_FOCUS_RIGHT,  H_zoom_focus_right);
+  DEFINE_CONST(S_zoom_focus_active,     ZOOM_FOCUS_ACTIVE, H_zoom_focus_active);
+  DEFINE_CONST(S_zoom_focus_middle,     ZOOM_FOCUS_MIDDLE, H_zoom_focus_middle);
 
   #define H_cursor_in_view "The value for an " S_bind_key " function that causes it to shift the window so that the cursor is in the view"
   #define H_cursor_on_left "The value for an " S_bind_key " function that causes it to shift the window so that the cursor is at the left edge"
@@ -2921,300 +3286,300 @@ void g_initialize_gh(snd_state *ss)
   #define H_cursor_no_action "The value for an " S_bind_key " function that causes it do nothing with the graph window"
   #define H_keyboard_no_action "The value for an " S_bind_key " function that causes it do nothing upon return"
 
-  DEFINE_VAR(S_cursor_in_view,        CURSOR_IN_VIEW,        H_cursor_in_view);
-  DEFINE_VAR(S_cursor_on_left,        CURSOR_ON_LEFT,        H_cursor_on_left);
-  DEFINE_VAR(S_cursor_on_right,       CURSOR_ON_RIGHT,       H_cursor_on_right);
-  DEFINE_VAR(S_cursor_in_middle,      CURSOR_IN_MIDDLE,      H_cursor_in_middle);
-  DEFINE_VAR(S_cursor_update_display, CURSOR_UPDATE_DISPLAY, H_cursor_update_display);
-  DEFINE_VAR(S_cursor_no_action,      CURSOR_NO_ACTION,      H_cursor_no_action);
-  DEFINE_VAR(S_keyboard_no_action,    KEYBOARD_NO_ACTION,    H_keyboard_no_action);
+  DEFINE_CONST(S_cursor_in_view,        CURSOR_IN_VIEW,        H_cursor_in_view);
+  DEFINE_CONST(S_cursor_on_left,        CURSOR_ON_LEFT,        H_cursor_on_left);
+  DEFINE_CONST(S_cursor_on_right,       CURSOR_ON_RIGHT,       H_cursor_on_right);
+  DEFINE_CONST(S_cursor_in_middle,      CURSOR_IN_MIDDLE,      H_cursor_in_middle);
+  DEFINE_CONST(S_cursor_update_display, CURSOR_UPDATE_DISPLAY, H_cursor_update_display);
+  DEFINE_CONST(S_cursor_no_action,      CURSOR_NO_ACTION,      H_cursor_no_action);
+  DEFINE_CONST(S_keyboard_no_action,    KEYBOARD_NO_ACTION,    H_keyboard_no_action);
 
-  DEFINE_VAR(S_time_graph,           TIME_AXIS_INFO,      "time domain graph");
-  DEFINE_VAR(S_transform_graph,      TRANSFORM_AXIS_INFO, "frequency domain graph");
-  DEFINE_VAR(S_lisp_graph,           LISP_AXIS_INFO,      "lisp graph");
+  DEFINE_CONST(S_time_graph,           TIME_AXIS_INFO,      "time domain graph");
+  DEFINE_CONST(S_transform_graph,      TRANSFORM_AXIS_INFO, "frequency domain graph");
+  DEFINE_CONST(S_lisp_graph,           LISP_AXIS_INFO,      "lisp graph");
 
 
   /* ---------------- VARIABLES ---------------- */
-  define_procedure_with_setter(S_ask_before_overwrite, PROCEDURE g_ask_before_overwrite, H_ask_before_overwrite,
-			       "set-" S_ask_before_overwrite, PROCEDURE g_set_ask_before_overwrite, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_ask_before_overwrite, PROCEDURE g_ask_before_overwrite_w, H_ask_before_overwrite,
+			       "set-" S_ask_before_overwrite, PROCEDURE g_set_ask_before_overwrite_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_audio_output_device, PROCEDURE g_audio_output_device, H_audio_output_device,
-			       "set-" S_audio_output_device, PROCEDURE g_set_audio_output_device, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_audio_output_device, PROCEDURE g_audio_output_device_w, H_audio_output_device,
+			       "set-" S_audio_output_device, PROCEDURE g_set_audio_output_device_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_audio_input_device, PROCEDURE g_audio_input_device, H_audio_input_device,
-			       "set-" S_audio_input_device, PROCEDURE g_set_audio_input_device, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_audio_input_device, PROCEDURE g_audio_input_device_w, H_audio_input_device,
+			       "set-" S_audio_input_device, PROCEDURE g_set_audio_input_device_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_minibuffer_history_length, PROCEDURE g_minibuffer_history_length, H_minibuffer_history_length,
-			       "set-" S_minibuffer_history_length, PROCEDURE g_set_minibuffer_history_length, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_minibuffer_history_length, PROCEDURE g_minibuffer_history_length_w, H_minibuffer_history_length,
+			       "set-" S_minibuffer_history_length, PROCEDURE g_set_minibuffer_history_length_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_dac_size, PROCEDURE g_dac_size, H_dac_size,
-			       "set-" S_dac_size, PROCEDURE g_set_dac_size, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_dac_size, PROCEDURE g_dac_size_w, H_dac_size,
+			       "set-" S_dac_size, PROCEDURE g_set_dac_size_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_dac_combines_channels, PROCEDURE g_dac_combines_channels, H_dac_combines_channels,
-			       "set-" S_dac_combines_channels, PROCEDURE g_set_dac_combines_channels, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_dac_combines_channels, PROCEDURE g_dac_combines_channels_w, H_dac_combines_channels,
+			       "set-" S_dac_combines_channels, PROCEDURE g_set_dac_combines_channels_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_auto_resize, PROCEDURE g_auto_resize, H_auto_resize,
-			       "set-" S_auto_resize, PROCEDURE g_set_auto_resize, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_auto_resize, PROCEDURE g_auto_resize_w, H_auto_resize,
+			       "set-" S_auto_resize, PROCEDURE g_set_auto_resize_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_auto_update, PROCEDURE g_auto_update, H_auto_update,
-			       "set-" S_auto_update, PROCEDURE g_set_auto_update, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_auto_update, PROCEDURE g_auto_update_w, H_auto_update,
+			       "set-" S_auto_update, PROCEDURE g_set_auto_update_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_filter_env_in_hz, PROCEDURE g_filter_env_in_hz, H_filter_env_in_hz,
-			       "set-" S_filter_env_in_hz, PROCEDURE g_set_filter_env_in_hz, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_filter_env_in_hz, PROCEDURE g_filter_env_in_hz_w, H_filter_env_in_hz,
+			       "set-" S_filter_env_in_hz, PROCEDURE g_set_filter_env_in_hz_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_color_cutoff, PROCEDURE g_color_cutoff, H_color_cutoff,
-			       "set-" S_color_cutoff, PROCEDURE g_set_color_cutoff, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_color_cutoff, PROCEDURE g_color_cutoff_w, H_color_cutoff,
+			       "set-" S_color_cutoff, PROCEDURE g_set_color_cutoff_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_color_inverted, PROCEDURE g_color_inverted, H_color_inverted,
-			       "set-" S_color_inverted, PROCEDURE g_set_color_inverted, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_color_inverted, PROCEDURE g_color_inverted_w, H_color_inverted,
+			       "set-" S_color_inverted, PROCEDURE g_set_color_inverted_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_color_scale, PROCEDURE g_color_scale, H_color_scale,
-			       "set-" S_color_scale, PROCEDURE g_set_color_scale, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_color_scale, PROCEDURE g_color_scale_w, H_color_scale,
+			       "set-" S_color_scale, PROCEDURE g_set_color_scale_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_auto_update_interval, PROCEDURE g_auto_update_interval, H_auto_update_interval,
-			       "set-" S_auto_update_interval, PROCEDURE g_set_auto_update_interval, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_auto_update_interval, PROCEDURE g_auto_update_interval_w, H_auto_update_interval,
+			       "set-" S_auto_update_interval, PROCEDURE g_set_auto_update_interval_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_default_output_chans, PROCEDURE g_default_output_chans, H_default_output_chans,
-			       "set-" S_default_output_chans, PROCEDURE g_set_default_output_chans, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_default_output_chans, PROCEDURE g_default_output_chans_w, H_default_output_chans,
+			       "set-" S_default_output_chans, PROCEDURE g_set_default_output_chans_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_default_output_srate, PROCEDURE g_default_output_srate, H_default_output_srate,
-			       "set-" S_default_output_srate, PROCEDURE g_set_default_output_srate, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_default_output_srate, PROCEDURE g_default_output_srate_w, H_default_output_srate,
+			       "set-" S_default_output_srate, PROCEDURE g_set_default_output_srate_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_default_output_type, PROCEDURE g_default_output_type, H_default_output_type,
-			       "set-" S_default_output_type, PROCEDURE g_set_default_output_type, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_default_output_type, PROCEDURE g_default_output_type_w, H_default_output_type,
+			       "set-" S_default_output_type, PROCEDURE g_set_default_output_type_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_default_output_format, PROCEDURE g_default_output_format, H_default_output_format,
-			       "set-" S_default_output_format, PROCEDURE g_set_default_output_format, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_default_output_format, PROCEDURE g_default_output_format_w, H_default_output_format,
+			       "set-" S_default_output_format, PROCEDURE g_set_default_output_format_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_eps_file, PROCEDURE g_eps_file, H_eps_file,
-			       "set-" S_eps_file, PROCEDURE g_set_eps_file, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_eps_file, PROCEDURE g_eps_file_w, H_eps_file,
+			       "set-" S_eps_file, PROCEDURE g_set_eps_file_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_eps_left_margin, PROCEDURE g_eps_left_margin, H_eps_left_margin,
-			       "set-" S_eps_left_margin, PROCEDURE g_set_eps_left_margin, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_eps_left_margin, PROCEDURE g_eps_left_margin_w, H_eps_left_margin,
+			       "set-" S_eps_left_margin, PROCEDURE g_set_eps_left_margin_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_eps_bottom_margin, PROCEDURE g_eps_bottom_margin, H_eps_bottom_margin,
-			       "set-" S_eps_bottom_margin, PROCEDURE g_set_eps_bottom_margin, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_eps_bottom_margin, PROCEDURE g_eps_bottom_margin_w, H_eps_bottom_margin,
+			       "set-" S_eps_bottom_margin, PROCEDURE g_set_eps_bottom_margin_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_listener_prompt, PROCEDURE g_listener_prompt, H_listener_prompt,
-			       "set-" S_listener_prompt, PROCEDURE g_set_listener_prompt, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_listener_prompt, PROCEDURE g_listener_prompt_w, H_listener_prompt,
+			       "set-" S_listener_prompt, PROCEDURE g_set_listener_prompt_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_audio_state_file, PROCEDURE g_audio_state_file, H_audio_state_file,
-			       "set-" S_audio_state_file, PROCEDURE g_set_audio_state_file, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_audio_state_file, PROCEDURE g_audio_state_file_w, H_audio_state_file,
+			       "set-" S_audio_state_file, PROCEDURE g_set_audio_state_file_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_movies, PROCEDURE g_movies, H_movies,
-			       "set-" S_movies, PROCEDURE g_set_movies, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_movies, PROCEDURE g_movies_w, H_movies,
+			       "set-" S_movies, PROCEDURE g_set_movies_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_selection_creates_region, PROCEDURE g_selection_creates_region, H_selection_creates_region,
-			       "set-" S_selection_creates_region, PROCEDURE g_set_selection_creates_region, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_selection_creates_region, PROCEDURE g_selection_creates_region_w, H_selection_creates_region,
+			       "set-" S_selection_creates_region, PROCEDURE g_set_selection_creates_region_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_print_length, PROCEDURE g_print_length, H_print_length,
-			       "set-" S_print_length, PROCEDURE g_set_print_length, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_print_length, PROCEDURE g_print_length_w, H_print_length,
+			       "set-" S_print_length, PROCEDURE g_set_print_length_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_previous_files_sort, PROCEDURE g_previous_files_sort, H_previous_files_sort,
-			       "set-" S_previous_files_sort, PROCEDURE g_set_previous_files_sort, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_previous_files_sort, PROCEDURE g_previous_files_sort_w, H_previous_files_sort,
+			       "set-" S_previous_files_sort, PROCEDURE g_set_previous_files_sort_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_show_listener, PROCEDURE g_show_listener, H_show_listener,
-			       "set-" S_show_listener, PROCEDURE g_set_show_listener, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_show_listener, PROCEDURE g_show_listener_w, H_show_listener,
+			       "set-" S_show_listener, PROCEDURE g_set_show_listener_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_show_indices, PROCEDURE g_show_indices, H_show_indices,
-			       "set-" S_show_indices, PROCEDURE g_set_show_indices, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_show_indices, PROCEDURE g_show_indices_w, H_show_indices,
+			       "set-" S_show_indices, PROCEDURE g_set_show_indices_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_show_backtrace, PROCEDURE g_show_backtrace, H_show_backtrace,
-			       "set-" S_show_backtrace, PROCEDURE g_set_show_backtrace, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_show_backtrace, PROCEDURE g_show_backtrace_w, H_show_backtrace,
+			       "set-" S_show_backtrace, PROCEDURE g_set_show_backtrace_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_show_usage_stats, PROCEDURE g_show_usage_stats, H_show_usage_stats,
-			       "set-" S_show_usage_stats, PROCEDURE g_set_show_usage_stats, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_show_usage_stats, PROCEDURE g_show_usage_stats_w, H_show_usage_stats,
+			       "set-" S_show_usage_stats, PROCEDURE g_set_show_usage_stats_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_sinc_width, PROCEDURE g_sinc_width, H_sinc_width,
-			       "set-" S_sinc_width, PROCEDURE g_set_sinc_width, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_sinc_width, PROCEDURE g_sinc_width_w, H_sinc_width,
+			       "set-" S_sinc_width, PROCEDURE g_set_sinc_width_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_hankel_jn, PROCEDURE g_hankel_jn, H_hankel_jn,
-			       "set-" S_hankel_jn, PROCEDURE g_set_hankel_jn, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_hankel_jn, PROCEDURE g_hankel_jn_w, H_hankel_jn,
+			       "set-" S_hankel_jn, PROCEDURE g_set_hankel_jn_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_colormap, PROCEDURE g_color_map, H_colormap,
-			       "set-" S_colormap, PROCEDURE g_set_color_map, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_colormap, PROCEDURE g_color_map_w, H_colormap,
+			       "set-" S_colormap, PROCEDURE g_set_color_map_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_temp_dir, PROCEDURE g_temp_dir, H_temp_dir,
-			       "set-" S_temp_dir, PROCEDURE g_set_temp_dir, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_temp_dir, PROCEDURE g_temp_dir_w, H_temp_dir,
+			       "set-" S_temp_dir, PROCEDURE g_set_temp_dir_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_save_dir, PROCEDURE g_save_dir, H_save_dir,
-			       "set-" S_save_dir, PROCEDURE g_set_save_dir, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_save_dir, PROCEDURE g_save_dir_w, H_save_dir,
+			       "set-" S_save_dir, PROCEDURE g_set_save_dir_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_trap_segfault, PROCEDURE g_trap_segfault, H_trap_segfault,
-			       "set-" S_trap_segfault, PROCEDURE g_set_trap_segfault, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_trap_segfault, PROCEDURE g_trap_segfault_w, H_trap_segfault,
+			       "set-" S_trap_segfault, PROCEDURE g_set_trap_segfault_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_show_selection_transform, PROCEDURE g_show_selection_transform, H_show_selection_transform,
-			       "set-" S_show_selection_transform, PROCEDURE g_set_show_selection_transform, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_show_selection_transform, PROCEDURE g_show_selection_transform_w, H_show_selection_transform,
+			       "set-" S_show_selection_transform, PROCEDURE g_set_show_selection_transform_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_with_mix_tags, PROCEDURE g_with_mix_tags, H_with_mix_tags,
-			       "set-" S_with_mix_tags, PROCEDURE g_set_with_mix_tags, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_with_mix_tags, PROCEDURE g_with_mix_tags_w, H_with_mix_tags,
+			       "set-" S_with_mix_tags, PROCEDURE g_set_with_mix_tags_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_use_sinc_interp, PROCEDURE g_use_sinc_interp, H_use_sinc_interp,
-			       "set-" S_use_sinc_interp, PROCEDURE g_set_use_sinc_interp, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_use_sinc_interp, PROCEDURE g_use_sinc_interp_w, H_use_sinc_interp,
+			       "set-" S_use_sinc_interp, PROCEDURE g_set_use_sinc_interp_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_data_clipped, PROCEDURE g_data_clipped, H_data_clipped,
-			       "set-" S_data_clipped, PROCEDURE g_set_data_clipped, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_data_clipped, PROCEDURE g_data_clipped_w, H_data_clipped,
+			       "set-" S_data_clipped, PROCEDURE g_set_data_clipped_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_vu_font, PROCEDURE g_vu_font, H_vu_font,
-			       "set-" S_vu_font, PROCEDURE g_set_vu_font, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_vu_font, PROCEDURE g_vu_font_w, H_vu_font,
+			       "set-" S_vu_font, PROCEDURE g_set_vu_font_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_vu_font_size, PROCEDURE g_vu_font_size, H_vu_font_size,
-			       "set-" S_vu_font_size, PROCEDURE g_set_vu_font_size, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_vu_font_size, PROCEDURE g_vu_font_size_w, H_vu_font_size,
+			       "set-" S_vu_font_size, PROCEDURE g_set_vu_font_size_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_vu_size, PROCEDURE g_vu_size, H_vu_size,
-			       "set-" S_vu_size, PROCEDURE g_set_vu_size, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_vu_size, PROCEDURE g_vu_size_w, H_vu_size,
+			       "set-" S_vu_size, PROCEDURE g_set_vu_size_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_window_x, PROCEDURE g_window_x, H_window_x,
-			       "set-" S_window_x, PROCEDURE g_set_window_x, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_window_x, PROCEDURE g_window_x_w, H_window_x,
+			       "set-" S_window_x, PROCEDURE g_set_window_x_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_window_y, PROCEDURE g_window_y, H_window_y,
-			       "set-" S_window_y, PROCEDURE g_set_window_y, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_window_y, PROCEDURE g_window_y_w, H_window_y,
+			       "set-" S_window_y, PROCEDURE g_set_window_y_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_zoom_focus_style, PROCEDURE g_zoom_focus_style, H_zoom_focus_style,
-			       "set-" S_zoom_focus_style, PROCEDURE g_set_zoom_focus_style, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_zoom_focus_style, PROCEDURE g_zoom_focus_style_w, H_zoom_focus_style,
+			       "set-" S_zoom_focus_style, PROCEDURE g_set_zoom_focus_style_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_help_text_font, PROCEDURE g_help_text_font, H_help_text_font,
-			       "set-" S_help_text_font, PROCEDURE g_set_help_text_font, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_help_text_font, PROCEDURE g_help_text_font_w, H_help_text_font,
+			       "set-" S_help_text_font, PROCEDURE g_set_help_text_font_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_tiny_font, PROCEDURE g_tiny_font, H_tiny_font,
-			       "set-" S_tiny_font, PROCEDURE g_set_tiny_font, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_tiny_font, PROCEDURE g_tiny_font_w, H_tiny_font,
+			       "set-" S_tiny_font, PROCEDURE g_set_tiny_font_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_button_font, PROCEDURE g_button_font, H_button_font,
-			       "set-" S_button_font, PROCEDURE g_set_button_font, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_button_font, PROCEDURE g_button_font_w, H_button_font,
+			       "set-" S_button_font, PROCEDURE g_set_button_font_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_bold_button_font, PROCEDURE g_bold_button_font, H_bold_button_font,
-			       "set-" S_bold_button_font, PROCEDURE g_set_bold_button_font, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_bold_button_font, PROCEDURE g_bold_button_font_w, H_bold_button_font,
+			       "set-" S_bold_button_font, PROCEDURE g_set_bold_button_font_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_axis_label_font, PROCEDURE g_axis_label_font, H_axis_label_font,
-			       "set-" S_axis_label_font, PROCEDURE g_set_axis_label_font, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_axis_label_font, PROCEDURE g_axis_label_font_w, H_axis_label_font,
+			       "set-" S_axis_label_font, PROCEDURE g_set_axis_label_font_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_axis_numbers_font, PROCEDURE g_axis_numbers_font, H_axis_numbers_font,
-			       "set-" S_axis_numbers_font, PROCEDURE g_set_axis_numbers_font, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_axis_numbers_font, PROCEDURE g_axis_numbers_font_w, H_axis_numbers_font,
+			       "set-" S_axis_numbers_font, PROCEDURE g_set_axis_numbers_font_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_listener_font, PROCEDURE g_listener_font, H_listener_font,
-			       "set-" S_listener_font, PROCEDURE g_set_listener_font, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_listener_font, PROCEDURE g_listener_font_w, H_listener_font,
+			       "set-" S_listener_font, PROCEDURE g_set_listener_font_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_window_width, PROCEDURE g_window_width, H_window_width,
-			       "set-" S_window_width, PROCEDURE g_set_window_width, local_doc, 0, 0, 0, 1);  
+  define_procedure_with_setter(S_window_width, PROCEDURE g_window_width_w, H_window_width,
+			       "set-" S_window_width, PROCEDURE g_set_window_width_w, local_doc, 0, 0, 0, 1);  
 
-  define_procedure_with_setter(S_window_height, PROCEDURE g_window_height, H_window_height,
-			       "set-" S_window_height, PROCEDURE g_set_window_height, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_window_height, PROCEDURE g_window_height_w, H_window_height,
+			       "set-" S_window_height, PROCEDURE g_set_window_height_w, local_doc, 0, 0, 0, 1);
 
 
 #if (!USE_NO_GUI)
   #if HAVE_HTML
   YES_WE_HAVE("snd-html");
-  define_procedure_with_setter(S_html_dir, PROCEDURE g_html_dir, H_html_dir,
-			       "set-" S_html_dir, PROCEDURE g_set_html_dir, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_html_dir, PROCEDURE g_html_dir_w, H_html_dir,
+			       "set-" S_html_dir, PROCEDURE g_set_html_dir_w, local_doc, 0, 0, 1, 0);
   #endif
 
-  define_procedure_with_setter(S_selection_color, PROCEDURE g_selection_color, H_selection_color,
-			       "set-" S_selection_color, PROCEDURE g_set_selection_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_selection_color, PROCEDURE g_selection_color_w, H_selection_color,
+			       "set-" S_selection_color, PROCEDURE g_set_selection_color_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_zoom_color, PROCEDURE g_zoom_color, H_zoom_color,
-			       "set-" S_zoom_color, PROCEDURE g_set_zoom_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_zoom_color, PROCEDURE g_zoom_color_w, H_zoom_color,
+			       "set-" S_zoom_color, PROCEDURE g_set_zoom_color_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_position_color, PROCEDURE g_position_color, H_position_color,
-			       "set-" S_position_color, PROCEDURE g_set_position_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_position_color, PROCEDURE g_position_color_w, H_position_color,
+			       "set-" S_position_color, PROCEDURE g_set_position_color_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_mark_color, PROCEDURE g_mark_color, H_mark_color,
-			       "set-" S_mark_color, PROCEDURE g_set_mark_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_mark_color, PROCEDURE g_mark_color_w, H_mark_color,
+			       "set-" S_mark_color, PROCEDURE g_set_mark_color_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_listener_color, PROCEDURE g_listener_color, H_listener_color,
-			       "set-" S_listener_color, PROCEDURE g_set_listener_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_listener_color, PROCEDURE g_listener_color_w, H_listener_color,
+			       "set-" S_listener_color, PROCEDURE g_set_listener_color_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_listener_text_color, PROCEDURE g_listener_text_color, H_listener_text_color,
-			       "set-" S_listener_text_color, PROCEDURE g_set_listener_text_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_listener_text_color, PROCEDURE g_listener_text_color_w, H_listener_text_color,
+			       "set-" S_listener_text_color, PROCEDURE g_set_listener_text_color_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_enved_waveform_color, PROCEDURE g_enved_waveform_color, H_enved_waveform_color,
-			       "set-" S_enved_waveform_color, PROCEDURE g_set_enved_waveform_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_enved_waveform_color, PROCEDURE g_enved_waveform_color_w, H_enved_waveform_color,
+			       "set-" S_enved_waveform_color, PROCEDURE g_set_enved_waveform_color_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_filter_waveform_color, PROCEDURE g_filter_waveform_color, H_filter_waveform_color,
-			       "set-" S_filter_waveform_color, PROCEDURE g_set_filter_waveform_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_filter_waveform_color, PROCEDURE g_filter_waveform_color_w, H_filter_waveform_color,
+			       "set-" S_filter_waveform_color, PROCEDURE g_set_filter_waveform_color_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_highlight_color, PROCEDURE g_highlight_color, H_highlight_color,
-			       "set-" S_highlight_color, PROCEDURE g_set_highlight_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_highlight_color, PROCEDURE g_highlight_color_w, H_highlight_color,
+			       "set-" S_highlight_color, PROCEDURE g_set_highlight_color_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_cursor_color, PROCEDURE g_cursor_color, H_cursor_color,
-			       "set-" S_cursor_color, PROCEDURE g_set_cursor_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_cursor_color, PROCEDURE g_cursor_color_w, H_cursor_color,
+			       "set-" S_cursor_color, PROCEDURE g_set_cursor_color_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_mix_color, PROCEDURE g_mix_color, H_mix_color,
-			       "set-" S_mix_color, PROCEDURE g_set_mix_color, local_doc, 0, 1, 1, 1);
+  define_procedure_with_setter(S_mix_color, PROCEDURE g_mix_color_w, H_mix_color,
+			       "set-" S_mix_color, PROCEDURE g_set_mix_color_w, local_doc, 0, 1, 1, 1);
 
-  define_procedure_with_setter(S_selected_mix_color, PROCEDURE g_selected_mix_color, H_selected_mix_color,
-			       "set-" S_selected_mix_color, PROCEDURE g_set_selected_mix_color, local_doc, 0, 1, 1, 1);
+  define_procedure_with_setter(S_selected_mix_color, PROCEDURE g_selected_mix_color_w, H_selected_mix_color,
+			       "set-" S_selected_mix_color, PROCEDURE g_set_selected_mix_color_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_text_focus_color, PROCEDURE g_text_focus_color, H_text_focus_color,
-			       "set-" S_text_focus_color, PROCEDURE g_set_text_focus_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_text_focus_color, PROCEDURE g_text_focus_color_w, H_text_focus_color,
+			       "set-" S_text_focus_color, PROCEDURE g_set_text_focus_color_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_sash_color, PROCEDURE g_sash_color, H_sash_color,
-			       "set-" S_sash_color, PROCEDURE g_set_sash_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_sash_color, PROCEDURE g_sash_color_w, H_sash_color,
+			       "set-" S_sash_color, PROCEDURE g_set_sash_color_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_data_color, PROCEDURE g_data_color, H_data_color,
-			       "set-" S_data_color, PROCEDURE g_set_data_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_data_color, PROCEDURE g_data_color_w, H_data_color,
+			       "set-" S_data_color, PROCEDURE g_set_data_color_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_graph_color, PROCEDURE g_graph_color, H_graph_color,
-			       "set-" S_graph_color, PROCEDURE g_set_graph_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_graph_color, PROCEDURE g_graph_color_w, H_graph_color,
+			       "set-" S_graph_color, PROCEDURE g_set_graph_color_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_selected_graph_color, PROCEDURE g_selected_graph_color, H_selected_graph_color,
-			       "set-" S_selected_graph_color, PROCEDURE g_set_selected_graph_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_selected_graph_color, PROCEDURE g_selected_graph_color_w, H_selected_graph_color,
+			       "set-" S_selected_graph_color, PROCEDURE g_set_selected_graph_color_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_selected_data_color, PROCEDURE g_selected_data_color, H_selected_data_color,
-			       "set-" S_selected_data_color, PROCEDURE g_set_selected_data_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_selected_data_color, PROCEDURE g_selected_data_color_w, H_selected_data_color,
+			       "set-" S_selected_data_color, PROCEDURE g_set_selected_data_color_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_basic_color, PROCEDURE g_basic_color, H_basic_color,
-			       "set-" S_basic_color, PROCEDURE g_set_basic_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_basic_color, PROCEDURE g_basic_color_w, H_basic_color,
+			       "set-" S_basic_color, PROCEDURE g_set_basic_color_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_pushed_button_color, PROCEDURE g_pushed_button_color, H_pushed_button_color,
-			       "set-" S_pushed_button_color, PROCEDURE g_set_pushed_button_color, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_pushed_button_color, PROCEDURE g_pushed_button_color_w, H_pushed_button_color,
+			       "set-" S_pushed_button_color, PROCEDURE g_set_pushed_button_color_w, local_doc, 0, 0, 1, 0);
 #endif
 
 
   /* ---------------- FUNCTIONS ---------------- */
 
-  DEFINE_PROC(S_snd_tempnam,         g_snd_tempnam, 0, 0, 0,         H_snd_tempnam);
-  DEFINE_PROC("set-" S_oss_buffers,  g_set_oss_buffers, 2, 0, 0,     H_set_oss_buffers);
-  DEFINE_PROC(S_update_usage_stats,  g_update_usage_stats, 0, 0, 0,  H_update_usage_stats);
-  DEFINE_PROC(S_clear_audio_inputs,  g_clear_audio_inputs, 0, 0, 0,  H_clear_audio_inputs);
-  DEFINE_PROC(S_color_dialog,        g_color_dialog, 0, 0, 0,        H_color_dialog);
-  DEFINE_PROC(S_orientation_dialog,  g_orientation_dialog, 0, 0, 0,  H_orientation_dialog);
-  DEFINE_PROC(S_transform_dialog,    g_transform_dialog, 0, 0, 0,    H_transform_dialog);
-  DEFINE_PROC(S_file_dialog,         g_file_dialog, 0, 0, 0,         H_file_dialog);
-  DEFINE_PROC(S_edit_header_dialog,  g_edit_header_dialog, 0, 1, 0,  H_edit_header_dialog);
-  DEFINE_PROC(S_help_dialog,         g_help_dialog, 2, 0, 0,         H_help_dialog);
-  DEFINE_PROC(S_mix_panel,           g_mix_panel, 0, 0, 0,           H_mix_panel);
+  DEFINE_PROC(S_snd_tempnam,         g_snd_tempnam_w, 0, 0, 0,         H_snd_tempnam);
+  DEFINE_PROC("set-" S_oss_buffers,  g_set_oss_buffers_w, 2, 0, 0,     H_set_oss_buffers);
+  DEFINE_PROC(S_update_usage_stats,  g_update_usage_stats_w, 0, 0, 0,  H_update_usage_stats);
+  DEFINE_PROC(S_clear_audio_inputs,  g_clear_audio_inputs_w, 0, 0, 0,  H_clear_audio_inputs);
+  DEFINE_PROC(S_color_dialog,        g_color_dialog_w, 0, 0, 0,        H_color_dialog);
+  DEFINE_PROC(S_orientation_dialog,  g_orientation_dialog_w, 0, 0, 0,  H_orientation_dialog);
+  DEFINE_PROC(S_transform_dialog,    g_transform_dialog_w, 0, 0, 0,    H_transform_dialog);
+  DEFINE_PROC(S_file_dialog,         g_file_dialog_w, 0, 0, 0,         H_file_dialog);
+  DEFINE_PROC(S_edit_header_dialog,  g_edit_header_dialog_w, 0, 1, 0,  H_edit_header_dialog);
+  DEFINE_PROC(S_help_dialog,         g_help_dialog_w, 2, 0, 0,         H_help_dialog);
+  DEFINE_PROC(S_mix_panel,           g_mix_panel_w, 0, 0, 0,           H_mix_panel);
 
-  DEFINE_PROC(S_max_sounds,          g_max_sounds, 0, 0, 0,          H_max_sounds);
-  DEFINE_PROC(S_sounds,              g_sounds, 0, 0, 0,              H_sounds);
-  DEFINE_PROC(S_yes_or_no_p,         g_yes_or_no_p, 1, 0, 0,         H_yes_or_no_p);
-  DEFINE_PROC(S_update_time_graph,   g_update_time_graph, 0, 2, 0,   H_update_time_graph);
-  DEFINE_PROC(S_update_lisp_graph,   g_update_lisp_graph, 0, 2, 0,   H_update_lisp_graph);
-  DEFINE_PROC(S_update_transform,    g_update_transform, 0, 2, 0,    H_update_transform);
-  DEFINE_PROC(S_abort,               g_abort, 0, 0, 0,               H_abort);
-  DEFINE_PROC(S_dismiss_all_dialogs, g_dismiss_all_dialogs, 0, 0, 0, H_dismiss_all_dialogs);
-  DEFINE_PROC(S_c_g,                 g_abortq, 0, 0, 0,              H_abortQ);
-  DEFINE_PROC(S_snd_version,         g_snd_version, 0, 0, 0,         H_snd_version);
-  DEFINE_PROC(S_equalize_panes,      g_equalize_panes, 0, 1, 0,      H_equalize_panes);
-  DEFINE_PROC(S_open_sound_file,     g_open_sound_file, 0, 4, 0,     H_open_sound_file);
-  DEFINE_PROC(S_close_sound_file,    g_close_sound_file, 2, 0, 0,    H_close_sound_file);
+  DEFINE_PROC(S_max_sounds,          g_max_sounds_w, 0, 0, 0,          H_max_sounds);
+  DEFINE_PROC(S_sounds,              g_sounds_w, 0, 0, 0,              H_sounds);
+  DEFINE_PROC(S_yes_or_no_p,         g_yes_or_no_p_w, 1, 0, 0,         H_yes_or_no_p);
+  DEFINE_PROC(S_update_time_graph,   g_update_time_graph_w, 0, 2, 0,   H_update_time_graph);
+  DEFINE_PROC(S_update_lisp_graph,   g_update_lisp_graph_w, 0, 2, 0,   H_update_lisp_graph);
+  DEFINE_PROC(S_update_transform,    g_update_transform_w, 0, 2, 0,    H_update_transform);
+  DEFINE_PROC(S_abort,               g_abort_w, 0, 0, 0,               H_abort);
+  DEFINE_PROC(S_dismiss_all_dialogs, g_dismiss_all_dialogs_w, 0, 0, 0, H_dismiss_all_dialogs);
+  DEFINE_PROC(S_c_g,                 g_abortq_w, 0, 0, 0,              H_abortQ);
+  DEFINE_PROC(S_snd_version,         g_snd_version_w, 0, 0, 0,         H_snd_version);
+  DEFINE_PROC(S_equalize_panes,      g_equalize_panes_w, 0, 1, 0,      H_equalize_panes);
+  DEFINE_PROC(S_open_sound_file,     g_open_sound_file_w, 0, 4, 0,     H_open_sound_file);
+  DEFINE_PROC(S_close_sound_file,    g_close_sound_file_w, 2, 0, 0,    H_close_sound_file);
   DEFINE_PROC(S_vct2sound_file,      vct2soundfile, 3, 0, 0,         H_vct2sound_file);
-  DEFINE_PROC(S_graph,               g_graph, 1, 8, 0,               H_graph);
+  DEFINE_PROC(S_graph,               g_graph_w, 1, 8, 0,               H_graph);
   DEFINE_PROC(S_samples2vct,         samples2vct, 0, 6, 0,           H_samples2vct);
   DEFINE_PROC(S_samples2sound_data,  samples2sound_data, 0, 7, 0,    H_samples2sound_data);
-  DEFINE_PROC(S_start_progress_report, g_start_progress_report, 0, 1, 0, H_start_progress_report);
-  DEFINE_PROC(S_finish_progress_report, g_finish_progress_report, 0, 1, 0, H_finish_progress_report);
-  DEFINE_PROC(S_progress_report,     g_progress_report, 1, 4, 0,     H_progress_report);
-  DEFINE_PROC(S_snd_print,           g_snd_print, 1, 0, 0,           H_snd_print);
+  DEFINE_PROC(S_start_progress_report, g_start_progress_report_w, 0, 1, 0, H_start_progress_report);
+  DEFINE_PROC(S_finish_progress_report, g_finish_progress_report_w, 0, 1, 0, H_finish_progress_report);
+  DEFINE_PROC(S_progress_report,     g_progress_report_w, 1, 4, 0,     H_progress_report);
+  DEFINE_PROC(S_snd_print,           g_snd_print_w, 1, 0, 0,           H_snd_print);
 
-  DEFINE_PROC("describe-audio",      g_mus_audio_describe, 0, 0, 0,  H_mus_audio_describe);
+  DEFINE_PROC("describe-audio",      g_mus_audio_describe_w, 0, 0, 0,  H_mus_audio_describe);
   /* this (describe-audio) is going away someday */
 
-  DEFINE_PROC(S_mus_audio_describe,  g_mus_audio_describe, 0, 0, 0,  H_mus_audio_describe);
-  DEFINE_PROC("little-endian?",      g_little_endian, 0, 0, 0,       "return #t if host is little endian");
-  DEFINE_PROC("snd-completion",      g_snd_completion, 1, 0, 0,      "return completion of arg");
+  DEFINE_PROC(S_mus_audio_describe,  g_mus_audio_describe_w, 0, 0, 0,  H_mus_audio_describe);
+  DEFINE_PROC("little-endian?",      g_little_endian_w, 0, 0, 0,       "return #t if host is little endian");
+  DEFINE_PROC("snd-completion",      g_snd_completion_w, 1, 0, 0,      "return completion of arg");
 #if HAVE_GUILE
-  DEFINE_PROC("gc-off",              g_gc_off, 0, 0, 0,              "turn off GC");
-  DEFINE_PROC("gc-on",               g_gc_on, 0, 0, 0,               "turn on GC");
+  DEFINE_PROC("gc-off",              g_gc_off_w, 0, 0, 0,              "turn off GC");
+  DEFINE_PROC("gc-on",               g_gc_on_w, 0, 0, 0,               "turn on GC");
 #endif
 
   #define H_during_open_hook S_during_open_hook " (fd name reason) is called after file is opened, but before data has been read. \n\
@@ -3296,7 +3661,10 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
 #endif
 #if HAVE_GUILE && HAVE_DLFCN_H
-  g_init_dl(local_doc);
+  DEFINE_PROC("dlopen", PROCEDURE g_dlopen_w, 1, 0 ,0, "");
+  DEFINE_PROC("dlclose", PROCEDURE g_dlclose_w, 1, 0 ,0, "");
+  DEFINE_PROC("dlerror", PROCEDURE g_dlerror_w, 0, 0 ,0, "");
+  DEFINE_PROC("dlinit", PROCEDURE g_dlinit_w, 2, 0 ,0, "");
 #endif
 #if HAVE_LADSPA
   g_ladspa_to_snd(local_doc);
@@ -3333,6 +3701,12 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
 #if USE_NO_GUI
   YES_WE_HAVE("snd-nogui");
+#endif
+#if HAVE_GUILE
+  YES_WE_HAVE("snd-guile");
+#endif
+#if HAVE_RUBY
+  YES_WE_HAVE("snd-ruby");
 #endif
 
   YES_WE_HAVE("snd");
@@ -3519,7 +3893,7 @@ char *Scheme_global_variable_to_Ruby(char *name)
   int i, len;
   new_name = Scheme_to_Ruby(name);
   len = snd_strlen(new_name);
-  for (i = len - 1; i > 0; i--)
+  for (i = len; i > 0; i--)
     new_name[i] = new_name[i - 1];
   new_name[0] = '$';
   return(new_name);

@@ -627,12 +627,26 @@ static SCM g_region_row_widgets(void)
 }
 #endif
 
+#ifdef ARGIFY_1
+NARGIFY_0(g_region_dialog_w, g_region_dialog)
+#if DEBUGGING
+NARGIFY_0(g_region_dialog_widgets_w, g_region_dialog_widgets)
+NARGIFY_0(g_region_row_widgets_w, g_region_row_widgets)
+#endif
+#else
+#define g_region_dialog_w g_region_dialog
+#if DEBUGGING
+#define g_region_dialog_widgets_w g_region_dialog_widgets
+#define g_region_row_widgets_w g_region_row_widgets
+#endif
+#endif
+
 void g_init_gxregion(SCM local_doc)
 {
-  DEFINE_PROC(S_region_dialog, g_region_dialog, 0, 0, 0,  H_region_dialog);
+  DEFINE_PROC(S_region_dialog, g_region_dialog_w, 0, 0, 0,  H_region_dialog);
 
 #if DEBUGGING
-  DEFINE_PROC("region-dialog-widgets", g_region_dialog_widgets, 0, 0, 0, "");
-  DEFINE_PROC("region-row-widgets", g_region_row_widgets, 0, 0, 0, "");
+  DEFINE_PROC("region-dialog-widgets", g_region_dialog_widgets_w, 0, 0, 0, "");
+  DEFINE_PROC("region-row-widgets", g_region_row_widgets_w, 0, 0, 0, "");
 #endif
 }

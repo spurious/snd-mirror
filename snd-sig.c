@@ -2999,37 +2999,92 @@ static SCM g_filter_selection(SCM e, SCM order)
   return(scm_return_first(TRUE_VALUE, e));
 }
 
+#ifdef ARGIFY_1
+ARGIFY_6(g_scan_chan_w, g_scan_chan)
+ARGIFY_7(g_map_chan_w, g_map_chan)
+ARGIFY_5(g_find_w, g_find)
+ARGIFY_5(g_count_matches_w, g_count_matches)
+ARGIFY_4(g_smooth_sound_w, g_smooth_sound)
+NARGIFY_0(g_smooth_selection_w, g_smooth_selection)
+ARGIFY_3(g_reverse_sound_w, g_reverse_sound)
+NARGIFY_0(g_reverse_selection_w, g_reverse_selection)
+ARGIFY_6(g_swap_channels_w, g_swap_channels)
+ARGIFY_4(g_insert_silence_w, g_insert_silence)
+NARGIFY_1(g_fht_w, g_fht)
+ARGIFY_1(g_scale_selection_to_w, g_scale_selection_to)
+ARGIFY_1(g_scale_selection_by_w, g_scale_selection_by)
+ARGIFY_3(g_scale_to_w, g_scale_to)
+ARGIFY_3(g_scale_by_w, g_scale_by)
+ARGIFY_4(g_env_selection_w, g_env_selection)
+ARGIFY_7(g_env_sound_w, g_env_sound)
+ARGIFY_3(g_fft_w, g_fft)
+ARGIFY_4(g_snd_spectrum_w, g_snd_spectrum)
+ARGIFY_2(g_convolve_w, g_convolve)
+ARGIFY_5(g_convolve_with_w, g_convolve_with)
+ARGIFY_2(g_convolve_selection_with_w, g_convolve_selection_with)
+ARGIFY_5(g_src_sound_w, g_src_sound)
+ARGIFY_2(g_src_selection_w, g_src_selection)
+ARGIFY_5(g_filter_sound_w, g_filter_sound)
+ARGIFY_2(g_filter_selection_w, g_filter_selection)
+#else
+#define g_scan_chan_w g_scan_chan
+#define g_map_chan_w g_map_chan
+#define g_find_w g_find
+#define g_count_matches_w g_count_matches
+#define g_smooth_sound_w g_smooth_sound
+#define g_smooth_selection_w g_smooth_selection
+#define g_reverse_sound_w g_reverse_sound
+#define g_reverse_selection_w g_reverse_selection
+#define g_swap_channels_w g_swap_channels
+#define g_insert_silence_w g_insert_silence
+#define g_fht_w g_fht
+#define g_scale_selection_to_w g_scale_selection_to
+#define g_scale_selection_by_w g_scale_selection_by
+#define g_scale_to_w g_scale_to
+#define g_scale_by_w g_scale_by
+#define g_env_selection_w g_env_selection
+#define g_env_sound_w g_env_sound
+#define g_fft_w g_fft
+#define g_snd_spectrum_w g_snd_spectrum
+#define g_convolve_w g_convolve
+#define g_convolve_with_w g_convolve_with
+#define g_convolve_selection_with_w g_convolve_selection_with
+#define g_src_sound_w g_src_sound
+#define g_src_selection_w g_src_selection
+#define g_filter_sound_w g_filter_sound
+#define g_filter_selection_w g_filter_selection
+#endif
 
 void g_init_sig(SCM local_doc)
 {
-  DEFINE_PROC(S_scan_chan,               g_scan_chan, 1, 5, 0,               H_scan_chan);
-  DEFINE_PROC(S_map_chan,                g_map_chan, 1, 6, 0,                H_map_chan);
-  DEFINE_PROC(S_find,                    g_find, 1, 4, 0,                    H_find);
-  DEFINE_PROC(S_count_matches,           g_count_matches, 1, 4, 0,           H_count_matches);
+  DEFINE_PROC(S_scan_chan,               g_scan_chan_w, 1, 5, 0,               H_scan_chan);
+  DEFINE_PROC(S_map_chan,                g_map_chan_w, 1, 6, 0,                H_map_chan);
+  DEFINE_PROC(S_find,                    g_find_w, 1, 4, 0,                    H_find);
+  DEFINE_PROC(S_count_matches,           g_count_matches_w, 1, 4, 0,           H_count_matches);
 
-  DEFINE_PROC(S_smooth_sound,            g_smooth_sound, 2, 2, 0,            H_smooth_sound);
-  DEFINE_PROC(S_smooth_selection,        g_smooth_selection, 0, 0, 0,        H_smooth_selection);
-  DEFINE_PROC(S_reverse_sound,           g_reverse_sound, 0, 3, 0,           H_reverse_sound);
-  DEFINE_PROC(S_reverse_selection,       g_reverse_selection, 0, 0, 0,       H_reverse_selection);
-  DEFINE_PROC(S_swap_channels,           g_swap_channels, 0, 6, 0,           H_swap_channels);
-  DEFINE_PROC(S_insert_silence,          g_insert_silence, 2, 2, 0,          H_insert_silence);
-  DEFINE_PROC(S_fht,                     g_fht, 1, 0, 0,                     H_fht);
+  DEFINE_PROC(S_smooth_sound,            g_smooth_sound_w, 2, 2, 0,            H_smooth_sound);
+  DEFINE_PROC(S_smooth_selection,        g_smooth_selection_w, 0, 0, 0,        H_smooth_selection);
+  DEFINE_PROC(S_reverse_sound,           g_reverse_sound_w, 0, 3, 0,           H_reverse_sound);
+  DEFINE_PROC(S_reverse_selection,       g_reverse_selection_w, 0, 0, 0,       H_reverse_selection);
+  DEFINE_PROC(S_swap_channels,           g_swap_channels_w, 0, 6, 0,           H_swap_channels);
+  DEFINE_PROC(S_insert_silence,          g_insert_silence_w, 2, 2, 0,          H_insert_silence);
+  DEFINE_PROC(S_fht,                     g_fht_w, 1, 0, 0,                     H_fht);
 
-  DEFINE_PROC(S_scale_selection_to,      g_scale_selection_to, 0, 1, 0,      H_scale_selection_to);
-  DEFINE_PROC(S_scale_selection_by,      g_scale_selection_by, 0, 1, 0,      H_scale_selection_by);
-  DEFINE_PROC(S_scale_to,                g_scale_to, 0, 3, 0,                H_scale_to);
-  DEFINE_PROC(S_scale_by,                g_scale_by, 0, 3, 0,                H_scale_by);
-  DEFINE_PROC(S_env_selection,           g_env_selection, 1, 3, 0,           H_env_selection);
-  DEFINE_PROC(S_env_sound,               g_env_sound, 1, 6, 0,               H_env_sound);
-  DEFINE_PROC(S_fft,                     g_fft, 2, 1, 0,                     H_fft);
-  DEFINE_PROC(S_snd_spectrum,            g_snd_spectrum, 1, 3, 0,            H_snd_spectrum);
-  DEFINE_PROC(S_convolve_arrays,         g_convolve, 1, 1, 0,                H_convolve);
-  DEFINE_PROC(S_convolve_with,           g_convolve_with, 1, 4, 0,           H_convolve_with);
-  DEFINE_PROC(S_convolve_selection_with, g_convolve_selection_with, 1, 1, 0, H_convolve_selection_with);
-  DEFINE_PROC(S_src_sound,               g_src_sound, 1, 4, 0,               H_src_sound);
-  DEFINE_PROC(S_src_selection,           g_src_selection, 1, 1, 0,           H_src_selection);
-  DEFINE_PROC(S_filter_sound,            g_filter_sound, 1, 4, 0,            H_filter_sound);
-  DEFINE_PROC(S_filter_selection,        g_filter_selection, 1, 1, 0,        H_filter_selection);
+  DEFINE_PROC(S_scale_selection_to,      g_scale_selection_to_w, 0, 1, 0,      H_scale_selection_to);
+  DEFINE_PROC(S_scale_selection_by,      g_scale_selection_by_w, 0, 1, 0,      H_scale_selection_by);
+  DEFINE_PROC(S_scale_to,                g_scale_to_w, 0, 3, 0,                H_scale_to);
+  DEFINE_PROC(S_scale_by,                g_scale_by_w, 0, 3, 0,                H_scale_by);
+  DEFINE_PROC(S_env_selection,           g_env_selection_w, 1, 3, 0,           H_env_selection);
+  DEFINE_PROC(S_env_sound,               g_env_sound_w, 1, 6, 0,               H_env_sound);
+  DEFINE_PROC(S_fft,                     g_fft_w, 2, 1, 0,                     H_fft);
+  DEFINE_PROC(S_snd_spectrum,            g_snd_spectrum_w, 1, 3, 0,            H_snd_spectrum);
+  DEFINE_PROC(S_convolve_arrays,         g_convolve_w, 1, 1, 0,                H_convolve);
+  DEFINE_PROC(S_convolve_with,           g_convolve_with_w, 1, 4, 0,           H_convolve_with);
+  DEFINE_PROC(S_convolve_selection_with, g_convolve_selection_with_w, 1, 1, 0, H_convolve_selection_with);
+  DEFINE_PROC(S_src_sound,               g_src_sound_w, 1, 4, 0,               H_src_sound);
+  DEFINE_PROC(S_src_selection,           g_src_selection_w, 1, 1, 0,           H_src_selection);
+  DEFINE_PROC(S_filter_sound,            g_filter_sound_w, 1, 4, 0,            H_filter_sound);
+  DEFINE_PROC(S_filter_selection,        g_filter_selection_w, 1, 1, 0,        H_filter_selection);
 
 }
 

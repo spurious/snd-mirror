@@ -616,7 +616,7 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select, int
   if (mcf) FREE(mcf);
   if (sp)
     {
-      SND_SET(memo_sound, TO_SMALL_SCM_INT(sp->index));
+      SND_SET_VAR(memo_sound, TO_SMALL_SCM_INT(sp->index));
       sp->write_date = file_write_date(sp->filename);
       sp->need_update = 0;
       ss->active_sounds++;
@@ -2254,24 +2254,43 @@ static SCM g_sound_files_in_directory(SCM dirname)
   return(res);
 }
 
+#ifdef ARGIFY_1
+NARGIFY_1(g_add_sound_file_extension_w, g_add_sound_file_extension)
+NARGIFY_1(g_file_write_date_w, g_file_write_date)
+ARGIFY_1(g_soundfont_info_w, g_soundfont_info)
+NARGIFY_1(g_preload_directory_w, g_preload_directory)
+NARGIFY_1(g_preload_file_w, g_preload_file)
+NARGIFY_1(g_sound_files_in_directory_w, g_sound_files_in_directory)
+ARGIFY_1(g_sound_loop_info_w, g_sound_loop_info)
+ARGIFY_2(g_set_sound_loop_info_w, g_set_sound_loop_info)
+NARGIFY_0(g_previous_files_sort_procedure_w, g_previous_files_sort_procedure)
+NARGIFY_1(g_set_previous_files_sort_procedure_w, g_set_previous_files_sort_procedure)
+#else
+#define g_add_sound_file_extension_w g_add_sound_file_extension
+#define g_file_write_date_w g_file_write_date
+#define g_soundfont_info_w g_soundfont_info
+#define g_preload_directory_w g_preload_directory
+#define g_preload_file_w g_preload_file
+#define g_sound_files_in_directory_w g_sound_files_in_directory
+#define g_sound_loop_info_w g_sound_loop_info
+#define g_set_sound_loop_info_w g_set_sound_loop_info
+#define g_previous_files_sort_procedure_w g_previous_files_sort_procedure
+#define g_set_previous_files_sort_procedure_w g_set_previous_files_sort_procedure
+#endif
+
 void g_init_file(SCM local_doc)
 {
-  DEFINE_PROC(S_add_sound_file_extension,    g_add_sound_file_extension, 1, 0, 0,     H_add_sound_file_extension);
-  DEFINE_PROC(S_file_write_date,             g_file_write_date, 1, 0, 0,              H_file_write_date);
-  DEFINE_PROC(S_soundfont_info,              g_soundfont_info, 0, 1, 0,               H_soundfont_info);
-  DEFINE_PROC(S_preload_directory,           g_preload_directory, 1, 0, 0,            H_preload_directory);
-  DEFINE_PROC(S_preload_file,                g_preload_file, 1, 0, 0,                 H_preload_file);
-  DEFINE_PROC(S_sound_files_in_directory,    g_sound_files_in_directory, 1, 0, 0,     H_sound_files_in_directory);
+  DEFINE_PROC(S_add_sound_file_extension,    g_add_sound_file_extension_w, 1, 0, 0,     H_add_sound_file_extension);
+  DEFINE_PROC(S_file_write_date,             g_file_write_date_w, 1, 0, 0,              H_file_write_date);
+  DEFINE_PROC(S_soundfont_info,              g_soundfont_info_w, 0, 1, 0,               H_soundfont_info);
+  DEFINE_PROC(S_preload_directory,           g_preload_directory_w, 1, 0, 0,            H_preload_directory);
+  DEFINE_PROC(S_preload_file,                g_preload_file_w, 1, 0, 0,                 H_preload_file);
+  DEFINE_PROC(S_sound_files_in_directory,    g_sound_files_in_directory_w, 1, 0, 0,     H_sound_files_in_directory);
 
-  define_procedure_with_setter(S_sound_loop_info, PROCEDURE g_sound_loop_info, H_sound_loop_info,
-			       "set-" S_sound_loop_info, PROCEDURE g_set_sound_loop_info, local_doc, 0, 1, 1, 1);
-#if HAVE_GUILE
-#if HAVE_SCM_C_DEFINE
-  memo_sound = scm_permanent_object(scm_c_define(S_memo_sound, FALSE_VALUE));
-#else
-  memo_sound = gh_define(S_memo_sound, FALSE_VALUE);
-#endif
-#endif
+  define_procedure_with_setter(S_sound_loop_info, PROCEDURE g_sound_loop_info_w, H_sound_loop_info,
+			       "set-" S_sound_loop_info, PROCEDURE g_set_sound_loop_info_w, local_doc, 0, 1, 1, 1);
+
+  DEFINE_VAR(S_memo_sound, memo_sound, FALSE_VALUE);
 
   #define H_open_hook S_open_hook " (filename) is called each time a file is opened (before the actual open). \
 If it returns #t, the file is not opened."
@@ -2294,6 +2313,6 @@ be omitted (location defaults to 0, and length defaults to the file length in by
 
   open_raw_sound_hook = MAKE_HOOK(S_open_raw_sound_hook, 2, H_open_raw_sound_hook);    /* args = filename current-result */
 
-  define_procedure_with_setter(S_previous_files_sort_procedure, PROCEDURE g_previous_files_sort_procedure, H_previous_files_sort_procedure,
-			       "set-" S_previous_files_sort_procedure, PROCEDURE g_set_previous_files_sort_procedure, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_previous_files_sort_procedure, PROCEDURE g_previous_files_sort_procedure_w, H_previous_files_sort_procedure,
+			       "set-" S_previous_files_sort_procedure, PROCEDURE g_set_previous_files_sort_procedure_w, local_doc, 0, 0, 1, 0);
 }

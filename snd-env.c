@@ -1486,6 +1486,47 @@ static SCM g_enved_dialog(void)
   return(SND_WRAP(create_envelope_editor(get_global_state()))); 
 }
 
+#ifdef ARGIFY_1
+NARGIFY_0(g_enved_base_w, g_enved_base)
+NARGIFY_1(g_set_enved_base_w, g_set_enved_base)
+NARGIFY_0(g_enved_power_w, g_enved_power)
+NARGIFY_1(g_set_enved_power_w, g_set_enved_power)
+NARGIFY_0(g_enved_clip_p_w, g_enved_clip_p)
+ARGIFY_1(g_set_enved_clip_p_w, g_set_enved_clip_p)
+NARGIFY_0(g_enved_exp_p_w, g_enved_exp_p)
+ARGIFY_1(g_set_enved_exp_p_w, g_set_enved_exp_p)
+NARGIFY_0(g_enved_target_w, g_enved_target)
+NARGIFY_1(g_set_enved_target_w, g_set_enved_target)
+NARGIFY_0(g_enved_wave_p_w, g_enved_wave_p)
+ARGIFY_1(g_set_enved_wave_p_w, g_set_enved_wave_p)
+NARGIFY_0(g_enved_in_dB_w, g_enved_in_dB)
+ARGIFY_1(g_set_enved_in_dB_w, g_set_enved_in_dB)
+NARGIFY_0(g_enved_filter_order_w, g_enved_filter_order)
+NARGIFY_1(g_set_enved_filter_order_w, g_set_enved_filter_order)
+NARGIFY_0(g_enved_dialog_w, g_enved_dialog)
+ARGIFY_1(g_save_envelopes_w, g_save_envelopes)
+NARGIFY_2(g_define_envelope_w, g_define_envelope)
+#else
+#define g_enved_base_w g_enved_base
+#define g_set_enved_base_w g_set_enved_base
+#define g_enved_power_w g_enved_power
+#define g_set_enved_power_w g_set_enved_power
+#define g_enved_clip_p_w g_enved_clip_p
+#define g_set_enved_clip_p_w g_set_enved_clip_p
+#define g_enved_exp_p_w g_enved_exp_p
+#define g_set_enved_exp_p_w g_set_enved_exp_p
+#define g_enved_target_w g_enved_target
+#define g_set_enved_target_w g_set_enved_target
+#define g_enved_wave_p_w g_enved_wave_p
+#define g_set_enved_wave_p_w g_set_enved_wave_p
+#define g_enved_in_dB_w g_enved_in_dB
+#define g_set_enved_in_dB_w g_set_enved_in_dB
+#define g_enved_filter_order_w g_enved_filter_order
+#define g_set_enved_filter_order_w g_set_enved_filter_order
+#define g_enved_dialog_w g_enved_dialog
+#define g_save_envelopes_w g_save_envelopes
+#define g_define_envelope_w g_define_envelope
+#endif
 
 void g_init_env(SCM local_doc)
 {
@@ -1493,41 +1534,41 @@ void g_init_env(SCM local_doc)
   #define H_enved_spectrum "The value for " S_enved_target " that sets the envelope editor 'flt' button."
   #define H_enved_srate "The value for " S_enved_target " that sets the envelope editor 'src' button."
 
-  DEFINE_VAR(S_enved_amplitude,       ENVED_AMPLITUDE, H_enved_amplitude);
-  DEFINE_VAR(S_enved_spectrum,        ENVED_SPECTRUM,  H_enved_spectrum);
-  DEFINE_VAR(S_enved_srate,           ENVED_SRATE,     H_enved_srate);
+  DEFINE_CONST(S_enved_amplitude,       ENVED_AMPLITUDE, H_enved_amplitude);
+  DEFINE_CONST(S_enved_spectrum,        ENVED_SPECTRUM,  H_enved_spectrum);
+  DEFINE_CONST(S_enved_srate,           ENVED_SRATE,     H_enved_srate);
 
-  define_procedure_with_setter(S_enved_base, PROCEDURE g_enved_base, H_enved_base,
-			       "set-" S_enved_base, PROCEDURE g_set_enved_base, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_enved_base, PROCEDURE g_enved_base_w, H_enved_base,
+			       "set-" S_enved_base, PROCEDURE g_set_enved_base_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_enved_power, PROCEDURE g_enved_power, H_enved_power,
-			       "set-" S_enved_power, PROCEDURE g_set_enved_power, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_enved_power, PROCEDURE g_enved_power_w, H_enved_power,
+			       "set-" S_enved_power, PROCEDURE g_set_enved_power_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_enved_clip_p, PROCEDURE g_enved_clip_p, H_enved_clip_p,
-			       "set-" S_enved_clip_p, PROCEDURE g_set_enved_clip_p, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_enved_clip_p, PROCEDURE g_enved_clip_p_w, H_enved_clip_p,
+			       "set-" S_enved_clip_p, PROCEDURE g_set_enved_clip_p_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_enved_exp_p, PROCEDURE g_enved_exp_p, H_enved_exp_p,
-			       "set-" S_enved_exp_p, PROCEDURE g_set_enved_exp_p, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_enved_exp_p, PROCEDURE g_enved_exp_p_w, H_enved_exp_p,
+			       "set-" S_enved_exp_p, PROCEDURE g_set_enved_exp_p_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_enved_target, PROCEDURE g_enved_target, H_enved_target,
-			       "set-" S_enved_target, PROCEDURE g_set_enved_target, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_enved_target, PROCEDURE g_enved_target_w, H_enved_target,
+			       "set-" S_enved_target, PROCEDURE g_set_enved_target_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_enved_wave_p, PROCEDURE g_enved_wave_p, H_enved_wave_p,
-			       "set-" S_enved_wave_p, PROCEDURE g_set_enved_wave_p, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_enved_wave_p, PROCEDURE g_enved_wave_p_w, H_enved_wave_p,
+			       "set-" S_enved_wave_p, PROCEDURE g_set_enved_wave_p_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_enved_in_dB, PROCEDURE g_enved_in_dB, H_enved_in_dB,
-			       "set-" S_enved_in_dB, PROCEDURE g_set_enved_in_dB, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_enved_in_dB, PROCEDURE g_enved_in_dB_w, H_enved_in_dB,
+			       "set-" S_enved_in_dB, PROCEDURE g_set_enved_in_dB_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_enved_filter_order, PROCEDURE g_enved_filter_order, H_enved_filter_order,
-			       "set-" S_enved_filter_order, PROCEDURE g_set_enved_filter_order, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_enved_filter_order, PROCEDURE g_enved_filter_order_w, H_enved_filter_order,
+			       "set-" S_enved_filter_order, PROCEDURE g_set_enved_filter_order_w, local_doc, 0, 0, 1, 0);
 
-  DEFINE_PROC(S_enved_dialog,    g_enved_dialog, 0, 0, 0,     H_enved_dialog);
-  DEFINE_PROC(S_save_envelopes,  g_save_envelopes, 0, 1, 0,   H_save_envelopes);
-  DEFINE_PROC(S_define_envelope, g_define_envelope, 2, 0, 0,  H_define_envelope);
+  DEFINE_PROC(S_enved_dialog,    g_enved_dialog_w, 0, 0, 0,     H_enved_dialog);
+  DEFINE_PROC(S_save_envelopes,  g_save_envelopes_w, 0, 1, 0,   H_save_envelopes);
+  DEFINE_PROC(S_define_envelope, g_define_envelope_w, 2, 0, 0,  H_define_envelope);
 
-  DEFINE_VAR(S_enved_add_point,    ENVED_ADD_POINT,    S_enved_hook " 'reason' arg when point is added");
-  DEFINE_VAR(S_enved_delete_point, ENVED_DELETE_POINT, S_enved_hook " 'reason' arg when point is deleted");
-  DEFINE_VAR(S_enved_move_point,   ENVED_MOVE_POINT,   S_enved_hook " 'reason' arg when point is moved");
+  DEFINE_CONST(S_enved_add_point,    ENVED_ADD_POINT,    S_enved_hook " 'reason' arg when point is added");
+  DEFINE_CONST(S_enved_delete_point, ENVED_DELETE_POINT, S_enved_hook " 'reason' arg when point is deleted");
+  DEFINE_CONST(S_enved_move_point,   ENVED_MOVE_POINT,   S_enved_hook " 'reason' arg when point is moved");
 
   #define H_enved_hook S_enved_hook " (env pt new-x new-y reason)\n\
 Each time a breakpoint is changed in the envelope editor, this hook \

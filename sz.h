@@ -48,7 +48,7 @@ SCM scm_return_first(SCM a, ...);
 #define VECTOR_ELEMENTS(a)           SCHEME_VEC_ELS(a)
 #define NEW_OBJECT(a, b, c)
 #define HOOK_PROCEDURES(a)
-#define SND_SET(a, b)
+#define SND_SET_VAR(a, b)
 
 #define RETURN_NEW_OBJECT(Tag, Val) 0
 #define OBJECT_REF(a) 0
@@ -98,6 +98,7 @@ SCM scm_return_first(SCM a, ...);
 #define SND_WRAPPED(a) 0
 #define HOOKED(a) 0
 #define DEFINE_PROC(Name, Func, ReqArg, OptArg, RstArg, Doc)
+#define DEFINE_CONST(a, b, c)
 #define DEFINE_VAR(a, b, c)
 #define WITH_REVERSED_CHANNEL_ARGS(name_reversed, name)
 

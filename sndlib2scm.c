@@ -1053,6 +1053,118 @@ header data table to the file given or stdout if none"
   return(res);
 }
 
+#ifdef ARGIFY_1
+NARGIFY_1(sound_data_length_w, sound_data_length)
+NARGIFY_1(sound_data_chans_w, sound_data_chans)
+NARGIFY_3(sound_data_ref_w, sound_data_ref)
+NARGIFY_4(sound_data_set_w, sound_data_set)
+NARGIFY_2(g_make_sound_data_w, g_make_sound_data)
+NARGIFY_1(g_sound_data_p_w, g_sound_data_p)
+ARGIFY_3(sound_data2vct_w, sound_data2vct)
+ARGIFY_3(vct2sound_data_w, vct2sound_data)
+NARGIFY_1(g_sound_samples_w, g_sound_samples)
+NARGIFY_1(g_sound_frames_w, g_sound_frames)
+NARGIFY_1(g_sound_duration_w, g_sound_duration)
+NARGIFY_1(g_sound_datum_size_w, g_sound_datum_size)
+NARGIFY_1(g_sound_data_location_w, g_sound_data_location)
+NARGIFY_1(g_sound_chans_w, g_sound_chans)
+NARGIFY_1(g_sound_srate_w, g_sound_srate)
+NARGIFY_1(g_sound_header_type_w, g_sound_header_type)
+NARGIFY_1(g_sound_data_format_w, g_sound_data_format)
+NARGIFY_1(g_sound_length_w, g_sound_length)
+NARGIFY_1(g_sound_type_specifier_w, g_sound_type_specifier)
+NARGIFY_1(g_sound_type_name_w, g_sound_type_name)
+NARGIFY_1(g_sound_format_name_w, g_sound_format_name)
+NARGIFY_1(g_sound_comment_w, g_sound_comment)
+NARGIFY_1(g_sound_write_date_w, g_sound_write_date)
+NARGIFY_1(g_sound_bytes_per_sample_w, g_sound_bytes_per_sample)
+NARGIFY_1(g_sound_loop_info_w, g_sound_loop_info)
+NARGIFY_1(g_sound_max_amp_w, g_sound_max_amp)
+NARGIFY_2(g_sound_set_max_amp_w, g_sound_set_max_amp)
+NARGIFY_1(g_sound_max_amp_exists_w, g_sound_max_amp_exists)
+NARGIFY_0(g_report_audio_state_w, g_report_audio_state)
+NARGIFY_3(g_audio_outputs_w, g_audio_outputs)
+NARGIFY_1(g_open_sound_input_w, g_open_sound_input)
+NARGIFY_1(g_close_sound_input_w, g_close_sound_input)
+NARGIFY_1(g_close_audio_w, g_close_audio)
+NARGIFY_0(g_save_audio_state_w, g_save_audio_state)
+NARGIFY_0(g_restore_audio_state_w, g_restore_audio_state)
+NARGIFY_0(g_audio_systems_w, g_audio_systems)
+NARGIFY_4(g_read_audio_state_w, g_read_audio_state)
+NARGIFY_4(g_write_audio_state_w, g_write_audio_state)
+NARGIFY_2(g_mus_set_data_clipped_w, g_mus_set_data_clipped)
+NARGIFY_1(g_mus_prescaler_w, g_mus_prescaler)
+NARGIFY_2(g_mus_set_prescaler_w, g_mus_set_prescaler)
+NARGIFY_1(g_mus_expand_filename_w, g_mus_expand_filename)
+NARGIFY_3(g_write_audio_w, g_write_audio)
+NARGIFY_3(g_read_audio_w, g_read_audio)
+ARGIFY_6(g_open_sound_output_w, g_open_sound_output)
+NARGIFY_5(g_reopen_sound_output_w, g_reopen_sound_output)
+NARGIFY_2(g_close_sound_output_w, g_close_sound_output)
+NARGIFY_5(g_read_sound_w, g_read_sound)
+NARGIFY_5(g_write_sound_w, g_write_sound)
+NARGIFY_3(g_seek_sound_w, g_seek_sound)
+NARGIFY_2(g_seek_sound_frame_w, g_seek_sound_frame)
+NARGIFY_5(g_open_audio_output_w, g_open_audio_output)
+NARGIFY_5(g_open_audio_input_w, g_open_audio_input)
+ARGIFY_1(g_mus_sound_report_cache_w, g_mus_sound_report_cache)
+#else
+#define sound_data_length_w sound_data_length
+#define sound_data_chans_w sound_data_chans
+#define sound_data_ref_w sound_data_ref
+#define sound_data_set_w sound_data_set
+#define g_make_sound_data_w g_make_sound_data
+#define g_sound_data_p_w g_sound_data_p
+#define sound_data2vct_w sound_data2vct
+#define vct2sound_data_w vct2sound_data
+#define g_sound_samples_w g_sound_samples
+#define g_sound_frames_w g_sound_frames
+#define g_sound_duration_w g_sound_duration
+#define g_sound_datum_size_w g_sound_datum_size
+#define g_sound_data_location_w g_sound_data_location
+#define g_sound_chans_w g_sound_chans
+#define g_sound_srate_w g_sound_srate
+#define g_sound_header_type_w g_sound_header_type
+#define g_sound_data_format_w g_sound_data_format
+#define g_sound_length_w g_sound_length
+#define g_sound_type_specifier_w g_sound_type_specifier
+#define g_sound_type_name_w g_sound_type_name
+#define g_sound_format_name_w g_sound_format_name
+#define g_sound_comment_w g_sound_comment
+#define g_sound_write_date_w g_sound_write_date
+#define g_sound_bytes_per_sample_w g_sound_bytes_per_sample
+#define g_sound_loop_info_w g_sound_loop_info
+#define g_sound_max_amp_w g_sound_max_amp
+#define g_sound_set_max_amp_w g_sound_set_max_amp
+#define g_sound_max_amp_exists_w g_sound_max_amp_exists
+#define g_report_audio_state_w g_report_audio_state
+#define g_audio_outputs_w g_audio_outputs
+#define g_open_sound_input_w g_open_sound_input
+#define g_close_sound_input_w g_close_sound_input
+#define g_close_audio_w g_close_audio
+#define g_save_audio_state_w g_save_audio_state
+#define g_restore_audio_state_w g_restore_audio_state
+#define g_audio_systems_w g_audio_systems
+#define g_read_audio_state_w g_read_audio_state
+#define g_write_audio_state_w g_write_audio_state
+#define g_mus_set_data_clipped_w g_mus_set_data_clipped
+#define g_mus_prescaler_w g_mus_prescaler
+#define g_mus_set_prescaler_w g_mus_set_prescaler
+#define g_mus_expand_filename_w g_mus_expand_filename
+#define g_write_audio_w g_write_audio
+#define g_read_audio_w g_read_audio
+#define g_open_sound_output_w g_open_sound_output
+#define g_reopen_sound_output_w g_reopen_sound_output
+#define g_close_sound_output_w g_close_sound_output
+#define g_read_sound_w g_read_sound
+#define g_write_sound_w g_write_sound
+#define g_seek_sound_w g_seek_sound
+#define g_seek_sound_frame_w g_seek_sound_frame
+#define g_open_audio_output_w g_open_audio_output
+#define g_open_audio_input_w g_open_audio_input
+#define g_mus_sound_report_cache_w g_mus_sound_report_cache
+#endif
+
 void mus_sndlib2scm_initialize(void)
 {
   SCM local_doc;
@@ -1072,134 +1184,134 @@ void mus_sndlib2scm_initialize(void)
   sound_data_tag = rb_define_class("SoundData", rb_cObject);
 #endif
 
-  DEFINE_VAR(S_mus_out_format, MUS_OUT_FORMAT, "sample format for fastest IO");
+  DEFINE_CONST(S_mus_out_format, MUS_OUT_FORMAT, "sample format for fastest IO");
 
-  DEFINE_VAR(S_mus_next,    MUS_NEXT,    "NeXT (Sun) sound header id");
-  DEFINE_VAR(S_mus_aifc,    MUS_AIFC,    "AIFC sound header id");
-  DEFINE_VAR(S_mus_riff,    MUS_RIFF,    "RIFF (wave) sound header id");
-  DEFINE_VAR(S_mus_nist,    MUS_NIST,    "NIST (Sphere) sound header id");
-  DEFINE_VAR(S_mus_raw,     MUS_RAW,     "raw (headerless) sound header id");
-  DEFINE_VAR(S_mus_ircam,   MUS_IRCAM,   "IRCAM sound header id");
-  DEFINE_VAR(S_mus_aiff,    MUS_AIFF,    "AIFF (old-style) sound header id");
+  DEFINE_CONST(S_mus_next,    MUS_NEXT,    "NeXT (Sun) sound header id");
+  DEFINE_CONST(S_mus_aifc,    MUS_AIFC,    "AIFC sound header id");
+  DEFINE_CONST(S_mus_riff,    MUS_RIFF,    "RIFF (wave) sound header id");
+  DEFINE_CONST(S_mus_nist,    MUS_NIST,    "NIST (Sphere) sound header id");
+  DEFINE_CONST(S_mus_raw,     MUS_RAW,     "raw (headerless) sound header id");
+  DEFINE_CONST(S_mus_ircam,   MUS_IRCAM,   "IRCAM sound header id");
+  DEFINE_CONST(S_mus_aiff,    MUS_AIFF,    "AIFF (old-style) sound header id");
 
-  DEFINE_VAR(S_mus_bshort,  MUS_BSHORT,  "big-endian short data format id");
-  DEFINE_VAR(S_mus_lshort,  MUS_LSHORT,  "little-endian short data format id");
-  DEFINE_VAR(S_mus_mulaw,   MUS_MULAW,   "mulaw (8-bit) data format id");
-  DEFINE_VAR(S_mus_alaw,    MUS_ALAW,    "alaw (8-bit) data format id");
-  DEFINE_VAR(S_mus_byte,    MUS_BYTE,    "signed byte data format id");
-  DEFINE_VAR(S_mus_ubyte,   MUS_UBYTE,   "unsigned byte data format id");
-  DEFINE_VAR(S_mus_bfloat,  MUS_BFLOAT,  "big-endian float data format id");
-  DEFINE_VAR(S_mus_lfloat,  MUS_LFLOAT,  "little-endian float data format id");
-  DEFINE_VAR(S_mus_bint,    MUS_BINT,    "big-endian int data format id");
-  DEFINE_VAR(S_mus_lint,    MUS_LINT,    "little-endian int data format id");
-  DEFINE_VAR(S_mus_bintn,   MUS_BINTN,   "normalized big-endian int data format id");
-  DEFINE_VAR(S_mus_lintn,   MUS_LINTN,   "normalized little-endian int data format id");
-  DEFINE_VAR(S_mus_b24int,  MUS_B24INT,  "big-endian 24-bit data format id");
-  DEFINE_VAR(S_mus_l24int,  MUS_L24INT,  "little-endian 24-bit data format id");
-  DEFINE_VAR(S_mus_bdouble, MUS_BDOUBLE, "big-endian double data format id");
-  DEFINE_VAR(S_mus_ldouble, MUS_LDOUBLE, "little-endian double data format id");
-  DEFINE_VAR(S_mus_ubshort, MUS_UBSHORT, "unsigned big-endian short data format id");
-  DEFINE_VAR(S_mus_ulshort, MUS_ULSHORT, "unsigned little-endian short data format id");
+  DEFINE_CONST(S_mus_bshort,  MUS_BSHORT,  "big-endian short data format id");
+  DEFINE_CONST(S_mus_lshort,  MUS_LSHORT,  "little-endian short data format id");
+  DEFINE_CONST(S_mus_mulaw,   MUS_MULAW,   "mulaw (8-bit) data format id");
+  DEFINE_CONST(S_mus_alaw,    MUS_ALAW,    "alaw (8-bit) data format id");
+  DEFINE_CONST(S_mus_byte,    MUS_BYTE,    "signed byte data format id");
+  DEFINE_CONST(S_mus_ubyte,   MUS_UBYTE,   "unsigned byte data format id");
+  DEFINE_CONST(S_mus_bfloat,  MUS_BFLOAT,  "big-endian float data format id");
+  DEFINE_CONST(S_mus_lfloat,  MUS_LFLOAT,  "little-endian float data format id");
+  DEFINE_CONST(S_mus_bint,    MUS_BINT,    "big-endian int data format id");
+  DEFINE_CONST(S_mus_lint,    MUS_LINT,    "little-endian int data format id");
+  DEFINE_CONST(S_mus_bintn,   MUS_BINTN,   "normalized big-endian int data format id");
+  DEFINE_CONST(S_mus_lintn,   MUS_LINTN,   "normalized little-endian int data format id");
+  DEFINE_CONST(S_mus_b24int,  MUS_B24INT,  "big-endian 24-bit data format id");
+  DEFINE_CONST(S_mus_l24int,  MUS_L24INT,  "little-endian 24-bit data format id");
+  DEFINE_CONST(S_mus_bdouble, MUS_BDOUBLE, "big-endian double data format id");
+  DEFINE_CONST(S_mus_ldouble, MUS_LDOUBLE, "little-endian double data format id");
+  DEFINE_CONST(S_mus_ubshort, MUS_UBSHORT, "unsigned big-endian short data format id");
+  DEFINE_CONST(S_mus_ulshort, MUS_ULSHORT, "unsigned little-endian short data format id");
 
-  DEFINE_VAR(S_mus_audio_default,        MUS_AUDIO_DEFAULT,        "default audio device");
-  DEFINE_VAR(S_mus_audio_duplex_default, MUS_AUDIO_DUPLEX_DEFAULT, "default duplex device");
-  DEFINE_VAR(S_mus_audio_line_out,       MUS_AUDIO_LINE_OUT,       "audio line-out device");
-  DEFINE_VAR(S_mus_audio_line_in,        MUS_AUDIO_LINE_IN,        "audio line-in device");
-  DEFINE_VAR(S_mus_audio_microphone,     MUS_AUDIO_MICROPHONE,     "microphone device");
-  DEFINE_VAR(S_mus_audio_speakers,       MUS_AUDIO_SPEAKERS,       "speakers device (a mixer kludge)");
-  DEFINE_VAR(S_mus_audio_dac_out,        MUS_AUDIO_DAC_OUT,        "DAC out device");
-  DEFINE_VAR(S_mus_audio_adat_in,        MUS_AUDIO_ADAT_IN,        "ADAT in device");
-  DEFINE_VAR(S_mus_audio_aes_in,         MUS_AUDIO_AES_IN,         "AES in device");
-  DEFINE_VAR(S_mus_audio_digital_in,     MUS_AUDIO_DIGITAL_IN,     "digital audio in device");
-  DEFINE_VAR(S_mus_audio_digital_out,    MUS_AUDIO_DIGITAL_OUT,    "digital audio out device");
-  DEFINE_VAR(S_mus_audio_adat_out,       MUS_AUDIO_ADAT_OUT,       "ADAT out device");
-  DEFINE_VAR(S_mus_audio_aes_out,        MUS_AUDIO_AES_OUT,        "AES out device");
-  DEFINE_VAR(S_mus_audio_dac_filter,     MUS_AUDIO_DAC_FILTER,     "DAC filter 'device' (a mixer kludge)");
-  DEFINE_VAR(S_mus_audio_mixer,          MUS_AUDIO_MIXER,          "the 'mixer' device");
-  DEFINE_VAR(S_mus_audio_line1,          MUS_AUDIO_LINE1,          "audio line 1 device");
-  DEFINE_VAR(S_mus_audio_line2,          MUS_AUDIO_LINE2,          "audio line 2device");
-  DEFINE_VAR(S_mus_audio_line3,          MUS_AUDIO_LINE3,          "audio line 3device");
-  DEFINE_VAR(S_mus_audio_aux_input,      MUS_AUDIO_AUX_INPUT,      "aux audio in device");
-  DEFINE_VAR(S_mus_audio_cd,             MUS_AUDIO_CD,             "CD in device");
-  DEFINE_VAR(S_mus_audio_aux_output,     MUS_AUDIO_AUX_OUTPUT,     "aux audio out device");
-  DEFINE_VAR(S_mus_audio_spdif_in,       MUS_AUDIO_SPDIF_IN,       "SPDIF in device");
-  DEFINE_VAR(S_mus_audio_spdif_out,      MUS_AUDIO_SPDIF_OUT,      "SPDIF out device");
-  DEFINE_VAR(S_mus_audio_direction,      MUS_AUDIO_DIRECTION,      "audio sample flow direction (mus-audio-read)");
-  DEFINE_VAR(S_mus_audio_samples_per_channel, MUS_AUDIO_SAMPLES_PER_CHANNEL, "samples per channel (mus-audio-read)");
+  DEFINE_CONST(S_mus_audio_default,        MUS_AUDIO_DEFAULT,        "default audio device");
+  DEFINE_CONST(S_mus_audio_duplex_default, MUS_AUDIO_DUPLEX_DEFAULT, "default duplex device");
+  DEFINE_CONST(S_mus_audio_line_out,       MUS_AUDIO_LINE_OUT,       "audio line-out device");
+  DEFINE_CONST(S_mus_audio_line_in,        MUS_AUDIO_LINE_IN,        "audio line-in device");
+  DEFINE_CONST(S_mus_audio_microphone,     MUS_AUDIO_MICROPHONE,     "microphone device");
+  DEFINE_CONST(S_mus_audio_speakers,       MUS_AUDIO_SPEAKERS,       "speakers device (a mixer kludge)");
+  DEFINE_CONST(S_mus_audio_dac_out,        MUS_AUDIO_DAC_OUT,        "DAC out device");
+  DEFINE_CONST(S_mus_audio_adat_in,        MUS_AUDIO_ADAT_IN,        "ADAT in device");
+  DEFINE_CONST(S_mus_audio_aes_in,         MUS_AUDIO_AES_IN,         "AES in device");
+  DEFINE_CONST(S_mus_audio_digital_in,     MUS_AUDIO_DIGITAL_IN,     "digital audio in device");
+  DEFINE_CONST(S_mus_audio_digital_out,    MUS_AUDIO_DIGITAL_OUT,    "digital audio out device");
+  DEFINE_CONST(S_mus_audio_adat_out,       MUS_AUDIO_ADAT_OUT,       "ADAT out device");
+  DEFINE_CONST(S_mus_audio_aes_out,        MUS_AUDIO_AES_OUT,        "AES out device");
+  DEFINE_CONST(S_mus_audio_dac_filter,     MUS_AUDIO_DAC_FILTER,     "DAC filter 'device' (a mixer kludge)");
+  DEFINE_CONST(S_mus_audio_mixer,          MUS_AUDIO_MIXER,          "the 'mixer' device");
+  DEFINE_CONST(S_mus_audio_line1,          MUS_AUDIO_LINE1,          "audio line 1 device");
+  DEFINE_CONST(S_mus_audio_line2,          MUS_AUDIO_LINE2,          "audio line 2device");
+  DEFINE_CONST(S_mus_audio_line3,          MUS_AUDIO_LINE3,          "audio line 3device");
+  DEFINE_CONST(S_mus_audio_aux_input,      MUS_AUDIO_AUX_INPUT,      "aux audio in device");
+  DEFINE_CONST(S_mus_audio_cd,             MUS_AUDIO_CD,             "CD in device");
+  DEFINE_CONST(S_mus_audio_aux_output,     MUS_AUDIO_AUX_OUTPUT,     "aux audio out device");
+  DEFINE_CONST(S_mus_audio_spdif_in,       MUS_AUDIO_SPDIF_IN,       "SPDIF in device");
+  DEFINE_CONST(S_mus_audio_spdif_out,      MUS_AUDIO_SPDIF_OUT,      "SPDIF out device");
+  DEFINE_CONST(S_mus_audio_direction,      MUS_AUDIO_DIRECTION,      "audio sample flow direction (mus-audio-read)");
+  DEFINE_CONST(S_mus_audio_samples_per_channel, MUS_AUDIO_SAMPLES_PER_CHANNEL, "samples per channel (mus-audio-read)");
 
-  DEFINE_VAR(S_mus_audio_amp,     MUS_AUDIO_AMP,     "mixer amp field id");
-  DEFINE_VAR(S_mus_audio_srate,   MUS_AUDIO_SRATE,   "mixer srate field id");
-  DEFINE_VAR(S_mus_audio_channel, MUS_AUDIO_CHANNEL, "mixer channel field id");
-  DEFINE_VAR(S_mus_audio_format,  MUS_AUDIO_FORMAT,  "mixer data format field id");
-  DEFINE_VAR(S_mus_audio_port,    MUS_AUDIO_PORT,    "mixer port");
-  DEFINE_VAR(S_mus_audio_imix,    MUS_AUDIO_IMIX,    "mixer 'imix' field id");
-  DEFINE_VAR(S_mus_audio_igain,   MUS_AUDIO_IGAIN,   "mixer 'igain' field id");
-  DEFINE_VAR(S_mus_audio_reclev,  MUS_AUDIO_RECLEV,  "mixer 'reclev' field id");
-  DEFINE_VAR(S_mus_audio_pcm,     MUS_AUDIO_PCM,     "mixer 'pcm' field id");
-  DEFINE_VAR(S_mus_audio_pcm2,    MUS_AUDIO_PCM2,    "mixer 'pcm2' field id");
-  DEFINE_VAR(S_mus_audio_ogain,   MUS_AUDIO_OGAIN,   "mixer 'ogain' field id");
-  DEFINE_VAR(S_mus_audio_line,    MUS_AUDIO_LINE,    "mixer 'line' field id");
-  DEFINE_VAR(S_mus_audio_synth,   MUS_AUDIO_SYNTH,   "mixer 'synth' field id");
-  DEFINE_VAR(S_mus_audio_bass,    MUS_AUDIO_BASS,    "mixer 'bass' field id");
-  DEFINE_VAR(S_mus_audio_treble,  MUS_AUDIO_TREBLE,  "mixer 'treble' field id");
+  DEFINE_CONST(S_mus_audio_amp,     MUS_AUDIO_AMP,     "mixer amp field id");
+  DEFINE_CONST(S_mus_audio_srate,   MUS_AUDIO_SRATE,   "mixer srate field id");
+  DEFINE_CONST(S_mus_audio_channel, MUS_AUDIO_CHANNEL, "mixer channel field id");
+  DEFINE_CONST(S_mus_audio_format,  MUS_AUDIO_FORMAT,  "mixer data format field id");
+  DEFINE_CONST(S_mus_audio_port,    MUS_AUDIO_PORT,    "mixer port");
+  DEFINE_CONST(S_mus_audio_imix,    MUS_AUDIO_IMIX,    "mixer 'imix' field id");
+  DEFINE_CONST(S_mus_audio_igain,   MUS_AUDIO_IGAIN,   "mixer 'igain' field id");
+  DEFINE_CONST(S_mus_audio_reclev,  MUS_AUDIO_RECLEV,  "mixer 'reclev' field id");
+  DEFINE_CONST(S_mus_audio_pcm,     MUS_AUDIO_PCM,     "mixer 'pcm' field id");
+  DEFINE_CONST(S_mus_audio_pcm2,    MUS_AUDIO_PCM2,    "mixer 'pcm2' field id");
+  DEFINE_CONST(S_mus_audio_ogain,   MUS_AUDIO_OGAIN,   "mixer 'ogain' field id");
+  DEFINE_CONST(S_mus_audio_line,    MUS_AUDIO_LINE,    "mixer 'line' field id");
+  DEFINE_CONST(S_mus_audio_synth,   MUS_AUDIO_SYNTH,   "mixer 'synth' field id");
+  DEFINE_CONST(S_mus_audio_bass,    MUS_AUDIO_BASS,    "mixer 'bass' field id");
+  DEFINE_CONST(S_mus_audio_treble,  MUS_AUDIO_TREBLE,  "mixer 'treble' field id");
 
-  DEFINE_PROC(S_sound_data_length,        sound_data_length, 1, 0, 0,       H_sound_data_length);
-  DEFINE_PROC(S_sound_data_chans,         sound_data_chans, 1, 0, 0,        H_sound_data_chans);
-  DEFINE_PROC(S_sound_data_ref,           sound_data_ref, 3, 0, 0,          H_sound_data_ref);
-  DEFINE_PROC(S_sound_data_setB,          sound_data_set, 4, 0, 0,          H_sound_data_setB);
-  DEFINE_PROC(S_make_sound_data,          g_make_sound_data, 2, 0, 0,       H_make_sound_data);
-  DEFINE_PROC(S_sound_data_p,             g_sound_data_p, 1, 0, 0,          H_sound_data_p);
-  DEFINE_PROC(S_sound_data2vct,           sound_data2vct, 1, 2, 0,          H_sound_data2vct);
-  DEFINE_PROC(S_vct2sound_data,           vct2sound_data, 1, 2, 0,          H_vct2sound_data);
-  DEFINE_PROC(S_mus_sound_samples,        g_sound_samples, 1, 0, 0,         H_mus_sound_samples);
-  DEFINE_PROC(S_mus_sound_frames,         g_sound_frames, 1, 0, 0,          H_mus_sound_frames);
-  DEFINE_PROC(S_mus_sound_duration,       g_sound_duration, 1, 0, 0,        H_mus_sound_duration);
-  DEFINE_PROC(S_mus_sound_datum_size,     g_sound_datum_size, 1, 0, 0,      H_mus_sound_datum_size);
-  DEFINE_PROC(S_mus_sound_data_location,  g_sound_data_location, 1, 0, 0,   H_mus_sound_data_location);
-  DEFINE_PROC(S_mus_sound_chans,          g_sound_chans, 1, 0, 0,           H_mus_sound_chans);
-  DEFINE_PROC(S_mus_sound_srate,          g_sound_srate, 1, 0, 0,           H_mus_sound_srate);
-  DEFINE_PROC(S_mus_sound_header_type,    g_sound_header_type, 1, 0, 0,     H_mus_sound_header_type);
-  DEFINE_PROC(S_mus_sound_data_format,    g_sound_data_format, 1, 0, 0,     H_mus_sound_data_format);
-  DEFINE_PROC(S_mus_sound_length,         g_sound_length, 1, 0, 0,          H_mus_sound_length	);
-  DEFINE_PROC(S_mus_sound_type_specifier, g_sound_type_specifier, 1, 0, 0,  H_mus_sound_type_specifier);
-  DEFINE_PROC(S_mus_header_type_name,     g_sound_type_name, 1, 0, 0,       H_mus_header_type_name);
-  DEFINE_PROC(S_mus_data_format_name,     g_sound_format_name, 1, 0, 0,     H_mus_data_format_name);
-  DEFINE_PROC(S_mus_sound_comment,        g_sound_comment, 1, 0, 0,         H_mus_sound_comment);
-  DEFINE_PROC(S_mus_sound_write_date,     g_sound_write_date, 1, 0, 0,      H_mus_sound_write_date);
-  DEFINE_PROC(S_mus_data_format_bytes_per_sample, g_sound_bytes_per_sample, 1, 0, 0, H_mus_data_format_bytes_per_sample);
-  DEFINE_PROC(S_mus_sound_loop_info,      g_sound_loop_info, 1, 0, 0,       H_mus_sound_loop_info);
-  DEFINE_PROC(S_mus_sound_max_amp,        g_sound_max_amp, 1, 0, 0,         H_mus_sound_max_amp);
-  DEFINE_PROC(S_mus_sound_set_max_amp,    g_sound_set_max_amp, 2, 0, 0,     H_mus_sound_set_max_amp);
-  DEFINE_PROC(S_mus_sound_max_amp_exists, g_sound_max_amp_exists, 1, 0, 0,  H_mus_sound_max_amp_exists);
-  DEFINE_PROC(S_mus_audio_report,         g_report_audio_state, 0, 0, 0,    H_mus_audio_report);
-  DEFINE_PROC(S_mus_audio_sun_outputs,    g_audio_outputs, 3, 0, 0,         H_mus_audio_sun_outputs);
-  DEFINE_PROC(S_mus_sound_open_input,     g_open_sound_input, 1, 0, 0,      H_mus_sound_open_input);
-  DEFINE_PROC(S_mus_sound_close_input,    g_close_sound_input, 1, 0, 0,     H_mus_sound_close_input);
-  DEFINE_PROC(S_mus_audio_close,          g_close_audio, 1, 0, 0,           H_mus_audio_close);
-  DEFINE_PROC(S_mus_audio_save,           g_save_audio_state, 0, 0, 0,      H_mus_audio_save);
-  DEFINE_PROC(S_mus_audio_restore,        g_restore_audio_state, 0, 0, 0,   H_mus_audio_restore);
-  DEFINE_PROC(S_mus_audio_systems,        g_audio_systems, 0, 0, 0,         H_mus_audio_systems);
-  DEFINE_PROC(S_mus_audio_mixer_read,     g_read_audio_state, 4, 0, 0,      H_mus_audio_mixer_read);
-  DEFINE_PROC(S_mus_audio_mixer_write,    g_write_audio_state, 4, 0, 0,     H_mus_audio_mixer_write);
-  DEFINE_PROC(S_mus_file_set_data_clipped, g_mus_set_data_clipped, 2, 0, 0, H_mus_file_set_data_clipped);
-  DEFINE_PROC(S_mus_file_prescaler,       g_mus_prescaler, 1, 0, 0,         H_mus_file_prescaler);
-  DEFINE_PROC(S_mus_file_set_prescaler,   g_mus_set_prescaler, 2, 0, 0,     H_mus_file_set_prescaler);
-  DEFINE_PROC(S_mus_expand_filename,      g_mus_expand_filename, 1, 0, 0,   H_mus_expand_filename);
-  DEFINE_PROC(S_mus_audio_write,          g_write_audio, 3, 0, 0,           H_mus_audio_write);
-  DEFINE_PROC(S_mus_audio_read,           g_read_audio, 3, 0, 0,            H_mus_audio_read);
-  DEFINE_PROC(S_mus_sound_open_output,    g_open_sound_output, 5, 1, 0,     H_mus_sound_open_output);
-  DEFINE_PROC(S_mus_sound_reopen_output,  g_reopen_sound_output, 5, 0, 0,   H_mus_sound_reopen_output);
-  DEFINE_PROC(S_mus_sound_close_output,   g_close_sound_output, 2, 0, 0,    H_mus_sound_close_output);
-  DEFINE_PROC(S_mus_sound_read,           g_read_sound, 5, 0, 0,            H_mus_sound_read);
-  DEFINE_PROC(S_mus_sound_write,          g_write_sound, 5, 0, 0,           H_mus_sound_write);
-  DEFINE_PROC(S_mus_sound_seek,           g_seek_sound, 3, 0, 0,            H_mus_sound_seek);
-  DEFINE_PROC(S_mus_sound_seek_frame,     g_seek_sound_frame, 2, 0, 0,      H_mus_sound_seek_frame);
-  DEFINE_PROC(S_mus_audio_open_output,    g_open_audio_output, 5, 0, 0,     H_mus_audio_open_output);
-  DEFINE_PROC(S_mus_audio_open_input,     g_open_audio_input, 5, 0, 0,      H_mus_audio_open_input);
-  DEFINE_PROC(S_mus_sound_report_cache,   g_mus_sound_report_cache, 0, 1, 0,H_mus_sound_report_cache);
+  DEFINE_PROC(S_sound_data_length,        sound_data_length_w, 1, 0, 0,       H_sound_data_length);
+  DEFINE_PROC(S_sound_data_chans,         sound_data_chans_w, 1, 0, 0,        H_sound_data_chans);
+  DEFINE_PROC(S_sound_data_ref,           sound_data_ref_w, 3, 0, 0,          H_sound_data_ref);
+  DEFINE_PROC(S_sound_data_setB,          sound_data_set_w, 4, 0, 0,          H_sound_data_setB);
+  DEFINE_PROC(S_make_sound_data,          g_make_sound_data_w, 2, 0, 0,       H_make_sound_data);
+  DEFINE_PROC(S_sound_data_p,             g_sound_data_p_w, 1, 0, 0,          H_sound_data_p);
+  DEFINE_PROC(S_sound_data2vct,           sound_data2vct_w, 1, 2, 0,          H_sound_data2vct);
+  DEFINE_PROC(S_vct2sound_data,           vct2sound_data_w, 1, 2, 0,          H_vct2sound_data);
+  DEFINE_PROC(S_mus_sound_samples,        g_sound_samples_w, 1, 0, 0,         H_mus_sound_samples);
+  DEFINE_PROC(S_mus_sound_frames,         g_sound_frames_w, 1, 0, 0,          H_mus_sound_frames);
+  DEFINE_PROC(S_mus_sound_duration,       g_sound_duration_w, 1, 0, 0,        H_mus_sound_duration);
+  DEFINE_PROC(S_mus_sound_datum_size,     g_sound_datum_size_w, 1, 0, 0,      H_mus_sound_datum_size);
+  DEFINE_PROC(S_mus_sound_data_location,  g_sound_data_location_w, 1, 0, 0,   H_mus_sound_data_location);
+  DEFINE_PROC(S_mus_sound_chans,          g_sound_chans_w, 1, 0, 0,           H_mus_sound_chans);
+  DEFINE_PROC(S_mus_sound_srate,          g_sound_srate_w, 1, 0, 0,           H_mus_sound_srate);
+  DEFINE_PROC(S_mus_sound_header_type,    g_sound_header_type_w, 1, 0, 0,     H_mus_sound_header_type);
+  DEFINE_PROC(S_mus_sound_data_format,    g_sound_data_format_w, 1, 0, 0,     H_mus_sound_data_format);
+  DEFINE_PROC(S_mus_sound_length,         g_sound_length_w, 1, 0, 0,          H_mus_sound_length	);
+  DEFINE_PROC(S_mus_sound_type_specifier, g_sound_type_specifier_w, 1, 0, 0,  H_mus_sound_type_specifier);
+  DEFINE_PROC(S_mus_header_type_name,     g_sound_type_name_w, 1, 0, 0,       H_mus_header_type_name);
+  DEFINE_PROC(S_mus_data_format_name,     g_sound_format_name_w, 1, 0, 0,     H_mus_data_format_name);
+  DEFINE_PROC(S_mus_sound_comment,        g_sound_comment_w, 1, 0, 0,         H_mus_sound_comment);
+  DEFINE_PROC(S_mus_sound_write_date,     g_sound_write_date_w, 1, 0, 0,      H_mus_sound_write_date);
+  DEFINE_PROC(S_mus_data_format_bytes_per_sample, g_sound_bytes_per_sample_w, 1, 0, 0, H_mus_data_format_bytes_per_sample);
+  DEFINE_PROC(S_mus_sound_loop_info,      g_sound_loop_info_w, 1, 0, 0,       H_mus_sound_loop_info);
+  DEFINE_PROC(S_mus_sound_max_amp,        g_sound_max_amp_w, 1, 0, 0,         H_mus_sound_max_amp);
+  DEFINE_PROC(S_mus_sound_set_max_amp,    g_sound_set_max_amp_w, 2, 0, 0,     H_mus_sound_set_max_amp);
+  DEFINE_PROC(S_mus_sound_max_amp_exists, g_sound_max_amp_exists_w, 1, 0, 0,  H_mus_sound_max_amp_exists);
+  DEFINE_PROC(S_mus_audio_report,         g_report_audio_state_w, 0, 0, 0,    H_mus_audio_report);
+  DEFINE_PROC(S_mus_audio_sun_outputs,    g_audio_outputs_w, 3, 0, 0,         H_mus_audio_sun_outputs);
+  DEFINE_PROC(S_mus_sound_open_input,     g_open_sound_input_w, 1, 0, 0,      H_mus_sound_open_input);
+  DEFINE_PROC(S_mus_sound_close_input,    g_close_sound_input_w, 1, 0, 0,     H_mus_sound_close_input);
+  DEFINE_PROC(S_mus_audio_close,          g_close_audio_w, 1, 0, 0,           H_mus_audio_close);
+  DEFINE_PROC(S_mus_audio_save,           g_save_audio_state_w, 0, 0, 0,      H_mus_audio_save);
+  DEFINE_PROC(S_mus_audio_restore,        g_restore_audio_state_w, 0, 0, 0,   H_mus_audio_restore);
+  DEFINE_PROC(S_mus_audio_systems,        g_audio_systems_w, 0, 0, 0,         H_mus_audio_systems);
+  DEFINE_PROC(S_mus_audio_mixer_read,     g_read_audio_state_w, 4, 0, 0,      H_mus_audio_mixer_read);
+  DEFINE_PROC(S_mus_audio_mixer_write,    g_write_audio_state_w, 4, 0, 0,     H_mus_audio_mixer_write);
+  DEFINE_PROC(S_mus_file_set_data_clipped, g_mus_set_data_clipped_w, 2, 0, 0, H_mus_file_set_data_clipped);
+  DEFINE_PROC(S_mus_file_prescaler,       g_mus_prescaler_w, 1, 0, 0,         H_mus_file_prescaler);
+  DEFINE_PROC(S_mus_file_set_prescaler,   g_mus_set_prescaler_w, 2, 0, 0,     H_mus_file_set_prescaler);
+  DEFINE_PROC(S_mus_expand_filename,      g_mus_expand_filename_w, 1, 0, 0,   H_mus_expand_filename);
+  DEFINE_PROC(S_mus_audio_write,          g_write_audio_w, 3, 0, 0,           H_mus_audio_write);
+  DEFINE_PROC(S_mus_audio_read,           g_read_audio_w, 3, 0, 0,            H_mus_audio_read);
+  DEFINE_PROC(S_mus_sound_open_output,    g_open_sound_output_w, 5, 1, 0,     H_mus_sound_open_output);
+  DEFINE_PROC(S_mus_sound_reopen_output,  g_reopen_sound_output_w, 5, 0, 0,   H_mus_sound_reopen_output);
+  DEFINE_PROC(S_mus_sound_close_output,   g_close_sound_output_w, 2, 0, 0,    H_mus_sound_close_output);
+  DEFINE_PROC(S_mus_sound_read,           g_read_sound_w, 5, 0, 0,            H_mus_sound_read);
+  DEFINE_PROC(S_mus_sound_write,          g_write_sound_w, 5, 0, 0,           H_mus_sound_write);
+  DEFINE_PROC(S_mus_sound_seek,           g_seek_sound_w, 3, 0, 0,            H_mus_sound_seek);
+  DEFINE_PROC(S_mus_sound_seek_frame,     g_seek_sound_frame_w, 2, 0, 0,      H_mus_sound_seek_frame);
+  DEFINE_PROC(S_mus_audio_open_output,    g_open_audio_output_w, 5, 0, 0,     H_mus_audio_open_output);
+  DEFINE_PROC(S_mus_audio_open_input,     g_open_audio_input_w, 5, 0, 0,      H_mus_audio_open_input);
+  DEFINE_PROC(S_mus_sound_report_cache,   g_mus_sound_report_cache_w, 0, 1, 0,H_mus_sound_report_cache);
 #if USE_SND
-  define_procedure_with_setter(S_sound_data_ref, PROCEDURE sound_data_ref, H_sound_data_ref,
-			       "set-" S_sound_data_ref, PROCEDURE sound_data_set, local_doc, 3, 0, 4, 0);
+  define_procedure_with_setter(S_sound_data_ref, PROCEDURE sound_data_ref_w, H_sound_data_ref,
+			       "set-" S_sound_data_ref, PROCEDURE sound_data_set_w, local_doc, 3, 0, 4, 0);
 #endif
 
   YES_WE_HAVE("sndlib");

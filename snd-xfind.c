@@ -181,10 +181,18 @@ static SCM g_edit_find_dialog(void)
   return(FALSE_VALUE);
 }
 
+#ifdef ARGIFY_1
+NARGIFY_0(g_edit_find_dialog_w, g_edit_find_dialog)
+NARGIFY_0(g_find_dialog_widgets_w, g_find_dialog_widgets)
+#else
+#define g_edit_find_dialog_w g_edit_find_dialog
+#define g_find_dialog_widgets_w g_find_dialog_widgets
+#endif
+
 void g_init_gxfind(SCM local_doc)
 {
-  DEFINE_PROC("edit-find-dialog", g_edit_find_dialog, 0, 0, 0, "");
-  DEFINE_PROC("find-dialog-widgets", g_find_dialog_widgets, 0, 0, 0, "");
+  DEFINE_PROC("edit-find-dialog", g_edit_find_dialog_w, 0, 0, 0, "");
+  DEFINE_PROC("find-dialog-widgets", g_find_dialog_widgets_w, 0, 0, 0, "");
 }
 
 #endif

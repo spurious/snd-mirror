@@ -58,7 +58,7 @@ SCM scm_return_first(SCM a, ...);
 #define VECTOR_ELEMENTS(a) ((SCM *)a)
 #define NEW_OBJECT(a, b, c, ig1, ig2)
 #define HOOK_PROCEDURES(a) 0
-#define SND_SET(a, b)
+#define SND_SET_VAR(a, b)
 #define VARIABLE_REF(a) 0
 
 /* this is the sg.h replacement */
@@ -108,6 +108,7 @@ SCM scm_return_first(SCM a, ...);
 #define SND_WRAPPED(a) 0
 #define HOOKED(a) 0
 #define DEFINE_PROC(Name, Func, ReqArg, OptArg, RstArg, Doc)
+#define DEFINE_CONST(a, b, c)
 #define DEFINE_VAR(a, b, c)
 #define WITH_REVERSED_CHANNEL_ARGS(name_reversed, name) static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) {return(0);}
 #define BOOLEAN_P(Arg) 0

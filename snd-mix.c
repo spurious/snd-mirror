@@ -4203,6 +4203,105 @@ finds the mix in snd's channel chn at samp, returning the mix id; returns #f if 
   return(TO_SCM_INT(id));
 }
 
+#ifdef ARGIFY_1
+NARGIFY_1(g_make_mix_sample_reader_w, g_make_mix_sample_reader)
+NARGIFY_1(g_next_mix_sample_w, g_next_mix_sample)
+NARGIFY_1(g_free_mix_sample_reader_w, g_free_mix_sample_reader)
+NARGIFY_1(g_mf_p_w, g_mf_p)
+ARGIFY_4(g_make_track_sample_reader_w, g_make_track_sample_reader)
+NARGIFY_1(g_next_track_sample_w, g_next_track_sample)
+NARGIFY_1(g_free_track_sample_reader_w, g_free_track_sample_reader)
+NARGIFY_1(g_tf_p_w, g_tf_p)
+ARGIFY_1(g_play_mix_w, g_play_mix)
+ARGIFY_3(g_play_track_w, g_play_track)
+ARGIFY_1(g_mix_position_w, g_mix_position)
+NARGIFY_2(g_set_mix_position_w, g_set_mix_position)
+ARGIFY_1(g_mix_length_w, g_mix_length)
+NARGIFY_2(g_set_mix_length_w, g_set_mix_length)
+ARGIFY_1(g_mix_locked_w, g_mix_locked)
+NARGIFY_2(g_set_mix_locked_w, g_set_mix_locked)
+ARGIFY_1(g_mix_anchor_w, g_mix_anchor)
+NARGIFY_2(g_set_mix_anchor_w, g_set_mix_anchor)
+ARGIFY_1(g_mix_track_w, g_mix_track)
+NARGIFY_2(g_set_mix_track_w, g_set_mix_track)
+ARGIFY_1(g_mix_tag_y_w, g_mix_tag_y)
+NARGIFY_2(g_set_mix_tag_y_w, g_set_mix_tag_y)
+ARGIFY_1(g_mix_speed_w, g_mix_speed)
+NARGIFY_2(g_set_mix_speed_w, g_set_mix_speed)
+ARGIFY_1(g_mix_name_w, g_mix_name)
+NARGIFY_2(g_set_mix_name_w, g_set_mix_name)
+NARGIFY_0(g_mix_waveform_height_w, g_mix_waveform_height)
+NARGIFY_1(g_set_mix_waveform_height_w, g_set_mix_waveform_height)
+NARGIFY_0(g_mix_tag_width_w, g_mix_tag_width)
+NARGIFY_1(g_set_mix_tag_width_w, g_set_mix_tag_width)
+NARGIFY_0(g_mix_tag_height_w, g_mix_tag_height)
+NARGIFY_1(g_set_mix_tag_height_w, g_set_mix_tag_height)
+ARGIFY_2(g_mix_amp_w, g_mix_amp)
+NARGIFY_3(g_set_mix_amp_w, g_set_mix_amp)
+ARGIFY_2(g_mix_amp_env_w, g_mix_amp_env)
+NARGIFY_3(g_set_mix_amp_env_w, g_set_mix_amp_env)
+ARGIFY_1(g_mix_chans_w, g_mix_chans)
+ARGIFY_1(g_mix_p_w, g_mix_p)
+ARGIFY_1(g_mix_home_w, g_mix_home)
+ARGIFY_2(g_mixes_w, g_mixes)
+NARGIFY_2(g_mix_sound_w, g_mix_sound)
+NARGIFY_1(g_select_mix_w, g_select_mix)
+ARGIFY_3(g_find_mix_w, g_find_mix)
+NARGIFY_0(g_selected_mix_w, g_selected_mix)
+ARGIFY_3(g_forward_mix_w, g_forward_mix)
+ARGIFY_3(g_backward_mix_w, g_backward_mix)
+ARGIFY_6(g_mix_w, g_mix)
+ARGIFY_6(mix_vct_w, mix_vct)
+#else
+#define g_make_mix_sample_reader_w g_make_mix_sample_reader
+#define g_next_mix_sample_w g_next_mix_sample
+#define g_free_mix_sample_reader_w g_free_mix_sample_reader
+#define g_mf_p_w g_mf_p
+#define g_make_track_sample_reader_w g_make_track_sample_reader
+#define g_next_track_sample_w g_next_track_sample
+#define g_free_track_sample_reader_w g_free_track_sample_reader
+#define g_tf_p_w g_tf_p
+#define g_play_mix_w g_play_mix
+#define g_play_track_w g_play_track
+#define g_mix_position_w g_mix_position
+#define g_set_mix_position_w g_set_mix_position
+#define g_mix_length_w g_mix_length
+#define g_set_mix_length_w g_set_mix_length
+#define g_mix_locked_w g_mix_locked
+#define g_set_mix_locked_w g_set_mix_locked
+#define g_mix_anchor_w g_mix_anchor
+#define g_set_mix_anchor_w g_set_mix_anchor
+#define g_mix_track_w g_mix_track
+#define g_set_mix_track_w g_set_mix_track
+#define g_mix_tag_y_w g_mix_tag_y
+#define g_set_mix_tag_y_w g_set_mix_tag_y
+#define g_mix_speed_w g_mix_speed
+#define g_set_mix_speed_w g_set_mix_speed
+#define g_mix_name_w g_mix_name
+#define g_set_mix_name_w g_set_mix_name
+#define g_mix_waveform_height_w g_mix_waveform_height
+#define g_set_mix_waveform_height_w g_set_mix_waveform_height
+#define g_mix_tag_width_w g_mix_tag_width
+#define g_set_mix_tag_width_w g_set_mix_tag_width
+#define g_mix_tag_height_w g_mix_tag_height
+#define g_set_mix_tag_height_w g_set_mix_tag_height
+#define g_mix_amp_w g_mix_amp
+#define g_set_mix_amp_w g_set_mix_amp
+#define g_mix_amp_env_w g_mix_amp_env
+#define g_set_mix_amp_env_w g_set_mix_amp_env
+#define g_mix_chans_w g_mix_chans
+#define g_mix_p_w g_mix_p
+#define g_mix_home_w g_mix_home
+#define g_mixes_w g_mixes
+#define g_mix_sound_w g_mix_sound
+#define g_select_mix_w g_select_mix
+#define g_find_mix_w g_find_mix
+#define g_selected_mix_w g_selected_mix
+#define g_forward_mix_w g_forward_mix
+#define g_backward_mix_w g_backward_mix
+#define g_mix_w g_mix
+#define mix_vct_w mix_vct
+#endif
 
 void g_init_mix(SCM local_doc)
 {
@@ -4219,10 +4318,10 @@ void g_init_mix(SCM local_doc)
   tf_tag = rb_define_class("TrackSampleReader", rb_cObject);
 #endif
 
-  DEFINE_PROC(S_make_mix_sample_reader, g_make_mix_sample_reader, 1, 0, 0, H_make_mix_sample_reader);
-  DEFINE_PROC(S_next_mix_sample,        g_next_mix_sample, 1, 0, 0,        H_next_mix_sample);
-  DEFINE_PROC(S_free_mix_sample_reader, g_free_mix_sample_reader, 1, 0, 0, H_free_mix_sample_reader);
-  DEFINE_PROC(S_mix_sample_reader_p,    g_mf_p, 1, 0, 0,                   H_mf_p);
+  DEFINE_PROC(S_make_mix_sample_reader, g_make_mix_sample_reader_w, 1, 0, 0, H_make_mix_sample_reader);
+  DEFINE_PROC(S_next_mix_sample,        g_next_mix_sample_w, 1, 0, 0,        H_next_mix_sample);
+  DEFINE_PROC(S_free_mix_sample_reader, g_free_mix_sample_reader_w, 1, 0, 0, H_free_mix_sample_reader);
+  DEFINE_PROC(S_mix_sample_reader_p,    g_mf_p_w, 1, 0, 0,                   H_mf_p);
 
 #if HAVE_GUILE
   tf_tag = scm_make_smob_type("tf", sizeof(track_fd));
@@ -4233,86 +4332,86 @@ void g_init_mix(SCM local_doc)
 #endif
 #endif
 
-  DEFINE_PROC(S_make_track_sample_reader, g_make_track_sample_reader, 1, 3, 0, H_make_track_sample_reader);
-  DEFINE_PROC(S_next_track_sample,             g_next_track_sample, 1, 0, 0,                 H_next_track_sample);
-  DEFINE_PROC(S_free_track_sample_reader,      g_free_track_sample_reader, 1, 0, 0,          H_free_track_sample_reader);
-  DEFINE_PROC(S_track_sample_reader_p,         g_tf_p, 1, 0, 0,                              H_tf_p);
-  DEFINE_PROC(S_play_mix,                      g_play_mix, 0, 1, 0,                          H_play_mix);
-  DEFINE_PROC(S_play_track,                    g_play_track, 1, 2, 0,                        H_play_track);
+  DEFINE_PROC(S_make_track_sample_reader,      g_make_track_sample_reader_w, 1, 3, 0, H_make_track_sample_reader);
+  DEFINE_PROC(S_next_track_sample,             g_next_track_sample_w, 1, 0, 0,                 H_next_track_sample);
+  DEFINE_PROC(S_free_track_sample_reader,      g_free_track_sample_reader_w, 1, 0, 0,          H_free_track_sample_reader);
+  DEFINE_PROC(S_track_sample_reader_p,         g_tf_p_w, 1, 0, 0,                              H_tf_p);
+  DEFINE_PROC(S_play_mix,                      g_play_mix_w, 0, 1, 0,                          H_play_mix);
+  DEFINE_PROC(S_play_track,                    g_play_track_w, 1, 2, 0,                        H_play_track);
 
-  define_procedure_with_setter(S_mix_position, PROCEDURE g_mix_position, H_mix_position,
-			       "set-" S_mix_position, PROCEDURE g_set_mix_position,
+  define_procedure_with_setter(S_mix_position, PROCEDURE g_mix_position_w, H_mix_position,
+			       "set-" S_mix_position, PROCEDURE g_set_mix_position_w,
 			       local_doc, 0, 1, 2, 0);
 
-  define_procedure_with_setter(S_mix_length, PROCEDURE g_mix_length, H_mix_length,
-			       "set-" S_mix_length, PROCEDURE g_set_mix_length,
+  define_procedure_with_setter(S_mix_length, PROCEDURE g_mix_length_w, H_mix_length,
+			       "set-" S_mix_length, PROCEDURE g_set_mix_length_w,
 			       local_doc, 0, 1, 2, 0);
 
-  define_procedure_with_setter(S_mix_locked, PROCEDURE g_mix_locked, H_mix_locked,
-			       "set-" S_mix_locked, PROCEDURE g_set_mix_locked,
+  define_procedure_with_setter(S_mix_locked, PROCEDURE g_mix_locked_w, H_mix_locked,
+			       "set-" S_mix_locked, PROCEDURE g_set_mix_locked_w,
 			       local_doc, 0, 1, 2, 0);
 
-  define_procedure_with_setter(S_mix_anchor, PROCEDURE g_mix_anchor, H_mix_anchor,
-			       "set-" S_mix_anchor, PROCEDURE g_set_mix_anchor,
+  define_procedure_with_setter(S_mix_anchor, PROCEDURE g_mix_anchor_w, H_mix_anchor,
+			       "set-" S_mix_anchor, PROCEDURE g_set_mix_anchor_w,
 			       local_doc, 0, 1, 2, 0);
 
-  define_procedure_with_setter(S_mix_track, PROCEDURE g_mix_track, H_mix_track,
-			       "set-" S_mix_track, PROCEDURE g_set_mix_track,
+  define_procedure_with_setter(S_mix_track, PROCEDURE g_mix_track_w, H_mix_track,
+			       "set-" S_mix_track, PROCEDURE g_set_mix_track_w,
 			       local_doc, 0, 1, 2, 0);
 
-  define_procedure_with_setter("mix-sync", PROCEDURE g_mix_track, H_mix_track,
-			       "set-mix-sync", PROCEDURE g_set_mix_track,
+  define_procedure_with_setter("mix-sync", PROCEDURE g_mix_track_w, H_mix_track, /* synonym for mix-track */
+			       "set-mix-track", PROCEDURE g_set_mix_track_w,
 			       local_doc, 0, 1, 2, 0);
 
-  define_procedure_with_setter(S_mix_tag_y, PROCEDURE g_mix_tag_y, H_mix_tag_y,
-			       "set-" S_mix_tag_y, PROCEDURE g_set_mix_tag_y,
+  define_procedure_with_setter(S_mix_tag_y, PROCEDURE g_mix_tag_y_w, H_mix_tag_y,
+			       "set-" S_mix_tag_y, PROCEDURE g_set_mix_tag_y_w,
 			       local_doc, 0, 1, 2, 0);
 
-  define_procedure_with_setter(S_mix_speed, PROCEDURE g_mix_speed, H_mix_speed,
-			       "set-" S_mix_speed, PROCEDURE g_set_mix_speed,
+  define_procedure_with_setter(S_mix_speed, PROCEDURE g_mix_speed_w, H_mix_speed,
+			       "set-" S_mix_speed, PROCEDURE g_set_mix_speed_w,
 			       local_doc, 0, 1, 2, 0);
 
-  define_procedure_with_setter(S_mix_name, PROCEDURE g_mix_name, H_mix_name,
-			       "set-" S_mix_name, PROCEDURE g_set_mix_name,
+  define_procedure_with_setter(S_mix_name, PROCEDURE g_mix_name_w, H_mix_name,
+			       "set-" S_mix_name, PROCEDURE g_set_mix_name_w,
 			       local_doc, 0, 1, 2, 0);
 
-  define_procedure_with_setter(S_mix_waveform_height, PROCEDURE g_mix_waveform_height, H_mix_waveform_height,
-			       "set-" S_mix_waveform_height, PROCEDURE g_set_mix_waveform_height,
+  define_procedure_with_setter(S_mix_waveform_height, PROCEDURE g_mix_waveform_height_w, H_mix_waveform_height,
+			       "set-" S_mix_waveform_height, PROCEDURE g_set_mix_waveform_height_w,
 			       local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_mix_tag_width, PROCEDURE g_mix_tag_width, H_mix_tag_width,
-			       "set-" S_mix_tag_width, PROCEDURE g_set_mix_tag_width,
+  define_procedure_with_setter(S_mix_tag_width, PROCEDURE g_mix_tag_width_w, H_mix_tag_width,
+			       "set-" S_mix_tag_width, PROCEDURE g_set_mix_tag_width_w,
 			       local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_mix_tag_height, PROCEDURE g_mix_tag_height, H_mix_tag_height,
-			       "set-" S_mix_tag_height, PROCEDURE g_set_mix_tag_height,
+  define_procedure_with_setter(S_mix_tag_height, PROCEDURE g_mix_tag_height_w, H_mix_tag_height,
+			       "set-" S_mix_tag_height, PROCEDURE g_set_mix_tag_height_w,
 			       local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_mix_amp, PROCEDURE g_mix_amp, H_mix_amp,
-			       "set-" S_mix_amp, PROCEDURE g_set_mix_amp,
+  define_procedure_with_setter(S_mix_amp, PROCEDURE g_mix_amp_w, H_mix_amp,
+			       "set-" S_mix_amp, PROCEDURE g_set_mix_amp_w,
 			       local_doc, 0, 2, 3, 0);
 
-  define_procedure_with_setter(S_mix_amp_env, PROCEDURE g_mix_amp_env, H_mix_amp_env,
-			       "set-" S_mix_amp_env, PROCEDURE g_set_mix_amp_env,
+  define_procedure_with_setter(S_mix_amp_env, PROCEDURE g_mix_amp_env_w, H_mix_amp_env,
+			       "set-" S_mix_amp_env, PROCEDURE g_set_mix_amp_env_w,
 			       local_doc, 0, 2, 3, 0);
 
 
-  DEFINE_PROC(S_mix_chans,    g_mix_chans, 0, 1, 0,    H_mix_chans);
-  DEFINE_PROC(S_mix_p,        g_mix_p, 0, 1, 0,         H_mix_p);
-  DEFINE_PROC(S_mix_home,     g_mix_home, 0, 1, 0,     H_mix_home);
-  DEFINE_PROC(S_mixes,        g_mixes, 0, 2, 0,        H_mixes);
-  DEFINE_PROC(S_mix_sound,    g_mix_sound, 2, 0, 0,    H_mix_sound);
-  DEFINE_PROC(S_select_mix,   g_select_mix, 1, 0, 0,   H_select_mix);
-  DEFINE_PROC(S_find_mix,     g_find_mix, 0, 3, 0,     H_find_mix);
+  DEFINE_PROC(S_mix_chans,    g_mix_chans_w, 0, 1, 0,    H_mix_chans);
+  DEFINE_PROC(S_mix_p,        g_mix_p_w, 0, 1, 0,         H_mix_p);
+  DEFINE_PROC(S_mix_home,     g_mix_home_w, 0, 1, 0,     H_mix_home);
+  DEFINE_PROC(S_mixes,        g_mixes_w, 0, 2, 0,        H_mixes);
+  DEFINE_PROC(S_mix_sound,    g_mix_sound_w, 2, 0, 0,    H_mix_sound);
+  DEFINE_PROC(S_select_mix,   g_select_mix_w, 1, 0, 0,   H_select_mix);
+  DEFINE_PROC(S_find_mix,     g_find_mix_w, 0, 3, 0,     H_find_mix);
 
-  define_procedure_with_setter(S_selected_mix, PROCEDURE g_selected_mix, H_selected_mix,
-			       "set-" S_selected_mix, PROCEDURE g_select_mix,
+  define_procedure_with_setter(S_selected_mix, PROCEDURE g_selected_mix_w, H_selected_mix,
+			       "set-" S_selected_mix, PROCEDURE g_select_mix_w,
 			       local_doc, 0, 0, 1, 0);
 
-  DEFINE_PROC(S_forward_mix,  g_forward_mix, 0, 3, 0,  H_forward_mix);
-  DEFINE_PROC(S_backward_mix, g_backward_mix, 0, 3, 0, H_backward_mix);
-  DEFINE_PROC(S_mix,          g_mix, 1, 5, 0,          H_mix);
-  DEFINE_PROC(S_mix_vct,      mix_vct, 1, 5, 0,        H_mix_vct);
+  DEFINE_PROC(S_forward_mix,  g_forward_mix_w, 0, 3, 0,  H_forward_mix);
+  DEFINE_PROC(S_backward_mix, g_backward_mix_w, 0, 3, 0, H_backward_mix);
+  DEFINE_PROC(S_mix,          g_mix_w, 1, 5, 0,          H_mix);
+  DEFINE_PROC(S_mix_vct,      mix_vct_w, 1, 5, 0,        H_mix_vct);
 
   #define H_multichannel_mix_hook S_multichannel_mix_hook "(ids) is called when a multichannel mix happens in a sync'd sound. \
 'ids' is a list of mix id numbers."

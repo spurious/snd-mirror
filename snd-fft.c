@@ -2516,6 +2516,24 @@ static SCM g_snd_transform(SCM type, SCM data, SCM hint)
   return(data);
 }
 
+#ifdef ARGIFY_1
+ARGIFY_2(g_transform_samples_size_w, g_transform_samples_size)
+ARGIFY_2(g_transform_samples_w, g_transform_samples)
+ARGIFY_4(g_transform_sample_w, g_transform_sample)
+ARGIFY_3(transform_samples2vct_w, transform_samples2vct)
+NARGIFY_1(g_autocorrelate_w, g_autocorrelate)
+NARGIFY_5(g_add_transform_w, g_add_transform)
+ARGIFY_3(g_snd_transform_w, g_snd_transform)
+#else
+#define g_transform_samples_size_w g_transform_samples_size
+#define g_transform_samples_w g_transform_samples
+#define g_transform_sample_w g_transform_sample
+#define transform_samples2vct_w transform_samples2vct
+#define g_autocorrelate_w g_autocorrelate
+#define g_add_transform_w g_add_transform
+#define g_snd_transform_w g_snd_transform
+#endif
+
 void g_init_fft(SCM local_doc)
 {
   #define H_before_transform_hook S_before_transform_hook " (snd chn) is called just before a transform is calculated.  If it returns \
@@ -2542,41 +2560,41 @@ of a moving mark:\n\
   #define H_walsh_transform     S_transform_type " value for Walsh transform (step function basis)"
   #define H_autocorrelation     S_transform_type " value for autocorrelation (ifft of spectrum)"
 
-  DEFINE_VAR(S_fourier_transform,   FOURIER,         H_fourier_transform);
-  DEFINE_VAR(S_wavelet_transform,   WAVELET,         H_wavelet_transform);
-  DEFINE_VAR(S_hankel_transform,    HANKEL,          H_hankel_transform);
-  DEFINE_VAR(S_chebyshev_transform, CHEBYSHEV,       H_chebyshev_transform);
-  DEFINE_VAR(S_haar_transform,      HAAR,            H_haar_transform);
-  DEFINE_VAR(S_cepstrum,            CEPSTRUM,        H_cepstrum);
-  DEFINE_VAR(S_hadamard_transform,  HADAMARD,        H_hadamard_transform);
-  DEFINE_VAR(S_walsh_transform,     WALSH,           H_walsh_transform);
-  DEFINE_VAR(S_autocorrelation,     AUTOCORRELATION, H_autocorrelation);
+  DEFINE_CONST(S_fourier_transform,   FOURIER,         H_fourier_transform);
+  DEFINE_CONST(S_wavelet_transform,   WAVELET,         H_wavelet_transform);
+  DEFINE_CONST(S_hankel_transform,    HANKEL,          H_hankel_transform);
+  DEFINE_CONST(S_chebyshev_transform, CHEBYSHEV,       H_chebyshev_transform);
+  DEFINE_CONST(S_haar_transform,      HAAR,            H_haar_transform);
+  DEFINE_CONST(S_cepstrum,            CEPSTRUM,        H_cepstrum);
+  DEFINE_CONST(S_hadamard_transform,  HADAMARD,        H_hadamard_transform);
+  DEFINE_CONST(S_walsh_transform,     WALSH,           H_walsh_transform);
+  DEFINE_CONST(S_autocorrelation,     AUTOCORRELATION, H_autocorrelation);
 
   #define H_graph_transform_once "The value for " S_transform_graph_type " that causes a single transform to be displayed"
   #define H_graph_transform_as_sonogram "The value for " S_transform_graph_type " that causes a snongram to be displayed"
   #define H_graph_transform_as_spectrogram "The value for " S_transform_graph_type " that causes a spectrogram to be displayed"
 
-  DEFINE_VAR(S_graph_transform_once,           GRAPH_TRANSFORM_ONCE,           H_graph_transform_once);
-  DEFINE_VAR(S_graph_transform_as_sonogram,    GRAPH_TRANSFORM_AS_SONOGRAM,    H_graph_transform_as_sonogram);
-  DEFINE_VAR(S_graph_transform_as_spectrogram, GRAPH_TRANSFORM_AS_SPECTROGRAM, H_graph_transform_as_spectrogram);
+  DEFINE_CONST(S_graph_transform_once,           GRAPH_TRANSFORM_ONCE,           H_graph_transform_once);
+  DEFINE_CONST(S_graph_transform_as_sonogram,    GRAPH_TRANSFORM_AS_SONOGRAM,    H_graph_transform_as_sonogram);
+  DEFINE_CONST(S_graph_transform_as_spectrogram, GRAPH_TRANSFORM_AS_SPECTROGRAM, H_graph_transform_as_spectrogram);
 
   #define H_dont_normalize_transform "The value for " S_transform_normalization " that causes the transform to display raw data"
   #define H_normalize_transform_by_channel "The value for " S_transform_normalization " that causes the transform to be normalized in each channel independently"
   #define H_normalize_transform_by_sound "The value for " S_transform_normalization " that causes the transform to be normalized across a sound's channels"
   #define H_normalize_transform_globally "The value for " S_transform_normalization " that causes the transform to be normalized across all sounds"
 
-  DEFINE_VAR(S_dont_normalize_transform,        DONT_NORMALIZE_TRANSFORM,       H_dont_normalize_transform);
-  DEFINE_VAR(S_normalize_transform_by_channel,  NORMALIZE_TRANSFORM_BY_CHANNEL, H_normalize_transform_by_channel);
-  DEFINE_VAR(S_normalize_transform_by_sound,    NORMALIZE_TRANSFORM_BY_SOUND,   H_normalize_transform_by_sound);
-  DEFINE_VAR(S_normalize_transform_globally,    NORMALIZE_TRANSFORM_GLOBALLY,   H_normalize_transform_globally);
+  DEFINE_CONST(S_dont_normalize_transform,        DONT_NORMALIZE_TRANSFORM,       H_dont_normalize_transform);
+  DEFINE_CONST(S_normalize_transform_by_channel,  NORMALIZE_TRANSFORM_BY_CHANNEL, H_normalize_transform_by_channel);
+  DEFINE_CONST(S_normalize_transform_by_sound,    NORMALIZE_TRANSFORM_BY_SOUND,   H_normalize_transform_by_sound);
+  DEFINE_CONST(S_normalize_transform_globally,    NORMALIZE_TRANSFORM_GLOBALLY,   H_normalize_transform_globally);
 
-  DEFINE_PROC(S_transform_samples_size,  g_transform_samples_size, 0, 2, 0,H_transform_samples_size);
-  DEFINE_PROC(S_transform_samples,     g_transform_samples, 0, 2, 0,   H_transform_samples);
-  DEFINE_PROC(S_transform_sample,      g_transform_sample, 0, 4, 0,    H_transform_sample);
-  DEFINE_PROC(S_transform_samples2vct, transform_samples2vct, 0, 3, 0, H_transform_samples2vct);
-  DEFINE_PROC(S_autocorrelate,         g_autocorrelate, 1, 0, 0,       H_autocorrelate);
-  DEFINE_PROC(S_add_transform,         g_add_transform, 5, 0, 0,       H_add_transform);
+  DEFINE_PROC(S_transform_samples_size,  g_transform_samples_size_w, 0, 2, 0,H_transform_samples_size);
+  DEFINE_PROC(S_transform_samples,     g_transform_samples_w, 0, 2, 0,   H_transform_samples);
+  DEFINE_PROC(S_transform_sample,      g_transform_sample_w, 0, 4, 0,    H_transform_sample);
+  DEFINE_PROC(S_transform_samples2vct, transform_samples2vct_w, 0, 3, 0, H_transform_samples2vct);
+  DEFINE_PROC(S_autocorrelate,         g_autocorrelate_w, 1, 0, 0,       H_autocorrelate);
+  DEFINE_PROC(S_add_transform,         g_add_transform_w, 5, 0, 0,       H_add_transform);
 
-  DEFINE_PROC("snd-transform",         g_snd_transform, 2, 1, 0,       "call transform code directly");
+  DEFINE_PROC("snd-transform",         g_snd_transform_w, 2, 1, 0,       "call transform code directly");
 }
 

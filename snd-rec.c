@@ -1658,45 +1658,99 @@ static SCM g_recorder_dialog(void)
   return(FALSE_VALUE);
 }
 
+#ifdef ARGIFY_1
+NARGIFY_0(g_recorder_autoload_w, g_recorder_autoload)
+ARGIFY_1(g_set_recorder_autoload_w, g_set_recorder_autoload)
+NARGIFY_0(g_recorder_buffer_size_w, g_recorder_buffer_size)
+NARGIFY_1(g_set_recorder_buffer_size_w, g_set_recorder_buffer_size)
+NARGIFY_0(g_recorder_file_w, g_recorder_file)
+NARGIFY_1(g_set_recorder_file_w, g_set_recorder_file)
+NARGIFY_0(g_recorder_in_format_w, g_recorder_in_format)
+NARGIFY_1(g_set_recorder_in_format_w, g_set_recorder_in_format)
+NARGIFY_0(g_recorder_out_chans_w, g_recorder_out_chans)
+NARGIFY_1(g_set_recorder_out_chans_w, g_set_recorder_out_chans)
+NARGIFY_0(g_recorder_out_format_w, g_recorder_out_format)
+NARGIFY_1(g_set_recorder_out_format_w, g_set_recorder_out_format)
+NARGIFY_0(g_recorder_srate_w, g_recorder_srate)
+NARGIFY_1(g_set_recorder_srate_w, g_set_recorder_srate)
+NARGIFY_0(g_recorder_trigger_w, g_recorder_trigger)
+NARGIFY_1(g_set_recorder_trigger_w, g_set_recorder_trigger)
+NARGIFY_0(g_recorder_max_duration_w, g_recorder_max_duration)
+NARGIFY_1(g_set_recorder_max_duration_w, g_set_recorder_max_duration)
+ARGIFY_1(g_recorder_gain_w, g_recorder_gain)
+NARGIFY_2(g_set_recorder_gain_w, g_set_recorder_gain)
+NARGIFY_2(g_recorder_in_amp_w, g_recorder_in_amp)
+NARGIFY_3(g_set_recorder_in_amp_w, g_set_recorder_in_amp)
+NARGIFY_1(g_recorder_out_amp_w, g_recorder_out_amp)
+NARGIFY_2(g_set_recorder_out_amp_w, g_set_recorder_out_amp)
+NARGIFY_0(g_recorder_dialog_w, g_recorder_dialog)
+#else
+#define g_recorder_autoload_w g_recorder_autoload
+#define g_set_recorder_autoload_w g_set_recorder_autoload
+#define g_recorder_buffer_size_w g_recorder_buffer_size
+#define g_set_recorder_buffer_size_w g_set_recorder_buffer_size
+#define g_recorder_file_w g_recorder_file
+#define g_set_recorder_file_w g_set_recorder_file
+#define g_recorder_in_format_w g_recorder_in_format
+#define g_set_recorder_in_format_w g_set_recorder_in_format
+#define g_recorder_out_chans_w g_recorder_out_chans
+#define g_set_recorder_out_chans_w g_set_recorder_out_chans
+#define g_recorder_out_format_w g_recorder_out_format
+#define g_set_recorder_out_format_w g_set_recorder_out_format
+#define g_recorder_srate_w g_recorder_srate
+#define g_set_recorder_srate_w g_set_recorder_srate
+#define g_recorder_trigger_w g_recorder_trigger
+#define g_set_recorder_trigger_w g_set_recorder_trigger
+#define g_recorder_max_duration_w g_recorder_max_duration
+#define g_set_recorder_max_duration_w g_set_recorder_max_duration
+#define g_recorder_gain_w g_recorder_gain
+#define g_set_recorder_gain_w g_set_recorder_gain
+#define g_recorder_in_amp_w g_recorder_in_amp
+#define g_set_recorder_in_amp_w g_set_recorder_in_amp
+#define g_recorder_out_amp_w g_recorder_out_amp
+#define g_set_recorder_out_amp_w g_set_recorder_out_amp
+#define g_recorder_dialog_w g_recorder_dialog
+#endif
+
 void g_init_recorder(SCM local_doc)
 {
-  define_procedure_with_setter(S_recorder_autoload, PROCEDURE g_recorder_autoload, H_recorder_autoload,
-			       "set-" S_recorder_autoload, PROCEDURE g_set_recorder_autoload, local_doc, 0, 0, 0, 1);
+  define_procedure_with_setter(S_recorder_autoload, PROCEDURE g_recorder_autoload_w, H_recorder_autoload,
+			       "set-" S_recorder_autoload, PROCEDURE g_set_recorder_autoload_w, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_recorder_buffer_size, PROCEDURE g_recorder_buffer_size, H_recorder_buffer_size,
-			       "set-" S_recorder_buffer_size, PROCEDURE g_set_recorder_buffer_size, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_recorder_buffer_size, PROCEDURE g_recorder_buffer_size_w, H_recorder_buffer_size,
+			       "set-" S_recorder_buffer_size, PROCEDURE g_set_recorder_buffer_size_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_file, PROCEDURE g_recorder_file, H_recorder_file,
-			       "set-" S_recorder_file, PROCEDURE g_set_recorder_file, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_recorder_file, PROCEDURE g_recorder_file_w, H_recorder_file,
+			       "set-" S_recorder_file, PROCEDURE g_set_recorder_file_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_in_format, PROCEDURE g_recorder_in_format, H_recorder_in_format,
-			       "set-" S_recorder_in_format, PROCEDURE g_set_recorder_in_format, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_recorder_in_format, PROCEDURE g_recorder_in_format_w, H_recorder_in_format,
+			       "set-" S_recorder_in_format, PROCEDURE g_set_recorder_in_format_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_out_chans, PROCEDURE g_recorder_out_chans, H_recorder_out_chans,
-			       "set-" S_recorder_out_chans, PROCEDURE g_set_recorder_out_chans, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_recorder_out_chans, PROCEDURE g_recorder_out_chans_w, H_recorder_out_chans,
+			       "set-" S_recorder_out_chans, PROCEDURE g_set_recorder_out_chans_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_out_format, PROCEDURE g_recorder_out_format, H_recorder_out_format,
-			       "set-" S_recorder_out_format, PROCEDURE g_set_recorder_out_format, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_recorder_out_format, PROCEDURE g_recorder_out_format_w, H_recorder_out_format,
+			       "set-" S_recorder_out_format, PROCEDURE g_set_recorder_out_format_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_srate, PROCEDURE g_recorder_srate, H_recorder_srate,
-			       "set-" S_recorder_srate, PROCEDURE g_set_recorder_srate, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_recorder_srate, PROCEDURE g_recorder_srate_w, H_recorder_srate,
+			       "set-" S_recorder_srate, PROCEDURE g_set_recorder_srate_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_trigger, PROCEDURE g_recorder_trigger, H_recorder_trigger,
-			       "set-" S_recorder_trigger, PROCEDURE g_set_recorder_trigger, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_recorder_trigger, PROCEDURE g_recorder_trigger_w, H_recorder_trigger,
+			       "set-" S_recorder_trigger, PROCEDURE g_set_recorder_trigger_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_max_duration, PROCEDURE g_recorder_max_duration, H_recorder_max_duration,
-			       "set-" S_recorder_max_duration, PROCEDURE g_set_recorder_max_duration, local_doc, 0, 0, 1, 0);
+  define_procedure_with_setter(S_recorder_max_duration, PROCEDURE g_recorder_max_duration_w, H_recorder_max_duration,
+			       "set-" S_recorder_max_duration, PROCEDURE g_set_recorder_max_duration_w, local_doc, 0, 0, 1, 0);
 
-  define_procedure_with_setter(S_recorder_gain, PROCEDURE g_recorder_gain, H_recorder_gain,
-			       "set-" S_recorder_gain, PROCEDURE g_set_recorder_gain, local_doc, 0, 1, 2, 0);
+  define_procedure_with_setter(S_recorder_gain, PROCEDURE g_recorder_gain_w, H_recorder_gain,
+			       "set-" S_recorder_gain, PROCEDURE g_set_recorder_gain_w, local_doc, 0, 1, 2, 0);
 
-  define_procedure_with_setter(S_recorder_in_amp, PROCEDURE g_recorder_in_amp, H_recorder_in_amp,
-			       "set-" S_recorder_in_amp, PROCEDURE g_set_recorder_in_amp, local_doc, 2, 0, 3, 0);
+  define_procedure_with_setter(S_recorder_in_amp, PROCEDURE g_recorder_in_amp_w, H_recorder_in_amp,
+			       "set-" S_recorder_in_amp, PROCEDURE g_set_recorder_in_amp_w, local_doc, 2, 0, 3, 0);
 
-  define_procedure_with_setter(S_recorder_out_amp, PROCEDURE g_recorder_out_amp, H_recorder_out_amp,
-			       "set-" S_recorder_out_amp, PROCEDURE g_set_recorder_out_amp, local_doc, 1, 0, 2, 0);
+  define_procedure_with_setter(S_recorder_out_amp, PROCEDURE g_recorder_out_amp_w, H_recorder_out_amp,
+			       "set-" S_recorder_out_amp, PROCEDURE g_set_recorder_out_amp_w, local_doc, 1, 0, 2, 0);
 
-  DEFINE_PROC(S_recorder_dialog, g_recorder_dialog, 0, 0, 0, H_recorder_dialog);
+  DEFINE_PROC(S_recorder_dialog, g_recorder_dialog_w, 0, 0, 0, H_recorder_dialog);
 }
 
 #if USE_NO_GUI

@@ -4837,19 +4837,13 @@ static SCM g_set_wavo_trace(SCM val, SCM snd, SCM chn)
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_wavo_trace_reversed, g_set_wavo_trace)
 
-static SCM g_transform_size_1(SCM snd, SCM chn)
+static SCM g_transform_size(SCM snd, SCM chn)
 {
   #define H_transform_size "(" S_transform_size " (snd #t) (chn #t)) -> current fft size (256)"
   if (BOUND_P(snd))
     return(cp_iread(snd, chn, CP_TRANSFORM_SIZE, S_transform_size));
   return(TO_SCM_INT(transform_size(get_global_state())));
 }
-
-#ifdef ARGIFY_2
-  ARGIFY_2(g_transform_size, g_transform_size_1)
-#else
-  #define g_transform_size g_transform_size_1
-#endif
 
 static SCM g_set_transform_size(SCM val, SCM snd, SCM chn)
 {
@@ -5371,217 +5365,454 @@ static SCM g_channel_widgets(SCM snd, SCM chn)
 }
 #endif
 
+
+#ifdef ARGIFY_1
+#if (!USE_NO_GUI)
+ARGIFY_2(g_channel_widgets_w, g_channel_widgets)
+#endif
+ARGIFY_2(g_edits_w, g_edits)
+ARGIFY_3(g_peaks_w, g_peaks)
+ARGIFY_2(g_edit_hook_w, g_edit_hook)
+ARGIFY_2(g_undo_hook_w, g_undo_hook)
+ARGIFY_2(g_ap_sx_w, g_ap_sx)
+ARGIFY_3(g_set_ap_sx_w, g_set_ap_sx)
+ARGIFY_2(g_ap_sy_w, g_ap_sy)
+ARGIFY_3(g_set_ap_sy_w, g_set_ap_sy)
+ARGIFY_2(g_ap_zx_w, g_ap_zx)
+ARGIFY_3(g_set_ap_zx_w, g_set_ap_zx)
+ARGIFY_2(g_ap_zy_w, g_ap_zy)
+ARGIFY_3(g_set_ap_zy_w, g_set_ap_zy)
+ARGIFY_3(g_frames_w, g_frames)
+ARGIFY_3(g_set_frames_w, g_set_frames)
+ARGIFY_3(g_maxamp_w, g_maxamp)
+ARGIFY_3(g_set_maxamp_w, g_set_maxamp)
+ARGIFY_3(g_forward_sample_w, g_forward_sample)
+ARGIFY_3(g_backward_sample_w, g_backward_sample)
+ARGIFY_2(g_cursor_position_w, g_cursor_position)
+ARGIFY_2(g_edit_position_w, g_edit_position)
+ARGIFY_3(g_set_edit_position_w, g_set_edit_position)
+ARGIFY_2(g_graph_transform_p_w, g_graph_transform_p)
+ARGIFY_3(g_set_graph_transform_p_w, g_set_graph_transform_p)
+ARGIFY_2(g_graph_time_p_w, g_graph_time_p)
+ARGIFY_3(g_set_graph_time_p_w, g_set_graph_time_p)
+ARGIFY_2(g_graph_lisp_p_w, g_graph_lisp_p)
+ARGIFY_3(g_set_graph_lisp_p_w, g_set_graph_lisp_p)
+ARGIFY_2(g_squelch_update_w, g_squelch_update)
+ARGIFY_3(g_set_squelch_update_w, g_set_squelch_update)
+ARGIFY_2(g_cursor_w, g_cursor)
+ARGIFY_3(g_set_cursor_w, g_set_cursor)
+ARGIFY_2(g_cursor_style_w, g_cursor_style)
+ARGIFY_3(g_set_cursor_style_w, g_set_cursor_style)
+ARGIFY_2(g_cursor_size_w, g_cursor_size)
+ARGIFY_3(g_set_cursor_size_w, g_set_cursor_size)
+ARGIFY_2(g_left_sample_w, g_left_sample)
+ARGIFY_3(g_set_left_sample_w, g_set_left_sample)
+ARGIFY_2(g_right_sample_w, g_right_sample)
+ARGIFY_3(g_set_right_sample_w, g_set_right_sample)
+ARGIFY_2(g_channel_sync_w, g_channel_sync)
+ARGIFY_3(g_set_channel_sync_w, g_set_channel_sync)
+ARGIFY_2(g_max_transform_peaks_w, g_max_transform_peaks)
+ARGIFY_3(g_set_max_transform_peaks_w, g_set_max_transform_peaks)
+ARGIFY_2(g_show_y_zero_w, g_show_y_zero)
+ARGIFY_3(g_set_show_y_zero_w, g_set_show_y_zero)
+ARGIFY_2(g_show_marks_w, g_show_marks)
+ARGIFY_3(g_set_show_marks_w, g_set_show_marks)
+ARGIFY_2(g_time_graph_type_w, g_time_graph_type)
+ARGIFY_3(g_set_time_graph_type_w, g_set_time_graph_type)
+ARGIFY_2(g_wavo_hop_w, g_wavo_hop)
+ARGIFY_3(g_set_wavo_hop_w, g_set_wavo_hop)
+ARGIFY_2(g_wavo_trace_w, g_wavo_trace)
+ARGIFY_3(g_set_wavo_trace_w, g_set_wavo_trace)
+ARGIFY_2(g_show_transform_peaks_w, g_show_transform_peaks)
+ARGIFY_3(g_set_show_transform_peaks_w, g_set_show_transform_peaks)
+ARGIFY_2(g_zero_pad_w, g_zero_pad)
+ARGIFY_3(g_set_zero_pad_w, g_set_zero_pad)
+ARGIFY_2(g_verbose_cursor_w, g_verbose_cursor)
+ARGIFY_3(g_set_verbose_cursor_w, g_set_verbose_cursor)
+ARGIFY_2(g_fft_log_frequency_w, g_fft_log_frequency)
+ARGIFY_3(g_set_fft_log_frequency_w, g_set_fft_log_frequency)
+ARGIFY_2(g_fft_log_magnitude_w, g_fft_log_magnitude)
+ARGIFY_3(g_set_fft_log_magnitude_w, g_set_fft_log_magnitude)
+ARGIFY_2(g_min_dB_w, g_min_dB)
+ARGIFY_3(g_set_min_dB_w, g_set_min_dB)
+ARGIFY_2(g_wavelet_type_w, g_wavelet_type)
+ARGIFY_3(g_set_wavelet_type_w, g_set_wavelet_type)
+ARGIFY_2(g_spectro_cutoff_w, g_spectro_cutoff)
+ARGIFY_3(g_set_spectro_cutoff_w, g_set_spectro_cutoff)
+ARGIFY_2(g_spectro_start_w, g_spectro_start)
+ARGIFY_3(g_set_spectro_start_w, g_set_spectro_start)
+ARGIFY_2(g_spectro_x_angle_w, g_spectro_x_angle)
+ARGIFY_3(g_set_spectro_x_angle_w, g_set_spectro_x_angle)
+ARGIFY_2(g_spectro_x_scale_w, g_spectro_x_scale)
+ARGIFY_3(g_set_spectro_x_scale_w, g_set_spectro_x_scale)
+ARGIFY_2(g_spectro_y_angle_w, g_spectro_y_angle)
+ARGIFY_3(g_set_spectro_y_angle_w, g_set_spectro_y_angle)
+ARGIFY_2(g_spectro_y_scale_w, g_spectro_y_scale)
+ARGIFY_3(g_set_spectro_y_scale_w, g_set_spectro_y_scale)
+ARGIFY_2(g_spectro_z_angle_w, g_spectro_z_angle)
+ARGIFY_3(g_set_spectro_z_angle_w, g_set_spectro_z_angle)
+ARGIFY_2(g_spectro_z_scale_w, g_spectro_z_scale)
+ARGIFY_3(g_set_spectro_z_scale_w, g_set_spectro_z_scale)
+ARGIFY_2(g_fft_window_beta_w, g_fft_window_beta)
+ARGIFY_3(g_set_fft_window_beta_w, g_set_fft_window_beta)
+ARGIFY_2(g_spectro_hop_w, g_spectro_hop)
+ARGIFY_3(g_set_spectro_hop_w, g_set_spectro_hop)
+ARGIFY_2(g_transform_size_w, g_transform_size)
+ARGIFY_3(g_set_transform_size_w, g_set_transform_size)
+ARGIFY_2(g_transform_graph_type_w, g_transform_graph_type)
+ARGIFY_3(g_set_transform_graph_type_w, g_set_transform_graph_type)
+ARGIFY_2(g_fft_window_w, g_fft_window)
+ARGIFY_3(g_set_fft_window_w, g_set_fft_window)
+ARGIFY_2(g_transform_type_w, g_transform_type)
+ARGIFY_3(g_set_transform_type_w, g_set_transform_type)
+ARGIFY_2(g_transform_normalization_w, g_transform_normalization)
+ARGIFY_3(g_set_transform_normalization_w, g_set_transform_normalization)
+ARGIFY_2(g_show_mix_waveforms_w, g_show_mix_waveforms)
+ARGIFY_3(g_set_show_mix_waveforms_w, g_set_show_mix_waveforms)
+ARGIFY_2(g_graph_style_w, g_graph_style)
+ARGIFY_3(g_set_graph_style_w, g_set_graph_style)
+ARGIFY_2(g_dot_size_w, g_dot_size)
+ARGIFY_3(g_set_dot_size_w, g_set_dot_size)
+ARGIFY_2(g_x_axis_style_w, g_x_axis_style)
+ARGIFY_3(g_set_x_axis_style_w, g_set_x_axis_style)
+ARGIFY_2(g_show_axes_w, g_show_axes)
+ARGIFY_3(g_set_show_axes_w, g_set_show_axes)
+ARGIFY_2(g_graphs_horizontal_w, g_graphs_horizontal)
+ARGIFY_3(g_set_graphs_horizontal_w, g_set_graphs_horizontal)
+ARGIFY_2(g_x_bounds_w, g_x_bounds)
+ARGIFY_3(g_set_x_bounds_w, g_set_x_bounds)
+ARGIFY_2(g_y_bounds_w, g_y_bounds)
+ARGIFY_3(g_set_y_bounds_w, g_set_y_bounds)
+#else
+#if (!USE_NO_GUI)
+#define g_channel_widgets_w g_channel_widgets
+#endif
+#define g_edits_w g_edits
+#define g_peaks_w g_peaks
+#define g_edit_hook_w g_edit_hook
+#define g_undo_hook_w g_undo_hook
+#define g_ap_sx_w g_ap_sx
+#define g_set_ap_sx_w g_set_ap_sx
+#define g_ap_sy_w g_ap_sy
+#define g_set_ap_sy_w g_set_ap_sy
+#define g_ap_zx_w g_ap_zx
+#define g_set_ap_zx_w g_set_ap_zx
+#define g_ap_zy_w g_ap_zy
+#define g_set_ap_zy_w g_set_ap_zy
+#define g_frames_w g_frames
+#define g_set_frames_w g_set_frames
+#define g_maxamp_w g_maxamp
+#define g_set_maxamp_w g_set_maxamp
+#define g_forward_sample_w g_forward_sample
+#define g_backward_sample_w g_backward_sample
+#define g_cursor_position_w g_cursor_position
+#define g_edit_position_w g_edit_position
+#define g_set_edit_position_w g_set_edit_position
+#define g_graph_transform_p_w g_graph_transform_p
+#define g_set_graph_transform_p_w g_set_graph_transform_p
+#define g_graph_time_p_w g_graph_time_p
+#define g_set_graph_time_p_w g_set_graph_time_p
+#define g_graph_lisp_p_w g_graph_lisp_p
+#define g_set_graph_lisp_p_w g_set_graph_lisp_p
+#define g_squelch_update_w g_squelch_update
+#define g_set_squelch_update_w g_set_squelch_update
+#define g_cursor_w g_cursor
+#define g_set_cursor_w g_set_cursor
+#define g_cursor_style_w g_cursor_style
+#define g_set_cursor_style_w g_set_cursor_style
+#define g_cursor_size_w g_cursor_size
+#define g_set_cursor_size_w g_set_cursor_size
+#define g_left_sample_w g_left_sample
+#define g_set_left_sample_w g_set_left_sample
+#define g_right_sample_w g_right_sample
+#define g_set_right_sample_w g_set_right_sample
+#define g_channel_sync_w g_channel_sync
+#define g_set_channel_sync_w g_set_channel_sync
+#define g_max_transform_peaks_w g_max_transform_peaks
+#define g_set_max_transform_peaks_w g_set_max_transform_peaks
+#define g_show_y_zero_w g_show_y_zero
+#define g_set_show_y_zero_w g_set_show_y_zero
+#define g_show_marks_w g_show_marks
+#define g_set_show_marks_w g_set_show_marks
+#define g_time_graph_type_w g_time_graph_type
+#define g_set_time_graph_type_w g_set_time_graph_type
+#define g_wavo_hop_w g_wavo_hop
+#define g_set_wavo_hop_w g_set_wavo_hop
+#define g_wavo_trace_w g_wavo_trace
+#define g_set_wavo_trace_w g_set_wavo_trace
+#define g_show_transform_peaks_w g_show_transform_peaks
+#define g_set_show_transform_peaks_w g_set_show_transform_peaks
+#define g_zero_pad_w g_zero_pad
+#define g_set_zero_pad_w g_set_zero_pad
+#define g_verbose_cursor_w g_verbose_cursor
+#define g_set_verbose_cursor_w g_set_verbose_cursor
+#define g_fft_log_frequency_w g_fft_log_frequency
+#define g_set_fft_log_frequency_w g_set_fft_log_frequency
+#define g_fft_log_magnitude_w g_fft_log_magnitude
+#define g_set_fft_log_magnitude_w g_set_fft_log_magnitude
+#define g_min_dB_w g_min_dB
+#define g_set_min_dB_w g_set_min_dB
+#define g_wavelet_type_w g_wavelet_type
+#define g_set_wavelet_type_w g_set_wavelet_type
+#define g_spectro_cutoff_w g_spectro_cutoff
+#define g_set_spectro_cutoff_w g_set_spectro_cutoff
+#define g_spectro_start_w g_spectro_start
+#define g_set_spectro_start_w g_set_spectro_start
+#define g_spectro_x_angle_w g_spectro_x_angle
+#define g_set_spectro_x_angle_w g_set_spectro_x_angle
+#define g_spectro_x_scale_w g_spectro_x_scale
+#define g_set_spectro_x_scale_w g_set_spectro_x_scale
+#define g_spectro_y_angle_w g_spectro_y_angle
+#define g_set_spectro_y_angle_w g_set_spectro_y_angle
+#define g_spectro_y_scale_w g_spectro_y_scale
+#define g_set_spectro_y_scale_w g_set_spectro_y_scale
+#define g_spectro_z_angle_w g_spectro_z_angle
+#define g_set_spectro_z_angle_w g_set_spectro_z_angle
+#define g_spectro_z_scale_w g_spectro_z_scale
+#define g_set_spectro_z_scale_w g_set_spectro_z_scale
+#define g_fft_window_beta_w g_fft_window_beta
+#define g_set_fft_window_beta_w g_set_fft_window_beta
+#define g_spectro_hop_w g_spectro_hop
+#define g_set_spectro_hop_w g_set_spectro_hop
+#define g_transform_size_w g_transform_size
+#define g_set_transform_size_w g_set_transform_size
+#define g_transform_graph_type_w g_transform_graph_type
+#define g_set_transform_graph_type_w g_set_transform_graph_type
+#define g_fft_window_w g_fft_window
+#define g_set_fft_window_w g_set_fft_window
+#define g_transform_type_w g_transform_type
+#define g_set_transform_type_w g_set_transform_type
+#define g_transform_normalization_w g_transform_normalization
+#define g_set_transform_normalization_w g_set_transform_normalization
+#define g_show_mix_waveforms_w g_show_mix_waveforms
+#define g_set_show_mix_waveforms_w g_set_show_mix_waveforms
+#define g_graph_style_w g_graph_style
+#define g_set_graph_style_w g_set_graph_style
+#define g_dot_size_w g_dot_size
+#define g_set_dot_size_w g_set_dot_size
+#define g_x_axis_style_w g_x_axis_style
+#define g_set_x_axis_style_w g_set_x_axis_style
+#define g_show_axes_w g_show_axes
+#define g_set_show_axes_w g_set_show_axes
+#define g_graphs_horizontal_w g_graphs_horizontal
+#define g_set_graphs_horizontal_w g_set_graphs_horizontal
+#define g_x_bounds_w g_x_bounds
+#define g_set_x_bounds_w g_set_x_bounds
+#define g_y_bounds_w g_y_bounds
+#define g_set_y_bounds_w g_set_y_bounds
+#endif
+
 void g_init_chn(SCM local_doc)
 {
   cp_edpos = UNDEFINED_VALUE;
 
 #if (!USE_NO_GUI)
-  DEFINE_PROC(S_channel_widgets,         g_channel_widgets, 0, 2, 0,         "returns channel widgets");
+  DEFINE_PROC(S_channel_widgets,         g_channel_widgets_w, 0, 2, 0,         "returns channel widgets");
 #endif
 
-  DEFINE_PROC(S_edits,                   g_edits, 0, 2, 0,                   H_edits);
-  DEFINE_PROC(S_peaks,                   g_peaks, 0, 3, 0,                   H_peaks);
-  DEFINE_PROC(S_edit_hook,               g_edit_hook, 0, 2, 0,               H_edit_hook);
-  DEFINE_PROC(S_undo_hook,               g_undo_hook, 0, 2, 0,               H_undo_hook);
+  DEFINE_PROC(S_edits,                   g_edits_w, 0, 2, 0,                   H_edits);
+  DEFINE_PROC(S_peaks,                   g_peaks_w, 0, 3, 0,                   H_peaks);
+  DEFINE_PROC(S_edit_hook,               g_edit_hook_w, 0, 2, 0,               H_edit_hook);
+  DEFINE_PROC(S_undo_hook,               g_undo_hook_w, 0, 2, 0,               H_undo_hook);
 
-  define_procedure_with_reversed_setter(S_x_position_slider, PROCEDURE g_ap_sx, H_x_position_slider,
-					"set-" S_x_position_slider, PROCEDURE g_set_ap_sx, PROCEDURE g_set_ap_sx_reversed,
+  define_procedure_with_reversed_setter(S_x_position_slider, PROCEDURE g_ap_sx_w, H_x_position_slider,
+					"set-" S_x_position_slider, PROCEDURE g_set_ap_sx_w, PROCEDURE g_set_ap_sx_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_y_position_slider, PROCEDURE g_ap_sy, H_y_position_slider,
-					"set-" S_y_position_slider, PROCEDURE g_set_ap_sy, PROCEDURE g_set_ap_sy_reversed,
+  define_procedure_with_reversed_setter(S_y_position_slider, PROCEDURE g_ap_sy_w, H_y_position_slider,
+					"set-" S_y_position_slider, PROCEDURE g_set_ap_sy_w, PROCEDURE g_set_ap_sy_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_x_zoom_slider, PROCEDURE g_ap_zx, H_x_zoom_slider,
-					"set-" S_x_zoom_slider, PROCEDURE g_set_ap_zx, PROCEDURE g_set_ap_zx_reversed,
+  define_procedure_with_reversed_setter(S_x_zoom_slider, PROCEDURE g_ap_zx_w, H_x_zoom_slider,
+					"set-" S_x_zoom_slider, PROCEDURE g_set_ap_zx_w, PROCEDURE g_set_ap_zx_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_y_zoom_slider, PROCEDURE g_ap_zy, H_y_zoom_slider,
-					"set-" S_y_zoom_slider, PROCEDURE g_set_ap_zy, PROCEDURE g_set_ap_zy_reversed,
+  define_procedure_with_reversed_setter(S_y_zoom_slider, PROCEDURE g_ap_zy_w, H_y_zoom_slider,
+					"set-" S_y_zoom_slider, PROCEDURE g_set_ap_zy_w, PROCEDURE g_set_ap_zy_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_frames, PROCEDURE g_frames, H_frames,
-					"set-" S_frames, PROCEDURE g_set_frames, PROCEDURE g_set_frames_reversed,
+  define_procedure_with_reversed_setter(S_frames, PROCEDURE g_frames_w, H_frames,
+					"set-" S_frames, PROCEDURE g_set_frames_w, PROCEDURE g_set_frames_reversed,
 					local_doc, 0, 3, 0, 3);
 
-  define_procedure_with_reversed_setter(S_maxamp, PROCEDURE g_maxamp, H_maxamp,
-					"set-" S_maxamp, PROCEDURE g_set_maxamp, PROCEDURE g_set_maxamp_reversed,
+  define_procedure_with_reversed_setter(S_maxamp, PROCEDURE g_maxamp_w, H_maxamp,
+					"set-" S_maxamp, PROCEDURE g_set_maxamp_w, PROCEDURE g_set_maxamp_reversed,
 					local_doc, 0, 3, 0, 3);
 
-  DEFINE_PROC(S_forward_sample,    g_forward_sample, 0, 3, 0,    H_forward_sample);
-  DEFINE_PROC(S_backward_sample,   g_backward_sample, 0, 3, 0,   H_backward_sample);
-  DEFINE_PROC(S_cursor_position,   g_cursor_position, 0, 2, 0,   H_cursor_position);
+  DEFINE_PROC(S_forward_sample,    g_forward_sample_w, 0, 3, 0,    H_forward_sample);
+  DEFINE_PROC(S_backward_sample,   g_backward_sample_w, 0, 3, 0,   H_backward_sample);
+  DEFINE_PROC(S_cursor_position,   g_cursor_position_w, 0, 2, 0,   H_cursor_position);
 
-  define_procedure_with_reversed_setter(S_edit_position, PROCEDURE g_edit_position, H_edit_position,
-					"set-" S_edit_position, PROCEDURE g_set_edit_position, PROCEDURE g_set_edit_position_reversed,
+  define_procedure_with_reversed_setter(S_edit_position, PROCEDURE g_edit_position_w, H_edit_position,
+					"set-" S_edit_position, PROCEDURE g_set_edit_position_w, PROCEDURE g_set_edit_position_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_graph_transform_p, PROCEDURE g_graph_transform_p, H_graph_transform_p,
-					"set-" S_graph_transform_p, PROCEDURE g_set_graph_transform_p, PROCEDURE g_set_graph_transform_p_reversed,
+  define_procedure_with_reversed_setter(S_graph_transform_p, PROCEDURE g_graph_transform_p_w, H_graph_transform_p,
+					"set-" S_graph_transform_p, PROCEDURE g_set_graph_transform_p_w, PROCEDURE g_set_graph_transform_p_reversed,
 					local_doc, 0, 2, 0, 3);
 
   #define H_graph_time_once "The value for " S_time_graph_type " to display the standard time domain waveform"
   #define H_graph_time_as_wavogram "The value for " S_time_graph_type " to make a spectrogram-like form of the time-domain data"
 
-  DEFINE_VAR(S_graph_time_once,        GRAPH_TIME_ONCE,        H_graph_time_once);
-  DEFINE_VAR(S_graph_time_as_wavogram, GRAPH_TIME_AS_WAVOGRAM, H_graph_time_as_wavogram);
+  DEFINE_CONST(S_graph_time_once,        GRAPH_TIME_ONCE,        H_graph_time_once);
+  DEFINE_CONST(S_graph_time_as_wavogram, GRAPH_TIME_AS_WAVOGRAM, H_graph_time_as_wavogram);
 
-  define_procedure_with_reversed_setter(S_graph_time_p, PROCEDURE g_graph_time_p, H_graph_time_p,
-					"set-" S_graph_time_p, PROCEDURE g_set_graph_time_p, PROCEDURE g_set_graph_time_p_reversed,
+  define_procedure_with_reversed_setter(S_graph_time_p, PROCEDURE g_graph_time_p_w, H_graph_time_p,
+					"set-" S_graph_time_p, PROCEDURE g_set_graph_time_p_w, PROCEDURE g_set_graph_time_p_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_graph_lisp_p, PROCEDURE g_graph_lisp_p, H_graph_lisp_p,
-					"set-" S_graph_lisp_p, PROCEDURE g_set_graph_lisp_p, PROCEDURE g_set_graph_lisp_p_reversed,
+  define_procedure_with_reversed_setter(S_graph_lisp_p, PROCEDURE g_graph_lisp_p_w, H_graph_lisp_p,
+					"set-" S_graph_lisp_p, PROCEDURE g_set_graph_lisp_p_w, PROCEDURE g_set_graph_lisp_p_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_squelch_update, PROCEDURE g_squelch_update, H_squelch_update,
-					"set-" S_squelch_update, PROCEDURE g_set_squelch_update, PROCEDURE g_set_squelch_update_reversed,
+  define_procedure_with_reversed_setter(S_squelch_update, PROCEDURE g_squelch_update_w, H_squelch_update,
+					"set-" S_squelch_update, PROCEDURE g_set_squelch_update_w, PROCEDURE g_set_squelch_update_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_cursor, PROCEDURE g_cursor, H_cursor,
-					"set-" S_cursor, PROCEDURE g_set_cursor, PROCEDURE g_set_cursor_reversed,
+  define_procedure_with_reversed_setter(S_cursor, PROCEDURE g_cursor_w, H_cursor,
+					"set-" S_cursor, PROCEDURE g_set_cursor_w, PROCEDURE g_set_cursor_reversed,
 					local_doc, 0, 2, 0, 3);
 
   #define H_cursor_cross "The value for " S_cursor_style " that causes is to be a cross (the default)"
   #define H_cursor_line "The value for " S_cursor_style " that causes is to be a full vertical line"
 
-  DEFINE_VAR(S_cursor_cross,          CURSOR_CROSS, H_cursor_cross);
-  DEFINE_VAR(S_cursor_line,           CURSOR_LINE,  H_cursor_line);
+  DEFINE_CONST(S_cursor_cross,          CURSOR_CROSS, H_cursor_cross);
+  DEFINE_CONST(S_cursor_line,           CURSOR_LINE,  H_cursor_line);
 
-  define_procedure_with_reversed_setter(S_cursor_style, PROCEDURE g_cursor_style, H_cursor_style,
-					"set-" S_cursor_style, PROCEDURE g_set_cursor_style, PROCEDURE g_set_cursor_style_reversed,
+  define_procedure_with_reversed_setter(S_cursor_style, PROCEDURE g_cursor_style_w, H_cursor_style,
+					"set-" S_cursor_style, PROCEDURE g_set_cursor_style_w, PROCEDURE g_set_cursor_style_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_cursor_size, PROCEDURE g_cursor_size, H_cursor_size,
-					"set-" S_cursor_size, PROCEDURE g_set_cursor_size, PROCEDURE g_set_cursor_size_reversed,
+  define_procedure_with_reversed_setter(S_cursor_size, PROCEDURE g_cursor_size_w, H_cursor_size,
+					"set-" S_cursor_size, PROCEDURE g_set_cursor_size_w, PROCEDURE g_set_cursor_size_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_left_sample, PROCEDURE g_left_sample, H_left_sample,
-					"set-" S_left_sample, PROCEDURE g_set_left_sample, PROCEDURE g_set_left_sample_reversed,
+  define_procedure_with_reversed_setter(S_left_sample, PROCEDURE g_left_sample_w, H_left_sample,
+					"set-" S_left_sample, PROCEDURE g_set_left_sample_w, PROCEDURE g_set_left_sample_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_right_sample, PROCEDURE g_right_sample, H_right_sample,
-					"set-" S_right_sample, PROCEDURE g_set_right_sample, PROCEDURE g_set_right_sample_reversed,
+  define_procedure_with_reversed_setter(S_right_sample, PROCEDURE g_right_sample_w, H_right_sample,
+					"set-" S_right_sample, PROCEDURE g_set_right_sample_w, PROCEDURE g_set_right_sample_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_channel_sync, PROCEDURE g_channel_sync, H_channel_sync,
-					"set-" S_channel_sync, PROCEDURE g_set_channel_sync, PROCEDURE g_set_channel_sync_reversed,
+  define_procedure_with_reversed_setter(S_channel_sync, PROCEDURE g_channel_sync_w, H_channel_sync,
+					"set-" S_channel_sync, PROCEDURE g_set_channel_sync_w, PROCEDURE g_set_channel_sync_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_max_transform_peaks, PROCEDURE g_max_transform_peaks, H_max_transform_peaks,
-					"set-" S_max_transform_peaks, PROCEDURE g_set_max_transform_peaks, PROCEDURE g_set_max_transform_peaks_reversed,
+  define_procedure_with_reversed_setter(S_max_transform_peaks, PROCEDURE g_max_transform_peaks_w, H_max_transform_peaks,
+					"set-" S_max_transform_peaks, PROCEDURE g_set_max_transform_peaks_w, PROCEDURE g_set_max_transform_peaks_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_show_y_zero, PROCEDURE g_show_y_zero, H_show_y_zero,
-					"set-" S_show_y_zero, PROCEDURE g_set_show_y_zero, PROCEDURE g_set_show_y_zero_reversed,
+  define_procedure_with_reversed_setter(S_show_y_zero, PROCEDURE g_show_y_zero_w, H_show_y_zero,
+					"set-" S_show_y_zero, PROCEDURE g_set_show_y_zero_w, PROCEDURE g_set_show_y_zero_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_show_marks, PROCEDURE g_show_marks, H_show_marks,
-					"set-" S_show_marks, PROCEDURE g_set_show_marks, PROCEDURE g_set_show_marks_reversed,
+  define_procedure_with_reversed_setter(S_show_marks, PROCEDURE g_show_marks_w, H_show_marks,
+					"set-" S_show_marks, PROCEDURE g_set_show_marks_w, PROCEDURE g_set_show_marks_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_time_graph_type, PROCEDURE g_time_graph_type, H_time_graph_type,
-					"set-" S_time_graph_type, PROCEDURE g_set_time_graph_type, PROCEDURE g_set_time_graph_type_reversed,
+  define_procedure_with_reversed_setter(S_time_graph_type, PROCEDURE g_time_graph_type_w, H_time_graph_type,
+					"set-" S_time_graph_type, PROCEDURE g_set_time_graph_type_w, PROCEDURE g_set_time_graph_type_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_wavo_hop, PROCEDURE g_wavo_hop, H_wavo_hop,
-					"set-" S_wavo_hop, PROCEDURE g_set_wavo_hop, PROCEDURE g_set_wavo_hop_reversed,
+  define_procedure_with_reversed_setter(S_wavo_hop, PROCEDURE g_wavo_hop_w, H_wavo_hop,
+					"set-" S_wavo_hop, PROCEDURE g_set_wavo_hop_w, PROCEDURE g_set_wavo_hop_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_wavo_trace, PROCEDURE g_wavo_trace, H_wavo_trace,
-					"set-" S_wavo_trace, PROCEDURE g_set_wavo_trace, PROCEDURE g_set_wavo_trace_reversed,
+  define_procedure_with_reversed_setter(S_wavo_trace, PROCEDURE g_wavo_trace_w, H_wavo_trace,
+					"set-" S_wavo_trace, PROCEDURE g_set_wavo_trace_w, PROCEDURE g_set_wavo_trace_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_show_transform_peaks, PROCEDURE g_show_transform_peaks, H_show_transform_peaks,
-					"set-" S_show_transform_peaks, PROCEDURE g_set_show_transform_peaks, PROCEDURE g_set_show_transform_peaks_reversed,
+  define_procedure_with_reversed_setter(S_show_transform_peaks, PROCEDURE g_show_transform_peaks_w, H_show_transform_peaks,
+					"set-" S_show_transform_peaks, PROCEDURE g_set_show_transform_peaks_w, PROCEDURE g_set_show_transform_peaks_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_zero_pad, PROCEDURE g_zero_pad, H_zero_pad,
-					"set-" S_zero_pad, PROCEDURE g_set_zero_pad, PROCEDURE g_set_zero_pad_reversed,
+  define_procedure_with_reversed_setter(S_zero_pad, PROCEDURE g_zero_pad_w, H_zero_pad,
+					"set-" S_zero_pad, PROCEDURE g_set_zero_pad_w, PROCEDURE g_set_zero_pad_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_verbose_cursor, PROCEDURE g_verbose_cursor, H_verbose_cursor,
-					"set-" S_verbose_cursor, PROCEDURE g_set_verbose_cursor, PROCEDURE g_set_verbose_cursor_reversed,
+  define_procedure_with_reversed_setter(S_verbose_cursor, PROCEDURE g_verbose_cursor_w, H_verbose_cursor,
+					"set-" S_verbose_cursor, PROCEDURE g_set_verbose_cursor_w, PROCEDURE g_set_verbose_cursor_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_fft_log_frequency, PROCEDURE g_fft_log_frequency, H_fft_log_frequency,
-					"set-" S_fft_log_frequency, PROCEDURE g_set_fft_log_frequency, PROCEDURE g_set_fft_log_frequency_reversed,
+  define_procedure_with_reversed_setter(S_fft_log_frequency, PROCEDURE g_fft_log_frequency_w, H_fft_log_frequency,
+					"set-" S_fft_log_frequency, PROCEDURE g_set_fft_log_frequency_w, PROCEDURE g_set_fft_log_frequency_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_fft_log_magnitude, PROCEDURE g_fft_log_magnitude, H_fft_log_magnitude,
-					"set-" S_fft_log_magnitude, PROCEDURE g_set_fft_log_magnitude, PROCEDURE g_set_fft_log_magnitude_reversed,
+  define_procedure_with_reversed_setter(S_fft_log_magnitude, PROCEDURE g_fft_log_magnitude_w, H_fft_log_magnitude,
+					"set-" S_fft_log_magnitude, PROCEDURE g_set_fft_log_magnitude_w, PROCEDURE g_set_fft_log_magnitude_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_min_dB, PROCEDURE g_min_dB, H_min_dB,
-					"set-" S_min_dB, PROCEDURE g_set_min_dB, PROCEDURE g_set_min_dB_reversed,
+  define_procedure_with_reversed_setter(S_min_dB, PROCEDURE g_min_dB_w, H_min_dB,
+					"set-" S_min_dB, PROCEDURE g_set_min_dB_w, PROCEDURE g_set_min_dB_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_wavelet_type, PROCEDURE g_wavelet_type, H_wavelet_type,
-					"set-" S_wavelet_type, PROCEDURE g_set_wavelet_type, PROCEDURE g_set_wavelet_type_reversed,
+  define_procedure_with_reversed_setter(S_wavelet_type, PROCEDURE g_wavelet_type_w, H_wavelet_type,
+					"set-" S_wavelet_type, PROCEDURE g_set_wavelet_type_w, PROCEDURE g_set_wavelet_type_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_cutoff, PROCEDURE g_spectro_cutoff, H_spectro_cutoff,
-					"set-" S_spectro_cutoff, PROCEDURE g_set_spectro_cutoff, PROCEDURE g_set_spectro_cutoff_reversed,
+  define_procedure_with_reversed_setter(S_spectro_cutoff, PROCEDURE g_spectro_cutoff_w, H_spectro_cutoff,
+					"set-" S_spectro_cutoff, PROCEDURE g_set_spectro_cutoff_w, PROCEDURE g_set_spectro_cutoff_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_start, PROCEDURE g_spectro_start, H_spectro_start,
-					"set-" S_spectro_start, PROCEDURE g_set_spectro_start, PROCEDURE g_set_spectro_start_reversed,
+  define_procedure_with_reversed_setter(S_spectro_start, PROCEDURE g_spectro_start_w, H_spectro_start,
+					"set-" S_spectro_start, PROCEDURE g_set_spectro_start_w, PROCEDURE g_set_spectro_start_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_x_angle, PROCEDURE g_spectro_x_angle, H_spectro_x_angle,
-					"set-" S_spectro_x_angle, PROCEDURE g_set_spectro_x_angle, PROCEDURE g_set_spectro_x_angle_reversed,
+  define_procedure_with_reversed_setter(S_spectro_x_angle, PROCEDURE g_spectro_x_angle_w, H_spectro_x_angle,
+					"set-" S_spectro_x_angle, PROCEDURE g_set_spectro_x_angle_w, PROCEDURE g_set_spectro_x_angle_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_x_scale, PROCEDURE g_spectro_x_scale, H_spectro_x_scale,
-					"set-" S_spectro_x_scale, PROCEDURE g_set_spectro_x_scale, PROCEDURE g_set_spectro_x_scale_reversed,
+  define_procedure_with_reversed_setter(S_spectro_x_scale, PROCEDURE g_spectro_x_scale_w, H_spectro_x_scale,
+					"set-" S_spectro_x_scale, PROCEDURE g_set_spectro_x_scale_w, PROCEDURE g_set_spectro_x_scale_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_y_angle, PROCEDURE g_spectro_y_angle, H_spectro_y_angle,
-					"set-" S_spectro_y_angle, PROCEDURE g_set_spectro_y_angle, PROCEDURE g_set_spectro_y_angle_reversed,
+  define_procedure_with_reversed_setter(S_spectro_y_angle, PROCEDURE g_spectro_y_angle_w, H_spectro_y_angle,
+					"set-" S_spectro_y_angle, PROCEDURE g_set_spectro_y_angle_w, PROCEDURE g_set_spectro_y_angle_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_y_scale, PROCEDURE g_spectro_y_scale, H_spectro_y_scale,
-					"set-" S_spectro_y_scale, PROCEDURE g_set_spectro_y_scale, PROCEDURE g_set_spectro_y_scale_reversed,
+  define_procedure_with_reversed_setter(S_spectro_y_scale, PROCEDURE g_spectro_y_scale_w, H_spectro_y_scale,
+					"set-" S_spectro_y_scale, PROCEDURE g_set_spectro_y_scale_w, PROCEDURE g_set_spectro_y_scale_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_z_angle, PROCEDURE g_spectro_z_angle, H_spectro_z_angle,
-					"set-" S_spectro_z_angle, PROCEDURE g_set_spectro_z_angle, PROCEDURE g_set_spectro_z_angle_reversed,
+  define_procedure_with_reversed_setter(S_spectro_z_angle, PROCEDURE g_spectro_z_angle_w, H_spectro_z_angle,
+					"set-" S_spectro_z_angle, PROCEDURE g_set_spectro_z_angle_w, PROCEDURE g_set_spectro_z_angle_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_z_scale, PROCEDURE g_spectro_z_scale, H_spectro_z_scale,
-					"set-" S_spectro_z_scale, PROCEDURE g_set_spectro_z_scale, PROCEDURE g_set_spectro_z_scale_reversed,
+  define_procedure_with_reversed_setter(S_spectro_z_scale, PROCEDURE g_spectro_z_scale_w, H_spectro_z_scale,
+					"set-" S_spectro_z_scale, PROCEDURE g_set_spectro_z_scale_w, PROCEDURE g_set_spectro_z_scale_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_fft_window_beta, PROCEDURE g_fft_window_beta, H_fft_window_beta,
-					"set-" S_fft_window_beta, PROCEDURE g_set_fft_window_beta, PROCEDURE g_set_fft_window_beta_reversed,
+  define_procedure_with_reversed_setter(S_fft_window_beta, PROCEDURE g_fft_window_beta_w, H_fft_window_beta,
+					"set-" S_fft_window_beta, PROCEDURE g_set_fft_window_beta_w, PROCEDURE g_set_fft_window_beta_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_spectro_hop, PROCEDURE g_spectro_hop, H_spectro_hop,
-					"set-" S_spectro_hop, PROCEDURE g_set_spectro_hop, PROCEDURE g_set_spectro_hop_reversed,
+  define_procedure_with_reversed_setter(S_spectro_hop, PROCEDURE g_spectro_hop_w, H_spectro_hop,
+					"set-" S_spectro_hop, PROCEDURE g_set_spectro_hop_w, PROCEDURE g_set_spectro_hop_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_transform_size, PROCEDURE g_transform_size, H_transform_size,
-					"set-" S_transform_size, PROCEDURE g_set_transform_size, PROCEDURE g_set_transform_size_reversed,
+  define_procedure_with_reversed_setter(S_transform_size, PROCEDURE g_transform_size_w, H_transform_size,
+					"set-" S_transform_size, PROCEDURE g_set_transform_size_w, PROCEDURE g_set_transform_size_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_transform_graph_type, PROCEDURE g_transform_graph_type, H_transform_graph_type,
-					"set-" S_transform_graph_type, PROCEDURE g_set_transform_graph_type, PROCEDURE g_set_transform_graph_type_reversed,
+  define_procedure_with_reversed_setter(S_transform_graph_type, PROCEDURE g_transform_graph_type_w, H_transform_graph_type,
+					"set-" S_transform_graph_type, PROCEDURE g_set_transform_graph_type_w, PROCEDURE g_set_transform_graph_type_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_fft_window, PROCEDURE g_fft_window, H_fft_window,
-					"set-" S_fft_window, PROCEDURE g_set_fft_window, PROCEDURE g_set_fft_window_reversed,
+  define_procedure_with_reversed_setter(S_fft_window, PROCEDURE g_fft_window_w, H_fft_window,
+					"set-" S_fft_window, PROCEDURE g_set_fft_window_w, PROCEDURE g_set_fft_window_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_transform_type, PROCEDURE g_transform_type, H_transform_type,
-					"set-" S_transform_type, PROCEDURE g_set_transform_type, PROCEDURE g_set_transform_type_reversed,
+  define_procedure_with_reversed_setter(S_transform_type, PROCEDURE g_transform_type_w, H_transform_type,
+					"set-" S_transform_type, PROCEDURE g_set_transform_type_w, PROCEDURE g_set_transform_type_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_transform_normalization, PROCEDURE g_transform_normalization, H_transform_normalization,
-					"set-" S_transform_normalization, PROCEDURE g_set_transform_normalization, PROCEDURE g_set_transform_normalization_reversed,
+  define_procedure_with_reversed_setter(S_transform_normalization, PROCEDURE g_transform_normalization_w, H_transform_normalization,
+					"set-" S_transform_normalization, PROCEDURE g_set_transform_normalization_w, PROCEDURE g_set_transform_normalization_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_show_mix_waveforms, PROCEDURE g_show_mix_waveforms, H_show_mix_waveforms,
-					"set-" S_show_mix_waveforms, PROCEDURE g_set_show_mix_waveforms, PROCEDURE g_set_show_mix_waveforms_reversed,
+  define_procedure_with_reversed_setter(S_show_mix_waveforms, PROCEDURE g_show_mix_waveforms_w, H_show_mix_waveforms,
+					"set-" S_show_mix_waveforms, PROCEDURE g_set_show_mix_waveforms_w, PROCEDURE g_set_show_mix_waveforms_reversed,
 					local_doc, 0, 2, 0, 3);
 
   /* should these be named "graph-with-lines" etc? */
@@ -5591,54 +5822,54 @@ void g_init_chn(SCM local_doc)
   #define H_graph_dots_and_lines "The value for " S_graph_style " that causes graphs to use dots connected by lines"
   #define H_graph_lollipops "The value for " S_graph_style " that makes DSP engineers happy"
 
-  DEFINE_VAR(S_graph_lines,           GRAPH_LINES,          H_graph_lines);
-  DEFINE_VAR(S_graph_dots,            GRAPH_DOTS,           H_graph_dots);
-  DEFINE_VAR(S_graph_filled,          GRAPH_FILLED,         H_graph_filled);
-  DEFINE_VAR(S_graph_dots_and_lines,  GRAPH_DOTS_AND_LINES, H_graph_dots_and_lines);
-  DEFINE_VAR(S_graph_lollipops,       GRAPH_LOLLIPOPS,      H_graph_lollipops);
+  DEFINE_CONST(S_graph_lines,           GRAPH_LINES,          H_graph_lines);
+  DEFINE_CONST(S_graph_dots,            GRAPH_DOTS,           H_graph_dots);
+  DEFINE_CONST(S_graph_filled,          GRAPH_FILLED,         H_graph_filled);
+  DEFINE_CONST(S_graph_dots_and_lines,  GRAPH_DOTS_AND_LINES, H_graph_dots_and_lines);
+  DEFINE_CONST(S_graph_lollipops,       GRAPH_LOLLIPOPS,      H_graph_lollipops);
 
-  define_procedure_with_reversed_setter(S_graph_style, PROCEDURE g_graph_style, H_graph_style,
-					"set-" S_graph_style, PROCEDURE g_set_graph_style, PROCEDURE g_set_graph_style_reversed,
+  define_procedure_with_reversed_setter(S_graph_style, PROCEDURE g_graph_style_w, H_graph_style,
+					"set-" S_graph_style, PROCEDURE g_set_graph_style_w, PROCEDURE g_set_graph_style_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_dot_size, PROCEDURE g_dot_size, H_dot_size,
-					"set-" S_dot_size, PROCEDURE g_set_dot_size, PROCEDURE g_set_dot_size_reversed,
+  define_procedure_with_reversed_setter(S_dot_size, PROCEDURE g_dot_size_w, H_dot_size,
+					"set-" S_dot_size, PROCEDURE g_set_dot_size_w, PROCEDURE g_set_dot_size_reversed,
 					local_doc, 0, 2, 0, 3);
 
   #define H_x_axis_in_seconds    "The value for " S_x_axis_style " that displays the x axis using seconds"
   #define H_x_axis_in_samples    "The value for " S_x_axis_style " that displays the x axis using sample numbers"
   #define H_x_axis_as_percentage "The value for " S_x_axis_style " that displays the x axis using percentages"
 
-  DEFINE_VAR(S_x_axis_in_seconds,     X_AXIS_IN_SECONDS,    H_x_axis_in_seconds);
-  DEFINE_VAR(S_x_axis_in_samples,     X_AXIS_IN_SAMPLES,    H_x_axis_in_samples);
-  DEFINE_VAR(S_x_axis_as_percentage,  X_AXIS_AS_PERCENTAGE, H_x_axis_as_percentage);
+  DEFINE_CONST(S_x_axis_in_seconds,     X_AXIS_IN_SECONDS,    H_x_axis_in_seconds);
+  DEFINE_CONST(S_x_axis_in_samples,     X_AXIS_IN_SAMPLES,    H_x_axis_in_samples);
+  DEFINE_CONST(S_x_axis_as_percentage,  X_AXIS_AS_PERCENTAGE, H_x_axis_as_percentage);
 
-  define_procedure_with_reversed_setter(S_x_axis_style, PROCEDURE g_x_axis_style, H_x_axis_style,
-					"set-" S_x_axis_style, PROCEDURE g_set_x_axis_style, PROCEDURE g_set_x_axis_style_reversed,
+  define_procedure_with_reversed_setter(S_x_axis_style, PROCEDURE g_x_axis_style_w, H_x_axis_style,
+					"set-" S_x_axis_style, PROCEDURE g_set_x_axis_style_w, PROCEDURE g_set_x_axis_style_reversed,
 					local_doc, 0, 2, 0, 3);
 
   #define H_show_all_axes "The value for " S_show_axes " that causes both the x and y axes to be displayed"
   #define H_show_no_axes "The value for " S_show_axes " that causes neither the x or y axes to be displayed"
   #define H_show_x_axis "The value for " S_show_axes " that causes only the x axis to be displayed"
 
-  DEFINE_VAR(S_show_all_axes,         SHOW_ALL_AXES, H_show_all_axes);
-  DEFINE_VAR(S_show_no_axes,          SHOW_NO_AXES,  H_show_no_axes);
-  DEFINE_VAR(S_show_x_axis,           SHOW_X_AXIS,   H_show_x_axis);
+  DEFINE_CONST(S_show_all_axes,         SHOW_ALL_AXES, H_show_all_axes);
+  DEFINE_CONST(S_show_no_axes,          SHOW_NO_AXES,  H_show_no_axes);
+  DEFINE_CONST(S_show_x_axis,           SHOW_X_AXIS,   H_show_x_axis);
 
-  define_procedure_with_reversed_setter(S_show_axes, PROCEDURE g_show_axes, H_show_axes,
-					"set-" S_show_axes, PROCEDURE g_set_show_axes, PROCEDURE g_set_show_axes_reversed,
+  define_procedure_with_reversed_setter(S_show_axes, PROCEDURE g_show_axes_w, H_show_axes,
+					"set-" S_show_axes, PROCEDURE g_set_show_axes_w, PROCEDURE g_set_show_axes_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_graphs_horizontal, PROCEDURE g_graphs_horizontal, H_graphs_horizontal,
-					"set-" S_graphs_horizontal, PROCEDURE g_set_graphs_horizontal, PROCEDURE g_set_graphs_horizontal_reversed,
+  define_procedure_with_reversed_setter(S_graphs_horizontal, PROCEDURE g_graphs_horizontal_w, H_graphs_horizontal,
+					"set-" S_graphs_horizontal, PROCEDURE g_set_graphs_horizontal_w, PROCEDURE g_set_graphs_horizontal_reversed,
 					local_doc, 0, 2, 0, 3);
 
-  define_procedure_with_reversed_setter(S_x_bounds, PROCEDURE g_x_bounds, H_x_bounds,
-					"set-" S_x_bounds, PROCEDURE g_set_x_bounds, PROCEDURE g_set_x_bounds_reversed,
+  define_procedure_with_reversed_setter(S_x_bounds, PROCEDURE g_x_bounds_w, H_x_bounds,
+					"set-" S_x_bounds, PROCEDURE g_set_x_bounds_w, PROCEDURE g_set_x_bounds_reversed,
 					local_doc, 0, 2, 1, 2);
 
-  define_procedure_with_reversed_setter(S_y_bounds, PROCEDURE g_y_bounds, H_y_bounds,
-					"set-" S_y_bounds, PROCEDURE g_set_y_bounds, PROCEDURE g_set_y_bounds_reversed,
+  define_procedure_with_reversed_setter(S_y_bounds, PROCEDURE g_y_bounds_w, H_y_bounds,
+					"set-" S_y_bounds, PROCEDURE g_set_y_bounds_w, PROCEDURE g_set_y_bounds_reversed,
 					local_doc, 0, 2, 1, 2);
 
   #define H_transform_hook S_transform_hook " (snd chn scaler) is called just after a spectrum is calculated."
