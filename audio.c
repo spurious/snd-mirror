@@ -9265,7 +9265,7 @@ void mus_audio_describe(void)
 }
 
 /* for CLM */
-void reset_audio_c (void)
+void mus_reset_audio_c (void)
 {
   audio_initialized = FALSE;
   save_it = NULL;

@@ -18,6 +18,7 @@
 ;;;     snap-mark-to-beat forces dragged mark to end up on a beat
 ;;;     mark-explode splits a sound into a bunch of sounds based on mark placements
 ;;;     mark-property implements property lists for marks
+;;;     save-mark-properties sets up an after-save-state-hook function to save any mark-properties
 ;;;     mark-click-info is a mark-click-hook function that describes a mark and its properties
 
 
@@ -381,6 +382,39 @@
 						       (not (mark? (car val))))
 						     all-mark-properties)))
 	     #f))
+
+;;; TODO: save/restore all properties in sound header? -- could be separate write/read-eval functions
+;;;   what about "temporary" properties like 'inset-envelope (draw.scm)?
+
+(define (save-mark-properties)
+  "(save-mark-properties) sets up an after-save-state-hook function to save any mark-properties"
+  (add-hook! after-save-state-hook 
+    (lambda (filename)
+      (let ((fd (open filename (logior O_RDWR O_APPEND))))
+	(format fd "~%~%;;; from remember-mark-properties in marks.scm~%")
+	(format fd "(if (not (defined? 'mark-property)) (load-from-path \"marks.scm\"))~%")
+	(for-each 
+	 (lambda (snd-m)
+	   (for-each 
+	    (lambda (chn-m)
+	      (for-each
+	       (lambda (m)
+		 (let ((mp (mark-properties m)))
+		   (if (and mp
+			    (list? mp)
+			    (not (null? mp)))
+		       (let ((mhome (mark-home m))
+			     (msamp (mark-sample m)))
+			 (format fd "(let ((s (find-sound ~S)))~%" (file-name (car mhome)))
+			 (format fd "  (if (sound? s)~%")
+			 (format fd "      (let ((m (find-mark ~A s ~A)))~%" msamp (cadr mhome))
+			 (format fd "        (if (mark? m)~%")
+			 (format fd "            (set! (mark-properties m) '~A)))))~%" mp)))))
+	       chn-m))
+	    snd-m))
+	 (marks))
+	(close fd)))))
+
 
 (define (mark-click-info n)
   "(mark-click-info n) is a mark-click-hook function that describes a mark and its properties"

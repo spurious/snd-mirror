@@ -1,15 +1,15 @@
 ;;; Snd tests
 ;;;
 ;;; test 0: constants 
-;;; test 1: default values
+;;; test 1: defaults
 ;;; test 2: headers 
-;;; test 3: can variables be set/reset
-;;; test 4: sndlib tests 
-;;; test 5: simple overall checks
+;;; test 3: variables
+;;; test 4: sndlib
+;;; test 5: overall checks
 ;;; test 6: vcts 
 ;;; test 7: colors 
 ;;; test 8: clm
-;;; test 9: mix 
+;;; test 9: mixes
 ;;; test 10: marks 
 ;;; test 11: dialogs 
 ;;; test 12: sound file extensions etc 
@@ -13168,141 +13168,173 @@ EDITS: 5
 	(revert-sound nind)
 	(close-sound nind))
       
-      (if (file-exists? "fmv.snd") (delete-file "fmv.snd"))
-      (if (file-exists? "fmv1.snd") (delete-file "fmv1.snd"))
-      (if (file-exists? "fmv2.snd") (delete-file "fmv2.snd"))
-      (if (file-exists? "fmv3.snd") (delete-file "fmv3.snd"))
-      (let ((v0 (make-vct 12)))
-	(vct-fill! v0 0.1)
-	(array->file "fmv1.snd" v0 12 22050 1)
-	(vct-fill! v0 0.2)
-	(array->file "fmv2.snd" v0 12 22050 2)
-	(vct-fill! v0 0.3)
-	(array->file "fmv3.snd" v0 12 22050 4)
-	(do ((i 0 (1+ i))) ((= i 12)) (vct-set! v0 i (* i .01)))
-	(array->file "fmv.snd" v0 12 22050 1)
-	(mus-mix "fmv.snd" "fmv1.snd")
-	(file->array "fmv.snd" 0 0 12 v0)
-	(do ((i 0 (1+ i))) ((= i 12)) (if (fneq (vct-ref v0 i) (+ 0.1 (* i .01))) (snd-display ";mus-mix(1->1): ~A?" v0)))
-	(mus-mix "fmv.snd" "fmv2.snd" 3 9 0 (make-mixer 2 0.3 0.0 0.7 0.0))
-	(file->array "fmv.snd" 0 0 12 v0)
-	(if (or (fneq (vct-ref v0 0) .1) (fneq (vct-ref v0 3) .33) (fneq (vct-ref v0 9) .19)) (snd-display ";mus-mix(2->1): ~A?" v0))
-	(mus-mix "fmv.snd" "fmv3.snd")
-	(file->array "fmv.snd" 0 0 12 v0)
-	(if (or (fneq (vct-ref v0 0) .4) (fneq (vct-ref v0 3) .33)) (snd-display ";mus-mix(4->1): ~A?" v0))
-	(let ((e0 (make-env '(0 0 1 1) :end 10))
-	      (vf (make-vector 1))
-	      (vf1 (make-vector 1)))
-	  (vector-set! vf 0 vf1)
-	  (vector-set! vf1 0 e0)
-	  (mus-mix "fmv.snd" "fmv1.snd" 0 12 0 (make-mixer 1 1.0) vf)
-	  (file->array "fmv.snd" 0 0 12 v0)
-	  (if (or (fneq (vct-ref v0 0) .4) (fneq (vct-ref v0 3) .360) (fneq (vct-ref v0 9) .28)) (snd-display ";mus-mix(env): ~A?" v0))
-	  (mus-mix "fmv.snd" "fmv2.snd" 0 12 0 (make-mixer 2 1.0 1.0 1.0 1.0) vf)) ; clm2xen should protect us here
-	(let ((vf (make-vector 2))
-	      (vf1 (make-vector 2))
-	      (vf2 (make-vector 2)))
-	  (vector-set! vf 0 vf1)
-	  (vector-set! vf 1 vf2)
-	  (vector-set! vf1 0 (make-env '(0 0 1 1) :end 9))
-	  (vector-set! vf2 1 (make-env '(0 0 1 1) :end 9))
-	  (mus-mix "fmv.snd" "fmv2.snd" 0 12 0 (make-mixer 2 1.0 1.0 1.0 1.0) vf)
-	  (let ((tag (catch #t
-			    (lambda ()
-			      (vector-set! vf 0 (make-oscil))
-			      (mus-mix "fmv.snd" "fmv2.snd" 0 12 0 (make-mixer 2 1.0 1.0 1.0 1.0) vf))
-			    (lambda args (car args)))))
-	    (if (not (eq? tag 'bad-type))
-		(snd-display ";mix w oscil-vect: ~A" tag)))
-	  (vector-set! vf 0 vf1)
-	  (vector-set! vf 1 vf2)
-	  (let ((tag (catch #t
-			    (lambda ()
-			      (vector-set! vf1 0 (make-oscil))
-			      (vector-set! vf2 1 (sqrt -1.0))
-			      (mus-mix "fmv.snd" "fmv2.snd" 0 12 0 (make-mixer 2 1.0 1.0 1.0 1.0) vf))
-			    (lambda args (car args)))))
-	    (if (not (eq? tag 'bad-type))
-		(snd-display ";mix w oscil-env: ~A" tag))))
-	(delete-file "fmv.snd")
-	(do ((i 0 (1+ i))) ((= i 12)) (vct-set! v0 i (* i .01)))
-	(array->file "fmv.snd" v0 12 22050 4)
-	(mus-mix "fmv.snd" "fmv1.snd")
-	(file->array "fmv.snd" 0 0 3 v0) ; chan 0 start 0 len 3
-	(if (or (fneq (vct-ref v0 0) .1) (fneq (vct-ref v0 2) .18)) (snd-display ";mus-mix(1->4): ~A?" v0))
-	(mus-mix "fmv.snd" "fmv2.snd"  0 3 0 (make-mixer 2 0.3 0.0 0.7 0.0))
-	(file->array "fmv.snd" 0 0 3 v0)
-	(if (or (fneq (vct-ref v0 0) .3) (fneq (vct-ref v0 2) .38)) (snd-display ";mus-mix(2->4): ~A?" v0))
-	(mus-mix "fmv.snd" "fmv3.snd" 0 2 0)
-	(file->array "fmv.snd" 0 0 3 v0)
-	(if (or (fneq (vct-ref v0 0) .6) (fneq (vct-ref v0 2) .38)) (snd-display ";mus-mix(4->4): ~A?" v0)))
-      
-      (if (file-exists? "fmv.snd") (delete-file "fmv.snd"))
-      (let ((v0 (make-vct 12))
-	    (len (mus-sound-frames "oboe.snd")))
-	(array->file "fmv.snd" v0 12 22050 1)
-	(mus-mix "fmv.snd" "oboe.snd")
-	(mus-mix "fmv.snd" "oboe.snd" 0 len 0 (make-mixer 1 0.5))
-	(let* ((egen (make-vector 1))
-	       (outv (make-vector 1)))
-	  (vector-set! outv 0 egen)
-	  (vector-set! egen 0 (make-env :envelope '(0 0 1 1) :end len))
-	  (mus-mix "fmv.snd" "oboe.snd" 0 len 0 #f outv)
-	  (vector-set! egen 0 (make-env :envelope '(0 1 1 0) :end len))
-	  (mus-mix "fmv.snd" "oboe.snd" 0 len 0 (make-mixer 1 1.0) outv))
-	(let ((ind-oboe (open-sound "oboe.snd"))
-	      (ind-mix (open-sound "fmv.snd")))
-	  (if (not (vequal (samples->vct 1000 10 ind-oboe)
-			   (vct-scale! (samples->vct 1000 10 ind-mix) (/ 1.0 2.5))))
-	      (snd-display ";mus-mix 1 chan: ~A ~A"
-			   (samples->vct 1000 10 ind-oboe)
-			   (samples->vct 1000 10 ind-mix)))
-	  (close-sound ind-oboe)
-	  (close-sound ind-mix))
-	(delete-file "fmv.snd")
-	(let ((v0 (make-vct 12))
-	      (len (mus-sound-frames "2.snd")))
-	  (array->file "fmv.snd" v0 12 22050 2)
-	  (if (not (= (mus-sound-chans "fmv.snd") 2))
-	      (snd-display ";array->file chans? ~A" (mus-sound-chans "fmv.snd")))
-	  (mus-mix "fmv.snd" "2.snd")
-	  (mus-mix "fmv.snd" "2.snd" 0 len 0 (make-mixer 2 0.5 0.0 0.0 0.5))
-	  (let* ((egen0 (make-vector 2))
-		 (egen1 (make-vector 2))
-		 (outv (make-vector 2)))
-	    (vector-set! outv 0 egen0)
-	    (vector-set! outv 1 egen1)
-	    (vector-set! egen0 0 (make-env :envelope '(0 0 1 1) :end len))
-	    (vector-set! egen1 1 (make-env :envelope '(0 0 1 1) :end len))
-	    (mus-mix "fmv.snd" "2.snd" 0 len 0 #f outv))
-	  (let ((ind-mix (open-sound "fmv.snd")))
-	    (if (not (= (channels ind-mix) 2))
-		(snd-display ";fmv re-read chans? ~A ~A" (mus-sound-chans "fmv.snd") (channels ind-mix)))
-	    (if (not (vequal (samples->vct 1000 10 ind-mix 0)
-			     (vct 0.003 0.010 0.012 0.011 0.008 0.004 0.002 0.002 0.007 0.017)))
-		(snd-display ";mus-mix 2 chan (2.snd written: ~A): ~A ~A"
-			     (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "2.snd")))
-			     (samples->vct 1000 10 ind-mix 0)
-			     (samples->vct 1000 10 ind-mix 1)))
-	    (close-sound ind-mix)
-	    (delete-file "fmv.snd"))))
-      
-      (let* ((ind (open-sound "oboe.snd"))
-	     (pi2 (* 2.0 pi))
-	     (pv (make-phase-vocoder #f
-				     512 4 128 1.0
-				     #f ;no change to analysis
-				     #f ;no change to edits
-				     #f ;no change to synthesis
-				     ))
-	     (reader (make-sample-reader 0)))
-	(if (not (phase-vocoder? pv)) (snd-display ";~A not phase-vocoder?" pv))
-	(print-and-check pv 
-			 "phase_vocoder"
-			 "phase_vocoder: outctr: 128, interp: 128, filptr: 0, N: 512, D: 128, in_data: nil"
-			 "pv_info outctr: 128, interp: 128, filptr: 0, N: 512, D: 128, in_data: nil, amps: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], freqs: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...]")
-	(select-sound ind)
-	(map-chan (lambda (val)
+      (let ((make-mix-output (lambda (name i)
+			       (if (or (= i 0) (= i 1)) 
+				   name
+				   (continue-sample->file name))))
+	    (make-mix-input (lambda (name i)
+			      (if (or (= i 0) (= i 2))
+				  name
+				  (make-file->frame name)))))
+	(define* (mus-mix-1 outf inf #:optional outloc frames inloc mixer envs)
+	  (if envs
+	      (mus-mix outf inf outloc frames inloc mixer envs)
+	      (if mixer
+		  (mus-mix outf inf outloc frames inloc mixer)
+		  (if inloc
+		      (mus-mix outf inf outloc frames inloc)
+		      (if frames
+			  (mus-mix outf inf outloc frames)
+			  (if outloc
+			      (mus-mix outf inf outloc)
+			      (mus-mix outf inf))))))
+	  (if (not (string? outf))
+	      (mus-close outf)))
+
+	(do ((k 0 (1+ k)))
+	    ((= k 4))
+	  (if (file-exists? "fmv.snd") (delete-file "fmv.snd"))
+	  (if (file-exists? "fmv1.snd") (delete-file "fmv1.snd"))
+	  (if (file-exists? "fmv2.snd") (delete-file "fmv2.snd"))
+	  (if (file-exists? "fmv3.snd") (delete-file "fmv3.snd"))
+	  (let ((v0 (make-vct 12)))
+	    (vct-fill! v0 0.1)
+	    (array->file "fmv1.snd" v0 12 22050 1)
+	    (vct-fill! v0 0.2)
+	    (array->file "fmv2.snd" v0 12 22050 2)
+	    (vct-fill! v0 0.3)
+	    (array->file "fmv3.snd" v0 12 22050 4)
+	    (do ((i 0 (1+ i))) ((= i 12)) (vct-set! v0 i (* i .01)))
+	    (array->file "fmv.snd" v0 12 22050 1)
+	    (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv1.snd" k))
+	    (file->array "fmv.snd" 0 0 12 v0)
+	    (call-with-current-continuation
+	     (lambda (break)
+	       (do ((i 0 (1+ i))) ((= i 12)) 
+		 (if (fneq (vct-ref v0 i) (+ 0.1 (* i .01))) 
+		     (break (snd-display ";~D mus-mix(1->1): ~A?" k v0))))))
+	    (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv2.snd" k) 3 9 0 (make-mixer 2 0.3 0.0 0.7 0.0))
+	    (file->array "fmv.snd" 0 0 12 v0)
+	    (if (or (fneq (vct-ref v0 0) .1) (fneq (vct-ref v0 3) .33) (fneq (vct-ref v0 9) .19)) (snd-display ";~D mus-mix(2->1): ~A?" k v0))
+	    (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv3.snd" k))
+	    (file->array "fmv.snd" 0 0 12 v0)
+	    (if (or (fneq (vct-ref v0 0) .4) (fneq (vct-ref v0 3) .33)) (snd-display ";~D mus-mix(4->1): ~A?" k v0))
+	    (let ((e0 (make-env '(0 0 1 1) :end 10))
+		  (vf (make-vector 1))
+		  (vf1 (make-vector 1)))
+	      (vector-set! vf 0 vf1)
+	      (vector-set! vf1 0 e0)
+	      (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv1.snd" k) 0 12 0 (make-mixer 1 1.0) vf)
+	      (file->array "fmv.snd" 0 0 12 v0)
+	      (if (or (fneq (vct-ref v0 0) .4) (fneq (vct-ref v0 3) .360) (fneq (vct-ref v0 9) .28)) (snd-display ";~D mus-mix(env): ~A?" k v0))
+	      (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv2.snd" k) 0 12 0 (make-mixer 2 1.0 1.0 1.0 1.0) vf)) 
+	    ;; clm2xen should protect us here
+	    (let ((vf (make-vector 2))
+		  (vf1 (make-vector 2))
+		  (vf2 (make-vector 2)))
+	      (vector-set! vf 0 vf1)
+	      (vector-set! vf 1 vf2)
+	      (vector-set! vf1 0 (make-env '(0 0 1 1) :end 9))
+	      (vector-set! vf2 1 (make-env '(0 0 1 1) :end 9))
+	      (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv2.snd" k) 0 12 0 (make-mixer 2 1.0 1.0 1.0 1.0) vf)
+	      (let ((tag (catch #t
+				(lambda ()
+				  (vector-set! vf 0 (make-oscil))
+				  (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv2.snd" k) 0 12 0 (make-mixer 2 1.0 1.0 1.0 1.0) vf))
+				(lambda args (car args)))))
+		(if (not (eq? tag 'bad-type))
+		    (snd-display ";~D mix w oscil-vect: ~A" k tag)))
+	      (vector-set! vf 0 vf1)
+	      (vector-set! vf 1 vf2)
+	      (let ((tag (catch #t
+				(lambda ()
+				  (vector-set! vf1 0 (make-oscil))
+				  (vector-set! vf2 1 (sqrt -1.0))
+				  (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv2.snd" k) 0 12 0 (make-mixer 2 1.0 1.0 1.0 1.0) vf))
+				(lambda args (car args)))))
+		(if (not (eq? tag 'bad-type))
+		    (snd-display ";~D mix w oscil-env: ~A" k tag))))
+	    (delete-file "fmv.snd")
+	    (do ((i 0 (1+ i))) ((= i 12)) (vct-set! v0 i (* i .01)))
+	    (array->file "fmv.snd" v0 12 22050 4)
+	    (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv1.snd" k))
+	    (file->array "fmv.snd" 0 0 3 v0) ; chan 0 start 0 len 3
+	    (if (or (fneq (vct-ref v0 0) .1) (fneq (vct-ref v0 2) .18)) (snd-display ";~D mus-mix(1->4): ~A?" k v0))
+	    (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv2.snd" k)  0 3 0 (make-mixer 2 0.3 0.0 0.7 0.0))
+	    (file->array "fmv.snd" 0 0 3 v0)
+	    (if (or (fneq (vct-ref v0 0) .3) (fneq (vct-ref v0 2) .38)) (snd-display ";~D mus-mix(2->4): ~A?" k v0))
+	    (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv3.snd" k) 0 2 0)
+	    (file->array "fmv.snd" 0 0 3 v0)
+	    (if (or (fneq (vct-ref v0 0) .6) (fneq (vct-ref v0 2) .38)) (snd-display ";~D mus-mix(4->4): ~A?" k v0)))
+	  
+	  (if (file-exists? "fmv.snd") (delete-file "fmv.snd"))
+	  (let ((v0 (make-vct 12))
+		(len (mus-sound-frames "oboe.snd")))
+	    (array->file "fmv.snd" v0 12 22050 1)
+	    (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "oboe.snd" k))
+	    (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "oboe.snd" k) 0 len 0 (make-mixer 1 0.5))
+	    (let* ((egen (make-vector 1))
+		   (outv (make-vector 1)))
+	      (vector-set! outv 0 egen)
+	      (vector-set! egen 0 (make-env :envelope '(0 0 1 1) :end len))
+	      (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "oboe.snd" k) 0 len 0 #f outv)
+	      (vector-set! egen 0 (make-env :envelope '(0 1 1 0) :end len))
+	      (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "oboe.snd" k) 0 len 0 (make-mixer 1 1.0) outv))
+	    (let ((ind-oboe (open-sound "oboe.snd"))
+		  (ind-mix (open-sound "fmv.snd")))
+	      (if (not (vequal (samples->vct 1000 10 ind-oboe)
+			       (vct-scale! (samples->vct 1000 10 ind-mix) (/ 1.0 2.5))))
+		  (snd-display ";~D mus-mix 1 chan: ~A ~A" k
+			       (samples->vct 1000 10 ind-oboe)
+			       (samples->vct 1000 10 ind-mix)))
+	      (close-sound ind-oboe)
+	      (close-sound ind-mix))
+	    (delete-file "fmv.snd")
+	    (let ((v0 (make-vct 12))
+		  (len (mus-sound-frames "2.snd")))
+	      (array->file "fmv.snd" v0 12 22050 2)
+	      (if (not (= (mus-sound-chans "fmv.snd") 2))
+		  (snd-display ";~D array->file chans? ~A" k (mus-sound-chans "fmv.snd")))
+	      (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "2.snd" k))
+	      (mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "2.snd" k) 0 len 0 (make-mixer 2 0.5 0.0 0.0 0.5))
+	      (let* ((egen0 (make-vector 2))
+		     (egen1 (make-vector 2))
+		     (outv (make-vector 2)))
+		(vector-set! outv 0 egen0)
+		(vector-set! outv 1 egen1)
+		(vector-set! egen0 0 (make-env :envelope '(0 0 1 1) :end len))
+		(vector-set! egen1 1 (make-env :envelope '(0 0 1 1) :end len))
+		(mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "2.snd" k) 0 len 0 #f outv))
+	      (let ((ind-mix (open-sound "fmv.snd")))
+		(if (not (= (channels ind-mix) 2))
+		    (snd-display ";~D fmv re-read chans? ~A ~A" k (mus-sound-chans "fmv.snd") (channels ind-mix)))
+		(if (not (vequal (samples->vct 1000 10 ind-mix 0)
+				 (vct 0.003 0.010 0.012 0.011 0.008 0.004 0.002 0.002 0.007 0.017)))
+		    (snd-display ";~D mus-mix 2 chan (2.snd written: ~A): ~A ~A" k
+				 (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "2.snd")))
+				 (samples->vct 1000 10 ind-mix 0)
+				 (samples->vct 1000 10 ind-mix 1)))
+		(close-sound ind-mix)
+		(delete-file "fmv.snd"))))
+	  ); end do loop
+	); end let
+	
+	(let* ((ind (open-sound "oboe.snd"))
+	       (pi2 (* 2.0 pi))
+	       (pv (make-phase-vocoder #f
+				       512 4 128 1.0
+				       #f ;no change to analysis
+				       #f ;no change to edits
+				       #f ;no change to synthesis
+				       ))
+	       (reader (make-sample-reader 0)))
+	  (if (not (phase-vocoder? pv)) (snd-display ";~A not phase-vocoder?" pv))
+	  (print-and-check pv 
+			   "phase_vocoder"
+			   "phase_vocoder: outctr: 128, interp: 128, filptr: 0, N: 512, D: 128, in_data: nil"
+			   "pv_info outctr: 128, interp: 128, filptr: 0, N: 512, D: 128, in_data: nil, amps: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], freqs: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...]")
+	  (select-sound ind)
+	  (map-chan (lambda (val)
  		    (phase-vocoder pv (lambda (dir) 
 					(next-sample reader)))))
 	(vct-set! (pv-amp-increments pv) 0 .1)
@@ -16567,6 +16599,17 @@ EDITS: 5
 	(close-sound ind1)
 	(delete-file "fmv.snd")
 	(delete-file "fmv1.snd"))
+
+      (let ((in1 (open-sound "oboe.snd"))
+	    (in2 (open-sound "2.snd")))
+	(set! (sync in1) 1)
+	(set! (sync in2) 1)
+	(if (defined? 'enable-play) (enable-play))
+	(play-and-wait 0 #f #f #t)
+	(if (defined? 'disable-play) (disable-play))
+	(close-sound in1)
+	(close-sound in2))
+
       (run-hook after-test-hook 13)
       ))
 
@@ -28085,6 +28128,13 @@ EDITS: 2
 						       (srate ind) (mus-srate) (mus-sound-srate "test.snd")))
 	  (if (not (= (frames ind) (* 3 2205))) (snd-display ";with-sound continued frames: ~A (~A)" (frames ind) (srate ind))))
 	(close-sound ind))
+
+      (with-sound () (fm-violin 0 .1 440 .1))
+      (with-sound (:continue-old-file #t) (fm-violin .2 .1 660 .04))
+      (let ((ind (find-sound "test.snd")))
+	(if (fneq (maxamp ind 0) .1) (snd-display ";maxamp after continued sound: ~A" (maxamp ind 0)))
+	(if (fneq (/ (frames ind) (srate ind)) .3) (snd-display ";duration after continued sound: ~A" (/ (frames ind) (srate ind))))
+	(close-sound ind))
       
       (with-sound (:srate 22050 :channels 2 :output "test1.snd") (fm-violin 0 .1 440 .1 :degree 45.0))
       (let ((ind (find-sound "test1.snd")))
@@ -28421,6 +28471,12 @@ EDITS: 2
 	(play-and-wait ind)
 	(close-sound ind))
       (if (defined? 'disable-play) (disable-play))
+
+      (with-sound (:channels 2 :statistics t)
+		  (fullmix "pistol.snd")
+		  (fullmix "oboe.snd" 1 2 0 (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5)))))
+      (let ((ind (find-sound "test.snd")))
+	(if (sound? ind) (close-sound ind)))
       
       (if (and (provided? 'snd-motif)
 	       (defined? 'variable-display))
@@ -30149,7 +30205,7 @@ EDITS: 2
 		    (widget-string text-widget "(lambda (n9) (if (> n9 .1) 1 #f))")
 		    (key-event text-widget snd-return-key 0) (force-event)
 		    (if (not (= (cursor) 4424))
-			(snd-display ";find 1 past .1: ~A ~A ~A" (cursor) (sample (1- (cursor))) (sample (cursor))))
+			(snd-display ";find 1 past .1: ~A ~A ~A" (cursor) (sample (max 0 (1- (cursor)))) (sample (cursor))))
 		    (click-button cancel-button) (force-event)
 		    (close-sound ind))))
 	    

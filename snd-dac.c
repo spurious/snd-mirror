@@ -863,14 +863,30 @@ void play_region(snd_state *ss, int region, int background)
   if (dp) start_dac(ss, region_srate(region), chans, background);
 }
 
+static int call_start_playing_hook(snd_info *sp)
+{
+  if ((XEN_HOOKED(start_playing_hook)) &&
+      (XEN_TRUE_P(run_or_hook(start_playing_hook,
+			      XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
+			      S_start_playing_hook))))
+    {
+      reflect_play_stop(sp);           /* turns off buttons */
+      if (sp->delete_me) 
+	completely_free_snd_info(sp);  /* dummy snd_info struct for (play "filename") in snd-xen.c */
+      return(TRUE);
+    }
+  return(FALSE);
+}
+
 void play_channel(chan_info *cp, off_t start, off_t end, int background, XEN edpos, const char *caller, int arg_pos)
 {
-  /* just plays one channel (ignores possible sync) */
+  /* just plays one channel (ignores possible sync), includes start-hook */
   snd_info *sp = NULL;
   dac_info *dp;
   if ((background == NOT_IN_BACKGROUND) && (play_list_members > 0)) return;
   sp = cp->sound;
   if (sp->inuse == SOUND_IDLE) return;
+  if (call_start_playing_hook(sp)) return;
   dp = add_channel_to_play_list(cp, sp, start, end, edpos, caller, arg_pos);
   if (dp) 
     {
@@ -888,16 +904,7 @@ void play_sound(snd_info *sp, off_t start, off_t end, int background, XEN edpos,
       (play_list_members > 0)) 
     return;
   if (sp->inuse == SOUND_IDLE) return;
-  if ((XEN_HOOKED(start_playing_hook)) &&
-      (XEN_TRUE_P(run_or_hook(start_playing_hook,
-			      XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
-			      S_start_playing_hook))))
-    {
-      reflect_play_stop(sp);           /* turns off buttons */
-      if (sp->delete_me) 
-	completely_free_snd_info(sp);  /* dummy snd_info struct for (play "filename") in snd-xen.c */
-      return;
-    }
+  if (call_start_playing_hook(sp)) return;
   for (i = 0; i < sp->nchans; i++) 
     dp = add_channel_to_play_list(sp->chans[i], sp, start, end, edpos, caller, arg_pos);
   if (dp)
@@ -918,6 +925,7 @@ void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ur_ends, in
       (play_list_members > 0)) 
     return;
   if (chans <= 0) return;
+  if ((!selection) && (call_start_playing_hook(cps[0]->sound))) return;
   if (ur_ends)
     ends = ur_ends;
   else
@@ -2052,7 +2060,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
 	    }
 	  play_channels(si->cps, si->chans, si->begs, ends, background, edpos, caller, arg_pos, FALSE);
 	  si = free_sync_info(si);
-	  FREE(ends);
+	  if (ends) FREE(ends);
 	}
       else
 	{

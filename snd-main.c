@@ -458,6 +458,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
       if (tmpstr) FREE(tmpstr);
     }
   if (sp->cursor_follows_play) psp_ss(fd, S_cursor_follows_play, b2s(sp->cursor_follows_play));
+  /* TODO: in both sound|channel-properties, need a way to signal that a given property is temporary (not to be saved) -- e.g. 'inset-envelope */
   if ((XEN_VECTOR_P(sp->properties)) &&
       (XEN_LIST_P(XEN_VECTOR_REF(sp->properties, 0))) &&
       (!(XEN_NULL_P(XEN_VECTOR_REF(sp->properties, 0)))))

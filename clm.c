@@ -5041,6 +5041,8 @@ static void flush_buffers(rdout *gen)
   int fd, i, j, last, hdrfrm, hdrtyp, num;
   off_t size, hdrend;
   mus_sample_t **addbufs;
+  if ((gen->obufs == NULL) || (mus_file_probe(gen->file_name) == 0))
+    return;
   fd = mus_sound_open_input(gen->file_name);
   if (fd == -1)
     {
@@ -6864,33 +6866,64 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
 #define SCALED_MIX 3
 #define ENVELOPED_MONO_MIX 4
 #define ENVELOPED_MIX 5
+#define ALL_MIX 6
 
-void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out_frames, off_t in_start, mus_any *umx, mus_any ***envs)
+static int mix_type(int out_chans, int in_chans, mus_any *umx, mus_any ***envs)
 {
-  int i, j = 0, k, m, ofd, ifd, in_chans, out_chans, mix_chans, min_chans, mixtype;
-  mus_sample_t **obufs, **ibufs;
+  int i, j;
   mus_mixer *mx = (mus_mixer *)umx;
-  off_t inc, outc, offi, offk, curoutframes;
+  if (envs)
+    {
+      if ((in_chans == 1) && (out_chans == 1)) 
+	return(ENVELOPED_MONO_MIX);
+      else 
+	{
+	  if (mx)
+	    return(ALL_MIX);
+	  return(ENVELOPED_MIX); 
+	}
+    }
+  if (mx)
+    {
+      if ((in_chans == 1) && (out_chans == 1)) 
+	{
+	  if (mx->vals[0][0] == 1.0)
+	    return(IDENTITY_MONO_MIX); 
+	  return(SCALED_MONO_MIX);
+	}
+      for (i = 0; i < mx->chans; i++)
+	for (j = 0; j < mx->chans; j++)
+	  if (((i == j) && (mx->vals[i][i] != 1.0)) ||
+	      ((i != j) && (mx->vals[i][j] != 0.0)))
+	    return(SCALED_MIX);
+    }
+  if ((in_chans == 1) && (out_chans == 1)) 
+    return(IDENTITY_MONO_MIX);
+  return(IDENTITY_MIX);
+}
+
+void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, off_t out_start, off_t out_frames, off_t in_start, mus_any *umx, mus_any ***envs)
+{
+  int j = 0, k, in_chans, out_chans, mix_chans, min_chans, mixtype;
+  mus_mixer *mx = (mus_mixer *)umx;
+  off_t inc, outc, offi;
   mus_frame *frin, *frthru = NULL;
-  mus_any *inf, *outf;
-  Float scaler;
-  mus_any *e;
-  out_chans = mus_sound_chans(outfile);
-  if (out_chans <= 0) mus_error(MUS_NO_CHANNELS, "%s chans: %d", outfile, out_chans);
-  in_chans = mus_sound_chans(infile);
-  if (in_chans <= 0) mus_error(MUS_NO_CHANNELS, "%s chans: %d", infile, in_chans);
+  out_chans = mus_channels(outf);
+  if (out_chans <= 0) mus_error(MUS_NO_CHANNELS, "%s chans: %d", mus_describe(outf), out_chans);
+  in_chans = mus_channels(inf);
+  if (in_chans <= 0) mus_error(MUS_NO_CHANNELS, "%s chans: %d", mus_describe(inf), in_chans);
   if (out_chans > in_chans) mix_chans = out_chans; else mix_chans = in_chans;
   if (out_chans > in_chans) min_chans = in_chans; else min_chans = out_chans;
-  if ((mx) && (envs) && ((in_chans > 1) || (out_chans > 1)))
+  mixtype = mix_type(out_chans, in_chans, umx, envs);
+  frin = (mus_frame *)mus_make_empty_frame(mix_chans);
+  frthru = (mus_frame *)mus_make_empty_frame(mix_chans);
+  switch (mixtype)
     {
+    case ENVELOPED_MONO_MIX:
+    case ENVELOPED_MIX:
+      if (umx == NULL) mx = (mus_mixer *)mus_make_identity_mixer(mix_chans); /* fall through */
+    case ALL_MIX:
       /* the general case -- possible envs/scalers on every mixer cell */
-      outf = mus_make_frame2file(outfile, 
-				 out_chans, 
-				 mus_sound_data_format(outfile), 
-				 mus_sound_header_type(outfile));
-      inf = mus_make_file2frame(infile);
-      frin = (mus_frame *)mus_make_empty_frame(mix_chans);
-      frthru = (mus_frame *)mus_make_empty_frame(mix_chans);
       for (offi = 0, inc = in_start, outc = out_start; offi < out_frames; offi++, inc++, outc++)
 	{
 	  for (j = 0; j < in_chans; j++)
@@ -6903,50 +6936,57 @@ void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out
 					 mus_file2frame(inf, inc, (mus_any *)frin), 
 					 (mus_any *)frthru));
 	}
+      if (umx == NULL) mus_free((mus_any *)mx);
+      break;
+    case IDENTITY_MIX:
+    case IDENTITY_MONO_MIX:
+      for (offi = 0, inc = in_start, outc = out_start; offi < out_frames; offi++, inc++, outc++)
+	mus_frame2file(outf, outc, mus_file2frame(inf, inc, (mus_any *)frin));
+      break;
+    case SCALED_MONO_MIX:
+    case SCALED_MIX:
+      for (offi = 0, inc = in_start, outc = out_start; offi < out_frames; offi++, inc++, outc++)
+	mus_frame2file(outf, 
+		       outc, 
+		       mus_frame2frame((mus_any *)mx, 
+				       mus_file2frame(inf, inc, (mus_any *)frin), 
+				       (mus_any *)frthru));
+      break;
+
+    }
+  mus_free((mus_any *)frin);
+  mus_free((mus_any *)frthru);
+}
+
+
+void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out_frames, off_t in_start, mus_any *umx, mus_any ***envs)
+{
+  int i, j = 0, m, ofd, ifd, in_chans, out_chans, mix_chans, min_chans, mixtype;
+  mus_sample_t **obufs, **ibufs;
+  mus_mixer *mx = (mus_mixer *)umx;
+  off_t offk, curoutframes;
+  mus_any *inf, *outf;
+  Float scaler;
+  mus_any *e;
+  out_chans = mus_sound_chans(outfile);
+  if (out_chans <= 0) mus_error(MUS_NO_CHANNELS, "%s chans: %d", outfile, out_chans);
+  in_chans = mus_sound_chans(infile);
+  if (in_chans <= 0) mus_error(MUS_NO_CHANNELS, "%s chans: %d", infile, in_chans);
+  if (out_chans > in_chans) mix_chans = out_chans; else mix_chans = in_chans;
+  if (out_chans > in_chans) min_chans = in_chans; else min_chans = out_chans;
+  mixtype = mix_type(out_chans, in_chans, umx, envs);
+  if (mixtype == ALL_MIX)
+    {
+      /* the general case -- possible envs/scalers on every mixer cell */
+      outf = mus_continue_sample2file(outfile);
+      inf = mus_make_file2frame(infile);
+      mus_mix_with_reader_and_writer(outf, inf, out_start, out_frames, in_start, umx, envs);
       mus_free((mus_any *)inf);
       mus_free((mus_any *)outf);
-      mus_free((mus_any *)frin);
-      if (frthru) mus_free((mus_any *)frthru);
     }
   else
     {
       /* highly optimizable cases */
-      if (envs)
-	{
-	  if ((in_chans == 1) && (out_chans == 1)) 
-	    mixtype = ENVELOPED_MONO_MIX;
-	  else mixtype = ENVELOPED_MIX; /* i.e., mx nil, you get one global env */
-	}
-      else
-	{
-	  if (mx)
-	    {
-	      if ((in_chans == 1) && (out_chans == 1)) 
-		{
-		  if (mx->vals[0][0] == 1.0)
-		    mixtype = IDENTITY_MONO_MIX; 
-		  else mixtype = SCALED_MONO_MIX;
-		}
-	      else
-		{
-		  mixtype = IDENTITY_MIX;
-		  for (i = 0; i < mx->chans; i++)
-		    for (j = 0; j < mx->chans; j++)
-		      if (((i == j) && (mx->vals[i][i] != 1.0)) ||
-			  ((i != j) && (mx->vals[i][j] != 0.0)))
-		      {
-			mixtype = SCALED_MIX;
-			break;
-		      }
-		}
-	    }
-	  else
-	    {
-	      if ((in_chans == 1) && (out_chans == 1)) 
-		mixtype = IDENTITY_MONO_MIX;
-	      else mixtype = IDENTITY_MIX;
-	    }
-	}
       obufs = (mus_sample_t **)clm_calloc(out_chans, sizeof(mus_sample_t *), "mix output");
       for (i = 0; i < out_chans; i++) 
 	obufs[i] = (mus_sample_t *)clm_calloc(clm_file_buffer_size, sizeof(mus_sample_t), "mix output buffers");

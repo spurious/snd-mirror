@@ -811,7 +811,7 @@ load <i>len</i> samples of <i>filename</i> into <i>vct</i> starting at frame <i>
 <tr><td><a href="clm.html#fir-filter">fir-filter</a></td><td>(gen input)</td><td>FIR filter</td></tr>
 <tr><td><a href="clm.html#fir-filter?">fir-filter?</a></td><td>(gen)</td><td>#t if gen is fir filter</td></tr>
 <tr><td><a href="clm.html#formant">formant</a></td><td>(gen input)</td><td>formant generator</td></tr>
-<tr><td>formant-bank</td><td>(scls gens inval)</td><td></td></tr>
+<tr><td><a name="formantbank">formant-bank</a></td><td>(scls gens inval)</td><td></td></tr>
 <tr><td><a href="clm.html#formant?">formant?</a></td><td>(gen)</td><td>#t if gen is formant generator</td></tr>
 <tr><td><a href="clm.html#frame*">frame*</a></td><td>(fr1 fr2 <i>outfr</i>)</td><td>element-wise multiply</td></tr>
 <tr><td><a href="clm.html#frame+">frame+</a></td><td>(fr1 fr2 <i>outfr</i>)</td><td>element-wise add</td></tr>
@@ -834,7 +834,7 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="clm.html#iir-filter">iir-filter</a></td><td>(gen input)</td><td>IIR filter</td></tr>
 <tr><td><a href="clm.html#iir-filter?">iir-filter?</a></td><td>(gen)</td><td>#t if gen is iir-filter</td></tr>
 <tr><td><a href="clm.html#in-any">in-any</a></td><td>(loc <i>chan stream</i>)</td><td>return sample in stream at loc and chan</td></tr>
-<tr><td>in-hz</td><td>(freq)</td><td>translate freq to radians/sample</td></tr>
+<tr><td><a name="inhz">in-hz</a></td><td>(freq)</td><td>translate freq to radians/sample</td></tr>
 <tr><td><a href="clm.html#ina">ina</a></td><td>(loc <i>stream</i>)</td><td>return sample in stream at loc, chan 0</td></tr>
 <tr><td><a href="clm.html#inb">inb</a></td><td>(loc <i>stream</i>)</td><td>return sample in stream at loc, chan 1</td></tr>
 <tr><td><a href="clm.html#linear-&gt;db">linear-&gt;db</a></td><td>(val)</td><td>translate linear val to dB</td></tr>
@@ -898,7 +898,7 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="clm.html#mus-a0">mus-a0</a></td><td>(gen)</td><td>a0 field (simple filters)</td></tr>
 <tr><td><a href="clm.html#mus-a1">mus-a1</a></td><td>(gen)</td><td>a1 field (simple filters)</td></tr>
 <tr><td><a href="clm.html#mus-a2">mus-a2</a></td><td>(gen)</td><td>a2 field (simple filters)</td></tr>
-<tr><td>mus-array-print-length</td><td>()</td><td>how many array elements to print in mus_describe</td></tr>
+<tr><td><a name="musarrayprintlength">mus-array-print-length</a></td><td>()</td><td>how many array (vct) elements to print in mus_describe</td></tr>
 <tr><td><a href="clm.html#mus-b1">mus-b1</a></td><td>(gen)</td><td>b1 field (simple filters)</td></tr>
 <tr><td><a href="clm.html#mus-b2">mus-b2</a></td><td>(gen)</td><td>b2 field (simple filters)</td></tr>
 <tr><td><a href="clm.html#musbank">mus-bank</a></td><td>(gens amps <i>args1 args2</i>)</td><td></td></tr>
@@ -908,7 +908,7 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="clm.html#mus-data">mus-data</a></td><td>(gen)</td><td>data array of gen</td></tr>
 <tr><td><a href="clm.html#mus-feedback">mus-feedback</a></td><td>(gen)</td><td>feedback term of gen (simple filters)</td></tr>
 <tr><td><a href="clm.html#mus-feedforward">mus-feedforward</a></td><td>(gen)</td><td>feedforward term of gen (all-pass)</td></tr>
-<tr><td>mus-file-buffer-size</td><td>()</td><td>size of input/ouput buffers (default 8192)</td></tr>
+<tr><td><a name="musfilebuffersize">mus-file-buffer-size</a></td><td>()</td><td>size of input/ouput buffers (default 8192)</td></tr>
 <tr><td><a href="clm.html#mus-file-name">mus-file-name</a></td><td>(gen)</td><td>name of file assoicated with gen</td></tr>
 <tr><td><a href="clm.html#mus-formant-radius">mus-formant-radius</a></td><td>(gen)</td><td>formant radius</td></tr>
 <tr><td><a href="clm.html#mus-frequency">mus-frequency</a></td><td>(gen)</td><td>frequency of gen (Hz)</td></tr>
@@ -917,12 +917,13 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="clm.html#mus-input?">mus-input?</a></td><td>(gen)</td><td>#t if gen is input source</td></tr>
 <tr><td><a href="clm.html#mus-length">mus-length</a></td><td>(gen)</td><td>length of gen</td></tr>
 <tr><td><a href="clm.html#mus-location">mus-location</a></td><td>(gen)</td><td>location (read point) of gen</td></tr>
-<tr><td>mus-mix</td><td colspan=2>(outfile infile <i>(outloc 0) frames (inloc 0) mixer envs</i>)</td></tr>
+<tr><td><a name="musmix">mus-mix</a></td><td colspan=2>(outfile infile <i>(outloc 0) frames (inloc 0) mixer envs</i>)</td></tr>
 <tr><td></td><td colspan=2><br>
 mix <i>infile</i> into <i>outfile</i> starting at <i>outloc</i> in <i>outfile</i> and <i>inloc</i> in <i>infile</i>
 mixing <i>frames</i> frames of <i>infile</i>.  <i>frames</i> defaults to the length of <i>infile</i>. If <i>mixer</i>,
 use it to scale the various channels; if <i>envs</i> (an array of envelope generators), use
 it in conjunction with <i>mixer</i>to scale/envelope all the various ins and outs.
+<i>outfile</i> can be a frame-&gt;file generator, and <i>infile</i> can be a file-&gt;frame generator.
 </td></tr>
 <tr><td colspan=3><br></td></tr>
 <tr><td><a href="clm.html#mus-order">mus-order</a></td><td>(gen)</td><td>order of gen (filters)</td></tr>
@@ -933,7 +934,7 @@ it in conjunction with <i>mixer</i>to scale/envelope all the various ins and out
 <tr><td><a href="clm.html#mus-run">mus-run</a></td><td>(gen <i>arg1 arg2</i>)</td><td>apply gen to args</td></tr>
 <tr><td><a href="clm.html#mus-scaler">mus-scaler</a></td><td>(gen)</td><td>scaler of gen</td></tr>
 <tr><td><a href="clm.html#mus-set-rand-seed">mus-rand-seed</a></td><td>(val)</td><td>random number generator seed (settable via set!)</td></tr>
-<tr><td>mus-srate</td><td>()</td><td>current sampling rate</td></tr>
+<tr><td><a name="mussrate">mus-srate</a></td><td>()</td><td>current sampling rate</td></tr>
 <tr><td><a href="clm.html#mus-xcoeffs">mus-xcoeffs</a></td><td>(gen)</td><td>feedforward (FIR) coeffs of filter</td></tr>
 <tr><td><a href="clm.html#mus-ycoeffs">mus-ycoeffs</a></td><td>(gen)</td><td>feedback (IIR) coeefs of filter</td></tr>
 <tr><td><a href="clm.html#notch">notch</a></td><td>(gen input <i>pm</i>)</td><td>notch filter</td></tr>
@@ -1185,9 +1186,9 @@ See test 23 in snd-test.scm for example calls.
 <tr><td>chain-dsps</td><td>examp.scm</td><td>instrument gets gen patch from its args</td></tr>
 <tr><td>clarinet</td><td>prc95.scm</td><td>clarinet pysical model</td></tr>
 <tr><td>drone, canter</td><td>clm-ins.scm</td><td>Peter Common's bagpipe</td></tr>
-<tr><td>flute</td><td>prc95.scm</td><td>flute pysical model</td></tr>
-<tr><td>expfil</td><td>clm-ins.scm</td><td>granular synthesis interleaving two files</td></tr>
 <tr><td>exp-snd</td><td>clm-ins.scm</td><td>granulate to the max</td></tr>
+<tr><td>expfil</td><td>clm-ins.scm</td><td>granular synthesis interleaving two files</td></tr>
+<tr><td>flute</td><td>prc95.scm</td><td>flute pysical model</td></tr>
 <tr><td>fm-bell</td><td>clm-ins.scm, examp.rb</td><td>Mike McNabb's FM bell</td></tr>
 <tr><td>fm-drum</td><td>clm-ins.scm</td><td>Jan Mattox's FM dum</td></tr>
 <tr><td>fm-insect</td><td>clm-ins.scm</td><td>FM insect (katydid)</td></tr>
@@ -1195,6 +1196,7 @@ See test 23 in snd-test.scm for example calls.
 <tr><td>fm-trumpet</td><td>clm-ins.scm</td><td>Dexter Morrill's FM trumpet</td></tr>
 <tr><td>fm-violin</td><td>v.scm, v.rb, fmv.scm, sndscm.html</td><td>violin-like sounds via FM</td></tr>
 <tr><td>fofins</td><td>clm-ins.scm</td><td>FOF synthesis</td></tr>
+<tr><td>fullmix</td><td>clm-ins.scm</td><td>complicated mixer</td></tr>
 <tr><td>freeverb</td><td>freeverb.scm</td><td>a reverberator</td></tr>
 <tr><td>gong</td><td>clm-ins.scm</td><td>Paul Weineke's FM gong</td></tr>
 <tr><td>gran-synth</td><td>clm-ins.scm</td><td>simple granular synthesis example</td></tr>
@@ -1214,8 +1216,8 @@ See test 23 in snd-test.scm for example calls.
 <tr><td>resflt</td><td>clm-ins.scm</td><td>two-poles for resonances (Xavier Serra)</td></tr>
 <tr><td>reson</td><td>clm-ins.scm</td><td>parallel FM creating resonances</td></tr>
 <tr><td>rhodey, wurley, hammondoid</td><td>clm-ins.scm</td><td>FM stuff from Perry Cook</td></tr>
-<tr><td>scratch</td><td>clm-ins.scm</td><td>move around in sound via list of turn points and src</td></tr>
 <tr><td>scm-simp</td><td>clm.html</td><td>simple sine wave example instrument</td></tr>
+<tr><td>scratch</td><td>clm-ins.scm</td><td>move around in sound via list of turn points and src</td></tr>
 <tr><td>singer</td><td>singer.scm</td><td>Perry Cook's vocal tract physical model</td></tr>
 <tr><td>spectra</td><td>clm-ins.scm</td><td>simple additive synthesis</td></tr>
 <tr><td>stereo-flute</td><td>clm-ins.scm</td><td>Nicky Hind's flute physical model</td></tr>

@@ -1273,3 +1273,32 @@ and if one is found, and the Snd documentation can be found, calls (html-program
     (list "zync" "sndscm.html#zync" "snd-gtk.scm")
   ))
 
+
+#!
+;;; this code reads an entire file and runs a regexp over it returning a list of matches:
+;;;   but, I can't decide how to tie this into the help search mechanism in a useful way.
+;;;   Based on guile's ice-9/regex.scm list-matches
+;;;   (The original idea here was to mimic Google's sorted list of references, as in the
+;;;   Mac OSX help dialog, but how to sort the list?)
+
+(use-modules (ice-9 regex))
+(define (match-list regexp file)
+  ;; (match-list "[tT]racking [cC]ursor" "extsnd.html")
+  (let* ((str (file->string file))      ; using undocumented procedure in snd-utils.c
+					;  (I can't find a simple way to do this in Scheme)
+	 (strlen (string-length str))
+	 (reg (make-regexp regexp)))
+    (let loop ((start 0)
+	       (value '())
+	       (abuts #f))
+      (let ((m (if (> start strlen)
+		   #f
+		   (regexp-exec reg str start 0))))
+	(if (not m)
+	    (reverse value)
+	    (if (and (= (match:start m) 
+			(match:end m)) 
+		     abuts)
+		(loop (+ start 1) value #f)
+		(loop (match:end m) (cons (list (match:substring m) (match:start m)) value) #t)))))))
+!#

@@ -32,6 +32,7 @@
 ;;; add a function to be called when the window manager sends us a "save yourself" message
 ;;; add-text-to-status-area puts a text widget in the notebook status area
 ;;; make-variable-display displays an arbitrary set of expressions/variables in a notebook widget
+;;; with-minmax-button adds an open/close button to each sound pane
 
 (use-modules (ice-9 common-list) (ice-9 format))
 
@@ -1351,6 +1352,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
       ;; now the actual sound-box maker
       ;; SOMEDAY: multi-channel thumbnail sketches, filled polygon rather than lines, small/large icon distinction
+      ;; SOMEDAY: drag from sound-box?
       (lambda (name parent select-func peak-func sounds args)
 	;; select-func called when sound selected and passed sound file name
 	;; peak-func (if any) tells icon where to find peak-env-info-file (if any)
@@ -2611,6 +2613,63 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; TODO: panel-control wid -> current value (this just needs run support?)
 
 
+(define with-minmax-button
+  (let ((maxed-snds '()))
+    (lambda (snd)
+      (let ((previous-minmax (find-if (lambda (n) (= (car n) snd)) maxed-snds)))
+	(if (not previous-minmax)
+	    (let* ((app (car (main-widgets)))
+		   (widgets (sound-widgets snd))
+		   (minibuffer (list-ref widgets 3))
+		   (play-button (list-ref widgets 4))
+		   (cur-size (cadr (XtVaGetValues (car widgets) (list XmNheight 0)))))
+	      (XtUnmanageChild play-button)
+	      (let* ((name-form (XtParent minibuffer)) ; "snd-name-form"
+		     (new-minmax (XtCreateManagedWidget "." xmPushButtonWidgetClass name-form 
+							(list XmNbackground      (basic-color)
+							      XmNrightAttachment XmATTACH_FORM
+							      XmNtopAttachment   XmATTACH_FORM
+							      XmNmarginWidth 2
+							      XmNmarginHeight 0
+							      XmNshadowThickness 0
+							      ))))
+		(XtVaSetValues play-button (list XmNrightAttachment XmATTACH_WIDGET
+						 XmNrightWidget new-minmax))
+		(XtManageChild play-button)
+		(XtAddCallback 
+		 new-minmax XmNactivateCallback 
+		 (lambda (w c i)
+		   (let ((mv (find-if (lambda (n) (= (car n) c)) maxed-snds)))
+		     (display mv)
+		     (if mv
+			 (let ((maxed (caddr mv)))
+			   (if maxed
+			       (begin
+				 (list-set! mv 3 (cadr (XtVaGetValues (car (sound-widgets c)) (list XmNheight 0))))
+				 (list-set! mv 4 (show-controls c))
+				 (do ((i 0 (1+ i)))
+				     ((= i (chans c)))
+				   (XtUnmanageChild (list-ref (channel-widgets c i) 10)))
+				 (set! (show-controls c) #f)
+				 (XmChangeColor new-minmax (make-color 1 1 0))
+				 (XtVaSetValues (car (sound-widgets c)) (list XmNpaneMaximum 25)))
+			       (let ((prev-size (list-ref mv 3)))
+				 (do ((i 0 (1+ i)))
+				     ((= i (chans c)))
+				   (XtManageChild (list-ref (channel-widgets c i) 10)))
+				 (if (list-ref mv 4) (set! (show-controls c) #t))
+				 (XmChangeColor new-minmax (basic-color))
+				 (XtVaSetValues (car (sound-widgets c)) (list XmNpaneMaximum prev-size XmNpaneMinimum (1- prev-size)))
+				 (XtVaSetValues (car (sound-widgets c)) (list XmNpaneMaximum 1000 XmNpaneMinimum 1))))
+			   (list-set! mv 2 (not maxed))))))
+			       snd)
+
+		(set! previous-minmax (list snd new-minmax #t cur-size (show-controls snd)))
+		(set! maxed-snds (cons previous-minmax maxed-snds)))))
+	#f))))
+
+
+;(add-hook! after-open-hook with-minmax-button)
 
 
 ;;; SOMEDAY: bess-translations (first case is bess.scm)

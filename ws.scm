@@ -608,10 +608,9 @@ returning you to the true top-level."
 		  (eval-string comment)
 		  *with-mix-calls*)
 		(lambda args #f))))) ; any error means we lost
+
+;;; (mus-mix *output* input-file sample-in-output) can replace sound.lisp's mix-in
 !#
-
-
-
 ;;; a test case for ws-debug
 ;;; (with-sound () (fm-violin 0 1 440 .1) (sleep 1) (fm-violin 1 1 440 .1) (sleep 1) (fm-violin 2 1 440 .1) (sleep 1))
 

@@ -2987,6 +2987,7 @@ more examples including:
 <tr><td><em class=def><a href="sndscm.html#exloopbetweenmarks">loop-between-marks</a></em></td><td>loop continuously between the two specified marks</td></tr>
 <tr><td><em class=def><a href="sndscm.html#exmarkexplode">mark-explode</a></em></td><td>split sound into separate files based on mark placement</td></tr>
 <tr><td><em class=def><a href="sndscm.html#markproperty">mark-property</a></em></td><td>mark property lists</td></tr>
+<tr><td><em class=def><a href="sndscm.html#savemarkproperties">save-mark-properties</a></em></td><td>save mark properties in saved state file</td></tr>
 <tr><td><em class=def><a href="sndscm.html#markclickinfo">mark-click-info</a></em></td><td>show mark properties upon click</td></tr>
 </table>
 <p>Other examples can be found in Dave Phillips' dlp/marks-menu.scm, snd-motif.scm (<i>add-mark-pane</i>),
@@ -3938,6 +3939,7 @@ close <i>snd</i> (same as File menu Close). To close all: <code>(map close-sound
 <tr><td></td><td>
 <i>snd</i>'s comment, if any (this refers initially to the file's header which can often contain a comment, identical
 to <a href="#soundcomment">mus-sound-comment</a>).  If you set it, the header is not updated until the sound is saved.
+If the new comment is the only change you want to make, you can save the new header via the Edit:Edit Header menu option.
 </td></tr>
 <tr><td colspan=2></td></tr>
 

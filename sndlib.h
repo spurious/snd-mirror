@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 18
-#define SNDLIB_REVISION 5
-#define SNDLIB_DATE "6-May-03"
+#define SNDLIB_REVISION 6
+#define SNDLIB_DATE "6-June-03"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -536,10 +536,10 @@ Float mus_fclamp(Float lo, Float val, Float hi);
 
 /* for CLM */
 /* these are needed to clear a saved lisp image to the just-initialized state */
-void reset_io_c(void);
-void reset_headers_c(void);
-void reset_audio_c(void);
-void set_rt_audio_p(int rt);
+void mus_reset_io_c(void);
+void mus_reset_headers_c(void);
+void mus_reset_audio_c(void);
+void mus_set_rt_audio_p(int rt);
 
 
 

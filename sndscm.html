@@ -206,6 +206,7 @@ end
   <em class=def>fm-insect</em> beg dur freq amp (etc)
   <em class=def>fm-trumpet</em> beg dur (etc)
   <em class=def>fofins</em> beg dur frq amp uvib f0 a0 f1 a1 f2 a2 (amp-env '(0 0 1 1 2 1 3 0))
+  <em class=def>fullmix</em> infile (etc)
   <em class=def>gong</em> beg dur freq amp (etc)
   <em class=def>gran-synth</em> beg dur freq grain-dur grain-hop amp
   <em class=def>graphEq</em> file (etc)
@@ -303,6 +304,8 @@ generators, with an optional envelope on each formant.
 <p>
 <i>anoi</i> is a stab at noise reduction
 based on Perry Cook's Scrubber.m.
+</p>
+<p><i>fullmix</i> is complicated (and currently slow) way to mix stuff.
 </p>
 <br>
 
@@ -1726,6 +1729,7 @@ The function that actually passes the url to the reader is <a href="extsnd.html#
   <em class=def><a name="exmarkexplode">mark-explode</a></em>
   <em class=def><a name="markproperty">mark-property</a></em> key id
   <em class=def><A NAME="markclickinfo">mark-click-info</a></em> id
+  <em class=def><A NAME="savemarkproperties">save-mark-properties</a></em>
 </pre>
 
 <p><b>mark-name-&gt;id</b> is like <a href="extsnd.html#sndfindmark">find-mark</a> but searches all currently accessible channels.
@@ -1766,8 +1770,9 @@ between the leftmost marks in <i>snd</i>.
 </p><p><b>mark-property</b> associates a property list with each mark.
 </p><p><b>mark-click-info</b> is a mark-click-hook function that describes a mark and its properties.  It
 is used by with-marked-sound in ws.scm.
+</p><p><b>save-mark-properties</b> sets up an <a href="extsnd.html#aftersavestatehook">after-save-state-hook</a> function to save any mark-properties.
 </p>
-
+<br>
 
 <A NAME="maxfdoc"></a><span class=box><h2>maxf.scm, maxf.rb</h2></span>
 
@@ -2420,6 +2425,7 @@ waterfall spectrum display of the incoming audio data.  <b>stop-waterfall</b> tu
   <em class=def>add-text-to-status-area</em>
   <em class=def><a name="makevariabledisplay">make-variable-display</a></em> page-name variable-name (type 'text) (range (list 0.0 1.0))
   <em class=def><a name="variabledisplay">variable-display</a></em> val widget
+  <em class=def>with-minmax-button</em>
 </pre>
 <!-- INDEX variabledisplay:Debugging (instruments) -->
 <p>snd-motif.scm has procedures that rely on the Motif module (xm.c).
@@ -2557,6 +2563,8 @@ putting it in a text display:
 </pre>
 <p>variable-display doesn't work within the run macro, but if you're debugging
 an instrument, you're presumably not primarily concerned with optimization.
+</p>
+<p><b>with-minmax-button</b> adds an open/close button to each sound's pane.
 </p>
 <br>
 
@@ -3317,7 +3325,15 @@ and you're ready to go).  If the run macro can handle the instrument code (and
 it can handle anything the CL version can handle, I think), then the Snd with-sound
 should run within a factor of four of the fastest CL-based CLM, even though the
 latter is going through the C intermediate file and the (very good) C compiler!  
+The easiest way to mix an existing file into the with-sound output is to use
+mus-mix with *output*:
 </p>
+<pre>
+(with-sound () 
+  (fm-violin 0 .1 440 .1) 
+  (mus-mix *output* "oboe.snd") 
+  (fm-violin .1 .1 660 .1))
+</pre>
 <p>To continue adding notes to an existing file, set <i>continue-old-file</i>:
 </p>
 <pre>
@@ -3362,7 +3378,7 @@ split with-sound into two pieces, primarily for Common Music's benefit.
   (fm-violin 0 1 440 .1))
 </pre>
 <!-- INDEX wsdebug:Debugging (notelists) -->
-<A NAME="wqsdebug"></a>
+<A NAME="wsdebug"></a>
 <p>with-sound establishes a catch for debugging: 'with-sound-interrupt.  If you
 place the macro <b>ws-interrupt?</b> in your instrument, C-g will be caught at
 each such point, and control transferred to the with-sound debugging context.

@@ -947,8 +947,16 @@ void play_button_pause(snd_state *ss, int pausing)
 
 void set_control_panel_play_button(snd_info *sp, int val)
 {
+  snd_state *ss;
   if ((sp) && (sp->sgx) && (PLAY_BUTTON(sp)))
-    set_toggle_button(PLAY_BUTTON(sp), FALSE, FALSE, sp);
+    {
+      set_toggle_button(PLAY_BUTTON(sp), FALSE, FALSE, sp);
+      if (!val) 
+	{
+	  ss = get_global_state();
+	  XtVaSetValues(PLAY_BUTTON(sp), XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
+	}
+    }
 }
 
 

@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 29
-#define MUS_DATE "27-May-03"
+#define MUS_REVISION 30
+#define MUS_DATE "9-June-03"
 
 /* 
+ * 9-June:     added mus_mix_with_reader_and_writer.
  * 27-May:     bugfix: interpolating all-pass ("zall-pass") had an extra delay.
  * 25-Apr:     mus_spectrum and mus_convolution now return Float*.
  * 9-Apr:      removed MUS_HANNING_WINDOW (use MUS_HANN_WINDOW).
@@ -531,6 +532,7 @@ int mus_set_file_buffer_size(int size);
 int mus_file_buffer_size(void);
 
 void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out_samps, off_t in_start, mus_any *mx, mus_any ***envs);
+void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, off_t out_start, off_t out_frames, off_t in_start, mus_any *umx, mus_any ***envs);
 int mus_file2fltarray(const char *filename, int chan, off_t start, int samples, Float *array);
 int mus_fltarray2file(const char *filename, Float *ddata, int len, int srate, int channels);
 

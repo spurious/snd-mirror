@@ -4541,41 +4541,64 @@ static XEN g_mus_mix(XEN out, XEN in, XEN ost, XEN olen, XEN ist, XEN mx, XEN en
 {
   #define H_mus_mix "(" S_mus_mix " outfile infile (outloc 0) (frames) (inloc 0) (mixer #f) (envs #f)): \
 mix infile into outfile starting at outloc in outfile and inloc in infile \
-mixing frames frames of infile.  frames defaults to the length of infile. If mixer, \
+mixing 'frames' frames into 'outfile'.  frames defaults to the length of infile. If mixer, \
 use it to scale the various channels; if envs (an array of envelope generators), use \
-it in conjunction with mixer to scale/envelope all the various ins and outs."
+it in conjunction with mixer to scale/envelope all the various ins and outs. \
+'outfile' can also be a frame->file generator, and 'infile' can be a file->frame \
+generator."
 
+  mus_any *outf = NULL, *inf = NULL;
   mus_any *mx1 = NULL;
   mus_any ***envs1 = NULL;
   char *outfile = NULL, *infile = NULL;
   int in_len = 0, out_len, i, j;
   off_t ostart = 0, istart = 0, osamps = 0;
-  int in_chans, out_chans, in_size = 0, out_size;  /* mus_mix in clm.c assumes the envs array is large enough */
+  int in_chans = 0, out_chans = 0, in_size = 0, out_size;  /* mus_mix in clm.c assumes the envs array is large enough */
   XEN *vdata0; XEN *vdata1;
-  XEN_ASSERT_TYPE(XEN_STRING_P(out), out, XEN_ARG_1, S_mus_mix, "a string");
-  XEN_ASSERT_TYPE(XEN_STRING_P(in), in, XEN_ARG_2, S_mus_mix, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(out) || ((MUS_XEN_P(out)) && (mus_output_p(XEN_TO_MUS_ANY(out)))), 
+		  out, XEN_ARG_1, S_mus_mix, "a filename or a frame->file generator");
+  XEN_ASSERT_TYPE(XEN_STRING_P(in) || ((MUS_XEN_P(in)) && (mus_input_p(XEN_TO_MUS_ANY(in)))), 
+		  in, XEN_ARG_2, S_mus_mix, "a filename or a file->frame generator");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(ost), ost, XEN_ARG_3, S_mus_mix, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(olen), olen, XEN_ARG_4, S_mus_mix, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(ist), ist, XEN_ARG_5, S_mus_mix, "a number");
   XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(mx)) || (XEN_FALSE_P(mx)) || ((MUS_XEN_P(mx)) && (mus_mixer_p(XEN_TO_MUS_ANY(mx)))), mx, XEN_ARG_6, S_mus_mix, "a mixer");
-  XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(envs)) || (XEN_VECTOR_P(envs)), envs, XEN_ARG_7, S_mus_mix, "an env gen or vector of envs");
+  XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(envs)) || (XEN_FALSE_P(envs)) || (XEN_VECTOR_P(envs)), envs, XEN_ARG_7, S_mus_mix, "an env gen or vector of envs");
   if (XEN_BOUND_P(ost)) ostart = XEN_TO_C_OFF_T_OR_ELSE(ost, 0);
   if (XEN_BOUND_P(ist)) istart = XEN_TO_C_OFF_T_OR_ELSE(ist, 0);
   if ((XEN_BOUND_P(mx)) && (MUS_XEN_P(mx))) mx1 = (mus_any *)XEN_TO_MUS_ANY(mx);
-  outfile = XEN_TO_C_STRING(out);
-  infile = XEN_TO_C_STRING(in);
+  if (XEN_STRING_P(out)) outfile = XEN_TO_C_STRING(out); else outf = XEN_TO_MUS_ANY(out);
+  if (XEN_STRING_P(in)) infile = XEN_TO_C_STRING(in); else inf = XEN_TO_MUS_ANY(in);
   if (XEN_BOUND_P(olen)) 
     osamps = XEN_TO_C_OFF_T_OR_ELSE(olen, 0); 
   else 
     {
-      osamps = mus_sound_frames(infile);
+      if (infile) 
+	osamps = mus_sound_frames(infile);
+      else osamps = mus_length(inf);
       if (osamps < 0)
 	XEN_ERROR(BAD_HEADER,
 		  XEN_LIST_3(C_TO_XEN_STRING(S_file2array),
-			     C_TO_XEN_STRING(infile),
-			     C_TO_XEN_STRING("frames < 0")));
+			     in,
+			     C_TO_XEN_STRING("input frames < 0")));
     }
-  if (XEN_BOUND_P(envs))
+  if (infile)
+    in_chans = mus_sound_chans(infile);
+  else in_chans = mus_channels(inf);
+  if (in_chans <= 0)
+    XEN_ERROR(BAD_HEADER,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
+			 in,
+			 C_TO_XEN_STRING("input chans <= 0")));
+  if (outfile)
+    out_chans = mus_sound_chans(outfile);
+  else out_chans = mus_channels(outf);
+  if (out_chans <= 0)
+    XEN_ERROR(BAD_HEADER,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
+			 out,
+			 C_TO_XEN_STRING("output chans <= 0")));
+  if ((XEN_BOUND_P(envs)) && (!(XEN_FALSE_P(envs))))
     {
       /* pack into a C-style array of arrays of env pointers */
       in_len = XEN_VECTOR_LENGTH(envs);
@@ -4592,18 +4615,6 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
 			       vdata0[i],
 			       C_TO_XEN_STRING("each element of env vector must be a vector (of envelopes)")));
       out_len = XEN_VECTOR_LENGTH(vdata0[0]);
-      in_chans = mus_sound_chans(infile);
-      if (in_chans <= 0)
-	XEN_ERROR(BAD_HEADER,
-		  XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
-			     C_TO_XEN_STRING(infile),
-			     C_TO_XEN_STRING("chans <= 0")));
-      out_chans = mus_sound_chans(outfile);
-      if (out_chans <= 0)
-	XEN_ERROR(BAD_HEADER,
-		  XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
-			     C_TO_XEN_STRING(outfile),
-			     C_TO_XEN_STRING("chans <= 0")));
       if (in_len < in_chans) in_size = in_chans; else in_size = in_len;
       if (out_len < out_chans) out_size = out_chans; else out_size = out_len;
       envs1 = (mus_any ***)CALLOC(in_size, sizeof(mus_any **));
@@ -4623,14 +4634,27 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
 		    XEN_ERROR(BAD_TYPE,
 			      XEN_LIST_5(C_TO_XEN_STRING(S_mus_mix),
 					 vdata1[j],
-					 C_TO_XEN_STRING("each (non #f) element of (inner) vector must be an envelope: "),
+					 C_TO_XEN_STRING("each (non #f) element of (inner) envs vector must be an envelope: "),
 					 C_TO_XEN_INT(i),
 					 C_TO_XEN_INT(j)));
 		  }
 	      }
 	}
     }
-  mus_mix(outfile, infile, ostart, osamps, istart, mx1, envs1);
+  if ((infile) && (outfile))
+    mus_mix(outfile, infile, ostart, osamps, istart, mx1, envs1);
+  else
+    {
+      if (infile)
+	inf = mus_make_file2frame(infile);
+      if (outfile)
+	outf = mus_continue_sample2file(outfile);
+      mus_mix_with_reader_and_writer(outf, inf, ostart, osamps, istart, mx1, envs1);
+      if (infile)
+	mus_free((mus_any *)inf);
+      if (outfile)
+	mus_free((mus_any *)outf);
+    }
   if (envs1) 
     {
       for (i = 0; i < in_size; i++) if (envs1[i]) FREE(envs1[i]);

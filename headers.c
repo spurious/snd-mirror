@@ -114,7 +114,7 @@ static int markers = 0;
 static int *marker_ids = NULL, *marker_positions = NULL;
 
 /* for CLM */
-void reset_headers_c(void) 
+void mus_reset_headers_c(void) 
 {
   hdrbuf_is_inited = FALSE; 
   markers = 0;

@@ -2126,7 +2126,7 @@ void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_da
   /* this blindly changes the header info -- it does not actually reformat the data or whatever */
   int err, chans, srate, type, format;
   off_t loc, samples;
-  char *comment;
+  char *comment, *original_comment = NULL;
   file_info *hdr;
   if (sp->read_only)
     {
@@ -2141,6 +2141,7 @@ void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_da
   if (err == 0)
     {
       hdr = sp->hdr;
+      original_comment = mus_sound_comment(sp->filename);
       if ((hdr->type == MUS_AIFF) || (hdr->type == MUS_AIFC)) mus_header_set_full_aiff_loop_info(mus_sound_loop_info(sp->filename));
       mus_sound_forget(sp->filename);
       /* find out which fields changed -- if possible don't touch the sound data */
@@ -2161,11 +2162,12 @@ void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_da
       if ((type == MUS_NEXT) &&
 	  (hdr->data_location != loc))
 	mus_header_change_location(sp->filename, loc);
-      if (((comment) && (hdr->comment) && (strcmp(comment, hdr->comment) != 0)) ||
-	  ((comment) && (hdr->comment == NULL)) ||
-	  ((comment == NULL) && (hdr->comment)))
+      if (((comment) && (original_comment) && (strcmp(comment, original_comment) != 0)) ||
+	  ((comment) && (original_comment == NULL)) ||
+	  ((comment == NULL) && (original_comment)))
 	mus_header_change_comment(sp->filename, comment);
       if (comment) FREE(comment);
+      if (original_comment) FREE(original_comment);
       snd_update(ss, sp);
     }
   else 

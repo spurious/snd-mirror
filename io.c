@@ -438,7 +438,7 @@ void mus_ldouble_to_char(unsigned char *j, double x)
 static int rt_ap_out;   /* address of RT audio ports, if any */
 
 /* for CLM */
-void set_rt_audio_p (int rt)
+void mus_set_rt_audio_p (int rt)
 {
   rt_ap_out = rt;
 }
@@ -1344,7 +1344,7 @@ int mus_file_write_buffer(int charbuf_data_format, int beg, int end, int chans, 
 
 
 /* for CLM */
-void reset_io_c(void) 
+void mus_reset_io_c(void) 
 {
   io_fd_size = 0;
   io_fds = NULL;
