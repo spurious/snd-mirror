@@ -4,7 +4,7 @@
 ;;; play-often, play-until-c-g -- play sound n times or until c-g
 ;;; play-region-forever -- play region over and over until C-g typed
 ;;; play samples created on-the-fly
-;;; loopit -- play while looping continuously between two movable marks
+;;; loop-between-marks -- play while looping continuously between two movable marks
 ;;; start-dac -- hold DAC open and play sounds via keyboard
 ;;; "vector synthesis"
 ;;; play-with-amps -- play channels with individually settable amps
@@ -16,7 +16,7 @@
 (use-modules (ice-9 format) (ice-9 optargs))
 
 (define* (play-sound #:optional func)
-  ;; play the currently selected sound, calling func on each data buffer, if func exists
+  "(play-sound &optional func) plays the currently selected sound, calling func on each data buffer, if func exists"
   ;;   this is essentially what the built-in play function is doing
   ;;
   ;; first try the simple case(s) -- most sound systems can handle short (16-bit) data and 1 or 2 channels
@@ -75,6 +75,7 @@
 ;;; -------- play sound n times -- (play-often 3) for example.
 
 (define (play-often n) 
+  "(play-often n) plays the selected sound 'n' times (interruptible via C-g)"
   (let ((plays (- n 1)))
     (define (play-once snd)
       (if (or (= plays 0)
@@ -86,12 +87,13 @@
     (add-hook! stop-playing-hook play-once)
     (play)))
 
-(bind-key (char->integer #\p) 0 (lambda (n) (play-often (max 1 n))))
+;(bind-key (char->integer #\p) 0 (lambda (n) (play-often (max 1 n))))
 
 
 ;;; -------- play sound until c-g
 
 (define (play-until-c-g)
+  "(play-until-c-g) plays the selected sound until you interrupt it via C-g"
   (define (play-once snd)
     (if (c-g?)
 	(remove-hook! stop-playing-hook play-once)
@@ -103,6 +105,7 @@
 ;;; -------- play region over and over until C-g typed
 
 (define (play-region-forever reg)
+  "(play-region-forever reg) plays region 'reg' until you interrupt it via C-g"
   (define (play-region-again reg)
     (if (c-g?)
 	(remove-hook! stop-playing-region-hook play-region-again)
@@ -111,80 +114,72 @@
   (add-hook! stop-playing-region-hook play-region-again)
   (play-region reg))
 
-(bind-key (char->integer #\p) 0 (lambda (n) (play-region-forever (list-ref (regions) (max 0 n)))))
+;(bind-key (char->integer #\p) 0 (lambda (n) (play-region-forever (list-ref (regions) (max 0 n)))))
 
 
-
+#!
+;;; these are obsolete now
 ;;; -------- play samples created on-the-fly
-;;;
-;;; play-fun sends the output of its function argument to the dac
-;;;   function should return #t to indicate completion
 
-(define play-fun
-  (lambda (proc bufsize)
-    (let* ((data (make-sound-data 1 bufsize))
-           (bytes (* bufsize 2))
-	   (audio-fd (mus-audio-open-output mus-audio-default 22050 1 mus-lshort bytes)))
-      (if (not (= audio-fd -1))
-	  (begin
-	    (do ((result #f (proc audio-fd data bufsize))) (result))
-	    (mus-audio-close audio-fd))))))
+(define (play-fun proc bufsize)
+  "(play-fun proc bufsize) send the output of 'proc' to the DAC.  proc should return #t to indicate completion"
+  (let* ((data (make-sound-data 1 bufsize))
+	 (bytes (* bufsize 2))
+	 (audio-fd (mus-audio-open-output mus-audio-default 22050 1 mus-lshort bytes)))
+    (if (not (= audio-fd -1))
+	(begin
+	  (do ((result #f (proc audio-fd data bufsize))) (result))
+	  (mus-audio-close audio-fd)))))
 
-(define ampit
-  ;; read current state of 0th sound and send it to the dac scaled by scaler
-  (lambda (len scaler)
-    (let ((beg 0))
-      (lambda (fd data size) 
-	(vct->sound-data (vct-scale! (samples->vct beg size) scaler) data 0)
-	(mus-audio-write fd data size)
-	(set! beg (+ beg size))
-	(>= beg len)))))
+(define (ampit len scaler)
+  "(ampit len scaler) plays (via play-fun) the selected sound scaled by scaler: (play-fun (ampit (frames) 2.0) 256)"
+  (let ((beg 0))
+    (lambda (fd data size) 
+      (vct->sound-data (vct-scale! (samples->vct beg size) scaler) data 0)
+      (mus-audio-write fd data size)
+      (set! beg (+ beg size))
+      (>= beg len))))
 
-;(play-fun (ampit (frames) 2.0) 256)
-
-(define amprt
-  ;; this one can be interrupted by C-g and uses the control-panel amp slider to set the amp 
-  (lambda (len)
-    (let ((beg 0))
-      (lambda (fd data size) 
-	(vct->sound-data (vct-scale! (samples->vct beg size) (amp)) data 0)
-	(mus-audio-write fd data size)
-	(set! beg (+ beg size))
-	(or (c-g?) (>= beg len))))))
-
-;(play-fun (amprt (frames)) 256)
+(define (amprt len)
+  "(amprt len) plays (via play-fun) the selected sound scaled by the control panel amp slider: (play-fun (amprt (frames)) 256)"
+  (let ((beg 0))
+    (lambda (fd data size) 
+      (vct->sound-data (vct-scale! (samples->vct beg size) (amp)) data 0)
+      (mus-audio-write fd data size)
+      (set! beg (+ beg size))
+      (or (c-g?) (>= beg len)))))
+!#
 
 
 ;;; -------- play while looping continuously between two movable marks
 
-(define loopit
-  (lambda (m1 m2 bufsize)
-    "(loopit mark1 mark2 buffersize) plays while looping between two marks"
-    (let* ((pos1 (mark-sample m1))
-	   (pos2 (mark-sample m2))
-	   (beg (min pos1 pos2))
-	   (end (max pos1 pos2))
-	   (all-data (samples->sound-data)) ; for simplicity, just grab all the data
-	   (audio-data (make-sound-data 1 bufsize))
-	   (bytes (* bufsize 2))
-	   (audio-fd (mus-audio-open-output mus-audio-default (srate) 1 mus-lshort bytes)))
-      (if (not (= audio-fd -1))
-	  (do ()
-	      ((c-g?) 
-	       (mus-audio-close audio-fd))
-	    (do ((i 0 (1+ i)))
-		((= i bufsize) 
-		 (begin 
-		   (set! i 0) 
-		   (mus-audio-write audio-fd audio-data bufsize)))
-	      (sound-data-set! audio-data 0 i (sound-data-ref all-data 0 beg))
-	      (set! beg (1+ beg))
-	      (if (= beg end)
-		  (begin
-		    (set! pos1 (mark-sample m1)) ; get current mark positions (can change while looping)
-		    (set! pos2 (mark-sample m2))
-		    (set! beg (min pos1 pos2))
-		    (set! end (max pos1 pos2))))))))))
+(define (loop-between-marks m1 m2 bufsize)
+  "(loop-between-marks mark1 mark2 buffersize) plays while looping between two marks"
+  (let* ((pos1 (mark-sample m1))
+	 (pos2 (mark-sample m2))
+	 (beg (min pos1 pos2))
+	 (end (max pos1 pos2))
+	 (all-data (samples->sound-data)) ; for simplicity, just grab all the data
+	 (audio-data (make-sound-data 1 bufsize))
+	 (bytes (* bufsize 2))
+	 (audio-fd (mus-audio-open-output mus-audio-default (srate) 1 mus-lshort bytes)))
+    (if (not (= audio-fd -1))
+	(do ()
+	    ((c-g?) 
+	     (mus-audio-close audio-fd))
+	  (do ((i 0 (1+ i)))
+	      ((= i bufsize) 
+	       (begin 
+		 (set! i 0) 
+		 (mus-audio-write audio-fd audio-data bufsize)))
+	    (sound-data-set! audio-data 0 i (sound-data-ref all-data 0 beg))
+	    (set! beg (1+ beg))
+	    (if (= beg end)
+		(begin
+		  (set! pos1 (mark-sample m1)) ; get current mark positions (can change while looping)
+		  (set! pos2 (mark-sample m2))
+		  (set! beg (min pos1 pos2))
+		  (set! end (max pos1 pos2)))))))))
 
 ;;; m1 and m2 are mark (id) numbers
 ;;; (loopit 0 1 512)
@@ -196,21 +191,14 @@
 ;;; if for some reason you want the DAC to run continuously in the background,
 ;;;   use the "end" argument to the first player seen upon starting the dac:
 
-(define now-playing #f)
-(define hidden-player #f)
-
 (define (start-dac)
-  (if (not now-playing)
-      (begin
-	(set! now-playing #t)
-	(set! hidden-player (make-player))
-	(set! (amp-control hidden-player) 0.0)
-	(add-player hidden-player 0 123456789)
-	(start-playing 1 22050))))
+  "(start-dac) starts the DAC running continuously in the background"
+  (let ((hidden-player (make-player)))
+    (set! (amp-control hidden-player) 0.0)
+    (add-player hidden-player 0 123456789)
+    (start-playing 1 22050)))
 
-(define (stop-dac)
-  (stop-playing)
-  (set! now-playing #f))
+(define stop-dac stop-playing)
 
 ;(bind-key (char->integer #\o) 0 (lambda () (play "oboe.snd")))
 ;(bind-key (char->integer #\p) 0 (lambda () (play "pistol.snd")))
@@ -332,6 +320,8 @@ read, even if not playing.  'files' is a list of files to be played."
 
 (define play-with-amps
   (lambda (sound . amps)
+    "(play-with-amps snd &rest amps) plays snd with each channel scaled by the corresponding \
+amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitude"
     (let ((chans (chans sound)))
       (do ((chan 0 (1+ chan)))
           ((= chan chans))
@@ -340,4 +330,3 @@ read, even if not playing.  'files' is a list of files to be played."
           (add-player player)))
       (start-playing chans (srate sound)))))
 
-;(play-with-amps 0 1.0 0.5) ;plays channel 2 of stereo sound at half amplitude

@@ -532,7 +532,7 @@ static char *gl_print(XEN result, const char *caller)
       ((int)(XEN_VECTOR_LENGTH(result)) <= print_length(state)))
     return(copy_string(g_print_1(result, caller)));
   ilen = print_length(state); 
-  newbuf = (char *)calloc(128, sizeof(char));
+  newbuf = (char *)CALLOC(128, sizeof(char));
   savelen = 128;
   savectr = 3;
   sprintf(newbuf, "#("); 
@@ -545,7 +545,7 @@ static char *gl_print(XEN result, const char *caller)
 	  if ((slen + savectr + 1) >= savelen)
 	    {
 	      savelen += (slen + 128);
-	      newbuf = (char *)realloc(newbuf, savelen * sizeof(char));
+	      newbuf = (char *)REALLOC(newbuf, savelen * sizeof(char));
 	    }
 	  if (i != 0) 
 	    {
@@ -557,7 +557,7 @@ static char *gl_print(XEN result, const char *caller)
 	}
     }
   if (savectr + 8 > savelen) 
-    newbuf = (char *)realloc(newbuf, (savectr + 8) * sizeof(char));
+    newbuf = (char *)REALLOC(newbuf, (savectr + 8) * sizeof(char));
   strcat(newbuf, " ...)");
   return(newbuf);
 }

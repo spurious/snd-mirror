@@ -31,6 +31,8 @@
 !#
 
 ;;; a better version:
+;;; TODO: make colored-samps generally useful
+
 (define (display-samps-in-red snd chn)
   "(display-samples-in-red snd chn) displays samples 1000 to 2000 in red whenever they're in the current view. It \
 is intended to be used as an after-graph-hook function."

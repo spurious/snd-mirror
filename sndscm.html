@@ -454,7 +454,11 @@ it's not hard to try them out.
 
 <A NAME="envdoc"></a><span class=box><h2>env.scm</h2></span>
 
-<p>An envelope in Snd/CLM is simply a list of breakpoint pairs.  The x axis extent
+<p>An envelope in Snd/CLM is simply a list of breakpoint pairs.  (In the function names, 
+I try to remember to use "envelope" to be a list of breakpoints, and "env" to be the result of make-env,
+a CLM env structure passed to the env generator).
+In an envelope,
+the x axis extent
 is arbitrary, though it's simplest to use 0.0 to 1.0.  env.scm provides several
 envelope functions that are often useful:
 </p>
@@ -467,7 +471,7 @@ envelope functions that are often useful:
   <em class=def><a name="maxenvelope">max-envelope</a></em> env
   <em class=def><a name="integrateenvelope">integrate-envelope</a></em> env
   <em class=def><a name="stretchenvelope">stretch-envelope</a></em> env old-attack new-attack <i>old-decay new-decay</i>
-  <em class=def><A NAME="maxx">max-x</a></em> env
+  <em class=def><A NAME="envelopelastx">envelope-last-x</a></em> env
   <em class=def><a name="scaleenvelope">scale-envelope</a></em> env scl <i>(offset 0.0)</i>
   <em class=def><a name="reverseenvelope">reverse-envelope</a></em> env
   <em class=def><a name="concatenateenvelopes">concatenate-envelopes</a></em> #:rest envs
@@ -517,7 +521,7 @@ for multiply envelopes is simply:</p>
   (lambda (e1 e2)
     (map-envelopes * e1 e2)))
 </pre>
-<p><i>max-envelope</i> returns the maximum Y value in <i>env</i>, and <i>max-x</i>
+<p><i>max-envelope</i> returns the maximum Y value in <i>env</i>, and <i>envelope-last-x</i>
 returns the maximum X value:
 </p>
 <pre>
@@ -950,8 +954,7 @@ a sound as a key is held down).
   <em class=def><a name="exswapselectionchannels">swap-selection-channels</a></em>
   <em class=def><A NAME="exselectionrms1">selection-rms-1</a></em>
   <em class=def><a name="exselectionrms">selection-rms</a></em>
-  <em class=def><A NAME="exregionrms1">region-rms-1</a></em> region
-  <em class=def><a name="exregionrms">region-rms</a></em> region
+  <em class=def><a name="exregionrms">region-rms</a></em> <i>region</i>
   <em class=def><A NAME="exreplacewithselection">replace-with-selection</a></em>
   <em class=def><a name="exexplodesf2">explode-sf2</a></em>
 </pre>
@@ -1109,7 +1112,7 @@ corresponding code in extsnd.html.  These include:
   <em class=def><a name="exupdategraphs">update-graphs</a></em>
   <em class=def><a name="exeverysample">every-sample?</a></em> func
   <em class=def><a name="exsortsamples">sort-samples</a></em> bins
-  <em class=def><a name="exwindowsamples">window-samples</a></em> snd chn
+  <em class=def><a name="exwindowsamples">window-samples</a></em> <i>snd chn</i>
   <em class=def><a name="exdisplayenergy">display-energy</a></em> snd chn y0 y1
   <em class=def><a name="exwindowrms">window-rms</a></em>
   <em class=def><A NAME="exnostartupfile">no-startup-file?</a></em> ind file
@@ -1820,13 +1823,13 @@ fill up the audio buffer with data.
 <pre>
 (play-fun (ampit (frames) 2.0) 256)
 </pre>
-<p>scales sound 0's samples by 2 and sends them to the DAC. 
+<p>scales sound 0's samples by 2 and sends them to the DAC. (These three functions are now obsolete).
 More useful is:</p>
 <pre>
-  <em class=def><A NAME="exloopit">loop-it</a></em> mark1 mark2 buffer-size
+  <em class=def><A NAME="exloop-between-marks">loop-it</a></em> mark1 mark2 buffer-size
 </pre>
 <p>which loops continuously between the two specified marks.
-The marks can be moved as the sound is played; C-g stops loopit.
+The marks can be moved as the sound is played; C-g stops loop-between-marks.
 If you want the DAC to be held open in the background,
 </p>
 <pre>

@@ -18,14 +18,15 @@
 	  (snd-error (format #f "popup.scm needs the xm module: ~A" hxm))
 	  (dlinit hxm "init_xm"))))
 
-(define (for-each-child w func)
-  "(for-each-child widget func) applies func to widget and each of its children"
-  (func w)
-  (if (|XtIsComposite w)
-      (for-each 
-       (lambda (n)
-	 (for-each-child n func))
-       (cadr (|XtGetValues w (list |XmNchildren 0) 1)))))
+(if (not (defined? 'for-each-child))
+    (define (for-each-child w func)
+      "(for-each-child widget func) applies func to widget and each of its children"
+      (func w)
+      (if (|XtIsComposite w)
+	  (for-each 
+	   (lambda (n)
+	     (for-each-child n func))
+	   (cadr (|XtGetValues w (list |XmNchildren 0) 1))))))
 
 (define (change-label w new-label)
   "(change-label widget new-label) changes widget's label to be new-label"
@@ -41,6 +42,7 @@
 
 
 (define (make-popup-menu name parent top-args entries)
+  "(make-popup-menu name parent top-args entries) creates a popup menu"
   (let ((menu (|XmCreatePopupMenu parent name top-args)))
     (for-each
      (lambda (entry)
@@ -347,7 +349,7 @@
       ))))
 
 (define (edit-graph-popup-menu snd chn)
-  ;; hide otiose entries, relabel others
+  "(edit-graph-popup-menu snd chn) hides otiose entries, relabel others to reflect current state of snd and chn"
   (let ((eds (edits snd chn)))
     (for-each-child
      graph-popup-menu
@@ -388,6 +390,7 @@
 ;;; -------- fft popup (easier to access than Options:Transform)
 
 (define (make-simple-popdown-menu label popdown-labels parent cascade-func args)
+  "(make-simple-popdown-menu label popdown-labels parent cascade-func args)"
   (let* ((top (|XmCreatePulldownMenu parent label args))
 	 (top-cascade (|XtCreateManagedWidget label |xmCascadeButtonWidgetClass parent
 			(append (list |XmNsubMenuId top)
@@ -403,6 +406,7 @@
               (cascade-func children))))))
 
 (define (edit-fft-popup-menu snd chn)
+  "(edit-fft-popup-menu snd chn) changes the fft-related popup menu to reflect the state of snd and chn"
   (for-each-child
    fft-popup-menu
    (lambda (w)
@@ -550,7 +554,7 @@
     fft-popup))
 
 (define (add-selection-popup)
-
+  "(add-selection-popup) makes the selection-related popup menu"
   (let ((popups '()))
     (define (find-popup snd chn dats)
       (if (not (null? dats))
@@ -624,7 +628,8 @@
      (sounds))))
 
 (define (change-menu-color menu new-color)
-  ;; new-color can be the color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-color)
+  "(change-menu-color menu new-color) changes the color of menu to new-color. new-color can be the \
+color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-color)"
   (let ((color-pixel
 	 (if (string? new-color) ; assuming X11 color names here
 	     (let* ((shell (cadr (main-widgets)))
@@ -647,22 +652,23 @@
        (|XmChangeColor n color-pixel)))))
 
 (define (change-selection-popup-color new-color)
+  "(change-selection-popup-color new-color) changes the selection popup menu's color: (change-selection-popup-color \"red\")"
   (change-menu-color selection-popup-menu new-color))
 
 (define (change-fft-popup-color new-color)
+  "(change-fft-popup-color new-color) changes the fft popup menu's color: (change-fft-popup-color (list .5 .5 .5))"
   (change-menu-color fft-popup-menu new-color))
 
 (define (change-graph-popup-color new-color)
+  "(change-graph-popup-color new-color) changes the time-domain popup menu's color: (change-graph-popup-color (basic-color))"
   (change-menu-color graph-popup-menu new-color))
 
-; (change-selection-popup-color "red") 
-; (change-selection-popup-color (list .5 .5 .5))
-; (change-selection-popup-color (basic-color))
 
 
 ;;; -------- listener popup
 
 (define (make-popdown-entry label parent func args collector with-one)
+  "(make-popdown-entry label parent func args collector with-one) makes a new listener popup menu entry"
   ;; make two entries for the popup menu, only one of which (if any) is active at a time
   ;;   if there are no relevant choices, no option is displayed
   ;;   if there's one such choice "top-one" (i.e. just a simple menu option) is displayed
@@ -816,6 +822,7 @@
 (define listener-menu (add-listener-popup))
 
 (define (change-listener-popup-color new-color)
+  "(change-listener-popup-color new-color) changes the listener popup menu's color"
   ;; slightly different from the earlier cases because the menu parent is not explicitly in the list
   (change-menu-color listener-menu new-color))
 

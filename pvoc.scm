@@ -1,73 +1,47 @@
 ;;; versions of the Moore-Klingbeil-Trevisani-Edwards phase-vocoder
-;;;
 
 (use-modules (ice-9 optargs))
 
-(define ifloor (lambda (n) (inexact->exact (floor n))))
-(define pi 3.141592653589793)
-(define pi2 (* 2 pi))
+(define* (make-pvocoder fftsize overlap interp #:optional analyze edit synthesize)
+  "(make-pvocoder fftsize overlap interp #:optional analyze edit synthesize) makes a new (Scheme-based, not CLM) phase-vocoder generator"
 
-(define make-pvocoder
-  (lambda (fftsize overlap interp analyze edit synthesize)
-    (let* ((N (or fftsize 512))
-	   (N2 (ifloor (/ N 2)))
-	   (hop (or overlap 4))
-	   (D (ifloor (/ N hop))))
+  (define ifloor (lambda (n) (inexact->exact (floor n))))
 
-	   ;; basic: fftsize overlap
-	   ;;  everything else via closures (interp in particular)
-	   ;;  pv: counter ("output" here)
-	   ;;      interp
-	   ;;      fftsize ("N"), hop ("D")
-	   ;;      in-counter ("filptr")
-	   ;;      hamming window scaled
-	   ;;      slot for in-coming data ("in-data") (created on first call)
-	   ;;      vcts: ampinc amp freqinc phaseinc phase lastphase
-	   ;;      funcs: analysize, edit, resynthesize
+  (let* ((N (or fftsize 512))
+	 (N2 (ifloor (/ N 2)))
+	 (hop (or overlap 4))
+	 (D (ifloor (/ N hop))))
 
-      (list 
-       interp                        ;output
-       interp                        ;interp
-       0                             ;filptr
-       N                             ;N
-       (let ((window (make-fft-window hamming-window fftsize)))
-	 (vct-scale! window (/ 2.0 (* 0.54 fftsize))) ;den = hamming window integrated
-	 window)                     ; window
-       D                             ;D
-       #f                            ;in-data (created in pvocoder gen)
-       (make-vct fftsize)            ;ampinc
-       (make-vct fftsize)            ;freqs
-       (make-vct N2)                 ;amps
-       (make-vct N2)                 ;phaseinc
-       (make-vct N2)                 ;phases
-       (make-vct N2)                 ;lastphaseinc
-       analyze
-       edit
-       synthesize
-       ))))
+    ;; basic: fftsize overlap
+    ;;  everything else via closures (interp in particular)
+    ;;  pv: counter ("output" here)
+    ;;      interp
+    ;;      fftsize ("N"), hop ("D")
+    ;;      in-counter ("filptr")
+    ;;      hamming window scaled
+    ;;      slot for in-coming data ("in-data") (created on first call)
+    ;;      vcts: ampinc amp freqinc phaseinc phase lastphase
+    ;;      funcs: analysize, edit, resynthesize
 
-;;; pvocoder list accessors
-(define pvoc-output (lambda (pv) (list-ref pv 0)))
-(define set-pvoc-output (lambda (pv val) (list-set! pv 0 val)))
-(define pvoc-interp (lambda (pv) (list-ref pv 1)))
-(define set-pvoc-interp (lambda (pv val) (list-set! pv 1 val)))
-(define pvoc-filptr (lambda (pv) (list-ref pv 2)))
-(define set-pvoc-filptr (lambda (pv val) (list-set! pv 2 val)))
-(define pvoc-N (lambda (pv) (list-ref pv 3)))
-(define pvoc-window (lambda (pv) (list-ref pv 4)))
-(define pvoc-D (lambda (pv) (list-ref pv 5)))
-(define pvoc-in-data (lambda (pv) (list-ref pv 6)))
-(define set-pvoc-in-data (lambda (pv val) (list-set! pv 6 val)))
-(define pvoc-ampinc (lambda (pv) (list-ref pv 7)))
-(define pvoc-freqs (lambda (pv) (list-ref pv 8)))
-(define pvoc-amps (lambda (pv) (list-ref pv 9)))
-(define pvoc-phaseinc (lambda (pv) (list-ref pv 10)))
-(define pvoc-phases (lambda (pv) (list-ref pv 11)))
-(define pvoc-lastphase (lambda (pv) (list-ref pv 12)))
-(define pvoc-analyze (lambda (pv) (list-ref pv 13)))
-(define pvoc-edit (lambda (pv) (list-ref pv 14)))
-(define pvoc-synthesize (lambda (pv) (list-ref pv 15)))
-
+    (list 
+     interp                        ;output
+     interp                        ;interp
+     0                             ;filptr
+     N                             ;N
+     (let ((window (make-fft-window hamming-window fftsize)))
+       (vct-scale! window (/ 2.0 (* 0.54 fftsize))) ;den = hamming window integrated
+       window)                     ; window
+     D                             ;D
+     #f                            ;in-data (created in pvocoder gen)
+     (make-vct fftsize)            ;ampinc
+     (make-vct fftsize)            ;freqs
+     (make-vct N2)                 ;amps
+     (make-vct N2)                 ;phaseinc
+     (make-vct N2)                 ;phases
+     (make-vct N2)                 ;lastphaseinc
+     analyze
+     edit
+     synthesize)))
 
 ;;; pvocoder generator: 
 ;;     input data func
@@ -75,8 +49,33 @@
 ;;     editing func with fallback 
 ;;     resynthesis func with fallback
 
-(define pvocoder
-  (lambda (pv input)
+(define (pvocoder pv input)
+  "(pvocoder pv input) is the phase-vocoder generator associated with make-pvocoder"
+
+  ;; pvocoder list accessors
+  (define (pvoc-output pv) (list-ref pv 0))
+  (define (set-pvoc-output pv val) (list-set! pv 0 val))
+  (define (pvoc-interp pv) (list-ref pv 1))
+  (define (set-pvoc-interp pv val) (list-set! pv 1 val))
+  (define (pvoc-filptr pv) (list-ref pv 2))
+  (define (set-pvoc-filptr pv val) (list-set! pv 2 val))
+  (define (pvoc-N pv) (list-ref pv 3))
+  (define (pvoc-window pv) (list-ref pv 4))
+  (define (pvoc-D pv) (list-ref pv 5))
+  (define (pvoc-in-data pv) (list-ref pv 6))
+  (define (set-pvoc-in-data pv val) (list-set! pv 6 val))
+  (define (pvoc-ampinc pv) (list-ref pv 7))
+  (define (pvoc-freqs pv) (list-ref pv 8))
+  (define (pvoc-amps pv) (list-ref pv 9))
+  (define (pvoc-phaseinc pv) (list-ref pv 10))
+  (define (pvoc-phases pv) (list-ref pv 11))
+  (define (pvoc-lastphase pv) (list-ref pv 12))
+  (define (pvoc-analyze pv) (list-ref pv 13))
+  (define (pvoc-edit pv) (list-ref pv 14))
+  (define (pvoc-synthesize pv) (list-ref pv 15))
+
+  (let* ((pi 3.141592653589793)
+	 (pi2 (* 2 pi)))
 
     (if (>= (pvoc-output pv) (pvoc-interp pv))
 	;; get next block of amp/phase info
@@ -125,7 +124,7 @@
 		(do ((k 0 (1+ k))
 		     (pscl (/ 1.0 D))
 		     (kscl (/ pi2 N)))
-		    ((= k (ifloor (/ N 2))))
+		    ((= k (inexact->exact (floor (/ N 2)))))
 		  (let ((phasediff (- (vct-ref freqs k) (vct-ref (pvoc-lastphase pv) k))))
 		    (vct-set! (pvoc-lastphase pv) k (vct-ref freqs k))
 		    (if (> phasediff pi) (do () ((<= phasediff pi)) (set! phasediff (- phasediff pi2))))
@@ -153,8 +152,7 @@
     ))
 
 
-
-
+#!
 ;;; ---------------- same thing using phase-vocoder gen
 
 (define test-pv-1
@@ -223,3 +221,4 @@
 		  (phase-vocoder pv (lambda (dir) 
 				      (next-sample reader)))))
       (free-sample-reader reader))))
+!#

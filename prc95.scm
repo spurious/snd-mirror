@@ -6,20 +6,20 @@
 (define pi 3.141592653589793)
 
 ;;; reedtable
-(define (reed-offset reed) (list-ref reed 0))
-(define (reed-slope reed) (list-ref reed 1)) 
 (define* (make-reed #:key (offset 0.6) (slope -0.8)) (list offset slope))
 
 (define (reedtable r sample) 
+  (define (reed-offset reed) (list-ref reed 0))
+  (define (reed-slope reed) (list-ref reed 1)) 
   (min 1.0 (+ (reed-offset r)
 	      (* (reed-slope r) sample))))
 
 ;;; bowtable
-(define (bowt-offset bowt) (list-ref bowt 0))
-(define (bowt-slope bowt) (list-ref bowt 1))
 (define* (make-bowt #:key (offset 0.0) (slope 1.0)) (list offset slope))
 
 (define (bowtable b sample) 
+  (define (bowt-offset bowt) (list-ref bowt 0))
+  (define (bowt-slope bowt) (list-ref bowt 1))
   (max 0.0 (- 1.0 (abs (* (bowt-slope b)
 			  (+ sample (bowt-offset b)))))))
 
@@ -28,13 +28,13 @@
   (max -1.0 (min 1.0 (* sample (- (* sample sample) 1.0)))))
 
 ;;; one-zero filter (slightly different from clm's)
-(define (onez-gain onez) (list-ref onez 0))
-(define (onez-zerocoeff onez) (list-ref onez 1))
-(define (onez-input onez) (list-ref onez 2))
-(define (onez-set-input onez val) (list-set! onez 2 val))
 (define* (make-onez #:key (gain 0.5) (zerocoeff 1.0) (input 0.0)) (list gain zerocoeff input))
 
 (define (onezero b sample)
+  (define (onez-gain onez) (list-ref onez 0))
+  (define (onez-zerocoeff onez) (list-ref onez 1))
+  (define (onez-input onez) (list-ref onez 2))
+  (define (onez-set-input onez val) (list-set! onez 2 val))
   (let ((result (* (onez-gain b) (+ sample (* (onez-zerocoeff b) (onez-input b))))))
     (onez-set-input b sample)
     result))
@@ -108,13 +108,14 @@
     (+ (* temp mouthsample) (* (- 1.0 temp) boresample))))
 
 
-(define (dcb-input dcb) (list-ref dcb 0))
-(define (dcb-set-input dcb val) (list-set! dcb 0 val))
-(define (dcb-output dcb) (list-ref dcb 1))
-(define (dcb-set-output dcb val) (list-set! dcb 1 val))
+;;;dc blocker
 (define* (make-dcb #:key (input 0.0) (output 0.0)) (list input output))
 
 (define (dcblock b sample) 
+  (define (dcb-input dcb) (list-ref dcb 0))
+  (define (dcb-set-input dcb val) (list-set! dcb 0 val))
+  (define (dcb-output dcb) (list-ref dcb 1))
+  (define (dcb-set-output dcb val) (list-set! dcb 1 val))
   (let ((result (+ sample (- (* 0.99 (dcb-output b)) (dcb-input b)))))
     (dcb-set-output b result)
     (dcb-set-input b sample)

@@ -98,196 +98,174 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;;
 ;;; this mainly involves keeping track of the current sound/channel
 
-(define region-rms-1
-  (lambda (n)
-    "(region-rms-1 n) -> rms of region n's data (chan 0) the slow way"
-    (if (region? n)
-	(let* ((data (region-samples 0 0 n))
-	       (len (vector-length data))
-	       (sum 0.0))
-	  (do ((i 0 (1+ i))) 
-	      ((= i len) (sqrt (/ sum len)))
-	    (set! sum (+ sum (* (vector-ref data i) (vector-ref data i))))))
-	(throw 'no-such-region (list "region-rms-1" n)))))
-
-(define selection-rms-1
-  (lambda ()
-    "(selection-rms-1) -> rms of selection data using sample readers"
-    (if (selection?)
-	(let* ((reader (make-sample-reader (selection-position)))
-	       (len (selection-length))
-	       (sum 0.0))
-	  (do ((i 0 (1+ i))) 
-	      ((= i len) 
-	       (begin 
-		 (free-sample-reader reader) 
-		 (sqrt (/ sum len))))
-	    (let ((val (next-sample reader)))
-	      (set! sum (+ sum (* val val))))))
-	(throw 'no-active-selection (list "selection-rms-1")))))
+(define (selection-rms-1)
+  "(selection-rms-1) -> rms of selection data using sample readers"
+  (if (selection?)
+      (let* ((reader (make-sample-reader (selection-position)))
+	     (len (selection-length))
+	     (sum 0.0))
+	(do ((i 0 (1+ i))) 
+	    ((= i len) 
+	     (begin 
+	       (free-sample-reader reader) 
+	       (sqrt (/ sum len))))
+	  (let ((val (next-sample reader)))
+	    (set! sum (+ sum (* val val))))))
+      (throw 'no-active-selection (list "selection-rms-1"))))
 
 ;;; if you'd rather use recursion:
-(define selection-rms
-  (lambda ()
-    "(selection-rms) -> rms of selection data using sample readers and recursion"
-    ;; this is actually slightly faster than selection-rms-1
-    ;; all the DO loops in this file could be re-written in this form, but I find loops easier to read
-    (if (selection?)
-	(let* ((reader (make-sample-reader (selection-position)))
-	       (len (selection-length)))
-	  (define rsum 
-	    (lambda (leng sum)
-	      (if (= leng 0)
-		  (sqrt (/ sum len))
-		  (let ((val (next-sample reader)))
-		    (rsum (1- leng) (+ sum (* val val)))))))
-	  (let ((val (rsum len 0.0)))
-	    (free-sample-reader reader)
-	    val))
-	(throw 'no-active-selection(list "selection-rms")))))
+(define (selection-rms)
+  "(selection-rms) -> rms of selection data using sample readers and recursion"
+  ;; this is actually slightly faster than selection-rms-1
+  ;; all the DO loops in this file could be re-written in this form, but I find loops easier to read
+  (if (selection?)
+      (let* ((reader (make-sample-reader (selection-position)))
+	     (len (selection-length)))
+	(define rsum 
+	  (lambda (leng sum)
+	    (if (= leng 0)
+		(sqrt (/ sum len))
+		(let ((val (next-sample reader)))
+		  (rsum (1- leng) (+ sum (* val val)))))))
+	(let ((val (rsum len 0.0)))
+	  (free-sample-reader reader)
+	  val))
+      (throw 'no-active-selection (list "selection-rms"))))
 
-(define region-rms
-  (lambda (n)
-    "(region-rms n) -> rms of region n's data (chan 0)"
-    (if (region? n)
-	(let* ((data (region-samples->vct 0 0 n)))
-	  (sqrt (/ (dot-product data data) (vct-length data))))
-	(throw 'no-such-region (list "region-rms" n)))))
+(define* (region-rms #:optional (n 0))
+  "(region-rms &optional n) -> rms of region n's data (chan 0)"
+  (if (region? n)
+      (let* ((data (region-samples->vct 0 0 n)))
+	(sqrt (/ (dot-product data data) (vct-length data))))
+      (throw 'no-such-region (list "region-rms" n))))
 
 
-(define window-samples
-  (lambda (snd chn)
-    "(window-samples snd chn) -> sample in snd channel chn in current graph window"
-    (let ((wl (left-sample snd chn))
-	  (wr (right-sample snd chn)))
-      (samples wl (+ 1 (- wr wl)) snd chn))))
+(define* (window-samples #:optional snd chn)
+  "(window-samples &optional snd chn) -> sample in snd channel chn in current graph window"
+  (let ((wl (left-sample snd chn))
+	(wr (right-sample snd chn)))
+    (samples wl (+ 1 (- wr wl)) snd chn)))
 
-(define display-energy
+(define (display-energy snd chn)
   ;; in this version, the y-zoom-slider controls the graph amp
-  (lambda (snd chn)
-    "(display-energy snd chn) is a lisp-graph-hook function to display the time domain data\n\
-    as energy (squared)"
-    (let* ((ls (left-sample))
-           (rs (right-sample))
-	   (datal (make-graph-data snd chn))
-	   (data (if (vct? datal) datal (cadr datal)))
-           (len (vct-length data))
-           (sr (srate snd))
-	   (y-max (y-zoom-slider snd chn)))
-      (vct-multiply! data data)
-      (graph data "energy" (/ ls sr) (/ rs sr) 0.0 (* y-max y-max) snd chn #f))))
+  "(display-energy snd chn) is a lisp-graph-hook function to display the time domain data as energy (squared)"
+  (let* ((ls (left-sample))
+	 (rs (right-sample))
+	 (datal (make-graph-data snd chn))
+	 (data (if (vct? datal) datal (cadr datal)))
+	 (len (vct-length data))
+	 (sr (srate snd))
+	 (y-max (y-zoom-slider snd chn)))
+    (vct-multiply! data data)
+    (graph data "energy" (/ ls sr) (/ rs sr) 0.0 (* y-max y-max) snd chn #f)))
 
 ;(add-hook! lisp-graph-hook display-energy)
 
-(define display-db
-  (lambda (snd chn)
-    "(display-db snd chn) is a lisp-graph-hook function to display the time domain data in dB"
-    (let* ((datal (make-graph-data snd chn))
-	   (data (if (vct? datal) datal (cadr datal)))
-           (sr (srate snd)))
-      (define (dB val)
-	(if (< val .001)
-	    -60.0
-	    (* 20.0 (log10 val))))
-      (vct-do! data (lambda (i)
-		      (vct-set! data i (+ 60.0 (dB (abs (vct-ref data i)))))))
-      (graph data "dB" 
-	     (/ (left-sample snd chn) sr) (/ (right-sample snd chn) sr)  
-	     0.0 60.0
-	     snd chn #f))))
+(define (display-db snd chn)
+  "(display-db snd chn) is a lisp-graph-hook function to display the time domain data in dB"
+  (let* ((datal (make-graph-data snd chn))
+	 (data (if (vct? datal) datal (cadr datal)))
+	 (sr (srate snd)))
+    (define (dB val)
+      (if (< val .001)
+	  -60.0
+	  (* 20.0 (log10 val))))
+    (vct-do! data (lambda (i)
+		    (vct-set! data i (+ 60.0 (dB (abs (vct-ref data i)))))))
+    (graph data "dB" 
+	   (/ (left-sample snd chn) sr) (/ (right-sample snd chn) sr)  
+	   0.0 60.0
+	   snd chn #f)))
 
 ;(add-hook! lisp-graph-hook display-db)
 
-(define window-rms
-  (lambda ()
-    "(window-rms n) -> rms of data in currently selected graph window"
-    (let* ((ls (left-sample))
-	   (rs (right-sample))
-	   (data (samples->vct ls (+ 1 (- rs ls))))
-	   (len (vct-length data)))
-      (sqrt (/ (dot-product data data) len)))))
+(define (window-rms)
+  "(window-rms) -> rms of data in currently selected graph window"
+  (let* ((ls (left-sample))
+	 (rs (right-sample))
+	 (data (samples->vct ls (+ 1 (- rs ls))))
+	 (len (vct-length data)))
+    (sqrt (/ (dot-product data data) len))))
 
 
-(define no-startup-file?
-  (lambda (ind file)
-    "(no-startup-file?) is intended as a start-hook procedure; if a file is specified in the
-  Snd invocation, but the file doesn't exist, Snd exits back to the shell"
-    (if (= ind (max-sounds))
-	(begin
-	  (write (string-append "can't open " file) (current-error-port))
-	  (newline (current-error-port))
-	  #t)
-	(if (sound? ind)
-	    #f
-	    (no-startup-file? (+ ind 1) file)))))
+(define (no-startup-file? ind file)
+  "(no-startup-file?) is intended as a start-hook procedure; if a file is specified in the \
+Snd invocation, but the file doesn't exist, Snd exits back to the shell"
+  (if (= ind (max-sounds))
+      (begin
+	(write (string-append "can't open " file) (current-error-port))
+	(newline (current-error-port))
+	#t)
+      (if (sound? ind)
+	  #f
+	  (no-startup-file? (+ ind 1) file))))
 
 ;(add-hook! start-hook (lambda (file) (if (> (string-length file) 0) (no-startup-file? 0 file) #f)))
 
 
-(define fft-peak
-  (lambda (snd chn scale)
-    "(fft-peak) returns the peak spectral magnitude"
-    (if (and (graph-transform?) (= (transform-graph-type) graph-transform-once))
-	(report-in-minibuffer 
-	 (number->string (/ (* 2.0 (vct-peak (transform-samples->vct snd chn))) (transform-size)))
-	 snd)
-      #f)))
+(define (fft-peak snd chn scale)
+  "(fft-peak) returns the peak spectral magnitude"
+  (if (and (graph-transform?) 
+	   (= (transform-graph-type) graph-transform-once))
+      (report-in-minibuffer 
+       (number->string (/ (* 2.0 (vct-peak (transform-samples->vct snd chn))) 
+			  (transform-size)))
+       snd)
+      #f))
 
 ;(add-hook! transform-hook fft-peak)
 
 
 ;;; -------- 'info' from extsnd.html using format --------
 
-(define finfo
-  (lambda (file)
-    "(finfo file) -> description (as a string) of file"
-    (format #f "~A: chans: ~D, srate: ~D, ~A, ~A, len: ~1,3F"
-	    file
-	    (mus-sound-chans file)
-	    (mus-sound-srate file)
-	    (mus-header-type-name (mus-sound-header-type file))
-	    (mus-data-format-name (mus-sound-data-format file))
-	    (/ (mus-sound-samples file)
-	       (* (mus-sound-chans file) (mus-sound-srate file))))))
+(define (finfo file)
+  "(finfo file) -> description (as a string) of file"
+  (format #f "~A: chans: ~D, srate: ~D, ~A, ~A, len: ~1,3F"
+	  file
+	  (mus-sound-chans file)
+	  (mus-sound-srate file)
+	  (mus-header-type-name (mus-sound-header-type file))
+	  (mus-data-format-name (mus-sound-data-format file))
+	  (/ (mus-sound-samples file)
+	     (* (mus-sound-chans file) (mus-sound-srate file)))))
 
 
 ;;; -------- Correlation --------
 ;;;
 ;;; correlation of channels in a stereo sound (uses window-samples given above)
 
-(define correlate
- (lambda (snd chn y0 y1)
-   "(correlate snd chn y0 y1) returns the correlation of snd's 2 channels"
-   (if (and (= (channels snd) 2)
-	    (> (frames snd 0) 1)
-	    (> (frames snd 1) 1))
-       (let* ((ls (left-sample snd 0))
-	      (rs (right-sample snd 0))
-	      (ilen (+ 1 (- rs ls)))
-	      (pow2 (ceiling (/ (log ilen) (log 2))))
-	      (fftlen (inexact->exact (expt 2 pow2)))
-	      (fftlen2 (/ fftlen 2))
-	      (fftscale (/ 1.0 fftlen))
-	      (rl1 (samples->vct ls fftlen snd 0))
-	      (rl2 (samples->vct ls fftlen snd 1))
-	      (im1 (make-vct fftlen))
-	      (im2 (make-vct fftlen)))
-	 (fft rl1 im1 1)
-	 (fft rl2 im2 1)
-	 (let* ((tmprl (vct-copy rl1))
-		(tmpim (vct-copy im1))
-		(data3 (make-vct fftlen2)))
-	   (vct-multiply! tmprl rl2)     ; (* tempr1 tempr2)
-	   (vct-multiply! tmpim im2)     ; (* tempi1 tempi2)
-	   (vct-multiply! im2 rl1)       ; (* tempr1 tempi2)
-	   (vct-multiply! rl2 im1)       ; (* tempr2 tempi1)
-	   (vct-add! tmprl tmpim)        ; add the first two
-	   (vct-subtract! im2 rl2)       ; subtract the 4th from the 3rd
-	   (fft tmprl im2 -1)
-	   (vct-add! data3 tmprl)        ; copy into data3 (which is half the size of tmprl)
-	   (vct-scale! data3 fftscale)   ; scale by fftscale
-	   (graph data3 "lag time" 0 fftlen2)))
-       (report-in-minibuffer "vct-correlate wants stereo input"))))
+(define (correlate snd chn y0 y1)
+  "(correlate snd chn y0 y1) returns the correlation of snd's 2 channels (intended for use with graph-hook)"
+  (if (and (= (channels snd) 2)
+	   (> (frames snd 0) 1)
+	   (> (frames snd 1) 1))
+      (let* ((ls (left-sample snd 0))
+	     (rs (right-sample snd 0))
+	     (ilen (+ 1 (- rs ls)))
+	     (pow2 (ceiling (/ (log ilen) (log 2))))
+	     (fftlen (inexact->exact (expt 2 pow2)))
+	     (fftlen2 (/ fftlen 2))
+	     (fftscale (/ 1.0 fftlen))
+	     (rl1 (samples->vct ls fftlen snd 0))
+	     (rl2 (samples->vct ls fftlen snd 1))
+	     (im1 (make-vct fftlen))
+	     (im2 (make-vct fftlen)))
+	(fft rl1 im1 1)
+	(fft rl2 im2 1)
+	(let* ((tmprl (vct-copy rl1))
+	       (tmpim (vct-copy im1))
+	       (data3 (make-vct fftlen2)))
+	  (vct-multiply! tmprl rl2)     ; (* tempr1 tempr2)
+	  (vct-multiply! tmpim im2)     ; (* tempi1 tempi2)
+	  (vct-multiply! im2 rl1)       ; (* tempr1 tempi2)
+	  (vct-multiply! rl2 im1)       ; (* tempr2 tempi1)
+	  (vct-add! tmprl tmpim)        ; add the first two
+	  (vct-subtract! im2 rl2)       ; subtract the 4th from the 3rd
+	  (fft tmprl im2 -1)
+	  (vct-add! data3 tmprl)        ; copy into data3 (which is half the size of tmprl)
+	  (vct-scale! data3 fftscale)   ; scale by fftscale
+	  (graph data3 "lag time" 0 fftlen2)))
+      (report-in-minibuffer "vct-correlate wants stereo input")))
 
 ;(add-hook! graph-hook correlate)
 
@@ -309,19 +287,17 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 ;(define buffer-menu (add-to-main-menu "Buffers"))
 
-(define open-buffer
-  (lambda (filename)
-    "(open-buffer filename) adds a menu item that will select filename"
-    (add-to-menu buffer-menu 
-		 filename 
-		 (lambda () (select-sound (find-sound filename))))
-    #f))
+(define (open-buffer filename)
+  "(open-buffer filename) adds a menu item that will select filename (use with open-hook)"
+  (add-to-menu buffer-menu 
+	       filename 
+	       (lambda () (select-sound (find-sound filename))))
+  #f)
 
-(define close-buffer 
-  (lambda (snd)
-    "(close-buffer snd) removes the menu item associated with snd"
-    (remove-from-menu buffer-menu (file-name snd))
-    #f))
+(define (close-buffer snd)
+  "(close-buffer snd) removes the menu item associated with snd (use with close-hook)"
+  (remove-from-menu buffer-menu (file-name snd))
+  #f)
 
 ;;; here we're adding this menu handling code to whatever is already happening at open/close-hook time
 
@@ -335,44 +311,45 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;; this can be used in conjunction with remember-sound-state in extensions.scm
 
 ;(define reopen-menu (add-to-main-menu "Reopen"))
-(define reopen-max-length 8)
 (define reopen-names '())
 
-(define add-to-reopen-menu
-  (lambda (snd)
-    (let ((brief-name (short-file-name snd))
-	  (long-name (file-name snd)))
-      (if (not (member brief-name reopen-names))
-	  (begin
-	    (add-to-menu reopen-menu 
-			 brief-name
-			 (lambda () 
-			   (remove-from-menu reopen-menu brief-name)
-			   (open-sound long-name))
-			 0) ; add to top
-	    (set! reopen-names (append reopen-names (list brief-name)))
-	    (if (> (length reopen-names) reopen-max-length)
-		(let ((goner (car reopen-names)))
-		  (set! reopen-names (cdr reopen-names))
-		  (remove-from-menu reopen-menu goner)))))
-      #f)))
+(define (add-to-reopen-menu snd)
+  "(add-to-reopen-menu snd) adds snd to the Reopen menu (use with close-hook)"
+  (let ((brief-name (short-file-name snd))
+	(long-name (file-name snd))
+	(reopen-max-length 8)) ; sets max length of menu
+    (if (not (member brief-name reopen-names))
+	(begin
+	  (add-to-menu reopen-menu 
+		       brief-name
+		       (lambda () 
+			 (remove-from-menu reopen-menu brief-name)
+			 (open-sound long-name))
+		       0) ; add to top
+	  (set! reopen-names (append reopen-names (list brief-name)))
+	  (if (> (length reopen-names) reopen-max-length)
+	      (let ((goner (car reopen-names)))
+		(set! reopen-names (cdr reopen-names))
+		(remove-from-menu reopen-menu goner)))))
+    #f))
 
-(define check-reopen-menu
-  (lambda (filename)
-    (define (just-filename name)
-      (let ((last-slash -1)
-	    (len (string-length name)))
-	(do ((i 0 (1+ i)))
-	    ((= i len) (substring name (1+ last-slash)))
-	  (if (char=? (string-ref name i) #\/)
-	      (set! last-slash i)))))
-    (let ((brief-name (just-filename filename)))
-      (if (member brief-name reopen-names)
-	  (set! reopen-names (remove-if (lambda (n) 
-					  (let ((val (string=? n brief-name)))
-					    (if val (remove-from-menu reopen-menu brief-name))
-					    val))
-					reopen-names))))))
+(define (check-reopen-menu filename)
+  "(check-reopen-menu filename) removes filename from the Reopen menu list (use with open-hook)"
+  (define (just-filename name)
+    (let ((last-slash -1)
+	  (len (string-length name)))
+      (do ((i 0 (1+ i)))
+	  ((= i len) (substring name (1+ last-slash)))
+	(if (char=? (string-ref name i) #\/)
+	    (set! last-slash i)))))
+  (let ((brief-name (just-filename filename)))
+    (if (member brief-name reopen-names)
+	(set! reopen-names (remove-if (lambda (n) 
+					(let ((val (string=? n brief-name)))
+					  (if val (remove-from-menu reopen-menu brief-name))
+					  val))
+				      reopen-names))))
+  #f)
 
 ;(add-hook! close-hook add-to-reopen-menu)
 ;(add-hook! open-hook check-reopen-menu)
@@ -384,21 +361,22 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;; also zoom spectrum based on y-axis zoom slider
 
 (define (zoom-spectrum snd chn y0 y1)
+  "(zoom-spectrum snd chn y0 y1) sets the transform size to correspond to the time-domain window size (use with graph-hook)"
   (if (and (graph-transform? snd chn) (= (transform-graph-type snd chn) graph-transform-once))
       (begin
 	(set! (transform-size snd chn)
 	      (expt 2 (ceiling 
 		       (/ (log (- (right-sample snd chn) (left-sample snd chn))) 
 			  (log 2.0)))))
-	(set! (spectro-cutoff snd chn) (y-zoom-slider snd chn)))))
+	(set! (spectro-cutoff snd chn) (y-zoom-slider snd chn))))
+  #f)
 
 ;(add-hook! graph-hook zoom-spectrum)
 
-;;; this version only messes with the fft settings if the time domain is not displayed
-;;;   it also sets the spectrum display start point based on the x position slider
-;;;   this can be confusing if fft normalization is on (the default)
-
 (define (zoom-fft snd chn y0 y1)
+  "(zoom-fft snd chn y0 y1) sets the transform size if the time domain is not displayed (use with graph-hook) \
+It also sets the spectrum display start point based on the x position slider -- \
+this can be confusing if fft normalization is on (the default)"
   (if (and (graph-transform? snd chn)
 	   (not (graph-time? snd chn))
 	   (= (transform-graph-type snd chn) graph-transform-once))
@@ -408,53 +386,53 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 		       (/ (log (- (right-sample snd chn) (left-sample snd chn))) 
 			  (log 2.0)))))
 	(set! (spectro-start snd chn) (x-position-slider snd chn))
-	(set! (spectro-cutoff snd chn) (y-zoom-slider snd chn)))))
+	(set! (spectro-cutoff snd chn) (y-zoom-slider snd chn))))
+  #f)
 
 ;(add-hook! graph-hook zoom-fft)
 
 
 ;;; -------- superimpose spectra of sycn'd sounds
 
-(define superimpose-ffts
-  (lambda (snd chn y0 y1)
-    "(superimpose-ffts snd chn y0 y1) superimposes ffts of multiple (syncd) sounds"
-    (define make-one-fft
-      (lambda (samp size snd chn)
-	(let* ((fdr (samples->vct samp size snd chn))
-	       (fdi (make-vct size))
-	       (spectr (make-vct (/ size 2))))
-	  (vct-add! spectr (spectrum fdr fdi #f size 2)))))
-    (define min-at-sync 
-      (lambda (snd ind)
-	(if (>= ind (max-sounds)) 
-	    #t
-	    (if (or (= snd ind)
-		    (not (sound? ind))
-		    (and (= (sync snd) (sync ind))
-			 (> ind snd)))
-		(min-at-sync snd (1+ ind))
-		#f))))
-    (define collect-ffts 
-      (lambda (samp size snd chn ffts ind)
-	(if (>= ind (max-sounds)) 
-	    ffts
-	    (if (and (sound? ind)
-		     (= (sync snd) (sync ind))
-		     (> (chans ind) chn))
-		(collect-ffts samp size snd chn (append ffts (list (make-one-fft samp size ind chn))) (1+ ind))
-		(collect-ffts samp size snd chn ffts (1+ ind))))))
-    (if (and (> (sync snd) 0)
-	     (min-at-sync snd 0))
-	;; we are sync, and we are the top sound in this sync group
-	(let* ((ls (left-sample snd chn))
-	       (rs (right-sample snd chn))
-	       (pow2 (inexact->exact (ceiling (/ (log (- rs ls)) (log 2)))))
-	       (fftlen (inexact->exact (expt 2 pow2))))
-	  (if (> pow2 2)
-	      (graph (collect-ffts ls fftlen snd chn '() snd)
-		     "spectra" 0.0 0.5 #f #f snd chn)))
-	(set! (graph-lisp? snd chn) #f))
-    #f))
+(define (superimpose-ffts snd chn y0 y1)
+  "(superimpose-ffts snd chn y0 y1) superimposes ffts of multiple (syncd) sounds (use with graph-hook)"
+  (define make-one-fft
+    (lambda (samp size snd chn)
+      (let* ((fdr (samples->vct samp size snd chn))
+	     (fdi (make-vct size))
+	     (spectr (make-vct (/ size 2))))
+	(vct-add! spectr (spectrum fdr fdi #f size 2)))))
+  (define min-at-sync 
+    (lambda (snd ind)
+      (if (>= ind (max-sounds)) 
+	  #t
+	  (if (or (= snd ind)
+		  (not (sound? ind))
+		  (and (= (sync snd) (sync ind))
+		       (> ind snd)))
+	      (min-at-sync snd (1+ ind))
+	      #f))))
+  (define collect-ffts 
+    (lambda (samp size snd chn ffts ind)
+      (if (>= ind (max-sounds)) 
+	  ffts
+	  (if (and (sound? ind)
+		   (= (sync snd) (sync ind))
+		   (> (chans ind) chn))
+	      (collect-ffts samp size snd chn (append ffts (list (make-one-fft samp size ind chn))) (1+ ind))
+	      (collect-ffts samp size snd chn ffts (1+ ind))))))
+  (if (and (> (sync snd) 0)
+	   (min-at-sync snd 0))
+      ;; we are sync, and we are the top sound in this sync group
+      (let* ((ls (left-sample snd chn))
+	     (rs (right-sample snd chn))
+	     (pow2 (inexact->exact (ceiling (/ (log (- rs ls)) (log 2)))))
+	     (fftlen (inexact->exact (expt 2 pow2))))
+	(if (> pow2 2)
+	    (graph (collect-ffts ls fftlen snd chn '() snd)
+		   "spectra" 0.0 0.5 #f #f snd chn)))
+      (set! (graph-lisp? snd chn) #f))
+  #f)
 
 ;(add-hook! graph-hook superimpose-ffts)
 
@@ -462,6 +440,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;; -------- c-g? example (Anders Vinjar)
 
 (define (locate-zero limit)
+  "(locate-zero limit) looks for successive samples that sum to less than 'limit', moving the cursor if successful"
   (let* ((start (cursor))
 	 (sf (make-sample-reader start)))
     (do ((n start (1+ n))
@@ -484,15 +463,15 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 (use-modules (ice-9 popen))  
 
-(define shell 
-  (lambda (cmd)
-    (let* ((str "")
-	   (fil (open-pipe cmd "r")))
-      (do ((val (read-char fil) (read-char fil))) 
-	  ((eof-object? val))
-	(set! str (string-append str (string val))))
-      (close-pipe fil)
-      str)))
+(define (shell cmd)
+  "(shell cmd) sends 'cmd' to a shell (executes it as a shell command) and returns the result."
+  (let* ((str "")
+	 (fil (open-pipe cmd "r")))
+    (do ((val (read-char fil) (read-char fil))) 
+	((eof-object? val))
+      (set! str (string-append str (string val))))
+    (close-pipe fil)
+    str))
 
 ;;; to simply make a system call, you can use the system function
 ;;;   (system "ls *.snd")
@@ -508,41 +487,40 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;; mpg123 with the -s switch sends the 16-bit (mono or stereo) representation of
 ;;;   an mpeg file to stdout.  There's also apparently a switch to write 'wave' output.
 
-(define mpg
-  (lambda (mpgfile rawfile)
-    "(mpg file tmpname) converts file from MPEG to raw 16-bit samples using mpg123"
-    (let* ((fd (open-file mpgfile "r"))
-	   (b0 (char->integer (read-char fd)))
-	   (b1 (char->integer (read-char fd)))
-	   (b2 (char->integer (read-char fd)))
-	   (b3 (char->integer (read-char fd))))
-      (close fd)
-      (if (or (not (= b0 255))
-	      (not (= (logand b1 #b11100000) #b11100000)))
-	  (snd-print (format #f "~S is not an MPEG file (first 11 bytes: #b~B #b~B)" mpgfile b0 (logand b1 #b11100000)))
-	  (let ((id (ash (logand b1 #b11000) -3))
-		(layer (ash (logand b1 #b110) -1))
-		(protection (logand b1 1))
-		(bitrate-index (ash (logand b2 #b11110000) -4))
-		(srate-index (ash (logand b2 #b1100) -2))
-		(padding (ash (logand b2 #b10) -1))
-		(channel-mode (ash (logand b3 #b11000000) -6))
-		(mode-extension (ash (logand b3 #b110000) -4))
-		(copyright (ash (logand b3 #b1000) -3))
-		(original (ash (logand b3 #b100) -2))
-		(emphasis (logand b3 #b11)))
-	    (if (= id 1)
-		(snd-print (format #f "odd: ~S is using a reserved Version ID" mpgfile)))
-	    (if (= layer 0)
-		(snd-print (format #f "odd: ~S is using a reserved layer decription" mpgfile)))
-	    (let* ((chans (if (= channel-mode 3) 1 2))
-		   (mpegnum (if (= id 0) 4 (if (= id 2) 2 1)))
-		   (mpeg-layer (if (= layer 3) 1 (if (= layer 2) 2 3)))
-		   (srate (/ (list-ref (list 44100 48000 32000 0) srate-index) mpegnum)))
-	      (snd-print (format #f "~S: ~A Hz, ~A, MPEG-~A~%" 
-				 mpgfile srate (if (= chans 1) "mono" "stereo") mpeg-layer))
-	      (system (format #f "mpg123 -s ~A > ~A" mpgfile rawfile))
-	      (open-raw-sound rawfile chans srate (if (little-endian?) mus-lshort mus-bshort))))))))
+(define (mpg mpgfile rawfile)
+  "(mpg file tmpname) converts file from MPEG to raw 16-bit samples using mpg123"
+  (let* ((fd (open-file mpgfile "r"))
+	 (b0 (char->integer (read-char fd)))
+	 (b1 (char->integer (read-char fd)))
+	 (b2 (char->integer (read-char fd)))
+	 (b3 (char->integer (read-char fd))))
+    (close fd)
+    (if (or (not (= b0 255))
+	    (not (= (logand b1 #b11100000) #b11100000)))
+	(snd-print (format #f "~S is not an MPEG file (first 11 bytes: #b~B #b~B)" mpgfile b0 (logand b1 #b11100000)))
+	(let ((id (ash (logand b1 #b11000) -3))
+	      (layer (ash (logand b1 #b110) -1))
+	      (protection (logand b1 1))
+	      (bitrate-index (ash (logand b2 #b11110000) -4))
+	      (srate-index (ash (logand b2 #b1100) -2))
+	      (padding (ash (logand b2 #b10) -1))
+	      (channel-mode (ash (logand b3 #b11000000) -6))
+	      (mode-extension (ash (logand b3 #b110000) -4))
+	      (copyright (ash (logand b3 #b1000) -3))
+	      (original (ash (logand b3 #b100) -2))
+	      (emphasis (logand b3 #b11)))
+	  (if (= id 1)
+	      (snd-print (format #f "odd: ~S is using a reserved Version ID" mpgfile)))
+	  (if (= layer 0)
+	      (snd-print (format #f "odd: ~S is using a reserved layer decription" mpgfile)))
+	  (let* ((chans (if (= channel-mode 3) 1 2))
+		 (mpegnum (if (= id 0) 4 (if (= id 2) 2 1)))
+		 (mpeg-layer (if (= layer 3) 1 (if (= layer 2) 2 3)))
+		 (srate (/ (list-ref (list 44100 48000 32000 0) srate-index) mpegnum)))
+	    (snd-print (format #f "~S: ~A Hz, ~A, MPEG-~A~%" 
+			       mpgfile srate (if (= chans 1) "mono" "stereo") mpeg-layer))
+	    (system (format #f "mpg123 -s ~A > ~A" mpgfile rawfile))
+	    (open-raw-sound rawfile chans srate (if (little-endian?) mus-lshort mus-bshort)))))))
 
 ;;; (mpg "mpeg.mpg" "mpeg.raw")
 
@@ -551,19 +529,18 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;; 
 ;;; this could be extended to set graph-style to graph-lines if many samples are displayed, etc
 
-(define auto-dot
-  (lambda (snd chn y0 y1)
-    "(auto-dot snd chn y0 y1) sets the dot size depending on the number of samples being displayed"
-    (let ((dots (- (right-sample snd chn)
-		   (left-sample snd chn))))
-      (if (> dots 100) 
-	  (set! (dot-size snd chn) 1)
+(define (auto-dot snd chn y0 y1)
+  "(auto-dot snd chn y0 y1) sets the dot size depending on the number of samples being displayed (use with graph-hook)"
+  (let ((dots (- (right-sample snd chn)
+		 (left-sample snd chn))))
+    (if (> dots 100) 
+	(set! (dot-size snd chn) 1)
 	(if (> dots 50)
 	    (set! (dot-size snd chn) 2)
-	  (if (> dots 25)
-	      (set! (dot-size snd chn) 3)
-	    (set! (dot-size snd chn) 5))))
-      #f)))
+	    (if (> dots 25)
+		(set! (dot-size snd chn) 3)
+		(set! (dot-size snd chn) 5))))
+    #f))
     
 ;(add-hook! graph-hook auto-dot)
 
@@ -576,132 +553,121 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;; the desired left edge has a mark, and the 'm' key (without control)
 ;;; will move the window left edge to that mark.
 
-(define first-mark-in-window-at-left
-  (lambda ()
-    "(first-mark-in-window-at-left) moves the graph so that the leftmost visible mark is at the left edge"
-    (let* ((keysnd (or (selected-sound) 0))
-	   (keychn (or (selected-channel keysnd) 0))
-	   (current-left-sample (left-sample keysnd keychn))
-	   (chan-marks (marks keysnd keychn)))
-      (define (find-leftmost-mark samples)
-	(if (null? samples)
-	    #f
-	    (if (> (car samples) current-left-sample)
-		(car samples)
-		(find-leftmost-mark (cdr samples)))))
-      (if (= (length chan-marks) 0)
-	  (report-in-minibuffer "no marks!")
-	  (let ((leftmost (find-leftmost-mark (map mark-sample chan-marks))))
-	    (if (number? leftmost)
-		(begin
-		  (set! (left-sample keysnd keychn) leftmost)
-		  cursor-update-display)
-		(report-in-minibuffer "no mark in window")))))))
+(define (first-mark-in-window-at-left)
+  "(first-mark-in-window-at-left) moves the graph so that the leftmost visible mark is at the left edge"
+  (let* ((keysnd (or (selected-sound) 0))
+	 (keychn (or (selected-channel keysnd) 0))
+	 (current-left-sample (left-sample keysnd keychn))
+	 (chan-marks (marks keysnd keychn)))
+    (define (find-leftmost-mark samples)
+      (if (null? samples)
+	  #f
+	  (if (> (car samples) current-left-sample)
+	      (car samples)
+	      (find-leftmost-mark (cdr samples)))))
+    (if (= (length chan-marks) 0)
+	(report-in-minibuffer "no marks!")
+	(let ((leftmost (find-leftmost-mark (map mark-sample chan-marks))))
+	  (if (number? leftmost)
+	      (begin
+		(set! (left-sample keysnd keychn) leftmost)
+		cursor-update-display)
+	      (report-in-minibuffer "no mark in window"))))))
 
-(bind-key (char->integer #\m) 0 (lambda () (first-mark-in-window-at-left)))
+;(bind-key (char->integer #\m) 0 (lambda () (first-mark-in-window-at-left)))
 
 
 ;;; -------- flash selected data red and green
 ;;;
 
-(define red (make-color 1 0 0))
-(define green (make-color 0 1 0))
-(define data-red? #t)
-;(set! (selected-data-color) red)
-
 (define flash-selected-data
-  (lambda (interval)
-    "(flash-selected-data millisecs) causes the selected data to flash red and green"
-    (if (selected-sound)
-	(begin
-	  (set! (selected-data-color) (if data-red? green red))
-	  (set! data-red? (not data-red?))
-	  (in interval (lambda () (flash-selected-data interval)))))))
+  (let ((data-red? #t)
+	(red (make-color 1 0 0))
+	(green (make-color 0 1 0)))
+    (lambda (interval)
+      "(flash-selected-data millisecs) causes the selected data to flash red and green"
+      (if (selected-sound)
+	  (begin
+	    (set! (selected-data-color) (if data-red? green red))
+	    (set! data-red? (not data-red?))
+	    (in interval (lambda () (flash-selected-data interval))))))))
 
 
 ;;; --------  use loop info (if any) to set marks at loop points
 
-(define mark-loops
-  (lambda ()
-    "(mark-loops) places marks at loop points found in the selected sound's header"
-    (let ((loops (or (sound-loop-info)
-		     (mus-sound-loop-info (file-name)))))
-      (if (not (null? loops))
-	  (begin
-	    (if (not (and (= (car loops) 0) (= (cadr loops) 0)))
-		(begin
-		  (add-mark (car loops))
-		  (add-mark (cadr loops))
-		  (if (not (and (= (caddr loops) 0) (= (cadddr loops) 0)))
-		      (begin
-			(add-mark (caddr loops))
-			(add-mark (cadddr loops)))))))
-	  (snd-print "no loop info")))))
+(define (mark-loops)
+  "(mark-loops) places marks at loop points found in the selected sound's header"
+  (let ((loops (or (sound-loop-info)
+		   (mus-sound-loop-info (file-name)))))
+    (if (not (null? loops))
+	(begin
+	  (if (not (and (= (car loops) 0) (= (cadr loops) 0)))
+	      (begin
+		(add-mark (car loops))
+		(add-mark (cadr loops))
+		(if (not (and (= (caddr loops) 0) (= (cadddr loops) 0)))
+		    (begin
+		      (add-mark (caddr loops))
+		      (add-mark (cadddr loops)))))))
+	(snd-print (format #f "%s has no loop info" (short-file-name))))))
 		
 	    
 
 ;;; -------- mapping extensions (map arbitrary single-channel function over various channel collections)
 ;;;
 
-(define do-all-chans
-  (lambda (func origin)
-    "(do-all-chans func edhist) applies func to all active channels, using edhist as the edit history indication"
-    (apply map (lambda (snd chn)
-		 (map-chan func #f #f origin snd chn))
-	   (all-chans))))
+(define (do-all-chans func origin)
+  "(do-all-chans func edhist) applies func to all active channels, using edhist as the edit history \
+indication: (do-all-chans (lambda (val) (* 2.0 val)) \"double all samples\")"
+  (apply map (lambda (snd chn)
+	       (map-chan func #f #f origin snd chn))
+	 (all-chans)))
 
-;; (do-all-chans (lambda (val) (* 2.0 val)) "double all samples") 
+(define (update-graphs)
+  "(update-graphs) updates (redraws) all graphs"
+  (apply map (lambda (snd chn)
+	       (update-time-graph snd chn))
+	 (all-chans)))
 
-(define update-graphs
-  (lambda ()
-    "(update-graphs) updates (redraws) all graphs"
-    (apply map (lambda (snd chn)
-		 (update-time-graph snd chn))
-	   (all-chans))))
+(define (do-chans func origin)
+  "(do-chans func edhist) applies func to all sync'd channels using edhist as the edit history indication"
+  (let ((snc (sync)))
+    (if (> snc 0)
+	(apply map
+	       (lambda (snd chn)
+		 (if (= (sync snd) snc)
+		     (map-chan func #f #f origin snd chn)))
+	       (all-chans))
+	(snd-warning "sync not set"))))
 
-(define do-chans
-  (lambda (func origin)
-    "(do-chans func edhist) applies func to all sync'd channels using edhist as the edit history indication"
-    (let ((snc (sync)))
-      (if (> snc 0)
-	  (apply map
-		 (lambda (snd chn)
-		   (if (= (sync snd) snc)
-		       (map-chan func #f #f origin snd chn)))
-		 (all-chans))
-	  (snd-warning "sync not set")))))
+(define (do-sound-chans proc origin)
+  "(do-sound-chans func args edhist) applies func to all selected channels using edhist as the edit history indication"
+  (let ((snd (selected-sound)))
+    (if (sound? snd)
+	(begin
+	  (do ((chn 0 (1+ chn)))
+	      ((= chn (channels snd)) #f)
+	    (map-chan proc #f #f origin snd chn)))
+	(snd-warning "no selected sound"))))
 
-(define do-sound-chans
-  (lambda (proc origin)
-    "(do-sound-chans func args edhist) applies func to all selected channels using edhist as the edit history indication"
-    (let ((snd (selected-sound)))
-      (if (sound? snd)
-	  (begin
-	    (do ((chn 0 (1+ chn)))
-		((= chn (channels snd)) #f)
-	      (map-chan proc #f #f origin snd chn)))
-	  (snd-warning "no selected sound")))))
+(define (every-sample? proc)
+  "(every-sample func) -> #t if func is not #f for all samples in the current channel, \
+otherwise it moves the cursor to the first offending sample"
+  (let ((baddy (scan-chan 
+		(lambda (y) 
+		  (not (proc y))))))
+    (if baddy (set! (cursor) (cadr baddy)))
+    (not baddy)))
 
-(define every-sample?
-  (lambda (proc)
-    "(every-sample func) -> #t if func is not #f for all samples in the current channel,
-  otherwise it moves the cursor to the first offending sample"
-    (let ((baddy (scan-chan 
-		  (lambda (y) 
-		    (not (proc y))))))
-      (if baddy (set! (cursor) (cadr baddy)))
-      (not baddy))))
-
-(define sort-samples
-  (lambda (nbins)
-    "(sort-samples bins) provides a histogram in bins bins"
-    (let ((bins (make-vector nbins 0)))
-      (scan-chan
-       (lambda (y)
-	 (let ((bin (inexact->exact (floor (* (abs y) nbins)))))
-	   (vector-set! bins bin (+ (vector-ref bins bin) 1))
-	   #f)))
-      bins)))
+(define (sort-samples nbins)
+  "(sort-samples bins) provides a histogram in 'bins' bins"
+  (let ((bins (make-vector nbins 0)))
+    (scan-chan
+     (lambda (y)
+       (let ((bin (inexact->exact (floor (* (abs y) nbins)))))
+	 (vector-set! bins bin (+ (vector-ref bins bin) 1))
+	 #f)))
+    bins))
 
 
 
@@ -2431,6 +2397,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 	       (return (1- ctr)))))))))
 
 (define (remove-clicks)
+  "(remove-clicks) tries to find and smooth-over clicks"
   ;; this is very conservative -- the click detection limits above could be set much tighter in many cases
   (define (remove-click loc)
     (let ((click (find-click loc)))
@@ -2534,13 +2501,15 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 ;;; -------- sound-data->list
 
-(define (sound-data-channel->list sd chan)
-  (let ((ls '()))
-    (do ((i (1- (sound-data-length sd)) (1- i)))
-	((< i 0) ls)
-      (set! ls (cons (sound-data-ref sd chan i) ls)))))
-
 (define (sound-data->list sd)
+  "(sound-data->list sd chan) turns a sound-data object's data into a list of lists (one for each channel)"
+
+  (define (sound-data-channel->list sd chan)
+    (let ((ls '()))
+      (do ((i (1- (sound-data-length sd)) (1- i)))
+	  ((< i 0) ls)
+	(set! ls (cons (sound-data-ref sd chan i) ls)))))
+
   (let ((lst '()))
     (do ((i (1- (sound-data-chans sd)) (1- i)))
 	((< i 0) lst)
@@ -2551,6 +2520,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;; -------- file->vct and a sort of cue-list, I think
 
 (define (file->vct file)
+  "(file->vct file) returns a vct with file's data"
   ;; should probably save these somewhere
   (let* ((len (mus-sound-frames file))
 	 (reader (make-sample-reader 0 file))
@@ -2614,6 +2584,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;; -------- replace-with-selection
 
 (define (replace-with-selection)
+  "(replace-with-selection) replaces the samples from the cursor with the current selection"
   (let ((beg (cursor))
 	(len (selection-length)))
     (delete-samples beg len)
@@ -2623,7 +2594,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;; -------- explode-sf2
 
 (define (explode-sf2)
-  ;; turn soundfont file into a bunch of files of the form sample-name.aif
+  "(explode-sf2) turns the currently selected soundfont file into a bunch of files of the form sample-name.aif"
   (letrec ((sf2it 
 	    (lambda (lst)
 	      (if (not (null? lst))
