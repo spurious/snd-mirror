@@ -1201,14 +1201,15 @@ void popup_menu_from(GtkWidget *w, GdkEventButton *ev, gpointer data, int snd, i
 
 static XEN g_menu_widgets(void)
 {
-  #define H_menu_widgets "(" S_menu_widgets "): a list of the top level menu widgets: ((0)main (1)file (2)edit (3)view (4)options (5)help)"
+  #define H_menu_widgets "(" S_menu_widgets "): a list of the top level menu widgets: ((0)main (1)file (2)edit (3)view (4)options (5)help (6)popup)"
   return(XEN_CONS(XEN_WRAP_WIDGET(mw[menu_menu]),
 	  XEN_CONS(XEN_WRAP_WIDGET(mw[file_menu]),
            XEN_CONS(XEN_WRAP_WIDGET(mw[edit_menu]),
             XEN_CONS(XEN_WRAP_WIDGET(mw[view_menu]),
              XEN_CONS(XEN_WRAP_WIDGET(mw[option_menu]),
               XEN_CONS(XEN_WRAP_WIDGET(mw[help_menu]),
-	       XEN_EMPTY_LIST)))))));
+	       XEN_CONS(XEN_WRAP_WIDGET(popup_menu),
+	        XEN_EMPTY_LIST))))))));
 }
 
 #ifdef XEN_ARGIFY_1

@@ -287,7 +287,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 	  ofile = snd_tempnam();
 
 	  saved_chan_file = snd_tempnam();
-	  err = save_channel_edits(ucp, saved_chan_file, edpos, S_convolve_with, arg_pos);
+	  err = save_channel_edits(ucp, saved_chan_file, to_c_edit_position(ucp, edpos, S_convolve_with, arg_pos));
 	  if (err != MUS_NO_ERROR)
 	    {
 	      if (ofile) FREE(ofile);
@@ -2345,7 +2345,7 @@ void cursor_delete(chan_info *cp, off_t count)
     }
 }
 
-void cursor_insert(chan_info *cp, off_t beg, off_t count, const char *origin)
+void cursor_insert(chan_info *cp, off_t beg, off_t count)
 {
   snd_info *sp;
   sp = cp->sound;
@@ -2366,7 +2366,7 @@ void cursor_insert(chan_info *cp, off_t beg, off_t count, const char *origin)
 	{
 	  if (extend_with_zeros(cps[i], 
 				mus_oclamp(0, beg, CURRENT_SAMPLES(si->cps[i])), 
-				count, origin,
+				count, 
 				cps[i]->edit_ctr))
 	    update_graph(cps[i]);
 	}
@@ -2376,7 +2376,7 @@ void cursor_insert(chan_info *cp, off_t beg, off_t count, const char *origin)
     {
       if (extend_with_zeros(cp, 
 			    mus_oclamp(0, beg, CURRENT_SAMPLES(cp)), 
-			    count, origin,
+			    count, 
 			    cp->edit_ctr))
 	update_graph(cp);
     }
@@ -2741,7 +2741,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
   return(xen_return_first(res, org));
 }
 
-static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off_t beg, off_t num, int pos)
+static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off_t beg, off_t num, int pos, const char *origin)
 { 
   snd_fd *sf = NULL;
   bool temp_file;
@@ -2761,14 +2761,14 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
     {
       mus_any *outgen = NULL;
       filename = snd_tempnam();
-      outgen = mus_make_sample_to_file_with_comment(filename, 1, MUS_OUT_FORMAT, MUS_NEXT, "ptree fallback temp");
+      outgen = mus_make_sample_to_file_with_comment(filename, 1, MUS_OUT_FORMAT, MUS_NEXT, origin);
       if (XEN_PROCEDURE_P(init_func))
 	{
 	  int loc;
 	  v = XEN_CALL_2(init_func,
 		     C_TO_XEN_OFF_T(0),
 		     C_TO_XEN_OFF_T(num),
-		     "ptree-channel fallback init func");
+		     origin);
 	  loc = snd_protect(v);
 	  for (kp = 0; kp < num; kp++)
 	    {
@@ -2776,7 +2776,7 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
 			       C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
 			       v,
 			       XEN_TRUE,
-			       "ptree-channel fallback proc");
+			       origin);
 	      MUS_OUTA_1(kp, XEN_TO_C_DOUBLE(res), outgen);
 	    }
 	  snd_unprotect_at(loc);
@@ -2787,7 +2787,7 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
 	    {
 	      res = XEN_CALL_1(proc, 
 			       C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
-			       "ptree-channel fallback proc");
+			       origin);
 	      MUS_OUTA_1(kp, XEN_TO_C_DOUBLE(res), outgen);
 	    }
 	}
@@ -2802,7 +2802,7 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
 	  v = XEN_CALL_2(init_func,
 		     C_TO_XEN_OFF_T(0),
 		     C_TO_XEN_OFF_T(num),
-		     "ptree-channel fallback init func");
+		     origin);
 	  loc = snd_protect(v);
 	  for (kp = 0; kp < num; kp++)
 	    {
@@ -2810,7 +2810,7 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
 			       C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
 			       v,
 			       XEN_TRUE,
-			       "ptree-channel fallback proc");
+			       origin);
 	      data[kp] = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(res));
 	    }
 	  snd_unprotect_at(loc);
@@ -2821,7 +2821,7 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
 	    {
 	      res = XEN_CALL_1(proc, 
 			       C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
-			       "ptree-channel fallback proc");
+			       origin);
 	      data[kp] = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(res));
 	    }
 	}
@@ -2829,12 +2829,12 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
   free_snd_fd(sf);
   if (temp_file)
     {
-      file_change_samples(beg, num, filename, cp, 0, DELETE_ME, LOCK_MIXES, "ptree-channel fallback", cp->edit_ctr);
+      file_change_samples(beg, num, filename, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
       FREE(filename);
     }
   else 
     {
-      change_samples(beg, num, data, cp, LOCK_MIXES, "ptree-channel fallback", cp->edit_ctr);
+      change_samples(beg, num, data, cp, LOCK_MIXES, origin, cp->edit_ctr);
       FREE(data);
     }
   update_graph(cp); 
@@ -2901,11 +2901,11 @@ at run-time.  See extsnd.html for the gory details."
 			 s_beg));
   dur = dur_to_samples(s_dur, beg, cp, pos, 3, S_ptree_channel);
   if (dur <= 0) return(XEN_FALSE);
+  if (XEN_STRING_P(origin)) caller = copy_string(XEN_TO_C_STRING(origin)); else caller = copy_string(S_ptree_channel);
 #if HAVE_RUBY
-  g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos);
+  g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos, caller);
 #else
   ptrees_present = ptree_fragments_in_use(cp, beg, dur, pos, XEN_FALSE_P(use_map_channel_fallback));
-  if (XEN_STRING_P(origin)) caller = copy_string(XEN_TO_C_STRING(origin)); else caller = copy_string(S_ptree_channel);
   if (XEN_PROCEDURE_P(init_func))
     {
       if (!(XEN_REQUIRED_ARGS_OK(init_func, 2)))
@@ -2930,7 +2930,7 @@ at run-time.  See extsnd.html for the gory details."
 	    }
 	}
       /* fallback on map chan */
-      g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos);
+      g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos, caller);
       if (caller) FREE(caller);
       return(proc_and_list);
     }
@@ -2956,7 +2956,7 @@ at run-time.  See extsnd.html for the gory details."
 	    }
 	  ptree_channel(cp, NULL, beg, dur, pos, XEN_TRUE_P(env_too), init_func, true, proc, caller);
 	}
-      else g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos);
+      else g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos, caller);
     }
 #endif
   if (caller) FREE(caller);
@@ -3357,7 +3357,6 @@ static XEN g_insert_silence(XEN beg, XEN num, XEN snd, XEN chn)
   #define H_insert_silence "(" S_insert_silence " beg num (snd #f) (chn #f)): insert num zeros at beg in snd's chn"
   chan_info *cp; /* follows sync */
   off_t start = 0, len = 0;
-  char *buf;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(beg), beg, XEN_ARG_1, S_insert_silence, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(num), num, XEN_ARG_2, S_insert_silence, "a number");
   ASSERT_CHANNEL(S_insert_silence, snd, chn, 3);
@@ -3368,9 +3367,7 @@ static XEN g_insert_silence(XEN beg, XEN num, XEN snd, XEN chn)
 				      beg));
   len = XEN_TO_C_OFF_T(num);
   if (len <= 0) return(XEN_FALSE);
-  buf = mus_format("%s " OFF_TD " " OFF_TD, S_insert_silence, start, len);
-  cursor_insert(cp, start, len, buf);
-  FREE(buf);
+  cursor_insert(cp, start, len);
   return(beg);
 }
 
@@ -3380,7 +3377,6 @@ static XEN g_pad_channel(XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
   chan_info *cp;
   off_t bg, len;
   int pos;
-  char *buf;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(beg), beg, XEN_ARG_1, S_pad_channel, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(num), num, XEN_ARG_2, S_pad_channel, "a number");
   ASSERT_CHANNEL(S_pad_channel, snd, chn, 3);
@@ -3388,10 +3384,8 @@ static XEN g_pad_channel(XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
   bg = beg_to_sample(beg, S_pad_channel);
   pos = to_c_edit_position(cp, edpos, S_pad_channel, 5);
   len = XEN_TO_C_OFF_T_OR_ELSE(num, cp->samples[pos] - bg);
-  buf = mus_format("%s " OFF_TD " " OFF_TD, S_pad_channel, bg, len);
-  if (extend_with_zeros(cp, bg,	len, buf, pos))
+  if (extend_with_zeros(cp, bg,	len, pos))
     update_graph(cp);
-  FREE(buf);
   return(beg);
 }
 

@@ -8407,7 +8407,7 @@ edit.
 
 <!-- edit-list->function -->
 <tr><td colspan=2>
-<code><a class=def name="editlist_to_function">edit-list-&gt;function</a> (<i>start end snd chn</i>)</code>
+<code><a class=def name="editlist_to_function">edit-list-&gt;function</a> (<i>snd chn start end</i>)</code>
 </td></tr>
 <tr><td></td><td>
 return a function encapsulating the current edit history list.  This provides a way to save an edit
@@ -10647,7 +10647,7 @@ The four "-widgets" procedures return lists of possibly useful widgets:
                      4:listener-pane 5:notebook-outer-pane)
 
   menu-widgets:    '(0:top-level-menu-bar 1:file-menu 2:edit-menu 3:view-menu 
-                     4:options-menu 5:help-menu)
+                     4:options-menu 5:help-menu, 6:default popup menu)
 
   sound-widgets:   '(0:main-pane 1:name-label 2:control-panel 3:minibuffer 
                      4:play 5:filter-graph 6:unite 7:minibuffer-label 8:name-icon 9:sync)

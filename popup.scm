@@ -617,9 +617,72 @@
 
     fft-popup))
 
-(define (add-selection-popup)
-  "(add-selection-popup) makes the selection-related popup menu"
+
+;;; -------- edit history popup
+
+(define edhist-lists '())
+(define edhist-snd #f)
+(define edhist-chn #f)
+
+(define (edhist-save-edits w c i)
+  (let* ((old-val (assoc (cons edhist-snd edhist-chn) edhist-lists))
+	 (cur-edits (edits edhist-snd edhist-chn))
+	 (new-func (edit-list->function edhist-snd edhist-chn (1+ (car cur-edits)) (apply + cur-edits))))
+    (if old-val
+	(set-cdr! old-val new-func)
+	(set! edhist-lists (cons (cons (cons edhist-snd edhist-chn) new-func) edhist-lists)))
+    #f))
+
+(define (edhist-reapply-edits w c i)
+  ;; PERHAPS: would be nice to provide some indication of what the saved function does
+  ;; PERHAPS: insensitive 'apply/reapply' buttons if no saved func?
+  (let* ((old-val (assoc (cons edhist-snd edhist-chn) edhist-lists)))
+    (if old-val
+	((cdr old-val) edhist-snd edhist-chn))))
+
+(define (edhist-apply-edits w c i) 
+  ;; TODO: give option to apply any save edit list func -- might need a way to clear this list
+  #f)
+
+(define (edhist-help w c i)
+  (help-dialog "Edit History Functions"
+	       "This popup menu gives access to the edit-list function handlers in Snd. \
+At any time you can backup in the edit list, 'save' the current trailing edits, make some \
+new set of edits, then 'reapply' the saved edits.  The 'apply' choice is not yet implemented, \
+but eventually it will give access to all saved edit list functions, making it easy to apply \
+one channel's edits to others."
+	       (list "{edit lists}" "{edit-list->function}")
+	       (list "extsnd.html#editlists" "extsnd.html#editlist_to_function")
+	       ))
+
+(define edit-history-menu
+  (let ((every-menu (list XmNbackground (highlight-color))))
+    (make-popup-menu 
+     "edit-history-popup"
+     (caddr (main-widgets))
+     (list XmNpopupEnabled #t
+	   XmNbackground (highlight-color))
+     (list
+      (list "Edits"    xmLabelWidgetClass      every-menu)
+      (list "sep"      xmSeparatorWidgetClass  every-menu)
+      (list "Save"     xmPushButtonWidgetClass every-menu edhist-save-edits)
+      (list "Reapply"  xmPushButtonWidgetClass every-menu edhist-reapply-edits)
+      (list "Apply"    xmPushButtonWidgetClass every-menu edhist-apply-edits)
+      (list "Help"     xmPushButtonWidgetClass every-menu edhist-help)))))
+
+(define (edit-history-popup-menu snd chn)
+  (set! edhist-snd snd)
+  (set! edhist-chn chn)
+  edit-history-menu)
+
+
+
+;;; -------- activate the above menus
+
+(define (add-popups)
+  "(add-popups) adds context-sensitive popup menus to various parts of the interface"
   (let ((popups '()))
+
     (define (find-popup snd chn dats)
       (if (not (null? dats))
 	  (let ((cur (car dats)))
@@ -635,6 +698,15 @@
 	(if (not (find-popup snd chn popups))
 	    (let ((chn-grf (car (channel-widgets snd chn))))
 	      (set! popups (cons (list snd chn) popups))
+
+	      ;; edit history list spreadsheet support
+	      (XtAddCallback  (list-ref (channel-widgets snd chn) 7) XmNpopupHandlerCallback 
+		 (lambda (w data info)
+		   (let ((e (.event info)))
+		     (if (= ButtonPress (.type e))
+			 (set! (.menuToPost info) (edit-history-popup-menu snd chn))))))
+	      ;; PERHAPS: the apply/restore/remember/reset buttons could be moved to a popup as well
+
 	      (XtAddCallback chn-grf XmNpopupHandlerCallback 
 		 (lambda (w data info)
 		   (let* ((e (.event info))
@@ -886,13 +958,10 @@ color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-
 		(set! (.menuToPost info) listener-popup)))))
       listener-popup)))
 
-(add-selection-popup)
+(add-popups)
 (define listener-menu (add-listener-popup))
 
 (define (change-listener-popup-color new-color)
   "(change-listener-popup-color new-color) changes the listener popup menu's color"
   ;; slightly different from the earlier cases because the menu parent is not explicitly in the list
   (change-menu-color listener-menu new-color))
-
-
-

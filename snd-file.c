@@ -2170,7 +2170,7 @@ bool saved_file_needs_update(snd_info *sp, char *str, save_dialog_t save_type, i
       /* also what if a sound is write-protected in one window, and not in another? */
       ofile = snd_tempnam(); 
       if (save_type == FILE_SAVE_AS)
-	result = save_edits_without_display(sp, ofile, type, format, srate, comment, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "file save as", 0);
+	result = save_edits_without_display(sp, ofile, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
       else result = save_selection(ofile, type, format, srate, comment, SAVE_ALL_CHANS);
       if (result != MUS_NO_ERROR)
 	report_in_minibuffer(sp, _("save as temp %s hit error: %s"), ofile, strerror(errno));
@@ -2205,7 +2205,7 @@ bool saved_file_needs_update(snd_info *sp, char *str, save_dialog_t save_type, i
 	}
       mus_sound_forget(fullname);
       if (save_type == FILE_SAVE_AS)
-	result = save_edits_without_display(sp, str, type, format, srate, comment, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "file save as", 0);
+	result = save_edits_without_display(sp, str, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
       else result = save_selection(str, type, format, srate, comment, SAVE_ALL_CHANS);
       if (result != MUS_NO_ERROR)
 	{
@@ -2446,7 +2446,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
   snd_info *sp;
   char *tmp_file;
   file_info *hdr;
-  int type, len = 0;
+  int type, len = 0, err = MUS_NO_ERROR;
   XEN start0 = XEN_UNDEFINED, end0 = XEN_UNDEFINED; 
   XEN start1 = XEN_UNDEFINED, end1 = XEN_UNDEFINED; 
   XEN mode0 = XEN_UNDEFINED, mode1 = XEN_UNDEFINED;
@@ -2533,16 +2533,20 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
    *   it would not be so hard).
    */
   tmp_file = snd_tempnam();
-  save_edits_without_display(sp, tmp_file, type, 
-			     hdr->format, 
-			     hdr->srate, 
-			     hdr->comment,
-			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION),
-			     S_sound_loop_info, 0);
+  err = save_edits_without_display(sp, tmp_file, type, 
+				   hdr->format, 
+				   hdr->srate, 
+				   hdr->comment,
+				   AT_CURRENT_EDIT_POSITION);
+  if (err != MUS_NO_ERROR)
+    XEN_ERROR(CANNOT_SAVE,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_setB S_sound_loop_info),
+			 C_TO_XEN_STRING(tmp_file),
+			 C_TO_XEN_STRING(strerror(errno))));
   move_file(tmp_file, sp->filename);
-  FREE(tmp_file);
   snd_update(sp);
-  return(xen_return_first(XEN_TRUE, snd, vals));
+  FREE(tmp_file);
+  return(xen_return_first((err == MUS_NO_ERROR) ? XEN_TRUE : C_TO_XEN_INT(err), snd, vals));
 }
 
 static XEN g_soundfont_info(XEN snd)

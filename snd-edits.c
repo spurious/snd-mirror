@@ -5236,7 +5236,7 @@ static ed_list *insert_samples_into_list(off_t samp, off_t num, int pos, chan_in
   return(new_state);
 }
 
-bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, const char *origin, int edpos)
+bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos)
 {
   off_t len, new_len;
   ed_fragment *cb;
@@ -5250,8 +5250,8 @@ bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, const char *origin, 
       num = new_len - beg;
     }
   else new_len = len + num;
-  if (!(prepare_edit_list(cp, new_len, edpos, origin))) return(false);
-  ed = insert_samples_into_list(beg, num, edpos, cp, &cb, origin, 0.0);
+  if (!(prepare_edit_list(cp, new_len, edpos, S_pad_channel))) return(false); /* actual edit-list origin is done at zero_edit level */
+  ed = insert_samples_into_list(beg, num, edpos, cp, &cb, S_pad_channel, 0.0);
   cp->edits[cp->edit_ctr] = ed;
   ED_SOUND(cb) = EDIT_LIST_ZERO_MARK;
   ED_SCALER(cb) = 0.0;
@@ -5302,7 +5302,7 @@ bool file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
   len = cp->samples[edpos];
   if (beg >= len)
     {
-      if (!(extend_with_zeros(cp, len, beg - len, "(insert-extend)", edpos))) return(false);
+      if (!(extend_with_zeros(cp, len, beg - len, edpos))) return(false);
       edpos = cp->edit_ctr;
       len = CURRENT_SAMPLES(cp);
     }
@@ -5352,7 +5352,7 @@ static bool insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *
   len = cp->samples[edpos];
   if (beg >= len)
     {
-      if (!(extend_with_zeros(cp, len, beg - len, "(insert-extend)", edpos))) return(false);
+      if (!(extend_with_zeros(cp, len, beg - len, edpos))) return(false);
       edpos = cp->edit_ctr;
       len = CURRENT_SAMPLES(cp);
     }
@@ -5540,7 +5540,7 @@ bool file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, in
       prev_len = cp->samples[edpos];
       if (beg >= prev_len)
 	{
-	  if (!(extend_with_zeros(cp, prev_len, beg - prev_len + 1, "(change-extend)", edpos))) 
+	  if (!(extend_with_zeros(cp, prev_len, beg - prev_len + 1, edpos))) 
 	    {
 	      free_file_info(hdr);
 	      return(false);
@@ -5645,7 +5645,7 @@ bool change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, loc
   prev_len = cp->samples[edpos];
   if (beg >= prev_len)
     {
-      if (!(extend_with_zeros(cp, prev_len, beg - prev_len + 1, "(change-extend)", edpos))) return(false);
+      if (!(extend_with_zeros(cp, prev_len, beg - prev_len + 1, edpos))) return(false);
       edpos = cp->edit_ctr;
       prev_len = CURRENT_SAMPLES(cp);
     }
@@ -6833,18 +6833,14 @@ static bool save_edits_and_update_display(snd_info *sp)
   return(false); /* don't erase our error message for the special write-permission problem */
 }
 
-int save_edits_without_display(snd_info *sp, char *new_name, int type, int format, int srate, char *comment, XEN edpos, const char *caller, int arg_pos)
+int save_edits_without_display(snd_info *sp, char *new_name, int type, int format, int srate, char *comment, int pos)
 { 
   /* file save as menu option -- changed 19-June-97 to retain current state after writing */
   file_info *hdr;
   if ((sp->read_only) && (strcmp(new_name, sp->filename) == 0))
-    {
-      if (strcmp(caller, "file save as") == 0)
-	snd_error(_("%s is write-protected"), sp->filename);
-      else ss->catch_message = "file is write-protected";
-      return(MUS_ERROR);
-    }
-  if (dont_save(sp, new_name)) return(MUS_NO_ERROR);
+    return(MUS_CANT_OPEN_FILE);
+  if (dont_save(sp, new_name)) 
+    return(MUS_NO_ERROR);
   if (MUS_DATA_FORMAT_OK(format))
     {
       if (MUS_HEADER_TYPE_OK(type))
@@ -6865,12 +6861,12 @@ int save_edits_without_display(snd_info *sp, char *new_name, int type, int forma
 	  sf = (snd_fd **)MALLOC(sp->nchans * sizeof(snd_fd *));
 	  for (i = 0; i < sp->nchans; i++) 
 	    {
-	      int pos;
 	      chan_info *cp;
+	      int local_pos;
 	      cp = sp->chans[i];
-	      pos = to_c_edit_position(cp, edpos, caller, arg_pos);
-	      sf[i] = init_sample_read_any(0, cp, READ_FORWARD, pos);
-	      if (frames < cp->samples[pos]) frames = cp->samples[pos];
+	      if (pos == AT_CURRENT_EDIT_POSITION) local_pos = cp->edit_ctr; else local_pos = pos;
+	      sf[i] = init_sample_read_any(0, cp, READ_FORWARD, local_pos);
+	      if (frames < cp->samples[local_pos]) frames = cp->samples[local_pos];
 	      if (sf[i] == NULL) err = MUS_ERROR;
 	    }
 	  if (err == MUS_NO_ERROR)
@@ -6881,29 +6877,20 @@ int save_edits_without_display(snd_info *sp, char *new_name, int type, int forma
 	  free_file_info(hdr);
 	  return(err);
 	}
-      else 
-	{
-	  if (strcmp(caller, "file save as") == 0)
-	    snd_error(_("save-edits: unknown header type? %d"), type);
-	  else ss->catch_message = "unknown header type";
-	  return(MUS_UNSUPPORTED_HEADER_TYPE);
-	}
+      else return(MUS_UNSUPPORTED_HEADER_TYPE);
     }
-  if (strcmp(caller, "file save as") == 0)
-    snd_error(_("save-edits: unknown data format? %d"), format);
-  else ss->catch_message = "unknown data format";
   return(MUS_UNSUPPORTED_DATA_FORMAT);
 }
 
-int save_channel_edits(chan_info *cp, char *ofile, XEN edpos, const char *caller, int arg_pos)
+int save_channel_edits(chan_info *cp, char *ofile, int pos)
 {
   /* channel extraction -- does not (normally) cause reversion of edits, or change of in-window file, etc */
   snd_info *sp;
-  int err, pos;
+  int err;
   sp = cp->sound;
   err = MUS_NO_ERROR;
   if (!(snd_overwrite_ok(ofile))) return(MUS_NO_ERROR); /* no error because decision was explicit */
-  pos = to_c_edit_position(cp, edpos, caller, arg_pos);
+  if (pos == AT_CURRENT_EDIT_POSITION) pos = cp->edit_ctr;
   if (strcmp(ofile, sp->filename) == 0)
     {
       char *nfile;

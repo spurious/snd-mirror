@@ -701,7 +701,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
   int err;
   chan_info *active_chan;
   char *str = NULL;
-  char *str1;
   if ((keysym == snd_K_s) || (keysym == snd_K_r)) s_or_r = true;
   if (sp != selected_sound()) select_channel(sp, 0);
   active_chan = any_selected_channel(sp);
@@ -820,37 +819,41 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	      }
 	      break;
 	    case REGION_FILING:
-	      str1 = mus_expand_filename(str);
-	      if (!(snd_overwrite_ok(str1))) 
-		{
-		  free(str); 
-		  FREE(str1); 
-		  return;
-		}
-	      if ((region_count == 0) && (selection_is_active()))
-		err = save_selection(str1, default_output_type(ss), default_output_format(ss), SND_SRATE(sp), NULL, SAVE_ALL_CHANS);
-	      else err = save_region(region_count, str1, default_output_format(ss));
-	      if (err == MUS_NO_ERROR)
-		{
-		  clear_minibuffer(sp); /* get rid of prompt */
-		  report_in_minibuffer(sp, _("%s saved as %s"), 
-				       ((region_count == 0) && (selection_is_active())) ? "selection" : "region",
-				       str1);
-		}
-	      FREE(str1);
+	      {
+		char *filename;
+		filename = mus_expand_filename(str);
+		if (!(snd_overwrite_ok(filename))) 
+		  {
+		    free(str); 
+		    FREE(filename); 
+		    return;
+		  }
+		if ((region_count == 0) && (selection_is_active()))
+		  err = save_selection(filename, default_output_type(ss), default_output_format(ss), SND_SRATE(sp), NULL, SAVE_ALL_CHANS);
+		else err = save_region(region_count, filename, default_output_format(ss));
+		if (err == MUS_NO_ERROR)
+		  {
+		    clear_minibuffer(sp); /* get rid of prompt */
+		    report_in_minibuffer(sp, _("%s saved as %s"), 
+					 ((region_count == 0) && (selection_is_active())) ? "selection" : "region",
+					 filename);
+		  }
+		FREE(filename);
+	      }
 	      break;
 	    case CHANNEL_FILING:
 	      {
-		char *mcf;
-		err = save_channel_edits(active_chan, mcf = mus_expand_filename(str), C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "C-x C-w", 0);
+		char *filename;
+		filename = mus_expand_filename(str);
+		err = save_channel_edits(active_chan, filename, AT_CURRENT_EDIT_POSITION);
 		if (err == MUS_NO_ERROR)
 		  {
 		    clear_minibuffer(sp);
 		    report_in_minibuffer(sp, _("channel %d saved as %s"), 
 					 active_chan->chan,
-					 mcf);
+					 filename);
 		  }
-		if (mcf) FREE(mcf);
+		if (filename) FREE(filename);
 	      }
 	      break;
 #if HAVE_OPENDIR
@@ -881,28 +884,36 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	    case INSERT_FILING:
 	      {
 		int nc;
-		str1 = mus_expand_filename(str);
-		nc = mus_sound_chans(str1);
+		char *filename;
+		filename = mus_expand_filename(str);
+		nc = mus_sound_chans(filename);
 		if (nc > 0)
 		  {
 		    off_t len;
-		    len = mus_sound_frames(str1);
+		    len = mus_sound_frames(filename);
 		    if (len == 0)
 		      report_in_minibuffer(sp, _("file %s has no data"), str);
 		    else
 		      {
 			int i, j;
+			off_t chan_beg;
+			char *origin;
+			chan_info *ncp;
 			if (!active_chan) active_chan = sp->chans[0];
 			for (i = active_chan->chan, j = 0; (j < nc) && (i < sp->nchans); i++, j++)
 			  {
-			    if (file_insert_samples(CURSOR(active_chan), len, str1, sp->chans[i], j, DONT_DELETE_ME, "C-x C-i", sp->chans[i]->edit_ctr))
-			      update_graph(sp->chans[i]);
+			    ncp = sp->chans[i];
+			    chan_beg = CURSOR(active_chan);
+			    origin = mus_format("%s \"%s\" " OFF_TD " %d", S_insert_sound, filename, chan_beg, j);
+			    if (file_insert_samples(chan_beg, len, filename, ncp, j, DONT_DELETE_ME, origin, ncp->edit_ctr))
+			      update_graph(ncp);
+			    FREE(origin);
 			  }
 			clear_minibuffer(sp);
 		      }
 		  }
 		else report_in_minibuffer_and_save(sp, _("can't read %s's header"), str);
-		FREE(str1);
+		FREE(filename);
 	      }
 	      break;
 	    case MACRO_FILING: 
@@ -1332,7 +1343,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 	    case snd_K_O: case snd_K_o: 
 	      cp->cursor_on = true; 
-	      cursor_insert(cp, CURSOR(cp), count, "C-o"); 
+	      cursor_insert(cp, CURSOR(cp), count); 
 	      break;
 	    case snd_K_P: case snd_K_p: 
 	      cp->cursor_on = true; 

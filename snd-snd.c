@@ -3384,12 +3384,12 @@ Omitted arguments take their value from the sound being saved.\n\
   ss->catch_message = NULL;
   fname = mus_expand_filename(file);
   if (chan >= 0)
-    err = save_channel_edits(sp->chans[chan], fname, edpos, S_save_sound_as, 7);
+    err = save_channel_edits(sp->chans[chan], fname, to_c_edit_position(sp->chans[chan], edpos, S_save_sound_as, 7));
   else 
     {
       char *outcom;
       outcom = output_comment(hdr);
-      err = save_edits_without_display(sp, fname, ht, df, sr, outcom, edpos, S_save_sound_as, 7);
+      err = save_edits_without_display(sp, fname, ht, df, sr, outcom, to_c_edit_position(sp->chans[0], edpos, S_save_sound_as, 7));
       if (outcom) FREE(outcom);
     }
   if (err != MUS_NO_ERROR)
@@ -3397,15 +3397,10 @@ Omitted arguments take their value from the sound being saved.\n\
       XEN errstr;
       errstr = C_TO_XEN_STRING(fname);
       if (fname) {FREE(fname); fname = NULL;}
-      if (ss->catch_message)
-	XEN_ERROR(CANNOT_SAVE,
-		  XEN_LIST_2(C_TO_XEN_STRING(S_save_sound_as),
-			     C_TO_XEN_STRING(ss->catch_message)));
-      else
-	XEN_ERROR(CANNOT_SAVE,
-		  XEN_LIST_3(C_TO_XEN_STRING(S_save_sound_as),
-			     errstr,
-			     C_TO_XEN_STRING(strerror(errno))));
+      XEN_ERROR(CANNOT_SAVE,
+		XEN_LIST_3(C_TO_XEN_STRING(S_save_sound_as),
+			   errstr,
+			   C_TO_XEN_STRING(strerror(errno))));
     }
   if (fname) FREE(fname);
   return(args[orig_arg[0] - 1]);

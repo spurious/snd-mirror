@@ -429,11 +429,13 @@ void update_graph(chan_info *cp)
   sp = cp->sound;
   if (cp->squelch_update)
     {
+#if (!USE_NO_GUI)
       if (sp)
 	{
 	  set_minibuffer_string(sp, "(update squelched)", false); /* this has tripped me one too many times... */
 	  sp->minibuffer_on = MINI_REPORT;
 	}
+#endif
       return;
     }
   updating = true;
@@ -4996,7 +4998,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
       else
 	{
 	  if (newlen > curlen)
-	    extend_with_zeros(cp, curlen, newlen - curlen, "(set-frames)", cp->edit_ctr);
+	    extend_with_zeros(cp, curlen, newlen - curlen, cp->edit_ctr);
 	}
       update_graph(cp);
       break;

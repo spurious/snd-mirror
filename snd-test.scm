@@ -3763,7 +3763,7 @@ EDITS: 2
    (at 0, cp->sounds[0][0:0, 0.000]) [file: " cwd "test.snd[0]]
    (at 1, end_mark)
 
- (silence 1 9) ; (insert-extend) [1:3]:
+ (silence 1 9) ; pad-channel [1:3]:
    (at 0, cp->sounds[0][0:0, 0.000]) [file: " cwd "test.snd[0]]
    (at 1, cp->sounds[-1][0:8, 0.000])
    (at 10, end_mark)
@@ -3784,7 +3784,7 @@ EDITS: 2
    (at 0, cp->sounds[0][0:0, 0.000]) [file: " cwd "test.snd[0]]
    (at 1, end_mark)
 
- (silence 1 9) ; (insert-extend) [1:3]:
+ (silence 1 9) ; pad-channel [1:3]:
    (at 0, cp->sounds[0][0:0, 0.000]) [file: " cwd "test.snd[0]]
    (at 1, cp->sounds[-1][0:8, 0.000])
    (at 10, end_mark)
@@ -4016,7 +4016,7 @@ EDITS: 5
 	    (snd-display ";new 21: ~A" (display-edits ind 0 18)))
 	(set! (samples 30 10) (make-vct 10))
 	(if (not (string-=? (display-edits ind 0 19) "
- (silence 20 11) ; (change-extend) [19:4]:
+ (silence 20 11) ; pad-channel [19:4]:
    (at 0, cp->sounds[12][0:11, 1.000]) [buf: 12] 
    (at 12, cp->sounds[9][2:9, 1.000]) [buf: 10] 
    (at 20, cp->sounds[-1][0:10, 0.000])
@@ -4326,7 +4326,7 @@ EDITS: 5
 	(undo)
 	(pad-channel 4 1)
 	(if (not (string-=? (display-edits ind 0 3) "
- (silence 4 1) ; pad-channel 4 1 [3:6]:
+ (silence 4 1) ; pad-channel [3:6]:
    (at 0, cp->sounds[1][0:1, 1.000]) [buf: 10] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.280]) [buf: 10] 
    (at 4, cp->sounds[-1][0:0, 0.000])
@@ -4484,7 +4484,7 @@ EDITS: 5
 	  (undo)
 	  (pad-channel 4 2)
 	  (if (not (string-=? (display-edits ind 0 3) "
- (silence 4 2) ; pad-channel 4 2 [3:4]:
+ (silence 4 2) ; pad-channel [3:4]:
    (at 0, cp->sounds[1][0:3, 1.000, [4]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[-1][0:1, 0.000])
    (at 6, cp->sounds[1][4:9, 1.000, [4]1.540 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
@@ -30352,7 +30352,7 @@ EDITS: 5
    (at 101, cp->sounds[0][101:50827, 2.000]) [file: " cwd "oboe.snd[0]]
    (at 50828, end_mark)
 
- (silence 100 20) ; pad-channel 100 20 [5:9]:
+ (silence 100 20) ; pad-channel [5:9]:
    (at 0, cp->sounds[0][0:0, 2.000]) [file: " cwd "oboe.snd[0]]
    (at 1, cp->sounds[1][0:0, 2.000]) [buf: 1] 
    (at 2, cp->sounds[0][2:9, 2.000]) [file: " cwd "oboe.snd[0]]
@@ -40693,8 +40693,6 @@ EDITS: 2
 			(snd-display ";C-x C-i oboe: ~A ~A" (* 2 fr) (frames)))
 		    (if (fneq (sample 4000) (sample (+ (srate) 4000)))
 			(snd-display ";inserted file: ~A ~A" (sample 4000) (sample (+ (srate) 4000))))
-		    (if (not (equal? (edit-fragment 1) (list "C-x C-i" "insert" (inexact->exact (srate)) fr)))
-			(snd-display ";C-x C-i edit: ~A" (edit-fragment 1)))
 		    (let ((edit-pos (edit-position)))
 		      (key-event cwid (char->integer #\x) 4) (force-event)
 		      (key-event cwid (char->integer #\i) 4) (force-event)
@@ -40713,9 +40711,7 @@ EDITS: 2
 		    (if (not (= (frames) (* 2 fr)))
 			(snd-display ";C-x C-q oboe: ~A ~A" (* 2 fr) (frames)))
 		    (if (fneq (* 2 (sample 4000)) (sample (+ (srate) 4000)))
-			(snd-display ";mixed file: ~A ~A" (* 2 (sample 4000)) (sample (+ (srate) 4000))))
-		    (if (not (equal? (edit-fragment 2) (list "C-x C-q" "set" (inexact->exact (srate)) fr)))
-			(snd-display ";C-x C-q edit: ~A" (edit-fragment 2))))
+			(snd-display ";mixed file: ~A ~A" (* 2 (sample 4000)) (sample (+ (srate) 4000)))))
 		  (set! (cursor) 0)
 		  (key-event cwid (char->integer #\x) 4) (force-event)
 		  (key-event cwid (char->integer #\j) 4) (force-event)

@@ -1122,7 +1122,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
   if (!(editable_p(cp))) return(NULL);
   len = CURRENT_SAMPLES(cp);
   if ((beg >= len) &&
-      (!(extend_with_zeros(cp, len, beg - len + 1, "(mix-extend)", cp->edit_ctr))))
+      (!(extend_with_zeros(cp, len, beg - len + 1, cp->edit_ctr))))
     return(NULL);
   if (beg < 0) beg = 0;
   sp = cp->sound;
