@@ -1660,7 +1660,11 @@ char *mus_expand_filename(char *utok)
     }
   else strcpy(file_name_buf, tok);
 #endif
+#if DEBUG_MEMORY
  return(copy_string(file_name_buf));
+#else
+ return(strdup(file_name_buf));
+#endif
 }
 
 

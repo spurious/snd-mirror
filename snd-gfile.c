@@ -194,6 +194,16 @@ typedef struct {
   snd_info *file_play_sp;
 } file_dialog_info;
 
+static void file_dialog_stop_playing(file_dialog_info *fd)
+{
+  if ((fd->file_play_sp) && 
+      (fd->file_play_sp->playing)) 
+    {
+      stop_playing_sound(fd->file_play_sp);
+      fd->file_play_sp = NULL;
+    }
+}
+
 void alert_new_file(void) {}
 
 #if HAVE_GTKEXTRA
@@ -270,14 +280,7 @@ static void play_selected_callback(GtkWidget *w, gpointer data)
 		   C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 
 		   "selected file play", 0);
     }
-  else
-    {
-      if ((fd->file_play_sp) && (fd->file_play_sp->playing)) 
-	{
-	  stop_playing_sound(fd->file_play_sp);
-	  fd->file_play_sp = NULL;
-	}
-    }
+  else file_dialog_stop_playing(fd);
 }
 
 static file_dialog_info *make_file_dialog(snd_state *ss, int read_only, char *title, int which_dialog, 
@@ -352,6 +355,7 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
   snd_state *ss = (snd_state *)data;
   last_filename = snd_gtk_get_filename(open_dialog->dialog);
   gtk_widget_hide(open_dialog->dialog);
+  file_dialog_stop_playing(open_dialog);
   if (!(is_directory(last_filename)))
     {
       sp = snd_open_file(last_filename, ss, open_dialog->file_dialog_read_only);
@@ -366,11 +370,13 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
 
 static void file_open_dialog_dismiss(GtkWidget *w, gpointer context)
 {
+  file_dialog_stop_playing(open_dialog);
   gtk_widget_hide(open_dialog->dialog);
 }
 
 static void file_open_dialog_delete(GtkWidget *w, GdkEvent *event, gpointer context)
 {
+  file_dialog_stop_playing(open_dialog);
   gtk_widget_hide(open_dialog->dialog);
 }
 
@@ -391,11 +397,13 @@ void make_open_file_dialog(snd_state *ss, int read_only, int managed)
 
 static void file_mix_cancel_callback(GtkWidget *w, gpointer context)
 {
+  file_dialog_stop_playing(mix_dialog);
   gtk_widget_hide(mix_dialog->dialog);
 }
 
 static void file_mix_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
+  file_dialog_stop_playing(mix_dialog);
   gtk_widget_hide(mix_dialog->dialog);
 }
 
@@ -403,6 +411,7 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
 {
   snd_state *ss = (snd_state *)context;
   gtk_widget_hide(mix_dialog->dialog);
+  file_dialog_stop_playing(mix_dialog);
   mix_complete_file(any_selected_sound(ss),
 		    snd_gtk_get_filename(mix_dialog->dialog),
 		    "File: mix", with_mix_tags(ss));

@@ -30,7 +30,7 @@ dnl Process this file with autoconf 2.50 to produce a configure script.
 #
 #--------------------------------------------------------------------------------
 
-AC_INIT(snd, 5.8, bil@ccrma.stanford.edu)
+AC_INIT(snd, 5.9, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-5.tar.gz)
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
 AC_CONFIG_HEADER(config.h)
@@ -478,7 +478,7 @@ else
    	     AC_DEFINE(HAVE_XPM)
    	    ], , $TEST_LIBS)
 
-   	  AC_CHECK_LIB(Xpm, XpmGetErrorString, , [AC_DEFINE(NEED_XPM_GET_ERROR_STRING)], , $TEST_LIBS)
+   	  AC_CHECK_LIB(Xpm, XpmGetErrorString,           [AC_DEFINE(HAVE_XPM_GET_ERROR_STRING)], ,             $TEST_LIBS)
    	  AC_CHECK_LIB(Xpm, XpmCreateXpmImageFromPixmap, [AC_DEFINE(HAVE_XPM_CREATE_XPM_IMAGE_FROM_PIXMAP)], , $TEST_LIBS)
 	  if test "$with_static_xm" = yes ; then
   	    GX_FILES="XM_O_FILES"

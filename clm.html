@@ -1989,6 +1989,7 @@ readin and <a href="#env">env</a> (see also the fullmix instrument in fullmix.in
  <a name="locsig-set!"><em class=def>locsig-set!</em></a> <i>loc chan val</i>
  <a name="locsig-reverb-ref"><em class=def>locsig-reverb-ref</em></a> <i>loc chan</i>
  <a name="locsig-reverb-set!"><em class=def>locsig-reverb-set!</em></a> <i>loc chan val</i>
+ <a name="move-locsig"><em class=def>move-locsig</em></a> loc degree distance
 </pre>
 <p><b>Locsig</b> normally takes the place of <a href="#outa">outa</a> and <a href="#outb">outb</a> in an
 instrument.  It tries to place a signal between outa and outb in
@@ -2060,9 +2061,26 @@ loop to pan between speakers:</p>
 <p>See also
 <a name="make-roomsig"><em class=def>make-roomsig</em></a> in <a href="roomsig.cl">roomsig.cl</a>.
 For a moving sound
-source, see Fernando Lopez Lezcano's <a name="dlocsig"><em class=def>dlocsig</em></a>, documented in
+source, see either move-locsig, or Fernando Lopez Lezcano's <a name="dlocsig"><em class=def>dlocsig</em></a>, documented in
 <a href="dlocsig/index.html">dlocsig/index.html</a>.
+<i>mus-channels</i> of a locsig generator returns the size of the direct-signal array (the channels argument
+to make-locsig, or the number of channels in the output sound).
 </p>
+<p>Locsig can be used for moving sound sources via move-locsig:
+</p>
+<pre><small>
+(definstrument simp (start dur freq amp &amp;key (degree 0) (dist 1.0) (reverb 0))
+  (let* ((beg (floor (* start *clm-srate*)))
+         (end (+ beg (floor (* dur *clm-srate*))) )
+         (car (make-oscil :frequency freq))
+         (loc (make-locsig :degree degree :distance dist :channels 2))
+	 (pan-env (make-env '(0 0 1 90) :duration dur)))
+    (run
+     (loop for i from beg to end do
+       (let ((ut (* amp (oscil car))))
+	 (move-locsig loc (env pan-env) dist)
+         (locsig loc i ut))))))
+</small></pre>
 <br>
 
 

@@ -249,6 +249,11 @@
   }
 #endif
 
+#define XEN_DOCUMENTATION_SYMBOL        scm_string_to_symbol(C_TO_XEN_STRING("documentation"))
+#define XEN_OBJECT_HELP(Name)           scm_object_property(Name, XEN_DOCUMENTATION_SYMBOL)
+#define XEN_PROCEDURE_HELP(Name)        scm_procedure_property(Name, XEN_DOCUMENTATION_SYMBOL)
+#define XEN_PROCEDURE_SOURCE_HELP(Name) scm_procedure_documentation(Name)
+
 #if HAVE_SCM_C_DEFINE
   #define XEN_DEFINE_VARIABLE(Name, Var, Value) Var = scm_permanent_object(scm_c_define(Name, Value))
 #else
@@ -349,7 +354,6 @@
 #define XEN_KEYWORD_EQ_P(k1, k2)      XEN_EQ_P(k1, k2)
 #define XEN_MAKE_KEYWORD(Arg)         scm_c_make_keyword(Arg)
 #define XEN_YES_WE_HAVE(Feature)      scm_add_feature(Feature)
-#define XEN_DOCUMENTATION_SYMBOL      scm_string_to_symbol(C_TO_XEN_STRING("documentation"))
 #define XEN_PROTECT_FROM_GC(Obj)      scm_permanent_object(Obj)
 #define XEN_LOAD_FILE(File)           scm_primitive_load(C_TO_XEN_STRING(File))
 
@@ -399,6 +403,12 @@
 #endif
 
 #define XEN_APPLY_ARG_LIST_END            scm_listofnull
+
+#define XEN_PUTS(Str, Port)      scm_puts(Str, Port)
+#define XEN_DISPLAY(Val, Port)   scm_display(Val, Port)
+#define XEN_FLUSH_PORT(Port)     scm_force_output(Port)
+#define XEN_CLOSE_PORT(Port)     scm_close_port(Port)
+#define XEN_PORT_TO_STRING(Port) scm_strport_to_string(Port)
 
 XEN xen_guile_create_hook(const char *name, int args, const char *help, XEN local_doc);
 void xen_guile_define_procedure_with_setter(char *get_name, XEN (*get_func)(), char *get_help,

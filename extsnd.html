@@ -6114,17 +6114,6 @@ the direction argument between the channel and edit-position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- transform-samples-size -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="transformgraphsize">transform-samples-size</a></em> (<i>snd chn</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->returns either 0 if no transform, transform-graph-type if graph-transform-once,
-<!-- -->or (list full-size bins slices) if sonogram or spectrogram.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
 <!-- transform-graph-type -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="lfftstyle">transform-graph-type</a></em> (<em class=narg>snd chn</em>)</code></span>
@@ -6181,6 +6170,17 @@ the direction argument between the channel and edit-position.
 <!-- -->return vct struct with the transform data currently in <i>snd</i>'s channel <i>chn</i>.
 <!-- -->If v (a vct) is provided, it is filled, rather than creating a new vct.
 <!-- -->Use <a href="#sndupdatefft">update-transform</a> to make sure the transform has run to completion.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- transform-samples-size -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="transformgraphsize">transform-samples-size</a></em> (<i>snd chn</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->returns either 0 if no transform, transform-graph-type if graph-transform-once,
+<!-- -->or (list full-size bins slices) if sonogram or spectrogram.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

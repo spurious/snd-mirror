@@ -5141,7 +5141,8 @@ typedef struct {
   mus_frame *outf, *revf;
   Float *outn;
   Float *revn;
-  int chans, rev_chans;
+  int chans, rev_chans, type;
+  Float reverb;
 } locs;
 
 static char *inspect_locs(void *ptr)
@@ -5383,6 +5384,8 @@ mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, 
       gen->core = &LOCSIG_CLASS;
       gen->outf = mus_make_empty_frame(chans);
       gen->chans = chans;
+      gen->type = type;
+      gen->reverb = reverb;
       if (distance > 1.0)
 	dist = 1.0 / distance;
       else dist = 1.0;
@@ -5433,6 +5436,17 @@ int mus_channels(mus_any *ptr)
   return(0);
 }
 
+void mus_move_locsig(mus_any *ptr, Float degree, Float distance)
+{
+  locs *gen = (locs *)ptr;
+  Float dist;
+  if (distance > 1.0)
+    dist = 1.0 / distance;
+  else dist = 1.0;
+  if (gen->rev_chans > 0)
+    fill_locsig(gen->revn, gen->rev_chans, degree, (gen->reverb * sqrt(dist)), gen->type);
+  fill_locsig(gen->outn, gen->chans, degree, dist, gen->type);
+}
 
 
 /* ---------------- src ---------------- */

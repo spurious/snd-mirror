@@ -82,7 +82,7 @@ void add_to_error_history(snd_state *ss, char *msg, int popup)
       if (XmGetVisibility(snd_error_history) != XmVISIBILITY_FULLY_OBSCURED)
 	{
 	  pos = XmTextGetLastPosition(snd_error_history);
-	  XmTextShowPosition(snd_error_history, pos-1); /* if pos here, stupid thing segfaults! */
+	  XmTextShowPosition(snd_error_history, pos - 1); /* if pos here, stupid thing segfaults! */
 	}
     }
 }

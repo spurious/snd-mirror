@@ -381,12 +381,12 @@ void set_verbose_cursor(snd_state *ss, int val)
 		   (val) ? STR_Silent_cursor : STR_Verbose_cursor);
 }
 
-void set_view_ctrls_label(char *lab)
+void set_view_ctrls_label(const char *lab)
 {
   set_menu_label(view_ctrls_menu(), lab);
 }
 
-void set_view_listener_label(char *lab)
+void set_view_listener_label(const char *lab)
 {
   set_menu_label(view_listener_menu(), lab);
 }

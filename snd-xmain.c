@@ -274,6 +274,8 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
    * need to see just iconfication events here, but there's no way I can
    * see to distinguish an iconify event from a desk event (WM_STATE atom state
    * of property changed event is identical etc), so I'll do what I can...
+   * This problem may be a side-effect of using non-transient dialogs:
+   * perhaps XSetTransientFor would handle this more cleanly?
    */
   if (ev->type == UnmapNotify) 
     {

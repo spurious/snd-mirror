@@ -51,7 +51,7 @@
 
 (if (string=? (version) "1.4") (load "fix-optargs.scm"))
 
-(define tests 1)
+(define tests 100)
 (define snd-test -1)
 (define keep-going #f)
 (define full-test (< snd-test 0))
@@ -4151,8 +4151,11 @@
 	  (IF (not (vequal v (channel->vct 0 10 index 0)))
 	      (snd-display "src-channel: ~A ~A" v (channel->vct 0 10 index 0)))
 	  (IF (not (vequal (make-vct 10) (channel->vct 0 10 index 1)))
-	      (snd-display ";src-channel leaks: ~A" (channel->vct 0 10 index 1))))
-	(revert-sound index)
+	      (snd-display ";src-channel leaks: ~A" (channel->vct 0 10 index 1)))
+	  (let ((tag (catch #t (lambda () (src s 1.0 (lambda (a b) a))) (lambda args (car args)))))
+	    (IF (not (eq? tag 'mus-error)) 
+		(snd-display "src bad func: ~A" tag))))
+        (revert-sound index)
 	(vct->channel v 0 10 index 1)
 	(vct->channel v 10 10 index 1)
 	(src-channel (make-env :envelope '(1 1 2 2) :end 19) 0 20 index 1)
@@ -6465,7 +6468,13 @@
 	(IF (or (fneq (frame-ref fr0 1) .333) (fneq (frame-ref fr0 2) .167)) (snd-display ";locsig quad output: ~A" fr0))
 	(set! gen (make-locsig 300.0 2.0 .1 :channels 4))
 	(set! fr0 (locsig gen 0 1.0))
-	(IF (or (fneq (frame-ref fr0 3) .333) (fneq (frame-ref fr0 0) .167)) (snd-display ";300 locsig quad output: ~A" fr0)))
+	(IF (or (fneq (frame-ref fr0 3) .333) (fneq (frame-ref fr0 0) .167)) (snd-display ";300 locsig quad output: ~A" fr0))
+	(move-locsig gen1 90.0 1.0)
+	(IF (or (fneq (locsig-ref gen1 0) 0.0) (fneq (locsig-ref gen1 1) 1.0)) (snd-display ";move-locsig 90 1: ~A" gen1))
+	(move-locsig gen1 0.0 1.0)
+	(IF (or (fneq (locsig-ref gen1 0) 1.0) (fneq (locsig-ref gen1 1) 0.0)) (snd-display ";move-locsig 0 1: ~A" gen1))
+	(move-locsig gen1 45.0 1.0)
+	(IF (or (fneq (locsig-ref gen1 0) 0.5) (fneq (locsig-ref gen1 1) 0.5)) (snd-display ";move-locsig 45 1: ~A" gen1)))
 
       (for-each 
        (lambda (chans)
@@ -6740,8 +6749,10 @@
 	(set! (mus-ramp gen) 1000) (IF (not (= (mus-ramp gen) 1000)) (snd-display ";granulate set-ramp: ~A?" (mus-ramp gen)))
 	(set! (mus-length gen) 3000) (IF (not (= (mus-length gen) 3000)) (snd-display ";granulate set-length: ~A?" (mus-length gen)))
 	(set! (mus-increment gen) 3.0)
-	(IF (> (abs (- (mus-increment gen) 3.0)) .01) (snd-display ";granulate set-increment: ~F?" (mus-increment gen))))
-
+	(IF (> (abs (- (mus-increment gen) 3.0)) .01) (snd-display ";granulate set-increment: ~F?" (mus-increment gen)))
+	(let ((tag (catch #t (lambda () (granulate gen (lambda (a b) a))) (lambda args (car args)))))
+	  (IF (not (eq? tag 'mus-error)) 
+	      (snd-display "granulate bad func: ~A" tag))))
       (let ((var (catch #t (lambda () (make-granulate :hop 35.0 :length 35.0)) (lambda args args))))
 	(IF (not (eq? (car var) 'mus-error))
 	    (snd-display ";make-granulate bad sizes: ~A" var)))
@@ -6768,7 +6779,11 @@
 		  (fneq (vct-ref v2 1) 1.0)
 		  (fneq (vct-ref v2 4) 0.25)
 		  (fneq (vct-ref v2 7) 0.143))
-	      (snd-display ";convolve output: ~A?" v2)))
+	      (snd-display ";convolve output: ~A?" v2))
+	  (let ((tag (catch #t (lambda () (convolve gen (lambda (a b) a))) (lambda args (car args)))))
+	    (IF (not (eq? tag 'mus-error)) 
+		(snd-display "convolve bad func: ~A" tag))))
+
 	(convolve-files "oboe.snd" "fyow.snd" .5 "fmv.snd")
 	(IF (fneq (cadr (mus-sound-maxamp "fmv.snd")) .5) 
 	    (snd-display ";convolve-files: ~A /= .5?" (cadr (mus-sound-maxamp "fmv.snd"))))
@@ -7152,7 +7167,11 @@
 	  (free-sample-reader reader)
 	  (IF (or (= incalls 0)
 		  (= outcalls 0))
-	      (snd-display "phase-vocoder incalls: ~A, outcalls: ~A" incalls outcalls)))
+	      (snd-display "phase-vocoder incalls: ~A, outcalls: ~A" incalls outcalls))
+	  (set! (pv-outctr pv) (pv-outctr pv))
+	  (let ((tag (catch #t (lambda () (phase-vocoder pv (lambda (a b) a))) (lambda args (car args)))))
+	    (IF (not (eq? tag 'mus-error)) 
+		(snd-display "phase-vocoder bad func: ~A" tag))))
 
 	(close-sound ind))
 
@@ -8874,17 +8893,28 @@
 		  (fneq sr (srate fd)))
 	      (snd-display ";copyfile(2): ~A ~A ~A ~A?" (frames fd) (chans fd) (srate fd) (maxamp fd)))))
 
-      (update-transform fd)
-      (let ((v0 (transform-samples->vct fd))
-	    (vc (transform-samples fd))
-	    (val (transform-sample 50 0 fd)))
-	(IF (and v0 vc)
-	    (begin
-	      (IF (fneq val (vector-ref vc 50)) (snd-display ";transform-sample: ~A ~A?" val (vector-ref vc 50)))
-	      (do ((i 0 (1+ i))) ((= i 100)) 
-		(IF (fneq (vector-ref vc i) (vct-ref v0 i)) 
-		    (snd-display ";transform-samples[~D]: ~A ~A?" i (vector-ref vc i) (vct-ref v0 i)))))
-	    (snd-display ";fft not ready yet: ~A ~A" v0 vc)))
+      (for-each
+       (lambda (dpy-type fft-type)
+	 (set! (transform-graph-type fd 0) dpy-type)
+	 (set! (transform-type fd 0) fft-type)
+	 (update-transform fd 0)
+	 (let ((v0 (transform-samples->vct fd 0))
+	       (vc (transform-samples fd 0))
+	       (val (transform-sample 50 0 fd 0)))
+	   (IF (and v0 vc)
+	       (begin
+		 (if (vector? (vector-ref vc 0))
+		     (set! vc (vector-ref vc 0)))
+		 (IF (fneq val (vector-ref vc 50)) 
+		     (snd-display ";~A ~A transform-sample: ~A ~A?" dpy-type fft-type val (vector-ref vc 50)))
+		 (do ((i 0 (1+ i))) ((= i 100)) 
+		   (IF (fneq (vector-ref vc i) (vct-ref v0 i)) 
+		       (snd-display ";~A ~A transform-samples[~D]: ~A ~A?" dpy-type fft-type i (vector-ref vc i) (vct-ref v0 i)))))
+	       (snd-display ";fft not ready yet: ~A ~A" v0 vc))))
+       (list graph-transform-once graph-transform-as-sonogram graph-transform-as-spectrogram
+	     graph-transform-once graph-transform-as-sonogram graph-transform-as-spectrogram)
+       (list fourier-transform fourier-transform fourier-transform 
+	     autocorrelation autocorrelation autocorrelation))
 
       (close-sound fd)
 
@@ -9066,7 +9096,17 @@
 	    (if (file-exists? "/home/bil/test/cmt/plugins")
 		(begin
 		  (set! (ladspa-dir) "/home/bil/test/cmt/plugins")
-		  (apply-ladspa (make-sample-reader 0) (list "cmt" "delay_5s" .3 .5) 1000 "delayed"))
+		  (apply-ladspa (make-sample-reader 0) (list "cmt" "delay_5s" .3 .5) 1000 "delayed")
+		  (let ((vals (list-ladspa)))
+		    (IF (or (not (list? vals))
+			    (null? vals))
+			(snd-display "ladspa list: ~A" vals))
+		    (let ((descr (analyse-ladspa "cmt" "delay_5s")))
+		      (IF (or (not (list? descr))
+			      (null? descr)
+			      (not (string? (car descr)))
+			      (not (string=? (car descr) "Echo Delay Line (Maximum Delay 5s)")))
+			  (snd-display "analyse-ladspa: ~A" descr)))))
 		(snd-display ";ladspa loaded but can't find plugin dir")))
 
 	(revert-sound fd)
@@ -13857,8 +13897,11 @@ EDITS: 4
 		(let* ((colord (list-ref (dialog-widgets) 0))
 		       (inv (find-child colord "invert"))
 		       (cut (find-child colord "cutoff"))
-		       (scl (find-child colord "ccdscl")))
+		       (scl (find-child colord "ccdscl"))
+		       (ind (open-sound "pistol.snd")))
 		  (|XtManageChild colord)
+		  (set! (graph-transform? ind 0) #t)
+		  (set! (transform-graph-type ind 0) graph-transform-as-sonogram)
 		  (if (and inv (|Widget? inv))
 		      (begin
 			(move-scale cut 32)
@@ -13879,7 +13922,9 @@ EDITS: 4
 			((= i 15))
 		      (|XmListSelectPos lst i #t)
 		      (IF (not (= (colormap) (- i 1)))
-			  (snd-display ";color dialog list ~A: ~A" (- i 1) (colormap)))))
+			  (snd-display ";color dialog list ~A: ~A" (- i 1) (colormap)))
+		      (update-transform)))
+		  (close-sound ind)
 		  (click-button (|XmMessageBoxGetChild colord |XmDIALOG_CANCEL_BUTTON)) (force-event))
 
                 ;; ---------------- orientation dialog ----------------
@@ -15113,11 +15158,276 @@ EDITS: 4
 		      (IF (not (|XFontProp? (|properties fnt))) (snd-display ";properties ~A" (|properties fnt)))
 		      (|XFreeFontSet dpy fs))))
 
+	      (let ((dpy (|XtDisplay (cadr (main-widgets))))
+		    (win (|XtWindow (cadr (main-widgets))))
+		    (eKeyPress (|XEvent |KeyPress))
+		    (eButtonPress (|XEvent |ButtonPress))
+		    (eMotionNotify (|XEvent |MotionNotify))
+		    (eEnterNotify (|XEvent |EnterNotify))
+		    (eFocusIn (|XEvent |FocusIn))
+		    (eKeymapNotify (|XEvent |KeymapNotify))
+		    (eExpose (|XEvent |Expose))
+		    (eGraphicsExpose (|XEvent |GraphicsExpose))
+		    (eNoExpose (|XEvent |NoExpose))
+		    (eVisibilityNotify (|XEvent |VisibilityNotify))
+		    (eCreateNotify (|XEvent |CreateNotify))
+		    (eDestroyNotify (|XEvent |DestroyNotify))
+		    (eUnmapNotify (|XEvent |UnmapNotify))
+		    (eMapNotify (|XEvent |MapNotify))
+		    (eMapRequest (|XEvent |MapRequest))
+		    (eReparentNotify (|XEvent |ReparentNotify))
+		    (eConfigureNotify (|XEvent |ConfigureNotify))
+		    (eConfigureRequest (|XEvent |ConfigureRequest))
+		    (eGravityNotify (|XEvent |GravityNotify))
+		    (eResizeRequest (|XEvent |ResizeRequest))
+		    (eCirculateNotify (|XEvent |CirculateNotify))
+		    (eCirculateRequest (|XEvent |CirculateRequest))
+		    (ePropertyNotify (|XEvent |PropertyNotify))
+		    (eSelectionClear (|XEvent |SelectionClear))
+		    (eSelectionRequest (|XEvent |SelectionRequest))
+		    (eSelectionNotify (|XEvent |SelectionNotify))
+		    (eColormapNotify (|XEvent |ColormapNotify))
+		    (eClientMessage (|XEvent |ClientMessage))
+		    (eMappingNotify (|XEvent |MappingNotify)))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eKeyPress) val)
+		   (if (not (equal? (func eKeyPress) val)) (snd-display ";eKeyPress ~A ~A" name (func eKeyPress))))
+		 (list |type |serial |send_event |display |window |root |subwindow |time |x |y |x_root |y_root |state |keycode |same_screen)
+		 (list |KeyPress 0 #f dpy win win win (list 'Time 0) 0 0 0 0 0 (list 'KeyCode 0) #f)
+		 (list 'type 'serial 'send_event 'display 'window 'root 'subwindow 'time 'x 'y 'x_root 'y_root 'state 'keycode 'same_screen))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eButtonPress) val)
+		   (if (not (equal? (func eButtonPress) val)) (snd-display ";eButtonPress ~A ~A" name (func eButtonPress))))
+		 (list |type |serial |send_event |display |window |root |subwindow |time |x |y |x_root |y_root |state |button |same_screen)
+		 (list |ButtonPress 0 #f dpy win win win (list 'Time 0) 0 0 0 0 0 0 #f)
+		 (list 'type 'serial 'send_event 'display 'window 'root 'subwindow 'time 'x 'y 'x_root 'y_root 'state 'button 'same_screen))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eMotionNotify) val)
+		   (if (not (equal? (func eMotionNotify) val)) (snd-display ";eMotionNotify ~A ~A" name (func eMotionNotify))))
+		 (list |type |serial |send_event |display |window |root |subwindow |time |x |y |x_root |y_root |state |is_hint |same_screen)
+		 (list |MotionNotify 0 #f dpy win win win (list 'Time 0) 0 0 0 0 0 0 #f)
+		 (list 'type 'serial 'send_event 'display 'window 'root 'subwindow 'time 'x 'y 'x_root 'y_root 'state 'is_hint 'same_screen))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eEnterNotify) val)
+		   (if (not (equal? (func eEnterNotify) val)) (snd-display ";eEnterNotify ~A ~A" name (func eEnterNotify))))
+		 (list |type |serial |send_event |display |window |root |subwindow |time |x |y |x_root |y_root |mode |detail |same_screen |focus |state)
+		 (list |EnterNotify 0 #f dpy win win win (list 'Time 0) 0 0 0 0 0 0 #f #f 0)
+		 (list 'type 'serial 'send_event 'display 'window 'root 'subwindow 'time 'x 'y 'x_root 'y_root 'mode 'detail 'same_screen 'focus 'state))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eFocusIn) val)
+		   (if (not (equal? (func eFocusIn) val)) (snd-display ";eFocusIn ~A ~A" name (func eFocusIn))))
+		 (list |type |serial |send_event |display |window |mode |detail)
+		 (list |FocusIn 0 #f dpy win 0 0)
+		 (list 'type 'serial 'send_event 'display 'window 'mode 'detail))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eKeymapNotify) val)
+		   (if (not (equal? (func eKeymapNotify) val)) (snd-display ";eKeymapNotify ~A ~A" name (func eKeymapNotify))))
+		 (list |type |serial |send_event |display |window |key_vector)
+		 (list |KeymapNotify 0 #f dpy win "hiho")
+		 (list 'type 'serial 'send_event 'display 'window 'key-vector))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eExpose) val)
+		   (if (not (equal? (func eExpose) val)) (snd-display ";eExpose ~A ~A" name (func eExpose))))
+		 (list |type |serial |send_event |display |window |x |y |width |height |count)
+		 (list |Expose 0 #f dpy win 0 0 0 0 0)
+		 (list 'type 'serial 'send_event 'display 'window 'x 'y 'width 'height 'count))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eGraphicsExpose) val)
+		   (if (not (equal? (func eGraphicsExpose) val)) (snd-display ";eGraphicsExpose ~A ~A" name (func eGraphicsExpose))))
+		 (list |type |serial |send_event |display |drawable |x |y |width |height |count |major_code |minor_code)
+		 (list |GraphicsExpose 0 #f dpy win 0 0 0 0 0 0 0)
+		 (list 'type 'serial 'send_event 'display 'drawable 'x 'y 'width 'height 'count 'major_code 'minor_code))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eNoExpose) val)
+		   (if (not (equal? (func eNoExpose) val)) (snd-display ";eNoExpose ~A ~A" name (func eNoExpose))))
+		 (list |type |serial |send_event |display |drawable |major_code |minor_code)
+		 (list |NoExpose 0 #f dpy win 0 0)
+		 (list 'type 'serial 'send_event 'display 'drawable 'major_code 'minor_code))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eVisibilityNotify) val)
+		   (if (not (equal? (func eVisibilityNotify) val)) (snd-display ";eVisibilityNotify ~A ~A" name (func eVisibilityNotify))))
+		 (list |type |serial |send_event |display |window |state)
+		 (list |VisibilityNotify 0 #f dpy win 0)
+		 (list 'type 'serial 'send_event 'display 'window 'state))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eCreateNotify) val)
+		   (if (not (equal? (func eCreateNotify) val)) (snd-display ";eCreateNotify ~A ~A" name (func eCreateNotify))))
+		 (list |type |serial |send_event |display |parent |window |x |y |width |height |border_width |override_redirect)
+		 (list |CreateNotify 0 #f dpy win win 0 0 0 0 0 #f)
+		 (list 'type 'serial 'send_event 'display 'parent 'window 'x 'y 'width 'height 'border_width 'override_redirect))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eDestroyNotify) val)
+		   (if (not (equal? (func eDestroyNotify) val)) (snd-display ";eDestroyNotify ~A ~A" name (func eDestroyNotify))))
+		 (list |type |serial |send_event |display |window)
+		 (list |DestroyNotify 0 #f dpy win)
+		 (list 'type 'serial 'send_event 'display 'window))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eUnmapNotify) val)
+		   (if (not (equal? (func eUnmapNotify) val)) (snd-display ";eUnmapNotify ~A ~A" name (func eUnmapNotify))))
+		 (list |type |serial |send_event |event |display |window |from_configure)
+		 (list |UnmapNotify 0 #f win dpy win #f)
+		 (list 'type 'serial 'send_event 'event 'display 'window 'from_configure))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eMapNotify) val)
+		   (if (not (equal? (func eMapNotify) val)) (snd-display ";eMapNotify ~A ~A" name (func eMapNotify))))
+		 (list |type |serial |send_event |event |display |window |override_redirect)
+		 (list |MapNotify 0 #f win dpy win #f)
+		 (list 'type 'serial 'send_event 'event 'display 'window 'override_redirect))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eMapRequest) val)
+		   (if (not (equal? (func eMapRequest) val)) (snd-display ";eMapRequest ~A ~A" name (func eMapRequest))))
+		 (list |type |serial |send_event |display |window)
+		 (list |MapRequest 0 #f dpy win)
+		 (list 'type 'serial 'send_event 'display 'window))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eReparentNotify) val)
+		   (if (not (equal? (func eReparentNotify) val)) (snd-display ";eReparentNotify ~A ~A" name (func eReparentNotify))))
+		 (list |type |serial |send_event |event |display |window |parent |x |y |override_redirect)
+		 (list |ReparentNotify 0 #f win dpy win win 0 0 #f)
+		 (list 'type 'serial 'send_event 'event 'display 'window 'parent 'x 'y 'override_redirect))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eConfigureNotify) val)
+		   (if (not (equal? (func eConfigureNotify) val)) (snd-display ";eConfigureNotify ~A ~A" name (func eConfigureNotify))))
+		 (list |type |serial |send_event |display |window |x |y |width |height |border_width |above |override_redirect)
+		 (list |ConfigureNotify 0 #f dpy win 0 0 0 0 0 win #f)
+		 (list 'type 'serial 'send_event 'display 'window 'x 'y 'width 'height 'border_width 'above 'override_redirect))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eGravityNotify) val)
+		   (if (not (equal? (func eGravityNotify) val)) (snd-display ";eGravityNotify ~A ~A" name (func eGravityNotify))))
+		 (list |type |serial |send_event |event |display |window |x |y)
+		 (list |GravityNotify 0 #f win dpy win 0 0)
+		 (list 'type 'serial 'send_event 'event 'display 'window 'x 'y))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eResizeRequest) val)
+		   (if (not (equal? (func eResizeRequest) val)) (snd-display ";eResizeRequest ~A ~A" name (func eResizeRequest))))
+		 (list |type |serial |send_event |display |window |width |height)
+		 (list |ResizeRequest 0 #f dpy win 0 0)
+		 (list 'type 'serial 'send_event 'display 'window 'width 'height))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eConfigureRequest) val)
+		   (if (not (equal? (func eConfigureRequest) val)) (snd-display ";eConfigureRequest ~A ~A" name (func eConfigureRequest))))
+		 (list |type |serial |send_event |display |parent |window |x |y |width |height |border_width |above |detail |value_mask)
+		 (list |ConfigureRequest 0 #f dpy win win 0 0 0 0 0 win 0 0)
+		 (list 'type 'serial 'send_event 'display 'parent 'window 'x 'y 'width 'height 'border_width 'above 'detail 'value_mask))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eCirculateNotify) val)
+		   (if (not (equal? (func eCirculateNotify) val)) (snd-display ";eCirculateNotify ~A ~A" name (func eCirculateNotify))))
+		 (list |type |serial |send_event |display |window |event |place)
+		 (list |CirculateNotify 0 #f dpy win win 0)
+		 (list 'type 'serial 'send_event 'display 'window 'event 'place))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eCirculateRequest) val)
+		   (if (not (equal? (func eCirculateRequest) val)) (snd-display ";eCirculateRequest ~A ~A" name (func eCirculateRequest))))
+		 (list |type |serial |send_event |display |window |parent |place)
+		 (list |CirculateRequest 0 #f dpy win win 0)
+		 (list 'type 'serial 'send_event 'display 'window 'parent 'place))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func ePropertyNotify) val)
+		   (if (not (equal? (func ePropertyNotify) val)) (snd-display ";ePropertyNotify ~A ~A" name (func ePropertyNotify))))
+		 (list |type |serial |send_event |display |window |atom |time |state)
+		 (list |PropertyNotify 0 #f dpy win |XA_STRING (list 'Time 0) 0)
+		 (list 'type 'serial 'send_event 'display 'window 'atom 'time 'state))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eSelectionClear) val)
+		   (if (not (equal? (func eSelectionClear) val)) (snd-display ";eSelectionClear ~A ~A" name (func eSelectionClear))))
+		 (list |type |serial |send_event |display |window |selection |time)
+		 (list |SelectionClear 0 #f dpy win |XA_STRING (list 'Time 0))
+		 (list 'type 'serial 'send_event 'display 'window 'atom 'time))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eSelectionRequest) val)
+		   (if (not (equal? (func eSelectionRequest) val)) (snd-display ";eSelectionRequest ~A ~A" name (func eSelectionRequest))))
+		 (list |type |serial |send_event |display |owner |requestor |selection |target |property |time)
+		 (list |SelectionRequest 0 #f dpy win win |XA_STRING |XA_STRING |XA_STRING (list 'Time 0))
+		 (list 'type 'serial 'send_event 'display 'owner 'requestor 'selection 'target 'property 'time))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eSelectionNotify) val)
+		   (if (not (equal? (func eSelectionNotify) val)) (snd-display ";eSelectionNotify ~A ~A" name (func eSelectionNotify))))
+		 (list |type |serial |send_event |display |requestor |selection |target |property |time)
+		 (list |SelectionNotify 0 #f dpy win |XA_STRING |XA_STRING |XA_STRING (list 'Time 0))
+		 (list 'type 'serial 'send_event 'display 'requestor 'selection 'target 'property 'time))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eColormapNotify) val)
+		   (if (not (equal? (func eColormapNotify) val)) (snd-display ";eColormapNotify ~A ~A" name (func eColormapNotify))))
+		 (list |type |serial |send_event |display |window |colormap |state)
+		 (list |ColormapNotify 0 #f dpy win (|XDefaultColormap dpy (|XScreenNumberOfScreen (|DefaultScreenOfDisplay dpy))) 0)
+		 (list 'type 'serial 'send_event 'display 'window 'colormap 'state))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eMappingNotify) val)
+		   (if (not (equal? (func eMappingNotify) val)) (snd-display ";eMappingNotify ~A ~A" name (func eMappingNotify))))
+		 (list |type |serial |send_event |display |window |request |first_keycode |count)
+		 (list |MappingNotify 0 #f dpy win 0 0 0)
+		 (list 'type 'serial 'send_event 'display 'window 'request 'first_keycode 'count))
+		
+		(for-each
+		 (lambda (func val name)
+		   (set! (func eClientMessage) val)
+		   (if (not (equal? (func eClientMessage) val)) (snd-display ";eClientMessage ~A ~A" name (func eClientMessage))))
+		 (list |type |serial |send_event |display |window |message_type |format |data)
+		 (list |ClientMessage 0 #f dpy win |XA_STRING 8 "gogo")
+		 (list 'type 'serial 'send_event 'display 'window 'message_type 'format 'data))
+		)
+	      
 	      (|XBell dpy 10)
 	      (let ((cmd (|XGetCommand dpy win)))
 		(IF (or (not (> (length cmd) 0))
 			(not (string=? (car cmd) "./snd")))
-		  (snd-display ";XGetCommand: ~A" cmd)))
+		    (snd-display ";XGetCommand: ~A" cmd)))
 	      (|XSetCommand dpy win (list "hiho" "away") 2)
 	      (IF (not (equal? (|XGetCommand dpy win) (list "hiho" "away"))) 
 		  (snd-display ";XSetCommand: ~A" (|XGetCommand dpy win)))
@@ -15128,7 +15438,7 @@ EDITS: 4
 		  (snd-display ";XListDepths: ~A" (|XListDepths dpy 0)))
 	      (IF (not (equal? (|XListPixmapFormats dpy) '((1 1 32) (4 8 32) (8 8 32) (15 16 32) (16 16 32) (24 32 32) (32 32 32))))
 		  (snd-display ";XListPixmapFormats: ~A" (|XListPixmapFormats dpy)))
-
+	      
 	      (|XWarpPointer dpy (list 'Window |None) (list 'Window |None) 0 0 10 10 100 100)
 	      (let ((cs (|XQueryBestCursor dpy win 10 10)))
 		(IF (not (equal? cs (list 1 32 32))) (snd-display ";XQueryBestCursor: ~A" cs)))
@@ -15137,6 +15447,7 @@ EDITS: 4
 	      (|XRaiseWindow dpy win)
 	      (|XRotateBuffers dpy 1)
 	      (|XSetWindowBorderWidth dpy win 10)
+	      (|XSetWindowBackground dpy win (cadr (snd-pixel (basic-color))))
 	      (let ((hints (|XGetWMHints dpy win)))
 		(IF (or (not hints) (not (|XWMHints? hints))) (snd-display ";XGetWMHints?"))
 		(IF (not (= (|flags hints) 7)) (snd-display ";flags wmhints: ~A" (|flags hints)))
@@ -15363,11 +15674,23 @@ EDITS: 4
 			  (|XSetDashes dpy gc 0 '(3 4 3 1))
 			  (|XSetClipRectangles dpy gc 0 0 (list (|XRectangle 0 0 10 10) (|XRectangle 10 10 100 100)) 2 |Unsorted)
 			  (let ((err (|XWriteBitmapFile dpy "test.data" pix 16 12 -1 -1)))
-			    (if (not (= |BitmapSuccess err)) (snd-display ";XWriteBitmapFile: ~A" err)))
+			    (IF (not (= |BitmapSuccess err)) (snd-display ";XWriteBitmapFile: ~A" err)))
 			  ;(let ((vals (|XReadBitmapFile dpy (|XtWindow (cadr (main-widgets))) "test.data")))
 			  ;  (if (not (= (car vals |BitmapSuccess))) (snd-display ";XReadBitmapFile: ~A" vals)))
 			  ;(let ((vals (|XReadBitmapFileData "test.data")))
 			  ;  (if (not (= (car vals |BitmapSuccess))) (snd-display ";XReadBitmapFileData: ~A" vals)))
+
+			  (let* ((fid (|XLoadFont dpy "cursor"))
+				 (col (|XColor))
+				 (col1 (|XColor))
+				 (scr (|DefaultScreen dpy))
+				 (cmap (|DefaultColormap dpy scr)))
+			    (|XAllocNamedColor dpy cmap "blue" col col)
+			    (|XAllocNamedColor dpy cmap "green" col1 col1)
+			    (let ((vals (|XCreateGlyphCursor dpy fid |None |XC_dot 0 col col1)))
+			      (IF (not (|Cursor? vals)) (snd-display ";XCreateGlyphCursor: ~A" vals)))
+			    (let ((vals (|XCreatePixmapCursor dpy pix |None col col1 5 5)))
+			      (IF (not (|Cursor? vals)) (snd-display ";XCreatePixmapCursor: ~A" vals))))
 			  )))
 		  (let* ((fid (|XLoadFont dpy "-adobe-times-medium-r-*-*-14-*-*-*-*-*-*-*"))
 			 (fnt (|XLoadQueryFont dpy "-adobe-times-medium-r-*-*-14-*-*-*-*-*-*-*"))
@@ -15788,6 +16111,22 @@ EDITS: 4
 		(|XtCallActionProc listener "b1-release" BEvent #f 0))
 	      (|XtCallActionProc listener "word-upper" (|XEvent) (list "u") 1))
 
+	    (let ((app (car (main-widgets)))
+		  (str #f))
+	      (|XtSetErrorHandler (lambda (msg) (set! str msg)))
+	      (|XtError "hiho")
+	      (IF (or (not (string? str)) (not (string=? str "hiho"))) (snd-display ";XtError: ~A" str))
+	      (|XtAppSetErrorHandler app (lambda (msg) (set! str msg)))
+	      (|XtAppError app "hiho")
+	      (IF (or (not (string? str)) (not (string=? str "hiho"))) (snd-display ";XtAppError: ~A" str))
+	      (|XtSetErrorMsgHandler (lambda (name type class def pars numpars) (set! str name)))
+	      (|XtErrorMsg "name" "type" "class" "defp" (list "a") 1)
+	      (IF (or (not (string? str)) (not (string=? str "name"))) (snd-display ";XtErrorMsg: ~A" str))
+	      (|XtAppSetErrorMsgHandler app (lambda (name type class def pars numpars) (set! str name)))
+	      (|XtAppErrorMsg app "name" "type" "class" "defp" (list "a") 1)
+	      (IF (or (not (string? str)) (not (string=? str "name"))) (snd-display ";XtAppErrorMsg: ~A" str))
+	      )
+
 	    ;; ---------------- XM tests ----------------
 	    (let ((dpy (|XtDisplay (cadr (main-widgets))))
 		  (win (|XtWindow (cadr (main-widgets)))))
@@ -16187,6 +16526,42 @@ EDITS: 4
 		    (IF (or (not (= (car err) |XpmSuccess))
 			    (not (|Pixmap? (cadr err))))
 			(snd-display ";XpmCreatePixmapFromData: ~A" err)))
+
+		  (let* ((shell (cadr (main-widgets)))
+			 (dpy (|XtDisplay shell))
+			 (button (|XmCreatePushButton shell "button" '()))
+			 (status-and-whatnot (|XpmReadFileToPixmap dpy (|XRootWindowOfScreen (|XtScreen shell)) "bullet.xpm" #f))
+			 (status (car status-and-whatnot))
+			 (pixmap (cadr status-and-whatnot))
+			 (pixmap1 (caddr status-and-whatnot)))
+		    (IF (not (string=? (|XpmGetErrorString |XpmSuccess) "XpmSuccess")) 
+			(snd-display ";XpmGetErrorString: ~A" (|XpmGetErrorString |XpmSuccess)))
+		    (IF (not (= status |XpmSuccess))
+			(snd-display "; XpmError ReadFileToPixmap: ~A" (|XpmGetErrorString status)))
+		    (|XtVaSetValues button (list |XmNlabelType |XmPIXMAP
+						  |XmNlabelPixmap pixmap))
+		    (|XpmWriteFileFromPixmap dpy "test.xpm" pixmap pixmap1 #f)
+		    (|XpmCreateDataFromPixmap dpy pixmap pixmap1 #f)
+		    ;(|XpmCreateBufferFromPixmap dpy pixmap pixmap1 #f)
+		    (let* ((status (|XpmReadFileToXpmImage "bullet.xpm"))
+			   (symb (|XpmColorSymbol "Foreground" "green" (snd-pixel (basic-color))))
+			   (attr (|XpmAttributes)))
+		      (if (not (|XpmImage? status))
+			  (snd-display "; XpmError ReadFileToXpmImage: ~A" (|XpmGetErrorString status)))
+		      (set! (|colorsymbols attr) symb)
+		      (set! (|numsymbols attr) 1)
+		      (set! (|valuemask attr) |XpmColorSymbols)
+		      (|XpmCreatePixmapFromXpmImage dpy (|XRootWindowOfScreen (|XtScreen shell)) status attr)
+		      (|XpmCreateXpmImageFromPixmap dpy pixmap pixmap1 attr)
+		      (for-each
+		       (lambda (func val name)
+			 (set! (func attr) val)
+			 (if (not (equal? (func attr) val)) (snd-display ";attr ~A ~A" name (func attr))))
+		       (list |valuemask |depth |width |x_hotspot |y_hotspot |cpp |npixels |ncolors)
+		       (list 0 0 0 0 0 0 0 0)
+		       (list 'valuemask 'depth 'width 'x_hotspot 'y_hotspot 'cpp 'npixels 'ncolors)))
+		    )
+
 		  (|XDestroyImage i1))
 		(|XDestroyImage before)
 		(|XFreePixmap dpy pix)
@@ -17676,7 +18051,7 @@ EDITS: 4
 	       locsig-ref locsig-reverb-ref locsig-reverb-set! locsig-set!  locsig? make-all-pass make-asymmetric-fm
 	       make-buffer make-comb make-convolve make-delay make-env make-fft-window make-file->frame
 	       make-file->sample make-filter make-fir-filter make-formant make-frame make-frame->file make-granulate
-	       make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil make-ppolar
+	       make-iir-filter make-locsig move-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil make-ppolar
 	       make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
 	       make-sine-summation make-square-wave make-src make-sum-of-cosines make-table-lookup make-triangle-wave
 	       make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* mixer-ref mixer-set! mixer?

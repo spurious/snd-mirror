@@ -14,6 +14,7 @@
  */
 
 /* HISTORY: 
+ *   20-Mar:    XpmGetErrorString omitted inadvertently earlier.
  *   4-Mar:     XWindowChanges and XSetWindowAttributes struct creators.
  *   1-Mar:     XmTabListFree, various ->* conversions.
  *   25-Feb:    XmTextBlock fields
@@ -475,7 +476,7 @@ static XEN type_to_event_symbol(int utype)
     case CreateNotify:     type = "XCreateWindowEvent"; break;
     case DestroyNotify:    type = "XDestroyWindowEvent"; break;
     case UnmapNotify:      type = "XUnmapEvent"; break;
-    case MapNotify:        type = "XMappingEvent"; break;
+    case MapNotify:        type = "XMapEvent"; break;
     case MapRequest:       type = "XMapRequestEvent"; break;
     case ReparentNotify:   type = "XReparentEvent"; break;
     case ConfigureNotify:  type = "XConfigureEvent"; break;
@@ -490,7 +491,7 @@ static XEN type_to_event_symbol(int utype)
     case SelectionNotify:  type = "XSelectionEvent"; break;
     case ColormapNotify:   type = "XColormapEvent"; break;
     case ClientMessage:    type = "XClientMessageEvent"; break;
-    case MappingNotify:    type = "XMapEvent"; break;
+    case MappingNotify:    type = "XMappingEvent"; break;
     }
   return(C_STRING_TO_XEN_SYMBOL(type));
 }
@@ -12204,13 +12205,14 @@ static XEN gxm_XCreateGlyphCursor(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN ar
 background_color) is similar to XCreatePixmapCursor except that the source and mask bitmaps are obtained from the specified font glyphs."
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XCreateGlyphCursor", "Display*");
   XEN_ASSERT_TYPE(XEN_Font_P(arg2), arg2, 2, "XCreateGlyphCursor", "Font");
-  XEN_ASSERT_TYPE(XEN_Font_P(arg3), arg3, 3, "XCreateGlyphCursor", "Font");
+  XEN_ASSERT_TYPE(XEN_Font_P(arg3) || XEN_INTEGER_P(arg3) || XEN_FALSE_P(arg3), arg3, 3, "XCreateGlyphCursor", "Font");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg4), arg4, 4, "XCreateGlyphCursor", "unsigned int");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg5), arg5, 5, "XCreateGlyphCursor", "unsigned int");
   XEN_ASSERT_TYPE(XEN_XColor_P(arg6), arg6, 6, "XCreateGlyphCursor", "XColor");
   XEN_ASSERT_TYPE(XEN_XColor_P(arg7), arg7, 7, "XCreateGlyphCursor", "XColor");
   return(C_TO_XEN_Cursor(XCreateGlyphCursor(XEN_TO_C_Display(arg1), XEN_TO_C_Font(arg2), 
-					    XEN_TO_C_Font(arg3), XEN_TO_C_ULONG(arg4),
+					    (XEN_Font_P(arg3)) ? XEN_TO_C_Font(arg3) : None,
+					    XEN_TO_C_ULONG(arg4),
 					    XEN_TO_C_ULONG(arg5), 
 					    XEN_TO_C_XColor(arg6), XEN_TO_C_XColor(arg7))));
 }
@@ -12219,13 +12221,14 @@ static XEN gxm_XCreatePixmapCursor(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN a
 {
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XCreatePixmapCursor", "Display*");
   XEN_ASSERT_TYPE(XEN_Pixmap_P(arg2), arg2, 2, "XCreatePixmapCursor", "Pixmap");
-  XEN_ASSERT_TYPE(XEN_Pixmap_P(arg3), arg3, 3, "XCreatePixmapCursor", "Pixmap");
+  XEN_ASSERT_TYPE(XEN_Pixmap_P(arg3) || XEN_INTEGER_P(arg3) || XEN_FALSE_P(arg3), arg3, 3, "XCreatePixmapCursor", "Pixmap");
   XEN_ASSERT_TYPE(XEN_XColor_P(arg4), arg4, 4, "XCreatePixmapCursor", "XColor");
   XEN_ASSERT_TYPE(XEN_XColor_P(arg5), arg5, 5, "XCreatePixmapCursor", "XColor");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg6), arg6, 6, "XCreatePixmapCursor", "unsigned int");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg7), arg7, 7, "XCreatePixmapCursor", "unsigned int");
   return(C_TO_XEN_Cursor(XCreatePixmapCursor(XEN_TO_C_Display(arg1), 
-					     XEN_TO_C_Pixmap(arg2), XEN_TO_C_Pixmap(arg3), 
+					     XEN_TO_C_Pixmap(arg2), 
+					     (XEN_Pixmap_P(arg3)) ? XEN_TO_C_Pixmap(arg3) : None,
 					     XEN_TO_C_XColor(arg4), 
 					     XEN_TO_C_XColor(arg5), 
 					     XEN_TO_C_ULONG(arg6), XEN_TO_C_ULONG(arg7))));
@@ -13748,7 +13751,7 @@ handler and passes the specified information."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XtAppErrorMsg", "int");
   size = XEN_TO_C_INT(arg7);
   if (size <= 0) return(XEN_FALSE);
-  pars = XEN_TO_C_Strings(arg5, size);
+  pars = XEN_TO_C_Strings(arg6, size);
   csize = (Cardinal)size;
   XtAppErrorMsg(XEN_TO_C_XtAppContext(arg1), XEN_TO_C_STRING(arg2), 
 		XEN_TO_C_STRING(arg3), XEN_TO_C_STRING(arg4), 
@@ -16711,18 +16714,24 @@ XM_TYPE_PTR(XpmAttributes, XpmAttributes *) /* _OBJ?? */
 XM_TYPE(XpmColorSymbol, XpmColorSymbol *)
 
 #if HAVE_XPM_CREATE_XPM_IMAGE_FROM_PIXMAP
-static XEN gxm_XpmCreateXpmImageFromPixmap(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
+static XEN gxm_XpmCreateXpmImageFromPixmap(XEN arg1, XEN arg2, XEN arg3, XEN arg5)
 {
+  XpmImage *image;
+  int val;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpmCreateXpmImageFromPixmap", "Display*");
   XEN_ASSERT_TYPE(XEN_Pixmap_P(arg2), arg2, 2, "XpmCreateXpmImageFromPixmap", "Pixmap");
   XEN_ASSERT_TYPE(XEN_Pixmap_P(arg3), arg3, 3, "XpmCreateXpmImageFromPixmap", "Pixmap");
-  XEN_ASSERT_TYPE(XEN_XpmImage_P(arg4), arg4, 4, "XpmCreateXpmImageFromPixmap", "XpmImage*");
-  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg5), arg5, 5, "XpmCreateXpmImageFromPixmap", "XpmAttributes*");
-  return(C_TO_XEN_INT(XpmCreateXpmImageFromPixmap(XEN_TO_C_Display(arg1), 
-						  XEN_TO_C_Pixmap(arg2), 
-						  XEN_TO_C_Pixmap(arg3), 
-						  XEN_TO_C_XpmImage(arg4), 
-						  XEN_TO_C_XpmAttributes(arg5))));
+  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg5) || XEN_FALSE_P(arg5), arg5, 5, "XpmCreateXpmImageFromPixmap", "XpmAttributes*");
+  image = (XpmImage *)CALLOC(1, sizeof(XpmImage));
+  val = XpmCreateXpmImageFromPixmap(XEN_TO_C_Display(arg1), 
+				    XEN_TO_C_Pixmap(arg2), 
+				    XEN_TO_C_Pixmap(arg3), 
+				    image,
+				    (XEN_FALSE_P(arg5)) ? NULL : XEN_TO_C_XpmAttributes(arg5));
+  if (val == XpmSuccess)
+    return(WRAP_FOR_XEN_OBJ("XpmImage", image));
+  FREE(image);
+  return(C_TO_XEN_INT(val));
 }
 
 static XEN gxm_XpmCreatePixmapFromXpmImage(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
@@ -16734,12 +16743,12 @@ static XEN gxm_XpmCreatePixmapFromXpmImage(XEN arg1, XEN arg2, XEN arg3, XEN arg
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpmCreatePixmapFromXpmImage", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XpmCreatePixmapFromXpmImage", "Drawable");
   XEN_ASSERT_TYPE(XEN_XpmImage_P(arg3), arg3, 3, "XpmCreatePixmapFromXpmImage", "XpmImage*");
-  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg4), arg4, 4, "XpmCreatePixmapFromXpmImage", "XpmAttributes*");
+  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg4) || XEN_FALSE_P(arg4), arg4, 4, "XpmCreatePixmapFromXpmImage", "XpmAttributes*");
   val = XpmCreatePixmapFromXpmImage(XEN_TO_C_Display(arg1), 
 				    XEN_TO_C_Window(arg2), 
 				    XEN_TO_C_XpmImage(arg3), 
 				    &p1, &p2,
-				    XEN_TO_C_XpmAttributes(arg4));
+				    (XEN_FALSE_P(arg4)) ? NULL : XEN_TO_C_XpmAttributes(arg4));
   return(XEN_LIST_3(C_TO_XEN_INT(val),
 		    C_TO_XEN_Pixmap(p1),
 		    C_TO_XEN_Pixmap(p2)));
@@ -16755,12 +16764,12 @@ static XEN gxm_XpmCreatePixmapFromBuffer(XEN arg1, XEN arg2, XEN arg3, XEN arg6)
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpmCreatePixmapFromBuffer", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XpmCreatePixmapFromBuffer", "Drawable");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XpmCreatePixmapFromBuffer", "char*");
-  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg6), arg6, 6, "XpmCreatePixmapFromBuffer", "XpmAttributes*");
+  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg6) || XEN_FALSE_P(arg6), arg6, 6, "XpmCreatePixmapFromBuffer", "XpmAttributes*");
   val = XpmCreatePixmapFromBuffer(XEN_TO_C_Display(arg1), 
 				  XEN_TO_C_Window(arg2), 
 				  XEN_TO_C_STRING(arg3),
 				  &p1, &p2,
-				  XEN_TO_C_XpmAttributes(arg6));
+				  (XEN_FALSE_P(arg6)) ? NULL : XEN_TO_C_XpmAttributes(arg6));
   return(XEN_LIST_3(C_TO_XEN_INT(val),
 		    C_TO_XEN_Pixmap(p1),
 		    C_TO_XEN_Pixmap(p2)));
@@ -16775,15 +16784,28 @@ static XEN gxm_XpmReadFileToPixmap(XEN arg1, XEN arg2, XEN arg3, XEN arg6)
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpmReadFileToPixmap", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XpmReadFileToPixmap", "Drawable");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XpmReadFileToPixmap", "char*");
-  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg6), arg6, 6, "XpmReadFileToPixmap", "XpmAttributes*");
+  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg6) || XEN_FALSE_P(arg6), arg6, 6, "XpmReadFileToPixmap", "XpmAttributes*");
   val = XpmReadFileToPixmap(XEN_TO_C_Display(arg1), 
 			    XEN_TO_C_Window(arg2), 
 			    XEN_TO_C_STRING(arg3), 
 			    &p1, &p2,
-			    XEN_TO_C_XpmAttributes(arg6));
+			    (XEN_FALSE_P(arg6)) ? NULL : XEN_TO_C_XpmAttributes(arg6));
   return(XEN_LIST_3(C_TO_XEN_INT(val),
 		    C_TO_XEN_Pixmap(p1),
 		    C_TO_XEN_Pixmap(p2)));
+}
+
+static XEN gxm_XpmReadFileToXpmImage(XEN arg1)
+{
+  int val;
+  XpmImage *image;
+  XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XpmReadFileToXpmImage", "char*");
+  image = (XpmImage *)CALLOC(1, sizeof(XpmImage));
+  val = XpmReadFileToXpmImage(XEN_TO_C_STRING(arg1), image, NULL);
+  if (val == XpmSuccess)
+    return(WRAP_FOR_XEN_OBJ("XpmImage", image));
+  FREE(image);
+  return(C_TO_XEN_INT(val));
 }
 
 static XEN gxm_XpmCreatePixmapFromData(XEN arg1, XEN arg2, XEN larg3, XEN arg6)
@@ -16797,7 +16819,7 @@ static XEN gxm_XpmCreatePixmapFromData(XEN arg1, XEN arg2, XEN larg3, XEN arg6)
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpmCreatePixmapFromData", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XpmCreatePixmapFromData", "Drawable");
   XEN_ASSERT_TYPE(XEN_LIST_P(larg3), larg3, 3, "XpmCreatePixmapFromData", "list of char*");
-  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg6), arg6, 6, "XpmCreatePixmapFromData", "XpmAttributes*");
+  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg6) || XEN_FALSE_P(arg6), arg6, 6, "XpmCreatePixmapFromData", "XpmAttributes*");
   arg3 = XEN_COPY_ARG(larg3);
   len = XEN_LIST_LENGTH(arg3);
   if (len <= 0) XEN_ASSERT_TYPE(0, arg3, 3, "XpmCreatePixmapFromData", "positive integer");
@@ -16808,7 +16830,7 @@ static XEN gxm_XpmCreatePixmapFromData(XEN arg1, XEN arg2, XEN larg3, XEN arg6)
 				XEN_TO_C_Window(arg2), 
 				bits,
 				&p1, &p2,
-				XEN_TO_C_XpmAttributes(arg6));
+				(XEN_FALSE_P(arg6)) ? NULL : XEN_TO_C_XpmAttributes(arg6));
   FREE(bits);
   return(XEN_LIST_3(C_TO_XEN_INT(val),
 		    C_TO_XEN_Pixmap(p1),
@@ -16826,8 +16848,8 @@ static XEN gxm_XpmCreateBufferFromPixmap(XEN arg1, XEN arg3, XEN arg4, XEN arg5)
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpmCreateBufferFromPixmap", "Display*");
   XEN_ASSERT_TYPE(XEN_Pixmap_P(arg3), arg3, 3, "XpmCreateBufferFromPixmap", "Pixmap");
   XEN_ASSERT_TYPE(XEN_Pixmap_P(arg4), arg4, 4, "XpmCreateBufferFromPixmap", "Pixmap");
-  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg5), arg5, 5, "XpmCreateBufferFromPixmap", "XpmAttributes*");
-  attr = XEN_TO_C_XpmAttributes(arg5);
+  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg5) || XEN_FALSE_P(arg5), arg5, 5, "XpmCreateBufferFromPixmap", "XpmAttributes*");
+  if (!(XEN_FALSE_P(arg5))) attr = XEN_TO_C_XpmAttributes(arg5);
   val = XpmCreateBufferFromPixmap(XEN_TO_C_Display(arg1), 
 				  buf,
 				  XEN_TO_C_Pixmap(arg3), 
@@ -16849,12 +16871,12 @@ static XEN gxm_XpmCreateBufferFromImage(XEN arg1, XEN arg3, XEN arg4, XEN arg5)
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpmCreateBufferFromImage", "Display*");
   XEN_ASSERT_TYPE(XEN_XImage_P(arg3), arg3, 3, "XpmCreateBufferFromImage", "XImage*");
   XEN_ASSERT_TYPE(XEN_XImage_P(arg4), arg4, 4, "XpmCreateBufferFromImage", "XImage*");
-  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg5), arg5, 5, "XpmCreateBufferFromImage", "XpmAttributes*");
+  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg5) || XEN_FALSE_P(arg5), arg5, 5, "XpmCreateBufferFromImage", "XpmAttributes*");
   val = XpmCreateBufferFromImage(XEN_TO_C_Display(arg1), 
 				 buf,
 				 XEN_TO_C_XImage(arg3), 
 				 XEN_TO_C_XImage(arg4), 
-				 XEN_TO_C_XpmAttributes(arg5));
+				 (XEN_FALSE_P(arg5)) ? NULL : XEN_TO_C_XpmAttributes(arg5));
   return(XEN_LIST_2(C_TO_XEN_INT(val),
 		    C_TO_XEN_ULONG(buf)));
 }
@@ -16865,10 +16887,10 @@ static XEN gxm_XpmWriteFileFromPixmap(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XE
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XpmWriteFileFromPixmap", "char*");
   XEN_ASSERT_TYPE(XEN_Pixmap_P(arg3), arg3, 3, "XpmWriteFileFromPixmap", "Pixmap");
   XEN_ASSERT_TYPE(XEN_Pixmap_P(arg4), arg4, 4, "XpmWriteFileFromPixmap", "Pixmap");
-  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg5), arg5, 5, "XpmWriteFileFromPixmap", "XpmAttributes*");
+  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg5) || XEN_FALSE_P(arg5), arg5, 5, "XpmWriteFileFromPixmap", "XpmAttributes*");
   return(C_TO_XEN_INT(XpmWriteFileFromPixmap(XEN_TO_C_Display(arg1), XEN_TO_C_STRING(arg2), 
 					     XEN_TO_C_Pixmap(arg3), XEN_TO_C_Pixmap(arg4), 
-					     XEN_TO_C_XpmAttributes(arg5))));
+					     (XEN_FALSE_P(arg5)) ? NULL : XEN_TO_C_XpmAttributes(arg5))));
 }
 
 static XEN gxm_XpmCreateDataFromPixmap(XEN arg1, XEN arg3, XEN arg4, XEN arg5)
@@ -16880,14 +16902,23 @@ static XEN gxm_XpmCreateDataFromPixmap(XEN arg1, XEN arg3, XEN arg4, XEN arg5)
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpmCreateDataFromPixmap", "Display*");
   XEN_ASSERT_TYPE(XEN_Pixmap_P(arg3), arg3, 3, "XpmCreateDataFromPixmap", "Pixmap");
   XEN_ASSERT_TYPE(XEN_Pixmap_P(arg4), arg4, 4, "XpmCreateDataFromPixmap", "Pixmap");
-  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg5), arg5, 5, "XpmCreateDataFromPixmap", "XpmAttributes*");
+  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(arg5) || XEN_FALSE_P(arg5), arg5, 5, "XpmCreateDataFromPixmap", "XpmAttributes*");
   val = XpmCreateDataFromPixmap(XEN_TO_C_Display(arg1), &buf, 
 				XEN_TO_C_Pixmap(arg3), 
 				XEN_TO_C_Pixmap(arg4), 
-				XEN_TO_C_XpmAttributes(arg5));
+				(XEN_FALSE_P(arg5)) ? NULL : XEN_TO_C_XpmAttributes(arg5));
   return(XEN_LIST_2(C_TO_XEN_INT(val),
 		    C_TO_XEN_ULONG(buf)));
 }
+
+#if HAVE_XPM_GET_ERROR_STRING
+static XEN gxm_XpmGetErrorString(XEN err)
+{
+  #define H_XpmGetErrorString "(XpmGetErrorString err) -> string describing error"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(err), err, XEN_ONLY_ARG, "XpmGetErrorString", "an Xpm status code");
+  return(C_TO_XEN_STRING(XpmGetErrorString(XEN_TO_C_INT(err))));
+}
+#endif
 
 static XEN gxm_XpmColorSymbol(XEN name, XEN value, XEN pixel)
 {
@@ -16927,14 +16958,14 @@ static XEN gxm_XpmAttributes(void)
 
 static XEN gxm_cpp(XEN ptr)
 {
-  XEN_ASSERT_TYPE((XEN_XpmImage_P(ptr)) || (XEN_XpmAttributes_P(ptr)), ptr, XEN_ONLY_ARG, "ncolors", "XpmImage");
+  XEN_ASSERT_TYPE((XEN_XpmImage_P(ptr)) || (XEN_XpmAttributes_P(ptr)), ptr, XEN_ONLY_ARG, "cpp", "XpmImage");
   if (XEN_XpmImage_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmImage(ptr))->cpp)));
   return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmAttributes(ptr))->cpp)));
 }
 
 static XEN gxm_set_cpp(XEN ptr, XEN val)
 {
-  XEN_ASSERT_TYPE((XEN_XpmImage_P(ptr)) || (XEN_XpmAttributes_P(ptr)), ptr, XEN_ARG_1, "ncolors", "XpmImage");
+  XEN_ASSERT_TYPE((XEN_XpmImage_P(ptr)) || (XEN_XpmAttributes_P(ptr)), ptr, XEN_ARG_1, "set cpp", "XpmImage");
   if (XEN_XpmImage_P(ptr)) (XEN_TO_C_XpmImage(ptr))->cpp = XEN_TO_C_ULONG(val);
   (XEN_TO_C_XpmAttributes(ptr))->cpp = XEN_TO_C_ULONG(val);
   return(val);
@@ -16942,21 +16973,23 @@ static XEN gxm_set_cpp(XEN ptr, XEN val)
 
 static XEN gxm_ncolors(XEN ptr)
 {
-  XEN_ASSERT_TYPE(XEN_XpmImage_P(ptr), ptr, XEN_ONLY_ARG, "ncolors", "XpmImage");
-  return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmImage(ptr))->ncolors)));
+  XEN_ASSERT_TYPE((XEN_XpmImage_P(ptr)) || (XEN_XpmAttributes_P(ptr)), ptr, XEN_ONLY_ARG, "ncolors", "XpmImage");
+  if (XEN_XpmImage_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmImage(ptr))->ncolors)));
+  return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmAttributes(ptr))->ncolors)));
 }
 
 static XEN gxm_set_ncolors(XEN ptr, XEN val)
 {
-  XEN_ASSERT_TYPE(XEN_XpmImage_P(ptr), ptr, XEN_ARG_1, "ncolors", "XpmImage");
-  (XEN_TO_C_XpmImage(ptr))->ncolors = XEN_TO_C_ULONG(val);
+  XEN_ASSERT_TYPE((XEN_XpmImage_P(ptr)) || (XEN_XpmAttributes_P(ptr)), ptr, XEN_ARG_1, "ncolors", "XpmImage");
+  if (XEN_XpmImage_P(ptr)) (XEN_TO_C_XpmImage(ptr))->ncolors = XEN_TO_C_ULONG(val);
+  else (XEN_TO_C_XpmAttributes(ptr))->ncolors = XEN_TO_C_ULONG(val);
   return(val);
 }
 
 #if 0
 static XEN gxm_set_data(XEN ptr, XEN val)
 {
-  XEN_ASSERT_TYPE(XEN_XpmImage_P(ptr), ptr, XEN_ARG_1, "ncolors", "XpmImage");
+  XEN_ASSERT_TYPE(XEN_XpmImage_P(ptr), ptr, XEN_ARG_1, "data", "XpmImage");
   (XEN_TO_C_XpmImage(ptr))->data = (unsigned int *)XEN_TO_C_ULONG(val);
   return(val);
 }
@@ -16964,78 +16997,78 @@ static XEN gxm_set_data(XEN ptr, XEN val)
 
 static XEN gxm_valuemask(XEN ptr)
 {
-  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ONLY_ARG, "ncolors", "XpmAttributes");
+  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ONLY_ARG, "valuemask", "XpmAttributes");
   return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmAttributes(ptr))->valuemask)));
 }
 
 static XEN gxm_set_valuemask(XEN ptr, XEN val)
 {
-  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ARG_1, "ncolors", "XpmAttributes");
+  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ARG_1, "set valuemask", "XpmAttributes");
   (XEN_TO_C_XpmAttributes(ptr))->valuemask = XEN_TO_C_ULONG(val);
   return(val);
 }
 
 static XEN gxm_x_hotspot(XEN ptr)
 {
-  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ONLY_ARG, "ncolors", "XpmAttributes");
+  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ONLY_ARG, "x_hotspot", "XpmAttributes");
   return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmAttributes(ptr))->x_hotspot)));
 }
 
 static XEN gxm_set_x_hotspot(XEN ptr, XEN val)
 {
-  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ARG_1, "ncolors", "XpmAttributes");
+  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ARG_1, "set x_hotspot", "XpmAttributes");
   (XEN_TO_C_XpmAttributes(ptr))->x_hotspot = XEN_TO_C_ULONG(val);
   return(val);
 }
 
 static XEN gxm_y_hotspot(XEN ptr)
 {
-  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ONLY_ARG, "ncolors", "XpmAttributes");
+  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ONLY_ARG, "y_hotspot", "XpmAttributes");
   return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmAttributes(ptr))->y_hotspot)));
 }
 
 static XEN gxm_set_y_hotspot(XEN ptr, XEN val)
 {
-  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ARG_1, "ncolors", "XpmAttributes");
+  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ARG_1, "set y_hotspot", "XpmAttributes");
   (XEN_TO_C_XpmAttributes(ptr))->y_hotspot = XEN_TO_C_ULONG(val);
   return(val);
 }
 
 static XEN gxm_colorsymbols(XEN ptr)
 {
-  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ONLY_ARG, "ncolors", "XpmAttributes");
+  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ONLY_ARG, "colorsymbols", "XpmAttributes");
   return(C_TO_XEN_XpmColorSymbol((XpmColorSymbol *)((XEN_TO_C_XpmAttributes(ptr))->colorsymbols)));
 }
 
 static XEN gxm_set_colorsymbols(XEN ptr, XEN val)
 {
-  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ARG_1, "ncolors", "XpmAttributes");
+  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ARG_1, "set colorsymbols", "XpmAttributes");
   (XEN_TO_C_XpmAttributes(ptr))->colorsymbols = XEN_TO_C_XpmColorSymbol(val);
   return(val);
 }
 
 static XEN gxm_numsymbols(XEN ptr)
 {
-  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ONLY_ARG, "ncolors", "XpmAttributes");
+  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ONLY_ARG, "numsymbols", "XpmAttributes");
   return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmAttributes(ptr))->numsymbols)));
 }
 
 static XEN gxm_set_numsymbols(XEN ptr, XEN val)
 {
-  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ARG_1, "ncolors", "XpmAttributes");
+  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ARG_1, "set numsymbols", "XpmAttributes");
   (XEN_TO_C_XpmAttributes(ptr))->numsymbols = XEN_TO_C_ULONG(val);
   return(val);
 }
 
 static XEN gxm_npixels(XEN ptr)
 {
-  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ONLY_ARG, "ncolors", "XpmAttributes");
+  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ONLY_ARG, "npixels", "XpmAttributes");
   return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmAttributes(ptr))->npixels)));
 }
 
 static XEN gxm_set_npixels(XEN ptr, XEN val)
 {
-  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ARG_1, "ncolors", "XpmAttributes");
+  XEN_ASSERT_TYPE(XEN_XpmAttributes_P(ptr), ptr, XEN_ARG_1, "set npixels", "XpmAttributes");
   (XEN_TO_C_XpmAttributes(ptr))->npixels = XEN_TO_C_ULONG(val);
   return(val);
 }
@@ -18229,15 +18262,19 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmCreatePixmapFromData" XM_POSTFIX, gxm_XpmCreatePixmapFromData, 4, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmCreateDataFromPixmap" XM_POSTFIX, gxm_XpmCreateDataFromPixmap, 4, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmReadFileToPixmap" XM_POSTFIX, gxm_XpmReadFileToPixmap, 4, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmReadFileToXpmImage" XM_POSTFIX, gxm_XpmReadFileToXpmImage, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmReadPixmapFile" XM_POSTFIX, gxm_XpmReadFileToPixmap, 4, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmWriteFileFromPixmap" XM_POSTFIX, gxm_XpmWriteFileFromPixmap, 5, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmWritePixmapFile" XM_POSTFIX, gxm_XpmWriteFileFromPixmap, 5, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmCreatePixmapFromBuffer" XM_POSTFIX, gxm_XpmCreatePixmapFromBuffer, 4, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmCreateBufferFromImage" XM_POSTFIX, gxm_XpmCreateBufferFromImage, 4, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmCreateBufferFromPixmap" XM_POSTFIX, gxm_XpmCreateBufferFromPixmap, 4, 0, 0, NULL);
+#if HAVE_XPM_GET_ERROR_STRING
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmGetErrorString" XM_POSTFIX, gxm_XpmGetErrorString, 1, 0, 0, H_XpmGetErrorString);
+#endif
 #if HAVE_XPM_CREATE_XPM_IMAGE_FROM_PIXMAP
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmCreatePixmapFromXpmImage" XM_POSTFIX, gxm_XpmCreatePixmapFromXpmImage, 4, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmCreateXpmImageFromPixmap" XM_POSTFIX, gxm_XpmCreateXpmImageFromPixmap, 5, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmCreateXpmImageFromPixmap" XM_POSTFIX, gxm_XpmCreateXpmImageFromPixmap, 4, 0, 0, NULL);
 #endif
 #endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetPixel" XM_POSTFIX, gxm_XGetPixel, 3, 0, 0, NULL);
@@ -18837,7 +18874,6 @@ static XEN gxm_screen(XEN ptr)
 #endif
   if (XEN_XVisualInfo_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XVisualInfo(ptr))->screen)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "screen", "a struct with a screen field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_your_event_mask(XEN ptr)
@@ -18881,7 +18917,6 @@ static XEN gxm_visual(XEN ptr)
   if (XEN_XpmAttributes_P(ptr)) return(C_TO_XEN_Visual((Visual *)((XEN_TO_C_XpmAttributes(ptr))->visual)));
 #endif
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "visual", "a struct with a visual field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_cursor(XEN ptr)
@@ -19000,7 +19035,6 @@ static XEN gxm_depth(XEN ptr)
   if (XEN_XpmAttributes_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmAttributes(ptr))->depth)));
 #endif
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "depth", "a struct with a depth field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_map_entries(XEN ptr)
@@ -19054,7 +19088,6 @@ static XEN gxm_class(XEN ptr)
   if (XEN_XVisualInfo_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XVisualInfo(ptr))->class)));
 #endif
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "class", "a struct with a class field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_visualid(XEN ptr)
@@ -19063,7 +19096,6 @@ static XEN gxm_visualid(XEN ptr)
   if (XEN_XStandardColormap_P(ptr)) return(C_TO_XEN_ULONG((VisualID)((XEN_TO_C_XStandardColormap(ptr))->visualid)));
   if (XEN_XVisualInfo_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XVisualInfo(ptr))->visualid)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "visualid", "a struct with a visualid field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_pixel(XEN ptr, XEN val)
@@ -19087,7 +19119,6 @@ static XEN gxm_pixel(XEN ptr)
   if (XEN_XpmColorSymbol_P(ptr)) return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XpmColorSymbol(ptr))->pixel)));
 #endif
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "pixel", "a struct with a pixel field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_window_group(XEN ptr)
@@ -19148,7 +19179,6 @@ static XEN gxm_flags(XEN ptr)
 #endif
   if (XEN_XWMHints_P(ptr)) return(C_TO_XEN_INT((long)((XEN_TO_C_XWMHints(ptr))->flags)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "flags", "a struct with a flags field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_flags(XEN ptr, XEN val)
@@ -19247,7 +19277,6 @@ static XEN gxm_name(XEN ptr)
   if (XEN_XpmColorSymbol_P(ptr)) return(C_TO_XEN_STRING((char *)((XEN_TO_C_XpmColorSymbol(ptr))->name)));
 #endif
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "name", "a struct with a name field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_attributes(XEN ptr)
@@ -19364,7 +19393,6 @@ static XEN gxm_format(XEN ptr)
 #endif
   if (XEN_XClientMessageEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XClientMessageEvent(ptr))->format)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "format", "XClientMessageEvent");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_format(XEN ptr, XEN val)
@@ -19422,7 +19450,6 @@ static XEN gxm_colormap(XEN ptr)
   if (XEN_XpmAttributes_P(ptr)) return(C_TO_XEN_Colormap((Colormap)((XEN_TO_C_XpmAttributes(ptr))->colormap)));
 #endif
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "colormap", "a struct with a colormap field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_colormap(XEN ptr, XEN val)
@@ -19463,7 +19490,6 @@ static XEN gxm_target(XEN ptr)
   if (XEN_XSelectionEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XSelectionEvent(ptr))->target)));
   if (XEN_XSelectionRequestEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XSelectionRequestEvent(ptr))->target)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "target", "a struct with a target field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_target(XEN ptr, XEN val)
@@ -19517,7 +19543,6 @@ static XEN gxm_selection(XEN ptr)
   if (XEN_XSelectionRequestEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XSelectionRequestEvent(ptr))->selection)));
   if (XEN_XSelectionClearEvent_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XSelectionClearEvent(ptr))->selection)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "selection", "a struct with a selection field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_selection(XEN ptr, XEN val)
@@ -19619,7 +19644,6 @@ static XEN gxm_event(XEN ptr)
   if (XEN_AnyCallbackStruct_P(ptr)) return(C_TO_XEN_XEvent((XEvent *)((XEN_TO_C_XmAnyCallbackStruct(ptr))->event)));
 #endif
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "event", "a struct with an event field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_event(XEN ptr, XEN val)
@@ -19647,7 +19671,6 @@ static XEN gxm_override_redirect(XEN ptr)
   if (XEN_XMapEvent_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XMapEvent(ptr))->override_redirect)));
   if (XEN_XCreateWindowEvent_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XCreateWindowEvent(ptr))->override_redirect)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "override_redirect", "a struct with an override_redirect field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_override_redirect(XEN ptr, XEN val)
@@ -19671,7 +19694,6 @@ static XEN gxm_border_width(XEN ptr)
   if (XEN_XConfigureEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XConfigureEvent(ptr))->border_width)));
   if (XEN_XCreateWindowEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XCreateWindowEvent(ptr))->border_width)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "border_width", "a struct with a border_width field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_border_width(XEN ptr, XEN val)
@@ -19694,7 +19716,6 @@ static XEN gxm_parent(XEN ptr)
   if (XEN_XMapRequestEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XMapRequestEvent(ptr))->parent)));
   if (XEN_XCreateWindowEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XCreateWindowEvent(ptr))->parent)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "parent", "a struct with a parent field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_parent(XEN ptr, XEN val)
@@ -19708,7 +19729,7 @@ static XEN gxm_set_parent(XEN ptr, XEN val)
   else if (XEN_XMapRequestEvent_P(ptr)) (XEN_TO_C_XMapRequestEvent(ptr))->parent = w;
   else if (XEN_XCreateWindowEvent_P(ptr)) (XEN_TO_C_XCreateWindowEvent(ptr))->parent= w;
   else XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set parent", "a struct with a parent field");
-  return(XEN_FALSE);
+  return(val);
 }
 
 static XEN gxm_minor_code(XEN ptr)
@@ -19717,7 +19738,6 @@ static XEN gxm_minor_code(XEN ptr)
   if (XEN_XNoExposeEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XNoExposeEvent(ptr))->minor_code)));
   if (XEN_XGraphicsExposeEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGraphicsExposeEvent(ptr))->minor_code)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "minor_code", "a struct with a minor_code field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_minor_code(XEN ptr, XEN val)
@@ -19768,7 +19788,6 @@ static XEN gxm_count(XEN ptr)
   if (XEN_XGraphicsExposeEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XGraphicsExposeEvent(ptr))->count)));
   if (XEN_XExposeEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XExposeEvent(ptr))->count)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "count", "a struct with a count field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_count(XEN ptr, XEN val)
@@ -19825,7 +19844,6 @@ static XEN gxm_detail(XEN ptr)
   if (XEN_XFocusChangeEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XFocusChangeEvent(ptr))->detail)));
   if (XEN_XCrossingEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XCrossingEvent(ptr))->detail)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "detail", "a struct with a detail field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_detail(XEN ptr, XEN val)
@@ -19889,7 +19907,6 @@ static XEN gxm_same_screen(XEN ptr)
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XButtonEvent(ptr))->same_screen)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_BOOLEAN((Bool)((XEN_TO_C_XKeyEvent(ptr))->same_screen)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "same_screen", "a struct with a same_screen field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_same_screen(XEN ptr, XEN val)
@@ -19929,7 +19946,6 @@ static XEN gxm_state(XEN ptr)
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XButtonEvent(ptr))->state)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XKeyEvent(ptr))->state)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "state", "a struct with a state field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_state(XEN ptr, XEN val)
@@ -19953,7 +19969,6 @@ static XEN gxm_y_root(XEN ptr)
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XButtonEvent(ptr))->y_root)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XKeyEvent(ptr))->y_root)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "y_root", "a struct with a y_root field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_y_root(XEN ptr, XEN val)
@@ -19974,7 +19989,6 @@ static XEN gxm_x_root(XEN ptr)
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XButtonEvent(ptr))->x_root)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XKeyEvent(ptr))->x_root)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "x_root", "a struct with an x_root field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_x_root(XEN ptr, XEN val)
@@ -20059,7 +20073,6 @@ static XEN gxm_y(XEN ptr)
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XButtonEvent(ptr))->y)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XKeyEvent(ptr))->y)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "y", "a struct with a y field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_x(XEN ptr)
@@ -20091,7 +20104,6 @@ static XEN gxm_x(XEN ptr)
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XButtonEvent(ptr))->x)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XKeyEvent(ptr))->x)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "x", "a struct with an x field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_time(XEN ptr)
@@ -20108,7 +20120,6 @@ static XEN gxm_time(XEN ptr)
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_Time((Time)((XEN_TO_C_XButtonEvent(ptr))->time)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_Time((Time)((XEN_TO_C_XKeyEvent(ptr))->time)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "time", "a struct with a time field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_time(XEN ptr, XEN val)
@@ -20135,7 +20146,6 @@ static XEN gxm_subwindow(XEN ptr)
   if (XEN_XButtonEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XButtonEvent(ptr))->subwindow)));
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XKeyEvent(ptr))->subwindow)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "subwindow", "a struct with a subwindow field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_subwindow(XEN ptr, XEN val)
@@ -20162,7 +20172,6 @@ static XEN gxm_window(XEN ptr)
 #endif
   if (XEN_XEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XAnyEvent(ptr))->window)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "window", "a struct with a window field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_window(XEN ptr, XEN val)
@@ -20208,7 +20217,6 @@ static XEN gxm_type(XEN ptr)
 #endif
   if (XEN_XEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XAnyEvent(ptr))->type)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "type", "a struct with a type field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_type(XEN ptr, XEN val)
@@ -20236,7 +20244,6 @@ static XEN gxm_backing_store(XEN ptr)
   if (XEN_XSetWindowAttributes_P(ptr)) return(C_TO_XEN_BOOLEAN((int)((XEN_TO_C_XSetWindowAttributes(ptr))->backing_store)));
   if (XEN_Screen_P(ptr)) return(C_TO_XEN_BOOLEAN((int)((XEN_TO_C_Screen(ptr))->backing_store)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "backing_store", "a struct with a backing_store field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_min_maps(XEN ptr)
@@ -20367,7 +20374,6 @@ static XEN gxm_height(XEN ptr)
   if (XEN_XpmAttributes_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmAttributes(ptr))->height)));
 #endif
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "height", "a struct with a height field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_width(XEN ptr)
@@ -20390,7 +20396,6 @@ static XEN gxm_width(XEN ptr)
   if (XEN_XpmAttributes_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmAttributes(ptr))->width)));
 #endif
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "width", "a struct with a width field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_root(XEN ptr)
@@ -20402,7 +20407,6 @@ static XEN gxm_root(XEN ptr)
   if (XEN_XKeyEvent_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_XKeyEvent(ptr))->root)));
   if (XEN_Screen_P(ptr)) return(C_TO_XEN_Window((Window)((XEN_TO_C_Screen(ptr))->root)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "root", "a struct with a root field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_root(XEN ptr, XEN val)
@@ -20468,7 +20472,6 @@ static XEN gxm_foreground(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XGCValues(ptr))->foreground)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "foreground", "a struct with a foreground field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_foreground(XEN ptr, XEN val)
@@ -20483,7 +20486,6 @@ static XEN gxm_background(XEN ptr)
 {
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_Pixel((Pixel)((XEN_TO_C_XGCValues(ptr))->background)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "background", "a struct with a background field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_background(XEN ptr, XEN val)
@@ -20653,7 +20655,6 @@ static XEN gxm_font(XEN ptr)
   if (XEN_XGCValues_P(ptr)) return(C_TO_XEN_Font((Font)((XEN_TO_C_XGCValues(ptr))->font)));
   if (XEN_XTextItem_P(ptr)) return(C_TO_XEN_Font((Font)((XEN_TO_C_XTextItem(ptr))->font)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "font", "a struct with a font field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_font(XEN ptr, XEN val)
@@ -20879,7 +20880,6 @@ static XEN gxm_data(XEN ptr)
   if (XEN_XpmImage_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmImage(ptr))->data)));
 #endif
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "data", "XpmImage");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_data(XEN ptr, XEN val)
@@ -20913,7 +20913,6 @@ static XEN gxm_text(XEN ptr)
 			C_TO_XEN_ULONG(tb->format)));
     }
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "text", "a struct with a text field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_endPos(XEN ptr)
@@ -21092,7 +21091,6 @@ static XEN gxm_selected_item_positions(XEN ptr)
     return(C_TO_XEN_Ints((int *)((XEN_TO_C_XmListCallbackStruct(ptr))->selected_item_positions),
 			 ((int)((XEN_TO_C_XmListCallbackStruct(ptr))->selected_item_count))));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "selected_item_positions", "a struct with a selected_item_positions field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_selected_item_count(XEN ptr)
@@ -21102,7 +21100,6 @@ static XEN gxm_selected_item_count(XEN ptr)
 #endif
   if (XEN_XmListCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmListCallbackStruct(ptr))->selected_item_count)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "selected_item_count", "XmListCallbackStruct");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_selected_items(XEN ptr)
@@ -21119,7 +21116,6 @@ static XEN gxm_selected_items(XEN ptr)
     return(C_TO_XEN_XmStringTable((XmStringTable)((XEN_TO_C_XmListCallbackStruct(ptr))->selected_items),
 				  (XEN_TO_C_XmListCallbackStruct(ptr))->selected_item_count));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "selected_items", "a struct with a selected_items field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_item_length(XEN ptr)
@@ -21135,7 +21131,6 @@ static XEN gxm_item(XEN ptr)
 #endif
   if (XEN_XmListCallbackStruct_P(ptr)) return(C_TO_XEN_XmString((XmString)((XEN_TO_C_XmListCallbackStruct(ptr))->item)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "item", "XmListCallbackStruct");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set(XEN ptr)
@@ -21164,7 +21159,6 @@ static XEN gxm_item_position(XEN ptr)
   if (XEN_XmComboBoxCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmComboBoxCallbackStruct(ptr))->item_position)));
 #endif
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "item_position", "a struct with an item_position field");
-  return(XEN_FALSE);
 }
 
 #if MOTIF_2
@@ -21183,7 +21177,6 @@ static XEN gxm_doit(XEN ptr)
   if (XEN_XmDragStartCallbackStruct_P(ptr)) return(C_TO_XEN_BOOLEAN((Boolean)((XEN_TO_C_XmDragStartCallbackStruct(ptr))->doit)));
 #endif
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "doit", "a struct with a doit field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_doit(XEN ptr, XEN val)
@@ -21206,7 +21199,6 @@ static XEN gxm_widget(XEN ptr)
 #endif
   if (XEN_XmRowColumnCallbackStruct_P(ptr)) return(C_TO_XEN_Widget((Widget)((XEN_TO_C_XmRowColumnCallbackStruct(ptr))->widget)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "widget", "a struct with a widget field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_click_count(XEN ptr)
@@ -21215,7 +21207,6 @@ static XEN gxm_click_count(XEN ptr)
   if (XEN_XmDrawnButtonCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDrawnButtonCallbackStruct(ptr))->click_count)));
   if (XEN_XmArrowButtonCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmArrowButtonCallbackStruct(ptr))->click_count)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "click_count", "a struct with a click_count field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_click_count(XEN ptr, XEN val)
@@ -21250,7 +21241,6 @@ static XEN gxm_transfer_id(XEN ptr)
   if (XEN_XmSelectionCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG(((XEN_TO_C_XmSelectionCallbackStruct(ptr))->transfer_id)));
   if (XEN_XmDestinationCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG(((XEN_TO_C_XmDestinationCallbackStruct(ptr))->transfer_id)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "transfer_id", "a struct with a transfer_id field");
-  return(XEN_FALSE);
 }
 #endif
 
@@ -21265,7 +21255,6 @@ static XEN gxm_length(XEN ptr)
   if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG((ulong)((XEN_TO_C_XmConvertCallbackStruct(ptr))->length)));
 #endif
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "length", "a struct with a length field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_length(XEN ptr, XEN val)
@@ -21306,7 +21295,6 @@ static XEN gxm_value(XEN ptr)
   if (XEN_XpmColorSymbol_P(ptr)) return(C_TO_XEN_STRING((char *)((XEN_TO_C_XpmColorSymbol(ptr))->value)));
 #endif
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "value", "a struct with a value field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_value(XEN ptr, XEN val)
@@ -21410,7 +21398,6 @@ static XEN gxm_iccHandle(XEN ptr)
   if (XEN_XmTopLevelEnterCallbackStruct_P(ptr)) return(C_TO_XEN_Atom((Atom)((XEN_TO_C_XmTopLevelEnterCallbackStruct(ptr))->iccHandle)));
 #endif
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "iccHandle", "a struct with an iccHandle field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_dropAction(XEN ptr)
@@ -21419,7 +21406,6 @@ static XEN gxm_dropAction(XEN ptr)
   if (XEN_XmDropFinishCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDropFinishCallbackStruct(ptr))->dropAction)));
   if (XEN_XmDropStartCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDropStartCallbackStruct(ptr))->dropAction)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "dropAction", "a struct with a dropAction field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_dropSiteStatus(XEN ptr)
@@ -21432,7 +21418,6 @@ static XEN gxm_dropSiteStatus(XEN ptr)
   if (XEN_XmDragMotionCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDragMotionCallbackStruct(ptr))->dropSiteStatus)));
   if (XEN_XmDropSiteEnterCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDropSiteEnterCallbackStruct(ptr))->dropSiteStatus)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "dropSiteStatus", "a struct with a dropSiteStatus field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_dropSiteStatus(XEN ptr, XEN val)
@@ -21446,7 +21431,7 @@ static XEN gxm_set_dropSiteStatus(XEN ptr, XEN val)
   if (XEN_XmDragMotionCallbackStruct_P(ptr)) (XEN_TO_C_XmDragMotionCallbackStruct(ptr))->dropSiteStatus = XEN_TO_C_INT(val); else
   if (XEN_XmDropSiteEnterCallbackStruct_P(ptr)) (XEN_TO_C_XmDropSiteEnterCallbackStruct(ptr))->dropSiteStatus = XEN_TO_C_INT(val); else
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "dropSiteStatus", "a struct with a dropSiteStatus field");
-  return(XEN_FALSE);
+  return(val);
 }
 
 static XEN gxm_operations(XEN ptr)
@@ -21459,7 +21444,6 @@ static XEN gxm_operations(XEN ptr)
   if (XEN_XmDragMotionCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDragMotionCallbackStruct(ptr))->operations)));
   if (XEN_XmDropSiteEnterCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDropSiteEnterCallbackStruct(ptr))->operations)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "operations", "a struct with an operations field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_operation(XEN ptr)
@@ -21475,7 +21459,6 @@ static XEN gxm_operation(XEN ptr)
   if (XEN_XmDragMotionCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDragMotionCallbackStruct(ptr))->operation)));
   if (XEN_XmDropSiteEnterCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmDropSiteEnterCallbackStruct(ptr))->operation)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "operation", "a struct with an operation field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_set_operation(XEN ptr, XEN val)
@@ -21492,7 +21475,7 @@ static XEN gxm_set_operation(XEN ptr, XEN val)
   if (XEN_XmDragMotionCallbackStruct_P(ptr)) (XEN_TO_C_XmDragMotionCallbackStruct(ptr))->operation = XEN_TO_C_INT(val); else
   if (XEN_XmDropSiteEnterCallbackStruct_P(ptr)) (XEN_TO_C_XmDropSiteEnterCallbackStruct(ptr))->operation = XEN_TO_C_INT(val); else
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "set_operation", "a struct with an operation field");
-  return(XEN_FALSE);
+  return(val);
 }
 
 static XEN gxm_timeStamp(XEN ptr)
@@ -21511,7 +21494,6 @@ static XEN gxm_timeStamp(XEN ptr)
   if (XEN_XmTopLevelLeaveCallbackStruct_P(ptr)) return(C_TO_XEN_Time((Time)((XEN_TO_C_XmTopLevelLeaveCallbackStruct(ptr))->timeStamp)));
 #endif
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "timeStamp", "a struct with a timeStamp field");
-  return(XEN_FALSE);
 }
 
 static XEN gxm_reason(XEN ptr)
@@ -22723,11 +22705,11 @@ static void define_integers(void)
 
 #if HAVE_GUILE
 #if HAVE_SCM_C_DEFINE
-  #define DEFINE_INTEGER(Name, Value) scm_c_define(Name, scm_long2num(Value))
-  #define DEFINE_ULONG(Name, Value) scm_c_define(Name, scm_ulong2num(Value))
+  #define DEFINE_INTEGER(Name, Value) scm_c_define(Name, C_TO_XEN_INT(Value))
+  #define DEFINE_ULONG(Name, Value) scm_c_define(Name, C_TO_XEN_ULONG(Value))
 #else
-  #define DEFINE_INTEGER(Name, Value) gh_define(Name, scm_long2num(Value))
-  #define DEFINE_ULONG(Name, Value) gh_define(Name, scm_ulong2num(Value))
+  #define DEFINE_INTEGER(Name, Value) gh_define(Name, C_TO_XEN_INT(Value))
+  #define DEFINE_ULONG(Name, Value) gh_define(Name, C_TO_XEN_ULONG(Value))
 #endif
 #else
   #define DEFINE_INTEGER(Name, Value) rb_define_global_const(Name, C_TO_XEN_INT(Value))

@@ -436,8 +436,11 @@ static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num)
 
 void append_listener_text(int end, char *msg)
 {
-  XmTextInsert(listener_text, end, msg);
-  XmTextSetCursorPosition(listener_text, XmTextGetLastPosition(listener_text));
+  if (listener_text)
+    {
+      XmTextInsert(listener_text, end, msg);
+      XmTextSetCursorPosition(listener_text, XmTextGetLastPosition(listener_text));
+    }
 }
 
 void save_listener_text(FILE *fp)
@@ -1048,7 +1051,6 @@ void handle_listener(snd_state *ss, int open)
       XtManageChild(listener_pane);
       XtVaSetValues(listener_pane, XmNpaneMaximum, LOTSA_PIXELS, XmNpaneMinimum, 1, NULL);
     }
-  ss->listening = open;
 }
 
 int listener_height(void)

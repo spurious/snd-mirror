@@ -848,7 +848,7 @@ int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int size)
 	{
 	  if (pks < num_peaks)
 	    {
-	      inds[pks] = i-1;
+	      inds[pks] = i - 1;
 	      peaks[pks++] = ca;
 	    }
 	  else
@@ -2458,7 +2458,7 @@ and otherwise returns a list (total-size active-bins active-slices)"
   cp = get_cp(snd, chn, S_transform_samples_size);
   if (!(cp->graph_transform_p)) 
     return(XEN_ZERO);
-  if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)  /* was global here?? */
+  if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)
     return(C_TO_SMALL_XEN_INT(cp->transform_size));
   si = (sono_info *)(cp->sonogram_data);
   if (si) return(XEN_LIST_3(C_TO_XEN_DOUBLE(cp->spectro_cutoff),
@@ -2488,7 +2488,7 @@ returns the current transform sample at bin and slice in snd channel chn (assumi
       if ((fp) && 
 	  (fbin < fp->current_size))
 	{
-	  if (transform_graph_type(cp->state) == GRAPH_TRANSFORM_ONCE)
+	  if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)
 	    return(C_TO_XEN_DOUBLE(fp->data[fbin]));
 	  else 
 	    {
@@ -2526,7 +2526,7 @@ static XEN g_transform_samples(XEN snd_n, XEN chn_n)
       if (fp)
 	{
 	  bins = fp->current_size;
-	  if (transform_graph_type(cp->state) == GRAPH_TRANSFORM_ONCE)
+	  if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)
 	    {
 	      len = fp->current_size;
 	      new_vect = XEN_MAKE_VECTOR(len, C_TO_XEN_DOUBLE(0.0));
@@ -2576,7 +2576,7 @@ returns a vct object (vct-obj if passed), with the current transform data from s
   if ((cp->graph_transform_p) && (cp->fft))
     {
       /* BACK */
-      if (transform_graph_type(cp->state) == GRAPH_TRANSFORM_ONCE)
+      if (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE)
 	{
 	  fp = cp->fft;
 	  len = fp->current_size;

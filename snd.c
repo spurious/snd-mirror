@@ -275,7 +275,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->open_ctrls_height = 180;        /* just a first guess */
   ss->sounds = (snd_info **)CALLOC(ss->max_sounds, sizeof(snd_info *));
   ss->print_choice = PRINT_SND;
-  ss->listening = 0;
   ss->graph_hook_active = 0;
   ss->just_time = 0;
   ss->error_lock = 0;

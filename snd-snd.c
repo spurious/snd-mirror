@@ -147,12 +147,18 @@ static env_state *make_env_state(chan_info *cp, int samples)
 		      ep->data_max = (MUS_SAMPLE_TYPE *)CALLOC(ep->amp_env_size, sizeof(MUS_SAMPLE_TYPE));
 		      ep->data_min = (MUS_SAMPLE_TYPE *)CALLOC(ep->amp_env_size, sizeof(MUS_SAMPLE_TYPE));
 		      start_bin = (int)(start / ep->samps_per_bin);
+#if DEBUGGING
+		      if (start_bin > ep->amp_env_size) abort();
+#endif
 		      ep->fmin = MUS_SAMPLE_0;
 		      ep->fmax = MUS_SAMPLE_0;
 		      for (i = 0; i < start_bin; i++) 
 			{
 			  ep->data_min[i] = old_ep->data_min[i];
 			  ep->data_max[i] = old_ep->data_max[i];
+#if DEBUGGING
+			  if (i >= ep->amp_env_size) abort();
+#endif
 			  if (ep->data_min[i] < ep->fmin) ep->fmin = ep->data_min[i];
 			  if (ep->data_max[i] > ep->fmax) ep->fmax = ep->data_max[i];
 			}
@@ -258,6 +264,9 @@ static int tick_amp_env(chan_info *cp, env_state *es)
 		    if (ymax < val) 
 		      ymax = val;
 		}
+#if DEBUGGING
+	      if (sb >= ep->amp_env_size) abort();
+#endif
 	      ep->data_max[sb] = ymax;
 	      ep->data_min[sb] = ymin;
 	      if (ymin < ep->fmin) ep->fmin = ymin;
@@ -310,6 +319,9 @@ static int tick_amp_env(chan_info *cp, env_state *es)
 		  val = bufs[nc][m];
 		  if (ymin > val) ymin = val; else if (ymax < val) ymax = val;
 		}
+#if DEBUGGING
+	      if (sb >= ep->amp_env_size) abort();
+#endif
 	      ep->data_max[sb] = ymax;
 	      ep->data_min[sb] = ymin;
 	      if (ymin < ep->fmin) ep->fmin = ymin;
@@ -533,6 +545,9 @@ void pick_one_bin(env_info *ep, int bin, int cursamp, chan_info *cp, int edpos)
       val = next_sample(sf); 
       if (ymin > val) ymin = val; else if (ymax < val) ymax = val;
     }
+#if DEBUGGING
+  if (bin >= ep->amp_env_size) abort();
+#endif
   ep->data_max[bin] = ymax;
   ep->data_min[bin] = ymin;
   free_snd_fd(sf);
@@ -619,6 +634,9 @@ env_info *amp_env_section(chan_info *cp, int beg, int num, int edpos)
 	  /* if segment is entirely in region, just scale it */
 	  if ((cursamp >= beg) && ((cursamp + new_ep->samps_per_bin) <= end))
 	    {
+#if DEBUGGING
+	      if (j > new_ep->amp_env_size) abort();
+#endif
 	      new_ep->data_max[j] = old_ep->data_max[i];
 	      new_ep->data_min[j] = old_ep->data_min[i];
 	    }
@@ -723,7 +741,7 @@ Float srate_changed(Float val, char *srcbuf, int style, int tones)
       for (i = 1; i < TOTAL_RATS; i++)
 	if (rat_values[i] > val) 
 	  break;
-      sprintf(srcbuf, "%s", rat_names[i-1]);
+      sprintf(srcbuf, "%s", rat_names[i - 1]);
       return(rat_values[i - 1]);
       break;
     case SPEED_CONTROL_AS_SEMITONE: 
@@ -1015,7 +1033,7 @@ static void remember_string(snd_info *sp, char *str, int which)
     }
   top = mh->strings_size - 1;
   if (mh->strings[top]) FREE(mh->strings[top]);
-  for (i = top; i > 0; i--) mh->strings[i] = mh->strings[i-1];
+  for (i = top; i > 0; i--) mh->strings[i] = mh->strings[i - 1];
   mh->strings[0] = copy_string(str);
   mh->strings_pos = 0;
   mh->first_time = 1;

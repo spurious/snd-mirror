@@ -1168,12 +1168,16 @@
   XEN_NARGIFY_4(gxm_XpmCreatePixmapFromData_w, gxm_XpmCreatePixmapFromData)
   XEN_NARGIFY_4(gxm_XpmCreateDataFromPixmap_w, gxm_XpmCreateDataFromPixmap)
   XEN_NARGIFY_4(gxm_XpmReadFileToPixmap_w, gxm_XpmReadFileToPixmap)
+  XEN_NARGIFY_1(gxm_XpmReadFileToXpmImage_w, gxm_XpmReadFileToXpmImage)
   XEN_NARGIFY_5(gxm_XpmWriteFileFromPixmap_w, gxm_XpmWriteFileFromPixmap)
   XEN_NARGIFY_4(gxm_XpmCreatePixmapFromBuffer_w, gxm_XpmCreatePixmapFromBuffer)
   XEN_NARGIFY_4(gxm_XpmCreateBufferFromImage_w, gxm_XpmCreateBufferFromImage)
   XEN_NARGIFY_4(gxm_XpmCreateBufferFromPixmap_w, gxm_XpmCreateBufferFromPixmap)
   XEN_NARGIFY_4(gxm_XpmCreatePixmapFromXpmImage_w, gxm_XpmCreatePixmapFromXpmImage)
-  XEN_NARGIFY_5(gxm_XpmCreateXpmImageFromPixmap_w, gxm_XpmCreateXpmImageFromPixmap)
+  XEN_NARGIFY_4(gxm_XpmCreateXpmImageFromPixmap_w, gxm_XpmCreateXpmImageFromPixmap)
+#if HAVE_XPM_GET_ERROR_STRING
+  XEN_NARGIFY_1(gxm_XpmGetErrorString_w, gxm_XpmGetErrorString)
+#endif
 #endif
   XEN_NARGIFY_3(gxm_XGetPixel_w, gxm_XGetPixel)
   XEN_NARGIFY_1(gxm_XDestroyImage_w, gxm_XDestroyImage)
@@ -2422,6 +2426,10 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmCreatePixmapFromData" XM_POSTFIX, gxm_XpmCreatePixmapFromData_w, 4, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmCreateDataFromPixmap" XM_POSTFIX, gxm_XpmCreateDataFromPixmap_w, 4, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmReadFileToPixmap" XM_POSTFIX, gxm_XpmReadFileToPixmap_w, 4, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmReadFileToXpmImage" XM_POSTFIX, gxm_XpmReadFileToXpmImage_w, 1, 0, 0, NULL);
+#if HAVE_XPM_GET_ERROR_STRING
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmGetErrorString" XM_POSTFIX, gxm_XpmGetErrorString_w, 1, 0, 0, NULL);
+#endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmReadPixmapFile" XM_POSTFIX, gxm_XpmReadFileToPixmap_w, 4, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmWriteFileFromPixmap" XM_POSTFIX, gxm_XpmWriteFileFromPixmap_w, 5, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmWritePixmapFile" XM_POSTFIX, gxm_XpmWriteFileFromPixmap_w, 5, 0, 0, NULL);
@@ -2429,7 +2437,7 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmCreateBufferFromImage" XM_POSTFIX, gxm_XpmCreateBufferFromImage_w, 4, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmCreateBufferFromPixmap" XM_POSTFIX, gxm_XpmCreateBufferFromPixmap_w, 4, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmCreatePixmapFromXpmImage" XM_POSTFIX, gxm_XpmCreatePixmapFromXpmImage_w, 4, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmCreateXpmImageFromPixmap" XM_POSTFIX, gxm_XpmCreateXpmImageFromPixmap_w, 5, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XpmCreateXpmImageFromPixmap" XM_POSTFIX, gxm_XpmCreateXpmImageFromPixmap_w, 4, 0, 0, NULL);
 #endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetPixel" XM_POSTFIX, gxm_XGetPixel_w, 3, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDestroyImage" XM_POSTFIX, gxm_XDestroyImage_w, 1, 0, 0, NULL);

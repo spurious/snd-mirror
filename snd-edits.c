@@ -3595,7 +3595,7 @@ inserts channel 'file-chan' of 'file' (or all chans if file-chan not given) into
   chan_info *cp;
   snd_info *sp;
   char *filename = NULL;
-  int nc, len, fchn, beg = 0, i, pos;
+  int nc, len, fchn, beg = 0, i;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_insert_sound, "a string");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(ubeg), ubeg, XEN_ARG_2, S_insert_sound, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(file_chn), file_chn, XEN_ARG_3, S_insert_sound, "an integer");
@@ -3614,7 +3614,6 @@ inserts channel 'file-chan' of 'file' (or all chans if file-chan not given) into
       if (filename) FREE(filename);
       return(C_TO_XEN_INT(len));
     }
-  pos = to_c_edit_position(cp, edpos, S_insert_sound, 6);
   if (XEN_NUMBER_P(ubeg))
     beg = XEN_TO_C_INT_OR_ELSE(ubeg, 0);
   else beg = cp->cursor;
@@ -3623,7 +3622,8 @@ inserts channel 'file-chan' of 'file' (or all chans if file-chan not given) into
       fchn = XEN_TO_C_INT(file_chn);
       if (fchn < mus_sound_chans(filename))
 	{
-	  file_insert_samples(beg, len, filename, cp, fchn, DONT_DELETE_ME, S_insert_sound, pos);
+	  file_insert_samples(beg, len, filename, cp, fchn, DONT_DELETE_ME, S_insert_sound,
+			      to_c_edit_position(cp, edpos, S_insert_sound, 6));
 	  update_graph(cp, NULL);
 	  if (filename) FREE(filename);
 	  return(C_TO_XEN_INT(len));
@@ -3640,7 +3640,11 @@ inserts channel 'file-chan' of 'file' (or all chans if file-chan not given) into
       if (sp->nchans < nc) nc = sp->nchans;
       for (i = 0; i < nc; i++)
 	{
-	  file_insert_samples(beg, len, filename, sp->chans[i], i, DONT_DELETE_ME, S_insert_sound, pos);
+	  file_insert_samples(beg, len, filename, sp->chans[i], i, DONT_DELETE_ME, S_insert_sound,
+			      /* this edit_position cannot be optimized out -- each channel may have
+			       *   a different edit history, but edpos might be -1 throughout etc.
+			       */
+			      to_c_edit_position(sp->chans[i], edpos, S_insert_sound, 6));
 	  update_graph(sp->chans[i], NULL);
 	}
       if (filename) FREE(filename);

@@ -326,8 +326,7 @@ static void view_lollipops_callback(Widget w, XtPointer cD, XtPointer mD)
 #if HAVE_EXTENSION_LANGUAGE
 static void view_listener_callback(Widget w, XtPointer cD, XtPointer mD) 
 {
-  snd_state *ss = (snd_state *)cD;
-  IF_MENU_HOOK(STR_View, STR_Show_listener) handle_listener((snd_state *)cD, (!(ss->listening)));
+  IF_MENU_HOOK(STR_View, STR_Show_listener) handle_listener((snd_state *)cD, (listener_height() < 5));
 }
 #endif
 
@@ -384,7 +383,11 @@ static void view_files_callback_1(Widget w, XtPointer cD, XtPointer mD)
   IF_MENU_HOOK(STR_View, STR_Files) view_files_callback(w, cD, mD);
 }
 
-
+static void view_menu_update(Widget w, XtPointer cD, XtPointer mD) 
+{
+  /* make sure listener menu option label correctly reflects current listener state */
+  set_view_listener_label((listener_height() > 10) ? STR_Hide_listener : STR_Show_listener);
+}
 
 /* -------------------------------- OPTIONS MENU -------------------------------- */
 
@@ -683,6 +686,7 @@ Widget add_menu(snd_state *ss)
   XtSetArg(high_args[high_n], XmNsubMenuId, mw[view_menu]); high_n++;
   XtSetArg(high_args[high_n], XmNmnemonic, 'V'); high_n++;
   mw[v_cascade_menu] = XtCreateManagedWidget(STR_View, xmCascadeButtonWidgetClass, mw[menu_menu], high_args, high_n);
+  XtAddCallback(mw[v_cascade_menu], XmNcascadingCallback, view_menu_update, NULL);
 
   mw[v_ctrls_menu] = XtCreateManagedWidget(STR_Show_controls, xmPushButtonWidgetClass, mw[view_menu], main_args, main_n);
   XtAddCallback(mw[v_ctrls_menu], XmNactivateCallback, view_ctrls_callback, ss);

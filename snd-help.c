@@ -1875,6 +1875,7 @@ static char CLM_help_string[] =
   mixer-ref           (mix in out)         mix-scaler[in, out]\n\
   mixer-set!          (mix in out val)     mix-scaler[in, out] = val\n\
   mixer?              (gen)                #t if gen is mixer object\n\
+  move-locsig         (gen degree distance) move locsig placement\n\
   multiply-arrays     (arr1 arr2)          arr1[i] *= arr2[i]\n\
   ;; the \"mus-\" functions are generic functions, to set use mus-set-var as in mus-set-frequency\n\
   mus-a0              (gen)                a0 field (simple filters)\n\
@@ -2038,17 +2039,17 @@ and the location of the associated C code will be displayed, if it can be found.
 	  value = XEN_NAME_AS_C_STRING_TO_VALUE(str);
 	}
       else value = text;
-      help_text = scm_object_property(value, XEN_DOCUMENTATION_SYMBOL);         /* (object-property ...) */
+      help_text = XEN_OBJECT_HELP(value);         /* (object-property ...) */
       if ((XEN_FALSE_P(help_text)) &&
 	  (XEN_PROCEDURE_P(value)))
 	{
-	  help_text = scm_procedure_property(value, XEN_DOCUMENTATION_SYMBOL);  /* (procedure-property ...) */
+	  help_text = XEN_PROCEDURE_HELP(value);  /* (procedure-property ...) */
 	  if (XEN_FALSE_P(help_text))
-	    help_text = scm_procedure_documentation(value);      /* (procedure-documentation ...) -- this is the first line of source if string */
+	    help_text = XEN_PROCEDURE_SOURCE_HELP(value);      /* (procedure-documentation ...) -- this is the first line of source if string */
 	}
       if ((XEN_FALSE_P(help_text)) &&
 	  (str))
-	help_text = scm_object_property(C_STRING_TO_XEN_SYMBOL(str), XEN_DOCUMENTATION_SYMBOL);
+	help_text = XEN_OBJECT_HELP(C_STRING_TO_XEN_SYMBOL(str));
       if (XEN_STRING_P(help_text))
         {
 	  /* look for C code location (if index.scm has been loaded) */

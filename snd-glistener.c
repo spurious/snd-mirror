@@ -203,7 +203,7 @@ static void back_to_start(snd_state *ss)
     {
       for (i = start_of_text; i >= 0; i--)
 	if ((full_str[i] == prompt[0]) && 
-	    ((i == 0) || (full_str[i-1] == '\n')))
+	    ((i == 0) || (full_str[i - 1] == '\n')))
 	  {
 	    start_of_text = i + 1;
 	    break;
@@ -495,11 +495,21 @@ void handle_listener(snd_state *ss, int open)
       set_view_listener_label(STR_Show_listener);
       gtk_widget_hide(listener_text);
     }
-  ss->listening = open;
 }
 
-int listener_height(void) {if (listener_text) return(widget_height(listener_text)); else return(0);}
-int listener_width(void) {if (listener_text) return(widget_width(listener_text)); else return(0);}
+int listener_height(void) 
+{
+  if ((listener_text) && (GTK_WIDGET_VISIBLE(listener_text)))
+    return(widget_height(listener_text));
+  else return(0);
+}
+
+int listener_width(void) 
+{
+  if ((listener_text) && (GTK_WIDGET_VISIBLE(listener_text)))
+    return(widget_width(listener_text)); 
+  else return(0);
+}
 
 static XEN g_listener_selected_text(void)
 {

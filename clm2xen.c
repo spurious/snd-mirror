@@ -664,12 +664,12 @@ XEN_MAKE_OBJECT_FREE_PROCEDURE(mus_xen, free_mus_xen, mus_xen_free)
 static int print_mus_xen(XEN obj, XEN port, scm_print_state *pstate)
 {
   char *str;
-  scm_puts("#<", port);
+  XEN_PUTS("#<", port);
   str = mus_describe(MUS_XEN_TO_CLM(obj));
   if (str)
-    scm_puts(str, port);
-  else scm_puts("nil", port);
-  scm_puts(">", port);
+    XEN_PUTS(str, port);
+  else XEN_PUTS("nil", port);
+  XEN_PUTS(">", port);
   return(1);
 }
 #endif
@@ -3710,6 +3710,7 @@ static XEN g_channel(XEN obj)
 #define S_mus_sinusoidal    "mus-sinusoidal"
 #define S_locsig_type       "locsig-type"
 #define S_set_locsig_type   "set-locsig-type"
+#define S_move_locsig       "move-locsig"
 
 static XEN g_locsig_ref(XEN obj, XEN chan)
 {
@@ -3868,6 +3869,17 @@ static XEN g_channels(XEN obj)
   return(C_TO_SMALL_XEN_INT(mus_channels(MUS_XEN_TO_CLM(obj))));
 }
 
+static XEN g_move_locsig(XEN obj, XEN degree, XEN distance)
+{
+  #define H_move_locsig "(" S_move_locsig " gen degree distance) moves locsig gen to reflect degree and distance"
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_locsig_p(MUS_XEN_TO_CLM(obj))), obj, XEN_ARG_1, S_move_locsig, "a locsig gen");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(degree), degree, XEN_ARG_2, S_move_locsig, "a number in degrees");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(distance), distance, XEN_ARG_3, S_move_locsig, "a number > 1.0");
+  mus_move_locsig(MUS_XEN_TO_CLM(obj),
+		  XEN_TO_C_DOUBLE(degree),
+		  XEN_TO_C_DOUBLE(distance));
+  return(obj);
+}
 
 
 /* ---------------- src ---------------- */
@@ -4614,7 +4626,7 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
   mus_any ***envs1 = NULL;
   char *outfile = NULL, *infile = NULL;
   int in_len = 0, out_len, i, j, ostart = 0, istart = 0, osamps = 0;
-  int in_chans, out_chans, in_size, out_size;  /* mus_mix in clm.c assumes the envs array is large enough */
+  int in_chans, out_chans, in_size = 0, out_size;  /* mus_mix in clm.c assumes the envs array is large enough */
   XEN *vdata0; XEN *vdata1;
   XEN_ASSERT_TYPE(XEN_STRING_P(out), out, XEN_ARG_1, S_mus_mix, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(in), in, XEN_ARG_2, S_mus_mix, "a string");
@@ -4881,6 +4893,7 @@ XEN_NARGIFY_2(g_set_increment_w, g_set_increment)
 XEN_NARGIFY_1(g_locsig_p_w, g_locsig_p)
 XEN_NARGIFY_3(g_locsig_w, g_locsig)
 XEN_VARGIFY(g_make_locsig_w, g_make_locsig)
+XEN_NARGIFY_3(g_move_locsig_w, g_move_locsig)
 XEN_NARGIFY_0(g_locsig_type_w, g_locsig_type)
 XEN_NARGIFY_1(g_set_locsig_type_w, g_set_locsig_type)
 XEN_NARGIFY_1(g_channels_w, g_channels)
@@ -5143,6 +5156,7 @@ XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 #define g_locsig_p_w g_locsig_p
 #define g_locsig_w g_locsig
 #define g_make_locsig_w g_make_locsig
+#define g_move_locsig_w g_move_locsig
 #define g_locsig_type_w g_locsig_type
 #define g_set_locsig_type_w g_set_locsig_type
 #define g_channels_w g_channels
@@ -5493,6 +5507,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_locsig_p,          g_locsig_p_w, 1, 0, 0,          H_locsig_p);
   XEN_DEFINE_PROCEDURE(S_locsig,            g_locsig_w, 3, 0, 0,            H_locsig);
   XEN_DEFINE_PROCEDURE(S_make_locsig,       g_make_locsig_w, 0, 0, 1,       H_make_locsig);
+  XEN_DEFINE_PROCEDURE(S_move_locsig,       g_move_locsig_w, 3, 0, 0,       H_move_locsig);
   XEN_DEFINE_PROCEDURE(S_mus_channels,      g_channels_w, 1, 0, 0,          H_mus_channels);
   XEN_DEFINE_PROCEDURE(S_locsig_ref,        g_locsig_ref_w, 2, 0, 0,        H_locsig_ref);
   XEN_DEFINE_PROCEDURE(S_locsig_reverb_ref, g_locsig_reverb_ref_w, 2, 0, 0, H_locsig_reverb_ref);

@@ -114,6 +114,7 @@ static XEN g_change_property(XEN winat, XEN name, XEN command)
 {
   char *c;
   /* winat arg needed as well as command arg because we need an atom that is guaranteed to have a value */
+  /*   Supposedly WM_STATE is just such an atom */
   XEN_ASSERT_TYPE(XEN_STRING_P(winat), name, XEN_ARG_1, S_change_property, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_change_property, "a string");
   if (XEN_STRING_P(command))

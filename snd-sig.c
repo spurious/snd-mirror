@@ -47,7 +47,7 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
   if (pos == AT_CURRENT_EDIT_POSITION)
     return(cp->edit_ctr);
   if ((pos < 0) || 
-      (pos > cp->edit_size) ||
+      (pos >= cp->edit_size) ||
       (cp->edits[pos] == NULL))
     XEN_ERROR(NO_SUCH_EDIT,
 	      XEN_LIST_4(C_TO_XEN_STRING(caller),
@@ -1642,6 +1642,11 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, int beg, int dur, XEN ed
 	  ebin = (int)floor((beg + dur) / ep->samps_per_bin);
 	  for (i = sbin, j = ebin - 1; i < j; i++, j--)
 	    {
+#if DEBUGGING
+	      if (i >= ep->amp_env_size) abort();
+	      if (j >= ep->amp_env_size) abort();
+	      if (j < 0) abort();
+#endif
 	      min1 = ep->data_min[i];
 	      max1 = ep->data_max[i];
 	      ep->data_min[i] = ep->data_min[j];

@@ -169,7 +169,7 @@ static void execute_named_macro(chan_info *cp, char *name, int count)
     /* not a macro...*/
     {
       one_edit = cp->edit_ctr + 1;
-      form = C_STRING_TO_XEN_FORM(name);
+      form = string_to_form(name);
       for (i = 0; i < count; i++)
 	result = snd_catch_any(eval_form_wrapper, (void *)form, name);
       snd_report_result(cp->state, result, name);
@@ -521,8 +521,6 @@ static chan_info *goto_next_graph (chan_info *cp, int count)
 	      ncp = sp->chans[j - 1];
 	    break;
 	  }
-      /* if (ss->listening) {goto_listener(); k--; if (k == 0) return;} */
-      /* not really right because C-x in listener already exits listener (so C-x O in one chan case bounces back to self) */
       if (k > 0)
 	for (i = 0; i <= sp->index; i++)
 	  if (snd_ok(ss->sounds[i]))
@@ -789,7 +787,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	  execute_named_macro(active_chan, str, sp->macroing);
 	  /* if this is a close command from the current minibuffer, the sound may not exist when we return */
 	  ss->mx_sp = NULL;
-	  if (sp->state == NULL) return;
+	  if (sp == NULL) return;
 	  sp->macroing = 0;
 	  if (str) free(str);
 	  return;
@@ -1631,16 +1629,12 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      /* it might be better to remove the menu accelerators -- they are a dubious feature to begin with */
 #endif
 #if HAVE_EXTENSION_LANGUAGE
-	      if (ss->listening)
+	      if (listener_height() > 5)
 		{
-		  if (listener_height() > 5)
-		    {
-		      char buf[2];
-		      goto_listener();
-		      buf[0] = keysym; buf[1] = 0;
-		      listener_append(ss, buf);
-		    }
-		  /* else activate?? */
+		  char buf[2];
+		  goto_listener();
+		  buf[0] = keysym; buf[1] = 0;
+		  listener_append(ss, buf);
 		}
 	      else 
 		{
@@ -1651,7 +1645,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 		      sp->macroing = count;
 		      redisplay = KEYBOARD_NO_ACTION;
 		    }
-		  report_in_minibuffer(sp, "%s%s undefined", (state & snd_MetaMask) ? "M-" : "", key_to_name(keysym));
+		  else report_in_minibuffer(sp, "%s%s undefined", (state & snd_MetaMask) ? "M-" : "", key_to_name(keysym));
 		}
 	      /* should we open the minibuffer in all cases? */
 #else

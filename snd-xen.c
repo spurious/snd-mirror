@@ -138,11 +138,11 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 			  scm_make_string(XEN_ZERO, SCM_MAKE_CHAR(0)),
 			  SCM_OPN | SCM_WRTNG,
 			  __FUNCTION__);
-    scm_display(tag, lport);
-    scm_puts(": ", lport);
-    scm_display(throw_args, lport);
-    scm_force_output(lport);
-    fprintf(stderr, XEN_TO_C_STRING(scm_strport_to_string(lport)));
+    XEN_DISPLAY(tag, lport);
+    XEN_PUTS(": ", lport);
+    XEN_DISPLAY(throw_args, lport);
+    XEN_FLUSH_PORT(lport);
+    fprintf(stderr, XEN_TO_C_STRING(XEN_PORT_TO_STRING(lport)));
   }
 #endif
 
@@ -151,19 +151,19 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
     {
       if (XEN_NOT_FALSE_P(XEN_CAR(throw_args)))
 	{
-	  scm_display(XEN_CAR(throw_args), port);
-	  scm_puts(": ", port);
+	  XEN_DISPLAY(XEN_CAR(throw_args), port);
+	  XEN_PUTS(": ", port);
 	}
       if (XEN_LIST_LENGTH(throw_args) > 1)
 	{
 	  if (XEN_EQ_P(tag, NO_SUCH_FILE))
 	    {
-	      scm_display(tag, port);
-	      scm_puts(" \"", port);
-	      scm_display(XEN_CADR(throw_args), port);
-	      scm_puts("\" ", port);
+	      XEN_DISPLAY(tag, port);
+	      XEN_PUTS(" \"", port);
+	      XEN_DISPLAY(XEN_CADR(throw_args), port);
+	      XEN_PUTS("\" ", port);
 	      if (XEN_LIST_LENGTH(throw_args) > 2)
-		scm_display(XEN_CDDR(throw_args), port);
+		XEN_DISPLAY(XEN_CDDR(throw_args), port);
 	    }
 	  else
 	    {
@@ -180,16 +180,16 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 #endif
 		  (XEN_EQ_P(tag, IMPOSSIBLE_BOUNDS)) || (XEN_EQ_P(tag, NO_SUCH_SAMPLE)))
 		{
-		  scm_display(tag, port);
-		  scm_puts(" ", port);
-		  scm_display(throw_args, port);
+		  XEN_DISPLAY(tag, port);
+		  XEN_PUTS(" ", port);
+		  XEN_DISPLAY(throw_args, port);
 		}
 	      else
 		{
 		  stmp = XEN_CADR(throw_args);
 		  if ((XEN_STRING_P(stmp)) && (XEN_LIST_LENGTH(throw_args) > 2))
 		    scm_display_error_message(stmp, XEN_CADDR(throw_args), port);
-		  else scm_display(tag, port);
+		  else XEN_DISPLAY(tag, port);
 		  if (show_backtrace(ss))
 		    {
 #if HAVE_SCM_C_DEFINE
@@ -203,32 +203,32 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 		}
 	    }
 	}
-      else scm_display(tag, port);
+      else XEN_DISPLAY(tag, port);
     }
   else 
     {
-      scm_display(tag, port);
-      scm_puts(": ", port);
-      scm_display(throw_args, port);
+      XEN_DISPLAY(tag, port);
+      XEN_PUTS(": ", port);
+      XEN_DISPLAY(throw_args, port);
     }
   possible_code = (char *)data;
   if ((possible_code) && 
       (snd_strlen(possible_code) < PRINT_BUFFER_SIZE))
     {
       /* not actually sure if this is always safe */
-      scm_puts("\n; ", port);
-      scm_puts(possible_code, port);
+      XEN_PUTS("\n; ", port);
+      XEN_PUTS(possible_code, port);
     }
   if (last_file_loaded)
     {
       /* sigh -- scm_current_load_port is #f so can't use scm_port_filename etc */
-      scm_puts("\n(while loading \"", port);
-      scm_puts(last_file_loaded, port);
-      scm_puts("\")", port);
+      XEN_PUTS("\n(while loading \"", port);
+      XEN_PUTS(last_file_loaded, port);
+      XEN_PUTS("\")", port);
       last_file_loaded = NULL;
     }
-  scm_force_output(port); /* needed to get rid of trailing garbage chars?? -- might be pointless now */
-  name_buf = XEN_TO_C_STRING(scm_strport_to_string(port));
+  XEN_FLUSH_PORT(port); /* needed to get rid of trailing garbage chars?? -- might be pointless now */
+  name_buf = XEN_TO_C_STRING(XEN_PORT_TO_STRING(port));
   if (send_error_output_to_stdout)
     string_to_stdout(ss, name_buf);
   else
@@ -239,14 +239,14 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 	  clear_minibuffer_prompt(sp);
 	  report_in_minibuffer(sp, name_buf);
 	}
-      if (ss->listening)
+      if (listener_height() > 5)
 	listener_append_and_prompt(ss, name_buf);
       else 
 	if (!(ss->mx_sp))
 	  snd_error(name_buf);
     }
 #endif
-  check_for_event(ss);
+  check_for_event(get_global_state());
   return(tag);
 }
 
@@ -401,6 +401,16 @@ XEN eval_form_wrapper(void *data)
   return(XEN_EVAL_FORM((XEN)data));
 }
 
+static XEN string_to_form_1(void *data)
+{
+  return(C_STRING_TO_XEN_FORM((char *)data));
+}
+
+XEN string_to_form(void *str)
+{
+  return(snd_catch_any(string_to_form_1, (void *)str, (const char *)str));  /* catch needed else #< in input (or incomplete form) exits Snd! */
+}
+
 static XEN eval_file_wrapper(void *data)
 {
   last_file_loaded = (char *)data;
@@ -525,9 +535,9 @@ char *g_print_1(XEN obj) /* don't free return val */
   XEN port;
   str = scm_makstr (0, 0);
   port = scm_mkstrport (XEN_ZERO, str, SCM_OPN | SCM_WRTNG, __FUNCTION__);
-  scm_prin1 (obj, port, 1);
-  val = scm_strport_to_string(port);
-  scm_close_port (port);
+  scm_prin1(obj, port, 1);
+  val = XEN_PORT_TO_STRING(port);
+  XEN_CLOSE_PORT(port);
   str1 = XEN_TO_C_STRING(val);
 #endif
 #endif
@@ -594,7 +604,7 @@ XEN snd_report_result(snd_state *ss, XEN result, char *buf)
       clear_minibuffer_prompt(sp);
       report_in_minibuffer(sp, str);
     }
-  if (ss->listening)
+  if (listener_height() > 5)
     {
       if (buf) listener_append(ss, buf);
       listener_append_and_prompt(ss, str);
@@ -615,7 +625,7 @@ XEN snd_report_listener_result(snd_state *ss, XEN form)
   result = snd_catch_any(eval_form_wrapper, (void *)form, NULL);
   str = gl_print(result);
 #endif
-  if (ss->listening)
+  if (listener_height() > 5)
     listener_append_and_prompt(ss, str);
   if (str) FREE(str);
   return(result);
@@ -679,7 +689,7 @@ void snd_eval_stdin_str(snd_state *ss, char *buf)
       send_error_output_to_stdout = 1;
       result = snd_catch_any(eval_str_wrapper, (void *)str, str);
       send_error_output_to_stdout = 0;
-      FREE(stdin_str); /* same as str in this case */
+      if (str) FREE(str);
       stdin_str = NULL;
       str = gl_print(result);
       string_to_stdout(ss, str);
@@ -1387,14 +1397,14 @@ static XEN g_show_listener(void)
 {
   #define H_show_listener "(" S_show_listener ") opens the lisp listener pane"
   handle_listener(state, TRUE); 
-  return(C_TO_XEN_BOOLEAN(state->listening));
+  return(C_TO_XEN_BOOLEAN(listener_height() > 5));
 }
 
 static XEN g_set_show_listener(XEN val)
 {
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, "set-" S_show_listener, "a boolean");
   handle_listener(state, XEN_TO_C_BOOLEAN(val));
-  return(C_TO_XEN_BOOLEAN(state->listening));
+  return(C_TO_XEN_BOOLEAN(listener_height() > 5));
 }
 
 static XEN g_help_text_font(void) {return(C_TO_XEN_STRING(help_text_font(state)));}

@@ -178,8 +178,19 @@ static void file_help_callback (Widget w, XtPointer context, XtPointer info)
 "If you click the 'Sound Files Only' button, only those files in the current directory that look vaguely like sound files will be displayed.");
 }
 
+static void file_dialog_stop_playing(file_dialog_info *fd)
+{
+  if ((fd->file_play_sp) && 
+      (fd->file_play_sp->playing)) 
+    {
+      stop_playing_sound(fd->file_play_sp);
+      fd->file_play_sp = NULL;
+    }
+}
+
 static void file_cancel_callback (Widget w, XtPointer context, XtPointer info) 
 {
+  file_dialog_stop_playing((file_dialog_info *)context);
   XtUnmanageChild (w);
 }
 
@@ -216,14 +227,7 @@ static void play_selected_callback(Widget w, XtPointer context, XtPointer info)
 		       "selected file play", 0);
 	}
     }
-  else
-    {
-      if ((fd->file_play_sp) && (fd->file_play_sp->playing)) 
-	{
-	  stop_playing_sound(fd->file_play_sp);
-	  fd->file_play_sp = NULL;
-	}
-    }
+  else file_dialog_stop_playing(fd);
 }
 
 static void play_selected_help_callback(Widget w, XtPointer context, XtPointer info) 
@@ -556,6 +560,7 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(w), w);
   XtUnmanageChild(w);
   XmStringGetLtoR (cbs->value, XmFONTLIST_DEFAULT_TAG, &filename);
+  file_dialog_stop_playing(fd);
   if (!(is_directory(filename)))               /* this can be a directory name if the user clicked 'ok' when he meant 'cancel' */
     {
       sp = snd_open_file(filename, 
@@ -588,12 +593,14 @@ void make_open_file_dialog(snd_state *ss, int read_only, int managed)
 static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmFileSelectionBoxCallbackStruct *cbs = (XmFileSelectionBoxCallbackStruct *)info;
+  file_dialog_info *fd = (file_dialog_info *)context;
   char *filename;
   snd_state *ss;
   ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(w), w);
   ss = get_global_state();
   XtUnmanageChild(w);
   XmStringGetLtoR (cbs->value, XmFONTLIST_DEFAULT_TAG, &filename);
+  file_dialog_stop_playing(fd);
   if (!(is_directory(filename)))               /* this can be a directory name if the user clicked 'ok' when he meant 'cancel' */
     {
       mix_complete_file(any_selected_sound(ss), 

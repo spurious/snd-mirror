@@ -47,7 +47,6 @@
 ;;; voice instrument (formants via FM)
 ;;; filtered-env (low-pass and amplitude follow envelope)
 ;;; multi-colored rxvt printout
-;;; locsig using fancier placement choice (Michael Edwards)
 ;;; lisp graph with draggable x axis
 ;;; pointer focus within Snd
 ;;; View: Files dialog chooses which sound is displayed
@@ -1996,38 +1995,6 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 
 ;(display (format #f "~A~Ahiho~Ahiho" yellow-bg red-fg normal-text))
 !#
-
-;;; -------- locsig using fancier placement choice
-;;;
-;;; this is now built into the standard locsig
-
-(define (make-cpp-locsig . args)
-  "(make-cpp-locsig .args) is a slightly fancier locsig -- it uses sin and cos to set respective amplitude. \
-Arguments are the same as in make-locsig."
-  (define (get-cpp-scalers degree)
-    (let* ((magic (/ (sqrt 2) 2))
-	   ;; although we (in clm) specify the degree from 0 - 90, for the sake
-	   ;; of the calculation it's from -45 to 45 with 0, not 45, being the
-	   ;; centre. 
-	   ;; (this taken from panning.lsp by Michael Edwards which is based on Curt Roads' suggestions)
-	   (radians (degrees->radians (- 45.0 degree)))
-	   (cos (cos radians))
-	   (sin (sin radians)))
-      (list (* magic (+ cos sin))
-	    (* magic (- cos sin)))))
-  (define* (make-cpp-locsig-internal curloc #:key (degree 0.0) (distance 1.0) #:allow-other-keys)
-    ;; here we're picking the two original arguments that interest us (degree and distance)
-    (let ((new-vals (get-cpp-scalers degree))
-	  (dist (/ 1.0 (max distance 1.0))))
-      (locsig-set! curloc 0 (* dist (car new-vals)))
-      (locsig-set! curloc 1 (* dist (cadr new-vals)))))
-  (let ((locgen (apply make-locsig args)))
-    (if (= (mus-channels locgen) 2)
-	(apply make-cpp-locsig-internal locgen args))
-    locgen))
-
-(define cpp-locsig locsig)
-
 
 ;;; -------- lisp graph with draggable x axis
 

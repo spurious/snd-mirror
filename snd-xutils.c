@@ -500,8 +500,9 @@ void set_selected_mix_color(snd_state *ss, Pixel color)
   XSetForeground(dpy, sx->selected_mix_gc, color);
 }
 
-#if NEED_XPM_GET_ERROR_STRING
-char *XpmGetErrorString(off_err) {return("");}
+#if (!(HAVE_XPM_GET_ERROR_STRING))
+char *XpmGetErrorString(int err);
+char *XpmGetErrorString(int err) {return("");}
 #endif
 
 void reflect_resize(snd_state *ss)

@@ -4522,7 +4522,7 @@
 (CFNC "gboolean gtk_tree_sortable_get_sort_column_id GtkTreeSortable* sortable gint* sort_column_id GtkSortType* order")
 (CFNC "void gtk_tree_sortable_set_sort_column_id GtkTreeSortable* sortable gint sort_column_id GtkSortType order")
 (CFNC "void gtk_tree_sortable_set_sort_func GtkTreeSortable* sortable gint sort_column_id GtkTreeIterCompareFunc func lambda_data func_data GtkDestroyNotify destroy")
-;; TODO: sort_func
+;; TODO: callbackmarshal func
 ;;       typedef void (*GtkCallbackMarshal) (GtkObject *object,gpointer data,guint n_args,GtkArg *args)
 (CFNC "void gtk_tree_sortable_set_default_sort_func GtkTreeSortable* sortable GtkTreeIterCompareFunc func lambda_data func_data GtkDestroyNotify destroy")
 (CFNC "gboolean gtk_tree_sortable_has_default_sort_func GtkTreeSortable* sortable")

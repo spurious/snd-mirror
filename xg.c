@@ -37918,11 +37918,11 @@ static void define_integers(void)
 
 #if HAVE_GUILE
 #if HAVE_SCM_C_DEFINE
-  #define DEFINE_INTEGER(Name, Value) scm_c_define(Name, scm_long2num(Value))
-  #define DEFINE_ULONG(Name, Value) scm_c_define(Name, scm_ulong2num(Value))
+  #define DEFINE_INTEGER(Name, Value) scm_c_define(Name, C_TO_XEN_INT(Value))
+  #define DEFINE_ULONG(Name, Value) scm_c_define(Name, C_TO_XEN_ULONG(Value))
 #else
-  #define DEFINE_INTEGER(Name, Value) gh_define(Name, scm_long2num(Value))
-  #define DEFINE_ULONG(Name, Value) gh_define(Name, scm_ulong2num(Value))
+  #define DEFINE_INTEGER(Name, Value) gh_define(Name, C_TO_XEN_INT(Value))
+  #define DEFINE_ULONG(Name, Value) gh_define(Name, C_TO_XEN_ULONG(Value))
 #endif
 #else
   #define DEFINE_INTEGER(Name, Value) rb_define_global_const(Name, C_TO_XEN_INT(Value))
@@ -39789,7 +39789,7 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"16-Mar-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"18-Mar-02\")");
 #endif
       xg_already_inited = 1;
     }

@@ -1562,8 +1562,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       /* this doesn't work yet because the control panel is screwed up when trying to display itself horizontally */
       /* Perhaps another layer of panes? */
 
-      if ((sound_style(ss) == SOUNDS_VERTICAL) &&
-	  (ss->listening))
+      if (sound_style(ss) == SOUNDS_VERTICAL)
 	{
 	  XtSetArg(args[n], XmNpositionIndex, snd_slot); n++;
 	}

@@ -1035,7 +1035,6 @@ the split depends on the panning envelope (0 = all in chan 0, etc).
   <em class=def><a name="exvoiced2unvoiced">voiced-&gt;unvoiced</a></em> amp fftsize r tempo
   <em class=def><A NAME="excnvtest">cnvtest</a></em> snd0 snd1 amp
   <em class=def><A NAME="exjcreverb">jc-reverb</a></em> decay-dur low-pass volume amp-env
-  <em class=def><A NAME="excpplocsig">fancier locsig</a></em>
   <em class=def><A NAME="excvectorsynthesis">"vector synthesis"</a></em>	
 </pre>
 <p><i>expsrc</i> uses sampling rate conversion (the src gen) and granular synthesis (granulate)
@@ -1066,8 +1065,6 @@ Here are some sample calls:
 (jc-reverb 2.0 #f .1 #f)
 </pre>
 <p>There are lots more sound effects scattered around the Snd distribution.
-The "fancier locsig", to quote Michael Edwards "avoids the 'hole in the middle' problem that occurs when
-trying to centre a signal in the middle of two speakers"; it is based on CLM's panning.lsp.
 "vector synthesis" cycles through a collection of incoming audio streams, playing whatever
 happens to be on the chosen one, with fade-ins and fade-outs to avoid clicks.
 </p>
