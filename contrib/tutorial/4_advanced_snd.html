@@ -1,0 +1,88 @@
+
+<html>
+<body bgcolor="#FFFFFF">
+
+<center><h3>SOME ADVANCED USES OF SND</h3></center>
+<p>
+
+There are too many other untapped resources in Snd to cover in this article, such as the scanned synthesis display, the FM violin controls, and running Snd remotely. But before we leave let's take a brief look at a few advanced uses of Snd...
+<p>
+
+<b>Batch Processing And GUI-less Snd</b> 
+<p>
+
+You may recall that Snd can be compiled without support for any GUI. In this form it can be used as an interactive interpreter for Scheme commands, as seen in the following very simple sequence:
+<p>
+
+<pre>
+    [dlphilp@localhost snd-5]$ ./snd
+    snd> (open-sound "bunt.wav")
+    0
+    snd> (play)
+    #t
+    snd> (close-sound 0)
+    (null)#f
+    snd> (exit)
+</pre>
+
+The call to open bunt.wav returns the file ID, the play command plays any files opened (all at once if several are loaded), and close-sound closes out the file with the particular ID.
+<p>
+
+Snd with no GUI can also function as a batch processor for Scheme scripts. For example, this test.scm file:
+<p>
+
+<pre>
+    (open-sound "bunt.wav")
+    (scale-by 0.5)
+    (save-sound-as "bunt-scaled.snd")
+    (exit)
+</pre>
+
+will open bunt.wav, reduce its amplitude by half, save it as a new file, and exit. Run it with this command under Snd with no GUI:
+<p>
+
+<pre>
+	snd -l test.scm
+</pre>
+
+Obviously far more complex scripts can be assembled, and the interested reader is advised to refer to the relevant sections of Snd's documentation.
+<p>
+
+<b>Other Dynamically-loaded Modules</b>
+<p>
+
+So far we have considered LADSPA plugins and Scheme code files as ways to dynamically load new functions into Snd. Snd is also capable of loading shared objects at runtime via commands issued in the Listener. The procedure for building shared objects from the Scheme code is described in detail in the Snd documentation, and I refer the interested reader to those sections dealing with Snd's use of runtime modules and external programs. The documentation also describes methods for using external applications with Snd, such as Perry Cook's <a href=http://www-ccrma.stanford.edu/software/stk/>STK</a> (synthesis toolkit), the <a href=http://home.sprynet.com/~cbagwell/sox.html>SoX</a> "Swiss Army knife of audio", and Bill Schottstaedt's own Common LISP Music.
+<p>
+
+For example, you can link a shared object into Snd with these commands:
+<p>
+
+<pre>
+	(define lib (dynamic-link "/home/dlphilp/snd-5/eff.so"))
+	(dynamic-call "init_eff" lib)  
+</pre>
+
+At this point you can invoke the flange processor from the shared object:
+<p>
+
+<pre>
+	(loop-samples (make-sample-reader 0) (get-flange) (frames) "flange" (make-flange 2.0 5.0 0.001))
+</pre>
+
+Called this way the flange processor should run about thirty times faster than if it were called via the same code in effects.scm.
+<p>
+
+<b>Panning Envelopes</b> 
+<p>
+
+If you load the customization package Snd will place a Special menu on the main menu bar. Among other things that menu offers a Start/Stop Enveloping feature. When Start Enveloping is invoked the next file opened will appear with a graphic envelope editor beside the usual time-domain waveform display [Figure 14]. This editor will appear along all subsequently opened files until the Stop Enveloping item is selected. When Start Enveloping is active you can create an envelope in the graphic editor and apply it to either amplitude or panning. I have added a widget for the panning function, available from the Special/Play Panned menu item, to make it easier to experiment with this interesting feature.
+<p>
+
+<center> <img src="images/jpg/4_01-snd_pan_env.jpg">
+<p>
+<b>Figure 14.</b> Making a panning envelope
+</center>
+<p>
+
+</body>
+</html>

@@ -1,0 +1,235 @@
+
+<html>
+<body bgcolor="#FFFFFF">
+
+<u><b>CUSTOMIZING SND: THE BASICS</b></u>
+<p>
+
+Both Cool Edit and Snd can be customized, but in Cool Edit the extent is limited to interface cosmetics, audio system configuration settings, and support for plugin architectures (though this support is very powerful). Snd is vastly more extensible, and it is by means of that extensibility that we will find a gentler and perhaps more familiar way into the depths of Snd. And yes, Snd also supports a plugin architecture (LADSPA). Let's take a closer look at how we can customize Snd to make it friendlier to Cool Edit users.
+<p>
+
+Snd's functions can be customized and extended by means of three files: the .snd initialization file, the Snd.ad X resource file, and Scheme code (i.e., files with the .scm extensions) loaded at runtime or dynamically loaded during program operation (via the Listener window). Some customization options are also available at the command-line when launching Snd. The resource and initialization files can both contain Scheme code, but I suggest placing lengthy code within its own file or files. 
+<p>
+
+I use my $HOME/.snd initialization file (included in the dp_scm tarball listed in the Resources for this article) to define the cursor shape, set display colors, restrict file listings to soundfile types only, and set some audio parameters. This file also stores the information generated from selecting Save Options from the Options menu. 
+<p>
+
+An X/Motif program such as Snd may utilize a resource file that defines various aspects of the Motif graphic interface such as color sets and font lists. The Snd distribution contains a resource file named Snd.ad (the extensions stands for "applications defaults") that should be copied simply as <i>Snd</i> to your $HOME directory. There isn't much to edit in Snd.ad, and you can safely leave it as it's found in the source package. 
+<p>
+
+The source distribution includes a large collection of <i>scm</i> files. These Scheme code files are the keys to accessing Snd's full range of capabilities, including routines for signal processing and other special effects and for adding new features to the graphic interface (such as menus and graphic control widgets). We will return to these files throughout this article, and we will investigate some of them in detail, but for now let's continue with our introduction to the basics of Snd.
+<p>
+
+Here's how I might typically open Snd:
+<p>
+<pre>
+	snd -geometry 900x800 -xrm '*autoresize: 0' -l /home/dlphilp/my_scm/misc.scm foo.snd foo.wav foo.au foo.sf2 foo.mp3 foo.W01 
+</pre>
+<p>
+
+The -geometry flag is an X windows option to set the size of any X-aware application and is not unique to Snd. The -xrm flag is another X window option that notifies the X resource manager that Snd's window is to <i>not</i> automatically resize by unlimited expansion. By using this flag I can keep the display size within my monitor's screen area while adding soundfiles; otherwise, the display size will expand beyond my screen resolution.
+<p>
+
+The format extensions to those foo soundfiles should be familiar to most audio people (the last one is a file format for the Yamaha TX16W sampler) and Snd will dutifully load them all. The MP3 and sampler files are converted to RAW and SND respectively, but the conversions work only for importing sounds: Snd does not encode MP3 files nor can it directly write files in the TX16W format (see Table 2 for a full list of Snd's accepted file types).
+<p>
+
+
+<pre>
+*********************************************
+*                                           *
+* Table 2: Comparing supported file formats *
+*                                           *
+*********************************************
+
+Cool Edit:
+     read/write:
+        MPEG 3 (MP3), ACM waveform (WAV), Apple AIFF format (PCM encoded data only) (AIF), 
+        CCITT mu-Law and A-Law waveforms (WAV), Dialogic ADPCM (VOX), IMA/DVI ADPCM waveform (WAV), 
+        Microsoft ADPCM waveform (WAV), Next/Sun CCITT mu-Law, A-Law and PCM format (AU), 
+        Raw PCM Data, Sound Blaster voice file format (VOC), TrueSpeech (WAV), ASCII Text Data (.TXT), 
+        Amiga IFF-8SVX (.IFF, .SVX)
+     write-only:
+        RealMedia G2 (export only)
+
+Snd: 
+     read/write (many data formats):
+        NeXT/Sun/DEC/AFsp, AIFF/AIFC, RIFF (Microsoft WAV), IRCAM (old style), NIST-sphere, no header (RAW)
+     read-only (in selected data formats):
+        8SVX (IFF), EBICSF, INRS, ESPS, SPPACK, ADC (OGI), AVR, VOC, PVF, Sound Tools, Turtle Beach SMP, SoundFont 2.0, 
+        Sound Designer I and II, PSION, MAUD, Kurzweil 2000, Tandy DeskMate,
+        Gravis Ultrasound, ASF, PAF, CSL, Comdisco SPW, Goldwave sample, omf, quicktime Sonic Foundry, SBStudio II, 
+        Delusion digital, Digiplayer ST3, Farandole Composer WaveSample, Ultratracker WaveSample, Sample Dump exchange, 
+        Yamaha SY85/SY99/TX16, Covox v8, SPL, AVI
+     automatically translated to Sun 16-bit, then read/write:
+        IEEE text, Mus10 SAM 16-bit (modes 1 and 4), IBM CVSD, AVI, NIST shortpack, HCOM, Intel and Oki (Dialogic) ADPCM, 
+        MIDI sample dump, G721, G723_24, G723_40, IFF Fibonacci and Exponential
+     automatically translated (with appropriate Scheme module) to 16-bit 44.1 kHz stereo RAW, then read-only:
+        MP3
+</pre>
+<p>
+
+The <b>-l</b> flag informs Snd that a Scheme file is to be loaded along with the rest of the program's normal functions. I utilize several Scheme files from the Snd source package to customize the program with such amenities as an effects menu, various time-domain and frequency-domain editing routines, and other significant interface extensions and enhancements.
+<p>
+
+Multiple instances of this flag may be entered at the command-line, but one Scheme file can '#include' other Scheme files by using the <i>load</i> command. For example, my misc.scm file begins by including some of the distribution Scheme files as well as some custom code for my own extensions:
+<p>
+
+<pre>
+	(load "/home/dlphilp/snd-5/snd-motif.scm")
+	(load "/home/dlphilp/snd-5/examp.scm")
+	(load "/home/dlphilp/snd-5/dsp.scm")
+	...
+	(load "/home/dlphilp/my_scm/special-menu.scm")
+	(load "/home/dlphilp/my_scm/new-effects.scm")
+</pre>
+<p>
+
+But the easiest method for loading your often-used Scheme files is to place statements in your $HOME/.snd file similar to these :
+<p>
+
+<pre>
+	(set! %load-path (cons "/home/dlphilp/my_scm" %load-path))
+	(set! %load-path (cons "/home/dlphilp/snd-5" %load-path))
+	(set! snd-remember-paths #t)
+
+	(load-from-path "misc.scm")
+</pre>
+<p>
+
+After adding those lines you need only specify the desired file to be loaded, without naming its entire path. For instance, the examples above could be entered in misc.scm in this fashion:
+<p>
+
+<pre>
+        (load-from-path "snd-motif.scm")
+        (load-from-path "examp.scm")
+        (load-from-path "dsp.scm")
+        ...
+        (load-from-path "special-menu.scm")
+        (load-from-path "dp-new-effects.scm")
+</pre>
+<p>
+
+Snd will then look for those files in my specified load paths.
+<p>
+
+Other lines in my misc.scm will turn on a "hidden controls" dialog, check for unsaved edits before exiting Snd, summon a panel for listing and editing marks, and add many other features available from the Scheme files loaded above. We'll look more closely into misc.scm later, but for now it is important to note that before using my misc.scm to customize Snd you must edit the load path to indicate where you have unpacked the Snd sources.
+<p>
+
+Snd's graphic display can also be configured using the -notebook, -separate, and -horizontal flags. The notebook flag will present your soundfiles as though they were on pages in a tabbed spiral-bound notebook [Figure 3], while the -separate flag will open the files in separate windows [Figure 4]. Snd's normal graph view stacks multiple soundfiles in a vertical fashion, but the -horizontal flag will place them side by side [Figure 5].
+<p>
+
+
+<center> <img src="images/jpg/2_01-snd_notebook.jpg">
+<p>
+<b>Figure 3.</b> The notebook layout
+</center>
+<p>
+
+<center> <img src="images/jpg/2_02-snd_separate.jpg">
+<p>
+<b>Figure 4.</b> The separated layout
+</center>
+<p>
+
+<center> <img src="images/jpg/2_03-snd_horizontal.jpg ">
+<p>
+<b>Figure 5.</b> The horizontal layout
+</center>
+<p>
+
+Finally, opening Snd with the --help flag will result in this display of information:
+<p>
+
+<p>
+<pre>
+	[dlphilp@localhost dlphilp]$ snd --help
+	Snd is a sound editor.  Peruse the 'help' menu or try the snd-help function for help.
+	This is Snd version 5.2 of 30-Aug-01:
+	    Xen: 1.0, Guile: 1.5.0
+	    OSS 3.9.8
+	    Sndlib 13.7 (29-Aug-01, int24 samples)
+	    CLM 1.51 (6-July-01)
+	    gsl: 0.9.1
+	    Motif 2.1.30 X11R6
+	    Xpm 3.4.11
+	    with LADSPA
+	    Compiled Aug 30 2001 09:40:29
+	    C: egcs-2.91.66 19990314/Linux (egcs-1.1.2 release)
+	    Libc: 2.1.3.stable
+</pre>
+<p>
+
+<u><b>A LOOK AT MY SND</b></u>
+<p>
+
+Figure 6 shows how my customized Snd appears with one soundfile loaded and its time-domain and frequency displays both opened. The marks panel and edit history list are active, and I have also opened the Listener and the Control Panel. Note that you can open or close any sashed panel by grabbing and moving the sash key. Note also the menus added to the main menu bar: the Special, Marks, and Panic Control menus are not standard with Snd, I have added them via my customization files.
+<p>
+
+<center> <img src="images/jpg/2_04-snd_full_defined.jpg">
+<p>
+<b>Figure 6.</b> Full-throttle Snd, with definitions
+</center>
+<p>
+
+<u><b>INSIDE A SCHEME FILE</b></u>
+<p>
+
+Scheme is a LISP-like programming language and Guile is its interpreter. Files written in Scheme are processed by Guile and the results returned to Snd. We have seen what such files can add to Snd, so now let's take a look inside a Scheme module to see how it worksr. We'll use excerpts from my misc.scm file for our example: The file is too long to quote entirely, but I have placed the <a href="files/misc.scm.txt">complete text of misc.scm</a> on-line for interested readers. It is also included in my Snd customization package listed in the Resources at the end of this article.
+<p>
+
+We know already that misc.scm starts by loading a variety of other Scheme files. Immediately after those files are loaded I make the following calls to them from within misc.scm:
+<p>
+
+<pre>
+	(title-with-date)				;;; puts the filename and date in the xterm titlebar, from examp.scm
+	(keep-file-dialog-open-upon-ok)			;;; keeps the file dialog open after clicking on OK, helpful when loading many files, from snd-motif.scm 
+	(make-hidden-controls-dialog)			;;; places the Open Hidden Controls entry in the Options menu, from snd-motif.scm
+	(check-for-unsaved-edits #t)			;;; checks for unsaved edits before closing, from extensions.scm
+	(add-hook! after-open-hook show-disk-space)	;;; reports available disk space to the minibuffer, from snd-motif.scm
+	(add-mark-pane)					;;; adds the mark panel automatically after the first mark is created, from snd-motif.scm
+	(add-sound-file-extension "W01")		;;; adds the soundfile extension W01 (for Yamaha TX16W sampler files) to Snd's internal list of recognized file formats, from extensions.scm
+</pre>
+<p>
+
+These lines demonstrate how to customize Snd using Scheme modules from the source distribution. The actual functions are defined in other pre-loaded Scheme files but are called from misc.scm. Many of Snd's most interesting features are defined throughout the source package's various Scheme files but they are not activated by default. Much of my preparatory work involved studying the various Scheme modules to find what treasures they contained.
+<p>
+
+This code actually adds a new function to Snd and a new entry to an existing menu:
+<p>
+
+<pre>
+	;;; -------- Cut selection -> new file
+
+	(define (cut-selection->new)					;;; give the function a name
+	  (if (selection?)						;;; if there is a selection
+	      (let ((new-file-name (format #f "sel-~D.snd" selctr)))	;;; make a new filename numbered by selctr
+	        (set! selctr (+ selctr 1))				;;; increment selctr
+	        (save-selection new-file-name)				;;; save the selection with the new filename
+	        (delete-selection)					;;; cut out the selection
+	        (open-sound new-file-name))))				;;; open the new file
+
+	(add-to-menu 1 "Cut Selection -> New" cut-selection->new)	;;; add "Cut Selection -> New" to menu number 1 (the Edit menu)
+</pre>
+<p>
+
+Misc.scm can itself act as a holder for Scheme code activated elsewhere. I added this brief block in order to add an Unselect function to Snd:
+<p>
+
+<pre>
+	;;; -------- Deselect function
+
+	(define (deselect-all)				;;; name the new function
+	  (if (selection?)				;;; if there is a selection
+	      (set! (selection-member? #t) #f)))	;;; negate its existence (reset its state from true to false)
+</pre>
+<p>
+ 
+However, I placed the call in Snd's popup.scm for placement in the channel graph display popup menu.
+<p>
+
+These examples indicate how I have gone about customizing Snd. I began by making sure that the baseline features as enumerated by Curtis Roads (and listed in the next section of this article) were present and easily accessible, then I added functions and operations suggested by the responses to my query to Cool Edit users. I must emphasize that I myself wrote virtually no code (well, maybe a wee tiny bit): as stated earlier, my objective has been to make more of Snd's inherent processing and editing power more visible and accessible to users, and thanks especially to the routines in snd-motif.scm (and a lot of help from Bill Schottstaedt) I believe I'm well on the way to meeting that objective.
+<p>
+
+
+</body>
+</html>
