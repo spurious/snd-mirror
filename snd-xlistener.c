@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: C-_ -> undo in listener */
+
 #if (XmVERSION >= 2)
   #define OVERRIDE_TOGGLE 1
   /* Motif 2.0 defines control-button1 to be "take focus" -- this is not a good idea!! */
