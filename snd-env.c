@@ -100,9 +100,17 @@ static void add_point (env *e, int pos, Float x, Float y)
     {
       e->data[j + 2] = e->data[j];
       e->data[j + 3] = e->data[j + 1];
+#if DEBUGGING
+      if ((j + 3) >= e->data_size) abort();
+#endif
+
     }
   e->data[pos * 2] = x;
   e->data[pos * 2 + 1] = y;
+#if DEBUGGING
+      if ((pos * 2 + 1) >= e->data_size) abort();
+#endif
+
   e->pts++;
 }
 
@@ -110,6 +118,10 @@ void move_point (env *e, int pos, Float x, Float y)
 {
   e->data[pos * 2] = x;
   e->data[pos * 2 + 1] = y;
+#if DEBUGGING
+      if ((pos * 2 + 1) >= e->data_size) abort();
+#endif
+
 }
 
 void delete_point(env *e, int pos)
@@ -119,6 +131,9 @@ void delete_point(env *e, int pos)
     {
       e->data[j] = e->data[j + 2];
       e->data[j + 1] = e->data[j + 3];
+#if DEBUGGING
+      if ((j + 1) >= e->data_size) abort();
+#endif
     }
   e->pts--;
 }

@@ -39,7 +39,6 @@ typedef struct {
   int len;
   int just_zeros;
 #if DEBUGGING
-  void *backpointer;
   const char *caller;
   int active;
 #endif
@@ -272,7 +271,7 @@ typedef struct snd__state {
   Latus ctrls_height, open_ctrls_height, channel_min_height;
   snd_info **sounds;
   char *search_expr, *startup_title;
-  SCM search_proc;
+  SCM search_proc, file_sort_proc;
   int catch_exists;
   int search_in_progress;
   int using_schemes;
@@ -1067,6 +1066,7 @@ void stop_applying(snd_info *sp);
 void *make_apply_state(void *xp);
 void remove_apply(snd_info *sp);
 BACKGROUND_TYPE apply_controls(GUI_POINTER xp);
+void *make_apply_state_with_implied_beg_and_dur(void *xp);
 
 void g_init_snd(SCM local_doc);
 SCM snd_no_such_sound_error(const char *caller, SCM n);

@@ -593,7 +593,7 @@ void mem_report(void)
       {
 	for (i = 0; i < mem_size; i++)
 	  if ((pointers[i]) && (locations[i] == loc))
-	    fprintf(Fp, "    %s %s [%d %p %p %d %d %d %d %d %d %p]\n",
+	    fprintf(Fp, "    %s %s [%d %p %p %d %d %d %d %d %d]\n",
 		    ((snd_data *)(pointers[i]))->caller, 
 		    ((snd_data *)(pointers[i]))->filename,
 		    ((snd_data *)(pointers[i]))->copy,
@@ -604,8 +604,7 @@ void mem_report(void)
 		    ((snd_data *)(pointers[i]))->inuse,
 		    ((snd_data *)(pointers[i]))->chan,
 		    ((snd_data *)(pointers[i]))->len,
-		    ((snd_data *)(pointers[i]))->just_zeros,
-		    ((snd_data *)(pointers[i]))->backpointer);
+		    ((snd_data *)(pointers[i]))->just_zeros);
 	break;
       }
 #endif

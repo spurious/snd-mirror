@@ -978,7 +978,7 @@ static void free_dac_info (dac_info *dp)
 
 static int dac_max_sounds = 0;
 static dac_info **play_list = NULL;
-#define INITIAL_MAX_SOUNDS 32
+#define INITIAL_MAX_SOUNDS 16
 static int play_list_members = 0;
 static int max_active_slot = -1;
 
@@ -1164,7 +1164,7 @@ static void stop_playing_sound_with_toggle(snd_info *sp, int toggle)
    */
   int i;
   if ((sp) && (play_list))
-    for (i = 0; i <= max_active_slot; i++)
+    for (i = 0; i < dac_max_sounds; i++)
       if ((play_list[i]) && 
 	  (sp == (play_list[i]->sp)))
 	{
@@ -1180,7 +1180,7 @@ void stop_playing_all_sounds (void)
 {
   int i;
   if (play_list)
-    for (i = 0; i <= max_active_slot; i++)
+    for (i = 0; i < dac_max_sounds; i++)
       {
 	stop_playing(play_list[i]);
 	play_list[i] = NULL;
@@ -1191,7 +1191,7 @@ void stop_playing_region(int n)
 {
   int i;
   if (play_list)
-    for (i = 0; i <= max_active_slot; i++)
+    for (i = 0; i < dac_max_sounds; i++)
       if ((play_list[i]) &&
 	  (play_list[i]->region == n))
 	{
@@ -1857,6 +1857,7 @@ static void unset_dac_print(void)
 
 static void dac_error(const char *file, int line, const char *function)
 {
+  stop_playing_all_sounds();
   snd_error("can't play %s\n  (%s)\n  [%s[%d] %s]",
 	    describe_dac(0),
 	    (last_print) ? last_print : "reason not known",
@@ -2006,6 +2007,7 @@ static void scan_audio_devices(void)
 					  MUS_AUDIO_PORT, 
 					  ALSA_MAX_DEVICES, val)) != MUS_NO_ERROR) 
 	    {
+	      stop_playing_all_sounds();
 	      snd_error("%s[%d] %s: mus_audio_mixer_read", 
 			__FILE__, __LINE__, __FUNCTION__);
 	    }
@@ -2019,6 +2021,7 @@ static void scan_audio_devices(void)
 					      0, 
 					      &direction)) != MUS_NO_ERROR) 
 		{
+		  stop_playing_all_sounds();
 		  snd_error("%s: can't read direction, ignoring device %d", 
 			    __FUNCTION__, dev);
 		  direction = 0;
@@ -2308,6 +2311,7 @@ static int start_audio_output_1 (dac_state *dacp)
 	available_chans = (int)(val[0]);
       else 
 	{
+	  stop_playing_all_sounds();
 	  snd_error("can't get audio output chans? (%d) ", audio_output_device(ss));
 	  return(FALSE);
 	}
@@ -2462,7 +2466,7 @@ void initialize_apply(snd_info *sp, int chans, int beg, int dur)
   switch (ss->apply_choice)
     {
     case APPLY_TO_SOUND: 
-      play_sound(sp, beg, dur, IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), S_apply_controls, 0); 
+      play_sound(sp, beg, beg + dur, IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), S_apply_controls, 0); 
       break;
     case APPLY_TO_SELECTION: 
       play_selection(IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), S_apply_controls, 0); 
@@ -2470,7 +2474,7 @@ void initialize_apply(snd_info *sp, int chans, int beg, int dur)
     case APPLY_TO_CHANNEL: 
       if (sp->selected_channel != NO_SELECTION)
 	curchan = sp->selected_channel;
-      play_channel(sp->chans[curchan], beg, dur, IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), S_apply_controls, 0); 
+      play_channel(sp->chans[curchan], beg, beg + dur, IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), S_apply_controls, 0); 
       break;
     }
 }

@@ -1427,6 +1427,35 @@ void make_prevfiles_list_1(snd_state *ss)
 	    data[i]->vals = prevtimes[i];
 	  qsort((void *)data, prevfile_end + 1, sizeof(heapdata *), less_compare);
 	  break;
+	case 5:
+	  if (PROCEDURE_P(ss->file_sort_proc))
+	    {
+	      SCM file_list;
+	      int j, pos;
+	      char *name;
+	      file_list = SCM_EOL;
+	      for (i = prevfile_end; i >= 0; i--) 
+		file_list = CONS(TO_SCM_STRING(prevfullnames[i]), file_list);
+	      file_list = CALL1(ss->file_sort_proc, file_list, "previous files sort");
+	      if (LIST_P(file_list))
+		{
+		  for (i = 0; (i < len) && (NOT_NULL_P(file_list)); i++, file_list = SCM_CDR(file_list))
+		    {
+		      name = TO_C_STRING(SCM_CAR(file_list));
+		      for (j = 0; j < len; j++)
+			if (strcmp(data[j]->a2, name) == 0)
+			  {
+			    prevnames[i] = data[j]->a1;
+			    prevfullnames[i] = data[j]->a2;
+			    prevtimes[i] = data[j]->times;
+			  }
+		    }
+		}
+	    }
+	  for (i = 0; i < len; i++) FREE(data[i]);
+	  FREE(data);
+	  return;
+	  break;
 	}
       for (i = 0; i < len; i++)
 	{
@@ -1437,6 +1466,40 @@ void make_prevfiles_list_1(snd_state *ss)
 	}
       FREE(data);
     }
+}
+
+static SCM g_file_sort_procedure(void)
+{
+  #define H_file_sort_procedure "(" S_file_sort_procedure ") -> file sort procedure for the current files viewer"
+  snd_state *ss;
+  ss = get_global_state();
+  return(ss->file_sort_proc);
+}
+
+static SCM g_set_file_sort_procedure(SCM proc)
+{
+  snd_state *ss;
+  char *error = NULL;
+  SCM errstr;
+  ss = get_global_state();
+  if (PROCEDURE_P(ss->file_sort_proc))
+    snd_unprotect(ss->file_sort_proc);
+  ss->file_sort_proc = SCM_UNDEFINED;
+  error = procedure_ok(proc, 1, "file sort", "sort", 1);
+  if (error == NULL)
+    {
+      ss->file_sort_proc = proc;
+      snd_protect(proc);
+      set_file_sort_sensitive(TRUE);
+    }
+  else 
+    {
+      set_file_sort_sensitive(FALSE);
+      errstr = TO_SCM_STRING(error);
+      FREE(error);
+      return(snd_bad_arity_error("set-" S_file_sort_procedure, errstr, proc));
+    }
+  return(proc);
 }
 
 
@@ -2207,4 +2270,7 @@ The list (passed to subsequent hook functions as 'current-choice') is interprete
 be omitted (location defaults to 0, and length defaults to the file length in bytes)."
 
   open_raw_sound_hook = MAKE_HOOK(S_open_raw_sound_hook, 2, H_open_raw_sound_hook);    /* args = filename current-result */
+
+  define_procedure_with_setter(S_file_sort_procedure, SCM_FNC g_file_sort_procedure, H_file_sort_procedure,
+			       "set-" S_file_sort_procedure, SCM_FNC g_set_file_sort_procedure, local_doc, 0, 0, 1, 0);
 }

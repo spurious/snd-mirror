@@ -160,6 +160,7 @@ typedef struct {
   GtkWidget *bysize;
   GtkWidget *byname;
   GtkWidget *byentry;
+  GtkWidget *byproc;
   GtkWidget *panes, *toppane, *tophbox;
 } ww_info;
 

@@ -1048,7 +1048,14 @@ static int max_sync(snd_info *sp, void *val)
   return(0);
 }
 
-static int apply_dur, apply_tick = 0, apply_reporting = 0, orig_dur, apply_beg = 0;
+static int apply_dur = 0, apply_tick = 0, apply_reporting = 0, orig_dur, apply_beg = 0;
+
+void *make_apply_state_with_implied_beg_and_dur(void *xp)
+{
+  apply_beg = 0;
+  apply_dur = 0;
+  return(make_apply_state(xp));
+}
 
 BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 {
@@ -1104,16 +1111,19 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	      ap->hdr->chans = 1; 
 	      if (sp->selected_channel != NO_SELECTION) 
 		curchan = sp->selected_channel;
-	      apply_dur = current_ed_samples(sp->chans[curchan]) - apply_beg;
+	      if (apply_dur == 0)
+		apply_dur = current_ed_samples(sp->chans[curchan]) - apply_beg;
 	      break;
 	    case APPLY_TO_SOUND:     
 	      ap->hdr->chans = sp->nchans; 
-	      apply_dur = current_ed_samples(sp->chans[0]) - apply_beg;
+	      if (apply_dur == 0)
+		apply_dur = current_ed_samples(sp->chans[0]) - apply_beg;
 	      break;
 	    case APPLY_TO_SELECTION: 
 	      ap->hdr->chans = selection_chans();
 	      if (ap->hdr->chans <= 0) return(BACKGROUND_QUIT);
-	      apply_dur = selection_len(); 
+	      if (apply_dur == 0)
+		apply_dur = selection_len(); 
 	      break;
 	    }
 	  orig_dur = apply_dur;
@@ -1180,9 +1190,12 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 		  if (apply_beg > 0)
 		    {
 		      for (i = 0; i < sp->nchans; i++)
-			file_change_samples(apply_beg, apply_dur, ap->ofile, sp->chans[i], i,
-					  (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-					  LOCK_MIXES, "Apply");
+			{
+			  file_change_samples(apply_beg, apply_dur, ap->ofile, sp->chans[i], i,
+					      (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
+					      LOCK_MIXES, "Apply");
+			  update_graph(sp->chans[i], NULL);
+			}
 		    }
 		  else
 		    {
@@ -1195,7 +1208,14 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 		case APPLY_TO_CHANNEL: 
 		  if (sp->selected_channel != NO_SELECTION) 
 		    curchan = sp->selected_channel;
-		  file_override_samples(apply_dur, ap->ofile, sp->chans[curchan], 0, DELETE_ME, LOCK_MIXES, "Apply to channel");
+		  if (apply_beg > 0)
+		    {
+		      file_change_samples(apply_beg, apply_dur, ap->ofile, sp->chans[curchan], 0, 
+					  DELETE_ME, LOCK_MIXES, "Apply to channel");
+		      update_graph(sp->chans[curchan], NULL);
+		    }
+		  else file_override_samples(apply_dur, ap->ofile, sp->chans[curchan], 0, 
+					     DELETE_ME, LOCK_MIXES, "Apply to channel");
 		  break;
 		case APPLY_TO_SELECTION:
 		  if (selection_chans() > 1) 
@@ -1281,19 +1301,6 @@ void remove_apply(snd_info *sp)
     {
       BACKGROUND_REMOVE(sgx->apply_in_progress);
       sgx->apply_in_progress = 0;
-    }
-}
-
-static void run_apply_to_completion(snd_info *sp)
-{
-  /* this version called from Guile, so we want it to complete before returning */
-  apply_state *ap;
-  if (sp)
-    {
-      sp->applying = 1;
-      ap = (apply_state *)make_apply_state((void *)sp);
-      if (ap)
-	while (apply_controls((GUI_POINTER)ap) == BACKGROUND_CONTINUE);
     }
 }
 
@@ -1385,6 +1392,7 @@ static SCM g_select_channel(SCM chn_n)
   chan = TO_C_INT_OR_ELSE(chn_n, 0);
   sp = any_selected_sound(ss);
   if ((sp) && 
+      (chan >= 0) &&
       (chan < sp->nchans)) 
     {
       select_channel(sp, chan);
@@ -1917,7 +1925,9 @@ static SCM g_set_selected_channel(SCM snd_n, SCM chn_n)
       if (sp == NULL) 
 	return(snd_no_such_sound_error("set-" S_selected_channel, snd_n));
       chan = TO_C_INT_OR_ELSE(chn_n, 0);
-      if ((sp) && (chan < sp->nchans)) 
+      if ((sp) && 
+	  (chan >= 0) && 
+	  (chan < sp->nchans)) 
 	{
 	  select_channel(sp, chan);
 	  return(chn_n);
@@ -2643,24 +2653,29 @@ static SCM g_filter_control_env(SCM snd_n)
 
 WITH_REVERSED_ARGS(g_set_filter_control_env_reversed, g_set_filter_control_env)
 
-static SCM g_apply_controls(SCM snd, SCM choice, SCM beg)
+static SCM g_apply_controls(SCM snd, SCM choice, SCM beg, SCM dur)
 {
-  /* TODO: add end arg to apply */
-  #define H_apply_controls "(" S_apply_controls " &optional snd choice beg) is equivalent to clicking the control panel 'Apply' button.\
+  #define H_apply_controls "(" S_apply_controls " &optional snd choice beg dur) is equivalent to clicking the control panel 'Apply' button.\
 The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to selection).  If 'beg' is given, the apply starts there."
 
   snd_info *sp;
   snd_state *ss;
+  apply_state *ap;
   SND_ASSERT_SND(S_apply_controls, snd, 1);
   ASSERT_TYPE(INTEGER_IF_BOUND_P(choice), choice, SCM_ARG2, S_apply_controls, "an integer");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(beg), beg, SCM_ARG3, S_apply_controls, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(dur), dur, SCM_ARG4, S_apply_controls, "an integer");
   sp = get_sp(snd);
   if (sp) 
     {
       ss = sp->state;
       if (INTEGER_P(beg)) apply_beg = TO_C_INT(beg); else apply_beg = 0;
+      if (INTEGER_P(dur)) apply_dur = TO_C_INT(dur); else apply_dur = 0;
       ss->apply_choice = mus_iclamp(0, TO_C_INT_OR_ELSE(choice, 0), 2);
-      run_apply_to_completion(sp); 
+      sp->applying = 1;
+      ap = (apply_state *)make_apply_state((void *)sp);
+      if (ap)
+	while (apply_controls((GUI_POINTER)ap) == BACKGROUND_CONTINUE);
       return(snd);
     }
   return(snd_no_such_sound_error(S_apply_controls, snd));
@@ -2870,7 +2885,7 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
   DEFINE_PROC(S_new_sound,            g_new_sound, 0, 6, 0,            H_new_sound);
   DEFINE_PROC(S_revert_sound,         g_revert_sound, 0, 1, 0,         H_revert_sound);
   DEFINE_PROC(S_save_sound_as,        g_save_sound_as, 1, 6, 0,        H_save_sound_as);
-  DEFINE_PROC(S_apply_controls,       g_apply_controls, 0, 3, 0,       H_apply_controls);
+  DEFINE_PROC(S_apply_controls,       g_apply_controls, 0, 4, 0,       H_apply_controls);
 
 
   define_procedure_with_reversed_setter(S_filter_control_env, SCM_FNC g_filter_control_env, H_filter_control_env,

@@ -465,6 +465,7 @@ void make_cur_name_row(int old_size, int new_size);
 void make_prev_name_row(int old_size, int new_size);
 void make_a_big_star_outa_me(char *shortname, int big_star);
 void set_file_browser_play_button(char *name, int state);
+void set_file_sort_sensitive(int sensitive);
 void highlight_selected_sound(snd_state *ss);
 void View_Files_Callback(Widget w, XtPointer clientData, XtPointer callData);
 Widget start_file_dialog(snd_state *ss, int width, int height);

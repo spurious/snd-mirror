@@ -1207,7 +1207,7 @@ static void apply_button_callback(GtkWidget *w, gpointer context)
 	}
       sp->applying = TRUE;
       set_background(w_snd_apply(sp), (ss->sgx)->pushed_button_color);
-      sgx->apply_in_progress = BACKGROUND_ADD(ss, apply_controls, (GUI_POINTER)(make_apply_state(sp)));
+      sgx->apply_in_progress = BACKGROUND_ADD(ss, apply_controls, (GUI_POINTER)(make_apply_state_with_implied_beg_and_dur(sp)));
     }
 }
 

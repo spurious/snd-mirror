@@ -763,7 +763,6 @@ static SCM g_snd_print(SCM msg)
 
 /* -------- global variables -------- */
 
-/* TODO: ask-before-overwrite -> overwrite-hook? */
 static SCM g_ask_before_overwrite(void) {return(TO_SCM_BOOLEAN(ask_before_overwrite(state)));}
 static SCM g_set_ask_before_overwrite(SCM val) 
 {

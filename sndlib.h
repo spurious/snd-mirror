@@ -484,8 +484,13 @@ int mus_file_read_buffer            PROTO((int charbuf_data_format, int beg, int
 int mus_file_write_file             PROTO((int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs));
 int mus_file_write_buffer           PROTO((int charbuf_data_format, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs, char *charbuf, int clipped));
 
-char *mus_file_full_name            PROTO((char *tok));
-#define mus_expand_filename(File)   mus_file_full_name(File)
+#if DEBUGGING
+char *mus_expand_filename_1         PROTO((char *name, const char *caller));
+#define mus_expand_filename(Name)   mus_expand_filename_1(Name, __FUNCTION__)
+#else
+char *mus_expand_filename           PROTO((char *name));
+#endif
+#define mus_file_full_name(File)    mus_expand_filename(File)
 
 int mus_file_set_data_clipped       PROTO((int tfd, int clipped));
 int mus_file_set_header_type        PROTO((int tfd, int type));

@@ -219,6 +219,7 @@ typedef struct {
   Widget bysize;
   Widget byname;
   Widget byentry;
+  Widget byproc;
   Widget panes, toppane;
 } ww_info;
 

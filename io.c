@@ -1582,12 +1582,19 @@ void reset_io_c(void)
 }
 #endif
 
-char *mus_file_full_name(char *utok)
+#if DEBUGGING
+char *mus_expand_filename_1(char *utok, const char *caller)
+#else
+char *mus_expand_filename(char *utok)
+#endif
 {
   /* fill out under-specified library pathnames etc */
   /* what about "../" and "./" ? these work, but perhaps we should handle them explicitly) */
   char *file_name_buf, *tok;
   int i, j, len;
+#if DEBUGGING
+  set_encloser(caller);
+#endif
   tok = utok;
   if ((tok) && (*tok)) 
     len = strlen(tok); 
@@ -1630,7 +1637,10 @@ char *mus_file_full_name(char *utok)
     }
   else strcpy(file_name_buf, tok);
 #endif
-  return(file_name_buf);
+#if DEBUGGING
+  set_encloser(NULL);
+#endif 
+ return(file_name_buf);
 }
 
 

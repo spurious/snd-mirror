@@ -376,6 +376,7 @@ static SCM g_sound_set_max_amp(SCM file, SCM vals)
 	  mvals[i + 1] = MUS_DOUBLE_TO_SAMPLE(TO_C_DOUBLE(vdata[i + 1]));
 	}
       mus_sound_set_max_amp(filename, mvals);
+      FREE(mvals);
     }
   FREE(filename);
   return(vals);
@@ -662,7 +663,7 @@ header-type is a sndlib type indicator such as mus-aiff, sndlib currently only w
 	    {
 	      tmpstr = mus_expand_filename(TO_C_STRING(file));
 	      if (STRING_P(comment)) com = TO_C_STRING(comment);
-	      fd = mus_sound_open_output(tmpstr = mus_expand_filename(TO_C_STRING(file)),
+	      fd = mus_sound_open_output(tmpstr,
 					 TO_C_INT_OR_ELSE(srate, 0),
 					 chns,
 					 df,

@@ -424,6 +424,7 @@
 #define S_fht                           "fht"
 #define S_file_dialog                   "file-dialog"
 #define S_file_name                     "file-name"
+#define S_file_sort_procedure           "file-sort-procedure"
 #define S_fill_polygon                  "fill-polygon"
 #define S_fill_rectangle                "fill-rectangle"
 #define S_filter_control_env            "filter-control-env"

@@ -268,6 +268,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+13-Jun:  file-sort-procedure (for View:Files dialog).\n\
 12-Jun:  x-axis-style can be channel-local.\n\
 7-June:  added Reset button to envelope editor (to return to initial state).\n\
          yes-or-no-p -> yes-or-no?\n\
@@ -2735,7 +2736,6 @@ the functions html and ? can be used in place of help to go to the HTML descript
       else value = text;
       local_doc = TO_SCM_SYMBOL("documentation");
 #if HAVE_GUILE
-      /* TODO: in new Guile, help for vars and setter-procs is messed up */ 
       help_text = scm_object_property(value, local_doc);         /* (object-property ...) */
       if ((FALSE_P(help_text)) &&
 	  (PROCEDURE_P(value)))

@@ -112,11 +112,11 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
   type = EDIT_TYPE(ed->sfnum);
   switch (type)
     {
-    case INSERTION_EDIT:  fprintf(outp, "\n (insert %d %d) ", ed->beg, ed->len);        break;
-    case DELETION_EDIT:   fprintf(outp, "\n (delete %d %d) ", ed->beg, ed->len);        break;
-    case CHANGE_EDIT:     fprintf(outp, "\n (set %d %d) ", ed->beg, ed->len);           break;
+    case INSERTION_EDIT:  fprintf(outp, "\n (insert %d %d) ", ed->beg, ed->len);         break;
+    case DELETION_EDIT:   fprintf(outp, "\n (delete %d %d) ", ed->beg, ed->len);         break;
+    case CHANGE_EDIT:     fprintf(outp, "\n (set %d %d) ", ed->beg, ed->len);            break;
     case PARSED_EDIT:     fprintf(outp, "\n (%s %d %d) ", ed->origin, ed->beg, ed->len); break;
-    case INITIALIZE_EDIT: fprintf(outp, "\n (begin) ");                               break;
+    case INITIALIZE_EDIT: fprintf(outp, "\n (begin) ");                                  break;
     }
   if (ed->origin) fprintf(outp, "; %s ", ed->origin);
   fprintf(outp, "[%d:%d]:", i, len);
@@ -924,11 +924,11 @@ void print_snd_data(snd_data *sf)
   fprintf(stderr,"snd_data: caller: %s, filename: %s, active: %d\n\
    copy:%d, io: %p, hdr: %p, edit_ctr: %d,\n\
    open: %d, inuse: %d, chan: %d, len: %d\n\
-   just_zeros: %d, backpointer: %p, type: %d\n",
+   just_zeros: %d, type: %d\n",
 	  sf->caller, sf->filename, sf->active,
 	  sf->copy, sf->io, sf->hdr, sf->edit_ctr,
 	  sf->open, sf->inuse, sf->chan, sf->len, 
-	  sf->just_zeros, sf->backpointer, sf->type);
+	  sf->just_zeros, sf->type);
 }
 
 void print_snd_fd(snd_fd *sf);
@@ -953,10 +953,10 @@ snd_data *free_snd_data(snd_data *sf)
 #if DEBUGGING
       if (sf->active != 1)
 	{
-	  fprintf(stderr,"double snd_data free (%s): %s %s [%d %p %p %d %d %d %d %d %d %p]\n",
+	  fprintf(stderr,"double snd_data free (%s): %s %s [%d %p %p %d %d %d %d %d %d]\n",
 		  (sf->temporary == ALREADY_DELETED) ? "recognized" : "not recognized",
 		  sf->caller, sf->filename, sf->copy, sf->io, sf->hdr, sf->edit_ctr,
-		  sf->open, sf->inuse, sf->chan, sf->len, sf->just_zeros, sf->backpointer);
+		  sf->open, sf->inuse, sf->chan, sf->len, sf->just_zeros);
 	  return(NULL);
 	}
       sf->active = 0;
@@ -984,9 +984,6 @@ snd_data *free_snd_data(snd_data *sf)
 	}
       sf->temporary = ALREADY_DELETED;
       sf->copy = FALSE;
-#if DEBUGGING
-      sf->backpointer = NULL;
-#endif
       FREE(sf);
     }
   return(NULL);
@@ -1079,37 +1076,27 @@ void update_all_usage_stats(snd_state *ss)
 static void release_pending_sounds(chan_info *cp, int edit_ctr)
 {
   /* look for buffers or open temp files that are no longer reachable after pruning the edit tree */
-  int i, j, del;
+  int i;
   snd_data *sf;
   if (cp)
     {
       if (cp->sounds)
 	{
-	  if ((cp->sound) && (cp->sound->playing)) stop_playing_sound(cp->sound);
-	  del = -1;
+	  if ((cp->sound) && (cp->sound->playing)) 
+	    stop_playing_sound(cp->sound);
 	  for (i = 0; i < cp->sound_size; i++)
-	    if ((sf = (cp->sounds[i])))
-	      {
-		if (sf->edit_ctr >= edit_ctr)
-		  {
-		    cp->sounds[i] = free_snd_data(sf);
-		    if (del == -1) del = i;
-		  }
-	    }
-	  if (del != -1)
 	    {
-	      for (j = del, i = del; i < cp->sound_size; i++)
-		if ((cp->sounds[i]) && (j != i))
-		  {
-fprintf(stderr,"moving %d to %d\n",i,j);
-		    cp->sounds[j] = cp->sounds[i];
-		    cp->sounds[i] = NULL;
-		    j++;
-		  }
-	      cp->sound_ctr = j - 1;
+	      sf = cp->sounds[i];
+	      if (sf)
+		{
+		  if (sf->edit_ctr >= edit_ctr)
+		    cp->sounds[i] = free_snd_data(sf);
+		  else cp->sound_ctr = i;
+		}
 	    }
 	}
-      if (show_usage_stats(cp->state)) gather_usage_stats(cp);
+      if (show_usage_stats(cp->state)) 
+	gather_usage_stats(cp);
     }
 }
 
@@ -1900,11 +1887,6 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
       sd = sf->current_sound;
       if (sd)
 	{
-#if DEBUGGING
-	  if (sd->backpointer != (void *)sf)
-	    fprintf(stderr,"trouble in free_snd_fd!");
-	  sd->backpointer = NULL;
-#endif
 	  sd->inuse = FALSE;
 	  if (sd->copy == 1) sd = free_snd_data(sd); 
 	}
@@ -1981,10 +1963,6 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
       sf->last = (MUS_SAMPLE_TYPE *)0; /* can I get away with this?? -- we're trying to do something with an empty file here */
       sf->first = (MUS_SAMPLE_TYPE *)2;
       /* data > last and data < first are triggers to ignore data and try to move in the fragment list */
-#if DEBUGGING
-      if (sf->current_sound)
-	sf->current_sound->backpointer = NULL;
-#endif
       sf->current_sound = NULL;
       sf->cbi = 0;
       return(sf);
@@ -2022,10 +2000,7 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
 	      sf->current_sound = first_snd;
 #if DEBUGGING
 	      if (first_snd)
-		{
-		  first_snd->backpointer = sf;
-		  first_snd->caller = sf->caller;
-		}
+		first_snd->caller = sf->caller;
 #endif
 	      if (direction == READ_FORWARD)
 		file_buffers_forward(ind0, ind1, indx, sf, first_snd);
@@ -2033,10 +2008,6 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
 	    }
 	  else 
 	    {
-#if DEBUGGING
-	      if (sf->current_sound)
-		sf->current_sound->backpointer = NULL;
-#endif
 	      sf->current_sound = NULL;
 	      sf->view_buffered_data = (MUS_SAMPLE_TYPE *)(first_snd->buffered_data + indx);
 	      sf->first = (MUS_SAMPLE_TYPE *)(first_snd->buffered_data + ind0);
@@ -2084,7 +2055,6 @@ MUS_SAMPLE_TYPE previous_sound (snd_fd *sf)
 	  prev_snd->inuse = TRUE;
 	  sf->current_sound = prev_snd;
 #if DEBUGGING
-	  prev_snd->backpointer = sf;
 	  prev_snd->caller = sf->caller;
 #endif
 	  file_buffers_back(ind0, ind1, ind1, sf, prev_snd);
@@ -2148,7 +2118,6 @@ MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
 	  nxt_snd->inuse = TRUE;
 	  sf->current_sound = nxt_snd;
 #if DEBUGGING
-	  nxt_snd->backpointer = sf;
 	  nxt_snd->caller = sf->caller;
 #endif
 	  file_buffers_forward(ind0, ind1, ind0, sf, nxt_snd);
@@ -2624,7 +2593,6 @@ void revert_edits(chan_info *cp, void *ptr)
   int old_ctr;
   old_ctr = cp->edit_ctr;
   sp = cp->sound;
-  /* if (sp->playing) stop_playing_sound(sp); */
   cp->edit_ctr = 0;
   reflect_edit_counter_change(cp);
   reflect_sample_change_in_axis(cp);
@@ -2643,7 +2611,6 @@ void undo_edit(chan_info *cp, int count)
   if ((cp) && (cp->edit_ctr > 0) && (count != 0))
     {
       sp = cp->sound;
-      /* if (sp->playing) stop_playing_sound(sp); */
       cp->edit_ctr -= count; 
       if (cp->edit_ctr < 0) cp->edit_ctr = 0;
       reflect_edit_counter_change(cp);
@@ -2694,7 +2661,6 @@ void redo_edit(chan_info *cp, int count)
   if (cp)
     {
       sp = cp->sound;
-      /* if (sp->playing) stop_playing_sound(sp); */
       cp->edit_ctr += count; 
       while ((cp->edit_ctr >= cp->edit_size) || 
 	     (!(cp->edits[cp->edit_ctr]))) 
@@ -3814,3 +3780,4 @@ the file is being saved under a new name (as in sound-save-as)."
 
   save_hook = MAKE_HOOK(S_save_hook, 2, H_save_hook);      /* arg = sound index, possible new name */
 }
+/* TODO: ask-before-overwrite could be handled by save-hook, but they seem to be checked at different times? */

@@ -1037,6 +1037,8 @@ ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *seco
       wwi->bydate = XtCreateManagedWidget(STR_date, xmPushButtonWidgetClass, smenu, args, n);
       wwi->bysize = XtCreateManagedWidget(STR_size, xmPushButtonWidgetClass, smenu, args, n);
       wwi->byentry = XtCreateManagedWidget(STR_entry, xmPushButtonWidgetClass, smenu, args, n);
+      wwi->byproc = XtCreateManagedWidget("proc", xmPushButtonWidgetClass, smenu, args, n);
+      XtSetSensitive(wwi->byproc, PROCEDURE_P(ss->file_sort_proc));
 
       XtManageChild(sbar);
     }
@@ -1462,6 +1464,13 @@ static void sort_prevfiles_by_entry_order(Widget w, XtPointer context, XtPointer
   make_prevfiles_list(ss);
 }
 
+static void sort_prevfiles_by_user_procedure(Widget w, XtPointer context, XtPointer info) 
+{
+  snd_state *ss = (snd_state *)context;
+  set_previous_files_sort(ss, 5);
+  make_prevfiles_list(ss);
+}
+
 void make_prevfiles_list (snd_state *ss)
 {
   int i, lim;
@@ -1502,6 +1511,12 @@ void make_prevfiles_list (snd_state *ss)
   if (!(XtIsManaged(vf_prevlst))) XtManageChild(vf_prevlst);
 }
 
+static Widget byproc = NULL;
+void set_file_sort_sensitive(int sensitive)
+{
+  if (byproc)
+    XtSetSensitive(byproc, sensitive);
+}
 
 /* play open unlist for prevfile, play save select for curfile, preload process for prevfile (snd-clm) */
 
@@ -1634,6 +1649,8 @@ void View_Files_Callback(Widget w, XtPointer context, XtPointer info)
       XtAddCallback(wwl->bydate, XmNactivateCallback, sort_prevfiles_by_date, ss);
       XtAddCallback(wwl->bysize, XmNactivateCallback, sort_prevfiles_by_size, ss);
       XtAddCallback(wwl->byentry, XmNactivateCallback, sort_prevfiles_by_entry_order, ss);
+      XtAddCallback(wwl->byproc, XmNactivateCallback, sort_prevfiles_by_user_procedure, ss);
+      byproc = wwl->byproc;
 
       vf_prevww = wwl->ww;
       vf_prevlst = wwl->list;

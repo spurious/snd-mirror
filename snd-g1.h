@@ -542,6 +542,7 @@ void view_curfiles_set_row_name(int pos);
 void make_a_big_star_outa_me(char *shortname, int big_star);
 void set_file_browser_play_button(char *name, int state);
 void highlight_selected_sound(snd_state *ss);
+void set_file_sort_sensitive(int sensitive);
 void View_Files_Callback(GtkWidget *w, gpointer clientData);
 GtkWidget *start_file_dialog(snd_state *ss, int width, int height);
 int file_dialog_is_active(void);

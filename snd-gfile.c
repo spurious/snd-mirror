@@ -510,6 +510,13 @@ void make_edit_save_as_dialog(snd_state *ss)
  * the region and file browsers share much widgetry -- they are supposed to look the same
  */
 
+static GtkWidget *byproc = NULL;
+void set_file_sort_sensitive(int sensitive)
+{
+  if (byproc)
+    set_sensitive(byproc, sensitive);
+}
+
 ww_info *make_title_row(snd_state *ss, GtkWidget *formw, char *first_str, char *second_str, char *main_str, int pad, int with_sort, int with_pane)
 {
   GtkWidget *rlw, *sep1, *cww, *phbox;
@@ -579,17 +586,22 @@ ww_info *make_title_row(snd_state *ss, GtkWidget *formw, char *first_str, char *
       set_background(wwi->bysize, (ss->sgx)->basic_color);
       wwi->byentry = gtk_menu_item_new_with_label(STR_entry);
       set_background(wwi->byentry, (ss->sgx)->basic_color);
+      wwi->byproc = gtk_menu_item_new_with_label("proc");
+      set_background(wwi->byproc, (ss->sgx)->basic_color);
 
       gtk_menu_append(GTK_MENU(smenu), wwi->byname);
       gtk_menu_append(GTK_MENU(smenu), wwi->bydate);
       gtk_menu_append(GTK_MENU(smenu), wwi->bysize);
       gtk_menu_append(GTK_MENU(smenu), wwi->byentry);
+      gtk_menu_append(GTK_MENU(smenu), wwi->byproc);
 
       gtk_widget_show(wwi->byname);
       gtk_widget_show(wwi->bydate);
       gtk_widget_show(wwi->bysize);
       gtk_widget_show(wwi->byentry);
-      
+      gtk_widget_show(wwi->byproc);
+      byproc = wwi->byproc;
+
       sitem = gtk_menu_item_new_with_label(STR_sort);
       set_background(sitem, (ss->sgx)->basic_color);
       gtk_widget_show(sitem);
@@ -933,6 +945,14 @@ static void sort_prevfiles_by_entry(GtkWidget *w, gpointer context)
   make_prevfiles_list(ss);
 }
 
+static void sort_prevfiles_by_user_procedure(GtkWidget *w, gpointer context) 
+{
+  snd_state *ss;
+  ss = get_global_state();
+  set_previous_files_sort(ss, 5);
+  make_prevfiles_list(ss);
+}
+
 void make_prevfiles_list (snd_state *ss)
 {
   int i, lim;
@@ -1054,6 +1074,7 @@ void View_Files_Callback(GtkWidget *w, gpointer context)
       gtk_signal_connect_object(GTK_OBJECT(wwl->bydate), "activate", GTK_SIGNAL_FUNC(sort_prevfiles_by_date), NULL);
       gtk_signal_connect_object(GTK_OBJECT(wwl->bysize), "activate", GTK_SIGNAL_FUNC(sort_prevfiles_by_size), NULL);
       gtk_signal_connect_object(GTK_OBJECT(wwl->byentry), "activate", GTK_SIGNAL_FUNC(sort_prevfiles_by_entry), NULL);
+      gtk_signal_connect_object(GTK_OBJECT(wwl->byproc), "activate", GTK_SIGNAL_FUNC(sort_prevfiles_by_user_procedure), NULL);
 
       vf_prevww = wwl->list;
       vf_prevlst = wwl->list;

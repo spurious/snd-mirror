@@ -342,6 +342,7 @@ void view_curfiles_set_row_name(int pos);
 void curfile_highlight(snd_state *ss, int i);
 void set_file_browser_play_button(char *name, int state);
 void highlight_selected_sound(snd_state *ss);
+void set_file_sort_sensitive(int sensitive);
 int start_file_dialog(snd_state *ss, int width, int height);
 int file_dialog_is_active(void);
 int edit_header(snd_info *sp);
