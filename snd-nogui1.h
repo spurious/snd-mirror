@@ -4,7 +4,7 @@
 /* -------- snd-xhelp.c -------- */
 
 int snd_help(const char *subject, const char *help, bool with_wrap);
-void snd_completion_help(int matches, char **buffer);
+void snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_wrap, const char *topic);
 
 
 /* -------- snd-xerror.c -------- */
@@ -78,6 +78,7 @@ int listener_height(void);
 int listener_width(void);
 void clear_listener(void);
 bool highlight_unbalanced_paren(void);
+void snd_completion_help(int matches, char **buffer);
 
 
 /* -------- snd-xmenu.c -------- */
@@ -324,6 +325,7 @@ void make_edit_save_as_dialog(void);
 void make_file_save_as_dialog(void);
 void make_mix_file_dialog(bool managed);
 void clear_deleted_snd_info(void *fd);
+void post_it(const char *subject, const char *str);
 
 
 /* -------- snd-xenv.c -------- */

@@ -6741,7 +6741,8 @@ EDITS: 5
 		    (delete-file "tmp.peaks")))))
 	(peaks)
 	(if (and (provided? 'xm) 
-		 (not (XtIsManaged (list-ref (dialog-widgets) 14))))
+		 (or (not (list-ref (dialog-widgets) 20))
+		     (not (XtIsManaged (list-ref (dialog-widgets) 20)))))
 	    (snd-display ";peaks but no help?"))
 	(dismiss-all-dialogs)
 	(let* ((num-transforms 7)
@@ -33053,6 +33054,13 @@ EDITS: 2
 		    (if (XtIsManaged helpd)
 			(snd-display ";help still active?")))
 		  
+		  ;; ---------------- info dialog ----------------
+		  (info-dialog "Test" "snd-test here")
+		  (let* ((helpd (list-ref (dialog-widgets) 20)))
+		    (click-button (XmMessageBoxGetChild helpd XmDIALOG_OK_BUTTON)) (force-event)
+		    (if (XtIsManaged helpd)
+			(snd-display ";info still active?")))
+		  
 		  ;; ---------------- mix-panel dialog ----------------
 		  (let* ((ind (open-sound "oboe.snd"))
 			 (v (make-vct 3))
@@ -37723,7 +37731,7 @@ EDITS: 2
 		     find-mark find-sound finish-progress-report foreground-color forward-graph forward-mark forward-mix
 		     frames free-mix-sample-reader free-sample-reader free-track-sample-reader graph
 		     graph-color graph-cursor graph-data graph->ps graph-style lisp-graph?  graphs-horizontal header-type
-		     help-dialog highlight-color in insert-region insert-sample insert-samples
+		     help-dialog info-dialog highlight-color in insert-region insert-sample insert-samples
 		     insert-samples-with-origin insert-selection insert-silence insert-sound just-sounds key key-binding
 		     left-sample listener-color listener-font listener-prompt listener-selection listener-text-color load-font
 		     main-widgets make-color make-graph-data make-mix-sample-reader make-player make-region
@@ -38821,6 +38829,7 @@ EDITS: 2
 	    (check-error-tag 'no-such-file (lambda () (open-sound-file "/bad/baddy.snd")))
 	    (check-error-tag 'out-of-range (lambda () (close-sound-file 0 0)))
 	    (check-error-tag 'wrong-type-arg (lambda () (help-dialog (list 0 1) "hiho")))
+	    (check-error-tag 'wrong-type-arg (lambda () (info-dialog (list 0 1) "hiho")))
 	    (check-error-tag 'no-such-sound (lambda () (edit-header-dialog 1234)))
 	    (check-error-tag 'no-such-sound (lambda () (make-track-sample-reader 0)))
 	    (check-error-tag 'wrong-type-arg (lambda () (yes-or-no? (list 0 1))))

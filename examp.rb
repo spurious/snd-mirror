@@ -1,16 +1,20 @@
 # examp.rb -- Guile -> Ruby translation
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Sat Jun 21 20:17:06 CEST 2003
+# Last: Thu Sep 18 04:16:47 CEST 2003
 
 # Commentary:
 #
 # Utilities
 #
 # Module Kernel
+#  defun(name, doc, &body)
+#  definstrumet(name, doc, &body)
+#  describe(name)
 #  doc(str)
 #  Kernel.doc(func)
 #  putd(func)
+#  arity2str(proc)
 #
 # snd_putd(func)
 #
@@ -39,10 +43,11 @@
 # times2samples(start, dur)
 # seconds2samples(sec)
 # rbm_random(n)
-# glog(r, b)
+# logn(r, b) [alias glog()]
 # remove_if(func, lst)
 # car(v), cadr(v), caddr(v), cdr(v)
-# warn(*args), die(*args), message(*args)
+# warn(*args), die(*args), error(*args)
+# rbm_message(*args), message(*args)
 # thunk?(thunk)
 # c_g?() (if not in Snd)
 # let { ... }
@@ -51,8 +56,10 @@
 # array?(ary)
 # to_rary(ary)
 # shell(*cmd)
-# get_args(args, key, val)
-# get_shift_args(args, key, val)
+# get_args(args, key, default)
+# get_shift_args(args, key, default)
+# get_class_or_key(args, klass, key, default)
+# Args(args, *rest)
 # load_init_file(file)
 #
 # Buffers
@@ -64,7 +71,7 @@
 #
 # FM
 # 
-# fm_bell(start, dur, freq, amp, *args)
+# fm_bell_loc(start, dur, freq, amp, *args)
 # fm_violin_rb(start, dur, freq, amp, *args)
 # jc_reverb_rb(startime, dur, *args)
 # fm_bell_snd(start, dur, freq, amp, amp_env, index_env, index)
@@ -98,7 +105,7 @@
 
 # Code:
 
-RBM_EXAMP_VERSION = "21-Jun-2003 (RCS 1.67)"
+RBM_EXAMP_VERSION = "18-Sep-2003 (RCS 1.84)"
 
 $IN_SND = defined? sound_open
 
@@ -148,8 +155,29 @@ require "ws"
 #
 
 module Kernel
-  @@docs = Hash.new
+  @@defuns = Hash.new
+  @@descriptions = Hash.new
+
+  def defun(name, doc = nil, &body)
+    @@defuns[name.object_id] = body
+    @@descriptions[name.to_sym] = doc
+    Object.class_eval(%Q{def #{name}(*args) @@defuns[#{name.object_id}].call(*args) end})
+  end
+
+  alias definstrument defun
+
+  def describe(name)
+    if defined?(snd_help) and (str = snd_help(name))
+      rbm_message str
+    elsif (str = @@descriptions[name.to_sym])
+      rbm_message str
+    else
+      putd name
+    end
+  end
   
+  @@docs = Hash.new
+
   def doc(str)
     if self.class <= Module
       @@docs[self.name] = str
@@ -170,7 +198,7 @@ module Kernel
   # 
   
   def putd(func)
-    catch(:__Kernel_doc__) { send(func.to_sym, :help) } unless func.class <= Module
+    catch(:__Kernel_doc__) do send(func.to_sym, :help) end unless func.class <= Module
   rescue
   ensure
     puts Kernel.doc(func)
@@ -184,10 +212,23 @@ end unless defined? @@docs
 # 
 
 def snd_putd(func)
-  catch(:__Kernel_doc__) { send(func.to_sym, :help) } unless func.class <= Module
+  catch(:__Kernel_doc__) do send(func.to_sym, :help) end unless func.class <= Module
 rescue
 ensure
-  message Kernel.doc(func)
+  rbm_message Kernel.doc(func)
+end
+
+def arity2str(proc)
+  raise "need a Proc (#{proc.inspect})" unless proc.kind_of?(Proc)
+  n = proc.arity
+  str = "("
+  c = 96.chr
+  unless n.zero?
+    (n.abs - 1).times do str << "%s, " % c.next! end
+    str << "*" if n < 0
+    str << "%s" % c.next!
+  end
+  str << ")"
 end
 
 class Hook
@@ -216,7 +257,9 @@ Example:
   end
 
   def Hook.all
-    message(@@all_hooks.sort.map_with_index do |x, i| format("Hook %2d: %s\n", i + 1, x) end.to_s)
+    rbm_message(@@all_hooks.sort.map_with_index do |x, i|
+                  format("Hook %2d: %s\n", i + 1, x)
+                end.to_s)
   end
   
   def Hook.make_hook(var, name, &body)
@@ -274,25 +317,9 @@ Example:
   end
   private :set_hook
 
-  def hook_arity(f)
-    case f.arity
-    when 0
-      "||"
-    when 2
-      "|a, b|"
-    when 3
-      "|a, b, c|"
-    when -1
-      "|*a|"
-    when -2
-      "|a, *b|"
-    end
-  end
-  private :hook_arity
-
   def to_s
     @hooks.map do |k, v|
-      format("%s name: %s, %s arity: %s\n", self.class, k, self.class, hook_arity(v))
+      format("%s name: %s, %s arity: %s\n", self.class, k, self.class, arity2str(v))
     end.to_s
   end
 
@@ -373,11 +400,12 @@ def rbm_random(n)
   mus_random(n).abs
 end
 
-def glog(r, b = nil)
+def logn(r, b = 10)
   raise "r must be > 0 (r = #{r})" if r <= 0
-  raise "b must be > 0 (b = #{b})" if b and b <= 0
-  b ? (log(r) / log(b)) : log(r)
+  raise "b must be > 0 (b = #{b})" if b <= 0
+  log(r) / log(b)
 end
+alias glog logn
   
 def remove_if(func, lst)
   if lst.empty?
@@ -406,7 +434,7 @@ def cdr(v) v.shift; v; end
 def warn(*args)
   str = "Warning: " << format(*args) << ($! ? ": #{$!}" : "")
   str << (($@ and $DEBUG) ? "\n[#{$@.join("\n")}]" : "")
-  message(str)
+  rbm_message(str)
   $! = nil
 end
 
@@ -417,19 +445,30 @@ end
 # terminates.
 
 def die(*args)
+  str = format(*args) << ($! ? ": #{$!}" : "")
+  str << (($@ and $DEBUG) ? "\n[#{$@.join("\n")}]" : "")
+  rbm_message(str)
+  $! = nil
+  exit(0) unless $IN_SND
+end
+
+def error(*args)
   str = "Error: " << format(*args) << ($! ? ": #{$!}" : "")
   str << (($@ and $DEBUG) ? "\n[#{$@.join("\n")}]" : "")
-  ($IN_SND  and (not ENV['EMACS'])) ? snd_error(str) : $stdout.print(str << "\n")
-  $! = nil
+  ws_error(str)
   exit(1) unless $IN_SND
 end
 
-def message(*args)
+def rbm_message(*args)
   if $IN_SND and (not ENV['EMACS'])
     snd_print("\n" << format(*args))
   else
-    $stdout.print(format(*args) << "\n")
+    print(format(*args) << "\n")
   end
+end
+
+def message(*args)
+  rbm_message("# " << format(*args))
 end
 
 def thunk?(thunk)
@@ -503,40 +542,39 @@ Examples:
   when Range
     args[0].each do |i|
       do_extra.call(before) if before
-      result << body.yield(i)
+      result << body.call(i)
       do_extra.call(after) if after
     end
   when Array
     lmax = args.map do |x| x.length end.max
     0.step(lmax - 1, step) do |i|
       do_extra.call(before) if before
-      *arg = args.map do |x| x[i] end << i
-      result << body.yield(*arg)
+      result << body.call(*args.map do |x| x[i] end << i)
       do_extra.call(after) if after
     end
   when Hash
     args.each do |x| x.each do |k, v|
         do_extra.call(before) if before
-        result << body.yield(k, v)
+        result << body.call(k, v)
         do_extra.call(after) if after
       end
     end
   when Fixnum
     0.step(args[0], step) do |i|
       do_extra.call(before) if before
-      result << body.yield(i)
+      result << body.call(i)
       do_extra.call(after) if after
     end
   else
     do_extra.call(before) if before
-    result << body.yield
+    result << body.call
     do_extra.call(after) if after
   end
   result
 end
 
 def array?(ary)
-  ary.class == Array
+  ary.kind_of?(Array)
 end
 
 def to_rary(ary)
@@ -566,25 +604,61 @@ end
 #
 # returns value, whether default VAL or value of KEY found in ARGS
 
-def get_args(args, key, val)
+def get_args(args, key, default)
   if(key == :help and (args == key or args.member?(key) or args.assoc(key)))
-    val = true
+    default = true
   elsif(args.member?(key))
     x = args[args.index(key) + 1]
-    val = ((x == nil) ? val : x)
+    default = ((x == nil) ? default : x)
   elsif(args.assoc(key))
-    val = (args.assoc(key)[1] rescue val)
+    default = (args.assoc(key)[1] rescue default)
   end
-  val
+  default
 end
 
-def get_shift_args(args, key, val)
-  val = get_args(args, key, val)
+def get_shift_args(args, key, default)
+  default = get_args(args, key, default)
   if args.member?(key)
     i = args.index(key)
     2.times do args.delete_at(i) end
   end
-  val
+  default
+end
+
+def get_class_args(args, klass, default)
+  if (arg = args.detect do |x| x.kind_of?(klass) end)
+    arg
+  else
+    default
+  end
+end
+
+# var = get_class_or_key(args, Klass, :key, default)
+
+def get_class_or_key(args, klass, key, default)
+  if args.first.kind_of?(klass)
+    args.shift
+  else
+    get_shift_args(args, key, default)
+  end
+end
+
+# var1, var2, var3 = Args(args, [Klass, :key, default],
+#                               [Numeric, :number, 1],
+#                               [Array, :list, [0, 1, 2, 3]])
+
+$strict_args ||= $DEBUG
+
+def Args(args, *rest)
+  result = rest.map do |keys| get_class_or_key(args, *keys) end
+  unless args.empty?
+    if $strict_args
+      error("rest args: %p", args)
+    else
+      warn("rest args ignored: %p", args)
+    end
+  end
+  result
 end
 
 def load_init_file(file)
@@ -604,15 +678,17 @@ end
 ## Buffers Menu
 ##
 
+$buffer_menu ||= nil
+
 def open_buffer(file)
   doc("open_buffer(file)
 Adds a menu item that will select filename (use with $open_hook). See
 also close_buffer().
 Usage in ~./snd-ruby.rb
-$buffer_menu = add_to_main_menu(\"Buffers\")
 $open_hook = lambda { |file| open_buffer(file) }
 $close_hook = lambda { |snd| close_buffer(snd) }\n") if file == :help
-  add_to_menu($buffer_menu, file, lambda { || select_sound(find_sound(file)) })
+  $buffer_menu ||= add_to_main_menu("Buffers")
+  add_to_menu($buffer_menu, file, lambda do | | select_sound(find_sound(file)) end)
   false
 end
 
@@ -621,7 +697,6 @@ def close_buffer(snd)
 Removes the menu item associated with snd (use with $close_hook). See
 also open_buffer().
 Usage in ~./snd-ruby.rb
-$buffer_menu = add_to_main_menu(\"Buffers\")
 $open_hook = lambda { |file| open_buffer(file) }
 $close_hook = lambda { |snd| close_buffer(snd) }\n") if snd == :help
   remove_from_menu($buffer_menu, file_name(snd))
@@ -633,29 +708,26 @@ end
 ##
 
 $reopen_names = []
+$reopen_menu ||= nil
 
 def add_to_reopen_menu(snd)
   doc("add_to_reopen_menu(snd)
 Adds snd to the Reopen menu (use with $close_hook). See also
 check_reopen_menu().
 Usage in ~./snd-ruby.rb
-$reopen_menu = add_to_main_menu(\"Reopen\")
 $open_hook = lambda { |file| check_reopen_menu(file) }
 $close_hook = lambda { |snd| add_to_reopen_menu(snd) }\n") if snd == :help
+  $reopen_menu ||= add_to_main_menu("Reopen")
   brief_name = short_file_name(snd)
   long_name = file_name(snd)
-  reopen_max_length = 8
   unless($reopen_names.member?(brief_name))
     add_to_menu($reopen_menu, brief_name,
-		lambda { | |
+		lambda do | |
 		  remove_from_menu($reopen_menu, brief_name)
-		  open_sound(long_name) 
-		}, 0)
-    $reopen_names << brief_name
-    if($reopen_names.length > reopen_max_length)
-      goner = $reopen_names.shift
-      remove_from_menu($reopen_menu, goner)
-    end
+		  open_sound(long_name)
+		end, 0)                           # add to top
+    $reopen_names.push(brief_name)
+    remove_from_menu($reopen_menu, $reopen_names.shift) if $reopen_names.length > 8
   end
   false
 end
@@ -665,22 +737,12 @@ def check_reopen_menu(file)
 Removes filename from the Reopen menu list (use with $open_hook). See
 also add_to_reopen_menu().
 Usage in ~./snd-ruby.rb
-$reopen_menu = add_to_main_menu(\"Reopen\")
 $open_hook = lambda { |file| check_reopen_menu(file) }
 $close_hook = lambda { |snd| add_to_reopen_menu(snd) }\n") if file == :help
-  just_file = lambda { |name|
-    last_slash = -1
-    len = name.length
-    (0...len).each { |i| last_slash = i if name[i] == ?/ }
-    name[last_slash + 1]
-  }
-  brief_name = just_file.call(file)
-  if($reopen_names.member?(brief_name))
-    $reopen_names = remove_if(lambda { |n|
-				val = (n == brief_name)
-				remove_from_menu($reopen_menu, brief_name) if val
-				val
-			      }, $reopen_names)
+  brief_name = File.split(file).last
+  if $reopen_names.member?(brief_name)
+    remove_from_menu($reopen_menu, brief_name)
+    $reopen_names.delete(brief_name)
   end
   false
 end
@@ -693,14 +755,14 @@ end
 ## Michael McNabb's FM bell (see bell.scm and fm_bell_snd() below)
 ##
 
-def fm_bell(start = 0.0, dur = 1.0, freq = 220.0, amp = 0.3, *args)
-  doc("fm_bell([start=0.0[, dur=1.0[, freq=220.0[, amp=0.3[, *args]]]]])
+def fm_bell_loc(start = 0.0, dur = 1.0, freq = 220.0, amp = 0.3, *args)
+  doc("fm_bell_loc([start=0.0[, dur=1.0[, freq=220.0[, amp=0.3[, *args]]]]])
 	:amp_env,   [0, 0, 0.1, 1, 10, 0.6, 25, 0.3, 50, 0.15, 90, 0.1, 100, 0]
 	:index_env, [0, 1, 2, 1.1, 25, 0.75, 75, 0.5, 100, 0.2]
 	:index,     1.0
 	:distance,  1.0
 	:reverb,    0.01
-Usage: with_sound { fm_bell }
+Usage: with_sound { fm_bell_loc }
        with_sound {
          C = 130.8
          A = 110
@@ -709,12 +771,12 @@ Usage: with_sound { fm_bell }
          notes = [C, A, G, E]
          fbell = [0, 1, 2, 1.1, 25, 0.75, 75, 0.5, 100, 0.2]
          abell = [0, 0, 0.1, 1, 10, 0.6, 25, 0.3, 50, 0.15, 90, 0.1, 100, 0]
-         fm_bell(0, 12, E, 0.4,
+         fm_bell_loc(0, 12, E, 0.4,
        	  :amp_env, abell,
        	  :index_env, fbell,
        	  :index, 0.1)
          (0...notes.length).each { |i|
-           fm_bell(i * 2, 4, notes[i], 0.5,
+           fm_bell_loc(i * 2, 4, notes[i], 0.5,
        	    :amp_env, abell,
        	    :index_env, fbell,
        	    :index, 0.2 * (i + 0.1))
@@ -1351,10 +1413,10 @@ stretch_envelope([0, 0, 1, 1], 0.1, 0.2)
 stretch_envelope([0, 0, 1, 1, 2, 0], 0.1, 0.2, 1.5, 1.6)
                  -> [0, 0, 0.2, 0.1, 1.1, 1, 1.6, 0.5, 2.0, 0]\n") if args[0] == :help
     fn = args[0].map do |x| x.to_f end
-    old_att = (args[1].to_f or false)
-    new_att = (args[2].to_f or false)
-    old_dec = (args[3].to_f or false)
-    new_dec = (args[4].to_f or false)
+    old_att = args[1] ? args[1].to_f : false
+    new_att = args[2] ? args[2].to_f : false
+    old_dec = args[3] ? args[3].to_f : false
+    new_dec = args[4] ? args[4].to_f : false
     if old_att and (not new_att)
       warn "wrong number of arguments"
     elsif not new_att
@@ -1363,7 +1425,7 @@ stretch_envelope([0, 0, 1, 1, 2, 0], 0.1, 0.2, 1.5, 1.6)
       warn "wrong number of arguments"
     else
       new_x = x0 = fn[0]
-      last_x = fn[fn.length - 2]
+      last_x = fn[-2]
       y0 = fn[1]
       new_fn = [y0, x0]
       scl = (new_att - x0) / [0.0001, old_att - x0].max
@@ -1377,28 +1439,31 @@ stretch_envelope([0, 0, 1, 1, 2, 0], 0.1, 0.2, 1.5, 1.6)
             if x1 == old_att
               y0 = y1
             else
-              y0 = y0 + (y1 - y0) * ((old_att - x0) / (x1 - x0))
+              y0 += (y1 - y0) * ((old_att - x0) / (x1 - x0))
             end
             x0 = old_att
             new_x = new_att
-            new_fn << new_x << y0
-            scl = (old_dec ? ((new_dec - new_att) / (old_dec - old_att)) :
-                   ((last_x - new_att) / (last_x - old_att)))
+            new_fn.unshift(new_x).unshift(y0)
+            scl = if old_dec
+                    (new_dec - new_att) / (old_dec - old_att)
+                  else
+                    (last_x - new_att) / (last_x - old_att)
+                  end
           end
           if old_dec and x0 < old_dec and x1 >= old_dec
             if x1 == old_dec
               y0 = y1
             else
-              y0 = y0 + (y1 - y0) * ((old_dec - x0) / (x1 - x0))
+              y0 += (y1 - y0) * ((old_dec - x0) / (x1 - x0))
             end
             x0 = old_dec
             new_x = new_dec
-            new_fn << new_x << y0
+            new_fn.unshift(new_x).unshift(y0)
             scl = (last_x - new_dec) / (last_x - old_dec)
           end
           unless x0 == x1
             new_x += scl * (x1 - x0)
-            new_fn << new_x << y1
+            new_fn.unshift(new_x).unshift(y1)
             x0, y0 = x1, y1
           end
           stretch_envelope_1.call(new_fn, old_fn[2..-1])
@@ -1407,7 +1472,7 @@ stretch_envelope([0, 0, 1, 1, 2, 0], 0.1, 0.2, 1.5, 1.6)
       if old_dec and old_dec == old_att
         old_dec = 0.000001 * last_x
       end
-      stretch_envelope_1.call(new_fn, fn[2..-1])
+      stretch_envelope_1.call(new_fn, fn[2..-1]).reverse
     end
   end
 end

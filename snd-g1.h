@@ -10,6 +10,7 @@ typedef struct {
 /* -------- snd-ghelp.c -------- */
 
 GtkWidget *snd_help(const char *subject, const char *help, bool with_wrap);
+void snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_wrap, const char *topic);
 
 
 /* -------- snd-gerror.c -------- */
@@ -536,6 +537,7 @@ GtkWidget *edit_header(snd_info *sp);
 void set_open_file_play_button(bool val);
 void g_init_gxfile(void);
 void clear_deleted_snd_info(void *fd);
+void post_it(const char *subject, const char *str);
 
 
 /* -------- snd-gprint.c -------- */

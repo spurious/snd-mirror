@@ -2301,7 +2301,7 @@ static char *raw_data_explanation(const char *filename, file_info *hdr)
   mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nformat: %s\n", mus_data_format_name(hdr->format));
   reason_str = snd_strcat(reason_str, tmp_str, &len);
   hdr->type = MUS_RAW;
-  snd_help("Current header values", reason_str, false);
+  post_it("Current header values", reason_str);
   file_string = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   mus_snprintf(file_string, PRINT_BUFFER_SIZE,
 	       "Bogus header found for %s", 

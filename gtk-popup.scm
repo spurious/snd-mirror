@@ -302,7 +302,7 @@
 	    (list "Info"                every-menu 
 		  (lambda (w data)
 		    (let ((snd graph-popup-snd))
-		      (help-dialog 
+		      (info-dialog 
 		       (format #f "~A info" (file-name snd))
 		       (format #f "~A:~%  chans: ~D~%  srate: ~D~%  header: ~A~%  data format: ~A~%  length: ~1,3F~%  maxamp: ~A~%~A~A~A"
 			       (short-file-name snd)

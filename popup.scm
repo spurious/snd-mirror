@@ -174,7 +174,7 @@
 	    (lambda (w c i)
 	      (let ((beg (selection-position))
 		    (len (selection-frames)))
-		(help-dialog 
+		(info-dialog 
 		 "Selection info"
 		 (format #f "start ~A, ~,3F~%end: ~A, ~,3F~%duration: ~A, ~,3F~%chans: ~D~%maxamp: ~,3F, rms: ~,3F"
 			 beg (exact->inexact (/ beg (srate)))
@@ -345,7 +345,7 @@
       (list "Info"               xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (let ((snd graph-popup-snd))
-		(help-dialog 
+		(info-dialog 
 		 (format #f "~A info" (file-name snd))
 		 (format #f "~A:~%  chans: ~D~%  srate: ~D~%  header: ~A~%  data format: ~A~%  length: ~1,3F~%  maxamp: ~A~%~A~A~A~A~A"
 			(short-file-name snd)

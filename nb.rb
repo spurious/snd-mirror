@@ -158,8 +158,8 @@ the filename.\n") if type == :help
     alert_color = make_color(1.0, 1.0, 0.94)
     unless type == Region_viewer
       @@current_file = file
-      help_dialog(file, str)
-      help_widget = dialog_widgets()[14]
+      info_dialog(file, str)
+      help_widget = dialog_widgets()[20]
       unless help_widget
         files_dialog = dialog_widgets()[8]
         files_position = widget_position(files_dialog)
@@ -176,7 +176,7 @@ the filename.\n") if type == :help
 It's intended as a mouse-leave-label hook function.
 It unhighlights the popped-up info about a file as the mouse leaves
 the associated label.\n") if type == :help
-    widget = dialog_widgets()[14]
+    widget = dialog_widgets()[20]
     recolor_widget(widget, basic_color()) if widget
   end
 

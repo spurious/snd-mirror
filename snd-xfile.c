@@ -2356,6 +2356,77 @@ Widget edit_header(snd_info *sp)
   return(edit_header_dialog);
 }
 
+
+/* ---------------- POST-IT MONOLOG ---------------- */
+
+#define POST_IT_ROWS 12
+#define POST_IT_COLUMNS 56
+
+static Widget post_it_dialog = NULL;
+static Widget post_it_text = NULL;
+
+static void create_post_it_monolog(void)
+{
+  /* create scrollable but not editable text window */
+  Arg args[20];
+  int n;
+
+  n = 0;
+  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+  XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
+  XtSetArg(args[n], XmNnoResize, false); n++;
+  XtSetArg(args[n], XmNtransient, false); n++;
+  post_it_dialog = XmCreateMessageDialog(MAIN_PANE(ss), "info", args, n);
+
+  XtUnmanageChild(XmMessageBoxGetChild(post_it_dialog, XmDIALOG_CANCEL_BUTTON));
+  XtUnmanageChild(XmMessageBoxGetChild(post_it_dialog, XmDIALOG_HELP_BUTTON));
+  XtUnmanageChild(XmMessageBoxGetChild(post_it_dialog, XmDIALOG_SYMBOL_LABEL));
+
+  if (!(ss->using_schemes))
+    XtVaSetValues(XmMessageBoxGetChild(post_it_dialog, XmDIALOG_MESSAGE_LABEL), XmNbackground, ss->sgx->help_button_color, NULL);
+      
+  n = 0;
+  XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
+  XtSetArg(args[n], XmNeditable, false); n++;
+  XtSetArg(args[n], XmNcolumns, POST_IT_COLUMNS); n++;
+  XtSetArg(args[n], XmNrows, POST_IT_ROWS); n++;
+  if (!(ss->using_schemes))
+    {
+      XtSetArg(args[n], XmNforeground, (ss->sgx)->black); n++; /* needed if color allocation fails completely */
+      XtSetArg(args[n], XmNbackground, (ss->sgx)->white); n++;
+    }
+  post_it_text = XmCreateScrolledText(post_it_dialog, "post-it-text", args, n);
+  XtManageChild(post_it_text);
+  XtManageChild(post_it_dialog);
+
+  if (!(ss->using_schemes))
+    {
+      map_over_children(post_it_dialog, set_main_color_of_widget, NULL);
+      XtVaSetValues(post_it_text, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(post_it_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(post_it_dialog, XmDIALOG_OK_BUTTON), XmNbackground, (ss->sgx)->quit_button_color, NULL);
+    }
+  set_dialog_widget(POST_IT_DIALOG, post_it_dialog);
+}
+
+void post_it(const char *subject, const char *str)
+{
+  /* place string in scrollable help window */
+  XmString xstr1;
+  if (!(post_it_dialog)) 
+    create_post_it_monolog(); 
+  else raise_dialog(post_it_dialog);
+  xstr1 = XmStringCreate((char *)subject, XmFONTLIST_DEFAULT_TAG);
+  XtVaSetValues(post_it_dialog, XmNmessageString, xstr1, NULL);
+  XmTextSetString(post_it_text, (char *)str);
+  if (!XtIsManaged(post_it_dialog)) 
+    XtManageChild(post_it_dialog);
+  XmStringFree(xstr1);
+}
+
+
+
+
 static XEN g_just_sounds(void)
 {
   #define H_just_sounds "(" S_just_sounds "): the 'just sounds' button in the file chooser dialog"
@@ -2406,7 +2477,7 @@ to popup file info as follows: \n\
 (add-hook! mouse-enter-label-hook\n\
   (lambda (type position name)\n\
     (if (not (= type 2))\n\
-        (help-dialog name (finfo name)))))\n\
+        (info-dialog name (finfo name)))))\n\
 See also nb.scm."
 
   #define H_mouse_leave_label_hook S_mouse_leave_label_hook " (type position label): called when the mouse leaves a file viewer or region label"

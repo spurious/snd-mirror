@@ -1864,7 +1864,8 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
 	  str = (char *)CALLOC(chars + 1, sizeof(char));
 	  fread(str, 1, chars, fd);
 	  snd_fclose(fd, filename);
-	  snd_help("fft peaks", str, false);
+	  post_it("fft peaks", str);
+	  /* TODO: just-sounds to snd-xen */
 	  FREE(str);
 	  err = snd_remove(filename, IGNORE_CACHE);
 	  FREE(filename);

@@ -2059,16 +2059,6 @@ off_t string2off_t(char *str)
 #endif
 }
 
-static XEN g_help_dialog(XEN subject, XEN msg)
-{
-  widget_t w;
-  #define H_help_dialog "(" S_help_dialog " subject message): start the Help window with subject and message"
-  XEN_ASSERT_TYPE(XEN_STRING_P(subject), subject, XEN_ARG_1, S_help_dialog, "a string");
-  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_2, S_help_dialog, "a string");
-  w = snd_help(XEN_TO_C_STRING(subject), XEN_TO_C_STRING(msg), true);
-  return(XEN_WRAP_WIDGET(w));
-}
-
 static XEN g_mix_panel(void)
 {
   widget_t w;
@@ -2143,14 +2133,15 @@ static XEN g_yes_or_no_p(XEN msg)
   return(C_TO_XEN_BOOLEAN(snd_yes_or_no_p(XEN_TO_C_STRING(msg))));
 }
 
-/* this needs to be in Snd (rather than sndlib2xen.c) because it calls snd_help */
-#define S_mus_audio_describe            "mus-audio-describe"
-static XEN g_mus_audio_describe(void) 
+static XEN g_info_dialog(XEN subject, XEN msg)
 {
-  #define H_mus_audio_describe "("  S_mus_audio_describe "): post a description of the audio hardware state in the Help dialog"
-  snd_help("Audio State", mus_audio_report(), false); 
-  return(XEN_TRUE);
+  #define H_info_dialog "(" S_info_dialog " subject message): start the Info window with subject and message"
+  XEN_ASSERT_TYPE(XEN_STRING_P(subject), subject, XEN_ARG_1, S_info_dialog, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_2, S_info_dialog, "a string");
+  post_it(XEN_TO_C_STRING(subject), XEN_TO_C_STRING(msg));
+  return(XEN_FALSE);
 }
+
 
 #if (!USE_NO_GUI)
 /* -------- shared color funcs -------- */
@@ -2616,6 +2607,16 @@ void after_open(int index)
 	     S_after_open_hook);
 }
 
+/* this needs to be in Snd (rather than sndlib2xen.c) because it calls post_it */
+#define S_mus_audio_describe            "mus-audio-describe"
+static XEN g_mus_audio_describe(void) 
+{
+  #define H_mus_audio_describe "("  S_mus_audio_describe "): post a description of the audio hardware state in the Help dialog"
+  post_it("Audio State", mus_audio_report()); 
+  return(XEN_TRUE);
+}
+
+
 #if HAVE_GUILE && HAVE_DLFCN_H
 #include <dlfcn.h>
 /* these are included because libtool's dlopen is incredibly stupid */
@@ -2863,7 +2864,7 @@ XEN_NARGIFY_0(g_file_dialog_w, g_file_dialog)
 XEN_ARGIFY_1(g_edit_header_dialog_w, g_edit_header_dialog)
 XEN_NARGIFY_0(g_edit_save_as_dialog_w, g_edit_save_as_dialog)
 XEN_NARGIFY_0(g_file_save_as_dialog_w, g_file_save_as_dialog)
-XEN_NARGIFY_2(g_help_dialog_w, g_help_dialog)
+XEN_NARGIFY_2(g_info_dialog_w, g_info_dialog)
 XEN_NARGIFY_0(g_mix_panel_w, g_mix_panel)
 XEN_NARGIFY_0(g_sounds_w, g_sounds)
 XEN_NARGIFY_1(g_yes_or_no_p_w, g_yes_or_no_p)
@@ -2876,10 +2877,10 @@ XEN_NARGIFY_2(g_close_sound_file_w, g_close_sound_file)
 XEN_NARGIFY_3(vct2soundfile_w, vct2soundfile)
 XEN_ARGIFY_7(samples2sound_data_w, samples2sound_data)
 XEN_NARGIFY_1(g_snd_print_w, g_snd_print)
-XEN_NARGIFY_0(g_mus_audio_describe_w, g_mus_audio_describe)
 XEN_NARGIFY_0(g_little_endian_w, g_little_endian)
 XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 XEN_NARGIFY_0(g_snd_global_state_w, g_snd_global_state)
+XEN_NARGIFY_0(g_mus_audio_describe_w, g_mus_audio_describe)
 #if DEBUGGING
   XEN_NARGIFY_1(g_snd_sound_pointer_w, g_snd_sound_pointer)
 #endif
@@ -3032,7 +3033,7 @@ XEN_NARGIFY_0(g_snd_global_state_w, g_snd_global_state)
 #define g_edit_header_dialog_w g_edit_header_dialog
 #define g_edit_save_as_dialog_w g_edit_save_as_dialog
 #define g_file_save_as_dialog_w g_file_save_as_dialog
-#define g_help_dialog_w g_help_dialog
+#define g_info_dialog_w g_info_dialog
 #define g_mix_panel_w g_mix_panel
 #define g_sounds_w g_sounds
 #define g_yes_or_no_p_w g_yes_or_no_p
@@ -3045,10 +3046,10 @@ XEN_NARGIFY_0(g_snd_global_state_w, g_snd_global_state)
 #define vct2soundfile_w vct2soundfile
 #define samples2sound_data_w samples2sound_data
 #define g_snd_print_w g_snd_print
-#define g_mus_audio_describe_w g_mus_audio_describe
 #define g_little_endian_w g_little_endian
 #define g_snd_completion_w g_snd_completion
 #define g_snd_global_state_w g_snd_global_state
+#define g_mus_audio_describe_w g_mus_audio_describe
 #if DEBUGGING
   #define g_snd_sound_pointer_w g_snd_sound_pointer
 #endif
@@ -3074,6 +3075,8 @@ XEN_NARGIFY_0(g_snd_global_state_w, g_snd_global_state)
 
 void g_initialize_gh(void)
 {
+  XEN_DEFINE_PROCEDURE(S_mus_audio_describe, g_mus_audio_describe_w, 0, 0, 0, H_mus_audio_describe);
+
   XEN_DEFINE_PROCEDURE("snd-global-state", g_snd_global_state_w, 0, 0, 0, "internal testing function");
 #if DEBUGGING
   XEN_DEFINE_PROCEDURE("snd-sound-pointer", g_snd_sound_pointer_w, 1, 0, 0, "internal testing function");
@@ -3336,7 +3339,7 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE(S_edit_header_dialog,  g_edit_header_dialog_w, 0, 1, 0,  H_edit_header_dialog);
   XEN_DEFINE_PROCEDURE(S_edit_save_as_dialog, g_edit_save_as_dialog_w, 0, 0, 0, H_edit_save_as_dialog);
   XEN_DEFINE_PROCEDURE(S_file_save_as_dialog, g_file_save_as_dialog_w, 0, 0, 0, H_file_save_as_dialog);
-  XEN_DEFINE_PROCEDURE(S_help_dialog,         g_help_dialog_w, 2, 0, 0,         H_help_dialog);
+  XEN_DEFINE_PROCEDURE(S_info_dialog,         g_info_dialog_w, 2, 0, 0,         H_info_dialog);
   XEN_DEFINE_PROCEDURE(S_mix_panel,           g_mix_panel_w, 0, 0, 0,           H_mix_panel);
   XEN_DEFINE_PROCEDURE(S_sounds,              g_sounds_w, 0, 0, 0,              H_sounds);
   XEN_DEFINE_PROCEDURE(S_yes_or_no_p,         g_yes_or_no_p_w, 1, 0, 0,         H_yes_or_no_p);
@@ -3349,7 +3352,6 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE(S_vct2sound_file,      vct2soundfile_w, 3, 0, 0,         H_vct2sound_file);
   XEN_DEFINE_PROCEDURE(S_samples2sound_data,  samples2sound_data_w, 0, 7, 0,    H_samples2sound_data);
   XEN_DEFINE_PROCEDURE(S_snd_print,           g_snd_print_w, 1, 0, 0,           H_snd_print);
-  XEN_DEFINE_PROCEDURE(S_mus_audio_describe,  g_mus_audio_describe_w, 0, 0, 0,  H_mus_audio_describe);
   XEN_DEFINE_PROCEDURE("little-endian?",      g_little_endian_w, 0, 0, 0,       "return #t if host is little endian");
   XEN_DEFINE_PROCEDURE("snd-completion",      g_snd_completion_w, 1, 0, 0,      "return completion of arg");
   /* XEN_DEFINE_PROCEDURE(S_clm_print,        g_clm_print, 0, 0, 1,             H_clm_print); */

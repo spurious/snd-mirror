@@ -1753,6 +1753,58 @@ GtkWidget *edit_header(snd_info *sp)
 }
 
 
+/* ---------------- POST-IT MONOLOG ---------------- */
+
+#define POST_IT_ROWS 12
+#define POST_IT_COLUMNS 56
+
+static GtkWidget *post_it_text = NULL, *post_it_dialog = NULL;
+
+static void dismiss_post_it(GtkWidget *w, gpointer context) {gtk_widget_hide(post_it_dialog);}
+static void delete_post_it(GtkWidget *w, GdkEvent *event, gpointer context) {gtk_widget_hide(post_it_dialog);}
+
+static void create_post_it_monolog(void)
+{
+  /* create scrollable but not editable text window */
+  GtkWidget *ok_button;
+  post_it_dialog = gtk_dialog_new();
+  g_signal_connect_closure_by_id(GTK_OBJECT(post_it_dialog),
+				 g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(post_it_dialog))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(delete_post_it), NULL, 0),
+				 0);
+
+  gtk_window_set_title(GTK_WINDOW(post_it_dialog), _("Info"));
+  sg_make_resizable(post_it_dialog);
+  gtk_container_set_border_width(GTK_CONTAINER(post_it_dialog), 10);
+  gtk_window_resize(GTK_WINDOW(post_it_dialog), POST_IT_COLUMNS * 9, POST_IT_ROWS * 20);
+  gtk_widget_realize(post_it_dialog);
+
+  ok_button = gtk_button_new_with_label(_("Ok"));
+  gtk_widget_set_name(ok_button, "quit_button");
+  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(post_it_dialog)->action_area), ok_button, false, true, 20);
+  g_signal_connect_closure_by_id(GTK_OBJECT(ok_button),
+				 g_signal_lookup("clicked", G_OBJECT_TYPE(GTK_OBJECT(ok_button))),
+				 0,
+				 g_cclosure_new(GTK_SIGNAL_FUNC(dismiss_post_it), NULL, 0),
+				 0);
+  gtk_widget_show(ok_button);
+
+  post_it_text = make_scrolled_text(GTK_DIALOG(post_it_dialog)->vbox, false, NULL, NULL);
+  gtk_text_view_set_left_margin(GTK_TEXT_VIEW(post_it_text), 10);
+  gtk_widget_show(post_it_dialog);
+  set_dialog_widget(POST_IT_DIALOG, post_it_dialog);
+}
+
+void post_it(const char *subject, const char *str)
+{
+  if (!(post_it_dialog)) create_post_it_monolog(); else raise_dialog(post_it_dialog);
+  gtk_window_set_title(GTK_WINDOW(post_it_dialog), subject);
+  gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(post_it_text)), "", 0);
+  sg_text_insert(post_it_text, (char *)str);
+}
+
+
 static XEN g_just_sounds(void)
 {
   #define H_just_sounds "(" S_just_sounds "): the 'just sounds' button in the file chooser dialog"
@@ -1799,7 +1851,7 @@ to popup file info as follows: \n\
 (add-hook! mouse-enter-label-hook\n\
   (lambda (type position name)\n\
     (if (not (= type 2))\n\
-        (help-dialog name (finfo name)))))\n\
+        (info-dialog name (finfo name)))))\n\
 See also nb.scm."
 
   #define H_mouse_leave_label_hook S_mouse_leave_label_hook " (type position label): called when the mouse leaves a file viewer or region label"

@@ -363,7 +363,7 @@ $graph_popup_menu = lambda do
                       ftime = Time.at(mus_sound_write_date(file))
                       date = ftime.localtime.strftime("%a %d-%b-%y %H:%M %Z")
                       notes = ((ptr and ptr.key?(file)) ? ptr.fetch(file) : "")
-                      help_dialog("#{file} info",
+                      info_dialog("#{file} info",
                                   format("\
   chans: %d, srate: %d
  length: %.3f (%d samples)
@@ -864,7 +864,7 @@ def add_listener_popup
                                           lambda do |w, c, i|
                                             selected = listener_selection()
                                             help = (selected and snd_help(selected))
-                                            help_dialog(selected, help) if help
+                                            info_dialog(selected, help) if help
                                           end)
                            help_widget
                          end,

@@ -4,7 +4,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Apr 08 17:05:03 CEST 2003
-# Last: Sat Jun 21 20:19:15 CEST 2003
+# Last: Wed Sep 17 17:38:33 CEST 2003
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -26,6 +26,7 @@
 # module WS
 #
 # user methods
+#   ws_interrupt?()
 #   with_sound(*args) { |start| ... }
 #   rbm_load(rbm_file_name, *args)
 #   sound_let(fname, *args) { |tmp_fname| ... }
@@ -43,7 +44,6 @@
 #   statistics(output, beg, reverb, revfile)
 #   make_reverb_file_name(snd_name)
 #   make_default_comment()
-#   sample2filename(fgen)
 #   remove_file(file)
 #   tempnam()
 #   get_notehook_instrument(body, func)
@@ -212,7 +212,7 @@ end
 
 # Code:
 
-RBM_WS_VERSION = "21-Jun-2003 (RCS 1.19)"
+RBM_WS_VERSION = "17-Sep-2003 (RCS 1.29)"
 
 $IN_SND = defined? sound_open
 
@@ -222,14 +222,14 @@ require "examp"
 require "etc"
 require "socket"
 
-$rbm_version = "21-Jun-03"
+$rbm_version = RBM_WS_VERSION.split(' ').first
 $rbm_output = nil
 $rbm_reverb = nil
 $rbm_file_name        ||= "test.snd"
 $rbm_srate            ||= 22050
 $rbm_channels         ||= 1
 $rbm_header_type      ||= Mus_next
-$rbm_data_format      ||= Mus_bshort
+$rbm_data_format      ||= Mus_lshort
 $rbm_comment          ||= nil
 $rbm_statistics       ||= false
 $rbm_play             ||= 0
@@ -253,6 +253,9 @@ module WS
   #
   # user methods
   #
+  def ws_interrupt?()
+    throw(:with_sound_interrupt, -1) if c_g?()
+  end
   
   def with_sound(*args, &body)
   doc("with_sound(*args) { |start| ... }
@@ -344,7 +347,8 @@ Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n") if get_args(arg
     $rbm_output = continue_sample2file(output)
     get_notehook_instrument(body, notehook) if notehook
     beg = Time.now
-    catch(:with_sound_interrupt) do body.call(startime) end
+    n = catch(:with_sound_interrupt) do body.call(startime) end
+    warn("with_sound body.call interrupted by user") if n.kind_of?(Numeric) and n < 0
   rescue
     ws_error("error in %s", get_func_name())
   else
@@ -355,12 +359,15 @@ Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n") if get_args(arg
       begin
         mus_close($rbm_reverb)
         $rbm_reverb = make_file2sample(revfile)
-        if reverb.kind_of?(Proc)
-          reverb.call(startime, dur + decay_time, :verbose, verbose, *reverb_data)
-        else
-          send(reverb, startime, dur + decay_time, :verbose, verbose, *reverb_data)
+        n = catch(:with_sound_interrupt) do
+          if reverb.kind_of?(Proc)
+            reverb.call(startime, dur + decay_time, :verbose, verbose, *reverb_data)
+          else
+            send(reverb, startime, dur + decay_time, :verbose, verbose, *reverb_data)
+          end
         end
         mus_close($rbm_reverb)
+        warn("reverb interrupted by user") if n.kind_of?(Numeric) and n < 0
       rescue
         ws_error("%s: reverb error", get_func_name())
       end
@@ -402,8 +409,12 @@ Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n") if get_args(arg
                 make_mixer(channels, *(1..channels * channels).map do scale end))
       end
     end
-    if $IN_SND and (snd = find_sound(output))
-      update_sound(snd)
+    if $IN_SND
+      if (snd = find_sound(output))
+        update_sound(snd)
+      else
+        open_sound(output)
+      end
     end
     statistics(output, beg, reverb, revfile) if statistics
     play_sound(output, play)
@@ -482,7 +493,7 @@ Usage: sound_let(fname, *args, &body)
     scaled_by = get_args(args, :scaled_by, false)
     comment   = get_args(args, :comment, "temporary sound file")
     offset    = get_args(args, :offset, 0)
-    current_output = sample2filename($rbm_output)
+    current_output = mus_file_name($rbm_output)
     with_sound(:output, output,
                :comment, comment,
                :scaled_to, scaled_to,
@@ -528,7 +539,7 @@ with_mix :reverb, :nrev, \"foo\", 2.2, %Q{
     output = fname + ".snd"
     rbm_file = fname + ".rbm"
     ws_error("%s: not in with_sound()", get_func_name()) unless $rbm_output
-    current_output = sample2filename($rbm_output)
+    current_output = mus_file_name($rbm_output)
     snd_time = lambda do
       if File.exist?(output)
         File.mtime(output)
@@ -566,7 +577,7 @@ with_mix :reverb, :nrev, \"foo\", 2.2, %Q{
         :scale,        0.0 (0.0...1.0)
         :output,       old_output
 Example: rbm_mix(\"tmp\")\n") if filename == :help
-    old_output   = sample2filename($rbm_output)
+    old_output   = mus_file_name($rbm_output)
     input_frame  = get_args(args, :input_frame, 0)
     output_frame = get_args(args, :output_frame, 0)
     frames       = get_args(args, :frames, mus_sound_frames(filename))
@@ -710,7 +721,7 @@ with_snd(:output, \"bell.snd\") {
   #
   
   def ws_error(*args)
-    raise(WSError, format(*args), caller(1)[0])
+    raise(WSError, format(*args))
   end
   
   def play_sound(output, play)
@@ -771,10 +782,6 @@ with_snd(:output, \"bell.snd\") {
     format("Written %s %s, rbm of %s", date, version, $rbm_version)
   rescue
     warn get_func_name
-  end
-  
-  def sample2filename(fgen)
-    fgen.to_s.split(' ')[1]
   end
   
   def remove_file(file)

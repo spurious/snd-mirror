@@ -234,6 +234,7 @@
 #else
   #define S_in                          "in"
 #endif
+#define S_info_dialog                   "info-dialog"
 #define S_initial_graph_hook            "initial-graph-hook"
 #define S_insert_region                 "insert-region"
 #define S_insert_sample                 "insert-sample"

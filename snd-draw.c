@@ -492,7 +492,7 @@ static XEN g_dialog_widgets(void)
 (0)color (1)orientation (2)enved (3)error (4)yes_or_no (5)transform \
 (6)file_open (7)file_save_as (8)view_files (9)raw_data (10)new_file \
 (11)file_mix (12)edit_header (13)find (14)help (15)completion (16)mix_panel \
-(17)print (18)recorder (19)region"
+(17)print (18)recorder (19)region, (20)info"
 
   check_dialog_widget_table();
   return(XEN_VECTOR_TO_LIST(dialog_widgets));

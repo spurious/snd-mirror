@@ -138,3 +138,8 @@ GtkWidget *snd_help(const char *subject, const char *helpstr, bool with_wrap)
   else add_help_text(help_text, helpstr);
   return(help_dialog);
 }
+
+void snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_wrap, const char *topic)
+{
+  snd_help(subject, helpstr, with_wrap);
+}

@@ -99,18 +99,18 @@ It causes a description of the file to popup when the mouse crosses the filename
 	(previous-file-viewer 1)
 	(region-viewer 2))
     (if (not (= type region-viewer))
-	(let ((help-exists (list-ref (dialog-widgets) 14)))
-	  (help-dialog name (file-info name))
-	  (let ((help-widget (list-ref (dialog-widgets) 14)))
-	    (if help-widget
+	(let ((info-exists (list-ref (dialog-widgets) 20)))
+	  (info-dialog name (file-info name))
+	  (let ((info-widget (list-ref (dialog-widgets) 20)))
+	    (if info-widget
 		(begin
-		  (if (not help-exists) ; keep the help dialog from overlapping the files dialog
+		  (if (not info-exists) ; keep the help dialog from overlapping the files dialog
 		      (let* ((files-dialog (list-ref (dialog-widgets) 8))
 			     (files-position (widget-position files-dialog))
 			     (files-size (widget-size files-dialog)))
-			(set! (widget-position help-widget) (list (+ (car files-position) (car files-size) 10)
+			(set! (widget-position info-widget) (list (+ (car files-position) (car files-size) 10)
 								  (+ (cadr files-position) 10)))))
-		  (recolor-widget help-widget alert-color))))))))
+		  (recolor-widget info-widget alert-color))))))))
 
 (define (files-popup-quit type position name)
   "(files-popup-quit type position name) is intended as a mouse-leave-label hook function. \

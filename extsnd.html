@@ -1073,7 +1073,7 @@ hook function is used in with-marked-sound in ws.scm to display arbitrary info a
 (add-hook! <em class=red>mark-click-hook</em>
   (lambda (n) 
     (if (not (defined? 'mark-properties)) (load "marks.scm"))
-    (help-dialog "Mark Help"
+    (info-dialog "Mark Help"
       (format #f "Mark ~D~A:~%  sample: ~D = ~,3F secs~A~A"
 	      n 
 	      (let ((name (mark-name n)))
@@ -1331,7 +1331,7 @@ to popup file info as follows:
 (add-hook! <em class=red>mouse-enter-label-hook</em>
   (lambda (type position name)
     (if (not (= type 2))
-        (help-dialog name (finfo name)))))
+        (info-dialog name (finfo name)))))
 </pre></td></tr></table></td></tr>
 <tr><td></td><td>See also <i>files-popup-buffer</i> in examp.scm</td></tr>
 <tr><td colspan=3></td></tr>
@@ -7968,6 +7968,12 @@ See <i>html</i> in index.scm.
 See <i>html</i> in index.scm.
 </td></tr>
 
+<!-- info-dialog -->
+<tr><td colspan=2 valign=top><span class=defbox><code><em class=def><a name="infodialog">info-dialog</a></em> (subject info) </code></span></td></tr>
+<tr><td></td><td>start the info dialog with title <i>subject</i> and body <i>info</i>.<br>
+<br><code>(info-dialog "xyzzy" "are we having fUn?")</code>
+</td></tr>
+
 <!-- listener-color -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="listenercolor">listener-color</a></em> ()</code></span></td></tr>
 <tr><td></td><td>background color of lisp listener. <code>(set! (listener-color) (make-color 0 0 0))</code> is good too.</td></tr>
@@ -9362,7 +9368,7 @@ The four "-widgets" procedures return lists of possibly useful widgets:
                      7:file_save_as_dialog 8:view_files_dialog 9:raw_data_dialog 
                      10:new_file_dialog 11:file_mix_dialog 12:edit_header_dialog 
                      13:find_dialog 14:help_dialog 15:completion_dialog 16:mix_panel_dialog
-                     17:print_dialog 18:recorder_dialog 19:region_dialog)
+                     17:print_dialog 18:recorder_dialog 19:region_dialog, 20:info_dialog)
 </pre>
 <p>
 <i>dialog-widgets</i> entries are #f for any dialog that has not

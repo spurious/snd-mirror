@@ -284,6 +284,8 @@ char *version_info(void)
   return(buf);
 }
 
+static void ssnd_help(const char *subject, ...);
+
 void news_help(void)
 {
   char *info = NULL, *features = NULL;
@@ -298,6 +300,7 @@ void news_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+18-Sep:  info-dialog.\n\
 17-Sep:  removed finder.scm, changed index.scm|rb to use snd-xref.c tables.\n\
 15-Sep:  just-sounds support in Gtk.\n\
 12-Sep:  quit-button-color, help-button-color, reset-button-color, \n\
@@ -308,8 +311,6 @@ void news_help(void)
 29-Aug:  gcc complex trig replaces GSL if it's available.\n\
 21-Aug:  added snd->sample and xen->sample (Snd-specific) generators to redirect\n\
            ina and friends automatically to Snd data.\n\
-19-Aug:  removed mouse-release-hook (use mouse-click-hook).\n\
-15-Aug:  snd 6.11.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -328,7 +329,7 @@ NULL);
 
 /* -------- basic helpers -------- */
 
-void ssnd_help(const char *subject, ...)
+static void ssnd_help(const char *subject, ...)
 {
   va_list ap;
   char *helpstr, *newstr;
@@ -567,89 +568,9 @@ Tab is a no-op.\n\
 static char graph_help_string[] = "";
 #endif
 
-static char fft_keypad_help_string[] = 
-"The keypad keys are mapped to various variables as follows:\n\
-\n\
-    variable         increase           decrease\n\
-  " S_spectro_cutoff "   PageUp (9)          PageDown (3)\n\
-  " S_spectro_hop "      Add (+)             Subtract (-)\n\
-  " S_spectro_z_angle "  RightArrow (6)      LeftArrow (4)\n\
-  " S_spectro_x_angle "  Ctrl-UpArrow (8)    Ctrl-DownArrow (2)\n\
-  " S_spectro_y_angle "  Ctrl-RightArrow (6) Ctrl-LeftArrow (4)\n\
-  " S_spectro_z_scale "  UpArrow (8)         DownArrow (2)\n\
-  " S_transform_size "   Multiply (*)        Divide (/)\n\
-  " S_dot_size "         Delete (.)          Insert (0)\n\
-\n\
-You can rotate the spectrogram around the various axes\n\
-by holding down the keypad and control keys.  You can get\n\
-arbitrarily small or large ffts with the Multiply and\n\
-Divide keys.  The x and y axis scalers are named\n\
-" S_spectro_x_scale " and " S_spectro_y_scale ".\n\
-See also the Color and Orientation menu options\n\
-in the View menu.\n\
-\n\
-";
-
-static char fft_help_string[] = 
-"The FFT performs a projection of the\n\
-time domain into the frequency domain.\n\
-Good discussions of the Fourier Transform\n\
-and the trick used in the FFT itself\n\
-can be found in many DSP books; those\n\
-I know of include 'A Digital Signal Processing\n\
-Primer', Ken Steiglitz, Addison-Wesley,\n\
-1996; or 'Numerical Recipes in C'.\n\
-\n\
-The FFT size can be any power of 2. The\n\
-larger, the longer it takes to compute,\n\
-and the larger the amount of the time domain\n\
-that gets consumed.  Interpretation of the\n\
-FFT results is not straightforward!\n\
-\n\
-The window choices are taken primarily\n\
-from Harris' article.\n\
-\n\
-  Fredric J. Harris, 'On the Use of Windows\n\
-     for Harmonic Analysis with the Discrete\n\
-     Fourier Transform', Proceedings of the\n\
-     IEEE, Vol. 66, No. 1, January 1978.\n\
-\n\
-with updates from:\n\
-\n\
-  Albert H. Nuttall, 'Some Windows with Very\n\
-     Good Sidelobe Behaviour', IEEE Transactions\n\
-     of Acoustics, Speech, and Signal Processing,\n\
-     Vol. ASSP-29, 1, February 1981.\n\
-\n\
-\n\
-Nearly all the transform-related choices are set\n\
-by the transform dialog launched from the Options\n\
-Menu Transform item. Most of this dialog should be\n\
-self-explanatory.  Some of the windows take an\n\
-additional parameter sometimes known as alpha or\n\
-beta.  This is set in Snd by the scroller in the\n\
-transform dialog.\n\
-\n\
-The FFT display is activated by setting the 'f'\n\
-button on the channel's window.  It then updates\n\
-itself each time the time domain waveform moves or\n\
-changes.  The update function runs in the\n\
-background, so in some cases, notably very large\n\
-FFTs, you will notice that the FFT updates less\n\
-often than the time domain.\n\
-\n\
-The spectrum data is usually normalized to fit\n\
-between 0.0 to 1.0; if you'd rather have un-normalized\n\
-data (the y-axis in this case changes to reflect the\n\
-data values, to some extent), set the variable\n\
-" S_transform_normalization " to " S_dont_normalize ".\n\
-\n\
-";
-
-
 void find_help(void) 
 {
-  snd_help("Find", 
+  snd_help_with_xrefs("Find", 
 "Searches in Snd refer to the sound data, and are in general patterned after Emacs.  When you type \
 C-s or C-r, the minibuffer below the graph is activated and you are asked for the search function. \
 The expression is a function of one argument, the current sample value.  It should return #t when the \
@@ -658,7 +579,8 @@ Successive C-s or C-r repeat the search.  C-x C-s can redefine the search patter
 events, much like Emacs. \
 \n\n\
 Normally, the search applies only to the current channel. To search all current files at once, use the Edit:Find dialog.",
-	   true);
+		      true,
+		      "Search");
 }
 
 void undo_help(void) 
@@ -684,7 +606,7 @@ the mouse) in one channel, and the parallel portions of the other channels will 
 
 void env_help(void) 
 {
-  snd_help("Envelope", 
+  snd_help_with_xrefs("Envelope", 
 "An envelope in Snd is a list of x y break-point pairs. The x axis range is \
 arbitrary. For example, to define a triangle curve: '(0 0 1 1 2 0). There is no (obvious) limit \
 on the number of breakpoints. \
@@ -711,7 +633,8 @@ argument. In the latter case, " S_scale_by " uses that scaler for all its channe
 normalizes all the channels together so that the loudest reaches that amplitude (that is, " S_scale_to " \
 .5) when applied to a stereo file means that both channels are scaled by the same amount so that the \
 loudest point in the file becomes .5). ",
-	   true);
+		      true,
+		      "Envelope");
 }
 
 static char sound_files_help_string[] = 
@@ -942,12 +865,32 @@ NULL);
 
 void fft_help(void)
 {
-  ssnd_help("FFT",
-fft_help_string,
-"\n\
-",
-fft_keypad_help_string,
-NULL);
+  snd_help_with_xrefs("FFT",
+"The FFT performs a projection of the time domain into the frequency domain. Good discussions of the Fourier Transform \
+and the trick used in the FFT itself can be found in many DSP books; those I know of include 'A Digital Signal Processing \
+Primer', Ken Steiglitz, Addison-Wesley, 1996; or 'Numerical Recipes in C'. \
+\n\n\
+The FFT size can be any power of 2. The larger, the longer it takes to compute, and the larger the amount of the time domain \
+that gets consumed.  Interpretation of the FFT results is not straightforward! The window choices are taken primarily \
+from Harris' article: Fredric J. Harris, 'On the Use of Windows for Harmonic Analysis with the Discrete Fourier Transform', Proceedings of the \
+IEEE, Vol. 66, No. 1, January 1978, with updates from: Albert H. Nuttall, 'Some Windows with Very Good Sidelobe Behaviour', IEEE Transactions \
+of Acoustics, Speech, and Signal Processing, Vol. ASSP-29, 1, February 1981. \
+\n\n\
+Nearly all the transform-related choices are set by the transform dialog launched from the Options \
+Menu Transform item. Most of this dialog should be self-explanatory.  Some of the windows take an \
+additional parameter sometimes known as alpha or beta.  This is set in Snd by the scroller in the \
+transform dialog. \
+\n\n\
+The FFT display is activated by setting the 'f' button on the channel's window.  It then updates \
+itself each time the time domain waveform moves or changes.  The update function runs in the \
+background, so in some cases, notably very large FFTs, you will notice that the FFT updates less \
+often than the time domain. \
+\n\n\
+The spectrum data is usually normalized to fit between 0.0 to 1.0; if you'd rather have un-normalized \
+data (the y-axis in this case changes to reflect the data values, to some extent), set the variable \
+transform-normalization to dont-normalize.",
+		      true,
+		      "FFT");
 }
 
 void controls_help(void) 
@@ -998,8 +941,8 @@ The reverb is on only if the reverb button is set. \n\
 NULL);
 }
 
-void marks_help(void) {snd_help("Marks", mark_help_string, true);}
-void mix_help(void) {snd_help("Mixing", mix_help_string, true);}
+void marks_help(void) {snd_help_with_xrefs("Marks", mark_help_string, true, "Mark");}
+void mix_help(void) {snd_help_with_xrefs("Mixing", mix_help_string, true, "Mix");}
 void sound_files_help(void) {snd_help("Headers and Data", sound_files_help_string, false);}
 void recording_help(void) {snd_help("Recording", recording_help_string, true);}
 void init_file_help(void) {ssnd_help("Customization", init_file_help_string, NULL);}
@@ -1009,7 +952,7 @@ void init_file_help(void) {ssnd_help("Customization", init_file_help_string, NUL
 
 void transform_dialog_help(void)
 {
-  snd_help("Transform Options",
+  snd_help_with_xrefs("Transform Options",
 "This dialog presents the various transform (fft) related choices. \
 \n\n\
 On the upper left is a list of available transform types; next on the right is a list of fft sizes;  \
@@ -1035,7 +978,8 @@ The top three buttons in the transform dialog choose between a normal fft, a son
 spectrogram. The 'peaks' button affects whether peak info is displayed alongside the graph of the \
 spectrum. The 'dB' button selects between a linear and logarithmic Y (magnitude) axis. The 'log freq' \
 button makes a similar choice along the frequency axis.",
-	   true);	   
+		      true,
+		      "FFT");
 }
 
 void color_dialog_help(void)
@@ -1055,7 +999,7 @@ void orientation_dialog_help(void)
 
 void region_dialog_help(void)
 {
-  snd_help("Region Browser",
+  snd_help_with_xrefs("Region Browser",
 "This is the 'region browser'.  The scrolled window contains the list of current regions \
 with a brief title to indicate the provenance thereof, and two buttons.  The 'save' button \
 protects or unprotects the region from deletion. The 'play' button plays the associated region. \
@@ -1065,7 +1009,8 @@ title, the text is highlighted, and that region is displayed in the graph area. 
 region by clicking the 'Delete' button.  To dismiss the browser, click 'Ok'.  The 'edit' button \
 loads the region into the main editor as a temporary file.  It can be edited or renamed, etc.  If you save \
 the file, the region is updated to reflect any edits you made.",
-	   true);
+		      true,
+		      "Region");
 }
 
 void raw_data_dialog_help(void)
@@ -1087,7 +1032,7 @@ void completion_dialog_help(void)
 
 void save_as_dialog_help(void)
 {
-  snd_help("Save As",
+  snd_help_with_xrefs("Save As",
 "You can save the current state of a file or region under a different file name using the Save \
 As option.  The output header type, data format,  and sampling rate can also be set.  The data formats \
 are little-endian where relevant except for 'aifc' output.  If a file by the chosen name already exists \
@@ -1097,7 +1042,8 @@ option, set the resource overwriteCheck to 1 (or the ask-before-overwrite variab
 If you give the current file name to Save As,  \
 any current edits will be saved and the current version in Snd will be updated (that is, in this \
 case, the edit tree is not preserved).",
-	   true);
+		      true,
+		      "Save");
 }
 
 void open_file_dialog_help(void)
@@ -1109,16 +1055,17 @@ void open_file_dialog_help(void)
 
 void find_dialog_help(void)
 {
-  snd_help("Global Find",
+  snd_help_with_xrefs("Global Find",
 "This search travels through all the current channels in parallel until a match is found.  The find \
 expression is a Scheme function of one argument,  the current sample value.  It should return #t when the \
 search is satisified.  For example, (lambda (n) (> n .1)) looks for the next sample that is greater than .1.",
-	   true);
+		      true,
+		      "Find");
 }
 
 void mix_dialog_help(void)
 {
-  snd_help("Mix Panel",
+  snd_help_with_xrefs("Mix Panel",
 "This dialog provides various commonly-used controls on the currently \
 selected mix.  At the top are the mix id, begin and end times, \
 track number, and a play button.  Beneath that are various sliders \
@@ -1127,7 +1074,8 @@ input channel; and finally, an envelope editor for the mix's (input) channels. \
 The current mix amp env is not actually changed until you click 'Apply Env'.\
 The editor envelope is drawn in black with dots whereas the current \
 mix amp env (if any) is drawn in blue.",
-	   true);
+		      true,
+		      "Mix");
 }
 
 void new_file_dialog_help(void)
@@ -1267,6 +1215,22 @@ static char **xref_tables[NUM_XREFS] = {
   Playing_xrefs, Reversing_xrefs, Saving_xrefs, Smoothing_xrefs, Resampling_xrefs, FFTs_xrefs, Reverb_xrefs,
   Resampling_xrefs, Searching_xrefs};
 
+#if HAVE_STRCASECMP
+  #define STRCMP(a, b) strcasecmp(a, b)
+#else
+  #define STRCMP(a, b) strcmp(a, b)
+#endif
+
+char **snd_xrefs(const char *topic)
+{
+  int i;
+  for (i = 0; i < NUM_XREFS; i++)
+    if (STRCMP(topic, xrefs[i]) == 0)
+      return(xref_tables[i]);
+  return(NULL);
+}
+
+/* TODO: add help menu: Filter Delete Insert Resample Reverb Save Play (Effects?) */
 /*
    includable: CLM ins, CLM gens
    ?? Plugins (current plugins?)
@@ -1281,7 +1245,7 @@ char *snd_url(const char *name)
 {
   int i;
   for (i = 0; i < help_names_size; i++)
-    if (strcmp(help_names[i], name) == 0)
+    if (STRCMP(help_names[i], name) == 0)
       return(help_urls[i]);
   return(NULL);
 }
@@ -1581,6 +1545,16 @@ static XEN g_snd_url(XEN name)
   return(C_TO_XEN_STRING(snd_url(XEN_SYMBOL_TO_C_STRING(name))));
 }
 
+static XEN g_help_dialog(XEN subject, XEN msg)
+{
+  widget_t w;
+  #define H_help_dialog "(" S_help_dialog " subject message): start the Help window with subject and message"
+  XEN_ASSERT_TYPE(XEN_STRING_P(subject), subject, XEN_ARG_1, S_help_dialog, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_2, S_help_dialog, "a string");
+  w = snd_help(XEN_TO_C_STRING(subject), XEN_TO_C_STRING(msg), true);
+  return(XEN_WRAP_WIDGET(w));
+}
+
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_listener_help_w, g_listener_help)
@@ -1589,6 +1563,7 @@ XEN_NARGIFY_1(g_set_html_dir_w, g_set_html_dir)
 XEN_NARGIFY_0(g_html_program_w, g_html_program)
 XEN_NARGIFY_1(g_set_html_program_w, g_set_html_program)
 XEN_NARGIFY_1(g_snd_url_w, g_snd_url)
+XEN_NARGIFY_2(g_help_dialog_w, g_help_dialog)
 #else
 #define g_listener_help_w g_listener_help
 #define g_html_dir_w g_html_dir
@@ -1596,12 +1571,14 @@ XEN_NARGIFY_1(g_snd_url_w, g_snd_url)
 #define g_html_program_w g_html_program
 #define g_set_html_program_w g_set_html_program
 #define g_snd_url_w g_snd_url
+#define g_help_dialog_w g_help_dialog
 #endif
 
 void g_init_help(void)
 {
   XEN_DEFINE_PROCEDURE(S_snd_help, g_listener_help_w, 0, 2, 0, H_snd_help);
   XEN_DEFINE_PROCEDURE(S_snd_url, g_snd_url_w, 1, 0, 0, H_snd_url);
+  XEN_DEFINE_PROCEDURE(S_help_dialog, g_help_dialog_w, 2, 0, 0, H_help_dialog);
 
   #define H_help_hook S_help_hook "(subject help-string): called from snd-help.  If \
 if returns a string, it replaces 'help-string' (the default help)"

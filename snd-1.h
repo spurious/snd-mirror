@@ -495,12 +495,12 @@ void find_dialog_help(void);
 void completion_dialog_help(void);
 void open_file_dialog_help(void);
 void save_as_dialog_help(void);
-void ssnd_help(const char *subject, ...);
 char* word_wrap(const char *text, int widget_len);
 void g_init_help(void);
 XEN g_snd_help(XEN text, int widget_wid);
 char *snd_url(const char *name);
 void set_html_dir(char *new_dir);
+char **snd_xrefs(const char *topic);
 
 
 /* -------- snd-menu.c -------- */

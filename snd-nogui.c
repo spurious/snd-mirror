@@ -3,6 +3,8 @@
 void check_menu_labels(int key, int state, bool extended) {}
 int add_channel_window(snd_info *sound, int channel, int chan_y, int insertion, widget_t main, fw_button_t arrows, bool with_events) {return(0);}
 int snd_help(const char *subject, const char *help, bool with_wrap) {fprintf(stdout, help); return(0);}
+void snd_help_with_xrefs(const char *subject, const char *helpstr, bool with_wrap, const char *topic) {}
+void post_it(const char *subject, const char *str) {fprintf(stdout, str);}
 void add_to_error_history(char *msg, bool popup) {}
 void post_error_dialog(char *msg) {}
 bool snd_yes_or_no_p(char *format, ...) {return(false);}

@@ -908,10 +908,7 @@ void display_info(snd_info *sp)
 		       (ampstr) ? ampstr : "",
 		       (comment) ? _("\ncomment: ") : "",
 		       (comment) ? comment : "");
-	  ssnd_help(
-		    sp->short_filename,
-		    buffer,
-		    NULL);
+	  post_it(sp->short_filename, buffer);
 	  if (ampstr) FREE(ampstr);
 	  FREE(buffer);
 	}

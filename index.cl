@@ -398,6 +398,7 @@
 			(format sfil ",~%  ~S" (scm->rb name))
 		      (format sfil ", ~S" (scm->rb name))))
 		  (format sfil "};~%#endif~%")
+		  (format sfil "#if (!HAVE_GUILE) && (!HAVE_RUBY)~%static char **help_names = NULL;~%#endif~%")
 		  (format sfil "static char *help_urls[~D] = {~%  " len)
 		  (format sfil "~S" (car help-names))
 		  (loop for ctr from 1 and url in (cdr help-urls) do

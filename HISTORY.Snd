@@ -1,5 +1,6 @@
 Snd change log
 
+  18-Sep:    info-dialog (for info-only stuff now that the help dialog has gotten complicated).
   17-Sep:    removed finder.scm, changed index.scm|rb to use snd-xref.c tables.
   15-Sep:    just-sounds support in Gtk.
   12-Sep:    quit-button-color, help-button-color, reset-button-color,
