@@ -501,7 +501,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 
   ss->sgx = (state_context *)CALLOC(1, sizeof(state_context));
   sx = ss->sgx;
-  sx->graph_is_active = 0;
+  sx->graph_is_active = FALSE;
 #if HAVE_HTML
   set_html_dir(ss, copy_string("."));
 #endif

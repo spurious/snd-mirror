@@ -1055,7 +1055,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
   (add-hook! after-open-hook open-remarks)
   (add-hook! update-hook (lambda (snd) 
 			   ;; update-sound (called if header is changed, for example), calls open-sound
-			   ;;   which restores out channel-local mark-pane hooks, but doesn't re-activate
+			   ;;   which restores our channel-local mark-pane hooks, but doesn't re-activate
 			   ;;   the mark pane itself. So, we return a procedure from the update-hook
 			   ;;   evaluation that will recreate our pane immediately upon update completion.
 			   (lambda (updated-snd) 

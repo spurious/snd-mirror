@@ -39,7 +39,7 @@
 ;;;   we kludge around it using the procedure name as a string.
 
 (define (remove-local-hook! hook func)
-  "(remove-local-hook! hook func) removes func from hook even if func is not defined locally"
+  "(remove-local-hook! hook func) removes func from hook even if func is defined locally"
   (let ((lst (hook->list hook))
 	(name (symbol->string (procedure-name func))))
     (reset-hook! hook)

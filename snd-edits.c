@@ -314,7 +314,13 @@ char *run_save_state_hook(char *filename)
  * redo: push position foward
  * No actual changes are flushed out to the file system until the file is saved.
  *
- * the editing possibilities are insert, change, delete, scaling, zero, [x]ramp[2,3], ptree(xen).  All input goes through these lists.
+ * the editing possibilities are insert, change, delete, scaling, zero, [x]ramp[2,3], ptree(xen). 
+ * All input goes through these lists (with minor exceptions -- see chn_sample below).
+ *
+ * The accessorsr are highly optimized (split into numerous choices) since everything else in Snd
+ *   goes through the accessors to get at the data.  My tests indicate that even a lowly old
+ *   267 MHz PC (and equivalent Sun) can play stereo 44KHz through the double xramp op
+ *   without glitches, and on a modern machine the readers scarcely register in loadav.
  */
 
 typedef struct {
@@ -338,7 +344,7 @@ typedef struct {
 } ed_fragment;
 
 enum {ED_SIMPLE, ED_ZERO,
-      ED_RAMP, ED_RAMP2, ED_RAMP3, ED_XRAMP, ED_XRAMP2,
+      ED_RAMP, ED_RAMP2, ED_RAMP3, ED_XRAMP, ED_XRAMP2, ED_RAMP_ON_XRAMP, ED_XRAMP_ON_RAMP,
       ED_PTREE, ED_PTREE_RAMP, ED_PTREE_XRAMP, ED_PTREE_ZERO, ED_PTREE_RAMP2, 
       ED_PTREE_CLOSURE, ED_PTREE_RAMP_CLOSURE, ED_PTREE_XRAMP_CLOSURE, ED_PTREE_ZERO_CLOSURE, ED_PTREE_RAMP2_CLOSURE,
       ED_XEN, ED_XEN_RAMP, ED_XEN_XRAMP, ED_XEN_ZERO, ED_XEN_RAMP2
@@ -394,7 +400,7 @@ enum {ED_SIMPLE, ED_ZERO,
 #define READER_PTREE_INDEX(Sf)      ((ed_fragment *)((Sf)->cb))->ptree_loc
 #define READER_PTREE_DUR(Sf)        ((ed_fragment *)((Sf)->cb))->ptree_dur
 #define READER_PTREE_POSITION(Sf)   ((ed_fragment *)((Sf)->cb))->ptree_pos
-#define READER_LENGTH(Sf)           (ED_LOCAL_END(Sf) - ED_LOCAL_POSITION(Sf) + 1)
+#define READER_LENGTH(Sf)           (READER_LOCAL_END(Sf) - READER_LOCAL_POSITION(Sf) + 1)
 
 #define ED_GLOBAL_POSITION(Ed)  (Ed)->out
 #define ED_LOCAL_POSITION(Ed)   (Ed)->beg
@@ -472,6 +478,8 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, int w
 	      (FRAGMENT_TYPE(ed, j) == ED_XRAMP2) || 
 	      (FRAGMENT_TYPE(ed, j) == ED_RAMP2) || 
 	      (FRAGMENT_TYPE(ed, j) == ED_RAMP3) || 
+	      (FRAGMENT_TYPE(ed, j) == ED_XRAMP_ON_RAMP) || 
+	      (FRAGMENT_TYPE(ed, j) == ED_RAMP_ON_XRAMP) || 
 	      (FRAGMENT_TYPE(ed, j) == ED_PTREE_RAMP) || 
 	      (FRAGMENT_TYPE(ed, j) == ED_PTREE_XRAMP) ||
 	      (FRAGMENT_TYPE(ed, j) == ED_PTREE_RAMP2) ||
@@ -488,6 +496,8 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, int w
 	      if ((FRAGMENT_TYPE(ed, j) == ED_RAMP2) || 
 		  (FRAGMENT_TYPE(ed, j) == ED_XRAMP2) || 
 		  (FRAGMENT_TYPE(ed, j) == ED_RAMP3) || 
+		  (FRAGMENT_TYPE(ed, j) == ED_RAMP_ON_XRAMP) || 
+		  (FRAGMENT_TYPE(ed, j) == ED_XRAMP_ON_RAMP) || 
 		  (FRAGMENT_TYPE(ed, j) == ED_PTREE_RAMP2) ||
 		  (FRAGMENT_TYPE(ed, j) == ED_XEN_RAMP2) ||
 		  (FRAGMENT_TYPE(ed, j) == ED_PTREE_RAMP2_CLOSURE))
@@ -502,7 +512,7 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, int w
 		fprintf(outp, ", off: %f, scl: %f", 
 			FRAGMENT_XRAMP_OFFSET(ed, j),
 			FRAGMENT_XRAMP_SCALER(ed, j));
-	      if (FRAGMENT_TYPE(ed, j) == ED_XRAMP2)
+	      if (FRAGMENT_XRAMP_SCALER2(ed, j) != 0.0)
 		fprintf(outp, ", off2: %f, scl2: %f", 
 			FRAGMENT_XRAMP_OFFSET2(ed, j),
 			FRAGMENT_XRAMP_SCALER2(ed, j));
@@ -1027,37 +1037,29 @@ static void new_leading_ramp(ed_fragment *new_start, ed_fragment *old_start, off
 	}
       ED_RAMP_BEG(new_start) = rmp0;
       ED_RAMP_END(new_start) = val;
-      ED_XRAMP_OFFSET(new_start) = ED_XRAMP_OFFSET(old_start);
-      ED_XRAMP_SCALER(new_start) = ED_XRAMP_SCALER(old_start);
-      ED_XRAMP_OFFSET2(new_start) = ED_XRAMP_OFFSET2(old_start);
-      ED_XRAMP_SCALER2(new_start) = ED_XRAMP_SCALER2(old_start);
       if ((val == 0.0) && (rmp0 == 0.0))
 	{
 	  ED_SCALER(new_start) = 0.0; /* not redundant because reader chooser thinks rmps=0 means no env */
 	  ED_TYPE(new_start) = ED_ZERO;
 	}
-      if ((ED_TYPE(old_start) == ED_RAMP2) || 
-	  (ED_TYPE(old_start) == ED_XRAMP2) || 
-	  (ED_TYPE(old_start) == ED_RAMP3) || 
-	  (ED_TYPE(old_start) == ED_PTREE_RAMP2) || 
-	  (ED_TYPE(old_start) == ED_XEN_RAMP2) || 
-	  (ED_TYPE(old_start) == ED_PTREE_RAMP2_CLOSURE))
+      else
 	{
+	  ED_XRAMP_OFFSET(new_start) = ED_XRAMP_OFFSET(old_start);
+	  ED_XRAMP_SCALER(new_start) = ED_XRAMP_SCALER(old_start);
+	  ED_XRAMP_OFFSET2(new_start) = ED_XRAMP_OFFSET2(old_start);
+	  ED_XRAMP_SCALER2(new_start) = ED_XRAMP_SCALER2(old_start);
 	  rmp0 = ED_RAMP2_BEG(old_start);
 	  rmp1 = ED_RAMP2_END(old_start);
 	  ED_RAMP2_BEG(new_start) = rmp0;
 	  if (ED_LOCAL_END(old_start) == ED_LOCAL_POSITION(old_start))
 	    ED_RAMP2_END(new_start) = rmp0;
 	  else ED_RAMP2_END(new_start) = rmp0 + (rmp1 - rmp0) * xpos;
-	  if (ED_TYPE(old_start) == ED_RAMP3)
-	    {
-	      rmp0 = ED_RAMP3_BEG(old_start);
-	      rmp1 = ED_RAMP3_END(old_start);
-	      ED_RAMP3_BEG(new_start) = rmp0;
-	      if (ED_LOCAL_END(old_start) == ED_LOCAL_POSITION(old_start))
-		ED_RAMP3_END(new_start) = rmp0;
-	      else ED_RAMP3_END(new_start) = rmp0 + (rmp1 - rmp0) * xpos;
-	    }
+	  rmp0 = ED_RAMP3_BEG(old_start);
+	  rmp1 = ED_RAMP3_END(old_start);
+	  ED_RAMP3_BEG(new_start) = rmp0;
+	  if (ED_LOCAL_END(old_start) == ED_LOCAL_POSITION(old_start))
+	    ED_RAMP3_END(new_start) = rmp0;
+	  else ED_RAMP3_END(new_start) = rmp0 + (rmp1 - rmp0) * xpos;
 	}
     }
 }
@@ -1080,22 +1082,17 @@ static void new_trailing_ramp(ed_fragment *new_back, ed_fragment *old_back, off_
 	}
       ED_RAMP_BEG(new_back) = val;
       ED_RAMP_END(new_back) = rmp1;
-      ED_XRAMP_OFFSET(new_back) = ED_XRAMP_OFFSET(old_back);
-      ED_XRAMP_SCALER(new_back) = ED_XRAMP_SCALER(old_back);
-      ED_XRAMP_OFFSET2(new_back) = ED_XRAMP_OFFSET2(old_back);
-      ED_XRAMP_SCALER2(new_back) = ED_XRAMP_SCALER2(old_back);
       if ((val == 0.0) && (rmp1 == 0.0))
 	{
 	  ED_SCALER(new_back) = 0.0;
 	  ED_TYPE(new_back) = ED_ZERO;
 	}
-      if ((ED_TYPE(old_back) == ED_RAMP2) ||
-	  (ED_TYPE(old_back) == ED_XRAMP2) ||
-	  (ED_TYPE(old_back) == ED_RAMP3) ||
-	  (ED_TYPE(old_back) == ED_PTREE_RAMP2) ||
-	  (ED_TYPE(old_back) == ED_XEN_RAMP2) ||
-	  (ED_TYPE(old_back) == ED_PTREE_RAMP2_CLOSURE))
+      else
 	{
+	  ED_XRAMP_OFFSET(new_back) = ED_XRAMP_OFFSET(old_back);
+	  ED_XRAMP_SCALER(new_back) = ED_XRAMP_SCALER(old_back);
+	  ED_XRAMP_OFFSET2(new_back) = ED_XRAMP_OFFSET2(old_back);
+	  ED_XRAMP_SCALER2(new_back) = ED_XRAMP_SCALER2(old_back);
 	  rmp0 = ED_RAMP2_BEG(old_back);
 	  rmp1 = ED_RAMP2_END(old_back);
 	  if (ED_LOCAL_END(old_back) == ED_LOCAL_POSITION(old_back))
@@ -1103,16 +1100,13 @@ static void new_trailing_ramp(ed_fragment *new_back, ed_fragment *old_back, off_
 	  else val = rmp0 + (rmp1 - rmp0) * xpos;
 	  ED_RAMP2_BEG(new_back) = val;
 	  ED_RAMP2_END(new_back) = rmp1;
-	  if (ED_TYPE(old_back) == ED_RAMP3)
-	    {
-	      rmp0 = ED_RAMP3_BEG(old_back);
-	      rmp1 = ED_RAMP3_END(old_back);
-	      if (ED_LOCAL_END(old_back) == ED_LOCAL_POSITION(old_back))
-		val = rmp0;
-	      else val = rmp0 + (rmp1 - rmp0) * xpos;
-	      ED_RAMP3_BEG(new_back) = val;
-	      ED_RAMP3_END(new_back) = rmp1;
-	    }
+	  rmp0 = ED_RAMP3_BEG(old_back);
+	  rmp1 = ED_RAMP3_END(old_back);
+	  if (ED_LOCAL_END(old_back) == ED_LOCAL_POSITION(old_back))
+	    val = rmp0;
+	  else val = rmp0 + (rmp1 - rmp0) * xpos;
+	  ED_RAMP3_BEG(new_back) = val;
+	  ED_RAMP3_END(new_back) = rmp1;
 	}
     }
   if (PTREE_OP(ED_TYPE(new_back)))
@@ -1666,12 +1660,11 @@ int ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos,
 	{
 	  if ((PTREE_OP(typ)) ||
 	      (typ == ED_RAMP3) || 
-	      (typ == ED_XRAMP2))
+	      (typ == ED_XRAMP2) ||
+	      (typ == ED_XRAMP_ON_RAMP) ||
+	      (typ == ED_RAMP_ON_XRAMP))
 	    return(TRUE);
-	  if (((typ == ED_RAMP) || (typ == ED_RAMP2)) &&
-	      (base != 1.0))
-	    return(TRUE);
-	  if ((typ == ED_XRAMP) && (base == 1.0))
+	  if ((typ == ED_RAMP2) && (base != 1.0)) /* xramp on ramp2 */
 	    return(TRUE);
 	}
     }
@@ -1696,6 +1689,8 @@ int ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos)
       /* fragment starts at loc, ends just before next_loc, is of type typ */
       if (((PTREE_OP(typ)) || 
 	   (FRAGMENT_TYPE(ed, i) == ED_RAMP3) ||
+	   (FRAGMENT_TYPE(ed, i) == ED_XRAMP_ON_RAMP) ||
+	   (FRAGMENT_TYPE(ed, i) == ED_RAMP_ON_XRAMP) ||
 	   (FRAGMENT_TYPE(ed, i) == ED_XRAMP2)) && 
 	  (next_loc > beg)) 
 	return(TRUE);
@@ -1705,7 +1700,7 @@ int ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos)
 
 int ptree_or_sound_fragments_in_use(chan_info *cp, int pos)
 {
-  /* (swap-channels): are there any non-simple edits? */
+  /* (swap-channels): are there any non-simple/non-ramp edits? */
   int i, index;
   ed_list *ed;
   ed = cp->edits[pos];
@@ -1881,7 +1876,7 @@ void scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, int 
   if (!in_as_one_edit) update_graph(cp);
 }
 
-static void setup_ramp_fragments(ed_list *new_ed, int i, double seg0, double seg1, Float scaler, Float offset)
+static void setup_ramp_fragments(ed_list *new_ed, int i, double seg0, double seg1, Float scaler, Float offset, int is_xramp)
 {
   if (FRAGMENT_TYPE(new_ed, i) != ED_ZERO)
     {
@@ -1893,37 +1888,54 @@ static void setup_ramp_fragments(ed_list *new_ed, int i, double seg0, double seg
 	}
       else
 	{
-	  if ((FRAGMENT_TYPE(new_ed, i) == ED_RAMP) ||
-	      (FRAGMENT_TYPE(new_ed, i) == ED_XRAMP))
+	  if (FRAGMENT_TYPE(new_ed, i) == ED_RAMP)
 	    {
+	      /* underlying is ramp */
 	      FRAGMENT_RAMP2_BEG(new_ed, i) = seg0;
 	      FRAGMENT_RAMP2_END(new_ed, i) = seg1;
-	      if (FRAGMENT_TYPE(new_ed, i) == ED_XRAMP)
+	      if (is_xramp)
 		{
-		  FRAGMENT_TYPE(new_ed, i) = ED_XRAMP2;
 		  FRAGMENT_XRAMP_SCALER2(new_ed, i) = scaler;
 		  FRAGMENT_XRAMP_OFFSET2(new_ed, i) = offset;
+		  FRAGMENT_TYPE(new_ed, i) = ED_XRAMP_ON_RAMP;
 		}
 	      else FRAGMENT_TYPE(new_ed, i) = ED_RAMP2;
 	    }
 	  else
 	    {
-	      FRAGMENT_RAMP_BEG(new_ed, i) = seg0;
-	      FRAGMENT_RAMP_END(new_ed, i) = seg1;
-	      if (scaler != 0.0)
+	      if (FRAGMENT_TYPE(new_ed, i) == ED_XRAMP)
 		{
-		  FRAGMENT_TYPE(new_ed, i) = ED_XRAMP;
-		  FRAGMENT_XRAMP_SCALER(new_ed, i) = scaler;
-		  FRAGMENT_XRAMP_OFFSET(new_ed, i) = offset;
+		  /* underlying is xramp */
+		  FRAGMENT_RAMP2_BEG(new_ed, i) = seg0;
+		  FRAGMENT_RAMP2_END(new_ed, i) = seg1;
+		  if (is_xramp)
+		    {
+		      FRAGMENT_XRAMP_SCALER2(new_ed, i) = scaler;
+		      FRAGMENT_XRAMP_OFFSET2(new_ed, i) = offset;
+		      FRAGMENT_TYPE(new_ed, i) = ED_XRAMP2;
+		    }
+		  else FRAGMENT_TYPE(new_ed, i) = ED_RAMP_ON_XRAMP;
 		}
-	      else FRAGMENT_TYPE(new_ed, i) = ED_RAMP;
+	      else
+		{
+		  /* underlying is not zero and not ramp-related */
+		  FRAGMENT_RAMP_BEG(new_ed, i) = seg0;
+		  FRAGMENT_RAMP_END(new_ed, i) = seg1;
+		  if (is_xramp)
+		    {
+		      FRAGMENT_TYPE(new_ed, i) = ED_XRAMP;
+		      FRAGMENT_XRAMP_SCALER(new_ed, i) = scaler;
+		      FRAGMENT_XRAMP_OFFSET(new_ed, i) = offset;
+		    }
+		  else FRAGMENT_TYPE(new_ed, i) = ED_RAMP;
+		}
 	    }
 	}
     }
 }
 
 static void all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, 
-			     off_t beg, off_t num, int pos, int in_as_one_edit, const char *origin)
+			     off_t beg, off_t num, int pos, int in_as_one_edit, const char *origin, int is_x)
 {
   off_t len;
   int i;
@@ -1959,7 +1971,7 @@ static void all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
 	{
 	  seg0 = seg1 + incr;
 	  seg1 = seg0 + (incr * (FRAGMENT_LENGTH(new_ed, i) - 1));
-	  setup_ramp_fragments(new_ed, i, seg0, seg1, scaler, offset);
+	  setup_ramp_fragments(new_ed, i, seg0, seg1, scaler, offset, is_x);
 	}
     }
   else 
@@ -1976,7 +1988,7 @@ static void all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
 	    {
 	      seg0 = seg1 + incr;
 	      seg1 = seg0 + (incr * (FRAGMENT_LENGTH(new_ed, i) - 1));
-	      setup_ramp_fragments(new_ed, i, seg0, seg1, scaler, offset);
+	      setup_ramp_fragments(new_ed, i, seg0, seg1, scaler, offset, is_x);
 	    }
 	}
     }
@@ -1994,13 +2006,13 @@ static void all_ramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler
 
 void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, int pos, int in_as_one_edit)
 {
-  all_ramp_channel(cp, rmp0, rmp1, 0.0, 0.0, beg, num, pos, in_as_one_edit, S_ramp_channel);
+  all_ramp_channel(cp, rmp0, rmp1, 0.0, 0.0, beg, num, pos, in_as_one_edit, S_ramp_channel, FALSE);
 }
 
 void xramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, 
 		   off_t beg, off_t num, int pos, int in_as_one_edit)
 {
-  all_ramp_channel(cp, rmp0, rmp1, scaler, offset, beg, num, pos, in_as_one_edit, S_xramp_channel);
+  all_ramp_channel(cp, rmp0, rmp1, scaler, offset, beg, num, pos, in_as_one_edit, S_xramp_channel, TRUE);
 }
 
 
@@ -2517,6 +2529,122 @@ static Float previous_sample_to_float_with_xramp(snd_fd *sf)
       Float val;
       val = sf->data[sf->loc--] * sf->fscaler * (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval)));
       sf->curval -= sf->incr;
+      return(val);
+    }
+}
+
+
+/* ---------------- ramp on xramp ---------------- */
+static mus_sample_t next_sample_with_ramp_on_xramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+    return(next_sound(sf));
+  else
+    {
+      mus_sample_t val;
+      val = (mus_sample_t)(sf->data[sf->loc++] * sf->curval2 * (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval))));
+      sf->curval += sf->incr;
+      sf->curval2 += sf->incr2;
+      return(val);
+    }
+}
+
+static mus_sample_t previous_sample_with_ramp_on_xramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound(sf));
+  else 
+    {
+      mus_sample_t val;
+      val = (mus_sample_t)(sf->data[sf->loc--] * sf->curval2 * (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval))));
+      sf->curval -= sf->incr;
+      sf->curval2 -= sf->incr2;
+      return(val);
+    }
+}
+
+static Float next_sample_to_float_with_ramp_on_xramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(MUS_SAMPLE_TO_FLOAT(next_sound(sf)));
+  else 
+    {
+      Float val;
+      val = sf->data[sf->loc++] * MUS_FIX_TO_FLOAT * sf->curval2 * (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval)));
+      sf->curval += sf->incr;
+      sf->curval2 += sf->incr2;
+      return(val);
+    }
+}
+
+static Float previous_sample_to_float_with_ramp_on_xramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(MUS_SAMPLE_TO_FLOAT(previous_sound(sf)));
+  else
+    {
+      Float val;
+      val = sf->data[sf->loc--] * MUS_FIX_TO_FLOAT * sf->curval2 * (READER_XRAMP_OFFSET(sf) + (READER_XRAMP_SCALER(sf) * exp(sf->curval)));
+      sf->curval -= sf->incr;
+      sf->curval2 -= sf->incr2;
+      return(val);
+    }
+}
+
+
+/* ---------------- xramp on ramp ---------------- */
+static mus_sample_t next_sample_with_xramp_on_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+    return(next_sound(sf));
+  else
+    {
+      mus_sample_t val;
+      val = (mus_sample_t)(sf->data[sf->loc++] * sf->curval * (READER_XRAMP_OFFSET2(sf) + (READER_XRAMP_SCALER2(sf) * exp(sf->curval2))));
+      sf->curval += sf->incr;
+      sf->curval2 += sf->incr2;
+      return(val);
+    }
+}
+
+static mus_sample_t previous_sample_with_xramp_on_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(previous_sound(sf));
+  else 
+    {
+      mus_sample_t val;
+      val = (mus_sample_t)(sf->data[sf->loc--] * sf->curval * (READER_XRAMP_OFFSET2(sf) + (READER_XRAMP_SCALER2(sf) * exp(sf->curval2))));
+      sf->curval -= sf->incr;
+      sf->curval2 -= sf->incr2;
+      return(val);
+    }
+}
+
+static Float next_sample_to_float_with_xramp_on_ramp(snd_fd *sf)
+{
+  if (sf->loc > sf->last)
+     return(MUS_SAMPLE_TO_FLOAT(next_sound(sf)));
+  else 
+    {
+      Float val;
+      val = sf->data[sf->loc++] * MUS_FIX_TO_FLOAT * sf->curval * (READER_XRAMP_OFFSET2(sf) + (READER_XRAMP_SCALER2(sf) * exp(sf->curval2)));
+      sf->curval += sf->incr;
+      sf->curval2 += sf->incr2;
+      return(val);
+    }
+}
+
+static Float previous_sample_to_float_with_xramp_on_ramp(snd_fd *sf)
+{
+  if (sf->loc < sf->first)
+    return(MUS_SAMPLE_TO_FLOAT(previous_sound(sf)));
+  else
+    {
+      Float val;
+      val = sf->data[sf->loc--] * MUS_FIX_TO_FLOAT * sf->curval * (READER_XRAMP_OFFSET2(sf) + (READER_XRAMP_SCALER2(sf) * exp(sf->curval2)));
+      sf->curval -= sf->incr;
+      sf->curval2 -= sf->incr2;
       return(val);
     }
 }
@@ -3434,6 +3562,42 @@ static void choose_accessor(snd_fd *sf)
       sf->runf = next_sample_to_float_with_ramp2;
       sf->rev_run = previous_sample_with_ramp2;
       sf->rev_runf = previous_sample_to_float_with_ramp2;
+      break;
+    case ED_RAMP_ON_XRAMP:
+      rmp0 = READER_RAMP_BEG(sf);
+      rmp1 = READER_RAMP_END(sf);
+      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+	sf->incr = 0.0;
+      else sf->incr = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+      sf->curval = rmp0 + sf->incr * sf->frag_pos;
+      rmp0 = READER_SCALER(sf) * READER_RAMP2_BEG(sf);
+      rmp1 = READER_SCALER(sf) * READER_RAMP2_END(sf);
+      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+	sf->incr2 = 0.0;
+      else sf->incr2 = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+      sf->curval2 = rmp0 + sf->incr2 * sf->frag_pos;
+      sf->run = next_sample_with_ramp_on_xramp;
+      sf->runf = next_sample_to_float_with_ramp_on_xramp;
+      sf->rev_run = previous_sample_with_ramp_on_xramp;
+      sf->rev_runf = previous_sample_to_float_with_ramp_on_xramp;
+      break;
+    case ED_XRAMP_ON_RAMP:
+      rmp0 = READER_SCALER(sf) * READER_RAMP_BEG(sf);
+      rmp1 = READER_SCALER(sf) * READER_RAMP_END(sf);
+      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+	sf->incr = 0.0;
+      else sf->incr = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+      sf->curval = rmp0 + sf->incr * sf->frag_pos;
+      rmp0 = READER_RAMP2_BEG(sf);
+      rmp1 = READER_RAMP2_END(sf);
+      if (READER_LOCAL_END(sf) == READER_LOCAL_POSITION(sf))
+	sf->incr2 = 0.0;
+      else sf->incr2 = (double)(rmp1 - rmp0) / (double)(READER_LOCAL_END(sf) - READER_LOCAL_POSITION(sf));
+      sf->curval2 = rmp0 + sf->incr2 * sf->frag_pos;
+      sf->run = next_sample_with_xramp_on_ramp;
+      sf->runf = next_sample_to_float_with_xramp_on_ramp;
+      sf->rev_run = previous_sample_with_xramp_on_ramp;
+      sf->rev_runf = previous_sample_to_float_with_xramp_on_ramp;
       break;
     case ED_RAMP3:
       rmp0 = READER_SCALER(sf) * READER_RAMP_BEG(sf);
@@ -6048,4 +6212,7 @@ append the rest?
 
 /* and ED_REVERSE -- split using pos, no higher cases, peak-env needs check of trailing junk at end
  *  this is implemented via xen-channel in extsnd.html (does that code work for sections?)
+ */
+
+/* and ED_SMOOTH -- see smooth-channel-as-ptree in examp.scm
  */

@@ -2467,9 +2467,10 @@ static XEN g_preload_file(XEN file)
   char *name = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_preload_file, "a string");
   name = mus_expand_filename(XEN_TO_C_STRING(file));
-  add_to_previous_files(get_global_state(), 
-	      filename_without_home_directory(name), 
-	      name);
+  if (mus_file_probe(name))
+    add_to_previous_files(get_global_state(), 
+			  filename_without_home_directory(name), 
+			  name);
   if (name) FREE(name);
   return(file);
 }

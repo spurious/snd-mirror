@@ -424,6 +424,7 @@ The X cursors are declared in /usr/X11R6/include/X11/cursorfont.h or some such f
 <tr><td valign=top><code><em class=def><a name="ladspadir">ladspa-dir</a></em></code></td>
 <td valign=top><code>#f</code></td>
 <td>Name of directory for LADSPA plugin libraries (can override or replace LADSPA_PATH).
+See <a href="grfsnd.html#sndandladspa">Snd and LADSPA</a>.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1160,7 +1161,7 @@ and if the mark-sync is active, the hook is called on each syncd mark.
 </td></tr>
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(define (snap-mark-to-beat)
+(define (<A NAME="snpmark">snap-mark-to-beat</a>)
   ;; when a mark is dragged, its end position is always on a beat
   (let ((mark-release 4))
     (add-hook! <em class=red>mark-hook</em>
@@ -1872,13 +1873,14 @@ called just after an FFT (or spectrum) is calculated.
 </td></tr>
 
 <tr><td></td><td colspan=2>
-update-hook is called just before update-sound is called. 
-The update process can be triggered by a variety of situations, not just by update-sound. 
+update-hook is called just before a sound is updated (re-read from the disk, flushing the current version; this
+is useful if you overwrite a sound file while viewing it in Snd). 
+The update process can be triggered by a variety of situations, not just by <a href="#sndupdate">update-sound</a>. 
 The hook is passed the sound's index.  If it returns #t, the update is cancelled (this is not 
 recommended!); if it returns a procedure of one argument, that procedure is called upon 
 completion of the update operation; its argument is the (possibly different) sound index. 
 Snd tries to maintain the index across the update, but if you change the number of channels 
-the newly updated sound may have a different index.  add-mark-pane in snd-motif.scm uses
+the newly updated sound may have a different index.  <i>add-mark-pane</i> in snd-motif.scm uses
 the returned procedure to make sure the mark pane is reactivated right away when a sound is updated. The basic idea is:
 </td></tr>
 
@@ -1941,7 +1943,10 @@ up protected portions of the edit history:
 </pre></td></tr></table></center>
 
 <p><a href="sndscm.html#enveddoc">enved.scm</a> uses several of these hooks to implement an envelope editor in lisp.
+<i>add-mark-pane</i> in snd-motif.scm uses them to make sure the mark list reflects the current edit history location.
 See also <a href="#menuhook">menu-hook</a> below.
+</p>
+<p>
 You can find out what's on a given hook with the following (which is mostly adding carriage returns to the
 printout from hook-&gt;list):
 </p>
@@ -1974,7 +1979,8 @@ we were.  Do we panic and dial 911? No!  We simply type:
 <p>These hooks are extremely easy to add; if there's some user-interface action
 you'd like to specialize in some way, send me a note.  I'm slowly replacing
 many of the global variables with hooks, since the latter are much more
-flexible.  hooks.scm has snd-hooks and reset-all-hooks.
+flexible.  hooks.scm has snd-hooks and reset-all-hooks, as well as other
+useful hook-related functions.
 </p>
 
 <br>
@@ -2753,7 +2759,8 @@ See <a href="#scanagain">scan-again</a> and <a href="newcp">find-zero</a> for ex
 
 <p>A mark is an object that refers to a particular sample.
 Each mark has an associated sample number (<b>mark-sample</b>), name (<b>mark-name</b>), sync value (<b>mark-sync</b>), and
-a globally unique id number (returned by <b>find-mark</b> or <b>add-mark</b>, for example).  
+a globally unique id number (returned by <b>find-mark</b> or <b>add-mark</b>, for example).  See <a href="snd.html#marks">Marks</a>
+for an overview and key bindings associated with marks.
 </p>
 
 <!-- -------------------------------- MARKS TABLE -------------------------------- -->
@@ -2761,31 +2768,30 @@ a globally unique id number (returned by <b>find-mark</b> or <b>add-mark</b>, fo
 <table border=0 cellspacing=8>
 
 <!-- add-mark -->
-
 <tr><td><span class=defbox><code><em class=def><a name="sndaddmark">add-mark</a></em> (sample <i>snd chn</i>)</code></span></td>
 <td>add mark at <i>sample</i>, returning mark id.  If <i>sample</i> is out-of-range, <i>add-mark</i> throws 'no-such-sample.
 </td></tr>
 
 <!-- backward-mark -->
-
 <tr><td><span class=defbox><code><em class=def><a name="sndbackwardmark">backward-mark</a></em> (<i>count snd chn</i>)</code></span></td>
 <td>move the cursor back <i>count</i> marks (C-j), returning mark id, or #f if none.
 </td></tr>
 
 <!-- delete-mark -->
-
 <tr><td><span class=defbox><code><em class=def><a name="snddeletemark">delete-mark</a></em> (<i>id</i>)</code></span></td>
 <td>delete mark <i>id</i> (- C-m).
 </td></tr>
 
 <!-- delete-marks -->
-
 <tr><td><span class=defbox><code><em class=def><a name="snddeletemarks">delete-marks</a></em> (<i>snd chn</i>)</code></span></td>
 <td>delete all marks in <i>snd</i>'s channel <i>chn</i>.
 </td></tr>
 
-<!-- find-mark -->
+<tr><td><span class=defbox><code><em class=def><a href="#drawmarkhook">draw-mark-hook</a></em> (id)</code></span></td>
+<td>called before a mark is drawn.
+</td></tr>
 
+<!-- find-mark -->
 <tr><td valign=top><span class=defbox><code><em class=def><a name="sndfindmark">find-mark</a></em> (samp <i>snd chn edpos</i>)</code></span></td>
 <td>return identifier of mark at sample <i>samp</i> or #f if none found.
 This identifier is used in calls such as <a href="#sndmarksample">mark-sample</a>.  Since marks
@@ -2795,23 +2801,32 @@ looks for a mark of that name.  <i>mark-name-&gt;id</i> in marks.scm finds a nam
 </td></tr>
 
 <!-- forward-mark -->
-
 <tr><td><span class=defbox><code><em class=def><a name="sndforwardmark">forward-mark</a></em> (<i>count snd chn</i>)</code></span></td>
 <td>move the cursor forward <i>count</i> marks (C-j), returning mark id, or #f if none.
 </td></tr>
 
 <tr><td><span class=defbox><code><em class=def><a href="#markclickhook">mark-click-hook</a></em> (id)</code></span></td>
-<td>called when a mark is clicked, return #t to squelch message.
+<td>called when a mark is clicked.
+</td></tr>
+
+<tr><td><span class=defbox><code><em class=def><a href="#markcolor">mark-color</a></em></code></span></td>
+<td>color of mark indicator.
+</td></tr>
+
+<tr><td><span class=defbox><code><em class=def><a href="#markcontext">mark-context</a></em></code></span></td>
+<td>graphics context to use to draw a mark (XOR mode).
 </td></tr>
 
 <!-- mark-home -->
-
 <tr><td><span class=defbox><code><em class=def><a name="markhome">mark-home</a></em> (<i>id</i>)</code></span></td>
 <td>a list with the sound index and channel that hold mark <i>id</i>.
 </td></tr>
 
-<!-- mark-name -->
+<tr><td><span class=defbox><code><em class=def><a href="#markhook">mark-hook</a></em> (id snd chn reason)</code></span></td>
+<td>called when a mark is added, deleted, moved.
+</td></tr>
 
+<!-- mark-name -->
 <tr><td><span class=defbox><code><em class=def><a name="sndmarkname">mark-name</a></em> (<i>id</i>)</code></span></td>
 <td>name of mark <i>id</i>.
 <tr><td colspan=2>
@@ -2824,7 +2839,6 @@ looks for a mark of that name.  <i>mark-name-&gt;id</i> in marks.scm finds a nam
 </td></tr>
 
 <!-- mark-sample -->
-
 <tr><td valign=top><span class=defbox><code><em class=def><a name="sndmarksample">mark-sample</a></em> (<i>id pos</i>)</code></span></td>
 <td>sample (number) marked by mark <i>id</i> at edit history position <i>pos</i>; also <code>(set! (mark-sample id) samp)</code>.
 It might be more consistent with other Snd names to call this mark-position, but I wanted to emphasize
@@ -2832,19 +2846,16 @@ that a mark follows its sample around as a sound is edited; that is, it marks a 
 </td></tr>
 
 <!-- mark-sync -->
-
 <tr><td><span class=defbox><code><em class=def><a name="sndmarksync">mark-sync</a></em> (<i>id</i>)</code></span></td>
 <td>mark <i>id</i>'s sync value; can be set.
 </td></tr>
 
 <!-- mark-sync-max -->
-
 <tr><td><span class=defbox><code><em class=def><a name="sndmarksyncmax">mark-sync-max</a></em> ()</code></span></td>
 <td>max mark sync value seen so far (intended as a way to get a unique sync value).
 </td></tr>
 
 <!-- marks -->
-
 <tr><td valign=top><span class=defbox><code><em class=def><a name="emarks">marks</a></em> (<i>snd chn pos</i>)</code></span></td>
 <td>list of mark ids in <i>snd</i>'s channel <i>chn</i> at edit history position <i>pos</i>.
 If <i>chn</i> and <i>pos</i> are omitted, a list of lists is returned, 
@@ -2865,19 +2876,20 @@ each sound and its channels.
 </td></tr>
 
 <!-- mark? -->
-
 <tr><td><span class=defbox><code><em class=def><a name="sndmarkok">mark?</a></em> (<i>id</i>)</code></span></td>
 <td>#t if mark <i>id</i> is active.
 </td></tr>
 
 <!-- save-marks -->
-
 <tr><td><span class=defbox><code><em class=def><a name="sndsavemarks">save-marks</a></em> (<i>snd</i>)</code></span></td>
 <td>save <i>snd</i>'s marks, writing a file &lt;name&gt;.marks (returns file name or #f if no marks).
 </td></tr>
 
-<!-- syncd-marks -->
+<tr><td><span class=defbox><code><em class=def><a href="#showmarks">show-marks</a></em></code></span></td>
+<td>#t if marks are being displayed.
+</td></tr>
 
+<!-- syncd-marks -->
 <tr><td><span class=defbox><code><em class=def><a name="syncdmarks">syncd-marks</a></em> (sync)</code></span></td>
 <td>list of marks (ids) that share sync.
 </td></tr>
@@ -2975,8 +2987,12 @@ more examples including:
 <tr><td><em class=def><a href="sndscm.html#exdefineselectionviamarks">define-selection-via-marks</a></em></td><td>define selection via marks</td></tr>
 <tr><td><em class=def><a href="sndscm.html#exsnapmarktobeat">snap-mark-to-beat</a></em></td><td>force dragged mark to land on a beat</td></tr>
 <tr><td><em class=def><a href="sndscm.html#exloopbetweenmarks">loop-between-marks</a></em></td><td>loop continuously between the two specified marks</td></tr>
+<tr><td><em class=def><a href="sndscm.html#exmarkexplode">mark-explode</a></em></td><td>split sound into separate files based on mark placement</td></tr>
 </table>
-
+<p>Other examples can be found in Dave Phillips' (contrib/dlp) marks-menu.scm, snd-motif.scm (<i>add-mark-pane</i>),
+edit-menu.scm (trim from mark, etc), examp.scm (move window to correspond to mark, looping).
+</p>
+<br>
 <br>
 <span class=cbox><h3><A NAME="sndmixes">Mixes</a></h3></span>
 
@@ -3744,7 +3760,8 @@ move the selected channel back (up or left) <i>count</i> graphs (C-x C-o), retur
 <tr><td></td><td>
 The x axis labelling of the time domain waveform can be in beats
 (x-axis-style = x-axis-in-beats); this variable sets the number of beats per minute.
-The default is 60.0, making it the same as x-axis-in-seconds.
+The default is 60.0, making it the same as x-axis-in-seconds.  
+See <a href="#snpmark">snap-mark-to-beat</a>, or <a href="sndscm.html#snapmixtobeat">snap-mix-to-beat</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -3795,7 +3812,8 @@ See <b>make-sound-icon</b> in snd-motif.scm for an example.
 </td></tr>
 <tr><td></td><td>
 A property list associated with the given channel.  It is set to '() at the time a sound is opened.  The accessor
-<a href="sndscm.html#exchannelproperty">channel-property</a> is provided in extensions.scm.  See enved.scm for an example.
+<a href="sndscm.html#exchannelproperty">channel-property</a> is provided in extensions.scm.  See enved.scm (which uses
+the property 'enved-envelope), or draw.scm (the properties 'colored-samples and 'insert-envelope).
 <br><br>Traditionally in Lisp, a property list has been treated as an "association list". This is a list
 of pairs (made by cons), each inner pair having a "key" as its first element, and the associated value as the second element.
 The function <b>assoc</b> can be used to search the list for a given key's value; a new key-value pair can be
@@ -5963,7 +5981,7 @@ the end points:</td></tr>
 <span class=defbox><code><em class=def><a name="sndok">sound?</a></em> (<i>snd</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
-#t if <i>snd</i> (an index) points to an open sound. (After update-sound, it is possible, though unlikely
+#t if <i>snd</i> (an index) points to an open sound. (After <a href="#sndupdate">update-sound</a>, it is possible, though unlikely
 for the updated sound's index to change; a better way to deal with this problem is via <a href="#updatehook">update-hook</a>).
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -6458,7 +6476,7 @@ See <a href="#updatehook">update-hook</a> for a way to deal with the index confu
 <span class=defbox><code><em class=def><a name="sndupdategraph">update-time-graph</a></em> (<em class=narg>snd chn</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-redisplay <i>chn's</i> graph(s).
+redisplay <i>chn's</i> time domain graph.  See <i>color-samples</i> in draw.scm.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6710,7 +6728,7 @@ is scaled by the Amp slider's value.  The filter is run next, if
 it's on, and finally the sample is scaled by the reverb slider and
 passed to the reverb, if any, which adds its result to the sample;
 the final result is sent to the speakers.
-The control panel procedures are:
+The control panel procedures (which are used extensively in new-effects.scm) are:
 </p>
 <!-- -------------------------------- CONTROL PANEL -------------------------------- -->
 <table border=0 cellspacing=10>
@@ -6722,7 +6740,8 @@ The control panel procedures are:
 <tr><td><spacer type=horizontal size=40><br></td><td>
 current amp (control panel slider) value.
 It is possible to use these controls (in "real-time") in your own functions.
-See amprt in <a href="sndscm.html#exampdoc">examp.scm</a> for a simple example.
+See amprt in <a href="sndscm.html#exampdoc">examp.scm</a> for a simple example,
+or <i>add-amp-control</i> in snd-motif.scm.
 As an experiment, I added the optional <i>chn</i> argument; if it is specified, the
 channel's local amp-control value is set instead of the sound's.  This affects the
 apply button (apply-controls) and playback.
@@ -6782,7 +6801,7 @@ where as <i>contrast-control-amp</i> below prescales the in-coming signal to be 
 <span class=defbox><code><em class=def><a name="sndcontrasting">contrast-control?</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-#t if <i>snd</i> has <a href="snd.html#contrast">contrast</a> turned on (control panel)
+#t if <i>snd</i> has <a href="snd.html#contrast">contrast</a> turned on (control panel).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7963,7 +7982,7 @@ Once in the debugger, you'll get a prompt:
 of debugger commands, and so on.
 Here's a real-life example, edited for brevity.  I hit a numerical
 overflow error (actually divide by zero...) in snd-test.scm, a huge
-(32000 line) pile of tests, got a slightly truncated backtrace from
+(33000 line) pile of tests, got a slightly truncated backtrace from
 Snd's default backtrace displayer (not sure why it was truncated, but first things first), so
 </p>
 <pre>
@@ -8065,8 +8084,8 @@ of infinite recursion,
 <hr>
 <p>If you hit a bug in Snd's C code, you'll need to use gdb (or dbx on the SGI)
 to track it down (an easier alternative is to simply mail me the gory details);
-if the error was a segfault, it probably left a file named "core" on the
-current directory.  In this case you can:
+if the error was a segfault, it probably left a file named "core" or "core.nnnn" where the number apparently reflects the Snd process id(?)
+on the current directory.  In this case you can:
 </p>
 <pre>
 gdb snd core
@@ -8934,7 +8953,7 @@ variables and functions control this:</p>
 <tr><td><code><em class=def><a name="colorscale">color-scale</a></em></code></td><td>0.5</td>
 <td>The darkness setting in the <a href="snd.html#colorbrowser">color</a> dialog, divided by 100.</td></tr>
 <tr><td valign=top><code><em class=def><a name="colormap">colormap</a></em></code></td><td valign=top>0</td>
-<td>Colormap choice for various displays (see the Color Editor).
+<td>Colormap choice for various displays (see the Color dialog, or <i>samples-via-colormap</i> in draw.scm).
 <br>
 This should be an integer between -1 and 15.  The maps (from 0 to 15) are: 
 gray, hsv, hot, cool, bone, copper, pink, jet, prism, autumn, winter, 
@@ -9107,6 +9126,7 @@ could be defined as:
 <i>colormap-ref</i> returns the rgb values of the colormap <i>map</i> at position <i>pos</i>,
 suitable for use with make-color.  'map' can be a number
 between 0.0 and 1.0 with 'pos' omitted; in this case the colormap choice and so on comes from the color dialog.
+See <i>samples-via-colormap</i> in draw.scm.
 </td></tr><tr><td colspan=2></td></tr>
 
 <!-- copy-context -->

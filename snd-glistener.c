@@ -619,12 +619,27 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
   return(FALSE);
 }
 
-/* TODO: click in listener can place cursor (and autoscroll window) at any random place! */
-
 static gboolean listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   snd_state *ss = (snd_state *)data;
-  (ss->sgx)->graph_is_active = 0;
+  (ss->sgx)->graph_is_active = FALSE;
+
+  /* this code from gedit/src/gedit-view.c.
+   *    click in listener can place cursor (and autoscroll window) at any random place!
+   *    so we have to explicitly find the correct place and put the cursor there.
+   */
+  {
+    gint x, y;
+    GtkTextIter iter;
+    GtkTextIter start, end;
+    GtkTextView *view = (GtkTextView *)w;
+    gtk_text_view_window_to_buffer_coords(view, GTK_TEXT_WINDOW_TEXT, ev->x, ev->y, &x, &y);
+    gtk_text_view_get_iter_at_location(view, &iter, x, y);
+    if (!(gtk_text_buffer_get_selection_bounds(gtk_text_view_get_buffer (view), &start, &end) &&          
+	  gtk_text_iter_in_range(&iter, &start, &end)))
+      gtk_text_buffer_place_cursor(gtk_text_view_get_buffer (view), &iter);
+  }
+
   goto_listener();
   return(FALSE);
 }
