@@ -23,13 +23,15 @@
 ;;; test 20: transforms
 ;;; test 21: goops
 ;;; test 22: run
-;;; test 23: Snd user-interface
-;;; test 24: X/Xt/Xm/Xpm
-;;; test 25: Glib/gdk/gdk-pixbuf/pango/gtk (none yet)
-;;; test 26: errors
+;;; test 23: with-sound
+;;; test 24: Snd user-interface
+;;; test 25: X/Xt/Xm/Xpm
+;;; test 26: Glib/gdk/gdk-pixbuf/pango/gtk (none yet)
+;;; test 27: errors
 
 ;;; TODO: GL tests, gtk (xg) tests
 ;;; TODO: mix panel env editor (apply button (|XmMessageBoxGetChild mix_panel |XmDIALOG_CANCEL_BUTTON)
+;;; TODO: with-sound tests
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
 
@@ -58,7 +60,7 @@
 (if (provided? 'snd-debug) (disable-play))
 (define keep-going #f)
 (define full-test (< snd-test 0))
-(define total-tests 26)
+(define total-tests 27)
 (define with-exit (< snd-test 0))
 (set! (with-background-processes) #f)
 (define all-args #f) ; huge arg testing
@@ -140,8 +142,11 @@
 (set! (window-y) 10)
 
 (define (snd-display . args)
-  (let ((str (apply format #f args)))
-    (newline) (display str)
+  (let ((str (if (null? (cdr args))
+		 (car args)
+		 (apply format #f args))))
+    (newline) 
+    (display str)
     (if (not (provided? 'snd-nogui))
 	(begin
 	  (snd-print "\n")
@@ -18170,7 +18175,55 @@ EDITS: 5
       ))))
 
 
-;;; ---------------- test 23: user-interface ----------------
+;;; ---------------- test 23: with-sound ----------------
+
+(load "ws.scm")
+(load "v.scm")
+(load "jcrev.scm")
+
+(define (ws-sine freq)
+  (let ((o (make-oscil freq)))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 100))
+	 (outa i (oscil o) *output*))))))
+
+(if (or full-test (= snd-test 23) (and keep-going (<= snd-test 23)))
+    (begin
+      (if (procedure? test-hook) (test-hook 23))
+      (set! (mus-srate) 22050)
+
+      (with-sound () (fm-violin 0 .1 440 .1))
+      (let ((ind (find-sound "test.snd")))
+	(if (not ind) (snd-display ";with-sound: ~A" (sounds)))
+	(let ((mx (maxamp)))
+	  (if (fneq mx .1) (snd-display ";with-sound max: ~A" (maxamp)))
+	  (if (not (= (srate ind) 22050)) (snd-display ";with-sound srate: ~A" (srate ind)))
+	  (if (not (= (frames ind) 2205)) (snd-display ";with-sound frames: ~A" (frames ind))))
+	(close-sound ind))
+
+      (with-sound (:srate 44100) (ws-sine 1000))
+      (let ((ind (find-sound "test.snd")))
+	(let ((i -1))
+	  (scan-channel (lambda (y)
+			  (set! i (1+ i))
+			  (if (fneq y (sin (* 2 3.14159 i (/ 1000.0 44100.0))))
+			      (begin
+				(snd-display ";with-sound sine: ~D ~A ~A" i y (sin (* 2 3.14159 i (/ 1000.0 44100.0))))
+				#t)
+			      #f))))
+	(close-sound ind))
+
+      (if (file-exists? "ii.scm")
+	  (begin
+	    (time (load "ii.scm"))
+	    (map close-sound (sounds))))
+
+      ))
+
+
+;;; ---------------- test 24: user-interface ----------------
 
 (if (and (provided? 'snd-motif)
 	 (provided? 'xm))
@@ -18206,9 +18259,9 @@ EDITS: 5
 (if (not (defined? 'move-scale))
     (define (move-scale a b) #f))
 
-(if (or full-test (= snd-test 23) (and keep-going (<= snd-test 23)))
+(if (or full-test (= snd-test 24) (and keep-going (<= snd-test 24)))
     (begin
-      (if (procedure? test-hook) (test-hook 23))
+      (if (procedure? test-hook) (test-hook 24))
 
       (if (and (provided? 'snd-motif)
 	       (provided? 'xm))
@@ -20624,10 +20677,12 @@ EDITS: 5
 
 (set! (optimization) 0)
 
-;;; -------------------- test 24: X/Xt/Xm --------------------
-(if (or full-test (= snd-test 24) (and keep-going (<= snd-test 24)))
+
+;;; -------------------- test 25: X/Xt/Xm --------------------
+
+(if (or full-test (= snd-test 25) (and keep-going (<= snd-test 25)))
     (begin
-      (if (procedure? test-hook) (test-hook 24))
+      (if (procedure? test-hook) (test-hook 25))
       (if (and (provided? 'snd-motif) (provided? 'xm) (not (provided? 'gl)))
 	  (begin
 	    ;; ---------------- X tests ----------------
@@ -23947,11 +24002,11 @@ EDITS: 5
 	      (gc))
 	      ))))
 
-;;; -------------------- test 25: Gtk --------------------
+;;; -------------------- test 26: Gtk --------------------
 
-(if (or full-test (= snd-test 25) (and keep-going (<= snd-test 25)))
+(if (or full-test (= snd-test 26) (and keep-going (<= snd-test 26)))
     (begin
-      (if (procedure? test-hook) (test-hook 25))
+      (if (procedure? test-hook) (test-hook 26))
       (if (and (provided? 'snd-gtk)
 	       (provided? 'xg))
 	  (begin
@@ -23959,7 +24014,7 @@ EDITS: 5
 	    ))))
 
 
-;;; ---------------- test 26: errors ----------------
+;;; ---------------- test 27: errors ----------------
 
 (mem-report)
 (if (file-exists? "memlog")
@@ -24163,9 +24218,9 @@ EDITS: 5
 
 (reset-all-hooks)
 
-(if (or full-test (= snd-test 26) (and keep-going (<= snd-test 26)))
+(if (or full-test (= snd-test 27) (and keep-going (<= snd-test 27)))
     (begin
-      (if (procedure? test-hook)  (test-hook 26))
+      (if (procedure? test-hook)  (test-hook 27))
 
       (for-each (lambda (n)
 		  (let ((tag

@@ -2788,6 +2788,9 @@ in C/CLM is:
 
 <A NAME="wsdoc"></a><span class=box><h2>ws.scm</h2></span>
 <p>
+
+<!-- TODO: new with-sound/run documentation -->
+
 <i>with-sound</i> is the primary sound producing macro in CLM (in a sense, it is CLM's user-interface).
 In Common Lisp it's defined as:</p>
 <pre>
@@ -2797,29 +2800,8 @@ In Common Lisp it's defined as:</p>
      (progn (cleanup...))))
 </pre>
 <p>and makes extensive use of Lisp's dynamic binding to handle nested with-sound calls and so on.
-Optional argument syntax has changed slightly in Guile; my first attempt to implement this macro
-(in Guile 1.4) was:</p>
-<pre>
-(defmacro with-sound (args . body) 
-  `((lambda* (#&amp;key (srate 22050)
-		    (output "test.snd")
-		    (channels 1)
-		    (explode #f))
-      (let ((old-srate (mus-srate)))
-	(dynamic-wind
-	 (lambda ()
-	   (set! (mus-srate) srate))
-	 (lambda () 
-	   (if (find-sound output) 
-               (close-sound (find-sound output)))
-	   (new-sound output (default-output-type) (default-output-format) srate channels)
-	   ,@body)
-	 (lambda ()
-	   (set! (mus-srate) old-srate)))))
-    ,@args))
-</pre>
-<p>but in the newer Guile (1.4.1) it's possible to make this prettier (this
-version is thanks to Kalle Olavi Niemitalo):</p>
+Kalle Olavi Niemitalo came up with this Scheme/Guile replacement:
+</p>
 <pre>
 (define* (with-sound-helper thunk #&amp;key (srate 22050) (explode #f))
   (let ((old-srate (mus-srate)))
@@ -2834,8 +2816,7 @@ version is thanks to Kalle Olavi Niemitalo):</p>
   `(with-sound-helper (lambda () ,@body)
                       ,@args))
 </pre>
-<p><i>lambda*</i> and <i>define*</i> are extensions of Scheme
-from Guile's ice-9/optargs.scm.
+<p>
 The version in ws.scm is simply an amplification of this code.
 The global variables that parallel CLM's *clm-...* are:
 </p>
@@ -2859,6 +2840,7 @@ The global variables that parallel CLM's *clm-...* are:
 	  (data-format *data-format*)
 	  (comment #f)
 	  (continue-old-file #f)
+	  (play #f)
   	  (reverb #f)
   	  (revfile #f)
 	  (statistics #f)
@@ -2870,25 +2852,27 @@ The global variables that parallel CLM's *clm-...* are:
   (with-sound (:srate 44100) (fm-violin 0 1 440 .1))
 </pre>
 <p>
-This code is highly unstable!  I originally set it up to run its body within the
-Snd editing context, but this required the use of temporary files (even if using
-as-one-edit or saving state every now and then), made reverb awkward, and made
-individual instruments messy, since they now needed to call Snd editing functions
-such as mix-vct, whereas the rest of the instrument was pure CLM-code.  So,
-in the current version, with-sound opens its output file (<i>output</i> above)
+<b>with-sound</b> opens its output file (<i>output</i> above)
 via make-sample-&gt;file, setting the global variable *output*.  This
 is equivalent to CLM's *output* variable, and can be used the same
 way in outa or locsig.  If <i>reverb</i> is specified, *reverb* is also
 opened (corresponding to CLM's *reverb*).  So the cooperating instrument code should be:
 </p>
 <pre>
-  (define (ins args)
-    (let ...
-      (do ((i start (1+ i)))
-	  ((= i end))
-        (outa i ... *output*))))
+(define (ins args)
+  (let ...
+    (run
+      (lambda ()
+        (do ((i start (1+ i)))
+            ((= i end))
+          (outa i ... *output*))))))
 </pre>
-<p>which is essentially the same as in the standard CLM. 
+<p>which is essentially the same as in the standard CLM (change the "loop" statement to a "do" statement,
+add the lambda wrapper (needed by the run macro unfortunately),
+and you're ready to go!  If the run macro can handle the instrument code (and
+it can handle anything the CL version can handle, I think), then the Snd with-sound
+should run within a factor of two of the fastest CL-based CLM, even though the
+latter is going through the C intermediate file!  
 </p>
 
 <A NAME="xmenveddoc"></a><span class=box><h2>xm-enved.scm</h2></span>

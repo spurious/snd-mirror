@@ -68,7 +68,8 @@
  *         (set-object-property! <func> 'ptree pt) [scm_set_object_property_x in objprop]
  *              procedure-property? -- this has name and arity
  * TODO: set of global var to continuation is not flagged as trouble (should it be?)
- * TODO: mus_file_name tested
+ * many list ops don't (necessarily) involve (special) allocation: 
+ *   car cdr (etc) list-ref list-set! length list->string list->vector list? member memq memv null? pair? set-car! set-cdr!
  *
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
@@ -2481,7 +2482,7 @@ static xen_value *generalized_set_form(ptree *prog, XEN form, int need_result)
 	{
 	  in_v = walk(prog, XEN_CADR(settee), TRUE);
 	  if ((in_v == NULL) ||
-	      (in_v->type = R_UNSPECIFIED) ||
+	      (in_v->type == R_UNSPECIFIED) ||
 	      (in_v->constant))
 	    {
 	      FREE(v);
@@ -5971,6 +5972,8 @@ static xen_value *file2frame_1(ptree *prog, xen_value **args, int num_args)
 
 
 /* ---------------- outa ---------------- */
+/* TODO: if no 3rd arg, look for *output* */
+
 #define OUT_GEN(CName, SName) \
 static char *descr_ ## CName ## _3(int *args, int *ints, Float *dbls) \
 { \
@@ -7487,6 +7490,7 @@ static XEN g_run(XEN proc_and_code)
       eval_ptree(pt);
       free_ptree(pt);
     }
+  else XEN_CALL_0(code, S_run);
   return(XEN_FALSE);
 }
 #endif
