@@ -170,6 +170,7 @@ various examples of and extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#birddoc">bird.scm</a></td>      <td>various North-American birds (from bird.clm)</td></tr>
 <tr><td><a href="sndscm.html#drawdoc">draw.scm</a></td>      <td>graphics additions</td></tr>
 <tr><td><a href="sndscm.html#dspdoc">dsp.scm</a></td>        <td>various DSP-related procedures</td></tr>
+<tr><td><a href="sndscm.html#editmenudoc">edit-menu.scm</a></td><td>Edit menu additions</td></tr>
 <tr><td><a href="sndscm.html#effectsdoc">effects.scm</a></td><td>an Effects menu based on examp.scm</td></tr>
 <tr><td><a href="sndscm.html#envdoc">env.scm</a></td>        <td>various envelope functions from CLM</td></tr>
 <tr><td><a href="sndscm.html#enveddoc">enved.scm</a></td>    <td>envelope editor in lisp graph section</td></tr>
@@ -1259,6 +1260,15 @@ the hook.
 <!-- -->
 <!-- --><table border=0 cellspacing=10>
 <!-- -->
+<!-- after-apply-hook -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="afterapplyhook">after-apply-hook</a></em> (snd)</code></span><td align=right><b>progn</b></td>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td colspan=2>
+<!-- -->called when 'Apply' finishes.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=3></td></tr>
+<!-- -->
 <!-- after-graph-hook -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="aftergraphhook">after-graph-hook</a></em> (snd chn)</code></span><td align=right><b>progn</b></td>
@@ -1293,9 +1303,9 @@ the hook.
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
-<!-- apply-hook -->
+<!-- before-apply-hook -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="applyhook">apply-hook</a></em> (snd)</code></span><td align=right><b>or</b></td>
+<!-- --><span class=defbox><code><em class=def><a name="beforeapplyhook">before-apply-hook</a></em> (snd)</code></span><td align=right><b>or</b></td>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when 'Apply' is clicked or apply-controls called.
@@ -6065,12 +6075,15 @@ the reverb.  The control panel procedures are:
 <!-- -->
 <!-- amp-control -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndamp">amp-control</a></em> (<em class=targ>snd</em>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndamp">amp-control</a></em> (<em class=targ>snd chn</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td><spacer type=horizontal size=40><br></td><td>
 <!-- -->current amp (control panel slider) value.
 <!-- -->It is possible to use these controls (in "real-time") in your own functions.
 <!-- -->See amprt in <a href="sndscm.html#exampdoc">examp.scm</a> for a simple example.
+<!-- -->As an experiment, I added the optional <i>chn</i> argument; if it is specified, the
+<!-- -->channel's local amp-control value is set instead of the sound's.  This affects the
+<!-- -->apply button (apply-controls) and playback.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

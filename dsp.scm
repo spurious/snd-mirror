@@ -389,3 +389,32 @@
 ;	     (report-in-minibuffer (format #f "~A" (spot-freq (left-sample))))))
 
 
+
+;;; -------- chorus (doesn't always work and needs speedup)
+(define chorus-size 5)
+(define chorus-time .05)
+(define chorus-amount 20.0)
+(define chorus-speed 10.0)
+
+(define (chorus)
+  (define (make-flanger)
+    (let* ((ri (make-rand-interp :frequency chorus-speed :amplitude chorus-amount))
+	   (len (inexact->exact (random (* 3.0 chorus-time (srate)))))
+	   (gen (make-delay len :max-size (+ len chorus-amount 1))))
+      (list gen ri)))
+  (define (flanger dly inval)
+    (+ inval 
+       (delay (car dly)
+	      inval
+	      (rand-interp (cadr dly)))))
+  (let ((dlys (make-vector chorus-size)))
+    (do ((i 0 (1+ i)))
+	((= i chorus-size))
+      (vector-set! dlys i (make-flanger)))
+    (lambda (inval)
+      (do ((sum 0.0)
+	   (i 0 (1+ i)))
+	  ((= i chorus-size)
+	   (* .25 sum))
+	(set! sum (+ sum (flanger (vector-ref dlys i) inval)))))))
+

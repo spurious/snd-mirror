@@ -229,6 +229,9 @@
       (list "Insert selection"   |xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (insert-selection (cursor graph-popup-snd graph-popup-chn) graph-popup-snd graph-popup-chn)))
+      (list "Select all"         |xmPushButtonWidgetClass every-menu 
+	    (lambda (w c i)
+	      (select-all graph-popup-snd graph-popup-chn)))
       (list "Equalize panes"     |xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (equalize-panes)))
@@ -255,6 +258,10 @@
 			(if (= (header-type snd) mus-soundfont)
 			    (format #f "  sounds: ~:{~%     ~S start: ~A, loop: ~A ~A~}" (soundfont-info))
 			    ""))))))
+      (list "sep"                |xmSeparatorWidgetClass  every-menu)
+      (list "Exit"               |xmPushButtonWidgetClass every-menu 
+	    (lambda (w c i)
+	      (exit)))
       ))))
 
 (define (edit-graph-popup-menu snd chn)

@@ -55,6 +55,9 @@ typedef struct dac__info {
   int end, no_scalers, never_sped, expand_ring_frames;
 } dac_info;
 
+#define AMP_CONTROL(sp, dp) ((dp->cp->amp_control) ? (dp->cp->amp_control[0]) : sp->amp_control)
+/* an experiment */
+
 
 /* -------- filter -------- */
 static mus_any *make_flt(dac_info *dp, int order, Float *env)
@@ -1209,7 +1212,7 @@ static dac_info *init_dp(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, int 
     {
       dp->cur_srate = sp->speed_control * sp->speed_control_direction;
       if (dp->cur_srate != 1.0) dp->never_sped = 0;
-      dp->cur_amp = sp->amp_control;
+      dp->cur_amp = AMP_CONTROL(sp, dp);
       dp->cur_index = sp->contrast_control;
       dp->cur_exp = sp->expand_control;
       dp->cur_rev = sp->reverb_control_scale;
@@ -1490,7 +1493,7 @@ static int choose_dac_op (dac_info *dp, snd_info *sp)
 	return(JUST_SPEED);
       else
 	{
-	  if ((sp->amp_control == dp->cur_amp) && (sp->amp_control == 1.0))
+	  if ((AMP_CONTROL(sp, dp) == dp->cur_amp) && (AMP_CONTROL(sp, dp) == 1.0))
 	    {
 	      if (dp->no_scalers)
 		return(NO_CHANGE_AND_NO_SCALING);
@@ -1621,9 +1624,9 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  break;
 
 		case JUST_AMP:
-		  /* sp->amp_control is current UI value, dp->cur_amp is current local value */
+		  /* AMP_CONTROL(sp, dp) is current UI value, dp->cur_amp is current local value */
 		  amp = dp->cur_amp;
-		  incr = (sp->amp_control - amp) / (Float)(frames);
+		  incr = (AMP_CONTROL(sp, dp) - amp) / (Float)(frames);
 		  for (j = 0; j < frames; j++, amp += incr) 
 		    buf[j] += MUS_FLOAT_TO_SAMPLE(next_sample_to_float(dp->chn_fd) * amp);
 		  dp->cur_amp = amp;
@@ -1634,7 +1637,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  /* sp->speed_control is current UI value, dp->cur_srate is current local value */
 		  dp->never_sped = 0;
 		  amp = dp->cur_amp;
-		  incr = (sp->amp_control - amp) / (Float)(frames);
+		  incr = (AMP_CONTROL(sp, dp) - amp) / (Float)(frames);
 		  sr = dp->cur_srate;
 		  sincr = (sp->speed_control * sp->speed_control_direction - sr) / (Float)(frames);
 		  if ((sr != 0.0) || (sincr != 0.0))
@@ -1648,7 +1651,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 
 		case ALL_CHANGES:
 		  amp = dp->cur_amp;
-		  incr = (sp->amp_control - amp) / (Float)(frames);
+		  incr = (AMP_CONTROL(sp, dp) - amp) / (Float)(frames);
 		  sr = dp->cur_srate;
 		  sincr = (sp->speed_control * sp->speed_control_direction - sr) / (Float)(frames);
 		  if ((sincr != 0.0) || (sr != 1.0)) dp->never_sped = 0;

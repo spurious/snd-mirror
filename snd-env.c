@@ -1,7 +1,6 @@
 #include "snd.h"
 
-/* TODO  enved mix flt and src undo&apply cases need more testing (also clean undo of selection src)
- * TODO  edit of mix sound doesn't follow undo chains?
+/* TODO:  edit of mix sound doesn't follow undo chains?
  */
 
 Float un_dB(snd_state *ss, Float py)
@@ -1035,11 +1034,11 @@ void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info
     }
   else
     {
-      if ((apply_to_mix) && 
+      if ((apply_to_mix) &&
 	  ((ss->selected_mix != NO_SELECTION) || 
-	   (mixes() == 1)))
+	   (accessible_mixes() == 1)))
 	{
-	  if (mixes() == 0) return;
+	  if (accessible_mixes() == 0) return;
 	  if (ss->selected_mix != NO_SELECTION) 
 	    id = ss->selected_mix; 
 	  else
@@ -1047,8 +1046,10 @@ void enved_show_background_waveform(snd_state *ss, chan_info *axis_cp, axis_info
 	      id = any_mix_id();
 	      if (id != NO_SELECTION) select_mix_from_id(id);
 	    }
+	  if (id == -1) return;
 	  samps = mix_length(id);
 	  ncp = mix_channel_from_id(id);
+	  if (ncp == NULL) return;
 	  srate = SND_SRATE(ncp->sound);
 	  gray_ap->losamp = 0;
 	  gray_ap->hisamp = samps - 1;

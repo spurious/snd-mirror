@@ -31,6 +31,10 @@
 
 /* TODO: if edit applies to edpos not current, show that somehow in the edit-history list */
 
+/* another thing we could use: anonymous edit -- an unattached edlist passable to init-sample-read etc
+ *   perhaps make-edit-list?
+ */
+
 
 /* -------------------------------- EDIT LISTS --------------------------------
  *

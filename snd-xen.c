@@ -5,6 +5,9 @@
 
 static snd_state *state = NULL;
 
+/* Snd defines its own exit, delay, and frame? clobbering (presumably) the Guile versions,
+ *   delay is protected in clm2xen.c as %delay, frame? as %frame?
+ */
 
 /* -------- protect XEN vars from GC -------- */
 

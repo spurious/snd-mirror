@@ -17,7 +17,7 @@
 ;;; (select-file func &optional title dir filter help) starts a Snd-like File Selection Dialog running func if a file is selected
 ;;; (show-disk-space) adds a label to the minibuffer area showing the current free space 
 ;;; (keep-file-dialog-open-upon-ok) changes File:Open so that clicking "ok" does not "unmanage" the dialog
-;;; (add-amp-control) adds another amp slider to the control panel
+;;; (add-amp-controls) adds amp sliders to the control panel for multi-channel sounds
 ;;; (add-very-useful-icons) adds some very useful icons
 
 
@@ -1697,9 +1697,9 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 
 
-;;; -------- add another amp slider in control panel
+;;; -------- add amp sliders in control panel for multi-channel sounds
 ;;;
-;;; TODO: play tie-in
+;;; TODO: some way to synchronize sliders (needs to be installable into existing set)
 
 (define (add-amp-controls)
   (let ((current-amp-controls '()))
@@ -1729,16 +1729,28 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	      (exp (/ (- val 50) 20.0)))))
 
     (define (amp-callback w c i)
+      ;; c is (list number-widget snd chan)
       (let* ((amp (amp-scroller->amp (|value i)))
-	     (ampstr (|XmStringCreateLocalized (format #f "~,2F" amp))))
-	(|XtSetValues c (list |XmNlabelString ampstr))
-	(|XmStringFree ampstr)))
+	     (ampstr (|XmStringCreateLocalized (format #f "~,2F" amp)))
+	     (snd (cadr c))
+	     (top-chn (- (chans snd) 1))
+	     (chn (- top-chn (caddr c))))
+	(|XtSetValues (car c) (list |XmNlabelString ampstr))
+	(|XmStringFree ampstr)
+	(if (> (caddr c) 0)
+	    (set! (amp-control snd chn) amp))))
 
     (define (label-name chan) (if (= chan 0) "amp-label" (format #f "amp-label-~D" chan)))
     (define (number-name chan) (if (= chan 0) "amp-number" (format #f "amp-number-~D" chan)))
     (define (scroller-name chan) (if (= chan 0) "amp" (format #f "amp-~D" chan)))
 
-    (define (make-amp-control chan parent)
+    (define (reset-to-one scroller number)
+      (|XtSetValues scroller (list |XmNvalue 50))
+      (let ((ampstr (|XmStringCreateLocalized "1.00")))
+	(|XtSetValues number (list |XmNlabelString ampstr))
+	(|XmStringFree ampstr)))
+
+    (define (make-amp-control snd chan parent)
       (let* ((s1 (|XmStringCreateLocalized "amp:"))
 	     (label (|XtCreateManagedWidget (label-name chan) |xmPushButtonWidgetClass parent
 		      (list |XmNbackground       (|Pixel (snd-pixel (basic-color)))
@@ -1778,8 +1790,10 @@ Reverb-feedback sets the scaler on the feedback.\n\
 			    |XmNorientation      |XmHORIZONTAL
 			    |XmNmaximum          100
 			    |XmNvalue            50
-			    |XmNdragCallback     (list amp-callback number)
-			    |XmNvalueChangedCallback (list amp-callback number)))))
+			    |XmNdragCallback     (list amp-callback (list number snd chan))
+			    |XmNvalueChangedCallback (list amp-callback (list number snd chan))))))
+	(|XtAddCallback label |XmNactivateCallback (lambda (w c i)
+						     (reset-to-one scroll number)))
 	(|XmStringFree s1)
 	(|XmStringFree s2)
 	label))
@@ -1802,7 +1816,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 			    (set! height (+ height (* 18 (- chns existing-controls)))))
 			(do ((i existing-controls (1+ i)))
 			    ((= i chns))
-			  (make-amp-control i snd-amp))
+			  (make-amp-control snd i snd-amp))
 			(set! (amp-controls snd) chns)
 			(set! existing-controls chns)))
 		  (do ((i 0 (1+ i)))
@@ -1821,10 +1835,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 			  (next-amp (if (< i (1- chns))
 					(find-child snd-amp (label-name (1+ i)))
 					#f)))
-		      (|XtSetValues amp (list |XmNvalue 50))
-		      (let ((ampstr (|XmStringCreateLocalized "1.00")))
-			(|XtSetValues ampn (list |XmNlabelString ampstr))
-			(|XmStringFree ampstr))
+		      (reset-to-one amp ampn)
 		      (if next-amp
 			  (|XtSetValues ampc (list |XmNtopAttachment |XmATTACH_WIDGET
 						   |XmNtopWidget next-amp))
@@ -1837,37 +1848,28 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		(|XtManageChild ctrls)
 		(|XtSetValues ctrls (list |XmNpaneMinimum panemin |XmNpaneMaximum panemax))))))
 
-      (define (apply-reflect-amp-controls snd)
+      (define (amp-controls-clear snd)
 	(if (> (chans snd) 1)
 	    (let* ((wids (sound-widgets snd))
 		   (ctrls (|Widget (list-ref wids 2)))
 		   (snd-amp (find-child ctrls "snd-amp"))
 		   (top (1- (chans snd))))
-	      (set! (sync snd) #f)
-	      (do ((i 0 (1+ i)))
+	      (do ((i 1 (1+ i)))
 		  ((= i (chans snd)))
 		(let ((ampn (find-child snd-amp (number-name i)))
 		      (amp (find-child snd-amp (scroller-name i))))
-		  (scale-by (amp-scroller->amp (cadr (|XtGetValues amp (list |XmNvalue 0)))) snd (- top i))
-		  (|XtSetValues amp (list |XmNvalue 50))
-		  (let ((ampstr (|XmStringCreateLocalized "1.00")))
-		    (|XtSetValues ampn (list |XmNlabelString ampstr))
-		    (|XmStringFree ampstr))))
-	      (set! (amp-control snd) 1.0)))
-	#f)
-
-      (define (play-reflect-amp-controls snd)
-	#f)
+		  (reset-to-one amp ampn)
+		  (set! (amp-control snd (- top i)) 1.0))))))
 
       (add-hook! after-open-hook amp-controls-reflect-chans)
-      (add-hook! apply-hook apply-reflect-amp-controls)
-      (add-hook! start-playing-hook play-reflect-amp-controls)))
+      (add-hook! after-apply-hook amp-controls-clear)))
 
+;(add-amp-controls)
 
 
 ;;; drawnbutton+workproc sound-button example
 ;;; bess-translations
 ;;; midi trigger
 ;;; save/restore -separate window details
-;;; chan-grf
-;;; marks menu
+;;; chan-grf, enved
+

@@ -230,6 +230,7 @@ typedef struct chan__info {
   XEN cursor_proc;
   int selection_visible, sync, active;
   Locus old_x0, old_x1;
+  Float *amp_control; /* an experiment */
 } chan_info;
 
 typedef struct snd__info {
@@ -1217,7 +1218,7 @@ mix_context *make_mix_context(chan_info *cp);
 mix_context *free_mix_context(mix_context *ms);
 void free_mix_list(chan_info *cp);
 void free_mixes(chan_info *cp);
-int mixes(void);
+int accessible_mixes(void);
 int mix_complete_file(snd_info *sp, char *str, const char *origin, int with_tag);
 int mix_array(int beg, int num, MUS_SAMPLE_TYPE **data, chan_info **out_cps, int in_chans, int out_chans, int nominal_srate, const char *origin, int with_tag);
 int mix_file_and_delete(int beg, int num, char *file, chan_info **cps, int out_chans, const char *origin, int with_tag);

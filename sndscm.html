@@ -36,6 +36,7 @@
   <li><a href="#birddoc">bird.scm: North-American birds</a>
   <li><a href="#drawdoc">draw.scm: graphics additions</a>
   <li><a href="#dspdoc">dsp.scm: various DSP-related procedures</a>
+  <li><a href="#editmenudoc">edit-menu.scm: Edit menu additions</a>
   <li><a href="#effectsdoc">effects.scm: an Effects menu</a>
   <li><a href="#envdoc">env.scm: envelope functions</a>
   <li><a href="#enveddoc">enved.scm: envelope editor</a>
@@ -326,6 +327,22 @@ log10 arguments fall between 0.0 and 1.0.
 </p>
 
 
+<A NAME="editmenudoc"></a><span class=box><h2>edit-menu.scm</h2></span>
+
+<p>edit-menu.scm adds some useful options to the Edit menu:
+</p>
+<pre>
+  trim front and trim back (to/from marks)
+  crop (first and last marks)
+  selection->new
+  cut selection->new
+  append selection (and append sound)
+</pre>
+<!-- I(trim sound):M(Edit: Trim)(editmenudoc) -->
+<!-- I(trim sound):A(editmenudoc) -->
+
+
+
 <A NAME="effectsdoc"></a><span class=box><h2>effects.scm</h2></span>
 
 <p>effects.scm implements a simple "Effects" menu, mimicking other sound editors.
@@ -343,13 +360,8 @@ The effects implemented currently are:
   reverberate (reverb-amount)
   intensify (contrast-amount)
   echo (echo-length, echo-amount)
-  trim front and trim back (to/from marks)
-  crop (first and last marks)
   squelch (squelch-amount, omit-silence)
-  selection->new
-  cut selection->new
   add silence (at cursor) (silence-amount)
-  append selection (and append sound)
   remove DC
   expsrc (independent pitch/time scaling) (time-scale and pitch-scale)
   notch filter (notch-freq and notch-bw)
@@ -362,8 +374,6 @@ The effects implemented currently are:
 <!-- I(normalize sound):L(scale-to)(sndscaleto) -->
 <!-- I(insert zeros):M(Effects: Add Silence)(effectsdoc) -->
 <!-- I(change tempo):M(Effects: Expsrc)(effectsdoc) -->
-<!-- I(trim sound):M(Effects: Trim)(effectsdoc) -->
-<!-- I(trim sound):A(effectsdoc) -->
 
 <p>Most of these are either simple calls on Snd functions ("invert" is <code>(scale-by -1)</code>),
 or use functions in examp.scm.  The actual operations follow the sync chain of the
@@ -1964,7 +1974,7 @@ that were removed from or renamed in Snd-5.
   <em class=def><a name="makelevelmeter">make-level-meter</a></em> parent width height
   <em class=def><a name="showdiskspace">show-disk-space</a></em>
   <em class=def><A NAME="keepfiledialogopenuponok">keep-file-dialog-open-upon-ok</a></em>
-  <em class=def><A NAME="addamp">add-amp</a></em>
+  <em class=def><A NAME="addampcontrols">add-amp-controls</a></em>
   <em class=def><A NAME="addveryusefulicons">add-very-useful-icons</a></em>
 </pre>
 
@@ -2025,8 +2035,8 @@ in the respective meter.  <b>show-disk-space</b> adds a label in the
 minibuffer area which shows the current amount of disk space available
 on the partition of the associated sound.
 <b>keep-file-dialog-open-upon-ok</b> changes File:Open so that clicking "ok" does not "unmanage" the dialog.
-<b>add-amp-control</b> adds another amp slider to the control panel -- it still needs the
-callbacks to make it useful with Play and Apply.
+<b>add-amp-controls</b> adds amp sliders to the control panel
+for multi-channel sounds.
 <b>add-very-useful-icons</b> adds some very useful icons.
 </p>
 

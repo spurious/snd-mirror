@@ -102,8 +102,18 @@
 			(display (format #f "~A: no H_loc~%" name))))
 		  (display (format #f "~A: no h_name_alone~%" name))))
 	    (display (format #f "~A: no h_name_with_define~%" name))))
-      (display (format #f "~A: no s_name~%" name))))
+      (let ((SCM_loc (shell (format #f "fgrep 'define ~A' ../dist/snd/*.scm --line-number" name))))
+	(if (or (not (string? SCM_loc))
+		(= (string-length SCM_loc) 0))
+	    (set! SCM_loc (shell (format #f "fgrep 'define (~A' ../dist/snd/*.scm --line-number" name))))
+	(if (and (string? SCM_loc)
+		 (> (string-length SCM_loc) 0))
+	    (let* ((file (scan-for-semi SCM_loc))
+		   (line (scan-for-line SCM_loc)))
+	      (shell (format #f "echo '(list ~S \"~A\" ~D \"~A\")\n' >> ~A" 
+			     name 
+			     (substring file 12)
+			     line name filename)))
+	    (display (format #f "~A: no s_name~%" name))))))
 
 (exit)
-
-;;; TODO: scm locations and color names 

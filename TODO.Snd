@@ -8,13 +8,10 @@ A more direct connection to gmeteor (perhaps using the control-panel filter
   text widget).  use (filter-sound(make-filter ...)).
 
 A graphic-EQ effect (effects.scm) -- this could use the
-  CLM formant generator.  The other effects in that file could use
-  some sort of dialog to set the various variables, and ideally a
+  CLM formant generator.  Ideally these effects would have a
   C module (effects.c -> effects.so) autoloaded by the effects module.
 
 A better pitch tracker than spot-freq in examp.scm.
-
-Noise reduction.
 
 dB display in VU meters (in the record dialog -- the dB value is ready
 to go, but the VU labels need different numbers).  A nicer VU meter background.

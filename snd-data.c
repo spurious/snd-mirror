@@ -115,6 +115,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->lisp_info = NULL;
   cp->mix_md = NULL;
   cp->stats = NULL;
+  cp->amp_control = NULL;
   cp->hookable = 1;
   cp->gzy = 1.0;
   cp->gsy = 1.0;
@@ -166,6 +167,12 @@ static chan_info *free_chan_info(chan_info *cp)
   cp->cursor = 0;
   cp->cursor_style = CURSOR_CROSS;
   cp->cursor_size = DEFAULT_CURSOR_SIZE;
+  if (cp->amp_control)
+    {
+      /* not sure this is the right thing */
+      FREE(cp->amp_control);
+      cp->amp_control = NULL;
+    }
   if (XEN_PROCEDURE_P(cp->cursor_proc))
     {
       snd_unprotect(cp->cursor_proc);
@@ -367,6 +374,7 @@ void free_snd_info(snd_info *sp)
   clear_mini_strings(sp);
   clear_filter_strings(sp);
   clear_players();
+  reflect_mix_in_enved();
 }
 
 snd_info *completely_free_snd_info(snd_info *sp)
@@ -613,7 +621,7 @@ void select_channel(snd_info *sp, int chan)
   if (XEN_HOOKED(select_channel_hook))
     g_c_run_progn_hook(select_channel_hook,
 		       XEN_LIST_2(C_TO_XEN_INT(sp->index),
-				 C_TO_XEN_INT(chan)),
+				  C_TO_XEN_INT(chan)),
 		       S_select_channel_hook);
       ncp = sp->chans[chan];
       reflect_undo_or_redo_in_menu(ncp);

@@ -2,9 +2,6 @@
 
 /* TODO    paned windows should use ratios (not doable currently -- need own panedwindow widget)
  * TODO    gmeteor tie-in directly to filter text widget -- would need filter-text-hook (sp specific)
- * TODO:   control-changed-hook (lambda (snd control-func val) ...) (for auto-set etc)
- *           or amp|speed|contrast|expand|reverb[-scale|length]|filter[-text?]-control-hook -> return value given raw slider position (0..1)
- *           or hooks on all sliders (chan-sx etc)
  */
 
 #if HAVE_XPM

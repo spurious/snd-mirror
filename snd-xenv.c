@@ -1738,7 +1738,7 @@ Widget create_envelope_editor (snd_state *ss)
   if (!XtIsManaged(enved_dialog)) 
     XtManageChild(enved_dialog);
   active_channel = current_channel(ss);
-  set_sensitive(mixB, (mixes() > 0));
+  set_sensitive(mixB, (accessible_mixes() > 0));
   return(enved_dialog);
 }
 
@@ -1844,7 +1844,7 @@ void color_enved_waveform(Pixel pix)
 void reflect_mix_in_enved(void)
 {
   if (enved_dialog)
-    set_sensitive(mixB, TRUE);
+    set_sensitive(mixB, accessible_mixes() > 0);
 }
 
 static int find_named_env(XEN name)

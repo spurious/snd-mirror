@@ -1,6 +1,7 @@
 snd change log
 
-  27-Aug:    apply-hook.
+  29-Aug:    added edit-menu.scm and merged in Dave Phillips changes for effects.scm.
+  28-Aug:    after-apply-hook, before-apply-hook.
   24-Aug:    add-amp-controls in snd-motif.scm, add-notes in examp.scm.
   21-Aug:    added explicit FIR/FFT choice to envelope editor (enved-filter).
              fft-squelch in examp.scm.

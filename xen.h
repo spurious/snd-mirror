@@ -218,6 +218,8 @@
 
 #if (!TIMING) && (!WITH_MCHECK)
 
+/*   if (SCM_EQ_P(scm_definedp(C_STRING_TO_XEN_SYMBOL(Name), XEN_UNDEFINED), XEN_TRUE)) fprintf(stderr,"%s is defined\n", Name); */
+
 #ifdef __cplusplus
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg)

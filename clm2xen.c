@@ -5165,7 +5165,7 @@ void mus_xen_init(void)
 
 
 #if HAVE_GUILE
-  XEN_EVAL_C_STRING("(define %delay delay)"); /* protect the original meaning */
+  XEN_EVAL_C_STRING("(define %delay delay)"); /* protect the original meaning (a Scheme built-in function) */
 #endif
   XEN_DEFINE_PROCEDURE(S_make_delay,    g_make_delay_w, 0, 0, 1,    H_make_delay);
   XEN_DEFINE_PROCEDURE(S_make_comb,     g_make_comb_w, 0, 0, 1,     H_make_comb);
@@ -5265,6 +5265,10 @@ void mus_xen_init(void)
 
 
   XEN_DEFINE_PROCEDURE(S_make_frame,     g_make_frame_w, 0, 0, 1,     H_make_frame);
+#if HAVE_GUILE
+  XEN_EVAL_C_STRING("(define %frame? frame?)"); /* protect the original meaning */
+  /* frame? is defined in guile stacks.c scm_frame_p, but doesn't appear to be used in ice-9 */
+#endif
   XEN_DEFINE_PROCEDURE(S_frame_p,        g_frame_p_w, 1, 0, 0,        H_frame_p);
   XEN_DEFINE_PROCEDURE(S_frame_add,      g_frame_add_w, 2, 1, 0,      H_frame_add);
   XEN_DEFINE_PROCEDURE(S_frame_multiply, g_frame_multiply_w, 2, 1, 0, H_frame_multiply);

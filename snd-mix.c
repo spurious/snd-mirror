@@ -221,7 +221,13 @@ static mix_info **mix_infos = NULL;
 static int mix_infos_size = 0;
 static int mix_infos_ctr = 0;
 
-int mixes(void) {return(mix_infos_ctr);}
+int accessible_mixes(void) 
+{
+  int i, mixes = 0;
+  for (i = 0; i < mix_infos_ctr; i++)
+    if (mix_infos[i]) mixes++;
+  return(mixes);
+}
 
 static mix_info *md_from_id(int n) 
 {
@@ -254,8 +260,8 @@ static mix_info *make_mix_info(chan_info *cp)
   md = (mix_info *)CALLOC(1, sizeof(mix_info));
   mix_infos[mix_infos_ctr] = md;
   cp->mixes = 1;
-  if (mix_infos_ctr == 0) reflect_mix_in_enved();
   md->id = mix_infos_ctr++;
+  reflect_mix_in_enved();
   md->cp = cp;
   md->ss = ss;
   md->add_snd = NULL;

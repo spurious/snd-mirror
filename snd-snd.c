@@ -1034,7 +1034,8 @@ typedef struct {
   file_info *hdr;
 } apply_state;
 
-static XEN apply_hook;
+static XEN before_apply_hook;
+static XEN after_apply_hook;
 
 static void *make_apply_state(void *xp)
 {
@@ -1042,10 +1043,10 @@ static void *make_apply_state(void *xp)
   apply_state *ap = NULL;
   snd_info *sp = (snd_info *)xp;
   /* call apply-hook (if any) return #t = don't apply */
-  if ((XEN_HOOKED(apply_hook)) &&
-      (XEN_TRUE_P(g_c_run_or_hook(apply_hook, 
+  if ((XEN_HOOKED(before_apply_hook)) &&
+      (XEN_TRUE_P(g_c_run_or_hook(before_apply_hook, 
 				  XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
-				  S_apply_hook))))
+				  S_before_apply_hook))))
     return(NULL);
   ap = (apply_state *)CALLOC(1, sizeof(apply_state));
   ap->slice = 0;
@@ -1079,12 +1080,12 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
   snd_state *ss;
   snd_context *sgx;
   snd_info *sp;
-  chan_info *cp;
+  chan_info *cp, *ncp;
   sync_info *si;
   Float ratio, mult_dur;
   int i, len, over_selection, curchan = 0, added_dur = 0, old_sync;
   int maxsync[1];
-  Float scaler[1];
+  Float *scalers = NULL;
   if (ptr == NULL) return(BACKGROUND_QUIT);
   sp = ap->sp;
   if (!(sp->active)) return(BACKGROUND_QUIT);
@@ -1099,6 +1100,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
       (!(sp->filter_control_p)) && (!(sp->expand_control_p)) && (!(sp->reverb_control_p)) && (!(sp->contrast_control_p)))
     {
       old_sync = sp->sync;
+      /* get unused sync val */
       if (ss->apply_choice == APPLY_TO_SOUND)
 	{
 	  maxsync[0] = 0;
@@ -1106,10 +1108,22 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
 	  sp->sync = maxsync[0] + 1;
 	}
       else sp->sync = 0;
-      scaler[0] = sp->amp_control;
-      scale_by((sp->selected_channel == NO_SELECTION) ? sp->chans[0] : sp->chans[sp->selected_channel], 
-	       scaler, 1, FALSE);
+      /* check for local amp_control vals */
+      if (sp->selected_channel == NO_SELECTION) 
+	cp = sp->chans[0];
+      else cp = sp->chans[sp->selected_channel];
+      si = sync_to_chan(cp);
+      scalers = (Float *)CALLOC(si->chans, sizeof(Float));
+      for (i = 0; i < si->chans; i++)
+	{
+	  ncp = si->cps[i];
+	  if (ncp->amp_control)
+	    scalers[i] = ncp->amp_control[0];
+	  else scalers[i] = sp->amp_control;
+	}
+      scale_by(cp, scalers, si->chans, FALSE);
       sp->sync = old_sync;
+      FREE(scalers);
     }
   else
     {
@@ -1306,6 +1320,10 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
   sp->applying = 0;
   sgx = sp->sgx;
   if (sgx->apply_in_progress) sgx->apply_in_progress = 0;
+  if (XEN_HOOKED(after_apply_hook))
+    g_c_run_progn_hook(after_apply_hook, 
+		       XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
+		       S_after_apply_hook);
   FREE(ap);
   return(BACKGROUND_QUIT);
 }
@@ -2433,19 +2451,40 @@ static XEN sp_fwrite(XEN snd_n, XEN val, int fld, char *caller)
   return(val);
 }
 
-static XEN g_amp_control(XEN snd_n) 
+static XEN g_amp_control(XEN snd_n, XEN chn_n) 
 {
-  #define H_amp_control "(" S_amp_control " &optional snd) -> current amp slider setting"
+  #define H_amp_control "(" S_amp_control " &optional snd chn) -> current amp slider setting"
+  chan_info *cp;
+  if (XEN_BOUND_P(chn_n))
+    {
+      ASSERT_CHANNEL(S_amp_control, snd_n, chn_n, 1);
+      cp = get_cp(snd_n, chn_n, S_amp_control);
+      if ((cp) && (cp->amp_control))
+	return(C_TO_XEN_DOUBLE(cp->amp_control[0]));
+    }
   return(sp_fread(snd_n, SP_AMP, S_amp_control));
 }
 
-static XEN g_set_amp_control(XEN on, XEN snd_n) 
+static XEN g_set_amp_control(XEN on, XEN snd_n, XEN chn_n) 
 {
+  chan_info *cp;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, XEN_ARG_1, "set-" S_amp_control, "a number"); 
+  if (XEN_BOUND_P(chn_n))
+    {
+      ASSERT_CHANNEL(S_amp_control, snd_n, chn_n, 2);
+      cp = get_cp(snd_n, chn_n, S_amp_control);
+      if (cp)
+	{
+	  if (cp->amp_control == NULL)
+	    cp->amp_control = (Float *)CALLOC(1, sizeof(Float));
+	  cp->amp_control[0] = (Float)XEN_TO_C_DOUBLE_WITH_CALLER(on, "set-" S_amp_control);
+	  return(on);
+	}
+    }
   return(sp_fwrite(snd_n, on, SP_AMP, "set-" S_amp_control));
 }
 
-WITH_REVERSED_ARGS(g_set_amp_control_reversed, g_set_amp_control)
+WITH_REVERSED_CHANNEL_ARGS(g_set_amp_control_reversed, g_set_amp_control)
 
 static XEN g_contrast_control(XEN snd_n) 
 {
@@ -3101,8 +3140,8 @@ XEN_ARGIFY_1(g_reverb_control_feedback_w, g_reverb_control_feedback)
 XEN_ARGIFY_2(g_set_reverb_control_feedback_w, g_set_reverb_control_feedback)
 XEN_ARGIFY_1(g_reverb_control_lowpass_w, g_reverb_control_lowpass)
 XEN_ARGIFY_2(g_set_reverb_control_lowpass_w, g_set_reverb_control_lowpass)
-XEN_ARGIFY_1(g_amp_control_w, g_amp_control)
-XEN_ARGIFY_2(g_set_amp_control_w, g_set_amp_control)
+XEN_ARGIFY_2(g_amp_control_w, g_amp_control)
+XEN_ARGIFY_3(g_set_amp_control_w, g_set_amp_control)
 XEN_ARGIFY_1(g_reverb_control_decay_w, g_reverb_control_decay)
 XEN_ARGIFY_2(g_set_reverb_control_decay_w, g_set_reverb_control_decay)
 XEN_ARGIFY_1(g_speed_control_style_w, g_speed_control_style)
@@ -3217,11 +3256,14 @@ void g_init_snd(void)
   #define H_name_click_hook S_name_click_hook " (snd) is called when sound name clicked. \
 If it returns #t, the usual informative minibuffer babbling is squelched."
 
-  #define H_apply_hook S_apply_hook " (snd) is called when 'Apply' is clicked or apply-controls called. \
+  #define H_before_apply_hook S_before_apply_hook " (snd) is called when 'Apply' is clicked or apply-controls called. \
 If it returns #t, the apply is aborted."
 
-  XEN_DEFINE_HOOK(name_click_hook, S_name_click_hook, 1, H_name_click_hook);       /* args = snd-index */
-  XEN_DEFINE_HOOK(apply_hook,      S_apply_hook,      1, H_apply_hook);            /* args = snd-index */
+  #define H_after_apply_hook S_after_apply_hook " (snd) is called when 'Apply' finishes."
+
+  XEN_DEFINE_HOOK(name_click_hook,   S_name_click_hook,   1, H_name_click_hook);       /* args = snd-index */
+  XEN_DEFINE_HOOK(before_apply_hook, S_before_apply_hook, 1, H_before_apply_hook);     /* args = snd-index */
+  XEN_DEFINE_HOOK(after_apply_hook,  S_after_apply_hook,  1, H_after_apply_hook);      /* args = snd-index */
 
   #define H_channels_separate "The value for " S_channel_style " that causes channel graphs to occupy separate panes"
   #define H_channels_combined "The value for " S_channel_style " that causes channel graphs to occupy one panes (the 'unite' button)"
@@ -3364,7 +3406,7 @@ If it returns #t, the apply is aborted."
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_amp_control, g_amp_control_w, H_amp_control,
 					    "set-" S_amp_control, g_set_amp_control_w, g_set_amp_control_reversed,
-					    0, 1, 0, 2);
+					    0, 2, 0, 3);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_reverb_control_decay, g_reverb_control_decay_w, H_reverb_control_decay,
 					    "set-" S_reverb_control_decay, g_set_reverb_control_decay_w, g_set_reverb_control_decay_reversed,

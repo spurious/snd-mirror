@@ -344,7 +344,7 @@ void scale_by(chan_info *cp, Float *ur_scalers, int len, int selection)
 {
   /* if selection, sync to current selection, else sync to current sound */
   /* 3-Oct-00: the scale factors are now embedded in the edit fragments,
-   *   and folded into the MUS_SAMPLE_TO_FLOAT calculcation if possible,
+   *   and folded into the MUS_SAMPLE_TO_FLOAT calculation if possible,
    *   so scaling comes at no extra cost, happens instantly, and requires no disk space,
    *   no matter how big the underlying sound.  This also affects scale_to.
    */
@@ -1204,7 +1204,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
   if ((!ur_a) && 
       (!gen) && 
       (!over_selection) && 
-      (order >= 256) && 
+      ((order == 0) || (order >= 256)) && 
       ((int)((to_c_edit_samples(ncp, edpos, origin, arg_pos) + order) / 128) < ss->memory_available))
     {
       /* use convolution if order is large and there's memory available (and not over_selection) */
@@ -1799,9 +1799,13 @@ int cursor_insert(chan_info *cp, int beg, int count, const char *origin)
 	}
       si = free_sync_info(si);
     }
-  else extend_with_zeros(cp, 
-			 mus_iclamp(0, beg, current_ed_samples(cp)), 
-			 count, origin);
+  else 
+    {
+      extend_with_zeros(cp, 
+			mus_iclamp(0, beg, current_ed_samples(cp)), 
+			count, origin);
+      update_graph(cp, NULL);
+    }
   return(CURSOR_UPDATE_DISPLAY);
 }
 

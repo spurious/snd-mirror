@@ -272,8 +272,8 @@
 			      (vector-ref cross-periods best-mark)
 			      snd chn)))
 
-		(let ((id (add-mark (vector-ref cross-samples best-mark) snd chn)))
-		  (set! (mark-name id) (format #f "~D" best-mark)))
+;		(let ((id (add-mark (vector-ref cross-samples best-mark) snd chn)))
+;		  (set! (mark-name id) (format #f "~D" best-mark)))
 
 		(if adding
 		    (insert-samples (vector-ref cross-samples (vector-ref cross-marks best-mark))
