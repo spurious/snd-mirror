@@ -2,8 +2,6 @@ A list of some things-to-do in Snd (these are some projects that strike
 me as straightforward, but not necessarily easy).
 
 
-Sawfish connection: it should be possible to send commands to sawfish.
-
 A more direct connection to gmeteor (perhaps using the control-panel filter
   text widget).  use (filter-sound(make-filter ...)).
 

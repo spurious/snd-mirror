@@ -56,26 +56,6 @@
 			  (centered-points (cdr points))))))
 	      (centered-points ms))))))
 
-(define (map-chan-over-target func target decay)
-  (let* ((ms (and (eq? target 'marks)
-		 (plausible-mark-samples)))
-	 (beg (if (eq? target 'sound)
-		  0
-		  (if (eq? target 'selection)
-		      (selection-position)
-		      (car ms))))
-	 (dur (if (eq? target 'sound)
-		  (1- (frames))
-		  (if (eq? target 'selection)
-		      (+ (selection-position) (selection-length))
-		      (cadr ms))))
-	 (overlap (if decay
-		      (inexact->exact (* (srate) decay))
-		      0)))
-    (map-chan (func dur)
-	      beg 
-	      (+ dur overlap))))
-
 (define map-chan-over-target-with-sync
   (lambda (func target origin decay)
     (let* ((snc (sync))
@@ -148,8 +128,56 @@
     (|XmStringFree titlestr)
     new-dialog))
 
+(define (change-label widget new-label)
+  (let ((str (|XmStringCreateLocalized new-label)))
+    (|XtSetValues widget (list |XmNlabelString str))
+    (|XmStringFree str)))
+
+(define log-scale-ticks 500) ; sets precision (to some extent) of slider 
+
+(define (scale-log->linear lo val hi)
+  ;; given user-relative low..val..hi return val as scale-relative (0..log-scale-ticks)
+  (let* ((log2 (log 2.0)) ; using log 2 here to get equally spaced octaves
+	 (log-lo (/ (log (max lo 1.0)) log2))
+	 (log-hi (/ (log hi) log2))
+	 (log-val (/ (log val) log2)))
+    (inexact->exact (* log-scale-ticks (/ (- log-val log-lo) (- log-hi log-lo))))))
+  
+(define (scale-linear->log lo val hi)
+  ;; given user-relative lo..hi and scale-relative val, return user-relative val
+  ;; since log-scale widget assumes 0..log-scale-ticks, val can be used as ratio (log-wise) between lo and hi
+  (let* ((log2 (log 2.0))
+	 (log-lo (/ (log (max lo 1.0)) log2))
+	 (log-hi (/ (log hi) log2))
+	 (log-val (+ log-lo (* (/ val log-scale-ticks) (- log-hi log-lo)))))
+    (expt 2.0 log-val)))
+
+(define (scale-log-label lo val hi)
+  (format #f "~,2F" (scale-linear->log lo val hi)))
+	  
+(define (create-log-scale-widget parent title low initial high callback scale)
+  (let* ((label (|XtCreateManagedWidget (format #f "~,2F" initial) |xmLabelWidgetClass parent
+	   (list |XmNbackground          (snd-pixel (basic-color)))))
+	 (scale (|XtCreateManagedWidget "scale" |xmScaleWidgetClass parent
+                  (list |XmNorientation   |XmHORIZONTAL
+			|XmNshowValue     #f
+			|XmNminimum       0
+			|XmNmaximum       log-scale-ticks
+			|XmNvalue         (inexact->exact (scale-log->linear low initial high))
+			|XmNdecimalPoints 0
+			|XmNtitleString   title
+			|XmNbackground    (snd-pixel (basic-color))))))
+    (|XtAddCallback scale |XmNvalueChangedCallback
+		    (lambda (widget context info)
+		      (change-label label (scale-log-label low (|value info) high))))
+    (|XtAddCallback scale |XmNdragCallback
+		    (lambda (widget context info)
+		      (change-label label (scale-log-label low (|value info) high))))
+    scale))
+
+					 
 (define (add-sliders dialog sliders)
-  ;; sliders is a list of lists, each inner list being (title low initial high callback scale)
+  ;; sliders is a list of lists, each inner list being (title low initial high callback scale ['log])
   ;; returns list of widgets (for reset callbacks)
   (let ((mainform 
 	 (|XtCreateManagedWidget "formd" |xmRowColumnWidgetClass dialog
@@ -168,17 +196,18 @@
 	      (high (list-ref slider-data 3))
 	      (func (list-ref slider-data 4))
 	      (scale (list-ref slider-data 5))
-	      (new-slider 
-	       (|XtCreateManagedWidget (car slider-data) |xmScaleWidgetClass mainform
-                  (list |XmNorientation   |XmHORIZONTAL
-			|XmNshowValue     #t
-			|XmNminimum       (inexact->exact (* low scale))
-			|XmNmaximum       (inexact->exact (* high scale))
-			|XmNvalue         (inexact->exact (* initial scale))
-			|XmNdecimalPoints (if (= scale 1000) 3 (if (= scale 100) 2 (if (= scale 10) 1 0)))
-			|XmNtitleString   title
-			;|XmNborderWidth   1
-			|XmNbackground    (snd-pixel (basic-color))))))
+	      (new-slider (if (and (= (length slider-data) 7) 
+				   (eq? (list-ref slider-data 6) 'log))
+			      (create-log-scale-widget mainform title low initial high func scale)
+			      (|XtCreateManagedWidget (car slider-data) |xmScaleWidgetClass mainform
+			        (list |XmNorientation   |XmHORIZONTAL
+				      |XmNshowValue     #t
+				      |XmNminimum       (inexact->exact (* low scale))
+				      |XmNmaximum       (inexact->exact (* high scale))
+				      |XmNvalue         (inexact->exact (* initial scale))
+				      |XmNdecimalPoints (if (= scale 1000) 3 (if (= scale 100) 2 (if (= scale 10) 1 0)))
+				      |XmNtitleString   title
+				      |XmNbackground    (snd-pixel (basic-color)))))))
 	 (|XmStringFree title)
 	 (|XtAddCallback new-slider |XmNvalueChangedCallback func)
 	 new-slider))
@@ -363,11 +392,6 @@
                           (post-gain-dialog)))))
 
     (add-to-menu effects-menu gain-label cp-gain))
-
-(define (change-label widget new-label)
-  (let ((str (|XmStringCreateLocalized new-label)))
-    (|XtSetValues widget (list |XmNlabelString str))
-    (|XmStringFree str)))
 
 (set! amp-menu-list (cons (lambda ()
                       (let ((new-label (format #f "Gain (~1,2F)"  gain-amount)))
@@ -717,10 +741,11 @@
 		  (fir-filter flt (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0))))))))))
 
 (define (cp-flecho)
- (map-chan-over-target 
+ (map-chan-over-target-with-sync
   (lambda (input-samps) 
     (flecho-1 flecho-scaler flecho-delay input-samps))
   flecho-target 
+  "flecho"
   (and (not flecho-truncate) 
        (* 4 flecho-delay))))
 
@@ -810,9 +835,11 @@
 		  (* amp (oscil os))))))))
 
 (define (cp-zecho)
- (map-chan-over-target 
-  (lambda (input-samps) (zecho-1 zecho-scaler zecho-delay zecho-freq zecho-amp input-samps)) 
+ (map-chan-over-target-with-sync
+  (lambda (input-samps)
+    (zecho-1 zecho-scaler zecho-delay zecho-freq zecho-amp input-samps)) 
   zecho-target
+  "zecho"
   (and (not zecho-truncate)
        (* 4 zecho-delay))))
 
@@ -968,15 +995,15 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 "Butterworth band-pass filter.\n\ Move the sliders to change the center frequency and bandwidth."))
 					(lambda (w c i)
 					  (set! band-pass-freq initial-band-pass-freq)
-					  (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact band-pass-freq)))
+					  (|XtSetValues (car sliders) (list |XmNvalue (scale-log->linear 20 band-pass-freq 22050)))
 					  (set! band-pass-bw initial-band-pass-bw)
 					  (|XtSetValues (cadr sliders) (list |XmNvalue (inexact->exact band-pass-bw))))))
 	      (set! sliders
 		    (add-sliders band-pass-dialog
-				 (list (list "center frequency" 0 initial-band-pass-freq 22050
+				 (list (list "center frequency" 20 initial-band-pass-freq 22050
 					     (lambda (w context info)
-					       (set! band-pass-freq (|value info)))
-					     1)
+					       (set! band-pass-freq (scale-linear->log 20 (|value info) 22050)))
+					     1 'log)
 				       (list "bandwidth" 0 initial-band-pass-bw 1000
 					     (lambda (w context info)
 					       (set! band-pass-bw (|value info)))
@@ -1000,7 +1027,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
     (|XmStringFree str)))
 
 (set! filter-menu-list (cons (lambda ()
-                      (let ((new-label (format #f "Band-pass filter (~1,2D ~1,2D)" band-pass-freq band-pass-bw)))
+                      (let ((new-label (format #f "Band-pass filter (~,2F ~1,2D" band-pass-freq band-pass-bw)))
                         (change-label band-pass-menu-widget new-label)))
                     filter-menu-list))
 
@@ -1049,15 +1076,15 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 						"Butterworth band-reject filter.\n\ Move the sliders to change the center frequency and bandwidth."))
 					(lambda (w c i)
 					  (set! notch-freq initial-notch-freq)
-					  (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact notch-freq)))
+					  (|XtSetValues (car sliders) (list |XmNvalue (scale-log->linear 20 notch-freq 22050)))
 					  (set! notch-bw initial-notch-bw)
 					  (|XtSetValues (cadr sliders) (list |XmNvalue (inexact->exact notch-bw))))))
 	      (set! sliders
 		    (add-sliders notch-dialog
-				 (list (list "center frequency" 0 initial-notch-freq 22050
+				 (list (list "center frequency" 20 initial-notch-freq 22050
 					     (lambda (w context info)
-					       (set! notch-freq (|value info)))
-					     1)
+					       (set! notch-freq (scale-linear->log 20 (|value info) 22050)))
+					     1 'log)
 				       (list "bandwidth" 0 initial-notch-bw 1000
 					     (lambda (w context info)
 					       (set! notch-bw (|value info)))
@@ -1081,7 +1108,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
     (|XmStringFree str)))
 
 (set! filter-menu-list (cons (lambda ()
-                      (let ((new-label (format #f "Band-reject filter (~1,2D ~1,2D)" notch-freq notch-bw)))
+                      (let ((new-label (format #f "Band-reject filter (~,2F ~1,2D)" notch-freq notch-bw)))
                         (change-label notch-menu-widget new-label)))
                     filter-menu-list))
 
@@ -1129,13 +1156,13 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 						"Butterworth high-pass filter.\n\ Move the slider to change the high-pass cutoff frequency."))
 					(lambda (w c i)
 					  (set! high-pass-freq initial-high-pass-freq)
-					  (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact high-pass-freq))))))
+					  (|XtSetValues (car sliders) (list |XmNvalue (scale-log->linear 20 high-pass-freq 22050))))))
 	      (set! sliders
 		    (add-sliders high-pass-dialog
-				 (list (list "high-pass cutoff frequency" 0 initial-high-pass-freq 22050
+				 (list (list "high-pass cutoff frequency" 20 initial-high-pass-freq 22050
 					     (lambda (w context info)
-					       (set! high-pass-freq (|value info)))
-					     1))))
+					       (set! high-pass-freq (scale-linear->log 20 (|value info) 22050)))
+					     1 'log))))
 	      (add-target (|XtParent (car sliders)) (lambda (target) (set! high-pass-target target)) #f)))
 
 	(activate-dialog high-pass-dialog))
@@ -1155,7 +1182,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
     (|XmStringFree str)))
 
 (set! filter-menu-list (cons (lambda ()
-                      (let ((new-label (format #f "High-pass filter (~1,2D)" high-pass-freq)))
+                      (let ((new-label (format #f "High-pass filter (~,2F)" high-pass-freq)))
                         (change-label high-pass-menu-widget new-label)))
                     filter-menu-list))
 
@@ -1203,13 +1230,13 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 						       "Butterworth low-pass filter.\n\ Move the slider to change the low-pass cutoff frequency."))
 					(lambda (w c i)
 					  (set! low-pass-freq initial-low-pass-freq)
-					  (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact low-pass-freq))))))
+					  (|XtSetValues (car sliders) (list |XmNvalue (scale-log->linear 20 low-pass-freq 22050))))))
 	      (set! sliders
 		    (add-sliders low-pass-dialog
-				 (list (list "low-pass cutoff frequency" 0 initial-low-pass-freq 22050
+				 (list (list "low-pass cutoff frequency" 20 initial-low-pass-freq 22050
 					     (lambda (w context info)
-					       (set! low-pass-freq (|value info)))
-					     1))))
+					       (set! low-pass-freq (scale-linear->log 20 (|value info) 22050)))
+					     1 'log))))
 	      (add-target (|XtParent (car sliders)) (lambda (target) (set! low-pass-target target)) #f)))
 
 	(activate-dialog low-pass-dialog))
@@ -1229,7 +1256,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
     (|XmStringFree str)))
 
 (set! filter-menu-list (cons (lambda ()
-                      (let ((new-label (format #f "Low-pass filter (~1,2D)" low-pass-freq)))
+                      (let ((new-label (format #f "Low-pass filter (~,2F)" low-pass-freq)))
                         (change-label low-pass-menu-widget new-label)))
                     filter-menu-list))
 
@@ -1270,7 +1297,10 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
               (set! comb-dialog 
 		    (make-effect-dialog comb-label
 					(lambda (w context info) 
-					  (map-chan-over-target (lambda (ignored) (comb-filter comb-scaler comb-size)) comb-target #f))
+					  (map-chan-over-target-with-sync
+					   (lambda (ignored) 
+					     (comb-filter comb-scaler comb-size)) 
+					   comb-target "comb-filter" #f))
 					(lambda (w context info) (|XtUnmanageChild comb-dialog))
 					(lambda (w context info)
 					  (help-dialog "Comb filter"
@@ -1303,7 +1333,10 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 
     (add-to-menu effects-menu comb-label 
                (lambda () 
-                (map-chan-over-target (lambda (ignored) (comb-filter comb-scaler comb-size)) comb-target #f))))
+                (map-chan-over-target-with-sync
+		 (lambda (ignored) 
+		   (comb-filter comb-scaler comb-size)) 
+		 comb-target "comb-filter" #f))))
 
 (define (change-label widget new-label)
   (let ((str (|XmStringCreateLocalized new-label)))
@@ -1445,7 +1478,9 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
         (moog-filter gen inval))))
 
 (define (cp-moog)
-  (map-chan-over-target (lambda (ignored) (moog moog-cutoff-frequency moog-resonance)) moog-target #f))
+  (map-chan-over-target-with-sync
+   (lambda (ignored) (moog moog-cutoff-frequency moog-resonance)) 
+   moog-target "moog-filter" #f))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -1467,15 +1502,15 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
  						"Moog-style 4-pole lowpass filter with 24db/oct rolloff and variable resonance.\n\ Move the sliders to set the filter cutoff frequency and resonance."))
 					(lambda (w c i)
 					  (set! moog-cutoff-frequency initial-moog-cutoff-frequency)
-					  (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* moog-cutoff-frequency 1))))
+					  (|XtSetValues (car sliders) (list |XmNvalue (scale-log->linear 20 moog-cutoff-frequency 22050)))
 					  (set! moog-resonance initial-moog-resonance)
 					  (|XtSetValues (cadr sliders) (list |XmNvalue (inexact->exact (* moog-resonance 100)))))))
 	      (set! sliders
 		    (add-sliders moog-dialog
-				 (list (list "cutoff frequency" 0 initial-moog-cutoff-frequency 22050
+				 (list (list "cutoff frequency" 20 initial-moog-cutoff-frequency 22050
 					     (lambda (w context info)
-					       (set! moog-cutoff-frequency (/ (|value info) 1)))
-					     1)
+					       (set! moog-cutoff-frequency (scale-linear->log 20 (|value info) 22050)))
+					     1 'log)
 				       (list "resonance" 0.0 initial-moog-resonance 1.0
 					     (lambda (w context info)
 					       (set! moog-resonance (/ (|value info) 100.0)))
@@ -1499,7 +1534,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
     (|XmStringFree str)))
 
 (set! filter-menu-list (cons (lambda ()
-                      (let ((new-label (format #f "Moog filter (~1,2D ~1,2F)" moog-cutoff-frequency moog-resonance)))
+                      (let ((new-label (format #f "Moog filter (~,2F ~1,2F)" moog-cutoff-frequency moog-resonance)))
                         (change-label moog-menu-widget new-label)))
                     filter-menu-list))
 
@@ -1535,7 +1570,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 
 (define (cp-adsat)
   "adsat does weird stuff by adsat size"
-  (map-chan-over-target
+  (map-chan-over-target-with-sync
    (lambda (ignored)
      (let ((mn 0.0)
            (mx 0.0)
@@ -1559,7 +1594,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
                (if (< val mn) (set! mn val))
                (set! n (1+ n))
                #f)))))
-   adsat-target #f))
+   adsat-target "adsat" #f))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -1823,7 +1858,10 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 
 (define (cp-am-effect)
   "amplitude modulation"
-  (map-chan-over-target (lambda (ignored) (am-effect am-effect-amount)) am-effect-target #f))
+  (map-chan-over-target-with-sync
+   (lambda (ignored) 
+     (am-effect am-effect-amount)) 
+   am-effect-target "am" #f))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -1912,7 +1950,10 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
            (* inval (oscil os)))))))
 
 (define (cp-rm)
-  (map-chan-over-target (lambda (ignored) (rm-effect rm-frequency (list 0 0 1 (hz->radians rm-radians)))) rm-target #f))
+  (map-chan-over-target-with-sync
+   (lambda (ignored) 
+     (rm-effect rm-frequency (list 0 0 1 (hz->radians rm-radians)))) 
+   rm-target "ring-modulation" #f))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -2166,7 +2207,8 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
               (set! jc-reverb-dialog
                     (make-effect-dialog jc-reverb-label
                                         (lambda (w context info) 
-					  (map-chan-over-target jc-reverb-1 jc-reverb-target (and (not jc-reverb-truncate) jc-reverb-decay)))
+					  (map-chan-over-target-with-sync
+					   jc-reverb-1 jc-reverb-target "jc-reverb" (and (not jc-reverb-truncate) jc-reverb-decay)))
                                         (lambda (w context info) (|XtUnmanageChild jc-reverb-dialog))
                                         (lambda (w context info)
                                           (help-dialog "Chowning reverb"
@@ -2201,7 +2243,8 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 
     (add-to-menu effects-menu jc-reverb-label
                 (lambda()
-                  (map-chan-over-target jc-reverb-1 jc-reverb-target (and (not jc-reverb-truncate) jc-reverb-decay)))))
+                  (map-chan-over-target-with-sync
+		   jc-reverb-1 jc-reverb-target "jc-reverb" (and (not jc-reverb-truncate) jc-reverb-decay)))))
 
 (define (change-label widget new-label)
   (let ((str (|XmStringCreateLocalized new-label)))

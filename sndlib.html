@@ -66,18 +66,15 @@ types, and most of the features of the audio hardware. </p>
 <li>clm2xen.c, vct.c and vct.h (tie clm.c into Guile or Ruby)
 <li>xen.h, xen.c, xen.html (the embedded language support)
 <li>midi.c (primitive MIDI support)
-<li>old-sndlib.h (old names)
 </ul>
-<p>In version 6 and then to a greater extent in version 10, I changed the exported names to
-use the prefix "mus" or "MUS"; see old-sndlib.h for backwards compatibility;
-also, if you have common lisp, you can automatically translate files from 
-version 9 or earlier to version 10 by loading transnd.cl and calling
-the translate function.  The naming scheme is more as less as follows:
+<p>
+The naming scheme is more as less as follows:
 constants start with "MUS_", audio hardware constants with "MUS_AUDIO_",
 functions involving sound files referenced through the file name
 start with "mus_sound_", functions involving files at a lower level
 with "mus_file_", functions involving header access with "mus_header_",
-functions involving audio hardware access with "mus_audio_", and various
+functions involving audio hardware access with "mus_audio_", MIDI functions
+with "mus_midi_", and various
 others just with "mus_" (number translations, etc).  Conversions use
 the word "to" as in "mus_samples_to_bytes".
 </p>
@@ -1309,10 +1306,6 @@ guile&gt; (oscil osc)
 </pre>
 <p>The first dynamic-call (mus_sndlib2xen_initialize) ties sndlib2xen.c into
 Guile, and the second (mus_xen_init) ties clm2xen.c into Guile.
-I've included sndlib.i in the sndlib tarfile, intended for use with
-swig.  I was able to create a python wrapper, but don't know enough
-(i.e. anything at all) about python.  Presumably, we could 
-use this to import sndlib into a number of environments.
 </p>
 
 <br>

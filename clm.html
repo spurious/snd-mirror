@@ -49,7 +49,7 @@ the <a href="#sndcommunication">Snd</a> sound editor.
 CLM runs on the Macintosh (MacOS or LinuxPPC), SGI, Sun, Alpha, Windoze, and any machine
 running Linux.
 It is available free, via anonymous ftp (<a href="ftp://ccrma-ftp.stanford.edu/pub/Lisp/clm-2.tar.gz">pub/Lisp/clm-2.tar.gz</a> at
-ccrma-ftp.stanford.edu; the Snd editor is <a href="ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-4.tar.gz">snd-4.tar.gz</a>).</p>
+ccrma-ftp.stanford.edu; the Snd editor is <a href="ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-5.tar.gz">snd-5.tar.gz</a>).</p>
 
 <center>Bill Schottstaedt (bil@ccrma.stanford.edu)</center>
 <br>
@@ -70,6 +70,7 @@ ccrma-ftp.stanford.edu; the Snd editor is <a href="ftp://ccrma-ftp.stanford.edu/
 <li><small><a href="#functions">Useful functions</a></small>
 <li><small><a href="#def-clm-struct">def-clm-struct</a></small>
 <li><small><a href="#definstrument">Definstrument</a></small>
+<li><small><a href="#guileetc">CLM in Guile, Ruby, C</a></small>
 </ul>
 <li><a href="#note-lists">Note Lists</a>
 <ul>
@@ -2536,6 +2537,54 @@ any of the run-oriented functions in with-sound:</p>
     (dotimes (i 5000) (outa i (* .1 (oscil os))))))
 </pre>
 <br>
+
+<span class=bbox><h3><A NAME="guileetc">CLM in Guile, Ruby, C</a></h3></span>
+
+<p>Although this document is aimed at Common Lisp, CLM instruments can also be written
+in Scheme (via Guile), Ruby, or C.  Examples can be found in the Snd tarball, but a short
+example might not be out of place.  The CL bird instrument is</p>
+<pre><small>
+(definstrument bird (startime dur frequency freq-skew amplitude freq-envelope amp-envelope 
+	             &amp;optional (lpfilt 1.0) (degree 0) (reverb-amount 0))
+  (multiple-value-bind (beg end) (times-&gt;samples startime dur)
+    (let* ((amp-env (make-env amp-envelope amplitude dur))
+	   (gls-env (make-env freq-envelope (hz-&gt;radians freq-skew) dur))
+	   (loc (make-locsig :degree degree :distance 1.0 :reverb reverb-amount))
+	   (fil (make-one-pole lpfilt (- 1.0 lpfilt)))
+	   (s (make-oscil :frequency frequency)))
+      (run
+       (loop for i from beg to end do
+	 (locsig loc i (one-pole fil (* (env amp-env) (oscil s (env gls-env))))))))))
+</small></pre>
+<p>Its (slightly simplified) Scheme counterpart is:
+</p>
+<pre><small>
+(define (bird start dur frequency freqskew amplitude freq-envelope amp-envelope)
+  "(bird start dur frequency freqskew amplitude freq-envelope amp-envelope)"
+  (let* ((gls-env (make-env freq-envelope (hz-&gt;radians freqskew) dur))
+	 (os (make-oscil :frequency frequency))
+	 (amp-env (make-env amp-envelope amplitude dur))
+	 (len (inexact->exact (round (* (srate) dur))))
+	 (beg (inexact->exact (round (* (srate) start))))
+	 (local-data (make-vct len)))
+    (vct-map! local-data (lambda () (* (env amp-env) (oscil os (env gls-env)))))
+    (vct-add! out-data local-data beg)))
+</small></pre>
+<p>And in Ruby:
+</p>
+<pre><small>
+def bird(start, dur, frequency, freqskew, amplitude, freq_envelope, amp_envelope)
+  gls_env = make_env(freq_envelope, hz2radians(freqskew), dur)
+  os = make_oscil(frequency)
+  amp_env = make_env(amp_envelope, amplitude, dur)
+  beg = (srate() * start).round
+  len = (srate() * dur).round
+  local_data  = make_vct len
+  vct_map!(local_data, Proc.new { || env(amp_env) * oscil(os, env(gls_env)) })
+  vct_add!($out_data, local_data, beg)
+end
+</small></pre>
+</br>
 
 <span class=box><h2><A NAME="note-lists">Note Lists</a></h2></span>
 <!-- INDEX note-lists:Note lists  -->
