@@ -707,12 +707,8 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   set_html_fixed_font_size_list(ss, snd_rs.html_fixed_font_size_list);
 #endif
 
-#ifdef SGI
-  ss->using_schemes = ((snd_rs.use_schemes) && 
-		       (strcmp(snd_rs.use_schemes, "all") == 0)); /* so *useSchemes: All still gets our color scheme */
-#else
-  ss->using_schemes = 0;
-#endif 
+  ss->using_schemes = ((snd_rs.use_schemes) &&
+		       ((strcmp(snd_rs.use_schemes, "all") == 0) || (strcmp(snd_rs.use_schemes, "All") == 0)));
 
   set_auto_resize(ss, snd_rs.auto_resize);
   ss->zoom_slider_width = snd_rs.zoom_slider_width;

@@ -99,6 +99,7 @@
   XEN_NARGIFY_5(gxm_XtRegisterGrabAction_w, gxm_XtRegisterGrabAction)
   XEN_NARGIFY_2(gxm_XtSetMultiClickTime_w, gxm_XtSetMultiClickTime)
   XEN_NARGIFY_1(gxm_XtGetMultiClickTime_w, gxm_XtGetMultiClickTime)
+  XEN_NARGIFY_1(gxm_XtGetResourceList_w, gxm_XtGetResourceList)
   XEN_NARGIFY_1(gxm_XtGetActionKeysym_w, gxm_XtGetActionKeysym)
   XEN_NARGIFY_3(gxm_XtTranslateKeycode_w, gxm_XtTranslateKeycode)
   XEN_NARGIFY_3(gxm_XtTranslateKey_w, gxm_XtTranslateKey)
@@ -1332,6 +1333,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XtRegisterGrabAction, gxm_XtRegisterGrabAction_w, 5, 0, 0, H_XtRegisterGrabAction);
   XM_DEFINE_PROCEDURE(XtSetMultiClickTime, gxm_XtSetMultiClickTime_w, 2, 0, 0, H_XtSetMultiClickTime);
   XM_DEFINE_PROCEDURE(XtGetMultiClickTime, gxm_XtGetMultiClickTime_w, 1, 0, 0, H_XtGetMultiClickTime);
+  XM_DEFINE_PROCEDURE(XtGetResourceList, gxm_XtGetResourceList_w, 1, 0, 0, H_XtGetResourceList);
   XM_DEFINE_PROCEDURE(XtGetActionKeysym, gxm_XtGetActionKeysym_w, 1, 0, 0, H_XtGetActionKeysym);
   XM_DEFINE_PROCEDURE(XtTranslateKeycode, gxm_XtTranslateKeycode_w, 3, 0, 0, H_XtTranslateKeycode);
   XM_DEFINE_PROCEDURE(XtTranslateKey, gxm_XtTranslateKey_w, 3, 0, 0, NULL);

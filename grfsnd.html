@@ -152,8 +152,10 @@ via <code>(set! (listener-text-color) (make-color 0 0 0))</code> in ~/.snd or wh
 If you use SGI color schemes (the useSchemes resource), most of the color resources mentioned above are ignored 
 (the cursor and selection colors are never ignored). If color schemes are available
 they're listed in /usr/lib/X11/schemes, probably -- it's unfortunate that
-there is the language Scheme used by Guile, and the notion of an SGI color scheme -- there is
-no connection between the two.  The last example sets the window title to "hiho", rather than
+there is the language Scheme implemented by Guile, and the notion of an SGI color scheme -- there is
+no connection between the two. Other systems (Linux, Solaris) use the term "theme" here;
+you can get Snd to honor your current window manager theme by setting useSchemes to all.  
+The last example above sets the window title to "hiho", rather than
 "snd", displays the window on the machine hummer.hiho (presumably accessible over the net),
 and tiles the graph backgrounds with the contents of text.xpm.  To get the -geometry argument
 to work, set the autoResize resource to 0:</p>
@@ -282,7 +284,7 @@ The following adds "WAV" to the sound file extension table before preloading the
 snd -e '(add-sound-file-extension "WAV")' -p /home/bil/sounds
 </pre>
 <br>
-<img src="note.png" alt="notebook"><spacer type=horizontal size=10><img src="bgd.png" alt="colors" vspace=30>
+<img src="note.png" alt="notebook"><spacer type=horizontal size=10><img src="bgd.png" alt="colors" vspace=0>
 <br>
 <br>
 

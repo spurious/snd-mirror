@@ -1,9 +1,12 @@
 /* xm.c: Guile/Ruby bindings for X/Xt/Xpm/Xm/Xp
  *   needs xen.h
- *   for tests and examples see snd-motif.scm and snd-test.scm
+ *   for tests and examples see snd-motif.scm, bess.scm, bess.rb, and snd-test.scm
  */
 
+/* TODO: some way to access XtGetApplicationResources */
+
 /* HISTORY: 
+ *   15-Oct:    XtGetResourceList.
  *   11-Oct:    xm-ruby XM_DEFINE* cleaned up (thanks to Michael Scholz).
  *              removed all (ignored) XrmOptionDesc args (XtAppInitialize etc).
  *   8-Oct:     added WITH_EDITRES to include _XEditResCheckMessages.
@@ -889,6 +892,7 @@ static Window *XEN_TO_C_Windows(XEN lst, int n)
 {
   Window *ws;
   int i;
+  if (n == 0) return(NULL);
   ws = (Window *)CALLOC(n, sizeof(Window));
   for (i = 0; (i < n) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
     if (XEN_Window_P(XEN_CAR(lst)))
@@ -902,6 +906,7 @@ static XmRendition *XEN_TO_C_XmRenditions(XEN lst, int n)
 {
   XmRendition *ws;
   int i;
+  if (n == 0) return(NULL);
   ws = (XmRendition *)CALLOC(n, sizeof(XmRendition));
   for (i = 0; (i < n) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
     if (XEN_XmRendition_P(XEN_CAR(lst)))
@@ -914,6 +919,7 @@ static XmTab *XEN_TO_C_XmTabs(XEN v, int len)
 {
   XmTab *str;
   int i;
+  if (len == 0) return(NULL);
   str = (XmTab *)CALLOC(len, sizeof(XmTab));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_XmTab_P(XEN_CAR(v)))
@@ -927,6 +933,7 @@ static Atom *XEN_TO_C_Atoms(XEN v, int len)
 {
   Atom *str;
   int i;
+  if (len == 0) return(NULL);
   str = (Atom *)CALLOC(len, sizeof(Atom));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_Atom_P(XEN_CAR(v)))
@@ -939,6 +946,7 @@ static Pixel *XEN_TO_C_Pixels(XEN v, int len)
 {
   Pixel *str;
   int i;
+  if (len == 0) return(NULL);
   str = (Pixel *)CALLOC(len, sizeof(Pixel));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_Pixel_P(XEN_CAR(v)))
@@ -951,6 +959,7 @@ static KeySym *XEN_TO_C_KeySyms(XEN v, int len)
 {
   KeySym *str;
   int i;
+  if (len == 0) return(NULL);
   str = (KeySym *)CALLOC(len, sizeof(KeySym));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_KeySym_P(XEN_CAR(v)))
@@ -963,6 +972,7 @@ static char **XEN_TO_C_Strings(XEN v, int len)
 {
   char **str;
   int i;
+  if (len == 0) return(NULL);
   str = (char **)CALLOC(len, sizeof(char *));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_STRING_P(XEN_CAR(v)))
@@ -975,6 +985,7 @@ static int *XEN_TO_C_Ints(XEN v, int len)
 {
   int *ps;
   int i;
+  if (len == 0) return(NULL);
   ps = (int *)CALLOC(len, sizeof(int));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_INTEGER_P(XEN_CAR(v)))
@@ -987,6 +998,7 @@ static Cardinal *XEN_TO_C_Cardinals(XEN v, int len)
 {
   Cardinal *ps;
   int i;
+  if (len == 0) return(NULL);
   ps = (Cardinal *)CALLOC(len, sizeof(int));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_INTEGER_P(XEN_CAR(v)))
@@ -999,6 +1011,7 @@ static XRectangle *XEN_TO_C_XRectangles(XEN v, int len)
 {
   XRectangle *str, *dat;
   int i;
+  if (len == 0) return(NULL);
   str = (XRectangle *)CALLOC(len, sizeof(XRectangle));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     {
@@ -14162,6 +14175,7 @@ static XEN gxm_XtCreateApplicationContext(void)
 static XEN gxm_argv_to_list(XEN lst, int argc, char **argv)
 {
   int i, loc;
+  if (argc == 0) return(lst);
   loc = xm_protect(lst);
   for (i = argc - 1; i >= 0; i--)
     lst = XEN_CONS(C_TO_XEN_STRING(argv[i]), lst);
@@ -14176,12 +14190,12 @@ static XEN gxm_XtOpenDisplay(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg7, X
 calls XOpenDisplay the specified display name."
   /* DIFF: XtOpenDisplay ignore arg5 6, argc is int, argv is list of strings, returns (list dpy argv ...)
    */
-  char **argv;
+  char **argv = NULL;
   int argc;
   XEN lst = XEN_EMPTY_LIST;
   Display *dpy;
   XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtOpenDisplay", "XtAppContext");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtOpenDisplay", "char*");
+  XEN_ASSERT_TYPE(XEN_STRING_P(arg2) || XEN_FALSE_P(arg2), arg2, 2, "XtOpenDisplay", "char*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XtOpenDisplay", "char*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg4), arg4, 4, "XtOpenDisplay", "char*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 5, "XtOpenDisplay", "int");
@@ -14189,7 +14203,7 @@ calls XOpenDisplay the specified display name."
   argc = XEN_TO_C_INT(arg7);
   argv = XEN_TO_C_Strings(arg8, argc);
   dpy = XtOpenDisplay(XEN_TO_C_XtAppContext(arg1), 
-		      XEN_TO_C_STRING(arg2), 
+		      (XEN_FALSE_P(arg2)) ? NULL : XEN_TO_C_STRING(arg2), 
 		      XEN_TO_C_STRING(arg3), 
 		      XEN_TO_C_STRING(arg4), 
 		      NULL, 0, &argc, argv);
@@ -14314,14 +14328,14 @@ static XEN gxm_XtVaOpenApplication(XEN arg1, XEN arg4, XEN arg5, XEN arg7, XEN a
   Arg *args;
   Widget res;
   int argc, arglen;
-  char **argv;
+  char **argv = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtVaOpenApplication", "char*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 2, "XtVaOpenApplication", "int"); /* was arg3 by mistake, 11-Oct-02 */
   XEN_ASSERT_TYPE(XEN_LIST_P(arg5), arg5, 3, "XtVaOpenApplication", "list of String");
   XEN_ASSERT_TYPE(XEN_WidgetClass_P(arg7), arg7, 4, "XtVaOpenApplication", "WidgetClass");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg8), arg8, 5, "XtVaOpenApplication", "arg list");
   argc = XEN_TO_C_INT(arg4);
-  argv = XEN_TO_C_Strings(arg5, argc);
+  if (argc > 0) argv = XEN_TO_C_Strings(arg5, argc);
   args = XEN_TO_C_Args(arg8);
   res = XtOpenApplication(&app, 
 			  XEN_TO_C_STRING(arg1), 
@@ -15753,6 +15767,31 @@ static XEN gxm_XtGetActionKeysym(XEN arg1)
   k = XtGetActionKeysym(XEN_TO_C_XEvent(arg1), &m);
   return(XEN_LIST_2(C_TO_XEN_KeySym(k),
 		    C_TO_XEN_Modifiers(m)));
+}
+
+static XEN gxm_XtGetResourceList(XEN widget_class)
+{
+  #define H_XtGetResourceList "XtGetResourceList(widget-class) returns the widget class's resource list"
+  XEN lst = XEN_EMPTY_LIST;
+  Cardinal len = 0;
+  int i;
+  XtResourceList resources;
+  XEN_ASSERT_TYPE(XEN_WidgetClass_P(widget_class), widget_class, 1, "XtGetResourceList", "WidgetClass");
+  XtGetResourceList(XEN_TO_C_WidgetClass(widget_class), &resources, &len);
+  if (len > 0)
+    {
+      for (i = len - 1; i >= 0; i--)
+	lst = XEN_CONS(XEN_LIST_7(C_TO_XEN_STRING(resources[i].resource_name),
+				  C_TO_XEN_STRING(resources[i].resource_class),
+				  C_TO_XEN_STRING(resources[i].resource_type),
+				  C_TO_XEN_INT((int)(resources[i].resource_size)),
+				  C_TO_XEN_INT((int)(resources[i].resource_offset)),
+				  C_TO_XEN_STRING(resources[i].default_type),
+				  C_TO_XEN_ULONG(resources[i].default_addr)),
+		       lst);
+      XtFree((void *)resources);
+    }
+  return(lst);
 }
 
 static XEN gxm_XtGetMultiClickTime(XEN arg1)
@@ -17309,6 +17348,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XtRegisterGrabAction, gxm_XtRegisterGrabAction, 5, 0, 0, H_XtRegisterGrabAction);
   XM_DEFINE_PROCEDURE(XtSetMultiClickTime, gxm_XtSetMultiClickTime, 2, 0, 0, H_XtSetMultiClickTime);
   XM_DEFINE_PROCEDURE(XtGetMultiClickTime, gxm_XtGetMultiClickTime, 1, 0, 0, H_XtGetMultiClickTime);
+  XM_DEFINE_PROCEDURE(XtGetResourceList, gxm_XtGetResourceList, 1, 0, 0, H_XtGetResourceList);
   XM_DEFINE_PROCEDURE(XtGetActionKeysym, gxm_XtGetActionKeysym, 1, 0, 0, H_XtGetActionKeysym);
   XM_DEFINE_PROCEDURE(XtTranslateKeycode, gxm_XtTranslateKeycode, 3, 0, 0, H_XtTranslateKeycode);
   XM_DEFINE_PROCEDURE(XtTranslateKey, gxm_XtTranslateKey, 3, 0, 0, H_XtTranslateKey);
@@ -24727,7 +24767,7 @@ static int xm_already_inited = 0;
       XEN_DEFINE_PROCEDURE(S_add_resource, g_add_resource_w, 2, 0, 0, H_add_resource);
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"11-Oct-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"15-Oct-02\")");
 #endif
       xm_already_inited = 1;
     }

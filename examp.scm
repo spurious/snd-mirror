@@ -1,4 +1,5 @@
 ;;; examples of Guile extensions to Snd
+;;;   for the Ruby version, see contrib/examp.rb by Michael Scholz
 ;;;
 ;;; (this file requires guile 1.5 -- it uses the generalized set! and newer optargs support)
 ;;;

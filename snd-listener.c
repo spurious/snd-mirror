@@ -18,6 +18,8 @@
   )
 */
 
+/* TODO: equivalent form-finder for Ruby listener */
+
 int find_matching_paren(char *str, int parens, int pos, char *prompt, int *highlight_pos)
 {
   int i, j, quoting = FALSE, up_comment = -1;
