@@ -139,7 +139,7 @@
 	"GtkWidgetAuxInfo*" "PangoFontFamily**" "PangoFontset*" "PangoEngineShape*" "PangoLayoutRun*" "GdkDeviceAxis*"
 	"GdkDeviceKey*" "GtkWidget**" "GtkLabelSelectionInfo*" "GtkItemFactoryCallback" "GtkNotebookPage*" "GtkRangeLayout*"
 	"GData*" "GtkRangeStepTimer*" "GtkRcContext*" "GdkGC**" "GdkPixmap**" "GArray*" "GtkTextBTree*" "GtkTextLogAttrCache*"
-	"GtkTableRowCol*" "GtkAccelMap*" "GtkTooltipsData*" "GdkAtom*"
+	"GtkTableRowCol*" "GtkAccelMap*" "GtkTooltipsData*" "GdkAtom*" "PangoScript"
 	))
 
 (define no-xen-to-c 
@@ -147,7 +147,7 @@
 	"GtkWidgetAuxInfo*" "PangoFontFamily**" "PangoFontset*" "PangoEngineShape*" "PangoLayoutRun*" "GdkDeviceAxis*" 
 	"GdkDeviceKey*" "GtkWidget**" "GtkItemFactoryCallback" "GtkLabelSelectionInfo*" "GtkNotebookPage*" "GtkRangeLayout*" 
 	"GtkRangeStepTimer*" "GData*" "GtkRcContext*" "GdkGC**" "GdkPixmap**" "GArray*" "GtkTableRowCol*" "GtkTextBTree*" 
-	"GtkTextLogAttrCache*" "GtkAccelMap*" "GtkTooltipsData*" "GdkAtom*"
+	"GtkTextLogAttrCache*" "GtkAccelMap*" "GtkTooltipsData*" "GdkAtom*" "PangoScript"
 	))
 
 (define (cadr-str data)
@@ -778,7 +778,9 @@
 		       (if (member type no-c-to-xen)
 			   "_1"
 			   (if (member type no-xen-p)
-			       "_NO_P"
+			       (if (member type no-xen-to-c)
+				   "_NO_P_2"
+				   "_NO_P")
 			       "")))
 		   (no-stars type) 
 		   type))))))
@@ -1597,6 +1599,9 @@
 (hey "  static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(#Name, val));} \\~%")
 (hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
 (hey "~%")
+(hey "#define XM_TYPE_NO_P_2(Name, XType) \\~%")
+(hey "  static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(#Name, val));}~%")
+(hey "~%")
 (hey "#define XM_TYPE_PTR(Name, XType) \\~%")
 (hey "  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \\~%")
 (hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
@@ -2239,10 +2244,10 @@
 				   (begin
 				     ;; special case -- type returned is dependent to some extent on atom
 				     (hey "  {~%      XEN data_val = XEN_FALSE;~%\
-#if HAVE_GUILE && HAVE_SCM_MEM2STRING~%\
+#if HAVE_GUILE && (HAVE_SCM_MEM2STRING || HAVE_SCM_C_MAKE_RECTANGULAR)~%\
       if (ref_actual_property_type == GDK_TARGET_STRING)~%\
 	data_val = C_TO_XEN_STRING((char *)ref_data);~%\
-      else if (ref_actual_length > 0) data_val = scm_mem2string((char *)ref_data, ref_actual_length * ref_actual_format / 8);~%\
+      else if (ref_actual_length > 0) data_val = C_TO_XEN_STRINGN((char *)ref_data, ref_actual_length * ref_actual_format / 8);~%\
 #else~%\
       data_val = C_TO_XEN_STRING((char *)ref_data);~%\
 #endif~%\
@@ -2635,7 +2640,7 @@
 (define (list->array type)
   (hey "  if (strcmp(ctype, ~S) == 0)~%" type)
   (hey "    {~%")
-  (hey "      ~A arr; arr = (~A)CALLOC(len, sizeof(~A));~%" type type (deref-type (list type)))
+  (hey "      ~A arr; arr = (~A)CALLOC(len + 1, sizeof(~A));~%" type type (deref-type (list type)))
   (hey "      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_~A(XEN_CAR(val));~%" (no-stars (deref-type (list type))))
   (hey "      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL(~S), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));~%" (no-stars type))
   (hey "    }~%"))
@@ -2991,9 +2996,9 @@
 (hey "  ~%")
 (hey "#if HAVE_GUILE~%")
 (hey "#if HAVE_SCM_C_DEFINE~%")
-(hey "  #define DEFINE_STRING(Name) scm_c_define(XG_PRE #Name XG_POST, scm_makfrom0str(Name))~%")
+(hey "  #define DEFINE_STRING(Name) scm_c_define(XG_PRE #Name XG_POST, C_TO_XEN_STRING(Name))~%")
 (hey "#else~%")
-(hey "  #define DEFINE_STRING(Name) gh_define(XG_PRE #Name XG_POST, scm_makfrom0str(Name))~%")
+(hey "  #define DEFINE_STRING(Name) gh_define(XG_PRE #Name XG_POST, C_TO_XEN_STRING(Name))~%")
 (hey "#endif~%")
 (hey "#else~%")
 (hey "  #define DEFINE_STRING(Name) rb_define_global_const(XG_PRE #Name XG_POST, C_TO_XEN_STRING(Name))~%")
