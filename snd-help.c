@@ -374,6 +374,7 @@ void about_snd_help(void)
 	    "\nRecent changes include:\n\
 \n\
 16-Mar:  def-optkey-fun in ws.scm.\n\
+         edit function in granulate generator.\n\
 15-Mar:  exported mus_optkey_* from sndlib and began incorporating optkey args into Snd.\n\
          region-position and optional channel arg to region-frames suggested by Matt Wright\n\
 10-Mar:  make-font-selector-dialog and make-color-selector-dialog in snd-gtk\n\
@@ -616,6 +617,7 @@ The keyboard commands associated with the control panel are: \
 		      WITH_WORD_WRAP,
 		      control_xrefs,
 		      NULL);
+  global_control_panel_state();
 }
 
 void marks_help(void) 

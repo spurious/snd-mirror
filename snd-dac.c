@@ -95,7 +95,7 @@ static void *make_expand(snd_info *sp, Float initial_ex, dac_info *dp)
 				.6, /* expand scaler, not currently settable -- dac_set_expand_scaler below */
 				sp->expand_control_hop, sp->expand_control_ramp, 
 				sp->expand_control_jitter,
-				max_expand_control_len(sp), (void *)spd);
+				max_expand_control_len(sp), NULL, (void *)spd);
   spd->dp = dp;
   spd->speeding = false;
   spd->sr = 0.0;

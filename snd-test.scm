@@ -14412,6 +14412,30 @@ EDITS: 5
 	(if (not (eq? (car var) 'out-of-range))
 	    (snd-display ";make-granulate bad sizes: ~A" var)))
       
+      (let ((ind (open-sound "oboe.snd")))
+	(let ((grn (make-granulate :expansion 2.0
+				   :edit (lambda (g)
+					   (let ((grain (mus-data g))  ; current grain
+						 (len (mus-length g))) ; current grain length
+					     (do ((i 0 (1+ i)))
+						 ((= i len) len)       ; grain length unchanged in this case
+					       (vct-set! grain i (* 2 (vct-ref grain i))))))))
+	      (rd (make-sample-reader 0)))
+	  (map-channel (lambda (y) (granulate grn (lambda (dir) (rd))))))
+	(let ((mx (maxamp)))
+	  (undo)
+	  (let ((grn (make-granulate :expansion 2.0
+				     :edit (lambda (g)
+					     (let ((grain (mus-data g))  ; current grain
+						   (len (mus-length g))) ; current grain length
+					       (do ((i 0 (1+ i)))
+						   ((= i len) len)       ; grain length unchanged in this case
+						 (vct-set! grain i (* 4 (vct-ref grain i))))))))
+		(rd (make-sample-reader 0)))
+	    (map-channel (lambda (y) (granulate grn (lambda (dir) (rd))))))
+	  (if (fffneq (/ (* 2 mx) (maxamp)) 1.0) (snd-display ";edited granulate: ~A ~A" mx (maxamp))))
+	(close-sound ind))
+
       (let* ((v0 (make-vct 32))
 	     (v1 (make-vct 256))
 	     (v2 (make-vct 256))
@@ -14896,7 +14920,6 @@ EDITS: 5
 	(let ((geno (make-phase-vocoder (lambda (dir) 0.0))))
 	  (let ((genx (make-phase-vocoder :input (lambda (dir) 0.0))))
 	    (if (equal? geno genx) (snd-display ";phase-vocoder equal? ~A ~A" geno genx))
-	    (if (not (procedure? (mus-data genx))) (snd-display ";phase-vocoder data: ~A" (mus-data genx))) ; in scheme it's the input procedure
 	    (if (fneq (mus-frequency genx) 1.0) (snd-display ";mus-frequency phase-vocoder: ~A" (mus-frequency genx)))
 	    (set! (mus-frequency genx) 2.0)
 	    (if (fneq (mus-frequency genx) 2.0) (snd-display ";set mus-frequency phase-vocoder: ~A" (mus-frequency genx)))
@@ -34162,6 +34185,18 @@ EDITS: 2
 	 (axis-y1 (list-ref axis 3)))
     (inexact->exact (floor (- axis-y0 (* y (- axis-y0 axis-y1)))))))
 
+(define (clean-string str)
+  ;; full file name should be unique, so I think we need only fix it up to look like a flat name
+  (let* ((len (string-length str))
+	 (new-str (make-string len #\.)))
+    (do ((i 0 (1+ i)))
+	((= i len) new-str)
+      (let ((c (string-ref str i)))
+	(if (or (char=? c #\\)
+		(char=? c #\/))
+	    (string-set! new-str i #\_)
+	    (string-set! new-str i c))))))
+
 (set! (previous-files-sort-procedure) #f)
 
 (define* (widget-string widget text #:optional (cleared #t))
@@ -40455,7 +40490,7 @@ EDITS: 2
 					      (if (char=? (string-ref filename i) #\/)
 						  (return (substring filename (+ i 1))))))))
 				       (format #f "~~/peaks/~A-peaks-~D" 
-					       (without-directories (mus-expand-filename file)) 
+					       (clean-string (mus-expand-filename file))
 					       chn))
 				     (list "oboe.snd" "pistol.snd" "cardinal.snd" "storm.snd")
 				     '())))

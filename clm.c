@@ -5960,6 +5960,8 @@ typedef struct {
   int in_data_len;
   int in_data_start;
   void *closure;
+  int (*edit)(void *closure);
+  Float *grain;
 } grn_info;
 
 static char *inspect_grn_info(mus_any *ptr)
@@ -6003,6 +6005,7 @@ static int free_granulate(mus_any *ptr)
     {
       if (gen->data) FREE(gen->data);
       if (gen->in_data) FREE(gen->in_data);
+      if (gen->grain) FREE(gen->grain);
       FREE(gen);
     }
   return(0);
@@ -6025,13 +6028,15 @@ static Float grn_set_increment(mus_any *rd, Float val) {((grn_info *)rd)->input_
 static off_t grn_hop(mus_any *ptr) {return(((grn_info *)ptr)->output_hop);}
 static off_t grn_set_hop(mus_any *ptr, off_t val) {((grn_info *)ptr)->output_hop = (int)val; return(val);}
 static off_t grn_ramp(mus_any *ptr) {return(((grn_info *)ptr)->rmp);}
-static off_t grn_set_ramp(mus_any *ptr, off_t val) 
+static off_t grn_set_ramp(mus_any *ptr, off_t val)
 {
   grn_info *gen = (grn_info *)ptr; 
   if (val < (gen->len * .5))
     gen->rmp = (int)val;
   return(val);
 }
+static Float *granulate_data(mus_any *ptr) {return(((grn_info *)ptr)->grain);}
+int mus_granulate_grain_max_length(mus_any *ptr) {return(((grn_info *)ptr)->in_data_len);}
 
 static Float run_granulate(mus_any *ptr, Float unused1, Float unused2) {return(mus_granulate(ptr, NULL));}
 
@@ -6042,7 +6047,7 @@ static mus_any_class GRANULATE_CLASS = {
   &describe_granulate,
   &inspect_grn_info,
   &granulate_equalp,
-  0, 0,
+  &granulate_data, 0,
   &grn_length,  /* segment-length */
   &grn_set_length,
   &grn_frequency, /* spd-out */
@@ -6064,7 +6069,9 @@ static mus_any_class GRANULATE_CLASS = {
 
 mus_any *mus_make_granulate(Float (*input)(void *arg, int direction), 
 			    Float expansion, Float length, Float scaler, 
-			    Float hop, Float ramp, Float jitter, int max_size, void *closure)
+			    Float hop, Float ramp, Float jitter, int max_size, 
+			    int (*edit)(void *closure),
+			    void *closure)
 {
   grn_info *spd;
   int outlen;
@@ -6099,6 +6106,10 @@ mus_any *mus_make_granulate(Float (*input)(void *arg, int direction),
   spd->in_data_start = spd->in_data_len;
   spd->rd = input;
   spd->closure = closure;
+  spd->edit = edit;
+  if (edit) /* grain needs to exist from the beginning so that the Scheme caller can wrap it for mus-data */
+    spd->grain = (Float *)clm_calloc(spd->in_data_len, sizeof(Float), "granulate grain");
+  else spd->grain = NULL;
   return((mus_any *)spd);
 }
 
@@ -6107,6 +6118,7 @@ Float mus_granulate(mus_any *ptr, Float (*input)(void *arg, int direction))
   grn_info *spd = (grn_info *)ptr;
   int start, end, len, extra, i, j, k, steady_end, curstart;
   Float amp, incr, result;
+  Float *out_data;
   result = spd->data[spd->ctr];
   spd->ctr++;
   if (spd->ctr >= spd->cur_out)
@@ -6144,14 +6156,34 @@ Float mus_granulate(mus_any *ptr, Float (*input)(void *arg, int direction))
       incr = (Float)(spd->amp) / (Float)(spd->rmp);
       steady_end = (spd->len - spd->rmp);
       curstart = irandom(spd->s20);
+      if (spd->edit)
+	{
+	  memset((void *)(spd->grain), 0, spd->in_data_len * sizeof(Float));
+	  out_data = spd->grain;
+	}
+      else out_data = spd->data;
       for (i = 0, j = curstart; i < spd->len; i++, j++)
 	{
-	  spd->data[i] += (amp * spd->in_data[j]);
+	  out_data[i] += (amp * spd->in_data[j]);
 	  if (i < spd->rmp) 
 	    amp += incr; 
 	  else 
 	    if (i > steady_end) 
 	      amp -= incr;
+	}
+      if (spd->edit)
+	{
+	  int new_len;
+	  new_len = (*(spd->edit))(spd->closure);
+	  if (new_len <= 0) 
+	    new_len = spd->len;
+	  else
+	    {
+	      if (new_len > spd->in_data_len)
+		new_len = spd->in_data_len;
+	    }
+	  for (i = 0; i < new_len; i++)
+	    spd->data[i] += out_data[i];
 	}
       
       spd->ctr -= spd->cur_out;
@@ -7271,7 +7303,6 @@ Float *mus_phase_vocoder_phase_increments(mus_any *ptr) {return(((pv_info *)ptr)
 Float *mus_phase_vocoder_previous_phases(mus_any *ptr) {return(((pv_info *)ptr)->lastphase);}
 int mus_phase_vocoder_outctr(mus_any *ptr) {return(((pv_info *)ptr)->outctr);}
 int mus_phase_vocoder_set_outctr(mus_any *ptr, int val) {((pv_info *)ptr)->outctr = val; return(val);}
-static Float *phase_vocoder_data(mus_any *ptr) {return(((pv_info *)ptr)->in_data);}
 static Float run_phase_vocoder(mus_any *ptr, Float unused1, Float unused2) {return(mus_phase_vocoder(ptr, NULL));}
 static Float pv_increment(mus_any *rd) {return((Float)(((pv_info *)rd)->interp));}
 static Float pv_set_increment(mus_any *rd, Float val) {((pv_info *)rd)->interp = (int)val; return(val);}
@@ -7283,7 +7314,7 @@ static mus_any_class PHASE_VOCODER_CLASS = {
   &describe_phase_vocoder,
   &inspect_pv_info,
   &phase_vocoder_equalp,
-  &phase_vocoder_data, 0,
+  0, 0,
   &pv_length,
   &pv_set_length,
   &pv_frequency,

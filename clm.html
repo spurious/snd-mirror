@@ -1545,18 +1545,20 @@ handier.</p>
         (<i>ramp</i> .4)         ;amount of slice-time spent ramping up/down
         (<i>jitter</i> 1.0)      ;affects spacing of successive grains
         <i>max-size</i>          ;internal buffer size
+        <i>edit</i>              ;grain editing function (Scheme/Ruby, not CL)
   <a class=def name="granulate">granulate</a> <i>e</i> &amp;optional <i>input-function</i>
   <a class=def name="granulate?">granulate?</a> <i>e</i>
 </pre>
 
 <table border>
 <tr><td colspan=2><center>granulate methods</center></td></tr>
-<tr><td>mus-frequency</td><td>time (seconds) between output grains (<i>hop</i>)</td></tr>
+<tr><td><em class=gen>mus-frequency</em></td><td>time (seconds) between output grains (<i>hop</i>)</td></tr>
 <tr><td><em class=gen>mus-ramp</em></td><td>length (samples) of grain envelope ramp segment</td></tr>
 <tr><td><em class=gen>mus-hop</em></td><td>time (samples)  between output grains (<i>hop</i>)</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>grain amp (<i>scaler</i>)</td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td><i>expansion</i></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>grain length (samples)</td></tr>
+<tr><td><em class=gen>mus-data</em></td><td>grain samples if edit function in use</td></tr>
 </table>
 
 <p><b>Granulate</b> "granulates" the sound file <i>file</i>.  It is the poor man's way
@@ -1596,8 +1598,7 @@ close to the original speed.
 </small></pre>
 <p>See expsrc.ins.  Here's an instrument that uses the <i>input-function</i>
 argument to granulate.  It cause the granulation to run backwards through the file:
-</p>
-<pre><small>
+</p><pre><small>
 (<a class=quiet href="#definstrument">definstrument</a> grev (beg dur exp-amt file file-beg)
   (let* ((exA (<em class=red>make-granulate</em> :expansion exp-amt))
 	 (fil (open-input* file file-beg))
@@ -1611,6 +1612,33 @@ argument to granulate.  It cause the granulation to run backwards through the fi
 				inval))))))))
 
 (<a class=quiet href="#with-sound">with-sound</a> () (grev 0 100000 2.0 "pistol.snd" 40000))
+</small></pre>
+<p>
+In Scheme and Ruby, but not currently in Common Lisp, the <i>edit</i> argument can
+be a function of one arg, the current granulate generator.  It is called just before
+a grain is added into the output buffer. The current grain is accessible via mus-data.
+The edit function, if any, should return the length in samples of the grain, or 0.
+In the following code, we use the edit function to reverse every other grain:
+</p><pre><small>
+(let ((forward #t))
+  (let ((grn (make-granulate :expansion 2.0
+			     :edit (lambda (g)
+				     (let ((grain (mus-data g))  ; current grain
+					   (len (mus-length g))) ; current grain length
+				       (if forward ; no change to data
+					   (begin
+					     (set! forward #f)
+					     len)
+					   (let ((mid (inexact-&gt;exact (floor (/ len 2)))))
+					     (set! forward #t)
+					     (do ((i 0 (1+ i))
+						  (j (1- len) (1- j)))
+						 ((= i mid) len)
+					       (let ((temp (vct-ref grain j)))
+						 (vct-set! grain j (vct-ref grain i))
+						 (vct-set! grain i temp)))))))))
+	(rd (make-sample-reader 0)))
+    (map-channel (lambda (y) (granulate grn (lambda (dir) (rd)))))))
 </small></pre>
 <br>
 

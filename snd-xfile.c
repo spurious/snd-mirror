@@ -1,7 +1,7 @@
 #include "snd.h"
 
 /* TODO: the view:files menu might be better as a container widget.  Not sure the "current files" list is useful.
- * PERHAPS: thumbnail sketch in file selection info box? connection to nb database? (preview-file-hook?)
+ * PERHAPS: thumbnail sketch in file selection info box? connection to nb database? (via addcallback for browse selection)
  *             need accessors for peak-env dir/files (peak-env.scm), Snd preview widget (for drawingarea or pixmap)
  */
 

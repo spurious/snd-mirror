@@ -417,6 +417,44 @@ static void save_snd_state_options (FILE *fd)
     }
 }
 
+void global_control_panel_state(void)
+{
+  char *buf;
+  snd_help_append("\n\nCurrent control panel defaults:\n\n");
+  buf = (char *)CALLOC(1024, sizeof(char));
+  mus_snprintf(buf, 1024, "amp bounds: %.3f to %.3f\n", 
+	       amp_control_min(ss), amp_control_max(ss));
+  snd_help_append(buf);
+  mus_snprintf(buf, 1024, "speed bounds: %.3f to %.3f, tones: %d, style: %s\n",
+	       speed_control_min(ss), speed_control_max(ss),
+	       speed_control_tones(ss),
+	       speed_control_style_name(speed_control_style(ss)));
+  snd_help_append(buf);
+  mus_snprintf(buf, 1024, "expand bounds: %.3f to %.3f, ramp: %.3f, hop: %.3f, length: %.3f, jitter: %.3f\n",
+	       expand_control_min(ss), expand_control_max(ss),
+	       expand_control_ramp(ss), expand_control_hop(ss), expand_control_length(ss), expand_control_jitter(ss));
+  snd_help_append(buf);
+  mus_snprintf(buf, 1024, "contrast bounds: %.3f to %.3f, amp: %.3f\n",
+	       contrast_control_min(ss), contrast_control_max(ss),
+	       contrast_control_amp(ss));
+  snd_help_append(buf);
+  mus_snprintf(buf, 1024, "reverb scale: %.3f to %.3f, length: %.3f to %.3f, feedbacl: %.3f, lowpass: %.3f, decay: %.3f\n",
+	       reverb_control_scale_min(ss), reverb_control_scale_max(ss),
+	       reverb_control_length_min(ss), reverb_control_length_max(ss),
+	       reverb_control_feedback(ss), reverb_control_lowpass(ss), reverb_control_decay(ss));
+  snd_help_append(buf);
+  mus_snprintf(buf, 1024, "filter order: %d, in dB: %s, in Hz: %s\n",
+	       filter_control_order(ss),
+	       b2s(filter_control_in_dB(ss)),
+	       b2s(filter_control_in_hz(ss)));
+  snd_help_append(buf);
+  mus_snprintf(buf, 1024, "tempo bounds: %.3f to %.3f\n",
+	       tempo_control_min(ss), tempo_control_max(ss));
+  snd_help_append(buf);
+  snd_help_back_to_top();
+  FREE(buf);
+}
+
 static FILE *open_restart_file(char *name, bool append)
 {
   FILE *fd;

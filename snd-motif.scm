@@ -1422,6 +1422,19 @@ Reverb-feedback sets the scaler on the feedback.
 
 (define* (show-sounds-in-directory #:optional (dir "."))
   "(show-sounds-in-directory #:optional (dir \".\")) calls make-sound-box with the given directory"
+
+  (define (clean-string str)
+    ;; full file name should be unique, so I think we need only fix it up to look like a flat name
+    (let* ((len (string-length str))
+	   (new-str (make-string len #\.)))
+      (do ((i 0 (1+ i)))
+	  ((= i len) new-str)
+	(let ((c (string-ref str i)))
+	  (if (or (char=? c #\\)
+		  (char=? c #\/))
+	      (string-set! new-str i #\_)
+	      (string-set! new-str i c))))))
+
   (make-sound-box
    "sounds"
    (XtCreateManagedWidget "scrolled-window" xmScrolledWindowWidgetClass (list-ref (main-widgets) 3)
@@ -1432,15 +1445,8 @@ Reverb-feedback sets the scaler on the feedback.
    (lambda (file) 
      (open-sound file))
    (lambda (file chn)
-     (define (without-directories filename)
-       (call-with-current-continuation
-	(lambda (return)
-	  (do ((i (- (string-length filename) 1) (1- i)))
-	      ((= 0 i) filename)
-	    (if (char=? (string-ref filename i) #\/)
-		(return (substring filename (+ i 1))))))))
-     (format #f "~~/peaks/~A-peaks-~D" 
-	     (without-directories (mus-expand-filename file)) 
+     (format #f "~~/peaks/~A-peaks-~D"                              
+	     (clean-string (mus-expand-filename file))
 	     chn))
    (sound-files-in-directory dir)
    '()))

@@ -601,6 +601,7 @@ void sound_not_current(snd_info *sp, void *dat);
 int save_options (void);
 FILE *open_snd_init_file (void);
 int save_state (char *save_state_name);
+void global_control_panel_state(void);
 int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool with_title, int args);
 
 void g_init_main(void);

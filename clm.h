@@ -2,10 +2,12 @@
 #define CLM_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 40
-#define MUS_DATE "22-Jan-04"
+#define MUS_REVISION 41
+#define MUS_DATE "17-Mar-04"
 
 /* 
+ * 17-Mar:     edit function added to mus_granulate.
+ *             replaced MUS_DATA_POSITION with MUS_DATA_WRAPPER.
  * 22-Jan:     various "environ" variables renamed for Windows' benefit.
  * 5-Jan-04:   env_interp bugfix.
  * --------
@@ -136,6 +138,7 @@
 #endif
 
 typedef enum {MUS_NOT_SPECIAL, MUS_SIMPLE_FILTER, MUS_FULL_FILTER, MUS_OUTPUT, MUS_INPUT, MUS_DELAY_LINE} mus_clm_extended_t;
+enum {MUS_DATA_WRAPPER, MUS_INPUT_FUNCTION, MUS_ANALYZE_FUNCTION, MUS_EDIT_FUNCTION, MUS_SYNTHESIZE_FUNCTION, MUS_SELF_WRAPPER};
 
 typedef struct {
   struct mus_any_class *core;
@@ -536,8 +539,11 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
 bool mus_granulate_p(mus_any *ptr);
 Float mus_granulate(mus_any *ptr, Float(*input)(void *arg, int direction));
 mus_any *mus_make_granulate(Float(*input)(void *arg, int direction), 
-				       Float expansion, Float length, Float scaler, 
-				       Float hop, Float ramp, Float jitter, int max_size, void *closure);
+			    Float expansion, Float length, Float scaler, 
+			    Float hop, Float ramp, Float jitter, int max_size, 
+			    int (*edit)(void *closure),
+			    void *closure);
+int mus_granulate_grain_max_length(mus_any *ptr);
 off_t mus_ramp(mus_any *ptr);
 off_t mus_set_ramp(mus_any *ptr, off_t val);
 off_t mus_hop(mus_any *ptr);

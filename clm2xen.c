@@ -649,7 +649,7 @@ static XEN *make_vcts(int size)
   return(vcts);
 }
 
-enum {INPUT_FUNCTION, ANALYZE_FUNCTION, EDIT_FUNCTION, SYNTHESIZE_FUNCTION, SELF_WRAPPER};
+#define MAX_VCTS (MUS_SELF_WRAPPER + 1)
 
 static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj) 
 {
@@ -664,7 +664,7 @@ static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj)
   if (ms->vcts) 
     {
       for (i = 0; i < ms->nvcts; i++) 
-	if ((i != SELF_WRAPPER) && (XEN_BOUND_P(ms->vcts[i])))
+	if ((i != MUS_SELF_WRAPPER) && (XEN_BOUND_P(ms->vcts[i])))
 	  xen_gc_mark(ms->vcts[i]);
     }
 #if HAVE_RUBY
@@ -726,7 +726,7 @@ XEN mus_xen_to_object(mus_xen *gn) /* global for user-defined gens */
 
 XEN mus_xen_to_object_with_vct(mus_xen *gn, XEN v) /* global for user-defined gens */
 {
-  gn->vcts[MUS_DATA_POSITION] = v;
+  gn->vcts[MUS_DATA_WRAPPER] = v;
   XEN_MAKE_AND_RETURN_OBJECT(mus_xen_tag, gn, mark_mus_xen, free_mus_xen);
 }
 
@@ -860,7 +860,7 @@ static XEN g_mus_data(XEN gen)
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ONLY_ARG, S_mus_data, "a generator");
   ms = XEN_TO_MUS_XEN(gen);
   if (ms->vcts)
-    return(ms->vcts[MUS_DATA_POSITION]); 
+    return(ms->vcts[MUS_DATA_WRAPPER]); 
   else return(XEN_FALSE);
 }
 
@@ -877,7 +877,7 @@ static XEN g_mus_set_data(XEN gen, XEN val)
       v = (vct *)XEN_OBJECT_REF(val);
       ma = ms->gen;
       mus_set_data(ma, v->data);  /* TO REMEMBER: if allocated, should have freed, and set to not allocated */
-      ms->vcts[MUS_DATA_POSITION] = val;
+      ms->vcts[MUS_DATA_WRAPPER] = val;
       return(val);
     }
   return(xen_return_first(XEN_FALSE, gen, val));
@@ -1214,9 +1214,9 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
   if (ge)
     {
       gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-      gn->vcts = make_vcts(1);
-      gn->gen = ge;
       gn->nvcts = 1;
+      gn->vcts = make_vcts(gn->nvcts);
+      gn->gen = ge;
       return(mus_xen_to_object_with_vct(gn, make_vct(max_size, line)));
     }
   if (line) FREE(line);
@@ -1657,8 +1657,8 @@ is the same in effect as " S_make_oscil "."
   if (ge)
     {
       gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-      gn->vcts = make_vcts(1);
       gn->nvcts = 1;
+      gn->vcts = make_vcts(gn->nvcts);
       gn->gen = ge;
       return(mus_xen_to_object_with_vct(gn, make_vct(table_size, table)));
     }
@@ -2594,8 +2594,8 @@ processing, normally involving overlap-adds."
   if (ge)
     {
       gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-      gn->vcts = make_vcts(1);
       gn->nvcts = 1;
+      gn->vcts = make_vcts(gn->nvcts);
       gn->gen = ge;
       return(mus_xen_to_object_with_vct(gn, make_vct(siz, buf)));
     }
@@ -2712,8 +2712,8 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
   if (ge)
     {
       gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-      gn->vcts = make_vcts(1);
       gn->nvcts = 1;
+      gn->vcts = make_vcts(gn->nvcts);
       gn->gen = ge;
       return(mus_xen_to_object_with_vct(gn, make_vct(wsize, wave)));
     }
@@ -2832,8 +2832,8 @@ is the same in effect as make-oscil"
   if (ge)
     {
       gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-      gn->vcts = make_vcts(1);
       gn->nvcts = 1;
+      gn->vcts = make_vcts(gn->nvcts);
       gn->gen = ge;
       return(mus_xen_to_object_with_vct(gn, make_vct(wsize, wave)));
     }
@@ -3037,7 +3037,7 @@ static XEN g_iir_filter(XEN obj, XEN input)
 
 typedef enum {G_FILTER, G_FIR_FILTER, G_IIR_FILTER} xclm_fir_t;
 enum {G_FILTER_STATE, G_FILTER_XCOEFFS, G_FILTER_YCOEFFS};
-/* G_FILTER_STATE must = MUS_DATA_POSITION */
+/* G_FILTER_STATE must = MUS_DATA_WRAPPER = 0 */
 
 static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
@@ -3130,8 +3130,8 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
     {
       gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
       gn->gen = fgen;                                    /* delay gn allocation since make_filter can throw an error */
-      gn->vcts = make_vcts(3);
       gn->nvcts = 3;
+      gn->vcts = make_vcts(gn->nvcts);
       gn->vcts[G_FILTER_STATE] = make_vct_wrapper(order, mus_data(fgen));
       gn->vcts[G_FILTER_XCOEFFS] = xwave;
       gn->vcts[G_FILTER_YCOEFFS] = ywave;
@@ -3301,8 +3301,8 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   if (ge)
     {
       gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-      gn->vcts = make_vcts(1);
       gn->nvcts = 1;
+      gn->vcts = make_vcts(gn->nvcts);
       gn->gen = ge;
       return(mus_xen_to_object_with_vct(gn, make_vct(len, odata)));
     }
@@ -3971,11 +3971,11 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
       gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
       if (vlen > 0)
 	{
-	  gn->vcts = make_vcts(vlen);
+	  gn->nvcts = vlen;
+	  gn->vcts = make_vcts(gn->nvcts);
 	  i = 0;
 	  if (XEN_BOUND_P(out_obj)) gn->vcts[i++] = out_obj;
 	  if (XEN_BOUND_P(rev_obj)) gn->vcts[i] = rev_obj;
-	  gn->nvcts = vlen;
 	}
       gn->gen = ge;
       return(mus_xen_to_object(gn));
@@ -4014,16 +4014,16 @@ static Float funcall1 (void *ptr, int direction) /* intended for "as-needed" inp
    * funcall1 is input-func for clm.c make args, or the 2nd arg to the gen (mus_src(gen, input))
    *    it is called in C (*input)(closure, dir)
    *    closure in mus_xen *gn
-   *      its gn->vcts array [INPUT_FUNCTION] = scm procedure object (if any) else EMPTY_LIST
+   *      its gn->vcts array [MUS_INPUT_FUNCTION] = scm procedure object (if any) else EMPTY_LIST
    *      this is set in the gen call if it's passed there, else in the make-gen call
    * so we get here via *funcall1(gn, dir)
-   *   and make sure gn->vcts[INPUT_FUNCTION] is a procedure, call it with dir as its arg,
+   *   and make sure gn->vcts[MUS_INPUT_FUNCTION] is a procedure, call it with dir as its arg,
    *   it returns a float which we then return to C
    */
   mus_xen *gn = (mus_xen *)ptr;
-  if ((gn) && (gn->vcts) && (XEN_BOUND_P(gn->vcts[INPUT_FUNCTION])) && (XEN_PROCEDURE_P(gn->vcts[INPUT_FUNCTION])))
+  if ((gn) && (gn->vcts) && (XEN_BOUND_P(gn->vcts[MUS_INPUT_FUNCTION])) && (XEN_PROCEDURE_P(gn->vcts[MUS_INPUT_FUNCTION])))
     /* the gh_procedure_p call can be confused by 0 -> segfault! */
-    return(XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(gn->vcts[INPUT_FUNCTION], C_TO_SMALL_XEN_INT(direction), "as-needed-input")));
+    return(XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_INPUT_FUNCTION], C_TO_SMALL_XEN_INT(direction), "as-needed-input")));
   else return(0.0);
 }
 
@@ -4055,7 +4055,7 @@ included an 'input' argument, input-function is ignored."
   if (XEN_PROCEDURE_P(func))
     {
       if (XEN_REQUIRED_ARGS(func) == 1)
-	gn->vcts[INPUT_FUNCTION] = func;
+	gn->vcts[MUS_INPUT_FUNCTION] = func;
       else XEN_BAD_ARITY_ERROR(S_src, 3, func, "src input function wants 1 arg");
     }
   return(C_TO_XEN_DOUBLE(mus_src(XEN_TO_MUS_ANY(obj), pm1, 0)));
@@ -4093,9 +4093,9 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
   if (wid > 2000) XEN_OUT_OF_RANGE_ERROR(S_make_src, 3, keys[2], "width ~A > 2000?");
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   /* mus_make_src assumes it can invoke the input function! */
-  gn->vcts = make_vcts(1);
-  gn->vcts[INPUT_FUNCTION] = in_obj;
-  gn->nvcts = 1;
+  gn->nvcts = MAX_VCTS;
+  gn->vcts = make_vcts(gn->nvcts);
+  gn->vcts[MUS_INPUT_FUNCTION] = in_obj;
   old_error_handler = mus_error_set_handler(local_mus_error);
   ge = mus_make_src(funcall1, srate, wid, gn);
   mus_error_set_handler(old_error_handler);
@@ -4129,7 +4129,7 @@ static XEN g_granulate(XEN obj, XEN func)
   if (XEN_PROCEDURE_P(func))
     {
       if (XEN_REQUIRED_ARGS(func) == 1)
-	gn->vcts[INPUT_FUNCTION] = func;
+	gn->vcts[MUS_INPUT_FUNCTION] = func;
       else XEN_BAD_ARITY_ERROR(S_granulate, 2, func, "granulate input function wants 1 arg");
     }
   return(C_TO_XEN_DOUBLE(mus_granulate(XEN_TO_MUS_ANY(obj), 0)));
@@ -4149,23 +4149,35 @@ static XEN g_mus_set_ramp(XEN obj, XEN val)
   return(C_TO_XEN_OFF_T(mus_set_ramp(XEN_TO_MUS_ANY(obj), XEN_TO_C_OFF_T_OR_ELSE(val, 0))));
 }
 
+static int grnedit (void *ptr)
+{
+  mus_xen *gn = (mus_xen *)ptr;
+  return(XEN_TO_C_INT(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_EDIT_FUNCTION], 
+					  gn->vcts[MUS_SELF_WRAPPER],
+					  "granulate edit function")));
+}
+
 static XEN g_make_granulate(XEN arglist)
 {
-  #define H_make_granulate "(" S_make_granulate " (:input) (:expansion 1.0) (:length .15) (:scaler .6) (:hop .05) (:ramp .4) (:jitter 1.0) (:max-size)): \
+  #define H_make_granulate "(" S_make_granulate " (:input) (:expansion 1.0) (:length .15) (:scaler .6) (:hop .05) (:ramp .4) (:jitter 1.0) (:max-size) (:edit)): \
 return a new granular synthesis generator.  'length' is the grain length (seconds), 'expansion' is the ratio in timing \
 between the new and old (expansion > 1.0 slows things down), 'scaler' scales the grains \
 to avoid overflows, 'hop' is the spacing (seconds) between successive grains upon output \
-jitter controls the randomness in that spacing, input can be a file pointer."
+jitter controls the randomness in that spacing, input can be a file pointer. 'edit' can \
+be a function of one arg, the current granulate generator.  It is called just before \
+a grain is added into the output buffer. The current grain is accessible via mus-data. \
+The edit function, if any, should return the length in samples of the grain, or 0."
 
   XEN in_obj = XEN_UNDEFINED;
   mus_xen *gn;
   mus_any *ge;
-  XEN args[16]; 
-  XEN keys[8];
-  int orig_arg[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+  XEN args[18]; 
+  XEN keys[9];
+  int orig_arg[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
   int vals, i, arglist_len, maxsize = 0;
   Float expansion = 1.0, segment_length = .15, segment_scaler = .6, ramp_time = .4, output_hop = .05;
   Float jitter = 1.0;
+  XEN edit_obj = XEN_UNDEFINED, grn_obj;
   keys[0] = kw_input;
   keys[1] = kw_expansion;
   keys[2] = kw_length;
@@ -4174,10 +4186,11 @@ jitter controls the randomness in that spacing, input can be a file pointer."
   keys[5] = kw_ramp;
   keys[6] = kw_jitter;
   keys[7] = kw_max_size;
-  for (i = 0; i < 16; i++) args[i] = XEN_UNDEFINED;
+  keys[8] = kw_edit;
+  for (i = 0; i < 18; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
-  vals = mus_optkey_unscramble(S_make_granulate, 8, keys, args, orig_arg);
+  vals = mus_optkey_unscramble(S_make_granulate, 9, keys, args, orig_arg);
   if (vals > 0)
     {
       in_obj = mus_optkey_to_procedure(keys[0], S_make_granulate, orig_arg[0], XEN_UNDEFINED, 1, "granulate input procedure takes 1 arg");
@@ -4189,6 +4202,7 @@ jitter controls the randomness in that spacing, input can be a file pointer."
       jitter = mus_optkey_to_float(keys[6], S_make_granulate, orig_arg[6], jitter);
       XEN_ASSERT_TYPE((jitter >= 0.0) && (jitter < 100.0), keys[6], orig_arg[6], S_make_granulate, "0.0 .. 100.0");
       maxsize = mus_optkey_to_int(keys[7], S_make_granulate, orig_arg[7], maxsize);
+      edit_obj = mus_optkey_to_procedure(keys[8], S_make_granulate, orig_arg[8], XEN_UNDEFINED, 1, "granulate edit procedure takes 1 arg");
     }
   if (expansion <= 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, 2, keys[1], "expansion ~A <= 0.0?");
   if (segment_length <= 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, 3, keys[2], "segment-length ~A <= 0.0?");
@@ -4198,15 +4212,22 @@ jitter controls the randomness in that spacing, input can be a file pointer."
     XEN_OUT_OF_RANGE_ERROR(S_make_granulate, 3, XEN_LIST_2(keys[2], keys[4]), "segment_length + output_hop = ~A: too large!");
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   old_error_handler = mus_error_set_handler(local_mus_error);
-  ge = mus_make_granulate(funcall1, expansion, segment_length, segment_scaler, output_hop, ramp_time, jitter, maxsize, gn);
+  ge = mus_make_granulate(funcall1, expansion, segment_length, segment_scaler, output_hop, ramp_time, jitter, maxsize, 
+			  (XEN_NOT_BOUND_P(edit_obj) ? NULL : grnedit),
+			  (void *)gn);
   mus_error_set_handler(old_error_handler);
   if (ge)
     {
-      gn->vcts = make_vcts(1);
-      gn->vcts[INPUT_FUNCTION] = in_obj;
-      gn->nvcts = 1;
+      gn->nvcts = MAX_VCTS;
+      gn->vcts = make_vcts(gn->nvcts);
+      if (XEN_BOUND_P(edit_obj)) gn->vcts[MUS_DATA_WRAPPER] = make_vct_wrapper(mus_granulate_grain_max_length(ge), mus_data(ge));
+      gn->vcts[MUS_INPUT_FUNCTION] = in_obj;
+      gn->vcts[MUS_EDIT_FUNCTION] = edit_obj;
       gn->gen = ge;
-      return(mus_xen_to_object(gn));
+      grn_obj = mus_xen_to_object(gn);
+      /* need scheme-relative backpointer for possible function calls */
+      gn->vcts[MUS_SELF_WRAPPER] = grn_obj;
+      return(grn_obj);
     }
   FREE(gn);
   return(clm_mus_error(local_error_type, local_error_msg));
@@ -4232,7 +4253,7 @@ static XEN g_convolve(XEN obj, XEN func)
   if (XEN_PROCEDURE_P(func))
     {
       if (XEN_REQUIRED_ARGS(func) == 1)
-	gn->vcts[INPUT_FUNCTION] = func;
+	gn->vcts[MUS_INPUT_FUNCTION] = func;
       else XEN_BAD_ARITY_ERROR(S_convolve, 2, func, "convolve input function wants 1 arg");
     }
   return(C_TO_XEN_DOUBLE(mus_convolve(XEN_TO_MUS_ANY(obj), 0)));
@@ -4282,10 +4303,10 @@ return a new convolution generator which convolves its input with the impulse re
   mus_error_set_handler(old_error_handler);
   if (ge)
     {
-      gn->nvcts = 2;
-      gn->vcts = make_vcts(2);
-      gn->vcts[INPUT_FUNCTION] = in_obj;
-      gn->vcts[1] = filt;
+      gn->nvcts = MAX_VCTS;
+      gn->vcts = make_vcts(gn->nvcts);
+      gn->vcts[MUS_INPUT_FUNCTION] = in_obj;
+      gn->vcts[2] = filt; /* why is this here? GC protection? */
       gn->gen = ge;
       return(mus_xen_to_object(gn));
     }
@@ -4323,11 +4344,11 @@ file1 and file2 writing outfile after scaling the convolution result to maxamp."
  *   user, and passed here as the edit function argument.  In this file, pv->edit is
  *   &pvedit, and (void *)ptr is closure; in make_phase_vocoder we set closure to be
  *   the mus_xen object that shadows the phase-vocoder generator, with two special
- *   pointers in the vcts field: vcts[EDIT_FUNCTION] is the (Scheme-side) function
- *   passed by the user, and vcts[SELF_WRAPPER] is a pointer to the (Scheme-relevant)
+ *   pointers in the vcts field: vcts[MUS_EDIT_FUNCTION] is the (Scheme-side) function
+ *   passed by the user, and vcts[MUS_SELF_WRAPPER] is a pointer to the (Scheme-relevant)
  *   smob that packages the mus_xen pointer for Scheme.  This way, the user's
  *    (make-phase-vocoder ... (lambda (v) (mus-length v)) ...)
- *   treats v as the current pv gen, vcts[SELF_WRAPPER] = v, vcts[EDIT_FUNCTION] = 
+ *   treats v as the current pv gen, vcts[MUS_SELF_WRAPPER] = v, vcts[MUS_EDIT_FUNCTION] = 
  *   the lambda form, mus_xen obj->gen is the C-side pv struct pointer.  See above
  *   under funcall1 for more verbiage.  (All this complication arises because clm.c
  *   is pure C -- no notion that Scheme might be the caller, and the user's pv.scm
@@ -4339,16 +4360,16 @@ file1 and file2 writing outfile after scaling the convolution result to maxamp."
 static bool pvedit (void *ptr)
 {
   mus_xen *gn = (mus_xen *)ptr;
-  return(XEN_TO_C_BOOLEAN(XEN_CALL_1_NO_CATCH(gn->vcts[EDIT_FUNCTION], 
-					      gn->vcts[SELF_WRAPPER],
+  return(XEN_TO_C_BOOLEAN(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_EDIT_FUNCTION], 
+					      gn->vcts[MUS_SELF_WRAPPER],
 					      "phase-vocoder edit function")));
 }
 
 static Float pvsynthesize (void *ptr)
 {
   mus_xen *gn = (mus_xen *)ptr;
-  return(XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(gn->vcts[SYNTHESIZE_FUNCTION], 
-					     gn->vcts[SELF_WRAPPER], 
+  return(XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_SYNTHESIZE_FUNCTION], 
+					     gn->vcts[MUS_SELF_WRAPPER], 
 					     "phase-vocoder synthesis function")));
 }
 
@@ -4356,9 +4377,9 @@ static bool pvanalyze (void *ptr, Float (*input)(void *arg1, int direction))
 {
   mus_xen *gn = (mus_xen *)ptr;
   /* we can only get input func if it's already set up by the outer gen call, so (?) we can use that function here */
-  return(XEN_TO_C_BOOLEAN(XEN_CALL_2_NO_CATCH(gn->vcts[ANALYZE_FUNCTION], 
-					      gn->vcts[SELF_WRAPPER], 
-					      gn->vcts[INPUT_FUNCTION], 
+  return(XEN_TO_C_BOOLEAN(XEN_CALL_2_NO_CATCH(gn->vcts[MUS_ANALYZE_FUNCTION], 
+					      gn->vcts[MUS_SELF_WRAPPER], 
+					      gn->vcts[MUS_INPUT_FUNCTION], 
 					      "phase-vocoder analysis function")));
 }
 
@@ -4377,7 +4398,7 @@ static XEN g_phase_vocoder(XEN obj, XEN func)
   if (XEN_PROCEDURE_P(func))
     {
       if (XEN_REQUIRED_ARGS(func) == 1)
-	gn->vcts[INPUT_FUNCTION] = func;
+	gn->vcts[MUS_INPUT_FUNCTION] = func;
       else XEN_BAD_ARITY_ERROR(S_phase_vocoder, 2, func, "phase-vocoder input function wants 1 arg");
     }
   return(C_TO_XEN_DOUBLE(mus_phase_vocoder(XEN_TO_MUS_ANY(obj), 0)));
@@ -4447,16 +4468,16 @@ is run.  'synthesize' is a function of 1 arg, the generator; it is called to get
   mus_error_set_handler(old_error_handler);
   if (ge)
     {
-      gn->nvcts = 5; /* don't mark self twice (not sure this matters) */
+      gn->nvcts = MAX_VCTS;
       gn->vcts = make_vcts(gn->nvcts);
-      gn->vcts[INPUT_FUNCTION] = in_obj;
-      gn->vcts[EDIT_FUNCTION] = edit_obj;
-      gn->vcts[ANALYZE_FUNCTION] = analyze_obj;
-      gn->vcts[SYNTHESIZE_FUNCTION] = synthesize_obj;
+      gn->vcts[MUS_INPUT_FUNCTION] = in_obj;
+      gn->vcts[MUS_EDIT_FUNCTION] = edit_obj;
+      gn->vcts[MUS_ANALYZE_FUNCTION] = analyze_obj;
+      gn->vcts[MUS_SYNTHESIZE_FUNCTION] = synthesize_obj;
       gn->gen = ge;
       pv_obj = mus_xen_to_object(gn);
       /* need scheme-relative backpointer for possible function calls */
-      gn->vcts[SELF_WRAPPER] = pv_obj;
+      gn->vcts[MUS_SELF_WRAPPER] = pv_obj;
       return(pv_obj);
     }
   FREE(gn);

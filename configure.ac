@@ -700,7 +700,7 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
 	  ;;
       esac
       if test "$with_gtk" = yes ; then
-	if which pkg-config >/dev/null 2>/dev/null && [ -x `which pkg-config` ] && pkg-config gtkglext-1.0 --exists ; then
+	if which pkg-config >/dev/null 2>/dev/null && pkg-config gtkglext-1.0 --exists ; then
            GL_LIBS=$GL_LIBS" "`pkg-config gtkglext-1.0 --libs`
            GL_FLAGS=$GL_FLAGS" "`pkg-config gtkglext-1.0 --cflags`
         else
