@@ -2481,10 +2481,11 @@ XEN_NARGIFY_1(gxg_gtk_toggle_tool_button_new_from_stock_w, gxg_gtk_toggle_tool_b
 XEN_NARGIFY_2(gxg_gtk_toggle_tool_button_set_active_w, gxg_gtk_toggle_tool_button_set_active)
 XEN_NARGIFY_1(gxg_gtk_toggle_tool_button_get_active_w, gxg_gtk_toggle_tool_button_get_active)
 XEN_NARGIFY_5(gxg_g_timeout_add_full_w, gxg_g_timeout_add_full)
-XEN_NARGIFY_3(gxg_g_timeout_add_w, gxg_g_timeout_add)
-XEN_NARGIFY_2(gxg_g_idle_add_w, gxg_g_idle_add)
+XEN_ARGIFY_3(gxg_g_timeout_add_w, gxg_g_timeout_add)
+XEN_ARGIFY_2(gxg_g_idle_add_w, gxg_g_idle_add)
 XEN_NARGIFY_4(gxg_g_idle_add_full_w, gxg_g_idle_add_full)
 XEN_NARGIFY_1(gxg_g_idle_remove_by_data_w, gxg_g_idle_remove_by_data)
+XEN_NARGIFY_1(gxg_g_source_remove_w, gxg_g_source_remove)
 XEN_NARGIFY_0(gxg_gtk_file_filter_get_type_w, gxg_gtk_file_filter_get_type)
 XEN_NARGIFY_0(gxg_gtk_file_filter_new_w, gxg_gtk_file_filter_new)
 XEN_NARGIFY_2(gxg_gtk_file_filter_set_name_w, gxg_gtk_file_filter_set_name)
@@ -6239,10 +6240,11 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_toggle_tool_button_set_active, gxg_gtk_toggle_tool_button_set_active_w, 2, 0, 0, H_gtk_toggle_tool_button_set_active);
   XG_DEFINE_PROCEDURE(gtk_toggle_tool_button_get_active, gxg_gtk_toggle_tool_button_get_active_w, 1, 0, 0, H_gtk_toggle_tool_button_get_active);
   XG_DEFINE_PROCEDURE(g_timeout_add_full, gxg_g_timeout_add_full_w, 5, 0, 0, H_g_timeout_add_full);
-  XG_DEFINE_PROCEDURE(g_timeout_add, gxg_g_timeout_add_w, 3, 0, 0, H_g_timeout_add);
-  XG_DEFINE_PROCEDURE(g_idle_add, gxg_g_idle_add_w, 2, 0, 0, H_g_idle_add);
+  XG_DEFINE_PROCEDURE(g_timeout_add, gxg_g_timeout_add_w, 2, 1, 0, H_g_timeout_add);
+  XG_DEFINE_PROCEDURE(g_idle_add, gxg_g_idle_add_w, 1, 1, 0, H_g_idle_add);
   XG_DEFINE_PROCEDURE(g_idle_add_full, gxg_g_idle_add_full_w, 4, 0, 0, H_g_idle_add_full);
   XG_DEFINE_PROCEDURE(g_idle_remove_by_data, gxg_g_idle_remove_by_data_w, 1, 0, 0, H_g_idle_remove_by_data);
+  XG_DEFINE_PROCEDURE(g_source_remove, gxg_g_source_remove_w, 1, 0, 0, H_g_source_remove);
   XG_DEFINE_PROCEDURE(gtk_file_filter_get_type, gxg_gtk_file_filter_get_type_w, 0, 0, 0, H_gtk_file_filter_get_type);
   XG_DEFINE_PROCEDURE(gtk_file_filter_new, gxg_gtk_file_filter_new_w, 0, 0, 0, H_gtk_file_filter_new);
   XG_DEFINE_PROCEDURE(gtk_file_filter_set_name, gxg_gtk_file_filter_set_name_w, 2, 0, 0, H_gtk_file_filter_set_name);

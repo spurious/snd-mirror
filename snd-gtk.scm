@@ -88,7 +88,7 @@
 (define scanned-synthesis-pane #f)
 
 (define (display-scanned-synthesis)
-
+  
   (define compute-uniform-circular-string
     ;; copied from dsp.scm to simplify life
     (lambda (size x0 x1 x2 mass xspring damp)
@@ -115,7 +115,9 @@
 	(vct-add! x2 x1)
 	(vct-fill! x1 0.0)
 	(vct-add! x1 x0))))
-
+  
+  (set! (mus-srate) 22050.0)
+  
   (let* ((pi 3.141592653589793) ; just for now?
 	 (mass 1.0)
 	 (xspring 0.1)
@@ -126,7 +128,7 @@
 	 (ax0 0) (ax1 0) (ay0 0) (ay1 0)
 	 (gc (car (snd-gcs)))
 	 (egc (list-ref (snd-gcs) 7))
-
+	 
 	 ;; now set up a paned window in the main Snd window with controllers on the left and the graph on the right
 	 (scan-outer (let ((pane (gtk_hbox_new #f 0)))
 		       (gtk_box_pack_start (GTK_BOX (list-ref (main-widgets) 5)) pane #f #f 4)
@@ -157,19 +159,22 @@
 		      (gtk_widget_show label)
 		      label))
 	 (size 128)
-	 (gx0 (make-vct size))	   
+	 (tbl (make-table-lookup :size size))
+	 (frequency 440.0)
+	 (amplitude 0.02)
+	 (gx0 (mus-data tbl))
 	 (gx1 (make-vct size))	   
 	 (gx2 (make-vct size))
 	 (vect (make-vector (* 2 size)))
 	 (work-proc #f))
-
+    
     (define (y->grfy y range)
       (min ay1
 	   (max ay0
 		(inexact->exact
 		 (round (+ ay0
-		    (* range (- 10.0 y))))))))
-
+			   (* range (- 10.0 y))))))))
+    
     (define (draw-graph)
       (if (and (> ax1 ax0)
 	       (> ay1 ay0))
@@ -193,7 +198,7 @@
 	    (set! pts0 (vector->GdkPoints vect))
 	    (set! pts1 pts0)
 	    (gdk_draw_lines wn gc (list 'GdkPoint_ pts0) size))))
-
+    
     (define (redraw-graph)
       (set! bounds (draw-axes scan-pane gc "scanned synthesis" 0.0 1.0 -10.0 10.0))
       (set! ax0 (+ (car bounds) 2))
@@ -201,18 +206,18 @@
       (set! ay1 (cadr bounds))
       (set! ay0 (cadddr bounds))
       (draw-graph))
-
+    
     (define (tick-synthesis n)
       ;; background process
       (compute-uniform-circular-string size gx0 gx1 gx2 mass xspring damp)
       (draw-graph)
       #t)
-
+    
     (define (stop-synthesis)
       (if work-proc
-	  (gtk_idle_remove work-proc))
+	  (g_source_remove work-proc))
       (set! work-proc #f))
-
+    
     (define (start-synthesis)
       (stop-synthesis)
       (vct-fill! gx0 0.0)
@@ -222,12 +227,12 @@
 	  ((= i 12))
 	(let ((val (sin (/ (* 2 pi i) 12.0))))
 	  (vct-set! gx1 (+ i (- (/ size 4) 6)) val)))
-      (set! work-proc (gtk_idle_add tick-synthesis #f)))
-
+      (set! work-proc (g_idle_add tick-synthesis #f)))
+    
     (define (continue-synthesis)
       (stop-synthesis)
-      (set! work-proc (gtk_idle_add tick-synthesis #f)))
-
+      (set! work-proc (g_idle_add tick-synthesis #f)))
+    
     ;; controller callbacks
     (for-each 
      (lambda (data)
@@ -255,7 +260,7 @@
      (list (list "mass" 1 200 100 2 (lambda (val) (set! mass (/ val 100.0))))
 	   (list "spring" 1 100 10 2 (lambda (val) (set! xspring (/ val 100.0))))
 	   (list "damping" 0 100 0 4 (lambda (val) (set! damp (/ val 10000.0))))))
-
+    
     (let* ((scan-size (gtk_hbox_new #f 4)))
       (gtk_box_pack_start (GTK_BOX scan-row) scan-size #t #t 6)
       (gtk_widget_show scan-size)
@@ -273,12 +278,73 @@
 					  (g_cclosure_new (lambda (w d) 
 							    (stop-synthesis)
 							    (set! size (string->number (gtk_entry_get_text (GTK_ENTRY scan-text))))
-							    (set! gx0 (make-vct size))	   
+							    (set! tbl (make-table-lookup :size size))
+							    (set! gx0 (mus-data tbl))
 							    (set! gx1 (make-vct size))	   
 							    (set! gx2 (make-vct size))
 							    (set! vect (make-vector (* size 2))))
 							  #f #f) #f))))
-
+    (let ((play-button (gtk_check_button_new_with_label "play")))
+      (gtk_box_pack_start (GTK_BOX scan-row) play-button #f #f 4)
+      (gtk_widget_show play-button)
+      (g_signal_connect_closure_by_id (GPOINTER play-button)
+				      (g_signal_lookup "toggled" 
+						       (G_OBJECT_TYPE (GTK_OBJECT play-button)))
+				      0
+				      (g_cclosure_new (lambda (w d) 
+							(if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON play-button))
+							    (let* ((data (make-sound-data 1 size))
+								   (bytes (* size 2))
+								   (audio-fd (mus-audio-open-output mus-audio-default 22050 1 mus-lshort bytes)))
+							      (if (not (= audio-fd -1))
+								  (begin
+								    (stop-synthesis)
+								    (do ()
+									((or (c-g?) (not (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON play-button))))
+									 (mus-audio-close audio-fd))
+								      (tick-synthesis work-proc)
+								      (do ((k 0 (1+ k)))
+									  ((= k size))
+									(sound-data-set! data 0 k (* amplitude (table-lookup tbl))))
+								      (mus-audio-write audio-fd data size)))))))
+						      #f #f) #f))
+    
+    (let* ((freq-adj (gtk_adjustment_new 440.0 20.0 1000.0 1.0 10.0 1.0)) ; step incr, page incr page size
+	   (amp-adj (gtk_adjustment_new 0.02 0.0 0.1 .001 .01 .001))
+	   (freq-scale (gtk_hscale_new (GTK_ADJUSTMENT freq-adj)))
+	   (amp-scale (gtk_hscale_new (GTK_ADJUSTMENT amp-adj)))
+	   (freq-label (gtk_label_new "frequency"))
+	   (amp-label (gtk_label_new "amplitude")))
+      (gtk_range_set_update_policy (GTK_RANGE (GTK_SCALE freq-scale)) GTK_UPDATE_CONTINUOUS)
+      (gtk_range_set_update_policy (GTK_RANGE (GTK_SCALE amp-scale)) GTK_UPDATE_CONTINUOUS)
+      (gtk_scale_set_digits (GTK_SCALE freq-scale) 1)
+      (gtk_scale_set_digits (GTK_SCALE amp-scale) 3)
+      (gtk_scale_set_value_pos (GTK_SCALE freq-scale) GTK_POS_TOP)
+      (gtk_scale_set_value_pos (GTK_SCALE amp-scale) GTK_POS_TOP)
+      (gtk_scale_set_draw_value (GTK_SCALE freq-scale) #t)
+      (gtk_scale_set_draw_value (GTK_SCALE amp-scale) #t)
+      (gtk_box_pack_start (GTK_BOX scan-row) freq-scale #t #t 0)
+      (gtk_box_pack_start (GTK_BOX scan-row) freq-label #t #t 0)
+      (gtk_box_pack_start (GTK_BOX scan-row) amp-scale #t #t 0)
+      (gtk_box_pack_start (GTK_BOX scan-row) amp-label #t #t 0)
+      (gtk_widget_show freq-scale)
+      (gtk_widget_show amp-scale)
+      (gtk_widget_show freq-label)
+      (gtk_widget_show amp-label)
+      (g_signal_connect_closure_by_id (GPOINTER freq-adj)
+				      (g_signal_lookup "value_changed" (G_OBJECT_TYPE (GTK_OBJECT freq-adj)))
+				      0
+				      (g_cclosure_new (lambda (w d) (set! (mus-frequency tbl) (.value (GTK_ADJUSTMENT freq-adj)))) 
+						      #f #f) 
+				      #f)
+      (g_signal_connect_closure_by_id (GPOINTER amp-adj)
+				      (g_signal_lookup "value_changed" (G_OBJECT_TYPE (GTK_OBJECT amp-adj)))
+				      0
+				      (g_cclosure_new (lambda (w d) (set! amplitude (.value (GTK_ADJUSTMENT amp-adj)))) 
+						      #f #f) 
+				      #f)
+      )
+    
     (g_signal_connect_closure_by_id (GPOINTER scan-pane)
 				    (g_signal_lookup "expose_event" (G_OBJECT_TYPE (GTK_OBJECT scan-pane)))
 				    0 (g_cclosure_new (lambda (w e d) (redraw-graph)) #f #f) #f)
@@ -648,7 +714,7 @@ Reverb-feedback sets the scaler on the feedback.
       (if (sound? (car data))
 	  (let ((space (kmg (disk-kspace (file-name (car data))))))
 	    (gtk_label_set_text (GTK_LABEL (cadr data)) space)
-	    (gtk_timeout_add 10000 show-label data) ; every 10 seconds recheck space
+	    (g_timeout_add 10000 show-label data) ; every 10 seconds recheck space
 	    0)))
 
     (lambda (snd)
@@ -662,7 +728,7 @@ Reverb-feedback sets the scaler on the feedback.
 	      (gtk_widget_show new-label)
 	      (set! previous-label (list snd new-label))
 	      (set! labelled-snds (cons previous-label labelled-snds))))
-	(gtk_timeout_add 10000 show-label previous-label)))))
+	(g_timeout_add 10000 show-label previous-label)))))
 
 ;(add-hook! after-open-hook show-disk-space)
 

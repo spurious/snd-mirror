@@ -39616,6 +39616,11 @@ EDITS: 2
 		(if (not (string=? (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 3) XmFONTLIST_DEFAULT_TAG)) "four"))
 		    (snd-display ";added item: ~A" (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 3) XmFONTLIST_DEFAULT_TAG))))
 		(XmListAddItems lst (list (XmStringCreateLocalized "five") (XmStringCreateLocalized "six")) 2 0)
+		(let ((tag (catch #t
+				  (lambda () (XmListAddItems lst (list (XmStringCreateLocalized "seven") 123) 2 0))
+				  (lambda args (car args)))))
+		  (if (not (eq? tag 'wrong-type-arg))
+		      (snd-display ";xstrings->list add: ~A" tag)))
 		(set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
 		(if (not (= (list-ref vals 1) 6)) (snd-display ";XmAddItems len: ~A" (list-ref vals 1)))
 		(if (not (string=? (cadr (XmStringGetLtoR (list-ref (list-ref vals 3) 5) XmFONTLIST_DEFAULT_TAG)) "six"))
@@ -40540,6 +40545,18 @@ EDITS: 2
 						   XmNcreatePopupChildProc (lambda (a) #f)
 						   XmNlargeIconX 0.5
 						   ))))
+	      (XtVaSetValues hi (list XmNqualifySearchDataProc (lambda (w c i) "hi")
+				    XmNtransferProc (lambda (a b c d e f g) "ho")
+				    XmNcolorAllocationProc (lambda (a b c) #f)
+				    XmNcolorCalculationProc (lambda (a b) #f)
+				    XmNcreatePopupChildProc (lambda (a) #f)))
+	      (XtVaSetValues hi (list XmNqualifySearchDataProc #f
+				    XmNcolorAllocationProc #f
+				    XmNcolorCalculationProc #f
+				    XmNcreatePopupChildProc #f
+				    XmNx 10
+				    XmNsource (XmTextGetSource hi)
+				    ))
 	      (XtUnmanageChild hi))
 	    
 	    (let* ((shell (cadr (main-widgets)))

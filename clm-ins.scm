@@ -1341,6 +1341,7 @@ is a physical model of a flute:
 	     (outa j (* 0.1 (+ (oscil frq1) (oscil frq2))) *output*))))))))
 
 ;;; (with-sound () (touch-tone-telephone '(7 2 3 4 9 7 1))
+;;; I think the dial tone is 349.23 + 440.0
 
 
 (definstrument (spectra start-time duration frequency amplitude

@@ -763,14 +763,12 @@ Reverb-feedback sets the scaler on the feedback.
 ;;;  on the left various controls, on the right a graph
 ;;;  push 'start' to start the scanned synthesis display
 ;;;  if spring > mass, you'll get overflows
-;;;
-;;; TODO: add audio output
 
 (define (display-scanned-synthesis)
-
+  
   (define (add-main-pane name type args)
     (XtCreateManagedWidget name type (list-ref (main-widgets) 3) args))
-
+  
   (define compute-uniform-circular-string
     ;; copied from dsp.scm to simplify life
     (lambda (size x0 x1 x2 mass xspring damp)
@@ -797,66 +795,72 @@ Reverb-feedback sets the scaler on the feedback.
 	(vct-add! x2 x1)
 	(vct-fill! x1 0.0)
 	(vct-add! x1 x0))))
-
+  
+  (if (< (window-height) 520) (set! (window-height) 520))
+  (set! (mus-srate) 22050.0)
+  
   (let* ((mass 1.0)
 	 (xspring 0.1)
 	 (damp 0.0)
 	 (bounds '())
 	 (pts0 #f)
 	 (pts1 #f)
+	 (playing #f)
+	 (frequency 440.0)
+	 (amplitude 0.02)
 	 (ax0 0) (ax1 0) (ay0 0) (ay1 0)
 	 (gc (car (snd-gcs)))
 	 (egc (list-ref (snd-gcs) 7))
 	 (app (car (main-widgets)))
-
+	 
 	 ;; now set up a paned window in the main Snd window with controllers on the left and the graph on the right
 	 (scan-outer (add-main-pane "Scanned Synthesis" xmFormWidgetClass
 				    (list XmNbackground (basic-color)
-					  XmNpaneMinimum 320)))
+					  XmNpaneMinimum 520)))
 	 (scan-row (XtCreateManagedWidget "row" xmRowColumnWidgetClass scan-outer
-					   (list XmNbackground       (basic-color)
-						 XmNorientation      XmVERTICAL
-						 XmNleftAttachment   XmATTACH_FORM
-						 XmNtopAttachment    XmATTACH_FORM
-						 XmNbottomAttachment XmATTACH_FORM
-						 XmNrightAttachment  XmATTACH_POSITION
-						 XmNrightPosition    32)))
-
+					  (list XmNbackground       (basic-color)
+						XmNorientation      XmVERTICAL
+						XmNleftAttachment   XmATTACH_FORM
+						XmNtopAttachment    XmATTACH_FORM
+						XmNbottomAttachment XmATTACH_FORM
+						XmNrightAttachment  XmATTACH_POSITION
+						XmNrightPosition    32)))
+	 
 	 ;; the graph
 	 (scan-pane (XtCreateManagedWidget "draw" xmDrawingAreaWidgetClass scan-outer
-					    (list XmNbackground       (graph-color)
-						  XmNforeground       (data-color)
-						  XmNleftAttachment   XmATTACH_WIDGET
-						  XmNleftWidget       scan-row
-						  XmNtopAttachment    XmATTACH_FORM
-						  XmNbottomAttachment XmATTACH_FORM
-						  XmNrightAttachment  XmATTACH_FORM)))
-
+					   (list XmNbackground       (graph-color)
+						 XmNforeground       (data-color)
+						 XmNleftAttachment   XmATTACH_WIDGET
+						 XmNleftWidget       scan-row
+						 XmNtopAttachment    XmATTACH_FORM
+						 XmNbottomAttachment XmATTACH_FORM
+						 XmNrightAttachment  XmATTACH_FORM)))
+	 
 	 ;; the controllers
 	 (scan-start (XtCreateManagedWidget "Start" xmPushButtonWidgetClass scan-row
-					     (list XmNbackground (basic-color)
-						   XmNarmColor   (pushed-button-color))))
-	 (scan-continue (XtCreateManagedWidget "Continue" xmPushButtonWidgetClass scan-row
-						(list XmNbackground (basic-color)
-						      XmNarmColor   (pushed-button-color))))
-	 (scan-stop (XtCreateManagedWidget "Stop" xmPushButtonWidgetClass scan-row
 					    (list XmNbackground (basic-color)
 						  XmNarmColor   (pushed-button-color))))
-	 
+	 (scan-continue (XtCreateManagedWidget "Continue" xmPushButtonWidgetClass scan-row
+					       (list XmNbackground (basic-color)
+						     XmNarmColor   (pushed-button-color))))
+	 (scan-stop (XtCreateManagedWidget "Stop" xmPushButtonWidgetClass scan-row
+					   (list XmNbackground (basic-color)
+						 XmNarmColor   (pushed-button-color))))
 	 (size 128)
-	 (gx0 (make-vct size))	   
+	 (tbl (make-table-lookup :size size))
+	 (gx0 (mus-data tbl))
 	 (gx1 (make-vct size))	   
 	 (gx2 (make-vct size))
 	 (vect (make-vector (* 2 size)))
 	 (work-proc 0))
-
+    
     (define (y->grfy y range)
       (min ay1
 	   (max ay0
 		(inexact->exact
 		 (round (+ ay0
-		    (* range (- 10.0 y))))))))
-
+			   (* range (- 10.0 y))))))))
+    
     (define (draw-graph)
       (if (and (> ax1 ax0)
 	       (> ay1 ay0))
@@ -881,7 +885,7 @@ Reverb-feedback sets the scaler on the feedback.
 	    (set! pts0 (vector->XPoints vect))
 	    (set! pts1 pts0)
 	    (XDrawLinesDirect dpy wn gc pts0 size 0))))
-
+    
     (define (redraw-graph)
       (set! bounds (draw-axes scan-pane gc "scanned synthesis" 0.0 1.0 -10.0 10.0))
       (set! ax0 (+ (car bounds) 2))
@@ -889,18 +893,18 @@ Reverb-feedback sets the scaler on the feedback.
       (set! ay1 (cadr bounds))
       (set! ay0 (cadddr bounds))
       (draw-graph))
-
+    
     (define (tick-synthesis n)
       ;; background process
       (compute-uniform-circular-string size gx0 gx1 gx2 mass xspring damp)
       (draw-graph)
       #f)
-
+    
     (define (stop-synthesis)
       (if (XtWorkProcId? work-proc)
 	  (XtRemoveWorkProc work-proc))
       (set! work-proc 0))
-
+    
     (define (start-synthesis)
       (stop-synthesis)
       (vct-fill! gx0 0.0)
@@ -911,48 +915,73 @@ Reverb-feedback sets the scaler on the feedback.
 	(let ((val (sin (/ (* 2 pi i) 12.0))))
 	  (vct-set! gx1 (+ i (- (/ size 4) 6)) val)))
       (set! work-proc (XtAppAddWorkProc app tick-synthesis)))
-
+    
     (define (continue-synthesis)
       (stop-synthesis)
       (set! work-proc (XtAppAddWorkProc app tick-synthesis)))
-
+    
     ;; controller callbacks
     (for-each 
      (lambda (data)
        (let* ((title (XmStringCreate (car data) XmFONTLIST_DEFAULT_TAG))
 	      (button (XtCreateManagedWidget (car data) xmScaleWidgetClass scan-row
-					      (list XmNbackground    (basic-color)
-						    XmNorientation   XmHORIZONTAL
-						    XmNshowValue     #t
-						    XmNminimum       (list-ref data 1)
-						    XmNmaximum       (list-ref data 2)
-						    XmNvalue         (list-ref data 3)
-						    XmNdecimalPoints (list-ref data 4)
-						    XmNtitleString   title))))
+					     (list XmNbackground    (basic-color)
+						   XmNorientation   XmHORIZONTAL
+						   XmNshowValue     #t
+						   XmNminimum       (list-ref data 1)
+						   XmNmaximum       (list-ref data 2)
+						   XmNvalue         (list-ref data 3)
+						   XmNdecimalPoints (list-ref data 4)
+						   XmNtitleString   title))))
 	 (XtAddCallback button XmNdragCallback (lambda (w c i) ((list-ref data 5) (.value i))))
 	 (XtAddCallback button XmNvalueChangedCallback (lambda (w c i) ((list-ref data 5) (.value i))))
 	 (XmStringFree title)))
      (list (list "mass" 1 200 100 2 (lambda (val) (set! mass (/ val 100.0))))
 	   (list "spring" 1 100 10 2 (lambda (val) (set! xspring (/ val 100.0))))
 	   (list "damping" 0 100 0 4 (lambda (val) (set! damp (/ val 10000.0))))))
-
+    
     (let* ((scan-size (XtCreateManagedWidget "srow" xmFormWidgetClass scan-row
-					      (list  XmNbackground (basic-color))))
+					     (list  XmNbackground (basic-color))))
 	   (scan-label (XtCreateManagedWidget "Size:" xmLabelWidgetClass scan-size
-					       (list XmNbackground       (basic-color)
-						     XmNleftAttachment   XmATTACH_FORM
-						     XmNtopAttachment    XmATTACH_FORM
-						     XmNbottomAttachment XmATTACH_FORM
-						     XmNrightAttachment  XmATTACH_NONE)))
-	   (scan-text (XtCreateManagedWidget "stext" xmTextFieldWidgetClass scan-size
 					      (list XmNbackground       (basic-color)
-						    XmNvalue            (number->string size)
-						    XmNleftAttachment   XmATTACH_WIDGET
-						    XmNleftWidget       scan-label
+						    XmNleftAttachment   XmATTACH_FORM
 						    XmNtopAttachment    XmATTACH_FORM
 						    XmNbottomAttachment XmATTACH_FORM
-						    XmNrightAttachment  XmATTACH_FORM))))
-
+						    XmNrightAttachment  XmATTACH_NONE)))
+	   (scan-text (XtCreateManagedWidget "stext" xmTextFieldWidgetClass scan-size
+					     (list XmNbackground       (basic-color)
+						   XmNvalue            (number->string size)
+						   XmNleftAttachment   XmATTACH_WIDGET
+						   XmNleftWidget       scan-label
+						   XmNtopAttachment    XmATTACH_FORM
+						   XmNbottomAttachment XmATTACH_FORM
+						   XmNrightAttachment  XmATTACH_FORM)))
+	   (play-button (XtCreateManagedWidget "play" xmToggleButtonWidgetClass scan-row
+					       (list XmNbackground  (basic-color)
+						     XmNselectColor (pushed-button-color))))
+	   (freq-str (XmStringCreate "frequency" XmFONTLIST_DEFAULT_TAG))
+	   (freq-scale (XtCreateManagedWidget "frequency" xmScaleWidgetClass scan-row
+					      (list XmNbackground    (basic-color)
+						    XmNorientation   XmHORIZONTAL
+						    XmNshowValue     #t
+						    XmNminimum       20
+						    XmNmaximum       1000
+						    XmNvalue         440
+						    XmNdecimalPoints 0
+						    XmNtitleString   freq-str)))
+	   (amp-str (XmStringCreate "amplitude" XmFONTLIST_DEFAULT_TAG))
+	   (amp-scale (XtCreateManagedWidget "amplitude" xmScaleWidgetClass scan-row
+					     (list XmNbackground    (basic-color)
+						   XmNorientation   XmHORIZONTAL
+						   XmNshowValue     #t
+						   XmNminimum       0
+						   XmNmaximum       100
+						   XmNvalue         10
+						   XmNdecimalPoints 3
+						   XmNtitleString   amp-str))))
+      (XmStringFree freq-str)
+      (XmStringFree amp-str)
+      
       (XtAddEventHandler scan-text EnterWindowMask #f
 			 (lambda (w context ev flag)
 			   (XmProcessTraversal w XmTRAVERSE_CURRENT)
@@ -964,11 +993,38 @@ Reverb-feedback sets the scaler on the feedback.
 		     (lambda (w c i)
 		       (stop-synthesis)
 		       (set! size (string->number (cadr (XtGetValues scan-text (list XmNvalue 0)))))
-		       (set! gx0 (make-vct size))	   
+		       (set! tbl (make-table-lookup :size size))
+		       (set! gx0 (mus-data tbl))
 		       (set! gx1 (make-vct size))	   
 		       (set! gx2 (make-vct size))
-		       (set! vect (make-vector (* size 2))))))
-
+		       (set! vect (make-vector (* size 2)))))
+      
+      (XtAddCallback freq-scale XmNdragCallback (lambda (w c i) (set! (mus-frequency tbl) (.value i))))
+      (XtAddCallback freq-scale XmNvalueChangedCallback (lambda (w c i) (set! (mus-frequency tbl) (.value i))))
+      (XtAddCallback amp-scale XmNdragCallback (lambda (w c i) (set! amplitude (* .001 (.value i)))))
+      (XtAddCallback amp-scale XmNvalueChangedCallback (lambda (w c i) (set! amplitude (* .001 (.value i)))))
+      
+      (XtAddCallback play-button XmNvalueChangedCallback 
+		     (lambda (w context info)
+		       (if playing
+			   (set! playing #f)
+			   (let* ((data (make-sound-data 1 size))
+				  (bytes (* size 2))
+				  (audio-fd (mus-audio-open-output mus-audio-default 22050 1 mus-lshort bytes)))
+			     (set! playing #t)
+			     (if (not (= audio-fd -1))
+				 (do ()
+				     ((or (c-g?) (not playing))
+				      (begin
+					(set! playing #f)
+					(mus-audio-close audio-fd)))
+				   (tick-synthesis work-proc)
+				   (do ((k 0 (1+ k)))
+				       ((= k size))
+				     (sound-data-set! data 0 k (* amplitude (table-lookup tbl))))
+				   (mus-audio-write audio-fd data size))
+				 (set! playing #f)))))))
+    
     (XtAddCallback scan-pane XmNresizeCallback (lambda (w context info) (redraw-graph)))
     (XtAddCallback scan-pane XmNexposeCallback (lambda (w context info) (redraw-graph)))
     (XtAddEventHandler scan-pane ButtonPressMask #f
@@ -982,10 +1038,9 @@ Reverb-feedback sets the scaler on the feedback.
     (XtAddCallback scan-start XmNactivateCallback (lambda (w c i) (start-synthesis)))
     (XtAddCallback scan-continue XmNactivateCallback (lambda (w c i) (continue-synthesis)))
     (XtAddCallback scan-stop XmNactivateCallback (lambda (w c i) (stop-synthesis)))
-
+    
     #t ; for slightly prettier listener output
     ))
-
 
 (define (close-scanned-synthesis-pane)
   (for-each-child 
@@ -993,7 +1048,6 @@ Reverb-feedback sets the scaler on the feedback.
    (lambda (n)
      (if (string=? (XtName n) "Scanned Synthesis")
 	 (XtUnmanageChild n)))))
-
 
 
 

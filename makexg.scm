@@ -89,9 +89,9 @@
 (define types-234 '())
 (define check-types-234 '())
 
-(define idlers (list "gtk_idle_remove" "gtk_idle_remove_by_data" 
+(define idlers (list "g_source_remove" "g_idle_remove_by_data"
 		     "gtk_quit_remove" "gtk_quit_remove_by_data" 
-		     "gtk_input_remove" "gtk_key_snooper_remove"))
+		     "gtk_key_snooper_remove"))
 
 (define no-c-to-xen (list
 		     "GClosureNotify" "GSignalAccumulator" "GSignalCMarshaller" "GSignalQuery*" "GQuark*" "GSignalEmissionHook" "GDestroyNotify" 
@@ -368,6 +368,13 @@
 			      "func2"
 			      (parse-args "GtkWidget* w lambda_data func_data" 'callback)
 			      'temporary)
+;typedef gboolean (*GSourceFunc)       (gpointer data);
+			(list 'GSourceFunc
+			      "gboolean"
+			      "timer_func"
+			      (parse-args "lambda_data func_data" 'callback)
+			      'semi-permanent)
+
 ;			(list 'GtkTimeoutFunction
 ;			      "gint"
 ;			      "timeout_func"
@@ -1249,6 +1256,7 @@
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     22-Mar:    added g_source_remove and related changes.~%")
 (hey " *     11-Mar:    gtk 2.3.6 changes.~%")
 (hey " *     4-Mar:     gtk 2.3.5 changes.~%")
 (hey " *     26-Feb:    gtk 3.2.4 changes.~%")

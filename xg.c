@@ -41,6 +41,7 @@
  * TODO: test suite (snd-test 24)
  *
  * HISTORY:
+ *     22-Mar:    added g_source_remove and related changes.
  *     11-Mar:    gtk 2.3.6 changes.
  *     4-Mar:     gtk 2.3.5 changes.
  *     26-Feb:    gtk 3.2.4 changes.
@@ -187,6 +188,7 @@ static void define_xm_obj(void)
 #define XEN_lambda2_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2))
 #define XEN_lambda3_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3))
 #define XEN_GtkCallback_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2))
+#define XEN_GSourceFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 1))
 #define XEN_GtkDestroyNotify_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 1))
 #define XEN_GdkFilterFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3))
 #define XEN_GdkEventFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2))
@@ -212,6 +214,7 @@ static void define_xm_obj(void)
 #define XEN_TO_C_lambda2(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_child_func
 #define XEN_TO_C_lambda3(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_find_func
 #define XEN_TO_C_GtkCallback(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_func2
+#define XEN_TO_C_GSourceFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_timer_func
 #define XEN_TO_C_GtkDestroyNotify(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_destroy_func
 #define XEN_TO_C_GdkFilterFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_filter_func
 #define XEN_TO_C_GdkEventFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_event_func
@@ -926,7 +929,6 @@ XM_TYPE_PTR(GtkRadioAction_, GtkRadioAction*)
 XM_TYPE_PTR_1(GtkSeparatorToolItem_, GtkSeparatorToolItem*)
 XM_TYPE_PTR(GtkToggleAction_, GtkToggleAction*)
 XM_TYPE_PTR_1(GtkToggleToolButton_, GtkToggleToolButton*)
-XM_TYPE_1(GSourceFunc, GSourceFunc)
 XM_TYPE_PTR(GtkFileFilter_, GtkFileFilter*)
 XM_TYPE(GtkFileFilterFlags, GtkFileFilterFlags)
 XM_TYPE_1(GtkFileFilterFunc, GtkFileFilterFunc)
@@ -1055,6 +1057,12 @@ static void gxg_func2(GtkWidget* w, gpointer func_data)
              C_TO_XEN_GtkWidget_(w),
              XEN_CADR((XEN)func_data),
              c__FUNCTION__);
+}
+static gboolean gxg_timer_func(gpointer func_data)
+{
+  return(XEN_TO_C_gboolean(XEN_CALL_1(XEN_CAR((XEN)func_data),
+                                      XEN_CADR((XEN)func_data),
+                                      c__FUNCTION__)));
 }
 static void gxg_destroy_func(gpointer func_data)
 {
@@ -21258,49 +21266,95 @@ static XEN gxg_gtk_toggle_tool_button_get_active(XEN button)
   XEN_ASSERT_TYPE(XEN_GtkToggleToolButton__P(button), button, 1, "gtk_toggle_tool_button_get_active", "GtkToggleToolButton*");
   return(C_TO_XEN_gboolean(gtk_toggle_tool_button_get_active(XEN_TO_C_GtkToggleToolButton_(button))));
 }
-static XEN gxg_g_timeout_add_full(XEN priority, XEN interval, XEN function, XEN data, XEN notify)
+static XEN gxg_g_timeout_add_full(XEN priority, XEN interval, XEN func, XEN func_data, XEN notify)
 {
-  #define H_g_timeout_add_full "guint g_timeout_add_full(gint priority, guint interval, GSourceFunc function, \
-gpointer data, GDestroyNotify notify)"
+  #define H_g_timeout_add_full "guint g_timeout_add_full(gint priority, guint interval, GSourceFunc func, \
+lambda_data func_data, GDestroyNotify notify)"
   XEN_ASSERT_TYPE(XEN_gint_P(priority), priority, 1, "g_timeout_add_full", "gint");
   XEN_ASSERT_TYPE(XEN_guint_P(interval), interval, 2, "g_timeout_add_full", "guint");
-  XEN_ASSERT_TYPE(XEN_GSourceFunc_P(function), function, 3, "g_timeout_add_full", "GSourceFunc");
-  XEN_ASSERT_TYPE(XEN_gpointer_P(data), data, 4, "g_timeout_add_full", "gpointer");
+  XEN_ASSERT_TYPE(XEN_GSourceFunc_P(func), func, 3, "g_timeout_add_full", "GSourceFunc");
+  XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 4, "g_timeout_add_full", "lambda_data");
   XEN_ASSERT_TYPE(XEN_GDestroyNotify_P(notify), notify, 5, "g_timeout_add_full", "GDestroyNotify");
-  return(C_TO_XEN_guint(g_timeout_add_full(XEN_TO_C_gint(priority), XEN_TO_C_guint(interval), XEN_TO_C_GSourceFunc(function), 
-                                           XEN_TO_C_gpointer(data), XEN_TO_C_GDestroyNotify(notify))));
+  {
+    XEN result = XEN_FALSE;
+    int loc;
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
+    loc = xm_protect(gxg_ptr);
+    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
+    result = C_TO_XEN_guint(g_timeout_add_full(XEN_TO_C_gint(priority), XEN_TO_C_guint(interval), XEN_TO_C_GSourceFunc(func), 
+                                               XEN_TO_C_lambda_data(func_data), XEN_TO_C_GDestroyNotify(notify)));
+    XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("idler"), result, C_TO_XEN_INT(loc)));
+    return(result);
+   }
 }
-static XEN gxg_g_timeout_add(XEN interval, XEN function, XEN data)
+static XEN gxg_g_timeout_add(XEN interval, XEN func, XEN func_data)
 {
-  #define H_g_timeout_add "guint g_timeout_add(guint interval, GSourceFunc function, gpointer data)"
+  #define H_g_timeout_add "guint g_timeout_add(guint interval, GSourceFunc func, lambda_data func_data)"
   XEN_ASSERT_TYPE(XEN_guint_P(interval), interval, 1, "g_timeout_add", "guint");
-  XEN_ASSERT_TYPE(XEN_GSourceFunc_P(function), function, 2, "g_timeout_add", "GSourceFunc");
-  XEN_ASSERT_TYPE(XEN_gpointer_P(data), data, 3, "g_timeout_add", "gpointer");
-  return(C_TO_XEN_guint(g_timeout_add(XEN_TO_C_guint(interval), XEN_TO_C_GSourceFunc(function), XEN_TO_C_gpointer(data))));
+  XEN_ASSERT_TYPE(XEN_GSourceFunc_P(func), func, 2, "g_timeout_add", "GSourceFunc");
+  if (XEN_NOT_BOUND_P(func_data)) func_data = XEN_FALSE; 
+  else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "g_timeout_add", "lambda_data");
+  {
+    XEN result = XEN_FALSE;
+    int loc;
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
+    loc = xm_protect(gxg_ptr);
+    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
+    result = C_TO_XEN_guint(g_timeout_add(XEN_TO_C_guint(interval), XEN_TO_C_GSourceFunc(func), XEN_TO_C_lambda_data(func_data)));
+    XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("idler"), result, C_TO_XEN_INT(loc)));
+    return(result);
+   }
 }
-static XEN gxg_g_idle_add(XEN function, XEN data)
+static XEN gxg_g_idle_add(XEN func, XEN func_data)
 {
-  #define H_g_idle_add "guint g_idle_add(GSourceFunc function, gpointer data)"
-  XEN_ASSERT_TYPE(XEN_GSourceFunc_P(function), function, 1, "g_idle_add", "GSourceFunc");
-  XEN_ASSERT_TYPE(XEN_gpointer_P(data), data, 2, "g_idle_add", "gpointer");
-  return(C_TO_XEN_guint(g_idle_add(XEN_TO_C_GSourceFunc(function), XEN_TO_C_gpointer(data))));
+  #define H_g_idle_add "guint g_idle_add(GSourceFunc func, lambda_data func_data)"
+  XEN_ASSERT_TYPE(XEN_GSourceFunc_P(func), func, 1, "g_idle_add", "GSourceFunc");
+  if (XEN_NOT_BOUND_P(func_data)) func_data = XEN_FALSE; 
+  else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 2, "g_idle_add", "lambda_data");
+  {
+    XEN result = XEN_FALSE;
+    int loc;
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
+    loc = xm_protect(gxg_ptr);
+    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
+    result = C_TO_XEN_guint(g_idle_add(XEN_TO_C_GSourceFunc(func), XEN_TO_C_lambda_data(func_data)));
+    XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("idler"), result, C_TO_XEN_INT(loc)));
+    return(result);
+   }
 }
-static XEN gxg_g_idle_add_full(XEN priority, XEN function, XEN data, XEN notify)
+static XEN gxg_g_idle_add_full(XEN priority, XEN func, XEN func_data, XEN notify)
 {
-  #define H_g_idle_add_full "guint g_idle_add_full(gint priority, GSourceFunc function, gpointer data, \
+  #define H_g_idle_add_full "guint g_idle_add_full(gint priority, GSourceFunc func, lambda_data func_data, \
 GDestroyNotify notify)"
   XEN_ASSERT_TYPE(XEN_gint_P(priority), priority, 1, "g_idle_add_full", "gint");
-  XEN_ASSERT_TYPE(XEN_GSourceFunc_P(function), function, 2, "g_idle_add_full", "GSourceFunc");
-  XEN_ASSERT_TYPE(XEN_gpointer_P(data), data, 3, "g_idle_add_full", "gpointer");
+  XEN_ASSERT_TYPE(XEN_GSourceFunc_P(func), func, 2, "g_idle_add_full", "GSourceFunc");
+  XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "g_idle_add_full", "lambda_data");
   XEN_ASSERT_TYPE(XEN_GDestroyNotify_P(notify), notify, 4, "g_idle_add_full", "GDestroyNotify");
-  return(C_TO_XEN_guint(g_idle_add_full(XEN_TO_C_gint(priority), XEN_TO_C_GSourceFunc(function), XEN_TO_C_gpointer(data), 
-                                        XEN_TO_C_GDestroyNotify(notify))));
+  {
+    XEN result = XEN_FALSE;
+    int loc;
+    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
+    loc = xm_protect(gxg_ptr);
+    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
+    result = C_TO_XEN_guint(g_idle_add_full(XEN_TO_C_gint(priority), XEN_TO_C_GSourceFunc(func), XEN_TO_C_lambda_data(func_data), 
+                                            XEN_TO_C_GDestroyNotify(notify)));
+    XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("idler"), result, C_TO_XEN_INT(loc)));
+    return(result);
+   }
 }
 static XEN gxg_g_idle_remove_by_data(XEN data)
 {
   #define H_g_idle_remove_by_data "gboolean g_idle_remove_by_data(gpointer data)"
   XEN_ASSERT_TYPE(XEN_gpointer_P(data), data, 1, "g_idle_remove_by_data", "gpointer");
   return(C_TO_XEN_gboolean(g_idle_remove_by_data(XEN_TO_C_gpointer(data))));
+  xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR(data)));
+}
+static XEN gxg_g_source_remove(XEN tag)
+{
+  #define H_g_source_remove "gboolean g_source_remove(guint tag)"
+  XEN_ASSERT_TYPE(XEN_guint_P(tag), tag, 1, "g_source_remove", "guint");
+  return(C_TO_XEN_gboolean(g_source_remove(XEN_TO_C_guint(tag))));
+  xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR(tag)));
 }
 static XEN gxg_gtk_file_filter_get_type(void)
 {
@@ -25731,10 +25785,11 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_toggle_tool_button_set_active, gxg_gtk_toggle_tool_button_set_active, 2, 0, 0, H_gtk_toggle_tool_button_set_active);
   XG_DEFINE_PROCEDURE(gtk_toggle_tool_button_get_active, gxg_gtk_toggle_tool_button_get_active, 1, 0, 0, H_gtk_toggle_tool_button_get_active);
   XG_DEFINE_PROCEDURE(g_timeout_add_full, gxg_g_timeout_add_full, 5, 0, 0, H_g_timeout_add_full);
-  XG_DEFINE_PROCEDURE(g_timeout_add, gxg_g_timeout_add, 3, 0, 0, H_g_timeout_add);
-  XG_DEFINE_PROCEDURE(g_idle_add, gxg_g_idle_add, 2, 0, 0, H_g_idle_add);
+  XG_DEFINE_PROCEDURE(g_timeout_add, gxg_g_timeout_add, 2, 1, 0, H_g_timeout_add);
+  XG_DEFINE_PROCEDURE(g_idle_add, gxg_g_idle_add, 1, 1, 0, H_g_idle_add);
   XG_DEFINE_PROCEDURE(g_idle_add_full, gxg_g_idle_add_full, 4, 0, 0, H_g_idle_add_full);
   XG_DEFINE_PROCEDURE(g_idle_remove_by_data, gxg_g_idle_remove_by_data, 1, 0, 0, H_g_idle_remove_by_data);
+  XG_DEFINE_PROCEDURE(g_source_remove, gxg_g_source_remove, 1, 0, 0, H_g_source_remove);
   XG_DEFINE_PROCEDURE(gtk_file_filter_get_type, gxg_gtk_file_filter_get_type, 0, 0, 0, H_gtk_file_filter_get_type);
   XG_DEFINE_PROCEDURE(gtk_file_filter_new, gxg_gtk_file_filter_new, 0, 0, 0, H_gtk_file_filter_new);
   XG_DEFINE_PROCEDURE(gtk_file_filter_set_name, gxg_gtk_file_filter_set_name, 2, 0, 0, H_gtk_file_filter_set_name);
@@ -32542,6 +32597,11 @@ static void define_integers(void)
   DEFINE_INTEGER(G_NORMALIZE_NFKD);
   DEFINE_INTEGER(G_NORMALIZE_ALL_COMPOSE);
   DEFINE_INTEGER(G_NORMALIZE_NFKC);
+  DEFINE_INTEGER(G_PRIORITY_HIGH);
+  DEFINE_INTEGER(G_PRIORITY_DEFAULT);
+  DEFINE_INTEGER(G_PRIORITY_HIGH_IDLE);
+  DEFINE_INTEGER(G_PRIORITY_DEFAULT_IDLE);
+  DEFINE_INTEGER(G_PRIORITY_LOW);
 #ifdef GTK_CELL_RENDERER_FOCUSED
   DEFINE_INTEGER(GTK_CELL_RENDERER_FOCUSED);
 #endif
@@ -33078,10 +33138,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"17-Mar-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"21-Mar-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("17-Mar-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("21-Mar-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
