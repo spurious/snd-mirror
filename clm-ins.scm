@@ -2362,3 +2362,289 @@ is a physical model of a flute:\n\
 
 ;;; (with-sound () (exp-snd "fyow.snd" 0 3 1 '(0 1 1 3) 0.4 .15 '(0 2 1 .5) 0.05))
 ;;; (with-sound () (exp-snd "oboe.snd" 0 3 1 '(0 1 1 3) 0.4 .15 '(0 2 1 .5) 0.2))
+
+
+
+(def-clm-struct grn 
+  (rampval 0.0 :type float) 
+  (rampinc 0.0 :type float)
+  (loc 0 :type int) 
+  (segctr 0 :type int)
+  (whichseg 0 :type int)
+  (ramplen 0 :type int)
+  (steadylen 0 :type int)
+  (trigger 0 :type int))
+
+(definstrument (expfil start duration hopsecs rampsecs steadysecs file1 file2)
+  (let* ((fil1 (make-file->sample file1))
+	 (fil2 (make-file->sample file2))
+	 (hop (inexact->exact (floor (* hopsecs (mus-srate)))))
+	 (ramplen (inexact->exact (floor (* rampsecs (mus-srate)))))
+	 (steadylen (inexact->exact (floor (* steadysecs (mus-srate)))))
+	 (grn1 (make-grn :rampval 0.0 :rampinc (/ 1.0 ramplen) :loc 0 :segctr 0 :whichseg 0 :ramplen ramplen :steadylen steadylen :trigger 0))
+	 (grn2 (make-grn :rampval 0.0 :rampinc (/ 1.0 ramplen) :loc 0 :segctr 0 :whichseg 0 :ramplen ramplen :steadylen steadylen :trigger 0))
+	 (beg (inexact->exact (floor (* start (mus-srate)))))
+	 (end (+ beg (inexact->exact (floor (* duration (mus-srate))))))
+	 (out1 beg)
+	 (out2 (+ hop beg)))
+    (run
+     (lambda ()
+       (do ((i beg (1+ i)))
+	   ((= i end))
+	 (let ((val 0.0))
+	   (if (= i out1)
+	       (let ((inval (ina (grn-loc grn1) fil1)))
+		 (set! (grn-loc grn1) (1+ (grn-loc grn1)))
+		 (if (= (grn-whichseg grn1) 0)	;ramp-up
+		     (begin
+		       (set! inval (* inval (grn-rampval grn1)))
+		       (set! (grn-rampval grn1) (+ (grn-rampval grn1) (grn-rampinc grn1)))
+		       (set! (grn-segctr grn1) (1+ (grn-segctr grn1)))
+		       (if (= (grn-segctr grn1) (grn-ramplen grn1))
+			   (begin
+			     (set! (grn-segctr grn1) 0)
+			     (set! (grn-whichseg grn1) (1+ (grn-whichseg grn1))))))
+		     (if (= (grn-whichseg grn1) 1)		;steady-state
+			 (begin
+			   (set! (grn-segctr grn1) (1+ (grn-segctr grn1)))
+			   (if (= (grn-segctr grn1) (grn-steadylen grn1))
+			       (begin
+				 (set! (grn-segctr grn1) 0)
+				 (set! (grn-whichseg grn1) (1+ (grn-whichseg grn1))))))
+			 (begin				;ramp-down
+			   (set! inval (* inval (grn-rampval grn1)))
+			   (set! (grn-segctr grn1) (1+ (grn-segctr grn1)))
+			   (set! (grn-rampval grn1) (- (grn-rampval grn1) (grn-rampinc grn1)))
+			   (if (= (grn-segctr grn1) (grn-ramplen grn1))
+			       (begin
+				 (set! (grn-segctr grn1) 0)
+				 (set! (grn-trigger grn1) 1)
+				 (set! (grn-whichseg grn1) 0)
+				 (set! (grn-rampval grn1) 0.0))))))
+		 (set! val inval)
+		 (set! out1 (1+ out1))
+		 (if (= (grn-trigger grn1) 1)
+		     (begin
+		       (set! (grn-trigger grn1) 0)
+		       (set! out1 (+ out1 hop))))))
+	   (if (= i out2)
+	       (let ((inval (ina (grn-loc grn2) fil2)))
+		 (set! (grn-loc grn2) (1+ (grn-loc grn2)))
+		 (if (= (grn-whichseg grn2) 0)	;ramp-up
+		     (begin
+		       (set! inval (* inval (grn-rampval grn2)))
+		       (set! (grn-rampval grn2) (+ (grn-rampval grn2) (grn-rampinc grn2)))
+		       (set! (grn-segctr grn2) (1+ (grn-segctr grn2)))
+		       (if (= (grn-segctr grn2) (grn-ramplen grn2))
+			   (begin
+			     (set! (grn-segctr grn2) 0)
+			     (set! (grn-whichseg grn2) (1+ (grn-whichseg grn2))))))
+		     (if (= (grn-whichseg grn2) 1)		;steady-state
+			 (begin
+			   (set! (grn-segctr grn2) (1+ (grn-segctr grn2)))
+			   (if (= (grn-segctr grn2) (grn-steadylen grn2))
+			       (begin
+				 (set! (grn-segctr grn2) 0)
+				 (set! (grn-whichseg grn2) (1+ (grn-whichseg grn2))))))
+			 (begin				;ramp-down
+			   (set! inval (* inval (grn-rampval grn2)))
+			   (set! (grn-segctr grn2) (1+ (grn-segctr grn2)))
+			   (set! (grn-rampval grn2) (- (grn-rampval grn2) (grn-rampinc grn2)))
+			   (if (= (grn-segctr grn2) (grn-ramplen grn2))
+			       (begin
+				 (set! (grn-segctr grn2) 0)
+				 (set! (grn-trigger grn2) 1)
+				 (set! (grn-whichseg grn2) 0)
+				 (set! (grn-rampval grn2) 0.0))))))
+		 (set! val (+ val inval))
+		 (set! out2 (1+ out2))
+		 (if (= (grn-trigger grn2) 1)
+		     (begin
+		       (set! (grn-trigger grn2) 0)
+		       (set! out2 (+ out2 hop))))))
+	   (outa i val *output*)))))))
+
+;;; (with-sound () (expfil 0 2 .2 .01 .1 "oboe.snd" "fyow.snd"))
+
+
+#!
+From: Marco Trevisani <marco@ccrma.Stanford.EDU>
+
+This should work like a Graphic Equalizer....
+Very easy to use. Just some note:
+
+"amp" & "amp-env" apply an enveloppe to the final result of the
+filtering.  
+
+"dur" as ""standard"" in my instruments, when dur = 0 it will take the length of the
+sndfile input, otherwise the duration in seconds.
+
+"gain-freq-list" is a list of gains and frequencies to
+filter --in this order gain and frequencies--. There is no limit to
+the size of the list. Gain can be a number or an
+envelope. Unfortunatelly in this version they cant alternate, one
+should chose, all envelopes or all numbers i.e.: 
+case 1 -> '( .1 440.0 .3 1500.0 .2 330.0 ...etc) or 
+case 2 -> '((0 .1 1 .5) 440.0 (0 1 1 .01) 1500 (0 .3 1 .5) 330.0 ...etc) 
+'( .1 440.0 (0 1 1 .01) 1500 ..etc) <<< again, this is not allowed ..
+
+"offset-gain" This apply to all the gains if case 1. It adds or
+subtracts an offset to all the gains in the list. This number can be positive or
+negative. In case the result is a negative number --let's say offset =
+-.4 and, like in case 1, the first gain is .1, the result would be
+-.3 -- the instrument will pass a gain equal to 0.  
+
+"filt-gain-scale" & "filt-gain-base" will apply to the elements of the
+envelopes if we are in case 2, gains are envelopes.
+
+"stats" if t --default-- prints the number of seconds processed, if
+nil doesnt print anything, which will speed up a bit the process.
+!#
+
+(definstrument (graphEq file #:key (beg 0) (dur 0) (or-beg 0) (amp 1) (amp-env '(0 1 .8 1 1 0)) (amp-base 1) 
+	(offset-gain 0)  
+	(gain-freq-list '((0 1 1 0) 440 (0 0 1 1) 660))      
+	(filt-gain-scale 1)                   
+	(filt-gain-base 1)                    
+	(a1 .99)
+	(stats #t))                      
+  (let* (
+	 (st (inexact->exact (floor (* beg (mus-srate)))))
+	 (durata (if (= 0 dur) (mus-sound-duration file) dur))
+	 (nd (+ st (inexact->exact (floor (* (mus-srate) durata)))))
+	 (or-start (inexact->exact (round (* or-beg (mus-sound-srate file)))))
+	 (RdA (make-readin :file file :start or-start))
+	 (half-list (/ (length gain-freq-list) 2))
+	 (ampenv (make-env :envelope amp-env :scaler amp :duration durata :base amp-base))
+	 (gain-list (let ((lst '())
+			  (len (length gain-freq-list)))
+		      (do ((i (- len 2) (- i 2)))
+			  ((< i 0))
+			(set! lst (cons (list-ref gain-freq-list i) lst)))
+		      lst))
+	 (freq-list (let ((lst '())
+			  (len (length gain-freq-list)))
+		      (do ((i (- len 1) (- i 2)))
+			  ((<= i 0))
+			(set! lst (cons (list-ref gain-freq-list i) lst)))
+		      lst))
+	 (env-size (if (list? (car gain-list))
+		       (make-vector (length freq-list))
+		       #f))
+	 (if-list-in-gain (list? (car gain-list)))
+	 (frm-size (make-vector (length freq-list)))
+	 (samp -1))
+
+    (do ((k 0 (1+ k)))
+	((= k half-list))
+      (let ((gval (list-ref gain-list k))
+	    (fval (list-ref freq-list k)))
+	(if (list? gval)
+	  (begin
+	    (vector-set! env-size k (make-env :envelope gval
+					      :scaler filt-gain-scale
+					      :duration durata :base filt-gain-base))
+	    (vector-set! frm-size k (make-formant a1 fval)))
+	  (vector-set! frm-size k (make-formant a1 fval
+						(if (< (+ offset-gain gval) 0) 0
+						    (+ offset-gain gval)))))))
+    (run
+     (lambda ()
+       (do ((i st (1+ i)))
+	   ((= i nd))
+	 (if stats 
+	     (begin
+	       (set! samp (1+ samp))
+	       (if (= samp (mus-srate))
+		   (begin
+		     (snd-print (format #f "~% ~F" (/ i (mus-srate))))
+		     (set! samp 0)))))
+	 (let ((outval 0.0)
+	       (inval (readin RdA)))
+	   (do ((k 0 (1+ k)))
+	       ((= k half-list))
+	     (if if-list-in-gain
+		 (set! (mus-a0 (vector-ref frm-size k)) (* (env (vector-ref env-size k)) (- 1.0 a1))))
+	     (set! outval (+ outval (formant (vector-ref frm-size k) inval))))
+	   (outa i (* (env ampenv) outval) *output*)))))))
+
+
+(definstrument (anoi infile start dur #:optional (fftsize 128) (amp-scaler 1.0) (r (* 2.0 3.14159)))
+  ;; a kind of noise reduction -- on-going average spectrum is squelched to some extent
+  ;; obviously aimed at intermittent signal in background noise
+  ;; this is based on Perry Cook's Scrubber.m
+  (let* ((freq-inc (inexact->exact (/ fftsize 2)))
+	 (fdi (make-vct fftsize))
+	 (fdr (make-vct fftsize))
+	 (spectr (make-vct freq-inc 1.0))
+	 (scales (make-vct freq-inc 1.0))
+	 (diffs (make-vct freq-inc))
+	 (win (make-fft-window blackman2-window fftsize))
+	 (k 0)
+	 (amp 0.0)
+	 (incr (/ (* amp-scaler 4) (mus-srate)))
+	 (beg (inexact->exact (floor (* start (mus-srate)))))
+	 (end (+ beg (inexact->exact (floor (* dur (mus-srate))))))
+	 (file (make-file->sample infile))
+	 (radius (- 1.0 (/ r fftsize)))
+	 (bin (/ (mus-srate) fftsize))
+	 (fs (make-vector freq-inc))
+	 (samp 0))
+    (do ((ctr 0 (1+ ctr)))
+	((= ctr freq-inc))
+      (vector-set! fs ctr (make-formant radius (* ctr bin))))
+    (run 
+     (lambda ()
+       (do ((i beg (1+ i)))
+	   ((= i end))
+	 (let ((inval (file->sample file samp)))
+	   (set! samp (1+ samp))
+	   (vct-set! fdr k inval)
+	   (set! k (1+ k))
+	   (if (< amp amp-scaler) (set! amp (+ amp incr)))
+	   (if (>= k fftsize)
+	       (begin
+		 (set! k 0)
+		 (spectrum fdr fdi win 1)
+		 (do ((ctr 0 (1+ ctr)))
+		     ((= ctr freq-inc))
+		   (vct-set! spectr ctr (+ (* .9 (vct-ref spectr ctr)) (* .1 (vct-ref fdr ctr))))
+		   (if (>= (vct-ref spectr ctr) (vct-ref fdr ctr)) 
+		       (vct-set! diffs ctr 
+				 (/ (vct-ref scales ctr) (- fftsize)))
+		       (vct-set! diffs ctr
+				 (/ (- (/ (- (vct-ref fdr ctr) (vct-ref spectr ctr)) 
+					  (vct-ref fdr ctr)) 
+				       (vct-ref scales ctr))
+				    fftsize))))))
+	   (let ((outval 0.0))
+	     (do ((ctr 1 (1+ ctr)))
+		 ((= ctr freq-inc))
+	       (let ((cur-scale (vct-ref scales ctr)))
+		 (set! outval (+ outval (* cur-scale (formant (vector-ref fs ctr) inval))))
+		 (vct-set! scales ctr (+ (vct-ref scales ctr) (vct-ref diffs ctr)))))
+	     (outa i (* amp outval) *output*))))))))
+
+
+#!
+Date: Fri, 25 Sep 1998 09:56:41 +0300
+From: Matti Koskinen <mjkoskin@sci.fi>
+To: linux-audio-dev@ginette.musique.umontreal.ca
+Subject: [linux-audio-dev] Announce: alpha version of denoising
+[...]
+	I wrote a simple denoiser called anoi after it's parent
+	clm-instrument anoi.ins.
+
+	anoi tries to remove white noise like tape hiss from wav-
+	files. Removing of noise succeeds ok, but depending of the
+	original sound, some distortion can be audible.
+
+	If someone is interested, http://www.sci.fi/~mjkoskin
+	contains tarred and gzipped file.
+
+	Now only monophonic wav-files can be denoised, but adding
+	others isn't too difficult. 
+
+-matti
+mjkoskin@sci.fi
+!#

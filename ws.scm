@@ -135,6 +135,8 @@
        val)))
 
 ;;; second stab at def-clm-struct
+;;; TODO: if file with def-clm-struct reloaded, struct defs are not updated
+;;; TODO: tmp27.scm infinite loop if opt=6
 
 (defmacro* def-clm-struct (name #:rest fields)
   ;; (def-clm-struct fd loc (chan 1))

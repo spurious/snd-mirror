@@ -1169,11 +1169,12 @@ You can load Rick Taube's CM into Snd as Scheme code:
 
 <p>It's hard to decide what's an "instrument" in this context, but I think I'll treat
 it as something that can be called as a note in a notelist (say in with-sound) and
-generate its own sound, or a reverberator.
+generate its own sound.
 See test 23 in snd-test.scm for example calls.
 </p>
 <table border=1 cellpadding=3>
 <tr><th>Instrument</th><th>Sources</th><th>Description</th></tr>
+<tr><td>anoi</td><td>clm-ins.scm</td><td>noise reduction based on P Cook's Scrubber.m</td></tr>
 <tr><td>attract</td><td>clm-ins.scm</td><td>James McCarthy's choatic brass</td></tr>
 <tr><td>bes-fm</td><td>clm-ins.scm</td><td>FM analog using Bessel j0 rather than sin</td></tr>
 <tr><td>bigbird</td><td>bird.scm, bird.rb</td><td>more bird songs</td></tr>
@@ -1186,7 +1187,8 @@ See test 23 in snd-test.scm for example calls.
 <tr><td>clarinet</td><td>prc95.scm</td><td>clarinet pysical model</td></tr>
 <tr><td>drone, canter</td><td>clm-ins.scm</td><td>Peter Common's bagpipe</td></tr>
 <tr><td>flute</td><td>prc95.scm</td><td>flute pysical model</td></tr>
-<tr><td>exp-snd</td><td>clm-ins.scm</td><td>granular synthesis to the max</td></tr>
+<tr><td>expfil</td><td>clm-ins.scm</td><td>granular synthesis interleaving two files</td></tr>
+<tr><td>exp-snd</td><td>clm-ins.scm</td><td>granulate to the max</td></tr>
 <tr><td>fm-bell</td><td>clm-ins.scm, examp.rb</td><td>Mike McNabb's FM bell</td></tr>
 <tr><td>fm-drum</td><td>clm-ins.scm</td><td>Jan Mattox's FM dum</td></tr>
 <tr><td>fm-insect</td><td>clm-ins.scm</td><td>FM insect (katydid)</td></tr>
@@ -1197,6 +1199,7 @@ See test 23 in snd-test.scm for example calls.
 <tr><td>freeverb</td><td>freeverb.scm</td><td>a reverberator</td></tr>
 <tr><td>gong</td><td>clm-ins.scm</td><td>Paul Weineke's FM gong</td></tr>
 <tr><td>gran-synth</td><td>clm-ins.scm</td><td>simple granular synthesis example</td></tr>
+<tr><td>graphEq</td><td>clm-ins.scm</td><td>Marco Trevisani's semi-graphical equalizer</td></tr>
 <tr><td>jc-reverb</td><td>jcrev.scm, examp.rb</td><td>Chowning's old reverb</td></tr>
 <tr><td>jl-reverb</td><td>clm-ins.scm</td><td>cavernous version of jc-reverb</td></tr>
 <tr><td>lbj-piano</td><td>clm-ins.scm</td><td>additive synthesis piano (Doug Fulton)</td></tr>

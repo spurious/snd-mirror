@@ -192,11 +192,13 @@ end
 </p>
 <!-- remember to add corresponding entry to grfsnd instrument table -->
 <pre>
+  <em class=def>anoi</em> file (etc)
   <em class=def>attract</em> beg dur amp c
   <em class=def>bes-fm</em> beg dur freq amp ratio index
   <em class=def>canter</em> beg dur freq amp (etc)
   <em class=def>cellon</em> beg dur freq amp (etc)
   <em class=def>drone</em> beg dur freq amp (etc)
+  <em class=def>expfil</em> start duration hopsecs rampsecs steadysecs file1 file2
   <em class=def>exp-snd</em> file beg dur amp (etc)
   <em class=def>fm-bell</em> beg dur frequency amplitude amp-env index-env index
   <em class=def>fm-drum</em> beg dur freq amp ind (etc)
@@ -205,6 +207,7 @@ end
   <em class=def>fofins</em> beg dur frq amp uvib f0 a0 f1 a1 f2 a2 (amp-env '(0 0 1 1 2 1 3 0))
   <em class=def>gong</em> beg dur freq amp (etc)
   <em class=def>gran-synth</em> beg dur freq grain-dur grain-hop amp
+  <em class=def>graphEq</em> file (etc)
   <em class=def>hammondoid</em> beg dur freq amp
   <em class=def>jl-reverb</em>
   <em class=def>lbj-piano</em> beg dur freq amp (etc)
@@ -291,8 +294,16 @@ of Xavier Serra and Julius Smith.  It is similar to the phase vocoder.
 comb, notch, and all-pass filters.
 </p>
 <p><i>exp-snd</i> is a granular synthesis instrument with envelopes on
-nearly every variable.
+nearly every variable. <i>expfile</i> interleaves two granulate processes.
 </p>
+<p><i>graphEq</i> mimics a graphical equalizer by setting up a bank of formant
+generators, with an optional envelope on each formant.
+</p>
+<p>
+<i>anoi</i> is a stab at noise reduction
+based on Perry Cook's Scrubber.m.
+</p>
+<br>
 
 <A NAME="dlocsigdoc"></a><span class=box><h2>dlocsig.rb</h2></span>
 
@@ -302,6 +313,7 @@ dlocsig in CLM.  Fernando's documentation can be found in the CLM tarball
 </p>
 <p>See dlocsig.rb for documentation and examples.
 </p>
+<br>
 
 <A NAME="dlpdoc"></a><span class=box><h2>dlp directory entries</h2></span>
 
@@ -679,7 +691,7 @@ returns the maximum X value:
 :<em class=typing>(max-envelope '(0 0 1 1 2 3 4 0))</em>
 <em class=listener>3.0</em>
 </pre>
-<p>Similarly, <i>min-envelope returns the minimum y value.</p>
+<p>Similarly, <i>min-envelope</i> returns the minimum y value.</p>
 <p><i>integrate-envelope</i> returns the area under the envelope; this is
 useful when you need to know in advance the overall effect of an envelope
 controlling the sampling rate.

@@ -35,7 +35,8 @@
 ;;; TODO: pan env field in mix dialog if stereo in/out
 ;;; TODO: xemacs style top list of sounds, current takes whole screen [make-top-row snd-motif.scm, files-popup-buffer in examp.scm]
 ;;; TOOD: extend the mix-as-list syntax to list-of-ids (tracks) (are these all rationalized now?)
-;;; TODO: effects crossref + tests + clm translations[grani? -- needs exp-envelope -- see tmp17.scm, anoi?, expfil?, expsnd?, grapheq?], interface crossref
+;;; TODO: effects crossref + tests + clm translations[grani? -- needs exp-envelope -- see tmp17.scm]
+;;; TODO: interface crossref
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 
@@ -24531,6 +24532,33 @@ EDITS: 2
       (set! dbl-var 3.14)
       (set! bool-var #t)
       
+      (etst '(set!))
+      (etst '(set! int-var))
+      (etst '(set! int-var 3 dbl-var 2.0))
+      (etst '(let))
+      (etst '(let*))
+      (etst '(let ()))
+      (etst '(let* ()))
+      (etst '(let ((a 1))))
+      (etst '(let* ((a 1))))
+      (etst '(do))
+      (etst '(do*))
+      (etst '(do ()))
+      (etst '(do* ()))
+      (etst '(do () ()))
+      (etst '(do* () ()))
+      (etst '(if))
+      (etst '(if #t))
+      (etst '(if #f #f #f #f))
+      (etst '(cond))
+      (etst '(case))
+      (etst '(case 1))
+      (etst '(call-with-current-continuation))
+      (etst '(call-with-current-continuation #f #f))
+      (etst '(lambda))
+      (etst '(quote))
+      (etst '(quote 1 2 4))
+
       (itst '(* 2 3) 6)
       (itst '(* 2) 2)
       (itst '(* 2 0) 0)
@@ -26466,7 +26494,9 @@ EDITS: 2
       (btst '(let ((gen (make-zpolar))) (two-zero? gen)) #t)
       
       (btst '(let ((win (make-fft-window hamming-window 8))) (vct? win)) #t)
-      
+      (btst '(if #f (oscil #f) #t) #t)
+      (btst '(if #f (mus-frequency #f) #t) #t)
+      (btst '(if #f (set! (mus-frequency #f) 100.0) #t) #t)
       
       (ftst '(let ((gen (make-all-pass))) (all-pass gen)) 0.0)
       (ftst '(let ((gen (make-asymmetric-fm))) (asymmetric-fm gen)) 0.0)
@@ -28318,6 +28348,7 @@ EDITS: 2
 	(resflt 17 1.0 0 0 0 nil .1 200 230 10 '(0 0 50 1 100 0) '(0 0 100 1) 500 .995 .1 1000 .995 .1 2000 .995 .1)
 	(resflt 17.5 1.0 1 10000 .01 '(0 0 50 1 100 0) 0 0 0 0 nil nil 500 .995 .1 1000 .995 .1 2000 .995 .1)
 
+	(graphEq "oboe.snd")
 	)
       (let ((ind (find-sound "test.snd")))
 	(if (or (not (vequal (channel->vct 45 10) (vct -0.068 -0.059 -0.045 -0.028 -0.011 0.005 0.018 0.028 0.035 0.039)))

@@ -73,7 +73,7 @@
  *       (define hi 3.0)
  *       (let ((hi 0.0)) (every-sample? (lambda (y) (> hi 1.0))))
  *       -> probably when func-as-arg is expanded, we should search its env (closure) -- is this accessible?
- * TODO: if clm gen is #f (mono/stereo etc), mus-* should still be optimizable [parsable]
+ * TODO: variable-display support in run
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
  *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)
@@ -2963,7 +2963,7 @@ static xen_value *generalized_set_form(ptree *prog, XEN form, int need_result)
 
 static xen_value *set_form(ptree *prog, XEN form, int need_result)
 {
-  char *varname;
+  char *varname = NULL;
   xen_var *var;
   xen_value *v;
   XEN settee, setval, rtnval;
@@ -8429,6 +8429,8 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       XEN walker;
       walk_info *w = NULL;
       function = XEN_CAR(form);
+      all_args = XEN_CDR(form);
+      num_args = XEN_LIST_LENGTH(all_args);
       if (XEN_SYMBOL_P(function))
 	{
 	  walker = XEN_OBJECT_PROPERTY(function, walk_sym);
@@ -8440,11 +8442,16 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	    {
 	      w = (walk_info *)(XEN_TO_C_ULONG(walker));
 	      if ((w) && (w->special_walker))
-		return((*(w->special_walker))(prog, form, need_result));
+		{
+		  if (num_args < w->required_args) 
+		    return(run_warn("missing expression for %s: %s", XEN_SYMBOL_TO_C_STRING(function), XEN_AS_STRING(form)));
+		  if ((w->max_args != UNLIMITED_ARGS) && 
+		      (num_args > w->max_args)) 
+		    return(run_warn("too many expressions for %s: %s", XEN_SYMBOL_TO_C_STRING(function), XEN_AS_STRING(form)));
+		  return((*(w->special_walker))(prog, form, need_result));
+		}
 	    }
 	}
-      all_args = XEN_CDR(form);
-      num_args = XEN_LIST_LENGTH(all_args);
       args = (xen_value **)CALLOC(num_args + 1, sizeof(xen_value *));
       if (num_args > 0)
 	{
@@ -9275,21 +9282,21 @@ static void init_walkers(void)
   snd_protect(walk_sym);
 
   /* -------- special forms */
-  INIT_WALKER("let", make_walker(NULL, let_form, NULL, 0, UNLIMITED_ARGS, R_ANY, FALSE, 0));
-  INIT_WALKER("let*", make_walker(NULL, let_star_form, NULL, 0, UNLIMITED_ARGS, R_ANY, FALSE, 0));
-  INIT_WALKER("do", make_walker(NULL, do_form, NULL, 0, UNLIMITED_ARGS, R_ANY, FALSE, 0));
-  INIT_WALKER("do*", make_walker(NULL, do_star_form, NULL, 0, UNLIMITED_ARGS, R_ANY, FALSE, 0));
+  INIT_WALKER("let", make_walker(NULL, let_form, NULL, 2, UNLIMITED_ARGS, R_ANY, FALSE, 0));
+  INIT_WALKER("let*", make_walker(NULL, let_star_form, NULL, 2, UNLIMITED_ARGS, R_ANY, FALSE, 0));
+  INIT_WALKER("do", make_walker(NULL, do_form, NULL, 2, UNLIMITED_ARGS, R_ANY, FALSE, 0));
+  INIT_WALKER("do*", make_walker(NULL, do_star_form, NULL, 2, UNLIMITED_ARGS, R_ANY, FALSE, 0));
   INIT_WALKER("begin", make_walker(NULL, begin_form, NULL, 0, UNLIMITED_ARGS, R_ANY, FALSE, 0));
-  INIT_WALKER("if", make_walker(NULL, if_form, NULL, 0, UNLIMITED_ARGS, R_ANY, FALSE, 0));
-  INIT_WALKER("cond", make_walker(NULL, cond_form, NULL, 0, UNLIMITED_ARGS, R_ANY, FALSE, 0));
-  INIT_WALKER("case", make_walker(NULL, case_form, NULL, 0, UNLIMITED_ARGS, R_ANY, FALSE, 0));
-  INIT_WALKER("call-with-current-continuation", make_walker(NULL, callcc_form, NULL, 0, UNLIMITED_ARGS, R_ANY, FALSE, 0));
+  INIT_WALKER("if", make_walker(NULL, if_form, NULL, 2, 3, R_ANY, FALSE, 0));
+  INIT_WALKER("cond", make_walker(NULL, cond_form, NULL, 1, UNLIMITED_ARGS, R_ANY, FALSE, 0));
+  INIT_WALKER("case", make_walker(NULL, case_form, NULL, 2, UNLIMITED_ARGS, R_ANY, FALSE, 0));
+  INIT_WALKER("call-with-current-continuation", make_walker(NULL, callcc_form, NULL, 1, 1, R_ANY, FALSE, 0));
   INIT_WALKER("or", make_walker(NULL, or_form, NULL, 0, UNLIMITED_ARGS, R_ANY, FALSE, 0));
   INIT_WALKER("and", make_walker(NULL, and_form, NULL, 0, UNLIMITED_ARGS, R_ANY, FALSE, 0));
-  INIT_WALKER("set!", make_walker(NULL, set_form, NULL, 0, UNLIMITED_ARGS, R_ANY, FALSE, 0));
-  INIT_WALKER("call/cc", make_walker(NULL, callcc_form, NULL, 0, UNLIMITED_ARGS, R_ANY, FALSE, 0));
-  INIT_WALKER("lambda", make_walker(NULL, lambda_preform, NULL, 0, UNLIMITED_ARGS, R_ANY, FALSE, 0));
-  INIT_WALKER("quote", make_walker(NULL, quote_form, NULL, 0, UNLIMITED_ARGS, R_ANY, FALSE, 0));
+  INIT_WALKER("set!", make_walker(NULL, set_form, NULL, 2, 2, R_ANY, FALSE, 0)); /* Scheme set! does not take &rest args */
+  INIT_WALKER("call/cc", make_walker(NULL, callcc_form, NULL, 1, 1, R_ANY, FALSE, 0));
+  INIT_WALKER("lambda", make_walker(NULL, lambda_preform, NULL, 1, UNLIMITED_ARGS, R_ANY, FALSE, 0));
+  INIT_WALKER("quote", make_walker(NULL, quote_form, NULL, 1, 1, R_ANY, FALSE, 0));
   INIT_WALKER("declare", make_walker(NULL, declare_1, NULL, 0, UNLIMITED_ARGS, R_ANY, FALSE, 0));
 
   /* -------- basic stuff */
@@ -9706,6 +9713,7 @@ static void init_walkers(void)
   INIT_WALKER(S_snd_print, make_walker(snd_print_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_STRING));
   INIT_WALKER(S_snd_warning, make_walker(snd_warning_1, NULL, NULL, 1, 1, R_BOOL, FALSE, 1, R_STRING));
   INIT_WALKER(S_report_in_minibuffer, make_walker(report_in_minibuffer_1, NULL, NULL, 1, 2, R_BOOL, FALSE, 1, R_STRING));
+  /* INIT_WALKER(S_variable_display, make_walker(variable_display_1, NULL, NULL, 2, 2, R_ANY, FALSE, 0); */
 }
 #endif
 

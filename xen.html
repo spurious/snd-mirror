@@ -45,7 +45,7 @@ static XEN orig_function(XEN argument)
   return(C_TO_XEN_INT(XEN_TO_C_INT(argument) + 1));
 }
 
-#ifdef ARGIFY_1
+#ifdef XEN_ARGIFY_1
   XEN_NARGIFY_1(function, orig_function);
 #else
   #define function orig_function
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
 }
 </pre>
 
-<p>The "ARGIFY" step
+<p>The "XEN_ARGIFY" step
 is needed for those languages that assume one calling sequence for
 a C-defined function; we have to wrap up the actual call in whatever
 sequence the extension language wants.
