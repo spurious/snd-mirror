@@ -198,8 +198,6 @@ needed information, call snd-debug first (after receiving the error)."
 
 
 ;;; -------- snd-trace 
-;;; 
-;;; this activates tracing and redirects its output to the Snd listener
 
 (defmacro snd-trace body
   "(snd-trace body) activates tracing and redirects its output to the Snd listener.  To get trace info, \

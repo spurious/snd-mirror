@@ -2759,7 +2759,11 @@ static SCM g_gc_on(void) {--scm_block_gc; return(XEN_FALSE);}
 #if HAVE_GUILE
 static SCM g_continuation_p(XEN obj)
 {
+#ifdef SCM_CONTINUATIONP
   return(C_TO_XEN_BOOLEAN(SCM_NIMP(obj) && (SCM_CONTINUATIONP(obj))));
+#else
+  return(XEN_PROCEDURE_P(obj));
+#endif
 }
 #endif
 

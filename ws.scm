@@ -145,15 +145,20 @@ returning you to the true top-level."
 ;  (ws-backtrace) shows the backtrace at the point of the interrupt.\n\
 ")
 
-;;; this goes in the instrument, but not in the run macro body (run doesn't (yet?) handle code this complex)
+;;; ws-interrupt? checks for C-g within with-sound, setting up continuation etc
+;;; this goes anywhere in the instrument (and any number of times), 
+;;;    but not in the run macro body (run doesn't (yet?) handle code this complex)
 (defmacro* ws-interrupt? (#:optional message)
-  `(let ((stack (make-stack #t)))
-     (if (c-g?) 
+  ;; using defmacro, not define, so that we can more easily find the instrument (as a procedure)
+  ;;   for ws-locals above -- some sort of procedure property is probably better
+  `(if (c-g?) 
+       (let ((stack (make-stack #t)))
 	 (call-with-current-continuation
 	  (lambda (continue)
 	    (if ,message
 		(throw 'with-sound-interrupt continue stack ,message)
-		(throw 'with-sound-interrupt continue stack)))))))
+		(throw 'with-sound-interrupt continue stack)))))
+       #f)) ; there is a possible return value from the continuation, so I guess this will make it easier to use?
 
 
 ;;; -------- with-sound --------
