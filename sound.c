@@ -697,20 +697,6 @@ void mus_sound_set_full_loop_info(const char *arg, int *loop)
     }
 }
 
-void mus_sound_set_loop_info(const char *arg, int *loop)
-{
-  /* backwards compatibility */
-  int bloop[MUS_LOOP_INFO_SIZE];
-  int i;
-  if (loop)
-    {
-      for (i = 0; i < 6; i++) bloop[i] = loop[i];
-      bloop[6] = 1; bloop[7] = 1;
-      mus_sound_set_full_loop_info(arg, bloop);
-    }
-  else mus_sound_set_full_loop_info(arg, NULL);
-}
-
 int mus_sound_aiff_p(const char *arg) 
 {
   return(mus_sound_header_type(arg) == MUS_AIFF);

@@ -86,8 +86,7 @@
  */
 
 #include "snd.h"
-#if HAVE_GUILE
-#if WITH_RUN
+#if HAVE_GUILE && WITH_RUN && HAVE_STRINGIZE
 #include "vct.h"
 #include "clm2xen.h"
 
@@ -791,7 +790,7 @@ static ptree *attach_to_ptree(ptree *pt)
   new_tree->arity = 0;
   if (pt->outer_tree)
     new_tree->outer_tree = pt->outer_tree;
-  else new_tree->outer_tree = pt;
+  else new_tree->outer_tree = (void *)pt;
 
   new_tree->ints = pt->ints;
   new_tree->dbls = pt->dbls;
@@ -1659,8 +1658,13 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, int *ints, Float 
 #define BOOL_RESULT ints[args[0]]
 #define FLOAT_RESULT dbls[args[0]]
 #define INT_RESULT ints[args[0]]
-#define STRING_RESULT ((char *)(ints[args[0]]))
-#define CHAR_RESULT ((char)(ints[args[0]]))
+#if (!(defined(__GNUC__))) || (defined(__cplusplus))
+  #define STRING_RESULT (*((char **)(&(ints[args[0]]))))
+  #define CHAR_RESULT (*((char *)(&(ints[args[0]]))))
+#else
+  #define STRING_RESULT ((char *)(ints[args[0]]))
+  #define CHAR_RESULT ((char)(ints[args[0]]))
+#endif
 #define BOOL_ARG_1 ints[args[1]]
 #define BOOL_ARG_2 ints[args[2]]
 #define BOOL_ARG_3 ints[args[3]]
@@ -2240,9 +2244,12 @@ static xen_value *cond_form(ptree *prog, XEN form, int need_result)
       fixups[clause_ctr] = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
       add_triple_to_ptree(prog, va_make_triple(jump_abs, descr_jump_abs, 1, fixups[clause_ctr])); 
       /* we jump to here is test was false */
-      prog->ints[jump_to_next_clause->addr] = prog->triple_ctr - current_pc - 1;
-      FREE(jump_to_next_clause);
-      jump_to_next_clause = NULL;
+      if (jump_to_next_clause)
+	{
+	  prog->ints[jump_to_next_clause->addr] = prog->triple_ctr - current_pc - 1;
+	  FREE(jump_to_next_clause);
+	  jump_to_next_clause = NULL;
+	}
       FREE(clause_value);
       clause_value = NULL;
       FREE(test_value);
@@ -2482,6 +2489,7 @@ static xen_value *callcc_form(ptree *prog, XEN form, int need_result)
   continuation_name = XEN_CAR(XEN_CADR(func_form));
   c = add_goto_to_ptree(prog, XEN_SYMBOL_TO_C_STRING(continuation_name));
   v = walk_sequence(prog, XEN_CDDR(func_form), need_result, "call/cc");
+  if (v == NULL) return(NULL);
   if (c->result)
     {
       if (v->type != c->result->type)
@@ -5107,7 +5115,7 @@ static void vector_set_i(int *args, int *ints, Float *dbls)
 static void vector_set_v(int *args, int *ints, Float *dbls) 
 {
   INT_RESULT = INT_ARG_3; 
-  (int)((vct_vct *)(INT_ARG_1))->data[INT_ARG_2] = (vct *)(INT_ARG_3);
+  ((vct_vct *)(INT_ARG_1))->data[INT_ARG_2] = (vct *)(INT_ARG_3);
 }
 static void vector_set_c(int *args, int *ints, Float *dbls)
 {
@@ -5176,7 +5184,7 @@ static void vector_fill_i(int *args, int *ints, Float *dbls)
 }
 static void vector_fill_v(int *args, int *ints, Float *dbls) 
 {
-  int i; for (i = 0; i < ((vct *)(INT_ARG_1))->length; i++) (int)((vct_vct *)(INT_ARG_1))->data[i] = (vct *)(INT_ARG_2);
+  int i; for (i = 0; i < ((vct *)(INT_ARG_1))->length; i++) ((vct_vct *)(INT_ARG_1))->data[i] = (vct *)(INT_ARG_2);
 }
 static void vector_fill_c(int *args, int *ints, Float *dbls)
 {
@@ -6375,7 +6383,7 @@ static Float src_input(void *arg, int direction)
   mus_xen *gn = (mus_xen *)arg;
   ptree *pt, *outer;
   pt = (ptree *)(gn->input_ptree);
-  outer = pt->outer_tree;
+  outer = (ptree *)(pt->outer_tree);
   outer->ints[pt->args[0]] = direction;
   eval_embedded_ptree(pt, outer->ints, outer->dbls);
   return(outer->dbls[pt->result->addr]);
@@ -6720,7 +6728,9 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       args = (xen_value **)CALLOC(num_args + 1, sizeof(xen_value *));
       if (num_args > 0)
 	{
-	  if (strcmp(funcname, "inexact->exact") == 0) arg_result = NEED_INT_RESULT;
+	  if ((strcmp(funcname, "inexact->exact") == 0) ||
+	      (strcmp(funcname, "modulo") == 0)) /* others here are remainder quotient ash logand logior logxor lognot gcd lcm integer->char */
+	    arg_result = NEED_INT_RESULT;
 	  for (i = 0; i < num_args; i++, all_args = XEN_CDR(all_args))
 	    {
 	      args[i + 1] = walk(prog, XEN_CAR(all_args), arg_result);
@@ -7366,7 +7376,7 @@ static void *form_to_ptree(XEN code)
 void *form_to_ptree_1f2f(XEN code)
 {
   ptree *pt;
-  pt = form_to_ptree(code);
+  pt = (ptree *)form_to_ptree(code);
   if (pt)
     {
       if ((pt->result->type == R_FLOAT) && (pt->arity == 1))
@@ -7379,7 +7389,7 @@ void *form_to_ptree_1f2f(XEN code)
 void *form_to_ptree_0f2f(XEN code)
 {
   ptree *pt;
-  pt = form_to_ptree(code);
+  pt = (ptree *)form_to_ptree(code);
   if (pt)
     {
       if ((pt->result->type == R_FLOAT) && (pt->arity == 0))
@@ -7392,7 +7402,7 @@ void *form_to_ptree_0f2f(XEN code)
 void *form_to_ptree_1f2b(XEN code)
 {
   ptree *pt;
-  pt = form_to_ptree(code);
+  pt = (ptree *)form_to_ptree(code);
   if (pt)
     {
       if ((pt->result->type == R_BOOL) && (pt->arity == 1))
@@ -7405,7 +7415,7 @@ void *form_to_ptree_1f2b(XEN code)
 void *form_to_ptree_1f2b_without_env(XEN code)
 {
   ptree *pt;
-  pt = form_to_ptree(XEN_LIST_2(code, XEN_FALSE));
+  pt = (ptree *)form_to_ptree(XEN_LIST_2(code, XEN_FALSE));
   if (pt)
     {
       if ((pt->result->type == R_BOOL) && (pt->arity == 1))
@@ -7596,7 +7606,7 @@ in multi-channel situations where you want the optimization that vct-map! provid
     }
   if (optimization(get_global_state()) > 0)
     {
-      pt = form_to_ptree(proc_and_code);
+      pt = (ptree *)form_to_ptree(proc_and_code);
       if ((pt) && (pt->arity == 0) && (pt->result->type == R_CLM))
 	{
 	  char *err;
@@ -7651,8 +7661,6 @@ during optimization to indicate where the optimizer ran into trouble"
   XEN_DEFINE_HOOK(optimization_hook, S_optimization_hook, 1, H_optimization_hook);      /* arg = message */
 }
 
-
-#endif
 #else
 /* no guile */
 void g_init_run(void)

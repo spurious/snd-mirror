@@ -5892,6 +5892,37 @@ _ACEOF
 
 fi
 
+echo "$as_me:$LINENO: checking for preprocessor stringizing operator" >&5
+echo $ECHO_N "checking for preprocessor stringizing operator... $ECHO_C" >&6
+if test "${ac_cv_c_stringize+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+#define x(y) #y
+
+char *s = x(teststring);
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  egrep "#teststring" >/dev/null 2>&1; then
+  ac_cv_c_stringize=no
+else
+  ac_cv_c_stringize=yes
+fi
+rm -f conftest*
+
+fi
+echo "$as_me:$LINENO: result: $ac_cv_c_stringize" >&5
+echo "${ECHO_T}$ac_cv_c_stringize" >&6
+if test $ac_cv_c_stringize = yes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_STRINGIZE 1
+_ACEOF
+
+fi
+
 
 echo "$as_me:$LINENO: checking for int" >&5
 echo $ECHO_N "checking for int... $ECHO_C" >&6

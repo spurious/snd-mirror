@@ -674,7 +674,7 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select, int
 	    }
 	}
     }
-  sp = add_sound_window(mcf, ss, read_only); /* snd-xsnd.c -> make_file_info */
+  sp = add_sound_window(mcf, ss, read_only); /* snd-xsnd.c -> make_file_info (in this file) */
   if (mcf) FREE(mcf);
   if (sp)
     {
@@ -1964,9 +1964,9 @@ void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_da
 #endif
   if (err == 0)
     {
-      if ((type == MUS_AIFF) || (type == MUS_AIFC)) mus_header_set_full_aiff_loop_info(mus_sound_loop_info(sp->filename));
-      mus_sound_forget(sp->filename);
       hdr = sp->hdr;
+      if ((hdr->type == MUS_AIFF) || (hdr->type == MUS_AIFC)) mus_header_set_full_aiff_loop_info(mus_sound_loop_info(sp->filename));
+      mus_sound_forget(sp->filename);
       /* find out which fields changed -- if possible don't touch the sound data */
       comment = read_file_data_choices(edit_header_data, &srate, &chans, &type, &format, &loc);
       if (hdr->chans != chans)
@@ -2101,9 +2101,13 @@ static XEN g_add_sound_file_extension(XEN ext)
 static XEN g_file_write_date(XEN file)
 {
   #define S_file_write_date "file-write-date"
+#ifndef __GNUC__
+  #define H_file_write_date "(" S_file_write_date " file) -> write date of file"
+#else
   #define H_file_write_date "(" S_file_write_date " file) -> write date in the same format as \
 current-time:\n\(strftime \"%a %d-%b-%Y %H:%M %Z\" (localtime (file-write-date \"oboe.snd\")))\n\
 Equivalent to Guile (stat:mtime (stat file))"
+#endif
 
   time_t date;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_file_write_date, "a string");
@@ -2121,7 +2125,8 @@ list: (sustain-start sustain-end release-start release-end baseNote detune)"
   sp = get_sp(snd);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_sound_loop_info, snd));
-  res = sp->hdr->loops; /* used to call mus_sound_loop_info which does not parallel other header-reader functions */
+  res = sp->hdr->loops;
+
   if (res)
     return(XEN_LIST_8(C_TO_XEN_INT(res[0]), C_TO_XEN_INT(res[1]), C_TO_XEN_INT(res[2]),
 		      C_TO_XEN_INT(res[3]), C_TO_XEN_INT(res[4]), C_TO_XEN_INT(res[5]),
@@ -2144,6 +2149,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
   if (XEN_NOT_BOUND_P(vals))
     {
       vals = snd;
+      len = XEN_LIST_LENGTH(vals); 
       sp = get_sp(XEN_UNDEFINED);
     }
   else sp = get_sp(snd);
@@ -2221,8 +2227,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
   move_file(tmp_file, sp->filename);
   FREE(tmp_file);
   snd_update(sp->state, sp);
-  mus_header_set_full_aiff_loop_info(NULL);
-  return(XEN_TRUE);
+  return(xen_return_first(XEN_TRUE, snd, vals));
 }
 
 static XEN g_soundfont_info(XEN snd)

@@ -204,6 +204,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+9-May:   sound-loop-info bugfix (thanks to Dave Phillips).\n\
 6-May:   support for files larger than 2^31 bytes.\n\
 1-May:   maraca.scm, piano.scm.\n\
 30-Apr:  vct-map\n\

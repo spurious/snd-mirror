@@ -1,5 +1,6 @@
 snd change log
 
+  9-May:     sound-loop-info bugfix (thanks to Dave Phillips).
   6-May:     support for files larger than 2^31 bytes.
   1-May:     maraca.scm, piano.scm.
   30-Apr:    vct-map.

@@ -1271,7 +1271,7 @@ static void apply_callback(Widget w, XtPointer context, XtPointer info)
 
 static int lockapply(snd_info *sp, void *up) 
 {
-  if (sp != up) set_sensitive(APPLY_BUTTON(sp), FALSE);
+  if (sp != (snd_info *)up) set_sensitive(APPLY_BUTTON(sp), FALSE);
   return(0);
 }
 
@@ -1283,7 +1283,7 @@ void lock_apply(snd_state *ss, snd_info *sp)
 
 static int unlockapply(snd_info *sp, void *up) 
 {
-  if (sp != up) set_sensitive(APPLY_BUTTON(sp), TRUE);
+  if (sp != (snd_info *)up) set_sensitive(APPLY_BUTTON(sp), TRUE);
   return(0);
 }
 

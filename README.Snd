@@ -190,13 +190,6 @@ from the 'play' button complaining about data formats, probably
 that it can't play big-endian shorts.
 
 
----- C++ ----
-
-Snd is compatible with C++ except for the optimizer (snd-run.c) --
-if your religion won't allow you to use plain old C, don't configure Snd
---with-run.
-
-
 ---- Recording: ----
 The Record dialog only works in Linux (OSS, perhaps ALSA) and on some
 SGI systems.  It tries real hard on a Sun, but drops samples.
@@ -472,7 +465,6 @@ bug in Redhat 7.2.  Whenever I install 7.2, I immediately:
 
 
 So to sum up: 
-  C, not C++ unless you're willing to run without the optimizer. 
   GSL 0.8 or later
   if Gtk, then Gtk+ 1.2.8 or 1.2.10 and hold your nose
   Motif 2.n but not Lesstif (I no longer have any way to test Motif 1)

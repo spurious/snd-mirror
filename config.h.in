@@ -31,6 +31,7 @@
 #undef HAVE_CLOCK
 #undef HAVE_VSNPRINTF
 #undef HAVE_SNPRINTF
+#undef HAVE_STRINGIZE
 
 #undef STDC_HEADERS
 #undef TM_IN_SYS_TIME

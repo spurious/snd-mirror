@@ -3920,8 +3920,8 @@
 			  (if (null? mxlst)
 			      mxcur
 			      (mxall (max mxcur (cadr mxlst)) (cddr mxlst))))
-			(let ((mxa (mus-sound-maxamp a))
-			      (mxb (mus-sound-maxamp b)))
+			(let ((mxa (mus-sound-duration a))
+			      (mxb (mus-sound-duration b)))
 			  (or (null? mxb)
 			      (and (not (null? mxa))
 				   (> (mxall 0.0 mxa)
@@ -15978,6 +15978,19 @@ EDITS: 5
       (etst '(case 10 ((1) 4) ((2 3) .5) (else 123)))
       (etst '(case 10 ((1) 4) ((2 1.3) 5) (else 123)))
 
+      (etst '(let ((a 1)) (if (> a 0) 2 (list 1 2))))
+      (etst '(let ((a 1)) (if (> a 0) 2 "hi")))
+      (btst '(let ((a 1)) (cond ((> a 0)))) #t)
+      (etst '(let ((a 1)) (cond ((> a 0) (list 1 2)))))
+      (etst '(let ((a 1)) (cond ((> a 1) 2) ((> a 0) "hi"))))
+      (etst '(do ((i 0 (1+ i))) ("hi" 3)))
+      (etst '(do ((i 0 (1+ i))) ((= i 3) (list 1 2)) (+ 1 2)))
+      (etst '(call/cc (lambda (break) (let ((a 1)) (if (> a 0) (break 3) (break "hi"))))))
+      (etst '(call/cc (lambda (break) (let ((a 1)) (if (> a 0) (break 3)) (break "hi")))))
+      (etst '(let ((a 1)) (or (> a 1) "hi"))) ; kinda stupid -- run should handle this!
+      (etst '(let ((a 1)) (and (> a 1) "hi"))) ; kinda stupid -- run should handle this!
+      (etst '(let ((v0 (make-vct 1)) (v1 (make-vct 1))) (set! v0 v1)))
+
       (itst '(cond ((> 1 0) 1)) 1)
       (itst '(cond ((> 1 0) 1) ((< 0 1) 2)) 1)
       (itst '(cond ((< 1 0) 1) ((< 0 1) 2)) 2)
@@ -16048,7 +16061,7 @@ EDITS: 5
 				  (* (mus-sound-chans file) (mus-sound-srate file))))))
 	    "oboe.snd: chans: 1, srate: 22050, Sun, big endian short (16 bits), len: 2.30512475967407")
       (ftst '(mus-sound-duration "oboe.snd") 2.30512)
-      (stst '(mus-sound-comment "1.snd") ";Written Mon 18-Mar-02 07:54 PST by bil at vulch (Linux/X86) using Allegro CL, clm of 18-Mar-02")
+      (stst '(mus-sound-comment "1.snd") ";Written Wed 08-May-02 10:37 PDT by bil at vulch (Linux/X86) using Allegro CL, clm of 9-May-02")
       (ftst '(radians->hz 2.84951704088598e-4) 1.0)
       (ftst '(radians->degrees 1.0) 57.2957801818848)
       (ftst '(degrees->radians 57.2957801818848) 1.0)
@@ -16191,6 +16204,7 @@ EDITS: 5
 		(not (vequal v1 (vct 0.5 0.5 0.5))))
 	    (snd-display ";vct-map 1.0 0.5: ~A ~A" v0 v1)))
 
+      (set! (locsig-type) mus-linear)
       (let ((v0 (make-vct 3))
 	    (v1 (make-vct 3))
 	    (l (make-locsig 30.0 :channels 2)))
@@ -16308,6 +16322,7 @@ EDITS: 5
 	(if (fneq (mus-b2 flt) .123) (snd-display ";run set mus-b2: ~A" (mus-b2 flt)))
 	(if (fneq (mus-formant-radius flt) .3) (snd-display ";run set mus-formant-radius: ~A" (mus-formant-radius flt))))
 
+      (set! (locsig-type) mus-linear)
       (let* ((rev (make-frame->file "fmv4.reverb" 1 mus-bshort mus-next))
 	     (loc (make-locsig 30.0 :channels 2 :reverb .1 :revout rev))
 	     (d0 123.0)

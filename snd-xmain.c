@@ -475,7 +475,7 @@ static void SetupIcon(Widget shell)
   Pixmap bitmap;
   dpy = XtDisplay(shell);
   root = DefaultRootWindow(dpy);
-  bitmap = XCreateBitmapFromData(dpy, root, snd_plain_icon_bits(), 48, 48);
+  bitmap = XCreateBitmapFromData(dpy, root, (const char *)snd_plain_icon_bits(), 48, 48);
   XtVaSetValues(shell, XmNiconPixmap, bitmap, NULL);
 }
 #endif

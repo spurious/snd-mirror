@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 16
-#define SNDLIB_REVISION 0
-#define SNDLIB_DATE "6-May-02"
+#define SNDLIB_REVISION 1
+#define SNDLIB_DATE "9-May-02"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -427,7 +427,6 @@ void mus_sound_print_cache    PROTO((void));
 void mus_sound_report_cache   PROTO((FILE *fp));
 int mus_sound_aiff_p          PROTO((const char *arg));
 int *mus_sound_loop_info      PROTO((const char *arg));
-void mus_sound_set_loop_info  PROTO((const char *arg, int *loop));
 void mus_sound_set_full_loop_info PROTO((const char *arg, int *loop));
 
 int mus_sound_open_input      PROTO((const char *arg));
