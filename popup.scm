@@ -623,6 +623,10 @@
 (define edhist-snd #f)
 (define edhist-chn #f)
 
+(define (edhist-clear-edits w c i)
+  (set! edhist-lists '())
+  #f)
+
 (define (edhist-save-edits w c i)
   (let* ((old-val (assoc (cons edhist-snd edhist-chn) edhist-lists))
 	 (cur-edits (edits edhist-snd edhist-chn))
@@ -634,7 +638,7 @@
 
 (define (edhist-reapply-edits w c i)
   ;; PERHAPS: would be nice to provide some indication of what the saved function does
-  ;; PERHAPS: insensitive 'apply/reapply' buttons if no saved func?
+  ;; PERHAPS: insensitive 'apply/reapply/clear' buttons if no saved func?
   (let* ((old-val (assoc (cons edhist-snd edhist-chn) edhist-lists)))
     (if old-val
 	((cdr old-val) edhist-snd edhist-chn))))
@@ -667,9 +671,10 @@ one channel's edits to others."
       (list "Save"     xmPushButtonWidgetClass every-menu edhist-save-edits)
       (list "Reapply"  xmPushButtonWidgetClass every-menu edhist-reapply-edits)
       (list "Apply"    xmPushButtonWidgetClass every-menu edhist-apply-edits)
+      (list "Clear"    xmPushButtonWidgetClass every-menu edhist-clear-edits)
       (list "Help"     xmPushButtonWidgetClass every-menu edhist-help)))))
 
-;;; PERHAPS: clear local/clear/all?
+;;; PERHAPS: clear local clear?
 
 (define (edit-history-popup-menu snd chn)
   (set! edhist-snd snd)

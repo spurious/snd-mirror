@@ -974,20 +974,6 @@ static XEN g_mus_audio_close(XEN line)
   return(C_TO_XEN_INT(res));
 }
 
-static XEN g_mus_audio_save (void) 
-{
-  #define H_mus_audio_save "(" S_mus_audio_save "): save the current audio state for a subsequent " S_mus_audio_restore "."
-  mus_audio_save(); 
-  return(XEN_FALSE);
-}
-
-static XEN g_mus_audio_restore (void) 
-{
-  #define H_mus_audio_restore "(" S_mus_audio_restore "): restore a previously saved audio hardware state"
-  mus_audio_restore(); 
-  return(XEN_FALSE);
-}
-
 static XEN g_mus_audio_systems (void) 
 {
   #define H_mus_audio_systems "(" S_mus_audio_systems "): number of audio systems; normally each sound card is a separate 'system'"
@@ -1249,8 +1235,6 @@ XEN_NARGIFY_1(g_mus_sound_open_input_w, g_mus_sound_open_input)
 XEN_NARGIFY_1(g_mus_sound_close_input_w, g_mus_sound_close_input)
 XEN_NARGIFY_1(g_mus_make_error_w, g_mus_make_error)
 XEN_NARGIFY_1(g_mus_audio_close_w, g_mus_audio_close)
-XEN_NARGIFY_0(g_mus_audio_save_w, g_mus_audio_save)
-XEN_NARGIFY_0(g_mus_audio_restore_w, g_mus_audio_restore)
 XEN_NARGIFY_0(g_mus_audio_systems_w, g_mus_audio_systems)
 XEN_NARGIFY_4(g_mus_audio_mixer_read_w, g_mus_audio_mixer_read)
 XEN_NARGIFY_4(g_mus_audio_mixer_write_w, g_mus_audio_mixer_write)
@@ -1320,8 +1304,6 @@ XEN_NARGIFY_2(g_mus_audio_set_oss_buffers_w, g_mus_audio_set_oss_buffers)
 #define g_mus_sound_close_input_w g_mus_sound_close_input
 #define g_mus_make_error_w g_mus_make_error
 #define g_mus_audio_close_w g_mus_audio_close
-#define g_mus_audio_save_w g_mus_audio_save
-#define g_mus_audio_restore_w g_mus_audio_restore
 #define g_mus_audio_systems_w g_mus_audio_systems
 #define g_mus_audio_mixer_read_w g_mus_audio_mixer_read
 #define g_mus_audio_mixer_write_w g_mus_audio_mixer_write
@@ -1642,8 +1624,6 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_sound_open_input,     g_mus_sound_open_input_w,       1, 0, 0, H_mus_sound_open_input);
   XEN_DEFINE_PROCEDURE(S_mus_sound_close_input,    g_mus_sound_close_input_w,      1, 0, 0, H_mus_sound_close_input);
   XEN_DEFINE_PROCEDURE(S_mus_audio_close,          g_mus_audio_close_w,            1, 0, 0, H_mus_audio_close);
-  XEN_DEFINE_PROCEDURE(S_mus_audio_save,           g_mus_audio_save_w,             0, 0, 0, H_mus_audio_save);
-  XEN_DEFINE_PROCEDURE(S_mus_audio_restore,        g_mus_audio_restore_w,          0, 0, 0, H_mus_audio_restore);
   XEN_DEFINE_PROCEDURE(S_mus_audio_systems,        g_mus_audio_systems_w,          0, 0, 0, H_mus_audio_systems);
   XEN_DEFINE_PROCEDURE(S_mus_audio_mixer_read,     g_mus_audio_mixer_read_w,       4, 0, 0, H_mus_audio_mixer_read);
   XEN_DEFINE_PROCEDURE(S_mus_audio_mixer_write,    g_mus_audio_mixer_write_w,      4, 0, 0, H_mus_audio_mixer_write);
@@ -1737,9 +1717,7 @@ void mus_sndlib_xen_initialize(void)
 	       S_mus_audio_reinitialize,
 #endif
 	       S_mus_audio_report,
-	       S_mus_audio_restore,
 	       S_mus_audio_samples_per_channel,
-	       S_mus_audio_save,
 	       S_mus_audio_set_oss_buffers,
 	       S_mus_audio_spdif_in,
 	       S_mus_audio_spdif_out,

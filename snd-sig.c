@@ -2488,7 +2488,7 @@ void cos_smooth(chan_info *cp, off_t beg, off_t num, bool over_selection)
   free_sync_state(sc);
 }
 
-static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edpos, const char *origin)
+static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edpos, const char *origin, const char *caller)
 {
   snd_info *sp;
   file_info *hdr = NULL;
@@ -2506,19 +2506,19 @@ static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edp
   if (sf == NULL) 
     {
       cp->edit_hook_checked = false;
-      return(mus_format(_("run-channel: can't read %s[%d] channel data!"), sp->short_filename, cp->chan));
+      return(mus_format(_("%s: can't read %s[%d] channel data!"), caller, sp->short_filename, cp->chan));
     }
   if (dur > MAX_BUFFER_SIZE)
     {
       temp_file = true; 
       ofile = snd_tempnam();
-      hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, S_map_channel);
+      hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, "run_channel temp");
       ofd = open_temp_file(ofile, 1, hdr);
       if (ofd == -1)
 	{
 	  free_snd_fd(sf); 
 	  cp->edit_hook_checked = false;
-	  return(mus_format(_("can't open run-channel temp file %s: %s\n"), ofile, strerror(errno)));
+	  return(mus_format(_("can't open %s temp file %s: %s\n"), caller, ofile, strerror(errno)));
 	}
       datumb = mus_bytes_per_sample(hdr->format);
     }
@@ -2635,7 +2635,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	  if (pt)
 	    {
 	      char *err_str;
-	      err_str = run_channel(cp, pt, beg, num, pos, caller);
+	      err_str = run_channel(cp, pt, beg, num, pos, caller, S_map_channel);
 	      free_ptree(pt);
 	      if (err_str == NULL)
 		{
@@ -2941,7 +2941,7 @@ at run-time.  See extsnd.html for the gory details."
     {
       if (ptrees_present)
 	{
-	  run_channel(cp, pt, beg, dur, pos, caller);
+	  run_channel(cp, pt, beg, dur, pos, caller, S_ptree_channel);
 	  pt = free_ptree(pt);
 	}
       else ptree_channel(cp, pt, beg, dur, pos, XEN_TRUE_P(env_too), init_func, false, XEN_FALSE, caller);

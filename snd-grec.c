@@ -741,7 +741,7 @@ static void device_button_callback(GtkWidget *w, gpointer context)
 	      if (!rp->monitoring)
 		{
 		  rp->monitor_port = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_DAC_OUT,
-							   rp->srate, rp->monitor_chans, rp->output_data_format, rp->buffer_size);
+							   rp->srate, rp->hd_audio_out_chans, rp->output_data_format, rp->buffer_size);
 		  if (rp->monitor_port == -1)
 		    {
 		      record_report(messages, _("open output"), NULL);
@@ -1697,9 +1697,6 @@ static void dismiss_record_callback(GtkWidget *w, gpointer context)
   if (rp->recording) reset_record_callback(w, context);
   gtk_widget_hide(recorder);
   close_recorder_audio();
-#if (!(HAVE_OSS || HAVE_ALSA))
-  mus_audio_restore();
-#endif
 }
 
 void finish_recording(recorder_info *rp)
@@ -2076,16 +2073,15 @@ void reflect_recorder_mixer_gain(int ind, Float val)
 static void initialize_recorder(recorder_info *rp)
 {
   /* picked up initial (widget) values from globals vars */
+#if NEW_SGI_AL || SUN
   int i;
+#endif
   /* special case initializations */
 #if OLD_SGI_AL
   /* in this case, digital in blocks out the others */
   long sb[2];
   int err;
   bool in_digital = false;
-#endif
-  for (i = 0; i < MAX_SOUNDCARDS; i++) rp->raw_input_bufs[i] = NULL;
-#if OLD_SGI_AL
   sb[0] = AL_INPUT_SOURCE;
   err = ALgetparams(AL_DEFAULT_DEVICE, sb, 2);
   if ((!err) && (sb[1] == AL_INPUT_DIGITAL)) in_digital = true;

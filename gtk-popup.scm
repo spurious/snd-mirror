@@ -587,6 +587,10 @@
 (define edhist-snd #f)
 (define edhist-chn #f)
 
+(define (edhist-clear-edits w c i)
+  (set! edhist-lists '())
+  #f)
+
 (define (edhist-save-edits)
   (let* ((old-val (assoc (cons edhist-snd edhist-chn) edhist-lists))
 	 (cur-edits (edits edhist-snd edhist-chn))
@@ -625,6 +629,7 @@ one channel's edits to others."
       (list "Save"     #f (lambda (w d) (edhist-save-edits)))
       (list "Reapply"  #f (lambda (w d) (edhist-reapply-edits)))
       (list "Apply"    #f (lambda (w d) (edhist-apply-edits)))
+      (list "Clear"    #f (lambda (w d) (edhist-clear-edits)))
       (list "Help"     #f (lambda (w d) (edhist-help)))))))
 
 (define edhist-widgets '())

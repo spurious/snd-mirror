@@ -1190,7 +1190,7 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
 	      if (!rp->monitoring)
 		{
 		  rp->monitor_port = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_DAC_OUT,
-							   rp->srate, rp->monitor_chans, rp->output_data_format, rp->buffer_size);
+							   rp->srate, rp->hd_audio_out_chans, rp->output_data_format, rp->buffer_size);
 		  if (rp->monitor_port == -1)
 		    {
 		      record_report(messages, _("open output"), NULL);
@@ -1601,16 +1601,7 @@ static void meter_button_callback(Widget w, XtPointer context, XtPointer info)
 	if (p->active[i]) 
 	  val++;
       if ((val > 0) && (val != n))
-	{
-	  widget_int_to_text(recdat->chans_text, val);
-#if (HAVE_ALSA || HAVE_OSS)
-	  /* FIXME: this apparently is not necessary, we cannot
-	   * change the number of recorded channels on the fly
-	   * (but we can activate or deactivate them in the gui?
-	   rp->out_chans = val;
-	   */
-#endif
-	}
+	widget_int_to_text(recdat->chans_text, val);
     }
   else rp->chan_in_active[wd->gain] = on;
 }
@@ -2874,9 +2865,6 @@ static void dismiss_record_callback(Widget w, XtPointer context, XtPointer info)
       if (rp->recording) reset_record_callback(w, context, info);
       XtUnmanageChild(recorder);
       close_recorder_audio();
-#if (!(HAVE_OSS || HAVE_ALSA))
-      mus_audio_restore();
-#endif
     }
 }
 
@@ -3200,7 +3188,6 @@ widget_t snd_record_file(void)
       /* open all audio devices and collect ins/out etc */
       out_file_pane = (rp->ordered_devices_size - 1);
 
-      /* see note above (line 2809) about recorder out chans */
       n = device_channels(MUS_AUDIO_PACK_SYSTEM(rp->ordered_systems[out_file_pane]) | rp->ordered_devices[out_file_pane]);
       if ((rp->out_chans == DEFAULT_RECORDER_OUT_CHANS) && (n > 2))
 	rp->out_chans = n;
@@ -3329,21 +3316,18 @@ static void initialize_recorder(recorder_info *rp)
   long sb[2];
   int err;
   bool in_digital = false;
-#endif
-  for (i = 0; i < MAX_SOUNDCARDS; i++)
-    {
-      rp->raw_input_bufs[i] = NULL;
-#if (HAVE_OSS || HAVE_ALSA)
-      mixer_gains_posted[i] = 0;
-      tone_controls_posted[i] = 0;
-#endif
-    }
-#if OLD_SGI_AL
   sb[0] = AL_INPUT_SOURCE;
   err = ALgetparams(AL_DEFAULT_DEVICE, sb, 2);
   if ((!err) && (sb[1] == AL_INPUT_DIGITAL)) in_digital = true;
   XmToggleButtonSetState(device_buttons[rp->digital_in_button], in_digital, false);
   device_button_callback(device_buttons[rp->digital_in_button], (XtPointer)all_panes[rp->digital_in_button], NULL);
+#endif
+#if (HAVE_OSS || HAVE_ALSA)
+  for (i = 0; i < MAX_SOUNDCARDS; i++)
+    {
+      mixer_gains_posted[i] = 0;
+      tone_controls_posted[i] = 0;
+    }
 #endif
 #if NEW_SGI_AL || SUN
   /* for simplicity, and until someone complains, new SGI AL machines will just have one active input device */

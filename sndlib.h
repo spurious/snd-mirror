@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 19
-#define SNDLIB_REVISION 6
-#define SNDLIB_DATE "29-Sep-04"
+#define SNDLIB_REVISION 7
+#define SNDLIB_DATE "15-Nov-04"
 
 #include <config.h>
 
@@ -406,8 +406,6 @@ int mus_audio_read_buffers(int line, int frames, int chans, mus_sample_t **bufs,
 
 int mus_audio_mixer_read(int dev, int field, int chan, float *val);
 int mus_audio_mixer_write(int dev, int field, int chan, float *val);
-void mus_audio_save(void);
-void mus_audio_restore(void);
 int mus_audio_initialize(void);
 #if HAVE_OSS || HAVE_ALSA
 int mus_audio_reinitialize(void); /* 29-Aug-01 for CLM/Snd bugfix? */
@@ -435,9 +433,6 @@ int mus_audio_compatible_format(int dev);
 /* -------- io.c -------- */
 
 int mus_file_open_descriptors(int tfd, const char *arg, int df, int ds, off_t dl, int dc, int dt);
-#ifndef SNDLIB_DISABLE_DEPRECATED
-  #define mus_file_set_descriptors(Tfd, Arg, Df, Ds, Dl, Dc, Dt) mus_file_open_descriptors(Tfd, Arg, Df, Ds, Dl, Dc, Dt)
-#endif
 int mus_file_open_read(const char *arg);
 bool mus_file_probe(const char *arg);
 int mus_file_open_write(const char *arg);

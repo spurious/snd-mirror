@@ -28,8 +28,6 @@
  *
  * int mus_audio_mixer_read(int dev, int field, int chan, float *val)
  * int mus_audio_mixer_write(int dev, int field, int chan, float *val)
- * void mus_audio_save(void)
- * void mus_audio_restore(void)
  * int mus_audio_initialize(void) does whatever is needed to get set up
  * int mus_audio_systems(void) returns number of separate complete audio systems (soundcards essentially)
  * AUDIO_SYSTEM(n) selects the nth card (counting from 0), AUDIO_SYSTEM(0) is always the default
@@ -1024,105 +1022,6 @@ static void describe_audio_state_1(void)
 }
 
 
-typedef struct {
-  int dev, has_gains;
-  ALfixed gains[MAX_CHANNELS];
-  int srate;
-} saved_info;
-
-static saved_info **si = NULL;
-static int saved_devices = 0;
-static int saved_devices_size = 0;
-
-static void save_devices(ALvalue *x, int rv)
-{
-  ALpv y;
-  saved_info *sv;
-  ALparamInfo pinf;
-  int i;
-  ALvalue z[16];
-  int nres;
-  for (i = 0; i < rv; i++)
-    {
-      if (saved_devices >= saved_devices_size)
-	{
-	  if (saved_devices_size == 0)
-	    {
-	      if (saved_devices >= 16) 
-		saved_devices_size = 2 * saved_devices; 
-	      else saved_devices_size = 16;
-	      si = (saved_info **)CALLOC(saved_devices_size, sizeof(saved_info *));
-	    }
-	  else
-	    {
-	      int j;
-	      si = (saved_info **)REALLOC(si, 2 * saved_devices * sizeof(saved_info *));
-	      for (j = saved_devices_size; j < 2 * saved_devices; j++) si[j] = NULL;
-	      saved_devices_size = 2 * saved_devices;
-	    }
-	}
-      si[saved_devices] = (saved_info *)CALLOC(1, sizeof(saved_info));
-      sv = si[saved_devices];
-      sv->dev = x[i].i;
-      y.param = AL_RATE;
-      alGetParams(x[i].i, &y, 1);
-      sv->srate = y.value.i;
-      saved_devices++;
-      if (alIsSubtype(AL_DEVICE_TYPE, x[i].i)) 
-        {
-          alGetParamInfo(x[i].i, AL_GAIN, &pinf);
-          if (pinf.min.ll != pinf.max.ll)
-            {
-              y.param = AL_GAIN;
-              y.value.ptr = sv->gains;
-              y.sizeIn = MAX_CHANNELS;
-              alGetParams(x[i].i, &y, 1);
-              sv->has_gains = 1;
-            }
-          else sv->has_gains = 0;
-          if ((nres = alQueryValues(x[i].i, AL_INTERFACE, z, 16, 0, 0)) >= 0) 
-	    save_devices(z, nres);
-        }
-    }
-}
-
-void mus_audio_save (void) 
-{
-  int rv, i;
-  ALvalue x[16];
-  if (saved_devices > 0)
-    for (i = 0; i < saved_devices; i++)
-      if (si[i])
-	{
-	  FREE(si[i]);
-	  si[i] = NULL;
-	}
-  saved_devices = 0;
-  rv= alQueryValues(AL_SYSTEM, AL_DEVICES, x, 16, 0, 0);
-  if (rv > 0) save_devices(x, rv);
-}
-
-void mus_audio_restore (void) 
-{
-  int i;
-  ALpv x;
-  if (saved_devices > 0)
-    for (i = 0; i < saved_devices; i++)
-      if (si[i])
-	{
-	  if (si[i]->has_gains)
-	    {
-	      x.param = AL_GAIN;
-	      x.value.ptr = si[i]->gains;
-	      x.sizeIn = MAX_CHANNELS;
-	      alSetParams(si[i]->dev, &x, 1);
-	    }
-	  x.param = AL_RATE;
-	  x.value.i = si[i]->srate;
-	  alSetParams(si[i]->dev, &x, 1);
-        }
-}
-
 #else
 
 /* old audio library */
@@ -1374,38 +1273,6 @@ static void describe_audio_state_1(void)
   if (err == MUS_NO_ERROR) {mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, " %.2f\n", amps[0]); pprint(audio_strbuf);}
 }
 
-static long *init_state = NULL;
-
-void mus_audio_save (void)
-{
-  /* save channel mode, input source, left/right atten (2), speaker gain, input/output rate, mic_mode */
-  start_sgi_print();
-  init_state = (long *)CALLOC(22, sizeof(long));
-  init_state[0] = AL_CHANNEL_MODE;
-  init_state[2] = AL_INPUT_SOURCE;
-  init_state[4] = AL_LEFT_INPUT_ATTEN;
-  init_state[6] = AL_RIGHT_INPUT_ATTEN;
-  init_state[8] = AL_LEFT2_INPUT_ATTEN;
-  init_state[10] = AL_RIGHT2_INPUT_ATTEN;
-  init_state[12] = AL_MIC_MODE;
-  init_state[14] = AL_LEFT_SPEAKER_GAIN;
-  init_state[16] = AL_RIGHT_SPEAKER_GAIN;
-  init_state[18] = AL_INPUT_RATE;
-  init_state[20] = AL_OUTPUT_RATE;
-  if (ALgetparams(AL_DEFAULT_DEVICE, init_state, 22)) MUS_STANDARD_ERROR(MUS_AUDIO_READ_ERROR, NULL);
-  end_sgi_print();
-}
-
-void mus_audio_restore (void)
-{
-  start_sgi_print();
-  if ((init_state) &&
-      (ALsetparams(AL_DEFAULT_DEVICE, init_state, 22)))
-    MUS_STANDARD_ERROR(MUS_AUDIO_WRITE_ERROR, NULL);
-  end_sgi_print();
-}
-
- 
 #endif
 /* new or old AL */
 
@@ -3309,68 +3176,6 @@ AUDIO_INFO:
     }
 }
 
-static void oss_mus_audio_save (void)
-{
-  int system, systems;
-  systems = mus_audio_systems();
-  for (system = 0; system < systems; system++)
-    {
-      int afd;
-      afd = linux_audio_open(mixer_name(system), O_RDONLY, 0, 0);
-      if (afd == -1) 
-	mus_print("mus_audio_save: %s: %s", mixer_name(system), strerror(errno));
-      else
-	{
-	  int i, devmask, err, level;
-	  ioctl(afd, SOUND_MIXER_READ_DEVMASK, &devmask);
-	  for (i = 0; i < SOUND_MIXER_NRDEVICES; i++)
-	    {
-	      mixer_state[system][i] = 0;
-	      if ((1 << i) & devmask)
-		{
-		  err = ioctl(afd, MIXER_READ(i), &level);
-		  if (err != -1) 
-		    mixer_state[system][i] = level;
-		}
-	    }
-	  ioctl(afd, SOUND_PCM_READ_RATE, &(init_srate[system]));
-	  ioctl(afd, SOUND_PCM_READ_CHANNELS, &(init_chans[system]));
-	  init_format[system] = AFMT_QUERY;
-	  ioctl(afd, SOUND_PCM_SETFMT, &(init_format[system]));
-	  linux_audio_close(afd);
-	}
-    }
-}
-
-static void oss_mus_audio_restore (void)
-{
-  int system, systems;
-  systems = mus_audio_systems();
-  for (system = 0; system < systems; system++)
-    {
-      int afd;
-      afd = linux_audio_open(mixer_name(system), O_RDWR, 0, 0);
-      if (afd == -1) 
-	mus_print("mus_audio_restore: %s: %s", mixer_name(system), strerror(errno));
-      else
-	{
-	  int i, level, devmask;
-	  ioctl(afd, SOUND_PCM_WRITE_CHANNELS, &(init_chans[system]));
-	  ioctl(afd, SOUND_PCM_WRITE_RATE, &(init_srate[system]));
-	  ioctl(afd, SOUND_PCM_SETFMT, &(init_format[system]));
-	  ioctl(afd, SOUND_MIXER_READ_DEVMASK, &devmask);
-	  for (i = 0; i < SOUND_MIXER_NRDEVICES; i++) 
-	    if ((1 << i) & devmask)
-	      {
-		level = mixer_state[system][i];
-		ioctl(afd, MIXER_WRITE(i), &level);
-	      }
-	  linux_audio_close(afd);
-	}
-    }
-}
-
-
 /* ------------------------------- ALSA, OSS, Jack ----------------------------------- */
 /* API being used */
 
@@ -3400,8 +3205,6 @@ static int   (*vect_mus_audio_read)(int id, char *buf, int bytes);
 static int   (*vect_mus_audio_close)(int id);
 static int   (*vect_mus_audio_mixer_read)(int ur_dev, int field, int chan, float *val);
 static int   (*vect_mus_audio_mixer_write)(int ur_dev, int field, int chan, float *val);
-static void  (*vect_mus_audio_save)(void);
-static void  (*vect_mus_audio_restore)(void);
 static void  (*vect_describe_audio_state_1)(void);
 
 /* vectors for the rest of the sndlib api */
@@ -3479,16 +3282,6 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
   return(vect_mus_audio_mixer_write(ur_dev, field, chan, val));
 }
 
-void mus_audio_save(void) 
-{
-  vect_mus_audio_save();
-}
-
-void mus_audio_restore(void) 
-{
-  vect_mus_audio_restore();
-}
-
 static void describe_audio_state_1(void) 
 {
   vect_describe_audio_state_1();
@@ -3521,8 +3314,6 @@ static int probe_api(void)
   vect_mus_audio_close = oss_mus_audio_close;
   vect_mus_audio_mixer_read = oss_mus_audio_mixer_read;
   vect_mus_audio_mixer_write = oss_mus_audio_mixer_write;
-  vect_mus_audio_save = oss_mus_audio_save;
-  vect_mus_audio_restore = oss_mus_audio_restore;
   vect_describe_audio_state_1 = oss_describe_audio_state_1;
   return(vect_mus_audio_initialize());
 #if HAVE_JACK
@@ -3653,8 +3444,6 @@ static int   alsa_mus_audio_read(int id, char *buf, int bytes);
 static int   alsa_mus_audio_close(int id);
 static int   alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val);
 static int   alsa_mus_audio_mixer_write(int ur_dev, int field, int chan, float *val);
-static void  alsa_mus_audio_save(void);
-static void  alsa_mus_audio_restore(void);
 static void  alsa_describe_audio_state_1(void);
 
 /* decide which api to activate */
@@ -3684,8 +3473,6 @@ static int probe_api(void)
 	vect_mus_audio_close = alsa_mus_audio_close;
 	vect_mus_audio_mixer_read = alsa_mus_audio_mixer_read;
 	vect_mus_audio_mixer_write = alsa_mus_audio_mixer_write;
-	vect_mus_audio_save = alsa_mus_audio_save;
-	vect_mus_audio_restore = alsa_mus_audio_restore;
 	vect_describe_audio_state_1 = alsa_describe_audio_state_1;
     } else {
 	/* go for the oss api */
@@ -3702,8 +3489,6 @@ static int probe_api(void)
 	vect_mus_audio_close = oss_mus_audio_close;
 	vect_mus_audio_mixer_read = oss_mus_audio_mixer_read;
 	vect_mus_audio_mixer_write = oss_mus_audio_mixer_write;
-	vect_mus_audio_save = oss_mus_audio_save;
-	vect_mus_audio_restore = oss_mus_audio_restore;
 	vect_describe_audio_state_1 = oss_describe_audio_state_1;
     }
     /* will the _real_ mus_audio_initialize please stand up? */
@@ -4750,14 +4535,6 @@ static int alsa_mus_audio_mixer_write(int ur_dev, int field, int chan, float *va
 	return(MUS_NO_ERROR);
 }
 
-static void alsa_mus_audio_save (void)
-{
-}
-
-static void alsa_mus_audio_restore (void)
-{
-}
-
 static void alsa_describe_audio_state_1(void)
 {
     int err; 
@@ -5716,32 +5493,6 @@ static void describe_audio_state_1(void)
   mus_audio_close(audio_fd);
 }
 
-static struct audio_info saved_info;
-
-void mus_audio_save (void) 
-{
-  int audio_fd, err=-1;
-  audio_fd = open("/dev/audioctl", O_RDONLY | O_NONBLOCK, 0);
-  if (audio_fd != -1) 
-    {
-      err = ioctl(audio_fd, AUDIO_GETINFO, &saved_info); 
-      close(audio_fd);
-      if (err == -1)
-	mus_print("can't get /dev/audioctl info to be saved: %s", strerror(errno));
-    }
-  else mus_print("can't save audio state via /dev/audioctl: %s", strerror(errno));
-}
-
-void mus_audio_restore (void) 
-{
-  int audio_fd, err;
-  audio_fd = open("/dev/audioctl", O_WRONLY | O_NONBLOCK, 0);
-  if (audio_fd != -1) 
-    {
-      err = ioctl(audio_fd, AUDIO_SETINFO, &saved_info); 
-      close(audio_fd);
-    }
-}
 #endif
 
 
@@ -6637,20 +6388,6 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
   return(MUS_NO_ERROR);
 }
 
-static long beep_vol = 0, out_vol = 0;
-
-void mus_audio_save(void) 
-{
-  GetDefaultOutputVolume(&out_vol);
-  GetSysBeepVolume(&beep_vol);
-}
-
-void mus_audio_restore(void) 
-{
-  SetDefaultOutputVolume(out_vol);
-  SetSysBeepVolume(beep_vol);
-}
-
 int mus_audio_initialize(void) 
 {
   return(MUS_NO_ERROR);
@@ -6898,90 +6635,6 @@ int mus_audio_write(int line, char *buf, int bytes)
       if (current_buf > 1) current_buf = 0;
     }
   return(MUS_NO_ERROR);
-}
-
-static int out_saved = 0, aux_saved = 0;
-static DWORD *out_vols = NULL, *aux_vols = NULL;
-static int *out_set = NULL, *aux_set = NULL;
-
-void mus_audio_save(void) 
-{
-  UINT dev;
-  MMRESULT err;
-  DWORD val;
-  HWAVEOUT hd;
-  WAVEOUTCAPS wocaps;
-  AUXCAPS wacaps;
-  WAVEFORMATEX pwfx;
-  out_saved = waveOutGetNumDevs();
-  if (out_vols) {FREE(out_vols); out_vols = NULL;}
-  if (out_set) {FREE(out_set); out_set = NULL;}
-  if (out_saved > 0)
-    {
-      out_vols = (DWORD *)CALLOC(out_saved, sizeof(DWORD));
-      out_set = (int *)CALLOC(out_saved, sizeof(int));
-      for (dev = 0; dev < out_saved; dev++)
-        {
-          err = waveOutGetDevCaps(dev, &wocaps, sizeof(wocaps));
-          if ((!err) && (wocaps.dwSupport & WAVECAPS_VOLUME))
-            {
-	      err = waveOutOpen(&hd, dev, &pwfx, 0, 0, WAVE_MAPPER);
-	      if (!err)
-		{
-		  err = waveOutGetVolume(hd, &val);
-		  if (!err) 
-		    {
-		      out_vols[dev] = val;
-		      out_set[dev] = 1;
-		    }
-		  waveOutClose(hd);
-                }
-            }
-        }
-    }
-  aux_saved = auxGetNumDevs();
-  if (aux_vols) {FREE(aux_vols); aux_vols = NULL;}
-  if (aux_set) {FREE(aux_set); aux_set = NULL;}
-  if (aux_saved > 0)
-    {
-      aux_vols = (DWORD *)CALLOC(aux_saved, sizeof(unsigned long));
-      aux_set = (int *)CALLOC(aux_saved, sizeof(int));
-      for (dev = 0; dev < aux_saved; dev++)
-        {
-          err = auxGetDevCaps(dev, &wacaps, sizeof(wacaps));
-          if ((!err) && (wacaps.dwSupport & AUXCAPS_VOLUME))
-            {
-              err = auxGetVolume(dev, &val);
-              if (!err) 
-                {
-                  aux_vols[dev] = val;
-                  aux_set[dev] = 1;
-                }
-            }
-        }
-    }
-  /* mixer state needs to be saved too, I suppose */
-}
-
-void mus_audio_restore(void) 
-{
-  int i;
-  HWAVEOUT hd;
-  WAVEFORMATEX pwfx;
-  MMRESULT err;
-  for (i = 0; i < out_saved; i++)
-    if (out_set[i])
-      {
-	err = waveOutOpen(&hd, i, &pwfx, 0, 0, WAVE_MAPPER);
-	if (!err)
-	  {
-	    waveOutSetVolume(hd, out_vols[i]);
-	    waveOutClose(hd);
-	  }
-      }
-  for (i = 0; i < aux_saved; i++) 
-    if (aux_set[i]) 
-      auxSetVolume(i, aux_vols[i]);
 }
 
 static float unlog(unsigned short val)
@@ -8468,8 +8121,6 @@ int mus_audio_mixer_write(int dev1, int field, int chan, float *val)
   return(MUS_NO_ERROR);
 }
 
-void mus_audio_save(void) {}
-void mus_audio_restore(void) {}
 int mus_audio_initialize(void) {return(MUS_NO_ERROR);}
 int mus_audio_systems(void) {return(1);}
 char *mus_audio_system_name(int system) {return("Mac OSX");}
@@ -8746,14 +8397,6 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 
 /* pause can be implemented with play.pause and record.pause */
 
-
-void mus_audio_save(void)
-{
-}
-
-void mus_audio_restore(void)
-{
-}
 
 void describe_audio_state_1(void)
 {
@@ -9204,8 +8847,6 @@ static int   jack_mus_audio_read(int id, char *buf, int bytes);
 static int   jack_mus_audio_close(int id);
 static int   jack_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val);
 static int   jack_mus_audio_mixer_write(int ur_dev, int field, int chan, float *val);
-static void  jack_mus_audio_save(void);
-static void  jack_mus_audio_restore(void);
 static void  jack_describe_audio_state_1(void);
 
 
@@ -9244,8 +8885,6 @@ static int jack_mus_audio_initialize(void) {
   vect_mus_audio_close = jack_mus_audio_close;
   vect_mus_audio_mixer_read = jack_mus_audio_mixer_read;
   vect_mus_audio_mixer_write = jack_mus_audio_mixer_write;
-  vect_mus_audio_save = jack_mus_audio_save;
-  vect_mus_audio_restore = jack_mus_audio_restore;
   vect_describe_audio_state_1 = jack_describe_audio_state_1;
 
   audio_initialized = true;
@@ -9484,9 +9123,6 @@ static void jack_describe_audio_state_1(void) {
   sprintf(temp,"\tPrefered audio format: %s\n",mus_short_data_format_name(MUS_COMP_FLOAT));pprint(temp);
 }
 
-
-void jack_mus_audio_save(void) {}
-void jack_mus_audio_restore(void) {}
 
 int jack_mus_audio_systems(void) {
   return(2);
@@ -9807,40 +9443,6 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
   return(MUS_NO_ERROR);
 }
 
-static int saved_gains[6];
-
-void mus_audio_save(void)
-{
-  int fd;
-  struct audio_gain gain;
-  gain.channel_mask = (AUDIO_CHANNEL_LEFT | AUDIO_CHANNEL_RIGHT);
-  fd = open("/dev/audio", O_RDWR);
-  ioctl(fd, AUDIO_GET_GAINS, &gain);
-  close(fd);
-  saved_gains[0] = gain.cgain[0].transmit_gain;
-  saved_gains[1] = gain.cgain[0].receive_gain;
-  saved_gains[2] = gain.cgain[0].monitor_gain;
-  saved_gains[3] = gain.cgain[1].transmit_gain;
-  saved_gains[4] = gain.cgain[1].receive_gain;
-  saved_gains[5] = gain.cgain[1].monitor_gain;
-}
-
-void mus_audio_restore(void)
-{
-  int fd;
-  struct audio_gain gain;
-  gain.channel_mask = (AUDIO_CHANNEL_LEFT | AUDIO_CHANNEL_RIGHT);
-  fd = open("/dev/audio", O_RDWR);
-  ioctl(fd, AUDIO_GET_GAINS, &gain);
-  gain.cgain[0].transmit_gain = saved_gains[0];
-  gain.cgain[0].receive_gain = saved_gains[1];
-  gain.cgain[0].monitor_gain = saved_gains[2];
-  gain.cgain[1].transmit_gain = saved_gains[3];
-  gain.cgain[1].receive_gain = saved_gains[4];
-  gain.cgain[1].monitor_gain = saved_gains[5];
-  ioctl(fd, AUDIO_SET_GAINS, &gain);
-}
-
 int mus_audio_initialize(void) {return(MUS_NO_ERROR);}
 
 int mus_audio_systems(void) {return(1);}
@@ -9914,8 +9516,6 @@ int mus_audio_close(int line) {return(MUS_ERROR);}
 int mus_audio_read(int line, char *buf, int bytes) {return(MUS_ERROR);}
 int mus_audio_mixer_read(int dev, int field, int chan, float *val) {return(MUS_ERROR);}
 int mus_audio_mixer_write(int dev, int field, int chan, float *val) {return(MUS_ERROR);}
-void mus_audio_save(void) {}
-void mus_audio_restore(void) {}
 int mus_audio_initialize(void) {return(MUS_ERROR);}
 int mus_audio_systems(void) {return(0);}
 char *mus_audio_system_name(int system) {return("unknown");}

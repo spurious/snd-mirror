@@ -790,6 +790,16 @@ static void save_sound_state (snd_info *sp, void *ptr)
 	}
       edit_history_to_file(fd, cp);
       check_selection(fd, cp);
+      if (selected_channel() == cp)
+	{
+#if HAVE_GUILE
+	  fprintf(fd, "%s(set! _saved_snd_selected_sound_ sfile)\n", white_space);
+	  fprintf(fd, "%s(set! _saved_snd_selected_channel_ %d)\n", white_space, cp->chan);
+#else
+	  fprintf(fd, "%ssaved_snd_selected_sound = sfile\n", white_space);
+	  fprintf(fd, "%ssaved_snd_selected_channel = %d\n", white_space, cp->chan);
+#endif
+	}
     }
   close_save_sound_block(fd);
 }
@@ -817,7 +827,25 @@ static char *save_state_or_error (char *save_state_name)
       save_prevlist(save_fd);                                 /* list of previous files (View: Files option) */
       save_snd_state_options(save_fd);                        /* options = user-settable global state variables */
       /* the global settings need to precede possible local settings */
+#if HAVE_GUILE
+      fprintf(save_fd, "\n(define _saved_snd_selected_sound_ #f)\n");
+      fprintf(save_fd, "(define _saved_snd_selected_channel_ #f)\n");
+#else
+      fprintf(save_fd, "\nsaved_snd_selected_sound = -1\n");
+      fprintf(save_fd, "saved_snd_selected_channel = -1\n");
+#endif
       for_each_sound(save_sound_state, (void *)save_fd);      /* current sound state -- will traverse chans */
+#if HAVE_GUILE
+      fprintf(save_fd, "(if _saved_snd_selected_sound_\n");
+      fprintf(save_fd, "  (begin\n");
+      fprintf(save_fd, "    (%s _saved_snd_selected_sound_)\n", S_select_sound);
+      fprintf(save_fd, "    (%s _saved_snd_selected_channel_)))\n\n", S_select_channel);
+#else
+      fprintf(save_fd, "if saved_snd_selected_sound != -1\n");
+      fprintf(save_fd, "  select_sound(saved_snd_selected_sound)\n");
+      fprintf(save_fd, "  select_channel(saved_snd_selected_channel)\n");
+      fprintf(save_fd, "end\n\n");
+#endif
       save_macro_state(save_fd);                              /* current unsaved keyboard macros (snd-chn.c) */
       save_envelope_editor_state(save_fd);                    /* current envelope editor window state */
       save_regions(save_fd);                                  /* regions */

@@ -74,54 +74,39 @@ typedef struct {
   bool recording;
   int input_ports[MAX_SOUNDCARDS]; /* input (audio hardware) channel (mus_audio_read from this) */
   int possible_input_chans;        /* possible_input_chans is a count of all existing input channels, some of which may be incompatible */
-  int input_srates[MAX_SOUNDCARDS];
-  int input_formats[MAX_SOUNDCARDS];
-  int input_buffer_sizes[MAX_SOUNDCARDS];
   int input_channels[MAX_SOUNDCARDS];
-  bool input_channel_active[MAX_IN_CHANS]; /* is this input channel receiving input */
-  char *raw_input_bufs[MAX_SOUNDCARDS]; /* incoming data has not yet been converted to sndlib representation */
-  mus_sample_t unscaled_output_bufs[MAX_OUT_CHANS]; /* per-channel (output) buffer, before final output scaling */
-  mus_sample_t input_vu_maxes[MAX_IN_CHANS]; /* VU label values on input chans */
-  mus_sample_t output_vu_maxes[MAX_OUT_CHANS]; /* VU label values on output chans */
-  mus_sample_t *all_systems_input_buf;
-  mus_sample_t *one_system_input_buf;
-  int system_input_buffer_size;
-  bool *chan_in_active;            /* overall_in_chans */
-  bool *chan_out_active;           /* (file)_out_chans */
+  bool input_channel_active[MAX_IN_CHANS];     /* is this input channel receiving input */
+  bool *chan_in_active;               /* overall_in_chans */
+  bool *chan_out_active;              /* (file)_out_chans */
   Float max_duration, trigger;
   int srate, in_format, output_data_format, out_chans, in_chans, buffer_size, in_device;
   bool triggered, triggering, autoload;
-  Float **in_amps;                /* overall_in_chans X out_chans */
-  Float *out_amps;                /* out_chans (independent of file write: monitor vol) */
-  Float *mixer_gains;             /* audio gain values (widgets are per pane) */
+  Float **in_amps;                   /* overall_in_chans X out_chans */
+  Float *out_amps;                   /* out_chans (independent of file write: monitor vol) */
+  Float *mixer_gains;                /* audio gain values (widgets are per pane) */
   int num_mixer_gains;
-  bool monitoring;                /* speakers active (monitor_fd open) */
-  int monitor_port;               /* mus_audio_write to this */
-  int monitor_chans;              /* number of channels being "monitored" -- i.e. output chans sent to the "output" pane
-				   *   not chans being sent to output file; used in conjunction with monitor_fd.
-				   * for example, on some SGI's you can have 4 incoming chans, 
-				   *   any number of recorded chans, but only 2 speaker chans
-				   *   and on some Linux setups, you can have 2 incoming chans,
-				   *   but no ("full duplex") speaker chans.
-				   */
-  int monitor_data_format;
-  char *monitor_buf;
-  bool taking_input;              /* is input (port) active -- are we running the ADC(s) */
+  bool monitoring;                   /* speakers active (monitor_fd open) */
+  int monitor_port;                  /* mus_audio_write to this */
+  int hd_audio_out_chans;            /* number of channels being "monitored" -- audio output
+				      *   not chans being sent to output file; used in conjunction with monitor_fd.
+				      * for example, on some SGI's you can have 4 incoming chans, 
+				      *   any number of recorded chans, but only 2 speaker chans
+				      *   and on some Linux setups, you can have 2 incoming chans,
+				      *   but no ("full duplex") speaker chans.
+				      */
+  bool taking_input;                 /* is input (port) active -- are we running the ADC(s) */
   char *output_file;
-  int output_file_descriptor;     /* mus_file_write to this */
+  int output_file_descriptor;        /* mus_file_write to this */
   int output_header_type;
-  mus_sample_t **output_bufs;  /* formatted non-interleaved output (for file and monitor outputs) */
-  int duration_label_update_frames; /* frames between updates of the duration label */
+  int duration_label_update_frames;  /* frames between updates of the duration label */
   off_t total_output_frames;
-  int systems;                    /* soundcards normally = how many independent input sources from sndlib's point of view */
+  int systems;                       /* soundcards normally = how many independent input sources from sndlib's point of view */
   int *ordered_devices, *ordered_systems; /* soundcards in recorder dialog order with output at end */
   int ordered_devices_size;
-  bool mixer_settings_saved;
   int autoload_button;
   int digital_in_button;
   int microphone_button;
   int line_in_button;
-  Cessator recorder_reader;
 } recorder_info;
 
 recorder_info *get_recorder_info(void);

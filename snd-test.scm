@@ -2518,19 +2518,7 @@
 	  
 	  (let* ((vals (make-vct 32))
 		 (err (mus-audio-mixer-read mus-audio-microphone mus-audio-amp 0 vals)))
-	    (if (= err -1) 
-		(snd-display ";mus-audio-mixer-read?")
-		(begin
-		  (mus-audio-save)
-		  (let ((old-val (vct-ref vals 0)))
-		    (vct-set! vals 0 .5)
-		    (set! err (mus-audio-mixer-write mus-audio-microphone mus-audio-amp 0 vals))
-		    (if (= err -1) 
-			(snd-display ";mus-audio-mixer-write?"))
-		    (clear-audio-inputs)
-		    (mus-audio-restore)
-		    (mus-audio-mixer-read mus-audio-microphone mus-audio-amp 0 vals)
-		    (if (fneq (vct-ref vals 0) old-val) (snd-display ";mus-audio-restore: ~A ~A?" old-val (vct-ref vals 0))))))
+	    (if (= err -1) (snd-display ";mus-audio-mixer-read?"))
 	    (for-each 
 	     (lambda (field)
 	       (for-each

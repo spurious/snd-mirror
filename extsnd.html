@@ -2451,20 +2451,12 @@ See play.scm and rtio.scm. The most important Sndlib functions for Snd are:</p>
 is set by the corresponding mus-audio-open-input call and is translated to the sound-data format (internally known as
 mus_sample_t) by mus-audio-read.</td></tr>
 
-<!-- mus-audio-restore -->
-<tr><td colspan=2><code><a class=def name="musaudiorestore">mus-audio-restore</a> ()</code></td></tr>
-<tr><td></td><td>restore a previously saved audio hardware state (unimplemented in many cases)</td></tr>
-
 <!-- mus-audio-report -->
 <tr><td colspan=2><code><a class=def name="musaudioreport">mus-audio-report</a> ()</code></td></tr>
 <tr><td></td><td>
 return a string describing the current audio hardware state. <a href="#musaudiodescribe">mus-audio-describe</a>
 prints out the same string.
 </td></tr>
-
-<!-- mus-audio-save -->
-<tr><td colspan=2><code><a class=def name="musaudiosave">mus-audio-save</a> ()</code></td></tr>
-<tr><td></td><td>save the current audio hardware state (unimplemented in many cases)</td></tr>
 
 <!-- mus-audio-sun-outputs -->
 <tr><td colspan=2><code><a class=def name="musaudiosunoutputs">mus-audio-sun-outputs</a> (speakers headphones line-out)</code></td></tr>
@@ -6449,7 +6441,7 @@ particular, <a href="#cosinechannelviaptree">cosine-channel-via-ptree</a>.
 This optimization is also hidden in many contexts (map-channel, find, etc).  Internally the Snd run macro
 uses 64-bit ints and doubles, so large sounds should not present any numerical problems.
 See <a href="#optimization">optimization</a>
-for some timings.  In Ruby, its possible to use the <a href="http://www.zenspider.com/Languages/Ruby/">RubyInline</a> module instead.
+for some timings.  In Ruby, it's possible to use the <a href="http://www.zenspider.com/Languages/Ruby/">RubyInline</a> module instead.
 </td></tr><tr><td colspan=2></td></tr>
 
 
@@ -6530,7 +6522,6 @@ use Emacs-style save-as behavior: <a href="#emacssytlesaveas">emacs-style-save-a
 save the current listener text: <a href="#savelistener">save-listener</a><br>
 save keyboard macros: <a href="#savemacros">save-macros</a><br>
 save marks: <a href="#savemarks">save-marks</a><br>
-save the audio hardware settings: <a href="#musaudiosave">mus-audio-save</a><br>
 save just the edit history: <a href="#saveedithistory">save-edit-history</a><br>
 save the peak-env data: <a href="sndscm.html#peakenvdoc">save-peak-env-info</a><br>
 take some action upon a window manager save-yourself signal: <a href="sndscm.html#uponsaveyourself">upon-save-yourself</a><br>

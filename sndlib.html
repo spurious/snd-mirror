@@ -1139,8 +1139,6 @@ constants and functions described above into Scheme.
                                            write new state for <i>device</i>'s <i>field</i> -- see mus_audio_mixer_write above.
   mus-audio-systems ()                     returns how many separate "systems" (soundcards) it can find.  To specify
                                            a particular system in the "device" parameters, add (ash system 16) to the device.
-  mus-audio-save ()                        save current audio state
-  mus-audio-restore ()                     restore previously saved audio state
 
   make-sound-data (chans, frames)      return a sound-data object with <i>chans</i> arrays, each of length <i>frames</i>
   sound-data-ref (obj chan frame)      return (as a float) the sample in channel <i>chan</i> at location <i>frame</i>
