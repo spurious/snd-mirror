@@ -305,7 +305,7 @@ int mus_header_original_format (void) {return(original_data_format);}
 int mus_header_loop_mode(int which) {return(loop_modes[which]);}
 int mus_header_loop_start(int which) {return(loop_starts[which]);}
 int mus_header_loop_end(int which) {return(loop_ends[which]);}
-int mus_header_mark_position(int id) {int i; for (i=0;i<markers;i++) {if (marker_ids[i] == id) return(marker_positions[i]);} return(-1);}
+int mus_header_mark_position(int id) {int i; for (i=0; i<markers; i++) {if (marker_ids[i] == id) return(marker_positions[i]);} return(-1);}
 int mus_header_base_detune(void) {return(base_detune);}
 int mus_header_base_note(void) {return(base_note);}
 
@@ -336,7 +336,7 @@ int mus_data_format_to_bytes_per_sample (int format)
 }
 
 int mus_header_data_format_to_bytes_per_sample (void) {return(mus_data_format_to_bytes_per_sample(data_format));}
-int mus_samples_to_bytes (int format, int size) {return(size*(mus_data_format_to_bytes_per_sample(format)));}
+int mus_samples_to_bytes (int format, int size) {return(size * (mus_data_format_to_bytes_per_sample(format)));}
 int mus_bytes_to_samples (int format, int size) {return((int)(size/(mus_data_format_to_bytes_per_sample(format))));}
 
 void mus_header_snd_set_header (int in_srate, int in_chans, int in_format) 
@@ -374,14 +374,17 @@ static float big_or_little_endian_float (const unsigned char *n, int little)
 static int match_four_chars(const unsigned char *head, const unsigned char *match)
 { 
   int i;
-  for (i=0;i<4;i++) if (head[i] != match[i]) return(0);
+  for (i=0; i<4; i++) 
+    if (head[i] != match[i])
+      return(0);
   return(1);
 }
   
 static void write_four_chars(unsigned char *head, const unsigned char *match)
 {
   int i;
-  for (i=0;i<4;i++) head[i] = match[i];
+  for (i=0; i<4; i++) 
+    head[i] = match[i];
 }
 
 char *mus_header_type_name(int type)
@@ -556,7 +559,7 @@ static int read_next_header (int chan)
   chans = mus_char_to_bint((unsigned char *)(hdrbuf+20));
   comment_start = 0;
   comment_end = 0;
-  for (i=24;i<data_location-1;i++)
+  for (i=24; i<data_location-1; i++)
     if (hdrbuf[i] == '\0') 
       break;
     else
@@ -615,7 +618,7 @@ int mus_header_write_next_header (int chan, int srate, int chans, int loc, int s
   mus_bint_to_char((unsigned char *)(hdrbuf+20), chans);
   write(chan, hdrbuf, 24);
   j = 0;
-  for (i=0;i<len;i++) 
+  for (i=0; i<len; i++) 
     {
       hdrbuf[j]=comment[i];
       j++;
@@ -625,7 +628,7 @@ int mus_header_write_next_header (int chan, int srate, int chans, int loc, int s
 	  j = 0;
 	}
     }
-  for (i=0;i<(loc-(len+24));i++) /* now fill left over bytes with nulls */
+  for (i=0; i<(loc-(len+24)); i++) /* now fill left over bytes with nulls */
     {
       hdrbuf[j]=0;
       j++;
@@ -653,11 +656,11 @@ static void update_next_header_comment (int chan, int loc, const char *comment, 
   lseek(chan, (long)(loc-4), SEEK_SET);
   read(chan, hdrbuf, 4);
   lseek(chan, (long)(loc-4), SEEK_SET);
-  for (j=0;j<4;j++) 
+  for (j=0; j<4; j++) 
     if (hdrbuf[j]==0) 
       hdrbuf[j] = 32;
   j = 4;
-  for (i=0;i<len;i++) 
+  for (i=0; i<len; i++) 
     {
       hdrbuf[j]=comment[i];
       j++;
@@ -824,7 +827,7 @@ static int read_aiff_header (int chan, int overall_offset)
   update_ssnd_location = 0;
   chunkloc = 12 + overall_offset;
   offset = 0;
-  for (i=0;i<AUX_COMMENTS;i++) aux_comment_start[i] = 0;
+  for (i=0; i<AUX_COMMENTS; i++) aux_comment_start[i] = 0;
   data_format = MUS_BSHORT;
   header_distributed = 1;
   srate = 0;
@@ -947,7 +950,7 @@ static int read_aiff_header (int chan, int overall_offset)
 		  (match_four_chars((unsigned char *)hdrbuf, I_AUTH)))
 		{
 		  j=0;
-		  for (i=0;i<AUX_COMMENTS;i++) 
+		  for (i=0; i<AUX_COMMENTS; i++) 
 		    if (aux_comment_start[i] == 0) 
 		      {j=i; break;}
 		  if (j >= AUX_COMMENTS) 
@@ -1017,7 +1020,7 @@ static int read_aiff_header (int chan, int overall_offset)
 				  marker_positions = (int *)CALLOC(markers, sizeof(int));
 				}
 			      moff = 10;
-			      for (m=0;m<num_marks;m++)
+			      for (m=0; m<num_marks; m++)
 				{
 				  if (seek_and_read(chan, (unsigned char *)hdrbuf, offset+moff, 8) > 0)
 				    {
@@ -1163,7 +1166,7 @@ static int write_aif_header (int chan, int srate, int chans, int siz, int format
 	  write_four_chars((unsigned char *)(hdrbuf+46), I_MUS_);
 	  i = 50;
 	}
-      for (j=0;j<len;j++)
+      for (j=0; j<len; j++)
 	{
 	  if (i == HDRBUFSIZ)
 	    {
@@ -1182,7 +1185,7 @@ static int write_aif_header (int chan, int srate, int chans, int siz, int format
 	      write(chan, hdrbuf, i);
 	      i=0;
 	    }
-	  for (j=0;j<extra;j++)
+	  for (j=0; j<extra; j++)
 	    {
 	      hdrbuf[i] = 0;
 	      i++;
@@ -1212,7 +1215,7 @@ static int write_aif_header (int chan, int srate, int chans, int siz, int format
       mus_bint_to_char((unsigned char *)(hdrbuf+4), 8*4 + 2); /* 2 for mark#, then 2:id + 4:pos + 2:pstr */
       /* loop_info: 0..3 are markers positions (ids 1..4) */
       mus_bshort_to_char((unsigned char *)(hdrbuf+8), 4);
-      for (j=0;j<4;j++)
+      for (j=0; j<4; j++)
 	{
 	  mus_bshort_to_char((unsigned char *)(hdrbuf+10+8*j), j+1);
 	  mus_bint_to_char((unsigned char *)(hdrbuf+10+8*j+2), aiff_loop_info[j]);
@@ -1284,7 +1287,7 @@ static void update_aiff_header_comment (int chan, const char *comment, int len)
   lseek(chan, 0L, SEEK_END);
   write_four_chars((unsigned char *)hdrbuf, I_ANNO);
   mus_bint_to_char((unsigned char *)(hdrbuf+4), len);
-  for (i=0, j=8;i<len;i++,j++) hdrbuf[j]=comment[i];
+  for (i=0, j=8; i<len; i++,j++) hdrbuf[j]=comment[i];
   write(chan, hdrbuf, 8+true_len);
   lseek(chan, 4L, SEEK_SET);
   read(chan, hdrbuf, 4);
@@ -1304,7 +1307,7 @@ char *mus_header_aiff_aux_comment(const char *name, int *starts, int *ends)
       fd = mus_file_open_read(name);
       if (fd == -1) return(NULL);
       full_len = 0;
-      for (i=0;i<AUX_COMMENTS;i++) 
+      for (i=0; i<AUX_COMMENTS; i++) 
 	if ((starts[i] > 0) && 
 	    (starts[i] < ends[i]))
 	  full_len += (ends[i] - starts[i] + 3);
@@ -1312,7 +1315,7 @@ char *mus_header_aiff_aux_comment(const char *name, int *starts, int *ends)
 	{
 	  sc = (char *)CALLOC(full_len, sizeof(char));
 	  sc_len = 0;
-	  for (i=0;i<AUX_COMMENTS;i++) 
+	  for (i=0; i<AUX_COMMENTS; i++) 
 	    {
 	      start = starts[i];
 	      end = ends[i];
@@ -1321,7 +1324,7 @@ char *mus_header_aiff_aux_comment(const char *name, int *starts, int *ends)
 		  len = end-start+1;
 		  lseek(fd, start, SEEK_SET);
 		  read(fd, (char *)(sc+sc_len), len);
-		  for (j=0;j<len;j++) 
+		  for (j=0; j<len; j++) 
 		    if (sc[j+sc_len] == 0) sc[j+sc_len] = ' ';
 		  sc_len += len;
 		  sc[sc_len++] = '\n';
@@ -1440,7 +1443,7 @@ static int read_riff_header (int chan)
   data_size = 0;
   fact_samples = 0;
   bits_per_sample = 0;
-  for (i=0;i<AUX_COMMENTS;i++) aux_comment_start[i] = 0;
+  for (i=0; i<AUX_COMMENTS; i++) aux_comment_start[i] = 0;
   true_file_length = lseek(chan, 0L, SEEK_END);
   update_form_size = big_or_little_endian_int((unsigned char *)(hdrbuf+4), little);
   while (1)
@@ -1599,7 +1602,7 @@ static int write_riff_header (int chan, int srate, int chans, int siz, int forma
       write_four_chars((unsigned char *)(hdrbuf+36), I_clm_);
       mus_lint_to_char((unsigned char *)(hdrbuf+40), len+extra);
       i = 44;
-      for (j=0;j<len;j++)
+      for (j=0; j<len; j++)
 	{
 	  if (i == HDRBUFSIZ)
 	    {
@@ -1618,7 +1621,7 @@ static int write_riff_header (int chan, int srate, int chans, int siz, int forma
 	      write(chan, hdrbuf, i);
 	      i=0;
 	    }
-	  for (j=0;j<extra;j++)
+	  for (j=0; j<extra; j++)
 	    {
 	      hdrbuf[i] = 0;
 	      i++;
@@ -1659,7 +1662,7 @@ static void update_riff_header_comment (int chan, const char *comment, int len)
   lseek(chan, 0L, SEEK_END);
   write_four_chars((unsigned char *)hdrbuf, I_INFO);
   mus_lint_to_char((unsigned char *)(hdrbuf+4), len);
-  for (i=0, j=8;i<len;i++,j++) hdrbuf[j]=comment[i];
+  for (i=0, j=8; i<len; i++,j++) hdrbuf[j]=comment[i];
   write(chan, hdrbuf, 8+true_len);
   lseek(chan, 4L, SEEK_SET);
   read(chan, hdrbuf, 4);
@@ -1690,13 +1693,13 @@ char *mus_header_riff_aux_comment(const char *name, int *starts, int *ends)
       i += 4;
       while (i < end)
 	{
-	  for (m=0;m<4;m++) sc[j++] = auxcom[k++];
+	  for (m=0; m<4; m++) sc[j++] = auxcom[k++];
 	  len = mus_char_to_lint((unsigned char *)(auxcom+k));
 	  if ((len <= 0) || (len > end)) break;
 	  sc[j++] = ':';
 	  sc[j++] = ' ';
 	  k+=4;
-	  for (m=0;m<len;m++) if (auxcom[k] != 0) sc[j++] = auxcom[k++]; else k++;
+	  for (m=0; m<len; m++) if (auxcom[k] != 0) sc[j++] = auxcom[k++]; else k++;
 	  sc[j++]='\n';
 	  if (len&1) {len++; k++;}
 	  i+=(len+8);
@@ -1863,7 +1866,7 @@ static void soundfont_entry(const char *name, int start, int end, int loop_start
 	  soundfont_names = (char **)REALLOC(soundfont_names, soundfont_size * sizeof(char *));
 #endif
 	}
-      for (i=soundfont_entries;i<soundfont_size;i++) soundfont_names[i]=NULL;
+      for (i=soundfont_entries; i<soundfont_size; i++) soundfont_names[i]=NULL;
     }
   if (soundfont_names[soundfont_entries] == NULL) soundfont_names[soundfont_entries] = (char *)CALLOC(20, sizeof(char));
   strcpy(soundfont_names[soundfont_entries], name);
@@ -2038,7 +2041,7 @@ static int decode_nist_value (char *str, int base, int end)
   while ((i<end) && (i<MAX_FIELD_LENGTH) && (str[i] != ' ')) i++; /* look for space after it */
   i++;
   if (i>=MAX_FIELD_LENGTH) return(0);
-  for (j=0;i<end;j++,i++)
+  for (j=0; i<end; j++,i++)
     value[j]=str[i];
   value[j]=0;
   if (value[0]=='s') return(MUS_NIST_SHORTPACK);
@@ -2052,7 +2055,7 @@ static int read_nist_header (int chan)
   int happy = 1;
   int k,hend,curbase,j,n,nm,samples,bytes,byte_format;
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)hdrbuf); /* the actual id is "NIST_1A" */
-  for (k=8;k<16;k++) str[k-8]=hdrbuf[k];
+  for (k=8; k<16; k++) str[k-8]=hdrbuf[k];
   sscanf(str, "%d", &data_location);       /* always "1024" */
   n = 16;
   hend = INITIAL_READ_SIZE;
@@ -2065,7 +2068,7 @@ static int read_nist_header (int chan)
   comment_start = 16;
   comment_end = 16;
   byte_format = 10;
-  for (j=0;j<MAX_FIELD_LENGTH;j++) str[j]=' ';  
+  for (j=0; j<MAX_FIELD_LENGTH; j++) str[j]=' ';  
   while (happy) 
     {
       /* much as in xIFF files, march through the file looking for the data we're after */
@@ -2098,7 +2101,7 @@ static int read_nist_header (int chan)
 		  if ((bytes == 0) && (strcmp(name, "sample_n_bytes") == 0)) bytes = decode_nist_value(str, nm, k); else
 		    if ((bytes == 0) && (strcmp(name, "sample_sig_bits") == 0)) {bytes = decode_nist_value(str, nm, k); bytes = (bytes>>3);} else
 		      if (strcmp(name, "sample_byte_format") == 0) byte_format = decode_nist_value(str, nm, k);
-	  for (j=0;j<=k;j++) str[j]=' ';
+	  for (j=0; j<=k; j++) str[j]=' ';
 	  k=0;
 	  if ((curbase+n+1) > 1024) happy=0;
 	}
@@ -2377,7 +2380,7 @@ static int write_ircam_header (int chan, int srate, int chans, int format, const
   write(chan, hdrbuf, 20);
   data_location = 1024;
   j = 0;
-  for (i=0;i<len;i++) 
+  for (i=0; i<len; i++) 
     {
       hdrbuf[j]=comment[i];
       j++;
@@ -2387,7 +2390,7 @@ static int write_ircam_header (int chan, int srate, int chans, int format, const
 	  j = 0;
 	}
     }
-  for (i=0;i<(1024-(len+20));i++) /* now fill left over bytes with nulls */
+  for (i=0; i<(1024-(len+20)); i++) /* now fill left over bytes with nulls */
     {
       hdrbuf[j]=0;
       j++;
@@ -2962,7 +2965,7 @@ static int read_esps_header (int chan)
   hend=curbase+HDRBUFSIZ;
   k=0;
   n=0;
-  for (j=0;j<80;j++) str[j]=' ';  
+  for (j=0; j<80; j++) str[j]=' ';  
   while (happy) 
     {
       str[k] = hdrbuf[n];
@@ -3766,7 +3769,7 @@ static int read_pvf_header(int chan, int loc)
   if (bits < 8) bits = 8;
   header_distributed = 0;
   data_location = 0;
-  for (i=6;i<INITIAL_READ_SIZE;i++)
+  for (i=6; i<INITIAL_READ_SIZE; i++)
     if (hdrbuf[i] == '\n')
       {
 	data_location = i+1;
@@ -3841,7 +3844,7 @@ static int read_ultratracker_header(int chan)
 static int read_sample_dump_header(int chan)
 {
   int i, len;
-  for (i=4;i<HDRBUFSIZ;i++) if (hdrbuf[i] == 26) break;
+  for (i=4; i<HDRBUFSIZ; i++) if (hdrbuf[i] == 26) break;
   len = hdrbuf[i+2];
   if (len>0)
     {
@@ -4091,7 +4094,7 @@ static int read_comdisco_header (int chan)
   commenting = 0;
   while (happy)
     {
-      for (i=0;i<256;i++)
+      for (i=0; i<256; i++)
 	{
 	  if (k == curend)
 	    {
@@ -4129,10 +4132,10 @@ static int read_comdisco_header (int chan)
       if (line[0] != '$')
 	{
 	  len = strlen(line);
-	  for (j=0;j<8;j++) portion[j]=line[j];
+	  for (j=0; j<8; j++) portion[j]=line[j];
 	  portion[8]='\0';
-	  for (j=8;j<len;j++) if (line[j] == '=') break;
-	  for (n=0, m=j+2;m<len;m++,n++) value[n]=line[m];
+	  for (j=8; j<len; j++) if (line[j] == '=') break;
+	  for (n=0, m=j+2; m<len; m++,n++) value[n]=line[m];
 	  value[n]='\0';
 	  if (strcmp(portion, "Sampling") == 0) sscanf(value, "%d", &srate); else
 	  if (strcmp(portion, "Number o") == 0) sscanf(value, "%d", &data_size); else
@@ -4592,7 +4595,7 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
       return(MUS_ERROR);
     }
   happy = 0;
-  for (i=0;i<NINRS;i++) 
+  for (i=0; i<NINRS; i++) 
     {
       if (equal_big_or_little_endian((unsigned char *)hdrbuf, I_INRS[i]))
 	{
@@ -5406,7 +5409,7 @@ from_base64(char* cs, int *buf)
 int i;
 lseek(chan, 0, SEEK_SET);
 read(chan, hdrbuf, HDRBUFSIZ); 
-for (i=0;i<HDRBUFSIZ;i++)
+for (i=0; i<HDRBUFSIZ; i++)
   {
     fprintf(stderr, "%d:   %d %c    %d %d     %d %d\n",
 	    i,

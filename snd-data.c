@@ -24,7 +24,7 @@ lisp_grf *free_lisp_info(chan_info *cp)
 	    free_axis_info(lg->axis);
 	  if (lg->data) 
 	    {
-	      for (i=0;i<lg->graphs;i++) 
+	      for (i=0; i<lg->graphs; i++) 
 		if (lg->data[i]) 
 		  FREE(lg->data[i]);
 	      FREE(lg->data);
@@ -207,7 +207,7 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
       if (sp->allocated_chans < chans) 
 	{
 	  sp->chans = (chan_info **)REALLOC(sp->chans, chans*sizeof(chan_info *));
-	  for (i=sp->allocated_chans;i<chans;i++) sp->chans[i] = NULL;
+	  for (i=sp->allocated_chans; i<chans; i++) sp->chans[i] = NULL;
 	  sp->allocated_chans = chans;
 	}
     }
@@ -292,7 +292,10 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   if (fit_data_on_open(ss)) 
     {
       sp->fit_data_amps = (Float *)CALLOC(sp->nchans, sizeof(Float));
-      file_maxamps(sp->fullname, sp->fit_data_amps, hdr->chans, hdr->format);
+      file_maxamps(sp->fullname, 
+		   sp->fit_data_amps, 
+		   hdr->chans, 
+		   hdr->format);
       /* can't use snd-chn.c get_maxamp here because the file edit tree is not yet set up */
       /* can't use mus_sound_chans etc here because this might be a raw header file */
     }
@@ -310,10 +313,9 @@ void free_snd_info(snd_info *sp)
   snd_info_cleanup(sp);
   snd_filter_cleanup(sp);
   sp->syncing = 0;
-  for (i=0;i<sp->nchans;i++)
-    {
-      if (sp->chans[i]) sp->chans[i]=free_chan_info(sp->chans[i]);
-    }
+  for (i=0; i<sp->nchans; i++)
+    if (sp->chans[i]) 
+      sp->chans[i] = free_chan_info(sp->chans[i]);
   sp->state = NULL;
   sp->inuse = 0;
   sp->amp = 1.0;
@@ -375,7 +377,7 @@ snd_info *completely_free_snd_info(snd_info *sp)
   chan_info *cp;
   free_snd_info(sp);
   if (sp->sgx) FREE(sp->sgx);
-  for (i=0;i<sp->allocated_chans;i++) 
+  for (i=0; i<sp->allocated_chans; i++) 
     {
       cp = sp->chans[i];
       if (cp)
@@ -403,15 +405,15 @@ int map_over_chans (snd_state *ss, int (*func)(chan_info *, void *), void *userp
   val = 0;
   if (ss)
     {
-      for (i=0;i<ss->max_sounds;i++)
+      for (i=0; i<ss->max_sounds; i++)
 	{
-	  if ((sp=((snd_info *)(ss->sounds[i]))))
+	  if ((sp = ((snd_info *)(ss->sounds[i]))))
 	    {
 	      if (sp->inuse)
 		{
-		  for (j=0;j<(sp->nchans);j++)
+		  for (j=0; j<(sp->nchans); j++)
 		    {
-		      if ((cp=((chan_info *)(sp->chans[j]))))
+		      if ((cp = ((chan_info *)(sp->chans[j]))))
 			{
 			  val = (*func)(cp, userptr);
 			  if (val) return(val);}}}}}}
@@ -424,14 +426,12 @@ int map_over_sound_chans (snd_info *sp, int (*func)(chan_info *, void *), void *
   int j,val;
   chan_info *cp;
   val = 0;
-  for (j=0;j<(sp->nchans);j++)
-    {
-      if ((cp=sp->chans[j]))
-	{
-	  val = (*func)(cp, userptr);
-	  if (val) return(val);
-	}
-    }
+  for (j=0; j<(sp->nchans); j++)
+    if ((cp = sp->chans[j]))
+      {
+	val = (*func)(cp, userptr);
+	if (val) return(val);
+      }
   return(val);
 }
 
@@ -443,9 +443,9 @@ int map_over_sounds (snd_state *ss, int (*func)(snd_info *, void *), void *userp
   val = 0;
   if (ss)
     {
-      for (i=0;i<ss->max_sounds;i++)
+      for (i=0; i<ss->max_sounds; i++)
 	{
-	  if ((sp=((snd_info *)(ss->sounds[i]))))
+	  if ((sp = ((snd_info *)(ss->sounds[i]))))
 	    {
 	      if (sp->inuse)
 		{
@@ -461,9 +461,9 @@ int map_over_separate_chans(snd_state *ss, int (*func)(chan_info *, void *), voi
   val = 0;
   if (ss)
     {
-      for (i=0;i<ss->max_sounds;i++)
+      for (i=0; i<ss->max_sounds; i++)
 	{
-	  if ((sp=((snd_info *)(ss->sounds[i]))))
+	  if ((sp = ((snd_info *)(ss->sounds[i]))))
 	    {
 	      if (sp->inuse)
 		{
@@ -481,11 +481,12 @@ int active_channels (snd_state *ss, int count_virtual_channels)
   int chans,i;
   snd_info *sp;
   chans = 0;
-  for (i=0;i<ss->max_sounds;i++)
+  for (i=0; i<ss->max_sounds; i++)
     {
       if (snd_ok(sp = (ss->sounds[i])))
 	{
-	  if ((count_virtual_channels == WITH_VIRTUAL_CHANNELS) || (sp->combining == CHANNELS_SEPARATE))
+	  if ((count_virtual_channels == WITH_VIRTUAL_CHANNELS) ||
+	      (sp->combining == CHANNELS_SEPARATE))
 	    chans += sp->nchans;
 	  else chans++;
 	}
@@ -498,17 +499,17 @@ int find_free_sound_slot (snd_state *state, int desired_chans)
   int i,j;
   snd_info *sp;
   /* first try to find an unused slot that can accommodate desired_chans (to reduce Widget creation) */
-  for (i=0;i<state->max_sounds;i++)
+  for (i=0; i<state->max_sounds; i++)
     {
       sp = state->sounds[i];
       if ((sp) && (sp->inuse == 0) && (sp->allocated_chans == desired_chans)) return(i);
     }
-  for (i=0;i<state->max_sounds;i++)
+  for (i=0; i<state->max_sounds; i++)
     {
       sp = state->sounds[i];
       if ((sp) && (sp->inuse == 0) && (sp->allocated_chans > desired_chans)) return(i);
     }
-  for (i=0;i<state->max_sounds;i++)
+  for (i=0; i<state->max_sounds; i++)
     {
       sp = state->sounds[i];
       if (sp == NULL) return(i);
@@ -518,7 +519,7 @@ int find_free_sound_slot (snd_state *state, int desired_chans)
   j = state->max_sounds;
   state->max_sounds += 4;
   state->sounds = (snd_info **)REALLOC(state->sounds, state->max_sounds*sizeof(snd_info *));
-  for (i=j;i<state->max_sounds;i++) state->sounds[i] = NULL;
+  for (i=j; i<state->max_sounds; i++) state->sounds[i] = NULL;
   return(j);
 }
 
@@ -526,9 +527,9 @@ static snd_info *any_active_sound(snd_state *ss)
 {
   snd_info *sp;
   int i;
-  for (i=0;i<ss->max_sounds;i++)
+  for (i=0; i<ss->max_sounds; i++)
     {
-      if ((sp=(ss->sounds[i])) && (sp->inuse)) return(sp);
+      if ((sp = (ss->sounds[i])) && (sp->inuse)) return(sp);
     }
   return(NULL);
 }
@@ -627,9 +628,6 @@ void select_channel(snd_info *sp, int chan)
 chan_info *current_channel(snd_state *ss)
 {
   snd_info *sp = NULL;
-#if DEBUGGING
-  if (!ss) {fprintf(stderr, "state null??"); abort();}
-#endif
   if (ss->selected_sound != NO_SELECTION)
     sp = ss->sounds[ss->selected_sound];
   else sp = any_active_sound(ss);
@@ -652,10 +650,10 @@ sync_info *free_sync_info (sync_info *si)
 
 sync_info *snd_sync(snd_state *ss, int sync)
 {
-  int i,j,k,chans=0;
+  int i,j,k,chans = 0;
   snd_info *sp;
   sync_info *si;
-  for (i=0;i<ss->max_sounds;i++)
+  for (i=0; i<ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse) && (sp->syncing == sync)) 
@@ -667,12 +665,12 @@ sync_info *snd_sync(snd_state *ss, int sync)
       si->begs = (int *)CALLOC(chans, sizeof(int));
       si->cps = (chan_info **)CALLOC(chans, sizeof(chan_info *));
       si->chans = chans;
-      j=0;
-      for (i=0;i<ss->max_sounds;i++)
+      j = 0;
+      for (i=0; i<ss->max_sounds; i++)
 	{
 	  sp = ss->sounds[i];
 	  if ((sp) && (sp->inuse) && (sp->syncing == sync))
-	    for (k=0;k<sp->nchans;k++,j++)
+	    for (k=0; k<sp->nchans; k++, j++)
 	      si->cps[j] = sp->chans[k];
 	}
       return(si);
@@ -707,15 +705,16 @@ snd_info *find_sound(snd_state *ss, char *name)
   char *sname;
   int i;
   if (name == NULL) return(NULL);
-  for (i=0;i<ss->max_sounds;i++)
+  for (i=0; i<ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse))
-	if ((strcmp(name, sp->shortname) == 0) || (strcmp(name, sp->fullname) == 0)) 
+	if ((strcmp(name, sp->shortname) == 0) || 
+	    (strcmp(name, sp->fullname) == 0)) 
 	  return(sp);
     }
   sname = filename_without_home_directory(name);
-  for (i=0;i<ss->max_sounds;i++)
+  for (i=0; i<ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse) && (strcmp(sname, sp->shortname) == 0))
@@ -752,8 +751,8 @@ void display_info(snd_info *sp)
 	  sprintf(buffer, "srate: %d\nchans: %d\nlength: %.3f (%d %s)\ntype: %s\nformat: %s\nwritten: %s%s%s\n",
 		  hdr->srate,
 		  hdr->chans,
-		  (Float)(hdr->samples)/(Float)(hdr->chans * hdr->srate),
-		  (hdr->samples)/(hdr->chans),
+		  (Float)(hdr->samples) / (Float)(hdr->chans * hdr->srate),
+		  (hdr->samples) / (hdr->chans),
 		  (hdr->chans == 1) ? "samples" : "frames",
 		  mus_header_type_name(hdr->type),
 		  mus_data_format_name(hdr->format),
@@ -776,7 +775,7 @@ static void file_maxamps(char *ifile, Float *vals, int ichans, int format)
   MUS_SAMPLE_TYPE fc;
   MUS_SAMPLE_TYPE *buffer,*amps;
   MUS_SAMPLE_TYPE **ibufs;
-  if ((ifd=mus_file_open_read(ifile)) == -1) return;
+  if ((ifd = mus_file_open_read(ifile)) == -1) return;
   idataloc = mus_sound_data_location(ifile);
   mus_file_set_descriptors(ifd,
 			   ifile,
@@ -790,44 +789,50 @@ static void file_maxamps(char *ifile, Float *vals, int ichans, int format)
   if (samples <= 0) 
     {
       if (mus_file_close(ifd) != 0)
-	snd_error("%s[%d] %s: close file %s: %s\n", __FILE__, __LINE__, __FUNCTION__, ifile, strerror(errno));
+	snd_error("%s[%d] %s: close file %s: %s\n", 
+		  __FILE__, __LINE__, __FUNCTION__, 
+		  ifile, strerror(errno));
       return;
     }
-  loc=mus_file_seek(ifd, idataloc, SEEK_SET);
-  if (loc<idataloc) 
+  loc = mus_file_seek(ifd, idataloc, SEEK_SET);
+  if (loc < idataloc) 
     {
       if (mus_file_close(ifd) != 0)
-	snd_error("%s[%d] %s: close file %s: %s\n", __FILE__, __LINE__, __FUNCTION__, ifile, strerror(errno));
+	snd_error("%s[%d] %s: close file %s: %s\n", 
+		  __FILE__, __LINE__, __FUNCTION__, 
+		  ifile, strerror(errno));
       return;
     }
   ibufs = (MUS_SAMPLE_TYPE **)CALLOC(ichans, sizeof(MUS_SAMPLE_TYPE *));
-  for (i=0;i<ichans;i++) ibufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
+  for (i=0; i<ichans; i++) ibufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
   amps = (MUS_SAMPLE_TYPE *)CALLOC(ichans, sizeof(MUS_SAMPLE_TYPE));
   bufnum = (FILE_BUFFER_SIZE);
-  for (n=0;n<samples;n+=bufnum)
+  for (n=0; n<samples; n+=bufnum)
     {
-      if ((n+bufnum)<samples) cursamples = bufnum; else cursamples = (samples-n);
+      if ((n + bufnum) < samples) cursamples = bufnum; else cursamples = (samples - n);
       mus_file_read(ifd, 0, cursamples-1, ichans, ibufs);
-      for (chn=0;chn<ichans;chn++)
+      for (chn=0; chn<ichans; chn++)
 	{
 	  buffer = (MUS_SAMPLE_TYPE *)(ibufs[chn]);
-	  fc=amps[chn];
-	  for (i=0;i<cursamples;i++) 
+	  fc = amps[chn];
+	  for (i=0; i<cursamples; i++) 
 	    {
 	      if ((buffer[i] > fc) || (fc < -buffer[i])) 
 		{
-		  fc=buffer[i]; 
+		  fc = buffer[i]; 
 		  if (fc < MUS_SAMPLE_0) fc = -fc;
 		}
 	    }
-	  amps[chn]=fc;
+	  amps[chn] = fc;
 	}
     }
-  for (chn=0;chn<ichans;chn++) vals[chn] = MUS_SAMPLE_TO_FLOAT(amps[chn]);
-  for (i=0;i<ichans;i++) FREE(ibufs[i]);
+  for (chn=0; chn<ichans; chn++) vals[chn] = MUS_SAMPLE_TO_FLOAT(amps[chn]);
+  for (i=0; i<ichans; i++) FREE(ibufs[i]);
   FREE(ibufs);
   FREE(amps);
   if (mus_file_close(ifd) != 0)
-    snd_error("%s[%d] %s: close file %s: %s\n", __FILE__, __LINE__, __FUNCTION__, ifile, strerror(errno));
+    snd_error("%s[%d] %s: close file %s: %s\n", 
+	      __FILE__, __LINE__, __FUNCTION__, 
+	      ifile, strerror(errno));
 }
 

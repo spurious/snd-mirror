@@ -32,6 +32,7 @@
 #undef HAVE_ISNAN
 #undef HAVE_MKSTEMP
 #undef HAVE_STRDUP
+#undef HAVE_FSTATFS
 
 #undef STDC_HEADERS
 #undef TM_IN_SYS_TIME

@@ -35,16 +35,13 @@ static mark *map_over_marks(chan_info *cp, mark_map_func *func, void *m, int dir
   if (cp->marks)
     {
       pos = cp->edit_ctr;
-#if DEBUGGING
-      if (pos >= cp->marks_size) {fprintf(stderr, "edit_ctr: %d, marks_size: %d?", cp->edit_ctr, cp->marks_size); abort();}
-#endif
       mps = cp->marks[pos];
       marks = cp->mark_ctr[pos];
       if (mps)
 	{
 	  if (direction == READ_FORWARD)
 	    {
-	      for (i=0;i<=marks;i++) 
+	      for (i=0; i<=marks; i++) 
 		{
 		  mp = (*func)(cp, mps[i], m);
 		  if (mp) return(mp);
@@ -52,7 +49,7 @@ static mark *map_over_marks(chan_info *cp, mark_map_func *func, void *m, int dir
 	    }
 	  else
 	    {
-	      for (i=marks;i>=0;i--) 
+	      for (i=marks; i>=0; i--) 
 		{
 		  mp = (*func)(cp, mps[i], m);
 		  if (mp) return(mp);
@@ -117,15 +114,15 @@ static mark *find_mark_from_id(snd_state *ss, int id, chan_info **cps, int pos)
   snd_info *sp;
   chan_info *cp;
   mark *mp;
-  for (i=0;i<ss->max_sounds;i++)
+  for (i=0; i<ss->max_sounds; i++)
     {
-      if ((sp=((snd_info *)(ss->sounds[i]))))
+      if ((sp = ((snd_info *)(ss->sounds[i]))))
 	{
 	  if (sp->inuse)
 	    {
-	      for (j=0;j<(sp->nchans);j++)
+	      for (j=0; j<(sp->nchans); j++)
 		{
-		  if ((cp=((chan_info *)(sp->chans[j]))))
+		  if ((cp = ((chan_info *)(sp->chans[j]))))
 		    {
 		      old_pos = cp->edit_ctr;
 		      if (pos >= 0) cp->edit_ctr = pos;
@@ -209,17 +206,17 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, int show)
     {
       activate_button_font(ax, cp->state);
       len = mark_name_width(cp->state, mp->name);
-      draw_string(ax, (int)(cx-0.5*len), y1+6, mp->name, strlen(mp->name));
+      draw_string(ax, (int)(cx - 0.5 * len), y1 + 6, mp->name, strlen(mp->name));
     }
   fill_rectangle(ax,
 		 cx - MARK_TAB_WIDTH, top,
-		 2*MARK_TAB_WIDTH, MARK_TAB_HEIGHT);
-  draw_line(ax, cx, top+4, cx, y0);
+		 2 * MARK_TAB_WIDTH, MARK_TAB_HEIGHT);
+  draw_line(ax, cx, top + 4, cx, y0);
   fill_polygon(ax, 4,
-	       cx,                y0,
-	       cx+PLAY_ARROW_SIZE, y0 +   PLAY_ARROW_SIZE,
-	       cx,                y0 + 2*PLAY_ARROW_SIZE,
-	       cx,                y0);
+	       cx,                 y0,
+	       cx + PLAY_ARROW_SIZE, y0 +     PLAY_ARROW_SIZE,
+	       cx,                 y0 + 2 * PLAY_ARROW_SIZE,
+	       cx,                 y0);
 
   if (show) mp->id |= MARK_VISIBLE; else mp->id &= (~MARK_VISIBLE);
 }
@@ -229,10 +226,10 @@ static void draw_play_triangle(chan_info *cp, int x)
   int y0;
   y0 = ((axis_info *)(cp->axis))->y_axis_y0;
   draw_polygon(mark_context(cp), 4,
-	       x,                y0,
-	       x+PLAY_ARROW_SIZE, y0 +   PLAY_ARROW_SIZE,
-	       x,                y0 + 2*PLAY_ARROW_SIZE,
-	       x,                y0);
+	       x,                 y0,
+	       x + PLAY_ARROW_SIZE, y0 +     PLAY_ARROW_SIZE,
+	       x,                 y0 + 2 * PLAY_ARROW_SIZE,
+	       x,                 y0);
 }
 
 void draw_mark(chan_info *cp, axis_info *ap, mark *mp)
@@ -257,12 +254,13 @@ static mark *hit_mark_1(chan_info *cp, mark *mp, void *m)
   mdata *md = (mdata *)m;
   axis_info *ap;
   mx = grf_x((double)(mp->samp) / (double)SND_SRATE(cp->sound), cp->axis);
-  if (mx > (md->x+MARK_TAB_WIDTH)) return(NULL); /* past it */
-  if (mx < (md->x-MARK_TAB_WIDTH)) return(NULL); /* before it */
+  if (mx > (md->x + MARK_TAB_WIDTH)) return(NULL); /* past it */
+  if (mx < (md->x - MARK_TAB_WIDTH)) return(NULL); /* before it */
   if (mp->name == NULL)                          /* check y if unnamed */
     {
       ap = cp->axis;
-      if ((md->y >= ap->y_axis_y1) && (md->y <= (ap->y_axis_y1+MARK_TAB_HEIGHT))) 
+      if ((md->y >= ap->y_axis_y1) && 
+	  (md->y <= (ap->y_axis_y1 + MARK_TAB_HEIGHT))) 
 	return(mp); 
       else return(NULL);
     }
@@ -278,11 +276,11 @@ static mark *hit_triangle_1(chan_info *cp, mark *mp, void *m)
   axis_info *ap;
   mx = grf_x((double)(mp->samp) / (double)SND_SRATE(cp->sound), cp->axis);
   if (mx > md->x) return(NULL);
-  if ((mx+PLAY_ARROW_SIZE) < md->x) return(NULL);
+  if ((mx + PLAY_ARROW_SIZE) < md->x) return(NULL);
   ap = cp->axis;
   y = md->y - ap->y_axis_y0 - PLAY_ARROW_SIZE;
   if (y < 0) y = -y;
-  if ((mx+PLAY_ARROW_SIZE-y) >= md->x) return(mp);
+  if ((mx + PLAY_ARROW_SIZE-y) >= md->x) return(mp);
   /* the last is assuming the triangle shape for hit detection */
   return(NULL);
 }
@@ -297,7 +295,7 @@ mark *hit_triangle(chan_info *cp, int x, int y)
     {
       /* first check that we're in the bottom portion of the graph where the mark triangles are */
       if ((y >= ap->y_axis_y0) && 
-	  (y <= (ap->y_axis_y0+2*PLAY_ARROW_SIZE)))
+	  (y <= (ap->y_axis_y0 + 2 * PLAY_ARROW_SIZE)))
 	{
 	  md = (mdata *)CALLOC(2, sizeof(mdata));
 	  md->x = x;
@@ -366,7 +364,11 @@ static int move_mark_1(chan_info *cp, mark *mp, int x)
     {
       erase_mark(cp, ap, mp);
       nx = x;
-      if (watching_mouse) {cancel_mark_watch(cp); redraw=0;}
+      if (watching_mouse) 
+	{
+	  cancel_mark_watch(cp); 
+	  redraw = 0;
+	}
     }
   mp->samp = (int)(ungrf_x(ap, nx) * SND_SRATE(cp->sound));
   if (mp->samp < 0) mp->samp = 0;
@@ -434,7 +436,7 @@ static void allocate_marks(chan_info *cp, int edit_ctr)
   cp->marks = (mark ***)CALLOC(cp->marks_size, sizeof(mark **));
   cp->mark_size = (int *)CALLOC(cp->marks_size, sizeof(int));
   cp->mark_ctr = (int *)CALLOC(cp->marks_size, sizeof(int));
-  for (i=0;i<cp->marks_size;i++) cp->mark_ctr[i] = -1;
+  for (i=0; i<cp->marks_size; i++) cp->mark_ctr[i] = -1;
 }
 
 mark *add_mark(int samp, char *name, chan_info *cp)
@@ -454,7 +456,7 @@ mark *add_mark(int samp, char *name, chan_info *cp)
       else 
 	{
 	  cp->marks[ed] = (mark **)REALLOC(cp->marks[ed], cp->mark_size[ed] * sizeof(mark *));
-	  for (i=cp->mark_size[ed]-16;i<cp->mark_size[ed];i++) cp->marks[ed][i] = NULL;
+	  for (i=cp->mark_size[ed]-16; i<cp->mark_size[ed]; i++) cp->marks[ed][i] = NULL;
 	}
     }
   mps = cp->marks[ed];
@@ -467,7 +469,7 @@ mark *add_mark(int samp, char *name, chan_info *cp)
     }
   else
     {
-      for (i=0;i<med;i++) /* not <= because we pre-incremented above */
+      for (i=0; i<med; i++) /* not <= because we pre-incremented above */
 	{
 	  mp = mps[i];
 	  if ((ignore_redundant_marks) && (samp == mp->samp))
@@ -478,7 +480,7 @@ mark *add_mark(int samp, char *name, chan_info *cp)
 	  if (samp < mp->samp)
 	    {
 	      if (mps[med]) free_mark(mps[med]);
-	      for (j=med;j>i;j--)
+	      for (j=med; j>i; j--)
 		mps[j] = mps[j-1];
 	      mps[i] = make_mark(samp, name);
 	      return(mps[i]);
@@ -504,7 +506,7 @@ void delete_mark_samp(int samp, chan_info *cp)
       if (mps)
 	{
 	  edm = cp->mark_ctr[ed];
-	  for (i=0;i<=edm;i++)
+	  for (i=0; i<=edm; i++)
 	    {
 	      mp = mps[i];
 	      if (mp->samp == samp)
@@ -515,7 +517,7 @@ void delete_mark_samp(int samp, chan_info *cp)
 		  mps[i] = NULL;
 		  if (i < edm)
 		    {
-		      for (j=i;j<edm;j++) mps[j] = mps[j+1];
+		      for (j=i; j<edm; j++) mps[j] = mps[j+1];
 		      mps[edm] = NULL;
 		    }
 		  cp->mark_ctr[ed]--;
@@ -540,7 +542,7 @@ static void delete_mark_id(int id, chan_info *cp)
       if (mps)
 	{
 	  edm = cp->mark_ctr[ed];
-	  for (i=0;i<=edm;i++)
+	  for (i=0; i<=edm; i++)
 	    {
 	      mp = mps[i];
 	      if (mark_id(mp) == id)
@@ -551,7 +553,7 @@ static void delete_mark_id(int id, chan_info *cp)
 		  mps[i] = NULL;
 		  if (i < edm)
 		    {
-		      for (j=i;j<edm;j++) mps[j] = mps[j+1];
+		      for (j=i; j<edm; j++) mps[j] = mps[j+1];
 		      mps[edm] = NULL;
 		    }
 		  cp->mark_ctr[ed]--;
@@ -575,7 +577,7 @@ static void delete_marks (chan_info *cp)
       mps = cp->marks[ed];
       if (mps)
 	{
-	  for (i=0;i<cp->mark_size[ed];i++)
+	  for (i=0; i<cp->mark_size[ed]; i++)
 	    {
 	      mp = mps[i];
 	      if (mp) 
@@ -599,14 +601,14 @@ void free_mark_list(chan_info *cp, int ignore)
   mark *mp;
   if (cp->marks)
     {
-      for (i=0;i<cp->marks_size;i++) 
+      for (i=0; i<cp->marks_size; i++) 
 	{
 	  if (i != ignore)
 	    {
 	      mps = cp->marks[i];
 	      if (mps)
 		{
-		  for (j=0;j<cp->mark_size[i];j++)
+		  for (j=0; j<cp->mark_size[i]; j++)
 		    {
 		      mp = mps[j];
 		      if (mp) free_mark(mp);
@@ -631,7 +633,7 @@ void collapse_marks (snd_info *sp)
   int i,ed,len,size;
   chan_info *cp;
   mark **mps;
-  for (i=0;i<sp->nchans;i++)
+  for (i=0; i<sp->nchans; i++)
     {
       cp = sp->chans[i];
       if ((cp) && (cp->marks))
@@ -658,9 +660,9 @@ static mark *find_nth_mark(chan_info *cp, int count)
   int i,c,samp;
   mark *mp = NULL;
   if ((!cp) || (!cp->marks)) return(NULL);
-  if (count > 0) c=count; else c=-count;
+  if (count > 0) c = count; else c = -count;
   samp = cp->cursor;
-  for (i=0;i<c;i++)
+  for (i=0; i<c; i++)
     {
       if (count > 0) mp = find_next_mark(samp, cp);
       else mp = find_previous_mark(samp, cp);
@@ -750,7 +752,7 @@ void release_pending_marks(chan_info *cp, int edit_ctr)
       mps = cp->marks[edit_ctr];
       if (mps)
 	{
-	  for (j=0;j<cp->mark_size[edit_ctr];j++) /* was <= cp->mark_ctr[edit_ctr] */
+	  for (j=0; j<cp->mark_size[edit_ctr]; j++) /* was <= cp->mark_ctr[edit_ctr] */
 	    {
 	      mp = mps[j];
 	      if (mp) free_mark(mp);
@@ -781,7 +783,7 @@ void ripple_marks(chan_info *cp, int beg, int change)
 	  cp->marks = (mark ***)REALLOC(cp->marks, cp->marks_size * sizeof(mark **));
 	  cp->mark_size = (int *)REALLOC(cp->mark_size, cp->marks_size * sizeof(int));
 	  cp->mark_ctr = (int *)REALLOC(cp->mark_ctr, cp->marks_size * sizeof(int));
-	  for (i=old_size;i<cp->marks_size;i++) 
+	  for (i=old_size; i<cp->marks_size; i++) 
 	    {
 	      cp->mark_ctr[i] = -1;
 	      cp->mark_size[i] = 0;
@@ -792,7 +794,7 @@ void ripple_marks(chan_info *cp, int beg, int change)
       if (cp->marks[new_m])
 	{
 	  mps = cp->marks[new_m];
-	  for (i=0;i<cp->mark_size[new_m];i++)
+	  for (i=0; i<cp->mark_size[new_m]; i++)
 	    if (mps[i])
 	      {
 		free_mark(mps[i]);
@@ -809,14 +811,14 @@ void ripple_marks(chan_info *cp, int beg, int change)
 	    {
 	      mps = cp->marks[new_m];
 	      mpo = cp->marks[old_m];
-	      for (i=0;i<=cp->mark_ctr[new_m];i++)
+	      for (i=0; i<=cp->mark_ctr[new_m]; i++)
 		mps[i] = copy_mark(mpo[i]);
 	      if (change < 0)
 		{
 		  /* if (change<0) and any marks are between beg and beg+change, they must be deleted */
-		  end = beg-change-1;
-		  i=0;
-		  while (i<=cp->mark_ctr[new_m])
+		  end = beg - change - 1;
+		  i = 0;
+		  while (i <= cp->mark_ctr[new_m])
 		    {
 		      mp = mps[i];
 		      if ((mp->samp >= beg) && (mp->samp <= end)) /* was mp->samp > beg, ditto end, beg can = end */
@@ -824,7 +826,7 @@ void ripple_marks(chan_info *cp, int beg, int change)
 		      else 
 			{
 			  if (mp->samp > beg)                     /* don't change marks that precede the point of the change */
-			    mp->samp+=change;
+			    mp->samp += change;
 			  i++;
 			}
 		    }
@@ -833,10 +835,10 @@ void ripple_marks(chan_info *cp, int beg, int change)
 		{
 		  if (change > 0)
 		    {
-		      for (i=0;i<=cp->mark_ctr[new_m];i++)
+		      for (i=0; i<=cp->mark_ctr[new_m]; i++)
 			{
 			  mp = mps[i];
-			  if (mp->samp > beg) mp->samp+=change;
+			  if (mp->samp > beg) mp->samp += change;
 			}
 		    }
 		}
@@ -872,7 +874,7 @@ void mark_define_region(chan_info *cp, int count)
 		  si = sync_to_chan(cp);
 		  si->begs[0] = beg;
 		  define_region(si, ends);
-		  for (i=0;i<si->chans;i++)
+		  for (i=0; i<si->chans; i++)
 		    {
 		      reactivate_selection(si->cps[i], beg, ends[0]);
 		      update_graph(si->cps[i], NULL);
@@ -898,14 +900,14 @@ void save_mark_list(FILE *fd, chan_info *cp)
   if (cp->marks)
     {
       fprintf(fd, "      (%s %d sfile %d '(", S_restore_marks, cp->marks_size, cp->chan);
-      for (i=0;i<cp->marks_size;i++)
+      for (i=0; i<cp->marks_size; i++)
 	{
 	  fprintf(fd, "\n        (%d %d (", cp->mark_size[i], cp->mark_ctr[i]);
 	  mps = cp->marks[i];
 	  if (mps)
 	    {
 	      marks = cp->mark_ctr[i];
-	      for (j=0;j<=marks;j++)
+	      for (j=0; j<=marks; j++)
 		{
 		  m = mps[j];
 		  if (m)
@@ -948,7 +950,7 @@ void reverse_marks(chan_info *cp, int over_selection)
       beg = selection_beg(cp);
       end = beg + selection_len() -1;
       marks = cp->mark_ctr[ed];
-      for (i=0;i<=marks;i++) 
+      for (i=0; i<=marks; i++) 
 	{
 	  m = mps[i];
 	  if ((m->samp >= beg) && (m->samp <= end))
@@ -973,7 +975,7 @@ void src_marks(chan_info *cp, Float ratio, int old_samps, int new_samps, int beg
 	{
 	  if (!over_selection)
 	    {
-	      for (i=0;i<=marks;i++) 
+	      for (i=0; i<=marks; i++) 
 		{
 		  m = mps[i];
 		  if (ratio > 0.0)
@@ -984,7 +986,7 @@ void src_marks(chan_info *cp, Float ratio, int old_samps, int new_samps, int beg
 	  else
 	    {
 	      end = beg + old_samps - 1;
-	      for (i=0;i<=marks;i++) 
+	      for (i=0; i<=marks; i++) 
 		{
 		  m = mps[i];
 		  if ((m->samp >= beg) && (m->samp <= end))
@@ -1021,13 +1023,13 @@ void reset_marks(chan_info *cp, int num, int *samps, int end, int extension, int
 	{
 	  if (over_selection)
 	    {
-	      for (i=0;i<=marks;i++) 
+	      for (i=0; i<=marks; i++) 
 		{
 		  m = mps[i];
 		  if (m->samp > end) m->samp += extension;
 		}
 	    }
-	  for (i=0;(i<=marks) && (i<num);i++) 
+	  for (i=0;(i<=marks) && (i<num); i++) 
 	    {
 	      m = mps[i];
 	      if (samps[i] >= 0) m->samp = samps[i];
@@ -1050,7 +1052,7 @@ void ripple_trailing_marks(chan_info *cp, int beg, int old_len, int new_len)
       marks = cp->mark_ctr[pos];
       if ((mps) && (marks >= 0))
 	{
-	  for (i=0;i<=marks;i++) 
+	  for (i=0; i<=marks; i++) 
 	    {
 	      m = mps[i];
 	      if (m->samp > (beg+old_len)) m->samp += (new_len - old_len);
@@ -1092,9 +1094,9 @@ static void add_syncd_mark(syncdata *sd, mark *mp, chan_info *cp)
   sd->chans[sd->mark_ctr++] = cp;
   if (sd->mark_ctr == sd->marks_size)
     {
-      sd->marks = (mark **)REALLOC(sd->marks, sd->marks_size*2 * sizeof(mark *));
-      sd->chans = (chan_info **)REALLOC(sd->chans, sd->marks_size*2 * sizeof(chan_info *));
-      for (i=sd->marks_size;i<sd->marks_size*2;i++) {sd->marks[i] = NULL; sd->chans[i] = NULL;}
+      sd->marks = (mark **)REALLOC(sd->marks, sd->marks_size * 2 * sizeof(mark *));
+      sd->chans = (chan_info **)REALLOC(sd->chans, sd->marks_size * 2 * sizeof(chan_info *));
+      for (i=sd->marks_size; i<sd->marks_size*2; i++) {sd->marks[i] = NULL; sd->chans[i] = NULL;}
       sd->marks_size *= 2;
     }
 }
@@ -1143,7 +1145,7 @@ static void initialize_md_context(int size, chan_info **cps)
   int i;
   mix_context *ms;
   mark_movers = (mix_context **)CALLOC(size, sizeof(mix_context *));
-  for (i=0;i<size;i++)
+  for (i=0; i<size; i++)
     {
       mark_movers[i] = make_mix_context(cps[i]);
       ms = mark_movers[i];
@@ -1157,7 +1159,7 @@ static void finalize_md_context(int size)
   int i;
   if (mark_movers)
     {
-      for (i=0;i<size;i++) 
+      for (i=0; i<size; i++) 
 	if (mark_movers[i]) 
 	  free_mix_context(mark_movers[i]);
       FREE(mark_movers);
@@ -1175,7 +1177,7 @@ mark *hit_mark(chan_info *cp, int x, int y, int key_state)
     {
       /* first check that we're in the top portion of the graph where the mark tabs are */
       if ((y >= ap->y_axis_y1) && 
-	  (y <= (ap->y_axis_y1+MARK_TAB_HEIGHT+10)))               /* +10 for named marks -- checked again later */
+	  (y <= (ap->y_axis_y1 + MARK_TAB_HEIGHT + 10)))               /* +10 for named marks -- checked again later */
 	{
 	  md = (mdata *)CALLOC(1, sizeof(mdata));
 	  md->x = x;
@@ -1214,7 +1216,7 @@ static int move_syncd_mark(chan_info *cp, mark *m, int x)
     {
       if ((mark_sd) && (mark_sd->mark_ctr > 1))
 	{
-	  for (i=0;i<mark_sd->mark_ctr;i++)
+	  for (i=0; i<mark_sd->mark_ctr; i++)
 	    {
 	      mp = mark_sd->marks[i];
 	      if (mp != m)
@@ -1301,7 +1303,7 @@ void finish_moving_mark(chan_info *cp, mark *m) /* button release called from sn
     {
       if (mark_control_clicked)
 	{
-	  for (i=mark_sd->mark_ctr-1;i>=0;i--)
+	  for (i=mark_sd->mark_ctr-1; i>=0; i--)
 	    {
 	      /* do the edits in reverse order on the assumption that marks sharing a channel were ordered to begin with,
 	       *   so they'll happen in reverse order here, so the lower sample edits in rippling won't affect the higher
@@ -1311,11 +1313,11 @@ void finish_moving_mark(chan_info *cp, mark *m) /* button release called from sn
 	    }
 	  finalize_md_context(mark_sd->mark_ctr);
 	}
-      for (i=0;i<mark_sd->mark_ctr;i++)
+      for (i=0; i<mark_sd->mark_ctr; i++)
 	if (mark_sd->chans[i])
 	  {
 	    sort_marks(mark_sd->chans[i]); /* resort marks in case movement scrambled them */
-	    for (j=i+1;j<mark_sd->mark_ctr;j++)    /* only sort each channel once */
+	    for (j=i+1; j<mark_sd->mark_ctr; j++)    /* only sort each channel once */
 	      if (mark_sd->chans[j] == mark_sd->chans[i])
 		mark_sd->chans[j] = NULL;
 	  }
@@ -1350,7 +1352,7 @@ static inline void move_to_next_sample(snd_fd *sf)
 
 static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int current_sample, int which)
 {
-  int i,j=0,samps,xi,k;
+  int i,j = 0,samps,xi,k;
   axis_info *ap;
   Float samples_per_pixel,xf,samp;
   double x,incr;  
@@ -1358,18 +1360,18 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
   int pixels;
   snd_fd *sf = NULL;
   int x_start,x_end;
-  double start_time=0.0,cur_srate=1.0;
+  double start_time = 0.0,cur_srate = 1.0;
   ap = cp->axis;
   cur_srate = (double)SND_SRATE(sp);
-  ap->losamp = (int)(ap->x0*cur_srate);
+  ap->losamp = (int)(ap->x0 * cur_srate);
   if (ap->losamp < 0) ap->losamp = 0;
-  if (ap->x0 != (ap->losamp/cur_srate)) ap->losamp++;
-  start_time = (double)(ap->losamp)/cur_srate;
-  ap->hisamp = (int)(ap->x1*cur_srate);
+  if (ap->x0 != (ap->losamp / cur_srate)) ap->losamp++;
+  start_time = (double)(ap->losamp) / cur_srate;
+  ap->hisamp = (int)(ap->x1 * cur_srate);
   if ((ap->losamp == 0) && (ap->hisamp == 0)) return;
   x_start = ap->x_axis_x0;
   x_end = ap->x_axis_x1;
-  samps = ap->hisamp - ap->losamp+1;
+  samps = ap->hisamp - ap->losamp + 1;
   if ((x_start == x_end) && (samps > 10)) return; /* must be too-tiny graph */
   pixels = x_end - x_start;
   if (pixels >= POINT_BUFFER_SIZE) pixels = POINT_BUFFER_SIZE-1;
@@ -1385,15 +1387,17 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
 
       if (current_sample < initial_sample)
 	{
-	  for (j=0, i=ap->losamp, x=start_time;i<=ap->hisamp;i++,j++,x+=incr)
+	  for (j=0, i=ap->losamp, x=start_time; i<=ap->hisamp; i++, j++, x+=incr)
 	    {
-	      if (i == current_sample) {for (k=current_sample;k<initial_sample;k++) move_to_next_sample(sf);}
+	      if (i == current_sample) 
+		for (k=current_sample; k<initial_sample; k++) 
+		  move_to_next_sample(sf);
 	      set_grf_point(grf_x(x, ap), j, grf_y(next_sample_to_float(sf), ap));
 	    }
 	}
       else
 	{
-	  for (j=0, i=ap->losamp, x=start_time;i<=ap->hisamp;i++,j++,x+=incr)
+	  for (j=0, i=ap->losamp, x=start_time; i<=ap->hisamp; i++, j++, x+=incr)
 	    {
 	      if ((i < initial_sample) || (i >= current_sample)) 
 		samp = next_sample_to_float(sf);
@@ -1407,20 +1411,22 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
     {
       sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
       j = 0;      /* graph point counter */
-      x=ap->x0;
-      xi=grf_x(x, ap);
-      xf=0.0;     /* samples per pixel counter */
+      x = ap->x0;
+      xi = grf_x(x, ap);
+      xf = 0.0;     /* samples per pixel counter */
       ymin = 100.0;
       ymax = -100.0;
       if (current_sample < initial_sample) 
 	{
-	  for (i=ap->losamp, xf=0.0;i<=ap->hisamp;i++)
+	  for (i=ap->losamp, xf=0.0; i<=ap->hisamp; i++)
 	    {
-	      if (i == current_sample) for (k=current_sample;k<initial_sample;k++) move_to_next_sample(sf);
+	      if (i == current_sample) 
+		for (k=current_sample; k<initial_sample; k++) 
+		  move_to_next_sample(sf);
 	      samp = next_sample_to_float(sf);
 	      if (samp > ymax) ymax = samp;
 	      if (samp < ymin) ymin = samp;
-	      xf+=1.0;
+	      xf += 1.0;
 	      if (xf>samples_per_pixel)
 		{
 		  set_grf_points(xi, j, grf_y(ymin, ap), grf_y(ymax, ap));
@@ -1434,14 +1440,14 @@ static void make_mark_graph(chan_info *cp, snd_info *sp, int initial_sample, int
 	}
       else
 	{
-	  for (i=ap->losamp, xf=0.0;i<=ap->hisamp;i++)
+	  for (i=ap->losamp, xf=0.0; i<=ap->hisamp; i++)
 	    {
 	      if ((i < initial_sample) || (i >= current_sample))
 		samp = next_sample_to_float(sf);
 	      else samp = 0.0;
 	      if (samp > ymax) ymax = samp;
 	      if (samp < ymin) ymin = samp;
-	      xf+=1.0;
+	      xf += 1.0;
 	      if (xf>samples_per_pixel)
 		{
 		  set_grf_points(xi, j, grf_y(ymin, ap), grf_y(ymax, ap));
@@ -1479,9 +1485,9 @@ static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)
       cp->marks = (mark ***)CALLOC(cp->marks_size, sizeof(mark **));
       cp->mark_size = (int *)CALLOC(cp->marks_size, sizeof(int));
       cp->mark_ctr = (int *)CALLOC(cp->marks_size, sizeof(int));
-      for (i=0;i<cp->marks_size;i++) cp->mark_ctr[i] = -1;
+      for (i=0; i<cp->marks_size; i++) cp->mark_ctr[i] = -1;
       list_size = gh_length(marklist);
-      for (i=0, olst=marklist;i<list_size;i++,olst=SCM_CDR(olst))
+      for (i=0, olst=marklist; i<list_size; i++, olst=SCM_CDR(olst))
 	{
 	  lst = SCM_CAR(olst);
 	  cp->mark_size[i] = TO_C_INT(SCM_CAR(lst));
@@ -1491,7 +1497,7 @@ static SCM g_restore_marks(SCM size, SCM snd, SCM chn, SCM marklist)
 	      mlst = SCM_CADDR(lst);
 	      cp->marks[i] = (mark **)CALLOC(cp->mark_size[i], sizeof(mark *));
 	      in_size = gh_length(mlst);
-	      for (j=0, molst=mlst;j<in_size;j++,molst=SCM_CDR(molst))
+	      for (j=0, molst=mlst; j<in_size; j++, molst=SCM_CDR(molst))
 		{
 		  el = SCM_CAR(molst);
 		  if (!(gh_list_p(el))) 
@@ -1675,7 +1681,7 @@ static SCM g_find_mark(SCM samp_n, SCM snd_n, SCM chn_n)
       else samp = TO_C_INT_OR_ELSE(samp_n, 0);
       if (name)
 	{
-	  for (i=0;i<=cp->mark_ctr[cp->edit_ctr];i++) 
+	  for (i=0; i<=cp->mark_ctr[cp->edit_ctr]; i++) 
 	    if ((mps[i]) && 
 		(mps[i]->name) && 
 		(strcmp(name, mps[i]->name) == 0))
@@ -1683,7 +1689,7 @@ static SCM g_find_mark(SCM samp_n, SCM snd_n, SCM chn_n)
 	}
       else
 	{
-	  for (i=0;i<=cp->mark_ctr[cp->edit_ctr];i++)
+	  for (i=0; i<=cp->mark_ctr[cp->edit_ctr]; i++)
 	    if ((mps[i]) && 
 		(mps[i]->samp == samp)) 
 	      return(TO_SCM_INT(mark_id(mps[i])));
@@ -1757,7 +1763,7 @@ static int *syncd_marks(snd_state *ss, int sync)
   map_over_chans(ss, gather_chan_syncd_marks, (void *)sd);
   ids = (int *)CALLOC(1+sd->mark_ctr, sizeof(int));
   ids[0] = sd->mark_ctr;
-  for (i=0;i<sd->mark_ctr;i++) ids[i+1] = mark_id(sd->marks[i]);
+  for (i=0; i<sd->mark_ctr; i++) ids[i+1] = mark_id(sd->marks[i]);
   free_syncdata(sd);
   return(ids);
 }
@@ -1787,8 +1793,8 @@ static int *channel_marks(chan_info *cp, int pos)
       if (mps)
 	{
 	  ids = (int *)CALLOC(marks+2, sizeof(int)); /* 1 for size, 1 because mark_ctr is current count */
-	  ids[0] = marks+1;
-	  for (i=0;i<=marks;i++) 
+	  ids[0] = marks + 1;
+	  for (i=0; i<=marks; i++) 
 	    ids[i+1] = mark_id(mps[i]);
 	}
     }
@@ -1831,7 +1837,7 @@ static SCM g_marks(SCM snd_n, SCM chn_n, SCM pos_n)
 	      return(scm_throw(NO_SUCH_SOUND,
 			       SCM_LIST2(TO_SCM_STRING(S_marks),
 					 snd_n)));
-	    for (i=sp->nchans-1;i>=0;i--)
+	    for (i=sp->nchans-1; i>=0; i--)
 	      {
 		cp = sp->chans[i];
 		ids = channel_marks(cp, cp->edit_ctr);
@@ -1847,7 +1853,7 @@ static SCM g_marks(SCM snd_n, SCM chn_n, SCM pos_n)
     {
       /* all marks */
       ss = get_global_state();
-      for (j=ss->max_sounds-1;j>=0;j--)
+      for (j=ss->max_sounds-1; j>=0; j--)
 	{
 	  sp = ss->sounds[j];
 	  if ((sp) && (sp->inuse))
@@ -1901,10 +1907,10 @@ static char *mark_file_name(snd_info *sp)
   len = strlen(sp->fullname);
   newname = (char *)CALLOC(len+7, sizeof(char));
   strcpy(newname, sp->fullname);
-  for (i=len-1;i>0;i--) 
+  for (i=len-1; i>0; i--) 
     if (newname[i] == '.') 
       break;
-  if (i>0) len=i;
+  if (i > 0) len = i;
   newname[len] = '\0';
   strcat(newname, ".marks");
   return(newname);
@@ -1912,7 +1918,7 @@ static char *mark_file_name(snd_info *sp)
 
 static int find_any_marks (chan_info *cp, void *ptr)
 {
-  if (cp->marks) return(cp->mark_ctr[cp->edit_ctr]+1); /* initialized to -1 -- 0 is first mark */
+  if (cp->marks) return(cp->mark_ctr[cp->edit_ctr] + 1); /* initialized to -1 -- 0 is first mark */
   return(0);
 }
 
@@ -1928,7 +1934,7 @@ static char *save_marks(snd_info *sp)
       if (fd)
 	{
 	  fprintf(fd, "(let ((sfile (find-sound \"%s\")))\n", sp->shortname);
-	  for (i=0;i<sp->nchans;i++)
+	  for (i=0; i<sp->nchans; i++)
 	    save_mark_list(fd, sp->chans[i]);
 	  fprintf(fd, ")");
 	  fclose(fd);

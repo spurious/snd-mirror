@@ -80,7 +80,7 @@
   #define TO_C_INT_OR_ELSE(a, b) to_c_int_or_else(a, b, "to_c_int_or_else")
 #endif
 
-#if HAVE_GUILE_1_3_0
+#if HAVE_GUILE_1_3
   #define TO_SCM_DOUBLE(a) scm_makdbl(a, 0.0)
 #else
   #define TO_SCM_DOUBLE(a) scm_make_real(a)

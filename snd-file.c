@@ -30,6 +30,9 @@
   #define S_ISLNK(mode) (((mode) & S_IFMT) == S_IFLNK)
 #endif
 
+/* TODO: use HAVE_FSTATFS here (cygwin has it) */
+/* TODO: perhaps add HAVE_SYS_PARAM_H ? */
+
 #if defined(WINDOZE) || (!(defined(FSTATFS_ARGS))) || (FSTATFS_ARGS == 0) || defined(BEOS)
   int disk_kspace (int fd) {return(1234567);}
   int is_link(char *filename) {return(0);}
@@ -51,7 +54,7 @@ int disk_kspace (int fd)
 #ifndef NEXT
       if (buf.f_bsize == 1024) return(buf.f_bfree);
       else if (buf.f_bsize == 512) return(buf.f_bfree >> 1);
-      else return((int)(buf.f_bsize * ((Float)(buf.f_bfree)/1024.0)));
+      else return((int)(buf.f_bsize * ((Float)(buf.f_bfree) / 1024.0)));
 #else
       return(buf.f_bavail);
 #endif
@@ -130,7 +133,7 @@ file_info *copy_header(char *fullname, file_info *ohdr)
       if (ohdr->loops)
 	{
 	  hdr->loops = (int *)CALLOC(6, sizeof(int));
-	  for (i=0;i<6;i++) hdr->loops[i] = ohdr->loops[i];
+	  for (i=0; i<6; i++) hdr->loops[i] = ohdr->loops[i];
 	}
     }
   return(hdr);
@@ -142,7 +145,7 @@ static file_info *translate_file(char *filename, snd_state *ss, int type)
   file_info *hdr = NULL;
   int err,len,fd;
   len = strlen(filename);
-  newname = (char *)CALLOC(len+5, sizeof(char));
+  newname = (char *)CALLOC(len + 5, sizeof(char));
   sprintf(newname, "%s.snd", filename);
   /* too many special cases to do anything smart here -- I'll just tack on '.snd' */
   /* before calling the translator we need to check for write-access to the current directory,
@@ -184,7 +187,7 @@ static file_info *translate_file(char *filename, snd_state *ss, int type)
 file_info *make_file_info(char *fullname, snd_state *ss)
 {
   file_info *hdr = NULL;
-  int type=MUS_UNSUPPORTED,format=MUS_UNKNOWN;
+  int type = MUS_UNSUPPORTED,format = MUS_UNKNOWN;
   if (mus_file_probe(fullname))
     {
       type = mus_sound_header_type(fullname);
@@ -196,8 +199,10 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 	      (mus_sound_chans(fullname) >= 256) || (mus_sound_chans(fullname) <= 0))
 	    {
 	      type = mus_header_type();
-	      if ((type != MUS_MIDI_SAMPLE_DUMP) && (type != MUS_IEEE) &&
-		  (type != MUS_MUS10) && (type != MUS_HCOM))
+	      if ((type != MUS_MIDI_SAMPLE_DUMP) && 
+		  (type != MUS_IEEE) &&
+		  (type != MUS_MUS10) && 
+		  (type != MUS_HCOM))
 		return(get_reasonable_file_info(fullname,
 						ss,
 						make_file_info_1(fullname, ss)));
@@ -275,10 +280,9 @@ dir *free_dir (dir *dp)
   if (dp->name) FREE(dp->name);
   if (dp->files)
     {
-      for (i=0;i<dp->len;i++) 
-	{
-	  if (dp->files[i]) FREE(dp->files[i]);
-	}
+      for (i=0; i<dp->len; i++) 
+	if (dp->files[i]) 
+	  FREE(dp->files[i]);
       FREE(dp->files);
     }
   FREE(dp);
@@ -294,7 +298,7 @@ static void add_snd_file_to_dir_list(dir *dp, char *name)
     {
       dp->size += 32;
       dp->files = (char **)REALLOC(dp->files, dp->size*sizeof(char *));
-      for (i=dp->size-32;i<dp->size;i++) dp->files[i] = NULL;
+      for (i=dp->size-32; i<dp->size; i++) dp->files[i] = NULL;
     }
 }
 
@@ -341,18 +345,20 @@ dir *find_sound_files_in_dir (char *name)
   char *dot,*sp;
   dir *dp = NULL;
   int i;
-  if ((dpos=opendir(name)) != NULL)
+  if ((dpos = opendir(name)) != NULL)
     {
       dp = make_dir(name);
-      while ((dirp=readdir(dpos)) != NULL)
+      while ((dirp = readdir(dpos)) != NULL)
 	{
 	  if (dirp->d_name[0] != '.')
 	    {
 	      dot = NULL;
-	      for (sp=dirp->d_name;(*sp) != '\0';sp++) if ((*sp) == '.') dot=(++sp);
+	      for (sp = dirp->d_name;(*sp) != '\0';sp++) 
+		if ((*sp) == '.') 
+		  dot = (++sp);
 	      if (dot)
 		{
-		  for (i=0;i<sound_file_extensions_end;i++)
+		  for (i=0; i<sound_file_extensions_end; i++)
 		    {
 		      if (strcmp(dot, sound_file_extensions[i]) == 0)
 			{
@@ -385,21 +391,27 @@ static int names_match(char *filename, char *pattern)
   char *sn,*sp;
   sn = filename;
   sp = pattern;
-  if ((!sn) || (!sp)) {if ((sn) || (sp)) return(0); else return(1);}
+  if ((!sn) || (!sp)) 
+    {
+      if ((sn) || (sp)) 
+	return(0); 
+      else return(1);
+    }
   while ((*sn) && (*sp))
     {
       if ((*sp) == '*') 
 	{
 	  sp++; 
-	  while ((*sp) == '*') {sp++;} 
+	  while ((*sp) == '*') sp++; 
 	  if (!(*sp)) return(1);
-	  while ((*sn) && ((*sn) != (*sp))) {sn++;}
+	  while ((*sn) && ((*sn) != (*sp))) sn++;
 	  if (!(*sn)) return(0);
 	}
       else 
 	{
 	  if ((*sn) != (*sp)) return(0);
-	  sn++; sp++;
+	  sn++; 
+	  sp++;
 	}
     }
   return(1);
@@ -410,7 +422,7 @@ dir *filter_sound_files(dir *dp, char *pattern)
   int i;
   dir *ndp;
   ndp = make_dir("");
-  for (i=0;i<dp->len;i++)
+  for (i=0; i<dp->len; i++)
     {
       if (names_match(dp->files[i], pattern)) 
 	add_snd_file_to_dir_list(ndp, dp->files[i]);
@@ -443,16 +455,19 @@ static void reflect_file_change_in_title(snd_state *ss)
   alist->sounds = (int *)CALLOC(ss->max_sounds, sizeof(int));
   alist->names = (char **)CALLOC(ss->max_sounds, sizeof(char *));
   map_over_sounds(ss, add_sound_to_active_list, alist);
-  sprintf(title_buffer, "%s%s", ss->startup_title, ((alist->active_sounds > 0) ? ": " : ""));
+  sprintf(title_buffer, 
+	  "%s%s", 
+	  ss->startup_title, 
+	  ((alist->active_sounds > 0) ? ": " : ""));
   if (alist->active_sounds > 0)
     {
-      if (alist->active_sounds < 4) j=alist->active_sounds; else j=4;
-      for (i=0;i<j;i++)
+      if (alist->active_sounds < 4) j = alist->active_sounds; else j = 4;
+      for (i=0; i<j; i++)
 	{
 	  strcat(title_buffer, filename_without_home_directory(alist->names[i]));
-	  if (i<j-1) strcat(title_buffer, ", ");
+	  if (i < j - 1) strcat(title_buffer, ", ");
 	}
-      if (alist->active_sounds>4) strcat(title_buffer, "...");
+      if (alist->active_sounds > 4) strcat(title_buffer, "...");
     }
   set_title(ss, title_buffer);
   FREE(alist->sounds);
@@ -465,7 +480,7 @@ static char *memo_file_name(snd_info *sp)
   char *newname;
   int len;
   len = strlen(sp->fullname);
-  newname = (char *)CALLOC(len+5, sizeof(char));
+  newname = (char *)CALLOC(len + 5, sizeof(char));
   sprintf(newname, "%s.scm", sp->fullname);
   return(newname);
 }
@@ -599,14 +614,16 @@ void snd_close_file(snd_info *sp, snd_state *ss)
   remember_me(ss, sp->shortname, sp->fullname);
   if (sp->playing) stop_playing_sound(sp);
   clear_minibuffer(sp);
-  if (sp == selected_sound(ss)) ss->selected_sound = NO_SELECTION;
+  if (sp == selected_sound(ss)) 
+    ss->selected_sound = NO_SELECTION;
   free_snd_info(sp);
   ss->active_sounds--;
   files = ss->active_sounds;
   if (files == 0) reflect_file_lack_in_menu();
   reflect_file_change_in_title(ss);
   reflect_normalize_in_menu(active_channels(ss, WITHOUT_VIRTUAL_CHANNELS) > 1);
-  if (!(selection_is_active())) reflect_edit_without_selection_in_menu();
+  if (!(selection_is_active())) 
+    reflect_edit_without_selection_in_menu();
 }
 
 
@@ -692,7 +709,7 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   /* conjure up just enough Snd structure to make this sound readable by the edit-tree readers */
   snd_info *sp;
   chan_info *cp;
-  file_info *hdr=NULL;
+  file_info *hdr = NULL;
   snd_data *sd;
   int *datai;
   int i,fd,len;
@@ -722,8 +739,8 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   sp->filtering = 0;
   sp->index = TEMP_SOUND_INDEX;
   sp->sgx = NULL;
-  len = (hdr->samples)/(hdr->chans);
-  for (i=0;i<sp->nchans;i++)
+  len = (hdr->samples) / (hdr->chans);
+  for (i=0; i<sp->nchans; i++)
     {
       cp = make_chan_info(NULL, i, sp, ss);
       FREE((cp->cgx)->ax);
@@ -731,7 +748,7 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
       cp->cgx = NULL;
       sp->chans[i] = cp;
       add_channel_data_1(cp, sp, ss, WITHOUT_GRAPH);
-      set_initial_ed_list(cp, len-1);
+      set_initial_ed_list(cp, len - 1);
       cp->edit_size = 1;
       cp->sound_size = 1;
       fd = snd_open_read(ss, filename);
@@ -785,17 +802,17 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
   old_chans = sp->nchans;
   old_sync = sp->syncing;
   old_combine = sp->combining;
-  axis_data = (Float *)CALLOC(4*old_chans, sizeof(Float));
+  axis_data = (Float *)CALLOC(4 * old_chans, sizeof(Float));
   ffts = (int *)CALLOC(old_chans, sizeof(int));
   waves = (int *)CALLOC(old_chans, sizeof(int));
-  for (i=0;i<old_chans;i++)
+  for (i=0; i<old_chans; i++)
     {
       cp = sp->chans[i];
       ap = cp->axis;
-      axis_data[(i*4)+0]=ap->x0;
-      axis_data[(i*4)+1]=ap->x1;
-      axis_data[(i*4)+2]=ap->y0;
-      axis_data[(i*4)+3]=ap->y1;
+      axis_data[(i * 4) + 0] = ap->x0;
+      axis_data[(i * 4) + 1] = ap->x1;
+      axis_data[(i * 4) + 2] = ap->y0;
+      axis_data[(i * 4) + 3] = ap->y1;
       waves[i] = cp->waving;
       ffts[i] = cp->ffting;
     }
@@ -811,20 +828,26 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
   set_use_raw_defaults(ss, raw_def);
   /* end wrapper */
   duration = (Float)mus_sound_samples(filename) / (Float)(mus_sound_chans(filename) * mus_sound_srate(filename));
-  for (i=0, j=0;i<nsp->nchans;i++)
+  for (i=0, j=0; i<nsp->nchans; i++)
     {
       cp = nsp->chans[i];
-      if (duration < axis_data[(j*4)+0]) axis_data[(j*4)+0]=duration-.1;
-      if (duration < axis_data[(j*4)+1]) axis_data[(j*4)+1]=duration;
-      set_axes(cp, axis_data[(j*4)+0], axis_data[(j*4)+1], axis_data[(j*4)+2], axis_data[(j*4)+3]);
+      if (duration < axis_data[(j*4)+0]) axis_data[(j * 4) + 0] = duration - .1;
+      if (duration < axis_data[(j*4)+1]) axis_data[(j * 4) + 1] = duration;
+      set_axes(cp,
+	       axis_data[(j * 4) + 0], 
+	       axis_data[(j * 4) + 1], 
+	       axis_data[(j * 4) + 2], 
+	       axis_data[(j * 4) + 3]);
       update_graph(cp, NULL); /* get normalized state before messing with it */
       if (ffts[j]) {fftb(cp, TRUE); need_update = 1;}
       if (!(waves[j])) {waveb(cp, FALSE); need_update = 1;}
-      if (j<(old_chans-1)) j++;
+      if (j < (old_chans - 1)) j++;
     }
   if (nsp->combining != old_combine) combineb(nsp, old_combine);
   if (nsp->syncing != old_sync) syncb(nsp, old_sync);
-  if (need_update) {for (i=0;i<nsp->nchans;i++) update_graph(nsp->chans[i], NULL);}
+  if (need_update) 
+    for (i=0; i<nsp->nchans; i++) 
+      update_graph(nsp->chans[i], NULL);
   FREE(axis_data);
   FREE(waves);
   FREE(ffts);
@@ -873,7 +896,7 @@ char *update_chan_stats(chan_info *cp)
 	    (cp->sound)->shortname,
 	    cp->chan + 1,
 	    vals[0], vals[1], vals[2], vals[3], vals[4], vals[6], vals[7]);
-  for (i=0;i<8;i++) free(vals[i]);
+  for (i=0; i<8; i++) free(vals[i]);
   return(desc);
 }
 
@@ -894,10 +917,10 @@ static int prevtime = 0;
 
 char *get_prevnames(int n) {return(prevnames[n]);}
 int get_max_prevfile_end(void) {return(max_prevfile_end);}
-void set_max_prevfile_end(int n) {max_prevfile_end=n;}
+void set_max_prevfile_end(int n) {max_prevfile_end = n;}
 int get_prevfile_end(void) {return(prevfile_end);}
 int get_max_curfile_end(void) {return(max_curfile_end);}
-void set_max_curfile_end(int n) {max_curfile_end=n;}
+void set_max_curfile_end(int n) {max_curfile_end = n;}
 int get_curfile_end(void) {return(curfile_end);}
 int get_curfile_size(void) {return(curfile_size);}
 int get_prevfile_size(void) {return(prevfile_size);}
@@ -995,7 +1018,7 @@ void file_unprevlist(char *filename)
       prevnames[i] = NULL;
       FREE(prevfullnames[i]);
       prevfullnames[i] = NULL;
-      for (j=i;j<prevfile_end;j++) 
+      for (j=i; j<prevfile_end; j++) 
 	{
 	  prevnames[j] = prevnames[j+1];
 	  prevfullnames[j] = prevfullnames[j+1]; 
@@ -1014,7 +1037,7 @@ static void file_prevlist(char *filename, char *fullname)
   prevfile_end++;
   if (prevfile_end == prevfile_size)
     {
-      new_size = prevfile_size+32;
+      new_size = prevfile_size + 32;
       if (prevfile_size == 0)
 	{
 	  prevnames = (char **)CALLOC(new_size, sizeof(char *));
@@ -1026,15 +1049,20 @@ static void file_prevlist(char *filename, char *fullname)
 	  prevnames = (char **)REALLOC(prevnames, new_size * sizeof(char *));
 	  prevfullnames = (char **)REALLOC(prevfullnames, new_size * sizeof(char *));
 	  prevtimes = (int *)REALLOC(prevtimes, new_size * sizeof(int *));
-	  for (i=prevfile_size;i<new_size;i++) {prevnames[i] = NULL; prevfullnames[i] = NULL; prevtimes[i] = 0;}
+	  for (i=prevfile_size; i<new_size; i++) 
+	    {
+	      prevnames[i] = NULL; 
+	      prevfullnames[i] = NULL; 
+	      prevtimes[i] = 0;
+	    }
 	}
       make_prev_name_row(prevfile_size, new_size);
       prevfile_size = new_size;
     }
-  for (k=prevfile_end;k>0;k--) 
+  for (k=prevfile_end; k>0; k--) 
     {
-      prevnames[k]=prevnames[k-1]; 
-      prevfullnames[k]=prevfullnames[k-1];
+      prevnames[k] = prevnames[k-1]; 
+      prevfullnames[k] = prevfullnames[k-1];
       prevtimes[k] = prevtimes[k-1];
     }
   prevnames[0] = copy_string(filename);
@@ -1059,19 +1087,19 @@ void add_directory_to_prevlist(snd_state *ss, char *dirname)
     {
       fullpathname = (char *)CALLOC(FILENAME_MAX, sizeof(char));
       strcpy(fullpathname, dirname);
-      if (dirname[strlen(dirname)-1] != '/') strcat(fullpathname, "/");
+      if (dirname[strlen(dirname) - 1] != '/') strcat(fullpathname, "/");
       end = strlen(fullpathname);
       fullnames = (char **)CALLOC(sound_files->len, sizeof(char *));
-      for (i=0;i<sound_files->len;i++) 
+      for (i=0; i<sound_files->len; i++) 
 	{
 	  fullnames[i] = copy_string(strcat(fullpathname, sound_files->files[i]));
 	  fullpathname[end] = '\0';
 	}
-      for (i=0;i<sound_files->len;i++) 
+      for (i=0; i<sound_files->len; i++) 
 	{
 	  file_prevlist(sound_files->files[i], fullnames[i]);
 	  FREE(fullnames[i]); 
-	  fullnames[i]=NULL;
+	  fullnames[i] = NULL;
 	}
       FREE(fullnames);
       if (file_dialog_is_active()) make_prevfiles_list(ss);
@@ -1090,7 +1118,7 @@ static void remember_me(snd_state *ss, char *shortname, char *fullname)
     {
       if (curnames[i]) FREE(curnames[i]);
       curnames[i] = NULL;
-      for (j=i;j<curfile_end-1;j++)
+      for (j=i; j<curfile_end-1; j++)
 	{
 	  curnames[j] = curnames[j+1];
 	  a_big_star[j] = a_big_star[j+1];
@@ -1110,7 +1138,7 @@ static void greet_me(snd_state *ss, char *shortname)
   int i,new_size;
   if (curfile_end == curfile_size)
     {
-      new_size = curfile_size+32;
+      new_size = curfile_size + 32;
       if (curfile_size == 0)
 	{
 	  curnames = (char **)CALLOC(new_size, sizeof(char *));
@@ -1120,7 +1148,11 @@ static void greet_me(snd_state *ss, char *shortname)
 	{
 	  curnames = (char **)REALLOC(curnames, new_size * sizeof(char *));
 	  a_big_star = (int *)REALLOC(a_big_star, new_size * sizeof(int *));
-	  for (i=curfile_size;i<new_size;i++) {curnames[i] = NULL; a_big_star[i] = 0;}
+	  for (i=curfile_size; i<new_size; i++) 
+	    {
+	      curnames[i] = NULL; 
+	      a_big_star[i] = 0;
+	    }
 	}
       make_cur_name_row(curfile_size, new_size);
       curfile_size = new_size;
@@ -1174,7 +1206,7 @@ void make_a_big_star_outa_me(char *shortname, int big_star)
 int find_curfile_regrow(char *shortname)
 {
   int i;
-  for (i=0;i<curfile_end;i++)
+  for (i=0; i<curfile_end; i++)
     if (strcmp(curnames[i], shortname) == 0) 
       return(i);
   return(-1);
@@ -1185,7 +1217,7 @@ int find_prevfile_regrow(char *shortname)
   int i;
   if (prevnames)
     {
-      for (i=0;i<=prevfile_end;i++)
+      for (i=0; i<=prevfile_end; i++)
 	if (strcmp(prevnames[i], shortname) == 0) 
 	  return(i);
     }
@@ -1197,7 +1229,7 @@ void save_prevlist(FILE *fd)
   int i;
   if (prevfullnames)
     {
-      for (i=0;i<=prevfile_end;i++)
+      for (i=0; i<=prevfile_end; i++)
 	fprintf(fd, "(%s \"%s\")\n",
 		S_preload_file,
 		prevfullnames[i]);
@@ -1209,12 +1241,14 @@ void clear_prevlist(snd_state *ss)
   int i;
   if (prevnames)
     {
-      for (i=0;i<prevfile_size;i++)
+      for (i=0; i<prevfile_size; i++)
 	{
 	  if (prevnames[i]) 
 	    {
-	      FREE(prevnames[i]); prevnames[i]=NULL;
-	      FREE(prevfullnames[i]); prevfullnames[i]=NULL;
+	      FREE(prevnames[i]); 
+	      prevnames[i] = NULL;
+	      FREE(prevfullnames[i]); 
+	      prevfullnames[i] = NULL;
 	    }
 	}
       prevfile_end = -1;
@@ -1229,15 +1263,17 @@ void update_prevlist(snd_state *ss)
   int i,j,fd;
   if (prevnames)
     {
-      for (i=0;i<=prevfile_end;i++)
+      for (i=0; i<=prevfile_end; i++)
 	{
 	  if (prevnames[i]) 
 	    {
 	      fd = open(prevfullnames[i], O_RDONLY, 0);
 	      if (fd == -1) 
 		{
-		  FREE(prevnames[i]); prevnames[i]=NULL;
-		  FREE(prevfullnames[i]); prevfullnames[i]=NULL;
+		  FREE(prevnames[i]); 
+		  prevnames[i] = NULL;
+		  FREE(prevfullnames[i]); 
+		  prevfullnames[i] = NULL;
 		}
 	      else 
 		{
@@ -1248,7 +1284,7 @@ void update_prevlist(snd_state *ss)
 		}
 	    }
 	}
-      for (i=0, j=0;i<=prevfile_end;i++)
+      for (i=0, j=0; i<=prevfile_end; i++)
 	{
 	  if (prevnames[i])
 	    {
@@ -1261,7 +1297,7 @@ void update_prevlist(snd_state *ss)
 	      j++;
 	    }
 	}
-      prevfile_end = j-1;
+      prevfile_end = j - 1;
       if (file_dialog_is_active()) make_prevfiles_list(ss);
     }
 }
@@ -1285,14 +1321,28 @@ static int greater_compare(const void *a, const void *b)
 {
   heapdata *d1 = *(heapdata **)a;
   heapdata *d2 = *(heapdata **)b;
-  if (d1->vals > d2->vals) return(1); else if (d1->vals == d2->vals) return(0); else return(-1);
+  if (d1->vals > d2->vals) 
+    return(1); 
+  else 
+    {
+      if (d1->vals == d2->vals) 
+	return(0); 
+      else return(-1);
+    }
 }
 
 static int less_compare(const void *a, const void *b)
 {
   heapdata *d1 = *(heapdata **)a;
   heapdata *d2 = *(heapdata **)b;
-  if (d1->vals < d2->vals) return(1); else if (d1->vals == d2->vals) return(0); else return(-1);
+  if (d1->vals < d2->vals) 
+    return(1); 
+  else 
+    {
+      if (d1->vals == d2->vals) 
+	return(0); 
+      else return(-1);
+    }
 }
 
 void make_prevfiles_list_1(snd_state *ss)
@@ -1303,7 +1353,7 @@ void make_prevfiles_list_1(snd_state *ss)
     {
       len = prevfile_end+1;
       data = (heapdata **)CALLOC(len, sizeof(heapdata *));
-      for (i=0;i<len;i++)
+      for (i=0; i<len; i++)
 	{
 	  data[i] = (heapdata *)CALLOC(1, sizeof(heapdata));
 	  data[i]->a1 = prevnames[i];
@@ -1318,19 +1368,22 @@ void make_prevfiles_list_1(snd_state *ss)
 	  qsort((void *)data, prevfile_end+1, sizeof(heapdata *), alphabet_compare);
 	  break;
 	case 2:
-	  for (i=0;i<=prevfile_end;i++) data[i]->vals = file_write_date(prevfullnames[i]);
+	  for (i=0; i<=prevfile_end; i++) 
+	    data[i]->vals = file_write_date(prevfullnames[i]);
 	  qsort((void *)data, prevfile_end+1, sizeof(heapdata *), less_compare);
 	  break;
 	case 3:
-	  for (i=0;i<=prevfile_end;i++) data[i]->vals = mus_sound_samples(prevfullnames[i]);
+	  for (i=0; i<=prevfile_end; i++) 
+	    data[i]->vals = mus_sound_samples(prevfullnames[i]);
 	  qsort((void *)data, prevfile_end+1, sizeof(heapdata *), greater_compare);
 	  break;
 	case 4:
-	  for (i=0;i<=prevfile_end;i++) data[i]->vals = prevtimes[i];
+	  for (i=0; i<=prevfile_end; i++) 
+	    data[i]->vals = prevtimes[i];
 	  qsort((void *)data, prevfile_end+1, sizeof(heapdata *), less_compare);
 	  break;
 	}
-      for (i=0;i<len;i++)
+      for (i=0; i<len; i++)
 	{
 	  prevnames[i] = data[i]->a1;
 	  prevfullnames[i] = data[i]->a2;
@@ -1418,7 +1471,7 @@ static char *data_formats[NUM_DATA_FORMATS] = {
   "32 bit little-endian normalized int"};
 
 int num_data_formats(void) {return(NUM_DATA_FORMATS);}
-char *data_format_name(int i) {if ((i>=0) && (i<NUM_DATA_FORMATS)) return(data_formats[i]); else return("unknown format");}
+char *data_format_name(int i) {if ((i >= 0) && (i < NUM_DATA_FORMATS)) return(data_formats[i]); else return("unknown format");}
 
 /* must parallel sndlib.h definitions */
 
@@ -1463,35 +1516,35 @@ char **set_header_and_data_positions(file_data *fdat, int type, int format)
       fl = aifc_data_formats; 
       fdat->header_pos = AIFC_POSITION; 
       fdat->format_pos = 0;
-      for (i=0;i<NUM_AIFC_FORMATS;i++) if (format == aifc_dfs[i]) {fdat->format_pos = i; break;}
+      for (i=0; i<NUM_AIFC_FORMATS; i++) if (format == aifc_dfs[i]) {fdat->format_pos = i; break;}
       break;
     case MUS_RIFF: 
       fdat->formats = NUM_WAVE_FORMATS; 
       fl = wave_data_formats; 
       fdat->header_pos = RIFF_POSITION;
       fdat->format_pos = 3;
-      for (i=0;i<NUM_WAVE_FORMATS;i++) if (format == wave_dfs[i]) {fdat->format_pos = i; break;}
+      for (i=0; i<NUM_WAVE_FORMATS; i++) if (format == wave_dfs[i]) {fdat->format_pos = i; break;}
       break;
     case MUS_IRCAM: 
       fdat->formats =NUM_IRCAM_FORMATS; 
       fl = ircam_data_formats; 
       fdat->header_pos = IRCAM_POSITION; 
       fdat->format_pos = 0;
-      for (i=0;i<NUM_IRCAM_FORMATS;i++) if (format == ircam_dfs[i]) {fdat->format_pos = i; break;}
+      for (i=0; i<NUM_IRCAM_FORMATS; i++) if (format == ircam_dfs[i]) {fdat->format_pos = i; break;}
       break;
     case MUS_NEXT:
       fdat->formats = NUM_NEXT_FORMATS; 
       fl = next_data_formats; 
       fdat->header_pos = NEXT_POSITION; 
       fdat->format_pos = 0;
-      for (i=0;i<NUM_NEXT_FORMATS;i++) if (format == next_dfs[i]) {fdat->format_pos = i; break;}
+      for (i=0; i<NUM_NEXT_FORMATS; i++) if (format == next_dfs[i]) {fdat->format_pos = i; break;}
       break;
     case MUS_NIST:
       fdat->formats = NUM_NIST_FORMATS; 
       fl = nist_data_formats; 
       fdat->header_pos = NIST_POSITION; 
       fdat->format_pos = 0;
-      for (i=0;i<NUM_NIST_FORMATS;i++) if (format == nist_dfs[i]) {fdat->format_pos = i; break;}
+      for (i=0; i<NUM_NIST_FORMATS; i++) if (format == nist_dfs[i]) {fdat->format_pos = i; break;}
       break;
     case MUS_RAW:
       fdat->formats = NUM_RAW_FORMATS; 
@@ -1504,7 +1557,7 @@ char **set_header_and_data_positions(file_data *fdat, int type, int format)
       fl = aiff_data_formats; 
       fdat->header_pos = AIFF_POSITION; 
       fdat->format_pos = 0;
-      for (i=0;i<NUM_AIFF_FORMATS;i++) if (format == aiff_dfs[i]) {fdat->format_pos = i; break;}
+      for (i=0; i<NUM_AIFF_FORMATS; i++) if (format == aiff_dfs[i]) {fdat->format_pos = i; break;}
       break;
     }
   return(fl);
@@ -1541,7 +1594,7 @@ char **set_header_positions_from_type(file_data *fdat, int header_type, int data
     case MUS_AIFF: fdat->formats = NUM_AIFF_FORMATS; formats = aiff_data_formats; fdat->header_pos = AIFF_POSITION; dfs = aiff_dfs; break;
     }
   fdat->format_pos = 0;
-  for (i=0;i<fdat->formats;i++) if (data_format == dfs[i]) {fdat->format_pos = i; break;}
+  for (i=0; i<fdat->formats; i++) if (data_format == dfs[i]) {fdat->format_pos = i; break;}
   return(formats);
 }
 
@@ -1560,7 +1613,7 @@ static int check_for_same_name(snd_info *sp1, void *ur_info)
     {
       
       info->sp = sp1;
-      for (i=0;i<sp1->nchans;i++) 
+      for (i=0; i<sp1->nchans; i++) 
 	{
 	  cp = sp1->chans[i];
 	  if (info->edits < cp->edit_ctr) info->edits = cp->edit_ctr;
@@ -1689,7 +1742,8 @@ void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_da
 	    {
 	      mus_header_write_with_fd(fd, type, srate, chans, loc, hdr->samples, format, comment, comlen);
 	      curloc = mus_header_data_location();
-	      if ((loc != curloc) && (loc != hdr->data_location)) /* user changed it */
+	      if ((loc != curloc) && 
+		  (loc != hdr->data_location)) /* user changed it */
 		{
 		  /* pad if possible ? */
 		  if (loc > curloc)
@@ -1755,9 +1809,9 @@ static int swap_int (int n)
 {
   int o;
   unsigned char *inp,*outp; 
-  inp=(unsigned char *)&n; 
-  outp=(unsigned char *)&o;
-  outp[0]=inp[3]; outp[1]=inp[2]; outp[2]=inp[1]; outp[3]=inp[0];
+  inp = (unsigned char *)&n; 
+  outp = (unsigned char *)&o;
+  outp[0] = inp[3]; outp[1] = inp[2]; outp[2] = inp[1]; outp[3] = inp[0];
   return(o);
 }
 
@@ -1765,9 +1819,9 @@ static short swap_short (short n)
 {
   short o;
   unsigned char *inp,*outp; 
-  inp=(unsigned char *)&n; 
-  outp=(unsigned char *)&o;
-  outp[0]=inp[1]; outp[1]=inp[0]; 
+  inp = (unsigned char *)&n; 
+  outp = (unsigned char *)&o;
+  outp[0] = inp[1]; outp[1] = inp[0]; 
   return(o);
 }
 
@@ -1790,15 +1844,15 @@ char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
   sprintf(tmp_str, "\nchans: %d", hdr->chans);
   strcat(reason_str, tmp_str);
   ns = swap_int(hdr->chans);
-  if ((ns<0) || (ns>8)) ns=swap_short((short)(hdr->chans));
-  if ((ns>0) && (ns <= 8))
+  if ((ns < 0) || (ns > 8)) ns = swap_short((short)(hdr->chans));
+  if ((ns > 0) && (ns <= 8))
     {
       better_chans = ns;
       sprintf(tmp_str, " (swapped: %d)", ns);
       strcat(reason_str, tmp_str);
     }
   sprintf(tmp_str, "\nlength: %.3f (%d samples, %d bytes total)",
-	  (float)(hdr->samples)/(float)(hdr->chans * hdr->srate),
+	  (float)(hdr->samples) / (float)(hdr->chans * hdr->srate),
 	  hdr->samples,
 	  mus_sound_length(filename));
   strcat(reason_str, tmp_str);
@@ -1809,7 +1863,9 @@ char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
       strcat(reason_str, tmp_str);
       if ((better_chans) && (better_srate))
 	{
-	  sprintf(tmp_str, ", swapped length: %.3f / sample-size-in-bytes)",(float)ns/(float)(better_chans * better_srate));
+	  sprintf(tmp_str, 
+		  ", swapped length: %.3f / sample-size-in-bytes)",
+		  (float)ns / (float)(better_chans * better_srate));
 	  strcat(reason_str, tmp_str);
 	}
       else strcat(reason_str, ")");
@@ -1817,7 +1873,7 @@ char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
   sprintf(tmp_str, "\ndata location: %d", hdr->data_location);
   strcat(reason_str, tmp_str);
   ns = swap_int(hdr->data_location);
-  if ((ns>0) && (ns<=1024)) 
+  if ((ns > 0) && (ns <= 1024)) 
     {
       sprintf(tmp_str, " (swapped: %d)", ns);
       strcat(reason_str, tmp_str);
@@ -1926,7 +1982,8 @@ static SCM g_set_sound_loop_info(SCM start0, SCM end0, SCM start1, SCM end1, SCM
   (sp->hdr)->loops[3] = TO_C_INT_OR_ELSE(end1, 0);
   mus_sound_set_loop_info(sp->fullname, (sp->hdr)->loops);
   type = (sp->hdr)->type;
-  if ((type != MUS_AIFF) && (type != MUS_AIFC))
+  if ((type != MUS_AIFF) && 
+      (type != MUS_AIFC))
     {
       snd_warning("changing %s header from %s to aifc to accommodate loop info",
 		  sp->shortname,
@@ -1963,7 +2020,7 @@ static SCM g_soundfont_info(SCM snd)
       lim = mus_header_sf2_entries();
       if (lim > 0)
 	{
-	  for (i=lim-1;i>=0;i--)
+	  for (i=lim-1; i>=0; i--)
 	    {
 	      inlist = SCM_LIST4(TO_SCM_STRING(mus_header_sf2_name(i)),
 				 TO_SCM_INT(mus_header_sf2_start(i)),
@@ -2014,7 +2071,7 @@ static SCM g_sound_files_in_directory(SCM dirname)
 	  numfiles = dp->len;
 	  vect = gh_make_vector(TO_SCM_INT(numfiles), SCM_BOOL_F);
 	  vdata = SCM_VELTS(vect);
-	  for (i=0;i<numfiles;i++)
+	  for (i=0; i<numfiles; i++)
 	    vdata[i] = TO_SCM_STRING(dp->files[i]);
 	  free_dir(dp);
 	}

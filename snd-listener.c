@@ -187,7 +187,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
 {
 #if (!USE_NO_GUI)
   /* try to find complete form either enclosing current cursor, or just before it */
-  GUI_TEXT_POSITION_TYPE new_eot=0,cmd_eot=0;
+  GUI_TEXT_POSITION_TYPE new_eot = 0,cmd_eot = 0;
   char *str = NULL,*full_str = NULL,*prompt;
   int i,j,slen;
   int end_of_text,start_of_text,last_position,current_position,parens;
@@ -199,7 +199,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
   prompt = listener_prompt(ss);
   if (last_position > end_of_text)
     {
-      for (i=current_position;i<last_position;i++)
+      for (i=current_position; i<last_position; i++)
 	if ((full_str[i+1] == prompt[0]) && 
 	    (full_str[i] == '\n'))
 	  {
@@ -209,7 +209,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
     }
   if (start_of_text > 0)
     {
-      for (i=end_of_text;i>=0;i--)
+      for (i=end_of_text; i>=0; i--)
 	if ((full_str[i] == prompt[0]) && 
 	    ((i == 0) || 
 	     (full_str[i-1] == '\n')))
@@ -224,7 +224,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
       parens = 0;
       slen = end_of_text - start_of_text + 2;
       str = (char *)CALLOC(slen, sizeof(char));
-      for (i=start_of_text, j=0;i<=end_of_text;j++,i++) 
+      for (i=start_of_text, j=0; i<=end_of_text; j++, i++) 
 	{
 	  str[j] = full_str[i]; 
 	  if (str[j] == '(') 
@@ -261,13 +261,13 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
 	  int loc,k,len;
 	  char *tmp;
 	  loc = current_position - start_of_text - 1;
-          for (i=loc;i>=0;i--)
+          for (i=loc; i>=0; i--)
 	    if ((str[i] == '\n') || (i == 0))
 	      {
 		len = snd_strlen(str);
 		tmp = (char *)CALLOC(len+1, sizeof(char));
 		if (i != 0) i++;
-		for (k=0;i<len;i++,k++) 
+		for (k=0; i<len; i++, k++) 
 		  if ((i>loc) &&
 		      ((str[i] == '\n') || 
 		       (str[i] == ' ')))
@@ -326,13 +326,13 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
   chan_info *cp;
   char *str,*r0 = NULL,*r1 = NULL;
   GUI_SET_TEXT(stats_form, "file chn: mem(#bufs), main, temp(#files), amp envs\n\n");
-  for (i=0;i<ss->max_sounds;i++)
+  for (i=0; i<ss->max_sounds; i++)
     {
       if ((sp=((snd_info *)(ss->sounds[i]))))
 	{
 	  if (sp->inuse)
 	    {
-	      for (j=0;j<(sp->nchans);j++)
+	      for (j=0; j<(sp->nchans); j++)
 		{
 		  if ((cp=((chan_info *)(sp->chans[j]))))
 		    {
@@ -361,13 +361,13 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
 #if HAVE_MALLINFO
   {
     struct mallinfo mall;
-    char *m0=NULL,*m1=NULL,*m2=NULL,*m3=NULL;
+    char *m0 = NULL,*m1 = NULL,*m2 = NULL,*m3 = NULL;
     mall = mallinfo();
     str = (char *)CALLOC(256, sizeof(char));
     sprintf(str, "\nmalloc: %s + %s (in use: %s, freed: %s)\n",
 	    m0 = kmg(mall.arena),
 	    m1 = kmg(mall.hblkhd),
-	    m2 = kmg(used_bytes=mall.uordblks),
+	    m2 = kmg(used_bytes = mall.uordblks),
 	    m3 = kmg(mall.fordblks));
     pos = GUI_TEXT_END(stats_form);
     GUI_STATS_TEXT_INSERT(stats_form, pos, str);

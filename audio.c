@@ -5771,10 +5771,10 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 						mus_audio_device_name(field)));
               break;
             default: 
-	      OLD_RETURN_ERROR_EXIT(MUS_AUDIO_CANT_READ, -1,
-				    mus_format("can't read %s field %s",
-					       mus_audio_device_name(dev),
-					       mus_audio_device_name(field)));
+	      RETURN_ERROR_EXIT(MUS_AUDIO_CANT_READ, -1,
+				mus_format("can't read %s field %s",
+					   mus_audio_device_name(dev),
+					   mus_audio_device_name(field)));
 	      break;
             }
         }

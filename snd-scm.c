@@ -54,7 +54,7 @@ void snd_protect(SCM obj)
     }
   else
     {
-      for (i=0;i<gc_protection_size;i++)
+      for (i=0; i<gc_protection_size; i++)
 	{
 	  if (SCM_EQ_P(scm_vector_ref(gc_protection, TO_SCM_INT(i)), DEFAULT_GC_VALUE))
 	    {
@@ -67,7 +67,7 @@ void snd_protect(SCM obj)
       gc_protection_size *= 2;
       gc_protection = scm_make_vector(TO_SCM_INT(gc_protection_size), DEFAULT_GC_VALUE);
       scm_permanent_object(gc_protection);
-      for (i=0;i<old_size;i++)
+      for (i=0; i<old_size; i++)
 	{
 	  num = TO_SCM_INT(i);
 	  scm_vector_set_x(gc_protection, num, scm_vector_ref(tmp, num));
@@ -80,7 +80,7 @@ void snd_protect(SCM obj)
 void snd_unprotect(SCM obj)
 {
   int i;
-  for (i=0;i<gc_protection_size;i++)
+  for (i=0; i<gc_protection_size; i++)
     {
       if (SCM_EQ_P(scm_vector_ref(gc_protection, TO_SCM_INT(i)), obj))
 	{
@@ -117,7 +117,7 @@ void SND_ASSERT_CHAN(char *origin, SCM snd, SCM chn, int off)
 {
   SND_ASSERT_SND(origin, snd, off);
   if (!((gh_number_p(chn)) || (SCM_FALSEP(chn)) || (SCM_UNBNDP(chn))))
-    scm_wrong_type_arg(origin, off+1, chn);
+    scm_wrong_type_arg(origin, off + 1, chn);
 }
 
 #define MAX_ERROR_STRING_LENGTH 512
@@ -134,7 +134,7 @@ static void string_to_stdout(snd_state *ss, char *msg)
 {
   char *str;
   write(fileno(stdout), msg, snd_strlen(msg));
-  str = (char *)CALLOC(4+snd_strlen(listener_prompt(ss)), sizeof(char));
+  str = (char *)CALLOC(4 + snd_strlen(listener_prompt(ss)), sizeof(char));
   sprintf(str, "\n%s", listener_prompt(ss));
   write(fileno(stdout), str, snd_strlen(str));
   FREE(str);
@@ -208,7 +208,8 @@ SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error handler */
 		      else scm_display(tag, port);
 #if (!HAVE_GUILE_1_3)
 		      stack = scm_fluid_ref(SCM_CDR(scm_the_last_stack_fluid));
-		      if (SCM_NFALSEP(stack)) scm_display_backtrace(stack, port, SCM_UNDEFINED, SCM_UNDEFINED);
+		      if (SCM_NFALSEP(stack)) 
+			scm_display_backtrace(stack, port, SCM_UNDEFINED, SCM_UNDEFINED);
 #endif
 		    }
 		}
@@ -416,40 +417,46 @@ static char *gh_print(SCM result)
   char *newbuf = NULL,*str = NULL;
   int i,ilen,savelen,savectr,slen;
   /* specialize vectors which can be enormous in this context */
-  if ((!(gh_vector_p(result))) || ((int)(gh_vector_length(result)) <= print_length(state)))
+  if ((!(gh_vector_p(result))) || 
+      ((int)(gh_vector_length(result)) <= print_length(state)))
     return(gh_print_1(result, __FUNCTION__));
-  ilen=print_length(state); 
+  ilen = print_length(state); 
   newbuf = (char *)calloc(128, sizeof(char));
   savelen = 128;
   savectr = 3;
   sprintf(newbuf, "#("); 
-  for (i=0;i<ilen;i++)
+  for (i=0; i<ilen; i++)
     {
       str = gh_print_1(gh_vector_ref(result, TO_SMALL_SCM_INT(i)), __FUNCTION__);
       if ((str) && (*str)) 
 	{
 	  slen = strlen(str);
-	  if ((slen+savectr+1) >= savelen)
+	  if ((slen + savectr + 1) >= savelen)
 	    {
-	      savelen += (slen+128);
+	      savelen += (slen + 128);
 	      newbuf = (char *)realloc(newbuf, savelen * sizeof(char));
 	    }
-	  if (i != 0) {strcat(newbuf, " "); savectr++;}
+	  if (i != 0) 
+	    {
+	      strcat(newbuf, " "); 
+	      savectr++;
+	    }
 	  strcat(newbuf, str);
-	  savectr+=slen;
+	  savectr += slen;
 	}
       if (str) free(str);
     }
-  if (savectr+8 > savelen) newbuf = (char *)realloc(newbuf, (savectr+8) * sizeof(char));
+  if (savectr + 8 > savelen) 
+    newbuf = (char *)realloc(newbuf, (savectr + 8) * sizeof(char));
   strcat(newbuf, " ...)");
   return(newbuf);
 }
 
 SCM array_to_list(Float *arr, int i, int len)
 {
-  if (i < (len-1))
+  if (i < (len - 1))
     return(gh_cons(TO_SCM_DOUBLE(arr[i]), 
-		   array_to_list(arr, i+1, len)));
+		   array_to_list(arr, i + 1, len)));
   else return(gh_cons(TO_SCM_DOUBLE(arr[i]), 
 		      SCM_EOL));
 }
@@ -472,7 +479,7 @@ int snd_eval_str(snd_state *ss, char *buf, int count)
   SCM result = SCM_UNDEFINED;
   int ctr;
   char *str = NULL;
-  for (ctr=0;ctr<count;ctr++)
+  for (ctr=0; ctr<count; ctr++)
     {
       result = snd_internal_stack_catch(SCM_BOOL_T, eval_str_wrapper, buf, snd_catch_scm_error, buf);
       if (g_error_occurred)
@@ -544,8 +551,8 @@ static char *stdin_check_for_full_expression(char *newstr)
   end_of_text = check_balance(stdin_str, 0, strlen(stdin_str)); /* can be strlen! */
   if (end_of_text > 0)
     {
-      if (end_of_text+1 < snd_strlen(stdin_str)) /* is this needed?  see warning above */
-	stdin_str[end_of_text+1] = 0;
+      if (end_of_text + 1 < snd_strlen(stdin_str)) /* is this needed?  see warning above */
+	stdin_str[end_of_text + 1] = 0;
       return(stdin_str);
     }
   else return(NULL);
@@ -1351,9 +1358,9 @@ static SCM g_sounds(void)
   SCM result;
   ss = get_global_state();
   result = SCM_EOL;
-  for (i=0;i<ss->max_sounds;i++)
+  for (i=0; i<ss->max_sounds; i++)
     {
-      sp=((snd_info *)(ss->sounds[i]));
+      sp = ((snd_info *)(ss->sounds[i]));
       if ((sp) && (sp->inuse))
 	result = gh_cons(TO_SMALL_SCM_INT(i),
 			 result);
@@ -1688,7 +1695,7 @@ static void set_temp_fd(int fd, file_info *hdr)
   else
     {
       pos = -1;
-      for (i=0;i<temp_sound_size;i++)
+      for (i=0; i<temp_sound_size; i++)
 	if (temp_sound_headers[i] == NULL) {pos=i; break;}
       if (pos == -1)
 	{
@@ -1696,7 +1703,7 @@ static void set_temp_fd(int fd, file_info *hdr)
 	  temp_sound_size += 4;
 	  temp_sound_fds = (int *)REALLOC(temp_sound_fds, temp_sound_size * sizeof(int));
 	  temp_sound_headers = (file_info **)REALLOC(temp_sound_headers, temp_sound_size * sizeof(file_info *));
-	  for (i=pos;i<temp_sound_size;i++) temp_sound_headers[i] = NULL;
+	  for (i=pos; i<temp_sound_size; i++) temp_sound_headers[i] = NULL;
 	}
     }
   temp_sound_fds[pos] = fd;
@@ -1706,7 +1713,7 @@ static void set_temp_fd(int fd, file_info *hdr)
 static file_info *get_temp_header(int fd)
 {
   int i;
-  for (i=0;i<temp_sound_size;i++)
+  for (i=0; i<temp_sound_size; i++)
     if (fd == temp_sound_fds[i]) 
       return(temp_sound_headers[i]);
   return(NULL);
@@ -1715,7 +1722,7 @@ static file_info *get_temp_header(int fd)
 static void unset_temp_fd(int fd)
 {
   int i;
-  for (i=0;i<temp_sound_size;i++)
+  for (i=0; i<temp_sound_size; i++)
     if (fd == temp_sound_fds[i])
       {
 	temp_sound_fds[i] = 0;
@@ -1840,7 +1847,7 @@ static SCM samples2vct(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM v, SCM p
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
   if (sf)
     {
-      for (i=0;i<len;i++) 
+      for (i=0; i<len; i++) 
 	fvals[i] = next_sample_to_float(sf);
       free_snd_fd(sf);
     }
@@ -1885,7 +1892,7 @@ static SCM samples2sound_data(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM s
 	sd = (sound_data *)SND_VALUE_OF(sdobj);
       else
 	{
-	  newsd = make_sound_data(chn+1, len);
+	  newsd = make_sound_data(chn + 1, len);
 	  sd = (sound_data *)SND_VALUE_OF(newsd);
 	}
       if (chn < sd->chans)
@@ -1894,10 +1901,10 @@ static SCM samples2sound_data(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM s
 	  if (sf)
 	    {
 	      if (no_ed_scalers(cp))
-		for (i=0;i<len;i++) 
+		for (i=0; i<len; i++) 
 		  sd->data[chn][i] = local_next_sample_unscaled(sf);
 	      else 
-		for (i=0;i<len;i++) 
+		for (i=0; i<len; i++) 
 		  sd->data[chn][i] = next_sample(sf);
 	      free_snd_fd(sf);
 	    }
@@ -1931,7 +1938,7 @@ static SCM transform_samples2vct(SCM snd_n, SCM chn_n, SCM v)
 	  if (v1)
 	    fvals = v1->data;
 	  else fvals = (Float *)CALLOC(len, sizeof(Float));
-	  for (i=0;i<len;i++) fvals[i] = fp->data[i];
+	  for (i=0; i<len; i++) fvals[i] = fp->data[i];
 	  if (v1)
 	    return(v);
 	  else return(make_vct(len, fvals));
@@ -1947,8 +1954,8 @@ static SCM transform_samples2vct(SCM snd_n, SCM chn_n, SCM v)
 	      if (v1)
 		fvals = v1->data;
 	      else fvals = (Float *)CALLOC(len, sizeof(Float));
-	      for (i=0, k=0;i<slices;i++)
-		for (j=0;j<bins;j++,k++)
+	      for (i=0, k=0; i<slices; i++)
+		for (j=0; j<bins; j++, k++)
 		  fvals[k] = si->data[i][j];
 	      if (v1)
 		return(v);
@@ -1978,7 +1985,7 @@ static SCM vct2soundfile(SCM g_fd, SCM obj, SCM g_nums)
     {
       /* v->data has doubles, but we're assuming elsewhere that these are floats in the file */
       vals = (float *)CALLOC(nums, sizeof(float));
-      for (i=0;i<nums;i++)
+      for (i=0; i<nums; i++)
 	vals[i] = (float)(v->data[i]);
       write(fd, (char *)vals, nums * 4);
       FREE(vals);
@@ -1997,7 +2004,7 @@ static SCM mix_vct(SCM obj, SCM beg, SCM snd, SCM chn, SCM with_consoles, SCM or
   chan_info *cp[1];
   char *edname = NULL;
   MUS_SAMPLE_TYPE **data;
-  int i,len,mix_id=-1,with_mixers=1;
+  int i,len,mix_id = -1,with_mixers = 1;
   SCM_ASSERT(vct_p(obj), obj, SCM_ARG1, S_mix_vct);
   SND_ASSERT_CHAN(S_mix_vct, snd, chn, 3);
   SCM_ASSERT(bool_or_arg_p(beg), beg, SCM_ARG2, S_mix_vct);
@@ -2017,7 +2024,7 @@ static SCM mix_vct(SCM obj, SCM beg, SCM snd, SCM chn, SCM with_consoles, SCM or
 	  else with_mixers = bool_int_or_one(with_consoles);
 	  data = (MUS_SAMPLE_TYPE **)CALLOC(1, sizeof(MUS_SAMPLE_TYPE *));
 	  data[0] = (MUS_SAMPLE_TYPE *)CALLOC(len, sizeof(MUS_SAMPLE_TYPE));
-	  for (i=0;i<len;i++)
+	  for (i=0; i<len; i++)
 	    data[0][i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
 	  if (gh_string_p(origin))
 	    edname = TO_NEW_C_STRING(origin);
@@ -2043,19 +2050,23 @@ MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, char *caller, int posit
   SCM lst;
   if (gh_list_p(obj))
     {
-      if ((*size) == 0) num = gh_length(obj); else num = (*size);
+      if ((*size) == 0)
+	num = gh_length(obj); 
+      else num = (*size);
       vals = (MUS_SAMPLE_TYPE *)CALLOC(num, sizeof(MUS_SAMPLE_TYPE));
-      for (i=0, lst=obj;i<num;i++,lst=SCM_CDR(lst)) 
+      for (i=0, lst=obj; i<num; i++, lst=SCM_CDR(lst)) 
 	vals[i] = MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(SCM_CAR(lst)));
     }
   else
     {
       if (gh_vector_p(obj))
 	{
-	  if ((*size) == 0) num = gh_vector_length(obj); else num = (*size);
+	  if ((*size) == 0)
+	    num = gh_vector_length(obj); 
+	  else num = (*size);
 	  vals = (MUS_SAMPLE_TYPE *)CALLOC(num, sizeof(MUS_SAMPLE_TYPE));
 	  vdata = SCM_VELTS(obj);
-	  for (i=0;i<num;i++) 
+	  for (i=0; i<num; i++) 
 	    vals[i] = MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(vdata[i]));
 	}
       else
@@ -2063,9 +2074,11 @@ MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, char *caller, int posit
 	  if (vct_p(obj))
 	    {
 	      v = get_vct(obj);
-	      if ((*size) == 0) num = v->length; else num = (*size);
+	      if ((*size) == 0) 
+		num = v->length; 
+	      else num = (*size);
 	      vals = (MUS_SAMPLE_TYPE *)CALLOC(num, sizeof(MUS_SAMPLE_TYPE));
-	      for (i=0;i<num;i++) 
+	      for (i=0; i<num; i++) 
 		vals[i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
 	    }
 	  else scm_wrong_type_arg(caller, position, obj);
@@ -2142,7 +2155,7 @@ static SCM g_samples(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM pos)
   if (sf)
     {
       vdata = SCM_VELTS(new_vect);
-      for (i=0;i<len;i++) 
+      for (i=0; i<len; i++) 
 	vdata[i] = TO_SCM_DOUBLE(next_sample_to_float(sf));
       free_snd_fd(sf);
     }
@@ -2157,7 +2170,7 @@ static SCM g_set_samples(SCM samp_0, SCM samps, SCM vect, SCM snd_n, SCM chn_n, 
 
   chan_info *cp;
   MUS_SAMPLE_TYPE *ivals;
-  int len,beg,curlen,override=0;
+  int len,beg,curlen,override = 0;
   char *fname;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(samp_0)), samp_0, SCM_ARG1, "set-" S_samples);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(samps)), samps, SCM_ARG2, "set-" S_samples);
@@ -2171,8 +2184,7 @@ static SCM g_set_samples(SCM samp_0, SCM samps, SCM vect, SCM snd_n, SCM chn_n, 
       curlen = current_ed_samples(cp);
       fname = TO_NEW_C_STRING(vect);
       if ((beg == 0) && 
-	  ((len > curlen) || 
-	   override))
+	  ((len > curlen) || override))
 	file_override_samples(len, fname, cp, 0, DELETE_ME, LOCK_MIXES, "set-" S_samples);
       else file_change_samples(beg, len, fname, cp, 0, DELETE_ME, LOCK_MIXES, "set-" S_samples);
       free(fname);
@@ -2224,9 +2236,9 @@ static SCM g_change_samples_with_origin(SCM samp_0, SCM samps, SCM origin, SCM v
       ivals = (MUS_SAMPLE_TYPE *)CALLOC(len, sizeof(MUS_SAMPLE_TYPE));
       vdata = SCM_VELTS(vect);
 #if SNDLIB_USE_FLOATS
-      for (i=0;i<len;i++) ivals[i] = TO_C_DOUBLE(vdata[i]);
+      for (i=0; i<len; i++) ivals[i] = TO_C_DOUBLE(vdata[i]);
 #else
-      for (i=0;i<len;i++) ivals[i] = TO_C_INT_OR_ELSE(vdata[i], 0);
+      for (i=0; i<len; i++) ivals[i] = TO_C_INT_OR_ELSE(vdata[i], 0);
 #endif
       change_samples(beg, len, ivals, cp, LOCK_MIXES, SCM_STRING_CHARS(origin));
       FREE(ivals);
@@ -2363,9 +2375,9 @@ static SCM g_insert_samples_with_origin(SCM samp, SCM samps, SCM origin, SCM vec
       ivals = (MUS_SAMPLE_TYPE *)CALLOC(len, sizeof(MUS_SAMPLE_TYPE));
       vdata = SCM_VELTS(vect);
 #if SNDLIB_USE_FLOATS
-      for (i=0;i<len;i++) ivals[i] = TO_C_DOUBLE(vdata[i]);
+      for (i=0; i<len; i++) ivals[i] = TO_C_DOUBLE(vdata[i]);
 #else
-      for (i=0;i<len;i++) ivals[i] = TO_C_INT_OR_ELSE(vdata[i], 0);
+      for (i=0; i<len; i++) ivals[i] = TO_C_INT_OR_ELSE(vdata[i], 0);
 #endif
       insert_samples(beg, len, ivals, cp, SCM_STRING_CHARS(origin));
       FREE(ivals);
@@ -2391,7 +2403,7 @@ static SCM g_insert_sound(SCM file, SCM ubeg, SCM file_chn, SCM snd_n, SCM chn_n
   chan_info *cp;
   snd_info *sp;
   char *filename = NULL;
-  int nc,len,fchn,beg=0,i;
+  int nc,len,fchn,beg = 0,i;
   SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_insert_sound);
   SCM_ASSERT(bool_or_arg_p(ubeg), ubeg, SCM_ARG2, S_insert_sound);
   SCM_ASSERT(bool_or_arg_p(file_chn), file_chn, SCM_ARG3, S_insert_sound);
@@ -2406,7 +2418,7 @@ static SCM g_insert_sound(SCM file, SCM ubeg, SCM file_chn, SCM snd_n, SCM chn_n
 		       SCM_LIST2(TO_SCM_STRING(S_insert_sound),
 				 file)));
     }
-  len = mus_sound_samples(filename)/nc;
+  len = mus_sound_samples(filename) / nc;
   if (gh_number_p(ubeg))
     beg = TO_C_INT_OR_ELSE(ubeg, 0);
   else beg = cp->cursor;
@@ -2432,7 +2444,7 @@ static SCM g_insert_sound(SCM file, SCM ubeg, SCM file_chn, SCM snd_n, SCM chn_n
     {
       sp = cp->sound;
       if (sp->nchans < nc) nc = sp->nchans;
-      for (i=0;i<nc;i++)
+      for (i=0; i<nc; i++)
 	{
 	  file_insert_samples(beg, len, filename, sp->chans[i], i, DONT_DELETE_ME, S_insert_sound);
 	  update_graph(sp->chans[i], NULL);
@@ -2588,7 +2600,8 @@ static SCM g_transform_samples(SCM snd_n, SCM chn_n)
 	      len = fp->current_size;
 	      new_vect = gh_make_vector(TO_SMALL_SCM_INT(len), TO_SCM_DOUBLE(0.0));
 	      vdata = SCM_VELTS(new_vect);
-	      for (i=0;i<len;i++) vdata[i] = TO_SCM_DOUBLE(fp->data[i]);
+	      for (i=0; i<len; i++) 
+		vdata[i] = TO_SCM_DOUBLE(fp->data[i]);
 	      return(new_vect);
 	    }
 	  else 
@@ -2600,12 +2613,12 @@ static SCM g_transform_samples(SCM snd_n, SCM chn_n)
 		  bins = si->target_bins;
 		  new_vect = gh_make_vector(TO_SMALL_SCM_INT(slices), TO_SCM_DOUBLE(0.0));
 		  vdata = SCM_VELTS(new_vect);
-		  for (i=0;i<slices;i++)
+		  for (i=0; i<slices; i++)
 		    {
 		      tmp_vect = gh_make_vector(TO_SMALL_SCM_INT(bins), TO_SCM_DOUBLE(0.0));
 		      tdata = SCM_VELTS(tmp_vect);
 		      vdata[i] = tmp_vect;
-		      for (j=0;j<bins;j++)
+		      for (j=0; j<bins; j++)
 			tdata[j] = TO_SCM_DOUBLE(si->data[i][j]);
 		    }
 		  return(new_vect);
@@ -2628,18 +2641,18 @@ static Float *load_Floats(SCM scalers, int *result_len)
     if (gh_list_p(scalers))
       len = gh_length(scalers);
     else len = 1;
-  if (len<=0) len=1;
+  if (len <= 0) len = 1;
   scls = (Float *)CALLOC(len, sizeof(Float));
   if (gh_vector_p(scalers))
     {
       vdata = SCM_VELTS(scalers);
-      for (i=0;i<len;i++) 
+      for (i=0; i<len; i++) 
 	scls[i] = (Float)TO_C_DOUBLE(vdata[i]);
     }
   else
     if (gh_list_p(scalers))
       {
-	for (i=0, lst=scalers;i<len;i++,lst=SCM_CDR(lst)) 
+	for (i=0, lst=scalers; i<len; i++,lst=SCM_CDR(lst)) 
 	  scls[i] = (Float)TO_C_DOUBLE(SCM_CAR(lst));
       }
     else
@@ -2833,7 +2846,7 @@ static SCM g_env_sound(SCM edata, SCM samp_n, SCM samps, SCM base, SCM snd_n, SC
 
   chan_info *cp;
   env *e;
-  int beg=0,dur;
+  int beg = 0,dur;
   mus_any *egen;
   SCM_ASSERT(bool_or_arg_p(samp_n), samp_n, SCM_ARG2, S_env_sound);
   SCM_ASSERT(bool_or_arg_p(samps), samps, SCM_ARG3, S_env_sound);
@@ -2883,7 +2896,7 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
     }
   else
     n = gh_vector_length(reals);
-  ipow = (int)ceil(log((Float)n)/log(2.0));
+  ipow = (int)ceil(log((Float)n) / log(2.0));
   n2 = (int)pow(2.0, (Float)ipow);
   if ((!v1) || (n != n2))
     {
@@ -2901,7 +2914,7 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
     {
       rvdata = SCM_VELTS(reals);
       ivdata = SCM_VELTS(imag);
-      for (i=0;i<n;i++)
+      for (i=0; i<n; i++)
 	{
 	  rl[i] = TO_C_DOUBLE(rvdata[i]);
 	  im[i] = TO_C_DOUBLE(ivdata[i]);
@@ -2911,7 +2924,7 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
     {
       if (n != n2)
 	{
-	  for (i=0;i<n;i++)
+	  for (i=0; i<n; i++)
 	    {
 	      rl[i] = v1->data[i];
 	      im[i] = v2->data[i];
@@ -2925,7 +2938,7 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
 	{
 	  rvdata = SCM_VELTS(reals);
 	  ivdata = SCM_VELTS(imag);
-	  for (i=0;i<n;i++)
+	  for (i=0; i<n; i++)
 	    {
 	      rvdata[i] = TO_SCM_DOUBLE(rl[i]);
 	      ivdata[i] = TO_SCM_DOUBLE(im[i]);
@@ -2935,7 +2948,7 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
 	{
 	  if (n != n2)
 	    {
-	      for (i=0;i<n;i++)
+	      for (i=0; i<n; i++)
 		{
 		  v1->data[i] = rl[i];
 		  v2->data[i] = im[i];
@@ -2949,13 +2962,13 @@ static SCM g_fft_1(SCM reals, SCM imag, SCM sign, int use_fft)
       if (v1 == NULL)
 	{
 	  rvdata = SCM_VELTS(reals);
-	  for (i=0;i<n;i++)
+	  for (i=0; i<n; i++)
 	    rvdata[i] = TO_SCM_DOUBLE(rl[i]);
 	}
       else
 	{
 	  if (n != n2)
-	    for (i=0;i<n;i++) 
+	    for (i=0; i<n; i++) 
 	      v1->data[i] = rl[i];
 	}
     }
@@ -3025,24 +3038,24 @@ static SCM g_snd_spectrum(SCM data, SCM win, SCM len, SCM linear_or_dB)
   rdat = v->data;
   n = TO_C_INT_OR_ELSE(len, 0);
   if (n > v->length) n = v->length;
-  if (SCM_TRUE_P(linear_or_dB)) linear=1; else linear=0;
+  if (SCM_TRUE_P(linear_or_dB)) linear = 1; else linear = 0;
   idat = (Float *)CALLOC(n, sizeof(Float));
   window = (Float *)CALLOC(n, sizeof(Float));
   make_fft_window_1(window, n, TO_C_INT_OR_ELSE(win, 0), 0.0);
-  for (i=0;i<n;i++) rdat[i] *= window[i];
+  for (i=0; i<n; i++) rdat[i] *= window[i];
   FREE(window);
   mus_fft(rdat, idat, n, 1);
   lowest = 0.00000001;
   maxa = 0.0;
-  n = n/2;
-  for (i=0;i<n;i++)
+  n = n / 2;
+  for (i=0; i<n; i++)
     {
-      val = rdat[i]*rdat[i]+idat[i]*idat[i];
+      val = rdat[i] * rdat[i] + idat[i] * idat[i];
       if (val < lowest)
 	idat[i] = .0001;
       else 
 	{
-	  idat[i]=sqrt(val);
+	  idat[i] = sqrt(val);
 	  if (idat[i] > maxa) maxa = idat[i];
 	}
     }
@@ -3051,10 +3064,13 @@ static SCM g_snd_spectrum(SCM data, SCM win, SCM len, SCM linear_or_dB)
       maxa = 1.0 / maxa;
       if (linear == 0) /* dB */
 	{
-	  todb = 20.0/log(10.0);
-	  for (i=0;i<n;i++) idat[i] = todb * log(idat[i] * maxa);
+	  todb = 20.0 / log(10.0);
+	  for (i=0; i<n; i++) 
+	    idat[i] = todb * log(idat[i] * maxa);
 	}
-      else for (i=0;i<n;i++) idat[i] *= maxa;
+      else 
+	for (i=0; i<n; i++) 
+	  idat[i] *= maxa;
     }
   return(scm_return_first(make_vct(n, idat), data));
 }
@@ -3150,7 +3166,9 @@ static SCM g_src_selection(SCM ratio_or_env, SCM base)
 		     SCM_LIST1(TO_SCM_STRING(S_src_selection))));
   cp = get_cp(SCM_BOOL_F, SCM_BOOL_F, S_src_selection);
   if (gh_number_p(ratio_or_env))
-    src_env_or_num(state, cp, NULL, TO_C_DOUBLE(ratio_or_env), TRUE, NOT_FROM_ENVED, S_src_selection, TRUE, NULL);
+    src_env_or_num(state, cp, 
+		   NULL, 
+		   TO_C_DOUBLE(ratio_or_env), TRUE, NOT_FROM_ENVED, S_src_selection, TRUE, NULL);
   else 
     {
       if (gh_list_p(ratio_or_env))
@@ -3166,9 +3184,9 @@ static SCM g_src_selection(SCM ratio_or_env, SCM base)
 	    {
 	      egen = mus_scm_to_clm(ratio_or_env);
 	      if (mus_env_p(egen))
-		{
-		  src_env_or_num(state, cp, NULL, 1.0, FALSE, NOT_FROM_ENVED, S_src_selection, TRUE, egen);
-		}
+		src_env_or_num(state, cp, 
+			       NULL, 
+			       1.0, FALSE, NOT_FROM_ENVED, S_src_selection, TRUE, egen);
 	    }
 	}
     }
@@ -3275,7 +3293,7 @@ static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM sn
   char *label = NULL;
   vct *v = NULL;
   SCM *vdata;
-  int i,len,graph,graphs,need_update=0;
+  int i,len,graph,graphs,need_update = 0;
   Float ymin,ymax,val,nominal_x0,nominal_x1;
   /* ldata can be a vct object, a vector, or a list of either */
   SCM_ASSERT(((vct_p(ldata)) || (gh_vector_p(ldata)) || (gh_list_p(ldata))), ldata, SCM_ARG1, S_graph);
@@ -3321,12 +3339,12 @@ static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM sn
 	  lg->data[0] = (Float *)CALLOC(len, sizeof(Float));
 	  lg->len[0] = len;
 	}
-      for (i=0, lst=ldata;i<len;i++,lst=SCM_CDR(lst))
+      for (i=0, lst=ldata; i<len; i++, lst=SCM_CDR(lst))
 	lg->data[0][i] = TO_C_DOUBLE(SCM_CAR(lst));
       if ((!gh_number_p(y0)) || 
 	  (!gh_number_p(y1)))
 	{
-	  for (i=1;i<len;i+=2)
+	  for (i=1; i<len; i+=2)
 	    {
 	      val = lg->data[0][i];
 	      if (ymin > val) ymin = val;
@@ -3334,7 +3352,7 @@ static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM sn
 	    }
 	}
       if (!gh_number_p(x0)) nominal_x0 = lg->data[0][0];
-      if (!gh_number_p(x1)) nominal_x1 = lg->data[0][len-2];
+      if (!gh_number_p(x1)) nominal_x1 = lg->data[0][len - 2];
     }
   else
     {
@@ -3359,19 +3377,19 @@ static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM sn
 	    }
 	  if (v)
 	    {
-	      for (i=0;i<len;i++) 
+	      for (i=0; i<len; i++) 
 		lg->data[graph][i] = v->data[i];
 	    }
 	  else 
 	    {
 	      vdata = SCM_VELTS(data);
-	      for (i=0;i<len;i++) 
+	      for (i=0; i<len; i++) 
 		lg->data[graph][i] = TO_C_DOUBLE(vdata[i]);
 	    }
 	  if ((!gh_number_p(y0)) || 
 	      (!gh_number_p(y1)))
 	    {
-	      for (i=0;i<len;i++)
+	      for (i=0; i<len; i++)
 		{
 		  val = lg->data[graph][i];
 		  if (ymin > val) ymin = val;
@@ -3822,20 +3840,20 @@ void g_initialize_gh(snd_state *ss)
 
   /* ---------------- FUNCTIONS ---------------- */
 
-  DEFINE_PROC(gh_new_procedure(S_snd_tempnam, SCM_FNC g_snd_tempnam, 0, 0, 0), H_snd_tempnam);
-  DEFINE_PROC(gh_new_procedure("set-" S_oss_buffers, SCM_FNC g_set_oss_buffers, 2, 0, 0), H_set_oss_buffers);
+  DEFINE_PROC(gh_new_procedure(S_snd_tempnam,        SCM_FNC g_snd_tempnam, 0, 0, 0),        H_snd_tempnam);
+  DEFINE_PROC(gh_new_procedure("set-" S_oss_buffers, SCM_FNC g_set_oss_buffers, 2, 0, 0),    H_set_oss_buffers);
   DEFINE_PROC(gh_new_procedure(S_update_usage_stats, SCM_FNC g_update_usage_stats, 0, 0, 0), H_update_usage_stats);
 #if HAVE_OSS
   DEFINE_PROC(gh_new_procedure(S_clear_audio_inputs, SCM_FNC g_clear_audio_inputs, 0, 0, 0), H_clear_audio_inputs);
 #endif
-  DEFINE_PROC(gh_new_procedure(S_enved_dialog, SCM_FNC g_enved_dialog, 0, 0, 0), H_enved_dialog);
-  DEFINE_PROC(gh_new_procedure(S_color_dialog, SCM_FNC g_color_dialog, 0, 0, 0), H_color_dialog);
+  DEFINE_PROC(gh_new_procedure(S_enved_dialog,       SCM_FNC g_enved_dialog, 0, 0, 0),       H_enved_dialog);
+  DEFINE_PROC(gh_new_procedure(S_color_dialog,       SCM_FNC g_color_dialog, 0, 0, 0),       H_color_dialog);
   DEFINE_PROC(gh_new_procedure(S_orientation_dialog, SCM_FNC g_orientation_dialog, 0, 0, 0), H_orientation_dialog);
-  DEFINE_PROC(gh_new_procedure(S_transform_dialog, SCM_FNC g_transform_dialog, 0, 0, 0), H_transform_dialog);
-  DEFINE_PROC(gh_new_procedure(S_file_dialog, SCM_FNC g_file_dialog, 0, 0, 0), H_file_dialog);
+  DEFINE_PROC(gh_new_procedure(S_transform_dialog,   SCM_FNC g_transform_dialog, 0, 0, 0),   H_transform_dialog);
+  DEFINE_PROC(gh_new_procedure(S_file_dialog,        SCM_FNC g_file_dialog, 0, 0, 0),        H_file_dialog);
   DEFINE_PROC(gh_new_procedure(S_edit_header_dialog, SCM_FNC g_edit_header_dialog, 0, 1, 0), H_edit_header_dialog);
-  DEFINE_PROC(gh_new_procedure(S_help_dialog, SCM_FNC g_help_dialog, 2, 0, 0), H_help_dialog);
-  DEFINE_PROC(gh_new_procedure(S_mix_panel, SCM_FNC g_mix_panel, 0, 0, 0), H_mix_panel);
+  DEFINE_PROC(gh_new_procedure(S_help_dialog,        SCM_FNC g_help_dialog, 2, 0, 0),        H_help_dialog);
+  DEFINE_PROC(gh_new_procedure(S_mix_panel,          SCM_FNC g_mix_panel, 0, 0, 0),          H_mix_panel);
 
   define_procedure_with_reversed_setter(S_sample, SCM_FNC g_sample, H_sample,
 					"set-" S_sample, SCM_FNC g_set_sample, SCM_FNC g_set_sample_reversed,
@@ -3845,61 +3863,61 @@ void g_initialize_gh(snd_state *ss)
 					"set-" S_samples, SCM_FNC g_set_samples, SCM_FNC g_set_samples_reversed,
 					local_doc, 2, 3, 3, 3);
 
-  DEFINE_PROC(gh_new_procedure(S_vct_samples, SCM_FNC g_set_samples, 3, 3, 0), H_set_samples);
-  DEFINE_PROC(gh_new_procedure(S_delete_sample, SCM_FNC g_delete_sample, 1, 2, 0), H_delete_sample);
-  DEFINE_PROC(gh_new_procedure(S_delete_samples, SCM_FNC g_delete_samples, 2, 2, 0), H_delete_samples);
-  DEFINE_PROC(gh_new_procedure(S_insert_sample, SCM_FNC g_insert_sample, 2, 2, 0), H_insert_sample);
-  DEFINE_PROC(gh_new_procedure(S_insert_samples, SCM_FNC g_insert_samples, 3, 2, 0), H_insert_samples);
-  DEFINE_PROC(gh_new_procedure(S_max_sounds, SCM_FNC g_max_sounds, 0, 0, 0), H_max_sounds);
-  DEFINE_PROC(gh_new_procedure(S_sounds, SCM_FNC g_sounds, 0, 0, 0), H_sounds);
-  DEFINE_PROC(gh_new_procedure(S_insert_sound, SCM_FNC g_insert_sound, 1, 4, 0), H_insert_sound);
-  DEFINE_PROC(gh_new_procedure(S_yes_or_no_p, SCM_FNC g_yes_or_no_p, 1, 0, 0), H_yes_or_no_p);
-  DEFINE_PROC(gh_new_procedure(S_scale_selection_to, SCM_FNC g_scale_selection_to, 0, 1, 0), H_scale_selection_to);
-  DEFINE_PROC(gh_new_procedure(S_scale_selection_by, SCM_FNC g_scale_selection_by, 0, 1, 0), H_scale_selection_by);
-  DEFINE_PROC(gh_new_procedure(S_update_graph, SCM_FNC g_update_graph, 0, 2, 0), H_update_graph);
-  DEFINE_PROC(gh_new_procedure(S_update_lisp_graph, SCM_FNC g_update_lisp_graph, 0, 2, 0), H_update_lisp_graph);
-  DEFINE_PROC(gh_new_procedure(S_update_fft, SCM_FNC g_update_fft, 0, 2, 0), H_update_fft);
-  DEFINE_PROC(gh_new_procedure(S_exit, SCM_FNC g_exit, 0, 1, 0), H_exit);
-  DEFINE_PROC(gh_new_procedure(S_abort, SCM_FNC g_abort, 0, 0, 0), H_abort);
+  DEFINE_PROC(gh_new_procedure(S_vct_samples,         SCM_FNC g_set_samples, 3, 3, 0),         H_set_samples);
+  DEFINE_PROC(gh_new_procedure(S_delete_sample,       SCM_FNC g_delete_sample, 1, 2, 0),       H_delete_sample);
+  DEFINE_PROC(gh_new_procedure(S_delete_samples,      SCM_FNC g_delete_samples, 2, 2, 0),      H_delete_samples);
+  DEFINE_PROC(gh_new_procedure(S_insert_sample,       SCM_FNC g_insert_sample, 2, 2, 0),       H_insert_sample);
+  DEFINE_PROC(gh_new_procedure(S_insert_samples,      SCM_FNC g_insert_samples, 3, 2, 0),      H_insert_samples);
+  DEFINE_PROC(gh_new_procedure(S_max_sounds,          SCM_FNC g_max_sounds, 0, 0, 0),          H_max_sounds);
+  DEFINE_PROC(gh_new_procedure(S_sounds,              SCM_FNC g_sounds, 0, 0, 0),              H_sounds);
+  DEFINE_PROC(gh_new_procedure(S_insert_sound,        SCM_FNC g_insert_sound, 1, 4, 0),        H_insert_sound);
+  DEFINE_PROC(gh_new_procedure(S_yes_or_no_p,         SCM_FNC g_yes_or_no_p, 1, 0, 0),         H_yes_or_no_p);
+  DEFINE_PROC(gh_new_procedure(S_scale_selection_to,  SCM_FNC g_scale_selection_to, 0, 1, 0),  H_scale_selection_to);
+  DEFINE_PROC(gh_new_procedure(S_scale_selection_by,  SCM_FNC g_scale_selection_by, 0, 1, 0),  H_scale_selection_by);
+  DEFINE_PROC(gh_new_procedure(S_update_graph,        SCM_FNC g_update_graph, 0, 2, 0),        H_update_graph);
+  DEFINE_PROC(gh_new_procedure(S_update_lisp_graph,   SCM_FNC g_update_lisp_graph, 0, 2, 0),   H_update_lisp_graph);
+  DEFINE_PROC(gh_new_procedure(S_update_fft,          SCM_FNC g_update_fft, 0, 2, 0),          H_update_fft);
+  DEFINE_PROC(gh_new_procedure(S_exit,                SCM_FNC g_exit, 0, 1, 0),                H_exit);
+  DEFINE_PROC(gh_new_procedure(S_abort,               SCM_FNC g_abort, 0, 0, 0),               H_abort);
   DEFINE_PROC(gh_new_procedure(S_dismiss_all_dialogs, SCM_FNC g_dismiss_all_dialogs, 0, 0, 0), H_dismiss_all_dialogs);
-  DEFINE_PROC(gh_new_procedure(S_c_g, SCM_FNC g_abortq, 0, 0, 0), H_abortQ);
-  DEFINE_PROC(gh_new_procedure(S_snd_version, SCM_FNC g_snd_version, 0, 0, 0), H_snd_version);
-  DEFINE_PROC(gh_new_procedure(S_show_listener, SCM_FNC g_show_listener, 0, 0, 0), H_show_listener);
-  DEFINE_PROC(gh_new_procedure(S_hide_listener, SCM_FNC g_hide_listener, 0, 0, 0), H_hide_listener);
-  DEFINE_PROC(gh_new_procedure(S_activate_listener, SCM_FNC g_activate_listener, 0, 0, 0), H_activate_listener);
-  DEFINE_PROC(gh_new_procedure(S_graph_ps, SCM_FNC g_graph2ps, 0, 0, 0), H_graph2ps);
-  DEFINE_PROC(gh_new_procedure(S_save_state, SCM_FNC g_save_state, 1, 0, 0), H_save_state);
-  DEFINE_PROC(gh_new_procedure(S_scale_to, SCM_FNC g_scale_to, 0, 3, 0), H_scale_to);
-  DEFINE_PROC(gh_new_procedure(S_scale_by, SCM_FNC g_scale_by, 0, 3, 0), H_scale_by);
-  DEFINE_PROC(gh_new_procedure(S_normalize_view, SCM_FNC g_normalize_view, 0, 0, 0), H_normalize_view);
-  DEFINE_PROC(gh_new_procedure(S_open_sound_file, SCM_FNC g_open_sound_file, 0, 4, 0), H_open_sound_file);
-  DEFINE_PROC(gh_new_procedure(S_close_sound_file, SCM_FNC g_close_sound_file, 2, 0, 0), H_close_sound_file);
-  DEFINE_PROC(gh_new_procedure(S_vct_sound_file, SCM_FNC vct2soundfile, 3, 0, 0), H_vct_sound_file);
-  DEFINE_PROC(gh_new_procedure(S_mix_vct, SCM_FNC mix_vct, 1, 5, 0), H_mix_vct);
-  DEFINE_PROC(gh_new_procedure(S_transform_size, SCM_FNC g_transform_size, 0, 2, 0), H_transform_size);
-  DEFINE_PROC(gh_new_procedure(S_transform_samples, SCM_FNC g_transform_samples, 0, 2, 0), H_transform_samples);
-  DEFINE_PROC(gh_new_procedure(S_transform_sample, SCM_FNC g_transform_sample, 0, 4, 0), H_transform_sample);
-  DEFINE_PROC(gh_new_procedure(S_env_selection, SCM_FNC g_env_selection, 1, 3, 0), H_env_selection);
-  DEFINE_PROC(gh_new_procedure(S_env_sound, SCM_FNC g_env_sound, 1, 5, 0), H_env_sound);
-  DEFINE_PROC(gh_new_procedure(S_fft, SCM_FNC g_fft, 2, 1, 0), H_fft);
-  DEFINE_PROC(gh_new_procedure(S_snd_spectrum, SCM_FNC g_snd_spectrum, 3, 1, 0), H_snd_spectrum);
-  DEFINE_PROC(gh_new_procedure(S_convolve_arrays, SCM_FNC g_convolve, 1, 1, 0), H_convolve);
-  DEFINE_PROC(gh_new_procedure(S_convolve_with, SCM_FNC g_convolve_with, 1, 3, 0), H_convolve_with);
+  DEFINE_PROC(gh_new_procedure(S_c_g,                 SCM_FNC g_abortq, 0, 0, 0),              H_abortQ);
+  DEFINE_PROC(gh_new_procedure(S_snd_version,         SCM_FNC g_snd_version, 0, 0, 0),         H_snd_version);
+  DEFINE_PROC(gh_new_procedure(S_show_listener,       SCM_FNC g_show_listener, 0, 0, 0),       H_show_listener);
+  DEFINE_PROC(gh_new_procedure(S_hide_listener,       SCM_FNC g_hide_listener, 0, 0, 0),       H_hide_listener);
+  DEFINE_PROC(gh_new_procedure(S_activate_listener,   SCM_FNC g_activate_listener, 0, 0, 0),   H_activate_listener);
+  DEFINE_PROC(gh_new_procedure(S_graph_ps,            SCM_FNC g_graph2ps, 0, 0, 0),            H_graph2ps);
+  DEFINE_PROC(gh_new_procedure(S_save_state,          SCM_FNC g_save_state, 1, 0, 0),          H_save_state);
+  DEFINE_PROC(gh_new_procedure(S_scale_to,            SCM_FNC g_scale_to, 0, 3, 0),            H_scale_to);
+  DEFINE_PROC(gh_new_procedure(S_scale_by,            SCM_FNC g_scale_by, 0, 3, 0),            H_scale_by);
+  DEFINE_PROC(gh_new_procedure(S_normalize_view,      SCM_FNC g_normalize_view, 0, 0, 0),      H_normalize_view);
+  DEFINE_PROC(gh_new_procedure(S_open_sound_file,     SCM_FNC g_open_sound_file, 0, 4, 0),     H_open_sound_file);
+  DEFINE_PROC(gh_new_procedure(S_close_sound_file,    SCM_FNC g_close_sound_file, 2, 0, 0),    H_close_sound_file);
+  DEFINE_PROC(gh_new_procedure(S_vct_sound_file,      SCM_FNC vct2soundfile, 3, 0, 0),         H_vct_sound_file);
+  DEFINE_PROC(gh_new_procedure(S_mix_vct,             SCM_FNC mix_vct, 1, 5, 0),               H_mix_vct);
+  DEFINE_PROC(gh_new_procedure(S_transform_size,      SCM_FNC g_transform_size, 0, 2, 0),      H_transform_size);
+  DEFINE_PROC(gh_new_procedure(S_transform_samples,   SCM_FNC g_transform_samples, 0, 2, 0),   H_transform_samples);
+  DEFINE_PROC(gh_new_procedure(S_transform_sample,    SCM_FNC g_transform_sample, 0, 4, 0),    H_transform_sample);
+  DEFINE_PROC(gh_new_procedure(S_env_selection,       SCM_FNC g_env_selection, 1, 3, 0),       H_env_selection);
+  DEFINE_PROC(gh_new_procedure(S_env_sound,           SCM_FNC g_env_sound, 1, 5, 0),           H_env_sound);
+  DEFINE_PROC(gh_new_procedure(S_fft,                 SCM_FNC g_fft, 2, 1, 0),                 H_fft);
+  DEFINE_PROC(gh_new_procedure(S_snd_spectrum,        SCM_FNC g_snd_spectrum, 3, 1, 0),        H_snd_spectrum);
+  DEFINE_PROC(gh_new_procedure(S_convolve_arrays,     SCM_FNC g_convolve, 1, 1, 0),            H_convolve);
+  DEFINE_PROC(gh_new_procedure(S_convolve_with,       SCM_FNC g_convolve_with, 1, 3, 0),       H_convolve_with);
   DEFINE_PROC(gh_new_procedure(S_convolve_selection_with, SCM_FNC g_convolve_selection_with, 1, 1, 0), H_convolve_selection_with);
-  DEFINE_PROC(gh_new_procedure(S_src_sound, SCM_FNC g_src_sound, 1, 3, 0), H_src_sound);
-  DEFINE_PROC(gh_new_procedure(S_src_selection, SCM_FNC g_src_selection, 1, 1, 0), H_src_selection);
-  DEFINE_PROC(gh_new_procedure(S_filter_sound, SCM_FNC g_filter_sound, 1, 3, 0), H_filter_sound);
-  DEFINE_PROC(gh_new_procedure(S_filter_selection, SCM_FNC g_filter_selection, 1, 1, 0), H_filter_selection);
-  DEFINE_PROC(gh_new_procedure(S_graph, SCM_FNC g_graph, 1, 7, 0), H_graph);
-  DEFINE_PROC(gh_new_procedure(S_samples_vct, SCM_FNC samples2vct, 0, 6, 0), H_samples2vct);
-  DEFINE_PROC(gh_new_procedure(S_samples2sound_data, SCM_FNC samples2sound_data, 0, 7, 0), H_samples2sound_data);
+  DEFINE_PROC(gh_new_procedure(S_src_sound,           SCM_FNC g_src_sound, 1, 3, 0),           H_src_sound);
+  DEFINE_PROC(gh_new_procedure(S_src_selection,       SCM_FNC g_src_selection, 1, 1, 0),       H_src_selection);
+  DEFINE_PROC(gh_new_procedure(S_filter_sound,        SCM_FNC g_filter_sound, 1, 3, 0),        H_filter_sound);
+  DEFINE_PROC(gh_new_procedure(S_filter_selection,    SCM_FNC g_filter_selection, 1, 1, 0),    H_filter_selection);
+  DEFINE_PROC(gh_new_procedure(S_graph,               SCM_FNC g_graph, 1, 7, 0),               H_graph);
+  DEFINE_PROC(gh_new_procedure(S_samples_vct,         SCM_FNC samples2vct, 0, 6, 0),           H_samples2vct);
+  DEFINE_PROC(gh_new_procedure(S_samples2sound_data,  SCM_FNC samples2sound_data, 0, 7, 0),    H_samples2sound_data);
   DEFINE_PROC(gh_new_procedure(S_transform_samples_vct, SCM_FNC transform_samples2vct, 0, 3, 0), H_transform_samples2vct);
   DEFINE_PROC(gh_new_procedure(S_start_progress_report, SCM_FNC g_start_progress_report, 0, 1, 0), H_start_progress_report);
   DEFINE_PROC(gh_new_procedure(S_finish_progress_report, SCM_FNC g_finish_progress_report, 0, 1, 0), H_finish_progress_report);
-  DEFINE_PROC(gh_new_procedure(S_progress_report, SCM_FNC g_progress_report, 1, 4, 0), H_progress_report);
-  DEFINE_PROC(gh_new_procedure(S_snd_print, SCM_FNC g_snd_print, 1, 0, 0), H_snd_print);
-  DEFINE_PROC(gh_new_procedure(S_describe_audio, SCM_FNC g_describe_audio, 0, 0, 0), H_describe_audio);
-  DEFINE_PROC(gh_new_procedure("mus-audio-describe", SCM_FNC g_describe_audio, 0, 0, 0), H_describe_audio);
+  DEFINE_PROC(gh_new_procedure(S_progress_report,     SCM_FNC g_progress_report, 1, 4, 0),     H_progress_report);
+  DEFINE_PROC(gh_new_procedure(S_snd_print,           SCM_FNC g_snd_print, 1, 0, 0),           H_snd_print);
+  DEFINE_PROC(gh_new_procedure(S_describe_audio,      SCM_FNC g_describe_audio, 0, 0, 0),      H_describe_audio);
+  DEFINE_PROC(gh_new_procedure("mus-audio-describe",  SCM_FNC g_describe_audio, 0, 0, 0),      H_describe_audio);
 
   /* semi-internal functions (restore-state) */
   gh_new_procedure(S_change_samples_with_origin, SCM_FNC g_change_samples_with_origin, 4, 2, 0);

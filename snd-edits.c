@@ -100,7 +100,7 @@
 #define INITIALIZE_EDIT 3
 #define PARSED_EDIT 4
 
-#define PACK_EDIT(a, b) ((a)<<16 | (b))
+#define PACK_EDIT(a, b) ((a) << 16 | (b))
 #define EDIT_TYPE(a) (((a) >> 16) & 0xffff)
 #define EDIT_LOCATION(a) ((a) & 0xffff)
 /* edit history decoding info */
@@ -124,7 +124,7 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
     }
   if (ed->origin) fprintf(outp, "; %s ",ed->origin);
   fprintf(outp, "[%d:%d]:", i, len);
-  for (j=0;j<len;j++)
+  for (j=0; j<len; j++)
     {
       fprintf(outp, "\n   (at %d, cp->sounds[%d][%d:%d, %f])",
 	      FRAGMENT_GLOBAL_POSITION(ed, j),
@@ -162,7 +162,7 @@ int no_ed_scalers(chan_info *cp)
   if (ed)
     {
       len = ed->size;
-      for (i=0;i<len-1;i++)
+      for (i=0; i<len-1; i++)
 	if (INT_AS_FLOAT(FRAGMENT_SCALER(ed, i)) != 1.0)
 	  return(0);
       return(1);
@@ -179,9 +179,9 @@ int edit_changes_begin_at(chan_info *cp)
   old_len = old_ed->size;
   len = ed->size;
   if (len < old_len) 
-    min_len = (len*ED_SIZE); 
-  else min_len = (old_len*ED_SIZE);
-  for (i=0;i<min_len;i+=ED_SIZE)
+    min_len = (len * ED_SIZE); 
+  else min_len = (old_len * ED_SIZE);
+  for (i=0; i<min_len; i+=ED_SIZE)
     if ((FRAGMENT_GLOBAL_POSITION_OFFSET(ed, i) != FRAGMENT_GLOBAL_POSITION_OFFSET(old_ed, i)) || 
 	(FRAGMENT_SOUND_OFFSET(ed, i) != FRAGMENT_SOUND_OFFSET(old_ed, i)) || 
 	(FRAGMENT_LOCAL_POSITION_OFFSET(ed, i) != FRAGMENT_LOCAL_POSITION_OFFSET(old_ed, i)))
@@ -193,13 +193,13 @@ int edit_changes_end_at(chan_info *cp)
 {
   ed_list *ed,*old_ed;
   int len,old_len;
-  old_ed = cp->edits[cp->edit_ctr-1];
+  old_ed = cp->edits[cp->edit_ctr - 1];
   ed = cp->edits[cp->edit_ctr];
   old_len = old_ed->size - 1;
   len = ed->size - 1;
   if (FRAGMENT_SOUND(ed, len) == EDIT_LIST_END_MARK) len--;
   if (FRAGMENT_SOUND(old_ed, old_len) == EDIT_LIST_END_MARK) old_len--;
-  while ((len>=0) && (old_len>=0))
+  while ((len >= 0) && (old_len >= 0))
     {
       if ((FRAGMENT_SOUND(ed, len) == FRAGMENT_SOUND(old_ed, old_len)) &&
 	  (FRAGMENT_LOCAL_END(ed, len) == FRAGMENT_LOCAL_END(old_ed, old_len)))
@@ -231,7 +231,7 @@ static void display_edits(chan_info *cp, FILE *outp)
   ed_list *ed;
   eds = cp->edit_ctr;
   fprintf(outp, "\nEDITS: %d\n", eds);
-  for (i=0;i<=eds;i++)
+  for (i=0; i<=eds; i++)
     {
       ed = cp->edits[i];
       if (!ed) 
@@ -253,7 +253,7 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
       if (sf->type == SND_DATA_BUFFER)
 	{
 	  fprintf(fd, "#(");
-	  for (i=0;i<ed->len;i++) 
+	  for (i=0; i<ed->len; i++) 
 #if SNDLIB_USE_FLOATS
 	    fprintf(fd, "%f ", sf->buffered_data[i]);
 #else
@@ -306,12 +306,12 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	      ibufs[0] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
 	      bufnum = (FILE_BUFFER_SIZE);
 	      sample = 0;
-	      for (n=0;n<samples;n+=bufnum)
+	      for (n=0; n<samples; n+=bufnum)
 		{
-		  if ((n+bufnum)<samples) cursamples = bufnum; else cursamples = (samples-n);
-		  mus_file_read(ifd, 0, cursamples-1, 1, ibufs);
+		  if ((n + bufnum) < samples) cursamples = bufnum; else cursamples = (samples - n);
+		  mus_file_read(ifd, 0, cursamples - 1, 1, ibufs);
 		  buffer = (MUS_SAMPLE_TYPE *)(ibufs[0]);
-		  for (i=0;i<cursamples;i++) 
+		  for (i=0; i<cursamples; i++) 
 		    {
 #if SNDLIB_USE_FLOAT
 		      fprintf(fd, "%f ", MUS_SAMPLE_TO_FLOAT(buffer[i]));
@@ -352,9 +352,11 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
   int i,edits;
   ed_list *ed;
   edits = cp->edit_ctr;
-  while ((edits<(cp->edit_size-1)) && (cp->edits[edits+1])) edits++;
+  while ((edits < (cp->edit_size - 1)) && 
+	 (cp->edits[edits + 1])) 
+    edits++;
   /* 0 case = open-sound */
-  for (i=1;i<=edits;i++)
+  for (i=1; i<=edits; i++)
     {
       ed = cp->edits[i];
       if (ed)
@@ -411,8 +413,8 @@ static void copy_ed_blocks(int *new_list, int *old_list, int new_beg, int old_be
   int i,end,k;
   if (num_lists > 0)
     {
-      end = (old_beg+num_lists)*ED_SIZE;
-      for (k=new_beg*ED_SIZE, i=old_beg*ED_SIZE;i<end;i++,k++) 
+      end = (old_beg + num_lists) * ED_SIZE;
+      for (k=new_beg*ED_SIZE, i=old_beg*ED_SIZE; i<end; i++, k++) 
 	new_list[k] = old_list[i];
     }
 }
@@ -422,7 +424,7 @@ static ed_list *make_ed_list(int size)
   ed_list *ed;
   ed=(ed_list *)CALLOC(1, sizeof(ed_list));
   ed->size = size;
-  ed->fragments = (int *)CALLOC(size*ED_SIZE, sizeof(int));
+  ed->fragments = (int *)CALLOC(size * ED_SIZE, sizeof(int));
   ed->origin = NULL;
   ed->maxamp = -1.0;
   ed->selection_maxamp = -1.0;
@@ -491,13 +493,13 @@ void backup_edit_list(chan_info *cp)
   free_ed_list(cp->edits[cur - 1]);
   free_amp_env(cp, cur-1);
   cp->edits[cur - 1] = cp->edits[cur];
-  cp->amp_envs[cur-1] = cp->amp_envs[cur];
+  cp->amp_envs[cur - 1] = cp->amp_envs[cur];
   cp->edits[cur] = NULL;
   cp->amp_envs[cur] = NULL;
   cp->samples[cur - 1] = cp->samples[cur];
   if (cp->sounds)
     { /* protect from release_pending_sounds upon edit after undo after as-one-edit or whatever */
-      for (i=0;i<cp->sound_size;i++)
+      for (i=0; i<cp->sound_size; i++)
 	{
 	  sf = cp->sounds[i];
 	  if ((sf) && (sf->edit_ctr == cur)) sf->edit_ctr--;
@@ -524,7 +526,7 @@ void free_edit_list(chan_info *cp)
     {
       if (cp->edits)
 	{
-	  for (i=0;i<cp->edit_size;i++)
+	  for (i=0; i<cp->edit_size; i++)
 	    {
 	      /* cp->edit_ctr follows current edit state (redo/undo) */
 	      if (cp->edits[i]) free_ed_list(cp->edits[i]);
@@ -545,7 +547,7 @@ static ed_list *initial_ed_list(int beg, int end)
   float one = 1.0;
   ed = make_ed_list(2);
   ed->beg = beg;
-  ed->len = end+1;
+  ed->len = end + 1;
   ed->selection_beg = NO_SELECTION;
   ed->selection_end = 0;
   ed->sfnum = PACK_EDIT(INITIALIZE_EDIT, 0);
@@ -559,7 +561,7 @@ static ed_list *initial_ed_list(int beg, int end)
   FRAGMENT_LOCAL_POSITION(ed, 1) = 0;
   FRAGMENT_LOCAL_END(ed, 1) = 0;
   FRAGMENT_SOUND(ed, 1) = EDIT_LIST_END_MARK;
-  FRAGMENT_GLOBAL_POSITION(ed, 1) = end+1;
+  FRAGMENT_GLOBAL_POSITION(ed, 1) = end + 1;
   return(ed);
 }
 
@@ -576,96 +578,70 @@ void set_initial_ed_list(chan_info *cp, int len)
 static int find_split_loc(int samp, ed_list *current_state)
 {
   int i,k;
-  for (i=0, k=0;i<current_state->size;i++,k+=ED_SIZE)
+  for (i=0, k=0; i<current_state->size; i++, k+=ED_SIZE)
     if (FRAGMENT_GLOBAL_POSITION_OFFSET(current_state, k) >= samp) 
       return(i);
   return(0); /* make sgi compiler happy */
 }
 
-#if DEBUGGING
-static ed_list *selected_ed_list(int beg, int end, ed_list *current_state, chan_info *cp)
-#else
 static ed_list *selected_ed_list(int beg, int end, ed_list *current_state)
-#endif
 {
   int bk,ek,new_size,i,k,j,oldk,diff,len;
   ed_list *new_ed;
-#if DEBUGGING
-  int ubeg,uend;
-  ubeg=beg; uend=end;
-#endif
 
   /* this refers to selected data, so beg and end must be within the current data bounds! */
   if (beg < 0) beg = 0;
   if (end < 0) end = 0;
-  len = FRAGMENT_GLOBAL_POSITION(current_state, current_state->size-1);
+  len = FRAGMENT_GLOBAL_POSITION(current_state, current_state->size - 1);
   if (beg >= len) beg = len-1;
   if (end >= len) end = len-1;
-#if DEBUGGING
-  if ((ubeg != beg) || (uend != end))
-    {
-      fprintf(stderr, "selected list: %d to %d -> %d to %d (%d: ", ubeg, uend, beg, end, len);
-      for (i=0;i<current_state->size;i++) 
-	fprintf(stderr, "%d ", FRAGMENT_GLOBAL_POSITION(current_state, i));
-      fprintf(stderr, "\n");
-    }
-#endif
-
   bk = find_split_loc(beg, current_state);
   if (FRAGMENT_GLOBAL_POSITION(current_state, bk) > beg) bk--;
-  ek = find_split_loc(end+1, current_state) - 1; /* was end 11-Nov-00 */
+  ek = find_split_loc(end + 1, current_state) - 1; /* was end 11-Nov-00 */
   new_size = current_state->size;
   /* if (ek < 0) ek = new_size-1; */
   if (ek < 0) ek = 0;
   if (FRAGMENT_GLOBAL_POSITION(current_state, bk) != beg) new_size++;
-  if (FRAGMENT_GLOBAL_POSITION(current_state, (ek+1)) != end+1) new_size++;
+  if (FRAGMENT_GLOBAL_POSITION(current_state, (ek + 1)) != end + 1) new_size++;
   new_ed = make_ed_list(new_size);
   new_ed->size = new_size;
-  for (k=0;k<=bk;k++)
+  for (k=0; k<=bk; k++)
     {
-      j = k*ED_SIZE;
-      for (i=0;i<ED_SIZE;i++)
+      j = k * ED_SIZE;
+      for (i=0; i<ED_SIZE; i++)
 	new_ed->fragments[j + i] = current_state->fragments[j + i];
     }
-  k=bk+1;
+  k = bk + 1;
   diff = beg - FRAGMENT_GLOBAL_POSITION(current_state, bk);
   if (diff != 0)
     {
-      for (i=0;i<ED_SIZE;i++)
-	new_ed->fragments[k*ED_SIZE + i] = current_state->fragments[bk*ED_SIZE + i];
+      for (i=0; i<ED_SIZE; i++)
+	new_ed->fragments[k * ED_SIZE + i] = current_state->fragments[bk * ED_SIZE + i];
       FRAGMENT_LOCAL_END(new_ed, bk) = FRAGMENT_LOCAL_POSITION(new_ed, bk) + diff - 1;
       FRAGMENT_GLOBAL_POSITION(new_ed, k) = beg;
       FRAGMENT_LOCAL_POSITION(new_ed, k) = FRAGMENT_LOCAL_END(new_ed, bk) + 1;
       k++;
     }
-  for (oldk=bk+1;oldk<=ek;oldk++,k++)
+  for (oldk=bk+1; oldk<=ek; oldk++, k++)
     {
-      for (i=0;i<ED_SIZE;i++)
-	new_ed->fragments[k*ED_SIZE + i] = current_state->fragments[oldk*ED_SIZE + i];
+      for (i=0; i<ED_SIZE; i++)
+	new_ed->fragments[k * ED_SIZE + i] = current_state->fragments[oldk * ED_SIZE + i];
     }
-  diff = FRAGMENT_GLOBAL_POSITION(current_state, (ek+1)) - end - 1;
+  diff = FRAGMENT_GLOBAL_POSITION(current_state, (ek + 1)) - end - 1;
   if (diff != 0)
     {
-      for (i=0;i<ED_SIZE;i++)
-	new_ed->fragments[k*ED_SIZE + i] = current_state->fragments[ek*ED_SIZE + i];
+      for (i=0; i<ED_SIZE; i++)
+	new_ed->fragments[k * ED_SIZE + i] = current_state->fragments[ek * ED_SIZE + i];
       FRAGMENT_LOCAL_END(new_ed, (k-1)) -= diff;
       FRAGMENT_LOCAL_POSITION(new_ed, k) = FRAGMENT_LOCAL_END(new_ed, (k-1)) + 1;
-      FRAGMENT_GLOBAL_POSITION(new_ed, k) = end+1; /* 1? */
+      FRAGMENT_GLOBAL_POSITION(new_ed, k) = end + 1; /* 1? */
       k++;
     }
-  for (oldk=ek+1;(oldk<=current_state->size) && (k < new_size);oldk++,k++)
+  for (oldk=ek+1; (oldk<=current_state->size) && (k < new_size); oldk++, k++)
     {
-      for (i=0;i<ED_SIZE;i++)
-	new_ed->fragments[k*ED_SIZE + i] = current_state->fragments[oldk*ED_SIZE + i];
+      for (i=0; i<ED_SIZE; i++)
+	new_ed->fragments[k * ED_SIZE + i] = current_state->fragments[oldk * ED_SIZE + i];
     }
-#if DEBUGGING
-  if (FRAGMENT_SOUND(new_ed, (new_ed->size - 1)) != EDIT_LIST_END_MARK)
-    {
-      fprintf(stderr, "oops");
-      display_edits(cp, stdout);
-      abort();
-    }
-#endif
   return(new_ed);
 }
 
@@ -694,13 +670,13 @@ void remember_temp(char *filename, int chans)
     }
   else
     {
-      for (i=0;i<tempfiles_size;i++)
+      for (i=0; i<tempfiles_size; i++)
 	if (tempfiles[i] == NULL)
 	  break;
       if (i >= tempfiles_size)
 	{
 	  tempfiles = (tempfile_ctr **)REALLOC(tempfiles, tempfiles_size * sizeof(tempfile_ctr *));
-	  for (i=tempfiles_size;i<(tempfiles_size+8);i++) tempfiles[i] = NULL;
+	  for (i=tempfiles_size; i<(tempfiles_size+8); i++) tempfiles[i] = NULL;
 	  i = tempfiles_size;
 	  tempfiles_size += 8;
 	}
@@ -714,15 +690,15 @@ void remember_temp(char *filename, int chans)
 
 static void forget_temp(char *filename, int chan)
 {
-  int i,j,happy=0;
+  int i,j,happy = 0;
   tempfile_ctr *tmp;
-  for (i=0;i<tempfiles_size;i++)
+  for (i=0; i<tempfiles_size; i++)
     {
       tmp = tempfiles[i];
       if ((tmp) && (strcmp(filename, tmp->name) == 0))
 	{
 	  tmp->ticks[chan]--;
-	  for (j=0;j<tmp->chans;j++)
+	  for (j=0; j<tmp->chans; j++)
 	    if (tmp->ticks[j] > 0) 
 	      {
 		happy = 1;
@@ -746,7 +722,7 @@ static void tick_temp(char *filename, int chan)
 {
   int i;
   tempfile_ctr *tmp;
-  for (i=0;i<tempfiles_size;i++)
+  for (i=0; i<tempfiles_size; i++)
     {
       tmp = tempfiles[i];
       if ((tmp) && (strcmp(filename, tmp->name) == 0))
@@ -761,16 +737,11 @@ void forget_temps(void)
 {
   int i;
   tempfile_ctr *tmp;
-  for (i=0;i<tempfiles_size;i++)
+  for (i=0; i<tempfiles_size; i++)
     {
       tmp = tempfiles[i];
       if (tmp) 
-	{
-#if DEBUGGING
-	  fprintf(stderr, "somehow %s got overlooked? ", tmp->name);	  
-#endif
-	  remove(tmp->name);
-	}
+	remove(tmp->name);
     }
 }
 
@@ -790,7 +761,7 @@ snd_data *make_snd_data_file(char *name, int *io, MUS_SAMPLE_TYPE *data, file_in
   sf->inuse = FALSE;
   sf->copy = FALSE;
   sf->chan = temp_chan;
-  sf->len = (hdr->samples)*(mus_data_format_to_bytes_per_sample(hdr->format)) + hdr->data_location;
+  sf->len = (hdr->samples) * (mus_data_format_to_bytes_per_sample(hdr->format)) + hdr->data_location;
   sf->just_zeros = 0;
   return(sf);
 }
@@ -864,12 +835,12 @@ snd_data *make_snd_data_buffer(MUS_SAMPLE_TYPE *data, int len, int ctr)
   int i;
   sf = (snd_data *)CALLOC(1, sizeof(snd_data));
   sf->type = SND_DATA_BUFFER;
-  sf->buffered_data = (MUS_SAMPLE_TYPE *)CALLOC(len+1, sizeof(MUS_SAMPLE_TYPE));
+  sf->buffered_data = (MUS_SAMPLE_TYPE *)CALLOC(len + 1, sizeof(MUS_SAMPLE_TYPE));
   /* sigh... using len+1 rather than len to protect against access to inserted buffer at end mixups (final fragment uses end+1) */
   /*   the real problem here is that I never decided whether insert starts at the cursor or just past it */
   /*   when the cursor is on the final sample, this causes cross-fragment ambiguity as to the length of a trailing insertion */
   /*   C > (make-region 1000 2000) (insert-region (cursor)) C-v hits this empty slot and gets confused about the previously final sample value */
-  for (i=0;i<len;i++) 
+  for (i=0; i<len; i++) 
     sf->buffered_data[i] = data[i];
   sf->edit_ctr = ctr;
   sf->copy = FALSE;
@@ -922,7 +893,7 @@ void free_sound_list (chan_info *cp)
     {
       if (cp->sounds)
 	{
-	  for (i=0;i<cp->sound_size;i++)
+	  for (i=0; i<cp->sound_size; i++)
 	    if (cp->sounds[i]) 
 	      cp->sounds[i] = free_snd_data(cp->sounds[i]);
 	  FREE(cp->sounds);
@@ -941,11 +912,11 @@ static int gather_usage_stats_1(chan_info *cp, void *ptr)
   if (cp)
     {
       if (cp->stats) 
-	{for (i=0;i<8;i++) cp->stats[i] = 0;}
+	{for (i=0; i<8; i++) cp->stats[i] = 0;}
       else cp->stats = (int *)CALLOC(8, sizeof(int));
       if (cp->amp_envs)
 	{
-	  for (i=0;i<cp->edit_size;i++)
+	  for (i=0; i<cp->edit_size; i++)
 	    {
 	      ep = cp->amp_envs[i];
 	      if (ep)
@@ -957,7 +928,7 @@ static int gather_usage_stats_1(chan_info *cp, void *ptr)
 	}
       if (cp->sounds)
 	{
-	  for (i=0;i<cp->sound_size;i++)
+	  for (i=0; i<cp->sound_size; i++)
 	    {
 	      if ((sf = (cp->sounds[i])))
 		{
@@ -973,7 +944,7 @@ static int gather_usage_stats_1(chan_info *cp, void *ptr)
 		    {
 		      if (sf->io)
 			{
-			  cp->stats[ARRAY_USAGE] += (file_state_buffer_size(sf->io)*4);
+			  cp->stats[ARRAY_USAGE] += (file_state_buffer_size(sf->io) * 4);
 			  cp->stats[ARRAYS_ACTIVE]++;
 			}
 		      if (sf->temporary == DELETE_ME)
@@ -983,7 +954,7 @@ static int gather_usage_stats_1(chan_info *cp, void *ptr)
 			  if (sf->open == FD_OPEN) cp->stats[TEMPS_OPEN]++;
 			}
 		      else
-			cp->stats[FILE_USAGE] += (sf->len)/((cp->sound)->nchans);
+			cp->stats[FILE_USAGE] += (sf->len) / ((cp->sound)->nchans);
 		    }}}}}
   return(0);
 }
@@ -1008,8 +979,8 @@ static void release_pending_sounds(chan_info *cp, int edit_ctr)
     {
       if (cp->sounds)
 	{
-	  del= -1;
-	  for (i=0;i<cp->sound_size;i++)
+	  del = -1;
+	  for (i=0; i<cp->sound_size; i++)
 	    {
 	      if ((sf = (cp->sounds[i])))
 		{
@@ -1022,7 +993,7 @@ static void release_pending_sounds(chan_info *cp, int edit_ctr)
 	    }
 	  if (del != -1)
 	    {
-	      for (j=del, i=del;i<cp->sound_size;i++)
+	      for (j=del, i=del; i<cp->sound_size; i++)
 		{
 		  if (cp->sounds[i]) 
 		    {
@@ -1034,7 +1005,7 @@ static void release_pending_sounds(chan_info *cp, int edit_ctr)
 			}
 		    }
 		}
-	      cp->sound_ctr = j-1;
+	      cp->sound_ctr = j - 1;
 	    }
 	}
       if (show_usage_stats(cp->state)) gather_usage_stats(cp);
@@ -1050,9 +1021,10 @@ static void prepare_sound_list (chan_info *cp)
     {
       cp->sound_size += EDIT_ALLOC_SIZE;
       cp->sounds = (snd_data **)REALLOC(cp->sounds, cp->sound_size * sizeof(snd_data *));
-      for (i=cp->sound_ctr;i<cp->sound_size;i++) cp->sounds[i] = NULL;
+      for (i=cp->sound_ctr; i<cp->sound_size; i++) cp->sounds[i] = NULL;
     }
-  if (cp->sounds[cp->sound_ctr]) cp->sounds[cp->sound_ctr] = free_snd_data(cp->sounds[cp->sound_ctr]);
+  if (cp->sounds[cp->sound_ctr]) 
+    cp->sounds[cp->sound_ctr] = free_snd_data(cp->sounds[cp->sound_ctr]);
 }
 
 static int add_sound_buffer_to_edit_list(chan_info *cp, MUS_SAMPLE_TYPE *data, int len)
@@ -1086,7 +1058,7 @@ static int add_zero_file_to_edit_list(chan_info *cp, int size)
 static void ripple_out(int *list, int beg, int num, int len)
 {
   int i,k;
-  for (i=beg, k=beg*ED_SIZE;i<len;i++,k+=ED_SIZE) list[k+ED_OUT] += num;
+  for (i=beg, k=beg*ED_SIZE; i<len; i++, k+=ED_SIZE) list[k + ED_OUT] += num;
 }
 
 static void prune_edits(chan_info *cp, int edpt)
@@ -1094,7 +1066,7 @@ static void prune_edits(chan_info *cp, int edpt)
   int i;
   if (cp->edits[edpt]) 
     {
-      for (i=edpt;i<cp->edit_size;i++) 
+      for (i=edpt; i<cp->edit_size; i++) 
 	{
 	  cp->edits[i] = free_ed_list(cp->edits[i]);
 	  cp->amp_envs[i] = free_amp_env(cp, i);
@@ -1118,12 +1090,17 @@ static void prepare_edit_list(chan_info *cp, int len)
     {
       cp->edit_size += EDIT_ALLOC_SIZE;
       if (!cp->edits) cp->edits = (ed_list **)CALLOC(cp->edit_size, sizeof(ed_list *));
-      else cp->edits = (ed_list **)REALLOC(cp->edits, cp->edit_size*sizeof(ed_list *));
+      else cp->edits = (ed_list **)REALLOC(cp->edits, cp->edit_size * sizeof(ed_list *));
       if (!cp->samples) cp->samples = (int *)CALLOC(cp->edit_size, sizeof(int));
-      else cp->samples = (int *)REALLOC(cp->samples, cp->edit_size*sizeof(int));
+      else cp->samples = (int *)REALLOC(cp->samples, cp->edit_size * sizeof(int));
       if (!(cp->amp_envs)) cp->amp_envs = (env_info **)CALLOC(cp->edit_size, sizeof(env_info *));
-      else cp->amp_envs = (env_info **)REALLOC(cp->amp_envs, cp->edit_size*sizeof(env_info *));
-      for (i=cp->edit_ctr;i<cp->edit_size;i++) {cp->edits[i] = NULL; cp->amp_envs[i] = NULL; cp->samples[i] = 0;}
+      else cp->amp_envs = (env_info **)REALLOC(cp->amp_envs, cp->edit_size * sizeof(env_info *));
+      for (i=cp->edit_ctr; i<cp->edit_size; i++) 
+	{
+	  cp->edits[i] = NULL; 
+	  cp->amp_envs[i] = NULL; 
+	  cp->samples[i] = 0;
+	}
     }
   prune_edits(cp, cp->edit_ctr);
   reflect_undo_ok_in_menu();
@@ -1145,7 +1122,7 @@ static void reflect_sample_change_in_axis(chan_info *cp)
   if (ap)
     {
       samps = current_ed_samples(cp);
-      ap->xmax = (double)samps/(double)SND_SRATE(cp->sound);
+      ap->xmax = (double)samps / (double)SND_SRATE(cp->sound);
       if (ap->x1 > ap->xmax) ap->x1 = ap->xmax;
       if ((samps == 0) || (ap->no_data))
 	{
@@ -1192,15 +1169,15 @@ static void fixup_edlist_endmark(ed_list *new_state, ed_list *current_state, int
   int k;
   if (FRAGMENT_SOUND(new_state, (new_state->size - 1)) != EDIT_LIST_END_MARK)
     {
-      for (k = new_state->size-1;k>0;k--)
+      for (k = new_state->size-1; k>0; k--)
 	if (FRAGMENT_SOUND(new_state, k) == EDIT_LIST_END_MARK) break;
-      if (k>0) 
-	new_state->size = k+1;
+      if (k > 0) 
+	new_state->size = k + 1;
       else
 	{
 	  if (new_state->size == current_state->size)
 	    {
-	      if (new_state->size < (len+1))
+	      if (new_state->size < (len + 1))
 		{
 		  k = new_state->size;
 		  new_state->size += 1;
@@ -1225,49 +1202,49 @@ static ed_list *insert_samples_1 (int samp, int num, MUS_SAMPLE_TYPE* vals, ed_l
   if (num <= 0) return(NULL);
   len = current_state->size;
   ed = current_state->fragments;
-  k=find_split_loc(samp, current_state);
-  cb = (int *)(ed + k*ED_SIZE);
+  k = find_split_loc(samp, current_state);
+  cb = (int *)(ed + k * ED_SIZE);
   if ((k == 0) && (cb[ED_END] == -1))
     {
       /* no data: just set insertion */
       new_state = append_ed_list(cp, len);
       copy_ed_blocks(new_state->fragments, ed, 0, 0, len);
       cb = (int *)(new_state->fragments);
-      cb[ED_END] = num-1;
+      cb[ED_END] = num - 1;
     }
   else
     {
       if ((samp == cb[ED_OUT]) || (samp == (cb[ED_OUT] - 1)))
 	{
-	  new_state = append_ed_list(cp, len+1);
+	  new_state = append_ed_list(cp, len + 1);
 	  copy_ed_blocks(new_state->fragments, ed, 0, 0, k);
-	  copy_ed_blocks(new_state->fragments, ed, k+1, k, len-k);
+	  copy_ed_blocks(new_state->fragments, ed, k + 1, k, len - k);
 	  len++;
 	}
       else
 	{
-	  cbback = (int *)(ed + (k-1)*ED_SIZE);
+	  cbback = (int *)(ed + (k - 1) * ED_SIZE);
 	  old_beg = cbback[ED_BEG];
 	  old_end = cbback[ED_END];
 	  old_snd = cbback[ED_SND];
 	  old_out = cbback[ED_OUT];
 	  old_scl = cbback[ED_SCL];
-	  new_state = append_ed_list(cp, len+2);
+	  new_state = append_ed_list(cp, len + 2);
 	  copy_ed_blocks(new_state->fragments, ed, 0, 0, k);
-	  copy_ed_blocks(new_state->fragments, ed, k+2, k, len-k);
-	  cb = (int *)(new_state->fragments + (k+1)*ED_SIZE);  /* old after split */
-	  cbback = (int *)(new_state->fragments + (k-1)*ED_SIZE); /* old before split */
+	  copy_ed_blocks(new_state->fragments, ed, k + 2, k, len - k);
+	  cb = (int *)(new_state->fragments + (k + 1) * ED_SIZE);  /* old after split */
+	  cbback = (int *)(new_state->fragments + (k - 1) * ED_SIZE); /* old before split */
 	  cb[ED_SND] = old_snd;
 	  cb[ED_OUT] = samp;
-	  cb[ED_BEG] = old_beg+samp-old_out;
+	  cb[ED_BEG] = old_beg + samp - old_out;
 	  cb[ED_END] = old_end;
 	  cb[ED_SCL] = old_scl;
-	  cbback[ED_END] = old_beg+samp-old_out-1;
+	  cbback[ED_END] = old_beg + samp - old_out - 1;
 	  len += 2;
 	}
-      cb = (int *)(new_state->fragments + k*ED_SIZE); /* new */
+      cb = (int *)(new_state->fragments + k * ED_SIZE); /* new */
       cb[ED_BEG] = 0;
-      cb[ED_END] = num-1;
+      cb[ED_END] = num - 1;
       cb[ED_OUT] = samp;
       cb[ED_SCL] = FLOAT_AS_INT(one); /* trust that insertion collapsed possible "tree" */
     }
@@ -1281,7 +1258,7 @@ static ed_list *insert_samples_1 (int samp, int num, MUS_SAMPLE_TYPE* vals, ed_l
   new_state->beg = samp;
   new_state->len = num;
   if (origin) new_state->origin = copy_string(origin);
-  ripple_out(new_state->fragments, k+1, num, len);
+  ripple_out(new_state->fragments, k + 1, num, len);
   ripple_marks(cp, samp, num);
   ripple_mixes(cp, samp, num);
   ripple_selection(new_state, samp, num);
@@ -1336,7 +1313,7 @@ void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, i
   len = current_ed_samples(cp);
   if (beg >= len)
     {
-      extend_with_zeros(cp, len, beg-len+1, "(insert-extend)");
+      extend_with_zeros(cp, len, beg - len + 1, "(insert-extend)");
       len = current_ed_samples(cp);
     }
   k=cp->edit_ctr;
@@ -1361,7 +1338,7 @@ void file_insert_samples(int beg, int num, char *inserted_file, chan_info *cp, i
 					       hdr, auto_delete, chan);
       ed = cp->edits[cp->edit_ctr];
       ed->sfnum = PACK_EDIT(INSERTION_EDIT, cb[ED_SND]);
-      lock_affected_mixes(cp, beg, beg+num);
+      lock_affected_mixes(cp, beg, beg + num);
       if (cp->mix_md) reflect_mix_edit(cp, origin);
     }
 }
@@ -1375,14 +1352,14 @@ void insert_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, char
   len = current_ed_samples(cp);
   if (beg >= len)
     {
-      extend_with_zeros(cp, len, beg-len+1, "(insert-extend)");
+      extend_with_zeros(cp, len, beg - len + 1, "(insert-extend)");
       len = current_ed_samples(cp);
     }
   k=cp->edit_ctr;
-  prepare_edit_list(cp, len+num);
+  prepare_edit_list(cp, len + num);
   cp->edits[cp->edit_ctr] = insert_samples_1(beg, num, vals, cp->edits[k], cp, &cb, origin);
   reflect_edit_history_change(cp);
-  lock_affected_mixes(cp, beg, beg+num);
+  lock_affected_mixes(cp, beg, beg + num);
   if (cp->mix_md) reflect_mix_edit(cp, origin);
 }
 
@@ -1394,32 +1371,32 @@ static ed_list *delete_samples_1(int beg, int num, ed_list *current_state, chan_
   if (num <= 0) return(NULL);
   len=current_state->size;
   len_fixup = -1;
-  k=find_split_loc(beg, current_state);
+  k = find_split_loc(beg, current_state);
   need_to_delete = num;
   start_del = k;
   curbeg = beg;
-  cb = (int *)(current_state->fragments + k*ED_SIZE);
+  cb = (int *)(current_state->fragments + k * ED_SIZE);
   if (cb[ED_OUT]>beg) start_del--;
-  new_state = append_ed_list(cp, len+1);
+  new_state = append_ed_list(cp, len + 1);
   copy_ed_blocks(new_state->fragments, current_state->fragments, 0, 0, start_del);
   cbi=start_del;
-  temp_cb = (int *)(current_state->fragments + start_del*ED_SIZE);
+  temp_cb = (int *)(current_state->fragments + start_del * ED_SIZE);
   old_out = temp_cb[ED_OUT];
   if (beg>old_out)
     {
-      cb = (int *)(new_state->fragments + start_del*ED_SIZE);
+      cb = (int *)(new_state->fragments + start_del * ED_SIZE);
       cb[ED_OUT] = old_out;
       cb[ED_SND] = temp_cb[ED_SND];
       cb[ED_BEG] = temp_cb[ED_BEG];
-      cb[ED_END] = temp_cb[ED_BEG]+beg-old_out-1;
+      cb[ED_END] = temp_cb[ED_BEG] + beg - old_out - 1;
       cb[ED_SCL] = temp_cb[ED_SCL];
       start_del++;
       len_fixup++;
     }
   while (need_to_delete > 0)
     {
-      old_out = FRAGMENT_GLOBAL_POSITION(current_state, (cbi+1));
-      need_to_delete -= (old_out-curbeg);
+      old_out = FRAGMENT_GLOBAL_POSITION(current_state, (cbi + 1));
+      need_to_delete -= (old_out - curbeg);
       if (need_to_delete > 0)
 	{
 	  cbi++;
@@ -1428,23 +1405,23 @@ static ed_list *delete_samples_1(int beg, int num, ed_list *current_state, chan_
     }
   if (need_to_delete < 0)
     {
-      temp_cb = (int *)(current_state->fragments+cbi*ED_SIZE);
-      cb = (int *)(new_state->fragments+start_del*ED_SIZE);
+      temp_cb = (int *)(current_state->fragments + cbi * ED_SIZE);
+      cb = (int *)(new_state->fragments + start_del * ED_SIZE);
       cb[ED_OUT] = beg;
       cb[ED_SND] = temp_cb[ED_SND];
-      cb[ED_BEG] = temp_cb[ED_END]+1+need_to_delete;
+      cb[ED_BEG] = temp_cb[ED_END] + 1 + need_to_delete;
       cb[ED_END] = temp_cb[ED_END];
       cb[ED_SCL] = temp_cb[ED_SCL];
       start_del++;
       len_fixup++;
     }
   cbi++;
-  copy_ed_blocks(new_state->fragments, current_state->fragments, start_del, cbi, len-cbi); /* ??? */
+  copy_ed_blocks(new_state->fragments, current_state->fragments, start_del, cbi, len - cbi); /* ??? */
   new_state->beg = beg;
   new_state->len = num;
   if (origin) new_state->origin = copy_string(origin);
   new_state->sfnum = PACK_EDIT(DELETION_EDIT, 0);
-  ripple_out(new_state->fragments, start_del, -num, len+len_fixup);
+  ripple_out(new_state->fragments, start_del, -num, len + len_fixup);
   ripple_marks(cp, beg, -num);
   ripple_mixes(cp, beg, -num);
   ripple_selection(new_state, beg, -num);
@@ -1454,10 +1431,10 @@ static ed_list *delete_samples_1(int beg, int num, ed_list *current_state, chan_
   
   if (FRAGMENT_SOUND(new_state, (new_state->size - 1)) != EDIT_LIST_END_MARK)
     {
-      for (k = new_state->size-1;k>0;k--)
+      for (k = new_state->size-1; k>0; k--)
 	if (FRAGMENT_SOUND(new_state, k) == EDIT_LIST_END_MARK) break;
-      if (k>0) 
-	new_state->size = k+1; 
+      if (k > 0) 
+	new_state->size = k + 1; 
     }
   if (new_state->size == 1)
     {
@@ -1484,19 +1461,19 @@ void delete_samples(int beg, int num, chan_info *cp, char *origin)
   len = current_ed_samples(cp);
   if ((beg < len) && (beg >= 0))
     {
-      if ((beg+num) > len) num = len-beg;
-      k=cp->edit_ctr;
-      prepare_edit_list(cp, len-num);
+      if ((beg + num) > len) num = len - beg;
+      k = cp->edit_ctr;
+      prepare_edit_list(cp, len - num);
       cp->edits[cp->edit_ctr] = delete_samples_1(beg, num, cp->edits[k], cp, origin);
       reflect_edit_history_change(cp);
-      lock_affected_mixes(cp, beg, beg+num);
+      lock_affected_mixes(cp, beg, beg + num);
       if (cp->mix_md) reflect_mix_edit(cp, origin);
     }
   else
     {
       if (num == 1)
 	report_in_minibuffer_and_save(cp->sound, "can't delete sample %d (current len=%d)", beg, len);
-      else report_in_minibuffer_and_save(cp->sound, "can't delete samples %d to %d (current len=%d)", beg, beg+num-1, len);
+      else report_in_minibuffer_and_save(cp->sound, "can't delete samples %d to %d (current len=%d)", beg, beg + num - 1, len);
     }
 }
 
@@ -1509,40 +1486,40 @@ static ed_list *change_samples_1(int beg, int num, MUS_SAMPLE_TYPE *vals, ed_lis
   if (num <= 0) return(NULL);
   len = current_state->size;
   len_fixup = -1;
-  k=find_split_loc(beg, current_state);
+  k = find_split_loc(beg, current_state);
   need_to_delete = num - lengthen;
   start_del = k;
   curbeg = beg;
-  cbi=0;
-  cb = (int *)(current_state->fragments + k*ED_SIZE);
+  cbi = 0;
+  cb = (int *)(current_state->fragments + k * ED_SIZE);
   if (cb[ED_OUT]>beg) start_del--;
-  new_state = append_ed_list(cp, len+2);
+  new_state = append_ed_list(cp, len + 2);
   copy_ed_blocks(new_state->fragments, current_state->fragments, 0, 0, start_del);
-  cbi=start_del;
-  temp_cb = (int *)(current_state->fragments + start_del*ED_SIZE);  
+  cbi = start_del;
+  temp_cb = (int *)(current_state->fragments + start_del * ED_SIZE);  
   old_out = temp_cb[ED_OUT];
   if (beg>old_out)
     {
-      cb = (int *)(new_state->fragments + start_del*ED_SIZE);
+      cb = (int *)(new_state->fragments + start_del * ED_SIZE);
       cb[ED_OUT] = old_out;
       cb[ED_SND] = temp_cb[ED_SND];
       cb[ED_BEG] = temp_cb[ED_BEG];
-      cb[ED_END] = temp_cb[ED_BEG]+beg-old_out-1;
+      cb[ED_END] = temp_cb[ED_BEG] + beg - old_out - 1;
       cb[ED_SCL] = temp_cb[ED_SCL];
       start_del++;
       len_fixup++;
     }
   while (need_to_delete > 0)
     {
-      old_out = FRAGMENT_GLOBAL_POSITION(current_state, (cbi+1));
-      need_to_delete -= (old_out-curbeg);
+      old_out = FRAGMENT_GLOBAL_POSITION(current_state, (cbi + 1));
+      need_to_delete -= (old_out - curbeg);
       if (need_to_delete > 0)
 	{
 	  cbi++;
 	  curbeg = old_out;
 	}
     }
-  cb = (int *)(new_state->fragments+start_del*ED_SIZE);
+  cb = (int *)(new_state->fragments + start_del * ED_SIZE);
   if (vals) 
     {
       cb[ED_SND] = add_sound_buffer_to_edit_list(cp, vals, num); 
@@ -1551,33 +1528,33 @@ static ed_list *change_samples_1(int beg, int num, MUS_SAMPLE_TYPE *vals, ed_lis
   else (*cb_back) = cb;
   cb[ED_OUT] = beg;
   cb[ED_BEG] = 0;
-  cb[ED_END] = num-1;
+  cb[ED_END] = num - 1;
   cb[ED_SCL] = FLOAT_AS_INT(one);
   start_del++;
   len_fixup++;
   if (need_to_delete < 0)
     {
-      temp_cb = (int *)(current_state->fragments+cbi*ED_SIZE);
-      cb = (int *)(new_state->fragments+start_del*ED_SIZE);
-      cb[ED_OUT] = beg+num;
+      temp_cb = (int *)(current_state->fragments + cbi * ED_SIZE);
+      cb = (int *)(new_state->fragments + start_del * ED_SIZE);
+      cb[ED_OUT] = beg + num;
       cb[ED_SND] = temp_cb[ED_SND];
-      cb[ED_BEG] = temp_cb[ED_END]+1+need_to_delete;
+      cb[ED_BEG] = temp_cb[ED_END] + 1 + need_to_delete;
       cb[ED_END] = temp_cb[ED_END];
       cb[ED_SCL] = temp_cb[ED_SCL];
       start_del++;
       len_fixup++;
     }
   cbi++;
-  copy_ed_blocks(new_state->fragments, current_state->fragments, start_del, cbi, len-cbi);
+  copy_ed_blocks(new_state->fragments, current_state->fragments, start_del, cbi, len - cbi);
   new_state->beg = beg;
   new_state->len = num;
   if (origin) new_state->origin = copy_string(origin);
   if (lengthen)
     {
-      ripple_out(new_state->fragments, k+1, lengthen, len+len_fixup);
+      ripple_out(new_state->fragments, k + 1, lengthen, len + len_fixup);
       reflect_sample_change_in_axis(cp);
     }
-  new_state->size = len+len_fixup; /* don't propogate useless trailing blocks */
+  new_state->size = len + len_fixup; /* don't propogate useless trailing blocks */
   ripple_marks(cp, 0, 0);
   check_for_first_edit(cp);
   fixup_edlist_endmark(new_state, current_state, len);
@@ -1603,17 +1580,17 @@ void file_change_samples(int beg, int num, char *tempfile, chan_info *cp, int ch
 
   if (beg >= prev_len)
     {
-      extend_with_zeros(cp, prev_len, beg-prev_len+1, "(change-extend)");
+      extend_with_zeros(cp, prev_len, beg-prev_len + 1, "(change-extend)");
       prev_len = current_ed_samples(cp);
     }
 
-  new_len = beg+num;
+  new_len = beg + num;
   if (new_len < prev_len) new_len = prev_len;
-  k=cp->edit_ctr;
+  k = cp->edit_ctr;
   prepare_edit_list(cp, new_len);
   cp->edits[cp->edit_ctr] = change_samples_1(beg, num, NULL, cp->edits[k], cp, &cb, new_len - prev_len, origin);
   reflect_edit_history_change(cp);
-  if (lock == LOCK_MIXES) lock_affected_mixes(cp, beg, beg+num);
+  if (lock == LOCK_MIXES) lock_affected_mixes(cp, beg, beg + num);
   hdr = make_file_info(tempfile, cp->state);
   if (hdr)
     {
@@ -1654,7 +1631,7 @@ void file_override_samples(int num, char *tempfile, chan_info *cp, int chan, int
   hdr = make_file_info(tempfile, ss);
   if (hdr) 
     {
-      if (num == -1) num = (hdr->samples/hdr->chans);
+      if (num == -1) num = (hdr->samples / hdr->chans);
       prepare_edit_list(cp, num);
       fd = snd_open_read(ss, tempfile);
       mus_file_set_descriptors(fd,
@@ -1666,7 +1643,7 @@ void file_override_samples(int num, char *tempfile, chan_info *cp, int chan, int
 			       hdr->type);
       during_open(fd, tempfile, SND_OVERRIDE_FILE);
       datai = make_file_state(fd, hdr, chan, FILE_BUFFER_SIZE);
-      e = initial_ed_list(0, num-1);
+      e = initial_ed_list(0, num - 1);
       if (origin) e->origin = copy_string(origin);
       cp->edits[cp->edit_ctr] = e;
       if (lock == LOCK_MIXES) lock_affected_mixes(cp, 0, num);
@@ -1691,16 +1668,16 @@ void change_samples(int beg, int num, MUS_SAMPLE_TYPE *vals, chan_info *cp, int 
   prev_len = current_ed_samples(cp);
   if (beg >= prev_len)
     {
-      extend_with_zeros(cp, prev_len, beg-prev_len+1, "(change-extend)");
+      extend_with_zeros(cp, prev_len, beg - prev_len + 1, "(change-extend)");
       prev_len = current_ed_samples(cp);
     }
-  new_len = beg+num;
+  new_len = beg + num;
   if (new_len < prev_len) new_len = prev_len;
-  k=cp->edit_ctr;
+  k = cp->edit_ctr;
   prepare_edit_list(cp, new_len);
   cp->edits[cp->edit_ctr] = change_samples_1(beg, num, vals, cp->edits[k], cp, NULL, new_len - prev_len, origin);
   reflect_edit_history_change(cp);
-  if (lock == LOCK_MIXES) lock_affected_mixes(cp, beg, beg+num);
+  if (lock == LOCK_MIXES) lock_affected_mixes(cp, beg, beg + num);
   if (cp->mix_md) reflect_mix_edit(cp, origin);
 }
 
@@ -1716,8 +1693,9 @@ void parse_tree_scale_by(chan_info *cp, Float scl)
   prepare_edit_list(cp, len);
   new_ed = make_ed_list(cp->edits[pos]->size);
   cp->edits[cp->edit_ctr] = new_ed;
-  for (i=0;i<new_ed->size * ED_SIZE;i++) new_ed->fragments[i] = old_ed->fragments[i];
-  for (i=0;i<new_ed->size;i++) 
+  for (i=0; i<new_ed->size * ED_SIZE; i++) 
+    new_ed->fragments[i] = old_ed->fragments[i];
+  for (i=0; i<new_ed->size; i++) 
     {
       ed_scl = (float)(scl * INT_AS_FLOAT(FRAGMENT_SCALER(new_ed, i)));
       FRAGMENT_SCALER(new_ed, i) = FLOAT_AS_INT(ed_scl);
@@ -1745,14 +1723,10 @@ void parse_tree_selection_scale_by(chan_info *cp, Float scl, int beg, int num)
   pos = cp->edit_ctr;
   old_ed = cp->edits[pos];
   prepare_edit_list(cp, len);
-#if DEBUGGING
-  new_ed = selected_ed_list(beg, beg+num-1, old_ed, cp);
-#else
-  new_ed = selected_ed_list(beg, beg+num-1, old_ed);
-#endif
-  for (i=0;i<new_ed->size;i++) 
+  new_ed = selected_ed_list(beg, beg + num - 1, old_ed);
+  for (i=0; i<new_ed->size; i++) 
     {
-      if (FRAGMENT_GLOBAL_POSITION(new_ed, i) > (beg+num-1)) break; /* not >= (1 sample selections) */
+      if (FRAGMENT_GLOBAL_POSITION(new_ed, i) > (beg + num - 1)) break; /* not >= (1 sample selections) */
       if (FRAGMENT_GLOBAL_POSITION(new_ed, i) >= beg)
 	{
 	  ed_scl = (float)(scl * INT_AS_FLOAT(FRAGMENT_SCALER(new_ed, i)));
@@ -1784,19 +1758,19 @@ Float sample(int samp, chan_info *cp)
   current_state = (ed_list *)(cp->edits[cp->edit_ctr]);
   data = current_state->fragments;
   len = current_state->size;
-  for (i=0, cb=0;i<len;i++,cb+=ED_SIZE)
+  for (i=0, cb=0; i<len; i++, cb+=ED_SIZE)
     {
-      if (samp < data[cb+ED_OUT])
+      if (samp < data[cb + ED_OUT])
 	{
 	  true_cb = cb-ED_SIZE;
-	  if (data[true_cb+ED_SND] == EDIT_LIST_END_MARK) return(0.0);
-	  index = data[true_cb+ED_BEG]+samp-data[true_cb+ED_OUT];
-	  sd = cp->sounds[data[true_cb+ED_SND]];
+	  if (data[true_cb + ED_SND] == EDIT_LIST_END_MARK) return(0.0);
+	  index = data[true_cb + ED_BEG] + samp - data[true_cb + ED_OUT];
+	  sd = cp->sounds[data[true_cb + ED_SND]];
 	  if (sd->type == SND_DATA_BUFFER)
 	    return(UNWRAP_SAMPLE(MUS_SAMPLE_TO_FLOAT(sd->buffered_data[index]),
-				 data[true_cb+ED_SCL]));
+				 data[true_cb + ED_SCL]));
 	  else return(UNWRAP_SAMPLE(MUS_SAMPLE_TO_FLOAT(snd_file_read_sample(sd, index, cp)),
-				    data[true_cb+ED_SCL]));
+				    data[true_cb + ED_SCL]));
 	}
     }
   return(0.0);
@@ -1807,9 +1781,6 @@ Float sample(int samp, chan_info *cp)
 snd_fd *free_snd_fd(snd_fd *sf)
 {
   snd_data *sd;
-#if DEBUGGING
-  if ((sf) && (sf->current_state == NULL)) {fprintf(stderr, "argh"); abort();}
-#endif
   if (sf) 
     {
       sd = sf->current_sound;
@@ -1828,12 +1799,12 @@ snd_fd *free_snd_fd(snd_fd *sf)
 #if LONG_INT_P
   int current_location(snd_fd *sf) 
   {
-    return(sf->cb[ED_OUT] - sf->cb[ED_BEG] + sf->beg + (int)(((long)(sf->view_buffered_data) - (long)(sf->first))>>2));
+    return(sf->cb[ED_OUT] - sf->cb[ED_BEG] + sf->beg + (int)(((long)(sf->view_buffered_data) - (long)(sf->first)) >> 2));
   }
 #else
   int current_location(snd_fd *sf) 
   {
-    return(sf->cb[ED_OUT] - sf->cb[ED_BEG] + sf->beg + (((int)(sf->view_buffered_data) - (int)(sf->first))>>2));
+    return(sf->cb[ED_OUT] - sf->cb[ED_BEG] + sf->beg + (((int)(sf->view_buffered_data) - (int)(sf->first)) >> 2));
   }
 #endif
 
@@ -1876,21 +1847,18 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
       sf->cbi = 0;
       return(sf);
     }
-  if (samp >= curlen) samp = curlen-1;
+  if (samp >= curlen) samp = curlen - 1;
   len = ed->size;
-  for (i=0, k=0;i<len;i++,k+=ED_SIZE)
+  for (i=0, k=0; i<len; i++, k+=ED_SIZE)
     {
-      cb = (int *)(ed->fragments+k);
+      cb = (int *)(ed->fragments + k);
       if ((cb[ED_OUT] > samp) || 
 	  (cb[ED_SND] == EDIT_LIST_END_MARK))
 	{
-#if DEBUGGING
-	  if (k == 0) {fprintf(stderr, "bad tree at 0: out %d, samp: %d", cb[ED_OUT], samp); abort();}
-#endif
-	  sf->cb = (int *)(ed->fragments+k-ED_SIZE);
-	  sf->cbi = i-1;
+	  sf->cb = (int *)(ed->fragments + k - ED_SIZE);
+	  sf->cbi = i - 1;
 	  ind0 = sf->cb[ED_BEG];
-	  indx = sf->cb[ED_BEG]+samp-sf->cb[ED_OUT];
+	  indx = sf->cb[ED_BEG] + samp - sf->cb[ED_OUT];
 	  ind1 = sf->cb[ED_END];
 	  sf->sounds = (snd_data **)(cp->sounds);
 	  sf->scaler = MUS_SAMPLE_TO_FLOAT(INT_AS_FLOAT(sf->cb[ED_SCL]));
@@ -1917,17 +1885,14 @@ snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_po
 	  else 
 	    {
 	      sf->current_sound = NULL;
-	      sf->view_buffered_data = (MUS_SAMPLE_TYPE *)(first_snd->buffered_data+indx);
-	      sf->first = (MUS_SAMPLE_TYPE *)(first_snd->buffered_data+ind0);
-	      sf->last = (MUS_SAMPLE_TYPE *)(first_snd->buffered_data+ind1);
+	      sf->view_buffered_data = (MUS_SAMPLE_TYPE *)(first_snd->buffered_data + indx);
+	      sf->first = (MUS_SAMPLE_TYPE *)(first_snd->buffered_data + ind0);
+	      sf->last = (MUS_SAMPLE_TYPE *)(first_snd->buffered_data + ind1);
 	      sf->eof = 1;
 	    }
 	  return(sf);
 	}
     }
-#if DEBUGGING
-  if (sf->current_sound) fprintf(stderr, "leftover??");
-#endif
   if (sf) FREE(sf);
   return(NULL);
 }
@@ -1953,7 +1918,7 @@ MUS_SAMPLE_TYPE previous_sound (snd_fd *sf)
       if (sf->cbi == 0) return(MUS_SAMPLE_0); /* can't back up any further */
       sf->cbi--;
       /* now start in the final portion of this block (if a file) */
-      sf->cb = (int *)((sf->current_state)->fragments+sf->cbi*ED_SIZE);
+      sf->cb = (int *)((sf->current_state)->fragments + sf->cbi * ED_SIZE);
       ind0 = sf->cb[ED_BEG];
       ind1 = sf->cb[ED_END];
       sf->scaler = MUS_SAMPLE_TO_FLOAT(INT_AS_FLOAT(sf->cb[ED_SCL]));
@@ -1969,8 +1934,8 @@ MUS_SAMPLE_TYPE previous_sound (snd_fd *sf)
 	}
       else 
 	{
-	  sf->view_buffered_data = (MUS_SAMPLE_TYPE *)(prev_snd->buffered_data+ind1);
-	  sf->first = (MUS_SAMPLE_TYPE *)(prev_snd->buffered_data+ind0);
+	  sf->view_buffered_data = (MUS_SAMPLE_TYPE *)(prev_snd->buffered_data + ind1);
+	  sf->first = (MUS_SAMPLE_TYPE *)(prev_snd->buffered_data + ind0);
 	  sf->last = sf->view_buffered_data;
 	  sf->eof = 1;
 	}
@@ -2007,7 +1972,7 @@ MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
 	  sf->last = (MUS_SAMPLE_TYPE *)0;
 	  return(MUS_SAMPLE_0);
 	}
-      sf->cb = (int *)((sf->current_state)->fragments+sf->cbi*ED_SIZE);
+      sf->cb = (int *)((sf->current_state)->fragments + sf->cbi * ED_SIZE);
       if ((!(sf->cb)) || 
 	  (sf->cb[ED_SND] == EDIT_LIST_END_MARK))
 	{
@@ -2029,9 +1994,9 @@ MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
 	}
       else 
 	{
-	  sf->view_buffered_data = (MUS_SAMPLE_TYPE *)(nxt_snd->buffered_data+ind0);
+	  sf->view_buffered_data = (MUS_SAMPLE_TYPE *)(nxt_snd->buffered_data + ind0);
 	  sf->first = sf->view_buffered_data;
-	  sf->last = (MUS_SAMPLE_TYPE *)(nxt_snd->buffered_data+ind1);
+	  sf->last = (MUS_SAMPLE_TYPE *)(nxt_snd->buffered_data + ind1);
 	  sf->eof = 1;
 	}
     }
@@ -2111,7 +2076,7 @@ int close_temp_file(int ofd, file_info *hdr, long bytes, snd_info *sp)
     snd_error("close temp file: %s", strerror(errno));
   else
     {
-      kused = bytes>>10;
+      kused = bytes >> 10;
       if ((kused > kleft) && (sp))
 	report_in_minibuffer_and_save(sp, "disk nearly full: used %d Kbytes leaving %d", kused, kleft);
     }
@@ -2123,8 +2088,8 @@ int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int leng
   /* create ofile, fill it by following sfs, use hdr for srate/type/format decisions */
   /* used only in this file and snd-chn (for external temps, snd->temp) */
   int ofd;
-  int i,j,len,datumb,reporting=0,total=0,err=0;
-  chan_info *cp=NULL;
+  int i,j,len,datumb,reporting = 0,total = 0,err = 0;
+  chan_info *cp = NULL;
   MUS_SAMPLE_TYPE **obufs;
   err = MUS_NO_ERROR;
   ofd = open_temp_file(ofile, chans, hdr, ss);
@@ -2132,11 +2097,9 @@ int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int leng
   datumb = mus_data_format_to_bytes_per_sample(hdr->format);
   obufs = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));
   ss->stopped_explicitly = 0;
-  for (i=0;i<chans;i++)
-    {
-      obufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
-    }
-  j=0;
+  for (i=0; i<chans; i++)
+    obufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE, sizeof(MUS_SAMPLE_TYPE));
+  j = 0;
   reporting = (length > (10 * MAX_BUFFER_SIZE));
   if (reporting) 
     {
@@ -2145,14 +2108,14 @@ int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int leng
     }
   if (chans == 1)
     {
-      for (len=0;len<length;len++)
+      for (len=0; len<length; len++)
 	{
 	  obufs[0][j] = next_sample(sfs[0]);
 	  j++;
 	  if (j == FILE_BUFFER_SIZE)
 	    {
-	      err = mus_file_write(ofd, 0, j-1, 1, obufs);
-	      j=0;
+	      err = mus_file_write(ofd, 0, j - 1, 1, obufs);
+	      j = 0;
 	      if (err == -1) break;
 	      if (reporting)
 		{
@@ -2172,15 +2135,15 @@ int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int leng
     }
   else
     {
-      for (len=0;len<length;len++)
+      for (len=0; len<length; len++)
 	{
-	  for (i=0;i<chans;i++)
+	  for (i=0; i<chans; i++)
 	    obufs[i][j] = next_sample(sfs[i]);
 	  j++;
 	  if (j == FILE_BUFFER_SIZE)
 	    {
-	      err = mus_file_write(ofd, 0, j-1, chans, obufs);
-	      j=0;
+	      err = mus_file_write(ofd, 0, j - 1, chans, obufs);
+	      j = 0;
 	      if (err == -1) break;
 	      if (reporting)
 		{
@@ -2199,15 +2162,15 @@ int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, int leng
 	}
     }
   if ((err == MUS_NO_ERROR) && (j > 0))
-    mus_file_write(ofd, 0, j-1, chans, obufs);
+    mus_file_write(ofd, 0, j - 1, chans, obufs);
   if (err == MUS_NO_ERROR)
     {
-      err = close_temp_file(ofd, hdr, len*chans*datumb, any_selected_sound(ss));
+      err = close_temp_file(ofd, hdr, len * chans * datumb, any_selected_sound(ss));
       alert_new_file();
     }
   else err = mus_file_close(ofd);
   if (reporting) finish_progress_report(cp->sound, NOT_FROM_ENVED);
-  for (i=0;i<chans;i++) FREE(obufs[i]);
+  for (i=0; i<chans; i++) FREE(obufs[i]);
   FREE(obufs);
   return(err);
 }
@@ -2219,12 +2182,15 @@ static int only_save_edits(snd_info *sp, file_info *nhdr, char *ofile)
   snd_fd **sf;
   ss = sp->state;
   sf = (snd_fd **)CALLOC(sp->nchans, sizeof(snd_fd *));
-  for (i=0;i<sp->nchans;i++) sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD);
+  for (i=0; i<sp->nchans; i++) 
+    sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD);
   err = snd_make_file(ofile, sp->nchans, nhdr, sf, current_ed_samples(sp->chans[0]), ss);
-  for (i=0;i<sp->nchans;i++) free_snd_fd(sf[i]);
+  for (i=0; i<sp->nchans; i++) 
+    free_snd_fd(sf[i]);
   FREE(sf);
   if (err == MUS_NO_ERROR)
-    for (i=0;i<sp->nchans;i++) reflect_save_as_in_edit_history(sp->chans[i], ofile);
+    for (i=0; i<sp->nchans; i++) 
+      reflect_save_as_in_edit_history(sp->chans[i], ofile);
   return(err);
 }
 
@@ -2234,7 +2200,7 @@ static int save_edits_1(snd_info *sp)
   /* can't overwrite current because we may have cut/paste backpointers scattered around the current edit list */
   /* have to decide here what header/data type to write as well -- original? */
   /* if latter, must be able to write all headers! -- perhaps warn user and use snd/aiff/riff/ircam */
-  char *ofile=NULL;
+  char *ofile = NULL;
   int err,saved_errno = 0;
   snd_state *ss;
   int i,samples;
@@ -2255,25 +2221,26 @@ static int save_edits_1(snd_info *sp)
   axis_data = (Float *)CALLOC(4*sp->nchans, sizeof(Float));
   ffts = (int *)CALLOC(sp->nchans, sizeof(int));
   waves = (int *)CALLOC(sp->nchans, sizeof(int));
-  for (i=0;i<sp->nchans;i++)
+  for (i=0; i<sp->nchans; i++)
     {
       cp = sp->chans[i];
       ap = cp->axis;
-      axis_data[(i*4)+0]=ap->x0;
-      axis_data[(i*4)+1]=ap->x1;
-      axis_data[(i*4)+2]=ap->y0;
-      axis_data[(i*4)+3]=ap->y1;
+      axis_data[(i * 4) + 0] = ap->x0;
+      axis_data[(i * 4) + 1] = ap->x1;
+      axis_data[(i * 4) + 2] = ap->y0;
+      axis_data[(i * 4) + 3] = ap->y1;
       waves[i] = cp->waving;
       ffts[i] = cp->ffting;
     }
   sf = (snd_fd **)CALLOC(sp->nchans, sizeof(snd_fd *));
-  for (i=0;i<sp->nchans;i++) sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD);
+  for (i=0; i<sp->nchans; i++) 
+    sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD);
   report_in_minibuffer(sp, "saving %s", sp->shortname);
   sphdr = sp->hdr;
   err = snd_make_file(ofile, sp->nchans, sp->hdr, sf, samples, ss);
   if (err != MUS_NO_ERROR) 
     {
-      for (i=0;i<sp->nchans;i++) free_snd_fd(sf[i]);
+      for (i=0; i<sp->nchans; i++) free_snd_fd(sf[i]);
       FREE(sf);
       FREE(ffts);
       FREE(waves);
@@ -2282,7 +2249,7 @@ static int save_edits_1(snd_info *sp)
     }
   sphdr->samples = samples*sp->nchans;
   collapse_marks(sp);
-  for (i=0;i<sp->nchans;i++)
+  for (i=0; i<sp->nchans; i++)
     {
       /* why not free_chan_info here? */
       cp = sp->chans[i];
@@ -2290,7 +2257,11 @@ static int save_edits_1(snd_info *sp)
       if (cp->edits) free_edit_list(cp);
       free_snd_fd(sf[i]);  /* must precede free_sound_list since it access the snd_data structs that free_sound_list frees */
       if (cp->sounds) free_sound_list(cp);
-      if (cp->samples) {FREE(cp->samples); cp->samples = NULL;}
+      if (cp->samples) 
+	{
+	  FREE(cp->samples); 
+	  cp->samples = NULL;
+	}
       cp->axis = free_axis_info(cp->axis);
     }
   FREE(sf);
@@ -2311,10 +2282,14 @@ static int save_edits_1(snd_info *sp)
 
   add_sound_data(sp->fullname, sp, ss);
 
-  for (i=0;i<sp->nchans;i++)
+  for (i=0; i<sp->nchans; i++)
     {
       cp = sp->chans[i];
-      set_axes(cp, axis_data[(i*4)+0], axis_data[(i*4)+1], axis_data[(i*4)+2], axis_data[(i*4)+3]);
+      set_axes(cp, 
+	       axis_data[(i * 4) + 0], 
+	       axis_data[(i * 4) + 1], 
+	       axis_data[(i * 4) + 2],
+	       axis_data[(i * 4) + 3]);
       update_graph(cp, NULL); /* get normalized state before messing with it */
       if (ffts[i]) fftb(cp, TRUE);
       if (!(waves[i])) waveb(cp, FALSE);
@@ -2329,8 +2304,13 @@ static int save_edits_1(snd_info *sp)
   if (err)
     report_in_minibuffer_and_save(sp, "write failed: %s, edits saved in: %s", strerror(saved_errno), ofile);
   else report_in_minibuffer(sp, "wrote %s", sp->fullname); 
-  if (ofile) {free(ofile); ofile=NULL;}
-  if (auto_update(ss)) map_over_sounds(ss, snd_not_current, NULL);
+  if (ofile) 
+    {
+      free(ofile); 
+      ofile = NULL;
+    }
+  if (auto_update(ss)) 
+    map_over_sounds(ss, snd_not_current, NULL);
   return(MUS_NO_ERROR); /* don't erase our error message for the special write-permission problem */
 }
 
@@ -2350,7 +2330,9 @@ int save_edits_2(snd_info *sp, char *new_name, int type, int format, int srate, 
 	  hdr->format = format;
 	  hdr->srate = srate;
 	  hdr->type = type;
-	  if (comment) hdr->comment = copy_string(comment); else hdr->comment = NULL;
+	  if (comment) 
+	    hdr->comment = copy_string(comment); 
+	  else hdr->comment = NULL;
 	  hdr->data_location = 0; /* in case comment changes it */
 	  res = only_save_edits(sp, hdr, new_name);
 	  free_file_info(hdr);
@@ -2418,7 +2400,7 @@ void save_edits(snd_info *sp, void *ptr)
   if (!sp->read_only)
     {
       need_save = 0;
-      for (i=0;i<sp->nchans;i++)
+      for (i=0; i<sp->nchans; i++)
 	{
 	  cp = sp->chans[i];
 	  if (cp->edit_ctr > 0) 
@@ -2442,7 +2424,8 @@ void save_edits(snd_info *sp, void *ptr)
 	    report_in_minibuffer_and_save(sp, "%s: %s", sp->fullname, strerror(errno));
 	  else
 	    {
-	      if (sp->edited_region) save_region_backpointer(sp);
+	      if (sp->edited_region) 
+		save_region_backpointer(sp);
 	    }
 	}
       else
@@ -2462,7 +2445,9 @@ void revert_edits(chan_info *cp, void *ptr)
   cp->edit_ctr = 0;
   reflect_edit_counter_change(cp);
   reflect_sample_change_in_axis(cp);
-  if (selection_is_active()) reflect_edit_with_selection_in_menu(); else reflect_edit_without_selection_in_menu();
+  if (selection_is_active())
+    reflect_edit_with_selection_in_menu(); 
+  else reflect_edit_without_selection_in_menu();
   update_graph(cp, NULL);
   if ((cp->mix_md) && (old_ctr != 0)) reflect_mix_edit(cp, "revert-sound");
   call_undo_hook(cp, TRUE);
@@ -2485,7 +2470,9 @@ void undo_edit(chan_info *cp, int count)
 	  reflect_file_revert_in_label(sp);
 	  reflect_file_revert_in_menu(cp->state);
 	}
-      if (selection_is_active()) reflect_edit_with_selection_in_menu(); else reflect_edit_without_selection_in_menu();
+      if (selection_is_active()) 
+	reflect_edit_with_selection_in_menu();
+      else reflect_edit_without_selection_in_menu();
       update_graph(cp, NULL);
       if (cp->mix_md) reflect_mix_edit(cp, "undo");
       call_undo_hook(cp, TRUE);
@@ -2508,7 +2495,7 @@ void undo_edit_with_sync(chan_info *cp, int count)
 	  if (sp->syncing != 0) si = snd_sync(cp->state, sp->syncing);
 	  if (si)
 	    {
-	      for (i=0;i<si->chans;i++) undo_edit(si->cps[i], count);
+	      for (i=0; i<si->chans; i++) undo_edit(si->cps[i], count);
 	      si = free_sync_info(si);
 	    }
 	  else undo_edit(cp, count);
@@ -2524,8 +2511,11 @@ void redo_edit(chan_info *cp, int count)
       sp = cp->sound;
       if (sp->playing) stop_playing_sound(sp);
       cp->edit_ctr += count; 
-      while ((cp->edit_ctr >= cp->edit_size) || (!(cp->edits[cp->edit_ctr]))) {cp->edit_ctr--;}
-      if (((cp->edit_ctr+1) == cp->edit_size) || (!(cp->edits[cp->edit_ctr+1]))) 
+      while ((cp->edit_ctr >= cp->edit_size) || 
+	     (!(cp->edits[cp->edit_ctr]))) 
+	cp->edit_ctr--;
+      if (((cp->edit_ctr+1) == cp->edit_size) || 
+	  (!(cp->edits[cp->edit_ctr+1]))) 
 	reflect_no_more_redo_in_menu();
       if (cp->edit_ctr != 0) /* possibly a sync'd redo to chan that has no edits */
 	{
@@ -2559,7 +2549,7 @@ void redo_edit_with_sync(chan_info *cp, int count)
 	  if (sp->syncing != 0) si = snd_sync(cp->state, sp->syncing);
 	  if (si)
 	    {
-	      for (i=0;i<si->chans;i++) redo_edit(si->cps[i], count);
+	      for (i=0; i<si->chans; i++) redo_edit(si->cps[i], count);
 	      si = free_sync_info(si);
 	    }
 	  else redo_edit(cp, count);
@@ -2590,7 +2580,7 @@ static SCM g_display_edits(SCM snd, SCM chn)
 		  __FILE__, __LINE__, __FUNCTION__);
       fd = mus_file_open_read(name);
       len = lseek(fd, 0L, SEEK_END);
-      buf = (char *)CALLOC(len+1, sizeof(char));
+      buf = (char *)CALLOC(len + 1, sizeof(char));
       lseek(fd, 0L, SEEK_SET);
       read(fd, buf, len);
       close(fd);
@@ -2649,7 +2639,7 @@ static SCM g_edit_tree(SCM snd, SCM chn, SCM upos)
 	{
 	  res = SCM_EOL;
 	  len = ed->size; /* fragments in this list */
-	  for (i=len-1;i>=0;i--)
+	  for (i=len-1; i>=0; i--)
 	    res = scm_cons(SCM_LIST5(TO_SCM_INT(FRAGMENT_GLOBAL_POSITION(ed, i)),
 				     TO_SCM_INT(FRAGMENT_SOUND(ed, i)),
 				     TO_SCM_INT(FRAGMENT_LOCAL_POSITION(ed, i)),
@@ -2760,7 +2750,7 @@ static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir1, SCM pos)
    snd can be a filename, a sound index number, or a list with a mix id number."
 
   snd_fd *fd = NULL;
-  int edpos,chan;
+  int chan;
   chan_info *cp;
   snd_state *ss;
   snd_info *loc_sp = NULL;
@@ -2776,7 +2766,8 @@ static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir1, SCM pos)
 			 SCM_LIST2(TO_SCM_STRING(S_make_sample_reader),
 				   snd)));
       chan = TO_C_INT_OR_ELSE(chn, 0);
-      if ((chan < 0) || (chan > loc_sp->nchans))
+      if ((chan < 0) || 
+	  (chan > loc_sp->nchans))
 	{
 	  completely_free_snd_info(loc_sp);
 	  return(scm_throw(NO_SUCH_CHANNEL,
@@ -2790,8 +2781,10 @@ static SCM g_make_sample_reader(SCM samp_n, SCM snd, SCM chn, SCM dir1, SCM pos)
       SND_ASSERT_CHAN(S_make_sample_reader, snd, chn, 2);
       cp = get_cp(snd, chn, S_make_sample_reader);
     }
-  edpos = TO_C_INT_OR_ELSE(pos, cp->edit_ctr);
-  fd = init_sample_read_any(TO_C_INT_OR_ELSE(samp_n, 0), cp, TO_C_INT_OR_ELSE(dir1, 1), edpos);
+  fd = init_sample_read_any(TO_C_INT_OR_ELSE(samp_n, 0), 
+			    cp, 
+			    TO_C_INT_OR_ELSE(dir1, 1), 
+			    TO_C_INT_OR_ELSE(pos, cp->edit_ctr));
   if (fd)
     {
       fd->local_sp = loc_sp;
@@ -2810,7 +2803,11 @@ static SCM g_make_region_sample_reader(SCM samp_n, SCM reg, SCM chn, SCM dir1)
   SCM_ASSERT(bool_or_arg_p(reg), reg, SCM_ARG2, S_make_sample_reader);
   SCM_ASSERT(bool_or_arg_p(chn), chn, SCM_ARG3, S_make_sample_reader);
   SCM_ASSERT(bool_or_arg_p(dir1), dir1, SCM_ARG4, S_make_sample_reader);
-  fd = init_region_read(get_global_state(), TO_C_INT_OR_ELSE(samp_n, 0), TO_C_INT_OR_ELSE(reg, 0), TO_C_INT_OR_ELSE(chn, 0), TO_C_INT_OR_ELSE(dir1, 1));
+  fd = init_region_read(get_global_state(), 
+			TO_C_INT_OR_ELSE(samp_n, 0), 
+			TO_C_INT_OR_ELSE(reg, 0), 
+			TO_C_INT_OR_ELSE(chn, 0), 
+			TO_C_INT_OR_ELSE(dir1, 1));
   if (fd)
     {
       SND_RETURN_NEWSMOB(sf_tag, (SCM)fd);
@@ -2866,9 +2863,9 @@ static SCM g_loop_samples(SCM reader, SCM proc, SCM calls, SCM origin, SCM envir
   snd_info *sp;
   char *ofile;
   snd_state *ss;
-  int num,i,j=0,ofd,datumb,err=0;
+  int num,i,j = 0,ofd,datumb,err = 0;
   snd_fd *sf;
-  void *envp=NULL;
+  void *envp = NULL;
   file_info *hdr;
   MUS_SAMPLE_TYPE **data;
   MUS_SAMPLE_TYPE *idata;
@@ -2899,13 +2896,13 @@ static SCM g_loop_samples(SCM reader, SCM proc, SCM calls, SCM origin, SCM envir
   idata = data[0];
   if (envp)
     {
-      for (i=0;i<num;i++)
+      for (i=0; i<num; i++)
 	{
 	  idata[j++] = MUS_FLOAT_TO_SAMPLE((*func_env)(next_sample_to_float(sf), envp));
 	  if (j == MAX_BUFFER_SIZE)
 	    {
-	      err = mus_file_write(ofd, 0, j-1, 1, data);
-	      j=0;
+	      err = mus_file_write(ofd, 0, j - 1, 1, data);
+	      j = 0;
 	      if (err == -1) break;
 	      if (ss->stopped_explicitly) break;
 	    }
@@ -2913,19 +2910,19 @@ static SCM g_loop_samples(SCM reader, SCM proc, SCM calls, SCM origin, SCM envir
     }
   else
     {
-      for (i=0;i<num;i++)
+      for (i=0; i<num; i++)
 	{
 	  idata[j++] = MUS_FLOAT_TO_SAMPLE((*func)(next_sample_to_float(sf)));
 	  if (j == MAX_BUFFER_SIZE)
 	    {
-	      err = mus_file_write(ofd, 0, j-1, 1, data);
-	      j=0;
+	      err = mus_file_write(ofd, 0, j - 1, 1, data);
+	      j = 0;
 	      if (err == -1) break;
 	      if (ss->stopped_explicitly) break;
 	    }
 	}
     }
-  if (j > 0) mus_file_write(ofd, 0, j-1, 1, data);
+  if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
   close_temp_file(ofd, hdr, num*datumb, sp);
   hdr = free_file_info(hdr);
   file_change_samples(sf->initial_samp, num, ofile, cp, 0, DELETE_ME, LOCK_MIXES, SCM_STRING_CHARS(origin));
@@ -2964,19 +2961,19 @@ static SCM g_save_edit_history(SCM filename, SCM snd, SCM chn)
 	    {
 	      sp = get_sp(snd);
 	      if (sp)
-		for (i=0;i<sp->nchans;i++)
+		for (i=0; i<sp->nchans; i++)
 		  edit_history_to_file(fd, sp->chans[i]);
 	    }
 	  else
 	    {
 	      ss = get_global_state();
-	      for (i=0;i<ss->max_sounds;i++)
+	      for (i=0; i<ss->max_sounds; i++)
 		{
-		  if ((sp=((snd_info *)(ss->sounds[i]))))
+		  if ((sp = ((snd_info *)(ss->sounds[i]))))
 		    {
 		      if (sp->inuse)
 			{
-			  for (j=0;j<sp->nchans;j++)
+			  for (j=0; j<sp->nchans; j++)
 			    edit_history_to_file(fd, sp->chans[j]);
 			}
 		    }
@@ -3000,7 +2997,8 @@ static SCM g_undo(SCM ed_n, SCM snd_n, SCM chn_n) /* opt ed_n */
   SND_ASSERT_CHAN(S_undo, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_undo);
   if (gh_number_p(ed_n))
-    undo_edit_with_sync(cp, TO_C_INT_OR_ELSE(ed_n, 0));
+    undo_edit_with_sync(cp, 
+			TO_C_INT_OR_ELSE(ed_n, 0));
   else undo_edit_with_sync(cp, 1);
   return(SCM_BOOL_T);
 }
@@ -3012,7 +3010,8 @@ static SCM g_redo(SCM ed_n, SCM snd_n, SCM chn_n) /* opt ed_n */
   SND_ASSERT_CHAN(S_redo, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_redo);
   if (gh_number_p(ed_n))
-    redo_edit_with_sync(cp, TO_C_INT_OR_ELSE(ed_n, 0));
+    redo_edit_with_sync(cp, 
+			TO_C_INT_OR_ELSE(ed_n, 0));
   else redo_edit_with_sync(cp, 1);
   return(SCM_BOOL_T);
 }
@@ -3144,22 +3143,22 @@ void g_init_edits(SCM local_doc)
 #else
   sf_tag = scm_newsmob(&sf_smobfuns);
 #endif
-  DEFINE_PROC(gh_new_procedure(S_make_sample_reader, SCM_FNC g_make_sample_reader, 0, 5, 0), H_make_sample_reader);
+  DEFINE_PROC(gh_new_procedure(S_make_sample_reader,        SCM_FNC g_make_sample_reader, 0, 5, 0),        H_make_sample_reader);
   DEFINE_PROC(gh_new_procedure(S_make_region_sample_reader, SCM_FNC g_make_region_sample_reader, 0, 4, 0), H_make_region_sample_reader);
-  DEFINE_PROC(gh_new_procedure(S_next_sample, SCM_FNC g_next_sample, 1, 0, 0), H_next_sample);
-  DEFINE_PROC(gh_new_procedure(S_previous_sample, SCM_FNC g_previous_sample, 1, 0, 0), H_previous_sample);
-  DEFINE_PROC(gh_new_procedure(S_free_sample_reader, SCM_FNC g_free_sample_reader, 1, 0, 0), H_free_sample_reader);
-  DEFINE_PROC(gh_new_procedure(S_sample_readerQ, SCM_FNC g_sf_p, 1, 0, 0), H_sf_p);
-  DEFINE_PROC(gh_new_procedure(S_sample_reader_at_endQ, SCM_FNC g_sample_reader_at_end, 1, 0, 0), H_sample_reader_at_end);
-  DEFINE_PROC(gh_new_procedure(S_loop_samples, SCM_FNC g_loop_samples, 4, 1, 0), H_loop_samples);
+  DEFINE_PROC(gh_new_procedure(S_next_sample,               SCM_FNC g_next_sample, 1, 0, 0),               H_next_sample);
+  DEFINE_PROC(gh_new_procedure(S_previous_sample,           SCM_FNC g_previous_sample, 1, 0, 0),           H_previous_sample);
+  DEFINE_PROC(gh_new_procedure(S_free_sample_reader,        SCM_FNC g_free_sample_reader, 1, 0, 0),        H_free_sample_reader);
+  DEFINE_PROC(gh_new_procedure(S_sample_readerQ,            SCM_FNC g_sf_p, 1, 0, 0),                      H_sf_p);
+  DEFINE_PROC(gh_new_procedure(S_sample_reader_at_endQ,     SCM_FNC g_sample_reader_at_end, 1, 0, 0),      H_sample_reader_at_end);
+  DEFINE_PROC(gh_new_procedure(S_loop_samples,              SCM_FNC g_loop_samples, 4, 1, 0),              H_loop_samples);
 
-  DEFINE_PROC(gh_new_procedure(S_save_edit_history, SCM_FNC g_save_edit_history, 1, 2, 0), H_save_edit_history);
-  DEFINE_PROC(gh_new_procedure(S_edit_fragment, SCM_FNC g_edit_fragment, 0, 3, 0), H_edit_fragment);
-  DEFINE_PROC(gh_new_procedure(S_undo, SCM_FNC g_undo, 0, 3, 0), H_undo);
-  DEFINE_PROC(gh_new_procedure(S_redo, SCM_FNC g_redo, 0, 3, 0), H_redo);
-  DEFINE_PROC(gh_new_procedure(S_as_one_edit, SCM_FNC g_as_one_edit, 1, 1, 0), H_as_one_edit);
-  DEFINE_PROC(gh_new_procedure(S_display_edits, SCM_FNC g_display_edits, 0, 2, 0), H_display_edits);
-  DEFINE_PROC(gh_new_procedure(S_edit_tree, SCM_FNC g_edit_tree, 0, 3, 0), H_edit_tree);
+  DEFINE_PROC(gh_new_procedure(S_save_edit_history,         SCM_FNC g_save_edit_history, 1, 2, 0),         H_save_edit_history);
+  DEFINE_PROC(gh_new_procedure(S_edit_fragment,             SCM_FNC g_edit_fragment, 0, 3, 0),             H_edit_fragment);
+  DEFINE_PROC(gh_new_procedure(S_undo,                      SCM_FNC g_undo, 0, 3, 0),                      H_undo);
+  DEFINE_PROC(gh_new_procedure(S_redo,                      SCM_FNC g_redo, 0, 3, 0),                      H_redo);
+  DEFINE_PROC(gh_new_procedure(S_as_one_edit,               SCM_FNC g_as_one_edit, 1, 1, 0),               H_as_one_edit);
+  DEFINE_PROC(gh_new_procedure(S_display_edits,             SCM_FNC g_display_edits, 0, 2, 0),             H_display_edits);
+  DEFINE_PROC(gh_new_procedure(S_edit_tree,                 SCM_FNC g_edit_tree, 0, 3, 0),                 H_edit_tree);
 
   DEFINE_PROC(gh_new_procedure("section-scale-by", SCM_FNC g_section_scale_by, 5, 0, 0), "internal scaling function");
 

@@ -11,8 +11,15 @@ void snd_warning(char *format, ...)
   va_list ap;
   snd_info *sp;
   snd_state *ss;
-  if (snd_error_buffer == NULL) snd_error_buffer = (char *)CALLOC(1024, sizeof(char));
-  if (snd_error_buffer == NULL) {fprintf(stderr, "serious memory trouble!!"); return;}
+  if (snd_error_buffer == NULL) 
+    {
+      snd_error_buffer = (char *)CALLOC(1024, sizeof(char));
+      if (snd_error_buffer == NULL) 
+	{
+	  fprintf(stderr, "serious memory trouble!!"); 
+	  return;
+	}
+    }
 #if HAVE_VPRINTF
   va_start(ap, format);
   vsprintf(snd_error_buffer, format, ap);
@@ -49,8 +56,15 @@ void snd_error(char *format, ...)
   va_list ap;
   snd_info *sp;
   snd_state *ss;
-  if (snd_error_buffer == NULL) snd_error_buffer = (char *)CALLOC(1024, sizeof(char));
-  if (snd_error_buffer == NULL) {fprintf(stderr, "serious memory trouble!!"); return;}
+  if (snd_error_buffer == NULL) 
+    {
+      snd_error_buffer = (char *)CALLOC(1024, sizeof(char));
+      if (snd_error_buffer == NULL) 
+	{
+	  fprintf(stderr, "serious memory trouble!!"); 
+	  return;
+	}
+    }
   va_start(ap, format);
   vsprintf(snd_error_buffer, format, ap);
   va_end(ap);
@@ -123,7 +137,9 @@ int ignore_mus_error(int type, char *msg)
 {
   SCM result = SCM_BOOL_F;
   if (HOOKED(mus_error_hook))
-    result = g_c_run_or_hook(mus_error_hook, SCM_LIST2(TO_SCM_INT(type), TO_SCM_STRING(msg)));
+    result = g_c_run_or_hook(mus_error_hook, 
+			     SCM_LIST2(TO_SCM_INT(type), 
+				       TO_SCM_STRING(msg)));
   return(SCM_NFALSEP(result));
 }
 
@@ -131,7 +147,8 @@ static int ignore_snd_error(char *msg)
 {
   SCM result = SCM_BOOL_F;
   if (HOOKED(snd_error_hook))
-    result = g_c_run_or_hook(snd_error_hook, SCM_LIST1(TO_SCM_STRING(msg)));
+    result = g_c_run_or_hook(snd_error_hook, 
+			     SCM_LIST1(TO_SCM_STRING(msg)));
   return(SCM_NFALSEP(result));
 }
 
@@ -139,7 +156,8 @@ static int ignore_snd_warning(char *msg)
 {
   SCM result = SCM_BOOL_F;
   if (HOOKED(snd_warning_hook))
-    result = g_c_run_or_hook(snd_warning_hook, SCM_LIST1(TO_SCM_STRING(msg)));
+    result = g_c_run_or_hook(snd_warning_hook, 
+			     SCM_LIST1(TO_SCM_STRING(msg)));
   return(SCM_NFALSEP(result));
 }
 

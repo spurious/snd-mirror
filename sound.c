@@ -187,7 +187,7 @@ int mus_make_error(char *error_name)
 	      len = mus_error_names_size;
 	      mus_error_names_size += 8;
 	      mus_error_names = (char **)REALLOC(mus_error_names, mus_error_names_size * sizeof(char *));
-	      for (i=len;i<mus_error_names_size;i++) mus_error_names[i] = NULL;
+	      for (i=len; i<mus_error_names_size; i++) mus_error_names[i] = NULL;
 #endif
 	    }
 	}
@@ -372,7 +372,7 @@ static sound_file *add_to_sound_table(const char *name)
   sound_file **ptr;
 #endif
   pos = -1;
-  for (i=0;i<sound_table_size;i++)
+  for (i=0; i<sound_table_size; i++)
     if (sound_table[i] == NULL) 
       {
 	pos = i;
@@ -388,13 +388,13 @@ static sound_file *add_to_sound_table(const char *name)
 	{
 #ifdef MACOS
 	  ptr = (sound_file **)CALLOC(sound_table_size, sizeof(sound_file *));
-	  for (i=0;i<pos;i++) ptr[i] = sound_table[i];
+	  for (i=0; i<pos; i++) ptr[i] = sound_table[i];
 	  FREE(sound_table);
 	  sound_table = ptr;
 #else
 	  sound_table = (sound_file **)REALLOC(sound_table, sound_table_size * sizeof(sound_file *));
 #endif
-	  for (i=pos;i<sound_table_size;i++) sound_table[i] = NULL;
+	  for (i=pos; i<sound_table_size; i++) sound_table[i] = NULL;
 	}
     }
   sound_table[pos] = (sound_file *)CALLOC(1, sizeof(sound_file));
@@ -413,7 +413,7 @@ int mus_sound_forget(const char *name)
   int i;
   if (name)
     {
-      for (i=0;i<sound_table_size;i++)
+      for (i=0; i<sound_table_size; i++)
 	{
 	  if (sound_table[i])
 	    {
@@ -470,7 +470,7 @@ static sound_file *find_sound_file(const char *name)
   int i;
   if (name)
     {
-      for (i=0;i<sound_table_size;i++)
+      for (i=0; i<sound_table_size; i++)
 	{
 	  if (sound_table[i])
 	    {
@@ -535,12 +535,12 @@ static void display_sound_file_entry(const char *name, sound_file *sf)
 	  if (lim > 64) lim = 64;
 #endif
 	  fprintf(stdout, ", max amps:");
-	  for (i=0;i<lim;i++)
+	  for (i=0; i<lim; i++)
 	    {
 	      if (i>1) fprintf(stdout, ", ");
 	      fprintf(stdout, " %.3f at %.3f ",
 		      MUS_SAMPLE_TO_FLOAT(sf->max_amps[i+1]),
-		      (float)(sf->max_amps[i])/(float)(sf->srate));
+		      (float)(sf->max_amps[i]) / (float)(sf->srate));
 	    }
 	}
     }
@@ -573,7 +573,7 @@ void mus_sound_print_cache(void)
 #else
   int i;
   fprintf(stdout, "sound table:\n");
-  for (i=0;i<sound_table_size;i++)
+  for (i=0; i<sound_table_size; i++)
     {
       sf = sound_table[i];
       if (sf) display_sound_file_entry(sf->file_name, sound_table[i]);
@@ -613,7 +613,7 @@ static void fill_sf_record(const char *name, sound_file *sf)
       sf->aux_comment_start = (int *)CALLOC(4, sizeof(int));
       sf->aux_comment_end = (int *)CALLOC(4, sizeof(int));
 #endif
-      for (i=0;i<4;i++)
+      for (i=0; i<4; i++)
 	{
 	  sf->aux_comment_start[i] = mus_header_aux_comment_start(i);
 	  sf->aux_comment_end[i] = mus_header_aux_comment_end(i);
@@ -632,7 +632,7 @@ static void fill_sf_record(const char *name, sound_file *sf)
       sf->loop_starts = (int *)CALLOC(2, sizeof(int));
       sf->loop_ends = (int *)CALLOC(2, sizeof(int));
 #endif
-      for (i=0;i<2;i++)
+      for (i=0; i<2; i++)
 	{
 	  sf->loop_modes[i] = mus_header_loop_mode(i);
 	  if ((sf->header_type == MUS_AIFF) || (sf->header_type == MUS_AIFC))
@@ -845,7 +845,8 @@ char *mus_sound_comment(const char *name)
     {
       if (mus_sound_header_type(name) == MUS_RIFF) 
 	return(mus_header_riff_aux_comment(name, sf->aux_comment_start, sf->aux_comment_end));
-      if ((mus_sound_header_type(name) == MUS_AIFF) || (mus_sound_header_type(name) == MUS_AIFC)) 
+      if ((mus_sound_header_type(name) == MUS_AIFF) || 
+	  (mus_sound_header_type(name) == MUS_AIFC)) 
 	return(mus_header_aiff_aux_comment(name, sf->aux_comment_start, sf->aux_comment_end));
       return(NULL);
     }
@@ -860,7 +861,8 @@ char *mus_sound_comment(const char *name)
       read(fd, sc, len);
       close(fd);
 #ifndef MACOS
-      if ((mus_sound_header_type(name) == MUS_AIFF) || (mus_sound_header_type(name) == MUS_AIFC)) 
+      if ((mus_sound_header_type(name) == MUS_AIFF) || 
+	  (mus_sound_header_type(name) == MUS_AIFC)) 
 	{
 	  auxcom = mus_header_aiff_aux_comment(name, sf->aux_comment_start, sf->aux_comment_end);
 	  if (auxcom)
@@ -1014,10 +1016,10 @@ int mus_sound_max_amp(const char *ifile, MUS_SAMPLE_TYPE *vals)
   if ((sf) && (sf->max_amps))
 #endif
     {
-      for (chn=0;chn<sf->chans;chn++)
+      for (chn=0; chn<sf->chans; chn++)
 	{
-	  vals[chn*2] = sf->max_amps[chn*2];
-	  vals[chn*2+1] = sf->max_amps[chn*2+1];
+	  vals[chn * 2] = sf->max_amps[chn * 2];
+	  vals[chn * 2 + 1] = sf->max_amps[chn * 2 + 1];
 	}
 #if HAVE_GDBM
       free(sf);
@@ -1033,24 +1035,25 @@ int mus_sound_max_amp(const char *ifile, MUS_SAMPLE_TYPE *vals)
   mus_sound_seek_frame(ifd, 0);
   ibufs = (MUS_SAMPLE_TYPE **)CALLOC(ichans, sizeof(MUS_SAMPLE_TYPE *));
   bufnum = 8192;
-  for (i=0;i<ichans;i++) ibufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(bufnum, sizeof(MUS_SAMPLE_TYPE));
+  for (i=0; i<ichans; i++) ibufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(bufnum, sizeof(MUS_SAMPLE_TYPE));
   time = (MUS_SAMPLE_TYPE *)CALLOC(ichans, sizeof(MUS_SAMPLE_TYPE));
   samp = (MUS_SAMPLE_TYPE *)CALLOC(ichans, sizeof(MUS_SAMPLE_TYPE));
-  for (n=0;n<frames;n+=bufnum)
+  for (n=0; n<frames; n+=bufnum)
     {
-      if ((n+bufnum)<frames) curframes = bufnum; else curframes = (frames-n);
-      mus_sound_read(ifd, 0, curframes-1, ichans, ibufs);
-      for (chn=0;chn<ichans;chn++)
+      if ((n + bufnum) < frames) curframes = bufnum; else curframes = (frames - n);
+      mus_sound_read(ifd, 0, curframes - 1, ichans, ibufs);
+      for (chn=0; chn<ichans; chn++)
 	{
 	  buffer = (MUS_SAMPLE_TYPE *)(ibufs[chn]);
 	  fc = samp[chn];
-	  for (i=0;i<curframes;i++) 
+	  for (i=0; i<curframes; i++) 
 	    {
-	      if ((buffer[i]>fc) || (fc < -buffer[i])) 
+	      if ((buffer[i] > fc) || 
+		  (fc < -buffer[i])) 
 		{
-		  time[chn]=i+n; 
-		  samp[chn]=buffer[i]; 
-		  if (samp[chn]<0) samp[chn] = -samp[chn];
+		  time[chn] = i + n; 
+		  samp[chn] = buffer[i]; 
+		  if (samp[chn] < 0) samp[chn] = -samp[chn];
 		  fc = samp[chn];
 		}
 	    }
@@ -1058,14 +1061,15 @@ int mus_sound_max_amp(const char *ifile, MUS_SAMPLE_TYPE *vals)
     }
   mus_sound_close_input(ifd);
 #if (!HAVE_GDBM)
-  if (sf->max_amps == NULL) sf->max_amps = (MUS_SAMPLE_TYPE *)CALLOC(ichans*2, sizeof(MUS_SAMPLE_TYPE));
+  if (sf->max_amps == NULL) 
+    sf->max_amps = (MUS_SAMPLE_TYPE *)CALLOC(ichans * 2, sizeof(MUS_SAMPLE_TYPE));
 #endif
-  for (chn=0, i=0;chn<ichans;chn++,i+=2)
+  for (chn=0, i=0; chn<ichans; chn++, i+=2)
     {
-      vals[i]=time[chn];
-      vals[i+1]=samp[chn];
+      vals[i] = time[chn];
+      vals[i + 1] = samp[chn];
       sf->max_amps[i] = vals[i];
-      sf->max_amps[i+1] = vals[i+1];
+      sf->max_amps[i + 1] = vals[i + 1];
     }
 #if HAVE_GDBM
   sf->max_amps_ok = 1;
@@ -1075,7 +1079,7 @@ int mus_sound_max_amp(const char *ifile, MUS_SAMPLE_TYPE *vals)
 #endif      
   FREE(time);
   FREE(samp);
-  for (i=0;i<ichans;i++) FREE(ibufs[i]);
+  for (i=0; i<ichans; i++) FREE(ibufs[i]);
   FREE(ibufs);
   return(frames);
 }
@@ -1091,7 +1095,8 @@ int mus_file_to_array(const char *filename, int chan, int start, int samples, MU
   if (chan >= chans) 
     {
       mus_sound_close_input(ifd);      
-      mus_error(MUS_NO_SUCH_CHANNEL, "can't read %s channel %d to array (file has %d chans)\n [%s[%d] %s]",
+      mus_error(MUS_NO_SUCH_CHANNEL, 
+		"can't read %s channel %d to array (file has %d chans)\n [%s[%d] %s]",
 		filename, chan, chans,
 		__FILE__, __LINE__, __FUNCTION__);
       return(MUS_ERROR);
@@ -1111,13 +1116,14 @@ int mus_array_to_file(const char *filename, MUS_SAMPLE_TYPE *ddata, int len, int
 {
   /* put ddata into a sound file, taking byte order into account */
   /* assume ddata is interleaved already if more than one channel */
-  int fd,err=MUS_NO_ERROR;
+  int fd,err = MUS_NO_ERROR;
   MUS_SAMPLE_TYPE *bufs[1];
   mus_sound_forget(filename);
   fd = mus_file_create(filename);
   if (fd == -1) 
     {
-      mus_error(MUS_CANT_OPEN_FILE, "can't create %s: %s\n  [%s[%d] %s]",
+      mus_error(MUS_CANT_OPEN_FILE, 
+		"can't create %s: %s\n  [%s[%d] %s]",
 		filename, strerror(errno),
 		__FILE__, __LINE__, __FUNCTION__);
       return(MUS_ERROR);
@@ -1129,11 +1135,11 @@ int mus_array_to_file(const char *filename, MUS_SAMPLE_TYPE *ddata, int len, int
 				 28, channels, MUS_NEXT);
   if (err != MUS_ERROR)
     {
-      err = mus_header_write_next_header(fd, srate, channels, 28, len*sizeof(MUS_SAMPLE_TYPE), MUS_OUT_FORMAT, NULL, 0);
+      err = mus_header_write_next_header(fd, srate, channels, 28, len * sizeof(MUS_SAMPLE_TYPE), MUS_OUT_FORMAT, NULL, 0);
       if (err != MUS_ERROR)
 	{
 	  bufs[0] = ddata;
-	  err = mus_file_write(fd, 0, len-1, 1, bufs);
+	  err = mus_file_write(fd, 0, len - 1, 1, bufs);
 	}
     }
   mus_file_close(fd);

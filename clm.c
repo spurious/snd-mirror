@@ -5827,6 +5827,12 @@ static Float mus_bessi0(Float x)
 }
 #endif
 
+#ifndef NEXT
+  #ifndef inline
+    #define inline
+  #endif
+#endif
+
 static inline Float sqr(Float x) {return(x*x);}
 
 Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *window)

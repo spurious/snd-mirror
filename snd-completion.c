@@ -159,7 +159,7 @@ static int complete_one_set(char *text, int num_commands, char **commands)
 {
   int i,j,len,curlen,matches = 0;
   len = strlen(text);
-  for (i=0;i<num_commands;i++)
+  for (i=0; i<num_commands; i++)
     {
       if (text[0] < commands[i][0]) break;
       if (text[0] == commands[i][0])
@@ -173,7 +173,7 @@ static int complete_one_set(char *text, int num_commands, char **commands)
 	      else 
 		{
 		  curlen = snd_strlen(current_match);
-		  for (j=0;j<curlen;j++)
+		  for (j=0; j<curlen; j++)
 		    if (current_match[j] != commands[i][j])
 		      {
 			current_match[j] = '\0';
@@ -201,21 +201,29 @@ void check_snd_commands(void)
   int i,len;
   char **names;
   if (strcmp(snd_commands[NUM_COMMANDS-1], S_zoom_focus_style) != 0)
-    fprintf(stderr, "last command (%d) is %s?", NUM_COMMANDS, snd_commands[NUM_COMMANDS - 1]);
-  for (i=1;i<NUM_COMMANDS;i++)
+    fprintf(stderr, "last command (%d) is %s?", 
+	    NUM_COMMANDS, 
+	    snd_commands[NUM_COMMANDS - 1]);
+  for (i=1; i<NUM_COMMANDS; i++)
     if (strcmp(snd_commands[i-1], snd_commands[i]) >= 0)
-      fprintf(stderr, "%s >= %s\n", snd_commands[i-1], snd_commands[i]);
+      fprintf(stderr, "%s >= %s\n", 
+	      snd_commands[i-1], 
+	      snd_commands[i]);
   names = (char **)sndlib_commands();
   len = sndlib_num_commands();
-  for (i=1;i<len;i++)
+  for (i=1; i<len; i++)
     if (strcmp(names[i-1], names[i]) >= 0)
-      fprintf(stderr, "%s >= %s\n", names[i-1], names[i]);
+      fprintf(stderr, "%s >= %s\n", 
+	      names[i-1], 
+	      names[i]);
 #if HAVE_GUILE
   names = mus_commands();
   len = mus_num_commands();
-  for (i=1;i<len;i++)
+  for (i=1; i<len; i++)
     if (strcmp(names[i-1], names[i]) >= 0)
-      fprintf(stderr, "%s >= %s\n", names[i-1], names[i]);
+      fprintf(stderr, "%s >= %s\n", 
+	      names[i-1], 
+	      names[i]);
 #endif
 }
 #endif
@@ -231,7 +239,7 @@ char *command_completer(char *original_text)
   if ((original_text) && (*original_text))
     {
       len = strlen(original_text);
-      for (i=len-1;i>=0;i--)
+      for (i=len-1; i>=0; i--)
 	if ((!(isalpha((int)(original_text[i])))) &&
 	    (!(isdigit((int)(original_text[i])))) &&
 	    (original_text[i] != '-'))
@@ -330,7 +338,8 @@ char *complete_text(char *text, int func)
   /* given text, call proc table entry func, return new text (not text!) */
   completion_matches = -1; /* i.e. no completer */
   possible_completions_ctr = 0;
-  if ((func >= 0) && (func < completer_funcs_end))
+  if ((func >= 0) && 
+      (func < completer_funcs_end))
     return((*completer_funcs[func])(text));
   else return(copy_string(text));
 }
@@ -351,19 +360,24 @@ char *filename_completer(char *text)
 
   full_name = mus_file_full_name(text);
   len = snd_strlen(full_name);
-  for (i=len-1;i>0;i--)
+  for (i=len-1; i>0; i--)
     if (full_name[i] == '/')
       break;
 
   dir_name = (char *)CALLOC(i+1, sizeof(char));
   strncpy(dir_name, full_name, i);
   file_name = (char *)CALLOC(len-i+2, sizeof(char));
-  for (j=0, k=i+1;k<len;j++,k++) file_name[j] = full_name[k];
-  if (full_name) {FREE(full_name); full_name = NULL;}
-  len = snd_strlen(file_name);
-  if ((dpos=opendir(dir_name)) != NULL)
+  for (j=0, k=i+1; k<len; j++, k++) 
+    file_name[j] = full_name[k];
+  if (full_name) 
     {
-      while ((dirp=readdir(dpos)) != NULL)
+      FREE(full_name); 
+      full_name = NULL;
+    }
+  len = snd_strlen(file_name);
+  if ((dpos = opendir(dir_name)) != NULL)
+    {
+      while ((dirp = readdir(dpos)) != NULL)
 	{
 	  if (dirp->d_name[0] != '.')
 	    {
@@ -377,7 +391,7 @@ char *filename_completer(char *text)
 		  else 
 		    {
 		      curlen = strlen(current_match);
-		      for (j=0;j<curlen;j++)
+		      for (j=0; j<curlen; j++)
 			if (current_match[j] != dirp->d_name[j])
 			  {
 			    current_match[j] = '\0';
@@ -391,7 +405,9 @@ char *filename_completer(char *text)
       closedir(dpos);
 #else
       if (closedir(dpos) != 0) 
-	snd_error("closedir %s failed! [%s[%d] %s]", dir_name, __FILE__, __LINE__, __FUNCTION__);
+	snd_error("closedir %s failed! [%s[%d] %s]",
+		  dir_name,
+		  __FILE__, __LINE__, __FUNCTION__);
 #endif
     }
   if (dir_name) FREE(dir_name);
@@ -401,7 +417,7 @@ char *filename_completer(char *text)
     {
       /* attach matched portion to user's indication of dir */
       len = snd_strlen(text);
-      for (i=len-1;i>=0;i--)
+      for (i=len-1; i>=0; i--)
 	if (text[i] == '/')
 	  break;
       if (i < 0) return(current_match);
@@ -462,10 +478,10 @@ char *info_completer(char *text)
 	      parens = 0;
 	      /* filename would have to be a string in this context */
 	      len = snd_strlen(text);
-	      for (i=0;i<len;i++)
+	      for (i=0; i<len; i++)
 		if (text[i] == '\"')
 		  {
-		    beg = i+1;
+		    beg = i + 1;
 		    parens++;
 		    break;
 		  }
@@ -492,17 +508,25 @@ static int find_indentation(char *str, int loc)
 {
   int line_beg = 0,open_paren = -1,parens,i;
   parens = 0;
-  for (i=loc-1;i>=0;i--)
+  for (i=loc-1; i>=0; i--)
     {
       if (str[i] == ')') parens--;
       if (str[i] == '(') parens++;
-      if (parens == 1) {open_paren = i; break;}
+      if (parens == 1) 
+	{
+	  open_paren = i; 
+	  break;
+	}
     }
   if (open_paren == -1) return(1);
   if (open_paren == 0) return(3);
-  for (i=open_paren-1;i>0;i--)
+  for (i=open_paren-1; i>0; i--)
     {
-      if (str[i] == '\n') {line_beg = i; break;}
+      if (str[i] == '\n') 
+	{
+	  line_beg = i; 
+	  break;
+	}
     }
   if (line_beg == 0) return(1);
   return(open_paren - line_beg + 2);
@@ -513,7 +537,7 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
   int len,i,k,spaces,text_pos = 0,cr_pos = 0;
   char *new_text = NULL,*file_text = NULL,*new_file = NULL;
   len = strlen(old_text);
-  for (i=len-1;i>0;i--)
+  for (i=len-1; i>0; i--)
     {
       if (old_text[i] == '\n')
 	{
@@ -522,8 +546,8 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
 	  spaces = find_indentation(old_text, i);
 	  if (spaces > 0)
 	    {
-	      file_text = (char *)CALLOC(spaces+1, sizeof(char));
-	      for (k=0;k<spaces;k++) file_text[k] = ' ';
+	      file_text = (char *)CALLOC(spaces + 1, sizeof(char));
+	      for (k=0; k<spaces; k++) file_text[k] = ' ';
 	      file_text[spaces] = 0;
 	      append_listener_text(end, file_text);
 	      FREE(file_text);
@@ -536,22 +560,26 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
 	{
 	  /* this isn't quite right, but how much effort should we put in it? */
 	  spaces = 20;
-	  for (k=i-1;k>0;k--) 
+	  for (k=i-1; k>0; k--) 
 	    if (old_text[k] == '\n') 
-	      {cr_pos = k; break;} 
+	      {
+		cr_pos = k; 
+		break;
+	      } 
 	    else 
-	      if ((!(isspace((int)(old_text[k])))) && (text_pos == 0)) 
+	      if ((!(isspace((int)(old_text[k])))) && 
+		  (text_pos == 0)) 
 		text_pos = k;
 	  if (text_pos > 0)
 	    text_pos -= cr_pos;
 	  if (cr_pos == 0) spaces--; 
 	  if (text_pos < spaces)
 	    {
-	      file_text = (char *)CALLOC(spaces+2, sizeof(char));
-	      for (k=text_pos+1;k<spaces;k++) file_text[k-text_pos-1] = ' ';
+	      file_text = (char *)CALLOC(spaces + 2, sizeof(char));
+	      for (k=text_pos+1; k<spaces; k++) file_text[k - text_pos - 1] = ' ';
 	      file_text[spaces] = ';';
-	      file_text[spaces+1] = 0;
-	      append_listener_text(end-1, file_text);
+	      file_text[spaces + 1] = 0;
+	      append_listener_text(end - 1, file_text);
 	      FREE(file_text);
 	    }
 	  (*try_completion) = 0;
@@ -559,11 +587,11 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
 	}
       if (old_text[i] == '\"')
 	{
-	  file_text = copy_string((char *)(old_text+i+1));
+	  file_text = copy_string((char *)(old_text + i + 1));
 	  new_file = filename_completer(file_text);
 	  len = i + 2 + snd_strlen(new_file);
 	  new_text = (char *)CALLOC(len, sizeof(char));
-	  strncpy(new_text, old_text, i+1);
+	  strncpy(new_text, old_text, i + 1);
 	  strcat(new_text, new_file);
 	  if (new_file) FREE(new_file);
 	  break;
@@ -582,8 +610,8 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
 
 static char *snd_apropos(char *old_text)
 {
-  int i,matches=0,len=0;
-  char *new_text=NULL,*buffer=NULL;
+  int i,matches = 0,len = 0;
+  char *new_text = NULL,*buffer = NULL;
   clear_possible_completions();
   set_save_completions(TRUE);
   new_text = command_completer(old_text);
@@ -591,9 +619,9 @@ static char *snd_apropos(char *old_text)
   if (new_text) {FREE(new_text); new_text = NULL;}
   if ((matches > 0) && (possible_completions_ctr > 0))
     {
-      for (i=0;i<possible_completions_ctr;i++) len += (snd_strlen(possible_completions[i]) + 3);
+      for (i=0; i<possible_completions_ctr; i++) len += (snd_strlen(possible_completions[i]) + 3);
       buffer = (char *)CALLOC(len, sizeof(char));
-      for (i=0;i<possible_completions_ctr;i++)
+      for (i=0; i<possible_completions_ctr; i++)
 	{
 	  strcat(buffer, possible_completions[i]);
 	  strcat(buffer, " ");

@@ -184,7 +184,8 @@ void reflect_undo_or_redo_in_menu(chan_info *cp)
   if ((cp) && (cp->cgx))
     {
       undoable = (cp->edit_ctr > 0);
-      redoable = (!(((cp->edit_ctr+1) == cp->edit_size) || (!(cp->edits[cp->edit_ctr+1]))));
+      redoable = (!(((cp->edit_ctr+1) == cp->edit_size) || 
+		    (!(cp->edits[cp->edit_ctr+1]))));
       set_sensitive(edit_undo_menu(), undoable);
       if (popup_menu_exists()) set_sensitive(popup_undo_menu(), undoable);
       set_sensitive(edit_redo_menu(), redoable);
@@ -245,7 +246,8 @@ static int file_update(snd_info *sp, void *ptr)
   snd_state *ss = (snd_state *)ptr;
   /* here we should only update files that have changed on disk */
   if ((sp) && (sp->edited_region == NULL) &&
-      ((sp->need_update) || (file_write_date(sp->fullname) != sp->write_date)))
+      ((sp->need_update) || 
+       (file_write_date(sp->fullname) != sp->write_date)))
     snd_update(ss, sp);
   return(0);
 }
@@ -275,8 +277,8 @@ void new_file_from_menu(snd_state *ss)
       switch (header_type)
 	{
 	case MUS_AIFC: case MUS_AIFF: extension = "aiff"; break;
-	case MUS_RIFF: extension = "wav"; break;
-	default: extension = "snd"; break;
+	case MUS_RIFF:                extension = "wav";  break;
+	default:                      extension = "snd";  break;
 	}
       sprintf(new_file_name, "new-%d.%s", new_ctr++, extension);
     }
@@ -296,7 +298,7 @@ void revert_file_from_menu(snd_state *ss)
   sp = any_selected_sound(ss);
   if (sp)
     {
-      for (i=0;i<sp->nchans;i++) revert_edits(sp->chans[i], NULL);
+      for (i=0; i<sp->nchans; i++) revert_edits(sp->chans[i], NULL);
       reflect_file_revert_in_label(sp);
       reflect_file_revert_in_menu(ss);
     }
@@ -338,21 +340,21 @@ void set_graph_style(snd_state *ss, int val)
 {
   switch (graph_style(ss))
     {
-    case GRAPH_LINES: set_sensitive(view_lines_menu(), TRUE); break;
-    case GRAPH_DOTS: set_sensitive(view_dots_menu(), TRUE); break;
-    case GRAPH_FILLED: set_sensitive(view_filled_menu(), TRUE); break;
+    case GRAPH_LINES:          set_sensitive(view_lines_menu(), TRUE);          break;
+    case GRAPH_DOTS:           set_sensitive(view_dots_menu(), TRUE);           break;
+    case GRAPH_FILLED:         set_sensitive(view_filled_menu(), TRUE);         break;
     case GRAPH_DOTS_AND_LINES: set_sensitive(view_dots_and_lines_menu(), TRUE); break;
-    case GRAPH_LOLLIPOPS: set_sensitive(view_lollipops_menu(), TRUE); break;
+    case GRAPH_LOLLIPOPS:      set_sensitive(view_lollipops_menu(), TRUE);      break;
     }
   in_set_graph_style(ss, val);
   map_over_chans(ss, map_chans_graph_style, (void *)val);
   switch (val)
     {
-    case GRAPH_LINES: set_sensitive(view_lines_menu(), FALSE); break;
-    case GRAPH_DOTS: set_sensitive(view_dots_menu(), FALSE); break;
-    case GRAPH_FILLED: set_sensitive(view_filled_menu(), FALSE); break;
+    case GRAPH_LINES:          set_sensitive(view_lines_menu(), FALSE);          break;
+    case GRAPH_DOTS:           set_sensitive(view_dots_menu(), FALSE);           break;
+    case GRAPH_FILLED:         set_sensitive(view_filled_menu(), FALSE);         break;
     case GRAPH_DOTS_AND_LINES: set_sensitive(view_dots_and_lines_menu(), FALSE); break;
-    case GRAPH_LOLLIPOPS: set_sensitive(view_lollipops_menu(), FALSE); break;
+    case GRAPH_LOLLIPOPS:      set_sensitive(view_lollipops_menu(), FALSE);      break;
     }
 }
 
@@ -381,7 +383,8 @@ void set_show_y_zero(snd_state *ss, int val)
   in_set_show_y_zero(ss, val);
   if (view_zero_menu())
     {
-      set_menu_label(view_zero_menu(), (val) ? STR_Hide_Y0 : STR_Show_Y0);
+      set_menu_label(view_zero_menu(), 
+		     (val) ? STR_Hide_Y0 : STR_Show_Y0);
       map_over_chans(ss, map_chans_zero, (void *)val);
     }
 }
@@ -395,7 +398,8 @@ void set_verbose_cursor(snd_state *ss, int val)
   if (val == 0) map_over_sounds(ss, clrmini, NULL);
   map_over_chans(ss, map_chans_verbose_cursor, (void *)val);
   if (view_cursor_menu())
-    set_menu_label(view_cursor_menu(), (val) ? STR_Silent_cursor : STR_Verbose_cursor);
+    set_menu_label(view_cursor_menu(), 
+		   (val) ? STR_Silent_cursor : STR_Verbose_cursor);
 }
 
 void set_view_ctrls_label(char *lab)
@@ -414,8 +418,8 @@ void activate_focus_menu(snd_state *ss, int new_focus)
     {
       switch (zoom_focus_style(ss))
 	{
-	case FOCUS_LEFT: set_sensitive(options_focus_left_menu(), TRUE); break;
-	case FOCUS_RIGHT: set_sensitive(options_focus_right_menu(), TRUE); break;
+	case FOCUS_LEFT:   set_sensitive(options_focus_left_menu(), TRUE);   break;
+	case FOCUS_RIGHT:  set_sensitive(options_focus_right_menu(), TRUE);  break;
 	case FOCUS_MIDDLE: set_sensitive(options_focus_middle_menu(), TRUE); break;
 	case FOCUS_ACTIVE: set_sensitive(options_focus_active_menu(), TRUE); break;
 	}
@@ -425,8 +429,8 @@ void activate_focus_menu(snd_state *ss, int new_focus)
     {
       switch (new_focus)
 	{
-	case FOCUS_LEFT: set_sensitive(options_focus_left_menu(), FALSE); break;
-	case FOCUS_RIGHT: set_sensitive(options_focus_right_menu(), FALSE); break;
+	case FOCUS_LEFT:   set_sensitive(options_focus_left_menu(), FALSE);   break;
+	case FOCUS_RIGHT:  set_sensitive(options_focus_right_menu(), FALSE);  break;
 	case FOCUS_MIDDLE: set_sensitive(options_focus_middle_menu(), FALSE); break;
 	case FOCUS_ACTIVE: set_sensitive(options_focus_active_menu(), FALSE); break;
 	}
@@ -439,9 +443,9 @@ void activate_speed_in_menu(snd_state *ss, int newval)
     {
       switch (speed_style(ss))
 	{
-	case SPEED_AS_RATIO: set_sensitive(options_speed_ratio_menu(), TRUE); break;
+	case SPEED_AS_RATIO:    set_sensitive(options_speed_ratio_menu(), TRUE);    break;
 	case SPEED_AS_SEMITONE: set_sensitive(options_speed_semitone_menu(), TRUE); break;
-	default: set_sensitive(options_speed_float_menu(), TRUE); break;
+	default:                set_sensitive(options_speed_float_menu(), TRUE);    break;
 	}
     }
   set_speed_style(ss, newval);
@@ -449,9 +453,9 @@ void activate_speed_in_menu(snd_state *ss, int newval)
     {
       switch (speed_style(ss))
 	{
-	case SPEED_AS_RATIO: set_sensitive(options_speed_ratio_menu(), FALSE); break;
+	case SPEED_AS_RATIO:    set_sensitive(options_speed_ratio_menu(), FALSE);    break;
 	case SPEED_AS_SEMITONE: set_sensitive(options_speed_semitone_menu(), FALSE); break;
-	default: set_sensitive(options_speed_float_menu(), FALSE); break;
+	default:                set_sensitive(options_speed_float_menu(), FALSE);    break;
 	}
     }
 }
@@ -460,17 +464,17 @@ static void reflect_x_axis_unit_change_in_menu(int oldval, int newval)
 {
   switch (oldval)
     {
-    case X_IN_SECONDS: set_sensitive(view_x_axis_seconds_menu(), TRUE); break;
-    case X_IN_SAMPLES: set_sensitive(view_x_axis_samples_menu(), TRUE); break;
-    case X_TO_ONE: set_sensitive(view_x_axis_percentage_menu(), TRUE); break;
-    default: set_sensitive(view_x_axis_seconds_menu(), TRUE); break;
+    case X_IN_SECONDS: set_sensitive(view_x_axis_seconds_menu(), TRUE);    break;
+    case X_IN_SAMPLES: set_sensitive(view_x_axis_samples_menu(), TRUE);    break;
+    case X_TO_ONE:     set_sensitive(view_x_axis_percentage_menu(), TRUE); break;
+    default:           set_sensitive(view_x_axis_seconds_menu(), TRUE);    break;
     }
   switch (newval)
     {
-    case X_IN_SECONDS: set_sensitive(view_x_axis_seconds_menu(), FALSE); break;
-    case X_IN_SAMPLES: set_sensitive(view_x_axis_samples_menu(), FALSE); break;
-    case X_TO_ONE: set_sensitive(view_x_axis_percentage_menu(), FALSE); break;
-    default: set_sensitive(view_x_axis_seconds_menu(), FALSE); break;
+    case X_IN_SECONDS: set_sensitive(view_x_axis_seconds_menu(), FALSE);    break;
+    case X_IN_SAMPLES: set_sensitive(view_x_axis_samples_menu(), FALSE);    break;
+    case X_TO_ONE:     set_sensitive(view_x_axis_percentage_menu(), FALSE); break;
+    default:           set_sensitive(view_x_axis_seconds_menu(), FALSE);    break;
     }
 }
   
@@ -488,8 +492,8 @@ static int update_sound(snd_info *sp, void *ptr)
     {
       switch (channel_style(ss))
 	{
-	case CHANNELS_SEPARATE: separate_sound(sp); break;
-	case CHANNELS_COMBINED: combine_sound(sp); break;
+	case CHANNELS_SEPARATE:     separate_sound(sp);    break;
+	case CHANNELS_COMBINED:     combine_sound(sp);     break;
 	case CHANNELS_SUPERIMPOSED: superimpose_sound(sp); break;
 	}
     }
@@ -500,15 +504,15 @@ void set_channel_style(snd_state *ss, int val)
 {
   switch (channel_style(ss))
     {
-    case CHANNELS_SEPARATE: set_sensitive(view_combine_separate_menu(), TRUE); break;
-    case CHANNELS_COMBINED: set_sensitive(view_combine_combined_menu(), TRUE); break;
+    case CHANNELS_SEPARATE:     set_sensitive(view_combine_separate_menu(), TRUE);     break;
+    case CHANNELS_COMBINED:     set_sensitive(view_combine_combined_menu(), TRUE);     break;
     case CHANNELS_SUPERIMPOSED: set_sensitive(view_combine_superimposed_menu(), TRUE); break;
     }
   in_set_channel_style(ss, val);
   switch (val)
     {
-    case CHANNELS_SEPARATE: set_sensitive(view_combine_separate_menu(), FALSE); break;
-    case CHANNELS_COMBINED: set_sensitive(view_combine_combined_menu(), FALSE); break;
+    case CHANNELS_SEPARATE:     set_sensitive(view_combine_separate_menu(), FALSE);     break;
+    case CHANNELS_COMBINED:     set_sensitive(view_combine_combined_menu(), FALSE);     break;
     case CHANNELS_SUPERIMPOSED: set_sensitive(view_combine_superimposed_menu(), FALSE); break;
     }
   map_over_sounds(ss, update_sound, (void *)ss);
@@ -602,7 +606,9 @@ static void add_callback(int slot, SCM callstr)
     menu_strings[slot] = TO_NEW_C_STRING(callstr);
   else 
     {
-      if ((menu_functions[slot]) && (gh_procedure_p(menu_functions[slot]))) snd_unprotect(menu_functions[slot]);
+      if ((menu_functions[slot]) && 
+	  (gh_procedure_p(menu_functions[slot]))) 
+	snd_unprotect(menu_functions[slot]);
       menu_functions[slot] = callstr;
       snd_protect(callstr);
     }
@@ -618,7 +624,9 @@ static SCM g_add_to_main_menu(SCM label, SCM callback)
       slot = make_callback_slot();
       add_callback(slot, callback);
     }
-  val = gh_add_to_main_menu(get_global_state(), SCM_STRING_CHARS(label), slot);
+  val = gh_add_to_main_menu(get_global_state(), 
+			    SCM_STRING_CHARS(label), 
+			    slot);
   return(TO_SCM_INT(val));
 }
 
@@ -631,7 +639,10 @@ static SCM g_add_to_menu(SCM menu, SCM label, SCM callstr)
   SCM_ASSERT(gh_string_p(label), label, SCM_ARG2, S_add_to_menu);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)), menu, SCM_ARG1, S_add_to_menu);
   slot = make_callback_slot();
-  err = gh_add_to_menu(get_global_state(), TO_C_INT_OR_ELSE(menu, 0), SCM_STRING_CHARS(label), slot);
+  err = gh_add_to_menu(get_global_state(), 
+		       TO_C_INT_OR_ELSE(menu, 0),
+		       SCM_STRING_CHARS(label),
+		       slot);
   if (err == -1) 
     return(scm_throw(NO_SUCH_MENU,
 		     SCM_LIST2(TO_SCM_STRING(S_add_to_menu),
@@ -652,7 +663,8 @@ static SCM g_remove_from_menu(SCM menu, SCM label)
   int val;
   SCM_ASSERT(gh_string_p(label), label, SCM_ARG2, S_remove_from_menu);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)), menu, SCM_ARG1, S_remove_from_menu);
-  val = gh_remove_from_menu(TO_C_INT_OR_ELSE(menu, 0), SCM_STRING_CHARS(label));
+  val = gh_remove_from_menu(TO_C_INT_OR_ELSE(menu, 0), 
+			    SCM_STRING_CHARS(label));
   return(TO_SCM_INT(val));
 }
 
@@ -663,7 +675,9 @@ static SCM g_change_menu_label(SCM menu, SCM old_label, SCM new_label)
   SCM_ASSERT(gh_string_p(old_label), old_label, SCM_ARG2, S_change_menu_label);
   SCM_ASSERT(gh_string_p(new_label), new_label, SCM_ARG3, S_change_menu_label);
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)), menu, SCM_ARG1, S_change_menu_label);
-  val = gh_change_menu_label(TO_C_INT_OR_ELSE(menu, 0), SCM_STRING_CHARS(old_label), SCM_STRING_CHARS(new_label));
+  val = gh_change_menu_label(TO_C_INT_OR_ELSE(menu, 0), 
+			     SCM_STRING_CHARS(old_label), 
+			     SCM_STRING_CHARS(new_label));
   return(TO_SCM_INT(val));
 }
 
@@ -673,7 +687,8 @@ static SCM g_menu_sensitive(SCM menu, SCM label)
   int val;
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)), menu, SCM_ARG1, "set-" S_menu_sensitive);
   SCM_ASSERT(gh_string_p(label), label, SCM_ARG2, "set-" S_menu_sensitive);
-  val = gh_menu_is_sensitive(TO_C_INT_OR_ELSE(menu, 0), SCM_STRING_CHARS(label));
+  val = gh_menu_is_sensitive(TO_C_INT_OR_ELSE(menu, 0), 
+			     SCM_STRING_CHARS(label));
   return(TO_SCM_BOOLEAN(val));
 }
 
@@ -683,7 +698,9 @@ static SCM g_set_menu_sensitive(SCM menu, SCM label, SCM on)
   SCM_ASSERT(SCM_NFALSEP(scm_real_p(menu)), menu, SCM_ARG1, "set-" S_menu_sensitive);
   SCM_ASSERT(gh_string_p(label), label, SCM_ARG2, "set-" S_menu_sensitive);
   SCM_ASSERT(bool_or_arg_p(on), on, SCM_ARG3, "set-" S_menu_sensitive);
-  val = gh_set_menu_sensitive(TO_C_INT_OR_ELSE(menu, 0), SCM_STRING_CHARS(label), bool_int_or_one(on));
+  val = gh_set_menu_sensitive(TO_C_INT_OR_ELSE(menu, 0), 
+			      SCM_STRING_CHARS(label), 
+			      bool_int_or_one(on));
   return(TO_SCM_BOOLEAN(val));
 }
 
