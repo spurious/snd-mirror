@@ -378,11 +378,13 @@ void about_snd_help(void)
 27-Oct:  removed notion of a selected mix (selected-mix, selected-mix-color, \n\
            select-mix, select-mix-hook).\n\
          moved find-mix to mix.scm, changed mix-locked to mix-locked?\n\
+         renamed mix-dragged-hook to mix-release-hook.\n\
+         removed mix-amp|speed|amp-env-changed-hooks and multichannel-mix-hook.\n\
 24-Oct:  data-location bugfixes in save-region|selection (thanks to Kjetil S. Matheussen).\n\
 21-Oct:  track-property in mix.scm.\n\
          added (or moved from mix.scm into C): track, tracks, track?, make-track, track-amp,\n\
            track-position, track-frames, track-speed, track-amp-env, track-track, delete-track,\n\
-           delete-mix, track-color.\n\
+           delete-mix, track-color, lock-track.\n\
          env-track is now track-amp-env, unused-track and new-track are now make-track.\n\
          mix-frames is no longer settable.\n\
 13-Oct:  recorder-file-hook to set or modify recorder output file name, recorder-out-type.\n\

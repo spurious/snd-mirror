@@ -1176,35 +1176,6 @@ and if the mark-sync is active, the hook is called on each syncd mark.
 </pre></td></tr></table></td></tr>
 <tr><td colspan=3></td></tr>
 
-<!-- mix-amp-changed-hook -->
-<tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mixampchangedhook">mix-amp-changed-hook</a></em> (id chan)</code></span></td><td align=right><b>progn</b>
-</td></tr>
-<tr><td></td><td colspan=2>
-called when a mix's amp changes via the mouse (id = mix id, chan = which channel's slider moved in the Mix Panel).
-If it returns #t, the actual remix is the hook's responsibility.
-With this hook and the parallel <a href="#mixdraggedhook">mix-dragged-hook</a>, 
-<a href="#mixampenvchangedhook">mix-amp-env-changed-hook</a>, and 
-<a href="#mixspeedchangedhook">mix-speed-changed-hook</a>,
-the intent is that user-interface changes will go through the hooks, but programmatic changes
-(setting mix-amp from code, for example) will handle the sync's effects and what not explicitly.
-The <a href="sndscm.html#panmix">pan-mix</a> function in mix.scm uses all four to make sure
-that all the mixes and their channels related to a given panning event can be handled
-as a unit through the user interface.
-</td></tr>
-<tr><td colspan=3></td></tr>
-
-<!-- mix-amp-env-changed-hook -->
-<tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mixampenvchangedhook">mix-amp-env-changed-hook</a></em> (id chan)</code></span></td><td align=right><b>progn</b>
-</td></tr>
-<tr><td></td><td colspan=2>
-called when a mix's amp env changes via the mouse (id = mix id, chan = which channel's amp env in the Mix Panel); this can happen either through
-the Mix Panel amp envs, or through the Envelope Editor if it is applied to a mix's amp env.
-If it returns #t, the actual remix is the hook's responsibility.
-</td></tr>
-<tr><td colspan=3></td></tr>
-
 <!-- mix-click-hook -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="mixclickhook">mix-click-hook</a></em> (id)</code></span></td><td align=right><b>progn</b>
@@ -1242,24 +1213,14 @@ called when a mix is dragged.
 </pre></td></tr></table></td></tr>
 <tr><td colspan=3></td></tr>
 
-<!-- mix-dragged-hook -->
+<!-- mix-release-hook -->
 <tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mixdraggedhook">mix-dragged-hook</a></em> (id samps)</code></span></td><td align=right><b>progn</b>
+<span class=defbox><code><em class=def><a name="mixreleasehook">mix-release-hook</a></em> (id samps)</code></span></td><td align=right><b>progn</b>
 </td></tr>
 <tr><td></td><td colspan=2>
 called after a mix has been dragged by the mouse to a new position (id = mix id, 
 samps = total samples moved during the drag).  If it returns #t, the actual remix is the 
 hook's responsibility.
-</td></tr>
-<tr><td colspan=3></td></tr>
-
-<!-- mix-speed-changed-hook -->
-<tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="mixspeedchangedhook">mix-speed-changed-hook</a></em> (id)</code></span></td><td align=right><b>progn</b>
-</td></tr>
-<tr><td></td><td colspan=2>
-called when a mix's speed changes via the mouse (id = mix id).
-If it returns #t, the actual remix is the hook's responsibility (see <i>respeed-track</i> in mix.scm).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -3130,9 +3091,11 @@ mix <i>file</i>'s channel <i>in-chan</i> starting at <i>samp</i> in <i>snd</i>'s
 if only the <i>file</i> argument is given, this is equivalent to the File menu's 
 Mix option; the mix start sample in this case depends on the cursor location.
 mix returns the id of the first channel's mix (subsequent channels simply 
-increment this number). If sync is off, only the first channel is mixed.
+increment this number). If sync is off and <i>in-chan</i> is not #t, only the first channel is mixed.
 If <i>with-mix-tags</i> is #f (default is #t), the data is simply
 mixed without creating any mix tags.  <i>track</i> is the mix track number.
+<!-- TODO: examples of mix, discussion of track settings
+-->
 </td></tr>
 
 <!-- mixes -->
@@ -3331,6 +3294,12 @@ take the track id as their initial argument.
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="freetrack">free-track</a></em> (track-id)</code></span></td></tr>
 <tr><td></td><td>Free track <i>track-id</i>; this frees the memory associated with the track and is not undoable.
 To free all tracks: <code>(for-each <em class=red>free-track</em> (tracks))</code>.
+</td></tr>
+
+<!-- lock-track -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="locktrack">lock-track</a></em> (track-id)</code></span></td></tr>
+<tr><td></td><td>Lock track <i>id</i> (lock all its associated mixes).  One reason to lock a track would be
+to preserve its overall amp-env despite some subsequent editing that changes the nominal track length.
 </td></tr>
 
 <!-- make-track -->

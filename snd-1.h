@@ -733,6 +733,7 @@ void file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, in
 void file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, 
 			   file_delete_t auto_delete, lock_mix_t lock, const char *origin);
 Float chn_sample(off_t samp, chan_info *cp, int pos);
+/* void extend_edit_list(chan_info *cp, const char *origin, int edpos); */
 snd_fd *free_snd_fd(snd_fd *sf);
 char *sf_to_string(snd_fd *fd);
 void release_region_readers(int reg);
@@ -1280,7 +1281,7 @@ mix_context *free_mix_context(mix_context *ms);
 void free_mix_list(chan_info *cp);
 void free_mixes(chan_info *cp);
 void mix_complete_file_at_cursor(snd_info *sp, char *str, const char *origin, bool with_tag, int track_id);
-int mix(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, file_delete_t temp, const char *origin, bool with_tag, int track_id);
+int mix_file(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, file_delete_t temp, const char *origin, bool with_tag, int track_id);
 void backup_mix_list(chan_info *cp, int edit_ctr);
 bool active_mix_p(chan_info *cp);
 off_t mix_beg(chan_info *cp);
@@ -1294,7 +1295,7 @@ void goto_mix(chan_info *cp, int count);
 off_t mix_frames(int n);
 int any_mix_id(void);
 bool mix_ok_and_unlocked(int n);
-int set_mix_amp_env_from_gui(int n, int chan, env *val);
+int set_mix_amp_env(int n, int chan, env *val);
 int set_mix_amp_env_without_edit(int n, int chan, env *val);
 env *mix_amp_env_from_id(int n, int chan);
 void g_init_mix(void);
@@ -1306,7 +1307,7 @@ int hit_mix(chan_info *cp, int x, int y);
 chan_info *mix_channel_from_id(int mix_id);
 void mix_play_from_id(int mix_id);
 void track_play_from_id(int mix_id);
-void start_mix_drag(int mix_id);
+void start_mix_panel_slider_drag(int mix_id);
 int set_mix_speed_from_id(int mix_id, Float val, bool dragging);
 int set_mix_amp_from_id(int mix_id, int chan, Float val, bool dragging);
 void set_mix_track_from_id(int mix_id, int track);

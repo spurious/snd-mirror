@@ -57,7 +57,7 @@ static void speed_drag_callback(Widget w, XtPointer context, XtPointer info)
   int ival;
   ival = ((XmScrollBarCallbackStruct *)info)->value;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  if (!dragging) start_mix_drag(mix_panel_id);
+  if (!dragging) start_mix_panel_slider_drag(mix_panel_id);
   dragging = true;
   change_mix_speed(mix_panel_id, exp((Float)(ival - SPEED_SCROLLBAR_MID) / SPEED_SCROLLBAR_BREAK));
 }
@@ -114,7 +114,7 @@ static void amp_drag_callback(Widget w, XtPointer context, XtPointer info)
   XtVaGetValues(w, XmNuserData, &chan, NULL);
   ival = ((XmScrollBarCallbackStruct *)info)->value;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  if (!dragging) start_mix_drag(mix_panel_id);
+  if (!dragging) start_mix_panel_slider_drag(mix_panel_id);
   dragging = true;
   change_mix_amp(mix_panel_id, chan, int_amp_to_Float(ival));
 }
@@ -319,7 +319,7 @@ static void apply_mix_panel_callback(Widget w, XtPointer context, XtPointer info
   for (i = 0; i < chans; i++)
     if (i != last_clicked_env_chan)
       set_mix_amp_env_without_edit(mix_id, i, envs[i]);
-  set_mix_amp_env_from_gui(mix_id, last_clicked_env_chan, envs[last_clicked_env_chan]);
+  set_mix_amp_env(mix_id, last_clicked_env_chan, envs[last_clicked_env_chan]);
   mix_amp_env_resize(w_env, NULL, NULL);
 }
 

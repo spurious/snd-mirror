@@ -551,6 +551,10 @@ case).  If you use libXm.a from ccrma-ftp, you'll need to go to
 config.h and set the macro HAVE_XmToolTipGetLabel to 0.
 
 
+The dac-size variable seems to matter a lot in OSX.  If you're
+getting distorted playback, try various powers of 2.  It defaults
+to 64.
+
 
 ---- Motif: ----
 If you installed OpenMotif, then upgraded to RedHat 7.2, Redhat

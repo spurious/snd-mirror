@@ -6,16 +6,16 @@
 
 (define (snd-hooks)
   "(snd-hooks) -> list of all global (not channel-specific) hooks"
-  (list after-graph-hook lisp-graph-hook before-transform-hook mix-dragged-hook stop-playing-channel-hook save-hook mus-error-hook
+  (list after-graph-hook lisp-graph-hook before-transform-hook mix-release-hook stop-playing-channel-hook save-hook mus-error-hook
 	mouse-enter-graph-hook mouse-leave-graph-hook open-raw-sound-hook select-channel-hook after-open-hook close-hook drop-hook update-hook
-	just-sounds-hook mark-click-hook mark-drag-hook mix-amp-changed-hook mix-speed-changed-hook name-click-hook open-hook help-hook
-	output-comment-hook multichannel-mix-hook play-hook snd-error-hook snd-warning-hook start-hook start-playing-hook stop-playing-hook
+	just-sounds-hook mark-click-hook mark-drag-hook name-click-hook open-hook help-hook
+	output-comment-hook play-hook snd-error-hook snd-warning-hook start-hook start-playing-hook stop-playing-hook
 	stop-playing-region-hook mouse-enter-listener-hook mouse-leave-listener-hook window-property-changed-hook select-sound-hook
 	print-hook exit-hook output-name-hook during-open-hook transform-hook mouse-enter-label-hook mouse-leave-label-hook initial-graph-hook
 	graph-hook key-press-hook mouse-drag-hook mouse-press-hook enved-hook read-hook mouse-click-hook new-widget-hook
 	mark-hook previous-files-select-hook dac-hook stop-dac-hook stop-playing-selection-hook after-apply-hook before-apply-hook draw-mark-hook
 	bad-header-hook save-state-hook new-sound-hook color-hook orientation-hook listener-click-hook mix-click-hook after-save-state-hook
-	mouse-enter-text-hook mouse-leave-text-hook optimization-hook mix-drag-hook mark-drag-triangle-hook mix-amp-env-changed-hook
+	mouse-enter-text-hook mouse-leave-text-hook optimization-hook mix-drag-hook mark-drag-triangle-hook
 	start-playing-selection-hook recorder-file-hook))
 
 (define (reset-all-hooks)

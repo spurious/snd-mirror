@@ -100,43 +100,7 @@
 	    (cons (- 1.0 (cadr env)) 
 		  (invert-envelope (cddr env))))))
 
-(define (pan-mix-amp-changes id chan)
-  (if (< chan 2)
-      (let ((chan-prop (mix-property 'pan-mix id)))
-	(if chan-prop
-	    (let ((other-mix (car chan-prop))
-		  (other-chan (cadr chan-prop)))
-	      (if (= other-mix id)
-		  (set! (mix-amp id (if (= chan 0) 1 0)) (- 1.0 (mix-amp id chan)))
-		  (if (= chan (cadr (mix-property 'pan-mix other-mix)))
-		      (set! (mix-amp other-mix other-chan) (- 1.0 (mix-amp id chan)))))))))
-  #f)
-
-(define (pan-mix-amp-env-changes id chan)
-  (if (< chan 2)
-      (let ((chan-prop (mix-property 'pan-mix id)))
-	(if chan-prop
-	    (let ((other-mix (car chan-prop))
-		  (other-chan (cadr chan-prop)))
-	      (if (= other-mix id)
-		  (set! (mix-amp-env id (if (= chan 0) 1 0)) (invert-envelope (mix-amp-env id chan)))
-		  (if (= chan (cadr (mix-property 'pan-mix other-mix)))
-		      (set! (mix-amp-env other-mix other-chan) (invert-envelope (mix-amp-env id chan)))))))))
-  #f)
-
-(define (pan-mix-resampled id)
-  (let ((chan-prop (mix-property 'pan-mix id)))
-    (if chan-prop
-	(multichannel-mix-resampled id))
-    #f))
-  
-(define (pan-mix-moved id samps)
-  (let ((chan-prop (mix-property 'pan-mix id)))
-    (if chan-prop
-	(multichannel-mix-moved id samps))
-    #f))
-  
-
+;;; TODO: fix pan-mix or automate 
 (define* (pan-mix name #:optional (beg 0) (envelope 1.0) snd (chn 0))
   "(pan-mix file (start 0) (envelope 1.0) snd chn) mixes 'file' into the sound 'snd' \
 starting at start (in samples) using 'envelope' to pan (0: all chan 0, 1: all chan 1).\
@@ -161,17 +125,6 @@ in the other channel. 'chn' is the start channel for all this (logical channel 0
 	       (invert-envelope envelope)
 	       (- 1.0 envelope)))
 	  (mix-func (if (list? envelope) mix-amp-env mix-amp)))
-      (if (or (> receiving-chans 1)
-	      (> incoming-chans 1))
-	  (begin
-	    (if (not (hook-member pan-mix-moved mix-dragged-hook))
-		(add-hook! mix-dragged-hook pan-mix-moved))
-	    (if (not (hook-member pan-mix-amp-changes mix-amp-changed-hook))
-		(add-hook! mix-amp-changed-hook pan-mix-amp-changes))
-	    (if (not (hook-member pan-mix-amp-env-changes mix-amp-env-changed-hook))
-		(add-hook! mix-amp-env-changed-hook pan-mix-amp-env-changes))
-	    (if (not (hook-member pan-mix-resampled mix-speed-changed-hook))
-		(add-hook! mix-speed-changed-hook pan-mix-resampled))))
       (if (= receiving-chans 1)
 	  (if (= incoming-chans 1)
 	      (let ((id (mix name beg 0 index 0)))
@@ -253,7 +206,7 @@ in the other channel. 'chn' is the start channel for all this (logical channel 0
 
 (define* (snap-mix-to-beat #:optional (at-anchor #f))
   "(snap-mix-to-beat) forces a dragged mix to end up on a beat (see beats-per-minute).  reset mix-dragged-hook to cancel"
-  (add-hook! mix-dragged-hook
+  (add-hook! mix-release-hook
 	     (lambda (id samps-moved)
 	       (let* ((offset (if at-anchor (mix-anchor id) 0))
 		      (samp (+ samps-moved (mix-position id) offset))

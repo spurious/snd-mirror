@@ -650,8 +650,8 @@ static bool RAMP3_OP(int type)
 #define EDIT_LIST_END_MARK -2
 #define EDIT_LIST_ZERO_MARK -1
 
-enum {INSERTION_EDIT, DELETION_EDIT, CHANGE_EDIT, INITIALIZE_EDIT, SCALED_EDIT, ZERO_EDIT, RAMP_EDIT, PTREE_EDIT, XEN_EDIT};
-static char *edit_names[10] = {"insert", "delete", "set", "init", "scale", "zero", "env", "ptree", "xen", ""};
+enum {INSERTION_EDIT, DELETION_EDIT, CHANGE_EDIT, INITIALIZE_EDIT, SCALED_EDIT, ZERO_EDIT, RAMP_EDIT, PTREE_EDIT, XEN_EDIT, EXTEND_EDIT};
+static char *edit_names[11] = {"insert", "delete", "set", "init", "scale", "zero", "env", "ptree", "xen", "extend", ""};
 
 static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool with_source)
 {
@@ -678,6 +678,7 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
     case RAMP_EDIT:       fprintf(outp, "\n (ramp " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                          break;
     case XEN_EDIT:        fprintf(outp, "\n (xen[%d] " OFF_TD " " OFF_TD ") ", ed->ptree_location, ed->beg, ed->len);   break; 
     case PTREE_EDIT:      fprintf(outp, "\n (ptree[%d] " OFF_TD " " OFF_TD ") ", ed->ptree_location, ed->beg, ed->len); break; 
+    case EXTEND_EDIT:     fprintf(outp, "\n (extend edit list with no-op)");                                            break;
     case INITIALIZE_EDIT: fprintf(outp, "\n (begin) ");                                                                 break;
     }
   if (ed->origin) fprintf(outp, "; %s ", ed->origin);
@@ -1009,6 +1010,9 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 		      (ed->origin) ? ed->origin : "");
 	      edit_data_to_file(fd, ed, cp);
 	      fprintf(fd, PROC_SEP "sfile" PROC_SEP "%d", cp->chan);
+	      break;
+	    case EXTEND_EDIT:
+	      /* not currently savable */
 	      break;
 	    case SCALED_EDIT: 
 	      fprintf(fd, "%s" PROC_SEP "sfile" PROC_SEP "%d",
@@ -1504,6 +1508,34 @@ void extend_with_zeros(chan_info *cp, off_t beg, off_t num, const char *origin, 
   check_for_first_edit(cp); /* needed to activate revert menu option */
   amp_env_insert_zeros(cp, beg, num, edpos);
 }
+
+#if 0
+void extend_edit_list(chan_info *cp, const char *origin, int edpos)
+{
+  int i;
+  ed_list *new_ed, *old_ed;
+  prepare_edit_list(cp, cp->samples[edpos], edpos, origin);
+  old_ed = cp->edits[edpos];
+  new_ed = make_ed_list(cp->edits[edpos]->size);
+  new_ed->beg = 0;
+  new_ed->len = cp->samples[edpos];
+  cp->edits[cp->edit_ctr] = new_ed;
+  for (i = 0; i < new_ed->size; i++) 
+    {
+      copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
+    }
+  new_ed->edit_type = EXTEND_EDIT;
+  new_ed->sound_location = 0;
+  new_ed->origin = copy_string(origin);
+  new_ed->edpos = edpos;
+  new_ed->selection_beg = old_ed->selection_beg;
+  new_ed->selection_end = old_ed->selection_end;
+  new_ed->maxamp = old_ed->maxamp;
+  ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
+  reflect_edit_history_change(cp);
+  cp->amp_envs[cp->edit_ctr] = amp_env_copy(cp, false, edpos);
+}
+#endif
 
 void file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos)
 {

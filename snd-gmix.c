@@ -48,7 +48,7 @@ static void speed_changed_callback(GtkAdjustment *adj, gpointer data)
 		      speed_number_buffer,
 		      sp->speed_control_style,
 		      sp->speed_control_tones);
-  if (!dragging) start_mix_drag(mix_id);
+  if (!dragging) start_mix_panel_slider_drag(mix_id);
   dragging = true;
   change_mix_speed(mix_id, val);
   gtk_label_set_text(GTK_LABEL(w_speed_number), speed_number_buffer);
@@ -141,7 +141,7 @@ static void amp_changed_callback(GtkAdjustment *adj, gpointer data)
   Float scrollval;
   chan = get_user_int_data(G_OBJECT(adj));
   scrollval = GTK_ADJUSTMENT(w_amp_adjs[chan])->value;
-  if (!dragging) start_mix_drag(mix_panel_id);
+  if (!dragging) start_mix_panel_slider_drag(mix_panel_id);
   dragging = true;
   change_mix_amp(mix_panel_id, chan, scroll_to_amp(scrollval));
 }
@@ -401,7 +401,7 @@ static void apply_mix_panel(GtkWidget *w, gpointer context)
   for (i = 0; i < chans; i++)
     if (i != last_clicked_env_chan)
       set_mix_amp_env_without_edit(mix_id, i, envs[i]);
-  set_mix_amp_env_from_gui(mix_id, last_clicked_env_chan, envs[last_clicked_env_chan]);
+  set_mix_amp_env(mix_id, last_clicked_env_chan, envs[last_clicked_env_chan]);
   mix_amp_env_resize(w_env);
 }
 

@@ -309,7 +309,11 @@ typedef enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_U
      #define DEFAULT_DAC_SIZE 256
   #endif
 #else
-  #define DEFAULT_DAC_SIZE 1024
+  #if MAC_OSX
+    #define DEFAULT_DAC_SIZE 64
+  #else
+    #define DEFAULT_DAC_SIZE 1024
+  #endif
 #endif
 
 #define dac_combines_channels(ss) ss->Dac_Combines_Channels
