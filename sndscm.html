@@ -1896,8 +1896,9 @@ than an integer between 0 and 255) mimics PostScript;
 as video hardware has improved over the years, there's
 less and less need for these elaborate color names, and less
 reason (except perhaps psychophysical) to limit these numbers to bytes.
-There is one gotcha in this file -- it defines the color "tan" thereby
-overwriting the Scheme built-in tan function.
+There is one gotcha in this file -- X11 defines a color named "tan"
+which is already used by Scheme, so (at the suggestion of Dave Phillips)
+this color is named "tawny" in rgb.scm.
 </p>
 
 <A NAME="rtiodoc"></a><span class=box><h2>rtio.scm</h2></span>

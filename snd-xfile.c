@@ -178,13 +178,12 @@ static void File_Open_OK_Callback(Widget w, XtPointer context, XtPointer info)
 
 static void File_Open_Help_Callback (Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context,
-       "File Open",
-"If you click the 'Sound Files Only'\n\
-button, only those files in the current\n\
-directory that look vaguely like sound\n\
-files will be displayed.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     "File Open",
+"If you click the 'Sound Files Only' \
+button, only those files in the current \
+directory that look vaguely like sound \
+files will be displayed.");
 }
 
 static void File_Open_Cancel_Callback (Widget w, XtPointer context, XtPointer info) 
@@ -236,13 +235,12 @@ static void play_selected_Callback(Widget w, XtPointer context, XtPointer info)
 
 static void play_selected_help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context,
-	   "play selected sound",
-"If you click the 'play selected sound'\n\
-button, the currently selected sound (if\n\
-and) in the file selection box file list\n\
-is played.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     "play selected sound",
+"If you click the 'play selected sound' \
+button, the currently selected sound (if \
+and) in the file selection box file list \
+is played.");
 }
 
 static char *fullpathname = NULL;
@@ -393,14 +391,13 @@ static void just_sounds_Callback(Widget w, XtPointer context, XtPointer info)
 
 static void just_sounds_help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context,
-	   "sound files only",
-"If you click the 'sound files only'\n\
-button, only those files in the current\n\
-directory that look vaguely like sound\n\
-files will be displayed.  The decision\n\
-is based on the file's extension.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     "sound files only",
+"If you click the 'sound files only' \
+button, only those files in the current \
+directory that look vaguely like sound \
+files will be displayed.  The decision \
+is based on the file's extension.");
 }
 
 static Widget just_sounds_button = NULL;
@@ -624,64 +621,54 @@ static void file_data_Format_Callback(Widget w, XtPointer context, XtPointer inf
 
 static void file_header_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context,
-	   "File Header Type",
-"This list shows the output header types that\n\
-Snd is willing to write.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     "File Header Type",
+"This list shows the output header types that \
+Snd is willing to write.");
 }
 
 static void file_data_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context,
-	   "File Data Format",
-"This list shows the data format choices\n\
-available with the currently selected header\n\
-choice.  'Short' means 16-bit two's complement\n\
-integer.  'Mulaw' and 'Alaw' are common 8-bit\n\
-compression schemes. 'Long' is 32-bit integer.\n\
-'Float' is 32-bit float.  In each case, the\n\
-decision as to byte order ('endianess') depends\n\
-on the header type.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     "File Data Format",
+"This list shows the data format choices \
+available with the currently selected header \
+choice.  'Short' means 16-bit two's complement \
+integer.  'Mulaw' and 'Alaw' are common 8-bit \
+compression schemes. 'Long' is 32-bit integer. \
+'Float' is 32-bit float.  In each case, the \
+decision as to byte order ('endianess') depends \
+on the header type.");
 }
 
 static void file_data_location_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context,
-	   "File Data Location",
-"If you know the data location (in bytes)\n\
-you can set it in this field.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     "File Data Location",
+"If you know the data location (in bytes) \
+you can set it in this field.");
 }
 
 static void file_srate_help_callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_help((snd_state *)context,
-	   "File Srate",
-"This field sets the nominal file sampling\n\
-rate.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     "File Srate",
+"This field sets the nominal file sampling rate.");
 } 
 
 static void file_chans_help_callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_help((snd_state *)context,
-	   "File Srate",
-"This field sets the number of channels\n\
-in the output file.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     "File Srate",
+"This field sets the number of channels in the output file.");
 } 
 
 static void file_comment_label_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
-  snd_help(ss,
-	   "Output File Comment",
-"This optional field provides any comments\n\
-that you want saved in the output file's\n\
-header.\n\
-");	   
+  snd_help_with_wrap(ss,
+		     "Output File Comment",
+"This optional field provides any comments that you want saved in the output file's header.");	   
 }
 
 file_data *sndCreateFileDataForm(snd_state *ss, Widget parent, char *name, Arg *in_args, int in_n, int with_chan, int header_type, int data_format, int with_loc)

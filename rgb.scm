@@ -1,3 +1,5 @@
+;; tan -> tawny 24-Aug-01
+
 (define snow (make-color 1.00 0.98 0.98))
 (define ghost-white (make-color 0.97 0.97 1.00))
 (define white-smoke (make-color 0.96 0.96 0.96))
@@ -101,7 +103,7 @@
 (define beige (make-color 0.96 0.96 0.86))
 (define wheat (make-color 0.96 0.87 0.70))
 (define sandy-brown (make-color 0.95 0.64 0.37))
-(define tan (make-color 0.82 0.70 0.55))
+(define tawny (make-color 0.82 0.70 0.55)) ; tan collides with Scheme built-in -- tawny suggested by Dave Phillips
 (define chocolate (make-color 0.82 0.41 0.12))
 (define firebrick (make-color 0.70 0.13 0.13))
 (define brown (make-color 0.64 0.16 0.16))

@@ -11,6 +11,7 @@ typedef struct {
 /* -------- snd-xhelp.c -------- */
 
 Widget snd_help(snd_state *ss, char *subject, char *help);
+Widget snd_help_with_wrap(snd_state *ss, char *subject, char *helpstr);
 
 
 /* -------- snd-xerror.c -------- */

@@ -94,7 +94,7 @@ static void create_help_monolog(snd_state *ss)
   gtk_widget_show(help_dialog);
 }
 
-GtkWidget *snd_help(snd_state *ss, char *subject, char *helpstr)
+static GtkWidget *snd_help_1(snd_state *ss, char *subject, char *helpstr, int with_wrap)
 {
   /* place help string in scrollable help window */
   /* if window is already active, add this help at the top and reposition */
@@ -104,7 +104,14 @@ GtkWidget *snd_help(snd_state *ss, char *subject, char *helpstr)
   gtk_window_set_title(GTK_WINDOW(help_dialog), help_window_label);
   chars = gtk_text_get_length(GTK_TEXT(help_text));
   if (chars > 0) gtk_editable_delete_text(GTK_EDITABLE(help_text), 0, -1);
-  add_help_text(ss, help_text, helpstr);
+  if (with_wrap)
+    {
+      char *new_help = NULL;
+      new_help = word_wrap(helpstr, widget_width(help_text));
+      add_help_text(ss, help_text, new_help);
+      if (new_help) FREE(new_help);
+    }
+  else add_help_text(ss, help_text, helpstr);
   return(help_dialog);
 }
 
@@ -162,7 +169,7 @@ static void create_help_monolog(snd_state *ss)
   gtk_widget_show(help_dialog);
 }
 
-GtkWidget *snd_help(snd_state *ss, char *subject, char *helpstr)
+static GtkWidget *snd_help_1(snd_state *ss, char *subject, char *helpstr, int with_wrap)
 {
   int i, len, lim;
   char *url, *urldir;
@@ -199,6 +206,16 @@ GtkWidget *snd_help(snd_state *ss, char *subject, char *helpstr)
 }
 
 #endif
+
+GtkWidget *snd_help(snd_state *ss, char *subject, char *helpstr)
+{
+  return(snd_help_1(ss, subject, helpstr, FALSE));
+}
+
+GtkWidget *snd_help_with_wrap(snd_state *ss, char *subject, char *helpstr)
+{
+  return(snd_help_1(ss, subject, helpstr, TRUE));
+}
 
 void move_help_dialog_to(int x, int y)
 {

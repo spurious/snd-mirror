@@ -2,22 +2,22 @@
 #define SND_0_H_LOADED
 
 #if (!defined(HAVE_CONFIG_H))
-  /* we need fstatfs -- need its header and how many args it takes */
+  /* we need statfs -- need its header and how many args it takes */
   #if defined(SGI) || defined(SCO5) || defined(UW2) || defined(SOLARIS)
     #define HAVE_SYS_STATFS_H 1
-    #define FSTATFS_ARGS 4
+    #define STATFS_ARGS 4
   #else
     #if defined(HPUX) || defined(LINUX)
       #define HAVE_SYS_VFS_H 1
-      #define FSTATFS_ARGS 2
+      #define STATFS_ARGS 2
     #else
       #if (defined(ALPHA) || defined(__APPLE__) || defined(__bsdi__))
         #define HAVE_SYS_MOUNT_H 1
-        #define FSTATFS_ARGS 2
+        #define STATFS_ARGS 2
       #else
         #if defined(WINDOZE) && defined(__CYGWIN__)
           #define HAVE_SYS_VFS_H 1
-          #define FSTATFS_ARGS 2
+          #define STATFS_ARGS 2
         #endif
       #endif
     #endif
@@ -29,7 +29,6 @@
   #define HAVE_VPRINTF 1
   #define HAVE_LOCALE_H 1
   #define HAVE_SETLOCALE 1
-  #define HAVE_FINITE 1
   #define HAVE_STRDUP 1
   #if defined(LINUX) && (!(defined(HAVE_FPU_CONTROL_H)))
     #define HAVE_FPU_CONTROL_H 1
@@ -54,7 +53,6 @@
     #define HAVE_OPENDIR 1
     #define HAVE_SLEEP 1
     #define HAVE_SIGNAL 1
-    #define HAVE_FSTATFS 1
     #define HAVE_STATFS 1
     #define HAVE_DIRENT_H 1
     #define HAVE_STRFTIME 1
@@ -94,8 +92,8 @@
 #endif
 #endif
 
-#ifndef FSTATFS_ARGS
-  #define FSTATFS_ARGS 2
+#ifndef STATFS_ARGS
+  #define STATFS_ARGS 2
 #endif
 
 #ifndef Float

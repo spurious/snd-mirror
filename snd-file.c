@@ -28,7 +28,7 @@
   #include <sys/mount.h>
 #endif
 
-#if (!HAVE_FSTATFS) && (!HAVE_STATFS)
+#if (!HAVE_STATFS)
   int disk_kspace (char *filename) {return(1234567);}
   int is_link(char *filename) {return(0);}
   int is_directory(char *filename) {return(0);}
@@ -39,7 +39,7 @@ int disk_kspace (char *filename)
   struct statfs buf;
   int err = -1;
 #if HAVE_STATFS
-#if (FSTATFS_ARGS == 4)
+#if (STATFS_ARGS == 4)
   /* SGI case */
   err = statfs(filename, &buf, sizeof(buf), 0);
 #else

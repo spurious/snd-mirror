@@ -320,8 +320,8 @@ static void Dismiss_Mix_Panel_Callback(Widget w, XtPointer context, XtPointer in
 
 static void Help_Mix_Panel_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context,
-       "Mix Panel",
+  snd_help_with_wrap((snd_state *)context,
+		     "Mix Panel",
 "This dialog controls the currently selected mix");
 }
 

@@ -103,73 +103,63 @@ static void W_filter_button_Help_Callback(Widget w, XtPointer context, XtPointer
 
 static void W_filter_dB_Help_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_help((snd_state *)context, "Filter dB",
-"This button chooses between dB and linear y axis\n\
-in the frequency response graph\n");
+  snd_help_with_wrap((snd_state *)context, 
+		     "Filter dB",
+"This button chooses between dB and linear y axis in the frequency response graph");
 }
 
 static void W_sync_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context,
-	   "Sync Button",
-"This button causes edit operations on one\n\
-channel to be applied to all channels at the\n\
-same time.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     "Sync Button",
+"This button causes edit operations on one channel to be applied to all channels at the same time.");
 }
 
 static void W_combine_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context,
-	   "Combine Button",
-"This button causes all channels to be\n\
-displayed in one window, sharing the various\n\
-channel controls.  Two extra scrollbars on\n\
-the right provide scroll and zoom for the\n\
-overall set of channel graphs. The default\n\
-multichannel display style can be set in\n\
-the Snd initialization file by setting\n\
-the variable combine-channels.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     "Combine Button",
+"This button causes all channels to be \
+displayed in one window, sharing the various \
+channel controls.  Two extra scrollbars on \
+the right provide scroll and zoom for the \
+overall set of channel graphs. The default \
+multichannel display style can be set in \
+the Snd initialization file by setting \
+the variable combine-channels.");
 }
 
 static void W_apply_Help_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_help((snd_state *)context,
-	   STR_Apply,
-"The Apply button saves the last recorded\n\
-run over the current file (see Record) as\n\
-an edit of the current file.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     STR_Apply,
+"The Apply button saves the last recorded \
+run over the current file (see Record) as \
+an edit of the current file.");
 }
 
 static void W_reset_Help_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_help((snd_state *)context,
-	   STR_Reset,
-"The 'Reset' button clears the control panel\n\
-settings to the no-change state.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     STR_Reset,
+"The 'Reset' button clears the control panel settings to the no-change state.");
 }
 
 static void W_remember_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context,
-	   STR_Remember,
-"The 'Remember' button saves the current control\n\
-panel state for a subsequent 'Restore'.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     STR_Remember,
+"The 'Remember' button saves the current control panel state for a subsequent 'Restore'.");
 }
 
 static void W_restore_Help_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_help((snd_state *)context,
-	   STR_Restore,
-"The 'Restore' button returns the control\n\
-panel to the state at the time of the\n\
-last 'Remember', or the initial state if there\n\
-has been no 'Remember'.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     STR_Restore,
+"The 'Restore' button returns the control \
+panel to the state at the time of the \
+last 'Remember', or the initial state if there \
+has been no 'Remember'.");
 }
 
 void goto_minibuffer(snd_info *sp)
@@ -814,10 +804,11 @@ void set_filter_text(snd_info *sp, char *str)
 
 static void filter_drawer_help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context, "Filter Frequency Response",
-"This graph shows the current filter frequency response envelope, \n\
-and the actual response (dependent on the filter order).\n\
-See the envelope editor documentation for editing directions.\n");
+  snd_help_with_wrap((snd_state *)context, 
+		     "Filter Frequency Response",
+"This graph shows the current filter frequency response envelope,  \
+and the actual response (dependent on the filter order). \
+See the envelope editor documentation for editing directions.");
 }
 
 static void filter_drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
@@ -896,22 +887,20 @@ static void filter_order_down_Callback(Widget w, XtPointer context, XtPointer in
 
 static void W_filter_order_up_Help_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_help((snd_state *)context,
-	   "Filter Order Increment Button",
-"This button causes the filter order to be incremented\n\
-in case your keyboard is not working, or arabic numbers\n\
-present an insuperable challenge.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     "Filter Order Increment Button",
+"This button causes the filter order to be incremented \
+in case your keyboard is not working, or arabic numbers \
+present an insuperable challenge.");
 }
 
 static void W_filter_order_down_Help_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_help((snd_state *)context,
-	   "Filter Order Decrement Button",
-"This button causes the filter order to be decremented\n\
-in case your keyboard is not working, or arabic numbers\n\
-present an insuperable challenge.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     "Filter Order Decrement Button",
+"This button causes the filter order to be decremented \
+in case your keyboard is not working, or arabic numbers \
+present an insuperable challenge.");
 }
 
 static void Filter_activate_Callback(Widget w, XtPointer context, XtPointer info)

@@ -1701,44 +1701,44 @@ Reverb-feedback sets the scaler on the feedback.\n\
 (define (make-amp-package parent)
   (let* ((s1 (|XmStringCreateLocalized "amp:"))
 	 (label (|XtCreateManagedWidget "amp-label" |xmPushButtonWidgetClass parent
-	 	  (list |XmNbackground (|Pixel (snd-pixel (basic-color)))
-			|XmNalignment |XmALIGNMENT_BEGINNING
-			|XmNtopAttachment |XmATTACH_FORM
+	 	  (list |XmNbackground       (|Pixel (snd-pixel (basic-color)))
+			|XmNalignment        |XmALIGNMENT_BEGINNING
+			|XmNtopAttachment    |XmATTACH_FORM
 			|XmNbottomAttachment |XmATTACH_NONE
-			|XmNleftAttachment |XmATTACH_FORM
-			|XmNrightAttachment |XmATTACH_NONE
-			|XmNlabelString s1
-			|XmNmarginHeight 1
-			|XmNrecomputeSize #f
-			|XmNshadowThickness 0
+			|XmNleftAttachment   |XmATTACH_FORM
+			|XmNrightAttachment  |XmATTACH_NONE
+			|XmNlabelString      s1
+			|XmNmarginHeight     1
+			|XmNrecomputeSize    #f
+			|XmNshadowThickness  0
 			|XmNhighlightThickness 0
-			|XmNfillOnArm #f)))
+			|XmNfillOnArm        #f)))
 	 (s2 (|XmStringCreateLocalized "1.00"))
 	 (number (|XtCreateManagedWidget "amp-number" |xmLabelWidgetClass parent
-	 	  (list |XmNbackground (|Pixel (snd-pixel (basic-color)))
-			|XmNalignment |XmALIGNMENT_BEGINNING
-			|XmNtopAttachment |XmATTACH_OPPOSITE_WIDGET
-			|XmNtopWidget label
+	 	  (list |XmNbackground       (|Pixel (snd-pixel (basic-color)))
+			|XmNalignment        |XmALIGNMENT_BEGINNING
+			|XmNtopAttachment    |XmATTACH_OPPOSITE_WIDGET
+			|XmNtopWidget        label
 			|XmNbottomAttachment |XmATTACH_NONE
-			|XmNleftAttachment |XmATTACH_WIDGET
-			|XmNleftWidget label
-			|XmNrightAttachment |XmATTACH_NONE
-			|XmNlabelString s2
-			|XmNmarginHeight 1
-			|XmNrecomputeSize #f)))
+			|XmNleftAttachment   |XmATTACH_WIDGET
+			|XmNleftWidget       label
+			|XmNrightAttachment  |XmATTACH_NONE
+			|XmNlabelString      s2
+			|XmNmarginHeight     1
+			|XmNrecomputeSize    #f)))
 	 (scroll (|XtCreateManagedWidget "amp" |xmScrollBarWidgetClass parent
-	 	  (list |XmNbackground (|Pixel (snd-pixel (position-color)))
-			|XmNtopAttachment |XmATTACH_OPPOSITE_WIDGET
-			|XmNtopWidget label
+	 	  (list |XmNbackground       (|Pixel (snd-pixel (position-color)))
+			|XmNtopAttachment    |XmATTACH_OPPOSITE_WIDGET
+			|XmNtopWidget        label
 			|XmNbottomAttachment |XmATTACH_NONE
-			|XmNheight 16
-			|XmNleftAttachment |XmATTACH_WIDGET
-			|XmNleftWidget number
-			|XmNrightAttachment |XmATTACH_FORM
-			|XmNorientation |XmHORIZONTAL
-			|XmNmaximum 100
-			|XmNvalue 50
-			|XmNdragCallback (list amp-callback number)
+			|XmNheight           16
+			|XmNleftAttachment   |XmATTACH_WIDGET
+			|XmNleftWidget       number
+			|XmNrightAttachment  |XmATTACH_FORM
+			|XmNorientation      |XmHORIZONTAL
+			|XmNmaximum          100
+			|XmNvalue            50
+			|XmNdragCallback     (list amp-callback number)
 			|XmNvalueChangedCallback (list amp-callback number)))))
 	 (|XmStringFree s1)
 	 (|XmStringFree s2)

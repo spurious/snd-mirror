@@ -309,7 +309,7 @@ static void create_help_monolog(snd_state *ss)
     }
 }
 
-Widget snd_help(snd_state *ss, char *subject, char *helpstr)
+static Widget snd_help_1(snd_state *ss, char *subject, char *helpstr, int with_wrap)
 {
   /* place help string in scrollable help window */
   /* if window is already active, add this help at the top and reposition */
@@ -387,7 +387,14 @@ Widget snd_help(snd_state *ss, char *subject, char *helpstr)
 	}
     }
 #else
-  XmTextSetString(help_text, helpstr);
+  if (with_wrap)
+    {
+      char *new_help = NULL;
+      new_help = word_wrap(helpstr, widget_width(help_text));
+      XmTextSetString(help_text, new_help);
+      if (new_help) FREE(new_help);
+    }
+  else XmTextSetString(help_text, helpstr);
 #endif
   if (!XtIsManaged(help_dialog)) 
     XtManageChild(help_dialog);
@@ -395,3 +402,12 @@ Widget snd_help(snd_state *ss, char *subject, char *helpstr)
   return(help_dialog);
 }
 
+Widget snd_help(snd_state *ss, char *subject, char *helpstr)
+{
+  return(snd_help_1(ss, subject, helpstr, FALSE));
+}
+
+Widget snd_help_with_wrap(snd_state *ss, char *subject, char *helpstr)
+{
+  return(snd_help_1(ss, subject, helpstr, TRUE));
+}

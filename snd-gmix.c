@@ -345,8 +345,8 @@ static void delete_mix_panel(GtkWidget *w, GdkEvent *event, gpointer context)
 
 static void mix_panel_help(GtkWidget *w, gpointer context) 
 {
-  snd_help((snd_state *)context,
-	   "Mix Panel",
+  snd_help_with_wrap((snd_state *)context,
+		     "Mix Panel",
 "This dialog controls the currently selected mix");
 }
 

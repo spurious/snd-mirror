@@ -436,82 +436,62 @@ static void W_History_Help_Callback(Widget w, XtPointer context, XtPointer info)
 
 static void W_sx_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context,
-	   "X axis scroll",
-"This scrollbar controls the position of\n\
-the x axis within the overall sound file.\n\
-The arrows increment the view by one window.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     "X axis scroll",
+"This scrollbar controls the position of the x axis within the overall sound file. The arrows increment the view by one window.");
 }
 
 static void W_sy_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context,
-	   "Y axis scroll",
-"This (nearly useless) scrollbar controls the\n\
-position of the y-axis within the current y axis\n\
-limits.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     "Y axis scroll",
+"This (nearly useless) scrollbar controls the position of the y-axis within the current y axis limits.");
 }
 
 static void W_zx_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context,
-	   "X axis zoom",
-"This scrollbar zooms in (as you move\n\
-it to the left) or out along the x axis.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     "X axis zoom",
+"This scrollbar zooms in (as you move it to the left) or out along the x axis.");
 }
 
 static void W_zy_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context,
-	   "Y axis zoom",
-"This scrollbar zooms in (as you move\n\
-it down) or out along the y axis.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     "Y axis zoom",
+"This scrollbar zooms in (as you move it down) or out along the y axis.");
 }
 
 static void W_gsy_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context,
-	   "Graph position",
-"This scrollbar controls the position\n\
-in the overall combined graph of the\n\
-portion visible in the sound pane.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     "Graph position",
+"This scrollbar controls the position in the overall combined graph of the portion visible in the sound pane.");
 }
 
 static void W_gzy_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context,
-	   "Graph zoom",
-"This scrollbar controls how much of\n\
-the overall combined graph is visible\n\
-in the sound pane.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     "Graph zoom",
+"This scrollbar controls how much of the overall combined graph is visible in the sound pane.");
 }
 
 static void F_button_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context,
-	   "fft button",
-"This button controls whether an FFT is\n\
-displayed alongside the waveform.  To affect\n\
-all channels at once, use control-click.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     "fft button",
+"This button controls whether an FFT is displayed alongside the waveform.  To affect all channels at once, use control-click.");
 }
 
 static void W_button_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context,
-	   "time domain waveform button",
-"This button determines whether the time\n\
-domain waveform is displayed.  If both the\n\
-'w' and 'f' buttons are off, only the lisp\n\
-graph (if any) is displayed.  To affect\n\
-all channels at once, use control-click.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     "time domain waveform button",
+"This button determines whether the time \
+domain waveform is displayed.  If both the \
+'w' and 'f' buttons are off, only the lisp \
+graph (if any) is displayed.  To affect \
+all channels at once, use control-click.");
 }
 
 

@@ -144,13 +144,12 @@ static void graph_redisplay(snd_state *ss)
 
 static void size_help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context,
-	   "FFT Size",
-"Any size FFT can be accommodated here, as long\n\
-as it will fit in memory somehow.  The larger\n\
-the FFT, the longer it takes to compute.\n\
-The size must be a power of 2.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     "FFT Size",
+"Any size FFT can be accommodated here, as long \
+as it will fit in memory somehow.  The larger \
+the FFT, the longer it takes to compute. \
+The size must be a power of 2.");
 }
 
 static void get_fft_window_data(snd_state *ss)
@@ -211,11 +210,9 @@ static void wavelet_browse_Callback(Widget w, XtPointer context, XtPointer info)
 
 static void wavelet_help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context,
-	   "Wavelet Choice",
-"These names refer to various standard wavelets.\n\
-The actual coefficients are in snd-fft.c.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     "Wavelet Choice",
+"These names refer to various standard wavelets. The actual coefficients are in snd-fft.c.");
 }
 
 
@@ -241,13 +238,12 @@ static void window_browse_Callback(Widget w, XtPointer context, XtPointer info)
 
 static void window_help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context,
-	   "FFT Window",
-"The FFT window names are taken from the article\n\
-of Harris that discusses most FFT windows\n\
-at great length.  The default window\n\
-is a second order Blackman window.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     "FFT Window",
+"The FFT window names are taken from the article \
+of Harris that discusses most FFT windows \
+at great length.  The default window \
+is a second order Blackman window.");
 }
 
 
@@ -269,11 +265,9 @@ static void transform_type_browse_Callback(Widget w, XtPointer context, XtPointe
 static void transform_type_help_Callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_state *ss = (snd_state *)context;
-  snd_help(ss,
-       "Transform Type",
-"This list presents the various transforms\n\
-that are available.\n\
-");	   
+  snd_help_with_wrap(ss,
+		     "Transform Type",
+"This list presents the various transforms that are available.");	   
 }
 
 
@@ -399,13 +393,12 @@ static void selection_Callback(Widget w, XtPointer context, XtPointer info)
 
 static void beta_help_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_help((snd_state *)context,
-	   "FFT Window Parameter",
-"This scale sets the FFT window parameter\n\
-sometimes known as alpha or beta.  The\n\
-scale tries to provide access to 'normal'\n\
-values, given the current FFT window.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     "FFT Window Parameter",
+"This scale sets the FFT window parameter \
+sometimes known as alpha or beta.  The \
+scale tries to provide access to 'normal' \
+values, given the current FFT window.");
 } 
 
 static void beta_Callback(Widget w, XtPointer context, XtPointer info)
@@ -426,11 +419,9 @@ static void beta_Callback(Widget w, XtPointer context, XtPointer info)
 
 static void graph_help_Callback(Widget w, XtPointer context, XtPointer info)
 {
-  snd_help((snd_state *)context,
-	   "Window Graph",
-"This shows a graph of the current fft window and the spectrum\n\
-thereof -- the spectrum is in dB with the min at -80dB.\n\
-");
+  snd_help_with_wrap((snd_state *)context,
+		     "Window Graph",
+"This shows a graph of the current fft window and the spectrum thereof -- the spectrum is in dB with the min at -80dB.");
 }
 
 static void graph_resize_Callback(Widget w, XtPointer context, XtPointer info)

@@ -472,7 +472,7 @@ void print_dialog_help(snd_state *ss);
 void view_files_dialog_help(snd_state *ss);
 void stats_dialog_help(snd_state *ss);
 void ssnd_help(snd_state *ss, char *subject, ...);
-
+char* word_wrap(char *text, int widget_len);
 void g_init_help(void);
 XEN g_help(XEN text, int widget_wid);
 

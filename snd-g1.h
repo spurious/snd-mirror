@@ -10,6 +10,7 @@ typedef struct {
 /* -------- snd-ghelp.c -------- */
 
 GtkWidget *snd_help(snd_state *ss, char *subject, char *help);
+GtkWidget *snd_help_with_wrap(snd_state *ss, char *subject, char *help);
 void move_help_dialog_to(int x, int y);
 int help_dialog_is_active(void);
 

@@ -909,9 +909,9 @@ void set_spectro_x_angle(snd_state *ss, Float val)
 
 static void AX_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context, 
-	   "x angle slider", 
-	   "This slider causes the graph to rotate\naround the x axis.\n");
+  snd_help_with_wrap((snd_state *)context, 
+		     "x angle slider", 
+"This slider causes the graph to rotate around the x axis.");
 }
 
 static void AY_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
@@ -937,9 +937,9 @@ void set_spectro_y_angle(snd_state *ss, Float val)
 
 static void AY_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context, 
-	   "y angle slider", 
-	   "This slider causes the graph to rotate\naround the y axis.\n");
+  snd_help_with_wrap((snd_state *)context, 
+		     "y angle slider", 
+"This slider causes the graph to rotate around the y axis.");
 }
 
 static void AZ_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
@@ -965,9 +965,9 @@ void set_spectro_z_angle(snd_state *ss, Float val)
 
 static void AZ_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context, 
-	   "z angle slider", 
-	   "This slider causes the graph to rotate\naround the z axis.\n");
+  snd_help_with_wrap((snd_state *)context, 
+		     "z angle slider", 
+"This slider causes the graph to rotate around the z axis.");
 }
 
 static void SX_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
@@ -993,9 +993,9 @@ void set_spectro_x_scale(snd_state *ss, Float val)
 
 static void SX_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context, 
-	   "x scale slider", 
-	   "This slider causes the graph to expand or\ncontract along the x axis.\n");
+  snd_help_with_wrap((snd_state *)context, 
+		     "x scale slider", 
+"This slider causes the graph to expand or contract along the x axis.");
 }
 
 static void SY_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
@@ -1021,9 +1021,9 @@ void set_spectro_y_scale(snd_state *ss, Float val)
 
 static void SY_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context, 
-	   "y scale slider", 
-	   "This slider causes the graph to expand or\ncontract along the y axis.\n");
+  snd_help_with_wrap((snd_state *)context, 
+		     "y scale slider", 
+"This slider causes the graph to expand or contract along the y axis.");
 }
 
 static void SZ_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
@@ -1049,9 +1049,9 @@ void set_spectro_z_scale(snd_state *ss, Float val)
 
 static void SZ_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context, 
-	   "z scale slider", 
-	   "This slider causes the graph to expand or\ncontract along the z axis.\n");
+  snd_help_with_wrap((snd_state *)context, 
+		     "z scale slider", 
+"This slider causes the graph to expand or contract along the z axis.");
 }
 
 static int map_chans_spectro_hop(chan_info *cp, void *ptr) {cp->spectro_hop = (*((int *)ptr)); return(0);}
@@ -1084,9 +1084,9 @@ void set_spectro_hop(snd_state *ss, int val)
 
 static void Hop_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context, 
-	   "hop slider", 
-	   "This slider changes the hop size.\n");
+  snd_help_with_wrap((snd_state *)context, 
+		     "hop slider", 
+"This slider changes the hop size.");
 }
 
 static void Cut_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 
@@ -1112,9 +1112,9 @@ void set_spectro_cutoff(snd_state *ss, Float val)
 
 static void Cut_Help_Callback(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_help((snd_state *)context, 
-	   "% of spectrum slider", 
-	   "This slider determines how much of\nthe spectrum is displayed\n");
+  snd_help_with_wrap((snd_state *)context, 
+		     "% of spectrum slider", 
+"This slider determines how much of the spectrum is displayed");
 }
 
 static void Help_Orientation_Callback(Widget w, XtPointer context, XtPointer info) 

@@ -3241,9 +3241,7 @@
 	(let ((str (format #f "~A" c1)))
 	  (if (not (string=? str "#<color: (0.00 0.00 1.00)>"))
 	      (snd-display ";print color: ~A ~A?" str c1))))
-      (let ((old-tan tan))
-	(load "rgb.scm")
-	(set! tan old-tan))
+      (load "rgb.scm")
       (test-color
        (list
 	(list 'basic-color basic-color set-basic-color ivory2)
