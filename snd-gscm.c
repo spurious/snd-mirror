@@ -29,7 +29,7 @@ static SCM g_region_dialog(void)
 
 static gint timed_eval(gpointer in_code)
 {
-  g_call0((SCM)in_code);
+  g_call0((SCM)in_code, "timed callback func");
   return(0);
 }
 

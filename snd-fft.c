@@ -1294,7 +1294,8 @@ static int apply_fft_window(fft_state *fs)
 	{
 	  res = g_c_run_progn_hook(before_fft_hook, 
 				   SCM_LIST2(TO_SMALL_SCM_INT(cp->sound->index), 
-					     TO_SMALL_SCM_INT(cp->chan)));
+					     TO_SMALL_SCM_INT(cp->chan)),
+				   S_before_fft_hook);
 	  if (gh_number_p(res))
 	    ind0 = TO_C_INT_OR_ELSE(res, 0) + fs->beg;
 	  else ind0 = (cp->axis)->losamp + fs->beg;
@@ -1386,7 +1387,8 @@ static int apply_fft_window(fft_state *fs)
 	snd_protect(sfd);
 	res = g_call2(added_transform_proc(cp->transform_type), 
 		      TO_SCM_INT(data_len), 
-		      sfd);
+		      sfd,
+		      "added transform func");
 	snd_protect(res);
 	if (vct_p(res))
 	  {

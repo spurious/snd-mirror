@@ -1096,7 +1096,7 @@ static SCM g_set_data(SCM gen, SCM val)
   return(scm_return_first(SCM_BOOL_F, gen, val));
 }
 
-static Float *whatever_to_floats(SCM inp, int size, int *free_invals)
+static Float *whatever_to_floats(SCM inp, int size, int *free_invals, const char *caller)
 {
   Float *invals = NULL;
   int i;
@@ -1135,10 +1135,10 @@ static Float *whatever_to_floats(SCM inp, int size, int *free_invals)
 		{
 #if USE_SND
 		  for (i = 0; i < size; i++) 
-		    invals[i] = TO_C_DOUBLE(g_call1(inp, TO_SCM_INT(i)));
+		    invals[i] = TO_C_DOUBLE(g_call1(inp, TO_SCM_INT(i), caller));
 #else
 		  for (i = 0; i < size; i++) 
-		    invals[i] = TO_C_DOUBLE(gh_call1(inp, TO_SCM_INT(i)));
+		    invals[i] = TO_C_DOUBLE(gh_call1(inp, TO_SCM_INT(i), caller));
 #endif
 		}
 	    }
@@ -1158,9 +1158,9 @@ static SCM g_mus_bank(SCM gens, SCM amps, SCM inp, SCM inp2)
   mus_any **gs;
   SCM *data;
   size = gh_vector_length(gens);
-  invals = whatever_to_floats(inp, size, &free_invals);
-  invals2 = whatever_to_floats(inp2, size, &free_invals2);
-  scls = whatever_to_floats(amps, size, &free_scls);
+  invals = whatever_to_floats(inp, size, &free_invals, S_mus_bank);
+  invals2 = whatever_to_floats(inp2, size, &free_invals2, S_mus_bank);
+  scls = whatever_to_floats(amps, size, &free_scls, S_mus_bank);
   gs = (mus_any **)CALLOC(size, sizeof(mus_any *));
   data = SCM_VELTS(gens);
   for (i = 0; i < size; i++) gs[i] = mus_get_any(data[i]);
@@ -4198,9 +4198,9 @@ static Float funcall1 (void *ptr, int direction) /* intended for "as-needed" inp
   if ((gn) && (gn->vcts) && (gn->vcts[INPUT_FUNCTION]) && (gh_procedure_p(gn->vcts[INPUT_FUNCTION])))
     /* the gh_procedure_p call can be confused by 0 -> segfault! */
 #if USE_SND
-    return(TO_C_DOUBLE(g_call1(gn->vcts[INPUT_FUNCTION], TO_SMALL_SCM_INT(direction))));
+    return(TO_C_DOUBLE(g_call1(gn->vcts[INPUT_FUNCTION], TO_SMALL_SCM_INT(direction), "as-needed-input")));
 #else
-    return(TO_C_DOUBLE(gh_call1(gn->vcts[INPUT_FUNCTION], TO_SMALL_SCM_INT(direction))));
+    return(TO_C_DOUBLE(gh_call1(gn->vcts[INPUT_FUNCTION], TO_SMALL_SCM_INT(direction), "as-needed-input")));
 #endif
   else return(0.0);
 }
@@ -4519,9 +4519,9 @@ static int pvedit (void *ptr)
   mus_scm *gn = (mus_scm *)ptr;
   if ((gn) && (gn->vcts) && (gn->vcts[EDIT_FUNCTION]) && (gh_procedure_p(gn->vcts[EDIT_FUNCTION])))
 #if USE_SND
-    return(gh_scm2bool(g_call1(gn->vcts[EDIT_FUNCTION], gn->vcts[SELF_WRAPPER])));
+    return(gh_scm2bool(g_call1(gn->vcts[EDIT_FUNCTION], gn->vcts[SELF_WRAPPER], __FUNCTION__)));
 #else
-    return(gh_scm2bool(gh_call1(gn->vcts[EDIT_FUNCTION], gn->vcts[SELF_WRAPPER])));
+    return(gh_scm2bool(gh_call1(gn->vcts[EDIT_FUNCTION], gn->vcts[SELF_WRAPPER], __FUNCTION__)));
 #endif
   return(0);
 }
@@ -4531,9 +4531,9 @@ static Float pvsynthesize (void *ptr)
   mus_scm *gn = (mus_scm *)ptr;
   if ((gn) && (gn->vcts) && (gn->vcts[SYNTHESIZE_FUNCTION]) && (gh_procedure_p(gn->vcts[SYNTHESIZE_FUNCTION])))
 #if USE_SND
-    return(TO_C_DOUBLE(g_call1(gn->vcts[SYNTHESIZE_FUNCTION], gn->vcts[SELF_WRAPPER])));
+    return(TO_C_DOUBLE(g_call1(gn->vcts[SYNTHESIZE_FUNCTION], gn->vcts[SELF_WRAPPER], __FUNCTION__)));
 #else
-    return(TO_C_DOUBLE(gh_call1(gn->vcts[SYNTHESIZE_FUNCTION], gn->vcts[SELF_WRAPPER])));
+    return(TO_C_DOUBLE(gh_call1(gn->vcts[SYNTHESIZE_FUNCTION], gn->vcts[SELF_WRAPPER], __FUNCTION__)));
 #endif
   return(0.0);
 }
@@ -4544,9 +4544,9 @@ static int pvanalyze (void *ptr, Float (*input)(void *arg1, int direction))
   if ((gn) && (gn->vcts) && (gn->vcts[SYNTHESIZE_FUNCTION]) && (gh_procedure_p(gn->vcts[SYNTHESIZE_FUNCTION])))
     /* we can only get input func if it's already set up by the outer gen call, so (?) we can use that function here */
 #if USE_SND
-    return(gh_scm2bool(g_call2(gn->vcts[SYNTHESIZE_FUNCTION], gn->vcts[SELF_WRAPPER], gn->vcts[INPUT_FUNCTION])));
+    return(gh_scm2bool(g_call2(gn->vcts[SYNTHESIZE_FUNCTION], gn->vcts[SELF_WRAPPER], gn->vcts[INPUT_FUNCTION], __FUNCTION__)));
 #else
-    return(gh_scm2bool(gh_call2(gn->vcts[SYNTHESIZE_FUNCTION], gn->vcts[SELF_WRAPPER], gn->vcts[INPUT_FUNCTION])));
+    return(gh_scm2bool(gh_call2(gn->vcts[SYNTHESIZE_FUNCTION], gn->vcts[SELF_WRAPPER], gn->vcts[INPUT_FUNCTION], __FUNCTION__)));
 #endif
   return(0);
 }

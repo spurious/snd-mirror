@@ -337,7 +337,8 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
       res = g_c_run_or_hook(initial_graph_hook,
 			    SCM_LIST3(TO_SMALL_SCM_INT(sp->index),
 				      TO_SMALL_SCM_INT(cp->chan),
-				      TO_SCM_DOUBLE(dur)));
+				      TO_SCM_DOUBLE(dur)),
+			    S_initial_graph_hook);
       if (gh_list_p(res))
 	{
 	  len = gh_length(res);
@@ -2318,7 +2319,8 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 			       SCM_LIST4(TO_SMALL_SCM_INT((cp->sound)->index),
 					 TO_SMALL_SCM_INT(cp->chan),
 					 TO_SCM_DOUBLE((cp->axis)->y0),
-					 TO_SCM_DOUBLE((cp->axis)->y1)));
+					 TO_SCM_DOUBLE((cp->axis)->y1)),
+			       S_graph_hook);
       /* (add-hook! graph-hook (lambda (a b c d) (snd-print (format #f "~A ~A ~A ~A" a b c d)))) */
       ss->graph_hook_active = 0;
       if (SCM_TRUE_P(res)) return;
@@ -2498,7 +2500,8 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	      (HOOKED(lisp_graph_hook)))
 	    g_c_run_progn_hook(lisp_graph_hook,
 			       SCM_LIST2(TO_SMALL_SCM_INT((cp->sound)->index),
-					 TO_SMALL_SCM_INT(cp->chan)));
+					 TO_SMALL_SCM_INT(cp->chan)),
+			       S_lisp_graph_hook);
 #endif
 	  if (up != (lisp_grf *)(cp->lisp_info))
 	    up = (lisp_grf *)(cp->lisp_info);
@@ -2528,7 +2531,8 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	      (HOOKED(after_graph_hook)))
 	    g_c_run_progn_hook(after_graph_hook,
 			       SCM_LIST2(TO_SMALL_SCM_INT((cp->sound)->index),
-					 TO_SMALL_SCM_INT(cp->chan)));
+					 TO_SMALL_SCM_INT(cp->chan)),
+			       S_after_graph_hook);
 	  /* (add-hook! after-graph-hook (lambda (a b) (snd-print (format #f "~A ~A" a b)))) */
 #endif
 	}
@@ -2629,7 +2633,8 @@ static void draw_graph_cursor(chan_info *cp)
 	  g_call3(cp->cursor_proc,
 		  TO_SCM_INT(cp->sound->index),
 		  TO_SCM_INT(cp->chan),
-		  TO_SCM_INT(WAVE_AXIS_INFO));
+		  TO_SCM_INT(WAVE_AXIS_INFO),
+		  __FUNCTION__);
 	  break;
 #endif
 	}
@@ -2650,7 +2655,8 @@ static void draw_graph_cursor(chan_info *cp)
 	  g_call3(cp->cursor_proc,
 		  TO_SCM_INT(cp->sound->index),
 		  TO_SCM_INT(cp->chan),
-		  TO_SCM_INT(WAVE_AXIS_INFO));
+		  TO_SCM_INT(WAVE_AXIS_INFO),
+		  __FUNCTION__);
 	  break;
 #endif
     }
@@ -3090,7 +3096,8 @@ int key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
 			    SCM_LIST4(TO_SMALL_SCM_INT(sp->index),
 				      TO_SMALL_SCM_INT(cp->chan),
 				      TO_SCM_INT(keysym),
-				      TO_SCM_INT(key_state)));
+				      TO_SCM_INT(key_state)),
+			    S_key_press_hook);
       if (SCM_TRUE_P(res))
 	return(FALSE);
     }
@@ -3190,7 +3197,8 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
 					 TO_SCM_INT(button),
 					 TO_SCM_INT(key_state),
 					 TO_SCM_DOUBLE(ungrf_x((cp->lisp_info)->axis, x)),
-					 TO_SCM_DOUBLE(ungrf_y((cp->lisp_info)->axis, y))));
+					 TO_SCM_DOUBLE(ungrf_y((cp->lisp_info)->axis, y))),
+			       S_mouse_press_hook);
 	}
       else
 #endif
@@ -3278,7 +3286,8 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 			  SCM res = SCM_BOOL_F;
 			  if (HOOKED(mark_click_hook))
 			    res = g_c_run_progn_hook(mark_click_hook,
-						     SCM_LIST1(TO_SMALL_SCM_INT(mark_id(mouse_mark))));
+						     SCM_LIST1(TO_SMALL_SCM_INT(mark_id(mouse_mark))),
+						     S_mark_click_hook);
 			  if (!(SCM_TRUE_P(res)))
 #endif
 			    report_in_minibuffer(sp, "mark %d at sample %d", 
@@ -3307,7 +3316,8 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 					       TO_SCM_INT(button),
 					       TO_SCM_INT(key_state),
 					       TO_SCM_DOUBLE(ungrf_x((cp->lisp_info)->axis, x)),
-					       TO_SCM_DOUBLE(ungrf_y((cp->lisp_info)->axis, y))));
+					       TO_SCM_DOUBLE(ungrf_y((cp->lisp_info)->axis, y))),
+				     S_mouse_release_hook);
 #endif
 	    }
 	}
@@ -3460,7 +3470,8 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
 						       TO_SCM_INT(-1),
 						       TO_SCM_INT(-1),
 						       TO_SCM_DOUBLE(ungrf_x((cp->lisp_info)->axis, x)),
-						       TO_SCM_DOUBLE(ungrf_y((cp->lisp_info)->axis, y))));
+						       TO_SCM_DOUBLE(ungrf_y((cp->lisp_info)->axis, y))),
+					     S_mouse_drag_hook);
 		      return;
 		    }
 #endif
@@ -5391,7 +5402,8 @@ static void after_fft(snd_state *ss, chan_info *cp, Float scaler)
       g_c_run_progn_hook(fft_hook,
 			 SCM_LIST3(TO_SMALL_SCM_INT((cp->sound)->index),
 				   TO_SMALL_SCM_INT(cp->chan),
-				   TO_SCM_DOUBLE(scaler)));
+				   TO_SCM_DOUBLE(scaler)),
+			 S_fft_hook);
       ss->fft_hook_active = 0;
     }
 }

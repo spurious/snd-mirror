@@ -4140,6 +4140,8 @@
   (reset-hook! mus-error-hook) (add-hook! mus-error-hook arg2) (carg2 mus-error-hook) (reset-hook! mus-error-hook)
   (reset-hook! mouse-enter-graph-hook) (add-hook! mouse-enter-graph-hook arg2) (carg2 mouse-enter-graph-hook) (reset-hook! mouse-enter-graph-hook)
   (reset-hook! mouse-leave-graph-hook) (add-hook! mouse-leave-graph-hook arg2) (carg2 mouse-leave-graph-hook) (reset-hook! mouse-leave-graph-hook)
+  (reset-hook! open-raw-sound-hook) (add-hook! open-raw-sound-hook arg2) (carg2 open-raw-sound-hook) (reset-hook! open-raw-sound-hook)
+  (reset-hook! select-channel-hook) (add-hook! select-channel-hook arg2) (carg2 select-channel-hook) (reset-hook! select-channel-hook)
 
   (reset-hook! after-open-hook) (add-hook! after-open-hook arg1) (carg1 after-open-hook) (reset-hook! after-open-hook)
   (reset-hook! close-hook) (add-hook! close-hook arg1) (carg1 close-hook) (reset-hook! close-hook)
@@ -4162,6 +4164,7 @@
   (reset-hook! mouse-enter-listener-hook) (add-hook! mouse-enter-listener-hook arg1) (carg1 mouse-enter-listener-hook) (reset-hook! mouse-enter-listener-hook)
   (reset-hook! mouse-leave-listener-hook) (add-hook! mouse-leave-listener-hook arg1) (carg1 mouse-leave-listener-hook) (reset-hook! mouse-leave-listener-hook)
   (reset-hook! property-changed-hook) (add-hook! property-changed-hook arg1) (carg1 property-changed-hook) (reset-hook! property-changed-hook)
+  (reset-hook! select-sound-hook) (add-hook! select-sound-hook arg1) (carg1 select-sound-hook) (reset-hook! select-sound-hook)
 
   (reset-hook! exit-hook) (add-hook! exit-hook arg0) (carg0 exit-hook) (reset-hook! exit-hook)
   (reset-hook! output-name-hook) (add-hook! output-name-hook arg0) (carg0 output-name-hook) (reset-hook! output-name-hook)
@@ -6161,20 +6164,17 @@
 			mus-data-format-name mus-sound-comment mus-sound-write-date mus-data-format-bytes-per-sample mus-sound-loop-info
 			mus-sound-max-amp mus-sound-max-amp-exists?))
 
-        (add-hook! snd-error-hook (lambda (a) #t))
 	(for-each (lambda (n)
 		    (let ((tag
 			   (catch #t
 				  (lambda ()
 				    (n "/bad/baddy"))
 				  (lambda args (car args)))))
-		      (if (and tag
-			       (fneq tag -1))
+		      (if (not (eq? tag 'mus-error))
 			  (snd-display (format #f ";bad file mus-sound ~A: ~A" n tag)))))
 		  (list mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location mus-sound-chans
 			mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length mus-sound-type-specifier mus-sound-comment 
 			mus-sound-write-date mus-sound-max-amp mus-sound-max-amp-exists?))
-        (reset-hook! snd-error-hook)
 
 	(let ((ctr 0))
 	  (for-each (lambda (n)

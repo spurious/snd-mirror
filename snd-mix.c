@@ -4078,7 +4078,8 @@ static void call_multichannel_mix_hook(int *ids, int n)
       for (i = n-1; i >= 0; i--)
 	lst = scm_cons(TO_SMALL_SCM_INT(ids[i]), lst);
       g_c_run_progn_hook(multichannel_mix_hook,
-			 SCM_LIST1(lst));
+			 SCM_LIST1(lst),
+			 S_multichannel_mix_hook);
     }
 }
 
@@ -4088,7 +4089,8 @@ static int call_mix_speed_changed_hook(mix_info *md)
   if ((md) && 
       (HOOKED(mix_speed_changed_hook)))
     res = g_c_run_progn_hook(mix_speed_changed_hook,
-			     SCM_LIST1(TO_SMALL_SCM_INT(md->id)));
+			     SCM_LIST1(TO_SMALL_SCM_INT(md->id)),
+			     S_mix_speed_changed_hook);
   return(SCM_TRUE_P(res));
 }
 
@@ -4098,7 +4100,8 @@ static int call_mix_amp_changed_hook(mix_info *md)
   if ((md) && 
       (HOOKED(mix_amp_changed_hook)))
     res = g_c_run_progn_hook(mix_amp_changed_hook,
-			     SCM_LIST1(TO_SMALL_SCM_INT(md->id)));
+			     SCM_LIST1(TO_SMALL_SCM_INT(md->id)),
+			     S_mix_amp_changed_hook);
   return(SCM_TRUE_P(res));
 }
 
@@ -4109,7 +4112,8 @@ static int call_mix_position_changed_hook(mix_info *md, int samps)
       (HOOKED(mix_position_changed_hook)))
     res = g_c_run_progn_hook(mix_position_changed_hook,
 			     SCM_LIST2(TO_SMALL_SCM_INT(md->id),
-				       TO_SCM_INT(samps)));
+				       TO_SCM_INT(samps)),
+			     S_mix_position_changed_hook);
   return(SCM_TRUE_P(res));
 }
 #endif

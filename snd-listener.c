@@ -382,7 +382,7 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
   GUI_STATS_TEXT_INSERT(stats_form, pos, str);
   free(str);
 #endif
-#if HAVE_GUILE && HAVE_CLOCK && HAVE_LONG_LONGS
+#if HAVE_GUILE && HAVE_CLOCK && HAVE_LONG_LONGS && HAVE_SCM_NUM2LONG_LONG
   {
     SCM stats;
     long long gc_swept = 0, gc_heap = 0, gc_cells = 0;

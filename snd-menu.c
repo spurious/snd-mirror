@@ -312,7 +312,8 @@ int dont_exit(snd_state *ss)
   SCM res = SCM_BOOL_F;
   if (HOOKED(exit_hook))
     res = g_c_run_or_hook(exit_hook, 
-			  SCM_LIST0);
+			  SCM_LIST0,
+			  S_exit_hook);
   return(SCM_TRUE_P(res));
 }
 #endif
@@ -545,7 +546,7 @@ static char *output_name(void)
       SCM procs = SCM_HOOK_PROCEDURES (output_name_hook);
       while (SCM_NIMP (procs))
 	{
-	  result = g_call0(SCM_CAR(procs));
+	  result = g_call0(SCM_CAR(procs), S_output_name_hook);
 	  if (gh_string_p(result)) return(TO_NEW_C_STRING(result));
 	  procs = SCM_CDR (procs);
 	}
@@ -677,7 +678,7 @@ menu is the index returned by add-to-main-menu, func should be a function of no 
 void g_snd_callback(int callb)
 {
   if ((callb >= 0) && (menu_functions[callb]))
-    g_call0(menu_functions[callb]);
+    g_call0(menu_functions[callb], "menu callback func");
 }
 
 static SCM g_remove_from_menu(SCM menu, SCM label)

@@ -1,5 +1,9 @@
 snd change log
 
+  22-Mar:    removed snd-noscm.c.
+             sndlib-scm calls that fail throw 'mus-error now, rather than returning -1.
+             files-popup-buffer in examp.scm (thanks to Anders Vinjar).
+             select-sound-hook, select-channel-hook.
   21-Mar:    mus-expand-filename.
              open-raw-sound-hook (old raw-* variables are obsolete).
   20-Mar:    mouse-enter-label hook function needs full filename (thanks to Anders Vinjar).

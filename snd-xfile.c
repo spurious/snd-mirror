@@ -1068,7 +1068,7 @@ ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *seco
 #if HAVE_HOOKS
 static SCM mouse_name_enter_hook, mouse_name_leave_hook;
 
-static void mouse_name_leave_or_enter(regrow *r, SCM hook)
+static void mouse_name_leave_or_enter(regrow *r, SCM hook, const char *caller)
 {
   XmString s1;
   char *label = NULL;
@@ -1099,18 +1099,19 @@ static void mouse_name_leave_or_enter(regrow *r, SCM hook)
 	g_c_run_progn_hook(hook,
 			   SCM_LIST3(TO_SMALL_SCM_INT(r->parent),
 				     TO_SMALL_SCM_INT(r->pos),
-				     TO_SCM_STRING(label)));
+				     TO_SCM_STRING(label)),
+			   caller);
     }
 }
 
 static void mouse_name_enter(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
-  mouse_name_leave_or_enter((regrow *)context, mouse_name_enter_hook);
+  mouse_name_leave_or_enter((regrow *)context, mouse_name_enter_hook, S_mouse_enter_label_hook);
 }
 
 static void mouse_name_leave(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
-  mouse_name_leave_or_enter((regrow *)context, mouse_name_leave_hook);
+  mouse_name_leave_or_enter((regrow *)context, mouse_name_leave_hook, S_mouse_leave_label_hook);
 }
 #endif
 
@@ -1229,7 +1230,6 @@ void view_curfiles_set_row_name(int pos)
   regrow *r;
   char *str;
   r = cur_name_row[pos];
-  XtUnmanageChild(r->rw);
   str = view_curfiles_name(r->pos);
   set_button_label_bold(r->nm, str);
   FREE(str);
@@ -1869,64 +1869,11 @@ static file_info *read_raw_dialog(char *filename, snd_state *ss)
   return(hdr);
 }
 
-#if HAVE_HOOKS
-static SCM open_raw_sound_hook;
-#endif
-
-/* TODO: remove raw-chans et al in favor of open-raw-sound-hook
- * TODO: gtk version of open-raw-sound-hook
- * TODO: snd-test cases for open-raw-sound-hook (and doc and index etc)
- */
-
-file_info *get_raw_file_info(char *filename, snd_state *ss)
+file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss)
 {
   /* put up dialog for srate, chans, data format */
   XmString xstr;
   char *str;
-#if HAVE_HOOKS
-  SCM res;
-  file_info *hdr = NULL;
-  int len, srate, chans, data_format, data_location, bytes;
-  if (HOOKED(open_raw_sound_hook))
-    {
-      res = g_c_run_progn_hook(open_raw_sound_hook,
-			       SCM_LIST1(TO_SCM_STRING(filename)));
-      if (gh_list_p(res))
-	{
-	  len = gh_length(res);
-	  chans = TO_C_INT(gh_list_ref(res, 0));
-	  if (len > 1) srate = TO_C_INT(gh_list_ref(res, 1)); else srate = raw_srate(ss);
-	  if (len > 2) data_format = TO_C_INT(gh_list_ref(res, 2)); else data_format = raw_format(ss);
-	  if (len > 3) data_location = TO_C_INT(gh_list_ref(res, 3)); else data_location = 0;
-	  if (len > 4) bytes = TO_C_INT(gh_list_ref(res, 4)); else bytes = mus_sound_length(filename);
-	  mus_header_set_raw_defaults(srate, chans, data_format);
-	  mus_sound_override_header(filename, srate, chans, data_format, MUS_RAW, data_location,
-				    mus_bytes_to_samples(data_format, bytes - data_location));
-	  hdr = (file_info *)CALLOC(1, sizeof(file_info));
-	  hdr->name = copy_string(filename);
-	  hdr->type = MUS_RAW;
-	  hdr->srate = mus_sound_srate(filename);
-	  hdr->chans = mus_sound_chans(filename);
-	  hdr->format = mus_sound_data_format(filename);
-	  hdr->samples = mus_sound_samples(filename); /* total samples, not per channel */
-	  hdr->data_location = mus_sound_data_location(filename);
-	  hdr->comment = NULL;
-	  return(hdr);
-	}
-    }
-#endif
-  if (use_raw_defaults(ss))
-    {
-      /* choices already made, so just send back a header that reflects those choices */
-      if (mus_file_probe(filename))
-	return(make_file_info_1(filename, ss));
-      else
-	{
-	  snd_error("can't find raw (headerless) file %s: %s",
-		    filename, strerror(errno));
-	  return(NULL);
-	}
-    }
   if (!raw_data_dialog) 
     make_raw_data_dialog(filename, ss);
   else
@@ -2310,13 +2257,6 @@ See also nb.scm."
 
   mouse_name_enter_hook = MAKE_HOOK(S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook);
   mouse_name_leave_hook = MAKE_HOOK(S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);
-
-#define H_open_raw_sound_hook S_open_raw_sound_hook " (filename) is called when a headerless sound file is opened. \
-Its result can be a list describing the raw file's attributes (thereby bypassing the Raw File Dialog and so on). \
-The list is interpreted as '(chans srate data-format data-location data-length) where the final two elements can \
-be omitted (location defaults to 0, and length defaults to the file length in bytes)."
-
-  open_raw_sound_hook =   MAKE_HOOK(S_open_raw_sound_hook, 1,    H_open_raw_sound_hook);    /* arg = filename */
 #endif
 }
 

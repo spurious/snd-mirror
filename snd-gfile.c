@@ -634,7 +634,7 @@ ww_info *make_title_row(snd_state *ss, GtkWidget *formw, char *first_str, char *
 #if HAVE_HOOKS
 static SCM mouse_name_enter_hook, mouse_name_leave_hook;
 
-static gint mouse_name(SCM hook, GtkWidget *w)
+static gint mouse_name(SCM hook, GtkWidget *w, const char *caller)
 {
   char *label = NULL;
   regrow *r;
@@ -657,7 +657,8 @@ static gint mouse_name(SCM hook, GtkWidget *w)
 	      g_c_run_progn_hook(hook,
 				 SCM_LIST3(TO_SMALL_SCM_INT(r->parent),
 					   TO_SMALL_SCM_INT(r->pos),
-					   TO_SCM_STRING(label)));
+					   TO_SCM_STRING(label)),
+				 caller);
 	    }
 	}
     }
@@ -666,12 +667,12 @@ static gint mouse_name(SCM hook, GtkWidget *w)
 
 static gint label_enter_callback(GtkWidget *w, GdkEventCrossing *ev)
 {
-  return(mouse_name(mouse_name_enter_hook, w));
+  return(mouse_name(mouse_name_enter_hook, w, S_mouse_enter_label_hook));
 }
 
 static gint label_leave_callback(GtkWidget *w, GdkEventCrossing *ev)
 {
-  return(mouse_name(mouse_name_leave_hook, w));
+  return(mouse_name(mouse_name_leave_hook, w, S_mouse_leave_label_hook));
 }
 
 #endif
@@ -1273,21 +1274,9 @@ static file_info *read_raw_dialog(char *filename, snd_state *ss)
   return(hdr);
 }
 
-file_info *get_raw_file_info(char *filename, snd_state *ss)
+file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss)
 {
-  /* put up dialog for srate, chans, data format */
   char *str;
-  if (use_raw_defaults(ss))
-    {
-      /* choices already made, so just send back a header that reflects those choices */
-      if (mus_file_probe(filename))
-	return(make_file_info_1(filename, ss));
-      else
-	{
-	  snd_error("can't find raw (headerless) file %s: %s", filename, strerror(errno));
-	  return(NULL);
-	}
-    }
   if (!raw_data_dialog) make_raw_data_dialog(ss);
   str = (char *)CALLOC(256, sizeof(char));
   sprintf(str, "No header found for %s", filename_without_home_directory(filename));

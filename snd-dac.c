@@ -594,7 +594,7 @@ static void reverb(void *ur, Float **rins, MUS_SAMPLE_TYPE **outs, int ind)
       {
 	SCM res;
 	if (!ur) return;
-	res = g_call3(g_reverb, (SCM)ur, v_ins, v_outs);
+	res = g_call3(g_reverb, (SCM)ur, v_ins, v_outs, __FUNCTION__);
 	if (!(vct_p(res)))
 	  {
 	    stop_playing_all_sounds();
@@ -661,7 +661,7 @@ static void free_reverb(void *ur)
       break;
     case USERVERB:
 #if HAVE_GUILE
-      g_call1(g_free_reverb, (SCM)ur);
+      g_call1(g_free_reverb, (SCM)ur, "free-reverb");
 #endif
       break;
     }
@@ -805,7 +805,8 @@ static void *make_reverb(snd_info *sp, int chans)
 #if HAVE_GUILE
       global_rev = (void *)g_call2(g_make_reverb,
 				   TO_SMALL_SCM_INT(sp->index),
-				   TO_SMALL_SCM_INT(chans));
+				   TO_SMALL_SCM_INT(chans),
+				   __FUNCTION__);
       if (SCM_SYMBOLP((SCM)global_rev))
 	{
 	  report_in_minibuffer(sp, "make-reverb unhappy?");
@@ -826,7 +827,8 @@ static Float contrast (dac_info *dp, Float amp, Float index, Float inval)
   if (use_g_contrast)
     return(amp * TO_C_DOUBLE(g_call2(g_contrast,
 				     TO_SCM_DOUBLE(dp->contrast_amp * inval),
-				     TO_SCM_DOUBLE(index))));
+				     TO_SCM_DOUBLE(index),
+				     __FUNCTION__)));
 #endif
   return(amp * mus_contrast_enhancement(dp->contrast_amp * inval, index));
 }
@@ -1603,7 +1605,8 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 #if HAVE_HOOKS
       if (HOOKED(play_hook))
 	g_c_run_progn_hook(play_hook, 
-			   SCM_LIST1(TO_SCM_INT(frames)));
+			   SCM_LIST1(TO_SCM_INT(frames)),
+			   S_play_hook);
 #endif
       cursor_time += frames;
       cursor_change = (cursor_time >= CURSOR_UPDATE_INTERVAL);
@@ -2804,7 +2807,8 @@ static void call_stop_playing_hook(snd_info *sp)
 {
   if (HOOKED(stop_playing_hook))
     g_c_run_or_hook(stop_playing_hook,
-		    SCM_LIST1(TO_SMALL_SCM_INT(sp->index)));
+		    SCM_LIST1(TO_SMALL_SCM_INT(sp->index)),
+		    S_stop_playing_hook);
 }
 
 static void call_stop_playing_channel_hook(snd_info *sp, chan_info *cp)
@@ -2812,14 +2816,16 @@ static void call_stop_playing_channel_hook(snd_info *sp, chan_info *cp)
   if (HOOKED(stop_playing_channel_hook))
     g_c_run_or_hook(stop_playing_channel_hook,
 		    SCM_LIST2(TO_SMALL_SCM_INT(sp->index),
-			      TO_SMALL_SCM_INT(cp->chan)));
+			      TO_SMALL_SCM_INT(cp->chan)),
+		    S_stop_playing_channel_hook);
 }
 
 static void call_stop_playing_region_hook(int n)
 {
   if (HOOKED(stop_playing_region_hook))
     g_c_run_or_hook(stop_playing_region_hook,
-		    SCM_LIST1(TO_SMALL_SCM_INT(n)));
+		    SCM_LIST1(TO_SMALL_SCM_INT(n)),
+		    S_stop_playing_region_hook);
 }
 
 static int call_start_playing_hook(snd_info *sp)
@@ -2827,7 +2833,8 @@ static int call_start_playing_hook(snd_info *sp)
   SCM stop = SCM_BOOL_F;
   if (HOOKED(start_playing_hook))
     stop = g_c_run_or_hook(start_playing_hook,
-			   SCM_LIST1(TO_SMALL_SCM_INT(sp->index)));
+			   SCM_LIST1(TO_SMALL_SCM_INT(sp->index)),
+			   S_start_playing_hook);
   return(SCM_TRUE_P(stop));
 }
 #endif

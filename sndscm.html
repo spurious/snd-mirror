@@ -2666,7 +2666,20 @@ In CLM-in-Scheme, the first (simpler) fcomb above might be:
 	(make-one-zero a0 a1)
 	feedback))
 </pre>
-<p>We could probably use Guile's object system to conjure up fcomb
+<p>Or perhaps a more Schemey method would be:
+</p>
+<pre>
+(define (fcomb gen input)
+  (gen input))	
+
+(define (make-fcomb length feedback a0 a1)
+  (let ((dly (make-delay length))
+        (flt (make-one-zero a0 a1)))
+    (lambda (input)
+      (dly (+ input (* (flt (tap dly)) feedback))))))
+</pre>
+<p>(Here we're returning a closure that packages up the generator's state). 
+We could probably use Guile's object system to conjure up fcomb
 classes and methods in Scheme.
 But, leaving that for a rainy day, our more immediate interest is how to do the same thing in CLM-in-C (clm.c).
 The following is extracted from snd-dac.c's translation of Fernando's

@@ -341,7 +341,8 @@ static void handle_input(XtPointer context, int *fd, XtInputId *id)
 {
   int input_index = (int)context;
   g_call1(added_input_callbacks[input_index],
-	  TO_SCM_INT(*fd));
+	  TO_SCM_INT(*fd),
+	  "input callback");
 }
 
 static SCM g_load_font(SCM font)
@@ -392,7 +393,8 @@ static void handle_input(gpointer context, gint fd, GdkInputCondition condition)
 {
   int input_index = (int)context;
   g_call1(added_input_callbacks[input_index],
-	  TO_SCM_INT(fd));
+	  TO_SCM_INT(fd),
+	  "input callback");
 }
 
 static SCM g_load_font(SCM font)
@@ -467,7 +469,7 @@ static SCM g_remove_input(SCM id)
 
 static BACKGROUND_TYPE call_idler(GUI_POINTER code)
 {
-  if (SCM_TRUE_P(g_call0(SND_UNWRAP((SCM)code))))
+  if (SCM_TRUE_P(g_call0(SND_UNWRAP((SCM)code), "idler callback")))
     return(BACKGROUND_CONTINUE);
   return(BACKGROUND_QUIT);
 }

@@ -287,7 +287,7 @@ typedef struct snd__state {
    *              included in snd-help.c's variable list
    *              documented in extsnd.html
    *              several styles of tests in snd-test.scm
-   *              brought out to user in snd-scm.c (and possibly snd-noscm.c)
+   *              brought out to user via Guile
    */
   int Show_Fft_Peaks, Show_Y_Zero, Show_Marks, Fft_Log_Frequency, Fft_Log_Magnitude, Channel_Style, Sound_Style, Show_Axes;
   char *Eps_File, *Temp_Dir, *Audio_State_File, *Save_Dir;
@@ -628,6 +628,9 @@ sync_info *make_simple_sync (chan_info *cp, int beg);
 sync_info *sync_to_chan(chan_info *cp);
 snd_info *find_sound(snd_state *ss, char *name);
 void display_info(snd_info *sp);
+#if HAVE_GUILE
+  void g_init_data(SCM local_doc);
+#endif
 
 
 
@@ -732,33 +735,32 @@ char *added_transform_name(int type);
 #endif
 
 
-/* -------- snd-scm.c, snd-noscm.c -------- */
+/* -------- snd-scm.c -------- */
 
 #if HAVE_GUILE
-  SCM snd_catch_any(scm_catch_body_t body, void *body_data);
+  SCM snd_catch_any(scm_catch_body_t body, void *body_data, const char *caller);
   SCM snd_set_object_property(SCM obj, SCM key, SCM val);
   SCM parse_proc(char *buf);
   int ignore_mus_error(int type, char *msg);
   void g_initialize_gh(snd_state *ss);
   SCM eval_str_wrapper(void *data);
-  SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args);
   char *gh_print_1(SCM obj, const char *caller);
   chan_info *get_cp(SCM scm_snd_n, SCM scm_chn_n, const char *caller);
   snd_info *get_sp(SCM scm_snd_n);
   SCM g_c_make_sample_reader(snd_fd *fd);
-  SCM g_call0(SCM proc);
-  SCM g_call1(SCM proc, SCM arg);
-  SCM g_call2(SCM proc, SCM arg1, SCM arg2);
-  SCM g_call3(SCM proc, SCM arg1, SCM arg2, SCM arg3);
-  SCM g_call_any(SCM proc, SCM arglist);
+  SCM g_call0(SCM proc, const char *caller);
+  SCM g_call1(SCM proc, SCM arg, const char *caller);
+  SCM g_call2(SCM proc, SCM arg1, SCM arg2, const char *caller);
+  SCM g_call3(SCM proc, SCM arg1, SCM arg2, SCM arg3, const char *caller);
+  SCM g_call_any(SCM proc, SCM arglist, const char *caller);
   char *procedure_ok(SCM proc, int req_args, int opt_args, const char *caller, const char *arg_name, int argn);
   int procedure_ok_with_error(SCM proc, int req_args, int opt_args, const char *caller, const char *arg_name, int argn);
   void snd_protect(SCM obj);
   void snd_unprotect(SCM obj);
   int to_c_int_or_else(SCM obj, int fallback, const char *origin);
-  SCM g_c_run_or_hook (SCM hook, SCM args);
-  SCM g_c_run_and_hook (SCM hook, SCM args);
-  SCM g_c_run_progn_hook (SCM hook, SCM args);
+  SCM g_c_run_or_hook (SCM hook, SCM args, const char *caller);
+  SCM g_c_run_and_hook (SCM hook, SCM args, const char *caller);
+  SCM g_c_run_progn_hook (SCM hook, SCM args, const char *caller);
   void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_help,
 				    char *set_name, SCM (*set_func)(), 
 				    SCM local_doc,

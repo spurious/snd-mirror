@@ -1893,7 +1893,8 @@ static void call_mark_drag_hook(int id)
 {
   if (HOOKED(mark_drag_hook))
     g_c_run_progn_hook(mark_drag_hook,
-		       SCM_LIST1(TO_SMALL_SCM_INT(id)));
+		       SCM_LIST1(TO_SMALL_SCM_INT(id)),
+		       S_mark_drag_hook);
 }
 #endif
 

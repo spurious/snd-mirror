@@ -223,7 +223,7 @@ void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
 	      for (k = 0; k < chan_dur; k++)
 		{
 		  res = g_call1(sp->eval_proc,
-				TO_SCM_DOUBLE((double)next_sample_to_float(sf)));
+				TO_SCM_DOUBLE((double)next_sample_to_float(sf)), __FUNCTION__);
 		  if (SCM_SYMBOLP(res))
 		    {
 		      for (j = chan; j < si->chans; j++) 
@@ -331,7 +331,8 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 	  for (kp = 0; kp < num; kp++)
 	    {
 	      res = g_call1(proc,
-			    TO_SCM_DOUBLE((double)next_sample_to_float(sf)));
+			    TO_SCM_DOUBLE((double)next_sample_to_float(sf)),
+			    origin);
 	      if ((SCM_NFALSEP(res)) || 
 		  (SCM_SYMBOLP(res)))
 		{
@@ -442,7 +443,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
       for (kp = 0; kp < num; kp++)
 	{
 	  vdata[0] = TO_SCM_DOUBLE((double)next_sample_to_float(sfs[0]));
-	  res = g_call2(proc, args, gh_chans);
+	  res = g_call2(proc, args, gh_chans, origin);
 	  if ((SCM_NFALSEP(res)) || 
 	      (SCM_SYMBOLP(res))) 
 	    {
@@ -468,7 +469,7 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
 	{
 	  for (ip = 0; ip < si->chans; ip++)
 	    vdata[ip] = TO_SCM_DOUBLE((double)next_sample_to_float(sfs[ip]));
-	  res = g_call2(proc, args, gh_chans);
+	  res = g_call2(proc, args, gh_chans, origin);
 	  if ((SCM_NFALSEP(res)) || 
 	      (SCM_SYMBOLP(res))) 
 	    {
@@ -659,7 +660,8 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 	  for (kp = 0; kp < num; kp++)
 	    {
 	      res = g_call1(proc, 
-			    TO_SCM_DOUBLE((double)next_sample_to_float(sf)));
+			    TO_SCM_DOUBLE((double)next_sample_to_float(sf)),
+			    origin);
 	      if (SCM_NFALSEP(res))                      /* if #f, no output on this pass */
 		{
 		  if (res != SCM_BOOL_T)                 /* if #t we halt the entire map */
@@ -786,7 +788,7 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
     {
       for (ip = 0; ip < si->chans; ip++)
 	vargs[ip] = TO_SCM_DOUBLE((double)next_sample_to_float(sfs[ip]));
-      res = g_call2(proc, args, gh_chans);
+      res = g_call2(proc, args, gh_chans, origin);
                                                       /* #f -> no output in any channel, #t -> halt */
       if (SCM_NFALSEP(res))                           /* if #f, no output on this pass */
 	{

@@ -164,7 +164,8 @@ static void who_called(GtkWidget *w, GdkEvent *event, gpointer context)
 #if HAVE_HOOKS
 	    if ((!(HOOKED(property_changed_hook))) ||
 		(!(g_c_run_or_hook(property_changed_hook,
-				   TO_SCM_STRING((char *)(version[0]))))))
+				   TO_SCM_STRING((char *)(version[0])),
+				   S_property_changed_hook))))
 #endif
 	      snd_eval_listener_str(ss, (char *)(version[0]));
 	      free(version[0]);

@@ -531,7 +531,8 @@ static void graph_mouse_enter(Widget w, XtPointer context, XEvent *event, Boolea
   if (HOOKED(mouse_enter_graph_hook))
     g_c_run_progn_hook(mouse_enter_graph_hook,
 		       SCM_LIST2(TO_SMALL_SCM_INT(UNPACK_SOUND(data)),
-				 TO_SMALL_SCM_INT(UNPACK_CHANNEL(data))));
+				 TO_SMALL_SCM_INT(UNPACK_CHANNEL(data))),
+		       S_mouse_enter_graph_hook);
 #endif
   XDefineCursor(XtDisplay(w), XtWindow(w), (ss->sgx)->graph_cursor);
 }
@@ -544,7 +545,8 @@ static void graph_mouse_leave(Widget w, XtPointer context, XEvent *event, Boolea
   if (HOOKED(mouse_leave_graph_hook))
     g_c_run_progn_hook(mouse_leave_graph_hook,
 		       SCM_LIST2(TO_SMALL_SCM_INT(UNPACK_SOUND(data)),
-				 TO_SMALL_SCM_INT(UNPACK_CHANNEL(data))));
+				 TO_SMALL_SCM_INT(UNPACK_CHANNEL(data))),
+		       S_mouse_leave_graph_hook);
 #endif
   XUndefineCursor(XtDisplay(w), XtWindow(w));
 }

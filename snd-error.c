@@ -139,7 +139,8 @@ int ignore_mus_error(int type, char *msg)
   if (HOOKED(mus_error_hook))
     result = g_c_run_or_hook(mus_error_hook, 
 			     SCM_LIST2(TO_SCM_INT(type), 
-				       TO_SCM_STRING(msg)));
+				       TO_SCM_STRING(msg)),
+			     S_mus_error_hook);
   return(SCM_NFALSEP(result));
 }
 
@@ -148,7 +149,8 @@ static int ignore_snd_error(char *msg)
   SCM result = SCM_BOOL_F;
   if (HOOKED(snd_error_hook))
     result = g_c_run_or_hook(snd_error_hook, 
-			     SCM_LIST1(TO_SCM_STRING(msg)));
+			     SCM_LIST1(TO_SCM_STRING(msg)),
+			     S_snd_error_hook);
   return(SCM_NFALSEP(result));
 }
 
@@ -157,7 +159,8 @@ static int ignore_snd_warning(char *msg)
   SCM result = SCM_BOOL_F;
   if (HOOKED(snd_warning_hook))
     result = g_c_run_or_hook(snd_warning_hook, 
-			     SCM_LIST1(TO_SCM_STRING(msg)));
+			     SCM_LIST1(TO_SCM_STRING(msg)),
+			     S_snd_warning_hook);
   return(SCM_NFALSEP(result));
 }
 

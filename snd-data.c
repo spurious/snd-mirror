@@ -591,9 +591,19 @@ chan_info *selected_channel(snd_state *ss)
   return(NULL);
 }
 
+#if HAVE_HOOKS
+static SCM select_sound_hook, select_channel_hook;
+#endif
+
 static void select_sound (snd_state *ss, snd_info *sp)
 {
   snd_info *osp = NULL;
+#if HAVE_HOOKS
+  if (HOOKED(select_sound_hook))
+    g_c_run_progn_hook(select_sound_hook,
+		       SCM_LIST1(TO_SCM_INT(sp->index)),
+		       S_select_sound_hook);
+#endif
   if (ss->selected_sound != sp->index)
     {
       if (!ss->using_schemes)
@@ -639,6 +649,13 @@ void select_channel(snd_info *sp, int chan)
 	  if (sp != cp->sound) (cp->sound)->selected_channel = NO_SELECTION;
 	  update_graph(cp, NULL);
 	}
+#if HAVE_HOOKS
+  if (HOOKED(select_channel_hook))
+    g_c_run_progn_hook(select_channel_hook,
+		       SCM_LIST2(TO_SCM_INT(sp->index),
+				 TO_SCM_INT(chan)),
+		       S_select_channel_hook);
+#endif
       ncp = sp->chans[chan];
       reflect_undo_or_redo_in_menu(ncp);
       recolor_graph(ncp, TRUE);
@@ -815,3 +832,19 @@ void display_info(snd_info *sp)
 	}
     }
 }
+
+#if HAVE_GUILE
+
+void g_init_data(SCM local_doc)
+{
+  #define H_select_sound_hook S_select_sound_hook " is called whenever a sound is selected. \
+Its argument is the sound index."
+
+  #define H_select_channel_hook S_select_channel_hook " is called whenever a channel is selected. \
+Its argument is the sound index and the channel number."
+
+  select_sound_hook = MAKE_HOOK(S_select_sound_hook, 1, H_select_sound_hook); /* arg = sound index */
+  select_channel_hook = MAKE_HOOK(S_select_channel_hook, 2, H_select_channel_hook); /* args = sound index, channel */
+}
+
+#endif

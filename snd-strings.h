@@ -717,9 +717,11 @@
 #define S_search_procedure              "search-procedure"
 #define S_select_all                    "select-all"
 #define S_select_channel                "select-channel"
+#define S_select_channel_hook           "select-channel-hook"
 #define S_select_mix                    "select-mix"
 #define S_select_region                 "select-region"
 #define S_select_sound                  "select-sound"
+#define S_select_sound_hook             "select-sound-hook"
 #define S_selected_channel              "selected-channel"
 #define S_selected_data_color           "selected-data-col" STR_OR
 #define S_selected_graph_color          "selected-graph-col" STR_OR

@@ -464,7 +464,7 @@ void highlight_selected_sound(snd_state *ss);
 void View_Files_Callback(Widget w, XtPointer clientData, XtPointer callData);
 void start_file_dialog(snd_state *ss, int width, int height);
 int file_dialog_is_active(void);
-file_info *get_raw_file_info(char *filename, snd_state *ss);
+file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss);
 file_info *get_reasonable_file_info(char *filename, snd_state *ss, file_info *hdr);
 void File_Mix_Callback(Widget w, XtPointer clientData, XtPointer callData);
 void edit_header(snd_info *sp);

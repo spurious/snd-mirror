@@ -21,9 +21,6 @@ static void mus_error2snd(int type, char *msg)
 #if HAVE_GUILE
   if (!(ignore_mus_error(type, msg)))
     {
-#endif
-      snd_error(msg);
-#if HAVE_GUILE
       if (ss->catch_exists) /* damned thing aborts main program if throw to tag is not caught! */
 	{
 	  if (msg == NULL)
@@ -32,8 +29,11 @@ static void mus_error2snd(int type, char *msg)
 	  else scm_throw(MUS_MISC_ERROR,
 			 SCM_LIST1(TO_SCM_STRING(msg)));
 	}
+      /* else we're not called from guile? */
     }
+  else return;
 #endif
+  snd_error(msg);
 }
 
 static void mus_print2snd(char *msg)
@@ -96,7 +96,20 @@ static void mus_print2snd(char *msg)
       else
 	if (strcmp(argv[i], "--help") == 0)
 	  {
-	    fprintf(stdout, "Snd is a sound editor.  Execute it and peruse the 'help' menu for details.\n");
+	    fprintf(stdout, "Snd is a sound editor.");
+#if HAVE_GUILE
+#if USE_NO_GUI
+	    fprintf(stdout, "  Try the snd-help function for more help.\n");
+#else
+	    fprintf(stdout, "  Peruse the 'help' menu or try the snd-help function for help.\n");
+#endif
+#else
+#if USE_NO_GUI
+	    fprintf(stdout, "  Since you haven't loaded Guile or any interface code, there's not much it can do.\n");
+#else
+	    fprintf(stdout, "  Peruse the 'help' menu for help, but you should make a real effort to get Guile.\n");
+#endif
+#endif
 	    fprintf(stdout, version_info());
 	    snd_exit(0);
 	  }

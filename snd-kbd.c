@@ -267,7 +267,7 @@ static int call_user_keymap(int hashedsym, int count)
   if (user_keymap[hashedsym].func != SCM_UNDEFINED)
     for (i = 0; i < count; i++) 
       {
-	funcres = g_call0(user_keymap[hashedsym].func);
+	funcres = g_call0(user_keymap[hashedsym].func, "user key func");
 	if (SCM_SYMBOLP(funcres)) break; /* error tag returned? */
 	res = TO_C_INT_OR_ELSE(funcres, KEYBOARD_NO_ACTION);
       }
@@ -809,7 +809,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	  snd_protect(proc);
 	  if ((sp->prompt_callback) && 
 	      (gh_procedure_p(sp->prompt_callback)))
-	    g_call2(sp->prompt_callback, proc, TO_SMALL_SCM_INT(sp->index));
+	    g_call2(sp->prompt_callback, proc, TO_SMALL_SCM_INT(sp->index), "prompt callback func");
 	  snd_unprotect(proc);
 	  if (str) free(str);
 	  sp->prompting = 0;

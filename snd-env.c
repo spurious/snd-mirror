@@ -1229,7 +1229,7 @@ static int x_increases(SCM res)
 env *string2env(char *str) 
 {
   SCM res;
-  res = snd_catch_any(eval_str_wrapper, str);
+  res = snd_catch_any(eval_str_wrapper, str, "string->env");
   if (gh_list_p(res))
     {
       if ((gh_length(res) % 2) == 0)
@@ -1319,7 +1319,7 @@ void add_or_edit_symbol(char *name, env *val)
   else sprintf(buf, "(define %s %s)", 
 	       name, 
 	       tmpstr = env_to_string(val));
-  snd_catch_any(eval_str_wrapper, buf);
+  snd_catch_any(eval_str_wrapper, buf, buf);
   FREE(buf);
   if (tmpstr) FREE(tmpstr);
 }
@@ -1411,7 +1411,8 @@ int check_enved_hook(env *e, int pos, Float x, Float y, int reason)
 					TO_SMALL_SCM_INT(pos),
 					TO_SCM_DOUBLE(x),
 					TO_SCM_DOUBLE(y),
-					TO_SMALL_SCM_INT(reason)));
+					TO_SMALL_SCM_INT(reason)),
+			      S_enved_hook);
 	  procs = SCM_CDR (procs);
 	  if ((SCM_NFALSEP(result)) && 
 	      (gh_list_p(result)))
@@ -1473,4 +1474,10 @@ stretch-envelope from env.scm: \n\
   enved_hook = MAKE_HOOK(S_enved_hook, 5, H_enved_hook);
 }
 
+#endif
+
+#if (!HAVE_GUILE)
+env *string2env(char *str) {return(NULL);}
+void add_or_edit_symbol(char *name, env *val) {}
+env *name_to_env(char *str) {return(NULL);}
 #endif

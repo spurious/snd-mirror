@@ -121,7 +121,8 @@ static int call_menu_hook(char *name, char *option)
   if ((name) && (HOOKED(menu_hook)))
     res = g_c_run_and_hook(menu_hook, 
 			   SCM_LIST2(TO_SCM_STRING(name), 
-				     TO_SCM_STRING(option)));
+				     TO_SCM_STRING(option)),
+			   S_menu_hook);
   return(SCM_TRUE_P(res));
 }
 #define IF_MENU_HOOK(NAME, OPTION) if (call_menu_hook(NAME, OPTION))
@@ -704,6 +705,9 @@ GtkWidget *add_menu(snd_state *ss)
   set_background(mw[v_listener_menu], (ss->sgx)->basic_color);
   gtk_widget_show(mw[v_listener_menu]);
   gtk_signal_connect(GTK_OBJECT(mw[v_listener_menu]), "activate", GTK_SIGNAL_FUNC(View_Listener_Callback), (gpointer)ss);
+#if (!HAVE_GUILE)
+  set_sensitive(mw[v_listener_menu], FALSE);
+#endif
 
   mw[v_mix_panel_menu] = gtk_menu_item_new_with_label(STR_Mix_Panel);
   gtk_menu_append(GTK_MENU(mw[v_cascade_menu]), mw[v_mix_panel_menu]);

@@ -446,7 +446,7 @@ static SCM vct_map(SCM obj, SCM proc)
 #if USE_SND
   if (v) 
     for (i = 0; i < v->length; i++) 
-      v->data[i] = TO_C_DOUBLE(g_call0(proc));
+      v->data[i] = TO_C_DOUBLE(g_call0(proc, S_vct_mapB));
 #else
   if (v) 
     for (i = 0; i < v->length; i++) 
@@ -466,7 +466,7 @@ static SCM vct_do(SCM obj, SCM proc)
 #if USE_SND
   if (v) 
     for (i = 0; i < v->length; i++) 
-      v->data[i] = TO_C_DOUBLE(g_call1(proc, TO_SCM_INT(i)));
+      v->data[i] = TO_C_DOUBLE(g_call1(proc, TO_SCM_INT(i), S_vct_doB));
 #else
   if (v) 
     for (i = 0; i < v->length; i++) 
@@ -517,7 +517,7 @@ static SCM vcts_map(SCM args)
   for (i = 0; i < vsize; i++)
     {
 #if USE_SND
-      arg = g_call1(proc, svi);
+      arg = g_call1(proc, svi, S_vcts_mapB);
 #else
       arg = gh_call1(proc, svi);
 #endif
@@ -573,7 +573,7 @@ static SCM vcts_do(SCM args)
   for (i = 0; i < vsize; i++)
     {
 #if USE_SND
-      arg = g_call2(proc, svi, TO_SCM_INT(i));
+      arg = g_call2(proc, svi, TO_SCM_INT(i), S_vcts_doB);
 #else
       arg = gh_call2(proc, svi, TO_SCM_INT(i));
 #endif

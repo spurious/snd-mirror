@@ -3073,7 +3073,7 @@ static SCM g_as_one_edit(SCM proc, SCM origin)
       cur_edits = (int *)CALLOC(chans, sizeof(int));
       chan_ctr = 0;
       map_over_chans(ss, init_as_one_edit, (void *)cur_edits); /* redo here can't make sense, can it? */
-      result = g_call0(proc);
+      result = g_call0(proc, S_as_one_edit);
       chan_ctr = 0;
       map_over_chans(ss, finish_as_one_edit, (void *)cur_edits);
       FREE(cur_edits);
@@ -3515,14 +3515,14 @@ static int dont_edit(chan_info *cp)
 {
   SCM res = SCM_BOOL_F;
   if (HOOKED(cp->edit_hook))
-    res = g_c_run_or_hook(cp->edit_hook, SCM_EOL);
+    res = g_c_run_or_hook(cp->edit_hook, SCM_EOL, S_edit_hook);
   return(SCM_TRUE_P(res));
 }
 
 static void call_undo_hook(chan_info *cp, int undo)
 {
   if (HOOKED(cp->undo_hook))
-    g_c_run_progn_hook(cp->undo_hook, SCM_EOL);
+    g_c_run_progn_hook(cp->undo_hook, SCM_EOL, S_undo_hook);
 }
 
 static SCM save_hook;
@@ -3534,10 +3534,12 @@ static int dont_save(snd_state *ss, snd_info *sp, char *newname)
       if (newname)
 	res = g_c_run_or_hook(save_hook,
 			      SCM_LIST2(TO_SMALL_SCM_INT(sp->index),
-					TO_SCM_STRING(newname)));
+					TO_SCM_STRING(newname)),
+			      S_save_hook);
       else res = g_c_run_or_hook(save_hook,
 				 SCM_LIST2(TO_SMALL_SCM_INT(sp->index),
-					   SCM_BOOL_F));
+					   SCM_BOOL_F),
+				 S_save_hook);
     }
   return(SCM_TRUE_P(res));
 }

@@ -113,7 +113,10 @@ static int call_menu_hook(char *name, char *option)
 {
   SCM res = SCM_BOOL_T;
   if ((name) && (HOOKED(menu_hook)))
-    res = g_c_run_and_hook(menu_hook, SCM_LIST2(TO_SCM_STRING(name), TO_SCM_STRING(option)));
+    res = g_c_run_and_hook(menu_hook, 
+			   SCM_LIST2(TO_SCM_STRING(name), 
+				     TO_SCM_STRING(option)),
+			   S_menu_hook);
   return(SCM_TRUE_P(res));
 }
 #define IF_MENU_HOOK(NAME, OPTION) if (call_menu_hook(NAME, OPTION))
@@ -687,7 +690,11 @@ Widget add_menu(snd_state *ss)
   XtAddCallback(mw[v_ctrls_menu], XmNactivateCallback, View_Ctrls_Callback, ss);
   XtVaSetValues(mw[v_ctrls_menu], XmNmnemonic, 'S', NULL);
 
+#if HAVE_GUILE
   mw[v_listener_menu] = XtCreateManagedWidget(STR_Open_listener, xmPushButtonWidgetClass, mw[view_menu], main_args, main_n);
+#else
+  mw[v_listener_menu] = XtCreateManagedWidget(STR_Open_listener, xmPushButtonWidgetClass, mw[view_menu], in_args, in_n);
+#endif
   XtAddCallback(mw[v_listener_menu], XmNactivateCallback, View_Listener_Callback, ss);
   XtVaSetValues(mw[v_listener_menu], XmNmnemonic, 'L', NULL);
 

@@ -339,7 +339,8 @@ static void graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
   if (HOOKED(mouse_enter_graph_hook))
     g_c_run_progn_hook(mouse_enter_graph_hook,
 		       SCM_LIST2(TO_SMALL_SCM_INT(UNPACK_SOUND(pdata)),
-				 TO_SMALL_SCM_INT(UNPACK_CHANNEL(pdata))));
+				 TO_SMALL_SCM_INT(UNPACK_CHANNEL(pdata))),
+		       S_mouse_enter_graph_hook);
 #endif
   gdk_window_set_cursor(w->window, (((snd_state *)data)->sgx)->graph_cursor);
 }
@@ -352,7 +353,8 @@ static void graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
   if (HOOKED(mouse_leave_graph_hook))
     g_c_run_progn_hook(mouse_leave_graph_hook,
 		       SCM_LIST2(TO_SMALL_SCM_INT(UNPACK_SOUND(pdata)),
-				 TO_SMALL_SCM_INT(UNPACK_CHANNEL(pdata))));
+				 TO_SMALL_SCM_INT(UNPACK_CHANNEL(pdata))),
+		       S_mouse_leave_graph_hook);
 #endif
   gdk_window_set_cursor(w->window, (((snd_state *)data)->sgx)->arrow_cursor);
 }

@@ -1982,8 +1982,7 @@ opens filename assuming the data matches the attributes indicated unless the fil
 			filename,
 			TO_SCM_STRING(strerror(errno))));
   sp = snd_open_file(fname, ss);
-  /* snd_open_file -> snd_open_file_1 -> add_sound_window -> make_file_info -> get_raw_file_info */
-  /*   if defaults -> make_file_info_1 else -> make_raw_data_dialog -> read_raw_dialog */
+  /* snd_open_file -> snd_open_file_1 -> add_sound_window -> make_file_info -> raw_data_dialog_to_file_info */
   /*   so here if hooked, we'd need to save the current hook, make it return the current args, open, then restore */
   if (fname) FREE(fname);
   set_raw_srate(ss, os);
@@ -2604,7 +2603,8 @@ static int dont_babble_info(snd_info *sp)
   ind = TO_SMALL_SCM_INT(sp->index);
   if (HOOKED(name_click_hook))
     res = g_c_run_or_hook(name_click_hook, 
-			  SCM_LIST1(ind));
+			  SCM_LIST1(ind),
+			  S_name_click_hook);
   return(SCM_TRUE_P(res));
 #else
   return(0);

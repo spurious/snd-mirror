@@ -35,7 +35,7 @@ static SCM g_region_dialog(void)
 
 static void timed_eval(XtPointer in_code, XtIntervalId *id)
 {
-  g_call0((SCM)in_code);
+  g_call0((SCM)in_code, "timed callback func");
 }
 
 static SCM g_in(SCM ms, SCM code)

@@ -192,7 +192,9 @@ Finally, the line:</p>
 (with-sound () (simp 0 0.25 440.0 0.2))
 </pre>
 <p>opens an output sound file, calls simp, closes the file, and
-plays the result. 
+plays the result.  (This example may not work in "no-ffi" versions
+of CLM, Clisp in particular; in those cases, you need to use the
+"run" macro as explained below).
 Lisp compilers generate less-than-ideal numerical code, so we always
 wrap up the "run-time" portion of our instrument in the macro <a href="#run">run</a>.  If
 it can, <i>run</i> expands into C code to speed up the work.
@@ -3146,6 +3148,7 @@ current dynamic value of that variable is *&lt;var&gt;*.
   <a name="*clm-table-size*"><em class=def>*clm-table-size*</em></a>         default table-lookup table size
   <a name="*clm-srate*"><em class=def>*clm-srate*</em></a>              default sampling rate (22050)
   <a name="*clm-channels*"><em class=def>*clm-channels*</em></a>           default output channels (1)
+  <a name="*clm-delete-reverb*"><em class=def>*clm-delete-reverb*</em></a>      should with-sound delete the temporary reverb output (default t)
   <a name="*clm-play*"><em class=def>*clm-play*</em></a>               default for play arg in with-sound
   <a name="*clm-clipped*"><em class=def>*clm-clipped*</em></a>            default for clipped arg in with-sound
   <a name="*clm-notehook*"><em class=def>*clm-notehook*</em></a>           default for notehook arg in with-sound

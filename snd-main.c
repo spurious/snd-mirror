@@ -650,7 +650,8 @@ static int dont_start(snd_state *ss, char *filename)
   SCM res = SCM_BOOL_F;
   if (HOOKED(start_hook))
     res = g_c_run_or_hook(start_hook,
-			  SCM_LIST1(TO_SCM_STRING(filename)));
+			  SCM_LIST1(TO_SCM_STRING(filename)),
+			  S_start_hook);
   return(SCM_TRUE_P(res));
 }
 

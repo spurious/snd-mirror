@@ -76,6 +76,7 @@
 ;;; easily-fooled autocorrelation-based pitch tracker 
 ;;; local hook
 ;;; pointer focus within Snd
+;;; View: Files dialog chooses which sound is displayed
 
 
 ;;; TODO: robust pitch tracker
@@ -3089,3 +3090,26 @@
 ;(add-hook! mouse-enter-graph-hook (lambda (snd chn) (focus-widget (car (channel-widgets snd chn)))))
 ;(add-hook! mouse-enter-listener-hook (lambda (widget) (focus-widget widget)))
 
+
+;;; -------- View: Files dialog chooses which sound is displayed
+;;;
+;;; by Anders Vinjar
+;;;
+;;; this hides all sounds but the one the mouse touched in the current files list
+
+(define (files-popup-buffer type position name)
+  (let ((snd (find-sound name)))
+    (if snd
+	(let* ((curr-buffer (max 0 (selected-sound)))
+	       (width (car (widget-size (car (sound-widgets curr-buffer)))))
+	       (height (cadr (widget-size (car (sound-widgets curr-buffer))))))
+	  (for-each 
+	   (lambda (n)
+	     (hide-widget (car (sound-widgets n))))
+	   (sounds))
+	  (show-widget (car (sound-widgets snd)))
+	  (set! (widget-size (car (sound-widgets snd)))
+		(list width height))
+	  (select-sound snd)))))
+
+(add-hook! mouse-enter-label-hook files-popup-buffer)

@@ -33,7 +33,7 @@ static int run_global_search (snd_state *ss, gfd *g)
 	      if (g->direction == READ_FORWARD)
 		samp = next_sample_to_float(sf);
 	      else samp = previous_sample_to_float(sf);
-	      res = g_call1(ss->search_proc, TO_SCM_DOUBLE((double)(samp)));
+	      res = g_call1(ss->search_proc, TO_SCM_DOUBLE((double)(samp)), "global search func");
 	      if (SCM_SYMBOLP(res))
 		{
 		  g->n = -1;
@@ -188,7 +188,7 @@ static int cursor_find(snd_info *sp, chan_info *cp, int count, int end_sample)
       if (count > 0)
 	samp = next_sample_to_float(sf);
       else samp = previous_sample_to_float(sf);
-      res = g_call1(sp->search_proc, TO_SCM_DOUBLE((double)samp));
+      res = g_call1(sp->search_proc, TO_SCM_DOUBLE((double)samp), "local search func");
       if (SCM_SYMBOLP(res)) break;
       if (SCM_NFALSEP(res)) 
 	{
