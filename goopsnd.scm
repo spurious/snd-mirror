@@ -100,7 +100,7 @@
     obj))
 
 (define-method name ((obj sound)) (file-name (id obj)))
-(define-method group ((obj sound)) (syncing (id obj)))
+(define-method group ((obj sound)) (sync (id obj)))
 
 ;(define-method length ((obj sound)) (frames (id obj)))
 

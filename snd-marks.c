@@ -916,7 +916,7 @@ static char *save_marks(snd_info *sp)
 	  fclose(fd);
 	}
       else 
-	report_in_minibuffer(sp,"%s %s ",newname,strerror(errno));
+	report_in_minibuffer_and_save(sp,"%s %s ",newname,strerror(errno));
     }
   return(newname);
 }

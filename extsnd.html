@@ -508,7 +508,7 @@ the hook.
                                          (lambda (snd)
                                            (if (> (channels snd) 1)
                                                (begin
-                                                 (set! (syncing) (1+ snd) snd) ; 0 = #f
+                                                 (set! (sync) (1+ snd) snd) ; 0 = #f
                                                  (set! (uniting) channels-combined snd)))
                                            (set! (graph-style) graph-filled)))
 </small>
@@ -1079,7 +1079,7 @@ a globally unique id number (returned by <b>find-mark</b> or <b>add-mark</b>, fo
 </pre>
 
 <p>The sync value is very similar to
-the mix track number or the sound syncing field; it provides a way to group marks for simultaneous
+the mix track number or the sound sync field; it provides a way to group marks for simultaneous
 changes.  Marks that share the same sync value (if not 0), move together when any one of them is
 dragged, play together, etc.  <b>mark-&gt;sound</b> provides a way to go from a mark id to the sound and
 channel that hold that mark; the inverse function is <b>marks</b>.  To find which marks share a given
@@ -1412,7 +1412,8 @@ sets its value to val.
 
 
 <pre>
-  <b><a name="addplayer">add-player</a></b>        (player)      add <i>player</i> to the play-list (see <a href="#makeplayer">make-player</a>). 
+  <b><a name="addplayer">add-player</a></b>        (player <i>start end</i>)
+                                  add <i>player</i> to the play-list (see <a href="#makeplayer">make-player</a>). 
 
   <b><a name="sndamp">amp</a></b>               (<em class=targ>snd</em>)         current amp (control panel slider) value.
 <small>
@@ -1576,7 +1577,8 @@ sets its value to val.
   <b><a name="sndforwardsample">forward-sample</a></b>    (<i>count snd chn</i>) 
                                   move forward <i>count</i> samples (C-f), return new cursor position.
 
-  <b><a name="sndframes">frames</a></b>            (<em class=targ>snd chn</em>)     <i>chn</i>'s current length in samples.
+  <b><a name="sndframes">frames</a></b>            (<em class=targ>snd chn</em>)     <i>chn</i>'s current length in samples.  Used with set!, this either truncates 
+                                  the sound or pads it with zeros at the end.
 
   <b><a name="sndgraph">graph</a></b>             (data <i>xlabel x0 x1 y0 y1 snd chn</i>)
                                   Display a graph of <i>data</i> in a separate display per channel.  The x axis
@@ -1677,7 +1679,7 @@ sets its value to val.
   <b><a name="mapsoundchan">map-sound-chans</a></b>   (func <i>start end edname snd</i>) 
                                   apply func to current sound's channels
 
-  <b><a name="sndmaxamp">maxamp</a></b>            (<em class=targ>snd chn</em>)     max amp of <i>snd</i>'s channel <i>chn</i>.
+  <b><a name="sndmaxamp">maxamp</a></b>            (<em class=targ>snd chn</em>)     max amp of <i>snd</i>'s channel <i>chn</i>.  Used with set!, this is equivalent to scale-to.
 
   <b><a name="maxfftpeaks">max-fft-peaks</a></b>     (<em class=narg>snd chn</em>)     max number of fft peaks reported (default: 100).
 
@@ -1771,7 +1773,8 @@ sets its value to val.
                                   See eval-over-selection in examp.scm for a more useful example.
 </small>
   <b><a name="sndreadonly">read-only</a></b>         (<em class=targ>snd</em>)         #t if <i>snd</i> is read-only, #f otherwise.
-  redo              (<i>edits snd chn</i>) redo <i>edits</i> edits (default is 1) in <i>snd</i>'s channel <i>chn</i>.
+
+  <b><a href="#sndredo">redo</a></b>              (<i>edits snd chn</i>) redo <i>edits</i> edits (default is 1) in <i>snd</i>'s channel <i>chn</i>.
 
   <b><a name="sndreportinminibuffer">report-in-minibuffer</a></b> (msg <i>snd</i>)  post <i>msg</i> in <i>snd</i>'s minibuffer [<em class=error>no-such-sound</em>].
 
@@ -2051,7 +2054,8 @@ sets its value to val.
   <b><a name="swapchannels">swap-channels</a></b>     (<i>snd1 chn1 snd2 chn2 beg dur</i>)
                                   Swap the indicated channels, between beg and beg+dur.
 
-  <b><a name="sndsyncing">syncing</a></b>           (<em class=targ>snd</em>)         <i>snd</i>'s 'sync' value (an integer, 0=off)
+  <b><a name="sndsyncing">sync</a></b>              (<em class=targ>snd</em>)         <i>snd</i>'s 'sync' value (an integer, 0=off).  The old name of this field
+                                  was 'syncing' (it was originally a boolean); this name still works.
 
   <b><a name="temptosound">temp-to-sound</a></b>     (data name origin) 
                                   read sync'd edit state from temp file (see <a href="grfsnd.html#programs">external programs</a>).
@@ -2077,7 +2081,7 @@ sets its value to val.
                                   fourier-transform  wavelet-transform   hankel-transform    chebyshev-transform
                                   autocorrelation    walsh-transform     hadamard-transform  cepstrum
 </small>
-  undo              (<i>edits snd chn</i>) undo <i>edits</i> edits (default 1) in <i>snd</i>'s channel <i>chn</i>.
+  <b><a href="#sndundo">undo</a></b>              (<i>edits snd chn</i>) undo <i>edits</i> edits (default 1) in <i>snd</i>'s channel <i>chn</i>.
 
   <b><a name="snduniting">uniting</a></b>           (<em class=targ>snd</em>)         #f if channels are not superimposed or combined ('unite' button is off).
                                   The global name of this is channel-style.
@@ -2650,8 +2654,10 @@ Error:
                                 Snd menus are numbered from 0 ('File') to 4 ('Help').  [<em class=error>no-such-menu</em>]
 <small>
                                       (<em class=red>add-to-menu</em> 5 "Denoise" 
-                                        (lambda () 
-                                          (report-in-minibuffer "denoise")))
+                                        (lambda () (report-in-minibuffer "denoise")))
+
+                                      (<em class=red>add-to-menu</em> 1 "Stop Playing" 
+                                        (lambda () (stop-playing)))
 </small>
   <b><a name="sndchangemenulabel">change-menu-label</a></b>     (top-menu old-label new-label) 
 
@@ -2697,7 +2703,7 @@ In the case of 'no-active-selection, we set up our own handler for that as follo
        (lambda (tag val) 0))</em>
 <em class=listener>0</em>
 </pre>
-<p>Here's we've "caught" 'no-active-selection (if it occurs within the
+<p>Here we've "caught" 'no-active-selection (if it occurs within the
 first "thunk's" body), and return 0 if it occurs; otherwise we return
 <code>(+ 1 (selection-position))</code>.  Scheme (Guile) has a number
 of errors such as 'out-of-range, 'wrong-type-arg, 'numerical-overflow,
@@ -2834,6 +2840,13 @@ Axis choice:
                                   cursor-in-view     cursor-on-left     cursor-on-right   cursor-in-middle 
                                   cursor-update-display cursor-no-action cursor-claim-selection keyboard-no-action
 </small>
+                                  We can use bind-key to turn the keyboard into a sort of extended piano:
+<small>
+                                  (bind-key (char->integer #\o) 0 (lambda () (play "oboe.snd")))
+                                  (bind-key (char->integer #\p) 0 (lambda () (play "pistol.snd")))
+</small>
+                                  Now each time we hit "o", "oboe.snd" plays,  etc.
+
   <b><a name="sndconvolve">convolve-arrays</a></b>   (rl1 rl2)     convolve vectors <i>rl1</i> with <i>rl2</i>.  Result returned in rl1.
                                   rl1 should be large enough to hold the full convolution result.
                                   As a special dispensation for forgetful users, if rl1 is a file
@@ -2960,7 +2973,7 @@ make a system call from the listener, and so on.  The following function compute
 to show a running graph of the
 time domain energy:</p>
 <pre>
-(define <a name="displayenergy">displaye-nergy</a>
+(define <a name="displayenergy">display-energy</a>
  (lambda ()
   (let* ((data (window-samples))
 	 (len (vector-length data)))
@@ -3105,7 +3118,7 @@ found (this code obviously has to be in the init file):</p>
 	<!-- I(axis fits data):L(fit-data-on-open)(fitdataonopen) --><!-- I(axis fits data):O(y-bounds)(sndybounds) -->
         <!-- I(axis fits data):A(fitdataonopen) -->
 	<!-- I(select sound):L(selected-sound)(sndselectedsound) -->
-	<!-- I(multichannel ops):L(syncing)(sndsyncing) -->
+	<!-- I(multichannel ops):L(sync)(sndsyncing) -->
         <!-- I(save control panel):L(control-panel-save)(sndcontrolpanelsave) -->
 	<!-- I(amp env):L(env-sound)(sndenv) -->
         <!-- I(filter):L(filter-env)(sndfilterenv) -->

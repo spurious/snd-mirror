@@ -256,6 +256,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+31-Oct:  syncing -> sync. Set! extended to frames, maxamp, x|y-zoom|position-slider.\n\
 30-Oct:  added examp.scm soft-port example of redirecting display to Snd's listener.\n\
          added support for GSL 0.7\n\
          scale-selection-to bugfix.\n\
@@ -1329,7 +1330,7 @@ all refer to the same thing.\n\
   " S_stop_playing "      (snd)\n\
   " S_swap_channels "     (snd1 chn1 snd2 chn2 beg dur)\n\
   " S_syncd_marks "       (sync)\n\
-  " S_syncing "           (snd)\n\
+  " S_sync "              (snd)\n\
   " S_temp_filenames "    (data)\n\
   " S_temp_to_selection " ()\n\
   " S_temp_to_sound "     ()\n\

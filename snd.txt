@@ -1416,7 +1416,11 @@ the sampling rate) and filter order in the text windows provided. If you
 raise the control pane from its default height, a graph is revealed beneath
 the filter text field; this is an envelope editor like the envelope editor
 dialog but specialized for filtering. The actual frequency response is
-displayed in blue. The filter is on only if the filter button is set.
+displayed in blue. As with all the user interface text entry widgets,
+anything you type in the filter envelope text field is evaluated as a scheme
+expression, returning a list of breakpoints; you can, for example, define a
+function that returns the list you want, then call that function in the text
+field. The filter is on only if the filter button is set.
 
 There are many variables that reflect or control the panel's various
 sliders; each also has a default or initial value. The reverb and expand

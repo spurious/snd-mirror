@@ -60,11 +60,11 @@
 
 (define map-chan-with-sync
   (lambda (func origin)
-    (let ((snc (syncing)))
+    (let ((snc (sync)))
       (if (> snc 0)
 	  (apply map
 		 (lambda (snd chn)
-		   (if (= (syncing snd) snc)
+		   (if (= (sync snd) snc)
 		       (map-chan (func) #f #f origin snd chn)))
 		 (all-chans))
 	  (map-chan (func) #f #f origin)))))
@@ -258,7 +258,7 @@
 ;;; -------- trim from and back (goes by first or last mark)
 (define (trim-front)
   "trim-front finds the first mark in each of the syncd channels and removes all samples before it"
-  (let ((snc (syncing)))
+  (let ((snc (sync)))
     (define (trim-front-one-channel snd chn)
       (if (< (length (marks snd chn)) 1)
 	  (report-in-minibuffer "trim-front needs a mark" snd)
@@ -266,7 +266,7 @@
     (if (> snc 0)
 	(apply map
 	       (lambda (snd chn)
-		 (if (= (syncing snd) snc)
+		 (if (= (sync snd) snc)
 		     (trim-front-one-channel snd chn)))
 	       (all-chans))
 	(trim-front-one-channel (selected-sound) (selected-channel)))))
@@ -275,7 +275,7 @@
 
 (define (trim-back)
   "trim-back finds the last mark in each of the syncd channels and removes all samples after it"
-  (let ((snc (syncing)))
+  (let ((snc (sync)))
     (define (trim-back-one-channel snd chn)
       (if (< (length (marks snd chn)) 1)
 	  (report-in-minibuffer "trim-back needs a mark" snd)
@@ -284,7 +284,7 @@
     (if (> snc 0)
 	(apply map
 	       (lambda (snd chn)
-		 (if (= (syncing snd) snc)
+		 (if (= (sync snd) snc)
 		     (trim-back-one-channel snd chn)))
 	       (all-chans))
 	(trim-back-one-channel (selected-sound) (selected-channel)))))
@@ -295,7 +295,7 @@
 ;;; -------- crop (trims front and back)
 (define (crop)
   "crop finds the first and last marks in each of the syncd channels and removes all samples outside them"
-  (let ((snc (syncing)))
+  (let ((snc (sync)))
     (define (crop-one-channel snd chn)
       (if (< (length (marks snd chn)) 2)
 	  (report-in-minibuffer "crop needs start and end marks" snd)
@@ -308,7 +308,7 @@
     (if (> snc 0)
 	(apply map
 	       (lambda (snd chn)
-		 (if (= (syncing snd) snc)
+		 (if (= (sync snd) snc)
 		     (crop-one-channel snd chn)))
 	       (all-chans))
 	(crop-one-channel (selected-sound) (selected-channel)))))
@@ -363,11 +363,11 @@
 (define squelch-amount .07)
 
 (define (squelch)
-  (let ((snc (syncing)))
+  (let ((snc (sync)))
     (if (> snc 0)
 	(apply map
 	       (lambda (snd chn)
-		 (if (= (syncing snd) snc)
+		 (if (= (sync snd) snc)
 		     (squelch-one-channel squelch-amount snd chn)))
 	       (all-chans))
 	(squelch-one-channel squelch-amount (selected-sound) (selected-channel)))))
@@ -413,7 +413,7 @@
 (define silence-label "add silence")
 
 (define (insert-silence)
-  (let* ((snc (syncing))
+  (let* ((snc (sync))
 	 (cur-srate (srate))
 	 (cur-len (inexact->exact (* silence-amount cur-srate)))
 	 (silence (make-vct cur-len)))
@@ -427,7 +427,7 @@
     (if (> snc 0)
 	(apply map
 	       (lambda (snd chn)
-		 (if (= (syncing snd) snc)
+		 (if (= (sync snd) snc)
 		     (insert-silence-one-channel snd chn)))
 	       (all-chans))
 	(insert-silence-one-channel (selected-sound) (selected-channel)))))

@@ -3018,7 +3018,7 @@ MIXER_INFO:
 	  pprint(":\n\n"
 		 "  mixer     recording  active     stereo    current\n"
 		 "  channel   source     source     device    level\n"
-		 "  --------  --------   --------   --------   -------- \n"); 
+		 "  --------  --------   --------   --------  -------- \n"); 
 	  for (i=0;i<SOUND_MIXER_NRDEVICES;i++)
 	    {
 	      if ((1<<i) & devmask)

@@ -33,7 +33,9 @@ typedef struct {
   int copy;
   int chan;
   int len;
+#if DEBUGGING
   void *owner;
+#endif
   int just_zeros;
 } snd_data;
 
@@ -938,8 +940,10 @@ int force_fft_clear(chan_info *cp, void *ptr);
 void chan_info_cleanup(chan_info *cp);
 #ifdef __GNUC__
   void report_in_minibuffer(snd_info *sp, char *format, ...)  __attribute__ ((format (printf, 2, 3)));
+  void report_in_minibuffer_and_save(snd_info *sp, char *format, ...)  __attribute__ ((format (printf, 2, 3)));
 #else
   void report_in_minibuffer(snd_info *sp, char *format, ...);
+  void report_in_minibuffer_and_save(snd_info *sp, char *format, ...);
 #endif
 void clear_minibuffer(snd_info *sp);
 void clear_minibuffer_prompt(snd_info *sp);

@@ -774,7 +774,7 @@
     (list "sum-of-sines" "clm.html#sum-of-sines")
     (list "swap-channels" "extsnd.html#swapchannels")
     (list "syncd-marks" "extsnd.html#syncdmarks")
-    (list "syncing" "extsnd.html#sndsyncing")
+    (list "sync" "extsnd.html#sndsyncing")
     (list "table-lookup" "clm.html#table-lookup")
     (list "table-lookup?" "clm.html#table-lookup?")
     (list "tap" "clm.html#tap")

@@ -734,8 +734,10 @@ snd_data *make_snd_data_file(char *name, int *io, MUS_SAMPLE_TYPE *data, file_in
   sf->copy = FALSE;
   sf->chan = temp_chan;
   sf->len = (hdr->samples)*(mus_data_format_to_bytes_per_sample(hdr->format)) + hdr->data_location;
+#if DEBUGGING
   sf->owner = NULL; 
   /* this owner field is obsolete */
+#endif
   sf->just_zeros = 0;
   return(sf);
 }
@@ -756,7 +758,9 @@ static snd_data *make_snd_data_zero_file(int size, int *io, MUS_SAMPLE_TYPE *dat
   sf->copy = FALSE;
   sf->chan = 0;
   sf->len = size;
+#if DEBUGGING
   sf->owner = NULL; 
+#endif
   sf->just_zeros = 1;
   return(sf);
 }
@@ -798,7 +802,9 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize)
   sf->open = FD_OPEN;
   sf->inuse = FALSE;
   sf->copy = TRUE;
+#if DEBUGGING
   sf->owner = NULL;
+#endif
   sf->just_zeros = 0;
   return(sf);
 }
@@ -819,7 +825,9 @@ snd_data *make_snd_data_buffer(MUS_SAMPLE_TYPE *data, int len, int ctr)
   sf->copy = FALSE;
   sf->inuse = FALSE;
   sf->len = len*4;
+#if DEBUGGING
   sf->owner = NULL;
+#endif
   sf->just_zeros = 0;
   return(sf);
 }
@@ -850,7 +858,9 @@ snd_data *free_snd_data(snd_data *sf)
 	  sf->filename = NULL;
 	}
       sf->temporary = ALREADY_DELETED;
+#if DEBUGGING
       sf->owner = NULL;
+#endif
       FREE(sf);
     }
   return(NULL);
@@ -1233,7 +1243,6 @@ static ed_list *insert_samples_1 (int samp, int num, MUS_SAMPLE_TYPE* vals, ed_l
 
 void extend_with_zeros(chan_info *cp, int beg, int num, char *origin)
 {
-  /* TODO: one case in snd-chn (cursor_zeros) */
   MUS_SAMPLE_TYPE *zeros;
   int k,len;
   int *cb;
@@ -1436,8 +1445,8 @@ void delete_samples(int beg, int num, chan_info *cp, char *origin)
   else
     {
       if (num == 1)
-	report_in_minibuffer(cp->sound,"can't delete sample %d (current len=%d)",beg,len);
-      else report_in_minibuffer(cp->sound,"can't delete samples %d to %d (current len=%d)",beg,beg+num-1,len);
+	report_in_minibuffer_and_save(cp->sound,"can't delete sample %d (current len=%d)",beg,len);
+      else report_in_minibuffer_and_save(cp->sound,"can't delete samples %d to %d (current len=%d)",beg,beg+num-1,len);
     }
 }
 
@@ -1750,9 +1759,9 @@ snd_fd *free_snd_fd(snd_fd *sf)
 	{
 	  sd->inuse = FALSE;
 #if DEBUGGING
-	  if ((sd->copy) && (sd->owner != (void *)sf)) fprintf(stderr,"weird case ");
+	  if ((sd->copy) && (sd->owner != (void *)sf)) {fprintf(stderr,"weird case "); abort();}
 #endif
-	  if ((sd->copy) && (sd->owner == (void *)sf)) free_snd_data(sd);
+	  if (sd->copy) free_snd_data(sd);
 	}
       FREE(sf);
     }
@@ -1833,7 +1842,9 @@ snd_fd *init_sample_read_any (int samp, chan_info *cp, int direction, int edit_p
 	      if (first_snd->inuse) 
 		{
 		  first_snd = copy_snd_data(first_snd,cp,MIX_FILE_BUFFER_SIZE);
+#if DEBUGGING
 		  first_snd->owner = (void *)sf;
+#endif
 		}
 	      first_snd->inuse = TRUE;
 	      sf->current_sound = first_snd;
@@ -1872,9 +1883,9 @@ static MUS_SAMPLE_TYPE previous_sound (snd_fd *sf)
 	  prev_snd->inuse = FALSE; 
 	  sf->current_sound = NULL;
 #if DEBUGGING
-	  if ((prev_snd->owner != (void *)sf) && (prev_snd->copy)) fprintf(stderr,"weird prev case");
+	  if ((prev_snd->owner != (void *)sf) && (prev_snd->copy)) {fprintf(stderr,"weird prev case"); abort();}
 #endif
-	  if ((prev_snd->owner == (void *)sf) && (prev_snd->copy)) free_snd_data(prev_snd);
+	  if (prev_snd->copy) free_snd_data(prev_snd);
 	}
       if (sf->cbi == 0) return(MUS_SAMPLE_0); /* can't back up any further */
       sf->cbi--;
@@ -1890,7 +1901,9 @@ static MUS_SAMPLE_TYPE previous_sound (snd_fd *sf)
 	  if (prev_snd->inuse) 
 	    {
 	      prev_snd = copy_snd_data(prev_snd,sf->cp,MIX_FILE_BUFFER_SIZE);
+#if DEBUGGING
 	      prev_snd->owner = (void *)sf;
+#endif
 	    }
 	  prev_snd->inuse = TRUE;
 	  sf->current_sound = prev_snd;
@@ -1927,9 +1940,9 @@ static MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
 	  nxt_snd->inuse = FALSE; 
 	  sf->current_sound = NULL;
 #if DEBUGGING
-	  if ((nxt_snd->owner != (void *)sf) && (nxt_snd->copy)) fprintf(stderr,"weird next case");
+	  if ((nxt_snd->owner != (void *)sf) && (nxt_snd->copy)) {fprintf(stderr,"weird next case"); abort();}
 #endif
-	  if ((nxt_snd->owner == (void *)sf) && (nxt_snd->copy)) free_snd_data(nxt_snd);
+	  if (nxt_snd->copy) free_snd_data(nxt_snd);
 	}
       if (sf->last == (MUS_SAMPLE_TYPE *)0) return(MUS_SAMPLE_0);
       sf->cbi++;
@@ -1955,7 +1968,9 @@ static MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
 	  if (nxt_snd->inuse) 
 	    {
 	      nxt_snd = copy_snd_data(nxt_snd,sf->cp,MIX_FILE_BUFFER_SIZE);
+#if DEBUGGING
 	      nxt_snd->owner = (void *)sf;
+#endif
 	    }
 	  nxt_snd->inuse = TRUE;
 	  sf->current_sound = nxt_snd;
@@ -2089,7 +2104,7 @@ int close_temp_file(int ofd, file_info *hdr, long bytes, snd_info *sp)
     {
       kused = bytes>>10;
       if ((kused > kleft) && (sp))
-	report_in_minibuffer(sp,"disk nearly full: used %d Kbytes leaving %d",kused,kleft);
+	report_in_minibuffer_and_save(sp,"disk nearly full: used %d Kbytes leaving %d",kused,kleft);
     }
   snd_close(ofd);
   return(0);
@@ -2301,7 +2316,7 @@ static int save_edits_1(snd_info *sp)
   reflect_file_revert_in_label(sp);
   reflect_file_save_in_menu(ss);
   if (err)
-    report_in_minibuffer(sp,"write failed: %s, edits saved in: %s",strerror(saved_errno),ofile);
+    report_in_minibuffer_and_save(sp,"write failed: %s, edits saved in: %s",strerror(saved_errno),ofile);
   else report_in_minibuffer(sp,"wrote %s",sp->fullname); 
   if (ofile) {free(ofile); ofile=NULL;}
   if (auto_update(ss)) map_over_sounds(ss,snd_not_current,NULL);
@@ -2356,7 +2371,7 @@ int chan_save_edits(chan_info *cp, char *ofile)
     {
       if (sp->read_only)
 	{
-	  report_in_minibuffer(sp,"can't save channel as %s (%s is write-protected)",ofile,sp->shortname);
+	  report_in_minibuffer_and_save(sp,"can't save channel as %s (%s is write-protected)",ofile,sp->shortname);
 	  return(MUS_WRITE_ERROR);
 	}
       /* here we're overwriting the current (possibly multi-channel) file with one of its channels */
@@ -2413,7 +2428,7 @@ void save_edits(snd_info *sp, void *ptr)
 	    }
 	  err = save_edits_1(sp);
 	  if (err)
-	    report_in_minibuffer(sp,"%s: %s",sp->fullname,strerror(errno));
+	    report_in_minibuffer_and_save(sp,"%s: %s",sp->fullname,strerror(errno));
 	  else
 	    {
 	      if (sp->edited_region) save_region_backpointer(sp);
@@ -2423,7 +2438,7 @@ void save_edits(snd_info *sp, void *ptr)
 	report_in_minibuffer(sp,"(no changes need to be saved)");
     }
   else
-    report_in_minibuffer(sp,"can't write %s (it is read-only)",sp->shortname);
+    report_in_minibuffer_and_save(sp,"can't write %s (it is read-only)",sp->shortname);
 }
 
 void revert_edits(chan_info *cp, void *ptr)

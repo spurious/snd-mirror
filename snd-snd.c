@@ -1,10 +1,5 @@
 #include "snd.h"
 
-/* TODO: syncing should be sync (it's no longer a boolean)
- * TODO  set! comment probably needs update to reflect immediately
- * TODO  amp with snd and chn could return the current scaling of chn (from original) in some cases
- */
-
 /* ---------------- amp envs ---------------- */
 
 #define MULTIPLIER 100
@@ -1258,6 +1253,7 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
   sp = get_sp(snd_n);
   if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
   if (fld != COMMENTF) ival = bool_int_or_one(val);
+  ss = sp->state;
   switch (fld)
     {
     case SYNCF:         syncb(sp,ival);                                            break;
@@ -1274,17 +1270,18 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
     case SPEEDTONESF:   sp->speed_tones = ival;                                    break;
     case SPEEDSTYLEF:   sp->speed_style = ival;                                    break;
       
-    case SRATEF:        mus_sound_override_header(sp->fullname,ival,-1,-1,-1,-1,-1); snd_update(sp->state,sp); break;
-    case NCHANSF:       mus_sound_override_header(sp->fullname,-1,ival,-1,-1,-1,-1); snd_update(sp->state,sp); break;
-    case DATAFORMATF:   mus_sound_override_header(sp->fullname,-1,-1,ival,-1,-1,-1); snd_update(sp->state,sp); break;
-    case HEADERTYPEF:   mus_sound_override_header(sp->fullname,-1,-1,-1,ival,-1,-1); snd_update(sp->state,sp); break;
-    case DATALOCATIONF: mus_sound_override_header(sp->fullname,-1,-1,-1,-1,ival,-1); snd_update(sp->state,sp); break;
+    case SRATEF:        mus_sound_override_header(sp->fullname,ival,-1,-1,-1,-1,-1); snd_update(ss,sp); break;
+    case NCHANSF:       mus_sound_override_header(sp->fullname,-1,ival,-1,-1,-1,-1); snd_update(ss,sp); break;
+    case DATAFORMATF:   mus_sound_override_header(sp->fullname,-1,-1,ival,-1,-1,-1); snd_update(ss,sp); break;
+    case HEADERTYPEF:   mus_sound_override_header(sp->fullname,-1,-1,-1,ival,-1,-1); snd_update(ss,sp); break;
+    case DATALOCATIONF: mus_sound_override_header(sp->fullname,-1,-1,-1,-1,ival,-1); snd_update(ss,sp); break;
       /* last arg is size */
     case COMMENTF:      
       /* this is safe only with aifc and riff headers */
       com = gh_scm2newstr(val,NULL);
       mus_header_update_comment(sp->fullname,0,com,snd_strlen(com),mus_sound_header_type(sp->fullname));
       free(com);
+      snd_update(ss,sp);
       break;
     }
   RTNBOOL(ival);
@@ -1399,16 +1396,16 @@ static SCM name_reversed(SCM arg1, SCM arg2) \
 
 static SCM g_syncing(SCM snd_n) 
 {
-  #define H_syncing "(" S_syncing " &optional snd) -> whether snd is sync'd to other sounds"
-  ERRSPT(S_syncing,snd_n,1); 
-  return(sp_iread(snd_n,SYNCF,S_syncing));
+  #define H_syncing "(" S_sync " &optional snd) -> whether snd is sync'd to other sounds"
+  ERRSPT(S_sync,snd_n,1); 
+  return(sp_iread(snd_n,SYNCF,S_sync));
 }
 
 static SCM g_set_syncing(SCM on, SCM snd_n) 
 {
-  ERRB1(on,"set-" S_syncing); 
-  ERRSPT("set-" S_syncing,snd_n,2); 
-  return(sp_iwrite(snd_n,on,SYNCF,"set-" S_syncing));
+  ERRB1(on,"set-" S_sync); 
+  ERRSPT("set-" S_sync,snd_n,2); 
+  return(sp_iwrite(snd_n,on,SYNCF,"set-" S_sync));
 }
 
 WITH_REVERSED_BOOLEAN_ARGS(g_set_syncing_reversed,g_set_syncing)
@@ -2365,8 +2362,13 @@ void g_init_snd(SCM local_doc)
 					"set-showing-controls",SCM_FNC g_set_show_controls,SCM_FNC g_set_show_controls_reversed,
 					local_doc,0,1,0,2);
 
-  define_procedure_with_reversed_setter(S_syncing,SCM_FNC g_syncing,H_syncing,
-					"set-" S_syncing,SCM_FNC g_set_syncing,SCM_FNC g_set_syncing_reversed,
+  define_procedure_with_reversed_setter(S_sync,SCM_FNC g_syncing,H_syncing,
+					"set-" S_sync,SCM_FNC g_set_syncing,SCM_FNC g_set_syncing_reversed,
+					local_doc,0,1,0,2);
+
+  /* for backwards compatibility */
+  define_procedure_with_reversed_setter("syncing",SCM_FNC g_syncing,H_syncing,
+					"set-syncing",SCM_FNC g_set_syncing,SCM_FNC g_set_syncing_reversed,
 					local_doc,0,1,0,2);
 
   define_procedure_with_reversed_setter(S_uniting,SCM_FNC g_uniting,H_uniting,

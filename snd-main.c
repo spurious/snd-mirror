@@ -399,7 +399,7 @@ static int save_sound_state (snd_info *sp, void *ptr)
 	  sp->shortname,
 	  (sp->read_only) ? S_view_sound : S_open_sound,
 	  sp->fullname);
-  if (sp->syncing != DEFAULT_SYNCING) psp_sd(fd,S_syncing,sp->syncing);
+  if (sp->syncing != DEFAULT_SYNCING) psp_sd(fd,S_sync,sp->syncing);
   if (sp->contrasting != DEFAULT_CONTRASTING) psp_ss(fd,S_contrasting,b2s(sp->contrasting));
   if (sp->contrast != DEFAULT_CONTRAST) psp_sf(fd,S_contrast,sp->contrast);
   if (sp->expanding != DEFAULT_EXPANDING) psp_ss(fd,S_expanding,b2s(sp->expanding));

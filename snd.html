@@ -2101,7 +2101,11 @@ If you raise the control pane from its default height,
 a graph is revealed beneath the filter text field;
 this is an envelope editor like the envelope editor dialog
 but specialized for filtering.  The actual frequency response
-is displayed in blue.
+is displayed in blue.  As with all the user interface text entry widgets,
+anything you type in the filter envelope text field is evaluated as
+a scheme expression, returning a list of breakpoints; you can, for example,
+define a function that returns the list you want, then call that function
+in the text field.
 The filter is on only if the filter button is set.
         <!-- I(filter):O(see filter controls)(filter) --><!-- I(filter):A(filter) -->
 </p>

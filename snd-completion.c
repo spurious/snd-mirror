@@ -131,7 +131,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_speed_style,S_speed_tones,S_squelch_update,S_srate,S_srate_env,
   S_src_selection,S_src_sound,S_start_hook,S_start_playing,S_start_playing_hook,S_start_progress_report,
   S_stop_player,S_stop_playing,S_stop_playing_channel_hook,S_stop_playing_hook,S_stop_playing_region_hook,S_string_length,
-  S_swap_channels,S_syncd_marks,S_syncing,
+  S_swap_channels,S_sync,S_syncd_marks,
 
   S_temp_dir,S_temp_filenames,S_temp_to_selection,S_temp_to_sound,S_temps_to_selection,S_temps_to_sound,S_text_focus_color,
   S_tiny_font,S_track_sample_readerQ,

@@ -818,7 +818,7 @@ static int disk_space_p(snd_info *sp, int fd, int bytes, int other_bytes)
   kfree = disk_kspace(fd);
   if (kfree < 0) 
     {
-      report_in_minibuffer(sp,strerror(errno)); 
+      report_in_minibuffer_and_save(sp,strerror(errno)); 
       return(NO_PROBLEM);
     }
   kneeded = bytes >> 10;
@@ -829,7 +829,7 @@ static int disk_space_p(snd_info *sp, int fd, int bytes, int other_bytes)
 	  kother = other_bytes >> 10;
 	  if (kother > kfree)
 	    {
-	      report_in_minibuffer(sp,"only %d Kbytes left on disk, changing to 16-bit temp output",kfree);
+	      report_in_minibuffer_and_save(sp,"only %d Kbytes left on disk, changing to 16-bit temp output",kfree);
 	      return(HUNKER_DOWN);
 	    }
 	}
@@ -1115,7 +1115,7 @@ int mix_complete_file(snd_info *sp, char *str, char *origin, int with_console)
 	  if (si) si = free_sync_info(si); else if (cps) FREE(cps);
 	}
       else 
-	report_in_minibuffer(sp,"can't open file: %s, %s ",fullname,strerror(errno));
+	report_in_minibuffer_and_save(sp,"can't open file: %s, %s ",fullname,strerror(errno));
       if (fullname) FREE(fullname);
     }
   return(id);

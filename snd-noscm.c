@@ -459,7 +459,7 @@ static int handle_set(snd_state *ss, char *tok, char **str)
     }
   if (strcmp(tok,"set-" S_speed_style) == 0) {activate_speed_in_menu(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,"set-" S_squelch_update) == 0) {cp = get_cp(ss,str[2],str[3]); if (cp) cp->squelch_update = istr(str[1]); isym(ss,0); return(0);}
-  if (strcmp(tok,"set-" S_syncing) == 0) {sp = get_sp(ss,str[2]); if (sp) syncb(sp,istr(str[1])); isym(ss,0); return(0);}
+  if (strcmp(tok,"set-" S_sync) == 0) {sp = get_sp(ss,str[2]); if (sp) syncb(sp,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,"set-" S_temp_dir) == 0) {set_temp_dir(ss,sstr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,"set-" S_transform_type) == 0) {set_transform_type(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,"set-" S_trap_segfault) == 0) {set_trap_segfault(ss,istr(str[1])); isym(ss,0); return(0);}
@@ -1109,7 +1109,7 @@ static int symit(snd_state *ss,char **str)
 	  isym(ss,0); 
 	  return(0);
 	} /* no env case */
-      if (strcmp(tok,S_syncing) == 0) {sp = get_sp(ss,str[1]); if (sp) isym(ss,sp->syncing); return(0);}
+      if (strcmp(tok,S_sync) == 0) {sp = get_sp(ss,str[1]); if (sp) isym(ss,sp->syncing); return(0);}
       if (strcmp(tok,S_selected_sound) == 0) {isym(ss,ss->selected_sound); return(0);}
       if (strcmp(tok,S_save_sound) == 0) {sp = get_sp(ss,str[1]); if (sp) save_edits(sp,NULL); isym(ss,0); return(0);}
       if (strcmp(tok,S_save_sound_as) == 0) 

@@ -3,7 +3,7 @@
 
 /* TODO: perhaps fit-data-on-open should be fit-data, callable via hooks at open time
  *         but would be much faster if we can wait until the amp-env is computed
- * TODO  mark-moved-hook? selection-creation-hook? sample-color?
+ * TODO  mark-moved-hook? sample-color?
  * TODO  should snd-out soft-port (examp.scm) be built-in?
  */
 
@@ -14,7 +14,7 @@ static snd_state *state = NULL;
 static int g_error_occurred = 0;
 
 /* if error occurs in sndlib, mus-error wants to throw to user-defined catch
- *   (or out own global catch), but if the sndlib function was not called by the user, 
+ *   (or our own global catch), but if the sndlib function was not called by the user, 
  *   the attempt to throw to a non-existent catch tag exits the main program!!
  *   so, we only throw if the catch_exists flag is true.
  */
@@ -3101,9 +3101,6 @@ static SCM g_progress_report(SCM pct, SCM name, SCM cur_chan, SCM chans, SCM snd
 
 void init_mus2scm_module(void);
 
-/* GOOPS */
-/* #include <goops.h> */
-
 static SCM during_open_hook,exit_hook,start_hook,after_open_hook;
 static SCM output_comment_hook;
 
@@ -3575,10 +3572,6 @@ void g_initialize_gh(snd_state *ss)
 #if HAVE_HOOKS
   g_init_gxmenu();
 #endif
-
-  /* GOOPS */
-  /* scm_init_oop_goops_goopscore_module (); */
-
 
 #if HAVE_LADSPA
   g_ladspa_to_snd(local_doc);

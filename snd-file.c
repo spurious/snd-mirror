@@ -828,7 +828,7 @@ void snd_update(snd_state *ss, snd_info *sp)
   if (mus_file_probe(sp->fullname) == 0)
     {
       /* user deleted file while editing it? */
-      report_in_minibuffer(sp,"%s no longer exists!",sp->shortname);
+      report_in_minibuffer_and_save(sp,"%s no longer exists!",sp->shortname);
       return;
     }
   app_x = widget_width(MAIN_SHELL(ss));
@@ -1547,7 +1547,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
        */
       if (sp->read_only)
 	{
-	  report_in_minibuffer(sp,"can't save-as %s (%s is write-protected)",fullname,sp->shortname);
+	  report_in_minibuffer_and_save(sp,"can't save-as %s (%s is write-protected)",fullname,sp->shortname);
 	  FREE(fullname);
 	  return(-1);
 	}
@@ -1591,7 +1591,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 	result = save_edits_2(sp,str,type,format,srate,comment);
       else result = save_selection(ss,str,type,format,srate,comment);
       if (result != MUS_NO_ERROR)
-	report_in_minibuffer(sp,"%s: %s",str,strerror(errno));
+	report_in_minibuffer_and_save(sp,"%s: %s",str,strerror(errno));
       else report_in_minibuffer(sp,"%s saved as %s",(save_type == FILE_SAVE_AS) ? sp->shortname : "selection",str);
       if (collision->sp) snd_open_file(fullname,ss);
       FREE(fullname);

@@ -3,7 +3,6 @@
  * TODO    then as running, at each block reset to initial - new scaled
  * TODO    (negative pm = longer delay)
  * TODO  play with expand is cutoff too soon (and reverb?)
- * TODO  can play idle (waiting for queued up sound starting in future)?
  */
 
 /* this was sound-oriented; changed to be channel-oriented 31-Aug-00 */

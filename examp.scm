@@ -46,9 +46,9 @@
 ;;; convolution (convolve)
 ;;; reverb (all-pass etc)
 ;;; scissor-tailed flycatcher (waveshaping)
-;;; fm-violin (FM and various other generators, #:key args)
+;;; fm-violin (FM and various other generators, #&key args)
 ;;; digital zipper "crossfade" (file->sample)
-;;; FOF voice synthesis (wave-train, #:optional args)
+;;; FOF voice synthesis (wave-train, #&optional args)
 ;;; phase vocoder
 ;;; mix with envelope
 ;;; time varying FIR filter, notch filter, frequency-response -> FIR coeffs
@@ -61,6 +61,7 @@
 ;;; selection-members
 ;;; with-sound for Snd
 ;;; how to get 'display' to write to Snd's listener
+;;; hold DAC open and play sounds via keyboard
 
 
 ;;; TODO: pitch tracker
@@ -388,7 +389,7 @@
 	    #t
 	    (if (or (= snd ind)
 		    (not (sound? ind))
-		    (and (= (syncing snd) (syncing ind))
+		    (and (= (sync snd) (sync ind))
 			 (> ind snd)))
 		(min-at-sync snd (1+ ind))
 		#f))))
@@ -397,13 +398,13 @@
 	(if (>= ind (max-sounds)) 
 	    ffts
 	    (if (and (sound? ind)
-		     (= (syncing snd) (syncing ind))
+		     (= (sync snd) (sync ind))
 		     (> (chans ind) chn))
 		(collect-ffts samp size snd chn (append ffts (list (make-one-fft samp size ind chn))) (1+ ind))
 		(collect-ffts samp size snd chn ffts (1+ ind))))))
-    (if (and (> (syncing snd) 0)
+    (if (and (> (sync snd) 0)
 	     (min-at-sync snd 0))
-	;; we are syncing, and we are the top sound in this sync group
+	;; we are sync, and we are the top sound in this sync group
 	(let* ((ls (left-sample snd chn))
 	       (rs (right-sample snd chn))
 	       (pow2 (floor (/ (log (- rs ls)) (log 2))))
@@ -870,10 +871,10 @@
       (let ((new-max-amp (maxamp snd chn)))
 	(if (not (= original-max-amp new-max-amp))
 	    (let ((scaler (/ original-max-amp new-max-amp))
-		  (old-sync (syncing snd)))
-	      (set! (syncing snd) 0)
+		  (old-sync (sync snd)))
+	      (set! (sync snd) 0)
 	      (scale-by scaler snd chn)
-	      (set! (syncing snd) old-sync)
+	      (set! (sync snd) old-sync)
 	      scaler)
 	    1.0)))))
 
@@ -900,11 +901,11 @@
 (define do-chans
   (lambda (func origin)
     "(do-chans func edhist) applies func to all sync'd channels using edhist as the edit history indication"
-    (let ((snc (syncing)))
+    (let ((snc (sync)))
       (if (> snc 0)
 	  (apply map
 		 (lambda (snd chn)
-		   (if (= (syncing snd) snc)
+		   (if (= (sync snd) snc)
 		       (map-chan func #f #f origin snd chn)))
 		 (all-chans))
 	  (snd-warning "sync not set")))))
@@ -1060,7 +1061,7 @@
   (lambda (panning-envelope)
     (letrec ((find-nchannel-sound (lambda (ind chans) 
 				      (if (< ind (max-sounds))
-					  (if (and (sound? ind) (> (syncing ind) 0) (= (channels ind) chans)) 
+					  (if (and (sound? ind) (> (sync ind) 0) (= (channels ind) chans)) 
 					      ind 
 					      (find-nchannel-sound (1+ ind) chans))
 					  (begin
@@ -1721,7 +1722,7 @@
 (define pi 3.141592653589793)
 
 (define fm-violin 
-  (lambda* (startime dur frequency amplitude #:key
+  (lambda* (startime dur frequency amplitude #&key
 	    (fm-index 1.0)
 	    (amp-env '(0 0  25 1  75 1  100 0))
 	    (periodic-vibrato-rate 5.0) 
@@ -1748,7 +1749,7 @@
 	    (base 1.0)
 	    (reverb-amount 0.01)
 	    (degree #f) (distance 1.0) (degrees #f)
-	    #:allow-other-keys)
+	    #&allow-other-keys)
     (let* ((beg (floor (* startime (srate))))
 	   (len (floor (* dur (srate))))
 	   (end (+ beg len))
@@ -1841,7 +1842,7 @@
 ;      (max-envelope (cddr e) (max mx (abs (cadr e)))))))
 
 (define zipper 
-  (lambda* (beg dur file1 file2 ramp-envelope frame-size #:optional (ramp-envelope-base 1.0) (frame-envelope #f))
+  (lambda* (beg dur file1 file2 ramp-envelope frame-size #&optional (ramp-envelope-base 1.0) (frame-envelope #f))
   ;; pan between file1 and file2 using a "zipper-like" effect
   ;; ramp-env at 0 => all file1, at 1 => all file2, in between a mixture
   ;; frame-size is the basic speed at which the mixture takes place (dependent also on frame-env)
@@ -1942,7 +1943,7 @@
 (define two-pi (* 2 3.141592653589793))
 
 (define fofins 
-  (lambda* (beg dur frq amp vib f0 a0 f1 a1 f2 a2 #:optional (ae '(0 0 25 1 75 1 100 0)))
+  (lambda* (beg dur frq amp vib f0 a0 f1 a1 f2 a2 #&optional (ae '(0 0 25 1 75 1 100 0)))
     (let* ((start (floor (* beg (srate))))
 	   (len (floor (* dur (srate))))
 	   (ampf (make-env :envelope ae :scaler amp :duration dur))
@@ -1982,7 +1983,7 @@
 (define pi 3.141592653589793)
 
 (define pvoc
-  (lambda* (#:key
+  (lambda* (#&key
 	   (fftsize 512) (overlap 4) (time 1.0)
 	   (pitch 1.0) (gate 0.0) (hoffset 0.0)
 	   (snd 0) (chn 0))
@@ -2565,7 +2566,7 @@
 ;;;    (with-sound (:srate 44100) (fm-violin 0 1 440 .1))
 
 (defmacro with-sound (args . body) 
-  `((lambda* (#:key (srate 22050)
+  `((lambda* (#&key (srate 22050)
 		    (output "test.snd")
 		    (channels 1)
 		    (explode #f))
@@ -2589,7 +2590,7 @@
 ;;; here's a better version courtesy of Kalle Olavi Niemitalo
 ;;; but it doesn't seem to work in Guile 1.4 (it needs 1.4.1)
 ;;;
-;;;(define* (with-sound-helper thunk #:key (srate 22050) (explode #f))
+;;;(define* (with-sound-helper thunk #&key (srate 22050) (explode #f))
 ;;;  (let ((old-srate (mus-srate)))
 ;;;    (dynamic-wind (lambda () (set! (mus-srate) srate))
 ;;;                  thunk
@@ -2625,3 +2626,31 @@
 
 ;;; Perhaps this should be built-in, allowing us to merge snd-help and help etc.
 
+
+
+;;; -------- hold DAC open and play sounds via keyboard
+;;; 
+;;; if for some reason you want the DAC to run continuously in the background,
+;;;   use the "end" argument to the first player seen upon starting the dac:
+
+(define now-playing #f)
+(define hidden-player #f)
+
+(define (start-dac)
+  (if (not now-playing)
+      (begin
+	(set! now-playing #t)
+	(set! hidden-player (make-player))
+	(set! (amp hidden-player) 0.0)
+	(add-player hidden-player 0 123456789)
+	(start-playing 1 22050))))
+
+(define (stop-dac)
+  (stop-playing)
+  (set! now-playing #f))
+
+;(bind-key (char->integer #\o) 0 (lambda () (play "oboe.snd")))
+;(bind-key (char->integer #\p) 0 (lambda () (play "pistol.snd")))
+
+;;; in this particular case, there's no need to hold the DAC open
+;;;   but maybe this will come in handy someday

@@ -749,7 +749,7 @@
 #define S_string_length                 "string-length"
 #define S_swap_channels                 "swap-channels"
 #define S_syncd_marks                   "syncd-marks"
-#define S_syncing                       "syncing"
+#define S_sync                          "sync"
 #define S_temp_dir                      "temp-dir"
 #define S_temp_filenames                "temp-filenames"
 #define S_temp_to_selection             "temp-to-selection"

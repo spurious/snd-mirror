@@ -28,7 +28,6 @@
 ;;; TODO  mix-tag-width|height+mixes (also mix-amp or whatever with '() as mix indicator)
 ;;; TODO  all dialogs need more extensive tests (perhaps built-in but undocumented test funcs)
 ;;; TODO  menu-hook (how? -- via accelerators?)
-;;; TODO  need careful C-z and C-o tests
 
 (use-modules (ice-9 format) (ice-9 debug))
 
@@ -297,7 +296,7 @@
 	'speed (without-errors (speed)) 'no-such-sound
 	'speed-style (speed-style) 0 
 	'speed-tones (speed-tones) 12
-	'syncing (without-errors (syncing)) 'no-such-sound
+	'sync (without-errors (sync)) 'no-such-sound
 	'temp-dir (temp-dir) #f 
 	'transform-type (transform-type) 0 
 	'trap-segfault (trap-segfault) #f
@@ -740,7 +739,7 @@
 	  (list 'speed speed 1.0 set-speed 0.5)
 	  (list 'speed-style speed-style 0 set-speed-style 1)
 	  (list 'speed-tones speed-tones 12 set-speed-tones 18)
-	  (list 'syncing syncing 0 set-syncing 1)
+	  (list 'sync sync 0 set-sync 1)
 	  (list 'transform-type transform-type 0 set-transform-type 1)
 	  (list 'use-raw-defaults use-raw-defaults #f set-use-raw-defaults #t)
 	  (list 'use-sinc-interp use-sinc-interp #t set-use-sinc-interp #f)
@@ -3600,8 +3599,8 @@
 
 	    (without-errors
 	     (let ((cfd (car open-files)))
-	       (set! (syncing cfd) 1)
-	       (if (not (null? (cdr open-files))) (set! (syncing (cadr open-files)) 1))
+	       (set! (sync cfd) 1)
+	       (if (not (null? (cdr open-files))) (set! (sync (cadr open-files)) 1))
 	       (if (rs 0.5)
 		   (begin
 		     (make-region 1000 2000 cfd)
@@ -3690,10 +3689,10 @@
 	      (select-all)
 	      (cut)
 	      (mix "4.aiff")
-	      (set! (syncing) 1)
+	      (set! (sync) 1)
 	      (mix "oboe.snd" 60000)
 	      (scale-by .1)
-	      (set! (syncing) 1)
+	      (set! (sync) 1)
 	      (if (> (channels s8) 3)
 		  (select-channel 3))
 	      (insert-region 80000)
@@ -3881,7 +3880,7 @@
 	  (do ((i 0 (1+ i)))
 	      ((= i (max-sounds)))
 	    (if (and (sound? i) (rs .5))
-		(set! (syncing i) (inexact->exact (my-random 3)))))
+		(set! (sync i) (inexact->exact (my-random 3)))))
 	  (add-hook! graph-hook superimpose-ffts)
 	  (do ((i 0 (1+ i)))
 	      ((= i 10))
@@ -4012,7 +4011,7 @@
 		    (list 'speed #t 0.01 set-speed 5.0)
 		    (list 'speed-style #f 0 set-speed-style 2)
 		    (list 'speed-tones #f 2 set-speed-tones 100)
-		    (list 'syncing #t 0 set-syncing 5)
+		    (list 'sync #t 0 set-sync 5)
 		    (list 'transform-type #f 0 set-transform-type 6)
 		    (list 'use-raw-defaults #f #f set-use-raw-defaults #t)
 		    (list 'use-sinc-interp #f #f set-use-sinc-interp #t)
@@ -4267,16 +4266,16 @@
 		  (fneq m2 (cadr mc))
 		  (fneq m3 (caddr mc)))
 	      (snd-print (format #f ";map maxamp all-chans: ~A ~A ~A ~A?" m1 m2 m3 mc)))
-	  (set! (syncing obi) 1)
-	  (set! (syncing s2i) 1)
+	  (set! (sync obi) 1)
+	  (set! (sync s2i) 1)
 	  (do-chans (lambda (val) (if val (* 2.0 val) #f)) "*2")
 	  (let ((mc1 (apply map maxamp (list (list obi s2i s2i) (list 0 0 1)))))
 	    (if (or (fneq (* 2.0 m1) (car mc1))
 		    (fneq (* 2.0 m2) (cadr mc1))
 		    (fneq (* 2.0 m3) (caddr mc1)))
 		(snd-print (format #f ";do-chans: ~A ~A?" mc mc1)))
-	    (set! (syncing obi) 0)
-	    (set! (syncing s2i) 0)
+	    (set! (sync obi) 0)
+	    (set! (sync s2i) 0)
 	    (select-sound s2i)
 	    (do-sound-chans (lambda (val) (if val (* 0.5 val) #f)) "/2")
 	    (let ((mc2 (apply map maxamp (list (list obi s2i s2i) (list 0 0 1)))))
@@ -4292,8 +4291,8 @@
 	    ))
 	(revert-sound s2i)
 	(revert-sound obi)
-	(set! (syncing obi) 3)
-	(set! (syncing s2i) 3)
+	(set! (sync obi) 3)
+	(set! (sync s2i) 3)
 	(let* ((half-way (inexact->exact (* 0.5 (frames obi))))
 	       (o1 (sample half-way obi 0))
 	       (s1 (sample half-way s2i 0))
@@ -4318,8 +4317,8 @@
 		    (snd-print (format #f ";place: ~A " (list o1 s1 s2 s11 s12 s21 s22 s31 s32))))))))
 	(revert-sound s2i)
 	(revert-sound obi)
-	(set! (syncing obi) 0)
-	(set! (syncing s2i) 0)
+	(set! (sync obi) 0)
+	(set! (sync s2i) 0)
 	(if (or (fneq ((compand) 0.0) 0.0)
 		(fneq ((compand) 1.0) 1.0)
 		(fneq ((compand) .1) .2)
@@ -4331,7 +4330,7 @@
 	(revert-sound s2i)
 	(let ((s1 (sample 1000 s2i 0))
 	      (s2 (sample 1000 s2i 1)))
-	  (set! (syncing s2i) 4)
+	  (set! (sync s2i) 4)
 	  (select-all)
 	  (swap-selection-channels)
 	  (if (or (fneq s1 (sample 1000 s2i 1))
@@ -4364,6 +4363,38 @@
 
 	(close-sound obi)
 	)
+
+      (let* ((id (open-sound "oboe.snd"))
+	     (fr (frames id 0))
+	     (mx (maxamp id 0)))
+	(set! (frames id 0) 25000)
+	(if (not (= (frames id 0) 25000)) (snd-print (format #f ";set-frames 25000: ~A?" (frames id 0))))
+	(if (not (= (edit-position id 0) 1)) (snd-print (format #f ";set-frames 25000 edit: ~A?" (edit-position id 0))))
+	(set! (frames id 0) 75000)
+	(if (not (= (frames id 0) 75000)) (snd-print (format #f ";set-frames 75000: ~A?" (frames id 0))))
+	(if (not (= (edit-position id 0) 2)) (snd-print (format #f ";set-frames 75000 edit: ~A?" (edit-position id 0))))
+	(if (fneq (sample 30000 id 0) 0.0) (snd-print (format #f ";set-frames 75000 zeros: ~A?" (sample 30000 id 0))))
+	(revert-sound)
+	(if (fneq (sample 30000 id 0) -0.0844) (snd-print (format #f ";revert from set-frames: ~A?" (sample 30000 id 0))))
+	(if (not (= fr (frames id 0))) (snd-print (format #f ";revert set-frames: ~A ~= ~A?" (frames id 0) fr)))
+	(set! (maxamp id 0) .5)
+	(if (fneq (maxamp id 0) .5) (snd-print (format #f ";set-maxamp: ~A?" (maxamp id 0))))
+	(if (not (= (edit-position id 0) 1)) (snd-print (format #f ";set-maxamp edit: ~A?" (edit-position id 0))))
+	(set! (maxamp id 0) .1)
+	(if (fneq (maxamp id 0) .1) (snd-print (format #f ";set-maxamp .1: ~A?" (maxamp id 0))))
+	(if (not (= (edit-position id 0) 2)) (snd-print (format #f ";set-maxamp .1 edit: ~A?" (edit-position id 0))))
+	(revert-sound)
+	(if (fneq (maxamp id 0) mx) (snd-print (format #f ";maxamp after set: ~A ~A?" (maxamp id 0) mx)))
+	(set! (x-position-slider id 0) .1)
+	(if (fneq (x-position-slider id 0) .1) (snd-print (format #f ";set x-position-slider .1: ~A?" (x-position-slider id 0))))
+	(if (> (abs (- (left-sample id 0) 5083)) 3) (snd-print (format #f ";set x-position-slider sample 5083: ~A?" (left-sample id 0))))
+	(set! (x-zoom-slider id 0) .5)
+	(if (fneq (x-zoom-slider) .5) (snd-print (format #f ";set x-zoom-slider: ~A?" (x-zoom-slider id 0))))
+	(if (> (abs (- fr (* 2 (- (right-sample id 0) (left-sample id 0))))) 10)
+	    (snd-print (format #f ";set x-zoom-slider: ~A ~A -> ~A?" 
+			       (left-sample id 0) (right-sample id 0)
+			       (abs (- fr (* 2 (right-sample id 0) (left-sample id 0)))))))
+	(close-sound id))
 
       (let ((id (open-sound "oboe.snd")))
 	(prefix-it 1000 id)
@@ -4470,7 +4501,7 @@
       (let ((id (open-sound (car (match-sound-files-1 (lambda (file) 
 							(and (>= (mus-sound-chans file) 2)
 							     (> (mus-sound-frames file) 1000))))))))
-	(set! (syncing id) 1)
+	(set! (sync id) 1)
 	(select-sound id)
 	(make-region 200 500 id)
 	(select-channel 1)
@@ -4680,7 +4711,7 @@
 
       ))
 
-
+(if #f (begin
 ;;; ---------------- test 16: define-syntax ----------------
 (if (or full-test (= snd-test 16))
     (let ((hi 32)
@@ -4693,6 +4724,7 @@
       (if (not (= ho 16)) (snd-print (format #f ";loop: ~A?" ho)))
       (set! hi (prog1 (+ 2 ho) (set! ho 3)))
       (if (not (= hi 18)) (snd-print (format #f ";prog1: ~A?" hi)))))
+))
 
 
 ;;; ---------------- test 17: guile-gtk dialogs ----------------

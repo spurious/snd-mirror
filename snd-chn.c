@@ -1,10 +1,6 @@
 #include "snd.h"
 
-/* TODO  report_in_minibuffer should (sometimes) add_to_error_history (change to snd_error?)
- * TODO  some of the guile tie-ins are still in snd-scm
- * TODO  set! for x|y-zoom|position? maxamp? frames?
- * TODO                  set_zx_scrollbar_value but others need to be indirect
- * TODO                  frames needs to set cp->samples[cp->edit_ctr] if less (if more pad with zeros?)
+/* TODO  some of the guile tie-ins are still in snd-scm
  * TODO  should channel-sync field be tied to sound's syncing field? (channel-sync is currently unused)
  * TODO  C-g should flush pending X events (not sure how to do this given background events etc)
  */
@@ -229,6 +225,30 @@ void report_in_minibuffer(snd_info *sp, char *format, ...)
 #endif
   set_minibuffer_string(sp,buf);
   sp->minibuffer_temp = 1;
+  FREE(buf);
+  /* leave sp->minibuffer off so that keyboard_command doesn't clear it */
+}
+
+void report_in_minibuffer_and_save(snd_info *sp, char *format, ...)
+{
+  /* kinda dumb to repeat this code -- is there a way to apply a C function to ... args? */
+  char *buf;
+  int len;
+#if HAVE_VPRINTF
+  va_list ap;
+  len = snd_strlen(format) + 256;
+  buf = (char *)CALLOC(len,sizeof(char));
+  va_start(ap,format);
+  vsprintf(buf,format,ap);
+  va_end(ap);
+#else
+  len = snd_strlen(format) + 256;
+  buf = (char *)CALLOC(len,sizeof(char));
+  sprintf(buf,"%s...[you need vprintf]",format);
+#endif
+  set_minibuffer_string(sp,buf);
+  sp->minibuffer_temp = 1;
+  add_to_error_history(sp->state,buf,FALSE);
   FREE(buf);
   /* leave sp->minibuffer off so that keyboard_command doesn't clear it */
 }
@@ -1562,7 +1582,7 @@ static int display_fft_peaks(chan_info *ucp, char *filename)
       if (mcf) FREE(mcf);
       if (fd == NULL) 
 	{
-	  report_in_minibuffer(sp,"can't write %s: %s",filename,strerror(errno));
+	  report_in_minibuffer_and_save(sp,"can't write %s: %s",filename,strerror(errno));
 	  err = 1;
 	}
       else tmp_file = 0;
@@ -5659,7 +5679,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
 	      else 
 		{
 		  tok = dir_from_tempnam(ss);
-		  report_in_minibuffer(sp,"can't access %s! temp dir is still %s",newdir,tok);
+		  report_in_minibuffer_and_save(sp,"can't access %s! temp dir is still %s",newdir,tok);
 		  if (newdir) FREE(newdir);
 		  if (tok) free(tok);
 		}
@@ -5683,7 +5703,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
 		    }
 		  clear_minibuffer(sp);
 		}
-	      else report_in_minibuffer(sp,"can't read %s's header",str);
+	      else report_in_minibuffer_and_save(sp,"can't read %s's header",str);
 	      FREE(str1);
 	      break;
 #if HAVE_GUILE
@@ -7720,9 +7740,9 @@ static SCM g_backward_graph(SCM count, SCM snd, SCM chn)
   RTNINT(val);
 }
 
-enum {FFTF,WAVEF,LENGTHF,CURSORF,MAXAMPF,GRAPHINGF,LOSAMPF,HISAMPF,SQUELCH_UPDATE,
-      AP_SX,AP_SY,AP_ZX,AP_ZY,EDITF,CURSOR_STYLE,EDIT_HOOK,UNDO_HOOK,
-      SHOW_Y_ZERO,SHOW_MARKS,CP_WAVO,CP_WAVO_HOP,CP_WAVO_TRACE,CP_MAX_FFT_PEAKS,CP_LINE_SIZE,
+enum {CP_FFTING,CP_WAVING,CP_FRAMES,CP_CURSOR,CP_LISP_GRAPHING,CP_AP_LOSAMP,CP_AP_HISAMP,CP_SQUELCH_UPDATE,
+      CP_EDIT_CTR,CP_CURSOR_STYLE,CP_EDIT_HOOK,CP_UNDO_HOOK,
+      CP_SHOW_Y_ZERO,CP_SHOW_MARKS,CP_WAVO,CP_WAVO_HOP,CP_WAVO_TRACE,CP_MAX_FFT_PEAKS,CP_LINE_SIZE,
       CP_SHOW_FFT_PEAKS,CP_ZERO_PAD,CP_VERBOSE_CURSOR,CP_FFT_LOG_FREQUENCY,CP_FFT_LOG_MAGNITUDE,
       CP_WAVELET_TYPE,CP_SPECTRO_HOP,CP_FFT_SIZE,CP_FFT_STYLE,CP_FFT_WINDOW,CP_TRANSFORM_TYPE,
       CP_NORMALIZE_FFT,CP_SHOW_MIX_WAVEFORMS,CP_GRAPH_STYLE,CP_DOT_SIZE,
@@ -7762,25 +7782,20 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	  cp = get_cp(snd_n,chn_n,caller);
 	  switch(fld)
 	    {
-	    case EDITF:                 RTNINT(cp->edit_ctr);                     break;
-	    case FFTF:                  RTNBOOL(cp->ffting);                      break;
-	    case WAVEF:                 RTNBOOL(cp->waving);                      break;
-	    case CURSORF:               RTNINT(cp->cursor);                       break;
-	    case LENGTHF:               RTNINT(current_ed_samples(cp));           break;
-	    case MAXAMPF:               RTNFLT(get_maxamp(cp->sound,cp));         break;
-	    case GRAPHINGF:             RTNBOOL(cp->lisp_graphing);               break;
-	    case LOSAMPF:               if (cp->axis) RTNINT((cp->axis)->losamp); break;
-	    case HISAMPF:               if (cp->axis) RTNINT((cp->axis)->hisamp); break;
-	    case SQUELCH_UPDATE:        RTNBOOL(cp->squelch_update);              break;
-	    case AP_SX:                 if (cp->axis) RTNFLT((cp->axis)->sx);     break;
-	    case AP_SY:                 if (cp->axis) RTNFLT((cp->axis)->sy);     break;
-	    case AP_ZX:                 if (cp->axis) RTNFLT((cp->axis)->zx);     break;
-	    case AP_ZY:                 if (cp->axis) RTNFLT((cp->axis)->zy);     break;
-	    case CURSOR_STYLE:          RTNINT(cp->cursor_style);                 break;
-	    case EDIT_HOOK:             return(cp->edit_hook);                    break;
-	    case UNDO_HOOK:             return(cp->undo_hook);                    break;
-	    case SHOW_Y_ZERO:           RTNBOOL(cp->show_y_zero);                 break;
-	    case SHOW_MARKS:            RTNBOOL(cp->show_marks);                  break;
+	    case CP_EDIT_CTR:           RTNINT(cp->edit_ctr);                     break;
+	    case CP_FFTING:             RTNBOOL(cp->ffting);                      break;
+	    case CP_WAVING:             RTNBOOL(cp->waving);                      break;
+	    case CP_CURSOR:             RTNINT(cp->cursor);                       break;
+	    case CP_FRAMES:             RTNINT(current_ed_samples(cp));           break;
+	    case CP_LISP_GRAPHING:      RTNBOOL(cp->lisp_graphing);               break;
+	    case CP_AP_LOSAMP:          if (cp->axis) RTNINT((cp->axis)->losamp); break;
+	    case CP_AP_HISAMP:          if (cp->axis) RTNINT((cp->axis)->hisamp); break;
+	    case CP_SQUELCH_UPDATE:     RTNBOOL(cp->squelch_update);              break;
+	    case CP_CURSOR_STYLE:       RTNINT(cp->cursor_style);                 break;
+	    case CP_EDIT_HOOK:          return(cp->edit_hook);                    break;
+	    case CP_UNDO_HOOK:          return(cp->undo_hook);                    break;
+	    case CP_SHOW_Y_ZERO:        RTNBOOL(cp->show_y_zero);                 break;
+	    case CP_SHOW_MARKS:         RTNBOOL(cp->show_marks);                  break;
 	    case CP_WAVO:               RTNBOOL(cp->wavo);                        break;
 	    case CP_WAVO_HOP:           RTNINT(cp->wavo_hop);                     break;
 	    case CP_WAVO_TRACE:         RTNINT(cp->wavo_trace);                   break;
@@ -7832,7 +7847,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
   int val = 0;
   snd_info *sp;
   snd_state *ss;
-  int i;
+  int i,curlen,newlen;
   SCM res = SCM_EOL;
   if (SCM_EQ_P(snd_n,SCM_BOOL_T))
     {
@@ -7856,27 +7871,27 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
   cp = get_cp(snd_n,chn_n,caller);
   switch (fld)
     {
-    case EDITF:
+    case CP_EDIT_CTR:
       val = g_scm2intdef(on,0);
       if (cp->edit_ctr < val)
 	redo_edit(cp,val - cp->edit_ctr);
       else undo_edit(cp,cp->edit_ctr - val);
       RTNINT(cp->edit_ctr);
       break;
-    case FFTF:                  fftb(cp,val = bool_int_or_one(on)); update_graph(cp,NULL);                                                               break;
-    case WAVEF:                 waveb(cp,val = bool_int_or_one(on)); update_graph(cp,NULL);                                                              break;
-    case CURSORF:               cp->cursor_on = 1; handle_cursor(cp,cursor_moveto(cp,val = g_scm2intdef(on,1)));                                         break;
-    case GRAPHINGF: 
+    case CP_FFTING:             fftb(cp,val = bool_int_or_one(on)); update_graph(cp,NULL);                                                               break;
+    case CP_WAVING:             waveb(cp,val = bool_int_or_one(on)); update_graph(cp,NULL);                                                              break;
+    case CP_CURSOR:             cp->cursor_on = 1; handle_cursor(cp,cursor_moveto(cp,val = g_scm2intdef(on,1)));                                         break;
+    case CP_LISP_GRAPHING: 
       cp->lisp_graphing = bool_int_or_one(on); 
       val = cp->lisp_graphing;
       update_graph(cp,NULL); 
       break;
-    case LOSAMPF:               set_x_axis_x0(cp,val = g_scm2intdef(on,0)); return(on);                                                                  break;
-    case HISAMPF:               set_x_axis_x1(cp,val = g_scm2intdef(on,1)); return(on);                                                                  break;
-    case SQUELCH_UPDATE:        cp->squelch_update = bool_int_or_one(on);                                                                                break;
-    case CURSOR_STYLE:          cp->cursor_style = g_scm2intdef(on,0); update_graph(cp,NULL); RTNINT(cp->cursor_style);                                  break;
-    case SHOW_Y_ZERO:           cp->show_y_zero = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_y_zero);                                  break;
-    case SHOW_MARKS:            cp->show_marks = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_marks);                                    break;
+    case CP_AP_LOSAMP:          set_x_axis_x0(cp,val = g_scm2intdef(on,0)); return(on);                                                                  break;
+    case CP_AP_HISAMP:          set_x_axis_x1(cp,val = g_scm2intdef(on,1)); return(on);                                                                  break;
+    case CP_SQUELCH_UPDATE:     cp->squelch_update = bool_int_or_one(on);                                                                                break;
+    case CP_CURSOR_STYLE:       cp->cursor_style = g_scm2intdef(on,0); update_graph(cp,NULL); RTNINT(cp->cursor_style);                                  break;
+    case CP_SHOW_Y_ZERO:        cp->show_y_zero = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_y_zero);                                  break;
+    case CP_SHOW_MARKS:         cp->show_marks = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_marks);                                    break;
     case CP_WAVO:               cp->wavo = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->wavo);                                                break;
     case CP_WAVO_HOP:           cp->wavo_hop = g_scm2intdef(on,DEFAULT_WAVO_HOP); update_graph(cp,NULL); RTNINT(cp->wavo_hop);                           break;
     case CP_WAVO_TRACE:         cp->wavo_trace = g_scm2intdef(on,DEFAULT_WAVO_TRACE); update_graph(cp,NULL); RTNINT(cp->wavo_trace);                     break;
@@ -7900,13 +7915,39 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
     case CP_SHOW_AXES:          cp->show_axes = g_scm2intdef(on,DEFAULT_SHOW_AXES); update_graph(cp,NULL); RTNINT(cp->show_axes);                        break;
     case CP_GRAPHS_HORIZONTAL:  cp->graphs_horizontal = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->graphs_horizontal);                      break;
     case CP_SYNC:               cp->sync = g_scm2intdef(on,0); RTNINT(cp->sync);                                                                         break;
+    case CP_FRAMES:
+      /* if less than current, delete, else zero pad */
+      curlen = current_ed_samples(cp);
+      newlen = g_scm2intdef(on,curlen);
+      if (curlen > newlen)
+	delete_samples(newlen-1,curlen-newlen,cp,"(set-frames)");
+      else
+	{
+	  if (newlen > curlen)
+	    extend_with_zeros(cp,curlen,newlen-curlen,"(set-frames)");
+	}
+      update_graph(cp,NULL);
+      break;
     }
   RTNBOOL(val);
 }
 
 enum {CP_MIN_DB,CP_SPECTRO_X_ANGLE,CP_SPECTRO_Y_ANGLE,CP_SPECTRO_Z_ANGLE,CP_SPECTRO_X_SCALE,CP_SPECTRO_Y_SCALE,CP_SPECTRO_Z_SCALE,
-      CP_SPECTRO_CUTOFF,CP_SPECTRO_START,CP_FFT_BETA
+      CP_SPECTRO_CUTOFF,CP_SPECTRO_START,CP_FFT_BETA,CP_AP_SX,CP_AP_SY,CP_AP_ZX,CP_AP_ZY,CP_MAXAMP
 };
+
+
+static void reset_y_display(chan_info *cp, double sy, double zy)
+{
+  axis_info *ap;
+  ap=cp->axis;
+  ap->sy = sy;
+  ap->zy = zy;
+  resize_sy(cp);
+  resize_zy(cp);
+  apply_y_axis_change(ap,cp);
+}
+
 
 static SCM cp_fread(SCM snd_n, SCM chn_n, int fld, char *caller)
 {
@@ -7937,16 +7978,21 @@ static SCM cp_fread(SCM snd_n, SCM chn_n, int fld, char *caller)
   cp = get_cp(snd_n,chn_n,caller);
   switch(fld)
     {
-    case CP_MIN_DB:          RTNFLT(cp->min_dB);          break;
-    case CP_SPECTRO_X_ANGLE: RTNFLT(cp->spectro_x_angle); break;
-    case CP_SPECTRO_Y_ANGLE: RTNFLT(cp->spectro_y_angle); break;
-    case CP_SPECTRO_Z_ANGLE: RTNFLT(cp->spectro_z_angle); break;
-    case CP_SPECTRO_X_SCALE: RTNFLT(cp->spectro_x_scale); break;
-    case CP_SPECTRO_Y_SCALE: RTNFLT(cp->spectro_y_scale); break;
-    case CP_SPECTRO_Z_SCALE: RTNFLT(cp->spectro_z_scale); break;
-    case CP_SPECTRO_CUTOFF:  RTNFLT(cp->spectro_cutoff);  break;
-    case CP_SPECTRO_START:   RTNFLT(cp->spectro_start);   break;
-    case CP_FFT_BETA:        RTNFLT(cp->fft_beta);        break;
+    case CP_AP_SX:           if (cp->axis) RTNFLT((cp->axis)->sx);     break;
+    case CP_AP_SY:           if (cp->axis) RTNFLT((cp->axis)->sy);     break;
+    case CP_AP_ZX:           if (cp->axis) RTNFLT((cp->axis)->zx);     break;
+    case CP_AP_ZY:           if (cp->axis) RTNFLT((cp->axis)->zy);     break;
+    case CP_MIN_DB:          RTNFLT(cp->min_dB);                       break;
+    case CP_SPECTRO_X_ANGLE: RTNFLT(cp->spectro_x_angle);              break;
+    case CP_SPECTRO_Y_ANGLE: RTNFLT(cp->spectro_y_angle);              break;
+    case CP_SPECTRO_Z_ANGLE: RTNFLT(cp->spectro_z_angle);              break;
+    case CP_SPECTRO_X_SCALE: RTNFLT(cp->spectro_x_scale);              break;
+    case CP_SPECTRO_Y_SCALE: RTNFLT(cp->spectro_y_scale);              break;
+    case CP_SPECTRO_Z_SCALE: RTNFLT(cp->spectro_z_scale);              break;
+    case CP_SPECTRO_CUTOFF:  RTNFLT(cp->spectro_cutoff);               break;
+    case CP_SPECTRO_START:   RTNFLT(cp->spectro_start);                break;
+    case CP_FFT_BETA:        RTNFLT(cp->fft_beta);                     break;
+    case CP_MAXAMP:          RTNFLT(get_maxamp(cp->sound,cp));         break;
     }
   return(SCM_BOOL_F);
 }
@@ -7957,6 +8003,8 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
   snd_info *sp;
   snd_state *ss;
   int i;
+  Float curamp;
+  Float newamp[1];
   SCM res = SCM_EOL;
   if (SCM_EQ_P(snd_n,SCM_BOOL_T))
     {
@@ -7980,6 +8028,10 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
   cp = get_cp(snd_n,chn_n,caller);
   switch (fld)
     {
+    case CP_AP_SX:           reset_x_display(cp, gh_scm2double(on), cp->axis->zx);                                             break;
+    case CP_AP_ZX:           reset_x_display(cp, cp->axis->sx, gh_scm2double(on));                                             break;
+    case CP_AP_SY:           reset_y_display(cp, gh_scm2double(on), cp->axis->zy);                                             break;
+    case CP_AP_ZY:           reset_y_display(cp, cp->axis->sy, gh_scm2double(on));                                             break;
     case CP_MIN_DB:          cp->min_dB = gh_scm2double(on); cp->lin_dB = pow(10.0,cp->min_dB * 0.05); calculate_fft(cp,NULL); break;
     case CP_SPECTRO_X_ANGLE: cp->spectro_x_angle = gh_scm2double(on); calculate_fft(cp,NULL);                                  break;
     case CP_SPECTRO_Y_ANGLE: cp->spectro_y_angle = gh_scm2double(on); calculate_fft(cp,NULL);                                  break;
@@ -7990,6 +8042,15 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
     case CP_SPECTRO_CUTOFF:  cp->spectro_cutoff = gh_scm2double(on); calculate_fft(cp,NULL);                                   break;
     case CP_SPECTRO_START:   cp->spectro_start = gh_scm2double(on); calculate_fft(cp,NULL);                                    break;
     case CP_FFT_BETA:        cp->fft_beta = gh_scm2double(on); calculate_fft(cp,NULL);                                         break;
+    case CP_MAXAMP:
+      curamp = get_maxamp(cp->sound,cp);
+      newamp[0] = gh_scm2double(on);
+      if (curamp != newamp[0])
+	{
+	  scale_to(cp->state,cp->sound,cp,newamp,1,FALSE);
+	  update_graph(cp,NULL);
+	}
+      break;
     }
   return(on);
 }
@@ -8015,13 +8076,13 @@ static SCM g_edit_position(SCM snd_n, SCM chn_n)
 {
   #define H_edit_position "(" S_edit_position " &optional snd chn) -> current edit history position in snd's channel chn"
   ERRCPT(S_edit_position,snd_n,chn_n,1);
-  return(cp_iread(snd_n,chn_n,EDITF,S_edit_position));
+  return(cp_iread(snd_n,chn_n,CP_EDIT_CTR,S_edit_position));
 }
 
 static SCM g_set_edit_position(SCM on, SCM snd_n, SCM chn_n) 
 {
   ERRCPT("set-" S_edit_position,snd_n,chn_n,2);
-  return(cp_iwrite(snd_n,chn_n,on,EDITF,"set-" S_edit_position));
+  return(cp_iwrite(snd_n,chn_n,on,CP_EDIT_CTR,"set-" S_edit_position));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_edit_position_reversed,g_set_edit_position)
@@ -8030,14 +8091,14 @@ static SCM g_ffting(SCM snd_n, SCM chn_n)
 {
   #define H_ffting "(" S_ffting " &optional snd chn) -> #t if fft display is active in snd's channel chn"
   ERRCPT(S_ffting,snd_n,chn_n,1); 
-  return(cp_iread(snd_n,chn_n,FFTF,S_ffting));
+  return(cp_iread(snd_n,chn_n,CP_FFTING,S_ffting));
 }
 
 static SCM g_set_ffting(SCM on, SCM snd_n, SCM chn_n) 
 {
   ERRB1(on,"set-" S_ffting); 
   ERRCPT("set-" S_ffting,snd_n,chn_n,2);
-  return(cp_iwrite(snd_n,chn_n,on,FFTF,"set-" S_ffting));
+  return(cp_iwrite(snd_n,chn_n,on,CP_FFTING,"set-" S_ffting));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_ffting_reversed,g_set_ffting)
@@ -8046,14 +8107,14 @@ static SCM g_waving(SCM snd_n, SCM chn_n)
 {
   #define H_waving "(" S_waving " &optional snd chn) -> #t if time domain display is active in snd's channel chn"
   ERRCPT(S_waving,snd_n,chn_n,1); 
-  return(cp_iread(snd_n,chn_n,WAVEF,S_waving));
+  return(cp_iread(snd_n,chn_n,CP_WAVING,S_waving));
 }
 
 static SCM g_set_waving(SCM on, SCM snd_n, SCM chn_n) 
 {
   ERRB1(on,"set-" S_waving); 
   ERRCPT("set-" S_waving,snd_n,chn_n,2); 
-  return(cp_iwrite(snd_n,chn_n,on,WAVEF,"set-" S_waving));
+  return(cp_iwrite(snd_n,chn_n,on,CP_WAVING,"set-" S_waving));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_waving_reversed,g_set_waving)
@@ -8062,14 +8123,14 @@ static SCM g_graphing(SCM snd_n, SCM chn_n)
 {
   #define H_graphing "(" S_graphing " &optional snd chn) -> #t if lisp-generated data display is active in snd's channel chn"
   ERRCPT(S_graphing,snd_n,chn_n,1);
-  return(cp_iread(snd_n,chn_n,GRAPHINGF,S_graphing));
+  return(cp_iread(snd_n,chn_n,CP_LISP_GRAPHING,S_graphing));
 }
 
 static SCM g_set_graphing(SCM on, SCM snd_n, SCM chn_n) 
 {
   ERRB1(on,"set-" S_graphing); 
   ERRCPT("set-" S_graphing,snd_n,chn_n,2); 
-  return(cp_iwrite(snd_n,chn_n,on,GRAPHINGF,"set-" S_graphing));
+  return(cp_iwrite(snd_n,chn_n,on,CP_LISP_GRAPHING,"set-" S_graphing));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_graphing_reversed,g_set_graphing)
@@ -8078,14 +8139,14 @@ static SCM g_cursor(SCM snd_n, SCM chn_n)
 {
   #define H_cursor "(" S_cursor " &optional snd chn) -> current cursor location in snd's channel chn"
   ERRCPT(S_cursor,snd_n,chn_n,1); 
-  return(cp_iread(snd_n,chn_n,CURSORF,S_cursor));
+  return(cp_iread(snd_n,chn_n,CP_CURSOR,S_cursor));
 }
 
 static SCM g_set_cursor(SCM on, SCM snd_n, SCM chn_n) 
 {
   ERRB1(on,"set-" S_cursor); 
   ERRCPT("set-" S_cursor,snd_n,chn_n,2); 
-  return(cp_iwrite(snd_n,chn_n,on,CURSORF,"set-" S_cursor));
+  return(cp_iwrite(snd_n,chn_n,on,CP_CURSOR,"set-" S_cursor));
 }
 
 WITH_REVERSED_CHANNEL_ARGS(g_set_cursor_reversed,g_set_cursor)
@@ -8094,14 +8155,14 @@ static SCM g_cursor_style(SCM snd_n, SCM chn_n)
 {
   #define H_cursor_style "(" S_cursor_style " &optional snd chn) -> current cursor style in snd's channel chn"
   ERRCPT(S_cursor_style,snd_n,chn_n,1); 
-  return(cp_iread(snd_n,chn_n,CURSOR_STYLE,S_cursor_style));
+  return(cp_iread(snd_n,chn_n,CP_CURSOR_STYLE,S_cursor_style));
 }
 
 static SCM g_set_cursor_style(SCM on, SCM snd_n, SCM chn_n) 
 {
   ERRB1(on,"set-" S_cursor_style); 
   ERRCPT("set-" S_cursor_style,snd_n,chn_n,2); 
-  return(cp_iwrite(snd_n,chn_n,on,CURSOR_STYLE,"set-" S_cursor_style));
+  return(cp_iwrite(snd_n,chn_n,on,CP_CURSOR_STYLE,"set-" S_cursor_style));
 }
 
 WITH_REVERSED_CHANNEL_ARGS(g_set_cursor_style_reversed,g_set_cursor_style)
@@ -8110,28 +8171,44 @@ static SCM g_frames(SCM snd_n, SCM chn_n)
 {
   #define H_frames "(" S_frames " &optional snd chn) -> number of frames of data in snd's channel chn"
   ERRCPT(S_frames,snd_n,chn_n,1); 
-  return(cp_iread(snd_n,chn_n,LENGTHF,S_frames));
+  return(cp_iread(snd_n,chn_n,CP_FRAMES,S_frames));
 }
+
+static SCM g_set_frames(SCM on, SCM snd_n, SCM chn_n) 
+{
+  ERRCPT("set-" S_frames,snd_n,chn_n,2); 
+  return(cp_iwrite(snd_n,chn_n,on,CP_FRAMES,"set-" S_frames));
+}
+
+WITH_REVERSED_CHANNEL_ARGS(g_set_frames_reversed,g_set_frames)
 
 static SCM g_maxamp(SCM snd_n, SCM chn_n) 
 {
   #define H_maxamp "(" S_maxamp " &optional snd chn) -> max amp of data in snd's channel chn"
   ERRCPT(S_maxamp,snd_n,chn_n,1); 
-  return(cp_iread(snd_n,chn_n,MAXAMPF,S_maxamp));
+  return(cp_fread(snd_n,chn_n,CP_MAXAMP,S_maxamp));
 }
+
+static SCM g_set_maxamp(SCM on, SCM snd_n, SCM chn_n) 
+{
+  ERRCPT("set-" S_maxamp,snd_n,chn_n,2); 
+  return(cp_fwrite(snd_n,chn_n,on,CP_MAXAMP,"set-" S_maxamp));
+}
+
+WITH_REVERSED_CHANNEL_ARGS(g_set_maxamp_reversed,g_set_maxamp)
 
 static SCM g_squelch_update(SCM snd_n, SCM chn_n) 
 {
   #define H_squelch_update "(" S_squelch_update " &optional snd chn) -> #t if updates (redisplays) are off in snd's channel chn"
   ERRCPT(S_squelch_update,snd_n,chn_n,1); 
-  return(cp_iread(snd_n,chn_n,SQUELCH_UPDATE,S_squelch_update));
+  return(cp_iread(snd_n,chn_n,CP_SQUELCH_UPDATE,S_squelch_update));
 }
 
 static SCM g_set_squelch_update(SCM on, SCM snd_n, SCM chn_n) 
 {
   ERRB1(on,"set-" S_squelch_update); 
   ERRCPT("set-" S_squelch_update,snd_n,chn_n,2); 
-  return(cp_iwrite(snd_n,chn_n,on,SQUELCH_UPDATE,"set-" S_squelch_update));
+  return(cp_iwrite(snd_n,chn_n,on,CP_SQUELCH_UPDATE,"set-" S_squelch_update));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_squelch_update_reversed,g_set_squelch_update)
@@ -8140,49 +8217,82 @@ static SCM g_ap_sx(SCM snd_n, SCM chn_n)
 {
   #define H_x_position_slider "(" S_x_position_slider " &optional snd chn) -> current x axis position slider of snd channel chn"
   ERRCPT(S_x_position_slider,snd_n,chn_n,1); 
-  return(cp_iread(snd_n,chn_n,AP_SX,S_x_position_slider));
+  return(cp_fread(snd_n,chn_n,CP_AP_SX,S_x_position_slider));
 }
+
+static SCM g_set_ap_sx(SCM on, SCM snd_n, SCM chn_n) 
+{
+  ERRCPT(S_x_position_slider,snd_n,chn_n,1); 
+  return(cp_fwrite(snd_n,chn_n,on,CP_AP_SX,"set-" S_x_position_slider));
+}
+
+WITH_REVERSED_CHANNEL_ARGS(g_set_ap_sx_reversed,g_set_ap_sx)
 
 static SCM g_ap_sy(SCM snd_n, SCM chn_n) 
 {
   #define H_y_position_slider "(" S_y_position_slider " &optional snd chn) -> current y axis position slider of snd channel chn"
   ERRCPT(S_y_position_slider,snd_n,chn_n,1); 
-  return(cp_iread(snd_n,chn_n,AP_SY,S_y_position_slider));
+  return(cp_fread(snd_n,chn_n,CP_AP_SY,S_y_position_slider));
 }
+
+static SCM g_set_ap_sy(SCM on, SCM snd_n, SCM chn_n) 
+{
+  ERRCPT(S_y_position_slider,snd_n,chn_n,1); 
+  return(cp_fwrite(snd_n,chn_n,on,CP_AP_SY,"set-" S_y_position_slider));
+}
+
+WITH_REVERSED_CHANNEL_ARGS(g_set_ap_sy_reversed,g_set_ap_sy)
 
 static SCM g_ap_zx(SCM snd_n, SCM chn_n) 
 {
   #define H_x_zoom_slider "(" S_x_zoom_slider " &optional snd chn) -> current x axis zoom slider of snd channel chn"
   ERRCPT(S_x_zoom_slider,snd_n,chn_n,1); 
-  return(cp_iread(snd_n,chn_n,AP_ZX,S_x_zoom_slider));
+  return(cp_fread(snd_n,chn_n,CP_AP_ZX,S_x_zoom_slider));
 }
+
+static SCM g_set_ap_zx(SCM on, SCM snd_n, SCM chn_n) 
+{
+  ERRCPT(S_x_zoom_slider,snd_n,chn_n,1); 
+  return(cp_fwrite(snd_n,chn_n,on,CP_AP_ZX,"set-" S_x_zoom_slider));
+}
+
+WITH_REVERSED_CHANNEL_ARGS(g_set_ap_zx_reversed,g_set_ap_zx)
+
 
 static SCM g_ap_zy(SCM snd_n, SCM chn_n) 
 {
   #define H_y_zoom_slider "(" S_y_zoom_slider " &optional snd chn) -> current y axis zoom slider of snd channel chn"
   ERRCPT(S_y_zoom_slider,snd_n,chn_n,1); 
-  return(cp_iread(snd_n,chn_n,AP_ZY,S_y_zoom_slider));
+  return(cp_fread(snd_n,chn_n,CP_AP_ZY,S_y_zoom_slider));
 }
+
+static SCM g_set_ap_zy(SCM on, SCM snd_n, SCM chn_n) 
+{
+  ERRCPT(S_y_zoom_slider,snd_n,chn_n,1); 
+  return(cp_fwrite(snd_n,chn_n,on,CP_AP_ZY,"set-" S_y_zoom_slider));
+}
+
+WITH_REVERSED_CHANNEL_ARGS(g_set_ap_zy_reversed,g_set_ap_zy)
 
 static SCM g_edit_hook(SCM snd_n, SCM chn_n) 
 {
   #define H_edit_hook "(" S_edit_hook " &optional snd chn) -> snd's channel chn's edit-hook"
   ERRCPT(S_edit_hook,snd_n,chn_n,1); 
-  return(cp_iread(snd_n,chn_n,EDIT_HOOK,S_edit_hook));
+  return(cp_iread(snd_n,chn_n,CP_EDIT_HOOK,S_edit_hook));
 }
 
 static SCM g_undo_hook(SCM snd_n, SCM chn_n) 
 {
   #define H_undo_hook "(" S_undo_hook " &optional snd chn) -> snd's channel chn's undo-hook"
   ERRCPT(S_undo_hook,snd_n,chn_n,1); 
-  return(cp_iread(snd_n,chn_n,UNDO_HOOK,S_undo_hook));
+  return(cp_iread(snd_n,chn_n,CP_UNDO_HOOK,S_undo_hook));
 }
 
 static SCM g_show_y_zero(SCM snd, SCM chn)
 {
   #define H_show_y_zero "(" S_show_y_zero " (snd #t) (chn #t)) -> #t if Snd should include a line at y=0.0"
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
-    return(cp_iread(snd,chn,SHOW_Y_ZERO,S_show_y_zero));
+    return(cp_iread(snd,chn,CP_SHOW_Y_ZERO,S_show_y_zero));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_show_y_zero);
   RTNBOOL(show_y_zero(get_global_state()));
 }
@@ -8192,7 +8302,7 @@ static SCM g_set_show_y_zero(SCM on, SCM snd, SCM chn)
   snd_state *ss;
   ERRB1(on,"set-" S_show_y_zero); 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
-    return(cp_iwrite(snd,chn,on,SHOW_Y_ZERO,"set-" S_show_y_zero));
+    return(cp_iwrite(snd,chn,on,CP_SHOW_Y_ZERO,"set-" S_show_y_zero));
   else
     {
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_show_y_zero);
@@ -8501,7 +8611,7 @@ static SCM g_show_marks(SCM snd, SCM chn)
 {
   #define H_show_marks "(" S_show_marks " (snd #t) (chn #t)) -> #t if Snd should show marks"
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
-    return(cp_iread(snd,chn,SHOW_MARKS,S_show_marks));
+    return(cp_iread(snd,chn,CP_SHOW_MARKS,S_show_marks));
   SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG1,S_show_marks);
   RTNBOOL(show_marks(get_global_state()));
 }
@@ -8511,7 +8621,7 @@ static SCM g_set_show_marks(SCM on, SCM snd, SCM chn)
   snd_state *ss;
   ERRB1(on,"set-" S_show_marks); 
   if ((gh_number_p(snd)) || (gh_boolean_p(snd)))
-    return(cp_iwrite(snd,chn,on,SHOW_MARKS,"set-" S_show_marks));
+    return(cp_iwrite(snd,chn,on,CP_SHOW_MARKS,"set-" S_show_marks));
   else
     {
       SCM_ASSERT((SCM_EQ_P(snd,SCM_UNDEFINED)),snd,SCM_ARG2,"set-" S_show_marks);
@@ -9117,14 +9227,14 @@ static SCM g_left_sample(SCM snd_n, SCM chn_n)
 {
   #define H_left_sample "(" S_left_sample " &optional snd chn) -> left sample number in time domain window"
   ERRCPT(S_left_sample,snd_n,chn_n,1); 
-  return(cp_iread(snd_n,chn_n,LOSAMPF,S_left_sample));
+  return(cp_iread(snd_n,chn_n,CP_AP_LOSAMP,S_left_sample));
 }
 
 static SCM g_set_left_sample(SCM on, SCM snd_n, SCM chn_n) 
 {
   ERRB1(on,"set-" S_left_sample); 
   ERRCPT("set-" S_left_sample,snd_n,chn_n,2); 
-  return(cp_iwrite(snd_n,chn_n,on,LOSAMPF,"set-" S_left_sample));
+  return(cp_iwrite(snd_n,chn_n,on,CP_AP_LOSAMP,"set-" S_left_sample));
 }
 
 WITH_REVERSED_CHANNEL_ARGS(g_set_left_sample_reversed,g_set_left_sample)
@@ -9133,14 +9243,14 @@ static SCM g_right_sample(SCM snd_n, SCM chn_n)
 {
   #define H_right_sample "(" S_right_sample " &optional snd chn) -> right sample number in time domain window"
   ERRCPT(S_right_sample,snd_n,chn_n,1); 
-  return(cp_iread(snd_n,chn_n,HISAMPF,S_right_sample));
+  return(cp_iread(snd_n,chn_n,CP_AP_HISAMP,S_right_sample));
 }
 
 static SCM g_set_right_sample(SCM on, SCM snd_n, SCM chn_n) 
 {
   ERRB1(on,"set-" S_right_sample); 
   ERRCPT("set-" S_right_sample,snd_n,chn_n,2); 
-  return(cp_iwrite(snd_n,chn_n,on,HISAMPF,"set-" S_right_sample));
+  return(cp_iwrite(snd_n,chn_n,on,CP_AP_HISAMP,"set-" S_right_sample));
 }
 
 WITH_REVERSED_CHANNEL_ARGS(g_set_right_sample_reversed,g_set_right_sample)
@@ -9544,15 +9654,34 @@ void g_init_chn(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_backward_graph,SCM_FNC g_backward_graph,0,3,0),H_backward_graph);
 
   DEFINE_PROC(gh_new_procedure(S_edits,SCM_FNC g_edits,0,2,0),H_edits);
-  DEFINE_PROC(gh_new_procedure(S_maxamp,SCM_FNC g_maxamp,0,2,0),H_maxamp);
   DEFINE_PROC(gh_new_procedure(S_peaks,SCM_FNC g_peaks,0,3,0),H_peaks);
   DEFINE_PROC(gh_new_procedure(S_edit_hook,SCM_FNC g_edit_hook,0,2,0),H_edit_hook);
   DEFINE_PROC(gh_new_procedure(S_undo_hook,SCM_FNC g_undo_hook,0,2,0),H_undo_hook);
-  DEFINE_PROC(gh_new_procedure(S_x_position_slider,SCM_FNC g_ap_sx,0,2,0),H_x_position_slider);
-  DEFINE_PROC(gh_new_procedure(S_y_position_slider,SCM_FNC g_ap_sy,0,2,0),H_y_position_slider);
-  DEFINE_PROC(gh_new_procedure(S_x_zoom_slider,SCM_FNC g_ap_zx,0,2,0),H_x_zoom_slider);
-  DEFINE_PROC(gh_new_procedure(S_y_zoom_slider,SCM_FNC g_ap_zy,0,2,0),H_y_zoom_slider);
-  DEFINE_PROC(gh_new_procedure(S_frames,SCM_FNC g_frames,0,2,0),H_frames);
+
+  define_procedure_with_reversed_setter(S_x_position_slider,SCM_FNC g_ap_sx,H_x_position_slider,
+					"set-" S_x_position_slider,SCM_FNC g_set_ap_sx, SCM_FNC g_set_ap_sx_reversed,
+					local_doc,0,2,0,3);
+
+  define_procedure_with_reversed_setter(S_y_position_slider,SCM_FNC g_ap_sy,H_y_position_slider,
+					"set-" S_y_position_slider,SCM_FNC g_set_ap_sy, SCM_FNC g_set_ap_sy_reversed,
+					local_doc,0,2,0,3);
+
+  define_procedure_with_reversed_setter(S_x_zoom_slider,SCM_FNC g_ap_zx,H_x_zoom_slider,
+					"set-" S_x_zoom_slider,SCM_FNC g_set_ap_zx, SCM_FNC g_set_ap_zx_reversed,
+					local_doc,0,2,0,3);
+
+  define_procedure_with_reversed_setter(S_y_zoom_slider,SCM_FNC g_ap_zy,H_y_zoom_slider,
+					"set-" S_y_zoom_slider,SCM_FNC g_set_ap_zy, SCM_FNC g_set_ap_zy_reversed,
+					local_doc,0,2,0,3);
+
+  define_procedure_with_reversed_setter(S_frames,SCM_FNC g_frames,H_frames,
+					"set-" S_frames,SCM_FNC g_set_frames, SCM_FNC g_set_frames_reversed,
+					local_doc,0,2,0,3);
+
+  define_procedure_with_reversed_setter(S_maxamp,SCM_FNC g_maxamp,H_maxamp,
+					"set-" S_maxamp,SCM_FNC g_set_maxamp, SCM_FNC g_set_maxamp_reversed,
+					local_doc,0,2,0,3);
+
   DEFINE_PROC(gh_new_procedure(S_forward_sample,SCM_FNC g_forward_sample,0,3,0),H_forward_sample);
   DEFINE_PROC(gh_new_procedure(S_backward_sample,SCM_FNC g_backward_sample,0,3,0),H_backward_sample);
   DEFINE_PROC(gh_new_procedure(S_smooth,SCM_FNC g_smooth,2,2,0),H_smooth);

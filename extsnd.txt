@@ -430,7 +430,7 @@ functions invoked by the hook.
                                          (lambda (snd)
                                            (if (> (channels snd) 1)
                                                (begin
-                                                 (set! (syncing) (1+ snd) snd) ; 0 = #f
+                                                 (set! (sync) (1+ snd) snd) ; 0 = #f
                                                  (set! (uniting) channels-combined snd)))
                                            (set! (graph-style) graph-filled)))
 
@@ -965,7 +965,7 @@ add-mark, for example).
 
   syncd-marks   (sync)            list of marks (ids) that share sync.
 
-The sync value is very similar to the mix track number or the sound syncing
+The sync value is very similar to the mix track number or the sound sync
 field; it provides a way to group marks for simultaneous changes. Marks that
 share the same sync value (if not 0), move together when any one of them is
 dragged, play together, etc. mark->sound provides a way to go from a mark id
@@ -1287,7 +1287,8 @@ The variables are local to each sound or each channel. That is, (amp snd)
 returns the control-panel amp setting, and (set! (amp snd) val) sets its
 value to val.
 
-  add-player        (player)      add player to the play-list (see make-player).
+  add-player        (player start end)
+                                  add player to the play-list (see make-player).
 
   amp               (snd)         current amp (control panel slider) value.
 
@@ -1451,7 +1452,8 @@ value to val.
   forward-sample    (count snd chn)
                                   move forward count samples (C-f), return new cursor position.
 
-  frames            (snd chn)     chn's current length in samples.
+  frames            (snd chn)     chn's current length in samples.  Used with set!, this either truncates
+                                  the sound or pads it with zeros at the end.
 
   graph             (data xlabel x0 x1 y0 y1 snd chn)
                                   Display a graph of data in a separate display per channel.  The x axis
@@ -1552,7 +1554,7 @@ value to val.
   map-sound-chans   (func start end edname snd)
                                   apply func to current sound's channels
 
-  maxamp            (snd chn)     max amp of snd's channel chn.
+  maxamp            (snd chn)     max amp of snd's channel chn.  Used with set!, this is equivalent to scale-to.
 
   max-fft-peaks     (snd chn)     max number of fft peaks reported (default: 100).
 
@@ -1646,6 +1648,7 @@ value to val.
                                   See eval-over-selection in examp.scm for a more useful example.
 
   read-only         (snd)         #t if snd is read-only, #f otherwise.
+
   redo              (edits snd chn) redo edits edits (default is 1) in snd's channel chn.
 
   report-in-minibuffer (msg snd)  post msg in snd's minibuffer [no-such-sound].
@@ -1925,7 +1928,8 @@ value to val.
   swap-channels     (snd1 chn1 snd2 chn2 beg dur)
                                   Swap the indicated channels, between beg and beg+dur.
 
-  syncing           (snd)         snd's 'sync' value (an integer, 0=off)
+  sync              (snd)         snd's 'sync' value (an integer, 0=off).  The old name of this field
+                                  was 'syncing' (it was originally a boolean); this name still works.
 
   temp-to-sound     (data name origin)
                                   read sync'd edit state from temp file (see external programs).
@@ -2498,8 +2502,10 @@ functions:
                                 Snd menus are numbered from 0 ('File') to 4 ('Help').  [no-such-menu]
 
                                       (add-to-menu 5 "Denoise"
-                                        (lambda ()
-                                          (report-in-minibuffer "denoise")))
+                                        (lambda () (report-in-minibuffer "denoise")))
+
+                                      (add-to-menu 1 "Stop Playing"
+                                        (lambda () (stop-playing)))
 
   change-menu-label     (top-menu old-label new-label)
 
@@ -2544,7 +2550,7 @@ for that as follows:
        (lambda (tag val) 0))
 0
 
-Here's we've "caught" 'no-active-selection (if it occurs within the first
+Here we've "caught" 'no-active-selection (if it occurs within the first
 "thunk's" body), and return 0 if it occurs; otherwise we return (+ 1
 (selection-position)). Scheme (Guile) has a number of errors such as
 'out-of-range, 'wrong-type-arg, 'numerical-overflow, etc. The Snd-specific
@@ -2671,6 +2677,13 @@ These functions don't seem to fit anywhere else:
                                   cursor-in-view     cursor-on-left     cursor-on-right   cursor-in-middle
                                   cursor-update-display cursor-no-action cursor-claim-selection keyboard-no-action
 
+                                  We can use bind-key to turn the keyboard into a sort of extended piano:
+
+                                  (bind-key (char->integer #\o) 0 (lambda () (play "oboe.snd")))
+                                  (bind-key (char->integer #\p) 0 (lambda () (play "pistol.snd")))
+
+                                  Now each time we hit "o", "oboe.snd" plays,  etc.
+
   convolve-arrays   (rl1 rl2)     convolve vectors rl1 with rl2.  Result returned in rl1.
                                   rl1 should be large enough to hold the full convolution result.
                                   As a special dispensation for forgetful users, if rl1 is a file
@@ -2791,7 +2804,7 @@ To get the data currently displayed in the time domain window:
 Now we can use window-samples and graph-hook to show a running graph of the
 time domain energy:
 
-(define displaye-nergy
+(define display-energy
  (lambda ()
   (let* ((data (window-samples))
          (len (vector-length data)))
