@@ -65,9 +65,9 @@
   XEN_NARGIFY_0(gxm_XtPeekEvent_w, gxm_XtPeekEvent)
 #endif
   XEN_NARGIFY_3(gxm_XtSetArg_w, gxm_XtSetArg)
-  XEN_NARGIFY_2(gxm_XtManageChildren_w, gxm_XtManageChildren)
+  XEN_ARGIFY_2(gxm_XtManageChildren_w, gxm_XtManageChildren)
   XEN_NARGIFY_1(gxm_XtManageChild_w, gxm_XtManageChild)
-  XEN_NARGIFY_2(gxm_XtUnmanageChildren_w, gxm_XtUnmanageChildren)
+  XEN_ARGIFY_2(gxm_XtUnmanageChildren_w, gxm_XtUnmanageChildren)
   XEN_NARGIFY_1(gxm_XtUnmanageChild_w, gxm_XtUnmanageChild)
   XEN_NARGIFY_1(gxm_XtDispatchEvent_w, gxm_XtDispatchEvent)
   XEN_NARGIFY_2(gxm_XtCallAcceptFocus_w, gxm_XtCallAcceptFocus)
@@ -1347,9 +1347,9 @@ static void define_procedures(void)
 #endif
 #if HAVE_MOTIF
   XM_DEFINE_PROCEDURE(XtSetArg, gxm_XtSetArg_w, 3, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XtManageChildren, gxm_XtManageChildren_w, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XtManageChildren, gxm_XtManageChildren_w, 1, 1, 0, NULL);
   XM_DEFINE_PROCEDURE(XtManageChild, gxm_XtManageChild_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XtUnmanageChildren, gxm_XtUnmanageChildren_w, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XtUnmanageChildren, gxm_XtUnmanageChildren_w, 1, 1, 0, NULL);
   XM_DEFINE_PROCEDURE(XtUnmanageChild, gxm_XtUnmanageChild_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XtDispatchEvent, gxm_XtDispatchEvent_w, 1, 0, 0, H_XtDispatchEvent);
   XM_DEFINE_PROCEDURE(XtCallAcceptFocus, gxm_XtCallAcceptFocus_w, 2, 0, 0, H_XtCallAcceptFocus);

@@ -6753,12 +6753,12 @@ static void define_structs(void)
 #endif
   XG_DEFINE_READER(colors, gxg_colors_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(size, gxg_size_w, 1, 0, 0, NULL);
-  XG_DEFINE_ACCESSOR(value, gxg_value_w, set_value, gxg_set_value_w, 1, 0, 2, 0);
+  XG_DEFINE_ACCESSOR(value, gxg_value_w, gxg_set_value_w, 1, 0, 2, 0);
 #if (!WITH_GTK_AND_X11)
-  XG_DEFINE_ACCESSOR(blue, gxg_blue_w, set_blue, gxg_set_blue_w, 1, 0, 2, 0);
-  XG_DEFINE_ACCESSOR(green, gxg_green_w, set_green, gxg_set_green_w, 1, 0, 2, 0);
-  XG_DEFINE_ACCESSOR(red, gxg_red_w, set_red, gxg_set_red_w, 1, 0, 2, 0);
-  XG_DEFINE_ACCESSOR(pixel, gxg_pixel_w, set_pixel, gxg_set_pixel_w, 1, 0, 2, 0);
+  XG_DEFINE_ACCESSOR(blue, gxg_blue_w, gxg_set_blue_w, 1, 0, 2, 0);
+  XG_DEFINE_ACCESSOR(green, gxg_green_w, gxg_set_green_w, 1, 0, 2, 0);
+  XG_DEFINE_ACCESSOR(red, gxg_red_w, gxg_set_red_w, 1, 0, 2, 0);
+  XG_DEFINE_ACCESSOR(pixel, gxg_pixel_w, gxg_set_pixel_w, 1, 0, 2, 0);
 #endif
   XG_DEFINE_PROCEDURE(GdkColor, gxg_make_GdkColor_w, 0, 0, 1, NULL);
   XG_DEFINE_PROCEDURE(GdkCursor, gxg_make_GdkCursor_w, 0, 0, 1, NULL);

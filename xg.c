@@ -23737,8 +23737,13 @@ static void define_functions(void)
 /* ---------------------------------------- structs ---------------------------------------- */
 
   #define XG_DEFINE_READER(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XG_FIELD_PRE #Name XG_POST, Value, A1, A2, A3, Help)
-  #define XG_DEFINE_ACCESSOR(Name, Value, SetName, SetValue, A1, A2, A3, A4) \
-     XEN_DEFINE_PROCEDURE_WITH_SETTER(XG_FIELD_PRE #Name XG_POST, Value, NULL, XG_FIELD_PRE #SetName XG_POST, SetValue, A1, A2, A3, A4)
+  #if HAVE_RUBY
+  #define XG_DEFINE_ACCESSOR(Name, Value, SetValue, A1, A2, A3, A4) \
+    XEN_DEFINE_PROCEDURE_WITH_SETTER(XG_FIELD_PRE #Name XG_POST, Value, NULL, XG_FIELD_PRE "set_" #Name XG_POST, SetValue, A1, A2, A3, A4)
+  #else
+  #define XG_DEFINE_ACCESSOR(Name, Value, SetValue, A1, A2, A3, A4) \
+    XEN_DEFINE_PROCEDURE_WITH_SETTER(XG_FIELD_PRE #Name XG_POST, Value, NULL, "set! " XG_FIELD_PRE #Name XG_POST, SetValue, A1, A2, A3, A4)
+  #endif
 
 /* conversions */
 static XEN c_array_to_xen_list(XEN val, XEN clen)
@@ -29042,12 +29047,12 @@ static void define_structs(void)
 #endif
   XG_DEFINE_READER(colors, gxg_colors, 1, 0, 0, NULL);
   XG_DEFINE_READER(size, gxg_size, 1, 0, 0, NULL);
-  XG_DEFINE_ACCESSOR(value, gxg_value, set_value, gxg_set_value, 1, 0, 2, 0);
+  XG_DEFINE_ACCESSOR(value, gxg_value, gxg_set_value, 1, 0, 2, 0);
 #if (!WITH_GTK_AND_X11)
-  XG_DEFINE_ACCESSOR(blue, gxg_blue, set_blue, gxg_set_blue, 1, 0, 2, 0);
-  XG_DEFINE_ACCESSOR(green, gxg_green, set_green, gxg_set_green, 1, 0, 2, 0);
-  XG_DEFINE_ACCESSOR(red, gxg_red, set_red, gxg_set_red, 1, 0, 2, 0);
-  XG_DEFINE_ACCESSOR(pixel, gxg_pixel, set_pixel, gxg_set_pixel, 1, 0, 2, 0);
+  XG_DEFINE_ACCESSOR(blue, gxg_blue, gxg_set_blue, 1, 0, 2, 0);
+  XG_DEFINE_ACCESSOR(green, gxg_green, gxg_set_green, 1, 0, 2, 0);
+  XG_DEFINE_ACCESSOR(red, gxg_red, gxg_set_red, 1, 0, 2, 0);
+  XG_DEFINE_ACCESSOR(pixel, gxg_pixel, gxg_set_pixel, 1, 0, 2, 0);
 #endif
   XG_DEFINE_PROCEDURE(GdkColor, gxg_make_GdkColor, 0, 0, 1, NULL);
   XG_DEFINE_PROCEDURE(GdkCursor, gxg_make_GdkCursor, 0, 0, 1, NULL);
@@ -30570,10 +30575,10 @@ static int xg_already_inited = FALSE;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"10-Jul-03\")");
+      XEN_EVAL_C_STRING("(define xm-version \"15-Jul-03\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("10-Jul-03"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("15-Jul-03"));
 #endif
       xg_already_inited = TRUE;
 #if WITH_GTK_AND_X11

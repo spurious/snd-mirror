@@ -69,7 +69,6 @@ typedef struct {
 static GdkGC *draw_gc, *vu_gc;
 
 static char timbuf[TIME_STR_SIZE];
-static char *msgbuf = NULL;
 
 static file_data *recdat;
 
@@ -106,6 +105,7 @@ static void record_report(GtkWidget *text, ...)
   time_t ts;
   va_list ap;
   char *nextstr;
+  static char *msgbuf = NULL;
   snd_state *ss;
   ss = get_global_state();
   if (msgbuf == NULL) msgbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
@@ -1867,6 +1867,7 @@ static void record_button_callback(GtkWidget *w, gpointer context)
   off_t oloc, samples;
   static char *comment;
   char *str;
+  char *buf;
   PANE *p;
   recorder_info *rp;
   rp = get_recorder_info();
@@ -1885,7 +1886,18 @@ static void record_button_callback(GtkWidget *w, gpointer context)
 	  if (str) FREE(str);
 	  str = NULL;
 	  rp->output_data_format = ofmt;
-	  rp->out_chans = ochns;
+
+	  if ((all_panes[out_file_pane]) && (all_panes[out_file_pane]->on_buttons_size < ochns))
+	    {
+	      rp->out_chans = all_panes[out_file_pane]->on_buttons_size;
+	      buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	      mus_snprintf(buf, PRINT_BUFFER_SIZE, 
+			   "only %d out chan%s available",
+			   rp->out_chans, (rp->out_chans > 1) ? "s" : "");
+	      record_report(messages, buf, NULL);
+	      FREE(buf);
+	    }
+	  else rp->out_chans = ochns;
 	  if (rs != old_srate) 
 	    {
 	      rp->srate = rs;
@@ -1899,17 +1911,19 @@ static void record_button_callback(GtkWidget *w, gpointer context)
 	      rp->triggered = (!rp->triggering);
 	      return;
 	    }
-
-	  comment = sg_get_text(recdat->comment_text, 0, -1);
+	  if (GTK_IS_TEXT_VIEW(recdat->comment_text))
+	    comment = sg_get_text(recdat->comment_text, 0, -1);
+	  else comment = (char *)gtk_entry_get_text(GTK_ENTRY(recdat->comment_text));
 	  reflect_recorder_duration(0.0);
 	  
 	  if (out_chans_active() != rp->out_chans)
 	    {
-	      if (msgbuf == NULL) msgbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-	      mus_snprintf(msgbuf, PRINT_BUFFER_SIZE,
-			   _("chans field (%d) doesn't match file out panel (%d channels active)"), 
-			   rp->out_chans, out_chans_active());
-	      record_report(messages, msgbuf, NULL);
+	      buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	      mus_snprintf(buf, PRINT_BUFFER_SIZE,
+			   _("chans field (%d) doesn't match file out panel (%d channel%s active)"), 
+			   rp->out_chans, out_chans_active(), (out_chans_active() > 1) ? "s" : "");
+	      record_report(messages, buf, NULL);
+	      FREE(buf);
 	      wd = (Wdesc *)CALLOC(1, sizeof(Wdesc));
 	      wd->ss = ss;
 

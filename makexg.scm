@@ -1941,7 +1941,13 @@
 (hey "/* ---------------------------------------- structs ---------------------------------------- */~%~%")
 
 (hey "  #define XG_DEFINE_READER(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XG_FIELD_PRE #Name XG_POST, Value, A1, A2, A3, Help)~%")
-(hey "  #define XG_DEFINE_ACCESSOR(Name, Value, SetName, SetValue, A1, A2, A3, A4) \\~%     XEN_DEFINE_PROCEDURE_WITH_SETTER(XG_FIELD_PRE #Name XG_POST, Value, NULL, XG_FIELD_PRE #SetName XG_POST, SetValue, A1, A2, A3, A4)~%~%")
+(hey "  #if HAVE_RUBY~%")
+(hey "  #define XG_DEFINE_ACCESSOR(Name, Value, SetValue, A1, A2, A3, A4) \\~%")
+(hey "    XEN_DEFINE_PROCEDURE_WITH_SETTER(XG_FIELD_PRE #Name XG_POST, Value, NULL, XG_FIELD_PRE \"set_\" #Name XG_POST, SetValue, A1, A2, A3, A4)~%")
+(hey "  #else~%")
+(hey "  #define XG_DEFINE_ACCESSOR(Name, Value, SetValue, A1, A2, A3, A4) \\~%")
+(hey "    XEN_DEFINE_PROCEDURE_WITH_SETTER(XG_FIELD_PRE #Name XG_POST, Value, NULL, \"set! \" XG_FIELD_PRE #Name XG_POST, SetValue, A1, A2, A3, A4)~%")
+(hey "  #endif~%~%")
 
 (define (array->list type)
   (hey "  if (strcmp(ctype, ~S) == 0)~%" (no-stars type))
@@ -2181,8 +2187,8 @@
 	     (begin
 	       (say-hey "#endif~%")
 	       (set! in-x11 #f))))
-     (hey "  XG_DEFINE_ACCESSOR(~A, gxg_~A, set_~A, gxg_set_~A, 1, 0, 2, 0);~%" field field field field)
-     (say "  XG_DEFINE_ACCESSOR(~A, gxg_~A_w, set_~A, gxg_set_~A_w, 1, 0, 2, 0);~%" field field field field))
+     (hey "  XG_DEFINE_ACCESSOR(~A, gxg_~A, gxg_set_~A, 1, 0, 2, 0);~%" field field field)
+     (say "  XG_DEFINE_ACCESSOR(~A, gxg_~A_w, gxg_set_~A_w, 1, 0, 2, 0);~%" field field field))
    settable-struct-fields)
   (if in-x11
       (say-hey "#endif~%")))

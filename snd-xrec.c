@@ -72,8 +72,6 @@ typedef struct {
 } Wdesc;
 
 static char timbuf[TIME_STR_SIZE];
-static char *msgbuf = NULL;
-
 static file_data *recdat;
 
 static VU **rec_in_VU = NULL;       /* from rec in to associated meter */
@@ -108,6 +106,7 @@ static void record_report(Widget text, ...)
   time_t ts;
   XmTextPosition pos, textpos = 0;
   va_list ap;
+  static char *msgbuf = NULL;
   char *nextstr;
   if (msgbuf == NULL) msgbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
 #if HAVE_STRFTIME
@@ -2862,6 +2861,7 @@ static void record_button_callback(Widget w, XtPointer context, XtPointer info)
   snd_state *ss = (snd_state *)context;
   XmString s1 = NULL, s2 = NULL;
   Wdesc *wd;
+  char *buf = NULL;
   int i, old_srate, ofmt, rs, ochns;
   off_t oloc, samples;
   static char *comment;
@@ -2885,7 +2885,17 @@ static void record_button_callback(Widget w, XtPointer context, XtPointer info)
 	  if (str) FREE(str);
 	  str = NULL;
 	  rp->output_data_format = ofmt;
-	  rp->out_chans = ochns;
+	  if ((all_panes[out_file_pane]) && (all_panes[out_file_pane]->on_buttons_size < ochns))
+	    {
+	      rp->out_chans = all_panes[out_file_pane]->on_buttons_size;
+	      buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	      mus_snprintf(buf, PRINT_BUFFER_SIZE, 
+			   "only %d out chan%s available",
+			   rp->out_chans, (rp->out_chans > 1) ? "s" : "");
+	      record_report(messages, buf, NULL);
+	      FREE(buf);
+	    }
+	  else rp->out_chans = ochns;
 	  if (rs != old_srate) 
 	    {
 	      rp->srate = rs;
@@ -2903,11 +2913,12 @@ static void record_button_callback(Widget w, XtPointer context, XtPointer info)
 	  
 	  if (out_chans_active() != rp->out_chans)
 	    {
-	      if (msgbuf == NULL) msgbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-	      mus_snprintf(msgbuf, PRINT_BUFFER_SIZE,
-			   _("chans field (%d) doesn't match file out panel (%d channels active)"),
-			   rp->out_chans, out_chans_active());
-	      record_report(messages, msgbuf, NULL);
+	      buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	      mus_snprintf(buf, PRINT_BUFFER_SIZE,
+			   _("chans field (%d) doesn't match file out panel (%d channel%s active)"),
+			   rp->out_chans, out_chans_active(), (out_chans_active() > 1) ? "s" : "");
+	      record_report(messages, buf, NULL);
+	      FREE(buf);
 	      wd = (Wdesc *)CALLOC(1, sizeof(Wdesc));
 	      wd->ss = ss;
 

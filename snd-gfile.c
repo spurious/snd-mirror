@@ -48,7 +48,9 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
     }
   if (fdat->comment_text) 
     {
-      comment = sg_get_text(fdat->comment_text, 0, -1);
+      if (GTK_IS_TEXT_VIEW(fdat->comment_text))
+	comment = sg_get_text(fdat->comment_text, 0, -1);
+      else comment = (char *)gtk_entry_get_text(GTK_ENTRY(fdat->comment_text)); 
     }
   if (fdat->header_list)
     {
@@ -114,8 +116,12 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
     }
   if (fdat->comment_text) 
     {
-      gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(fdat->comment_text)), "", 0);
-      sg_text_insert(fdat->comment_text, comment);
+      if (GTK_IS_TEXT_VIEW(fdat->comment_text))
+	{
+	  gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(fdat->comment_text)), "", 0);
+	  sg_text_insert(fdat->comment_text, comment);
+	}
+      else gtk_entry_set_text(GTK_ENTRY(fdat->comment_text), comment);
     }
   if ((location >= 0) && (fdat->location_text))
     {
@@ -545,7 +551,9 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
   str = (char *)gtk_entry_get_text(GTK_ENTRY(save_as_file_data->srate_text));
   srate = string2int(str);
   str = NULL;
-  comment = sg_get_text(save_as_file_data->comment_text, 0, -1);
+  if (GTK_IS_TEXT_VIEW(save_as_file_data->comment_text))
+    comment = sg_get_text(save_as_file_data->comment_text, 0, -1);
+  else comment = (char *)gtk_entry_get_text(GTK_ENTRY(save_as_file_data->comment_text)); 
   type = save_as_file_data->current_type;
   format = save_as_file_data->current_format;
   last_save_as_filename = (char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(save_as_dialog));
