@@ -50,9 +50,10 @@
   <li><a href="#gmdoc">gm.scm: gmeteor support</a>
   <li><a href="#goopsnddoc">goopsnd.scm: look at Goops</a>
   <li><a href="#hooksdoc">hooks.scm: functions related to hooks</a>
-  <li><a href="#indexdoc">index.scm: snd-help extension</a>
+  <li><a href="#indexdoc">index.scm, index.rb: snd-help extension</a>
   <li><a href="#maracadoc">maraca.scm: Perry Cook's maraca physical model</a>
   <li><a href="#marksdoc">marks.scm: functions related to marks</a>
+  <li><a href="#maxfdoc">maxf.scm, maxf.rb: Max Mathews resonator</a>
   <li><a href="#mixdoc">mix.scm: functions related to mixes and tracks</a>
   <li><a href="#moogdoc">moog.scm: Moog filter</a>
   <li><a href="#musglyphs">musglyphs.scm: Music notation symbols (from CMN)</a>
@@ -1598,7 +1599,7 @@ a list of all Snd-specific hooks; this is used by <i>reset-all-hooks</i> which
 returns all hooks to the empty state. 
 </p>
 
-<A NAME="indexdoc"></a><span class=box><h2>index.scm</h2></span>
+<A NAME="indexdoc"></a><span class=box><h2>index.scm, index.rb</h2></span>
 <pre>
   <em class=def><A NAME="htmlreader">*html-reader*</a></em> "netscape"
   <em class=def><A NAME="html">html</a></em> obj
@@ -1680,6 +1681,14 @@ between the leftmost marks in <i>snd</i>.
 <i>define-selection-via-marks</i> selects the portion between the given marks.
 <i>snap-mark-to-beat</i> forces a dragged mark to end up on a beat.
 <i>mark-explode</i> splits a sound into a bunch of separate files based on mark placements.
+</p>
+
+
+<A NAME="maxfdoc"></a><span class=box><h2>maxf.scm, maxf.rb</h2></span>
+
+<p>These files are translations (thanks to Michael Scholz!) of CLM's maxf.ins
+(thanks to Juan Reyes!). They implement a new kind of resonator designed by
+Max Mathews.
 </p>
 
 

@@ -304,6 +304,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+26-Mar:  maxf.scm and maxf.rb from Michael Scholz.\n\
 21-Mar:  snd 6.7.\n\
 19-Mar:  xm-enved.rb and rubber.rb thanks to Michael Scholz.\n\
          added listener-click-hook with click-for-listener-help in draw.scm.\n\

@@ -419,6 +419,7 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
   if (XEN_INTEGER_P(snd)) /* could be the proc arg if no snd */
     {
       ASSERT_SOUND(S_setB S_search_procedure, snd, 1);
+      XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) || XEN_FALSE_P(proc), proc, XEN_ARG_1, S_setB S_search_procedure, "a procedure or #f");
       sp = get_sp(snd, NO_PLAYERS);
       if (sp)
 	{
@@ -427,17 +428,19 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 	    {
 	      if (XEN_PROCEDURE_P(sp->search_proc)) snd_unprotect(sp->search_proc);
 	      sp->search_proc = XEN_UNDEFINED;
+	      if (sp->search_expr) FREE(sp->search_expr);
+	      sp->search_expr = NULL;
 	      if (sp->search_tree)
 		sp->search_tree = free_ptree(sp->search_tree);
+	      if (XEN_PROCEDURE_P(proc))
+		{
 #if HAVE_GUILE
-	      if (optimization(ss) > 0)
-		sp->search_tree = form_to_ptree_1_b_without_env(scm_procedure_source(proc));
+		  if (optimization(ss) > 0)
+		    sp->search_tree = form_to_ptree_1_b_without_env(scm_procedure_source(proc));
 #endif
-	      sp->search_proc = proc;
-	      snd_protect(proc);
-	      if (sp->search_expr) FREE(sp->search_expr);
-	      /* sp->search_expr = copy_string(XEN_AS_STRING(proc)); */
-	      sp->search_expr = NULL;
+		  sp->search_proc = proc;
+		  snd_protect(proc);
+		}
 	      return(proc);
 	    }
 	  else 
@@ -452,6 +455,7 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
     }
   else 
     {
+      XEN_ASSERT_TYPE(XEN_PROCEDURE_P(snd) || XEN_FALSE_P(snd), snd, XEN_ARG_1, S_setB S_search_procedure, "a procedure or #f");
       error = procedure_ok(snd, 1, S_setB S_search_procedure, "proc", 1);
       if (error == NULL)
 	{
@@ -460,13 +464,15 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 	  if (ss->search_expr) FREE(ss->search_expr);
 	  ss->search_expr = NULL;
 	  if (ss->search_tree) ss->search_tree = free_ptree(ss->search_tree);
+	  if (XEN_PROCEDURE_P(snd))
+	    {
 #if HAVE_GUILE
-	  if (optimization(ss) > 0)
-	    ss->search_tree = form_to_ptree_1_b_without_env(scm_procedure_source(snd));
+	      if (optimization(ss) > 0)
+		ss->search_tree = form_to_ptree_1_b_without_env(scm_procedure_source(snd));
 #endif
-	  ss->search_proc = snd;
-	  snd_protect(snd);
-	  /* ss->search_expr = copy_string(XEN_AS_STRING(snd)); */
+	      ss->search_proc = snd;
+	      snd_protect(snd);
+	    }
 	}
       else 
 	{

@@ -1742,6 +1742,9 @@ static int read_soundforge_header (int chan)
       if (offset >= true_file_length) break;
       if (seek_and_read(chan, (unsigned char *)hdrbuf, offset, 64) <= 0) break;
       chunksize = little_long_long((unsigned char *)(hdrbuf + 16));
+      if ((chunksize == 0) && /* can be empty data chunk? */
+	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
+	break;
       if (match_four_chars((unsigned char *)hdrbuf, I_fmt_))
 	{
 	  off = 16;
@@ -1813,6 +1816,9 @@ static int read_avi_header (int chan)
       if (seek_and_read(chan, (unsigned char *)hdrbuf, offset, 32) <= 0)
 	return(mus_error(MUS_HEADER_READ_FAILED, "read_avi_header: chunks confused at %d", offset));
       chunksize = mus_char_to_lint((unsigned char *)(hdrbuf + 4));
+      if ((chunksize == 0) && /* can be empty data chunk? */
+	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
+	break;
       if (match_four_chars((unsigned char *)hdrbuf, I_LIST))
 	{
 	  ckoff = offset + 12;
@@ -1973,6 +1979,9 @@ static int read_soundfont_header (int chan)
       if (seek_and_read(chan, (unsigned char *)hdrbuf, offset, 32) <= 0)
 	return(mus_error(MUS_HEADER_READ_FAILED, "read_soundfont_header: chunks confused at %d", offset));
       chunksize = mus_char_to_lint((unsigned char *)(hdrbuf + 4));
+      if ((chunksize == 0) && /* can be empty data chunk? */
+	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
+	break;
       if (match_four_chars((unsigned char *)hdrbuf, I_LIST))
 	{
 	  /* everything is squirreled away in LIST chunks in this format */
@@ -2506,6 +2515,9 @@ static int read_8svx_header (int chan)
       if (seek_and_read(chan, (unsigned char *)hdrbuf, offset, 32) <= 0)
 	return(mus_error(MUS_HEADER_READ_FAILED, "read_8svx_header: chunks confused at %d", offset));
       chunksize = mus_char_to_bint((unsigned char *)(hdrbuf + 4));
+      if ((chunksize == 0) && /* can be empty data chunk? */
+	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
+	break;
       if (match_four_chars((unsigned char *)hdrbuf, I_CHAN))
 	{
 	  chans = mus_char_to_bint((unsigned char *)(hdrbuf + 8));
@@ -3171,6 +3183,9 @@ static int read_maud_header (int chan)
       if (seek_and_read(chan, (unsigned char *)hdrbuf, offset, 32) <= 0)
 	return(mus_error(MUS_HEADER_READ_FAILED, "read_maud_header: chunks confused at %d", offset));
       chunksize = mus_char_to_bint((unsigned char *)(hdrbuf + 4));
+      if ((chunksize == 0) && /* can be empty data chunk? */
+	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
+	break;
       if (match_four_chars((unsigned char *)hdrbuf, I_MHDR))
 	{
 	  data_size = mus_char_to_bint((unsigned char *)(hdrbuf + 8));
@@ -3254,6 +3269,9 @@ static int read_csl_header (int chan)
       if (seek_and_read(chan, (unsigned char *)hdrbuf, offset, 64) <= 0)
 	return(mus_error(MUS_HEADER_READ_FAILED, "read_csl_header: chunks confused at %d", offset));
       chunksize = mus_char_to_lint((unsigned char *)(hdrbuf + 4));
+      if ((chunksize == 0) && /* can be empty data chunk? */
+	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
+	break;
       if ((match_four_chars((unsigned char *)hdrbuf, I_HEDR)) || 
 	  (match_four_chars((unsigned char *)hdrbuf, I_HDR8)))
 	{

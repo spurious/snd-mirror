@@ -1502,6 +1502,24 @@
       (set! (color-scale) 100.0)
       (IF (fneq (color-scale) 100.0) (snd-display ";color-scale to 100: ~A" (color-scale)))
 
+      (IF (procedure? (search-procedure))
+	  (snd-display ";global search procedure: ~A?" (search-procedure)))
+      (set! (search-procedure) (lambda (y) (> y .1)))
+      (IF (not (procedure? (search-procedure)))
+	  (snd-display ";set global search procedure: ~A?" (search-procedure)))
+      (IF (not ((search-procedure) .2))
+	  (snd-display ";search > .1 .2"))
+      (IF ((search-procedure) .02)
+	  (snd-display ";search > .1 .02"))
+      (set! (search-procedure) (lambda (y) (< y 0.0)))
+      (IF ((search-procedure) .02)
+	  (snd-display ";search < 0.0 .02"))
+      (set! (search-procedure) #f)
+      (IF (procedure? (search-procedure))
+	  (snd-display ";global search procedure after reset: ~A?" (search-procedure)))
+      (set! (search-procedure) (lambda (y) (> y .1)))
+      (IF (not (procedure? (search-procedure)))
+	  (snd-display ";set global search procedure: ~A?" (search-procedure)))
       (close-sound 0) 
       (dismiss-all-dialogs)
       ))
@@ -6600,7 +6618,10 @@ EDITS: 5
 	(IF (not (= (frames) (+ len addlen))) (snd-display ";insert-sound len: ~A?" (frames)))
 	(save-sound-as "not-temporary.snd")
 	(insert-samples 0 100 "not-temporary.snd")
+	(set! (cursor index 0 0) (- (frames index 0 0) 2))
 	(revert-sound)
+	(IF (not (= (cursor index 0) (- (frames index 0) 2)))
+	    (snd-display ";set edpos cursor: ~A ~A ~A" (cursor) (cursor index 0 0) (- (frames index 0 0) 2)))
 	(IF (not (file-exists? "not-temporary.snd"))
 	    (snd-display ";insert-samples deleted its file?")
 	    (delete-file "not-temporary.snd"))
@@ -9040,13 +9061,14 @@ EDITS: 5
 	(IF (eq? c1 c3) (snd-display ";diff color eq? ~A ~A?" c1 c3))
 	(IF (not (equal? (color->list c1) (list 0.0 0.0 1.0)))
 	    (snd-display ";color->list: ~A ~A?" c1 (color->list c1))))
-      (do ((i 0 (1+ i))) ((= i 15)) 
+      (do ((i 0 (1+ i))) ((= i 16)) 
 	(let ((val (colormap-ref i 0))
 	      (true-val (list-ref (list '(0.0 0.0 0.0) '(1.0 0.0 0.0) '(0.00520332646677348 0.0 0.0) '(0.0 1.0 1.0)
 					'(0.0 0.0 7.01915007248035e-4) '(0.0 0.0 0.0) '(0.0417029068436713 0.0 0.0)
 					'(0.0 0.0 0.50780498970016) '(1.0 0.0 0.0) '(1.0 0.0 0.0) '(0.0 0.0 1.0)
 					'(1.0 0.0 1.0) '(0.0 0.500007629510948 0.4) '(0.166704814221408 0.166704814221408 0.0)
-					'(1.0 0.0 0.0)) i)))
+					'(1.0 0.0 0.0) '(0.0 0.0 1.0))
+				  i)))
 	  (IF (not (feql val true-val))
 	      (snd-display ";colormap-ref ~A: ~A (~A)" i val true-val))))
       (let ((curmap (colormap)))
@@ -9092,6 +9114,11 @@ EDITS: 5
 		 (set! (selected-data-color) light-green)
 		 (set! (data-color) blue)
 		 (set! (selected-graph-color) black)
+		 (let ((red (make-color 1.0 0.0 0.0)))
+		   (set! (foreground-color ind 0 cursor-context) red)
+		   (let ((col (foreground-color ind 0 cursor-context)))
+		     (if (not (equal? col red))
+			 (snd-display ";set foreground cursor color: ~A ~A" col red))))
 		 (close-sound ind)))
 	     (lambda args args))
       ))
@@ -14713,6 +14740,8 @@ EDITS: 5
 	  (revert-sound ind)
 	  (if (not (= calls 3)) (snd-display ";undo-hook called ~A times" calls)))
 	(reset-hook! (undo-hook ind 0))
+
+	(set! (search-procedure ind) #f)
 	(close-sound ind)
 	)
 
@@ -20880,6 +20909,9 @@ EDITS: 6
 		 (lambda args
 		   (snd-display "caught mus-error")
 		   #f))
+  	  (set! (squelch-update ind0 #t) #f)
+	  (set! (squelch-update ind1 #t) #f)
+	  (set! (squelch-update ind2 #t) #f)
 	  (close-sound ind0)
 	  (close-sound ind1)
 	  (close-sound ind2))
@@ -22672,6 +22704,18 @@ EDITS: 2
 		 	       (lambda args args))
 	  (set! (colormap) old-colormap))
 	(close-sound ind1))
+
+	(let* ((ind (new-sound "test.snd" mus-next mus-bfloat)))
+	  (pad-channel 0 1000)
+	  (set! (transform-graph-type ind 0) graph-once)
+	  (set! (show-transform-peaks ind 0) #t)
+	  (set! (fft-log-magnitude ind 0) #t)
+	  (set! (fft-log-frequency ind 0) #f)
+	  (set! (transform-graph? ind 0) #t)
+	  (set! (x-bounds) (list 0.0 .04))
+	  (update-time-graph)
+	  (update-transform-graph)
+	  (close-sound ind))
 
 	(let* ((ind (open-sound "oboe.snd"))
 	       (size 8192)
@@ -28384,7 +28428,7 @@ EDITS: 2
 		      (snd-display ";can't find color invert button?"))
 		  (let ((lst (find-child colord "colormap-list")))
 		    (do ((i 2 (1+ i)))
-			((= i 15))
+			((= i 16))
 		      (XmListSelectPos lst i #t)
 		      (IF (not (= (colormap) (- i 1)))
 			  (snd-display ";color dialog list ~A: ~A" (- i 1) (colormap)))
@@ -32682,13 +32726,16 @@ EDITS: 2
 	    (let ((val (XpQueryExtension (XtDisplay (cadr (main-widgets))))))
 	      (if (car val) (snd-display ";got Xp?? ~A" val)))
 
-	    (let* ((xm-procs 
+	    (let* ((win (XtWindow (cadr (main-widgets))))
+		   (xm-procs 
 		    ;; these can't be called in this context:
-		    ;;   XtProcessEvent XtAppProcessEvent XtMainLoop XtAppMainLoop XtAppAddActions XtAddActions 
-		    ;;   XtNextEvent XtAppNextEvent XtPeekEvent XtAppPeekEvent XtMalloc XtCalloc XtRealloc XtFree XFree 
-		    ;;   freeXPoints moveXPoints vector->XPoints XNextEvent XPutBackEvent XmParseMappingCreate XmParseMappingSetValues 
+		    ;;   XtProcessEvent XtMainLoop XtAddActions XtNextEvent XtPeekEvent XtMalloc XtCalloc XtRealloc XtFree XFree 
+		    ;;   freeXPoints moveXPoints vector->XPoints XmParseMappingCreate XmParseMappingSetValues 
 		    ;;   XReadBitmapFile XReadBitmapFileData XmTransferStartRequest XmTransferSendRequest XmTransferDone 
 		    (list
+		         XPutBackEvent XNextEvent
+		         XtAppProcessEvent XtAppMainLoop XtAppAddActions XtAppNextEvent XtAppPeekEvent
+
 		         XpStartPage XpEndPage XpCancelPage XpStartJob XpEndJob XpCancelJob XpStartDoc XpEndDoc
 		         XpCancelDoc XpRehashPrinterList XpCreateContext XpSetContext XpGetContext XpDestroyContext
 		         XpGetLocaleNetString XpNotifyPdm XpSendAuth XpGetImageResolution XpGetAttributes XpSetAttributes
@@ -32718,7 +32765,8 @@ EDITS: 2
 		         XtSetLanguageProc XtDisplayInitialize XtOpenApplication XtVaOpenApplication XtAppInitialize
 		         XtVaAppInitialize XtInitialize XtOpenDisplay XtCreateApplicationContext
 		         XtDestroyApplicationContext XtInitializeWidgetClass XtWidgetToApplicationContext
-		         XtDisplayToApplicationContext XtCloseDisplay XtSetValues XtVaSetValues XtGetValues XtVaGetValues
+		         XtDisplayToApplicationContext XtCloseDisplay 
+			 XtSetValues XtVaSetValues XtGetValues XtVaGetValues
 		         XtAppSetErrorMsgHandler XtSetErrorMsgHandler XtAppSetWarningMsgHandler XtSetWarningMsgHandler
 		         XtAppErrorMsg XtErrorMsg XtAppWarningMsg XtWarningMsg XtAppSetErrorHandler XtSetErrorHandler
 		         XtAppSetWarningHandler XtSetWarningHandler XtAppError XtError XtAppWarning XtWarning
@@ -32740,9 +32788,7 @@ EDITS: 2
 		         XCreatePixmap XCreateBitmapFromData XCreatePixmapFromBitmapData XCreateSimpleWindow
 		         XGetSelectionOwner XCreateWindow XListInstalledColormaps XListFonts XListFontsWithInfo
 		         XGetFontPath XListExtensions XListProperties XKeycodeToKeysym XLookupKeysym
-		         XGetKeyboardMapping 
-                         XStringToKeysym 
-			 XMaxRequestSize XExtendedMaxRequestSize
+		         XGetKeyboardMapping XStringToKeysym XMaxRequestSize XExtendedMaxRequestSize
 		         XDisplayMotionBufferSize XVisualIDFromVisual
 		         XInitThreads XLockDisplay XUnlockDisplay XRootWindow XDefaultRootWindow XRootWindowOfScreen
 		         XDefaultVisual XDefaultVisualOfScreen XDefaultGC XDefaultGCOfScreen XBlackPixel XWhitePixel
@@ -32957,7 +33003,7 @@ EDITS: 2
 			   (lambda () (n arg))
 			   (lambda args (car args))))
 		  xm-procs1))
-	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
+	       (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 		     (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() (make-vector 0) 12345678901234567890))
 	      
 	      ;; ---------------- 2 Args
@@ -32971,9 +33017,9 @@ EDITS: 2
 			      (lambda () (n arg1 arg2))
 			      (lambda args (car args))))
 		     xm-procs2))
-		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) '#(0 1) 3/4 
+		  (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) '#(0 1) 3/4 
 			(sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
-	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) '#(0 1) 3/4 
+	       (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) '#(0 1) 3/4 
 		     (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() (make-vector 0) 12345678901234567890))
 	      
 	      (if all-args
@@ -32992,11 +33038,11 @@ EDITS: 2
 				       (lambda () (n arg1 arg2 arg3))
 				       (lambda args (car args))))
 			      xm-procs3))
-			   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
+			   (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
 				 :start -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
-			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
+			(list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
 			      :phase -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
-		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
+		     (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
 			   :channels -1 0 #f #t '() (make-vector 0) 12345678901234567890))
 		    
 		    ;; ---------------- 4 Args
@@ -33014,13 +33060,13 @@ EDITS: 2
 					  (lambda () (n arg1 arg2 arg3 arg4))
 					  (lambda args (car args))))
 				 xm-procs4))
-			      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
+			      (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
 				    :start -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
-			   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
+			   (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
 				 :phase -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
-			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
+			(list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
 			      :channels -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
-		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
+		     (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
 			   :channels -1 0 #f #t '() (make-vector 0) 12345678901234567890))
 		    ))
 

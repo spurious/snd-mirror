@@ -1245,8 +1245,8 @@ static XEN g_set_show_backtrace(XEN val)
   return(C_TO_XEN_BOOLEAN(show_backtrace(ss)));
 }
 
-static XEN g_color_map(void) {return(C_TO_XEN_INT(color_map(get_global_state())));}
-static XEN g_set_color_map(XEN val) 
+static XEN g_colormap(void) {return(C_TO_XEN_INT(color_map(get_global_state())));}
+static XEN g_set_colormap(XEN val) 
 {
   #define H_colormap "(" S_colormap "): current colormap choice. \
 This should be an integer between -1 and 15.  The maps (from 0 to 15) are: \
@@ -2762,8 +2762,8 @@ XEN_NARGIFY_0(g_show_indices_w, g_show_indices)
 XEN_ARGIFY_1(g_set_show_indices_w, g_set_show_indices)
 XEN_NARGIFY_0(g_show_backtrace_w, g_show_backtrace)
 XEN_ARGIFY_1(g_set_show_backtrace_w, g_set_show_backtrace)
-XEN_NARGIFY_0(g_color_map_w, g_color_map)
-XEN_ARGIFY_1(g_set_color_map_w, g_set_color_map)
+XEN_NARGIFY_0(g_colormap_w, g_colormap)
+XEN_ARGIFY_1(g_set_colormap_w, g_set_colormap)
 XEN_NARGIFY_0(g_temp_dir_w, g_temp_dir)
 XEN_ARGIFY_1(g_set_temp_dir_w, g_set_temp_dir)
 XEN_NARGIFY_0(g_save_dir_w, g_save_dir)
@@ -2929,8 +2929,8 @@ XEN_NARGIFY_0(g_snd_global_state_w, g_snd_global_state)
 #define g_set_show_indices_w g_set_show_indices
 #define g_show_backtrace_w g_show_backtrace
 #define g_set_show_backtrace_w g_set_show_backtrace
-#define g_color_map_w g_color_map
-#define g_set_color_map_w g_set_color_map
+#define g_colormap_w g_colormap
+#define g_set_colormap_w g_set_colormap
 #define g_temp_dir_w g_temp_dir
 #define g_set_temp_dir_w g_set_temp_dir
 #define g_save_dir_w g_save_dir
@@ -3179,8 +3179,8 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_backtrace, g_show_backtrace_w, H_show_backtrace,
 				   S_setB S_show_backtrace, g_set_show_backtrace_w,  0, 0, 0, 1);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_colormap, g_color_map_w, H_colormap,
-				   S_setB S_colormap, g_set_color_map_w,  0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_colormap, g_colormap_w, H_colormap,
+				   S_setB S_colormap, g_set_colormap_w,  0, 0, 0, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_temp_dir, g_temp_dir_w, H_temp_dir,
 				   S_setB S_temp_dir, g_set_temp_dir_w,  0, 0, 0, 1);

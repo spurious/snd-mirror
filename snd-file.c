@@ -1131,7 +1131,7 @@ static XEN update_hook;
 static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
 {
   /* we can't be real smart here because the channel number may have changed and so on */
-  int i, read_only, old_srate, old_chans, old_format, old_raw, sp_chans, old_index;
+  int i, read_only, old_srate, old_chans, old_format, old_raw, sp_chans, old_index, old_channel_style;
   axes_data *sa;
   snd_info *nsp = NULL;
   char *filename;
@@ -1167,6 +1167,9 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
     }
   sp_chans = sp->nchans;
   old_index = sp->index;
+  old_channel_style = sp->channel_style;
+  if (sp->channel_style != CHANNELS_SEPARATE)
+    set_sound_channel_style(sp, CHANNELS_SEPARATE);
   ms = sound_store_marks(sp);
   save_controls(sp);
   saved_controls = sp->saved_controls;
@@ -1192,6 +1195,8 @@ static snd_info *snd_update_1(snd_state *ss, snd_info *sp, char *ur_filename)
       for (i = 0; i < nsp->nchans; i++) 
 	update_graph(nsp->chans[i]);
       for (i = 0; (i < nsp->nchans) && (i < sp_chans); i++) CURSOR(nsp->chans[i]) = old_cursors[i];
+      if ((nsp->nchans > 1) && (old_channel_style != CHANNELS_SEPARATE))
+	set_sound_channel_style(nsp, old_channel_style);
     }
   FREE(old_cursors);
 

@@ -1424,7 +1424,9 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
   if (fft_data)
     num_peaks = find_and_sort_transform_peaks(data, peak_freqs, num_peaks, samps, 1, samps_per_pixel, fft_scale); /* srate 1.0=>freqs between 0 and 1.0 */
   else num_peaks = find_and_sort_peaks(data, peak_freqs, num_peaks, samps);
-  if ((num_peaks == 1) && (peak_freqs[0].freq == 0.0)) 
+  if ((num_peaks == 0) || 
+      ((num_peaks == 1) && 
+       ((peak_freqs[0].freq == 1.0) || (peak_freqs[0].freq == 0.0))))
     {
       FREE(peak_freqs); 
       FREE(peak_amps); 
@@ -4513,10 +4515,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       else
 	if (XEN_FALSE_P(on))
 	  cp->transform_normalization = DONT_NORMALIZE;
-	else 
-	  if (XEN_TRUE_P(on))
-	    cp->transform_normalization = NORMALIZE_BY_CHANNEL;
-	  else cp->transform_normalization = DEFAULT_TRANSFORM_NORMALIZATION;
+	else cp->transform_normalization = NORMALIZE_BY_CHANNEL; /* checked below for int or bool */
       calculate_fft(cp); 
       return(C_TO_XEN_INT(cp->transform_normalization));
       break;
@@ -4755,7 +4754,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_lisp_graph_p_reversed, g_set_lisp_graph
 
 static XEN g_cursor(XEN snd_n, XEN chn_n, XEN edpos) 
 {
-  #define H_cursor "(" S_cursor " (snd #f) (chn #f) edpos): current cursor location in snd's channel chn"
+  #define H_cursor "(" S_cursor " (snd #f) (chn #f) (edpos #f)): current cursor location in snd's channel chn"
   if (XEN_BOUND_P(edpos))
     {
       XEN res;

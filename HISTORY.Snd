@@ -1,5 +1,6 @@
 Snd change log
 
+  26-Mar:    maxf.scm and maxf.rb from Michael Scholz.
   21-Mar:    snd 6.7.
   19-Mar:    xm-enved.rb and rubber.rb thanks to Michael Scholz.
              added listener-click-hook with click-for-listener-help in draw.scm.

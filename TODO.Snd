@@ -19,7 +19,6 @@ dB display in VU meters (in the record dialog -- the dB value is ready
   background (perhaps from OpenGL?).
 
 dlocsig from CLM + a path envelope editor dialog
-maxf.ins -> scm
 
 A "master volume" control in the recorder.
 

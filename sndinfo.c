@@ -98,8 +98,6 @@ int main(int argc, char *argv[])
 	  type = mus_sound_header_type(argv[ctr]);
 	  header_name = (char *)mus_header_type_name(type);
 	  format = mus_sound_data_format(argv[ctr]);
-	  if ((chans > 0) && (mus_sound_maxamp_exists(argv[ctr])))
-	    ampstr = display_maxamps(argv[ctr], chans);
 	  if (format != MUS_UNSUPPORTED)
 	    format_info = (char *)mus_data_format_name(format);
 	  else
@@ -111,18 +109,28 @@ int main(int argc, char *argv[])
 		sprintf(format_info, "%d (%s)", format, format_name);
 	      else sprintf(format_info, "%d", format);
 	    }
+	  fprintf(stdout, "%s:\n  srate: %d\n  chans: %d\n  length: %f",
+		  argv[ctr], srate, chans, length);
+	  if (length < 10.0)
+	    {
+	      int samps;
+	      samps = mus_sound_frames(argv[ctr]);
+	      fprintf(stdout, " (%d sample%s)", samps, (samps != 1) ? "s" : "");
+	    }
+	  fprintf(stdout, "\n");
+	  fprintf(stdout, "  type: %s\n  format: %s\n  ",
+		  header_name,
+		  format_info);
 #if (!defined(HAVE_CONFIG_H)) || HAVE_STRFTIME
 	  strftime(timestr, 64, "%a %d-%b-%Y %H:%M %Z", localtime(&date));
-#else
-	  sprintf(timestr, "who knows?");
+	  fprintf(stdout, "written: %s", timestr);
 #endif
-	  fprintf(stdout, "%s:\n  srate: %d\n  chans: %d\n  length: %f\n",
-		  argv[ctr], srate, chans, length);
-	  fprintf(stdout, "  type: %s\n  format: %s\n  written: %s%s\n",
-		  header_name,
-		  format_info,
-		  timestr,
-		  (ampstr) ? ampstr : "");
+	  if ((chans > 0) && (mus_sound_maxamp_exists(argv[ctr])))
+	    {
+	      ampstr = display_maxamps(argv[ctr], chans);
+	      if (ampstr) fprintf(stdout, ampstr);
+	    }
+	  fprintf(stdout, "\n");
 	  if (comment) fprintf(stdout, "  comment: %s\n", comment);
 	  if (loops)
 	    {
