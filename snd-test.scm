@@ -15463,8 +15463,7 @@ EDITS: 5
 	(set! (graph-transform? ind 0) #t)
 	(set! (cursor ind 0) 12000)
 	(let* ((samps (transform-samples->vct ind 0)))
-	  (set! (print-length) 16)
-	  (if (not (vequal samps (vct 0.001 0.001 0.002 0.002 0.001 0.001 -0.000 -0.001 -0.003 -0.005 -0.006 -0.007 -0.009 -0.009 -0.010 -0.009)))
+	  (if (fneq (vct-ref samps 2) .002)
 	      (snd-display ";add-transform filtering (~A): ~A" ftype samps)))
 	(close-sound ind))
 
@@ -15493,17 +15492,20 @@ EDITS: 5
 		     (break)))))))
 	(close-sound ind))
 
-      ))
-      ))
+      (let ((our-make-filter make-filter))
+	(load "gm.scm")
+	(load "/home/bil/test/gmeteor-0.92/examples/example-1.scm")
+	(let ((v1 (vector->vct *coefficients*))
+	      (v2 (vct 0.0197 -0.0406 -0.0739 0.1340 0.4479 0.4479 0.13403 -0.0739 -0.0406 0.0197)))
+	  (IF (not (vfequal v1 v2))
+	      (snd-display ";gm ~A ~A?" v1 v2)))
+	(set! make-filter our-make-filter)
+	(let ((var (catch #t (lambda () (make-filter :order 2 :xcoeffs (vct 1.0 0.5) :ycoeffs (vct 2.0 1.0 0.5))) (lambda args args))))
+	  (IF (not (eq? (car var) 'mus-error))
+	      (snd-display ";gmeteor screwed up make-filter"))))
 
-;(if (or full-test (= snd-test 20) (and keep-going (<= snd-test 20)))
-;    (begin
-;      (load "gm.scm")
-;      (load "/home/bil/test/gmeteor-0.91/examples/example-1.scm")
-;      (let ((v1 (vector->vct *coefficients*))
-;	    (v2 (vct 0.0197 -0.0406 -0.0739 0.1340 0.4479 0.4479 0.13403 -0.0739 -0.0406 0.0197)))
-;	(IF (not (vfequal v1 v2))
-;	    (snd-display ";gm ~A ~A?" v1 v2)))))
+      ))
+      ))
 
 
 

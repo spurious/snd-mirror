@@ -1338,10 +1338,10 @@ void unlock_apply(snd_state *ss, snd_info *sp)
  *   An attempt to get the same effect by wrapping w_pane in a drawingarea widget
  *   ran into other troubles (the thing is seriously confused about its size).
  *   You'd naively think the Actions "Start" and "Commit" could be used, since
- *   and XtActions are list of XtActionProcs, but I can't find a way to add
+ *   XtActions are said to be a list of XtActionProcs, but I can't find a way to add
  *   my action without deactivating the built-in action of the same name --
  *   XtAugmentTranslations ignores new actions if the old exists, XtOverride
- *   replaces the old, XtAddActions ignores all after the first etc.
+ *   replaces the old, etc.
  *
  * so... drop down into the sashes...(using undocumented stuff throughout this code)
  */
@@ -1365,7 +1365,6 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer callData)
       (call_data->params[0]) && 
       (with_relative_panes(ss)) &&
       (sound_style(ss) == SOUNDS_VERTICAL))
-
     {
       if (strcmp(call_data->params[0], "Start") == 0)
 	{

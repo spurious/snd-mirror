@@ -64,7 +64,6 @@
  *
  *
  * TODO: procedure property 'ptree -> saved ptree
- *         basically the run macro: (run code) 
  *         (set-object-property! <func> 'ptree pt) [scm_set_object_property_x in objprop]
  *              procedure-property? -- this has name and arity
  *
@@ -7487,6 +7486,10 @@ in multi-channel situations where you want the optimization that vct-map! provid
 #if WITH_RUN
 static XEN g_run(XEN proc_and_code)
 {
+  #define H_run "(" S_run " thunk) tries to optimize the procedure passed as its argument, \
+then evaluates it; if the optimizer can't handle something in the procedure, it is passed \
+to Guile and is equivalent to (thunk)."
+
   XEN code;
   ptree *pt = NULL;
   code = XEN_CADR(proc_and_code);
@@ -7507,6 +7510,7 @@ void g_init_run(void)
 #if WITH_RUN
   XEN_DEFINE_PROCEDURE("run-internal", g_run, 1, 0, 0, "run macro testing...");
   XEN_EVAL_C_STRING("(defmacro " S_run " (thunk) `(run-internal (list ',thunk ,thunk)))");
+  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(S_run), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(H_run));
   XEN_DEFINE_PROCEDURE("run-eval", g_run_eval, 1, 1, 0, "run macro testing...");
   XEN_DEFINE_PROCEDURE("vct-map-2",     g_vct_map, 2, 0, 0,      H_vct_map);
   XEN_EVAL_C_STRING("(defmacro* " S_vct_map " (thunk #:rest args) `(vct-map-2 (list ',thunk ,thunk) (list ,@args)))");

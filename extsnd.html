@@ -5346,8 +5346,8 @@ the direction argument between the channel and edit-position:
 <!-- --><tr><td></td><td>
 <!-- --><b>scan-chan</b> applies <i>func</i> to samples in the specified channel.
 <!-- -->An optional subsequence of the data can be requested via
-<!-- -->'start' and 'end' points.  If beg is #f, it defaults to 0; if end is #f,
-<!-- -->it defaults to the end of the channel.
+<!-- -->'start' and 'end' points.  'start' defaults to 0; 'end'
+<!-- -->defaults to the end of the channel.
 <!-- -->The function is passed the current sample as its argument.
 <!-- -->If it returns something other than #f, the scan is stopped and a list is returned
 <!-- -->containing the non-#f value returned and the current sample position of the
