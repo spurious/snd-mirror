@@ -29,13 +29,11 @@ static void c_io_bufclr (int *io, int *datai, int beg)
 	  j = MUS_SAMPLE_ARRAY(datai[io[SND_IO_DATS + SND_AREF_BLOCK] + k]);
 	  if (j)
 	    {
-#if HAVE_MEMSET
 	      if (beg == 0)
 		memset((void *)j, 0, end * sizeof(MUS_SAMPLE_TYPE));
 	      else
-#endif
-	      for (i = beg; i < end; i++) 
-		j[i] = MUS_SAMPLE_0;
+		for (i = beg; i < end; i++) 
+		  j[i] = MUS_SAMPLE_0;
 	    }
 	}
     }

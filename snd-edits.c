@@ -29,6 +29,8 @@
  * offsets could be added, but need reader-proc at init time (and isn't a very common editing operation)
  */
 
+/* TODO: if edit applies to edpos not current, show that somehow in the edit-history list */
+
 
 /* -------------------------------- EDIT LISTS --------------------------------
  *
@@ -434,17 +436,17 @@ static ed_list *make_ed_list(int size)
   return(ed);
 }
 
-void set_ed_maxamp(chan_info *cp, Float val)
+void set_ed_maxamp(chan_info *cp, int edpos, Float val)
 {
   ed_list *ed;
-  ed = cp->edits[cp->edit_ctr];
+  ed = cp->edits[edpos];
   ed->maxamp = val;
 }
 
-Float ed_maxamp(chan_info *cp)
+Float ed_maxamp(chan_info *cp, int edpos)
 {
   ed_list *ed;
-  ed = cp->edits[cp->edit_ctr];
+  ed = cp->edits[edpos];
   return(ed->maxamp);
 }
 
@@ -1798,11 +1800,13 @@ snd_fd *free_snd_fd(snd_fd *sf)
 #if LONG_INT_P
   int current_location(snd_fd *sf) 
   {
+    if (sf->eof) return(sf->end);
     return(sf->cb[ED_OUT] - sf->cb[ED_BEG] + sf->beg + (int)(((long)(sf->view_buffered_data) - (long)(sf->first)) >> 2));
   }
 #else
   int current_location(snd_fd *sf) 
   {
+    if (sf->eof) return(sf->end);
     return(sf->cb[ED_OUT] - sf->cb[ED_BEG] + sf->beg + (((int)(sf->view_buffered_data) - (int)(sf->first)) >> 2));
   }
 #endif
@@ -1945,7 +1949,7 @@ MUS_SAMPLE_TYPE previous_sound (snd_fd *sf)
       /* back up in current file */
       ind0 = sf->cb[ED_BEG];
       ind1 = sf->cb[ED_END];
-      indx = sf->beg-1;
+      indx = sf->beg - 1;
       file_buffers_back(ind0, ind1, indx, sf, sf->current_sound);
     }
   return((MUS_SAMPLE_TYPE)(UNWRAP_SAMPLE(*sf->view_buffered_data--, sf->cb[ED_SCL])));
@@ -2300,7 +2304,7 @@ static int save_edits_and_update_display(snd_info *sp)
   return(MUS_NO_ERROR); /* don't erase our error message for the special write-permission problem */
 }
 
-int save_edits_without_display(snd_info *sp, char *new_name, int type, int format, int srate, char *comment, int edpos)
+int save_edits_without_display(snd_info *sp, char *new_name, int type, int format, int srate, char *comment, SCM edpos, const char *caller)
 { 
   /* file save as menu option -- changed 19-June-97 to retain current state after writing */
   file_info *hdr, *ohdr;
@@ -2327,7 +2331,7 @@ int save_edits_without_display(snd_info *sp, char *new_name, int type, int forma
 	  for (i = 0; i < sp->nchans; i++) 
 	    {
 	      cp = sp->chans[i];
-	      if (edpos == AT_CURRENT_EDIT_POSITION) pos = cp->edit_ctr; else pos = edpos;
+	      pos = to_c_edit_position(cp, edpos, caller);
 	      sf[i] = init_sample_read_any(0, cp, READ_FORWARD, pos);
 	      if (frames < cp->samples[pos]) frames = cp->samples[pos];
 	      if (sf[i] == NULL) err = MUS_ERROR;
@@ -2353,7 +2357,7 @@ int save_edits_without_display(snd_info *sp, char *new_name, int type, int forma
   return(MUS_UNSUPPORTED_DATA_FORMAT);
 }
 
-int save_channel_edits(chan_info *cp, char *ofile, int edpos)
+int save_channel_edits(chan_info *cp, char *ofile, SCM edpos, const char *caller)
 {
   /* channel extraction -- does not (normally) cause reversion of edits, or change of in-window file, etc */
   snd_info *sp;
@@ -2365,7 +2369,7 @@ int save_channel_edits(chan_info *cp, char *ofile, int edpos)
   sp = cp->sound;
   err = MUS_NO_ERROR;
   if (!(snd_overwrite_ok(ss, ofile))) return(MUS_NO_ERROR); /* no error because decision was explicit */
-  if (edpos == AT_CURRENT_EDIT_POSITION) pos = cp->edit_ctr; else pos = edpos;
+  pos = to_c_edit_position(cp, edpos, caller);
   if (strcmp(ofile, sp->fullname) == 0)
     {
       if (sp->read_only)
@@ -2684,7 +2688,7 @@ static SCM g_edit_tree(SCM snd, SCM chn, SCM upos)
 /* ---------------- sample readers ---------------- */
 
 static SND_TAG_TYPE sf_tag = 0;
-static SCM mark_sf(SCM obj) {SND_SETGCMARK(obj); return(SCM_BOOL_F);}
+static SCM mark_sf(SCM obj) {/* SND_SETGCMARK(obj); */ return(SCM_BOOL_F);}
 
 int sf_p(SCM obj); /* currently for snd-ladspa.c */
 int sf_p(SCM obj) {return(SMOB_TYPE_P(obj, sf_tag));}
@@ -2707,7 +2711,7 @@ static int print_sf(SCM obj, SCM port, scm_print_state *pstate)
   snd_fd *fd;
   fd = get_sf(obj);
   if (fd == NULL)
-    WRITE_STRING("<null>", port);
+    WRITE_STRING("#<sample-reader: null>", port);
   else
     {
       cp = fd->cp;
@@ -2720,13 +2724,11 @@ static int print_sf(SCM obj, SCM port, scm_print_state *pstate)
 	  else name = "unknown source";
 	}
       desc = (char *)CALLOC(128, sizeof(char));
-      mus_snprintf(desc, 128, "<sample-reader %p: %s from %d, at %d (%.4f)",
-	      fd,
-	      name,
-	      fd->initial_samp,
-	      current_location(fd),
-	      UNWRAP_SAMPLE(MUS_SAMPLE_TO_FLOAT(*fd->view_buffered_data),
-			    fd->cb[ED_SCL]));
+      if (fd->eof)
+	mus_snprintf(desc, 128, "#<sample-reader %p: %s from %d, at eof>",
+		     fd, name, fd->initial_samp);
+      else mus_snprintf(desc, 128, "#<sample-reader %p: %s from %d, at %d>",
+			fd, name, fd->initial_samp, current_location(fd));
       WRITE_STRING(desc, port); 
       FREE(desc);
     }
@@ -2750,7 +2752,7 @@ static scm_sizet free_sf(SCM obj)
       free_snd_fd(fd);
       if (sp) completely_free_snd_info(sp);
     }
-  return(0);
+  return(sizeof(snd_fd));
 }
 
 static SCM g_sample_reader_at_end(SCM obj) 
@@ -2762,6 +2764,7 @@ static SCM g_sample_reader_at_end(SCM obj)
 
 SCM g_c_make_sample_reader(snd_fd *fd)
 {
+  scm_done_malloc(sizeof(snd_fd));
   SND_RETURN_NEWSMOB(sf_tag, (SCM)fd);
 }
 
@@ -2810,6 +2813,7 @@ snd can be a filename, a sound index number, or a list with a mix id number."
   if (fd)
     {
       fd->local_sp = loc_sp;
+      scm_done_malloc(sizeof(snd_fd));
       SND_RETURN_NEWSMOB(sf_tag, fd);
     }
   return(SCM_BOOL_F);
@@ -2843,6 +2847,7 @@ returns a reader ready to access region's channel chn data starting at 'start-sa
 			TO_C_INT_OR_ELSE(dir1, 1));
   if (fd)
     {
+      scm_done_malloc(sizeof(snd_fd));
       SND_RETURN_NEWSMOB(sf_tag, (SCM)fd);
     }
   return(SCM_BOOL_F);
@@ -3068,7 +3073,7 @@ static int finish_as_one_edit(chan_info *cp, void *ptr)
 	  if (ed)
 	    {
 	      if (ed->origin) FREE(ed->origin);
-	      ed->origin = copy_string(as_one_edit_origin);
+	      ed->origin = as_one_edit_origin;
 	      reflect_edit_history_change(cp);
 	    }
 	}
@@ -3092,7 +3097,7 @@ static SCM g_as_one_edit(SCM proc, SCM origin)
   if (chans > 0)
     {
       if (STRING_P(origin))
-	as_one_edit_origin = TO_C_STRING(origin);
+	as_one_edit_origin = TO_NEW_C_STRING(origin);
       else as_one_edit_origin = NULL;
       cur_edits = (int *)CALLOC(chans, sizeof(int));
       chan_ctr = 0;
@@ -3102,7 +3107,7 @@ static SCM g_as_one_edit(SCM proc, SCM origin)
       map_over_chans(ss, finish_as_one_edit, (void *)cur_edits);
       FREE(cur_edits);
     }
-  return(result);
+  return(scm_return_first(result, proc, origin));
 }
 
 static SCM g_section_scale_by(SCM scl, SCM beg, SCM num, SCM snd, SCM chn)
@@ -3205,7 +3210,7 @@ static SCM g_set_sample_reversed(SCM arg1, SCM arg2, SCM arg3, SCM arg4)
     }
 }
 
-static SCM g_samples(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM pos)
+static SCM g_samples(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM edpos)
 {
   #define H_samples "(" S_samples " &optional (start-samp 0) samps snd chn edit-position)\n\
 returns a vector containing snd channel chn's samples starting a start-samp for samps samples; edit-position is the edit \
@@ -3214,19 +3219,18 @@ history position to read (defaults to current position)."
   /* return the filled vector for scm to free? */
   chan_info *cp;
   snd_fd *sf;
-  int i, len, beg, edpos;
+  int i, len, beg, pos;
   SCM new_vect;
   SCM *vdata;
   ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_0), samp_0, SCM_ARG1, S_samples, "a number");
   ASSERT_TYPE(NUMBER_IF_BOUND_P(samps), samps, SCM_ARG2, S_samples, "a number");
   SND_ASSERT_CHAN(S_samples, snd_n, chn_n, 3);
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(pos), pos, SCM_ARG5, S_samples, "an integer");
   cp = get_cp(snd_n, chn_n, S_samples);
-  edpos = TO_C_INT_OR_ELSE(pos, cp->edit_ctr);
+  pos = to_c_edit_position(cp, edpos, S_samples);
   beg = TO_C_INT_OR_ELSE(samp_0, 0);
-  len = TO_C_INT_OR_ELSE(samps, cp->samples[edpos] - beg);
+  len = TO_C_INT_OR_ELSE(samps, cp->samples[pos] - beg);
   new_vect = MAKE_VECTOR(len, TO_SCM_DOUBLE(0.0));
-  sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
+  sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   if (sf)
     {
       vdata = SCM_VELTS(new_vect);
@@ -3552,7 +3556,7 @@ static int dont_save(snd_state *ss, snd_info *sp, char *newname)
 void g_init_edits(SCM local_doc)
 {
 #if HAVE_GUILE
-  sf_tag = scm_make_smob_type("sf", sizeof(SCM));
+  sf_tag = scm_make_smob_type("sf", sizeof(snd_fd));
   scm_set_smob_mark(sf_tag, mark_sf);
   scm_set_smob_print(sf_tag, print_sf);
   scm_set_smob_free(sf_tag, free_sf);
@@ -3561,6 +3565,8 @@ void g_init_edits(SCM local_doc)
   scm_set_smob_apply(sf_tag, SCM_FNC g_next_sample, 0, 0, 0);
 #endif
 #endif
+
+  DEFINE_VAR(S_current_edit_position,      AT_CURRENT_EDIT_POSITION,             "current edit position indicator for 'edpos' args");
 
   DEFINE_PROC(S_make_sample_reader,        g_make_sample_reader, 0, 5, 0,        H_make_sample_reader);
   DEFINE_PROC(S_make_region_sample_reader, g_make_region_sample_reader, 0, 4, 0, H_make_region_sample_reader);

@@ -747,7 +747,7 @@ static SCM mark_mus_scm(SCM obj)
 	  scm_gc_mark(ms->vcts[i]);
     }
 #endif
-  SND_SETGCMARK(obj); 
+  /* SND_SETGCMARK(obj);  */
   return(SCM_BOOL_F);
 }
 
@@ -758,7 +758,7 @@ static scm_sizet free_mus_scm(SCM obj)
   if (ms->nvcts != -1) mus_free(TO_CLM(obj));
   if (ms->vcts) FREE(ms->vcts);  
   FREE(ms);
-  return(0);
+  return(sizeof(mus_scm));
 }
 
 static int print_mus_scm(SCM obj, SCM port, scm_print_state *pstate)
@@ -767,7 +767,9 @@ static int print_mus_scm(SCM obj, SCM port, scm_print_state *pstate)
   buf = mus_describe(TO_CLM(obj));
   if (buf)
     {
+      WRITE_STRING("#<", port);
       WRITE_STRING(buf, port);
+      WRITE_STRING(">", port);
       FREE(buf);
     }
   return(1);
@@ -804,6 +806,7 @@ static void init_mus_scm(void)
 
 SCM mus_scm_to_smob(mus_scm *gn)
 {
+  scm_done_malloc(sizeof(mus_scm));
   SND_RETURN_NEWSMOB(mus_scm_tag, gn);
 }
 

@@ -332,6 +332,7 @@
 #define S_copy_context                  "copy-context"
 #define S_corruption_time               "corruption-time"
 #define S_count_matches                 "count-matches"
+#define S_current_edit_position         "current-edit-position"
 #define S_current_font                  "current-font"
 #define S_cursor                        "cursor"
 #define S_cursor_color                  "cursor-col" STR_OR

@@ -483,6 +483,7 @@ Linux audio:
 
 GSL:
   ftp://sourceware.cygnus.com/pub/gsl/
+  http://sourceware.cygnus.com/gsl/
 
 Gtk+extra:
   http://gtkextra.sourceforge.net/

@@ -25,7 +25,6 @@
 #undef HAVE_ACCESS
 #undef HAVE_OPENDIR
 #undef HAVE_SIGNAL
-#undef HAVE_MEMSET
 #undef HAVE_FINITE
 #undef HAVE_ISNAN
 #undef HAVE_STRDUP
@@ -113,6 +112,7 @@
 #undef HAVE_GUILE_GTK
 #undef GUILE_GTK_VERSION
 #undef HAVE_GSL
+#undef HAVE_GSL_DHT_NEW
 #undef GSL_VERSION
 #undef SNDLIB_USE_FLOATS
 #undef DEBUGGING

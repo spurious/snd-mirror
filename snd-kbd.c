@@ -709,7 +709,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	      FREE(str1);
 	      break;
 	    case CHANNEL_FILING:
-	      save_channel_edits(active_chan, mcf = mus_expand_filename(str), AT_CURRENT_EDIT_POSITION);
+	      save_channel_edits(active_chan, mcf = mus_expand_filename(str), TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "C-x C-w");
 	      if (mcf) FREE(mcf);
 	      clear_minibuffer(sp);
 	      break;
@@ -1183,7 +1183,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      redisplay = cursor_move(cp, -count * cp->line_size); 
 	      break;
 	    case snd_K_Q: case snd_K_q: 
-	      play_channel(cp, cp->cursor, NO_END_SPECIFIED, TRUE, AT_CURRENT_EDIT_POSITION); 
+	      play_channel(cp, cp->cursor, NO_END_SPECIFIED, TRUE, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "C-q");
 	      set_play_button(sp, 1); 
 	      redisplay = NO_ACTION; 
 	      break;
@@ -1760,7 +1760,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_P: case snd_K_p: 
 	      if (ext_count == NO_CX_ARG_SPECIFIED)
-		play_selection(IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
+		play_selection(IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "C-x p");
 	      else play_region(ss, ext_count, IN_BACKGROUND);
 	      redisplay = NO_ACTION;
 	      break;

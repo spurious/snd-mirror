@@ -3877,6 +3877,18 @@ sets its value to val.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
+<!-- count-matches -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="lcountmatches">count-matches</a></em> (expr <i>sample snd chn edpos</i>) </code></span></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->return how many samples satisfy the expression <i>expr</i>.  <i>expr</i>
+<!-- -->is a Scheme function of one argument (the current sample value). <i>sample</i> 
+<!-- -->determines where to start the search.<br><br>
+<!-- -->
+<!-- --><code>(count-matches (lambda (y) (&gt; y .1)))</code>
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
 <!-- cursor -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndcursor">cursor</a></em> (<em class=targ>snd chn</em>)</code></span>
@@ -4260,6 +4272,18 @@ sets its value to val.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
+<!-- find -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="lfind">find</a></em> (expr <i>sample snd chn edpos</i>) </code></span></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->find the sample that satisfies the Scheme function <i>expr</i>. <i>sample</i>
+<!-- -->determines where to start the search. <br><br>
+<!-- -->
+<!-- --><code>(find (lambda (y) (&gt; y .1)))</code>
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
 <!-- find-sound -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndfindsound">find-sound</a></em> (filename)</code></span>
@@ -4303,7 +4327,7 @@ sets its value to val.
 <!-- -->
 <!-- frames -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndframes">frames</a></em> (<em class=targ>snd chn</em>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndframes">frames</a></em> (<em class=targ>snd chn</em> <i>edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- --><i>chn</i>'s current length in samples.  Used with set!, this either truncates 
@@ -4524,7 +4548,7 @@ sets its value to val.
 <!-- -->
 <!-- map-across-all-chans -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mapacrossallchans">map-across-all-chans</a></em> (func <i>start end edname</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="mapacrossallchans">map-across-all-chans</a></em> (func <i>start end edname edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->apply func to all open channels in parallel (see <a href="#scanning">Scanning Data</a>).
@@ -4534,7 +4558,7 @@ sets its value to val.
 <!-- -->
 <!-- map-across-chans -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mapacrosschans">map-across-chans</a></em> (func <i>start end edname</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="mapacrosschans">map-across-chans</a></em> (func <i>start end edname edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->apply func to currently syncd channels in parallel
@@ -4544,7 +4568,7 @@ sets its value to val.
 <!-- -->
 <!-- map-across-sound-chans -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mapacrosssoundchans">map-across-sound-chans</a></em> (func <i>start end edname snd</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="mapacrosssoundchans">map-across-sound-chans</a></em> (func <i>start end edname snd edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->apply func to sound's channels in parallel
@@ -4554,7 +4578,7 @@ sets its value to val.
 <!-- -->
 <!-- map-all-chans -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mapallchans">map-all-chans</a></em> (func <i>start end edname</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="mapallchans">map-all-chans</a></em> (func <i>start end edname edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->apply func to all open channels
@@ -4564,7 +4588,7 @@ sets its value to val.
 <!-- -->
 <!-- map-chan -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mapchan">map-chan</a></em> (func <i>start end edname snd chn</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="mapchan">map-chan</a></em> (func <i>start end edname snd chn edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->apply func to samples in current channel 
@@ -4574,7 +4598,7 @@ sets its value to val.
 <!-- -->
 <!-- map-chans -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mapchans">map-chans</a></em> (func <i>start end edname</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="mapchans">map-chans</a></em> (func <i>start end edname edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->apply func to currently syncd channels
@@ -4584,7 +4608,7 @@ sets its value to val.
 <!-- -->
 <!-- map-sound-chans -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="mapsoundchan">map-sound-chans</a></em> (func <i>start end edname snd</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="mapsoundchan">map-sound-chans</a></em> (func <i>start end edname snd edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->apply func to current sound's channels
@@ -4594,7 +4618,7 @@ sets its value to val.
 <!-- -->
 <!-- maxamp -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndmaxamp">maxamp</a></em> (<em class=targ>snd chn</em>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndmaxamp">maxamp</a></em> (<em class=targ>snd chn</em> <i>edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->max amp of <i>snd</i>'s channel <i>chn</i>.  Used with set!, this is equivalent to scale-to.
@@ -5098,7 +5122,7 @@ sets its value to val.
 <!-- -->
 <!-- scan-across-all-chans -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="scanacrossallchans">scan-across-all-chans</a></em> (func <i>start end</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="scanacrossallchans">scan-across-all-chans</a></em> (func <i>start end edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->apply func to all open channels in parallel (see <a href="#scanning">Scanning Data</a>).
@@ -5108,7 +5132,7 @@ sets its value to val.
 <!-- -->
 <!-- scan-across-chans -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="scanacrosschans">scan-across-chans</a></em> (func <i>start end</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="scanacrosschans">scan-across-chans</a></em> (func <i>start end edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->apply func to currently syncd channels in parallel
@@ -5118,7 +5142,7 @@ sets its value to val.
 <!-- -->
 <!-- scan-across-sound-chans -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="scanacrosssoundchans">scan-across-sound-chans</a></em> (func <i>start end snd</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="scanacrosssoundchans">scan-across-sound-chans</a></em> (func <i>start end snd edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->apply func to sound's channels in parallel
@@ -5128,7 +5152,7 @@ sets its value to val.
 <!-- -->
 <!-- scan-all-chans -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="scanallchans">scan-all-chans</a></em> (func <i>start end</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="scanallchans">scan-all-chans</a></em> (func <i>start end edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->apply func to all open channels
@@ -5138,7 +5162,7 @@ sets its value to val.
 <!-- -->
 <!-- scan-chan -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="scanchan">scan-chan</a></em> (func <i>start end snd chn</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="scanchan">scan-chan</a></em> (func <i>start end snd chn edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->apply func to samples in current channel (see <a href="#scanning">Scanning Data</a>).
@@ -5148,7 +5172,7 @@ sets its value to val.
 <!-- -->
 <!-- scan-chans -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="scanchans">scan-chans</a></em> (func <i>start end</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="scanchans">scan-chans</a></em> (func <i>start end edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->apply func to currently syncd channels
@@ -5158,7 +5182,7 @@ sets its value to val.
 <!-- -->
 <!-- scan-sound-chans -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="scansoundchan">scan-sound-chans</a></em> (func <i>start end snd</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="scansoundchan">scan-sound-chans</a></em> (func <i>start end snd edpos</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->apply func to current sound's channels
@@ -6315,21 +6339,21 @@ it defaults to the end of the channel.
 </p>
 
 <table cellpadding=0 cellspacing=0>
-<tr><td width=450><b>map-across-all-chans</b> (func <i>start end edname</i>)</td><td>apply func to all open channels in parallel</td></tr>
-<tr><td><b>map-across-chans</b> (func <i>start end edname</i>)</td><td>apply func to currently syncd channels in parallel</td></tr>
-<tr><td><b>map-across-sound-chans</b> (func <i>start end edname snd</i>)</td><td>apply func to sound's channels in parallel</td></tr>
-<tr><td><b>map-all-chans</b> (func <i>start end edname</i>)</td><td>apply func to all open channels</td></tr>
-<tr><td><b>map-chan</b> (func <i>start end edname snd chn</i>)</td><td>apply func to samples in current channel</td></tr>
-<tr><td><b>map-chans</b> (func <i>start end edname</i>)</td><td>apply func to currently syncd channels</td></tr>
-<tr><td><b>map-sound-chans</b> (func <i>start end edname snd</i>)</td><td>apply func to current sound's channels</td></tr>
+<tr><td width=450><b>map-across-all-chans</b> (func <i>start end edname edpos</i>)</td><td>apply func to all open channels in parallel</td></tr>
+<tr><td><b>map-across-chans</b> (func <i>start end edname edpos</i>)</td><td>apply func to currently syncd channels in parallel</td></tr>
+<tr><td><b>map-across-sound-chans</b> (func <i>start end edname snd edpos</i>)</td><td>apply func to sound's channels in parallel</td></tr>
+<tr><td><b>map-all-chans</b> (func <i>start end edname edpos</i>)</td><td>apply func to all open channels</td></tr>
+<tr><td><b>map-chan</b> (func <i>start end edname snd chn edpos</i>)</td><td>apply func to samples in current channel</td></tr>
+<tr><td><b>map-chans</b> (func <i>start end edname edpos</i>)</td><td>apply func to currently syncd channels</td></tr>
+<tr><td><b>map-sound-chans</b> (func <i>start end edname snd edpos</i>)</td><td>apply func to current sound's channels</td></tr>
 <tr><td><br></td><td><br></td></tr>
-<tr><td><b>scan-across-all-chans</b> (func <i>start end</i>)</td><td>apply func to all open channels in parallel</td></tr>
-<tr><td><b>scan-across-chans</b> (func <i>start end</i>)</td><td>apply func to currently syncd channels in parallel</td></tr>
-<tr><td><b>scan-across-sound-chans</b> (func <i>start end snd</i>)</td><td>apply func to sound's channels in parallel</td></tr>
-<tr><td><b>scan-all-chans</b> (func <i>start end</i>)</td><td>apply func to all open channels</td></tr>
-<tr><td><b>scan-chan</b> (func <i>start end snd chn</i>)</td><td>apply func to samples in current channel</td></tr>
-<tr><td><b>scan-chans</b> (func <i>start end</i>)</td><td>apply func to currently syncd channels</td></tr>
-<tr><td><b>scan-sound-chans</b> (func <i>start end snd</i>)</td><td>apply func to current sound's channels</td></tr>
+<tr><td><b>scan-across-all-chans</b> (func <i>start end edpos</i>)</td><td>apply func to all open channels in parallel</td></tr>
+<tr><td><b>scan-across-chans</b> (func <i>start end edpos</i>)</td><td>apply func to currently syncd channels in parallel</td></tr>
+<tr><td><b>scan-across-sound-chans</b> (func <i>start end snd edpos</i>)</td><td>apply func to sound's channels in parallel</td></tr>
+<tr><td><b>scan-all-chans</b> (func <i>start end edpos</i>)</td><td>apply func to all open channels</td></tr>
+<tr><td><b>scan-chan</b> (func <i>start end snd chn edpos</i>)</td><td>apply func to samples in current channel</td></tr>
+<tr><td><b>scan-chans</b> (func <i>start end edpos</i>)</td><td>apply func to currently syncd channels</td></tr>
+<tr><td><b>scan-sound-chans</b> (func <i>start end snd edpos</i>)</td><td>apply func to current sound's channels</td></tr>
 </table>
 
 <p>In the case of the scanning operations, the function passed as the first argument takes
@@ -6491,6 +6515,12 @@ lengths will be more or less the same (as in the mapping operations).
 Use snd-tempnam to get a temporary filename that reflects the current
 temp-dir setting (if any).  The env-sound-interp function in <a href="sndscm.html#exenvsoundinterp">examp.scm</a>
 is an example of this.</p>
+
+<p>The <i>edpos</i> argument, if specified, can be either an edit history position (to which
+the operation is applied), the constant current-edit-position (the default), or a function
+of two arguments, the sound index and the channel number.  The function should return the
+desired edit history position. 
+</p>
 
 <p>The sample-reader functions have made these scanning functions largely redundant.
 I may remove them, or move them into Scheme.
@@ -7280,18 +7310,6 @@ variable %load-verbosely to #t.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
-<!-- count-matches -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="lcountmatches">count-matches</a></em> (expr <i>sample snd chn</i>) </code></span></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->return how many samples satisfy the expression <i>expr</i>.  <i>expr</i>
-<!-- -->is a Scheme function of one argument (the current sample value). <i>sample</i> 
-<!-- -->determines where to start the search.<br><br>
-<!-- -->
-<!-- --><code>(count-matches (lambda (y) (&gt; y .1)))</code>
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
 <!-- exit -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndexit">exit</a></em>              (<i>exit-value</i>)</code></span></td></tr>
@@ -7344,17 +7362,6 @@ variable %load-verbosely to #t.
 <!-- -->
 <!-- --><tr><td></td><td>
 <!-- -->The explicit (slow) form of this transform is dht in <a href="sndscm.html#exampdoc">examp.scm</a>.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- find -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="lfind">find</a></em> (expr <i>sample snd chn</i>) </code></span></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->find the sample that satisfies the Scheme function <i>expr</i>. <i>sample</i>
-<!-- -->determines where to start the search. <br><br>
-<!-- -->
-<!-- --><code>(find (lambda (y) (&gt; y .1)))</code>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

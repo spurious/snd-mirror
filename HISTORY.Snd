@@ -1,6 +1,7 @@
 snd change log
 
-  7-May:     added edit-position arg to various play functions and save-sound-as.
+  9-May:     support for GSL 0.7+.
+  7-May:     added edit-position arg to various play functions, save-sound-as, scan/map/find funcs, frames and maxamps.
              "vector synthesis" in examp.scm.
              Guile 1.5.
   1-May:     Alpha (64-bit) and FreeBSD (Old OSS) fixups.

@@ -336,7 +336,7 @@ char *procedure_ok(SCM proc, int req_args, int opt_args, const char *caller, con
   /* if string returned, needs to be freed */
   SCM arity_list;
   int rargs, oargs;
-#if TIMING
+#if TIMING || GCING
   return(NULL);
 #endif
   if (!(PROCEDURE_P(proc)))
@@ -428,21 +428,8 @@ static SCM eval_file_wrapper(void *data)
 
 static SCM g_call0_1(void *arg)
 {
-#if USE_OPT_APPLY
-  /* taken from guile's sort.c; can speed up user-funcs */
-  SCM code = (SCM)arg;
-  switch (SCM_TYP7(code))
-    {
-    case scm_tc7_subr_0:
-      return(SCM_SUBRF(code)());
-    case scm_tcs_closures:
-      return(scm_eval_body(SCM_CDR(SCM_CODE(code)), SCM_ENV(code))); /* not sure about env here */
-    default:
-      return(scm_apply(code, SCM_EOL, SCM_EOL));
-    }
-#else
+  /* the USE_OPT_APPLY code here can get confused about the environment */
   return(scm_apply((SCM)arg, SCM_EOL, SCM_EOL));
-#endif
 }
 
 SCM g_call0(SCM proc, const char *caller) /* replacement for gh_call0 -- protect ourselves from premature exit(!$#%@$) */
@@ -1898,7 +1885,7 @@ static SCM g_close_sound_file(SCM g_fd, SCM g_bytes)
   return(TO_SCM_INT(result));
 }
 
-static SCM samples2vct(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM v, SCM pos)
+static SCM samples2vct(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM v, SCM edpos)
 {
   #define H_samples2vct "(" S_samples_vct " &optional (start-samp 0)\n    samps snd chn vct-obj edit-position)\n\
 returns a vct object (vct-obj if given) containing snd channel chn's data starting at start-samp for samps, \
@@ -1907,20 +1894,19 @@ reading edit version edit-position (defaulting to the current version)"
   chan_info *cp;
   snd_fd *sf;
   Float *fvals;
-  int i, len, beg, edpos;
+  int i, len, beg, pos;
   vct *v1 = get_vct(v);
   ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_0), samp_0, SCM_ARG1, S_samples_vct, "a number");
   ASSERT_TYPE(NUMBER_IF_BOUND_P(samps), samps, SCM_ARG2, S_samples_vct, "a number");
   SND_ASSERT_CHAN(S_samples_vct, snd_n, chn_n, 3);
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(pos), pos, SCM_ARG6, S_samples_vct, "an integer");
   cp = get_cp(snd_n, chn_n, S_samples_vct);
-  edpos = TO_C_INT_OR_ELSE(pos, cp->edit_ctr);
+  pos = to_c_edit_position(cp, edpos, S_samples_vct);
   beg = TO_C_INT_OR_ELSE(samp_0, 0);
-  len = TO_C_INT_OR_ELSE(samps, cp->samples[edpos] - beg);
+  len = TO_C_INT_OR_ELSE(samps, cp->samples[pos] - beg);
   if (v1)
     fvals = v1->data;
   else fvals = (Float *)MALLOC(len * sizeof(Float));
-  sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
+  sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   if (sf)
     {
       for (i = 0; i < len; i++) 
@@ -1939,7 +1925,7 @@ static MUS_SAMPLE_TYPE local_next_sample_unscaled(snd_fd *sf)
   else return(*sf->view_buffered_data++);
 }
 
-static SCM samples2sound_data(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM sdobj, SCM pos, SCM sdchan)
+static SCM samples2sound_data(SCM samp_0, SCM samps, SCM snd_n, SCM chn_n, SCM sdobj, SCM edpos, SCM sdchan)
 {
   #define H_samples2sound_data "(" S_samples2sound_data " &optional (start-samp 0)\n    samps snd chn sdobj edit-position (sdobj-chan 0))\n\
 returns a sound-data object (sdobj if given) containing snd channel chn's data starting at start-samp for samps, \
@@ -1949,20 +1935,15 @@ reading edit version edit-position (defaulting to the current version)"
   snd_fd *sf;
   sound_data *sd;
   SCM newsd = SCM_BOOL_F;
-  int i, len, beg, chn = 0, edpos;
+  int i, len, beg, chn = 0, pos;
   ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_0), samp_0, SCM_ARG1, S_samples2sound_data, "a number");
   ASSERT_TYPE(NUMBER_IF_BOUND_P(samps), samps, SCM_ARG2, S_samples2sound_data, "a number");
   SND_ASSERT_CHAN(S_samples2sound_data, snd_n, chn_n, 3);
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(pos), pos, SCM_ARG6, S_samples2sound_data, "an integer");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(sdchan), sdchan, SCM_ARG7, S_samples2sound_data, "an integer");
   cp = get_cp(snd_n, chn_n, S_samples2sound_data);
-  edpos = TO_C_INT_OR_ELSE(pos, cp->edit_ctr);
-  if (edpos >= cp->edit_size) 
-    ERROR(NO_SUCH_EDIT,
-	  SCM_LIST4(TO_SCM_STRING(S_samples2sound_data),
-		    snd_n, chn_n, pos));
+  pos = to_c_edit_position(cp, edpos, S_samples2sound_data);
   beg = TO_C_INT_OR_ELSE(samp_0, 0);
-  len = TO_C_INT_OR_ELSE(samps, cp->samples[edpos] - beg);
+  len = TO_C_INT_OR_ELSE(samps, cp->samples[pos] - beg);
   if (len > 0)
     {
       chn = TO_C_INT_OR_ELSE(sdchan, 0);
@@ -1975,7 +1956,7 @@ reading edit version edit-position (defaulting to the current version)"
 	}
       if (chn < sd->chans)
 	{
-	  sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
+	  sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
 	  if (sf)
 	    {
 	      if (no_ed_scalers(cp))
@@ -3014,10 +2995,31 @@ static SCM g_gc_off(void) {++scm_block_gc; return(TO_SCM_INT(scm_block_gc));}
 static SCM g_gc_on(void) {--scm_block_gc; return(TO_SCM_INT(scm_block_gc));}
 #endif
 
+#if GCING
+/* need someplace findable in gdb (without knowing much about Guile) to get the last call+args upon segfault */
+static char *this_proc = NULL, *these_args = NULL;
+static SCM g_set_last_proc(SCM proc, SCM args)
+{
+  if (this_proc) free(this_proc);
+  this_proc = TO_NEW_C_STRING(scm_object_to_string(proc, SCM_UNDEFINED));
+  if (these_args) free(these_args);
+  these_args = TO_NEW_C_STRING(scm_object_to_string(args, SCM_UNDEFINED));
+  return(scm_return_first(SCM_BOOL_F, proc, args));
+}
+#endif
+
 void g_initialize_gh(snd_state *ss)
 {
   SCM local_doc;
   state = ss;
+
+#if GCING
+  gh_new_procedure("set-last-proc", SCM_FNC g_set_last_proc, 2, 0, 0);
+  DEFINE_VAR("g-gc-step", 10, "");
+  DEFINE_VAR("g-gc-ctr", 0, "");
+  gh_eval_str("(define (gc-1) (if (> g-gc-step 0) (begin (if (> g-gc-ctr g-gc-step) (begin (set! g-gc-ctr 0) (gc)) (set! g-gc-ctr (1+ g-gc-ctr))))))");
+  YES_WE_HAVE("gcing");
+#endif
 
   local_doc = MAKE_PERMANENT(DOCUMENTATION);
 #if TIMING

@@ -182,7 +182,7 @@ static SCM g_draw_dots(SCM pts, SCM size, SCM snd, SCM chn, SCM ax)
 }
 
 static SCM g_fill_polygon(SCM pts, SCM snd, SCM chn, SCM ax_id)
-{
+{ 
   POINT *pack_pts;
   axis_context *ax;
   SND_ASSERT_CHAN(S_fill_polygon, snd, chn, 2);
@@ -539,7 +539,7 @@ static SCM g_remove_idler(SCM id)
 }
 
 
-static SCM g_make_graph_data(SCM snd, SCM chn, SCM pos, SCM lo, SCM hi)
+static SCM g_make_graph_data(SCM snd, SCM chn, SCM edpos, SCM lo, SCM hi)
 {
   #define H_make_graph_data "(" S_make_graph_data " snd chn edit-pos low high)\n\
 returns either a vct (if the graph has one trace), or a \
@@ -552,11 +552,10 @@ list of two vcts (the two sides of the envelope graph). \
   chan_info *cp;
   SND_ASSERT_CHAN(S_make_graph_data, snd, chn, 1);
   cp = get_cp(snd, chn, S_make_graph_data);
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(pos), pos, SCM_ARG3, S_make_graph_data, "an integer");
   ASSERT_TYPE(NUMBER_IF_BOUND_P(lo), lo, SCM_ARG4, S_make_graph_data, "a number");
   ASSERT_TYPE(NUMBER_IF_BOUND_P(hi), hi, SCM_ARG5, S_make_graph_data, "a number");
   return(make_graph_data(cp,
-			 TO_C_INT_OR_ELSE(pos, cp->edit_ctr),
+			 to_c_edit_position(cp, edpos, S_make_graph_data),
 			 TO_C_INT_OR_ELSE(lo, -1),
 			 TO_C_INT_OR_ELSE(hi, -1)));
 }

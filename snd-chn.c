@@ -1770,11 +1770,7 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
       ax = copy_context(cp);
       for (slice = 0; slice < si->active_slices; slice++, xf += xfincr)
 	{
-#if HAVE_MEMSET
 	  memset((void *)js, 0, GRAY_SCALES * sizeof(int));
-#else
-	  for (i = 0; i < GRAY_SCALES; i++) js[i] = 0;
-#endif
 	  fdata = si->data[slice];
 	  for (i = 0; i < bins; i++)
 	    {
@@ -3192,7 +3188,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	    {
 	      if (play_mark->sync)
 		play_syncd_mark(cp, play_mark);
-	      else play_channel(cp, play_mark->samp, NO_END_SPECIFIED, TRUE, AT_CURRENT_EDIT_POSITION);
+	      else play_channel(cp, play_mark->samp, NO_END_SPECIFIED, TRUE, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "play button");
 	      sp->playing_mark = play_mark;
 	      set_play_button(sp, 1);
 	    }
@@ -3358,7 +3354,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, TIME_TYPE time, T
 	      dragged = 1;
 	      sp->srate = 0.0;
 	      mouse_cursor = cp->cursor;
-	      play_channel(cp, play_mark->samp, NO_END_SPECIFIED, TRUE, AT_CURRENT_EDIT_POSITION);
+	      play_channel(cp, play_mark->samp, NO_END_SPECIFIED, TRUE, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "drag playing mark");
 	      set_play_button(sp, 1);
 	    }
 	  else
@@ -3514,8 +3510,11 @@ enum {CP_FFTING, CP_WAVING, CP_FRAMES, CP_CURSOR, CP_LISP_GRAPHING, CP_AP_LOSAMP
       CP_SHOW_FFT_PEAKS, CP_ZERO_PAD, CP_VERBOSE_CURSOR, CP_FFT_LOG_FREQUENCY, CP_FFT_LOG_MAGNITUDE,
       CP_WAVELET_TYPE, CP_SPECTRO_HOP, CP_FFT_SIZE, CP_FFT_STYLE, CP_FFT_WINDOW, CP_TRANSFORM_TYPE,
       CP_NORMALIZE_FFT, CP_SHOW_MIX_WAVEFORMS, CP_GRAPH_STYLE, CP_DOT_SIZE,
-      CP_SHOW_AXES, CP_GRAPHS_HORIZONTAL, CP_SYNC, CP_CURSOR_SIZE, CP_CURSOR_POSITION
+      CP_SHOW_AXES, CP_GRAPHS_HORIZONTAL, CP_SYNC, CP_CURSOR_SIZE, CP_CURSOR_POSITION,
+      CP_EDPOS_FRAMES
 };
+
+static SCM cp_edpos = SCM_UNDEFINED;
 
 static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 {
@@ -3524,7 +3523,7 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
   snd_state *ss;
   int i;
   SCM res = SCM_EOL;
-  if (SCM_EQ_P(snd_n, SCM_BOOL_T))
+  if (TRUE_P(snd_n))
     {
       ss = get_global_state();
       for (i = 0; i < ss->max_sounds; i++)
@@ -3537,7 +3536,7 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
     }
   else
     {
-      if (SCM_EQ_P(chn_n, SCM_BOOL_T))
+      if (TRUE_P(chn_n))
 	{
 	  sp = get_sp(snd_n);
 	  if (sp == NULL) snd_no_such_sound_error(caller, snd_n);
@@ -3590,6 +3589,7 @@ static SCM cp_iread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	    case CP_GRAPHS_HORIZONTAL:  return(TO_SCM_BOOLEAN(cp->graphs_horizontal));             break;
 	    case CP_SYNC:               return(TO_SCM_INT(cp->sync));                              break;
 	    case CP_CURSOR_POSITION:    return(SCM_LIST2(TO_SCM_INT(cp->cx), TO_SCM_INT(cp->cy))); break;
+	    case CP_EDPOS_FRAMES:       return(TO_SCM_INT(to_c_edit_samples(cp, cp_edpos, caller))); break;
 	    }
 	}
     }
@@ -3867,7 +3867,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 }
 
 enum {CP_MIN_DB, CP_SPECTRO_X_ANGLE, CP_SPECTRO_Y_ANGLE, CP_SPECTRO_Z_ANGLE, CP_SPECTRO_X_SCALE, CP_SPECTRO_Y_SCALE, CP_SPECTRO_Z_SCALE,
-      CP_SPECTRO_CUTOFF, CP_SPECTRO_START, CP_FFT_BETA, CP_AP_SX, CP_AP_SY, CP_AP_ZX, CP_AP_ZY, CP_MAXAMP
+      CP_SPECTRO_CUTOFF, CP_SPECTRO_START, CP_FFT_BETA, CP_AP_SX, CP_AP_SY, CP_AP_ZX, CP_AP_ZY, CP_MAXAMP, CP_EDPOS_MAXAMP
 };
 
 
@@ -3928,7 +3928,8 @@ static SCM cp_fread(SCM snd_n, SCM chn_n, int fld, char *caller)
     case CP_SPECTRO_CUTOFF:  return(TO_SCM_DOUBLE(cp->spectro_cutoff));               break;
     case CP_SPECTRO_START:   return(TO_SCM_DOUBLE(cp->spectro_start));                break;
     case CP_FFT_BETA:        return(TO_SCM_DOUBLE(cp->fft_beta));                     break;
-    case CP_MAXAMP:          return(TO_SCM_DOUBLE(get_maxamp(cp->sound, cp)));        break;
+    case CP_MAXAMP:          return(TO_SCM_DOUBLE(get_maxamp(cp->sound, cp, AT_CURRENT_EDIT_POSITION)));        break;
+    case CP_EDPOS_MAXAMP:    return(TO_SCM_DOUBLE(get_maxamp(cp->sound, cp, to_c_edit_position(cp, cp_edpos, S_maxamp)))); break;
     }
   return(SCM_BOOL_F);
 }
@@ -4005,7 +4006,7 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       return(TO_SCM_DOUBLE(cp->fft_beta));             
       break;
     case CP_MAXAMP:
-      curamp = get_maxamp(cp->sound, cp);
+      curamp = get_maxamp(cp->sound, cp, AT_CURRENT_EDIT_POSITION);
       newamp[0] = TO_C_DOUBLE(on);
       if (curamp != newamp[0])
 	{
@@ -4136,9 +4137,18 @@ static SCM g_cursor_position(SCM snd, SCM chn)
   return(cp_iread(snd, chn, CP_CURSOR_POSITION, S_cursor_position));
 }
 
-static SCM g_frames(SCM snd_n, SCM chn_n) 
+static SCM g_frames(SCM snd_n, SCM chn_n, SCM edpos)
 {
-  #define H_frames "(" S_frames " &optional snd chn) -> number of frames of data in snd's channel chn"
+  #define H_frames "(" S_frames " &optional snd chn edpos) -> number of frames of data in snd's channel chn"
+  SCM res;
+  if (BOUND_P(edpos))
+    {
+      cp_edpos = edpos;
+      snd_protect(cp_edpos);
+      res = cp_iread(snd_n, chn_n, CP_EDPOS_FRAMES, S_frames);
+      snd_unprotect(cp_edpos);
+      return(res);
+    }
   return(cp_iread(snd_n, chn_n, CP_FRAMES, S_frames));
 }
 
@@ -4150,9 +4160,18 @@ static SCM g_set_frames(SCM on, SCM snd_n, SCM chn_n)
 
 WITH_REVERSED_CHANNEL_ARGS(g_set_frames_reversed, g_set_frames)
 
-static SCM g_maxamp(SCM snd_n, SCM chn_n) 
+static SCM g_maxamp(SCM snd_n, SCM chn_n, SCM edpos) 
 {
-  #define H_maxamp "(" S_maxamp " &optional snd chn) -> max amp of data in snd's channel chn"
+  #define H_maxamp "(" S_maxamp " &optional snd chn edpos) -> max amp of data in snd's channel chn"
+  SCM res;
+  if (BOUND_P(edpos))
+    {
+      cp_edpos = edpos;
+      snd_protect(cp_edpos);
+      res = cp_fread(snd_n, chn_n, CP_EDPOS_MAXAMP, S_maxamp);
+      snd_unprotect(cp_edpos);
+      return(res);
+    }
   return(cp_fread(snd_n, chn_n, CP_MAXAMP, S_maxamp));
 }
 
@@ -5231,7 +5250,7 @@ static SCM g_set_y_bounds(SCM bounds, SCM snd_n, SCM chn_n)
   else
     {
       /* if no bounds given, use maxamp */
-      hi = get_maxamp(cp->sound, cp);
+      hi = get_maxamp(cp->sound, cp, AT_CURRENT_EDIT_POSITION);
       if (hi < 0.0) hi = -hi;
       if (hi == 0.0) hi = .001;
       low = -hi;
@@ -5347,11 +5366,11 @@ void g_init_chn(SCM local_doc)
 
   define_procedure_with_reversed_setter(S_frames, SCM_FNC g_frames, H_frames,
 					"set-" S_frames, SCM_FNC g_set_frames, SCM_FNC g_set_frames_reversed,
-					local_doc, 0, 2, 0, 3);
+					local_doc, 0, 3, 0, 3);
 
   define_procedure_with_reversed_setter(S_maxamp, SCM_FNC g_maxamp, H_maxamp,
 					"set-" S_maxamp, SCM_FNC g_set_maxamp, SCM_FNC g_set_maxamp_reversed,
-					local_doc, 0, 2, 0, 3);
+					local_doc, 0, 3, 0, 3);
 
   DEFINE_PROC(S_forward_sample,    g_forward_sample, 0, 3, 0,    H_forward_sample);
   DEFINE_PROC(S_backward_sample,   g_backward_sample, 0, 3, 0,   H_backward_sample);

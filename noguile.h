@@ -89,8 +89,8 @@ SCM scm_return_first(SCM a, ...);
 #define TO_C_INT_OR_ELSE_WITH_ORIGIN(a, b, c) 0
 #define TO_C_STRING(STR) NULL
 #define TO_SCM_DOUBLE(a) 0
-#define TO_SCM_INT(a) 0
-#define TO_SMALL_SCM_INT(a) 0
+#define TO_SCM_INT(a) a
+#define TO_SMALL_SCM_INT(a) a
 #define TO_SMALL_C_INT(a) 0
 #define TO_C_UNSIGNED_LONG(a) 0
 #define TO_SCM_STRING(a) 0

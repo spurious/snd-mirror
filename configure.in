@@ -108,17 +108,29 @@ AC_ARG_WITH(snd-conf,
 
 
 # -------- GSL --------
-AM_PATH_GSL(,[
-	      AC_DEFINE(HAVE_GSL)
-              gsl_version="`$GSL_CONFIG --version`"
-              AC_DEFINE_UNQUOTED(GSL_VERSION,"${gsl_version}")
-              if test "`$GSL_CONFIG --version`" = "0.6"; then
-                GSL_LIBS="$GSL_LIBS -lgslblasnative"
-              fi
-              if test "`gsl-config --version`" = "0.7"; then
-                GSL_LIBS="$GSL_LIBS -lgslblas"
-              fi
-	     ],)
+GSL_LIBS=""
+GSL_CFLAGS=""
+AC_PATH_PROG(GSL_CONFIG, gsl-config, no)
+AC_MSG_CHECKING(for GSL)
+if test "$GSL_CONFIG" = "no" ; then
+  AC_MSG_RESULT(no)
+else
+  GSL_CFLAGS=`$GSL_CONFIG --cflags`
+  GSL_LIBS=`$GSL_CONFIG --libs`
+  AC_DEFINE(HAVE_GSL)
+  gsl_version="`$GSL_CONFIG --version`"
+  AC_MSG_RESULT($gsl_version)
+  AC_DEFINE_UNQUOTED(GSL_VERSION,"${gsl_version}")
+  if test "`$GSL_CONFIG --version`" = "0.6"; then
+    GSL_LIBS="$GSL_LIBS -lgslblasnative"
+  fi
+  if test "`gsl-config --version`" = "0.7"; then
+    GSL_LIBS="$GSL_LIBS -lgslblas"
+  fi
+  AC_CHECK_LIB(gsl, gsl_dht_new, [AC_DEFINE(HAVE_GSL_DHT_NEW)], , $GSL_LIBS)
+fi
+AC_SUBST(GSL_LIBS)
+AC_SUBST(GSL_CFLAGS)
 
 
 # -------- SNDLIB (not ready yet...) --------
@@ -265,7 +277,7 @@ AC_MSG_RESULT(${ok})
 
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME
-AC_CHECK_FUNCS(getcwd strerror mallinfo readlink setlocale access opendir sleep signal memset finite strdup fstatfs clock vsnprintf snprintf)
+AC_CHECK_FUNCS(getcwd strerror mallinfo readlink setlocale access opendir sleep signal finite strdup fstatfs clock vsnprintf snprintf)
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
 
@@ -435,9 +447,8 @@ if (${GUILE_CONFIG_path}guile-config link > /dev/null) 2>&1; then
   GUILE_CONFIG_works=yes
 else
   GUILE_CONFIG_works=no
+  AC_MSG_RESULT(no)
 fi
-
-AC_MSG_RESULT($GUILE_CONFIG_works)
 
 if test $GUILE_CONFIG_works = yes; then
   GUILE_CFLAGS="`${GUILE_CONFIG_path}guile-config compile`"
@@ -446,6 +457,10 @@ if test $GUILE_CONFIG_works = yes; then
   else
     GUILE_LIBS="`${GUILE_CONFIG_path}guile-config link`"
   fi
+
+  guile_version="`guile -c '(display (version))'`"
+  AC_MSG_RESULT($guile_version)
+
   if test "`guile -c '(display (string>=? (version) "1.3.4"))'`" != "#t"; then
     AC_MSG_WARN(Snd needs Guile 1.3.4 or later)
     AC_DEFINE(HAVE_GUILE,0)

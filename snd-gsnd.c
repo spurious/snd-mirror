@@ -377,7 +377,9 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
       if (sp->cursor_follows_play != DONT_FOLLOW) 
 	set_active_color(w, (ss->sgx)->green); 
       else set_active_color(w, (ss->sgx)->pushed_button_color);
-      play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION); /* should this follow the sync button? */
+      play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, 
+		 TO_SCM_INT(AT_CURRENT_EDIT_POSITION),
+		 "play button");                        /* should this follow the sync button? */
     }
 }
 

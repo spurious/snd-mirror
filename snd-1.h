@@ -681,9 +681,9 @@ void undo_edit_with_sync(chan_info *cp, int count);
 void redo_edit_with_sync(chan_info *cp, int count);
 void undo_edit(chan_info *cp, int count);
 void redo_edit(chan_info *cp, int count);
-int save_channel_edits(chan_info *cp, char *ofile, int edpos);
+int save_channel_edits(chan_info *cp, char *ofile, SCM edpos, const char *caller);
 void save_edits(snd_info *sp, void *ptr);
-int save_edits_without_display(snd_info *sp, char *new_name, int type, int format, int srate, char *comment, int edpos);
+int save_edits_without_display(snd_info *sp, char *new_name, int type, int format, int srate, char *comment, SCM edpos, const char *caller);
 void revert_edits(chan_info *cp, void *ptr);
 int open_temp_file(char *ofile, int chans, file_info *hdr, snd_state *ss);
 int close_temp_file(int ofd, file_info *hdr, long bytes, snd_info *sp);
@@ -699,8 +699,8 @@ snd_data *free_snd_data(snd_data *sf);
 void parse_tree_scale_by(chan_info *cp, Float scl);
 void parse_tree_selection_scale_by(chan_info *cp, Float scl, int beg, int num);
 int no_ed_scalers(chan_info *cp);
-void set_ed_maxamp(chan_info *cp, Float val);
-Float ed_maxamp(chan_info *cp);
+void set_ed_maxamp(chan_info *cp, int edpos, Float val);
+Float ed_maxamp(chan_info *cp, int edpos);
 void set_ed_selection_maxamp(chan_info *cp, Float val);
 Float ed_selection_maxamp(chan_info *cp);
 
@@ -911,10 +911,10 @@ void stop_playing_sound_no_toggle(snd_info *sp);
 void stop_playing_all_sounds(void);
 void stop_playing_region(int n);
 void play_region(snd_state *ss, int n, int background);
-void play_channel(chan_info *cp, int start, int end, int background, int edpos);
-void play_sound(snd_info *sp, int start, int end, int background, int edpos);
-void play_channels(chan_info **cps, int chans, int *starts, int *ends, int background, int edpos);
-void play_selection(int background, int edpos);
+void play_channel(chan_info *cp, int start, int end, int background, SCM edpos, const char *caller);
+void play_sound(snd_info *sp, int start, int end, int background, SCM edpos, const char *caller);
+void play_channels(chan_info **cps, int chans, int *starts, int *ends, int background, SCM edpos, const char *caller);
+void play_selection(int background, SCM edpos, const char *caller);
 void toggle_dac_pausing(snd_state *ss); /* snd-dac.c */
 int play_in_progress(void);
 void initialize_apply(snd_info *sp, int chans, int frames);
@@ -1030,8 +1030,8 @@ void free_env_state(chan_info *cp);
 env_state *make_env_state(chan_info *cp, int samples);
 int tick_amp_env(chan_info *cp, env_state *es);
 BACKGROUND_TYPE get_amp_env(GUI_POINTER ptr);
-int amp_env_maxamp_ok(chan_info *cp);
-Float amp_env_maxamp(chan_info *cp);
+int amp_env_maxamp_ok(chan_info *cp, int edpos);
+Float amp_env_maxamp(chan_info *cp, int edpos);
 int amp_env_usable(chan_info *cp, Float samples_per_pixel, int hisamp, int start_new, int edit_pos);
 int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int srate);
 char *shortname(snd_info *sp);
@@ -1301,7 +1301,7 @@ void g_init_kbd(SCM local_doc);
 void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr);
 void scale_by(chan_info *cp, Float *scalers, int len, int selection);
 void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *scalers, int len, int selection);
-Float get_maxamp(snd_info *sp, chan_info *cp);
+Float get_maxamp(snd_info *sp, chan_info *cp, int edpos);
 src_state *make_src(snd_state *ss, Float srate, snd_fd *sf);
 Float run_src(src_state *sr, Float sr_change);
 src_state *free_src(src_state *sr);
@@ -1317,6 +1317,8 @@ int cursor_insert(chan_info *cp, int beg, int count, const char *origin);
 void fht(int powerOfFour, Float *array);
 
 void g_init_sig(SCM local_doc);
+int to_c_edit_position(chan_info *cp, SCM edpos, const char *caller);
+int to_c_edit_samples(chan_info *cp, SCM edpos, const char *caller);
 
 
 

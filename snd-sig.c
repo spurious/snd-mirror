@@ -3,6 +3,7 @@
 /* TODO:  map|scan-any-chans = (for-each (map|scan-chan ... ) chans)
  *        map|scan-across-any-chans the same
  *        so all the map|scan funcs are specialized calls of these two
+ * TODO: doc and test and complete edpos 
  */
 
 /* collect syncd chans */
@@ -24,14 +25,45 @@ static void free_sync_state(sync_state *sc)
     }
 }
 
-/* TODO: map|scan-chan|find|count-matches pos? */
+int to_c_edit_position(chan_info *cp, SCM edpos, const char *caller)
+{
+  int pos;
+  SCM errstr;
+  char *errmsg = NULL;
+  ASSERT_TYPE(NOT_BOUND_P(edpos) || INTEGER_P(edpos) || PROCEDURE_P(edpos), edpos, SCM_ARGn, caller, "an integer or a procedure");
+  if (PROCEDURE_P(edpos))
+    {
+      errmsg = procedure_ok(edpos, 2, 0, caller, "edit position procedure", 0);
+      if (errmsg)
+	{
+	  errstr = TO_SCM_STRING(errmsg);
+	  FREE(errmsg);
+	  snd_bad_arity_error(caller, errstr, edpos);
+	}
+      pos = TO_C_INT_OR_ELSE_WITH_ORIGIN(CALL2(edpos, 
+					       TO_SMALL_SCM_INT(cp->sound->index), 
+					       TO_SMALL_SCM_INT(cp->chan),
+					       caller),
+					 AT_CURRENT_EDIT_POSITION, caller);
+    }
+  else pos = TO_C_INT_OR_ELSE_WITH_ORIGIN(edpos, AT_CURRENT_EDIT_POSITION, caller);
+  if ((pos == AT_CURRENT_EDIT_POSITION) || (pos < 0) || (pos > cp->edit_size))
+    return(cp->edit_ctr);
+  return(pos);
+}
 
-static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, int beg, int regexpr, int forwards, int prebeg)
+int to_c_edit_samples(chan_info *cp, SCM edpos, const char *caller)
+{
+  return(cp->samples[to_c_edit_position(cp, edpos, caller)]);
+}
+
+static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, int beg, int regexpr, int forwards, int prebeg, SCM edpos, const char *caller)
 {
   /* can return NULL if regexpr and no current selection */
   sync_info *si = NULL;
   snd_fd **sfs = NULL;
-  int dur, i, pbeg;
+  chan_info *ncp;
+  int dur, i, pbeg, pos;
   sync_state *sc;
   dur = 0;
   if ((!regexpr) && (sp == NULL)) return(NULL);
@@ -41,12 +73,12 @@ static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, 
       sfs = (snd_fd **)MALLOC(si->chans * sizeof(snd_fd *));
       for (i = 0; i < si->chans; i++) 
 	{
+	  ncp = si->cps[i];
+	  pos = to_c_edit_position(ncp, edpos, caller);
 	  si->begs[i] = beg;
 	  if (forwards == READ_FORWARD)
-	    sfs[i] = init_sample_read(beg, si->cps[i], READ_FORWARD);
-	  else sfs[i] = init_sample_read(current_ed_samples(si->cps[i]) - 1, 
-					 si->cps[i], 
-					 READ_BACKWARD);
+	    sfs[i] = init_sample_read_any(beg, ncp, READ_FORWARD, pos);
+	  else sfs[i] = init_sample_read_any(cp->samples[pos] - 1, ncp, READ_BACKWARD, pos);
 	}
     }
   else
@@ -60,17 +92,15 @@ static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, 
 	      sfs = (snd_fd **)MALLOC(si->chans * sizeof(snd_fd *));
 	      for (i = 0; i < si->chans; i++) 
 		{
+		  ncp = si->cps[i];
+		  pos = to_c_edit_position(ncp, edpos, caller);
 		  if (forwards == READ_FORWARD)
 		    {
 		      pbeg = si->begs[i] - prebeg;
 		      if (pbeg < 0) pbeg = 0;
-		      sfs[i] = init_sample_read(pbeg, 
-						si->cps[i], 
-						READ_FORWARD);
+		      sfs[i] = init_sample_read_any(pbeg, ncp, READ_FORWARD, pos);
 		    }
-		  else sfs[i] = init_sample_read(si->begs[i] + dur - 1, 
-						 si->cps[i], 
-						 READ_BACKWARD);
+		  else sfs[i] = init_sample_read_any(si->begs[i] + dur - 1, ncp, READ_BACKWARD, pos);
 		}
 	    }
 	  else 
@@ -84,9 +114,10 @@ static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, 
     {
       si = make_simple_sync(cp, beg);
       sfs = (snd_fd **)MALLOC(sizeof(snd_fd *));
+      pos = to_c_edit_position(cp, edpos, caller);
       if (forwards == READ_FORWARD)
-	sfs[0] = init_sample_read(beg, cp, READ_FORWARD);
-      else sfs[0] = init_sample_read(current_ed_samples(cp) - 1, cp, READ_BACKWARD);
+	sfs[0] = init_sample_read_any(beg, cp, READ_FORWARD, pos);
+      else sfs[0] = init_sample_read_any(cp->samples[pos] - 1, cp, READ_BACKWARD, pos);
     }
   sc = (sync_state *)CALLOC(1, sizeof(sync_state));
   sc->dur = dur;
@@ -95,33 +126,34 @@ static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, 
   return(sc);
 }
 
-static sync_state *get_sync_state(snd_state *ss, snd_info *sp, chan_info *cp, int beg, int regexpr, int forwards)
+static sync_state *get_sync_state(snd_state *ss, snd_info *sp, chan_info *cp, int beg, int regexpr, int forwards, SCM edpos, const char *caller)
 {
-  return(get_sync_state_1(ss, sp, cp, beg, regexpr, forwards, 0));
+  return(get_sync_state_1(ss, sp, cp, beg, regexpr, forwards, 0, edpos, caller));
 }
 
 /* support for scan and map functions */
 
-static sync_state *get_chan_sync_state(chan_info *cp, int beg)
+static sync_state *get_chan_sync_state(chan_info *cp, int beg, SCM edpos, const char *caller)
 {
   sync_info *si;
   snd_fd **sfs;
   sync_state *sc;
   si = make_simple_sync(cp, beg);
   sfs = (snd_fd **)MALLOC(sizeof(snd_fd *));
-  sfs[0] = init_sample_read(beg, cp, READ_FORWARD);
+  sfs[0] = init_sample_read_any(beg, cp, READ_FORWARD, to_c_edit_position(cp, edpos, caller));
   sc = (sync_state *)CALLOC(1, sizeof(sync_state));
   sc->sfs = sfs;
   sc->si = si;
   return(sc);
 }
 
-static sync_state *get_sound_chans_sync_state(chan_info *cp, int beg)
+static sync_state *get_sound_chans_sync_state(chan_info *cp, int beg, SCM edpos, const char *caller)
 {
   sync_info *si;
   snd_fd **sfs;
   sync_state *sc;
   snd_info *sp;
+  chan_info *ncp;
   int i;
   sp = cp->sound;
   si = (sync_info *)CALLOC(1, sizeof(sync_info));
@@ -132,8 +164,9 @@ static sync_state *get_sound_chans_sync_state(chan_info *cp, int beg)
   for (i = 0; i < sp->nchans; i++) 
     {
       si->cps[i] = sp->chans[i];
+      ncp = si->cps[i];
       si->begs[i] = beg;
-      sfs[i] = init_sample_read(beg, si->cps[i], READ_FORWARD);
+      sfs[i] = init_sample_read_any(beg, ncp, READ_FORWARD, to_c_edit_position(ncp, edpos, caller));
     }
   sc = (sync_state *)CALLOC(1, sizeof(sync_state));
   sc->sfs = sfs;
@@ -141,12 +174,13 @@ static sync_state *get_sound_chans_sync_state(chan_info *cp, int beg)
   return(sc);
 }
 
-static sync_state *get_active_chans_sync_state(snd_state *ss, int beg)
+static sync_state *get_active_chans_sync_state(snd_state *ss, int beg, SCM edpos, const char *caller)
 {
   sync_info *si;
   snd_fd **sfs;
   sync_state *sc;
   snd_info *sp;
+  chan_info *ncp;
   int snd, chn, i;
   si = (sync_info *)CALLOC(1, sizeof(sync_info));
   si->chans = active_channels(ss, WITH_VIRTUAL_CHANNELS);
@@ -161,8 +195,9 @@ static sync_state *get_active_chans_sync_state(snd_state *ss, int beg)
 	for (i = 0; i < sp->nchans; i++)
 	  {
 	    si->cps[chn] = sp->chans[i];
+	    ncp = si->cps[chn];
 	    si->begs[chn] = beg;
-	    sfs[chn] = init_sample_read(beg, si->cps[chn], READ_FORWARD);
+	    sfs[chn] = init_sample_read_any(beg, ncp, READ_FORWARD, to_c_edit_position(ncp, edpos, caller));
 	    chn++;
 	  }
     }
@@ -202,7 +237,10 @@ void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
 		}
 	    }
 	}
-      sc = get_sync_state(ss, sp, cp, beg, regexpr, READ_FORWARD); /* beg ignored if regexpr (starts at region 0 = si->begs[]) */
+      sc = get_sync_state(ss, sp, cp, beg, regexpr, 
+			  READ_FORWARD,               /* beg ignored if regexpr (starts at region 0 = si->begs[]) */
+			  TO_SCM_INT(AT_CURRENT_EDIT_POSITION),
+			  "eval expression"); 
       if (sc == NULL) return;
       si = sc->si;
       sfs = sc->sfs;
@@ -282,7 +320,7 @@ void eval_expression(chan_info *cp, snd_info *sp, int count, int regexpr)
 enum {SCAN_CURRENT_CHAN, SCAN_SOUND_CHANS, SCAN_SYNCD_CHANS, SCAN_ALL_CHANS};
 
 static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, 
-		       const char *origin, const char *procname, int procn, int counting)
+		       const char *origin, const char *procname, int procn, int counting, SCM edpos)
 {
   sync_state *sc = NULL;
   sync_info *si;
@@ -307,16 +345,16 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
   switch (chan_choice)
     {
     case SCAN_SYNCD_CHANS: 
-      sc = get_sync_state(ss, sp, cp, beg, FALSE, READ_FORWARD); 
+      sc = get_sync_state(ss, sp, cp, beg, FALSE, READ_FORWARD, edpos, origin); 
       break;
     case SCAN_ALL_CHANS: 
-      sc = get_active_chans_sync_state(ss, beg); 
+      sc = get_active_chans_sync_state(ss, beg, edpos, origin); 
       break;
     case SCAN_SOUND_CHANS: 
-      sc = get_sound_chans_sync_state(cp, beg); 
+      sc = get_sound_chans_sync_state(cp, beg, edpos, origin); 
       break;
     case SCAN_CURRENT_CHAN: 
-      sc = get_chan_sync_state(cp, beg); 
+      sc = get_chan_sync_state(cp, beg, edpos, origin); 
       break;
     }
   if (sc == NULL) return(SCM_BOOL_T);
@@ -338,7 +376,7 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
        * if beg > len, omit this chaneel,
        * if beg > end after fixup, omit.
        */
-      len = current_ed_samples(cp);
+      len = to_c_edit_samples(cp, edpos, origin);
       if (end >= len) end = len - 1;
       if (end == 0) end = len - 1;
       num = end - beg + 1;
@@ -416,7 +454,7 @@ static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, 
 }
 
 static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, 
-			 const char *origin, const char *procname, int procn)
+			 const char *origin, const char *procname, int procn, SCM edpos)
 {
   /* here we need to load the arglist in order */
   sync_state *sc = NULL;
@@ -442,16 +480,16 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
   switch (chan_choice)
     {
     case SCAN_SYNCD_CHANS: 
-      sc = get_sync_state(ss, sp, cp, beg, FALSE, READ_FORWARD); 
+      sc = get_sync_state(ss, sp, cp, beg, FALSE, READ_FORWARD, edpos, origin); 
       break;
     case SCAN_ALL_CHANS: 
-      sc = get_active_chans_sync_state(ss, beg); 
+      sc = get_active_chans_sync_state(ss, beg, edpos, origin); 
       break;
     case SCAN_SOUND_CHANS: 
-      sc = get_sound_chans_sync_state(cp, beg); 
+      sc = get_sound_chans_sync_state(cp, beg, edpos, origin); 
       break;
     case SCAN_CURRENT_CHAN: 
-      sc = get_chan_sync_state(cp, beg); 
+      sc = get_chan_sync_state(cp, beg, edpos, origin); 
       break;
     }
   if (sc == NULL) return(SCM_BOOL_T);
@@ -465,10 +503,10 @@ static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice
    * we need to capture the longest of the channels, padding the
    * others with zero.
    */
-  len = current_ed_samples(si->cps[0]);
+  len = to_c_edit_samples(si->cps[0], edpos, origin);
   for (ip = 1; ip < si->chans; ip++)
     {
-      num = current_ed_samples(si->cps[ip]);
+      num = to_c_edit_samples(si->cps[ip], edpos, origin);
       if (num > len) len = num;
     }
   if (end >= len) end = len - 1;
@@ -663,7 +701,7 @@ static output_state *end_output(output_state *os, int beg, chan_info *cp, const 
 }
 
 static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, 
-		      const char *origin, const char *procname, int procn)
+		      const char *origin, const char *procname, int procn, SCM edpos)
 {
   sync_state *sc = NULL;
   sync_info *si;
@@ -690,16 +728,16 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
   switch (chan_choice)
     {
     case SCAN_SYNCD_CHANS: 
-      sc = get_sync_state(ss, sp, cp, beg, FALSE, READ_FORWARD); 
+      sc = get_sync_state(ss, sp, cp, beg, FALSE, READ_FORWARD, edpos, origin); 
       break;
     case SCAN_ALL_CHANS: 
-      sc = get_active_chans_sync_state(ss, beg); 
+      sc = get_active_chans_sync_state(ss, beg, edpos, origin); 
       break;
     case SCAN_SOUND_CHANS: 
-      sc = get_sound_chans_sync_state(cp, beg); 
+      sc = get_sound_chans_sync_state(cp, beg, edpos, origin); 
       break;
     case SCAN_CURRENT_CHAN: 
-      sc = get_chan_sync_state(cp, beg); 
+      sc = get_chan_sync_state(cp, beg, edpos, origin); 
       break;
     }
   if (sc == NULL) return(SCM_BOOL_T);
@@ -714,7 +752,7 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
       cp = si->cps[ip];
       sp = cp->sound;
       sf = sfs[ip];
-      if (end == 0) end = current_ed_samples(cp) - 1;
+      if (end == 0) end = to_c_edit_samples(cp, edpos, origin) - 1;
       num = end - beg + 1;
       if (num > 0)
 	{
@@ -794,7 +832,7 @@ static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, i
 
 
 static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, 
-			const char *origin, const char *procname, int procn)
+			const char *origin, const char *procname, int procn, SCM edpos)
 {
   sync_state *sc = NULL;
   sync_info *si;
@@ -820,26 +858,26 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
   switch (chan_choice)
     {
     case SCAN_SYNCD_CHANS: 
-      sc = get_sync_state(ss, sp, cp, beg, FALSE, READ_FORWARD); 
+      sc = get_sync_state(ss, sp, cp, beg, FALSE, READ_FORWARD, edpos, origin); 
       break;
     case SCAN_ALL_CHANS: 
-      sc = get_active_chans_sync_state(ss, beg);
+      sc = get_active_chans_sync_state(ss, beg, edpos, origin);
       break;
     case SCAN_SOUND_CHANS: 
-      sc = get_sound_chans_sync_state(cp, beg); 
+      sc = get_sound_chans_sync_state(cp, beg, edpos, origin); 
       break;
     case SCAN_CURRENT_CHAN: 
-      sc = get_chan_sync_state(cp, beg); 
+      sc = get_chan_sync_state(cp, beg, edpos, origin); 
       break;
     }
   if (sc == NULL) return(SCM_BOOL_T);
   si = sc->si;
   sfs = sc->sfs;
   rpt4 = MAX_BUFFER_SIZE / 4;
-  len = current_ed_samples(si->cps[0]);
+  len = to_c_edit_samples(si->cps[0], edpos, origin);
   for (ip = 1; ip < si->chans; ip++)
     {
-      num = current_ed_samples(si->cps[ip]);
+      num = to_c_edit_samples(si->cps[ip], edpos, origin);
       if (num > len) len = num;
     }
   if (end == 0) end = len - 1;
@@ -937,7 +975,7 @@ static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice,
   return(SCM_BOOL_F);
 }
 
-static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp)
+static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp)  /* TODO POS? */
 {
   /* if string returned, needs to be freed */
   /* amp == 0.0 means unnormalized, cp == NULL means current selection */
@@ -965,7 +1003,9 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp)
       sp = any_selected_sound(ss);
       ncp = any_selected_channel(sp);
     }
-  sc = get_sync_state(ss, sp, ncp, 0, (cp == NULL), READ_FORWARD);
+  sc = get_sync_state(ss, sp, ncp, 0, (cp == NULL), READ_FORWARD, 
+		      TO_SCM_INT(AT_CURRENT_EDIT_POSITION),
+		      (cp == NULL) ? S_convolve_selection_with : S_convolve_with);
   if (sc == NULL) return(NULL);
   si = sc->si;
   sfs = sc->sfs;
@@ -999,7 +1039,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp)
 	  ofile = snd_tempnam(ss);
 
 	  saved_chan_file = snd_tempnam(ss);
-	  err = save_channel_edits(ucp, saved_chan_file, AT_CURRENT_EDIT_POSITION);
+	  err = save_channel_edits(ucp, saved_chan_file, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), S_convolve_with);
 	  if (err != MUS_NO_ERROR)
 	    {
 	      FREE(ofile);
@@ -1160,20 +1200,22 @@ void scale_by(chan_info *cp, Float *ur_scalers, int len, int selection)
   free_sync_info(si);
 }
 
-Float get_maxamp(snd_info *sp, chan_info *cp)
+Float get_maxamp(snd_info *sp, chan_info *cp, int edpos)
 {
   snd_fd *sf;
   Float ymax, val;
-  int i, len;
+  int i, len, pos;
   if (!sp) return(0.0);
   if (!cp) cp = sp->chans[0];
-  if (amp_env_maxamp_ok(cp)) return(amp_env_maxamp(cp));
-  val = ed_maxamp(cp);
+  if (edpos == AT_CURRENT_EDIT_POSITION) pos = cp->edit_ctr; else pos = edpos;
+  if (amp_env_maxamp_ok(cp, pos)) 
+    return(amp_env_maxamp(cp, pos));
+  val = ed_maxamp(cp, pos);
   if (val >= 0.0) return(val);
-  sf = init_sample_read(0, cp, READ_FORWARD); /* TODO: pos? */
+  sf = init_sample_read_any(0, cp, READ_FORWARD, pos);
   if (sf == NULL) return(0.0);
   ymax = 0.0;
-  len = current_ed_samples(cp);
+  len = cp->samples[pos];
   for (i = 0; i < len; i++)
     {
       val = next_sample_to_float(sf);
@@ -1181,7 +1223,7 @@ Float get_maxamp(snd_info *sp, chan_info *cp)
       if (val > ymax) ymax = val;
     }
   free_snd_fd(sf);
-  set_ed_maxamp(cp, ymax);
+  set_ed_maxamp(cp, pos, ymax);
   return(ymax);
 }
 
@@ -1246,7 +1288,7 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
 	      ncp = si->cps[i];
 	      if (selection)
 		val = get_selection_maxamp(ncp);
-	      else val = get_maxamp(ncp->sound, ncp);
+	      else val = get_maxamp(ncp->sound, ncp, AT_CURRENT_EDIT_POSITION);
 	      if (val > maxamp) maxamp = val;
 	    }
 	  if ((data_clipped(ss) == 0) && 
@@ -1271,7 +1313,7 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
 	    {
 	      if (selection)
 		val = get_selection_maxamp(ncp);
-	      else val = get_maxamp(ncp->sound, ncp);
+	      else val = get_maxamp(ncp->sound, ncp, AT_CURRENT_EDIT_POSITION);
 	      if (val != 0.0)
 		{
 		  if ((data_clipped(ss) == 0) && 
@@ -1397,7 +1439,7 @@ static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c
 
 typedef struct {int selection; int files; char **old_filenames; char **new_filenames; void *sc;} snd_exf;
 
-static snd_exf *snd_to_temp(chan_info *cp, int selection, int one_file, int header_type, int data_format)
+static snd_exf *snd_to_temp(chan_info *cp, int selection, int one_file, int header_type, int data_format) /* TODO POS? */
 {
   /* save current state starting at cp and following sync buttons
    *   just current selection if selection, else entire channel
@@ -1420,7 +1462,7 @@ static snd_exf *snd_to_temp(chan_info *cp, int selection, int one_file, int head
   ss = cp->state;
   sp = cp->sound;
   if (!sp->inuse) return(NULL);
-  sc = get_sync_state(ss, sp, cp, 0, selection, READ_FORWARD);
+  sc = get_sync_state(ss, sp, cp, 0, selection, READ_FORWARD, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), S_sound_to_temp);
   if (sc == NULL) return(NULL);
   si = sc->si;
   chans = si->chans;
@@ -1639,7 +1681,7 @@ src_state *free_src(src_state *sr)
 }
 
 void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_num, 
-		    int from_enved, const char *origin, int over_selection, mus_any *gen)
+		    int from_enved, const char *origin, int over_selection, mus_any *gen) /* TODO POS? */
 {
   snd_info *sp = NULL;
   int reporting = 0;
@@ -1678,7 +1720,9 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
   else sp = cp->sound;
   /* get current syncd chans */
   sc = get_sync_state(ss, sp, cp, 0, over_selection, 
-		      (ratio < 0.0) ? READ_BACKWARD : READ_FORWARD);      /* 0->beg, 0->regexpr (ratio = 0.0 if from_enved) */
+		      (ratio < 0.0) ? READ_BACKWARD : READ_FORWARD, /* 0->beg, 0->regexpr (ratio = 0.0 if from_enved) */
+		      TO_SCM_INT(AT_CURRENT_EDIT_POSITION),
+		      origin);      
   if (sc == NULL) return;
   si = sc->si;
   sfs = sc->sfs;
@@ -2137,7 +2181,7 @@ void fht(int powerOfFour, Float *array)
 /* TODO: non-fht(fft) case is centered but straight case is not! */
 
 static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_enved, 
-				   const char *origin, int over_selection, Float *ur_a, mus_any *gen)
+				   const char *origin, int over_selection, Float *ur_a, mus_any *gen) /* TODO: POS? */
 {
   /* if string returned, needs to be freed */
   /* interpret e as frequency response and apply as filter to all sync'd chans */
@@ -2171,7 +2215,10 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 		      __FILE__, __LINE__, __FUNCTION__));
   ss = ncp->state;
   sp = ncp->sound;
-  sc = get_sync_state_1(ss, sp, ncp, 0, over_selection, READ_FORWARD, (over_selection) ? (order - 1) : 0);
+  sc = get_sync_state_1(ss, sp, ncp, 0, over_selection, 
+			READ_FORWARD, (over_selection) ? (order - 1) : 0, 
+			TO_SCM_INT(AT_CURRENT_EDIT_POSITION),
+			origin);
   if (sc == NULL) return(NULL);
   si = sc->si;
   sfs = sc->sfs;
@@ -2406,7 +2453,7 @@ static MUS_SAMPLE_TYPE previous_sample_unscaled(snd_fd *sf)
   else return(*sf->view_buffered_data--);
 }
 
-static void reverse_sound(chan_info *ncp, int over_selection)
+static void reverse_sound(chan_info *ncp, int over_selection) /* TODO POS? */
 {
   sync_state *sc;
   sync_info *si;
@@ -2424,7 +2471,9 @@ static void reverse_sound(chan_info *ncp, int over_selection)
   chan_info *cp;
   ss = ncp->state;
   sp = ncp->sound;
-  sc = get_sync_state(ss, sp, ncp, 0, over_selection, READ_BACKWARD);
+  sc = get_sync_state(ss, sp, ncp, 0, over_selection, READ_BACKWARD, 
+		      TO_SCM_INT(AT_CURRENT_EDIT_POSITION), 
+		      (over_selection) ? S_reverse_selection : S_reverse_sound);
   if (sc == NULL) return;
   si = sc->si;
   sfs = sc->sfs;
@@ -2537,7 +2586,7 @@ static void reverse_sound(chan_info *ncp, int over_selection)
 /*   changed to use mus_env 20-Dec-00 */
 
 void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexpr, 
-	       int from_enved, const char *origin, mus_any *gen)
+	       int from_enved, const char *origin, mus_any *gen) /* TODO POS? */
 {
   snd_fd *sf = NULL;
   snd_info *sp;
@@ -2576,7 +2625,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
   si = NULL;
   sp = cp->sound;
   ss = cp->state;
-  sc = get_sync_state(ss, sp, cp, beg, regexpr, READ_FORWARD);
+  sc = get_sync_state(ss, sp, cp, beg, regexpr, READ_FORWARD, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), origin);
   if (sc == NULL) return;
   si = sc->si;
   sfs = sc->sfs;
@@ -2596,7 +2645,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
   if (dur > MAX_BUFFER_SIZE) /* if smaller than this, we don't gain anything by using a temp file (its buffers are this large) */
     {
       temp_file = 1; 
-      ofile = snd_tempnam(ss); /* see warning below -- don't use tmpnam without deleting free */
+      ofile = snd_tempnam(ss); 
       hdr = make_temp_header(ofile, SND_SRATE(sp), si->chans, dur);
       ofd = open_temp_file(ofile, si->chans, hdr, ss);
       if (ofd == -1)
@@ -3036,7 +3085,7 @@ using data returned by the latter and origin as the edit history entry for the e
 }
 
 static SCM g_sp_scan(SCM proc, int chan_choice, SCM s_beg, SCM s_end, int series, int scan, SCM snd, SCM chn, 
-		     const char *caller, const char *procname, int procn, int counting)
+		     const char *caller, const char *procname, int procn, int counting, SCM edpos)
 {
   snd_state *ss;
   chan_info *cp;
@@ -3046,99 +3095,99 @@ static SCM g_sp_scan(SCM proc, int chan_choice, SCM s_beg, SCM s_end, int series
   ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(s_end), s_end, SCM_ARG3, caller, "a number");
   ss = get_global_state();
   cp = get_cp(snd, chn, caller);
-  beg = TO_C_INT_OR_ELSE(s_beg, 0);
-  end = TO_C_INT_OR_ELSE(s_end, 0);
+  beg = TO_C_INT_OR_ELSE_WITH_ORIGIN(s_beg, 0, caller);
+  end = TO_C_INT_OR_ELSE_WITH_ORIGIN(s_end, 0, caller);
   if (scan)
     {
       if (series)
-	return(series_scan(ss, cp, proc, chan_choice, beg, end, caller, procname, procn, counting));
-      else return(parallel_scan(ss, cp, proc, chan_choice, beg, end, caller, procname, procn));
+	return(series_scan(ss, cp, proc, chan_choice, beg, end, caller, procname, procn, counting, edpos));
+      else return(parallel_scan(ss, cp, proc, chan_choice, beg, end, caller, procname, procn, edpos));
     }
   else
     {
       if (series)
-	return(series_map(ss, cp, proc, chan_choice, beg, end, caller, procname, procn));
-      return(parallel_map(ss, cp, proc, chan_choice, beg, end, caller, procname, procn));
+	return(series_map(ss, cp, proc, chan_choice, beg, end, caller, procname, procn, edpos));
+      return(parallel_map(ss, cp, proc, chan_choice, beg, end, caller, procname, procn, edpos));
     }
 }
 
-static SCM g_scan_chan(SCM proc, SCM beg, SCM end, SCM snd, SCM chn) 
+static SCM g_scan_chan(SCM proc, SCM beg, SCM end, SCM snd, SCM chn, SCM edpos) 
 { 
-  #define H_scan_chan "(" S_scan_chan " func &optional (start 0) end snd chn)\n\
+  #define H_scan_chan "(" S_scan_chan " func &optional (start 0) end snd chn edpos)\n\
 apply func to samples in current channel (or the specified channel) \
 func is a function of one argument, the current sample. \
 if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n\
   (scan-chan (lambda (x) (> x .1)))"
 
   SND_ASSERT_CHAN(S_scan_chan, snd, chn, 4); 
-  return(g_sp_scan(proc, SCAN_CURRENT_CHAN, beg, end, TRUE, TRUE, snd, chn, S_scan_chan, "func", 1, FALSE));
+  return(g_sp_scan(proc, SCAN_CURRENT_CHAN, beg, end, TRUE, TRUE, snd, chn, S_scan_chan, "func", 1, FALSE, edpos));
 }
 
-static SCM g_scan_chans(SCM proc, SCM beg, SCM end) 
+static SCM g_scan_chans(SCM proc, SCM beg, SCM end, SCM edpos) 
 { 
-  #define H_scan_chans "(" S_scan_chans " func &optional (start 0) end)\n\
+  #define H_scan_chans "(" S_scan_chans " func &optional (start 0) end edpos)\n\
 apply func to samples in all sync'd channels, one channel after another.\
 if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n\
   (scan-chans (lambda (x) (> x .1)))"
    
-  return(g_sp_scan(proc, SCAN_SYNCD_CHANS, beg, end, TRUE, TRUE, SCM_BOOL_F, SCM_BOOL_F, S_scan_chans, "func", 1, FALSE));
+  return(g_sp_scan(proc, SCAN_SYNCD_CHANS, beg, end, TRUE, TRUE, SCM_BOOL_F, SCM_BOOL_F, S_scan_chans, "func", 1, FALSE, edpos));
 }
 
-static SCM g_scan_all_chans(SCM proc, SCM beg, SCM end) 
+static SCM g_scan_all_chans(SCM proc, SCM beg, SCM end, SCM edpos) 
 { 
-  #define H_scan_all_chans "(" S_scan_all_chans " func &optional (start 0) end)\n\
+  #define H_scan_all_chans "(" S_scan_all_chans " func &optional (start 0) end edpos)\n\
 apply func to samples in all channels, one after the other.\
 if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n\
   (scan-all-chans (lambda (x) (> x .1)))"
 
-  return(g_sp_scan(proc, SCAN_ALL_CHANS, beg, end, TRUE, TRUE, SCM_BOOL_F, SCM_BOOL_F, S_scan_all_chans, "func", 1, FALSE));
+  return(g_sp_scan(proc, SCAN_ALL_CHANS, beg, end, TRUE, TRUE, SCM_BOOL_F, SCM_BOOL_F, S_scan_all_chans, "func", 1, FALSE, edpos));
 }
 
-static SCM g_scan_sound_chans(SCM proc, SCM beg, SCM end, SCM snd) 
+static SCM g_scan_sound_chans(SCM proc, SCM beg, SCM end, SCM snd, SCM edpos) 
 { 
-  #define H_scan_sound_chans "(" S_scan_sound_chans " func &optional (start 0) end snd)\n\
+  #define H_scan_sound_chans "(" S_scan_sound_chans " func &optional (start 0) end snd edpos)\n\
 apply func to samples in all of sound snd's channels.\
 if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n\
   (scan-sound-chans (lambda (x) (> x .1)))"
 
   SND_ASSERT_SND(S_scan_sound_chans, snd, 4); 
-  return(g_sp_scan(proc, SCAN_SOUND_CHANS, beg, end, TRUE, TRUE, snd, SCM_BOOL_F, S_scan_sound_chans, "func", 1, FALSE));
+  return(g_sp_scan(proc, SCAN_SOUND_CHANS, beg, end, TRUE, TRUE, snd, SCM_BOOL_F, S_scan_sound_chans, "func", 1, FALSE, edpos));
 }
 
-static SCM g_scan_across_chans(SCM proc, SCM beg, SCM end) 
+static SCM g_scan_across_chans(SCM proc, SCM beg, SCM end, SCM edpos) 
 { 
-  #define H_scan_across_chans "(" S_scan_across_chans " func &optional (start 0) end)\n\
+  #define H_scan_across_chans "(" S_scan_across_chans " func &optional (start 0) end edpos)\n\
 apply func to samples in all sync'd channels in parallel.\
 if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n\
   (scan-across-chans (lambda (data chans) (> (vector-ref data 0) .1)))"
 
-  return(g_sp_scan(proc, SCAN_SYNCD_CHANS, beg, end, FALSE, TRUE, SCM_BOOL_F, SCM_BOOL_F, S_scan_across_chans, "func", 1, FALSE));
+  return(g_sp_scan(proc, SCAN_SYNCD_CHANS, beg, end, FALSE, TRUE, SCM_BOOL_F, SCM_BOOL_F, S_scan_across_chans, "func", 1, FALSE, edpos));
 }
 
-static SCM g_scan_across_all_chans(SCM proc, SCM beg, SCM end) 
+static SCM g_scan_across_all_chans(SCM proc, SCM beg, SCM end, SCM edpos) 
 { 
-  #define H_scan_across_all_chans "(" S_scan_across_all_chans " func &optional (start 0) end)\n\
+  #define H_scan_across_all_chans "(" S_scan_across_all_chans " func &optional (start 0) end edpos)\n\
 apply func to samples in all channels in parallel.\
 if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n\
   (scan-across-chans (lambda (data chans) (> (vector-ref data 0) .1)))"
 
-  return(g_sp_scan(proc, SCAN_ALL_CHANS, beg, end, FALSE, TRUE, SCM_BOOL_F, SCM_BOOL_F, S_scan_across_all_chans, "func", 1, FALSE));
+  return(g_sp_scan(proc, SCAN_ALL_CHANS, beg, end, FALSE, TRUE, SCM_BOOL_F, SCM_BOOL_F, S_scan_across_all_chans, "func", 1, FALSE, edpos));
 }
 
-static SCM g_scan_across_sound_chans(SCM proc, SCM beg, SCM end, SCM snd) 
+static SCM g_scan_across_sound_chans(SCM proc, SCM beg, SCM end, SCM snd, SCM edpos) 
 { 
-  #define H_scan_across_sound_chans "(" S_scan_across_sound_chans " func &optional (start 0) end snd)\n\
+  #define H_scan_across_sound_chans "(" S_scan_across_sound_chans " func &optional (start 0) end snd edpos)\n\
 apply func to samples in sound snd's channels in parallel.\
 if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n\
   (scan-across-sound-chans (lambda (data chans) (> (vector-ref data 0) .1)))"
 
   SND_ASSERT_SND(S_scan_across_sound_chans, snd, 4); 
-  return(g_sp_scan(proc, SCAN_SOUND_CHANS, beg, end, FALSE, TRUE, snd, SCM_BOOL_F, S_scan_across_sound_chans, "func", 1, FALSE));
+  return(g_sp_scan(proc, SCAN_SOUND_CHANS, beg, end, FALSE, TRUE, snd, SCM_BOOL_F, S_scan_across_sound_chans, "func", 1, FALSE, edpos));
 }
 
-static SCM g_map_chan(SCM proc, SCM beg, SCM end, SCM org, SCM snd, SCM chn) 
+static SCM g_map_chan(SCM proc, SCM beg, SCM end, SCM org, SCM snd, SCM chn, SCM edpos) 
 { 
-  #define H_map_chan "(" S_map_chan " func &optional (start 0) end edname snd chn)\n\
+  #define H_map_chan "(" S_map_chan " func &optional (start 0) end edname snd chn edpos)\n\
 apply func to samples in current channel, edname is the edit history name for this editing operation.\n\
   (map-chan abs)"
 
@@ -3147,12 +3196,12 @@ apply func to samples in current channel, edname is the edit history name for th
     caller = TO_C_STRING(org);
   else caller = S_map_chan;
   SND_ASSERT_CHAN(S_map_chan, snd, chn, 5); 
-  return(g_sp_scan(proc, SCAN_CURRENT_CHAN, beg, end, TRUE, FALSE, snd, chn, caller, "func", 1, FALSE));
+  return(g_sp_scan(proc, SCAN_CURRENT_CHAN, beg, end, TRUE, FALSE, snd, chn, caller, "func", 1, FALSE, edpos));
 }
 
-static SCM g_map_chans(SCM proc, SCM beg, SCM end, SCM org) 
+static SCM g_map_chans(SCM proc, SCM beg, SCM end, SCM org, SCM edpos) 
 { 
-  #define H_map_chans "(" S_map_chans " func &optional (start 0) end edname)\n\
+  #define H_map_chans "(" S_map_chans " func &optional (start 0) end edname edpos)\n\
 apply func to currently sync'd channels, edname is the edit history name for this editing operation.\n\
   (map-chans abs)"
 
@@ -3160,12 +3209,12 @@ apply func to currently sync'd channels, edname is the edit history name for thi
   if (STRING_P(org)) 
     caller = TO_C_STRING(org);
   else caller = S_map_chans;
-  return(g_sp_scan(proc, SCAN_SYNCD_CHANS, beg, end, TRUE, FALSE, SCM_BOOL_F, SCM_BOOL_F, caller, "func", 1, FALSE));
+  return(g_sp_scan(proc, SCAN_SYNCD_CHANS, beg, end, TRUE, FALSE, SCM_BOOL_F, SCM_BOOL_F, caller, "func", 1, FALSE, edpos));
 }
 
-static SCM g_map_all_chans(SCM proc, SCM beg, SCM end, SCM org) 
+static SCM g_map_all_chans(SCM proc, SCM beg, SCM end, SCM org, SCM edpos) 
 { 
-  #define H_map_all_chans "(" S_map_all_chans " func &optional (start 0) end edname)\n\
+  #define H_map_all_chans "(" S_map_all_chans " func &optional (start 0) end edname edpos)\n\
 apply func to all channels, edname is the edit history name for this editing operation.\n\
   (map-all-chans abs)"
 
@@ -3173,12 +3222,12 @@ apply func to all channels, edname is the edit history name for this editing ope
   if (STRING_P(org)) 
     caller = TO_C_STRING(org);
   else caller = S_map_all_chans;
-  return(g_sp_scan(proc, SCAN_ALL_CHANS, beg, end, TRUE, FALSE, SCM_BOOL_F, SCM_BOOL_F, caller, "func", 1, FALSE));
+  return(g_sp_scan(proc, SCAN_ALL_CHANS, beg, end, TRUE, FALSE, SCM_BOOL_F, SCM_BOOL_F, caller, "func", 1, FALSE, edpos));
 }
 
-static SCM g_map_sound_chans(SCM proc, SCM beg, SCM end, SCM org, SCM snd) 
+static SCM g_map_sound_chans(SCM proc, SCM beg, SCM end, SCM org, SCM snd, SCM edpos) 
 {
-  #define H_map_sound_chans "(" S_map_sound_chans " func &optional (start 0) end edname snd)\n\
+  #define H_map_sound_chans "(" S_map_sound_chans " func &optional (start 0) end edname snd edpos)\n\
 apply func to sound snd's channels, edname is the edit history name for this editing operation.\n\
   (map-sound-chans abs)"
 
@@ -3187,12 +3236,12 @@ apply func to sound snd's channels, edname is the edit history name for this edi
     caller = TO_C_STRING(org);
   else caller = S_map_sound_chans;
   SND_ASSERT_SND(S_map_sound_chans, snd, 5); 
-  return(g_sp_scan(proc, SCAN_SOUND_CHANS, beg, end, TRUE, FALSE, snd, SCM_BOOL_F, caller, "func", 1, FALSE));
+  return(g_sp_scan(proc, SCAN_SOUND_CHANS, beg, end, TRUE, FALSE, snd, SCM_BOOL_F, caller, "func", 1, FALSE, edpos));
 }
 
-static SCM g_map_across_chans(SCM proc, SCM beg, SCM end, SCM org) 
+static SCM g_map_across_chans(SCM proc, SCM beg, SCM end, SCM org, SCM edpos) 
 {
-  #define H_map_across_chans "(" S_map_across_chans " func &optional (start 0) end edname)\n\
+  #define H_map_across_chans "(" S_map_across_chans " func &optional (start 0) end edname edpos)\n\
 apply func to currently sync'd channels in parallel, edname is the edit history name for this editing operation.\n\
   (map-across-chans \n\
     (lambda (data chans)\n\
@@ -3203,12 +3252,12 @@ apply func to currently sync'd channels in parallel, edname is the edit history 
   if (STRING_P(org)) 
     caller = TO_C_STRING(org);
   else caller = S_map_across_chans;
-  return(g_sp_scan(proc, SCAN_SYNCD_CHANS, beg, end, FALSE, FALSE, SCM_BOOL_F, SCM_BOOL_F, caller, "func", 1, FALSE));
+  return(g_sp_scan(proc, SCAN_SYNCD_CHANS, beg, end, FALSE, FALSE, SCM_BOOL_F, SCM_BOOL_F, caller, "func", 1, FALSE, edpos));
 }
 
-static SCM g_map_across_all_chans(SCM proc, SCM beg, SCM end, SCM org) 
+static SCM g_map_across_all_chans(SCM proc, SCM beg, SCM end, SCM org, SCM edpos) 
 {
-  #define H_map_across_all_chans "(" S_map_across_all_chans " func &optional (start 0) end edname)\n\
+  #define H_map_across_all_chans "(" S_map_across_all_chans " func &optional (start 0) end edname edpos)\n\
 apply func to all channels in parallel, edname is the edit history name for this editing operation.\n\
   (map-across-all-chans \n\
     (lambda (data chans)\n\
@@ -3219,12 +3268,12 @@ apply func to all channels in parallel, edname is the edit history name for this
   if (STRING_P(org)) 
     caller = TO_C_STRING(org);
   else caller = S_map_across_all_chans;
-  return(g_sp_scan(proc, SCAN_ALL_CHANS, beg, end, FALSE, FALSE, SCM_BOOL_F, SCM_BOOL_F, caller, "func", 1, FALSE));
+  return(g_sp_scan(proc, SCAN_ALL_CHANS, beg, end, FALSE, FALSE, SCM_BOOL_F, SCM_BOOL_F, caller, "func", 1, FALSE, edpos));
 }
 
-static SCM g_map_across_sound_chans(SCM proc, SCM beg, SCM end, SCM org, SCM snd) 
+static SCM g_map_across_sound_chans(SCM proc, SCM beg, SCM end, SCM org, SCM snd, SCM edpos) 
 {
-  #define H_map_across_sound_chans "(" S_map_across_sound_chans " func &optional (start 0) end edname snd)\n\
+  #define H_map_across_sound_chans "(" S_map_across_sound_chans " func &optional (start 0) end edname snd edpos)\n\
 apply func to sound snd's channels in parallel, edname is the edit history name for this editing operation.\n\
   (map-across-all-chans \n\
     (lambda (data chans)\n\
@@ -3236,24 +3285,24 @@ apply func to sound snd's channels in parallel, edname is the edit history name 
     caller = TO_C_STRING(org);
   else caller = S_map_across_sound_chans;
   SND_ASSERT_SND(S_map_across_sound_chans, snd, 5); 
-  return(g_sp_scan(proc, SCAN_SOUND_CHANS, beg, end, FALSE, FALSE, snd, SCM_BOOL_F, caller, "func", 1, FALSE));
+  return(g_sp_scan(proc, SCAN_SOUND_CHANS, beg, end, FALSE, FALSE, snd, SCM_BOOL_F, caller, "func", 1, FALSE, edpos));
 }
 
-static SCM g_find(SCM expr, SCM sample, SCM snd_n, SCM chn_n)
+static SCM g_find(SCM expr, SCM sample, SCM snd_n, SCM chn_n, SCM edpos)
 {
-  #define H_find "(" S_find " func &optional (start-samp 0) snd chn) applies func, a function of one argument, \
+  #define H_find "(" S_find " func &optional (start-samp 0) snd chn edpos) applies func, a function of one argument, \
 the current sample, to each sample in snd's channel chn, starting at 'start-samp' until func returns #t"
 
   /* no free here -- it's handled as ss->search_expr in snd-find.c */
   ASSERT_TYPE(PROCEDURE_P(expr), expr, SCM_ARG1, S_find, "a procedure");
   ASSERT_TYPE(NUMBER_IF_BOUND_P(sample), sample, SCM_ARG2, S_find, "a number");
   SND_ASSERT_CHAN(S_find, snd_n, chn_n, 3);
-  return(g_sp_scan(expr, SCAN_CURRENT_CHAN, sample, SCM_BOOL_F, TRUE, TRUE, snd_n, chn_n, S_find, "func", 1, FALSE));
+  return(g_sp_scan(expr, SCAN_CURRENT_CHAN, sample, SCM_BOOL_F, TRUE, TRUE, snd_n, chn_n, S_find, "func", 1, FALSE, edpos));
 }
 
-static SCM g_count_matches(SCM expr, SCM sample, SCM snd_n, SCM chn_n)
+static SCM g_count_matches(SCM expr, SCM sample, SCM snd_n, SCM chn_n, SCM edpos)
 {
-  #define H_count_matches "(" S_count_matches " func &optional (start-samp 0) snd chn) returns how many \
+  #define H_count_matches "(" S_count_matches " func &optional (start-samp 0) snd chn edpos) returns how many \
 samples satisfy func (a function of one argument, the current sample, returning #t upon match)"
 
   ASSERT_TYPE(PROCEDURE_P(expr), expr, SCM_ARG1, S_count_matches, "a procedure");
@@ -3263,7 +3312,8 @@ samples satisfy func (a function of one argument, the current sample, returning 
 		   sample, SCM_BOOL_F, 
 		   TRUE, TRUE, 
 		   snd_n, chn_n, 
-		   S_count_matches, "func", 1, TRUE));
+		   S_count_matches, "func", 1, 
+		   TRUE, edpos));
 }
 
 static SCM g_smooth(SCM beg, SCM num, SCM snd_n, SCM chn_n)
@@ -4119,22 +4169,22 @@ void g_init_sig(SCM local_doc)
   DEFINE_PROC(S_temps_to_sound,          g_temps_to_sound, 3, 0, 0,          H_temps_to_sound);
   DEFINE_PROC(S_temp_to_selection,       g_temp_to_sound, 3, 0, 0,           H_temp_to_sound);
   DEFINE_PROC(S_temps_to_selection,      g_temps_to_sound, 3, 0, 0,          H_temps_to_sound);
-  DEFINE_PROC(S_scan_chan,               g_scan_chan, 1, 4, 0,               H_scan_chan);
-  DEFINE_PROC(S_scan_chans,              g_scan_chans, 1, 2, 0,              H_scan_chans);
-  DEFINE_PROC(S_scan_all_chans,          g_scan_all_chans, 1, 2, 0,          H_scan_all_chans);
-  DEFINE_PROC(S_scan_sound_chans,        g_scan_sound_chans, 1, 3, 0,        H_scan_sound_chans);
-  DEFINE_PROC(S_scan_across_chans,       g_scan_across_chans, 1, 2, 0,       H_scan_across_chans);
-  DEFINE_PROC(S_scan_across_all_chans,   g_scan_across_all_chans, 1, 2, 0,   H_scan_across_all_chans);
-  DEFINE_PROC(S_scan_across_sound_chans, g_scan_across_sound_chans, 1, 3, 0, H_scan_across_sound_chans);
-  DEFINE_PROC(S_map_chan,                g_map_chan, 1, 5, 0,                H_map_chan);
-  DEFINE_PROC(S_map_chans,               g_map_chans, 1, 3, 0,               H_map_chans);
-  DEFINE_PROC(S_map_all_chans,           g_map_all_chans, 1, 3, 0,           H_map_all_chans);
-  DEFINE_PROC(S_map_sound_chans,         g_map_sound_chans, 1, 4, 0,         H_map_sound_chans);
-  DEFINE_PROC(S_map_across_chans,        g_map_across_chans, 1, 3, 0,        H_map_across_chans);
-  DEFINE_PROC(S_map_across_all_chans,    g_map_across_all_chans, 1, 3, 0,    H_map_across_all_chans);
-  DEFINE_PROC(S_map_across_sound_chans,  g_map_across_sound_chans, 1, 4, 0,  H_map_across_sound_chans);
-  DEFINE_PROC(S_find,                    g_find, 1, 3, 0,                    H_find);
-  DEFINE_PROC(S_count_matches,           g_count_matches, 1, 3, 0,           H_count_matches);
+  DEFINE_PROC(S_scan_chan,               g_scan_chan, 1, 5, 0,               H_scan_chan);
+  DEFINE_PROC(S_scan_chans,              g_scan_chans, 1, 3, 0,              H_scan_chans);
+  DEFINE_PROC(S_scan_all_chans,          g_scan_all_chans, 1, 3, 0,          H_scan_all_chans);
+  DEFINE_PROC(S_scan_sound_chans,        g_scan_sound_chans, 1, 4, 0,        H_scan_sound_chans);
+  DEFINE_PROC(S_scan_across_chans,       g_scan_across_chans, 1, 3, 0,       H_scan_across_chans);
+  DEFINE_PROC(S_scan_across_all_chans,   g_scan_across_all_chans, 1, 3, 0,   H_scan_across_all_chans);
+  DEFINE_PROC(S_scan_across_sound_chans, g_scan_across_sound_chans, 1, 4, 0, H_scan_across_sound_chans);
+  DEFINE_PROC(S_map_chan,                g_map_chan, 1, 6, 0,                H_map_chan);
+  DEFINE_PROC(S_map_chans,               g_map_chans, 1, 4, 0,               H_map_chans);
+  DEFINE_PROC(S_map_all_chans,           g_map_all_chans, 1, 4, 0,           H_map_all_chans);
+  DEFINE_PROC(S_map_sound_chans,         g_map_sound_chans, 1, 5, 0,         H_map_sound_chans);
+  DEFINE_PROC(S_map_across_chans,        g_map_across_chans, 1, 4, 0,        H_map_across_chans);
+  DEFINE_PROC(S_map_across_all_chans,    g_map_across_all_chans, 1, 4, 0,    H_map_across_all_chans);
+  DEFINE_PROC(S_map_across_sound_chans,  g_map_across_sound_chans, 1, 5, 0,  H_map_across_sound_chans);
+  DEFINE_PROC(S_find,                    g_find, 1, 4, 0,                    H_find);
+  DEFINE_PROC(S_count_matches,           g_count_matches, 1, 4, 0,           H_count_matches);
 
   DEFINE_PROC(S_smooth,                  g_smooth, 2, 2, 0,                  H_smooth);
   DEFINE_PROC(S_smooth_selection,        g_smooth_selection, 0, 0, 0,        H_smooth_selection);

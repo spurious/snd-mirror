@@ -38,7 +38,7 @@ static SND_TAG_TYPE snd_color_tag = 0;
 
 static SCM mark_snd_color(SCM obj)
 {
-  SND_SETGCMARK(obj);
+  /* SND_SETGCMARK(obj); */
   return(SCM_BOOL_F);
 }
 
@@ -64,8 +64,8 @@ static scm_sizet free_snd_color(SCM obj)
 {
   snd_color *v = (snd_color *)SND_VALUE_OF(obj);
   gdk_color_free(v->color);
-  FREE(v);
-  return(0);
+  free(v);
+  return(sizeof(snd_color));
 }
 
 static int print_snd_color(SCM obj, SCM port, scm_print_state *pstate)
@@ -114,7 +114,7 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
   /* someday accept a list as r */
   ASSERT_TYPE(NUMBER_P(g), g, SCM_ARG2, S_make_color, "a number");
   ASSERT_TYPE(NUMBER_P(b), b, SCM_ARG3, S_make_color, "a number");
-  new_color = (snd_color *)CALLOC(1, sizeof(snd_color));
+  new_color = (snd_color *)scm_must_malloc(sizeof(snd_color), S_make_color);
   gcolor.red = (unsigned short)(65535 * TO_C_DOUBLE(r));
   gcolor.green = (unsigned short)(65535 * TO_C_DOUBLE(g));
   gcolor.blue = (unsigned short)(65535 * TO_C_DOUBLE(b));

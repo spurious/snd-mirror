@@ -99,10 +99,11 @@
 
 #define HOOKED(a) (NOT_NULL_P(SCM_HOOK_PROCEDURES(a)))
 
-#if (!TIMING)
+#if (!TIMING) && (!GCING)
 #define DEFINE_PROC(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   scm_set_procedure_property_x(gh_new_procedure(Name, SCM_FNC Func, ReqArg, OptArg, RstArg), local_doc, gh_str02scm(Doc))
 #else
+#if (TIMING)
 /* add timing calls */
 #define DEFINE_PROC(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   gh_new_procedure(Name "-t", SCM_FNC Func, ReqArg, OptArg, RstArg); \
@@ -118,6 +119,18 @@
                                     res))))", \
                             tag, tag)); \
   }
+#else
+/* pound on gc-related bugs! */
+#define DEFINE_PROC(Name, Func, ReqArg, OptArg, RstArg, Doc) \
+  gh_new_procedure(Name "-t", SCM_FNC Func, ReqArg, OptArg, RstArg); \
+  gh_eval_str("(define " Name " \
+                 (lambda args \
+                   (let ((res #f)) \
+                     (set-last-proc \"" Name "\" args) \
+                     (set! res (apply " Name "-t args)) \
+                     (gc-1) \
+                     res)))");
+#endif
 #endif
 
 #if 0

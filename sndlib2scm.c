@@ -347,7 +347,7 @@ static SND_TAG_TYPE sound_data_tag = 0;
 
 static SCM mark_sound_data(SCM obj)
 {
-  SND_SETGCMARK(obj);
+  /* SND_SETGCMARK(obj); */
   return(SCM_BOOL_F);
 }
 
@@ -382,8 +382,9 @@ static scm_sizet free_sound_data(SCM obj)
       FREE(v->data);
     }
   v->data = NULL;
-  FREE(v);
-  return(0);
+  v->chans = 0;
+  free(v);
+  return(sizeof(sound_data));
 }
 
 static int print_sound_data(SCM obj, SCM port, scm_print_state *pstate)
@@ -391,15 +392,19 @@ static int print_sound_data(SCM obj, SCM port, scm_print_state *pstate)
   char *buf;
   sound_data *v = (sound_data *)SND_VALUE_OF(obj);
   if (v == NULL)
-    WRITE_STRING("<null>", port);
+    WRITE_STRING("#<sound-data: null>", port);
   else
     {
-      buf = (char *)CALLOC(64, sizeof(char));
-      mus_snprintf(buf, 64, "#<sound-data: %d chan%s, %d frame%s>",
-		   v->chans, (v->chans == 1) ? "" : "s",
-		   v->length, (v->length == 1) ? "" : "s");
-      WRITE_STRING(buf, port);
-      FREE(buf);
+      if ((v->data) && (v->chans > 0))
+	{
+	  buf = (char *)CALLOC(64, sizeof(char));
+	  mus_snprintf(buf, 64, "#<sound-data: %d chan%s, %d frame%s>",
+		       v->chans, (v->chans == 1) ? "" : "s",
+		       v->length, (v->length == 1) ? "" : "s");
+	  WRITE_STRING(buf, port);
+	  FREE(buf);
+	}
+      else WRITE_STRING("#<sound-data: inactive>", port);
     }
 #if HAVE_SCM_REMEMBER_UPTO_HERE
   scm_remember_upto_here(obj);
@@ -452,7 +457,7 @@ SCM make_sound_data(int chans, int frames)
   #define H_make_sound_data "(" S_make_sound_data " chans frames) -> new sound-data object with chans channels, each having frames samples"
   int i;
   sound_data *new_sound_data;
-  new_sound_data = (sound_data *)CALLOC(1, sizeof(sound_data));
+  new_sound_data = (sound_data *)scm_must_malloc(sizeof(sound_data), S_make_sound_data);
   new_sound_data->length = frames;
   new_sound_data->chans = chans;
   new_sound_data->data = (MUS_SAMPLE_TYPE **)CALLOC(chans, sizeof(MUS_SAMPLE_TYPE *));

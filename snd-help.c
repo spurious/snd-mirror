@@ -264,7 +264,9 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
-7-May:   added edit-position arg to various play functions and save-sound-as.\n\
+9-May:   support for GSL 0.7+\n\
+7-May:   added edit-position arg to various play functions, save-sound-as,\n\
+           scan/map/find funcs, frames and maxamps.\n\
          \"vector synthesis\" in examp.scm\n\
          Guile 1.5\n\
 1-May:   Alpha (64-bit) and FreeBSD (Old OSS) fixups.\n\

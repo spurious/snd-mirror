@@ -338,22 +338,22 @@ BACKGROUND_TYPE get_amp_env(GUI_POINTER ptr)
   else return(BACKGROUND_CONTINUE);
 }
 
-int amp_env_maxamp_ok(chan_info *cp)
+int amp_env_maxamp_ok(chan_info *cp, int edpos)
 {
   env_info *ep;
   if ((cp) && (cp->amp_envs))
     {
-      ep = cp->amp_envs[cp->edit_ctr];
+      ep = cp->amp_envs[edpos];
       return((ep) && (ep->completed));
     }
   return(FALSE);
 }
 
-Float amp_env_maxamp(chan_info *cp)
+Float amp_env_maxamp(chan_info *cp, int edpos)
 {
   env_info *ep;
   MUS_SAMPLE_TYPE ymax = MUS_SAMPLE_0;
-  ep = cp->amp_envs[cp->edit_ctr];
+  ep = cp->amp_envs[edpos];
   ymax = -ep->fmin;
   if (ymax < ep->fmax) 
     return(MUS_SAMPLE_TO_FLOAT(ep->fmax));
@@ -2096,7 +2096,6 @@ Any argument can be #f which causes its value to be taken from the sound being s
   ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(format), format, SCM_ARG4, S_save_sound_as, "an integer (a data format id)");
   ASSERT_TYPE(NUMBER_OR_BOOLEAN_IF_BOUND_P(srate), srate, SCM_ARG5, S_save_sound_as, "a number");
   ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(channel), channel, SCM_ARG6, S_save_sound_as, "an integer");
-  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(edpos), edpos, SCM_ARG7, S_save_sound_as, "an integer");
   fname = mus_expand_filename(TO_C_STRING(newfile));
   hdr = sp->hdr;
   ht = TO_C_INT_OR_ELSE_WITH_ORIGIN(type, hdr->type, S_save_sound_as);
@@ -2127,12 +2126,10 @@ Any argument can be #f which causes its value to be taken from the sound being s
       else 
 	{
 	  cp = sp->chans[chan];
-	  save_channel_edits(cp, fname, 
-			     TO_C_INT_OR_ELSE_WITH_ORIGIN(edpos, cp->edit_ctr, S_save_sound_as));
+	  save_channel_edits(cp, fname, edpos, S_save_sound_as);
 	}
     }
-  else save_edits_without_display(sp, fname, ht, df, sr, NULL, 
-				  TO_C_INT_OR_ELSE_WITH_ORIGIN(edpos, AT_CURRENT_EDIT_POSITION, S_save_sound_as));
+  else save_edits_without_display(sp, fname, ht, df, sr, NULL, edpos, S_save_sound_as);
   mus_error_set_handler(old_mus_error);
 
   if (fname) FREE(fname);

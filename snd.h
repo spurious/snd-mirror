@@ -77,11 +77,12 @@
  *   STR_OR        British spelling enthusiasts can -DSTR_OR=\"our\" (this changes
  *                 every "color" to "colour" even in the resource names).
  *
- *   HAVE_GSL      use GSL (Gnu Scientific Library) where possible.
+ *   HAVE_GSL      use GSL (Gnu Scientific Library).
  *                 The intention is to use GSL for most of the standard math stuff that
  *                 isn't in the math library.  Currently this means the Bessel I0 function
  *                 (for the Kaiser window), the Hankel transform, the complex trig support
- *                 (for the Dolph-Chebyshev window), etc.
+ *                 (for the Dolph-Chebyshev window), etc.  If you have a version after 0.7,
+ *                 and you're making your own makefile, include the flag -DHAVE_GSL_DHT_NEW.
  *
  *   HAVE_GTKEXTRA If USE_GTK is set, and you want the Gtk+extra version of the file
  *                 selection widget, set this flag (it requires libgtkextra).
@@ -190,7 +191,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "7-May-01"
+#define SND_VERSION "8-May-01"
 #define SND_RPM_VERSION "4.13"
 #define SND_MAJOR_VERSION 4
 #define SND_MINOR_VERSION 13

@@ -458,8 +458,10 @@ static int mix_input_amp_env_usable(mix_info *md, Float samples_per_pixel)
 #define C_SPEED 2
 #define C_ZERO 3
 
+#define MIX_INPUT_INVALID -1
 #define MIX_INPUT_SOUND 0
 #define MIX_INPUT_AMP_ENV 1
+#define MIX_TYPE_OK(Type) ((Type == MIX_INPUT_SOUND) || (Type == MIX_INPUT_AMP_ENV))
  
 static Float next_mix_input_amp_env_sample(mix_fd *mf, int chan)
 {
@@ -583,7 +585,7 @@ static int amp_env_len(mix_info *md, int chan)
   return(current_ed_samples((md->add_snd)->chans[chan]));
 }
 
-static mix_fd *init_mix_read_1(mix_info *md, int old, int type)
+static mix_fd *init_mix_read_any(mix_info *md, int old, int type)
 {
   mix_fd *mf;
   env *e;
@@ -659,11 +661,12 @@ static mix_fd *init_mix_read_1(mix_info *md, int old, int type)
   if (type == MIX_INPUT_SOUND)
     {
       if (mf->calc == C_STRAIGHT)
-	mf->sfs[mf->base] = init_sample_read_any(0, add_sp->chans[mf->base], READ_FORWARD, cs->mix_edit_ctr[mf->base]); /* TODO: pos? */
+	/* to include edpos here we'd need to use it also during the mix_input_amp_env_read (movies) business below, so it's non-trivial to add */
+	mf->sfs[mf->base] = init_sample_read_any(0, add_sp->chans[mf->base], READ_FORWARD, cs->mix_edit_ctr[mf->base]); 
       else
 	{
 	  for (i = 0; i < chans; i++)
-	    mf->sfs[i] = init_sample_read_any(0, add_sp->chans[i], READ_FORWARD, cs->mix_edit_ctr[i]); /* TODO: pos? */
+	    mf->sfs[i] = init_sample_read_any(0, add_sp->chans[i], READ_FORWARD, cs->mix_edit_ctr[i]);
 	}
     }
   if (mf->calc == C_SPEED)
@@ -703,7 +706,7 @@ static mix_fd *init_mix_read_1(mix_info *md, int old, int type)
 
 static mix_fd *init_mix_read(mix_info *md, int old)
 {
-  return(init_mix_read_1(md, old, MIX_INPUT_SOUND));
+  return(init_mix_read_any(md, old, MIX_INPUT_SOUND));
 }
 
 static mix_fd *init_mix_input_amp_env_read(mix_info *md, int old, int hi)
@@ -713,7 +716,7 @@ static mix_fd *init_mix_input_amp_env_read(mix_info *md, int old, int hi)
   snd_info *sp;
   chan_info *cp;
   env_info *ep;
-  mf = init_mix_read_1(md, old, MIX_INPUT_AMP_ENV);
+  mf = init_mix_read_any(md, old, MIX_INPUT_AMP_ENV);
   if (!mf) return(NULL);
   sp = md->add_snd;
   mf->ctr = (int *)CALLOC(sp->nchans, sizeof(int));
@@ -766,6 +769,8 @@ static mix_fd *free_mix_fd(mix_fd *mf)
 	  FREE(mf->srcs);
 	  mf->srcs = NULL;
 	}
+      mf->type = MIX_INPUT_INVALID;
+      mf->md = NULL;
       FREE(mf);
     }
   return(NULL);
@@ -2736,6 +2741,7 @@ static void free_track_fd(track_fd *fd)
 	      fd->fds[i] = free_mix_fd(fd->fds[i]);
 	  FREE(fd->fds);
 	}
+      fd->mixes = 0;
       if (fd->state) FREE(fd->state);
       if (fd->len) FREE(fd->len);
       FREE(fd);
@@ -3793,7 +3799,7 @@ If chn is omitted, file's channels are mixed until snd runs out of channels"
 /* ---------------- mix sample readers ---------------- */
 
 static SND_TAG_TYPE mf_tag = 0;
-static SCM mark_mf(SCM obj) {SND_SETGCMARK(obj); return(SCM_BOOL_F);}
+static SCM mark_mf(SCM obj) {/* SND_SETGCMARK(obj); */ return(SCM_BOOL_F);}
 static int mf_p(SCM obj) {return(SMOB_TYPE_P(obj, mf_tag));}
 #define TO_MIX_SAMPLE_READER(obj) ((mix_fd *)SND_VALUE_OF(obj))
 #define MIX_SAMPLE_READER_P(Obj) SMOB_TYPE_P(Obj, mf_tag)
@@ -3823,17 +3829,21 @@ static int print_mf(SCM obj, SCM port, scm_print_state *pstate)
   char *desc;
   fd = get_mf(obj);
   if (fd == NULL)
-    WRITE_STRING("<null>", port);
+    WRITE_STRING("#<mix-sample-reader: null>", port);
   else
     {
       md = fd->md;
-      desc = (char *)CALLOC(128, sizeof(char));
-      mus_snprintf(desc, 128, "<mix-sample-reader %p: %s via mix %d>",
-	      fd,
-	      md->in_filename,
-	      md->id);
-      WRITE_STRING(desc, port); 
-      FREE(desc);
+      if ((md) && (MIX_TYPE_OK(fd->type)))
+	{
+	  desc = (char *)CALLOC(128, sizeof(char));
+	  mus_snprintf(desc, 128, "#<mix-sample-reader %p: %s via mix %d>",
+		       fd,
+		       md->in_filename,
+		       md->id);
+	  WRITE_STRING(desc, port); 
+	  FREE(desc);
+	}
+      else WRITE_STRING("#<mix-sample-reader: inactive>", port);
     }
 #if HAVE_SCM_REMEMBER_UPTO_HERE
   scm_remember_upto_here(obj);
@@ -3845,7 +3855,7 @@ static scm_sizet free_mf(SCM obj)
 {
   mix_fd *fd = (mix_fd *)SND_VALUE_OF(obj); 
   if (fd) free_mix_fd(fd); 
-  return(0);
+  return(sizeof(mix_fd));
 }
 
 static SCM g_make_mix_sample_reader(SCM mix_id)
@@ -3860,6 +3870,7 @@ static SCM g_make_mix_sample_reader(SCM mix_id)
   else snd_no_such_mix_error(S_make_mix_sample_reader, mix_id);
   if (mf)
     {
+      scm_done_malloc(sizeof(mix_fd));
       SND_RETURN_NEWSMOB(mf_tag, (SCM)mf);
     }
   return(SCM_BOOL_F);
@@ -3888,7 +3899,7 @@ static SCM g_free_mix_sample_reader(SCM obj)
 /* ---------------- track sample readers ---------------- */
 
 static SND_TAG_TYPE tf_tag = 0;
-static SCM mark_tf(SCM obj) {SND_SETGCMARK(obj); return(SCM_BOOL_F);}
+static SCM mark_tf(SCM obj) {/* SND_SETGCMARK(obj); */ return(SCM_BOOL_F);}
 static int tf_p(SCM obj) {return(SMOB_TYPE_P(obj, tf_tag));}
 #define TO_TRACK_SAMPLE_READER(obj) ((track_fd *)SND_VALUE_OF(obj))
 #define TRACK_SAMPLE_READER_P(Obj) SMOB_TYPE_P(Obj, tf_tag)
@@ -3906,35 +3917,41 @@ static int print_tf(SCM obj, SCM port, scm_print_state *pstate)
 {
   track_fd *fd;
   mix_info *md;
-  mix_fd *mf;
+  mix_fd *mf = NULL;
   char *desc;
   int i, len;
   fd = get_tf(obj);
   if (fd == NULL)
-    WRITE_STRING("<null>", port);
+    WRITE_STRING("#<track-sample-reader: null>", port);
   else
     {
       desc = (char *)CALLOC(128, sizeof(char));
-      mf = fd->fds[0];
-      md = mf->md;
-      mus_snprintf(desc, 128, "<track-sample-reader %p: %s chan %d via mixes '(",
-	      fd,
-	      md->in_filename,
-	      (md->cp)->chan);
-      WRITE_STRING(desc, port); 
-      len = fd->mixes;
-      if (len > 0)
+      if ((fd->fds) && (fd->mixes > 0))
+	mf = fd->fds[0];
+      if (mf == NULL)
+	mus_snprintf(desc, 128, "#<track-sample-reader %p: inactive>", fd);
+      else
 	{
-	  for (i = 0; i < len - 1; i++)
+	  md = mf->md;
+	  mus_snprintf(desc, 128, "#<track-sample-reader %p: %s chan %d via mixes '(",
+		       fd,
+		       md->in_filename,
+		       (md->cp)->chan);
+	  WRITE_STRING(desc, port); 
+	  len = fd->mixes;
+	  if (len > 0)
 	    {
-	      mf = fd->fds[i];
-	      mus_snprintf(desc, 128, "%d ", (mf->md)->id);
-	      WRITE_STRING(desc, port); 
+	      for (i = 0; i < len - 1; i++)
+		{
+		  mf = fd->fds[i];
+		  mus_snprintf(desc, 128, "%d ", (mf->md)->id);
+		  WRITE_STRING(desc, port); 
+		}
+	      mf = fd->fds[len - 1];
+	      mus_snprintf(desc, 128, "%d)>",(mf->md)->id);
 	    }
-	  mf = fd->fds[len - 1];
-	  mus_snprintf(desc, 128, "%d)>",(mf->md)->id);
+	  else sprintf(desc, ")>");
 	}
-      else sprintf(desc, ")>");
       WRITE_STRING(desc, port); 
       FREE(desc);
     }
@@ -3948,7 +3965,7 @@ static scm_sizet free_tf(SCM obj)
 {
   track_fd *fd = (track_fd *)SND_VALUE_OF(obj); 
   if (fd) free_track_fd(fd); 
-  return(0);
+  return(sizeof(track_fd));
 }
 
 static SCM g_make_track_sample_reader(SCM track_id, SCM samp, SCM snd, SCM chn)
@@ -3967,6 +3984,7 @@ returns a reader ready to access track's data associated with snd's channel chn 
 			 TO_C_INT_OR_ELSE(samp, 0));
   if (tf)
     {
+      scm_done_malloc(sizeof(track_fd));
       SND_RETURN_NEWSMOB(tf_tag, (SCM)tf);
     }
   ERROR(NO_SUCH_TRACK,
@@ -4125,7 +4143,7 @@ mixes data (a vct object) into snd's channel chn starting at beg; returns the ne
 void g_init_mix(SCM local_doc)
 {
 #if HAVE_GUILE
-  mf_tag = scm_make_smob_type("mf", sizeof(SCM));
+  mf_tag = scm_make_smob_type("mf", sizeof(sizeof(mix_fd)));
   scm_set_smob_mark(mf_tag, mark_mf);
   scm_set_smob_print(mf_tag, print_mf);
   scm_set_smob_free(mf_tag, free_mf);
@@ -4141,7 +4159,7 @@ void g_init_mix(SCM local_doc)
   DEFINE_PROC(S_mix_sample_readerQ,     g_mf_p, 1, 0, 0,                   H_mf_p);
 
 #if HAVE_GUILE
-  tf_tag = scm_make_smob_type("tf", sizeof(SCM));
+  tf_tag = scm_make_smob_type("tf", sizeof(track_fd));
   scm_set_smob_mark(tf_tag, mark_tf);
   scm_set_smob_print(tf_tag, print_tf);
   scm_set_smob_free(tf_tag, free_tf);

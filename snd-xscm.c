@@ -45,7 +45,7 @@ static SND_TAG_TYPE snd_color_tag = 0;
 
 static SCM mark_snd_color(SCM obj)
 {
-  SND_SETGCMARK(obj);
+  /* SND_SETGCMARK(obj); */
   return(SCM_BOOL_F);
 }
 
@@ -75,8 +75,8 @@ static scm_sizet free_snd_color(SCM obj)
   dpy = XtDisplay(MAIN_SHELL(state));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   XFreeColors(dpy, cmap, &(v->color), 1, 0);
-  FREE(v);
-  return(0);
+  free(v);
+  return(sizeof(snd_color));
 }
 
 static int print_snd_color(SCM obj, SCM port, scm_print_state *pstate)
@@ -146,7 +146,7 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
 
   /* TODO: check rgb for 0.0 .. 1.0 and (perhaps) send NO_SUCH_COLOR or range-error if outside */
 
-  new_color = (snd_color *)CALLOC(1, sizeof(snd_color));
+  new_color = (snd_color *)scm_must_malloc(sizeof(snd_color), S_make_color);
   dpy = XtDisplay(MAIN_SHELL(state));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;

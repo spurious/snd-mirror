@@ -5,10 +5,6 @@ me as straightforward -- they don't require intimate knowlege of Snd innards).
 add modules to tie sndlib into Python, Octave, etc (via SWIG?).
 fixup the sz.h, sl.h, sr.h files to implement mzscheme, librep, ruby support.
 
-Snd name completion tied into the Emacs-Snd subjob connection (this
-  apparently will require "raw" mode in ilisp -- there is a snd-completion
-  function available from snd).
-
 Sawfish connection: it should be possible to send commands to sawfish,
   (via sawfish-client?); also there's a switch in Snd, HAVE_THEMES,
   that can draw widget backgrounds that grade between colors (as in

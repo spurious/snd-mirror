@@ -886,7 +886,7 @@ void save_region_backpointer(snd_info *sp)
 	  r->frames = current_ed_samples(sp->chans[0]);
 	  for (i = 0; i < sp->nchans; i++)
 	    {
-	      val = get_maxamp(sp, sp->chans[i]);
+	      val = get_maxamp(sp, sp->chans[i], AT_CURRENT_EDIT_POSITION);
 	      if (val > r->maxamp) r->maxamp = val;
 	    }
 	  /* make new region temp file */

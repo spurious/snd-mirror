@@ -1340,7 +1340,7 @@ static void start_dac(snd_state *ss, int srate, int channels, int background)
 }
 
 
-static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, int start, int end, int edpos)
+static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, int start, int end, SCM edpos, const char *caller)
 {
   /* if not sp, control panel is ignored */
   int slot, beg = 0, direction = READ_FORWARD;
@@ -1364,13 +1364,13 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, int start
 	{
 	  direction = READ_BACKWARD;
 	  if (start == 0) 
-	    beg = current_ed_samples(cp)-1; 
+	    beg = to_c_edit_samples(cp, edpos, caller) - 1;
 	  else beg = start;
 	}
     }
   return(init_dp(slot, cp, sp, 
 		 init_sample_read_any(beg, cp, direction, 
-				      (edpos != AT_CURRENT_EDIT_POSITION) ? edpos : cp->edit_ctr), 
+				      to_c_edit_position(cp, edpos, caller)),
 		 start, end));
 }
 
@@ -1402,7 +1402,7 @@ void play_region(snd_state *ss, int region, int background)
   start_dac(ss, region_srate(region), chans, background);
 }
 
-void play_channel(chan_info *cp, int start, int end, int background, int edpos)
+void play_channel(chan_info *cp, int start, int end, int background, SCM edpos, const char *caller)
 {
   /* just plays one channel (ignores possible sync) */
   snd_info *sp = NULL;
@@ -1410,11 +1410,11 @@ void play_channel(chan_info *cp, int start, int end, int background, int edpos)
   if ((background == NOT_IN_BACKGROUND) && (play_list_members > 0)) return;
   sp = cp->sound;
   if (!(sp->inuse)) return;
-  dp = add_channel_to_play_list(cp, sp, start, end, edpos);
+  dp = add_channel_to_play_list(cp, sp, start, end, edpos, caller);
   start_dac(dp->ss, SND_SRATE(sp), 1, background);
 }
 
-void play_sound(snd_info *sp, int start, int end, int background, int edpos)
+void play_sound(snd_info *sp, int start, int end, int background, SCM edpos, const char *caller)
 {
   /* just plays one sound (ignores possible sync) */
   int i;
@@ -1433,11 +1433,11 @@ void play_sound(snd_info *sp, int start, int end, int background, int edpos)
       return;
     }
   for (i = 0; i < sp->nchans; i++) 
-    add_channel_to_play_list(sp->chans[i], sp, start, end, edpos);
+    add_channel_to_play_list(sp->chans[i], sp, start, end, edpos, caller);
   start_dac(sp->state, SND_SRATE(sp), sp->nchans, background);
 }
 
-void play_channels(chan_info **cps, int chans, int *starts, int *ur_ends, int background, int edpos)
+void play_channels(chan_info **cps, int chans, int *starts, int *ur_ends, int background, SCM edpos, const char *caller)
 {
   /* ends can be NULL */
   int i;
@@ -1459,12 +1459,12 @@ void play_channels(chan_info **cps, int chans, int *starts, int *ur_ends, int ba
     add_channel_to_play_list(cps[i], 
 			     sp = (cps[i]->sound), 
 			     starts[i], ends[i],
-			     edpos);
+			     edpos, caller);
   if (ur_ends == NULL) FREE(ends);
   if (sp) start_dac(sp->state, SND_SRATE(sp), chans, background);
 }
 
-void play_selection(int background, int edpos)
+void play_selection(int background, SCM edpos, const char *caller)
 {
   /* just plays the current selection */
   int i;
@@ -1484,7 +1484,7 @@ void play_selection(int background, int edpos)
 		ends[i] = si->begs[i] + (int)(((Float)selection_len() / (Float)(sp->srate))); /* TODO this should use the src->sample counter instead */
 	      else ends[i] = si->begs[i] + selection_len();
 	    }
-	  play_channels(si->cps, si->chans, si->begs, ends, background, edpos);
+	  play_channels(si->cps, si->chans, si->begs, ends, background, edpos, caller);
 	  si = free_sync_info(si); /* does not free sample readers */
 	  FREE(ends);
 	}
@@ -1544,7 +1544,6 @@ static Float **rev_ins;
 
 static void clear_dac_buffers(dac_state *dacp)
 {
-#if HAVE_MEMSET
   int i, frames;
   frames = dacp->frames;
   for (i = 0; i < dacp->channels; i++) 
@@ -1552,17 +1551,6 @@ static void clear_dac_buffers(dac_state *dacp)
   if (global_rev)
     for (i = 0; i < dacp->channels; i++) 
       memset(rev_ins[i], 0, frames * sizeof(Float));
-#else
-  int i, j, frames;
-  frames = dacp->frames;
-  for (i = 0; i < dacp->channels; i++) 
-    for (j = 0; j < frames; j++)
-      dac_buffers[i][j] = MUS_SAMPLE_0;
-  if (global_rev)
-    for (i = 0; i < dacp->channels; i++) 
-      for (j = 0; j < frames; j++)
-	rev_ins[i][j] = MUS_SAMPLE_0;
-#endif  
 }
 
 static MUS_SAMPLE_TYPE local_next_sample_unscaled(snd_fd *sf)
@@ -2468,15 +2456,15 @@ void initialize_apply(snd_info *sp, int chans, int dur)
   switch (ss->apply_choice)
     {
     case APPLY_TO_SOUND: 
-      play_sound(sp, 0, dur, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION); 
+      play_sound(sp, 0, dur, IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), S_call_apply); 
       break;
     case APPLY_TO_SELECTION: 
-      play_selection(IN_BACKGROUND, -1);
+      play_selection(IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), S_call_apply); 
       break;
     case APPLY_TO_CHANNEL: 
       if (sp->selected_channel != NO_SELECTION)
 	curchan = sp->selected_channel;
-      play_channel(sp->chans[curchan], 0, dur, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
+      play_channel(sp->chans[curchan], 0, dur, IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), S_call_apply); 
       break;
     }
 }
@@ -2504,7 +2492,7 @@ int run_apply(int ofd)
 
 /* -------------------------------- scheme connection -------------------------------- */
 
-static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd, SCM end_n, int edpos) 
+static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd, SCM end_n, SCM edpos, const char *caller) 
 {
   /* all chans if chn_n omitted, arbitrary file if snd_n is name */
   snd_info *sp;
@@ -2528,19 +2516,19 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
       if (!(mus_file_probe(name)))
 	{
 	  FREE(name);
-	  snd_no_such_file_error(S_play, samp_n);
+	  snd_no_such_file_error(caller, samp_n);
 	}
       if (!(MUS_HEADER_TYPE_OK(mus_sound_header_type(name))))
 	{
 	  FREE(name);
-	  mus_misc_error(S_play, "can't read header", 
+	  mus_misc_error(caller, "can't read header", 
 			 SCM_LIST2(samp_n, 
 				   TO_SCM_STRING(mus_header_type_name(mus_header_type()))));
 	}
       if (!(MUS_DATA_FORMAT_OK(mus_sound_data_format(name))))
 	{
 	  FREE(name);
-	  mus_misc_error(S_play, "can't read data", 
+	  mus_misc_error(caller, "can't read data", 
 			 SCM_LIST2(samp_n, 
 				   TO_SCM_STRING(mus_header_original_format_name(mus_sound_original_format(name),
 										 mus_sound_header_type(name)))));
@@ -2551,16 +2539,16 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
       sp->delete_me = 1;
       samp = TO_C_INT_OR_ELSE(snd_n, 0);
       if (INTEGER_P(chn_n)) end = TO_C_INT(chn_n);
-      play_sound(sp, samp, end, background, 0);
+      play_sound(sp, samp, end, background, TO_SMALL_SCM_INT(0), caller);
       if (name) FREE(name);
     }
   else
     {
-      ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_n), samp_n, SCM_ARG1, S_play, "a number");
-      SND_ASSERT_CHAN(S_play, snd_n, chn_n, 2);
+      ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_n), samp_n, SCM_ARG1, caller, "a number");
+      SND_ASSERT_CHAN(caller, snd_n, chn_n, 2);
       sp = get_sp(snd_n);
       if (sp == NULL) 
-	snd_no_such_sound_error(S_play, snd_n);
+	snd_no_such_sound_error(caller, snd_n);
       samp = TO_C_INT_OR_ELSE(samp_n, 0);
       if ((syncd) && (sp->sync != 0))
 	{
@@ -2570,20 +2558,20 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
 	      ends = (int *)CALLOC(si->chans, sizeof(int));
 	      for (i = 0; i < si->chans; i++) ends[i] = end;
 	    }
-	  play_channels(si->cps, si->chans, si->begs, ends, background, edpos);
+	  play_channels(si->cps, si->chans, si->begs, ends, background, edpos, caller);
 	  si = free_sync_info(si);
 	  FREE(ends);
 	}
       else
 	{
 	  if (!(INTEGER_P(chn_n)))
-	    play_sound(sp, samp, end, background, edpos);
+	    play_sound(sp, samp, end, background, edpos, caller);
 	  else 
 	    {
-	      cp = get_cp(snd_n, chn_n, S_play);
+	      cp = get_cp(snd_n, chn_n, caller);
 	      if (cp) 
-		play_channel(cp, samp, end, background, edpos);
-	      else snd_no_such_channel_error(S_play, snd_n, chn_n);
+		play_channel(cp, samp, end, background, edpos, caller);
+	      else snd_no_such_channel_error(caller, snd_n, chn_n);
 	    }
 	}
     }
@@ -2600,8 +2588,8 @@ if 'end' is not given, it plays to the end of the sound.  If 'pos' is -1 or not 
 played."
 
   return(g_play_1(samp_n, snd_n, chn_n, TRUE, 
-		  TO_C_BOOLEAN_OR_F(syncd), end_n, 
-		  TO_C_INT_OR_ELSE(edpos, AT_CURRENT_EDIT_POSITION)));
+		  TO_C_BOOLEAN_OR_F(syncd), end_n,
+		  edpos, S_play));
 }
 
 static SCM g_play_selection(SCM wait, SCM edpos) 
@@ -2610,7 +2598,7 @@ static SCM g_play_selection(SCM wait, SCM edpos)
   ASSERT_TYPE(BOOLEAN_IF_BOUND_P(wait), wait, SCM_ARG1, S_play_selection, "a boolean");
   if (selection_is_active())
     {
-      play_selection(!(TO_C_BOOLEAN_OR_F(wait)), TO_C_INT_OR_ELSE(edpos, AT_CURRENT_EDIT_POSITION));
+      play_selection(!(TO_C_BOOLEAN_OR_F(wait)), edpos, S_play_selection);
       return(SCM_BOOL_T);
     }
   snd_no_active_selection_error(S_play_selection);
@@ -2624,7 +2612,7 @@ and waiting for the play to complete before returning.  'start' can also be a fi
 
   return(g_play_1(samp_n, snd_n, chn_n, FALSE, 
 		  TO_C_BOOLEAN_OR_F(syncd), end_n, 
-		  TO_C_INT_OR_ELSE(edpos, AT_CURRENT_EDIT_POSITION)));
+		  edpos, S_play_and_wait));
 }
 
 static SCM g_stop_playing(SCM snd_n)
@@ -2739,7 +2727,6 @@ static SCM g_add_player(SCM snd_chn, SCM start, SCM end, SCM edpos)
   ASSERT_TYPE(INTEGER_P(snd_chn), snd_chn, SCM_ARG1, S_add_player, "an integer");
   ASSERT_TYPE(NUMBER_IF_BOUND_P(start), start, SCM_ARG2, S_add_player, "a number");
   ASSERT_TYPE(NUMBER_IF_BOUND_P(end), end, SCM_ARG3, S_add_player, "a number");
-  ASSERT_TYPE(INTEGER_IF_BOUND_P(edpos), edpos, SCM_ARG4, S_add_player, "an integer");
   index = -TO_SMALL_C_INT(snd_chn);
   if ((index > 0) && (index < players_size)) sp = players[index];
   if (sp)
@@ -2748,7 +2735,8 @@ static SCM g_add_player(SCM snd_chn, SCM start, SCM end, SCM edpos)
       add_channel_to_play_list(cp, sp,
 			       TO_C_INT_OR_ELSE(start, 0),
 			       TO_C_INT_OR_ELSE(end, NO_END_SPECIFIED),
-			       TO_C_INT_OR_ELSE(edpos, cp->edit_ctr));
+			       edpos,
+			       S_add_player);
     }
   else snd_no_such_player_error(S_add_player, snd_chn);
   return(snd_chn);

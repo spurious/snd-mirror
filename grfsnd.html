@@ -361,10 +361,37 @@ Once you have ILISP, put this code in your .emacs file:</p>
 <b>*snd*</b> buffer is sent to Snd (very much as if you were running CLM as
 an Emacs subjob), and Snd's output is appended to the <b>*snd*</b> buffer.
 Also, C-x C-h prompts for some Snd entity and appends the help text for that
-entity in the snd buffer.
-This connection still needs some work -- 
-it would be nice to have
-Snd's command completion available in the *snd* buffer.
+entity in the snd buffer.  The following code tries to implement Snd's
+name completion upon C-x C-i in the <b>*snd*</b> buffer:</p>
+<pre>
+(defun handle-snd-completion (process string)
+  (let ((buffer (process-buffer process)))
+    (save-excursion
+      (set-buffer buffer)
+      (goto-char (point-max))
+      (insert (substring string 1 (- (length string) 3))))
+    (goto-char (point-max))
+    (display-buffer buffer)))
+      
+(defun snd-complete-symbol ()
+  (interactive)
+  (let* ((end (point))
+	 (start (save-excursion (skip-syntax-backward "w_") (point)))
+	 (pattern (buffer-substring-no-properties start end))
+	 (proc (get-buffer-process (current-buffer)))
+	 (old-filter (process-filter proc)))
+    (delete-region start end)
+    (set-process-filter proc 'handle-snd-completion)
+    (process-send-string proc (format "(snd-completion \"%s\")\n" pattern))
+    (accept-process-output proc)
+    (set-process-filter proc old-filter)))
+</pre>
+<p>and add this to the defdialect block:</p>
+<pre>
+  (local-set-key "\C-x\C-i" 'snd-complete-symbol)
+</pre>
+<p>But for some reason it needs an open-paren?
+</p>
 <i>snd-program</i> is the name of the snd image; you can include whatever
 startup switches you like:
 </p>

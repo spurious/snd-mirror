@@ -487,12 +487,7 @@ Float mus_amplitude_modulate(Float carrier, Float sig1, Float sig2) {return(sig1
 Float mus_contrast_enhancement(Float sig, Float index) {return(mus_sin((sig * M_PI_2) + (index * mus_sin(sig * TWO_PI))));}
 void mus_clear_array(Float *arr, int size) 
 {
-#if HAVE_MEMSET
   memset((void *)arr, 0, size * sizeof(Float));
-#else
-  int i; 
-  for (i = 0; i < size; i++) arr[i] = 0.0;
-#endif
 }
 
 Float mus_dot_product(Float *data1, Float *data2, int size)
@@ -1244,11 +1239,7 @@ Float *mus_partials2wave(Float *partial_data, int partials, Float *table, int ta
 {
   int partial, i, k;
   Float amp, freq, angle;
-#if HAVE_MEMSET
   memset((void *)table, 0, table_size * sizeof(Float));
-#else
-  for (i = 0; i < table_size; i++) table[i] = 0.0;
-#endif
   for (partial = 0, k = 1; partial < partials; partial++, k += 2)
     {
       amp = partial_data[k];
@@ -1268,11 +1259,7 @@ Float *mus_phasepartials2wave(Float *partial_data, int partials, Float *table, i
 {
   int partial, i, k, n;
   Float amp, freq, angle; 
-#if HAVE_MEMSET
   memset((void *)table, 0, table_size * sizeof(Float));
-#else
-  for (i = 0; i < table_size; i++) table[i] = 0.0;
-#endif
   for (partial = 0, k = 1, n = 2; partial < partials; partial++, k += 3, n += 3)
     {
       amp = partial_data[k];
@@ -2948,9 +2935,6 @@ Float *mus_make_fir_coeffs(int order, Float *env, Float *aa)
 
 void mus_clear_filter_state(mus_any *gen)
 {
-#if (!HAVE_MEMSET)
-  int i;
-#endif
   int len;
   Float *state;
   smpflt *ptr;
@@ -2965,11 +2949,7 @@ void mus_clear_filter_state(mus_any *gen)
     case MUS_ALL_PASS:
       state = mus_data(gen);
       len = mus_length(gen);
-#if HAVE_MEMSET
       memset((void *)state, 0, len * sizeof(Float));
-#else
-      for (i = 0; i < len; i++) state[i] = 0.0;
-#endif
       break;
     case MUS_ONE_ZERO:
     case MUS_ONE_POLE:
@@ -5072,9 +5052,6 @@ static void flush_buffers(rdout *gen)
 static Float sample_file(void *ptr, int samp, int chan, Float val)
 {
   rdout *gen = (rdout *)ptr;
-#if (!HAVE_MEMSET)
-  int i;
-#endif
   int j;
   if (chan < gen->chans)
     {
@@ -5083,12 +5060,7 @@ static Float sample_file(void *ptr, int samp, int chan, Float val)
 	{
 	  flush_buffers(gen);
 	  for (j = 0; j < gen->chans; j++)
-#if HAVE_MEMSET
 	    memset((void *)(gen->obufs[j]), 0, clm_file_buffer_size * sizeof(MUS_SAMPLE_TYPE));
-#else
-	    for (i = 0; i < clm_file_buffer_size; i++)
-	      gen->obufs[j][i] = MUS_SAMPLE_0;
-#endif
 	  gen->data_start = samp;
 	  gen->data_end = samp + clm_file_buffer_size - 1;
 	  gen->out_end = samp;
@@ -5114,17 +5086,14 @@ static int sample2file_end(void *ptr)
 {
   rdout *gen = (rdout *)ptr;
   int i;
-  if (gen)
+  if ((gen) && (gen->obufs))
     {
-      if (gen->obufs)
-	{
-	  flush_buffers(gen);
-	  for (i = 0; i < gen->chans; i++)
-	    if (gen->obufs[i]) 
-	      FREE(gen->obufs[i]);
-	  FREE(gen->obufs);
-	  gen->obufs = NULL;
-	}
+      flush_buffers(gen);
+      for (i = 0; i < gen->chans; i++)
+	if (gen->obufs[i]) 
+	  FREE(gen->obufs[i]);
+      FREE(gen->obufs);
+      gen->obufs = NULL;
     }
   return(0);
 }
@@ -5208,7 +5177,7 @@ Float mus_sample2file(mus_any *ptr, int samp, int chan, Float val)
 int mus_close_file(mus_any *ptr)
 {
   rdout *gen = (rdout *)ptr;
-  if ((mus_output_p(ptr)) && (gen->obufs)) flush_buffers(gen);
+  if ((mus_output_p(ptr)) && (gen->obufs)) sample2file_end(ptr);
   return(0);
 }
 
@@ -6663,16 +6632,8 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
 	  if (c1 >= file1_chans) c1 = 0;
 	  c2++; 
 	  if (c2 >= file2_chans) c2 = 0;
-#if HAVE_MEMSET
 	  memset((void *)data1, 0, fftlen * sizeof(Float));
 	  memset((void *)data2, 0, fftlen * sizeof(Float));
-#else
-	  for (i = 0; i < fftlen; i++) 
-	    {
-	      data1[i] = 0.0; 
-	      data2[i] = 0.0;
-	    }
-#endif
 	}
       for (i = 0; i < totallen; i++) 
 	if (maxval < fabs(outdat[i])) 

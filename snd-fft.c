@@ -141,6 +141,13 @@ static fft_window_state *fft_windows[NUM_CACHED_FFT_WINDOWS];
   /* cc -o besi0 besi0.c -I/usr/local/include/gsl /usr/local/lib/gsl/libgsldht.a /usr/local/lib/gsl/libgslspecfunc.a /usr/local/lib/gsl/libgslerr.a */
 #include <gsl/gsl_dht.h>
 
+#if HAVE_GSL_DHT_NEW
+  #define gsl_dht_transform gsl_dht
+  #define gsl_dht_transform_new gsl_dht_new
+  #define gsl_dht_transform_free gsl_dht_free
+  #define gsl_dht_transform_apply gsl_dht_apply
+#endif
+
 static void hankel_transform(int size, Float *input, Float *output)
 {
   /* args size, bessel limit, xmax */
@@ -567,11 +574,7 @@ static void autocorrelation(Float *data, int n)
 	  rl[j] = rl[i];
 	}
     }
-#if HAVE_MEMSET
   memset((void *)im, 0, n * sizeof(Float));
-#else
-  for (i = 0; i < n; i++) im[i] = 0.0;
-#endif
   mus_fft(rl, im, n, -1);
   for (i = 0; i <= n / 2; i++) data[i] = fscl * rl[i];
 
@@ -606,11 +609,7 @@ static void cepstrum(Float *data, int n)
       else rl[i] = log(sqrt(rl[i]));
       rl[j] = rl[i];
     }
-#if HAVE_MEMSET
   memset((void *)im, 0, n * sizeof(Float));
-#else
-  for (i = 0; i < n; i++) im[i] = 0.0;
-#endif
   mus_fft(rl, im, n, -1);
   for (i = 0; i < n; i++)
     if (fabs(rl[i]) > fscl) 

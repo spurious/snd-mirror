@@ -994,7 +994,7 @@ void view_curfiles_play(snd_state *ss, int pos, int play)
       if (sp->playing) stop_playing_sound(sp);
       if (play)
 	{
-	  play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
+	  play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "current files play");
 	  set_play_button(sp, 1);
 	}
       else set_play_button(sp, 0);
@@ -1053,7 +1053,7 @@ int view_prevfiles_play(snd_state *ss, int pos, int play)
 	{
 	  play_sp->shortname = prevnames[pos];
 	  play_sp->fullname = NULL;
-	  play_sound(play_sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
+	  play_sound(play_sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "previous files play");
 	}
       else return(1); /* can't find or setup file */
     }
@@ -1753,7 +1753,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
       /* also what if a sound is write-protected in one window, and not in another? */
       ofile = snd_tempnam(ss); 
       if (save_type == FILE_SAVE_AS)
-	result = save_edits_without_display(sp, ofile, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
+	result = save_edits_without_display(sp, ofile, type, format, srate, comment, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "file save as");
       else result = save_selection(ss, ofile, type, format, srate, comment);
       if (result != MUS_NO_ERROR)
 	report_in_minibuffer(sp, "save as temp: %s: %s", ofile, strerror(errno));
@@ -1786,7 +1786,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 	  snd_close_file(collision->sp, ss);
 	}
       if (save_type == FILE_SAVE_AS)
-	result = save_edits_without_display(sp, str, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
+	result = save_edits_without_display(sp, str, type, format, srate, comment, TO_SCM_INT(AT_CURRENT_EDIT_POSITION), "file save as");
       else result = save_selection(ss, str, type, format, srate, comment);
       if (result != MUS_NO_ERROR)
 	report_in_minibuffer_and_save(sp, "%s: %s", str, strerror(errno));
@@ -2088,7 +2088,8 @@ static SCM g_set_sound_loop_info(SCM snd, SCM vals)
 			     hdr->format, 
 			     hdr->srate, 
 			     hdr->comment,
-			     AT_CURRENT_EDIT_POSITION);
+			     TO_SCM_INT(AT_CURRENT_EDIT_POSITION),
+			     S_sound_loop_info);
   move_file(tmp_file, sp->fullname);
   FREE(tmp_file);
   snd_update(sp->state, sp);

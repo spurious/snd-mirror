@@ -1029,11 +1029,9 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
 	  total = read(tfd, (char *)(bufs[0]), bytes);
 	  if (total != bytes)
 	    {
-#if HAVE_MEMSET
 	      if (total <= 0)
 		memset((void *)(bufs[0]), 0, bytes);
 	      else
-#endif
 		{
 		  int i, last;
 		  last = beg + nints;
@@ -1101,11 +1099,9 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, MUS_SAMPLE_TYP
 		for (k = 0; k < chans; k++)
 		  if ((cm == NULL) || (cm[k]))
 		    {
-#if HAVE_MEMSET
 		      if (loc == 0)
 			memset((void *)(bufs[k]), 0, lim * sizeof(MUS_SAMPLE_TYPE));
 		      else
-#endif
 			for (j = loc; j < lim; j++) 
 			  bufs[k][j] = MUS_SAMPLE_0;
 		    }
