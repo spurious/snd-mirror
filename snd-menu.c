@@ -280,7 +280,7 @@ void new_file_from_menu(snd_state *ss)
   data_format = default_output_format(ss);
   srate = default_output_srate(ss);
   new_comment = output_comment(NULL);
-  snd_new_file(ss,new_file_name,header_type,data_format,srate,chans,new_comment);
+  snd_new_file(ss,new_file_name,header_type,data_format,srate,chans,new_comment,WITH_DIALOG);
   if (new_comment) FREE(new_comment);
   if (new_file_name) FREE(new_file_name);
 }
