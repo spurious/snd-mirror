@@ -567,13 +567,15 @@ static SCM memo_sound, open_hook, close_hook, just_sounds_hook;
 static int dont_open(snd_state *ss, char *file)
 {
   char *mcf = NULL;
-  SCM res = SCM_BOOL_F;
+  SCM res = SCM_BOOL_F, fstr;
   if (HOOKED(open_hook))
     {
-      res = g_c_run_or_hook(open_hook,
-			    SCM_LIST1(TO_SCM_STRING(mcf = mus_expand_filename(file))),
-			    S_open_hook);
+      mcf = mus_expand_filename(file);
+      fstr = TO_SCM_STRING(mcf);
       if (mcf) FREE(mcf);
+      res = g_c_run_or_hook(open_hook,
+			    SCM_LIST1(fstr),
+			    S_open_hook);
     }
   return(SCM_TRUE_P(res));
 }

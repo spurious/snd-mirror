@@ -38,6 +38,14 @@ static int to_c_int_or_else(SCM obj, int fallback, char *origin)
 }
 #endif
 
+void mus_misc_error(char *caller, char *msg, SCM val)
+{
+  scm_throw(MUS_MISC_ERROR,
+	    SCM_LIST3(TO_SCM_STRING(caller),
+		      TO_SCM_STRING(msg),
+		      val));
+}
+
 static SCM g_sound_loop_info(SCM filename)
 {
   #define H_mus_sound_loop_info "(" S_mus_sound_loop_info " filename) -> loop info for sound as a list (start1 end1 start2 end2 base-note base-detune)"
@@ -390,15 +398,9 @@ SCM make_sound_data(int chans, int frames)
   int i;
   sound_data *new_sound_data;
   if (chans <= 0)
-    scm_throw(MUS_MISC_ERROR,
-	      SCM_LIST3(TO_SCM_STRING(S_make_sound_data),
-			TO_SCM_STRING("chans <= 0?"),
-			TO_SCM_INT(chans)));
+    mus_misc_error(S_make_sound_data, "chans <= 0?", chans);
   if (frames <= 0)
-    scm_throw(MUS_MISC_ERROR,
-	      SCM_LIST3(TO_SCM_STRING(S_make_sound_data),
-			TO_SCM_STRING("frames <= 0?"),
-			TO_SCM_INT(frames)));
+    mus_misc_error(S_make_sound_data, "frames <= 0?", frames);
   new_sound_data = (sound_data *)CALLOC(1, sizeof(sound_data));
   new_sound_data->length = frames;
   new_sound_data->chans = chans;
@@ -552,7 +554,7 @@ the file size is normally set later via mus-sound-close-output. srate is an inte
 data-format is a sndlib format indicator such as mus-bshort, if #f if defaults to a format compatible with sndlib, \
 header-type is a sndlib type indicator such as mus-aiff, sndlib currently only writes 5 or so header types."
 
-  int fd;
+  int fd = -1, df, ht, chns;
   char *com = NULL;
   char *tmpstr = NULL;
   SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_mus_sound_open_output);
@@ -561,14 +563,31 @@ header-type is a sndlib type indicator such as mus-aiff, sndlib currently only w
   SCM_ASSERT(INTEGER_OR_BOOLEAN_P(data_format), data_format, SCM_ARG4, S_mus_sound_open_output);
   SCM_ASSERT(INTEGER_OR_BOOLEAN_P(header_type), header_type, SCM_ARG5, S_mus_sound_open_output);
   SCM_ASSERT((gh_string_p(comment) || (SCM_UNBNDP(comment))), comment, SCM_ARG6, S_mus_sound_open_output);
-  if (gh_string_p(comment)) com = TO_NEW_C_STRING(comment);
-  fd = mus_sound_open_output(tmpstr = mus_expand_filename(TO_C_STRING(file)),
-			     TO_C_INT_OR_ELSE(srate, 0),
-			     TO_C_INT_OR_ELSE(chans, 0),
-			     TO_C_INT_OR_ELSE(data_format, MUS_OUT_FORMAT),
-			     TO_C_INT_OR_ELSE(header_type, 0), com);
-  if (tmpstr) FREE(tmpstr);
-  if (com) free(com);
+  df = TO_C_INT_OR_ELSE(data_format, MUS_OUT_FORMAT);
+  if (MUS_DATA_FORMAT_OK(df))
+    {
+      ht = TO_C_INT_OR_ELSE(header_type, 0);
+      if (MUS_HEADER_TYPE_OK(ht))
+	{
+	  chns = TO_C_INT_OR_ELSE(chans, 0);
+	  if (chns > 0)
+	    {
+	      tmpstr = mus_expand_filename(TO_C_STRING(file));
+	      if (gh_string_p(comment)) com = TO_NEW_C_STRING(comment);
+	      fd = mus_sound_open_output(tmpstr = mus_expand_filename(TO_C_STRING(file)),
+					 TO_C_INT_OR_ELSE(srate, 0),
+					 chns,
+					 df,
+					 ht,
+					 com);
+	      if (tmpstr) FREE(tmpstr);
+	      if (com) free(com);
+	    }
+	  else mus_misc_error(S_mus_sound_open_output, "invalid chans", chans);
+	}
+      else mus_misc_error(S_mus_sound_open_output, "invalid header type", header_type);
+    }
+  else mus_misc_error(S_mus_sound_open_output, "invalid data format", data_format);
   return(TO_SCM_INT(fd));
 }
 
@@ -580,19 +599,35 @@ reopen (without alteration) filename for output \
 data-format and header-type are sndlib indicators such as mus-bshort or mus-aiff \
 data-location should be retrieved from a previous call to mus-sound-data-location"
 
-  int fd;
+  int fd = -1, df, ht, chns;
   char *tmpstr = NULL;
   SCM_ASSERT(gh_string_p(file), file, SCM_ARG1, S_mus_sound_reopen_output);
   SCM_ASSERT(INTEGER_OR_BOOLEAN_P(chans), chans, SCM_ARG2, S_mus_sound_reopen_output);
   SCM_ASSERT(INTEGER_OR_BOOLEAN_P(data_format), data_format, SCM_ARG3, S_mus_sound_reopen_output);
   SCM_ASSERT(INTEGER_OR_BOOLEAN_P(header_type), header_type, SCM_ARG4, S_mus_sound_reopen_output);
   SCM_ASSERT(INTEGER_OR_BOOLEAN_P(data_loc), data_loc, SCM_ARG5, S_mus_sound_reopen_output);
-  fd = mus_sound_reopen_output(tmpstr = mus_expand_filename(TO_C_STRING(file)),
-			       TO_C_INT_OR_ELSE(chans, 0),
-			       TO_C_INT_OR_ELSE(data_format, MUS_OUT_FORMAT),
-			       TO_C_INT_OR_ELSE(header_type, 0),
-			       TO_C_INT_OR_ELSE(data_loc, 0));
-  if (tmpstr) FREE(tmpstr);
+  df = TO_C_INT_OR_ELSE(data_format, MUS_OUT_FORMAT);
+  if (MUS_DATA_FORMAT_OK(df))
+    {
+      ht = TO_C_INT_OR_ELSE(header_type, 0);
+      if (MUS_HEADER_TYPE_OK(ht))
+	{
+	  chns = TO_C_INT_OR_ELSE(chans, 0);
+	  if (chns > 0)
+	    {
+	      tmpstr = mus_expand_filename(TO_C_STRING(file));
+	      fd = mus_sound_reopen_output(tmpstr,
+					   chns,
+					   df,
+					   ht,
+					   TO_C_INT_OR_ELSE(data_loc, 0));
+	      if (tmpstr) FREE(tmpstr);
+	    }
+	  else mus_misc_error(S_mus_sound_reopen_output, "invalid chans", chans);
+	}
+      else mus_misc_error(S_mus_sound_reopen_output, "invalid header type", header_type);
+    }
+  else mus_misc_error(S_mus_sound_reopen_output, "invalid data format", data_format);
   return(TO_SCM_INT(fd));
 }
 

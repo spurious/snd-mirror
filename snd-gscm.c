@@ -1,4 +1,5 @@
 #include "snd.h"
+#include "vct.h"
 
 #if HAVE_GUILE
 /* TODO: combine this and xscm where the code is the same */
@@ -138,6 +139,7 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
 
 SCM pixel2color(COLOR_TYPE pix)
 {
+  if (pix == NO_COLOR) return(SCM_BOOL_F);
   return(g_make_snd_color(TO_SCM_DOUBLE((Float)(pix->red) / 65535.0),
 			  TO_SCM_DOUBLE((Float)(pix->green) / 65535.0),
 			  TO_SCM_DOUBLE((Float)(pix->blue) / 65535.0)));
@@ -146,8 +148,10 @@ SCM pixel2color(COLOR_TYPE pix)
 COLOR_TYPE color2pixel(SCM color)
 {
   snd_color *v;
-  v = get_snd_color(color); 
-  return(v->color);
+  v = get_snd_color(color);
+  if (v)
+    return(v->color);
+  return(NO_COLOR);
 }
 
 void recolor_everything(GUI_WIDGET w, GUI_POINTER ptr)

@@ -1573,11 +1573,19 @@ char *mus_format(const char *format, ...)
   va_list ap;
   buf = (char *)CALLOC(MUS_FORMAT_STRING_MAX, sizeof(char));
   va_start(ap, format);
+#if HAVE_VSNPRINTF
   vsnprintf(buf, MUS_FORMAT_STRING_MAX, format, ap);
+#else
+  vsprintf(buf, format, ap);
+#endif
   va_end(ap);
 #else
   buf = (char *)CALLOC(MUS_FORMAT_STRING_MAX, sizeof(char));
+#if HAVE_SNPRINTF
   snprintf(buf, MUS_FORMAT_STRING_MAX, "%s...[you need vprintf]", format);
+#else
+  sprintf(buf, "%s...[you need vprintf]", format);
+#endif
 #endif
   return(buf);
 }

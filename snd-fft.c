@@ -2412,7 +2412,7 @@ of a moving mark:\n\
   #define H_fourier_transform   S_transform_type " value for Fourier transform (sinusoid basis)"
   #define H_wavelet_transform   S_transform_type " value for wavelet transform (" S_wavelet_type " chooses wavelet)"
   #define H_hankel_transform    S_transform_type " value for Hankel transform (Bessel function basis)"
-  #define H_chebyshev_transform S_transform_type " value for Chebyshev transform (Checbyshev polynomial basis)"
+  #define H_chebyshev_transform S_transform_type " value for Chebyshev transform (Chebyshev polynomial basis)"
   #define H_cepstrum            S_transform_type " value for cepstrum (log of power spectrum)"
   #define H_hadamard_transform  S_transform_type " value for Hadamard transform"
   #define H_walsh_transform     S_transform_type " value for Walsh transform (step function basis)"

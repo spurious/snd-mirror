@@ -194,7 +194,7 @@ static char *print_array(Float *arr, int len, int loc)
     {
       sprintf(str, "%.3f ", arr[k]);
       strcat(base, str);
-      if ((strlen(base) + 32) > size)
+      if ((int)(strlen(base) + 32) > size)
 	{
 	  base = (char *)REALLOC(base, size * 2 * sizeof(char));
 	  base[size] = 0;
@@ -230,7 +230,7 @@ static char *print_double_array(double *arr, int len, int loc)
     {
       sprintf(str, "%.3f ", arr[k]);
       strcat(base, str);
-      if ((strlen(base) + 32) > size)
+      if ((int)(strlen(base) + 32) > size)
 	{
 	  base = (char *)REALLOC(base, size * 2 * sizeof(char));
 	  base[size] = 0;
@@ -266,7 +266,7 @@ static char *print_int_array(int *arr, int len, int loc)
     {
       sprintf(str, "%d ", arr[k]);
       strcat(base, str);
-      if ((strlen(base) + 32) > size)
+      if ((int)(strlen(base) + 32) > size)
 	{
 	  base = (char *)REALLOC(base, size * 2 * sizeof(char));
 	  base[size] = 0;
@@ -2245,25 +2245,25 @@ static mus_any_class TWO_POLE_CLASS = {
 mus_any *mus_make_two_pole(Float a0, Float b1, Float b2)
 {
  smpflt *gen;
- gen = (smpflt *)CALLOC(1, sizeof(smpflt));
-  if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_two_pole!");
-  else
-    {
-      if (fabs(b1) >= 2.0) 
-	mus_error(MUS_UNSTABLE_TWO_POLE_ERROR, "make_two_pole: b1 = %.3f", b1);
-      else
-	{
-	  if (fabs(b2) >= 1.0) 
-	    mus_error(MUS_UNSTABLE_TWO_POLE_ERROR, "make_two_pole: b2 = %.3f", b2);
-	  else
-	    {
-	      if ( ((b1 * b1) - (b2 * 4.0) >= 0.0) &&
-		   ( ((b1 + b2) >= 1.0) || 
-		     ((b2 - b1) >= 1.0)))
-		mus_error(MUS_UNSTABLE_TWO_POLE_ERROR, "make_two_pole: b1 = %.3f, b2 = %.3f", b1, b2);
-	      else
-		{
+ if (fabs(b1) >= 2.0) 
+   mus_error(MUS_UNSTABLE_TWO_POLE_ERROR, "make_two_pole: b1 = %.3f", b1);
+ else
+   {
+     if (fabs(b2) >= 1.0) 
+       mus_error(MUS_UNSTABLE_TWO_POLE_ERROR, "make_two_pole: b2 = %.3f", b2);
+     else
+       {
+	 if ( ((b1 * b1) - (b2 * 4.0) >= 0.0) &&
+	      ( ((b1 + b2) >= 1.0) || 
+		((b2 - b1) >= 1.0)))
+	   mus_error(MUS_UNSTABLE_TWO_POLE_ERROR, "make_two_pole: b1 = %.3f, b2 = %.3f", b1, b2);
+	 else
+	   {
+	     gen = (smpflt *)CALLOC(1, sizeof(smpflt));
+	     if (gen == NULL) 
+	       mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate struct for mus_make_two_pole!");
+	     else
+	       {
 		  gen->core = &TWO_POLE_CLASS;
 		  gen->a0 = a0;
 		  gen->b1 = b1;
@@ -3397,6 +3397,12 @@ mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float
 	    {
 	      e->style = ENV_EXP;
 	      edata = fixup_exp_env(e, brkpts, npts, offset, scaler, base);
+	      if (edata == NULL)
+		{
+		  if ((e->original_data) && (e->data_allocated)) FREE(e->original_data);
+		  FREE(e);
+		  return(NULL);
+		}
 	      dmagify_env(e, edata, npts, dur_in_samples, 1.0);
 	      e->power = edata[1];
 	      e->init_power = e->power;

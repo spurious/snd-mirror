@@ -534,9 +534,13 @@ char *ps_rgb(snd_state *ss, int pchan);
 
 #if HAVE_GUILE
 int snd_color_p(SCM obj);
+snd_color *get_snd_color(SCM arg);
 SCM pixel2color(COLOR_TYPE pix);
 COLOR_TYPE color2pixel(SCM color);
-
+void recolor_button(GUI_WIDGET w, GUI_POINTER ptr);
+void color_chan_components(COLOR_TYPE color, int which_component);
+void color_unselected_graphs(COLOR_TYPE color);
+void recolor_everything(GUI_WIDGET w, GUI_POINTER ptr);
 void g_initialize_xgh(snd_state *ss, SCM local_doc);
 #endif
 

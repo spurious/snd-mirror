@@ -2463,9 +2463,9 @@ static SCM g_selection_color(void)
   return(pixel2color((state->sgx)->selection_color));
 }
 
-static SCM g_set_mix_color (SCM arg1, SCM arg2) 
+static SCM g_set_mix_color (SCM arg1, SCM arg2)
 {
-  snd_color *v; 
+  snd_color *v;
   SCM color, mix_id = SCM_UNDEFINED;
   if (SCM_UNBNDP(arg2))
     color = arg1;
@@ -2618,7 +2618,11 @@ static SCM g_set_selected_graph_color (SCM color)
       cp = selected_channel(state);
       if (cp) 
 	{
+#if USE_MOTIF
 	  XtVaSetValues(channel_graph(cp), XmNbackground, v->color, NULL);
+#else
+	  set_background_and_redraw(channel_graph(cp), v->color);
+#endif
 	}
     }
   return(color);
@@ -2658,7 +2662,7 @@ static SCM g_basic_color(void)
 static SCM g_set_basic_color (SCM color) 
 {
   snd_color *v; 
-  Pixel old_color;
+  COLOR_TYPE old_color;
   SCM_ASSERT(snd_color_p(color), color, SCM_ARG1, "set-" S_basic_color); 
   v = get_snd_color(color); 
   if (v) 
@@ -3107,7 +3111,7 @@ void g_initialize_gh(snd_state *ss)
   define_procedure_with_setter(S_search_procedure, SCM_FNC g_search_procedure, H_search_procedure,
 			       "set-" S_search_procedure, SCM_FNC g_set_search_procedure, local_doc, 0, 1, 1, 1);
 
-
+#if (!USE_NO_GUI)
   define_procedure_with_setter(S_selection_color, SCM_FNC g_selection_color, H_selection_color,
 			       "set-" S_selection_color, SCM_FNC g_set_selection_color, local_doc, 0, 0, 1, 0);
 
@@ -3167,7 +3171,7 @@ void g_initialize_gh(snd_state *ss)
 
   define_procedure_with_setter(S_pushed_button_color, SCM_FNC g_pushed_button_color, H_pushed_button_color,
 			       "set-" S_pushed_button_color, SCM_FNC g_set_pushed_button_color, local_doc, 0, 0, 1, 0);
-
+#endif
 
 
   /* ---------------- FUNCTIONS ---------------- */

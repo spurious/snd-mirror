@@ -3852,7 +3852,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
       return(TO_SCM_INT(cp->fft_style)); 
       break;
     case CP_FFT_WINDOW:
-      cp->fft_window = g_iclamp(0, on, DEFAULT_FFT_WINDOW, NUM_FFT_WINDOWS-1); 
+      cp->fft_window = g_iclamp(0, on, DEFAULT_FFT_WINDOW, NUM_FFT_WINDOWS - 1); 
       calculate_fft(cp, NULL); 
       return(TO_SCM_INT(cp->fft_window));
       break;

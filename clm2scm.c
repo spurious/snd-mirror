@@ -51,6 +51,7 @@
 #include "clm.h"
 #include "vct.h"
 #include "sg.h"
+#include "sndlib2scm.h"
 #include "clm2scm.h"
 
 #if (!USE_SND)
@@ -195,10 +196,7 @@ static int decode_keywords(char *caller, int nkeys, SCM *keys, int nargs, SCM *a
       if (!(keyword_p(args[arg_ctr])))
 	{
 	  if (keying) 
-	    scm_throw(MUS_MISC_ERROR,
-		      SCM_LIST3(TO_SCM_STRING(caller),
-				TO_SCM_STRING("unmatched value within keyword section?"),
-				args[arg_ctr]));
+	    mus_misc_error(caller, "unmatched value within keyword section?", args[arg_ctr]);
 	  /* type checking on the actual values has to be the caller's problem */
 	  if (arg_ctr > nkeys) 
 	    scm_throw(MUS_MISC_ERROR,
@@ -246,10 +244,7 @@ static int decode_keywords(char *caller, int nkeys, SCM *keys, int nargs, SCM *a
 	  if (key_found == 0)
 	    {
 	      /* either there's a redundant keyword pair or a keyword that 'caller' doesn't recognize */
-	      scm_throw(MUS_MISC_ERROR,
-			SCM_LIST3(TO_SCM_STRING(caller),
-				  TO_SCM_STRING("redundant or invalid key found"),
-				  key));
+	      mus_misc_error(caller, "redundant or invalid key found", key);
 	      arg_ctr += 2;
 	    }
 	}
@@ -507,17 +502,14 @@ the real and imaginary parts of the data, len should be a power of 2, dir = 1 fo
     {
       n = TO_C_INT(len); 
       if (n <= 0)
-	scm_throw(MUS_MISC_ERROR,
-		  SCM_LIST3(TO_SCM_STRING(S_mus_fft),
-			    TO_SCM_STRING("size <= 0?"),
-			    len));
+	mus_misc_error(S_mus_fft, "size <= 0?", len);
       if (n > v1->length)
 	n = v1->length;
     }
   else n = v1->length;
   nf = (log(n) / log(2.0));
   np = (int)nf;
-  if (np != nf) n = pow(2.0, np);
+  if (np != nf) n = (int)pow(2.0, np);
   mus_fft(v1->data, v2->data, n, sign);
   return(scm_return_first(url, uim));
 }
@@ -536,17 +528,12 @@ beta is the window parameter, if any:\n\
   if (NUMBER_P(ubeta)) beta = TO_C_DOUBLE(ubeta);
   n = TO_C_INT(size);
   if (n <= 0)
-    scm_throw(MUS_MISC_ERROR,
-	      SCM_LIST3(TO_SCM_STRING(S_make_fft_window),
-			TO_SCM_STRING("size <= 0?"),
-			size));
+    mus_misc_error(S_make_fft_window, "size <= 0?", size);
   t = TO_C_INT(type);
   if (MUS_FFT_WINDOW_OK(t))
     return(make_vct(n, mus_make_fft_window(t, n, beta)));
-  scm_throw(MUS_MISC_ERROR,
-	    SCM_LIST3(TO_SCM_STRING(S_make_fft_window),
-		      TO_SCM_STRING("unknown fft window"),
-		      type));
+  mus_misc_error(S_make_fft_window, "unknown fft window", type);
+  return(SCM_BOOL_F);
 }
 
 static SCM g_spectrum(SCM url, SCM uim, SCM uwin, SCM un, SCM utype)
@@ -571,17 +558,14 @@ and type determines how the spectral data is scaled:\n\
     {
       n = TO_C_INT(un); 
       if (n <= 0)
-	scm_throw(MUS_MISC_ERROR,
-		  SCM_LIST3(TO_SCM_STRING(S_spectrum),
-			    TO_SCM_STRING("size <= 0?"),
-			    un));
+	mus_misc_error(S_spectrum, "size <= 0?", un);
       if (n > v1->length)
 	n = v1->length;
     }
   else n = v1->length;
   nf = (log(n) / log(2.0));
   np = (int)nf;
-  if (np != nf) n = pow(2.0, np);
+  if (np != nf) n = (int)pow(2.0, np);
   if (INTEGER_P(utype)) type = TO_C_INT(utype); else type = 1; /* linear normalized */
   mus_spectrum(v1->data, v2->data, (v3) ? (v3->data) : NULL, n, type);
   return(scm_return_first(url, uim, uwin));
@@ -603,10 +587,7 @@ of (vcts) v1 with v2, using fft of size len (a power of 2), result in v1"
     {
       n = TO_C_INT(un); 
       if (n <= 0)
-	scm_throw(MUS_MISC_ERROR,
-		  SCM_LIST3(TO_SCM_STRING(S_convolution),
-			    TO_SCM_STRING("size <= 0?"),
-			    un));
+	mus_misc_error(S_convolution, "size <= 0?", un);
       if (n > v1->length)
 	n = v1->length;
       if (n > v2->length)
@@ -615,7 +596,7 @@ of (vcts) v1 with v2, using fft of size len (a power of 2), result in v1"
   else n = v1->length;
   nf = (log(n) / log(2.0));
   np = (int)nf;
-  if (np != nf) n = pow(2.0, np);
+  if (np != nf) n = (int)pow(2.0, np);
   mus_convolution(v1->data, v2->data, n);
   return(scm_return_first(url1, url2));
 }
@@ -654,10 +635,7 @@ taking into account wrap-around (size = size of data), with linear interpolation
     {
       len = TO_C_INT_OR_ELSE(size, 0); 
       if (len <= 0)
-	scm_throw(MUS_MISC_ERROR,
-		  SCM_LIST3(TO_SCM_STRING(S_array_interp),
-			    TO_SCM_STRING("size <= 0?"),
-			    size));
+	mus_misc_error(S_array_interp, "size <= 0?", size);
       if (len > v->length) len = v->length;
     }
   else len = v->length;
@@ -1049,10 +1027,7 @@ static SCM g_mus_bank(SCM gens, SCM amps, SCM inp, SCM inp2)
       {
 	if (scls) FREE(scls);
 	if (gs) FREE(gs);
-	scm_throw(MUS_MISC_ERROR,
-		  SCM_LIST3(TO_SCM_STRING(S_mus_bank),
-			    data[i],
-			    TO_SCM_STRING("not a generator!")));
+	mus_misc_error(S_mus_bank, "not a generator!", data[i]);
       }
   invals = whatever_to_floats(inp, size, S_mus_bank);
   invals2 = whatever_to_floats(inp2, size, S_mus_bank);
@@ -1219,7 +1194,7 @@ static SCM g_make_delay_1(int choice, SCM arglist)
   SCM args[14], keys[7];
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
   int vals, i, argn = 0, len, arglist_len, keyn, max_size = -1;
-  int size = 1;
+  int size = 1, size_key;
   Float *line = NULL;
   Float scaler = 0.0, feedback = 0.0, feedforward = 0.0;
   SCM initial_contents = SCM_UNDEFINED, lst, msg;
@@ -1259,6 +1234,7 @@ static SCM g_make_delay_1(int choice, SCM arglist)
 	  break;
 	}
       size = ikeyarg(keys[keyn], caller, orig_arg[keyn]+1, args[orig_arg[keyn]], size);
+      size_key = keyn;
       keyn++;
       if (!(keyword_p(keys[keyn])))
 	{
@@ -1281,6 +1257,8 @@ static SCM g_make_delay_1(int choice, SCM arglist)
       keyn++;
       max_size = ikeyarg(keys[keyn], caller, orig_arg[keyn]+1, args[orig_arg[keyn]], size);
     }
+  if (size < 0)
+    mus_misc_error(caller, "size < 0?", keys[size_key]);
   if (max_size == -1) max_size = size;
   if (max_size <= 0)
     {
@@ -1522,6 +1500,8 @@ returns a new " S_sum_of_cosines " generator, producing a band-limited pulse tra
       freq = fkeyarg(keys[1], S_make_sum_of_cosines, orig_arg[1]+1, args[orig_arg[1]], freq);
       phase = fkeyarg(keys[2], S_make_sum_of_cosines, orig_arg[2]+1, args[orig_arg[2]], phase);
     }
+  if (cosines <= 0)
+    mus_misc_error(S_make_sum_of_cosines, "cosines <= 0?", keys[0]);
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->gen = mus_make_sum_of_cosines(cosines, freq, phase);
   gn->nvcts = 0;
@@ -2487,10 +2467,7 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
   size = TO_C_INT_OR_ELSE(cararg, 0);
   if (len > (size + 1)) len = size + 1;
   if (size <= 0)
-    scm_throw(MUS_MISC_ERROR,
-	      SCM_LIST3(TO_SCM_STRING(S_make_frame),
-			TO_SCM_STRING("size: "),
-			TO_SCM_INT(size)));
+    mus_misc_error(S_make_frame, "size: ", TO_SCM_INT(size));
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->gen = (mus_any *)mus_make_empty_frame(size);
   if (len > 1)
@@ -2503,10 +2480,7 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
 	  {
 	    mus_free(gn->gen);
 	    FREE(gn);
-	    scm_throw(MUS_MISC_ERROR,
-		      SCM_LIST3(TO_SCM_STRING(S_make_frame),
-				TO_SCM_STRING("invalid arg:"),
-				SCM_CAR(lst)));
+	    mus_misc_error(S_make_frame, "invalid arg:", SCM_CAR(lst));
 	  }
     }
   return(mus_scm_to_smob(gn));
@@ -2740,10 +2714,7 @@ with chans inputs and outputs, initializing the scalers from the rest of the arg
   if (!(NUMBER_P(cararg))) scm_wrong_type_arg(S_make_mixer, 1, cararg);
   size = TO_C_INT_OR_ELSE(cararg, 0);
   if (size <= 0)
-    scm_throw(MUS_MISC_ERROR,
-	      SCM_LIST3(TO_SCM_STRING(S_make_mixer),
-			TO_SCM_STRING("size: "),
-			TO_SCM_INT(size)));
+    mus_misc_error(S_make_mixer, "size: ", TO_SCM_INT(size));
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->gen = (mus_any *)mus_make_empty_mixer(size);
   if (len > 1)
@@ -2759,10 +2730,7 @@ with chans inputs and outputs, initializing the scalers from the rest of the arg
 	    {
 	      mus_free(gn->gen);
 	      FREE(gn);
-	      scm_throw(MUS_MISC_ERROR,
-			SCM_LIST3(TO_SCM_STRING(S_make_mixer),
-				  TO_SCM_STRING("invalid arg:"),
-				  SCM_CAR(lst)));
+	      mus_misc_error(S_make_mixer, "invalid arg:", SCM_CAR(lst));
 	    }
 	  k++;
 	  if (k == size)
@@ -3054,11 +3022,7 @@ is basically the same as make-oscil"
         }
     }
   if (wsize <= 0)
-    scm_throw(MUS_MISC_ERROR,
-	      SCM_LIST4(TO_SCM_STRING(S_make_waveshape),
-			TO_SCM_STRING("size <= 0?"),
-			TO_SCM_INT(wsize),
-			keys[2]));
+    mus_misc_error(S_make_waveshape, "size <= 0?", keys[2]);
   if (wave == NULL) 
     {
       if (partials == NULL) return(SCM_BOOL_F);
@@ -3102,10 +3066,7 @@ that will produce the harmonic spectrum given by the partials argument"
     size = TO_C_INT(s_size);
   else size = DEFAULT_TABLE_SIZE;
   if (size <= 0)
-    scm_throw(MUS_MISC_ERROR,
-	      SCM_LIST3(TO_SCM_STRING(S_partials2waveshape),
-			TO_SCM_STRING("size <= 0?"),
-			s_size));
+    mus_misc_error(S_partials2waveshape, "size <= 0?", s_size);
   partials = list2partials(amps, &npartials);
   wave = mus_partials2waveshape(npartials, partials, size, (Float *)CALLOC(size, sizeof(Float)));
   gwave = make_vct(size, wave);
@@ -3485,7 +3446,17 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
       end = ikeyarg(keys[5], S_make_env, orig_arg[5]+1, args[orig_arg[5]], 0);
       start = ikeyarg(keys[6], S_make_env, orig_arg[6]+1, args[orig_arg[6]], 0);
     }
-  if (brkpts == NULL) scm_misc_error(S_make_env, "no envelope?", SCM_EOL);
+  if (brkpts == NULL) 
+    scm_misc_error(S_make_env, "no envelope?", SCM_EOL);
+  if ((end < 0) || (base < 0.0) || (duration < 0.0) || (start < 0))
+    {
+      if (brkpts) FREE(brkpts);
+      if (odata) FREE(odata);
+      scm_throw(MUS_MISC_ERROR,
+		SCM_LIST3(TO_SCM_STRING(S_make_env),
+			  TO_SCM_STRING((end < 0) ? "end < 0?" : ((start < 0) ? "start < 0?" :  ((base < 0.0) ? "base < 0.0?" : "duration < 0.0?"))),
+			  (end < 0) ? keys[5] : ((start < 0) ? keys[6] : ((base < 0.0) ? keys[4] : keys[2]))));
+    }
   /* odata = vct->data in this context [vcts[0]] */
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->vcts = (SCM *)CALLOC(1, sizeof(SCM));
@@ -3694,17 +3665,34 @@ should be sndlib identifiers:\n\
    (make-sample->file \"test.snd\" 2 mus-lshort mus-riff)"
 
   mus_scm *gn;
+  int df, ht, chns;
   SCM_ASSERT(gh_string_p(name), name, SCM_ARG1, S_make_sample2file);
   SCM_ASSERT(INTEGER_P(chans), chans, SCM_ARG2, S_make_sample2file);
   SCM_ASSERT(INTEGER_P(out_format), out_format, SCM_ARG3, S_make_sample2file);
   SCM_ASSERT(INTEGER_P(out_type), out_type, SCM_ARG4, S_make_sample2file);
-  gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
-  gn->gen = mus_make_sample2file(TO_C_STRING(name),
-				 TO_C_INT(chans),
-				 TO_C_INT(out_format),
-				 TO_C_INT(out_type));
-  gn->nvcts = 0;
-  return(scm_return_first(mus_scm_to_smob(gn), name));
+  df = TO_C_INT(out_format);
+  if (MUS_DATA_FORMAT_OK(df))
+    {
+      ht = TO_C_INT(out_type);
+      if (MUS_HEADER_TYPE_OK(ht))
+	{
+	  chns = TO_C_INT(chans);
+	  if (chns > 0)
+	    {
+	      gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
+	      gn->gen = mus_make_sample2file(TO_C_STRING(name),
+					     chns,
+					     df,
+					     ht);
+	      gn->nvcts = 0;
+	      return(scm_return_first(mus_scm_to_smob(gn), name));
+	    }
+	  else mus_misc_error(S_make_sample2file, "invalid chans", chans);
+	}
+      else mus_misc_error(S_make_sample2file, "invalid header type", out_type);
+    }
+  else mus_misc_error(S_make_sample2file, "invalid data format", out_format);
+  return(SCM_BOOL_F);
 }
 
 static SCM g_sample2file(SCM obj, SCM samp, SCM chan, SCM val)
@@ -3795,7 +3783,7 @@ static SCM g_array2file(SCM filename, SCM data, SCM len, SCM srate, SCM channels
 a vct object of interleaved samples to the sound file 'filename' set up to have the given \
 srate and channels.  'len' samples are written."
 
-  int olen;
+  int olen, samps;
   vct *v;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_array2file);
   SCM_ASSERT(vct_p(data), data, SCM_ARG2, S_array2file);
@@ -3803,9 +3791,14 @@ srate and channels.  'len' samples are written."
   SCM_ASSERT(NUMBER_P(srate), srate, SCM_ARG4, S_array2file);
   SCM_ASSERT(INTEGER_P(channels), channels, SCM_ARG5, S_array2file);
   v = get_vct(data);
+  samps = TO_C_INT_OR_ELSE(len, 1);
+  if (samps <= 0)
+    mus_misc_error(S_array2file, "samples <= 0?", len);
+  if (samps > v->length)
+    samps = v->length;
   olen = mus_fltarray2file(TO_C_STRING(filename),
 			   v->data,
-			   TO_C_INT_OR_ELSE(len, 0),
+			   samps,
 			   TO_C_INT_OR_ELSE(srate, 0),
 			   TO_C_INT(channels));
   return(scm_return_first(TO_SCM_INT(olen), filename));
@@ -3817,18 +3810,36 @@ static SCM g_file2array(SCM filename, SCM chan, SCM start, SCM samples, SCM data
 'filename' placing samples from channel 'chan' into the vct object 'data' starting in the file \
 at frame 'start' and reading 'samples' samples altogether."
 
-  int err;
+  int err, chn, samps;
   vct *v;
+  char *name;
   SCM_ASSERT(gh_string_p(filename), filename, SCM_ARG1, S_file2array);
+  name = TO_C_STRING(filename);
+  if (!(mus_file_probe(name)))
+    scm_throw(NO_SUCH_FILE,
+	      SCM_LIST3(TO_SCM_STRING(S_file2array),
+			filename,
+			TO_SCM_STRING(strerror(errno))));
   SCM_ASSERT(INTEGER_P(chan), chan, SCM_ARG2, S_file2array);
   SCM_ASSERT(NUMBER_P(start), start, SCM_ARG3, S_file2array);
   SCM_ASSERT(NUMBER_P(samples), samples, SCM_ARG4, S_file2array);
   SCM_ASSERT((vct_p(data)), data, SCM_ARG5, S_file2array);
   v = get_vct(data);
-  err = mus_file2fltarray(TO_C_STRING(filename),
-			  TO_C_INT(chan),
+  samps = TO_C_INT_OR_ELSE(samples, 1);
+  if (samps <= 0) 
+    mus_misc_error(S_file2array, "samples <= 0?", samples);
+  chn = TO_C_INT(chan);
+  if ((chn < 0) || (chn > mus_sound_chans(name)))
+    scm_throw(NO_SUCH_CHANNEL,
+	      SCM_LIST3(TO_SCM_STRING(S_file2array),
+			TO_SCM_STRING("invalid chan"),
+			chn));
+  if (samps > v->length)
+    samps = v->length;
+  err = mus_file2fltarray(name,
+			  chn,
 			  TO_C_INT_OR_ELSE(start, 0),
-			  TO_C_INT_OR_ELSE(samples, 0),
+			  samps,
 			  v->data);
   return(scm_return_first(TO_SMALL_SCM_INT(err), filename));
 }
@@ -3918,6 +3929,8 @@ returns a new readin (file input) generator reading the sound file 'file' starti
       start = ikeyarg(keys[2], S_make_readin, orig_arg[2]+1, args[orig_arg[2]], start);
       direction = ikeyarg(keys[3], S_make_readin, orig_arg[3]+1, args[orig_arg[3]], direction);
     }
+  if (channel < 0)
+    mus_misc_error(S_make_readin, "channel < 0?", keys[1]);
   if (!(mus_file_probe(file)))
     scm_throw(NO_SUCH_FILE,
 	      SCM_LIST3(TO_SCM_STRING(S_make_readin),
@@ -4203,7 +4216,7 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
 
   SCM in_obj = SCM_UNDEFINED;
   mus_scm *gn;
-  int vals, wid = 0;
+  int vals, wid = 0; /* 0 here picks up the current default width in clm.c */
   SCM args[6], keys[3];
   int orig_arg[3] = {0, 0, 0};
   Float srate = 1.0;
@@ -4223,6 +4236,11 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
       srate = fkeyarg(keys[1], S_make_src, orig_arg[1]+1, args[orig_arg[1]], srate);
       wid = ikeyarg(keys[2], S_make_src, orig_arg[2]+1, args[orig_arg[2]], wid);
     }
+  if ((srate <= 0) || (wid < 0))
+    scm_throw(MUS_MISC_ERROR,
+	      SCM_LIST3(TO_SCM_STRING(S_make_src),
+			TO_SCM_STRING((srate <= 0) ? "srate <= 0?" : "width < 0?"),
+			(srate <= 0) ? keys[1] : keys[2]));
   gn = (mus_scm *)CALLOC(1, sizeof(mus_scm));
   gn->vcts = (SCM *)CALLOC(1, sizeof(SCM));
   if (BOUND_P(in_obj)) gn->vcts[INPUT_FUNCTION] = in_obj; else gn->vcts[INPUT_FUNCTION] = SCM_EOL;
@@ -4324,6 +4342,13 @@ jitter controls the randomness in that spacing, input can be a file pointer."
       jitter = fkeyarg(keys[6], S_make_granulate, orig_arg[6]+1, args[orig_arg[6]], jitter);
       maxsize = ikeyarg(keys[7], S_make_granulate, orig_arg[7]+1, args[orig_arg[7]], maxsize);
     }
+  if ((expansion <= 0.0) || (segment_length <= 0.0) || (segment_scaler == 0.0))
+    scm_throw(MUS_MISC_ERROR,
+	      SCM_LIST3(TO_SCM_STRING(S_make_granulate),
+			TO_SCM_STRING((expansion <= 0.0) ? "expansion < 0.0?" : 
+				      ((segment_length <= 0.0) ? "segment-length <= 0.0?" :
+				       "segment-scaler: 0.0?")),
+			(expansion <= 0.0) ? keys[1] : ((segment_length <= 0.0) ? keys[2] : keys[3])));
   if ((segment_length + output_hop) > 60.0) /* multiplied by srate in mus_make_granulate in array allocation */
     scm_throw(MUS_MISC_ERROR,
 	      SCM_LIST2(TO_SCM_STRING(S_make_granulate),

@@ -295,12 +295,20 @@ void report_in_minibuffer(snd_info *sp, char *format, ...)
   len = snd_strlen(format) + 256;
   buf = (char *)CALLOC(len, sizeof(char));
   va_start(ap, format);
+#if HAVE_VSNPRINTF
   vsnprintf(buf, len, format, ap);
+#else
+  vsprintf(buf, format, ap);
+#endif
   va_end(ap);
 #else
   len = snd_strlen(format) + 256;
   buf = (char *)CALLOC(len, sizeof(char));
+#if HAVE_SNPRINTF
   snprintf(buf, len, "%s...[you need vprintf]", format);
+#else
+  sprintf(buf, "%s...[you need vprintf]", format);
+#endif
 #endif
   set_minibuffer_string(sp, buf);
   sp->minibuffer_temp = 1;
@@ -318,12 +326,20 @@ void report_in_minibuffer_and_save(snd_info *sp, char *format, ...)
   len = snd_strlen(format) + 256;
   buf = (char *)CALLOC(len, sizeof(char));
   va_start(ap, format);
+#if HAVE_VSNPRINTF
   vsnprintf(buf, len, format, ap);
+#else
+  vsprintf(buf, format, ap);
+#endif
   va_end(ap);
 #else
   len = snd_strlen(format) + 256;
   buf = (char *)CALLOC(len, sizeof(char));
+#if HAVE_SNPRINTF
   snprintf(buf, len, "%s...[you need vprintf]", format);
+#else
+  sprintf(buf, "%s...[you need vprintf]", format);
+#endif
 #endif
   set_minibuffer_string(sp, buf);
   sp->minibuffer_temp = 1;

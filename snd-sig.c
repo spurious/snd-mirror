@@ -3749,7 +3749,7 @@ static SCM g_snd_spectrum(SCM data, SCM win, SCM len, SCM linear_or_dB)
   #define H_snd_spectrum "(" S_snd_spectrum " data window len linear-or-dB)\n\
 return magnitude spectrum of data (vct) in data using fft-window win and fft length len"
 
-  int i, n, linear;
+  int i, n, linear, wtype;
   Float maxa, todb, lowest, val;
   Float *idat, *rdat, *window;
   vct *v;
@@ -3760,11 +3760,16 @@ return magnitude spectrum of data (vct) in data using fft-window win and fft len
   v = get_vct(data);
   rdat = v->data;
   n = TO_C_INT(len);
+  if (n <= 0)
+    mus_misc_error(S_snd_spectrum, "length <= 0?", len);
   if (n > v->length) n = v->length;
   if (SCM_TRUE_P(linear_or_dB)) linear = 1; else linear = 0;
+  wtype = TO_C_INT(win);
+  if (!(MUS_FFT_WINDOW_OK(wtype)))
+    mus_misc_error(S_snd_spectrum, "unknown fft window", win);
   idat = (Float *)CALLOC(n, sizeof(Float));
   window = (Float *)CALLOC(n, sizeof(Float));
-  make_fft_window_1(window, n, TO_C_INT(win), 0.0);
+  make_fft_window_1(window, n, wtype, 0.0);
   for (i = 0; i < n; i++) rdat[i] *= window[i];
   FREE(window);
   mus_fft(rdat, idat, n, 1);

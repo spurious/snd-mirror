@@ -16,7 +16,11 @@ void snd_warning(char *format, ...)
     snd_error_buffer = (char *)CALLOC(SND_ERROR_BUFFER_SIZE, sizeof(char));
 #if HAVE_VPRINTF
   va_start(ap, format);
+#if HAVE_VSNPRINTF
   vsnprintf(snd_error_buffer, SND_ERROR_BUFFER_SIZE, format, ap);
+#else
+  vsprintf(snd_error_buffer, format, ap);
+#endif
   va_end(ap);
 #if HAVE_GUILE
   if ((HOOKED(snd_warning_hook)) &&
@@ -57,7 +61,11 @@ void snd_error(char *format, ...)
   if (snd_error_buffer == NULL) 
     snd_error_buffer = (char *)CALLOC(SND_ERROR_BUFFER_SIZE, sizeof(char));
   va_start(ap, format);
+#if HAVE_VSNPRINTF
   vsnprintf(snd_error_buffer, SND_ERROR_BUFFER_SIZE, format, ap);
+#else
+  vsprintf(snd_error_buffer, format, ap);
+#endif
   va_end(ap);
 #if HAVE_GUILE
     if ((HOOKED(snd_error_hook)) &&

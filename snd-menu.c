@@ -660,12 +660,17 @@ static SCM g_add_to_menu(SCM menu, SCM label, SCM callstr)
   #define H_add_to_menu "(" S_add_to_menu " menu label func) adds label to menu invoking func when activated \
 menu is the index returned by add-to-main-menu, func should be a function of no arguments"
 
-  int err = 0, slot;
+  int err = 0, slot, m;
   SCM_ASSERT(gh_string_p(label), label, SCM_ARG2, S_add_to_menu);
   SCM_ASSERT(INTEGER_P(menu), menu, SCM_ARG1, S_add_to_menu);
+  m = TO_C_INT(menu);
+  if (m < 0)
+    scm_throw(NO_SUCH_MENU,
+	      SCM_LIST2(TO_SCM_STRING(S_add_to_menu),
+			menu));
   slot = make_callback_slot();
   err = gh_add_to_menu(get_global_state(), 
-		       TO_C_INT(menu),
+		       m,
 		       TO_C_STRING(label),
 		       slot);
   if (err == -1) 

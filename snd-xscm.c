@@ -1,4 +1,5 @@
 #include "snd.h"
+#include "vct.h"
 
 /* TODO:   user-loaded colormaps need to be added to the Color dialog list, etc
  * TODO    colored marks etc (requires 2 pixels for selected/unselected graphs)?
@@ -173,6 +174,7 @@ SCM pixel2color(COLOR_TYPE pix)
   Colormap cmap;
   XColor tmp_color;
   Display *dpy;
+  if (pix == NO_COLOR) return(SCM_BOOL_F);
   dpy = XtDisplay(MAIN_SHELL(state));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
@@ -187,7 +189,9 @@ COLOR_TYPE color2pixel(SCM color)
 {
   snd_color *v;
   v = get_snd_color(color); 
-  return(v->color);
+  if (v)
+    return(v->color);
+  return(NO_COLOR);
 }
 
 void recolor_everything(GUI_WIDGET w, GUI_POINTER ptr)

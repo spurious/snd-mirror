@@ -6940,81 +6940,114 @@
 	(check-error-tag 'no-such-region (lambda () (make-region-sample-reader 0 1234567)))
 
 	;; now try everything! (all we care about here is that Snd keeps running)
-	(for-each (lambda (n)
-		    (catch #t
-			   (lambda () (n))
-			   (lambda args (car args))))
-		  procs)
+	(for-each 
+	 (lambda (n)
+	   (catch #t
+		  (lambda () (n))
+		  (lambda args (car args))))
+	 procs)
 	(dismiss-all-dialogs)
 	(gc)
 
-	(for-each (lambda (arg)
-		    (for-each (lambda (n)
-				;(display (format #f "(~A ~A)~%" n arg))
-				(catch #t
-				       (lambda () (n arg))
-				       (lambda args (car args))))
-			      procs))
-		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color 1 0 0) 
-			#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
-			(lambda () #t) (current-module) (make-sound-data 2 3) :order
-			0 1 -1 (make-hook 2)))
+	(for-each 
+	 (lambda (arg)
+	   (for-each 
+	    (lambda (n)
+	      ;(display (format #f "(~A ~A)~%" n arg))
+	      (catch #t
+		     (lambda () (n arg))
+		     (lambda args (car args))))
+	    procs))
+	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color 1 0 0)  #(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
+	       (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2)))
 	(gc)
 
-	(for-each (lambda (arg1)
-		    (for-each (lambda (arg2)
-				;(display (format #f "(~A ~A)~%" arg1 arg2))
-				(for-each (lambda (n)
-					    ;(display (format #f "(~A ~A ~A)~%" n arg1 arg2))
-					    (catch #t
-						   (lambda () (n arg1 arg2))
-						   (lambda args (car args))))
-					  procs))
-			      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color 1 0 0) #(0 1) 3/4 
-				    'mus-error (sqrt -1.0) (make-delay 32) :feedback -1)))
-		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color 1 0 0) #(0 1) 3/4 
-			'mus-error (sqrt -1.0) (make-delay 32) :frequency -1))
+	(for-each 
+	 (lambda (arg1)
+	   (for-each 
+	    (lambda (arg2)
+	      ;(display (format #f "(~A ~A)~%" arg1 arg2))
+	      (for-each 
+	       (lambda (n)
+		 ;(display (format #f "(~A ~A ~A)~%" n arg1 arg2))
+		 (catch #t
+			(lambda () (n arg1 arg2))
+			(lambda args (car args))))
+	       procs))
+	    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color 1 0 0) #(0 1) 3/4 (sqrt -1.0) (make-delay 32) :feedback -1 0)))
+	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color 1 0 0) #(0 1) 3/4 (sqrt -1.0) (make-delay 32) :frequency -1 0))
 	(gc)
 
 	(if (> tests 1)
 	    (begin
-	      (for-each (lambda (arg1)
-			  (begin
-			    (for-each (lambda (arg2)
-					(for-each (lambda (arg3)
-						    ;(display (format #f "(~A ~A ~A)~%" arg1 arg2 arg3))
-						    (for-each (lambda (n)
-								;(display (format #f "(~A ~A ~A ~A)~%" n arg1 arg2 arg3))
-								(catch #t
-								       (lambda () (n arg1 arg2 arg3))
-								       (lambda args (car args))))
-							      procs))
-						  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1)
-							(sqrt -1.0) (make-delay 32) :start)))
-				      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) 
-					    (sqrt -1.0) (make-delay 32) :phase))
-			    (gc)))
-			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) 
-			      (sqrt -1.0) (make-delay 32) :channels))
+	      (for-each 
+	       (lambda (arg1)
+		 (begin
+		   (for-each
+		    (lambda (arg2)
+		      (for-each 
+		       (lambda (arg3)
+			 ;(display (format #f "(~A ~A ~A)~%" arg1 arg2 arg3))
+			 (for-each
+			  (lambda (n)
+			    ;(display (format #f "(~A ~A ~A ~A)~%" n arg1 arg2 arg3))
+			    (catch #t
+				   (lambda () (n arg1 arg2 arg3))
+				   (lambda args (car args))))
+			  procs))
+		       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :start -1 0)))
+		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0))
+		   (gc)))
+	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0))
 	      (gc)
 	      
-	      (for-each (lambda (arg1)
-			  (begin
-			    (for-each (lambda (arg2)
-					(for-each (lambda (arg3)
-						    (for-each (lambda (arg4)
-								;(display (format #f "(~A ~A ~A ~A)~%" arg1 arg2 arg3 arg4))
-								(for-each (lambda (n)
-									    ;(display (format #f "(~A ~A ~A ~A ~A)~%" n arg1 arg2 arg3 arg4))
-									    (catch #t
-										   (lambda () (n arg1 arg2 arg3 arg4))
-										   (lambda args (car args))))
-									  procs))
-							      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :wave)))
-						  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :initial-contents)))
-				      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :srate))
-			    (gc)))
-			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :input))
+	      (for-each 
+	       (lambda (arg1)
+		 (begin
+		   (for-each 
+		    (lambda (arg2)
+		      (for-each 
+		       (lambda (arg3)
+			 (for-each 
+			  (lambda (arg4)
+			    ;(display (format #f "(~A ~A ~A ~A)~%" arg1 arg2 arg3 arg4))
+			    (for-each
+			     (lambda (n)
+			       ;(display (format #f "(~A ~A ~A ~A ~A)~%" n arg1 arg2 arg3 arg4))
+			       (catch #t
+				      (lambda () (n arg1 arg2 arg3 arg4))
+				      (lambda args (car args))))
+			     procs))
+			  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :wave -1 0)))
+		       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :initial-contents -1 0)))
+		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :srate -1 0))
+		   (gc)))
+	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :input -1 0))
+
+	      (if #f
+		  (for-each 
+		   (lambda (arg1)
+		     (for-each 
+		      (lambda (arg2)
+			(for-each 
+			 (lambda (arg3)
+			   (for-each 
+			    (lambda (arg4)
+			      (for-each
+			       (lambda (arg5)
+				 ;(display (format #f "(~A ~A ~A ~A ~A)~%" arg1 arg2 arg3 arg4 arg5))
+				 (for-each 
+				  (lambda (n)
+				    (catch #t
+					   (lambda () (n arg1 arg2 arg3 arg4 arg5))
+					   (lambda args (car args))))
+				  procs))
+			       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :wave -1 0 1)))
+			    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :initial-contents -1 0 1)))
+			 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :srate -1 0 1)))
+		      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :input -1 0 1)))
+		   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :order -1 0 1)))
+	      (gc)
 	      ))
       ))
 

@@ -69,7 +69,11 @@ void mus_error(int error, const char *format, ...)
   if (mus_error_buffer == NULL)
     mus_error_buffer = (char *)CALLOC(MUS_ERROR_BUFFER_SIZE, sizeof(char));
   va_start(ap, format);
+#if HAVE_VSNPRINTF
   vsnprintf(mus_error_buffer, MUS_ERROR_BUFFER_SIZE, format, ap);
+#else
+  vsprintf(mus_error_buffer, format, ap);
+#endif
   va_end(ap);
   if (mus_error_handler)
     (*mus_error_handler)(error, mus_error_buffer);
@@ -103,7 +107,11 @@ void mus_print(const char *format, ...)
   if (mus_print_handler)
     {
       va_start(ap, format);
+#if HAVE_VSNPRINTF
       vsnprintf(mus_error_buffer, MUS_ERROR_BUFFER_SIZE, format, ap);
+#else
+      vsprintf(mus_error_buffer, format, ap);
+#endif
       va_end(ap);
       (*mus_print_handler)(mus_error_buffer);
     }
@@ -747,13 +755,14 @@ int mus_sound_open_output (const char *arg, int srate, int chans, int data_forma
   if (err != MUS_ERROR)
     {
       fd = mus_file_open_write(arg);
-      mus_file_set_descriptors(fd,
-			       arg,
-			       data_format,
-			       mus_data_format_to_bytes_per_sample(data_format),
-			       mus_header_data_location(),
-			       chans,
-			       header_type);
+      if (fd != -1)
+	mus_file_set_descriptors(fd,
+				 arg,
+				 data_format,
+				 mus_data_format_to_bytes_per_sample(data_format),
+				 mus_header_data_location(),
+				 chans,
+				 header_type);
     }
   return(fd);
 }
@@ -763,13 +772,14 @@ int mus_sound_reopen_output(const char *arg, int chans, int format, int type, in
   int fd;
   mus_sound_initialize();
   fd = mus_file_reopen_write(arg);
-  mus_file_set_descriptors(fd,
-			   arg,
-			   format,
-			   mus_data_format_to_bytes_per_sample(format),
-			   data_loc,
-			   chans,
-			   type);
+  if (fd != -1)
+    mus_file_set_descriptors(fd,
+			     arg,
+			     format,
+			     mus_data_format_to_bytes_per_sample(format),
+			     data_loc,
+			     chans,
+			     type);
   return(fd);
 }
 

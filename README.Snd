@@ -231,11 +231,9 @@ In Linux, if you get the error "No such file or directory" when you
 try to execute linux-snd, the problem is probably that you're running
 a libc5-based Linux; linux-snd is built with glibc (the newer libc).
 
-If Snd dies with a segfault after you upgrade Linux,  first, recompile
-guile from scratch, if you're using guile (i.e. make clean, make,
-make install).  Then remake Snd.  If Snd dies with a complaint
-about __setfpucw, you need to recompile Snd (that portion of
-glibc changed between versions 1 and 2, or something like that).
+If Snd dies with a complaint about __setfpucw, you need to recompile
+Snd (that portion of glibc changed between versions 1 and 2, or
+something like that).
 
 
 Compiling:

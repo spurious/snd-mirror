@@ -43,6 +43,8 @@
   #ifdef LINUX
     #define HAVE_MALLINFO 1
     #define HAVE_MKSTEMP 1
+    #define HAVE_VSNPRINTF 1
+    #define HAVE_SNPRINTF 1
   #endif
   #ifndef _MSC_VER
     #ifndef TRAP_SEGFAULT
@@ -227,6 +229,8 @@ enum {WAVE_AXIS_INFO, FFT_AXIS_INFO, LISP_AXIS_INFO};
 #define MAIN_GRAPH_STYLE(cp) (cp->graph_style & 0xff)
 #define FFT_GRAPH_STYLE(cp) (((cp->graph_style & 0xff00) != 0) ? (((cp->graph_style >> 8) & 0xff) - 1) : (cp->graph_style & 0xff))
 #define LISP_GRAPH_STYLE(cp) (((cp->graph_style & 0xff0000) != 0) ? (((cp->graph_style >> 16) & 0xff) - 1) : (cp->graph_style & 0xff))
+
+enum {COLOR_POSITION, COLOR_ZOOM};
 
 #define DEFAULT_MIN_DB -60.0
 #define DEFAULT_AMP 1.0

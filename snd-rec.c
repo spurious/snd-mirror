@@ -1577,24 +1577,25 @@ static SCM g_recorder_gain (SCM num)
 static SCM g_recorder_in_amp (SCM in, SCM out) 
 {
   #define H_recorder_in_amp "(" S_recorder_in_amp " in out) -> recorder scaler on input in to output out"
-  int i,o;
+  int ic, oc;
   SCM_ASSERT(INTEGER_P(in), in, SCM_ARG1, S_recorder_in_amp);
   SCM_ASSERT(INTEGER_P(out), out, SCM_ARG2, S_recorder_in_amp);
-  i = TO_C_INT(in);
-  o = TO_C_INT(out);
-  if ((i < MAX_IN_CHANS) && (o < MAX_OUT_CHANS))
-    return(TO_SCM_DOUBLE(rp->in_amps[i][o]));
+  ic = TO_C_INT(in);
+  oc = TO_C_INT(out);
+  if ((ic >= 0) && (ic < MAX_IN_CHANS) && 
+      (oc >= 0) && (oc < MAX_OUT_CHANS))
+    return(TO_SCM_DOUBLE(rp->in_amps[ic][oc]));
   return(TO_SCM_DOUBLE(0.0));
 }
 
 static SCM g_recorder_out_amp (SCM num) 
 {
   #define H_recorder_out_amp "(" S_recorder_out_amp " out) -> recorder output out scaler"
-  int o;
+  int oc;
   SCM_ASSERT(INTEGER_P(num), num, SCM_ARG1, S_recorder_out_amp);
-  o = TO_C_INT(num);
-  if (o < MAX_OUT_CHANS)
-    return(TO_SCM_DOUBLE(rp->out_amps[o]));
+  oc = TO_C_INT(num);
+  if ((oc >= 0) && (oc < MAX_OUT_CHANS))
+    return(TO_SCM_DOUBLE(rp->out_amps[oc]));
   return(TO_SCM_DOUBLE(0.0));
 }
 
@@ -1617,10 +1618,14 @@ static SCM g_set_recorder_in_amp (SCM in, SCM out, SCM amp)
   SCM_ASSERT(NUMBER_P(amp), amp, SCM_ARG3, "set-" S_recorder_in_amp);
   in_ind = TO_C_INT(in);
   out_ind = TO_C_INT(out);
-  rp->in_amps[in_ind][out_ind] = TO_C_DOUBLE(amp);
-  reflect_recorder_in_amp(in_ind, 
-			  out_ind, 
-			  rp->in_amps[in_ind][out_ind]);
+  if ((in_ind >= 0) && (in_ind < MAX_IN_CHANS) && 
+      (out_ind >= 0) && (out_ind < MAX_OUT_CHANS))
+    {
+      rp->in_amps[in_ind][out_ind] = TO_C_DOUBLE(amp);
+      reflect_recorder_in_amp(in_ind, 
+			      out_ind, 
+			      rp->in_amps[in_ind][out_ind]);
+    }
   return(amp);
 }
 
@@ -1630,9 +1635,12 @@ static SCM g_set_recorder_out_amp (SCM num, SCM amp)
   SCM_ASSERT(INTEGER_P(num), num, SCM_ARG1, "set-" S_recorder_out_amp);
   SCM_ASSERT(NUMBER_P(amp), amp, SCM_ARG2, "set-" S_recorder_out_amp); 
   ind = TO_C_INT(num);
-  rp->out_amps[ind] = TO_C_DOUBLE(amp); 
-  reflect_recorder_out_amp(ind,
-			   rp->out_amps[ind]);
+  if ((ind >= 0) && (ind < MAX_OUT_CHANS))
+    {
+      rp->out_amps[ind] = TO_C_DOUBLE(amp); 
+      reflect_recorder_out_amp(ind,
+			       rp->out_amps[ind]);
+    }
   return(amp);
 }
 

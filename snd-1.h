@@ -9,6 +9,10 @@ typedef struct {
 } env_info;
 
 typedef struct {
+  COLOR_TYPE color;
+} snd_color;
+
+typedef struct {
   char *name;             /* full name */
   int samples;            /* total samples = chans * samples/chan */
   int data_location;      /* bytes */

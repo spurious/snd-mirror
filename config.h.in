@@ -34,6 +34,8 @@
 #undef HAVE_STRDUP
 #undef HAVE_FSTATFS
 #undef HAVE_CLOCK
+#undef HAVE_VSNPRINTF
+#undef HAVE_SNPRINTF
 
 #undef STDC_HEADERS
 #undef TM_IN_SYS_TIME

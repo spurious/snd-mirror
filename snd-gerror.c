@@ -135,11 +135,19 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
   va_list ap;
   yes_buf = (char *)CALLOC(YES_OR_NO_BUFFER_SIZE, sizeof(char));
   va_start(ap, format);
+#if HAVE_VSNPRINTF
   vsnprintf(yes_buf, YES_OR_NO_BUFFER_SIZE, format, ap);
+#else
+  vsprintf(yes_buf, format, ap);
+#endif
   va_end(ap);
 #else
   yes_buf = (char *)CALLOC(256, sizeof(char));
+#if HAVE_SNPRINTF
   snprintf(yes_buf, YES_OR_NO_BUFFER_SIZE, "%s...[you need vprintf]", format);
+#else
+  sprintf(yes_buf, "%s...[you need vprintf]", format);
+#endif
 #endif
 
   yes_or_no = 0;
