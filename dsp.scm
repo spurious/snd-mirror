@@ -680,6 +680,42 @@
   (let ((h (make-hilbert-transform 15)))
     (map-channel (lambda (y)
 		   (hilbert-transform h y))))
+
+;;; this comes from R Lyons:
+(define (sound->amp-env)
+  (let ((hlb (make-hilbert-transform 40))
+	(d (make-delay 40)))
+    (map-channel
+     (lambda (y)
+       (let ((hy (hilbert-transform hlb y))
+	     (dy (delay d y)))
+	 (sqrt (+ (* hy hy) (* dy dy))))))))
+
+(define (hilbert-transform-via-fft)
+  ;; same as FIR version but use FFT and change phases by hand
+  (let* ((size (frames))
+	 (len (inexact->exact (expt 2 (ceiling (/ (log size) (log 2.0))))))
+	 (rl (make-vct len))
+	 (im (make-vct len))
+	 (rd (make-sample-reader 0)))
+    (do ((i 0 (1+ i)))
+	((= i size))
+      (vct-set! rl i (rd)))
+    (mus-fft rl im len)
+    (do ((i 0 (1+ i)))
+	((= i len))
+      (let* ((c (make-rectangular (vct-ref rl i) (vct-ref im i)))
+	     (ph (angle c))
+	     (mag (magnitude c)))
+	(if (< i (/ len 2))
+	    (set! ph (+ ph (* 0.5 pi)))
+	    (set! ph (- ph (* 0.5 pi))))
+	(set! c (make-polar mag ph))
+	(vct-set! rl i (real-part c))
+	(vct-set! im i (imag-part c))))
+    (mus-fft rl im len -1)
+    (vct-scale! rl (/ 1.0 len))
+    (vct->channel rl)))
 !#
 
 ;;; -------- highpass filter 
@@ -1450,22 +1486,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; end of JOS stuff
 
 
-(define* (map-ssb-am freq #:optional (order 40)) ; higher order = better cancellation
-  (let* ((carrier-freq (abs freq))
-	 (cos-carrier (make-oscil carrier-freq (* .5 pi)))
-	 (sin-carrier (make-oscil carrier-freq))
-	 (dly (make-delay order))
-	 (hlb (make-hilbert-transform order)))
-    (map-channel (lambda (y)
-		   (let ((ccos (oscil cos-carrier))
-			 (csin (oscil sin-carrier))
-			 (yh (hilbert-transform hlb y))
-			 (yd (delay dly y)))
-		     (if (> freq 0.0)
-			 (- (* ccos yd) ; shift up
-			    (* csin yh))
-			 (+ (* ccos yd) ; shift down
-			    (* csin yh))))))))
+;;; -------- ssb-am and friends
 
 (define* (make-ssb-am freq-1 #:optional (order 40))
   (let* ((freq freq-1)
@@ -1487,6 +1508,11 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 (define (ssb-am gen y) (gen y))
 
+(define* (map-ssb-am freq #:optional (order 40)) ; higher order = better cancellation
+  (let* ((gen (make-ssb-am freq order)))
+    (map-channel (lambda (y) (ssb-am gen y)))))
+
+
 (define (hz->2pi freq) (/ (* 2 pi freq) (srate)))
 
 (define* (ssb-bank old-freq new-freq pairs #:optional (order 40) (bw 50.0))
@@ -1499,7 +1525,9 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
       (let* ((aff (* i old-freq))
 	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
 	(vector-set! ssbs (1- i) (make-ssb-am (* i factor old-freq)))
-	(vector-set! bands (1- i) (make-bandpass (hz->2pi (- aff bwf)) (hz->2pi (+ aff bwf)) order))))
+	(vector-set! bands (1- i) (make-bandpass (hz->2pi (- aff bwf)) 
+						 (hz->2pi (+ aff bwf)) 
+						 order))))
     (as-one-edit
      (lambda ()
        (let ((nmx 0.0))
@@ -1508,10 +1536,11 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	    (let ((sum 0.0))
 	      (do ((i 0 (1+ i)))
 		  ((= i pairs))
-		(set! sum (+ sum (ssb-am (vector-ref ssbs i) (bandpass (vector-ref bands i) y)))))
+		(set! sum (+ sum (ssb-am (vector-ref ssbs i) 
+					 (bandpass (vector-ref bands i) 
+						   y)))))
 	      (set! nmx (max nmx (abs sum)))
 	      sum)))
 	 (scale-by (/ mx nmx)))))))
 
-;;; TODO: doc/test ssb-bank, doc edot-product, doc/test ssb-am (gen/map)
 ;;; TODO: auto-detect main freq so ssb-bank can work semi-automatically

@@ -5671,7 +5671,7 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 0.0 1.0)
 	(xramp-channel 0.0 1.0 32.0)
-	(if (not (string=? (display-edits ind 0 4) "
+	(if (not (string-=? (display-edits ind 0 4) "
  (ramp 0 11) ; xramp-channel 0.000 1.000 32.000 0 11 [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
@@ -6473,7 +6473,7 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 0.0 1.0)
 	(xramp-channel 0.0 1.0 32.0)
-	(if (not (string=? (display-edits ind 0 4) "
+	(if (not (string-=? (display-edits ind 0 4) "
  (ramp 0 11) ; xramp-channel 0.000 1.000 32.000 0 11 [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
@@ -6486,7 +6486,7 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 0.0 1.0)
-	(if (not (string=? (display-edits ind 0 5) "
+	(if (not (string-=? (display-edits ind 0 5) "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 11 [5:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [3]-0.000 -> 1.000, [4]-0.000 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
@@ -6499,7 +6499,7 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 0.0 1.0)
 	(xramp-channel 0.0 1.0 32.0)
-	(if (not (string=? (display-edits ind 0 5) "
+	(if (not (string-=? (display-edits ind 0 5) "
  (ramp 0 11) ; xramp-channel 0.000 1.000 32.000 0 11 [5:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [3]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
@@ -9661,6 +9661,14 @@ EDITS: 5
 	    
 	    (close-sound ind))
 	  
+	  (let ((hlb (make-hilbert-transform 8))
+		(data (make-vct 20)))
+	    (do ((i 0 (1+ i)))
+		((= i 20))
+	      (vct-set! data i (hilbert-transform hlb (if (= i 0) 1.0 0.0))))
+	    (if (not (vequal data (vct 0.0 -0.010 0.0 -0.046 0.0 -0.152 0.0 -0.614 0.0 0.614 0.0 0.152 0.0 0.046 0.0 0.010 0.0 0.0 0.0 0.0)))
+		(snd-display ";hilbert-transform impulse response: ~A" data)))
+
 	  (let ((ind (new-sound "test.snd")))
 	    (pad-channel 0 1000)
 	    (set! (sample 100) 1.0)
@@ -11641,12 +11649,14 @@ EDITS: 5
 	(vct-set! spect i sum)))
     (vct-scale! spect (/ 1.0 mx))))
 
-(define (print-and-check gen name desc insp)
+(define* (print-and-check gen name desc insp #:optional insp2)
   (if (not (string=? (mus-name gen) name))
       (snd-display ";mus-name ~A: ~A?" name (mus-name gen)))
   (if (not (string=? (mus-describe gen) desc))
       (snd-display ";mus-describe ~A: ~A?" (mus-name gen) (mus-describe gen)))
-  (if (not (string=? (mus-inspect gen) insp))
+  (if (and (not (string=? (mus-inspect gen) insp))
+	   (or (not insp2)
+	       (not (string=? (mus-inspect gen) insp2))))
       (snd-display ";mus-inspect ~A: ~A?" (mus-name gen) (mus-inspect gen)))
   (let ((egen gen))
     (if (not (equal? egen gen))
@@ -12196,13 +12206,15 @@ EDITS: 5
 	  (vct-set! v6 i (tap d6 j))
 	  (vct-set! v7 i (tap d7 j)))
 	(set! (print-length) (max 20 (print-length)))
-	(if (not (vequal v1 (vct 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 1.0 1.0 1.0 1.0 0.0 0.0 0.0 0.0 0.0)))
+	(if (and (not (vequal v1 (vct 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 1.0 1.0 1.0 1.0 0.0 0.0 0.0 0.0 0.0)))
+		 (not (vequal v1 (vct 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 1.0 1.0 1.0 0.0 0.0 0.0 0.0 0.0))))
 	    (snd-display ";delay interp none (1): ~A" v1))
 	(if (not (vequal v2 (vct 0.0 0.0 0.0 0.0 0.0 0.0 0.200 0.400 0.600 0.800 1.0 0.800 0.600 0.400 0.200 0.0 0.0 0.0 0.0 0.0)))
 	    (snd-display ";delay interp linear (2): ~A" v2))
 	(if (not (vequal v3 (vct 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.429 0.143 0.095 0.905 0.397 0.830 0.793 0.912 -0.912 0.608 -0.261 0.065 -0.007)))
 	    (snd-display ";delay interp all-pass (3): ~A" v3))
-	(if (not (vequal v4 (vct 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 1.0 1.0 1.0 1.0 0.0 0.0 0.0 0.0 0.0)))
+	(if (and (not (vequal v4 (vct 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 1.0 1.0 1.0 1.0 0.0 0.0 0.0 0.0 0.0)))
+		 (not (vequal v4 (vct 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 1.0 1.0 1.0 0.0 0.0 0.0 0.0 0.0))))
 	    (snd-display ";delay interp none (4): ~A" v4))
 	(if (not (vequal v5 (vct 0.0 0.0 0.0 0.0 0.0 0.0 0.120 0.280 0.480 0.720 1.000 0.960 0.840 0.640 0.360 0.000 -0.080 -0.120 -0.120 -0.080)))
 	    (snd-display ";delay interp lagrange (5): ~A" v5))
@@ -16013,7 +16025,8 @@ EDITS: 5
 	(print-and-check gen 
 			 "granulate"
 			 "granulate: expansion: 2.000 (551/1102), scaler: 0.600, length: 0.150 secs (3308 samps), ramp: 0.060"
-			 "grn_info s20: 1102, s50: 441, rmp: 1323, amp: 0.600000, len: 3308, cur_out: 0, cur_in: 0, input_hop: 551, ctr: 0, output_hop: 1102, in_data_start: 5513, in_data[5513]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], data[4410]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...]")
+			 "grn_info s20: 1102, s50: 441, rmp: 1323, amp: 0.600000, len: 3308, cur_out: 0, cur_in: 0, input_hop: 551, ctr: 0, output_hop: 1102, in_data_start: 5513, in_data[5513]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], data[4410]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...]"
+			 "grn_info s20: 1102, s50: 441, rmp: 1323, amp: 0.600000, len: 3308, cur_out: 0, cur_in: 0, input_hop: 551, ctr: 0, output_hop: 1102, in_data_start: 5512, in_data[5512]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...], data[4409]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...]")
 	(do ((i 0 (1+ i)))
 	    ((= i 1000))
 	  (vct-set! v0 i (granulate gen (lambda (dir) (readin rd)))))
@@ -16152,6 +16165,31 @@ EDITS: 5
 	      (snd-display ";save-sound ~A: ~A ~A ~A?" i (sample 0) (sample 1) (sample i))))
 	(close-sound ind))
       
+      (let ((ind (new-sound "test.snd" :srate 22050 :channels 1 :size 1000))
+	    (gen (make-ssb-am 100.0)))
+	(map-channel (lambda (y) (ssb-am gen 0.0)))
+	(if (fneq (maxamp) 0.0) (snd-display ";ssb-am 0.0: ~A" (maxamp)))
+	(let ((gen1 (make-oscil 220.0)))
+	  (map-channel (lambda (y) (* 0.5 (oscil gen1))))
+	  (set! gen (make-ssb-am 100.0 100))
+	  (map-channel (lambda (y) (ssb-am gen y)))
+	  (delete-samples 0 200)
+	  (set! gen1 (make-oscil 320.0 :initial-phase (asin (* 2 (sample 0))))) ; depends on rising side
+	  (map-channel (lambda (y) (- y (* 0.5 (oscil gen1)))))
+	  (if (> (maxamp) .003) (snd-display ";ssb-am cancelled: ~A" (maxamp)))
+	  (close-sound ind)))
+
+      (let ((ind (new-sound "test.snd" :srate 22050 :channels 1 :size 1000))
+	    (ctr 0))
+	(map-channel (lambda (y) (let ((val (sin (/ (* 2 pi ctr) 50)))) (set! ctr (+ ctr 1)) val)))
+	;; 441 Hz 
+	(ssb-bank 441 882 1 100)
+	(delete-samples 0 217)
+	(let ((gen1 (make-oscil 882.0 :initial-phase (asin (sample 0)))))
+	  (map-channel (lambda (y) (- y (oscil gen1))))
+	  (if (> (maxamp) .04) (snd-display ";ssb-bank cancelled: ~A" (maxamp))))
+	(close-sound ind))
+
       (if *output* 
 	  (begin
 	    (snd-display ";*output* ~A" *output*)
@@ -18647,9 +18685,9 @@ EDITS: 5
 		      (fneq (sample 99) 0.2)
 		      (fneq (sample 100) 0.2)
 		      (fneq (sample 200) 0.4)
-		      (fneq (sample 300) 0.6)
-		      (fneqerr (sample 400) 0.801 .01)
-		      (fneqerr (sample 450) 0.900 .01))
+		      (fneqerr (sample 300) 0.6 .002)
+		      (fneqerr (sample 400) 0.801 .005)
+		      (fneqerr (sample 450) 0.900 .005))
 		  (snd-display ";mix-speed lengthens track + track-amp-env: ~A"
 			       (map sample (list 0 50 99 100 200 300 400 450))))
 	      (undo)

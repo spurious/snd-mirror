@@ -2,8 +2,8 @@
 
 (provide 'snd-fft-menu.scm)
 
-;;; TODO: add gtk support here and in other dlp additions
-;;; DONE: gtk support (KSM)
+;;; TODO: add gtk support in other dlp additions
+;;; DONE: gtk support in this file (KSM)
 
 (define fft-list '()) ; menu labels are updated to show current default settings
 

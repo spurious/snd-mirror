@@ -486,7 +486,7 @@ the listener?
 </p>
 <table border=1>
   <tr><td><A class=def NAME="exdolph">dolph</a> n gamma</td><td>Dolph-Chebyshev fft data window</td></tr>
-  <tr><td><A class=def NAME="exdownoct">down-oct n</a></td><td>move sound down a factor of n (a power of 2) using fft</td></tr>
+  <tr><td><A class=def NAME="exdownoct">down-oct</a> n, <em class=emdef>stretch-sound-via-dft</em></td><td>move sound down a factor of n using fft/dft</td></tr>
   <tr><td><em class=emdef>freqdiv</em> n</td><td>"frequency division" effect</td></tr>
   <tr><td><em class=emdef>adsat</em> size</td><td>"adaptive saturation" effect</td></tr>
   <tr><td><em class=emdef>spike</em></td><td>spikey sound effect</td></tr>
@@ -529,7 +529,7 @@ the listener?
   <tr><td><a class=def name="notchchannel">notch-channel</a> freqs order beg dur s c e trunc width</td><td>arbitrary notch filter applied to channel</td></tr>
   <tr><td><a class=def name="notchsound">notch-sound</a> freqs order s c width</td><td>arbitrary notch filter applied to sound</td></tr>
   <tr><td><a class=def name="notchselection">notch-selection</a> freqs order width</td><td>arbitrary notch filter applied to selection</td></tr>
-  <tr><td><a class=def name="fractionalfouriertransform">fractional-fourier-transform</a> rl im size angle</td></tr>
+  <tr><td><a class=def name="fractionalfouriertransform">fractional-fourier-transform</a> rl im size angle</td><td>fractional dft</td></tr>
   <tr><td><a class=def name="ztransform">z-transform</a> rl size z</td></tr>
   <tr><td><A class=def NAME="exdht">dht</A> data</td><td>slow Hartley transform </td></tr>
   <tr><td><em class=emdef>find-sine</em> freq beg dur</td><td>DFT at a particular frequency</td></tr>
@@ -537,7 +537,9 @@ the listener?
   <tr><td><em class=emdef>make-spencer-filter</em></td><td>return FIR filter with Spencer coefficients</td></tr>
   <tr><td><A class=def NAME="anyrandom">any-random</A></td><td>random numbers of arbitrary distribution using rejection method</td></tr>
   <tr><td><em class=emdef>channel-variance</em> etc</td><td> miscellaneous funcs from Julius Smith, Mathematics of the DFT</td></tr>
-  <tr><td><em class=emdef>ssb-am</em></td><td>shift all components by some frequency ("single-sideband amplitude modulation")</td></tr>
+  <tr><td><em class=emdef>map-ssb-am</em></td><td>shift all components by some frequency ("single-sideband amplitude modulation")</td></tr>
+  <tr><td><a class=def name="makessbam">make-ssb-am</a></td><td>single-sideband carrier-suppressed amplitude modulation</td></tr>
+  <tr><td><a class=def name="ssbbank">ssb-bank</a></td><td>time/pitch changes using ssb-am gens</td></tr>
 </table>
 
 <p><b>dolph</b> is the Dolph-Chebyshev fft data window, taken
@@ -620,15 +622,19 @@ a sort of "FM index" parameter (named "k", hence the generator name) to vary the
 </p>
 
 <p><b>brighten-slightly</b> is a slight simplification of contrast-enhancement.
-</p><p><b>make-hilbert-transform</b> and <b>hilbert-transform</b> provide an FIR filter approach to the Hilbert transform (see ssb-am).
+</p>
+
+<p><b>make-hilbert-transform</b> and <b>hilbert-transform</b> provide an FIR filter approach to the Hilbert transform (see ssb-am).
 <b>make-lowpass</b> and <b>lowpass</b> provide FIR low pass filtering.
 <b>make-highpass</b> and <b>highpass</b> provide FIR high pass filtering.
 <b>make-bandpass</b> and <b>bandpass</b> provide FIR band pass filtering.
 <b>make-bandstop</b> and <b>bandstop</b> provide FIR notch filtering.
 <b>make-differentiator</b> and <b>differentiator</b> provide an FIR filter-based differentiator.
 </p>
+
 <p>The Ruby version of this is in examp.rb.
 </p>
+
 <p>
 <b>notch-channel</b> and <b>notch-selection</b> are aimed at noise reduction.
 Each takes a list of frequencies (in Hz), and an optional filter order, and
@@ -639,6 +645,7 @@ filter <i>order</i>.  A common application cancels 60 Hz hum:
 <pre>
 (notch-channel (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)))
 </pre>
+
 <p>Here we've built a list of multiples of 60 and passed it to notch-channel. Its default notch
 width is 2 Hz, and its default order tries to maintain that width given the channel's sampling rate,
 so the default filter order can be very high (65536).  The filtering is normally done via
@@ -649,15 +656,43 @@ But, if the hum is not absolutely stable, you'll probably want wider notches:
 <pre>
 (notch-channel (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) 1024)
 </pre>
+
 <p>The order of 1024 means we get 20 Hz width minima (44100 Hz srate), so this
 notches out much bigger chunks of the spectrum.  You get 98% cancellation, but
 also lose more of the original signal.
 </p>
+
 <p><b>fractional-fourier-transform</b> is the slow (dft) version of the fractional Fourier Transform.
 <b>z-transform</b> performs a z transform.
-I've started working my way through Julius Smith's very fine "Mathematics of the
-DFT", and collecting functions that he says are useful.  These include
+Some of the functions from Julius Smith's "Mathematics of the
+DFT" are included:
 <b>channel-mean</b>, <b>channel-rms</b>, <b>channel-variance</b>, etc.
+</p>
+
+<p>The ssb-* functions provide single-sideband amplitude modulation, and pitch/time changes
+based on that generator.  The generator associated with <b>make-ssb-am</b> is <a name="ssb-am">ssb-am</a>.
+If you run ssb-am on some input signal, the result is that that signal is shifted in pitch by
+the <i>freq</i> amount.  The higher the <i>order</i>, the better the low frequency cancellation
+is (amplitude modulation creates symmetrical sidebands, one of which is cancelled by the ssb-am
+generator).  The ssb-bank uses a bank of ssb-am generators, each with its bandpass filter to
+shift a sound's pitch without changing its duration;
+the ssb-am generators do the pitch
+shift, and the filters pick out successive harmonics,
+so each harmonic gets shifted individually.
+For an oboe at 557 Hz, good values are:
+<code>(ssb-bank 557 new-freq 6 40 50)</code>.
+For a person talking at ca. 150 Hz:
+<code>(ssb-bank 150 300 30 100 30)</code> or
+<code>(ssb-bank 150 100 40 100 20)</code>.
+To get a duration change without a pitch change, use this functions
+followed by sampling rate conversion back to the original pitch:
+</p>
+<pre>
+(define (stretch-oboe factor)
+  (<em class=red>ssb-bank</em> 557 (* factor 557) 7 40 40)
+  (src-sound (/ 1.0 factor)))
+</pre>
+
 </p>
 
 <p><b>any-random</b> provides the same output as <a href="clm.html#rand">rand</a> if the latter's

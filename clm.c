@@ -58,7 +58,7 @@ enum {MUS_OSCIL, MUS_SUM_OF_COSINES, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PAS
       MUS_FILTER, MUS_FIR_FILTER, MUS_IIR_FILTER, MUS_CONVOLVE, MUS_ENV, MUS_LOCSIG,
       MUS_FRAME, MUS_READIN, MUS_FILE_TO_SAMPLE, MUS_FILE_TO_FRAME,
       MUS_SAMPLE_TO_FILE, MUS_FRAME_TO_FILE, MUS_MIXER, MUS_PHASE_VOCODER,
-      MUS_AVERAGE, MUS_SUM_OF_SINES,
+      MUS_AVERAGE, MUS_SUM_OF_SINES, MUS_SSB_AM,
       MUS_INITIAL_GEN_TAG};
 
 static char *interp_name[] = {"step", "linear", "sinusoidal", "all-pass", "lagrange", "bezier", "hermite"};
@@ -7826,7 +7826,157 @@ Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg, int direction))
     }
 }
 
+
+#if 0
+/* ---------------- single sideband "suppressed carrier" amplitude modulation (ssb-am) ---------------- */
+
+#define S_ssb_am "ssb-am"
+#define S_make_ssb_am "make-ssb-am"
+#define S_ssb_am_p "ssb-am?"
+
+typedef struct {
+  mus_any_class *core;
+  bool shift_up;
+  Float *coeffs;
+  mus_any *sin_osc, *cos_osc, *hilbert, *dly;
+} ssbam;
+
+bool mus_ssb_am_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SSB_AM));}
+
+Float mus_ssb_am(mus_any *ptr, Float insig)
+{
+  ssbam *gen = (ssbam *)ptr;
+  if (gen->shift_up)
+    return((mus_oscil_0(gen->cos_osc) * mus_delay_1(gen->dly, insig)) - 
+	   (mus_oscil_0(gen->sin_osc) * mus_fir_filter(gen->hilbert, insig)));
+  return((mus_oscil_0(gen->cos_osc) * mus_delay_1(gen->dly, insig)) +
+	 (mus_oscil_0(gen->sin_osc) * mus_fir_filter(gen->hilbert, insig)));
+}
+
+static int free_ssb_am(mus_any *ptr) 
+{
+  if (ptr) 
+    {
+      ssbam *gen = (ssbam *)ptr;
+      mus_free(gen->dly);
+      mus_free(gen->hilbert);
+      mus_free(gen->cos_osc);
+      mus_free(gen->sin_osc);
+      FREE(gen->coeffs);
+      FREE(ptr); 
+    }
+  return(0);
+}
+
+static Float ssb_am_freq(mus_any *ptr) 
+{
+  return(mus_radians_to_hz(((osc *)((ssbam *)ptr)->sin_osc)->freq));
+}
+
+static Float set_ssb_am_freq(mus_any *ptr, Float val) 
+{
+  ssbam *gen = (ssbam *)ptr;
+  Float rads;
+  rads = mus_hz_to_radians(val);
+  ((osc *)(gen->sin_osc))->freq = rads;
+  ((osc *)(gen->cos_osc))->freq = rads;
+  return(val);
+}
+
+static Float ssb_am_phase(mus_any *ptr) 
+{
+  return(fmod(((osc *)((ssbam *)ptr)->sin_osc)->phase, TWO_PI));
+}
+
+static Float set_ssb_am_phase(mus_any *ptr, Float val) 
+{
+  ssbam *gen = (ssbam *)ptr;
+  ((osc *)(gen->sin_osc))->phase = val; 
+  ((osc *)(gen->cos_osc))->phase = val; 
+  return(val);
+}
+
+static off_t ssb_am_cosines(mus_any *ptr) {return(1);}
+
+static off_t ssb_am_order(mus_any *ptr) {return(mus_order(((ssbam *)ptr)->dly));}
+
+static bool ssb_am_equalp(mus_any *p1, mus_any *p2)
+{
+  return((p1 == p2) ||
+	 ((mus_ssb_am_p((mus_any *)p1)) && 
+	  (mus_ssb_am_p((mus_any *)p2)) &&
+	  (((ssbam *)p1)->shift_up == ((ssbam *)p2)->shift_up) &&
+	  (mus_equal_p(((ssbam *)p1)->sin_osc, ((ssbam *)p2)->sin_osc)) &&
+	  (mus_equal_p(((ssbam *)p1)->cos_osc, ((ssbam *)p2)->cos_osc)) &&
+	  (mus_equal_p(((ssbam *)p1)->dly, ((ssbam *)p2)->dly)) &&
+	  (mus_equal_p(((ssbam *)p1)->hilbert, ((ssbam *)p2)->hilbert))));
+}
+
+static char *describe_ssb_am(mus_any *ptr)
+{
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_ssb_am " no description yet");
+  return(describe_buffer);
+}
+
+static char *inspect_ssb_am(mus_any *ptr)
+{
+  ssbam *gen = (ssbam *)ptr;
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "no inspect yet");
+  return(describe_buffer);
+}
+
+static mus_any_class SSB_AM_CLASS = {
+  MUS_SSB_AM,
+  S_ssb_am,
+  &free_ssb_am,
+  &describe_ssb_am,
+  &inspect_ssb_am,
+  &ssb_am_equalp,
+  0, 0, /* data */                               /* filter_data here ? */
+  &ssb_am_order, 0,
+  &ssb_am_freq,
+  &set_ssb_am_freq,
+  &ssb_am_phase,
+  &set_ssb_am_phase,
+  0, 0, 0, 0,
+  &mus_ssb_am,
+  MUS_NOT_SPECIAL, 
+  NULL,
+  0,                                            /* delay interp type ? */
+  0, 0, 0, 0, 0, 0, &ssb_am_cosines, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0
+};
+
+mus_any *mus_make_ssb_am(Float freq, int order)
+{
+  ssbam *gen;
+  gen = (ssbam *)clm_calloc(1, sizeof(ssbam), S_make_ssb_am);
+  gen->core = &SSB_AM_CLASS;
+  if (freq > 0)
+    gen->shift_up = true;
+  else gen->shift_up = false;
+  gen->sin_osc = mus_make_oscil(fabs(freq), 0.0);
+  gen->cos_osc = mus_make_oscil(fabs(freq), M_PI * 0.5);
+  gen->dly = mus_make_delay(order, NULL, order, MUS_INTERP_NONE);
+
+  /* TODO: allocate and load up hilbert coeffs here */
+
+  gen->hilbert = mus_make_fir_filter(order, gen->coeffs, NULL);
+  return((mus_any *)gen);
+}
+
+
+/* TODO: make-ssb-am, tie-ins in clm2xen.c clm.h clm-strings.h, test/doc built-in ssb_am etc [clm|grfsnd.html] */
+/* TODO: same in mus.lisp cmus.lisp */
+/* TODO: describe/inspect ssb_am */
+
+/* TODO: check delay/hilbert alignment (is it order or (order*2+1)? */
+
+#endif
+
+
 void init_mus_module(void)
 {
 }
+
 
