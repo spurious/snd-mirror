@@ -3,6 +3,11 @@
 ;;;   rubber-sound looks for stable portions and either inserts or deletes periods 
 ;;;     period length is determined via autocorrelation
 
+;;; TODO: no-vowels, no-consonants (and scaled versions thereof)
+;;; TODO: no-vib (local resample), more-vib
+;;; TODO: re-pitch (local resample, same end length)
+;;; TODO: re-orch (cross-fade within steady state) -- could end up with one voice's consonants and another's vowels etc
+
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
 (use-modules (ice-9 optargs))

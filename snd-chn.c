@@ -3560,7 +3560,7 @@ enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GRAPH_LISP
       CP_SHOW_TRANSFORM_PEAKS, CP_ZERO_PAD, CP_VERBOSE_CURSOR, CP_FFT_LOG_FREQUENCY, CP_FFT_LOG_MAGNITUDE,
       CP_WAVELET_TYPE, CP_SPECTRO_HOP, CP_TRANSFORM_SIZE, CP_TRANSFORM_GRAPH_TYPE, CP_FFT_WINDOW, CP_TRANSFORM_TYPE,
       CP_TRANSFORM_NORMALIZATION, CP_SHOW_MIX_WAVEFORMS, CP_GRAPH_STYLE, CP_DOT_SIZE,
-      CP_SHOW_AXES, CP_GRAPHS_HORIZONTAL, CP_SYNC, CP_CURSOR_SIZE, CP_CURSOR_POSITION,
+      CP_SHOW_AXES, CP_GRAPHS_HORIZONTAL, CP_CURSOR_SIZE, CP_CURSOR_POSITION,
       CP_EDPOS_FRAMES, CP_X_AXIS_STYLE, CP_UPDATE_TIME, CP_UPDATE_TRANSFORM, CP_UPDATE_LISP, CP_PROPERTIES,
       CP_MIN_DB, CP_SPECTRO_X_ANGLE, CP_SPECTRO_Y_ANGLE, CP_SPECTRO_Z_ANGLE, CP_SPECTRO_X_SCALE, CP_SPECTRO_Y_SCALE, CP_SPECTRO_Z_SCALE,
       CP_SPECTRO_CUTOFF, CP_SPECTRO_START, CP_FFT_WINDOW_BETA, CP_AP_SX, CP_AP_SY, CP_AP_ZX, CP_AP_ZY, CP_MAXAMP, CP_EDPOS_MAXAMP,
@@ -3642,7 +3642,6 @@ static XEN channel_get(XEN snd_n, XEN chn_n, int fld, char *caller)
 	    case CP_DOT_SIZE:           return(C_TO_XEN_INT(cp->dot_size));                          break;
 	    case CP_SHOW_AXES:          return(C_TO_XEN_INT(cp->show_axes));                         break;
 	    case CP_GRAPHS_HORIZONTAL:  return(C_TO_XEN_BOOLEAN(cp->graphs_horizontal));             break;
-	    case CP_SYNC:               return(C_TO_XEN_INT(cp->sync));                              break;
 	    case CP_CURSOR_POSITION:    return(XEN_LIST_2(C_TO_XEN_INT(cp->cx), C_TO_XEN_INT(cp->cy))); break;
 	    case CP_EDPOS_FRAMES:       return(C_TO_XEN_INT(to_c_edit_samples(cp, cp_edpos, caller, 3))); break;
 	    case CP_UPDATE_TIME:        update_graph(cp, NULL);                                      break;
@@ -3958,10 +3957,6 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, int fld, char *caller)
       cp->graphs_horizontal = XEN_TO_C_BOOLEAN_OR_TRUE(on); 
       update_graph(cp, NULL); 
       return(C_TO_XEN_BOOLEAN(cp->graphs_horizontal));
-      break;
-    case CP_SYNC:
-      cp->sync = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(on, 1, caller); 
-      return(C_TO_XEN_INT(cp->sync)); 
       break;
     case CP_FRAMES:
       /* if less than current, delete, else zero pad */
@@ -5250,21 +5245,6 @@ static XEN g_set_right_sample(XEN on, XEN snd_n, XEN chn_n)
 
 WITH_REVERSED_CHANNEL_ARGS(g_set_right_sample_reversed, g_set_right_sample)
 
-static XEN g_channel_sync(XEN snd_n, XEN chn_n) 
-{
-  #define H_channel_sync "(" S_channel_sync " &optional snd chn) -> sync field of chn"
-  return(channel_get(snd_n, chn_n, CP_SYNC, S_channel_sync));
-}
-
-static XEN g_set_channel_sync(XEN on, XEN snd_n, XEN chn_n) 
-{
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_1, "set-" S_channel_sync, "an integer");
-  return(channel_set(snd_n, chn_n, on, CP_SYNC, "set-" S_channel_sync));
-}
-
-WITH_REVERSED_CHANNEL_ARGS(g_set_channel_sync_reversed, g_set_channel_sync)
-
-
 static XEN g_channel_properties(XEN snd_n, XEN chn_n) 
 {
   #define H_channel_properties "(" S_channel_properties " &optional snd chn) -> property list of chn"
@@ -5452,8 +5432,6 @@ XEN_ARGIFY_2(g_left_sample_w, g_left_sample)
 XEN_ARGIFY_3(g_set_left_sample_w, g_set_left_sample)
 XEN_ARGIFY_2(g_right_sample_w, g_right_sample)
 XEN_ARGIFY_3(g_set_right_sample_w, g_set_right_sample)
-XEN_ARGIFY_2(g_channel_sync_w, g_channel_sync)
-XEN_ARGIFY_3(g_set_channel_sync_w, g_set_channel_sync)
 XEN_ARGIFY_2(g_channel_properties_w, g_channel_properties)
 XEN_ARGIFY_3(g_set_channel_properties_w, g_set_channel_properties)
 XEN_ARGIFY_2(g_max_transform_peaks_w, g_max_transform_peaks)
@@ -5574,8 +5552,6 @@ XEN_ARGIFY_2(g_update_transform_w, g_update_transform)
 #define g_set_left_sample_w g_set_left_sample
 #define g_right_sample_w g_right_sample
 #define g_set_right_sample_w g_set_right_sample
-#define g_channel_sync_w g_channel_sync
-#define g_set_channel_sync_w g_set_channel_sync
 #define g_channel_properties_w g_channel_properties
 #define g_set_channel_properties_w g_set_channel_properties
 #define g_max_transform_peaks_w g_max_transform_peaks
@@ -5733,9 +5709,6 @@ void g_init_chn(void)
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_right_sample, g_right_sample_w, H_right_sample,
 					    "set-" S_right_sample, g_set_right_sample_w, g_set_right_sample_reversed, 0, 2, 0, 3);
-  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_channel_sync, g_channel_sync_w, H_channel_sync,
-					    "set-" S_channel_sync, g_set_channel_sync_w, g_set_channel_sync_reversed, 0, 2, 0, 3);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_channel_properties, g_channel_properties_w, H_channel_properties,
 					    "set-" S_channel_properties, g_set_channel_properties_w, g_set_channel_properties_reversed, 0, 2, 0, 3);

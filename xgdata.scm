@@ -22,6 +22,9 @@
 (CFNC "guint g_signal_newv gchar* signal_name GType itype GSignalFlags signal_flags GClosure* class_closure GSignalAccumulator accumulator gpointer accu_data GSignalCMarshaller c_marshaller GType return_type guint n_params GType* param_types")
 ;;;(CFNC "guint g_signal_new_valist gchar* signal_name GType itype GSignalFlags signal_flags GClosure* class_closure GSignalAccumulator accumulator gpointer accu_data GSignalCMarshaller c_marshaller GType return_type guint n_params va_list args")
 (CFNC "guint g_signal_new gchar* signal_name GType itype GSignalFlags signal_flags guint class_offset GSignalAccumulator accumulator gpointer accu_data GSignalCMarshaller c_marshaller GType return_type guint n_params ...")
+;; typedef GClosureMarshal GSignalCMarshaller;
+;; typedef void (*GClosureNotify) (gpointer data, GClosure *closure)
+;; typedef void (*GClosureMarshal)(GClosure *closure,GValue *return_value,guint n_param_values,const GValue *param_values,gpointer invocation_hint,gpointer marshal_data)
 (CFNC "void g_signal_emitv GValue* instance_and_params guint signal_id GQuark detail GValue* return_value")
 ;;;;(CFNC "void g_signal_emit_valist gpointer instance guint signal_id GQuark detail va_list var_args")
 (CFNC "void g_signal_emit gpointer instance guint signal_id GQuark detail ...")
@@ -4501,7 +4504,10 @@
 (CFNC "gboolean gtk_tree_sortable_get_sort_column_id GtkTreeSortable* sortable gint* sort_column_id GtkSortType* order")
 (CFNC "void gtk_tree_sortable_set_sort_column_id GtkTreeSortable* sortable gint sort_column_id GtkSortType order")
 (CFNC "void gtk_tree_sortable_set_sort_func GtkTreeSortable* sortable gint sort_column_id GtkTreeIterCompareFunc func lambda_data func_data GtkDestroyNotify destroy")
-;; TODO: sort_func and destry_func can be NULL
+;; TODO: sort_func and destroy_func can be NULL, also need some way to wrap the call (all uses have unrelated func_data somewhere)
+;;       gtktypeutils.h: typedef void (*GtkDestroyNotify) (gpointer data)
+;;       all these funcs are called with the same func_data arg
+;;       typedef void (*GtkCallbackMarshal) (GtkObject *object,gpointer data,guint n_args,GtkArg *args)
 (CFNC "void gtk_tree_sortable_set_default_sort_func GtkTreeSortable* sortable GtkTreeIterCompareFunc func lambda_data func_data GtkDestroyNotify destroy")
 (CFNC "gboolean gtk_tree_sortable_has_default_sort_func GtkTreeSortable* sortable")
 (CCAST "GTK_TREE_STORE(obj)" "GtkTreeStore*")

@@ -23,6 +23,9 @@ static XEN name_reversed(XEN arg1, XEN arg2, XEN arg3) \
     else return(name(arg3, arg1, arg2)); \
 }}
 
+#define ASSERT_SAMPLE_TYPE(Origin, Beg, Offset) \
+  XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(Beg), Beg, Offset, Origin, "a number or #f")
+
 typedef struct {
   int samps_per_bin, amp_env_size;
   MUS_SAMPLE_TYPE fmax, fmin;
@@ -221,7 +224,7 @@ typedef struct chan__info {
   XEN cursor_proc;
   XEN after_edit_hook;
   XEN properties;
-  int selection_visible, sync, active;
+  int selection_visible, active;
   Locus old_x0, old_x1;
   Float *amp_control; /* an experiment */
   int last_search_result;
@@ -1291,7 +1294,9 @@ void fht(int powerOfFour, Float *array);
 void g_init_sig(void);
 int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos);
 int to_c_edit_samples(chan_info *cp, XEN edpos, const char *caller, int arg_pos);
-
+int beg_to_sample(XEN beg, const char *caller);
+int dur_to_samples(XEN dur, int beg, chan_info *cp, int edpos, int argn, const char *caller);
+int end_to_sample(XEN end, chan_info *cp, int edpos, const char *caller);
 
 
 /* -------- snd-draw.c -------- */

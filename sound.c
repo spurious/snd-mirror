@@ -713,7 +713,7 @@ char *mus_sound_comment(const char *name)
 					   sf->aux_comment_end));
       return(NULL);
     }
-  len = end-start + 1;
+  len = end - start + 1;
   if (len > 0)
     {
       /* open and get the comment */

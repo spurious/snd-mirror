@@ -77,7 +77,6 @@
     (list "channel-properties" "extsnd.html#sndchannelproperties" "snd-chn.c" 5267 "g_channel_properties")
     (list "channel-property" "sndscm.html#exchannelproperty" "draw.scm" 161 "channel-property")
     (list "channel-style" "extsnd.html#channelstyle" "snd-snd.c" 1992 "g_channel_style")
-    (list "channel-sync" "extsnd.html#sndchannelsync" "snd-chn.c" 5252 "g_channel_sync")
     (list "channel-widgets" "extsnd.html#channelwidgets" "snd-gchn.c" 1006 "g_channel_widgets")
     (list "channels" "extsnd.html#channels" "snd-snd.c" 1842 "g_channels")
     (list "channels-separate" "extsnd.html#channelstyleconstants" "snd-snd.c" 3385 "channels-separate")

@@ -2007,7 +2007,9 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
     {
       /* filename beg end background syncd ignored */
       samp = XEN_TO_C_INT_OR_ELSE(snd_n, 0);
-      if (samp < 0) return(XEN_FALSE);
+      if (samp < 0) XEN_ERROR(NO_SUCH_SAMPLE,
+			      XEN_LIST_2(C_TO_XEN_STRING(caller),
+					 snd_n));
       name = mus_expand_filename(XEN_TO_C_STRING(samp_n));
       if (!(mus_file_probe(name)))
 	{
@@ -2042,7 +2044,9 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, caller, "a number");
       ASSERT_CHANNEL(caller, snd_n, chn_n, 2);
       samp = XEN_TO_C_INT_OR_ELSE(samp_n, 0);
-      if (samp < 0) return(XEN_FALSE);
+      if (samp < 0) XEN_ERROR(NO_SUCH_SAMPLE,
+			      XEN_LIST_2(C_TO_XEN_STRING(caller),
+					 samp_n));
       sp = get_sp(snd_n);
       if (sp == NULL) 
 	return(snd_no_such_sound_error(caller, snd_n));

@@ -1431,6 +1431,7 @@
 	     (if using-result (hey "    XEN result = XEN_FALSE;~%"))
 	     (if using-loc (hey "    int loc;~%"))
 	     (hey "    XEN gxg_ptr = XEN_LIST_3(func, func_data, XEN_FALSE);~%")
+	     ;; TODO: if destroynotify or callbackmarshal, append these to this list, add callbacks that access list-ref 3 and 4 using same func_data
 	     (if using-loc
 		 (hey "    loc = xm_protect(gxg_ptr);~%")
 		 (hey "    xm_protect(gxg_ptr);~%"))

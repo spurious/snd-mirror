@@ -26,9 +26,9 @@
 #endif
 
 
-#define SNDLIB_VERSION 14
-#define SNDLIB_REVISION 21
-#define SNDLIB_DATE "1-Feb-02"
+#define SNDLIB_VERSION 15
+#define SNDLIB_REVISION 0
+#define SNDLIB_DATE "11-Mar-02"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -597,7 +597,7 @@ unsigned int mus_bytes_to_samples   PROTO((int format, unsigned int size));
 int mus_header_write_next_header    PROTO((int chan, int srate, int chans, int loc, int siz, int format, const char *comment, int len));
 int mus_header_read_with_fd         PROTO((int chan));
 int mus_header_read                 PROTO((const char *name));
-int mus_header_write                PROTO((const char *name, int type, int srate, int chans, int loc, int size, int format, const char *comment, int len));
+int mus_header_write                PROTO((const char *name, int type, int srate, int chans, int loc, int size_in_samples, int format, const char *comment, int len));
 int mus_header_write_with_fd        PROTO((int chan, int type, int in_srate, int in_chans, int loc, int size, int format, const char *comment, int len));
 int mus_header_update_with_fd       PROTO((int chan, int type, int siz));
 int mus_header_update               PROTO((const char *name, int type, int size, int srate, int format, int chans, int loc));
@@ -621,6 +621,14 @@ int mus_header_no_header            PROTO((const char *name));
 void mus_header_set_aifc            PROTO((int val)); /* backwards compatibility, sort of */
 char *mus_header_riff_aux_comment   PROTO((const char *name, int *starts, int *ends));
 char *mus_header_aiff_aux_comment   PROTO((const char *name, int *starts, int *ends));
+
+int mus_header_change_chans         PROTO((const char *filename, int new_chans));
+int mus_header_change_srate         PROTO((const char *filename, int new_srate));
+int mus_header_change_type          PROTO((const char *filename, int new_type, int new_format));
+int mus_header_change_format        PROTO((const char *filename, int new_format));
+int mus_header_change_location      PROTO((const char *filename, int new_location));
+int mus_header_change_comment       PROTO((const char *filename, char *new_comment));
+int mus_header_change_samples       PROTO((const char *filename, int new_samples));
 
 
 /* -------- midi.c -------- */

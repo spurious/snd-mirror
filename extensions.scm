@@ -58,6 +58,13 @@
        new-val))))
 
 
+(define channel-sync
+  (make-procedure-with-setter
+   (lambda (snd chn) (channel-property 'sync snd chn))
+   (lambda (snd chn val) (set! (channel-property 'sync snd chn) val))))
+
+
+
 ;;; -------- accessors for graph-style fields
 
 (define time-graph-style
@@ -602,8 +609,8 @@ If 'check' is #f, the hooks are removed."
 			   (caddr file-data)))
 	 (len (or dur (- (mus-sound-frames file-name) file-beg)))
 	 (start (or beg 0)))
-    (if (and (>= start 0)
-	     (> len 0))
+    (if (< start 0) (throw 'no-such-sample (list "mix-channel" beg)))
+    (if (> len 0)
 	(let ((reader (make-sample-reader file-beg file-name file-channel)))
 	  (map-channel (lambda (val)
 			 (+ val (next-sample reader)))
@@ -623,8 +630,8 @@ If 'check' is #f, the hooks are removed."
 			   (caddr file-data)))
 	 (len (or dur (- (mus-sound-frames file-name) file-beg)))
 	 (start (or beg 0)))
-    (if (and (>= start 0)
-	     (> len 0))
+    (if (< start 0) (throw 'no-such-sample (list "insert-channel" beg)))
+    (if (> len 0)
 	(let ((reader (make-sample-reader file-beg file-name file-channel))
 	      (data (make-vct len)))
 	  (do ((i 0 (1+ i)))
@@ -636,7 +643,7 @@ If 'check' is #f, the hooks are removed."
   "(c-channel func &optional beg dur snd chn edpos call-data) calls the c function func"
   (let ((len (or dur (frames snd chn edpos)))
 	(start (or beg 0)))
-    (if (and (>= start 0)
-	     (> len 0))
+    (if (< start 0) (throw 'no-such-sample (list "c-channel" beg)))
+    (if (> len 0)
 	(loop-samples (make-sample-reader start snd chn 1 edpos) func len "c-channel" call-data))))
 

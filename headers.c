@@ -285,7 +285,7 @@ static const unsigned int I_INRS[NINRS] ={0xcb460020, 0xd0465555, 0xfa460000, 0x
 static int data_location = 0, srate = 0, chans = 0, header_type = 0, data_format = 0, original_data_format = 0;
 static int comment_start = 0, comment_end = 0, header_distributed = 0, type_specifier = 0, bits_per_sample = 0, fact_samples = 0, block_align = 0;
 static off_t true_file_length = 0, data_size = 0;
-static int base_detune = 0, base_note = 0;
+static int base_detune = 0, base_note = 0, little_endian = 0;
 
 off_t mus_header_samples (void) {return(data_size);}
 int mus_header_data_location (void) {return(data_location);}
@@ -640,41 +640,32 @@ static int read_next_header (int chan)
   return(err);
 }
 
-int mus_header_write_next_header (int chan, int wsrate, int wchans, int loc, int siz, int format, const char *comment, int len)
+static int sndlib_format_to_next(int format)
 {
-  int i, j;
-  write_four_chars((unsigned char *)hdrbuf, I_DSND); /* ".snd" */
-  i = len / 4;
-  j = 24 + (4 * (i + 1));
-  if (loc < j) loc = j;
-  mus_bint_to_char((unsigned char *)(hdrbuf + 4), loc);
-  mus_bint_to_char((unsigned char *)(hdrbuf + 8), siz);
   switch (format)
     {
-    case MUS_MULAW:   mus_bint_to_char((unsigned char *)(hdrbuf + 12), 1);  break;
-    case MUS_BYTE:    mus_bint_to_char((unsigned char *)(hdrbuf + 12), 2);  break;
-    case MUS_BSHORT:  mus_bint_to_char((unsigned char *)(hdrbuf + 12), 3);  break;
-    case MUS_B24INT:  mus_bint_to_char((unsigned char *)(hdrbuf + 12), 4);  break;
-    case MUS_BINT:    mus_bint_to_char((unsigned char *)(hdrbuf + 12), 5);  break;
-    case MUS_BFLOAT:  mus_bint_to_char((unsigned char *)(hdrbuf + 12), 6);  break;
-    case MUS_BDOUBLE: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 7);  break;
-    case MUS_ALAW:    mus_bint_to_char((unsigned char *)(hdrbuf + 12), 27); break;
-
-    case MUS_LINT:             mus_bint_to_char((unsigned char *)(hdrbuf + 12), 30); break; /* see above */
-    case MUS_LFLOAT:           mus_bint_to_char((unsigned char *)(hdrbuf + 12), 31); break; 
-    case MUS_BINTN:            mus_bint_to_char((unsigned char *)(hdrbuf + 12), 32); break; 
-    case MUS_LINTN:            mus_bint_to_char((unsigned char *)(hdrbuf + 12), 33); break; 
-    case MUS_LDOUBLE:          mus_bint_to_char((unsigned char *)(hdrbuf + 12), 34); break; 
-    case MUS_ULSHORT:          mus_bint_to_char((unsigned char *)(hdrbuf + 12), 35); break; 
-    case MUS_UBSHORT:          mus_bint_to_char((unsigned char *)(hdrbuf + 12), 36); break;
-    case MUS_LFLOAT_UNSCALED:  mus_bint_to_char((unsigned char *)(hdrbuf + 12), 37); break;
-    case MUS_BFLOAT_UNSCALED:  mus_bint_to_char((unsigned char *)(hdrbuf + 12), 38); break;
-    case MUS_LDOUBLE_UNSCALED: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 39); break;
-    case MUS_BDOUBLE_UNSCALED: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 40); break;
-    case MUS_LSHORT:           mus_bint_to_char((unsigned char *)(hdrbuf + 12), 41); break;
-    case MUS_L24INT:           mus_bint_to_char((unsigned char *)(hdrbuf + 12), 42); break;
-    case MUS_UBYTE:            mus_bint_to_char((unsigned char *)(hdrbuf + 12), 43); break;
-
+    case MUS_MULAW:            return(1);  break;
+    case MUS_BYTE:             return(2);  break;
+    case MUS_BSHORT:           return(3);  break;
+    case MUS_B24INT:           return(4);  break;
+    case MUS_BINT:             return(5);  break;
+    case MUS_BFLOAT:           return(6);  break;
+    case MUS_BDOUBLE:          return(7);  break;
+    case MUS_ALAW:             return(27); break;
+    case MUS_LINT:             return(30); break; /* see above */
+    case MUS_LFLOAT:           return(31); break; 
+    case MUS_BINTN:            return(32); break; 
+    case MUS_LINTN:            return(33); break; 
+    case MUS_LDOUBLE:          return(34); break; 
+    case MUS_ULSHORT:          return(35); break; 
+    case MUS_UBSHORT:          return(36); break;
+    case MUS_LFLOAT_UNSCALED:  return(37); break;
+    case MUS_BFLOAT_UNSCALED:  return(38); break;
+    case MUS_LDOUBLE_UNSCALED: return(39); break;
+    case MUS_BDOUBLE_UNSCALED: return(40); break;
+    case MUS_LSHORT:           return(41); break;
+    case MUS_L24INT:           return(42); break;
+    case MUS_UBYTE:            return(43); break;
     default: 
       mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
 		"can't write NeXT/Sun data format: %d (%s)\n  [%s[%d] %s]",
@@ -684,31 +675,36 @@ int mus_header_write_next_header (int chan, int wsrate, int wchans, int loc, int
       return(MUS_ERROR); 
       break;
     }
+}
+
+static void write_next_comment(int fd, const char *comment, int len, int loc)
+{
+  unsigned char *combuf;
+  if (len > 0)
+    write(fd, (unsigned char *)comment, len);
+  len = loc - (len + 24);
+  if (len > 0)
+    {
+      combuf = (unsigned char *)CALLOC(len, sizeof(char));
+      write(fd, combuf, len);
+      FREE(combuf);
+    }
+}
+
+int mus_header_write_next_header (int chan, int wsrate, int wchans, int loc, int siz, int format, const char *comment, int len)
+{
+  int i, j;
+  write_four_chars((unsigned char *)hdrbuf, I_DSND); /* ".snd" */
+  i = len / 4;
+  j = 24 + (4 * (i + 1));
+  if (loc < j) loc = j;
+  mus_bint_to_char((unsigned char *)(hdrbuf + 4), loc);
+  mus_bint_to_char((unsigned char *)(hdrbuf + 8), siz);
+  mus_bint_to_char((unsigned char *)(hdrbuf + 12), sndlib_format_to_next(format));
   mus_bint_to_char((unsigned char *)(hdrbuf + 16), wsrate);
   mus_bint_to_char((unsigned char *)(hdrbuf + 20), wchans);
   write(chan, hdrbuf, 24);
-  j = 0;
-  for (i = 0; i < len; i++) 
-    {
-      hdrbuf[j] = comment[i];
-      j++;
-      if (j == HDRBUFSIZ) 
-	{
-	  write(chan, hdrbuf, HDRBUFSIZ);
-	  j = 0;
-	}
-    }
-  for (i = 0; i < (loc - (len + 24)); i++) /* now fill left over bytes with nulls */
-    {
-      hdrbuf[j] = 0;
-      j++;
-      if (j == HDRBUFSIZ) 
-	{
-	  write(chan, hdrbuf, HDRBUFSIZ);
-	  j = 0;
-	}
-    }
-  if (j != 0) write(chan, hdrbuf, j);
+  write_next_comment(chan, comment, len, loc);
   data_location = loc;
   return(MUS_NO_ERROR);
 }
@@ -1095,6 +1091,41 @@ static int read_aiff_header (int chan, int overall_offset)
 
 int mus_header_aiff_p(void) {return(type_specifier == mus_char_to_uninterpreted_int((unsigned const char *)I_AIFF));}
 
+static int sndlib_format_to_aiff_bits(int format)
+{
+  switch (format)
+    {
+    case MUS_BSHORT: case MUS_LSHORT: case MUS_UBSHORT: case MUS_ULSHORT:  return(16); break;
+    case MUS_B24INT: case MUS_L24INT:                                      return(24); break;
+    case MUS_BINT: case MUS_LINT: case MUS_BFLOAT: case MUS_LFLOAT:        return(32); break;
+    case MUS_BDOUBLE: case MUS_LDOUBLE:                                    return(64); break;
+    case MUS_BYTE: case MUS_UBYTE: case MUS_MULAW: case MUS_ALAW:          return(8);  break;
+    default: 
+      mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
+		"can't write AIFF data format: %d (%s)\n  [%s[%d] %s]",
+		format,
+		any_data_format_name(format),
+		__FILE__, __LINE__, __FUNCTION__);
+      return(MUS_ERROR);
+      break;
+    }
+}
+
+static const char *sndlib_format_to_aifc_name(int format)
+{
+  switch (format)
+    {
+    case MUS_BSHORT: case MUS_B24INT: case MUS_BINT: case MUS_BYTE: return((const char *)I_NONE); break;
+    case MUS_LSHORT: case MUS_L24INT: case MUS_LINT:                return((const char *)I_sowt); break;
+    case MUS_BFLOAT:                                                return((const char *)I_fl32); break;
+    case MUS_BDOUBLE:                                               return((const char *)I_fl64); break;
+    case MUS_UBYTE: case MUS_UBSHORT:                               return((const char *)I_raw_); break;
+    case MUS_MULAW:                                                 return((const char *)I_ulaw); break;
+    case MUS_ALAW:                                                  return((const char *)I_alaw); break;
+    default:                                                        return((const char *)I_NONE); break;
+    }
+}
+
 static int write_aif_header (int chan, int wsrate, int wchans, int siz, int format, const char *comment, int len, int aifc_header)
 {
   /* we write the simplest possible AIFC header: AIFC | COMM | APPL-MUS_ if needed | SSND eof. */
@@ -1138,74 +1169,11 @@ static int write_aif_header (int chan, int wsrate, int wchans, int siz, int form
   else mus_bint_to_char((unsigned char *)(hdrbuf + 16), 18);
   mus_bshort_to_char((unsigned char *)(hdrbuf + 20), (short)wchans);
   mus_bint_to_char((unsigned char *)(hdrbuf + 22), siz / (wchans * mus_data_format_to_bytes_per_sample(format)));
-  switch (format)
-    {
-    case MUS_BSHORT: case MUS_LSHORT: case MUS_UBSHORT: 
-      mus_bshort_to_char((unsigned char *)(hdrbuf + 26), 16); 
-      break;
-    case MUS_B24INT: case MUS_L24INT: 
-      mus_bshort_to_char((unsigned char *)(hdrbuf + 26), 24); 
-      break;
-    case MUS_BINT: case MUS_LINT: case MUS_BFLOAT: 
-      mus_bshort_to_char((unsigned char *)(hdrbuf + 26), 32); 
-      break;
-    case MUS_BDOUBLE: 
-      mus_bshort_to_char((unsigned char *)(hdrbuf + 26), 64); 
-      break;
-    case MUS_BYTE: case MUS_UBYTE: 
-      mus_bshort_to_char((unsigned char *)(hdrbuf + 26), 8); 
-      break;
-    case MUS_MULAW: 
-      mus_bshort_to_char((unsigned char *)(hdrbuf + 26), 8); 
-      break;
-    case MUS_ALAW: 
-      mus_bshort_to_char((unsigned char *)(hdrbuf + 26), 8); 
-      break;
-    default: 
-      mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
-		"can't write AIFF data format: %d (%s)\n  [%s[%d] %s]",
-		format,
-		any_data_format_name(format),
-		__FILE__, __LINE__, __FUNCTION__);
-      return(MUS_ERROR);
-      break;
-    }
+  mus_bshort_to_char((unsigned char *)(hdrbuf + 26), sndlib_format_to_aiff_bits(format));
   double_to_ieee_80((double)wsrate, (unsigned char *)(hdrbuf + 28));
   if (aifc_header)
     {
-      switch (format)
-	{
-	case MUS_BSHORT: 
-	case MUS_B24INT: 
-	case MUS_BINT: 
-	case MUS_BYTE: 
-	  str = (char *)I_NONE; 
-	  break;
-	case MUS_LSHORT: 
-	case MUS_L24INT: 
-	case MUS_LINT: 
-	  str = (char *)I_sowt; 
-	  break;
-	case MUS_BFLOAT: 
-	  str = (char *)I_fl32; 
-	  break;
-	case MUS_BDOUBLE: 
-	  str = (char *)I_fl64; 
-	  break;
-	case MUS_UBYTE: 
-	case MUS_UBSHORT: 
-	  str = (char *)I_raw_; 
-	  break;
-	case MUS_MULAW: 
-	  str = (char *)I_ulaw; 
-	  break;
-	case MUS_ALAW: 
-	  str = (char *)I_alaw; 
-	  break;
-	default: 
-	  str = (char *)I_NONE; 
-	  break;
-	}
+      str = (char *)sndlib_format_to_aifc_name(format);
       write_four_chars((unsigned char *)(hdrbuf + 38), (const unsigned char *)str);
       (*(unsigned char *)(hdrbuf + 42)) = 4; /* final pad null not accounted-for */
       write_four_chars((unsigned char *)(hdrbuf + 43), (const unsigned char *)str);
@@ -1495,6 +1463,7 @@ static int read_riff_header (int chan)
   int chunksize, offset, chunkloc, little, i;
   little = 1;
   if (match_four_chars((unsigned char *)hdrbuf, I_RIFX)) little = 0; /* big-endian data in this case, but I've never seen one */
+  little_endian = little;
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)(hdrbuf + 8));
   chunkloc = 12;
   offset = 0;
@@ -1538,6 +1507,7 @@ static int read_riff_header (int chan)
 	  original_data_format = big_or_little_endian_short((unsigned char *)(hdrbuf + 8), little);
 	  chans = big_or_little_endian_short((unsigned char *)(hdrbuf + 10), little);
 	  srate = big_or_little_endian_int((unsigned char *)(hdrbuf + 12), little);
+	  update_frames_location = 12 + offset;
 	  block_align = big_or_little_endian_short((unsigned char *)(hdrbuf + 20), little);
 	  bits_per_sample = big_or_little_endian_short((unsigned char *)(hdrbuf + 22), little);
 	  if (original_data_format == -2) /* 0xFFFE = "extensible" : short size=22, short bits, long chanmap, short format */
@@ -1712,10 +1682,7 @@ static void update_riff_header (int chan, int siz)
   read(chan, hdrbuf, INITIAL_READ_SIZE);
   read_riff_header(chan);
   lseek(chan, 4L, SEEK_SET);
-  mus_lint_to_char((unsigned char *)hdrbuf,
-		   (siz + 
-		    update_form_size - 
-		    mus_long_samples_to_bytes(data_format, data_size))); 
+  mus_lint_to_char((unsigned char *)hdrbuf, siz + update_form_size - mus_long_samples_to_bytes(data_format, data_size)); 
   /* see update_aiff_header for explanation */
   write(chan, hdrbuf, 4);
   lseek(chan, update_ssnd_location, SEEK_SET);
@@ -2278,7 +2245,7 @@ static int read_nist_header (int chan)
 	  hend = HDRBUFSIZ;
 	}
     }
-  data_size = samples*bytes;
+  data_size = samples * bytes;
   if (byte_format == MUS_NIST_SHORTPACK)
     {
       data_format = MUS_UNSUPPORTED;
@@ -2453,6 +2420,7 @@ static int read_ircam_header (int chan)
       (mus_char_to_lint((unsigned char *)hdrbuf) == I_IRCAM_MIPS))
     little = 1;
   else little = 0;
+  little_endian = little;
   data_location = 1024;
   true_file_length = SEEK_FILE_LENGTH(chan);
   data_size = (true_file_length - 1024);
@@ -2523,23 +2491,15 @@ static int read_ircam_header (int chan)
   return(MUS_NO_ERROR);
 }
 
-static int write_ircam_header (int chan, int wsrate, int wchans, int format, const char *comment, int len)
+static int sndlib_format_to_ircam(int format)
 {
-  int i, j;
-#ifdef NEXT
-  mus_bint_to_char((unsigned char *)hdrbuf, 0x4a364);
-#else
-  mus_bint_to_char((unsigned char *)hdrbuf, 0x2a364); /* SUN id */
-#endif
-  mus_bfloat_to_char((unsigned char *)(hdrbuf + 4), (float)wsrate);
-  mus_bint_to_char((unsigned char *)(hdrbuf + 8), wchans);
   switch (format)
     {
-    case MUS_MULAW: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 0x20001); break;
-    case MUS_ALAW: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 0x10001); break;
-    case MUS_BSHORT: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 2); break;
-    case MUS_BINT: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 0x40004); break;
-    case MUS_BFLOAT: mus_bint_to_char((unsigned char *)(hdrbuf + 12), 4); break;
+    case MUS_MULAW:  return(0x20001); break;
+    case MUS_ALAW:   return(0x10001); break;
+    case MUS_BSHORT: return(2);       break;
+    case MUS_BINT:   return(0x40004); break;
+    case MUS_BFLOAT: return(4);       break;
     default: 
       mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
 		"IRCAM unsupported sound data format type: %d (%s)\n  [%s[%d] %s]",
@@ -2549,43 +2509,49 @@ static int write_ircam_header (int chan, int wsrate, int wchans, int format, con
       return(MUS_ERROR);
       break;
     }
+}
+
+static void write_ircam_comment(int fd, const char *comment, int len)
+{
+  unsigned char *combuf;
   if (len > 0)
     {
-      mus_bshort_to_char((unsigned char *)(hdrbuf + 16), 2);
-      mus_bshort_to_char((unsigned char *)(hdrbuf + 18), (short)len);
+      mus_bshort_to_char((unsigned char *)hdrbuf, 2);
+      mus_bshort_to_char((unsigned char *)(hdrbuf + 2), (short)len);
+      write(fd, hdrbuf, 4);
+      write(fd, (unsigned char *)comment, len);
     }
   else
     {
-      mus_bint_to_char((unsigned char *)(hdrbuf + 16), 0);
+      mus_bint_to_char((unsigned char *)hdrbuf, 0);
+      write(fd, hdrbuf, 4);
     }
-  write(chan, hdrbuf, 20);
+  len = 1024 - (len + 20);
+  if (len > 0)
+    {
+      combuf = (unsigned char *)CALLOC(len, sizeof(char));
+      write(fd, combuf, len);
+      FREE(combuf);
+    }
+}
+
+static int write_ircam_header(int chan, int wsrate, int wchans, int format, const char *comment, int len)
+{
+#ifdef NEXT
+  mus_bint_to_char((unsigned char *)hdrbuf, 0x4a364);
+#else
+  mus_bint_to_char((unsigned char *)hdrbuf, 0x2a364); /* SUN id */
+#endif
+  mus_bfloat_to_char((unsigned char *)(hdrbuf + 4), (float)wsrate);
+  mus_bint_to_char((unsigned char *)(hdrbuf + 8), wchans);
+  mus_bint_to_char((unsigned char *)(hdrbuf + 12), sndlib_format_to_ircam(format));
+  write(chan, hdrbuf, 16);
   data_location = 1024;
-  j = 0;
-  for (i = 0; i < len; i++) 
-    {
-      hdrbuf[j] = comment[i];
-      j++;
-      if (j == HDRBUFSIZ) 
-	{
-	  write(chan, hdrbuf, HDRBUFSIZ);
-	  j = 0;
-	}
-    }
-  for (i = 0; i < (1024 - (len + 20)); i++) /* now fill left over bytes with nulls */
-    {
-      hdrbuf[j] = 0;
-      j++;
-      if (j == HDRBUFSIZ) 
-	{
-	  write(chan, hdrbuf, HDRBUFSIZ);
-	  j = 0;
-	}
-    }
-  if (j != 0) write(chan, hdrbuf, j);
+  write_ircam_comment(chan, comment, len);
   return(MUS_NO_ERROR);
 }
 
-static void update_ircam_header (void)
+static void update_ircam_header(void)
 {
   /* size is implicit in file size - header */
 }
@@ -4533,37 +4499,6 @@ void mus_header_raw_defaults(int *sr, int *chn, int *frm)
 }
 
 
-#ifdef MACOS
-
-/* try to read SDII resources */
-/* apparently c2pstr or the reverse operate in place!! so we copy the strings first */
-#include <Resources.h>
-#include <Sound.h>
-
-static int mus_resource(char *resname)
-{
-  Handle sndH;
-  OSErr err;
-  char *val, *tmp;
-  int rtn = MUS_ERROR;
-  tmp = (char *)CALLOC(strlen(resname) + 2, sizeof(char));
-  strcpy(tmp, resname);
-  sndH = GetNamedResource('STR ', (const unsigned char *)c2pstr(tmp));
-  FREE(tmp);
-  err = ResError();
-  if ((err == noErr) && (sndH))
-    {
-      LoadResource(sndH);
-      val = p2cstr((unsigned char *)(*sndH));
-      sscanf(val, "%d", &rtn);
-      ReleaseResource(sndH);
-    }
-  return(rtn);
-}
-
-#endif
-
-
 /* ------------------------------------ all together now ------------------------------------ */
 
 static int mus_header_read_with_fd_and_name(int chan, const char *filename)
@@ -5000,7 +4935,7 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
   return(read_no_header(chan));
 }
 
-int mus_header_read (const char *name)
+int mus_header_read(const char *name)
 {
   int chan, err = 0;
 #ifdef MACOS
@@ -5017,44 +4952,6 @@ int mus_header_read (const char *name)
       return(MUS_ERROR);
     }
   err = mus_header_read_with_fd_and_name(chan, name);
-  
-#ifdef MACOS
-  /* on the Mac, we should look for the resource fork. */
-  /* we'll at least check SDII possibilities */
-  /* if I had an example of SoundEdit output, I'd add support for that too */
-  
-  if (header_type == MUS_RAW)
-    {
-      dupname = (char *)CALLOC(strlen(name) + 2, sizeof(char));
-      strcpy(dupname, name);
-      loc = OpenResFile((const unsigned char *)c2pstr(dupname));
-      FREE(dupname);
-      if (loc != -1)
-	{
-	  happy = mus_resource("channels");
-	  if (happy != -1)
-	    {
-	      /* found an SDII file?!? */
-	      chans = happy;
-	      srate = mus_resource("sample-rate");
-	      happy = mus_resource("sample-size");
-	      if (happy == 1)
-		data_format = MUS_UBYTE;
-	      else data_format = MUS_BSHORT;
-	      data_size = mus_long_bytes_to_samples(data_format, true_file_length);
-	      header_type = MUS_SD2;
-	    }
-	  CloseResFile(loc);
-	}
-    }
-  /* we could also check the file type:
-   * FInfo fi;
-   * err = GetFInfo((const unsigned char *)c2pstr(name), fd, &fi);
-   * if (err == noErr) <check fi.fdType against possibiliites given above>
-   */
-
-#endif
-
   if (close(chan) != 0)
     {
       mus_error(MUS_CANT_CLOSE_FILE,
@@ -5067,17 +4964,17 @@ int mus_header_read (const char *name)
   return(err);
 }
 
-int mus_header_read_with_fd (int chan)
+int mus_header_read_with_fd(int chan)
 {
   return(mus_header_read_with_fd_and_name(chan, NULL));
 }
 
 static int mus_header_write_with_fd_and_name(int chan, int type, int in_srate, int in_chans, 
-					     int loc, int size, int format, const char *comment, 
+					     int loc, int size_in_samples, int format, const char *comment, 
 					     int len, const char *filename)
 {
   off_t siz;
-  siz = mus_long_samples_to_bytes(format, size);
+  siz = mus_long_samples_to_bytes(format, size_in_samples);
   switch (type)
     {
     case MUS_NEXT: return(mus_header_write_next_header(chan, in_srate, in_chans, loc, siz, format, comment, len)); break;
@@ -5108,12 +5005,12 @@ static int mus_header_write_with_fd_and_name(int chan, int type, int in_srate, i
   return(MUS_NO_ERROR);
 }
 
-int mus_header_write_with_fd(int chan, int type, int in_srate, int in_chans, int loc, int size, int format, const char *comment, int len)
+int mus_header_write_with_fd(int chan, int type, int in_srate, int in_chans, int loc, int size_in_samples, int format, const char *comment, int len)
 {
-  return(mus_header_write_with_fd_and_name(chan, type, in_srate, in_chans, loc, size, format, comment, len, NULL));
+  return(mus_header_write_with_fd_and_name(chan, type, in_srate, in_chans, loc, size_in_samples, format, comment, len, NULL));
 }
 
-int mus_header_write (const char *name, int type, int in_srate, int in_chans, int loc, int size, int format, const char *comment, int len)
+int mus_header_write(const char *name, int type, int in_srate, int in_chans, int loc, int size_in_samples, int format, const char *comment, int len)
 {
   int chan, err;
   chan = mus_file_create(name);
@@ -5125,7 +5022,7 @@ int mus_header_write (const char *name, int type, int in_srate, int in_chans, in
 		__FILE__, __LINE__, __FUNCTION__);
       return(MUS_ERROR);
     }
-  err = mus_header_write_with_fd_and_name(chan, type, in_srate, in_chans, loc, size, format, comment, len, name);
+  err = mus_header_write_with_fd_and_name(chan, type, in_srate, in_chans, loc, size_in_samples, format, comment, len, name);
   if (close(chan) != 0)
     {
       mus_error(MUS_CANT_CLOSE_FILE,
@@ -5162,7 +5059,7 @@ int mus_header_update_with_fd(int chan, int type, int size)
   return(MUS_NO_ERROR);
 }
 
-int mus_header_update (const char *name, int type, int size, int wsrate, int format, int wchans, int loc)
+int mus_header_update(const char *name, int type, int size, int wsrate, int format, int wchans, int loc)
 {
   int chan, err;
   off_t siz;
@@ -5205,6 +5102,356 @@ int mus_header_update (const char *name, int type, int size, int wsrate, int for
 		chan, name, strerror(errno),
 		__FILE__, __LINE__, __FUNCTION__); 
       return(MUS_ERROR);
+    }
+  return(err);
+}
+
+int mus_header_change_samples(const char *filename, int new_samples)
+{
+  int bytes, err, fd;
+  err = mus_header_read(filename);
+  if (err == MUS_NO_ERROR)
+    {
+      bytes = mus_long_samples_to_bytes(data_format, new_samples);
+      fd = mus_file_reopen_write(filename);
+      err = mus_header_update_with_fd(fd, header_type, bytes);
+    }
+  return(err);
+}
+
+int mus_header_change_chans(const char *filename, int new_chans)
+{
+  int err = MUS_NO_ERROR, fd, new_frames;
+  err = mus_header_read(filename);
+  if (err == MUS_NO_ERROR)
+    {
+      if (chans != new_chans)
+	{
+	  fd = mus_file_reopen_write(filename);
+	  if (fd == -1) 
+	    {
+	      mus_error(MUS_CANT_OPEN_FILE,
+			"can't change chans in header of %s: %s\n  [%s[%d] %s]",
+			filename, strerror(errno),
+			__FILE__, __LINE__, __FUNCTION__);
+	      return(MUS_ERROR);
+	    }
+	  switch (header_type)
+	    {
+	    case MUS_NEXT:
+	      lseek(fd, 20L, SEEK_SET);
+	      mus_bint_to_char((unsigned char *)hdrbuf, new_chans);
+	      write(fd, hdrbuf, 4);
+	      break;
+	    case MUS_IRCAM:
+	      lseek(fd, 8L, SEEK_SET);
+	      if (little_endian) 
+		mus_lint_to_char((unsigned char *)hdrbuf, new_chans);
+	      else mus_bint_to_char((unsigned char *)hdrbuf, new_chans);
+	      write(fd, hdrbuf, 4);
+	      break;
+	    case MUS_NIST:
+	      lseek(fd, 0L, SEEK_SET);
+	      write_nist_header(fd, srate, new_chans, mus_data_format_to_bytes_per_sample(data_format) * data_size, data_format);
+	      break;
+	    case MUS_AIFF: case MUS_AIFC:
+	      lseek(fd, update_frames_location - 2, SEEK_SET);
+	      new_frames = data_size / new_chans;
+	      mus_bshort_to_char((unsigned char *)hdrbuf, new_chans);
+	      mus_bint_to_char((unsigned char *)(hdrbuf + 2), new_frames);
+	      write(fd, hdrbuf, 6);
+	      break;
+	    case MUS_RIFF:
+	      lseek(fd, update_frames_location - 2, SEEK_SET);
+	      if (little_endian)
+		mus_lshort_to_char((unsigned char *)hdrbuf, new_chans);
+	      else mus_bshort_to_char((unsigned char *)hdrbuf, new_chans);
+	      write(fd, hdrbuf, 2);
+	      break;
+	    }
+	  close(fd);
+	}
+    }
+  return(err);
+}
+
+int mus_header_change_srate(const char *filename, int new_srate)
+{
+  int err = MUS_NO_ERROR, fd;
+  err = mus_header_read(filename);
+  if (err == MUS_NO_ERROR)
+    {
+      if (srate != new_srate)
+	{
+	  fd = mus_file_reopen_write(filename);
+	  if (fd == -1) 
+	    {
+	      mus_error(MUS_CANT_OPEN_FILE,
+			"can't change srate in header of %s: %s\n  [%s[%d] %s]",
+			filename, strerror(errno),
+			__FILE__, __LINE__, __FUNCTION__);
+	      return(MUS_ERROR);
+	    }
+	  switch (header_type)
+	    {
+	    case MUS_NEXT:
+	      lseek(fd, 16L, SEEK_SET);
+	      mus_bint_to_char((unsigned char *)hdrbuf, new_srate);
+	      write(fd, hdrbuf, 4);
+	      break;
+	    case MUS_IRCAM:
+	      lseek(fd, 4L, SEEK_SET);
+	      if (little_endian) 
+		mus_lfloat_to_char((unsigned char *)hdrbuf, (float)new_srate);
+	      else mus_bfloat_to_char((unsigned char *)hdrbuf, (float)new_srate);
+	      write(fd, hdrbuf, 4);
+	      break;
+	    case MUS_NIST:
+	      lseek(fd, 0L, SEEK_SET);
+	      write_nist_header(fd, new_srate, chans, mus_data_format_to_bytes_per_sample(data_format) * data_size, data_format);
+	      break;
+	    case MUS_AIFF: case MUS_AIFC:
+	      lseek(fd, update_frames_location + 6, SEEK_SET);
+	      double_to_ieee_80((double)new_srate, (unsigned char *)hdrbuf);
+	      write(fd, hdrbuf, 10);
+	      break;
+	    case MUS_RIFF:
+	      lseek(fd, update_frames_location, SEEK_SET);
+	      if (little_endian)
+		mus_lint_to_char((unsigned char *)hdrbuf, new_srate);
+	      else mus_bint_to_char((unsigned char *)hdrbuf, new_srate);
+	      write(fd, hdrbuf, 4);
+	      break;
+	    }
+	  close(fd);
+	}
+    }
+  return(err);
+}
+
+int mus_header_change_type(const char *filename, int new_type, int new_format)
+{
+  int err = MUS_NO_ERROR;
+  /* open temp, write header, copy data, replace original with temp */
+  char *new_file, *comment = NULL;
+  int ofd, ifd, loc, len = 0;
+  long nbytes;
+  char *buf = NULL;
+  err = mus_header_read(filename);
+  if (err == MUS_NO_ERROR)
+    {
+      if (header_type != new_type)
+	{
+	  new_file = (char *)CALLOC(strlen(filename) + 5, sizeof(char));
+	  sprintf(new_file, "%s.tmp", filename);
+	  loc = mus_header_data_location();
+	  if (new_type != MUS_RAW)
+	    {
+	      if (comment_end > comment_start)
+		{
+		  len = comment_end - comment_start + 1;
+		  comment = (char *)CALLOC(len + 1, sizeof(char));
+		  ifd = mus_file_open_read(filename);
+		  lseek(ifd, comment_start, SEEK_SET);
+		  read(ifd, (unsigned char *)comment, len);
+		  close(ifd);
+		}
+	      mus_header_write(new_file, new_type, srate, chans, loc, data_size, new_format, comment, len);
+	    }
+	  else mus_file_create(new_file);
+	  ifd = mus_file_open_read(filename);
+	  lseek(ifd, loc, SEEK_SET);
+	  ofd = mus_file_reopen_write(new_file);
+	  lseek(ofd, 0L, SEEK_END);
+	  buf = (char *)CALLOC(8192, sizeof(char));
+	  while ((nbytes = read(ifd, buf, 8192))) write(ofd, buf, nbytes);
+	  close(ifd);
+	  close(ofd);
+	  FREE(buf);
+	  if (comment) FREE(comment);
+	  rename(new_file, filename);
+	  FREE(new_file);
+	}
+    }
+  return(err);
+}
+
+int mus_header_change_format(const char *filename, int new_format)
+{
+  int err = MUS_NO_ERROR, fd, old_bytes;
+  err = mus_header_read(filename);
+  if (err == MUS_NO_ERROR)
+    {
+      if (data_format != new_format)
+	{
+	  fd = mus_file_reopen_write(filename);
+	  if (fd == -1) 
+	    {
+	      mus_error(MUS_CANT_OPEN_FILE,
+			"can't change data format in header of %s: %s\n  [%s[%d] %s]",
+			filename, strerror(errno),
+			__FILE__, __LINE__, __FUNCTION__);
+	      return(MUS_ERROR);
+	    }
+	  switch (header_type)
+	    {
+	    case MUS_NEXT:
+	      lseek(fd, 12L, SEEK_SET);
+	      mus_bint_to_char((unsigned char *)hdrbuf, sndlib_format_to_next(new_format));
+	      write(fd, hdrbuf, 4);
+	      break;
+	    case MUS_IRCAM:
+	      lseek(fd, 12L, SEEK_SET);
+	      mus_bint_to_char((unsigned char *)hdrbuf, sndlib_format_to_ircam(new_format)); break;
+	      write(fd, hdrbuf, 4);
+	      break;
+	    case MUS_NIST:
+	      lseek(fd, 0L, SEEK_SET);
+	      write_nist_header(fd, srate, chans, mus_data_format_to_bytes_per_sample(data_format) * data_size, new_format);
+	      break;
+	    case MUS_AIFF: case MUS_AIFC:
+	      old_bytes = data_size * mus_data_format_to_bytes_per_sample(data_format);
+	      lseek(fd, update_frames_location, SEEK_SET);
+	      mus_bint_to_char((unsigned char *)hdrbuf,
+			       old_bytes / (chans * mus_data_format_to_bytes_per_sample(new_format)));
+	      mus_bshort_to_char((unsigned char *)(hdrbuf + 4), sndlib_format_to_aiff_bits(new_format));
+	      write(fd, hdrbuf, 6);
+	      if (header_type == MUS_AIFC)
+		{
+		  const char *str;
+		  str = sndlib_format_to_aifc_name(new_format);
+		  lseek(fd, update_frames_location + 16, SEEK_SET);
+		  write_four_chars((unsigned char *)(hdrbuf + 0), (const unsigned char *)str);
+		  (*(unsigned char *)(hdrbuf + 4)) = 4; /* final pad null not accounted-for */
+		  write_four_chars((unsigned char *)(hdrbuf + 5), (const unsigned char *)str);
+		  (*(unsigned char *)(hdrbuf + 9)) = 0;
+		  write(fd, hdrbuf, 10);
+		}
+	      break;
+	    case MUS_RIFF:
+	      lseek(fd, update_frames_location + 24, SEEK_SET);
+	      if (little_endian)
+		mus_lshort_to_char((unsigned char *)hdrbuf, sndlib_format_to_aiff_bits(new_format));
+	      else mus_bshort_to_char((unsigned char *)hdrbuf, sndlib_format_to_aiff_bits(new_format));
+	      write(fd, hdrbuf, 2);
+	      lseek(fd, update_frames_location + 10, SEEK_SET);
+	      switch (new_format)
+		{
+		case MUS_MULAW: 
+		  new_format = 7; 
+		  break;
+		case MUS_ALAW:  
+		  new_format = 6; 
+		  break;
+		case MUS_UBYTE: 
+		case MUS_LSHORT: case MUS_L24INT: case MUS_LINT: 
+		case MUS_BSHORT: case MUS_B24INT: case MUS_BINT: 
+		  new_format = 1;
+		  break;
+		case MUS_LFLOAT: case MUS_LDOUBLE: 
+		case MUS_BFLOAT: case MUS_BDOUBLE:
+		  new_format = 3;
+		  break;
+		}
+	      if (little_endian)
+		mus_lshort_to_char((unsigned char *)hdrbuf, new_format);
+	      else mus_bshort_to_char((unsigned char *)hdrbuf, new_format);
+	      write(fd, hdrbuf, 2);
+	      break;
+	    }
+	  close(fd);
+	}
+    }
+  return(err);
+}
+
+int mus_header_change_location(const char *filename, int new_location)
+{
+  /* only NEXT changeable in this regard */
+  int err = MUS_NO_ERROR, fd;
+  err = mus_header_read(filename);
+  if (err == MUS_NO_ERROR)
+    {
+      if (data_location != new_location)
+	{
+	  fd = mus_file_reopen_write(filename);
+	  if (fd == -1) 
+	    {
+	      mus_error(MUS_CANT_OPEN_FILE,
+			"can't change data location in header of %s: %s\n  [%s[%d] %s]",
+			filename, strerror(errno),
+			__FILE__, __LINE__, __FUNCTION__);
+	      return(MUS_ERROR);
+	    }
+	  switch (header_type)	  
+	    {
+	    case MUS_NEXT:
+	      lseek(fd, 4L, SEEK_SET);
+	      mus_bint_to_char((unsigned char *)hdrbuf, new_location);
+	      write(fd, hdrbuf, 4);
+	      break;
+	    }
+	  close(fd);
+	}
+    }
+  return(err);
+}
+
+int mus_header_change_comment(const char *filename, char *new_comment)
+{
+  int err = MUS_NO_ERROR, fd, len = 0, need_ripple = 0;
+  err = mus_header_read(filename);
+  if (err == MUS_NO_ERROR)
+    {
+      switch (header_type)	  
+	{
+	case MUS_IRCAM:
+	  fd = mus_file_reopen_write(filename);
+	  lseek(fd, 16L, SEEK_SET);
+	  if (new_comment) len = strlen(new_comment);
+	  write_ircam_comment(fd, new_comment, len);
+	  close(fd);
+	  break;
+	case MUS_NEXT:
+	  fd = mus_file_reopen_write(filename);
+	  lseek(fd, 24L, SEEK_SET);
+	  if (new_comment == NULL)
+	    write_next_comment(fd, new_comment, 0, data_location); /* erase old possibly */
+	  else
+	    {
+	      if ((comment_start != comment_end) && ((data_location - 24) >= strlen(new_comment)))
+		write_next_comment(fd, new_comment, strlen(new_comment), data_location); /* there's room to overwrite old comment */
+	      else need_ripple = 1;
+	    }
+	  close(fd);
+	  break;
+	default:
+	  need_ripple = 1;
+	  break;
+	}
+      if (need_ripple)
+	{
+	  /* open temp, write header, copy data, replace original with temp */
+	  char *new_file;
+	  int ofd, ifd, loc;
+	  long nbytes;
+	  char *buf = NULL;
+	  new_file = (char *)CALLOC(strlen(filename) + 5, sizeof(char));
+	  sprintf(new_file, "%s.tmp", filename);
+	  loc = mus_header_data_location();
+	  mus_header_write(new_file, header_type, srate, chans, loc, data_size, data_format, new_comment, (new_comment) ? strlen(new_comment): 0);
+	  ifd = mus_file_open_read(filename);
+	  lseek(ifd, loc, SEEK_SET);
+	  ofd = mus_file_reopen_write(new_file);
+	  lseek(ofd, 0L, SEEK_END);
+	  buf = (char *)CALLOC(8192, sizeof(char));
+	  while ((nbytes = read(ifd, buf, 8192))) write(ofd, buf, nbytes);
+	  close(ifd);
+	  close(ofd);
+	  FREE(buf);
+	  rename(new_file, filename);
+	  FREE(new_file);
+	}
     }
   return(err);
 }

@@ -1993,13 +1993,10 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 }
 
 
-#define RIPPLE_SIZE 65536
-/* needs to be big enough to accommodate any newly added header or header comments */
-
 void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_data)
 {
-  unsigned char *ripple0, *ripple1, *zerobuf;
-  int fd, err, chans, srate, loc, comlen, type, format, bytes0, bytes1, curloc, readloc, writeloc, curbytes, totalbytes;
+  /* this blindly changes the header info -- it does not actually reformat the data or whatever */
+  int err, chans, srate, loc, type, format;
   char *comment;
   file_info *hdr;
   if (sp->read_only)
@@ -2014,97 +2011,34 @@ void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_da
 #endif
   if (err == 0)
     {
-      fd = open(sp->filename, O_RDWR, 0);
-      if (fd != -1)
+      if ((type == MUS_AIFF) || (type == MUS_AIFC)) mus_header_set_full_aiff_loop_info(mus_sound_loop_info(sp->filename));
+      mus_sound_forget(sp->filename);
+      hdr = sp->hdr;
+      /* find out which fields changed -- if possible don't touch the sound data */
+      comment = read_file_data_choices(edit_header_data, &srate, &chans, &type, &format, &loc);
+      if (hdr->chans != chans)
+	mus_header_change_chans(sp->filename, chans);
+      if (hdr->srate != srate)
+	mus_header_change_srate(sp->filename, srate);
+      if (hdr->type != type)
+	mus_header_change_type(sp->filename, type, format);
+      else
 	{
-	  hdr = sp->hdr;
-	  ripple0 = (unsigned char *)CALLOC(RIPPLE_SIZE, sizeof(unsigned char));
-	  ripple1 = (unsigned char *)CALLOC(RIPPLE_SIZE, sizeof(unsigned char));
-	  lseek(fd, hdr->data_location, SEEK_SET);
-	  bytes0 = read(fd, ripple0, RIPPLE_SIZE);
-	  if (bytes0 == RIPPLE_SIZE) 
-	    bytes1 = read(fd, ripple1, RIPPLE_SIZE); 
-	  else bytes1 = -1;
-	  srate = hdr->srate;
-	  chans = hdr->chans;
-	  type = hdr->type;
-	  if ((type == MUS_AIFF) || 
-	      (type == MUS_AIFC))
-	    mus_header_set_full_aiff_loop_info(mus_sound_loop_info(sp->filename));
-	  mus_sound_forget(sp->filename);
-	  format = hdr->format;
-	  loc = hdr->data_location;
-	  comment = read_file_data_choices(edit_header_data, &srate, &chans, &type, &format, &loc);
-	  comlen = snd_strlen(comment);
-	  curloc = 0;
-	  curbytes = 0;
-	  totalbytes = hdr->samples * mus_data_format_to_bytes_per_sample(hdr->format);
-	  lseek(fd, 0, SEEK_SET);
-	  if (type != MUS_RAW)
-	    {
-	      mus_header_write_with_fd(fd, type, srate, chans, loc, hdr->samples, format, comment, comlen);
-	      curloc = mus_header_data_location();
-	      if ((loc != curloc) && 
-		  (loc != hdr->data_location)) /* user changed it */
-		{
-		  /* pad if possible ? */
-		  if (loc > curloc)
-		    {
-		      zerobuf = (unsigned char *)CALLOC(loc-curloc, sizeof(unsigned char));
-		      write(fd, zerobuf, loc-curloc);
-		      FREE(zerobuf);
-		      curloc = loc;
-		    }
-		}
-	    }
-	  readloc = RIPPLE_SIZE * 2;
-	  writeloc = curloc;
-	  if (writeloc > readloc) 
-	    snd_error("%s[%d] %s: writeloc > readloc!",
-		      __FILE__, __LINE__, __FUNCTION__);
-	  while (bytes0 > 0)
-	    {
-	      write(fd, ripple0, bytes0);
-	      curbytes += bytes0;
-	      writeloc += RIPPLE_SIZE;
-	      if (bytes1 > 0)
-		{
-		  lseek(fd, readloc, SEEK_SET);
-		  readloc += RIPPLE_SIZE;
-		  bytes0 = read(fd, ripple0, RIPPLE_SIZE);
-		  lseek(fd, writeloc, SEEK_SET);
-		  writeloc += RIPPLE_SIZE;
-		  write(fd, ripple1, bytes1);
-		  curbytes += bytes1;
-		  if (bytes0 > 0)
-		    {
-		      lseek(fd, readloc, SEEK_SET);
-		      readloc += RIPPLE_SIZE;
-		      bytes1 = read(fd, ripple1, RIPPLE_SIZE);
-		    }
-		}
-	      if (curbytes > totalbytes) break; /* ?? this should not happen */
-	    }
-	  if (close(fd) != 0)
-	    snd_error("can't close %d (%s): %s [%s[%d] %s]",
-		      fd, sp->filename, strerror(errno),
-		      __FILE__, __LINE__, __FUNCTION__);
-	  clear_minibuffer(sp);
-	  snd_file_bomb_icon(sp, TRUE);
-	  FREE(ripple0);
-	  FREE(ripple1);
-	  FREE(comment);
-	  if (auto_update(ss)) 
-	    map_over_sounds(ss, snd_not_current, NULL);
+	  if (hdr->format != format)
+	    mus_header_change_format(sp->filename, format);
 	}
-      else 
-	snd_error("can't open %s: %s", sp->short_filename, strerror(errno));
-      mus_header_set_aiff_loop_info(NULL);
+      if ((type == MUS_NEXT) &&
+	  (hdr->data_location != loc))
+	mus_header_change_location(sp->filename, loc);
+      if (((comment) && (hdr->comment) && (strcmp(comment, hdr->comment) != 0)) ||
+	  ((comment) && (hdr->comment == NULL)) ||
+	  ((comment == NULL) && (hdr->comment)))
+	mus_header_change_comment(sp->filename, comment);
+      snd_update(ss, sp);
     }
   else 
     snd_error("can't write %s: %s", sp->short_filename, strerror(errno));
 }
-
 
 /* raw data dialog funcs */
 

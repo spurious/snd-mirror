@@ -131,7 +131,6 @@
 #define XEN_ARG_7    SCM_ARG7
 #define XEN_ARG_8    8
 
-
 #define XEN_TO_C_DOUBLE(a)            scm_num2dbl(a,  __FUNCTION__)
 #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ((XEN_NUMBER_P(a)) ? (scm_num2dbl(a,  __FUNCTION__)) : (b))
 #define XEN_TO_C_DOUBLE_WITH_CALLER(a, b) scm_num2dbl(a, b)
@@ -846,7 +845,7 @@ XEN xen_rb_copy_list(XEN val); /* Ruby arrays (lists) are passed by reference */
 #define C_TO_XEN_DOUBLE(a) 0
 #define C_TO_XEN_INT(a) a
 #define C_TO_SMALL_XEN_INT(a) a
-#define XEN_TO_SMALL_C_INT(a) 0
+#define XEN_TO_SMALL_C_INT(a) a
 #define C_TO_XEN_STRING(a) 0
 #define XEN_TO_NEW_C_STRING(a) NULL
 #define C_TO_XEN_BOOLEAN(a) 0
@@ -917,6 +916,15 @@ XEN xen_rb_copy_list(XEN val); /* Ruby arrays (lists) are passed by reference */
 #define XEN_TO_STRING(Obj) "(unknown)"
 #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr)
 #define XEN_APPEND(X, Y) 0
+#define XEN_ONLY_ARG 0
+#define XEN_ARG_1    0
+#define XEN_ARG_2    0
+#define XEN_ARG_3    0
+#define XEN_ARG_4    0
+#define XEN_ARG_5    0
+#define XEN_ARG_6    0
+#define XEN_ARG_7    0
+#define XEN_ARG_8    0
 
 #endif
 /* end NO EXTENSION LANGUAGE */

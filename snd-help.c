@@ -275,6 +275,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+11-Mar:  removed channel-sync.\n\
 28-Feb:  edit-position bugfix (thanks to Ludger Brummer).\n\
 27-Feb:  color-scale bugfix (thanks to Anders Vinjar).\n\
 25-Feb:  gtk2 port with xg (see example in grfsnd.html).\n\
@@ -1097,7 +1098,6 @@ all refer to the same thing.\n\
   " S_change_menu_label " (top-menu old-label new-label)\n\
   " S_channel_properties "(snd chn)\n\
   " S_channel_style "     (snd)\n\
-  " S_channel_sync "      (snd chn)\n\
   " S_channels "          (snd)\n\
   " S_chans "             (snd)\n\
   " S_clear_audio_inputs "()\n\

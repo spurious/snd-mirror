@@ -3161,16 +3161,16 @@ between beg and beg + num by scaler.  If channel is omitted, the scaling applies
   chan_info *cp;
   int i, samp, pos;
   Float scaler;
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_2, S_scale_sound_by, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(num), num, XEN_ARG_3, S_scale_sound_by, "a number");
+  ASSERT_SAMPLE_TYPE(S_scale_sound_by, beg, XEN_ARG_2);
+  ASSERT_SAMPLE_TYPE(S_scale_sound_by, num, XEN_ARG_3);
   ASSERT_SOUND(S_scale_sound_by, snd, 4);
   scaler = XEN_TO_C_DOUBLE(scl);
-  samp = XEN_TO_C_INT_OR_ELSE(beg, 0);
+  samp = beg_to_sample(beg, S_scale_sound_by);
   if (XEN_INTEGER_P(chn))
     {
       cp = get_cp(snd, chn, S_scale_sound_by);
       pos = to_c_edit_position(cp, edpos, S_scale_sound_by, 6);
-      scale_channel(cp, scaler, samp, XEN_TO_C_INT_OR_ELSE(num, cp->samples[pos]), pos); /* should this subtract beg? */
+      scale_channel(cp, scaler, samp, dur_to_samples(num, samp, cp, pos, 3, S_scale_sound_by), pos);
     }
   else
     {
@@ -3178,7 +3178,11 @@ between beg and beg + num by scaler.  If channel is omitted, the scaling applies
       if (sp == NULL)
 	return(snd_no_such_sound_error(S_scale_sound_by, snd));
       for (i = 0; i < sp->nchans; i++)
-	scale_channel(sp->chans[i], scaler, samp, XEN_TO_C_INT_OR_ELSE(num, current_ed_samples(sp->chans[i])), sp->chans[i]->edit_ctr);
+	{
+	  cp = sp->chans[i];
+	  pos = cp->edit_ctr;
+	  scale_channel(cp, scaler, samp, dur_to_samples(num, samp, cp, pos, 3, S_scale_sound_by), pos);
+	}
     }
   return(scl);
 }
@@ -3191,14 +3195,14 @@ between beg and beg + num by scaler."
   Float scaler;
   chan_info *cp;
   int samp, pos;
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_2, S_scale_channel, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(num), num, XEN_ARG_3, S_scale_channel, "a number");
+  ASSERT_SAMPLE_TYPE(S_scale_channel, beg, XEN_ARG_2);
+  ASSERT_SAMPLE_TYPE(S_scale_channel, num, XEN_ARG_3);
   ASSERT_SOUND(S_scale_channel, snd, 4);
   scaler = XEN_TO_C_DOUBLE(scl);
-  samp = XEN_TO_C_INT_OR_ELSE(beg, 0);
+  samp = beg_to_sample(beg, S_scale_channel);
   cp = get_cp(snd, chn, S_scale_channel);
   pos = to_c_edit_position(cp, edpos, S_scale_channel, 6);
-  scale_channel(cp, scaler, samp, XEN_TO_C_INT_OR_ELSE(num, cp->samples[pos]), pos); /* should this subtract beg? */
+  scale_channel(cp, scaler, samp, dur_to_samples(num, samp, cp, pos, 3, S_scale_channel), pos);
   return(scl);
 }			  
 
@@ -3229,18 +3233,18 @@ between beg and beg + num to peak value norm.  If channel is omitted, the scalin
   chan_info *cp;
   int i, samp, samps;
   Float scaler, maxamp = 0.0;
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_2, S_scale_sound_to, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(num), num, XEN_ARG_3, S_scale_sound_to, "a number");
+  ASSERT_SAMPLE_TYPE(S_scale_sound_to, beg, XEN_ARG_2);
+  ASSERT_SAMPLE_TYPE(S_scale_sound_to, num, XEN_ARG_3);
   ASSERT_SOUND(S_scale_sound_to, snd, 4);
   scaler = XEN_TO_C_DOUBLE(norm);
-  samp = XEN_TO_C_INT_OR_ELSE(beg, 0);
+  samp = beg_to_sample(beg, S_scale_sound_to);
   sp = get_sp(snd);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_scale_sound_to, snd));
   if (XEN_INTEGER_P(chn))
     {
       cp = get_cp(snd, chn, S_scale_sound_by);
-      samps = XEN_TO_C_INT_OR_ELSE(num, current_ed_samples(cp));
+      samps = dur_to_samples(num, samp, cp, cp->edit_ctr, 3, S_scale_sound_to);
       if ((samp == 0) &&
 	  (samps >= current_ed_samples(cp)))
 	maxamp = get_maxamp(sp, cp, AT_CURRENT_EDIT_POSITION);
@@ -3256,7 +3260,7 @@ between beg and beg + num to peak value norm.  If channel is omitted, the scalin
       for (i = 0; i < sp->nchans; i++)
 	{
 	  cp = sp->chans[i];
-	  samps = XEN_TO_C_INT_OR_ELSE(num, current_ed_samples(cp));
+	  samps = dur_to_samples(num, samp, cp, cp->edit_ctr, 3, S_scale_sound_to);
 	  if ((samp == 0) &&
 	      (samps >= current_ed_samples(cp)))
 	    maxamp = get_maxamp(sp, cp, AT_CURRENT_EDIT_POSITION);
@@ -3268,7 +3272,7 @@ between beg and beg + num to peak value norm.  If channel is omitted, the scalin
 	  for (i = 0; i < sp->nchans; i++)
 	    {
 	      cp = sp->chans[i];
-	      samps = XEN_TO_C_INT_OR_ELSE(num, current_ed_samples(cp));
+	      samps = dur_to_samples(num, samp, cp, cp->edit_ctr, 3, S_scale_sound_to);
 	      scale_channel(cp, scaler, samp, samps, cp->edit_ctr);
 	    }
 	}
@@ -3387,13 +3391,13 @@ history position to read (defaults to current position)."
   int i, len, beg, pos;
   XEN new_vect;
   XEN *vdata;
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_0), samp_0, XEN_ARG_1, S_samples, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_2, S_samples, "a number");
+  ASSERT_SAMPLE_TYPE(S_samples, samp_0, XEN_ARG_1);
+  ASSERT_SAMPLE_TYPE(S_samples, samps, XEN_ARG_2);
   ASSERT_CHANNEL(S_samples, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_samples);
   pos = to_c_edit_position(cp, edpos, S_samples, 5);
-  beg = XEN_TO_C_INT_OR_ELSE(samp_0, 0);
-  len = XEN_TO_C_INT_OR_ELSE(samps, cp->samples[pos] - beg);
+  beg = beg_to_sample(samp_0, S_samples);
+  len = dur_to_samples(samps, beg, cp, pos, 2, S_samples);
   new_vect = XEN_MAKE_VECTOR(len, C_TO_XEN_DOUBLE(0.0));
   sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   if (sf)
@@ -3417,22 +3421,21 @@ the new data's end."
   MUS_SAMPLE_TYPE *ivals;
   int len = 0, beg, curlen, override = 0, inchan = 0, delete_choice = DELETE_ME, pos;
   char *fname, *caller;
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(samp_0), samp_0, XEN_ARG_1, "set-" S_samples, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(samps), samps, XEN_ARG_2, "set-" S_samples, "a number");
-  ASSERT_CHANNEL("set-" S_samples, snd_n, chn_n, 4);
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(truncate), truncate, XEN_ARG_6, "set-" S_samples, "a boolean");
-  cp = get_cp(snd_n, chn_n, "set-" S_samples);
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(infile_chan), infile_chan, XEN_ARG_8, "set-" S_samples, "an integer");
-  XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(edname) || XEN_STRING_P(edname) || XEN_BOOLEAN_P(edname), edname, XEN_ARG_7, "set-" S_samples, "a string");
-  beg = XEN_TO_C_INT_OR_ELSE(samp_0, 0);
-  if (beg < 0) return(XEN_FALSE);
-  len = XEN_TO_C_INT_OR_ELSE(samps, 0);
-  if (len <= 0) return(XEN_FALSE);
-  override = XEN_TRUE_P(truncate);
-  pos = to_c_edit_position(cp, edpos, "set-" S_samples, 9);
   if (XEN_STRING_P(edname))
     caller = XEN_TO_C_STRING(edname);
   else caller = "set-" S_samples;
+  ASSERT_SAMPLE_TYPE(caller, samp_0, XEN_ARG_1);
+  ASSERT_SAMPLE_TYPE(caller, samps, XEN_ARG_2);
+  ASSERT_CHANNEL(caller, snd_n, chn_n, 4);
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(truncate), truncate, XEN_ARG_6, caller, "a boolean");
+  cp = get_cp(snd_n, chn_n, caller);
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(infile_chan), infile_chan, XEN_ARG_8, caller, "an integer");
+  XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(edname) || XEN_STRING_P(edname) || XEN_BOOLEAN_P(edname), edname, XEN_ARG_7, caller, "a string");
+  pos = to_c_edit_position(cp, edpos, caller, 9);
+  beg = beg_to_sample(samp_0, caller);
+  len = dur_to_samples(samps, beg, cp, pos, 2, caller);
+  if (len == 0) return(XEN_FALSE);
+  override = XEN_TRUE_P(truncate);
   if (XEN_STRING_P(vect))
     {
       curlen = current_ed_samples(cp);

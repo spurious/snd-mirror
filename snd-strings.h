@@ -308,7 +308,6 @@
 #define S_channel_amp_envs              "channel-amp-envs"
 #define S_channel_properties            "channel-properties"
 #define S_channel_style                 "channel-style"
-#define S_channel_sync                  "channel-sync"
 #define S_channel_widgets               "channel-widgets"
 #define S_channels                      "channels"
 #define S_channels_combined             "channels-combined"

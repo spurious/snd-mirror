@@ -30,6 +30,7 @@
 ;;; TODO: gtk tests
 ;;; TODO: Xt selection tests?
 ;;; TODO: rest of Snd callbacks triggered
+;;; TODO: header editor tests
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
 
@@ -2560,8 +2561,6 @@
       (set! (right-sample) 3000) 
       (let ((samp (right-sample)))
 	(IF (> (abs (- samp 3000)) 1) (snd-display ";right-sample: ~A?" samp)))
-      (set! (channel-sync) 123)
-      (IF (not (= (channel-sync) 123)) (snd-display ";channel-sync: ~A?" (channel-sync)))
       (set! (left-sample) 1000) 
       (let ((samp (left-sample)))
 	(IF (> (abs (- samp 1000)) 1) (snd-display ";left-sample: ~A?" samp)))
@@ -8658,6 +8657,27 @@
   
 ;;; ---------------- test 13: menus, edit lists, hooks, seach/key funcs ----------------
 
+(define (test-menus)
+  (for-each
+   (lambda (top-menu)
+     (for-each-child
+      top-menu
+      (lambda (w)
+	(let ((option-holder (cadr (|XtGetValues w (list |XmNsubMenuId 0)))))
+	  (for-each-child
+	   option-holder
+	   (lambda (menu)
+	     (if (and (|XmIsPushButton menu)
+		      (|XtIsSensitive menu)
+		      (not (member (|XtName menu)
+				   (list "Exit" "New" 
+					 "Save   C-x C-s" 
+					 "Close  C-x k" 
+					 "Click for help" "Mix Panel"))))
+		 (|XtCallCallbacks menu |XmNactivateCallback (snd-global-state)))))))))
+   (cdr (menu-widgets)))
+  (dismiss-all-dialogs))
+
 (if (or full-test (= snd-test 13) (and keep-going (<= snd-test 13)))
     (let ((fd (view-sound "oboe.snd"))
 	  (mb (add-to-main-menu "clm")))
@@ -9904,7 +9924,6 @@
 	  (test-channel cursor-style 'cursor-style)
 	  (test-channel left-sample 'left-sample)
 	  (test-channel right-sample 'right-sample)
-	  (test-channel channel-sync 'channel-sync)
 	  (test-channel squelch-update 'squelch-update)
 	  (test-channel x-zoom-slider 'x-zoom-slider)
 	  (test-channel y-zoom-slider 'y-zoom-slider)
@@ -11019,79 +11038,80 @@
     (begin
       (if (procedure? test-hook) (test-hook 16))
       (let ((oboe (open-sound "oboe.snd")))
-	(scale-channel 2.0 0 0 oboe)
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";dur:0 scale-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(env-channel (make-env '(0 0 1 1) :end 123) 0 0 oboe)
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";dur:0 env-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(clm-channel (make-oscil) 0 0 oboe)
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";dur:0 clm-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(vct->channel (make-vct 3) 0 0 oboe)
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";dur:0 vct->channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(smooth-channel 0 0 oboe)
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";dur:0 smooth-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(pad-channel 0 0 oboe)
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";dur:0 pad-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(src-channel 2.0 0 0 oboe)
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";dur:0 src-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(mix-channel "pistol.snd" 0 0 oboe)
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";dur:0 mix-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(insert-channel "pistol.snd" 0 0 oboe)
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";dur:0 insert-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
+
+	(for-each
+	 (lambda (func name)
+	   (func)
+	   (IF (not (= (edit-position oboe) 0))
+	       (snd-display ";dur:0 ~A? ~A ~A" name (edit-position oboe) (edit-fragment))))
+	 (list 
+	  (lambda () (scale-channel 2.0 0 0 oboe))
+	  (lambda () (env-channel (make-env '(0 0 1 1) :end 123) 0 0 oboe))
+	  (lambda () (clm-channel (make-oscil) 0 0 oboe))
+	  (lambda () (vct->channel (make-vct 3) 0 0 oboe))
+	  (lambda () (smooth-channel 0 0 oboe))
+	  (lambda () (pad-channel 0 0 oboe))
+	  (lambda () (src-channel 2.0 0 0 oboe))
+	  (lambda () (mix-channel "pistol.snd" 0 0 oboe))
+	  (lambda () (insert-channel "pistol.snd" 0 0 oboe))
+	  (lambda () (reverse-channel 0 0 oboe))
+	  (lambda () (play-channel 0 0 oboe))
+	  (lambda () (scale-sound-by 2.0 0 0 oboe))
+	  (lambda () (env-sound '(0 0 1 1) 0 0 oboe))
+	  (lambda () (set-samples 0 0 (make-vct 3) oboe))
+	  (lambda () (smooth-sound 0 0 oboe))
+	  (lambda () (insert-silence 0 0 oboe)))
+	 (list 
+	  "scale-channel" "env-channel" "clm-channel" "vct->channel" "smooth-channel" "pad-channel" "src-channel"
+	  "mix-channel" "insert-channel" "reverse-channel" "play-channel" 
+	  "scale-sound-by" "env-sound" "set-samples" "smooth-sound" "insert-silence"))
+
 	(if (defined? 'get-test-a2)
 	    (begin
 	      (c-channel (get-test-a2) 0 0 oboe)
 	      (IF (not (= (edit-position oboe) 0))
 		  (snd-display ";dur:0 c-channel? ~A ~A" (edit-position oboe) (edit-fragment)))))
-	(reverse-channel 0 0 oboe)
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";dur:0 reverse-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(play-channel 0 0 oboe)
 
-	(scale-channel 2.0 -1 123 oboe)
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";beg:-1 scale-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(env-channel (make-env '(0 0 1 1) :end 123) -1 123 oboe)
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";beg:-1 env-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(clm-channel (make-oscil) -1 123 oboe)
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";beg:-1 clm-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(vct->channel (make-vct 3) -1 123 oboe)
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";beg:-1 vct->channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(smooth-channel -1 123 oboe)
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";beg:-1 smooth-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(pad-channel -1 123 oboe)
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";beg:-1 pad-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(src-channel 2.0 -1 123 oboe)
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";beg:-1 src-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(mix-channel "pistol.snd" -1 123 oboe)
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";beg:-1 mix-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(insert-channel "pistol.snd" -1 123 oboe)
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";beg:-1 insert-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
+	(for-each
+	 (lambda (func name)
+	   (let ((tag (catch #t
+			     func
+			     (lambda args (car args)))))
+	     (IF (not (eq? tag 'no-such-sample))
+		 (snd-display "~A beg -1->~A" name tag))
+	     (IF (not (= (edit-position oboe) 0))
+		 (snd-display ";beg:-1 ~A? ~A ~A" name (edit-position oboe) (edit-fragment)))))
+	 (list 
+	  (lambda () (scale-channel 2.0 -1 123 oboe))
+	  (lambda () (env-channel (make-env '(0 0 1 1) :end 123) -1 123 oboe))
+	  (lambda () (clm-channel (make-oscil) -1 123 oboe))
+	  (lambda () (vct->channel (make-vct 3) -1 123 oboe))
+	  (lambda () (smooth-channel -1 123 oboe))
+	  (lambda () (pad-channel -1 123 oboe))
+	  (lambda () (src-channel 2.0 -1 123 oboe))
+	  (lambda () (mix-channel "pistol.snd" -1 123 oboe))
+	  (lambda () (insert-channel "pistol.snd" -1 123 oboe))
+	  (lambda () (reverse-channel -1 123 oboe))
+	  (lambda () (play-channel -1 123 oboe))
+	  (lambda () (scale-sound-by 2.0 -1 123 oboe))
+	  (lambda () (env-sound '(0 0 1 1) -1 123 oboe))
+	  (lambda () (set-samples -1 123 (make-vct 3) oboe))
+	  (lambda () (smooth-sound -1 123 oboe))
+	  (lambda () (insert-silence -1 123 oboe)))
+	 (list 
+	  "scale-channel" "env-channel" "clm-channel" "vct->channel" "smooth-channel" "pad-channel" "src-channel"
+	  "mix-channel" "insert-channel" "reverse-channel" "play-channel" 
+	  "scale-sound-by" "env-sound" "set-samples" "smooth-sound" "insert-silence"))
+
 	(if (defined? 'get-test-a2)
-	    (begin
-	      (c-channel (get-test-a2) -1 123 oboe)
-	      (IF (not (= (edit-position oboe) 0))
-		  (snd-display ";beg:-1 c-channel? ~A ~A" (edit-position oboe) (edit-fragment)))))
-	(reverse-channel -1 123 oboe)
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";beg:-1 reverse-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(play-channel -1 123 oboe)
+	    (let ((tag
+		   (catch #t
+			  (lambda () (c-channel (get-test-a2) -1 123 oboe))
+			  (lambda args (car args)))))
+	     (IF (not (eq? tag 'no-such-sample))
+		 (snd-display "c-channel beg -1->~A"  tag))
+	     (IF (not (= (edit-position oboe) 0))
+		 (snd-display ";beg:-1 c-channel? ~A ~A" (edit-position oboe) (edit-fragment)))))
 
 	(scale-channel 2.0 12345678 123 oboe)
 	(IF (not (= (edit-position oboe) 0))
@@ -11222,38 +11242,6 @@
 	  (IF (not (eq? tag 'no-such-edit)) (snd-display ";bad edpos play-channel: ~A" tag)))
 	(revert-sound oboe)
 
-	(scale-sound-by 2.0 0 0 oboe) ; same args
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";dur:0 scale-sound? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(env-sound '(0 0 1 1) 0 0 oboe) ; same args except env
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";dur:0 env-sound? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(set-samples 0 0 (make-vct 3) oboe) ; beg dur data [no edpos]
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";dur:0 set-samples? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(smooth-channel 0 0 oboe) ; beg dur s c [no edpos]
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";dur:0 smooth-sound? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(insert-silence 0 0 oboe) ; beg dur s c [no edpos]
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";dur:0 insert-silence? ~A ~A" (edit-position oboe) (edit-fragment)))
-	
-	(scale-sound-by 2.0 -1 123 oboe) ; same args
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";beg:-1 scale-sound? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(env-sound '(0 0 1 1) -1 123 oboe) ; same args except env
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";beg:-1 env-sound? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(set-samples -1 123 (make-vct 3) oboe) ; beg dur data [no edpos]
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";beg:-1 set-samples? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(smooth-channel -1 123 oboe) ; beg dur s c [no edpos]
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";beg:-1 smooth-sound? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(insert-silence -1 123 oboe) ; beg dur s c [no edpos]
-	(IF (not (= (edit-position oboe) 0))
-	    (snd-display ";beg:-1 insert-silence? ~A ~A" (edit-position oboe) (edit-fragment)))
-	
 	(let ((oldv (channel->vct 1000 10 oboe)))
 	  (mix-channel "oboe.snd" 0)
 	  (vct-scale! oldv 2.0)
@@ -11336,6 +11324,85 @@
 	  (IF (or (fneq m0 (maxamp ind 1)) (fneq m1 (maxamp ind 0)))
 	      (snd-display "swapped: ~A ~A -> ~A ~A" m0 m1 (maxamp ind 0) (maxamp ind 1)))
 	  (close-sound ind))
+
+	(let ((oboe0 (open-sound "oboe.snd"))
+	      (oboe1 (open-sound "oboe.snd")))
+
+	  (define (funcs-equal? name func0 func1)
+	    (func0 #f #f oboe0)
+	    (func1 #f #f oboe1)
+	    (IF (not (vequal (channel->vct 1000 100 oboe0) (channel->vct 1000 100 oboe1)))
+		(snd-display ";~A via #f: ~A ~A" name (channel->vct 1000 100 oboe0) (channel->vct 1000 100 oboe1)))
+	    (revert-sound oboe0)
+	    (revert-sound oboe1)
+	    (select-sound oboe0)
+	    (func0)
+	    (select-sound oboe1)
+	    (func1)
+	    (IF (not (vequal (channel->vct 1000 100 oboe0) (channel->vct 1000 100 oboe1)))
+		(snd-display ";~A via none: ~A ~A" name (channel->vct 1000 100 oboe0) (channel->vct 1000 100 oboe1)))
+	    (revert-sound oboe0)
+	    (revert-sound oboe1)
+	    (func0 0 (frames oboe0) oboe0)
+	    (func1 0 (frames oboe1) oboe1)
+	    (IF (not (vequal (channel->vct 1000 100 oboe0) (channel->vct 1000 100 oboe1)))
+		(snd-display ";~A via frames: ~A ~A" name (channel->vct 1000 100 oboe0) (channel->vct 1000 100 oboe1)))
+	    (revert-sound oboe0)
+	    (revert-sound oboe1))
+
+	  (funcs-equal? "scale-sound-by" 
+			(lambda args (apply scale-sound-by (cons 2.0 args)))
+			(lambda args (apply scale-channel (cons 2.0 args))))
+	  (funcs-equal? "smooth-sound"
+			(lambda args (apply smooth-sound args))
+			(lambda args (apply smooth-channel args)))
+	  (funcs-equal? "env-sound"
+			(lambda args (apply env-sound (list (list 0 0 1 1)
+							    (if (> (length args) 0) (car args) 0)
+							    (if (and (> (length args) 1) 
+								     (number? (cadr args)))
+								(1- (cadr args))
+								#f)
+							    1.0
+							    (if (> (length args) 2)
+								(caddr args)
+								(selected-sound)))))
+			(lambda args (apply env-channel 
+					    (cons (make-env :envelope (list 0 0 1 1) 
+							    :end (if (and (> (length args) 1)
+									  (number? (cadr args)))
+								     (cadr args)
+								     (1- (frames (if (> (length args) 2)
+										     (caddr args)
+										     (selected-sound))))))
+						  args))))
+	  (funcs-equal? "map-chan"
+			(lambda args (apply map-chan (list (lambda (n) (* n 2)) 
+							   (if (> (length args) 0) (car args) 0)
+							   (if (and (> (length args) 1) 
+								    (number? (cadr args)))
+							       (1- (cadr args))
+							       #f)
+							   "testing..."
+							   (if (> (length args) 2)
+							       (caddr args)
+							       (selected-sound)))))
+			(lambda args (apply map-channel (cons (lambda (n) (* n 2)) args))))
+	  (funcs-equal? "src-sound"
+			(lambda args (apply src-sound (list 2.0 1.0 (if (> (length args) 2) (caddr args) #f))))
+			(lambda args (apply src-channel (cons 2.0 args))))
+	  (funcs-equal? "reverse-sound"
+			(lambda args (apply reverse-sound (list (if (> (length args) 2) (caddr args) #f))))
+			(lambda args (apply reverse-channel args)))
+	  (funcs-equal? "mix"
+			(lambda args (apply mix (list "pistol.snd" 0 0 (if (> (length args) 2) (caddr args) #f))))
+			(lambda args (apply mix-channel "pistol.snd" args)))
+	  (funcs-equal? "insert-sound"
+			(lambda args (apply insert-sound (list "pistol.snd" 0 0 (if (> (length args) 2) (caddr args) #f))))
+			(lambda args (apply insert-channel "pistol.snd" args)))
+	  (close-sound oboe0)
+	  (close-sound oboe1))
+
 	)))
 
 
@@ -17086,7 +17153,7 @@ EDITS: 4
 	       append-to-minibuffer as-one-edit ask-before-overwrite audio-input-device audio-output-device
 	       audio-state-file auto-resize auto-update autocorrelate axis-info axis-label-font axis-numbers-font
 	       backward-graph backward-mark backward-mix backward-sample basic-color bind-key bold-button-font bomb
-	       button-font c-g?  apply-controls change-menu-label change-samples-with-origin channel-style channel-sync
+	       button-font c-g?  apply-controls change-menu-label change-samples-with-origin channel-style
 	       channel-widgets channels chans clear-audio-inputs close-sound close-sound-file color-cutoff color-dialog
 	       color-inverted color-scale color->list colormap color?  comment contrast-control contrast-control-amp
 	       contrast-control?  convolve-arrays convolve-selection-with convolve-with channel-properties
@@ -17191,7 +17258,7 @@ EDITS: 4
 (define set-procs (list 
 		   amp-control ask-before-overwrite audio-input-device audio-output-device audio-state-file auto-resize
 		   auto-update axis-label-font axis-numbers-font basic-color bold-button-font button-font channel-style
-		   channel-sync color-cutoff color-inverted color-scale contrast-control contrast-control-amp
+		   color-cutoff color-inverted color-scale contrast-control contrast-control-amp
 		   contrast-control? auto-update-interval current-font cursor cursor-color channel-properties
 		   cursor-follows-play cursor-size cursor-style dac-combines-channels dac-size data-clipped data-color
 		   default-output-chans default-output-format default-output-srate default-output-type dot-size
@@ -17571,7 +17638,7 @@ EDITS: 4
 			(IF (not (eq? tag 'wrong-type-arg))
 			    (snd-display ";~D: chn (no snd) procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list backward-graph backward-sample channel-sync channel-widgets count-matches cursor channel-properties
+		    (list backward-graph backward-sample channel-widgets count-matches cursor channel-properties
 			  cursor-follows-play cursor-position cursor-size cursor-style delete-sample display-edits dot-size
 			  draw-dots draw-lines edit-fragment edit-position edit-tree edits fft-window-beta fft-log-frequency
 			  fft-log-magnitude transform-size transform-graph-type fft-window graph-transform? find forward-graph
@@ -17597,7 +17664,7 @@ EDITS: 4
 			(IF (not (eq? tag 'wrong-type-arg))
 			    (snd-display ";~D: chn (no chn) procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list backward-graph backward-sample channel-sync channel-widgets count-matches cursor channel-properties
+		    (list backward-graph backward-sample channel-widgets count-matches cursor channel-properties
 			  cursor-position cursor-size cursor-style delete-sample display-edits dot-size draw-dots draw-lines
 			  edit-fragment edit-position edit-tree edits fft-window-beta fft-log-frequency fft-log-magnitude
 			  transform-size transform-graph-type fft-window graph-transform? find forward-graph forward-mark
@@ -17622,7 +17689,7 @@ EDITS: 4
 			(IF (not (eq? tag 'no-such-sound))
 			    (snd-display ";~D: chn procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list backward-graph backward-sample channel-sync channel-widgets cursor cursor-follows-play channel-properties
+		    (list backward-graph backward-sample channel-widgets cursor cursor-follows-play channel-properties
 			  cursor-position cursor-size cursor-style delete-sample display-edits dot-size edit-fragment
 			  edit-position edit-tree edits env-sound fft-window-beta fft-log-frequency fft-log-magnitude
 			  transform-size transform-graph-type fft-window graph-transform? filter-sound forward-graph
@@ -17678,7 +17745,7 @@ EDITS: 4
 			(IF (not (eq? tag 'no-such-channel))
 			    (snd-display ";~D: chn procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list channel-sync channel-widgets cursor cursor-position cursor-size cursor-style display-edits
+		    (list channel-widgets cursor cursor-position cursor-size cursor-style display-edits
 			  dot-size edit-position edit-tree edits fft-window-beta fft-log-frequency fft-log-magnitude
 			  transform-size transform-graph-type fft-window graph-transform? graph-style graph-lisp? left-sample
 			  make-graph-data max-transform-peaks maxamp min-dB transform-normalization peak-env-info
@@ -17701,7 +17768,7 @@ EDITS: 4
 			(IF (not (eq? tag 'wrong-type-arg))
 			    (snd-display ";~D: set chn procs ~A: ~A" ctr n tag))
 			(set! ctr (+ ctr 1))))
-		    (list channel-sync channel-widgets cursor cursor-position display-edits dot-size edit-tree edits
+		    (list channel-widgets cursor cursor-position display-edits dot-size edit-tree edits
 			  fft-window-beta fft-log-frequency fft-log-magnitude transform-size transform-graph-type fft-window
 			  graph-transform? graph-style graph-lisp? left-sample make-graph-data max-transform-peaks maxamp
 			  min-dB transform-normalization peak-env-info reverse-sound right-sample show-axes channel-properties
@@ -18365,6 +18432,8 @@ EDITS: 4
       (snd-display (format #f "ls /tmp/snd_* | wc~%"))
       (system "ls /tmp/snd_* | wc")
       (system "rm /tmp/snd_*")))
+
+(system "cp /home/bil/dot-snd /home/bil/.snd")
 
 (if with-exit (exit))
 

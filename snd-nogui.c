@@ -393,8 +393,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define (" S_in " . args) #f)\
                (define (" S_make_color " . args) #f)\
                (define (" S_color_p " . args) #f)\
-               (define (" S_color2list " .args) #f)\
-               (define (test-menus) #f)");
+               (define (" S_color2list " .args) #f)");
 
   XEN_EVAL_C_STRING("(define (set-" S_enved_active_env " obj) obj)\
                (define (set-" S_enved_selected_env " obj) obj)\
