@@ -1,60 +1,37 @@
-Snd 7.7
+Snd 7.8:
 
-new version of sndins and other bugfixes thanks to Mike Scholz
+new version of gfm package (sndlib/gfm) thanks to Mike Scholz,
+  now included (along with sndins) in the Snd tarball.
+  also many other improvements
 
-in clm: autoc.ins, scentroid.ins, rmsenv.ins, and sndwarp.ins thanks to Bret Battey
+various bugfixes and improvements thanks to Kjetil S. Matheussen
 
-clm: configuration and signum bugfixes thanks to Anders Vinjar
+added:
+  recorder-in-chans
+  vct->string
+  normalize-channel
+  controls->channel
+  sound-data->sound-data (for oscope)
+  rms-envelope in env.scm (based on Bret Battey's rmsenv.ins)
+  edit history pane popup menu (popup.scm and gtk-popup.scm) (unfinished)
 
+  oscope.scm: oscilloscope dialog
 
-added: smart-line-cursor in draw.scm
-	  (a line cursor that ducks under the top right thumbnail graph)
+removed:
+  track-id arg to mix-selection
+  edpos arg to play-selection
+  mus_audio_save|restore (audio.c) and Scheme/Ruby correlates
+  the dumb buttons at the bottom of the controls (Apply etc)
+    these are now in various popup menus
 
-       vct|channel|spectral-polynomial (dsp.scm)
+moved scale-sound-by and scale-sound-to to snd7.scm.
 
-       create-ssb-dialog in snd-motif.scm 
+changed handling of recorder-out-chans -- it now sets the max out chans
+  displayed in the recorder dialog, as well as the default output file chans.
 
-       vct-reverse! (mostly to experiment with fancy granulate edit funcs)
+checked: gtk 2.5.4|5, sbcl 0.8.16, ruby 1.8.2-preview3
 
-       log-freq-start (with more transform dialog widgetry and axis improvements)
+with much help from: Mike Scholz, Heinrich Gudenus, Kjetil S. Matheussen,
+  Dave Phillips, Michal Seta, Thomas F. Bechteler, Frank Barknecht, Peter Lutek,
+  Tim Orford, Juan Reyes
 
-       show-sonogram-cursor (tracking cursor in sonogram)
-
-       do? (examp.scm -- do that can be interrupted and continued)
-
-       grid-density (controls axis tick spacing)
-
-       edit-list->function (1st step toward a "sound spreadsheet")
-
-
-removed: mus-inspect, buffer generator.
-           (mus-inspect duplicates the functionality of mus-describe, and given
-	   a decent debbuger, the extra info it provides is unneeded).
-
-         vct-convolve! (see snd7.scm -- was same as convolution function)
-
-         vct->samples and samples->vct (see snd7.scm)
-	   (These were redundant given vct->channel->vct and inconsistent with others)
-
-         list and vector return value choices from map-chan and map-channel (see snd7.scm).
-           float vector as possible arg to formant-bank, fft, or scale-* (use vct) (see snd7.scm).
-           list of vectors as possible arg to graph (use list of vcts)
-           mus-audio-mixer-read|write vector arg is now a vct
-           (I'm trying to reduce the use of vectors as much as possible)
-
-         oscil-bank, mus-bank (see snd7.scm)
-
-         support for gtkglext 0.1 through 0.4
-
-
-changed transform-samples->vct to transform->vct, region-samples->vct to region->vct,
-	transform-samples-size to transform-frames. (Old forms are in snd7.scm).
-
-checked: gtk 2.5.2|3, Mesa 6.1, sbcl 0.8.14|5
-
-with much help from: Michael Klingbeil, Anthony Kozar, Bret Battey, Anders Vinjar, 
-     Mike Scholz, Paul Winkler, Marv Smoak
-
-
-(Snd has lumbered over the 400,000 line mark -- 250000 C, 110000 Scheme,
-30000 Ruby, and a few thousand of m4, lisp, emacs-lisp etc)
