@@ -10212,7 +10212,7 @@ EDITS: 3
 		   recorder-in-amp recorder-in-format recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format recorder-srate
 		   recorder-trigger reverb-control-decay reverb-control-feedback reverb-control-procedures 
 		   reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control? sash-color
-		   save-dir save-state-file search-procedure selected-data-color selected-graph-color selected-mix-color
+		   save-dir save-state-file selected-data-color selected-graph-color selected-mix-color
 		   selection-color selection-creates-region show-axes show-backtrace show-controls show-transform-peaks show-indices show-marks
 		   show-mix-waveforms show-selection-transform show-usage-stats show-y-zero sinc-width spectro-cutoff spectro-hop spectro-start
 		   spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale 

@@ -74,9 +74,9 @@ void reflect_recorder_in_amp(int in, int out, Float val);
 
 void append_listener_text(int end, char *msg);
 void save_listener_text(FILE *fp);
-void snd_append_command(snd_state *ss, char *msg);
+void listener_append_and_prompt(snd_state *ss, char *msg);
 void goto_listener(void);
-void snd_append_char(snd_state *ss, char *msg);
+void listener_append(snd_state *ss, char *msg);
 void handle_listener(snd_state *ss, int new_state);
 int listener_height(void);
 int listener_width(void);

@@ -791,7 +791,7 @@ Widget sndCreateTextWidget(snd_state *ss, char *name, Widget parent, Arg *args, 
 
 static Widget lisp_window = NULL;
 
-void snd_append_char(snd_state *ss, char *msg)
+void listener_append(snd_state *ss, char *msg)
 {
   if (listener_text)
     XmTextInsert(listener_text, XmTextGetLastPosition(listener_text), msg);
@@ -799,23 +799,18 @@ void snd_append_char(snd_state *ss, char *msg)
  
 static Widget listener_pane = NULL; 
 
-void snd_append_command(snd_state *ss, char *msg)
+void listener_append_and_prompt(snd_state *ss, char *msg)
 {
   int cmd_eot;
   if (listener_text)
     {
-      if (ss->result_printout != PLAIN_MESSAGE) 
-	XmTextInsert(listener_text, XmTextGetLastPosition(listener_text), "\n");
       if (msg)
 	XmTextInsert(listener_text, XmTextGetLastPosition(listener_text), msg);
       cmd_eot = XmTextGetLastPosition(listener_text);
-      if (ss->result_printout == MESSAGE_WITH_PROMPT) 
-	XmTextInsert(listener_text, cmd_eot, listener_prompt_with_cr(ss));
-      ss->result_printout = 0;
+      XmTextInsert(listener_text, cmd_eot, listener_prompt_with_cr(ss));
       cmd_eot = XmTextGetLastPosition(listener_text);
       last_prompt = cmd_eot - 1;
       XmTextShowPosition(listener_text, cmd_eot - 1);
-      /*      XmUpdateDisplay(listener_text); */ /* causes segfaults in libefence!! */
     }
 }
 

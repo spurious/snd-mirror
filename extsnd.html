@@ -3862,7 +3862,7 @@ desired edit history position.
 <!-- --><span class=defbox><code><em class=def><a name="sndbackwardgraph">backward-graph</a></em> (<i>count snd chn</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->move back (up or left) <i>count</i> graphs (C-x C-o).
+<!-- -->move back (up or left) <i>count</i> graphs (C-x C-o), returning a list of the new sound index and channel number.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4281,7 +4281,7 @@ desired edit history position.
 <!-- --><span class=defbox><code><em class=def><a name="sndforwardgraph">forward-graph</a></em> (<i>count snd chn</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->move forward (down or right) <i>count</i> graphs (C-x C-o).
+<!-- -->move forward (down or right) <i>count</i> graphs (C-x C-o), returning a list of the new sound index and channel number.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7750,8 +7750,9 @@ variable %load-verbosely to #t.
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndspectrum">snd-spectrum</a></em> (data window length <i>linear</i>)</code></span></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->return spectrum of <i>data</i> (type vct) using fft-window <i>win</i>.
-<!-- -->length of data (and fft) is <i>length</i>.
+<!-- -->return spectrum (vct) of <i>data</i> (also a vct) using fft-window <i>win</i>.
+<!-- -->length of data (and fft) is <i>length</i>. <code>(let ((spectr (snd-spectrum data rectangular-window (transform-size)))) ...)</code>
+<!-- -->If <i>linear</i> is #f (default is #t), the spectrum is returned as dB values.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7846,6 +7847,7 @@ variable %load-verbosely to #t.
 
   <b><a name="makepixmap">make-pixmap</a></b> (list-of-xpm-style-strings)
   <b><a name="setpixmap">set-pixmap</a></b> (widget pixmap)
+  <b><a name="colormapref">colormap-ref</a></b> (map position)
 </pre>
 <p>These are still experimental; <i>add-input</i> causes <i>callback</i> (a function of one argument, the file number)
 to be called whenever input is available on <i>file</i> (a file number, as returned by C's open). <i>remove-input</i>
@@ -7915,7 +7917,9 @@ an arrow pixmap and displays it next to the sound file name:
 
 (set-pixmap (list-ref (sound-widgets) 8) arrow)
 </pre>
-
+<p><i>colormap-ref</i> returns the rgb values of the colormap <i>map</i> at position <i>pos</i>,
+suitable for use with make-color.
+</p>
 
 
 <br><br>

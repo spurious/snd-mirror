@@ -59,13 +59,14 @@
 ;;; View: Files dialog chooses which sound is displayed
 ;;; "vector synthesis"
 ;;; remove-clicks
+;;; searching examples (zero+, next-peak, find-pitch)
 
 ;;; TODO: decide how to handle the CLM examples
 ;;; TODO: robust pitch tracker
 ;;; TODO: adaptive notch filter
 ;;; TODO: ins: singer piano flute fade
 ;;; TODO: data-file rw case for pvoc.scm
-;;; TODO: C-s to next same-sense zero-crossing or next peak or click (using the int rtn inc case)
+;;; TODO: C-s to click (using the int rtn inc case)
 ;;; TODO: C-s wrap-around (as in Emacs)
 ;;; TODO: triggered record
 ;;; TODO: notation following location (as in display-current-window-location)
@@ -2567,3 +2568,71 @@ read, even if not playing.  'files' is a list of files to be played."
   (remove-click 0))
 
 
+;;; -------- searching examples (zero+, next-peak)
+
+(define (zero+)
+  ;; find next positive-going zero crossing (if searching forward)
+  (let ((lastn 0.0))
+    (lambda (n)
+      (let ((rtn (and (< lastn 0.0)
+		      (>= n 0.0)
+		      -1)))
+	(set! lastn n)
+	rtn))))
+
+(define (next-peak)
+  ;; find next max or min
+  (let ((last0 #f)
+	(last1 #f))
+    (lambda (n)
+      (let ((rtn (and (number? last0)
+		      (or (and (< last0 last1) (> last1 n))
+			  (and (> last0 last1) (< last1 n)))
+		      -1)))
+	(set! last0 last1)
+	(set! last1 n)
+	rtn))))
+
+(define (find-pitch pitch)
+  ;; find point in sound where pitch (in Hz) predominates -- C-s (find-pitch 300)
+  ;;   in most cases, this will be slightly offset from the true beginning of the note
+  (define (interpolated-peak-offset la ca ra)
+    (let* ((pk (+ .001 (max la ca ra)))
+	   (logla (/ (log (/ (max la .0000001) pk)) (log 10)))
+	   (logca (/ (log (/ (max ca .0000001) pk)) (log 10)))
+	   (logra (/ (log (/ (max ra .0000001) pk)) (log 10))))
+      (/ (* 0.5 (- logla logra))
+	 (- (+ logla logra)
+	    (* 2 logca)))))
+  (let ((data (make-vct (transform-size)))
+	(data-loc 0))
+    (lambda (n)
+      (vct-set! data data-loc n)
+      (set! data-loc (1+ data-loc))
+      (let ((rtn #f))
+	(if (= data-loc (transform-size))
+	    (begin
+	      (set! data-loc 0)
+	      (if (> (vct-peak data) .001) ;ignore noise sections??
+		  (let ((spectr (snd-spectrum data rectangular-window (transform-size)))
+			(pk 0.0)
+			(pkloc 0))
+		    (let ((pit 
+			   (do ((i 0 (1+ i)))
+			       ((= i (/ (transform-size) 2)) 
+				(/ (* (+ pkloc
+					 (if (> pkloc 0)
+					     (interpolated-peak-offset (vct-ref spectr (1- pkloc))
+								       (vct-ref spectr pkloc)
+								       (vct-ref spectr (1+ pkloc)))
+					     0.0))
+				      (srate)) 
+				   (transform-size)))
+			     (if (> (vct-ref spectr i) pk)
+				 (begin
+				   (set! pk (vct-ref spectr i))
+				   (set! pkloc i))))))
+		      (if (< (abs (- pitch pit)) (/ (srate) (* 2 (transform-size))))
+			  (set! rtn (- (/ (transform-size) 2)))))))
+	       (vct-fill! data 0.0)))
+	 rtn))))

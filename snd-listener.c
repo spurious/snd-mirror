@@ -366,11 +366,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
       FREE(str);
       str = NULL;
       if (BOUND_P(form))
-#if (SCM_DEBUG_TYPING_STRICTNESS == 2)
-	snd_report_result(ss, snd_catch_any(eval_form_wrapper, NULL, NULL), NULL, FALSE);
-#else
-	snd_report_result(ss, snd_catch_any(eval_form_wrapper, (void *)form, NULL), NULL, FALSE);
-#endif
+	snd_report_listener_result(ss, form);
       GUI_UNSET_CURSOR(w, (ss->sgx)->arrow_cursor);
     }
   else

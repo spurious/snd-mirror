@@ -92,8 +92,8 @@ int listener_width(void);
 void goto_listener(void);
 void save_listener_text(FILE *fp);
 void append_listener_text(int end, char *msg);
-void snd_append_char(snd_state *ss, char *msg);
-void snd_append_command(snd_state *ss, char *msg);
+void listener_append(snd_state *ss, char *msg);
+void listener_append_and_prompt(snd_state *ss, char *msg);
 
 void g_init_gxlistener(SCM local_doc);
 GtkWidget *snd_entry_new(snd_state *ss, GtkWidget *container, int with_white_background);

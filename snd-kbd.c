@@ -163,7 +163,7 @@ static void execute_named_macro(chan_info *cp, char *name, int count)
 #else
 	result = snd_catch_any(eval_form_wrapper, (void *)form, name);
 #endif
-      snd_report_result(cp->state, result, name, TRUE);
+      snd_report_result(cp->state, result, name);
       if (cp->edit_ctr > one_edit)
 	{
 	  while (cp->edit_ctr > one_edit) backup_edit_list(cp);
@@ -411,15 +411,15 @@ static char *dir_from_tempnam(snd_state *ss)
   return(name);
 }
 
-static void goto_next_graph (chan_info *cp, int count);
+static chan_info *goto_next_graph (chan_info *cp, int count);
 
-static void goto_previous_graph (chan_info *cp, int count)
+static chan_info *goto_previous_graph (chan_info *cp, int count)
 {
   snd_info *sp;
   snd_state *ss;
   chan_info *ncp, *vcp;
   int i, k, j, chan;
-  if (count == 0) return;
+  if (count == 0) return(cp);
   sp = cp->sound;
   ss = cp->state;
   vcp = virtual_selected_channel(cp);
@@ -427,17 +427,13 @@ static void goto_previous_graph (chan_info *cp, int count)
   ncp = NULL;
   if (count < 0) 
     k = -count; 
-  else 
-    {
-      goto_next_graph(cp, count); 
-      return;
-    }
+  else return(goto_next_graph(cp, count)); 
   if (chan > 0)
     {
       /* goto previous channel in current sound */
       k -= chan;
       if (k <= 0)
-	ncp = sp->chans[chan+count];
+	ncp = sp->chans[chan + count];
     }
   while (k > 0)
     {
@@ -450,52 +446,50 @@ static void goto_previous_graph (chan_info *cp, int count)
 	    j = k;
 	    k -= sp->nchans;
 	    if (k <= 0)
-	      ncp = sp->chans[sp->nchans-j];
+	      ncp = sp->chans[sp->nchans - j];
 	    break;
 	  }
       if (k > 0)
-	for (i = ss->max_sounds-1; i >= sp->index; i--)
+	for (i = ss->max_sounds - 1; i >= sp->index; i--)
 	  if (snd_ok(ss->sounds[i]))
 	    {
 	      sp = (snd_info *)(ss->sounds[i]);
 	      j = k;
 	      k -= sp->nchans;
 	      if (k <= 0)
-		ncp = sp->chans[sp->nchans-j];
+		ncp = sp->chans[sp->nchans - j];
 	      break;
 	    }
     }
-  if (ncp == vcp) return;
+  if (ncp == vcp) return(ncp);
   if (!ncp) snd_error("goto previous graph lost!");
   select_channel(ncp->sound, ncp->chan);
   equalize_sound_panes(ss, ncp->sound, ncp, FALSE); /* snd-xsnd.c */
   /* goto_graph(ncp); */
+  return(ncp);
 }
 
-static void goto_next_graph (chan_info *cp, int count)
+static chan_info *goto_next_graph (chan_info *cp, int count)
 {
   snd_info *sp;
   snd_state *ss;
   chan_info *ncp, *vcp;
   int i, k, j, chan;
-  if (count == 0) return;
+  if (count == 0) return(cp);
   sp = cp->sound;
   ss = cp->state;
   vcp = virtual_selected_channel(cp);
   chan = vcp->chan;
   ncp = NULL;
   if (count < 0) 
-    {
-      goto_previous_graph(cp, count); 
-      return;
-    }
+    return(goto_previous_graph(cp, count)); 
   k = count;
-  if (chan < (sp->nchans-1))
+  if (chan < (sp->nchans - 1))
     {
       /* goto next channel in current sound */
-      k -= (sp->nchans-chan-1);
+      k -= (sp->nchans-chan - 1);
       if (k <= 0)
-	ncp = sp->chans[chan+count];
+	ncp = sp->chans[chan + count];
     }
   while (k > 0)
     {
@@ -508,7 +502,7 @@ static void goto_next_graph (chan_info *cp, int count)
 	    j = k;
 	    k -= sp->nchans;
 	    if (k <= 0)
-	      ncp = sp->chans[j-1];
+	      ncp = sp->chans[j - 1];
 	    break;
 	  }
       /* if (ss->listening) {goto_listener(); k--; if (k == 0) return;} */
@@ -521,15 +515,16 @@ static void goto_next_graph (chan_info *cp, int count)
 	      j = k;
 	      k -= sp->nchans;
 	      if (k <= 0)
-		ncp = sp->chans[j-1];
+		ncp = sp->chans[j - 1];
 	      break;
 	    }
     }
-  if (ncp == vcp) return;
+  if (ncp == vcp) return(ncp);
   if (!ncp) snd_error("goto next graph lost!");
   select_channel(ncp->sound, ncp->chan);
   equalize_sound_panes(ss, ncp->sound, ncp, FALSE);
   /* goto_graph(ncp); */
+  return(ncp);
 }
 
 
@@ -1619,7 +1614,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 		      char buf[2];
 		      goto_listener();
 		      buf[0] = keysym; buf[1] = 0;
-		      snd_append_char(ss, buf);
+		      listener_append(ss, buf);
 		    }
 		  /* else activate?? */
 		}
@@ -1968,8 +1963,9 @@ static SCM g_forward_graph(SCM count, SCM snd, SCM chn)
   SND_ASSERT_CHAN(S_forward_graph, snd, chn, 2);
   cp = get_cp(snd, chn, S_forward_graph);
   val = TO_C_INT_OR_ELSE(count, 1);
-  goto_next_graph(cp, val);
-  return(TO_SCM_INT(val));
+  cp = goto_next_graph(cp, val);
+  return(SCM_LIST2(TO_SMALL_SCM_INT(cp->sound->index),
+		   TO_SMALL_SCM_INT(cp->chan)));
 }
 
 static SCM g_backward_graph(SCM count, SCM snd, SCM chn) 
@@ -1981,8 +1977,9 @@ static SCM g_backward_graph(SCM count, SCM snd, SCM chn)
   SND_ASSERT_CHAN(S_backward_graph, snd, chn, 2);
   cp = get_cp(snd, chn, S_backward_graph);
   val = -(TO_C_INT_OR_ELSE(count, 1));
-  goto_previous_graph(cp, val);
-  return(TO_SCM_INT(val));
+  cp = goto_previous_graph(cp, val);
+  return(SCM_LIST2(TO_SMALL_SCM_INT(cp->sound->index),
+		   TO_SMALL_SCM_INT(cp->chan)));
 }
 
 static SCM g_c_g_x(void)

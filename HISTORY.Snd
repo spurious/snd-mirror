@@ -1,5 +1,7 @@
 snd change log
 
+  28-Jun:    find enhancements (see snd.html and examp.scm); find-pitch.
+             colormap-ref.
   26-Jun:    sound-files-in-directory returns a list, not a vector (to be consistent with CLM).
   25-Jun:    gcc 3.0.
 	     added type and comment args to save-region, and moved format arg after type (to be consistent with other such calls).

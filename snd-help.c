@@ -147,8 +147,12 @@ char *version_info(void)
 #if HAVE_MZSCHEME
 	  "\n    mzscheme ", scheme_version(),
 #else
+#if HAVE_RUBY
+	  "\n    Ruby ", TO_C_STRING(EVAL_STRING("RUBY_RELEASE")), " of ", TO_C_STRING(EVAL_STRING("RUBY_RELEASE_DATE")),
+#else
 #if (!HAVE_EXTENSION_LANGUAGE)
 	  "\n    without any extension language",
+#endif
 #endif
 #endif
 #endif
@@ -268,6 +272,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+28-Jun:  find enhancements (see snd.html and examp.scm); find-pitch.\n\
+         colormap-ref.\n\
 26-Jun:  sound-files-in-directory returns a list, not a vector (to be consistent with CLM).\n\
 24-Jun:  added type and comment args to save-region,\n\
            and moved format arg after type (to be consistent with other such calls).\n\
@@ -320,15 +326,6 @@ void news_help(snd_state *ss)
          added channel arg to save-selection and set-samples (for multi-file selection saves)\n\
          added make-selection (examp.scm).\n\
          removed env-base.\n\
-29-May:  combined channel-style and uniting under the name channel-style (uniting removed).\n\
-         dac-folding -> dac-combines-channels (not sure about this name change).\n\
-         C-x x|n|x_x|n key support (\"eval expression\") removed (was useless and broken).\n\
-           These four keys can be re-implemented using bind-key and as-one-edit.\n\
-         added c-g! (simulates typing C-g).\n\
-28-May:  renamed enved-exping -> enved-exp?, enved-waving -> enved-wave?, enved-clipping -> enved-clip?\n\
-           amplitude-env -> enved-amplitude, srate-env -> enved-srate, spectrum-env -> enved-spectrum\n\
-         removed save-state-on-exit (use exit-hook with save-state).\n\
-         removed activate-listener and hide-listener (the latter is now (set! (show-listener) #f)).\n\
 ",
 NULL);
   FREE(info);

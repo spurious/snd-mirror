@@ -115,6 +115,10 @@ static repv snd_rep_main(repv arg)
 
   mus_sound_initialize(); /* has to precede version check (mus_audio_moniker needs to be setup in Alsa/Oss) */
 
+  #if HAVE_RUBY
+    ruby_init();
+  #endif
+
   for (i = 1; i < argc; i++)
     {
       if (strcmp(argv[i], "--version") == 0)
@@ -293,10 +297,6 @@ static repv snd_rep_main(repv arg)
   }
   #endif
   
-  #if HAVE_RUBY
-    ruby_init();
-  #endif
-
   init_recorder();
 
   ss->catch_exists = 0;

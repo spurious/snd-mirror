@@ -283,10 +283,7 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 	  report_in_minibuffer(sp, name_buf);
 	}
       if (state->listening)
-	{
-	  state->result_printout = MESSAGE_WITH_PROMPT;
-	  snd_append_command(state, name_buf);
-	}
+	listener_append_and_prompt(state, name_buf);
       else 
 	if (!(state->mx_sp))
 	  snd_error(name_buf);
@@ -588,18 +585,18 @@ static char *gl_print(SCM result, const char *caller)
 
 SCM snd_eval_str(snd_state *ss, char *buf)
 {
-  return(snd_report_result(ss, snd_catch_any(eval_str_wrapper, (void *)buf, buf), buf, TRUE));
+  return(snd_report_result(ss, snd_catch_any(eval_str_wrapper, (void *)buf, buf), buf));
 }
 
 static SCM print_hook;
 
-SCM snd_report_result(snd_state *ss, SCM result, char *buf, int check_mini)
+SCM snd_report_result(snd_state *ss, SCM result, char *buf)
 {
   snd_info *sp = NULL;
   char *str = NULL;
   SCM res = SCM_BOOL_F;
   str = gl_print(result, "eval-str");
-  if ((check_mini) && (ss->mx_sp))
+  if (ss->mx_sp)
     {
       sp = ss->mx_sp;
       clear_minibuffer_prompt(sp);
@@ -607,16 +604,33 @@ SCM snd_report_result(snd_state *ss, SCM result, char *buf, int check_mini)
     }
   if (ss->listening)
     {
-      if (buf) snd_append_command(ss, buf);
+      if (buf) listener_append(ss, buf);
       if (HOOKED(print_hook))
 	res = g_c_run_or_hook(print_hook, 
 			      SCM_LIST1(TO_SCM_STRING(str)),
 			      S_print_hook);
       if (FALSE_P(res))
-	{
-	  ss->result_printout = MESSAGE_WITH_PROMPT;
-	  snd_append_command(ss, str);
-	}
+	listener_append_and_prompt(ss, str);
+    }
+  if (str) free(str);
+  return(result);
+}
+
+SCM snd_report_listener_result(snd_state *ss, SCM form)
+{
+  char *str = NULL;
+  SCM res = SCM_BOOL_F, result;
+  listener_append(ss, "\n");
+  result = snd_catch_any(eval_form_wrapper, (void *)form, NULL);
+  str = gl_print(result, "eval");
+  if (ss->listening)
+    {
+      if (HOOKED(print_hook))
+	res = g_c_run_or_hook(print_hook, 
+			      SCM_LIST1(TO_SCM_STRING(str)),
+			      S_print_hook);
+      if (FALSE_P(res))
+	listener_append_and_prompt(ss, str);
     }
   if (str) free(str);
   return(result);
@@ -629,8 +643,7 @@ void snd_eval_property_str(snd_state *ss, char *buf)
   if ((snd_strlen(buf) == 0) || ((snd_strlen(buf) == 1) && (buf[0] == '\n'))) return;
   result = snd_catch_any(eval_str_wrapper, (void *)buf, buf);
   str = gl_print(result, "eval-listener-str");
-  ss->result_printout = MESSAGE_WITH_PROMPT;
-  snd_append_command(ss, str);
+  listener_append_and_prompt(ss, str);
   if (str) free(str);
 }
 
@@ -642,8 +655,7 @@ void clear_listener(void)
   ss = get_global_state();
   if (stdin_str) FREE(stdin_str);
   stdin_str = NULL;
-  ss->result_printout = MESSAGE_WITH_PROMPT;
-  snd_append_command(ss, "");
+  listener_append_and_prompt(ss, "");
 }
 
 static char *stdin_check_for_full_expression(char *newstr)
@@ -750,7 +762,6 @@ static SCM g_snd_print(SCM msg)
 {
   #define H_snd_print "(" S_snd_print " str) displays str in the lisp listener window"
   char *str = NULL;
-  state->result_printout = PLAIN_MESSAGE;
   if (STRING_P(msg))
     str = TO_NEW_C_STRING(msg);
   else
@@ -763,7 +774,7 @@ static SCM g_snd_print(SCM msg)
       else str = gl_print(msg, S_snd_print);
     }
   check_for_event(state);
-  snd_append_command(state, str);
+  listener_append(state, str);
   if (str) free(str);
   return(msg);
 }
@@ -3209,7 +3220,7 @@ If more than one hook function, results are concatenated. If none, the current c
 If it returns some non-#f result, Snd assumes you've sent the text out yourself, as well as any needed prompt. \n\
 (add-hook! print-hook \n\
   (lambda (msg) \n\
-    (snd-print 
+    (snd-print \n\
       (format #f \"~A~%[~A]~%~A\" \n\
               msg \n\
               (strftime \"%d-%b %H:%M %Z\" \n\

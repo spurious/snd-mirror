@@ -495,7 +495,9 @@ static void muffle_warning(char *name, char *type, char *klass, char *defaultp, 
 #endif
 {
   /* these warnings are occurring when they should not, and they are of no interest to anyone, so shove a sock in Xt */
-  /* fprintf(stderr, "ignoring: %s: %s\n", name, defaultp); */
+#if DEBUGGING
+  fprintf(stderr, "ignoring: %s: %s\n", name, defaultp);
+#endif
 }
 
 static void ss_graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
@@ -512,7 +514,7 @@ static void ss_graph_key_press(Widget w, XtPointer context, XEvent *event, Boole
   sp = any_selected_sound(ss);
   if (sp)
     key_press_callback(any_selected_channel(sp), ev->x, ev->y, ev->state, keysym);
-  else snd_append_command(ss, XKeysymToString(keysym));
+  else listener_append(ss, XKeysymToString(keysym));
 }
 
 static Pixel get_color(Widget shell,

@@ -126,7 +126,7 @@ void snd_completion_help(snd_state *ss, int matches, char **pbuffer)
 
 /* ---------------- command widget replacement ---------------- */
 
-void snd_append_char(snd_state *ss, char *msg)
+void listener_append(snd_state *ss, char *msg)
 {
   if (listener_text)
     {
@@ -136,18 +136,14 @@ void snd_append_char(snd_state *ss, char *msg)
     }
 }
 
-void snd_append_command(snd_state *ss, char *msg)
+void listener_append_and_prompt(snd_state *ss, char *msg)
 {
   int cmd_eot;
   if (listener_text)
     {
-      if (ss->result_printout != PLAIN_MESSAGE) 
-	append_listener_text(0, "\n");
       if (msg)
 	append_listener_text(0, msg);
-      if (ss->result_printout == MESSAGE_WITH_PROMPT) 
-	append_listener_text(0, listener_prompt_with_cr(ss));
-      ss->result_printout = 0;
+      append_listener_text(0, listener_prompt_with_cr(ss));
       cmd_eot = gtk_text_get_length(GTK_TEXT(listener_text));
       last_prompt = cmd_eot - 1;
     }

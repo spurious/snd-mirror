@@ -936,6 +936,17 @@ static SCM g_make_pixmap(SCM vals)
   return(result);
 }
 
+static SCM g_colormap_ref(SCM map, SCM pos)
+{
+  unsigned short r, g, b;
+  ASSERT_TYPE(INTEGER_P(map), map, SCM_ARG1, "colormap-ref", "an integer");
+  ASSERT_TYPE(INTEGER_P(pos), pos, SCM_ARG2, "colormap-ref", "an integer");
+  get_current_color(TO_C_INT(map), TO_C_INT(pos), &r, &g, &b);
+  return(SCM_LIST3(TO_SCM_DOUBLE((float)r / 65535.0),
+		   TO_SCM_DOUBLE((float)g / 65535.0),
+		   TO_SCM_DOUBLE((float)b / 65535.0)));
+}
+
 void g_init_draw(SCM local_doc)
 {
   dialog_widgets = SCM_UNDEFINED;
@@ -1004,5 +1015,7 @@ void g_init_draw(SCM local_doc)
 
   DEFINE_PROC(S_make_pixmap, g_make_pixmap, 1, 0, 0, "(make-pixmap strs)");
   DEFINE_PROC("set-pixmap", g_set_pixmap, 2, 0, 0, "(set-pixmap widget pixmap)");
+
+  DEFINE_PROC("colormap-ref", g_colormap_ref, 2, 0, 0, "(colormap-ref map position) -> (list r g b)");
 }
 #endif

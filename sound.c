@@ -82,8 +82,9 @@ void mus_error(int error, const char *format, ...)
       fputc('\n', stderr);
     }
 #else
-  fprintf(stderr, "error: %d", error);
-  fputc('\n', stderr);
+  if (error == 0) /* this case mainly for CLM */
+    fprintf(stderr, format);
+  else fprintf(stderr, "error: %d %s\n", error, format);
 #endif
 }
 

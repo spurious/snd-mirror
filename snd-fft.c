@@ -749,7 +749,7 @@ int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int size)
 		  }
 	      if (ca > minval)
 		{
-		  inds[minpk] = i-1;
+		  inds[minpk] = i - 1;
 		  peaks[minpk] = ca;
 		}
 	    }

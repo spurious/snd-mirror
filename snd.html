@@ -1417,8 +1417,23 @@ finds the next sample greater than .1, and places the cursor two samples before 
   <A NAME="cr">C-r</a>   find backwards
   <A NAME="cs">C-s</a>   find forwards
 </pre>
-<p>See also the functions <a href="extsnd.html#lfind">find</a> and <a href="extsnd.html#lcountmatches">count-matches</a>.
-
+<p>These searching functions can be closures; the following, for example, searches for
+the next positive-going zero crossing, placing the cursor just before it:
+</p>
+<pre>
+(define (zero+)
+  (let ((lastn 0.0))
+    (lambda (n)
+      (let ((rtn (and (< lastn 0.0)
+		      (>= n 0.0)
+		      -1)))
+	(set! lastn n)
+	rtn))))
+</pre>
+<p>Now C-s (zero+) followed by C-s's moves to successive zero crossings.
+There are more examples in <a href="sndscm.html#exzeroplus">sndscm.html</a>.
+See also the functions <a href="extsnd.html#lfind">find</a> and <a href="extsnd.html#lcountmatches">count-matches</a>.
+</p>
 
 <h4><A NAME="changesamples">Change samples</a></h4>
 

@@ -283,7 +283,7 @@ typedef struct snd__state {
   char *pending_change;
   int print_choice, apply_choice, just_time, memory_available;
   int stopped_explicitly, checking_explicitly, reloading_updated_file;
-  int result_printout, listening;
+  int listening;
   Latus init_window_width, init_window_height;
   Locus init_window_x, init_window_y;
   int transform_hook_active, graph_hook_active;
@@ -788,7 +788,8 @@ char *output_comment(file_info *hdr);
 void snd_load_init_file(snd_state *ss, int nog, int noi);
 void snd_load_file(char *filename);
 SCM snd_eval_str(snd_state *ss, char *buf);
-SCM snd_report_result(snd_state *ss, SCM result, char *buf, int check_mini);
+SCM snd_report_result(snd_state *ss, SCM result, char *buf);
+SCM snd_report_listener_result(snd_state *ss, SCM form);
 void snd_eval_property_str(snd_state *ss, char *buf);
 void snd_eval_stdin_str(snd_state *ss, char *buf);
 void g_snd_callback(int callb);

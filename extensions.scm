@@ -336,7 +336,7 @@
        (set-current-output-port stdout)
        (set-current-input-port stdin)))))
 
-;;; TODO: check step/trace
+;;; TODO: check step/trace -- trace output seems to be lost somewhere?
 		 
 
 ;;; -------- read-listener-line

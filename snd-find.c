@@ -1,9 +1,5 @@
 #include "snd.h"
 
-/* TODO: doc that closure is not re-evaluated upon C-s so the ctr is never cleared in
- *       (define (hiho) (let ((ctr 0)) (lambda (n) (if (> n .1) (begin (snd-print ctr) (- ctr 10)) (begin (set! ctr (+ ctr 1)) #f)))))
- */
-
 typedef struct {int n; int direction; int chans; int inc; chan_info **cps; snd_fd **fds;} gfd;
 
 static int prepare_global_search (chan_info *cp, void *g0)
@@ -47,7 +43,9 @@ static int run_global_search (snd_state *ss, gfd *g)
 		  if (INTEGER_P(res))
 		    {
 		      g->n = i; /* channel number */
-		      g->inc += TO_C_INT(res);
+		      if (g->direction == READ_FORWARD)
+			g->inc += TO_C_INT(res);
+		      else g->inc -= TO_C_INT(res);
 		      return(1);
 		    }
 		}
@@ -76,7 +74,7 @@ static int run_global_search (snd_state *ss, gfd *g)
   return(0);
 }
 
-static char search_no_luck[PRINT_BUFFER_SIZE];
+static char search_message[PRINT_BUFFER_SIZE];
 
 char *global_search(snd_state *ss, int direction)
 {
@@ -90,12 +88,34 @@ char *global_search(snd_state *ss, int direction)
   chan_info *cp;
   if (ss->search_in_progress) 
     {
-      mus_snprintf(search_no_luck, PRINT_BUFFER_SIZE, "search in progress");
-      return(search_no_luck);
+      mus_snprintf(search_message, PRINT_BUFFER_SIZE, "search in progress");
+      return(search_message);
+    }
+
+  /* here and elsewhere when a new search is begun, even if using the previous seach expression, the
+   *   expression needs to be re-evaluated, since otherwise in a search like:
+   *   (define (zero+)
+   *     (let ((lastn 0.0))
+   *       (lambda (n)
+   *         (let ((rtn (and (< lastn 0.0)
+   *                         (>= n 0.0)
+   *                         -1)))
+   *           (set! lastn n)
+   *           rtn))))
+   *   the notion of the previous sample will never be cleared.
+   * But we do know that the expression is ok otherwise.
+   * (This causes one redundant evaluation the first time around)
+   */
+  if (ss->search_expr)
+    {
+      /* search_expr can be null if user set search_proc directly */
+      snd_unprotect(ss->search_proc);
+      ss->search_proc = snd_catch_any(eval_str_wrapper, ss->search_expr, ss->search_expr);
+      snd_protect(ss->search_proc);
     }
   ss->search_in_progress = 1;
   chans = active_channels(ss, WITH_VIRTUAL_CHANNELS);
-  search_no_luck[0] = '\0';
+  search_message[0] = '\0';
   if (chans > 0)
     {
       fd = (gfd *)CALLOC(1, sizeof(gfd));
@@ -121,8 +141,8 @@ char *global_search(snd_state *ss, int direction)
       if (fd->n == -1)
 	{
 	  if (ss->stopped_explicitly)
-	    mus_snprintf(search_no_luck, PRINT_BUFFER_SIZE, "search stopped");
-	  else mus_snprintf(search_no_luck, PRINT_BUFFER_SIZE, "%s: not found", ss->search_expr);
+	    mus_snprintf(search_message, PRINT_BUFFER_SIZE, "search stopped");
+	  else mus_snprintf(search_message, PRINT_BUFFER_SIZE, "%s: not found", ss->search_expr);
 	  /* printed by find_ok_callback in snd-xmenu.c */
 	}
       else
@@ -149,7 +169,7 @@ char *global_search(snd_state *ss, int direction)
       FREE(fd);
     }
   ss->search_in_progress = 0;
-  return(search_no_luck);
+  return(search_message);
 }
 
 static int cursor_find_forward(snd_info *sp, chan_info *cp, int count)
@@ -245,7 +265,7 @@ static int cursor_find_backward(snd_info *sp, chan_info *cp, int count)
   ss->search_in_progress = 0;
   if (count != 0) return(-1); /* impossible sample number, so => failure */
   if (INTEGER_P(res))
-    return(i + TO_C_INT(res));
+    return(i - TO_C_INT(res));
   return(i);
 }
 
@@ -276,6 +296,15 @@ int cursor_search(chan_info *cp, int count)
   if (sp->searching)
     {
       if (!(PROCEDURE_P(sp->search_proc))) return(CURSOR_IN_VIEW); /* no search expr */
+
+      if (sp->search_expr)
+	{
+	  /* see note above about closures */
+	  snd_unprotect(sp->search_proc);
+	  sp->search_proc = snd_catch_any(eval_str_wrapper, sp->search_expr, sp->search_expr);
+	  snd_protect(sp->search_proc);
+	}
+
       if (count > 0)
 	samp = cursor_find_forward(sp, cp, count);
       else samp = cursor_find_backward(sp, cp, -count);
@@ -286,8 +315,9 @@ int cursor_search(chan_info *cp, int count)
 	}
       else
 	{
-	  report_in_minibuffer(sp, "%s: y = %s at %s (%d)",
-			       sp->search_expr,
+	  report_in_minibuffer(sp, "%s%sy = %s at %s (%d)",
+			       (sp->search_expr) ? sp->search_expr : "",
+			       (sp->search_expr) ? ": " : "",
 			       s1 = prettyf(sample(samp, cp), 2),
 			       s2 = prettyf((double)samp / (double)SND_SRATE(sp), 2),
 			       samp);
@@ -325,7 +355,7 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
 {
   snd_state *ss;
   snd_info *sp;
-  char *error = NULL;
+  char *error = NULL, *expr = NULL;
   SCM errstr;
   if (INTEGER_P(snd)) /* could be the proc arg if no snd */
     {
@@ -336,13 +366,18 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
 	  if (PROCEDURE_P(sp->search_proc))
 	    snd_unprotect(sp->search_proc);
 	  sp->search_proc = SCM_UNDEFINED;
+	  if (STRING_P(proc))
+	    {
+	      expr = TO_NEW_C_STRING(proc);
+	      proc = snd_catch_any(eval_str_wrapper, expr, expr);
+	    }
 	  error = procedure_ok(proc, 1, "find", "find", 1);
 	  if (error == NULL)
 	    {
 	      sp->search_proc = proc;
 	      snd_protect(proc);
 	      if (sp->search_expr) free(sp->search_expr);
-	      sp->search_expr = g_print_1(proc, __FUNCTION__);
+	      sp->search_expr = expr;
 	      return(proc);
 	    }
 	  else 
@@ -361,19 +396,24 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
       if (PROCEDURE_P(ss->search_proc))
 	snd_unprotect(ss->search_proc);
       ss->search_proc = SCM_UNDEFINED;
+      if (STRING_P(snd))
+	{
+	  expr = TO_NEW_C_STRING(snd);
+	  snd = snd_catch_any(eval_str_wrapper, expr, expr);
+	}
       error = procedure_ok(snd, 1, "find", "find", 1);
       if (error == NULL)
 	{
 	  ss->search_proc = snd;
 	  snd_protect(snd);
 	  if (ss->search_expr) free(ss->search_expr);
-	  ss->search_expr = g_print_1(snd, __FUNCTION__);
+	  ss->search_expr = expr;
 	}
       else 
 	{
 	  errstr = TO_SCM_STRING(error);
 	  FREE(error);
-	  return(snd_bad_arity_error("set-" S_search_procedure, errstr, proc));
+	  return(snd_bad_arity_error("set-" S_search_procedure, errstr, snd));
 	}
     }
   return(snd);

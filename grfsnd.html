@@ -436,7 +436,7 @@ Next add Guile wrappers to your C code:</p>
 
   SCM hiho_wrapper(SCM a) 
   { /* this tells Guile how to interpret the arguments and return value of hiho */
-    return(gh_int2scm(hiho(gh_scm2int(a))));
+    return(scm_long2num(hiho(scm_num2int(a, 0, "hiho"))));
   }
 
   void init_hiho() 
@@ -482,8 +482,8 @@ Then make a file (say "gsl-ex.c"):</p>
 static SCM scm_j0(SCM x)
 { /* calls GSL function gsl_sf_bessel_J0_e */
   gsl_sf_result res;
-  gsl_sf_bessel_J0_e(gh_scm2double(x), &amp;res);
-  return(gh_double2scm(res.val));
+  gsl_sf_bessel_J0_e(scm_num2dbl(x, "j0"), &amp;res);
+  return(scm_make_real(res.val));
 }
 
 void init_gsl_j0(void)
@@ -558,7 +558,7 @@ defines a function that scales the data by 2:</p>
 
 static float a2(float b) {return(b * 2.0);}
 
-static SCM get_a2(void) {return(gh_ulong2scm((unsigned long)a2));}
+static SCM get_a2(void) {return(scm_ulong2num((unsigned long)a2));}
 
 void init_hiho() {scm_c_define_gsubr("get-a2", 0, 0, 0, get_a2);}
 </pre>
@@ -580,7 +580,7 @@ is a sketch using the Snd internal "srate" function:</p>
 <pre>
   #include &lt;guile/gh.h&gt;
   static SCM g_srate;
-  static SCM srate_wrapper(SCM a) {return(gh_call1(g_srate, a));}
+  static SCM srate_wrapper(SCM a) {return(scm_call_1(g_srate, a));}
   void init_srate(void) 
   { 
     scm_c_define_gsubr("my-srate", 1, 0, 0, srate_wrapper);
@@ -591,7 +591,7 @@ is a sketch using the Snd internal "srate" function:</p>
 <pre>
   scm_eval_str0("(recorder-dialog)");
   scm_eval_str0("(open-sound \"oboe.snd\")");
-  srate = gh_scm2int(scm_eval_str0("(srate)"));
+  srate = scm_num2int(scm_eval_str0("(srate)"), 0, "");
 </pre>
 <p>There is a Scheme to C compiler named <a name="hobbit">Hobbit</a>, but it's not
 very useful in our context.  If you have pure Scheme functions,
@@ -654,18 +654,18 @@ static SCM g_make_flange(SCM speed, SCM amount, SCM time)
 {
   SCM result;
   flg *gens;
-  gens = make_flange(gh_scm2double(speed), gh_scm2double(amount), gh_scm2double(time));
-  return(gh_ulong2scm((unsigned long)(gens)));
+  gens = make_flange(scm_num2dbl(speed, "make-flange"), scm_num2dbl(amount, "make-flange"), scm_num2dbl(time, "make-flange"));
+  return(scm_ulong2num((unsigned long)(gens)));
 }
 
 static SCM g_get_flange(void)
 {
-  return(gh_ulong2scm((unsigned long)run_flange));
+  return(scm_ulong2num((unsigned long)run_flange));
 }
 
 static SCM g_free_flange(SCM g_gens)
 {
-  free_flange((flg *)gh_scm2ulong(g_gens));
+  free_flange((flg *)scm_num2ulong(g_gens));
 }
 
 void init_eff(void)
@@ -1591,14 +1591,14 @@ static void create_scale_dialog(Widget parent)
 
 static SCM hiho_scaler(void) 
 {
-  return(gh_double2scm(current_scaler));
+  return(scm_make_real(current_scaler));
 }
 
 static SCM g_create_scale_dialog(SCM parent)
 {
   /* assumes we're called in listener as (create-scale-dialog (cadr (main-widgets))) */
   /* (cadr (main-widgets)) returns Snd's topmost widget */
-  create_scale_dialog((Widget)gh_scm2ulong(parent));
+  create_scale_dialog((Widget)scm_num2ulong(parent));
   return(SCM_BOOL_F);
 }
 

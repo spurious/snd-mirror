@@ -102,10 +102,11 @@
 #define TO_SCM_FORM(Str)      scm_read_0str(Str)
 
 #ifdef SCM_SYMBOL_CHARS
-  #define EVAL_FORM(Form)       scm_eval_x((SCM)(Form), scm_interaction_environment())
+  #define EVAL_FORM(Form)       scm_eval((SCM)(Form), scm_interaction_environment())
+  /* was scm_eval_x but I'm not sure that's safe */
   #define SYMBOL_TO_C_STRING(a) SCM_SYMBOL_CHARS(a)
 #else
-  #define EVAL_FORM(Form)       scm_eval_x((SCM)(Form))
+  #define EVAL_FORM(Form)       scm_eval((SCM)(Form))
   #define SYMBOL_TO_C_STRING(a) gh_symbol2newstr(a, NULL)
 #endif
 

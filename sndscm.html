@@ -27,8 +27,6 @@
 <span class=htmlbox>related documentation</span><span class=htmlbox><a href="snd.html">snd.html</a><spacer type=horizontal size=25><a href="extsnd.html">extsnd.html</a><spacer type=horizontal size=25><a href="grfsnd.html">grfsnd.html</a><spacer type=horizontal size=25><a href="clm.html">clm.html</a><spacer type=horizontal size=25><a href="sndlib.html">sndlib.html</a><spacer type=horizontal size=25><a href="index.html">index.html</a></span>
 </center>
 
-<!-- TODO: get rid of deprecated gh_ stuff (also in grfsnd.html) -->
-
 <!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (index.cl) -->
 
 <center><A NAME="introduction"></a>
@@ -665,6 +663,7 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>translate mpeg input to 16-bit linear and read into Snd
     <li>mapping extensions (map arbitrary single-channel function over various channel collections)
     <li>sound-interp, env-sound-interp
+    <li>searching procedures (find-pitch, zero+, next-peak)
   </ul>
 </small>
 </ul>
@@ -1147,6 +1146,16 @@ current sound; <code>(env-sound-interp '(0 0 1 1 2 0) 2.0)</code> returns a new 
 with the sound copied first in normal order, then reversed.  src-sound with an
 envelope could be used for this effect, but it is much more direct to apply the
 envelope to sound sample positions.
+</p>
+<pre>
+  <em class=def><A NAME="exzeroplus">zero+</a></em>
+  <em class=def><A NAME="exnextpeak">next-peak</a></em>
+  <em class=def><A NAME="exfindpitch">find-pitch</a></em> pitch
+</pre>
+<p>These are examples of searching procedures (to be used with C-s and so on).  <i>zero+</i> finds the next
+positive-going zero crossing (if searching forwards), <i>next-peak</i> finds
+the next max or min in the waveform, and <i>find-pitch</i> finds the next
+place where the given pitch is predominate.
 </p>
 <br>
 
@@ -2540,13 +2549,12 @@ void inner_main(void *closure, int argc, char **argv)
   char **buffer = NULL;
   buffer = (char **)calloc(1, sizeof(char *));
   buffer[0] = (char *)calloc(size, sizeof(char));
-  counter = scm_permanent_object(scm_c_define("counter", gh_int2scm(0)));
+  counter = scm_permanent_object(scm_c_define("counter", scm_long2num(0)));
   while (1)
     {
       getline(buffer, &amp;size, stdin);
       scm_eval_str0(buffer[0]);
-      /* fprintf(stdout, "counter is %d\n", gh_scm2int(gh_cdr(counter))); */ /* old style */
-      fprintf(stdout, "counter is %d\n", gh_scm2int(SCM_VARIABLE_REF(counter)));
+      fprintf(stdout, "counter is %d\n", scm_num2int(SCM_VARIABLE_REF(counter), 0, "main"));
     }
 }
 
@@ -2576,7 +2584,7 @@ responsive.  <code>(set! basic-color red)</code> would have no effect unless
 our C code could be informed that the <code>basic-color</code> variable's value had changed.
 In addition, in Snd, there are perhaps several hundred such variables, and
 our C code will run faster if we access C variables as much as possible, rather
-than calling gh_scm2int (or whatever) every time the value is needed.
+than calling scm_num2int (or whatever) every time the value is needed.
 So, we first defined each variable along these lines:
 </p>
 <pre>
@@ -2587,12 +2595,12 @@ int counter = 0;
 
 SCM g_counter(void)
 {
-  return(gh_int2scm(counter));
+  return(scm_long2num(counter));
 }
 
 SCM g_set_counter(SCM newval)
 {
-  counter = gh_scm2int(newval);
+  counter = scm_num2int(newval, 0, "set-counter");
   return(newval);
 }
 
@@ -2667,11 +2675,11 @@ to the counter:
 #include &lt;guile/gh.h&gt;
 
 int counter = 0;
-SCM g_counter(void) {return(gh_int2scm(counter));}
+SCM g_counter(void) {return(scm_long2num(counter));}
 
 SCM g_set_counter(SCM newval)
 {
-  counter = gh_scm2int(newval);
+  counter = scm_num2int(newval, 0, "set-counter");
   return(newval);
 }
 
@@ -2690,8 +2698,8 @@ static SCM report_error(void *data, SCM tag, SCM throw_args)
 static SCM add_to_counter(SCM val)
 {
   SCM_ASSERT_TYPE(SCM_EQ_P(scm_integer_p(val), SCM_BOOL_T), val, SCM_ARGn, "add-to-counter", "an integer");
-  counter += gh_scm2int(val);   /* convert from Scheme to C */
-  return(gh_int2scm(counter));  /* return our new counter value */
+  counter += scm_num2int(val, 0, "add-to-counter");   /* convert from Scheme to C */
+  return(scm_long2num(counter));  /* return our new counter value */
 }
 
 static void inner_main(void *closure, int argc, char **argv)
@@ -2834,7 +2842,7 @@ typedef struct {
 float src_input_as_needed(void *ptr, int direction)
 {
   src_state *sr = (src_state *)ptr;
-  return(gh_scm2double(gh_call1(sr-&gt;input_func, gh_int2scm(direction))));
+  return(scm_num2dbl(scm_call_1(sr-&gt;input_func, scm_long2num(direction)), "input-as-needed"));
 }
 
 void inner_main(void *closure, int argc, char **argv)
@@ -2870,7 +2878,7 @@ int main(int argc, char *argv[])
 */
 </pre>
 <p>In this case, <code>src_input_as_needed</code> is calling the
-user-supplied Scheme function (via <code>gh_call1</code>).
+user-supplied Scheme function (via <code>scm_call_1</code>).
 </p>
 <br>
 

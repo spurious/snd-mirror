@@ -85,13 +85,13 @@ void textfield_focus_Callback(Widget w, XtPointer clientData, XtPointer callData
 void textfield_unfocus_Callback(Widget w, XtPointer clientData, XtPointer callData);
 void add_completer_to_textfield(snd_state *ss, Widget w, int completer);
 void snd_completion_help(snd_state *ss, int matches, char **buffer);
-void snd_append_command(snd_state *ss, char *msg);
+void listener_append_and_prompt(snd_state *ss, char *msg);
 void save_listener_text(FILE *fp);
 void append_listener_text(int end, char *msg);
 void goto_listener(void);
 void color_listener(Pixel pix);
 void color_listener_text(Pixel pix);
-void snd_append_char(snd_state *ss, char *msg);
+void listener_append(snd_state *ss, char *msg);
 void handle_listener(snd_state *ss, int new_state);
 int listener_height(void);
 int listener_width(void);
