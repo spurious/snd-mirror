@@ -597,6 +597,7 @@ Snd_names_and_urls =
     ["mix_chans", "extsnd.html#sndmixchans", "snd-mix.c"],
     ["mix_click_hook", "extsnd.html#mixclickhook", "snd-chn.c"],
     ["mix_color", "extsnd.html#mixcolor", "snd-mix.c"],
+    ["mix_drag_hook", "extsnd.html#mixdraghook", "snd-mix.c"],
     ["mix_file_dialog", "extsnd.html#sndmixfiledialog", "snd-file.c"],
     ["mix_frames", "extsnd.html#sndmixframes", "snd-mix.c"],
     ["mix_home", "extsnd.html#sndmixhome", "snd-mix.c"],
@@ -1245,4 +1246,3 @@ Snd_names_and_urls =
     ["zoom_focus_style", "extsnd.html#zoomfocusstyle", "snd-xen.c"],
     ["zync", "sndscm.html#zync", "snd-gtk.scm"],
   ]
-

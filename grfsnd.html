@@ -55,7 +55,6 @@
   <li><a href="#sndandgl">Snd and OpenGL</a>
   <li><a href="#sndandgdb">Snd and gdb</a>
   </ul>
-<li><a href="index.html">Index</a>
 </ul>
 
 <br>
@@ -239,6 +238,7 @@ yellowcolor (a few envelope editor buttons), lightbluecolor (the recorder), and 
         <!-- I(print file):O(epsFile resource)(epsresource) -->
 
 <br>
+<!-- INDEX sndswitches:Invocation flags -->
 <span class=bbox><h3><A NAME="sndswitches">Snd invocation flags</a></h3></span>
 
 <p>Snd recognizes the following switches in its command line (leaving aside all
@@ -283,6 +283,7 @@ snd -e '(add-sound-file-extension "WAV")' -p /home/bil/sounds
 <br>
 <br>
 
+<!-- INDEX: sndinitfile:Initialization file -->
 <span class=bbox><h3><A NAME="sndinitfile">The initialization file</a></h3></span>
 <p>
 When Snd starts, it looks for an initialization file, normally named "~/.snd" (its name can be set
@@ -384,6 +385,8 @@ use any external program from within Snd as an editing function.
 And, perhaps most useful, you can run Snd as an Emacs subjob.
 </p>
 <br>
+
+<!-- INDEX emacssnd:Emacs and Snd -->
 <span class=bbox><h3><A NAME="emacssnd">Snd as an Emacs subjob</a></h3></span>
 
 <p>Snd watches stdin; any input received
@@ -622,7 +625,7 @@ is a sketch using the Snd internal "srate" function:</p>
 <span class=bbox><h3><A NAME="programs">External Programs</a></h3></span>
 
 <p>Any external program that knows about sound files can be used to perform editing operations
-from Snd.  You get Snd's display, analysis, header and format conversion, and edit-tree support,
+in Snd.  You get Snd's display, analysis, header and format conversion, and edit-tree support,
 and can concentrate on the actual sound effect you're developing.
 The original impetus for Snd came from CLM, a large lisp-listener based program
 which normally runs without a graphical
@@ -758,6 +761,8 @@ The CLM (common lisp) version might be something like:</p>
 </pre></td></tr></table>
 
 <br>
+
+<!-- INDEX clmfuncs:CLM generators -->
 <span class=cbox><h4><A NAME="clmfuncs">CLM functions</a></h4></span>
 
 <p>See <a href="clm.html">clm.html</a> for full details. Optional args are in italics.</p>
@@ -1381,6 +1386,7 @@ how the "marshaller" works in Gtk, I may be able to fix this.
 
 <br>
 
+<!-- INDEX sndwithnogui:Scripting -->
 <span class=bbox><h3><A NAME="sndwithnogui">Snd with no GUI and scripting</a></h3></span>
 
 <p>If Snd is built without a graphical user interface (either by specifying
@@ -1703,6 +1709,7 @@ and much of examp.scm: examp.rb.
 </p>
 <br>
 
+<!-- INDEX sndandladspa:Plugins -->
 <span class=bbox><h3><A NAME="sndandladspa">Snd and LADSPA</a></h3></span>
 
 <pre>

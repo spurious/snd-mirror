@@ -7,10 +7,11 @@
   #include <config.h>
 #endif
 
-#define XM_DATE "8-Apr-03"
+#define XM_DATE "9-May-03"
 
 
 /* HISTORY: 
+ *   9-May:     Ruby fixups (some functions accidentally omitted earlier).
  *   8-Apr:     XSetErrorHandler proc takes XErrorEvent, not XEvent 2nd arg (thanks Friedrich Delgado Friedrichs)
  *   7-Apr:     more changes for the WITH_GTK_AND_X11 switch.
  *   1-Apr:     XGetWindowProperty uses mem2string if not XA_STRING.
@@ -18931,20 +18932,6 @@ static XEN gxm_XRectangle(XEN x, XEN y, XEN width, XEN height)
   return(C_TO_XEN_XRectangle(r));
 }
 
-#if HAVE_RUBY
-static char xm_print_buf[1024];
-
-static char *XRectangle_to_string(XEN obj)
-{
-  XRectangle *r;
-  r = XEN_TO_C_XRectangle(obj);
-  sprintf(xm_print_buf, 
-	  "%d %d %d %d",
-	  r->x, r->y, r->width, r->height);
-  return(xm_print_buf);
-}
-#endif
-
 /* XSegment */
 
 static XEN gxm_XSegment(XEN x1, XEN y1, XEN x2, XEN y2)
@@ -18961,18 +18948,6 @@ static XEN gxm_XSegment(XEN x1, XEN y1, XEN x2, XEN y2)
   r->y2 = (short)XEN_TO_C_INT(y2);
   return(C_TO_XEN_XSegment(r));
 }
-
-#if HAVE_RUBY
-static char *XSegment_to_string(XEN obj)
-{
-  XSegment *r;
-  r = XEN_TO_C_XSegment(obj);
-  sprintf(xm_print_buf, 
-	  "%d %d %d %d",
-	  r->x1, r->y1, r->x2, r->y2);
-  return(xm_print_buf);
-}
-#endif
 
 static XEN gxm_y2(XEN ptr)
 {
@@ -19059,18 +19034,6 @@ static XEN gxm_XPoint(XEN x, XEN y)
   return(C_TO_XEN_XPoint(r));
 }
 
-#if HAVE_RUBY
-static char *XPoint_to_string(XEN obj)
-{
-  XPoint *r;
-  r = XEN_TO_C_XPoint(obj);
-  sprintf(xm_print_buf, 
-	  "%d %d",
-	  r->x, r->y);
-  return(xm_print_buf);
-}
-#endif
-
 /* XArc */
 
 static XEN gxm_XArc(XEN x, XEN y, XEN width, XEN height, XEN angle1, XEN angle2)
@@ -19091,19 +19054,6 @@ static XEN gxm_XArc(XEN x, XEN y, XEN width, XEN height, XEN angle1, XEN angle2)
   r->angle2 = (short)XEN_TO_C_INT(angle2);
   return(C_TO_XEN_XArc(r));
 }
-
-#if HAVE_RUBY
-static char *XArc_to_string(XEN obj)
-{
-  XArc *r;
-  r = XEN_TO_C_XArc(obj);
-  sprintf(xm_print_buf, 
-	  "%d %d %d %d %d %d",
-	  r->x, r->y, r->width, r->height, r->angle1, r->angle2);
-  return(xm_print_buf);
-}
-#endif
-
 
 static XEN gxm_angle2(XEN ptr)
 {
@@ -19153,18 +19103,6 @@ static XEN gxm_XColor(XEN pixel, XEN red, XEN green, XEN blue, XEN flags, XEN pa
   if (XEN_BOUND_P(pad)) r->pad = (char)XEN_TO_C_INT(pad);
   return(C_TO_XEN_XColor(r));
 }
-
-#if HAVE_RUBY
-static char *XColor_to_string(XEN obj)
-{
-  XColor *r;
-  r = XEN_TO_C_XColor(obj);
-  sprintf(xm_print_buf, 
-	  "pixel: %d, rgb: %d %d %d, flags: %x", 
-	  (int)(r->pixel), r->red, r->green, r->blue, (int)(r->flags));
-  return(xm_print_buf);
-}
-#endif
 
 static XEN gxm_pad(XEN ptr)
 {

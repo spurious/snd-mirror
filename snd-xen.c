@@ -148,7 +148,9 @@ static XEN snd_format_if_needed(XEN args)
   if (num_args == 1) return(XEN_CAR(args));
   format_info = XEN_TO_C_STRING(XEN_CAR(args));
   format_info_len = snd_strlen(format_info);
-  format_args = XEN_COPY_ARG(XEN_CADR(args)); /* protect Ruby case, a no-op in Guile */
+  if (XEN_LIST_P(XEN_CADR(args)))
+    format_args = XEN_COPY_ARG(XEN_CADR(args)); /* protect Ruby case, a no-op in Guile */
+  else format_args = XEN_CADR(args);
   errmsg = (char *)CALLOC(ERR_SIZE, sizeof(char));
   for (i = 0; i < format_info_len; i++)
     {
@@ -481,7 +483,10 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 {
   /* if string returned, needs to be freed */
   XEN arity;
-  int rargs, oargs, restargs;
+  int rargs;
+#if (!HAVE_RUBY)
+  int oargs, restargs, loc;
+#endif
   if (!(XEN_PROCEDURE_P(proc)))
     {
       if (XEN_NOT_FALSE_P(proc)) /* #f as explicit arg to clear */
@@ -491,7 +496,6 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
     }
   else
     {
-      int loc;
       arity = XEN_ARITY(proc);
 #if HAVE_RUBY
       rargs = XEN_TO_C_INT(arity);
@@ -639,8 +643,8 @@ static XEN g_call1_1(void *arg)
 
 XEN g_call1(XEN proc, XEN arg, const char *caller)
 {
-  XEN args[2];
 #if HAVE_GUILE
+  XEN args[2];
   args[0] = proc;
   args[1] = arg;
   return(snd_catch_any(g_call1_1, (void *)args, caller));
@@ -681,8 +685,8 @@ static XEN g_call2_1(void *arg)
 
 XEN g_call2(XEN proc, XEN arg1, XEN arg2, const char *caller)
 {
-  XEN args[3];
 #if HAVE_GUILE
+  XEN args[3];
   args[0] = proc;
   args[1] = arg1;
   args[2] = arg2;
@@ -705,8 +709,8 @@ static XEN g_call3_1(void *arg)
 
 XEN g_call3(XEN proc, XEN arg1, XEN arg2, XEN arg3, const char *caller)
 {
-  XEN args[4];
 #if HAVE_GUILE
+  XEN args[4];
   args[0] = proc;
   args[1] = arg1;
   args[2] = arg2;
@@ -859,7 +863,9 @@ void clear_stdin(void)
 static char *stdin_check_for_full_expression(char *newstr)
 {
   char *str;
+#if HAVE_GUILE
   int end_of_text;
+#endif
   if (stdin_str)
     {
       str = stdin_str;
@@ -1534,7 +1540,7 @@ static XEN g_snd_version(void)
 
 static XEN g_sounds(void)
 {
-  #define H_sounds "(" S_sounds "): list of active sounds (ids)"
+  #define H_sounds "(" S_sounds "): list of active sounds (a list of indices)"
   int i;
   snd_state *ss;
   snd_info *sp;

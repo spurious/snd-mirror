@@ -6,6 +6,7 @@
   #define TO_PROC_NAME(Str) xen_scheme_procedure_to_ruby(Str)
 #else
   #define TO_VAR_NAME(Str) Str
+  #define TO_PROC_NAME(Str) Str
 #endif
 
 static void remove_temp_files(chan_info *cp)
@@ -190,7 +191,7 @@ static void psp_sf(FILE *fd, char *name, Float val) {fprintf(fd, "%sset_%s(%.4f,
 
 static void pcp_ss(FILE *fd, char *name, char *val, int chan) {fprintf(fd, "%sset_%s(%s, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
 static void pcp_sd(FILE *fd, char *name, int val, int chan)   {fprintf(fd, "%sset_%s(%d, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
-static void pcp_sod(FILE *fd, char *name, off_t val, int chan)   {fprintf(fd, "%sset_%s(%d, sfile, " OFF_TD ")\n", white_space, TO_PROC_NAME(name), val, chan);}
+static void pcp_sod(FILE *fd, char *name, off_t val, int chan)   {fprintf(fd, "%sset_%s(" OFF_TD ", sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
 static void pcp_sf(FILE *fd, char *name, Float val, int chan) {fprintf(fd, "%sset_%s(%.4f, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
 static void pcp_sl(FILE *fd, char *name, Float val1, Float val2, int chan) 
   {fprintf(fd, "%sset_%s([%f, %f], sfile, %d)\n", white_space, TO_PROC_NAME(name), val1, val2, chan);}
@@ -460,7 +461,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
       (!(XEN_NULL_P(XEN_VECTOR_REF(sp->properties, 0)))))
     {
 #if HAVE_RUBY
-      fprintf(fd, "%sset_%s(%s, sfile)\n", white_space, TO_PROC_NAME(S_sound_properties), XEN_AS_STRING(XEN_VECTOR_REF(sp->properties, 0)));
+      fprintf(fd, "%sset_%s([%s], sfile)\n", white_space, TO_PROC_NAME(S_sound_properties), XEN_AS_STRING(XEN_VECTOR_REF(sp->properties, 0)));
 #else
       fprintf(fd, "%s(set! (%s sfile) \'%s)\n", white_space, S_sound_properties, XEN_AS_STRING(XEN_VECTOR_REF(sp->properties, 0)));
 #endif
@@ -520,7 +521,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
 	  (!(XEN_NULL_P(XEN_VECTOR_REF(cp->properties, 0)))))
 	{
 #if HAVE_RUBY
-	  fprintf(fd, "%sset_%s(%s, sfile, %d)\n", 
+	  fprintf(fd, "%sset_%s([%s], sfile, %d)\n", 
 		  white_space, 
 		  TO_PROC_NAME(S_channel_properties), 
 		  XEN_AS_STRING(XEN_VECTOR_REF(cp->properties, 0)),
@@ -573,13 +574,13 @@ static char *save_state_or_error (snd_state *ss, char *save_state_name)
       save_macro_state(save_fd);                              /* current unsaved keyboard macros (snd-chn.c) */
       save_envelope_editor_state(save_fd);                    /* current envelope editor window state */
       save_regions(ss, save_fd);                              /* regions */
-      if (transform_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", S_transform_dialog);
-      if (enved_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", S_enved_dialog);
-      if (color_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", S_color_dialog);
-      if (orientation_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", S_orientation_dialog);
-      if (file_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", S_file_dialog); /* View: Files dialog, not Open: File */
-      if (region_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", S_region_dialog);
-      if (record_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", S_recorder_dialog);
+      if (transform_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_transform_dialog));
+      if (enved_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_enved_dialog));
+      if (color_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_color_dialog));
+      if (orientation_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_orientation_dialog));
+      if (file_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_file_dialog)); /* View: Files dialog, not Open: File */
+      if (region_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_region_dialog));
+      if (record_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_recorder_dialog));
       /* the problem here (with saving hooks) is that it is not straightforward to save the function source
        *   (with the current print-set! source option, or with an earlier procedure->string function using
        *   procedure_environment etc); many types print in this case in ways that are not readable.

@@ -1,4 +1,4 @@
-;;; various dsp procedures (leaving aside the more CLM-specific examples in examp.scm etc)
+;;; a DSP-related grabbag
 
 (use-modules (ice-9 optargs))
 (use-modules (ice-9 format))

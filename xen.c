@@ -482,7 +482,6 @@ static char *lstbuf = NULL;
 static char *xen_rb_list_to_s(XEN lst)
 {
   int i, len;
-  XEN val;
   if (lstbuf == NULL) 
     lstbuf = (char *)calloc(512, sizeof(char));
   else lstbuf[0] = '\0';

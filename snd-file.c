@@ -239,7 +239,9 @@ file_info *make_file_info(char *fullname, snd_state *ss)
       if (type == MUS_RAW)
 	{
 	  XEN res = XEN_FALSE;
+#if HAVE_GUILE
 	  XEN procs; XEN arg1;
+#endif
 	  int len, srate, chans, data_format;
 	  off_t data_location, bytes;
 

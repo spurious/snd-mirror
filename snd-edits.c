@@ -8986,6 +8986,7 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
   return(val);
 }
 
+#if HAVE_GUILE
 static XEN g_set_sample_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   if (XEN_NOT_BOUND_P(arg2))
@@ -9007,6 +9008,7 @@ static XEN g_set_sample_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
 	}
     }
 }
+#endif
 
 static XEN g_set_samples(XEN samp_0, XEN samps, XEN vect, XEN snd_n, XEN chn_n, XEN truncate, XEN edname, XEN infile_chan, XEN edpos)
 {
@@ -9166,6 +9168,7 @@ history position to read (defaults to current position)."
   return(samples2vct_1(samp_0, samps, snd_n, chn_n, XEN_FALSE, edpos, S_samples));
 }
 
+#if HAVE_GUILE
 static XEN g_set_samples_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8, XEN arg9)
 {
   /* (set! (samples start samps [snd chn trunc edname infilechan edpos]) vect) */
@@ -9204,6 +9207,7 @@ static XEN g_set_samples_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN ar
 	}
     }
 }
+#endif
 
 static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN vect, XEN snd_n, XEN chn_n, XEN edpos)
 {

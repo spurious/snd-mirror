@@ -91,7 +91,7 @@ if Normalize_by_channel != 1 then snd_display sprintf("\n# Normalize_by_channel 
 if Normalize_by_sound != 2 then snd_display sprintf("\n# Normalize_by_sound => %d", Normalize_by_sound) end
 if Normalize_globally != 3 then snd_display sprintf("\n# Normalize_globally => %d", Normalize_globally) end
 if X_axis_in_samples != 1 then snd_display sprintf("\n# X_axis_in_samples => %d", X_axis_in_samples) end
-if X_axis_in_beats != 4 then snd_display sprintf("\n# X_axis_in_beats => %d", X_axis_in_beats) end
+if X_axis_in_beats != 3 then snd_display sprintf("\n# X_axis_in_beats => %d", X_axis_in_beats) end
 if X_axis_in_seconds != 0 then snd_display sprintf("\n# X_axis_in_seconds => %d", X_axis_in_seconds) end
 if X_axis_as_percentage != 2 then snd_display sprintf("\n# X_axis_as_percentage => %d", X_axis_as_percentage) end
 if Enved_add_point != 0 then snd_display sprintf("\n# Enved_add_point => %d", Enved_add_point) end
@@ -108,12 +108,12 @@ if Mus_aifc != 1 then snd_display sprintf("\n# Mus_aifc => %d", Mus_aifc) end
 if Mus_riff != 2 then snd_display sprintf("\n# Mus_riff => %d", Mus_riff) end
 if Mus_nist != 4 then snd_display sprintf("\n# Mus_nist => %d", Mus_nist) end
 if Mus_raw != 10 then snd_display sprintf("\n# Mus_raw => %d", Mus_raw) end
-if Mus_ircam != 14 then snd_display sprintf("\n# Mus_ircam => %d", Mus_ircam) end
-if Mus_aiff != 54 then snd_display sprintf("\n# Mus_aiff => %d", Mus_aiff) end
+if Mus_ircam != 13 then snd_display sprintf("\n# Mus_ircam => %d", Mus_ircam) end
+if Mus_aiff != 48 then snd_display sprintf("\n# Mus_aiff => %d", Mus_aiff) end
 if Mus_bicsf != 3 then snd_display sprintf("\n# Mus_bicsf => %d", Mus_bicsf) end
 if Mus_voc != 8 then snd_display sprintf("\n# Mus_voc => %d", Mus_voc) end
 if Mus_svx != 7 then snd_display sprintf("\n# Mus_svx => %d", Mus_svx) end
-if Mus_soundfont != 29 then snd_display sprintf("\n# Mus_soundfont => %d", Mus_soundfont) end
+if Mus_soundfont != 24 then snd_display sprintf("\n# Mus_soundfont => %d", Mus_soundfont) end
 if Mus_bshort != 1 then snd_display sprintf("\n# Mus_bshort => %d", Mus_bshort) end
 if Mus_lshort != 10 then snd_display sprintf("\n# Mus_lshort => %d", Mus_lshort) end
 if Mus_mulaw != 2 then snd_display sprintf("\n# Mus_mulaw => %d", Mus_mulaw) end
@@ -132,10 +132,10 @@ if Mus_bdouble != 9 then snd_display sprintf("\n# Mus_bdouble => %d", Mus_bdoubl
 if Mus_ldouble != 13 then snd_display sprintf("\n# Mus_ldouble => %d", Mus_ldouble) end
 if Mus_ubshort != 14 then snd_display sprintf("\n# Mus_ubshort => %d", Mus_ubshort) end
 if Mus_ulshort != 15 then snd_display sprintf("\n# Mus_ulshort => %d", Mus_ulshort) end
-if Mus_bfloat_unscaled != 20 then snd_display sprintf("\n# Mus_bfloat_unscaled => %d", Mus_bfloat_unscaled) end
-if Mus_lfloat_unscaled != 21 then snd_display sprintf("\n# Mus_lfloat_unscaled => %d", Mus_lfloat_unscaled) end
-if Mus_bdouble_unscaled != 22 then snd_display sprintf("\n# Mus_bdouble_unscaled => %d", Mus_bdouble_unscaled) end
-if Mus_ldouble_unscaled != 23 then snd_display sprintf("\n# Mus_ldouble_unscaled => %d", Mus_ldouble_unscaled) end
+if Mus_bfloat_unscaled != 19 then snd_display sprintf("\n# Mus_bfloat_unscaled => %d", Mus_bfloat_unscaled) end
+if Mus_lfloat_unscaled != 20 then snd_display sprintf("\n# Mus_lfloat_unscaled => %d", Mus_lfloat_unscaled) end
+if Mus_bdouble_unscaled != 21 then snd_display sprintf("\n# Mus_bdouble_unscaled => %d", Mus_bdouble_unscaled) end
+if Mus_ldouble_unscaled != 22 then snd_display sprintf("\n# Mus_ldouble_unscaled => %d", Mus_ldouble_unscaled) end
 if Mus_audio_default != 0 then snd_display sprintf("\n# Mus_audio_default => %d", Mus_audio_default) end
 if Mus_audio_duplex_default != 1 then snd_display sprintf("\n# Mus_audio_duplex_default => %d", Mus_audio_duplex_default) end
 if Mus_audio_line_out != 4 then snd_display sprintf("\n# Mus_audio_line_out => %d", Mus_audio_line_out) end
@@ -385,7 +385,7 @@ test_headers("inrs-16.snd", 1, 8000, 2.46399998664856, "INRS", "little endian sh
 test_headers("kirk.wve", 1, 8000, 1.40799999237061, "PSION", "alaw (8 bits)")
 test_headers("loop.aiff", 1, 44100, 0.0367120169103146, "AIFC", "big endian short (16 bits)")
 test_headers("m.asf", 1, 8000, 0.0, "asf", "unsupported")
-test_headers("mary-sun4.sig", 1, 8000, 5.95137500762939, "Comdisco SPW signal", "big endian double (64 bits)")
+# test_headers("mary-sun4.sig", 1, 8000, 5.95137500762939, "Comdisco SPW signal", "big endian double (64 bits)")
 test_headers("mocksong.wav", 1, 11025, 7.86956930160522, "RIFF", "little endian short (16 bits)")
 test_headers("mono24.wav", 1, 22050, 1.98997735977173, "RIFF", "little endian int (24 bits)")
 test_headers("msadpcm.wav", 1, 11025, 4.43501138687134, "RIFF", "unsupported")
@@ -514,6 +514,7 @@ test_headers("zulu_a4.w11", 1, 33000, 1.21987879276276, "TX-16W", "unsupported")
 
 # ---------------------------------------- test 3 ----------------------------------------
 
+snd_display "test 3"
 $oboe = open_sound "oboe.snd"
 $td = temp_dir     
 if (sample(1000) - 0.0328).abs > 0.001 then snd_print sprintf("# sample: %s\n", sample(1000)); end
@@ -1004,6 +1005,7 @@ close_sound $oboe
 
 # ---------------------------------------- test 6 ----------------------------------------
 
+snd_display "test 6"
 v0 = make_vct 10
 v1 = make_vct 10
 if v0 == 10 then snd_display "v0 is 10?!?" end
@@ -1113,12 +1115,10 @@ if fneq(v1[1], 2.0) then snd_display sprintf("\n# (v1 1) = %s?", v1[1]) end
 
 
 # from test 9
+snd_display "test 9"
 load "/home/bil/cl/bird.rb"
 make_birds
 close_sound(find_sound("test.snd"))
-
-
-
 
 def display_energy(snd, chn)
   ls = left_sample
@@ -1136,12 +1136,17 @@ def display_energy(snd, chn)
   end
 
 oboe = open_sound "oboe.snd"
+set_sound_properties([1234], oboe)
 save_state "s61.rb"
 close_sound oboe
 load "s61.rb"
 oboe = find_sound "oboe.snd"
 if (oboe == false) then snd_print "oops"
-else close_sound oboe
+else 
+  if ((sound_properties(oboe) == nil) || (sound_properties(oboe)[0] != 1234)) 
+    then snd_print "prop bad"
+  end
+  close_sound oboe
 end
 
 # these taken from Michael Scholz's examples
@@ -1180,7 +1185,7 @@ end
 
 
 # from test 25
-
+snd_display "test 25"
 $snd_widgets = main_widgets()
 $shell = $snd_widgets[1]
 $dpy = RXtDisplay($shell)
@@ -1305,7 +1310,6 @@ end
 if RXEventMaskOfScreen($scr) != Rroot_input_mask($scr) 
   then snd_display sprintf("\n# XEventMaskOfScreen: %s %s", RXEventMaskOfScreen($scr), Rroot_input_mask($scr)) 
 end
-
 
 procs0_len = 367
 procs0 = [Proc.new {|| add_mark()}, Proc.new {|| amp_control()}, Proc.new {|| ask_before_overwrite()}, Proc.new {|| audio_input_device()}, Proc.new {|| audio_output_device()}, Proc.new {|| auto_resize()}, Proc.new {|| auto_update()}, Proc.new {|| auto_update_interval()}, Proc.new {|| axis_info()}, Proc.new {|| axis_label_font()}, Proc.new {|| axis_numbers_font()}, Proc.new {|| backward_graph()}, Proc.new {|| backward_mark()}, Proc.new {|| backward_mix()}, Proc.new {|| basic_color()}, Proc.new {|| beats_per_minute()}, Proc.new {|| beats_per_minute()}, Proc.new {|| bold_button_font()}, Proc.new {|| bold_peaks_font()}, Proc.new {|| bomb()}, Proc.new {|| button_font()}, Proc.new {|| c_g?()}, Proc.new {|| channel2vct()}, Proc.new {|| channel_amp_envs()}, Proc.new {|| channel_properties()}, Proc.new {|| channel_style()}, Proc.new {|| channel_widgets()}, Proc.new {|| channels()}, Proc.new {|| chans()}, Proc.new {|| clear_listener()}, Proc.new {|| color_cutoff()}, Proc.new {|| color_inverted()}, Proc.new {|| color_scale()}, Proc.new {|| colormap()}, Proc.new {|| comment()}, Proc.new {|| contrast_control()}, Proc.new {|| contrast_control_amp()}, Proc.new {|| contrast_control?()}, Proc.new {|| current_font()}, Proc.new {|| cursor()}, Proc.new {|| cursor_color()}, Proc.new {|| cursor_follows_play()}, Proc.new {|| cursor_position()}, Proc.new {|| cursor_size()}, Proc.new {|| cursor_style()}, Proc.new {|| dac_combines_channels()}, Proc.new {|| dac_size()}, Proc.new {|| data_clipped()}, Proc.new {|| data_color()}, Proc.new {|| data_format()}, Proc.new {|| data_location()}, Proc.new {|| default_output_chans()}, Proc.new {|| default_output_format()}, Proc.new {|| default_output_srate()}, Proc.new {|| default_output_type()}, Proc.new {|| delete_mark()}, Proc.new {|| delete_marks()}, Proc.new {|| delete_selection()}, Proc.new {|| dialog_widgets()}, Proc.new {|| display_edits()}, Proc.new {|| dot_size()}, Proc.new {|| edit_fragment()}, Proc.new {|| edit_position()}, Proc.new {|| edit_tree()}, Proc.new {|| edits()}, Proc.new {|| emacs_style_save_as()}, Proc.new {|| enved_active_env()}, Proc.new {|| enved_base()}, Proc.new {|| enved_clip?()}, Proc.new {|| enved_exp?()}, Proc.new {|| enved_filter()}, Proc.new {|| enved_filter_order()}, Proc.new {|| enved_in_dB()}, Proc.new {|| enved_power()}, Proc.new {|| enved_selected_env()}, Proc.new {|| enved_target()}, Proc.new {|| enved_wave?()}, Proc.new {|| enved_waveform_color()}, Proc.new {|| eps_bottom_margin()}, Proc.new {|| eps_file()}, Proc.new {|| eps_left_margin()}, Proc.new {|| eps_size()}, Proc.new {|| equalize_panes()}, Proc.new {|| expand_control()}, Proc.new {|| expand_control_hop()}, Proc.new {|| expand_control_length()}, Proc.new {|| expand_control_ramp()}, Proc.new {|| expand_control?()}, Proc.new {|| fft_log_frequency()}, Proc.new {|| fft_log_magnitude()}, Proc.new {|| fft_window()}, Proc.new {|| fft_window_beta()}, Proc.new {|| file_name()}, Proc.new {|| filter_control_coeffs()}, Proc.new {|| filter_control_env()}, Proc.new {|| filter_control_in_dB()}, Proc.new {|| filter_control_order()}, Proc.new {|| filter_control?()}, Proc.new {|| filter_env_in_hz()}, Proc.new {|| filter_waveform_color()}, Proc.new {|| find_mix()}, Proc.new {|| finish_progress_report()}, Proc.new {|| foreground_color()}, Proc.new {|| forget_region()}, Proc.new {|| forward_graph()}, Proc.new {|| forward_mark()}, Proc.new {|| forward_mix()}, Proc.new {|| frames()}, Proc.new {|| graph2ps()}, Proc.new {|| graph_color()}, Proc.new {|| graph_cursor()}, Proc.new {|| graph_style()}, Proc.new {|| graphs_horizontal()}, Proc.new {|| header_type()}, Proc.new {|| help_text_font()}, Proc.new {|| highlight_color()}, Proc.new {|| just_sounds()}, Proc.new {|| ladspa_dir()}, Proc.new {|| left_sample()}, Proc.new {|| lisp_graph?()}, Proc.new {|| listener_color()}, Proc.new {|| listener_font()}, Proc.new {|| listener_prompt()}, Proc.new {|| listener_selection()}, Proc.new {|| listener_text_color()}, Proc.new {|| little_endian?()}, Proc.new {|| locsig_type()}, Proc.new {|| main_widgets()}, Proc.new {|| make_all_pass()}, Proc.new {|| make_asymmetric_fm()}, Proc.new {|| make_buffer()}, Proc.new {|| make_comb()}, Proc.new {|| make_convolve()}, Proc.new {|| make_delay()}, Proc.new {|| make_env()}, Proc.new {|| make_filter()}, Proc.new {|| make_fir_filter()}, Proc.new {|| make_formant()}, Proc.new {|| make_frame()}, Proc.new {|| make_granulate()}, Proc.new {|| make_graph_data()}, Proc.new {|| make_iir_filter()}, Proc.new {|| make_locsig()}, Proc.new {|| make_mixer()}, Proc.new {|| make_notch()}, Proc.new {|| make_one_pole()}, Proc.new {|| make_one_zero()}, Proc.new {|| make_oscil()}, Proc.new {|| make_phase_vocoder()}, Proc.new {|| make_ppolar()}, Proc.new {|| make_pulse_train()}, Proc.new {|| make_rand()}, Proc.new {|| make_rand_interp()}, Proc.new {|| make_readin()}, Proc.new {|| make_region_sample_reader()}, Proc.new {|| make_sample_reader()}, Proc.new {|| make_sawtooth_wave()}, Proc.new {|| make_sine_summation()}, Proc.new {|| make_square_wave()}, Proc.new {|| make_src()}, Proc.new {|| make_sum_of_cosines()}, Proc.new {|| make_table_lookup()}, Proc.new {|| make_triangle_wave()}, Proc.new {|| make_two_pole()}, Proc.new {|| make_two_zero()}, Proc.new {|| make_wave_train()}, Proc.new {|| make_waveshape()}, Proc.new {|| make_zpolar()}, Proc.new {|| mark_color()}, Proc.new {|| mark_home()}, Proc.new {|| mark_name()}, Proc.new {|| mark_sample()}, Proc.new {|| mark_sync()}, Proc.new {|| mark_sync_max()}, Proc.new {|| marks()}, Proc.new {|| max_regions()}, Proc.new {|| max_transform_peaks()}, Proc.new {|| maxamp()}, Proc.new {|| min_dB()}, Proc.new {|| minibuffer_history_length()}, Proc.new {|| mix_amp()}, Proc.new {|| mix_amp_env()}, Proc.new {|| mix_anchor()}, Proc.new {|| mix_chans()}, Proc.new {|| mix_color()}, Proc.new {|| mix_frames()}, Proc.new {|| mix_home()}, Proc.new {|| mix_locked()}, Proc.new {|| mix_name()}, Proc.new {|| mix_panel()}, Proc.new {|| mix_position()}, Proc.new {|| mix_region()}, Proc.new {|| mix_selection()}, Proc.new {|| mix_speed()}, Proc.new {|| mix_tag_height()}, Proc.new {|| mix_tag_width()}, Proc.new {|| mix_tag_y()}, Proc.new {|| mix_track()}, Proc.new {|| mix_waveform_height()}, Proc.new {|| mix?()}, Proc.new {|| mixes()}, Proc.new {|| mus_array_print_length()}, Proc.new {|| mus_file_buffer_size()}, Proc.new {|| mus_rand_seed()}, Proc.new {|| mus_sound_prune()}, Proc.new {|| mus_srate()}, Proc.new {|| optimization()}, Proc.new {|| peak_env_info()}, Proc.new {|| peaks_font()}, Proc.new {|| position_color()}, Proc.new {|| previous_files_sort()}, Proc.new {|| previous_files_sort_procedure()}, Proc.new {|| print_length()}, Proc.new {|| pushed_button_color()}, Proc.new {|| read_only()}, Proc.new {|| recorder_autoload()}, Proc.new {|| recorder_buffer_size()}, Proc.new {|| recorder_file()}, Proc.new {|| recorder_gain()}, Proc.new {|| recorder_in_device()}, Proc.new {|| recorder_in_format()}, Proc.new {|| recorder_max_duration()}, Proc.new {|| recorder_out_chans()}, Proc.new {|| recorder_out_format()}, Proc.new {|| recorder_srate()}, Proc.new {|| recorder_trigger()}, Proc.new {|| redo_edit()}, Proc.new {|| region_chans()}, Proc.new {|| region_frames()}, Proc.new {|| region_graph_style()}, Proc.new {|| region_maxamp()}, Proc.new {|| region_sample()}, Proc.new {|| region_samples2vct()}, Proc.new {|| region_srate()}, Proc.new {|| regions()}, Proc.new {|| reset_controls()}, Proc.new {|| reset_listener_cursor()}, Proc.new {|| restore_controls()}, Proc.new {|| reverb_control_decay()}, Proc.new {|| reverb_control_feedback()}, Proc.new {|| reverb_control_length()}, Proc.new {|| reverb_control_lowpass()}, Proc.new {|| reverb_control_scale()}, Proc.new {|| reverb_control?()}, Proc.new {|| reverse_channel()}, Proc.new {|| reverse_selection()}, Proc.new {|| reverse_sound()}, Proc.new {|| revert_sound()}, Proc.new {|| right_sample()}, Proc.new {|| sample()}, Proc.new {|| samples()}, Proc.new {|| samples2sound_data()}, Proc.new {|| samples2vct()}, Proc.new {|| sash_color()}, Proc.new {|| save_controls()}, Proc.new {|| save_dir()}, Proc.new {|| save_envelopes()}, Proc.new {|| save_macros()}, Proc.new {|| save_marks()}, Proc.new {|| save_state_file()}, Proc.new {|| scale_selection_to()}, Proc.new {|| scale_to()}, Proc.new {|| search_procedure()}, Proc.new {|| select_all()}, Proc.new {|| select_channel()}, Proc.new {|| select_sound()}, Proc.new {|| selected_channel()}, Proc.new {|| selected_data_color()}, Proc.new {|| selected_graph_color()}, Proc.new {|| selected_mix()}, Proc.new {|| selected_mix_color()}, Proc.new {|| selected_sound()}, Proc.new {|| selection_chans()}, Proc.new {|| selection_color()}, Proc.new {|| selection_creates_region()}, Proc.new {|| selection_frames()}, Proc.new {|| selection_maxamp()}, Proc.new {|| selection_member?()}, Proc.new {|| selection_position()}, Proc.new {|| selection_srate()}, Proc.new {|| selection?()}, Proc.new {|| short_file_name()}, Proc.new {|| show_axes()}, Proc.new {|| show_backtrace()}, Proc.new {|| show_controls()}, Proc.new {|| show_indices()}, Proc.new {|| show_listener()}, Proc.new {|| show_marks()}, Proc.new {|| show_mix_waveforms()}, Proc.new {|| show_selection_transform()}, Proc.new {|| show_transform_peaks()}, Proc.new {|| show_y_zero()}, Proc.new {|| sinc_width()}, Proc.new {|| smooth_channel()}, Proc.new {|| smooth_selection()}, Proc.new {|| smooth_sound()}, Proc.new {|| snd_gcs()}, Proc.new {|| snd_tempnam()}, Proc.new {|| snd_version()}, Proc.new {|| sound_files_in_directory()}, Proc.new {|| sound_loop_info()}, Proc.new {|| sound_properties()}, Proc.new {|| sound_widgets()}, Proc.new {|| sound?()}, Proc.new {|| soundfont_info()}, Proc.new {|| sounds()}, Proc.new {|| spectro_cutoff()}, Proc.new {|| spectro_hop()}, Proc.new {|| spectro_start()}, Proc.new {|| spectro_x_angle()}, Proc.new {|| spectro_x_scale()}, Proc.new {|| spectro_y_angle()}, Proc.new {|| spectro_y_scale()}, Proc.new {|| spectro_z_angle()}, Proc.new {|| spectro_z_scale()}, Proc.new {|| speed_control()}, Proc.new {|| speed_control_style()}, Proc.new {|| speed_control_tones()}, Proc.new {|| squelch_update()}, Proc.new {|| srate()}, Proc.new {|| start_progress_report()}, Proc.new {|| stop_playing()}, Proc.new {|| swap_channels()}, Proc.new {|| sync()}, Proc.new {|| temp_dir()}, Proc.new {|| text_focus_color()}, Proc.new {|| time_graph_type()}, Proc.new {|| time_graph?()}, Proc.new {|| tiny_font()}, Proc.new {|| transform_graph_type()}, Proc.new {|| transform_graph?()}, Proc.new {|| transform_normalization()}, Proc.new {|| transform_sample()}, Proc.new {|| transform_samples2vct()}, Proc.new {|| transform_samples_size()}, Proc.new {|| transform_size()}, Proc.new {|| transform_type()}, Proc.new {|| trap_segfault()}, Proc.new {|| undo()}, Proc.new {|| update_lisp_graph()}, Proc.new {|| update_time_graph()}, Proc.new {|| update_transform_graph()}, Proc.new {|| vct()}, Proc.new {|| verbose_cursor()}, Proc.new {|| vu_font()}, Proc.new {|| vu_font_size()}, Proc.new {|| vu_size()}, Proc.new {|| wavelet_type()}, Proc.new {|| wavo_hop()}, Proc.new {|| wavo_trace()}, Proc.new {|| window_height()}, Proc.new {|| window_width()}, Proc.new {|| window_x()}, Proc.new {|| window_y()}, Proc.new {|| with_gl()}, Proc.new {|| with_mix_tags()}, Proc.new {|| with_relative_panes()}, Proc.new {|| x_axis_style()}, Proc.new {|| x_bounds()}, Proc.new {|| x_position_slider()}, Proc.new {|| x_zoom_slider()}, Proc.new {|| y_bounds()}, Proc.new {|| y_position_slider()}, Proc.new {|| y_zoom_slider()}, Proc.new {|| zero_pad()}, Proc.new {|| zoom_color()}, Proc.new {|| zoom_focus_style()}]

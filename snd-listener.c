@@ -283,10 +283,12 @@ void command_return(widget_t w, snd_state *ss, int last_prompt)
   /* try to find complete form either enclosing current cursor, or just before it */
   GUI_TEXT_POSITION_TYPE new_eot = 0, cmd_eot = 0;
   char *str = NULL, *full_str = NULL, *prompt;
-  int i, j, slen;
+  int i, j;
   XEN form = XEN_UNDEFINED;
   GUI_TEXT_POSITION_TYPE end_of_text = 0, start_of_text = 0, last_position = 0, current_position = 0;
+#if (!HAVE_RUBY)
   int parens;
+#endif
   full_str = GUI_TEXT(w);
   current_position = GUI_TEXT_INSERTION_POSITION(w);
   start_of_text = current_position;
@@ -394,6 +396,7 @@ void command_return(widget_t w, snd_state *ss, int last_prompt)
 	}
       if (end_of_text > start_of_text)
 	{
+	  int slen;
 	  parens = 0;
 	  slen = end_of_text - start_of_text + 2;
 	  str = (char *)CALLOC(slen, sizeof(char));

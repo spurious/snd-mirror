@@ -668,6 +668,39 @@
   XEN_NARGIFY_1(gxm_IsMiscFunctionKey_w, gxm_IsMiscFunctionKey)
   XEN_NARGIFY_1(gxm_IsModifierKey_w, gxm_IsModifierKey)
 
+  XEN_NARGIFY_1(XEN_XButtonEvent_p_w, XEN_XButtonEvent_p)
+  XEN_NARGIFY_1(XEN_XCirculateEvent_p_w, XEN_XCirculateEvent_p)
+  XEN_NARGIFY_1(XEN_XCirculateRequestEvent_p_w, XEN_XCirculateRequestEvent_p)
+  XEN_NARGIFY_1(XEN_XClientMessageEvent_p_w, XEN_XClientMessageEvent_p)
+  XEN_NARGIFY_1(XEN_XColormapEvent_p_w, XEN_XColormapEvent_p)
+  XEN_NARGIFY_1(XEN_XConfigureEvent_p_w, XEN_XConfigureEvent_p)
+  XEN_NARGIFY_1(XEN_XConfigureRequestEvent_p_w, XEN_XConfigureRequestEvent_p)
+  XEN_NARGIFY_1(XEN_XCreateWindowEvent_p_w, XEN_XCreateWindowEvent_p)
+  XEN_NARGIFY_1(XEN_XCrossingEvent_p_w, XEN_XCrossingEvent_p)
+  XEN_NARGIFY_1(XEN_XDestroyWindowEvent_p_w, XEN_XDestroyWindowEvent_p)
+  XEN_NARGIFY_1(XEN_XErrorEvent_p_w, XEN_XErrorEvent_p)
+  XEN_NARGIFY_1(XEN_XExposeEvent_p_w, XEN_XExposeEvent_p)
+  XEN_NARGIFY_1(XEN_XFocusChangeEvent_p_w, XEN_XFocusChangeEvent_p)
+  XEN_NARGIFY_1(XEN_XGraphicsExposeEvent_p_w, XEN_XGraphicsExposeEvent_p)
+  XEN_NARGIFY_1(XEN_XGravityEvent_p_w, XEN_XGravityEvent_p)
+  XEN_NARGIFY_1(XEN_XKeyEvent_p_w, XEN_XKeyEvent_p)
+  XEN_NARGIFY_1(XEN_XKeymapEvent_p_w, XEN_XKeymapEvent_p)
+  XEN_NARGIFY_1(XEN_XMapEvent_p_w, XEN_XMapEvent_p)
+  XEN_NARGIFY_1(XEN_XMapRequestEvent_p_w, XEN_XMapRequestEvent_p)
+  XEN_NARGIFY_1(XEN_XMappingEvent_p_w, XEN_XMappingEvent_p)
+  XEN_NARGIFY_1(XEN_XMotionEvent_p_w, XEN_XMotionEvent_p)
+  XEN_NARGIFY_1(XEN_XNoExposeEvent_p_w, XEN_XNoExposeEvent_p)
+  XEN_NARGIFY_1(XEN_XPropertyEvent_p_w, XEN_XPropertyEvent_p)
+  XEN_NARGIFY_1(XEN_XReparentEvent_p_w, XEN_XReparentEvent_p)
+  XEN_NARGIFY_1(XEN_XResizeRequestEvent_p_w, XEN_XResizeRequestEvent_p)
+  XEN_NARGIFY_1(XEN_XSelectionClearEvent_p_w, XEN_XSelectionClearEvent_p)
+  XEN_NARGIFY_1(XEN_XSelectionEvent_p_w, XEN_XSelectionEvent_p)
+  XEN_NARGIFY_1(XEN_XSelectionRequestEvent_p_w, XEN_XSelectionRequestEvent_p)
+  XEN_NARGIFY_1(XEN_XSetWindowAttributes_p_w, XEN_XSetWindowAttributes_p)
+  XEN_NARGIFY_1(XEN_XUnmapEvent_p_w, XEN_XUnmapEvent_p)
+  XEN_NARGIFY_1(XEN_XVisibilityEvent_p_w, XEN_XVisibilityEvent_p)
+  XEN_NARGIFY_1(XEN_XIconSize_p_w, XEN_XIconSize_p)
+
 #if HAVE_MOTIF
   XEN_ARGIFY_4(gxm_XmCreateMessageBox_w, gxm_XmCreateMessageBox)
   XEN_ARGIFY_4(gxm_XmCreateMessageDialog_w, gxm_XmCreateMessageDialog)
@@ -775,6 +808,9 @@
   XEN_NARGIFY_2(gxm_XmScaleSetValue_w, gxm_XmScaleSetValue)
   XEN_NARGIFY_1(gxm_XmScaleGetValue_w, gxm_XmScaleGetValue)
   XEN_ARGIFY_4(gxm_XmCreateScale_w, gxm_XmCreateScale)
+#ifndef LESSTIF_VERSION
+  XEN_NARGIFY_5(gxm_XmClipboardBeginCopy_w, gxm_XmClipboardBeginCopy)
+#endif
   XEN_NARGIFY_6(gxm_XmClipboardStartCopy_w, gxm_XmClipboardStartCopy)
   XEN_NARGIFY_7(gxm_XmClipboardCopy_w, gxm_XmClipboardCopy)
   XEN_NARGIFY_3(gxm_XmClipboardEndCopy_w, gxm_XmClipboardEndCopy)
@@ -793,6 +829,9 @@
   XEN_NARGIFY_3(gxm_XmClipboardInquirePendingItems_w, gxm_XmClipboardInquirePendingItems)
   XEN_NARGIFY_3(gxm_XmClipboardRegisterFormat_w, gxm_XmClipboardRegisterFormat)
 #if MOTIF_2
+#if HAVE_XmToolTipGetLabel
+  XEN_NARGIFY_1(gxm_XmToolTipGetLabel_w, gxm_XmToolTipGetLabel)
+#endif
   XEN_NARGIFY_1(gxm_XmGetXmScreen_w, gxm_XmGetXmScreen)
 #endif
   XEN_ARGIFY_4(gxm_XmCreateScrollBar_w, gxm_XmCreateScrollBar)
@@ -1115,6 +1154,7 @@
   XEN_NARGIFY_1(gxm_XmIsManager_w, gxm_XmIsManager)
   XEN_NARGIFY_1(gxm_XmIsMenuShell_w, gxm_XmIsMenuShell)
   XEN_NARGIFY_1(gxm_XmListGetSelectedPos_w, gxm_XmListGetSelectedPos)
+  XEN_NARGIFY_1(gxm_XmWidgetGetDisplayRect_w, gxm_XmWidgetGetDisplayRect)
 
 #if (!XM_DISABLE_DEPRECATED)
   XEN_NARGIFY_1(gxm_XmStringLength_w, gxm_XmStringLength)
@@ -1904,6 +1944,39 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(IsMiscFunctionKey, gxm_IsMiscFunctionKey_w, 1, 0, 0, H_IsMiscFunctionKey);
   XM_DEFINE_PROCEDURE(IsModifierKey, gxm_IsModifierKey_w, 1, 0, 0, H_IsModifierKey);
 
+  XM_DEFINE_PROCEDURE(XButtonEvent?, XEN_XButtonEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XCirculateEvent?, XEN_XCirculateEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XCirculateRequestEvent?, XEN_XCirculateRequestEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XClientMessageEvent?, XEN_XClientMessageEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XColormapEvent?, XEN_XColormapEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XConfigureEvent?, XEN_XConfigureEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XConfigureRequestEvent?, XEN_XConfigureRequestEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XCreateWindowEvent?, XEN_XCreateWindowEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XCrossingEvent?, XEN_XCrossingEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XDestroyWindowEvent?, XEN_XDestroyWindowEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XErrorEvent?, XEN_XErrorEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XExposeEvent?, XEN_XExposeEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XFocusChangeEvent?, XEN_XFocusChangeEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XGraphicsExposeEvent?, XEN_XGraphicsExposeEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XGravityEvent?, XEN_XGravityEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XKeyEvent?, XEN_XKeyEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XKeymapEvent?, XEN_XKeymapEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XMapEvent?, XEN_XMapEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XMapRequestEvent?, XEN_XMapRequestEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XMappingEvent?, XEN_XMappingEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XMotionEvent?, XEN_XMotionEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XNoExposeEvent?, XEN_XNoExposeEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XPropertyEvent?, XEN_XPropertyEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XReparentEvent?, XEN_XReparentEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XResizeRequestEvent?, XEN_XResizeRequestEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XSelectionClearEvent?, XEN_XSelectionClearEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XSelectionEvent?, XEN_XSelectionEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XSelectionRequestEvent?, XEN_XSelectionRequestEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XSetWindowAttributes?, XEN_XSetWindowAttributes_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XUnmapEvent?, XEN_XUnmapEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XVisibilityEvent?, XEN_XVisibilityEvent_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XIconSize?, XEN_XIconSize_p_w, 1, 0, 0, NULL);
+
 #if HAVE_MOTIF
   XM_DEFINE_PROCEDURE(XmCreateMessageBox, gxm_XmCreateMessageBox_w, 3, 1, 0, H_XmCreateMessageBox);
   XM_DEFINE_PROCEDURE(XmCreateMessageDialog, gxm_XmCreateMessageDialog_w, 3, 1, 0, H_XmCreateMessageDialog);
@@ -1917,6 +1990,9 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmCreateArrowButtonGadget, gxm_XmCreateArrowButtonGadget_w, 3, 1, 0, H_XmCreateArrowButtonGadget);
   XM_DEFINE_PROCEDURE(XmCreateArrowButton, gxm_XmCreateArrowButton_w, 3, 1, 0, H_XmCreateArrowButton);
 #if MOTIF_2
+#if HAVE_XmToolTipGetLabel
+  XM_DEFINE_PROCEDURE(XmToolTipGetLabel, gxm_XmToolTipGetLabel_w, 1, 0, 0, H_XmToolTipGetLabel);
+#endif
   XM_DEFINE_PROCEDURE(XmCreateNotebook, gxm_XmCreateNotebook_w, 3, 1, 0, H_XmCreateNotebook);
   XM_DEFINE_PROCEDURE(XmNotebookGetPageInfo, gxm_XmNotebookGetPageInfo_w, 2, 0, 0, H_XmNotebookGetPageInfo);
 #if HAVE_XM_XP
@@ -2011,6 +2087,10 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmScaleSetValue, gxm_XmScaleSetValue_w, 2, 0, 0, H_XmScaleSetValue);
   XM_DEFINE_PROCEDURE(XmScaleGetValue, gxm_XmScaleGetValue_w, 1, 0, 0, H_XmScaleGetValue);
   XM_DEFINE_PROCEDURE(XmCreateScale, gxm_XmCreateScale_w, 3, 1, 0, H_XmCreateScale);
+#ifndef LESSTIF_VERSION
+  XM_DEFINE_PROCEDURE(XmClipboardBeginCopy, gxm_XmClipboardBeginCopy_w, 5, 0, 0, H_XmClipboardBeginCopy);
+#endif
+  XM_DEFINE_PROCEDURE(XmWidgetGetDisplayRect, gxm_XmWidgetGetDisplayRect_w, 1, 0, 0, H_XmWidgetGetDisplayRect);
   XM_DEFINE_PROCEDURE(XmClipboardStartCopy, gxm_XmClipboardStartCopy_w, 6, 0, 0, H_XmClipboardStartCopy);
   XM_DEFINE_PROCEDURE(XmClipboardCopy, gxm_XmClipboardCopy_w, 7, 0, 0, H_XmClipboardCopy);
   XM_DEFINE_PROCEDURE(XmClipboardEndCopy, gxm_XmClipboardEndCopy_w, 3, 0, 0, H_XmClipboardEndCopy);
@@ -2846,6 +2926,14 @@ static void define_procedures(void)
   XEN_NARGIFY_1(gxm_height_inc_w, gxm_height_inc)
   XEN_NARGIFY_1(gxm_width_inc_w, gxm_width_inc)
 
+  XEN_NARGIFY_2(gxm_set_data_w, gxm_set_data)
+  XEN_NARGIFY_2(gxm_set_set_w, gxm_set_set)
+  XEN_NARGIFY_2(gxm_set_click_count_w, gxm_set_click_count)
+  XEN_NARGIFY_2(gxm_set_length_w, gxm_set_length)
+  XEN_NARGIFY_1(gxm_ptr_w, gxm_ptr)
+  XEN_NARGIFY_2(gxm_set_ptr_w, gxm_set_ptr)
+  XEN_NARGIFY_2(gxm_set_reason_w, gxm_set_reason)
+
 #if HAVE_MOTIF
 #if MOTIF_2
   XEN_NARGIFY_1(gxm_page_number_w, gxm_page_number)
@@ -3098,7 +3186,7 @@ static void define_structs(void)
   XM_DEFINE_READER(blue_mult, gxm_blue_mult_w, 1, 0, 0);
   XM_DEFINE_READER(base_pixel, gxm_base_pixel_w, 1, 0, 0);
   XM_DEFINE_READER(killid, gxm_killid_w, 1, 0, 0);
-  XM_DEFINE_READER(data, gxm_data_w, 1, 0, 0);
+  XM_DEFINE_ACCESSOR(data, gxm_data_w, set_data, gxm_set_data_w, 1, 0, 2, 0);
 
   XM_DEFINE_READER(min_height, gxm_min_height_w, 1, 0, 0);
   XM_DEFINE_READER(max_height, gxm_max_height_w, 1, 0, 0);
@@ -3140,7 +3228,8 @@ static void define_structs(void)
   XM_DEFINE_READER(dragProtocolStyle, gxm_dragProtocolStyle_w, 1, 0, 0);
   XM_DEFINE_READER(direction, gxm_direction_w, 1, 0, 0);
 #endif
-  XM_DEFINE_READER(reason, gxm_reason_w, 1, 0, 0);
+  XM_DEFINE_ACCESSOR(reason, gxm_reason_w, set_reason, gxm_set_reason_w, 1, 0, 2, 0);
+  XM_DEFINE_ACCESSOR(ptr, gxm_ptr_w, set_ptr, gxm_set_ptr_w, 1, 0, 2, 0);
   XM_DEFINE_READER(timeStamp, gxm_timeStamp_w, 1, 0, 0);
   XM_DEFINE_ACCESSOR(operation, gxm_operation_w, set_operation, gxm_set_operation_w, 1, 0, 2, 0);
   XM_DEFINE_READER(operations, gxm_operations_w, 1, 0, 0);
@@ -3150,12 +3239,12 @@ static void define_structs(void)
   XM_DEFINE_READER(completionStatus, gxm_completionStatus_w, 1, 0, 0);
   XM_DEFINE_READER(dragContext, gxm_dragContext_w, 1, 0, 0);
   XM_DEFINE_READER(animate, gxm_animate_w, 1, 0, 0);
-  XM_DEFINE_READER(length, gxm_length_w, 1, 0, 0);
-  XM_DEFINE_READER(click_count, gxm_click_count_w, 1, 0, 0);
+  XM_DEFINE_ACCESSOR(length, gxm_length_w, set_length, gxm_set_length_w, 1, 0, 2, 0);
+  XM_DEFINE_ACCESSOR(click_count, gxm_click_count_w, set_click_count, gxm_set_click_count_w, 1, 0, 2, 0);
   XM_DEFINE_READER(widget, gxm_widget_w, 1, 0, 0);
   XM_DEFINE_READER(item_position, gxm_item_position_w, 1, 0, 0);
   XM_DEFINE_READER(callbackstruct, gxm_callbackstruct_w, 1, 0, 0);
-  XM_DEFINE_READER(set, gxm_set_w, 1, 0, 0);
+  XM_DEFINE_ACCESSOR(set, gxm_set_w, set_set, gxm_set_set_w, 1, 0, 2, 0);
   XM_DEFINE_READER(item, gxm_item_w, 1, 0, 0);
   XM_DEFINE_READER(item_length, gxm_item_length_w, 1, 0, 0);
   XM_DEFINE_READER(selected_items, gxm_selected_items_w, 1, 0, 0);

@@ -617,6 +617,7 @@ and if one is found, and the Snd documentation can be found, calls *html-reader*
     (list "mix-chans" "extsnd.html#sndmixchans" "snd-mix.c")
     (list "mix-click-hook" "extsnd.html#mixclickhook" "snd-chn.c")
     (list "mix-color" "extsnd.html#mixcolor" "snd-mix.c")
+    (list "mix-drag-hook" "extsnd.html#mixdraghook" "snd-mix.c")
     (list "mix-file-dialog" "extsnd.html#sndmixfiledialog" "snd-file.c")
     (list "mix-frames" "extsnd.html#sndmixframes" "snd-mix.c")
     (list "mix-home" "extsnd.html#sndmixhome" "snd-mix.c")
@@ -1265,4 +1266,3 @@ and if one is found, and the Snd documentation can be found, calls *html-reader*
     (list "zoom-focus-style" "extsnd.html#zoomfocusstyle" "snd-xen.c")
     (list "zync" "sndscm.html#zync" "snd-gtk.scm")
   ))
-

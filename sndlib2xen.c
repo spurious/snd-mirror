@@ -1333,7 +1333,7 @@ static XEN sound_data_fill(XEN obj, XEN val)
 {
   sound_data *sd;
   mus_sample_t filler;
-  int i, j, chans, len;
+  int i, j;
   filler = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(val));
   sd = (sound_data *)XEN_OBJECT_REF(obj);
   for (i = 0; i < sd->chans; i++)
@@ -1345,7 +1345,7 @@ static XEN sound_data_fill(XEN obj, XEN val)
 static XEN sound_data_dup(XEN obj)
 {
   sound_data *sd, *sdnew;
-  int i, j, chans, len;
+  int i, j;
   XEN result;
   sd = (sound_data *)XEN_OBJECT_REF(obj);
   result = make_sound_data(sd->chans, sd->length);

@@ -307,6 +307,7 @@ static char *print_off_t_array(off_t *arr, int len, int loc)
 
 /* ---------------- generic functions ---------------- */
 
+#ifndef S_setB
 #if HAVE_RUBY
   #define S_setB "set_"
 #else
@@ -315,6 +316,7 @@ static char *print_off_t_array(off_t *arr, int len, int loc)
   #else
     #define S_setB "set-"
   #endif
+#endif
 #endif
 
 int mus_free(mus_any *gen)

@@ -23,6 +23,7 @@
     if (!((XEN_INTEGER_P(Chn)) || (XEN_BOOLEAN_P(Chn)) || (XEN_NOT_BOUND_P(Chn)))) \
       XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset + 1, Chn, "an integer (0-based channel number) or boolean");
 
+#if HAVE_GUILE
 #define WITH_REVERSED_CHANNEL_ARGS(name_reversed, name) \
 static XEN name_reversed(XEN arg1, XEN arg2, XEN arg3) \
 { \
@@ -33,6 +34,9 @@ static XEN name_reversed(XEN arg1, XEN arg2, XEN arg3) \
       return(name(arg2, arg1, XEN_UNDEFINED)); \
     else return(name(arg3, arg1, arg2)); \
 }}
+#else
+#define WITH_REVERSED_CHANNEL_ARGS(name_reversed, name)
+#endif
 
 #define ASSERT_SAMPLE_TYPE(Origin, Beg, Offset) \
   XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(Beg), Beg, Offset, Origin, "a number or #f")

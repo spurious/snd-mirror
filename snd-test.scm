@@ -36,7 +36,7 @@
 ;;; TODO: doc ex of key-press-hook (cx cs=save as in xe-enved?), mix-amp-changed-hook, select-*-hook [click=>post info in box]
 ;;; TODO: does multi-chan mix try to delete temp file twice?
 ;;; TODO: xemacs style top list of sounds, current takes whole screen [make-top-row tmp18.scm, files-popup-buffer in examp.scm]
-;;; TODO: test ruby case of sound property save-state
+;;; TODO: ruby case of sound property -- gc gets setfault? save-state of any list(array) is probably broken (ruby not readable rep)
 ;;; TOOD: extend the mix-as-list syntax to list-of-ids (tracks) (are these all rationalized now?)
 ;;;       do we need make-track|mix-sample-reader? should they accept all the standard args?
 

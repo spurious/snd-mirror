@@ -1243,7 +1243,9 @@ XEN env_to_xen (env *e)
 void add_or_edit_symbol(char *name, env *val)
 {
   /* called from envelope editor -- pass new definition into scheme */
+#if (!HAVE_RUBY)
   XEN e;
+#endif
   char *buf, *tmpstr = NULL;
   int len;
   tmpstr = env_to_string(val);

@@ -144,7 +144,9 @@
 			(let ((epos (search " -->" dline)))
 			  (if (not epos) 
 			      (warn "<!-- INDEX but no --> for ~A" dline)
-			    (when (not no-bold)
+			    (when (or (not no-bold)
+				      (and with-scm
+					   (not (string= "clm.html" file))))
 			      (setf (aref generals g) (subseq dline (+ compos 11) epos))
 			      (incf g))))
 		      (loop while pos do
@@ -174,7 +176,7 @@
 	(setf n ctr)
 	(adjust-array tnames n))
 
-      (when (not no-bold)
+      (when (> g 0)
 	(if (< (length tnames) (+ g n)) (adjust-array tnames (+ g n)))
 	(dotimes (i g)
 	  (setf (aref tnames (+ i n))
@@ -279,14 +281,17 @@
 			 (gpos (search "&gt;" ind)))
 		    (if gpos (setf ind (concatenate 'string (subseq ind 0 gpos) ">" (subseq ind (+ gpos 4)))))
 		    (let ((loc (find ind all-locs :key #'car :test #'string-equal)))
-		      (if loc
-			  (progn
-			    (format sfil "    (list ~S ~S ~S)~%" ind url (cadr loc))
-			    (format rfil "    [~S, ~S, ~S],~%" (scm->rb ind) url (cadr loc)))
+		      (when (and ind
+			       (stringp ind)
+			       (> (length ind) 0))
+			(if loc
+			    (progn
+			      (format sfil "    (list ~S ~S ~S)~%" ind url (cadr loc))
+			      (format rfil "    [~S, ~S, ~S],~%" (scm->rb ind) url (cadr loc)))
 					;(format sfil "    (list ~S ~S ~S ~D ~S)~%" ind url (cadr loc) (caddr loc) (cadddr loc))
-			(progn
-			  (format sfil "    (list ~S ~S)~%" ind url)
-			  (format rfil "    [~S, ~S],~%" (scm->rb ind) url))))))
+			  (progn
+			    (format sfil "    (list ~S ~S)~%" ind url)
+			    (format rfil "    [~S, ~S],~%" (scm->rb ind) url)))))))
 	      (format sfil "  ))~%~%")
 	      (format rfil "  ]~%~%")))))
       (when make-help

@@ -2390,7 +2390,7 @@ static XEN g_set_comment(XEN snd_n, XEN val)
   return(sound_set(snd_n, val, SP_COMMENT, S_setB S_comment));
 }
 
-
+#if HAVE_GUILE
 #define WITH_REVERSED_BOOLEAN_ARGS(name_reversed, name) \
 static XEN name_reversed(XEN arg1, XEN arg2) \
 { \
@@ -2401,6 +2401,9 @@ static XEN name_reversed(XEN arg1, XEN arg2) \
       return(name(arg1, XEN_UNDEFINED)); \
     else return(name(arg2, arg1)); \
 }
+#else
+#define WITH_REVERSED_BOOLEAN_ARGS(name_reversed, name)
+#endif
 
 static XEN g_sync(XEN snd_n) 
 {
@@ -2575,6 +2578,7 @@ static XEN g_set_filter_control_order(XEN on, XEN snd_n)
   return(sound_set(snd_n, on, SP_FILTER_ORDER, S_setB S_filter_control_order));
 }
 
+#if HAVE_GUILE
 #define WITH_REVERSED_ARGS(name_reversed, name) \
 static XEN name_reversed(XEN arg1, XEN arg2) \
 { \
@@ -2582,6 +2586,9 @@ static XEN name_reversed(XEN arg1, XEN arg2) \
     return(name(arg1, XEN_UNDEFINED)); \
   else return(name(arg2, arg1)); \
 }
+#else
+#define WITH_REVERSED_ARGS(name_reversed, name)
+#endif
 
 WITH_REVERSED_ARGS(g_set_filter_control_order_reversed, g_set_filter_control_order)
 
