@@ -703,7 +703,7 @@ XEN mus_xen_to_object(mus_xen *gn)
 
 XEN mus_xen_to_object_with_vct(mus_xen *gn, XEN v)
 {
-  XEN new_dly;
+  XEN new_dly = XEN_FALSE;
   XEN_MAKE_OBJECT(new_dly, mus_xen_tag, gn, mark_mus_xen, free_mus_xen);
   gn->vcts[MUS_DATA_POSITION] = v;
   return(new_dly);

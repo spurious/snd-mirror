@@ -4,17 +4,13 @@
  * with much help from Douglas Young's "The X Window System, Programming and Applications with Xt" Prentice-Hall 1994.
  */
 
-/* TODO: tie in configuration scripts to possible use of sndlib.so
- * TODO: make background as separate thread option (for multi-processor machines)
- */
-
 #include "snd.h"
 
 #if HAVE_FPU_CONTROL_H
   #include <fpu_control.h>
 #endif
 
-static snd_state *ss;                      /* global state info, carried around via callData arg in callbacks */
+static snd_state *ss;
 
 static XEN mus_error_hook;
 
@@ -62,10 +58,6 @@ static void mus_print2snd(char *msg)
   #include <gsl/gsl_ieee_utils.h>
 #endif
 
-#if WITH_MCHECK
-  #include <mcheck.h>
-#endif
-
 #if SND_AS_WIDGET
   snd_state *snd_main(int argc, char **argv)
 #else
@@ -86,10 +78,6 @@ static void mus_print2snd(char *msg)
 
 #if HAVE_SYS_FPU_H
   union fpc_csr f; f.fc_word = get_fpc_csr(); f.fc_struct.flush = 1; set_fpc_csr(f.fc_word);
-#endif
-
-#if WITH_MCHECK
-  mcheck_pedantic(NULL);
 #endif
 
   /* if HAVE_GSL and the environment variable GSL_IEEE_MODE exists, use it */

@@ -1,8 +1,6 @@
 #include "snd.h"
 #include "vct.h"
 
-static snd_state *state;
-
 static gint timed_eval(gpointer in_code)
 {
   XEN_CALL_0((XEN)in_code, "timed callback func");
@@ -148,14 +146,16 @@ void color_unselected_graphs(COLOR_TYPE color)
   int i, j;
   chan_info *cp;
   snd_info *sp;
-  for (i = 0; i < state->max_sounds; i++)
+  snd_state *ss;
+  ss = get_global_state();
+  for (i = 0; i < ss->max_sounds; i++)
     {
-      sp = (snd_info *)state->sounds[i];
+      sp = (snd_info *)(ss->sounds[i]);
       if (sp)
 	for (j = 0; j < sp->allocated_chans; j++)
 	  {
 	    cp = sp->chans[j];
-	    if ((cp) && ((i != state->selected_sound) || (j != sp->selected_channel)))
+	    if ((cp) && ((i != ss->selected_sound) || (j != sp->selected_channel)))
 	      set_background_and_redraw(channel_graph(cp), color);
 	  }
     }
@@ -166,9 +166,11 @@ void color_chan_components(COLOR_TYPE color, int which_component)
   int i, j;
   chan_info *cp;
   snd_info *sp;
-  for (i = 0; i < state->max_sounds; i++)
+  snd_state *ss;
+  ss = get_global_state();
+  for (i = 0; i < ss->max_sounds; i++)
     {
-      sp = (snd_info *)state->sounds[i];
+      sp = (snd_info *)(ss->sounds[i]);
       if (sp)
 	for (j = 0; j < sp->allocated_chans; j++)
 	  {
@@ -193,18 +195,20 @@ void color_chan_components(COLOR_TYPE color, int which_component)
 void recolor_button(GUI_WIDGET w, GUI_POINTER ptr)
 {
   if ((GTK_IS_WIDGET(w)) && (GTK_IS_BUTTON(w)))
-    set_pushed_button_colors(w, state);
+    set_pushed_button_colors(w, get_global_state());
 }
 
 static XEN g_graph_cursor(void)
 {
   #define H_graph_cursor "(" S_graph_cursor ") -> current graph cursor shape"
-  return(C_TO_SMALL_XEN_INT(in_graph_cursor(state)));
+  return(C_TO_SMALL_XEN_INT(in_graph_cursor(get_global_state())));
 }
 
 static XEN g_set_graph_cursor(XEN curs)
 {
   int val;
+  snd_state *ss;
+  ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_NUMBER_P(curs), curs, XEN_ONLY_ARG, "set-" S_graph_cursor, "a number");
   /* X11/cursorfont.h has various even-numbered glyphs, but the odd numbers are ok, and XC_num_glyphs is a lie */
   /*   if you use too high a number here, Goddamn X dies */
@@ -212,8 +216,8 @@ static XEN g_set_graph_cursor(XEN curs)
   val = XEN_TO_C_INT(curs);
   if ((val >= 0) && (val <= GDK_XTERM))
     {
-      state->Graph_Cursor = val;
-      (state->sgx)->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(state));
+      ss->Graph_Cursor = val;
+      (ss->sgx)->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
     }
   else mus_misc_error("set-" S_graph_cursor, "invalid cursor", curs);
   return(curs);
@@ -235,9 +239,8 @@ XEN_NARGIFY_1(g_set_graph_cursor_w, g_set_graph_cursor)
 #define g_set_graph_cursor_w g_set_graph_cursor
 #endif
 
-void g_initialize_xgh(snd_state *ss)
+void g_initialize_xgh(void)
 {
-  state = ss;
   snd_color_tag = XEN_MAKE_OBJECT_TYPE("SndCol" STR_OR, sizeof(snd_color));
 
 #if HAVE_GUILE

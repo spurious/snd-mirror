@@ -5,6 +5,7 @@
  *        (not an edit history addition to the mixed sound), but would each be
  *        a separate edit of the underlying sound? (Then we'd need a stack of
  *        mix envs so we could back up).
+ * TODO: add a sync button to affect all of track?  Also need a way to display all related mixes at once (panning etc)
  */
 
 static Widget mix_panel = NULL;

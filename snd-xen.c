@@ -190,7 +190,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 		  if (show_backtrace(ss))
 		    {
 #if HAVE_SCM_C_DEFINE
-		      stack = scm_fluid_ref(VARIABLE_REF(scm_the_last_stack_fluid_var));
+		      stack = scm_fluid_ref(XEN_VARIABLE_REF(scm_the_last_stack_fluid_var));
 #else
 		      stack = scm_fluid_ref(XEN_CDR(scm_the_last_stack_fluid));
 #endif
@@ -288,9 +288,6 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
   /* if string returned, needs to be freed */
   XEN arity;
   int rargs, oargs, restargs;
-#if TIMING
-  return(NULL);
-#endif
   if (!(XEN_PROCEDURE_P(proc)))
     {
       if (XEN_NOT_FALSE_P(proc)) /* #f as explicit arg to clear */
@@ -2701,8 +2698,8 @@ XEN g_c_run_progn_hook (XEN hook, XEN args, const char *caller)
   return(xen_return_first(result, args));
 #else
   if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
-    return(XEN_APPLY(XEN_VARIABLE_REF(hook), args, caller));
-  else return(XEN_CALL_0(XEN_VARIABLE_REF(hook), caller));
+    return(XEN_APPLY(hook, args, caller));
+  else return(XEN_CALL_0(hook, caller));
 #endif
 }
 
@@ -2723,8 +2720,8 @@ XEN g_c_run_or_hook (XEN hook, XEN args, const char *caller)
   return(xen_return_first(result, args));
 #else
   if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
-    return(XEN_APPLY(XEN_VARIABLE_REF(hook), args, caller));
-  else return(XEN_CALL_0(XEN_VARIABLE_REF(hook), caller));
+    return(XEN_APPLY(hook, args, caller));
+  else return(XEN_CALL_0(hook, caller));
 #endif
 }
 
@@ -2744,8 +2741,8 @@ XEN g_c_run_and_hook (XEN hook, XEN args, const char *caller)
   return(xen_return_first(result, args));
 #else
   if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
-    return(XEN_APPLY(XEN_VARIABLE_REF(hook), args, caller));
-  else return(XEN_CALL_0(XEN_VARIABLE_REF(hook), caller));
+    return(XEN_APPLY(hook, args, caller));
+  else return(XEN_CALL_0(hook, caller));
 #endif
 }
 
@@ -2785,7 +2782,7 @@ char *output_comment(file_info *hdr)
 			      C_TO_XEN_STRING(com),
 			      S_output_comment_hook);
 #else
-	  result = XEN_CALL_1(XEN_VARIABLE_REF(procs),
+	  result = XEN_CALL_1(procs,
 			      C_TO_XEN_STRING(com),
 			      S_output_comment_hook);
 #endif
@@ -2818,7 +2815,7 @@ char *output_comment(file_info *hdr)
 
 #if HAVE_GUILE && HAVE_DLFCN_H
 #include <dlfcn.h>
-/* these are included because libtool's dlopen is incredibly stupid, as is libtool in general */
+/* these are included because libtool's dlopen is incredibly stupid */
 
 static XEN g_dlopen(XEN name)
 {
@@ -3303,9 +3300,6 @@ void g_initialize_gh(snd_state *ss)
 
   XEN_DEFINE_PROCEDURE("snd-global-state", g_global_state, 0, 0, 0, "internal testing function");
 
-#if TIMING
-  g_init_timing();
-#endif
   mus_sndlib2xen_initialize();
 #if HAVE_EXTENSION_LANGUAGE
   mus_midi_init();
@@ -3677,9 +3671,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   g_init_dac();
   init_vct();
   mus_xen_init();
-  g_initialize_xgh(state);
-  g_initialize_xgfile();
-  g_init_gxutils();
   g_init_mix();
   g_init_chn();
   g_init_kbd();
@@ -3697,10 +3688,13 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   g_init_data();
   g_init_env();
   g_init_recorder();
-  g_init_gxenv();
-  g_init_gxmenu();
   g_init_find();
 #if (!USE_NO_GUI)
+  g_init_gxutils();
+  g_initialize_xgh();
+  g_initialize_xgfile();
+  g_init_gxenv();
+  g_init_gxmenu();
   g_init_axis();
   g_init_gxmain();
   g_init_gxlistener();

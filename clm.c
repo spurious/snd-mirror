@@ -2626,7 +2626,7 @@ Float mus_fir_filter (mus_any *ptr, Float input)
   flt *gen = (flt *)ptr;
   xout = 0.0;
   gen->state[0] = input;
-  for (j = gen->order-1; j >= 1; j--) 
+  for (j = gen->order - 1; j >= 1; j--) 
     {
       xout += gen->state[j] * gen->x[j];
       gen->state[j] = gen->state[j - 1];
@@ -2639,7 +2639,7 @@ Float mus_iir_filter (mus_any *ptr, Float input)
   int j;
   flt *gen = (flt *)ptr;
   gen->state[0] = input;
-  for (j = gen->order-1; j >= 1; j--) 
+  for (j = gen->order - 1; j >= 1; j--) 
     {
       gen->state[0] -= gen->y[j] * gen->state[j];
       gen->state[j] = gen->state[j - 1];

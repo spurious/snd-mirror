@@ -12,7 +12,7 @@ SNDLIB_HEADERS = sndlib.h sndlib-strings.h clm.h xen.h vct.h sndlib2xen.h clm2xe
 SND_HEADERS = snd.h snd-0.h snd-1.h snd-strings.h snd-rec.h
 SND_X_HEADERS = snd-x0.h snd-x1.h
 SND_G_HEADERS = snd-g0.h snd-g1.h
-SNDLIB_O_FILES = headers.obj audio.obj io.obj sound.obj clm.obj xen.o vct.obj sndlib2xen.obj clm2xen.obj
+SNDLIB_O_FILES = headers.obj audio.obj io.obj sound.obj clm.obj xen.obj vct.obj sndlib2xen.obj clm2xen.obj
 
 O_FILES = snd-io.obj snd-utils.obj snd-listener.obj snd-error.obj snd-completion.obj snd-menu.obj snd-axis.obj snd-data.obj snd-fft.obj snd-marks.obj snd-file.obj snd-edits.obj snd-chn.obj snd-dac.obj snd-region.obj snd-select.obj snd-find.obj snd-snd.obj snd-help.obj snd-main.obj snd-print.obj snd-trans.obj snd-mix.obj snd.obj snd-env.obj snd-xen.obj snd-ladspa.obj snd-rec.obj snd-kbd.obj snd-sig.obj snd-draw.obj
 

@@ -1382,10 +1382,6 @@ void mus_sndlib2xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_sound_maxamp,         g_sound_maxamp_w, 1, 0, 0,          H_mus_sound_maxamp);
   XEN_DEFINE_PROCEDURE(S_mus_sound_set_maxamp,     g_sound_set_maxamp_w, 2, 0, 0,      H_mus_sound_set_maxamp);
   XEN_DEFINE_PROCEDURE(S_mus_sound_maxamp_exists,  g_sound_maxamp_exists_w, 1, 0, 0,   H_mus_sound_maxamp_exists);
-  /* backwards compatibility */
-  XEN_DEFINE_PROCEDURE("mus-sound-max-amp",        g_sound_maxamp_w, 1, 0, 0,          H_mus_sound_maxamp);
-  XEN_DEFINE_PROCEDURE("mus-sound-set-max-amp",    g_sound_set_maxamp_w, 2, 0, 0,      H_mus_sound_set_maxamp);
-  XEN_DEFINE_PROCEDURE("mus-sound-max-amp-exists?",g_sound_maxamp_exists_w, 1, 0, 0,   H_mus_sound_maxamp_exists);
 
   XEN_DEFINE_PROCEDURE(S_mus_audio_report,         g_report_audio_state_w, 0, 0, 0,    H_mus_audio_report);
   XEN_DEFINE_PROCEDURE(S_mus_audio_sun_outputs,    g_audio_outputs_w, 3, 0, 0,         H_mus_audio_sun_outputs);

@@ -1773,7 +1773,11 @@ void *make_fft_state(chan_info *cp, int simple)
       dlen = selection_len();
       /* these need to be handled at the same time, and not re-examined until the next call */
       /* if we're sweeping the mouse defining the selection, by the time we get to apply_fft_window, selection_len() can change */
-      fftsize = snd_ipow2((int)(ceil(log((Float)(dlen * (1 + cp->zero_pad))) / log(2.0))));
+      fftsize = snd_2pow2(dlen * (1 + cp->zero_pad));
+#if DEBUGGING
+      if (fftsize ! = snd_ipow2((int)(ceil(log((Float)(dlen * (1 + cp->zero_pad))) / log(2.0)))))
+	fprintf(stderr,"make_fft_state: new: %d, old: %d\n", fftsize, snd_ipow2((int)(ceil(log((Float)(dlen * (1 + cp->zero_pad))) / log(2.0)))));
+#endif
       if (fftsize < 2) fftsize = 2;
       cp->selection_transform_size = fftsize;
     }
@@ -2042,7 +2046,11 @@ static int set_up_sonogram(sonogram_state *sg)
       si = (sono_info *)CALLOC(1, sizeof(sono_info));
       cp->sonogram_data = si;
       si->total_bins = sg->spectrum_size;
-      si->total_slices = snd_ipow2((int)ceil(log(sg->outlim) / log(2.0)));
+      si->total_slices = snd_2pow2(sg->outlim);
+#if DEBUGGING
+      if (si->total_slices != snd_ipow2((int)ceil(log(sg->outlim) / log(2.0))))
+	fprintf(stderr,"set_up_sonogram: new: %d, old: %d\n", si->total_slices, snd_ipow2((int)ceil(log(sg->outlim) / log(2.0))));
+#endif
       si->begs = (int *)CALLOC(si->total_slices, sizeof(int));
       si->data = (Float **)CALLOC(si->total_slices, sizeof(Float *));
       for (i = 0; i < si->total_slices; i++) si->data[i] = (Float *)CALLOC(si->total_bins, sizeof(Float));
@@ -2057,7 +2065,11 @@ static int set_up_sonogram(sonogram_state *sg)
 	      FREE(si->data[i]); 
 	      si->data[i] = NULL;
 	    }
-	tempsize = snd_ipow2((int)ceil(log(sg->outlim) / log(2.0)));
+	tempsize = snd_2pow2(sg->outlim);
+#if DEBUGGING
+	if (tempsize != snd_ipow2((int)ceil(log(sg->outlim) / log(2.0))))
+	  fprintf(stderr,"temp set_up_sonogram: new: %d, old: %d\n", tempsize, snd_ipow2((int)ceil(log(sg->outlim) / log(2.0))));
+#endif
 	if (si->total_slices < tempsize) 
 	  {
 	    FREE(si->data);

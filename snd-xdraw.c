@@ -151,8 +151,6 @@ static void fill_two_sided_polygons(axis_context *ax, XPoint *points, XPoint *po
 static XPoint *points = NULL;
 static XPoint *points1 = NULL;
 
-static XPoint *points_address(int which) {if (which == 0) return(points); else return(points1);}
-
 void allocate_grf_points(void)
 {
   if (!points) points = (XPoint *)CALLOC(POINT_BUFFER_SIZE, sizeof(XPoint));
@@ -281,9 +279,6 @@ static void allocate_erase_grf_points(mix_context *ms)
 static void backup_erase_grf_points(mix_context *ms, int nj)
 {
   int i;
-  XPoint *points, *points1;
-  points = points_address(0);
-  points1 = points_address(1);
   ms->lastpj = nj;
   for (i = 0; i < nj; i++)
     {
@@ -309,8 +304,6 @@ void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int nj)
   Display *dpy;
   Drawable wn;
   GC draw_gc, undraw_gc;
-  XPoint *points;
-  points = points_address(0);
   previous_j = ms->lastpj;
   cx = cp->tcgx;
   if (!cx) cx = cp->cgx;
@@ -372,9 +365,6 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
   Display *dpy;
   Drawable wn;
   GC draw_gc, undraw_gc;
-  XPoint *points, *points1;
-  points = points_address(0);
-  points1 = points_address(1);
   previous_j = ms->lastpj;
   cx = cp->tcgx;
   if (!cx) cx = cp->cgx;

@@ -1140,6 +1140,7 @@ void g_init_file(void);
 
 int snd_round(double x);
 int snd_ipow2(int n);
+int snd_2pow2(int n);
 char *copy_string(const char *str);
 int snd_strlen(char *str);
 char *filename_without_home_directory(char *name);
@@ -1156,10 +1157,6 @@ char *kmg (int num);
 #if DEBUGGING && HAVE_CLOCK
   void start_timing(void);
   void stop_timing(void);
-#endif
-#if TIMING
-  void g_init_timing(void);
-  int new_time(char *name);
 #endif
 XEN show_stack(void);
 

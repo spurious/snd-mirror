@@ -62,12 +62,10 @@
 ;;; explode-sf2 -- turn soundfont file into a bunch of files of the form sample-name.aif
 
 
-;;; TODO: decide how to handle the CLM examples
 ;;; TODO: robust pitch tracker
 ;;; TODO: adaptive notch filter
 ;;; TODO: ins: singer piano flute fade dlocsig
 ;;; TODO: data-file rw case for pvoc.scm
-;;; TODO: triggered record
 ;;; TODO: notation following location (as in display-current-window-location)
 ;;;       but this requires some way to converse with cmn that does not require sleep
 

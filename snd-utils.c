@@ -20,6 +20,17 @@ int snd_ipow2(int n)
   return((int)pow(2.0, n));
 }
 
+int snd_2pow2(int n)
+{
+  /* round up to next power of 2 */
+  int i;
+  for (i = 0; i < POW2_SIZE; i++)
+    if (pow2s[i] >= n)
+      return(pow2s[i]);
+  return(0);
+}
+
+
 char *copy_string(const char *str)
 {
 #if DEBUG_MEMORY || (!HAVE_STRDUP)
@@ -535,9 +546,6 @@ char *mem_stats(snd_state *ss, int ub)
 #if DEBUGGING && (!USE_NO_GUI)
 char *stats_window_state(void);
 #endif
-#if TIMING
-static void report_times_1(FILE *std);
-#endif
 
 void mem_report(void)
 {
@@ -606,19 +614,14 @@ void mem_report(void)
 #if DEBUGGING && (!USE_NO_GUI)
   fprintf(Fp, stats_window_state());
 #endif
-#if TIMING
-  fprintf(Fp,"\n\n--------------------------------\n");
-  report_times_1(Fp);
-#endif
   fprintf(Fp, "\n\nprevlist: %d %d\n", get_prevfile_end(), get_max_prevfile_end());
   fclose(Fp);
 }
 
 #endif
 
-#if DEBUGGING
+#if (DEBUGGING) && (HAVE_CLOCK)
 
-#if HAVE_CLOCK
 #if HAVE_SYS_TIME_H
   #include <sys/time.h>
 #endif
@@ -627,160 +630,5 @@ static clock_t start;
 void start_timing(void) {start = clock();}
 void stop_timing(void) {fprintf(stderr, "time: %d ",(int)((clock() - start) * 1000.0 / CLOCKS_PER_SEC));}
 
-#if TIMING
-
-/* gprof is completely confused by guile, so... */
-typedef struct {
-  long long total;
-  long start;
-  int in_calls, out_calls;
-  char *name;
-} tdat;
-
-static tdat *times = NULL;
-static int num_times = 0;
-static int timer = 0;
-
-int new_time(char *name) 
-{
-  timer++;
-  if (num_times <= timer)
-    {
-      if (times == NULL)
-	{
-	  times = (tdat *)CALLOC(1024, sizeof(tdat));
-	  num_times = 1024;
-	}
-      else 
-	{
-	  times = (tdat *)REALLOC(times, timer * 2 * sizeof(tdat));
-	  num_times =  timer * 2;
-	}
-    }
-  times[timer].in_calls = 0;
-  times[timer].out_calls = 0;
-  times[timer].start = 0;
-  times[timer].total = 0;
-  times[timer].name = copy_string(name);
-  return(timer);
-}
-
-static XEN start_time(XEN utag)
-{
-  int tag;
-  tag = XEN_TO_C_INT(utag);
-  times[tag].start = clock();
-  times[tag].in_calls++;
-  return(XEN_FALSE);
-}
-
-static XEN stop_time(XEN utag)
-{
-  int tag;
-  long clk;
-  tag = XEN_TO_C_INT(utag);
-  if (times[tag].start <= 0) return(XEN_FALSE);
-  clk = clock();
-  if (clk >= times[tag].start)
-    times[tag].total += (clk - times[tag].start); /* clock() can wrap around! */
-  else times[tag].total += clk; /* semi-bogus... */
-  times[tag].start = 0;
-  times[tag].out_calls++;
-  return(XEN_FALSE);
-}
-
-static int compare_time(const void *a, const void *b)
-{
-  tdat t1, t2;
-  t1 = *((tdat *)a);
-  t2 = *((tdat *)b);
-  if (t1.out_calls > 0)
-    {
-      if (t2.out_calls > 0)
-	{
-#if 1
-	  if (((Float)(t1.total) / (Float)(t1.out_calls)) == ((Float)(t2.total) / (Float)(t2.out_calls)))
-	    return(0);
-	  if (((Float)(t1.total) / (Float)(t1.out_calls)) > ((Float)(t2.total) / (Float)(t2.out_calls)))
-	    return(-1);
-#else
-	  if (t1.total == t2.total) return(0);
-	  if (t1.total > t2.total) return(-1);
 #endif
-	  return(1);
-	}
-      else return(-1);
-    }
-  if (t2.out_calls == 0)
-    return(0);
-  return(1);
-}
 
-static void report_times_1(FILE *std)
-{
-  int i, j = 0, len = 0;
-  tdat *ltimes;
-  for (i = 0; i < num_times; i++)
-    if (times[i].name)
-      len++;
-  ltimes = (tdat *)CALLOC(len, sizeof(tdat));
-  for (i = 0; i < num_times; i++)
-    if (times[i].name)
-      {
-	ltimes[j].total = times[i].total;
-	ltimes[j].out_calls = times[i].out_calls;
-	ltimes[j].in_calls = times[i].in_calls;
-	ltimes[j].name = times[i].name;
-	j++;
-      }
-  qsort((void *)ltimes, len, sizeof(tdat), compare_time);
-  for (i = 0; i < len; i++)
-    if (ltimes[i].name)
-      {
-	if (ltimes[i].in_calls == 0)
-	  fprintf(std, "%s never called\n",
-		  ltimes[i].name);
-	else
-	  {
-	    if (ltimes[i].in_calls == ltimes[i].out_calls)
-	      fprintf(std,"%s[%d]: %f, %f\n",
-		      ltimes[i].name,
-		      ltimes[i].in_calls,
-		      (float)(ltimes[i].total) / 1000000.0,
-		      (float)(ltimes[i].total) / (ltimes[i].in_calls * 1000000.0));
-	    else
-	      {
-		if (ltimes[i].out_calls == 0)
-		  fprintf(std,"%s[%d but never returned]\n",
-			  ltimes[i].name,
-			  ltimes[i].in_calls);
-		else
-		  fprintf(std,"%s[%d -> %d]: %f, %f\n",
-			  ltimes[i].name,
-			  ltimes[i].in_calls, ltimes[i].out_calls,
-			  (float)(ltimes[i].total) / 1000000.0,
-			  (float)(ltimes[i].total) / (ltimes[i].out_calls * 1000000.0));
-	      }
-	  }
-      }
-  FREE(ltimes);
-}
-
-static XEN report_times(void)
-{
-  report_times_1(stderr);
-  return(XEN_FALSE);
-}
-
-void g_init_timing(void)
-{
-#if HAVE_GUILE
-  /* not XEN_DEFINE_PROCEDURE here! */
-  XEN_NEW_PROCEDURE("start-time", start_time, 1, 0, 0);
-  XEN_NEW_PROCEDURE("stop-time", stop_time, 1, 0, 0);
-  XEN_NEW_PROCEDURE("report-times", report_times, 0, 0, 0);
-#endif
-}
-#endif
-#endif
-#endif

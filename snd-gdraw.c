@@ -135,8 +135,6 @@ static void fill_two_sided_polygons(axis_context *ax, GdkPoint *points, GdkPoint
 static GdkPoint *points = NULL;
 static GdkPoint *points1 = NULL;
 
-static GdkPoint *points_address(int which) {if (which == 0) return(points); else return(points1);}
-
 void allocate_grf_points(void)
 {
   if (!points) points = (GdkPoint *)CALLOC(POINT_BUFFER_SIZE, sizeof(GdkPoint));
@@ -253,9 +251,6 @@ static void allocate_erase_grf_points(mix_context *ms)
 static void backup_erase_grf_points(mix_context *ms, int nj)
 {
   int i;
-  GdkPoint *points, *points1;
-  points = points_address(0);
-  points1 = points_address(1);
   ms->lastpj = nj;
   for (i = 0; i < nj; i++)
     {
@@ -280,8 +275,6 @@ void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int nj)
   axis_context *ax;
   GdkDrawable *wn;
   GdkGC *draw_gc, *undraw_gc;
-  GdkPoint *points;
-  points = points_address(0);
   previous_j = ms->lastpj;
   cx = cp->tcgx;
   if (!cx) cx = cp->cgx;
@@ -342,9 +335,6 @@ void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int nj)
   axis_context *ax;
   GdkDrawable *wn;
   GdkGC *draw_gc, *undraw_gc;
-  GdkPoint *points, *points1;
-  points = points_address(0);
-  points1 = points_address(1);
   previous_j = ms->lastpj;
   cx = cp->tcgx;
   if (!cx) cx = cp->cgx;

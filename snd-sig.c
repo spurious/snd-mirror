@@ -2672,7 +2672,7 @@ scales snd by scalers (following sync) scalers can be a float or a vector of flo
 
 static XEN g_scale_selection_to(XEN scalers)
 {
-  #define H_scale_selection_to "(" S_scale_selection_to " norms &optional chn) normalizes current selected portion to norms"
+  #define H_scale_selection_to "(" S_scale_selection_to " norms) normalizes current selected portion to norms"
   int len[1];
   Float *scls;
   if (selection_is_active())
@@ -2688,7 +2688,7 @@ static XEN g_scale_selection_to(XEN scalers)
 
 static XEN g_scale_selection_by(XEN scalers)
 {
-  #define H_scale_selection_by "(" S_scale_selection_by " scalers &optional chn) scales current selected portion by scalers"
+  #define H_scale_selection_by "(" S_scale_selection_by " scalers) scales current selected portion by scalers"
   int len[1];
   Float *scls;
   if (selection_is_active())
@@ -3203,7 +3203,7 @@ sampling-rate converts snd's channel chn by ratio, or following an envelope. Neg
 
 static XEN g_src_selection(XEN ratio_or_env, XEN base)
 {
-  #define H_src_selection "(" S_src_selection " ratio-or-env &optional (base 1.0) edpos)\n\
+  #define H_src_selection "(" S_src_selection " ratio-or-env &optional (base 1.0))\n\
 sampling-rate converts the currently selected data by ratio (which can be an envelope)"
 
   if (selection_is_active() == 0) 

@@ -2199,7 +2199,6 @@ Reverb-feedback sets the scaler on the feedback.\n\
 
 
 ;;; TODO: bess-translations
-;;; TODO: midi trigger
 ;;; TODO: equivalent of zync (x too) across sounds
 ;;; TODO: radar scope style region cue list
 ;;; (create-sound-window (list-ref (main-widgets) 3) "pistol.snd")

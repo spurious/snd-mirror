@@ -1448,7 +1448,7 @@ int check_enved_hook(env *e, int pos, Float x, Float y, int reason)
 			     S_enved_hook);
 	  procs = XEN_CDR (procs);
 #else
-	  result = XEN_APPLY(XEN_VARIABLE_REF(procs), 
+	  result = XEN_APPLY(procs, 
 			     XEN_LIST_5(env_list,
 					C_TO_SMALL_XEN_INT(pos),
 					C_TO_XEN_DOUBLE(x),

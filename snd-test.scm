@@ -2878,6 +2878,10 @@
 	     (vol (maxamp obind))
 	     (dur (frames)))
 	(set! (amp-control obind) 2.0)
+	(if (fffneq (amp-control obind) 2.0) (snd-display ";set amp-control ~A" (amp-control obind)))
+	(reset-controls obind)
+	(if (ffneq (amp-control obind) 1.0) (snd-display ";reset amp-control ~A" (amp-control obind)))
+	(set! (amp-control obind) 2.0)
 	(if (eq? (without-errors (apply-controls obind)) 'no-such-sound) (snd-display "apply-controls can't find oboe.snd?"))
 	(let ((newamp (maxamp obind)))
 	  (if (> (abs (- (* 2.0 vol) newamp)) .05) (snd-display ";apply amp: ~A -> ~A?" vol newamp))
@@ -6651,6 +6655,7 @@
 				    #f ;no change to synthesis
 				    ))
 	    (reader (make-sample-reader 0)))
+	(if (not (phase-vocoder? pv)) (snd-display ";~A not phase-vocoder?" pv))
 	(print-and-check pv 
 			 "phase_vocoder"
 			 "phase_vocoder: outctr: 128, interp: 128, filptr: 0, N: 512, D: 128, in_data: nil"
@@ -14868,8 +14873,6 @@ EDITS: 3
 (save-listener "test.output")
 (set! (listener-prompt) original-prompt)
 (update-usage-stats)
-
-(if (defined? 'report-times) (report-times))
 
 (snd-display ";all done!~%~A" original-prompt)
 (let ((gc-lst (gc-stats)))

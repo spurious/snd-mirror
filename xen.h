@@ -4,7 +4,7 @@
 /* macros for extended language support 
  *
  * Guile:     ok, covers 1.3.4 to present (1.7.0) given the configuration macros in Snd's config.h.in.
- * Ruby:      ok, still a few gaps, tested in 1.6.3
+ * Ruby:      ok, still a few gaps, tested in 1.6.6
  * None:      ok, covers all known versions of None
  *
  * "xen" from Greek xenos (guest, foreigner)
@@ -17,11 +17,12 @@
 #endif
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 1
-#define XEN_VERSION "1.1"
+#define XEN_MINOR_VERSION 2
+#define XEN_VERSION "1.2"
 
 /* HISTORY:
  *  
+ *   2-Jan-02:  removed TIMING and MCHECK debugging stuff, VARIABLE_REF -> XEN_VARIABLE_REF
  *   22-Sep-01: removed (redundant) UNSIGNED_LONG macros -- use ULONG instead
 */
 
@@ -64,10 +65,10 @@
 /* remember to check the smob type agreement before calling XEN_OBJECT_REF! */
 #define XEN_MAKE_OBJECT(Var, Tag, Val, ig1, ig2)  SCM_NEWSMOB(Var, Tag, Val)
 
-#define VARIABLE_REF                   SCM_VARIABLE_REF
+#define XEN_VARIABLE_REF               SCM_VARIABLE_REF
 #if HAVE_SCM_C_DEFINE
   #define XEN_VARIABLE_SET(Var, Val)   SCM_VARIABLE_SET(Var, Val)
-  #define XEN_NAME_AS_C_STRING_TO_VALUE(a) VARIABLE_REF(scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure (), XEN_TRUE))
+  #define XEN_NAME_AS_C_STRING_TO_VALUE(a) XEN_VARIABLE_REF(scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure (), XEN_TRUE))
 #else
   #define XEN_VARIABLE_SET(Var, Val)   SCM_SETCDR(Var, Val)
   #define XEN_NAME_AS_C_STRING_TO_VALUE(a) scm_symbol_value0(a)
@@ -218,43 +219,11 @@
   #define XEN_NEW_PROCEDURE(Name, Func, Req, Opt, Rst) gh_new_procedure(Name, XEN_PROCEDURE_CAST Func, Req, Opt, Rst)
 #endif
 
-#if (!TIMING) && (!WITH_MCHECK)
-
-/*   if (SCM_EQ_P(scm_definedp(C_STRING_TO_XEN_SYMBOL(Name), XEN_UNDEFINED), XEN_TRUE)) fprintf(stderr,"%s is defined\n", Name); */
-
+/* if ((DEBUGGING) && (XEN_TRUE_P(scm_definedp(C_STRING_TO_XEN_SYMBOL(Name), XEN_UNDEFINED)))) fprintf(stderr,"%s is defined\n", Name); */
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   if (Doc != (char *)NULL) \
     scm_set_procedure_property_x(XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(Doc)); \
   else XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg)
-
-#else
-#if (TIMING)
-/* add timing calls */
-#define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  XEN_NEW_PROCEDURE(Name "-t", XEN_PROCEDURE_CAST Func, ReqArg, OptArg, RstArg); \
-  { \
-    int tag; \
-    tag = new_time(Name); \
-    XEN_EVAL_C_STRING(mus_format("(define " Name " \
-                              (lambda args \
-                                (begin \
-                                  (start-time %d) \
-                                  (let ((res (apply " Name "-t args))) \
-                                    (stop-time %d) \
-                                    res))))", \
-                            tag, tag)); \
-  }
-#else
-#define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  XEN_NEW_PROCEDURE(Name "-t", XEN_PROCEDURE_CAST Func, ReqArg, OptArg, RstArg); \
-  XEN_EVAL_C_STRING("(define " Name " \
-                 (lambda args \
-                   (let ((res #f)) \
-                     (set! res (apply " Name "-t args)) \
-                     (mcheck-all) \
-                     res)))");
-#endif
-#endif
 
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   xen_guile_define_procedure_with_setter(Get_Name, XEN_PROCEDURE_CAST Get_Func, Get_Help, \
@@ -839,7 +808,7 @@ XEN xen_rb_funcall_0(XEN func);
 #define XEN_MAKE_OBJECT_FREE_PROCEDURE(Type, Wrapped_Free, Original_Free)
 #define XEN_HOOK_PROCEDURES(a) 0
 #define XEN_VARIABLE_SET(a, b)
-#define VARIABLE_REF(a) 0
+#define XEN_VARIABLE_REF(a) 0
 
 #define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, ig1, ig2) return(0)
 #define XEN_OBJECT_REF(a) 0

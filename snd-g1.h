@@ -509,7 +509,7 @@ void recolor_button(GUI_WIDGET w, GUI_POINTER ptr);
 void color_chan_components(COLOR_TYPE color, int which_component);
 void color_unselected_graphs(COLOR_TYPE color);
 void recolor_everything(GUI_WIDGET w, GUI_POINTER ptr);
-void g_initialize_xgh(snd_state *ss);
+void g_initialize_xgh(void);
 
 
 
