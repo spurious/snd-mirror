@@ -3976,7 +3976,6 @@ The following substitutions can be made:
 </p>
 <small>
 <pre>
-<a href="#sndconvolvewith">convolve-with</a> file amp s c e                <a href="#clmchannel">clm-channel</a> clm-convolve-gen beg dur s c e overlap
 <a href="#sndenv">env-sound</a> env beg dur s c e                 <a href="#envchannel">env-channel</a> clm-env-gen beg dur s c e
 <a href="#sndfilter">filter-sound</a> env order s c e                <a href="#clmchannel">clm-channel</a> clm-filter-gen beg dur s c e overlap
 <a href="#mapchan">map-chan</a> func beg end origin s c e          <a href="#mapchannel">map-channel</a> func beg dur s c e origin
@@ -3988,6 +3987,8 @@ The following substitutions can be made:
 <a href="#sndsmooth">smooth-sound</a> beg dur s c                    <a href="#smoothchannel">smooth-channel</a> beg dur s c e
 <a href="#samples2vct">samples-&gt;vct</a> beg dur snd chn v e            <a href="#channel2vct">channel-&gt;vct</a> beg dur s c e
 <a href="#vct2samples">vct-&gt;samples</a> beg dur vct s c                <a href="#vct2channel">vct-&gt;channel</a> vct beg dur s c [edpos doesn't apply here]
+<a href="#sndconvolvewith">convolve-with</a> file amp s c e               
+<a href="#sndsrc">src-sound</a> num base s c e
 </pre>
 </small>
 <p><small>An equivalent Scheme wrapper might be:</small></p>

@@ -1,10 +1,9 @@
 #include "snd.h"
 
-/* TODO:
- *  src-channel beg dur s c e (new len changes)
- *  fft-channel -> fft vct (spectrum-channel?)
+/* TODO: src-channel beg dur s c e (new len changes as in src-selection via delete-selection+insert-samples+backup-edit-list)
+ * TODO: convolve-channel kernel beg dur s c e overlap
+ * TODO: merge repetitious g_*_sound|selection code 
  */
-
 
 /* collect syncd chans */
 typedef struct {
@@ -1167,6 +1166,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, int beg, int dur, XEN edp,
   MUS_SAMPLE_TYPE *idata;
   char *ofile = NULL;
   snd_fd *sf;
+  if ((beg < 0) || ((dur + overlap) <= 0)) return(NULL);
   ss = cp->state;
   sp = cp->sound;
   if (!(MUS_RUN_P(gen)))
@@ -1528,6 +1528,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, int beg, int dur, XEN ed
   MUS_SAMPLE_TYPE **data;
   MUS_SAMPLE_TYPE *idata;
   char *ofile = NULL;
+  if ((beg < 0) || (dur <= 0)) return(NULL);
   ss = cp->state;
   sp = cp->sound;
   edpos = to_c_edit_position(cp, edp, caller, arg_pos);
@@ -1991,8 +1992,9 @@ static void smooth_channel(chan_info *cp, int beg, int dur, int edpos, const cha
   MUS_SAMPLE_TYPE *data = NULL;
   int k;
   Float y0, y1, angle, incr, off, scale;
+  if ((beg < 0) || (dur <= 0)) return;
   y0 = chn_sample(beg, cp, edpos);
-  y1 = chn_sample(beg + dur, cp, edpos);
+  y1 = chn_sample(beg + dur, cp, edpos); /* one past end -- this is a debatable choice */
   if (y1 > y0) angle = M_PI; else angle = 0.0;
   incr = M_PI / (Float)dur;
   off = 0.5 * (y1 + y0);
@@ -2055,12 +2057,15 @@ static XEN g_map_chan_1(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN ch
   ss = get_global_state();
   cp = get_cp(snd, chn, caller);
   beg = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(s_beg, 0, caller);
+  if (beg < 0) return(XEN_FALSE);
   end = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(s_end, 0, caller);
+  if (end < 0) return(XEN_FALSE);
   dur = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(s_dur, 0, caller);
+  if (dur < 0) return(XEN_FALSE);
   if (end == 0) 
     {
       if (dur != 0) 
-	end = beg + dur;
+	end = beg + dur - 1;
       else end = to_c_edit_samples(cp, edpos, caller, 7) - 1;
     }
   num = end - beg + 1;
@@ -2185,8 +2190,11 @@ static XEN g_sp_scan(XEN proc, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   ASSERT_CHANNEL(caller, snd, chn, 4);
   cp = get_cp(snd, chn, caller);
   beg = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(s_beg, 0, caller);
+  if (beg < 0) return(XEN_FALSE);
   end = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(s_end, 0, caller);
+  if (end < 0) return(XEN_FALSE);
   dur = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(s_dur, 0, caller);
+  if (dur < 0) return(XEN_FALSE);
 
   errmsg = procedure_ok(proc, 1, caller, "", 1);
   if (errmsg)
@@ -2203,7 +2211,7 @@ static XEN g_sp_scan(XEN proc, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   if (end == 0) 
     {
       if (dur != 0)
-	end = beg + dur;
+	end = beg + dur - 1;
       else end = to_c_edit_samples(cp, edpos, caller, arg_pos) - 1;
     }
   num = end - beg + 1;
@@ -2746,6 +2754,7 @@ applies amplitude envelope 'clm-env-gen' to snd's channel chn starting at beg fo
   cp = get_cp(snd_n, chn_n, S_env_channel);
   beg = XEN_TO_C_INT_OR_ELSE(samp_n, 0);
   dur = XEN_TO_C_INT_OR_ELSE(samps, 0);
+  if ((beg < 0) || (dur < 0)) return(XEN_FALSE);
   if (dur == 0) dur = (to_c_edit_samples(cp, edpos, S_env_channel, 6) - beg);
   sp = cp->sound;
   old_sync = sp->sync;

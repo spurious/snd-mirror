@@ -4,6 +4,9 @@
 
 /*****************************************************************************/
 
+/* TODO: add multichannel plugin support
+ */
+
 #include "snd.h"
 
 #if HAVE_LADSPA
@@ -14,7 +17,7 @@
 
 /*****************************************************************************/
 
-//FIXME: Repository is not threadsafe. Does this matter in Snd?
+//FIXME: Repository is not threadsafe. Does this matter in Snd? (not currently -- Bill)
 
 //FIXME: Memory checking is non-existent.
 
@@ -262,8 +265,8 @@ static void loadLADSPA() {
   pcLADSPAPath = getenv("LADSPA_PATH");
   if (!pcLADSPAPath) {
     snd_warning(
-	    "Warning: You do not have a LADSPA_PATH "
-	    "environment variable set.\n");
+		"Warning: You do not have a LADSPA_PATH "
+		"environment variable set.\n");
     return;
   }
 
@@ -560,7 +563,7 @@ by any arguments. (Information about about parameters can be acquired using anal
   free(pcLabel);
 
   if (!psDescriptor) {
-    snd_error("Plugin unknown.\n");
+    snd_error("Plugin unknown or unsupported (mono only currently).\n");
     //FIXME: How to report?
     return(XEN_FALSE);
   }

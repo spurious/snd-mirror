@@ -1764,7 +1764,7 @@ static void parse_tree_scale_by(chan_info *cp, Float scl, int pos)
       FRAGMENT_SCALER(new_ed, i) = FLOAT_AS_INT(ed_scl);
     }
   new_ed->sfnum = PACK_EDIT(PARSED_EDIT, 0);
-  new_ed->origin = mus_format("scale-by %.4f", scl);
+  new_ed->origin = mus_format("scale-channel %.4f 0 %d", scl, len);
   new_ed->beg = 0;
   new_ed->len = len;
   new_ed->size = old_ed->size;
@@ -1798,7 +1798,7 @@ static void parse_tree_selection_scale_by(chan_info *cp, Float scl, int beg, int
 
   cp->edits[cp->edit_ctr] = new_ed;
   new_ed->sfnum = PACK_EDIT(PARSED_EDIT, 0);
-  new_ed->origin = mus_format("scale-sound-by %.4f %d %d", scl, beg, num);
+  new_ed->origin = mus_format("scale-channel %.4f %d %d", scl, beg, num);
   new_ed->beg = beg;
   new_ed->len = num;
   new_ed->selection_beg = old_ed->selection_beg;
@@ -3191,6 +3191,7 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
 
 void scale_channel(chan_info *cp, Float scaler, int beg, int num, int pos)
 {
+  if ((beg < 0) || (num < 0)) return;
   if ((beg == 0) && 
       (num >= cp->samples[pos]))
     {
