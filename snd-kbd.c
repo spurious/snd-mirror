@@ -169,7 +169,7 @@ static int execute_named_macro_1(chan_info *cp, char *name, off_t count)
 
 static void execute_named_macro(chan_info *cp, char *name, off_t count)
 {
-  int one_edit, i;
+  int one_edit, i, loc, form_loc;
   XEN form, result = XEN_UNDEFINED;
   if (!(execute_named_macro_1(cp, name, count)))
     /* not a macro...*/
@@ -177,9 +177,13 @@ static void execute_named_macro(chan_info *cp, char *name, off_t count)
 #if HAVE_EXTENSION_LANGUAGE
       one_edit = cp->edit_ctr + 1;
       form = string_to_form(name);
+      form_loc = snd_protect(form);
       for (i = 0; i < count; i++)
 	result = snd_catch_any(eval_form_wrapper, (void *)form, name);
+      loc = snd_protect(result);
       snd_report_result(result, name);
+      snd_unprotect_at(loc);
+      snd_unprotect_at(form_loc);
       if (cp->edit_ctr > one_edit)
 	{
 	  if (ss->deferred_regions > 0) 

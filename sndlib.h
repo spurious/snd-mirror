@@ -302,7 +302,7 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
       MUS_NO_X1, MUS_NO_Y1, MUS_NO_X2, MUS_NO_Y2,
       MUS_INITIAL_ERROR_TAG};
 
-/* keep this list in sync with error_names in sound.c and initmus.lisp */
+/* keep this list in sync with mus_error_names in sound.c and initmus.lisp */
 
 #ifdef MACOS
   /* C's calloc/free are incompatible with Mac's SndDisposeChannel (which we can't avoid using) */

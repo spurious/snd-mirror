@@ -1561,8 +1561,8 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_sound_data_p,             g_mus_sound_data_p_w,           1, 0, 0, H_sound_data_p);
   XEN_DEFINE_PROCEDURE(S_sound_data_maxamp,        g_mus_sound_data_maxamp_w,      1, 0, 0, H_sound_data_maxamp);
   XEN_DEFINE_PROCEDURE(S_sound_data_setB,          g_sound_data_set_w,             4, 0, 0, H_sound_data_setB);
-  XEN_DEFINE_PROCEDURE(S_sound_data_to_vct,           g_sound_data_to_vct_w,             1, 2, 0, H_sound_data_to_vct);
-  XEN_DEFINE_PROCEDURE(S_vct_to_sound_data,           g_vct_to_sound_data_w,             1, 2, 0, H_vct_to_sound_data);
+  XEN_DEFINE_PROCEDURE(S_sound_data_to_vct,        g_sound_data_to_vct_w,          1, 2, 0, H_sound_data_to_vct);
+  XEN_DEFINE_PROCEDURE(S_vct_to_sound_data,        g_vct_to_sound_data_w,          1, 2, 0, H_vct_to_sound_data);
   XEN_DEFINE_PROCEDURE(S_mus_sound_frames,         g_mus_sound_frames_w,           1, 0, 0, H_mus_sound_frames);
   XEN_DEFINE_PROCEDURE(S_mus_sound_duration,       g_mus_sound_duration_w,         1, 0, 0, H_mus_sound_duration);
   XEN_DEFINE_PROCEDURE(S_mus_sound_datum_size,     g_mus_sound_datum_size_w,       1, 0, 0, H_mus_sound_datum_size);

@@ -695,10 +695,10 @@ void init_vct(void)
   XEN_DEFINE_PROCEDURE(S_make_vct,      g_make_vct_w,   1, 1, 0, H_make_vct);
   XEN_DEFINE_PROCEDURE(S_vct_copy,      copy_vct_w,     1, 0, 0, H_vct_copy);
   XEN_DEFINE_PROCEDURE(S_vct_p,         g_vct_p_w,      1, 0, 0, H_vct_p);
-  XEN_DEFINE_PROCEDURE(S_list_to_vct,      list_to_vct_w,     1, 0, 0, H_list_to_vct);
-  XEN_DEFINE_PROCEDURE(S_vct_to_list,      vct_to_list_w,     1, 0, 0, H_vct_to_list);
-  XEN_DEFINE_PROCEDURE(S_vector_to_vct,    vector_to_vct_w,   1, 0, 0, H_vector_to_vct);
-  XEN_DEFINE_PROCEDURE(S_vct_to_vector,    vct_to_vector_w,   1, 0, 0, H_vct_to_vector);
+  XEN_DEFINE_PROCEDURE(S_list_to_vct,   list_to_vct_w,  1, 0, 0, H_list_to_vct);
+  XEN_DEFINE_PROCEDURE(S_vct_to_list,   vct_to_list_w,  1, 0, 0, H_vct_to_list);
+  XEN_DEFINE_PROCEDURE(S_vector_to_vct, vector_to_vct_w, 1, 0, 0, H_vector_to_vct);
+  XEN_DEFINE_PROCEDURE(S_vct_to_vector, vct_to_vector_w, 1, 0, 0, H_vct_to_vector);
   XEN_DEFINE_PROCEDURE(S_vct_length,    vct_length_w,   1, 0, 0, H_vct_length);
   XEN_DEFINE_PROCEDURE(S_vct_multiplyB, vct_multiply_w, 2, 0, 0, H_vct_multiplyB);
   XEN_DEFINE_PROCEDURE(S_vct_scaleB,    vct_scale_w,    2, 0, 0, H_vct_scaleB);

@@ -50,8 +50,8 @@ typedef struct {
   off_t data_location;    /* bytes */
   int srate;
   int chans;
-  int format;             /* data format (snd_16_linear etc) */
-  int type;               /* header type (AIFF etc) */
+  int format;             /* data format (mus_bshort etc) */
+  int type;               /* header type (mus_aifc etc) */
   char *comment;          /* output case, not input */
   int *loops;
 } file_info;

@@ -309,7 +309,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   snd_info *sp;
   char *possible_code;
   XEN port;
-  int port_gc_loc;
+  int port_gc_loc, stack_gc_loc;
   XEN stack = XEN_FALSE;
   char *name_buf = NULL;
   bool need_comma = false;
@@ -374,6 +374,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 #endif
   if (XEN_NOT_FALSE_P(stack)) 
     {
+      stack_gc_loc = snd_protect(stack);
       if (show_backtrace(ss))
 	{
 	  XEN_PUTS("\n", port);
@@ -382,19 +383,25 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
       else
 	{
 	  XEN current_frame, source;
+	  int frame_gc_loc, source_gc_loc;
 	  current_frame = scm_stack_ref(stack, XEN_ZERO);
+	  frame_gc_loc = snd_protect(current_frame);
 	  if (XEN_NOT_FALSE_P(current_frame))
 	    {
 	      source = scm_frame_source(current_frame);
 	      if (XEN_NOT_FALSE_P(source))
 		{
+		  source_gc_loc = snd_protect(source);
 		  XEN_PUTS("\n", port);
 		  XEN_PUTS(XEN_AS_STRING(scm_source_property(source, scm_sym_filename)), port);
 		  XEN_PUTS(": line ", port);
 		  XEN_PUTS(XEN_AS_STRING(scm_source_property(source, scm_sym_line)), port);
+		  snd_unprotect_at(source_gc_loc);
 		}
 	    }
+	  snd_unprotect_at(frame_gc_loc);
 	}
+      snd_unprotect_at(stack_gc_loc);
     }
   else
     {
@@ -867,13 +874,18 @@ XEN snd_report_listener_result(XEN form)
 {
   char *str = NULL;
   XEN result;
+#if (!HAVE_RUBY)
+  int loc;
+#endif
   listener_append("\n");
 #if HAVE_RUBY
   str = gl_print(form);
   result = form;
 #else
   result = snd_catch_any(eval_form_wrapper, (void *)form, NULL);
+  loc = snd_protect(result);
   str = gl_print(result);
+  snd_unprotect_at(loc);
 #endif
   if (listener_height() > 5)
     listener_append_and_prompt(str);
@@ -884,12 +896,15 @@ XEN snd_report_listener_result(XEN form)
 void snd_eval_property_str(char *buf)
 {
   XEN result;
+  int loc;
   char *str;
   if ((snd_strlen(buf) == 0) || ((snd_strlen(buf) == 1) && (buf[0] == '\n'))) return;
   result = snd_catch_any(eval_str_wrapper, (void *)buf, buf);
+  loc = snd_protect(result);
   str = gl_print(result);
   listener_append_and_prompt(str);
   if (str) FREE(str);
+  snd_unprotect_at(loc);
 }
 
 static char *stdin_str = NULL;
@@ -934,6 +949,7 @@ void snd_eval_stdin_str(char *buf)
   /* we may get incomplete expressions here */
   /*   (Ilisp always sends a complete expression, but it may be broken into two or more pieces from read's point of view) */
   XEN result;
+  int loc;
   char *str = NULL;
   if (snd_strlen(buf) == 0) return;
   str = stdin_check_for_full_expression(buf);
@@ -941,6 +957,7 @@ void snd_eval_stdin_str(char *buf)
     {
       send_error_output_to_stdout = true;
       result = snd_catch_any(eval_str_wrapper, (void *)str, str);
+      loc = snd_protect(result);
       send_error_output_to_stdout = false;
       if (stdin_str) FREE(stdin_str);
       /* same as str here; if c-g! evaluated from stdin, clear_listener is called which frees/nullifies stdin_str */
@@ -948,6 +965,7 @@ void snd_eval_stdin_str(char *buf)
       str = gl_print(result);
       string_to_stdout(str);
       if (str) FREE(str);
+      snd_unprotect_at(loc);
     }
 }
 
@@ -982,12 +1000,15 @@ void snd_load_init_file(bool no_global, bool no_init)
 #if HAVE_RUBY
   if (!(XEN_TRUE_P(result)))
     {
+      int loc;
+      loc = snd_protect(result);
       str = gl_print(result);
       if (str)
 	{
 	  snd_error(str);
 	  FREE(str);
 	}
+      snd_unprotect_at(loc);
     }
 #endif
 }
@@ -1026,12 +1047,15 @@ void snd_load_file(char *filename)
 #if HAVE_RUBY
   if (!(XEN_TRUE_P(result)))
     {
+      int loc;
+      loc = snd_protect(result);
       str = gl_print(result);
       if (str)
 	{
 	  snd_error(str);
 	  FREE(str);
 	}
+      snd_unprotect_at(loc);
     }
 #endif
 }
@@ -1752,7 +1776,7 @@ reading edit version edpos"
   snd_fd *sf;
   sound_data *sd;
   XEN newsd = XEN_FALSE;
-  int i, len, chn = 0, pos, maxlen = 0;
+  int i, len, chn = 0, pos, maxlen = 0, loc = -1;
   off_t beg;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_0), samp_0, XEN_ARG_1, S_samples_to_sound_data, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_2, S_samples_to_sound_data, "a number");
@@ -1774,6 +1798,7 @@ reading edit version edpos"
       else
 	{
 	  newsd = make_sound_data(chn + 1, len);
+	  loc = snd_protect(newsd);
 	  sd = (sound_data *)XEN_OBJECT_REF(newsd);
 	  if ((sd->data == NULL) || (sd->data[chn] == NULL))
 	    mus_misc_error(S_samples_to_sound_data, "sound_data memory allocation trouble", newsd);
@@ -1789,8 +1814,13 @@ reading edit version edpos"
 	      free_snd_fd(sf);
 	    }
 	}
-      else XEN_OUT_OF_RANGE_ERROR(S_samples_to_sound_data, 7, sdchan, "sound-data channel ~A > available chans");
+      else 
+	{
+	  if (loc != -1) snd_unprotect_at(loc);
+	  XEN_OUT_OF_RANGE_ERROR(S_samples_to_sound_data, 7, sdchan, "sound-data channel ~A > available chans");
+	}
     }
+  if (loc != -1) snd_unprotect_at(loc);
   if (XEN_NOT_FALSE_P(newsd))
     return(newsd);
   return(sdobj);
@@ -2333,7 +2363,7 @@ XEN run_progn_hook(XEN hook, XEN args, const char *caller)
   while (XEN_NOT_NULL_P(procs))
     {
       result = XEN_APPLY(XEN_CAR(procs), args, caller);
-      procs = XEN_CDR (procs);
+      procs = XEN_CDR(procs);
     }
   return(xen_return_first(result, args));
 }
@@ -3104,7 +3134,6 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE(S_color_p, g_color_p_w, 1, 0, 0, H_color_p);
 #endif
 
-
   XEN_DEFINE_PROCEDURE(S_snd_tempnam,           g_snd_tempnam_w,           0, 0, 0, H_snd_tempnam);
   XEN_DEFINE_PROCEDURE(S_color_dialog,          g_color_dialog_w,          0, 1, 0, H_color_dialog);
   XEN_DEFINE_PROCEDURE(S_orientation_dialog,    g_orientation_dialog_w,    0, 1, 0, H_orientation_dialog);
@@ -3120,7 +3149,7 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE(S_abort,                 g_abort_w,                 0, 0, 0, H_abort);
   XEN_DEFINE_PROCEDURE(S_c_g,                   g_abortq_w,                0, 0, 0, H_abortQ);
   XEN_DEFINE_PROCEDURE(S_snd_version,           g_snd_version_w,           0, 0, 0, H_snd_version);
-  XEN_DEFINE_PROCEDURE(S_samples_to_sound_data,    g_samples_to_sound_data_w,    0, 7, 0, H_samples_to_sound_data);
+  XEN_DEFINE_PROCEDURE(S_samples_to_sound_data, g_samples_to_sound_data_w, 0, 7, 0, H_samples_to_sound_data);
   XEN_DEFINE_PROCEDURE(S_snd_print,             g_snd_print_w,             1, 0, 0, H_snd_print);
   XEN_DEFINE_PROCEDURE("little-endian?",        g_little_endian_w,         0, 0, 0, "return #t if host is little endian");
   XEN_DEFINE_PROCEDURE("fmod",                  g_fmod_w,                  2, 0, 0, "C's fmod");
