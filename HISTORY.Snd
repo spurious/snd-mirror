@@ -1,6 +1,6 @@
 Snd change log
 
-  12-Feb:    menues.scm and many other improvements thanks to Kjetil S. Matheussen.
+  12-Feb:    gui.scm and many other improvements thanks to Kjetil S. Matheussen.
   11-Feb:    added optional truncate arg to file-selection.
   9-Feb:     channels-equal? and channels=? in extensions.scm.
              play-sine, play-sines, open-play-oputput in play.scm.

@@ -298,7 +298,7 @@ typedef struct snd_info {
   Float saved_speed_control, saved_amp_control, saved_expand_control, saved_contrast_control;
   Float saved_reverb_control_length, saved_reverb_control_scale;
   Float expand_control, expand_control_length, expand_control_ramp, expand_control_hop, expand_control_jitter;
-  Float contrast_control, contrast_control_amp;
+  Float contrast_control, contrast_control_amp, contrast_control_min, contrast_control_max;
   Float reverb_control_length, reverb_control_scale, reverb_control_feedback, reverb_control_lowpass;
   Float reverb_control_decay, filter_control_xmax;
   int filter_control_order;

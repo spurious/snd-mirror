@@ -404,20 +404,21 @@ void toggle_expand_button(snd_info *sp, bool state)
 }
 
 
-#define CONTRAST_SCROLLBAR_MULT (SCROLLBAR_MAX / 10)
 static char contrast_number_buffer[5] = {'0', STR_decimal, '0', '0', '\0'};
 
-static int snd_contrast_to_int(Float val)
+static int snd_contrast_to_int(Float minval, Float val, Float maxval)
 {
-  if (val < 10.0)
-    return(snd_round(val * CONTRAST_SCROLLBAR_MULT));
+  if (val <= minval)
+    return(0);
+  if (val < maxval)
+    return(snd_round((val - minval) / (maxval - minval) * SCROLLBAR_MAX));
   else return(SCROLLBAR_MAX);
 }
 
 static int snd_contrast_changed(snd_info *sp, int val)
 {
   char *sfs;
-  sp->contrast_control = (Float)val / CONTRAST_SCROLLBAR_MULT;
+  sp->contrast_control = sp->contrast_control_min + val * (sp->contrast_control_max - sp->contrast_control_min) / SCROLLBAR_MAX;
   sfs = prettyf(sp->contrast_control, 2);
   fill_number(sfs, contrast_number_buffer);
   set_label(CONTRAST_LABEL(sp), contrast_number_buffer);
@@ -431,7 +432,7 @@ void set_snd_contrast(snd_info *sp, Float val)
     sp->contrast_control = val;
   else XtVaSetValues(CONTRAST_SCROLLBAR(sp),
 		     XmNvalue,
-		     snd_contrast_changed(sp, snd_contrast_to_int(mus_fclamp(0.0, val, 9.0))),
+		     snd_contrast_changed(sp, snd_contrast_to_int(sp->contrast_control_min, val, sp->contrast_control_max)),
 		     NULL);
 }
 
@@ -444,7 +445,7 @@ static void contrast_click_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
-    val = snd_contrast_to_int(sp->last_contrast_control); 
+    val = snd_contrast_to_int(sp->contrast_control_min, sp->last_contrast_control, sp->contrast_control_max); 
   else val = 0;
   snd_contrast_changed(sp, val);
   XtVaSetValues(CONTRAST_SCROLLBAR(sp), XmNvalue, val, NULL);
@@ -3214,6 +3215,3 @@ void g_init_gxsnd(void)
   XEN_DEFINE_PROCEDURE("top-sash", g_sash, 0, 0, 0, "autotest func");
 #endif
 }
-
-
-

@@ -198,6 +198,8 @@ static void pss_sf(FILE *fd, const char *name, Float val) {fprintf(fd, "set_%s(%
 static void psp_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "%sset_%s(%s, sfile)\n", white_space, TO_PROC_NAME(name), val);}
 static void psp_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "%sset_%s(%d, sfile)\n", white_space, TO_PROC_NAME(name), val);}
 static void psp_sf(FILE *fd, const char *name, Float val) {fprintf(fd, "%sset_%s(%.4f, sfile)\n", white_space, TO_PROC_NAME(name), val);}
+static void psp_sl(FILE *fd, const char *name, Float val1, Float val2) 
+  {fprintf(fd, "%sset_%s([%f, %f], sfile)\n", white_space, TO_PROC_NAME(name), val1, val2);}
 
 static void pcp_ss(FILE *fd, const char *name, const char *val, int chan) {fprintf(fd, "%sset_%s(%s, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
 static void pcp_sd(FILE *fd, const char *name, int val, int chan)   {fprintf(fd, "%sset_%s(%d, sfile, %d)\n", white_space, TO_PROC_NAME(name), val, chan);}
@@ -215,6 +217,7 @@ static void pss_sf(FILE *fd, const char *name, Float val) {fprintf(fd, "(set! (%
 static void psp_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "%s(set! (%s sfile) %s)\n", white_space, name, val);}
 static void psp_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "%s(set! (%s sfile) %d)\n", white_space, name, val);}
 static void psp_sf(FILE *fd, const char *name, Float val) {fprintf(fd, "%s(set! (%s sfile) %.4f)\n", white_space, name, val);}
+static void psp_sl(FILE *fd, const char *name, Float val1, Float val2) {fprintf(fd, "%s(set! (%s sfile) (list %f %f))\n", white_space, name, val1, val2);}
 
 static void pcp_ss(FILE *fd, const char *name, const char *val, int chan) {fprintf(fd, "%s(set! (%s sfile %d) %s)\n", white_space, name, chan, val);}
 static void pcp_sd(FILE *fd, const char *name, int val, int chan)   {fprintf(fd, "%s(set! (%s sfile %d) %d)\n", white_space, name, chan, val);}
@@ -512,6 +515,9 @@ static void save_sound_state (snd_info *sp, void *ptr)
   if (sp->sync != DEFAULT_SYNC) psp_sd(fd, S_sync, sp->sync);
   if (sp->contrast_control_p != DEFAULT_CONTRAST_CONTROL_P) psp_ss(fd, S_contrast_control_p, b2s(sp->contrast_control_p));
   if (sp->contrast_control != DEFAULT_CONTRAST_CONTROL) psp_sf(fd, S_contrast_control, sp->contrast_control);
+  if ((sp->contrast_control_min != DEFAULT_CONTRAST_CONTROL_MIN) ||
+      (sp->contrast_control_max != DEFAULT_CONTRAST_CONTROL_MAX))
+    psp_sl(fd, S_contrast_control_bounds, sp->contrast_control_min, sp->contrast_control_max);
   if (sp->expand_control_p != DEFAULT_EXPAND_CONTROL_P) psp_ss(fd, S_expand_control_p, b2s(sp->expand_control_p));
   if (sp->expand_control != DEFAULT_EXPAND_CONTROL) psp_sf(fd, S_expand_control, sp->expand_control);
   if (sp->expand_control_ramp != DEFAULT_EXPAND_CONTROL_RAMP) psp_sf(fd, S_expand_control_ramp, sp->expand_control_ramp);

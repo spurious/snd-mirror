@@ -2021,7 +2021,8 @@ typedef enum {SP_SYNC, SP_READ_ONLY, SP_NCHANS, SP_CONTRASTING, SP_EXPANDING, SP
 	      SP_FILTER_DBING, SP_SPEED_TONES, SP_SPEED_STYLE, SP_RESET_CONTROLS,
 	      SP_AMP, SP_CONTRAST, SP_CONTRAST_AMP, SP_EXPAND, SP_EXPAND_LENGTH, SP_EXPAND_RAMP, SP_EXPAND_HOP,
 	      SP_SPEED, SP_REVERB_LENGTH, SP_REVERB_FEEDBACK, SP_REVERB_SCALE, SP_REVERB_LOW_PASS,
-	      SP_REVERB_DECAY, SP_PROPERTIES, SP_FILTER_COEFFS, SP_DATA_SIZE, SP_FILTER_HZING, SP_EXPAND_JITTER
+	      SP_REVERB_DECAY, SP_PROPERTIES, SP_FILTER_COEFFS, SP_DATA_SIZE, SP_FILTER_HZING, SP_EXPAND_JITTER,
+	      SP_CONTRAST_BOUNDS
 } sp_field_t;
 
 static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
@@ -2088,6 +2089,7 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
       break;
     case SP_AMP:                 return(C_TO_XEN_DOUBLE(sp->amp_control));             break;
     case SP_CONTRAST:            return(C_TO_XEN_DOUBLE(sp->contrast_control));        break;
+    case SP_CONTRAST_BOUNDS:     return(XEN_LIST_2(C_TO_XEN_DOUBLE(sp->contrast_control_min), C_TO_XEN_DOUBLE(sp->contrast_control_max))); break;
     case SP_CONTRAST_AMP:        return(C_TO_XEN_DOUBLE(sp->contrast_control_amp));    break;
     case SP_EXPAND:              return(C_TO_XEN_DOUBLE(sp->expand_control));          break;
     case SP_EXPAND_LENGTH:       return(C_TO_XEN_DOUBLE(sp->expand_control_length));   break;
@@ -2325,6 +2327,12 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
     case SP_CONTRAST:      
       set_snd_contrast(sp, XEN_TO_C_DOUBLE_WITH_CALLER(val, caller));
       return(C_TO_XEN_DOUBLE(sp->contrast_control)); 
+      break;
+    case SP_CONTRAST_BOUNDS:
+      sp->contrast_control_min = XEN_TO_C_DOUBLE(XEN_CAR(val));
+      sp->contrast_control_max = XEN_TO_C_DOUBLE(XEN_CADR(val));
+      set_snd_contrast(sp, mus_fclamp(sp->contrast_control_min, sp->contrast_control, sp->contrast_control_max));
+      return(val);
       break;
     case SP_CONTRAST_AMP:  
       sp->contrast_control_amp = XEN_TO_C_DOUBLE_WITH_CALLER(val, caller);
@@ -3227,6 +3235,26 @@ static XEN g_set_contrast_control(XEN on, XEN snd_n)
 
 WITH_REVERSED_ARGS(g_set_contrast_control_reversed, g_set_contrast_control)
 
+static XEN g_contrast_control_bounds(XEN snd_n) 
+{
+  #define H_contrast_control_bounds "(" S_contrast_control_bounds " (snd #f)): current contrast slider bounds (default: '(0.0 10.0))"
+  return(sound_get(snd_n, SP_CONTRAST_BOUNDS, S_contrast_control_bounds));
+}
+
+static XEN g_set_contrast_control_bounds(XEN on, XEN snd_n) 
+{
+  XEN_ASSERT_TYPE(XEN_LIST_P(on), on, XEN_ARG_1, S_setB S_contrast_control_bounds, "a list of the new min and max values"); 
+  if ((XEN_LIST_LENGTH(on) != 2) ||
+      (!(XEN_NUMBER_P(XEN_CAR(on)))) ||
+      (!(XEN_NUMBER_P(XEN_CADR(on)))))
+    XEN_WRONG_TYPE_ARG_ERROR(S_setB S_contrast_control_bounds, XEN_ARG_1, on, "a list of 2 numbers");
+  if (XEN_TO_C_DOUBLE(XEN_CAR(on)) >= XEN_TO_C_DOUBLE(XEN_CADR(on)))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_contrast_control_bounds, 1, on, "min >= max");
+  return(sound_set(snd_n, on, SP_CONTRAST_BOUNDS, S_setB S_contrast_control_bounds));
+}
+
+WITH_REVERSED_ARGS(g_set_contrast_control_bounds_reversed, g_set_contrast_control_bounds)
+
 static XEN g_contrast_control_amp(XEN snd_n) 
 {
   #define H_contrast_control_amp "(" S_contrast_control_amp " (snd #f)): snd's contrast amp\n\
@@ -4001,6 +4029,8 @@ XEN_ARGIFY_1(g_filter_control_order_w, g_filter_control_order)
 XEN_ARGIFY_2(g_set_filter_control_order_w, g_set_filter_control_order)
 XEN_ARGIFY_1(g_contrast_control_w, g_contrast_control)
 XEN_ARGIFY_2(g_set_contrast_control_w, g_set_contrast_control)
+XEN_ARGIFY_1(g_contrast_control_bounds_w, g_contrast_control_bounds)
+XEN_ARGIFY_2(g_set_contrast_control_bounds_w, g_set_contrast_control_bounds)
 XEN_ARGIFY_1(g_contrast_control_amp_w, g_contrast_control_amp)
 XEN_ARGIFY_2(g_set_contrast_control_amp_w, g_set_contrast_control_amp)
 XEN_ARGIFY_1(g_expand_control_w, g_expand_control)
@@ -4107,6 +4137,8 @@ XEN_ARGIFY_5(g_progress_report_w, g_progress_report)
 #define g_set_filter_control_order_w g_set_filter_control_order
 #define g_contrast_control_w g_contrast_control
 #define g_set_contrast_control_w g_set_contrast_control
+#define g_contrast_control_bounds_w g_contrast_control_bounds
+#define g_set_contrast_control_bounds_w g_set_contrast_control_bounds
 #define g_contrast_control_amp_w g_contrast_control_amp
 #define g_set_contrast_control_amp_w g_set_contrast_control_amp
 #define g_expand_control_w g_expand_control
@@ -4259,6 +4291,10 @@ If it returns #t, the apply is aborted."
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_contrast_control, g_contrast_control_w, H_contrast_control,
 					    S_setB S_contrast_control, g_set_contrast_control_w, g_set_contrast_control_reversed, 0, 1, 1, 1);
+  
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_contrast_control_bounds, g_contrast_control_bounds_w, H_contrast_control_bounds,
+					    S_setB S_contrast_control_bounds, g_set_contrast_control_bounds_w, g_set_contrast_control_bounds_reversed, 
+					    0, 1, 1, 1);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_contrast_control_amp, g_contrast_control_amp_w, H_contrast_control_amp,
 					    S_setB S_contrast_control_amp, g_set_contrast_control_amp_w, g_set_contrast_control_amp_reversed, 0, 1, 1, 1);

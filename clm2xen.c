@@ -5746,6 +5746,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_make_file2frame,
 	       S_make_file2sample,
 	       S_make_filter,
+	       S_make_fir_coeffs,
 	       S_make_fir_filter,
 	       S_make_formant,
 	       S_make_frame,

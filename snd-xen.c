@@ -1638,7 +1638,9 @@ static XEN g_set_window_height(XEN height)
   val = (Latus)XEN_TO_C_INT_OR_ELSE(height, 0);
   if ((val > 0) && (val < snd_screen_height()))
     {
+#if (!USE_NO_GUI)
       set_widget_height(MAIN_SHELL(ss), val);
+#endif
       ss->init_window_height = val;
     }
   return(height);
@@ -1652,7 +1654,9 @@ static XEN g_set_window_width(XEN width)
   val = (Latus)XEN_TO_C_INT_OR_ELSE(width, 0);
   if ((val > 0) && (val < snd_screen_width()))
     {
+#if (!USE_NO_GUI)
       set_widget_width(MAIN_SHELL(ss), val);
+#endif
       ss->init_window_width = val;
     }
   return(width);

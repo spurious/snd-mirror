@@ -1084,7 +1084,7 @@ static enved_fft *new_enved_fft(chan_info *cp)
 	  int i, old_size;
 	  old_size = efs->size;
 	  efs->ffts = (enved_fft **)REALLOC(efs->ffts, (cp->edit_ctr + 1) * sizeof(enved_fft *));
-	  for (i = old_size; i < cp->edit_ctr; i++) efs->ffts[i] = NULL;
+	  for (i = old_size; i <= cp->edit_ctr; i++) efs->ffts[i] = NULL;
 	}
       else efs->ffts = (enved_fft **)CALLOC(cp->edit_ctr + 1, sizeof(enved_fft *));
       efs->size = cp->edit_ctr + 1;

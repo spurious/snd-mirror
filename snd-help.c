@@ -378,7 +378,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
-12-Feb:  menues.scm and many other improvements thanks to Kjetil S. Matheussen.\n\
+12-Feb:  gui.scm and many other improvements thanks to Kjetil S. Matheussen.\n\
 11-Feb:  added optional truncate arg to file-selection\n\
 9-Feb:   channels-equal? and channels=? in extensions.scm\n\
          play-sine, play-sines, open-play-oputput in play.scm.\n\

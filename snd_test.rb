@@ -1184,6 +1184,12 @@ end
 #   close_sound oboe
 # end
 
+if not provided? "snd-motif" then
+  exit
+end
+if not provided? "xm" then
+  exit
+end
 
 # from test 25
 snd_display "test 25"

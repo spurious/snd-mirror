@@ -718,7 +718,7 @@ static void set_snd_contrast_1(snd_info *sp, Float val, bool setadj)
   char *sfs;
   GtkObject *adj;
   sp->contrast_control = val;
-  scrollval = val / 10.0;
+  scrollval = (val - sp->contrast_control_min) / (sp->contrast_control_max - sp->contrast_control_min);
   sfs = prettyf(sp->contrast_control, 2);
   fill_number(sfs, contrast_number_buffer);
   gtk_label_set_text(GTK_LABEL(CONTRAST_LABEL(sp)), contrast_number_buffer);
@@ -738,9 +738,9 @@ void set_snd_contrast(snd_info *sp, Float amp)
   else set_snd_contrast_1(sp, amp, true);
 }
 
-static Float get_snd_contrast(Float scrollval)
+static Float get_snd_contrast(Float minval, Float scrollval, Float maxval)
 {
-  return(scrollval * 10.0);
+  return(minval + scrollval * (maxval - minval));
 }
 
 static gboolean contrast_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -750,13 +750,14 @@ static gboolean contrast_click_callback(GtkWidget *w, GdkEventButton *ev, gpoint
   sx = sp->sgx;
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
     set_snd_contrast(sp, sp->last_contrast_control);
-  else set_snd_contrast(sp, 0.0);
+  else set_snd_contrast(sp, sp->contrast_control_min);
   return(false);
 }
 
 static void contrast_changed_callback(GtkAdjustment *adj, gpointer data)
 {
-  set_snd_contrast_1((snd_info *)data, get_snd_contrast((Float)(adj->value)), false);
+  snd_info *sp = (snd_info *)data;
+  set_snd_contrast_1(sp, get_snd_contrast(sp->contrast_control_min, (Float)(adj->value), sp->contrast_control_max), false);
 }
 
 static gboolean contrast_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)

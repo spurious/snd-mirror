@@ -2930,6 +2930,16 @@ Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
       qj = q * (am - j - 1);
       for (i = 1, x = qj; i < m; i++, x += qj)
 	xt += (envl[i] * cos(x));
+      /* we could use waveshaping here and get a major speedup via:
+       * 
+       *  Float *cheby;
+       *  cheby = mus_partials2polynomial(m, envl, 1);
+       *  for (j = 0, jj = n - 1; j < m; j++, jj--)
+       *    a[j] = scl * (xt0 + mus_polynomial(cheby, cos(q * (am - j -1)), m));
+       *
+       * but the highest term is always 2^i * envl[i], and in large spectra (i > 8192 for example)
+       *  this causes numerical overflows.
+       */
       a[j] = xt * scl;
       a[jj] = a[j];
     }

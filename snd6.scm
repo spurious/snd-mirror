@@ -73,22 +73,15 @@
 (define (mus-sound-set-maxamp file vals) (set! (mus-sound-maxamp file) vals))
 
 (define (dismiss-all-dialogs)
-  (define (is-active? dialog)
-    (if (provided? 'xm)
-	(XtIsManaged dialog)
-	#t))
-  (define (deactivate dialog)
-    (if (provided? 'xm)
-	(XtUnmanageChild dialog)
-	(if (provided? 'xg)
-	    (gtk_widget_hide dialog))))
-  (if (or (provided? 'snd-gtk)
-	  (provided? 'snd-motif))
+  (if (provided? 'xm)
       (for-each
        (lambda (dialog)
 	 (if dialog
-	     (if (is-active? dialog)
-		 (deactivate dialog))))
+	     (if (provided? 'snd-motif)
+		 (if (XtIsManaged dialog)
+		     (XtUnmanageChild dialog))
+		 (if (provided? 'snd-gtk)
+		     (gtk_widget_hide dialog)))))
        (dialog-widgets))))
 
 (define change-property change-window-property)

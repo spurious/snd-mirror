@@ -227,8 +227,11 @@ void initialize_control_panel(snd_info *sp)
   if (DEFAULT_SPEED_CONTROL > 0.0) sp->speed_control_direction = 1; else sp->speed_control_direction = -1;
   sp->contrast_control_p = DEFAULT_CONTRAST_CONTROL_P;
   sp->contrast_control = DEFAULT_CONTRAST_CONTROL;
-  sp->last_contrast_control = 0.0;
-  sp->saved_contrast_control = 0.0;
+  sp->contrast_control_min = DEFAULT_CONTRAST_CONTROL_MIN;
+  sp->contrast_control_max = DEFAULT_CONTRAST_CONTROL_MAX;
+  sp->contrast_control_amp = DEFAULT_CONTRAST_CONTROL_AMP;
+  sp->last_contrast_control = DEFAULT_CONTRAST_CONTROL_MIN;
+  sp->saved_contrast_control = DEFAULT_CONTRAST_CONTROL_MIN;
   sp->reverb_control_p = DEFAULT_REVERB_CONTROL_P;
   sp->filter_control_p = DEFAULT_FILTER_CONTROL_P;
   sp->expand_control_length = DEFAULT_EXPAND_CONTROL_LENGTH;
@@ -255,7 +258,6 @@ void initialize_control_panel(snd_info *sp)
     sp->filter_control_xmax = (Float)(SND_SRATE(sp) / 2);
   else sp->filter_control_xmax = 1.0;
   sp->filter_control_changed = false;
-  sp->contrast_control_amp = DEFAULT_CONTRAST_CONTROL_AMP;
   sp->saved_controls = NULL;
 }
 

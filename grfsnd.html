@@ -176,8 +176,8 @@ Here's a more elaborate initialization file:
 (add-hook! <a class=quiet href="extsnd.html#mouseenterlistenerhook">mouse-enter-listener-hook</a>
   (lambda (widget) 
     (<a class=quiet href="extsnd.html#focuswidget">focus-widget</a> widget)))
-(add-hook! <a class=quiet href="extsnd.html#mouseentertexthook">mouse-enter-text-hook
-</a> (lambda (w)
+(add-hook! <a class=quiet href="extsnd.html#mouseentertexthook">mouse-enter-text-hook</a> 
+  (lambda (w)
     (<a class=quiet href="extsnd.html#focuswidget">focus-widget</a> w)))
 
 (set! (<a class=quiet href="extsnd.html#savedir">save-dir</a>) "/zap/snd")        ;save-state files are placed in /zap/snd
