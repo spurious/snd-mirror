@@ -40,8 +40,7 @@
  * snd-scm.c in the Snd package; others can be found in the CLM package, (clm2scm.c).
  */
 
-/* TODO: set! for vct-ref?
- * TODO  offsets for vct-*?
+/* TODO  offsets for vct-*?
  */
 
 #if defined(HAVE_CONFIG_H)
@@ -624,5 +623,9 @@ void init_vct(void)
   DEFINE_PROC(gh_new_procedure(S_vcts_mapB,SCM_FNC vcts_map,0,0,1),H_vcts_mapB);
   DEFINE_PROC(gh_new_procedure(S_vcts_doB, SCM_FNC vcts_do,0,0,1), H_vcts_doB);
   DEFINE_PROC(gh_new_procedure3_0(S_vct_moveB,     vct_move),      H_vct_moveB);
+#if USE_SND
+  define_procedure_with_setter(S_vct_ref,SCM_FNC vct_ref,H_vct_ref,
+			       "set-" S_vct_ref,SCM_FNC vct_set,local_doc,2,0,3,0);
+#endif
 }
 #endif

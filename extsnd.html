@@ -784,7 +784,7 @@ functions:</p>
   <b><a name="vctpeak">vct-peak</a></b>          (vobj)            abs max val in vobj
   <b><a name="vctref">vct-ref</a></b>           (vobj pos)        value in vobj's data at location pos.
   <b><a name="vctscale">vct-scale!</a></b>        (vobj scl)        vobj[i] *= scl, returns vobj.
-  <b><a name="vctset">vct-set!</a></b>          (vobj pos val)    set vobj's data at location pos to val.
+  <b><a name="vctset">vct-set!</a></b>          (vobj pos val)    set vobj's data at location pos to val (same as (set! (vct-ref ...) val)).
   <b><a name="vctsubtract">vct-subtract!</a></b>     (vobj1 vobj2)     vobj1[i] -= vobj2[i], returns vobj1.
   <b><a name="vct2list">vct-&gt;list</a></b>         (v1)              return list with elements of vct <i>v1</i>
   <b><a name="vct2samples">vct-&gt;samples</a></b>      (samp samps data <i>snd chn</i>) synonym for <a href="#sndsetsamples">set-samples</a>.

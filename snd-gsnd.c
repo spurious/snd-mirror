@@ -1084,8 +1084,12 @@ void set_snd_filter_order(snd_info *sp, int order)
 
 static void filter_order_callback(GtkWidget *w, gpointer data)
 {
+  int order;
   snd_info *sp = (snd_info *)data;
-  sp->filter_order = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(w_snd_filter_order(sp)));
+  order = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(w_snd_filter_order(sp)));
+  if (order&1) order++;
+  if (order<=0) order = 2;
+  sp->filter_order = order;
   set_snd_filter_order_1(sp,sp->filter_order,FALSE);
 }
 

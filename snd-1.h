@@ -659,8 +659,9 @@ void file_change_samples(int beg, int num, char *tempfile, chan_info *cp, int ch
 void file_override_samples(int num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, char *origin);
 Float sample (int samp, chan_info *cp);
 snd_fd *free_snd_fd(snd_fd *sf);
+
 snd_fd *init_sample_read(int samp, chan_info *cp, int direction);
-snd_fd *init_sample_read_any (int samp, chan_info *cp, int direction, int edit_position);
+snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_position);
 __inline__ MUS_SAMPLE_TYPE next_sample(snd_fd *sf);
 __inline__ MUS_SAMPLE_TYPE previous_sample(snd_fd *sf);
 __inline__ MUS_SAMPLE_TYPE next_sample_unscaled(snd_fd *sf);

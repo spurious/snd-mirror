@@ -154,9 +154,13 @@ int tick_amp_env(chan_info *cp, env_state *es)
   if (es->slice == 0)
     {
       if (ep->top_bin != 0)
-	lm = (ep->top_bin - ep->bin);
+	lm = (ep->top_bin - ep->bin + 1);
       else lm = (ep->amp_env_size - ep->bin);
-      if (lm > MULTIPLIER) lm = MULTIPLIER;
+      if (lm <= 0) 
+	lm = 1;
+      else 
+	if (lm > MULTIPLIER) 
+	  lm = MULTIPLIER;
       sb = ep->bin;
       if ((cp->edit_ctr != 0) || 
 	  (ep->samps_per_bin < (2*AMP_ENV_SUBSAMPLE)))
@@ -242,10 +246,12 @@ int tick_amp_env(chan_info *cp, env_state *es)
 
       es->m += es->amp_buffer_size;
       ep->bin += lm;
-      if (es->m >= es->samples) 
+      if ((es->m >= es->samples) || (ep->bin >= ep->top_bin))
 	{
 	  es->slice++;
 	  if (es->sf) es->sf = free_snd_fd(es->sf);
+	  ep->completed = 1;
+	  return(TRUE);
 	}
       return(FALSE);
     }

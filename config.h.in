@@ -29,6 +29,7 @@
 #undef HAVE_SIGNAL
 #undef HAVE_MEMSET
 #undef HAVE_FINITE
+#undef HAVE_ISNAN
 
 #undef STDC_HEADERS
 #undef TM_IN_SYS_TIME

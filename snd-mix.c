@@ -3421,7 +3421,7 @@ static SCM g_mix_sound(SCM file, SCM start_samp)
   if (mus_file_probe(filename))
     err = mix(beg,mus_sound_frames(filename),sp->nchans,sp->chans,filename,DONT_DELETE_ME,S_mix_sound,with_mix_tags(ss)); 
   else err = -1;
-  if (filename) free(filename);
+  if (filename) FREE(filename);
   if (err == -1) return(scm_throw(NO_SUCH_FILE,SCM_LIST3(gh_str02scm(S_mix_sound),file,gh_str02scm(strerror(errno)))));
   RTNINT(err);
 }

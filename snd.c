@@ -249,7 +249,7 @@ static void mus_print2snd(char *msg)
   if (md)
     {
       long long mem;
-      fscanf(md,"        total:    used:    free:  shared: buffers:  cached:\nMem:  %Ld",&mem);
+      fscanf(md,"        total:    used:    free:  shared: buffers:  cached:\nMem:  %Ld",&mem); /* %lld on SGI? */
       fclose(md);
       ss->memory_available = mem / 1024;
     }

@@ -53,6 +53,9 @@
   #ifdef __GNUC__
     #define HAVE_LONG_LONGS 1
   #endif
+  #ifdef LINUX
+    #define HAVE_ISNAN 1
+  #endif
   #ifndef BEOS
     #define HAVE_X 1
   #endif

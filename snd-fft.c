@@ -195,16 +195,27 @@ static Float lambda[NSE] = {0.000000000000000000,-2.08424632126539366,-5.7892863
 			    -35.0617158334443104,-83.3258406398958158,-210.358805421311445,-6673.64911325382036,-34897.7050244132261};
 
 typedef struct abeltStruct {int n; Float **a,**b0,**b1;} abelt;
-static abelt *at = NULL;
+static abelt *atdat = NULL;
 
 static void make_abel_transformer(int n)
 {
   int i,j,nse=NSE;
   Float **a,**b0,**b1,fi,hj,lambdaj,scale,temp;
-  if ((!at) || (at->n != n))
+  if ((!atdat) || (atdat->n != n))
     {
-      if (at) {for (i=0;i<at->n;i++) {FREE(at->a[i]); FREE(at->b0[i]); FREE(at->b1[i]);} FREE(at->a); FREE(at->b0); FREE(at->b1);}
-      else at = (abelt *)CALLOC(1,sizeof(abelt));
+      if (atdat) 
+	{
+	  for (i=0;i<atdat->n;i++) 
+	    {
+	      FREE(atdat->a[i]); 
+	      FREE(atdat->b0[i]); 
+	      FREE(atdat->b1[i]);
+	    } 
+	  FREE(atdat->a);
+	  FREE(atdat->b0);
+	  FREE(atdat->b1);
+	}
+      else atdat = (abelt *)CALLOC(1,sizeof(abelt));
       a = (Float **)CALLOC(n,sizeof(Float *));
       b0 = (Float **)CALLOC(n,sizeof(Float *));
       b1 = (Float **)CALLOC(n,sizeof(Float *));
@@ -228,10 +239,10 @@ static void make_abel_transformer(int n)
 	      b1[i][j] = -scale * (lambdaj+1.0+fi-fi*temp);
 	    }
 	}
-      at->n = n;
-      at->a = a;
-      at->b0 = b0;
-      at->b1 = b1;
+      atdat->n = n;
+      atdat->a = a;
+      atdat->b0 = b0;
+      atdat->b1 = b1;
     }
 }
 
@@ -239,10 +250,10 @@ static void abel (Float *f, Float *g)
 {
   int i,j,n,nse=NSE;
   Float **a,**b0,**b1,xi[NSE],sum,fi,fip1;
-  n = at->n;
-  a = at->a;
-  b0 = at->b0;
-  b1 = at->b1;
+  n = atdat->n;
+  a = atdat->a;
+  b0 = atdat->b0;
+  b1 = atdat->b1;
   fi = f[n-1];
   g[0] = 0.5*f[0]+fi;
   for (j=0,sum=0.0; j<nse; ++j)
@@ -1264,7 +1275,7 @@ static int apply_fft_window(fft_state *fs)
   
   if (cp->transform_type == FOURIER) pad = fs->pad_zero;
   data_len = (int)(fs->size / (1+pad));
-  if ((show_selection_transform(ss)) && (selection_is_active_in_channel(cp)))
+  if ((show_selection_transform(ss)) && (selection_is_active_in_channel(cp)) && (fs->datalen > 0))
     {
       ind0 = fs->databeg;
       if (cp->fft_style == NORMAL_FFT) data_len = fs->datalen;
@@ -1434,9 +1445,12 @@ static int display_snd_fft(fft_state *fs)
 	  for (j=0;j<sp->nchans;j++)
 	    {
 	      ncp = sp->chans[j];
-	      nfp = ncp->fft;
-	      tdata = nfp->data;
-	      for (i=lo;i<hi;i++) if (tdata[i]>data_max) data_max=tdata[i];
+	      if ((ncp->ffting) && (ncp->fft)) /* normalize-by-sound but not ffting all chans? */
+		{
+		  nfp = ncp->fft;
+		  tdata = nfp->data;
+		  for (i=lo;i<hi;i++) if (tdata[i]>data_max) data_max=tdata[i];
+		}
 	    }
 	}
       else

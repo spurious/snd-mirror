@@ -830,16 +830,19 @@ typedef struct {
   snd_state *ss;
 } dac_state;
 
-static void free_dac_state(dac_state *dacp)
+static dac_state *snd_dacp = NULL;
+
+static void free_dac_state(void)
 {
-  if (dacp)
+  if (snd_dacp)
     {
-      if (dacp->chans_per_device) FREE(dacp->chans_per_device);
-      FREE(dacp);
+      if (snd_dacp->chans_per_device) FREE(snd_dacp->chans_per_device);
+      FREE(snd_dacp);
+      snd_dacp = NULL;
     }
 }
 
-static char *describe_dac(dac_state *dacp, int error_type)
+static char *describe_dac(int error_type)
 {
   /* TODO: pass back the relevant dac state given the error indication */
   int players=0,i;
@@ -856,7 +859,6 @@ static BACKGROUND_TYPE dac_in_background(GUI_POINTER ptr);
 
 static void start_dac(snd_state *ss, int srate, int channels, int background)
 {
-  dac_state *dacp = NULL;
   dac_info *dp;
   int i;
   /* look for channel folding cases etc */
@@ -884,22 +886,23 @@ static void start_dac(snd_state *ss, int srate, int channels, int background)
    */
   if (!dac_running)
     {
-      dacp = (dac_state *)CALLOC(1,sizeof(dac_state));
-      dacp->slice = 0;
-      dacp->ss = ss;
-      dacp->srate = srate;
-      dacp->out_format = MUS_COMPATIBLE_FORMAT;
-      if (dacp->srate <= 0) dacp->srate = 44100;
-      dacp->channels = channels;
-      dacp->frames = 256; /* just a first guess */
-      dacp->devices = 1;  /* just a first guess */
-      dacp->reverb_ring_frames = (int)(srate * reverb_decay(ss));
+      if (snd_dacp) free_dac_state();
+      snd_dacp = (dac_state *)CALLOC(1,sizeof(dac_state));
+      snd_dacp->slice = 0;
+      snd_dacp->ss = ss;
+      snd_dacp->srate = srate;
+      snd_dacp->out_format = MUS_COMPATIBLE_FORMAT;
+      if (snd_dacp->srate <= 0) snd_dacp->srate = 44100;
+      snd_dacp->channels = channels;
+      snd_dacp->frames = 256; /* just a first guess */
+      snd_dacp->devices = 1;  /* just a first guess */
+      snd_dacp->reverb_ring_frames = (int)(srate * reverb_decay(ss));
       if (background == IN_BACKGROUND) 
-	BACKGROUND_ADD(ss,dac_in_background,(GUI_POINTER)dacp);
+	BACKGROUND_ADD(ss,dac_in_background,NULL);
       else
 	{
 	  /* here we want to play as an atomic (not background) action */
-	  while (dac_in_background((GUI_POINTER)dacp) == BACKGROUND_CONTINUE)
+	  while (dac_in_background(NULL) == BACKGROUND_CONTINUE)
 	    {
 	      check_for_event(ss); /* need to be able to C-g out of this */
 	      /* if ((sp) && (!(sp->inuse))) break; */
@@ -1352,10 +1355,10 @@ static void unset_dac_print(void)
   mus_print_set_handler(old_dac_printer);
 }
 
-static void dac_error(dac_state *dacp, const char *file, int line, const char *function)
+static void dac_error(const char *file, int line, const char *function)
 {
   snd_error("can't play %s\n  (%s)\n  [%s[%d] %s]",
-	    describe_dac(dacp,0),
+	    describe_dac(0),
 	    (last_print) ? last_print : "reason not known",
 	    file,line,function);
 }
@@ -1647,12 +1650,11 @@ static int start_audio_output_1 (dac_state *dacp)
 		{
 		  mus_audio_close(alsa_devices[out_dev[i]]);
 		}
-	      dac_error(dacp,__FILE__,__LINE__,__FUNCTION__);
+	      dac_error(__FILE__,__LINE__,__FUNCTION__);
 	      dac_running = 0;
 	      unlock_recording_audio();
 	      if (global_reverb) {free_reverb(global_reverb); global_reverb = NULL;}
 	      max_active_slot = -1;
-	      free_dac_state(dacp); 
 	      return(FALSE);
 	    }
 	}
@@ -1716,7 +1718,7 @@ static int start_audio_output_1 (dac_state *dacp)
       unset_dac_print();
       if (dev_fd[0] == MUS_ERROR)
 	{
-	  dac_error(dacp,__FILE__,__LINE__,__FUNCTION__);
+	  dac_error(__FILE__,__LINE__,__FUNCTION__);
 	  stop_audio_output(dacp);
 	  return(FALSE);
 	}
@@ -1763,7 +1765,7 @@ static int start_audio_output_1 (dac_state *dacp)
   unset_dac_print();
   if (dev_fd[0] == MUS_ERROR)
     {
-      dac_error(dacp,__FILE__,__LINE__,__FUNCTION__);
+      dac_error(__FILE__,__LINE__,__FUNCTION__);
       stop_audio_output(dacp);
       return(FALSE);
     }
@@ -1820,7 +1822,6 @@ static void stop_audio_output (dac_state *dacp)
    if (global_reverb) {free_reverb(global_reverb); global_reverb = NULL;}
    max_active_slot = -1;
    unlock_apply(dacp->ss,NULL);
-   free_dac_state(dacp);
 }
 
 static BACKGROUND_TYPE dac_in_background(GUI_POINTER ptr)
@@ -1829,28 +1830,29 @@ static BACKGROUND_TYPE dac_in_background(GUI_POINTER ptr)
    *       1: loop sending data until the play_list is empty or some error (C-g) happens
    *       2: try to close all active outputs and remove background procedure
    */
-  dac_state *dacp = (dac_state *)ptr;
-  switch (dacp->slice)
+  if (snd_dacp == NULL) return(BACKGROUND_QUIT);
+  switch (snd_dacp->slice)
     {
     case 0:
-      if (start_audio_output(dacp))
+      if (start_audio_output(snd_dacp))
 	{
-	  dacp->slice = 1;
+	  snd_dacp->slice = 1;
 	  return(BACKGROUND_CONTINUE);
 	}
       else 
 	{
-	  free_dac_state(dacp);
+	  free_dac_state();
 	  return(BACKGROUND_QUIT);
 	}
       break;
     case 1:
-      fill_dac_buffers(dacp,WRITE_TO_DAC);
-      if ((!global_reverbing) && (play_list_members == 0)) dacp->slice = 2;
+      fill_dac_buffers(snd_dacp,WRITE_TO_DAC);
+      if ((!global_reverbing) && (play_list_members == 0)) snd_dacp->slice = 2;
       return(BACKGROUND_CONTINUE);
       break;
      case 2:
-       stop_audio_output(dacp);
+       stop_audio_output(snd_dacp);
+       free_dac_state();
        return(BACKGROUND_QUIT);
        break;
      }
@@ -1859,8 +1861,6 @@ static BACKGROUND_TYPE dac_in_background(GUI_POINTER ptr)
  
 
 /* ---------------- support for Apply button (snd-apply.c) ---------------- */
-
-static dac_state *apply_dacp = NULL;
 
 void initialize_apply(snd_info *sp, int chans, int dur)
 {
@@ -1872,19 +1872,20 @@ void initialize_apply(snd_info *sp, int chans, int dur)
   play_list_members = 0;
 
   dac_running = 1; /* this keeps start_dac from actually starting the dac */
-  apply_dacp = (dac_state *)CALLOC(1,sizeof(dac_state));
-  apply_dacp->slice = 0;
-  apply_dacp->ss = ss;
-  apply_dacp->srate = SND_SRATE(sp);
-  apply_dacp->out_format = MUS_COMPATIBLE_FORMAT;
-  if (apply_dacp->srate <= 0) apply_dacp->srate = 44100;
-  apply_dacp->channels = chans;
-  apply_dacp->frames = 8192;
-  apply_dacp->devices = 1;
-  apply_dacp->chans_per_device = (int *)CALLOC(1,sizeof(int));
-  apply_dacp->chans_per_device[0] = chans;
-  apply_dacp->reverb_ring_frames = (int)(apply_dacp->srate * reverb_decay(ss));
-  make_dac_buffers(apply_dacp);
+  if (snd_dacp) free_dac_state();
+  snd_dacp = (dac_state *)CALLOC(1,sizeof(dac_state));
+  snd_dacp->slice = 0;
+  snd_dacp->ss = ss;
+  snd_dacp->srate = SND_SRATE(sp);
+  snd_dacp->out_format = MUS_COMPATIBLE_FORMAT;
+  if (snd_dacp->srate <= 0) snd_dacp->srate = 44100;
+  snd_dacp->channels = chans;
+  snd_dacp->frames = 8192;
+  snd_dacp->devices = 1;
+  snd_dacp->chans_per_device = (int *)CALLOC(1,sizeof(int));
+  snd_dacp->chans_per_device[0] = chans;
+  snd_dacp->reverb_ring_frames = (int)(snd_dacp->srate * reverb_decay(ss));
+  make_dac_buffers(snd_dacp);
   switch (ss->apply_choice)
     {
     case APPLY_TO_SOUND: 
@@ -1909,16 +1910,15 @@ void finalize_apply(snd_info *sp)
   play_list_members = 0;
   sp->playing = 0;
   dac_running = 0;
-  free_dac_state(apply_dacp);
-  apply_dacp = NULL;
+  if (snd_dacp) free_dac_state();
   if (global_reverb) {free_reverb(global_reverb); global_reverb=NULL;}
 }
 
 int run_apply(int ofd)
 {
   int len;
-  len = fill_dac_buffers(apply_dacp,WRITE_TO_FILE);
-   mus_file_write(ofd,0,len-1,apply_dacp->channels,dac_buffers);
+  len = fill_dac_buffers(snd_dacp,WRITE_TO_FILE);
+   mus_file_write(ofd,0,len-1,snd_dacp->channels,dac_buffers);
   return(len);
 }
 

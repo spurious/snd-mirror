@@ -32,8 +32,8 @@
 
 (if (file-exists? "sndlib.gdbm") (delete-file "sndlib.gdbm"))
 
-(define tests 1)
-(define snd-test -2)
+(define tests 50)
+(define snd-test -1)
 (define full-test #t)
 
 (define include-clm #f)
@@ -4179,6 +4179,8 @@
 		    (list 'zoom-focus-style #f 0 set-zoom-focus-style 3))))
 	  
 	  (save-options "hiho.scm")
+	  (if (not (= (transform-type) fourier-transform))
+	      (set! (fft-size) (min (fft-size) 128)))
 	  )))
       (if open-files (map close-sound open-files))
       (set! open-files '())

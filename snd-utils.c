@@ -570,9 +570,10 @@ char *mem_stats(snd_state *ss, int ub)
 	  chns += sp->allocated_chans;
 	}
     }
-  sprintf(result,"snd mem: %s (%s%s), %d sounds, %d chans (%s)\n",
-	  ksum=kmg(sum),kptrs=kmg(ptrs),
-	  (forgetting) ? "+" : "",snds,chns,
+  sprintf(result,"snd mem: %s (%s%s ptrs), %d sounds, %d chans (%s)\n",
+	  ksum=kmg(sum),
+	  kptrs=kmg(ptrs),(forgetting) ? "+" : "",
+	  snds,chns,
 	  (chns>0) ? (kpers=kmg(ub / chns)) : "");
   if (ksum) free(ksum);
   if (kptrs) free(kptrs);
@@ -610,7 +611,7 @@ void mem_report(void)
 
   time(&ts);
   strftime(time_buf,TIME_STR_SIZE,STRFTIME_FORMAT,localtime(&ts));
-  fprintf(Fp,"memlog: %s\n\n",time_buf);
+  fprintf(Fp,"memlog: %s: %s\n\n",time_buf,mem_stats(get_global_state(),0));
 
   for (i=0;i<=mem_location;i++)
     {

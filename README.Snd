@@ -315,6 +315,14 @@ vanilla Guile (i.e. without threads).  You'll need to make a
 version of the guile library that doesn't require libqt, or
 build Snd from the sources and include -lqt in the LIBS statement.
 
+If you get some complaint along these lines:
+
+> only packages with major numbers <= 3 are supported by this version of RPM
+> error: snd-4-8.i386.rpm cannot be installed
+
+it means you need to upgrade your version of RPM; apparently
+version 3.0.5 is good enough.
+
 
 NeXT:
 On the NeXT, Snd compiles and loads, but dies during start up while

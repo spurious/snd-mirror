@@ -1,7 +1,6 @@
 #include "snd.h"
 
 /* TODO  some of the guile tie-ins are still in snd-scm
- * TODO  should channel-sync field be tied to sound's syncing field? (channel-sync is currently unused)
  * TODO  C-g should flush pending X events (not sure how to do this given background events etc)
  */
 
@@ -641,7 +640,7 @@ void set_x_bounds(axis_info *ap)
   if (ap->xmax <= ap->xmin) ap->xmax = ap->xmin+.001;
   range = ap->zx*(ap->xmax - ap->xmin);
   ap->x0 = ap->xmin + ap->sx*(ap->xmax - ap->xmin);
-#ifdef LINUX
+#if HAVE_ISNAN
   if (isnan(ap->x0)) ap->x0 = 0.0;
 #endif
   ap->x1 = (ap->x0 + range);
@@ -711,7 +710,7 @@ static void set_x_axis_x0(chan_info *cp, int left)
 	{
 	  x1x0 = ap->x1 - ap->x0; 
 	  ap->x0 = (double)left / (double)SND_SRATE(cp->sound); 
-#ifdef LINUX
+#if HAVE_ISNAN
 	  if (isnan(ap->x0)) ap->x0 = 0.0;
 #endif
 	  set_x_axis_x0x1(cp,ap->x0,ap->x0 + x1x0);
@@ -886,7 +885,7 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp, int focus_s
 	    }
 	  break;
 	}
-#ifdef LINUX
+#if HAVE_ISNAN
       if (isnan(ap->x0)) ap->x0 = 0.0;
 #endif
       if (ap->x0 < 0.0) ap->x0 = 0.0;
@@ -4357,7 +4356,7 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
   si = sc->si;
   sfs = sc->sfs;
   scdur = sc->dur;
-  
+
   if ((!ur_a) && (!over_selection) && (order > 512) && ((int)((current_ed_samples(ncp)+order)/128) < ss->memory_available))
     {
       /* use convolution if order is large and there's memory available (and not over_selection) */
@@ -4433,7 +4432,11 @@ void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origi
     {
       if (ur_a)
 	a = ur_a;
-      else a = get_filter_coeffs(order,e);
+      else 
+	{
+	  if (order&1) order++;
+	  a = get_filter_coeffs(order,e);
+	}
       if (!a) return;
       d = (Float *)CALLOC(order,sizeof(Float));
       /* now filter all currently sync'd chans (one by one) */
@@ -7272,6 +7275,7 @@ void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_conte
   Float *coeffs = NULL;
   int height,width,i,pts,x0,y0,x1,y1;
   Float samps_per_pixel,invpts,resp,frq,pix;
+  if (order&1) order++;
   coeffs = get_filter_coeffs(order,e);
   if (!coeffs) return;
   height = (ap->y_axis_y1 - ap->y_axis_y0);

@@ -52,3 +52,9 @@ Noise reduction.
 dB display in VU meters (in the record dialog).  A nicer VU meter background.
 
 loop syntax filled in (loop.scm)
+
+finish the with-sound translation so Snd's is basically the same as CLM's.
+
+Perhaps support for FFTW (replacing mus_fft in clm.c).  (My initial
+timing tests indicate that FFTW's fft is noticeably faster than
+the one currently used by clm.c).

@@ -249,6 +249,16 @@ if test "$snd_cv_long_longs" = yes; then
   AC_DEFINE(HAVE_LONG_LONGS)
 fi
 
+dnl from fftw's configure.in
+AC_MSG_CHECKING([for isnan])
+AC_TRY_LINK([#include <math.h>
+], if (!isnan(3.14159)) isnan(2.7183);, ok=yes, ok=no)
+if test "$ok" = "yes"; then
+	AC_DEFINE(HAVE_ISNAN)
+fi
+AC_MSG_RESULT(${ok})
+
+
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME
 AC_CHECK_FUNCS(getcwd strerror tempnam strtok mallinfo readlink setlocale access opendir sleep signal memset finite)

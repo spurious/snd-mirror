@@ -138,6 +138,7 @@ void add_dialog(snd_state *ss, GtkWidget *dialog)
 
 void dismiss_all_dialogs(snd_state *ss)
 {
+  /* TODO: why don't all the dialogs actually go away?? */
   state_context *sx;
   int i;
   sx = ss->sgx;

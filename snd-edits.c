@@ -1801,7 +1801,8 @@ snd_fd *free_snd_fd(snd_fd *sf)
   int current_location(snd_fd *sf) {return(sf->cb[ED_OUT] - sf->cb[ED_BEG] + sf->beg + (((int)(sf->view_buffered_data) - (int)(sf->first))>>2));}
 #endif
 
-snd_fd *init_sample_read_any (int samp, chan_info *cp, int direction, int edit_position)
+
+snd_fd *init_sample_read_any(int samp, chan_info *cp, int direction, int edit_position)
 {
   snd_fd *sf;
   snd_info *sp;

@@ -954,7 +954,10 @@ void mus_sndlib2scm_initialize(void)
   DEFINE_PROC(gh_new_procedure2_0(S_mus_sound_seek_frame,g_seek_sound_frame),H_mus_sound_seek_frame);
   DEFINE_PROC(gh_new_procedure5_0(S_mus_audio_open_output,g_open_audio_output),H_mus_audio_open_output);
   DEFINE_PROC(gh_new_procedure5_0(S_mus_audio_open_input,g_open_audio_input),H_mus_audio_open_input);
-
+#if USE_SND
+  define_procedure_with_setter(S_sound_data_ref,SCM_FNC sound_data_ref,H_sound_data_ref,
+			       "set-" S_sound_data_ref,SCM_FNC sound_data_set,local_doc,3,0,4,0);
+#endif
 #if DEBUGGING
   gh_new_procedure0_0("mus-sound-print-cache",g_sound_print_cache);
 #endif
