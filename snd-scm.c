@@ -4,6 +4,9 @@
 /* TODO: perhaps fit-data-on-open should be fit-data, callable via hooks at open time
  *       mark-moved-hook? selection-creation-hook? sample-color?
  *       need to redirect scheme display output to snd's listener somehow
+ *          (define %display display)
+ *          (define (display arg) (with-output-to-string (lambda () (%display arg))))
+ *          -- this works for display called from top-level in listener
  */
 
 #if HAVE_GUILE
@@ -1760,59 +1763,40 @@ static SCM vct2soundfile(SCM g_fd, SCM obj, SCM g_nums)
 }
 
 
-static SCM mix_vct(SCM obj, SCM beg, SCM in_chans, SCM snd, SCM chn, SCM with_consoles)
+static SCM mix_vct(SCM obj, SCM beg, SCM snd, SCM chn, SCM with_consoles)
 {
-  #define H_mix_vct "(" S_mix_vct " data &optional (beg 0) (chans 1) snd chn (with-consoles #t)) mixes data\n\
-   (a vct object) into snd's channel chn starting at beg; data has chans channels of interleaved data. returns\n\
-   the new mix id"
+  #define H_mix_vct "(" S_mix_vct " data &optional (beg 0) snd chn (with-consoles #t)) mixes data\n\
+   (a vct object) into snd's channel chn starting at beg; returns the new mix id"
 
   vct *v;
-  int bg,chans;
+  int bg;
   chan_info *cp[1];
   MUS_SAMPLE_TYPE **data;
-  int i,j,k,len,num,mix_id=-1,with_mixers=1;
+  int i,len,mix_id=-1,with_mixers=1;
   SCM_ASSERT(vct_p(obj),obj,SCM_ARG1,S_mix_vct);
-  ERRCP(S_mix_vct,snd,chn,4);
+  ERRCP(S_mix_vct,snd,chn,3);
   ERRB2(beg,S_mix_vct);
-  ERRB3(in_chans,S_mix_vct);
-  SCM_ASSERT((bool_or_arg_p(with_consoles)),with_consoles,SCM_ARG6,S_mix_vct);
+  SCM_ASSERT((bool_or_arg_p(with_consoles)),with_consoles,SCM_ARG5,S_mix_vct);
   v = get_vct(obj);
   if (v)
     {
       len = v->length;
       cp[0] = get_cp(snd,chn,S_mix_vct);
       bg = g_scm2intdef(beg,0);
-      chans = g_scm2intdef(in_chans,1);
-      if (chans <= 0) 
-	scm_misc_error(S_mix_vct,"input channels = ~S?",in_chans);
+      if (bg < 0)
+	scm_misc_error(S_mix_vct,"beg = ~S?",beg);
       else
 	{
-	  if (bg < 0)
-	    scm_misc_error(S_mix_vct,"beg = ~S?",beg);
-	  else
-	    {
-	      if (SCM_UNBNDP(with_consoles))
-		with_mixers = with_mix_consoles(state);
-	      else with_mixers = bool_int_or_one(with_consoles);
-	      num = len/chans;
-	      data = (MUS_SAMPLE_TYPE **)CALLOC(chans,sizeof(MUS_SAMPLE_TYPE *));
-	      for (i=0;i<chans;i++)
-		data[i] = (MUS_SAMPLE_TYPE *)CALLOC(num,sizeof(MUS_SAMPLE_TYPE));
-	      if (chans == 1)
-		{
-		  for (i=0;i<len;i++)
-		    data[0][i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
-		}
-	      else
-		{
-		  for (i=0,k=0;i<len;i+=chans,k++)
-		    for (j=0;j<chans;j++)
-		      data[j][k] = MUS_FLOAT_TO_SAMPLE(v->data[i+j]);
-		}
-	      mix_id = mix_array(bg,num,data,cp,chans,1,SND_SRATE(cp[0]->sound),S_mix_vct,with_mixers);
-	      for (i=0;i<chans;i++) FREE(data[i]);
-	      FREE(data);
-	    }
+	  if (SCM_UNBNDP(with_consoles))
+	    with_mixers = with_mix_consoles(state);
+	  else with_mixers = bool_int_or_one(with_consoles);
+	  data = (MUS_SAMPLE_TYPE **)CALLOC(1,sizeof(MUS_SAMPLE_TYPE *));
+	  data[0] = (MUS_SAMPLE_TYPE *)CALLOC(len,sizeof(MUS_SAMPLE_TYPE));
+	  for (i=0;i<len;i++)
+	    data[0][i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
+	  mix_id = mix_array(bg,len,data,cp,1,1,SND_SRATE(cp[0]->sound),S_mix_vct,with_mixers);
+	  FREE(data[0]);
+	  FREE(data);
 	}
     }
   scm_remember(&obj);
@@ -2507,15 +2491,6 @@ static SCM g_yes_or_no_p(SCM msg)
 }
 
 
-#if HAVE_OSS
-static SCM g_clear_audio_inputs (void) 
-{
-  #define H_clear_audio_inputs "(" S_clear_audio_inputs ") tries to reduce soundcard noise in Linux/OSS"
-  mus_audio_clear_soundcard_inputs(); 
-  return(SCM_BOOL_F);
-}
-#endif
-
 static SCM g_env_selection(SCM edata, SCM base, SCM snd_n, SCM chn_n)
 {
   #define H_env_selection "(" S_env_selection " env &optional (env-base 1.0) snd chn) applies envelope 'env'\n\
@@ -2953,6 +2928,16 @@ static SCM g_graph(SCM ldata, SCM xlabel, SCM x0, SCM x1, SCM y0, SCM y1, SCM sn
   display_channel_lisp_data(cp,cp->sound,cp->state);
   return(scm_return_first(SCM_BOOL_F,data));
 }
+
+
+#if HAVE_OSS
+static SCM g_clear_audio_inputs (void) 
+{
+  #define H_clear_audio_inputs "(" S_clear_audio_inputs ") tries to reduce soundcard noise in Linux/OSS"
+  mus_audio_clear_soundcard_inputs(); 
+  return(SCM_BOOL_F);
+}
+#endif
 
 static SCM g_set_oss_buffers(SCM num, SCM size)
 {
@@ -3439,7 +3424,7 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure(S_open_sound_file,SCM_FNC g_open_sound_file,0,4,0),H_open_sound_file);
   DEFINE_PROC(gh_new_procedure(S_close_sound_file,SCM_FNC g_close_sound_file,2,0,0),H_close_sound_file);
   DEFINE_PROC(gh_new_procedure(S_vct_sound_file,SCM_FNC vct2soundfile,3,0,0),H_vct_sound_file);
-  DEFINE_PROC(gh_new_procedure(S_mix_vct,SCM_FNC mix_vct,1,5,0),H_mix_vct);
+  DEFINE_PROC(gh_new_procedure(S_mix_vct,SCM_FNC mix_vct,1,4,0),H_mix_vct);
   DEFINE_PROC(gh_new_procedure(S_transform_size,SCM_FNC g_transform_size,0,2,0),H_transform_size);
   DEFINE_PROC(gh_new_procedure(S_transform_samples,SCM_FNC g_transform_samples,0,2,0),H_transform_samples);
   DEFINE_PROC(gh_new_procedure(S_transform_sample,SCM_FNC g_transform_sample,0,4,0),H_transform_sample);

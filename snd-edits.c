@@ -17,8 +17,10 @@
  *     to its fragment indices.  Any non-global edits would have to force the list to become explicit.
  *   To include a user-defined function, we'd need a wrapper for SCM procs and a tie into user-declared
  *     as-needed-input.
+ *   Even something simple like reverse needs a way to handle cut/paste pointers after the (virtual) reversal.
  *
  * A simpler version would allow only one level of this, and collapse it out if any further edits take place.
+ *   (problem is that amp env reads new form and that's just as expensive as writing it out)
  */
 
 
@@ -1719,7 +1721,7 @@ static MUS_SAMPLE_TYPE previous_sound (snd_fd *sf)
       indx = sf->beg-1;
       file_buffers_back(ind0,ind1,indx,sf,sf->current_sound);
     }
-  return(UNWRAP_SAMPLE(*sf->view_buffered_data--,sf->cb[ED_SCL]));
+  return((MUS_SAMPLE_TYPE)(UNWRAP_SAMPLE(*sf->view_buffered_data--,sf->cb[ED_SCL])));
 }
 
 static MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
@@ -1780,21 +1782,21 @@ static MUS_SAMPLE_TYPE next_sound (snd_fd *sf)
       indx = sf->end+1;
       file_buffers_forward(ind0,ind1,indx,sf,sf->current_sound);
     }
-  return(UNWRAP_SAMPLE(*sf->view_buffered_data++,sf->cb[ED_SCL]));
+  return((MUS_SAMPLE_TYPE)(UNWRAP_SAMPLE(*sf->view_buffered_data++,sf->cb[ED_SCL])));
 }
 
 __inline__ MUS_SAMPLE_TYPE next_sample(snd_fd *sf) /* "__inline__" probably not needed -- -O3 includes -finline-functions */
 {
   if (sf->view_buffered_data > sf->last)
     return(next_sound(sf));
-  else return(UNWRAP_SAMPLE(*sf->view_buffered_data++,sf->cb[ED_SCL]));
+  else return((MUS_SAMPLE_TYPE)(UNWRAP_SAMPLE(*sf->view_buffered_data++,sf->cb[ED_SCL])));
 }
 
 __inline__ MUS_SAMPLE_TYPE previous_sample(snd_fd *sf)
 {
   if (sf->view_buffered_data < sf->first)
     return(previous_sound(sf));
-  else return(UNWRAP_SAMPLE(*sf->view_buffered_data--,sf->cb[ED_SCL]));
+  else return((MUS_SAMPLE_TYPE)(UNWRAP_SAMPLE(*sf->view_buffered_data--,sf->cb[ED_SCL])));
 }
 
 __inline__ MUS_SAMPLE_TYPE next_sample_unscaled(snd_fd *sf)

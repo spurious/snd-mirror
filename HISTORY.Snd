@@ -1,5 +1,6 @@
 snd change log
 
+  6-Oct:     removed chans arg to mix-vct.
   4-Oct:     added enved-active-env and enved-selected-env.
   3-Oct:     scale-by and scale-to now use embedded fragment scalers.
   2-Oct:     added audio-input-device.

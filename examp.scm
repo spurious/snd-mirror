@@ -1817,9 +1817,9 @@
 		     (oscil carrier (+ vib (* ind-fuzz modulation))))))
       (if (= (channels) 2)
 	  (let ((bsamps (vct-copy out-data)))
-	    (mix-vct (vct-scale! bsamps (locsig-ref loc 1)) beg 1 #f 1 #f)
-	    (mix-vct (vct-scale! out-data (locsig-ref loc 0)) beg 1 #f 0 #f))
-	  (mix-vct out-data beg 1 #f 0 #f)))))
+	    (mix-vct (vct-scale! bsamps (locsig-ref loc 1)) beg #f 1 #f)
+	    (mix-vct (vct-scale! out-data (locsig-ref loc 0)) beg #f 0 #f))
+	  (mix-vct out-data beg #f 0 #f)))))
 
 ; (fm-violin 0 1 440 .1 :fm-index 2.0)
 
@@ -2579,7 +2579,7 @@
 ;;; if explode, each call makes a new mix
 ;;; should old-srate be *clm-srate* (i.e. nested calls carry down the outer setting?)
 
-;;; here's a better version courtesy of Kalle Olavi Niemitalo
+;;; here's a better version courtesy of K Olle
 ;;; but it doesn't seem to work in Guile 1.4 (it needs 1.4.1)
 ;;;
 ;;;(define* (with-sound-helper thunk #:key (srate 22050) (explode #f))

@@ -256,6 +256,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+6-Oct:   removed chans arg to mix-vct.\n\
 4-Oct:   added enved-active-env and enved-selected-env.\n\
 3-Oct:   scale-by and scale-to now use embedded fragment scalers.\n\
 2-Oct:   added audio-input-device.\n\

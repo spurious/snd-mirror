@@ -1,12 +1,7 @@
 #include "snd.h"
 
-#if (!SNDLIB_USE_FLOATS)
-  #define MUS_MIX_MAX (1 << 30)
-  #define MUS_MIX_MIN (-(MUS_MIX_MAX))
-#else
-  #define MUS_MIX_MAX 100.0
-  #define MUS_MIX_MIN (-100.0)
-#endif
+/* TODO: all the mixdata calls should use md_from_int locally (to make it easier to extract the struct later)
+ */
 
 #if 0
 static void display_md(mixdata *md)
@@ -434,17 +429,17 @@ snd_info *make_mix_readable(mixdata *md)
 #define MIX_INPUT_SOUND 0
 #define MIX_INPUT_AMP_ENV 1
  
-static MUS_SAMPLE_TYPE next_mix_input_amp_env_sample(mix_fd *mf, int chan)
+static Float next_mix_input_amp_env_sample(mix_fd *mf, int chan)
 {
   if (mf->ctr[chan] < mf->samples[chan])
     {
       mf->ctr[chan]++;
-      return(mf->idata[chan][mf->ctr[chan]]);
+      return(MUS_SAMPLE_TO_FLOAT(mf->idata[chan][mf->ctr[chan]]));
     }
-  return(0);
+  return(0.0);
 }
 
-static MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
+static Float next_mix_sample(mix_fd *mf)
 {
   int i,j,move;
   Float spd,samp,sum = 0.0;
@@ -453,14 +448,13 @@ static MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
     {
     case C_STRAIGHT:
       if (mf->type == MIX_INPUT_SOUND)
-	return(next_sample(mf->sfs[mf->base]));
+	return(next_sample_to_float(mf->sfs[mf->base]));
       else return(next_mix_input_amp_env_sample(mf,mf->base));
       break;
     case C_ZERO: 
-      return(MUS_SAMPLE_0);
+      return(0.0);
       break;
     case C_AMP:
-      sum = MUS_SAMPLE_0;
       cs = mf->cs;
       if (mf->segs)
 	{
@@ -468,7 +462,7 @@ static MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
 	    {
 	      if (mf->type == MIX_INPUT_SOUND)
 		samp = next_sample_to_float(mf->sfs[i]);
-	      else samp = MUS_SAMPLE_TO_FLOAT(next_mix_input_amp_env_sample(mf,i));
+	      else samp = next_mix_input_amp_env_sample(mf,i);
 	      if (mf->segs[i])
 		sum += (samp * mus_env(mf->segs[i]));
 	      else sum += (samp * cs->scalers[i]);
@@ -484,12 +478,11 @@ static MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
 	  else
 	    {
 	      for (i=0;i<mf->chans;i++)
-		sum += (cs->scalers[i] * MUS_SAMPLE_TO_FLOAT(next_mix_input_amp_env_sample(mf,i)));
+		sum += (cs->scalers[i] * next_mix_input_amp_env_sample(mf,i));
 	    }
 	}
       break;
     case C_SPEED:
-      sum = MUS_SAMPLE_0;
       cs = mf->cs;
       if (mf->srcs)
 	{
@@ -545,14 +538,14 @@ static MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
 		      mf->lst[i] = mf->nxt[i];
 		      if (mf->type == MIX_INPUT_SOUND)
 			mf->nxt[i] = next_sample_to_float(mf->sfs[i]);
-		      else mf->nxt[i] = MUS_SAMPLE_TO_FLOAT(next_mix_input_amp_env_sample(mf,i));
+		      else mf->nxt[i] = next_mix_input_amp_env_sample(mf,i);
 		    }
 		}
 	    }
 	}
       break;
     }
-  return(MUS_FLOAT_TO_SAMPLE(sum));
+  return(sum);
 }
 
 static int amp_env_len(mixdata *md, int chan)
@@ -909,12 +902,13 @@ static mixdata *make_mixdata(chan_info *cp)
   return(md);
 }
 
-static char *save_as_temp_file(snd_state *ss, MUS_SAMPLE_TYPE **raw_data, int chans, int len, int nominal_srate)
+static char *save_as_temp_file(MUS_SAMPLE_TYPE **raw_data, int chans, int len, int nominal_srate)
 {
   char *newname;
+  snd_state *ss;
   int format,ofd,no_space,hfd;
   format = MUS_OUT_FORMAT;
-  /* newname = tempnam(temp_dir(ss),"snd_"); */
+  ss = get_global_state();
   newname = shorter_tempnam(temp_dir(ss),"snd_");
   /* we're writing our own private version of this thing, so we can use our own formats */
   hfd = snd_write_header(ss,newname,MUS_NEXT,nominal_srate,chans,28,len*chans,format,NULL,0,NULL);
@@ -1152,10 +1146,8 @@ int mix_array(int beg, int num, MUS_SAMPLE_TYPE **data, chan_info **out_cps, int
   /* always write to tempfile */
   char *newname;
   int id=-1;
-  snd_state *ss;
-  ss = out_cps[0]->state;
   /* this seems excessive -- why not just change_samples? */
-  newname = save_as_temp_file(ss,data,in_chans,num,nominal_srate);
+  newname = save_as_temp_file(data,in_chans,num,nominal_srate);
   if (newname) 
     {
       id = mix(beg,num,out_chans,out_cps,newname,DELETE_ME,origin,with_console);
@@ -1275,7 +1267,7 @@ void backup_mix_list(chan_info *cp, int edit_ctr)
 void remix_file(mixdata *md, char *origin)
 {
   int beg,end,i,j,ofd = 0,size,num,no_space,use_temp_file;
-  MUS_SAMPLE_TYPE val,maxy,miny;
+  Float val,maxy,miny;
   Float fmax,fmin;
   snd_info *cursp;
   mix_fd *add,*sub;
@@ -1353,8 +1345,8 @@ void remix_file(mixdata *md, char *origin)
   new_beg -= beg;
   new_end -= beg;
 
-  maxy = MUS_SAMPLE_MAX;
-  miny = MUS_SAMPLE_MIN;
+  maxy = 0.99999; /* TODO: use current y-bounds here? */
+  miny = 1.0;
 
   /* split out special simple cases */
   if ((add->calc == C_ZERO) && (sub->calc == C_ZERO))
@@ -1384,14 +1376,14 @@ void remix_file(mixdata *md, char *origin)
 		  j = 0;
 		  if (err == -1) break;
 		}
-	      chandata[j] = next_sample(cur);
+	      val = next_sample_to_float(cur);
 	      if ((i>=old_beg) && (i<=old_end))
-		chandata[j] -= next_sample(sfb);
+		val -= next_sample_to_float(sfb);
 	      if ((i>=new_beg) && (i<=new_end))
-		chandata[j] += next_sample(afb);
-	      if (chandata[j] > maxy) maxy = chandata[j];
-	      else if (chandata[j] < miny) miny = chandata[j];
-	      j++;
+		val += next_sample_to_float(afb);
+	      if (val > maxy) maxy = val;
+	      else if (val < miny) miny = val;
+	      chandata[j++] = MUS_FLOAT_TO_SAMPLE(val);
 	    }
 	}
       else
@@ -1404,20 +1396,14 @@ void remix_file(mixdata *md, char *origin)
 		  j = 0;
 		  if (err == -1) break;
 		}
-	      chandata[j] = next_sample(cur);
+	      val = next_sample_to_float(cur);
 	      if ((i>=old_beg) && (i<=old_end))
-		{
-		  val = next_mix_sample(sub);
-		  chandata[j] -= val;
-		}
+		val -= next_mix_sample(sub);
 	      if ((i>=new_beg) && (i<=new_end))
-		{
-		  val = next_mix_sample(add);
-		  chandata[j] += val;
-		}
-	      if (chandata[j] > maxy) maxy = chandata[j];
-	      else if (chandata[j] < miny) miny = chandata[j];
-	      j++;
+		val += next_mix_sample(add);
+	      if (val > maxy) maxy = val;
+	      else if (val < miny) miny = val;
+	      chandata[j++] = MUS_FLOAT_TO_SAMPLE(val);
 	    }
 	}
     }
@@ -1449,8 +1435,8 @@ void remix_file(mixdata *md, char *origin)
   make_current_console(md);
 
   /* fix up graph if we overflowed during mix */
-  fmax = MUS_SAMPLE_TO_FLOAT(maxy);
-  fmin = MUS_SAMPLE_TO_FLOAT(miny);
+  fmax = maxy;
+  fmin = miny;
   if ((fmax > ap->ymax) || (fmin < ap->ymin)) 
     {
       if (fmax < -fmin) fmax = -fmin; 
@@ -1470,7 +1456,7 @@ static int make_temporary_amp_env_mixed_graph(chan_info *cp, axis_info *ap, mixd
   /* temp graph using cp->amp_env and mix (sample-by-sample) data */
   Float main_start,new_start,old_start;
   mix_fd *new_fd,*old_fd;
-  MUS_SAMPLE_TYPE val,new_ymin,new_ymax,old_ymin,old_ymax,main_ymin,main_ymax;
+  Float val,new_ymin,new_ymax,old_ymin,old_ymax,main_ymin,main_ymax;
   Float xi,xf,xfinc;
   int lastx,lo,hi,main_loc,j,i;
   env_info *ep;
@@ -1503,12 +1489,12 @@ static int make_temporary_amp_env_mixed_graph(chan_info *cp, axis_info *ap, mixd
 
   for (j=0,xi=(Float)lo,xf=ap->x0;xi<(Float)hi;xi+=samples_per_pixel,lastx++,xf+=xfinc,j++)
     {
-      main_ymin = MUS_MIX_MAX;
-      main_ymax = MUS_MIX_MIN;
-      old_ymin = MUS_MIX_MAX;
-      old_ymax = MUS_MIX_MIN;
-      new_ymin = MUS_MIX_MAX;
-      new_ymax = MUS_MIX_MIN;
+      main_ymin = 100.0;
+      main_ymax = -100.0;
+      old_ymin = 100.0;
+      old_ymax = -100.0;
+      new_ymin = 100.0;
+      new_ymax = -100.0;
       if ((xi >= newbeg) && (xi < newend))
 	{
 	  while (new_start <= xi)
@@ -1521,8 +1507,8 @@ static int make_temporary_amp_env_mixed_graph(chan_info *cp, axis_info *ap, mixd
 	}
       else
 	{
-	  new_ymin = 0;
-	  new_ymax = 0;
+	  new_ymin = 0.0;
+	  new_ymax = 0.0;
 	}
       if ((xi >= oldbeg) && (xi < oldend))
 	{
@@ -1536,22 +1522,24 @@ static int make_temporary_amp_env_mixed_graph(chan_info *cp, axis_info *ap, mixd
 	}
       else
 	{
-	  old_ymin = 0;
-	  old_ymax = 0;
+	  old_ymin = 0.0;
+	  old_ymax = 0.0;
 	}
 
       while (main_start <= xi)
 	{
-	  if (ep->data_min[main_loc] < main_ymin) main_ymin=ep->data_min[main_loc];
-	  if (ep->data_max[main_loc] > main_ymax) main_ymax=ep->data_max[main_loc];
+	  val = MUS_SAMPLE_TO_FLOAT(ep->data_min[main_loc]);
+	  if (val < main_ymin) main_ymin = val;
+	  val = MUS_SAMPLE_TO_FLOAT(ep->data_max[main_loc]);
+	  if (val > main_ymax) main_ymax = val;
 	  if (main_loc < (ep->amp_env_size - 1))
 	    main_loc++;
 	  main_start += ep->samps_per_bin;
 	}
 
       set_grf_points(lastx,j,
-		     grf_y(MUS_SAMPLE_TO_FLOAT(main_ymin - old_ymin + new_ymin),ap),
-		     grf_y(MUS_SAMPLE_TO_FLOAT(main_ymax - old_ymax + new_ymax),ap));
+		     grf_y(main_ymin - old_ymin + new_ymin,ap),
+		     grf_y(main_ymax - old_ymax + new_ymax,ap));
 
     }
 
@@ -1566,10 +1554,10 @@ static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mixdata *m
 					int newbeg, int newend, int oldbeg, int oldend)
 {
   /* temp graph using cp->amp_env and mix input amp envs */
-  Float main_start,new_start,old_start;
+  Float main_start,new_start,old_start,val;
   mix_fd *new_min_fd,*new_max_fd,*old_min_fd,*old_max_fd;
-  MUS_SAMPLE_TYPE new_ymin,new_ymax,old_ymin,old_ymax,main_ymin,main_ymax;
-  MUS_SAMPLE_TYPE new_high,new_low,old_high,old_low;
+  Float new_ymin,new_ymax,old_ymin,old_ymax,main_ymin,main_ymax;
+  Float new_high,new_low,old_high,old_low;
   Float xi,xf,xfinc,x;
   int lastx,lo,hi,main_loc,j;
   env_info *ep;
@@ -1599,8 +1587,8 @@ static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mixdata *m
     }
   else 
     {
-      new_ymin=0;
-      new_ymax=0;
+      new_ymin = 0.0;
+      new_ymax = 0.0;
       new_start = (Float)newbeg;
     }
 
@@ -1618,8 +1606,8 @@ static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mixdata *m
   else 
     {
       old_start = (Float)oldbeg;
-      old_ymin=0;
-      old_ymax=0;
+      old_ymin = 0.0;
+      old_ymax = 0.0;
     }
 
   lastx = ap->x_axis_x0;
@@ -1627,12 +1615,12 @@ static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mixdata *m
 
   for (j=0,xi=(Float)lo,xf=ap->x0;xi<(Float)hi;xi+=samples_per_pixel,lastx++,xf+=xfinc,j++)
     {
-      main_ymin = MUS_MIX_MAX;
-      main_ymax = MUS_MIX_MIN;
-      old_ymin = MUS_MIX_MAX;
-      old_ymax = MUS_MIX_MIN;
-      new_ymin = MUS_MIX_MAX;
-      new_ymax = MUS_MIX_MIN;
+      main_ymin = 100.0;
+      main_ymax = -100.0;
+      old_ymin = 100.0;
+      old_ymax = -100.0;
+      new_ymin = 100.0;
+      new_ymax = -100.0;
       if ((xi >= newbeg) && (xi < newend))
 	{
 	  while (new_start <= xi)
@@ -1646,8 +1634,8 @@ static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mixdata *m
 	}
       else
 	{
-	  new_ymin = MUS_SAMPLE_0;
-	  new_ymax = MUS_SAMPLE_0;
+	  new_ymin = 0.0;
+	  new_ymax = 0.0;
 	}
       if ((xi >= oldbeg) && (xi < oldend))
 	{
@@ -1662,22 +1650,24 @@ static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mixdata *m
 	}
       else
 	{
-	  old_ymin = MUS_SAMPLE_0;
-	  old_ymax = MUS_SAMPLE_0;
+	  old_ymin = 0.0;
+	  old_ymax = 0.0;
 	}
 
       while (main_start <= xi)
 	{
-	  if (ep->data_min[main_loc] < main_ymin) main_ymin=ep->data_min[main_loc];
-	  if (ep->data_max[main_loc] > main_ymax) main_ymax=ep->data_max[main_loc];
+	  val = MUS_SAMPLE_TO_FLOAT(ep->data_min[main_loc]);
+	  if (val < main_ymin) main_ymin = val;
+	  val = MUS_SAMPLE_TO_FLOAT(ep->data_max[main_loc]);
+	  if (val > main_ymax) main_ymax = val;
 	  if (main_loc < (ep->amp_env_size - 1))
 	    main_loc++;
 	  main_start += ep->samps_per_bin;
 	}
 
       set_grf_points(lastx,j,
-		     grf_y(MUS_SAMPLE_TO_FLOAT(main_ymin - old_ymin + new_ymin),ap),
-		     grf_y(MUS_SAMPLE_TO_FLOAT(main_ymax - old_ymax + new_ymax),ap));
+		     grf_y(main_ymin - old_ymin + new_ymin,ap),
+		     grf_y(main_ymax - old_ymax + new_ymax,ap));
 
     }
 
@@ -1701,7 +1691,7 @@ void make_temporary_graph(chan_info *cp, mixdata *md, console_state *cs)
   snd_state *ss;
   Float samples_per_pixel,xf;
   double x,incr,initial_x;
-  MUS_SAMPLE_TYPE ina,ymin,ymax;
+  Float ina,ymin,ymax;
   int lo,hi;
   snd_fd *sf = NULL,*sfb,*afb;
   mix_fd *add = NULL,*sub = NULL;
@@ -1752,12 +1742,12 @@ void make_temporary_graph(chan_info *cp, mixdata *md, console_state *cs)
 	}
       for (j=0,i=lo,x=initial_x;i<=hi;i++,j++,x+=incr)
 	{
-	  ina = next_sample(sf);
+	  ina = next_sample_to_float(sf);
 	  if ((i >= oldbeg) && (i <= oldend)) ina -= next_mix_sample(sub);
 	  if ((i >= newbeg) && (i <= newend)) ina += next_mix_sample(add);
 	  if (widely_spaced)
-	    set_grf_point((int)x,j,grf_y(MUS_SAMPLE_TO_FLOAT(ina),ap));
-	  else set_grf_point(grf_x(x,ap),j,grf_y(MUS_SAMPLE_TO_FLOAT(ina),ap));
+	    set_grf_point((int)x,j,grf_y(ina,ap));
+	  else set_grf_point(grf_x(x,ap),j,grf_y(ina,ap));
 	}
       erase_and_draw_grf_points(md->wg,cp,j);
     }
@@ -1782,26 +1772,26 @@ void make_temporary_graph(chan_info *cp, mixdata *md, console_state *cs)
 	  xi=grf_x(x,ap);
 	  i=lo;
 	  xf=0.0;     /* samples per pixel counter */
-	  ymin = MUS_MIX_MAX;
-	  ymax = MUS_MIX_MIN;
+	  ymin = 100.0;
+	  ymax = -100.0;
 
 	  if ((add->calc == C_ZERO) && (sub->calc == C_ZERO))
 	    {
 	      while (i<=hi)
 		{
-		  ina = next_sample(sf);
+		  ina = next_sample_to_float(sf);
 		  if (ina > ymax) ymax = ina;
 		  if (ina < ymin) ymin = ina;
 		  xf+=1.0;
 		  i++;
 		  if (xf>samples_per_pixel)
 		    {
-		      set_grf_points(xi,j,grf_y(MUS_SAMPLE_TO_FLOAT(ymin),ap),grf_y(MUS_SAMPLE_TO_FLOAT(ymax),ap));
+		      set_grf_points(xi,j,grf_y(ymin,ap),grf_y(ymax,ap));
 		      xi++;
 		      j++;
 		      xf -= samples_per_pixel;
-		      ymin = MUS_MIX_MAX;
-		      ymax = MUS_MIX_MIN;
+		      ymin = 100.0;
+		      ymax = -100.0;
 		    }
 		}
 	    }
@@ -1813,21 +1803,21 @@ void make_temporary_graph(chan_info *cp, mixdata *md, console_state *cs)
 		  afb = add->sfs[add->base];
 		  while (i<=hi)
 		    {
-		      ina = next_sample(sf);
-		      if ((i >= oldbeg) && (i <= oldend)) {ina -= next_sample(sfb);}
-		      if ((i >= newbeg) && (i <= newend)) {ina += next_sample(afb);}
+		      ina = next_sample_to_float(sf);
+		      if ((i >= oldbeg) && (i <= oldend)) ina -= next_sample_to_float(sfb);
+		      if ((i >= newbeg) && (i <= newend)) ina += next_sample_to_float(afb);
 		      if (ina > ymax) ymax = ina;
 		      if (ina < ymin) ymin = ina;
 		      xf+=1.0;
 		      i++;
 		      if (xf>samples_per_pixel)
 			{
-			  set_grf_points(xi,j,grf_y(MUS_SAMPLE_TO_FLOAT(ymin),ap),grf_y(MUS_SAMPLE_TO_FLOAT(ymax),ap));
+			  set_grf_points(xi,j,grf_y(ymin,ap),grf_y(ymax,ap));
 			  xi++;
 			  j++;
 			  xf -= samples_per_pixel;
-			  ymin = MUS_MIX_MAX;
-			  ymax = MUS_MIX_MIN;
+			  ymin = 100.0;
+			  ymax = -100.0;
 			}
 		    }
 		}
@@ -1835,7 +1825,7 @@ void make_temporary_graph(chan_info *cp, mixdata *md, console_state *cs)
 		{
 		  while (i<=hi)
 		    {
-		      ina = next_sample(sf);
+		      ina = next_sample_to_float(sf);
 		      if ((i >= oldbeg) && (i <= oldend)) ina -= next_mix_sample(sub);
 		      if ((i >= newbeg) && (i <= newend)) ina += next_mix_sample(add);
 		      if (ina > ymax) ymax = ina;
@@ -1844,12 +1834,12 @@ void make_temporary_graph(chan_info *cp, mixdata *md, console_state *cs)
 		      i++;
 		      if (xf>samples_per_pixel)
 			{
-			  set_grf_points(xi,j,grf_y(MUS_SAMPLE_TO_FLOAT(ymin),ap),grf_y(MUS_SAMPLE_TO_FLOAT(ymax),ap));
+			  set_grf_points(xi,j,grf_y(ymin,ap),grf_y(ymax,ap));
 			  xi++;
 			  j++;
 			  xf -= samples_per_pixel;
-			  ymin = MUS_MIX_MAX;
-			  ymax = MUS_MIX_MIN;
+			  ymin = 100.0;
+			  ymax = -100.0;
 			}
 		    }
 		}
@@ -1868,7 +1858,7 @@ static int display_mix_amp_env(mixdata *md, Float scl, int yoff, int newbeg, int
   /* need min and max readers */
   mix_fd *min_fd,*max_fd;
   int hi,lo,j,lastx,newx;
-  MUS_SAMPLE_TYPE ymin,ymax,high=MUS_SAMPLE_0,low=MUS_SAMPLE_0;
+  Float ymin,ymax,high=0.0,low=0.0;
   Float sum,xend,xstart,xstep;
   min_fd = init_mix_input_amp_env_read(md,0,0); /* not old, not hi */
   max_fd = init_mix_input_amp_env_read(md,0,1); /* not old, hi */
@@ -1895,8 +1885,8 @@ static int display_mix_amp_env(mixdata *md, Float scl, int yoff, int newbeg, int
   else 
     {
       xstart = (Float)(newbeg)/(Float)SND_SRATE(cp->sound);
-      ymin = MUS_MIX_MAX;
-      ymax = MUS_MIX_MIN;
+      ymin = 100.0;
+      ymax = -100.0;
     }
 
   if (hi < newend)
@@ -1912,12 +1902,12 @@ static int display_mix_amp_env(mixdata *md, Float scl, int yoff, int newbeg, int
       if (newx > lastx)
 	{
 	  set_grf_points(lastx,j,
-			 (int)(yoff - scl*MUS_SAMPLE_TO_FLOAT(ymin)),
-			 (int)(yoff - scl*MUS_SAMPLE_TO_FLOAT(ymax)));
+			 (int)(yoff - scl*ymin),
+			 (int)(yoff - scl*ymax));
 	  lastx = newx;
 	  j++;
-	  ymin=low;
-	  ymax=high;
+	  ymin = low;
+	  ymax = high;
 	}
       else
 	{
@@ -1941,7 +1931,7 @@ int display_mix_waveform(chan_info *cp, mixdata *md, console_state *cs, int yoff
   snd_info *sp;
   Float samples_per_pixel,xf;
   double x,incr,initial_x;
-  MUS_SAMPLE_TYPE ina,ymin,ymax;
+  Float ina,ymin,ymax;
   int lo,hi;
   mix_fd *add = NULL;
   int x_start,x_end;
@@ -1989,8 +1979,8 @@ int display_mix_waveform(chan_info *cp, mixdata *md, console_state *cs, int yoff
 	{
 	  ina = next_mix_sample(add);
 	  if (widely_spaced)
-	    set_grf_point((int)x,j,(int)(yoff - scl*MUS_SAMPLE_TO_FLOAT(ina)));
-	  else set_grf_point(grf_x(x,ap),j, (int)(yoff - scl*MUS_SAMPLE_TO_FLOAT(ina)));
+	    set_grf_point((int)x,j,(int)(yoff - scl*ina));
+	  else set_grf_point(grf_x(x,ap),j, (int)(yoff - scl*ina));
 	}
       if (sp)
 	draw_grf_points(cp,(draw) ? mix_waveform_context(cp) : erase_context(cp),j,ap,ungrf_y(ap,yoff));
@@ -2011,8 +2001,8 @@ int display_mix_waveform(chan_info *cp, mixdata *md, console_state *cs, int yoff
 	  x=ap->x0;
 	  xi=grf_x(x,ap);
 	  xf=0.0;     /* samples per pixel counter */
-	  ymin = MUS_MIX_MAX;
-	  ymax = MUS_MIX_MIN;
+	  ymin = 100.0;
+	  ymax = -100.0;
 	  if (newend < hi) endi = newend; else endi = hi;
 	  for (i=lo;i<newbeg;i++)
 	    {
@@ -2032,11 +2022,11 @@ int display_mix_waveform(chan_info *cp, mixdata *md, console_state *cs, int yoff
 	      if (xf>samples_per_pixel)
 		{
 		  set_grf_points(xi,j,
-				 (int)(yoff - scl*MUS_SAMPLE_TO_FLOAT(ymin)),
-				 (int)(yoff - scl*MUS_SAMPLE_TO_FLOAT(ymax)));
+				 (int)(yoff - scl*ymin),
+				 (int)(yoff - scl*ymax));
 		  j++;
-		  ymin = MUS_MIX_MAX;
-		  ymax = MUS_MIX_MIN;
+		  ymin = 100.0;
+		  ymax = -100.0;
 		  xi++;
 		  xf -= samples_per_pixel;
 		}
@@ -2329,7 +2319,7 @@ void release_mixes(chan_info *cp)
     }
 }
 
-void regraph_all_mixmarks(chan_info *cp)
+void reset_mix_graph_parent(chan_info *cp)
 {
   mixdata *md;
   mixmark *m;
@@ -2765,7 +2755,7 @@ static void free_track_fd(track_fd *fd)
 static MUS_SAMPLE_TYPE next_track_sample(track_fd *fd)
 {
   int i;
-  MUS_SAMPLE_TYPE sum=MUS_SAMPLE_0;
+  Float sum=0.0;
   if (fd)
     {
       for (i=0;i<fd->mixes;i++)
@@ -2782,7 +2772,7 @@ static MUS_SAMPLE_TYPE next_track_sample(track_fd *fd)
 	    }
 	}
     }
-  return(sum);
+  return(MUS_FLOAT_TO_SAMPLE(sum));
 }
 
 static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num)
@@ -2885,7 +2875,7 @@ void play_mix(snd_state *ss, mixdata *md)
 	    {
 	      for (i=0;i<samps;i+=256)
 		{
-		  for (j=0;j<256;j++) buf[j] = MUS_SAMPLE_TO_SHORT(next_mix_sample(mf));
+		  for (j=0;j<256;j++) buf[j] = MUS_SAMPLE_TO_SHORT(MUS_FLOAT_TO_SAMPLE(next_mix_sample(mf)));
 		  mus_audio_write(play_fd,(char *)buf,512);
 		  check_for_event(ss);
 		  if ((ss->stopped_explicitly) || ((m) && (m->playing == 0)))
@@ -3604,7 +3594,7 @@ static SCM g_next_mix_sample(SCM obj)
 {
   #define H_next_mix_sample "(" S_next_mix_sample " reader) -> next sample from mix reader"
   SCM_ASSERT(mf_p(obj),obj,SCM_ARG1,S_next_mix_sample);
-  return(gh_double2scm(MUS_SAMPLE_TO_FLOAT(next_mix_sample(get_mf(obj)))));
+  return(gh_double2scm(next_mix_sample(get_mf(obj))));
 }
 
 static SCM g_free_mix_sample_reader(SCM obj)

@@ -2,6 +2,7 @@
 
 /* TODO: syncing should be sync (it's no longer a boolean)
  *       set! comment probably needs update to reflect immediately
+ *       amp with snd and chn could return the current scaling of chn (from original) in some cases
  */
 
 /* ---------------- amp envs ---------------- */
@@ -422,6 +423,44 @@ void amp_env_scale_by(chan_info *cp, Float scl)
     }
 }
 
+env_info *amp_env_copy(chan_info *cp, int reversed)
+{
+  env_info *old_ep,*new_ep=NULL;
+  int i,j;
+  old_ep = cp->amp_envs[cp->edit_ctr];
+  if ((old_ep) && (old_ep->completed))
+    {
+      new_ep = (env_info *)CALLOC(1,sizeof(env_info));
+      new_ep->data_max = (MUS_SAMPLE_TYPE *)CALLOC(old_ep->amp_env_size,sizeof(MUS_SAMPLE_TYPE));
+      new_ep->data_min = (MUS_SAMPLE_TYPE *)CALLOC(old_ep->amp_env_size,sizeof(MUS_SAMPLE_TYPE));
+      new_ep->amp_env_size = old_ep->amp_env_size;
+      new_ep->samps_per_bin = old_ep->samps_per_bin;
+      new_ep->fmin = old_ep->fmin;
+      new_ep->fmax = old_ep->fmax;
+      if (reversed)
+	{
+	  for (i=0,j=new_ep->amp_env_size-1;i<new_ep->amp_env_size;i++,j--) 
+	    {
+	      new_ep->data_min[j] = old_ep->data_min[i];
+	      new_ep->data_max[j] = old_ep->data_max[i];
+	    }
+	}
+      else
+	{
+	  for (i=0;i<new_ep->amp_env_size;i++) 
+	    {
+	      new_ep->data_min[i] = old_ep->data_min[i];
+	      new_ep->data_max[i] = old_ep->data_max[i];
+	    }
+	}
+      new_ep->completed = 1;
+      new_ep->bin = old_ep->bin;
+      new_ep->top_bin = old_ep->top_bin;
+      
+    }
+  return(new_ep);
+}
+
 static char sname[256];
 char *shortname(snd_info *sp)
 {
@@ -724,6 +763,13 @@ void *make_apply_state(void *xp)
 
 #define APPLY_TICKS 4
 
+static int max_sync(snd_info *sp, void *val)
+{
+  int *maxsync = (int *)val;
+  if (sp->syncing > maxsync[0]) maxsync[0] = sp->syncing;
+  return(0);
+}
+
 static int apply_dur,apply_tick = 0, apply_reporting = 0, orig_dur;
 
 BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
@@ -735,7 +781,9 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
   chan_info *cp;
   sync_info *si;
   Float ratio,mult_dur;
-  int i,len,over_selection,curchan=0,added_dur=0;
+  int i,len,over_selection,curchan=0,added_dur=0,old_sync;
+  int maxsync[1];
+  Float scaler[1];
   sp = ap->sp;
   if (!(sp->inuse)) return(BACKGROUND_QUIT);
   ss = sp->state;
@@ -743,169 +791,183 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER ptr)
   mult_dur = 1.0 / fabs(sp->srate);
   if (sp->expanding) mult_dur *= sp->expand;
   if (sp->reverbing) added_dur += (int)((SND_SRATE(sp)*reverb_decay(ss)));
-  switch (ap->slice)
+  if ((ss->apply_choice == APPLY_TO_SOUND) &&
+      (sp->amp != 1.0) && (sp->srate == 1.0) &&
+      (!(sp->filtering)) && (!(sp->expanding)) && (!(sp->reverbing)) && (!(sp->contrasting)))
     {
-    case 0: 
-      ap->ofile = NULL;
-      lock_apply(ss,sp);
-      ap->ofile = snd_tempnam(ss);
-      ap->hdr = make_temp_header(ss,ap->ofile,sp->hdr,0);
-      switch (ss->apply_choice)
+      old_sync = sp->syncing;
+      maxsync[0] = 0;
+      map_over_sounds(ss,max_sync,(void *)maxsync);
+      sp->syncing = maxsync[0] + 1;
+      scaler[0] = sp->amp;
+      scale_by(ss,sp,sp->chans[0],scaler,1,FALSE);
+      sp->syncing = old_sync;
+    }
+  else
+    {
+      switch (ap->slice)
 	{
-	case APPLY_TO_CHANNEL:   
-	  ap->hdr->chans = 1; 
-	  if (sp->selected_channel != NO_SELECTION) curchan = sp->selected_channel;
-	  apply_dur = current_ed_samples(sp->chans[curchan]);
-	  break;
-	case APPLY_TO_SOUND:     
-	  ap->hdr->chans = sp->nchans; 
-	  apply_dur = current_ed_samples(sp->chans[0]); 
-	  break;
-	case APPLY_TO_SELECTION: 
-	  ap->hdr->chans = region_chans(0); 
-	  apply_dur = selection_len(); 
-	  break;
-	}
-      orig_dur = apply_dur;
-      apply_dur = (int)(mult_dur * (apply_dur + added_dur));
-      ap->ofd = open_temp_file(ap->ofile,ap->hdr->chans,ap->hdr,ss);
-      sp->apply_ok = 1;
-      initialize_apply(sp,ap->hdr->chans,apply_dur);
-      apply_reporting = (apply_dur > (MAX_BUFFER_SIZE * 4));
-      if (apply_reporting) 
-	start_progress_report(sp,NOT_FROM_ENVED);
-      ap->i = 0;
-      ap->slice++;
-      return(BACKGROUND_CONTINUE);
-      break;
-
-    case 1:
-      if (!(sp->apply_ok))
-	ap->slice++;
-      else
-	{
-	  len = run_apply(ap->ofd); /* returns frames written */
-	  ap->i += len;
-	  if (ap->i >= apply_dur) ap->slice++;
-	  check_for_event(ss);
-	  /* if C-G, stop_applying called which cancels and backs out */
-	  if (ss->stopped_explicitly)
-	    {
-	      finish_progress_report(sp,NOT_FROM_ENVED);
-	      apply_reporting = 0;
-	      ap->slice++;
-	    }
-	  else
-	    {
-	      if (apply_reporting) 
-		{
-		  apply_tick++;
-		  if (apply_tick > APPLY_TICKS)
-		    {
-		      apply_tick = 0;
-		      progress_report(sp,"apply",1,1,(Float)(ap->i) / (Float)apply_dur,NOT_FROM_ENVED);
-		    }
-		}
-	    }
-	  /* sr .07 -> infinite output? */
-	}
-
-      return(BACKGROUND_CONTINUE);
-      break;
-
-    case 2:
-      finalize_apply(sp);
-      if (apply_reporting) finish_progress_report(sp,NOT_FROM_ENVED);
-      close_temp_file(ap->ofd,
-		      ap->hdr,
-		      apply_dur*(ap->hdr->chans)*mus_data_format_to_bytes_per_sample((ap->hdr)->format),
-		      sp);
-      if (sp->apply_ok)
-	{
+	case 0: 
+	  ap->ofile = NULL;
+	  lock_apply(ss,sp);
+	  ap->ofile = snd_tempnam(ss);
+	  ap->hdr = make_temp_header(ss,ap->ofile,sp->hdr,0);
 	  switch (ss->apply_choice)
 	    {
-	    case APPLY_TO_SOUND:
-	      if (sp->nchans > 1) remember_temp(ap->ofile,sp->nchans);
-	      for (i=0;i<sp->nchans;i++)
-		file_override_samples(apply_dur,ap->ofile,sp->chans[i],i,
-				      (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,LOCK_MIXES,"Apply");
-	      break;
-	    case APPLY_TO_CHANNEL: 
+	    case APPLY_TO_CHANNEL:   
+	      ap->hdr->chans = 1; 
 	      if (sp->selected_channel != NO_SELECTION) curchan = sp->selected_channel;
-	      file_override_samples(apply_dur,ap->ofile,sp->chans[curchan],0,DELETE_ME,LOCK_MIXES,"Apply to channel");
+	      apply_dur = current_ed_samples(sp->chans[curchan]);
 	      break;
-	    case APPLY_TO_SELECTION:
-	      if (selection_chans() > 1) remember_temp(ap->ofile,selection_chans());
-	      si = selection_sync();
-	      if (apply_dur == selection_len())
+	    case APPLY_TO_SOUND:     
+	      ap->hdr->chans = sp->nchans; 
+	      apply_dur = current_ed_samples(sp->chans[0]); 
+	      break;
+	    case APPLY_TO_SELECTION: 
+	      ap->hdr->chans = region_chans(0); 
+	      apply_dur = selection_len(); 
+	      break;
+	    }
+	  orig_dur = apply_dur;
+	  apply_dur = (int)(mult_dur * (apply_dur + added_dur));
+	  ap->ofd = open_temp_file(ap->ofile,ap->hdr->chans,ap->hdr,ss);
+	  sp->apply_ok = 1;
+	  initialize_apply(sp,ap->hdr->chans,apply_dur);
+	  apply_reporting = (apply_dur > (MAX_BUFFER_SIZE * 4));
+	  if (apply_reporting) 
+	    start_progress_report(sp,NOT_FROM_ENVED);
+	  ap->i = 0;
+	  ap->slice++;
+	  return(BACKGROUND_CONTINUE);
+	  break;
+	  
+	case 1:
+	  if (!(sp->apply_ok))
+	    ap->slice++;
+	  else
+	    {
+	      len = run_apply(ap->ofd); /* returns frames written */
+	      ap->i += len;
+	      if (ap->i >= apply_dur) ap->slice++;
+	      check_for_event(ss);
+	      /* if C-G, stop_applying called which cancels and backs out */
+	      if (ss->stopped_explicitly)
 		{
-		  for (i=0;i<si->chans;i++)
-		    {
-		      file_change_samples(si->begs[i],apply_dur,ap->ofile,si->cps[i],i,
-					  (si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,LOCK_MIXES,"Apply to selection");
-		      update_graph(si->cps[i],NULL);
-		    }
+		  finish_progress_report(sp,NOT_FROM_ENVED);
+		  apply_reporting = 0;
+		  ap->slice++;
 		}
 	      else
 		{
-		  int ok;
-		  ok = delete_selection(S_src_selection,DONT_UPDATE_DISPLAY);
-		  for (i=0;i<si->chans;i++)
+		  if (apply_reporting) 
 		    {
-		      file_insert_samples(si->begs[i],apply_dur,ap->ofile,si->cps[i],0,DELETE_ME,"Apply to selection");
-		      reactivate_selection(si->cps[i],si->begs[i],si->begs[i]+apply_dur);
-		      if (ok) backup_edit_list(si->cps[i]);
+		      apply_tick++;
+		      if (apply_tick > APPLY_TICKS)
+			{
+			  apply_tick = 0;
+			  progress_report(sp,"apply",1,1,(Float)(ap->i) / (Float)apply_dur,NOT_FROM_ENVED);
+			}
 		    }
 		}
-	      si = free_sync_info(si); 
-	      break;
+	      /* sr .07 -> infinite output? */
 	    }
-	  clear_minibuffer(sp);
-	  set_apply_button(sp,FALSE);
-	  sp->apply_ok = 0;
-
-	  if ((sp->expanding) || (sp->play_direction != 1) || (sp->srate != 1.0))
+	  
+	  return(BACKGROUND_CONTINUE);
+	  break;
+	  
+	case 2:
+	  finalize_apply(sp);
+	  if (apply_reporting) finish_progress_report(sp,NOT_FROM_ENVED);
+	  close_temp_file(ap->ofd,
+			  ap->hdr,
+			  apply_dur*(ap->hdr->chans)*mus_data_format_to_bytes_per_sample((ap->hdr)->format),
+			  sp);
+	  if (sp->apply_ok)
 	    {
-	      for (i=0;i<sp->nchans;i++)
+	      switch (ss->apply_choice)
 		{
-		  cp = sp->chans[i];
-		  if (cp->marks)
+		case APPLY_TO_SOUND:
+		  if (sp->nchans > 1) remember_temp(ap->ofile,sp->nchans);
+		  for (i=0;i<sp->nchans;i++)
+		    file_override_samples(apply_dur,ap->ofile,sp->chans[i],i,
+					  (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
+					  LOCK_MIXES,"Apply");
+		  break;
+		case APPLY_TO_CHANNEL: 
+		  if (sp->selected_channel != NO_SELECTION) curchan = sp->selected_channel;
+		  file_override_samples(apply_dur,ap->ofile,sp->chans[curchan],0,DELETE_ME,LOCK_MIXES,"Apply to channel");
+		  break;
+		case APPLY_TO_SELECTION:
+		  if (selection_chans() > 1) remember_temp(ap->ofile,selection_chans());
+		  si = selection_sync();
+		  if (apply_dur == selection_len())
 		    {
-		      if (!(sp->expanding))
-			ratio = sp->srate;
-		      else ratio = sp->srate / sp->expand;
-		      if (ratio != 1.0)
+		      for (i=0;i<si->chans;i++)
 			{
-			  over_selection = (ss->apply_choice == APPLY_TO_SELECTION);
-			  src_marks(cp,ratio,orig_dur,apply_dur,(over_selection) ? selection_beg(cp) : 0,over_selection);
-			  update_graph(cp,NULL);
+			  file_change_samples(si->begs[i],apply_dur,ap->ofile,si->cps[i],i,
+					      (si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
+					      LOCK_MIXES,"Apply to selection");
+			  update_graph(si->cps[i],NULL);
+			}
+		    }
+		  else
+		    {
+		      int ok;
+		      ok = delete_selection(S_src_selection,DONT_UPDATE_DISPLAY);
+		      for (i=0;i<si->chans;i++)
+			{
+			  file_insert_samples(si->begs[i],apply_dur,ap->ofile,si->cps[i],0,DELETE_ME,"Apply to selection");
+			  reactivate_selection(si->cps[i],si->begs[i],si->begs[i]+apply_dur);
+			  if (ok) backup_edit_list(si->cps[i]);
+			}
+		    }
+		  si = free_sync_info(si); 
+		  break;
+		}
+	      clear_minibuffer(sp);
+	      set_apply_button(sp,FALSE);
+	      sp->apply_ok = 0;
+	      
+	      if ((sp->expanding) || (sp->play_direction != 1) || (sp->srate != 1.0))
+		{
+		  for (i=0;i<sp->nchans;i++)
+		    {
+		      cp = sp->chans[i];
+		      if (cp->marks)
+			{
+			  if (!(sp->expanding))
+			    ratio = sp->srate;
+			  else ratio = sp->srate / sp->expand;
+			  if (ratio != 1.0)
+			    {
+			      over_selection = (ss->apply_choice == APPLY_TO_SELECTION);
+			      src_marks(cp,ratio,orig_dur,apply_dur,(over_selection) ? selection_beg(cp) : 0,over_selection);
+			      update_graph(cp,NULL);
+			    }
 			}
 		    }
 		}
 	    }
+	  else
+	    {
+	      remove(ap->ofile);
+	      mus_sound_forget(ap->ofile);
+	      report_in_minibuffer(sp,"apply flushed!");
+	    }
+	  free(ap->ofile);                                              /* safe only if tempnam, not tmpnam used */
+	  ap->ofile=NULL;
+	  if (ap->hdr) ap->hdr = free_file_info(ap->hdr);
+	  free_controls(sp);
+	  break;
 	}
-      else
-	{
-	  remove(ap->ofile);
-	  mus_sound_forget(ap->ofile);
-	  report_in_minibuffer(sp,"apply flushed!");
-	}
-      free(ap->ofile);                                              /* safe only if tempnam, not tmpnam used */
-      ap->ofile=NULL;
-      if (ap->hdr) ap->hdr = free_file_info(ap->hdr);
-
-      free_controls(sp);
-      sp->saved_controls = NULL;
-      restore_control_panel(sp); /* i.e. clear it */
-
-      sp->applying = 0;
-      sgx = sp->sgx;
-      if (sgx->apply_in_progress) sgx->apply_in_progress = 0;
-      FREE(ap);
-      unlock_apply(ss,sp);
-      return(BACKGROUND_QUIT);
-      break;
     }
+  unlock_apply(ss,sp);
+  sp->saved_controls = NULL;
+  restore_control_panel(sp); /* i.e. clear it */
+  sp->applying = 0;
+  sgx = sp->sgx;
+  if (sgx->apply_in_progress) sgx->apply_in_progress = 0;
+  FREE(ap);
   return(BACKGROUND_QUIT);
 }
 
@@ -1141,41 +1203,38 @@ static SCM sp_iread(SCM snd_n, int fld, char *caller)
 	}
       return(scm_reverse(res));
     }
-  else
+  sp = get_sp(snd_n);
+  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
+  switch (fld)
     {
-      sp = get_sp(snd_n);
-      if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
-      switch (fld)
-	{
-	case SYNCF:                RTNINT(sp->syncing); break;
-	case UNITEF:               RTNINT(sp->combining); break;
-	case READONLYF:            RTNBOOL(sp->read_only); break;
-	case NCHANSF:              RTNINT(sp->nchans); break;
-	case EXPANDINGF:           RTNBOOL(sp->expanding); break;
-	case CONTRASTINGF:         RTNBOOL(sp->contrasting); break;
-	case REVERBINGF:           RTNBOOL(sp->reverbing); break;
-	case FILTERINGF:           RTNBOOL(sp->filtering); break;
-	case FILTERDBING:          RTNBOOL(sp->filter_dBing); break;
-	case FILTERORDERF:         RTNINT(sp->filter_order); break;
-	case SRATEF:               RTNINT((sp->hdr)->srate); break;
-	case DATAFORMATF:          return(gh_int2scm((sp->hdr)->format)); break;
-	case HEADERTYPEF:          return(gh_int2scm((sp->hdr)->type)); break;
-	case DATALOCATIONF:        RTNINT((sp->hdr)->data_location); break;
-	case CONTROLPANELSAVEF:    save_control_panel(sp); break;
-	case CONTROLPANELRESTOREF: restore_control_panel(sp); break;
-	case CONTROLPANELRESETF:   reset_control_panel(sp); break;
-	case SELECTEDCHANNELF:     RTNINT(sp->selected_channel); break;
-	case FILENAMEF:            RTNSTR(sp->fullname); break;
-	case SHORTFILENAMEF:       RTNSTR(sp->shortname); break;
-	case COMMENTF:             RTNSTR(mus_sound_comment(sp->fullname)); break;
-	case CLOSEF:               snd_close_file(sp,sp->state); break;
-	case SAVEF:                save_edits(sp,NULL); break;
-	case UPDATEF:              snd_update(sp->state,sp); break;
-	case CURSORFOLLOWSPLAYF:   RTNBOOL(sp->cursor_follows_play); break;
-	case SHOWCONTROLSF:        RTNBOOL(control_panel_open(sp)); break;
-	case SPEEDTONESF:          RTNINT(sp->speed_tones); break;
-	case SPEEDSTYLEF:          RTNINT(sp->speed_style); break;
-	}
+    case SYNCF:                RTNINT(sp->syncing);                     break;
+    case UNITEF:               RTNINT(sp->combining);                   break;
+    case READONLYF:            RTNBOOL(sp->read_only);                  break;
+    case NCHANSF:              RTNINT(sp->nchans);                      break;
+    case EXPANDINGF:           RTNBOOL(sp->expanding);                  break;
+    case CONTRASTINGF:         RTNBOOL(sp->contrasting);                break;
+    case REVERBINGF:           RTNBOOL(sp->reverbing);                  break;
+    case FILTERINGF:           RTNBOOL(sp->filtering);                  break;
+    case FILTERDBING:          RTNBOOL(sp->filter_dBing);               break;
+    case FILTERORDERF:         RTNINT(sp->filter_order);                break;
+    case SRATEF:               RTNINT((sp->hdr)->srate);                break;
+    case DATAFORMATF:          return(gh_int2scm((sp->hdr)->format));   break;
+    case HEADERTYPEF:          return(gh_int2scm((sp->hdr)->type));     break;
+    case DATALOCATIONF:        RTNINT((sp->hdr)->data_location);        break;
+    case CONTROLPANELSAVEF:    save_control_panel(sp);                  break;
+    case CONTROLPANELRESTOREF: restore_control_panel(sp);               break;
+    case CONTROLPANELRESETF:   reset_control_panel(sp);                 break;
+    case SELECTEDCHANNELF:     RTNINT(sp->selected_channel);            break;
+    case FILENAMEF:            RTNSTR(sp->fullname);                    break;
+    case SHORTFILENAMEF:       RTNSTR(sp->shortname);                   break;
+    case COMMENTF:             RTNSTR(mus_sound_comment(sp->fullname)); break;
+    case CLOSEF:               snd_close_file(sp,sp->state);            break;
+    case SAVEF:                save_edits(sp,NULL);                     break;
+    case UPDATEF:              snd_update(sp->state,sp);                break;
+    case CURSORFOLLOWSPLAYF:   RTNBOOL(sp->cursor_follows_play);        break;
+    case SHOWCONTROLSF:        RTNBOOL(control_panel_open(sp));         break;
+    case SPEEDTONESF:          RTNINT(sp->speed_tones);                 break;
+    case SPEEDSTYLEF:          RTNINT(sp->speed_style);                 break;
     }
   return(SCM_BOOL_F);
 }
@@ -1197,40 +1256,37 @@ static SCM sp_iwrite(SCM snd_n, SCM val, int fld, char *caller)
 	}
       return(val);
     }
-  else
+  sp = get_sp(snd_n);
+  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
+  if (fld != COMMENTF) ival = bool_int_or_one(val);
+  switch (fld)
     {
-      sp = get_sp(snd_n);
-      if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
-      if (fld != COMMENTF) ival = bool_int_or_one(val);
-      switch (fld)
-	{
-	case SYNCF:         syncb(sp,ival);                                            break;
-	case UNITEF:        combineb(sp,ival);                                         break;
-	case READONLYF:     sp->read_only = ival; snd_file_lock_icon(sp,ival);         break;
-	case EXPANDINGF:    toggle_expand_button(sp,ival);                             break;
-	case CONTRASTINGF:  toggle_contrast_button(sp,ival);                           break;
-	case REVERBINGF:    toggle_reverb_button(sp,ival);                             break;
-	case FILTERINGF:    toggle_filter_button(sp,ival);                             break;
-	case FILTERDBING:   set_filter_dBing(sp,ival);                                 break;
-	case FILTERORDERF:  set_snd_filter_order(sp,ival);                             break;
-	case CURSORFOLLOWSPLAYF: sp->cursor_follows_play = ival;                       break;
-	case SHOWCONTROLSF: if (ival) sound_show_ctrls(sp); else sound_hide_ctrls(sp); break;
-	case SPEEDTONESF:   sp->speed_tones = ival;                                    break;
-	case SPEEDSTYLEF:   sp->speed_style = ival;                                    break;
-
-	case SRATEF:        mus_sound_override_header(sp->fullname,ival,-1,-1,-1,-1,-1); snd_update(sp->state,sp); break;
-	case NCHANSF:       mus_sound_override_header(sp->fullname,-1,ival,-1,-1,-1,-1); snd_update(sp->state,sp); break;
-	case DATAFORMATF:   mus_sound_override_header(sp->fullname,-1,-1,ival,-1,-1,-1); snd_update(sp->state,sp); break;
-	case HEADERTYPEF:   mus_sound_override_header(sp->fullname,-1,-1,-1,ival,-1,-1); snd_update(sp->state,sp); break;
-	case DATALOCATIONF: mus_sound_override_header(sp->fullname,-1,-1,-1,-1,ival,-1); snd_update(sp->state,sp); break;
-	  /* last arg is size */
-	case COMMENTF:      
-	  /* this is safe only with aifc and riff headers */
-	  com = gh_scm2newstr(val,NULL);
-	  mus_header_update_comment(sp->fullname,0,com,snd_strlen(com),mus_sound_header_type(sp->fullname));
-	  free(com);
-	  break;
-	}
+    case SYNCF:         syncb(sp,ival);                                            break;
+    case UNITEF:        combineb(sp,ival);                                         break;
+    case READONLYF:     sp->read_only = ival; snd_file_lock_icon(sp,ival);         break;
+    case EXPANDINGF:    toggle_expand_button(sp,ival);                             break;
+    case CONTRASTINGF:  toggle_contrast_button(sp,ival);                           break;
+    case REVERBINGF:    toggle_reverb_button(sp,ival);                             break;
+    case FILTERINGF:    toggle_filter_button(sp,ival);                             break;
+    case FILTERDBING:   set_filter_dBing(sp,ival);                                 break;
+    case FILTERORDERF:  set_snd_filter_order(sp,ival);                             break;
+    case CURSORFOLLOWSPLAYF: sp->cursor_follows_play = ival;                       break;
+    case SHOWCONTROLSF: if (ival) sound_show_ctrls(sp); else sound_hide_ctrls(sp); break;
+    case SPEEDTONESF:   sp->speed_tones = ival;                                    break;
+    case SPEEDSTYLEF:   sp->speed_style = ival;                                    break;
+      
+    case SRATEF:        mus_sound_override_header(sp->fullname,ival,-1,-1,-1,-1,-1); snd_update(sp->state,sp); break;
+    case NCHANSF:       mus_sound_override_header(sp->fullname,-1,ival,-1,-1,-1,-1); snd_update(sp->state,sp); break;
+    case DATAFORMATF:   mus_sound_override_header(sp->fullname,-1,-1,ival,-1,-1,-1); snd_update(sp->state,sp); break;
+    case HEADERTYPEF:   mus_sound_override_header(sp->fullname,-1,-1,-1,ival,-1,-1); snd_update(sp->state,sp); break;
+    case DATALOCATIONF: mus_sound_override_header(sp->fullname,-1,-1,-1,-1,ival,-1); snd_update(sp->state,sp); break;
+      /* last arg is size */
+    case COMMENTF:      
+      /* this is safe only with aifc and riff headers */
+      com = gh_scm2newstr(val,NULL);
+      mus_header_update_comment(sp->fullname,0,com,snd_strlen(com),mus_sound_header_type(sp->fullname));
+      free(com);
+      break;
     }
   RTNBOOL(ival);
 }
@@ -1925,26 +1981,23 @@ static SCM sp_fread(SCM snd_n, int fld, char *caller)
 	}
       return(scm_reverse(res));
     }
-  else
+  sp = get_sp(snd_n);
+  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
+  switch (fld)
     {
-      sp = get_sp(snd_n);
-      if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
-      switch (fld)
-	{
-	case AMPF:            RTNFLT(sp->amp); break;
-	case CONTRASTF:       RTNFLT(sp->contrast); break;
-	case CONTRASTAMPF:    RTNFLT(sp->contrast_amp); break;
-	case EXPANDF:         RTNFLT(sp->expand); break;
-	case EXPANDLENGTHF:   RTNFLT(sp->expand_length); break;
-	case EXPANDRAMPF:     RTNFLT(sp->expand_ramp); break;
-	case EXPANDHOPF:      RTNFLT(sp->expand_hop); break;
-	case SPEEDF:          if (sp->play_direction == -1) RTNFLT((-(sp->srate))); else RTNFLT(sp->srate); break;
-	case REVERBLENGTHF:   RTNFLT(sp->revlen); break;
-	case REVERBFEEDBACKF: RTNFLT(sp->revfb); break;
-	case REVERBSCALEF:    RTNFLT(sp->revscl); break;
-	case REVERBLOWPASSF:  RTNFLT(sp->revlp); break;
-	case SP_REVERB_DECAY: RTNFLT(sp->reverb_decay); break;
-	}
+    case AMPF:            RTNFLT(sp->amp);                                                              break;
+    case CONTRASTF:       RTNFLT(sp->contrast);                                                         break;
+    case CONTRASTAMPF:    RTNFLT(sp->contrast_amp);                                                     break;
+    case EXPANDF:         RTNFLT(sp->expand);                                                           break;
+    case EXPANDLENGTHF:   RTNFLT(sp->expand_length);                                                    break;
+    case EXPANDRAMPF:     RTNFLT(sp->expand_ramp);                                                      break;
+    case EXPANDHOPF:      RTNFLT(sp->expand_hop);                                                       break;
+    case SPEEDF:          if (sp->play_direction == -1) RTNFLT((-(sp->srate))); else RTNFLT(sp->srate); break;
+    case REVERBLENGTHF:   RTNFLT(sp->revlen);                                                           break;
+    case REVERBFEEDBACKF: RTNFLT(sp->revfb);                                                            break;
+    case REVERBSCALEF:    RTNFLT(sp->revscl);                                                           break;
+    case REVERBLOWPASSF:  RTNFLT(sp->revlp);                                                            break;
+    case SP_REVERB_DECAY: RTNFLT(sp->reverb_decay);                                                     break;
     }
   return(SCM_BOOL_F);
 }

@@ -111,7 +111,7 @@
 						 (* odd-amp (- (* yfax (oscil (vector-ref sin-odds k) odd-freq))
 							       (* fax (oscil (vector-ref cos-odds k) odd-freq)))))))))))
 		    (* (env ampf) sum))))
-      (mix-vct out-data start 1 #f 0 #f))))
+      (mix-vct out-data start #f 0 #f))))
 
 
 ;;; (pqw-vox 0 1 300 300 .1 '(0 0 50 1 100 0) '(0 0 100 0) 0 '(0 L 100 L) '(.33 .33 .33) '((1 1 2 .5) (1 .5 2 .5 3 1) (1 1 4 .5)))

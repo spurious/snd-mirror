@@ -217,10 +217,12 @@ typedef struct dac__info {
 static char dac_info_buf[512];
 static char *describe_dac_info(dac_info *dp)
 {
-  
   if (dp)
     sprintf(dac_info_buf,"dac_info (%p) %s: slot: %d, sp: %p (%s), reg: %d, cp: %p %d\n",
-	    dp,dp->desc,dp->slot,dp->sp,(dp->sp) ? dp->sp->shortname : "none", dp->region,dp->cp, dp->cp->chan);
+	    dp,dp->desc,dp->slot,
+	    dp->sp,(dp->sp) ? dp->sp->shortname : "none",
+	    dp->region,
+	    dp->cp, (dp->cp) ? dp->cp->chan : -1);
   else return("null!");
   return(dac_info_buf);
 }
@@ -849,7 +851,7 @@ static char *describe_dac(dac_state *dacp, int error_type)
   dac_info *ptr=NULL;
   for (i=0;i<dac_max_sounds;i++) 
     if (play_list[i]) {ptr = play_list[i]; players++;}
-  if ((players == 1) && (ptr->sp))
+  if (players == 1)
     return(ptr->sp->shortname);
   return("");
 }

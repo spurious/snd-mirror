@@ -108,9 +108,9 @@ void map_chans_field(snd_state *ss, int field, Float val)
 		case FCP_Y_SCALE: sp->chans[j]->spectro_y_scale = val; break;
 		case FCP_Z_ANGLE: sp->chans[j]->spectro_z_angle = val; break;
 		case FCP_Z_SCALE: sp->chans[j]->spectro_z_scale = val; break;
-		case FCP_START:   sp->chans[j]->spectro_start = val; break;
-		case FCP_CUTOFF:  sp->chans[j]->spectro_cutoff = val; break;
-		case FCP_BETA:    sp->chans[j]->fft_beta = val; break;
+		case FCP_START:   sp->chans[j]->spectro_start = val;   break;
+		case FCP_CUTOFF:  sp->chans[j]->spectro_cutoff = val;  break;
+		case FCP_BETA:    sp->chans[j]->fft_beta = val;        break;
 		}
 	    }
 	}
@@ -2241,7 +2241,10 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
 	  cp->selection_visible = 0;
 	  points = make_graph(cp,sp,ss);
 	  if (points == 0) return;
-	  if ((cp->show_mix_consoles) && (cp->mixes) && (cp->mix_dragging)) mix_save_graph(ss,((mixdata *)(cp->mix_dragging))->wg,points);
+	  if ((cp->show_mix_consoles) && 
+	      (cp->mixes) &&
+	      (cp->mix_dragging)) 
+	    mix_save_graph(ss,((mixdata *)(cp->mix_dragging))->wg,points);
 	  if (cp->cursor_on) draw_graph_cursor(cp);
 	}
     }
@@ -2502,8 +2505,19 @@ static int cursor_moveto_end(chan_info *cp)
 
 
 static int region_count = 0;
-static void get_amp_expression(snd_info *sp,int count, int regexpr) {prompt(sp,"env:",NULL); sp->amping = count; sp->reging = regexpr;}
-static void get_eval_expression(snd_info *sp, int count, int regexpr) {prompt(sp,"eval:",NULL); sp->evaling = count; sp->reging = regexpr;}
+static void get_amp_expression(snd_info *sp,int count, int regexpr) 
+{
+  prompt(sp,"env:",NULL); 
+  sp->amping = count; 
+  sp->reging = regexpr;
+}
+
+static void get_eval_expression(snd_info *sp, int count, int regexpr) 
+{
+  prompt(sp,"eval:",NULL); 
+  sp->evaling = count; 
+  sp->reging = regexpr;
+}
 
 void show_cursor_info(chan_info *cp)
 {
@@ -3449,9 +3463,9 @@ void convolve_with(char *filename, Float amp, chan_info *cp)
 		  reactivate_selection(si->cps[ip],si->begs[ip],si->begs[ip]+filtersize+filesize);
 		  if (ok) backup_edit_list(ucp); /* pray... */
 		  if (ucp->marks) ripple_trailing_marks(ucp,si->begs[ip],sc->dur,filtersize+filesize);
+		  update_graph(ucp,NULL); 
 		}
 	      else file_override_samples(filtersize + filesize,ofile,ucp,0,DELETE_ME,LOCK_MIXES,origin);
-	      update_graph(ucp,NULL); 
 	    }
 	  if (ofile) free(ofile);
 	  sfs[ip] = free_snd_fd(sfs[ip]);
@@ -3604,7 +3618,6 @@ static void scale_with(snd_state *ss, sync_state *sc, Float *scalers, char *orig
   FREE(data[0]);
   FREE(data);
 }
-
 
 void scale_by(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int len, int selection)
 {
@@ -3786,43 +3799,20 @@ static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c
   idata0 = data0[0];
   idata1 = data1[0];
   j = 0;
-  if ((no_ed_scalers(cp0)) && (no_ed_scalers(cp1)))
+  for (k=0;k<dur;k++)
     {
-      for (k=0;k<dur;k++)
+      idata0[j] = next_sample(c1);
+      idata1[j] = next_sample(c0);
+      j++;
+      if (temp_file)
 	{
-	  idata0[j] = next_sample_unscaled(c1);
-	  idata1[j] = next_sample_unscaled(c0);
-	  j++;
-	  if (temp_file)
+	  if (j == MAX_BUFFER_SIZE)
 	    {
-	      if (j == MAX_BUFFER_SIZE)
-		{
-		  err = mus_file_write(ofd0,0,j-1,1,data0);
-		  err = mus_file_write(ofd1,0,j-1,1,data1);
-		  j=0;
-		  if (err == -1) break;
-		  if (reporting) progress_report(sp0,"scl",1,1,(Float)k / (Float)dur,NOT_FROM_ENVED);
-		}
-	    }
-	}
-    }
-  else
-    {
-      for (k=0;k<dur;k++)
-	{
-	  idata0[j] = next_sample(c1);
-	  idata1[j] = next_sample(c0);
-	  j++;
-	  if (temp_file)
-	    {
-	      if (j == MAX_BUFFER_SIZE)
-		{
-		  err = mus_file_write(ofd0,0,j-1,1,data0);
-		  err = mus_file_write(ofd1,0,j-1,1,data1);
-		  j=0;
-		  if (err == -1) break;
-		  if (reporting) progress_report(sp0,"scl",1,1,(Float)k / (Float)dur,NOT_FROM_ENVED);
-		}
+	      err = mus_file_write(ofd0,0,j-1,1,data0);
+	      err = mus_file_write(ofd1,0,j-1,1,data1);
+	      j=0;
+	      if (err == -1) break;
+	      if (reporting) progress_report(sp0,"scl",1,1,(Float)k / (Float)dur,NOT_FROM_ENVED);
 	    }
 	}
     }
@@ -4575,6 +4565,7 @@ static void reverse_sound(chan_info *ncp, int over_selection)
   sync_info *si;
   snd_state *ss;
   snd_info *sp;
+  env_info *ep;
   int i,dur,k,stop_point = 0;
   snd_fd **sfs;
   snd_fd *sf;
@@ -4598,9 +4589,14 @@ static void reverse_sound(chan_info *ncp, int over_selection)
 	{
 	  cp = si->cps[i];
 	  sp = cp->sound;
+	  ep = NULL;
 	  if (over_selection)
 	    dur = sc->dur;
-	  else dur = current_ed_samples(cp);
+	  else 
+	    {
+	      dur = current_ed_samples(cp);
+	      ep = amp_env_copy(cp,TRUE);
+	    }
 	  if (dur == 0) continue;
 	  if (dur > MAX_BUFFER_SIZE)
 	    {
@@ -4660,6 +4656,8 @@ static void reverse_sound(chan_info *ncp, int over_selection)
 	      if (ofile) {free(ofile); ofile=NULL;}
 	    }
 	  else change_samples(si->begs[i],dur,data[0],cp,LOCK_MIXES,(over_selection) ? S_reverse_selection : S_reverse_sound);
+	  if (ep) cp->amp_envs[cp->edit_ctr] = ep;
+	  ep = NULL;
 	  if (cp->marks)
 	    {
 	      /* marks refer to particular samples, not positions, so they too must be reversed */
@@ -4703,11 +4701,12 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
   file_info *hdr;
   Float *ef = NULL;
   double *efd = NULL;
-  int i,j,k,ef_ctr,pass,ofd = 0,datumb = 0,temp_file,need_free_env=0,err=0;
+  int i,j,k,ef_ctr,pass,ofd = 0,datumb = 0,temp_file,need_free_env=0,err=0,scalable=1;
   MUS_SAMPLE_TYPE **data;
   MUS_SAMPLE_TYPE *idata;
   int reporting = 0;
   Float env_val,env_incr,step_val;
+  Float val[1];
   double env_vald=0.0,env_incrd;
   int need_doubles=0,need_exponential=0,need_step=0;
   char *ofile = NULL;
@@ -4715,6 +4714,22 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
   Float xoffset,xscaler,logbase=0.0,env_powd;
 
   if (!e) return;
+  if (e->pts == 0) return;
+
+  val[0] = e->data[1];
+  for (i=1,j=2;i<e->pts;i++,j+=2)
+    if (e->data[j+1] != val[0]) 
+      {
+	scalable = 0; 
+	break;
+      }
+  if (scalable)
+    {
+      val[0] *= scaler;
+      scale_by(cp->state,cp->sound,cp,val,1,regexpr);
+      return;
+    }
+
   need_step = (e->base <= 0.0);
   need_exponential = ((!need_step) && (e->base != 1.0) && (fabs(e->base-1.0) > 0.00001));
   need_doubles = (((dur > 5000000) && (!need_step)) || (need_exponential));
@@ -4986,6 +5001,7 @@ void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexp
       if ((temp_file) && (si->chans > 1)) remember_temp(ofile,si->chans);
       for (i=0;i<si->chans;i++)
 	{
+	  /* TODO: ?? envelope the amp-env? */
 	  if (temp_file)
 	    file_change_samples(si->begs[i],dur,ofile,si->cps[i],i,(si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,LOCK_MIXES,origin);
 	  else change_samples(si->begs[i],dur,data[i],si->cps[i],LOCK_MIXES,origin);
@@ -6615,13 +6631,11 @@ static int within_graph(chan_info *cp, int x, int y)
 
 static char *describe_fft_point(chan_info *cp, int x, int y)
 {
-  char *fftdes;
   Float xf,yf;
   axis_info *ap;
   fft_info *fp;
   sono_info *si;
   int ind,time;
-  fftdes = (char *)CALLOC(128,sizeof(char));
   fp = cp->fft;
   ap = fp->axis;
   if (x < ap->x_axis_x0) x = ap->x_axis_x0; else if (x > ap->x_axis_x1) x = ap->x_axis_x1;
@@ -6633,10 +6647,10 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
       if (cp->transform_type == FOURIER)
 	ind = (int)((fp->current_size * xf) / (Float)SND_SRATE(cp->sound));
       else ind = (int)xf;
-      sprintf(fftdes,"(%.1f%s, transform val: %.3f%s (raw: %.3f)",
-	      xf,
-	      ((cp->transform_type == AUTOCORRELATION) ? " samps" : " Hz"),
-	      fp->data[ind]*fp->scale,(cp->fft_log_magnitude) ? "dB" : "",fp->data[ind]);
+      return(mus_format("(%.1f%s, transform val: %.3f%s (raw: %.3f)",
+			xf,
+			((cp->transform_type == AUTOCORRELATION) ? " samps" : " Hz"),
+			fp->data[ind]*fp->scale,(cp->fft_log_magnitude) ? "dB" : "",fp->data[ind]));
     }
   else 
     {
@@ -6648,11 +6662,10 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
 	    ind = (int)((fp->current_size * yf) / (Float)SND_SRATE(cp->sound));
 	  else ind = (int)yf;
 	  time = (int)(si->target_slices * (Float)(x - ap->x_axis_x0)/(Float)(ap->x_axis_x1 - ap->x_axis_x0));
-	  sprintf(fftdes,"(time: %.2f, freq: %.1f, val: %.3f (raw: %.3f))",xf,yf,si->data[time][ind]/si->scale,si->data[time][ind]);
+	  return(mus_format("(time: %.2f, freq: %.1f, val: %.3f (raw: %.3f))",xf,yf,si->data[time][ind]/si->scale,si->data[time][ind]));
 	}
-      else sprintf(fftdes,"?");
     }
-  return(fftdes);
+  return(mus_format("?"));
 }
 
 void fftb(chan_info *cp, int on)
@@ -7783,67 +7796,61 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 	}
       return(scm_reverse(res));
     }
-  else
+  if (SCM_EQ_P(chn_n,SCM_BOOL_T))
     {
-      if (SCM_EQ_P(chn_n,SCM_BOOL_T))
-	{
-	  sp = get_sp(snd_n);
-	  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
-	  for (i=0;i<sp->nchans;i++)
-	    res = gh_cons(cp_iwrite(snd_n,gh_int2scm(i),on,fld,caller),res);
-	  return(scm_reverse(res));
-	}
-      else
-	{
-	  cp = get_cp(snd_n,chn_n,caller);
-	  switch (fld)
-	    {
-	    case EDITF:
-	      val = g_scm2intdef(on,0);
-	      if (cp->edit_ctr < val)
-		redo_edit(cp,val - cp->edit_ctr);
-	      else undo_edit(cp,cp->edit_ctr - val);
-	      RTNINT(cp->edit_ctr);
-	      break;
-	    case FFTF:                  fftb(cp,val = bool_int_or_one(on)); update_graph(cp,NULL);                                                               break;
-	    case WAVEF:                 waveb(cp,val = bool_int_or_one(on)); update_graph(cp,NULL);                                                              break;
-	    case CURSORF:               cp->cursor_on = 1; handle_cursor(cp,cursor_moveto(cp,val = g_scm2intdef(on,1)));                                         break;
-	    case GRAPHINGF: 
-	      cp->lisp_graphing = bool_int_or_one(on); 
-	      val = cp->lisp_graphing;
-	      update_graph(cp,NULL); 
-	      break;
-	    case LOSAMPF:               set_x_axis_x0(cp,val = g_scm2intdef(on,0)); return(on);                                                                  break;
-	    case HISAMPF:               set_x_axis_x1(cp,val = g_scm2intdef(on,1)); return(on);                                                                  break;
-	    case SQUELCH_UPDATE:        cp->squelch_update = bool_int_or_one(on);                                                                                break;
-	    case CURSOR_STYLE:          cp->cursor_style = g_scm2intdef(on,0); update_graph(cp,NULL); RTNINT(cp->cursor_style);                                  break;
-	    case SHOW_Y_ZERO:           cp->show_y_zero = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_y_zero);                                  break;
-	    case SHOW_MARKS:            cp->show_marks = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_marks);                                    break;
-	    case CP_WAVO:               cp->wavo = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->wavo);                                                break;
-	    case CP_WAVO_HOP:           cp->wavo_hop = g_scm2intdef(on,DEFAULT_WAVO_HOP); update_graph(cp,NULL); RTNINT(cp->wavo_hop);                           break;
-	    case CP_WAVO_TRACE:         cp->wavo_trace = g_scm2intdef(on,DEFAULT_WAVO_TRACE); update_graph(cp,NULL); RTNINT(cp->wavo_trace);                     break;
-	    case CP_LINE_SIZE:          cp->line_size = g_scm2intdef(on,DEFAULT_LINE_SIZE); RTNINT(cp->line_size);                                               break;
-	    case CP_MAX_FFT_PEAKS:      cp->max_fft_peaks = g_scm2intdef(on,DEFAULT_MAX_FFT_PEAKS); RTNINT(cp->max_fft_peaks);                                   break;
-	    case CP_ZERO_PAD:           cp->zero_pad = g_scm2intdef(on,DEFAULT_ZERO_PAD); update_graph(cp,NULL); RTNINT(cp->zero_pad);                           break;
-	    case CP_WAVELET_TYPE:       cp->wavelet_type = g_scm2intdef(on,DEFAULT_WAVELET_TYPE); update_graph(cp,NULL); RTNINT(cp->wavelet_type);               break;
-	    case CP_SHOW_FFT_PEAKS:     cp->show_fft_peaks = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_fft_peaks);                            break;
-	    case CP_VERBOSE_CURSOR:     cp->verbose_cursor = bool_int_or_one(on); RTNBOOL(cp->verbose_cursor);                                                   break;
-	    case CP_FFT_LOG_FREQUENCY:  cp->fft_log_frequency = bool_int_or_one(on); if (cp->ffting) calculate_fft(cp,NULL); RTNBOOL(cp->fft_log_frequency);     break;
-	    case CP_FFT_LOG_MAGNITUDE:  cp->fft_log_magnitude = bool_int_or_one(on); if (cp->ffting) calculate_fft(cp,NULL); RTNBOOL(cp->fft_log_magnitude);     break;
-	    case CP_SPECTRO_HOP:        cp->spectro_hop = g_scm2intdef(on,DEFAULT_SPECTRO_HOP); if (cp->ffting) calculate_fft(cp,NULL); RTNINT(cp->spectro_hop); break;
-	    case CP_FFT_SIZE:           cp->fft_size = g_scm2intdef(on,DEFAULT_FFT_SIZE); calculate_fft(cp,NULL); RTNINT(cp->fft_size);                          break;
-	    case CP_FFT_STYLE:          cp->fft_style = g_scm2intdef(on,DEFAULT_FFT_STYLE); calculate_fft(cp,NULL); RTNINT(cp->fft_style);                       break;
-	    case CP_FFT_WINDOW:         cp->fft_window = g_scm2intdef(on,DEFAULT_FFT_WINDOW); calculate_fft(cp,NULL); RTNINT(cp->fft_window);                    break;
-	    case CP_TRANSFORM_TYPE:     cp->transform_type = g_scm2intdef(on,DEFAULT_TRANSFORM_TYPE); calculate_fft(cp,NULL); RTNINT(cp->transform_type);        break;
-	    case CP_NORMALIZE_FFT:      cp->normalize_fft = g_scm2boolintdef(on,DEFAULT_NORMALIZE_FFT); calculate_fft(cp,NULL); RTNINT(cp->normalize_fft);       break;
-	    case CP_SHOW_MIX_CONSOLES:  cp->show_mix_consoles = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_mix_consoles);                      break;
-	    case CP_SHOW_MIX_WAVEFORMS: cp->show_mix_waveforms = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_mix_waveforms);                    break;
-	    case CP_GRAPH_STYLE:        cp->graph_style = g_scm2intdef(on,DEFAULT_GRAPH_STYLE); update_graph(cp,NULL); RTNINT(cp->graph_style);                  break;
-	    case CP_DOT_SIZE:           cp->dot_size = g_scm2intdef(on,DEFAULT_DOT_SIZE); update_graph(cp,NULL); RTNINT(cp->dot_size);                           break;
-	    case CP_SHOW_AXES:          cp->show_axes = g_scm2intdef(on,DEFAULT_SHOW_AXES); update_graph(cp,NULL); RTNINT(cp->show_axes);                        break;
-	    case CP_GRAPHS_HORIZONTAL:  cp->graphs_horizontal = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->graphs_horizontal);                      break;
-	    }
-	}
+      sp = get_sp(snd_n);
+      if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
+      for (i=0;i<sp->nchans;i++)
+	res = gh_cons(cp_iwrite(snd_n,gh_int2scm(i),on,fld,caller),res);
+      return(scm_reverse(res));
+    }
+  cp = get_cp(snd_n,chn_n,caller);
+  switch (fld)
+    {
+    case EDITF:
+      val = g_scm2intdef(on,0);
+      if (cp->edit_ctr < val)
+	redo_edit(cp,val - cp->edit_ctr);
+      else undo_edit(cp,cp->edit_ctr - val);
+      RTNINT(cp->edit_ctr);
+      break;
+    case FFTF:                  fftb(cp,val = bool_int_or_one(on)); update_graph(cp,NULL);                                                               break;
+    case WAVEF:                 waveb(cp,val = bool_int_or_one(on)); update_graph(cp,NULL);                                                              break;
+    case CURSORF:               cp->cursor_on = 1; handle_cursor(cp,cursor_moveto(cp,val = g_scm2intdef(on,1)));                                         break;
+    case GRAPHINGF: 
+      cp->lisp_graphing = bool_int_or_one(on); 
+      val = cp->lisp_graphing;
+      update_graph(cp,NULL); 
+      break;
+    case LOSAMPF:               set_x_axis_x0(cp,val = g_scm2intdef(on,0)); return(on);                                                                  break;
+    case HISAMPF:               set_x_axis_x1(cp,val = g_scm2intdef(on,1)); return(on);                                                                  break;
+    case SQUELCH_UPDATE:        cp->squelch_update = bool_int_or_one(on);                                                                                break;
+    case CURSOR_STYLE:          cp->cursor_style = g_scm2intdef(on,0); update_graph(cp,NULL); RTNINT(cp->cursor_style);                                  break;
+    case SHOW_Y_ZERO:           cp->show_y_zero = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_y_zero);                                  break;
+    case SHOW_MARKS:            cp->show_marks = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_marks);                                    break;
+    case CP_WAVO:               cp->wavo = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->wavo);                                                break;
+    case CP_WAVO_HOP:           cp->wavo_hop = g_scm2intdef(on,DEFAULT_WAVO_HOP); update_graph(cp,NULL); RTNINT(cp->wavo_hop);                           break;
+    case CP_WAVO_TRACE:         cp->wavo_trace = g_scm2intdef(on,DEFAULT_WAVO_TRACE); update_graph(cp,NULL); RTNINT(cp->wavo_trace);                     break;
+    case CP_LINE_SIZE:          cp->line_size = g_scm2intdef(on,DEFAULT_LINE_SIZE); RTNINT(cp->line_size);                                               break;
+    case CP_MAX_FFT_PEAKS:      cp->max_fft_peaks = g_scm2intdef(on,DEFAULT_MAX_FFT_PEAKS); RTNINT(cp->max_fft_peaks);                                   break;
+    case CP_ZERO_PAD:           cp->zero_pad = g_scm2intdef(on,DEFAULT_ZERO_PAD); update_graph(cp,NULL); RTNINT(cp->zero_pad);                           break;
+    case CP_WAVELET_TYPE:       cp->wavelet_type = g_scm2intdef(on,DEFAULT_WAVELET_TYPE); update_graph(cp,NULL); RTNINT(cp->wavelet_type);               break;
+    case CP_SHOW_FFT_PEAKS:     cp->show_fft_peaks = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_fft_peaks);                            break;
+    case CP_VERBOSE_CURSOR:     cp->verbose_cursor = bool_int_or_one(on); RTNBOOL(cp->verbose_cursor);                                                   break;
+    case CP_FFT_LOG_FREQUENCY:  cp->fft_log_frequency = bool_int_or_one(on); if (cp->ffting) calculate_fft(cp,NULL); RTNBOOL(cp->fft_log_frequency);     break;
+    case CP_FFT_LOG_MAGNITUDE:  cp->fft_log_magnitude = bool_int_or_one(on); if (cp->ffting) calculate_fft(cp,NULL); RTNBOOL(cp->fft_log_magnitude);     break;
+    case CP_SPECTRO_HOP:        cp->spectro_hop = g_scm2intdef(on,DEFAULT_SPECTRO_HOP); if (cp->ffting) calculate_fft(cp,NULL); RTNINT(cp->spectro_hop); break;
+    case CP_FFT_SIZE:           cp->fft_size = g_scm2intdef(on,DEFAULT_FFT_SIZE); calculate_fft(cp,NULL); RTNINT(cp->fft_size);                          break;
+    case CP_FFT_STYLE:          cp->fft_style = g_scm2intdef(on,DEFAULT_FFT_STYLE); calculate_fft(cp,NULL); RTNINT(cp->fft_style);                       break;
+    case CP_FFT_WINDOW:         cp->fft_window = g_scm2intdef(on,DEFAULT_FFT_WINDOW); calculate_fft(cp,NULL); RTNINT(cp->fft_window);                    break;
+    case CP_TRANSFORM_TYPE:     cp->transform_type = g_scm2intdef(on,DEFAULT_TRANSFORM_TYPE); calculate_fft(cp,NULL); RTNINT(cp->transform_type);        break;
+    case CP_NORMALIZE_FFT:      cp->normalize_fft = g_scm2boolintdef(on,DEFAULT_NORMALIZE_FFT); calculate_fft(cp,NULL); RTNINT(cp->normalize_fft);       break;
+    case CP_SHOW_MIX_CONSOLES:  cp->show_mix_consoles = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_mix_consoles);                      break;
+    case CP_SHOW_MIX_WAVEFORMS: cp->show_mix_waveforms = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->show_mix_waveforms);                    break;
+    case CP_GRAPH_STYLE:        cp->graph_style = g_scm2intdef(on,DEFAULT_GRAPH_STYLE); update_graph(cp,NULL); RTNINT(cp->graph_style);                  break;
+    case CP_DOT_SIZE:           cp->dot_size = g_scm2intdef(on,DEFAULT_DOT_SIZE); update_graph(cp,NULL); RTNINT(cp->dot_size);                           break;
+    case CP_SHOW_AXES:          cp->show_axes = g_scm2intdef(on,DEFAULT_SHOW_AXES); update_graph(cp,NULL); RTNINT(cp->show_axes);                        break;
+    case CP_GRAPHS_HORIZONTAL:  cp->graphs_horizontal = bool_int_or_one(on); update_graph(cp,NULL); RTNBOOL(cp->graphs_horizontal);                      break;
     }
   RTNBOOL(val);
 }
@@ -7870,33 +7877,27 @@ static SCM cp_fread(SCM snd_n, SCM chn_n, int fld, char *caller)
 	}
       return(scm_reverse(res));
     }
-  else
+  if (SCM_EQ_P(chn_n,SCM_BOOL_T))
     {
-      if (SCM_EQ_P(chn_n,SCM_BOOL_T))
-	{
-	  sp = get_sp(snd_n);
-	  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
-	  for (i=0;i<sp->nchans;i++)
-	    res = gh_cons(cp_fread(snd_n,gh_int2scm(i),fld,caller),res);
-	  return(scm_reverse(res));
-	}
-      else
-	{
-	  cp = get_cp(snd_n,chn_n,caller);
-	  switch(fld)
-	    {
-	    case CP_MIN_DB:          RTNFLT(cp->min_dB);          break;
-	    case CP_SPECTRO_X_ANGLE: RTNFLT(cp->spectro_x_angle); break;
-	    case CP_SPECTRO_Y_ANGLE: RTNFLT(cp->spectro_y_angle); break;
-	    case CP_SPECTRO_Z_ANGLE: RTNFLT(cp->spectro_z_angle); break;
-	    case CP_SPECTRO_X_SCALE: RTNFLT(cp->spectro_x_scale); break;
-	    case CP_SPECTRO_Y_SCALE: RTNFLT(cp->spectro_y_scale); break;
-	    case CP_SPECTRO_Z_SCALE: RTNFLT(cp->spectro_z_scale); break;
-	    case CP_SPECTRO_CUTOFF:  RTNFLT(cp->spectro_cutoff);  break;
-	    case CP_SPECTRO_START:   RTNFLT(cp->spectro_start);   break;
-	    case CP_FFT_BETA:        RTNFLT(cp->fft_beta);        break;
-	    }
-	}
+      sp = get_sp(snd_n);
+      if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
+      for (i=0;i<sp->nchans;i++)
+	res = gh_cons(cp_fread(snd_n,gh_int2scm(i),fld,caller),res);
+      return(scm_reverse(res));
+    }
+  cp = get_cp(snd_n,chn_n,caller);
+  switch(fld)
+    {
+    case CP_MIN_DB:          RTNFLT(cp->min_dB);          break;
+    case CP_SPECTRO_X_ANGLE: RTNFLT(cp->spectro_x_angle); break;
+    case CP_SPECTRO_Y_ANGLE: RTNFLT(cp->spectro_y_angle); break;
+    case CP_SPECTRO_Z_ANGLE: RTNFLT(cp->spectro_z_angle); break;
+    case CP_SPECTRO_X_SCALE: RTNFLT(cp->spectro_x_scale); break;
+    case CP_SPECTRO_Y_SCALE: RTNFLT(cp->spectro_y_scale); break;
+    case CP_SPECTRO_Z_SCALE: RTNFLT(cp->spectro_z_scale); break;
+    case CP_SPECTRO_CUTOFF:  RTNFLT(cp->spectro_cutoff);  break;
+    case CP_SPECTRO_START:   RTNFLT(cp->spectro_start);   break;
+    case CP_FFT_BETA:        RTNFLT(cp->fft_beta);        break;
     }
   return(SCM_BOOL_F);
 }
@@ -7919,33 +7920,27 @@ static SCM cp_fwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
 	}
       return(scm_reverse(res));
     }
-  else
+  if (SCM_EQ_P(chn_n,SCM_BOOL_T))
     {
-      if (SCM_EQ_P(chn_n,SCM_BOOL_T))
-	{
-	  sp = get_sp(snd_n);
-	  if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
-	  for (i=0;i<sp->nchans;i++)
-	    res = gh_cons(cp_fwrite(snd_n,gh_int2scm(i),on,fld,caller),res);
-	  return(scm_reverse(res));
-	}
-      else
-	{
-	  cp = get_cp(snd_n,chn_n,caller);
-	  switch (fld)
-	    {
-	    case CP_MIN_DB:          cp->min_dB = gh_scm2double(on); cp->lin_dB = pow(10.0,cp->min_dB * 0.05); calculate_fft(cp,NULL); break;
-	    case CP_SPECTRO_X_ANGLE: cp->spectro_x_angle = gh_scm2double(on); calculate_fft(cp,NULL);                                  break;
-	    case CP_SPECTRO_Y_ANGLE: cp->spectro_y_angle = gh_scm2double(on); calculate_fft(cp,NULL);                                  break;
-	    case CP_SPECTRO_Z_ANGLE: cp->spectro_z_angle = gh_scm2double(on); calculate_fft(cp,NULL);                                  break;
-	    case CP_SPECTRO_X_SCALE: cp->spectro_x_scale = gh_scm2double(on); calculate_fft(cp,NULL);                                  break;
-	    case CP_SPECTRO_Y_SCALE: cp->spectro_y_scale = gh_scm2double(on); calculate_fft(cp,NULL);                                  break;
-	    case CP_SPECTRO_Z_SCALE: cp->spectro_z_scale = gh_scm2double(on); calculate_fft(cp,NULL);                                  break;
-	    case CP_SPECTRO_CUTOFF:  cp->spectro_cutoff = gh_scm2double(on); calculate_fft(cp,NULL);                                   break;
-	    case CP_SPECTRO_START:   cp->spectro_start = gh_scm2double(on); calculate_fft(cp,NULL);                                    break;
-	    case CP_FFT_BETA:        cp->fft_beta = gh_scm2double(on); calculate_fft(cp,NULL);                                         break;
-	    }
-	}
+      sp = get_sp(snd_n);
+      if (sp == NULL) return(scm_throw(NO_SUCH_SOUND,SCM_LIST2(gh_str02scm(caller),snd_n)));
+      for (i=0;i<sp->nchans;i++)
+	res = gh_cons(cp_fwrite(snd_n,gh_int2scm(i),on,fld,caller),res);
+      return(scm_reverse(res));
+    }
+  cp = get_cp(snd_n,chn_n,caller);
+  switch (fld)
+    {
+    case CP_MIN_DB:          cp->min_dB = gh_scm2double(on); cp->lin_dB = pow(10.0,cp->min_dB * 0.05); calculate_fft(cp,NULL); break;
+    case CP_SPECTRO_X_ANGLE: cp->spectro_x_angle = gh_scm2double(on); calculate_fft(cp,NULL);                                  break;
+    case CP_SPECTRO_Y_ANGLE: cp->spectro_y_angle = gh_scm2double(on); calculate_fft(cp,NULL);                                  break;
+    case CP_SPECTRO_Z_ANGLE: cp->spectro_z_angle = gh_scm2double(on); calculate_fft(cp,NULL);                                  break;
+    case CP_SPECTRO_X_SCALE: cp->spectro_x_scale = gh_scm2double(on); calculate_fft(cp,NULL);                                  break;
+    case CP_SPECTRO_Y_SCALE: cp->spectro_y_scale = gh_scm2double(on); calculate_fft(cp,NULL);                                  break;
+    case CP_SPECTRO_Z_SCALE: cp->spectro_z_scale = gh_scm2double(on); calculate_fft(cp,NULL);                                  break;
+    case CP_SPECTRO_CUTOFF:  cp->spectro_cutoff = gh_scm2double(on); calculate_fft(cp,NULL);                                   break;
+    case CP_SPECTRO_START:   cp->spectro_start = gh_scm2double(on); calculate_fft(cp,NULL);                                    break;
+    case CP_FFT_BETA:        cp->fft_beta = gh_scm2double(on); calculate_fft(cp,NULL);                                         break;
     }
   return(on);
 }
@@ -9293,8 +9288,9 @@ static SCM g_swap_channels(SCM snd0, SCM chn0, SCM snd1, SCM chn1, SCM beg, SCM 
   #define H_swap_channels "(" S_swap_channels " snd0 chn0 snd1 chn1) swaps the indicated channels"
   chan_info *cp0 = NULL,*cp1 = NULL;
   snd_fd *c0,*c1;
-  int dur0,dur1,beg0=0,num;
+  int dur0,dur1,beg0=0,num,old_squelch0,old_squelch1;
   snd_info *sp = NULL;
+  env_info *e0,*e1;
   ERRCP(S_swap_channels,snd0,chn0,1);
   cp0 = get_cp(snd0,chn0,S_swap_channels);
   if (SCM_INUMP(snd1) && SCM_INUMP(chn1)) 
@@ -9326,11 +9322,38 @@ static SCM g_swap_channels(SCM snd0, SCM chn0, SCM snd1, SCM chn1, SCM beg, SCM 
 	  dur1 = current_ed_samples(cp1);
 	  if (dur0 > dur1) num = dur1; else num = dur0;
 	}
-      c0 = init_sample_read(beg0,cp0,READ_FORWARD);
-      c1 = init_sample_read(beg0,cp1,READ_FORWARD);
-      swap_channels(cp0->state,beg0,num,c0,c1);
-      free_snd_fd(c0);
-      free_snd_fd(c1);
+      if ((beg0 == 0) && ((num == dur0) || (num == dur1)) &&
+	  (no_ed_scalers(cp0)) && (no_ed_scalers(cp1)) &&
+	  (cp0->edit_ctr == 0) && (cp1->edit_ctr == 0))
+	{
+	  /* common special case -- just setup a new ed-list entry with the channels/sounds swapped */
+	  /*   TODO: extend this to swap scaled chans and to accept any point int list as long as just sound */
+	  old_squelch0 = cp0->squelch_update;
+	  old_squelch1 = cp1->squelch_update;
+	  e0 = amp_env_copy(cp0,FALSE);
+	  e1 = amp_env_copy(cp1,FALSE);
+	  cp0->squelch_update = 1;
+	  cp1->squelch_update = 1;
+	  file_override_samples(dur1,cp1->sound->fullname,cp0,cp1->chan,DONT_DELETE_ME,LOCK_MIXES,S_swap_channels);
+	  file_override_samples(dur0,cp0->sound->fullname,cp1,cp0->chan,DONT_DELETE_ME,LOCK_MIXES,S_swap_channels);
+	  if ((e0) && (e1))
+	    {
+	      cp0->amp_envs[cp0->edit_ctr] = e1;
+	      cp1->amp_envs[cp1->edit_ctr] = e0;
+	    }
+	  cp0->squelch_update = old_squelch0;
+	  cp1->squelch_update = old_squelch1;
+	  update_graph(cp0,NULL);
+	  update_graph(cp1,NULL);
+	}
+      else
+	{
+	  c0 = init_sample_read(beg0,cp0,READ_FORWARD);
+	  c1 = init_sample_read(beg0,cp1,READ_FORWARD);
+	  swap_channels(cp0->state,beg0,num,c0,c1);
+	  free_snd_fd(c0);
+	  free_snd_fd(c1);
+	}
     }
   return(SCM_BOOL_F);
 }

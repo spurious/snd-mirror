@@ -1264,6 +1264,7 @@ static int apply_fft_window(fft_state *fs)
       window = (Float *)((fft_window_state *)(fs->wp))->window;
       for (i=0;i<data_len;i++) 
 	fft_data[i] = window[i] * next_sample_to_float(sf);
+      /* my timing tests indicate this change to float (i.e. scaling) costs nothing in the larger scheme of things */
       if (data_len < fs->size) for (i=data_len;i<fs->size;i++) fft_data[i] = 0.0;
       decrement_fft_window_use(fs);
       result = 1;
@@ -1423,7 +1424,6 @@ void *make_fft_state(chan_info *cp, int simple)
   int reuse_old = 0,fftsize,dbeg=0,dlen=0;
   ss = cp->state;
   ap = cp->axis;
-  
   if ((show_selection_transform(ss)) && 
       (cp->fft_style == NORMAL_FFT) && 
       (selection_is_active_in_channel(cp)))

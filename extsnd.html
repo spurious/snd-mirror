@@ -1102,10 +1102,9 @@ To mix data in such a way as to create an associated mix object:</p>
 
   <a name="sndmixsound">mix-sound</a> (file start)  mix <i>file</i> into selected sound at <i>start</i> [<em class=error>no-such-file</em>].
 
-  <a name="sndmixvct">mix-vct</a> (vct <i>beg in-chans snd chn with-mix-consoles</i>)
+  <a name="sndmixvct">mix-vct</a> (vct <i>beg snd chn with-mix-consoles</i>)
                       mix the contents of <i>vct</i> into <i>snd</i>'s channel <i>chn</i> starting at frame <i>beg</i>.
-                      The data in the vct represent <i>in-chans</i> input channels, with samples 
-                      interleaved. returns the id of the new mix, or -1 if some error occurred.
+                      Returns the id of the new mix, or -1 if some error occurred.
                       If <i>with-mix-consoles</i> is #f (default is #t), the data is simply
                       mixed without creating any mix consoles.
 </pre>

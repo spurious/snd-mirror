@@ -1101,7 +1101,7 @@ multifile_info *sort_multifile_channels(snd_state *ss, char *filename);
 #endif
 void set_speed_style(snd_state *ss, int val);
 void amp_env_scale_by(chan_info *cp, Float scl);
-
+env_info *amp_env_copy(chan_info *cp, int reversed);
 
 
 /* -------- snd-file -------- */
@@ -1233,7 +1233,7 @@ void update_all_consoles(snd_state *ss);
 mixdata *active_mix(chan_info *cp);
 int mix_beg(chan_info *cp);
 void release_mixes(chan_info *cp);
-void regraph_all_mixmarks(chan_info *cp);
+void reset_mix_graph_parent(chan_info *cp);
 void display_channel_mixes(chan_info *cp);
 void lock_affected_mixes(chan_info *cp, int beg, int end);
 void release_pending_mixes(chan_info *cp, int edit_ctr);

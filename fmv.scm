@@ -229,9 +229,9 @@
 	(vct-set! out-data i (fm-violin v)))
       (if (= (channels) 2)
 	  (let ((bsamps (vct-copy out-data)))
-	    (mix-vct (vct-scale! bsamps (locsig-ref loc 1)) beg 1 #f 1 #f)
-	    (mix-vct (vct-scale! out-data (locsig-ref loc 0)) beg 1 #f 0 #f))
-	  (mix-vct out-data beg 1 #f 0 #f)))))
+	    (mix-vct (vct-scale! bsamps (locsig-ref loc 1)) beg #f 1 #f)
+	    (mix-vct (vct-scale! out-data (locsig-ref loc 0)) beg #f 0 #f))
+	  (mix-vct out-data beg #f 0 #f)))))
 
 
 			  

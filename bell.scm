@@ -30,7 +30,7 @@
 			  (* .15 (oscil car3 (* fmenv 
 						fmInd4 
 						(oscil mod4)))))))))
-      (mix-vct out-data beg 1 #f 0 #f))))
+      (mix-vct out-data beg))))
 
 
 ;(define fbell '(0 1 2 1.1000 25 .7500 75 .5000 100 .2000 ))
