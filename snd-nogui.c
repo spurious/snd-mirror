@@ -300,7 +300,6 @@ void set_revscl(snd_info *sp, Float val) {sp->reverb_control_scale = val;}
 void set_filter_order(snd_info *sp, int val) {sp->filter_control_order = val;}
 void set_filter_in_dB(snd_info *sp, bool val) {sp->filter_control_in_dB = val;}
 void set_filter_in_hz(snd_info *sp, bool val) {sp->filter_control_in_hz = val;}
-
 void reflect_recorder_mixer_gain(int ind, Float val) {}
 void reflect_recorder_out_amp(int ind, Float val) {}
 void reflect_recorder_in_amp(int in, int out, Float val) {}

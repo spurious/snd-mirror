@@ -1449,6 +1449,7 @@ struct track_fd *run_make_track_sample_reader(int id, int chan, off_t beg);
 bool track_sample_reader_at_end_p(struct track_fd *tf);
 bool mix_dialog_mix_inverted(int id);
 void mix_dialog_set_mix_inverted(int id, bool on);
+char *edit_list_mix_and_track_init(chan_info *cp);
 
 XEN g_copy_mix_sample_reader(XEN obj);
 XEN g_mix_sample_reader_home(XEN obj);
@@ -1460,10 +1461,6 @@ XEN g_track_sample_reader_home(XEN obj);
 XEN g_track_sample_reader_at_end_p(XEN obj);
 XEN g_track_sample_reader_position(XEN obj);
 XEN g_free_track_sample_reader(XEN obj);
-
-#if HAVE_GUILE
-char *edit_list_mix_and_track_init(chan_info *cp);
-#endif
 
 
 

@@ -1258,10 +1258,9 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
   return(NULL);
 }
 
-#define MAX_SINGLE_FFT_SIZE 1048576
-
 #if HAVE_FFTW || HAVE_FFTW3
 #define TWO_30 1073741824
+#define MAX_SINGLE_FFT_SIZE 1048576
 
 static Float convolve_next_sample(void *ptr, int dir)
 {

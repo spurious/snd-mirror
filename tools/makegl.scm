@@ -303,6 +303,7 @@
 				     (list "Display*" "XVisualInfo*" "int*" "Pixmap" "Font" "GLubyte*"
 					   "GLdouble*" "GLfloat*" "GLvoid*" "GLuint*"
 					   "GLboolean*" "void*" "GLint*" "GLshort*"
+					   "GLsizei" "GLclampd" "GLclampf" "GLbitfield" "GLshort" "GLubyte" "GLbyte"
 					   "void**")))
 			(if (string=? (car typ) "constchar*")
 			    (hey "#define C_TO_XEN_~A(Arg) C_TO_XEN_~A((char *)(Arg))~%" (no-stars (car typ)) (cdr typ))

@@ -136,10 +136,8 @@ XL_TYPE_PTR_1(GtkWidget_, GtkWidget*)
 #define C_TO_XEN_GLfloat(Arg) C_TO_XEN_DOUBLE(Arg)
 #define XEN_TO_C_GLfloat(Arg) (GLfloat)(XEN_TO_C_DOUBLE(Arg))
 #define XEN_GLfloat_P(Arg) XEN_NUMBER_P(Arg)
-#define C_TO_XEN_GLclampf(Arg) C_TO_XEN_DOUBLE(Arg)
 #define XEN_TO_C_GLclampf(Arg) (GLclampf)(XEN_TO_C_DOUBLE(Arg))
 #define XEN_GLclampf_P(Arg) XEN_NUMBER_P(Arg)
-#define C_TO_XEN_GLbitfield(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_GLbitfield(Arg) (GLbitfield)(XEN_TO_C_ULONG(Arg))
 #define XEN_GLbitfield_P(Arg) XEN_ULONG_P(Arg)
 #define C_TO_XEN_GLuint(Arg) C_TO_XEN_ULONG(Arg)
@@ -158,7 +156,6 @@ XL_TYPE_PTR_1(GtkWidget_, GtkWidget*)
 #define XEN_TO_C_GLushort(Arg) (GLushort)(XEN_TO_C_INT(Arg))
 #define XEN_GLushort_P(Arg) XEN_INTEGER_P(Arg)
 XL_TYPE_PTR_1(GLubyte_, GLubyte*)
-#define C_TO_XEN_GLsizei(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GLsizei(Arg) (GLsizei)(XEN_TO_C_INT(Arg))
 #define XEN_GLsizei_P(Arg) XEN_INTEGER_P(Arg)
 XL_TYPE_PTR_1(GLdouble_, GLdouble*)
@@ -168,18 +165,14 @@ XL_TYPE_PTR_1(GLdouble_, GLdouble*)
 #define C_TO_XEN_constchar_(Arg) C_TO_XEN_STRING((char *)(Arg))
 #define XEN_TO_C_constchar_(Arg) (constchar*)(XEN_TO_C_STRING(Arg))
 #define XEN_constchar__P(Arg) XEN_STRING_P(Arg)
-#define C_TO_XEN_GLclampd(Arg) C_TO_XEN_DOUBLE(Arg)
 #define XEN_TO_C_GLclampd(Arg) (GLclampd)(XEN_TO_C_DOUBLE(Arg))
 #define XEN_GLclampd_P(Arg) XEN_NUMBER_P(Arg)
 XL_TYPE_PTR_1(GLfloat_, GLfloat*)
 XL_TYPE_PTR_1(GLvoid_, GLvoid*)
-#define C_TO_XEN_GLshort(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GLshort(Arg) (GLshort)(XEN_TO_C_INT(Arg))
 #define XEN_GLshort_P(Arg) XEN_INTEGER_P(Arg)
-#define C_TO_XEN_GLbyte(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GLbyte(Arg) (GLbyte)(XEN_TO_C_INT(Arg))
 #define XEN_GLbyte_P(Arg) XEN_INTEGER_P(Arg)
-#define C_TO_XEN_GLubyte(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GLubyte(Arg) (GLubyte)(XEN_TO_C_INT(Arg))
 #define XEN_GLubyte_P(Arg) XEN_INTEGER_P(Arg)
 XL_TYPE_PTR(void_, void*)
@@ -5182,10 +5175,10 @@ static bool gl_already_inited = false;
       define_functions();
       XEN_YES_WE_HAVE("gl");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define gl-version \"08-Mar-04\")");
+      XEN_EVAL_C_STRING("(define gl-version \"24-Feb-05\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Gl_Version", C_TO_XEN_STRING("08-Mar-04"));
+      rb_define_global_const("Gl_Version", C_TO_XEN_STRING("24-Feb-05"));
 #endif
       gl_already_inited = true;
     }

@@ -4809,11 +4809,9 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
   save_mark_list(fd, cp);
 }
 
-/* TODO: Ruby side of edit-list->function */
-
-#if HAVE_GUILE
 static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 {
+#if HAVE_GUILE
   char *function = NULL, *old_function = NULL;
   bool close_mix_let = false;
   int i, edits;
@@ -4908,8 +4906,101 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
   else function = mus_format("%s)", function);
   FREE(old_function);
   return(function);
-}
+#else
+  #if HAVE_RUBY
+
+  /* TODO: finish Ruby side of edit-list->function
+   * all origin settings (more than 100) need to have Ruby cases
+   *  [file_change_samples, file_insert_samples, etc]
+   */
+
+  char *function = NULL, *old_function = NULL;
+  bool close_mix_let = false, first = true;
+  int i, edits;
+  ed_list *ed;
+  edits = cp->edit_ctr;
+  while ((edits < (cp->edit_size - 1)) && 
+	 (cp->edits[edits + 1])) 
+    edits++;
+  if ((end_pos > 0) && (end_pos < edits)) edits = end_pos;
+  if (start_pos > edits)
+    return(copy_string("Proc.new {|snd, chn| false }"));
+  if (cp->have_mixes)
+    {
+      char *mix_list;
+      mix_list = edit_list_mix_and_track_init(cp);
+      if (mix_list)
+	{
+	  close_mix_let = true;
+	  function = mus_format("Proc.new {|snd, chn| %s", mix_list);
+	  FREE(mix_list);
+	}
+      else function = copy_string("Proc.new {|snd, chn| ");
+    }
+  else function = copy_string("Proc.new {|snd, chn| ");
+  for (i = start_pos; i <= edits; i++)
+    {
+      ed = cp->edits[i];
+      if (ed)
+	{
+	  old_function = function;
+	  /* most of these depend on the caller to supply a usable re-call string (origin). */
+	  /*   In insert/change/ptree/xen cases, there's basically no choice */
+	  if (ed->backed_up)
+	    {
+	      if ((ed->origin) && (strncmp(ed->origin, "set!", 4) == 0))
+		function = mus_format("%s%s %s", function, (first) ? "" : ";", ed->origin);
+	      else function = mus_format("%s%s %s, snd, chn)", function, (first) ? "" : ";", ed->origin);
+	    }
+	  else
+	    {
+	      switch (ed->edit_type)
+		{
+		case INSERTION_EDIT: 
+		  function = mus_format("%s%s %s, snd, chn)", function, (first) ? "" : ";", ed->origin);
+		  break;
+		case CHANGE_EDIT:
+		  if ((ed->origin) && (strncmp(ed->origin, "set!", 4) == 0))
+		    function = mus_format("%s%s %s()", function, (first) ? "" : ";", ed->origin);
+		  else function = mus_format("%s%s %s, snd, chn)", function, (first) ? "" : ";", ed->origin);
+		  break;
+		case DELETION_EDIT:
+		  /* what about delete-mix? */
+		  function = mus_format("%s%s %s(" OFF_TD ", " OFF_TD ", snd, chn)", 
+					function, (first) ? "" : ";", TO_PROC_NAME(S_delete_samples), ed->beg, ed->len);
+		  break;
+		case SCALED_EDIT: 
+		  function = mus_format("%s%s %s, snd, chn)", function, (first) ? "" : ";", ed->origin);
+		  break;
+		case EXTEND_EDIT:
+		  /* mix drag case */
+		  break;
+		case RAMP_EDIT:
+		  function = mus_format("%s%s %s, snd, chn)", function, (first) ? "" : ";", ed->origin);
+		  break;
+		case ZERO_EDIT:
+		  /* origin here is useless (see extend_with_zeros cases) */
+		  function = mus_format("%s%s %s(" OFF_TD ", " OFF_TD ", snd, chn)", 
+					function, (first) ? "" : ";", TO_PROC_NAME(S_pad_channel), ed->beg, ed->len);
+		  break;
+		}
+	    }
+	  if (old_function) {FREE(old_function); old_function = NULL;}
+	}
+      first = false;
+    }
+  old_function = function;
+  if (close_mix_let)
+    function = mus_format("%s }", function);
+  else function = mus_format("%s }", function);
+  FREE(old_function);
+#if DEBUGGING
+  fprintf(stderr, "%s\n", function);
 #endif
+  return(function);
+  #endif
+#endif
+}
 
 #define copy_ed_fragment(New_Ed, Old_Ed) memcpy((void *)(New_Ed), (void *)(Old_Ed), sizeof(ed_fragment))
 
@@ -9061,8 +9152,6 @@ be a function of 2 args: the sample to read (a long int), and the channel."
   return(XEN_FALSE);
 }
 
-
-#if HAVE_GUILE
 static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
 {
   #define H_edit_list_to_function "(" S_edit_list_to_function " snd chn start end) -> function encapsulating edits"
@@ -9081,7 +9170,6 @@ static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
   FREE(funcstr);
   return(func);
 }
-#endif
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_5(g_make_sample_reader_w, g_make_sample_reader)
@@ -9126,6 +9214,7 @@ XEN_ARGIFY_3(g_snd_to_sample_w, g_snd_to_sample)
 XEN_ARGIFY_3(g_xen_to_sample_w, g_xen_to_sample)
 XEN_ARGIFY_2(g_make_snd_to_sample_w, g_make_snd_to_sample)
 XEN_NARGIFY_1(g_make_xen_to_sample_w, g_make_xen_to_sample)
+XEN_ARGIFY_4(g_edit_list_to_function_w, g_edit_list_to_function)
 #else
 #define g_make_sample_reader_w g_make_sample_reader
 #define g_make_region_sample_reader_w g_make_region_sample_reader
@@ -9169,6 +9258,7 @@ XEN_NARGIFY_1(g_make_xen_to_sample_w, g_make_xen_to_sample)
 #define g_make_xen_to_sample_w g_make_xen_to_sample
 #define g_snd_to_sample_w g_snd_to_sample
 #define g_xen_to_sample_w g_xen_to_sample
+#define g_edit_list_to_function_w g_edit_list_to_function
 #endif
 
 
@@ -9188,68 +9278,67 @@ void g_init_edits(void)
   rb_define_method(sf_tag, "to_s", XEN_PROCEDURE_CAST print_sf, 0);
 #endif
 
-  XEN_DEFINE_CONSTANT(S_current_edit_position,      AT_CURRENT_EDIT_POSITION,      "current edit position indicator for 'edpos' args");
+  XEN_DEFINE_CONSTANT(S_current_edit_position,         AT_CURRENT_EDIT_POSITION,         "current edit position indicator for 'edpos' args");
 
-  XEN_DEFINE_PROCEDURE(S_make_sample_reader,        g_make_sample_reader_w,        0, 5, 0, H_make_sample_reader);
-  XEN_DEFINE_PROCEDURE(S_make_region_sample_reader, g_make_region_sample_reader_w, 0, 4, 0, H_make_region_sample_reader);
-  XEN_DEFINE_PROCEDURE(S_read_sample,               g_read_sample_w,               1, 0, 0, H_read_sample);
-  XEN_DEFINE_PROCEDURE(S_read_region_sample,        g_read_sample_w,               1, 0, 0, H_read_sample);
-  XEN_DEFINE_PROCEDURE(S_next_sample,               g_next_sample_w,               1, 0, 0, H_next_sample);
-  XEN_DEFINE_PROCEDURE(S_previous_sample,           g_previous_sample_w,           1, 0, 0, H_previous_sample);
-  XEN_DEFINE_PROCEDURE(S_free_sample_reader,        g_free_sample_reader_w,        1, 0, 0, H_free_sample_reader);
-  XEN_DEFINE_PROCEDURE(S_sample_reader_home,        g_sample_reader_home_w,        1, 0, 0, H_sample_reader_home);
-  XEN_DEFINE_PROCEDURE(S_sample_reader_p,           g_sample_reader_p_w,           1, 0, 0, H_sample_reader_p);
-  XEN_DEFINE_PROCEDURE(S_region_sample_reader_p,    g_region_sample_reader_p_w,    1, 0, 0, H_region_sample_reader_p);
-  XEN_DEFINE_PROCEDURE(S_sample_reader_at_end_p,    g_sample_reader_at_end_w,      1, 0, 0, H_sample_reader_at_end);
-  XEN_DEFINE_PROCEDURE(S_sample_reader_position,    g_sample_reader_position_w,    1, 0, 0, H_sample_reader_position);
-  XEN_DEFINE_PROCEDURE(S_copy_sample_reader,        g_copy_sample_reader_w,        1, 0, 0, H_copy_sample_reader);
+  XEN_DEFINE_PROCEDURE(S_make_sample_reader,           g_make_sample_reader_w,           0, 5, 0, H_make_sample_reader);
+  XEN_DEFINE_PROCEDURE(S_make_region_sample_reader,    g_make_region_sample_reader_w,    0, 4, 0, H_make_region_sample_reader);
+  XEN_DEFINE_PROCEDURE(S_read_sample,                  g_read_sample_w,                  1, 0, 0, H_read_sample);
+  XEN_DEFINE_PROCEDURE(S_read_region_sample,           g_read_sample_w,                  1, 0, 0, H_read_sample);
+  XEN_DEFINE_PROCEDURE(S_next_sample,                  g_next_sample_w,                  1, 0, 0, H_next_sample);
+  XEN_DEFINE_PROCEDURE(S_previous_sample,              g_previous_sample_w,              1, 0, 0, H_previous_sample);
+  XEN_DEFINE_PROCEDURE(S_free_sample_reader,           g_free_sample_reader_w,           1, 0, 0, H_free_sample_reader);
+  XEN_DEFINE_PROCEDURE(S_sample_reader_home,           g_sample_reader_home_w,           1, 0, 0, H_sample_reader_home);
+  XEN_DEFINE_PROCEDURE(S_sample_reader_p,              g_sample_reader_p_w,              1, 0, 0, H_sample_reader_p);
+  XEN_DEFINE_PROCEDURE(S_region_sample_reader_p,       g_region_sample_reader_p_w,       1, 0, 0, H_region_sample_reader_p);
+  XEN_DEFINE_PROCEDURE(S_sample_reader_at_end_p,       g_sample_reader_at_end_w,         1, 0, 0, H_sample_reader_at_end);
+  XEN_DEFINE_PROCEDURE(S_sample_reader_position,       g_sample_reader_position_w,       1, 0, 0, H_sample_reader_position);
+  XEN_DEFINE_PROCEDURE(S_copy_sample_reader,           g_copy_sample_reader_w,           1, 0, 0, H_copy_sample_reader);
 
-  XEN_DEFINE_PROCEDURE(S_save_edit_history,         g_save_edit_history_w,         1, 2, 0, H_save_edit_history);
-  XEN_DEFINE_PROCEDURE(S_edit_fragment,             g_edit_fragment_w,             0, 3, 0, H_edit_fragment);
+  XEN_DEFINE_PROCEDURE(S_save_edit_history,            g_save_edit_history_w,            1, 2, 0, H_save_edit_history);
+  XEN_DEFINE_PROCEDURE(S_edit_fragment,                g_edit_fragment_w,                0, 3, 0, H_edit_fragment);
 #if HAVE_GUILE
-  XEN_DEFINE_PROCEDURE("edit-fragment-type-name",   g_edit_fragment_type_name,     1, 0, 0, "internal testing function");
+  XEN_DEFINE_PROCEDURE("edit-fragment-type-name",      g_edit_fragment_type_name,        1, 0, 0, "internal testing function");
 #endif
-  XEN_DEFINE_PROCEDURE(S_undo,                      g_undo_w,                      0, 3, 0, H_undo);
+  XEN_DEFINE_PROCEDURE(S_undo,                         g_undo_w,                         0, 3, 0, H_undo);
 #if HAVE_RUBY
-  XEN_DEFINE_PROCEDURE("undo_edit",                 g_undo_w,                      0, 3, 0, H_undo);
+  XEN_DEFINE_PROCEDURE("undo_edit",                    g_undo_w,                         0, 3, 0, H_undo);
 #endif
-  XEN_DEFINE_PROCEDURE(S_redo,                      g_redo_w,                      0, 3, 0, H_redo);
-  XEN_DEFINE_PROCEDURE(S_as_one_edit,               g_as_one_edit_w,               1, 1, 0, H_as_one_edit);
-  XEN_DEFINE_PROCEDURE(S_display_edits,             g_display_edits_w,             0, 4, 0, H_display_edits);
-  XEN_DEFINE_PROCEDURE(S_edit_tree,                 g_edit_tree_w,                 0, 3, 0, H_edit_tree);
+  XEN_DEFINE_PROCEDURE(S_redo,                         g_redo_w,                         0, 3, 0, H_redo);
+  XEN_DEFINE_PROCEDURE(S_as_one_edit,                  g_as_one_edit_w,                  1, 1, 0, H_as_one_edit);
+  XEN_DEFINE_PROCEDURE(S_display_edits,                g_display_edits_w,                0, 4, 0, H_display_edits);
+  XEN_DEFINE_PROCEDURE(S_edit_tree,                    g_edit_tree_w,                    0, 3, 0, H_edit_tree);
 
-  XEN_DEFINE_PROCEDURE(S_delete_sample,             g_delete_sample_w,             1, 3, 0, H_delete_sample);
-  XEN_DEFINE_PROCEDURE(S_delete_samples,            g_delete_samples_w,            2, 3, 0, H_delete_samples);
-  XEN_DEFINE_PROCEDURE(S_insert_sample,             g_insert_sample_w,             2, 3, 0, H_insert_sample);
-  XEN_DEFINE_PROCEDURE(S_insert_samples,            g_insert_samples_w,            3, 5, 0, H_insert_samples);
-  XEN_DEFINE_PROCEDURE(S_vct_to_channel,            g_vct_to_channel_w,            1, 6, 0, H_vct_to_channel);
-  XEN_DEFINE_PROCEDURE(S_channel_to_vct,            g_channel_to_vct_w,            0, 5, 0, H_channel_to_vct);
-  XEN_DEFINE_PROCEDURE(S_insert_sound,              g_insert_sound_w,              1, 6, 0, H_insert_sound);
-  XEN_DEFINE_PROCEDURE(S_scale_channel,             g_scale_channel_w,             1, 5, 0, H_scale_channel);
-  XEN_DEFINE_PROCEDURE(S_normalize_channel,         g_normalize_channel_w,         1, 5, 0, H_normalize_channel);
+  XEN_DEFINE_PROCEDURE(S_delete_sample,                g_delete_sample_w,                1, 3, 0, H_delete_sample);
+  XEN_DEFINE_PROCEDURE(S_delete_samples,               g_delete_samples_w,               2, 3, 0, H_delete_samples);
+  XEN_DEFINE_PROCEDURE(S_insert_sample,                g_insert_sample_w,                2, 3, 0, H_insert_sample);
+  XEN_DEFINE_PROCEDURE(S_insert_samples,               g_insert_samples_w,               3, 5, 0, H_insert_samples);
+  XEN_DEFINE_PROCEDURE(S_vct_to_channel,               g_vct_to_channel_w,               1, 6, 0, H_vct_to_channel);
+  XEN_DEFINE_PROCEDURE(S_channel_to_vct,               g_channel_to_vct_w,               0, 5, 0, H_channel_to_vct);
+  XEN_DEFINE_PROCEDURE(S_insert_sound,                 g_insert_sound_w,                 1, 6, 0, H_insert_sound);
+  XEN_DEFINE_PROCEDURE(S_scale_channel,                g_scale_channel_w,                1, 5, 0, H_scale_channel);
+  XEN_DEFINE_PROCEDURE(S_normalize_channel,            g_normalize_channel_w,            1, 5, 0, H_normalize_channel);
 
   XEN_DEFINE_PROCEDURE(S_change_samples_with_origin,   g_change_samples_with_origin_w,   7, 1, 0, "internal function used in save-state");
   XEN_DEFINE_PROCEDURE(S_delete_samples_with_origin,   g_delete_samples_with_origin_w,   6, 0, 0, "internal function used in save-state");
   XEN_DEFINE_PROCEDURE(S_insert_samples_with_origin,   g_insert_samples_with_origin_w,   7, 1, 0, "internal function used in save-state");
   XEN_DEFINE_PROCEDURE(S_override_samples_with_origin, g_override_samples_with_origin_w, 5, 1, 0, "internal function used in save-state");
 
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_sample, g_sample_w, H_sample,
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_sample,  g_sample_w, H_sample,
 					    S_setB S_sample, g_set_sample_w, g_set_sample_reversed, 0, 4, 1, 4);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_samples, g_samples_w, H_samples,
 					    S_setB S_samples, g_set_samples_w, g_set_samples_reversed, 0, 5, 3, 7);
-#if HAVE_GUILE
-  XEN_DEFINE_PROCEDURE("set-sample",  g_set_sample_w,  2, 3, 0, H_sample);   /* for edit-list->function */
-  XEN_DEFINE_PROCEDURE("set-samples", g_set_samples_w, 3, 7, 0, H_set_samples);
-#endif
 
-  XEN_DEFINE_PROCEDURE(S_snd_to_sample_p,    g_snd_to_sample_p_w,    1, 0, 0, H_snd_to_sample_p);
-  XEN_DEFINE_PROCEDURE(S_xen_to_sample_p,    g_xen_to_sample_p_w,    1, 0, 0, H_xen_to_sample_p);
-  XEN_DEFINE_PROCEDURE(S_make_snd_to_sample, g_make_snd_to_sample_w, 0, 2, 0, H_make_snd_to_sample);
-  XEN_DEFINE_PROCEDURE(S_make_xen_to_sample, g_make_xen_to_sample_w, 1, 0, 0, H_make_xen_to_sample);
-  XEN_DEFINE_PROCEDURE(S_snd_to_sample,      g_snd_to_sample_w,      2, 1, 0, H_snd_to_sample);
-  XEN_DEFINE_PROCEDURE(S_xen_to_sample,      g_xen_to_sample_w,      2, 1, 0, H_xen_to_sample);
+  XEN_DEFINE_PROCEDURE("set-sample",                   g_set_sample_w,                   2, 3, 0, H_sample);   /* for edit-list->function */
+  XEN_DEFINE_PROCEDURE("set-samples",                  g_set_samples_w,                  3, 7, 0, H_set_samples);
 
+  XEN_DEFINE_PROCEDURE(S_snd_to_sample_p,              g_snd_to_sample_p_w,              1, 0, 0, H_snd_to_sample_p);
+  XEN_DEFINE_PROCEDURE(S_xen_to_sample_p,              g_xen_to_sample_p_w,              1, 0, 0, H_xen_to_sample_p);
+  XEN_DEFINE_PROCEDURE(S_make_snd_to_sample,           g_make_snd_to_sample_w,           0, 2, 0, H_make_snd_to_sample);
+  XEN_DEFINE_PROCEDURE(S_make_xen_to_sample,           g_make_xen_to_sample_w,           1, 0, 0, H_make_xen_to_sample);
+  XEN_DEFINE_PROCEDURE(S_snd_to_sample,                g_snd_to_sample_w,                2, 1, 0, H_snd_to_sample);
+  XEN_DEFINE_PROCEDURE(S_xen_to_sample,                g_xen_to_sample_w,                2, 1, 0, H_xen_to_sample);
+  XEN_DEFINE_PROCEDURE(S_edit_list_to_function,        g_edit_list_to_function_w,        0, 4, 0, H_edit_list_to_function);
 
   #define H_save_hook S_save_hook " (snd name): called each time a file is about to be saved. \
 If it returns #t, the file is not saved.  'name' is #f unless the file is being saved under a new name (as in sound-save-as)."
@@ -9277,11 +9366,6 @@ keep track of which files are in a given saved state batch, and a way to rename 
   check_type_info_entry(ED_ZERO, 0, 0, 0, true);
   report_unhit_entries();
 #endif
-
-#if HAVE_GUILE
-  XEN_DEFINE_PROCEDURE(S_edit_list_to_function,    g_edit_list_to_function,    0, 4, 0, H_edit_list_to_function);
-#endif
-
 }
 
 /* from Anders:

@@ -3184,9 +3184,6 @@ mus_any *mus_make_rand_interp_with_distribution(Float freq, Float base, Float *d
 
 /* ---------------- simple filters ---------------- */
 
-/* PERHAPS: biquad but only because dsp-types expect to find it
- */
-
 /* eventually this class/struct could be replaced by flt/filter below */
 typedef struct {
   mus_any_class *core;

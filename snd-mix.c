@@ -437,7 +437,6 @@ static mix_info *free_mix_info(mix_info *md)
   return(NULL);
 }
 
-#if HAVE_GUILE
 /* edit-list->function support for mixes/tracks:
  *      mix list search for current channel, make outer let holding all names as (-mix-### ###)
  *      origins for make-mix procs: (set! -mix-### (...))
@@ -450,6 +449,7 @@ static mix_info *free_mix_info(mix_info *md)
 
 char *edit_list_mix_and_track_init(chan_info *cp)
 {
+#if HAVE_GUILE
   char *mix_list = NULL, *old_list = NULL;
   int i;
   for (i = 0; i < mix_infos_ctr; i++)
@@ -466,8 +466,11 @@ char *edit_list_mix_and_track_init(chan_info *cp)
 	}
     }
   return(mix_list);
-}
+#else
+  #if HAVE_RUBY
+  #endif
 #endif
+}
 
 
 /* ---------------- MIX READ ---------------- */

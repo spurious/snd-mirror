@@ -108,12 +108,10 @@ static int run_safety = RUN_UNSAFE;
 #define Double double
 
 #define DONT_OPTIMIZE 0
-#define OMIT_COMPLEX 1
 #define COMPLEX_OK 2
 #define GLOBAL_OK 3
 #define GLOBAL_SET_OK 5
 #define SOURCE_OK 6
-/* OMIT_COMPLEX not used */
 
 #define XEN_CDDDR(a)                        SCM_CDDDR(a)
 #define XEN_CAAR(a)                         XEN_CAR(XEN_CAR(a))
@@ -141,10 +139,6 @@ static int run_safety = RUN_UNSAFE;
 #define XEN_LIST_REF_WRAPPED(a, b)          scm_list_ref(a, b)
 #define XEN_OBJECT_PROPERTY(Obj, Prop)      scm_object_property(Obj, Prop)
 #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val) scm_set_object_property_x(Obj, Prop, Val)
-#if 0
-#define XEN_PROCEDURE_PROPERTY(Obj, Prop)   scm_procedure_property(Obj, Prop)
-#define XEN_SET_PROCEDURE_PROPERTY(Obj, Prop, Val) scm_set_procedure_property_x(Obj, Prop, Val)
-#endif
 #define XEN_PROCEDURE_WITH_SETTER_P(Proc)   scm_procedure_with_setter_p(Proc)
 
 #define FLT_PT  "d%d(%.4f)"
@@ -10238,11 +10232,6 @@ static xen_value *arg_warn(ptree *prog, char *funcname, int arg_num, xen_value *
   return(NULL);
 }
 
-#define WITH_PROCPROP 0
-/* aimed at eventual apply support -- places walker property on function so it can be
- *   found even if name has changed -- (define hi min) for example (not very useful by itself)
- */
-
 static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 {
   /* walk form, storing vars, making program entries for operators etc */
@@ -10267,10 +10256,6 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
       if (XEN_SYMBOL_P(function))
 	{
 	  walker = XEN_OBJECT_PROPERTY(function, walk_sym);
-#if WITH_PROCPROP
-	  if ((XEN_FALSE_P(walker)) && (XEN_PROCEDURE_P(XEN_VARIABLE_REF(XEN_SYMBOL_TO_VARIABLE(function)))))
-	    walker = XEN_PROCEDURE_PROPERTY(XEN_VARIABLE_REF(XEN_SYMBOL_TO_VARIABLE(function)), walk_sym);
-#endif
 	  if (XEN_ULONG_P(walker))
 	    {
 	      w = (walk_info *)(XEN_TO_C_ULONG(walker));
@@ -10814,16 +10799,10 @@ static XEN eval_ptree_to_xen(ptree *pt)
   return(result);
 }
 
-#if WITH_PROCPROP
-#define INIT_WALKER(Name, Val) \
-  XEN_SET_OBJECT_PROPERTY(C_STRING_TO_XEN_SYMBOL(Name), walk_sym, C_TO_XEN_ULONG(Val)); \
-  XEN_SET_PROCEDURE_PROPERTY(XEN_VARIABLE_REF(XEN_NAME_AS_C_STRING_TO_VARIABLE(Name)), walk_sym, C_TO_XEN_ULONG(Val))
-#else
-#define INIT_WALKER(Name, Val) XEN_SET_OBJECT_PROPERTY(C_STRING_TO_XEN_SYMBOL(Name), walk_sym, C_TO_XEN_ULONG(Val))
-#endif
-
 static void init_walkers(void)
 {
+  #define INIT_WALKER(Name, Val) XEN_SET_OBJECT_PROPERTY(C_STRING_TO_XEN_SYMBOL(Name), walk_sym, C_TO_XEN_ULONG(Val))
+
   XEN declare;
 #if (!HAVE_GUILE_CALL_CC)
   XEN call_cc;
