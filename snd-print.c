@@ -100,7 +100,7 @@ static void end_ps_graph(void)
 	       (int)(bby + 10 + eps_bottom_margin(ss)));
   ps_write(pbuf);
   ps_flush(ps_fd);
-  snd_close(ps_fd, "eps file");
+  snd_close(ps_fd, _("eps file"));
   if (previous_locale)
     {
 #if HAVE_SETLOCALE
@@ -479,7 +479,7 @@ static char *snd_print_or_error(snd_state *ss, char *output)
     {
       ccp = current_channel(ss);
       if (ccp == NULL) 
-	return(copy_string("nothing to print?"));
+	return(copy_string(_("nothing to print?")));
       si = sync_to_chan(ccp);
       offsets = (int *)CALLOC(si->chans, sizeof(int));
       for (j = 0, i = (si->chans - 1); i >= 0; i--)
@@ -508,12 +508,12 @@ static char *snd_print_or_error(snd_state *ss, char *output)
 	    ps_graph(si->cps[i], 0, offsets[i]);
 	  end_ps_graph();
 	}
-      else errstr = mus_format("print %s failed: %s", output, strerror(errno));
+      else errstr = mus_format(_("print %s failed: %s"), output, strerror(errno));
       if (si) si = free_sync_info(si);
       if (offsets) FREE(offsets);
       return(errstr);
     }
-  else return(copy_string("print sound: eps file name needed"));
+  else return(copy_string(_("print sound: eps file name needed")));
 }
 
 void snd_print(snd_state *ss, char *output)
@@ -538,9 +538,9 @@ void region_print(char *output, char* title, chan_info *cp)
 	  ps_graph(cp, 0, 0);
 	  end_ps_graph();
 	}
-      else snd_error("print region %s failed: %s", output, strerror(errno));
+      else snd_error(_("print region %s failed: %s"), output, strerror(errno));
     }
-  else snd_error("print region: eps file name needed");
+  else snd_error(_("print region: eps file name needed"));
 }
 
 void print_enved(char *output, int y0)
@@ -556,9 +556,9 @@ void print_enved(char *output, int y0)
 	  env_redisplay_with_print(get_global_state());
 	  end_ps_graph();
 	}
-      else snd_error("print env %s failed: %s", output, strerror(errno));
+      else snd_error(_("print env %s failed: %s"), output, strerror(errno));
     }
-  else snd_error("print envelope: eps file name needed");
+  else snd_error(_("print envelope: eps file name needed"));
 }
 
 static XEN g_graph2ps(XEN filename)

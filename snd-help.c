@@ -26,16 +26,16 @@ static char *sndlib_consistency_check(void)
 {
 #if SNDLIB_USE_FLOATS
   if (mus_sample_bits() > 0) 
-    return(" Snd built expecting float samples, but sndlib uses int!"); 
+    return(_(" Snd built expecting float samples, but sndlib uses int!")); 
 #else
   char *buf;
   if (mus_sample_bits() == 0)
-    return(" Snd built expecting int samples, but sndlib uses float!"); 
+    return(_(" Snd built expecting int samples, but sndlib uses float!")); 
   else
     if (mus_sample_bits() != MUS_SAMPLE_BITS)
       {
 	buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char)); /* memory leak here is the least of our worries... */
-	mus_snprintf(buf, LABEL_BUFFER_SIZE, " Snd expects %d bit int samples, but sndlib uses %d bits!",
+	mus_snprintf(buf, LABEL_BUFFER_SIZE, _(" Snd expects %d bit int samples, but sndlib uses %d bits!"),
 		     MUS_SAMPLE_BITS,
 		     mus_sample_bits());
 	return(buf);
@@ -116,7 +116,7 @@ static char *glx_version(void)
       gdk_gl_query_version (&major, &minor);
       mus_snprintf(version, 128, " %d.%d", major, minor);
     }
-  else mus_snprintf(version, 128, "gtkGL not supported?");
+  else mus_snprintf(version, 128, _("gtkGL not supported?"));
 #endif
   return(version);
 }
@@ -131,7 +131,7 @@ char *version_info(void)
   char *buf;
   buf = (char *)CALLOC(1024, sizeof(char));
   vstrcat(buf,
-	  "This is Snd version ",
+	  _("This is Snd version "),
 	  SND_RPM_VERSION,
 	  " of ",
 	  SND_VERSION,
@@ -141,12 +141,12 @@ char *version_info(void)
                            snd_itoa(SNDLIB_REVISION), 
                            " (", SNDLIB_DATE,
 #if SNDLIB_USE_FLOATS
-	  ", float samples",
+	  _(", float samples"),
 #else
-	  ", int", snd_itoa(MUS_SAMPLE_BITS), " samples",
+	  ", int", snd_itoa(MUS_SAMPLE_BITS), _(" samples"),
 #endif
 #if WITH_MODULES
-	  ", with modules",
+	  _(", with modules"),
 #endif
 	  ")", 
 	  sndlib_consistency_check(),
@@ -210,7 +210,7 @@ char *version_info(void)
   #endif
 #endif
 #if (!USE_MOTIF) && (!USE_GTK)
-	  "\n    without any graphics system",
+	  _("\n    without any graphics system"),
 #endif
 #if HAVE_HTML
   #if USE_MOTIF
@@ -218,7 +218,7 @@ char *version_info(void)
                            snd_itoa(XmHTMLREVISION), ".", 
                            snd_itoa(XmHTMLUPDATE_LEVEL),
   #else
-	  "\n    with mozilla browser",
+	  _("\n    with mozilla browser"),
   #endif
 #endif
 #if HAVE_XPM && USE_MOTIF
@@ -235,10 +235,10 @@ char *version_info(void)
   #endif
 #endif
 #if SND_AS_WIDGET
-	  "\n    compiled as a widget",
+	  _("\n    compiled as a widget"),
 #endif
 #if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
-	  "\n    with large file support",
+	  _("\n    with large file support"),
 #endif
 #ifdef __DATE__
 	  "\n    Compiled ", __DATE__, " ", __TIME__,
@@ -268,6 +268,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+30-Jan:  gettext changes\n\
 12-Jan:  snd-6.5\n\
 8-Jan:   removed loop-samples.\n\
 7-Jan:   added various simple FIR filters to dsp.scm.\n\

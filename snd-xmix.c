@@ -228,7 +228,7 @@ static void mix_amp_env_resize(Widget w, XtPointer context, XtPointer info)
   e = mix_panel_envs(mix_id);
   for (chan = 0; chan < chans; chan++)
     {
-      edp_display_graph(ss, spfs[chan], "mix env", ax, 
+      edp_display_graph(ss, spfs[chan], _("mix env"), ax, 
 			(int)(chan * widget_width(w) / chans), 0,
 			widget_width(w) / chans, widget_height(w), 
 			e[chan], FALSE, TRUE);
@@ -236,7 +236,7 @@ static void mix_amp_env_resize(Widget w, XtPointer context, XtPointer info)
       if (cur_env)
 	{
 	  XSetForeground(MAIN_DISPLAY(ss), ax->gc, (ss->sgx)->enved_waveform_color);
-	  edp_display_graph(ss, spfs[chan], "mix env", ax, 
+	  edp_display_graph(ss, spfs[chan], _("mix env"), ax, 
 			    (int)(chan * widget_width(w) / chans), 0,
 			    widget_width(w) / chans, widget_height(w), 
 			    cur_env, FALSE, FALSE);
@@ -423,15 +423,15 @@ static void dismiss_mix_panel_callback(Widget w, XtPointer context, XtPointer in
 static void help_mix_panel_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Mix Panel",
-"This dialog provides various commonly-used controls on the currently \
+		     _("Mix Panel"),
+_("This dialog provides various commonly-used controls on the currently \
 selected mix.  At the top are the mix id, name, begin and end times, \
 track number, and a play button.  Beneath that are various sliders \
 controlling the speed (sampling rate) of the mix, and the amplitude of each \
 input channel; and finally, an editor for the mix's (input) channels. \
 The current mix amp env is not actually changed until you click 'Apply Env'.\
 The editor envelope is drawn in black with dots whereas the current \
-mix amp env (if any) is drawn in blue.");
+mix amp env (if any) is drawn in blue."));
 }
 
 
@@ -485,10 +485,10 @@ Widget make_mix_panel(snd_state *ss)
   char amplab[LABEL_BUFFER_SIZE];
   if (mix_panel == NULL)
     {
-      xdismiss = XmStringCreate("Dismiss", XmFONTLIST_DEFAULT_TAG);
-      xapply = XmStringCreate("Apply Env", XmFONTLIST_DEFAULT_TAG);
-      xhelp = XmStringCreate("Help", XmFONTLIST_DEFAULT_TAG);
-      xtitle = XmStringCreate("Mix Panel", XmFONTLIST_DEFAULT_TAG);
+      xdismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
+      xapply = XmStringCreate(_("Apply Env"), XmFONTLIST_DEFAULT_TAG);
+      xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
+      xtitle = XmStringCreate(_("Mix Panel"), XmFONTLIST_DEFAULT_TAG);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -500,7 +500,7 @@ Widget make_mix_panel(snd_state *ss)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
-      mix_panel = XmCreateTemplateDialog(MAIN_SHELL(ss), "Mix Panel", args, n);
+      mix_panel = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Mix Panel"), args, n);
 
       XtAddCallback(mix_panel, XmNokCallback, dismiss_mix_panel_callback, ss);
       XtAddCallback(mix_panel, XmNcancelCallback, apply_mix_panel_callback, ss);
@@ -538,7 +538,7 @@ Widget make_mix_panel(snd_state *ss)
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      XtCreateManagedWidget("mix id:", xmLabelWidgetClass, w_row, args, n);
+      XtCreateManagedWidget(_("mix id:"), xmLabelWidgetClass, w_row, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -560,7 +560,7 @@ Widget make_mix_panel(snd_state *ss)
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      XtCreateManagedWidget("track:", xmLabelWidgetClass, w_row, args, n);
+      XtCreateManagedWidget(_("track:"), xmLabelWidgetClass, w_row, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -580,12 +580,12 @@ Widget make_mix_panel(snd_state *ss)
       XtSetArg(args[n], XmNlabelType, XmPIXMAP); n++;
       XtSetArg(args[n], XmNlabelPixmap, speaker_r); n++;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;}
-      w_play = XtCreateManagedWidget("play", xmPushButtonWidgetClass, w_row, args, n);
+      w_play = XtCreateManagedWidget(_("play"), xmPushButtonWidgetClass, w_row, args, n);
       XtAddCallback(w_play, XmNactivateCallback, mix_panel_play_callback, ss);
 
       /* SRATE */
       n = 0;
-      s1 = XmStringCreate("speed:", XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreate(_("speed:"), XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -644,7 +644,7 @@ Widget make_mix_panel(snd_state *ss)
       for (i = 0; i < chans; i++)
 	{
 	  n = 0;
-	  mus_snprintf(amplab, LABEL_BUFFER_SIZE, "amp %d:", i);
+	  mus_snprintf(amplab, LABEL_BUFFER_SIZE, _("amp %d:"), i);
 	  s1 = XmStringCreate(amplab, XmFONTLIST_DEFAULT_TAG);
 	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
 	  XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	

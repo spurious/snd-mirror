@@ -1447,13 +1447,12 @@ static char *describe_dac(void)
   return("");
 }
 
-static void dac_error(const char *file, int line, const char *function)
+static void dac_error(void)
 {
   stop_playing_all_sounds();
-  snd_error("can't play %s\n  (%s)\n  [%s[%d] %s]",
+  snd_error(_("can't play %s: %s"),
 	    describe_dac(),
-	    (last_print) ? last_print : "reason not known",
-	    file, line, function);
+	    (last_print) ? last_print : "reason not known");
 }
 
 
@@ -1744,7 +1743,7 @@ static int start_audio_output_1 (dac_state *dacp)
 		{
 		  mus_audio_close(alsa_devices[out_dev[i]]);
 		}
-	      dac_error(__FILE__, __LINE__, __FUNCTION__);
+	      dac_error();
 	      dac_running = FALSE;
 	      cleanup_dac_hook();
 	      unlock_recording_audio();
@@ -1818,7 +1817,7 @@ static int start_audio_output_1 (dac_state *dacp)
       if (oss_available_chans < dacp->channels) 
 	{
 	  if (dac_combines_channels(ss)) 
-	    snd_warning("folding %d chans into %d ", 
+	    snd_warning(_("folding %d chans into %d "), 
 			dacp->channels, oss_available_chans);
 	  dacp->channels = oss_available_chans;
 	}
@@ -1831,7 +1830,7 @@ static int start_audio_output_1 (dac_state *dacp)
       unset_dac_print();
       if (dev_fd[0] == MUS_ERROR)
 	{
-	  dac_error(__FILE__, __LINE__, __FUNCTION__);
+	  dac_error();
 	  stop_audio_output(dacp);
 	  return(FALSE);
 	}
@@ -1862,7 +1861,7 @@ static int start_audio_output_1 (dac_state *dacp)
       else 
 	{
 	  stop_playing_all_sounds();
-	  snd_error("can't get audio output chans? (%d) ", audio_output_device(ss));
+	  snd_error(_("can't get audio output chans? (%d) "), audio_output_device(ss));
 	  return(FALSE);
 	}
     }
@@ -1871,7 +1870,7 @@ static int start_audio_output_1 (dac_state *dacp)
   if (available_chans < dacp->channels) 
     {
       if (dac_combines_channels(ss)) 
-	snd_warning("folding %d chans into %d ", 
+	snd_warning(_("folding %d chans into %d "), 
 		    dacp->channels, available_chans);
       dacp->channels = available_chans;
     }
@@ -1884,7 +1883,7 @@ static int start_audio_output_1 (dac_state *dacp)
   unset_dac_print();
   if (dev_fd[0] == MUS_ERROR)
     {
-      dac_error(__FILE__, __LINE__, __FUNCTION__);
+      dac_error();
       stop_audio_output(dacp);
       return(FALSE);
     }
@@ -2086,11 +2085,11 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, int background, int syncd,
 	  return(snd_no_such_file_error(caller, samp_n));
 	}
       if (!(MUS_HEADER_TYPE_OK(mus_sound_header_type(name))))
-	mus_misc_error(caller, "can't read header", 
+	mus_misc_error(caller, _("can't read header"), 
 		       XEN_LIST_2(samp_n, 
 				  C_TO_XEN_STRING(mus_header_type_name(mus_header_type()))));
       if (!(MUS_DATA_FORMAT_OK(mus_sound_data_format(name))))
-	mus_misc_error(caller, "can't read data", 
+	mus_misc_error(caller, _("can't read data"), 
 		       XEN_LIST_2(samp_n, 
 				  C_TO_XEN_STRING(mus_header_original_format_name(mus_sound_original_format(name),
 										  mus_sound_header_type(name)))));
@@ -2370,10 +2369,10 @@ static XEN g_start_playing(XEN Chans, XEN Srate, XEN In_Background)
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(In_Background), In_Background, XEN_ARG_3, S_start_playing, "a boolean");
   chans = XEN_TO_C_INT_OR_ELSE(Chans, 1);
   if (chans <= 0)
-    mus_misc_error(S_start_playing, "invalid chans arg", Chans);
+    mus_misc_error(S_start_playing, _("invalid chans arg"), Chans);
   srate = XEN_TO_C_INT_OR_ELSE(Srate, 44100);
   if (srate <= 0)
-    mus_misc_error(S_start_playing, "invalid srate arg", Srate);
+    mus_misc_error(S_start_playing, _("invalid srate arg"), Srate);
   start_dac(get_global_state(), srate, chans, XEN_TO_C_BOOLEAN_OR_TRUE(In_Background));
   return(XEN_FALSE);
 }

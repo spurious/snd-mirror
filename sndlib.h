@@ -110,10 +110,13 @@
 #else
   #include <sys/types.h>
 #endif
+
 #if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
   #define OFF_TD "%lld"
+  #define PRId64 "%lld"
 #else
   #define OFF_TD "%d"
+  #define PRId64 "%d"
 #endif
 
 #ifndef MUS_LITTLE_ENDIAN

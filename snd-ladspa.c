@@ -260,7 +260,7 @@ static void loadLADSPA() {
     {
       pcLADSPAPath = getenv("LADSPA_PATH");
       if (!pcLADSPAPath) {
-	snd_warning("Warning: You have not set " S_ladspa_dir " or the environment variable LADSPA_PATH.");
+	snd_warning(_("Warning: You have not set " S_ladspa_dir " or the environment variable LADSPA_PATH."));
 	return;
       }
     }
@@ -515,11 +515,11 @@ Information about about parameters can be acquired using analyse-ladspa."
     XEN_ERROR(PLUGIN_ERROR,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
 			 ladspa_plugin_configuration,
-			 C_TO_XEN_STRING("Snd plugins must have at least 1 input and output")));
+			 C_TO_XEN_STRING(_("Snd plugins must have at least 1 input and output"))));
 
   if (inchans != readers)
     {
-      msg = mus_format("%s inputs (%d) != sample-readers (%d)", pcLabel, readers, inchans);
+      msg = mus_format(_("Ladspa %s inputs (%d) != sample-readers (%d)"), pcLabel, readers, inchans);
       errmsg = C_TO_XEN_STRING(msg);
       FREE(msg);
       XEN_ERROR(PLUGIN_ERROR,
@@ -533,10 +533,13 @@ Information about about parameters can be acquired using analyse-ladspa."
     if (LADSPA_IS_PORT_CONTROL(psDescriptor->PortDescriptors[lPortIndex])
 	&& LADSPA_IS_PORT_INPUT(psDescriptor->PortDescriptors[lPortIndex]))
       lParameterCount++;
+  msg = mus_format("a list of 2 strings + %d parameters", (int)lParameterCount);
   XEN_ASSERT_TYPE(XEN_LIST_LENGTH(ladspa_plugin_configuration) == (int)(2 + lParameterCount),
 		  ladspa_plugin_configuration,
 		  XEN_ARG_2,
-		  S_apply_ladspa, mus_format("a list of 2 strings + %d parameters", (int)lParameterCount));
+		  S_apply_ladspa, 
+		  msg);
+  FREE(msg);
   pfControls = (LADSPA_Data *)MALLOC(psDescriptor->PortCount * sizeof(LADSPA_Data));
 
   /* Get parameters. */
@@ -713,7 +716,7 @@ Information about about parameters can be acquired using analyse-ladspa."
     }
   else 
     {
-      report_in_minibuffer(sp, S_apply_ladspa " interrupted");
+      report_in_minibuffer(sp, _(S_apply_ladspa " interrupted"));
       state->stopped_explicitly = FALSE;
     }
   if (ofile) FREE(ofile);

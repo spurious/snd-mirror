@@ -195,7 +195,7 @@ void change_channel_style(snd_info *sp, int new_style) {}
 void reflect_amp_env_in_progress(snd_info *sp) {}
 void cleanup_cw(chan_info *cp) {}
 void clear_deleted_snd_info(void *fd) {}
-int fixup_cp_cgx_ax_wn(chan_info *cp) {return(0);}
+int fixup_cp_cgx_ax_wn(chan_info *cp) {return(FALSE);}
 int w_snd_name(snd_info *sp) {return(0);}
 int filter_graph(snd_info *sp) {return(0);}
 void make_minibuffer_label(snd_info *sp, char *str) {}
@@ -342,11 +342,11 @@ snd_info *add_sound_window (char *filename, snd_state *ss, int read_only)
     {
       /* either a screwed up header, or Snd was built with wrong endianess */
       /* this kind of error is trapped by raw_data_explanation in make_file_info in the motif/gtk cases */
-      fprintf(stderr, "%s has %d channels? ", filename, nchans);
+      fprintf(stderr, _("%s has %d channels? "), filename, nchans);
       if (mus_char_to_bint((unsigned char *)&nchans) < 8)
-	fprintf(stderr, "byte swap problem: chans should be %d ", mus_char_to_bint((unsigned char *)&nchans));
+	fprintf(stderr, _("byte swap problem: chans should be %d"), mus_char_to_bint((unsigned char *)&nchans));
       if (mus_char_to_lint((unsigned char *)&nchans) < 8)
-	fprintf(stderr, "byte swap problem: chans should be %d ", mus_char_to_lint((unsigned char *)&nchans));
+	fprintf(stderr, _("byte swap problem: chans should be %d"), mus_char_to_lint((unsigned char *)&nchans));
       nchans = 1; /* ?? */
     }
   snd_slot = find_free_sound_slot(ss, nchans); /* expands sound list if needed */
@@ -537,7 +537,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 #if TRAP_SEGFAULT
   if (sigsetjmp(envHandleEventsLoop, 1))
     {
-      snd_error("Caught seg fault (will try to continue):\n");
+      snd_error(_("Caught seg fault (will try to continue):\n"));
     }
 #endif
 

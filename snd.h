@@ -55,6 +55,16 @@
 #include "clm.h"
 #include "snd-0.h"
 #include "xen.h"
+
+#if HAVE_GUILE
+  #undef PRId64
+  #if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
+    #define PRId64 "%lld"
+  #else
+    #define PRId64 "%d"
+  #endif
+#endif
+
 #include "sndlib2xen.h"
 #include "vct.h"
 
@@ -82,7 +92,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "28-Jan-03"
+#define SND_VERSION "30-Jan-03"
 #define SND_RPM_VERSION "6.6"
 #define SND_MAJOR_VERSION 6
 #define SND_MINOR_VERSION 6

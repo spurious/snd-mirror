@@ -150,7 +150,7 @@ static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, 
 	    }
 	  else 
 	    {
-	      snd_warning("no current selection");
+	      snd_warning(_("no current selection"));
 	      return(NULL);
 	    }
 	}
@@ -200,7 +200,7 @@ static sync_state *get_sync_state_without_snd_fds(snd_state *ss, snd_info *sp, c
 	    }
 	  else
 	    {
-	      snd_warning("no current selection");
+	      snd_warning(_("no current selection"));
 	      return(NULL);
 	    }
 	}
@@ -415,7 +415,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
   filter_chans = mus_sound_chans(filename);
   filtersize = mus_sound_samples(filename) / filter_chans;
   if (filtersize <= 0) 
-    return(mus_format("convolve: impulse response file %s is empty", filename));
+    return(mus_format(_("convolve: impulse response file %s is empty"), filename));
   /* if impulse response is stereo, we need to use both its channels */
   dataloc = mus_sound_data_location(filename);
   dataformat = mus_sound_data_format(filename);
@@ -452,7 +452,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 	  if (err != MUS_NO_ERROR)
 	    {
 	      FREE(ofile);
-	      return(mus_format("convolve: save chan (%s[%d]) in %s: %s\n",
+	      return(mus_format(_("convolve: save chan (%s[%d]) in %s hit error: %s\n"),
 				sp->short_filename, ucp->chan, 
 				saved_chan_file, strerror(errno)));
 	    }
@@ -460,7 +460,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 	    {
 	      scfd = mus_file_open_read(saved_chan_file);
 	      if (scfd == -1) 
-		return(mus_format("convolve: open saved chan (%s[%d]) file %s: %s\n",
+		return(mus_format(_("convolve: open saved chan (%s[%d]) file %s hit error: %s\n"),
 				  sp->short_filename, ucp->chan, 
 				  saved_chan_file, strerror(errno)));
 	      else
@@ -474,7 +474,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 					    1, hdr->type); /* ??? */
 		  fltfd = mus_file_open_read(filename);
 		  if (fltfd == -1) 
-		    return(mus_format("convolve: open filter file %s: %s\n", 
+		    return(mus_format(_("convolve: open filter file %s hit error: %s\n"), 
 				      filename, strerror(errno)));
 		  else
 		    {
@@ -503,12 +503,12 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 			    impulse_chan = 0;
 			}
 		      if (mus_file_close(fltfd) != 0)
-			return(mus_format("convolve: close filter file %s: %s\n", 
+			return(mus_format(_("convolve: close filter file %s hit error: %s\n"), 
 					  filename, strerror(errno)));
 		    }
 		}
 	      if (mus_file_close(scfd) != 0)
-		return(mus_format("convolve: close saved chan (%s[%d]) file %s: %s\n",
+		return(mus_format(_("convolve: close saved chan (%s[%d]) file %s hit error: %s\n"),
 				  sp->short_filename, ucp->chan, 
 				  saved_chan_file, strerror(errno)));
 	    }
@@ -734,7 +734,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
       if (ofd0 == -1)
 	{
 	  free_file_info(hdr0);
-	  snd_error("can't open swap-channels temp file %s: %s\n", ofile0, strerror(errno));
+	  snd_error(_("can't open swap-channels temp file %s: %s\n"), ofile0, strerror(errno));
 	  return;
 	}
       datumb = mus_bytes_per_sample(hdr0->format);
@@ -747,7 +747,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
 	  free_file_info(hdr0);
 	  free_file_info(hdr1);
 	  if (ofile0) FREE(ofile0);
-	  snd_error("can't open swap-channels temp file %s: %s\n", ofile1, strerror(errno));
+	  snd_error(_("can't open swap-channels temp file %s: %s\n"), ofile1, strerror(errno));
 	  return;
 	}
     }
@@ -897,7 +897,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, (char *)origin);
   ofd = open_temp_file(ofile, 1, hdr, ss);
   if (ofd == -1)
-    return(mus_format("can't open %s temp file %s: %s\n", origin, ofile, strerror(errno)));
+    return(mus_format(_("can't open %s temp file %s: %s\n"), origin, ofile, strerror(errno)));
   data = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));
   data[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
   datumb = mus_bytes_per_sample(hdr->format);
@@ -1062,7 +1062,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
     }
   else
     {
-      report_in_minibuffer(sp, "src interrupted");
+      report_in_minibuffer(sp, _("src interrupted"));
       ss->stopped_explicitly = FALSE;
     }
   if (old_marks) FREE(old_marks);
@@ -1277,11 +1277,11 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
   ss = cp->state;
   sp = cp->sound;
   if (!(MUS_RUN_P(gen)))
-    return(mus_format("clm-channel: %s can't handle %s generators",
+    return(mus_format(_("clm-channel: %s can't handle %s generators"),
 		      caller,
 		      mus_name(gen)));
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
-  if (sf == NULL) return(mus_format("%s: can't read %s[%d] channel data!", caller, sp->short_filename, cp->chan));
+  if (sf == NULL) return(mus_format(_("%s: can't read %s[%d] channel data!"), caller, sp->short_filename, cp->chan));
   if ((dur + overlap) > MAX_BUFFER_SIZE)
     {
       temp_file = TRUE; 
@@ -1291,7 +1291,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
       if (ofd == -1)
 	{
 	  free_snd_fd(sf); 
-	  return(mus_format("can't open %s temp file %s: %s\n", caller, ofile, strerror(errno)));
+	  return(mus_format(_("can't open %s temp file %s: %s\n"), caller, ofile, strerror(errno)));
 	}
       datumb = mus_bytes_per_sample(hdr->format);
     }
@@ -1386,7 +1386,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
     return(NULL);
 
   if ((gen) && (!(MUS_RUN_P(gen))))
-    return(mus_format("filter-channel: %s can't handle %s generators",
+    return(mus_format(_("filter-channel: %s can't handle %s generators"),
 		      origin,
 		      mus_name(gen)));
   ss = ncp->state;
@@ -1438,7 +1438,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 	  if (ss->stopped_explicitly)
 	    {
 	      ss->stopped_explicitly = FALSE;
-	      report_in_minibuffer(sp, "stopped");
+	      report_in_minibuffer(sp, _("stopped"));
 	      FREE(sndrdat);
 	      FREE(fltdat);
 	      break;
@@ -1462,7 +1462,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 	  ofd = open_temp_file(ofile, 1, hdr, ss);
 	  if (ofd == -1)
 	    {
-	      snd_error("can't open %s temp file %s: %s\n", origin, ofile, strerror(errno));
+	      snd_error(_("can't open %s temp file %s: %s\n"), origin, ofile, strerror(errno));
 	      break;
 	    }
 	  write(ofd, sndrdat, fsize * sizeof(Float));
@@ -1477,7 +1477,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 	  if (ss->stopped_explicitly)
 	    {
 	      ss->stopped_explicitly = FALSE;
-	      report_in_minibuffer(sp, "stopped");
+	      report_in_minibuffer(sp, _("stopped"));
 	      break;
 	    }
 	}
@@ -1530,7 +1530,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 		  ofd = open_temp_file(ofile, 1, hdr, ss);
 		  if (ofd == -1)
 		    {
-		      snd_error("can't open %s temp file %s: %s\n", origin, ofile, strerror(errno));
+		      snd_error(_("can't open %s temp file %s: %s\n"), origin, ofile, strerror(errno));
 		      break;
 		    }
 		  datumb = mus_bytes_per_sample(hdr->format);
@@ -1661,7 +1661,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
       hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, caller);
       ofd = open_temp_file(ofile, 1, hdr, ss);
       if (ofd == -1)
-	return(mus_format("can't open %s temp file %s: %s\n", caller, ofile, strerror(errno)));
+	return(mus_format(_("can't open %s temp file %s: %s\n"), caller, ofile, strerror(errno)));
       datumb = mus_bytes_per_sample(hdr->format);
     }
   else temp_file = FALSE;
@@ -1997,7 +1997,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, int regexpr,
 		if (sfs[i]) 
 		  free_snd_fd(sfs[i]);
 	      free_sync_state(sc);
-	      snd_error("can't open %s temp file %s: %s\n", origin, ofile, strerror(errno));
+	      snd_error(_("can't open %s temp file %s: %s\n"), origin, ofile, strerror(errno));
 	      FREE(ofile);
 	      if (e) mus_free(egen);
 	      return;
@@ -2399,7 +2399,7 @@ static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edp
   ss = cp->state;
   sp = cp->sound;
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
-  if (sf == NULL) return(mus_format("run-channel: can't read %s[%d] channel data!", sp->short_filename, cp->chan));
+  if (sf == NULL) return(mus_format(_("run-channel: can't read %s[%d] channel data!"), sp->short_filename, cp->chan));
   if (dur > MAX_BUFFER_SIZE)
     {
       temp_file = TRUE; 
@@ -2409,7 +2409,7 @@ static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edp
       if (ofd == -1)
 	{
 	  free_snd_fd(sf); 
-	  return(mus_format("can't open run-channel temp file %s: %s\n", ofile, strerror(errno)));
+	  return(mus_format(_("can't open run-channel temp file %s: %s\n"), ofile, strerror(errno)));
 	}
       datumb = mus_bytes_per_sample(hdr->format);
     }
@@ -2893,7 +2893,7 @@ static XEN scan_body(void *context)
       if (ss->stopped_explicitly)
 	{
 	  ss->stopped_explicitly = FALSE;
-	  report_in_minibuffer(sc->sp, "C-G stopped %s at sample " OFF_TD, 
+	  report_in_minibuffer(sc->sp, _("C-G stopped %s at sample " PRId64), 
 			       sc->caller, kp + sc->beg);
 	  break;
 	}
@@ -3043,7 +3043,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
       if (ss->stopped_explicitly)
 	{
 	  ss->stopped_explicitly = FALSE;
-	  report_in_minibuffer(sp, "C-G stopped %s at sample " OFF_TD, 
+	  report_in_minibuffer(sp, _("C-G stopped %s at sample " PRId64), 
 			       caller, kp + beg);
 	  break;
 	}
@@ -4006,20 +4006,20 @@ static Float check_src_envelope(int pts, Float *data, const char *caller)
   Float res = 0.0;
   for (i = 0; i < (2 * pts); i += 2)
     if (data[i + 1] == 0.0)
-      mus_misc_error(caller, "envelope hits 0.0", mus_array_to_list(data, 0, pts * 2));
+      mus_misc_error(caller, _("src envelope hits 0.0"), mus_array_to_list(data, 0, pts * 2));
     else
       {
 	if (data[i + 1] < 0.0)
 	  {
 	    if (res <= 0.0)
 	      res = -1.0;
-	    else mus_misc_error(caller, "envelope passes through 0.0", mus_array_to_list(data, 0, pts * 2));
+	    else mus_misc_error(caller, _("src envelope passes through 0.0"), mus_array_to_list(data, 0, pts * 2));
 	  }
 	else
 	  {
 	    if (res >= 0)
 	      res = 1.0;
-	    else mus_misc_error(caller, "envelope passes through 0.0", mus_array_to_list(data, 0, pts * 2));
+	    else mus_misc_error(caller, _("src envelope passes through 0.0"), mus_array_to_list(data, 0, pts * 2));
 	  }
       }
   return(res);
@@ -4161,7 +4161,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
 	{
 	  v = TO_VCT(e);
 	  if (len > v->length) 
-	    mus_misc_error(caller, "order > length coeffs?", XEN_LIST_2(order, e));
+	    mus_misc_error(caller, _("order > length coeffs?"), XEN_LIST_2(order, e));
 	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, caller, selection, v->data, NULL, edpos, 5);
 	}
       else 

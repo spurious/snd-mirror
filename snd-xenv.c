@@ -9,7 +9,7 @@ static Widget nameL, textL, screnvlst, screnvname, dBB, orderL, revrow, deleteB,
 static Widget expB, linB, lerow, baseScale, baseLabel, baseValue, baseSep, selectionB, mixB, selrow, unrow, saverow;
 static GC gc, rgc, ggc;
 
-static char *env_names[3] = {"amp env:", "flt env:", "src env:"};
+static char *env_names[3] = {N_("amp env:"), N_("flt env:"), N_("src env:")};
 
 static int showing_all_envs = FALSE; /* edit one env (0), or view all currently defined envs (1) */
 static int apply_to_selection = FALSE;
@@ -162,7 +162,7 @@ static void apply_enved(snd_state *ss)
 	{
 	  set_sensitive(applyB, FALSE);
 	  set_sensitive(apply2B, FALSE);
-	  set_button_label(cancelB, "Stop");
+	  set_button_label(cancelB, _("Stop"));
 	  check_for_event(ss);
 	  switch (enved_target(ss))
 	    {
@@ -205,7 +205,7 @@ static void apply_enved(snd_state *ss)
 	  if (enved_wave_p(ss)) env_redisplay(ss);
 	  set_sensitive(applyB, TRUE);
 	  if (!apply_to_mix) set_sensitive(apply2B, TRUE);
-	  set_button_label(cancelB, "Dismiss");
+	  set_button_label(cancelB, _("Dismiss"));
 	}
     }
 }
@@ -221,7 +221,7 @@ static void env_redisplay_1(snd_state *ss, int printing)
       else 
 	{
 	  name = XmTextGetString(textL);
-	  if (!name) name = copy_string("noname");
+	  if (!name) name = copy_string(_("noname"));
 	  display_env(ss, active_env, name, gc, 0, 0, 
 		      env_window_width, env_window_height, 1, 
 		      (enved_exp_p(ss)) ? active_env_base : 1.0,
@@ -333,7 +333,7 @@ static void save_button_pressed(Widget w, XtPointer context, XtPointer info)
   char *name = NULL;
   name = XmTextGetString(textL);
   if ((!name) || (!(*name))) 
-    name = copy_string("unnamed");
+    name = copy_string(_("unnamed"));
   alert_envelope_editor(ss, name, copy_env(active_env));
   add_or_edit_symbol(name, active_env);
   set_sensitive(saveB, FALSE);
@@ -344,11 +344,11 @@ static void save_button_pressed(Widget w, XtPointer context, XtPointer info)
 static void save_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Save Current Envelope",
-"The envelope in the editor is not saved until you press the 'save' button.  Once saved, it can be \
+		     _("Save Current Envelope"),
+_("The envelope in the editor is not saved until you press the 'save' button.  Once saved, it can be \
 used in other portions of Snd (for example, as the argument to C-x C-a), or saved to a file via the \
 Option menu Save State option.  Similarly, a file of CLM (lisp) envelope definitions can be loaded \
-using load.");
+using load."));
 }
 
 static void apply_enved_callback(Widget w, XtPointer context, XtPointer info) 
@@ -393,9 +393,9 @@ static void undo_and_apply_enved_callback(Widget w, XtPointer context, XtPointer
 static void undo_and_apply_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Undo and Apply",
-"This button first tries to undo a previous apply then calls apply, the point obviously being to make \
-it easy to retry an envelope after some minor change.");
+		     _("Undo and Apply"),
+_("This button first tries to undo a previous apply then calls apply, the point obviously being to make \
+it easy to retry an envelope after some minor change."));
 }
 
 static void reflect_segment_state (snd_state *ss)
@@ -422,7 +422,7 @@ static void select_or_edit_env(snd_state *ss, int pos)
   if (showing_all_envs)
     {
       showing_all_envs = FALSE;
-      set_button_label_normal(showB, "view envs");
+      set_button_label_normal(showB, _("view envs"));
     }
   if (active_env) active_env = free_env(active_env);
   selected_env = enved_all_envs(pos);
@@ -580,60 +580,60 @@ static void drawer_resize(Widget w, XtPointer context, XtPointer info)
 static void drawer_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Envelope Editor Display",
-"This portion of the envelope editor displays either the envelope currently being edited, or all currently \
+		     _("Envelope Editor Display"),
+_("This portion of the envelope editor displays either the envelope currently being edited, or all currently \
 loaded envelopes.  In the latter case, click an envelope to select it, click the selected envelope to load it into \
 the editor portion.  In the former case, click anywhere in the graph to place a new breakpoint at that point; click \
 an existing point to delete it; drag an existing point to move it.  Put some envelope name in the text field and click \
 the 'save' button to save the current envelope under the chosen name.  Unlimited undo/redo are available through the \
 'undo' and 'redo' buttons.  Set the 'w' button to see the currently active sound under the envelope; set the 'f' button \
 to apply the envelope to the sound's frequency, rather than amplitude; set the 'c' button to clip mouse motion to the current \
-y axis bounds.");
+y axis bounds."));
 }
 
 static void text_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Envelope Name",
-"To load an exisiting envelope into the editor,  type its name in this field; to give a name to \
+		     _("Envelope Name"),
+_("To load an exisiting envelope into the editor,  type its name in this field; to give a name to \
 the envelope as it is currently defined in the graph viewer, type its name in this field, then \
 either push return or the 'save' button; to define a new envelope by its break point values, give the \
 values in this field as though it were a defvar call in M-X -- that is, '(0 0 1 1)<cr> in this \
-field fires up a ramp as a new envelope.");
+field fires up a ramp as a new envelope."));
 }
 
 static void scrolled_list_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Loaded Envelope Names",
-"This is the list of all currently loaded envelopes by name.  When a new envelope is saved, its name is \
+		     _("Loaded Envelope Names"),
+_("This is the list of all currently loaded envelopes by name.  When a new envelope is saved, its name is \
 added to the end of the list.  Click a name to select that envelope; click the selected envelope to load it \
-into the editor.  The selected envelope is displayed in red.");
+into the editor.  The selected envelope is displayed in red."));
 }
 
 static void brkpt_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Breakpoint Data",
-"This portion ofthe envelope editor displays the current breakpoint values while the mouse is dragging a point");
+		     _("Breakpoint Data"),
+_("This portion ofthe envelope editor displays the current breakpoint values while the mouse is dragging a point"));
 }
 
 static void show_button_pressed(Widget w, XtPointer context, XtPointer info) 
 {
   /* if show all (as opposed to show current), loop through loaded LV_LISTs */
   showing_all_envs = (!showing_all_envs);
-  set_button_label_normal(showB, (showing_all_envs) ? "edit env" : "view envs");
+  set_button_label_normal(showB, (showing_all_envs) ? _("edit env") : _("view envs"));
   env_redisplay((snd_state *)context);
 }
 
 static void show_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "View Envs or Edit Env",
-"There are two sides to the Envelope Editor, the editor itself, and an envelope viewer.  This button \
+		     _("View Envs or Edit Env"),
+_("There are two sides to the Envelope Editor, the editor itself, and an envelope viewer.  This button \
 chooses which is active.  In the envelope viewer,  all currently loaded envelopes are displayed, and \
 you can select one by clicking it; click the selected envelope to load it into the editor portion.  The \
-other choice is the editor which displays the current state of the envelope being edited.");
+other choice is the editor which displays the current state of the envelope being edited."));
 }
 
 static void selection_button_pressed(Widget s, XtPointer context, XtPointer info) 
@@ -705,15 +705,15 @@ static void mix_button_pressed(Widget w, XtPointer context, XtPointer info)
 static void selection_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Apply to Selection or Sound",
-"The 'Apply' button can affect either the current selection, the current sound, or the currently selected mix.");
+		     _("Apply to Selection or Sound"),
+_("The 'Apply' button can affect either the current selection, the current sound, or the currently selected mix."));
 }
 
 static void mix_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Apply to Mix",
-"The 'Apply' button can affect either the currently selected mix, or the entire current sound, or the current selection.");
+		     _("Apply to Mix"),
+_("The 'Apply' button can affect either the currently selected mix, or the entire current sound, or the current selection."));
 }
 
 static void delete_button_pressed(Widget w, XtPointer context, XtPointer info) 
@@ -740,8 +740,8 @@ static void delete_button_pressed(Widget w, XtPointer context, XtPointer info)
 static void delete_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Delete Selected Envelope",
-"If an envelope is selected in the envs list, this will remove it");
+		     _("Delete Selected Envelope"),
+_("If an envelope is selected in the envs list, this will remove it"));
 }
 
 static void revert_button_pressed(Widget w, XtPointer context, XtPointer info) 
@@ -755,9 +755,9 @@ static void revert_button_pressed(Widget w, XtPointer context, XtPointer info)
 static void revert_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Revert to Original Envelope",
-"The revert button undoes all the edits back to the original state, and if clicked again at that \
-point, clears the editor to a clean state (that is, the envelope '(0 0 1 0)).");
+		     _("Revert to Original Envelope"),
+_("The revert button undoes all the edits back to the original state, and if clicked again at that \
+point, clears the editor to a clean state (that is, the envelope '(0 0 1 0))."));
 }
 
 static void undo_button_pressed(Widget w, XtPointer context, XtPointer info) 
@@ -771,9 +771,9 @@ static void undo_button_pressed(Widget w, XtPointer context, XtPointer info)
 static void undo_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Undo Edit",
-"The undo button undoes the previous edit.  The list of edits is not cleared until you changed to \
-a new envelope, so you can undo and redo every edit without limitation.");
+		     _("Undo Edit"),
+_("The undo button undoes the previous edit.  The list of edits is not cleared until you changed to \
+a new envelope, so you can undo and redo every edit without limitation."));
 }
 
 static void redo_button_pressed(Widget w, XtPointer context, XtPointer info) 
@@ -787,14 +787,14 @@ static void redo_button_pressed(Widget w, XtPointer context, XtPointer info)
 static void redo_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Redo Edit",
-"The redo button redoes an edit that was previously undone.  There is no limit on the number of edits \
-all_that can be undone and redone.");
+		     _("Redo Edit"),
+_("The redo button redoes an edit that was previously undone.  There is no limit on the number of edits \
+all_that can be undone and redone."));
 }
 
 static void reflect_apply_state (snd_state *ss)
 {
-  set_label(nameL, env_names[enved_target(ss)]);
+  set_label(nameL, _(env_names[enved_target(ss)]));
   XmChangeColor(ampB, 
 		(enved_target(ss) == ENVED_AMPLITUDE) ? ((Pixel)(ss->sgx)->green) : 
                                                       ((Pixel)(ss->sgx)->highlight_color));
@@ -821,11 +821,11 @@ static void freq_button_callback(Widget w, XtPointer context, XtPointer info)
 static void freq_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Apply Envelope to Spectrum",
-"When the 'Apply' button is pressed, the envelope in the editor window is applied to the current sound \
+		     _("Apply Envelope to Spectrum"),
+_("When the 'Apply' button is pressed, the envelope in the editor window is applied to the current sound \
 and any sounds sync'd to it. If this button is set,  the envelope is interpreted as a frequency response \
 curve, and used to design an FIR filter that is then applied to the current sound. The order of the filter \
-is determined by the variable " S_enved_filter_order " which defaults to 40.");
+is determined by the variable " S_enved_filter_order " which defaults to 40."));
 }
 
 static void amp_button_callback(Widget w, XtPointer context, XtPointer info) 
@@ -840,9 +840,9 @@ static void amp_button_callback(Widget w, XtPointer context, XtPointer info)
 static void amp_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Apply Envelope to Amplitude",
-"When the 'Apply' button is pressed, the envelope in the editor window is applied to the current sound \
-and any sounds sync'd to it. If this button is set,  the envelope is interpreted as a amplitude envelope.");
+		     _("Apply Envelope to Amplitude"),
+_("When the 'Apply' button is pressed, the envelope in the editor window is applied to the current sound \
+and any sounds sync'd to it. If this button is set,  the envelope is interpreted as a amplitude envelope."));
 }
 
 static void src_button_callback(Widget w, XtPointer context, XtPointer info) 
@@ -862,9 +862,9 @@ static void reset_button_callback(Widget w, XtPointer context, XtPointer info)
 static void src_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Apply Envelope to Srate",
-"When the 'Apply' button is pressed, the envelope in the editor window is applied to the current sound \
-and any sounds sync'd to it. If this button is set,  the envelope is applied to the sampling rate.");
+		     _("Apply Envelope to Srate"),
+_("When the 'Apply' button is pressed, the envelope in the editor window is applied to the current sound \
+and any sounds sync'd to it. If this button is set,  the envelope is applied to the sampling rate."));
 }
 
 void enved_print(char *name)
@@ -882,9 +882,9 @@ static void print_button_pressed(Widget w, XtPointer context, XtPointer info)
 static void print_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Print Envelopes",
-"The print button causes the current envelope editor display (whether the envelope being edited, or all the \
-envelopes currently loaded) to be saved in a postscript file named aaa.eps.  You can send this to a printer with lpr.");
+		     _("Print Envelopes"),
+_("The print button causes the current envelope editor display (whether the envelope being edited, or all the \
+envelopes currently loaded) to be saved in a postscript file named aaa.eps.  You can send this to a printer with lpr."));
 }
 
 static void env_browse_callback(Widget w, XtPointer context, XtPointer info) 
@@ -907,11 +907,11 @@ static void graph_button_callback(Widget w, XtPointer context, XtPointer info)
 static void graph_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Show Current Active Channel",
-"This button, if set, causes a light-colored version of the current channel's overall data to be displayed \
+		     _("Show Current Active Channel"),
+_("This button, if set, causes a light-colored version of the current channel's overall data to be displayed \
 in the envelope editor window, making it easier to design an envelope to fit the exact contours of the \
 sound.  Since the envelope is always applied to the entire sound, the x-axis bounds in the envelope editor \
-are arbitrary.");
+are arbitrary."));
 }
 
 static void dB_button_callback(Widget w, XtPointer context, XtPointer info) 
@@ -925,8 +925,8 @@ static void dB_button_callback(Widget w, XtPointer context, XtPointer info)
 static void dB_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Linear or Log Y Axis",
-"This button, if set, causes the y axis to be in dB");
+		     _("Linear or Log Y Axis"),
+_("This button, if set, causes the y axis to be in dB"));
 }
 
 static void clip_button_callback(Widget w, XtPointer context, XtPointer info) 
@@ -940,9 +940,9 @@ static void clip_button_callback(Widget w, XtPointer context, XtPointer info)
 static void clip_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Y Axis Clipped",
-"This button, if set, causes break point motion in the y direction to be clipped at the current \
-axis bounds.  If unset, the bounds will try to change to accommodate the current mouse position.");
+		     _("Y Axis Clipped"),
+_("This button, if set, causes break point motion in the y direction to be clipped at the current \
+axis bounds.  If unset, the bounds will try to change to accommodate the current mouse position."));
 }
 
 static void exp_button_callback(Widget w, XtPointer context, XtPointer info) 
@@ -964,8 +964,8 @@ static void exp_button_callback(Widget w, XtPointer context, XtPointer info)
 static void exp_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Linear or Exponential Segments",
-"This button, if set, causes the segments to be drawn with an exponential curve");
+		     _("Linear or Exponential Segments"),
+_("This button, if set, causes the segments to be drawn with an exponential curve"));
 }
 
 static void lin_button_callback(Widget w, XtPointer context, XtPointer info) 
@@ -987,29 +987,29 @@ static void lin_button_callback(Widget w, XtPointer context, XtPointer info)
 static void lin_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Linear or Exponential Segments",
-"This button, if set, causes the segments to be drawn with an straight line.");
+		     _("Linear or Exponential Segments"),
+_("This button, if set, causes the segments to be drawn with an straight line."));
 }
 
 static void base_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Exponential Envelope Base",
-"This slider sets the base of the exponential used to connect the envelope breakpoints.");
+		     _("Exponential Envelope Base"),
+_("This slider sets the base of the exponential used to connect the envelope breakpoints."));
 }
 
 static void order_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Filter Order",
-"This text field sets the order of the FIR filter used by the 'flt' envelope.");
+		     _("Filter Order"),
+_("This text field sets the order of the FIR filter used by the 'flt' envelope."));
 }
 
 static void FIR_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Filter Type",
-"This button sets the type of filter used by the 'flt' envelope -- FIR or FFT.");
+		     _("Filter Type"),
+_("This button sets the type of filter used by the 'flt' envelope -- FIR or FFT."));
 }
 
 #define BASE_MAX 400
@@ -1139,11 +1139,11 @@ Widget create_envelope_editor (snd_state *ss)
     {
 
       /* -------- DIALOG -------- */
-      xdismiss = XmStringCreate("Dismiss", XmFONTLIST_DEFAULT_TAG);
-      xhelp = XmStringCreate("Help", XmFONTLIST_DEFAULT_TAG);
-      titlestr = XmStringCreate("Edit Envelope", XmFONTLIST_DEFAULT_TAG);
-      xapply = XmStringCreate("Apply", XmFONTLIST_DEFAULT_TAG);
-      /* xreset = XmStringCreate("Reset", XmFONTLIST_DEFAULT_TAG); */
+      xdismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
+      xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
+      titlestr = XmStringCreate(_("Edit Envelope"), XmFONTLIST_DEFAULT_TAG);
+      xapply = XmStringCreate(_("Apply"), XmFONTLIST_DEFAULT_TAG);
+      /* xreset = XmStringCreate(_("Reset"), XmFONTLIST_DEFAULT_TAG); */
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -1155,7 +1155,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
-      enved_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "envelope editor", args, n);
+      enved_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), _("envelope editor"), args, n);
   
       XtAddCallback(enved_dialog, XmNcancelCallback, dismiss_enved_callback, ss);
       XtAddCallback(enved_dialog, XmNhelpCallback, help_enved_callback, ss);
@@ -1179,11 +1179,11 @@ Widget create_envelope_editor (snd_state *ss)
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	}
-      apply2B = XtCreateManagedWidget("Undo&Apply", xmPushButtonWidgetClass, enved_dialog, args, n);
+      apply2B = XtCreateManagedWidget(_("Undo&Apply"), xmPushButtonWidgetClass, enved_dialog, args, n);
       XtAddCallback(apply2B, XmNactivateCallback, undo_and_apply_enved_callback, ss);
       XtAddCallback(apply2B, XmNhelpCallback, undo_and_apply_help_callback, ss);
 
-      resetB = XtCreateManagedWidget("Reset", xmPushButtonWidgetClass, enved_dialog, args, n);
+      resetB = XtCreateManagedWidget(_("Reset"), xmPushButtonWidgetClass, enved_dialog, args, n);
       XtAddCallback(resetB, XmNactivateCallback, reset_button_callback, ss);
 
 
@@ -1214,7 +1214,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
-      baseLabel = make_pushbutton_widget ("exp:", mainform, args, n);
+      baseLabel = make_pushbutton_widget (_("exp:"), mainform, args, n);
       XtAddCallback(baseLabel, XmNhelpCallback, base_help_callback, ss);
       XtAddCallback(baseLabel, XmNactivateCallback, base_click_callback, ss);
 
@@ -1307,7 +1307,7 @@ Widget create_envelope_editor (snd_state *ss)
 
       /* -------- AMP ENV NAME -------- */
       n = 0;
-      s1 = XmStringCreate("amp env:", XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreate(_("amp env:"), XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
@@ -1345,7 +1345,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
-      dBB = make_togglebutton_widget("dB", mainform, args, n);
+      dBB = make_togglebutton_widget(_("dB"), mainform, args, n);
       XtAddCallback(dBB, XmNvalueChangedCallback, dB_button_callback, ss);
       XtAddCallback(dBB, XmNhelpCallback, dB_button_help_callback, ss);
 
@@ -1362,7 +1362,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, dBB); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
-      graphB = make_togglebutton_widget("wave", mainform, args, n);
+      graphB = make_togglebutton_widget(_("wave"), mainform, args, n);
       XtAddCallback(graphB, XmNvalueChangedCallback, graph_button_callback, ss);
       XtAddCallback(graphB, XmNhelpCallback, graph_button_help_callback, ss);
 
@@ -1379,7 +1379,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, graphB); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
-      clipB = make_togglebutton_widget("clip", mainform, args, n);
+      clipB = make_togglebutton_widget(_("clip"), mainform, args, n);
       XtAddCallback(clipB, XmNvalueChangedCallback, clip_button_callback, ss);
       XtAddCallback(clipB, XmNhelpCallback, clip_button_help_callback, ss);
 
@@ -1459,7 +1459,7 @@ Widget create_envelope_editor (snd_state *ss)
 	  XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(ss)); n++;
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	}
-      showB = XtCreateManagedWidget("view envs", xmPushButtonWidgetClass, colB, args, n);
+      showB = XtCreateManagedWidget(_("view envs"), xmPushButtonWidgetClass, colB, args, n);
       XtAddCallback(showB, XmNactivateCallback, show_button_pressed, ss);
       XtAddCallback(showB, XmNhelpCallback, show_button_help_callback, ss);
 
@@ -1479,8 +1479,8 @@ Widget create_envelope_editor (snd_state *ss)
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	}
       XtSetArg(args[n], XmNshadowThickness, 1); n++;
-      saveB = XtCreateManagedWidget(" save  ", xmPushButtonWidgetClass, saverow, args, n);
-      printB = XtCreateManagedWidget("  print  ", xmPushButtonWidgetClass, saverow, args, n);
+      saveB = XtCreateManagedWidget(_(" save  "), xmPushButtonWidgetClass, saverow, args, n);
+      printB = XtCreateManagedWidget(_("  print  "), xmPushButtonWidgetClass, saverow, args, n);
 
       XtAddCallback(saveB, XmNactivateCallback, save_button_pressed, ss);
       XtAddCallback(saveB, XmNhelpCallback, save_button_help_callback, ss);
@@ -1503,8 +1503,8 @@ Widget create_envelope_editor (snd_state *ss)
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	}
       XtSetArg(args[n], XmNshadowThickness, 1); n++;
-      undoB = XtCreateManagedWidget(" undo  ", xmPushButtonWidgetClass, unrow, args, n);
-      redoB = XtCreateManagedWidget(" redo   ", xmPushButtonWidgetClass, unrow, args, n);
+      undoB = XtCreateManagedWidget(_(" undo  "), xmPushButtonWidgetClass, unrow, args, n);
+      redoB = XtCreateManagedWidget(_(" redo   "), xmPushButtonWidgetClass, unrow, args, n);
 
       XtAddCallback(undoB, XmNactivateCallback, undo_button_pressed, ss);
       XtAddCallback(undoB, XmNhelpCallback, undo_button_help_callback, ss);
@@ -1526,8 +1526,8 @@ Widget create_envelope_editor (snd_state *ss)
 	  XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(ss)); n++;
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	}
-      revertB = XtCreateManagedWidget("revert", xmPushButtonWidgetClass, revrow, args, n);
-      deleteB = XtCreateManagedWidget("delete", xmPushButtonWidgetClass, revrow, args, n);
+      revertB = XtCreateManagedWidget(_("revert"), xmPushButtonWidgetClass, revrow, args, n);
+      deleteB = XtCreateManagedWidget(_("delete"), xmPushButtonWidgetClass, revrow, args, n);
 
       XtAddCallback(revertB, XmNactivateCallback, revert_button_pressed, ss);
       XtAddCallback(revertB, XmNhelpCallback, revert_button_help_callback, ss);
@@ -1552,9 +1552,9 @@ Widget create_envelope_editor (snd_state *ss)
 	}
       /* XtSetArg(args[n], XmNmarginWidth, 0); n++; */
       XtSetArg(args[n], XmNshadowThickness, 1); n++;
-      ampB = XtCreateManagedWidget("amp", xmPushButtonWidgetClass, rbrow, args, n);
-      fltB = XtCreateManagedWidget(" flt ", xmPushButtonWidgetClass, rbrow, args, n);
-      srcB = XtCreateManagedWidget("src", xmPushButtonWidgetClass, rbrow, args, n);
+      ampB = XtCreateManagedWidget(_("amp"), xmPushButtonWidgetClass, rbrow, args, n);
+      fltB = XtCreateManagedWidget(_(" flt "), xmPushButtonWidgetClass, rbrow, args, n);
+      srcB = XtCreateManagedWidget(_("src"), xmPushButtonWidgetClass, rbrow, args, n);
 
       XtAddCallback(fltB, XmNactivateCallback, freq_button_callback, ss);
       XtAddCallback(fltB, XmNhelpCallback, freq_button_help_callback, ss);
@@ -1588,12 +1588,12 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 50); n++;
-      linB = XtCreateManagedWidget("linear", xmPushButtonWidgetClass, lerow, args, n);
+      linB = XtCreateManagedWidget(_("linear"), xmPushButtonWidgetClass, lerow, args, n);
       n -= 3;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, linB); n++;
-      expB = XtCreateManagedWidget("exp", xmPushButtonWidgetClass, lerow, args, n);
+      expB = XtCreateManagedWidget(_("exp"), xmPushButtonWidgetClass, lerow, args, n);
 
       XtAddCallback(linB, XmNactivateCallback, lin_button_callback, ss);
       XtAddCallback(linB, XmNhelpCallback, lin_button_help_callback, ss);
@@ -1617,8 +1617,8 @@ Widget create_envelope_editor (snd_state *ss)
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	}
       XtSetArg(args[n], XmNshadowThickness, 1); n++;
-      selectionB = make_pushbutton_widget("selection", selrow, args, n);
-      mixB = make_pushbutton_widget("mix", selrow, args, n);
+      selectionB = make_pushbutton_widget(_("selection"), selrow, args, n);
+      mixB = make_pushbutton_widget(_("mix"), selrow, args, n);
 
       XtAddCallback(selectionB, XmNactivateCallback, selection_button_pressed, ss);
       XtAddCallback(selectionB, XmNhelpCallback, selection_button_help_callback, ss);
@@ -1634,7 +1634,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, colF); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      screnvname = XtCreateManagedWidget("envs:", xmLabelWidgetClass, aform, args, n);
+      screnvname = XtCreateManagedWidget(_("envs:"), xmLabelWidgetClass, aform, args, n);
       XtAddCallback(screnvname, XmNhelpCallback, scrolled_list_help_callback, ss);
 
       n = 0;

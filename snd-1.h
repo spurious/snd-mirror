@@ -292,7 +292,8 @@ typedef struct snd__info {
   XEN properties;
   int raw_prompt;
   char *search_expr;
-  int searching, marking, filing, finding_mark, amping, reging, printing, loading, prompting;
+  off_t marking;
+  int searching, filing, finding_mark, amping, reging, printing, loading, prompting;
   off_t macroing;
   int minibuffer_on, read_only;
   chan_info **chans;

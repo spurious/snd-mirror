@@ -99,7 +99,7 @@ char *global_search(snd_state *ss, int direction)
   chan_info *cp;
   if (search_in_progress) 
     {
-      mus_snprintf(search_message, PRINT_BUFFER_SIZE, "search in progress");
+      mus_snprintf(search_message, PRINT_BUFFER_SIZE, _("search in progress"));
       return(search_message);
     }
 
@@ -161,8 +161,8 @@ char *global_search(snd_state *ss, int direction)
       if (fd->n == -1)
 	{
 	  if (ss->stopped_explicitly)
-	    mus_snprintf(search_message, PRINT_BUFFER_SIZE, "search stopped");
-	  else mus_snprintf(search_message, PRINT_BUFFER_SIZE, "%s: not found", ss->search_expr);
+	    mus_snprintf(search_message, PRINT_BUFFER_SIZE, _("search stopped"));
+	  else mus_snprintf(search_message, PRINT_BUFFER_SIZE, _("%s: not found"), ss->search_expr);
 	  /* printed by find_ok_callback in snd-xmenu.c */
 	}
       else
@@ -263,7 +263,7 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
   ss = sp->state;
   if (search_in_progress) 
     {
-      report_in_minibuffer(sp, "search in progress");
+      report_in_minibuffer(sp, _("search in progress"));
       return(-1);
     }
   search_in_progress = TRUE;
@@ -337,7 +337,7 @@ void cursor_search(chan_info *cp, int count)
   char *s1, *s2;
   sp = cp->sound;
   if (search_in_progress) 
-    report_in_minibuffer(sp, "search in progress");
+    report_in_minibuffer(sp, _("search in progress"));
   else
     {
       if (sp->searching)
@@ -368,15 +368,15 @@ void cursor_search(chan_info *cp, int count)
 	  else samp = cursor_find_backward(sp, cp, -count);
 	  if (samp == -1) 
 	    { 
-	      report_in_minibuffer(sp, "%s%snot found%s", 
+	      report_in_minibuffer(sp, _("%s%snot found%s"), 
 				   (sp->search_expr) ? sp->search_expr : "", 
 				   (sp->search_expr) ? ": " : "",
-				   (cp->last_search_result == SEARCH_FAILED) ? " (wrapped)" : "");
+				   (cp->last_search_result == SEARCH_FAILED) ? _(" (wrapped)") : "");
 	      cp->last_search_result = SEARCH_FAILED;
 	    }
 	  else
 	    {
-	      report_in_minibuffer(sp, "%s%sy = %s at %s (" OFF_TD ")",
+	      report_in_minibuffer(sp, _("%s%sy = %s at %s (" PRId64 ")"),
 				   (sp->search_expr) ? sp->search_expr : "",
 				   (sp->search_expr) ? ": " : "",
 				   s1 = prettyf(chn_sample(samp, cp, cp->edit_ctr), 2),

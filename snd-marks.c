@@ -549,7 +549,7 @@ void delete_mark_samp(off_t samp, chan_info *cp)
 	    }
 	}
     }
-  report_in_minibuffer(cp->sound, "no mark at sample " OFF_TD, samp);
+  report_in_minibuffer(cp->sound, _("no mark at sample " PRId64), samp);
 }
 
 static void delete_mark_id(int id, chan_info *cp)
@@ -586,7 +586,7 @@ static void delete_mark_id(int id, chan_info *cp)
 	    }
 	}
     }
-  report_in_minibuffer(cp->sound, "no mark with id: %d", id);
+  report_in_minibuffer(cp->sound, _("no mark with id: %d"), id);
 }
 
 static void delete_marks(chan_info *cp)
@@ -761,13 +761,13 @@ void goto_mark(chan_info *cp, int count)
   mark *mp;
   if ((!cp) || (!cp->marks))
     {
-      if (cp) report_in_minibuffer(cp->sound, "no marks");
+      if (cp) report_in_minibuffer(cp->sound, _("no marks"));
     }
   else
     {
       mp = find_nth_mark(cp, count);
       if (!mp) 
-	report_in_minibuffer(cp->sound, "no such mark");
+	report_in_minibuffer(cp->sound, _("no such mark"));
       else cursor_moveto(cp, mp->samp);
     }
 }
@@ -974,9 +974,9 @@ void mark_define_region(chan_info *cp, int count)
 		  si = free_sync_info(si);
 		}
 	    }
-	  else report_in_minibuffer(cp->sound, "no such mark");
+	  else report_in_minibuffer(cp->sound, _("no such mark"));
 	}
-      else report_in_minibuffer(cp->sound, "no marks");
+      else report_in_minibuffer(cp->sound, _("no marks"));
     }
 }
 
@@ -1719,7 +1719,7 @@ static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
   cp = get_cp(snd, chn, S_restore_marks);
   if (cp->marks)
     {
-      snd_error("restore-marks: there are marks here already!");
+      snd_error(_("restore-marks: there are marks here already!"));
       free_mark_list(cp, 0);
     }
   cp->marks_size = XEN_TO_C_INT(size);
@@ -1742,7 +1742,7 @@ static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
 	    {
 	      el = XEN_CAR(molst);
 	      if (!(XEN_LIST_P(el))) 
-		snd_error("restore-marks: saved mark data is not a list?? ");
+		snd_error(_("restore-marks: saved mark data is not a list?? "));
 	      else
 		{
 		  sm = XEN_CADR(el);

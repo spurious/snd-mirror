@@ -75,7 +75,11 @@ static Float *sine_table = NULL;
 static void *clm_calloc(int num, int size, const char* what)
 {
   register void *mem;
+#if DEBUG_MEMORY
+  mem = mem_calloc(num, size, what, __FILE__, __LINE__);
+#else
   mem = CALLOC(num, size);
+#endif
   if (mem == 0)
     mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate %s", what);
   return(mem);

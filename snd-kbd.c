@@ -392,7 +392,7 @@ static void prompt(snd_info *sp, char *msg, char *preload)
 static int region_count = 0;
 static void get_amp_expression(snd_info *sp, int count, int regexpr) 
 {
-  prompt(sp, "env:", NULL); 
+  prompt(sp, _("env:"), NULL); 
   sp->amping = count; 
   sp->reging = regexpr;
 }
@@ -401,7 +401,7 @@ static void prompt_named_mark(chan_info *cp)
 {
   snd_info *sp = cp->sound;
   clear_minibuffer(sp);
-  make_minibuffer_label(sp, "mark:");
+  make_minibuffer_label(sp, _("mark:"));
   sp->minibuffer_on = MINI_PROMPT;
   goto_minibuffer(sp);
   sp->marking = CURSOR(cp) + 1; /*  + 1 so it's not confused with 0 (if (sp->marking)...) */
@@ -479,7 +479,7 @@ static chan_info *goto_previous_graph (chan_info *cp, int count)
 	    }
     }
   if (ncp == vcp) return(ncp);
-  if (!ncp) snd_error("goto previous graph failed!");
+  if (!ncp) snd_error(_("goto previous graph failed!"));
   select_channel(ncp->sound, ncp->chan);
   equalize_sound_panes(ss, ncp->sound, ncp, FALSE); /* snd-xsnd.c */
   /* goto_graph(ncp); */
@@ -535,7 +535,7 @@ static chan_info *goto_next_graph (chan_info *cp, int count)
 	    }
     }
   if (ncp == vcp) return(ncp);
-  if (!ncp) snd_error("goto next graph failed!");
+  if (!ncp) snd_error(_("goto next graph failed!"));
   select_channel(ncp->sound, ncp->chan);
   equalize_sound_panes(ss, ncp->sound, ncp, FALSE);
   /* goto_graph(ncp); */
@@ -620,7 +620,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 		snd_unprotect(sp->search_proc);
 	      sp->search_proc = XEN_UNDEFINED;
 	      proc = snd_catch_any(eval_str_wrapper, str, str);
-	      if (procedure_ok_with_error(proc, 1, "find", "find", 1))
+	      if (procedure_ok_with_error(proc, 1, _("find"), _("find"), 1))
 		{
 		  sp->search_proc = proc;
 		  snd_protect(proc);
@@ -643,10 +643,10 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	  m = add_mark(sp->marking - 1, str, active_chan);
 	  if (m)
 	    {
-	      report_in_minibuffer(sp, "%s placed at sample %d", str, sp->marking - 1);
+	      report_in_minibuffer(sp, _("%s placed at sample " PRId64), str, sp->marking - 1);
 	      display_channel_marks(active_chan);
 	    }
-	  else report_in_minibuffer(sp, "There is already a mark at sample %d", sp->marking - 1);
+	  else report_in_minibuffer(sp, _("There is already a mark at sample " PRId64), sp->marking - 1);
 	  sp->marking = 0;
 	}	
       else 
@@ -720,7 +720,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	      else 
 		{
 		  tok = dir_from_tempnam(ss);
-		  report_in_minibuffer_and_save(sp, "can't access %s! temp dir is still %s", newdir, tok);
+		  report_in_minibuffer_and_save(sp, _("can't access %s! temp dir is still %s"), newdir, tok);
 		  if (newdir) free(newdir);
 		  if (tok) FREE(tok);
 		}
@@ -737,7 +737,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 		{
 		  len = mus_sound_frames(str1);
 		  if (len == 0)
-		    report_in_minibuffer(sp, "%s has no data", str);
+		    report_in_minibuffer(sp, _("file %s has no data"), str);
 		  else
 		    {
 		      if (!active_chan) active_chan = sp->chans[0];
@@ -749,7 +749,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 		      clear_minibuffer(sp);
 		    }
 		}
-	      else report_in_minibuffer_and_save(sp, "can't read %s's header", str);
+	      else report_in_minibuffer_and_save(sp, _("can't read %s's header"), str);
 	      FREE(str1);
 	      break;
 	    case MACRO_FILING: 
@@ -951,7 +951,7 @@ static Float state_amount (int state)
 
 static void no_selection_error(snd_info *sp)
 {
-  report_in_minibuffer(sp, "no active selection");
+  report_in_minibuffer(sp, _("no active selection"));
 }
 
 static int stop_selecting(int keysym, int state)
@@ -1249,7 +1249,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      if (count > 0)
 		{
 		  start_selection_creation(cp, CURSOR(cp));
-		  report_in_minibuffer(sp, "selection starts at " OFF_TD, CURSOR(cp));
+		  report_in_minibuffer(sp, _("selection starts at " PRId64), CURSOR(cp));
 		  clear_search = FALSE;
 		}
 	      break;
@@ -1293,7 +1293,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      reflect_spectro(ss); 
 	      break;
 	    default:
-	      report_in_minibuffer(sp, "C-%s undefined", key_to_name(keysym));
+	      report_in_minibuffer(sp, _("C-%s undefined"), key_to_name(keysym));
 	      break;
 	    }
 	}
@@ -1315,22 +1315,22 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      sound_hide_ctrls(sp); 
 	      break;
 	    case snd_K_D: case snd_K_d: 
-	      prompt(sp, "eps file:", NULL); 
+	      prompt(sp, _("eps file:"), NULL); 
 	      sp->printing = ext_count; 
 	      searching = TRUE; 
 	      break;
 	    case snd_K_E: case snd_K_e: 
 	      if (macro_size == 0)
-		report_in_minibuffer(sp, "no macro active?");
+		report_in_minibuffer(sp, _("no macro active?"));
 	      else
 		{
-		  prompt(sp, "macro name:", NULL); 
+		  prompt(sp, _("macro name:"), NULL); 
 		  sp->filing = MACRO_FILING; 
 		  searching = TRUE; 
 		}
 	      break;
 	    case snd_K_F: case snd_K_f: 
-	      prompt(sp, "file:", NULL); 
+	      prompt(sp, _("file:"), NULL); 
 	      sp->filing = INPUT_FILING; 
 	      searching = TRUE; 
 	      break;
@@ -1338,7 +1338,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      control_g(ss, sp);
 	      break;
 	    case snd_K_I: case snd_K_i: 
-	      prompt(sp, "insert file:", NULL); 
+	      prompt(sp, _("insert file:"), NULL); 
 	      sp->filing = INSERT_FILING; 
 	      searching = TRUE; 
 	      break;
@@ -1347,7 +1347,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      goto_mix(cp, ext_count); 
 	      break;
 	    case snd_K_L: case snd_K_l: 
-	      prompt(sp, "load:", NULL); 
+	      prompt(sp, _("load:"), NULL); 
 	      sp->loading = TRUE;
 	      searching = TRUE; 
 	      break;
@@ -1364,7 +1364,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      set_window_size(cp, ext_count); 
 	      break;
 	    case snd_K_Q: case snd_K_q: 
-	      prompt(sp, "mix file:", NULL); 
+	      prompt(sp, _("mix file:"), NULL); 
 	      sp->filing = CHANGE_FILING; 
 	      searching = TRUE; 
 	      break;
@@ -1384,7 +1384,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      set_window_percentage(cp, ext_count);
 	      break;
 	    case snd_K_W: case snd_K_w: 
-	      prompt(sp, "file:", NULL); 
+	      prompt(sp, _("file:"), NULL); 
 	      sp->filing = CHANNEL_FILING; 
 	      searching = TRUE; 
 	      break;
@@ -1405,7 +1405,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      zx_incremented(cp, 1.0 / (1.0 + state_amount(state))); 
 	      break;
 	    default:
-	      report_in_minibuffer(sp, "C-x C-%s undefined", key_to_name(keysym));
+	      report_in_minibuffer(sp, _("C-x C-%s undefined"), key_to_name(keysym));
 	      break;
 	    }
 	}
@@ -1566,7 +1566,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 		  }
 	      }
 #else
-	      report_in_minibuffer(sp, "%s%s undefined", (state & snd_MetaMask) ? "M-" : "", key_to_name(keysym));
+	      report_in_minibuffer(sp, _("key %s%s undefined"), (state & snd_MetaMask) ? "M-" : "", key_to_name(keysym));
 #endif
 	      break;
 	    }
@@ -1598,7 +1598,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      mark_define_region(cp, (ext_count == NO_CX_ARG_SPECIFIED) ? 1 : ext_count); 
 	      break;
 	    case snd_K_D: case snd_K_d: 
-	      prompt(sp, "temp dir:", NULL); 
+	      prompt(sp, _("temp dir:"), NULL); 
 	      sp->filing = TEMP_FILING; 
 	      searching = TRUE; 
 	      break;
@@ -1614,7 +1614,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      insert_selection_or_region(ss, (ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count, cp, "C-x i");
 	      break;
 	    case snd_K_J: case snd_K_j: 
-	      prompt(sp, "mark:", NULL); 
+	      prompt(sp, _("mark:"), NULL); 
 	      sp->finding_mark = TRUE; 
 	      searching = TRUE; 
 	      break;
@@ -1654,7 +1654,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_W: case snd_K_w:
 	      region_count = ((ext_count == NO_CX_ARG_SPECIFIED) ? 0 : ext_count);
-	      prompt(sp, "file:", NULL); 
+	      prompt(sp, _("file:"), NULL); 
 	      sp->filing = REGION_FILING; 
 	      searching = TRUE;
 	      break;
@@ -1685,11 +1685,11 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      break;
 	    case snd_K_openparen:
 	      if (defining_macro) 
-		report_in_minibuffer(sp, "macro definition already in progress");
+		report_in_minibuffer(sp, _("macro definition already in progress"));
 	      else
 		{
 		  start_defining_macro(); 
-		  report_in_minibuffer(sp, "defining macro..."); 
+		  report_in_minibuffer(sp, _("defining macro...")); 
 		}
 	      clear_search = FALSE; 
 	      break;
@@ -1708,7 +1708,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 	      searching = TRUE; 
 	      break;
 	    default:
-	      report_in_minibuffer(sp, "C-x %s undefined", key_to_name(keysym));
+	      report_in_minibuffer(sp, _("C-x %s undefined"), key_to_name(keysym));
 	      break;
 	    }
 	}
@@ -1753,7 +1753,7 @@ the name reported if an error occurs."
       args = XEN_REQUIRED_ARGS(code);
       if (args > 1)
 	{
-	  errstr = mus_format("bind-key function arg should take either zero or one args, not %d", args);
+	  errstr = mus_format(_("bind-key function arg should take either zero or one args, not %d"), args);
 	  errmsg = C_TO_XEN_STRING(errstr);
 	  FREE(errstr);
 	  return(snd_bad_arity_error(S_bind_key, 

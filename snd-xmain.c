@@ -227,7 +227,7 @@ static void auto_update_check(XtPointer context, XtIntervalId *id)
 	  (!(record_in_progress())))
 	for_each_sound(ss, sound_not_current, NULL);
       XtAppAddTimeOut(MAIN_APP(ss),
-		      (unsigned long)(auto_update_interval(ss)*1000),
+		      (unsigned long)(auto_update_interval(ss) * 1000),
 		      (XtTimerCallbackProc)auto_update_check,
 		      context);
     }
@@ -563,12 +563,12 @@ static Pixel get_color(Widget shell,
       /* snd_error here causes a seg fault (it builds on mainpane which has not yet been created) */
       if (use_white)
 	{
-	  fprintf(stderr, "can't get %s -- will use white\n", rs_color);
+	  fprintf(stderr, _("can't get color %s -- will use white\n"), rs_color);
 	  return(WhitePixel(dpy, scr));
 	}
       else
 	{
-	  fprintf(stderr, "can't get %s -- will use black\n", rs_color);
+	  fprintf(stderr, _("can't get color %s -- will use black\n"), rs_color);
 	  return(BlackPixel(dpy, scr));
 	}
     }
@@ -709,7 +709,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 		    mus_snprintf(tmpstr, PRINT_BUFFER_SIZE, "/usr/local/share/doc/snd-%d", SND_MAJOR_VERSION);
 		  else 
 		    {
-		      add_to_error_history(ss, "can't find Snd doc directory", FALSE);
+		      add_to_error_history(ss, _("can't find Snd doc directory"), FALSE);
 		      mus_snprintf(tmpstr, PRINT_BUFFER_SIZE, HTML_DIR);
 		    }
 		}
@@ -755,13 +755,13 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 	vi = glXChooseVisual(dpy, DefaultScreen(dpy), snglBuf);
       }
     if (vi == NULL) 
-      fprintf(stderr, "no RGB visual with desired depth\n"); /* not snd_error -- shell not ready yet */
+      fprintf(stderr, _("no RGB visual with desired depth\n")); /* not snd_error -- shell not ready yet */
     else
       {
 	/* create an OpenGL rendering context */
 	cx = glXCreateContext(dpy, vi, /* no display list sharing */ None, /* favor direct */ GL_TRUE);
 	if (cx == NULL) 
-	  fprintf(stderr, "could not create rendering context\n");
+	  fprintf(stderr, _("could not create rendering context\n"));
 	else
 	  {
 	    /* create an X colormap since probably not using default visual */
@@ -813,45 +813,45 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   if ((!(set_button_font(ss, snd_rs.button_font))) &&
       (!(set_button_font(ss, DEFAULT_BUTTON_FONT))) &&
       (!(set_button_font(ss, FALLBACK_FONT))))
-    fprintf(stderr, "can't find font %s", snd_rs.button_font);
+    fprintf(stderr, _("can't find font %s"), snd_rs.button_font);
 
   if ((!(set_peaks_font(ss, snd_rs.peaks_font))) &&
       (!(set_peaks_font(ss, DEFAULT_PEAKS_FONT))) &&
       (!(set_peaks_font(ss, FALLBACK_FONT))))
-    fprintf(stderr, "can't find font %s", snd_rs.peaks_font);
+    fprintf(stderr, _("can't find font %s"), snd_rs.peaks_font);
 
   if ((!(set_tiny_font(ss, TINY_FONT))) &&
       (!(set_tiny_font(ss, FALLBACK_FONT))))
-    fprintf(stderr, "can't find font %s", TINY_FONT);
+    fprintf(stderr, _("can't find font %s"), TINY_FONT);
 
   if ((!(set_bold_button_font(ss, snd_rs.bold_button_font))) &&
       (!(set_bold_button_font(ss, DEFAULT_BOLD_BUTTON_FONT))) &&
       (!(set_bold_button_font(ss, FALLBACK_FONT))))
-    fprintf(stderr, "can't find font %s", snd_rs.bold_button_font);
+    fprintf(stderr, _("can't find font %s"), snd_rs.bold_button_font);
 
   if ((!(set_bold_peaks_font(ss, snd_rs.bold_peaks_font))) &&
       (!(set_bold_peaks_font(ss, DEFAULT_BOLD_PEAKS_FONT))) &&
       (!(set_bold_peaks_font(ss, FALLBACK_FONT))))
-    fprintf(stderr, "can't find font %s", snd_rs.bold_peaks_font);
+    fprintf(stderr, _("can't find font %s"), snd_rs.bold_peaks_font);
 
   if ((!(set_axis_label_font(ss, snd_rs.axis_label_font))) &&
       (!(set_axis_label_font(ss, DEFAULT_AXIS_LABEL_FONT))) &&
       (!(set_axis_label_font(ss, FALLBACK_FONT))))
-    fprintf(stderr, "can't find font %s", snd_rs.axis_label_font);
+    fprintf(stderr, _("can't find font %s"), snd_rs.axis_label_font);
 
   if ((!(set_axis_numbers_font(ss, snd_rs.axis_numbers_font))) &&
       (!(set_axis_numbers_font(ss, DEFAULT_AXIS_NUMBERS_FONT))) &&
       (!(set_axis_numbers_font(ss, FALLBACK_FONT))))
-    fprintf(stderr, "can't find font %s", snd_rs.axis_numbers_font);
+    fprintf(stderr, _("can't find font %s"), snd_rs.axis_numbers_font);
 
   if ((!(set_help_text_font(ss, snd_rs.help_text_font))) &&
       (!(set_help_text_font(ss, DEFAULT_HELP_TEXT_FONT))) &&
       (!(set_help_text_font(ss, FALLBACK_FONT))))
-    fprintf(stderr, "can't find font %s", snd_rs.help_text_font);
+    fprintf(stderr, _("can't find font %s"), snd_rs.help_text_font);
 
   if ((snd_rs.listener_font) &&
       (!(set_listener_font(ss, snd_rs.listener_font))))
-    fprintf(stderr, "can't find font %s", snd_rs.listener_font);
+    fprintf(stderr, _("can't find font %s"), snd_rs.listener_font);
 
   if (!(ss->using_schemes)) XtVaSetValues(shell, XmNbackground, sx->basic_color, NULL);
   ss->init_file = copy_string(getenv(SND_INIT_FILE_ENVIRONMENT_NAME));
@@ -1023,13 +1023,13 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 #if TRAP_SEGFAULT
   if (sigsetjmp(envHandleEventsLoop, 1))
     {
-      snd_error("Caught seg fault (will try to continue):\n");
+      snd_error(_("Caught seg fault (will try to continue):\n"));
     }
 #endif
   if (setjmp(top_level_jump))
     {
       if (!(ss->jump_ok))
-	snd_error("Caught top level error (will try to continue):\n");
+	snd_error(_("Caught top level error (will try to continue):\n"));
       else ss->jump_ok = FALSE;
     }
 #endif

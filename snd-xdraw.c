@@ -553,7 +553,7 @@ void allocate_color_map(snd_state *ss, int colormap)
 	      if ((XAllocColor(dpy, cmap, &tmp_color)) == 0)
 		{
 		  if (!warned_color)
-		    snd_error("can't even allocate black?!?");
+		    snd_error(_("can't even allocate black?!?"));
 		  warned_color = TRUE;
 		}
 	    }
@@ -724,9 +724,9 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       ccd = (color_chooser_info *)CALLOC(1, sizeof(color_chooser_info));
       ccd->state = ss;
 
-      xdismiss = XmStringCreate("Dismiss", XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
-      xhelp = XmStringCreate("Help", XmFONTLIST_DEFAULT_TAG);
-      titlestr = XmStringCreate("Color Editor", XmFONTLIST_DEFAULT_TAG);
+      xdismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
+      xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
+      titlestr = XmStringCreate(_("Color Editor"), XmFONTLIST_DEFAULT_TAG);
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNcancelLabelString, xdismiss); n++;
@@ -736,7 +736,7 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
-      ccd->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "Color", args, n);
+      ccd->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Color"), args, n);
 
       XtAddCallback(ccd->dialog, XmNcancelCallback, dismiss_color_callback, ccd);
       XtAddCallback(ccd->dialog, XmNhelpCallback, help_color_callback, ss);
@@ -769,7 +769,7 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       
       n = 0;
       cmaps = (XmString *)CALLOC(NUM_COLORMAPS, sizeof(XmString));
-      names = colormap_names();
+      names = _(colormap_names());
       for (i = 0; i < NUM_COLORMAPS; i++) cmaps[i] = XmStringCreate(names[i], XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
@@ -843,7 +843,7 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, ccd->scale); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      light_label = XtCreateManagedWidget("light", xmLabelWidgetClass, mainform, args, n);
+      light_label = XtCreateManagedWidget(_("light"), xmLabelWidgetClass, mainform, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -853,7 +853,7 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, ccd->scale); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      XtCreateManagedWidget("dark", xmLabelWidgetClass, mainform, args, n);
+      XtCreateManagedWidget(_("dark"), xmLabelWidgetClass, mainform, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -867,7 +867,7 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
       XtSetArg(args[n], XmNmaximum, 250); n++;
       XtSetArg(args[n], XmNdecimalPoints, 3); n++;
-      xcutoff = XmStringCreate("data cutoff", XmFONTLIST_DEFAULT_TAG);
+      xcutoff = XmStringCreate(_("data cutoff"), XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNtitleString, xcutoff); n++;
       XtSetArg(args[n], XmNvalue, (int)(color_cutoff(ss) * 1000)); n++;
       ccd->cutoff = XtCreateManagedWidget("cutoff", xmScaleWidgetClass, mainform, args, n);
@@ -884,7 +884,7 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNtopWidget, ccd->cutoff); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNset, color_inverted(ss)); n++;
-      xinvert = XmStringCreate("invert", XmFONTLIST_DEFAULT_TAG);
+      xinvert = XmStringCreate(_("invert"), XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNlabelString, xinvert); n++;
       ccd->invert = make_togglebutton_widget("invert", mainform, args, n);
       XtAddCallback(ccd->invert, XmNvalueChangedCallback, invert_color_callback, ccd);
@@ -961,8 +961,8 @@ void set_spectro_x_angle(snd_state *ss, Float val)
 static void ax_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
-		     "x angle slider", 
-"This slider causes the graph to rotate around the x axis.");
+		     _("x angle slider"), 
+_("This slider causes the graph to rotate around the x axis."));
 }
 
 static void ay_orientation_callback(Widget w, XtPointer context, XtPointer info) 
@@ -992,8 +992,8 @@ void set_spectro_y_angle(snd_state *ss, Float val)
 static void ay_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
-		     "y angle slider", 
-"This slider causes the graph to rotate around the y axis.");
+		     _("y angle slider"), 
+_("This slider causes the graph to rotate around the y axis."));
 }
 
 static void az_orientation_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1023,8 +1023,8 @@ void set_spectro_z_angle(snd_state *ss, Float val)
 static void az_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
-		     "z angle slider", 
-"This slider causes the graph to rotate around the z axis.");
+		     _("z angle slider"), 
+_("This slider causes the graph to rotate around the z axis."));
 }
 
 static void sx_orientation_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1053,8 +1053,8 @@ void set_spectro_x_scale(snd_state *ss, Float val)
 static void sx_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
-		     "x scale slider", 
-"This slider causes the graph to expand or contract along the x axis.");
+		     _("x scale slider"), 
+_("This slider causes the graph to expand or contract along the x axis."));
 }
 
 static void sy_orientation_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1083,8 +1083,8 @@ void set_spectro_y_scale(snd_state *ss, Float val)
 static void sy_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
-		     "y scale slider", 
-"This slider causes the graph to expand or contract along the y axis.");
+		     _("y scale slider"), 
+_("This slider causes the graph to expand or contract along the y axis."));
 }
 
 static void sz_orientation_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1113,8 +1113,8 @@ void set_spectro_z_scale(snd_state *ss, Float val)
 static void sz_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
-		     "z scale slider", 
-"This slider causes the graph to expand or contract along the z axis.");
+		     _("z scale slider"), 
+_("This slider causes the graph to expand or contract along the z axis."));
 }
 
 static void chans_spectro_hop(chan_info *cp, void *ptr) {cp->spectro_hop = (*((int *)ptr));}
@@ -1150,8 +1150,8 @@ void set_spectro_hop(snd_state *ss, int val)
 static void hop_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
-		     "hop slider", 
-"This slider changes the hop size.");
+		     _("hop slider"), 
+_("This slider changes the hop size."));
 }
 
 static void chans_spectro_cut(chan_info *cp) {cp->fft_changed = FFT_CHANGE_LOCKED;}
@@ -1183,8 +1183,8 @@ void set_spectro_cutoff(snd_state *ss, Float val)
 static void cut_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
-		     "% of spectrum slider", 
-"This slider determines how much of the spectrum is displayed");
+		     _("percent of spectrum slider"), 
+_("This slider determines how much of the spectrum is displayed"));
 }
 
 static int fixup_angle(Float ang)
@@ -1249,8 +1249,8 @@ static void with_gl_callback(Widget w, XtPointer context, XtPointer info)
 static void with_gl_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context, 
-		     "with-gl button", 
-"This buttons determines whether OpenGL is used for various displays");
+		     _("with-gl button"), 
+_("This buttons determines whether OpenGL is used for various displays"));
 }
 #endif
 
@@ -1292,10 +1292,10 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       oid = (orientation_info *)CALLOC(1, sizeof(orientation_info));
       oid->state = ss;
 
-      xdismiss = XmStringCreate("Dismiss", XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
-      xhelp = XmStringCreate("Help", XmFONTLIST_DEFAULT_TAG);
-      xreset = XmStringCreate("Reset", XmFONTLIST_DEFAULT_TAG);
-      titlestr = XmStringCreate("Spectrogram Orientation", XmFONTLIST_DEFAULT_TAG);
+      xdismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
+      xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
+      xreset = XmStringCreate(_("Reset"), XmFONTLIST_DEFAULT_TAG);
+      titlestr = XmStringCreate(_("Spectrogram Orientation"), XmFONTLIST_DEFAULT_TAG);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -1307,7 +1307,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
-      oid->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "Orientation", args, n);
+      oid->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Orientation"), args, n);
 
       XtAddCallback(oid->dialog, XmNcancelCallback, dismiss_orientation_callback, oid);
       XtAddCallback(oid->dialog, XmNhelpCallback, help_orientation_callback, ss);
@@ -1355,7 +1355,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       
       /* left box */
       n = 0;
-      xstr = XmStringCreate("x angle", XmFONTLIST_DEFAULT_TAG);
+      xstr = XmStringCreate(_("x angle"), XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
@@ -1369,7 +1369,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XmStringFree(xstr);
 
       n = 0;
-      xstr = XmStringCreate("y angle", XmFONTLIST_DEFAULT_TAG);
+      xstr = XmStringCreate(_("y angle"), XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
@@ -1383,7 +1383,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XmStringFree(xstr);
 
       n = 0;
-      xstr = XmStringCreate("z angle", XmFONTLIST_DEFAULT_TAG);
+      xstr = XmStringCreate(_("z angle"), XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
@@ -1397,7 +1397,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XmStringFree(xstr);
 
       n = 0;
-      xstr = XmStringCreate("hop", XmFONTLIST_DEFAULT_TAG);
+      xstr = XmStringCreate(_("hop"), XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
@@ -1412,7 +1412,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
 
       /* right box */
       n = 0;
-      xstr = XmStringCreate("x scale", XmFONTLIST_DEFAULT_TAG);
+      xstr = XmStringCreate(_("x scale"), XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
@@ -1427,7 +1427,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XmStringFree(xstr);
 
       n = 0;
-      xstr = XmStringCreate("y scale", XmFONTLIST_DEFAULT_TAG);
+      xstr = XmStringCreate(_("y scale"), XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
@@ -1442,7 +1442,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XmStringFree(xstr);
 
       n = 0;
-      xstr = XmStringCreate("z scale", XmFONTLIST_DEFAULT_TAG);
+      xstr = XmStringCreate(_("z scale"), XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
@@ -1457,7 +1457,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XmStringFree(xstr);
 
       n = 0;
-      xstr = XmStringCreate("% of spectrum", XmFONTLIST_DEFAULT_TAG);
+      xstr = XmStringCreate(_("percent of spectrum"), XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, TRUE); n++;
@@ -1474,7 +1474,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
       XtSetArg(args[n], XmNset, with_gl(ss)); n++;
-      glstr = XmStringCreate("use OpenGL", XmFONTLIST_DEFAULT_TAG);
+      glstr = XmStringCreate(_("use OpenGL"), XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNlabelString, glstr); n++;
       oid->glbutton = make_togglebutton_widget("use OpenGL", leftbox, args, n);
       XtAddCallback(oid->glbutton, XmNvalueChangedCallback, with_gl_callback, oid);

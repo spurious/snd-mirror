@@ -23,7 +23,7 @@ static char *file_to_string(char *filename)
   char *content;
   if ((file = FOPEN(filename, "r")) == NULL)
     {
-      snd_error("can't open %s: %s", filename, strerror(errno));
+      snd_error(_("can't open %s: %s"), filename, strerror(errno));
       return(NULL);
     }
   fseek(file, 0, SEEK_END);
@@ -32,7 +32,7 @@ static char *file_to_string(char *filename)
   content = (char *)CALLOC(size + 1, sizeof(char));
   if (content == NULL) return(NULL);
   if ((fread(content, 1, size, file)) != size)
-    snd_error("html reader (file_to_string): did not read entire file!");
+    snd_error(_("html reader (file_to_string): did not read entire file!"));
   snd_fclose(file, filename);
   return(content);
 }
@@ -202,10 +202,10 @@ static void create_help_monolog(snd_state *ss)
   XmString forwardstr, backstr;
 #endif
 
-  titlestr = XmStringCreate("Help", XmFONTLIST_DEFAULT_TAG);
+  titlestr = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
 #if HAVE_HTML
-  backstr = XmStringCreate("Back", XmFONTLIST_DEFAULT_TAG);
-  forwardstr = XmStringCreate("Forward", XmFONTLIST_DEFAULT_TAG);
+  backstr = XmStringCreate(_("Back"), XmFONTLIST_DEFAULT_TAG);
+  forwardstr = XmStringCreate(_("Forward"), XmFONTLIST_DEFAULT_TAG);
 #endif
 
   n = 0;
@@ -225,10 +225,10 @@ static void create_help_monolog(snd_state *ss)
   }
 #if HAVE_HTML
   for (i = 0; i < MAX_HTML_HISTORY; i++) anchors[i] = NULL;
-  back_button = XtCreateManagedWidget("Back", xmPushButtonWidgetClass, help_dialog, args, n);
+  back_button = XtCreateManagedWidget(_("Back"), xmPushButtonWidgetClass, help_dialog, args, n);
   XtAddCallback(back_button, XmNactivateCallback, back_anchor_callback, ss);
   XtSetSensitive(back_button, FALSE);
-  forward_button = XtCreateManagedWidget("Forward", xmPushButtonWidgetClass, help_dialog, args, n);
+  forward_button = XtCreateManagedWidget(_("Forward"), xmPushButtonWidgetClass, help_dialog, args, n);
   XtAddCallback(forward_button, XmNactivateCallback, forward_anchor_callback, ss);
   XtSetSensitive(forward_button, FALSE);
 #endif
@@ -303,7 +303,7 @@ static Widget snd_help_1(snd_state *ss, char *subject, char *helpstr, int with_w
       raise_dialog(help_dialog);
     }
 
-  mus_snprintf(help_window_label, LABEL_BUFFER_SIZE, "%s help", subject);
+  mus_snprintf(help_window_label, LABEL_BUFFER_SIZE, _("%s help"), subject);
   xstr1 = XmStringCreate(help_window_label, XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(help_dialog, XmNmessageString, xstr1, NULL);
 #if HAVE_HTML

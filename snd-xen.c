@@ -349,7 +349,7 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
   if (!(XEN_PROCEDURE_P(proc)))
     {
       if (XEN_NOT_FALSE_P(proc)) /* #f as explicit arg to clear */
-	return(mus_format("%s: %s (%s arg %d) is not a procedure!", 
+	return(mus_format(_("%s: %s (%s arg %d) is not a procedure!"), 
 			  XEN_AS_STRING(proc),
 			  arg_name, caller, argn));
     }
@@ -360,7 +360,7 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
       rargs = XEN_TO_C_INT(arity);
       if ((rargs > args) ||
 	  ((rargs < 0) && (-rargs > args)))
-	return(mus_format("%s function (%s arg %d) should take %d args, not %d", 
+	return(mus_format(_("%s function (%s arg %d) should take %d args, not %d"), 
 			  arg_name, caller, argn, args, (rargs < 0) ? (-rargs) : rargs));
 #else
       snd_protect(arity);
@@ -368,12 +368,25 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
       oargs = XEN_TO_SMALL_C_INT(XEN_CADR(arity));
       restargs = ((XEN_TRUE_P(XEN_CADDR(arity))) ? 1 : 0);
       snd_unprotect(arity);
+#if ENABLE_NLS
       if (rargs > args)
-	return(mus_format("%s function (%s arg %d) should take %d argument%s, but instead requires %d",
+	return(mus_format(ngettext("%s function (%s arg %d) should take %d argument, but instead requires %d",
+				   "%s function (%s arg %d) should take %d arguments, but instead requires %d",
+				   args),
+			  arg_name, caller, argn, args, rargs));
+      if ((restargs == 0) && ((rargs + oargs) < args))
+	return(mus_format(ngettext("%s function (%s arg %d) should accept at least %d argument, but instead accepts only %d",
+				   "%s function (%s arg %d) should accept at least %d arguments, but instead accepts only %d",
+				   args),
+			  arg_name, caller, argn, args, rargs + oargs));
+#else
+      if (rargs > args)
+	return(mus_format(_("%s function (%s arg %d) should take %d argument%s, but instead requires %d"),
 			  arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs));
       if ((restargs == 0) && ((rargs + oargs) < args))
-	return(mus_format("%s function (%s arg %d) should accept at least %d argument%s, but instead accepts only %d",
+	return(mus_format(_("%s function (%s arg %d) should accept at least %d argument%s, but instead accepts only %d"),
 			  arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs + oargs));
+#endif
 #endif
     }
   return(NULL);
@@ -849,7 +862,7 @@ void snd_load_file(char *filename)
 	  str1 = NULL;
 	  FREE(str2);
 	  str2 = NULL;
-	  snd_error("can't load %s: %s", filename, strerror(errno));
+	  snd_error(_("can't load %s: %s"), filename, strerror(errno));
 	}
       /* snd_error ok here because all uses of this are user-interface generated (autoload, memo-file, etc) */
       else result = snd_catch_any(eval_file_wrapper, (void *)str1, str2);
@@ -889,7 +902,6 @@ static XEN g_snd_print(XEN msg)
   listener_append(str);
   if (str) FREE(str);
 #if (!USE_GTK)
-  /* fprintf(stderr,"Q: %d ",XQLength(MAIN_DISPLAY(get_global_state()))); */
   check_for_event(get_global_state());
 #endif
   return(msg);
@@ -1227,7 +1239,7 @@ static int snd_access(char *dir, char *caller)
   if (err == -1)
     {
       FREE(temp);
-      temp = mus_format("%s %s is not writable: %s", caller, dir, strerror(errno));
+      temp = mus_format(_("%s: directory %s is not writable: %s"), caller, dir, strerror(errno));
       res = C_TO_XEN_STRING(temp);
       FREE(temp);
       XEN_ERROR(NO_SUCH_FILE,
@@ -1997,7 +2009,7 @@ int string2int(char *str)
   res = snd_catch_any(eval_str_wrapper, (void *)str, "string->int");
   if (XEN_NUMBER_P(res))
     return(XEN_TO_C_INT_OR_ELSE(res, 0));
-  else snd_error("%s is not a number", str);
+  else snd_error(_("%s is not a number"), str);
   return(0);
 #else
   int res = 0;
@@ -2013,7 +2025,7 @@ off_t string2off_t(char *str)
   res = snd_catch_any(eval_str_wrapper, (void *)str, "string->off_t");
   if (XEN_NUMBER_P(res))
     return(XEN_TO_C_OFF_T_OR_ELSE(res, 0));
-  else snd_error("%s is not a number", str);
+  else snd_error(_("%s is not a number"), str);
   return(0);
 #else
   off_t res = 0;

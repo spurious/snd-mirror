@@ -872,11 +872,8 @@ void make_prev_name_row(int old_size, int new_size)
 void view_curfiles_set_row_name(int pos)
 {
   regrow *r;
-  char *str;
   r = cur_name_row[pos];
-  str = view_curfiles_name(r->pos);
-  set_button_label_bold(r->nm, str);
-  FREE(str);
+  set_button_label_bold(r->nm, view_curfiles_name(r->pos));
 }
 
 static void view_files_help_callback(GtkWidget *w, gpointer context) 
@@ -1011,7 +1008,6 @@ void highlight_selected_sound(snd_state *ss)
 void make_curfiles_list (snd_state *ss)
 {
   int i, lim;
-  char *str;
   regrow *r;
   lim = get_curfile_end();
   for (i = 0; i < lim; i++)
@@ -1028,9 +1024,7 @@ void make_curfiles_list (snd_state *ss)
 	  r->ss = ss;
 	  r->parent = CURRENT_FILE_VIEWER;
 	}
-      str = view_curfiles_name(r->pos);
-      set_button_label_bold(r->nm, str);
-      FREE(str);
+      set_button_label_bold(r->nm, view_curfiles_name(r->pos));
       set_toggle_button(r->sv, FALSE, FALSE, (void *)r);
       set_toggle_button(r->pl, FALSE, FALSE, (void *)r);
       gtk_widget_show(r->rw);

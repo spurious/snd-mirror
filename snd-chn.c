@@ -399,10 +399,10 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, int graphed)
   y1 = 1.0;
   switch (cp->x_axis_style)
     {
-    case X_AXIS_IN_BEATS:      label = "time (beats)";   break;
-    case X_AXIS_IN_SAMPLES:    label = "time (samples)"; break;
-    case X_AXIS_AS_PERCENTAGE: label = "time (%)"; break;
-    default:                   label = "time";         break;
+    case X_AXIS_IN_BEATS:      label = _("time (beats)");   break;
+    case X_AXIS_IN_SAMPLES:    label = _("time (samples)"); break;
+    case X_AXIS_AS_PERCENTAGE: label = _("time (percent)"); break;
+    default:                   label = _("time");         break;
     }
   dur = (double)samples_per_channel / (double)(hdr->srate);
 
@@ -461,7 +461,7 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, int graphed)
   if (dur <= 0.0)
     {
       /* empty sound */
-      label = "(no data)";
+      label = _("(no data)");
       xmax = .001;
     }
   else
@@ -937,9 +937,9 @@ static void display_channel_id(chan_info *cp, int height, int chans)
 	    {
 	      if (cp->edit_ctr == 0)
 		mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "[%s%d]", 
-			     "chn", (cp->chan + 1));                    /* cp chan numbers are 0 based to index sp->chans array */
+			     _("chn"), (cp->chan + 1));                    /* cp chan numbers are 0 based to index sp->chans array */
 	      else mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "[%s%d: (%d)]", 
-				"chn", (cp->chan + 1), cp->edit_ctr);
+				_("chn"), (cp->chan + 1), cp->edit_ctr);
 	    }
 	  else mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "[%d]", cp->edit_ctr);
 	}
@@ -949,9 +949,9 @@ static void display_channel_id(chan_info *cp, int height, int chans)
 	    {
 	      if (cp->edit_ctr == 0)
 		mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "%s%d", 
-			     "chn", (cp->chan + 1));
+			     _("chn"), (cp->chan + 1));
 	      else mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "%s%d:(%d)", 
-				"chn", (cp->chan + 1), cp->edit_ctr);
+				_("chn"), (cp->chan + 1), cp->edit_ctr);
 	    }
 	  else mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "(%d)", cp->edit_ctr);
 	}
@@ -976,7 +976,7 @@ static void display_selection_transform_size (chan_info *cp, axis_info *fap)
   y0 = fap->height + fap->y_offset + SELECTION_FFT_LABEL_OFFSET;
   x0 = fap->x_axis_x0 + 10;
   mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, 
-	       "(len: " OFF_TD "/%d)", 
+	       _("(len: " PRId64 "/%d)"), 
 	       selection_len(), 
 	       cp->selection_transform_size);
   draw_string(copy_context(cp), x0, y0, chn_id_str, strlen(chn_id_str));
@@ -1721,7 +1721,7 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
       if (mcf) FREE(mcf);
       if (fd == NULL) 
 	{
-	  report_in_minibuffer_and_save(sp, "can't write %s: %s", filename, strerror(errno));
+	  report_in_minibuffer_and_save(sp, _("can't write %s: %s"), filename, strerror(errno));
 	  err = 1;
 	}
       else tmp_file = 0;
@@ -1737,10 +1737,10 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
       timbuf = (char *)CALLOC(TIME_STR_SIZE, sizeof(char));
       time(&ts);
       strftime(timbuf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&ts));
-      fprintf(fd, "Snd: fft peaks (%s)\n\n", timbuf);
+      fprintf(fd, _("Snd: fft peaks (%s)\n\n"), timbuf);
       FREE(timbuf);
 #else
-      fprintf(fd, "Snd: fft peaks (%s)\n\n");
+      fprintf(fd, _("Snd: fft peaks (%s)\n\n"));
 #endif
       for (chn = 0; chn < si->chans; chn++)
 	{
@@ -1774,8 +1774,8 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
 		      (peak_freqs[0].freq != 0.0))
 		    {
 		      fprintf(fd, sp->short_filename);
-		      if (sp->nchans > 1) fprintf(fd, ": chan %d", cp->chan);
-		      fprintf(fd, ", fft %d points beginning at sample " OFF_TD " (%.3f secs)\n\n",
+		      if (sp->nchans > 1) fprintf(fd, _(": chan %d"), cp->chan);
+		      fprintf(fd, _(", fft %d points beginning at sample " PRId64 " (%.3f secs)\n\n"),
 			      fp->current_size, 
 			      ap->losamp, 
 			      (float)((double)(ap->losamp) / (double)srate));
@@ -1792,7 +1792,7 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
 	    }
 	}
       if (FCLOSE(fd) != 0)
-	report_in_minibuffer_and_save(sp, "can't close %s: %s", filename, strerror(errno));
+	report_in_minibuffer_and_save(sp, _("can't close %s: %s"), filename, strerror(errno));
       if (tmp_file)
 	{
 	  fd = FOPEN(filename, "r");
@@ -1802,7 +1802,7 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
 	  str = (char *)CALLOC(chars + 1, sizeof(char));
 	  fread(str, 1, chars, fd);
 	  snd_fclose(fd, filename);
-	  snd_help(ss, "fft peaks", str);
+	  snd_help(ss, _("fft peaks"), str);
 	  FREE(str);
 	  err = snd_remove(filename, FALSE);
 	  FREE(filename);
@@ -1928,7 +1928,7 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	      if ((ss->stopped_explicitly) || (!(cp->active))) /* user closed file while trying to print */
 		{
 		  ss->stopped_explicitly = FALSE;
-		  report_in_minibuffer(sp, "stopped");
+		  report_in_minibuffer(sp, _("stopped"));
 		  break;
 		}
 	    }
@@ -2193,7 +2193,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 #endif
 	  fp = cp->fft;
 	  fap = fp->axis; 
-	  if (cp->printing) snd_warning("can't print openGL graphics yet");
+	  if (cp->printing) snd_warning(_("can't print openGL graphics yet"));
 #if USE_MOTIF
 	  glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->sgx->cx);
 #else
@@ -2256,7 +2256,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	  make_axis_info(cp,
 			 cp->axis->x0, cp->axis->x1,
 			 SND_SRATE(sp) * cp->spectro_start / 2.0, SND_SRATE(sp) * cp->spectro_cutoff / 2.0,
-			 "time",
+			 _("time"),
 			 cp->axis->x0, cp->axis->x1,
 			 SND_SRATE(sp) * cp->spectro_start / 2.0, SND_SRATE(sp) * cp->spectro_cutoff / 2.0,
 			 fap);
@@ -2350,7 +2350,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		  if ((ss->stopped_explicitly) || (!(cp->active)))
 		    {
 		      ss->stopped_explicitly = FALSE;
-		      report_in_minibuffer(sp, "stopped");
+		      report_in_minibuffer(sp, _("stopped"));
 		      break;
 		    }
 		}
@@ -2407,7 +2407,7 @@ static int make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		  if ((ss->stopped_explicitly) || (!(cp->active)))
 		    {
 		      ss->stopped_explicitly = FALSE;
-		      report_in_minibuffer(sp, "stopped");
+		      report_in_minibuffer(sp, _("stopped"));
 		      break;
 		    }
 		}
@@ -3295,14 +3295,14 @@ void show_cursor_info(chan_info *cp)
   else digits = 2;
   expr_str = (char *)CALLOC(PRINT_BUFFER_SIZE,sizeof(char));
   if (sp->nchans == 1)
-    mus_snprintf(expr_str, PRINT_BUFFER_SIZE, "cursor at %s (sample " OFF_TD ") = %s",
+    mus_snprintf(expr_str, PRINT_BUFFER_SIZE, _("cursor at %s (sample " PRId64 ") = %s"),
 		 s1 = prettyf((double)samp / (double)SND_SRATE(sp), 2),
 		 samp,
 		 s2 = prettyf(y, digits));
   else
     {
       if (sp->sync == 0)
-	mus_snprintf(expr_str, PRINT_BUFFER_SIZE, "chan %d, cursor at %s (sample " OFF_TD ") = %s",
+	mus_snprintf(expr_str, PRINT_BUFFER_SIZE, _("chan %d, cursor at %s (sample " PRId64 ") = %s"),
 		     cp->chan + 1,
 		     s1 = prettyf((double)samp / (double)SND_SRATE(sp), 2),
 		     samp,
@@ -3311,7 +3311,7 @@ void show_cursor_info(chan_info *cp)
 	{
 	  /* in this case, assume we show all on chan 0 and ignore the call otherwise (see above) */
 	  /* "cursor at..." then list of values */
-	  mus_snprintf(expr_str, PRINT_BUFFER_SIZE, "cursor at %s (sample " OFF_TD "): %s",
+	  mus_snprintf(expr_str, PRINT_BUFFER_SIZE, _("cursor at %s (sample " PRId64 "): %s"),
 		       s1 = prettyf((double)samp / (double)SND_SRATE(sp), 2),
 		       samp,
 		       s2 = prettyf(y, digits));
@@ -3345,7 +3345,7 @@ void show_cursor_info(chan_info *cp)
 void goto_graph(chan_info *cp)
 {
   snd_info *sp;
-  if (cp)
+  if ((cp) && (!(cp->squelch_update)))
     {
       sp = cp->sound;
       if ((cp->chan == 0) || (sp->channel_style == CHANNELS_SEPARATE))
@@ -3437,11 +3437,11 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
 	ind = (int)((fp->current_size * xf) / (Float)SND_SRATE(cp->sound));
       else ind = (int)xf;
       if (ind >= fp->current_size) ind = fp->current_size - 1;
-      return(mus_format("(%.1f%s, transform val: %.3f%s (raw: %.3f)",
+      return(mus_format(_("(%.1f%s, transform val: %.3f%s (raw: %.3f)"),
 			xf,
-			((cp->transform_type == AUTOCORRELATION) ? " samps" : " Hz"),
+			((cp->transform_type == AUTOCORRELATION) ? _(" samps") : _(" Hz")),
 			(cp->fft_log_magnitude) ? in_dB(cp->min_dB, cp->lin_dB, (fp->data[ind] * fp->scale)) : (fp->data[ind] * fp->scale),
-			(cp->fft_log_magnitude) ? "dB" : "",
+			(cp->fft_log_magnitude) ? _("dB") : "",
 			fp->data[ind]));
     }
   else 
@@ -3458,10 +3458,10 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
 	  if (ind >= si->total_bins) ind = si->total_bins - 1;
 	  time = (int)(si->target_slices * (Float)(x - ap->x_axis_x0) / (Float)(ap->x_axis_x1 - ap->x_axis_x0));
 	  if (time >= si->total_slices) time = si->total_slices - 1;
-	  return(mus_format("(time: %.2f, freq: %.1f, val: %.3f%s (raw: %.3f))",
+	  return(mus_format(_("(time: %.2f, freq: %.1f, val: %.3f%s (raw: %.3f))"),
 			    xf, yf,
 			    (cp->fft_log_magnitude) ? in_dB(cp->min_dB, cp->lin_dB, si->data[time][ind] / si->scale) : (si->data[time][ind] / si->scale),
-			    (cp->fft_log_magnitude) ? "dB" : "",
+			    (cp->fft_log_magnitude) ? _("dB") : "",
 			    si->data[time][ind]));
 	}
     }
@@ -3833,14 +3833,14 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 						 XEN_LIST_1(C_TO_SMALL_XEN_INT(mark_id(mouse_mark))),
 						 S_mark_click_hook);
 			  if (!(XEN_TRUE_P(res)))
-			    report_in_minibuffer(sp, "mark %d at sample " OFF_TD, 
+			    report_in_minibuffer(sp, _("mark %d at sample " PRId64), 
 						 mark_id(mouse_mark), 
 						 mouse_mark->samp);
 			}
 		      else
 			{
 			  if (mix_tag != NO_MIX_TAG)
-			    report_in_minibuffer(sp, "mix %d ", mix_tag);
+			    report_in_minibuffer(sp, _("mix %d "), mix_tag);
 			}
 		    }
 		}

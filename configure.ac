@@ -5,13 +5,20 @@ AC_INIT(snd, 6.6, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
 AC_CONFIG_HEADER(config.h)
-AC_CONFIG_FILES(makefile)
+AC_CONFIG_FILES(makefile po/Makefile.in )
 AC_PROG_CC
 AC_HEADER_STDC # this needs to precede AC_CHECK_HEADER! (autoconf docs don't mention this problem)
 AC_PROG_INSTALL
 
 audio_system="unknown"
 MAKE_TARGET="snd"
+
+PACKAGE=snd
+VERSION=6.6
+AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
+AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
+AC_SUBST(PACKAGE)
+AC_SUBST(VERSION)
 
 #--------------------------------------------------------------------------------
 # configuration options
@@ -1066,6 +1073,9 @@ if test "$with_shared_sndlib" = yes; then
 fi
 AC_SUBST(SNDLIB_FILES)
 AC_SUBST(SNDLIB_LIB)
+
+
+AM_GNU_GETTEXT([external])
 
 
 CFLAGS="-I. $CFLAGS"

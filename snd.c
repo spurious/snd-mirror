@@ -6,6 +6,10 @@
 
 #include "snd.h"
 
+#if HAVE_LOCALE_H
+  #include <locale.h>
+#endif
+
 static snd_state *ss;
 #if DEBUGGING
   static snd_state *initial_ss = NULL;
@@ -131,6 +135,14 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
    *   int __fpu_ieee = _FPU_IEEE; _FPU_SETCW(__fpu_ieee);
    */
 
+#if ENABLE_NLS
+  #if HAVE_SETLOCALE
+    setlocale (LC_ALL, "");
+  #endif
+  bindtextdomain (PACKAGE, LOCALEDIR);
+  textdomain (PACKAGE);
+#endif
+
   mus_sound_initialize(); /* has to precede version check (mus_audio_moniker needs to be setup in Alsa/Oss) */
 
 #if HAVE_RUBY
@@ -147,20 +159,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
       else
 	if (strcmp(argv[i], "--help") == 0)
 	  {
-	    fprintf(stdout, "Snd is a sound editor.");
-#if HAVE_EXTENSION_LANGUAGE
-#if USE_NO_GUI
-	    fprintf(stdout, "  Try the snd-help function for more help.\n");
-#else
-	    fprintf(stdout, "  Peruse the 'help' menu or try the snd-help function for help.\n");
-#endif
-#else
-#if USE_NO_GUI
-	    fprintf(stdout, "  Since you haven't loaded Guile or any interface code, there's not much it can do.\n");
-#else
-	    fprintf(stdout, "  Peruse the 'help' menu for help, but you should make a real effort to get Guile.\n");
-#endif
-#endif
+	    fprintf(stdout, _("Snd is a sound editor; see http://www-ccrma.stanford.edu/software/snd/."));
 	    fprintf(stdout, version_info());
 	    snd_exit(0);
 	  }
@@ -355,13 +354,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 
 snd_state *get_global_state(void) 
 {
-#if DEBUGGING
-  if (ss != initial_ss)
-    {
-      fprintf(stderr,"global state clobbered! %p %p\n", initial_ss, ss);
-      abort();
-    }
-#endif
   return(ss);
 }
 

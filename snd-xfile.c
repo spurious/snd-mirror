@@ -175,8 +175,8 @@ typedef struct {
 static void file_help_callback (Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap(get_global_state(),
-		     "File",
-"If you click the 'Sound Files Only' button, only those files in the current directory that look vaguely like sound files will be displayed.");
+		     _("File"),
+_("If you click the 'Sound Files Only' button, only those files in the current directory that look vaguely like sound files will be displayed."));
 }
 
 static void file_dialog_stop_playing(file_dialog_info *fd)
@@ -240,8 +240,8 @@ static void play_selected_callback(Widget w, XtPointer context, XtPointer info)
 static void play_selected_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap(get_global_state(),
-		     "play selected sound",
-"If you click the 'play selected sound' button, the currently selected sound (if and) in the file selection box file list is played.");
+		     _("play selected sound"),
+_("If you click the 'play selected sound' button, the currently selected sound (if and) in the file selection box file list is played."));
 }
 
 static file_dialog_info *open_dialog = NULL;
@@ -286,9 +286,6 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
   if (which_dialog == FILE_OPEN_DIALOG)
     fd = open_dialog;
   else fd = mix_dialog;
-  if (fd == NULL)
-    snd_error("sound file search procedure called with %d (%p %p)?", which_dialog, open_dialog, mix_dialog);
-
   XmStringGetLtoR (data->pattern, XmFONTLIST_DEFAULT_TAG, &pattern);
   XmStringGetLtoR (data->dir, XmFONTLIST_DEFAULT_TAG, &our_dir);
 
@@ -413,9 +410,9 @@ static void just_sounds_callback(Widget w, XtPointer context, XtPointer info)
 static void just_sounds_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "sound files only",
-"If you click the 'sound files only' button, only those files in the current directory that look vaguely like sound \
-files will be displayed.  The decision is based on the file's extension.");
+		     _("sound files only"),
+_("If you click the 'sound files only' button, only those files in the current directory that look vaguely like sound \
+files will be displayed.  The decision is based on the file's extension."));
 }
 
 #if (XmVERSION > 1)
@@ -435,7 +432,7 @@ static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer i
     {
       XtManageChild(fd->play_selected_button);
       buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s: %d chan%s, %d Hz, %.3f secs",
+      mus_snprintf(buf, LABEL_BUFFER_SIZE, _("%s: %d chan%s, %d Hz, %.3f secs"),
 		   filename_without_home_directory(filename),
 		   mus_sound_chans(filename),
 		   (mus_sound_chans(filename) > 1) ? "s" : "",
@@ -496,6 +493,7 @@ static file_dialog_info *make_file_dialog(snd_state *ss, int read_only, char *ti
   fd->dialog = XmCreateFileSelectionDialog(w, title, args, n);
   XmStringFree(s1);
   XmStringFree(s2);
+  /* TODO: should the FSB labels be changed to reflect locale? */
 
   rc1 = XtVaCreateManagedWidget("filebuttons", 
 				xmRowColumnWidgetClass, fd->dialog,
@@ -505,11 +503,11 @@ static file_dialog_info *make_file_dialog(snd_state *ss, int read_only, char *ti
 			       xmRowColumnWidgetClass, rc1,
 			       XmNorientation, XmHORIZONTAL,
 			       NULL);
-  fd->just_sounds_button = XtVaCreateManagedWidget("sound files only", xmToggleButtonWidgetClass, rc,
+  fd->just_sounds_button = XtVaCreateManagedWidget(_("sound files only"), xmToggleButtonWidgetClass, rc,
 						   XmNset, just_sounds_state,
 						   XmNalignment, XmALIGNMENT_BEGINNING,
 						   NULL);
-  fd->play_selected_button = XtVaCreateWidget("play selected sound", xmToggleButtonWidgetClass, rc,
+  fd->play_selected_button = XtVaCreateWidget(_("play selected sound"), xmToggleButtonWidgetClass, rc,
 					      XmNalignment, XmALIGNMENT_END,
 					      NULL);
 #if (XmVERSION > 1)
@@ -575,14 +573,14 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
 			 fd->file_dialog_read_only);
       if (sp) select_channel(sp, 0);           /* add_sound_window (snd-xsnd.c) will report reason for error, if any */
     }
-  else snd_error("%s is a directory", filename);
+  else snd_error(_("%s is a directory"), filename);
 }
 
 void make_open_file_dialog(snd_state *ss, int read_only, int managed)
 {
   if (open_dialog == NULL)
     {
-      open_dialog = make_file_dialog(ss, read_only, "Open", "open:", FILE_OPEN_DIALOG, file_open_ok_callback);
+      open_dialog = make_file_dialog(ss, read_only, _("Open"), _("open:"), FILE_OPEN_DIALOG, file_open_ok_callback);
       if (just_sounds_state) XtVaSetValues(open_dialog->dialog, XmNfileSearchProc, sound_file_search, NULL);
     }
   if (open_dialog->new_file_written) 
@@ -615,7 +613,7 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
 				  "File: mix",
 				  with_mix_tags(ss));
     }
-  else snd_error("%s is a directory", filename);
+  else snd_error(_("%s is a directory"), filename);
 }
 
 void make_mix_file_dialog(snd_state *ss, int managed)
@@ -623,7 +621,7 @@ void make_mix_file_dialog(snd_state *ss, int managed)
   /* called from the menu */
   if (mix_dialog == NULL)
     {
-      mix_dialog = make_file_dialog(ss, TRUE, "Mix", "mix in:", FILE_MIX_DIALOG, file_mix_ok_callback);
+      mix_dialog = make_file_dialog(ss, TRUE, _("Mix"), _("mix in:"), FILE_MIX_DIALOG, file_mix_ok_callback);
       if (just_sounds_state) XtVaSetValues(mix_dialog->dialog, XmNfileSearchProc, sound_file_search, NULL);
     }
   if ((managed) && (!XtIsManaged(mix_dialog->dialog)))
@@ -679,7 +677,7 @@ static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
     opened = check_for_filename_collisions_and_save(ss, sp, str, save_as_dialog_type, srate, type, format, comment);
   else 
     if (sp) 
-      report_in_minibuffer(sp, "not saved (no name given)");
+      report_in_minibuffer(sp, _("not saved (no file name given)"));
   XtUnmanageChild(save_as_dialog);
   if ((sp) && (str) && (emacs_style_save_as(ss)) &&
       (save_as_dialog_type == FILE_SAVE_AS) && 
@@ -698,15 +696,15 @@ static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
 static void save_as_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Save As",
-"You can save the current state of a file or region under a different file name using the Save \
+		     _("Save As"),
+_("You can save the current state of a file or region under a different file name using the Save \
 As option.  The output header type, data format,  and sampling rate can also be set.  The data formats \
 are big-endian where relevant except for 'wave' output.  If a file by the chosen name already exists \
 it is silently overwritten, unless that file is already open in Snd and has edits.  In that case,  \
 you'll be asked what to do.  If you want to be warned whenever a file is about to be overwritten by this \
 option, set the resource overwriteCheck to 1. If you give the current file name to Save As,  \
 any current edits will be saved and the current version in Snd will be updated (that is, in this \
-case, the current edit tree is not preserved).");
+case, the current edit tree is not preserved)."));
 }
 
 static void save_as_cancel_callback(Widget w, XtPointer context, XtPointer info)
@@ -745,46 +743,46 @@ static void file_data_format_callback(Widget w, XtPointer context, XtPointer inf
 static void file_header_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "File Header Type",
-"This list shows the output header types that Snd is willing to write.");
+		     _("File Header Type"),
+_("This list shows the output header types that Snd is willing to write."));
 }
 
 static void file_data_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "File Data Format",
-"This list shows the data format choices available with the currently selected header choice.  'Short' means 16-bit two's complement \
+		     _("File Data Format"),
+_("This list shows the data format choices available with the currently selected header choice.  'Short' means 16-bit two's complement \
 integer.  'Mulaw' and 'Alaw' are common 8-bit compression schemes. 'Long' is 32-bit integer. 'Float' is 32-bit float.  In each case, the \
-decision as to byte order ('endianess') depends on the header type.");
+decision as to byte order ('endianess') depends on the header type."));
 }
 
 static void file_data_location_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "File Data Location",
-"If you know the data location (in bytes) you can set it in this field.");
+		     _("File Data Location"),
+_("If you know the data location (in bytes) you can set it in this field."));
 }
 
 static void file_srate_help_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_help_with_wrap((snd_state *)context,
-		     "File Srate",
-"This field sets the nominal file sampling rate.");
+		     _("File Srate"),
+_("This field sets the nominal file sampling rate."));
 } 
 
 static void file_chans_help_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_help_with_wrap((snd_state *)context,
-		     "File Srate",
-"This field sets the number of channels in the output file.");
+		     _("File Srate"),
+_("This field sets the number of channels in the output file."));
 } 
 
 static void file_comment_label_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
   snd_help_with_wrap(ss,
-		     "Output File Comment",
-"This optional field provides any comments that you want saved in the output file's header.");	   
+		     _("Output File Comment"),
+_("This optional field provides any comments that you want saved in the output file's header."));	   
 }
 
 #define NUM_HEADER_TYPES 7
@@ -834,7 +832,7 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, sep1); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-  hlab = XtCreateManagedWidget("header", xmLabelWidgetClass, form, args, n);
+  hlab = XtCreateManagedWidget(_("header"), xmLabelWidgetClass, form, args, n);
   XtAddCallback(hlab, XmNhelpCallback, file_header_help_callback, ss);
 
   n = 0;
@@ -879,7 +877,7 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, sep2); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-  dlab = XtCreateManagedWidget("data", xmLabelWidgetClass, form, args, n);
+  dlab = XtCreateManagedWidget(_("data"), xmLabelWidgetClass, form, args, n);
   XtAddCallback(dlab, XmNhelpCallback, file_data_help_callback, ss);
 
   n = 0;
@@ -921,7 +919,7 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, sep3); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-  slab = XtCreateManagedWidget("srate:", xmLabelWidgetClass, form, args, n);
+  slab = XtCreateManagedWidget(_("srate:"), xmLabelWidgetClass, form, args, n);
   XtAddCallback(slab, XmNhelpCallback, file_srate_help_callback, ss);
 
   n = 0;
@@ -946,7 +944,7 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, sep3); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-      clab = XtCreateManagedWidget("chans:", xmLabelWidgetClass, form, args, n);
+      clab = XtCreateManagedWidget(_("chans:"), xmLabelWidgetClass, form, args, n);
       XtAddCallback(clab, XmNhelpCallback, file_chans_help_callback, ss);
 
       n = 0;
@@ -971,7 +969,7 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
 	  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
 	  XtSetArg(args[n], XmNleftWidget, sep3); n++;
 	  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-	  loclab = XtCreateManagedWidget("location:", xmLabelWidgetClass, form, args, n);
+	  loclab = XtCreateManagedWidget(_("location:"), xmLabelWidgetClass, form, args, n);
 	  XtAddCallback(loclab, XmNhelpCallback, file_data_location_help_callback, ss);
 
 	  n = 0;
@@ -1008,7 +1006,7 @@ file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *i
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-      comment_label = XtCreateManagedWidget("comment:", xmLabelWidgetClass, mainform, args, n);
+      comment_label = XtCreateManagedWidget(_("comment:"), xmLabelWidgetClass, mainform, args, n);
       XtAddCallback(comment_label, XmNhelpCallback, file_comment_label_help_callback, ss);
       
       n = 0;
@@ -1041,12 +1039,12 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int header_type
     {
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      s1 = XmStringCreate("save as:", XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreate(_("save as:"), XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNselectionLabelString, s1); n++;
-      xmstr1 = XmStringCreate("Save", XmFONTLIST_DEFAULT_TAG);
+      xmstr1 = XmStringCreate(_("Save"), XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
       file_string = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(file_string, PRINT_BUFFER_SIZE, "saving %s", sound_name);
+      mus_snprintf(file_string, PRINT_BUFFER_SIZE, _("saving %s"), sound_name);
       xmstr2 = XmStringCreate(file_string, XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNdialogTitle, xmstr2); n++;
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
@@ -1082,7 +1080,7 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int header_type
   else
     {
       file_string = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(file_string, PRINT_BUFFER_SIZE, "saving %s", sound_name);
+      mus_snprintf(file_string, PRINT_BUFFER_SIZE, _("saving %s"), sound_name);
       xmstr2 = XmStringCreate(file_string, XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(save_as_dialog, XmNdialogTitle, xmstr2, NULL);
       XmStringFree(xmstr2);
@@ -1115,7 +1113,7 @@ void make_file_save_as_dialog(snd_state *ss)
 void make_edit_save_as_dialog(snd_state *ss)
 {
   save_as_dialog_type = EDIT_SAVE_AS;
-  make_save_as_dialog(ss, "current selection",
+  make_save_as_dialog(ss, _("current selection"),
 		      default_output_type(ss),
 		      default_output_format(ss));
   load_header_and_data_lists(save_as_file_data,
@@ -1252,7 +1250,7 @@ ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *seco
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      smenu = XmCreatePulldownMenu(sbar, "sort", args, n);
+      smenu = XmCreatePulldownMenu(sbar, _("sort"), args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -1266,11 +1264,11 @@ ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *seco
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(ss)); n++;
-      wwi->byname = XtCreateManagedWidget("name", xmPushButtonWidgetClass, smenu, args, n);
-      wwi->bydate = XtCreateManagedWidget("date", xmPushButtonWidgetClass, smenu, args, n);
-      wwi->bysize = XtCreateManagedWidget("size", xmPushButtonWidgetClass, smenu, args, n);
-      wwi->byentry = XtCreateManagedWidget("entry", xmPushButtonWidgetClass, smenu, args, n);
-      wwi->byproc = XtCreateManagedWidget("proc", xmPushButtonWidgetClass, smenu, args, n);
+      wwi->byname = XtCreateManagedWidget(_("name"), xmPushButtonWidgetClass, smenu, args, n);
+      wwi->bydate = XtCreateManagedWidget(_("date"), xmPushButtonWidgetClass, smenu, args, n);
+      wwi->bysize = XtCreateManagedWidget(_("size"), xmPushButtonWidgetClass, smenu, args, n);
+      wwi->byentry = XtCreateManagedWidget(_("entry"), xmPushButtonWidgetClass, smenu, args, n);
+      wwi->byproc = XtCreateManagedWidget(_("proc"), xmPushButtonWidgetClass, smenu, args, n);
       XtSetSensitive(wwi->byproc, XEN_PROCEDURE_P(ss->file_sort_proc));
 
       XtManageChild(sbar);
@@ -1360,6 +1358,7 @@ static void mouse_leave_label_or_enter(regrow *r, XEN hook, const char *caller)
 		  XmStringGetLtoR(s1, "button_font", &label);
 		  if (label == NULL)
 		    XmStringGetLtoR(s1, "bold_button_font", &label);
+		  XmStringFree(s1);
 		}
 	    }
 	}
@@ -1492,11 +1491,8 @@ void make_prev_name_row(int old_size, int new_size)
 void view_curfiles_set_row_name(int pos)
 {
   regrow *r;
-  char *str;
   r = cur_name_row[pos];
-  str = view_curfiles_name(r->pos);
-  set_button_label_bold(r->nm, str);
-  FREE(str);
+  set_button_label_bold(r->nm, view_curfiles_name(r->pos));
 }
 
 static void view_files_help_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1631,7 +1627,6 @@ void make_curfiles_list (snd_state *ss)
 {
   int i, lim;
   Widget last_row = NULL;
-  char *str;
   regrow *r;
   lim = get_curfile_end();
   for (i = 0; i < lim; i++)
@@ -1646,13 +1641,11 @@ void make_curfiles_list (snd_state *ss)
 	  r->ss = ss;
 	  r->parent = CURRENT_FILE_VIEWER;
 	}
-      str = view_curfiles_name(r->pos);
-      set_button_label_bold(r->nm, str);
+      set_button_label_bold(r->nm, view_curfiles_name(r->pos));
       XmToggleButtonSetState(r->sv, FALSE, FALSE);
       XmToggleButtonSetState(r->pl, FALSE, FALSE);
       if (!(XtIsManaged(r->rw))) XtManageChild(r->rw);
       last_row = r->rw;
-      FREE(str);
     }
   lim = get_max_curfile_end();
   for (i = get_curfile_end(); i < lim; i++)
@@ -1766,10 +1759,10 @@ void view_files_callback(Widget w, XtPointer context, XtPointer info)
   if (!view_files_dialog)
     {
       vf_selected_file = -1;
-      xdismiss = XmStringCreate("Dismiss", XmFONTLIST_DEFAULT_TAG);
-      xhelp = XmStringCreate("Help", XmFONTLIST_DEFAULT_TAG);
-      xclear = XmStringCreate("Clear", XmFONTLIST_DEFAULT_TAG);
-      titlestr = XmStringCreate("Files", XmFONTLIST_DEFAULT_TAG);
+      xdismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
+      xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
+      xclear = XmStringCreate(_("Clear"), XmFONTLIST_DEFAULT_TAG);
+      titlestr = XmStringCreate(_("Files"), XmFONTLIST_DEFAULT_TAG);
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNcancelLabelString, xclear); n++;
@@ -1803,7 +1796,7 @@ void view_files_callback(Widget w, XtPointer context, XtPointer info)
 	  XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	}
-      updateB = XtCreateManagedWidget("Update", xmPushButtonWidgetClass, view_files_dialog, args, n);
+      updateB = XtCreateManagedWidget(_("Update"), xmPushButtonWidgetClass, view_files_dialog, args, n);
       XtAddCallback(updateB, XmNactivateCallback, view_files_update_callback, ss);
 
       n = 0;
@@ -1846,7 +1839,7 @@ void view_files_callback(Widget w, XtPointer context, XtPointer info)
 
 
       /* current files section: save play current files | files */
-      wwl = make_title_row(ss, curform, "save", "play", "current files",
+      wwl = make_title_row(ss, curform, _("save"), _("play"), _("current files"),
 			   PAD_TITLE_ON_RIGHT, WITHOUT_SORT_BUTTON, WITHOUT_PANED_WINDOW);
       vf_curww = wwl->ww;
       vf_curlst = wwl->list;
@@ -1867,7 +1860,7 @@ void view_files_callback(Widget w, XtPointer context, XtPointer info)
 	}
 
       /* previous files section: unlist play previous files | files */
-      wwl = make_title_row(ss, prevform, "unlist", "play", "previous files",
+      wwl = make_title_row(ss, prevform, _("unlist"), _("play"), _("previous files"),
 			   PAD_TITLE_ON_LEFT, WITH_SORT_BUTTON, WITHOUT_PANED_WINDOW);
       XtAddCallback(wwl->byname, XmNactivateCallback, sort_prevfiles_by_name, ss);
       XtAddCallback(wwl->bydate, XmNactivateCallback, sort_prevfiles_by_date, ss);
@@ -1966,13 +1959,13 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   mus_header_raw_defaults(&sr, &oc, &fr);
 
   n = 0;
-  xstr1 = XmStringCreate("Cancel", XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
-  xstr2 = XmStringCreate("Help", XmFONTLIST_DEFAULT_TAG);
-  xstr3 = XmStringCreate("Ok", XmFONTLIST_DEFAULT_TAG);
-  titlestr = XmStringCreate("No Header on File", XmFONTLIST_DEFAULT_TAG);
+  xstr1 = XmStringCreate(_("Cancel"), XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
+  xstr2 = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
+  xstr3 = XmStringCreate(_("Ok"), XmFONTLIST_DEFAULT_TAG);
+  titlestr = XmStringCreate(_("No Header on File"), XmFONTLIST_DEFAULT_TAG);
   str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   mus_snprintf(str, PRINT_BUFFER_SIZE, 
-	       "No header found for %s",
+	       _("No header found for %s"),
 	       filename_without_home_directory(filename));
   xstr4 = XmStringCreate(str, XmFONTLIST_DEFAULT_TAG);
   FREE(str);
@@ -1998,7 +1991,7 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-  defw = XtCreateManagedWidget("Default", xmPushButtonWidgetClass, raw_data_dialog, args, n);
+  defw = XtCreateManagedWidget(_("Default"), xmPushButtonWidgetClass, raw_data_dialog, args, n);
   XtAddCallback(defw, XmNactivateCallback, raw_data_default_callback, ss);
 
   rform = XtCreateManagedWidget("sretc", xmFormWidgetClass, raw_data_dialog, NULL, 0);
@@ -2009,7 +2002,7 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNmarginTop, 6); n++;
-  dls = XtCreateManagedWidget("srate:", xmLabelWidgetClass, rform, args, n);
+  dls = XtCreateManagedWidget(_("srate:"), xmLabelWidgetClass, rform, args, n);
 
   n = 0;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
@@ -2033,7 +2026,7 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_END); n++;	
   XtSetArg(args[n], XmNmarginTop, 6); n++;
-  chnlab = XtCreateManagedWidget("chans:", xmLabelWidgetClass, rform, args, n);
+  chnlab = XtCreateManagedWidget(_("chans:"), xmLabelWidgetClass, rform, args, n);
 
   n = 0;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
@@ -2057,7 +2050,7 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_END); n++;
   XtSetArg(args[n], XmNmarginTop, 6); n++;
-  dloclab = XtCreateManagedWidget("data location:", xmLabelWidgetClass, rform, args, n);
+  dloclab = XtCreateManagedWidget(_("data location:"), xmLabelWidgetClass, rform, args, n);
   
   n = 0;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
@@ -2076,7 +2069,7 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, raw_location_text); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-  dlab = XtCreateManagedWidget("data format:", xmLabelWidgetClass, rform, args, n);
+  dlab = XtCreateManagedWidget(_("data format:"), xmLabelWidgetClass, rform, args, n);
 
   n = 0;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -2198,14 +2191,14 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
   Widget name_label, form;
   new_file_cancelled = FALSE;
   title = (char *)CALLOC(snd_strlen(newname) + 32, sizeof(char));
-  sprintf(title, "create new sound: %s", newname);
+  sprintf(title, _("create new sound: %s"), newname);
   titlestr = XmStringCreate(title, XmFONTLIST_DEFAULT_TAG);
   FREE(title);
   if (!new_dialog)
     {
-      xhelp = XmStringCreate("Help", XmFONTLIST_DEFAULT_TAG);
-      xcancel = XmStringCreate("Cancel", XmFONTLIST_DEFAULT_TAG);
-      xok = XmStringCreate("Ok", XmFONTLIST_DEFAULT_TAG);
+      xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
+      xcancel = XmStringCreate(_("Cancel"), XmFONTLIST_DEFAULT_TAG);
+      xok = XmStringCreate(_("Ok"), XmFONTLIST_DEFAULT_TAG);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -2234,7 +2227,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-      name_label = XtCreateManagedWidget("New file:", xmLabelWidgetClass, form, args, n);
+      name_label = XtCreateManagedWidget(_("New file:"), xmLabelWidgetClass, form, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -2324,7 +2317,7 @@ static void edit_header_ok_callback(Widget w, XtPointer context, XtPointer info)
       if (cb->event == ((ss->sgx)->text_activate_event)) return; /* <cr> in one of text fields */
       if (!(edit_header_sp->read_only))
 	edit_header_callback(ss, edit_header_sp, edit_header_data);
-      else snd_error("%s is write-protected", edit_header_sp->short_filename);
+      else snd_error(_("%s is write-protected"), edit_header_sp->short_filename);
     }
   XtUnmanageChild(edit_header_dialog);
 }
@@ -2347,17 +2340,17 @@ Widget edit_header(snd_info *sp)
   ss = sp->state;
   hdr = sp->hdr;
   str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(str, PRINT_BUFFER_SIZE, "Edit header of %s", sp->short_filename);
+  mus_snprintf(str, PRINT_BUFFER_SIZE, _("Edit header of %s"), sp->short_filename);
   xstr4 = XmStringCreate(str, XmFONTLIST_DEFAULT_TAG);
   FREE(str);
 
   if (!edit_header_dialog)
     {
       n = 0;
-      xstr1 = XmStringCreate("Cancel", XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
-      xstr2 = XmStringCreate("Help", XmFONTLIST_DEFAULT_TAG);
-      xstr3 = XmStringCreate("Save", XmFONTLIST_DEFAULT_TAG);
-      titlestr = XmStringCreate("Edit Header", XmFONTLIST_DEFAULT_TAG);
+      xstr1 = XmStringCreate(_("Cancel"), XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
+      xstr2 = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
+      xstr3 = XmStringCreate(_("Save"), XmFONTLIST_DEFAULT_TAG);
+      titlestr = XmStringCreate(_("Edit Header"), XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNcancelLabelString, xstr1); n++;
       XtSetArg(args[n], XmNhelpLabelString, xstr2); n++;

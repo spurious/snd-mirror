@@ -427,82 +427,82 @@ static void graph_help_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_help_with_url_and_wrap((snd_state *)context,
 			     "Graph", "#panelayout",
-"This portion of the Snd display shows the sound data in the time and/or frequency domains. \
+_("This portion of the Snd display shows the sound data in the time and/or frequency domains. \
 If you click on the time domain wave, you can edit it using emacs-like keyboard commands, as \
 well as using mouse-click-and-drag to define the selection.  Once defined, the selected portion \
-can be cut, deleted, or pasted elsewhere, the latter with the middle mouse button.");
+can be cut, deleted, or pasted elsewhere, the latter with the middle mouse button."));
 }
 
 #if (XmVERSION > 1)
 static void history_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_url_and_wrap((snd_state *)context,
-			     "Edit History",
+			     _("Edit History"),
 			     "#edithistory",
-"The current state of the undo/redo list can be viewed as a scrolled list of strings in the pane \
+_("The current state of the undo/redo list can be viewed as a scrolled list of strings in the pane \
 on the left of the graph (in Motif 1, there's a 'Show Edit History' menu option).  If there are no \
 current edits, it just lists the associated file name (i.e. the zero-edits state).  As you edit the \
 sound, the operations appear in the edit list window.  Click on a member of the list to move to \
 that point in the edit list (equivalent to some number of undo's or redo's).  To move to a given \
-edit point and follow the sync chain (if any), use control-click.");
+edit point and follow the sync chain (if any), use control-click."));
 }
 #endif
 
 static void sx_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "X axis scroll",
-"This scrollbar controls the position of the x axis within the overall sound file. The arrows increment the view by one window.");
+		     _("X axis scroll"),
+_("This scrollbar controls the position of the x axis within the overall sound file. The arrows increment the view by one window."));
 }
 
 static void sy_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Y axis scroll",
-"This (nearly useless) scrollbar controls the position of the y-axis within the current y axis limits.");
+		     _("Y axis scroll"),
+_("This (nearly useless) scrollbar controls the position of the y-axis within the current y axis limits."));
 }
 
 static void zx_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "X axis zoom",
-"This scrollbar zooms in (as you move it to the left) or out along the x axis.");
+		     _("X axis zoom"),
+_("This scrollbar zooms in (as you move it to the left) or out along the x axis."));
 }
 
 static void zy_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Y axis zoom",
-"This scrollbar zooms in (as you move it down) or out along the y axis.");
+		     _("Y axis zoom"),
+_("This scrollbar zooms in (as you move it down) or out along the y axis."));
 }
 
 static void gsy_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Graph position",
-"This scrollbar controls the position in the overall combined graph of the portion visible in the sound pane.");
+		     _("Graph position"),
+_("This scrollbar controls the position in the overall combined graph of the portion visible in the sound pane."));
 }
 
 static void gzy_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Graph zoom",
-"This scrollbar controls how much of the overall combined graph is visible in the sound pane.");
+		     _("Graph zoom"),
+_("This scrollbar controls how much of the overall combined graph is visible in the sound pane."));
 }
 
 static void f_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "fft button",
-"This button controls whether an FFT is displayed alongside the waveform.  To affect all channels at once, use control-click.");
+		     _("fft button"),
+_("This button controls whether an FFT is displayed alongside the waveform.  To affect all channels at once, use control-click."));
 }
 
 static void w_button_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "time domain waveform button",
-"This button determines whether the time domain waveform is displayed.  If both the 'w' and 'f' buttons are off, only the lisp \
-graph (if any) is displayed.  To affect all channels at once, use control-click.");
+		     _("time domain waveform button"),
+_("This button determines whether the time domain waveform is displayed.  If both the 'w' and 'f' buttons are off, only the lisp \
+graph (if any) is displayed.  To affect all channels at once, use control-click."));
 }
 
 
@@ -887,13 +887,13 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(ss)); n++;
 	  XtSetArg(args[n], XmNspacing, 1); n++;
 	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, sx->pushed_button_color); n++;}
-	  cw[W_f] = make_togglebutton_widget("f", cw[W_wf_buttons], args, n);
+	  cw[W_f] = make_togglebutton_widget(_("f"), cw[W_wf_buttons], args, n);
 	  XtAddCallback(cw[W_f], XmNvalueChangedCallback, f_toggle_callback, cp);
 	  XtAddCallback(cw[W_f], XmNhelpCallback, f_button_help_callback, ss);
 	  XtAddEventHandler(cw[W_f], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 	  
 	  XtSetArg(args[n], XmNset, TRUE); n++;
-	  cw[W_w] = make_togglebutton_widget("w", cw[W_wf_buttons], args, n);
+	  cw[W_w] = make_togglebutton_widget(_("w"), cw[W_wf_buttons], args, n);
 	  XtAddCallback(cw[W_w], XmNvalueChangedCallback, w_toggle_callback, cp);
 	  XtAddCallback(cw[W_w], XmNhelpCallback, w_button_help_callback, ss);
 	  XtAddEventHandler(cw[W_w], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
@@ -1360,7 +1360,7 @@ void change_channel_style(snd_info *sp, int new_style)
 int fixup_cp_cgx_ax_wn(chan_info *cp) 
 {
   ((cp->cgx)->ax)->wn = XtWindow((cp->cgx)->chan_widgets[W_graph]); 
-  return(1);
+  return(TRUE);
 }
 
 static XEN g_channel_widgets(XEN snd, XEN chn)

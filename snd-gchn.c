@@ -1064,7 +1064,7 @@ int fixup_cp_cgx_ax_wn(chan_info *cp)
   else w = channel_graph(cp);
   ax->wn = w->window;
   ax->w = w;
-  return((int)(ax->wn));
+  return(w->window != NULL);
 }
 
 static XEN g_channel_widgets(XEN snd, XEN chn)

@@ -53,7 +53,7 @@ static void reposition_file_buffers(snd_data *sd, off_t index)
       if (fd == -1) 
 	{
 	  /* our file has disappeared?!? */
-	  snd_error("%s is unreadable? open: %s", sd->filename, strerror(errno));
+	  snd_error(_("%s is unreadable: %s?"), sd->filename, strerror(errno));
 	  return;
 	}
       hdr = sd->hdr;
@@ -212,7 +212,7 @@ int snd_overwrite_ok(snd_state *ss, const char *ofile)
       if (fil != -1) 
 	{
 	  CLOSE(fil);
-	  rtn = snd_yes_or_no_p(ss, "%s exists. Overwrite?", ofile);
+	  rtn = snd_yes_or_no_p(ss, _("file %s exists. Overwrite?"), ofile);
 	}
     }
   return(rtn);
@@ -262,7 +262,7 @@ int snd_remove(const char *name, int forget)
   if (forget) mus_sound_forget(name); /* no error here if not in sound tables */
   err = remove(name);
   if (err == -1)
-    snd_warning("can't remove %s: %s", name, strerror(errno));
+    snd_warning(_("can't remove file %s: %s"), name, strerror(errno));
   return(err);
 }
 
@@ -271,7 +271,7 @@ int snd_close(int fd, const char *name)
   int val;
   val = CLOSE(fd);
   if (val != 0)
-    snd_warning("can't close %d (%s): %s", fd, name, strerror(errno));
+    snd_warning(_("can't close file %d (%s): %s"), fd, name, strerror(errno));
   return(val);
 }
 
@@ -280,7 +280,7 @@ int snd_fclose(FILE *fd, const char *name)
   int val;
   val = FCLOSE(fd);
   if (val != 0)
-    snd_warning("can't close %s: %s", name, strerror(errno));
+    snd_warning(_("can't close file %s: %s"), name, strerror(errno));
   return(val);
 }
 
@@ -570,12 +570,12 @@ int close_temp_file(int ofd, file_info *hdr, off_t bytes, snd_info *sp)
   mus_header_update_with_fd(ofd, hdr->type, bytes);
   kleft = disk_kspace(hdr->name);
   if (kleft < 0)
-    snd_error("close temp file: %s", strerror(errno));
+    snd_error(_("disk full?: %s"), strerror(errno));
   else
     {
       kused = bytes >> 10;
       if ((kused > kleft) && (sp))
-	report_in_minibuffer_and_save(sp, "disk nearly full: used " OFF_TD " Kbytes in the last operation, leaving " OFF_TD, kused, kleft);
+	report_in_minibuffer_and_save(sp, _("disk nearly full: used " PRId64 " Kbytes in the last operation, leaving " PRId64), kused, kleft);
     }
   return(mus_file_close(ofd));
 }

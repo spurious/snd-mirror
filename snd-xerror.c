@@ -10,7 +10,7 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
   Arg args[32];
   int n;
   XmString titlestr;
-  titlestr = XmStringCreate("Error", XmFONTLIST_DEFAULT_TAG);
+  titlestr = XmStringCreate(_("Error"), XmFONTLIST_DEFAULT_TAG);
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
@@ -31,7 +31,7 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
   XtSetArg(args[n], XmNscrollingPolicy, XmAUTOMATIC); n++;
   XtSetArg(args[n], XmNheight,200); n++;
   XtSetArg(args[n], XmNwidth, 400); n++;
-  snd_error_history = XmCreateScrolledText(snd_error_dialog, "Error History", args, n);
+  snd_error_history = XmCreateScrolledText(snd_error_dialog, _("Error History"), args, n);
   XtManageChild(snd_error_history);
 
   if (popup) 
@@ -41,7 +41,7 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
   XmStringFree(titlestr);
   if (!(ss->using_schemes))
     {
-      XtVaSetValues(XtNameToWidget(snd_error_dialog, "OK"), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
+      XtVaSetValues(XtNameToWidget(snd_error_dialog, _("OK")), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
       XtVaSetValues(snd_error_history, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
     }
   set_dialog_widget(ss, ERROR_DIALOG, snd_error_dialog);
@@ -106,7 +106,7 @@ void show_snd_errors(snd_state *ss)
 	XtManageChild(snd_error_dialog);
       else raise_dialog(snd_error_dialog);
     }
-  else post_error_dialog(ss, "no errors yet");
+  else post_error_dialog(ss, _("no errors yet"));
 }
 
 static int yes_or_no = FALSE;
@@ -145,9 +145,9 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
   yes_or_no = FALSE;
   if (!yes_or_no_dialog)
     {
-      titlestr = XmStringCreate("Yow!", XmFONTLIST_DEFAULT_TAG);
-      xmstr1 = XmStringCreate("Yes", XmFONTLIST_DEFAULT_TAG);
-      xmstr2 = XmStringCreate("No", XmFONTLIST_DEFAULT_TAG);
+      titlestr = XmStringCreate(_("Yow!"), XmFONTLIST_DEFAULT_TAG);
+      xmstr1 = XmStringCreate(_("Yes"), XmFONTLIST_DEFAULT_TAG);
+      xmstr2 = XmStringCreate(_("No"), XmFONTLIST_DEFAULT_TAG);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}

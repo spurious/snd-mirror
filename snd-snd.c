@@ -13,7 +13,7 @@ snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_f
 				 chans /* one sample in each chan */, data_format, new_comment, 
 				 snd_strlen(new_comment), NULL);
 	  if (err == -1)
-	    snd_error("can't write %s",newname);
+	    snd_error(_("can't write %s"),newname);
 	  else
 	    {
 	      chan = snd_reopen_write(ss, newname);
@@ -27,8 +27,7 @@ snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_f
 	    }
 	}
       else 
-	snd_error("can't write %s %s file with %s data format",
-		  ((header_type != MUS_RIFF) && (header_type != MUS_NEXT)) ? "an" : "a",
+	snd_error(_("can't write %s file with %s data format"),
 		  mus_header_type_name(header_type),
 		  mus_data_format_name(data_format));
     }
@@ -1508,7 +1507,7 @@ Cessate apply_controls(Indicium ptr)
 	  ap->ofd = open_temp_file(ap->ofile, ap->hdr->chans, ap->hdr, ss);
 	  if (ap->ofd == -1)
 	    {
-	      snd_error("can't open apply temp file %s: %s\n", ap->ofile, strerror(errno));
+	      snd_error(_("can't open apply temp file %s: %s\n"), ap->ofile, strerror(errno));
 	      sp->applying = FALSE;
 	      FREE(ap);
 	      return(BACKGROUND_QUIT);
@@ -2684,12 +2683,12 @@ Any argument can be #f which causes its value to be taken from the sound being s
   if (!(mus_header_writable(ht, -2)))
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_save_sound_as),
-			 C_TO_XEN_STRING("can't write this header type:"),
+			 C_TO_XEN_STRING(_("can't write this header type:")),
 			 C_TO_XEN_STRING(mus_header_type_name(ht))));
   if (!(mus_header_writable(ht, df)))
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_4(C_TO_XEN_STRING(S_save_sound_as),
-			 C_TO_XEN_STRING("can't write this combination of header type and data format:"),
+			 C_TO_XEN_STRING(_("can't write this combination of header type and data format:")),
 			 C_TO_XEN_STRING(mus_header_type_name(ht)),
 			 C_TO_XEN_STRING(mus_data_format_name(df))));
   if (XEN_INTEGER_P(channel))
@@ -2769,7 +2768,7 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
 		  if (ch <= 0)
 		    {
 		      if (str) FREE(str);
-		      mus_misc_error(S_new_sound, "chans <= 0?", chans);
+		      mus_misc_error(S_new_sound, _("chans <= 0?"), chans);
 		    }
 		  if (XEN_STRING_P(comment))
 		    com = XEN_TO_C_STRING(comment);
@@ -2794,19 +2793,19 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
 	      else 
 		{
 		  if (str) FREE(str);
-		  mus_misc_error(S_new_sound, "can't write this combination of data format and header type", XEN_LIST_2(type, format));
+		  mus_misc_error(S_new_sound, _("can't write this combination of data format and header type"), XEN_LIST_2(type, format));
 		}
 	    }
 	  else 
 	    {
 	      if (str) FREE(str);
-	      mus_misc_error(S_new_sound, "invalid data format", format);
+	      mus_misc_error(S_new_sound, _("invalid data format"), format);
 	    }
 	}
       else
 	{
 	  if (str) FREE(str);
-	  mus_misc_error(S_new_sound, "invalid header type", type);
+	  mus_misc_error(S_new_sound, _("invalid header type"), type);
 	}
     }
   if (str) FREE(str);

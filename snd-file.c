@@ -165,7 +165,7 @@ static file_info *translate_file(char *filename, snd_state *ss, int type)
       fd = CREAT(tempname, 0666);
       if (fd == -1)
 	{
-	  snd_error("can't write translator temp file: %s or %s!",
+	  snd_error(_("can't write translation temp file: %s or %s!"),
 		    newname, tempname);
 	  FREE(newname);
 	  FREE(tempname);
@@ -250,7 +250,7 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 		return(make_file_info_1(fullname));
 	      else
 		{
-		  snd_error("can't find raw (headerless) file %s: %s",
+		  snd_error(_("can't find raw (headerless) file %s: %s"),
 			    fullname, strerror(errno));
 		  return(NULL);
 		}
@@ -304,7 +304,7 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 	    {
 	      char *str;
 	      str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-	      mus_snprintf(str, PRINT_BUFFER_SIZE, "No header found for %s", filename_without_home_directory(fullname));
+	      mus_snprintf(str, PRINT_BUFFER_SIZE, _("No header found for %s"), filename_without_home_directory(fullname));
 	      hdr = raw_data_dialog_to_file_info(fullname, ss, str);
 	      FREE(str);
 	      return(hdr);
@@ -321,12 +321,12 @@ file_info *make_file_info(char *fullname, snd_state *ss)
 	      else hdr = translate_file(fullname, ss, type);
 	    }
 	  else 
-	    snd_error("%s does not seem to be a sound file?", fullname);
+	    snd_error(_("%s does not seem to be a sound file?"), fullname);
 	}
     }
   else
     {
-      snd_error("can't find %s: %s", fullname, strerror(errno));
+      snd_error(_("can't find file %s: %s"), fullname, strerror(errno));
       return(NULL);
     }
   return(hdr);
@@ -490,7 +490,7 @@ dir *find_sound_files_in_dir (char *name)
       closedir(dpos);
 #else
       if (closedir(dpos) != 0) 
-	snd_error("find_sound_files_in_dir: closedir %s failed (%s)!",
+	snd_error(_("closedir %s failed (%s)!"),
 		  name, strerror(errno));
 #endif
     }
@@ -790,7 +790,7 @@ int copy_file(char *oldname, char *newname)
     snd_warning("%s: %s\n", newname, strerror(errno));
   else
     if (total > wb) 
-      snd_warning("disk nearly full: used " OFF_TD " Kbytes leaving " OFF_TD,
+      snd_warning(_("disk is nearly full: used " PRId64 " Kbytes leaving " PRId64),
 		  total, wb);
   return(MUS_NO_ERROR);
 }
@@ -809,7 +809,7 @@ int move_file(char *oldfile, char *newfile)
 	}
     }
   if (err != 0)
-    snd_error("trouble overwriting %s: %s", newfile, strerror(errno));
+    snd_error(_("error while overwriting %s: %s"), newfile, strerror(errno));
   return(err);
 }
 
@@ -870,9 +870,7 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
 	  if (post_close) 
 	    {
 	      if (mus_file_close(fd) != 0)
-		snd_error("can't close %d (%s): %s [%s[%d] %s]",
-			  fd, filename, strerror(errno),
-			  __FILE__, __LINE__, __FUNCTION__);
+		snd_error(_("can't close file %s: %s"), filename, strerror(errno));
 	      sd = cp->sounds[0]; 
 	      sd->open = FD_CLOSED; 
 	      io->fd = -1;
@@ -1239,8 +1237,8 @@ snd_info *snd_update(snd_state *ss, snd_info *sp)
   app_y = widget_height(MAIN_SHELL(ss));
   sp = snd_update_1(ss, sp, sp->filename);
   if (sp)
-    report_in_minibuffer(sp, "updated %s", sp->short_filename);
-  else snd_error("update %s failed!", sp->filename);
+    report_in_minibuffer(sp, _("updated %s"), sp->short_filename);
+  else snd_error(_("update %s failed!"), sp->filename);
   set_widget_size(MAIN_SHELL(ss), app_x, app_y);
   return(sp);
 }
@@ -1252,7 +1250,6 @@ static int curfile_size = 0;
 static char **curnames = NULL;
 static char **prevnames = NULL;
 static char **prevfullnames = NULL;
-static int *a_big_star = NULL;
 static int *prevtimes = NULL;
 static int curfile_end = 0;
 static int prevfile_end = -1;
@@ -1283,10 +1280,7 @@ char *get_curfullname(int pos)
 
 char *view_curfiles_name(int pos)
 {
-  char *str;
-  str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(str, PRINT_BUFFER_SIZE, "%s%s", curnames[pos], (a_big_star[pos]) ? "*" : "");
-  return(str);
+  return(curnames[pos]);
 }
 
 void view_curfiles_play(snd_state *ss, int pos, int play)
@@ -1358,7 +1352,7 @@ int view_prevfiles_play(snd_state *ss, int pos, int play)
 	{
 	  if (mus_file_probe(prevfullnames[pos]))
 	    play_sp = make_sound_readable(ss, prevfullnames[pos], FALSE);
-	  else snd_error("play previous file: can't find %s: %s ", prevfullnames[pos], strerror(errno));
+	  else snd_error(_("play previous file: can't find %s: %s"), prevfullnames[pos], strerror(errno));
 	}
       if (play_sp)
 	{
@@ -1483,10 +1477,7 @@ static void add_to_previous_files(snd_state *ss, char *shortname, char *fullname
       if (curnames[i]) FREE(curnames[i]);
       curnames[i] = NULL;
       for (j = i; j < curfile_end - 1; j++)
-	{
-	  curnames[j] = curnames[j + 1];
-	  a_big_star[j] = a_big_star[j + 1];
-	}
+	curnames[j] = curnames[j + 1];
       curnames[curfile_end - 1] = NULL;
       curfile_end--;
     }
@@ -1503,7 +1494,6 @@ void init_curfiles(int size)
     {
       curfile_size = size;
       curnames = (char **)CALLOC(curfile_size, sizeof(char *));
-      a_big_star = (int *)CALLOC(curfile_size, sizeof(int));
     }
 }
 
@@ -1514,25 +1504,17 @@ static void add_to_current_files(snd_state *ss, char *shortname)
     {
       new_size = curfile_size + 32;
       if (curfile_size == 0)
-	{
-	  curnames = (char **)CALLOC(new_size, sizeof(char *));
-	  a_big_star = (int *)CALLOC(new_size, sizeof(int));
-	}
+	curnames = (char **)CALLOC(new_size, sizeof(char *));
       else
 	{
 	  curnames = (char **)REALLOC(curnames, new_size * sizeof(char *));
-	  a_big_star = (int *)REALLOC(a_big_star, new_size * sizeof(int));
 	  for (i = curfile_size; i < new_size; i++) 
-	    {
-	      curnames[i] = NULL; 
-	      a_big_star[i] = 0;
-	    }
+	    curnames[i] = NULL; 
 	}
       make_cur_name_row(curfile_size, new_size);
       curfile_size = new_size;
     }
   curnames[curfile_end] = copy_string(shortname);
-  a_big_star[curfile_end] = 0;
   curfile_end++;
   if (max_curfile_end < curfile_end)
     max_curfile_end = curfile_end;
@@ -1552,19 +1534,6 @@ void init_prevfiles(int size)
       prevnames = (char **)CALLOC(prevfile_size, sizeof(char *));
       prevfullnames = (char **)CALLOC(prevfile_size, sizeof(char *));
       prevtimes = (int *)CALLOC(prevfile_size, sizeof(int));
-    }
-}
-
-void make_a_big_star_outa_me(char *shortname, int big_star)
-{
-  int i;
-  i = find_curfile_regrow(shortname);
-  if ((i != -1) && 
-      (a_big_star[i] != big_star))
-    {
-      if (file_dialog_is_active())
-	view_curfiles_set_row_name(i);
-      a_big_star[i] = big_star;
     }
 }
 
@@ -2085,7 +2054,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
        */
       if (sp->read_only)
 	{
-	  report_in_minibuffer_and_save(sp, "can't save-as %s (%s is write-protected)", fullname, sp->short_filename);
+	  report_in_minibuffer_and_save(sp, _("can't save-as %s (%s is write-protected)"), fullname, sp->short_filename);
 	  FREE(fullname);
 	  return(-1);
 	}
@@ -2096,7 +2065,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 	result = save_edits_without_display(sp, ofile, type, format, srate, comment, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), "file save as", 0);
       else result = save_selection(ss, ofile, type, format, srate, comment, SAVE_ALL_CHANS);
       if (result != MUS_NO_ERROR)
-	report_in_minibuffer(sp, "save as temp: %s: %s", ofile, strerror(errno));
+	report_in_minibuffer(sp, _("save as temp %s hit error: %s"), ofile, strerror(errno));
       else move_file(ofile, sp->filename);
       snd_update(ss, sp);
       opened = 1;
@@ -2117,7 +2086,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 	  /* we don't need to check for overwrites at this point */
 	  if (collision->edits > 0)
 	    {
-	      if (!(snd_yes_or_no_p(ss, "%s has unsaved edits.\nClobber them and overwrite %s?", str, str)))
+	      if (!(snd_yes_or_no_p(ss, _("%s has unsaved edits. Clobber them?"), str)))
 		{
 		  FREE(fullname); 
 		  FREE(collision); 
@@ -2135,7 +2104,7 @@ int check_for_filename_collisions_and_save(snd_state *ss, snd_info *sp, char *st
 	  report_in_minibuffer_and_save(sp, "%s: %s", str, strerror(errno));
 	  opened = -1;
 	}
-      else report_in_minibuffer(sp, "%s saved as %s",
+      else report_in_minibuffer(sp, _("%s saved as %s"),
 				(save_type == FILE_SAVE_AS) ? sp->short_filename : "selection",
 				str);
       if (collision->sp) 
@@ -2159,7 +2128,7 @@ void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_da
   file_info *hdr;
   if (sp->read_only)
     {
-      snd_error("%s is write-protected", sp->filename);
+      snd_error(_("%s is write-protected"), sp->filename);
       return;
     }
 #if HAVE_ACCESS
@@ -2196,7 +2165,7 @@ void edit_header_callback(snd_state *ss, snd_info *sp, file_data *edit_header_da
       snd_update(ss, sp);
     }
   else 
-    snd_error("can't write %s: %s", sp->short_filename, strerror(errno));
+    snd_error(_("can't write file %s: %s"), sp->short_filename, strerror(errno));
 }
 
 /* raw data dialog funcs */
@@ -2271,7 +2240,7 @@ static char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
       mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %d)", ns);
       strcat(reason_str, tmp_str);
     }
-  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nlength: %.3f (" OFF_TD " samples, " OFF_TD " bytes total)",
+  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, _("\nlength: %.3f (" PRId64 " samples, " PRId64 " bytes total)"),
 	       (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)),
 	       hdr->samples,
 	       mus_sound_length(filename));
@@ -2303,10 +2272,10 @@ static char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
   mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nformat: %s\n", mus_data_format_name(hdr->format));
   strcat(reason_str, tmp_str);
   hdr->type = MUS_RAW;
-  snd_help(ss, "Current header values", reason_str);
+  snd_help(ss, _("Current header values"), reason_str);
   file_string = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   mus_snprintf(file_string, PRINT_BUFFER_SIZE,
-	       "Bogus header found for %s", 
+	       _("Bogus header found for %s"), 
 	       filename_without_home_directory(filename));
   FREE(tmp_str);
   FREE(reason_str);
@@ -2383,7 +2352,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING("set! " S_sound_loop_info),
 			 C_TO_XEN_STRING(sp->filename),
-			 C_TO_XEN_STRING("sound is write-protected")));
+			 C_TO_XEN_STRING(_("sound is write-protected"))));
   hdr = sp->hdr;
   if (len > 0) 
     {
@@ -2437,7 +2406,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
   if ((type != MUS_AIFF) && 
       (type != MUS_AIFC))
     {
-      snd_warning("changing %s header from %s to aifc to accommodate loop info",
+      snd_warning(_("changing %s's header from %s to aifc to accommodate loop info"),
 		  sp->short_filename,
 		  mus_header_type_name(type));
       type = MUS_AIFC;

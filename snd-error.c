@@ -1,5 +1,6 @@
 #include "snd.h"
 
+/* these are needed as C ints below */
 #ifndef DEBUGGING
   #define DEBUGGING 0
 #endif

@@ -1,39 +1,19 @@
-# v.rb -- Inlined fm_violin and jc_reverb version
+# v.rb -- Inline FM violin version
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Fri Dec 06 01:49:49 CET 2002
-# Version: $Revision: 1.3 $
+# Last: Wed Nov 20 22:43:39 CET 2002
+# Version: $Revision: 1.2 $
 
-# NOTE concerning RubyInline's patch (whether version 1.0.7 or 1.1.0):
-
-# Add the following line in RubyInline before the `unless' condition
-# in line 45 and change the next one like below.
-#
-# original line 45
-#          unless File.file? so_name and File.mtime($0) < File.mtime(so_name) then
-#
-# change it to line 45/46
-#          f = File.expand_path(caller.first.split(/:/).first)
-#          unless File.file? so_name and File.mtime(f) < File.mtime(so_name) then
-#
-# The global variable `$0' isn't correct in several cases including
-# using RubyInline in Snd.
-
-# If you have a symbolic link from sndlib.so to libsndlib.so in your
-# ${LD_LIBRARY_PATH} and if you have compiled Snd with link option
-# -lsndlib, you don't need `require 'sndlib'' (see section
-# `Dynamically loaded modules' in snd-6/grfsnd.html for more
-# information about it). Set the Ruby variable $HAVE_SNDLIB_SO to
-# true, here or in your startup file (e.g. ~./snd-ruby.rb) in that
-# case.
+# NOTE: Don't `require' the normal inline.rb but use function `inline'
+# included in this file. It will work with Snd as well as with Ruby.
 
 $IN_SND = true unless defined? $IN_SND
-$HAVE_SNDLIB_SO = false unless defined? $HAVE_SNDLIB_SO
 
-require "sndlib" unless $HAVE_SNDLIB_SO
+require "sndlib"		# produces many but harmless warnings
 require "examp"
-require "inline"
-include Inline
+
+undef fm_violin if defined? fm_violin
+undef jc_reverb if defined? jc_reverb
 
 #
 # Inline example (see clm.html):
@@ -634,6 +614,209 @@ typedef struct {
 
     return INT2FIX(i);
 }
+end
+
+### Original README.txt of RubyInline 1.0.7 [MS]
+
+=begin	
+Ruby Inline
+    http://www.zenspider.com/Languages/Ruby/
+    support@zenspider.com
+
+DESCRIPTION:
+  
+Ruby Inline is my quick attempt to create an analog to Perl's
+Inline::C. It allows you to embed C external module code in your ruby
+script directly. The code is compiled and run on the fly when
+needed. The ruby version isn't near as feature-full as the perl
+version, but it is neat!
+
+FEATURES/PROBLEMS:
+  
++ Quick and easy inlining of your C code embedded in your ruby script.
++ Only recompiles if the C code has changed.
++ Pretends to be secure.
++ Only uses standard ruby libraries, nothing extra to download.
++ Simple as it can be. Less than 125 lines long.
+- Currently doesn't munge ruby names that aren't compatible in C (ex: a!())
+
+SYNOPSYS:
+
+  require "inline"
+  class MyTest
+    include Inline
+    def fastfact(*args)
+      inline args, <<-END
+      int i, f=1;
+      for (i = FIX2INT(argv[0]); i >= 1; i--) { f = f * i; }
+      return INT2FIX(f);
+      END
+    end
+  end
+  t = MyTest.new()
+  factorial_5 = t.fastfact(5)
+
+Produces:
+
+  <502> rm /tmp/Mod_MyTest_fastfact.*; ./example.rb 
+  RubyInline 1.0.4
+  Building /tmp/Mod_MyTest_fastfact.so with 'cc -shared -O -pipe  -fPIC -I /usr/local/lib/ruby/1.6/i386-freebsd4'
+  Type = Inline, Iter = 1000000, time = 5.37746200 sec, 0.00000538 sec / iter
+  <503> ./example.rb 
+  RubyInline 1.0.4
+  Type = Inline, Iter = 1000000, time = 5.26147500 sec, 0.00000526 sec / iter
+  <504> ./example.rb native
+  RubyInline 1.0.4
+  Type = Native, Iter = 1000000, time = 24.09801500 sec, 0.00002410 sec / iter
+
+REQUIREMENTS:
+
++ Ruby - 1.6.7 has been used on FreeBSD 4.6.
++ POSIX compliant system (ie pretty much any UNIX, or Cygwin on MS platforms).
++ A C compiler (the same one that compiled your ruby interpreter).
+
+INSTALL:
+
++ no install instructions yet.
+
+LICENSE:
+
+(The MIT License)
+
+Copyright (c) 2001-2002 Ryan Davis, Zen Spider Software
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+=end
+
+### Patched inline.rb of RubyInline 1.0.7 [MS]
+
+require "rbconfig"
+require "ftools"
+
+def caller_method_name()
+  /\`([^\']+)\'/.match(caller(2).first)[1]
+end
+
+def assert_dir_secure(path)
+  mode = File.stat(path).mode
+  unless ((mode % 01000) & 0022) == 0 then # WARN: POSIX systems only...
+    $stderr.puts "#{path} is insecure (#{sprintf('%o', mode)}), needs 0700 for perms" 
+    exit 1
+  end
+end
+
+RB_INLINE_VERSION = '1.0.7.p0'
+#  VERSION = '1.0.7' [MS]
+
+# TODO: extend the signature to pass in self in order to zap aliased methods
+# def inline(args, prelude, src=nil, instance=self)
+def inline(args, prelude, src=nil)
+
+  if src.nil? then
+    src = prelude
+    prelude = ""
+  end
+
+  rootdir = ENV['INLINEDIR'] || ENV['HOME']
+  assert_dir_secure(rootdir)
+
+  tmpdir = rootdir + "/.ruby_inline"
+  unless File.directory? tmpdir then
+    $stderr.puts "NOTE: creating #{tmpdir} for RubyInline" if $DEBUG
+    Dir.mkdir(tmpdir, 0700)
+  end
+  assert_dir_secure(tmpdir)
+
+  myclass = self.class
+  mymethod = caller_method_name
+  mod_name = "Mod_#{myclass}_#{mymethod}"
+  so_name = "#{tmpdir}/#{mod_name}.so"
+
+  # extracted from mkmf.rb
+  srcdir  = Config::CONFIG["srcdir"]
+  archdir = Config::CONFIG["archdir"]
+  if File.exist? archdir + "/ruby.h"
+    hdrdir = archdir
+  elsif File.exist? srcdir + "/ruby.h"
+    hdrdir = srcdir
+  else
+    $stderr.puts "ERROR: Can't find header files for ruby. Exiting..."
+    exit 1
+  end
+
+  # Generating code
+  src = %Q{
+#include <ruby.h>
+#{prelude}
+
+  static VALUE t_#{mymethod}(int argc, VALUE *argv, VALUE self) {
+    #{src}
+  }
+
+  VALUE c#{mod_name};
+
+  void Init_#{mod_name}() {
+    c#{mod_name} = rb_define_module("#{mod_name}");
+    rb_define_method(c#{mod_name}, "_#{mymethod}", t_#{mymethod}, -1);
+  }
+}
+  
+  src_name = "#{tmpdir}/#{mod_name}.c"
+
+  # move previous version to the side if it exists
+  test_cmp = false
+  old_src_name = src_name + ".old"
+  if test ?f, src_name then
+    test_cmp = true
+    File.rename src_name, old_src_name
+  end
+
+  f = File.new(src_name, "w")
+  f.puts src
+  f.close
+
+  # recompile only if the files are different
+  recompile = true
+  if test_cmp and File::compare(old_src_name, src_name, $DEBUG) then
+    recompile = false
+  end
+
+  if recompile then
+    cmd = "#{Config::CONFIG['LDSHARED']} #{Config::CONFIG['CFLAGS']} -I #{hdrdir} -o #{so_name} #{src_name}"
+    
+    if /mswin32/ =~ RUBY_PLATFORM then
+      cmd += " -link /INCREMENTAL:no /EXPORT:Init_#{mod_name}"
+    end
+    
+    $stderr.puts "Building #{so_name} with '#{cmd}'" if $DEBUG
+    `#{cmd}`
+  end
+  
+  # Loading & Replacing w/ new method
+  require "#{so_name}"
+  myclass.class_eval("include #{mod_name}")
+  myclass.class_eval("alias_method :old_#{mymethod}, :#{mymethod}")
+  myclass.class_eval("alias_method :#{mymethod}, :_#{mymethod}")
+  
+  # Calling
+  return method("_#{mymethod}").call(*args)
 end
 
 # v.rb ends here

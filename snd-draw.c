@@ -115,7 +115,7 @@ static POINT *TO_C_POINTS(XEN pts, const char *caller)
   XEN *data;
   len = XEN_VECTOR_LENGTH(pts) / 2;
   if (len <= 0) 
-    mus_misc_error(caller, "empty vector?", XEN_LIST_1(pts));
+    mus_misc_error(caller, _("empty vector?"), XEN_LIST_1(pts));
   data = XEN_VECTOR_ELEMENTS(pts);
   pack_pts = (POINT *)CALLOC(len, sizeof(POINT));
   for (i = 0, j = 0; i < len; i++, j += 2)
@@ -584,6 +584,7 @@ static XEN g_widget_text(XEN wid)
 	      if (text == NULL)
 		XmStringGetLtoR(s1, "bold_button_font", &text);
 	    }
+	  XmStringFree(s1);
 	  res = C_TO_XEN_STRING(text);
 	}
       return(res);

@@ -79,6 +79,9 @@
 #undef SIZEOF_FLOAT
 #undef SIZEOF_VOID_P
 #undef SIZEOF_OFF_T
+#undef ENABLE_NLS
+#undef PACKAGE
+#undef VERSION
 
 #undef LINUX
 #undef SGI

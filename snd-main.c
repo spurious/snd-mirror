@@ -231,9 +231,9 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
 #if HAVE_STRFTIME
   time(&ts);
   strftime(time_buf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&ts));
-  fprintf(fd, "\n%s Snd %s (%s) options saved %s\n", XEN_COMMENT_STRING, SND_RPM_VERSION, SND_VERSION, time_buf);
+  fprintf(fd, _("\n%s Snd %s (%s) options saved %s\n"), XEN_COMMENT_STRING, SND_RPM_VERSION, SND_VERSION, time_buf);
 #else
-  fprintf(fd, "\n%s Snd %s (%s)\n", XEN_COMMENT_STRING, SND_RPM_VERSION, SND_VERSION);
+  fprintf(fd, _("\n%s Snd %s (%s)\n"), XEN_COMMENT_STRING, SND_RPM_VERSION, SND_VERSION);
 #endif
 
   if (transform_size(ss) != DEFAULT_TRANSFORM_SIZE) pss_sd(fd, S_transform_size, transform_size(ss));
@@ -350,7 +350,7 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
 
   save_recorder_state(fd);
 
-  fprintf(fd, XEN_COMMENT_STRING " end of snd options\n");
+  fprintf(fd, _("%s end of snd options\n"), XEN_COMMENT_STRING);
   if (locale)
     {
 #if HAVE_SETLOCALE
@@ -392,7 +392,7 @@ static char *save_options_or_error(snd_state *ss)
   fd = open_snd_init_file(ss);
   if (fd) save_snd_state_options(ss, fd);
   if ((!fd) || (FCLOSE(fd) != 0))
-    return(mus_format("save-options in %s: %s",
+    return(mus_format(_("save-options in %s hit error: %s"),
 		      ss->init_file,
 		      strerror(errno)));
   return(NULL);
@@ -535,7 +535,7 @@ static char *save_state_or_error (snd_state *ss, char *save_state_name)
   char *locale = NULL;
   save_fd = open_restart_file(save_state_name, FALSE);
   if (save_fd == NULL) 
-    return(mus_format("can't write %s: %s", 
+    return(mus_format(_("can't write %s: %s"), 
 		      save_state_name, 
 		      strerror(errno)));
 
@@ -684,7 +684,7 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 		    auto_open_ctr++;
 		  if ((auto_open_ctr >= args) ||
 		      (auto_open_file_names[auto_open_ctr] == NULL))
-		    snd_error("%s but no file to load?", argname);
+		    snd_error(_("%s but no file to load?"), argname);
 		  else 
 		    {
 		      script_arg = auto_open_ctr;
@@ -704,7 +704,7 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 		      auto_open_ctr++;
 		      if ((auto_open_ctr >= args) ||
 			  (auto_open_file_names[auto_open_ctr] == NULL))
-			snd_error("%s but no form to evaluate?", argname);
+			snd_error(_("%s but no form to evaluate?"), argname);
 		      else snd_eval_str(ss, auto_open_file_names[auto_open_ctr]);
 		    }
 		  else
@@ -715,7 +715,7 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 			  auto_open_ctr++;
 			  if ((auto_open_ctr >= args) ||
 			      (auto_open_file_names[auto_open_ctr] == NULL))
-			    snd_error("-title but no title?"); /* for gtk -- Xt handles the Motif case */
+			    snd_error(_("-title but no title?")); /* for gtk -- Xt handles the Motif case */
 			  else ss->startup_title = copy_string(auto_open_file_names[auto_open_ctr]);
 			}
 		      else
@@ -726,7 +726,7 @@ int handle_next_startup_arg(snd_state *ss, int auto_open_ctr, char **auto_open_f
 			      auto_open_ctr++;
 			      if ((auto_open_ctr >= args) ||
 				  (auto_open_file_names[auto_open_ctr] == NULL))
-				snd_error("-I but no path?");
+				snd_error(_("-I but no path?"));
 			      else 
 				{
 #if HAVE_RUBY

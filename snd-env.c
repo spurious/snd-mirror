@@ -94,19 +94,6 @@ env *make_envelope(Float *env_buffer, int len)
   return(e);
 }
 
-#if DEBUGGING
-static void check_env(Float *brkpts, int npts)
-{
-  int i;
-  for (i = 2; i < npts * 2; i += 2)
-    if (brkpts[i - 2] > brkpts[i])
-      {
-	fprintf(stderr, "\nenv at %d: %f > %f\n", i / 2, brkpts[i - 2], brkpts[i]);
-	abort();
-      }
-}
-#endif
-
 static void add_point (env *e, int pos, Float x, Float y)
 {
   int i, j;
@@ -123,18 +110,12 @@ static void add_point (env *e, int pos, Float x, Float y)
   e->data[pos * 2] = x;
   e->data[pos * 2 + 1] = y;
   e->pts++;
-#if DEBUGGING
-  check_env(e->data, e->pts);
-#endif
 }
 
 void move_point(env *e, int pos, Float x, Float y)
 {
   e->data[pos * 2] = x;
   e->data[pos * 2 + 1] = y;
-#if DEBUGGING
-  check_env(e->data, e->pts);
-#endif
 }
 
 void delete_point(env *e, int pos)
@@ -146,9 +127,6 @@ void delete_point(env *e, int pos)
       e->data[j + 1] = e->data[j + 3];
     }
   e->pts--;
-#if DEBUGGING
-  check_env(e->data, e->pts);
-#endif
 }
 
 static int place_point(int *cxs, int points, int x)
@@ -1194,11 +1172,11 @@ env *string2env(char *str)
 	{
 	  if (x_increases(res))
 	    return(xen_to_env(res));
-	  else snd_error("x axis points not increasing: %s", str);
+	  else snd_error(_("x axis points not increasing: %s"), str);
 	}
-      else snd_error("odd length envelope? %s", str);
+      else snd_error(_("odd length envelope? %s"), str);
     }
-  else snd_error("%s is not a list", str);
+  else snd_error(_("%s is not a list"), str);
   return(NULL);
 #else
   char *tok;
@@ -1228,7 +1206,7 @@ env *string2env(char *str)
 	  tok = strtok(NULL, env_white_space);
 	}
       if ((i == 0) || (i & 1)) 
-	snd_error("odd length envelope? %s", str);
+	snd_error(_("odd length envelope? %s"), str);
       return(make_envelope(env_buffer, i));
     }
   return(NULL);

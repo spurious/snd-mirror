@@ -531,7 +531,6 @@ void make_prevfiles_list (snd_state *ss);
 void make_curfiles_list (snd_state *ss);
 void curfile_highlight(snd_state *ss, int i);
 void view_curfiles_set_row_name(int pos);
-void make_a_big_star_outa_me(char *shortname, int big_star);
 void set_file_browser_play_button(char *name, int state);
 void highlight_selected_sound(snd_state *ss);
 void set_file_sort_sensitive(int sensitive);

@@ -239,8 +239,8 @@ static void reflect_sample_change_in_axis(chan_info *cp)
 	  ap->no_data = (samps == 0);
 	  if (ap->xlabel) FREE(ap->xlabel);
 	  if (samps == 0) 
-	    ap->xlabel = copy_string("(no data)"); 
-	  else ap->xlabel = copy_string("time");
+	    ap->xlabel = copy_string(_("(no data)")); 
+	  else ap->xlabel = copy_string(_("time"));
 	}
       set_x_bounds(ap);
     }
@@ -265,7 +265,6 @@ void reflect_file_change_in_label(chan_info *cp)
       set_sound_pane_file_label(sp, starred_name);
       FREE(starred_name);
     }
-  make_a_big_star_outa_me(sp->short_filename, 1);
 }
 
 static void check_for_first_edit(chan_info *cp)
@@ -1623,10 +1622,10 @@ void delete_samples(off_t beg, off_t num, chan_info *cp, const char *origin, int
     {
       if (num == 1)
 	report_in_minibuffer_and_save(cp->sound, 
-				      "can't delete sample " OFF_TD " (current len=" OFF_TD ")", 
+				      _("can't delete sample " PRId64 " (current len =" PRId64 ")"), 
 				      beg, len);
       else report_in_minibuffer_and_save(cp->sound, 
-					 "can't delete samples " OFF_TD " to " OFF_TD " (current len=" OFF_TD")", 
+					 _("can't delete samples " PRId64 " to " PRId64 " (current len =" PRId64")"), 
 					 beg, beg + num - 1, len);
     }
 }
@@ -7082,8 +7081,8 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, int 
   if (sp->need_update) 
     {
       if (mus_file_probe(sp->filename) == 0)
-	snd_error("%s no longer exists!", sp->short_filename);
-      else snd_warning("%s has changed since we last read it!", sp->short_filename);
+	snd_error(_("file %s no longer exists!"), sp->short_filename);
+      else snd_warning(_("file %s has changed since we last read it!"), sp->short_filename);
     }
   curlen = cp->samples[edit_position];
   /* snd_fd allocated only here */
@@ -7499,7 +7498,7 @@ static int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, o
 		  if (ss->stopped_explicitly)
 		    {
 		      ss->stopped_explicitly = FALSE;
-		      snd_warning("file save cancelled by C-g");
+		      snd_warning(_("file save cancelled by C-g"));
 		      err = MUS_INTERRUPTED;
 		      break;
 		    }
@@ -7534,7 +7533,7 @@ static int snd_make_file(char *ofile, int chans, file_info *hdr, snd_fd **sfs, o
 	      if (ss->stopped_explicitly)
 		{
 		  ss->stopped_explicitly = FALSE;
-		  snd_warning("file save cancelled by C-g");
+		  snd_warning(_("file save cancelled by C-g"));
 		  err = MUS_INTERRUPTED;
 		  break;
 		}
@@ -7590,7 +7589,7 @@ static int save_edits_and_update_display(snd_info *sp)
     }
   if (err == MUS_NO_ERROR)
     {
-      report_in_minibuffer(sp, "saving %s", sp->short_filename);
+      report_in_minibuffer(sp, _("saving %s"), sp->short_filename);
       sphdr = sp->hdr;
       err = snd_make_file(ofile, sp->nchans, sp->hdr, sf, samples, ss);
     }
@@ -7651,8 +7650,8 @@ static int save_edits_and_update_display(snd_info *sp)
   reflect_file_revert_in_label(sp);
   reflect_file_save_in_menu(ss);
   if (err)
-    report_in_minibuffer_and_save(sp, "write failed: %s, edits saved in: %s", strerror(saved_errno), ofile);
-  else report_in_minibuffer(sp, "wrote %s", sp->filename); 
+    report_in_minibuffer_and_save(sp, _("file write failed: %s, edits are saved in: %s"), strerror(saved_errno), ofile);
+  else report_in_minibuffer(sp, _("wrote %s"), sp->filename); 
   if (ofile) 
     {
       FREE(ofile); 
@@ -7675,7 +7674,7 @@ int save_edits_without_display(snd_info *sp, char *new_name, int type, int forma
   ss = sp->state;
   if ((sp->read_only) && (strcmp(new_name, sp->filename) == 0))
     {
-      snd_error("%s is write-protected", sp->filename);
+      snd_error(_("%s is write-protected"), sp->filename);
       return(MUS_ERROR);
     }
   if (dont_save(sp, new_name)) return(MUS_NO_ERROR);
@@ -7715,13 +7714,13 @@ int save_edits_without_display(snd_info *sp, char *new_name, int type, int forma
       else 
 	{
 	  if (strcmp(caller, "file save as") == 0)
-	    snd_error("save-edits: unknown header type?!? %d ", type);
+	    snd_error(_("save-edits: unknown header type? %d"), type);
 	  else ss->catch_message = "unknown header type";
 	  return(MUS_UNSUPPORTED_HEADER_TYPE);
 	}
     }
   if (strcmp(caller, "file save as") == 0)
-    snd_error("save-edits: unknown data format?!? %d", format);
+    snd_error(_("save-edits: unknown data format? %d"), format);
   else ss->catch_message = "unknown data format";
   return(MUS_UNSUPPORTED_DATA_FORMAT);
 }
@@ -7743,7 +7742,7 @@ int save_channel_edits(chan_info *cp, char *ofile, XEN edpos, const char *caller
     {
       if (sp->read_only)
 	{
-	  report_in_minibuffer_and_save(sp, "can't save channel as %s (%s is write-protected)", ofile, sp->short_filename);
+	  report_in_minibuffer_and_save(sp, _("can't save (extract) channel as %s (%s is write-protected)"), ofile, sp->short_filename);
 	  return(MUS_WRITE_ERROR);
 	}
       /* here we're overwriting the current (possibly multi-channel) file with one of its channels */
@@ -7759,7 +7758,7 @@ int save_channel_edits(chan_info *cp, char *ofile, XEN edpos, const char *caller
 	}
       FREE(sf);
       if (err != MUS_NO_ERROR)
-	report_in_minibuffer_and_save(sp, "save channel as temp: %s: %s)", nfile, strerror(errno));
+	report_in_minibuffer_and_save(sp, _("save channel as %s hit error: %s)"), nfile, strerror(errno));
       else 
 	{
 	  err = move_file(nfile, ofile);
@@ -7812,7 +7811,7 @@ void save_edits(snd_info *sp, void *ptr)
 	  current_write_date = file_write_date(sp->filename);
 	  if ((current_write_date - sp->write_date) > 1) /* weird!! In Redhat 7.1 these can differ by 1?? Surely this is a bug! */
 	    {
-	      err = snd_yes_or_no_p(sp->state, "%s changed on disk! Save anyway?", sp->short_filename);
+	      err = snd_yes_or_no_p(sp->state, _("%s changed on disk! Save anyway?"), sp->short_filename);
 	      if (err == 0) return;
 	    }
 	  err = save_edits_and_update_display(sp);
@@ -7825,10 +7824,10 @@ void save_edits(snd_info *sp, void *ptr)
 	    }
 	}
       else
-	report_in_minibuffer(sp, "(no changes need to be saved)");
+	report_in_minibuffer(sp, _("(no changes need to be saved)"));
     }
   else
-    report_in_minibuffer_and_save(sp, "can't write %s (it is read-only)", sp->short_filename);
+    report_in_minibuffer_and_save(sp, _("can't write %s (it is read-only)"), sp->short_filename);
 }
 
 void revert_edits(chan_info *cp, void *ptr)
@@ -8357,7 +8356,7 @@ static XEN g_undo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
     XEN_ERROR(NO_SUCH_EDIT,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_undo),
 			 snd_n,
-			 C_TO_XEN_STRING("can't undo an underlying mix edit except through the outer (mixed-into) sound")));
+			 C_TO_XEN_STRING(_("can't undo an underlying mix edit except through the outer (mixed-into) sound"))));
   ASSERT_CHANNEL(S_undo, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_undo);
   if (XEN_INTEGER_P(ed_n))
@@ -8376,7 +8375,7 @@ static XEN g_redo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
     XEN_ERROR(NO_SUCH_EDIT,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_redo),
 			 snd_n,
-			 C_TO_XEN_STRING("can't redo an underlying mix edit except through the outer (mixed-into) sound")));
+			 C_TO_XEN_STRING(_("can't redo an underlying mix edit except through the outer (mixed-into) sound"))));
   ASSERT_CHANNEL(S_redo, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_redo);
   if (XEN_INTEGER_P(ed_n))
@@ -8903,7 +8902,7 @@ static XEN samples2vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN v, XEN
   ss = get_global_state();
   if ((ss->memory_available > 0) && (ss->memory_available < (len / 1024)))
     {
-      snd_error("not enough memory!");
+      snd_error(_("not enough memory!"));
       return(XEN_FALSE);
     }
 #endif

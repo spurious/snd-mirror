@@ -406,7 +406,7 @@ static snd_info *make_mix_readable(mix_info *md)
 	md->add_snd = make_sound_readable(cp->state, md->in_filename, TRUE);
       else 
 	{
-	  snd_error("can't find %s: %s", md->in_filename, strerror(errno));
+	  snd_error(_("can't find file %s: %s"), md->in_filename, strerror(errno));
 	  return(NULL);
 	}
       add_sp = md->add_snd;
@@ -844,13 +844,13 @@ int disk_space_p(snd_info *sp, off_t bytes, off_t other_bytes, char *filename)
 	  kother = other_bytes >> 10;
 	  if (kother > kfree)
 	    {
-	      report_in_minibuffer_and_save(sp, "only " OFF_TD " Kbytes left on disk, changing to 16-bit temp output", kfree);
+	      report_in_minibuffer_and_save(sp, _("only " PRId64 " Kbytes left on disk, changing to 16-bit temp output"), kfree);
 	      return(HUNKER_DOWN);
 	    }
 	}
-      go_on = snd_yes_or_no_p(sp->state, "only " OFF_TD " Kbytes left on disk; continue?", kfree);
+      go_on = snd_yes_or_no_p(sp->state, _("only " PRId64 " Kbytes left on disk; continue?"), kfree);
       if (!go_on) return(GIVE_UP);
-      report_in_minibuffer(sp, "ok -- here we go...");
+      report_in_minibuffer(sp, _("ok -- here we go..."));
       return(BLIND_LEAP);
     }
   return(NO_PROBLEM);
@@ -875,7 +875,7 @@ static char *save_as_temp_file(mus_sample_t **raw_data, int chans, int len, int 
   if (no_space != GIVE_UP)
     mus_file_write(ofd, 0, len - 1, chans, raw_data);
   if (mus_file_close(ofd) != 0)
-    snd_error("mix save temp: can't close %s: %s!", newname, strerror(errno));
+    snd_error(_("mix save temp: can't close %s: %s!"), newname, strerror(errno));
   return(newname);
 }
 
@@ -951,7 +951,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
   if (ofd == -1) 
     {
       free_file_info(ihdr);
-      snd_error("mix temp file %s: %s", ofile, strerror(errno)); 
+      snd_error(_("open mix temp file %s hit error: %s"), ofile, strerror(errno)); 
       return(NULL);
     }
   if ((disk_space_p(sp, num * 4, 0, ofile)) != GIVE_UP)
@@ -1096,7 +1096,7 @@ void mix_complete_file_at_cursor(snd_info *sp, char *str, const char *origin, in
       cp = any_selected_channel(sp);
       err = mix_complete_file(sp, CURSOR(cp), fullname, origin, with_tag);
       if (err == -2) 
-	report_in_minibuffer_and_save(sp, "can't mix file: %s, %s ", str, strerror(errno));
+	report_in_minibuffer_and_save(sp, _("can't mix file: %s, %s"), str, strerror(errno));
       if (fullname) FREE(fullname);
     }
 }
@@ -1192,7 +1192,7 @@ static void remix_file(mix_info *md, const char *origin)
       ofd = open_temp_file(ofile, 1, ohdr, ss);
       if (ofd == -1)
 	{
-	  snd_error("can't write mix temp file %s: %s\n", ofile, strerror(errno));
+	  snd_error(_("can't write mix temp file %s: %s\n"), ofile, strerror(errno));
 	  return;
 	}
     }
@@ -2938,7 +2938,7 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
 	      if (ss->stopped_explicitly)
 		{
 		  ss->stopped_explicitly = FALSE;
-		  report_in_minibuffer(cps[0]->sound, "stopped");
+		  report_in_minibuffer(cps[0]->sound, _("stopped"));
 		  break;
 		}
 	    }
@@ -3044,7 +3044,7 @@ static void play_mix(snd_state *ss, mix_info *md)
 	      if ((ss->stopped_explicitly) || (mix_play_stopped()))
 		{
 		  ss->stopped_explicitly = FALSE;
-		  report_in_minibuffer(cp->sound, "stopped");
+		  report_in_minibuffer(cp->sound, _("stopped"));
 		  break;
 		}
 	    }
@@ -4319,7 +4319,7 @@ mixes data (a vct object) into snd's channel chn starting at beg; returns the ne
   cp = get_cp(snd, chn, S_mix_vct);
   bg = XEN_TO_C_OFF_T_OR_ELSE(beg, 0);
   if (bg < 0)
-    mus_misc_error(S_mix_vct, "beg < 0?", beg);
+    mus_misc_error(S_mix_vct, _("mix-vct: beg < 0?"), beg);
   else
     {
       if (XEN_NOT_BOUND_P(with_tag))

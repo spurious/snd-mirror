@@ -1,6 +1,5 @@
 #include "snd.h"
 
-
 /* -------------------------------- DATA STRUCTURES -------------------------------- 
  *
  * axis_info: axis data
@@ -828,7 +827,7 @@ static char *display_maxamps(const char *filename, int chans)
   ampstr = (char *)CALLOC(chans * 32, sizeof(char));
   vals = (mus_sample_t *)CALLOC(chans, sizeof(mus_sample_t));
   times = (off_t *)CALLOC(chans, sizeof(off_t));
-  mus_snprintf(ampstr,chans * 32, "\nmax amp%s: ",(chans > 1) ? "s" : "");
+  sprintf(ampstr, _("\nmax amp: "));
   mus_sound_maxamps(filename, chans, vals, times);
   for (i = 0; i < chans; i++)
     {
@@ -867,17 +866,17 @@ void display_info(snd_info *sp)
 	  strftime(timestr, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&(sp->write_date)));
 #endif
 	  mus_snprintf(buffer, INFO_BUFFER_SIZE, 
-		       "srate: %d\nchans: %d\nlength: %.3f (" OFF_TD " %s)\ntype: %s\nformat: %s\nwritten: %s%s%s%s\n",
+		       _("srate: %d\nchans: %d\nlength: %.3f (" PRId64 " %s)\ntype: %s\nformat: %s\nwritten: %s%s%s%s\n"),
 		       hdr->srate,
 		       hdr->chans,
 		       (Float)((double)(hdr->samples) / (Float)(hdr->chans * hdr->srate)),
 		       (off_t)((hdr->samples) / (hdr->chans)),
-		       (hdr->chans == 1) ? "samples" : "frames",
+		       (hdr->chans == 1) ? _("samples") : _("frames"),
 		       mus_header_type_name(hdr->type),
 		       mus_data_format_name(hdr->format),
 		       timestr,
 		       (ampstr) ? ampstr : "",
-		       (comment) ? "\ncomment: " : "",
+		       (comment) ? _("\ncomment: ") : "",
 		       (comment) ? comment : "");
 	  ssnd_help(sp->state,
 		    sp->short_filename,

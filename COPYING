@@ -1,4 +1,4 @@
-Snd is a sound editor written mostly by Bill Schottstaedt (bil@ccrma.stanford.edu).
+Snd is a sound editor written by Bill Schottstaedt (bil@ccrma.stanford.edu).
 Except where otherwise noted, it is Copyright 1996-2002 The Board of Trustees 
 of Stanford University.	
 
@@ -22,6 +22,11 @@ FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE
 IS PROVIDED ON AN "AS IS" BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE
 NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR
 MODIFICATIONS.
+
+RESTRICTED RIGHTS: Use, duplication or disclosure by the government
+is subject to the restrictions as set forth in subparagraph (c) (1) (ii)
+of the Rights in Technical Data and Computer Software Clause as DFARS
+252.227-7013 and FAR 52.227-19.
 
 
 

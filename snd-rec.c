@@ -78,30 +78,30 @@ char *recorder_device_name(int dev)
   /* format label at top of pane */
   switch (dev)
     {
-    case MUS_AUDIO_DIGITAL_OUT: return("Digital Out"); break;
-    case MUS_AUDIO_LINE_OUT:    return("Line Out");    break;
+    case MUS_AUDIO_DIGITAL_OUT: return(_("Digital Out")); break;
+    case MUS_AUDIO_LINE_OUT:    return(_("Line Out"));    break;
     case MUS_AUDIO_DEFAULT: 
-    case MUS_AUDIO_DAC_OUT:     return("Output");      break; /* default here means that linuxppc reports "Output" as analog-in pane name */
+    case MUS_AUDIO_DAC_OUT:     return(_("Output"));      break; /* default here means that linuxppc reports "Output" as analog-in pane name */
     case MUS_AUDIO_DUPLEX_DEFAULT: 
-    case MUS_AUDIO_SPEAKERS:    return("Speakers");    break;
-    case MUS_AUDIO_ADAT_IN:     return("Adat In");     break;
-    case MUS_AUDIO_AES_IN:      return("Aes In");      break;
+    case MUS_AUDIO_SPEAKERS:    return(_("Speakers"));    break;
+    case MUS_AUDIO_ADAT_IN:     return(_("Adat In"));     break;
+    case MUS_AUDIO_AES_IN:      return(_("Aes In"));      break;
 #if (HAVE_OSS || HAVE_ALSA)
-    case MUS_AUDIO_LINE_IN:     return("Analog In");   break;
+    case MUS_AUDIO_LINE_IN:     return(_("Analog In"));   break;
 #else
-    case MUS_AUDIO_LINE_IN:     return("Line In");     break;
+    case MUS_AUDIO_LINE_IN:     return(_("Line In"));     break;
 #endif
-    case MUS_AUDIO_MICROPHONE:  return("Microphone");  break;
-    case MUS_AUDIO_DIGITAL_IN:  return("Digital In");  break;
-    case MUS_AUDIO_ADAT_OUT:    return("Adat Out");    break;
-    case MUS_AUDIO_AES_OUT:     return("Aes Out");     break;
-    case MUS_AUDIO_DAC_FILTER:  return("Tone");          break;
-    case MUS_AUDIO_MIXER:       return("Mixer");         break;
-    case MUS_AUDIO_AUX_INPUT:   return("Aux Input");     break;
-    case MUS_AUDIO_CD:          return("CD");            break;
-    case MUS_AUDIO_AUX_OUTPUT:  return("Aux Output");    break;
-    case MUS_AUDIO_SPDIF_IN:    return("S/PDIF In");     break;
-    case MUS_AUDIO_SPDIF_OUT:   return("S/PDIF Out");    break;
+    case MUS_AUDIO_MICROPHONE:  return(_("Microphone"));  break;
+    case MUS_AUDIO_DIGITAL_IN:  return(_("Digital In"));  break;
+    case MUS_AUDIO_ADAT_OUT:    return(_("Adat Out"));    break;
+    case MUS_AUDIO_AES_OUT:     return(_("Aes Out"));     break;
+    case MUS_AUDIO_DAC_FILTER:  return(_("Tone"));          break;
+    case MUS_AUDIO_MIXER:       return(_("Mixer"));         break;
+    case MUS_AUDIO_AUX_INPUT:   return(_("Aux Input"));     break;
+    case MUS_AUDIO_CD:          return(_("CD"));            break;
+    case MUS_AUDIO_AUX_OUTPUT:  return(_("Aux Output"));    break;
+    case MUS_AUDIO_SPDIF_IN:    return(_("S/PDIF In"));     break;
+    case MUS_AUDIO_SPDIF_OUT:   return(_("S/PDIF Out"));    break;
     default: 
       snd_error("%s[%d] %s: unknown device: %d", 
 		__FILE__, __LINE__, __FUNCTION__, 
@@ -148,9 +148,7 @@ int recorder_input_device(int dev)
     case MUS_AUDIO_CD:
     default: return(1); break;
     }
-  snd_error("%s[%d] %s: uncategorized device: %d", 
-	    __FILE__, __LINE__, __FUNCTION__, 
-	    dev);
+  snd_error(_("unknown audio device: %d"), dev);
   return(0);
 }
 
@@ -170,21 +168,21 @@ char *pane_device_name(int dev)
     case MUS_AUDIO_LINE_OUT:
     case MUS_AUDIO_DEFAULT:
     case MUS_AUDIO_DAC_OUT:
-    case MUS_AUDIO_DUPLEX_DEFAULT: return("the output");                break;
-    case MUS_AUDIO_SPEAKERS:   return("the speakers");                  break;
+    case MUS_AUDIO_DUPLEX_DEFAULT: return(_("the output"));                break;
+    case MUS_AUDIO_SPEAKERS:   return(_("the speakers"));                  break;
     case MUS_AUDIO_ADAT_OUT: 
-    case MUS_AUDIO_ADAT_IN:    return("the Adat");                      break;
+    case MUS_AUDIO_ADAT_IN:    return(_("the Adat"));                      break;
     case MUS_AUDIO_AES_OUT: 
-    case MUS_AUDIO_AES_IN:     return("the Aes");                       break;
+    case MUS_AUDIO_AES_IN:     return(_("the Aes"));                       break;
     case MUS_AUDIO_SPDIF_IN:
-    case MUS_AUDIO_SPDIF_OUT:  return("the S/PDIF");                    break;
-    case MUS_AUDIO_LINE_IN:    return("line in");                       break;
-    case MUS_AUDIO_MICROPHONE: return("the microphone");                break;
-    case MUS_AUDIO_DIGITAL_IN: return("digital in");                    break;
-    case MUS_AUDIO_DAC_FILTER: return("the analog tone control");       break;
-    case MUS_AUDIO_MIXER:      return("various analog volume controls"); break;
-    case MUS_AUDIO_CD:         return("the internal CD");               break;
-    default:                   return("the input");                     break;
+    case MUS_AUDIO_SPDIF_OUT:  return(_("the S/PDIF"));                    break;
+    case MUS_AUDIO_LINE_IN:    return(_("line in"));                       break;
+    case MUS_AUDIO_MICROPHONE: return(_("the microphone"));                break;
+    case MUS_AUDIO_DIGITAL_IN: return(_("digital in"));                    break;
+    case MUS_AUDIO_DAC_FILTER: return(_("the analog tone control"));       break;
+    case MUS_AUDIO_MIXER:      return(_("various analog volume controls")); break;
+    case MUS_AUDIO_CD:         return(_("the internal CD"));               break;
+    default:                   return(_("the input"));                     break;
     }
 }
 
@@ -237,19 +235,19 @@ char *recorder_field_function(int fld)
 {
   switch (fld)
     {
-    case MUS_AUDIO_IMIX:   return("the pre-adc mix of mic and line-in"); break;
-    case MUS_AUDIO_IGAIN:  return("input gain");                         break;
-    case MUS_AUDIO_RECLEV: return("recording level");                    break;
-    case MUS_AUDIO_PCM:    return("the speaker level, perhaps");         break;
-    case MUS_AUDIO_PCM2:   return("nothing in particular");              break;
-    case MUS_AUDIO_OGAIN:  return("output gain");                        break;
-    case MUS_AUDIO_LINE:   return("analog line-in");                     break;
-    case MUS_AUDIO_MICROPHONE: return("the microphone");                 break;
+    case MUS_AUDIO_IMIX:   return(_("the pre-adc mix of mic and line-in")); break;
+    case MUS_AUDIO_IGAIN:  return(_("input gain"));                         break;
+    case MUS_AUDIO_RECLEV: return(_("recording level"));                    break;
+    case MUS_AUDIO_PCM:    return(_("the speaker level, perhaps"));         break;
+    case MUS_AUDIO_PCM2:   return(_("nothing in particular"));              break;
+    case MUS_AUDIO_OGAIN:  return(_("output gain"));                        break;
+    case MUS_AUDIO_LINE:   return(_("analog line-in"));                     break;
+    case MUS_AUDIO_MICROPHONE: return(_("the microphone"));                 break;
     case MUS_AUDIO_LINE1:  
     case MUS_AUDIO_LINE2:  
-    case MUS_AUDIO_LINE3:  return("extra line inputs");                  break;
-    case MUS_AUDIO_SYNTH:  return("the on-card synthesizer, if any");    break;
-    case MUS_AUDIO_CD:     return("the cd gain");                        break;
+    case MUS_AUDIO_LINE3:  return(_("extra line inputs"));                  break;
+    case MUS_AUDIO_SYNTH:  return(_("the on-card synthesizer, if any"));    break;
+    case MUS_AUDIO_CD:     return(_("the cd gain"));                        break;
     default:               return("?");                                  break;
     }
 }
@@ -509,8 +507,7 @@ Float mixer_gain(int system, int device, int chan, int gain, int field)
   float g[1];
   mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system) | (device), field, chan, g);
   if (gain > rp->num_mixer_gains) 
-    snd_error("%s[%d] %s: overflow %d > %d",
-	      __FILE__, __LINE__, __FUNCTION__, 
+    snd_error(_("gain (slider) number too high: %d > %d"),
 	      gain, rp->num_mixer_gains);
   else rp->mixer_gains[gain] = g[0];
   return(g[0]);
@@ -528,8 +525,7 @@ void set_mixer_gain(int system, int device, int chan, int gain, int field, Float
   else 
     mus_audio_mixer_write(MUS_AUDIO_PACK_SYSTEM(system) | (device), field, chan, g);
   if (gain > rp->num_mixer_gains) 
-    snd_error("%s[%d] %s: overflow %d > %d",
-	      __FILE__, __LINE__, __FUNCTION__, 
+    snd_error(_("gain (slider) number too high: %d > %d"),
 	      gain, rp->num_mixer_gains);
   else rp->mixer_gains[gain] = amp;
 }
@@ -559,7 +555,7 @@ void set_line_source(snd_state *ss, int in_digital)
 			      ((in_digital) ? MUS_AUDIO_DIGITAL_IN : MUS_AUDIO_MICROPHONE), 
 			      NULL);
   if (err == -1) 
-    recorder_error("set input source: ");
+    recorder_error(_("set input source: "));
   rp->input_channel_active[0] = (!in_digital); 
   rp->input_channel_active[1] = (!in_digital);
   rp->input_channel_active[2] = (!in_digital); 
@@ -734,7 +730,7 @@ void fire_up_recorder(snd_state *ss)
 	}
       if (in_count == 0) 
 	{
-	  recorder_error("no inputs?: ");
+	  recorder_error(_("no inputs?: "));
 	  return;
 	}
 
@@ -756,7 +752,7 @@ void fire_up_recorder(snd_state *ss)
 							      rp->input_buffer_sizes[sys] * rp->input_channels[sys] * size);
 		  if (rp->input_ports[sys] == -1)
 		    {
-		      recorder_error("open device: ");
+		      recorder_error(_("open device: "));
 		      for (j = 0; j < rp->ordered_devices_size; j++)
 			{
 			  sys = rp->ordered_systems[j];
@@ -817,7 +813,7 @@ void fire_up_recorder(snd_state *ss)
 		    }
 		  else
 		    {
-		      recorder_error("open output: ");
+		      recorder_error(_("open output: "));
 		      rp->monitoring = FALSE;
 		    }
 		  break;
@@ -846,14 +842,14 @@ void fire_up_recorder(snd_state *ss)
 	  }
       if (err)
 	{
-	  recorder_error("no inputs?: ");
+	  recorder_error(_("no inputs?: "));
 	  return;
 	}
       /* if adat, aes etc, make choices about default on/off state, open monitor separately (and write) */
       oss_get_input_devices();
       if (rp->input_ports[0] == -1)
 	{
-	  recorder_error("open device: ");
+	  recorder_error(_("open device: "));
 	  return;
 	}
       rp->taking_input = TRUE;
@@ -866,7 +862,7 @@ void fire_up_recorder(snd_state *ss)
 
       if (rp->monitor_port == -1)
 	{
-	  recorder_error("open output: ");
+	  recorder_error(_("open output: "));
 	  rp->monitoring = FALSE;
 	}
       else rp->monitoring = TRUE;
@@ -1001,7 +997,7 @@ void fire_up_recorder(snd_state *ss)
   for (i = 0; i < rp->systems; i++) if (rp->input_channels[i] > 0) {err = 0; break;}
   if (err)
     {
-      recorder_error("no inputs?: ");
+      recorder_error(_("no inputs?: "));
       return;
     }
 
@@ -1034,7 +1030,7 @@ void fire_up_recorder(snd_state *ss)
 #endif
   if (rp->input_ports[0] == -1)
     {
-      recorder_error("open device: ");
+      recorder_error(_("open device: "));
       return;
     }
   rp->taking_input = TRUE;
@@ -1055,7 +1051,7 @@ void fire_up_recorder(snd_state *ss)
 #endif
   if (rp->monitor_port == -1)
     {
-      recorder_error("open output: ");
+      recorder_error(_("open output: "));
       rp->monitoring = FALSE;
     }
   else rp->monitoring = TRUE;
@@ -1488,7 +1484,7 @@ int recorder_get_devices(recorder_info *rp, int *outs)
       cur_devices = (int)(audval[0]);
       if (cur_devices == 0) 
 	{
-	  snd_error("no audio devices available"); 
+	  snd_error(_("no audio devices available")); 
 	  return(-1);
 	}
       for (i = 0; i < cur_devices; i++) 
@@ -1506,7 +1502,7 @@ int recorder_get_devices(recorder_info *rp, int *outs)
     }
   if (input_devices == 0) 
     {
-      snd_error("no audio input devices available"); 
+      snd_error(_("no audio input devices available")); 
       return(-1);
     }
   (*outs) = output_devices;
@@ -1566,7 +1562,7 @@ static XEN g_set_recorder_buffer_size(XEN val)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, "set! " S_recorder_buffer_size, "an integer"); 
   size = XEN_TO_C_INT(val);
   if (size <= 0)
-    mus_misc_error("set! " S_recorder_buffer_size, "can't set buffer size <= 0", val);
+    mus_misc_error("set! " S_recorder_buffer_size, _("can't set buffer size <= 0"), val);
   rp->buffer_size = size;
   return(val);
 }

@@ -672,7 +672,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
 	  if (ss->stopped_explicitly)
 	    {
 	      ss->stopped_explicitly = FALSE;
-	      snd_warning("save selection stopped");
+	      snd_warning(_("save selection stopped"));
 	      break;
 	    }
 	}
@@ -691,7 +691,7 @@ int save_selection(snd_state *ss, char *ofile, int type, int format, int srate, 
   FREE(ends);
   if (mus_file_close(ofd) != 0)
     {
-      snd_error("save-selection: can't close %s: %s!", ofile, strerror(errno));
+      snd_error(_("save-selection: can't close %s: %s!"), ofile, strerror(errno));
       return(MUS_CANT_CLOSE_FILE);
     }
   alert_new_file();
@@ -943,12 +943,12 @@ saves the current selection in filename using the indicated file attributes.  If
   if (!(mus_header_writable(type, -2)))
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_save_selection),
-			 C_TO_XEN_STRING("can't write this header type:"),
+			 C_TO_XEN_STRING(_("can't write this header type:")),
 			 C_TO_XEN_STRING(mus_header_type_name(type))));
   if (!(mus_header_writable(type, format)))
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_4(C_TO_XEN_STRING(S_save_selection),
-			 C_TO_XEN_STRING("can't write this combination of header type and data format:"),
+			 C_TO_XEN_STRING(_("can't write this combination of header type and data format:")),
 			 C_TO_XEN_STRING(mus_header_type_name(type)),
 			 C_TO_XEN_STRING(mus_data_format_name(format))));
 

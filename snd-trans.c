@@ -33,14 +33,14 @@ static int snd_checked_write(int fd, unsigned char *buf, int bytes, char *filena
   if (kfree < 0) 
     {
       mus_snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
-		   "no space left on device: %s",
+		   _("no space left on device: %s"),
 		   strerror(errno)); 
       return(MUS_ERROR);
     }
   if (kfree < (bytes >> 10))
     { 
       mus_snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
-		   "only " OFF_TD " bytes left on device (we need %d bytes)",
+		   _("only " PRId64 " bytes left on device (we need %d bytes)"),
 		   kfree << 10, bytes);
       return(MUS_ERROR);
     }
@@ -48,7 +48,7 @@ static int snd_checked_write(int fd, unsigned char *buf, int bytes, char *filena
   if (bytes_written != bytes)
     {
       mus_snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
-		   "write error (wrote %d of requested %d bytes): %s",
+		   _("write error (wrote %d of requested %d bytes): %s"),
 		   bytes_written, bytes, strerror(errno));
       return(MUS_ERROR);
     }
@@ -72,13 +72,13 @@ static int be_snd_checked_write(int fd, unsigned char *buf, int bytes, char *fil
 }
 
 #define RETURN_MUS_IO_ERROR(IO_Func, IO_Name) \
-  return(mus_error(MUS_CANT_OPEN_FILE, "translator: %s(%s): %s\n  [%s[%d] %s]", \
+  return(mus_error(MUS_CANT_OPEN_FILE, _("translator: %s(%s): %s\n  [%s[%d] %s]"), \
                    IO_Func, IO_Name, strerror(errno), \
                    __FILE__, __LINE__, __FUNCTION__))
 
 #define RETURN_MUS_WRITE_ERROR(OldName, NewName) \
   do { \
-      mus_error(MUS_WRITE_ERROR, "can't translate %s to %s:\n  %s\n [snd-trans.c[%d] %s]", \
+      mus_error(MUS_WRITE_ERROR, _("can't translate %s to %s:\n  %s\n [snd-trans.c[%d] %s]"), \
 		OldName, NewName, write_error_buffer, \
 		__LINE__, __FUNCTION__); \
       write_error_buffer[0] = '\0'; \
@@ -87,7 +87,7 @@ static int be_snd_checked_write(int fd, unsigned char *buf, int bytes, char *fil
   while (0)
 
 #define RETURN_MUS_ALLOC_ERROR(OldName, Bytes, VariableName) \
-  return(mus_error(MUS_MEMORY_ALLOCATION_FAILED, "translate %s: can't allocate %d bytes for %s:\n  [snd-trans.c[%d] %s]", \
+  return(mus_error(MUS_MEMORY_ALLOCATION_FAILED, _("translate %s: can't allocate %d bytes for %s:\n  [snd-trans.c[%d] %s]"), \
 		   OldName, Bytes, VariableName, \
 		   __LINE__, __FUNCTION__))
 
@@ -416,7 +416,7 @@ static int read_mus10(char *oldname, char *newname, char *hdr)
     {
       CLEANUP();
       return(mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
-		       "read_mus10: can't translate Mus10 file %s:\n  mode = %d\n",
+		       _("read_mus10: can't translate Mus10 file %s:\n  mode = %d\n"),
 		       oldname, mode));
     }
   /* 4 = SAM 16-bit packing mode, 0 = 12 bit 3 to a word */
@@ -942,7 +942,7 @@ static int read_dvi_adpcm(char *oldname, char *newname, char *hdr, int type)
   samps = mus_sound_fact_samples(oldname);
   if ((chans != 1) || (mus_sound_bits_per_sample(oldname) != 4))
     return(mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
-		     "read_dvi_adpcm: can't translate DVI ADPCM file %s: chans: %d and bits: %d\n",
+		     _("read_dvi_adpcm: can't translate DVI ADPCM file %s: chans: %d and bits: %d\n"),
 		     oldname, chans, mus_sound_bits_per_sample(oldname)));
   srate = mus_sound_srate(oldname);
   mus_bint_to_char((unsigned char *)(hdr + 16), srate);
@@ -1020,7 +1020,7 @@ static int read_oki_adpcm(char *oldname, char *newname, char *hdr)
   chans = mus_sound_chans(oldname);
   if (chans != 1)
     return(mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
-		     "read_oki_adpcm: can't translate Oki ADPCM file %s: chans: %d\n",
+		     _("read_oki_adpcm: can't translate Oki ADPCM file %s: chans: %d\n"),
 		     oldname, chans));
   loc = mus_sound_data_location(oldname);
   blksiz = mus_sound_align(oldname);
@@ -1521,7 +1521,7 @@ static int read_g72x_adpcm(char *oldname, char *newname, char *hdr, int which_g)
   chans = mus_sound_chans(oldname);
   if (chans != 1)
     return(mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
-		     "read_g72x_adpcm: can't translate G72x file %s: chans: %d\n",
+		     _("read_g72x_adpcm: can't translate G72x file %s: chans: %d\n"),
 		     oldname, chans));
   fs = CREAT(newname, 0666);
   if (fs == -1) RETURN_MUS_IO_ERROR("create", newname);
@@ -1691,12 +1691,12 @@ int snd_translate(char *oldname, char *newname, int type)
       ss = get_global_state();
       if (ss->catch_exists)
 	return(mus_error(MUS_CANT_TRANSLATE,
-			 "can't translate %s\n  (%s header: %s (0x%x) data format)\n",
+			 _("can't translate %s\n  (%s header: %s (0x%x) data format)\n"),
 			 oldname,
 			 mus_header_type_name(type),
 			 any_format_name(oldname),
 			 mus_sound_original_format(oldname)));
-      else snd_error("can't translate %s\n  (%s header: %s (0x%x) data format)\n",
+      else snd_error(_("can't translate %s\n  (%s header: %s (0x%x) data format)\n"),
 		     oldname,
 		     mus_header_type_name(type),
 		     any_format_name(oldname),

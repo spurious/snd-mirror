@@ -14,10 +14,10 @@ static Widget completion_help_dialog = NULL, completion_help_list = NULL;
 static void completion_help_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
-  snd_help(ss, "completion",
-"These are the completions that Snd thinks might be likely.\n\
+  snd_help(ss, _("completion"),
+_("These are the completions that Snd thinks might be likely.\n\
 If you select one, it will be used to complete the current name.\n\
-");
+"));
 }
 
 static void completion_help_browse_callback(Widget w, XtPointer context, XtPointer info) 
@@ -114,7 +114,7 @@ void snd_completion_help(snd_state *ss, int matches, char **buffer)
   XmString *match;
   if (completion_help_dialog)
     XtManageChild(completion_help_dialog);
-  else create_completion_help_dialog(ss, "Completions");
+  else create_completion_help_dialog(ss, _("Completions"));
   match = (XmString *)CALLOC(matches, sizeof(XmString));
   for (i = 0; i < matches; i++) 
     match[i] = XmStringCreate(buffer[i], XmFONTLIST_DEFAULT_TAG);
@@ -1074,9 +1074,9 @@ static void command_modify_callback(Widget w, XtPointer context, XtPointer info)
 static void command_help_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_help_with_url_and_wrap((snd_state *)context,
-			     "Lisp Listener",
+			     _("Lisp Listener"),
 			     "#customization",
-"This is the lisp listener pane; it is one way to access the interpreter.");
+_("This is the lisp listener pane; it is one way to access the interpreter."));
 }
 
 static XEN mouse_enter_listener_hook;

@@ -124,10 +124,7 @@ void reflect_file_revert_in_label (snd_info *sp)
     {
       editing = map_over_sound_chans(sp, find_any_edits, NULL);
       if (!editing)
-	{
-	  set_sound_pane_file_label(sp, shortname_indexed(sp));
-	  make_a_big_star_outa_me(sp->short_filename, 0);
-	}
+	set_sound_pane_file_label(sp, shortname_indexed(sp));
     }
 }
 
@@ -266,7 +263,7 @@ snd_info *new_file_from_menu(snd_state *ss)
 	case MUS_RIFF:                extension = "wav";  break;
 	default:                      extension = "snd";  break;
 	}
-      mus_snprintf(new_file_name, MUS_MAX_FILE_NAME, "new-%d.%s", new_ctr++, extension);
+      mus_snprintf(new_file_name, MUS_MAX_FILE_NAME, _("new-%d.%s"), new_ctr++, extension);
     }
   chans = default_output_chans(ss);
   data_format = default_output_format(ss);
@@ -303,7 +300,7 @@ void save_options_from_menu(snd_state *ss)
 {
   if ((save_options(ss) == 0) && 
       (any_selected_sound(ss)))
-    report_in_minibuffer(any_selected_sound(ss), "saved options in %s", ss->init_file);
+    report_in_minibuffer(any_selected_sound(ss), _("saved options in %s"), ss->init_file);
 }
 
 void save_state_from_menu(snd_state *ss)
@@ -311,7 +308,7 @@ void save_state_from_menu(snd_state *ss)
   if ((save_state_file(ss)) && 
       (save_state(ss, save_state_file(ss)) == 0) && 
       (any_selected_sound(ss)))
-    report_in_minibuffer(any_selected_sound(ss), "saved state in %s", save_state_file(ss));
+    report_in_minibuffer(any_selected_sound(ss), _("saved state in %s"), save_state_file(ss));
 }
 
 static void chans_graph_style(chan_info *cp, void *ptr) 
@@ -369,7 +366,7 @@ void set_show_y_zero(snd_state *ss, int val)
   if (view_zero_menu())
     {
       set_menu_label(view_zero_menu(), 
-		     (val) ? "Hide Y = 0" : "Show Y = 0");
+		     (val) ? _("Hide Y = 0") : _("Show Y = 0"));
       for_each_chan_1(ss, chans_zero, (void *)(&val));
     }
 }
@@ -384,7 +381,7 @@ void set_verbose_cursor(snd_state *ss, int val)
   for_each_chan_1(ss, chans_verbose_cursor, (void *)(&val));
   if (view_cursor_menu())
     set_menu_label(view_cursor_menu(), 
-		   (val) ? "Silent cursor" : "Verbose cursor");
+		   (val) ? _("Silent cursor") : _("Verbose cursor"));
 }
 
 void set_view_ctrls_label(const char *lab)
@@ -456,10 +453,10 @@ void chans_x_axis_style(chan_info *cp, void *ptr)
       if (ap->xlabel) FREE(ap->xlabel);
       switch (new_style)
 	{
-	case X_AXIS_IN_BEATS:      ap->xlabel = copy_string("time (beats)");   break;
-	case X_AXIS_IN_SAMPLES:    ap->xlabel = copy_string("time (samples)"); break;
-	case X_AXIS_AS_PERCENTAGE: ap->xlabel = copy_string("time (%)");       break;
-	default:                   ap->xlabel = copy_string("time");           break;
+	case X_AXIS_IN_BEATS:      ap->xlabel = copy_string(_("time (beats)"));   break;
+	case X_AXIS_IN_SAMPLES:    ap->xlabel = copy_string(_("time (samples)")); break;
+	case X_AXIS_AS_PERCENTAGE: ap->xlabel = copy_string(_("time (percent)")); break;
+	default:                   ap->xlabel = copy_string(_("time"));           break;
 	}
       update_graph(cp);
     }

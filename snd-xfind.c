@@ -7,10 +7,10 @@ static Widget edit_find_dialog, edit_find_text, cancelB, edit_find_label, findne
 static void edit_find_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_help_with_wrap((snd_state *)context,
-		     "Global Find",
-"This search travels through all the current channels in parallel until a match is found.  The find \
+		     _("Global Find"),
+_("This search travels through all the current channels in parallel until a match is found.  The find \
 expression is a Scheme function of one argument,  the current sample value.  It should return #t when the \
-search is satisified.  For example, (lambda (n) (> n .1)) looks for the next sample that is greater than .1.");
+search is satisified.  For example, (lambda (n) (> n .1)) looks for the next sample that is greater than .1."));
 } 
 
 static void edit_find_ok_callback(int direction, Widget w, XtPointer context, XtPointer info)
@@ -37,7 +37,7 @@ static void edit_find_ok_callback(int direction, Widget w, XtPointer context, Xt
 	  if (optimization(ss) > 0)
 	    ss->search_tree = form_to_ptree_1_b_without_env(C_STRING_TO_XEN_FORM(str));
 	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-	  mus_snprintf(buf, PRINT_BUFFER_SIZE, "find: %s", str);
+	  mus_snprintf(buf, PRINT_BUFFER_SIZE, _("find: %s"), str);
 	  set_label(edit_find_label, buf);
 	  XmTextSetString(edit_find_text, NULL);
 	  FREE(buf);
@@ -50,7 +50,7 @@ static void edit_find_ok_callback(int direction, Widget w, XtPointer context, Xt
 	{
 	  /* using global search_proc set by user */
 	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-	  mus_snprintf(buf, PRINT_BUFFER_SIZE, "find: %s", XEN_AS_STRING(ss->search_proc));
+	  mus_snprintf(buf, PRINT_BUFFER_SIZE, _("find: %s"), XEN_AS_STRING(ss->search_proc));
 	  set_label(edit_find_label, buf);
 	  XmTextSetString(edit_find_text, NULL);
 	  FREE(buf);
@@ -58,11 +58,11 @@ static void edit_find_ok_callback(int direction, Widget w, XtPointer context, Xt
     }
   if ((XEN_PROCEDURE_P(ss->search_proc)) || (ss->search_tree))
     {
-      s1 = XmStringCreate("Stop", XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreate(_("Stop"), XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(cancelB, XmNlabelString, s1, NULL);
       XmStringFree(s1);
       str = global_search(ss, direction);
-      s1 = XmStringCreate("Dismiss", XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(cancelB, XmNlabelString, s1, NULL);
       XmStringFree(s1);
       if ((str) && (*str)) set_label(edit_find_label, str);
@@ -94,10 +94,10 @@ static void make_edit_find_dialog(snd_state *ss)
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-  xmstr1 = XmStringCreate("Dismiss", XmFONTLIST_DEFAULT_TAG);
-  xmstr2 = XmStringCreate("Next", XmFONTLIST_DEFAULT_TAG);
-  xmstr3 = XmStringCreate("Previous", XmFONTLIST_DEFAULT_TAG);
-  titlestr = XmStringCreate("Find", XmFONTLIST_DEFAULT_TAG);
+  xmstr1 = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
+  xmstr2 = XmStringCreate(_("Next"), XmFONTLIST_DEFAULT_TAG);
+  xmstr3 = XmStringCreate(_("Previous"), XmFONTLIST_DEFAULT_TAG);
+  titlestr = XmStringCreate(_("Find"), XmFONTLIST_DEFAULT_TAG);
   XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
   XtSetArg(args[n], XmNcancelLabelString, xmstr3); n++;
   XtSetArg(args[n], XmNautoUnmanage, FALSE); n++;
@@ -105,7 +105,7 @@ static void make_edit_find_dialog(snd_state *ss)
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
   XtSetArg(args[n], XmNtransient, FALSE); n++;
-  edit_find_dialog = XmCreateMessageDialog(MAIN_SHELL(ss), "find", args, n);
+  edit_find_dialog = XmCreateMessageDialog(MAIN_SHELL(ss), _("find"), args, n);
 
   XmStringFree(xmstr1);
   XmStringFree(xmstr2);
@@ -124,7 +124,7 @@ static void make_edit_find_dialog(snd_state *ss)
       XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
       XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
     }
-  findnextB = XtCreateManagedWidget("Next", xmPushButtonWidgetClass, edit_find_dialog, args, n);
+  findnextB = XtCreateManagedWidget(_("Next"), xmPushButtonWidgetClass, edit_find_dialog, args, n);
   XtAddCallback(findnextB, XmNactivateCallback, edit_find_next_callback, ss);
 
   rc = XtCreateManagedWidget("row", xmFormWidgetClass, edit_find_dialog, NULL, 0);
@@ -134,7 +134,7 @@ static void make_edit_find_dialog(snd_state *ss)
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-  dl = XtCreateManagedWidget("find:", xmLabelWidgetClass, rc, args, n);
+  dl = XtCreateManagedWidget(_("find:"), xmLabelWidgetClass, rc, args, n);
 
   n = 0;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;

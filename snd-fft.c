@@ -634,11 +634,11 @@ static char *spectro_xlabel(chan_info *cp)
       else return("frequency");
       break;
     case WAVELET:         return(wavelet_names[cp->wavelet_type]); break;
-    case HAAR:            return("Haar spectrum");                 break;
+    case HAAR:            return(_("Haar spectrum"));              break;
     case CEPSTRUM:        return("cepstrum");                      break;
     case WALSH:           return("Sequency");                      break;
     case HADAMARD:        return("Sequency");                      break;
-    case AUTOCORRELATION: return("Lag time");                      break;
+    case AUTOCORRELATION: return(_("Lag time"));                   break;
     default:              return(added_transform_xlabel(cp->transform_type)); break;
     }
   return(NULL);
@@ -686,10 +686,10 @@ static void make_sonogram_axes(chan_info *cp)
 	{
 	  if (cp->transform_type == FOURIER)
 	    {
-	      if (yang < 45.0) xlabel = "frequency";
-	      else if (yang < 135.0) xlabel = "time";
-	      else if (yang < 225.0) xlabel = "ycneuqerf";
-	      else if (yang < 315.0) xlabel = "emit";
+	      if (yang < 45.0) xlabel = _("frequency");
+	      else if (yang < 135.0) xlabel = _("time");
+	      else if (yang < 225.0) xlabel = _("ycneuqerf"); /* a joke... */
+	      else if (yang < 315.0) xlabel = _("emit");
 	      else xlabel = "frequency";
 	    }
 	  else xlabel = spectro_xlabel(cp);
@@ -1615,7 +1615,7 @@ void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, o
 	  (pbuffer == NULL) || (pbuffer[0] == NULL) || (cm == NULL) ||
 	  (fbuffer == NULL) || (fbuffer[filter_chan] == NULL) || (fcm == NULL))
 	{
-	  snd_error("not enough memory for convolve of %s (filter size: %d, fft size: %d", 
+	  snd_error(_("not enough memory for convolve of %s (filter size: %d, fft size: %d"), 
 		    fname, filtersize, fftsize);
 	}
       else
@@ -1666,7 +1666,7 @@ void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, o
 	  /* and save as temp file */
 	  mus_file_write(tempfile, 0, data_size - 1, 1, &(pbuf));
 	  if (mus_file_close(tempfile) != 0)
-	    snd_error("c_convolve: can't close %s!", fname);
+	    snd_error(_("convolve: can't close temp file %s!"), fname);
 	}
       if (rl0) FREE(rl0);
       if (rl1) FREE(rl1);
@@ -1783,7 +1783,7 @@ returns the current transform sample at bin and slice in snd channel chn (assumi
 				 XEN_LIST_8(C_TO_XEN_STRING(S_transform_sample),
 					    bin, slice,
 					    snd_n, chn_n,
-					    C_TO_XEN_STRING("max bin, max slice:"),
+					    C_TO_XEN_STRING(_("max bin, max slice:")),
 					    C_TO_XEN_INT((si) ? si->target_bins : 0),
 					    C_TO_XEN_INT((si) ? si->active_slices : 0)));
 		}
@@ -1792,7 +1792,7 @@ returns the current transform sample at bin and slice in snd channel chn (assumi
 			 XEN_LIST_6(C_TO_XEN_STRING(S_transform_sample),
 				    bin,
 				    snd_n, chn_n,
-				    C_TO_XEN_STRING("max bin:"),
+				    C_TO_XEN_STRING(_("max bin:")),
 				    C_TO_XEN_INT(fp->current_size)));
 	}
     }
@@ -1868,7 +1868,7 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
   XEN_ASSERT_TYPE(VCT_P(data), data, XEN_ARG_2, "snd-transform", "a vct");
   trf = XEN_TO_SMALL_C_INT(type);
   if ((trf < 0) || (trf > HAAR))
-    mus_misc_error("snd-transform", "invalid transform choice", type);
+    mus_misc_error("snd-transform", _("invalid transform choice"), type);
   v = TO_VCT(data);
   switch (trf)
     {

@@ -337,8 +337,11 @@ static int complain_about_focus_policy = TRUE;
 void goto_window(Widget text)
 {
   int err;
-  if ((XmIsTraversable(text)) && 
+  if ((XmIsTraversable(text)) && (1))
+    /*
+      there's a major memory leak here
       (XmGetVisibility(text) != XmVISIBILITY_FULLY_OBSCURED))
+    */
     {
       if (!(XmProcessTraversal(text, XmTRAVERSE_CURRENT)))
 	{
@@ -346,10 +349,10 @@ void goto_window(Widget text)
 	    {
 	      XtVaGetValues(text, XmNkeyboardFocusPolicy, &err, NULL);
 	      if (err == XmEXPLICIT)
-		snd_error("goto_window: traverse to %s failed!", XtName(text));
+		snd_error(_("goto_window: traverse to %s failed!"), XtName(text));
 	      else 
 		{
-		  snd_error("goto_window: keyboard focus policy is not explicit!");
+		  snd_error(_("goto_window: keyboard focus policy is not explicit!"));
 		  complain_about_focus_policy = FALSE;
 		}
 	    }

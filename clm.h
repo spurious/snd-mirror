@@ -2,10 +2,12 @@
 #define MUS_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 19
-#define MUS_DATE "18-Dec-02"
+#define MUS_REVISION 20
+#define MUS_DATE "7-Jan-03"
 
 /* 
+ * 7-Jan-03:   mus_src with very large sr_change segfault bugfix.
+ * --------
  * 17-Dec:     mus_env_offset|initial_power for Snd exp env optimizations.
  * 13-Sep:     mus_frandom and mus_irandom (for Snd optimizer).
  * 19-Aug:     changed internal phase-vocoder array accessor names

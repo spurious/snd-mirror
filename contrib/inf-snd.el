@@ -4,8 +4,8 @@
 
 ;; Author: Michael Scholz <scholz-micha@gmx.de>
 ;; Created: Wed Nov 27 20:52:54 CET 2002
-;; Last: Thu Dec 19 00:31:04 CET 2002
-;; Version: $Revision: 1.3.2.4 $
+;; Last: Tue Dec 10 00:46:38 CET 2002
+;; Version: $Revision: 1.3.2.3 $
 ;; Keywords: processes, snd, ruby, guile
 
 ;; This file is not part of GNU Emacs.
@@ -17,7 +17,7 @@
 
 ;; This program is distributed in the hope that it will be useful, but
 ;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
@@ -28,26 +28,26 @@
 ;;; Commentary:
 
 ;; This file defines a snd-in-a-buffer package built on top of
-;; comint-mode.  It includes inferior mode for Snd-Ruby
+;; comint-mode. It includes inferior mode for Snd-Ruby
 ;; (inf-snd-ruby-mode) and Snd-Guile (inf-snd-guile-mode), furthermore
 ;; both a Snd-Ruby mode (snd-ruby-mode) and a Snd-Guile mode
-;; (snd-guile-mode) for editing source files.  It is tested with
+;; (snd-guile-mode) for editing source files. It is tested with
 ;; Snd-Ruby and Snd-Guile, version 6.4, and GNU Emacs, version 21.2.
 
 ;; Since this mode is built on top of the general command-interpreter-
 ;; in-a-buffer mode (comint-mode), it shares a common base
 ;; functionality, and a common set of bindings, with all modes derived
-;; from comint mode.  This makes these modes easier to use.  For
+;; from comint mode. This makes these modes easier to use. For
 ;; documentation on the functionality provided by comint-mode, and the
 ;; hooks available for customizing it, see the file comint.el.
 
 ;; A nice feature may be the command inf-snd-help, which shows the
-;; description Snd provides for many functions.  With tab-completion
-;; in the minibuffer you can scan all functions at a glance, help
-;; strings of Guile functions are also available, but not with
-;; tab-completion in the minibuffer.  It should be easy to extent this
-;; mode with new commands and key bindings; the example below and the
-;; code in this file may show the way.
+;; description Snd provides for many functions. With tab-completion in
+;; the minibuffer you can scan all functions at a glance, help strings
+;; of Guile functions are also available, but not with tab-completion
+;; in the minibuffer. It should be easy to extent this mode with new
+;; commands and key bindings; the example below and the code in this
+;; file may show the way.
 
 ;; There exist four main modes in this file: the two inferior
 ;; Snd-process-modes (inf-snd-ruby-mode and inf-snd-guile-mode) and
@@ -71,7 +71,7 @@
 
 ;; You can start inf-snd-ruby-mode interactive either with prefix-key
 ;; (C-u M-x run-snd-ruby)--you will be ask for program name and
-;; optional arguments--or direct (M-x run-snd-ruby).  In the latter
+;; optional arguments--or direct (M-x run-snd-ruby). In the latter
 ;; case, variable inf-snd-ruby-program-name should be set correctly.
 ;; The same usage goes for inf-snd-guile-mode.
 
@@ -116,10 +116,10 @@
 ;; 	    (define-key (current-local-map) "\C-ce" 'snd-send-definition)))
 
 ;; You may change the mode in a Snd-Ruby or Snd-Guile source file by
-;; M-x snd-ruby-mode or M-x snd-guile-mode.  To determine
-;; automatically which mode to set, you can decide to use special
-;; file-extensions.  I use file-extension `.rbs' for Snd-Ruby source
-;; files and `.cms' for Snd-Guile.
+;; M-x snd-ruby-mode or M-x snd-guile-mode. To determine automatically
+;; which mode to set, you can decide to use special file-extensions. I
+;; use file-extension `.rbs' for Snd-Ruby source files and `.cms' for
+;; Snd-Guile.
 ;;
 ;; (set-default 'auto-mode-alist
 ;; 	     (append '(("\\.rbs$" . snd-ruby-mode)
@@ -167,45 +167,6 @@
 ;; C-c C-k   snd-quit    	   quit Snd process
 ;; C-h m     describe-mode   	   describe current major mode
 
-;; Ruby Note (see also documentation string of `snd-send-region'):
-
-;; There are some difficulties in `snd-ruby-mode' with
-;; `snd-send-region' and related commands.  A ruby-region must not
-;; contain a block spanning several lines, that means something like
-;; "do ...  end" or "{ ...  }" must appear on a single line.  This is
-;; no good solution but one can load the whole file to define
-;; functions and than use blocks with "begin ... end" sending it with
-;; `snd-send-block' with point somewhere in or before the block
-;; statement or one can send a single line enclosed in parenthesis
-;; with `snd-send-last-sexp' with point after the last closing paren.
-;; Comments in regions sending to inferior Snd buffer produce errors
-;; too.
-;; 
-;; Working examples:
-;; 
-;; def foo(beg, len)
-;;   amp = .5
-;;   dur = 1
-;;   beg.upto(len) { |i| play_my_inst(i, dur, [:c4, :e4, :g4].rand, amp) }
-;; end
-;; 
-;; with `snd-send-definition' somewhere in or before the definition.
-;; The beg.upto-line must appear on a single line.
-;; 
-;; begin
-;;   first_func
-;;   second_func
-;;   third_func
-;; end
-;; 
-;; with `snd-send-block' somewhere in or before the begin-block,
-;; 
-;; (i = 10
-;;  j = 440
-;;  foo(i, j))
-;; 
-;; with `snd-send-last-sexp' after the last paren.
-
 ;;; Code:
 
 ;;;; The inf-snd-ruby-mode and inf-snd-guile-mode.
@@ -216,7 +177,7 @@
 (require 'inf-ruby)
 (require 'cmuscheme)
 
-(defconst inf-snd-rcsid "$Id: inf-snd.el,v 1.3.2.4 2002/12/18 23:35:03 mike Exp $")
+(defconst inf-snd-rcsid "$Id: inf-snd.el,v 1.3.2.3 2002/12/09 23:47:00 mike Exp $")
 
 (defconst inf-snd-version
   (progn
@@ -256,7 +217,7 @@ Snd-Guile process.")
 
 (defvar inf-snd-ruby-flag t
   "Non-nil means extension language Ruby, nil Guile.
-Needed to determine which extension language to use.  This variable is
+Needed to determine which extension language to use. This variable is
 buffer-local.")
 
 (defvar inf-snd-keywords nil
@@ -266,13 +227,13 @@ Will be used by `inf-snd-help' (\\[inf-snd-help]), taken from
 snd-6/snd-strings.h.
 
 With the following Ruby script you can update the value of this
-variable from the Snd sources.  It puts the strings in a file and you
+variable from the Snd sources. It puts the strings in a file and you
 can merge it in the Emacs source file of this mode (inf-snd.el).
 
 #!/usr/bin/env ruby -w
 
 # replace with your path to snd-6/snd-strings.h
-in_file = (ARGV[0] or \"/usr/gnu/src/snd-6-cvs/snd/snd-strings.h\")
+in_file = \"/usr/gnu/src/snd-6-cvs/snd/snd-strings.h\"
 out_file = \"help.strings\"
 
 begin
@@ -317,7 +278,7 @@ end")
 
 (defun inf-snd-set-keys (mode name)
   "Set the key bindings and menu entries for MODE.
-Menu name is NAME.  You can extend the key bindings and menu entries
+Menu name is NAME. You can extend the key bindings and menu entries
 here or via hook variables in .emacs file."
   ;; key bindings
   (define-key (current-local-map) "\C-c\C-f" 'inf-snd-file)
@@ -360,8 +321,8 @@ here or via hook variables in .emacs file."
 (defun inf-snd-send-string (str &optional no-strip-p)
   "Print STR in buffer and send it to the inferior Snd process.
 If NO-STRIP-P is nil, the default, all dashes (-) will be translated
-to underlines (_), if `inf-snd-ruby-flag' is true.  If NO-STRIP-P is
-non-nil, it won't translate.  See `inf-snd-load' for the latter case."
+to underlines (_), if `inf-snd-ruby-flag' is true. If NO-STRIP-P is
+non-nil, it won't translate. See `inf-snd-load' for the latter case."
   (interactive)
   (and (not no-strip-p)
        inf-snd-ruby-flag
@@ -397,12 +358,12 @@ Asks for FILE interactively in minibuffer."
 
 (defun inf-snd-help ()
   "Receive a string in minibuffer and show corresponding help.
-This is done via Snd's function snd_help(), putting result at the end
-of the inferior Snd process buffer.  If point is near a function name
+This is done via Snd's function snd-help(), putting result at the end
+of the inferior Snd process buffer. If point is near a function name
 in inferior Snd process buffer, that function will be used as default
-value in minibuffer; tab-completion is activated.  The help strings
-are defined in `inf-snd-keywords', where you can find a little Ruby
-script to update the value of this variable."
+value in minibuffer; tab-completion is activated. The help strings are
+defined in `inf-snd-keywords', where you can find a little Ruby script
+to update the value of this variable."
   (interactive)
   (let ((prompt "Snd Help: ")
 	(default (thing-at-point 'symbol)))
@@ -476,13 +437,13 @@ Argument STRING is the Snd command and optional arguments."
   "Inferior mode running Snd-Ruby, derived from `comint-mode'.
 
 Snd is a sound editor created by Bill Schottstaedt
-\(bil@ccrma.Stanford.EDU).  You can find it on
+\(bil@ccrma.Stanford.EDU). You can find it on
 ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-6.tar.gz.
 
 You can type in Ruby commands in inferior Snd process buffer which
-will be sent via `comint-send-string' to the inferior Snd process.
-The return value will be shown in the process buffer, other output
-goes to the listener of Snd.
+will be sent via `comint-send-string' to the inferior Snd process. The
+return value will be shown in the process buffer, other output goes to
+the listener of Snd.
 
 You should set variable `inf-snd-ruby-program-name' and
 `inf-snd-working-directory' in your .emacs file to set the appropriate
@@ -491,11 +452,11 @@ scripts directory, you have.
 
 The hook variables `comint-mode-hook' and `inf-snd-ruby-mode-hook'
 will be called in that special order after calling the inferior Snd
-process.  You can use them e.g. to set additional key bindings.
+process. You can use them e.g. to set additional key bindings.
 
 \\<inf-snd-ruby-mode-map> Interactive start is possible either by
 \\[universal-argument] \\[run-snd-ruby], you will be ask for the Snd
-program name, or by \\[run-snd-ruby].  Emacs shows an additional menu
+program name, or by \\[run-snd-ruby]. Emacs shows an additional menu
 entry ``Snd-Ruby'' in the menu bar.
 
 The following key bindings are defined:
@@ -527,13 +488,13 @@ The following key bindings are defined:
   "Inferior mode running Snd-Guile, derived from `comint-mode'.
 
 Snd is a sound editor created by Bill Schottstaedt
-\(bil@ccrma.Stanford.EDU).  You can find it on
+\(bil@ccrma.Stanford.EDU). You can find it on
 ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-6.tar.gz.
 
 You can type in Guile commands in inferior Snd process buffer which
-will be sent via `comint-send-string' to the inferior Snd process.
-The return value will be shown in the process buffer, other output
-goes to the listener of Snd.
+will be sent via `comint-send-string' to the inferior Snd process. The
+return value will be shown in the process buffer, other output goes to
+the listener of Snd.
 
 You sould set variable `inf-snd-guile-program-name' and
 `inf-snd-working-directory' in your .emacs file to set the appropriate
@@ -542,11 +503,11 @@ scripts directory, you have.
 
 The hook variables `comint-mode-hook' and `inf-snd-guile-mode-hook'
 will be called in that special order after calling the inferior Snd
-process.  You can use them e.g. to set additional key bindings.
+process. You can use them e.g. to set additional key bindings.
 
 \\<inf-snd-guile-mode-map> Interactive start is possible either by
 \\[universal-argument] \\[run-snd-guile], you will be ask for the Snd
-program name, or by \\[run-snd-guile].  Emacs shows an additional menu
+program name, or by \\[run-snd-guile]. Emacs shows an additional menu
 entry ``Snd-Guile'' in the menu bar.
 
 The following key bindings are defined:
@@ -568,7 +529,7 @@ The following key bindings are defined:
 
 (defun run-snd-ruby (cmd)
   "Start inferior Snd-Ruby process.
-CMD is used for determine which program to run.  If interactively
+CMD is used for determine which program to run. If interactively
 called, one will be asked for program name to run."
   (interactive (list (if current-prefix-arg
  			 (read-string "Run Snd Ruby: " inf-snd-ruby-program-name)
@@ -582,7 +543,7 @@ called, one will be asked for program name to run."
 
 (defun run-snd-guile (cmd)
   "Start inferior Snd-Guile process.
-CMD is used for determine which program to run.  If interactively
+CMD is used for determine which program to run. If interactively
 called, one will be asked for program name to run."
   (interactive (list (if current-prefix-arg
  			 (read-string "Run Snd Guile: " inf-snd-guile-program-name)
@@ -598,9 +559,9 @@ called, one will be asked for program name to run."
 
 ;;; Commentary
 
-;; These two modes are derived from ruby-mode and scheme-mode.  The
+;; These two modes are derived from ruby-mode and scheme-mode. The
 ;; main changes are the key bindings, which now refer to special
-;; Snd-process-buffer-related ones.  I used commands from inf-ruby.el
+;; Snd-process-buffer-related ones. I used commands from inf-ruby.el
 ;; as well as from cmuscheme.el and changed them appropriately.
 
 (defvar snd-ruby-buffer-name "Snd/Ruby"
@@ -622,15 +583,14 @@ process.")
 (defvar snd-source-modes '(snd-ruby-mode)
   "Used to determine if a buffer contains Snd source code.
 If it's loaded into a buffer that is in one of these major modes, it's
-considered a Snd source file by `snd-load-file'.  Used by this command
-to determine defaults.  This variable is buffer-local in
-`snd-ruby-mode' respective `snd-guile-mode'.")
+considered a Snd source file by `snd-load-file'. Used by this command
+to determine defaults. This variable is buffer-local in
+`snd-ruby-mode' resp. `snd-guile-mode'.")
 
 (defvar snd-inf-ruby-flag t
   "Non-nil means extension language Ruby, nil Guile.
-Needed to determine which extension language should be used.  This
-variable is buffer-local in `snd-ruby-mode' respective
-`snd-guile-mode'.")
+Needed to determine which extension language should be used. This
+variable is buffer-local in `snd-ruby-mode' resp. `snd-guile-mode'.")
 
 (defvar snd-prev-l/c-dir/file nil
   "Cache the (directory . file) pair used in the last `snd-load-file'.
@@ -642,8 +602,8 @@ Used for determining the default in the next one.")
 Editing commands are similar to those of `ruby-mode'.
 
 In addition, you can start an inferior Snd process and some additional
-commands will be defined for evaluating expressions.  A menu
-``Snd/Ruby'' appears in the menu bar.  Entries in this menu are
+commands will be defined for evaluating expressions. A menu
+``Snd/Ruby'' appears in the menu bar. Entries in this menu are
 disabled if no inferior Snd process exist.
 
 You can use the hook variables `ruby-mode-hook' and
@@ -664,8 +624,8 @@ The current key bindings are:
 Editing commands are similar to those of `scheme-mode'.
 
 In addition, you can start an inferior Snd process and some additional
-commands will be defined for evaluating expressions.  A menu
-``Snd/Guile'' appears in the menu bar.  Entries in this menu are
+commands will be defined for evaluating expressions. A menu
+``Snd/Guile'' appears in the menu bar. Entries in this menu are
 disabled if no inferior Snd process exist.
 
 You can use variables `scheme-mode-hook' and `snd-guile-mode-hook',
@@ -682,57 +642,18 @@ The current key bindings are:
 
 (defun snd-send-region (start end)
   "Send the current region to the inferior Snd process.
-START and END define the region.\\<snd-ruby-mode-map>
-
-There are some difficulties in `snd-ruby-mode'.  A ruby-region must
-not contain a block spanning several lines, that means something like
-\"do ... end\" or \"{ ...  }\" must appear on a single line.  This is
-no good solution but one can load the whole file to define functions
-and than use blocks with \"begin ... end\" sending it with
-`snd-send-block' with point somewhere in or before the block statement
-or one can send a single line enclosed in parenthesis with
-`snd-send-last-sexp' with point after the last closing paren.
-Comments in regions sending to inferior Snd buffer produce errors too.
-
-Working examples:
-
-def foo(beg, len)
-  amp = .5
-  dur = 1
-  beg.upto(len) { |i| play_my_inst(i, dur, [:c4, :e4, :g4].rand, amp) }
-end
-
-with \\[snd-send-definition] somewhere in or before the definition.
-The beg.upto-line must appear on a single line.
-
-begin
-  first_func
-  second_func
-  third_func
-end
-
-with \\[snd-send-block] somewhere in or before the begin-block,
-
-\(i = 10
-  j = 440
-  foo(i, j))
-
-with \\[snd-send-last-sexp] after the last paren."
+START and END define the region."
   (interactive "r")
-  (let ((str  (concat (buffer-substring-no-properties start end))))
-    (if snd-inf-ruby-flag
-	(progn
-	  (comint-send-string (snd-proc) "(")
-	  (while (string-match "\n" str)
-	    (setq str (replace-match ";" t nil str)))))
-    (comint-send-string (snd-proc) str)
-    (if snd-inf-ruby-flag
-	(comint-send-string (snd-proc) ")"))
-    (comint-send-string (snd-proc) "\n")))
+  (if snd-inf-ruby-flag
+      (comint-send-string (snd-proc) "("))
+  (comint-send-region (snd-proc) start end)
+  (if snd-inf-ruby-flag
+      (comint-send-string (snd-proc) ")"))
+  (comint-send-string (snd-proc) "\n"))
 
 (defun snd-send-region-and-go (start end)
   "Send the current region to the inferior Snd process.
-Switch to the process buffer.  START and END define the region."
+Switch to the process buffer. START and END define the region."
   (interactive "r")
   (snd-send-region start end)
   (snd-switch-to-snd t))
@@ -760,8 +681,8 @@ Switch to the process buffer."
 (defun snd-send-last-sexp ()
   "Send the previous sexp to the inferior Snd process.
 \\<snd-ruby-mode-map>\\<snd-guile-mode-map>
-In Ruby one can give the expression in between parentheses: \(puts
-\"result is #{foo * 17}\")\\[snd-send-last-sexp]"
+In Ruby one can give the expression in between brackets:
+\(puts \"result is #{foo * 17}\")\\[snd-send-last-sexp]"
   (interactive)
   (snd-send-region (save-excursion (backward-sexp) (point)) (point)))
 
@@ -778,7 +699,7 @@ Works only in `snd-ruby-mode'."
 
 (defun snd-send-block-and-go ()
   "Send the current block to the inferior Ruby-Snd process.
-Switch to the process buffer.  Works only in `snd-ruby-mode'."
+Switch to the process buffer. Works only in `snd-ruby-mode'."
   (interactive)
   (snd-send-block)
   (snd-switch-to-snd t))
@@ -802,7 +723,7 @@ Non-nil EOB-P means to position cursor at end of buffer."
   (let ((buf (if snd-inf-ruby-flag inf-snd-ruby-buffer inf-snd-guile-buffer)))
     (if (get-buffer buf)
 	(pop-to-buffer buf)
-      (error "No current Snd process buffer.  See variable inf-snd-ruby|guile-buffer"))
+      (error "No current Snd process buffer. See variable inf-snd-ruby|guile-buffer"))
     (cond (eob-p
 	   (push-mark)
 	   (goto-char (point-max))))))
@@ -849,12 +770,12 @@ Started from `snd-ruby-mode' or `snd-guile-mode'."
 
 (defun snd-help ()
   "Receive a string in minibuffer and show corresponding help.
-This is done via Snd's function snd_help(), putting result at the end
-of the inferior Snd process buffer.  If point is near a function name
+This is done via Snd's function snd-help(), putting result at the end
+of the inferior Snd process buffer. If point is near a function name
 in inferior Snd process buffer, that function will be used as default
-value in minibuffer; tab-completion is activated.  The help strings
-are defined in `inf-snd-keywords', where you can find a little Ruby
-script to update the value of this variable."
+value in minibuffer; tab-completion is activated. The help strings are
+defined in `inf-snd-keywords', where you can find a little Ruby script
+to update the value of this variable."
   (interactive)
   (snd-save-state)
   (inf-snd-help))
@@ -883,7 +804,7 @@ script to update the value of this variable."
 				       (current-buffer)
 				     buf))))
     (or proc
-	(error "No current process.  See variable inf-snd-ruby|guile-buffer"))))
+	(error "No current process. See variable inf-snd-ruby|guile-buffer"))))
 
 (defun snd-proc-p ()
   "Return non-nil if no process buffer available."
@@ -892,7 +813,7 @@ script to update the value of this variable."
 
 (defun snd-set-keys (mode name)
   "Set the key bindings and menu entries for MODE.
-Menu name is NAME.  You can extend the key bindings and menu entries
+Menu name is NAME. You can extend the key bindings and menu entries
 here or via hook variables in .emacs file."
   (define-key (current-local-map) "\M-\C-x"  'snd-send-definition)
   (define-key (current-local-map) "\C-x\C-e" 'snd-send-last-sexp)
@@ -1207,11 +1128,11 @@ here or via hook variables in .emacs file."
 	  ("write-peak-env-info-file") ("x->position") ("x-axis-as-percentage")
 	  ("x-axis-in-beats") ("x-axis-in-samples") ("x-axis-in-seconds")
 	  ("x-axis-style") ("x-bounds") ("x-position-slider")
-	  ("xramp-channel") ("x-zoom-slider") ("y->position")
-	  ("y-bounds") ("y-position-slider") ("y-zoom-slider")
-	  ("yes-or-no?") ("zero-pad") ("zoom-color")
-	  ("zoom-focus-active") ("zoom-focus-left") ("zoom-focus-middle")
-	  ("zoom-focus-right") ("zoom-focus-style"))))
+	  ("x-zoom-slider") ("y->position") ("y-bounds")
+	  ("y-position-slider") ("y-zoom-slider") ("yes-or-no?")
+	  ("zero-pad") ("zoom-color") ("zoom-focus-active")
+	  ("zoom-focus-left") ("zoom-focus-middle") ("zoom-focus-right")
+	  ("zoom-focus-style"))))
 
 (provide 'inf-snd)
 

@@ -3,8 +3,8 @@
 enum {GRAY_COLORMAP, HSV_COLORMAP, HOT_COLORMAP, COOL_COLORMAP, BONE_COLORMAP, COPPER_COLORMAP, PINK_COLORMAP, JET_COLORMAP, PRISM_COLORMAP,
       AUTUMN_COLORMAP, WINTER_COLORMAP, SPRING_COLORMAP, SUMMER_COLORMAP, COLORCUBE_COLORMAP, FLAG_COLORMAP, LINES_COLORMAP};
 
-static char *colormaps[] = {"gray","hsv","hot","cool","bone","copper","pink","jet","prism",
-			    "autumn","winter","spring","summer","colorcube","flag","lines"};
+static char *colormaps[] = {N_("gray"), N_("hsv"), N_("hot"), N_("cool"), N_("bone"), N_("copper"), N_("pink"), N_("jet"), N_("prism"),
+			    N_("autumn"), N_("winter"), N_("spring"), N_("summer"), N_("colorcube"), N_("flag"), N_("lines")};
 
 char **colormap_names(void) {return(colormaps);}
 
