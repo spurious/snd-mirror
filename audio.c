@@ -10290,8 +10290,6 @@ static void describe_audio_state_1(void)
 #define MAX_BUFS 12
 static char **bufs = NULL;
 static int in_buf = 0, out_buf = 0;
-/* TODO: minimize MAX_BUFS and check whether closed is needed */
-static int closed = 0;
 
 static OSStatus writer(AudioDeviceID inDevice, const AudioTimeStamp *inNow, 
 		       const void *InputData, const AudioTimeStamp *InputTime, 
@@ -10306,12 +10304,7 @@ static OSStatus writer(AudioDeviceID inDevice, const AudioTimeStamp *inNow,
 #if DEBUGGING
   fprintf(stderr,"dac %d ",out_buf);
 #endif
-  if (closed)
-    {
-      memset((void *)aplbuf, 0, abuf.mDataByteSize);
-      in_buf++;
-    }
-  else memmove((void *)aplbuf, (void *)sndbuf, abuf.mDataByteSize);
+  memmove((void *)aplbuf, (void *)sndbuf, abuf.mDataByteSize);
   out_buf++;
   if (out_buf >= MAX_BUFS) out_buf = 0;
   return(noErr);
@@ -10329,7 +10322,6 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
   OSStatus err = noErr;
   UInt32 sizeof_device, sizeof_int, sizeof_format, sizeof_bufsize;
   sizeof_device = sizeof(device);
-  closed = 0;
   err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &sizeof_device, (void *)(&device));
   if (err != noErr) 
     {
@@ -10413,7 +10405,7 @@ int mus_audio_write(int line, char *buf, int bytes)
     {
       bp = out_buf;
       sizeof_running = sizeof(UInt32);
-#if DEBUGGING(
+#if DEBUGGING
       fprintf(stderr,"wait at %d ",in_buf);
 #endif
       while (bp == out_buf)
@@ -10476,9 +10468,6 @@ int mus_audio_close(int line)
 	}
 
       in_buf = 0;
-      closed = 1;
-      while (in_buf != 6);
-
       err = AudioDeviceStop(device, (AudioDeviceIOProc)writer);
       if (err == noErr) 
 	err = AudioDeviceRemoveIOProc(device, (AudioDeviceIOProc)writer);

@@ -1283,7 +1283,11 @@ static void start_dac(snd_state *ss, int srate, int channels, int background)
       snd_dacp->srate = srate;
       snd_dacp->out_format = MUS_COMPATIBLE_FORMAT;
       if (snd_dacp->srate <= 0) snd_dacp->srate = 44100;
+#if MAC_OSX
+      snd_dacp->channels = 2;
+#else
       snd_dacp->channels = channels;
+#endif
       snd_dacp->frames = 256; /* just a first guess */
       snd_dacp->devices = 1;  /* just a first guess */
       snd_dacp->reverb_ring_frames = (int)(srate * reverb_control_decay(ss));

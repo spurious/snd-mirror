@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
 		      for (k = 0, n = 0; k < curframes; k++, n += 2) 
 			{
 			  obuf[n] = MUS_SAMPLE_TO_FLOAT(bufs[0][k]);
-			  obuf[n + 1] = obuf[n];
+			  obuf[n + 1] = 0.0;
 			}
 		    }
 		  else
@@ -200,9 +200,9 @@ int main(int argc, char *argv[])
 		      for (k = 0, n = 0; k < curframes; k++, n += 4) 
 			{
 			  obuf[n] = MUS_SAMPLE_TO_FLOAT(bufs[0][k]);
-			  obuf[n + 1] = obuf[n];
+			  obuf[n + 1] = 0.0;
 			  obuf[n + 2] = obuf[n];
-			  obuf[n + 3] = obuf[n];
+			  obuf[n + 3] = 0.0;
 			}
 		    }
 		}
@@ -266,7 +266,11 @@ int main(int argc, char *argv[])
 #endif
 		  if (afd == -1) break;
 		}
+#if MAC_OSX
+	      outbytes = 4096;
+#else
 	      outbytes = curframes * out_chans * sample_size;
+#endif
 	      mus_audio_write(afd, (char *)obuf, outbytes);
 	    }
 	  if (afd != -1) mus_audio_close(afd);
