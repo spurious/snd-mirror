@@ -493,6 +493,32 @@ const char *mus_data_format_name(int format)
     }
 }
 
+const char *mus_short_data_format_name(int format)
+{
+  switch (format)
+    {
+    case MUS_BSHORT:  return("bshort");         break;
+    case MUS_MULAW:   return("mulaw");          break;
+    case MUS_BYTE:    return("byte");           break;
+    case MUS_BFLOAT:  return("bfloat");         break;
+    case MUS_BINT:    return("bint");           break;
+    case MUS_ALAW:    return("alaw");           break;
+    case MUS_UBYTE:   return("char");           break;
+    case MUS_B24INT:  return("bint24");         break;
+    case MUS_BDOUBLE: return("bdouble");        break;
+    case MUS_LSHORT:  return("lshort");         break;
+    case MUS_LINT:    return("lint");           break;
+    case MUS_LFLOAT:  return("lfloat");         break;
+    case MUS_LDOUBLE: return("ldouble");        break;
+    case MUS_UBSHORT: return("ubshort");        break;
+    case MUS_ULSHORT: return("ulshort");        break;
+    case MUS_L24INT:  return("lint24");         break;
+    case MUS_BINTN:   return("bint");           break;
+    case MUS_LINTN:   return("lint");           break;
+    default:          return("unknown format"); break;
+    }
+}
+
 static const char *any_data_format_name(int sndlib_format)
 {
   if (MUS_DATA_FORMAT_OK(sndlib_format))

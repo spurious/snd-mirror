@@ -412,6 +412,21 @@ void init_sound_file_extensions(void)
 
 static int just_sounds_happy(char *filename);
 
+int is_sound_file(char *name)
+{
+  int i;
+  char *dot, *sp;
+  dot = NULL;
+  for (sp = name; (*sp) != '\0'; sp++) 
+    if ((*sp) == '.') 
+      dot = (++sp);
+  if (dot)
+    for (i = 0; i < sound_file_extensions_end; i++)
+      if (strcmp(dot, sound_file_extensions[i]) == 0)
+	return(1);
+  return(0);
+}
+
 dir *find_sound_files_in_dir (char *name)
 {
 #if (!HAVE_OPENDIR)

@@ -1107,6 +1107,7 @@ file_info *free_file_info(file_info *hdr);
 file_info *copy_header(char *fullname, file_info *ohdr);
 file_info *make_temp_header(char *fullname, int srate, int chans, int samples, char *caller);
 dir *free_dir (dir *dp);
+int is_sound_file(char *name);
 void init_sound_file_extensions(void);
 dir *find_sound_files_in_dir (char *name);
 dir *filter_sound_files(dir *dp, char *pattern);

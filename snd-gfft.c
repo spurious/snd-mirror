@@ -322,6 +322,16 @@ static void Dismiss_Transform_Callback(GtkWidget *w, gpointer context)
   gtk_widget_hide(transform_dialog);
 }
 
+static void Orient_Transform_Callback(GtkWidget *w, gpointer context)
+{
+  start_orientation_dialog(get_global_state(), 0, 0);
+}
+
+static void Color_Transform_Callback(GtkWidget *w, gpointer context)
+{
+  start_color_dialog(get_global_state(), 0, 0);
+}
+
 static void delete_transform_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(transform_dialog);
@@ -352,7 +362,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss)
   char *str;
   int i, need_callback = 0;
   GtkWidget *type_frame, *size_frame, *display_frame, *window_frame, *wavelet_frame, *help_button, *dismiss_button;
-  GtkWidget *type_scroller, *size_scroller, *window_scroller, *wavelet_scroller, *window_box;
+  GtkWidget *type_scroller, *size_scroller, *window_scroller, *wavelet_scroller, *window_box, *orient_button, *color_button;
 
   if (!transform_dialog)
     {
@@ -369,13 +379,23 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss)
 
       help_button = gtk_button_new_with_label(STR_Help);
       dismiss_button = gtk_button_new_with_label(STR_Dismiss);
+      color_button = gtk_button_new_with_label(STR_Color);
+      orient_button = gtk_button_new_with_label(STR_Orientation);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), dismiss_button, FALSE, TRUE, 10);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), color_button, FALSE, TRUE, 10);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), orient_button, FALSE, TRUE, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), help_button, FALSE, TRUE, 10);
       gtk_signal_connect(GTK_OBJECT(dismiss_button), "clicked", GTK_SIGNAL_FUNC(Dismiss_Transform_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(color_button), "clicked", GTK_SIGNAL_FUNC(Color_Transform_Callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(orient_button), "clicked", GTK_SIGNAL_FUNC(Orient_Transform_Callback), (gpointer)ss);
       gtk_signal_connect(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(Help_Transform_Callback), (gpointer)ss);
       set_pushed_button_colors(help_button, ss);
       set_pushed_button_colors(dismiss_button, ss);
+      set_pushed_button_colors(color_button, ss);
+      set_pushed_button_colors(orient_button, ss);
       gtk_widget_show(dismiss_button);
+      gtk_widget_show(color_button);
+      gtk_widget_show(orient_button);
       gtk_widget_show(help_button);
 
       outer_table = gtk_table_new(2, 3, FALSE);

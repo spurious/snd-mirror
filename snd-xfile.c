@@ -404,13 +404,65 @@ static Widget just_sounds_button = NULL;
 static int just_sounds_state = FALSE;
 static Widget play_selected_button = NULL;
 
+#if (XmVERSION > 1)
+static Widget open_dialog_info1 = NULL, open_dialog_info2 = NULL, open_dialog_frame = NULL;
+
+static void open_dialog_select_callback(Widget w, XtPointer context, XtPointer info)
+{
+  /* TODO: use this in File:Mix dialog too? */
+  XmString *strs;
+  char *filename;
+  XmString label;
+  char *buf;
+  char timestr[64];
+  time_t date;
+  ASSERT_WIDGET_TYPE(XmIsList(w), w);
+  XtVaGetValues(w, XmNselectedItems, &strs, NULL);
+  filename = (char *)XmStringUnparse(strs[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+  if ((filename) && (is_sound_file(filename)))
+    {
+      XtManageChild(play_selected_button);
+      buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+      mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s: %d chan%s, %d Hz, %.3f secs",
+		   filename_without_home_directory(filename),
+		   mus_sound_chans(filename),
+		   (mus_sound_chans(filename) > 1) ? "s" : "",
+		   mus_sound_srate(filename),
+		   mus_sound_duration(filename));
+      label = XmStringCreateLocalized(buf);
+      XtVaSetValues(open_dialog_info1, XmNlabelString, label, NULL);
+      XmStringFree(label);
+      date = mus_sound_write_date(filename);
+#if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
+      strftime(timestr, 64, ", %d-%b-%Y", localtime(&date));
+#else
+      sprintf(timestr, "");
+#endif
+      mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s %s%s",
+		   mus_header_type_name(mus_sound_header_type(filename)),
+		   mus_short_data_format_name(mus_sound_data_format(filename)),
+		   timestr);
+      label = XmStringCreateLocalized(buf);
+      XtVaSetValues(open_dialog_info2, XmNlabelString, label, NULL);
+      XmStringFree(label);
+      FREE(buf);
+      if (!(XtIsManaged(open_dialog_frame))) XtManageChild(open_dialog_frame);
+    }
+  else
+    {
+      if (XtIsManaged(play_selected_button)) XtUnmanageChild(play_selected_button);
+      if (XtIsManaged(open_dialog_frame)) XtUnmanageChild(open_dialog_frame);
+    }
+}
+#endif
+
 void make_open_file_dialog(snd_state *ss, int read_only, int managed)
 {
   Widget w;
   Arg args[20];
   int n;
   XmString s1;
-  Widget wtmp = NULL, rc;
+  Widget wtmp = NULL, rc, rc1, rc2;
   file_dialog_read_only = read_only;
   if (!open_dialog) 
     {
@@ -428,17 +480,32 @@ void make_open_file_dialog(snd_state *ss, int read_only, int managed)
       set_dialog_widget(FILE_OPEN_DIALOG, open_dialog);
       XmStringFree(s1);
 
-      rc = XtVaCreateManagedWidget("filebuttons", 
+      rc1 = XtVaCreateManagedWidget("filebuttons", 
 				   xmRowColumnWidgetClass, open_dialog,
+				   XmNorientation, XmVERTICAL,
+				   NULL);
+      rc = XtVaCreateManagedWidget("filebuttons", 
+				   xmRowColumnWidgetClass, rc1,
 				   XmNorientation, XmHORIZONTAL,
 				   NULL);
       just_sounds_button = XtVaCreateManagedWidget(STR_Sound_Files_Only, xmToggleButtonWidgetClass, rc,
 						   XmNset, just_sounds_state,
 						   XmNalignment, XmALIGNMENT_BEGINNING,
 						   NULL);
-      play_selected_button = XtVaCreateManagedWidget("play selected sound", xmToggleButtonWidgetClass, rc,
-						   XmNalignment, XmALIGNMENT_END,
-						   NULL);
+      play_selected_button = XtVaCreateWidget("play selected sound", xmToggleButtonWidgetClass, rc,
+					      XmNalignment, XmALIGNMENT_END,
+					      NULL);
+#if (XmVERSION > 1)
+      open_dialog_frame = XtVaCreateWidget("", xmFrameWidgetClass, rc1);
+      rc2 = XtVaCreateManagedWidget("", 
+				    xmRowColumnWidgetClass, open_dialog_frame,
+				    XmNorientation, XmVERTICAL,
+				    NULL);
+      open_dialog_info1 = XtVaCreateManagedWidget("", xmLabelWidgetClass, rc2,
+						  NULL);
+      open_dialog_info2 = XtVaCreateManagedWidget("", xmLabelWidgetClass, rc2,
+						  NULL);
+#endif
       color_file_selection_box(open_dialog, ss);
 
       wtmp = XtNameToWidget(open_dialog, "Text");
@@ -459,6 +526,10 @@ void make_open_file_dialog(snd_state *ss, int read_only, int managed)
       XtAddCallback(just_sounds_button, XmNhelpCallback, just_sounds_help_Callback, (XtPointer)ss);
       XtAddCallback(play_selected_button, XmNvalueChangedCallback, play_selected_Callback, NULL);
       XtAddCallback(play_selected_button, XmNhelpCallback, play_selected_help_Callback, (XtPointer)ss);
+#if (XmVERSION > 1)
+      XtAddCallback(XmFileSelectionBoxGetChild(open_dialog, XmDIALOG_LIST),
+		    XmNbrowseSelectionCallback, open_dialog_select_callback, NULL);
+#endif
       add_dialog(ss, open_dialog);
     }
   if (new_file_written) 
@@ -523,7 +594,7 @@ static void file_data_Type_Callback(Widget w, XtPointer context, XtPointer info)
   file_data *fd;
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
   XtVaGetValues(w, XmNuserData, &fd, NULL);
-  pos = cbs->item_position-1;
+  pos = cbs->item_position - 1;
   if (header_type_from_position(pos) != fd->current_type)
     {
       set_header_type_and_format_from_position(fd, pos);

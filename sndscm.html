@@ -1105,7 +1105,6 @@ corresponding code in extsnd.html.  These include:
   <em class=def><a name="exwindowsamples">window-samples</a></em> snd chn
   <em class=def><a name="exdisplayenergy">display-energy</a></em> snd chn y0 y1
   <em class=def><a name="exwindowrms">window-rms</a></em>
-  <em class=def><a name="exunsavededits">unsaved-edits?</a></em> ind
   <em class=def><A NAME="exnostartupfile">no-startup-file></a></em> ind file
   <em class=def><A NAME="exfftpeak">fft-peak</a></em> snd chn scale
 </pre>
@@ -1121,8 +1120,6 @@ corresponding code in extsnd.html.  These include:
 displayed in the current window for <i>snd</i>'s channel <i>chn</i>.
 <i>display-energy</i> is a graph-hook function to display the time domain data squared.
 <i>window-rms</i> returns the rms of the data in currently selected graph window.
-<i>unsaved-edits?</i> is an exit-hook function that returns #t if there are
-any open sounds with unsaved edits.
 <i>no-startup-file></i> is a start-hook function that causes Snd to exit immediately
 if a file is specified on Snd's invocation line, but that file doesn't exist.
 <i>fft-peak</i> is a transform-hook function that returns the peak spectral magnitude.
@@ -1201,6 +1198,8 @@ convenient if they were in one file.
   <em class=def><a name="exnormalizedmix">normalized-mix</a></em> filename beg in-chan snd chn
   <em class=def><a name="exenvelopedmix">enveloped-mix</a></em> filename beg env
   <em class=def><A NAME="exenvelopedmix1">enveloped-mix-1</a></em> filename beg env
+
+  <em class=def><a name="exunsavededits">check-for-unsaved-edits</a></em> on
 </pre>
 
 <p>The graph-style functions provide accessors for the channel-specific
@@ -1329,6 +1328,11 @@ amplitude envelope over the mixed-in data.
 <pre>
 (enveloped-mix "pistol.snd" 0 '(0 0 1 1 2 0))
 </pre>
+<p><i>check-for-unsaved-edits</i> adds functions to the exit-hook and close-hook to check
+for unsaved edits before exiting Snd or closing a file.  If its argument is #f, it removes
+those hooks.
+</p>
+
 
 
 <A NAME="fmvdoc"></a><span class=box><h2>fmv.scm</h2></span>
@@ -1932,6 +1936,7 @@ the lowpass filter coefficient in the reverberator.
 the fm-violin (fmv.scm) running (interpreted!) in "real-time".
 <b>make-pixmap</b> turns xpm-style description into pixmap.
 <b>display-scanned-synthesis</b> opens a pane for experimenting with scanned synthesis.
+<b>disable-control-panel</b> does away with the control panel.
 </p>
 
 

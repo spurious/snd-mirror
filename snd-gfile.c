@@ -211,6 +211,54 @@ static void file_open_dialog_delete(GtkWidget *w, GdkEvent *event, gpointer cont
   gtk_widget_hide(open_dialog);
 }
 
+#if (!HAVE_GTKEXTRA)
+  static GtkWidget *open_dialog_frame, *open_dialog_info1, *open_dialog_info2, *open_dialog_vbox;
+
+static void open_dialog_select_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+{
+  char *filename;
+  char *buf;
+  char timestr[64];
+  time_t date;
+  filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(open_dialog));
+  if ((filename) && (is_sound_file(filename)))
+    {
+      buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+      mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s: %d chan%s, %d Hz, %.3f secs",
+		   filename_without_home_directory(filename),
+		   mus_sound_chans(filename),
+		   (mus_sound_chans(filename) > 1) ? "s" : "",
+		   mus_sound_srate(filename),
+		   mus_sound_duration(filename));
+      gtk_label_set_text(GTK_LABEL(open_dialog_info1), buf);
+      date = mus_sound_write_date(filename);
+#if (!defined(HAVE_CONFIG_H)) || defined(HAVE_STRFTIME)
+      strftime(timestr, 64, ", %d-%b-%Y", localtime(&date));
+#else
+      sprintf(timestr, "");
+#endif
+      mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s %s%s",
+		   mus_header_type_name(mus_sound_header_type(filename)),
+		   mus_short_data_format_name(mus_sound_data_format(filename)),
+		   timestr);
+      gtk_label_set_text(GTK_LABEL(open_dialog_info2), buf);
+      FREE(buf);
+      gtk_widget_show(open_dialog_frame);
+      gtk_widget_show(open_dialog_vbox);
+      gtk_widget_show(open_dialog_info1);
+      gtk_widget_show(open_dialog_info2);
+    }
+  else
+    {
+      gtk_widget_hide(open_dialog_frame);
+      gtk_widget_hide(open_dialog_vbox);
+      gtk_widget_hide(open_dialog_info1);
+      gtk_widget_hide(open_dialog_info2);
+    }
+}
+
+#endif
+
 void make_open_file_dialog(snd_state *ss, int read_only, int managed)
 {
   file_dialog_read_only = read_only;
@@ -221,6 +269,28 @@ void make_open_file_dialog(snd_state *ss, int read_only, int managed)
 					       (GtkSignalFunc)file_open_dialog_ok,
 					       (GtkSignalFunc)file_open_dialog_dismiss);
       set_dialog_widget(FILE_OPEN_DIALOG, open_dialog);
+#if (!HAVE_GTKEXTRA)
+      {
+	open_dialog_frame = gtk_frame_new(NULL);
+	gtk_box_pack_start(GTK_BOX(GTK_FILE_SELECTION(open_dialog)->main_vbox), open_dialog_frame, TRUE, TRUE, 0);
+	gtk_frame_set_shadow_type(GTK_FRAME(open_dialog_frame), GTK_SHADOW_ETCHED_IN);
+
+	open_dialog_vbox = gtk_vbox_new(FALSE, 0);
+	gtk_container_add(GTK_CONTAINER(open_dialog_frame), open_dialog_vbox);
+
+	open_dialog_info1 = gtk_label_new(NULL);
+	gtk_box_pack_start(GTK_BOX(open_dialog_vbox), open_dialog_info1, TRUE, TRUE, 2);
+	
+	open_dialog_info2 = gtk_label_new(NULL);
+	gtk_box_pack_start(GTK_BOX(open_dialog_vbox), open_dialog_info2, TRUE, TRUE, 2);
+
+	gtk_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION(open_dialog)->file_list), 
+			   "select_row", 
+			   GTK_SIGNAL_FUNC(open_dialog_select_callback), 
+			   NULL);
+      }
+#endif
+
     }
   if (managed) gtk_widget_show(open_dialog);
 }

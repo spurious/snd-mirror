@@ -7,6 +7,7 @@
 ;;; (create-fmv-dialog) for "real-time" control of the fm-violin in fmv.scm
 ;;; (make-pixmap strs) turns xpm-style description into pixmap
 ;;; (display-scanned-synthesis) opens a scanned-synthesis viewer
+;;; (disable-control-panel) does away with the control panel
 
 
 (if (not (provided? 'xm))

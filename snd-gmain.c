@@ -607,7 +607,8 @@ void snd_doit(snd_state *ss, int argc, char **argv)
       gtk_widget_show(SOUND_PANE(ss));
     }
   gtk_widget_show(MAIN_PANE(ss));
-  if (!batch) gtk_widget_show (MAIN_SHELL(ss));
+  gtk_widget_show (MAIN_SHELL(ss));
+
 #ifndef SND_AS_WIDGET
   ss->sgx->mainwindow = ss->sgx->mainshell->window;
 #else
@@ -615,6 +616,8 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 #endif
 
   setup_gcs(ss);
+
+  if (batch) gtk_widget_hide(MAIN_SHELL(ss));
 
   tm = (startup_state *)CALLOC(1, sizeof(startup_state));
   tm->slice = 0;

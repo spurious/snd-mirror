@@ -11,6 +11,8 @@
 ;;; snd-debug
 ;;; read-listener-line
 ;;; snd-trace
+;;; check-for-unsaved-edits
+
 
 
 ;;; -------- accessors for graph-style fields
@@ -408,3 +410,48 @@
 	(set-current-error-port stderr)))))
 
        
+
+;;; -------- check-for-unsaved-edits
+;;;
+;;; (check-for-unsaved-edits on): if 'on', add a function to the close-hook and exit-hook
+;;;    that asks the user for confirmation before closing a sound if there are unsaved
+;;;    edits on that sound.  if 'on' is #f, remove those hooks.
+
+
+(define (unsaved-edits-at-close? ind)
+  "(unsaved-edits? ind) -> #t if there are any unsaved edits in sound ind"
+  (letrec ((unsaved-edits-in-chan? 
+	    (lambda (chan)
+	      (if (>= chan (channels ind))
+		  #f
+		  (let ((eds (edits ind chan)))
+		    (if (> (car eds) 0)
+			(not (yes-or-no? ;that is, "yes" => exit
+			      (format #f "~A has ~D unsaved edit~P in channel ~D, exit anyway? " 
+				      (short-file-name ind) 
+				      (car eds)
+				      (car eds)
+				      chan)))
+			(unsaved-edits-in-chan? (1+ chan))))))))
+    (unsaved-edits-in-chan? 0)))
+
+(define (unsaved-edits-at-exit?)
+  (letrec ((unsaved-edits-at-exit-1?
+	    (lambda (snds)
+	      (and snds
+		   (or (unsaved-edits-at-close? (car snds))
+		       (unsaved-edits-at-exit-1? (cdr snds)))))))
+    (unsaved-edits-at-exit-1? (sounds))))
+
+(define check-for-unsaved-edits
+  (lambda arg
+    (if (or (null? arg)
+	    (car arg))
+	(begin
+	  (if (not (member unsaved-edits-at-exit? (hook->list exit-hook)))
+	      (add-hook! exit-hook unsaved-edits-at-exit?))
+	  (if (not (member unsaved-edits-at-close? (hook->list close-hook)))
+	      (add-hook! close-hook unsaved-edits-at-close?)))
+	(begin
+	  (remove-hook! exit-hook unsaved-edits-at-exit?)
+	  (remove-hook! close-hook unsaved-edits-at-close?)))))

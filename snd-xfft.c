@@ -443,6 +443,16 @@ static void Dismiss_Transform_Callback(Widget w, XtPointer context, XtPointer in
   XtUnmanageChild(transform_dialog);
 }
 
+static void Orient_Transform_Callback(Widget w, XtPointer context, XtPointer info)
+{
+  start_orientation_dialog((snd_state *)context, 0, 0);
+}
+
+static void Color_Transform_Callback(Widget w, XtPointer context, XtPointer info)
+{
+  start_color_dialog((snd_state *)context, 0, 0);
+}
+
 static void Help_Transform_Callback(Widget w, XtPointer context, XtPointer info)
 {
   transform_dialog_help((snd_state *)context);
@@ -450,7 +460,7 @@ static void Help_Transform_Callback(Widget w, XtPointer context, XtPointer info)
 
 Widget fire_up_transform_dialog(snd_state *ss)
 {
-  XmString xhelp, xdismiss, xtitle, bstr;
+  XmString xhelp, xdismiss, xtitle, bstr, xorient, xcolor;
   Arg args[32];
   XmString sizes[NUM_TRANSFORM_SIZES];
   XmString *types;
@@ -465,7 +475,7 @@ Widget fire_up_transform_dialog(snd_state *ss)
                   display_frame, display_form, display_label,
                   window_frame, window_form, window_label,
                   wavelet_frame, wavelet_form, wavelet_label,
-                  graph_frame, graph_form;
+                  graph_frame, graph_form, color_button;
     
   if (!transform_dialog)
     {
@@ -479,10 +489,13 @@ Widget fire_up_transform_dialog(snd_state *ss)
       xdismiss = XmStringCreate(STR_Dismiss, XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
       xhelp = XmStringCreate(STR_Help, XmFONTLIST_DEFAULT_TAG);
       xtitle = XmStringCreate(STR_Transform_Options, XmFONTLIST_DEFAULT_TAG);
+      xorient = XmStringCreate(STR_Orientation, XmFONTLIST_DEFAULT_TAG);
+      xcolor = XmStringCreate(STR_Color, XmFONTLIST_DEFAULT_TAG);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      XtSetArg(args[n], XmNcancelLabelString, xdismiss); n++;
+      XtSetArg(args[n], XmNcancelLabelString, xorient); n++;
+      XtSetArg(args[n], XmNokLabelString, xdismiss); n++;
       XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
       XtSetArg(args[n], XmNautoUnmanage, FALSE); n++;
       XtSetArg(args[n], XmNdialogTitle, xtitle); n++;
@@ -493,16 +506,28 @@ Widget fire_up_transform_dialog(snd_state *ss)
       set_dialog_widget(TRANSFORM_DIALOG, transform_dialog);
       add_dialog(ss, transform_dialog);
 
-      XtAddCallback(transform_dialog, XmNcancelCallback, Dismiss_Transform_Callback, ss);
+      XtAddCallback(transform_dialog, XmNcancelCallback, Orient_Transform_Callback, ss);
+      XtAddCallback(transform_dialog, XmNokCallback, Dismiss_Transform_Callback, ss);
       XtAddCallback(transform_dialog, XmNhelpCallback, Help_Transform_Callback, ss);
       XmStringFree(xhelp);
       XmStringFree(xdismiss);
       XmStringFree(xtitle);
+      XmStringFree(xorient);
+      XmStringFree(xcolor);
       if (!(ss->using_schemes))
 	{
 	  XtVaSetValues(XmMessageBoxGetChild(transform_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(transform_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(transform_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	}
+      n = 0;
+      if (!(ss->using_schemes)) 
+	{
+	  XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
+	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
+	}
+      color_button = XtCreateManagedWidget(STR_Color, xmPushButtonWidgetClass, transform_dialog, args, n);
+      XtAddCallback(color_button, XmNactivateCallback, Color_Transform_Callback, ss);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}

@@ -146,7 +146,8 @@
 (load "hooks.scm")
 ;(reset-all-hooks)
 
-(if (> (length (script-args)) 0)
+(if (and (> (length (script-args)) 0)
+	 (> (script-arg) 0))
     (let ((arg (script-arg))
 	  (args (script-args)))
       (if (not (string=? (list-ref args (1- arg)) "-l")) 

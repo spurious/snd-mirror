@@ -206,31 +206,6 @@
       (sqrt (/ (dot-product data data) len)))))
 
 
-(define unsaved-edits?
-  (lambda (ind)
-    "(unsaved-edits? ind) -> #t if there are unsaved edits in sound ind"
-    (letrec ((unsaved-edits-in-chan? 
-	      (lambda (chan)
-		(if (>= chan (channels ind))
-		    #f
-		    (let ((eds (edits ind chan)))
-		      (if (> (car eds) 0)
-			  (not (yes-or-no? ;that is, "yes" => exit
-				(format #f "~A has ~D unsaved edit~P in channel ~D, exit anyway? " 
-					(short-file-name ind) 
-					(vector-ref eds 0)
-					(vector-ref eds 0)
-					chan)))
-			  (unsaved-edits-in-chan? (1+ chan))))))))
-      (if (< ind (max-sounds))
-	  (or (and (sound? ind) 
-		   (unsaved-edits-in-chan? 0))
-	      (unsaved-edits? (+ ind 1)))
-	  #f))))
-
-;(add-hook! exit-hook (lambda () (report-in-minibuffer "") (unsaved-edits? 0)))
-
-
 (define no-startup-file?
   (lambda (ind file)
     "(no-startup-file?) is intended as a start-hook procedure; if a file is specified in the

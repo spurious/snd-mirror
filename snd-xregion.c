@@ -480,6 +480,8 @@ static void make_region_dialog(snd_state *ss)
       id = stack_position_to_id(0);
       reg_sp = (snd_info *)CALLOC(1, sizeof(snd_info));
       reg_sp->nchans = 1;
+      reg_sp->inuse = 1;
+      reg_sp->active = 1;
       reg_sp->allocated_chans = 1;
       reg_sp->chans = (chan_info **)CALLOC(1, sizeof(chan_info *));
       reg_sp->sx_scroll_max = 100;
