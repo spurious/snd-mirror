@@ -286,6 +286,12 @@ static gint minibuffer_key_callback(GtkWidget *w, GdkEventKey *event, gpointer d
       gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "key_press_event");
       return(TRUE);
     }
+  if (((event->keyval == snd_K_g) || (event->keyval == snd_K_G)) && 
+      (event->state & snd_ControlMask))
+    {
+      clear_minibuffer(sp);
+      return(TRUE);
+    }
   return(FALSE);
 }
 
@@ -1270,7 +1276,7 @@ void reflect_amp_env_in_progress(snd_info *sp)
   if (info_sep) gtk_widget_hide(info_sep);
 }
 
-static gint Close_Sound_Dialog(GtkWidget *w, GdkEvent *event, gpointer context)
+static gint close_sound_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
   if (sp) snd_close_file(sp, sp->state);
@@ -1370,7 +1376,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 	  gtk_window_set_policy(GTK_WINDOW(sx->dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
 	  gtk_container_add(GTK_CONTAINER(sx->dialog), sw[W_pane]);
 	  gtk_widget_show(sx->dialog);
-	  gtk_signal_connect(GTK_OBJECT(sx->dialog), "delete_event", GTK_SIGNAL_FUNC(Close_Sound_Dialog), (gpointer)sp);
+	  gtk_signal_connect(GTK_OBJECT(sx->dialog), "delete_event", GTK_SIGNAL_FUNC(close_sound_dialog), (gpointer)sp);
 	}
       else
 	{

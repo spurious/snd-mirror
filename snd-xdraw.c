@@ -732,7 +732,7 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNbottomWidget, XmMessageBoxGetChild(ccd->dialog, XmDIALOG_SEPARATOR)); n++;
-      mainform = sndCreateFormWidget("formd", ccd->dialog, args, n);
+      mainform = XtCreateManagedWidget("formd", xmFormWidgetClass, ccd->dialog, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -859,7 +859,7 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNset, color_inverted(ss)); n++;
       xinvert = XmStringCreate(STR_invert, XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNlabelString, xinvert); n++;
-      ccd->invert = sndCreateToggleButtonWidget(STR_invert, mainform, args, n);
+      ccd->invert = make_togglebutton_widget(STR_invert, mainform, args, n);
       XtAddCallback(ccd->invert, XmNvalueChangedCallback, invert_color_callback, ccd);
       XmStringFree(xinvert);
       if (color_scale(ss) != 1.0)
@@ -1223,7 +1223,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNbottomWidget, XmMessageBoxGetChild(oid->dialog, XmDIALOG_SEPARATOR)); n++;
-      mainform = sndCreateFormWidget("formd", oid->dialog, args, n);
+      mainform = XtCreateManagedWidget("formd", xmFormWidgetClass, oid->dialog, args, n);
       
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -1233,7 +1233,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
-      leftbox = sndCreateRowColumnWidget("leftb", mainform, args, n);
+      leftbox = XtCreateManagedWidget("leftb", xmRowColumnWidgetClass, mainform, args, n);
       
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -1243,7 +1243,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
-      rightbox = sndCreateRowColumnWidget("rightb", mainform, args, n);
+      rightbox = XtCreateManagedWidget("rightb", xmRowColumnWidgetClass, mainform, args, n);
       
       /* left box */
       n = 0;

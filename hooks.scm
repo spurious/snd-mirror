@@ -3,6 +3,7 @@
 ;;; -------- snd-hooks
 
 (define (snd-hooks)
+  "list of all global (not channel-specific) hooks"
   (list after-graph-hook lisp-graph-hook before-transform-hook mix-position-changed-hook stop-playing-channel-hook save-hook mus-error-hook
 	mouse-enter-graph-hook mouse-leave-graph-hook open-raw-sound-hook select-channel-hook after-open-hook close-hook drop-hook
 	just-sounds-hook mark-click-hook mark-drag-hook mix-amp-changed-hook mix-speed-changed-hook name-click-hook open-hook
@@ -13,6 +14,7 @@
 	mark-hook previous-files-select-hook dac-hook stop-dac-hook stop-playing-selection-hook after-apply-hook before-apply-hook))
 
 (define (reset-all-hooks)
+  "remove all hook functions"
   (for-each 
    (lambda (n)
      (reset-hook! n))

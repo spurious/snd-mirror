@@ -369,60 +369,6 @@ static Pixmap device_icon(int device)
 
 /* -------------------------------- VU METER -------------------------------- */
 
-static XFontStruct *get_vu_font(snd_state *ss, Float size)
-{
-  char font_name[LABEL_BUFFER_SIZE];
-  int font_size;
-  char *vu_font_name;
-  XFontStruct *label_font;
-  font_size = (int)(size * 12 * vu_font_size(ss));
-  if (font_size < 5) font_size = 5;
-  vu_font_name = vu_font(ss);
-  if (!vu_font_name)
-    {
-      if (size < 0.75) 
-#ifndef SGI
-	vu_font_name = "fixed";
-#else
-        vu_font_name = "courier";
-#endif
-      else
-	{
-	  if (size < 1.25) 
-	    vu_font_name = "courier";
-	  else vu_font_name = "times";
-	}
-    }
-  mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-%s-%s-r-*-*-%d-*-*-*-*-*-*",
-	  vu_font_name,
-	  (font_size > 10) ? "bold" : "*",
-	  font_size);
-  
-  label_font = XLoadQueryFont(MAIN_DISPLAY(ss), font_name);
-  if (!(label_font))
-    {
-      mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-%s-*-*-*-*-%d-*-*-*-*-*-*", vu_font_name, font_size);
-      label_font = XLoadQueryFont(MAIN_DISPLAY(ss), font_name);
-      if (!(label_font))
-	{
-	  mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-courier-*-*-*-*-%d-*-*-*-*-*-*", font_size);
-	  label_font = XLoadQueryFont(MAIN_DISPLAY(ss), font_name);
-	  while (!(label_font))
-	    {
-	      mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-*-*-*-*-*-%d-*-*-*-*-*-*", font_size);
-	      label_font = XLoadQueryFont(MAIN_DISPLAY(ss), font_name);
-	      font_size++;
-	      if (font_size > 60) 
-		{
-		  label_font = XLoadQueryFont(MAIN_DISPLAY(ss), "-*-*-*-*-*-*-*-*-*-*-*-*-*");
-		  break;
-		}
-	    }
-	}
-    }
-  return(label_font);
-}
-
 #if HAVE_XPM
 static int allocate_meter_2(Widget w, vu_label *vu)
 {
@@ -1136,11 +1082,8 @@ static void trigger_help_callback(Widget w, XtPointer context, XtPointer info)
   snd_state *ss = (snd_state *)context;
   snd_help_with_wrap(ss,
 		     "Record Trigger",
-"This scale sets the auto-record trigger \
-value.  If it is non-zero, when you push the \
-'Rp->Triggered Record' button, Snd waits until it \
-receives data above that value before starting \
-the actual recording.");
+"This scale sets the auto-record trigger value.  If it is non-zero, when you push the \
+'Rp->Triggered Record' button, Snd waits until it receives data above that value before starting the actual recording.");
 }
 
 static void make_trigger_label(Float val)
@@ -1336,15 +1279,10 @@ static void save_audio_settings_help_callback(Widget w, XtPointer context, XtPoi
   snd_state *ss = (snd_state *)context;
   snd_help_with_wrap(ss,
 		     "Save Audio Settings",
-"Normally, Snd saves the state of the audio hardware \
-(the 'mixer' in Linux jargon) before opening the \
-recorder window, then restores it upon closing that \
-window.  This means that any changes you make via \
-the sliders will be erased upon exit.  To save the \
-current state, press this button.  The mixer state \
-will be written to the file .snd-mixer which can be \
-deleted to cancel the save.  This file will also be \
-read by CLM, someday.");	   
+"Normally, Snd saves the state of the audio hardware (the 'mixer' in Linux jargon) before opening the \
+recorder window, then restores it upon closing that window.  This means that any changes you make via \
+the sliders will be erased upon exit.  To save the current state, press this button.  The mixer state \
+will be written to the file .snd-mixer which can be deleted to cancel the save.  This file will also be read by CLM, someday.");	   
 }
 #endif
 
@@ -1387,11 +1325,8 @@ static void rec_size_help_callback(Widget w, XtPointer context, XtPointer info)
   snd_state *ss = (snd_state *)context;
   snd_help_with_wrap(ss,
 		     "Record Input Buffer Size",
-"This field sets the size of the recorder's input \
-buffers.  If you are getting clicks, and have already \
-tried everything else (you're writing to a local disk,  \
-in the host's native data format), try goofing around \
-with this number.");
+"This field sets the size of the recorder's input buffers.  If you are getting clicks, and have already \
+tried everything else (you're writing to a local disk, in the host's native data format), try goofing around with this number.");
 }
 
 static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pane, int ndevs)
@@ -1417,7 +1352,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  file_form = sndCreateFormWidget("file-data", file_pane, args, n);
+  file_form = XtCreateManagedWidget("file-data", xmFormWidgetClass, file_pane, args, n);
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->black); n++;}
@@ -1438,7 +1373,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-  ff_form = sndCreateFormWidget("ff-form", file_form, args, n);
+  ff_form = XtCreateManagedWidget("ff-form", xmFormWidgetClass, file_form, args, n);
 
   n = 0;
   /* if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->red); n++;} */
@@ -1461,7 +1396,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNleftWidget, file_label); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   if (snd_strlen(rp->output_file) > 0) {XtSetArg(args[n], XmNvalue, rp->output_file); n++;}
-  file_text = sndCreateTextFieldWidget(ss, "text", ff_form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
+  file_text = make_textfield_widget(ss, "text", ff_form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
   XtAddCallback(file_text, XmNhelpCallback, file_label_help_callback, ss);
 
   n = 0;
@@ -1482,7 +1417,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  recdat = sndCreateFileDataForm(ss, ff_form, "data-form", args, n, TRUE, rp->output_header_type, rp->out_format, FALSE);
+  recdat = make_file_data_panel(ss, ff_form, "data-form", args, n, TRUE, rp->output_header_type, rp->out_format, FALSE);
   XtVaGetValues(recdat->comment_text, XmNy, &pane_max, NULL);
   XtAddCallback(recdat->srate_text, XmNactivateCallback, srate_changed_callback, (void *)ss); /* this is a no-op -- textfield widget is not activatable */
 #if defined(SGI)
@@ -1535,7 +1470,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
   XtSetArg(args[n], XmNcolumns, 6); n++;
-  rec_size_text = sndCreateTextFieldWidget(ss, "rectext", file_form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
+  rec_size_text = make_textfield_widget(ss, "rectext", file_form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
   XtAddCallback(rec_size_text, XmNhelpCallback, rec_size_help_callback, ss);
   XtAddCallback(rec_size_text, XmNactivateCallback, rec_size_changed_callback, (void *)ss);
   mus_snprintf(timbuf, TIME_STR_SIZE, "%d", rp->buffer_size);
@@ -1620,7 +1555,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNleftWidget, ff_sep1); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNshadowThickness, 4); n++;
-  button_frame = sndCreateFrameWidget("button-frame", file_form, args, n);
+  button_frame = XtCreateManagedWidget("button-frame", xmFrameWidgetClass, file_form, args, n);
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
@@ -1630,7 +1565,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
   XtSetArg(args[n], XmNspacing, 0); n++;
-  button_holder = sndCreateRowColumnWidget("button-holder", button_frame, args, n);
+  button_holder = XtCreateManagedWidget("button-holder", xmRowColumnWidgetClass, button_frame, args, n);
   XtAddCallback(button_holder, XmNhelpCallback, button_holder_help_callback, ss);
 
   /* load up the box of panel on-buttons and various other settings (autoload for now) */
@@ -1658,12 +1593,12 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
       if ((rp->systems == 1) || (!(recorder_input_device(rp->ordered_devices[i]))))
 	name = recorder_device_name(rp->ordered_devices[i]);
       else name = recorder_system_and_device_name(rp->ordered_systems[i], rp->ordered_devices[i]);
-      device_buttons[i] = sndCreateToggleButtonWidget(name, button_holder, args, n);
+      device_buttons[i] = make_togglebutton_widget(name, button_holder, args, n);
       XtAddCallback(device_buttons[i], XmNhelpCallback, button_holder_help_callback, ss);
       XtAddCallback(device_buttons[i], XmNvalueChangedCallback, device_button_callback, (XtPointer)all_panes[i]);
       XmToggleButtonSetState(device_buttons[i], TRUE, FALSE); 
     }
-  autoload_file = sndCreateToggleButtonWidget(STR_Autoload_Recording, button_holder, args, init_n);
+  autoload_file = make_togglebutton_widget(STR_Autoload_Recording, button_holder, args, init_n);
   device_buttons[ndevs] = autoload_file;
   /* we assume this is last in the device_buttons list in sensitize_control_buttons */
   rp->autoload_button = ndevs;
@@ -1671,7 +1606,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
   XtAddCallback(autoload_file, XmNvalueChangedCallback, autoload_file_callback, ss);
   XmToggleButtonSetState(autoload_file, rp->autoload, FALSE); 
 #if (HAVE_OSS || HAVE_ALSA)
-  save_audio_settings = sndCreateToggleButtonWidget(STR_Save_Audio_Settings, button_holder, args, n);
+  save_audio_settings = make_togglebutton_widget(STR_Save_Audio_Settings, button_holder, args, n);
   XtAddCallback(save_audio_settings, XmNvalueChangedCallback, save_audio_settings_callback, NULL);
   XtAddCallback(save_audio_settings, XmNhelpCallback, save_audio_settings_help_callback, ss);
 #endif
@@ -1937,20 +1872,15 @@ static void button_matrix_help_callback(Widget w, XtPointer context, XtPointer i
 {
   snd_state *ss = (snd_state *)context;
   snd_help_with_wrap(ss, "Channel Matrix",
-"This set of buttons controls which amplitude sliders \
-are visible in the pane.  To conserve screen space, only \
-the most commonly used sliders are visible by default, but \
-you can press the button corresponding to the slider you want \
-at any time.  It is also possible to drag the mouse through \
-a row or column, setting (button 1) or unsetting (button 2) \
-buttons as you go.  Click in the corner (the '/' label) to \
-set all (button 1) or unset all (button 2). Similarly, click \
-above a column or to the left of a row to set (button 1) or \
-unset (button 2) the entire column or row.  Control-click in \
+"This set of buttons controls which amplitude sliders are visible in the pane.  To conserve screen space, only \
+the most commonly used sliders are visible by default, but you can press the button corresponding to the slider you want \
+at any time.  It is also possible to drag the mouse through a row or column, setting (button 1) or unsetting (button 2) \
+buttons as you go.  Click in the corner (the '/' label) to set all (button 1) or unset all (button 2). Similarly, click \
+above a column or to the left of a row to set (button 1) or unset (button 2) the entire column or row.  Control-click in \
 the corner to return to the default settings.");
 }
 
-static Widget sndCreateRecorderSlider(snd_state *ss, PANE *p, AMP *a, Widget last_slider, int input)
+static Widget make_recorder_slider(snd_state *ss, PANE *p, AMP *a, Widget last_slider, int input)
 {
   int n;
   Arg args[32];
@@ -1979,7 +1909,7 @@ static Widget sndCreateRecorderSlider(snd_state *ss, PANE *p, AMP *a, Widget las
   s1 = XmStringCreate("     ", "button_font");
   XtSetArg(args[n], XmNlabelString, s1); n++;
 #endif
-  a->label = sndCreatePushButtonWidget(gain_channel_name(p->in_chans, p->out_chans, input, a->device_in_chan, a->out), 
+  a->label = make_pushbutton_widget(gain_channel_name(p->in_chans, p->out_chans, input, a->device_in_chan, a->out), 
 				       p->pane, args, n);
   XtAddCallback(a->label, XmNactivateCallback, record_amp_click_callback, a);
   XtAddCallback(a->label, XmNhelpCallback, amp_slider_help_callback, a->wd);
@@ -2007,7 +1937,7 @@ static Widget sndCreateRecorderSlider(snd_state *ss, PANE *p, AMP *a, Widget las
   XtSetArg(args[n], XmNshadowThickness, 0); n++;
   XtSetArg(args[n], XmNhighlightThickness, 0); n++;
   XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
-  a->number = sndCreatePushButtonWidget ("amp-number", p->pane, args, n);
+  a->number = make_pushbutton_widget ("amp-number", p->pane, args, n);
   /* this could be the snd-xsnd control panel case as well */
   XtAddCallback(a->number, XmNactivateCallback, record_amp_click_callback, a);
   XtAddCallback(a->number, XmNhelpCallback, amp_slider_help_callback, a->wd);
@@ -2072,7 +2002,7 @@ static void handle_matrix_slider(Widget mb, PANE *p, int bin, int bout, int cura
 	}
       else
 	{
-	  new_top = sndCreateRecorderSlider(ss, p, a, a->top, TRUE);
+	  new_top = make_recorder_slider(ss, p, a, a->top, TRUE);
 	}
     }
   for (i = curamp + 1; i < p->amps_size; i++)
@@ -2199,7 +2129,7 @@ static void button_matrix_button_release(Widget w, XtPointer context, XEvent *ev
     }
 }
 
-static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget parent, Arg *in_args, int in_n, Float meter_size)
+static Widget make_button_matrix(snd_state *ss, PANE *p, char *name, Widget parent, Arg *in_args, int in_n, Float meter_size)
 {
   Widget outer_form, outer_frame;
   Arg args[32];
@@ -2215,7 +2145,7 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
   height = (int)(vu_rows * (3 * 2 + 100 * meter_size));
   width = height;
   XtSetArg(in_args[in_n], XmNshadowType, XmSHADOW_ETCHED_IN); in_n++;
-  outer_frame = sndCreateFrameWidget(name, parent, in_args, in_n);
+  outer_frame = XtCreateManagedWidget(name, xmFrameWidgetClass, parent, in_args, in_n);
   XtAddEventHandler(outer_frame, ButtonPressMask, FALSE, button_matrix_button_press, (XtPointer)p);
   XtAddEventHandler(outer_frame, ButtonMotionMask, FALSE, button_matrix_button_motion, (XtPointer)p);
   XtAddEventHandler(outer_frame, ButtonReleaseMask, FALSE, button_matrix_button_release, (XtPointer)p);
@@ -2229,7 +2159,7 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
   XtSetArg(args[n], XmNheight, (Dimension)height); n++;
   XtSetArg(args[n], XmNwidth, (Dimension)width); n++;
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_NONE); n++;
-  outer_form = sndCreateFormWidget("outer-form", outer_frame, args, n);
+  outer_form = XtCreateManagedWidget("outer-form", xmFormWidgetClass, outer_frame, args, n);
   XtAddCallback(outer_form, XmNhelpCallback, button_matrix_help_callback, ss);
   XtAddEventHandler(outer_form, ButtonPressMask, FALSE, button_matrix_button_press, (XtPointer)p);
   XtAddEventHandler(outer_form, ButtonMotionMask, FALSE, button_matrix_button_motion, (XtPointer)p);
@@ -2318,7 +2248,7 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
   XtSetArg(args[n], XmNtopWidget, outputs_label); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNshadowType, XmSHADOW_ETCHED_OUT); n++;
-  inner_frame = sndCreateFrameWidget("inner-frame", outer_form, args, n);
+  inner_frame = XtCreateManagedWidget("inner-frame", xmFrameWidgetClass, outer_form, args, n);
 
   ins = p->in_chans;
   outs = p->out_chans;
@@ -2333,7 +2263,7 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNfractionBase, ins*outs); n++;
-  inner_form = sndCreateFormWidget("inner-form", inner_frame, args, n);
+  inner_form = XtCreateManagedWidget("inner-form", xmFormWidgetClass, inner_frame, args, n);
 
   for (col = 0; col < outs; col++)
     for (row = 0; row < ins; row++)
@@ -2360,7 +2290,7 @@ static Widget sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, Widget p
 	XtSetArg(args[n], XmNshadowThickness, 1); n++;
 	XtSetArg(args[n], XmNarmColor, (ss->sgx)->green); n++;
 	XtSetArg(args[n], XmNfillOnArm, TRUE); n++;
-	mb = sndCreatePushButtonWidget(" ", inner_form, args, n);
+	mb = make_pushbutton_widget(" ", inner_form, args, n);
 	XtAddCallback(mb, XmNactivateCallback, matrix_button_callback, si);
 	if (active_sliders[row][col]) XmChangeColor(mb, (Pixel)((ss->sgx)->green));
 	p->matrix_buttons[row][col] = mb;
@@ -2444,7 +2374,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNallowResize, TRUE); n++;
-  p->pane = sndCreateFormWidget("pane", paned_window, args, n);
+  p->pane = XtCreateManagedWidget("pane", xmFormWidgetClass, paned_window, args, n);
   
   last_frame = NULL;
   left_frame = NULL;
@@ -2466,7 +2396,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      matrix_frame = sndCreateButtonMatrix(ss, p, "channel-matrix", p->pane, args, n, meter_size);
+      matrix_frame = make_button_matrix(ss, p, "channel-matrix", p->pane, args, n, meter_size);
       last_frame = matrix_frame;
       left_frame = matrix_frame;
     }
@@ -2569,7 +2499,7 @@ static Widget make_vu_meters(snd_state *ss, PANE *p, int vu_meters, Widget *fram
       if (vu_meters < 4)
 	{XtSetArg(args[n], XmNshadowThickness, 6); n++;}
       else {XtSetArg(args[n], XmNshadowThickness, 3); n++;}
-      frame = sndCreateFrameWidget("frame", p->pane, args, n);
+      frame = XtCreateManagedWidget("frame", xmFrameWidgetClass, p->pane, args, n);
       frames[i] = frame;
       if (!first_frame) first_frame = frame;
 
@@ -2583,7 +2513,7 @@ static Widget make_vu_meters(snd_state *ss, PANE *p, int vu_meters, Widget *fram
       XtSetArg(args[n], XmNwidth, 120 * 2 * meter_size); n++;
       XtSetArg(args[n], XmNheight, 100 * meter_size); n++;
       XtSetArg(args[n], XmNallowResize, FALSE); n++;
-      meter = sndCreateDrawingAreaWidget("vu", frame, args, n);
+      meter = XtCreateManagedWidget("vu", xmDrawingAreaWidgetClass, frame, args, n);
       p->meters[i] = make_vu_meter(meter, 120, 100, 120, 160, ss, meter_size);
       vu = p->meters[i];
 
@@ -2859,7 +2789,7 @@ static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float m
   XtSetArg(args[n], XmNleftWidget, vu_vertical_sep); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNrightWidget, p->button_vertical_sep); n++;
-  button_box = sndCreateFormWidget("data", p->pane, args, n);
+  button_box = XtCreateManagedWidget("data", xmFormWidgetClass, p->pane, args, n);
   
   p->on_buttons = (Widget *)CALLOC(vu_meters, sizeof(Widget));
   p->on_buttons_size = vu_meters;
@@ -2946,7 +2876,7 @@ static Widget make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Float m
 	  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
 	}
       XtSetArg(args[n], XmNshadowType, XmSHADOW_ETCHED_OUT); n++;
-      last_max = sndCreateFrameWidget("max-frame1", button_box, args, n);
+      last_max = XtCreateManagedWidget("max-frame1", xmFrameWidgetClass, button_box, args, n);
       frames[i] = last_max;
       
       n = 0;
@@ -3086,7 +3016,7 @@ static Position make_amp_sliders(snd_state *ss, recorder_info *rp, PANE *p, Widg
       a->wd = wd;
       if ((!input) || (p->active_sliders[in_chan][out_chan]))
 	{
-	  last_slider = sndCreateRecorderSlider(ss, p, a, last_slider, input);
+	  last_slider = make_recorder_slider(ss, p, a, last_slider, input);
 	  XtVaGetValues(last_slider, XmNy, &pane_max, NULL);
 	}
       else
@@ -3115,7 +3045,7 @@ void unsensitize_control_buttons(void)
       set_sensitive(device_buttons[i], FALSE);
 }
 
-static void RecordCleanupCB(Widget w, XtPointer context, XtPointer info)
+static void close_recorder(Widget w, XtPointer context, XtPointer info)
 {
   cleanup_recording(); 
 }
@@ -3476,7 +3406,7 @@ void snd_record_file(snd_state *ss)
       XtSetArg(args[n], XmNsashHeight, ss->sash_size); n++;
       XtSetArg(args[n], XmNsashWidth, ss->sash_size); n++;
       XtSetArg(args[n], XmNsashIndent, -1); n++; /* need room for icons -- default is -10 */
-      rec_panes = sndCreatePanedWindowWidget("rec-panes", recorder, args, n);
+      rec_panes = XtCreateManagedWidget("rec-panes", xmPanedWindowWidgetClass, recorder, args, n);
 
       XtManageChild(recorder);
       make_record_icons(recorder, ss);
@@ -3506,8 +3436,8 @@ void snd_record_file(snd_state *ss)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNallowResize, TRUE); n++;
 
-      file_info_pane = sndCreateFormWidget("file-pane", rec_panes, args, n);
-      message_pane = sndCreateFormWidget("msg-pane", rec_panes, args, n);
+      file_info_pane = XtCreateManagedWidget("file-pane", xmFormWidgetClass, rec_panes, args, n);
+      message_pane = XtCreateManagedWidget("msg-pane", xmFormWidgetClass, rec_panes, args, n);
 
       make_file_info_pane(ss, rp, file_info_pane, rp->ordered_devices_size);
       messages = make_message_pane(ss, message_pane);
@@ -3522,7 +3452,7 @@ void snd_record_file(snd_state *ss)
 
       /* in case caller closes (via window menu) dialog: */
       wm_delete = XmInternAtom(XtDisplay(recorder), "WM_DELETE_WINDOW", FALSE);
-      XmAddWMProtocolCallback(XtParent(recorder), wm_delete, RecordCleanupCB, (XtPointer)ss);
+      XmAddWMProtocolCallback(XtParent(recorder), wm_delete, close_recorder, (XtPointer)ss);
 
       initialize_recorder(rp);
     }

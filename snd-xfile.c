@@ -683,7 +683,7 @@ static void save_as_cancel_callback(Widget w, XtPointer context, XtPointer info)
 
 static void file_data_type_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  /* this can be called from any header list created by sndCreateFileDataForm */
+  /* this can be called from any header list created by make_file_data_panel */
   int pos;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   file_data *fd;
@@ -754,7 +754,7 @@ static void file_comment_label_help_callback(Widget w, XtPointer context, XtPoin
 "This optional field provides any comments that you want saved in the output file's header.");	   
 }
 
-file_data *sndCreateFileDataForm(snd_state *ss, Widget parent, char *name, Arg *in_args, int in_n, int with_chan, int header_type, int data_format, int with_loc)
+file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *in_args, int in_n, int with_chan, int header_type, int data_format, int with_loc)
 {
   Widget mainform, form,
     sep1, hlab, hlist, dlab, dlist,
@@ -773,14 +773,14 @@ file_data *sndCreateFileDataForm(snd_state *ss, Widget parent, char *name, Arg *
   fdat->current_format = data_format;
   formats = set_header_positions_from_type(fdat, header_type, data_format);
   dformats = fdat->formats;
-  mainform = sndCreateFormWidget(name, parent, in_args, in_n);
+  mainform = XtCreateManagedWidget(name, xmFormWidgetClass, parent, in_args, in_n);
 
   n = 0;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  form = sndCreateFormWidget(name, mainform, args, n);
+  form = XtCreateManagedWidget(name, xmFormWidgetClass, mainform, args, n);
 
   n = 0;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -898,7 +898,7 @@ file_data *sndCreateFileDataForm(snd_state *ss, Widget parent, char *name, Arg *
   XtSetArg(args[n], XmNleftWidget, sep3); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
-  stext = sndCreateTextFieldWidget(ss, "text", form, args, n, NOT_ACTIVATABLE, add_completer_func(srate_completer));
+  stext = make_textfield_widget(ss, "text", form, args, n, NOT_ACTIVATABLE, add_completer_func(srate_completer));
   XtAddCallback(stext, XmNhelpCallback, file_srate_help_callback, ss);
   fdat->srate_text = stext;
 
@@ -923,7 +923,7 @@ file_data *sndCreateFileDataForm(snd_state *ss, Widget parent, char *name, Arg *
       XtSetArg(args[n], XmNleftWidget, sep3); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
-      ctext = sndCreateTextFieldWidget(ss, "text", form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
+      ctext = make_textfield_widget(ss, "text", form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
       XtAddCallback(ctext, XmNhelpCallback, file_chans_help_callback, ss);
       fdat->chans_text = ctext;
 
@@ -948,7 +948,7 @@ file_data *sndCreateFileDataForm(snd_state *ss, Widget parent, char *name, Arg *
 	  XtSetArg(args[n], XmNleftWidget, sep3); n++;
 	  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
 	  XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
-	  loctext = sndCreateTextFieldWidget(ss, "text", form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
+	  loctext = make_textfield_widget(ss, "text", form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
 	  XtAddCallback(loctext, XmNhelpCallback, file_data_location_help_callback, ss);
 	  fdat->location_text = loctext;
 	}
@@ -986,7 +986,7 @@ file_data *sndCreateFileDataForm(snd_state *ss, Widget parent, char *name, Arg *
   XtSetArg(args[n], XmNcolumns, 40); n++;
   /* this pushes the right boundary over a ways -- otherwise the button holder box takes up all available space */
 #endif
-  comment_text = sndCreateTextWidget(ss, "comment", mainform, args, n);
+  comment_text = make_text_widget(ss, "comment", mainform, args, n);
   XtAddCallback(comment_text, XmNhelpCallback, file_comment_label_help_callback, ss);
   fdat->comment_text = comment_text;
 
@@ -1037,7 +1037,7 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int header_type
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      save_as_file_data = sndCreateFileDataForm(ss, save_as_dialog, "data-form", args, n, FALSE, header_type, format_type, FALSE);
+      save_as_file_data = make_file_data_panel(ss, save_as_dialog, "data-form", args, n, FALSE, header_type, format_type, FALSE);
 
       color_file_selection_box(save_as_dialog, ss);
       if (!(ss->using_schemes))	
@@ -1139,7 +1139,7 @@ ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *seco
       XtSetArg(args[n], XmNtopWidget, sep1); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNallowResize, TRUE); n++;
-      wwi->panes = sndCreatePanedWindowWidget("panes", formw, args, n);
+      wwi->panes = XtCreateManagedWidget("panes", xmPanedWindowWidgetClass, formw, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -1148,7 +1148,7 @@ ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *seco
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNpaneMinimum, 40); n++;
-      wwi->toppane = sndCreateFormWidget("toppane", wwi->panes, args, n);
+      wwi->toppane = XtCreateManagedWidget("toppane", xmFormWidgetClass, wwi->panes, args, n);
       formw = wwi->toppane;
     }
   else 
@@ -1299,7 +1299,7 @@ ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *seco
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-  wwi->ww = sndCreateFormWidget("ww", wwi->list, args, n);
+  wwi->ww = XtCreateManagedWidget("ww", xmFormWidgetClass, wwi->list, args, n);
   XtVaSetValues(wwi->list, XmNworkWindow, wwi->ww, NULL);
   
   return(wwi);
@@ -1386,7 +1386,7 @@ regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row,
   XtSetArg(args[n], XmNlabelString, s1); n++;
   XtSetArg(args[n], XmNvalueChangedCallback, n1 = make_callback_list(first_callback, (XtPointer)r)); n++;
   if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
-  r->sv = sndCreateToggleButtonWidget("sv", r->rw, args, n);
+  r->sv = make_togglebutton_widget("sv", r->rw, args, n);
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
@@ -1399,7 +1399,7 @@ regrow *make_regrow(snd_state *ss, Widget ww, Widget last_row,
   XtSetArg(args[n], XmNlabelString, s1); n++;
   XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(second_callback, (XtPointer)r)); n++;
   if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
-  r->pl = sndCreateToggleButtonWidget("pl", r->rw, args, n);
+  r->pl = make_togglebutton_widget("pl", r->rw, args, n);
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
@@ -1787,7 +1787,7 @@ void view_files_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNbottomWidget, XmMessageBoxGetChild(view_files_dialog, XmDIALOG_SEPARATOR)); n++;
-      mainform = sndCreateFormWidget("formd", view_files_dialog, args, n);
+      mainform = XtCreateManagedWidget("formd", xmFormWidgetClass, view_files_dialog, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -1796,7 +1796,7 @@ void view_files_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNrightPosition, 49); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      curform = sndCreateFormWidget("curform", mainform, args, n);
+      curform = XtCreateManagedWidget("curform", xmFormWidgetClass, mainform, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -1816,7 +1816,7 @@ void view_files_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      prevform = sndCreateFormWidget("prevform", mainform, args, n);
+      prevform = XtCreateManagedWidget("prevform", xmFormWidgetClass, mainform, args, n);
 
 
       /* current files section: save play current files | files */
@@ -1975,7 +1975,7 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   defw = XtCreateManagedWidget(STR_Default, xmPushButtonWidgetClass, raw_data_dialog, args, n);
   XtAddCallback(defw, XmNactivateCallback, raw_data_default_callback, ss);
 
-  rform = sndCreateFormWidget("sretc", raw_data_dialog, NULL, 0);
+  rform = XtCreateManagedWidget("sretc", xmFormWidgetClass, raw_data_dialog, NULL, 0);
 
   n = 0;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -1993,7 +1993,7 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNcolumns, 6); n++;
   XtSetArg(args[n], XmNresizeWidth, FALSE); n++;
-  raw_srate_text = sndCreateTextFieldWidget(ss, "text", rform, args, n, NOT_ACTIVATABLE, add_completer_func(srate_completer));
+  raw_srate_text = make_textfield_widget(ss, "text", rform, args, n, NOT_ACTIVATABLE, add_completer_func(srate_completer));
   if (sr < 100000) 
     mus_snprintf(dfs_str, LABEL_BUFFER_SIZE, " %d", sr);
   else mus_snprintf(dfs_str, LABEL_BUFFER_SIZE, "%d", sr);
@@ -2017,7 +2017,7 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNcolumns, 3); n++;
   XtSetArg(args[n], XmNresizeWidth, FALSE); n++;
-  raw_chans_text = sndCreateTextFieldWidget(ss, "text", rform, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
+  raw_chans_text = make_textfield_widget(ss, "text", rform, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
   if (oc < 10) 
     mus_snprintf(dfc_str, LABEL_BUFFER_SIZE, "  %d", oc);
   else mus_snprintf(dfc_str, LABEL_BUFFER_SIZE, " %d", oc);
@@ -2041,7 +2041,7 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   XtSetArg(args[n], XmNtopWidget, raw_srate_text); n++;
   XtSetArg(args[n], XmNcolumns, 8); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-  raw_location_text = sndCreateTextFieldWidget(ss, "text", rform, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
+  raw_location_text = make_textfield_widget(ss, "text", rform, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
   XmTextSetString(raw_location_text, "0");
 
   n = 0;
@@ -2151,8 +2151,8 @@ static Widget new_dialog = NULL;
 static file_data *new_dialog_data = NULL;
 static Widget new_file_name = NULL;
 
-static void NewFileOkCallback(Widget w, XtPointer context, XtPointer info) {new_file_cancelled = 0;}
-static void NewFileCancelCallback(Widget w, XtPointer context, XtPointer info) {new_file_cancelled = 1;}
+static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info) {new_file_cancelled = 0;}
+static void new_file_cancel_callback(Widget w, XtPointer context, XtPointer info) {new_file_cancelled = 1;}
 
 static void new_file_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -2194,15 +2194,15 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       XmStringFree(xhelp);
 
       XtAddCallback(new_dialog, XmNhelpCallback, new_file_help_callback, ss);
-      XtAddCallback(new_dialog, XmNcancelCallback, NewFileCancelCallback, NULL);
-      XtAddCallback(new_dialog, XmNokCallback, NewFileOkCallback, NULL);
+      XtAddCallback(new_dialog, XmNcancelCallback, new_file_cancel_callback, NULL);
+      XtAddCallback(new_dialog, XmNokCallback, new_file_ok_callback, NULL);
 
       n = 0;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      form = sndCreateFormWidget("newfile", new_dialog, args, n);
+      form = XtCreateManagedWidget("newfile", xmFormWidgetClass, new_dialog, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -2218,7 +2218,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       XtSetArg(args[n], XmNleftWidget, name_label); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNvalue, newname); n++;
-      new_file_name = sndCreateTextFieldWidget(ss, "newtext", form, args, n, NOT_ACTIVATABLE, add_completer_func(filename_completer));
+      new_file_name = make_textfield_widget(ss, "newtext", form, args, n, NOT_ACTIVATABLE, add_completer_func(filename_completer));
 
       n = 0;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2226,7 +2226,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      new_dialog_data = sndCreateFileDataForm(ss, form, "data-form", args, n, TRUE, default_output_type(ss), default_output_format(ss), FALSE);
+      new_dialog_data = make_file_data_panel(ss, form, "data-form", args, n, TRUE, default_output_type(ss), default_output_format(ss), FALSE);
 
       XtManageChild(new_dialog);
       if (!(ss->using_schemes))	
@@ -2353,7 +2353,7 @@ Widget edit_header(snd_info *sp)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      edit_header_data = sndCreateFileDataForm(ss, edit_header_dialog, STR_Edit_Header, args, n, TRUE, hdr->type, hdr->format, TRUE);
+      edit_header_data = make_file_data_panel(ss, edit_header_dialog, STR_Edit_Header, args, n, TRUE, hdr->type, hdr->format, TRUE);
       load_header_and_data_lists(edit_header_data, hdr->type, hdr->format, hdr->srate, hdr->chans, hdr->data_location, hdr->comment);
 
       XtManageChild(edit_header_dialog);

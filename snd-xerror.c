@@ -114,8 +114,8 @@ void show_snd_errors(snd_state *ss)
 
 static int yes_or_no = 0;
 
-static void YesCallback(Widget w, XtPointer context, XtPointer info) {yes_or_no = 1;}
-static void NoCallback(Widget w, XtPointer context, XtPointer info) {yes_or_no = 0;}
+static void yes_callback(Widget w, XtPointer context, XtPointer info) {yes_or_no = 1;}
+static void no_callback(Widget w, XtPointer context, XtPointer info) {yes_or_no = 0;}
 
 #define YES_OR_NO_BUFFER_SIZE 1024
 
@@ -166,8 +166,8 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
       XtUnmanageChild(XmMessageBoxGetChild(yes_or_no_dialog, XmDIALOG_SYMBOL_LABEL));
       XtUnmanageChild(XmMessageBoxGetChild(yes_or_no_dialog, XmDIALOG_HELP_BUTTON));
       if (!(ss->using_schemes)) map_over_children(yes_or_no_dialog, set_main_color_of_widget, (void *)ss);
-      XtAddCallback(yes_or_no_dialog, XmNokCallback, YesCallback, NULL);
-      XtAddCallback(yes_or_no_dialog, XmNcancelCallback, NoCallback, NULL);
+      XtAddCallback(yes_or_no_dialog, XmNokCallback, yes_callback, NULL);
+      XtAddCallback(yes_or_no_dialog, XmNcancelCallback, no_callback, NULL);
 
       if (!(ss->using_schemes))
 	{

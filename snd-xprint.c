@@ -145,7 +145,7 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info)
       XtAddCallback(file_print_dialog, XmNcancelCallback, file_print_cancel_callback, ss);
       XtAddCallback(file_print_dialog, XmNokCallback, file_print_ok_callback, ss);
 
-      rc = sndCreateFormWidget("form", file_print_dialog, NULL, 0);
+      rc = XtCreateManagedWidget("form", xmFormWidgetClass, file_print_dialog, NULL, 0);
 
       n = 0;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -161,7 +161,7 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNvalue, eps_file(ss)); n++;
-      file_print_name = sndCreateTextFieldWidget(ss, "text", rc, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
+      file_print_name = make_textfield_widget(ss, "text", rc, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
 
       n = 0;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -169,7 +169,7 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, file_print_name); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-      file_print_eps_or_lpr = sndCreateToggleButtonWidget(STR_direct_to_printer, rc, args, n);
+      file_print_eps_or_lpr = make_togglebutton_widget(STR_direct_to_printer, rc, args, n);
 
       XtManageChild(file_print_dialog);
 

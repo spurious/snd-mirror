@@ -712,7 +712,7 @@ static void remember_event(Widget w, XtPointer context, XtPointer info)
   (ss->sgx)->text_widget = w;
 }
 
-Widget sndCreateTextFieldWidget(snd_state *ss, char *name, Widget parent, Arg *args, int n, int activatable, int completer)
+Widget make_textfield_widget(snd_state *ss, char *name, Widget parent, Arg *args, int n, int activatable, int completer)
 {
   /* white background when active, emacs translations, text_activate_event in ss->sgx for subsequent activation check */
   Widget df;
@@ -762,7 +762,7 @@ void add_completer_to_textfield(snd_state *ss, Widget w, int completer)
   add_completer_widget(w, completer);
 }
 
-Widget sndCreateTextWidget(snd_state *ss, char *name, Widget parent, Arg *args, int n)
+Widget make_text_widget(snd_state *ss, char *name, Widget parent, Arg *args, int n)
 {
   /* white background when active, emacs translations, text_activate_event in ss->sgx for subsequent activation check */
   Widget df;
@@ -919,7 +919,7 @@ static void listener_unfocus_callback(Widget w, XtPointer context, XEvent *event
 		       S_mouse_leave_listener_hook);
 }
 
-static void sndCreateCommandWidget(snd_state *ss, int height)
+static void make_command_widget(snd_state *ss, int height)
 {
   Arg args[32];
   Widget wv, wh;
@@ -936,8 +936,8 @@ static void sndCreateCommandWidget(snd_state *ss, int height)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNheight, height); n++;
       if ((sound_style(ss) == SOUNDS_IN_NOTEBOOK) || (sound_style(ss) == SOUNDS_HORIZONTAL))
-	listener_pane = sndCreateFormWidget("frm", SOUND_PANE_BOX(ss), args, n);
-      else listener_pane = sndCreateFormWidget("frm", SOUND_PANE(ss), args, n);
+	listener_pane = XtCreateManagedWidget("frm", xmFormWidgetClass, SOUND_PANE_BOX(ss), args, n);
+      else listener_pane = XtCreateManagedWidget("frm", xmFormWidgetClass, SOUND_PANE(ss), args, n);
       /* this widget is not redundant at least in Metroworks Motif */
 
       n = 0;
@@ -1025,7 +1025,7 @@ void handle_listener(snd_state *ss, int open)
   if (open)
     {
       if (!listener_text)
-	sndCreateCommandWidget(ss, 100);
+	make_command_widget(ss, 100);
       else
 	{
 	  XtUnmanageChild(listener_pane);
@@ -1072,12 +1072,7 @@ static void override_toggle_translation(Widget w)
 }
 #endif
 
-Widget sndCreateFormWidget(char *name, Widget parent, Arg *args, int n)
-{
-  return(XtCreateManagedWidget(name, xmFormWidgetClass, parent, args, n));
-}
-
-Widget sndCreateToggleButtonWidget(char *name, Widget parent, Arg *args, int n)
+Widget make_togglebutton_widget(char *name, Widget parent, Arg *args, int n)
 {
   Widget w;
   w = XtCreateManagedWidget(name, xmToggleButtonWidgetClass, parent, args, n);
@@ -1087,7 +1082,7 @@ Widget sndCreateToggleButtonWidget(char *name, Widget parent, Arg *args, int n)
   return(w);
 }
 
-Widget sndCreatePushButtonWidget(char *name, Widget parent, Arg *args, int n)
+Widget make_pushbutton_widget(char *name, Widget parent, Arg *args, int n)
 {
   Widget w;
   w = XtCreateManagedWidget(name, xmPushButtonWidgetClass, parent, args, n);
@@ -1095,26 +1090,6 @@ Widget sndCreatePushButtonWidget(char *name, Widget parent, Arg *args, int n)
   override_toggle_translation(w); /* ??? activate here (rather than armandactivate) fails? */
 #endif
   return(w);
-}
-
-Widget sndCreateFrameWidget(char *name, Widget parent, Arg *args, int n)
-{
-  return(XtCreateManagedWidget(name, xmFrameWidgetClass, parent, args, n));
-}
-
-Widget sndCreateRowColumnWidget(char *name, Widget parent, Arg *args, int n)
-{
-  return(XtCreateManagedWidget(name, xmRowColumnWidgetClass, parent, args, n));
-}
-
-Widget sndCreateDrawingAreaWidget(char *name, Widget parent, Arg *args, int n)
-{
-  return(XtCreateManagedWidget(name, xmDrawingAreaWidgetClass, parent, args, n));
-}
-
-Widget sndCreatePanedWindowWidget(char *name, Widget parent, Arg *args, int n)
-{
-  return(XtCreateManagedWidget(name, xmPanedWindowWidgetClass, parent, args, n));
 }
 
 static XEN g_listener_selected_text(void)

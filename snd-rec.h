@@ -26,7 +26,7 @@
 #define SMALLER_FONT "5x7"
 
 #define AUDVAL_SIZE 64
-#define MAX_AUDIO_FIELD (MUS_AUDIO_DIRECTION+1)
+#define MAX_AUDIO_FIELD (MUS_AUDIO_DIRECTION + 1)
 
 #define DEFAULT_RECORDER_AUTOLOAD 0
 #define DEFAULT_RECORDER_FILE NULL
@@ -153,5 +153,20 @@ void finish_recording(snd_state *ss, recorder_info *rp);
 #if OLD_SGI_AL
   void set_line_source(snd_state *ss, int in_digital);
 #endif
+
+#if USE_MOTIF
+  #define FONT_TYPE XFontStruct
+  #define LOAD_FONT(Font) XLoadQueryFont(MAIN_DISPLAY(ss), Font)
+#else
+  #if USE_GTK
+    #define FONT_TYPE GdkFont
+    #define LOAD_FONT(Font) gdk_font_load(Font)
+  #else
+    #define FONT_TYPE int
+    #define LOAD_FONT(Font) NULL
+  #endif
+#endif
+
+FONT_TYPE *get_vu_font(snd_state *ss, Float size);
 
 #endif

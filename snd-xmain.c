@@ -220,7 +220,7 @@ static startup_state *make_startup_state(snd_state *ss, Widget shell, Display *d
 }
 
 #ifndef SND_AS_WIDGET
-static void Window_Close(Widget w, XtPointer context, XtPointer callData)
+static void window_close(Widget w, XtPointer context, XtPointer callData)
 {
   snd_exit_cleanly((snd_state *)context, TRUE);
 }
@@ -346,7 +346,7 @@ static int noglob = 0, noinit = 0, batch = 0;
 #if HAVE_EXTENSION_LANGUAGE
 static XtInputId stdin_id = 0;
 
-static void GetStdinString (XtPointer context, int *fd, XtInputId *id)
+static void get_stdin_string (XtPointer context, int *fd, XtInputId *id)
 {
   int bytes, size;
   char *buf;
@@ -387,14 +387,14 @@ static BACKGROUND_TYPE startup_funcs(XtPointer context)
       create_popup_menu(ss);
 #ifndef SND_AS_WIDGET
 #ifndef __alpha__
-      InitializeDrop(ss);
+      initialize_drop(ss);
 #endif
 #endif
 #ifndef SND_AS_WIDGET
       /* trap outer-level Close for cleanup check */
       wm_delete_window = XmInternAtom(tm->dpy, "WM_DELETE_WINDOW", FALSE);
       /* XmAddWMProtocols(tm->shell, &wm_delete_window, 1); */ /* is this ever needed? */
-      XmAddWMProtocolCallback(tm->shell, wm_delete_window, Window_Close, (XtPointer)ss);
+      XmAddWMProtocolCallback(tm->shell, wm_delete_window, window_close, (XtPointer)ss);
 
       snd_v = XInternAtom(tm->dpy, "SND_VERSION", FALSE);
       snd_c = XInternAtom(tm->dpy, "SND_COMMAND", FALSE);
@@ -421,7 +421,7 @@ static BACKGROUND_TYPE startup_funcs(XtPointer context)
       stdin_id = XtAppAddInput(MAIN_APP(ss), 
 			       fileno(stdin), 
 			       (XtPointer)XtInputReadMask, 
-			       GetStdinString, 
+			       get_stdin_string, 
 			       (XtPointer)ss);
 #endif
       break;
@@ -798,10 +798,10 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNallowResize, TRUE); n++;
-  sx->mainpane = sndCreateFormWidget("mainpane", shell, args, n);
+  sx->mainpane = XtCreateManagedWidget("mainpane", xmFormWidgetClass, shell, args, n);
   XtAddEventHandler(sx->mainpane, KeyPressMask, FALSE, ss_graph_key_press, (XtPointer)ss);
 #else
-  sx->mainpane = sndCreateFormWidget("mainpane", parent, caller_args, caller_argn);
+  sx->mainpane = XtCreateManagedWidget("mainpane", xmFormWidgetClass, parent, caller_args, caller_argn);
 #endif
   menu = add_menu(ss);
 
@@ -816,11 +816,11 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   switch (sound_style(ss))
     {
     case SOUNDS_IN_SEPARATE_WINDOWS:
-      sx->soundpane = sndCreateFormWidget("soundpane", sx->mainpane, args, n);
+      sx->soundpane = XtCreateManagedWidget("soundpane", xmFormWidgetClass, sx->mainpane, args, n);
       break;
     case SOUNDS_HORIZONTAL:
       XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
-      sx->soundpanebox = sndCreatePanedWindowWidget("soundpane", sx->mainpane, args, n);
+      sx->soundpanebox = XtCreateManagedWidget("soundpane", xmPanedWindowWidgetClass, sx->mainpane, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -828,18 +828,18 @@ void snd_doit(snd_state *ss, int argc, char **argv)
       XtSetArg(args[n], XmNsashWidth, ss->sash_size); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNsashIndent, ss->sash_indent); n++;
-      sx->soundpane = sndCreatePanedWindowWidget("soundpane", sx->soundpanebox, args, n);
+      sx->soundpane = XtCreateManagedWidget("soundpane", xmPanedWindowWidgetClass, sx->soundpanebox, args, n);
       break;
     case SOUNDS_VERTICAL:
       XtSetArg(args[n], XmNsashHeight, ss->sash_size); n++;
       XtSetArg(args[n], XmNsashWidth, ss->sash_size); n++;
       XtSetArg(args[n], XmNsashIndent, ss->sash_indent); n++;
-      sx->soundpane = sndCreatePanedWindowWidget("soundpane", sx->mainpane, args, n);
+      sx->soundpane = XtCreateManagedWidget("soundpane", xmPanedWindowWidgetClass, sx->mainpane, args, n);
       break;
 #if (XmVERSION > 1)
     case SOUNDS_IN_NOTEBOOK:
       XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
-      sx->soundpanebox = sndCreatePanedWindowWidget("soundpane", sx->mainpane, args, n);
+      sx->soundpanebox = XtCreateManagedWidget("soundpane", xmPanedWindowWidgetClass, sx->mainpane, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}

@@ -521,7 +521,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNbottomWidget, XmMessageBoxGetChild(transform_dialog, XmDIALOG_SEPARATOR)); n++;
-      mainform = sndCreateFormWidget("mainform", transform_dialog, args, n);
+      mainform = XtCreateManagedWidget("mainform", xmFormWidgetClass, transform_dialog, args, n);
 
 
       /* now 6 boxes within the main box:
@@ -542,7 +542,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNbottomPosition, 50); n++;
       XtSetArg(args[n], XmNborderWidth, 4); n++;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNborderColor, (ss->sgx)->basic_color); n++;}
-      type_frame = sndCreateFrameWidget("type-frame", mainform, args, n);
+      type_frame = XtCreateManagedWidget("type-frame", xmFrameWidgetClass, mainform, args, n);
       XtAddCallback(type_frame, XmNhelpCallback, transform_type_help_callback, ss);
 
       n = 0;
@@ -551,7 +551,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      type_form = sndCreateFormWidget("type-form", type_frame, args, n);
+      type_form = XtCreateManagedWidget("type-form", xmFormWidgetClass, type_frame, args, n);
       /* needed because XmFrame only accepts one child */
       XtAddCallback(type_form, XmNhelpCallback, transform_type_help_callback, ss);
 
@@ -603,7 +603,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNbottomWidget, type_frame); n++;
       XtSetArg(args[n], XmNborderWidth, 4); n++;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNborderColor, (ss->sgx)->basic_color); n++;}
-      size_frame = sndCreateFrameWidget("size-frame", mainform, args, n);
+      size_frame = XtCreateManagedWidget("size-frame", xmFrameWidgetClass, mainform, args, n);
       XtAddCallback(size_frame, XmNhelpCallback, size_help_callback, ss);
 
       n = 0;
@@ -612,7 +612,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      size_form = sndCreateFormWidget("size-form", size_frame, args, n);
+      size_form = XtCreateManagedWidget("size-form", xmFormWidgetClass, size_frame, args, n);
       XtAddCallback(size_form, XmNhelpCallback, size_help_callback, ss);
 
       n = 0;
@@ -659,7 +659,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNborderWidth, 4); n++;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNborderColor, (ss->sgx)->basic_color); n++;}
-      display_frame = sndCreateFrameWidget("display-frame", mainform, args, n);
+      display_frame = XtCreateManagedWidget("display-frame", xmFrameWidgetClass, mainform, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->zoom_color); n++;}
@@ -667,7 +667,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      display_form = sndCreateFormWidget("display-form", display_frame, args, n);
+      display_form = XtCreateManagedWidget("display-form", xmFormWidgetClass, display_frame, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
@@ -693,7 +693,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNlabelString, bstr); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
       XtSetArg(args[n], XmNindicatorType, XmONE_OF_MANY); n++;
-      normo_button = sndCreateToggleButtonWidget("normo-button", display_form, args, n);
+      normo_button = make_togglebutton_widget("normo-button", display_form, args, n);
       XtAddCallback(normo_button, XmNvalueChangedCallback, graph_transform_once_callback, ss);
       XmStringFree(bstr);
 
@@ -712,7 +712,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNlabelString, bstr); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
       XtSetArg(args[n], XmNindicatorType, XmONE_OF_MANY); n++;
-      sono_button = sndCreateToggleButtonWidget("sono-button", display_form, args, n);
+      sono_button = make_togglebutton_widget("sono-button", display_form, args, n);
       XtAddCallback(sono_button, XmNvalueChangedCallback, sonogram_callback, ss);
       XmStringFree(bstr);
 
@@ -731,7 +731,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNlabelString, bstr); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
       XtSetArg(args[n], XmNindicatorType, XmONE_OF_MANY); n++;
-      spectro_button = sndCreateToggleButtonWidget("spectro-button", display_form, args, n);
+      spectro_button = make_togglebutton_widget("spectro-button", display_form, args, n);
       XtAddCallback(spectro_button, XmNvalueChangedCallback, spectrogram_callback, ss);
       XmStringFree(bstr);
 
@@ -749,7 +749,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNlabelString, bstr); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-      peaks_button = sndCreateToggleButtonWidget("peaks-button", display_form, args, n);
+      peaks_button = make_togglebutton_widget("peaks-button", display_form, args, n);
       XtAddCallback(peaks_button, XmNvalueChangedCallback, peaks_callback, ss);
       XmStringFree(bstr);
 
@@ -767,7 +767,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNlabelString, bstr); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-      db_button = sndCreateToggleButtonWidget("db-button", display_form, args, n);
+      db_button = make_togglebutton_widget("db-button", display_form, args, n);
       XtAddCallback(db_button, XmNvalueChangedCallback, db_callback, ss);
       XmStringFree(bstr);
 
@@ -785,7 +785,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNlabelString, bstr); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-      logfreq_button = sndCreateToggleButtonWidget("logfreq-button", display_form, args, n);
+      logfreq_button = make_togglebutton_widget("logfreq-button", display_form, args, n);
       XtAddCallback(logfreq_button, XmNvalueChangedCallback, logfreq_callback, ss);
       XmStringFree(bstr);
 
@@ -803,7 +803,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNlabelString, bstr); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-      normalize_button = sndCreateToggleButtonWidget("normalize-button", display_form, args, n);
+      normalize_button = make_togglebutton_widget("normalize-button", display_form, args, n);
       XtAddCallback(normalize_button, XmNvalueChangedCallback, normalize_callback, ss);
       XmStringFree(bstr);
 
@@ -821,7 +821,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNlabelString, bstr); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-      selection_button = sndCreateToggleButtonWidget("selection-button", display_form, args, n);
+      selection_button = make_togglebutton_widget("selection-button", display_form, args, n);
       XtAddCallback(selection_button, XmNvalueChangedCallback, selection_callback, ss);
       XmStringFree(bstr);
 
@@ -838,7 +838,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNborderWidth, 4); n++;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNborderColor, (ss->sgx)->basic_color); n++;}
-      wavelet_frame = sndCreateFrameWidget("wavelet-frame", mainform, args, n);
+      wavelet_frame = XtCreateManagedWidget("wavelet-frame", xmFrameWidgetClass, mainform, args, n);
       XtAddCallback(wavelet_frame, XmNhelpCallback, wavelet_help_callback, ss);
 
       n = 0;
@@ -847,7 +847,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      wavelet_form = sndCreateFormWidget("wavelet-form", wavelet_frame, args, n);
+      wavelet_form = XtCreateManagedWidget("wavelet-form", xmFormWidgetClass, wavelet_frame, args, n);
       XtAddCallback(wavelet_form, XmNhelpCallback, wavelet_help_callback, ss);
 
       n = 0;
@@ -895,7 +895,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNborderWidth, 4); n++;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNborderColor, (ss->sgx)->basic_color); n++;}
-      window_frame = sndCreateFrameWidget("window-frame", mainform, args, n);
+      window_frame = XtCreateManagedWidget("window-frame", xmFrameWidgetClass, mainform, args, n);
       XtAddCallback(window_frame, XmNhelpCallback, window_help_callback, ss);
 
       n = 0;
@@ -904,7 +904,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      window_form = sndCreateFormWidget("window-form", window_frame, args, n);
+      window_form = XtCreateManagedWidget("window-form", xmFormWidgetClass, window_frame, args, n);
       XtAddCallback(window_form, XmNhelpCallback, window_help_callback, ss);
 
       n = 0;
@@ -969,7 +969,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNborderWidth, 4); n++;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNborderColor, (ss->sgx)->basic_color); n++;}
-      graph_frame = sndCreateFrameWidget("graph-frame", mainform, args, n);
+      graph_frame = XtCreateManagedWidget("graph-frame", xmFrameWidgetClass, mainform, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -977,7 +977,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      graph_form = sndCreateFormWidget("graph-form", graph_frame, args, n);
+      graph_form = XtCreateManagedWidget("graph-form", xmFormWidgetClass, graph_frame, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
@@ -997,7 +997,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNallowResize, TRUE); n++;
-      graph_drawer = sndCreateDrawingAreaWidget("graph-drawer", graph_form, args, n);
+      graph_drawer = XtCreateManagedWidget("graph-drawer", xmDrawingAreaWidgetClass, graph_form, args, n);
       XtAddCallback(graph_drawer, XmNhelpCallback, graph_help_callback, ss);
 
       gv.function = GXcopy;

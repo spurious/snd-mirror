@@ -427,7 +427,7 @@ GtkWidget *snd_entry_new(snd_state *ss, GtkWidget *container, int with_white_bac
 }
 
 
-static void sndCreateCommandWidget(snd_state *ss, int height)
+static void make_command_widget(snd_state *ss, int height)
 {
   GtkWidget *hscrollbar, *vscrollbar, *frame;
   if (!listener_text)
@@ -511,7 +511,7 @@ void handle_listener(snd_state *ss, int open)
   if (open)
     {
       if (!listener_text)
-	sndCreateCommandWidget(ss, 100);
+	make_command_widget(ss, 100);
       else gtk_widget_show(listener_pane);
       set_view_listener_label(STR_Hide_listener);
     }

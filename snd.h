@@ -35,8 +35,6 @@
  *   USR_LIB_OSS, USR_LOCAL_LIB_OSS, OPT_OSS, VAR_LIB_OSS
  *                 define if OSS library/header files are in the indicated directory.
  *                 These are sometimes needed to find the correct version of soundcard.h
- *                 OSS is one of the main sound support providers for Linux.
- *                 http://www.4front-tech.com/ or maybe www.4front.com
  *   HAVE_ALSA     In Linux, OSS is the default audio system; HAVE_ALSA overrides this.
  *   HAVE_SAM_9407 Currently, this driver is only supported as a special case under OSS.
  *                 If the OSS code doesn't work as is, try adding -DHAVE_SAM_9407.
@@ -60,9 +58,9 @@
  *   SND_AS_WIDGET This causes the entire Snd editor to become a module loadable
  *                 into some other program as a kind of enormous widget (see saw.c).
  *
- *   HAVE_HTML     define if the XmHTML widget or the mozilla browser library is available 
+ *   HAVE_HTML     define if using Gtk+ and the mozilla browser library is available 
  *                 (used by help functions).  (The configure script assumes you have
- *                 /usr/lib/mozilla and /usr/include/mozilla in the gtk case).
+ *                 /usr/lib/mozilla and /usr/include/mozilla).
  *                 Currently the XmHTML widget segfaults on nearly every Snd html file.
  *
  *   Float         This can be defined to double in CFLAGS if you want Snd to use 
@@ -75,8 +73,7 @@
  *                 The intention is to use GSL for most of the standard math stuff that
  *                 isn't in the math library.  Currently this means the Bessel I0 function
  *                 (for the Kaiser window), the Hankel transform, the complex trig support
- *                 (for the Dolph-Chebyshev window), etc.  If you have a version after 0.7,
- *                 and you're making your own makefile, include the flag -DHAVE_GSL_DHT_NEW.
+ *                 (for the Dolph-Chebyshev window), etc.
  *
  *   HAVE_GTKEXTRA If USE_GTK is set, and you want the Gtk+extra version of the file
  *                 selection widget, set this flag (it requires libgtkextra).
@@ -162,7 +159,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "5-Oct-01"
+#define SND_VERSION "8-Oct-01"
 #define SND_RPM_VERSION "5.4"
 #define SND_MAJOR_VERSION 5
 #define SND_MINOR_VERSION 4

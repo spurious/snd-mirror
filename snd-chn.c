@@ -325,12 +325,12 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, int graphed)
   y1 = DEFAULT_INITIAL_Y1;
   switch (cp->x_axis_style)
     {
-    case X_AXIS_IN_BEATS:      label = STR_time_beats; break;
+    case X_AXIS_IN_BEATS:      label = STR_time_beats;   break;
     case X_AXIS_IN_SAMPLES:    label = STR_time_samples; break;
     case X_AXIS_AS_PERCENTAGE: label = STR_time_percent; break;
     default:                   label = STR_time;         break;
     }
-  dur = (double)samples_per_channel / (double)hdr->srate;
+  dur = (double)samples_per_channel / (double)(hdr->srate);
 
   cp->edit_size = INITIAL_EDIT_SIZE;
   cp->edit_ctr = 0;
@@ -753,7 +753,7 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, snd_info *sp, int focus_s
       if (isnan(ap->x0)) ap->x0 = 0.0;
 #endif
       if (ap->x0 < 0.0) ap->x0 = 0.0;
-      ap->sx = (double)(ap->x0 - ap->xmin) / (double)ap->x_ambit;
+      ap->sx = (double)(ap->x0 - ap->xmin) / (double)(ap->x_ambit);
     }
   apply_x_axis_change(ap, cp, sp);
 }

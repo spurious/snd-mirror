@@ -205,7 +205,7 @@ static chan_info *axis_cp = NULL;
 static axis_context *ax = NULL;
 static GC cur_gc;
 
-static void Mix_Amp_Env_Resize(Widget w, XtPointer context, XtPointer info) 
+static void mix_amp_env_resize(Widget w, XtPointer context, XtPointer info) 
 {
   snd_state *ss = (snd_state *)context;
   XGCValues gv;
@@ -416,7 +416,7 @@ Widget make_mix_panel(snd_state *ss)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNbottomWidget, XmMessageBoxGetChild(mix_panel, XmDIALOG_SEPARATOR)); n++;
-      mainform = sndCreateFormWidget("formd", mix_panel, args, n);
+      mainform = XtCreateManagedWidget("formd", xmFormWidgetClass, mix_panel, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -425,7 +425,7 @@ Widget make_mix_panel(snd_state *ss)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-      w_row = sndCreateRowColumnWidget("mix-panel-row", mainform, args, n);
+      w_row = XtCreateManagedWidget("mix-panel-row", xmRowColumnWidgetClass, mainform, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -436,17 +436,17 @@ Widget make_mix_panel(snd_state *ss)
       XtSetArg(args[n], XmNresizeWidth, FALSE); n++;
       XtSetArg(args[n], XmNcolumns, 3); n++;
       XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
-      w_id = sndCreateTextFieldWidget(ss, "mix-id", w_row, args, n, ACTIVATABLE, NO_COMPLETER);
+      w_id = make_textfield_widget(ss, "mix-id", w_row, args, n, ACTIVATABLE, NO_COMPLETER);
       XmTextSetString(w_id, "0");
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      w_name = sndCreateTextFieldWidget(ss, "mix-name", w_row, args, n, ACTIVATABLE, NO_COMPLETER);
+      w_name = make_textfield_widget(ss, "mix-name", w_row, args, n, ACTIVATABLE, NO_COMPLETER);
       XmTextSetString(w_name, "mix");
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      w_beg = sndCreateTextFieldWidget(ss, "mix-times", w_row, args, n, ACTIVATABLE, NO_COMPLETER);
+      w_beg = make_textfield_widget(ss, "mix-times", w_row, args, n, ACTIVATABLE, NO_COMPLETER);
       XmTextSetString(w_beg, "0.000 : 1.000");
 
       n = 0;
@@ -458,7 +458,7 @@ Widget make_mix_panel(snd_state *ss)
       XtSetArg(args[n], XmNresizeWidth, FALSE); n++;
       XtSetArg(args[n], XmNcolumns, 3); n++;
       XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
-      w_track = sndCreateTextFieldWidget(ss, "mix-track", w_row, args, n, ACTIVATABLE, NO_COMPLETER);
+      w_track = make_textfield_widget(ss, "mix-track", w_row, args, n, ACTIVATABLE, NO_COMPLETER);
       XmTextSetString(w_track, "0");
 
 
@@ -489,7 +489,7 @@ Widget make_mix_panel(snd_state *ss)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
-      w_speed_label = sndCreatePushButtonWidget("speed-label", mainform, args, n);
+      w_speed_label = make_pushbutton_widget("speed-label", mainform, args, n);
       XtAddCallback(w_speed_label, XmNactivateCallback, speed_click_callback, ss);
       XmStringFree(s1);
 
@@ -550,7 +550,7 @@ Widget make_mix_panel(snd_state *ss)
 	  XtSetArg(args[n], XmNhighlightThickness, 0); n++;
 	  XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
 	  XtSetArg(args[n], XmNuserData, i); n++;
-	  w_amp_labels[i] = sndCreatePushButtonWidget("amp-label", mainform, args, n);
+	  w_amp_labels[i] = make_pushbutton_widget("amp-label", mainform, args, n);
 	  XtAddCallback(w_amp_labels[i], XmNactivateCallback, amp_click_callback, ss);
 	  XmStringFree(s1);
 
@@ -603,7 +603,7 @@ Widget make_mix_panel(snd_state *ss)
       XtSetArg(args[n], XmNallowResize, TRUE); n++;
       XtSetArg(args[n], XmNshadowType, XmSHADOW_ETCHED_IN); n++;
       XtSetArg(args[n], XmNshadowThickness, 4); n++;
-      w_env_frame = sndCreateFrameWidget("amp-env-frame", mainform, args, n);
+      w_env_frame = XtCreateManagedWidget("amp-env-frame", xmFrameWidgetClass, mainform, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -612,12 +612,12 @@ Widget make_mix_panel(snd_state *ss)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNallowResize, TRUE); n++;
-      w_env = sndCreateDrawingAreaWidget("amp-env-window", w_env_frame, args, n);
+      w_env = XtCreateManagedWidget("amp-env-window", xmDrawingAreaWidgetClass, w_env_frame, args, n);
 
       XtManageChild(mix_panel);
 
-      XtAddCallback(w_env, XmNresizeCallback, Mix_Amp_Env_Resize, ss);
-      XtAddCallback(w_env, XmNexposeCallback, Mix_Amp_Env_Resize, ss);
+      XtAddCallback(w_env, XmNresizeCallback, mix_amp_env_resize, ss);
+      XtAddCallback(w_env, XmNexposeCallback, mix_amp_env_resize, ss);
 
     }
   else raise_dialog(mix_panel);
@@ -692,7 +692,7 @@ static void update_mix_panel(int mix_id)
 	}
       XtVaSetValues(w_env_frame, XmNtopWidget, w_amp_labels[chans-1], NULL);
 
-      Mix_Amp_Env_Resize(w_env, (XtPointer)ss, NULL);
+      mix_amp_env_resize(w_env, (XtPointer)ss, NULL);
 
     }
 }

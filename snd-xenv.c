@@ -1222,7 +1222,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNbottomWidget, XmMessageBoxGetChild(enved_dialog, XmDIALOG_SEPARATOR)); n++;
-      mainform = sndCreateFormWidget("formd", enved_dialog, args, n);
+      mainform = XtCreateManagedWidget("formd", xmFormWidgetClass, enved_dialog, args, n);
 
       /* the order in which widgets are defined matters a lot here:
        * we need to build from the bottom up so that the graph portion expands
@@ -1241,7 +1241,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
-      baseLabel = sndCreatePushButtonWidget (STR_exp_base, mainform, args, n);
+      baseLabel = make_pushbutton_widget (STR_exp_base, mainform, args, n);
       XtAddCallback(baseLabel, XmNhelpCallback, base_help_callback, ss);
       XtAddCallback(baseLabel, XmNactivateCallback, base_click_callback, ss);
 
@@ -1279,7 +1279,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNmarginBottom, 0); n++;
       mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", enved_filter_order(ss));
       XtSetArg(args[n], XmNvalue, str); n++;
-      orderL = sndCreateTextFieldWidget(ss, "orderL", mainform, args, n, ACTIVATABLE, NO_COMPLETER);
+      orderL = make_textfield_widget(ss, "orderL", mainform, args, n, ACTIVATABLE, NO_COMPLETER);
       XtAddCallback(orderL, XmNhelpCallback, order_help_callback, ss);
 
       /* -------- fft/fir choice -------- */
@@ -1294,7 +1294,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
-      firB = sndCreatePushButtonWidget((char *)((FIR_p) ? "fir" : "fft"), mainform, args, n);
+      firB = make_pushbutton_widget((char *)((FIR_p) ? "fir" : "fft"), mainform, args, n);
       XtAddCallback(firB, XmNhelpCallback, FIR_help_callback, ss);
       XtAddCallback(firB, XmNactivateCallback, FIR_click_callback, ss);
 
@@ -1356,7 +1356,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, nameL); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-      textL = sndCreateTextFieldWidget(ss, "textL", mainform, args, n, ACTIVATABLE, NO_COMPLETER);
+      textL = make_textfield_widget(ss, "textL", mainform, args, n, ACTIVATABLE, NO_COMPLETER);
       XtAddCallback(textL, XmNhelpCallback, text_help_callback, ss);
 
       /* -------- dB, GRAPH ('wave') AND CLIP BUTTONS -------- */
@@ -1372,7 +1372,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
-      dBB = sndCreateToggleButtonWidget(STR_dB, mainform, args, n);
+      dBB = make_togglebutton_widget(STR_dB, mainform, args, n);
       XtAddCallback(dBB, XmNvalueChangedCallback, dB_button_callback, ss);
       XtAddCallback(dBB, XmNhelpCallback, dB_button_help_callback, ss);
 
@@ -1389,7 +1389,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, dBB); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
-      graphB = sndCreateToggleButtonWidget(STR_wave, mainform, args, n);
+      graphB = make_togglebutton_widget(STR_wave, mainform, args, n);
       XtAddCallback(graphB, XmNvalueChangedCallback, graph_button_callback, ss);
       XtAddCallback(graphB, XmNhelpCallback, graph_button_help_callback, ss);
 
@@ -1406,7 +1406,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, graphB); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
-      clipB = sndCreateToggleButtonWidget(STR_clip, mainform, args, n);
+      clipB = make_togglebutton_widget(STR_clip, mainform, args, n);
       XtAddCallback(clipB, XmNvalueChangedCallback, clip_button_callback, ss);
       XtAddCallback(clipB, XmNhelpCallback, clip_button_help_callback, ss);
 
@@ -1459,7 +1459,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNbottomWidget, spacer1); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-      aform = sndCreateFormWidget("aform", mainform, args, n);
+      aform = XtCreateManagedWidget("aform", xmFormWidgetClass, mainform, args, n);
 
       /* -------- BUTTON BOX AT TOP LEFT -------- */
       n = 0;
@@ -1469,7 +1469,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNshadowThickness, 4); n++;
-      colF = sndCreateFrameWidget("env-button-frame", aform, args, n);
+      colF = XtCreateManagedWidget("env-button-frame", xmFrameWidgetClass, aform, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
@@ -1479,7 +1479,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
       XtSetArg(args[n], XmNspacing, 0); n++;
-      colB = sndCreateRowColumnWidget("env-button-holder", colF, args, n);
+      colB = XtCreateManagedWidget("env-button-holder", xmRowColumnWidgetClass, colF, args, n);
 
       /* VIEW ENVS */
       n = 0;
@@ -1499,7 +1499,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNspacing, 0); n++;
       XtSetArg(args[n], XmNmarginWidth, 0); n++;
-      saverow = sndCreateRowColumnWidget("saverow-holder", colB, args, n);  
+      saverow = XtCreateManagedWidget("saverow-holder", xmRowColumnWidgetClass, colB, args, n);  
 
       n = 0;
       if (!(ss->using_schemes)) 
@@ -1523,7 +1523,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNspacing, 0); n++;
       XtSetArg(args[n], XmNmarginWidth, 0); n++;
-      unrow = sndCreateRowColumnWidget("unrow-holder", colB, args, n);  
+      unrow = XtCreateManagedWidget("unrow-holder", xmRowColumnWidgetClass, colB, args, n);  
 
       n = 0;
       if (!(ss->using_schemes)) 
@@ -1547,7 +1547,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNspacing, 0); n++;
       XtSetArg(args[n], XmNmarginWidth, 0); n++;
-      revrow = sndCreateRowColumnWidget("revrow-holder", colB, args, n);  
+      revrow = XtCreateManagedWidget("revrow-holder", xmRowColumnWidgetClass, colB, args, n);  
 
       n = 0;
       if (!(ss->using_schemes)) 
@@ -1571,7 +1571,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNspacing, 0); n++;
       XtSetArg(args[n], XmNmarginWidth, 0); n++;
-      rbrow = sndCreateRowColumnWidget("asf-holder", colB, args, n);  
+      rbrow = XtCreateManagedWidget("asf-holder", xmRowColumnWidgetClass, colB, args, n);  
 
       n = 0;
       if (!(ss->using_schemes)) 
@@ -1601,7 +1601,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      lerow = sndCreateFormWidget("le-holder", colB, args, n);  
+      lerow = XtCreateManagedWidget("le-holder", xmFormWidgetClass, colB, args, n);  
 
       n = 0;
       if (!(ss->using_schemes)) 
@@ -1637,7 +1637,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNspacing, 0); n++;
       XtSetArg(args[n], XmNmarginWidth, 0); n++;
-      selrow = sndCreateRowColumnWidget("selmix-holder", colB, args, n);  
+      selrow = XtCreateManagedWidget("selmix-holder", xmRowColumnWidgetClass, colB, args, n);  
 
       n = 0;
       if (!(ss->using_schemes)) 
@@ -1647,8 +1647,8 @@ Widget create_envelope_editor (snd_state *ss)
 	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
 	}
       XtSetArg(args[n], XmNshadowThickness, 1); n++;
-      selectionB = sndCreatePushButtonWidget("selection", selrow, args, n);
-      mixB = sndCreatePushButtonWidget("mix", selrow, args, n);
+      selectionB = make_pushbutton_widget("selection", selrow, args, n);
+      mixB = make_pushbutton_widget("mix", selrow, args, n);
 
       XtAddCallback(selectionB, XmNactivateCallback, selection_button_pressed, ss);
       XtAddCallback(selectionB, XmNhelpCallback, selection_button_help_callback, ss);
@@ -1694,7 +1694,7 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNheight, 350); n++;
       XtSetArg(args[n], XmNallowResize, TRUE); n++;
-      drawer = sndCreateDrawingAreaWidget("drawer", mainform, args, n);
+      drawer = XtCreateManagedWidget("drawer", xmDrawingAreaWidgetClass, mainform, args, n);
       XtAddCallback(drawer, XmNhelpCallback, drawer_help_callback, ss);
 
       gv.function = GXcopy;

@@ -425,7 +425,7 @@ void finish_moving_play_mark(chan_info *cp)
   sp->speed_control = 1.0;
 }
 
-enum {MARK_ADD, MARK_DELETE, MARK_MOVE, MARKS_DELETE};
+enum {MARK_ADD, MARK_DELETE, MARK_MOVE, MARKS_DELETE, MARK_RELEASE};
 static void run_mark_hook(chan_info *cp, int id, int reason)
 {
   /* called after the mark list has been made consistent */
@@ -1345,7 +1345,7 @@ void finish_moving_mark(chan_info *cp, mark *m) /* button release called from sn
       sort_marks(cp);
     }
   if (mark_sd) mark_sd = free_syncdata(mark_sd);
-  run_mark_hook(cp, mark_id(m), MARK_MOVE);
+  run_mark_hook(cp, mark_id(m), MARK_RELEASE);
 }
 
 void play_syncd_mark(chan_info *cp, mark *m)

@@ -215,60 +215,6 @@ static void recorder_noop_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpoint
 
 /* -------------------------------- VU METER -------------------------------- */
 
-static GdkFont *get_vu_font(snd_state *ss, Float size)
-{
-  char font_name[LABEL_BUFFER_SIZE];
-  int font_size;
-  char *vu_font_name;
-  GdkFont *label_font;
-  font_size = (int)(size * 12 * vu_font_size(ss));
-  if (font_size < 5) font_size = 5;
-  vu_font_name = vu_font(ss);
-  if (!vu_font_name)
-    {
-      if (size < 0.75) 
-#ifndef SGI
-	vu_font_name = "fixed";
-#else
-        vu_font_name = "courier";
-#endif
-      else
-	{
-	  if (size < 1.25) 
-	    vu_font_name = "courier";
-	  else vu_font_name = "times";
-	}
-    }
-  mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-%s-%s-r-*-*-%d-*-*-*-*-*-*",
-	       vu_font_name,
-	       (font_size > 10) ? "bold" : "*",
-	       font_size);
-  
-  label_font = gdk_font_load(font_name);
-  if (!(label_font))
-    {
-      mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-%s-*-*-*-*-%d-*-*-*-*-*-*", vu_font_name, font_size);
-      label_font = gdk_font_load(font_name);
-      if (!(label_font))
-	{
-	  mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-courier-*-*-*-*-%d-*-*-*-*-*-*", font_size);
-	  label_font = gdk_font_load(font_name);
-	  while (!(label_font))
-	    {
-	      mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-*-*-*-*-*-%d-*-*-*-*-*-*", font_size);
-	      label_font = gdk_font_load(font_name);
-	      font_size++;
-	      if (font_size > 60) 
-		{
-		  label_font = gdk_font_load("-*-*-*-*-*-*-*-*-*-*-*-*-*");
-		  break;
-		}
-	    }
-	}
-    }
-  return(label_font);
-}
-
 static void allocate_meter_2(GtkWidget *w, vu_label *vu)
 {
   GdkDrawable *wn;
@@ -1032,7 +978,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   gtk_box_pack_start(GTK_BOX(left_form), ff_sep3, FALSE, FALSE, 8);
   gtk_widget_show(ff_sep3);
 
-  recdat = sndCreateFileDataForm(ss, left_form, "data-form", TRUE, rp->output_header_type, rp->out_format, FALSE, TRUE);
+  recdat = make_file_data_panel(ss, left_form, "data-form", TRUE, rp->output_header_type, rp->out_format, FALSE, TRUE);
   gtk_signal_connect_object(GTK_OBJECT(recdat->srate_text), "activate", GTK_SIGNAL_FUNC(srate_changed_callback), (GtkObject *)ss);
 
 #if defined(SGI)
@@ -1234,7 +1180,7 @@ static void volume_callback(GtkAdjustment *adj, gpointer context)
 
 /* ---- slider button matrix ---- */
 
-static void sndCreateRecorderSlider(snd_state *ss, PANE *p, AMP *a, int input)
+static void make_recorder_slider(snd_state *ss, PANE *p, AMP *a, int input)
 {
   GtkWidget *hb;
 
@@ -1291,7 +1237,7 @@ static void handle_matrix_slider(GtkWidget *mb, PANE *p, int bin, int bout, int 
 	  gtk_widget_show(a->slider);
 	}
       else
-	sndCreateRecorderSlider(ss, p, a, TRUE);
+	make_recorder_slider(ss, p, a, TRUE);
     }
 }
 
@@ -1311,7 +1257,7 @@ static void matrix_button_callback(GtkWidget *mb, gpointer context)
   handle_matrix_slider(mb, p, si->in_chan, si->out_chan, curamp, (p->active_sliders[si->in_chan][si->out_chan]));
 }
 
-static GtkWidget *sndCreateButtonMatrix(snd_state *ss, PANE *p, char *name, GtkWidget *parent, Float meter_size)
+static GtkWidget *make_button_matrix(snd_state *ss, PANE *p, char *name, GtkWidget *parent, Float meter_size)
 {
   GtkWidget *outer_frame, *outer_vbox, *outer_hbox, *top_hbox, *left_vbox, *buttons;
   int ins = 2, outs = 2, row, col, vu_rows;
@@ -1496,7 +1442,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
 	    p->active_sliders[i][k] = 1;
 
       /* rather than default to posting 64 (or 256!) sliders, set up a channel matrix where desired sliders can be set */
-      matrix_frame = sndCreateButtonMatrix(ss, p, "channel-matrix", vuh, meter_size);
+      matrix_frame = make_button_matrix(ss, p, "channel-matrix", vuh, meter_size);
     }
   else 
     {
@@ -1824,7 +1770,7 @@ static int make_amp_sliders(snd_state *ss, recorder_info *rp, PANE *p, int input
       a->wd = wd;
       if ((!input) || (p->active_sliders[in_chan][out_chan]))
 	{
-	  sndCreateRecorderSlider(ss, p, a, input);
+	  make_recorder_slider(ss, p, a, input);
 	}
       else
 	{

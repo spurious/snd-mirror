@@ -17,7 +17,7 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
   if ((*type == XA_STRING) || (*type == FILE_NAME))
     {
       str = (char *)CALLOC(*length + 1, sizeof(char));
-      for (i = 0; i<(*length); i++)
+      for (i = 0; i < (*length); i++)
 	{
 	  if (((char *)value)[i] == ' ')
 	    {
@@ -68,9 +68,9 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
     }
 }
 
-void HandleDrop(Widget w, XtPointer context, XtPointer info) 
+void handle_drop(Widget w, XtPointer context, XtPointer info) 
 {
-  /* this is called (see InitializeDrop) when a drop occurs */
+  /* this is called (see initialize_drop) when a drop occurs */
   XmDropProcCallbackStruct *cb = (XmDropProcCallbackStruct *)info;
   Arg args[12];
   int n, i, num_targets, k;
@@ -120,7 +120,7 @@ void HandleDrop(Widget w, XtPointer context, XtPointer info)
   XmDropTransferStart(cb->dragContext, args, n);
 }
 
-void InitializeDrop(snd_state *ss)
+void initialize_drop(snd_state *ss)
 {
   /* called via startup func */
   int n;
@@ -133,7 +133,7 @@ void InitializeDrop(snd_state *ss)
   XtSetArg(args[n], XmNdropSiteOperations, XmDROP_COPY); n++;
   XtSetArg(args[n], XmNimportTargets, targets); n++;
   XtSetArg(args[n], XmNnumImportTargets, 2); n++;
-  XtSetArg(args[n], XmNdropProc, HandleDrop); n++;
+  XtSetArg(args[n], XmNdropProc, handle_drop); n++;
   XmDropSiteRegister(get_menubar(), args, n); /* won't accept main-shell here, or main-pane! */
 }
 

@@ -131,7 +131,7 @@ static void forward_anchor_callback(Widget w, XtPointer context, XtPointer info)
   if (!XtIsManaged(help_dialog)) XtManageChild(help_dialog);
 }
 
-static void anchorCB(Widget widget, XtPointer client_data, XmHTMLAnchorCallbackStruct *cbs)
+static void anchor_callback(Widget widget, XtPointer client_data, XmHTMLAnchorCallbackStruct *cbs)
 {
   snd_state *ss;
   if (cbs->reason != XmCR_ACTIVATE) return;
@@ -275,7 +275,7 @@ static void create_help_monolog(snd_state *ss)
   XtSetArg(args[n], XmNfontSizeFixedList, html_fixed_font_size_list(ss)); n++;
   XtSetArg(args[n], XmNimageProc, loadImage); n++;
   help_text = XtCreateManagedWidget("html", xmHTMLWidgetClass, help_dialog, args, n);
-  XtAddCallback(help_text, XmNactivateCallback, (XtCallbackProc)anchorCB, NULL);
+  XtAddCallback(help_text, XmNactivateCallback, (XtCallbackProc)anchor_callback, NULL);
 #else
   XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
   XtSetArg(args[n], XmNeditable, FALSE); n++;

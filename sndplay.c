@@ -503,7 +503,15 @@ int main(int argc, char *argv[])
 	  MUS_SAMPLE_TYPE **dev_bufs = read_bufs;
 	  if ((i + samples_per_chan) <= frames)
 	    curframes = samples_per_chan;
-	  else curframes = frames - i;
+	  else 
+	    {
+	      curframes = frames - i;
+	      for (d = 0; d < allocated; d++)
+		{
+		  int dev = out_devs[d];
+		  out_bytes[dev] = curframes * out_chans[d] * mus_data_format_to_bytes_per_sample(out_format[dev]);
+		}
+	    }
 	  mus_sound_read(fd, 0, curframes - 1, chans, read_bufs); 
 	  /* some systems are happier if we read the file before opening the dac */
 	  /* at this point the data is in separate arrays of MUS_SAMPLE_TYPE */
@@ -511,7 +519,7 @@ int main(int argc, char *argv[])
 	    {
 	      int dev = out_devs[d];
 	      mus_file_write_buffer(out_format[dev],
-				    0, samples_per_chan - 1,
+				    0, curframes - 1,
 				    out_chans[d],
 				    dev_bufs,
 				    (char *)(out_buf[dev]),

@@ -362,7 +362,7 @@ static void make_region_dialog(snd_state *ss)
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNbottomWidget, XmMessageBoxGetChild(region_dialog, XmDIALOG_SEPARATOR)); n++;
-  formw = sndCreateFormWidget("formw", region_dialog, args, n);
+  formw = XtCreateManagedWidget("formw", xmFormWidgetClass, region_dialog, args, n);
 
   wwl = make_title_row(ss, formw, STR_save, STR_play, STR_regions, DONT_PAD_TITLE, WITHOUT_SORT_BUTTON, WITH_PANED_WINDOW);
   ww = wwl->ww;
@@ -484,7 +484,7 @@ static void make_region_dialog(snd_state *ss)
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNpaneMinimum, 150); n++;
-  region_grf = sndCreateFormWidget("grf", wwl->panes, args, n);
+  region_grf = XtCreateManagedWidget("grf", xmFormWidgetClass, wwl->panes, args, n);
 
   XtManageChild(region_dialog);
   if (widget_width(region_dialog) < 400) set_widget_width(region_dialog, 400);

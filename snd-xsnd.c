@@ -1349,7 +1349,7 @@ static void snd_file_glasses_icon(snd_info *sp, int on, int glass) {}
 void x_bomb(snd_info *sp, int on) {}
 #endif
 
-static void Close_Sound_Dialog(Widget w, XtPointer context, XtPointer info) 
+static void close_sound_dialog(Widget w, XtPointer context, XtPointer info) 
 {
   snd_info *sp = (snd_info *)context;
   if (sp) snd_close_file(sp, sp->state);
@@ -1447,7 +1447,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
 	       * the main shell.
 	       */
 	      sound_delete = XmInternAtom(XtDisplay(sx->dialog), "WM_DELETE_WINDOW", FALSE);
-	      XmAddWMProtocolCallback(sx->dialog, sound_delete, Close_Sound_Dialog, (XtPointer)sp);
+	      XmAddWMProtocolCallback(sx->dialog, sound_delete, close_sound_dialog, (XtPointer)sp);
 	    }
 	  else XtVaSetValues(sx->dialog, XmNtitle, title, NULL);
 	  FREE(title);
@@ -1479,12 +1479,12 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
 	}
 
       if (parent)
-	sw[W_pane] = sndCreatePanedWindowWidget("snd-pane", parent, args, n);
+	sw[W_pane] = XtCreateManagedWidget("snd-pane", xmPanedWindowWidgetClass, parent, args, n);
       else
 	{
 	  if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
-	    sw[W_pane] = sndCreatePanedWindowWidget("snd-pane", sx->dialog, args, n);
-	  else sw[W_pane] = sndCreatePanedWindowWidget("snd-pane", SOUND_PANE(ss), args, n);
+	    sw[W_pane] = XtCreateManagedWidget("snd-pane", xmPanedWindowWidgetClass, sx->dialog, args, n);
+	  else sw[W_pane] = XtCreateManagedWidget("snd-pane", xmPanedWindowWidgetClass, SOUND_PANE(ss), args, n);
 	}
       /* it would be better if we could set a paned window to keep its children relative
        *   amounts the same upon outside resize, but the Paned Window widget doesn't
@@ -1505,7 +1505,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNpaneMinimum, ss->ctrls_height); n++;
       XtSetArg(args[n], XmNpaneMaximum, ss->ctrls_height); n++;
-      sw[W_ctrls] = sndCreateFormWidget ("snd-ctrls", sw[W_pane], args, n);
+      sw[W_ctrls] = XtCreateManagedWidget ("snd-ctrls", xmFormWidgetClass, sw[W_pane], args, n);
       XtAddEventHandler(sw[W_ctrls], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
       n = 0;
@@ -1514,7 +1514,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      sw[W_name_form] = sndCreateFormWidget("snd-name-form", sw[W_ctrls], args, n);
+      sw[W_name_form] = XtCreateManagedWidget("snd-name-form", xmFormWidgetClass, sw[W_ctrls], args, n);
       XtAddCallback(sw[W_name_form], XmNhelpCallback, name_help_callback, ss);
       XtAddEventHandler(sw[W_name_form], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
@@ -1641,7 +1641,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNcolumns, 30); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
-      sw[W_info] = sndCreateTextFieldWidget(ss, "snd-info", sw[W_name_form], args, n, ACTIVATABLE, add_completer_func(info_completer));
+      sw[W_info] = make_textfield_widget(ss, "snd-info", sw[W_name_form], args, n, ACTIVATABLE, add_completer_func(info_completer));
       XtAddCallback(sw[W_info], XmNhelpCallback, info_help_callback, ss);
       XtAddCallback(sw[W_info], XmNactivateCallback, minibuffer_click_callback, (XtPointer)sp);
 
@@ -1658,7 +1658,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(ss)); n++;
       XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
-      sw[W_play] = sndCreateToggleButtonWidget(STR_play, sw[W_name_form], args, n);
+      sw[W_play] = make_togglebutton_widget(STR_play, sw[W_name_form], args, n);
       XtAddCallback(sw[W_play], XmNhelpCallback, play_help_callback, ss);
       XtAddCallback(sw[W_play], XmNvalueChangedCallback, play_button_callback, (XtPointer)sp);
 
@@ -1675,7 +1675,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNrightWidget, sw[W_play]); n++;
       XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(ss)); n++;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
-      sw[W_sync] = sndCreateToggleButtonWidget(STR_sync, sw[W_name_form], args, n);
+      sw[W_sync] = make_togglebutton_widget(STR_sync, sw[W_name_form], args, n);
       XtAddCallback(sw[W_sync], XmNhelpCallback, sync_help_callback, ss);
       XtAddEventHandler(sw[W_sync], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_sync], XmNvalueChangedCallback, sync_button_callback, (XtPointer)sp);
@@ -1694,7 +1694,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNrightWidget, sw[W_sync]); n++;
       XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(ss)); n++;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
-      sw[W_combine] = sndCreateToggleButtonWidget(STR_unite, sw[W_name_form], args, n);
+      sw[W_combine] = make_togglebutton_widget(STR_unite, sw[W_name_form], args, n);
       XtAddCallback(sw[W_combine], XmNhelpCallback, combine_help_callback, ss);
       XtAddEventHandler(sw[W_combine], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_combine], XmNvalueChangedCallback, combine_button_callback, (XtPointer)sp);
@@ -1723,7 +1723,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      sw[W_amp_form] = sndCreateFormWidget ("snd-amp", sw[W_ctrls], args, n);
+      sw[W_amp_form] = XtCreateManagedWidget ("snd-amp", xmFormWidgetClass, sw[W_ctrls], args, n);
       XtAddEventHandler(sw[W_amp_form], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
       n = 0;      
@@ -1741,7 +1741,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
-      sw[W_amp_label] = sndCreatePushButtonWidget ("amp-label", sw[W_amp_form], args, n);
+      sw[W_amp_label] = make_pushbutton_widget ("amp-label", sw[W_amp_form], args, n);
       XtAddCallback(sw[W_amp_label], XmNhelpCallback, amp_help_callback, ss);
       XtAddEventHandler(sw[W_amp_label], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_amp_label], XmNactivateCallback, amp_click_callback, (XtPointer)sp);
@@ -1798,7 +1798,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
-      sw[W_srate_label] = sndCreatePushButtonWidget ("srate-label", sw[W_amp_form], args, n);
+      sw[W_srate_label] = make_pushbutton_widget ("srate-label", sw[W_amp_form], args, n);
       XtAddCallback(sw[W_srate_label], XmNhelpCallback, srate_help_callback, ss);
       XtAddEventHandler(sw[W_srate_label], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_srate_label], XmNactivateCallback, srate_click_callback, (XtPointer)sp);
@@ -1834,7 +1834,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNmarginWidth, 0); n++;
       XtSetArg(args[n], XmNmarginTop, 0); n++;
       XtSetArg(args[n], XmNtopOffset, 0); n++;
-      sw[W_srate_arrow] = sndCreateToggleButtonWidget("dir", sw[W_amp_form], args, n);
+      sw[W_srate_arrow] = make_togglebutton_widget("dir", sw[W_amp_form], args, n);
       form = sw[W_srate_arrow];
       rb = XCreateBitmapFromData(XtDisplay(form), RootWindowOfScreen(XtScreen(form)), (const char *)speed_r_bits1, 16, 12);
       lb = XCreateBitmapFromData(XtDisplay(form), RootWindowOfScreen(XtScreen(form)), (const char *)speed_l_bits1, 16, 12);
@@ -1886,7 +1886,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
-      sw[W_expand_label] = sndCreatePushButtonWidget ("expand-label", sw[W_amp_form], args, n);
+      sw[W_expand_label] = make_pushbutton_widget ("expand-label", sw[W_amp_form], args, n);
       XtAddCallback(sw[W_expand_label], XmNhelpCallback, expand_help_callback, ss);
       XtAddEventHandler(sw[W_expand_label], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_expand_label], XmNactivateCallback, expand_click_callback, (XtPointer)sp);
@@ -1925,7 +1925,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNlabelString, s1); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
-      sw[W_expand_button] = sndCreateToggleButtonWidget("expoff", sw[W_amp_form], args, n);
+      sw[W_expand_button] = make_togglebutton_widget("expoff", sw[W_amp_form], args, n);
       XtAddCallback(sw[W_expand_button], XmNhelpCallback, expand_button_help_callback, ss);
       XtAddEventHandler(sw[W_expand_button], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_expand_button], XmNvalueChangedCallback, expand_button_callback, (XtPointer)sp);
@@ -1968,7 +1968,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
-      sw[W_contrast_label] = sndCreatePushButtonWidget ("contrast-label", sw[W_amp_form], args, n);
+      sw[W_contrast_label] = make_pushbutton_widget ("contrast-label", sw[W_amp_form], args, n);
       XtAddCallback(sw[W_contrast_label], XmNhelpCallback, contrast_help_callback, ss);
       XtAddEventHandler(sw[W_contrast_label], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_contrast_label], XmNactivateCallback, contrast_click_callback, (XtPointer)sp);
@@ -2007,7 +2007,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNspacing, 0); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
-      sw[W_contrast_button] = sndCreateToggleButtonWidget("conoff", sw[W_amp_form], args, n);
+      sw[W_contrast_button] = make_togglebutton_widget("conoff", sw[W_amp_form], args, n);
       XtAddCallback(sw[W_contrast_button], XmNhelpCallback, contrast_button_help_callback, ss);
       XtAddEventHandler(sw[W_contrast_button], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_contrast_button], XmNvalueChangedCallback, contrast_button_callback, (XtPointer)sp);
@@ -2049,7 +2049,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
-      sw[W_revscl_label] = sndCreatePushButtonWidget ("revscl-label", sw[W_amp_form], args, n);
+      sw[W_revscl_label] = make_pushbutton_widget ("revscl-label", sw[W_amp_form], args, n);
       XtAddCallback(sw[W_revscl_label], XmNhelpCallback, revscl_help_callback, ss);
       XtAddEventHandler(sw[W_revscl_label], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_revscl_label], XmNactivateCallback, revscl_click_callback, (XtPointer)sp);
@@ -2109,7 +2109,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNlabelString, s1); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
-      sw[W_reverb_button] = sndCreateToggleButtonWidget("revoff", sw[W_amp_form], args, n);
+      sw[W_reverb_button] = make_togglebutton_widget("revoff", sw[W_amp_form], args, n);
       XtAddCallback(sw[W_reverb_button], XmNhelpCallback, reverb_button_help_callback, ss);
       XtAddEventHandler(sw[W_reverb_button], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_reverb_button], XmNvalueChangedCallback, reverb_button_callback, (XtPointer)sp);
@@ -2133,7 +2133,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, FALSE); n++;
-      sw[W_revlen_label] = sndCreatePushButtonWidget("revlen-label", sw[W_amp_form], args, n);
+      sw[W_revlen_label] = make_pushbutton_widget("revlen-label", sw[W_amp_form], args, n);
       XtAddCallback(sw[W_revlen_label], XmNhelpCallback, revlen_help_callback, ss);
       XtAddEventHandler(sw[W_revlen_label], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_revlen_label], XmNactivateCallback, revlen_click_callback, (XtPointer)sp);
@@ -2214,7 +2214,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
       XtSetArg(args[n], XmNrecomputeSize, FALSE); n++;
-      sw[W_filter_order] = sndCreateTextFieldWidget(ss, "filter-order", sw[W_amp_form], args, n, ACTIVATABLE, NO_COMPLETER);
+      sw[W_filter_order] = make_textfield_widget(ss, "filter-order", sw[W_amp_form], args, n, ACTIVATABLE, NO_COMPLETER);
       XmTextSetString(sw[W_filter_order], " 20");
       XtAddCallback(sw[W_filter_order], XmNhelpCallback, filter_order_help_callback, ss);
       XtAddCallback(sw[W_filter_order], XmNactivateCallback, filter_order_activate_callback, (XtPointer)sp);
@@ -2234,7 +2234,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNborderWidth, 0); n++;
       XtSetArg(args[n], XmNmarginWidth, 0); n++;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;}
-      sw[W_filter_order_down] = sndCreatePushButtonWidget("", sw[W_amp_form], args, n);
+      sw[W_filter_order_down] = make_pushbutton_widget("", sw[W_amp_form], args, n);
       XtAddEventHandler(sw[W_filter_order_down], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_filter_order_down], XmNhelpCallback, filter_order_down_help_callback, ss);
       XtAddCallback(sw[W_filter_order_down], XmNactivateCallback, filter_order_down_callback, (XtPointer)sp);
@@ -2252,7 +2252,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNborderWidth, 0); n++;
       XtSetArg(args[n], XmNmarginWidth, 0); n++;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;}
-      sw[W_filter_order_up] = sndCreatePushButtonWidget("", sw[W_amp_form], args, n);
+      sw[W_filter_order_up] = make_pushbutton_widget("", sw[W_amp_form], args, n);
       XtAddEventHandler(sw[W_filter_order_up], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_filter_order_up], XmNhelpCallback, filter_order_up_help_callback, ss);
       XtAddCallback(sw[W_filter_order_up], XmNactivateCallback, filter_order_up_callback, (XtPointer)sp);
@@ -2272,7 +2272,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNlabelString, s1); n++; 
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
-      sw[W_filter_button] = sndCreateToggleButtonWidget("fltoff", sw[W_amp_form], args, n);
+      sw[W_filter_button] = make_togglebutton_widget("fltoff", sw[W_amp_form], args, n);
       XtAddCallback(sw[W_filter_button], XmNhelpCallback, filter_button_help_callback, ss);
       XtAddEventHandler(sw[W_filter_button], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_filter_button], XmNvalueChangedCallback, filter_button_callback, (XtPointer)sp);
@@ -2291,7 +2291,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNvalue, sp->filter_control_in_dB); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
-      sw[W_filter_dB] = sndCreateToggleButtonWidget("fltdB", sw[W_amp_form], args, n);
+      sw[W_filter_dB] = make_togglebutton_widget("fltdB", sw[W_amp_form], args, n);
       XtAddCallback(sw[W_filter_dB], XmNhelpCallback, filter_dB_help_callback, ss);
       XtAddEventHandler(sw[W_filter_dB], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_filter_dB], XmNvalueChangedCallback, filter_dB_callback, (XtPointer)sp);
@@ -2309,7 +2309,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, sw[W_filter_dB]); n++;
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
-      sw[W_filter] = sndCreateTextFieldWidget(ss, "filter-window", sw[W_amp_form], args, n, ACTIVATABLE, add_completer_func(filename_completer));
+      sw[W_filter] = make_textfield_widget(ss, "filter-window", sw[W_amp_form], args, n, ACTIVATABLE, add_completer_func(filename_completer));
       XtAddCallback(sw[W_filter], XmNhelpCallback, filter_envelope_help_callback, ss);
       XtAddCallback(sw[W_filter], XmNactivateCallback, filter_activate_callback, (XtPointer)sp);
 
@@ -2326,7 +2326,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 25); n++;
-      sw[W_apply] = sndCreatePushButtonWidget(STR_Apply, sw[W_amp_form], args, n);
+      sw[W_apply] = make_pushbutton_widget(STR_Apply, sw[W_amp_form], args, n);
       XtAddCallback(sw[W_apply], XmNhelpCallback, apply_help_callback, ss);
       XtAddEventHandler(sw[W_apply], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_apply], XmNactivateCallback, apply_callback, (XtPointer)sp);
@@ -2345,7 +2345,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNleftPosition, 25); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 50); n++;
-      sw[W_remember] = sndCreatePushButtonWidget(STR_Remember, sw[W_amp_form], args, n);
+      sw[W_remember] = make_pushbutton_widget(STR_Remember, sw[W_amp_form], args, n);
       XtAddCallback(sw[W_remember], XmNhelpCallback, remember_help_callback, ss);
       XtAddEventHandler(sw[W_remember], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_remember], XmNactivateCallback, save_control_panel_callback, (XtPointer)sp);
@@ -2364,7 +2364,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNleftPosition, 50); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 75); n++;
-      sw[W_restore] = sndCreatePushButtonWidget(STR_Restore, sw[W_amp_form], args, n);
+      sw[W_restore] = make_pushbutton_widget(STR_Restore, sw[W_amp_form], args, n);
       XtAddCallback(sw[W_restore], XmNhelpCallback, restore_help_callback, ss);
       XtAddEventHandler(sw[W_restore], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
       XtAddCallback(sw[W_restore], XmNactivateCallback, restore_control_panel_callback, (XtPointer)sp);
@@ -2403,7 +2403,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       /* if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;} */
       XtSetArg(args[n], XmNshadowType, XmSHADOW_ETCHED_IN); n++;
       XtSetArg(args[n], XmNshadowThickness, 4); n++;
-      sw[W_filter_frame] = sndCreateFrameWidget("filter-frame", sw[W_amp_form], args, n);
+      sw[W_filter_frame] = XtCreateManagedWidget("filter-frame", xmFrameWidgetClass, sw[W_amp_form], args, n);
 
       n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
@@ -2412,7 +2412,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNallowResize, TRUE); n++;
-      sw[W_filter_env] = sndCreateDrawingAreaWidget("filter-window", sw[W_filter_frame], args, n);
+      sw[W_filter_env] = XtCreateManagedWidget("filter-window", xmDrawingAreaWidgetClass, sw[W_filter_frame], args, n);
       XtAddCallback(sw[W_filter_env], XmNhelpCallback, filter_drawer_help_callback, ss);
       XtAddCallback(sw[W_filter_env], XmNresizeCallback, filter_drawer_resize, (XtPointer)sp);
       XtAddCallback(sw[W_filter_env], XmNexposeCallback, filter_drawer_resize, (XtPointer)sp);

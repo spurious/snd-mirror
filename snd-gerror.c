@@ -118,8 +118,8 @@ static GtkWidget *yes_or_no_dialog = NULL;
 static GtkWidget *yn_label;
 static GtkWidget *yes_button, *no_button;
 
-static void YesCallback(GtkWidget *w, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = 1;}
-static void NoCallback(GtkWidget *w, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = 0;}
+static void yes_callback(GtkWidget *w, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = 1;}
+static void no_callback(GtkWidget *w, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = 0;}
 static void delete_yes_or_no_dialog(GtkWidget *w, GdkEvent *event, gpointer context) {gtk_widget_hide(yes_or_no_dialog); yes_or_no = 1;}
 
 #define YES_OR_NO_BUFFER_SIZE 1024
@@ -163,8 +163,8 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
       no_button = gtk_button_new_with_label(STR_No);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(yes_or_no_dialog)->action_area), yes_button, FALSE, TRUE, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(yes_or_no_dialog)->action_area), no_button, FALSE, TRUE, 10);
-      gtk_signal_connect(GTK_OBJECT(yes_button), "clicked", GTK_SIGNAL_FUNC(YesCallback), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(no_button), "clicked", GTK_SIGNAL_FUNC(NoCallback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(yes_button), "clicked", GTK_SIGNAL_FUNC(yes_callback), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(no_button), "clicked", GTK_SIGNAL_FUNC(no_callback), (gpointer)ss);
       set_pushed_button_colors(no_button, ss);
       set_pushed_button_colors(yes_button, ss);
       gtk_widget_show(yes_button);

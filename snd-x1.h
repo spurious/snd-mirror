@@ -93,15 +93,10 @@ void listener_append(snd_state *ss, char *msg);
 void handle_listener(snd_state *ss, int new_state);
 int listener_height(void);
 int listener_width(void);
-Widget sndCreateFormWidget(char *name, Widget parent, Arg *args, int n);
-Widget sndCreateDrawingAreaWidget(char *name, Widget parent, Arg *args, int n);
-Widget sndCreateFrameWidget(char *name, Widget parent, Arg *args, int n);
-Widget sndCreateToggleButtonWidget(char *name, Widget parent, Arg *args, int n);
-Widget sndCreatePushButtonWidget(char *name, Widget parent, Arg *args, int n);
-Widget sndCreateRowColumnWidget(char *name, Widget parent, Arg *args, int n);
-Widget sndCreateTextWidget(snd_state *ss, char *name, Widget parent, Arg *args, int n);
-Widget sndCreateTextFieldWidget(snd_state *ss, char *name, Widget parent, Arg *args, int n, int activatable, int completer);
-Widget sndCreatePanedWindowWidget(char *name, Widget parent, Arg *args, int n);
+Widget make_togglebutton_widget(char *name, Widget parent, Arg *args, int n);
+Widget make_pushbutton_widget(char *name, Widget parent, Arg *args, int n);
+Widget make_text_widget(snd_state *ss, char *name, Widget parent, Arg *args, int n);
+Widget make_textfield_widget(snd_state *ss, char *name, Widget parent, Arg *args, int n, int activatable, int completer);
 
 void g_init_gxlistener(void);
 
@@ -218,8 +213,8 @@ void set_transform_graph_type(snd_state *ss, int val);
 
 /* -------- snd-xdrop.c -------- */
 
-void InitializeDrop(snd_state *ss);
-void HandleDrop(Widget w, XtPointer context, XtPointer info);
+void initialize_drop(snd_state *ss);
+void handle_drop(Widget w, XtPointer context, XtPointer info);
 void g_init_gxdrop(void);
 
 
@@ -449,7 +444,7 @@ void g_init_gxsnd(void);
 /* -------- snd-xfile.c -------- */
 
 char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, int *location);
-file_data *sndCreateFileDataForm(snd_state *ss, Widget parent, char *name, Arg *args, int n, int with_chan, int header_type, int data_format, int with_loc);
+file_data *make_file_data_panel(snd_state *ss, Widget parent, char *name, Arg *args, int n, int with_chan, int header_type, int data_format, int with_loc);
 void alert_new_file(void);
 void make_open_file_dialog(snd_state *ss, int read_only, int managed);
 void make_file_save_as_dialog(snd_state *ss);

@@ -786,7 +786,7 @@ static void add_drop(snd_state *ss, Widget drawer)
   XtSetArg(args[n], XmNdropSiteOperations, XmDROP_COPY); n++;
   XtSetArg(args[n], XmNimportTargets, targets); n++;
   XtSetArg(args[n], XmNnumImportTargets, 2); n++;
-  XtSetArg(args[n], XmNdropProc, HandleDrop); n++;
+  XtSetArg(args[n], XmNdropProc, handle_drop); n++;
   XmDropSiteRegister(drawer, args, n);
 }
 
@@ -827,7 +827,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  if (insertion) {XtSetArg(args[n], XmNpositionIndex, (short)channel); n++;}
 	  XtSetArg(args[n], XmNpaneMinimum, chan_y); n++;
 #if (XmVERSION > 1)
-	  cw[W_form] = sndCreateFormWidget("chn-form", w_snd_pane(sp), args, n);
+	  cw[W_form] = XtCreateManagedWidget("chn-form", xmFormWidgetClass, w_snd_pane(sp), args, n);
 	  if ((sp->channel_style == CHANNELS_COMBINED) && (channel > 0)) XtUnmanageChild(cw[W_form]);
 
 	  n = 0;
@@ -839,10 +839,10 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
 	  XtSetArg(args[n], XmNsashIndent, 2); n++;
 	  XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-	  cw[W_top] = sndCreatePanedWindowWidget("chn-main-window", cw[W_form], args, n);
+	  cw[W_top] = XtCreateManagedWidget("chn-main-window", xmPanedWindowWidgetClass, cw[W_form], args, n);
 	  XtAddEventHandler(cw[W_top], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 #else
-	  cw[W_main_window] = sndCreateFormWidget("chn-main-window", w_snd_pane(sp), args, n);
+	  cw[W_main_window] = XtCreateManagedWidget("chn-main-window", xmFormWidgetClass, w_snd_pane(sp), args, n);
 	  XtAddEventHandler(cw[W_main_window], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 #endif
 
@@ -856,7 +856,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  n = 0;
 	  if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
 	  XtSetArg(args[n], XmNpaneMaximum, LOTSA_PIXELS); n++;
-	  cw[W_main_window] = sndCreateFormWidget("chn-main-window", cw[W_top], args, n);
+	  cw[W_main_window] = XtCreateManagedWidget("chn-main-window", xmFormWidgetClass, cw[W_top], args, n);
 	  XtAddEventHandler(cw[W_main_window], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 	  /* left_widget = cw[W_main_window]; */
 	  XtManageChild(cw[W_edhist]);
@@ -887,7 +887,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       XtSetArg(args[n], XmNpacking, XmPACK_COLUMN); n++;
       XtSetArg(args[n], XmNnumColumns, 1); n++;
       XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
-      cw[W_wf_buttons] = sndCreateRowColumnWidget("chn-buttons", cw[W_main_window], args, n);	
+      cw[W_wf_buttons] = XtCreateManagedWidget("chn-buttons", xmRowColumnWidgetClass, cw[W_main_window], args, n);	
 
       if (button_style == WITH_FW_BUTTONS)
 	{
@@ -896,13 +896,13 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  XtSetArg(args[n], XM_FONT_RESOURCE, BUTTON_FONT(ss)); n++;
 	  XtSetArg(args[n], XmNspacing, 1); n++;
 	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, sx->pushed_button_color); n++;}
-	  cw[W_f] = sndCreateToggleButtonWidget(STR_f, cw[W_wf_buttons], args, n);
+	  cw[W_f] = make_togglebutton_widget(STR_f, cw[W_wf_buttons], args, n);
 	  XtAddCallback(cw[W_f], XmNvalueChangedCallback, f_toggle_callback, cp);
 	  XtAddCallback(cw[W_f], XmNhelpCallback, f_button_help_callback, ss);
 	  XtAddEventHandler(cw[W_f], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 	  
 	  XtSetArg(args[n], XmNset, TRUE); n++;
-	  cw[W_w] = sndCreateToggleButtonWidget(STR_w, cw[W_wf_buttons], args, n);
+	  cw[W_w] = make_togglebutton_widget(STR_w, cw[W_wf_buttons], args, n);
 	  XtAddCallback(cw[W_w], XmNvalueChangedCallback, w_toggle_callback, cp);
 	  XtAddCallback(cw[W_w], XmNhelpCallback, w_button_help_callback, ss);
 	  XtAddEventHandler(cw[W_w], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
@@ -939,7 +939,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	}
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNspacing, 0); n++;
-      cw[W_left_scrollers] = sndCreateRowColumnWidget("chn-left", cw[W_main_window], args, n);
+      cw[W_left_scrollers] = XtCreateManagedWidget("chn-left", xmRowColumnWidgetClass, cw[W_main_window], args, n);
       XtAddEventHandler(cw[W_left_scrollers], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
       n = 0;
@@ -986,7 +986,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       XtSetArg(args[n], XmNleftWidget, cw[W_wf_buttons]); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNspacing, 0); n++;
-      cw[W_bottom_scrollers] = sndCreateRowColumnWidget("chn-bottom", cw[W_main_window], args, n);
+      cw[W_bottom_scrollers] = XtCreateManagedWidget("chn-bottom", xmRowColumnWidgetClass, cw[W_main_window], args, n);
       XtAddEventHandler(cw[W_bottom_scrollers], KeyPressMask, FALSE, graph_key_press, (XtPointer)sp);
 
       n = 0;
@@ -1042,14 +1042,14 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
       XtSetArg(args[n], XmNuserData, PACK_SOUND_AND_CHANNEL(sp->index, cp->chan)); n++;
       /* this collides with W_gzy below, but a consistent version came up with half a window blank */
       XtSetArg(args[n], XmNnavigationType, XmNONE); n++;
-      cw[W_graph] = sndCreateDrawingAreaWidget("chn-graph", cw[W_main_window], args, n);
+      cw[W_graph] = XtCreateManagedWidget("chn-graph", xmDrawingAreaWidgetClass, cw[W_main_window], args, n);
 
       if (!main)
 	{
 	  XtAddCallback(cw[W_graph], XmNhelpCallback, graph_help_callback, ss);
 	  XtAddCallback(cw[W_graph], XmNresizeCallback, channel_resize_callback, (XtPointer)cp);
 	  XtAddCallback(cw[W_graph], XmNexposeCallback, channel_expose_callback, (XtPointer)cp);
-	  XtAddEventHandler(cw[W_graph], EnterWindowMask, FALSE, graph_mouse_enter, (XtPointer)(cp->state));
+	  XtAddEventHandler(cw[W_graph], EnterWindowMask, FALSE, graph_mouse_enter, (XtPointer)ss);
 	  XtAddEventHandler(cw[W_graph], LeaveWindowMask, FALSE, graph_mouse_leave, (XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph], ButtonPressMask, FALSE, graph_button_press, (XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph], ButtonMotionMask, FALSE, graph_button_motion, (XtPointer)cp);

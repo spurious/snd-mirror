@@ -54,7 +54,7 @@
 #define AUTO_RESIZE_DEFAULT 1
 
 #ifndef SND_AS_WIDGET
-static gint Window_Close(GtkWidget *w, GdkEvent *event, gpointer context)
+static gint window_close(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   if (snd_exit_cleanly((snd_state *)context, TRUE))
     snd_exit(0);
@@ -138,7 +138,7 @@ static int noglob = 0, noinit = 0, batch = 0;
 #if HAVE_EXTENSION_LANGUAGE
 static gint stdin_id = 0;
 
-static void GetStdinString (gpointer context, gint fd, GdkInputCondition condition)
+static void get_stdin_string(gpointer context, gint fd, GdkInputCondition condition)
 {
   int bytes, size;
   char *buf;
@@ -267,7 +267,7 @@ static BACKGROUND_TYPE startup_funcs(gpointer context)
     case 0:
 #ifndef SND_AS_WIDGET
 #ifndef __alpha__
-      InitializeDrop(ss);
+      initialize_drop(ss);
 #endif
 #endif
 
@@ -287,7 +287,7 @@ static BACKGROUND_TYPE startup_funcs(gpointer context)
       gtk_signal_connect(GTK_OBJECT(tm->shell), "property_notify_event", GTK_SIGNAL_FUNC(who_called), (gpointer)ss);
 #endif
       /* trap outer-level Close for cleanup check */
-      gtk_signal_connect(GTK_OBJECT(tm->shell), "delete_event", GTK_SIGNAL_FUNC(Window_Close), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(tm->shell), "delete_event", GTK_SIGNAL_FUNC(window_close), (gpointer)ss);
 #endif
 
       (ss->sgx)->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
@@ -306,7 +306,7 @@ static BACKGROUND_TYPE startup_funcs(gpointer context)
        * but try to read stdin (needed to support the emacs subjob connection).  If
        * we don't do this, the background job is suspended when the shell sends SIGTTIN.
        */
-      stdin_id = gdk_input_add(fileno(stdin), GDK_INPUT_READ, GetStdinString, (gpointer)ss);
+      stdin_id = gdk_input_add(fileno(stdin), GDK_INPUT_READ, get_stdin_string, (gpointer)ss);
 #endif
       break;
     case 2: 

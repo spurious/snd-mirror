@@ -3,6 +3,60 @@
 #include "snd.h"
 #include "snd-rec.h"
 
+FONT_TYPE *get_vu_font(snd_state *ss, Float size)
+{
+  char font_name[LABEL_BUFFER_SIZE];
+  int font_size;
+  char *vu_font_name;
+  FONT_TYPE *label_font;
+  font_size = (int)(size * 12 * vu_font_size(ss));
+  if (font_size < 5) font_size = 5;
+  vu_font_name = vu_font(ss);
+  if (!vu_font_name)
+    {
+      if (size < 0.75) 
+#ifndef SGI
+	vu_font_name = "fixed";
+#else
+        vu_font_name = "courier";
+#endif
+      else
+	{
+	  if (size < 1.25) 
+	    vu_font_name = "courier";
+	  else vu_font_name = "times";
+	}
+    }
+  mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-%s-%s-r-*-*-%d-*-*-*-*-*-*",
+	  vu_font_name,
+	  (font_size > 10) ? "bold" : "*",
+	  font_size);
+  
+  label_font = LOAD_FONT(font_name);
+  if (!(label_font))
+    {
+      mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-%s-*-*-*-*-%d-*-*-*-*-*-*", vu_font_name, font_size);
+      label_font = LOAD_FONT(font_name);
+      if (!(label_font))
+	{
+	  mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-courier-*-*-*-*-%d-*-*-*-*-*-*", font_size);
+	  label_font = LOAD_FONT(font_name);
+	  while (!(label_font))
+	    {
+	      mus_snprintf(font_name, LABEL_BUFFER_SIZE, "-*-*-*-*-*-*-%d-*-*-*-*-*-*", font_size);
+	      label_font = LOAD_FONT(font_name);
+	      font_size++;
+	      if (font_size > 60) 
+		{
+		  label_font = LOAD_FONT("-*-*-*-*-*-*-*-*-*-*-*-*-*");
+		  break;
+		}
+	    }
+	}
+    }
+  return(label_font);
+}
+
 int recorder_columns(int vu_meters)
 {
   if ((vu_meters % 4) == 0)

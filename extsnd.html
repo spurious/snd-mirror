@@ -1650,7 +1650,7 @@ the hook.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td colspan=2>
 <!-- -->called when a mark is added, deleted, or moved (but not while moving). 'id' can be -1 (i.e. no specific mark).
-<!-- -->'Reason' can be 0: add, 1: delete, 2: move, 3: delete all marks.  See add-mark-pane in snd-motif.scm.
+<!-- -->'Reason' can be 0: add, 1: delete, 2: move (via set! mark-sample), 3: delete all marks, 4: release (after drag).  See add-mark-pane in snd-motif.scm.
 <!-- --></td></tr>
 <!-- -->
 <!-- mark-click-hook -->
@@ -2320,8 +2320,7 @@ the hook.
 
 <table border=0><tr><td width=150><br></td><td>
 These are functions that return the hooks in question associated with the specified channel.
-edit-hook is called just before any attempt to edit the channel's data (a better name might
-be before-edit-hook).  If it returns #t,
+edit-hook is called just before any attempt to edit the channel's data; if it returns #t,
 the edit is aborted. So,
 </td></tr></table>
 <center><pre>

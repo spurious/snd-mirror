@@ -29,7 +29,7 @@ static void drag_data_received (GtkWidget *widget, GdkDragContext *context, gint
   gtk_drag_finish(context, FALSE, FALSE, time);
 }
 
-void InitializeDrop(snd_state *ss)
+void initialize_drop(snd_state *ss)
 {
   /* called via startup func */
   gtk_drag_dest_set(MAIN_SHELL(ss), GTK_DEST_DEFAULT_DROP, target_table, 3, GDK_ACTION_COPY);

@@ -69,7 +69,7 @@ void update_stats_display(snd_state *ss, int all)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNheight,250); n++;
       XtSetArg(args[n], XmNwidth, 600); n++;
-      stats_form = sndCreateTextWidget(ss, "stats", stats_window, args, n);
+      stats_form = make_text_widget(ss, "stats", stats_window, args, n);
 
       XtManageChild(stats_window);
 

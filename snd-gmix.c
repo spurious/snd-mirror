@@ -207,7 +207,7 @@ static chan_info *axis_cp = NULL;
 static axis_context *ax = NULL;
 static GdkGC *cur_gc;
 
-static void Amp_Env_Display(GtkWidget *w, snd_state *ss)
+static void amp_env_display(GtkWidget *w, snd_state *ss)
 {
   GdkWindow *wn;
   if (ax == NULL)
@@ -231,14 +231,14 @@ static void Amp_Env_Display(GtkWidget *w, snd_state *ss)
   display_mix_amp_envs(ss, axis_cp, ax, widget_width(w), widget_height(w));
 }
 
-static void Mix_Amp_Env_Expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
+static void mix_amp_env_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
-  Amp_Env_Display(w, (snd_state *)data);
+  amp_env_display(w, (snd_state *)data);
 }
 
-static void Mix_Amp_Env_Resize(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
+static void mix_amp_env_resize(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
 {
-  Amp_Env_Display(w, (snd_state *)data);
+  amp_env_display(w, (snd_state *)data);
 }
 
 
@@ -498,8 +498,8 @@ GtkWidget *make_mix_panel(snd_state *ss)
       gtk_container_add(GTK_CONTAINER(w_env_frame), w_env);
       set_background(w_env, (ss->sgx)->basic_color);
       gtk_widget_show(w_env);
-      gtk_signal_connect(GTK_OBJECT(w_env), "expose_event", GTK_SIGNAL_FUNC(Mix_Amp_Env_Expose), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(w_env), "configure_event", GTK_SIGNAL_FUNC(Mix_Amp_Env_Resize), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(w_env), "expose_event", GTK_SIGNAL_FUNC(mix_amp_env_expose), (gpointer)ss);
+      gtk_signal_connect(GTK_OBJECT(w_env), "configure_event", GTK_SIGNAL_FUNC(mix_amp_env_resize), (gpointer)ss);
       gtk_widget_show(w_env_frame);
 
       gtk_widget_show(mix_panel);
@@ -575,7 +575,7 @@ static void update_mix_panel(int mix_id)
 	  gtk_widget_hide(w_amp_forms[i]);
 	}
 
-      Amp_Env_Display(w_env, ss);
+      amp_env_display(w_env, ss);
 
     }
 }
