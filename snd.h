@@ -20,7 +20,7 @@
  *                   see ftp://ftp.netlab.co.jp/pub/lang/ruby/
  *                 This part of Snd is brand-new and has many bugs/omissions/etc.
  *
- *   HAVE_GL       include support for OpenGL.
+ *   HAVE_GL       include support for OpenGL.  include JUST_GL to omit gl.o (the GL/Guile bindings)
  *
  *   HAVE_LADSPA   include support for LADSPA.
  *

@@ -4,7 +4,7 @@
 /* macros for extended language support 
  *
  * Guile:     ok, covers 1.3.4 to present (1.7.0) given the configuration macros in Snd's config.h.in.
- * Ruby:      ok, still a few gaps, tested in 1.6.6
+ * Ruby:      ok, still a few gaps, tested in 1.6.6, 1.6.7, 1.7.2
  * None:      ok, covers all known versions of None
  *
  * "xen" from Greek xenos (guest, foreigner)
@@ -22,6 +22,7 @@
 
 /* HISTORY:
  *  
+ *   28-May-02: off_t equivalents in Ruby 1.7
  *   6-May-02:  added off_t (long long) macros.
  *   29-Apr-02: added XEN_EXACT_P
  *   2-Jan-02:  removed TIMING and MCHECK debugging stuff, VARIABLE_REF -> XEN_VARIABLE_REF
@@ -533,8 +534,13 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_TO_SMALL_C_INT(a)             FIX2INT(a)
 #define XEN_TO_C_ULONG(a)                 NUM2ULONG(a)
 #define C_TO_XEN_ULONG(a)                 UINT2NUM((unsigned long)a)
-#define C_TO_XEN_LONG_LONG(a)             C_TO_XEN_ULONG(a)
-#define XEN_TO_C_LONG_LONG(a)             XEN_TO_C_ULONG(a)
+#if HAVE_RB_BIG2LL
+  #define C_TO_XEN_LONG_LONG(a)           rb_ll2big(a)
+  #define XEN_TO_C_LONG_LONG(a)           rb_big2ll(a)
+#else
+  #define C_TO_XEN_LONG_LONG(a)           C_TO_XEN_ULONG(a)
+  #define XEN_TO_C_LONG_LONG(a)           XEN_TO_C_ULONG(a)
+#endif
 
 #define C_TO_XEN_STRING(a)                rb_str_new2((a) ? a : "")
 #define XEN_TO_C_STRING(Str)              RSTRING(Str)->ptr
@@ -611,8 +617,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #define XEN_PROCEDURE_P(Arg)             (XEN_BOUND_P(Arg) && (rb_obj_is_kind_of(Arg, rb_cProc)))
 #define XEN_ULONG_P(Arg1)                XEN_INTEGER_P(Arg1)
 #define XEN_EXACT_P(Arg1)                XEN_INTEGER_P(Arg1)
-#define XEN_OFF_T_P(Arg)                 XEN_INTEGER_P(Arg)
-/* TODO: off_t in Ruby? (BDIGIT_DBL in bignum.c, but not exported) */
+#define XEN_OFF_T_P(Arg)                 (TYPE(Arg) == T_BIGNUM)
 
 #define XEN_LIST_P(Arg)                  (TYPE(Arg) == T_ARRAY)
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((XEN_LIST_P(Arg)) ? (Len = RARRAY(Arg)->len) : 0)

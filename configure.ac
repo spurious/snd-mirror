@@ -67,6 +67,7 @@ MAKE_TARGET="snd"
 #   --with-save-dir       directory to use for saved-state files
 #   --with-run            Guile optimizer (default=yes)
 #   --with-gl             include OpenGL support (default=no)
+#   --with-just-gl        include OpenGL support but omit the Guile bindings (gl.o) (default=no)
 #--------------------------------------------------------------------------------
 
 AC_ARG_WITH(esd,        [  --with-esd		  use ESD])
@@ -80,6 +81,7 @@ AC_ARG_WITH(xm,         [  --with-static-xm	  include the xm module])
 AC_ARG_WITH(guile,      [  --with-guile		  use Guile])
 AC_ARG_WITH(run,        [  --with-run		  Guile optimizer])
 AC_ARG_WITH(gl,         [  --with-gl		  include OpenGL support])
+AC_ARG_WITH(just-gl,    [  --with-just-gl	  include OpenGL support, but omit the GL/Guile bindings])
 
 if test "$with_doubles" = yes; then
   AC_DEFINE(Float,double)
@@ -192,6 +194,15 @@ AC_ARG_WITH(ruby,
 			    GUILE_LIBS="$GUILE_LIBS -lreadline -lncurses"], ,"-lncurses")
               AC_SUBST(GUILE_LIBS)
               AC_SUBST(GUILE_CFLAGS)
+
+              OLD_LIBS="$LIBS"
+    	      LIBS="$GUILE_LIBS"
+              OLD_CFLAGS="$CFLAGS"
+              CFLAGS="$GUILE_CFLAGS -lm"
+              AC_CHECK_LIB(ruby, rb_big2ll, [AC_DEFINE(HAVE_RB_BIG2LL)])
+              LIBS="$OLD_LIBS"
+              CFLAGS="$OLD_CFLAGS"
+
             else 
               AC_MSG_WARN([can't find Ruby!])
   	      AC_DEFINE(HAVE_RUBY,0)
@@ -390,6 +401,15 @@ if test "$with_gl" = yes ; then
   AC_CHECK_HEADER(GL/gl.h,
 	[AC_DEFINE(HAVE_GL)
 	 GL_FILES="gl.o"
+	 GL_LIBS="-lGLU -lGL"],
+	[AC_MSG_WARN(can't find GL headers)])
+fi
+# TODO: if with-gl but not GL_COLOR_TABLE_SCALE, try just_gl case
+if test "$with_just_gl" = yes ; then
+  AC_CHECK_HEADER(GL/gl.h,
+	[AC_DEFINE(HAVE_GL)
+	 AC_DEFINE(JUST_GL)
+	 GL_FILES=""
 	 GL_LIBS="-lGLU -lGL"],
 	[AC_MSG_WARN(can't find GL headers)])
 fi

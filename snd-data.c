@@ -48,6 +48,10 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
       cp->mixes = 0;
       cp->last_sonogram = NULL;
       cp->temp_sonogram = NULL;
+#if HAVE_GL
+      cp->gl_time_list = NO_LIST;
+      cp->gl_fft_list = NO_LIST;
+#endif
       XEN_DEFINE_SIMPLE_HOOK(cp->edit_hook, 0);
       snd_protect(cp->edit_hook);
       XEN_DEFINE_SIMPLE_HOOK(cp->after_edit_hook, 0);

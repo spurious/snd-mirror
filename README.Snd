@@ -21,7 +21,7 @@ The configure program has several Snd-related arguments:
    --with-motif          use Motif (the default)
      --with-static-motif same, but load Motif statically (for RPM)
      --with-motif-prefix set Motif location (will append lib and include)
-   --with-gtk            use Gtk+	
+   --with-gtk            use Gtk+ (not recommended -- this port needs a lot of work)
    --with-gtk-extra      use the file selection widget from libgtkextra
    --with-alsa           use ALSA if possible
      --with-static-alsa  use ALSA statically loaded (for RPM generation)
@@ -45,6 +45,7 @@ The configure program has several Snd-related arguments:
    --with-save-dir       directory to use for saved-state files
    --with-run            Guile optimizer (default = yes)
    --with-gl             include support for OpenGL (default = no)
+   --with-just-gl        same but omit Guile bindings in gl.c (default = no)
 
 If the configure/make process fails, please send me
 (bil@ccrma.stanford.edu) the files config.h, config.log, and makefile,
@@ -166,6 +167,7 @@ The BSD port is thanks to Steven Schultz.
 The Mac-OSX port is thanks to Ludger Brummer and Charles Nichols.
 effects.scm is largely thanks to Dave Phillips.
 The contrib directory has contributions from Dave Phillips and Tom Roth.
+The tutorial was written by Dave Phillips.
 
 
 ----------------------------------------------------------------

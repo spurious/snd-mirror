@@ -228,7 +228,7 @@ typedef struct chan__info {
   void *sonogram_data;
   void *last_sonogram, *temp_sonogram;
   void *fft_data;          /* parallels sonogram -- try to avoid repeating large ffts needlessly */
-  int printing, fft_unchanged;
+  int printing, fft_changed;
   Float gsy, gzy;
   void *mix_dragging;
   int height, mixes;
@@ -253,6 +253,9 @@ typedef struct chan__info {
   Locus old_x0, old_x1;
   Float *amp_control; /* local amp controls in snd-dac; should it be extended to other controls? */
   int last_search_result;
+#if HAVE_GL
+  int gl_time_list, gl_fft_list;
+#endif
 } chan_info;
 
 typedef struct snd__info {

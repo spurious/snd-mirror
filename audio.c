@@ -1502,7 +1502,7 @@ int mus_audio_oss_buffer_size(void)
 {
   if (fragments_locked)
     return(FRAGMENTS * (1 << FRAGMENT_SIZE));
-  else return(16 * 4096);
+  else return(16 * 4096); /* TODO: need to readback the default setting, not assume it (and are these bytes?) */
 }
 /* SOMEDAY: these should be set per-card, not globally */
 

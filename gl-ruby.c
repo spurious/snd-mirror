@@ -696,27 +696,27 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XL_PRE "glSeparableFilter2D" XL_POST, gxg_glSeparableFilter2D_w, 8, 0, 0, H_glSeparableFilter2D);
 #ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluBeginPolygon" XL_POST, gxg_gluBeginPolygon_w, 1, 0, 0, H_gluBeginPolygon);
-#endif_2
+#endif
   XEN_DEFINE_PROCEDURE(XL_PRE "gluBuild1DMipmaps" XL_POST, gxg_gluBuild1DMipmaps_w, 6, 0, 0, H_gluBuild1DMipmaps);
   XEN_DEFINE_PROCEDURE(XL_PRE "gluBuild2DMipmaps" XL_POST, gxg_gluBuild2DMipmaps_w, 7, 0, 0, H_gluBuild2DMipmaps);
 #ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluDeleteTess" XL_POST, gxg_gluDeleteTess_w, 1, 0, 0, H_gluDeleteTess);
-#endif_2
+#endif
 #ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluEndPolygon" XL_POST, gxg_gluEndPolygon_w, 1, 0, 0, H_gluEndPolygon);
-#endif_2
+#endif
   XEN_DEFINE_PROCEDURE(XL_PRE "gluErrorString" XL_POST, gxg_gluErrorString_w, 1, 0, 0, H_gluErrorString);
   XEN_DEFINE_PROCEDURE(XL_PRE "gluGetString" XL_POST, gxg_gluGetString_w, 1, 0, 0, H_gluGetString);
 #ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluGetTessProperty" XL_POST, gxg_gluGetTessProperty_w, 3, 0, 0, H_gluGetTessProperty);
-#endif_2
+#endif
   XEN_DEFINE_PROCEDURE(XL_PRE "gluLookAt" XL_POST, gxg_gluLookAt_w, 9, 0, 0, H_gluLookAt);
 #ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluNewTess" XL_POST, gxg_gluNewTess_w, 0, 0, 0, H_gluNewTess);
-#endif_2
+#endif
 #ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluNextContour" XL_POST, gxg_gluNextContour_w, 2, 0, 0, H_gluNextContour);
-#endif_2
+#endif
   XEN_DEFINE_PROCEDURE(XL_PRE "gluOrtho2D" XL_POST, gxg_gluOrtho2D_w, 4, 0, 0, H_gluOrtho2D);
   XEN_DEFINE_PROCEDURE(XL_PRE "gluPerspective" XL_POST, gxg_gluPerspective_w, 4, 0, 0, H_gluPerspective);
   XEN_DEFINE_PROCEDURE(XL_PRE "gluPickMatrix" XL_POST, gxg_gluPickMatrix_w, 5, 0, 0, H_gluPickMatrix);
@@ -724,25 +724,25 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XL_PRE "gluScaleImage" XL_POST, gxg_gluScaleImage_w, 9, 0, 0, H_gluScaleImage);
 #ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluTessBeginContour" XL_POST, gxg_gluTessBeginContour_w, 1, 0, 0, H_gluTessBeginContour);
-#endif_2
+#endif
 #ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluTessBeginPolygon" XL_POST, gxg_gluTessBeginPolygon_w, 2, 0, 0, H_gluTessBeginPolygon);
-#endif_2
+#endif
 #ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluTessEndContour" XL_POST, gxg_gluTessEndContour_w, 1, 0, 0, H_gluTessEndContour);
-#endif_2
+#endif
 #ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluTessEndPolygon" XL_POST, gxg_gluTessEndPolygon_w, 1, 0, 0, H_gluTessEndPolygon);
-#endif_2
+#endif
 #ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluTessNormal" XL_POST, gxg_gluTessNormal_w, 4, 0, 0, H_gluTessNormal);
-#endif_2
+#endif
 #ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluTessProperty" XL_POST, gxg_gluTessProperty_w, 3, 0, 0, H_gluTessProperty);
-#endif_2
+#endif
 #ifdef GLU_VERSION_1_2
   XEN_DEFINE_PROCEDURE(XL_PRE "gluTessVertex" XL_POST, gxg_gluTessVertex_w, 3, 0, 0, H_gluTessVertex);
-#endif_2
+#endif
   XEN_DEFINE_PROCEDURE(XL_PRE "gluUnProject" XL_POST, gxg_gluUnProject_w, 9, 0, 0, H_gluUnProject);
   XEN_DEFINE_PROCEDURE(XL_PRE "glActiveTextureARB" XL_POST, gxg_glActiveTextureARB_w, 1, 0, 0, H_glActiveTextureARB);
   XEN_DEFINE_PROCEDURE(XL_PRE "glClientActiveTextureARB" XL_POST, gxg_glClientActiveTextureARB_w, 1, 0, 0, H_glClientActiveTextureARB);

@@ -227,6 +227,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+28-May:  Dave Phillips' Snd tutorial added in contrib/tutorial.\n\
 24-May:  with-gl to choose between GL/X graphics, snd-gl.scm.\n\
 23-May:  gl1.png (spectrogram uses GL now if mono and HAVE_GL).\n\
 20-May:  removed glfft.c and glfft.scm, added snd-gxl-context on -DHAVE_GL switch (configure --with-gl).\n\

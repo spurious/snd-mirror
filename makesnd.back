@@ -13,6 +13,7 @@ clean:
 	rm -f $(GM_SO_FILE)
 	rm -f $(GG_FILES)
 	rm -f $(GG_SO_FILE)
+	rm -f $(GL_FILES)
 	rm -f sndplay.o audinfo.o sndrecord.o sndinfo.o sndsine.o
 	rm -f snd sndplay audinfo sndrecord sndinfo sndsine
 

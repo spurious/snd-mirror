@@ -358,6 +358,8 @@
 (hey " * the various \"v\" forms are omitted for now -- are they needed in this context?~%")
 (hey " * 'gl is added to *features*~%")
 (hey " *~%")
+(hey " * ~A: glGet* returning more than one value~%" (string-append "T" "ODO"))
+(hey " *~%")
 (hey " * HISTORY:~%")
 (hey " *     20-May-02: initial version.~%")
 (hey " */~%~%")
@@ -640,12 +642,14 @@
 		     (if (>= cargs 10) 0 refargs) ; optional ignored
 		     (if (>= cargs 10) 1 0)
 		     (car func))
-    (if (member (car func) glu-1-2) (say "#endif_2~%"))
+    (if (member (car func) glu-1-2) (say "#endif~%"))
     ))
 
 (for-each defun (reverse funcs))
 
 (say-hey "}~%~%")
+(hey "#else~%")
+(hey "  #include \"gl-ruby.c\"~%")
 (hey "#endif~%")
 
 

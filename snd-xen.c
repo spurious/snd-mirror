@@ -3164,11 +3164,13 @@ XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 #endif
 #endif
 
+#ifndef JUST_GL
 #if HAVE_GL
 #if HAVE_GUILE
  XEN init_gl(void);
 #else
  XEN Init_libgl(void);
+#endif
 #endif
 #endif
 
@@ -3653,11 +3655,13 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
 #endif
 
+#ifndef JUST_GL
 #if HAVE_GL
 #if HAVE_GUILE
   init_gl();
 #else
   Init_libgl();
+#endif
 #endif
 #endif
 

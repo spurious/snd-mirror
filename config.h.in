@@ -101,6 +101,7 @@
 #undef HAVE_XPM
 #undef HAVE_XP
 #undef HAVE_GL
+#undef JUST_GL
 #undef DEFAULT_TEMP_DIR
 #undef DEFAULT_SAVE_DIR
 #undef STATFS_ARGS
@@ -154,6 +155,7 @@
 #undef HAVE_GTK_FILE_SELECTION_GET_SELECTIONS
 #undef HAVE_GTK_ICON_SET_GET_TYPE
 #undef HAVE_GTK_1
+#undef HAVE_RB_BIG2LL
 #undef WITH_RUN
 
 #define USE_SND 1

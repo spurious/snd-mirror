@@ -9,7 +9,7 @@
  * returned to old wavelet code 18-Apr-01, and finally wrote the snd-test.scm tests.
  */
 
-#define FFT_IN_BACKGROUND_SIZE 4096
+#define FFT_IN_BACKGROUND_SIZE 16384
 /* this fft size decides when to use a background process rather than a single fft call */
 
 #define NUM_CACHED_FFT_WINDOWS 8
@@ -1415,10 +1415,12 @@ static void make_sonogram_axes(chan_info *cp)
     }
 }
 
+void fht_1(Float *fz, int n);
+
 static int apply_fft_window(fft_state *fs)
 {
   /* apply the window, reading data if necessary, resetting IO blocks to former state */
-  int i, j, result = 5, p = 0, use_fht = 0;
+  int i, j, result = 5, p = 0, use_fht = 0, use_fht_1 = 0;
   off_t ind0;
   Float *window, *fft_data;
   int data_len;
@@ -1470,8 +1472,9 @@ static int apply_fft_window(fft_state *fs)
 	  /*   hooray for micro-optimization! */
 	  p = (int)(log(fs->size + 1) / log(4.0));
 	  use_fht = ((p > 0) && (fs->size == snd_ipow2(p * 2)));
+	  use_fht_1 = !use_fht;
 	}
-      if (use_fht)
+      if ((use_fht) || (use_fht_1))
 	for (i = 0; i < data_len; i++)
 	  fft_data[i] = window[i] * read_sample_to_float(sf);
 	else
@@ -1486,9 +1489,9 @@ static int apply_fft_window(fft_state *fs)
 	  fft_data[i] = 0.0;
       decrement_fft_window_use(fs);
       result = 1;
-      if (use_fht)
+      if ((use_fht) || (use_fht_1))
 	{
-	  fht(p, fft_data);
+	  if (use_fht) fht(p, fft_data); else fht_1(fft_data, fs->size);
 	  scaler = 1.0 / sqrt(2.0);
 	  fft_data[0] = scaler * fabs(fft_data[0]);
 	  fft_data[fs->size / 2] = scaler * fabs(fft_data[fs->size / 2]);
@@ -1784,7 +1787,6 @@ void *make_fft_state(chan_info *cp, int simple)
   off_t dbeg = 0, dlen = 0;
   ss = cp->state;
   ap = cp->axis;
-  cp->fft_unchanged = FFT_CHANGED;
   if ((show_selection_transform(ss)) && 
       (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE) && 
       (selection_is_active_in_channel(cp)))
@@ -1828,7 +1830,6 @@ void *make_fft_state(chan_info *cp, int simple)
   if (reuse_old)
     {
       fs->slice = 8;
-      cp->fft_unchanged = FFT_UNCHANGED;
     }
   else
     {
@@ -2048,7 +2049,9 @@ static int set_up_sonogram(sonogram_state *sg)
   sonogram_state *lsg = NULL;
   int i, tempsize, dpys = 1;
   cp = sg->cp;
-  cp->fft_unchanged = (cp->fft_unchanged != FFT_CHANGE_LOCKED);
+  if (cp->fft_changed != FFT_CHANGE_LOCKED)
+    cp->fft_changed = FFT_UNCHANGED;
+  else cp->fft_changed = FFT_CHANGED;
   if ((cp->graph_transform_p == 0) || (cp->transform_size <= 1)) return(2);
   ss = cp->state;
   ap = cp->axis;
@@ -2135,7 +2138,7 @@ static int set_up_sonogram(sonogram_state *sg)
 	  return(2);                                   /* so skip the ffts! */
 	}
     }
-  cp->fft_unchanged = FFT_CHANGED;
+  cp->fft_changed = FFT_CHANGED;
   start_progress_report(cp->sound, NOT_FROM_ENVED);
   return(1);
 }

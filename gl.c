@@ -6,6 +6,8 @@
  * the various "v" forms are omitted for now -- are they needed in this context?
  * 'gl is added to *features*
  *
+ * TODO: glGet* returning more than one value
+ *
  * HISTORY:
  *     20-May-02: initial version.
  */
@@ -4477,6 +4479,8 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XL_PRE "glGetColorTableParameterivEXT" XL_POST, gxg_glGetColorTableParameterivEXT, 2, 1, 0, H_glGetColorTableParameterivEXT);
 }
 
+#else
+  #include "gl-ruby.c"
 #endif
 /* ---------------------------------------- constants ---------------------------------------- */
 
@@ -5380,7 +5384,7 @@ static int gl_already_inited = 0;
       define_functions();
       XEN_YES_WE_HAVE("gl");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define gl-version \"23-May-02\")");
+      XEN_EVAL_C_STRING("(define gl-version \"25-May-02\")");
 #endif
       gl_already_inited = 1;
     }
