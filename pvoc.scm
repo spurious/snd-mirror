@@ -149,6 +149,11 @@
 	  (sum-of-sines (pvoc-amps pv) (pvoc-phases pv))))
     ))
 
+;;;   (let* ((ind (open-sound "oboe.snd"))
+;;;	     (pv (make-pvocoder 256 4 64))
+;;;	     (rd (make-sample-reader 0)))
+;;;	(map-channel (lambda (y) (pvocoder pv rd))))
+
 
 #!
 ;;; ---------------- same thing using phase-vocoder gen

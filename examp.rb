@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Last: Tue Mar 09 12:36:12 CET 2004
+# Last: Sat Apr 17 04:28:37 CEST 2004
 
 # Commentary:
 #
@@ -59,7 +59,6 @@
 # close_sound_extend(snd)
 # get_func_name(n)
 # times2samples(start, dur)
-# seconds2samples(sec)
 # rbm_random(n)
 # logn(r, b)
 # car(v), cadr(v), caddr(v), cdr(v)
@@ -611,10 +610,6 @@ START and DUR are in seconds;
 returns array [beg, len] in samples\n") if start == :help
   beg = seconds2samples(start)
   [beg, beg + seconds2samples(dur)]
-end
-
-def seconds2samples(sec)
-  (sec * mus_srate()).round
 end
 
 def rbm_random(n)

@@ -4,13 +4,15 @@
 
 (use-modules (ice-9 optargs))
 
+(define (safe-srate) (if (not (null? (sounds))) (srate) (mus-srate)))
+
 (define* (make-zipper ramp-env #:optional frame-size frame-env)
   "(make-zipper ramp-env #:optional frame-size frame-env) makes a zipper generator.  'ramp-env' is 
 a thunk (normally a ramp from 0 to 1) which sets where we are in the zipping process, 
 'frame-size' is the maximum frame length during the zip in seconds (defaults to 0.05), and 
 'frame-env' is a thunk returning the current frame size during the zip process."
 
-  (let ((max-size (+ 1 (ceiling (* (srate) (or frame-size 0.05))))))
+  (let ((max-size (+ 1 (ceiling (* (safe-srate) (or frame-size 0.05))))))
     (list
      20                       ;min section len in samples
      0                        ;frame-loc
@@ -19,7 +21,7 @@ a thunk (normally a ramp from 0 to 1) which sets where we are in the zipping pro
      (make-vct max-size)      ;frame1
      (make-vct max-size)      ;frame2
      (or frame-env            ;frame length in samples (can be envelope, function etc)
-	 (lambda () (* (srate) 0.05)))
+	 (lambda () (* (safe-srate) 0.05)))
      ramp-env                 ;ramp location (where we are between the sounds)
      )))
 
@@ -102,7 +104,7 @@ a thunk (normally a ramp from 0 to 1) which sets where we are in the zipping pro
 			    (lambda ()
 			      (env e)))
 			  (or size 0.05)
-			  (lambda () (inexact->exact (* (srate) (or size 0.05))))))
+			  (lambda () (inexact->exact (* (safe-srate) (or size 0.05))))))
 	(read0 (make-sample-reader 0 file1))
 	(read1 (make-sample-reader 0 file2))
 	(read2 (make-sample-reader beg))
@@ -127,7 +129,7 @@ a thunk (normally a ramp from 0 to 1) which sets where we are in the zipping pro
 			      (lambda () 
 				(env e)))
 			    0.05
-			    (lambda () (* (srate) 0.05))))
+			    (lambda () (* (safe-srate) 0.05))))
 	  (reader0 (make-sample-reader 0 0 0))
 	  (reader1 (make-sample-reader 0 1 0)))
       (map-chan (lambda (val)

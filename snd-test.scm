@@ -1,4 +1,4 @@
-;;; Snd tests
+;; Snd tests
 ;;;
 ;;; test 0: constants 
 ;;; test 1: defaults
@@ -31,12 +31,6 @@
 ;;; test 28: errors
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
-;;; check: check-for-unsaved-edits cross-synthesis dlocsig explode-sf2 extract-channel(s) fft-edit fft-squelch mark-explode
-;;;        mpg notch-out-rumble-and-hiss play-syncd-marks snap-mark-to-beat snap-mix-to-beat
-;;;        zip-sound zipper anoi squelch-vowels snd-out
-;;;        files-popup-buffer open-next-file-in-directory read-ogg write-ogg read-speex write-speex read-flac write-flac
-;;;        next-peak find-pitch make-fm-violin remove-local-hook! html ? prune-db stop-dac delete-all-tracks
-;;;        make-pvocoder pvocoder in-out xe-create-enved xe-envelope make-zipper
 ;;; need all html example code in autotests
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
@@ -10495,7 +10489,18 @@ EDITS: 5
 	    (map-channel (comb-filter .8 32))
 	    (map-channel (zcomb .8 32 '(0 0 1 10)))
 	    (map-channel (notch-filter .8 32))
-	    (close-sound ind))
+	    (let ((ind1 (open-sound "now.snd")))
+	      (select-sound ind1)
+	      (if (fneq (maxamp) .309) (snd-display ";squelch-vowels init: ~A" (maxamp)))
+	      (squelch-vowels)
+	      (if (fneq (maxamp) .047) (snd-display ";squelch-vowels maxamp: ~A" (maxamp)))
+	      (select-sound ind)
+	      (map-channel (cross-synthesis ind1 .5 128 6.0))
+	      (revert-sound ind1)
+	      (fft-edit 40 8000)
+	      (fft-squelch .1)
+	      (close-sound ind)
+	      (close-sound ind1)))
 
 	  (let ((ind (new-sound  "test.snd" mus-next mus-bfloat 22050 1 "special env tests" 100)))
 	    (map-channel (lambda (y) 1.0))
@@ -18449,6 +18454,25 @@ EDITS: 5
 	    (snd-display ";tempo-control-bounds set (0.0 2.0): ~A" old))
 	(set! (tempo-control-bounds) (list 0.0 8.0)))
       
+      (let* ((ind (new-sound "test.snd" :size 10))
+	     (mx1 (mix-vct (make-vct 2 .1) 0))
+	     (mx2 (mix-vct (make-vct 2 .2) 2))
+	     (mx3 (mix-vct (make-vct 2 .3) 4))
+	     (mx4 (mix-vct (make-vct 2 .4) 6))
+	     (mx5 (mix-vct (make-vct 2 .5) 8)))
+	(if (not (vequal (channel->vct) (vct .1 .1 .2 .2 .3 .3 .4 .4 .5 .5)))
+	    (snd-display ";delete-all-tracks init: ~A" (channel->vct)))
+	(delete-all-tracks)
+	(if (not (vequal (channel->vct) (vct .1 .1 .2 .2 .3 .3 .4 .4 .5 .5)))
+	    (snd-display ";delete-all-tracks no-op: ~A" (channel->vct)))
+	(let ((trk (make-track mx1 mx3))
+	      (trk1 (make-track)))
+	  (set! (mix-track mx4) trk1)
+	  (delete-all-tracks)
+	  (if (not (vequal (channel->vct) (vct 0 0 .2 .2 0 0 0 0 .5 .5)))
+	      (snd-display ";delete-all-tracks: ~A" (channel->vct)))
+	  (close-sound ind)))
+
       (run-hook after-test-hook 9)
       ))
 
@@ -22464,8 +22488,8 @@ EDITS: 5
 	(offset-channel 1.0)
 	(env-sound '(0 0 1 1))
 	(let ((osc (make-oscil :frequency 1000.0 :initial-phase (+ 3.14159 (/ 3.14159 2))))
-	      (reader (make-sound-interp 0 0 0)) 
-	      (len (1- (frames 0 0))))
+	      (reader (make-sound-interp 0 ind 0)) 
+	      (len (1- (frames ind 0))))
 	  (map-channel (lambda (val) 
 			 (sound-interp reader (* len (+ 0.5 (* 0.5 (oscil osc)))))))
 	  (if (not (vequal (channel->vct) (vct 0.000 0.020 0.079 0.172 0.291 0.427 0.569 0.706 0.825 0.919 
@@ -34342,6 +34366,7 @@ EDITS: 2
 (load "clm-ins.scm")
 (load "piano.scm")
 (load "play.scm")
+(load "zip.scm")
 
 (define old-opt-23 (optimization))
 (set! (optimization) max-optimization)
@@ -35046,7 +35071,27 @@ EDITS: 2
 	(attract 0 1 0.1 2.0)
         (expfil 0 2 .2 .01 .1 "oboe.snd" "fyow.snd")
 	(fm-violin 0 .1 660 .1 :reverb-amount .1)
+	(anoi "oboe.snd" 1 1)
+	(let* ((ind (open-sound "oboe.snd"))
+	       (ind1 (open-sound "now.snd"))
+	       (zp (make-zipper (let ((e (make-env '(0 0 1 1) :end (1- (frames ind)))))
+				  (lambda () 
+				    (env e)))
+				0.05
+				(lambda () (* (mus-srate) 0.05))))
+	       (reader0 (make-sample-reader 0 ind 0))
+	       (reader1 (make-sample-reader 0 ind1 0)))
+	  (zip-sound 3 1 "fyow.snd" "now.snd" '(0 0 1 1) .05)
+	  (zip-sound 4 3 "mb.snd" "fyow.snd" '(0 0 1.0 0 1.5 1.0 3.0 1.0) .025)
+	  (map-channel (lambda (val) (zipper zp reader0 reader1)))
+	  (close-sound ind)
+	  (close-sound ind1))
 	)
+      (let* ((ind (open-sound "oboe.snd"))
+	     (pv (make-pvocoder 256 4 64))
+	     (rd (make-sample-reader 0)))
+	(map-channel (lambda (y) (pvocoder pv rd)))
+	(close-sound ind))
 
       (make-birds)
       (map close-sound (sounds))

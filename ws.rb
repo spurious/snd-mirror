@@ -4,7 +4,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Apr 08 17:05:03 CEST 2003
-# Last: Fri Mar 05 20:51:50 CET 2004
+# Last: Fri Apr 16 05:59:18 CEST 2004
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -379,7 +379,7 @@ with_silence do
 end
 require "hooks"
 
-$rbm_version          = "05-Mar-2004"
+$rbm_version          = "16-Apr-2004"
 $rbm_output           = false
 $rbm_reverb           = false
 $rbm_file_name        = "test.snd" unless defined? $rbm_file_name
@@ -778,7 +778,10 @@ installs the @with_sound_note_hook and prints the line
 
   def rbm_load(rbm_file, *args)
     if File.exist?(rbm_file)
-      ws = with_sound(*args) do
+      ws = with_sound(:play, @play,
+                      :statistics, @statistics,
+                      :comment, @comment,
+                      :reverb, @reverb, *args) do
         message("Loading %s", rbm_file.inspect) if @verbose
         eval(File.open(rbm_file).read)
       end
@@ -826,10 +829,8 @@ installs the @with_sound_note_hook and prints the line
   end
 
   def with_sound_info(name, start, dur)
-    if @info or @notehook
-      message("%s: start %1.3f, dur %1.3f", name, start, dur) if @info
-      @with_sound_note_hook.call(name, start, dur) if @notehook
-    end
+    message("%s: start %1.3f, dur %1.3f", name, start, dur) if @info
+    @with_sound_note_hook.call(name, start, dur) if @notehook
   end
   
   def run_instrument(start, dur, *locsig_args, &body)
@@ -877,8 +878,14 @@ installs the @with_sound_note_hook and prints the line
     end
     after_output
     if @reverb
+      mus_close(@ws_reverb) if mus_output?(@ws_reverb)
+      old_reverb = @ws_reverb
+      # non-run_reverb functions needs it here
+      $rbm_reverb = make_file2sample(@revfile)
       @dur += @decay_time
       run_sound_reverb
+      mus_close(@ws_reverb) if mus_input?(@ws_reverb)
+      $rbm_reverb = @ws_reverb = old_reverb
       after_reverb
     end
     if @statistics
@@ -1449,9 +1456,7 @@ class With_CLM < CLM_Instrument
   end
 
   def run_reverb(start, dur, chan = 0, &body)
-    mus_close(@ws_reverb)
-    old_reverb = @ws_reverb
-    $rbm_reverb = @ws_reverb = make_file2sample(@revfile)
+    @ws_reverb = $rbm_reverb
     case chan
     when Integer
       super(start, dur, chan)
@@ -1465,8 +1470,6 @@ class With_CLM < CLM_Instrument
         frame2file(@ws_output, samp, body.call(file2frame(@ws_reverb, samp, frm), samp))
       end
     end
-    mus_close(@ws_reverb)
-    $rbm_reverb = @ws_reverb = old_reverb
   end
 
   def rbm_mix(filename, *args)
@@ -1532,7 +1535,7 @@ Example: rbm_mix(\"tmp\")\n") if filename == :help
   end
   
   def after_reverb
-    mus_close(@ws_reverb) if @reverb
+    mus_close(@ws_reverb)
     if provided? "snd"
       if snd = find_sound(@output)
         update_sound(snd)
