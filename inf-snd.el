@@ -1,11 +1,10 @@
 ;;; inf-snd.el -- Inferior Snd Process (Ruby/Guile)
 
-;; Copyright (C) 2002--2003 Michael Scholz
+;; Copyright (C) 2002--2004 Michael Scholz
 
 ;; Author: Michael Scholz <scholz-micha@gmx.de>
 ;; Created: Wed Nov 27 20:52:54 CET 2002
-;; Last: Wed Oct 08 03:20:39 CEST 2003
-;; Ident: $Id: inf-snd.el,v 1.11 2003/10/08 01:48:32 mike Exp $
+;; Last: Wed Jan 07 03:12:26 CET 2004
 ;; Keywords: processes, snd, ruby, guile
 
 ;; This file is not part of GNU Emacs.
@@ -32,7 +31,7 @@
 ;; (inf-snd-ruby-mode) and Snd-Guile (inf-snd-guile-mode), furthermore
 ;; both a Snd-Ruby mode (snd-ruby-mode) and a Snd-Guile mode
 ;; (snd-guile-mode) for editing source files.  It is tested with
-;; Snd-Ruby and Snd-Guile 6.9 and GNU Emacs 21.2/21.3.
+;; Snd-Ruby and Snd-Guile 7.1 and GNU Emacs 21.2/21.3.50.
 
 ;; Since this mode is built on top of the general command-interpreter-
 ;; in-a-buffer mode (comint-mode), it shares a common base
@@ -88,7 +87,7 @@
 ;; (setq inf-snd-ruby-program-name "snd-ruby -notebook")
 ;; (setq inf-snd-guile-program-name "snd-guile -separate")
 ;; (setq inf-snd-working-directory "~/Snd/")
-;; (setq inf-snd-index-path "~/Snd/snd-7/")
+;; (setq inf-snd-index-path "~/Snd/snd-6/")
 
 ;; The hook-variables may be used to set new key bindings and menu
 ;; entries etc in your .emacs file, e.g.:
@@ -135,9 +134,9 @@
 ;; Key binding of inf-snd-ruby-mode and inf-snd-guile-mode:
 ;;
 ;; C-c C-f   	 inf-snd-file      open file-dialog of Snd
-;; C-c C-l   	 inf-snd-load      load script in current working directory
-;; C-c C-p   	 inf-snd-play      play current sound file
-;; C-c C-u   	 inf-snd-stop      stop playing all sound files
+;; M-C-l 	 inf-snd-load      load script in current working directory
+;; M-C-p 	 inf-snd-play      play current sound file
+;; C-c C-t 	 inf-snd-stop      stop playing all sound files
 ;; C-c C-i   	 inf-snd-help      help on Snd-function (snd-help)
 ;; C-u C-c C-i   inf-snd-help-html help on Snd-function (html)
 ;; C-c C-g   	 inf-snd-break     send C-g! to Snd process
@@ -167,7 +166,7 @@
 ;; 
 ;; C-c C-f   	 snd-file    	   open file-dialog of Snd
 ;; C-c C-p   	 snd-play    	   play current sound file
-;; C-c C-u   	 snd-stop    	   stop playing all sound files
+;; C-c C-t   	 snd-stop    	   stop playing all sound files
 ;; C-c C-i   	 snd-help    	   help on Snd-function (snd-help)
 ;; C-u C-c C-i   snd-help-html 	   help on Snd-function (html)
 ;; C-c C-g   	 snd-break   	   send C-g! to Snd process
@@ -183,6 +182,9 @@
 (require 'scheme)
 (require 'inf-ruby)
 (require 'cmuscheme)
+
+(defconst inf-snd-version "07-Jan-2004"
+  "Current version of inf-snd.el")
 
 (defvar inf-snd-ruby-buffer "*Snd-Ruby*"
   "Inferior Snd-Ruby process buffer.")
@@ -232,7 +234,7 @@ buffer-local.")
 `inf-snd-help' (\\[inf-snd-help], \\[universal-argument]
 \\[inf-snd-help]) and `snd-help' (\\[snd-help],
 \\[universal-argument] \\[snd-help]), taken from
-snd-7/snd-xref.c.  The user variable `inf-snd-index-path' should
+snd-6/snd-xref.c.  The user variable `inf-snd-index-path' should
 point to the correct path of snd-xref.c.")
 
 (defvar inf-snd-guile-keywords nil
@@ -241,7 +243,7 @@ point to the correct path of snd-xref.c.")
 `inf-snd-help' (\\[inf-snd-help], \\[universal-argument]
 \\[inf-snd-help]) and `snd-help' (\\[snd-help],
 \\[universal-argument] \\[snd-help]), taken from
-snd-7/snd-xref.c.  The user variable `inf-snd-index-path' should
+snd-6/snd-xref.c.  The user variable `inf-snd-index-path' should
 point to the correct path of snd-xref.c.")
 
 (defun inf-snd-set-keywords ()
@@ -268,9 +270,9 @@ Menu name is NAME.  You can extend the key bindings and menu entries
 here or via hook variables in .emacs file."
   ;; key bindings
   (define-key (current-local-map) "\C-c\C-f" 'inf-snd-file)
-  (define-key (current-local-map) "\C-c\C-l" 'inf-snd-load)
-  (define-key (current-local-map) "\C-c\C-p" 'inf-snd-play)
-  (define-key (current-local-map) "\C-c\C-u" 'inf-snd-stop)
+  (define-key (current-local-map) "\M-\C-l" 'inf-snd-load)
+  (define-key (current-local-map) "\M-\C-p" 'inf-snd-play)
+  (define-key (current-local-map) "\C-c\C-t" 'inf-snd-stop)
   (define-key (current-local-map) "\C-c\C-i" 'inf-snd-help)
   (define-key (current-local-map) "\C-c\C-g" 'inf-snd-break)
   (define-key (current-local-map) "\C-c\C-k" 'inf-snd-kill)
@@ -375,7 +377,7 @@ snd-xref.c."
 	(let ((inf-str (if html-help
 			   (format "(html \"%s\")" str)
 			 (if inf-snd-ruby-flag
-			     (format "puts snd-help(\"%s\")" str)
+			     (format "printf(\"%%s\\n\", snd-help(\"%s\"))" str)
 			   (format "(snd-help \"%s\")" str)))))
 	  (with-current-buffer (inf-snd-proc-buffer)
 	    (goto-char (point-max))
@@ -448,7 +450,7 @@ Argument STRING is the Snd command and optional arguments."
 
 Snd is a sound editor created by Bill Schottstaedt
 \(bil@ccrma.Stanford.EDU).  You can find it on
-ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz.
+ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-6.tar.gz.
 
 You can type in Ruby commands in inferior Snd process buffer which
 will be sent via `comint-send-string' to the inferior Snd process.
@@ -500,7 +502,7 @@ The following key bindings are defined:
 
 Snd is a sound editor created by Bill Schottstaedt
 \(bil@ccrma.Stanford.EDU).  You can find it on
-ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz.
+ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-6.tar.gz.
 
 You can type in Guile commands in inferior Snd process buffer which
 will be sent via `comint-send-string' to the inferior Snd process.
@@ -539,6 +541,26 @@ The following key bindings are defined:
   (goto-char (point-max))
   (run-hooks 'inf-snd-guile-mode-hook))
 
+;; pre 2003-12-29 lisp/comint.el, send-invisible
+(defun old-send-invisible (str)
+  "Read a string without echoing.
+Then send it to the process running in the current buffer.
+The string is sent using `comint-input-sender'.
+Security bug: your string can still be temporarily recovered with
+\\[view-lossage]."
+  (interactive "P")			; Defeat snooping via C-x ESC ESC
+  (let ((proc (get-buffer-process (current-buffer))))
+    (cond ((not proc)
+	   (error "Current buffer has no process"))
+	  ((stringp str)
+	   (comint-snapshot-last-prompt)
+	   (funcall comint-input-sender proc str))
+	  (t
+	   (let ((str (comint-read-noecho "Non-echoed text: " t)))
+	     (if (stringp str)
+		 (send-invisible str)
+	       (message "Warning: text will be echoed")))))))
+
 (defun run-snd-ruby (cmd)
   "Start inferior Snd-Ruby process.
 CMD is used for determine which program to run.  If interactively
@@ -551,7 +573,7 @@ called, one will be asked for program name to run."
       (setq inf-snd-ruby-program-name cmd)
       (set-buffer (apply 'make-comint inf-snd-ruby-buffer-name (car cmdlist) nil (cdr cmdlist))))
     (inf-snd-ruby-mode)
-    (send-invisible "snd_version"))) ; dummy to force Snd showing a prompt
+    (old-send-invisible "snd_version"))) ; dummy to force Snd showing a prompt
 
 (defun run-snd-guile (cmd)
   "Start inferior Snd-Guile process.
@@ -565,7 +587,7 @@ called, one will be asked for program name to run."
       (setq inf-snd-guile-program-name cmd)
       (set-buffer (apply 'make-comint inf-snd-guile-buffer-name (car cmdlist) nil (cdr cmdlist))))
     (inf-snd-guile-mode)
-    (send-invisible "(snd-version)")))
+    (old-send-invisible "(snd-version)")))
 
 ;;;; The snd-ruby-mode and snd-guile-mode
 
@@ -867,7 +889,7 @@ here or via hook variables in .emacs file."
   (define-key (current-local-map) "\C-u\C-c\C-l" 'snd-load-file-protected)
   (define-key (current-local-map) "\C-c\C-f" 'snd-file)
   (define-key (current-local-map) "\C-c\C-p" 'snd-play)
-  (define-key (current-local-map) "\C-c\C-u" 'snd-stop)
+  (define-key (current-local-map) "\C-c\C-t" 'snd-stop)
   (define-key (current-local-map) "\C-c\C-i" 'snd-help)
   (define-key (current-local-map) "\C-c\C-g" 'snd-break)
   (define-key (current-local-map) "\C-c\C-q" 'snd-quit)

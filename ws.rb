@@ -1,10 +1,10 @@
 # ws.rb -- with_sound and friends for Snd/Ruby
 
-# Copyright (C) 2003 Michael Scholz
+# Copyright (C) 2003--2004 Michael Scholz
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Apr 08 17:05:03 CEST 2003
-# Last: Sun Dec 21 14:31:08 CET 2003
+# Last: Wed Jan 07 01:35:21 CET 2004
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -208,9 +208,9 @@ end
 
 # Code:
 
-RBM_WS_VERSION = "21-Dec-2003 (RCS 1.32)"
+RBM_WS_VERSION = "07-Jan-2004"
 
-$IN_SND = defined? sound_open
+$IN_SND = defined? open_sound
 
 require "English"
 require "sndlib" unless $LOADED_FEATURES.member?("sndlib")
@@ -218,9 +218,14 @@ require "examp"
 require "etc"
 require "socket"
 
-$rbm_version = RBM_WS_VERSION.split(' ').first
-$rbm_output = nil
-$rbm_reverb = nil
+# Older ruby versions warn if global variables are undefined.
+# ($var ||= val)
+old_verbose = $VERBOSE
+$VERBOSE = false
+
+$rbm_version            = RBM_WS_VERSION
+$rbm_output             = nil
+$rbm_reverb             = nil
 $rbm_file_name        ||= "test.snd"
 $rbm_srate            ||= 22050
 $rbm_channels         ||= 1
@@ -240,6 +245,8 @@ $rbm_verbose          ||= ($VERBOSE or $DEBUG)
 $rbm_notehook         ||= nil
 $rbm_rt_bufsize       ||= 128
 
+$VERBOSE = old_verbose
+
 module WS
   @@file_nr = 0
 
@@ -254,7 +261,7 @@ module WS
   end
   
   def with_sound(*args, &body)
-  doc("with_sound(*args) { |start| ... }
+    doc("with_sound(*args) { |start| ... }
 	:output,            $rbm_file_name (#{$rbm_file_name.inspect})
 	:channels,          $rbm_channels (#$rbm_channels)
 	:srate,             $rbm_srate (#$rbm_srate)
@@ -414,8 +421,6 @@ Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n") if get_args(arg
     end
     statistics(output, beg, reverb, revfile) if statistics
     play_sound(output, play)
-    output
-  ensure
     mus_close($rbm_reverb) if $rbm_reverb
     reverb and $rbm_delete_reverb and (not continue_old_file) and remove_file(revfile)
     mus_close($rbm_output) if $rbm_output
@@ -426,6 +431,7 @@ Usage: with_sound(:play, 1, :statistics, true) { fm_violin }\n") if get_args(arg
     $rbm_srate = old_srate
     $rbm_channels = old_channels
     $rbm_reverb_channels = old_reverb_channels
+    output
   end
 
   def rbm_load(rbm_file_name, *args)

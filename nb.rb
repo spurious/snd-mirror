@@ -1,7 +1,8 @@
 # nb.rb -- translation of nb.rb
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Sat Dec 27 18:02:11 CET 2003
+# Created: Tue Dec 10 22:08:15 CET 2002
+# Last: Tue Jan 06 18:17:37 CET 2004
 
 # User functions
 #  make_nb(path)            install mouse hooks
@@ -19,7 +20,7 @@
 # database.  The edit widget may be used for editing current file info
 # entries.
 
-SND_NB_VERSION = "27-Dec-2003"
+SND_NB_VERSION = "06-Jan-2004"
 
 require "English"
 $HAVE_MOTIF = $LOADED_FEATURES.member?("xm")
@@ -32,7 +33,9 @@ require "examp"
 require "hooks"
 
 module NB
-    doc "#{self.class} #{self.name} is a translation of nb.scm.
+  $nb_database = "nb" unless defined? $nb_database
+  
+  doc "#{self.class} #{self.name} is a translation of nb.scm.
 
 Provide pop-up help in the Files viewer.
 If you have `dbm', any data associated with the file in the dbm
@@ -46,7 +49,6 @@ To remove a file's info, unb([file=@current_file]).
 To clean non-existent file references out of the database,
 prune_db()."
 
-  $nb_database ||= "nb"
   Current_file_viewer = 0
   Previous_file_viewer = 1
   Region_viewer = 2
@@ -83,7 +85,7 @@ Install mouse enter and leave hooks in Files viewer.\n") if path == :help
       doc("make_nb_motif([path = $nb_database])
 Install mouse enter and leave hooks in Files viewer
 and creates popup on Info viewer.\n") if path == :help
-      $mnb ||= Edit_info.new(path)
+      $mnb = Edit_info.new(path) unless defined? $mnb
       $mouse_enter_label_hook.add_hook!("nb_edit_info_enter") do |t, p, n|
         $mnb.mouse_enter_label(t, p, n)
       end
@@ -95,7 +97,7 @@ and creates popup on Info viewer.\n") if path == :help
 
     # to use in popup.rb
     def show_edit_window(path = $nb_database, file = nil)
-      $mnb ||= Edit_info.new(path)
+      $mnb = Edit_info.new(path) unless defined? $mnb
       $mnb.mouse_enter_label(Current_file_viewer, nil, file)
     end
 =begin
@@ -245,22 +247,6 @@ written: %s
 
   if $HAVE_MOTIF
     module Motif
-      def focus_cb(w, c, i)
-        RXtVaSetValues(w, [RXmNbackground, text_focus_color()])
-      end
-      
-      def losing_cb(w, c, i)
-        RXtVaSetValues(w, [RXmNbackground, basic_color()])
-      end
-      
-      def cancel_edit_cb(w, c, i)
-        RXtUnmanageChild(w)
-      end
-      
-      def clear_text_widget_cb(w, c, i)
-        RXmTextSetString(c, "")
-      end
-      
       def string2compound(*args)
         RXmStringCreateLocalized(format(*args))
       end
@@ -320,13 +306,15 @@ written: %s
         unless popup_widget?
           if info_widget?
             @popup_widget = make_popup_menu(info_widget, F_INFO,
-                                            ["Edit info", method(:edit_cb).to_proc],
+                                            ["Edit info", lambda do |w, c, i| edit_cb() end],
                                             ["Prune DB", lambda do |w, c, i| prune_db() end],
                                             ["Clear current info", lambda do |w, c, i| unb() end],
                                             [:sep_two],
-                                            ["Help", method(:help_cb).to_proc])
+                                            ["Help", lambda do |w, c, i| help_cb() end])
             RXtAddEventHandler(@popup_widget, RButtonPressMask, false,
-                               method(:button_cb).to_proc, :popup_widget)
+                               lambda do |w, c, i, f|
+                                 Rbutton(i) == 3 and edit_cb()
+                               end, :popup_widget)
           end
         end
       end
@@ -340,21 +328,12 @@ written: %s
         set_edit_widget(file, notes)
       end
       
-      def button_cb(w, c, i, f)
-        Rbutton(i) == 3 and edit_cb(w, c, i)
-      end
-      
-      def write_string_cb(w, c, i)
-        unb()
-        nb(RXmTextGetString(c))
-      end
-      
       def set_edit_widget(file, notes)
         @file_widget and RXtVaSetValues(@file_widget, [RXmNlabelString, string2compound(file)])
         @text_widget and RXtVaSetValues(@text_widget, [RXmNvalue, notes])
       end
       
-      def edit_cb(w, c, i)
+      def edit_cb
         unless edit_widget?
           edit = RXmCreateTemplateDialog(main_widgets()[1], "edit",
                                          [RXmNtitle, F_INFO,
@@ -387,12 +366,25 @@ written: %s
                                          [RXmNarmColor, pushed_button_color(),
                                           RXmNbackground, reset_button_color(),
                                           RXmNforeground, data_color()])
-          RXtAddCallback(clear, RXmNactivateCallback, method(:clear_text_widget_cb).to_proc, text)
-          RXtAddCallback(edit, RXmNokCallback, method(:write_string_cb).to_proc, text)
-          RXtAddCallback(edit, RXmNcancelCallback, method(:cancel_edit_cb).to_proc)
-          RXtAddCallback(edit, RXmNhelpCallback, method(:help_cb).to_proc)
-          RXtAddCallback(text, RXmNfocusCallback, method(:focus_cb).to_proc)
-          RXtAddCallback(text, RXmNlosingFocusCallback, method(:losing_cb).to_proc)
+          RXtAddCallback(clear, RXmNactivateCallback,
+                         lambda do |w, c, i|
+                           RXmTextSetString(c, "")
+                         end, text)
+          RXtAddCallback(edit, RXmNokCallback,
+                         lambda do |w, c, i|
+                           unb()
+                           nb(RXmTextGetString(c))
+                         end, text)
+          RXtAddCallback(edit, RXmNcancelCallback, lambda do |w, c, i| RXtUnmanageChild(w) end)
+          RXtAddCallback(edit, RXmNhelpCallback, lambda do |w, c, i| help_cb() end)
+          RXtAddCallback(text, RXmNfocusCallback,
+                         lambda do |w, c, i|
+                           RXtVaSetValues(w, [RXmNbackground, text_focus_color()])
+                         end)
+          RXtAddCallback(text, RXmNlosingFocusCallback,
+                         lambda do |w, c, i|
+                           RXtVaSetValues(w, [RXmNbackground, basic_color()])
+                         end)
           # If we have a $mouse_enter_text_hook, e.g. in ~/.snd-ruby.rb
           #   $mouse_enter_text_hook.add_hook!("snd_init_hook") do |w| focus_widget(w) end
           RXtAddEventHandler(text, REnterWindowMask, false,
@@ -412,7 +404,10 @@ written: %s
           # we can click in edit widget to get Snd's whole widget tree.
           # (editres: Commands-->Get Tree)
           if defined?(R_XEditResCheckMessages())
-            RXtAddEventHandler(RXtParent(edit), 0, true, method(:R_XEditResCheckMessages).to_proc)
+            RXtAddEventHandler(RXtParent(edit), 0, true,
+                               lambda do |w, c, i, f|
+                                 R_XEditResCheckMessages(w, c, i, f)
+                               end)
           end
           @edit_widget = edit
           @text_widget = text
@@ -425,7 +420,7 @@ written: %s
         RXMapRaised(RXtDisplayOfObject(@edit_widget), RXtWindow(@edit_widget))
       end
       
-      def help_cb(w, c, i)
+      def help_cb
         help_dialog(F_INFO,
                     "Edit info DB of sound files (see snd/nb.scm).
 

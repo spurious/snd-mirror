@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sun Dec 21 13:48:01 CET 2003
-# Last: Sat Dec 27 17:51:54 CET 2003
+# Last: Tue Jan 06 14:17:42 CET 2004
 
 # Commentary:
 #
@@ -36,7 +36,7 @@ end
 
 # Code:
 
-SND_HOOKS_VERSION = "27-Dec-2003"
+SND_HOOKS_VERSION = "06-Jan-2004"
 
 unless defined?(Hook)
   class Hook
@@ -213,6 +213,9 @@ end
 require "examp"
 
 class Hook
+  # This works only with newer ruby versions (I assume >= 1.8.x).
+  # Proc#to_s must return #<Proc:0x80c96a0@xxx:x> not only
+  # #<Proc:0x80c96a0>!
   def to_str
     self.each do |prc| rbm_message(prc.to_str) end
     nil

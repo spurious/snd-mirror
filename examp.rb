@@ -1,19 +1,20 @@
 # examp.rb -- Guile -> Ruby translation
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Wed Dec 24 17:24:01 CET 2003
+# Last: Wed Jan 07 02:54:03 CET 2004
 
 # Commentary:
 #
 # Utilities
 #
+# Object#to_str, Symbol#to_sym, Array#zip for backward compatibility
+# 
 # module Info
 #  description=(text)
 #  description
 #
 # class Proc
 #  to_method(name, klass)
-#  inspect
 #  to_str
 #  to_body
 #
@@ -95,9 +96,47 @@
 
 # Code:
 
-RBM_EXAMP_VERSION = "21-Dec-2003 (RCS 1.93)"
+RBM_EXAMP_VERSION = "07-Jan-2004"
 
-$IN_SND = defined? sound_open
+$IN_SND = defined? open_sound
+
+class Object
+  # Older ruby versions need this but I don't know the last one.  It
+  # doesn't conflict with newer versions, as far as I can see.
+  def to_str
+    self.inspect
+  end
+end
+
+class Symbol
+  def to_sym
+    self
+  end unless defined? :a.to_sym
+end
+
+class Array
+  # Array#zip, new in ruby core since 19-Nov-2002.
+=begin
+  a = [4, 5, 6]
+  b = [7, 8, 9]
+  [1, 2, 3].zip(a, b) --> [[1, 4, 7], [2, 5, 8], [3, 6, 9]]
+  [1, 2].zip(a, b)    --> [[1, 4, 7], [2, 5, 8]]
+  a.zip([1, 2],[8])   --> [[4, 1, 8], [5, 2, nil], [6, nil, nil]]
+=end
+  def zip(*args)
+    args.map! do |x| x.to_a end
+    self.each_index do |i|
+      ary = [self[i]]
+      args.each do |x| ary.push(x[i]) end
+      if block_given?
+        yield(*ary)
+      else
+        self[i] = ary
+      end
+    end
+    self
+  end unless defined? [].zip
+end
 
 include Math
 require "ws"
@@ -133,16 +172,27 @@ class Proc
   # m = lambda do |*args| p args end
   # m.to_method(:func)
   # func(1, 2, 3) ==> [1, 2, 3]
+  # 
+  # lambda do |x| p x end.to_method(:foo)  foo("text1") --> "text1"
+  # lambda do |x| p x end.to_method("bar") bar("text2") --> "text2"
   
   def to_method(name, klass = Object)
-    body = self.clone.to_proc
-    klass.class_eval do define_method(name.to_sym, body) end
+    name = case name
+           when String
+             name.intern
+           when Symbol
+             name
+           else
+             raise "Proc#to_method(name, klass = Object): `name' must be a String or Symbol"
+           end
+    body = self
+    klass.class_eval do define_method(name, body) end
   end
-  
-  def inspect
-    format("#<%s: id: %d, source: %s>", self.class, self.object_id,
-           self.to_s.split("@").last.gsub(/>/, "").gsub(/:/, ", line: "))
-  end
+
+  # Important:
+  # The following works only with newer ruby versions (I assume >=
+  # 1.8.x).  Proc#inspect must return #<Proc:0x80c96a0@xxx:x> to
+  # locate the source file of the procedure, not only #<Proc:0x80c96a0>!
 
   # Functions to_str and to_body try to search the procedure source
   # code in a file determined by to_s.  It is only a simple scanner
@@ -169,9 +219,15 @@ class Proc
   # returns something like 'lambda do ... end'
   def to_str
     file, line = self.to_s.sub(/>/, "").split(/@/).last.split(/:/)
-    return "no file found for procedure #{self.inspect}" if file == "(eval)"
+    if file == "(eval)" or file == "(irb)"
+      return "no file found for procedure #{self.inspect}"
+    elsif (not File.exist?(file))
+      return "Sorry, you need a higher ruby version to use Proc#to_str.
+This works only with newer ruby versions (I assume >= 1.8.x).
+Proc#inspect must return #<Proc:0x01234567@xxx:x> not only #{self.inspect}!"
+    end
     line = line.to_i
-    body = String.new
+    body = ""
     brck = i = 0
     blck = -1
     first_line = true
@@ -194,7 +250,7 @@ class Proc
         end
         next
       end
-      # don't count statement modifiers like: code if conditional
+      # don't count statement modifiers like: `code if conditional'
       next if /\s*\S+\s*(if|unless|while|until)+/ =~ f
       f.split(/\W+/).each do |s|
         case s
@@ -220,7 +276,7 @@ class Proc
     else
       brck = 0
       ws = true
-      body = String.new
+      body = ""
       self.to_str.each_line do |s|
         if ws
           s.each_byte do |c|
@@ -306,7 +362,7 @@ module Kernel
   end
 
   #
-  # putd(func)
+  # putd(:func)
   #
   # put documentation (for usage in an Emacs Snd session)
   # 
@@ -315,12 +371,12 @@ module Kernel
     catch(:__Kernel_doc__) do send(func.to_sym, :help) end unless func.class <= Module
   rescue
   ensure
-    puts Kernel.doc(func)
+    printf("%s\n", Kernel.doc(func))
   end
 end unless defined? @@docs
 
 #
-# snd_putd(func)
+# snd_putd(:func)
 #
 # snd put documentation (for usage in Snd)
 # 
@@ -329,7 +385,7 @@ def snd_putd(func)
   catch(:__Kernel_doc__) do send(func.to_sym, :help) end unless func.class <= Module
 rescue
 ensure
-  rbm_message Kernel.doc(func)
+  rbm_message(Kernel.doc(func))
 end
 
 def arity2str(proc)
@@ -605,7 +661,7 @@ def shell(*cmd)
   doc("shell(*cmd)
 Sends cmd to a shell (executes it as a shell command) and returns the
 result.\n") if cmd == :help
-  str = String.new
+  str = ""
   f = IO.popen(format(*cmd))
   str << f.getc until f.eof?
   f.close
@@ -659,7 +715,7 @@ end
 #                               [Numeric, :number, 1],
 #                               [Array, :list, [0, 1, 2, 3]])
 
-$strict_args ||= $DEBUG
+$strict_args = $DEBUG unless defined? $strict_args
 
 def Args(args, *rest)
   result = rest.map do |keys| get_class_or_key(args, *keys) end
@@ -690,7 +746,7 @@ end
 ## Buffers Menu
 ##
 
-$buffer_menu ||= nil
+$buffer_menu = nil unless defined? $buffer_menu
 
 def open_buffer(file)
   doc("open_buffer(file)
@@ -720,7 +776,7 @@ end
 ##
 
 $reopen_names = []
-$reopen_menu ||= nil
+$reopen_menu = nil unless defined? $reopen_menu
 
 def add_to_reopen_menu(snd)
   doc("add_to_reopen_menu(snd)
