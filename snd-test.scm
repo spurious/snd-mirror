@@ -28486,11 +28486,19 @@ EDITS: 3
 			       times))))
 		     (list "1a.snd" "oboe.snd" "storm.snd" (string-append home-dir "/test/sound/away.snd")))))
 	  (snd-display ";         scl   rev   env   map   ptree  scn  pad   wrt   clm   mix   src   del")
-	  (snd-display ";1a:   ~{~6,2F~}" (car data))  
-	  (snd-display ";oboe: ~{~6,2F~}" (cadr data))  
-	  (snd-display ";storm:~{~6,2F~}" (caddr data))
+;	  (snd-display ";1a:   ~{~6,2F~}" (car data))  
+;	  (snd-display ";oboe: ~{~6,2F~}" (cadr data))  
+;	  (snd-display ";storm:~{~6,2F~}" (caddr data))
+;	  (if (list-p (cadddr data))
+;	      (snd-display ";away: ~{~6,2F~}" (cadddr data)))
+;	  (map (lambda (a) (format #f "~6,2F" a)) (car data))
+
+	  (snd-display ";1a:   ~{~A~}" (map (lambda (a) (format #f "~6,2F" a)) (car data)))
+	  (snd-display ";oboe: ~{~A~}" (map (lambda (a) (format #f "~6,2F" a)) (cadr data)))
+	  (snd-display ";storm:~{~A~}" (map (lambda (a) (format #f "~6,2F" a)) (caddr data)))
 	  (if (list-p (cadddr data))
-	      (snd-display ";away: ~{~6,2F~}" (cadddr data))))
+	      (snd-display ";away: ~{~A~}" (map (lambda (a) (format #f "~6,2F" a)) (cadddr data))))
+	  )
 
 	(if (and all-args with-big-file)
 	    (let ((big-file-name "/home/bil/zap/sounds/bigger.snd"))
@@ -43771,7 +43779,7 @@ EDITS: 2
 		(if (not (= (list-ref vals 1) XmNO_AUTO_SELECT)) (snd-display ";XmNautomaticSelection: ~A" (list-ref vals 1)))
 		(if (not (= (list-ref vals 3) 100)) (snd-display ";XmNdoubleClickInterval: ~A" (list-ref vals 3)))
 		(if (not (= (list-ref vals 5) 3)) (snd-display ";XmNitemCount: ~A" (list-ref vals 5)))
-		(if (not (XmString? (car (list-ref vals 7)))) (snd-display ";XmNitems: ~A" (list-ref vals 7)))
+		(if (or (null? (list-ref vals 7)) (not (XmString? (car (list-ref vals 7))))) (snd-display ";XmNitems: ~A" (list-ref vals 7)))
 		(if (not (= (list-ref vals 9) 4)) (snd-display ";XmNlistMarginHeight: ~A" (list-ref vals 9)))
 		(if (not (= (list-ref vals 11) 1)) (snd-display ";XmNlistMarginWidth: ~A" (list-ref vals 11)))
 		(if (not (= (list-ref vals 13) XmVARIABLE)) (snd-display ";XmNlistSizePolicy: ~A" (list-ref vals 13)))
@@ -49180,12 +49188,15 @@ EDITS: 2
 (define (traced a) (+ 2 a))
 
 (define (make-identity-mixer chans)
-  (let ((m1 (make-mixer chans)))
-    (if (mixer? m1)
-	(do ((i 0 (1+ i)))
-	    ((= i chans))
-	  (mixer-set! m1 i i 1.0)))
-    m1))
+  (if (and (integer? chans) 
+	   (< chans 256))
+      (let ((m1 (make-mixer chans)))
+	(if (mixer? m1)
+	    (do ((i 0 (1+ i)))
+		((= i chans))
+	      (mixer-set! m1 i i 1.0)))
+	m1)
+      #f))
 
 (define (extract-channel filename snd chn)
   (save-sound-as filename snd #f #f #f chn))

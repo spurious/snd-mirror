@@ -5,10 +5,11 @@
 
 #include <config.h>
 
-#define XM_DATE "12-Aug-04"
+#define XM_DATE "23-Aug-04"
 
 /* HISTORY: 
  *
+ *   23-Aug:    more changes for new Guile.
  *   12-Aug:    some changes to accommodate new Guile names.
  *   22-June:   XmColorSelector resources.
  *   19-May:    plug several memory leaks.
@@ -1709,6 +1710,26 @@ static Boolean gxm_XtConvertSelectionIncrProc(Widget w, Atom *selection, Atom *t
   return(1);
 }
 
+static Arg *protect_args(Arg *args, int len)
+{
+  /* probably too clever... trying to put off the copy until after all error checking to reduce memory leakage */
+  int i;
+  for (i = 0; i < len; i++)
+    if (args[i].name)
+      args[i].name = strdup(args[i].name); /* XEN_TO_C_STRING will eventually gc, so protect against that until we're done with args */
+  return(args);
+}
+
+static Arg *free_args(Arg *args, int len)
+{
+  int i;
+  for (i = 0; i < len; i++)
+    if (args[i].name)
+      free(args[i].name); /* free what we strdup'd above */
+  FREE(args);
+  return(NULL);
+}
+
 static Arg *XEN_TO_C_Args(XEN inargl)
 {
   /* an Arg array in xm is a list of name value pairs */
@@ -1731,7 +1752,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
     {
       xname = XEN_CAR(inarg);
       XEN_ASSERT_TYPE(XEN_STRING_P(xname), xname, 0, c__FUNCTION__, "string");
-      name = XEN_TO_C_STRING(xname); /* should this be protected? unfortunately -- yes... */
+      name = XEN_TO_C_STRING(xname);
       type = resource_type(name);
       value = XEN_CADR(inarg);
       switch (type)
@@ -2063,7 +2084,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	}
     }
   xm_unprotect_at(gcloc);
-  return(args);
+  return(protect_args(args, len));
 }
 
 static void fixup_args(Widget w, Arg *args, int len)
@@ -2395,12 +2416,12 @@ static XEN gxm_XtGetValues_1(XEN arg1, XEN larg2, int len)
   locs = (unsigned long *)CALLOC(len, sizeof(unsigned long));
   for (i = 0; i < len; i++, arg2 = XEN_CDDR(arg2))
     {
-      name = XEN_TO_C_STRING(XEN_CAR(arg2));
+      name = strdup(XEN_TO_C_STRING(XEN_CAR(arg2)));
       XtSetArg(args[i], name, &(locs[i]));
     }
   XtGetValues(w, args, len);
   val = C_TO_XEN_Args(w, args, len);
-  FREE(args);
+  free_args(args, len);
   FREE(locs);
   xm_unprotect_at(gcloc);
   return(xen_return_first(val, larg2));
@@ -2622,7 +2643,7 @@ static XEN gxm_new_widget(const char *caller, Widget (*func)(Widget parent, char
     if (args)
       {
 	fixup_args(w, args, arglen);
-	FREE(args);
+	free_args(args, arglen);
       }
   }
   return(C_TO_XEN_Widget(w));
@@ -2844,10 +2865,9 @@ creates a rendition"
     Arg *args;
     int arglen;
     args = XEN_TO_C_Args(arg3);
-    w = XmRenditionCreate(XEN_TO_C_Widget(arg1), 
-			  XEN_TO_C_STRING(arg2), 
-			  args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
-    if (args) FREE(args);
+    arglen = XEN_TO_C_INT_DEF(arg4, arg3);
+    w = XmRenditionCreate(XEN_TO_C_Widget(arg1), XEN_TO_C_STRING(arg2), args, arglen);
+    if (args) free_args(args, arglen);
   }
   return(C_TO_XEN_XmRendition(w));
 }
@@ -2887,12 +2907,12 @@ retrieves rendition resources"
     locs = (unsigned long *)CALLOC(len, sizeof(unsigned long));
     for (i = 0; i < len; i++, arg2 = XEN_CDDR(arg2))
       {
-	name = XEN_TO_C_STRING(XEN_CAR(arg2));
+	name = strdup(XEN_TO_C_STRING(XEN_CAR(arg2)));
 	XtSetArg(args[i], name, &(locs[i]));
       }
     XmRenditionRetrieve(r, args, len);
     val = C_TO_XEN_Args((Widget)r, args, len);
-    FREE(args);
+    free_args(args, len);
     FREE(locs);
     xm_unprotect_at(gcloc);
     return(xen_return_first(val, larg2));
@@ -2910,9 +2930,9 @@ modifies resources"
     Arg *args;
     int arglen;
     args = XEN_TO_C_Args(arg2);
-    XmRenditionUpdate(XEN_TO_C_XmRendition(arg1), 
-		      args, arglen = XEN_TO_C_INT_DEF(arg3, arg2));
-    if (args) FREE(args);
+    arglen = XEN_TO_C_INT_DEF(arg3, arg2);
+    XmRenditionUpdate(XEN_TO_C_XmRendition(arg1), args, arglen);
+    if (args) free_args(args, arglen);
   }
   return(XEN_FALSE);
 }
@@ -3186,12 +3206,12 @@ retrieves attributes of a parse mapping"
     locs = (unsigned long *)CALLOC(len, sizeof(unsigned long));
     for (i = 0; i < len; i++, arg2 = XEN_CDDR(arg2))
       {
-	name = XEN_TO_C_STRING(XEN_CAR(arg2));
+	name = strdup(XEN_TO_C_STRING(XEN_CAR(arg2)));
 	XtSetArg(args[i], name, &(locs[i]));
       }
     XmParseMappingGetValues(XEN_TO_C_XmParseMapping(arg1), args, len);
     val = C_TO_XEN_Args(NULL, args, len);
-    FREE(args);
+    free_args(args, len);
     FREE(locs);
     xm_unprotect_at(gcloc);
     return(xen_return_first(val, larg2));
@@ -3211,7 +3231,7 @@ sets attributes of a parse mapping"
     args = XEN_TO_C_Args(arg2);
     arglen = XEN_TO_C_INT_DEF(arg3, arg2);
     XmParseMappingSetValues(XEN_TO_C_XmParseMapping(arg1), args, arglen);
-    if (args) FREE(args);
+    if (args) free_args(args, arglen);
     return(XEN_FALSE);
   }
 }
@@ -3226,8 +3246,9 @@ static XEN gxm_XmParseMappingCreate(XEN arg1, XEN arg2)
     Arg *args;
     int arglen;
     args = XEN_TO_C_Args(arg1);
-    w = XmParseMappingCreate(args, arglen = XEN_TO_C_INT_DEF(arg2, arg1));
-    if (args) FREE(args);
+    arglen = XEN_TO_C_INT_DEF(arg2, arg1);
+    w = XmParseMappingCreate(args, arglen);
+    if (args) free_args(args, arglen);
   }
   return(C_TO_XEN_XmParseMapping(w));
 }
@@ -3242,7 +3263,7 @@ static XEN gxm_XmCvtXmStringToByteStream(XEN str)
   xstr = XEN_TO_C_XmString(str);
   if (!(XmStringEmpty(xstr)))
     res = XmCvtXmStringToByteStream(xstr, &prop);
-  return(XEN_LIST_2(C_TO_XEN_INT(res), C_TO_XEN_STRING(prop)));
+  return(XEN_LIST_2(C_TO_XEN_INT(res), C_TO_XEN_STRING((const char *)prop)));
 }
 
 static XEN gxm_XmCvtByteStreamToXmString(XEN str)
@@ -4294,14 +4315,15 @@ static XEN gxm_XmVaCreateSimpleCheckBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
     int arglen;
     Arg *args;
     args = XEN_TO_C_Args(arg4);
+    arglen = XEN_LIST_LENGTH(arg4) / 2;
     w = XmCreateSimpleCheckBox(XEN_TO_C_Widget(arg1), 
 			       XEN_TO_C_STRING(arg2), 
 			       args,
-			       arglen = XEN_LIST_LENGTH(arg4) / 2);
+			       arglen);
     if (args)
       {
 	fixup_args(w, args, arglen);
-	FREE(args);
+	free_args(args, arglen);
       }
   }
   return(C_TO_XEN_Widget(w));
@@ -4325,14 +4347,15 @@ static XEN gxm_XmVaCreateSimpleRadioBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4, 
     int arglen;
     Arg *args;
     args = XEN_TO_C_Args(arg5);
+    arglen = XEN_LIST_LENGTH(arg5) / 2;
     w = XmCreateSimpleRadioBox(XEN_TO_C_Widget(arg1), 
 			       XEN_TO_C_STRING(arg2), 
 			       args,
-			       arglen = XEN_LIST_LENGTH(arg5) / 2);
+			       arglen);
     if (args)
       {
 	fixup_args(w, args, arglen);
-	FREE(args);
+	free_args(args, arglen);
       }
   }
   return(C_TO_XEN_Widget(w));
@@ -4361,14 +4384,15 @@ KeySym option_mnemonic, int button_set, XtCallbackProc callback, args)"
     int arglen;
     Arg *args;
     args = XEN_TO_C_Args(arg7);
+    arglen = XEN_LIST_LENGTH(arg7) / 2;
     w = XmCreateSimpleOptionMenu(XEN_TO_C_Widget(arg1), 
 				 XEN_TO_C_STRING(arg2), 
 				 args,
-				 arglen = XEN_LIST_LENGTH(arg7) / 2);
+				 arglen);
     if (args)
       {
 	fixup_args(w, args, arglen);
-	FREE(args);
+	free_args(args, arglen);
       }
   }
   return(C_TO_XEN_Widget(w));
@@ -4390,14 +4414,15 @@ static XEN gxm_XmVaCreateSimplePulldownMenu(XEN arg1, XEN arg2, XEN arg3, XEN ar
     int arglen;
     Arg *args;
     args = XEN_TO_C_Args(arg5);
+    arglen = XEN_LIST_LENGTH(arg5) / 2;
     w = XmCreateSimplePulldownMenu(XEN_TO_C_Widget(arg1), 
 				   XEN_TO_C_STRING(arg2), 
 				   args,
-				   arglen = XEN_LIST_LENGTH(arg5) / 2);
+				   arglen);
     if (args)
       {
 	fixup_args(w, args, arglen);
-	FREE(args);
+	free_args(args, arglen);
       }
   }
   return(C_TO_XEN_Widget(w));
@@ -4418,14 +4443,15 @@ static XEN gxm_XmVaCreateSimplePopupMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
     int arglen;
     Arg *args;
     args = XEN_TO_C_Args(arg4);
+    arglen = XEN_LIST_LENGTH(arg4) / 2;
     w = XmCreateSimplePopupMenu(XEN_TO_C_Widget(arg1), 
 				XEN_TO_C_STRING(arg2), 
 				args,
-				arglen = XEN_LIST_LENGTH(arg4) / 2);
+				arglen);
     if (args)
       {
 	fixup_args(w, args, arglen);
-	FREE(args);
+	free_args(args, arglen);
       }
   }
   return(C_TO_XEN_Widget(w));
@@ -4442,14 +4468,15 @@ static XEN gxm_XmVaCreateSimpleMenuBar(XEN arg1, XEN arg2, XEN arg3)
     int arglen;
     Arg *args;
     args = XEN_TO_C_Args(arg3);
+    arglen = XEN_LIST_LENGTH(arg3) / 2;
     w = XmVaCreateSimpleMenuBar(XEN_TO_C_Widget(arg1), 
 				XEN_TO_C_STRING(arg2),
 				args,
-				arglen = XEN_LIST_LENGTH(arg3) / 2);
+				arglen);
     if (args)
       {
 	fixup_args(w, args, arglen);
-	FREE(args);
+	free_args(args, arglen);
       }
   }
   return(C_TO_XEN_Widget(w));
@@ -6663,12 +6690,12 @@ initiates a drop transfer"
     Arg *args;
     int arglen;
     args = XEN_TO_C_Args(arg2);
-    w = XmDropTransferStart(XEN_TO_C_Widget(arg1), 
-			    args, arglen = XEN_TO_C_INT_DEF(arg3, arg2));
+    arglen = XEN_TO_C_INT_DEF(arg3, arg2);
+    w = XmDropTransferStart(XEN_TO_C_Widget(arg1), args, arglen);
     if (args)
       {
 	fixup_args(w, args, arglen);
-	FREE(args);
+	free_args(args, arglen);
       }
   }
   return(C_TO_XEN_Widget(w));
@@ -6729,12 +6756,12 @@ retrieves resource values set on a drop site"
   locs = (unsigned long *)CALLOC(len, sizeof(unsigned long));
   for (i = 0; i < len; i++, arg2 = XEN_CDDR(arg2))
     {
-      name = XEN_TO_C_STRING(XEN_CAR(arg2));
+      name = strdup(XEN_TO_C_STRING(XEN_CAR(arg2)));
       XtSetArg(args[i], name, &(locs[i]));
     }
   XmDropSiteRetrieve(XEN_TO_C_Widget(arg1), args, len);
   val = C_TO_XEN_Args((Widget)(XEN_TO_C_Widget(arg1)), args, len);
-  FREE(args);
+  free_args(args, len);
   FREE(locs);
   xm_unprotect_at(gcloc);
   return(xen_return_first(val, larg2));
@@ -6761,11 +6788,12 @@ resource values for a drop site"
     int arglen;
     w = XEN_TO_C_Widget(arg1);
     args = XEN_TO_C_Args(arg2);
-    XmDropSiteUpdate(w, args, arglen = XEN_TO_C_INT_DEF(arg3, arg2));
+    arglen = XEN_TO_C_INT_DEF(arg3, arg2);
+    XmDropSiteUpdate(w, args, arglen);
     if (args)
       {
 	fixup_args(w, args, arglen);
-	FREE(args);
+	free_args(args, arglen);
       }
   }
   return(XEN_FALSE);
@@ -6810,11 +6838,12 @@ identifies a drop site and assigns resources that specify its behavior"
     int arglen;
     w = XEN_TO_C_Widget(arg1);
     args = XEN_TO_C_Args(arg2);
-    XmDropSiteRegister(w, args, arglen = XEN_TO_C_INT_DEF(arg3, arg2));
+    arglen = XEN_TO_C_INT_DEF(arg3, arg2);
+    XmDropSiteRegister(w, args, arglen);
     if (args)
       {
 	fixup_args(w, args, arglen);
-	FREE(args);
+	free_args(args, arglen);
       }
   }
   return(XEN_FALSE);
@@ -6956,13 +6985,14 @@ initiates a drag and drop transaction"
     Arg *args;
     int arglen;
     args = XEN_TO_C_Args(arg3);
+    arglen = XEN_TO_C_INT_DEF(arg4, arg3);
     w = XmDragStart(XEN_TO_C_Widget(arg1), 
 		    XEN_TO_C_XEvent(arg2), 
-		    args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
+		    args, arglen);
     if (args)
       {
 	fixup_args(w, args, arglen);
-	FREE(args);
+	free_args(args, arglen);
       }
   }
   return(C_TO_XEN_Widget(w));
@@ -8041,14 +8071,15 @@ setup and create a Print Shell widget"
     Arg *args;
     int arglen;
     args = XEN_TO_C_Args(arg4);
+    arglen = XEN_TO_C_INT_DEF(arg5, arg4);
     w = XmPrintSetup(XEN_TO_C_Widget(arg1), 
 		     XEN_TO_C_Screen(arg2), 
 		     XEN_TO_C_STRING(arg3), 
-		     args, arglen = XEN_TO_C_INT_DEF(arg5, arg4));
+		     args, arglen);
     if (args)
       {
 	fixup_args(w, args, arglen);
-	FREE(args);
+	free_args(args, arglen);
       }
   }
   return(C_TO_XEN_Widget(w));
@@ -15297,11 +15328,12 @@ static XEN gxm_XtVaSetValues(XEN arg1, XEN arg2)
     int arglen;
     args = XEN_TO_C_Args(arg2);
     w = XEN_TO_C_Widget(arg1);
-    XtSetValues(w, args, arglen = XEN_LIST_LENGTH(arg2) / 2);
+    arglen = XEN_LIST_LENGTH(arg2) / 2;
+    XtSetValues(w, args, arglen);
     if (args)
       {
 	fixup_args(w, args, arglen);
-	FREE(args);
+	free_args(args, arglen);
       }
   }
   return(XEN_FALSE);
@@ -15324,11 +15356,12 @@ of a widget, (" XM_PREFIX "XtSetValues" XM_POSTFIX " w (list " XM_PREFIX "XmNhei
     Widget w;
     w = XEN_TO_C_Widget(arg1);
     args = XEN_TO_C_Args(arg2);
-    XtSetValues(w, args, arglen = XEN_TO_C_INT_DEF(arg3, arg2));
+    arglen = XEN_TO_C_INT_DEF(arg3, arg2);
+    XtSetValues(w, args, arglen);
     if (args)
       {
 	fixup_args(w, args, arglen);
-	FREE(args);
+	free_args(args, arglen);
       }
   }
   return(XEN_FALSE);
@@ -15497,6 +15530,7 @@ of the arguments is slightly different from the C Xt call.  The final arg is an 
       xm_unprotect_at(gcloc);
     }
   args = XEN_TO_C_Args(arg8);
+  arglen = XEN_LIST_LENGTH(arg8) / 2;
   res = XtAppInitialize(&app, 
 			XEN_TO_C_STRING(arg2), 
 			NULL,
@@ -15505,11 +15539,11 @@ of the arguments is slightly different from the C Xt call.  The final arg is an 
 			argv,
 			fallbacks,
 			args,
-			arglen = XEN_LIST_LENGTH(arg8) / 2);
+			arglen);
   if (args)
     {
       fixup_args(res, args, arglen);
-      FREE(args);
+      free_args(args, arglen);
     }
   if (fallbacks) 
     {
@@ -15574,7 +15608,7 @@ and the specified args and num_args and returns the created shell.  The num_args
   if (args)
     {
       fixup_args(res, args, arglen);
-      FREE(args);
+      free_args(args, arglen);
     }
   if (fallbacks) 
     {
@@ -15623,6 +15657,7 @@ static XEN gxm_XtVaOpenApplication(XEN arg1, XEN arg4, XEN arg5, XEN arg7, XEN a
       xm_unprotect_at(gcloc);
     }
   args = XEN_TO_C_Args(arg8);
+  arglen = XEN_LIST_LENGTH(arg8) / 2;
   res = XtOpenApplication(&app, 
 			  XEN_TO_C_STRING(arg1), 
 			  NULL,
@@ -15632,11 +15667,11 @@ static XEN gxm_XtVaOpenApplication(XEN arg1, XEN arg4, XEN arg5, XEN arg7, XEN a
 			  fallbacks,
 			  XEN_TO_C_WidgetClass(arg7), 
 			  args, 
-			  arglen = XEN_LIST_LENGTH(arg8) / 2);
+			  arglen);
   if (args)
     {
       fixup_args(res, args, arglen);
-      FREE(args);
+      free_args(args, arglen);
     }
   if (fallbacks) 
     {
@@ -15694,7 +15729,7 @@ of fallback resources."
   if (args)
     {
       fixup_args(res, args, arglen);
-      FREE(args);
+      free_args(args, arglen);
     }
   if (fallbacks) 
     {
@@ -15802,16 +15837,17 @@ static XEN gxm_XtVaAppCreateShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN ar
   XEN_ASSERT_TYPE(XEN_Display_P(arg4), arg4, 4, "XtVaAppCreateShell", "Display*");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg5), arg5, 5, "XtVaAppCreateShell", "List");
   args = XEN_TO_C_Args(arg5);
+  arglen = XEN_LIST_LENGTH(arg5) / 2;
   w = XtAppCreateShell(XEN_TO_C_STRING(arg1), 
 		       XEN_TO_C_STRING(arg2), 
 		       XEN_TO_C_WidgetClass(arg3), 
 		       XEN_TO_C_Display(arg4), 
 		       args,
-		       arglen = XEN_LIST_LENGTH(arg5) / 2);
+		       arglen);
   if (args)
     {
       fixup_args(w, args, arglen);
-      FREE(args);
+      free_args(args, arglen);
     }
   return(C_TO_XEN_Widget(w));
 }
@@ -15830,16 +15866,17 @@ the specified application name and application class for qualifying all widget r
   XEN_ASSERT_TYPE(XEN_LIST_P(arg5), arg5, 5, "XtAppCreateShell", "ArgList");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg6), arg6, 6, "XtAppCreateShell", "int");
   args = XEN_TO_C_Args(arg5);
+  arglen = XEN_TO_C_INT_DEF(arg6, arg5);
   w = XtAppCreateShell(XEN_TO_C_STRING(arg1), 
 		       XEN_TO_C_STRING(arg2), 
 		       XEN_TO_C_WidgetClass(arg3), 
 		       XEN_TO_C_Display(arg4), 
 		       args, 
-		       arglen = XEN_TO_C_INT_DEF(arg6, arg5));
+		       arglen);
   if (args)
     {
       fixup_args(w, args, arglen);
-      FREE(args);
+      free_args(args, arglen);
     }
   return(C_TO_XEN_Widget(w));
 }
@@ -15858,13 +15895,14 @@ routine has been replaced by XtAppCreateShell."
   XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XtCreateApplicationShell", "ArgList");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XtCreateApplicationShell", "int");
   args = XEN_TO_C_Args(arg3);
+  arglen = XEN_TO_C_INT_DEF(arg4, arg3);
   w = XtCreateApplicationShell(XEN_TO_C_STRING(arg1), 
 			       XEN_TO_C_WidgetClass(arg2), 
-			       args, arglen = XEN_TO_C_INT_DEF(arg4, arg3));
+			       args, arglen);
   if (args)
     {
       fixup_args(w, args, arglen);
-      FREE(args);
+      free_args(args, arglen);
     }
   return(C_TO_XEN_Widget(w));
 }
@@ -15881,15 +15919,16 @@ static XEN gxm_XtVaCreateManagedWidget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   XEN_ASSERT_TYPE(XEN_Widget_P(arg3), arg3, 3, "XtVaCreateManagedWidget", "Widget");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XtVaCreateManagedWidget", "List");
   args = XEN_TO_C_Args(arg4);
+  arglen = XEN_LIST_LENGTH(arg4) / 2;
   w = XtCreateManagedWidget(XEN_TO_C_STRING(arg1),
 			    XEN_TO_C_WidgetClass(arg2), 
 			    XEN_TO_C_Widget(arg3), 
 			    args,
-			    arglen = XEN_LIST_LENGTH(arg4) / 2);
+			    arglen);
   if (args)
     {
       fixup_args(w, args, arglen);
-      FREE(args);
+      free_args(args, arglen);
     }
   return(C_TO_XEN_Widget(w));
 }
@@ -15905,15 +15944,16 @@ static XEN gxm_XtVaCreateWidget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   XEN_ASSERT_TYPE(XEN_Widget_P(arg3), arg3, 3, "XtVaCreateWidget", "Widget");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XtVaCreateWidget", "List");
   args = XEN_TO_C_Args(arg4);
+  arglen = XEN_LIST_LENGTH(arg4) / 2;
   w = XtCreateWidget(XEN_TO_C_STRING(arg1), 
 		     XEN_TO_C_WidgetClass(arg2), 
 		     XEN_TO_C_Widget(arg3), 
 		     args,
-		     arglen = XEN_LIST_LENGTH(arg4) / 2);
+		     arglen);
   if (args)
     {
       fixup_args(w, args, arglen);
-      FREE(args);
+      free_args(args, arglen);
     }
   return(C_TO_XEN_Widget(w));
 }
@@ -15931,14 +15971,15 @@ that calls XtCreateWidget and XtManageChild."
   XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XtCreateManagedWidget", "ArgList");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg5), arg5, 5, "XtCreateManagedWidget", "int");
   args = XEN_TO_C_Args(arg4);
+  arglen = XEN_TO_C_INT_DEF(arg5, arg4);
   w = XtCreateManagedWidget(XEN_TO_C_STRING(arg1), 
 			    XEN_TO_C_WidgetClass(arg2), 
 			    XEN_TO_C_Widget(arg3), 
-			    args, arglen = XEN_TO_C_INT_DEF(arg5, arg4));
+			    args, arglen);
   if (args)
     {
       fixup_args(w, args, arglen);
-      FREE(args);
+      free_args(args, arglen);
     }
   return(C_TO_XEN_Widget(w));
 }
@@ -15955,14 +15996,15 @@ static XEN gxm_XtCreateWidget(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
   XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XtCreateWidget", "ArgList");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg5), arg5, 5, "XtCreateWidget", "int");
   args = XEN_TO_C_Args(arg4);
+  arglen = XEN_TO_C_INT_DEF(arg5, arg4);
   w = XtCreateWidget(XEN_TO_C_STRING(arg1), 
 		     XEN_TO_C_WidgetClass(arg2), 
 		     XEN_TO_C_Widget(arg3), 
-		     args, arglen = XEN_TO_C_INT_DEF(arg5, arg4));
+		     args, arglen);
   if (args)
     {
       fixup_args(w, args, arglen);
-      FREE(args);
+      free_args(args, arglen);
     }
   return(C_TO_XEN_Widget(w));
 }
@@ -16036,15 +16078,16 @@ static XEN gxm_XtVaCreatePopupShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   XEN_ASSERT_TYPE(XEN_Widget_P(arg3), arg3, 3, "XtVaCreatePopupShell", "Widget");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XtVaCreatePopupShell", "List");
   args = XEN_TO_C_Args(arg4);
+  arglen = XEN_LIST_LENGTH(arg4) / 2;
   w = XtVaCreatePopupShell(XEN_TO_C_STRING(arg1), 
 			   XEN_TO_C_WidgetClass(arg2), 
 			   XEN_TO_C_Widget(arg3),
 			   args,
-			   arglen = XEN_LIST_LENGTH(arg4) / 2);
+			   arglen);
   if (args)
     {
       fixup_args(w, args, arglen);
-      FREE(args);
+      free_args(args, arglen);
     }
   return(C_TO_XEN_Widget(w));
 }
@@ -16064,14 +16107,15 @@ to the parent's pop-ups list directly."
     Arg *args;
     int arglen;
     args = XEN_TO_C_Args(arg4);
+    arglen = XEN_TO_C_INT_DEF(arg5, arg4);
     w = XtCreatePopupShell(XEN_TO_C_STRING(arg1), 
 			   XEN_TO_C_WidgetClass(arg2), 
 			   XEN_TO_C_Widget(arg3), 
-			   args, arglen = XEN_TO_C_INT_DEF(arg5, arg4));
+			   args, arglen);
     if (args)
       {
 	fixup_args(w, args, arglen);
-	FREE(args);
+	free_args(args, arglen);
       }
   }
   return(C_TO_XEN_Widget(w));
@@ -24076,6 +24120,7 @@ static xm_resource_t resource_type(char *name)
 {
   int i, start, end, ind;
   ind = (int)(name[0]) - 97;
+  if (ind < 0) return(XM_ULONG); /* oops... */
   start = hd_links[ind];
   if (start < 0)
     return(XM_ULONG);

@@ -44,6 +44,7 @@ The configure program has several Snd-related arguments:
                            without any extras.
 
    --with-ladspa         include LADSPA plugin support (default: yes in Linux)
+
    --with-static-xm      include the xm module (rather than loading it dynamically)
 			   this option affects xm.c for Motif, xg.c for Gtk.
                            You'll need this (or need to make xm and load xm.so
@@ -131,7 +132,7 @@ switch.
 
 
 There are RPM packages of Snd available at the ccrma-ftp site
-mentioned above: snd-7-5.i386.rpm and snd-7-5.src.rpm.  These RPM
+mentioned above: snd-7-6.i386.rpm and snd-7-6.src.rpm.  These RPM
 files have been superseded by Fernando Lopez-Lezcano's set available
 at http://ccrma.stanford.edu/planetccrma/software/
 
@@ -171,9 +172,9 @@ legalese).  Send bug reports or suggestions to bil@ccrma.stanford.edu.
 Authors:
 Bill Schottstaedt
 Michael Scholz: the German translation, the Ruby code, inf-snd.el, and the Forth version of sndlib.
-Fernando Lopez-Lezcano: the current ALSA support.
 Dave Phillips: the tutorial, new-effects.scm, and many other files.
 Kjetil S. Matheussen: snd_conffile.scm, ladspa.scm, gui.scm, snd-hobbit.scm, and the Jack audio support.
+Fernando Lopez-Lezcano: the current ALSA support.
 Richard W.E. Furse: the original LADSPA support.
 Nick Bailey: the ESD support.
 Volker Kuhlmann and Seppo Ingalsuo: the Solaris port.

@@ -269,6 +269,11 @@ static char **xen_temp_strings = NULL;
 static int xen_temp_strings_ctr = 0;
 #define XEN_TEMP_STRINGS_SIZE 128
 
+#if DEBUGGING
+static char **stored_strings = NULL;
+static int stored_strings_ctr = 0;
+#endif
+
 char *xen_guile_to_c_string_with_eventual_free(XEN str)
 {
   char *result;
@@ -277,7 +282,21 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str)
   else
     {
       if (xen_temp_strings[xen_temp_strings_ctr]) 
+#if DEBUGGING
+	{
+	  int i, len;
+	  char *str;
+	  str = xen_temp_strings[xen_temp_strings_ctr];
+	  len = strlen(str);
+	  for (i = 0; i < len; i++) str[i] = 'X';
+	  if (!stored_strings) stored_strings = (char **)calloc(1024, sizeof(char **));
+	  if (stored_strings[stored_strings_ctr]) free(stored_strings[stored_strings_ctr]);
+	  stored_strings[stored_strings_ctr++] = str;
+	  if (stored_strings_ctr >= 1024) stored_strings_ctr = 0;
+	}
+#else
 	free(xen_temp_strings[xen_temp_strings_ctr]);
+#endif
     }
   result = scm_to_locale_string(str); /* not XEN_TO_C_STRING here -- infinite recursion */
   xen_temp_strings[xen_temp_strings_ctr++] = result;

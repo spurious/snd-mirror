@@ -243,10 +243,10 @@ static XEN snd_format_if_needed(XEN args)
   XEN format_args = XEN_EMPTY_LIST, cur_arg, result;
   int i, start = 0, num_args, format_info_len, err_size = 8192;
   bool got_tilde = false, was_formatted = false;
-  char *format_info, *errmsg = NULL;
+  char *format_info = NULL, *errmsg = NULL;
   num_args = XEN_LIST_LENGTH(args);
   if (num_args == 1) return(XEN_CAR(args));
-  format_info = XEN_TO_C_STRING(XEN_CAR(args));
+  format_info = copy_string(XEN_TO_C_STRING(XEN_CAR(args)));
   format_info_len = snd_strlen(format_info);
   if (XEN_LIST_P(XEN_CADR(args)))
     format_args = XEN_COPY_ARG(XEN_CADR(args)); /* protect Ruby case, a no-op in Guile */
@@ -309,6 +309,7 @@ static XEN snd_format_if_needed(XEN args)
     }
   if (i > start)
     strncat(errmsg, (char *)(format_info + start), i - start);
+  if (format_info) FREE(format_info);
   if (!was_formatted)
     {
       errmsg = snd_strcat(errmsg, " ", &err_size);
@@ -462,7 +463,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
       XEN_PUTS(possible_code, port);
     }
   XEN_FLUSH_PORT(port); /* needed to get rid of trailing garbage chars?? -- might be pointless now */
-  name_buf = XEN_TO_C_STRING(XEN_PORT_TO_STRING(port));
+  name_buf = copy_string(XEN_TO_C_STRING(XEN_PORT_TO_STRING(port)));
   if (send_error_output_to_stdout)
     string_to_stdout(name_buf);
   else
@@ -482,6 +483,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 	}
     }
   snd_unprotect_at(port_gc_loc);
+  if (name_buf) FREE(name_buf);
   check_for_event();
   return(tag);
 }
@@ -2520,11 +2522,13 @@ static XEN g_little_endian(void)
 static XEN g_snd_completion(XEN text)
 {
   /* perhaps callable from emacs? */
-  char *str;
+  char *str, *temp;
   XEN res;
-  str = command_completer(XEN_TO_C_STRING(text));
+  temp = copy_string(XEN_TO_C_STRING(text));
+  str = command_completer(temp);
   res = C_TO_XEN_STRING(str);
   FREE(str);
+  FREE(temp);
   return(res);
 }
 

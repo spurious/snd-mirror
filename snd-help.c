@@ -382,6 +382,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+23-Aug:  snd 7.6\n\
 16-Aug:  removed built-in Hadamard transform\n\
          out-chan argument to add-player so that channel data can be sent to any audio channel\n\
 	    (also play, play-and-wait, play-channel)\n\

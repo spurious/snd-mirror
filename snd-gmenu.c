@@ -251,6 +251,8 @@ void check_menu_labels(int key, int state, bool extended) {}
 
 /* -------------------------------- MAIN MENU -------------------------------- */
 
+/* I tried gtk_image_menu_item_new_from_stock here, and it looks cruddy to me -- will stick with bare-bones menus */
+
 GtkWidget *add_menu(void)
 {
   /* this mainly passes the global data pointer (ss) to all the menu-related callbacks */

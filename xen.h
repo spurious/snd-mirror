@@ -21,11 +21,12 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 17
-#define XEN_VERSION "1.17"
+#define XEN_MINOR_VERSION 18
+#define XEN_VERSION "1.18"
 
 /* HISTORY:
  *
+ *  23-Aug-04: more Guile name changes.
  *  12-Aug-04: more Guile name changes, C_TO_XEN_STRINGN (Guile)
  *  3-Aug-04:  xen_to_c_int bugfix thanks to Kjetil S. Matheussen.
  *  29-Jul-04: deprecated XEN_TO_C_BOOLEAN_OR_TRUE.
@@ -89,10 +90,10 @@
 /* ------------------------------ GUILE ------------------------------ */
 
 #if HAVE_GUILE
-#if (!HAVE_SCM_NUM2INT)
-  #include <guile/gh.h>
-#else
+#if (HAVE_SCM_NUM2INT || HAVE_SCM_C_MAKE_RECTANGULAR)
   #include <libguile.h>
+#else
+  #include <guile/gh.h>
 #endif
 
 #define XEN_OK 1
@@ -113,12 +114,22 @@
 
 #define XEN_UNDEFINED       SCM_UNDEFINED
 
+#if HAVE_SCM_IS_SYMBOL
+  #define C_STRING_TO_XEN_SYMBOL(a)   scm_from_locale_symbol(a)
+#else
+  #if HAVE_SCM_STR2SYMBOL
+    #define C_STRING_TO_XEN_SYMBOL(a) scm_str2symbol(a)
+  #else
+    #define C_STRING_TO_XEN_SYMBOL(a) gh_symbol2scm(a)
+  #endif
+#endif
+
 #if HAVE_SCM_C_DEFINE
   #define XEN_VARIABLE_REF(Var)               SCM_VARIABLE_REF(Var)
   #define XEN_VARIABLE_SET(Var, Val)          SCM_VARIABLE_SET(Var, Val)
-  #define XEN_NAME_AS_C_STRING_TO_VALUE(a)    XEN_VARIABLE_REF(scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure (), XEN_TRUE))
+  #define XEN_NAME_AS_C_STRING_TO_VALUE(a)    XEN_VARIABLE_REF(scm_sym2var(C_STRING_TO_XEN_SYMBOL(a), scm_current_module_lookup_closure (), XEN_TRUE))
       /* this is probably not the right thing -- the 3rd arg should be XEN_FALSE, else we're defining a new variable in the current module */
-  #define XEN_NAME_AS_C_STRING_TO_VARIABLE(a) scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure(), XEN_FALSE)
+  #define XEN_NAME_AS_C_STRING_TO_VARIABLE(a) scm_sym2var(C_STRING_TO_XEN_SYMBOL(a), scm_current_module_lookup_closure(), XEN_FALSE)
   #define XEN_SYMBOL_TO_VARIABLE(a)           scm_sym2var(a, scm_current_module_lookup_closure(), XEN_FALSE)
 
   #if HAVE_SCM_DEFINED_P
@@ -315,20 +326,20 @@
   #define C_STRING_TO_XEN_FORM(Str)   scm_read_0str(Str)
 #endif
 
-#if HAVE_SCM_STR2SYMBOL
-  #define C_STRING_TO_XEN_SYMBOL(a)   scm_str2symbol(a)
+#if HAVE_SCM_IS_SYMBOL
+  #define XEN_EVAL_FORM(Form)         scm_eval((XEN)(Form), scm_interaction_environment())
+  #define XEN_SYMBOL_TO_C_STRING(a)   XEN_TO_C_STRING(scm_symbol_to_string(a))
 #else
-  #define C_STRING_TO_XEN_SYMBOL(a)   gh_symbol2scm(a)
+  #ifdef SCM_SYMBOL_CHARS
+    #define XEN_EVAL_FORM(Form)       scm_eval((XEN)(Form), scm_interaction_environment())
+    /* was scm_eval_x but I'm not sure that's safe */
+    #define XEN_SYMBOL_TO_C_STRING(a) SCM_SYMBOL_CHARS(a)
+  #else
+    #define XEN_EVAL_FORM(Form)       scm_eval((XEN)(Form))
+    #define XEN_SYMBOL_TO_C_STRING(a) gh_symbol2newstr(a, NULL)
+  #endif
 #endif
 
-#ifdef SCM_SYMBOL_CHARS
-  #define XEN_EVAL_FORM(Form)         scm_eval((XEN)(Form), scm_interaction_environment())
-  /* was scm_eval_x but I'm not sure that's safe */
-  #define XEN_SYMBOL_TO_C_STRING(a)   SCM_SYMBOL_CHARS(a)
-#else
-  #define XEN_EVAL_FORM(Form)         scm_eval((XEN)(Form))
-  #define XEN_SYMBOL_TO_C_STRING(a)   gh_symbol2newstr(a, NULL)
-#endif
 #if HAVE_SCM_OBJECT_TO_STRING
   #define XEN_TO_STRING(Obj)          scm_object_to_string(Obj, XEN_UNDEFINED)
 #else
@@ -441,13 +452,20 @@
   #define SCM_SYMBOLP(Arg)            gh_symbol_p(Arg)
 #endif
 
-#define XEN_SYMBOL_P(Arg)             (SCM_SYMBOLP(Arg))
+#if HAVE_SCM_IS_SYMBOL
+  #define XEN_SYMBOL_P(Arg)           scm_is_symbol(Arg)
+#else
+  #define XEN_SYMBOL_P(Arg)           (SCM_SYMBOLP(Arg))
+#endif
+
 #define XEN_PROCEDURE_P(Arg)          (XEN_NOT_FALSE_P(scm_procedure_p(Arg)))
+
 #if HAVE_SCM_C_MAKE_RECTANGULAR
   #define XEN_STRING_P(Arg)           scm_is_string(Arg)
 #else
   #define XEN_STRING_P(Arg)           (SCM_STRINGP(Arg))
 #endif
+
 #define XEN_VECTOR_P(Arg)             (SCM_VECTORP(Arg))
 #define XEN_LIST_P(Arg)               (scm_ilength(Arg) >= 0)
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((Len = ((int)scm_ilength(Arg))) >= 0)
@@ -545,8 +563,8 @@
 #else
 #define XEN_REQUIRED_ARGS(Func) \
   XEN_TO_C_INT(((!(SCM_CLOSUREP(Func))) && \
-                (XEN_NOT_FALSE_P(scm_procedure_property(Func, scm_str2symbol("hobbit-numargs"))))) ? \
-		 scm_procedure_property(Func,scm_str2symbol("hobbit-numargs")) : XEN_CAR(XEN_ARITY(Func)))
+                (XEN_NOT_FALSE_P(scm_procedure_property(Func, C_STRING_TO_XEN_SYMBOL("hobbit-numargs"))))) ? \
+		 scm_procedure_property(Func, C_STRING_TO_XEN_SYMBOL("hobbit-numargs")) : XEN_CAR(XEN_ARITY(Func)))
 #endif
 
 #define XEN_REQUIRED_ARGS_OK(Func, Args) (XEN_TO_C_INT(XEN_CAR(XEN_ARITY(Func))) == Args)
