@@ -1,3 +1,6 @@
+/* TODO: src from clm and envs?
+ */
+
 #include "snd.h"
 
 #if defined(NEXT) || defined(HAVE_SYS_DIR_H)
@@ -967,7 +970,7 @@ int make_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 	    }
 	  if (sp)
 	    {
-	      draw_both_grf_points(ss,ax,j);
+	      draw_both_grf_points(ss,ax,j,ap);
 	      if (cp->printing) ps_draw_both_grf_points(ss,cp,ap,j);
 	    }
 	}
@@ -1877,7 +1880,7 @@ static void make_lisp_graph(chan_info *cp, snd_info *sp, snd_state *ss)
 		  ymax=-32768.0;
 		}
 	    }
-	  draw_both_grf_points(ss,ax,j);
+	  draw_both_grf_points(ss,ax,j,uap);
 	  if (cp->printing) ps_draw_both_grf_points(ss,cp,uap,j);
 	}
     }
@@ -3264,7 +3267,7 @@ static void scale_with(snd_state *ss, sync_state *sc, Float *scalers, char *orig
   snd_fd **sfs;
   chan_info *cp;
   snd_info *sp;
-  int i,scdur,dur,k;
+  int i,scdur,dur,k,lim;
   snd_fd *sf;
   file_info *hdr = NULL;
   int j,ofd = 0,datumb = 0,temp_file,err=0;
@@ -3304,19 +3307,66 @@ static void scale_with(snd_state *ss, sync_state *sc, Float *scalers, char *orig
       idata = data[0];
       env_val = scalers[i];
       j = 0;
-      for (k=0;k<dur;k++)
+      /* handle a couple special cases */
+      if (env_val == 0.0)
 	{
-	  NEXT_SAMPLE(val,sf);
-	  idata[j] = (MUS_SAMPLE_TYPE)(val*env_val);
-	  j++;
+	  if (dur < MAX_BUFFER_SIZE) lim = dur; else lim = MAX_BUFFER_SIZE;
+#if HAVE_MEMSET
+	  memset((void *)idata,0,(lim * sizeof(MUS_SAMPLE_0)));
+#else
+	  for (k=0;k<lim;k++) idata[k] = MUS_SAMPLE_0;
+#endif
 	  if (temp_file)
 	    {
-	      if (j == MAX_BUFFER_SIZE)
+	      for (k=0;k<dur;k+=MAX_BUFFER_SIZE)
 		{
+		  if ((k+MAX_BUFFER_SIZE)<dur) j=MAX_BUFFER_SIZE; else j=dur-k;
 		  err = mus_file_write(ofd,0,j-1,1,data);
 		  j=0;
 		  if (err == -1) break;
 		  if (reporting) progress_report(ss,sp,"scl",i+1,si->chans,(Float)k / (Float)dur,NOT_FROM_ENVED);
+		}
+	    }
+	}
+      else
+	{
+	  if (env_val == -1.0)
+	    {
+	      /* this case doesn't actually run much faster (15% or so) */
+	      for (k=0;k<dur;k++)
+		{
+		  NEXT_SAMPLE(val,sf);
+		  idata[j] = -val;
+		  j++;
+		  if (temp_file)
+		    {
+		      if (j == MAX_BUFFER_SIZE)
+			{
+			  err = mus_file_write(ofd,0,j-1,1,data);
+			  j=0;
+			  if (err == -1) break;
+			  if (reporting) progress_report(ss,sp,"scl",i+1,si->chans,(Float)k / (Float)dur,NOT_FROM_ENVED);
+			}
+		    }
+		}
+	    }
+	  else
+	    {
+	      for (k=0;k<dur;k++)
+		{
+		  NEXT_SAMPLE(val,sf);
+		  idata[j] = (MUS_SAMPLE_TYPE)(val*env_val);
+		  j++;
+		  if (temp_file)
+		    {
+		      if (j == MAX_BUFFER_SIZE)
+			{
+			  err = mus_file_write(ofd,0,j-1,1,data);
+			  j=0;
+			  if (err == -1) break;
+			  if (reporting) progress_report(ss,sp,"scl",i+1,si->chans,(Float)k / (Float)dur,NOT_FROM_ENVED);
+			}
+		    }
 		}
 	    }
 	}
@@ -3428,6 +3478,93 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
   scale_with(ss,sc,scalers,S_scale_to);
   FREE(scalers);
   free_sync_state(sc);
+}
+
+static void swap_channels(snd_state *ss, int beg, int dur, snd_fd *c0, snd_fd *c1)
+{
+  chan_info *cp0,*cp1;
+  snd_info *sp0;
+  int i,k;
+  file_info *hdr0 = NULL,*hdr1 = NULL;
+  int j,ofd0 = 0,ofd1 = 0,datumb = 0,temp_file,err=0;
+  MUS_SAMPLE_TYPE **data0,**data1;
+  MUS_SAMPLE_TYPE *idata0,*idata1;
+  int reporting = 0;
+  char *ofile0 = NULL,*ofile1 = NULL;
+  if (dur <= 0) return;
+  data0 = (MUS_SAMPLE_TYPE **)CALLOC(1,sizeof(MUS_SAMPLE_TYPE *));
+  data0[0] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE)); 
+  data1 = (MUS_SAMPLE_TYPE **)CALLOC(1,sizeof(MUS_SAMPLE_TYPE *));
+  data1[0] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE)); 
+  cp0 = c0->cp;
+  sp0 = cp0->sound;
+  cp1 = c1->cp;
+  reporting = ((sp0) && (dur > (MAX_BUFFER_SIZE * 10)));
+  if (reporting) start_progress_report(ss,sp0,NOT_FROM_ENVED);
+  if (dur > MAX_BUFFER_SIZE)
+    {
+      temp_file = 1; 
+      ofile0 = snd_tempnam(ss);
+      hdr0 = make_temp_header(ss,ofile0,sp0->hdr,dur);
+      hdr0->chans = 1;
+      ofd0 = open_temp_file(ofile0,1,hdr0,ss);
+      datumb = mus_data_format_to_bytes_per_sample(hdr0->format);
+      ofile1 = snd_tempnam(ss);
+      hdr1 = make_temp_header(ss,ofile1,sp0->hdr,dur);
+      hdr1->chans = 1;
+      ofd1 = open_temp_file(ofile1,1,hdr1,ss);
+    }
+  else temp_file = 0;
+  idata0 = data0[0];
+  idata1 = data1[0];
+  j = 0;
+  for (k=0;k<dur;k++)
+    {
+      NEXT_SAMPLE(idata0[j],c1);
+      NEXT_SAMPLE(idata1[j],c0);
+      j++;
+      if (temp_file)
+	{
+	  if (j == MAX_BUFFER_SIZE)
+	    {
+	      err = mus_file_write(ofd0,0,j-1,1,data0);
+	      err = mus_file_write(ofd1,0,j-1,1,data1);
+	      j=0;
+	      if (err == -1) break;
+	      if (reporting) progress_report(ss,sp0,"scl",i+1,1,(Float)k / (Float)dur,NOT_FROM_ENVED);
+	    }
+	}
+    }
+  if (temp_file)
+    {
+      if (j > 0) 
+	{
+	  mus_file_write(ofd0,0,j-1,1,data0);
+	  mus_file_write(ofd1,0,j-1,1,data1);
+	}
+      close_temp_file(ofd0,hdr0,dur*datumb,sp0);
+      close_temp_file(ofd1,hdr1,dur*datumb,sp0); /* sp0 used here in case of error report */
+      free_file_info(hdr0);
+      free_file_info(hdr1);
+      file_change_samples(beg,dur,ofile0,cp0,0,DELETE_ME,LOCK_MIXES,S_swap_channels);
+      file_change_samples(beg,dur,ofile1,cp1,0,DELETE_ME,LOCK_MIXES,S_swap_channels);
+      if (ofile0) {free(ofile0); ofile0=NULL;}
+      if (ofile1) {free(ofile1); ofile1=NULL;}
+      if (reporting) finish_progress_report(ss,sp0,NOT_FROM_ENVED);
+    }
+  else 
+    {
+      change_samples(beg,dur,data0[0],cp0,LOCK_MIXES,S_swap_channels);
+      change_samples(beg,dur,data1[0],cp1,LOCK_MIXES,S_swap_channels);
+    }
+  update_graph(cp0,NULL);
+  update_graph(cp1,NULL);
+  if (ofile0) free(ofile0);
+  if (ofile1) free(ofile1);
+  FREE(data0[0]);
+  FREE(data0);
+  FREE(data1[0]);
+  FREE(data1);
 }
 
 typedef struct {int selection; int files; char **old_filenames; char **new_filenames; void *sc;} snd_exf;
@@ -7646,6 +7783,53 @@ static SCM g_reverse_selection(void)
   return(SCM_BOOL_F);
 }
 
+static SCM g_swap_channels(SCM snd0, SCM chn0, SCM snd1, SCM chn1, SCM beg, SCM dur)
+{
+  #define H_swap_channels "(" S_swap_channels " snd0 chn0 snd1 chn1) swaps the indicated channels"
+  chan_info *cp0,*cp1;
+  snd_fd *c0,*c1;
+  int dur0,dur1,beg0=0,num;
+  snd_info *sp;
+  ERRCP(S_swap_channels,snd0,chn0,1);
+  cp0 = get_cp(snd0,chn0);
+  if (SCM_INUMP(snd1) && SCM_INUMP(chn1)) 
+    {
+      ERRCP(S_swap_channels,snd1,chn1,3);
+      cp1 = get_cp(snd1,chn1);
+    }
+  else
+    {
+      if (SCM_INUMP(snd1))
+	sp = get_sp(snd1);
+      else sp = cp0->sound;
+      if (SCM_INUM(snd0) == SCM_INUM(snd1))
+	{
+	  if ((cp0->chan+1) < sp->nchans)
+	    cp1 = sp->chans[cp0->chan + 1];
+	  else cp1 = sp->chans[0];
+	}
+      else cp1 = sp->chans[0];
+    }
+  if (SCM_INUMP(beg)) beg0 = SCM_INUM(beg);
+  if (SCM_INUMP(dur)) 
+    num = SCM_INUM(dur);
+  else
+    {
+      dur0 = current_ed_samples(cp0);
+      dur1 = current_ed_samples(cp1);
+      if (dur0 > dur1) num = dur1; else num = dur0;
+    }
+  if ((cp0) && (cp1))
+    {
+      c0 = init_sample_read(beg0,cp0,READ_FORWARD);
+      c1 = init_sample_read(beg0,cp1,READ_FORWARD);
+      swap_channels(cp0->state,beg0,num,c0,c1);
+      free_snd_fd(c0);
+      free_snd_fd(c1);
+      return(SCM_BOOL_F);
+    }
+  return(NO_SUCH_CHANNEL);
+}
 
 static SCM mouse_press_hook,mark_click_hook;
 static SCM mouse_release_hook,mouse_drag_hook,key_press_hook,fft_hook;
@@ -7833,6 +8017,8 @@ void g_init_chn(SCM local_doc)
   DEFINE_PROC(gh_new_procedure(S_smooth_selection,SCM_FNC g_smooth_selection,0,0,0),H_smooth_selection);
   DEFINE_PROC(gh_new_procedure(S_reverse_sound,SCM_FNC g_reverse_sound,0,2,0),H_reverse_sound);
   DEFINE_PROC(gh_new_procedure(S_reverse_selection,SCM_FNC g_reverse_selection,0,0,0),H_reverse_selection);
+
+  DEFINE_PROC(gh_new_procedure("swap-channels",SCM_FNC g_swap_channels,0,6,0),H_swap_channels);
 
 #if (!HAVE_GUILE_1_3_0)
   fft_hook = scm_create_hook(S_fft_hook,3);                       /* args = sound channel scaler */

@@ -1094,6 +1094,8 @@ Snd is currently in flux.
   src-selection     (num-or-env base) same as src but applied to current selection.
   start-progress-report (snd)     see progress-report.
   stop-playing      (snd)         if snd is playing, stop.
+  swap-channels     (snd1 chn1 snd2 chn2 beg dur)
+                                  Swap the indicated channels, between beg and beg+dur (default is whole channel).
   syncd-marks       (sync)        list of marks (ids) that share sync.
   syncing           (snd)         snd's 'sync' value (an integer, 0=off)
   temp-filenames    (data)        return vector of temp file names (see external programs).

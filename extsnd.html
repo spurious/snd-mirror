@@ -1140,6 +1140,8 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndsrcselection">src-selection</a>     (num-or-env <i>base</i>) same as <i>src</i> but applied to current selection.
   <a name="startprogressreport">start-progress-report</a> (<i>snd</i>)     see <a href="#progressreport">progress-report</a>.
   <a name="sndstop">stop-playing</a>      (<i>snd</i>)         if <i>snd</i> is playing, stop.
+  <a name="swapchannels">swap-channels</a>     (<i>snd1 chn1 snd2 chn2 beg dur</i>)
+                                  Swap the indicated channels, between beg and beg+dur (default is whole channel).
   <a name="syncdmarks">syncd-marks</a>       (sync)        list of marks (ids) that share sync.
   <a name="sndsyncing">syncing</a>           (<i>snd</i>)         <i>snd</i>'s 'sync' value (an integer, 0=off)
   <a name="sndtempfilenames">temp-filenames</a>    (data)        return vector of temp file names (see <a href="#programs">external programs</a>).

@@ -190,6 +190,7 @@ void news_help(snd_state *ss)
 	    "Recent changes include:\n\
 \n\
 5-Jul:   experimental erase-zeros flag.\n\
+         swap-channels\n\
 3-Jul:   save-hook and auto-save (examp.scm) improvements.\n\
          ok? renamed sound?, mix-ok? -> mix?, added mark?, region?, selection?\n\
          setf.scm for (setf (<var>) <val>) in place of (set-<var> <val>).\n\
@@ -1301,6 +1302,7 @@ all refer to the same thing.\n\
   " S_src_selection "     (num-or-env base)\n\
   " S_src_sound "         (num-or-env base)\n\
   " S_stop_playing "      (snd)\n\
+  " S_swap_channels "     (snd1 chn1 snd2 chn2 beg dur)\n\
   " S_syncd_marks "       (sync)\n\
   " S_syncing "           (snd)\n\
   " S_temp_filenames "    (data)\n\

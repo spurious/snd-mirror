@@ -1,6 +1,7 @@
 snd change log
 
   5-Jul:     experimental erase-zeros flag.
+             swap-channels.
   3-Jul:     save-hook and auto-save (examp.scm) improvements.
              ok? renamed sound?, mix-ok? -> mix?, new mark?, region?, selection?
              setf.scm for (setf (<var>) <val>) in place of (set-<var> <val>).

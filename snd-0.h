@@ -47,6 +47,7 @@
     #define HAVE_OPENDIR 1
     #define HAVE_SLEEP 1
     #define HAVE_SIGNAL 1
+    #define HAVE_MEMSET 1
   #endif
   #ifndef BEOS
     #define HAVE_X 1

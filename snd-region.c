@@ -172,10 +172,23 @@ int selection_is_current(void)
 static Float region_sample(int reg, int chn, int samp)
 {
   region *r;
+  snd_fd *sf;
+  MUS_SAMPLE_TYPE val;
   if (region_ok(reg))
     {
       r = regions[reg];
-      if ((samp < r->len) && (chn < r->chans)) return(MUS_SAMPLE_TO_FLOAT(r->data[chn][samp]));
+      if ((samp < r->len) && (chn < r->chans)) 
+	{
+	  if (r->use_temp_file == REGION_ARRAY)
+	    return(MUS_SAMPLE_TO_FLOAT(r->data[chn][samp]));
+	  else 
+	    {
+	      sf = init_region_read(get_global_state(),samp,reg,chn,READ_FORWARD);
+	      NEXT_SAMPLE(val,sf);
+	      free_snd_fd(sf);
+	      return(MUS_SAMPLE_TO_FLOAT(val));
+	    }
+	}
     }
   return(0.0);
 }
@@ -183,13 +196,28 @@ static Float region_sample(int reg, int chn, int samp)
 static void region_samples(int reg, int chn, int beg, int num, Float *data)
 {
   region *r;
+  snd_fd *sf;
+  MUS_SAMPLE_TYPE val;
   int i,j;
   if (region_ok(reg))
     {
       r = regions[reg];
       if ((beg < r->len) && (chn < r->chans))
 	{
-	  for (i=beg,j=0;(i<r->len) && (j<num);i++,j++) data[j] = MUS_SAMPLE_TO_FLOAT(r->data[chn][i]);
+	  if (r->use_temp_file == REGION_ARRAY)
+	    {
+	      for (i=beg,j=0;(i<r->len) && (j<num);i++,j++) data[j] = MUS_SAMPLE_TO_FLOAT(r->data[chn][i]);
+	    }
+	  else
+	    {
+	      sf = init_region_read(get_global_state(),beg,reg,chn,READ_FORWARD);
+	      for (i=beg,j=0;(i<r->len) && (j<num);i++,j++) 
+		{
+		  NEXT_SAMPLE(val,sf);		  
+		  data[j] = MUS_SAMPLE_TO_FLOAT(val);
+		}
+	      free_snd_fd(sf);
+	    }
 	  if (j < num) for (;j<num;j++) data[j] = 0.0;
 	}
     }

@@ -203,7 +203,7 @@ AC_CHECK_SIZEOF(int *)
 
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME
-AC_CHECK_FUNCS(getcwd strerror tempnam strtok mallinfo readlink setlocale access opendir sleep signal)
+AC_CHECK_FUNCS(getcwd strerror tempnam strtok mallinfo readlink setlocale access opendir sleep signal memset)
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
 AC_PATH_XTRA

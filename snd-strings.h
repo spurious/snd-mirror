@@ -1041,6 +1041,7 @@
 #define S_stop_playing_hook             "stop-playing-hook"
 #define S_stop_playing_region_hook      "stop-playing-region-hook"
 #define S_string_length                 "string-length"
+#define S_swap_channels                 "swap-channels"
 #define S_syncd_marks                   "syncd-marks"
 #define S_syncing                       "syncing"
 #define S_temp_dir                      "temp-dir"

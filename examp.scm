@@ -29,7 +29,6 @@
 ;;;     do-chans, do-all-chans, do-sound-chans
 ;;;     every-sample?
 ;;;     sort-samples
-;;;     swap-channels
 ;;; envelope-interp, window-envelope, map-envelopes, multiply-envelopes
 ;;; mix mono sound into stereo sound panning according to env, also simple sound placement
 ;;; fft-edit -- FFT based editing
@@ -77,6 +76,36 @@
       (do ((i 0 (1+ i))) 
 	  ((= i len) (sqrt (/ sum len)))
 	(set! sum (+ sum (* (vector-ref data i) (vector-ref data i))))))))
+
+(define selection-rms
+  (lambda ()
+    "(selection-rms) -> rms of selection data"
+    (let* ((reader (make-sample-reader (selection-beg)))
+	   (len (selection-length))
+	   (sum 0.0))
+      (do ((i 0 (1+ i))) 
+	  ((= i len) 
+	   (begin 
+	     (free-sample-reader reader) 
+	     (sqrt (/ sum len))))
+	(let ((val (next-sample reader)))
+	  (set! sum (+ sum (* val val))))))))
+
+;;; if you'd rather use recursion:
+(define selection-rms-1
+  (lambda ()
+    ;; this is actually slightly faster than selection-rms
+    ;; all the DO loops in this file could be re-written in this form, but I find loops easier to read
+    (let* ((reader (make-sample-reader (selection-beg)))
+	   (len (selection-length)))
+      (define rsum 
+	(lambda (leng sum)
+	  (if (= leng 0)
+	      (sqrt (/ sum len))
+	      (let ((val (next-sample reader)))
+		(rsum (1- leng) (+ sum (* val val)))))))
+      (rsum len 0.0))))
+
 
 (define window-samples
   (lambda (snd chn)
@@ -728,7 +757,7 @@
 
 (define delete-selection-and-smooth
   (lambda ()
-    (if (selection-length)
+    (if (selection?)
 	(let ((beg (selection-beg))
 	      (len (selection-length)))
 	  (do ((i 0 (1+ i)))
@@ -751,7 +780,7 @@
 
 (bind-key (char->integer #\x) 0 
 	  (lambda ()
-	    (if (selection-length)
+	    (if (selection?)
 		(prompt-in-minibuffer "selection eval:" eval-over-selection)
 		(report-in-minibuffer "no selection"))))
 
@@ -879,27 +908,6 @@
 	      #f)
 	    bins)))))
 
-(define swap-channels
-  (lambda ()
-    (if (= (channels) 2)
-	(map-across-sound-chans
-	 (lambda (data chans)
-	   (if data 
-	       (let ((chan0-sample (vector-ref data 0)))
-		 (vector-set! data 0 (vector-ref data 1))
-		 (vector-set! data 1 chan0-sample)
-		 data)
-	       #f))
-	 #f #f "swap-channels")
-	(string-append (short-file-name) " is not stereo!"))))
-
-;;; a version that uses temp files, and might be a lot faster is:
-(define faster-swap-channels
-  (lambda (snd)
-    (save-sound-as "/tmp/snd_chan0.snd" snd #f #f #f 0)    ;currently the 3 #f args are ignored in this case
-    (save-sound-as "/tmp/snd_chan1.snd" snd #f #f #f 1)
-    (set-samples 0 (frames) "/tmp/snd_chan0.snd" snd 1)    ;temps will be deleted by Snd
-    (set-samples 0 (frames) "/tmp/snd_chan1.snd" snd 0)))
 
 
 ;;; -------- envelope-interp (named envelope-interp in clm's env.lisp)
@@ -2285,28 +2293,30 @@
 
 ;;; -------- swap selection chans
 
-(define swap-selection-channels
+(define swap-selection-channels 
   (lambda ()
-    (if (= (region-chans 0) 2)
-	(let* ((beg (selection-beg))
-	       (len (selection-length))
-	       (snd
-		(call-with-current-continuation
-		 (lambda (return)
-		   (do ((i 0 (1+ i)))
-		       ((= i (max-sounds)) #f)
-		     (if (sound? i)
-			 (do ((j 0 (1+ j)))
-			     ((= j (channels i)) #f)
-			   (if (selection-member i j)
-			       (return i))))))))
-	       (chan0 (region-samples->vct 0 len 0 0))
-	       (chan1 (region-samples->vct 0 len 0 1)))
-	  (if (= (channels snd) 2)
-	      (as-one-edit
-	       (lambda ()
-		 (vct->samples beg len chan1 snd 0)
-		 (vct->samples beg len chan0 snd 1)))
-	      (report-in-minubuffer "swap-selection-channels needs a stereo sound")))
-	(report-in-minibuffer "swap-selection-channels needs a stereo selection"))))
-
+    (define find-selection-sound 
+      (lambda (not-this)
+	(call-with-current-continuation
+	 (lambda (return)
+	   (do ((i 0 (1+ i)))
+	       ((= i (max-sounds)) #f)
+	     (if (sound? i) 
+		 (do ((j 0 (1+ j)))
+		     ((= j (channels i)) #f)
+		   (if (and (selection-member i j)
+			    (or (null? not-this)
+				(not (= i (car not-this)))
+				(not (= j (cadr not-this)))))
+		       (return (list i j))))))))))
+    (if (selection?)
+	(if (= (region-chans 0) 2)
+	    (let* ((beg (selection-beg))
+		   (len (selection-length))
+		   (snd-chn0 (find-selection-sound '()))
+		   (snd-chn1 (find-selection-sound snd-chn0)))
+	      (if snd-chn1
+		  (swap-channels (car snd-chn0) (cadr snd-chn0) (car snd-chn1) (cadr snd-chn1) beg len)
+		  (report-in-minubuffer "swap-selection-channels needs two channels two swap")))
+	    (report-in-minibuffer "swap-selection-channels needs a stereo selection"))
+	(report-in-minibuffer "no active selection"))))
