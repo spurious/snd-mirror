@@ -2,9 +2,6 @@
 
 /* SOMEDAY: fftw error catcher (memerr = exit) (fftw does not yet support this) */
 /* SOMEDAY: logfreq in spectrogram?  */
-/* TODO: fft freq axis in wavelength -- inverse freq -- wouldn't this "naturally" stretch the low freqs? -- maybe too much so 
- *       would need transform dialog button, inverse-frequency or something (parallel log-frequency)
- */
 
 #if WITH_SHARED_SNDLIB
 #if HAVE_FFTW3
@@ -2110,3 +2107,9 @@ an integer, it is used as the starting point of the transform."
   XEN_DEFINE_PROCEDURE("snd-transform",        g_snd_transform_w,    2, 1, 0, "call transform code directly");
 }
 
+/* display by wavelength is not so useful in the context of sound because
+ *  the frequencies span say 8-10 octaves.  Even if we place the start point
+ *  at 20Hz, that still puts the (linear) middle at 40 Hz (17 meters->1 inch
+ *  is basically the range); if we goof around with log freq axis, why bother
+ *  with the inverse?
+ */

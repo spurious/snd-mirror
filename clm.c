@@ -82,7 +82,7 @@ enum {MUS_OSCIL, MUS_SUM_OF_COSINES, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PAS
       MUS_FILTER, MUS_FIR_FILTER, MUS_IIR_FILTER, MUS_CONVOLVE, MUS_ENV, MUS_LOCSIG,
       MUS_FRAME, MUS_READIN, MUS_FILE_TO_SAMPLE, MUS_FILE_TO_FRAME,
       MUS_SAMPLE_TO_FILE, MUS_FRAME_TO_FILE, MUS_MIXER, MUS_PHASE_VOCODER,
-      MUS_AVERAGE, MUS_SUM_OF_SINES, MUS_SSB_AM,                            /* MUS_POLYSHAPE, MUS_SSB_POLYSHAPE, */
+      MUS_AVERAGE, MUS_SUM_OF_SINES, MUS_SSB_AM, MUS_POLYSHAPE, MUS_SSB_POLYSHAPE,
       MUS_INITIAL_GEN_TAG};
 
 static char *interp_name[] = {"step", "linear", "sinusoidal", "all-pass", "lagrange", "bezier", "hermite"};
@@ -1849,11 +1849,7 @@ Float *mus_partials_to_polynomial(int npartials, Float *partials, int kind)
   return(partials);
 }
 
-/* PERHAPS: waveshape via polynomial -- polyshape?
-   make-polyshape coeffs partials
-   polyshape gen ind fm
-   make-ssb-polyshape partials
-   ssb-polyshape gen ind fm
+/* PERHAPS: make-ssb-polyshape partials, ssb-polyshape gen ind fm
 
    in v.ins
     (polynomial coeffs (oscil fmosc1 vib))
@@ -1862,22 +1858,131 @@ Float *mus_partials_to_polynomial(int npartials, Float *partials, int kind)
    with earlier
      (poly (make-polyshape :coeffs (partials->polynomial (list fm1-rat index1 (floor fm2-rat fm1-rat) index2 (floor fm3-rat fm1-rat) index3))))
    or 
-     (poly (make-polyshape :partialss (list fm1-rat index1 (floor fm2-rat fm1-rat) index2 (floor fm3-rat fm1-rat) index3)))
+     (poly (make-polyshape :partials (list fm1-rat index1 (floor fm2-rat fm1-rat) index2 (floor fm3-rat fm1-rat) index3)))
 
    ssb version
      pqw-vox is actually saving computation by re-using the polyshape outputs
 
-   def here
-   clm2xen.c
-   clm-strings.h/clm.h
+   [def here]
+   [clm2xen.c]
+   [clm-strings.h/clm.h]
    snd-run.c
    clm.html
    grfsnd.html
    snd-test.scm
    mus.lisp
    export.lisp
+   initmus.lisp (constant) -- cmus.h
    run.lisp
+   libclm.def?
+   test ins (ug1 clm-23 etc)
+   sndlib.html mention
+   snd-xref/index
+
+   v.ins etc
+   v.scm etc
+
+   coeffs retro-fit to filters?
+
+;test 22
+;(let ((gen (make-waveshape))) (waveshape gen)) -> 1.0 (0.0)
+;(let ((gen (make-waveshape))) (gen)) -> 1.0 (0.0)
+
  */
+
+
+static void poly_reset(mus_any *ptr)
+{
+  ws *gen = (ws *)ptr;
+  oscil_reset(gen->o);
+}
+
+static char *describe_polyshape(mus_any *ptr)
+{
+  ws *gen = (ws *)ptr;
+  char *str;
+  str = print_array(gen->table, gen->table_size, 0);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_polyshape " freq: %.3fHz, phase: %.3f, coeffs[%d]: %s",
+	       mus_frequency(ptr),
+	       mus_phase(ptr),
+	       gen->table_size,
+	       str);
+  FREE(str);
+  return(describe_buffer);
+}
+
+Float mus_polyshape(mus_any *ptr, Float index, Float fm)
+{
+  ws *gen = (ws *)ptr;
+  return(mus_polynomial(gen->table,
+			index * mus_oscil_1(gen->o, fm), 
+			gen->table_size));
+}
+
+Float mus_polyshape_2(mus_any *ptr, Float fm)
+{
+  ws *gen = (ws *)ptr;
+  return(mus_polynomial(gen->table,
+			mus_oscil_1(gen->o, fm), 
+			gen->table_size));
+}
+
+Float mus_polyshape_1(mus_any *ptr, Float index)
+{
+  ws *gen = (ws *)ptr;
+  return(mus_polynomial(gen->table,
+			index * mus_oscil_0(gen->o), 
+			gen->table_size));
+}
+
+Float mus_polyshape_0(mus_any *ptr)
+{
+  ws *gen = (ws *)ptr;
+  return(mus_polynomial(gen->table,
+			mus_oscil_0(gen->o), 
+			gen->table_size));
+}
+
+static mus_any_class POLYSHAPE_CLASS = {
+  MUS_POLYSHAPE,
+  S_polyshape,
+  &free_ws,
+  &describe_polyshape,
+  &ws_equalp,
+  &ws_data,
+  &set_ws_data,
+  &ws_size,
+  &set_ws_size,
+  &ws_freq,
+  &set_ws_freq,
+  &ws_phase,
+  &set_ws_phase,
+  0, 0,
+  0, 0,
+  &mus_polyshape,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0,
+  &_mus_wrap_one_vct_wrapped,
+  &poly_reset
+};
+
+
+mus_any *mus_make_polyshape(Float frequency, Float phase, Float *coeffs, int size)
+{
+  ws *gen;
+  gen = (ws *)clm_calloc(1, sizeof(ws), S_make_polyshape);
+  gen->core = &POLYSHAPE_CLASS;
+  gen->o = mus_make_oscil(frequency, phase);
+  gen->table = coeffs;
+  gen->table_allocated = false;
+  gen->table_size = size;
+  return((mus_any *)gen);
+}
+
+bool mus_polyshape_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_POLYSHAPE));}
 
 
 
@@ -5728,7 +5833,10 @@ mus_any *mus_continue_frame_to_file(const char *filename)
 
 /* ---------------- locsig ---------------- */
 
-/* always return a frame */
+/* always returns a frame 
+ * TODO: somehow locsig should not make a new frame on every pass if user neglects to offer one
+ *       perhaps clm2xen can create one for it in that case?
+ */
 
 typedef struct {
   mus_any_class *core;
@@ -8145,7 +8253,8 @@ Float mus_apply(mus_any *gen, ...)
 	{
 	  /* 2 actual args */
 	case MUS_OSCIL:	case MUS_DELAY:	case MUS_COMB:	case MUS_NOTCH:	case MUS_ALL_PASS: case MUS_MIXER:
-	case MUS_WAVESHAPE: case MUS_AVERAGE: case MUS_SSB_AM: case MUS_FILE_TO_SAMPLE: case MUS_LOCSIG:
+	case MUS_WAVESHAPE: case MUS_AVERAGE: case MUS_SSB_AM: case MUS_FILE_TO_SAMPLE: case MUS_LOCSIG: 
+	case MUS_POLYSHAPE:
 	  f1 = NEXT_ARG; 
 	  f2 = NEXT_ARG; 
 	  break;

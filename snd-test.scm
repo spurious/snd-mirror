@@ -9,27 +9,27 @@
 ;;;  test 6: vcts                               [10963]
 ;;;  test 7: colors                             [11254]
 ;;;  test 8: clm                                [11756]
-;;;  test 9: mix                                [18435]
-;;;  test 10: marks                             [21493]
-;;;  test 11: dialogs                           [22195]
-;;;  test 12: extensions                        [22512]
-;;;  test 13: menus, edit lists, hooks, etc     [22927]
-;;;  test 14: all together now                  [24227]
-;;;  test 15: chan-local vars                   [25313]
-;;;  test 16: regularized funcs                 [26573]
-;;;  test 17: dialogs and graphics              [30940]
-;;;  test 18: enved                             [31015]
-;;;  test 19: save and restore                  [31035]
-;;;  test 20: transforms                        [32509]
-;;;  test 21: new stuff                         [34120]
-;;;  test 22: run                               [34991]
-;;;  test 23: with-sound                        [40191]
-;;;  test 24: user-interface                    [41187]
-;;;  test 25: X/Xt/Xm                           [44346]
-;;;  test 26: Gtk                               [48842]
-;;;  test 27: GL                                [52834]
-;;;  test 28: errors                            [52943]
-;;;  test all done                              [55025]
+;;;  test 9: mix                                [18528]
+;;;  test 10: marks                             [21586]
+;;;  test 11: dialogs                           [22288]
+;;;  test 12: extensions                        [22605]
+;;;  test 13: menus, edit lists, hooks, etc     [23020]
+;;;  test 14: all together now                  [24320]
+;;;  test 15: chan-local vars                   [25406]
+;;;  test 16: regularized funcs                 [26666]
+;;;  test 17: dialogs and graphics              [31033]
+;;;  test 18: enved                             [31108]
+;;;  test 19: save and restore                  [31128]
+;;;  test 20: transforms                        [32602]
+;;;  test 21: new stuff                         [34215]
+;;;  test 22: run                               [35093]
+;;;  test 23: with-sound                        [40306]
+;;;  test 24: user-interface                    [41308]
+;;;  test 25: X/Xt/Xm                           [44467]
+;;;  test 26: Gtk                               [48963]
+;;;  test 27: GL                                [52955]
+;;;  test 28: errors                            [53066]
+;;;  test all done                              [55149]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -11863,14 +11863,16 @@ EDITS: 5
 				  (= fm1-rat (floor fm1-rat))
 				  (= fm2-rat (floor fm2-rat))
 				  (= fm3-rat (floor fm3-rat))))
-		  (coeffs (and easy-case modulate
-			       (partials->polynomial
-				(list (inexact->exact fm1-rat) index1
-				      (inexact->exact (floor (/ fm2-rat fm1-rat))) index2
-				      (inexact->exact (floor (/ fm3-rat fm1-rat))) index3))))
 		  (norm (or (and easy-case modulate 1.0) index1))
 		  (carrier (make-oscil frequency))
-		  (fmosc1  (and modulate (make-oscil (* fm1-rat frequency))))
+		  (fmosc1  (if modulate 
+			       (if easy-case 
+				   (make-polyshape :frequency (* fm1-rat frequency) 
+						   :coeffs (partials->polynomial (list (inexact->exact fm1-rat) index1
+										       (inexact->exact (floor (/ fm2-rat fm1-rat))) index2
+										       (inexact->exact (floor (/ fm3-rat fm1-rat))) index3)))
+				   (make-oscil (* fm1-rat frequency)))
+			       #f))
 		  (fmosc2  (and modulate (or easy-case (make-oscil (* fm2-rat frequency)))))
 		  (fmosc3  (and modulate (or easy-case (make-oscil (* fm3-rat frequency)))))
 		  (ampf  (make-env amp-env :scaler amplitude :base base :duration dur))
@@ -11906,7 +11908,7 @@ EDITS: 5
 			     (if easy-case
 				 (set! modulation
 				       (* (env indf1) 
-					  (polynomial coeffs (oscil fmosc1 vib)))) ;(* vib fm1-rat)??
+					  (polyshape fmosc1 1.0 vib)))
 				 (set! modulation
 				       (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
 					  (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))

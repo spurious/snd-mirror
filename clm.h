@@ -3,9 +3,10 @@
 
 #define MUS_VERSION 3
 #define MUS_REVISION 11
-#define MUS_DATE "18-Feb-05"
+#define MUS_DATE "15-Mar-05"
 
 /*
+ * 15-Mar:     polyshape generator (waveshaper as polynomial + oscil)
  * 18-Feb:     mus_interpolate.
  * 14-Feb:     deprecated mus_restart_env and mus_clear_filter_state.
  * 7-Feb-05:   mus_reset method, replaces mus_restart_env and mus_clear_filter_state.
@@ -460,6 +461,12 @@ Float mus_waveshape_0(mus_any *ptr);
 bool mus_waveshape_p(mus_any *ptr);
 Float *mus_partials_to_waveshape(int npartials, Float *partials, int size, Float *table);
 Float *mus_partials_to_polynomial(int npartials, Float *partials, int kind);
+mus_any *mus_make_polyshape(Float frequency, Float phase, Float *coeffs, int size);
+Float mus_polyshape(mus_any *ptr, Float index, Float fm);
+Float mus_polyshape_2(mus_any *ptr, Float fm);
+Float mus_polyshape_1(mus_any *ptr, Float index);
+Float mus_polyshape_0(mus_any *ptr);
+bool mus_polyshape_p(mus_any *ptr);
 
 Float mus_env(mus_any *ptr);
 Float mus_env_linear(mus_any *ptr);

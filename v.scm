@@ -70,14 +70,16 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 			   (= fm3-rat (floor fm3-rat))
 			   (integer? (inexact->exact (/ fm2-rat fm1-rat))) ; might be 2=2 but 1=3 or whatever
 			   (integer? (inexact->exact (/ fm3-rat fm1-rat)))))
-	   (coeffs (and easy-case modulate
-			(partials->polynomial
-			 (list (inexact->exact fm1-rat) index1
-			       (inexact->exact (floor (/ fm2-rat fm1-rat))) index2
-			       (inexact->exact (floor (/ fm3-rat fm1-rat))) index3))))
 	   (norm (or (and easy-case modulate 1.0) index1))
 	   (carrier (make-oscil frequency))
-	   (fmosc1  (and modulate (make-oscil (* fm1-rat frequency))))
+	   (fmosc1  (if modulate 
+			(if easy-case 
+			    (make-polyshape :frequency (* fm1-rat frequency) 
+					    :coeffs (partials->polynomial (list (inexact->exact fm1-rat) index1
+										(inexact->exact (floor (/ fm2-rat fm1-rat))) index2
+										(inexact->exact (floor (/ fm3-rat fm1-rat))) index3)))
+			    (make-oscil (* fm1-rat frequency)))
+			#f))
 	   (fmosc2  (and modulate (or easy-case (make-oscil (* fm2-rat frequency)))))
 	   (fmosc3  (and modulate (or easy-case (make-oscil (* fm3-rat frequency)))))
 	   (ampf  (make-env amp-env :scaler amplitude :base base :duration dur))
@@ -117,7 +119,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 		   (if easy-case
 		       (set! modulation
 			     (* (env indf1) 
-				(polynomial coeffs (oscil fmosc1 vib)))) ;(* vib fm1-rat)??
+				(polyshape fmosc1 1.0 vib)))
 		       (set! modulation
 			     (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
 				(* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
@@ -131,7 +133,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 	       (let* ((vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib))))
 		 (locsig locs i (* (env ampf) 
 				   (oscil carrier (+ vib (* (env indf1) 
-							    (polynomial coeffs (oscil fmosc1 vib))))))))))))))
+							    (polyshape fmosc1 1.0 vib)))))))))))))
 
 
 ; (fm-violin 0 1 440 .1 :fm-index 2.0)

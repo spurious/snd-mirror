@@ -45,7 +45,7 @@
   <li><a href="#dlocsigdoc">dlocsig.rb</a>: moving sounds (Michael Scholz)
   <li><a href="#dlpdoc">dlp</a>: tutorial directories from Dave Phillips
   <li><a href="#drawdoc">draw.scm</a>: graphics additions
-  <li><a href="#dspdoc">dsp.scm</a>: various DSP-related procedures
+  <li><a href="#dspdoc">dsp.scm, dsp.rb</a>: various DSP-related procedures
   <li><a href="#editmenudoc">edit-menu.scm</a>: Edit menu additions
   <li><a href="#dotsnd">edit123.scm, snd_conffile.scm</a>: .snd examples (Tom Roth, Kjetil S. Matheussen)
   <li><a href="#effectsdoc">new-effects.scm, gtk-effects.scm, effects.rb</a>: an Effects menu
@@ -67,10 +67,10 @@
   <li><a href="#marksdoc">marks.scm</a>: functions related to marks
   <li><a href="#maxfdoc">maxf.scm, maxf.rb</a>: Max Mathews resonator
   <li><a href="#mixdoc">mix.scm, mix.rb</a>: functions related to mixes and tracks
-  <li><a href="#moogdoc">moog.scm</a>: Moog filter
+  <li><a href="#moogdoc">moog.scm, moog.rb</a>: Moog filter
   <li><a href="#musglyphs">musglyphs.scm</a>: Music notation symbols (from CMN)
   <li><a href="#nbdoc">nb.scm, nb.rb</a>: Popup File info etc
-  <li><a href="#noisedoc">noise.scm</a>: noise.ins from CLM translated to Scheme/Ruby by Michael Scholz
+  <li><a href="#noisedoc">noise.scm, noise.rb</a>: noise.ins from CLM translated to Scheme/Ruby by Michael Scholz
   <li><a href="#oscopedoc">oscope.scm</a>: an oscilloscope/spectrum analysis dialog
   <li><a href="#peakenvdoc">peak-env.scm</a>: peak envelope support
   <li><a href="#pianodoc">piano.scm, piano.rb</a>: piano physical model
@@ -495,7 +495,7 @@ the listener?
 </p>
 <br>
 
-<A NAME="dspdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>dsp.scm</h2></td></tr></table>
+<A NAME="dspdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>dsp.scm, dsp.rb</h2></td></tr></table>
 
 <p>A DSP grabbag, mostly filters.
 </p>
@@ -4092,261 +4092,32 @@ an upward ramp and a downward ramp, then zips them together:
 
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="extsndvarexpl">A Note on Scheme variables in Snd</a></h2></td></tr></table>
 
-<p>At first glance, Snd's use of functions for nearly all variable accesses, i.e. <code>(<a class=quiet href="extsnd.html#listenerprompt">listener-prompt</a>)</code>
-rather than the simpler <code>listener-prompt</code>, seems unmotivated.  The following little
-program defines "counter" as a scheme variable, accessible in C:
-</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-#include &lt;stdio.h&gt;
-#include &lt;libguile.h&gt;
-
-void inner_main(void *closure, int argc, char **argv)
-{
-  SCM counter;
-  int size = 512;
-  char **buffer = NULL;
-  buffer = (char **)calloc(1, sizeof(char *));
-  buffer[0] = (char *)calloc(size, sizeof(char));
-  counter = scm_permanent_object(scm_c_define("counter", scm_long2num(0)));
-  while (1)
-    {
-      getline(buffer, &amp;size, stdin);
-      scm_eval_str0(buffer[0]);
-      fprintf(stdout, "counter is %d\n", scm_num2int(SCM_VARIABLE_REF(counter), 0, "main"));
-    }
-}
-
-int main(int argc, char *argv[])
-{
-  scm_boot_guile(argc, argv, inner_main, 0);
-  return(0);
-}
-</pre></td></tr></table>
-
-<p>Now we compile and load it (in Linux: cc g.c -o g -lguile), and it sits in a loop
-reading a line at a time, evaluating it, and printing the current value of
-our counter:
+<p>Snd's use of functions for nearly all variable accesses
+may seem unmotivated.  Guile makes it easy to
+access Scheme-level variables in C, and vice-versa.  So why the extra parentheses in something
+like:
 </p>
 <pre>
-/home/bil/cl/ g
-(+ 1 2)
-counter is 0
-(set! counter 123)
-counter is 123
-(set! counter (* counter 2))
-counter is 246
+  (set! (transform-size) 16)
 </pre>
-<p>But the C code itself doesn't see the set!, and there's no way to
-tell set! in Guile to call an auxiliary function when our counter
-is set.  We need to see that set! as soon as it happens to make the user interface
-responsive.  <code>(set! basic-color red)</code> would have no effect unless
-our C code could be informed that the <code>basic-color</code> variable's value had changed.
-In addition, in Snd, there are perhaps several hundred such variables, and
-our C code will run faster if we access C variables as much as possible, rather
-than calling scm_num2int (or whatever) every time the value is needed.
-So, we first defined each variable along these lines:
-</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-#include &lt;stdio.h&gt;
-#include &lt;libguile.h&gt;
-
-int counter = 0;
-
-SCM g_counter(void)
-{
-  return(scm_long2num(counter));
-}
-
-SCM g_set_counter(SCM newval)
-{
-  counter = scm_num2int(newval, 0, "set-counter");
-  return(newval);
-}
-
-void inner_main(void *closure, int argc, char **argv)
-{
-  int size = 512;
-  char **buffer = NULL;
-  buffer = (char **)calloc(1, sizeof(char *));
-  buffer[0] = (char *)calloc(size, sizeof(char));
-  scm_c_define_gsubr("counter", 0, 0, 0, g_counter);
-  scm_c_define_gsubr("set-counter", 1, 0, 0, g_set_counter);
-  while (1)
-    {
-      getline(buffer, &amp;size, stdin);
-      scm_eval_str0(buffer[0]);
-      fprintf(stdout, "counter is %d\n", counter);
-    }
-}
-
-int main(int argc, char *argv[])
-{
-  scm_boot_guile(argc,argv, inner_main, 0);
-  return(0);
-}
-</pre></td></tr></table>
-
-<p>Now we have two functions:  <code>counter</code> returns (to the Scheme world)
-the current value of the C variable <code>counter</code>, and <code>set-counter</code>
-sets it:
+<p>rather than:
 </p>
 <pre>
-/home/bil/cl/ g
-(+ 1 2)
-counter is 0
-(set-counter 123)
-counter is 123
-(set-counter (* (counter) 2))
-counter is 246
+  (set! transform-size 16)
 </pre>
-<p>Now the g_set_counter procedure can reflect counter's new value within C,
-and the variable lives in C, so two of our problems are solved.
-But we don't really want the extra name "set-counter".
-So, we use Guile's generalized set! by replacing the two
-scm_c_define_gsubr calls above with:
-</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-  scm_c_define("counter",
-    scm_make_procedure_with_setter(
-      scm_c_define_gsubr("", 0, 0, 0, g_counter),
-      scm_c_define_gsubr("", 1, 0, 0, g_set_counter)));
-</pre></td></tr></table>
-
-<p>Now we have Snd's way of handling things:
-</p>
-<pre>
-/home/bil/cl/ g
-(+ 1 2)
-counter is 0
-(set! (counter) 123)
-counter is 123
-(set! (counter) (* (counter) 2)) 
-counter is 246
-</pre>
-<p>It's not completely ideal, but it's close enough that I don't find it painful to use.
-If you run the program above, you'll be annoyed to discover that any error causes
-it to exit!  Guile's default is to have no error handler installed, so the throw
-that an error generates is not caught, causing the program to exit.  The next
-version of our program adds error handling, a cleaner exit mechanism (you can
-call the exit procedure to exit), and a simple procedure that adds some amount
-to the counter:
-</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-#include &lt;stdio.h&gt;
-#include &lt;libguile.h&gt;
-
-int counter = 0;
-SCM g_counter(void) {return(scm_long2num(counter));}
-
-SCM g_set_counter(SCM newval)
-{
-  counter = scm_num2int(newval, 0, "set-counter");
-  return(newval);
-}
-
-/* this code needs Guile 1.5 or later */
-/* the error handler:  it prints out whatever information the error sent us and returns */
-
-static SCM report_error(void *data, SCM tag, SCM throw_args)
-{
-  if (SCM_EQ_P(tag, scm_str2symbol("quit"))) exit(0);
-  fprintf(stdout, "%s: %s\n", 
-	  SCM_STRING_CHARS(scm_object_to_string(tag, SCM_UNDEFINED)), 
-	  SCM_STRING_CHARS(scm_object_to_string(throw_args, SCM_UNDEFINED)));
-  return(tag);
-}
-
-static SCM add_to_counter(SCM val)
-{
-  SCM_ASSERT_TYPE(SCM_EQ_P(scm_integer_p(val), SCM_BOOL_T), val, SCM_ARGn, "add-to-counter", "an integer");
-  counter += scm_num2int(val, 0, "add-to-counter");   /* convert from Scheme to C */
-  return(scm_long2num(counter));  /* return our new counter value */
-}
-
-static void inner_main(void *closure, int argc, char **argv)
-{
-  SCM result;
-  int size = 512;
-  char **buffer = NULL;
-  scm_c_define_gsubr("add-to-counter", 1, 0, 0, add_to_counter);
-
-  scm_c_define("counter",
-    scm_make_procedure_with_setter(
-      scm_c_define_gsubr("", 0, 0, 0, g_counter),
-      scm_c_define_gsubr("", 1, 0, 0, g_set_counter)));
-
-  buffer = (char **)calloc(1, sizeof(char *));
-  buffer[0] = (char *)calloc(size, sizeof(char));
-  while (1)
-    {
-      /* (exit) to exit */
-      fprintf(stdout, "&gt;");
-      getline(buffer, &amp;size, stdin);
-      result = scm_internal_stack_catch(SCM_BOOL_T, /* this is our "catch" */
-					scm_eval_str0, 
-					(void *)(buffer[0]), 
-					report_error,
-					buffer[0]);
-      fprintf(stdout, "%s\n",
-	      SCM_STRING_CHARS(scm_object_to_string(result, SCM_UNDEFINED)));
-    }
-}
-
-int main(int argc, char *argv[])
-{
-  scm_boot_guile(argc, argv, inner_main, 0);
-  return(0);
-}
-</pre></td></tr></table>
-
-<p>Now we have our own "read-eval-print" loop:
-</p>
-<pre>
-/home/bil/cl/ g
-&gt;(+ 1 2)
-3
-&gt;counter 
-#&lt;procedure-with-setter&gt;
-&gt;(counter)
-0
-&gt;(add-to-counter 32)
-32
-&gt;(counter)
-32
-&gt;(add-to-counter 1)
-33
-&gt;(counter)
-33
-&gt;(add-to-counter 3.41)
-wrong-type-arg: ("add-to-counter" "Wrong type argument (expecting ~A): ~S" ("an integer" 3.41) #f)
-wrong-type-arg
-&gt;asdf
-unbound-variable: (#f "Unbound variable: ~S" (asdf) #f)
-unbound-variable
-&gt;(<a class=quiet href="extsnd.html#exit">exit</a>)
-</pre>
-<p>But now the <i>scm_eval_str0</i> use generates a compiler complaint about type
-mismatches (though it works).  We can fix that by:
-</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-static SCM eval_str_wrapper(void *data) {return(scm_eval_str0((char *)data));}
-
-/* ... */
-
-      result = scm_internal_stack_catch(SCM_BOOL_T,
-					eval_str_wrapper, 
-					(void *)(buffer[0]), 
-					report_error,
-					buffer[0]);
-</pre></td></tr></table>
-
+The problem is that <i>set!</i> in Guile does not inform Snd's
+C code that a set! has occurred.
+We need to see that set! as soon as it happens to make the user interface
+responsive.  <code>(set! basic-color red)</code> will have no effect unless
+our C code can be informed that the <code>basic-color</code> variable's value has changed.
+It would be tedious to define 
+several hundred functions with the prefix "set-" (or whatever), simply to
+be able to set the variables.  Instead we use the 
+"generalized set!" to package up both the accessor functions under the (nominal) variable name.
+<p>
 
 <br>
+
 
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="extsndasneededexpl">A Note on "As-Needed" input functions</a></h2></td></tr></table>
 

@@ -679,7 +679,6 @@ XEN_ARGIFY_2(vct_reverse_w, vct_reverse)
 #define vct_move_w vct_move
 #define vct_subseq_w vct_subseq
 #define g_vct_w g_vct
-#define vct_ref_w vct_ref
 #define vct_reverse_w vct_reverse
 #endif
 

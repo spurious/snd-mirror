@@ -235,7 +235,7 @@ static XEN kw_frequency, kw_initial_phase, kw_wave, kw_cosines, kw_amplitude,
   kw_expansion, kw_length, kw_hop, kw_ramp, kw_jitter,
   kw_type, kw_channels, kw_filter, kw_revout, kw_width,
   kw_edit, kw_synthesize, kw_analyze, kw_interp, kw_overlap, kw_pitch, kw_dur, kw_sines,
-  kw_distribution;
+  kw_distribution, kw_coeffs;
 
 static void init_keywords(void)
 {
@@ -302,6 +302,7 @@ static void init_keywords(void)
   kw_dur = XEN_MAKE_KEYWORD("dur");
   kw_sines = XEN_MAKE_KEYWORD("sines");
   kw_distribution = XEN_MAKE_KEYWORD("distribution");
+  kw_coeffs = XEN_MAKE_KEYWORD("coeffs");
 }
 
 
@@ -1154,7 +1155,7 @@ static Float *copy_vct_data(vct *v)
 
 static XEN g_make_oscil(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_make_oscil "(" S_make_oscil " (:frequency 440.0) (:phase 0.0)): return a new " S_oscil " (sinewave) generator"
+  #define H_make_oscil "(" S_make_oscil " (:frequency 440.0) (:initial-phase 0.0)): return a new " S_oscil " (sinewave) generator"
   mus_any *ge;
   int vals;
   XEN args[4]; 
@@ -3105,7 +3106,8 @@ is the same in effect as make-oscil"
 	{
 	  /* clm.html says '(1 1) is the default */
 	  Float data[2];
-	  data[0] = 0.0;
+	  data[0] = 1.0; /* was 0.0?? */
+	  /* TODO: add test for no wave in make-waveshape */
 	  data[1] = 1.0;
 	  wave = mus_partials_to_waveshape(1, data, wsize, (Float *)CALLOC(wsize, sizeof(Float)));
 	}
@@ -3190,6 +3192,91 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
   partials = list_to_partials(amps, &npartials);
   wave = mus_partials_to_polynomial(npartials, partials, kind);
   return(xen_return_first(make_vct(npartials, wave), amps));
+}
+
+
+/* ---------------- polyshape ---------------- */
+
+static XEN g_polyshape(XEN obj, XEN index, XEN fm)
+{
+  #define H_polyshape "(" S_polyshape " gen (index 1.0) (fm 0.0)): next sample of polynomial-based waveshaper"
+  Float fm1 = 0.0, index1 = 1.0;
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_polyshape_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_polyshape, "a polyshape gen");
+  if (XEN_NUMBER_P(index)) index1 = XEN_TO_C_DOUBLE(index); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(index), index, XEN_ARG_2, S_polyshape, "a number");
+  if (XEN_NUMBER_P(fm)) fm1 = XEN_TO_C_DOUBLE(fm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_3, S_polyshape, "a number");
+  return(C_TO_XEN_DOUBLE(mus_polyshape(XEN_TO_MUS_ANY(obj), index1, fm1)));
+}
+
+static XEN g_polyshape_p(XEN obj) 
+{
+  #define H_polyshape_p "(" S_polyshape_p " gen): #t if gen is a " S_polyshape
+  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_polyshape_p(XEN_TO_MUS_ANY(obj)))));
+}
+
+static XEN g_make_polyshape(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
+{
+  #define H_make_polyshape "(" S_make_polyshape " (:frequency 440.0) (:initial-phase 0.0) (:coeffs #f) (:partials '(1 1))): \
+return a new polynomial-based waveshaping generator ('polyshaper...')\n\
+   (make-polyshape :coeffs (partials->polynomial '(1 1.0)))\n\
+is the same in effect as make-oscil"
+
+  mus_any *ge;
+  XEN args[8]; 
+  XEN keys[4];
+  int orig_arg[4] = {0, 0, 0, 0};
+  int vals, csize = 0, npartials = 0;
+  vct *v = NULL;
+  Float freq = 440.0, phase = 0.0;
+  Float *coeffs = NULL, *partials = NULL;
+  keys[0] = kw_frequency;
+  keys[1] = kw_initial_phase;
+  keys[2] = kw_coeffs;
+  keys[3] = kw_partials;
+  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = arg7; args[7] = arg8;
+  vals = mus_optkey_unscramble(S_make_polyshape, 4, keys, args, orig_arg);
+  if (vals > 0)
+    {
+      freq = mus_optkey_to_float(keys[0], S_make_polyshape, orig_arg[0], freq);
+      if (freq > (0.5 * mus_srate()))
+	XEN_OUT_OF_RANGE_ERROR(S_make_polyshape, orig_arg[0], keys[0], "freq ~A > srate/2?");
+      phase = mus_optkey_to_float(keys[1], S_make_polyshape, orig_arg[2], phase);
+      v = mus_optkey_to_vct(keys[2], S_make_polyshape, orig_arg[2], NULL);
+      if (v)
+        {
+	  coeffs = copy_vct_data(v);
+	  csize = v->length;
+	}
+      else
+	{
+	  if (!(XEN_KEYWORD_P(keys[3])))
+	    {
+	      XEN_ASSERT_TYPE(XEN_LIST_P(keys[3]), keys[3], orig_arg[3], S_make_polyshape, "a list");
+	      partials = list_to_partials(keys[3], &npartials);
+	      if (partials == NULL)
+		XEN_ERROR(NO_DATA, 
+			  XEN_LIST_3(C_TO_XEN_STRING(S_make_polyshape), 
+				     C_TO_XEN_STRING("coeffs and partials list empty?"), 
+				     keys[3]));
+	      coeffs = mus_partials_to_polynomial(npartials, partials, 0);
+	      csize = npartials;
+	      /* TODO: poly c size probably off by one here and below */
+	      /* coeffs = partials here, so don't delete */ 
+	    }
+	  if (!partials)
+	    {
+	      /* clm.html says '(1 1) is the default */
+	      Float *data;
+	      data = (Float *)CALLOC(2, sizeof(Float));
+	      data[0] = 1.0;
+	      data[1] = 1.0;
+	      coeffs = mus_partials_to_polynomial(1, data, 0);
+	      csize = 1;
+	    }
+	}
+    }
+  ge = mus_make_polyshape(freq, phase, coeffs, csize);
+  if (ge) return(mus_xen_to_object(_mus_wrap_one_vct(ge)));
+  return(XEN_FALSE);
 }
 
 
@@ -5214,6 +5301,9 @@ XEN_NARGIFY_1(g_wave_train_p_w, g_wave_train_p)
 XEN_ARGIFY_8(g_make_waveshape_w, g_make_waveshape)
 XEN_ARGIFY_3(g_waveshape_w, g_waveshape)
 XEN_NARGIFY_1(g_waveshape_p_w, g_waveshape_p)
+XEN_ARGIFY_8(g_make_polyshape_w, g_make_polyshape)
+XEN_ARGIFY_3(g_polyshape_w, g_polyshape)
+XEN_NARGIFY_1(g_polyshape_p_w, g_polyshape_p)
 XEN_ARGIFY_2(g_partials_to_waveshape_w, g_partials_to_waveshape)
 XEN_ARGIFY_2(g_partials_to_polynomial_w, g_partials_to_polynomial)
 XEN_VARGIFY(g_make_sine_summation_w, g_make_sine_summation)
@@ -5469,6 +5559,9 @@ XEN_NARGIFY_1(g_mus_generator_p_w, g_mus_generator_p)
 #define g_make_waveshape_w g_make_waveshape
 #define g_waveshape_w g_waveshape
 #define g_waveshape_p_w g_waveshape_p
+#define g_make_polyshape_w g_make_polyshape
+#define g_polyshape_w g_polyshape
+#define g_polyshape_p_w g_polyshape_p
 #define g_partials_to_waveshape_w g_partials_to_waveshape
 #define g_partials_to_polynomial_w g_partials_to_polynomial
 #define g_make_sine_summation_w g_make_sine_summation
@@ -5899,6 +5992,9 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_make_waveshape,         g_make_waveshape_w,         0, 8, 0, H_make_waveshape);
   XEN_DEFINE_PROCEDURE(S_waveshape,              g_waveshape_w,              1, 2, 0, H_waveshape);
   XEN_DEFINE_PROCEDURE(S_waveshape_p,            g_waveshape_p_w,            1, 0, 0, H_waveshape_p);
+  XEN_DEFINE_PROCEDURE(S_make_polyshape,         g_make_polyshape_w,         0, 8, 0, H_make_polyshape);
+  XEN_DEFINE_PROCEDURE(S_polyshape,              g_polyshape_w,              1, 2, 0, H_polyshape);
+  XEN_DEFINE_PROCEDURE(S_polyshape_p,            g_polyshape_p_w,            1, 0, 0, H_polyshape_p);
   XEN_DEFINE_PROCEDURE(S_partials_to_waveshape,  g_partials_to_waveshape_w,  1, 1, 0, H_partials_to_waveshape);
   XEN_DEFINE_PROCEDURE(S_partials_to_polynomial, g_partials_to_polynomial_w, 1, 1, 0, H_partials_to_polynomial);
 
@@ -6144,6 +6240,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_make_one_zero,
 	       S_make_oscil,
 	       S_make_phase_vocoder,
+	       S_make_polyshape,
 	       S_make_ppolar,
 	       S_make_pulse_train,
 	       S_make_rand,
@@ -6245,6 +6342,8 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_poisson_window,
 	       S_polar_to_rectangular,
 	       S_polynomial,
+	       S_polyshape,
+	       S_polyshape_p,
 	       S_pulse_train,
 	       S_pulse_train_p,
 	       S_phase_vocoder_amp_increments,
