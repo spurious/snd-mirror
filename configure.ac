@@ -1,5 +1,4 @@
 dnl Configuration script for Snd
-dnl Process this file with autoconf 2.57 to produce a configure script.
 
 AC_INIT(snd, 6.13, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-6.tar.gz)
 AC_CONFIG_SRCDIR(snd.c)
@@ -53,6 +52,7 @@ AC_SUBST(VERSION)
 #   --without-fftw        omit FFTW even if it exists
 #   --without-xpm         omit XPM even if it exists (for testing)
 #   --without-xp          omit libXp even if it exists (for testing)
+#   --with-profiling      add profiling flags (for testing)
 #   GUILE_CONFIG_path     where to look for guile-config
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
 #
@@ -83,6 +83,7 @@ AC_ARG_WITH(gsl,        [  --with-gsl		  use GSL, default=yes])
 AC_ARG_WITH(fftw,       [  --with-fftw		  use fftw, default=yes])
 AC_ARG_WITH(xpm,        [  --with-xpm		  use xpm, default=yes])
 AC_ARG_WITH(xp,         [  --with-xp		  use xp, default=yes])
+AC_ARG_WITH(profiling,  [  --with-profiling	  include profiling machinery, default=no])
 
 if test "$with_doubles" = yes; then
   AC_DEFINE(Float,double)
@@ -1107,7 +1108,9 @@ AC_CHECK_HEADER(nl_types.h,
      [AC_MSG_RESULT(no)])])
 
 CFLAGS="-I. $CFLAGS"
-# needed since we're looking for <config.h>, I think (where is config.h written?)
+if test "$with_profiling" = yes; then
+  CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage -fbranch-probabilities"
+fi
 
 AC_SUBST(MAKE_TARGET)
 AC_OUTPUT

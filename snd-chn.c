@@ -4019,6 +4019,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	    {
 	      if (mix_tag != NO_MIX_TAG)
 		{
+		  /* TODO: mix-dragged-hook moved to here to handle track */
 		  finish_moving_mix_tag(mix_tag, x);
 		  dragged = false;
 		  mix_tag = NO_MIX_TAG;
@@ -4120,6 +4121,9 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Temp
 	    case WAVE:
 	      if (mix_tag != NO_MIX_TAG)
 		{
+		  /* TODO: move-track mix-drag-hook? */
+		  /* if not dragged...? could save here as well as inform mix-drag-hook */
+		  /* the mix->track business also applies to the mix panel controls */
 		  move_mix_tag(mix_tag, x);
 		  dragged = true;
 		  return;

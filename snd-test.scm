@@ -48,7 +48,7 @@
 (define tests 1)
 (if (not (defined? 'snd-test)) (define snd-test -1))
 (if (defined? 'disable-play) (disable-play))
-(define keep-going #t)
+(define keep-going #f)
 (define full-test (< snd-test 0))
 (define total-tests 28)
 (if (not (defined? 'with-exit)) (define with-exit (< snd-test 0)))
@@ -31694,29 +31694,35 @@ EDITS: 2
 	      (if (not (= (edit-position ind 1) 0))
 		  (snd-display ";activate Undo menu: ~A" (edit-position ind 1)))
 	      (select-channel 1) ; redundant
-	      (key-event cwid (char->integer #\x) 4) (force-event)
-	      (key-event cwid (char->integer #\q) 4) (force-event)
-	      (widget-string minibuffer "oboe.snd")
-	      (key-event minibuffer snd-return-key 0) (force-event)
+	      (without-errors
+	       (begin
+		 (key-event cwid (char->integer #\x) 4) (force-event)
+		 (key-event cwid (char->integer #\q) 4) (force-event)
+		 (widget-string minibuffer "oboe.snd")
+		 (key-event minibuffer snd-return-key 0) (force-event)))
 	      (if (not (= (frames ind 0) c0))
 		  (snd-display ";C-x C-q wrote to wrong channel: ~A ~A" (frames ind 0) (frames ind 1)))
 	      (if (not (= (frames ind 1) 50828))
 		  (snd-display ";C-x C-q wrote wrong number of samples: ~A" (frames ind 1)))
-	      (key-event cwid (char->integer #\x) 4) (force-event)
-	      (key-event cwid (char->integer #\w) 4) (force-event)
-	      (take-keyboard-focus minibuffer)
-	      (widget-string minibuffer "fmv.snd")
-	      (key-event minibuffer snd-return-key 0) (force-event)
+	      (without-errors
+	       (begin
+		 (key-event cwid (char->integer #\x) 4) (force-event)
+		 (key-event cwid (char->integer #\w) 4) (force-event)
+		 (take-keyboard-focus minibuffer)
+		 (widget-string minibuffer "fmv.snd")
+		 (key-event minibuffer snd-return-key 0) (force-event)))
 	      (if (file-exists? "fmv.snd")
 		  (begin
 		    (if (not (= (mus-sound-frames "fmv.snd") 50828))
 			(snd-display ";C-x C-w wrote wrong number of samples: ~A" (mus-sound-frames "fmv.snd")))
 		    (delete-file "fmv.snd")))
 	      (select-all)
-	      (key-event cwid (char->integer #\x) 4) (force-event)
-	      (key-event cwid (char->integer #\w) 0) (force-event)
-	      (widget-string minibuffer "fmv1.snd")
-	      (key-event minibuffer snd-return-key 0) (force-event)
+	      (without-errors
+	       (begin
+		 (key-event cwid (char->integer #\x) 4) (force-event)
+		 (key-event cwid (char->integer #\w) 0) (force-event)
+		 (widget-string minibuffer "fmv1.snd")
+		 (key-event minibuffer snd-return-key 0) (force-event)))
 	      (if (file-exists? "fmv1.snd")
 		  (begin
 		    (if (not (= (mus-sound-frames "fmv1.snd") 50828))

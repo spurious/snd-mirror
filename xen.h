@@ -4,7 +4,7 @@
 /* macros for extension language support 
  *
  * Guile:     covers 1.3.4 to present (1.7.0) given the configuration macros in the Snd or Libxm config.h.in.
- * Ruby:      still a few gaps, tested in 1.6.6, 1.6.7, 1.6.8, 1.7.2, 1.8.0
+ * Ruby:      still a few gaps, tested in 1.6.6 and up, 1.7.2, 1.8.0
  * None:      covers all known versions of None
  *
  * I also have incomplete versions for SCM, MzScheme, Python, and librep if anyone is interested,

@@ -939,9 +939,7 @@ static char *save_as_temp_file(mus_sample_t **raw_data, int chans, int len, int 
 #define OFFSET_FROM_TOP 0
 /* axis top border width is 10 (snd-axis.c) */
 
-static mix_info *add_mix(chan_info *cp, int chan, off_t beg, off_t num, 
-			char *full_original_file, 
-			int input_chans, int auto_delete)
+static mix_info *add_mix(chan_info *cp, int chan, off_t beg, off_t num, char *full_original_file, int input_chans, int auto_delete)
 { 
   mix_info *md;
   char *namebuf;
@@ -2221,6 +2219,7 @@ int hit_mix(chan_info *cp, int x, int y)
     {
       mix_info *md;
       md = md_from_id(mx - 1);
+      /* TODO: click-mix-hook -> track of saved mixes? */
       mix_save_graph(md->wg, make_graph(cp));
       select_mix(md);
       return(mx - 1);

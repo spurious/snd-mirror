@@ -249,13 +249,9 @@ static void allocate_erase_grf_points(mix_context *ms)
 
 static void backup_erase_grf_points(mix_context *ms, int nj)
 {
-  int i;
   ms->lastpj = nj;
-  for (i = 0; i < nj; i++)
-    {
-      ms->p0[i] = points[i];
-      ms->p1[i] = points1[i];
-    }
+  memcpy((void *)(ms->p0), (void *)points, nj * sizeof(GdkPoint));
+  memcpy((void *)(ms->p1), (void *)points1, nj * sizeof(GdkPoint));
 }
 
 void mix_save_graph(mix_context *ms, int j)

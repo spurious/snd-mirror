@@ -880,6 +880,7 @@ Optional Packages:
   --with-fftw		  use fftw, default=yes
   --with-xpm		  use xpm, default=yes
   --with-xp		  use xp, default=yes
+  --with-profiling	  include profiling machinery, default=no
   --with-float-samples	  use floats as the internal sample respresentation
   --with-sample-width=N   use N bits of samples
   --with-motif-prefix=PFX where Motif is installed
@@ -2812,6 +2813,7 @@ _ACEOF
 #   --without-fftw        omit FFTW even if it exists
 #   --without-xpm         omit XPM even if it exists (for testing)
 #   --without-xp          omit libXp even if it exists (for testing)
+#   --with-profiling      add profiling flags (for testing)
 #   GUILE_CONFIG_path     where to look for guile-config
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
 #
@@ -2945,6 +2947,12 @@ fi;
 # Check whether --with-xp or --without-xp was given.
 if test "${with_xp+set}" = set; then
   withval="$with_xp"
+
+fi;
+
+# Check whether --with-profiling or --without-profiling was given.
+if test "${with_profiling+set}" = set; then
+  withval="$with_profiling"
 
 fi;
 
@@ -14362,11 +14370,223 @@ A_LD_FLAGS=""
 
 
 
-if test "$audio_system" != unknown ; then
+if test "$with_esd" = yes ; then
+  echo "$as_me:$LINENO: checking for main in -lesd" >&5
+echo $ECHO_N "checking for main in -lesd... $ECHO_C" >&6
+if test "${ac_cv_lib_esd_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lesd  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
 
+
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_esd_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_esd_main=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_esd_main" >&5
+echo "${ECHO_T}$ac_cv_lib_esd_main" >&6
+if test $ac_cv_lib_esd_main = yes; then
+
+    if test "${ac_cv_header_esd_h+set}" = set; then
+  echo "$as_me:$LINENO: checking for esd.h" >&5
+echo $ECHO_N "checking for esd.h... $ECHO_C" >&6
+if test "${ac_cv_header_esd_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_esd_h" >&5
+echo "${ECHO_T}$ac_cv_header_esd_h" >&6
+else
+  # Is the header compilable?
+echo "$as_me:$LINENO: checking esd.h usability" >&5
+echo $ECHO_N "checking esd.h usability... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+#include <esd.h>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_header_compiler=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_header_compiler=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+echo "${ECHO_T}$ac_header_compiler" >&6
+
+# Is the header present?
+echo "$as_me:$LINENO: checking esd.h presence" >&5
+echo $ECHO_N "checking esd.h presence... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <esd.h>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  ac_header_preproc=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+echo "${ECHO_T}$ac_header_preproc" >&6
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc in
+  yes:no )
+    { echo "$as_me:$LINENO: WARNING: esd.h: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: esd.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: esd.h: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: esd.h: proceeding with the preprocessor's result" >&2;}
+    (
+      cat <<\_ASBOX
+## ------------------------------------ ##
+## Report this to bug-autoconf@gnu.org. ##
+## ------------------------------------ ##
+_ASBOX
+    ) |
+      sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+  no:yes )
+    { echo "$as_me:$LINENO: WARNING: esd.h: present but cannot be compiled" >&5
+echo "$as_me: WARNING: esd.h: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: esd.h: check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: esd.h: check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: esd.h: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: esd.h: proceeding with the preprocessor's result" >&2;}
+    (
+      cat <<\_ASBOX
+## ------------------------------------ ##
+## Report this to bug-autoconf@gnu.org. ##
+## ------------------------------------ ##
+_ASBOX
+    ) |
+      sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+esac
+echo "$as_me:$LINENO: checking for esd.h" >&5
+echo $ECHO_N "checking for esd.h... $ECHO_C" >&6
+if test "${ac_cv_header_esd_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_cv_header_esd_h=$ac_header_preproc
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_esd_h" >&5
+echo "${ECHO_T}$ac_cv_header_esd_h" >&6
+
+fi
+if test $ac_cv_header_esd_h = yes; then
+
+	cat >>confdefs.h <<\_ACEOF
+#define ESD 1
+_ACEOF
+
+	esd_version="`esd-config --version`"
+        cat >>confdefs.h <<_ACEOF
+#define ESD_VERSION "${esd_version}"
+_ACEOF
+
+        audiofile_version="`audiofile-config --version`"
+        cat >>confdefs.h <<_ACEOF
+#define AUDIOFILE_VERSION "${audiofile_version}"
+_ACEOF
+
+        AUDIO_LIB="`esd-config --libs`"
+#       ESD_CFLAGS="`esd-config --cflags`"
+
+        audio_system=ESD
+
+else
+  { echo "$as_me:$LINENO: WARNING: can't find the ESD header files" >&5
+echo "$as_me: WARNING: can't find the ESD header files" >&2;}
+fi
+
+
+else
+  { echo "$as_me:$LINENO: WARNING: can't find the ESD library" >&5
+echo "$as_me: WARNING: can't find the ESD library" >&2;}
+fi
+
+fi
+
+if test "$audio_system" != unknown ; then
   echo "$as_me:$LINENO: result: Using the $audio_system audio system" >&5
 echo "${ECHO_T}Using the $audio_system audio system" >&6
-
 else
 
 case "$host" in
@@ -14379,7 +14599,6 @@ _ACEOF
         LIBS="-lm"
 
         audio_system=OSS
-
 	if test "$with_alsa" = yes || test "$with_static_alsa" = yes ; then
           echo "$as_me:$LINENO: checking for main in -lasound" >&5
 echo $ECHO_N "checking for main in -lasound... $ECHO_C" >&6
@@ -14710,201 +14929,6 @@ fi
 
         fi
 
-        if test "$with_esd" = yes ; then
-	  echo "$as_me:$LINENO: checking for main in -lesd" >&5
-echo $ECHO_N "checking for main in -lesd... $ECHO_C" >&6
-if test "${ac_cv_lib_esd_main+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lesd  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-
-int
-main ()
-{
-main ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_esd_main=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_esd_main=no
-fi
-rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_esd_main" >&5
-echo "${ECHO_T}$ac_cv_lib_esd_main" >&6
-if test $ac_cv_lib_esd_main = yes; then
-
-	    if test "${ac_cv_header_esd_h+set}" = set; then
-  echo "$as_me:$LINENO: checking for esd.h" >&5
-echo $ECHO_N "checking for esd.h... $ECHO_C" >&6
-if test "${ac_cv_header_esd_h+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-fi
-echo "$as_me:$LINENO: result: $ac_cv_header_esd_h" >&5
-echo "${ECHO_T}$ac_cv_header_esd_h" >&6
-else
-  # Is the header compilable?
-echo "$as_me:$LINENO: checking esd.h usability" >&5
-echo $ECHO_N "checking esd.h usability... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-$ac_includes_default
-#include <esd.h>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_header_compiler=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_header_compiler=no
-fi
-rm -f conftest.$ac_objext conftest.$ac_ext
-echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
-echo "${ECHO_T}$ac_header_compiler" >&6
-
-# Is the header present?
-echo "$as_me:$LINENO: checking esd.h presence" >&5
-echo $ECHO_N "checking esd.h presence... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <esd.h>
-_ACEOF
-if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
-  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } >/dev/null; then
-  if test -s conftest.err; then
-    ac_cpp_err=$ac_c_preproc_warn_flag
-  else
-    ac_cpp_err=
-  fi
-else
-  ac_cpp_err=yes
-fi
-if test -z "$ac_cpp_err"; then
-  ac_header_preproc=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-  ac_header_preproc=no
-fi
-rm -f conftest.err conftest.$ac_ext
-echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
-echo "${ECHO_T}$ac_header_preproc" >&6
-
-# So?  What about this header?
-case $ac_header_compiler:$ac_header_preproc in
-  yes:no )
-    { echo "$as_me:$LINENO: WARNING: esd.h: accepted by the compiler, rejected by the preprocessor!" >&5
-echo "$as_me: WARNING: esd.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
-    { echo "$as_me:$LINENO: WARNING: esd.h: proceeding with the preprocessor's result" >&5
-echo "$as_me: WARNING: esd.h: proceeding with the preprocessor's result" >&2;}
-    (
-      cat <<\_ASBOX
-## ------------------------------------ ##
-## Report this to bug-autoconf@gnu.org. ##
-## ------------------------------------ ##
-_ASBOX
-    ) |
-      sed "s/^/$as_me: WARNING:     /" >&2
-    ;;
-  no:yes )
-    { echo "$as_me:$LINENO: WARNING: esd.h: present but cannot be compiled" >&5
-echo "$as_me: WARNING: esd.h: present but cannot be compiled" >&2;}
-    { echo "$as_me:$LINENO: WARNING: esd.h: check for missing prerequisite headers?" >&5
-echo "$as_me: WARNING: esd.h: check for missing prerequisite headers?" >&2;}
-    { echo "$as_me:$LINENO: WARNING: esd.h: proceeding with the preprocessor's result" >&5
-echo "$as_me: WARNING: esd.h: proceeding with the preprocessor's result" >&2;}
-    (
-      cat <<\_ASBOX
-## ------------------------------------ ##
-## Report this to bug-autoconf@gnu.org. ##
-## ------------------------------------ ##
-_ASBOX
-    ) |
-      sed "s/^/$as_me: WARNING:     /" >&2
-    ;;
-esac
-echo "$as_me:$LINENO: checking for esd.h" >&5
-echo $ECHO_N "checking for esd.h... $ECHO_C" >&6
-if test "${ac_cv_header_esd_h+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_header_esd_h=$ac_header_preproc
-fi
-echo "$as_me:$LINENO: result: $ac_cv_header_esd_h" >&5
-echo "${ECHO_T}$ac_cv_header_esd_h" >&6
-
-fi
-if test $ac_cv_header_esd_h = yes; then
-  audio_system=ESD
-else
-  { echo "$as_me:$LINENO: WARNING: can't find the ESD header files" >&5
-echo "$as_me: WARNING: can't find the ESD header files" >&2;}
-fi
-
-
-else
-  { echo "$as_me:$LINENO: WARNING: can't find the ESD library" >&5
-echo "$as_me: WARNING: can't find the ESD library" >&2;}
-fi
-
-        fi
-
 	case $audio_system in
 	    ALSA)
                 # if alsa version < 0.9 complain and use OSS
@@ -15019,25 +15043,6 @@ _ACEOF
 
 		fi
 		;;
-	    ESD)
-		cat >>confdefs.h <<\_ACEOF
-#define ESD 1
-_ACEOF
-
-	        esd_version="`esd-config --version`"
-                cat >>confdefs.h <<_ACEOF
-#define ESD_VERSION "${esd_version}"
-_ACEOF
-
-                audiofile_version="`audiofile-config --version`"
-                cat >>confdefs.h <<_ACEOF
-#define AUDIOFILE_VERSION "${audiofile_version}"
-_ACEOF
-
-                AUDIO_LIB="`esd-config --libs`"
-#               ESD_CFLAGS="`esd-config --cflags`"
-
-		;;
 	    OSS)
 		cat >>confdefs.h <<\_ACEOF
 #define HAVE_OSS 1
@@ -15045,7 +15050,6 @@ _ACEOF
 
 		;;
 	esac
-
 	;;
     *-*-sunos4*)
         cat >>confdefs.h <<\_ACEOF
@@ -17568,7 +17572,9 @@ fi
 
 
 CFLAGS="-I. $CFLAGS"
-# needed since we're looking for <config.h>, I think (where is config.h written?)
+if test "$with_profiling" = yes; then
+  CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage -fbranch-probabilities"
+fi
 
 
 cat >confcache <<\_ACEOF
