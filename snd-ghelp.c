@@ -67,7 +67,6 @@ static void create_help_monolog(snd_state *ss)
   /* create scrollable but not editable text window */
   GtkWidget *help_button, *ok_button, *table;
   help_dialog = gtk_dialog_new();
-  set_dialog_widget(ss, HELP_DIALOG, help_dialog);
   gtk_signal_connect(GTK_OBJECT(help_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_help), (gpointer)ss);
   gtk_window_set_title(GTK_WINDOW(help_dialog), STR_Help);
   gtk_window_set_policy(GTK_WINDOW(help_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
@@ -91,6 +90,7 @@ static void create_help_monolog(snd_state *ss)
   gtk_container_add(GTK_CONTAINER(GTK_DIALOG(help_dialog)->vbox), table);
   gtk_widget_show(table);
   gtk_widget_show(help_dialog);
+  set_dialog_widget(ss, HELP_DIALOG, help_dialog);
 }
 
 static GtkWidget *snd_help_1(snd_state *ss, char *subject, char *helpstr, int with_wrap)
@@ -131,7 +131,6 @@ static void create_help_monolog(snd_state *ss)
   /* create scrollable but not editable text window */
   GtkWidget *help_button, *ok_button, *back_button, *forward_button;
   help_dialog = gtk_dialog_new();
-  set_dialog_widget(ss, HELP_DIALOG, help_dialog);
   gtk_signal_connect(GTK_OBJECT(help_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_help), (gpointer)ss);
   gtk_window_set_title(GTK_WINDOW(help_dialog), STR_Help);
   gtk_window_set_policy(GTK_WINDOW(help_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
@@ -166,6 +165,7 @@ static void create_help_monolog(snd_state *ss)
 
   gtk_widget_show(help_mozilla);
   gtk_widget_show(help_dialog);
+  set_dialog_widget(ss, HELP_DIALOG, help_dialog);
 }
 
 static GtkWidget *snd_help_1(snd_state *ss, char *subject, char *helpstr, int with_wrap)

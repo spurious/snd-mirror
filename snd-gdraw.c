@@ -635,7 +635,6 @@ void view_color_callback(GtkWidget *w, gpointer context)
       ccd = (color_chooser_info *)CALLOC(1, sizeof(color_chooser_info));
       ccd->state = ss;
       ccd->dialog = gtk_dialog_new();
-      set_dialog_widget(ss, COLOR_DIALOG, ccd->dialog);
       gtk_signal_connect(GTK_OBJECT(ccd->dialog), "delete_event", GTK_SIGNAL_FUNC(delete_color_dialog), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(ccd->dialog), STR_Color_Editor);
       gtk_window_set_policy(GTK_WINDOW(ccd->dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
@@ -744,6 +743,7 @@ void view_color_callback(GtkWidget *w, gpointer context)
       gtk_widget_show(colormap_box);
 
       gtk_widget_show(outer_table);
+      set_dialog_widget(ss, COLOR_DIALOG, ccd->dialog);
     }
   else raise_dialog(ccd->dialog);
   gtk_widget_show(ccd->dialog);
@@ -997,7 +997,6 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
       oid->state = ss;
 
       oid->dialog = gtk_dialog_new();
-      set_dialog_widget(ss, ORIENTATION_DIALOG, oid->dialog);
       gtk_signal_connect(GTK_OBJECT(oid->dialog), "delete_event", GTK_SIGNAL_FUNC(delete_orientation_dialog), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(oid->dialog), STR_Spectrogram_Orientation);
       gtk_window_set_policy(GTK_WINDOW(oid->dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
@@ -1202,6 +1201,7 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
       gtk_widget_show(cut_box);
 
       gtk_widget_show(outer_table);
+      set_dialog_widget(ss, ORIENTATION_DIALOG, oid->dialog);
     }
   else raise_dialog(oid->dialog);
   gtk_widget_show(oid->dialog);

@@ -89,7 +89,6 @@ static void make_edit_find_dialog(snd_state *ss)
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
   XtSetArg(args[n], XmNtransient, FALSE); n++;
   edit_find_dialog = XmCreateMessageDialog(MAIN_SHELL(ss), "find", args, n);
-  set_dialog_widget(ss, FIND_DIALOG, edit_find_dialog);
 
   XmStringFree(xmstr1);
   XmStringFree(xmstr2);
@@ -135,6 +134,7 @@ static void make_edit_find_dialog(snd_state *ss)
   XtSetArg(args[n], XmNtopWidget, edit_find_text); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   edit_find_label = XtCreateManagedWidget(STR_global_search, xmLabelWidgetClass, rc, args, n);
+  set_dialog_widget(ss, FIND_DIALOG, edit_find_dialog);
 }
 
 void edit_find_callback(Widget w, XtPointer context, XtPointer info)

@@ -2446,6 +2446,9 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
 	  sx->tab = XtCreateManagedWidget(name, xmPushButtonWidgetClass, SOUND_PANE(ss), args, n);
 	}
 #endif
+      if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
+	run_new_widget_hook(sw[W_pane]);
+      else run_new_widget_hook(sx->dialog);
 
     } /* new sound ss */
   else

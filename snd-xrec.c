@@ -3370,7 +3370,6 @@ void snd_record_file(snd_state *ss)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       recorder = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Record, args, n);
-      set_dialog_widget(ss, RECORDER_DIALOG, recorder);
 
       XtAddCallback(recorder, XmNcancelCallback, reset_record_callback, ss);
       XtAddCallback(recorder, XmNhelpCallback, help_record_callback, ss);
@@ -3454,6 +3453,7 @@ void snd_record_file(snd_state *ss)
       wm_delete = XmInternAtom(XtDisplay(recorder), "WM_DELETE_WINDOW", FALSE);
       XmAddWMProtocolCallback(XtParent(recorder), wm_delete, close_recorder, (XtPointer)ss);
 
+      set_dialog_widget(ss, RECORDER_DIALOG, recorder);
       initialize_recorder(rp);
     }
   else 

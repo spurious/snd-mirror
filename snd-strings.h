@@ -602,6 +602,7 @@
 #define S_mus_error_hook                "mus-error-hook"
 #define S_name_click_hook               "name-click-hook"
 #define S_new_sound                     "new-sound"
+#define S_new_widget_hook               "new-widget-hook"
 #define S_next_mix_sample               "next-mix-sample"
 #define S_next_sample                   "next-sample"
 #define S_next_track_sample             "next-track-sample"

@@ -105,7 +105,6 @@ void file_print_callback(GtkWidget *w, gpointer context)
   if (!file_print_dialog)
     {
       file_print_dialog = gtk_dialog_new();
-      set_dialog_widget(ss, PRINT_DIALOG, file_print_dialog);
       gtk_signal_connect(GTK_OBJECT(file_print_dialog), "delete_event", GTK_SIGNAL_FUNC(file_print_delete_callback), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(file_print_dialog), STR_Print);
       gtk_window_set_policy(GTK_WINDOW(file_print_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
@@ -150,6 +149,7 @@ void file_print_callback(GtkWidget *w, gpointer context)
       file_print_eps_or_lpr = gtk_check_button_new_with_label(STR_direct_to_printer);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(file_print_dialog)->vbox), file_print_eps_or_lpr, FALSE, FALSE, 6);
       gtk_widget_show(file_print_eps_or_lpr);
+      set_dialog_widget(ss, PRINT_DIALOG, file_print_dialog);
     }
   if (ss->print_choice == PRINT_SND)
     {

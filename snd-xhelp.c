@@ -239,7 +239,6 @@ static void create_help_monolog(snd_state *ss)
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
   XtSetArg(args[n], XmNtransient, FALSE); n++;
   help_dialog = XmCreateMessageDialog(MAIN_PANE(ss), "snd-help", args, n);
-  set_dialog_widget(ss, HELP_DIALOG, help_dialog);
 
   n = 0;
   if (!(ss->using_schemes)) 
@@ -307,6 +306,7 @@ static void create_help_monolog(snd_state *ss)
       XtVaSetValues(back_button, XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 #endif
     }
+  set_dialog_widget(ss, HELP_DIALOG, help_dialog);
 }
 
 static Widget snd_help_1(snd_state *ss, char *subject, char *helpstr, int with_wrap)

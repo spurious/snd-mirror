@@ -1,5 +1,6 @@
 snd change log
 
+  10-Nov:    new-widget-hook.
   5-Nov:     snd 5.4.
   29-Oct:    added contrib/dlp directory with Dave Phillips' ladspa plugin stuff.
   15-Oct:    multichannel ladspa plugins, ladspa-dir.

@@ -70,7 +70,6 @@ void edit_find_callback(GtkWidget *w, gpointer context)
   if (!edit_find_dialog)
     {
       edit_find_dialog = gtk_dialog_new();
-      set_dialog_widget(ss, FIND_DIALOG, edit_find_dialog);
       gtk_signal_connect(GTK_OBJECT(edit_find_dialog), "delete_event", GTK_SIGNAL_FUNC(edit_find_delete), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(edit_find_dialog), STR_Find);
       gtk_window_set_policy(GTK_WINDOW(edit_find_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
@@ -115,6 +114,7 @@ void edit_find_callback(GtkWidget *w, gpointer context)
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(edit_find_dialog)->vbox), edit_find_label, FALSE, FALSE, 4);
       gtk_widget_show(edit_find_label);
       gtk_widget_show(edit_find_dialog);
+      set_dialog_widget(ss, FIND_DIALOG, edit_find_dialog);
     }
   else raise_dialog(edit_find_dialog);
 }

@@ -338,7 +338,6 @@ static void make_region_dialog(snd_state *ss)
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
   XtSetArg(args[n], XmNtransient, FALSE); n++;
   region_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Regions, args, n);
-  set_dialog_widget(ss, REGION_DIALOG, region_dialog);
 
   XtAddCallback(region_dialog, XmNokCallback, region_ok_callback, ss);
   XtAddCallback(region_dialog, XmNcancelCallback, region_delete_callback, ss);
@@ -552,6 +551,7 @@ static void make_region_dialog(snd_state *ss)
   region_update_graph(cp);
   FREE(wwl); 
   wwl = NULL;
+  set_dialog_widget(ss, REGION_DIALOG, region_dialog);
 }
 
 void view_region_callback(Widget w, XtPointer context, XtPointer info)

@@ -455,6 +455,13 @@ static XEN g_main_widgets(void)
 }
 
 static XEN dialog_widgets;
+static XEN new_widget_hook;
+
+void run_new_widget_hook(GUI_WIDGET w)
+{
+  if (XEN_HOOKED(new_widget_hook))
+    g_c_run_progn_hook(new_widget_hook, XEN_LIST_1(XEN_WRAP_C_POINTER(w)), S_new_widget_hook);
+}
 
 static XEN g_dialog_widgets(void)
 {
@@ -487,6 +494,7 @@ void set_dialog_widget(snd_state *ss, int which, GUI_WIDGET wid)
   XEN_VECTOR_SET(dialog_widgets, 
 		 which, 
 		 XEN_WRAP_C_POINTER(wid));
+  run_new_widget_hook(wid);
 }
 
 static XEN g_widget_position(XEN wid)
@@ -892,5 +900,10 @@ void g_init_draw(void)
   XEN_DEFINE_CONSTANT("colormap-size", COLORMAP_SIZE, "colormap size");
 
   XEN_DEFINE_PROCEDURE(S_snd_gcs, g_snd_gcs, 0, 0, 0, H_snd_gcs);
+
+  #define H_new_widget_hook S_new_widget_hook " (widget) is called each time a dialog or \
+a new set of channel or sound widgets is created."
+
+  XEN_DEFINE_HOOK(new_widget_hook, S_new_widget_hook, 1, H_new_widget_hook);      /* arg = widget */
 }
 #endif

@@ -17,7 +17,7 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
   XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
   snd_error_dialog = XmCreateErrorDialog(MAIN_PANE(ss), "error", args, n);
-  set_dialog_widget(ss, ERROR_DIALOG, snd_error_dialog);
+
   XtUnmanageChild(XmMessageBoxGetChild(snd_error_dialog, XmDIALOG_SYMBOL_LABEL));
   XtUnmanageChild(XmMessageBoxGetChild(snd_error_dialog, XmDIALOG_CANCEL_BUTTON));
   XtUnmanageChild(XmMessageBoxGetChild(snd_error_dialog, XmDIALOG_HELP_BUTTON));
@@ -48,6 +48,7 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
       XtVaSetValues(XtNameToWidget(snd_error_dialog, "OK"), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
       XtVaSetValues(snd_error_history, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
     }
+  set_dialog_widget(ss, ERROR_DIALOG, snd_error_dialog);
 }
 
 void add_to_error_history(snd_state *ss, char *msg, int popup)
@@ -160,7 +161,7 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
       XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
       XtSetArg(args[n], XmNcancelLabelString, xmstr2); n++;
       yes_or_no_dialog = XmCreateQuestionDialog(MAIN_PANE(ss), "yow!", args, n);
-      set_dialog_widget(ss, YES_OR_NO_DIALOG, yes_or_no_dialog);
+
       XtManageChild(yes_or_no_dialog);
 
       XtUnmanageChild(XmMessageBoxGetChild(yes_or_no_dialog, XmDIALOG_SYMBOL_LABEL));
@@ -177,6 +178,7 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
       XmStringFree(titlestr);
       XmStringFree(xmstr1);
       XmStringFree(xmstr2);
+      set_dialog_widget(ss, YES_OR_NO_DIALOG, yes_or_no_dialog);
     }
   error_msg = XmStringCreateLtoR(yes_buf, XmFONTLIST_DEFAULT_TAG);
   if (!(XtIsManaged(yes_or_no_dialog))) 

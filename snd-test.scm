@@ -7802,6 +7802,7 @@
   (add-hook! multichannel-mix-hook arg1) (carg1 multichannel-mix-hook)
   (add-hook! play-hook arg1) (carg1 play-hook)
   (add-hook! dac-hook arg1) (carg1 dac-hook)
+  (add-hook! new-widget-hook arg1) (carg1 new-widget-hook)
   (add-hook! snd-error-hook arg1) (carg1 snd-error-hook)
   (add-hook! snd-warning-hook arg1) (carg1 snd-warning-hook)
   (add-hook! start-hook arg1) (carg1 start-hook)
@@ -8070,11 +8071,23 @@
 			 (set! ctr (+ ctr 1)))
 		     #t))
 
-	(set! (with-background-processes) #t)
-	(set! (vu-size) 1.25)
-	(without-errors
-	 (test-menus)) ; built-in self-test function
-	(set! (with-background-processes) #f)
+	(let ((added 0))
+	  (set! (with-background-processes) #t)
+	  (set! (vu-size) 1.25)
+	  (add-hook! new-widget-hook
+		     (lambda (w)
+		       (set! added (+ added 1))))
+	  (without-errors
+	   (test-menus)) ; built-in self-test function
+	  (set! (with-background-processes) #f)
+	  (if (= added 0)
+	      (snd-display ";no widgets added?"))
+	  (reset-hook! new-widget-hook))
+
+	(if (provided? 'snd-ladspa)
+	    (begin
+	      (set! (ladspa-dir) "/home/bil/test/cmt/plugins")
+	      (apply-ladspa (make-sample-reader 0) (list "cmt" "delay_5s" .3 .5) 1000 "delayed")))
 
 	(revert-sound fd)
 	(close-sound fd)
@@ -12598,21 +12611,24 @@ EDITS: 3
 		       (pl2 (find-child rw1 "pl"))
 		       (nm2 (find-child rw1 "nm")))
 		  (if (> (length (sounds)) 0) (snd-display ";sounds at view-file: ~A" (sounds)))
-		  (|XmToggleButtonSetState pl1 #t #t)
-		  (|XmToggleButtonSetState pl1 #f #t)
-		  (click-button (cadr nm1))
-		  (if (or (= (length (sounds)) 0)
-			  (not (string=? (short-file-name (car (sounds))) name)))
-		      (snd-display ";click previous: ~A ~A" name (map short-file-name (sounds))))
-		  (|XmToggleButtonSetState sv2 #t #t)		  
-		  (|XmToggleButtonSetState pl2 #t #t)
-		  (|XmToggleButtonSetState sv2 #f #t)
-		  (|XmToggleButtonSetState pl2 #f #t)
+		  (catch #t
+	            (lambda ()
+		      (|XmToggleButtonSetState pl1 #t #t)
+		      (|XmToggleButtonSetState pl1 #f #t)
+		      (click-button (cadr nm1))
+		      (if (or (= (length (sounds)) 0)
+			      (not (string=? (short-file-name (car (sounds))) name)))
+			  (snd-display ";click previous: ~A ~A" name (map short-file-name (sounds))))
+		      (|XmToggleButtonSetState sv2 #t #t)		  
+		      (|XmToggleButtonSetState pl2 #t #t)
+		      (|XmToggleButtonSetState sv2 #f #t)
+		      (|XmToggleButtonSetState pl2 #f #t))
+		    (lambda arg args))
 		  (set! name (cadr (|XmStringGetLtoR (cadr (|XtVaGetValues nm2 (list |XmNlabelString 0))) "bold_button_font")))
 		  (close-sound (car (sounds)))
 		  (|XmToggleButtonSetState sv1 #t #t)		  
 		  (click-button (cadr (|XmMessageBoxGetChild filed |XmDIALOG_CANCEL_BUTTON))) (force-event)     ;clear
-		  (set! name (cadr (|XmStringGetLtoR (cadr (|XtVaGetValues nm2 (list |XmNlabelString 0))) "bold_button_font")))	  
+		  (set! name (cadr (|XmStringGetLtoR (cadr (|XtVaGetValues nm2 (list |XmNlabelString 0))) "bold_button_font")))
 		  (click-button (cadr (|XmMessageBoxGetChild filed |XmDIALOG_OK_BUTTON))) (force-event)
 		  (if (|XtIsManaged filed)
 		      (snd-display ";why is view files active?")))
@@ -13605,6 +13621,24 @@ EDITS: 3
 		   mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler vct-ref
 		   ))
 
+(define make-procs (list
+               make-all-pass make-asymmetric-fm
+	       make-buffer make-comb make-convolve make-delay make-env make-fft-window make-file->frame
+	       make-file->sample make-filter make-fir-filter make-formant make-frame make-frame->file make-granulate
+	       make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil make-ppolar
+	       make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
+	       make-sine-summation make-square-wave make-src make-sum-of-cosines make-table-lookup make-triangle-wave
+	       make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar))
+
+(define keyargs
+	 (list 
+	  :frequency :initial-phase :wave :cosines :amplitude :ratio :size :a0 :a1 :a2 :b1 :b2 :input 
+	  :srate :file :channel :start :initial-contents :initial-element :scaler :feedforward :feedback 
+	  :max-size :radius :gain :partials :r :a :n :fill-time :order :xcoeffs :ycoeffs :envelope 
+	  :base :duration :offset :end :direction :degree :distance :reverb :output :fft-size :expansion 
+	  :length :hop :ramp :jitter :type :format :comment :channels :filter :revout :width :edit 
+	  :synthesize :analyze :interp :overlap :pitch))
+
 (reset-all-hooks)
 
 (if (or full-test (= snd-test 23) (and keep-going (<= snd-test 23)))
@@ -14248,6 +14282,7 @@ EDITS: 3
 			(list multichannel-mix-hook 'multichannel-mix-hook)
 			(list play-hook 'play-hook)
 			(list dac-hook 'dac-hook)
+			(list new-widget-hook 'new-widget-hook)
 			(list read-hook 'read-hook)
 			(list snd-error-hook 'snd-error-hook)
 			(list snd-warning-hook 'snd-warning-hook)
@@ -14357,6 +14392,20 @@ EDITS: 3
 	(check-error-tag 'no-such-region (lambda () (make-region-sample-reader 0 1234567)))
 
 	;; now try everything! (all we care about here is that Snd keeps running)
+
+	;; ---------------- key args
+	(for-each
+	 (lambda (arg1)
+	   (for-each 
+	    (lambda (arg2)
+	      (for-each 
+	       (lambda (n)
+		 (catch #t
+			(lambda () (n arg1 arg2))
+			(lambda args (car args))))
+	       make-procs))
+	    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-delay 32) :wave -1 0 1 #f #t '() 12345678901234567890)))
+	 keyargs)
 
 	;; ---------------- 0 Args
 	(for-each 
@@ -14663,4 +14712,3 @@ EDITS: 3
 ;;; (define handle (dlopen "/home/bil/snd-4/gsl-ex.so"))
 ;;; (dlinit handle "init_gsl_j0")
 ;;; (fneq (j0 1.0) 0.765)
-;;; TODO: ladspa tests

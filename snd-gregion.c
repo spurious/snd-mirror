@@ -325,7 +325,6 @@ static void make_region_dialog(snd_state *ss)
   GtkWidget *infobox, *labels, *labbox;
 
   region_dialog = gtk_dialog_new();
-  set_dialog_widget(ss, REGION_DIALOG, region_dialog);
   gtk_signal_connect(GTK_OBJECT(region_dialog), "delete_event", GTK_SIGNAL_FUNC(region_browser_delete_callback), (gpointer)ss);
   gtk_window_set_title(GTK_WINDOW(region_dialog), STR_Regions);
   gtk_window_set_policy(GTK_WINDOW(region_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
@@ -487,6 +486,7 @@ static void make_region_dialog(snd_state *ss)
   region_update_graph(cp);
   FREE(wwl); 
   wwl = NULL;
+  set_dialog_widget(ss, REGION_DIALOG, region_dialog);
 }
 
 void view_region_callback(GtkWidget *w, gpointer context)

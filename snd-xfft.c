@@ -489,7 +489,6 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       transform_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Transform_Options, args, n);
-      set_dialog_widget(ss, TRANSFORM_DIALOG, transform_dialog);
 
       XtAddCallback(transform_dialog, XmNcancelCallback, orient_transform_callback, ss);
       XtAddCallback(transform_dialog, XmNokCallback, dismiss_transform_callback, ss);
@@ -1029,6 +1028,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
 
       FREE(n1);
       FREE(n2);
+      set_dialog_widget(ss, TRANSFORM_DIALOG, transform_dialog);
     }
   else
     {

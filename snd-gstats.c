@@ -45,7 +45,6 @@ void update_stats_display(snd_state *ss, int all)
   if (!stats_window)
     {
       stats_window = gtk_dialog_new();
-      set_dialog_widget(ss, STATS_DIALOG, stats_window);
       gtk_signal_connect(GTK_OBJECT(stats_window), "delete_event", GTK_SIGNAL_FUNC(stats_delete), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(stats_window), STR_Disk_and_Memory_Usage);
       gtk_window_set_policy(GTK_WINDOW(stats_window), TRUE, TRUE, FALSE); /* allow shrink or grow */
@@ -99,6 +98,7 @@ void update_stats_display(snd_state *ss, int all)
       gtk_container_add(GTK_CONTAINER(GTK_DIALOG(stats_window)->vbox), table);
       gtk_widget_show(table);
       gtk_widget_show(stats_window);
+      set_dialog_widget(ss, STATS_DIALOG, stats_window);
     }
   else raise_dialog(stats_window);
   if (all) update_all_usage_stats(ss);

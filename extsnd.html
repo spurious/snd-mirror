@@ -1955,6 +1955,15 @@ the hook.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
+<!-- new-widget-hook -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="newwidgethook">new-widget-hook</a></em> (widget)</code></span><td align=right><b>progn</b></td>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td colspan=2>
+<!-- -->called each time a dialog or a new set of channel or sound widgets is created.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=3></td></tr>
+<!-- -->
 <!-- open-hook -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="openhook">open-hook</a></em> (filename)</code></span><td align=right><b>or</b></td>
@@ -3482,8 +3491,23 @@ a particular mix object:</p>
 <!-- -->
 <!-- mix-locked -->
 <!-- -->
-<!-- --><tr><td><span class=defbox><code><em class=def><a name="sndmixlocked">mix-locked</a></em> (<i>mix</i>)</code></span></td>
-<!-- --><td>#t if <i>mix</i> is locked.  
+<!-- --><tr><td valign=top><span class=defbox><code><em class=def><a name="sndmixlocked">mix-locked</a></em> (<i>mix</i>)</code></span></td>
+<!-- --><td>#t if <i>mix</i> is locked.  A mix is automatically locked (i.e. made immovable) if an edit operation
+<!-- -->affects some portion of the data that the mix also affects.  For example, if you delete a portion of a sound
+<!-- -->that has actively mixed data, the associated mix tag goes away until you undo that deletion.  This can
+<!-- -->be used deliberately to remove a mix:
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2>
+<!-- --><center><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+(define (delete-mix id)
+  (if (mix? id)
+      (as-one-edit
+       (lambda ()
+	 (do ((i 0 (1+ i)))
+	     ((= i (mix-chans id)))
+	   (set! (mix-amp id i) 0.0))
+	 (set! (<em class=red>mix-locked</em> id) #t)))))
+<!-- --></pre></td></tr></table></center>
 <!-- --></td></tr>
 <!-- -->
 <!-- mix-name -->

@@ -22,7 +22,6 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
   GtkWidget *vscrollbar;
 
   snd_error_dialog = gtk_dialog_new();
-  set_dialog_widget(ss, ERROR_DIALOG, snd_error_dialog);
   gtk_signal_connect(GTK_OBJECT(snd_error_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_snd_error), (gpointer)ss);
   gtk_window_set_title(GTK_WINDOW(snd_error_dialog), STR_Error);
   gtk_window_set_policy(GTK_WINDOW(snd_error_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
@@ -64,6 +63,7 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
   gtk_container_add(GTK_CONTAINER(GTK_DIALOG(snd_error_dialog)->vbox), table);
   gtk_widget_show(table);
   if (popup) gtk_widget_show(snd_error_dialog);
+  set_dialog_widget(ss, ERROR_DIALOG, snd_error_dialog);
 }
 
 void add_to_error_history(snd_state *ss, char *msg, int popup)
@@ -150,7 +150,6 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
   if (!yes_or_no_dialog)
     {
       yes_or_no_dialog = gtk_dialog_new();
-      set_dialog_widget(ss, YES_OR_NO_DIALOG, yes_or_no_dialog);
       gtk_signal_connect(GTK_OBJECT(yes_or_no_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_yes_or_no_dialog), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(yes_or_no_dialog), STR_Big_Trouble);
       gtk_window_set_policy(GTK_WINDOW(yes_or_no_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
@@ -174,6 +173,7 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
       gtk_container_add(GTK_CONTAINER(GTK_DIALOG(yes_or_no_dialog)->vbox), yn_label);
 
       gtk_widget_show(yn_label);
+      set_dialog_widget(ss, YES_OR_NO_DIALOG, yes_or_no_dialog);
     }
   else gtk_label_set_text(GTK_LABEL(yn_label), yes_buf);
   gtk_widget_show(yes_or_no_dialog);

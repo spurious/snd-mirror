@@ -51,7 +51,6 @@ void update_stats_display(snd_state *ss, int all)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       stats_window = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Disk_and_Memory_Usage, args, n);
-      set_dialog_widget(ss, STATS_DIALOG, stats_window);
 
       XtAddCallback(stats_window, XmNcancelCallback, stats_update, ss);
       XtAddCallback(stats_window, XmNhelpCallback, stats_help, ss);
@@ -81,6 +80,7 @@ void update_stats_display(snd_state *ss, int all)
 	  map_over_children(stats_window, set_main_color_of_widget, ss);
 	  XtVaSetValues(stats_form, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
 	}
+      set_dialog_widget(ss, STATS_DIALOG, stats_window);
     }
   else raise_dialog(stats_window);
   if (all) update_all_usage_stats(ss);

@@ -2035,7 +2035,6 @@ void snd_record_file(snd_state *ss)
       small_font = gdk_font_load((vu_size(ss) < SMALLER_FONT_CUTOFF) ? SMALLER_FONT : SMALL_FONT);
 
       recorder = gtk_dialog_new();
-      set_dialog_widget(ss, RECORDER_DIALOG, recorder);
       gtk_signal_connect(GTK_OBJECT(recorder), "delete_event", GTK_SIGNAL_FUNC(recorder_delete), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(recorder), STR_Record);
       gtk_window_set_policy(GTK_WINDOW(recorder), TRUE, TRUE, FALSE); /* allow shrink or grow */
@@ -2106,6 +2105,7 @@ void snd_record_file(snd_state *ss)
       gtk_paned_add2(GTK_PANED(rec_panes), messagetab);
       gtk_widget_show(messagetab);
 
+      set_dialog_widget(ss, RECORDER_DIALOG, recorder);
       initialize_recorder(rp);
     }
   gtk_widget_show(recorder);

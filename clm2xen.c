@@ -3814,6 +3814,7 @@ returns a new generator for signal placement in up to 4 channels.  Channel 0 cor
 	    }
 	}
       out_chans = ikeyarg(keys[5], S_make_locsig, orig_arg[5] + 1, out_chans);
+      XEN_ASSERT_TYPE(out_chans > 0, keys[5], orig_arg[5] + 1, S_make_locsig, "int > 0");
     }
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   if (vlen > 0)
@@ -4020,6 +4021,7 @@ jitter controls the randomness in that spacing, input can be a file pointer."
       output_hop = fkeyarg(keys[4], S_make_granulate, orig_arg[4] + 1, output_hop);
       ramp_time = fkeyarg(keys[5], S_make_granulate, orig_arg[5] + 1, ramp_time);
       jitter = fkeyarg(keys[6], S_make_granulate, orig_arg[6] + 1, jitter);
+      XEN_ASSERT_TYPE((jitter >= 0.0) && (jitter < 100.0), keys[6], orig_arg[6] + 1, S_make_granulate, "0.0 .. 100.0");
       maxsize = ikeyarg(keys[7], S_make_granulate, orig_arg[7] + 1, maxsize);
     }
   if (expansion <= 0.0) mus_misc_error(S_make_granulate, "expansion < 0.0?", keys[1]);

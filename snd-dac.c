@@ -1590,6 +1590,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  (!(read_sample_eof(dp->chn_fd))) &&
 		  (dp->chn_fd->cb))
 		cursor_moveto(dp->cp, current_location(dp->chn_fd));
+	      /* TODO: make this more accurate by taking fragments (soundcard buffers) into account */
 
 	      /* add a buffer's worth from the current source into dp->audio_chan */
 	      buf = dac_buffers[dp->audio_chan];

@@ -1122,6 +1122,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  cw[W_gsy] = NULL;
 	  cw[W_gzy] = NULL;
 	}
+      run_new_widget_hook(cw[W_main_window]);
 
       /* also position of current graph in overall sound as window */
 

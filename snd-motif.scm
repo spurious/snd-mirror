@@ -313,6 +313,29 @@
 (define (add-main-pane name type args)
   (|XtCreateManagedWidget name type (|Widget (or (list-ref (main-widgets) 5) (list-ref (main-widgets) 3))) args))
 
+;;; -------- add a widget at the top of the listener
+
+(define (add-listener-pane name type args)
+  (let* ((listener (find-child (|Widget (cadr (main-widgets))) "lisp-listener"))
+	 ;; this is the listener text widget, hopefully
+	 ;;   its parent is the scrolled window, its parent is the form widget filling the listener pane
+	 (listener-scroll (|XtParent listener))
+	 (listener-form (|XtParent listener-scroll)))
+    ;; to insert the new widget at the top of the listener pane we need to detach the
+    ;;   listener scrolled window etc -- assume here that the "args" list does not
+    ;;   include any ATTACH_* arguments
+    (|XtUnmanageChild listener-scroll)
+    (let ((top-widget (|XtCreateManagedWidget name type listener-form
+					      (append 
+					       (list |XmNleftAttachment   |XmATTACH_FORM
+						     |XmNrightAttachment  |XmATTACH_FORM
+						     |XmNtopAttachment    |XmATTACH_FORM)
+					       args))))
+      (|XtVaSetValues listener-scroll (list |XmNtopAttachment |XmATTACH_WIDGET
+					    |XmNtopWidget     top-widget))
+      (|XtManageChild listener-scroll)
+      top-widget)))
+
 ;(add-channel-pane "new-pane" 
 ;		  |xmDrawingAreaWidgetClass 
 ;		  (list |XmNbackground (|Pixel (snd-pixel (graph-color)))
@@ -590,11 +613,25 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ; (|XtSetValues (|Widget (list-ref (sound-widgets) 8)) (list |XmNlabelPixmap (make-pixmap (cadr (|Widget (cadr (main-widgets))) arrow-strs))))
 
 ;;; if you have a nice background pixmap, you can map it over all of Snd with:
+#!
+(load "backgrounds.scm")
+(define wd (make-pixmap (|Widget (cadr (main-widgets))) wood))
 
-;;; (load "backgrounds.scm")
-;;; (define wd (make-pixmap (|Widget (cadr (main-widgets))) wood))
-;;; (for-each-child (|Widget (cadr (main-widgets))) (lambda (w) (|XtSetValues w (list |XmNbackgroundPixmap wd))))
+(define (paint-all widget)
+  (for-each-child 
+    (|Widget widget)
+    (lambda (w) 
+      (|XtSetValues w (list |XmNbackgroundPixmap wd)))))
 
+(paint-all (cadr (main-widgets)))
+(for-each
+ (lambda (w)
+   (if w
+       (paint-all w)))
+ (dialog-widgets))
+ 
+(add-hook! new-widget-hook paint-all)
+!#
 
 (define right-arrow (list
    #x00 #x04 #x10 #x08 #x00 #x10 #x04 #x20 #x00 #x40 #xa5 #xbf
@@ -2044,6 +2081,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;;; TODO: DAP-style loop point dialog
 ;;; TODO: ladspa+enved example
 ;;; TODO: mix-panning via enved
+;;; TODO: spatial envelope dialog
 
 (define (change-label widget new-label)
   (let ((str (|XmStringCreateLocalized new-label)))

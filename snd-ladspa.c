@@ -50,8 +50,7 @@ long g_lLADSPARepositoryCount;
 /*****************************************************************************/
 
 /* Snd currently does not support all LADSPA plugins. */
-char
-isLADSPAPluginSupported(const LADSPA_Descriptor * psDescriptor) {
+static char isLADSPAPluginSupported(const LADSPA_Descriptor * psDescriptor) {
 
   long lInputCount, lOutputCount, lIndex;
   LADSPA_PortDescriptor iPortDescriptor;
@@ -75,8 +74,7 @@ isLADSPAPluginSupported(const LADSPA_Descriptor * psDescriptor) {
 /*****************************************************************************/
 
 /* Assumes repository initialised, returns NULL if not found. */
-const LADSPA_Descriptor *
-findLADSPADescriptor(const char * pcPackedFilename, const char * pcLabel) {
+static const LADSPA_Descriptor *findLADSPADescriptor(const char * pcPackedFilename, const char * pcLabel) {
 
   /* FIXME: Could be using hashtables, binary chops etc. Instead we simply scan the table. */
 
@@ -97,7 +95,7 @@ findLADSPADescriptor(const char * pcPackedFilename, const char * pcLabel) {
 
 /* Allocate a new string. The string will contain a library filename,
    stripped of path and .so (if present) */
-char * packLADSPAFilename(const char * pcFilename) {
+static char * packLADSPAFilename(const char * pcFilename) {
 
   const char * pcStart, * pcEnd;
   char * pcPackedFilename;
@@ -473,16 +471,12 @@ Information about about parameters can be acquired using analyse-ladspa."
   chan_info *cp, *ncp;
   snd_info *sp;
   char *ofile, *msg;
-  int num, i, j = 0, ofd, datumb, err = 0, inchans = 1, readers = 1;
+  int num, i, ofd, datumb, err = 0, inchans = 1, readers = 1;
   snd_fd **sf;
   file_info *hdr;
   snd_state *state;
   XEN errmsg;
   MUS_SAMPLE_TYPE **data;
-  MUS_SAMPLE_TYPE *idata;
-#if (!SNDLIB_USE_FLOATS)
-  MUS_SAMPLE_TYPE val;
-#endif
   LADSPA_Data **pfInputBuffer = NULL;
 #if (!SNDLIB_USE_FLOATS)
   LADSPA_Data **pfBuffer2 = NULL;
@@ -556,7 +550,7 @@ Information about about parameters can be acquired using analyse-ladspa."
   XEN_ASSERT_TYPE(XEN_LIST_LENGTH(ladspa_plugin_configuration) == 2 + lParameterCount,
 		  ladspa_plugin_configuration,
 		  XEN_ARG_2,
-		  S_apply_ladspa, mus_format("a list of 2 strings + %d parameters", lParameterCount));
+		  S_apply_ladspa, mus_format("a list of 2 strings + %d parameters", (int)lParameterCount));
   pfControls = (LADSPA_Data *)MALLOC(psDescriptor->PortCount * sizeof(LADSPA_Data));
 
   /* Get parameters. */

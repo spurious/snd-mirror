@@ -1346,6 +1346,7 @@ int to_c_edit_samples(chan_info *cp, XEN edpos, const char *caller, int arg_pos)
   axis_info *get_ap(chan_info *cp, int ap_id, const char *caller);
   void g_init_draw(void);
   void set_dialog_widget(snd_state *ss, int which, GUI_WIDGET wid);
+  void run_new_widget_hook(GUI_WIDGET w);
 #endif
 
 #endif

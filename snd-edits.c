@@ -2308,6 +2308,7 @@ static int save_edits_and_update_display(snd_info *sp)
       report_in_minibuffer(sp, "saving %s", sp->short_filename);
       sphdr = sp->hdr;
       err = snd_make_file(ofile, sp->nchans, sp->hdr, sf, samples, ss);
+      /* TODO: here add hook for output format? -- or can this be done in save-hook? */
     }
   if (err != MUS_NO_ERROR) 
     {

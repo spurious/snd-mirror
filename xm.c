@@ -1127,14 +1127,11 @@ static void gxm_Drop_Callback(Widget w, XtPointer context, XtPointer info)
     {
       code = XEN_LIST_REF(xm_protected_element(i), CALLBACK_FUNC);
       if (XEN_PROCEDURE_P(code))
-	{
-	  XEN_CALL_3(code,
-		     C_TO_XEN_Widget(w),
-		     XEN_FALSE,
-		     C_TO_XEN_XmDropProcCallbackStruct(cb),
-		     __FUNCTION__);
-	  return;
-	}
+	XEN_CALL_3(code,
+		   C_TO_XEN_Widget(w),
+		   XEN_FALSE,
+		   C_TO_XEN_XmDropProcCallbackStruct(cb),
+		   __FUNCTION__);
     }
   cb->dropSiteStatus = XmINVALID_DROP_SITE; /* try to exit cleanly from on-going drop */
 }
@@ -1162,14 +1159,11 @@ static void gxm_Drag_Callback(Widget w, XtPointer context, XtPointer info)
     {
       code = XEN_LIST_REF(xm_protected_element(i), CALLBACK_FUNC);
       if (XEN_PROCEDURE_P(code))
-	{
-	  XEN_CALL_3(code,
-		     C_TO_XEN_Widget(w),
-		     XEN_FALSE,
-		     C_TO_XEN_XmDragProcCallbackStruct(cb),
-		     __FUNCTION__);
-	  return;
-	}
+	XEN_CALL_3(code,
+		   C_TO_XEN_Widget(w),
+		   XEN_FALSE,
+		   C_TO_XEN_XmDragProcCallbackStruct(cb),
+		   __FUNCTION__);
     }
 }
 
@@ -2172,7 +2166,7 @@ static XEN gxm_XmTransferValue(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 transfers data to a destination"
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XmTransferSetParameters", "XtPointer");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XmTransferSetParameters", "an Atom");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3), arg3, 3, "XmTransferSetParameters", "XtCallbackProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS(arg3) == 3), arg3, 3, "XmTransferSetParameters", "XtCallbackProc (3 args)");
   XEN_ASSERT_TYPE(XEN_Time_P(arg5), arg5, 5, "XmTransferSetParameters", "Time");
   XmTransferValue((XtPointer)XEN_TO_C_ULONG(arg1), 
 		  XEN_TO_C_Atom(arg2), 
@@ -2281,14 +2275,15 @@ static XEN gxm_XmRenderTableAddRenditions(XEN arg1, XEN arg2, XEN arg3, XEN arg4
 XmRendition *renditions, Cardinal rendition_count, XmMergeMode merge_mode) adds renditions to a render table"
   /* DIFF: XmRenderTableAddRenditions arg2 is list of Renditions, arg1 can be #f = NULL
    */
-  int len;
+  int len, listlen;
   XmRendition *rs;
   XmRenderTable res;
   XEN_ASSERT_TYPE(XEN_XmRenderTable_P(arg1) || XEN_FALSE_P(arg1), arg1, 1, "XmRenderTableAddRenditions", "XmRenderTable");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmRenderTableAddRenditions", "list of XmRendition");
+  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(arg2, listlen), arg2, 2, "XmRenderTableAddRenditions", "list of XmRendition");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmRenderTableAddRenditions", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmRenderTableAddRenditions", "XmMergeMode");
   len = XEN_TO_C_INT(arg3);
+  if (len > listlen) len = listlen;
   if (len <= 0) return(XEN_FALSE);
   rs = XEN_TO_C_XmRenditions(arg2, len);
   res = XmRenderTableAddRenditions(XEN_FALSE_P(arg1) ? NULL : XEN_TO_C_XmRenderTable(arg1), 
@@ -2520,14 +2515,15 @@ static XEN gxm_XmTabListInsertTabs(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 inserts tabs into a tab list"
   /* DIFF: XmTabListInsertTabs arg2 is list of XmTabs (can be #f = NULL)
    */
-  int len;
+  int len, listlen;
   XmTab *tabs;
   XmTabList tl;
   XEN_ASSERT_TYPE(XEN_XmTabList_P(arg1) || XEN_FALSE_P(arg1), arg1, 1, "XmTabListInsertTabs", "XmTabList");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmTabListInsertTabs", "list of XmTab");
+  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(arg2, listlen), arg2, 2, "XmTabListInsertTabs", "list of XmTab");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmTabListInsertTabs", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmTabListInsertTabs", "int");
   len = XEN_TO_C_INT(arg3);
+  if (len > listlen) len = listlen;
   if (len <= 0) return(XEN_FALSE);
   tabs = XEN_TO_C_XmTabs(arg2, len);
   tl = XmTabListInsertTabs(XEN_FALSE_P(arg1) ? NULL : XEN_TO_C_XmTabList(arg1), 
@@ -2569,14 +2565,15 @@ creates a new tab list with replacement tabs"
   /* DIFF: XmTabListReplacePositions arg2 is list of ints, arg3 is list of XmTabs
    */
   Cardinal *ts;
-  int len;
+  int len, listlen;
   XEN res;
   XmTab *tabs;
   XEN_ASSERT_TYPE(XEN_XmTabList_P(arg1), arg1, 1, "XmTabListReplacePositions", "XmTabList");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg2), arg2, 2, "XmTabListReplacePositions", "list of ints");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XmTabListReplacePositions", "list of XmTab");
+  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(arg3, listlen), arg3, 3, "XmTabListReplacePositions", "list of XmTab");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XmTabListReplacePositions", "int");
   len = XEN_TO_C_INT(arg4);
+  if (len < listlen) len = listlen;
   if (len <= 0) return(XEN_FALSE);
   ts = XEN_TO_C_Cardinals(arg2, len);
   tabs = XEN_TO_C_XmTabs(arg3, len);
@@ -3802,7 +3799,7 @@ static XEN gxm_XmVaCreateSimpleCheckBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmVaCreateSimpleCheckBox", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmVaCreateSimpleCheckBox", "String");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3), arg3, 3, "XmVaCreateSimpleCheckBox", "XtCallbackProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS(arg3) == 3), arg3, 3, "XmVaCreateSimpleCheckBox", "XtCallbackProc (3 args)");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XmVaCreateSimpleCheckBox", "List");
   arg4 = XEN_CONS_2(C_TO_XEN_STRING("XmNvalueChangedCallback"),
 		    arg3,
@@ -3832,7 +3829,7 @@ static XEN gxm_XmVaCreateSimpleRadioBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4, 
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmVaCreateSimpleRadioBox", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmVaCreateSimpleRadioBox", "String");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmVaCreateSimpleRadioBox", "int");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4), arg4, 4, "XmVaCreateSimpleRadioBox", "XtCallbackProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 3), arg4, 4, "XmVaCreateSimpleRadioBox", "XtCallbackProc (3 args");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg5), arg5, 5, "XmVaCreateSimpleRadioBox", "List");
   arg5 = XEN_CONS_2(C_TO_XEN_STRING("XmNvalueChangedCallback"),
 		    arg4,
@@ -3866,7 +3863,7 @@ KeySym option_mnemonic, int button_set, XtCallbackProc callback)"
   XEN_ASSERT_TYPE(XEN_XmString_P(arg3), arg3, 3, "XmVaCreateSimpleOptionMenu", "XmString");
   XEN_ASSERT_TYPE(XEN_KeySym_P(arg4), arg4, 4, "XmVaCreateSimpleOptionMenu", "KeySym");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XmVaCreateSimpleOptionMenu", "int");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg6), arg6, 6, "XmVaCreateSimpleOptionMenu", "XtCallbackProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg6) && (XEN_REQUIRED_ARGS(arg6) == 3), arg6, 6, "XmVaCreateSimpleOptionMenu", "XtCallbackProc (3 args)");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg7), arg7, 7, "XmVaCreateSimpleOptionMenu", "List");
   arg7 = XEN_CONS_2(C_TO_XEN_STRING("XmNlabelString"),
 		    arg3,
@@ -3901,7 +3898,7 @@ static XEN gxm_XmVaCreateSimplePulldownMenu(XEN arg1, XEN arg2, XEN arg3, XEN ar
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmVaCreateSimplePulldownMenu", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmVaCreateSimplePulldownMenu", "String");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmVaCreateSimplePulldownMenu", "int");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4), arg4, 4, "XmVaCreateSimplePulldownMenu", "XtCallbackProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 3), arg4, 4, "XmVaCreateSimplePulldownMenu", "XtCallbackProc (3 args)");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg5), arg5, 5, "XmVaCreateSimplePulldownMenu", "List");
   arg5 = XEN_CONS_2(C_TO_XEN_STRING("XmNvalueChangedCallback"),
 		    arg4,
@@ -3931,7 +3928,7 @@ static XEN gxm_XmVaCreateSimplePopupMenu(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   Widget w;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmVaCreateSimplePopupMenu", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmVaCreateSimplePopupMenu", "String");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3), arg3, 3, "XmVaCreateSimplePopupMenu", "XtCallbackProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS(arg3) == 3), arg3, 3, "XmVaCreateSimplePopupMenu", "XtCallbackProc (3 args)");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XmVaCreateSimplePopupMenu", "List");
   arg4 = XEN_CONS_2(C_TO_XEN_STRING("XmNvalueChangedCallback"),
 		    arg3,
@@ -6923,7 +6920,7 @@ XtPointer closure) removes a callback from the internal list"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmRemoveProtocolCallback", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XmRemoveProtocolCallback", "Atom");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg3), arg3, 3, "XmRemoveProtocolCallback", "Atom"); 
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4), arg4, 4, "XmRemoveProtocolCallback", "XtCallbackProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 3), arg4, 4, "XmRemoveProtocolCallback", "XtCallbackProc (3 args)");
   descr = C_TO_XEN_XM_ProtocolProc(arg4, arg5, arg2, arg3);
   xm_protect(descr);
   loc = map_over_protected_elements(unprotect_protocolproc, (unsigned long)descr);
@@ -7040,7 +7037,7 @@ retrieves and saves data that would normally be printed by the X Print Server"
   XEN descr;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmPrintToFile", "Display*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmPrintToFile", "char*");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3), arg3, 3, "XmPrintToFile", "XPFinishProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS(arg3) == 4), arg3, 3, "XmPrintToFile", "XPFinishProc (4 args)");
   descr = XEN_LIST_3(XEN_FALSE, arg3, arg4);
   xm_protect(descr);
   return(C_TO_XEN_INT(XmPrintToFile(XEN_TO_C_Display(arg1), 
@@ -13205,7 +13202,7 @@ value of the selection converted to each of the targets."
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XtGetSelectionValuesIncremental", "Atom");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XtGetSelectionValuesIncremental", "list of Atom");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XtGetSelectionValuesIncremental", "int");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg5), arg5, 5, "XtGetSelectionValuesIncremental", "XtSelectionCallbackProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg5) && (XEN_REQUIRED_ARGS(arg5) == 7), arg5, 5, "XtGetSelectionValuesIncremental", "XtSelectionCallbackProc");
   XEN_ASSERT_TYPE(XEN_Time_P(arg7), arg7, 7, "XtGetSelectionValuesIncremental", "Time");
   len = XEN_TO_C_INT(arg4);
   if (len <= 0) return(XEN_FALSE);
@@ -13226,7 +13223,7 @@ to XtGetSelectionValue except that the selection_callback procedure will be call
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtGetSelectionValueIncremental", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XtGetSelectionValueIncremental", "Atom");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg3), arg3, 3, "XtGetSelectionValueIncremental", "Atom");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4), arg4, 4, "XtGetSelectionValueIncremental", "XtSelectionCallbackProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 7), arg4, 4, "XtGetSelectionValueIncremental", "XtSelectionCallbackProc");
   XEN_ASSERT_TYPE(XEN_Time_P(arg6), arg6, 6, "XtGetSelectionValueIncremental", "Time");
   xm_XtSelectionCallback_Descr = XEN_LIST_2(arg4, arg5);
   XtGetSelectionValueIncremental(XEN_TO_C_Widget(arg1), 
@@ -13288,7 +13285,7 @@ converted to each of the targets."
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XtGetSelectionValues", "Atom");
   XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XtGetSelectionValues", "list of Atom");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XtGetSelectionValues", "int");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg5), arg5, 5, "XtGetSelectionValues", "XtSelectionCallbackProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg5) && (XEN_REQUIRED_ARGS(arg5) == 7), arg5, 5, "XtGetSelectionValues", "XtSelectionCallbackProc");
   XEN_ASSERT_TYPE(XEN_Time_P(arg7), arg7, 7, "XtGetSelectionValues", "Time");
   len = XEN_TO_C_INT(arg4);
   if (len <= 0) return(XEN_FALSE);
@@ -13309,7 +13306,7 @@ selection that has been converted to the target type. "
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtGetSelectionValue", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XtGetSelectionValue", "Atom");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg3), arg3, 3, "XtGetSelectionValue", "Atom");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4), arg4, 4, "XtGetSelectionValue", "XtSelectionCallbackProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 7), arg4, 4, "XtGetSelectionValue", "XtSelectionCallbackProc");
   XEN_ASSERT_TYPE(XEN_Time_P(arg6), arg6, 6, "XtGetSelectionValue", "Time");
   xm_XtSelectionCallback_Descr = XEN_LIST_2(arg4, arg5);
   XtGetSelectionValue(XEN_TO_C_Widget(arg1), 
@@ -13359,7 +13356,9 @@ static XEN gxm_XtResolvePathname(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
   XEN_ASSERT_TYPE(XEN_FALSE_P(arg5) || XEN_STRING_P(arg5), arg5, 5, "XtResolvePathname", "char*");
   XEN_ASSERT_TYPE(XEN_FALSE_P(arg6) || XEN_Substitution_P(arg6), arg6, 6, "XtResolvePathname", "Substitution");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg7), arg7, 7, "XtResolvePathname", "int");
-  XEN_ASSERT_TYPE(XEN_FALSE_P(arg8) || XEN_PROCEDURE_P(arg8), arg8, 8, "XtResolvePathname", "XtFilePredicate");
+  XEN_ASSERT_TYPE(XEN_FALSE_P(arg8) || 
+		  (XEN_PROCEDURE_P(arg8) && (XEN_REQUIRED_ARGS(arg8) == 1)), 
+		  arg8, 8, "XtResolvePathname", "XtFilePredicate (takes 1 arg)");
   if (XEN_PROCEDURE_P(arg8))
     {
       xm_protect(arg8);
@@ -13385,7 +13384,9 @@ searches for a file using substitutions in the path list"
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtFindFile", "char*");
   XEN_ASSERT_TYPE(XEN_FALSE_P(arg2) || XEN_Substitution_P(arg2), arg2, 2, "XtFindFile", "Substitution");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XtFindFile", "int");
-  XEN_ASSERT_TYPE(XEN_FALSE_P(arg4) || XEN_PROCEDURE_P(arg4), arg4, 4, "XtFindFile", "XtFilePredicate");
+  XEN_ASSERT_TYPE(XEN_FALSE_P(arg4) || 
+		  (XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 1)), 
+		  arg4, 4, "XtFindFile", "XtFilePredicate (takes 1 arg)");
   if (XEN_PROCEDURE_P(arg4))
     {
       xm_protect(arg4);
@@ -13673,6 +13674,7 @@ is called when a nonfatal error condition occurs."
   /* DIFF: XtWarningMsg takes final int not int*, arg5 is list of strings
    */
   int size;
+  Cardinal csize;
   char **pars;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtWarningMsg", "char*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtWarningMsg", "char*");
@@ -13683,7 +13685,8 @@ is called when a nonfatal error condition occurs."
   size = XEN_TO_C_INT(arg6);
   if (size <= 0) return(XEN_FALSE);
   pars = XEN_TO_C_Strings(arg5, size);
-  XtWarningMsg(XEN_TO_C_STRING(arg1), XEN_TO_C_STRING(arg2), XEN_TO_C_STRING(arg3), XEN_TO_C_STRING(arg4), pars, &size);
+  csize = (Cardinal)size;
+  XtWarningMsg(XEN_TO_C_STRING(arg1), XEN_TO_C_STRING(arg2), XEN_TO_C_STRING(arg3), XEN_TO_C_STRING(arg4), pars, &csize);
   FREE(pars);
   return(XEN_FALSE);
 }
@@ -13695,6 +13698,7 @@ handler and passes the specified information."
   /* DIFF: XtAppWarningMsg takes final int not int*, arg5 is list of strings
    */
   int size;
+  Cardinal csize;
   char **pars;
   XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppWarningMsg", "XtAppContext");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtAppWarningMsg", "char*");
@@ -13706,9 +13710,10 @@ handler and passes the specified information."
   size = XEN_TO_C_INT(arg7);
   if (size <= 0) return(XEN_FALSE);
   pars = XEN_TO_C_Strings(arg5, size);
+  csize = (Cardinal)size;
   XtAppWarningMsg(XEN_TO_C_XtAppContext(arg1), XEN_TO_C_STRING(arg2), 
 		  XEN_TO_C_STRING(arg3), XEN_TO_C_STRING(arg4), XEN_TO_C_STRING(arg5), 
-		  pars, &size);
+		  pars, &csize);
   FREE(pars);
   return(XEN_FALSE);
 }
@@ -13720,6 +13725,7 @@ when a fatal error occurs."
   /* DIFF: XtErrorMsg takes final int not int*, arg5 is list of strings
    */
   int size;
+  Cardinal csize;
   char **pars;
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtErrorMsg", "char*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtErrorMsg", "char*");
@@ -13730,7 +13736,8 @@ when a fatal error occurs."
   size = XEN_TO_C_INT(arg6);
   if (size <= 0) return(XEN_FALSE);
   pars = XEN_TO_C_Strings(arg5, size);
-  XtErrorMsg(XEN_TO_C_STRING(arg1), XEN_TO_C_STRING(arg2), XEN_TO_C_STRING(arg3), XEN_TO_C_STRING(arg4), pars, &size);
+  csize = (Cardinal)size;
+  XtErrorMsg(XEN_TO_C_STRING(arg1), XEN_TO_C_STRING(arg2), XEN_TO_C_STRING(arg3), XEN_TO_C_STRING(arg4), pars, &csize);
   FREE(pars);
   return(XEN_FALSE);
 }
@@ -13741,6 +13748,7 @@ static XEN gxm_XtAppErrorMsg(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, X
   /* DIFF: XtAppErrorMsg takes final int not int*, arg5 is list of strings
    */
   int size;
+  Cardinal csize;
   char **pars;
   XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppErrorMsg", "XtAppContext");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtAppErrorMsg", "char*");
@@ -13752,9 +13760,10 @@ static XEN gxm_XtAppErrorMsg(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, X
   size = XEN_TO_C_INT(arg7);
   if (size <= 0) return(XEN_FALSE);
   pars = XEN_TO_C_Strings(arg5, size);
+  csize = (Cardinal)size;
   XtAppErrorMsg(XEN_TO_C_XtAppContext(arg1), XEN_TO_C_STRING(arg2), 
 		XEN_TO_C_STRING(arg3), XEN_TO_C_STRING(arg4), 
-		XEN_TO_C_STRING(arg5), pars, &size);
+		XEN_TO_C_STRING(arg5), pars, &csize);
   FREE(pars);
   return(XEN_FALSE);
 }
@@ -14228,7 +14237,7 @@ static XEN gxm_XtSetLanguageProc(XEN arg1, XEN arg2, XEN arg3)
    */
   XEN previous_proc = XEN_FALSE;
   XEN_ASSERT_TYPE(XEN_FALSE_P(arg1) || XEN_XtAppContext_P(arg1), arg1, 1, "XtSetLanguageProc", "XtAppContext");
-  XEN_ASSERT_TYPE(XEN_FALSE_P(arg2) || XEN_PROCEDURE_P(arg2), arg2, 2, "XtSetLanguageProc", "XtLanguageProc");
+  XEN_ASSERT_TYPE(XEN_FALSE_P(arg2) || (XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS(arg2) == 3)), arg2, 2, "XtSetLanguageProc", "XtLanguageProc");
   previous_proc = xm_language_proc;
   if (XEN_PROCEDURE_P(previous_proc))
     xm_unprotect(previous_proc);
@@ -15296,7 +15305,7 @@ XtInsertEventHandler except that it does not modify the widget's event mask and 
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtInsertRawEventHandler", "Widget");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XtInsertRawEventHandler", "EventMask");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XtInsertRawEventHandler", "boolean");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4), arg4, 4, "XtInsertRawEventHandler", "XtEventHandler");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 4), arg4, 4, "XtInsertRawEventHandler", "XtEventHandler");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XtInsertRawEventHandler", "XtListPosition");
   call_descr = C_TO_XEN_XM_XtEventHandler(arg4, (XEN_BOUND_P(arg5)) ? arg5 : XEN_FALSE, arg1, arg2);
   XEN_LIST_SET(call_descr, EVENT_HANDLER_GC_LOC, C_TO_XEN_INT(xm_protect(call_descr)));
@@ -15317,7 +15326,7 @@ XtAddEventHandler with the additional position argument. "
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtInsertEventHandler", "Widget");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XtInsertEventHandler", "EventMask");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XtInsertEventHandler", "boolean");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4), arg4, 4, "XtInsertEventHandler", "XtEventHandler");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 4), arg4, 4, "XtInsertEventHandler", "XtEventHandler");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XtInsertEventHandler", "XtListPosition");
   call_descr = C_TO_XEN_XM_XtEventHandler(arg4, (XEN_BOUND_P(arg5)) ? arg5 : XEN_FALSE, arg1, arg2);
   XEN_LIST_SET(call_descr, EVENT_HANDLER_GC_LOC, C_TO_XEN_INT(xm_protect(call_descr)));
@@ -15337,7 +15346,7 @@ procedure from receiving the specified events."
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtRemoveRawEventHandler", "Widget");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XtRemoveRawEventHandler", "EventMask");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XtRemoveRawEventHandler", "boolean");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4), arg4, 4, "XtRemoveRawEventHandler", "XtEventHandler");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 4), arg4, 4, "XtRemoveRawEventHandler", "XtEventHandler");
   XtRemoveRawEventHandler(XEN_TO_C_Widget(arg1), 
 			  XEN_TO_C_ULONG(arg2), 
 			  XEN_TO_C_BOOLEAN(arg3),
@@ -15354,7 +15363,7 @@ except that it does not affect the widget's mask and never causes an XSelectInpu
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtAddRawEventHandler", "Widget");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XtAddRawEventHandler", "EventMask");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XtAddRawEventHandler", "boolean");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4), arg4, 4, "XtAddRawEventHandler", "XtEventHandler");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 4), arg4, 4, "XtAddRawEventHandler", "XtEventHandler");
   call_descr = C_TO_XEN_XM_XtEventHandler(arg4, (XEN_BOUND_P(arg5)) ? arg5 : XEN_FALSE, arg1, arg2);
   XEN_LIST_SET(call_descr, EVENT_HANDLER_GC_LOC, C_TO_XEN_INT(xm_protect(call_descr)));
   XtAddRawEventHandler(XEN_TO_C_Widget(arg1), 
@@ -15371,7 +15380,7 @@ static XEN gxm_XtRemoveEventHandler(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN 
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtRemoveEventHandler", "Widget");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XtRemoveEventHandler", "EventMask");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XtRemoveEventHandler", "boolean");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4), arg4, 4, "XtRemoveEventHandler", "XtEventHandler");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 4), arg4, 4, "XtRemoveEventHandler", "XtEventHandler");
   XtRemoveEventHandler(XEN_TO_C_Widget(arg1), 
 		       XEN_TO_C_ULONG(arg2), 
 		       XEN_TO_C_BOOLEAN(arg3), 
@@ -15388,7 +15397,7 @@ mechanism that is to be called when an event that matches the mask occurs on the
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtAddEventHandler", "Widget");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XtAddEventHandler", "EventMask");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XtAddEventHandler", "boolean");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4), arg4, 4, "XtAddEventHandler", "XtEventHandler");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 4), arg4, 4, "XtAddEventHandler", "XtEventHandler");
   call_descr = C_TO_XEN_XM_XtEventHandler(arg4, (XEN_BOUND_P(arg5)) ? arg5 : XEN_FALSE, arg1, arg2);
   XEN_LIST_SET(call_descr, EVENT_HANDLER_GC_LOC, C_TO_XEN_INT(xm_protect(call_descr)));
   XtAddEventHandler(XEN_TO_C_Widget(arg1), 
@@ -15562,7 +15571,7 @@ static XEN gxm_XtRegisterGrabAction(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN 
 {
   #define H_XtRegisterGrabAction "void XtRegisterGrabAction(action_proc, owner_events, event_mask, pointer_mode, keyboard_mode) adds the \
 specified action_proc to a list known to the translation manager."
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg1), arg1, 1, "XtRegisterGrabAction", "XtActionProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg1) && (XEN_REQUIRED_ARGS(arg1) ==4), arg1, 1, "XtRegisterGrabAction", "XtActionProc");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XtRegisterGrabAction", "int");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XtRegisterGrabAction", "unsigned int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XtRegisterGrabAction", "int");
@@ -15662,7 +15671,7 @@ a list maintained in the application context."
   int gc_loc;
   XEN descr;
   XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppAddActionHook", "XtAppContext");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg2), arg2, 2, "XtAppAddActionHook", "XtActionHookProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS(arg2) == 6), arg2, 2, "XtAppAddActionHook", "XtActionHookProc");
   descr = C_TO_XEN_XM_ActionHook(arg2, (XEN_BOUND_P(arg3)) ? arg3 : XEN_FALSE);
   gc_loc = xm_protect(descr);
   id = XtAppAddActionHook(XEN_TO_C_XtAppContext(arg1), gxm_XtActionHookProc, (XtPointer)descr);
@@ -15940,10 +15949,10 @@ done_callback, cancel_callback, client_data)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtOwnSelectionIncremental", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XtOwnSelectionIncremental", "Atom");
   XEN_ASSERT_TYPE(XEN_Time_P(arg3), arg3, 3, "XtOwnSelectionIncremental", "Time");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4), arg4, 4, "XtOwnSelectionIncremental", "XtConvertSelectionIncrProc");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg5), arg5, 5, "XtOwnSelectionIncremental", "XtLoseSelectionIncrProc");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg6), arg6, 6, "XtOwnSelectionIncremental", "XtSelectionDoneIncrProc");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg7), arg7, 7, "XtOwnSelectionIncremental", "XtCancelConvertSelectionProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 10), arg4, 4, "XtOwnSelectionIncremental", "XtConvertSelectionIncrProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg5) && (XEN_REQUIRED_ARGS(arg5) == 3), arg5, 5, "XtOwnSelectionIncremental", "XtLoseSelectionIncrProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg6) && (XEN_REQUIRED_ARGS(arg6) == 5), arg6, 6, "XtOwnSelectionIncremental", "XtSelectionDoneIncrProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg7) && (XEN_REQUIRED_ARGS(arg7) == 5), arg7, 7, "XtOwnSelectionIncremental", "XtCancelConvertSelectionProc");
   return(C_TO_XEN_BOOLEAN(XtOwnSelectionIncremental(XEN_TO_C_Widget(arg1), 
 						    XEN_TO_C_Atom(arg2), 
 						    XEN_TO_C_Time(arg3), 
@@ -15961,9 +15970,9 @@ mechanism that a widget believes it owns a selection."
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtOwnSelection", "Widget");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XtOwnSelection", "Atom");
   XEN_ASSERT_TYPE(XEN_Time_P(arg3), arg3, 3, "XtOwnSelection", "Time");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4), arg4, 4, "XtOwnSelection", "XtConvertSelectionProc");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg5), arg5, 5, "XtOwnSelection", "XtLoseSelectionProc");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg6), arg6, 6, "XtOwnSelection", "XtSelectionDoneProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 7), arg4, 4, "XtOwnSelection", "XtConvertSelectionProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg5) && (XEN_REQUIRED_ARGS(arg5) == 2), arg5, 5, "XtOwnSelection", "XtLoseSelectionProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg6) && (XEN_REQUIRED_ARGS(arg6) == 3), arg6, 6, "XtOwnSelection", "XtSelectionDoneProc");
   return(C_TO_XEN_BOOLEAN(XtOwnSelection(XEN_TO_C_Widget(arg1), 
 					 XEN_TO_C_Atom(arg2), 
 					 XEN_TO_C_Time(arg3), 
@@ -16650,8 +16659,8 @@ static XEN gxm_XpGetDocumentData(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
   XEN descr;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpGetDocumentData", "Display*");
   XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpGetDocumentData", "XPContext");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3), arg3, 3, "XpGetDocumentData", "XPSaveProc");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4), arg4, 4, "XpGetDocumentData", "XPFinishProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS(arg3) == 5), arg3, 3, "XpGetDocumentData", "XPSaveProc");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS(arg4) == 4), arg4, 4, "XpGetDocumentData", "XPFinishProc");
   descr = XEN_LIST_3(arg3, arg4, arg5);
   xm_protect(descr);
   return(C_TO_XEN_INT(XpGetDocumentData(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2), 
@@ -24390,7 +24399,7 @@ static int xm_already_inited = 0;
       define_structs();
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"9-Nov-01\")");
+      XEN_EVAL_C_STRING("(define xm-version \"12-Nov-01\")");
 #endif
       xm_already_inited = 1;
     }

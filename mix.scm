@@ -5,6 +5,7 @@
 ;;; (pan-mix file frame envelope) mixes file into current (stereo) sound starting at frame using envelope to pan (0: all chan 0, 1: all chan 1)
 ;;; (mix->vct id) return current state of mix in vct
 ;;; (snap-mix-to-beat) forces dragged mix to end up on a beat
+;;; (delete-mix id) removes mix (can be undone)
 ;;;
 ;;; tracks:
 ;;; (make-track id mix-list) puts each mix (referenced by its id number) in mix-list into track id
@@ -34,6 +35,17 @@
 ;;; (reverse-track track) reverses the mix order
 
 (load "env.scm")
+
+
+(define (delete-mix id)
+  (if (mix? id)
+      (as-one-edit
+       (lambda ()
+	 (do ((i 0 (1+ i)))
+	     ((= i (mix-chans id)))
+	   (set! (mix-amp id i) 0.0))
+	 (set! (mix-locked id) #t)))
+      (throw 'no-such-mix (list "delete-mix" id))))
 
 
 ;;; find mix id given mix name (for regex-style track creation)

@@ -372,7 +372,7 @@ static XEN g_click_button(XEN button)
 #if USE_MOTIF
   Widget w;
   w = (Widget)(XEN_UNWRAP_C_POINTER(button));
-  if ((XmIsPushButton(w)) || (XmIsPushButtonGadget(w)))
+  if ((XmIsPushButton(w)) || (XmIsPushButtonGadget(w)) || XmIsArrowButton(w))
     { 
       if (XtIsSensitive(w))
 	XtCallCallbacks(w, XmNactivateCallback, (void *)get_global_state());
@@ -384,7 +384,7 @@ static XEN g_click_button(XEN button)
 	  if (XtIsSensitive(w))
 	    XtCallCallbacks(w, XmNvalueChangedCallback, (void *)get_global_state());
 	}
-      else fprintf(stderr,"click_button: %s, not a push or toggle button\n", XtName(w));
+      else fprintf(stderr,"click_button: %s (%s), not a push or toggle button\n", XtName(w), XtName(XtParent(w)));
     }
 #endif
 #if USE_GTK

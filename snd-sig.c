@@ -1297,7 +1297,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
 
   if ((!ur_a) && 
       (!gen) && 
-      (!over_selection) && 
+      (!over_selection) &&   /* TODO: make fft-filter work with selection */
       ((order == 0) || (order >= 256)) && 
       ((int)((to_c_edit_samples(ncp, edpos, origin, arg_pos) + order) / 128) < ss->memory_available))
     {
@@ -1377,6 +1377,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, int from_e
     }
   else
     {
+      if (order == 0) order = enved_filter_order(ss);
       if (!gen)
 	{
 	  if (ur_a)

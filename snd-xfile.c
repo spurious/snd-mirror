@@ -488,7 +488,6 @@ static file_dialog_info *make_file_dialog(snd_state *ss, int read_only, char *ti
   XtSetArg(args[n], XmNuserData, which_dialog); n++;
   XtSetArg(args[n], XmNdialogTitle, s2); n++;
   fd->dialog = XmCreateFileSelectionDialog(w, title, args, n);
-  set_dialog_widget(ss, which_dialog, fd->dialog);
   XmStringFree(s1);
   XmStringFree(s2);
 
@@ -546,6 +545,7 @@ static file_dialog_info *make_file_dialog(snd_state *ss, int read_only, char *ti
   XtAddCallback(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_LIST),
 		XmNbrowseSelectionCallback, file_dialog_select_callback, (XtPointer)fd);
 #endif
+  set_dialog_widget(ss, which_dialog, fd->dialog);
   return(fd);
 }
 
@@ -1021,7 +1021,6 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int header_type
       XtSetArg(args[n], XmNchildPlacement, XmPLACE_ABOVE_SELECTION); n++;
       XtSetArg(args[n], XmNallowOverlap, FALSE); n++;
       save_as_dialog = XmCreateFileSelectionDialog(MAIN_SHELL(ss), "save-as", args, n);
-      set_dialog_widget(ss, FILE_SAVE_AS_DIALOG, save_as_dialog);
       FREE(file_string);
 
       XtManageChild(save_as_dialog);
@@ -1048,7 +1047,7 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int header_type
 	  XtVaSetValues(save_as_file_data->format_list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
 	  XtVaSetValues(save_as_file_data->header_list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
 	}
-
+      set_dialog_widget(ss, FILE_SAVE_AS_DIALOG, save_as_dialog);
     }
   else
     {
@@ -1760,7 +1759,6 @@ void view_files_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       view_files_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_File_Browser, args, n);
-      set_dialog_widget(ss, VIEW_FILES_DIALOG, view_files_dialog);
 
       XtAddCallback(view_files_dialog, XmNcancelCallback, view_files_clear_callback, ss);
       XtAddCallback(view_files_dialog, XmNhelpCallback, view_files_help_callback, ss);
@@ -1873,6 +1871,7 @@ void view_files_callback(Widget w, XtPointer context, XtPointer info)
 	  r->ss = ss;
 	  r->parent = PREVIOUS_FILE_VIEWER;
 	}
+      set_dialog_widget(ss, VIEW_FILES_DIALOG, view_files_dialog);
     }
   else raise_dialog(view_files_dialog);
   make_curfiles_list(ss);
@@ -1965,7 +1964,6 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
   /* not transient -- we want this window to remain visible if possible */
   raw_data_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "raw data", args, n);
-  set_dialog_widget(ss, RAW_DATA_DIALOG, raw_data_dialog);
 
   XtAddCallback(raw_data_dialog, XmNcancelCallback, raw_data_cancel_callback, ss);
   XtAddCallback(raw_data_dialog, XmNhelpCallback, raw_data_help_callback, ss);
@@ -2089,6 +2087,7 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
       XtVaSetValues(XmMessageBoxGetChild(raw_data_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
       XtVaSetValues(defw, XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
     }
+  set_dialog_widget(ss, RAW_DATA_DIALOG, raw_data_dialog);
 }
 
 file_info *raw_data_dialog_to_file_info(char *filename, snd_state *ss, const char *title)
@@ -2194,7 +2193,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       new_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "new", args, n);
-      set_dialog_widget(ss, NEW_FILE_DIALOG, new_dialog);
+
       XmStringFree(titlestr);
       XmStringFree(xok);
       XmStringFree(xcancel);
@@ -2249,6 +2248,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
 	  XtVaSetValues(XmMessageBoxGetChild(new_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(new_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	}
+      set_dialog_widget(ss, NEW_FILE_DIALOG, new_dialog);
     }
   else 
     {
@@ -2350,7 +2350,6 @@ Widget edit_header(snd_info *sp)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       edit_header_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Edit_Header, args, n);
-      set_dialog_widget(ss, EDIT_HEADER_DIALOG, edit_header_dialog);
 
       XtAddCallback(edit_header_dialog, XmNcancelCallback, edit_header_cancel_callback, ss);
       XtAddCallback(edit_header_dialog, XmNhelpCallback, edit_header_help_callback, ss);
@@ -2381,6 +2380,7 @@ Widget edit_header(snd_info *sp)
 	  XtVaSetValues(edit_header_data->header_list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
 	  XtVaSetValues(edit_header_data->format_list, XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
 	}
+      set_dialog_widget(ss, EDIT_HEADER_DIALOG, edit_header_dialog);
     }
   else raise_dialog(edit_header_dialog);
   if (!(XtIsManaged(edit_header_dialog))) XtManageChild(edit_header_dialog);

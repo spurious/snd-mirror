@@ -711,7 +711,6 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       ccd->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Color, args, n);
-      set_dialog_widget(ss, COLOR_DIALOG, ccd->dialog);
 
       XtAddCallback(ccd->dialog, XmNcancelCallback, dismiss_color_callback, ccd);
       XtAddCallback(ccd->dialog, XmNhelpCallback, help_color_callback, ss);
@@ -864,6 +863,7 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       XmStringFree(xinvert);
       if (color_scale(ss) != 1.0)
 	reflect_color_scale(color_scale(ss));
+      set_dialog_widget(ss, COLOR_DIALOG, ccd->dialog);
     }
   else raise_dialog(ccd->dialog);
   if (!XtIsManaged(ccd->dialog)) 
@@ -1199,7 +1199,6 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       oid->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), STR_Orientation, args, n);
-      set_dialog_widget(ss, ORIENTATION_DIALOG, oid->dialog);
 
       XtAddCallback(oid->dialog, XmNcancelCallback, dismiss_orientation_callback, oid);
       XtAddCallback(oid->dialog, XmNhelpCallback, help_orientation_callback, ss);
@@ -1359,6 +1358,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XtAddCallback(oid->cut, XmNdragCallback, cut_orientation_callback, oid);
       XtAddCallback(oid->cut, XmNhelpCallback, cut_help_callback, ss);
       XmStringFree(xstr);
+      set_dialog_widget(ss, ORIENTATION_DIALOG, oid->dialog);
     }
   else raise_dialog(oid->dialog);
   if (!XtIsManaged(oid->dialog)) XtManageChild(oid->dialog);

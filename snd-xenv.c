@@ -1137,7 +1137,6 @@ Widget create_envelope_editor (snd_state *ss)
       XtSetArg(args[n], XmNnoResize, FALSE); n++;
       XtSetArg(args[n], XmNtransient, FALSE); n++;
       enved_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "envelope editor", args, n);
-      set_dialog_widget(ss, ENVED_DIALOG, enved_dialog);
   
       XtAddCallback(enved_dialog, XmNcancelCallback, dismiss_enved_callback, ss);
       XtAddCallback(enved_dialog, XmNhelpCallback, help_enved_callback, ss);
@@ -1690,6 +1689,7 @@ Widget create_envelope_editor (snd_state *ss)
 
       reflect_apply_state(ss);
       reflect_segment_state(ss);
+      set_dialog_widget(ss, ENVED_DIALOG, enved_dialog);
     }
   else raise_dialog(enved_dialog);
   if (!XtIsManaged(enved_dialog)) 

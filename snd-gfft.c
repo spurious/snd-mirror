@@ -367,7 +367,6 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
   if (!transform_dialog)
     {
       transform_dialog = gtk_dialog_new();
-      set_dialog_widget(ss, TRANSFORM_DIALOG, transform_dialog);
       gtk_signal_connect(GTK_OBJECT(transform_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_transform_dialog), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(transform_dialog), STR_Transform_Options);
       gtk_window_set_policy(GTK_WINDOW(transform_dialog), TRUE, TRUE, FALSE); /* allow shrink or grow */
@@ -657,6 +656,7 @@ GtkWidget *fire_up_transform_dialog(snd_state *ss, int managed)
 
       need_callback = 1;
       gtk_widget_show(outer_table);
+      set_dialog_widget(ss, TRANSFORM_DIALOG, transform_dialog);
     }
   else raise_dialog(transform_dialog);
   gtk_widget_show(transform_dialog);

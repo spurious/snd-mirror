@@ -50,7 +50,6 @@ static void create_completion_help_dialog(snd_state *ss, char *title)
   XtSetArg(args[n], XmNnoResize, FALSE); n++;
   /* XtSetArg(args[n], XmNtransient, FALSE); n++; */
   completion_help_dialog = XmCreateMessageDialog(MAIN_PANE(ss), "snd-completion-help", args, n);
-  set_dialog_widget(ss, COMPLETION_DIALOG, completion_help_dialog);
 
   XtUnmanageChild(XmMessageBoxGetChild(completion_help_dialog, XmDIALOG_CANCEL_BUTTON));
   XtUnmanageChild(XmMessageBoxGetChild(completion_help_dialog, XmDIALOG_SYMBOL_LABEL));
@@ -74,6 +73,7 @@ static void create_completion_help_dialog(snd_state *ss, char *title)
       XtVaSetValues(XmMessageBoxGetChild(completion_help_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
       XtVaSetValues(XmMessageBoxGetChild(completion_help_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
     }
+  set_dialog_widget(ss, COMPLETION_DIALOG, completion_help_dialog);
 }
 
 void snd_completion_help(snd_state *ss, int matches, char **buffer)
