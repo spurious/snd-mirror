@@ -24079,7 +24079,7 @@ static XEN gxg_GTK_ICON_VIEW(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(
 #endif
 
 #if HAVE_GTK_FILE_CHOOSER_BUTTON_NEW
-static XEN gxg_GTK_FILE_CHOOSER_BUTTON(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkFileChooserButton"), XEN_CADR(obj)));}
+static XEN gxg_GTK_FILE_CHOOSER_BUTTON(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkFileChooserButton_"), XEN_CADR(obj)));}
 #endif
 
 static XEN gxg_GDK_IS_COLORMAP(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj) && GDK_IS_COLORMAP((GTypeInstance *)XEN_TO_C_ULONG(XEN_CADR(obj)))));}
@@ -31095,10 +31095,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"30-Aug-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"06-Sep-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("30-Aug-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("06-Sep-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

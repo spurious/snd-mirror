@@ -5257,8 +5257,8 @@
 (CINT-251 "GTK_TREE_SORTABLE_DEFAULT_SORT_COLUMN_ID" "void")
 
 (CLNG-252 "GTK_TYPE_FILE_CHOOSER_BUTTON")
-(CCAST-252 "GTK_FILE_CHOOSER_BUTTON(obj)" "GtkFileChooserButton")
-(CCHK-252 "GTK_IS_FILE_CHOOSER_BUTTON(obj)" "GtkFileChooserButton")
+(CCAST-252 "GTK_FILE_CHOOSER_BUTTON(obj)" "GtkFileChooserButton*")
+(CCHK-252 "GTK_IS_FILE_CHOOSER_BUTTON(obj)" "GtkFileChooserButton*")
 
 (CFNC-252 "GType gtk_file_chooser_button_get_type void")
 (CFNC-252 "GtkWidget* gtk_file_chooser_button_new gchar* title")

@@ -1244,7 +1244,9 @@ XEN_ARGIFY_4(g_grf_y_w, g_grf_y)
 XEN_ARGIFY_4(g_ungrf_x_w, g_ungrf_x)
 XEN_ARGIFY_4(g_ungrf_y_w, g_ungrf_y)
 XEN_ARGIFY_3(g_axis_info_w, g_axis_info)
+#if (!USE_NO_GUI)
 XEN_VARGIFY(g_draw_axes_w, g_draw_axes)
+#endif
 XEN_ARGIFY_3(g_x_axis_label_w, g_x_axis_label)
 XEN_ARGIFY_4(g_set_x_axis_label_w, g_set_x_axis_label)
 #else

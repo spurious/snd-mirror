@@ -8615,9 +8615,7 @@ static void mus_spectrum_2v(int *args, ptree *pt)
 }
 static char *descr_mus_spectrum_3v(int *args, ptree *pt) 
 {
-  if (VCT_ARG_3)
-    return(mus_format("spectrum(" VCT_PT ", " VCT_PT ", " VCT_PT ")", args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2, args[3], DESC_VCT_ARG_3));
-  return(mus_format("spectrum(" VCT_PT ", " VCT_PT ", #f)", args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2));
+  return(mus_format("spectrum(" VCT_PT ", " VCT_PT ", " VCT_PT ")", args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2, args[3], DESC_VCT_ARG_3));
 }
 static void mus_spectrum_3v(int *args, ptree *pt) 
 {
@@ -9119,6 +9117,8 @@ SND_STR_OP(mus_sound_srate)
 SND_STR_OP(mus_sound_header_type)
 SND_STR_OP(mus_sound_data_format)
 SND_STR_OP(mus_sound_length)
+SND_STR_OP(mus_sound_type_specifier)
+SND_STR_OP(mus_sound_forget)
 
 static void mus_sound_duration_f(int *args, ptree *pt) {FLOAT_RESULT = mus_sound_duration(STRING_ARG_1);}
 static char *descr_mus_sound_duration_f(int *args, ptree *pt)
@@ -11535,6 +11535,8 @@ static void init_walkers(void)
   INIT_WALKER(S_mus_sound_length, make_walker(mus_sound_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
   INIT_WALKER(S_mus_sound_duration, make_walker(mus_sound_duration_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_STRING));
   INIT_WALKER(S_mus_sound_comment, make_walker(mus_sound_comment_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_STRING));
+  INIT_WALKER(S_mus_sound_forget, make_walker(mus_sound_forget_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
+  INIT_WALKER(S_mus_sound_type_specifier, make_walker(mus_sound_type_specifier_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
 
   INIT_WALKER(S_mus_header_type_name, make_walker(mus_header_type_name_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_INT));
   INIT_WALKER(S_mus_data_format_name, make_walker(mus_data_format_name_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_INT));

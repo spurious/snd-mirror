@@ -213,17 +213,6 @@
 #define XEN_EQV_P(A, B)              XEN_TO_C_BOOLEAN(scm_eqv_p(A, B))
 #define XEN_EQUAL_P(A, B)            XEN_TO_C_BOOLEAN(scm_equal_p(A, B))
 
-#define XEN_ONLY_ARG 0
-#define XEN_ARG_1    1
-#define XEN_ARG_2    2
-#define XEN_ARG_3    3
-#define XEN_ARG_4    4
-#define XEN_ARG_5    5
-#define XEN_ARG_6    6
-#define XEN_ARG_7    7
-#define XEN_ARG_8    8
-#define XEN_ARG_9    9
-
 #define XEN_TO_C_INT(a)                 xen_to_c_int(a)
 #define XEN_TO_C_INT_OR_ELSE(a, b)      xen_to_c_int_or_else(a, b, c__FUNCTION__)
 #define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) xen_to_c_int_or_else(a, b, c)
@@ -706,17 +695,6 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 
 #define XEN_FILE_EXTENSION  "rb"
 #define XEN_COMMENT_STRING  "#"
-
-#define XEN_ONLY_ARG 1
-#define XEN_ARG_1 1
-#define XEN_ARG_2 2
-#define XEN_ARG_3 3
-#define XEN_ARG_4 4
-#define XEN_ARG_5 5
-#define XEN_ARG_6 6
-#define XEN_ARG_7 7
-#define XEN_ARG_8 8
-#define XEN_ARG_9 9
 
 #ifdef __cplusplus
   #ifdef ANYARGS
@@ -1512,16 +1490,6 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr)
 #define XEN_OUT_OF_RANGE_ERROR(Caller, ArgN, Arg, Descr)
 #define XEN_APPEND(X, Y) 0
-#define XEN_ONLY_ARG 0
-#define XEN_ARG_1    0
-#define XEN_ARG_2    0
-#define XEN_ARG_3    0
-#define XEN_ARG_4    0
-#define XEN_ARG_5    0
-#define XEN_ARG_6    0
-#define XEN_ARG_7    0
-#define XEN_ARG_8    0
-#define XEN_ARG_9    0
 typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
 #endif
@@ -1552,6 +1520,17 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
   #define XEN_INTEGER_OR_BOOLEAN_P(Arg)          ((XEN_BOOLEAN_P(Arg))   || (XEN_INTEGER_P(Arg)))
   #define XEN_ULONG_IF_BOUND_P(Arg)              ((XEN_NOT_BOUND_P(Arg)) || (XEN_ULONG_P(Arg)))
 #endif
+
+#define XEN_ONLY_ARG 0
+#define XEN_ARG_1    1
+#define XEN_ARG_2    2
+#define XEN_ARG_3    3
+#define XEN_ARG_4    4
+#define XEN_ARG_5    5
+#define XEN_ARG_6    6
+#define XEN_ARG_7    7
+#define XEN_ARG_8    8
+#define XEN_ARG_9    9
 
 #define XEN_TO_C_OFF_T_OR_ELSE(a, b)  xen_to_c_off_t_or_else(a, b, c__FUNCTION__)
 #define C_TO_XEN_OFF_T(a)             c_to_xen_off_t(a)

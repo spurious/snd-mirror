@@ -9,9 +9,6 @@
 /*    and what about the xor effect over unknown bg colors? -- perhaps white here? */
 /*    for sonogram, can use local_grf_x[y not needed?] here, just as in time case, I think */
 
-/* TODO: filled graph unfills at some random point?
- */
-
 typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */
 
 static XEN lisp_graph_hook;

@@ -2,9 +2,6 @@
 
 (provide 'snd-fft-menu.scm)
 
-;;; TODO: add gtk support in other dlp additions
-;;; DONE: gtk support in this file (KSM)
-
 (define fft-list '()) ; menu labels are updated to show current default settings
 
 (define fft-menu (add-to-main-menu "FFT Edits" (lambda ()
@@ -136,56 +133,3 @@
 (add-to-menu fft-menu #f #f)
 
 (add-to-menu fft-menu "Squelch vowels" squelch-vowels)
-
-;(define (ramp gen up)
-;  "(ramp gen up) is a kind of CLM generator that produces a ramp of a given length, then sticks at 0.0 or 1.0 until the 'up' argument changes"
-  ;; gen is list: ctr size
-  ;;  the idea here is that we want to ramp in or out a portion of a sound based on some
-  ;;  factor of the sound data -- the ramp gen produces a ramp up when 'up' is #t, sticking
-  ;;  at 1.0, and a ramp down when 'up' is #f, sticking at 0.0
-;  (let* ((ctr (car gen))
-;	 (size (cadr gen))
-;	 (val (/ ctr size)))
-;    (list-set! gen 0 (min size (max 0 (+ ctr (if up 1 -1)))))
-;    val))
-;
-;(define* (make-ramp #:optional (size 128))
-;  "(make-ramp &optional size) returns a ramp generator"
-;  (list 0 size))
-
-;(define (squelch-consonants)
-;  "(squelch-consonants) suppresses portions of a sound that look like unsteady-state"
-;  (let* ((fft-size 32)
-;	 (fft-mid (inexact->exact (/ fft-size 2)))
-;	 (rl (make-vct fft-size))
-;	 (im (make-vct fft-size))
-;	 (ramper (make-ramp 256)) ; 512 ok too
-;	 (peak (/ (maxamp) fft-mid))
-;	 (read-ahead (make-sample-reader))
-;	 (ctr 0)
-;	 (in-vowel #f))
-;    (do ((i 0 (1+ i)))
-;	((= i (1- fft-size)))
-;      (vct-set! rl i (read-ahead)))
-;    (set! ctr (1- fft-size))
-;    (map-channel (lambda (y)
-;		   (vct-set! rl ctr (read-ahead))
-;		   (set! ctr (1+ ctr))
-;		   (if (= ctr fft-size)
-;		       (begin
-;			 (fft rl im 1)
-;			 (vct-multiply! rl rl)
-;			 (vct-multiply! im im)
-;			 (vct-add! rl im)
-;			 (set! in-vowel (> (+ (vct-ref rl 0) (vct-ref rl 1) (vct-ref rl 2) (vct-ref rl 3)) peak))
-;			 ;; fancier version checked here ratio of this sum and
-;			 ;;   sum of all rl vals, returned vowel if > 0.5
-;			 (set! ctr 0)
-;			 (vct-fill! im 0.0)))
-;		   (let ((rval (ramp ramper in-vowel)))
-;		     ; squelch consonants if just ramp value (not 1.0-val)
-;		     (and (> rval 0.0) ; if this is included, the vowel-portions are omitted
-;		     ))))))
-;
-;(add-to-menu fft-menu "Squelch consonants" squelch-consonants)
-

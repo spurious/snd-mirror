@@ -1,7 +1,7 @@
 # clm-ins.rb -- CLM instruments translated to Snd/Ruby
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
-# Last: Sat Feb 14 13:52:56 CET 2004
+# Last: Sun Sep 05 15:44:23 CEST 2004
 
 # Instruments work with
 #   with_sound (CLM, sample2file gens)
@@ -1686,8 +1686,10 @@ def lbj_piano(start, dur, freq, amp, *args)
   end
   run_instrument(start, newdur, :degree, degree, :distance, distance, :reverb_amount, rev_amount) do
     sktr += 1
-  # TODO: replace mus_bank with explicit loop
-    mus_bank(oscils, alist) * env(((sktr > env1samples) ? ampenv2 : ampenv1))
+    let(0.0) do |sum|
+      oscils.each_with_index do |osc, i| sum += (oscil(osc) * alist[i]) end
+      sum * env(((sktr > env1samples) ? ampenv2 : ampenv1))
+    end
   end
 end
 # with_sound() do lbj_piano(0, 1, 440.0, 0.2) end

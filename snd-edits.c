@@ -5797,6 +5797,11 @@ static void setup_ramp_fragments(ed_list *new_ed, int i, double seg0, double seg
 	      FRAGMENT_RAMP3_END(new_ed, i) = seg1;
 	      FRAGMENT_XRAMP_SCALER2(new_ed, i) = scaler;
 	      FRAGMENT_XRAMP_OFFSET2(new_ed, i) = offset;
+	      /*
+	      if ((FRAGMENT_XRAMP_OFFSET(new_ed, i) == 0.0) &&
+		  (FRAGMENT_XRAMP_OFFSET2(new_ed, i) == 0.0))
+		  ...collapse to one xramp... -- never happens, so I didn't write the obvious code
+	      */
 	    }
 	  else
 	    {
@@ -9060,9 +9065,12 @@ append the rest?
       rampn can be implemented via polynomial multiply: incr currently has implicit
         ramp location, would need float array of polynomial coeffs and some more
         explicit notion of x.  (ax+b)(cx+d)->(acx^2 + (ad+bc)x + bd) and so on
-        xramps could also be collapsed, but I think they would require an extra exp.
-        This looks complicated in the fragment setup case -- perhaps the current
-        brute-force-but-obvious code is better.
+        xramps could also be collapsed, but I think they would require an extra exp:
+        we only win via algebra if both segments offsets are 0.0; then it can collapse 
+        to e^(x1+x2) essentially.  Unfortunately, this almost never happens.
+
+        Both cases look complicated at fragment setup -- perhaps the current brute-force-but-obvious 
+        code is better.
 
       ptree3[zero] -- doesn't seem useful yet (need real-life stats here)
         ptree3 could piggy-back on ptree2 (about 125 ops currently) -- add to ptree base readers,

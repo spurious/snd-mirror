@@ -258,6 +258,7 @@ XEN xen_guile_create_hook(const char *name, int args, const char *help, XEN loca
 #if XEN_DEBUGGING
 XEN xen_guile_dbg_new_procedure(const char *name, XEN (*func)(), int req, int opt, int rst)
 {
+  /* look for name collisions */
   if ((name) && (strlen(name) > 0) && XEN_DEFINED_P(name)) fprintf(stderr, "%s is defined\n", name);
   /* if ((name) && (strlen(name) > 0) && (!(snd_url(name)))) fprintf(stderr, "%s not documented\n", name); */
   return(scm_c_define_gsubr(name, req, opt, rst, func));

@@ -2480,13 +2480,13 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
   else
     {
       cararg = XEN_CAR(arglist);
-      XEN_ASSERT_TYPE(XEN_NUMBER_P(cararg), cararg, 1, S_make_frame, "a number");
+      XEN_ASSERT_TYPE(XEN_NUMBER_P(cararg), cararg, XEN_ARG_1, S_make_frame, "a number");
       size = XEN_TO_C_INT_OR_ELSE(cararg, 0);
-      if (size <= 0) XEN_OUT_OF_RANGE_ERROR(S_make_frame, 1, cararg, "chans ~A <= 0?");
+      if (size <= 0) XEN_OUT_OF_RANGE_ERROR(S_make_frame, XEN_ARG_1, cararg, "chans ~A <= 0?");
       if (len > (size + 1)) 
 	mus_misc_error(S_make_frame, "extra trailing args?", arglist);
       if (size <= 0)
-	XEN_OUT_OF_RANGE_ERROR(S_make_frame, 1, C_TO_XEN_INT(size), "size ~A <= 0?");
+	XEN_OUT_OF_RANGE_ERROR(S_make_frame, XEN_ARG_1, C_TO_XEN_INT(size), "size ~A <= 0?");
     }
   ge = (mus_any *)mus_make_empty_frame(size);
   if (ge)
@@ -2605,7 +2605,7 @@ static XEN g_set_mixer_ref(XEN uf1, XEN in, XEN out, XEN val)
   #define H_mixer_set "(" S_mixer_set " m in out val): set m[in, out] = val"
   XEN_ASSERT_TYPE((MUS_XEN_P(uf1)) && (mus_mixer_p(XEN_TO_MUS_ANY(uf1))), uf1, XEN_ARG_1, S_mixer_set, "a mixer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(in), in, XEN_ARG_2, S_mixer_set, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(out), out, XEN_ARG_2, S_mixer_set, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(out), out, XEN_ARG_3, S_mixer_set, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_4, S_mixer_set, "a number");
   return(C_TO_XEN_DOUBLE(mus_mixer_set((mus_any *)XEN_TO_MUS_ANY(uf1),
 				       XEN_TO_C_INT(in),

@@ -524,8 +524,7 @@
   (if range-in-secs
       (begin
 	(change-label start (format #f "~,3F" (/ (list-ref loop-data (* sus-rel 2)) (srate))))
-	(change-label range (format #f "~,3F" (/ (- (list-ref loop-data (+ 1 (* sus-rel 2))) (list-ref loop-data (*  
-sus-rel 2))) (srate))))
+	(change-label range (format #f "~,3F" (/ (- (list-ref loop-data (+ 1 (* sus-rel 2))) (list-ref loop-data (* sus-rel 2))) (srate))))
 	(change-label end (format #f "~,3F" (/ (list-ref loop-data (+ 1 (* sus-rel 2))) (srate)))))
       (begin
 	(change-label start (format #f "~D" (list-ref loop-data (* sus-rel 2))))
@@ -653,7 +652,7 @@ sus-rel 2))) (srate))))
 							      XmNbackground          (position-color)
 							      XmNwidth               20)))
 		    (rightlock (XtCreateManagedWidget "lock" xmToggleButtonWidgetClass rowrightmid '()))
-	;; SOMEDAY: implement the loop dialog lock button
+
 		    (rowrightbottom (XtCreateManagedWidget "r1" xmRowColumnWidgetClass right-column
 							(list XmNorientation         XmHORIZONTAL
 							      XmNbackground          (position-color)
@@ -739,14 +738,12 @@ sus-rel 2))) (srate))))
 		    (XtAddCallback lotsleft XmNactivateCallback
 				    (lambda (w c i)
 				      (let ((ml (if (= loc 0) 0 (list-ref loop-data sus-rel-start))))
-					(list-set! loop-data (+ loc (* offset 2)) (max ml (- (list-ref loop-data (+  
-loc (* offset 2))) 10)))
+					(list-set! loop-data (+ loc (* offset 2)) (max ml (- (list-ref loop-data (+ loc (* offset 2))) 10)))
 					(update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
 		    (XtAddCallback someleft XmNactivateCallback
 				    (lambda (w c i)
 				      (let ((ml (if (= loc 0) 0 (list-ref loop-data sus-rel-start))))
-					(list-set! loop-data (+ loc (* offset 2)) (max ml (- (list-ref loop-data (+  
-loc (* offset 2))) 1)))
+					(list-set! loop-data (+ loc (* offset 2)) (max ml (- (list-ref loop-data (+ loc (* offset 2))) 1)))
 					(update-labels midlab1 midlab2 midlab3 offset range-in-secs))))))
 		(list rowlefttop rowleftbottom)
 		(list 0 1))
@@ -771,14 +768,12 @@ loc (* offset 2))) 1)))
 		    (XtAddCallback lotsright XmNactivateCallback
 				    (lambda (w c i)
 				      (let ((ml (if (= loc 0) (list-ref loop-data (+ sus-rel-start 1)) (frames))))
-					(list-set! loop-data (+ loc (* offset 2)) (min ml (+ (list-ref loop-data (+  
-loc (* offset 2))) 10)))
+					(list-set! loop-data (+ loc (* offset 2)) (min ml (+ (list-ref loop-data (+ loc (* offset 2))) 10)))
 					(update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
 		    (XtAddCallback someright XmNactivateCallback
 				    (lambda (w c i)
 				      (let ((ml (if (= loc 0) (list-ref loop-data (+ sus-rel-start 1)) (frames))))
-					(list-set! loop-data (+ loc (* offset 2)) (min ml (+ (list-ref loop-data (+  
-loc (* offset 2))) 1)))
+					(list-set! loop-data (+ loc (* offset 2)) (min ml (+ (list-ref loop-data (+ loc (* offset 2))) 1)))
 					(update-labels midlab1 midlab2 midlab3 offset range-in-secs))))))
 		(list rowrighttop rowrightbottom)
 		(list 0 1))))
