@@ -30,7 +30,6 @@
 ;;; TODO: gtk tests
 ;;; TODO: Xt selection tests?
 ;;; TODO: rest of Snd callbacks triggered
-;;; TODO: header editor tests
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
 
@@ -168,9 +167,12 @@
 	#t
 	(and (< (abs (- (vct-ref v0 ctr) (vct-ref v1 ctr))) .001)
 	     (dequal (1+ ctr) len))))
-  (let ((len (vct-length v0)))
-    (and (= len (vct-length v1))
-	 (dequal 0 len))))
+  (or (equal? v0 v1)
+      (and (vct? v0)
+	   (vct? v1)
+	   (let ((len (vct-length v0)))
+	     (and (= len (vct-length v1))
+		  (dequal 0 len))))))
 
 (define ran-state (seed->random-state (current-time)))
 (define my-random
@@ -2813,14 +2815,14 @@
 	      (snd-display ";new-sound bad chan: ~A" var)))
       (set! index (new-sound "fmv.snd" mus-next mus-bshort 22050 2 "unequal lens"))
       (insert-silence 0 1000 index 1)
-      (IF (or (not (= (frames index 0) 2))
-	      (not (= (frames index 1) 1002)))
+      (IF (or (not (= (frames index 0) 1))
+	      (not (= (frames index 1) 1001)))
 	  (snd-display ";silence 1: ~A ~A" (frames index 0) (frames index 1)))
       (save-sound index)
-      (IF (or (not (= (frames index 0) 1002))
-	      (not (= (frames index 1) 1002)))
+      (IF (or (not (= (frames index 0) 1001))
+	      (not (= (frames index 1) 1001)))
 	  (snd-display ";saved silence 1: ~A ~A" (frames index 0) (frames index 1)))
-      (IF (not (= (mus-sound-frames "fmv.snd") 1002))
+      (IF (not (= (mus-sound-frames "fmv.snd") 1001))
 	  (snd-display ";saved framers silence 1: ~A" (mus-sound-frames "fmv.snd")))
       (let ((v0 (samples->vct 0 1000 index 0))
 	    (v1 (samples->vct 0 1000 index 1)))
@@ -2833,8 +2835,8 @@
 
       (set! index (new-sound "fmv.snd" mus-next mus-bshort 22050 2 "unequal lens"))
       (pad-channel 0 1000 index 1)
-      (IF (or (not (= (frames index 0) 2))
-	      (not (= (frames index 1) 1002)))
+      (IF (or (not (= (frames index 0) 1))
+	      (not (= (frames index 1) 1001)))
 	  (snd-display ";pad-channel 1: ~A ~A" (frames index 0) (frames index 1)))
       (let ((v0 (samples->vct 0 1000 index 0))
 	    (v1 (samples->vct 0 1000 index 1)))
@@ -3235,6 +3237,15 @@
 	  (IF (not (= ind after-ran)) (snd-display ";after-apply-hook: ~A?" after-ran))
 	  (reset-hook! before-apply-hook)
 	  (reset-hook! after-apply-hook))
+	(revert-sound ind)
+	(set! (sync ind) 1)
+	(scale-to '#(.1 .2))
+	(let ((mx (maxamp ind #t)))
+	  (IF (or (fneq (list-ref mx 0) .1)
+		  (fneq (list-ref mx 1) .2)
+		  (fneq (list-ref mx 2) .2)
+		  (fneq (list-ref mx 3) .2))
+	      (snd-display ";scale to with vector: ~A" mx)))
 	(close-sound ind))
 
       (let* ((obind (open-sound "4.aiff"))
@@ -10156,10 +10167,10 @@
 			     (break)))))))
 		(close-sound clone))
 	      (delete-file "/tmp/cloned.snd")
+	      (mus-sound-forget "/tmp/cloned.snd")
 	      (close-sound cfd2)
 	      (close-sound cfd)
 	      (set! (use-sinc-interp) #f)))
-
 	  (add-hook! (edit-hook) (lambda () #f))
 	  (let ((editctr (edit-position)))
 	    (as-one-edit (lambda () (set! (sample 200) .2) (set! (sample 300) .3)))
@@ -11681,6 +11692,83 @@
 	  (close-sound oboe0)
 	  (close-sound oboe1))
 
+	(let ((ind (open-sound "storm.snd")))
+	  (reverse-channel 500000 1000000)
+	  (close-sound ind))
+
+	(for-each 
+	 (lambda (out-chans)
+	   (let ((ind (new-sound "new.snd" mus-next mus-bfloat 22050 out-chans "edpos testing"))
+		 (mx (apply max (map sync (sounds)))))
+	     (set! (sync ind) (+ mx 1))
+	     (for-each 
+	      (lambda (in-sound)
+		(for-each
+		 (lambda (func)
+		   (for-each 
+		    (lambda (edpos)
+		      (func edpos)
+		      (revert-sound ind))
+		    (list (lambda () current-edit-position)
+			  (lambda () 0)
+			  (lambda () (lambda (s c) (1- (edit-position s c))))
+			  (lambda () (lambda (s c) (edit-position s c)))
+			  (lambda () (lambda (s c) current-edit-position))
+			  (lambda () (lambda (s c) 0)))))
+		 (list 
+		  (lambda (posfunc)
+		    (let ((chn (min (random (1+ out-chans)) (1- out-chans))))
+		      (IF (not (vequal (channel->vct 0 (frames ind chn) ind chn 0) (vct 0.0)))
+			  (snd-display ";start bad: ~A" (channel->vct 0 (frames ind chn) ind chn 0)))
+		      (set! (sample 0 ind chn) .1)
+		      (IF (not (vequal (channel->vct 0 (frames ind chn) ind chn) (vct 0.1)))
+			  (snd-display ";set bad: ~A" (channel->vct 0 (frames ind chn) ind chn)))
+		      (pad-channel 0 1 ind chn (posfunc))
+		      (let ((pos (posfunc))) (if (procedure? pos)
+			    (set! pos (pos ind chn)))
+			(let ((data (channel->vct 0 (frames ind chn) ind chn)))
+			  (IF (or (and (= pos 0) 
+				       (not (vequal data (vct 0.0 0.0))))
+				  (and (or (= pos current-edit-position) 
+					   (= pos (edit-position ind chn)))
+				       (not (vequal data (vct 0.0 0.1))))			  
+				  (and (= pos (1- (edit-position ind chn)))
+				       (not (vequal data (vct 0.0 0.0)))))
+			      (snd-display ";pos[~A]: edpos ~A of ~A, pad result[~A, ~A]: ~A" 
+					   chn pos (edit-position ind chn) (frames ind chn pos) (frames ind chn) data))
+			  (if (> (chans ind) 1)
+			      (do ((i 0 (1+ i)))
+				  ((= i (chans ind)))
+				(IF (not (= i chn))
+				    (let ((data (channel->vct 0 (frames ind i) ind i)))
+				      (if (not (vequal data (vct 0.0)))
+					  (snd-display ";pad[~A / ~A] empty: ~A" i chn data))))))))))
+		  (lambda (posfunc)
+		    (let ((chn (min (random (1+ out-chans)) (1- out-chans))))
+		      (set! (sample 0 ind chn) .1)
+		      (scale-channel 2.0 0 1 ind chn (posfunc))
+		      (let ((pos (posfunc)))
+			(if (procedure? pos) (set! pos (pos ind chn)))
+			(let ((data (channel->vct 0 (frames ind chn) ind chn)))
+			  (IF (or (and (= pos 0) 
+				       (not (vequal data (vct 0.0))))
+				  (and (or (= pos current-edit-position) 
+					   (= pos (edit-position ind chn)))
+				       (not (vequal data (vct 0.2))))			  
+				  (and (= pos (1- (edit-position ind chn)))
+				       (not (vequal data (vct 0.0)))))
+			      (snd-display ";pos[~A]: edpos ~A of ~A, scale result[~A, ~A]: ~A" 
+					   chn pos (edit-position ind chn) (frames ind chn pos) (frames ind chn) data))
+			  (if (> (chans ind) 1)
+			      (do ((i 0 (1+ i)))
+				  ((= i (chans ind)))
+				(if (not (= i chn))
+				    (let ((data (channel->vct 0 (frames ind i) ind i)))
+				      (IF (not (vequal data (vct 0.0)))
+					  (snd-display ";scale[~A / ~A] empty: ~A" i chn data)))))))))))))
+	      (list "2a.snd" "1a.snd" "4a.snd"))
+	     (close-sound ind)))
+	 (list 1 2 4))
 	)))
 
 
@@ -11943,7 +12031,7 @@ EDITS: 4
 	(close-sound ind)
 	(close-sound ind1)
 	(delete-file "t1.scm"))
-
+      (mus-sound-prune)
       ))
 
 
@@ -12733,6 +12821,16 @@ EDITS: 4
 		(key (char->integer #\f) 4 ind)
 		(IF (not (= (cursor) 22050))
 		    (snd-display ";C-u 1.0 C-f -> ~A" (cursor)))
+
+		(let ((i1 (open-sound "2.snd")))
+		  (select-sound i1)
+		  (key (char->integer #\u) 4 i1)
+		  (key (char->integer #\1) 0 i1)
+		  (key (char->integer #\0) 0 i1)
+		  (key (char->integer #\0) 0 i1)
+		  (key (char->integer #\d) 4 i1)
+		  (close-sound i1)
+		  (select-sound ind))
 
 		(key-event cwid (char->integer #\x) 4) (force-event)
 		(key-event cwid (char->integer #\=) 4) (force-event)
@@ -13635,6 +13733,8 @@ EDITS: 4
 		(set! fe (filter-control-env ind))
 		(IF (not (equal? fe '(0.0 1.0 1.0 1.0)))
 		    (snd-display ";filter-env (point deleted): ~A?" fe))
+		(set! (filter-control-in-dB) #t)
+		(click-event filter-grf 1 0 100 100) (force-event)
 		(close-sound ind)
 		))
 
@@ -19342,8 +19442,6 @@ EDITS: 4
       (system "rm /tmp/snd_*")))
 
 (system "cp /home/bil/dot-snd /home/bil/.snd")
-(mus-sound-report-cache "allfiles")
-
 (if with-exit (exit))
 
 ;;; need to know before calling this if libguile.so was loaded

@@ -723,6 +723,7 @@ dnl     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 		else
 	    	  AUDIO_LIB="-lasound"
 		fi
+# TODO: if alsa version < 0.9 complain and use OSS
 	    	AC_SUBST(AUDIO_LIB)
                 # snd_config_get_id argnum changed in Nov-01
                 snd_config_get_id_args=1

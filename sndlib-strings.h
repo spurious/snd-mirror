@@ -122,6 +122,8 @@
 #define S_mus_sound_write               "mus-sound-write"
 #define S_mus_sound_seek                "mus-sound-seek"
 #define S_mus_sound_seek_frame          "mus-sound-seek-frame"
+#define S_mus_sound_forget              "mus-sound-forget"
+#define S_mus_sound_prune               "mus-sound-prune"
 
 #define S_mus_audio_open_output         "mus-audio-open-output"
 #define S_mus_audio_open_input          "mus-audio-open-input"

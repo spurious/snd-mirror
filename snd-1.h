@@ -383,7 +383,7 @@ typedef struct {
 
 int snd_open_read(snd_state *ss, const char *arg);
 int snd_reopen_write(snd_state *ss, const char *arg);
-int snd_write_header(snd_state *ss, const char *name, int type, int srate, int chans, int loc, int size, int format, const char *comment, int len, int *loops);
+int snd_write_header(snd_state *ss, const char *name, int type, int srate, int chans, int loc, int samples, int format, const char *comment, int len, int *loops);
 int snd_overwrite_ok(snd_state *ss, const char *ofile);
 int *make_file_state(int fd, file_info *hdr, int chan, int suggested_bufsize);
 int *free_file_state(int *datai);
@@ -1134,6 +1134,7 @@ void snd_exit(int val);
 char *kmg (int num);
 #ifdef DEBUG_MEMORY
   void set_encloser(const char *name);
+  char *stack_to_string(void);
 #endif
 #if DEBUGGING && HAVE_CLOCK
   void start_timing(void);

@@ -2883,6 +2883,10 @@ See play.scm and rtio.scm for example code. The most important Sndlib functions 
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="soundduration">mus-sound-duration</a></em> (filename)</code></span></td>
 <!-- --><td>duration of sound in seconds</td></tr>
 <!-- -->
+<!-- mus-sound-forget -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="soundforget">mus-sound-forget</a></em> (filename)</code></span></td>
+<!-- --><td>remove <i>filename</i> from the sound cache (presumably the file has been deleted or something).</td></tr>
+<!-- -->
 <!-- mus-sound-frames -->
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="soundframes">mus-sound-frames</a></em> (filename)</code></span></td>
 <!-- --><td>frames of sound according to header (can be incorrect)</td></tr>
@@ -2917,6 +2921,10 @@ See play.scm and rtio.scm for example code. The most important Sndlib functions 
 <!-- --><a name="mussoundopenoutput">mus-sound-open-output</a></em> (filename srate chans data-format header-type comment)</code></span></td>
 <!-- --></tr><tr><td></td>
 <!-- --><td>create a new sound file with the indicated attributes, return "fd"</td></tr>
+<!-- -->
+<!-- mus-sound-prune -->
+<!-- --><tr><td><span class=defbox><code><em class=def><a name="soundprune">mus-sound-prune</a></em> ()</code></span></td>
+<!-- --><td>remove all defunct (non-existent) files from the sound cache.</td></tr>
 <!-- -->
 <!-- mus-sound-read -->
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="mussoundread">mus-sound-read</a></em> (fd beg end chans sdata)</code></span></td>

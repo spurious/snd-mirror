@@ -327,6 +327,36 @@ void set_encloser(const char *name)
 #endif
 }
 
+char *stack_to_string(void)
+{
+  char *val = NULL;
+#if HAVE_EXECINFO_H
+  void *ba[6];
+  char **names;
+  int i, n, len = 0;
+  n = backtrace(ba, sizeof (ba) / sizeof (ba[0]));
+  if (n != 0)
+    {
+      names = backtrace_symbols(ba, n);
+      if (names != NULL)
+	{
+	  for (i = 0; i < n; i++)
+	    if (names[i]) 
+	      len += (strlen(names[i]) + 2);
+	  val = (char *)CALLOC(len, sizeof(char));
+	  for (i = 0; i < n; i++)
+	    if (names[i]) 
+	      {
+		strcat(val, names[i]);
+		strcat(val,"\n");
+	      }
+	  free(names);
+	}
+    }
+#endif
+  return(val);
+}
+
 static int find_mem_location(const char *func, const char *file, int line)
 {
   int i;
@@ -611,6 +641,7 @@ void mem_report(void)
   fprintf(Fp, "\n\nprevlist: %d %d\n", get_prevfile_end(), get_max_prevfile_end());
   fprintf(Fp, "\n\n");
   save_listener_text(Fp);
+  /* mus_sound_report_cache(Fp); */
   fclose(Fp);
 }
 

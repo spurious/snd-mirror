@@ -400,19 +400,20 @@ int snd_reopen_write(snd_state *ss, const char *arg)
   return(fd);
 }
 
-int snd_write_header(snd_state *ss, const char *name, int type, int srate, int chans, int loc, int size, int format, const char *comment, int len, int *loops)
+int snd_write_header(snd_state *ss, const char *name, int type, int srate, int chans, int loc, 
+		     int samples, int format, const char *comment, int len, int *loops)
 {
   int fd;
   mus_sound_forget(name);
   mus_header_set_aiff_loop_info(loops);
-  fd = mus_header_write(name, type, srate, chans, loc, size, format, comment, len);
+  fd = mus_header_write(name, type, srate, chans, loc, samples, format, comment, len);
   if (fd == -1)
     {
       if (errno == EMFILE) /* 0 => no error (fd not actually returned unless it's -1) */
 	{
 	  fd = too_many_files_cleanup(ss);
 	  if (fd != -1) 
-	    fd = mus_header_write(name, type, srate, chans, loc, size, format, comment, len);
+	    fd = mus_header_write(name, type, srate, chans, loc, samples, format, comment, len);
 	}
       if (fd == -1) 
 	mus_error(MUS_CANT_OPEN_FILE, "%s", name);

@@ -53,7 +53,7 @@ static char *display_maxamps(const char *filename, int chans)
 int main(int argc, char *argv[])
 {
   int chans, srate, samples, format, type;
-  float length;
+  float length = 0.0;
   time_t date;
   int *loops = NULL;
   char *comment, *header_name;
@@ -76,12 +76,13 @@ int main(int argc, char *argv[])
       chans = mus_sound_chans(argv[1]);
       samples = mus_sound_samples(argv[1]);
       comment = mus_sound_comment(argv[1]); 
-      length = (float)samples / (float)(chans * srate);
+      if ((chans > 0) && (srate > 0))
+	length = (float)samples / (float)(chans * srate);
       loops = mus_sound_loop_info(argv[1]);
       type = mus_sound_header_type(argv[1]);
       header_name = (char *)mus_header_type_name(type);
       format = mus_sound_data_format(argv[1]);
-      if (mus_sound_maxamp_exists(argv[1]))
+      if ((chans > 0) && (mus_sound_maxamp_exists(argv[1])))
 	ampstr = display_maxamps(argv[1], chans);
       if (format != MUS_UNSUPPORTED)
 	format_info = (char *)mus_data_format_name(format);

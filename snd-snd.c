@@ -9,7 +9,7 @@ snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_f
       if (mus_header_writable(header_type, data_format))
 	{
 	  err = snd_write_header(ss, newname, header_type, srate, chans, 0, 
-				 chans * 2, data_format, new_comment, 
+				 chans, data_format, new_comment, 
 				 snd_strlen(new_comment), NULL);
 	  if (err == -1)
 	    snd_error("can't write %s",newname);
@@ -17,7 +17,7 @@ snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_f
 	    {
 	      chan = snd_reopen_write(ss, newname);
 	      lseek(chan, mus_header_data_location(), SEEK_SET);
-	      size = chans * mus_samples_to_bytes(data_format, 2); /* why 2 samples? */
+	      size = chans * mus_samples_to_bytes(data_format, 1); /* was 2 samples? 22-Mar-02 */
 	      buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
 	      write(chan, buf, size);
 	      if (close(chan) != 0)
@@ -2471,7 +2471,7 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
 		  if (XEN_STRING_P(comment))
 		    com = XEN_TO_C_STRING(comment);
 		  ss->catch_message = NULL;
-		  err = snd_write_header(ss, str, ht, sr, ch, 0, ch * 2, df, com, snd_strlen(com), NULL);
+		  err = snd_write_header(ss, str, ht, sr, ch, 0, ch, df, com, snd_strlen(com), NULL);
 		  if (err == -1)
 		    {
 		      if (str) FREE(str);
@@ -2481,7 +2481,7 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
 		    }
 		  chan = snd_reopen_write(ss, str);
 		  lseek(chan, mus_header_data_location(), SEEK_SET);
-		  size = ch * mus_samples_to_bytes(df, 2); /* why 2 samples? */
+		  size = ch * mus_samples_to_bytes(df, 1); /* was 2 samples? 22-Mar-02 */
 		  buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
 		  write(chan, buf, size);
 		  close(chan);

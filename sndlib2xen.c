@@ -125,6 +125,18 @@ static XEN g_sound_type_specifier(XEN filename)
   return(gmus_sound(S_mus_sound_type_specifier, mus_sound_type_specifier, filename));
 }
 
+static XEN g_sound_forget(XEN filename) 
+{
+  #define H_mus_sound_forget "(" S_mus_sound_forget " filename) remove 'filename' from sound cache"
+  return(gmus_sound(S_mus_sound_forget, mus_sound_forget, filename));
+}
+
+static XEN g_sound_prune(void) 
+{
+  #define H_mus_sound_prune "(" S_mus_sound_prune ") remove all defunct entries from sound cache"
+  return(C_TO_XEN_INT(mus_sound_prune()));
+}
+
 static XEN g_sound_comment(XEN filename) 
 {
   #define H_mus_sound_comment "(" S_mus_sound_comment " filename) -> comment (string) found in sound's header"
@@ -1105,6 +1117,8 @@ XEN_NARGIFY_2(g_seek_sound_frame_w, g_seek_sound_frame)
 XEN_NARGIFY_5(g_open_audio_output_w, g_open_audio_output)
 XEN_NARGIFY_5(g_open_audio_input_w, g_open_audio_input)
 XEN_ARGIFY_1(g_mus_sound_report_cache_w, g_mus_sound_report_cache)
+XEN_NARGIFY_1(g_sound_forget_w, g_sound_forget)
+XEN_NARGIFY_0(g_sound_prune_w, g_sound_prune)
 #else
 #define sound_data_length_w sound_data_length
 #define sound_data_chans_w sound_data_chans
@@ -1161,6 +1175,8 @@ XEN_ARGIFY_1(g_mus_sound_report_cache_w, g_mus_sound_report_cache)
 #define g_open_audio_output_w g_open_audio_output
 #define g_open_audio_input_w g_open_audio_input
 #define g_mus_sound_report_cache_w g_mus_sound_report_cache
+#define g_sound_forget_w g_sound_forget
+#define g_sound_prune_w g_sound_prune
 #endif
 
 #if HAVE_RUBY
@@ -1385,6 +1401,8 @@ void mus_sndlib2xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_sound_maxamp,         g_sound_maxamp_w, 1, 0, 0,          H_mus_sound_maxamp);
   XEN_DEFINE_PROCEDURE(S_mus_sound_set_maxamp,     g_sound_set_maxamp_w, 2, 0, 0,      H_mus_sound_set_maxamp);
   XEN_DEFINE_PROCEDURE(S_mus_sound_maxamp_exists,  g_sound_maxamp_exists_w, 1, 0, 0,   H_mus_sound_maxamp_exists);
+  XEN_DEFINE_PROCEDURE(S_mus_sound_forget,         g_sound_forget, 1, 0, 0,            H_mus_sound_forget);
+  XEN_DEFINE_PROCEDURE(S_mus_sound_prune,          g_sound_prune, 0, 0, 0,             H_mus_sound_prune);
 
   XEN_DEFINE_PROCEDURE(S_mus_audio_report,         g_report_audio_state_w, 0, 0, 0,    H_mus_audio_report);
   XEN_DEFINE_PROCEDURE(S_mus_audio_sun_outputs,    g_audio_outputs_w, 3, 0, 0,         H_mus_audio_sun_outputs);

@@ -115,7 +115,7 @@ static sync_state *get_sync_state_1(snd_state *ss, snd_info *sp, chan_info *cp, 
 	  pos = to_c_edit_position(ncp, edpos, caller, arg_pos);
 	  if (forwards == READ_FORWARD)
 	    sfs[i] = init_sample_read_any(beg, ncp, READ_FORWARD, pos);
-	  else sfs[i] = init_sample_read_any(cp->samples[pos] - 1, ncp, READ_BACKWARD, pos);
+	  else sfs[i] = init_sample_read_any(ncp->samples[pos] - 1, ncp, READ_BACKWARD, pos);
 	}
     }
   else

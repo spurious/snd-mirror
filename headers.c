@@ -2,7 +2,7 @@
  *
  * --------------------------------
  * int mus_header_read (const char *name)
- * int mus_header_write (const char *name, int type, int in_srate, int in_chans, int loc, int size, int format, const char *comment, int len)
+ * int mus_header_write (const char *name, int type, int in_srate, int in_chans, int loc, int size_in_samples, int format, const char *comment, int len)
  * int mus_header_update (const char *name, int type, int size, int srate, int format, int chans, int loc)
  * int mus_header_initialize (void)
  *
@@ -4946,9 +4946,8 @@ int mus_header_read(const char *name)
   if (chan == -1) 
     {
       mus_error(MUS_CANT_OPEN_FILE,
-		"can't read header of %s: %s\n  [%s[%d] %s]",
-		name, strerror(errno),
-		__FILE__, __LINE__, __FUNCTION__); 
+		"can't open %s: %s",
+		name, strerror(errno));
       return(MUS_ERROR);
     }
   err = mus_header_read_with_fd_and_name(chan, name);
@@ -5964,9 +5963,8 @@ int mus_header_no_header(const char *filename)
   if (chan == -1) 
     {
       mus_error(MUS_CANT_OPEN_FILE,
-		"can't read header of %s: %s\n  [%s[%d] %s]",
-		filename, strerror(errno),
-		__FILE__, __LINE__, __FUNCTION__); 
+		"can't open %s: %s",
+		filename, strerror(errno));
       return(MUS_ERROR);
     }
   bytes = read(chan, hdrbuf, INITIAL_READ_SIZE);

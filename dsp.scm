@@ -581,22 +581,27 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;;
 ;;; from Andrews, Askey, Roy "Special Functions" 5.1.16
 
-(define (cosine-summation gen)
+(define (cosine-summation gen r)
+  ;; this could obviously be radically optimized
   (* (- (/ (- 1.0 (* r r))
 	   (- (+ 1.0 (* r r))
-	      (* (* 2 r)
-		 (oscil gen))))
+	      (* 2 r (oscil gen))))
 	1.0)
      (/ (- 1.0 (* r r)) ; amplitude normalization (not vital)
 	(* 2 r (+ 1.0 (* r r))))))
 
-
-(define (make-cosine-summation freq r)
-  (make-oscil freq))
-
-	
-	
+(define make-cosine-summation make-oscil)
 
 
+;;; -------- legendre-summation (sum-of-cosines with descreasing amps)
+;;;
+;;; from Andrews, Askey, Roy "Special Functions" p 314
 
+(define (legendre-summation gen)
+  (let ((val (sum-of-cosines gen)))
+    (* val val)))
 
+(define (make-legendre-summation cosines frequency)
+  (make-sum-of-cosines (inexact->exact (/ cosines 2)) frequency))
+
+;(let ((gen (make-legendre-summation 10 100))) (map-chan (lambda (y) (legendre-summation gen))))

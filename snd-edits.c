@@ -285,7 +285,7 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	    }
 	  else
 	    {
-	      /* read at very low level */
+	      /* read at very low level and write to (text) history files as sample list */
 	      int ifd, idataloc, bufnum, n, cursamples, samples, sample;
 	      MUS_SAMPLE_TYPE *buffer;
 	      MUS_SAMPLE_TYPE **ibufs;

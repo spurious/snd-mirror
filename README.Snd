@@ -236,7 +236,7 @@ not trying to support this anymore.
 
 
 ---- ALSA: ----
-Not all versions of ALSA are supported.  If you get a compile-time
+Only versions from 0.9 of ALSA are supported. If you get a compile-time
 complaint about snd_pcm_hw_params (ALSA 0.9beta4) you need to get
 a newer version of ALSA.
 

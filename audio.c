@@ -3598,6 +3598,8 @@ static int probe_api(void)
 
 /* ------------------------------- ALSA ----------------------------------------- */
 /*
+ * 0.5 support removed by Bill 24-Mar-02
+ *
  * changed for 0.9.x api by Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>
  *
  *  sndlib "exports" only one soundcard with two directions (if they are available),
@@ -3673,46 +3675,10 @@ static int probe_api(void)
   #include <sys/asoundlib.h>
 #endif
 
-/* simplify this silliness! (bil -- 3-Mar-01) */
 #if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
-
-#define ALSA_5 1
-/* avoid a bunch of ifdefs below, switch to 0.9 naming in this case */
-#define SND_PCM_STREAM_PLAYBACK SND_PCM_CHANNEL_PLAYBACK
-#define SND_PCM_STREAM_CAPTURE SND_PCM_CHANNEL_CAPTURE
-/* avoid duplicated function definitions for format conversion */
-#define SND_PCM_FORMAT_S8 SND_PCM_SFMT_S8 
-#define SND_PCM_FORMAT_U8 SND_PCM_SFMT_U8 
-#define SND_PCM_FORMAT_MU_LAW SND_PCM_SFMT_MU_LAW 
-#define SND_PCM_FORMAT_A_LAW SND_PCM_SFMT_A_LAW 
-#define SND_PCM_FORMAT_S16_BE SND_PCM_SFMT_S16_BE 
-#define SND_PCM_FORMAT_S16_LE SND_PCM_SFMT_S16_LE 
-#define SND_PCM_FORMAT_U16_BE SND_PCM_SFMT_U16_BE 
-#define SND_PCM_FORMAT_U16_LE SND_PCM_SFMT_U16_LE 
-#define SND_PCM_FORMAT_S24_BE SND_PCM_SFMT_S24_BE 
-#define SND_PCM_FORMAT_S24_LE SND_PCM_SFMT_S24_LE 
-#define SND_PCM_FORMAT_S32_BE SND_PCM_SFMT_S32_BE 
-#define SND_PCM_FORMAT_S32_LE SND_PCM_SFMT_S32_LE 
-#define SND_PCM_FORMAT_FLOAT_BE SND_PCM_SFMT_FLOAT_BE 
-#define SND_PCM_FORMAT_FLOAT_LE SND_PCM_SFMT_FLOAT_LE 
-#define SND_PCM_FORMAT_FLOAT64_BE SND_PCM_SFMT_FLOAT64_BE 
-#define SND_PCM_FORMAT_FLOAT64_LE SND_PCM_SFMT_FLOAT64_LE 
-/* extras for 0.5 only formats */
-#define SND_PCM_FORMAT_U24_BE  SND_PCM_SFMT_U24_BE
-#define SND_PCM_FORMAT_U24_LE  SND_PCM_SFMT_U24_LE
-#define SND_PCM_FORMAT_U32_BE  SND_PCM_SFMT_U32_BE
-#define SND_PCM_FORMAT_U32_LE  SND_PCM_SFMT_U32_LE
-#define SND_PCM_FORMAT_IEC958_SUBFRAME_LE SND_PCM_SFMT_IEC958_SUBFRAME_LE 
-#define SND_PCM_FORMAT_IEC958_SUBFRAME_BE SND_PCM_SFMT_IEC958_SUBFRAME_BE
-#define SND_PCM_FORMAT_IMA_ADPCM SND_PCM_SFMT_IMA_ADPCM 
-#define SND_PCM_FORMAT_MPEG SND_PCM_SFMT_MPEG
-#define SND_PCM_FORMAT_GSM SND_PCM_SFMT_GSM
-#define SND_PCM_FORMAT_SPECIAL SND_PCM_SFMT_SPECIAL
-
+  #error ALSA version is too old -- audio.c needs 0.9 or later
 #else
-
-#define ALSA_9 1
-
+  #define ALSA_9 1
 #endif
 
 #ifndef SND_CARDS
@@ -3742,13 +3708,8 @@ static void  alsa_describe_audio_state_1(void);
 
 static int probe_api(void) 
 {
-#if ALSA_5
-    unsigned int mask = snd_cards_mask();
-    if (mask) {
-#else
     int card = -1;
     if (snd_card_next(&card) >= 0 && card >= 0) {
-#endif
 	/* the alsa library has detected one or more cards */
 	api = ALSA_API;
 	vect_mus_audio_initialize = alsa_mus_audio_initialize;
@@ -3826,169 +3787,9 @@ static void alsa_mus_audio_set_oss_buffers (int num, int size) {
 
 /* static int sound_cards = 0; */
 
-#if ALSA_5
-
-/* holds hardware information about a soundcard */
-
-typedef struct card_info {
-    snd_ctl_hw_info_t* info;
-} card_info_t;
-
-/* holds information about one device in a system or soundcard */
-
-typedef struct device_info {
-    /* next device for this soundcard */
-    struct device_info *next;
-    /* alsa device number */
-    int device;
-    /* alsa channel */
-    int channel;
-    snd_pcm_channel_info_t info;
-} device_info_t;
-
-/* holds information about open handles in a system or soundcard */
-
-typedef struct handle_info {
-  snd_pcm_t     *handle;
-  device_info_t *playback_device;
-  device_info_t *capture_device;
-} handle_info_t;
-
-/* indexed pointers to device information chain */
-
-#define MAX_HANDLES (SND_CARDS*8)
-static handle_info_t handles[MAX_HANDLES];
-
-/* information about all soundcards */
-
-static card_info_t card_info[SND_CARDS];
-
-/* information about all devices */
-
-static device_info_t *device_info[SND_CARDS];
-
-/* to switch between pcm and plugin versions under alsa 0.5
- *
- * in the latest version tested (0.5.7 on April 10 2000) the plugin
- * versions of the function don't recover from underruns, this was
- * added so I could easily switch between the plugin and normal
- * functions. I tried the plugin functions to enable the automatic
- * format conversion available...
- */
-
- static int (*alsa_info)(snd_pcm_t *handle, snd_pcm_channel_info_t *info);
- static int (*alsa_params)(snd_pcm_t *handle, snd_pcm_channel_params_t *params);
- static int (*alsa_prepare)(snd_pcm_t *handle, int channel);
- static int (*alsa_setup)(snd_pcm_t *handle, snd_pcm_channel_setup_t *setup);
- static int (*alsa_status)(snd_pcm_t *handle, snd_pcm_channel_status_t *status);
- static int (*alsa_flush)(snd_pcm_t *handle, int channel);
- static ssize_t (*alsa_write)(snd_pcm_t *handle, const void *buffer, size_t size);
- static ssize_t (*alsa_read)(snd_pcm_t *handle, void *buffer, size_t size);
-
- static int use_plugins = 0;
-
-static void alsa_initialize_functions()
-{
-    if (use_plugins==0) {
-	alsa_info = snd_pcm_channel_info;
-	alsa_params = snd_pcm_channel_params;
-	alsa_prepare = snd_pcm_channel_prepare;
-	alsa_setup = snd_pcm_channel_setup;
-	alsa_status = snd_pcm_channel_status;
-	alsa_flush = snd_pcm_channel_flush;
-	alsa_write = snd_pcm_write;
-	alsa_read = snd_pcm_read;
-    } else {
-	alsa_info = snd_pcm_plugin_info;
-	alsa_params = snd_pcm_plugin_params;
-	alsa_prepare = snd_pcm_plugin_prepare;
-	alsa_setup = snd_pcm_plugin_setup;
-	alsa_status = snd_pcm_plugin_status;
-	alsa_flush = snd_pcm_plugin_flush;
-	alsa_write = snd_pcm_plugin_write;
-	alsa_read = snd_pcm_plugin_read;
-    }
-}
-
-/* what to do on stop under alsa 0.5
- *
- * this is here to make it easy to test the two different
- * behaviors on stop [SND_PCM_STOP_STOP or SND_PCM_STOP_ROLLOVER]
- */
-
-static int stop_mode = SND_PCM_STOP_STOP; 
-
-/* translate an alsa format code into a string */
-
-static const char *decode_alsa_format(int format) 
-{
-    switch (format) {
-    case SND_PCM_SFMT_S8:
-	return("SND_PCM_SFMT_S8");
-    case SND_PCM_SFMT_U8:
-	return("SND_PCM_SFMT_U8");
-    case SND_PCM_SFMT_S16_LE:
-	return("SND_PCM_SFMT_S16_LE");
-    case SND_PCM_SFMT_S16_BE:
-	return("SND_PCM_SFMT_S16_BE");
-    case SND_PCM_SFMT_U16_LE:
-	return("SND_PCM_SFMT_U16_LE");
-    case SND_PCM_SFMT_U16_BE:
-	return("SND_PCM_SFMT_U16_BE");
-    case SND_PCM_SFMT_S24_LE:
-	return("SND_PCM_SFMT_S24_LE");
-    case SND_PCM_SFMT_S24_BE:
-	return("SND_PCM_SFMT_S24_BE");
-    case SND_PCM_SFMT_U24_LE:
-	return("SND_PCM_SFMT_U24_LE");
-    case SND_PCM_SFMT_U24_BE:
-	return("SND_PCM_SFMT_U24_BE");
-    case SND_PCM_SFMT_S32_LE:
-	return("SND_PCM_SFMT_S32_LE");
-    case SND_PCM_SFMT_S32_BE:
-	return("SND_PCM_SFMT_S32_BE");
-    case SND_PCM_SFMT_U32_LE:
-	return("SND_PCM_SFMT_U32_LE");
-    case SND_PCM_SFMT_U32_BE:
-	return("SND_PCM_SFMT_U32_BE");
-    case SND_PCM_SFMT_FLOAT_LE:
-	return("SND_PCM_SFMT_FLOAT_LE");
-    case SND_PCM_SFMT_FLOAT_BE:
-	return("SND_PCM_SFMT_FLOAT_BE");
-    case SND_PCM_SFMT_FLOAT64_LE:
-	return("SND_PCM_SFMT_FLOAT64_LE");
-    case SND_PCM_SFMT_FLOAT64_BE:
-	return("SND_PCM_SFMT_FLOAT64_BE");
-    case SND_PCM_SFMT_IEC958_SUBFRAME_LE:
-	return("SND_PCM_SFMT_IEC958_SUBFRAME_LE");
-    case SND_PCM_SFMT_IEC958_SUBFRAME_BE:
-	return("SND_PCM_SFMT_IEC958_SUBFRAME_BE");
-    case SND_PCM_SFMT_MU_LAW:
-	return("SND_PCM_SFMT_MU_LAW");
-    case SND_PCM_SFMT_A_LAW:
-	return("SND_PCM_SFMT_A_LAW");
-    case SND_PCM_SFMT_IMA_ADPCM:
-	return("SND_PCM_SFMT_IMA_ADPCM");
-    case SND_PCM_SFMT_MPEG:
-	return("SND_PCM_SFMT_MPEG");
-    case SND_PCM_SFMT_GSM:
-	return("SND_PCM_SFMT_GSM");
-    case SND_PCM_SFMT_SPECIAL:
-	return("SND_PCM_SFMT_SPECIAL");
-    default:
-	return("[undefined]");
-    }
-}
-
-#endif
-
 /* convert a sndlib sample format to an alsa sample format */
 
-#if ALSA_5
-  static int to_alsa_format(int snd_format)
-#else /* ALSA_9 */
-  static snd_pcm_format_t to_alsa_format(int snd_format)
-#endif
+static snd_pcm_format_t to_alsa_format(int snd_format)
 {
     switch (snd_format) {
     case MUS_BYTE: 
@@ -4028,11 +3829,7 @@ static const char *decode_alsa_format(int format)
     case MUS_LDOUBLE: 
 	return(SND_PCM_FORMAT_FLOAT64_LE); 
     }
-#if ALSA_5
-    return(MUS_ERROR);
-#else
     return((snd_pcm_format_t)MUS_ERROR);
-#endif
 }
 
 /* FIXME: this is not taking yet into account the 
@@ -4107,11 +3904,7 @@ static int to_mus_format(int alsa_format)
  * how do we specify that???
  */
 
-#if ALSA_5
-  static int to_alsa_device(int dev, int *adev, int *achan)
-#else /* ALSA_9 */
-  static int to_alsa_device(int dev, int *adev, snd_pcm_stream_t *achan)
-#endif
+static int to_alsa_device(int dev, int *adev, snd_pcm_stream_t *achan)
 {
     switch(dev) {
 	/* default values are a problem because the concept does
@@ -4247,504 +4040,6 @@ static char *alsa_mus_audio_moniker(void)
   return(version_name);
 }
 
-#if ALSA_5
-
-/* return the name of a given system */
-
-static char *alsa_mus_audio_system_name(int system) 
-{
-    if (card_info[system].info!=NULL) {
-	return(card_info[system].info->name);
-    } else {
-	return("");
-    }
-}
-
-/* count the soundcards and store their hardware information  */
-
-static int alsa_mus_audio_initialize(void) 
-{
-    device_info_t **dev_info;
-    snd_pcm_info_t pcminfo;
-    snd_ctl_t *handle;
-    int card, dev, err;
-    unsigned int mask;
-
-    if (audio_initialized) {
-	return(0);
-    }
-    /* set the process schedulling policy to real-time SCHED_FIFO */
-    set_priority();
-    /* initialize function pointers for normal or plugin calls */
-    alsa_initialize_functions();
-    /* allocate various things */
-    dev_name = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
-    /* scan for soundcards */
-    mask = snd_cards_mask();
-    if (!mask) {
-	return(0);
-    }
-    for (card = 0; card < SND_CARDS; card++) {
-	if (mask & (1<<card)) {
-	    if ((err = snd_ctl_open(&handle, card))<0) {
-		mus_print("%s: snd_ctl_open[%d]: %s", 
-			  __FUNCTION__, card, snd_strerror(err));
-		continue;
-	    }
-	    if (card_info[card].info==NULL) {
-		card_info[card].info=(snd_ctl_hw_info_t*)CALLOC(1, sizeof(snd_ctl_hw_info_t));
-	    }
-	    if ((err = snd_ctl_hw_info(handle, card_info[card].info))<0) {
-		mus_print("%s: snd_ctl_hw_info[%d]: %s", 
-			  __FUNCTION__, card, snd_strerror(err));
-		snd_ctl_close(handle);
-		continue;
-	    }
-	    dev_info=&device_info[card];
-	    for (dev = 0; dev < card_info[card].info->pcmdevs; dev++) {
-		/* get information for the soundcard */
-		if ((err = snd_ctl_pcm_info(handle, dev, &pcminfo)) < 0) {
-		    mus_print("%s: snd_ctl_pcm_info[%d:%d]: %s", 
-			      __FUNCTION__, card, dev, snd_strerror(err));
-		    continue;
-		}
-		/* get information for the pcm playback devices */
-		if (pcminfo.flags & SND_PCM_INFO_PLAYBACK) {
-		    snd_pcm_t *dhandle;
-		    if ((err = snd_pcm_open(&dhandle, card, dev, SND_PCM_OPEN_PLAYBACK))!=0) {
-			mus_print("%s: snd_pcm_open[%d:%d:playback]: %s", 
-				  __FUNCTION__, card, dev, snd_strerror(err));
-		    } else {
-			if(*dev_info==NULL) {
-			    (*dev_info) =(device_info_t*)CALLOC(1, sizeof(device_info_t));
-			}
-			(*dev_info)->device = dev;
-			(*dev_info)->channel = SND_PCM_STREAM_PLAYBACK;
-			(*dev_info)->info.channel = SND_PCM_STREAM_PLAYBACK;
-			if ((err = alsa_info(dhandle, &(*dev_info)->info))!=0) {
-			    mus_print("%s: snd_pcm_info[%d:%d:playback]: %s", 
-				      __FUNCTION__, card, dev, snd_strerror(err));
-			} else {			    
-			    dev_info=&(*dev_info)->next;
-			}
-			snd_pcm_close(dhandle);
-		    }
-		}
-		/* get information for the pcm capture devices */
-		if (pcminfo.flags & SND_PCM_INFO_CAPTURE) {
-		    snd_pcm_t *dhandle;
-		    if ((err = snd_pcm_open(&dhandle, card, dev, SND_PCM_OPEN_CAPTURE))!=0) {
-			mus_print("%s: snd_pcm_open[%d:%d]: %s", 
-				  __FUNCTION__, card, dev, snd_strerror(err));
-		    } else {
-			if((*dev_info) ==NULL) {
-			    (*dev_info) =(device_info_t*)CALLOC(1, sizeof(device_info_t));
-			}
-			(*dev_info)->device = dev;
-			(*dev_info)->channel = SND_PCM_STREAM_CAPTURE;
-			(*dev_info)->info.channel = SND_PCM_STREAM_CAPTURE;
-			if ((err = alsa_info(dhandle, &(*dev_info)->info))!=0) {
-			    mus_print("%s: snd_pcm_info[%d:%d:capture]: %s", 
-				      __FUNCTION__, card, dev, snd_strerror(err));
-			} else {
-			    dev_info=&(*dev_info)->next;
-			}
-			snd_pcm_close(dhandle);
-		    }
-		}
-	    }
-	    snd_ctl_close(handle);
-	    sound_cards++;
-	}
-    }
-    audio_initialized = 1;
-    return 0;
-}
-
-/* get information block for a card, device and channel */
-
-static device_info_t *alsa_get_info(int card, int device, int stream)
-{
-    device_info_t *info;
-    info = device_info[card];
-    while (info!=NULL) {
-	if (info->device==device &&
-	    info->channel==stream) {
-	    return(info);
-	    break;
-	}
-	info = info->next;
-    }
-    return(NULL);
-}
-
-/* flush and close an input or output stream */
-
-static int alsa_audio_close(int id)
-{
-    int err = 0;
-    if (alsa_trace) mus_print( "%s: %d", __FUNCTION__, id);
-    if (handles[id].handle!=NULL) {
-	snd_pcm_channel_status_t status;
-	memset(&status, 0, sizeof(status));
-	if (handles[id].playback_device!=NULL) {
-	    status.channel = SND_PCM_STREAM_PLAYBACK;
-	    if ((err = alsa_status(handles[id].handle, &status))<0) {
-		/* do these need to cleanup before possible jump? */
-		mus_error(MUS_AUDIO_CANT_CLOSE, "%s: alsa_status: %s", __FUNCTION__, snd_strerror(err)); /* ?? */
-	    } else {
-		if (status.status==SND_PCM_STATUS_RUNNING) {
-		    if ((err = alsa_flush(handles[id].handle, status.channel))<0) {
-		      mus_error(MUS_AUDIO_CANT_CLOSE, "%s: alsa_flush: %s", __FUNCTION__, snd_strerror(err)); /* ?? */
-		    }
-		}
-	    }
-	} else {
-	    status.channel = SND_PCM_STREAM_CAPTURE;
-	}
-	if ((err = snd_pcm_close(handles[id].handle))!=0) {
-	  mus_error(MUS_AUDIO_CANT_CLOSE, "%s: snd_pcm_close: %s", __FUNCTION__, snd_strerror(err)); /* ?? etc... */
-	}
-	handles[id].handle = NULL;
-	handles[id].playback_device = NULL;
-	handles[id].capture_device = NULL;
-    }
-    return(err);
-}
-
-/* open an input or output stream */
-
-static int alsa_audio_open(int card, int device)
-{
-    snd_pcm_t *handle;
-    int alsa_device;
-    int alsa_channel;
-    int err = 0;
-
-    if (alsa_trace) mus_print("%s: %d:%d", __FUNCTION__, card, device);
-    if ((err = to_alsa_device(device, &alsa_device, &alsa_channel))<0) {
-	mus_error(MUS_AUDIO_DEVICE_NOT_AVAILABLE, "%s: cannot translate device %s<%d> to alsa",
-		  __FUNCTION__, mus_audio_device_name(device), device);
-	return(MUS_ERROR);
-    }
-    if ((err = snd_pcm_open(&handle, card, alsa_device, 
-			    ((alsa_channel==SND_PCM_STREAM_PLAYBACK)?
-			     SND_PCM_OPEN_PLAYBACK:
-			     SND_PCM_OPEN_CAPTURE)))!=0) {
-	mus_error(MUS_AUDIO_CANT_OPEN, "%s: open %s<$d> card=%d adev=%d achan=%d: %s", __FUNCTION__,
-		  mus_audio_device_name(device), device, 
-		  card, alsa_device, alsa_channel, snd_strerror(err));
-    } else {
-	int i;
-	for (i = 0; i < MAX_HANDLES; i++) {
-	    if (handles[i].handle==NULL) {
-		device_info_t *info;
-		handles[i].handle = handle;
-		switch (alsa_channel) {
-		case SND_PCM_STREAM_PLAYBACK:
-		    handles[i].playback_device = alsa_get_info(card, alsa_device, alsa_channel);
-		    if (handles[i].playback_device==NULL) {
-
-		      /* have to unwind first */ /* ?? throughout -- trying to cleanup here */
-			handles[i].handle = NULL;
-			snd_pcm_close(handle);
-
-			mus_error(MUS_AUDIO_DEVICE_NOT_AVAILABLE, "%s: could not find info block for %d:%d:%d",
-				  __FUNCTION__, card, alsa_device, alsa_channel);
-			return(MUS_ERROR);
-		    }
-		    break;
-		case SND_PCM_STREAM_CAPTURE:
-		    handles[i].capture_device = alsa_get_info(card, alsa_device, alsa_channel);
-		    if (handles[i].capture_device==NULL) {
-
-			handles[i].handle = NULL;
-			snd_pcm_close(handle);
-
-			mus_error(MUS_AUDIO_DEVICE_NOT_AVAILABLE, "%s: could not find info block for %d:%d:%d",
-				  __FUNCTION__, card, alsa_device, alsa_channel);
-			return(MUS_ERROR);
-		    }
-		    break;
-		default:
-		    mus_print("%s: alsa channel %d is not playback or capture", 
-			      __FUNCTION__, alsa_channel);
-
-		}
-		return(i);
-	    }
-	}
-	mus_error(MUS_AUDIO_CANT_OPEN, "%s: ran out of handle storage space", __FUNCTION__);
-
-	if ((err = snd_pcm_close(handle))!=0) {
-	    mus_error(MUS_AUDIO_CANT_CLOSE, "%s: snd_pcm_close; %s", __FUNCTION__, snd_strerror(err));
-
-	}
-    }
-    return(MUS_ERROR);
-}
-
-/* sndlib support for opening output devices */
-
-static int alsa_mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size)
-{
-    int alsa_format, card, dev;
-    snd_pcm_channel_params_t params;
-    struct snd_pcm_channel_setup setup;
-    int id;
-    int err;
-
-    if (alsa_trace) mus_print("%s: %x rate=%d, chans=%d, format=%d:%s, size=%d", 
-			      __FUNCTION__, ur_dev, srate, chans, format, mus_audio_format_name(format), size);
-    card = MUS_AUDIO_SYSTEM(ur_dev);
-    dev = MUS_AUDIO_DEVICE(ur_dev);
-    if ((alsa_format = to_alsa_format(format)) ==-1) {
-	mus_error(MUS_AUDIO_FORMAT_NOT_AVAILABLE, "%s: could not change %s<%d> to alsa format", 
-		  __FUNCTION__, mus_audio_format_name(format), format);
-	return(MUS_ERROR);
-    }
-    if ((id = alsa_audio_open(card, dev))<0) {
-	mus_error(MUS_AUDIO_CANT_OPEN, NULL);
-	return(MUS_ERROR);
-    }
-    memset(&params, 0, sizeof(params));
-    params.channel = SND_PCM_STREAM_PLAYBACK;
-    if ((handles[id].playback_device->info.flags) & SND_PCM_CHNINFO_BLOCK) 
-        params.mode = SND_PCM_MODE_BLOCK;
-    else {
-	alsa_audio_close(id);
-	mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, "%s: block mode not available for card %d, device %d",
-		  __FUNCTION__, card, dev);
-	return(MUS_ERROR);
-    }
-    params.start_mode = SND_PCM_START_FULL;
-    params.stop_mode = stop_mode; 
-    params.buf.block.frag_size = size;
-    params.buf.block.frags_max = 3;
-    params.buf.block.frags_min = 1;
-    if ((handles[id].playback_device->info.flags) & SND_PCM_CHNINFO_INTERLEAVE) 
-      params.format.interleave = 1;
-    if ((handles[id].playback_device->info.flags) & SND_PCM_CHNINFO_NONINTERLEAVE) 
-      params.format.interleave = 0;
-    params.format.format = alsa_format;
-    params.format.rate = srate;
-    params.format.voices = chans;
-    if ((err = alsa_params (handles[id].handle, &params))!=0) {
-	alsa_audio_close(id);
-	mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, "%s: alsa_params: %s", 
-		  __FUNCTION__, snd_strerror(err));
-	return(MUS_ERROR);
-    }
-    /* FIXME: we are not checking that the buffer size actually
-     * allocated by alsa is the size we requested. It is possible
-     * that the sizes don't match. Fixing this is not easy as we
-     * don't have a way to return a new size to the sndlib caller. 
-     * Maybe the sndlib api will have to include a call to check
-     * that? Otherwise we'll need a second intermediate buffer
-     * to accumulate samples on succesive calls to write (argh!)
-     */
-    if (alsa_trace) {
-	/* report real number of fragments allocated */
-        int frags;
-	memset(&setup, 0, sizeof(setup));
-	setup.mode = SND_PCM_MODE_BLOCK;
-	setup.channel = SND_PCM_STREAM_PLAYBACK;
-	if ((err = alsa_setup(handles[id].handle, &setup))<0) {
-	    mus_print("%s: alsa_setup: %s", 
-		      __FUNCTION__, snd_strerror(err));
-	} else {
- 	    frags = setup.buf.block.frags;
-	    mus_print("%s: frags=%d, total size=%d", 
-		      __FUNCTION__, frags, frags*size);
-	}
-    }
-    if ((err = alsa_flush(handles[id].handle, SND_PCM_STREAM_PLAYBACK))<0) {
-	alsa_audio_close(id);
-	mus_error(MUS_AUDIO_CANT_OPEN, "%s: alsa_flush: %s", 
-		  __FUNCTION__, snd_strerror(err));
-	return(MUS_ERROR);
-    }
-    if ((err = alsa_prepare(handles[id].handle, params.channel))!=0) {
-	alsa_audio_close(id);
-	mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, "%s: alsa_prepare: %s", 
-		  __FUNCTION__, snd_strerror(err));
-	return(MUS_ERROR);
-    }
-    return(id);
-}
-
-/* sndlib support for opening input devices */
-
-static int alsa_mus_audio_open_input(int ur_dev, int srate, int chans, int format, int requested_size)
-{
-    int alsa_format, card, dev;
-    snd_pcm_channel_params_t params;
-    int id;
-    int err;
-
-    if (alsa_trace) mus_print( "%s: %x rate=%d, chans=%d, format=%d:%s, size=%d", 
-			       __FUNCTION__, ur_dev, srate, chans, 
-			       format, mus_audio_format_name(format), requested_size);
-    card = MUS_AUDIO_SYSTEM(ur_dev);
-    dev = MUS_AUDIO_DEVICE(ur_dev);
-    if ((alsa_format = to_alsa_format(format)) ==-1) {
-	mus_error(MUS_AUDIO_FORMAT_NOT_AVAILABLE, "%s: could not change %s<%d> to alsa format", 
-		  __FUNCTION__, mus_audio_format_name(format), format);
-	return(MUS_ERROR);
-    }
-    if ((id = alsa_audio_open(card, dev))<0) {
-	mus_error(MUS_AUDIO_CANT_OPEN, NULL);
-	return(MUS_ERROR);
-    }
-    memset(&params, 0, sizeof(params));
-    params.channel = SND_PCM_STREAM_CAPTURE;
-    if ((handles[id].capture_device->info.flags) & SND_PCM_CHNINFO_BLOCK) 
-        params.mode = SND_PCM_MODE_BLOCK;
-    else {
-	alsa_audio_close(id);
-	mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, "%s: block mode not available for card %d, device %d",
-		  __FUNCTION__, card, dev);
-	return(MUS_ERROR);
-    }
-    params.start_mode = SND_PCM_START_DATA;
-    params.stop_mode = stop_mode;
-    params.buf.block.frag_size = requested_size;
-    params.buf.block.frags_max=-1;
-    params.buf.block.frags_min = 1;
-    if ((handles[id].capture_device->info.flags) & SND_PCM_CHNINFO_INTERLEAVE) 
-      params.format.interleave = 1;
-    if ((handles[id].capture_device->info.flags) & SND_PCM_CHNINFO_NONINTERLEAVE) 
-      params.format.interleave = 0;
-    params.format.format = alsa_format;
-    params.format.rate = srate;
-    params.format.voices = chans;
-    if ((err = alsa_params(handles[id].handle, &params))!=0) {
-	alsa_audio_close(id);
-	mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, "%s: alsa_params: %s", 
-		  __FUNCTION__, snd_strerror(err));
-	return(MUS_ERROR);
-    }
-    if ((err = alsa_prepare(handles[id].handle, params.channel))!=0) {
-	alsa_audio_close(id);
-	mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, "%s: alsa_prepare; %s", 
-		  __FUNCTION__, snd_strerror(err));
-	return(MUS_ERROR);
-    }
-    if (alsa_trace) {
-        int frags;
-	struct snd_pcm_channel_setup setup;
-	memset(&setup, 0, sizeof(setup));
-	setup.mode = SND_PCM_MODE_BLOCK;
-	setup.channel = SND_PCM_STREAM_CAPTURE;
-	if ((err = alsa_setup(handles[id].handle, &setup))<0) {
-	    mus_print("%s: setup: %s", 
-		      __FUNCTION__, snd_strerror(err));
-	} else {
- 	    frags = setup.buf.block.frags;
-	    mus_print( "%s: frags=%d, total size=%d", 
-		      __FUNCTION__, frags, frags*requested_size);
-	}
-    }
-    return (id);
-}
-
-/* sndlib support for closing a device */
-
-static int alsa_mus_audio_close(int id)
-{
-    int err = 0;
-    if (alsa_trace) mus_print( "%s: %d", __FUNCTION__, id); 
-    if ((err = alsa_audio_close(id))!=0) {
-	mus_error(MUS_AUDIO_CANT_CLOSE, NULL);
-	return(MUS_ERROR);
-    }
-    return 0;
-}
-
-/* sndlib support for writing a buffer to an output device */
-
-static int underruns = 0;
-
-static int alsa_mus_audio_write(int id, char *buf, int bytes)
-{
-    int done, err;
-    snd_pcm_channel_status_t status;
-
-    if ((done = alsa_write(handles[id].handle, buf, bytes))!=bytes) {
-        /* check status to recover from and report underruns */
-        memset(&status, 0, sizeof(status));
-	status.channel = SND_PCM_STREAM_PLAYBACK;
-	if ((err = alsa_status(handles[id].handle, &status))<0) { /* ?? are these errors? if not, we should use mus_print */
-	    mus_error(MUS_AUDIO_WRITE_ERROR, "%s: status: %s", 
-		      __FUNCTION__, snd_strerror(err));
-	    return(MUS_ERROR);
-	} else {
-	    if (stop_mode!=SND_PCM_STOP_ROLLOVER) {
-	        if (status.status==SND_PCM_STATUS_UNDERRUN) {
-		    if ((err = alsa_prepare(handles[id].handle, SND_PCM_STREAM_PLAYBACK))<0) {
-		        mus_print("%s: prepare: %s", 
-				  __FUNCTION__, snd_strerror(err));
-		    }
-		}
-	    }
- 	    if (status.underrun!=0) {
-	        /* I'm sure this WILL catch all underruns */
- 	        underruns+=status.underrun;
-		if (alsa_trace) mus_print("%s: %d underruns [%d]", 
-					   __FUNCTION__, underruns, status.status);
-	    }
-	}
-    }
-    return(MUS_NO_ERROR);
-}
-
-/* sndlib support for reading a buffer from an input device */
-
-static int alsa_mus_audio_read(int id, char *buf, int bytes)
-{
-  snd_pcm_channel_status_t status;
-    int done, err;
-
-    if ((done = alsa_read(handles[id].handle, buf, bytes))<0) {
-	if (done==-EPIPE) {
-	    memset(&status, 0, sizeof(status));
-	    status.channel = SND_PCM_STREAM_CAPTURE;
-	    if ((err = alsa_status(handles[id].handle, &status))<0) {
-		mus_error(MUS_AUDIO_READ_ERROR, "%s: status: %s", 
-			  __FUNCTION__, snd_strerror(err));
-		return(MUS_ERROR);
-	    }
-	    if (status.status==SND_PCM_STATUS_RUNNING) {
-	        if (alsa_trace)
-		    mus_print("%s: driver is waiting for data", 
-			      __FUNCTION__);
-		return(MUS_NO_ERROR);
-	    }
-	    if (status.status==SND_PCM_STATUS_OVERRUN) {
-		if (alsa_trace) {
-		    mus_print( "%s: overrun at position %u", 
-			      __FUNCTION__,
-			      status.scount);
-		}
-		if ((err = alsa_prepare(handles[id].handle, SND_PCM_STREAM_CAPTURE))<0) {
-		    mus_error(MUS_AUDIO_READ_ERROR, "%s: prepare: %s", 
-			      __FUNCTION__, snd_strerror(err));
-		    return(MUS_ERROR);
-		}
-		return(MUS_NO_ERROR);
-	    }
-	    mus_error(MUS_AUDIO_READ_ERROR, "%s: %s <%d>", 
-		      __FUNCTION__, snd_strerror(done), done);
-	    return(MUS_ERROR);
-	} else {
-	    mus_print("%s[%d bytes=%d]: %s <%d>", 
-		      __FUNCTION__, id, bytes, snd_strerror(done), done);
-	}
-    }
-    return(MUS_NO_ERROR);
-}
-
-#else /* ALSA_9 */
 
 /* handles for both directions of the virtual device */
 
@@ -5375,8 +4670,6 @@ static int alsa_mus_audio_read(int id, char *buf, int bytes)
     return(MUS_NO_ERROR);
 }
 
-#endif
-
 /* read state of the audio hardware */
 
 static int alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
@@ -5384,12 +4677,7 @@ static int alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val
     int card;
     int device;
     int alsa_device;
-#if ALSA_5
-    int alsa_stream;
-    device_info_t *info;
-#else
     snd_pcm_stream_t alsa_stream;
-#endif
     int i, f, err;
     int channels;
 
@@ -5409,30 +4697,6 @@ static int alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val
      * before trying to map the device to an alsa device */
 
     if (field==MUS_AUDIO_PORT) {
-#if ALSA_5
-	/* FIXME: this appears to fail for devices that are configured to
-	 * load but are not found when the sound driver starts, even
-	 * though there are other devices, nothing is returned */
-	int count = 0;
-	int dev;
- 	info = device_info[card];
-	while (info!=NULL) {
-	    dev = to_sndlib_device(info->device, info->channel);
-	    if (dev!=-1) {
-		if (info->info.max_rate > 9000) {
-		    /* Hack Alert!
-		     * we ignore all input devices with less than decent srate,
-		     * this is too ignore extra devices like the one offered by
-		     * the sound blaster live 0.5 driver...
-		     */
-		    val[count+1] =(float)dev;
-		    if (count++>chan) break;
-		}
-	    }
-	    info = info->next;
-	}
-	val[0] = count;
-#else
 	/* under 0.9 we only advertise at most two devices, one for playback 
 	   and another one for capture */
 	int dev; 
@@ -5444,7 +4708,6 @@ static int alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val
 	    val[i++] = (float)to_sndlib_device(0, SND_PCM_STREAM_CAPTURE);
 	}
 	val[0]=(float)(i-1);
-#endif
 	return(MUS_NO_ERROR);
     }
     /* map the mus device to an alsa device and channel */
@@ -5468,18 +4731,6 @@ static int alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val
 	break;
     case MUS_AUDIO_SAMPLES_PER_CHANNEL: 
 	/* samples per channel */
-#if ALSA_5
-	if ((info = alsa_get_info(card, alsa_device, alsa_stream)) ==NULL) {
-	    mus_error(MUS_AUDIO_CANT_READ, NULL);
-	    return(MUS_ERROR);
-	} else {
-	    val[0] = alsa_samples_per_channel;
-	    if (chan > 1) {
-	        val[1] = info->info.min_fragment_size; 
-		val[2] = info->info.max_fragment_size; 
-	    }
-	}
-#else
 	if (card>0 || alsa_device>0) {
 	    mus_error(MUS_AUDIO_CANT_READ, NULL);
 	    return(MUS_ERROR);
@@ -5490,22 +4741,9 @@ static int alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val
 		val[2] = (float)snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[alsa_stream]); 
 	    }
 	}
-#endif
 	break;
     case MUS_AUDIO_CHANNEL: 
 	/* number of channels */
-#if ALSA_5
-	if ((info = alsa_get_info(card, alsa_device, alsa_stream)) ==NULL) {
-	    mus_error(MUS_AUDIO_CANT_READ, NULL);
-	    return(MUS_ERROR);
-	} else {
-	    val[0] = info->info.max_voices; 
-	    if (chan > 1) {
-	        val[1] = info->info.min_voices; 
-		val[2] = info->info.max_voices; 
-	    }
-	}
-#else
 	if (card>0 || alsa_device>0) {
 	    mus_error(MUS_AUDIO_CANT_READ, NULL);
 	    return(MUS_ERROR);
@@ -5529,22 +4767,9 @@ static int alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val
 		val[2] = (float)max_channels;
 	    }
 	}
-#endif
 	break;
     case MUS_AUDIO_SRATE: 
 	/* supported sample rates */
-#if ALSA_5
-	if ((info = alsa_get_info(card, alsa_device, alsa_stream)) ==NULL) {
-	    mus_error(MUS_AUDIO_CANT_READ, NULL);
-	    return(MUS_ERROR);
-	} else {
-	    val[0] = 44100;
-	    if (chan > 1) {
-	        val[1] = info->info.min_rate; 
-		val[2] = info->info.max_rate; 
-	    }
-	}
-#else
 	if (card>0 || alsa_device>0) {
 	    mus_error(MUS_AUDIO_CANT_READ, NULL);
 	    return(MUS_ERROR);
@@ -5556,27 +4781,9 @@ static int alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val
 		val[2] = (float)snd_pcm_hw_params_get_rate_max(alsa_hw_params[alsa_stream], &dir); 
 	    }
 	}
-#endif
 	break;
     case MUS_AUDIO_FORMAT:
 	/* supported formats */
-#if ALSA_5
-	if ((info = alsa_get_info(card, alsa_device, alsa_stream)) ==NULL) {
-	    mus_error(MUS_AUDIO_CANT_READ, NULL);
-	    return(MUS_ERROR);
-	} else {
-	    for (i = 0, f = 1; i < 32; i++) {
-		if (info->info.formats & (1<<i)) {
-		    if (f < chan && (to_mus_format(i)!=MUS_ERROR)) {
-			val[f++] = (float)to_mus_format(i);
-			/* FIXME: what if chan is not big enough? We end
-			 * up not reporting all formats with no error */
-		    }
-		}
-	    }
-	    val[0] = f-1;
-	}
-#else
 	if (card>0 || alsa_device>0) {
 	    mus_error(MUS_AUDIO_CANT_READ, NULL);
 	    return(MUS_ERROR);
@@ -5595,19 +4802,9 @@ static int alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val
 	    }
 	    val[0] = f-1;
 	}
-#endif
 	break;                
     case MUS_AUDIO_DIRECTION: 
 	/* direction of this device */
-#if ALSA_5
-	if ((info = alsa_get_info(card, alsa_device, alsa_stream)) ==NULL) {
-	    mus_error(MUS_AUDIO_CANT_READ, NULL);
-	    return(MUS_ERROR);
-	} else {
-	    /* 0-->playback, 1-->capture */
-	    val[0] = alsa_stream;
-	}
-#else
 	if (card>0 || alsa_device>0) {
 	    mus_error(MUS_AUDIO_CANT_READ, NULL);
 	    return(MUS_ERROR);
@@ -5615,7 +4812,6 @@ static int alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val
 	    /* 0-->playback, 1-->capture */
 	    val[0] = (float)alsa_stream;
 	}
-#endif
 	break;
     default: 
 	mus_error(MUS_AUDIO_CANT_READ, NULL);
@@ -5645,168 +4841,6 @@ static void alsa_mus_audio_mixer_save(const char* file)
 static void alsa_mus_audio_mixer_restore(const char* file)
 {
 }
-
-#if ALSA_5
-
-static void alsa_describe_audio_state_1(void)
-{
-    snd_ctl_t *handle;
-    int card, err, dev, idx, i;
-    unsigned int mask;
-    struct snd_ctl_hw_info info;
-    snd_pcm_info_t pcminfo;
-    snd_pcm_channel_info_t strinfo;
-
-    mask = snd_cards_mask();
-    if (!mask) {
-	mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "no soundcards found...\n");
-	pprint(audio_strbuf);
-	return;
-    }
-    for (card = 0; card < SND_CARDS; card++) {
-	if (!(mask & (1 << card)))
-	    continue;
-	if ((err = snd_ctl_open(&handle, card))<0) {
-	    mus_print(" %s: snd_ctl_open[%d]: %s", 
-		      __FUNCTION__, card, snd_strerror(err));
-	    continue;
-	}
-	if ((err = snd_ctl_hw_info(handle, &info)) < 0) {
-	    mus_print("%s: snd_ctl_hw_info: %s", 
-		      __FUNCTION__, card, snd_strerror(err));
-	    snd_ctl_close(handle);
-	    continue;
-	}
-	for (dev = 0; dev < info.pcmdevs; dev++) {
-	    if ((err = snd_ctl_pcm_info(handle, dev, &pcminfo)) < 0) {
-		mus_print( "%s: snd_ctl_pcm_info[%d:%d]: %s", 
-			  __FUNCTION__, card, dev, snd_strerror(err));
-		continue;
-	    }
-	    mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "Device %s: %i [%s] / #%i: %s\n",
-		    info.name, card+1, info.id, dev, pcminfo.name);
-	    pprint(audio_strbuf);
-	    mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "  Directions: %s%s%s\n",
-		    pcminfo.flags & SND_PCM_INFO_PLAYBACK ? "playback " : "",
-		    pcminfo.flags & SND_PCM_INFO_CAPTURE ? "capture " : "",
-		    pcminfo.flags & SND_PCM_INFO_DUPLEX ? "duplex " : "");
-	    pprint(audio_strbuf);
-	    mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "  Playback subdevices: %i\n", pcminfo.playback + 1);
-	    pprint(audio_strbuf);
-	    if (pcminfo.flags & SND_PCM_INFO_PLAYBACK) {
-		/* get hardware information for playback device */
-		snd_pcm_t *dhandle;
-		snd_pcm_channel_info_t dev_info;
-		snd_pcm_channel_params_t dev_params;
-		if ((err = snd_pcm_open(&dhandle, card, dev, SND_PCM_OPEN_PLAYBACK))!=0) {
-		    mus_print( "%s: open[%d:%d]: %s", 
-			      __FUNCTION__, card, dev, snd_strerror(err));
-		} else {
-		    memset(&dev_info, 0, sizeof(dev_info));
-		    dev_info.channel = SND_PCM_STREAM_PLAYBACK;
-		    if ((err = alsa_info(dhandle, &dev_info))!=0) {
-			mus_print( "%s: snd_pcm_plugin_info: %s", 
-				  __FUNCTION__, snd_strerror(err));
-		    } else {
-			mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "  Playback: formats=%d rates=%d frag-size=%d-%d\n", 
-				dev_info.formats, dev_info.rates, 
-				dev_info.min_fragment_size, dev_info.max_fragment_size);
-			pprint(audio_strbuf);
-			mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "            rate=%d-%d channels=%d-%d\n", 
-				dev_info.min_rate, dev_info.max_rate, 
-				dev_info.min_voices, dev_info.max_voices);
-			pprint(audio_strbuf);
-			for (i = 0; i < 32; i++) {
-			    if (dev_info.formats & (1<<i)) {
-				mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "              format %s -> %s\n",
-					decode_alsa_format(i),
-					mus_audio_format_name(to_mus_format(i)));
-				pprint(audio_strbuf);
-			    }
-			}
-			/* list associated mixer element - hum, not very useful info */
-			if (snd_mixer_element_has_info(&(dev_info.mixer_eid))) {
-			    mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "  Associated mixer element #%i: %i\n", 
-				    dev_info.mixer_eid, dev_info.mixer_device);
-			    pprint(audio_strbuf);
-			    mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "    name=%s index=%i type=%i\n", 
-				    dev_info.mixer_eid.name, dev_info.mixer_eid.index,  dev_info.mixer_eid.type);
-			    pprint(audio_strbuf);
-			}		    
-		    }
-		    snd_pcm_close(dhandle);
-		}
-	    }
-	    if (pcminfo.flags & SND_PCM_INFO_PLAYBACK) {
-		/* list available subdevices */
-		for (idx = 0; idx <= pcminfo.playback; idx++) {
-		    memset(&strinfo, 0, sizeof(strinfo));
-		    strinfo.channel = SND_PCM_STREAM_PLAYBACK;
-		    if ((err = snd_ctl_pcm_channel_info(handle, dev, SND_PCM_STREAM_PLAYBACK, idx, &strinfo))<0) {
-			mus_print( "%s: snd_ctl_pcm_channel_info[%i]: %s", 
-				  __FUNCTION__, card, snd_strerror(err));
-		    } else {
-			mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "  Playback subdevice #%i: %s\n", idx, strinfo.subname);
-			pprint(audio_strbuf);
-		    }
-		}
-	    }
-
-	    mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "  Capture subdevices: %i\n", pcminfo.capture + 1);
-	    pprint(audio_strbuf);
-	    if (pcminfo.flags & SND_PCM_INFO_CAPTURE) {
-		/* get hardware information for capture device */
-		snd_pcm_t *dhandle;
-		snd_pcm_channel_info_t dev_info;
-		snd_pcm_channel_params_t dev_params;
-		if ((err = snd_pcm_open(&dhandle, card, dev, SND_PCM_OPEN_CAPTURE))!=0) {
-		    mus_print("%s: open[%d:%d]: %s", __FUNCTION__, card, dev, snd_strerror(err));
-		} else {
-		    memset(&dev_info, 0, sizeof(dev_info));
-		    dev_info.channel = SND_PCM_STREAM_CAPTURE;
-		    if ((err = alsa_info(dhandle, &dev_info))!=0) {
-			mus_error(MUS_AUDIO_CANT_OPEN, "%s: snd_pcm_plugin_info: %s", __FUNCTION__, snd_strerror(err));
-		    } else {
-			mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "  Capture: formats=%d rates=%d frag-size=%d-%d\n", 
-				dev_info.formats, dev_info.rates, 
-				dev_info.min_fragment_size, dev_info.max_fragment_size);
-			pprint(audio_strbuf);
-			mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "           rate=%d-%d channels=%d-%d\n", 
-				dev_info.min_rate, dev_info.max_rate, 
-				dev_info.min_voices, dev_info.max_voices);
-			pprint(audio_strbuf);
-			for (i = 0; i < 32; i++) {
-			    if (dev_info.formats & (1<<i)) {
-				mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "             format %s -> %s\n",
-					decode_alsa_format(i),
-					mus_audio_format_name(to_mus_format(i)));
-				pprint(audio_strbuf);
-			    }
-			}
-		    }
-		    snd_pcm_close(dhandle);
-		}
-	    }
-	    if (pcminfo.flags & SND_PCM_INFO_CAPTURE) {
-		/* list available subdevices */
-		for (idx = 0; idx <= pcminfo.capture; idx++) {
-		    memset(&strinfo, 0, sizeof(strinfo));
-		    strinfo.channel = SND_PCM_STREAM_CAPTURE;
-		    if ((err = snd_ctl_pcm_channel_info(handle, dev, SND_PCM_STREAM_CAPTURE, 0, &strinfo)) < 0) {
-			mus_print( "%s: snd_ctl_pcm_channel_info[%i]: %s", 
-				  __FUNCTION__, card, snd_strerror(err));
-		    } else {
-			mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "  Capture subdevice #%i: %s\n", idx, strinfo.subname);
-			pprint(audio_strbuf);
-		    }
-		}
-	    }
-	}
-	snd_ctl_close(handle);
-    }
-}
-
-#else /* ALSA_9 */
 
 static void alsa_describe_audio_state_1(void)
 {
@@ -5842,8 +4876,6 @@ static void alsa_describe_audio_state_1(void)
 	snd_output_close(buf);
     }
 }
-
-#endif
 	   
 #endif /* HAVE_ALSA */
 

@@ -422,6 +422,7 @@ static void display_sound_file_entry(FILE *fp, const char *name, sound_file *sf)
   int i, lim;
   time_t date;
   char timestr[64];
+  char *comment;
 #ifndef MPW_C
   date = sf->write_date;
   if (date != 0)
@@ -468,6 +469,16 @@ static void display_sound_file_entry(FILE *fp, const char *name, sound_file *sf)
 	    }
 	}
     }
+  if (mus_file_probe(name))
+    {
+      comment = mus_sound_comment(name);
+      if (comment)
+	{
+	  fprintf(fp, "\n      comment: %s", comment);
+	  FREE(comment);
+	}
+    }
+  else fprintf(fp, " [defunct]");
   fprintf(fp, "\n");
 }
 
@@ -482,7 +493,7 @@ void mus_sound_report_cache(FILE *fp)
       sf = sound_table[i];
       if (sf) 
 	{
-	  display_sound_file_entry(fp, sf->file_name, sound_table[i]);
+	  display_sound_file_entry(fp, sf->file_name, sf);
 	  entries++;
 	}
     }

@@ -276,7 +276,7 @@ the cursor is moved to the clicked point.
     <li>easily-fooled autocorrelation-based pitch tracker 
     <li>zero-phase, rotate-phase
     <li>asyfm
-    <li>cosine-summation
+    <li>cosine-summation, legendre-summation
   </ul>
 
 <p>These are DSP-related procedures that aren't closely tied to CLM.
@@ -301,6 +301,7 @@ the cursor is moved to the clicked point.
   <em class=def><A NAME="zerophase">zero-phase, rotate-phase</a></em>
   <em class=def><A NAME="asyfm">both forms of asymmetric-fm</a></em>
   <em class=def><a name="cosinesummation">cosine-summation</a></em>
+  <em class=def><a name="legendresummation">legendre-summation</a></em>
 </pre>
 
 <p><i>dolph</i> is the Dolph-Chebyshev fft data window, taken
@@ -369,7 +370,10 @@ the moving formant idea mentioned in the original article.
 the generating formula is much simpler, but the result is basically the same.  This
 could also be viewed as a version of the sum-of-cosines generator, giving control
 on the ratio between successive cosines in the sum (i.e. the "r" parameter in
-sine-summation, applied within the sum-of-cosines output).
+sine-summation, applied within the sum-of-cosines output).  <i>legendre-summation</i>
+uses the sum-of-cosines generator to produce a band-limited pulse-train whose
+cosine components have a decreasing amplitude (as if it were a sum of Lengendre
+Polynomials driven by a cosine).
 </p>
 
 <A NAME="editmenudoc"></a><span class=box><h2>edit-menu.scm</h2></span>

@@ -275,6 +275,9 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+24-Mar:  removed ALSA 0.5 support.\n\
+         cosine-summation, legendre-summation in dsp.scm.\n\
+         mus-sound-forget and mus-sound-prune bindings.\n\
 18-Mar:  squelch-vowels in examp.scm (and ramp gen).\n\
 13-Mar:  snd 5.8.\n\
 12-Mar:  header editor bugfix (thanks to Ludger Brummer).\n\
@@ -282,8 +285,6 @@ void news_help(snd_state *ss)
 28-Feb:  edit-position bugfix (thanks to Ludger Brummer).\n\
 27-Feb:  color-scale bugfix (thanks to Anders Vinjar).\n\
 25-Feb:  gtk2 port with xg (see example in grfsnd.html).\n\
-11-Feb:  snd 5.7.\n\
-         xg.c (gtk2 bindings), makexg.scm, xgdata.scm.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
