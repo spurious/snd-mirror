@@ -1267,6 +1267,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
       (let ((sum 0.0)
 	    (t 1.0)
 	    (m (expt z w)))
+	;; -w?? there seems to be confusion here -- slowzt.cc in the fxt package uses +w
 	(do ((k 0 (1+ k)))
 	    ((= k n))
 	  (set! sum (+ sum (* (vct-ref f k) t)))
@@ -1551,10 +1552,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; TODO: auto-detect main freq so ssb-bank can work semi-automatically (bw/pairs choices also automated)
 ;;; TODO: freq env to add (or remove) pitch fluctuations [if pitch follower, this could be automated]
 ;;; TODO: hz->radians should be smart (or someone should) about srates
-;;; TODO: should some form of ssb-bank be moved into CLM?
 ;;; TODO: a channel (regularized) version of ssb-bank -- repitch-channel? (+ retime or whatever)
 ;;; TODO: a realtime interface to this -- a slider for pitch/bw etc
-;;; TODO: run support for complex data? (what about generators?)
 
 #!
 (define* (repitch-sound old-freq new-freq)
@@ -1587,3 +1586,18 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 (car1 (oscil (list-ref gen 3) mod1)))
     (+ (* am0 car0)
        (* am1 car1))))
+
+
+;;; if all we want are asymmetric fm-generated spectra, we can just add 2 fm oscil pairs:
+
+(define (make-fm2 f1 f2 f3 f4 p1 p2 p3 p4)
+  ;; (make-fm2 1000 100 1000 100  0 0  (* 0.5 pi) (* 0.5 pi))
+  ;; (make-fm2 1000 100 1000 100  0 0  0 (* 0.5 pi))
+  (list (make-oscil f1 p1)
+	(make-oscil f2 p2)
+	(make-oscil f3 p3)
+	(make-oscil f4 p4)))
+
+(define (fm2 gen index)
+  (* .25 (+ (oscil (list-ref gen 0) (* index (oscil (list-ref gen 1))))
+	    (oscil (list-ref gen 2) (* index (oscil (list-ref gen 3)))))))

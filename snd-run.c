@@ -1272,7 +1272,9 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
   bool local_var;
   if (var)
     {
-      /* fprintf(stderr, "free var %s %s (global: %d, unclean: %d)\n", var->name, type_name(var->v->type), var->global, var->unclean); */
+      /* fprintf(stderr, "free var %s %s (global: %d, unclean: %d, opt: %d)\n", 
+	 var->name, type_name(var->v->type), var->global, var->unclean, current_optimization);
+      */
       /* if var->global, reflect new value into outer level version of the variable upon quit */
       if ((var->global) &&
 	  (var->unclean))
@@ -2783,10 +2785,15 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
 			{
 			  if (strcmp(type, "real") == 0) 
 			    arg_type = R_FLOAT; 
-			  else arg_type = default_arg_type;
+			  else /* arg_type = default_arg_type; */
+			    return(mus_format("unknown type in declare: %s in %s", type, XEN_AS_STRING(XEN_CADDR(form))));
 			}
 		    }
 		}
+	      else return(mus_format("unrecognized arg in declare: %s (for %s?) in %s", 
+				     XEN_AS_STRING(XEN_CAR(declaration)), 
+				     XEN_AS_STRING(arg), 
+				     XEN_AS_STRING(XEN_CADDR(form))));
 	    }
 	  else
 	    {
@@ -7617,6 +7624,16 @@ GEN_P(input)
 GEN_P(output)
 
 
+static char *descr_close_0(int *args, ptree *pt)
+{
+  return(mus_format( INT_PT " = mus-close(" CLM_PT , args[0], INT_RESULT, args[1], DESC_CLM_ARG_1));
+}
+static void close_0(int *args, ptree *pt) {INT_RESULT = mus_close_file(CLM_ARG_1);}
+static xen_value *mus_close_0(ptree *prog, xen_value **args, int num_args)
+{
+  return(package(prog, R_INT, close_0, descr_close_0, args, 1));
+}
+
 static char *descr_set_formant_radius_and_frequency_2f(int *args, ptree *pt) 
 {
   return(descr_gen(args, pt, S_mus_set_formant_radius_and_frequency, 2));
@@ -8077,7 +8094,7 @@ static char *descr_buffer_to_frame_1b(int *args, ptree *pt)
 {
   return(mus_format( CLM_PT " = buffer->frame(" CLM_PT ")", args[0], DESC_CLM_RESULT, args[1], DESC_CLM_ARG_1));
 }
-static void buffer_to_frame_1b(int *args, ptree *pt) {CLM_RESULT = mus_buffer_to_frame(CLM_ARG_1, NULL);}
+static void buffer_to_frame_1b(int *args, ptree *pt) {CLM_RESULT = mus_buffer_to_frame(CLM_ARG_1, mus_make_frame(1));}
 static char *descr_buffer_to_frame_2b(int *args, ptree *pt) 
 {
   return(mus_format( CLM_PT " = buffer->frame(" CLM_PT ", " CLM_PT ")", 
@@ -8885,7 +8902,7 @@ static xen_value *cadadr_1(ptree *prog, xen_value **args, int num_args) {return(
 static xen_value *caddar_1(ptree *prog, xen_value **args, int num_args) {return(unwrap_xen_object(prog, XEN_CADDAR(get_lst(prog, args)), "caddar"));}
 static xen_value *cadddr_1(ptree *prog, xen_value **args, int num_args) {return(unwrap_xen_object(prog, XEN_CADDDR(get_lst(prog, args)), "cadddr"));}
 
-static xen_value *cdr_1(ptree *prog, xen_value **args, int num_args) {return(unwrap_xen_object(prog, XEN_CDR(get_lst(prog, args)), "car"));}
+static xen_value *cdr_1(ptree *prog, xen_value **args, int num_args) {return(unwrap_xen_object(prog, XEN_CDR(get_lst(prog, args)), "cdr"));}
 
 static xen_value *list_length_1(ptree *prog, xen_value **args, int num_args) 
 {
@@ -8927,6 +8944,7 @@ static bool xenable(xen_value *v)
     {
     case R_FLOAT: case R_INT: case R_CHAR: case R_STRING: case R_BOOL:
     case R_LIST: case R_PAIR: case R_FLOAT_VECTOR: case R_VCT: case R_SOUND_DATA: case R_KEYWORD: case R_SYMBOL:
+    case R_XCLM: case R_CLM:
       return(true);
       break;
     default:
@@ -8938,8 +8956,10 @@ static bool xenable(xen_value *v)
 
 static XEN xen_value_to_xen(ptree *pt, xen_value *v)
 {
-  vct *vc;
   XEN val = XEN_UNDEFINED;
+  /*
+  fprintf(stderr,"xen_value_to_xen: %s %s\n", type_name(v->type), describe_xen_value(v, pt));
+  */
   switch (v->type)
     {
     case R_FLOAT:   val = C_TO_XEN_DOUBLE(pt->dbls[v->addr]); break;
@@ -8947,14 +8967,28 @@ static XEN xen_value_to_xen(ptree *pt, xen_value *v)
     case R_CHAR:    val = C_TO_XEN_CHAR((char)(pt->ints[v->addr])); break;
     case R_STRING:  val = C_TO_XEN_STRING(pt->strs[v->addr]); break;
     case R_BOOL:    return(C_TO_XEN_BOOLEAN(pt->ints[v->addr])); break;
+    case R_XCLM:
     case R_SYMBOL:
     case R_KEYWORD:
     case R_LIST:    
     case R_PAIR:    val = pt->xens[v->addr]; break;
     case R_FLOAT_VECTOR:
     case R_VCT:
-      vc = pt->vcts[v->addr];
-      val = make_vct_wrapper(vc->length, vc->data);
+      {
+	vct *vc;
+	vc = pt->vcts[v->addr];
+	val = make_vct_wrapper(vc->length, vc->data);
+      }
+      break;
+    case R_SOUND_DATA:
+      {
+	sound_data *sd;
+	sd = pt->sds[v->addr];
+	val = wrap_sound_data(sd->chans, sd->length, sd->data);
+      }
+      break;
+    case R_CLM:
+      val = mus_wrap_generator(pt->clms[v->addr]);
       break;
     default:
       if (v->type > R_ANY)
@@ -8966,6 +9000,7 @@ static XEN xen_value_to_xen(ptree *pt, xen_value *v)
       add_loc_to_protected_list(pt, snd_protect(val));
       return(val);
     }
+  /* TODO: add other types here (sound data and clm for example) */
   return(XEN_FALSE);
 }
 
@@ -9227,7 +9262,7 @@ static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, boo
 	  {
 	    char *xv;
 	    xv = describe_xen_value(args[i], prog);
-	    run_warn("can't handle %s as arg (%d) to %s", xv, i, (is_format) ? "format" : "clm-print");
+	    run_warn("can't handle %s as arg %d to %s", xv, i, (is_format) ? "format" : "clm-print");
 	    FREE(xv);
 	    return(NULL);
 	  }
@@ -9323,23 +9358,26 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
   /*
   fprintf(stderr, "xen to addr: %s %d %d\n", XEN_AS_STRING(arg), type, addr);
   */
+  if ((xen_to_run_type(arg) != type) &&
+      ((!(XEN_NUMBER_P(arg))) || ((type != R_FLOAT) && (type != R_INT))))
+    XEN_WRONG_TYPE_ARG_ERROR("run", 0, arg, type_name(type));
   switch (type)
     {
-    case R_FLOAT:   pt->dbls[addr] = (Double)XEN_TO_C_DOUBLE(arg);        break;
-    case R_INT:     pt->ints[addr] = R_XEN_TO_C_INT(arg);                break;
-    case R_CHAR:    pt->ints[addr] = (Int)XEN_TO_C_CHAR(arg);            break;
-    case R_BOOL:    pt->ints[addr] = (Int)XEN_TO_C_BOOLEAN(arg);         break;
-    case R_VCT:     pt->vcts[addr] = get_vct(arg);                       break;
-    case R_SOUND_DATA: pt->sds[addr] = (sound_data *)XEN_OBJECT_REF(arg); break;
-    case R_CLM:     pt->clms[addr] = XEN_TO_MUS_ANY(arg);                break;
-    case R_READER:  pt->readers[addr] = get_sf(arg);                     break;
-    case R_MIX_READER: pt->mix_readers[addr] = get_mf(arg);              break;
-    case R_TRACK_READER: pt->track_readers[addr] = get_tf(arg);          break;
+    case R_FLOAT:        pt->dbls[addr] = (Double)XEN_TO_C_DOUBLE(arg);     break;
+    case R_INT:          pt->ints[addr] = R_XEN_TO_C_INT(arg);              break;
+    case R_CHAR:         pt->ints[addr] = (Int)XEN_TO_C_CHAR(arg);          break;
+    case R_BOOL:         pt->ints[addr] = (Int)XEN_TO_C_BOOLEAN(arg);       break;
+    case R_VCT:          pt->vcts[addr] = get_vct(arg);                     break;
+    case R_SOUND_DATA:   pt->sds[addr] = (sound_data *)XEN_OBJECT_REF(arg); break;
+    case R_CLM:          pt->clms[addr] = XEN_TO_MUS_ANY(arg);              break;
+    case R_READER:       pt->readers[addr] = get_sf(arg);                   break;
+    case R_MIX_READER:   pt->mix_readers[addr] = get_mf(arg);               break;
+    case R_TRACK_READER: pt->track_readers[addr] = get_tf(arg);             break;
     case R_SYMBOL:
     case R_KEYWORD:
     case R_LIST:
-    case R_PAIR:    pt->xens[addr] = arg;                                break;
-    case R_STRING:  pt->strs[addr] = copy_string(XEN_TO_C_STRING(arg));  break;
+    case R_PAIR:         pt->xens[addr] = arg;                               break;
+    case R_STRING:       pt->strs[addr] = copy_string(XEN_TO_C_STRING(arg)); break;
     case R_FLOAT_VECTOR:
       pt->vcts[addr] = vector_to_vct(arg);
       add_obj_to_gcs(pt, R_FLOAT_VECTOR, addr);
@@ -9767,13 +9805,6 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 		    }
 		}
 	      args[i + 1] = walk(prog, XEN_CAR(all_args), arg_result);
-	      /*
-	      if ((args[i + 1] != NULL) && (args[i + 1]->type == R_STRING))
-		{
-		  fprintf(stderr, "arg %d: addr: %d type: %s val: %s\n", 
-			  i + 1, args[i + 1]->addr, type_name(args[i + 1]->type), prog->strs[args[i + 1]->addr]);
-		}
-	      */
 	      if ((args[i + 1] == NULL) ||
 		  (((args[i + 1]->type == R_LIST) || 
 		    (args[i + 1]->type == R_PAIR)) && 
@@ -9891,6 +9922,9 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 			{
 			  if ((w->arg_types[i] == R_CLM) || (w->arg_types[i] == R_XCLM))
 			    {
+			      /*
+				fprintf(stderr,"%s found %s\n", funcname, describe_xen_value(args[i+1],prog));
+			      */
 			      if (args[i + 1]->type == R_XCLM)
 				{
 				  /* get mus_any from mus_xen */
@@ -9906,27 +9940,20 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 				{
 				  if (args[i + 1]->type == R_CLM)
 				    {
-				      /* need mus_xen from mus_any -- may not be doable */
-				      /* search from name for original global var -- locally created gens not transformable */
 				      xen_var *var;
 				      var = find_var_in_ptree_via_addr(prog, args[i + 1]->type, args[i + 1]->addr);
 				      if (var)
 					{
-					  /* var->name -> symbol, lookup globally -> form -> mus_xen (whew!) */
-					  XEN val;
-					  bool local_var;
-					  val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
-					  if (mus_xen_p(val))
-					    {
-					      xen_value *old_v, *new_v;
-					      old_v = args[i + 1];
-					      new_v = make_xen_value(R_XCLM, 
-								     add_xen_to_ptree(prog, val), 
-								     R_VARIABLE);
-					      FREE(old_v);
-					      args[i + 1] = new_v;
-					    }
-					  else return(clean_up(run_warn("shadowed local clm gen?"), args, num_args));
+					  xen_value *old_v, *new_v;
+					  old_v = args[i + 1];
+					  if ((prog->clms) &&
+					      (prog->clms[var->v->addr]))
+					    new_v = make_xen_value(R_XCLM, 
+								   add_xen_to_ptree(prog, mus_wrap_generator(prog->clms[var->v->addr])),
+								   R_VARIABLE);
+					  else return(clean_up(run_warn("can't handle this local generator"), args, num_args));
+					  FREE(old_v);
+					  args[i + 1] = new_v;
 					}
 				      else return(clean_up(run_warn("local clm gen use unoptimizable"), args, num_args));
 				    }
@@ -10050,13 +10077,13 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	  /* case R_LIST:    can't happen */
 	case R_PAIR:    return(make_xen_value(R_PAIR, add_xen_to_ptree(prog, form), R_CONSTANT)); break;
 	case R_KEYWORD: return(make_xen_value(R_KEYWORD, add_xen_to_ptree(prog, form), R_CONSTANT)); break;
-
+#if HAVE_SCM_MAKE_RATIO
 	  /* TODO: need a way to distinguish newer Guiles (#@lambda) */
 	case R_UNSPECIFIED:
 	  if (strcmp(XEN_AS_STRING(form), "#@lambda") == 0)
 	    return(make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_CONSTANT)); break;
 	  break;
-
+#endif
 	default:
 	  if (type > R_ANY)
 	    return(make_xen_value(type, add_xen_to_ptree(prog, form), R_CONSTANT));
@@ -10154,10 +10181,11 @@ static xen_value *lookup_generalized_set(ptree *prog, XEN acc_form, xen_value *i
   return(NULL);
 }
 
-static bool ptree_on = false;
+typedef enum {NO_PTREE_DISPLAY, STDERR_PTREE_DISPLAY, LISTENER_PTREE_DISPLAY} ptree_display_t;
+static ptree_display_t ptree_on = NO_PTREE_DISPLAY;
 static XEN g_show_ptree(XEN on)
 {
-  ptree_on = XEN_TO_C_BOOLEAN(on);
+  ptree_on = (ptree_display_t)XEN_TO_C_INT(on);
   return(on);
 }
 
@@ -10185,7 +10213,8 @@ static void *form_to_ptree(XEN code)
       {
 	char *msg;
 	msg = describe_ptree(prog);
-	if (ptree_on) fprintf(stderr, msg);
+	if (ptree_on == STDERR_PTREE_DISPLAY) fprintf(stderr, msg);
+	else if (ptree_on == LISTENER_PTREE_DISPLAY) listener_append(msg);
 	FREE(msg);
       }
 #endif
@@ -10356,7 +10385,8 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
       {
 	char *msg;
 	msg = describe_ptree(pt);
-	if (ptree_on) fprintf(stderr, msg);
+	if (ptree_on == STDERR_PTREE_DISPLAY) fprintf(stderr, msg);
+	else if (ptree_on == LISTENER_PTREE_DISPLAY) listener_append(msg);
 	FREE(msg);
       }
 #endif
@@ -10825,6 +10855,7 @@ static void init_walkers(void)
   INIT_WALKER(S_mus_file_name, make_walker(mus_file_name_0, NULL, NULL, 1, 1, R_STRING, false, 1, R_CLM));
   INIT_WALKER(S_mus_describe, make_walker(mus_describe_0, NULL, NULL, 1, 1, R_STRING, false, 1, R_CLM));
   INIT_WALKER(S_mus_inspect, make_walker(mus_inspect_0, NULL, NULL, 1, 1, R_STRING, false, 1, R_CLM));
+  INIT_WALKER(S_mus_close, make_walker(mus_close_0, NULL, NULL, 1, 1, R_INT, false, 1, R_CLM));
 
   INIT_WALKER(S_oscil, make_walker(oscil_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_one_zero, make_walker(one_zero_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));

@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 53
-#define MUS_DATE "14-June-04"
+#define MUS_REVISION 54
+#define MUS_DATE "21-June-04"
 
 /*
+ * 21-June:    wrapper method.
  * 14-June:    ssb_am generator.
  *             removed mus-a*|b*, replaced by mus-x|ycoeff.
  * 9-June:     mus_edot_product.
@@ -208,6 +209,7 @@ typedef struct mus_any_class {
   Float (*set_ycoeff)(mus_any *ptr, int index, Float val);
   Float* (*xcoeffs)(mus_any *ptr);
   Float* (*ycoeffs)(mus_any *ptr);
+  void* (*wrapper)(mus_any *gen);
 } mus_any_class;
 
 typedef enum {MUS_INTERP_NONE, MUS_INTERP_LINEAR, MUS_INTERP_SINUSOIDAL, MUS_INTERP_ALL_PASS, 
@@ -611,6 +613,7 @@ Float mus_ssb_am(mus_any *ptr, Float insig);
 
 void mus_clear_sinc_tables(void);
 void *mus_environ(mus_any *rd);
+void *mus_wrapper(mus_any *gen);
 
 #ifndef CLM_DISABLE_DEPRECATED
 /* backwards compatibility */

@@ -8683,7 +8683,7 @@ static mus_any_class SND_TO_SAMPLE_CLASS = {
   &snd_to_sample_location,
   0,  /* set location (ptr, off_t loc) */
   0,
-  0, 0, 0, 0
+  0, 0, 0, 0, 0
 };
 
 static mus_any_class XEN_TO_SAMPLE_CLASS = {
@@ -8705,7 +8705,7 @@ static mus_any_class XEN_TO_SAMPLE_CLASS = {
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   &xen_to_sample_read, /* read sample (ptr, samp, chan) */
   0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0
+  0, 0, 0, 0, 0
 };
 
 static mus_any *make_snd_to_sample(snd_info *sp, int edpos)
@@ -8765,10 +8765,18 @@ static XEN g_xen_to_sample(XEN os, XEN frame, XEN chan)
   return(C_TO_XEN_DOUBLE(xen_to_sample_read((mus_any *)XEN_TO_MUS_ANY(os), XEN_TO_C_OFF_T(frame), XEN_TO_C_INT_OR_ELSE(chan, 0))));
 }
 
+static void *wrap_no_vcts(mus_any *ge)
+{
+  mus_xen *gn;
+  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+  gn->gen = ge;
+  gn->nvcts = 0;
+  return((void *)gn);
+}
+
 static XEN g_make_snd_to_sample(XEN snd, XEN edp)
 {
   #define H_make_snd_to_sample "(" S_make_snd_to_sample " (snd #f) (edpos -1)): return a new " S_snd_to_sample " (input) generator"
-  mus_xen *gn;
   mus_any *ge;
   snd_info *sp;
   int edpos;
@@ -8780,10 +8788,8 @@ static XEN g_make_snd_to_sample(XEN snd, XEN edp)
   ge = make_snd_to_sample(sp, edpos);
   if (ge)
     {
-      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-      gn->gen = ge;
-      gn->nvcts = 0;
-      return(mus_xen_to_object(gn));
+      ge->core->wrapper = &wrap_no_vcts;
+      return(mus_xen_to_object((mus_xen *)wrap_no_vcts(ge)));
     }
   return(XEN_FALSE);
 }
@@ -8792,7 +8798,6 @@ static XEN g_make_xen_to_sample(XEN reader)
 {
   #define H_make_xen_to_sample "(" S_make_xen_to_sample " reader): return a new " S_xen_to_sample " (input) generator.  'reader' should \
 be a function of 2 args: the sample to read (a long int), and the channel."
-  mus_xen *gn;
   mus_any *ge;
   char *errmsg;
   XEN errstr;
@@ -8806,10 +8811,8 @@ be a function of 2 args: the sample to read (a long int), and the channel."
   ge = make_xen_to_sample(reader);
   if (ge)
     {
-      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-      gn->gen = ge;
-      gn->nvcts = 0;
-      return(mus_xen_to_object(gn));
+      ge->core->wrapper = &wrap_no_vcts;
+      return(mus_xen_to_object((mus_xen *)wrap_no_vcts(ge)));
     }
   return(XEN_FALSE);
 }

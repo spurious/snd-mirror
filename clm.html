@@ -2156,7 +2156,7 @@ run-time memory management).
   <a class=def Name="mus-reopen-write">mus-reopen-write</a> <i>filename</i>     ;low-level open call (O_RDRW), returning file id
   <a class=def Name="mus-open-read">mus-open-read</a> <i>filename</i>        ;low-level open call (O_RDONLY), returning file id
   <a class=def Name="mus-create">mus-create</a> <i>filename</i>           ;low-level creat call (make new file), returning file id
-  <a class=def name="mus-close">mus-close</a> <i>fd</i>                  ;low-level close call (fd can be int or IO struct)
+  <a class=def name="mus-close">mus-close</a> <i>fd</i>                  ;low-level close call (CL: fd can be int or IO struct, Scheme: fd is output gen)
 
   <a class=def name="continue-sample-&gt;file">continue-sample-&gt;file</a> <i>file</i>    ;reopen <i>file</i> for more output (C/Scheme, not CL yet)
 </pre>

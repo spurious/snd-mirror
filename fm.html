@@ -385,7 +385,15 @@ backwards to get the exponential modulation that would produce that spectrum:</p
 </pre>
 <p>This idea was mentioned by Moorer in "Signal Processing Aspects of Computer Music: A Survey", 
 but he didn't go into much detail.  It does give very pretty asymmetric spectra, but I believe 
-waveshaping does as well for less computation, is more versatile, and is easier to set up and control.</p>
+waveshaping does as well for less computation, is more versatile, and is easier to set up and control.
+It's also probably simpler to add two FM oscil pairs:
+</p>
+<pre>
+  (+ (oscil gen0 (* index (oscil gen1)))
+     (oscil gen2 (* index (oscil gen3))))
+</pre>
+<p>where all the oscils have the same frequency and initial phase (0) except gen3 (and optionally gen2) which starts at pi/2.
+</p>
 
 <p>So far we've been using just a sinusoid for the modulator -- what if we make it a more complicated 
 signal?  Here again elementary trigonometry can be used to expand</p>
