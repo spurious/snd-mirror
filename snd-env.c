@@ -780,7 +780,7 @@ void view_envs(snd_state *ss, int env_window_width, int env_window_height)
   if (all_envs_top > 1)
     {
       cols = snd_round(sqrt((Float)(all_envs_top * env_window_width) / (Float)env_window_height));
-      rows = snd_round((Float)all_envs_top/(Float)cols);
+      rows = snd_round((Float)all_envs_top / (Float)cols);
       if ((rows * cols) < all_envs_top) rows++;
     }
   else

@@ -180,7 +180,7 @@ Float gsy_value(chan_info *cp)
   int ival;
   wcp = channel_gsy(cp);
   XtVaGetValues(wcp, XmNvalue, &ival, NULL);
-  return((Float)ival/(Float)(SCROLLBAR_MAX));
+  return((Float)ival / (Float)(SCROLLBAR_MAX));
 }
 
 Float gsy_size(chan_info *cp)

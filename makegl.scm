@@ -149,12 +149,14 @@
 (define (no-stars type)
   (if (string=? type "Display*")
       "Display"
-      (let ((len (string-length type))
-	    (val (string-copy type)))
-	(do ((i 0 (1+ i)))
-	    ((= i len) val)
-	  (if (char=? (string-ref val i) #\*)
-	      (string-set! val i #\_))))))
+      (if (string=? type "XVisualInfo*")
+	  "XVisualInfo"
+	  (let ((len (string-length type))
+		(val (string-copy type)))
+	    (do ((i 0 (1+ i)))
+		((= i len) val)
+	      (if (char=? (string-ref val i) #\*)
+		  (string-set! val i #\_)))))))
 
 (define (no-arg-or-stars name)
   (let ((len (string-length name)))
@@ -279,7 +281,7 @@
 	      (if (string? (cdr typ))
 		  (begin
 		    (if (not (member (car typ)
-				     (list "Display*" "int*" "Pixmap" "Font" "GLubyte*"
+				     (list "Display*" "XVisualInfo*" "int*" "Pixmap" "Font" "GLubyte*"
 					   "GLdouble*" "GLfloat*" "GLvoid*" "GLuint*"
 					   "GLboolean*" "void*" "GLint*" "GLshort*"
 					   "void**")))
@@ -297,7 +299,8 @@
 		  (begin
 		    (hey "#define XEN_~A_P(Arg) 1~%" (no-stars (car typ)))
 		    (hey "#define XEN_TO_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))))
-	(if (not (string=? type "Display*"))
+	(if (not (or (string=? type "Display*")
+		     (string=? type "XVisualInfo*")))
 	    (begin
 	      (if (member type glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
 	      (hey "XL_TYPE~A~A(~A, ~A)~%" 
@@ -309,7 +312,9 @@
 		   (no-stars type)
 		   type)
 	      (if (member type glu-1-2) (hey "#endif~%")))
-	    (hey "XL_TYPE_1(Display, Display*)~%")))))
+	    (if (string=? type "Display*")
+		(hey "XL_TYPE_1(Display, Display*)~%")
+		(hey "XL_TYPE(XVisualInfo, XVisualInfo*)~%"))))))
 
 (define* (CFNC data #:optional spec spec-name)
   (let ((name (cadr-str data))
@@ -350,11 +355,8 @@
 (hey " *   needs xen.h~%")
 (hey " *~%")
 (hey " * reference args are ignored if passed, resultant values are returned in a list.~%")
-(hey " * null ptrs are passed and returned as #f.~%")
 (hey " * the various \"v\" forms are omitted for now -- are they needed in this context?~%")
 (hey " * 'gl is added to *features*~%")
-(hey " *~%")
-(hey " * ~A: figure out rest of reference args~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
 (hey " *     20-May-02: initial version.~%")

@@ -1302,6 +1302,15 @@ static XEN g_set_show_selection_transform(XEN val)
   return(C_TO_XEN_BOOLEAN(show_selection_transform(state)));
 }
 
+static XEN g_with_gl(void) {return(C_TO_XEN_BOOLEAN(with_gl(state)));}
+static XEN g_set_with_gl(XEN val) 
+{
+  #define H_with_gl "(" S_with_gl ") -> #t if Snd should use GL graphics"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set-" S_with_gl, "a boolean");
+  set_with_gl(state, XEN_TO_C_BOOLEAN_OR_TRUE(val));
+  return(C_TO_XEN_BOOLEAN(with_gl(state)));
+}
+
 static XEN g_with_mix_tags(void) {return(C_TO_XEN_BOOLEAN(with_mix_tags(state)));}
 static XEN g_set_with_mix_tags(XEN val) 
 {
@@ -2824,6 +2833,8 @@ XEN_NARGIFY_0(g_optimization_w, g_optimization)
 XEN_ARGIFY_1(g_set_optimization_w, g_set_optimization)
 XEN_NARGIFY_0(g_show_selection_transform_w, g_show_selection_transform)
 XEN_ARGIFY_1(g_set_show_selection_transform_w, g_set_show_selection_transform)
+XEN_NARGIFY_0(g_with_gl_w, g_with_gl)
+XEN_ARGIFY_1(g_set_with_gl_w, g_set_with_gl)
 XEN_NARGIFY_0(g_with_mix_tags_w, g_with_mix_tags)
 XEN_ARGIFY_1(g_set_with_mix_tags_w, g_set_with_mix_tags)
 XEN_NARGIFY_0(g_with_background_processes_w, g_with_background_processes)
@@ -3026,6 +3037,8 @@ XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 #define g_set_optimization_w g_set_optimization
 #define g_show_selection_transform_w g_show_selection_transform
 #define g_set_show_selection_transform_w g_set_show_selection_transform
+#define g_with_gl_w g_with_gl
+#define g_set_with_gl_w g_set_with_gl
 #define g_with_mix_tags_w g_with_mix_tags
 #define g_set_with_mix_tags_w g_set_with_mix_tags
 #define g_with_background_processes_w g_with_background_processes
@@ -3341,6 +3354,9 @@ void g_initialize_gh(snd_state *ss)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_selection_transform, g_show_selection_transform_w, H_show_selection_transform,
 				   "set-" S_show_selection_transform, g_set_show_selection_transform_w,  0, 0, 0, 1);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_gl, g_with_gl_w, H_with_gl,
+				   "set-" S_with_gl, g_set_with_gl_w,  0, 0, 0, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_mix_tags, g_with_mix_tags_w, H_with_mix_tags,
 				   "set-" S_with_mix_tags, g_set_with_mix_tags_w,  0, 0, 0, 1);

@@ -1400,6 +1400,7 @@
 	  (list 'wavo-hop wavo-hop 3 set-wavo-hop 6)
 	  (list 'wavo-trace wavo-trace 64 set-wavo-trace 128)
 	  (list 'with-mix-tags with-mix-tags #t set-with-mix-tags #f)
+	  (list 'with-gl with-gl (provided? 'gl) set-with-gl #f)
 	  (list 'x-axis-style x-axis-style 0 set-x-axis-style 1)
 	  (list 'beats-per-minute beats-per-minute 30.0 set-beats-per-minute 120.0)
 	  (list 'zero-pad zero-pad 0 set-zero-pad 1)
@@ -22894,7 +22895,7 @@ EDITS: 5
 	       update-transform update-time-graph update-lisp-graph update-sound use-sinc-interp
 	       vct->samples vct->sound-file verbose-cursor view-sound vu-font vu-font-size vu-size wavelet-type
 	       graph-time?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
-	       with-mix-tags write-peak-env-info-file x-axis-style beats-per-minute x-bounds x-position-slider x->position x-zoom-slider
+	       with-mix-tags with-gl write-peak-env-info-file x-axis-style beats-per-minute x-bounds x-position-slider x->position x-zoom-slider
 	       y-bounds y-position-slider y->position y-zoom-slider zero-pad zoom-color zoom-focus-style
 	       mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location
 	       mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length
@@ -22966,7 +22967,7 @@ EDITS: 5
 		   spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed-control
 		   speed-control-style speed-control-tones squelch-update sync sound-properties temp-dir text-focus-color tiny-font y-bounds
 		   transform-type trap-segfault optimization use-sinc-interp verbose-cursor vu-font vu-font-size vu-size wavelet-type x-bounds
-		   graph-time? wavo-hop wavo-trace with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style 
+		   graph-time? wavo-hop wavo-trace with-gl with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style 
 
 		   window-x window-y window-width window-height
 		   channels chans colormap comment data-format data-location edit-position frames header-type maxamp
@@ -23612,7 +23613,7 @@ EDITS: 5
 			  selected-sound selection-creates-region show-backtrace show-controls show-indices show-listener
 			  show-selection-transform sinc-width temp-dir text-focus-color tiny-font
 			  trap-segfault optimization unbind-key use-sinc-interp verbose-cursor vu-font vu-font-size vu-size window-height
-			  window-width window-x window-y with-mix-tags x-axis-style beats-per-minute zoom-color zoom-focus-style mix-tag-height
+			  window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color zoom-focus-style mix-tag-height
 			  mix-tag-width ))
 	  (gc))
 

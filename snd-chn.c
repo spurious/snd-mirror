@@ -1779,10 +1779,21 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
   return(err);
 }
 
-static Float skew_color(Float x, Float base)
+static Float skew_color(snd_state *ss, Float x)
 {
-  if ((base <= 0.0) || (base == 1.0)) return(x);
-  return((pow(base, x) - 1.0) / (base - 1.0));
+  Float base, val;
+  int pos;
+  if (color_inverted(ss))   
+    val = 1.0 - x;
+  else val = x;
+  base = color_scale(ss);
+  if ((base > 0.0) && (base != 1.0))
+    val = (pow(base, val) - 1.0) / (base - 1.0);
+  pos = (int)(val * COLORMAP_SIZE);
+  if (pos > COLORMAP_SIZE) return(COLORMAP_SIZE - 1);
+  if (pos > 0)
+    return(pos - 1);
+  return(0);
 }
 
 static int js[COLORMAP_SIZE];
@@ -1857,10 +1868,7 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	      if (cp->fft_log_magnitude) binval = 1.0 - (cp_dB(cp, binval)) / cp->min_dB;
 	      if (binval >= color_cutoff(ss))
 		{
-		  if (color_inverted(ss)) 
-		    j = (int)(skew_color((1.0 - binval), color_scale(ss)) * COLORMAP_SIZE); 
-		  else j = (int)(skew_color(binval, color_scale(ss)) * COLORMAP_SIZE);
-		  if (j > 0) j--; else j = 0;
+		  j = skew_color(ss, binval);
 		  if (cp->fft_log_frequency)
 		    set_sono_rectangle(js[j], j, (Locus)xf, hidata[i + 1], rectw, hidata[i] - hidata[i + 1]);
 		  else set_sono_rectangle(js[j], j, (Locus)xf, hidata[i + 1], rectw, recth);
@@ -1963,17 +1971,18 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	 TODO: multi-channel gl spectros
 	 TODO: gl wavogram, sonogram
 	 TODO: gl xrec labels
-	 TODO: 3D window-family fft (i.e. the 3rd dim tracks the window "beta" parameter)
 	 TODO: lighting, texture?
-	 TODO: background (0) case from graph color, not colormap
 	 TODO: movable viewpoints, translations
 	 SOMEDAY: editable spectrogram (select, apply any selection-proc)
 	 TODO: fix the regraph problem (glClear of partial window?)
-	 TODO: gl widget backgrounds? (3D lock, hourglass and bomb)
 	 TODO: printing support (doesn't GL->ps already exist?)
+	 TODO: semi-transparent coloring for spectrogram
+	 TODO: added-transform self-display option 
+	 SOMEDAY: gl in gtk
       */
       if ((sp->nchans == 1) && 
-	  (color_map(ss) != BLACK_AND_WHITE))
+	  (color_map(ss) != BLACK_AND_WHITE) &&
+	  (with_gl(ss)))
 	{
 	  float x1, y1;
 	  int **js;
@@ -1989,13 +1998,7 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	    {
 	      js[i] = (int *)CALLOC(bins, sizeof(int));
 	      for (j = 0; j < bins; j++)
-		{
-		  if (color_inverted(ss)) 
-		    xx = (int)(skew_color((1.0 - si->data[i][j] / scl), color_scale(ss)) * COLORMAP_SIZE); 
-		  else xx = (int)(skew_color(si->data[i][j] / scl, color_scale(ss)) * COLORMAP_SIZE);
-		  if (xx > 0) xx--; else xx = 0;
-		  js[i][j] = xx;
-		}
+		js[i][j] = skew_color(ss, si->data[i][j]);
 	    }
 	  glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->sgx->cx);
 	  glEnable(GL_DEPTH_TEST);
@@ -2178,11 +2181,7 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 		  xval = xyz[0];
 		  if (binval >= color_cutoff(ss))
 		    {
-		      if (color_inverted(ss)) 
-			j = (int)(skew_color((1.0 - binval), color_scale(ss)) * COLORMAP_SIZE); 
-		      else j = (int)(skew_color(binval, color_scale(ss)) * COLORMAP_SIZE);
-		      if (j > 0) j--;
-		      if (j >= COLORMAP_SIZE) j = COLORMAP_SIZE - 1;
+		      j = skew_color(ss, binval);
 		      draw_spectro_line(ax, j, xx, yy, 
 					(int)(xval + x0), 
 					(int)(yval + y0));
@@ -2288,11 +2287,7 @@ static void make_wavogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	      if (binval < 0.0) binval = -binval;
 	      if ((binval >= color_cutoff(ss)) && (xx != -1))
 		{
-		  if (color_inverted(ss)) 
-		    j = (int)(skew_color((1.0 - binval), color_scale(ss)) * COLORMAP_SIZE); 
-		  else j = (int)(skew_color(binval, color_scale(ss)) * COLORMAP_SIZE);
-		  if (j > 0) j--;
-		  if (j >= COLORMAP_SIZE) j = COLORMAP_SIZE - 1;
+		  j = skew_color(ss, binval);
 		  draw_spectro_line(ax, j, xx, yy, 
 				    (int)(xval + x0), 
 				    (int)(yval + y0));
@@ -2457,15 +2452,20 @@ static void make_axes(chan_info *cp, axis_info *ap, int x_style, int erase_first
     }
   else ax = ap->ax;
   sp = cp->sound;
+#if DEBUGGING
+  if (sp == NULL)
+    {
+      fprintf(stderr, "make_axes sp is null!");
+      abort();
+    }
+#endif
   setup_axis_context(cp, ax);
   if (erase_first)
     erase_rectangle(cp, ap->ax, ap->graph_x0, ap->y_offset, ap->width, ap->height); 
   make_axes_1(ap, x_style, SND_SRATE(sp), cp->show_axes, cp->printing,
-	      ((sp == NULL) || 
-	       (sp->channel_style != CHANNELS_COMBINED) || 
+	      ((sp->channel_style != CHANNELS_COMBINED) || 
 	       (cp->show_axes == SHOW_ALL_AXES) || 
 	       (cp->chan == (sp->nchans - 1))));
-  /* sp is null in the control panel filter envelope display */
 }
 
 static void draw_graph_cursor(chan_info *cp);
@@ -5737,6 +5737,30 @@ If 'data' is a list of numbers, it is treated as an envelope."
 }
 
 
+static XEN g_colormap_ref(XEN map, XEN pos)
+{
+  #define H_colormap_ref "(colormap-ref map &optional position) -> (list r g b). 'map' can be a number \
+between 0.0 and 1.0 with 'pos' omitted -- in this case the color_map and so on comes from the color dialog."
+  unsigned short r, g, b;
+  snd_state *ss;
+  if (XEN_NOT_BOUND_P(pos))
+    {
+      ss = get_global_state();
+      XEN_ASSERT_TYPE(XEN_NUMBER_P(map), map, XEN_ARG_1, "colormap-ref", "a number");
+      get_current_color(color_map(ss), skew_color(ss, XEN_TO_C_DOUBLE(map)), &r, &g, &b);
+    }
+  else
+    {
+      XEN_ASSERT_TYPE(XEN_INTEGER_P(map), map, XEN_ARG_1, "colormap-ref", "an integer");
+      XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, XEN_ARG_2, "colormap-ref", "an integer");
+      get_current_color(XEN_TO_C_INT(map), XEN_TO_C_INT(pos), &r, &g, &b);
+    }
+  return(XEN_LIST_3(C_TO_XEN_DOUBLE((float)r / 65535.0),
+		    C_TO_XEN_DOUBLE((float)g / 65535.0),
+		    C_TO_XEN_DOUBLE((float)b / 65535.0)));
+}
+
+
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_9(g_graph_w, g_graph)
@@ -5859,6 +5883,7 @@ XEN_ARGIFY_3(g_set_y_bounds_w, g_set_y_bounds)
 XEN_ARGIFY_2(g_update_time_graph_w, g_update_time_graph)
 XEN_ARGIFY_2(g_update_lisp_graph_w, g_update_lisp_graph)
 XEN_ARGIFY_2(g_update_transform_w, g_update_transform)
+XEN_NARGIFY_2(g_colormap_ref_w, g_colormap_ref)
 #else
 #define g_graph_w g_graph
 #define g_edits_w g_edits
@@ -5980,6 +6005,7 @@ XEN_ARGIFY_2(g_update_transform_w, g_update_transform)
 #define g_update_time_graph_w g_update_time_graph
 #define g_update_lisp_graph_w g_update_lisp_graph
 #define g_update_transform_w g_update_transform
+#define g_colormap_ref_w g_colormap_ref
 #endif
 
 void g_init_chn(void)
@@ -6207,6 +6233,8 @@ void g_init_chn(void)
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_y_bounds, g_y_bounds_w, H_y_bounds,
 					    "set-" S_y_bounds, g_set_y_bounds_w, g_set_y_bounds_reversed, 0, 2, 1, 2);
+
+  XEN_DEFINE_PROCEDURE("colormap-ref", g_colormap_ref_w, 1, 1, 0, H_colormap_ref);
 
   #define H_transform_hook S_transform_hook " (snd chn scaler) is called just after a spectrum is calculated."
   #define H_graph_hook S_graph_hook " (snd chn y0 y1) is called each time a graph is about to be updated. If it returns #t, the display is not updated."

@@ -96,9 +96,13 @@ static char *glx_version(void)
   ss = get_global_state();
   if (ss == NULL) return(""); /* snd --help for example */
   err = glXQueryVersion(MAIN_DISPLAY(ss), &major, &minor);
-  version = (char *)CALLOC(32, sizeof(char));
-  snprintf(version, 32, " %d.%d", major, minor);
-  /* this info doesn't look useful: glXQueryExtensionsString(MAIN_DISPLAY(ss), XScreenNumberOfScreen(DefaultScreenOfDisplay(MAIN_DISPLAY(ss))))); */
+  version = (char *)CALLOC(128, sizeof(char));
+  if ((ss->sgx) && (ss->sgx->cx))
+    {
+      glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(ss->sgx->mainshell), ss->sgx->cx);
+      snprintf(version, 128, " %s", glGetString(GL_VERSION));
+    }
+  else snprintf(version, 128, " %d.%d", major, minor);
   return(version);
 }
 #endif
@@ -223,6 +227,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+24-May:  with-gl to choose between GL/X graphics, snd-gl.scm.\n\
 23-May:  gl1.png (spectrogram uses GL now if mono and HAVE_GL).\n\
 20-May:  removed glfft.c and glfft.scm, added snd-gxl-context on -DHAVE_GL switch (configure --with-gl).\n\
          added gl.c, makegl.scm, gldata.scm (GL example in grfsnd.html).\n\
@@ -1023,6 +1028,7 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_window_width "          0\n\
   " S_window_x "             -1\n\
   " S_window_y "             -1\n\
+  " S_with_gl "               #t (if --with-gl)\n\
   " S_with_mix_tags "         #t\n\
   " S_x_axis_style "          " S_x_axis_in_seconds "\n\
   " S_zero_pad "              0 (snd #t) (chn #t)\n\

@@ -85,7 +85,7 @@ static void init_sine (void)
   if (sine_table == NULL)
     {
       sine_table = (Float *)clm_calloc(SINE_SIZE + 1, sizeof(Float), "sine table");
-      incr = TWO_PI/(Float)SINE_SIZE;
+      incr = TWO_PI / (Float)SINE_SIZE;
       for (i = 0, phase = 0.0; i < SINE_SIZE + 1; i++, phase += incr)
 	sine_table[i] = (Float)sin(phase);
     }
@@ -1260,7 +1260,7 @@ static int table_lookup_length(void *ptr) {return(((tbl *)ptr)->table_size);}
 static Float *table_lookup_data(void *ptr) {return(((tbl *)ptr)->table);}
 static Float table_lookup_freq(void *ptr) {return((((tbl *)ptr)->freq * sampling_rate) / (Float)(((tbl *)ptr)->table_size));}
 static Float set_table_lookup_freq(void *ptr, Float val) {((tbl *)ptr)->freq = (val * ((tbl *)ptr)->table_size) / sampling_rate; return(val);}
-static Float table_lookup_phase(void *ptr) {return(fmod(((TWO_PI * ((tbl *)ptr)->phase)/((tbl *)ptr)->table_size), TWO_PI));}
+static Float table_lookup_phase(void *ptr) {return(fmod(((TWO_PI * ((tbl *)ptr)->phase) / ((tbl *)ptr)->table_size), TWO_PI));}
 static Float set_table_lookup_phase(void *ptr, Float val) {((tbl *)ptr)->phase = (val * ((tbl *)ptr)->table_size) / TWO_PI; return(val);}
 
 static char *describe_table_lookup(void *ptr)
@@ -6083,7 +6083,7 @@ void mus_spectrum(Float *rdat, Float *idat, Float *window, int n, int type)
   if (window) mus_multiply_arrays(rdat, window, n);
   mus_clear_array(idat, n);
   mus_fft(rdat, idat, n, 1);
-  lowest = 0.00000001;
+  lowest = 0.000001;
   maxa = 0.0;
   n = (int)(n * 0.5);
   for (i = 0; i < n; i++)
@@ -6093,6 +6093,9 @@ void mus_spectrum(Float *rdat, Float *idat, Float *window, int n, int type)
       if (idat[i] < lowest) idat[i] = 0.0;
 #endif
       val = rdat[i] * rdat[i] + idat[i] * idat[i];
+#if HAVE_ISNAN
+      if (isnan(val)) val = 0.0;
+#endif
       if (val < lowest)
 	rdat[i] = .0001;
       else 

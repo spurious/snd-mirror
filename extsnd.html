@@ -159,6 +159,7 @@ various examples of and extensions to Snd can be found in the contrib directory,
 <tr><td><a href="sndscm.html#rubberdoc">rubber.scm</a></td>  <td>rubber-sound</td></tr>
 <tr><td><a href="sndscm.html#singerdoc">singer.scm</a></td>  <td>Perry Cook's vocal-tract physical model</td></tr>
 <tr><td><a href="sndscm.html#sndmotifdoc">snd-motif.scm</a></td><td>Motif module (xm.c)</td></tr>
+<tr><td><a href="sndscm.html#sndgldoc">snd-gl.scm</a></td><td>OpenGL examples (gl.c)</td></tr>
 <tr><td><a href="sndscm.html#snd4doc">snd4.scm</a></td>      <td>backwards compatibility stuff</td></tr>
 <tr><td><a href="sndscm.html#snd5doc">snd5.scm</a></td>      <td>backwards compatibility stuff</td></tr>
 <tr><td><a href="sndscm.html#vdoc">v.scm</a></td>            <td>fm-violin (from CLM)</td></tr>
@@ -791,6 +792,14 @@ The lowest level procedures are:
 <!-- -->
 <!-- --><tr><td></td><td>
 <!-- -->the graphics context for XOR drawing in the selection color.</td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- with-gl -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="withgl">with-gl</a></em></code></span></td></tr>
+<!-- -->
+<!-- --><tr><td></td><td>
+<!-- -->If #t and GL is loaded, use GL where possible (default is #t if HAVE_GL).</td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- --></table>
@@ -8633,7 +8642,7 @@ run
 <!-- -->
 <!-- snd-spectrum -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndspectrum">snd-spectrum</a></em> (data window length <i>linear</i>)</code></span></td></tr>
+<!-- --><span class=defbox><code><em class=def><a name="sndspectrum">snd-spectrum</a></em> (data window length <i>linear beta</i>)</code></span></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->return spectrum (vct) of <i>data</i> (also a vct) using fft-window <i>win</i>.
 <!-- -->length of data (and fft) is <i>length</i>. <code>(let ((spectr (snd-spectrum data rectangular-window (transform-size)))) ...)</code>
@@ -8738,7 +8747,10 @@ to the selection if "h" is typed in the graph:
             (help-dialog subject (snd-help subject))))))
 </pre>
 <p><i>colormap-ref</i> returns the rgb values of the colormap <i>map</i> at position <i>pos</i>,
-suitable for use with make-color.  <i>snd-gcs</i> returns a list of Snd's graphics contexts
+suitable for use with make-color.  
+'map' can be a number
+between 0.0 and 1.0 with 'pos' omitted; in this case the colormap choice and so on comes from the color dialog.
+<i>snd-gcs</i> returns a list of Snd's graphics contexts
 (intended for use with the xm module in snd-motif.scm).
 <b>snd-pixel</b> returns the pixel associated with a given color such as basic-color. This
 is handy in snd-motif.scm where many of the procedures want an X-style Pixel value.

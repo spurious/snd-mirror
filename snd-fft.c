@@ -737,7 +737,7 @@ static void cepstrum(Float *data, int n)
       fscl = fabs(rl[i]);
   if (fscl > 0.0)
     for (i = 0; i < n; i++) 
-      data[i] = rl[i]/fscl;
+      data[i] = rl[i] / fscl;
   FREE(rl);
   FREE(im);
 }

@@ -6,7 +6,7 @@ XEN_NARGIFY_4(gxg_glXCreateContext_w, gxg_glXCreateContext)
 XEN_NARGIFY_3(gxg_glXCreateGLXPixmap_w, gxg_glXCreateGLXPixmap)
 XEN_NARGIFY_2(gxg_glXDestroyContext_w, gxg_glXDestroyContext)
 XEN_NARGIFY_2(gxg_glXDestroyGLXPixmap_w, gxg_glXDestroyGLXPixmap)
-XEN_NARGIFY_4(gxg_glXGetConfig_w, gxg_glXGetConfig)
+XEN_ARGIFY_4(gxg_glXGetConfig_w, gxg_glXGetConfig)
 XEN_NARGIFY_0(gxg_glXGetCurrentContext_w, gxg_glXGetCurrentContext)
 XEN_NARGIFY_0(gxg_glXGetCurrentDrawable_w, gxg_glXGetCurrentDrawable)
 XEN_NARGIFY_2(gxg_glXIsDirect_w, gxg_glXIsDirect)
@@ -410,7 +410,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XL_PRE "glXCreateGLXPixmap" XL_POST, gxg_glXCreateGLXPixmap_w, 3, 0, 0, H_glXCreateGLXPixmap);
   XEN_DEFINE_PROCEDURE(XL_PRE "glXDestroyContext" XL_POST, gxg_glXDestroyContext_w, 2, 0, 0, H_glXDestroyContext);
   XEN_DEFINE_PROCEDURE(XL_PRE "glXDestroyGLXPixmap" XL_POST, gxg_glXDestroyGLXPixmap_w, 2, 0, 0, H_glXDestroyGLXPixmap);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glXGetConfig" XL_POST, gxg_glXGetConfig_w, 4, 0, 0, H_glXGetConfig);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glXGetConfig" XL_POST, gxg_glXGetConfig_w, 3, 1, 0, H_glXGetConfig);
   XEN_DEFINE_PROCEDURE(XL_PRE "glXGetCurrentContext" XL_POST, gxg_glXGetCurrentContext_w, 0, 0, 0, H_glXGetCurrentContext);
   XEN_DEFINE_PROCEDURE(XL_PRE "glXGetCurrentDrawable" XL_POST, gxg_glXGetCurrentDrawable_w, 0, 0, 0, H_glXGetCurrentDrawable);
   XEN_DEFINE_PROCEDURE(XL_PRE "glXIsDirect" XL_POST, gxg_glXIsDirect_w, 2, 0, 0, H_glXIsDirect);

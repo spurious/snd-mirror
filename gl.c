@@ -3,11 +3,8 @@
  *   needs xen.h
  *
  * reference args are ignored if passed, resultant values are returned in a list.
- * null ptrs are passed and returned as #f.
  * the various "v" forms are omitted for now -- are they needed in this context?
  * 'gl is added to *features*
- *
- * TODO: figure out rest of reference args
  *
  * HISTORY:
  *     20-May-02: initial version.
@@ -68,7 +65,7 @@
 
 /* ---------------------------------------- types ---------------------------------------- */
 
-XL_TYPE_PTR(XVisualInfo_, XVisualInfo*)
+XL_TYPE(XVisualInfo, XVisualInfo*)
 XL_TYPE_1(Display, Display*)
 #define C_TO_XEN_int(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_int(Arg) (int)(XEN_TO_C_INT(Arg))
@@ -155,7 +152,7 @@ static XEN gxg_glXChooseVisual(XEN dpy, XEN screen, XEN attribList)
   XEN_ASSERT_TYPE(XEN_Display_P(dpy), dpy, 1, "glXChooseVisual", "Display*");
   XEN_ASSERT_TYPE(XEN_int_P(screen), screen, 2, "glXChooseVisual", "int");
   XEN_ASSERT_TYPE(XEN_int__P(attribList), attribList, 3, "glXChooseVisual", "int*");
-  return(C_TO_XEN_XVisualInfo_(glXChooseVisual(XEN_TO_C_Display(dpy), XEN_TO_C_int(screen), XEN_TO_C_int_(attribList))));
+  return(C_TO_XEN_XVisualInfo(glXChooseVisual(XEN_TO_C_Display(dpy), XEN_TO_C_int(screen), XEN_TO_C_int_(attribList))));
 }
 
 static XEN gxg_glXCopyContext(XEN dpy, XEN src, XEN dst, XEN mask)
@@ -174,10 +171,10 @@ static XEN gxg_glXCreateContext(XEN dpy, XEN vis, XEN shareList, XEN direct)
   #define H_glXCreateContext "GLXContext glXCreateContext(Display* dpy, XVisualInfo* vis, GLXContext shareList, \
 Bool direct)"
   XEN_ASSERT_TYPE(XEN_Display_P(dpy), dpy, 1, "glXCreateContext", "Display*");
-  XEN_ASSERT_TYPE(XEN_XVisualInfo__P(vis), vis, 2, "glXCreateContext", "XVisualInfo*");
+  XEN_ASSERT_TYPE(XEN_XVisualInfo_P(vis), vis, 2, "glXCreateContext", "XVisualInfo*");
   XEN_ASSERT_TYPE(XEN_GLXContext_P(shareList), shareList, 3, "glXCreateContext", "GLXContext");
   XEN_ASSERT_TYPE(XEN_Bool_P(direct), direct, 4, "glXCreateContext", "Bool");
-  return(C_TO_XEN_GLXContext(glXCreateContext(XEN_TO_C_Display(dpy), XEN_TO_C_XVisualInfo_(vis), XEN_TO_C_GLXContext(shareList), 
+  return(C_TO_XEN_GLXContext(glXCreateContext(XEN_TO_C_Display(dpy), XEN_TO_C_XVisualInfo(vis), XEN_TO_C_GLXContext(shareList), 
                                               XEN_TO_C_Bool(direct))));
 }
 
@@ -185,9 +182,9 @@ static XEN gxg_glXCreateGLXPixmap(XEN dpy, XEN vis, XEN pixmap)
 {
   #define H_glXCreateGLXPixmap "GLXPixmap glXCreateGLXPixmap(Display* dpy, XVisualInfo* vis, Pixmap pixmap)"
   XEN_ASSERT_TYPE(XEN_Display_P(dpy), dpy, 1, "glXCreateGLXPixmap", "Display*");
-  XEN_ASSERT_TYPE(XEN_XVisualInfo__P(vis), vis, 2, "glXCreateGLXPixmap", "XVisualInfo*");
+  XEN_ASSERT_TYPE(XEN_XVisualInfo_P(vis), vis, 2, "glXCreateGLXPixmap", "XVisualInfo*");
   XEN_ASSERT_TYPE(XEN_Pixmap_P(pixmap), pixmap, 3, "glXCreateGLXPixmap", "Pixmap");
-  return(C_TO_XEN_GLXPixmap(glXCreateGLXPixmap(XEN_TO_C_Display(dpy), XEN_TO_C_XVisualInfo_(vis), XEN_TO_C_Pixmap(pixmap))));
+  return(C_TO_XEN_GLXPixmap(glXCreateGLXPixmap(XEN_TO_C_Display(dpy), XEN_TO_C_XVisualInfo(vis), XEN_TO_C_Pixmap(pixmap))));
 }
 
 static XEN gxg_glXDestroyContext(XEN dpy, XEN ctx)
@@ -210,12 +207,16 @@ static XEN gxg_glXDestroyGLXPixmap(XEN dpy, XEN pix)
 
 static XEN gxg_glXGetConfig(XEN dpy, XEN vis, XEN attrib, XEN value)
 {
-  #define H_glXGetConfig "int glXGetConfig(Display* dpy, XVisualInfo* vis, int attrib, int* value)"
+  #define H_glXGetConfig "int glXGetConfig(Display* dpy, XVisualInfo* vis, int attrib, int* [value])"
+  int ref_value;
   XEN_ASSERT_TYPE(XEN_Display_P(dpy), dpy, 1, "glXGetConfig", "Display*");
-  XEN_ASSERT_TYPE(XEN_XVisualInfo__P(vis), vis, 2, "glXGetConfig", "XVisualInfo*");
+  XEN_ASSERT_TYPE(XEN_XVisualInfo_P(vis), vis, 2, "glXGetConfig", "XVisualInfo*");
   XEN_ASSERT_TYPE(XEN_int_P(attrib), attrib, 3, "glXGetConfig", "int");
-  XEN_ASSERT_TYPE(XEN_int__P(value), value, 4, "glXGetConfig", "int*");
-  return(C_TO_XEN_int(glXGetConfig(XEN_TO_C_Display(dpy), XEN_TO_C_XVisualInfo_(vis), XEN_TO_C_int(attrib), XEN_TO_C_int_(value))));
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_int(glXGetConfig(XEN_TO_C_Display(dpy), XEN_TO_C_XVisualInfo(vis), XEN_TO_C_int(attrib), &ref_value));
+    return(XEN_LIST_2(result, C_TO_XEN_int(ref_value)));
+   }
 }
 
 static XEN gxg_glXGetCurrentContext(void)
@@ -4078,7 +4079,7 @@ static void define_functions(void)
   XEN_DEFINE_PROCEDURE(XL_PRE "glXCreateGLXPixmap" XL_POST, gxg_glXCreateGLXPixmap, 3, 0, 0, H_glXCreateGLXPixmap);
   XEN_DEFINE_PROCEDURE(XL_PRE "glXDestroyContext" XL_POST, gxg_glXDestroyContext, 2, 0, 0, H_glXDestroyContext);
   XEN_DEFINE_PROCEDURE(XL_PRE "glXDestroyGLXPixmap" XL_POST, gxg_glXDestroyGLXPixmap, 2, 0, 0, H_glXDestroyGLXPixmap);
-  XEN_DEFINE_PROCEDURE(XL_PRE "glXGetConfig" XL_POST, gxg_glXGetConfig, 4, 0, 0, H_glXGetConfig);
+  XEN_DEFINE_PROCEDURE(XL_PRE "glXGetConfig" XL_POST, gxg_glXGetConfig, 3, 1, 0, H_glXGetConfig);
   XEN_DEFINE_PROCEDURE(XL_PRE "glXGetCurrentContext" XL_POST, gxg_glXGetCurrentContext, 0, 0, 0, H_glXGetCurrentContext);
   XEN_DEFINE_PROCEDURE(XL_PRE "glXGetCurrentDrawable" XL_POST, gxg_glXGetCurrentDrawable, 0, 0, 0, H_glXGetCurrentDrawable);
   XEN_DEFINE_PROCEDURE(XL_PRE "glXIsDirect" XL_POST, gxg_glXIsDirect, 2, 0, 0, H_glXIsDirect);
@@ -5379,7 +5380,7 @@ static int gl_already_inited = 0;
       define_functions();
       XEN_YES_WE_HAVE("gl");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define gl-version \"22-May-02\")");
+      XEN_EVAL_C_STRING("(define gl-version \"23-May-02\")");
 #endif
       gl_already_inited = 1;
     }

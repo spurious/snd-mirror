@@ -569,6 +569,14 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 #define set_with_mix_tags(ss, a) ss->With_Mix_Tags = a
 #define DEFAULT_WITH_MIX_TAGS TRUE
 
+#define with_gl(ss) ss->With_GL
+#define set_with_gl(ss, a) ss->With_GL = a
+#if HAVE_GL
+  #define DEFAULT_WITH_GL TRUE
+#else
+  #define DEFAULT_WITH_GL FALSE
+#endif
+
 #define with_background_processes(ss) ss->With_Background_Processes
 #define set_with_background_processes(ss, a) ss->With_Background_Processes = a
 #define DEFAULT_WITH_BACKGROUND_PROCESSES TRUE

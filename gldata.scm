@@ -4,7 +4,7 @@
 (CFNC "GLXPixmap glXCreateGLXPixmap Display* dpy XVisualInfo* vis Pixmap pixmap")
 (CFNC "void glXDestroyContext Display* dpy GLXContext ctx")
 (CFNC "void glXDestroyGLXPixmap Display* dpy GLXPixmap pix")
-(CFNC "int glXGetConfig Display* dpy XVisualInfo* vis int attrib int* value")
+(CFNC "int glXGetConfig Display* dpy XVisualInfo* vis int attrib int* [value]")
 (CFNC "GLXContext glXGetCurrentContext void")
 (CFNC "Window glXGetCurrentDrawable void")
 (CFNC "Bool glXIsDirect Display* dpy GLXContext ctx")

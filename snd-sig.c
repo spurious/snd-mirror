@@ -3300,19 +3300,20 @@ If sign is -1, performs inverse fft"
   return(g_fft_1(reals, imag, sign, TRUE));
 }
 
-static XEN g_snd_spectrum(XEN data, XEN win, XEN len, XEN linear_or_dB)
+static XEN g_snd_spectrum(XEN data, XEN win, XEN len, XEN linear_or_dB, XEN beta)
 {
-  #define H_snd_spectrum "(" S_snd_spectrum " data window len linear-or-dB)\n\
+  #define H_snd_spectrum "(" S_snd_spectrum " data window len linear-or-dB beta)\n\
 return magnitude spectrum of data (vct) in data using fft-window win and fft length len"
 
   int i, j, n, p = 0, n2, linear, wtype;
-  Float maxa, todb, lowest, val;
+  Float maxa, todb, lowest, val, b = 0.0;
   Float *idat, *rdat, *window;
   vct *v;
   XEN_ASSERT_TYPE((VCT_P(data)), data, XEN_ARG_1, S_snd_spectrum, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(win), win, XEN_ARG_2, S_snd_spectrum, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(len), len, XEN_ARG_3, S_snd_spectrum, "an integer");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(linear_or_dB), linear_or_dB, XEN_ARG_4, S_snd_spectrum, "a boolean");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beta), beta, XEN_ARG_5, S_snd_spectrum, "a number");
   v = TO_VCT(data);
   rdat = v->data;
   n = XEN_TO_C_INT_OR_ELSE(len, v->length);
@@ -3323,9 +3324,10 @@ return magnitude spectrum of data (vct) in data using fft-window win and fft len
   wtype = XEN_TO_C_INT_OR_ELSE(win, MUS_RECTANGULAR_WINDOW);
   if (!(MUS_FFT_WINDOW_OK(wtype)))
     mus_misc_error(S_snd_spectrum, "unknown fft window", win);
+  if (XEN_NUMBER_P(beta)) b = XEN_TO_C_DOUBLE(beta);
   idat = (Float *)CALLOC(n, sizeof(Float));
   window = (Float *)CALLOC(n, sizeof(Float));
-  make_fft_window_1(window, n, wtype, 0.0);
+  make_fft_window_1(window, n, wtype, b);
   for (i = 0; i < n; i++) rdat[i] *= window[i];
   FREE(window);
 
@@ -3339,6 +3341,9 @@ return magnitude spectrum of data (vct) in data using fft-window win and fft len
       for (i = 1, j = n - 1; i < n2; i++, j--)
 	{
 	  rdat[i] = 0.5 * ((rdat[i] * rdat[i]) + (rdat[j] * rdat[j]));
+#if HAVE_ISNAN
+	  if (isnan(rdat[i])) rdat[i] = 0.0;
+#endif
 	  rdat[j] = rdat[i];
 	}
     }
@@ -3351,11 +3356,14 @@ return magnitude spectrum of data (vct) in data using fft-window win and fft len
       for (i = 1, j = n - 1; i < n2; i++, j--)
 	{
 	  rdat[i] = rdat[i] * rdat[i] + idat[i] * idat[i];
+#if HAVE_ISNAN
+	  if (isnan(rdat[i])) rdat[i] = 0.0;
+#endif
 	  rdat[j] = rdat[i];
 	}
     }
 
-  lowest = 0.00000001;
+  lowest = 0.000001;
   maxa = 0.0;
   n = n / 2;
   for (i = 0; i < n; i++)
@@ -3366,6 +3374,9 @@ return magnitude spectrum of data (vct) in data using fft-window win and fft len
       else 
 	{
 	  idat[i] = sqrt(val);
+#if HAVE_ISNAN
+	  if (isnan(idat[i])) idat[i] = 0.0;
+#endif
 	  if (idat[i] > maxa) maxa = idat[i];
 	}
     }
@@ -3672,7 +3683,7 @@ XEN_ARGIFY_2(g_env_selection_w, g_env_selection)
 XEN_ARGIFY_7(g_env_sound_w, g_env_sound)
 XEN_ARGIFY_6(g_env_channel_w, g_env_channel)
 XEN_ARGIFY_3(g_fft_w, g_fft)
-XEN_ARGIFY_4(g_snd_spectrum_w, g_snd_spectrum)
+XEN_ARGIFY_5(g_snd_spectrum_w, g_snd_spectrum)
 XEN_ARGIFY_2(g_convolve_w, g_convolve)
 XEN_ARGIFY_5(g_convolve_with_w, g_convolve_with)
 XEN_ARGIFY_2(g_convolve_selection_with_w, g_convolve_selection_with)
@@ -3767,7 +3778,7 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_env_selection,           g_env_selection_w, 1, 1, 0,           H_env_selection);
   XEN_DEFINE_PROCEDURE(S_env_sound,               g_env_sound_w, 1, 6, 0,               H_env_sound);
   XEN_DEFINE_PROCEDURE(S_fft,                     g_fft_w, 2, 1, 0,                     H_fft);
-  XEN_DEFINE_PROCEDURE(S_snd_spectrum,            g_snd_spectrum_w, 1, 3, 0,            H_snd_spectrum);
+  XEN_DEFINE_PROCEDURE(S_snd_spectrum,            g_snd_spectrum_w, 1, 4, 0,            H_snd_spectrum);
   XEN_DEFINE_PROCEDURE(S_convolve_arrays,         g_convolve_w, 1, 1, 0,                H_convolve);
   XEN_DEFINE_PROCEDURE(S_convolve_with,           g_convolve_with_w, 1, 4, 0,           H_convolve_with);
   XEN_DEFINE_PROCEDURE(S_convolve_selection_with, g_convolve_selection_with_w, 1, 1, 0, H_convolve_selection_with);
