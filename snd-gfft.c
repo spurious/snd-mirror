@@ -383,12 +383,12 @@ static void dismiss_transform_callback(GtkWidget *w, gpointer context)
 
 static void orient_transform_callback(GtkWidget *w, gpointer context)
 {
-  start_orientation_dialog();
+  start_orientation_dialog(true);
 }
 
 static void color_transform_callback(GtkWidget *w, gpointer context)
 {
-  start_color_dialog();
+  start_color_dialog(true);
 }
 
 static void delete_transform_dialog(GtkWidget *w, GdkEvent *event, gpointer context)

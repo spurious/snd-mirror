@@ -691,7 +691,7 @@ static void help_color_callback(Widget w, XtPointer context, XtPointer info)
 
 /* I tried a scrolled window with each colormap name in an appropriate color, but it looked kinda dumb */
 
-void view_color_callback(Widget w, XtPointer context, XtPointer info)
+static void start_view_color_dialog(bool managed)
 {
   Arg args[32];
   int n, i;
@@ -877,10 +877,21 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       if (color_scale(ss) != 1.0)
 	reflect_color_scale(color_scale(ss));
       set_dialog_widget(COLOR_DIALOG, ccd->dialog);
+      if (managed) XtManageChild(ccd->dialog);
     }
-  else raise_dialog(ccd->dialog);
-  if (!XtIsManaged(ccd->dialog)) 
-    XtManageChild(ccd->dialog);
+  else 
+    {
+      if (managed)
+	{
+	  if (!XtIsManaged(ccd->dialog)) XtManageChild(ccd->dialog);
+	  raise_dialog(ccd->dialog);
+	}
+    }
+}
+
+void view_color_callback(Widget w, XtPointer context, XtPointer info)
+{
+  start_view_color_dialog(true);
 }
 
 bool color_dialog_is_active(void)
@@ -888,9 +899,9 @@ bool color_dialog_is_active(void)
   return((ccd) && (ccd->dialog) && (XtIsManaged(ccd->dialog)));
 }
 
-Widget start_color_dialog(void)
+Widget start_color_dialog(bool managed)
 {
-  view_color_callback(NULL, NULL, NULL);
+  start_view_color_dialog(managed);
   return(ccd->dialog);
 }
 
@@ -1165,7 +1176,7 @@ static void reset_orientation_callback(Widget w, XtPointer context, XtPointer in
   for_each_chan(update_graph);
 }
 
-void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
+static void start_view_orientation_dialog(bool managed)
 {
   Widget mainform, rightbox, leftbox;
   XmString xdismiss, xhelp, xstr, xreset, titlestr;
@@ -1194,7 +1205,7 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
-      oid->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Orientation"), args, n);
+      oid->dialog = XmCreateTemplateDialog(MAIN_PANE(ss), _("Orientation"), args, n);
 
       XtAddCallback(oid->dialog, XmNcancelCallback, dismiss_orientation_callback, oid);
       XtAddCallback(oid->dialog, XmNhelpCallback, help_orientation_callback, NULL);
@@ -1367,9 +1378,21 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
 #endif
 
       set_dialog_widget(ORIENTATION_DIALOG, oid->dialog);
+      if (managed) XtManageChild(oid->dialog);
     }
-  else raise_dialog(oid->dialog);
-  if (!XtIsManaged(oid->dialog)) XtManageChild(oid->dialog);
+  else 
+    {
+      if (managed)
+	{
+	  if (!XtIsManaged(oid->dialog)) XtManageChild(oid->dialog);
+	  raise_dialog(oid->dialog);
+	}
+    }
+}
+
+void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
+{
+  start_view_orientation_dialog(true);
 }
 
 bool orientation_dialog_is_active(void)
@@ -1377,9 +1400,9 @@ bool orientation_dialog_is_active(void)
   return((oid) && (oid->dialog) && (XtIsManaged(oid->dialog)));
 }
 
-Widget start_orientation_dialog(void)
+widget_t start_orientation_dialog(bool managed)
 {
-  view_orientation_callback(NULL, NULL, NULL);
+  start_view_orientation_dialog(managed);
   return(oid->dialog);
 }
 

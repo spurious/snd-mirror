@@ -947,10 +947,10 @@ Widget make_mix_dialog(void)
     }
   else 
     {
+      if (!(XtIsManaged(mix_dialog))) XtManageChild(mix_dialog);
       raise_dialog(mix_dialog);
       if (mix_dialog_id != INVALID_MIX_ID) reflect_edit_in_mix_dialog_envs(mix_dialog_id);
     }
-  if (!(XtIsManaged(mix_dialog))) XtManageChild(mix_dialog);
   update_mix_dialog(mix_dialog_id);
   return(mix_dialog);
 }
@@ -2061,10 +2061,10 @@ Widget make_track_dialog(void)
     }
   else 
     {
+      if (!(XtIsManaged(track_dialog))) XtManageChild(track_dialog);
       raise_dialog(track_dialog);
       reflect_edit_in_track_dialog_env(track_dialog_id);
     }
-  if (!(XtIsManaged(track_dialog))) XtManageChild(track_dialog);
   update_track_dialog(track_dialog_id);
   return(track_dialog);
 }

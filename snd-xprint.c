@@ -96,22 +96,12 @@ static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
     XtUnmanageChild(file_print_dialog);
 }
 
-void file_print_callback(Widget w, XtPointer context, XtPointer info)
+static void start_file_print_dialog(XmString xmstr4, bool managed)
 {
   Arg args[20];
   int n;
   Widget dl, rc;
-  XmString xmstr1, xmstr2, xmstr3, xmstr4, titlestr;
-  snd_info *nsp;
-  if (ss->print_choice == PRINT_SND)
-    {
-      nsp = any_selected_sound();
-      if (!nsp) return;
-      mus_snprintf(print_string, PRINT_BUFFER_SIZE, _("print %s"), nsp->short_filename);
-      xmstr4 = XmStringCreate(print_string, XmFONTLIST_DEFAULT_TAG);
-    }
-  else xmstr4 = XmStringCreate(_("print env"), XmFONTLIST_DEFAULT_TAG);
-
+  XmString xmstr1, xmstr2, xmstr3, titlestr;
   if (!file_print_dialog)
     {
       n = 0;
@@ -129,12 +119,11 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
-      file_print_dialog = XmCreateMessageDialog(w, _("eps file:"), args, n);
+      file_print_dialog = XmCreateMessageDialog(MAIN_PANE(ss), _("eps file:"), args, n);
 
       XmStringFree(xmstr1);
       XmStringFree(xmstr2);
       XmStringFree(xmstr3);
-      XmStringFree(xmstr4);
       XmStringFree(titlestr);
       XtUnmanageChild(XmMessageBoxGetChild(file_print_dialog, XmDIALOG_SYMBOL_LABEL));
       XtAddCallback(file_print_dialog, XmNhelpCallback, file_print_help_callback, NULL);
@@ -167,11 +156,11 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       file_print_eps_or_lpr = make_togglebutton_widget(_("direct to printer"), rc, args, n);
 
-      XtManageChild(file_print_dialog);
+      if (managed) XtManageChild(file_print_dialog);
 
       if (!(ss->using_schemes))	
 	{
-	  map_over_children(file_print_dialog, set_main_color_of_widget, (void *)context);
+	  map_over_children(file_print_dialog, set_main_color_of_widget, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(file_print_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(file_print_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(file_print_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
@@ -185,9 +174,36 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info)
   else
     {
       XtVaSetValues(file_print_dialog, XmNmessageString, xmstr4, NULL);
-      XmStringFree(xmstr4);
-      raise_dialog(file_print_dialog);
+      if (managed)
+	{
+	  if (!XtIsManaged(file_print_dialog))
+	    XtManageChild(file_print_dialog);
+	  raise_dialog(file_print_dialog); /* a no-op unless already managed */
+	}
     }
-  if (!XtIsManaged(file_print_dialog)) 
-    XtManageChild(file_print_dialog);
+}
+
+widget_t make_file_print_dialog(bool managed)
+{
+  XmString xmstr4;
+  xmstr4 = XmStringCreate("print", XmFONTLIST_DEFAULT_TAG);
+  start_file_print_dialog(xmstr4, managed);
+  XmStringFree(xmstr4);
+  return(file_print_dialog);
+}
+
+void file_print_callback(Widget w, XtPointer context, XtPointer info)
+{
+  XmString xmstr4;
+  snd_info *nsp;
+  if (ss->print_choice == PRINT_SND)
+    {
+      nsp = any_selected_sound();
+      if (!nsp) return;
+      mus_snprintf(print_string, PRINT_BUFFER_SIZE, _("print %s"), nsp->short_filename);
+      xmstr4 = XmStringCreate(print_string, XmFONTLIST_DEFAULT_TAG);
+    }
+  else xmstr4 = XmStringCreate(_("print env"), XmFONTLIST_DEFAULT_TAG);
+  start_file_print_dialog(xmstr4, true);
+  XmStringFree(xmstr4);
 }

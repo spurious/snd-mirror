@@ -376,12 +376,12 @@ static void dismiss_transform_callback(Widget w, XtPointer context, XtPointer in
 
 static void orient_transform_callback(Widget w, XtPointer context, XtPointer info)
 {
-  start_orientation_dialog();
+  start_orientation_dialog(true);
 }
 
 static void color_transform_callback(Widget w, XtPointer context, XtPointer info)
 {
-  start_color_dialog();
+  start_color_dialog(true);
 }
 
 static void help_transform_callback(Widget w, XtPointer context, XtPointer info)

@@ -79,83 +79,77 @@ static void edit_find_cancel_callback(Widget w, XtPointer context, XtPointer inf
   else edit_find_next_callback(w, context, info);
 } 
 
-static void make_edit_find_dialog(void)
+static void make_edit_find_dialog(bool managed)
 {
   Widget dl, rc;
   Arg args[20];
   int n;
   XmString xmstr1, xmstr3, titlestr;
 
-  n = 0;
-  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-  xmstr1 = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
-  xmstr3 = XmStringCreate(_("Previous"), XmFONTLIST_DEFAULT_TAG);
-  titlestr = XmStringCreate(_("Find"), XmFONTLIST_DEFAULT_TAG);
-  XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
-  XtSetArg(args[n], XmNcancelLabelString, xmstr3); n++;
-  XtSetArg(args[n], XmNautoUnmanage, false); n++;
-  XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
-  XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
-  XtSetArg(args[n], XmNnoResize, false); n++;
-  XtSetArg(args[n], XmNtransient, false); n++;
-  edit_find_dialog = XmCreateMessageDialog(MAIN_SHELL(ss), _("find"), args, n);
-
-  XmStringFree(xmstr1);
-  XmStringFree(xmstr3);
-  XmStringFree(titlestr);
-
-  XtUnmanageChild(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_SYMBOL_LABEL));
-  XtUnmanageChild(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_MESSAGE_LABEL));
-
-  XtAddCallback(edit_find_dialog, XmNhelpCallback, edit_find_help_callback, NULL);
-  XtAddCallback(edit_find_dialog, XmNcancelCallback, edit_find_previous_callback, NULL);
-  XtAddCallback(edit_find_dialog, XmNokCallback, edit_find_cancel_callback, NULL);
-
-  n = 0;
-  if (!(ss->using_schemes)) 
-    {
-      XtSetArg(args[n], XmNbackground, (ss->sgx)->doit_button_color); n++;
-      XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
-    }
-  findnextB = XtCreateManagedWidget(_("Next"), xmPushButtonGadgetClass, edit_find_dialog, args, n);
-  XtAddCallback(findnextB, XmNactivateCallback, edit_find_next_callback, NULL);
-
-  rc = XtCreateManagedWidget("row", xmFormWidgetClass, edit_find_dialog, NULL, 0);
-
-  n = 0;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-  dl = XtCreateManagedWidget(_("find:"), xmLabelWidgetClass, rc, args, n);
-
-  n = 0;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNleftWidget, dl); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  edit_find_text = make_textfield_widget("text", rc, args, n, ACTIVATABLE, NO_COMPLETER);
-
-  n = 0;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, edit_find_text); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  edit_find_label = XtCreateManagedWidget("global search", xmLabelWidgetClass, rc, args, n);
-  set_dialog_widget(FIND_DIALOG, edit_find_dialog);
-}
-
-void edit_find_callback(Widget w, XtPointer context, XtPointer info)
-{
   if (!edit_find_dialog)
     {
-      make_edit_find_dialog();
-      XtManageChild(edit_find_dialog);
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+      xmstr1 = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
+      xmstr3 = XmStringCreate(_("Previous"), XmFONTLIST_DEFAULT_TAG);
+      titlestr = XmStringCreate(_("Find"), XmFONTLIST_DEFAULT_TAG);
+      XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
+      XtSetArg(args[n], XmNcancelLabelString, xmstr3); n++;
+      XtSetArg(args[n], XmNautoUnmanage, false); n++;
+      XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
+      XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
+      XtSetArg(args[n], XmNnoResize, false); n++;
+      XtSetArg(args[n], XmNtransient, false); n++;
+      edit_find_dialog = XmCreateMessageDialog(MAIN_SHELL(ss), _("find"), args, n);
+      
+      XmStringFree(xmstr1);
+      XmStringFree(xmstr3);
+      XmStringFree(titlestr);
+      
+      XtUnmanageChild(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_SYMBOL_LABEL));
+      XtUnmanageChild(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_MESSAGE_LABEL));
+      
+      XtAddCallback(edit_find_dialog, XmNhelpCallback, edit_find_help_callback, NULL);
+      XtAddCallback(edit_find_dialog, XmNcancelCallback, edit_find_previous_callback, NULL);
+      XtAddCallback(edit_find_dialog, XmNokCallback, edit_find_cancel_callback, NULL);
+      
+      n = 0;
       if (!(ss->using_schemes)) 
 	{
-	  map_over_children(edit_find_dialog, set_main_color_of_widget, (void *)context);
+	  XtSetArg(args[n], XmNbackground, (ss->sgx)->doit_button_color); n++;
+	  XtSetArg(args[n], XmNarmColor, (ss->sgx)->pushed_button_color); n++;
+	}
+      findnextB = XtCreateManagedWidget(_("Next"), xmPushButtonGadgetClass, edit_find_dialog, args, n);
+      XtAddCallback(findnextB, XmNactivateCallback, edit_find_next_callback, NULL);
+      
+      rc = XtCreateManagedWidget("row", xmFormWidgetClass, edit_find_dialog, NULL, 0);
+      
+      n = 0;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+      dl = XtCreateManagedWidget(_("find:"), xmLabelWidgetClass, rc, args, n);
+      
+      n = 0;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNleftWidget, dl); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      edit_find_text = make_textfield_widget("text", rc, args, n, ACTIVATABLE, NO_COMPLETER);
+      
+      n = 0;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, edit_find_text); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      edit_find_label = XtCreateManagedWidget("global search", xmLabelWidgetClass, rc, args, n);
+      
+      if (!(ss->using_schemes)) 
+	{
+	  map_over_children(edit_find_dialog, set_main_color_of_widget, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
@@ -164,15 +158,29 @@ void edit_find_callback(Widget w, XtPointer context, XtPointer info)
 	  XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, (ss->sgx)->help_button_color, NULL);
 	}
       cancelB = XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON);
+      set_dialog_widget(FIND_DIALOG, edit_find_dialog);
+      if (managed) XtManageChild(edit_find_dialog);
     }
-  else raise_dialog(edit_find_dialog);
-  if (!XtIsManaged(edit_find_dialog)) XtManageChild(edit_find_dialog);
+  else
+    {
+      if (managed)
+	{
+	  if (!XtIsManaged(edit_find_dialog)) XtManageChild(edit_find_dialog);
+	  raise_dialog(edit_find_dialog);
+	}
+    }
 }
 
-static XEN g_find_dialog(void)
+void edit_find_callback(Widget w, XtPointer context, XtPointer info)
+{
+  make_edit_find_dialog(true);
+}
+
+static XEN g_find_dialog(XEN managed)
 {
   #define H_find_dialog "(" S_find_dialog "): create and activate the Edit:Find dialog, return the dialog widget"
-  edit_find_callback(NULL, NULL, NULL);
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_find_dialog, "a boolean");
+  make_edit_find_dialog(XEN_TO_C_BOOLEAN_OR_TRUE(managed));
   return(XEN_WRAP_WIDGET(edit_find_dialog));
 }
 
@@ -191,7 +199,7 @@ static XEN g_find_dialog_widgets(void)
 #endif
 
 #ifdef XEN_ARGIFY_1
-XEN_NARGIFY_0(g_find_dialog_w, g_find_dialog)
+XEN_ARGIFY_1(g_find_dialog_w, g_find_dialog)
 #if DEBUGGING
   XEN_NARGIFY_0(g_find_dialog_widgets_w, g_find_dialog_widgets)
 #endif
@@ -204,7 +212,7 @@ XEN_NARGIFY_0(g_find_dialog_w, g_find_dialog)
 
 void g_init_gxfind(void)
 {
-  XEN_DEFINE_PROCEDURE(S_find_dialog, g_find_dialog_w, 0, 0, 0, H_find_dialog);
+  XEN_DEFINE_PROCEDURE(S_find_dialog, g_find_dialog_w, 0, 1, 0, H_find_dialog);
 #if DEBUGGING
   XEN_DEFINE_PROCEDURE("find-dialog-widgets", g_find_dialog_widgets_w, 0, 0, 0, "");
 #endif

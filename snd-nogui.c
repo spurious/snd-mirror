@@ -37,8 +37,8 @@ void allocate_sono_rects(int size) {}
 bool set_with_gl(bool val) {return(false);}
 void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus height) {}
 void draw_sono_rectangles(axis_context *ax, int color, int jmax) {}
-int start_color_dialog(void) {return(0);}
-int start_orientation_dialog(void) {return(0);}
+widget_t start_color_dialog(bool managed) {return(0);}
+widget_t start_orientation_dialog(bool managed) {return(0);}
 void set_color_scale(Float val) {}
 void set_color_inverted(bool val) {}
 void set_color_cutoff(Float val) {}
@@ -230,11 +230,12 @@ void set_file_sort_sensitive(bool sensitive) {}
 void view_curfiles_set_row_name(int pos) {}
 void set_file_browser_play_button(char *name, int state) {}
 void highlight_selected_sound(void) {}
-int start_file_dialog(void) {return(0);}
-bool file_dialog_is_active(void) {return(false);}
+int start_file_dialog(bool managed) {return(0);}
+bool view_files_dialog_is_active(void) {return(false);}
 int edit_header(snd_info *sp) {return(0);}
-widget_t make_edit_save_as_dialog(void) {return(0);}
-widget_t make_file_save_as_dialog(void) {return(0);}
+widget_t make_edit_save_as_dialog(bool managed) {return(0);}
+widget_t make_file_save_as_dialog(bool managed) {return(0);}
+widget_t make_file_print_dialog(bool managed) {return(0);}
 axis_info *enved_make_axis(const char *name, axis_context *ax, int ex0, int ey0, int width, int height, 
 			   Float xmin, Float xmax, Float ymin, Float ymax, bool printing) {return(NULL);}
 void display_enved_env_with_selection(env *e, char *name, int x0, int y0, int width, int height, bool dots, bool printing) {}
@@ -260,7 +261,7 @@ void set_enved_filter_order(int order) {}
 void enved_reflect_selection(bool on) {}
 void lock_recording_audio(void) {}
 void unlock_recording_audio(void) {}
-void snd_record_file(void) {}
+widget_t snd_record_file(void) {return(0);}
 bool record_dialog_is_active(void) {return(false);}
 void recorder_error(char *msg) {}
 void reflect_record_size(int val) {}
@@ -393,7 +394,7 @@ void snd_doit(int argc, char **argv)
 #if HAVE_GUILE
   XEN_EVAL_C_STRING("(set! scm-repl-prompt \"snd> \")");
 
-  XEN_EVAL_C_STRING("(define (" S_region_dialog " . args) #f)\
+  XEN_EVAL_C_STRING("(define (" S_view_regions_dialog " . args) #f)\
                (define (" S_in " . args) #f)\
                (define (" S_make_color " . args) #f)\
                (define (" S_color_p " . args) #f)\
@@ -459,7 +460,7 @@ void snd_doit(int argc, char **argv)
                (define " S_mix_color " (make-procedure-with-setter (lambda args #f) (lambda args #f)))");
 #endif
 #if HAVE_RUBY
-  XEN_EVAL_C_STRING("def region_dialog () false end");
+  XEN_EVAL_C_STRING("def view_regions_dialog () false end");
   XEN_EVAL_C_STRING("def make_color (r g b) false end");
   XEN_EVAL_C_STRING("def color_p (a) false end");
   XEN_EVAL_C_STRING("def color2list (a) false end");

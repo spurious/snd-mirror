@@ -73,7 +73,7 @@ void set_find_dialog_label(const char *str) {if (edit_find_label) set_label(edit
 static void edit_find_next(GtkWidget *w, gpointer context) {edit_find_find(READ_FORWARD, w, context);}
 static void edit_find_previous(GtkWidget *w, gpointer context) {edit_find_find(READ_BACKWARD, w, context);}
 
-void edit_find_callback(GtkWidget *w, gpointer context)
+static void make_edit_find_dialog(bool managed)
 {
   GtkWidget *dl, *rc;
   GtkWidget *help_button;
@@ -146,16 +146,25 @@ void edit_find_callback(GtkWidget *w, gpointer context)
       edit_find_label = gtk_label_new(_("global search"));
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(edit_find_dialog)->vbox), edit_find_label, false, false, 4);
       gtk_widget_show(edit_find_label);
-      gtk_widget_show(edit_find_dialog);
+      if (managed) gtk_widget_show(edit_find_dialog);
       set_dialog_widget(FIND_DIALOG, edit_find_dialog);
     }
-  else raise_dialog(edit_find_dialog);
+  else 
+    {
+      if (managed) raise_dialog(edit_find_dialog);
+    }
 }
 
-static XEN g_find_dialog(void)
+void edit_find_callback(GtkWidget *w, gpointer context)
+{
+  make_edit_find_dialog(true);
+}
+
+static XEN g_find_dialog(XEN managed)
 {
   #define H_find_dialog "(" S_find_dialog "): create and activate the Edit:Find dialog, return the dialog widget"
-  edit_find_callback(NULL, (gpointer)(ss));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_find_dialog, "a boolean");
+  make_edit_find_dialog(XEN_TO_C_BOOLEAN_OR_TRUE(managed));
   return(XEN_WRAP_WIDGET(edit_find_dialog));
 }
 
@@ -174,7 +183,7 @@ static XEN g_find_dialog_widgets(void)
 #endif
 
 #ifdef XEN_ARGIFY_1
-XEN_NARGIFY_0(g_find_dialog_w, g_find_dialog)
+XEN_ARGIFY_1(g_find_dialog_w, g_find_dialog)
 #if DEBUGGING
   XEN_NARGIFY_0(g_find_dialog_widgets_w, g_find_dialog_widgets)
 #endif
@@ -187,7 +196,7 @@ XEN_NARGIFY_0(g_find_dialog_w, g_find_dialog)
 
 void g_init_gxfind(void)
 {
-   XEN_DEFINE_PROCEDURE(S_find_dialog, g_find_dialog_w, 0, 0, 0, H_find_dialog);
+   XEN_DEFINE_PROCEDURE(S_find_dialog, g_find_dialog_w, 0, 1, 0, H_find_dialog);
 #if DEBUGGING
   XEN_DEFINE_PROCEDURE("find-dialog-widgets", g_find_dialog_widgets_w, 0, 0, 0, "");
 #endif

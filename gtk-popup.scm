@@ -262,7 +262,7 @@
 	    (list "Save as"             every-menu 
 		  (lambda (w data)
 		    (select-sound graph-popup-snd)
-		    (file-save-as-dialog)))
+		    (save-sound-dialog)))
 	    (list "Close"               every-menu 
 		  (lambda (w data)
 		    (close-sound graph-popup-snd)))

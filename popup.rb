@@ -658,7 +658,7 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
     entry("Save") do |snd, chn, w| save_sound(snd) end
     entry("Save as") do |snd, chn, w|
       select_sound(snd)
-      file_save_as_dialog
+      save_sound_dialog
     end
     entry("Update") do |snd, chn, w| update_sound(snd) end
     entry("Mix selection") do |snd, chn, w| mix_selection(cursor(snd, chn), snd, chn) end

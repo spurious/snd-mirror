@@ -110,7 +110,7 @@ static void file_record_callback(GtkWidget *w, gpointer info) {snd_record_file()
 static void file_close_callback(GtkWidget *w, gpointer info) {close_file_from_menu();}
 static void file_save_callback(GtkWidget *w, gpointer info) {save_file_from_menu();}
 static void file_update_callback(GtkWidget *w, gpointer info) {update_file_from_menu();}
-static void file_save_as_callback(GtkWidget *w, gpointer info) {make_file_save_as_dialog();}
+static void file_save_as_callback(GtkWidget *w, gpointer info) {make_file_save_as_dialog(true);}
 static void file_revert_callback(GtkWidget *w, gpointer info) {revert_file_from_menu();}
 static void file_exit_callback(GtkWidget *w, gpointer info) {exit_from_menu();}
 static void file_mix_callback_1(GtkWidget *w, gpointer info) {make_mix_file_dialog(true);}
@@ -124,7 +124,7 @@ static void edit_mix_callback(GtkWidget *w, gpointer info) {add_selection_or_reg
 static void edit_envelope_callback(GtkWidget *w, gpointer info) {create_envelope_editor();}
 static void edit_cut_callback(GtkWidget *w, gpointer info) {delete_selection("Edit: Cut", UPDATE_DISPLAY);}
 static void edit_paste_callback(GtkWidget *w, gpointer info) {insert_selection_from_menu();}
-static void edit_save_as_callback(GtkWidget *w, gpointer info) {make_edit_save_as_dialog();}
+static void edit_save_as_callback(GtkWidget *w, gpointer info) {make_edit_save_as_dialog(true);}
 static void edit_select_all_callback(GtkWidget *w, gpointer info) {select_all(current_channel());}
 static void edit_undo_callback(GtkWidget *w, gpointer info) {undo_edit_with_sync(current_channel(), 1);}
 static void edit_redo_callback(GtkWidget *w, gpointer info) {redo_edit_with_sync(current_channel(), 1);}

@@ -373,8 +373,10 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
-24-Mar:  dialog function consistency changes: added find-dialog, \n\
+24-Mar:  dialog function consistency changes: added find-dialog, print-dialog\n\
            changed region-dialog to view-regions-dialog, edit-save-as-dialog -> save-selection-dialog\n\
+           file-dialog -> view-files-dialog, mix-dialog -> view-mixes-dialog, track-dialog -> view-tracks-dialog\n\
+           file-save-as-dialog -> save-sound-dialog\n\
 19-Mar:  change-window-property is now a procedure-with-setter named window-property.\n\
          removed change-menu-label, menu-sensitive, recolor-widget.\n\
 16-Mar:  def-optkey-fun in ws.scm.\n\

@@ -626,7 +626,7 @@ static void delete_color_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
   gtk_widget_hide(ccd->dialog);
 }
 
-void view_color_callback(GtkWidget *w, gpointer context)
+static void start_view_color_dialog(bool managed)
 {
   GtkWidget *light_label, *dark_label, *help_button, *dismiss_button;
   GtkWidget *outer_table, *scale_box, *cutoff_box, *cutoff_label, *colormap_box;
@@ -750,7 +750,12 @@ void view_color_callback(GtkWidget *w, gpointer context)
       if (color_map(ss) != 0) sg_list_select(ccd->list, color_map(ss));
     }
   else raise_dialog(ccd->dialog);
-  gtk_widget_show(ccd->dialog);
+  if (managed) gtk_widget_show(ccd->dialog);
+}
+
+void view_color_callback(GtkWidget *w, gpointer context)
+{
+  start_view_color_dialog(true);
 }
 
 bool color_dialog_is_active(void)
@@ -758,9 +763,9 @@ bool color_dialog_is_active(void)
   return((ccd) && (ccd->dialog) && (GTK_WIDGET_VISIBLE(ccd->dialog))); /* ismanaged ...? */
 }
 
-GtkWidget *start_color_dialog(void)
+GtkWidget *start_color_dialog(bool managed)
 {
-  view_color_callback(NULL, NULL);
+  start_view_color_dialog(managed);
   return(ccd->dialog);
 }
 
@@ -997,7 +1002,7 @@ static void glbutton_callback(GtkWidget *w, gpointer context)
 }
 #endif
 
-void view_orientation_callback(GtkWidget *w, gpointer context)
+static void start_view_orientation_dialog(bool managed)
 {
   #define X_PAD 10
   #define Y_PAD 0
@@ -1312,7 +1317,12 @@ void view_orientation_callback(GtkWidget *w, gpointer context)
       set_dialog_widget(ORIENTATION_DIALOG, oid->dialog);
     }
   else raise_dialog(oid->dialog);
-  gtk_widget_show(oid->dialog);
+  if (managed) gtk_widget_show(oid->dialog);
+}
+
+void view_orientation_callback(GtkWidget *w, gpointer context)
+{
+  start_view_orientation_dialog(true);
 }
 
 bool orientation_dialog_is_active(void)
@@ -1320,9 +1330,9 @@ bool orientation_dialog_is_active(void)
   return((oid) && (oid->dialog) && (GTK_WIDGET_VISIBLE(oid->dialog)));
 }
 
-GtkWidget *start_orientation_dialog(void)
+GtkWidget *start_orientation_dialog(bool managed)
 {
-  view_orientation_callback(NULL, NULL);
+  start_view_orientation_dialog(managed);
   return(oid->dialog);
 }
 

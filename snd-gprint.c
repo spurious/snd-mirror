@@ -95,10 +95,9 @@ static void file_print_ok_callback(GtkWidget *w, gpointer context)
   if (quit) gtk_widget_hide(file_print_dialog);
 }
 
-void file_print_callback(GtkWidget *w, gpointer context)
+static void start_file_print_dialog(void)
 {
   GtkWidget *print_button, *help_button, *dismiss_button, *epsbox, *epslabel;
-  snd_info *nsp;
   if (!file_print_dialog)
     {
       file_print_dialog = snd_gtk_dialog_new();
@@ -162,6 +161,12 @@ void file_print_callback(GtkWidget *w, gpointer context)
       gtk_widget_show(file_print_eps_or_lpr);
       set_dialog_widget(PRINT_DIALOG, file_print_dialog);
     }
+}
+
+void file_print_callback(GtkWidget *w, gpointer context)
+{
+  snd_info *nsp;
+  start_file_print_dialog();
   if (ss->print_choice == PRINT_SND)
     {
       nsp = any_selected_sound();
@@ -172,3 +177,9 @@ void file_print_callback(GtkWidget *w, gpointer context)
   gtk_widget_show(file_print_dialog);
 }
 
+widget_t make_file_print_dialog(bool managed)
+{
+  start_file_print_dialog();
+  if (managed) gtk_widget_show(file_print_dialog);
+  return(file_print_dialog);
+}

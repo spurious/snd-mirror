@@ -1933,7 +1933,7 @@ static void recorder_delete(GtkWidget *w, GdkEvent *event, gpointer context)
   dismiss_record_callback(w, context);
 }
 
-void snd_record_file(void)
+widget_t snd_record_file(void)
 {
   int n, i, device, input_devices, output_devices, system;
   GdkDrawable *wn;
@@ -1955,7 +1955,7 @@ void snd_record_file(void)
       gdk_gc_set_function(vu_gc, GDK_COPY);
 
       input_devices = recorder_get_devices(rp, &output_devices);
-      if (input_devices == -1) return;
+      if (input_devices == -1) return(NULL);
       all_panes = (PANE **)CALLOC(input_devices + 1, sizeof(PANE *));
       device_buttons_size = input_devices + 2; /* inputs, one output, autoload_file */
       device_buttons = (GtkWidget **)CALLOC(device_buttons_size, sizeof(GtkWidget *));
@@ -2063,6 +2063,7 @@ void snd_record_file(void)
     }
   gtk_widget_show(recorder);
   if (!(rp->taking_input)) fire_up_recorder();
+  return(recorder);
 }
 
 void set_recorder_autoload(recorder_info *rp, bool val)

@@ -1795,10 +1795,11 @@ static XEN g_set_recorder_out_amp (XEN num, XEN amp)
 
 static XEN g_recorder_dialog(void) 
 {
+  widget_t w;
   #define H_recorder_dialog "(" S_recorder_dialog "): start the Recorder"
   init_recorder(); 
-  snd_record_file(); 
-  return(XEN_FALSE);
+  w = snd_record_file(); 
+  return(XEN_WRAP_WIDGET(w));
 }
 
 static XEN g_vu_font(void) {return(C_TO_XEN_STRING(vu_font(ss)));}

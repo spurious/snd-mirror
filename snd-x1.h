@@ -58,8 +58,8 @@ void initialize_colormap(void);
 void allocate_sono_rects(int size);
 void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus height);
 void draw_sono_rectangles(axis_context *ax, int color, int jmax);
-Widget start_color_dialog(void);
-Widget start_orientation_dialog(void);
+widget_t start_color_dialog(bool managed);
+widget_t start_orientation_dialog(bool managed);
 void set_color_scale(Float val);
 void set_color_inverted(bool val);
 void set_color_cutoff(Float val);
@@ -270,9 +270,7 @@ void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g
 
 void edit_find_callback(Widget w, XtPointer context, XtPointer info);
 void set_find_dialog_label(const char *str);
-#if DEBUGGING
-  void g_init_gxfind(void);
-#endif
+void g_init_gxfind(void);
 
 
 /* -------- snd-xutils.c -------- */
@@ -440,8 +438,8 @@ file_data *make_file_data_panel(Widget parent, char *name, Arg *args, int n, boo
 				int header_type, int data_format, bool with_loc, bool with_comment, bool with_samples);
 void alert_new_file(void);
 widget_t make_open_file_dialog(bool read_only, bool managed);
-widget_t make_file_save_as_dialog(void);
-widget_t make_edit_save_as_dialog(void);
+widget_t make_file_save_as_dialog(bool managed);
+widget_t make_edit_save_as_dialog(bool managed);
 snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, int srate, int chans, char *comment);
 ww_info *make_title_row(Widget formw, char *top_str, char *main_str, dialog_pad_t pad, dialog_sort_t with_sort, dialog_paned_t with_pane);
 regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callback, XtCallbackProc name_callback);
@@ -455,8 +453,8 @@ void set_file_browser_play_button(char *name, int state);
 void set_file_sort_sensitive(bool sensitive);
 void highlight_selected_sound(void);
 void view_files_callback(Widget w, XtPointer context, XtPointer info);
-Widget start_file_dialog(void);
-bool file_dialog_is_active(void);
+Widget start_file_dialog(bool managed);
+bool view_files_dialog_is_active(void);
 file_info *raw_data_dialog_to_file_info(const char *filename, const char *title);
 Widget edit_header(snd_info *sp);
 void set_open_file_play_button(bool val);
@@ -525,7 +523,7 @@ void show_track_background_wave(int pts, bool two_sided);
 void lock_recording_audio(void);
 void unlock_recording_audio(void);
 void cleanup_recording (void);
-void snd_record_file(void);
+widget_t snd_record_file(void);
 bool record_dialog_is_active(void);
 void make_recorder_icons_transparent_again(Pixel old_color, Pixel new_color);
 void recorder_error(char *msg);
@@ -536,6 +534,7 @@ void g_init_gxrec(void);
 /* -------- snd-xprint.c -------- */
 
 void file_print_callback(Widget w, XtPointer context, XtPointer info);
+widget_t make_file_print_dialog(bool managed);
 
 
 /* -------- snd-xxen.c -------- */

@@ -7903,18 +7903,18 @@ static XEN g_set_track_dialog_track(XEN val)
   return(val);
 }
 
-static XEN g_mix_dialog(void)
+static XEN g_view_mixes_dialog(void)
 {
   widget_t w;
-  #define H_mix_dialog "(" S_mix_dialog "): start the Mix browser"
+  #define H_view_mixes_dialog "(" S_view_mixes_dialog "): start the Mix browser"
   w = make_mix_dialog();
   return(XEN_WRAP_WIDGET(w));
 }
 
-static XEN g_track_dialog(void)
+static XEN g_view_tracks_dialog(void)
 {
   widget_t w;
-  #define H_track_dialog "(" S_track_dialog "): start the Track browser"
+  #define H_view_tracks_dialog "(" S_view_tracks_dialog "): start the Track browser"
   w = make_track_dialog();
   return(XEN_WRAP_WIDGET(w));
 }
@@ -7980,8 +7980,8 @@ XEN_NARGIFY_0(g_mix_dialog_mix_w, g_mix_dialog_mix)
 XEN_NARGIFY_1(g_set_mix_dialog_mix_w, g_set_mix_dialog_mix)
 XEN_NARGIFY_0(g_track_dialog_track_w, g_track_dialog_track)
 XEN_NARGIFY_1(g_set_track_dialog_track_w, g_set_track_dialog_track)
-XEN_NARGIFY_0(g_mix_dialog_w, g_mix_dialog)
-XEN_NARGIFY_0(g_track_dialog_w, g_track_dialog)
+XEN_NARGIFY_0(g_view_mixes_dialog_w, g_view_mixes_dialog)
+XEN_NARGIFY_0(g_view_tracks_dialog_w, g_view_tracks_dialog)
 XEN_NARGIFY_0(g_tempo_control_bounds_w, g_tempo_control_bounds)
 XEN_NARGIFY_1(g_set_tempo_control_bounds_w, g_set_tempo_control_bounds)
 #else
@@ -8018,8 +8018,8 @@ XEN_NARGIFY_1(g_set_tempo_control_bounds_w, g_set_tempo_control_bounds)
 #define g_set_mix_dialog_mix_w g_set_mix_dialog_mix
 #define g_track_dialog_track_w g_track_dialog_track
 #define g_set_track_dialog_track_w g_set_track_dialog_track
-#define g_mix_dialog_w g_mix_dialog
-#define g_track_dialog_w g_track_dialog
+#define g_view_mixes_dialog_w g_view_mixes_dialog
+#define g_view_tracks_dialog_w g_view_tracks_dialog
 #define g_tempo_control_bounds_w g_tempo_control_bounds
 #define g_set_tempo_control_bounds_w g_set_tempo_control_bounds
 #endif
@@ -8063,8 +8063,9 @@ void g_init_track(void)
   XEN_DEFINE_PROCEDURE(S_copy_mix,     g_copy_mix_w,     1, 1, 0, H_copy_mix);
   XEN_DEFINE_PROCEDURE(S_copy_track,   g_copy_track_w,   1, 1, 0, H_copy_track);
 
-  XEN_DEFINE_PROCEDURE(S_mix_dialog,   g_mix_dialog_w,   0, 0, 0, H_mix_dialog);
-  XEN_DEFINE_PROCEDURE(S_track_dialog, g_track_dialog_w, 0, 0, 0, H_track_dialog);
+  XEN_DEFINE_PROCEDURE(S_view_mixes_dialog,  g_view_mixes_dialog_w,  0, 0, 0, H_view_mixes_dialog);
+  XEN_DEFINE_PROCEDURE(S_view_tracks_dialog, g_view_tracks_dialog_w, 0, 0, 0, H_view_tracks_dialog);
+
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_dialog_mix, g_mix_dialog_mix_w, H_mix_dialog_mix, 
 				   S_setB S_mix_dialog_mix, g_set_mix_dialog_mix_w, 0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_track_dialog_track, g_track_dialog_track_w, H_track_dialog_track, 

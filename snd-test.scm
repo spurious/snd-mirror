@@ -1373,7 +1373,9 @@
       (set! (show-controls) #t)
       (if with-gui
 	  (begin
-	    (enved-dialog) 
+	    (let ((wid (enved-dialog) ))
+	      (if (not (equal? wid (list-ref (dialog-widgets) 2)))
+		  (snd-display ";enved-dialog -> ~A ~A" wid (list-ref (dialog-widgets) 2))))
 	    (if (not (list-ref (dialog-widgets) 2)) (snd-display ";enved-dialog?"))
 	    (set! (enved-envelope) '(0.0 0.0 1.0 1.0 2.0 0.0))
 	    (if (not (equal? (enved-envelope) (list 0.0 0.0 1.0 1.0 2.0 0.0)))
@@ -8134,7 +8136,7 @@ EDITS: 5
 	  
 	  (if (and (provided? 'xm) (provided? 'snd-debug))
 	      (XtCallCallbacks (menu-option "Files") XmNactivateCallback (snd-global-state))
-	      (file-dialog))
+	      (view-files-dialog))
 	  (set! (previous-files-sort-procedure)
 		(lambda (lst)
 		  (sort lst 
@@ -14984,7 +14986,7 @@ EDITS: 5
 	  (if (find-mix 0 new-index 0) (snd-display ";found non-existent mix? ~A" (find-mix 0 new-index 0)))
 	  (let ((mix-id (mix "pistol.snd" 100)))
 	    (if (not (mix? mix-id)) (snd-display ";~A not mix?" mix-id))
-	    (mix-dialog)
+	    (view-mixes-dialog)
 	    (let ((pos (mix-position mix-id))
 		  (len (mix-frames mix-id))
 		  (loc (mix-locked? mix-id))
@@ -15489,7 +15491,9 @@ EDITS: 5
 	  (if (and (provided? 'snd-motif)
 		   (provided? 'xm))
 	      (begin
-		(mix-dialog)
+		(let ((wid (view-mixes-dialog)))
+		  (if (not (equal? wid (list-ref (dialog-widgets) 16)))
+		      (snd-display ";view-mixes-dialog -> ~A ~A" wid (list-ref (dialog-widgets) 16))))
 		(let* ((mixd (list-ref (dialog-widgets) 16))
 		       (spdscr (find-child mixd "mix-speed"))
 		       (dragged #f))
@@ -15882,7 +15886,7 @@ EDITS: 5
 	      (if (not (equal? (mixes) (list (list (list mix1 mix2 mix3)))))
 		  (snd-display ":mixes all: ~A ~A" (mixes) (list (list (list mix1 mix2 mix3)))))
 		
-		(mix-dialog)
+		(view-mixes-dialog)
 		(set! (mix-dialog-mix) mix1)
 		(let* ((mixd (list-ref (dialog-widgets) 16))
 		       (nxt (find-child mixd "Next"))
@@ -18641,11 +18645,14 @@ EDITS: 5
 	(let ((cold (color-dialog))
 	      (ord (orientation-dialog))
 	      (trd (transform-dialog))
-	      (fild (file-dialog))
+	      (fild (view-files-dialog))
 	      (regd (view-regions-dialog))
+	      (pd (print-dialog))
 	      (ehd (without-errors (edit-header-dialog))))
 	  (if (not (equal? cold (list-ref (dialog-widgets) 0)))
 	      (snd-display ";color-dialog -> ~A ~A" cold (list-ref (dialog-widgets) 0)))
+	  (if (not (equal? pd (list-ref (dialog-widgets) 17)))
+	      (snd-display ";print-dialog -> ~A ~A" pd (list-ref (dialog-widgets) 17)))
 	  (if (not (equal? trd (list-ref (dialog-widgets) 5)))
 	      (snd-display ";transform-dialog -> ~A ~A" trd (list-ref (dialog-widgets) 5)))
 	  (if (not (equal? regd (list-ref (dialog-widgets) 19)))
@@ -35804,7 +35811,9 @@ EDITS: 2
 							       "test")
 							   extension))))
 				     (string-append "test" extension)))))
-		  (recorder-dialog)
+		  (let ((wid (recorder-dialog)))
+		    (if (not (equal? wid (list-ref (dialog-widgets) 18)))
+			(snd-display ";recorder-dialog -> ~A ~A" wid (list-ref (dialog-widgets) 18))))
 		  (let* ((recd (list-ref (dialog-widgets) 18)))
 		    (if recd ; /dev/mixer trouble sometimes here
 			(let* ((record-button (find-child recd "record-button"))
@@ -36479,7 +36488,9 @@ EDITS: 2
 		  (let ((ind (open-sound "oboe.snd")))
 		    (if (file-exists? "test.snd") (delete-file "test.snd"))
 		    (scale-by 2.0)
-		    (file-save-as-dialog)
+		    (let ((wid (save-sound-dialog)))
+		      (if (not (equal? wid (list-ref (dialog-widgets) 7)))
+			  (snd-display ";save-sound-dialog -> ~A ~A" wid (list-ref (dialog-widgets) 7))))
 		    (let* ((saved (list-ref (dialog-widgets) 7))
 			   (ok (XmFileSelectionBoxGetChild saved XmDIALOG_OK_BUTTON))
 			   (filetext (XmFileSelectionBoxGetChild saved XmDIALOG_TEXT)))
@@ -36512,7 +36523,7 @@ EDITS: 2
 			  (free-sample-reader r1))
 			(close-sound ind1)))
 		    (if (file-exists? "test.snd") (delete-file "test.snd"))
-		    (file-save-as-dialog)
+		    (save-sound-dialog)
 		    (let* ((saved (list-ref (dialog-widgets) 7))
 			   (types (find-child saved "header type")) ; list
 			   (formats (find-child saved "data format")) ; list
@@ -36557,7 +36568,7 @@ EDITS: 2
 			  (free-sample-reader r1))
 			(close-sound ind1)))
 		    (if (file-exists? "test.snd") (delete-file "test.snd"))
-		    (file-save-as-dialog)
+		    (save-sound-dialog)
 		    (let* ((saved (list-ref (dialog-widgets) 7))
 			   (filetext (XmFileSelectionBoxGetChild saved XmDIALOG_TEXT))
 			   (cancel (XmFileSelectionBoxGetChild saved XmDIALOG_CANCEL_BUTTON))
@@ -36643,7 +36654,7 @@ EDITS: 2
 			(add-hook! mouse-leave-label-hook files-popup-quit)))
 		  (let ((ind1 (open-sound "oboe.snd"))
 			(ind2 (open-sound "pistol.snd")))
-		    (file-dialog)
+		    (view-files-dialog)
 		    (let ((ind (open-sound "2.snd")))
 		      (close-sound ind))
 		    (let* ((filed (list-ref (dialog-widgets) 8))
@@ -37006,7 +37017,7 @@ EDITS: 2
 		    (vct-fill! v .1)
 		    (let* ((id1 (mix-vct v 1000 ind 0 #t))
 			   (id2 (mix-vct v 2000 ind 0 #t)))
-		      (mix-dialog)
+		      (view-mixes-dialog)
 		      (let* ((mixd (list-ref (dialog-widgets) 16))
 			     (idtxt (find-child mixd "mix-id"))
 			     (begtxt (find-child mixd "mix-times"))
@@ -37092,7 +37103,9 @@ EDITS: 2
 			   (id2 (mix-vct v 2000 ind 0 #t)))
 		      (set! (mix-track id1) id3)
 		      (set! (mix-track id2) id3)
-		      (track-dialog)
+		      (let ((wid (view-tracks-dialog)))
+			(if (not (equal? wid (list-ref (dialog-widgets) 21)))
+			    (snd-display ";view-tracks-dialog -> ~A ~A" wid (list-ref (dialog-widgets) 21))))
 		      (let* ((trackd (list-ref (dialog-widgets) 21))
 			     (idtxt (find-child trackd "track-id"))
 			     (begtxt (find-child trackd "track-times"))
@@ -41841,7 +41854,7 @@ EDITS: 2
 		     enved-target enved-waveform-color enved-wave? eps-file eps-left-margin emacs-style-save-as
 		     eps-bottom-margin eps-size expand-control expand-control-hop expand-control-jitter expand-control-length expand-control-ramp
 		     expand-control? fft fft-window-beta fft-log-frequency fft-log-magnitude transform-size disk-kspace
-		     transform-graph-type fft-window transform-graph? file-dialog mix-file-dialog file-name fill-polygon
+		     transform-graph-type fft-window transform-graph? view-files-dialog mix-file-dialog file-name fill-polygon
 		     fill-rectangle filter-sound filter-control-in-dB filter-control-envelope enved-filter-order enved-filter
 		     filter-control-in-hz filter-control-order filter-selection filter-channel filter-control-waveform-color filter-control? find
 		     find-mark find-sound finish-progress-report foreground-color forward-graph forward-mark forward-mix
@@ -41854,7 +41867,7 @@ EDITS: 2
 		     make-region-sample-reader make-sample-reader make-track-sample-reader map-chan mark-color mark-name
 		     mark-sample mark-sync mark-sync-max mark-home marks mark?  max-transform-peaks max-regions
 		     maxamp menu-widgets minibuffer-history-length min-dB mix mixes mix-amp mix-amp-env
-		     mix-tag-position mix-chans mix-color mix-track mix-frames mix-locked? mix? mix-dialog mix-position track-dialog
+		     mix-tag-position mix-chans mix-color mix-track mix-frames mix-locked? mix? view-mixes-dialog mix-position view-tracks-dialog
 		     track-dialog-track mix-dialog-mix mix-inverted?
 		     mix-region mix-sample-reader?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width
 		     mix-tag-y mix-vct mix-waveform-height time-graph-style lisp-graph-style transform-graph-style

@@ -3065,7 +3065,7 @@ static void help_record_callback(Widget w, XtPointer context, XtPointer info)
   recording_help();
 }
 
-void snd_record_file(void)
+widget_t snd_record_file(void)
 {
   Arg args[32];
   int n, i, device, input_devices, output_devices, system;
@@ -3091,7 +3091,7 @@ void snd_record_file(void)
       vu_gc = XCreateGC(MAIN_DISPLAY(ss), wn, GCForeground | GCBackground, &v);
 
       input_devices = recorder_get_devices(rp, &output_devices);
-      if (input_devices == -1) return;
+      if (input_devices == -1) return(NULL);
 
       all_panes = (PANE **)CALLOC(input_devices + 1, sizeof(PANE *));
       device_buttons_size = input_devices + 2; /* inputs, one output, autoload_file */
@@ -3248,9 +3248,9 @@ void snd_record_file(void)
     }
   else 
     {
+      if (!XtIsManaged(recorder)) XtManageChild(recorder);
       raise_dialog(recorder);
     }
-  if (!XtIsManaged(recorder)) XtManageChild(recorder);
   XtVaSetValues(message_pane, XmNpaneMinimum, 1, NULL);
   for (i = 0; i < rp->ordered_devices_size; i++)
     {
@@ -3258,6 +3258,7 @@ void snd_record_file(void)
       XtVaSetValues(p->pane, XmNpaneMaximum, LOTSA_PIXELS, NULL); /* release max once we're set up so user can do what he wants */
     }
   if (!(rp->taking_input)) fire_up_recorder();
+  return(recorder);
 }
 
 void set_recorder_autoload(recorder_info *rp, bool val)

@@ -58,7 +58,7 @@
       <ul><li><a href="#customcontrols">the control panel</a></ul>
     <li><a href="#editlists">Edit Lists</a>
     <li><a href="#sndtransforms">Transforms</a>
-    <li><a href="#snddialogs">Dialogs and Menus</a>
+    <li><a href="#snddialogs">Dialogs</a>
     <li><a href="#sndmisc">Miscellaneous functions</a>
     <li><a href="#sndconstants">Constants</a>
     <li><a href="#snderrors">Errors and Debugging</a>
@@ -6340,7 +6340,7 @@ save a mix: <a href="sndscm.html#savemix">save-mix</a><br>
 save a track: <a href="sndscm.html#savetrack">save-track</a><br>
 save the control panel state: <a href="#savecontrols">save-controls</a><br>
 save currently defined envelopes (envelope editor): <a href="#saveenvelopes">save-envelopes</a><br>
-start the file save dialog: <a href="#filesaveasdialog">file-save-as-dialog</a><br>
+start the file save dialog: <a href="#savesounddialog">save-sound-dialog</a><br>
 start the selection save dialog: <a href="#saveselectiondialog">save-selection-dialog</a><br>
 use Emacs-style save-as behavior: <a href="#emacssytlesaveas">emacs-style-save-as</a><br>
 save the current listener text: <a href="#savelistener">save-listener</a><br>
@@ -8454,10 +8454,143 @@ More transforms: <a href="sndscm.html#fractionalfouriertransform">fractional-fou
 <!-- Dialogs -->
 <br>
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="snddialogs">Dialogs</a></h3></td></tr></table>
-<p>Many aspects of the various dialogs can be customized.  The following is organized by dialog, or was meant to be originally.</p>
 
 <!-- -------------------------------- DIALOG TABLE -------------------------------- -->
 <table border=0 cellspacing=10>
+
+<!-- color-dialog -->
+<tr><td colspan=2><code><a class=def name="colordialog">color-dialog</a> (<i>managed</i>)</code></td></tr>
+<tr><td></td><td>Create and (if <i>managed</i> which defaults to #t) activate the Color dialog. Return the dialog widget.</td></tr>
+
+<!-- define-envelope -->
+<tr><td colspan=2><code><a class=def name="defineenvelope">define-envelope</a> (name data (base 1.0))</code></td></tr>
+<tr><td></td><td>
+Add an envelope to the envelope editor's list, under the name 'name', using the list of breakpoints
+'data', and the optional 'base'.  If the 'base' is omitted, this is the same as <a href="#ldefvar">defvar</a>.
+<code>(define-envelope ramp '(0 0 1 1))</code>.
+</td></tr>
+
+<!-- edit-header-dialog -->
+<tr><td colspan=2><code><a class=def name="editheaderdialog">edit-header-dialog</a> (snd) </code></td></tr>
+<tr><td></td><td>start the Edit Header dialog on <i>snd</i>, return the dialog widget.</td></tr>
+
+<!-- enved-base -->
+<tr><td colspan=2><code><a class=def name="envedbase">enved-base</a> () </code></td></tr>
+<tr><td></td><td>envelope editor exponential base value (1.0)</td></tr>
+
+<!-- enved-clip? -->
+<tr><td colspan=2><code><a class=def name="envedclipping">enved-clip?</a> ()</code></td></tr>
+<tr><td></td><td>envelope editor 'clip' button (restricts mouse motion) (#f)</td></tr>
+
+<!-- enved-dialog -->
+<tr><td colspan=2><code><a class=def name="enveddialog">enved-dialog</a> ()</code></td></tr>
+<tr><td></td><td>start the Envelope editor dialog, return the dialog widget.</td></tr>
+
+<!-- enved-envelope -->
+<tr><td colspan=2><code><a class=def name="envedenvelope">enved-envelope</a> ()</code></td></tr>
+<tr><td></td><td>current envelope in the envelope editor's graph window (list).</td></tr>
+
+<!-- enved-filter -->
+<tr><td colspan=2><code><a class=def name="filterenv">enved-filter</a> ()</code></td></tr>
+<tr><td></td><td>The type of the Envelope editor's filter. (default #t: FIR, #f is FFT).  To get the fft display in the envelope editor
+as the default:
+</td></tr>
+
+<tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(define (enved-fft)
+  (set! (<em class=red>enved-filter)</em> #f)
+  (set! (<a class=quiet href="#envedwaving">enved-wave?</a>) #t)
+  (set! (<a class=quiet href="#envedtarget">enved-target</a>) <a class=quiet href="#envedtarget">enved-spectrum</a>)
+  (add-hook! <a class=quiet href="#afteropenhook">after-open-hook</a> (lambda (snd)
+			       (set! (<a class=quiet href="#lfftsize">transform-size</a> snd) 
+				     (expt 2 (ceiling (/ (log (max 1 (<a class=quiet href="#frames">frames</a> snd)))
+							 (log 2.0))))))))
+</pre></td></tr></table></td></tr>
+
+<!-- enved-filter-order -->
+<tr><td colspan=2><code><a class=def name="filterenvorder">enved-filter-order</a> ()</code></td></tr>
+<tr><td></td><td>The order of the envelope editor's FIR filter. (default is 40)</td></tr>
+
+<!-- enved-in-dB -->
+<tr><td colspan=2><code><a class=def name="envedin-dB">enved-in-dB</a> ()</code></td></tr>
+<tr><td></td><td>envelope editor 'dB' button (#f)</td></tr>
+
+<!-- enved-power -->
+<tr><td colspan=2><code><a class=def name="envedpower">enved-power</a> ()</code></td></tr>
+<tr><td></td><td>envelope editor base scale range (9.0^power). (3.0)</td></tr>
+
+<!-- enved-style -->
+<tr><td colspan=2><code><a class=def name="envedstyle">enved-style</a> ()</code></td></tr>
+<tr><td></td><td>envelope editor choice for connecting breakpoints.  Can be <i>envelope-linear</i> (the default), or
+<i>envelope-exponential</i>.
+</td></tr>
+
+<!-- enved-target -->
+<tr><td colspan=2><code><a class=def name="envedtarget">enved-target</a> ()</code></td></tr>
+<tr><td></td><td>
+Determines how the envelope editor's current envelope is applied to the currently selected data.
+The choices are <i>enved-amplitude</i>, <i>enved-srate</i> and <i>enved-spectrum</i>.
+</td></tr>
+
+<!-- enved-waveform-color -->
+<tr><td colspan=2><code><a class=def name="envedwaveformcolor">enved-waveform-color</a> ()</code></td></tr>
+<tr><td></td><td>color of waveform displayed in envelope editor. (default is blue).</td></tr>
+
+<!-- enved-wave? -->
+<tr><td colspan=2><code><a class=def name="envedwaving">enved-wave?</a> ()</code></td></tr>
+<tr><td></td><td>envelope editor 'wave' button.
+The wave shown is the time domain display, even when filtering.
+</td></tr>
+
+<!-- find-dialog -->
+<tr><td colspan=2><code><a class=def name="finddialog">find-dialog</a> (<i>managed</i>) </code></td></tr>
+<tr><td></td><td>create and (if <i>managed</i> which defaults to #t) start the Edit:Find dialog, return the dialog widget.</td></tr>
+
+<!-- help-dialog -->
+<tr><td colspan=2 valign=top><code><a class=def name="helpdialog">help-dialog</a> (subject help-string <i>xrefs urls</i>) </code></td></tr>
+<tr><td></td><td>start the help dialog with title <i>subject</i> and body <i>help</i>, returning the dialog widget.
+<i>xrefs</i> is an optional list of strings to post in the "related items" list.  <i>urls</i> is a corresponding
+list of urls.
+<br>
+<br><code>(help-dialog "xyzzy" "are we having fUn?")</code>
+<br><br>There are many examples in new-effects.scm.
+</td></tr>
+<tr><td></td><td colspan=2>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(defmacro with-snd-help (form)
+  ;; if an error occurs while evaluating form, try to start the help dialog with some relevant help
+  `(catch #t 
+	  (lambda ()
+	    ,form)
+	  (lambda args
+	    (if (and args (cadr args) (string? (cadr args)))
+		(let* ((func (if (string=? "set!" (substring (cadr args) 0 4))
+				(substring (cadr args) 5)
+				(cadr args)))
+		       (help (<a class=quiet href="#sndhelp">snd-help</a> func)))
+		  (if help (<em class=red>help-dialog</em> func help))))
+	    args)))
+</pre></td></tr></table>
+</td></tr>
+
+<!-- html-dir -->
+<tr><td colspan=2><code><a class=def name="htmldir">html-dir</a> ()</code></td></tr>
+<tr><td></td><td>The directory to search for documentation if an HTML reader is in use.
+See <i>html</i> in index.scm.
+</td></tr>
+
+<!-- html-program -->
+<tr><td colspan=2><code><a class=def name="htmlprogram">html-program</a> ()</code></td></tr>
+<tr><td></td><td>The program to use to read HTML files (defaults to "mozilla", but can also be "netscape").
+On the Mac, you need to give the full path to the executable image: "/Applications/Safari.app/Contents/MacOS/Safari".
+See <i>html</i> in index.scm.
+</td></tr>
+
+<!-- info-dialog -->
+<tr><td colspan=2 valign=top><code><a class=def name="infodialog">info-dialog</a> (subject info) </code></td></tr>
+<tr><td></td><td>start the info dialog with title <i>subject</i> and body <i>info</i>. Return the dialog widget.<br>
+<br><code>(info-dialog "xyzzy" "are we having fUn?")</code>
+</td></tr>
 
 <!-- just-sounds -->
 <tr><td colspan=2><code><a class=def name="justsounds">just-sounds</a> ()</code></td></tr>
@@ -8467,9 +8600,25 @@ the file lists displayed by the file selection dialogs are filtered to show just
 sound files (see <a href="#addsoundfileextension">add-sound-file-extension</a> and
 <a href="#justsoundshook">just-sounds-hook</a>).</td></tr>
 
-<!-- file-dialog -->
-<tr><td colspan=2><code><a class=def name="filedialog">file-dialog</a> ()</code></td></tr>
-<tr><td></td><td>create and activate the View:Files <a href="snd.html#prevfiles">list</a> of current and previous files (not the file browser).</td></tr>
+<!-- listener-color -->
+<tr><td colspan=2><code><a class=def name="listenercolor">listener-color</a> ()</code></td></tr>
+<tr><td></td><td>background color of lisp listener. <code>(set! (listener-color) (<a class=quiet href="#makecolor">make-color</a> 0 0 0))</code> is good too.</td></tr>
+
+<!-- listener-font -->
+<tr><td colspan=2><code><a class=def name="listenerfont">listener-font</a> ()</code></td></tr>
+<tr><td></td><td>listener font.</td></tr>
+
+<!-- listener-prompt -->
+<tr><td colspan=2><code><a class=def name="listenerprompt">listener-prompt</a> ()</code></td></tr>
+<tr><td></td><td>lisp listener prompt (defaults to "&gt;").</td></tr>
+
+<!-- listener-text-color -->
+<tr><td colspan=2><code><a class=def name="listenertextcolor">listener-text-color</a> ()</code></td></tr>
+<tr><td></td><td>text color in lisp listener.</td></tr>
+
+<!-- mix-dialog-mix -->
+<tr><td colspan=2><code><a class=def name="mixdialogmix">mix-dialog-mix</a> ()</code></td></tr>
+<tr><td></td><td>the id of the mix displayed by the mix dialog</td></tr>
 
 <!-- mix-file-dialog -->
 <tr><td colspan=2><code><a class=def name="mixfiledialog">mix-file-dialog</a> (<i>managed</i>)</code></td></tr>
@@ -8499,6 +8648,10 @@ If the xm module is loaded, we could add our own info via:
 		   #f))
 </pre></td></tr></table></td></tr>
 
+<!-- orientation-dialog -->
+<tr><td colspan=2><code><a class=def name="orientationdialog">orientation-dialog</a> (<i>managed</i>)</code></td></tr>
+<tr><td></td><td>Create and (if <i>managed</i> which defaults to #t) activate the <a href="snd.html#orientationbrowser">Orientation</a> dialog. Return the dialog widget.</td></tr>
+
 <!-- previous-files-sort -->
 <tr><td colspan=2><code><a class=def name="previousfilessort">previous-files-sort</a> ()</code></td></tr>
 <tr><td></td><td>The sort function choice in the View:Files dialog (0=unsorted, 1=name, 2=date, 3=size, 4=entry, 5=user procedure).</td></tr>
@@ -8526,206 +8679,9 @@ should return that list, sorted as it pleases.  The following sorts the list by 
 			  (mxall 0.0 mxb)))))))))
 </pre></td></tr></table></td></tr>
 
-<!-- edit-header-dialog -->
-<tr><td colspan=2><code><a class=def name="editheaderdialog">edit-header-dialog</a> (snd) </code></td></tr>
-<tr><td></td><td>start the Edit Header dialog on <i>snd</i>.</td></tr>
-
-<!-- save-selection-dialog -->
-<tr><td colspan=2><code><a class=def name="saveselectiondialog">save-selection-dialog</a> () </code></td></tr>
-<tr><td></td><td>start the Edit Save-as dialog (to save the selection), return the dialog widget.</td></tr>
-
-<!-- define-envelope -->
-<tr><td colspan=2><code><a class=def name="defineenvelope">define-envelope</a> (name data (base 1.0))</code></td></tr>
-<tr><td></td><td>
-Add an envelope to the envelope editor's list, under the name 'name', using the list of breakpoints
-'data', and the optional 'base'.  If the 'base' is omitted, this is the same as <a href="#ldefvar">defvar</a>.
-<code>(define-envelope ramp '(0 0 1 1))</code>.
-</td></tr>
-
-<!-- enved-base -->
-<tr><td colspan=2><code><a class=def name="envedbase">enved-base</a> () </code></td></tr>
-<tr><td></td><td>envelope editor exponential base value (1.0)</td></tr>
-
-<!-- enved-clip? -->
-<tr><td colspan=2><code><a class=def name="envedclipping">enved-clip?</a> ()</code></td></tr>
-<tr><td></td><td>envelope editor 'clip' button (restricts mouse motion) (#f)</td></tr>
-
-<!-- enved-in-dB -->
-<tr><td colspan=2><code><a class=def name="envedin-dB">enved-in-dB</a> ()</code></td></tr>
-<tr><td></td><td>envelope editor 'dB' button (#f)</td></tr>
-
-<!-- enved-dialog -->
-<tr><td colspan=2><code><a class=def name="envsoundeddialog">enved-dialog</a> ()</code></td></tr>
-<tr><td></td><td>start the Envelope editor dialog, return the dialog widget.</td></tr>
-
-<!-- enved-envelope -->
-<tr><td colspan=2><code><a class=def name="envedenvelope">enved-envelope</a> ()</code></td></tr>
-<tr><td></td><td>current envelope in the envelope editor's graph window (list).</td></tr>
-
-<!-- enved-filter -->
-<tr><td colspan=2><code><a class=def name="filterenv">enved-filter</a> ()</code></td></tr>
-<tr><td></td><td>The type of the Envelope editor's filter. (default #t: FIR, #f is FFT).  To get the fft display in the envelope editor
-as the default:
-</td></tr>
-
-<tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(define (enved-fft)
-  (set! (<em class=red>enved-filter)</em> #f)
-  (set! (<a class=quiet href="#envedwaving">enved-wave?</a>) #t)
-  (set! (<a class=quiet href="#envedtarget">enved-target</a>) <a class=quiet href="#envedtarget">enved-spectrum</a>)
-  (add-hook! <a class=quiet href="#afteropenhook">after-open-hook</a> (lambda (snd)
-			       (set! (<a class=quiet href="#lfftsize">transform-size</a> snd) 
-				     (expt 2 (ceiling (/ (log (max 1 (<a class=quiet href="#frames">frames</a> snd)))
-							 (log 2.0))))))))
-</pre></td></tr></table></td></tr>
-
-<!-- enved-filter-order -->
-<tr><td colspan=2><code><a class=def name="filterenvorder">enved-filter-order</a> ()</code></td></tr>
-<tr><td></td><td>The order of the envelope editor's FIR filter. (default is 40)</td></tr>
-
-<!-- enved-power -->
-<tr><td colspan=2><code><a class=def name="envedpower">enved-power</a> ()</code></td></tr>
-<tr><td></td><td>envelope editor base scale range (9.0^power). (3.0)</td></tr>
-
-<!-- enved-style -->
-<tr><td colspan=2><code><a class=def name="envedstyle">enved-style</a> ()</code></td></tr>
-<tr><td></td><td>envelope editor choice for connecting breakpoints.  Can be <i>envelope-linear</i> (the default), or
-<i>envelope-exponential</i>.
-</td></tr>
-
-<!-- enved-target -->
-<tr><td colspan=2><code><a class=def name="envedtarget">enved-target</a> ()</code></td></tr>
-<tr><td></td><td>
-Determines how the envelope editor's current envelope is applied to the currently selected data.
-The choices are <i>enved-amplitude</i>, <i>enved-srate</i> and <i>enved-spectrum</i>.
-</td></tr>
-
-<!-- enved-waveform-color -->
-<tr><td colspan=2><code><a class=def name="envedwaveformcolor">enved-waveform-color</a> ()</code></td></tr>
-<tr><td></td><td>color of waveform displayed in envelope editor. (default is blue).</td></tr>
-
-<!-- enved-wave? -->
-<tr><td colspan=2><code><a class=def name="envedwaving">enved-wave?</a> ()</code></td></tr>
-<tr><td></td><td>envelope editor 'wave' button.
-The wave shown is the time domain display, even when filtering.
-</td></tr>
-
-<!-- file-save-as-dialog -->
-<tr><td colspan=2><code><a class=def name="filesaveasdialog">file-save-as-dialog</a> () </code></td></tr>
-<tr><td></td><td>start the File Save-as dialog (to save the currently selected sound), return the dialog widget.</td></tr>
-
-<!-- find-dialog -->
-<tr><td colspan=2><code><a class=def name="finddialog">find-dialog</a> () </code></td></tr>
-<tr><td></td><td>start the Edit:Find dialog.</td></tr>
-
-<!-- help-dialog -->
-<tr><td colspan=2 valign=top><code><a class=def name="helpdialog">help-dialog</a> (subject help-string <i>xrefs urls</i>) </code></td></tr>
-<tr><td></td><td>start the help dialog with title <i>subject</i> and body <i>help</i>, returning the dialog widget.
-<i>xrefs</i> is an optional list of strings to post in the "related items" list.  <i>urls</i> is a corresponding
-list of urls.
-<br>
-<br><code>(help-dialog "xyzzy" "are we having fUn?")</code>
-<br><br>There are many examples in new-effects.scm.
-</td></tr>
-<tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(defmacro with-snd-help (form)
-  ;; if an error occurs while evaluating form, try to start the help dialog with some relevant help
-  `(catch #t 
-	  (lambda ()
-	    ,form)
-	  (lambda args
-	    (if (and args (cadr args) (string? (cadr args)))
-		(let* ((func (if (string=? "set!" (substring (cadr args) 0 4))
-				(substring (cadr args) 5)
-				(cadr args)))
-		       (help (<a class=quiet href="#sndhelp">snd-help</a> func)))
-		  (if help (<em class=red>help-dialog</em> func help))))
-	    args)))
-</pre></td></tr></table>
-</td></tr>
-
-
-<!-- html-dir -->
-<tr><td colspan=2><code><a class=def name="htmldir">html-dir</a> ()</code></td></tr>
-<tr><td></td><td>The directory to search for documentation if an HTML reader is in use.
-See <i>html</i> in index.scm.
-</td></tr>
-
-<!-- html-program -->
-<tr><td colspan=2><code><a class=def name="htmlprogram">html-program</a> ()</code></td></tr>
-<tr><td></td><td>The program to use to read HTML files (defaults to "mozilla", but can also be "netscape").
-On the Mac, you need to give the full path to the executable image: "/Applications/Safari.app/Contents/MacOS/Safari".
-See <i>html</i> in index.scm.
-</td></tr>
-
-<!-- info-dialog -->
-<tr><td colspan=2 valign=top><code><a class=def name="infodialog">info-dialog</a> (subject info) </code></td></tr>
-<tr><td></td><td>start the info dialog with title <i>subject</i> and body <i>info</i>. Return the dialog widget.<br>
-<br><code>(info-dialog "xyzzy" "are we having fUn?")</code>
-</td></tr>
-
-<!-- listener-color -->
-<tr><td colspan=2><code><a class=def name="listenercolor">listener-color</a> ()</code></td></tr>
-<tr><td></td><td>background color of lisp listener. <code>(set! (listener-color) (<a class=quiet href="#makecolor">make-color</a> 0 0 0))</code> is good too.</td></tr>
-
-<!-- listener-font -->
-<tr><td colspan=2><code><a class=def name="listenerfont">listener-font</a> ()</code></td></tr>
-<tr><td></td><td>listener font.</td></tr>
-
-<!-- listener-prompt -->
-<tr><td colspan=2><code><a class=def name="listenerprompt">listener-prompt</a> ()</code></td></tr>
-<tr><td></td><td>lisp listener prompt (defaults to "&gt;").</td></tr>
-
-<!-- listener-text-color -->
-<tr><td colspan=2><code><a class=def name="listenertextcolor">listener-text-color</a> ()</code></td></tr>
-<tr><td></td><td>text color in lisp listener.</td></tr>
-
-<!-- mix-dialog -->
-<tr><td colspan=2><code><a class=def name="mixdialog">mix-dialog</a> ()</code></td></tr>
-<tr><td></td><td>create and activate the Mix Dialog.</td></tr>
-
-<!-- mix-dialog-mix -->
-<tr><td colspan=2><code><a class=def name="mixdialogmix">mix-dialog-mix</a> ()</code></td></tr>
-<tr><td></td><td>the id of the mix displayed by the mix dialog</td></tr>
-
-<!-- orientation-dialog -->
-<tr><td colspan=2><code><a class=def name="orientationdialog">orientation-dialog</a> ()</code></td></tr>
-<tr><td></td><td>Create and activate the <a href="snd.html#orientationbrowser">Orientation</a> dialog. Return the dialog widget.</td></tr>
-
-<tr><td colspan=2><code><a href="#spectrocutoff">spectro-cutoff</a> ()</code></td></tr>
-<tr><td></td><td>The amount of the frequency domain to include in the spectrum display.
-This number changes as you drag the frequency axis.  
-This is the slider labelled '% of spectrum' in the View Orientation dialog.
-Its default value is 1.0.
-</td></tr>
-
-<tr><td colspan=2><code><a href="#spectrohop">spectro-hop</a> ()</code></td></tr>
-<tr><td></td><td>The distance (pixels) moved between successive spectrogram traces.
-This is the slider labelled 'hop' in the Orientation dialog.
-default: 4.
-</td></tr>
-
-<tr><td colspan=2><code><a href="#spectrostart">spectro-start</a> ()</code></td></tr>
-<tr><td></td><td>The starting point of the frequency domain in the spectrum display. default: 0.0</td></tr>
-
-<tr><td colspan=2><code><a href="#spectroxangle">spectro-x-angle</a> ()</code></td></tr>
-<tr><td></td><td>Default spectrogram x-axis viewing angle. default: 90.0</td></tr>
-
-<tr><td colspan=2><code><a href="#spectroxscale">spectro-x-scale</a> ()</code></td></tr>
-<tr><td></td><td>Default scaler (stretch) along the spectrogram x axis. default: 1.0</td></tr>
-
-<tr><td colspan=2><code><a href="#spectroyangle">spectro-y-angle</a> ()</code></td></tr>
-<tr><td></td><td>Same for y-axis. default: 0.0</td></tr>
-
-<tr><td colspan=2><code><a href="#spectroyscale">spectro-y-scale</a> ()</code></td></tr>
-<tr><td></td><td>Same for y-axis. default: 1.0</td></tr>
-
-<tr><td colspan=2><code><a href="#spectrozangle">spectro-z-angle</a> ()</code></td></tr>
-<tr><td></td><td>Same for z-axis. default: -2.0</td></tr>
-
-<tr><td colspan=2><code><a href="#spectrozscale">spectro-z-scale</a> ()</code></td></tr>
-<tr><td></td><td>Same for z-axis. default: 0.1</td></tr>
+<!-- print-dialog -->
+<tr><td colspan=2><code><a class=def name="printdialog">print-dialog</a> (<i>managed</i>)</code></td></tr>
+<tr><td></td><td>Create and (if <i>managed</i> which defaults to #t) activate the File:Print dialog. Return the dialog widget.</td></tr>
 
 <!-- print-length -->
 <tr><td colspan=2><code><a class=def name="printlength">print-length</a> ()</code></td></tr>
@@ -8742,7 +8698,7 @@ default: 4.
 
 <!-- recorder-dialog -->
 <tr><td colspan=2><code><a class=def name="recorderdialog">recorder-dialog</a> ()</code></td></tr>
-<tr><td></td><td>start the <a href="snd.html#recordfile">recorder</a> window.</td></tr>
+<tr><td></td><td>start the <a href="snd.html#recordfile">recorder</a> window, return the dialog widget.</td></tr>
 
 <!-- recorder-file -->
 <tr><td colspan=2><code><a class=def name="recorderfile">recorder-file</a> ()</code></td></tr>
@@ -8818,24 +8774,89 @@ If it returns a string, that becomes the output filename.
 <tr><td colspan=2><code><a class=def name="recordertrigger">recorder-trigger</a> ()</code></td></tr>
 <tr><td></td><td>Recorder auto-trigger value.</td></tr>
 
+<!-- save-listener -->
+<tr><td colspan=2><code><em class=emdef><a href="#savelistener">save-listener</a></em> (filename) </code></td></tr>
+<tr><td></td><td>save listener text in <i>filename</i>.</td></tr>
+
+<!-- save-selection-dialog -->
+<tr><td colspan=2><code><a class=def name="saveselectiondialog">save-selection-dialog</a> (<i>managed</i>) </code></td></tr>
+<tr><td></td><td>create and (if <i>managed</i> which defaults to #t)
+start the Edit Save-as dialog (to save the current selection), return the dialog widget.
+</td></tr>
+
+<!-- save-sound-dialog -->
+<tr><td colspan=2><code><a class=def name="savesounddialog">save-sound-dialog</a> (<i>managed</i>) </code></td></tr>
+<tr><td></td><td>create and (if <i>managed</i> which defaults to #t)
+start the File Save-as dialog (to save the currently selected sound), return the dialog widget.
+</td></tr>
+
 <!-- show-listener -->
 <tr><td colspan=2><code><a class=def name="showlistener">show-listener</a> ()</code></td></tr>
 <tr><td></td><td>if #t, open the lisp listener pane, else close it.  For backwards compatibility, if called outside set!, it opens the pane.</td></tr>
 
-<tr><td colspan=2><code><em class=emdef><a href="#savelistener">save-listener</a></em> (filename) </code></td></tr>
-<tr><td></td><td>save listener text in <i>filename</i>.</td></tr>
+<tr><td colspan=2><code><a href="#spectrocutoff">spectro-cutoff</a> ()</code></td></tr>
+<tr><td></td><td>The amount of the frequency domain to include in the spectrum display.
+This number changes as you drag the frequency axis.  
+This is the slider labelled '% of spectrum' in the View Orientation dialog.
+Its default value is 1.0.
+</td></tr>
+
+<tr><td colspan=2><code><a href="#spectrohop">spectro-hop</a> ()</code></td></tr>
+<tr><td></td><td>The distance (pixels) moved between successive spectrogram traces.
+This is the slider labelled 'hop' in the Orientation dialog.
+default: 4.
+</td></tr>
+
+<tr><td colspan=2><code><a href="#spectrostart">spectro-start</a> ()</code></td></tr>
+<tr><td></td><td>The starting point of the frequency domain in the spectrum display. default: 0.0</td></tr>
+
+<tr><td colspan=2><code><a href="#spectroxangle">spectro-x-angle</a> ()</code></td></tr>
+<tr><td></td><td>Default spectrogram x-axis viewing angle. default: 90.0</td></tr>
+
+<tr><td colspan=2><code><a href="#spectroxscale">spectro-x-scale</a> ()</code></td></tr>
+<tr><td></td><td>Default scaler (stretch) along the spectrogram x axis. default: 1.0</td></tr>
+
+<tr><td colspan=2><code><a href="#spectroyangle">spectro-y-angle</a> ()</code></td></tr>
+<tr><td></td><td>Same for y-axis. default: 0.0</td></tr>
+
+<tr><td colspan=2><code><a href="#spectroyscale">spectro-y-scale</a> ()</code></td></tr>
+<tr><td></td><td>Same for y-axis. default: 1.0</td></tr>
+
+<tr><td colspan=2><code><a href="#spectrozangle">spectro-z-angle</a> ()</code></td></tr>
+<tr><td></td><td>Same for z-axis. default: -2.0</td></tr>
+
+<tr><td colspan=2><code><a href="#spectrozscale">spectro-z-scale</a> ()</code></td></tr>
+<tr><td></td><td>Same for z-axis. default: 0.1</td></tr>
 
 <!-- tempo-control-bounds -->
 <tr><td colspan=2><code><a class=def name="tempocontrolbounds">tempo-control-bounds</a> ()</code></td></tr>
 <tr><td></td><td>Track dialog tempo slider bounds (defaults to (list 0.0 8.0)).</td></tr>
 
-<!-- track-dialog -->
-<tr><td colspan=2><code><a class=def name="trackdialog">track-dialog</a> ()</code></td></tr>
-<tr><td></td><td>create and activate the Track dialog.</td></tr>
-
 <!-- track-dialog-track -->
 <tr><td colspan=2><code><a class=def name="trackdialogtrack">track-dialog-track</a> ()</code></td></tr>
 <tr><td></td><td>the id of the track currently displayed by the track dialog.</td></tr>
+
+<!-- transform-dialog -->
+<tr><td colspan=2><code><a class=def name="transformdialog">transform-dialog</a> (<i>managed</i>)</code></td></tr>
+<tr><td></td><td>create and (if <i>managed</i> which defaults to #t) activate the Options:Transform dialog. Return the dialog widget.</td></tr>
+
+<!-- view-files-dialog -->
+<tr><td colspan=2><code><a class=def name="viewfilesdialog">view-files-dialog</a> (<i>managed</i>)</code></td></tr>
+<tr><td></td><td>create and (if <i>managed</i> which defaults to #t) activate the 
+View:Files <a href="snd.html#prevfiles">list</a> of current and previous files (not the file browser),
+and return the dialog widget.</td></tr>
+
+<!-- view-mixes-dialog -->
+<tr><td colspan=2><code><a class=def name="viewmixesdialog">view-mixes-dialog</a> ()</code></td></tr>
+<tr><td></td><td>create and activate the Mix Dialog, return the dialog widget.</td></tr>
+
+<!-- view-regions-dialog -->
+<tr><td colspan=2><code><a class=def name="viewregionsdialog">view-regions-dialog</a> ()</code></td></tr>
+<tr><td></td><td>start the <a href="snd.html#regionbrowser">region browser</a> (a no-op if there are no regions).  Return the dialog widget.</td></tr>
+
+<!-- view-tracks-dialog -->
+<tr><td colspan=2><code><a class=def name="viewtracksdialog">view-tracks-dialog</a> ()</code></td></tr>
+<tr><td></td><td>create and activate the Track dialog, return the dialog widget.</td></tr>
 
 <!-- vu-font -->
 <tr><td colspan=2><code><a class=def name="vufont">vu-font</a> ()</code></td></tr>
@@ -8850,14 +8871,6 @@ If it returns a string, that becomes the output filename.
 <!-- vu-size -->
 <tr><td colspan=2><code><a class=def name="vusize">vu-size</a> ()</code></td></tr>
 <tr><td></td><td>overall size of the recorder VU meters. (1.0)</td></tr>
-
-<!-- transform-dialog -->
-<tr><td colspan=2><code><a class=def name="transformdialog">transform-dialog</a> (<i>managed</i>)</code></td></tr>
-<tr><td></td><td>create and (if <i>managed</i> which defaults to #t) activate the Options:Transform dialog. Return the dialog widget.</td></tr>
-
-<!-- view-regions-dialog -->
-<tr><td colspan=2><code><a class=def name="viewregionsdialog">view-regions-dialog</a> ()</code></td></tr>
-<tr><td></td><td>start the <a href="snd.html#regionbrowser">region browser</a> (a no-op if there are no regions).  Return the dialog widget.</td></tr>
 
 <!-- yes-or-no? -->
 <tr><td colspan=2><code><a class=def name="yesornop">yes-or-no?</a> (ques)</code></td></tr>
@@ -10001,8 +10014,6 @@ variables and functions control this:</p>
 
 <tr><td width=180><code><a class=def name="colorcutoff">color-cutoff</a></code></td><td width=100>0.003</td>
 <td>In spectra, sets the lowest data value that will be colored.</td></tr>
-<tr><td><code><a class=def name="colordialog">color-dialog</a></code></td><td>()</td>
-<td>Create the Color dialog (to choose a colormap etc), if necessary, activate it and return the dialog widget.</td></tr>
 <tr><td><code><a class=def name="colorinverted">color-inverted</a></code></td><td>#t</td>
 <td>The 'invert' button in the <a href="snd.html#colorbrowser">color</a> dialog, negated (hunh?!).</td></tr>
 <tr><td><code><a class=def name="colorscale">color-scale</a></code></td><td>0.5</td>
@@ -10632,7 +10643,7 @@ return the current x axis label (also settable).
 	<!-- I(color):O(color-scale,color-cutoff)(colorscale) -->
         <!-- I(orientation):L(orientation-dialog)(orientationdialog) -->
         <!-- I(orientation):O(spectro-x-angle etc)(spectroxangle) -->
-	<!-- I(file lists):L(file-dialog)(filedialog) -->
+	<!-- I(file lists):L(view-files-dialog)(viewfilesdialog) -->
         <!-- I(define selection):L(make-region)(makeregion) -->
 	<!-- I(delete samples):L(delete-samples)(deletesamples) -->
         <!-- I(temp directory):L(temp-dir)(tempdir) -->
@@ -10663,7 +10674,7 @@ return the current x axis label (also settable).
 	<!-- I(speed units):L(speed-control-style)(lspeedstyle) -->
 	<!-- I(speed units):O(speed-control-tones)(speedtones) -->
 	<!-- I(change srate):L(src-sound)(srcsound) -->	
-	<!-- I(edit env):L(enved-dialog)(envsoundeddialog) -->
+	<!-- I(edit env):L(enved-dialog)(enveddialog) -->
 	<!-- I(edit header):L(edit-header-dialog)(editheaderdialog) -->
 	<!-- I(insert file):L(insert-sound)(insertsound) -->
 	<!-- I(mix file):L(mix)(mix) -->
@@ -10673,7 +10684,7 @@ return the current x axis label (also settable).
 	<!-- I(play selection):L(play-selection)(playselection) -->
 	<!-- I(play selection):O(play-region)(playregion) -->
 	<!-- I(update file):L(update)(updatesound) -->
-	<!-- I(view envs):L(enved-dialog)(envsoundeddialog) -->
+	<!-- I(view envs):L(enved-dialog)(enveddialog) -->
 	<!-- I(play channel):L(play-channel)(playchannel) -->
 	<!-- I(play channel):O(play)(play) -->
 	<!-- I(mix selection):O(mix-region)(mixregion) -->
@@ -10686,7 +10697,7 @@ return the current x axis label (also settable).
 	<!-- I(wavelets):L(wavelet-type)(wavelettype) -->
 	<!-- I(save macros):L(save-macros)(savemacros) -->
         <!-- I(save selection):L(save-region)(saveregion) --><!-- I(save selection):O(save-selection)(saveselection) -->
-	<!-- I(examine regions):L(view-regions-dialog)(regiondialog) -->
+	<!-- I(examine regions):L(view-regions-dialog)(viewregionsdialog) -->
 	<!-- I(zoom window):L(x-bounds)(xbounds) -->
 	<!-- I(save options):L(save-options)(saveoptions) -->
 	<!-- I(describe audio):A(describeaudiostate) --><!-- I(describe audio):L(mus-audio-describe)(describeaudiostate) -->

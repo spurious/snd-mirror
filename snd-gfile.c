@@ -852,7 +852,7 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
     }
 }
 
-widget_t make_file_save_as_dialog(void)
+widget_t make_file_save_as_dialog(bool managed)
 {
   snd_info *sp = NULL;
   char *com = NULL;
@@ -870,11 +870,11 @@ widget_t make_file_save_as_dialog(void)
 			     0, -1, -1,
 			     com = output_comment(hdr));
   if (com) FREE(com);
-  gtk_widget_show(save_as_dialog);
+  if (managed) gtk_widget_show(save_as_dialog);
   return(save_as_dialog);
 }
 
-widget_t make_edit_save_as_dialog(void)
+widget_t make_edit_save_as_dialog(bool managed)
 {
   save_as_dialog_type = EDIT_SAVE_AS;
   make_save_as_dialog(_("current selection"),
@@ -885,7 +885,7 @@ widget_t make_edit_save_as_dialog(void)
 			     save_as_file_data->current_format,
 			     selection_srate(), 
 			     0, -1, -1, NULL);
-  gtk_widget_show(save_as_dialog);
+  if (managed) gtk_widget_show(save_as_dialog);
   return(save_as_dialog);
 }
 
@@ -1160,7 +1160,7 @@ static void view_files_update_callback(GtkWidget *w, gpointer context)
 {
   /* run through previous files list looking for any that have been deleted behind our back */
   update_prevlist();
-  if (file_dialog_is_active()) make_prevfiles_list();
+  if (view_files_dialog_is_active()) make_prevfiles_list();
 }
 
 void set_file_browser_play_button(char *name, int state)
@@ -1168,7 +1168,7 @@ void set_file_browser_play_button(char *name, int state)
   int i, list;
   regrow *r;
   list = 0;
-  if (file_dialog_is_active())
+  if (view_files_dialog_is_active())
     {
       i = find_curfile_regrow(name); 
       if (i != -1) list = 1; else i = find_prevfile_regrow(name);
@@ -1189,7 +1189,7 @@ static void view_curfiles_play_callback(GtkWidget *w, gpointer context)
 static void curfile_unhighlight(void)
 {
   regrow *r;
-  if (file_dialog_is_active())
+  if (view_files_dialog_is_active())
     {
       if (vf_selected_file != -1)
 	{
@@ -1206,7 +1206,7 @@ static void curfile_unhighlight(void)
 void curfile_highlight(int i)
 {
   regrow *r;
-  if (file_dialog_is_active())
+  if (view_files_dialog_is_active())
     {
       if (vf_selected_file != -1) curfile_unhighlight();
       r = cur_name_row[i];
@@ -1347,7 +1347,8 @@ void make_prevfiles_list (void)
 /* play open for prevfile, play select for curfile, preload process for prevfile (snd-clm) */
 
 static GtkWidget *fs1, *fs3;
-void view_files_callback(GtkWidget *w, gpointer context)
+
+static void start_view_files_dialog(bool managed)
 {
   /* fire up a dialog window with a list of currently open files, 
    * currently selected file also selected in list
@@ -1472,19 +1473,24 @@ void view_files_callback(GtkWidget *w, gpointer context)
       wwl = NULL;
       set_dialog_widget(VIEW_FILES_DIALOG, view_files_dialog);
     }
-  gtk_widget_show(view_files_dialog);
+  if (managed) gtk_widget_show(view_files_dialog);
   make_curfiles_list();
   make_prevfiles_list();
   highlight_selected_sound();
 }
 
-GtkWidget *start_file_dialog(void)
+void view_files_callback(GtkWidget *w, gpointer context)
 {
-  view_files_callback(NULL, NULL);
+  start_view_files_dialog(true);
+}
+
+GtkWidget *start_file_dialog(bool managed)
+{
+  start_view_files_dialog(managed);
   return(view_files_dialog);
 }
 
-bool file_dialog_is_active(void)
+bool view_files_dialog_is_active(void)
 {
   return((view_files_dialog) && (GTK_WIDGET_VISIBLE(view_files_dialog)));
 }

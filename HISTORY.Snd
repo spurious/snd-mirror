@@ -1,7 +1,9 @@
 Snd change log
 
-  24-Mar:    dialog function consistency changes: added find-dialog, 
+  24-Mar:    dialog function consistency changes: added find-dialog, print-dialog
                changed region-dialog to view-regions-dialog, edit-save-as-dialog -> save-selection-dialog
+               file-dialog -> view-files-dialog, mix-dialog -> view-mixes-dialog, track-dialog -> view-tracks-dialog\n\
+               file-save-as-dialog -> save-sound-dialog\n\
   19-Mar:    change-window-property is now a procedure-with-setter named window-property.
              removed change-menu-label, menu-sensitive, recolor-widget.
   16-Mar:    def-optkey-fun in ws.scm.

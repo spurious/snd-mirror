@@ -1541,7 +1541,7 @@ void add_directory_to_prevlist(const char *dirname)
       free_dir(sound_files);
       FREE(fullpathname);
     }
-  if (file_dialog_is_active()) make_prevfiles_list();
+  if (view_files_dialog_is_active()) make_prevfiles_list();
 }
 
 static void add_to_previous_files(const char *shortname, const char *fullname)
@@ -1558,7 +1558,7 @@ static void add_to_previous_files(const char *shortname, const char *fullname)
       curnames[curfile_end - 1] = NULL;
       curfile_end--;
     }
-  if (file_dialog_is_active())
+  if (view_files_dialog_is_active())
     {
       make_curfiles_list();
       make_prevfiles_list();
@@ -1596,7 +1596,7 @@ static void add_to_current_files(const char *shortname)
   if (max_curfile_end < curfile_end)
     max_curfile_end = curfile_end;
   file_unprevlist(shortname);
-  if (file_dialog_is_active())
+  if (view_files_dialog_is_active())
     {
       make_curfiles_list();
       make_prevfiles_list();
@@ -2627,7 +2627,7 @@ static XEN g_set_previous_files_sort(XEN val)
   if ((choice < 0) || (choice > 5))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_previous_files_sort, 1, val, "~A, but must be between 0.0 and 0..5");
   set_previous_files_sort(choice);
-  if (file_dialog_is_active()) 
+  if (view_files_dialog_is_active()) 
     make_prevfiles_list();
   return(C_TO_XEN_INT(previous_files_sort(ss)));
 }

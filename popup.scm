@@ -306,7 +306,7 @@
       (list "Save as"            xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (select-sound graph-popup-snd)
-	      (file-save-as-dialog)))
+	      (save-sound-dialog)))
       (list "Close"              xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (close-sound graph-popup-snd)))

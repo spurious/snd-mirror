@@ -41,8 +41,8 @@ void allocate_color_map(int colormap);
 void allocate_sono_rects(int size);
 void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus height);
 void draw_sono_rectangles(axis_context *ax, int color, int jmax);
-int start_color_dialog(void);
-int start_orientation_dialog(void);
+widget_t start_color_dialog(bool managed);
+widget_t start_orientation_dialog(bool managed);
 void set_color_scale(Float val);
 void set_color_inverted(bool val);
 void set_color_cutoff(Float val);
@@ -318,13 +318,13 @@ void curfile_highlight(int i);
 void set_file_browser_play_button(char *name, int state);
 void highlight_selected_sound(void);
 void set_file_sort_sensitive(bool sensitive);
-int start_file_dialog(void);
-bool file_dialog_is_active(void);
+int start_file_dialog(bool managed);
+bool view_files_dialog_is_active(void);
 int edit_header(snd_info *sp);
 widget_t make_open_file_dialog(bool read_only, bool managed);
 void set_open_file_play_button(bool val);
-widget_t make_edit_save_as_dialog(void);
-widget_t make_file_save_as_dialog(void);
+widget_t make_edit_save_as_dialog(bool managed);
+widget_t make_file_save_as_dialog(bool managed);
 widget_t make_mix_file_dialog(bool managed);
 void clear_deleted_snd_info(void *fd);
 widget_t post_it(const char *subject, const char *str);
@@ -380,7 +380,7 @@ void show_track_background_wave(int pts, bool two_sided);
 void lock_recording_audio(void);
 void unlock_recording_audio(void);
 void cleanup_recording (void);
-void snd_record_file(void);
+widget_t snd_record_file(void);
 bool record_dialog_is_active(void);
 void reflect_amp_control_bounds_change_in_recorder(void);
 
@@ -388,6 +388,9 @@ void reflect_amp_control_bounds_change_in_recorder(void);
 /* -------- snd-gxutils.c -------- */
 bool send_netscape(const char *html_viewer, const char *url);
 
+
+/* -------- snd-xprint.c -------- */
+widget_t make_file_print_dialog(bool managed);
 
 #endif
 

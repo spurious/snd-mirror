@@ -1111,7 +1111,7 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
     }
 }
 
-widget_t make_file_save_as_dialog(void)
+widget_t make_file_save_as_dialog(bool managed)
 {
   snd_info *sp = NULL;
   char *com = NULL;
@@ -1129,11 +1129,11 @@ widget_t make_file_save_as_dialog(void)
 			     0, -1, -1,
 			     com = output_comment(hdr));
   if (com) FREE(com);
-  if (!XtIsManaged(save_as_dialog)) XtManageChild(save_as_dialog);
+  if ((managed) && (!XtIsManaged(save_as_dialog))) XtManageChild(save_as_dialog);
   return(save_as_dialog);
 }
 
-widget_t make_edit_save_as_dialog(void)
+widget_t make_edit_save_as_dialog(bool managed)
 {
   save_as_dialog_type = EDIT_SAVE_AS;
   make_save_as_dialog(_("current selection"),
@@ -1144,7 +1144,7 @@ widget_t make_edit_save_as_dialog(void)
 			     save_as_file_data->current_format,
 			     selection_srate(), 
 			     0, -1, -1, NULL);
-  if (!XtIsManaged(save_as_dialog)) XtManageChild(save_as_dialog);
+  if ((managed) && (!XtIsManaged(save_as_dialog))) XtManageChild(save_as_dialog);
   return(save_as_dialog);
 }
 
@@ -1515,7 +1515,7 @@ static void view_files_update_callback(Widget w, XtPointer context, XtPointer in
 {
   /* run through previous files list looking for any that have been deleted behind our back */
   update_prevlist();
-  if (file_dialog_is_active()) make_prevfiles_list();
+  if (view_files_dialog_is_active()) make_prevfiles_list();
 }
 
 void set_file_browser_play_button(char *name, int state)
@@ -1523,7 +1523,7 @@ void set_file_browser_play_button(char *name, int state)
   int i, list;
   regrow *r;
   list = 0;
-  if (file_dialog_is_active())
+  if (view_files_dialog_is_active())
     {
       i = find_curfile_regrow(name); 
       if (i != -1) list = 1; else i = find_prevfile_regrow(name);
@@ -1546,7 +1546,7 @@ static void view_curfiles_play_callback(Widget w, XtPointer context, XtPointer i
 static void curfile_unhighlight(void)
 {
   regrow *r;
-  if ((file_dialog_is_active()) && 
+  if ((view_files_dialog_is_active()) && 
       (!(ss->using_schemes)) && 
       (vf_selected_file != -1))
     {
@@ -1560,7 +1560,7 @@ static void curfile_unhighlight(void)
 void curfile_highlight(int i)
 {
   regrow *r;
-  if ((file_dialog_is_active()) && 
+  if ((view_files_dialog_is_active()) && 
       (!(ss->using_schemes)))
     {
       if (vf_selected_file != -1) curfile_unhighlight();
@@ -1713,7 +1713,7 @@ void set_file_sort_sensitive(bool sensitive)
 
 /* play open for prevfile, play save select for curfile, preload process for prevfile (snd-clm) */
 
-void view_files_callback(Widget w, XtPointer context, XtPointer info)
+static void start_view_files_dialog(bool managed)
 {
   /* fire up a dialog window with a list of currently open files, 
    * currently selected file also selected in list --
@@ -1822,7 +1822,7 @@ void view_files_callback(Widget w, XtPointer context, XtPointer info)
       vf_curww = wwl->ww;
       vf_curlst = wwl->list;
       if (!(ss->using_schemes)) 
-	map_over_children(vf_curlst, set_main_color_of_widget, (void *)context);
+	map_over_children(vf_curlst, set_main_color_of_widget, NULL);
       FREE(wwl); 
       wwl = NULL;
       if (get_curfile_size() == 0) /* apparently we need at least one row to get Motif to allocate the outer widgets correctly */
@@ -1846,7 +1846,7 @@ void view_files_callback(Widget w, XtPointer context, XtPointer info)
       vf_prevww = wwl->ww;
       vf_prevlst = wwl->list;
       if (!(ss->using_schemes)) 
-	map_over_children(vf_prevlst, set_main_color_of_widget, (void *)context);
+	map_over_children(vf_prevlst, set_main_color_of_widget, NULL);
       FREE(wwl); 
       wwl = NULL;
       if (get_prevfile_size() == 0)
@@ -1859,22 +1859,34 @@ void view_files_callback(Widget w, XtPointer context, XtPointer info)
 	  r->parent = PREVIOUS_FILE_VIEWER;
 	}
       set_dialog_widget(VIEW_FILES_DIALOG, view_files_dialog);
+      if (managed) XtManageChild(view_files_dialog);
     }
-  else raise_dialog(view_files_dialog);
+  else 
+    {
+      if (managed)
+	{
+	  if (!XtIsManaged(view_files_dialog)) 
+	    XtManageChild(view_files_dialog);
+	  raise_dialog(view_files_dialog);
+	}
+    }
   make_curfiles_list();
   make_prevfiles_list();
-  if (!XtIsManaged(view_files_dialog)) 
-    XtManageChild(view_files_dialog);
   highlight_selected_sound();
 }
 
-Widget start_file_dialog(void)
+void view_files_callback(Widget w, XtPointer context, XtPointer info)
 {
-  view_files_callback(NULL, NULL, NULL);
+  start_view_files_dialog(true);
+}
+
+Widget start_file_dialog(bool managed)
+{
+  start_view_files_dialog(managed);
   return(view_files_dialog);
 }
 
-bool file_dialog_is_active(void)
+bool view_files_dialog_is_active(void)
 {
   return((view_files_dialog) && (XtIsManaged(view_files_dialog)));
 }
@@ -2272,7 +2284,6 @@ snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, 
     }
   return(sp);
 }
-
 
 
 /* ---------------- EDIT_HEADER ---------------- */
