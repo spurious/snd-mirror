@@ -368,11 +368,11 @@
 			      "func2"
 			      (parse-args "GtkWidget* w lambda_data func_data" 'callback)
 			      'temporary)
-			(list 'GtkTimeoutFunction
-			      "gint"
-			      "timeout_func"
-			      (parse-args "lambda_data func_data" 'callback)
-			      'timeout)
+;			(list 'GtkTimeoutFunction
+;			      "gint"
+;			      "timeout_func"
+;			      (parse-args "lambda_data func_data" 'callback)
+;			      'timeout)
 			(list 'GtkDestroyNotify
 			      "void"
 			      "destroy_func"
@@ -403,11 +403,11 @@
 			      "snoop_func"
 			      (parse-args "GtkWidget* widget GdkEventKey* event lambda_data func_data" 'callback)
 			      'semi-permanent)
-			(list 'GtkTranslateFunc
-			      "gchar*"
-			      "translate_func"
-			      (parse-args "gchar* path lambda_data func_data" 'callback)
-			      'permanent)
+;			(list 'GtkTranslateFunc
+;			      "gchar*"
+;			      "translate_func"
+;			      (parse-args "gchar* path lambda_data func_data" 'callback)
+;			      'permanent)
 			(list 'GtkMenuPositionFunc
 			      "void"
 			      "menu_position_func"

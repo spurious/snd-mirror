@@ -59,6 +59,19 @@
 (define (black-pixel)  (BlackPixelOfScreen (current-screen)))
 (define (screen-depth) (DefaultDepthOfScreen (current-screen)))
 
+(define (clean-string str)
+  ;; for peak env file names
+  ;; full file name should be unique, so I think we need only fix it up to look like a flat name
+  (let* ((len (string-length str))
+	 (new-str (make-string len #\.)))
+    (do ((i 0 (1+ i)))
+	((= i len) new-str)
+      (let ((c (string-ref str i)))
+	(if (or (char=? c #\\)
+		(char=? c #\/))
+	    (string-set! new-str i #\_)
+	    (string-set! new-str i c))))))
+
 
 ;;; -------- apply func to every widget belonging to w (and w) --------
 
@@ -1422,18 +1435,6 @@ Reverb-feedback sets the scaler on the feedback.
 
 (define* (show-sounds-in-directory #:optional (dir "."))
   "(show-sounds-in-directory #:optional (dir \".\")) calls make-sound-box with the given directory"
-
-  (define (clean-string str)
-    ;; full file name should be unique, so I think we need only fix it up to look like a flat name
-    (let* ((len (string-length str))
-	   (new-str (make-string len #\.)))
-      (do ((i 0 (1+ i)))
-	  ((= i len) new-str)
-	(let ((c (string-ref str i)))
-	  (if (or (char=? c #\\)
-		  (char=? c #\/))
-	      (string-set! new-str i #\_)
-	      (string-set! new-str i c))))))
 
   (make-sound-box
    "sounds"

@@ -8472,7 +8472,25 @@ sound files (see <a href="#addsoundfileextension">add-sound-file-extension</a> a
 
 <!-- open-file-dialog -->
 <tr><td colspan=2><code><a class=def name="openfiledialog">open-file-dialog</a> (managed)</code></td></tr>
-<tr><td></td><td>create and activate the File:Open file selection dialog (see snd-motif.scm for examples).</td></tr>
+<tr><td></td><td>create and activate the File:Open file selection dialog (see snd-motif.scm for examples).
+If the xm module is loaded, we could add our own info via:
+</td></tr>
+
+<tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+  (if (not (list-ref (dialog-widgets) 6)) (open-file-dialog #f))
+  (let* ((dialog (list-ref (dialog-widgets) 6))
+	 (rc (find-child dialog "info-rc2")) ; holds the info labels if a sound file is selected
+	 (label (XtCreateManagedWidget "file-preview-info" xmLabelWidgetClass rc (list XmNbackground (highlight-color)))))
+    (XtAddCallback (XmFileSelectionBoxGetChild dialog XmDIALOG_LIST)
+		   XmNbrowseSelectionCallback
+		   (lambda (widget context info)
+		     (let ((file (cadr (XmStringGetLtoR (.item info) XmFONTLIST_DEFAULT_TAG))))
+		       (XtVaSetValues label
+				      (list XmNlabelString
+					    (XmStringCreateLtoR (format #f "~A: no comment" file)
+								XmFONTLIST_DEFAULT_TAG)))))
+		   #f))
+</pre></td></tr></table></td></tr>
 
 <!-- previous-files-sort -->
 <tr><td colspan=2><code><a class=def name="previousfilessort">previous-files-sort</a> ()</code></td></tr>
@@ -10126,9 +10144,9 @@ The four "-widgets" procedures return lists of possibly useful widgets:
                      4:yes_or_no_dialog 5:transform_dialog 6:file_open_dialog 
                      7:file_save_as_dialog 8:view_files_dialog 9:raw_data_dialog 
                      10:new_file_dialog 11:file_mix_dialog 12:edit_header_dialog 
-                     13:find_dialog 14:help_dialog 15:completion_dialog 16:mix_panel_dialog
-                     17:print_dialog 18:recorder_dialog 19:region_dialog, 20:info_dialog
-                     21:track_dialog)
+                     13:find_dialog 14:help_dialog 15:completion_dialog 16:view_mixes_dialog
+                     17:print_dialog 18:recorder_dialog 19:view_regions_dialog, 20:info_dialog
+                     21:view_tracks_dialog)
 </pre>
 <p>
 <i>dialog-widgets</i> entries are #f for any dialog that has not

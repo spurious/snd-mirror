@@ -187,14 +187,12 @@ static void define_xm_obj(void)
 #define XEN_lambda2_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2))
 #define XEN_lambda3_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3))
 #define XEN_GtkCallback_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2))
-#define XEN_GtkTimeoutFunction_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 1))
 #define XEN_GtkDestroyNotify_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 1))
 #define XEN_GdkFilterFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3))
 #define XEN_GdkEventFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2))
 #define XEN_GdkSpanFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2))
 #define XEN_GtkFunction_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 1))
 #define XEN_GtkKeySnoopFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 3))
-#define XEN_GtkTranslateFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 2))
 #define XEN_GtkMenuPositionFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 5))
 #define XEN_GtkTreeModelForeachFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 4))
 #define XEN_GtkTreeSelectionForeachFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS(Arg) == 4))
@@ -214,14 +212,12 @@ static void define_xm_obj(void)
 #define XEN_TO_C_lambda2(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_child_func
 #define XEN_TO_C_lambda3(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_find_func
 #define XEN_TO_C_GtkCallback(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_func2
-#define XEN_TO_C_GtkTimeoutFunction(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_timeout_func
 #define XEN_TO_C_GtkDestroyNotify(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_destroy_func
 #define XEN_TO_C_GdkFilterFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_filter_func
 #define XEN_TO_C_GdkEventFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_event_func
 #define XEN_TO_C_GdkSpanFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_span_func
 #define XEN_TO_C_GtkFunction(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_func1
 #define XEN_TO_C_GtkKeySnoopFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_snoop_func
-#define XEN_TO_C_GtkTranslateFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_translate_func
 #define XEN_TO_C_GtkMenuPositionFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_menu_position_func
 #define XEN_TO_C_GtkTreeModelForeachFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_model_func
 #define XEN_TO_C_GtkTreeSelectionForeachFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_tree_selection_func
@@ -270,9 +266,6 @@ XM_TYPE_PTR_2(GdkXEvent_, GdkXEvent*)
 XM_TYPE_PTR(GdkEvent_, GdkEvent*)
 XM_TYPE_PTR(GdkSpan_, GdkSpan*)
 XM_TYPE_PTR(GdkEventKey_, GdkEventKey*)
-#define C_TO_XEN_gchar_(Arg) C_TO_XEN_String(Arg)
-#define XEN_TO_C_gchar_(Arg) (gchar*)(XEN_TO_C_String(Arg))
-#define XEN_gchar__P(Arg) XEN_String_P(Arg)
 XM_TYPE_PTR(GtkMenu_, GtkMenu*)
 XM_TYPE_PTR(gint_, gint*)
 XM_TYPE_PTR(gboolean_, gboolean*)
@@ -281,6 +274,9 @@ XM_TYPE_PTR(GtkTreePath_, GtkTreePath*)
 XM_TYPE_PTR(GtkTreeIter_, GtkTreeIter*)
 XM_TYPE_PTR(GtkClipboard_, GtkClipboard*)
 XM_TYPE_PTR(GtkSelectionData_, GtkSelectionData*)
+#define C_TO_XEN_gchar_(Arg) C_TO_XEN_String(Arg)
+#define XEN_TO_C_gchar_(Arg) (gchar*)(XEN_TO_C_String(Arg))
+#define XEN_gchar__P(Arg) XEN_String_P(Arg)
 XM_TYPE_PTR(GtkTreeView_, GtkTreeView*)
 XM_TYPE_PTR(GtkTreeViewColumn_, GtkTreeViewColumn*)
 #define C_TO_XEN_gint(Arg) C_TO_XEN_INT(Arg)
@@ -1060,17 +1056,6 @@ static void gxg_func2(GtkWidget* w, gpointer func_data)
              XEN_CADR((XEN)func_data),
              c__FUNCTION__);
 }
-static gint gxg_timeout_func(gpointer func_data)
-{
-  int call_again = 0;
-  XEN result = XEN_FALSE;
-  result = XEN_CALL_1(XEN_CAR((XEN)func_data),
-                      XEN_CADR((XEN)func_data),
-                      c__FUNCTION__);
-  if (XEN_BOOLEAN_P(result)) call_again = XEN_TO_C_BOOLEAN(result); else call_again = XEN_TO_C_INT_OR_ELSE(result, 0);
-  if (!call_again) xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR((XEN)func_data)));
-  return(call_again);
-}
 static void gxg_destroy_func(gpointer func_data)
 {
   XEN_CALL_1(XEN_CADDDR((XEN)func_data),
@@ -1112,13 +1097,6 @@ static gint gxg_snoop_func(GtkWidget* widget, GdkEventKey* event, gpointer func_
                                   C_TO_XEN_GdkEventKey_(event),
                                   XEN_CADR((XEN)func_data),
                                   c__FUNCTION__)));
-}
-static gchar* gxg_translate_func(const gchar* path, gpointer func_data)
-{
-  return(XEN_TO_C_gchar_(XEN_CALL_2(XEN_CAR((XEN)func_data),
-                                    C_TO_XEN_gchar_(path),
-                                    XEN_CADR((XEN)func_data),
-                                    c__FUNCTION__)));
 }
 static void gxg_menu_position_func(GtkMenu* menu, gint* x, gint* y, gboolean* push, gpointer func_data)
 {
@@ -33100,10 +33078,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"10-Mar-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"17-Mar-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("10-Mar-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("17-Mar-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

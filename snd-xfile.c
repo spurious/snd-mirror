@@ -1,8 +1,6 @@
 #include "snd.h"
 
 /* TODO: the view:files menu might be better as a container widget.  Not sure the "current files" list is useful.
- * PERHAPS: thumbnail sketch in file selection info box? connection to nb database? (via addcallback for browse selection)
- *             need accessors for peak-env dir/files (peak-env.scm), Snd preview widget (for drawingarea or pixmap)
  */
 
 #define NUM_VISIBLE_HEADERS 4
@@ -545,7 +543,7 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
 					      NULL);
 #if (XmVERSION > 1)
   fd->dialog_frame = XtVaCreateWidget("", xmFrameWidgetClass, rc1, NULL);
-  rc2 = XtVaCreateManagedWidget("", 
+  rc2 = XtVaCreateManagedWidget("info-rc2", 
 				xmRowColumnWidgetClass, fd->dialog_frame,
 				XmNorientation, XmVERTICAL,
 				XmNbackground, ss->sgx->highlight_color,
