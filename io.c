@@ -1460,6 +1460,7 @@ static int mus_write_1(int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **b
 
       for (k = 0; k < chans; k++)
 	{
+	  if (bufs[k] == NULL) continue;
 	  loc = oldloc;
 	  buffer = (MUS_SAMPLE_TYPE *)(bufs[k]);
 	  if (clipping)

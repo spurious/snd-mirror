@@ -2860,7 +2860,7 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
   track_fd **fds;
   chan_info **cps;
   chan_info *locp;
-  int playfd, i, j, k, n, samps, chan = 0, happy = 0, need_free = 0, format, datum_bytes, outchans;
+  int playfd, i, j, k, n, samps, chan = 0, happy = 0, need_free = 0, format, datum_bytes, outchans, frames;
 #if MAC_OSX
   float *buf;
 #else
@@ -2905,9 +2905,10 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
   outchans = chans;
   format = mus_audio_compatible_format(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss));
   datum_bytes = mus_data_format_to_bytes_per_sample(format);
+  frames = 256;
 #if MAC_OSX
   fds = (track_fd **)CALLOC(2, sizeof(track_fd *));
-  buf = (float *)CALLOC(2 * 256, sizeof(float));
+  buf = (float *)CALLOC(2 * frames, sizeof(float));
 #else
   fds = (track_fd **)CALLOC(chans, sizeof(track_fd *));
 
@@ -2915,12 +2916,15 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
     /* in ALSA we have no way to tell what the possible output format is, or min chans, so... */
     mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_CHANNEL, 2, val);
     if (chans < (int)(val[1])) outchans = (int)(val[1]);
+    mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_SAMPLES_PER_CHANNEL, 2, val);
+    frames = (int)(val[0]);
+    set_dac_size(ss, outchans * frames * mus_data_format_to_bytes_per_sample(format));
     buf = (MUS_SAMPLE_TYPE **)CALLOC(outchans, sizeof(MUS_SAMPLE_TYPE *));
-    for (i = 0; i < chans; i++) buf[i] = (MUS_SAMPLE_TYPE *)CALLOC(256, sizeof(MUS_SAMPLE_TYPE));
-    outbuf = (char *)CALLOC(256 * datum_bytes * outchans, sizeof(char));
+    for (i = 0; i < chans; i++) buf[i] = (MUS_SAMPLE_TYPE *)CALLOC(frames, sizeof(MUS_SAMPLE_TYPE));
+    outbuf = (char *)CALLOC(frames * datum_bytes * outchans, sizeof(char));
 
   #else
-    buf = (short *)CALLOC(chans * 256, sizeof(short));
+    buf = (short *)CALLOC(chans * frames, sizeof(short));
   #endif
 #endif
   for (i = 0; i < chans; i++)
@@ -2942,28 +2946,28 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
 				     dac_size(ss));
       if (playfd != -1)
 	{
-	  for (i = 0; i < samps; i += 256)
+	  for (i = 0; i < samps; i += frames)
 	    {
 #if MAC_OSX
 	      for (k = 0; k < chans; k++)
 		if (fds[k])
-		  for (j = k; j < 256 * 2; j += 2)
+		  for (j = k; j < frames * 2; j += 2)
 		    buf[j] = next_track_sample(fds[k]);
-	      mus_audio_write(playfd, (char *)buf, 256 * datum_bytes * 2);
+	      mus_audio_write(playfd, (char *)buf, frames * datum_bytes * 2);
 #else
   #if HAVE_ALSA
 	      for (k = 0; k < chans; k++)
 		if (fds[k])
-		  for (j = 0; j < 256; j++)
+		  for (j = 0; j < frames; j++)
 		    buf[k][j] = MUS_FLOAT_TO_SAMPLE(next_track_sample(fds[k]));
-	      mus_file_write_buffer(format, 0, 255, outchans, buf, outbuf, TRUE);
-	      mus_audio_write(playfd, outbuf, 256 * datum_bytes * outchans);
+	      mus_file_write_buffer(format, 0, frames - 1, outchans, buf, outbuf, TRUE);
+	      mus_audio_write(playfd, outbuf, frames * datum_bytes * outchans);
   #else
 	      for (k = 0; k < chans; k++)
 		if (fds[k])
-		  for (j = k; j < 256 * chans; j += chans)
+		  for (j = k; j < frames * chans; j += chans)
 		    buf[j] = MUS_SAMPLE_TO_SHORT(MUS_FLOAT_TO_SAMPLE(next_track_sample(fds[k])));
-	      mus_audio_write(playfd, (char *)buf, 256 * datum_bytes * chans);
+	      mus_audio_write(playfd, (char *)buf, frames * datum_bytes * chans);
   #endif
 #endif
 	      check_for_event(ss);
@@ -3015,7 +3019,7 @@ static void play_mix(snd_state *ss, mix_info *md)
     short *buf;
   #endif
 #endif
-  int play_fd, i, j, samps, format, datum_bytes, outchans;
+  int play_fd, i, j, samps, format, datum_bytes, outchans, frames;
   if (md == NULL) return;
   cp = md->cp;
   cs = md->current_cs;
@@ -3023,6 +3027,7 @@ static void play_mix(snd_state *ss, mix_info *md)
   format = mus_audio_compatible_format(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss));
   datum_bytes = mus_data_format_to_bytes_per_sample(format);
   outchans = 1;
+  frames = 256;
 
 #if MAC_OSX
   buf = (float *)CALLOC(2 * 256, sizeof(float));
@@ -3030,11 +3035,14 @@ static void play_mix(snd_state *ss, mix_info *md)
   #if HAVE_ALSA
     mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_CHANNEL, 2, val);
     if (outchans < (int)(val[1])) outchans = (int)(val[1]);
+    mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_SAMPLES_PER_CHANNEL, 2, val);
+    frames = (int)(val[0]);
+    set_dac_size(ss, outchans * frames * mus_data_format_to_bytes_per_sample(format));
     buf = (MUS_SAMPLE_TYPE **)CALLOC(outchans, sizeof(MUS_SAMPLE_TYPE *));
-    buf[0] = (MUS_SAMPLE_TYPE *)CALLOC(256, sizeof(MUS_SAMPLE_TYPE));
-    outbuf = (char *)CALLOC(256 * datum_bytes * outchans, sizeof(char));
+    buf[0] = (MUS_SAMPLE_TYPE *)CALLOC(frames, sizeof(MUS_SAMPLE_TYPE));
+    outbuf = (char *)CALLOC(frames * datum_bytes * outchans, sizeof(char));
   #else
-    buf = (short *)CALLOC(256, sizeof(short));
+    buf = (short *)CALLOC(frames, sizeof(short));
   #endif
 #endif
 
@@ -3048,7 +3056,7 @@ static void play_mix(snd_state *ss, mix_info *md)
       mf = init_mix_read(md, FALSE);
       if (mf)
 	{
-	  for (i = 0; i < samps; i += 256)
+	  for (i = 0; i < samps; i += frames)
 	    {
 #if MAC_OSX
 	      for (j = 0; j < 512; j += 2) 
@@ -3056,14 +3064,14 @@ static void play_mix(snd_state *ss, mix_info *md)
 	      mus_audio_write(play_fd, (char *)buf, 2048);
 #else
   #if HAVE_ALSA
-	      for (j = 0; j < 256; j++)
+	      for (j = 0; j < frames; j++)
 		buf[0][j] = MUS_FLOAT_TO_SAMPLE(next_mix_sample(mf));
-	      mus_file_write_buffer(format, 0, 255, outchans, buf, outbuf, TRUE);
-	      mus_audio_write(play_fd, outbuf, 256 * datum_bytes * outchans);
+	      mus_file_write_buffer(format, 0, frames - 1, outchans, buf, outbuf, TRUE);
+	      mus_audio_write(play_fd, outbuf, frames * datum_bytes * outchans);
   #else
-	      for (j = 0; j < 256; j++) 
+	      for (j = 0; j < frames; j++) 
 		buf[j] = MUS_SAMPLE_TO_SHORT(MUS_FLOAT_TO_SAMPLE(next_mix_sample(mf)));
-	      mus_audio_write(play_fd, (char *)buf, 512);
+	      mus_audio_write(play_fd, (char *)buf, frames * datum_bytes);
   #endif
 #endif
 	      check_for_event(ss);
