@@ -30,6 +30,7 @@
 
 ;;; TODO: test of off_t mark search
 ;;; TODO: GL tests
+;;; TODO: load-font current-font loop-samples+environ send-netscape apply-ladspa set-enved-selected-env
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
 
@@ -757,6 +758,15 @@
       (set! (selected-mix) (selected-mix))
       (IF (not (equal? (selected-mix) #f)) 
 	  (snd-display ";selected-mix set def: ~A" (selected-mix)))
+
+      (for-each
+       (lambda (func name)
+	 (let ((val (func)))
+	   (set! (func) "8x123")
+	   (IF (not (string=? val (func)))
+	       (snd-display ";set ~A to bogus value: ~A ~A" name val (func)))))
+       (list axis-label-font axis-numbers-font listener-font help-text-font tiny-font button-font bold-button-font)
+       (list 'axis-label-font 'axis-numbers-font 'listener-font 'help-text-font 'tiny-font button-font 'bold-button-font))
 
       ))
 
@@ -2629,7 +2639,26 @@
 	(graph '#(0 1 2)) 
 	(graph (list '#(0 1 2) '#(3 2 1) '#(1 2 3)))
 	(graph (list '#(0 1 2) '#(3 2 1))))
-      (IF (= (transform-samples-size) 0) (snd-display ";graph-transform? transform-samples-size ~A?" (transform-samples-size)))
+      (set! (x-bounds) (list 0.0 0.01))
+      (let ((data (make-graph-data)))
+	(if (vct? data)
+	    (let ((mid (inexact->exact (* .5 (vct-length data)))))
+	      (IF (not (= (vct-length data) (1+ (- (right-sample) (left-sample)))))
+		  (snd-display ";make-graph-data bounds: ~A ~A -> ~A" (left-sample) (right-sample) (vct-length data)))
+	      (IF (fneq (vct-ref data mid)
+			(sample (+ (left-sample) mid)))
+		  (snd-display ";make-graph-data[~D]: ~A ~A" mid (vct-ref data mid) (sample (+ (left-sample) mid)))))))
+      (let ((data (make-graph-data index 0 0 100 199)))
+	(if (vct? data)
+	    (begin
+	      (IF (not (= (vct-length data) 100))
+		  (snd-display ";make-graph-data 100:199: ~A" (vct-length data)))
+	      (IF (fneq (vct-ref data 50) (sample 50))
+		  (snd-display ";make-graph-data 50: ~A ~A" (vct-ref data 50) (sample 50))))))
+      (set! (x-bounds) (list 0.0 0.1))
+      (IF (and (number? (transform-samples-size))
+	       (= (transform-samples-size) 0))
+	  (snd-display ";graph-transform? transform-samples-size ~A?" (transform-samples-size)))
       (update-transform)
       (peaks "tmp.peaks")
       (if (defined? 'read-line)

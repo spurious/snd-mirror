@@ -723,6 +723,9 @@ void snd_doit(snd_state *ss, int argc, char **argv)
     GLXContext cx;
     int snglBuf[] = {GLX_RGBA, GLX_DEPTH_SIZE, 16, None};
     int dblBuf[] = {GLX_RGBA, GLX_DEPTH_SIZE, 16, GLX_DOUBLEBUFFER, None};
+    /* TODO: in glx 1.3 (I'm using 1.2 currently), the following are supposedly deprecated:
+             glXChooseVisual, glXCreateContext, glXMakeCurrent
+    */
     vi = glXChooseVisual(dpy, DefaultScreen(dpy), dblBuf);
     if (vi) 
       ss->gl_has_double_buffer = TRUE;

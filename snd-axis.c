@@ -202,6 +202,30 @@ static void activate_gl_fonts(snd_state *ss)
       gl_fonts_activated = TRUE;
     }
 }
+
+void reload_label_font(snd_state *ss)
+{
+  XFontStruct *label;
+  if (gl_fonts_activated)
+    {
+      glDeleteLists(label_base, 128);
+      label_base = glGenLists(128);
+      label = (XFontStruct *)(AXIS_LABEL_FONT(ss));
+      glXUseXFont(label->fid, 32, 96, label_base + 32);
+    }
+}
+
+void reload_number_font(snd_state *ss)
+{
+  XFontStruct *number;
+  if (gl_fonts_activated)
+    {
+      glDeleteLists(number_base, 128);
+      number_base = glGenLists(128);
+      number = (XFontStruct *)(AXIS_NUMBERS_FONT(ss));
+      glXUseXFont(number->fid, 32, 96, number_base + 32);
+    }
+}
 #endif
 
 void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, int show_x_axis)
@@ -480,13 +504,11 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
       if (ap->use_gl)
 	{
 	  Float yl;
-	  yl = -0.5 - .02 /* axis thickness for now */ - ((Float)(2.5 * major_tick_length + x_label_height) / (Float)height);
-	  glPushAttrib(GL_LIST_BIT);
+	  yl = -0.5 - .02 - ((Float)(2.5 * major_tick_length + x_label_height) / (Float)height);
 	  glColor3f(0.0, 0.0, 0.0);
 	  glRasterPos3f(-0.1, 0.0, yl);
 	  glListBase(label_base);
 	  glCallLists(snd_strlen(ap->xlabel), GL_UNSIGNED_BYTE, (GLubyte *)(ap->xlabel));
-	  glPopAttrib();
 	}
       else
 #endif
@@ -553,18 +575,14 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	{
 	  Float xl;
 	  xl = -0.5 -.02 - ((Float)(2 * tdy->maj_tick_len + tdy->min_label_width + inner_border_width) / (Float)width);
-	  glPushAttrib(GL_LIST_BIT);
 	  glRasterPos3f(xl, 0.0, (tdy->mlo - ap->y0) / (ap->y1 - ap->y0) - 0.51);
 	  glListBase(number_base);
 	  glCallLists(snd_strlen(tdy->min_label), GL_UNSIGNED_BYTE, (GLubyte *)(tdy->min_label));
-	  glPopAttrib();
 
 	  xl = -0.5 -.02 - ((Float)(2 * tdy->maj_tick_len + tdy->max_label_width + inner_border_width) / (Float)width);
-	  glPushAttrib(GL_LIST_BIT);
 	  glRasterPos3f(xl, 0.0, (tdy->mhi - ap->y0) / (ap->y1 - ap->y0) - 0.51);
 	  glListBase(number_base);
 	  glCallLists(snd_strlen(tdy->max_label), GL_UNSIGNED_BYTE, (GLubyte *)(tdy->max_label));
-	  glPopAttrib();
 	}
       else
 	{
@@ -609,12 +627,10 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	  if (ap->use_gl)
 	    {
 	      Float yl;
-	      yl = -0.5 - .02 /* axis thickness for now */ - ((Float)(1.5 * major_tick_length + x_number_height) / (Float)height);
-	      glPushAttrib(GL_LIST_BIT);
+	      yl = -0.5 - .02 - ((Float)(1.5 * major_tick_length + x_number_height) / (Float)height);
 	      glRasterPos3f((tdx->mlo - ap->x0) / (ap->x1 - ap->x0) - 0.53, 0.0, yl);
 	      glListBase(number_base);
 	      glCallLists(snd_strlen(tdx->min_label), GL_UNSIGNED_BYTE, (GLubyte *)(tdx->min_label));
-	      glPopAttrib();
 	    }
 	  else
 #endif
@@ -639,12 +655,10 @@ void make_axes_1(axis_info *ap, int x_style, int srate, int axes, int printing, 
 	  if (ap->use_gl)
 	    {
 	      Float yl;
-	      yl = -0.5 - .02 /* axis thickness for now */ - ((Float)(1.5 * major_tick_length + x_number_height) / (Float)height);
-	      glPushAttrib(GL_LIST_BIT);
+	      yl = -0.5 - .02 - ((Float)(1.5 * major_tick_length + x_number_height) / (Float)height);
 	      glRasterPos3f((tdx->mhi - ap->x0) / (ap->x1 - ap->x0) - 0.53, 0.0, yl);
 	      glListBase(number_base);
 	      glCallLists(snd_strlen(tdx->max_label), GL_UNSIGNED_BYTE, (GLubyte *)(tdx->max_label));
-	      glPopAttrib();
 	    }
 	  else
 #endif

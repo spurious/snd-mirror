@@ -56,19 +56,24 @@ static int start_ps_graph(char *output, char *title)
   previous_locale = copy_string(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since PostScript assumes that format */
 #endif
 
-  mus_snprintf(pbuf, PRINT_BUFFER_SIZE, "%%!PS-Adobe-2.0 EPSF-2.0\n%%%%Title: %s\n%%%%Creator: Snd: %s\n%%%%CreationDate: ", title, SND_VERSION);
+  mus_snprintf(pbuf, PRINT_BUFFER_SIZE, 
+	       "%%!PS-Adobe-2.0 EPSF-2.0\n%%%%Title: %s\n%%%%Creator: Snd: %s\n%%%%CreationDate: ", 
+	       title, SND_VERSION);
   ps_write(pbuf);
 #if HAVE_STRFTIME
   time(&ts);
   strftime(pbuf, PRINT_BUFFER_SIZE, STRFTIME_FORMAT, localtime(&ts));
   ps_write(pbuf);
 #endif
-  mus_snprintf(pbuf, PRINT_BUFFER_SIZE, "\n%%%%BoundingBox:(atend)\n%%%%EndComments\n%%%%EndProlog\n%%%%Page: 1 1\n");
+  mus_snprintf(pbuf, PRINT_BUFFER_SIZE, 
+	       "\n%%%%BoundingBox:(atend)\n%%%%EndComments\n%%%%EndProlog\n%%%%Page: 1 1\n");
   ps_write(pbuf);
-  mus_snprintf(pbuf, PRINT_BUFFER_SIZE, "/LT {lineto} bind def\n/RF {rectfill} bind def\n/RG {setrgbcolor} bind def\n/NAF {newpath arc fill} bind def\n\n");
+  mus_snprintf(pbuf, PRINT_BUFFER_SIZE, 
+	       "/LT {lineto} bind def\n/RF {rectfill} bind def\n/RG {setrgbcolor} bind def\n/NAF {newpath arc fill} bind def\n\n");
   ps_write(pbuf);
   ss = get_global_state();
-  mus_snprintf(pbuf, PRINT_BUFFER_SIZE, "gsave [%.3f 0.0 0.0 %.3f %.3f %.3f] concat\n\n",
+  mus_snprintf(pbuf, PRINT_BUFFER_SIZE, 
+	       "gsave [%.3f 0.0 0.0 %.3f %.3f %.3f] concat\n\n",
 	       eps_size(ss), eps_size(ss), eps_left_margin(ss), eps_bottom_margin(ss));
   ps_write(pbuf);
   return(0);
@@ -87,7 +92,8 @@ static void end_ps_graph(void)
 {
   snd_state *ss;
   ss = get_global_state();
-  mus_snprintf(pbuf, PRINT_BUFFER_SIZE, "%s\nshowpage\n%%%%Trailer\n%%%%BoundingBox: %d %d %d %d\n",
+  mus_snprintf(pbuf, PRINT_BUFFER_SIZE, 
+	       "%s\nshowpage\n%%%%Trailer\n%%%%BoundingBox: %d %d %d %d\n",
 	       ((eps_left_margin(ss) != 0) || (eps_bottom_margin(ss) != 0)) ? "\ngrestore" : "",
 	       0, 0,
 	       (int)(bbx + 10 + eps_left_margin(ss)),

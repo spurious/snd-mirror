@@ -1037,7 +1037,10 @@ axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, Float ymin, 
 			   axis_info *old_ap);
 
 void g_init_axis(void);
-
+#if HAVE_GL
+  void reload_label_font(snd_state *ss);
+  void reload_number_font(snd_state *ss);
+#endif
 
 
 

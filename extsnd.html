@@ -379,8 +379,13 @@ The font variables are:
 <!-- --></pre></td></tr></table></center>
 
 <p>See also <a href="#loadfont">load-font</a> and <a href="#currentfont">current-font</a> below.
+If the requested font can't be loaded, the set! statement will return the old (unchanged) font name.
 </p>
-
+<pre>
+&gt;<em class=typing>(set! (axis-label-font) "8x14")</em>
+<em class=listener>"-adobe-times-medium-r-normal-*-18-*-*-*-*-*-*-*"</em>
+</pre>
+<br>
 <br>
 <span class=cbox><h4><A NAME="sndwidgets">Widgets</a></h4></span>
 
