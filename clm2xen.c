@@ -1230,8 +1230,8 @@ static XEN g_delay(XEN obj, XEN input, XEN pm)
 {
   #define H_delay "(" S_delay " gen &optional (val 0.0) (pm 0.0))\n\
 delays val according to the delay line's length and pm ('phase-modulation'). \
-The Scheme built-in 'delay' function is named %delay. \
-If pm is greater than 0.0, the max-size argument used to create gen should have accommodated its maximum value."
+If pm is greater than 0.0, the max-size argument used to create gen should have accommodated its maximum value. (The \
+Scheme function delay is available as %delay)"
 
   Float in1 = 0.0, pm1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_delay_p(MUS_XEN_TO_CLM(obj))), obj, XEN_ARG_1, S_delay, "a delay line");

@@ -1,6 +1,11 @@
 /* this is so ugly I can't bear to include it in xm.c
  */
 
+static XEN gxm_to_s(XEN obj)
+{
+  return(C_TO_XEN_STRING(xm_obj_to_string(obj)));
+}
+
 #if HAVE_XP
   XEN_NARGIFY_2(gxm_XpStartPage_w, gxm_XpStartPage)
   XEN_NARGIFY_1(gxm_XpEndPage_w, gxm_XpEndPage)

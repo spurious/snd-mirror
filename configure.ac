@@ -972,7 +972,7 @@ if test "$enable_snd_debug" != yes ; then
 fi
 
 CFLAGS="-I. $CFLAGS"
-# needed since we're looking for <config.h>, I think
+# needed since we're looking for <config.h>, I think (where is config.h written?)
 
 AC_SUBST(MAKE_TARGET)
 AC_OUTPUT

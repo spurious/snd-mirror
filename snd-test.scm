@@ -25739,7 +25739,8 @@ EDITS: 5
   (if (number? (vector-ref timings i))
       (display (format #f " [~D: ~A]" i (/ (vector-ref timings i) internal-time-units-per-second)))))
 	
-(if (string? test14-file)
+(if (and (string? test14-file)
+	 (file-exists? test14-file))
     (snd-display "~%~A(~D)" test14-file (mus-sound-samples test14-file)))
 
 (show-listener)

@@ -1017,7 +1017,7 @@
 (hey " * ~A: test suite (snd-test 24)~%" (string-append "T" "ODO"))
 (hey " *~%")
 (hey " * HISTORY:~%")
-(hey " *     19-Jul:    XG_FIELD_PRE for change from using vertical-tab (reserved in R5RS)~%")
+(hey " *     19-Jul:    XG_FIELD_PRE for change from using vertical-bar (reserved in R5RS)~%")
 (hey " *     2-Jun:     removed deprecated and broken stuff (see include-deprecated switch in makexg.scm)~%")
 (hey " *     4-Apr:     minor changes for Gtk 2.0.2~%")
 (hey " *     13-Mar:    Gtk 2.0.0~%")

@@ -120,7 +120,7 @@ char *vct_to_string(vct *v)
   int len, i;
   char *buf;
   char flt[16];
-  if (v == NULL) return(copy_string("#<vct: null>"));
+  if (v == NULL) return(NULL); /* not copy_string! -- it's not a sndlib function */
   len = vct_print_length;
   if (len > v->length) len = v->length;
   buf = (char *)CALLOC(64 + len * 8, sizeof(char));
@@ -698,8 +698,6 @@ void init_vct(void)
   XEN_DEFINE_PROCEDURE(S_vector2vct,    vector2vct_w, 1, 0, 0,    H_vector2vct);
   XEN_DEFINE_PROCEDURE(S_vct2vector,    vct2vector_w, 1, 0, 0,    H_vct2vector);
   XEN_DEFINE_PROCEDURE(S_vct_length,    vct_length_w, 1, 0, 0,    H_vct_length);
-  XEN_DEFINE_PROCEDURE(S_vct_ref,       vct_ref_w, 2, 0, 0,       H_vct_ref);
-  XEN_DEFINE_PROCEDURE(S_vct_setB,      vct_set_w, 3, 0, 0,       H_vct_setB);
   XEN_DEFINE_PROCEDURE(S_vct_multiplyB, vct_multiply_w, 2, 0, 0,  H_vct_multiplyB);
   XEN_DEFINE_PROCEDURE(S_vct_scaleB,    vct_scale_w, 2, 0, 0,     H_vct_scaleB);
   XEN_DEFINE_PROCEDURE(S_vct_fillB,     vct_fill_w, 2, 0, 0,      H_vct_fillB);
@@ -719,8 +717,10 @@ void init_vct(void)
 #endif
 
 #if HAVE_GUILE
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vct_ref, vct_ref_w, H_vct_ref,
-				   "set-" S_vct_ref, vct_set_w,  2, 0, 3, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vct_ref, vct_ref_w, H_vct_ref, "set-" S_vct_ref, vct_set_w,  2, 0, 3, 0);
+#else
+  XEN_DEFINE_PROCEDURE(S_vct_ref,       vct_ref_w, 2, 0, 0,       H_vct_ref);
 #endif
+  XEN_DEFINE_PROCEDURE(S_vct_setB,      vct_set_w, 3, 0, 0,       H_vct_setB);
 }
 

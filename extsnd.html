@@ -5914,6 +5914,7 @@ the direction argument between the channel and edit-position:
 <!-- -->currently selected sound and also to any other sounds that share its sync value.  (I later decided that
 <!-- -->this was a bad idea, hence the "regularized" replacements).  Sounds that share a given sync value 
 <!-- -->move together when you drag an x-axis slider and so on.
+<!-- --><br><br>The built-in Guile/Posix function named sync ("flush OS disk buffers") is available (are you sure you want this?) as %sync.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6683,7 +6684,7 @@ one, and are exposed in many functions described above as the <i>pos</i> argumen
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->return a list with the number of undo-able edits and redo-able edits.  That is, if we have 2 undo-able edits and
-<!-- -->no re-doable edits, (edits) returns (list 2 0).
+<!-- -->no redo-able edits, (edits) returns (list 2 0).
 <!-- --></td></tr>
 <!-- --><tr><td></td><td></td></tr>
 <!-- -->

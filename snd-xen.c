@@ -2722,7 +2722,6 @@ char *run_concat_hook(XEN hook, const char *caller, char *initial_string, char *
 #if HAVE_GUILE
       while (XEN_NOT_NULL_P(procs))
 	{
-	  /* TODO: dynwind around concat hook (newstr) */
 	  if (subject)
 	    result = XEN_CALL_2(XEN_CAR(procs),
 				C_TO_XEN_STRING(subject),

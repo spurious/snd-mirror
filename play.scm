@@ -117,40 +117,6 @@
 ;(bind-key (char->integer #\p) 0 (lambda (n) (play-region-forever (list-ref (regions) (max 0 n)))))
 
 
-#!
-;;; these are obsolete now
-;;; -------- play samples created on-the-fly
-
-(define (play-fun proc bufsize)
-  "(play-fun proc bufsize) send the output of 'proc' to the DAC.  proc should return #t to indicate completion"
-  (let* ((data (make-sound-data 1 bufsize))
-	 (bytes (* bufsize 2))
-	 (audio-fd (mus-audio-open-output mus-audio-default 22050 1 mus-lshort bytes)))
-    (if (not (= audio-fd -1))
-	(begin
-	  (do ((result #f (proc audio-fd data bufsize))) (result))
-	  (mus-audio-close audio-fd)))))
-
-(define (ampit len scaler)
-  "(ampit len scaler) plays (via play-fun) the selected sound scaled by scaler: (play-fun (ampit (frames) 2.0) 256)"
-  (let ((beg 0))
-    (lambda (fd data size) 
-      (vct->sound-data (vct-scale! (samples->vct beg size) scaler) data 0)
-      (mus-audio-write fd data size)
-      (set! beg (+ beg size))
-      (>= beg len))))
-
-(define (amprt len)
-  "(amprt len) plays (via play-fun) the selected sound scaled by the control panel amp slider: (play-fun (amprt (frames)) 256)"
-  (let ((beg 0))
-    (lambda (fd data size) 
-      (vct->sound-data (vct-scale! (samples->vct beg size) (amp)) data 0)
-      (mus-audio-write fd data size)
-      (set! beg (+ beg size))
-      (or (c-g?) (>= beg len)))))
-!#
-
-
 ;;; -------- play while looping continuously between two movable marks
 
 (define (loop-between-marks m1 m2 bufsize)

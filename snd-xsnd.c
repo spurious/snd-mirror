@@ -1341,7 +1341,8 @@ void unlock_apply(snd_state *ss, snd_info *sp)
  *   XtActions are said to be a list of XtActionProcs, but I can't find a way to add
  *   my action without deactivating the built-in action of the same name --
  *   XtAugmentTranslations ignores new actions if the old exists, XtOverride
- *   replaces the old, etc.
+ *   replaces the old, etc. (And XtActions involve far more complexity than
+ *   anyone should have to endure).
  *
  * so... drop down into the sashes...(using undocumented stuff throughout this code)
  */

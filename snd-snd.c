@@ -2140,7 +2140,7 @@ static XEN name_reversed(XEN arg1, XEN arg2) \
 
 static XEN g_sync(XEN snd_n) 
 {
-  #define H_sync "(" S_sync " &optional snd) -> whether snd is sync'd to other sounds"
+  #define H_sync "(" S_sync " &optional snd) -> whether snd is sync'd to other sounds (0 = no sync), built-in Posix sync is called %sync"
   return(sound_get(snd_n, SP_SYNC, S_sync));
 }
 
@@ -3722,6 +3722,10 @@ If it returns #t, the apply is aborted."
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_controls, g_show_controls_w, H_show_controls,
 					    "set-" S_show_controls, g_set_show_controls_w, g_set_show_controls_reversed, 0, 1, 0, 2);
   
+#if HAVE_GUILE
+  XEN_EVAL_C_STRING("(define %sync sync)"); /* protect the original meaning (a Guile/Posix built-in function) */
+#endif
+
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_sync, g_sync_w, H_sync,
 					    "set-" S_sync, g_set_sync_w, g_set_sync_reversed, 0, 1, 0, 2);
   

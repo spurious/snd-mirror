@@ -3,22 +3,24 @@
  *   for tests and examples see snd-motif.scm and snd-test.scm
  */
 
+/* WARNING: vertical-bar has to go (r5rs limitation) so the default prefix will change soon */
+
 /* SOMEDAY: finish selection-oriented Xt callbacks
  * SOMEDAY: XmVaCreateSimple* (need special arglist handlers)
- * TODO: callback struct print (and tie makers into Ruby)
- * TODO: finish the -> converters
- * TODO: add_resource
+ * SOMEDAY: callback struct print (and tie makers into Ruby)
+ * SOMEDAY: finish the -> converters
+ * SOMEDAY: add_resource
  * SOMEDAY: get Xprt to work and test the Xp stuff
  */
 
 /* HISTORY: 
- *   19-Jul:    XM_FIELD_PREFIX for change from using vertical-tab (reserved in R5RS).
+ *   19-Jul:    XM_FIELD_PREFIX for change from using vertical-bar (reserved in R5RS).
  *   17-Jun:    removed XtSetWMColormapWindows.
  *   29-Apr:    minor 64-bit fixups.
  *   29-Mar:    XmParseProc.
  *   20-Mar:    XpmGetErrorString omitted inadvertently earlier.
  *   4-Mar:     XWindowChanges and XSetWindowAttributes struct creators.
- *   1-Mar:     XmTabListFree, various ->* conversions.
+ *   1-Mar:     XmTabListFree, various ->* conversions (->strings etc).
  *   25-Feb:    XmTextBlock fields
  *   22-Feb:    #f = NULL and vice-versa throughout
  *   21-Feb:    added various callback struct makers, changed XtCallCallbacks to be compatible with them.
@@ -103,7 +105,7 @@
 
 #if HAVE_MOTIF
   #define MOTIF_2 (XmVERSION >= 2)
-  /* 2.1 really -- I don't have a test system for 2.0 -- I'm using LessTif's headers to blindly check 1.2 */
+  /* 2.1 really -- I don't have a test system for 2.0 -- I'm using LessTif's headers to check 1.2 */
   #ifdef XmNtoolTipString
     #define MOTIF_2_2 1
   #endif
@@ -18687,11 +18689,6 @@ static char *xm_obj_to_string(XEN obj)
   return(NULL);
 }
 
-static XEN gxm_to_s(XEN obj)
-{
-  return(C_TO_XEN_STRING(xm_obj_to_string(obj)));
-}
-
 static XEN gxm_pad(XEN ptr)
 {
   XEN_ASSERT_TYPE(XEN_XColor_P(ptr), ptr, XEN_ONLY_ARG, "pad", "XColor");
@@ -21586,7 +21583,6 @@ static void define_structs(void)
 				   XM_FIELD_PREFIX "set_y2" XM_POSTFIX, gxm_set_y2,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XSegment" XM_POSTFIX, gxm_XSegment, 4, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XRectangle" XM_POSTFIX, gxm_XRectangle, 4, 0, 0, H_XRectangle);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "->string" XM_POSTFIX, gxm_to_s, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_FIELD_PREFIX "dashes" XM_POSTFIX, gxm_dashes, "",  
 				   XM_FIELD_PREFIX "set_dashes" XM_POSTFIX, gxm_set_dashes,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_FIELD_PREFIX "dash_offset" XM_POSTFIX, gxm_dash_offset, "", 

@@ -40,9 +40,8 @@ void append_listener_text(int end, char *msg)
 
 static void listener_completion(snd_state *ss)
 {
-  int beg, end, matches = 0, need_position;
+  int beg, end, matches = 0;
   char *old_text, *new_text = NULL, *file_text = NULL;
-  gint xoff, yoff; 
   int try_completion = 1;
   beg = printout_end + 1;
   end = SG_TEXT_LENGTH(listener_text);
@@ -78,17 +77,8 @@ static void listener_completion(snd_state *ss)
 	      FREE(new_text); 
 	      new_text = NULL;
 	    }
-	  need_position = (!(help_dialog_is_active()));
 	  display_completions(ss);
 	  set_save_completions(FALSE);
-	  if (need_position)
-	    {
-	      /* try to position the newly popped up help window below the text field */
-	      gdk_window_get_origin(listener_text->window, &xoff, &yoff);
-	      /* move_help_dialog_to(widget_x(listener_text) + xoff, widget_y(listener_text) + yoff + 140); */
-	      move_help_dialog_to(widget_x(listener_text) + xoff, 
-				  widget_y(listener_text) + yoff + 40);
-	    }
 	  if (file_text) FREE(file_text);
 	}
       if (old_text) g_free(old_text);

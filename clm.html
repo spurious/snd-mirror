@@ -1283,6 +1283,9 @@ delay line. </p>
 ;;; (with-sound () (echo 0 60000 .5 1.0 "pistol.snd"))
 </small></pre>
 <br>
+<p>In the Scheme version of CLM, the Scheme built-in function delay is available as %delay.
+</p>
+<br>
 
 
 <!-- TOPIC comb -->
@@ -1936,8 +1939,10 @@ run-time memory management).
 
   <a name="continue-sample-&gt;file"><em class=def>continue-sample-&gt;file</em></a> <i>file</i>    ;reopen <i>file</i> for more output (C/Scheme, not CL yet)
 </pre>
+<br>
+<p>In the Scheme version of CLM, the Guile built-in (but unused) function frame? is available as %frame?.
+</p>
 
-<p>These functions underly the more commonly used IO functions, outa and friends:</p>
 
 <!-- TOPIC outa -->
 <!-- INDEX ina-outa:Input and output --><A NAME="ina-outa"></a>

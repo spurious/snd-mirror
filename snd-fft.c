@@ -1140,6 +1140,7 @@ static void apply_fft(fft_state *fs)
     default:
       {
 #if HAVE_DYNAMIC_WIND
+	/* is this actually needed?  We're not using the NO_ERROR form of XEN_CALL, so surely this dynamic-wind is pointless */
 	add_fft *af;
 	af = make_add_fft(added_transform_proc(cp->transform_type), 
 			  sf,
