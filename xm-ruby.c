@@ -152,7 +152,6 @@
   XEN_NARGIFY_3(gxm_XtRemoveCallbacks_w, gxm_XtRemoveCallbacks)
   XEN_NARGIFY_2(gxm_XtRemoveAllCallbacks_w, gxm_XtRemoveAllCallbacks)
   XEN_NARGIFY_3(gxm_XtCallCallbacks_w, gxm_XtCallCallbacks)
-  XEN_NARGIFY_3(gxm_XtCallCallbacks_raw_w, gxm_XtCallCallbacks_raw)
   XEN_NARGIFY_3(gxm_XtCallCallbackList_w, gxm_XtCallCallbackList)
   XEN_NARGIFY_2(gxm_XtHasCallbacks_w, gxm_XtHasCallbacks)
   XEN_ARGIFY_5(gxm_XtCreatePopupShell_w, gxm_XtCreatePopupShell)
@@ -1382,7 +1381,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRemoveCallbacks" XM_POSTFIX, gxm_XtRemoveCallbacks_w, 3, 0, 0, H_XtRemoveCallbacks);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtRemoveAllCallbacks" XM_POSTFIX, gxm_XtRemoveAllCallbacks_w, 2, 0, 0, H_XtRemoveAllCallbacks);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCallCallbacks" XM_POSTFIX, gxm_XtCallCallbacks_w, 3, 0, 0, H_XtCallCallbacks);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCallCallbacks_raw" XM_POSTFIX, gxm_XtCallCallbacks_raw_w, 3, 0, 0, H_XtCallCallbacks_raw);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCallCallbackList" XM_POSTFIX, gxm_XtCallCallbackList_w, 3, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtHasCallbacks" XM_POSTFIX, gxm_XtHasCallbacks_w, 2, 0, 0, H_XtHasCallbacks);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XtCreatePopupShell" XM_POSTFIX, gxm_XtCreatePopupShell_w, 4, 1, 0, H_XtCreatePopupShell);
