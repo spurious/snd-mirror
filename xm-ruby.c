@@ -1405,11 +1405,11 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XpGetDocumentData, gxm_XpGetDocumentData_w, 5, 0, 0, H_XpGetDocumentData);
 #endif
 #if HAVE_MOTIF
-  XM_DEFINE_PROCEDURE(XtSetArg, gxm_XtSetArg_w, 3, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XtManageChildren, gxm_XtManageChildren_w, 1, 1, 0, NULL);
-  XM_DEFINE_PROCEDURE(XtManageChild, gxm_XtManageChild_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XtUnmanageChildren, gxm_XtUnmanageChildren_w, 1, 1, 0, NULL);
-  XM_DEFINE_PROCEDURE(XtUnmanageChild, gxm_XtUnmanageChild_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XtSetArg, gxm_XtSetArg_w, 3, 0, 0, H_XtSetArg);
+  XM_DEFINE_PROCEDURE(XtManageChildren, gxm_XtManageChildren_w, 1, 1, 0, H_XtManageChildren);
+  XM_DEFINE_PROCEDURE(XtManageChild, gxm_XtManageChild_w, 1, 0, 0, H_XtManageChild);
+  XM_DEFINE_PROCEDURE(XtUnmanageChildren, gxm_XtUnmanageChildren_w, 1, 1, 0, H_XtUnmanageChildren);
+  XM_DEFINE_PROCEDURE(XtUnmanageChild, gxm_XtUnmanageChild_w, 1, 0, 0, H_XtUnmanageChild);
   XM_DEFINE_PROCEDURE(XtDispatchEvent, gxm_XtDispatchEvent_w, 1, 0, 0, H_XtDispatchEvent);
   XM_DEFINE_PROCEDURE(XtCallAcceptFocus, gxm_XtCallAcceptFocus_w, 2, 0, 0, H_XtCallAcceptFocus);
   XM_DEFINE_PROCEDURE(XtAppPeekEvent, gxm_XtAppPeekEvent_w, 1, 0, 0, H_XtAppPeekEvent);
@@ -1424,7 +1424,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XtTranslateCoords, gxm_XtTranslateCoords_w, 3, 0, 0, H_XtTranslateCoords);
   XM_DEFINE_PROCEDURE(XtKeysymToKeycodeList, gxm_XtKeysymToKeycodeList_w, 2, 0, 0, H_XtKeysymToKeycodeList);
   XM_DEFINE_PROCEDURE(XtParseTranslationTable, gxm_XtParseTranslationTable_w, 1, 0, 0, H_XtParseTranslationTable);
-  XM_DEFINE_PROCEDURE(XtParseAcceleratorTable, gxm_XtParseAcceleratorTable_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XtParseAcceleratorTable, gxm_XtParseAcceleratorTable_w, 1, 0, 0, H_XtParseAcceleratorTable);
   XM_DEFINE_PROCEDURE(XtOverrideTranslations, gxm_XtOverrideTranslations_w, 2, 0, 0, H_XtOverrideTranslations);
   XM_DEFINE_PROCEDURE(XtAugmentTranslations, gxm_XtAugmentTranslations_w, 2, 0, 0, H_XtAugmentTranslations);
   XM_DEFINE_PROCEDURE(XtInstallAccelerators, gxm_XtInstallAccelerators_w, 2, 0, 0, H_XtInstallAccelerators);
@@ -1441,18 +1441,18 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XtGetResourceList, gxm_XtGetResourceList_w, 1, 0, 0, H_XtGetResourceList);
   XM_DEFINE_PROCEDURE(XtGetActionKeysym, gxm_XtGetActionKeysym_w, 1, 0, 0, H_XtGetActionKeysym);
   XM_DEFINE_PROCEDURE(XtTranslateKeycode, gxm_XtTranslateKeycode_w, 3, 0, 0, H_XtTranslateKeycode);
-  XM_DEFINE_PROCEDURE(XtTranslateKey, gxm_XtTranslateKey_w, 3, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XtTranslateKey, gxm_XtTranslateKey_w, 3, 0, 0, H_XtTranslateKey);
   XM_DEFINE_PROCEDURE(XtSetKeyTranslator, gxm_XtSetKeyTranslator_w, 2, 0, 0, H_XtSetKeyTranslator);
   XM_DEFINE_PROCEDURE(XtRegisterCaseConverter, gxm_XtRegisterCaseConverter_w, 4, 0, 0, H_XtRegisterCaseConverter);
   XM_DEFINE_PROCEDURE(XtConvertCase, gxm_XtConvertCase_w, 2, 0, 0, H_XtConvertCase);
   XM_DEFINE_PROCEDURE(XtAddEventHandler, gxm_XtAddEventHandler_w, 4, 1, 0, H_XtAddEventHandler);
-  XM_DEFINE_PROCEDURE(XtRemoveEventHandler, gxm_XtRemoveEventHandler_w, 5, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XtRemoveEventHandler, gxm_XtRemoveEventHandler_w, 5, 0, 0, H_XtRemoveEventHandler);
   XM_DEFINE_PROCEDURE(XtAddRawEventHandler, gxm_XtAddRawEventHandler_w, 5, 0, 0, H_XtAddRawEventHandler);
   XM_DEFINE_PROCEDURE(XtRemoveRawEventHandler, gxm_XtRemoveRawEventHandler_w, 5, 0, 0, H_XtRemoveRawEventHandler);
   XM_DEFINE_PROCEDURE(XtInsertEventHandler, gxm_XtInsertEventHandler_w, 6, 0, 0, H_XtInsertEventHandler);
   XM_DEFINE_PROCEDURE(XtInsertRawEventHandler, gxm_XtInsertRawEventHandler_w, 6, 0, 0, H_XtInsertRawEventHandler);
   XM_DEFINE_PROCEDURE(XtDispatchEventToWidget, gxm_XtDispatchEventToWidget_w, 2, 0, 0, H_XtDispatchEventToWidget);
-  XM_DEFINE_PROCEDURE(XtBuildEventMask, gxm_XtBuildEventMask_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XtBuildEventMask, gxm_XtBuildEventMask_w, 1, 0, 0, H_XtBuildEventMask);
   XM_DEFINE_PROCEDURE(XtAddGrab, gxm_XtAddGrab_w, 3, 0, 0, H_XtAddGrab);
   XM_DEFINE_PROCEDURE(XtRemoveGrab, gxm_XtRemoveGrab_w, 1, 0, 0, H_XtRemoveGrab);
   XM_DEFINE_PROCEDURE(XtAppProcessEvent, gxm_XtAppProcessEvent_w, 2, 0, 0, H_XtAppProcessEvent);
@@ -1523,9 +1523,9 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XtWidgetToApplicationContext, gxm_XtWidgetToApplicationContext_w, 1, 0, 0, H_XtWidgetToApplicationContext);
   XM_DEFINE_PROCEDURE(XtDisplayToApplicationContext, gxm_XtDisplayToApplicationContext_w, 1, 0, 0, H_XtDisplayToApplicationContext);
   XM_DEFINE_PROCEDURE(XtCloseDisplay, gxm_XtCloseDisplay_w, 1, 0, 0, H_XtCloseDisplay);
-  XM_DEFINE_PROCEDURE(XtSetValues, gxm_XtSetValues_w, 2, 1, 0, NULL);
+  XM_DEFINE_PROCEDURE(XtSetValues, gxm_XtSetValues_w, 2, 1, 0, H_XtSetValues);
   XM_DEFINE_PROCEDURE(XtVaSetValues, gxm_XtVaSetValues_w, 2, 0, 0, H_XtVaSetValues);
-  XM_DEFINE_PROCEDURE(XtGetValues, gxm_XtGetValues_w, 2, 1, 0, NULL);
+  XM_DEFINE_PROCEDURE(XtGetValues, gxm_XtGetValues_w, 2, 1, 0, H_XtGetValues);
   XM_DEFINE_PROCEDURE(XtVaGetValues, gxm_XtVaGetValues_w, 2, 0, 0, H_XtVaGetValues);
   XM_DEFINE_PROCEDURE(XtAppSetErrorMsgHandler, gxm_XtAppSetErrorMsgHandler_w, 2, 0, 0, H_XtAppSetErrorMsgHandler);
   XM_DEFINE_PROCEDURE(XtAppSetWarningMsgHandler, gxm_XtAppSetWarningMsgHandler_w, 2, 0, 0, H_XtAppSetWarningMsgHandler);
@@ -1542,9 +1542,9 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XtRemoveWorkProc, gxm_XtRemoveWorkProc_w, 1, 0, 0, H_XtRemoveWorkProc);
   XM_DEFINE_PROCEDURE(XtGetGC, gxm_XtGetGC_w, 3, 0, 0, H_XtGetGC);
   XM_DEFINE_PROCEDURE(XtAllocateGC, gxm_XtAllocateGC_w, 6, 0, 0, H_XtAllocateGC);
-  XM_DEFINE_PROCEDURE(XtDestroyGC, gxm_XtDestroyGC_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XtDestroyGC, gxm_XtDestroyGC_w, 1, 0, 0, H_XtDestroyGC);
   XM_DEFINE_PROCEDURE(XtReleaseGC, gxm_XtReleaseGC_w, 2, 0, 0, H_XtReleaseGC);
-  XM_DEFINE_PROCEDURE(XtFindFile, gxm_XtFindFile_w, 4, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XtFindFile, gxm_XtFindFile_w, 4, 0, 0, H_XtFindFile);
   XM_DEFINE_PROCEDURE(XtResolvePathname, gxm_XtResolvePathname_w, 8, 0, 0, H_XtResolvePathname);
   XM_DEFINE_PROCEDURE(XtDisownSelection, gxm_XtDisownSelection_w, 3, 0, 0, H_XtDisownSelection);
   XM_DEFINE_PROCEDURE(XtGetSelectionValue, gxm_XtGetSelectionValue_w, 6, 0, 0, H_XtGetSelectionValue);
@@ -1582,7 +1582,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XtIsTopLevelShell, gxm_XtIsTopLevelShell_w, 1, 0, 0, H_XtIsTopLevelShell);
   XM_DEFINE_PROCEDURE(XtIsApplicationShell, gxm_XtIsApplicationShell_w, 1, 0, 0, H_XtIsApplicationShell);
   XM_DEFINE_PROCEDURE(XtIsSessionShell, gxm_XtIsSessionShell_w, 1, 0, 0, H_XtIsSessionShell);
-  XM_DEFINE_PROCEDURE(XtMapWidget, gxm_XtMapWidget_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XtMapWidget, gxm_XtMapWidget_w, 1, 0, 0, H_XtMapWidget);
   XM_DEFINE_PROCEDURE(XtUnmapWidget, gxm_XtUnmapWidget_w, 1, 0, 0, H_XtUnmapWidget);
 #endif
   XM_DEFINE_PROCEDURE(XUniqueContext, gxm_XUniqueContext_w, 0, 0, 0, H_XUniqueContext);
@@ -1603,7 +1603,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XDisplayName, gxm_XDisplayName_w, 1, 0, 0, H_XDisplayName);
   XM_DEFINE_PROCEDURE(XKeysymToString, gxm_XKeysymToString_w, 1, 0, 0, H_XKeysymToString);
   XM_DEFINE_PROCEDURE(XSynchronize, gxm_XSynchronize_w, 2, 0, 0, H_XSynchronize);
-  XM_DEFINE_PROCEDURE(XSetAfterFunction, gxm_XSetAfterFunction_w, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XSetAfterFunction, gxm_XSetAfterFunction_w, 2, 0, 0, H_XSetAfterFunction);
   XM_DEFINE_PROCEDURE(XInternAtom, gxm_XInternAtom_w, 3, 0, 0, H_XInternAtom);
   XM_DEFINE_PROCEDURE(XCopyColormapAndFree, gxm_XCopyColormapAndFree_w, 2, 0, 0, H_XCopyColormapAndFree);
   XM_DEFINE_PROCEDURE(XCreateColormap, gxm_XCreateColormap_w, 4, 0, 0, H_XCreateColormap);
@@ -1612,7 +1612,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XCreateFontCursor, gxm_XCreateFontCursor_w, 2, 0, 0, H_XCreateFontCursor);
   XM_DEFINE_PROCEDURE(XLoadFont, gxm_XLoadFont_w, 2, 0, 0, H_XLoadFont);
   XM_DEFINE_PROCEDURE(XCreateGC, gxm_XCreateGC_w, 4, 0, 0, H_XCreateGC);
-  XM_DEFINE_PROCEDURE(XFlushGC, gxm_XFlushGC_w, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XFlushGC, gxm_XFlushGC_w, 2, 0, 0, H_XFlushGC);
   XM_DEFINE_PROCEDURE(XCreatePixmap, gxm_XCreatePixmap_w, 5, 0, 0, H_XCreatePixmap);
   XM_DEFINE_PROCEDURE(XCreateBitmapFromData, gxm_XCreateBitmapFromData_w, 5, 0, 0, H_XCreateBitmapFromData);
   XM_DEFINE_PROCEDURE(XCreatePixmapFromBitmapData, gxm_XCreatePixmapFromBitmapData_w, 8, 0, 0, H_XCreatePixmapFromBitmapData);
@@ -1623,7 +1623,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XListFonts, gxm_XListFonts_w, 3, 0, 0, H_XListFonts);
   XM_DEFINE_PROCEDURE(XListFontsWithInfo, gxm_XListFontsWithInfo_w, 3, 0, 0, H_XListFontsWithInfo);
   XM_DEFINE_PROCEDURE(XGetFontPath, gxm_XGetFontPath_w, 1, 0, 0, H_XGetFontPath);
-  XM_DEFINE_PROCEDURE(XListExtensions, gxm_XListExtensions_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XListExtensions, gxm_XListExtensions_w, 1, 0, 0, H_XListExtensions);
   XM_DEFINE_PROCEDURE(XListProperties, gxm_XListProperties_w, 2, 0, 0, H_XListProperties);
   XM_DEFINE_PROCEDURE(XKeycodeToKeysym, gxm_XKeycodeToKeysym_w, 3, 0, 0, H_XKeycodeToKeysym);
   XM_DEFINE_PROCEDURE(XLookupKeysym, gxm_XLookupKeysym_w, 2, 0, 0, H_XLookupKeysym);
@@ -1653,10 +1653,10 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XDefaultColormapOfScreen, gxm_XDefaultColormapOfScreen_w, 1, 0, 0, H_DefaultColormapOfScreen);
   XM_DEFINE_PROCEDURE(XDisplayOfScreen, gxm_XDisplayOfScreen_w, 1, 0, 0, H_DisplayOfScreen);
   XM_DEFINE_PROCEDURE(XScreenOfDisplay, gxm_XScreenOfDisplay_w, 2, 0, 0, H_ScreenOfDisplay);
-  XM_DEFINE_PROCEDURE(XDefaultScreenOfDisplay, gxm_XDefaultScreenOfDisplay_w, 1, 0, 0, H_DefaultScreenOfDisplay);
+  XM_DEFINE_PROCEDURE(XDefaultScreenOfDisplay, gxm_XDefaultScreenOfDisplay_w, 1, 0, 0, H_XDefaultScreenOfDisplay);
   XM_DEFINE_PROCEDURE(XEventMaskOfScreen, gxm_XEventMaskOfScreen_w, 1, 0, 0, H_EventMaskOfScreen);
   XM_DEFINE_PROCEDURE(XScreenNumberOfScreen, gxm_XScreenNumberOfScreen_w, 1, 0, 0, H_XScreenNumberOfScreen);
-  XM_DEFINE_PROCEDURE(XSetErrorHandler, gxm_XSetErrorHandler_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XSetErrorHandler, gxm_XSetErrorHandler_w, 1, 0, 0, H_XSetErrorHandler);
   XM_DEFINE_PROCEDURE(XSetIOErrorHandler, gxm_XSetIOErrorHandler_w, 1, 0, 0, H_XSetIOErrorHandler);
   XM_DEFINE_PROCEDURE(XListPixmapFormats, gxm_XListPixmapFormats_w, 1, 0, 0, H_XListPixmapFormats);
   XM_DEFINE_PROCEDURE(XListDepths, gxm_XListDepths_w, 2, 0, 0, H_XListDepths);
@@ -1706,9 +1706,9 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XCopyArea, gxm_XCopyArea_w, 0, 0, 1, H_XCopyArea);
   XM_DEFINE_PROCEDURE(XCopyGC, gxm_XCopyGC_w, 4, 0, 0, H_XCopyGC);
   XM_DEFINE_PROCEDURE(XCopyPlane, gxm_XCopyPlane_w, 0, 0, 1, H_XCopyPlane);
-  XM_DEFINE_PROCEDURE(XDefaultDepth, gxm_XDefaultDepth_w, 2, 0, 0, H_DefaultDepth);
-  XM_DEFINE_PROCEDURE(XDefaultDepthOfScreen, gxm_XDefaultDepthOfScreen_w, 1, 0, 0, H_DefaultDepthOfScreen);
-  XM_DEFINE_PROCEDURE(XDefaultScreen, gxm_XDefaultScreen_w, 1, 0, 0, H_DefaultScreen);
+  XM_DEFINE_PROCEDURE(XDefaultDepth, gxm_XDefaultDepth_w, 2, 0, 0, H_XDefaultDepth);
+  XM_DEFINE_PROCEDURE(XDefaultDepthOfScreen, gxm_XDefaultDepthOfScreen_w, 1, 0, 0, H_XDefaultDepthOfScreen);
+  XM_DEFINE_PROCEDURE(XDefaultScreen, gxm_XDefaultScreen_w, 1, 0, 0, H_XDefaultScreen);
   XM_DEFINE_PROCEDURE(XDefineCursor, gxm_XDefineCursor_w, 3, 0, 0, H_XDefineCursor);
   XM_DEFINE_PROCEDURE(XDeleteProperty, gxm_XDeleteProperty_w, 3, 0, 0, H_XDeleteProperty);
   XM_DEFINE_PROCEDURE(XDestroyWindow, gxm_XDestroyWindow_w, 2, 0, 0, H_XDestroyWindow);
@@ -1728,9 +1728,9 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XDrawImageString, gxm_XDrawImageString_w, 7, 0, 0, H_XDrawImageString);
   XM_DEFINE_PROCEDURE(XDrawLine, gxm_XDrawLine_w, 7, 0, 0, H_XDrawLine);
   XM_DEFINE_PROCEDURE(XDrawLines, gxm_XDrawLines_w, 6, 0, 0, H_XDrawLines);
-  XM_DEFINE_PROCEDURE(XDrawLinesDirect, gxm_XDrawLinesDirect_w, 6, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(freeXPoints, gxm_FreeXPoints_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(vector->XPoints, gxm_Vector2XPoints_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XDrawLinesDirect, gxm_XDrawLinesDirect_w, 6, 0, 0, H_XDrawLinesDirect);
+  XM_DEFINE_PROCEDURE(freeXPoints, gxm_FreeXPoints_w, 1, 0, 0, H_freeXPoints);
+  XM_DEFINE_PROCEDURE(vector->XPoints, gxm_Vector2XPoints_w, 1, 0, 0, H_vector2XPoints);
   XM_DEFINE_PROCEDURE(XDrawPoint, gxm_XDrawPoint_w, 5, 0, 0, H_XDrawPoint);
   XM_DEFINE_PROCEDURE(XDrawPoints, gxm_XDrawPoints_w, 6, 0, 0, H_XDrawPoints);
   XM_DEFINE_PROCEDURE(XDrawRectangle, gxm_XDrawRectangle_w, 7, 0, 0, H_XDrawRectangle);
@@ -1747,7 +1747,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XFillRectangle, gxm_XFillRectangle_w, 7, 0, 0, H_XFillRectangle);
   XM_DEFINE_PROCEDURE(XFillRectangles, gxm_XFillRectangles_w, 5, 0, 0, H_XFillRectangles);
   XM_DEFINE_PROCEDURE(XFlush, gxm_XFlush_w, 1, 0, 0, H_XFlush);
-  XM_DEFINE_PROCEDURE(XForceScreenSaver, gxm_XForceScreenSaver_w, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XForceScreenSaver, gxm_XForceScreenSaver_w, 2, 0, 0, H_XForceScreenSaver);
   XM_DEFINE_PROCEDURE(XFree, gxm_XFree_w, 1, 0, 0, H_XFree);
   XM_DEFINE_PROCEDURE(XFreeColormap, gxm_XFreeColormap_w, 2, 0, 0, H_XFreeColormap);
   XM_DEFINE_PROCEDURE(XFreeColors, gxm_XFreeColors_w, 5, 0, 0, H_XFreeColors);
@@ -1760,7 +1760,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XFreeGC, gxm_XFreeGC_w, 2, 0, 0, H_XFreeGC);
   XM_DEFINE_PROCEDURE(XFreeModifiermap, gxm_XFreeModifiermap_w, 1, 0, 0, H_XFreeModifiermap);
   XM_DEFINE_PROCEDURE(XFreePixmap, gxm_XFreePixmap_w, 2, 0, 0, H_XFreePixmap);
-  XM_DEFINE_PROCEDURE(XGeometry, gxm_XGeometry_w, 0, 0, 1, NULL);
+  XM_DEFINE_PROCEDURE(XGeometry, gxm_XGeometry_w, 0, 0, 1, H_XGeometry);
   XM_DEFINE_PROCEDURE(XGetErrorText, gxm_XGetErrorText_w, 4, 0, 0, H_XGetErrorText);
   XM_DEFINE_PROCEDURE(XGetFontProperty, gxm_XGetFontProperty_w, 2, 0, 0, H_XGetFontProperty);
   XM_DEFINE_PROCEDURE(XGetGCValues, gxm_XGetGCValues_w, 3, 0, 0, H_XGetGCValues);
@@ -1799,7 +1799,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XMoveResizeWindow, gxm_XMoveResizeWindow_w, 6, 0, 0, H_XMoveResizeWindow);
   XM_DEFINE_PROCEDURE(XMoveWindow, gxm_XMoveWindow_w, 4, 0, 0, H_XMoveWindow);
   XM_DEFINE_PROCEDURE(XNextEvent, gxm_XNextEvent_w, 1, 0, 0, H_XNextEvent);
-  XM_DEFINE_PROCEDURE(XNoOp, gxm_XNoOp_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XNoOp, gxm_XNoOp_w, 1, 0, 0, H_XNoOp);
   XM_DEFINE_PROCEDURE(XParseColor, gxm_XParseColor_w, 4, 0, 0, H_XParseColor);
   XM_DEFINE_PROCEDURE(XParseGeometry, gxm_XParseGeometry_w, 1, 0, 0, H_XParseGeometry);
   XM_DEFINE_PROCEDURE(XPeekEvent, gxm_XPeekEvent_w, 1, 0, 0, H_XPeekEvent);
@@ -1817,7 +1817,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XQueryBestTile, gxm_XQueryBestTile_w, 4, 0, 0, H_XQueryBestTile);
   XM_DEFINE_PROCEDURE(XQueryColor, gxm_XQueryColor_w, 3, 0, 0, H_XQueryColor);
   XM_DEFINE_PROCEDURE(XQueryColors, gxm_XQueryColors_w, 3, 1, 0, H_XQueryColors);
-  XM_DEFINE_PROCEDURE(XQueryExtension, gxm_XQueryExtension_w, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XQueryExtension, gxm_XQueryExtension_w, 2, 0, 0, H_XQueryExtension);
   XM_DEFINE_PROCEDURE(XQueryKeymap, gxm_XQueryKeymap_w, 1, 0, 0, H_XQueryKeymap);
   XM_DEFINE_PROCEDURE(XQueryPointer, gxm_XQueryPointer_w, 2, 0, 0, H_XQueryPointer);
   XM_DEFINE_PROCEDURE(XQueryTextExtents, gxm_XQueryTextExtents_w, 3, 0, 0, H_XQueryTextExtents);
@@ -1835,7 +1835,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XRotateBuffers, gxm_XRotateBuffers_w, 2, 0, 0, H_XRotateBuffers);
   XM_DEFINE_PROCEDURE(XRotateWindowProperties, gxm_XRotateWindowProperties_w, 5, 0, 0, H_XRotateWindowProperties);
   XM_DEFINE_PROCEDURE(XScreenCount, gxm_XScreenCount_w, 1, 0, 0, H_ScreenCount);
-  XM_DEFINE_PROCEDURE(XSelectInput, gxm_XSelectInput_w, 3, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XSelectInput, gxm_XSelectInput_w, 3, 0, 0, H_XSelectInput);
   XM_DEFINE_PROCEDURE(XSendEvent, gxm_XSendEvent_w, 5, 0, 0, H_XSendEvent);
   XM_DEFINE_PROCEDURE(XSetAccessControl, gxm_XSetAccessControl_w, 2, 0, 0, H_XSetAccessControl);
   XM_DEFINE_PROCEDURE(XSetArcMode, gxm_XSetArcMode_w, 3, 0, 0, H_XSetArcMode);
@@ -1851,7 +1851,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XSetFont, gxm_XSetFont_w, 3, 0, 0, H_XSetFont);
   XM_DEFINE_PROCEDURE(XSetFontPath, gxm_XSetFontPath_w, 3, 0, 0, H_XSetFontPath);
   XM_DEFINE_PROCEDURE(XSetForeground, gxm_XSetForeground_w, 3, 0, 0, H_XSetForeground);
-  XM_DEFINE_PROCEDURE(XSetFunction, gxm_XSetFunction_w, 3, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XSetFunction, gxm_XSetFunction_w, 3, 0, 0, H_XSetFunction);
   XM_DEFINE_PROCEDURE(XSetGraphicsExposures, gxm_XSetGraphicsExposures_w, 3, 0, 0, H_XSetGraphicsExposures);
   XM_DEFINE_PROCEDURE(XSetIconName, gxm_XSetIconName_w, 3, 0, 0, H_XSetIconName);
   XM_DEFINE_PROCEDURE(XSetInputFocus, gxm_XSetInputFocus_w, 4, 0, 0, H_XSetInputFocus);
@@ -1911,7 +1911,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XFilterEvent, gxm_XFilterEvent_w, 2, 0, 0, H_XFilterEvent);
   XM_DEFINE_PROCEDURE(XAllocIconSize, gxm_XAllocIconSize_w, 0, 0, 0, H_XAllocIconSize);
   XM_DEFINE_PROCEDURE(XAllocStandardColormap, gxm_XAllocStandardColormap_w, 0, 0, 0, H_XAllocStandardColormap);
-  XM_DEFINE_PROCEDURE(XAllocWMHints, gxm_XAllocWMHints_w, 0, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XAllocWMHints, gxm_XAllocWMHints_w, 0, 0, 0, H_XAllocWMHints);
   XM_DEFINE_PROCEDURE(XClipBox, gxm_XClipBox_w, 1, 0, 0, H_XClipBox);
   XM_DEFINE_PROCEDURE(XCreateRegion, gxm_XCreateRegion_w, 0, 0, 0, H_XCreateRegion);
   XM_DEFINE_PROCEDURE(XDefaultString, gxm_XDefaultString_w, 0, 0, 0, H_XDefaultString);
@@ -1919,11 +1919,11 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XDestroyRegion, gxm_XDestroyRegion_w, 1, 0, 0, H_XDestroyRegion);
   XM_DEFINE_PROCEDURE(XEmptyRegion, gxm_XEmptyRegion_w, 1, 0, 0, H_XEmptyRegion);
   XM_DEFINE_PROCEDURE(XEqualRegion, gxm_XEqualRegion_w, 2, 0, 0, H_XEqualRegion);
-  XM_DEFINE_PROCEDURE(XFindContext, gxm_XFindContext_w, 3, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XFindContext, gxm_XFindContext_w, 3, 0, 0, H_XFindContext);
   XM_DEFINE_PROCEDURE(XGetIconSizes, gxm_XGetIconSizes_w, 2, 0, 0, H_XGetIconSizes);
   XM_DEFINE_PROCEDURE(XGetRGBColormaps, gxm_XGetRGBColormaps_w, 3, 0, 0, H_XGetRGBColormaps);
 #if (!XM_DISABLE_DEPRECATED)
-  XM_DEFINE_PROCEDURE(XGetStandardColormap, gxm_XGetStandardColormap_w, 3, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XGetStandardColormap, gxm_XGetStandardColormap_w, 3, 0, 0, H_XGetStandardColormap);
 #endif
   XM_DEFINE_PROCEDURE(XGetVisualInfo, gxm_XGetVisualInfo_w, 3, 0, 0, H_XGetVisualInfo);
   XM_DEFINE_PROCEDURE(XGetWMHints, gxm_XGetWMHints_w, 2, 0, 0, H_XGetWMHints);
@@ -1935,12 +1935,12 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XPointInRegion, gxm_XPointInRegion_w, 3, 0, 0, H_XPointInRegion);
   XM_DEFINE_PROCEDURE(XPolygonRegion, gxm_XPolygonRegion_w, 3, 0, 0, H_XPolygonRegion);
   XM_DEFINE_PROCEDURE(XRectInRegion, gxm_XRectInRegion_w, 5, 0, 0, H_XRectInRegion);
-  XM_DEFINE_PROCEDURE(XSaveContext, gxm_XSaveContext_w, 4, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XSaveContext, gxm_XSaveContext_w, 4, 0, 0, H_XSaveContext);
   XM_DEFINE_PROCEDURE(XSetRGBColormaps, gxm_XSetRGBColormaps_w, 5, 0, 0, H_XSetRGBColormaps);
   XM_DEFINE_PROCEDURE(XSetWMHints, gxm_XSetWMHints_w, 3, 0, 0, H_XSetWMHints);
   XM_DEFINE_PROCEDURE(XSetRegion, gxm_XSetRegion_w, 3, 0, 0, H_XSetRegion);
 #if (!XM_DISABLE_DEPRECATED)
-  XM_DEFINE_PROCEDURE(XSetStandardColormap, gxm_XSetStandardColormap_w, 4, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XSetStandardColormap, gxm_XSetStandardColormap_w, 4, 0, 0, H_XSetStandardColormap);
   XM_DEFINE_PROCEDURE(XSetStandardProperties, gxm_XSetStandardProperties_w, 8, 0, 0, H_XSetStandardProperties);
 #endif
   XM_DEFINE_PROCEDURE(XSetWMProperties, gxm_XSetWMProperties_w, 8, 0, 0, H_XSetWMProperties);
@@ -2102,12 +2102,12 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmTextFieldCopyLink, gxm_XmTextFieldCopyLink_w, 2, 0, 0, H_XmTextFieldCopyLink);
   XM_DEFINE_PROCEDURE(XmTextFieldPasteLink, gxm_XmTextFieldPasteLink_w, 1, 0, 0, H_XmTextFieldPasteLink);
   XM_DEFINE_PROCEDURE(XmTextGetCenterline, gxm_XmTextGetCenterline_w, 1, 0, 0, H_XmTextGetCenterline);
-  XM_DEFINE_PROCEDURE(XmToggleButtonGadgetSetValue, gxm_XmToggleButtonGadgetSetValue_w, 3, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmToggleButtonGadgetSetValue, gxm_XmToggleButtonGadgetSetValue_w, 3, 0, 0, H_XmToggleButtonGadgetSetValue);
   XM_DEFINE_PROCEDURE(XmCreateIconGadget, gxm_XmCreateIconGadget_w, 3, 1, 0, H_XmCreateIconGadget);
-  XM_DEFINE_PROCEDURE(XmCreateIconHeader, gxm_XmCreateIconHeader_w, 3, 1, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmCreateIconHeader, gxm_XmCreateIconHeader_w, 3, 1, 0, H_XmCreateIconHeader);
   XM_DEFINE_PROCEDURE(XmObjectAtPoint, gxm_XmObjectAtPoint_w, 3, 0, 0, H_XmObjectAtPoint);
   XM_DEFINE_PROCEDURE(XmConvertStringToUnits, gxm_XmConvertStringToUnits_w, 4, 0, 0, H_XmConvertStringToUnits);
-  XM_DEFINE_PROCEDURE(XmCreateGrabShell, gxm_XmCreateGrabShell_w, 3, 1, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmCreateGrabShell, gxm_XmCreateGrabShell_w, 3, 1, 0, H_XmCreateGrabShell);
   XM_DEFINE_PROCEDURE(XmToggleButtonSetValue, gxm_XmToggleButtonSetValue_w, 3, 0, 0, H_XmToggleButtonSetValue);
   XM_DEFINE_PROCEDURE(XmTextPasteLink, gxm_XmTextPasteLink_w, 1, 0, 0, H_XmTextPasteLink);
   XM_DEFINE_PROCEDURE(XmTextCopyLink, gxm_XmTextCopyLink_w, 2, 0, 0, H_XmTextCopyLink);
@@ -2212,14 +2212,14 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmTextFieldReplace, gxm_XmTextFieldReplace_w, 4, 0, 0, H_XmTextFieldReplace);
   XM_DEFINE_PROCEDURE(XmTextFieldInsert, gxm_XmTextFieldInsert_w, 3, 0, 0, H_XmTextFieldInsert);
   XM_DEFINE_PROCEDURE(XmTextFieldSetAddMode, gxm_XmTextFieldSetAddMode_w, 2, 0, 0, H_XmTextFieldSetAddMode);
-  XM_DEFINE_PROCEDURE(XmTextFieldGetAddMode, gxm_XmTextFieldGetAddMode_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmTextFieldGetAddMode, gxm_XmTextFieldGetAddMode_w, 1, 0, 0, H_XmTextFieldGetAddMode);
   XM_DEFINE_PROCEDURE(XmTextFieldGetEditable, gxm_XmTextFieldGetEditable_w, 1, 0, 0, H_XmTextFieldGetEditable);
   XM_DEFINE_PROCEDURE(XmTextFieldSetEditable, gxm_XmTextFieldSetEditable_w, 2, 0, 0, H_XmTextFieldSetEditable);
   XM_DEFINE_PROCEDURE(XmTextFieldGetMaxLength, gxm_XmTextFieldGetMaxLength_w, 1, 0, 0, H_XmTextFieldGetMaxLength);
   XM_DEFINE_PROCEDURE(XmTextFieldSetMaxLength, gxm_XmTextFieldSetMaxLength_w, 2, 0, 0, H_XmTextFieldSetMaxLength);
-  XM_DEFINE_PROCEDURE(XmTextFieldGetCursorPosition, gxm_XmTextFieldGetCursorPosition_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmTextFieldGetCursorPosition, gxm_XmTextFieldGetCursorPosition_w, 1, 0, 0, H_XmTextFieldGetCursorPosition);
   XM_DEFINE_PROCEDURE(XmTextFieldGetInsertionPosition, gxm_XmTextFieldGetInsertionPosition_w, 1, 0, 0, H_XmTextFieldGetInsertionPosition);
-  XM_DEFINE_PROCEDURE(XmTextFieldSetCursorPosition, gxm_XmTextFieldSetCursorPosition_w, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmTextFieldSetCursorPosition, gxm_XmTextFieldSetCursorPosition_w, 2, 0, 0, H_XmTextFieldSetCursorPosition);
   XM_DEFINE_PROCEDURE(XmTextFieldSetInsertionPosition, gxm_XmTextFieldSetInsertionPosition_w, 2, 0, 0, H_XmTextFieldSetInsertionPosition);
   XM_DEFINE_PROCEDURE(XmTextFieldGetSelectionPosition, gxm_XmTextFieldGetSelectionPosition_w, 1, 0, 0, H_XmTextFieldGetSelectionPosition);
   XM_DEFINE_PROCEDURE(XmTextFieldGetSelection, gxm_XmTextFieldGetSelection_w, 1, 0, 0, H_XmTextFieldGetSelection);
@@ -2249,17 +2249,17 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmTextReplace, gxm_XmTextReplace_w, 4, 0, 0, H_XmTextReplace);
   XM_DEFINE_PROCEDURE(XmTextInsert, gxm_XmTextInsert_w, 3, 0, 0, H_XmTextInsert);
   XM_DEFINE_PROCEDURE(XmTextSetAddMode, gxm_XmTextSetAddMode_w, 2, 0, 0, H_XmTextSetAddMode);
-  XM_DEFINE_PROCEDURE(XmTextGetAddMode, gxm_XmTextGetAddMode_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmTextGetAddMode, gxm_XmTextGetAddMode_w, 1, 0, 0, H_XmTextGetAddMode);
   XM_DEFINE_PROCEDURE(XmTextGetEditable, gxm_XmTextGetEditable_w, 1, 0, 0, H_XmTextGetEditable);
   XM_DEFINE_PROCEDURE(XmTextSetEditable, gxm_XmTextSetEditable_w, 2, 0, 0, H_XmTextSetEditable);
   XM_DEFINE_PROCEDURE(XmTextGetMaxLength, gxm_XmTextGetMaxLength_w, 1, 0, 0, H_XmTextGetMaxLength);
   XM_DEFINE_PROCEDURE(XmTextSetMaxLength, gxm_XmTextSetMaxLength_w, 2, 0, 0, H_XmTextSetMaxLength);
   XM_DEFINE_PROCEDURE(XmTextGetTopCharacter, gxm_XmTextGetTopCharacter_w, 1, 0, 0, H_XmTextGetTopCharacter);
   XM_DEFINE_PROCEDURE(XmTextSetTopCharacter, gxm_XmTextSetTopCharacter_w, 2, 0, 0, H_XmTextSetTopCharacter);
-  XM_DEFINE_PROCEDURE(XmTextGetCursorPosition, gxm_XmTextGetCursorPosition_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmTextGetCursorPosition, gxm_XmTextGetCursorPosition_w, 1, 0, 0, H_XmTextGetCursorPosition);
   XM_DEFINE_PROCEDURE(XmTextGetInsertionPosition, gxm_XmTextGetInsertionPosition_w, 1, 0, 0, H_XmTextGetInsertionPosition);
   XM_DEFINE_PROCEDURE(XmTextSetInsertionPosition, gxm_XmTextSetInsertionPosition_w, 2, 0, 0, H_XmTextSetInsertionPosition);
-  XM_DEFINE_PROCEDURE(XmTextSetCursorPosition, gxm_XmTextSetCursorPosition_w, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmTextSetCursorPosition, gxm_XmTextSetCursorPosition_w, 2, 0, 0, H_XmTextSetCursorPosition);
   XM_DEFINE_PROCEDURE(XmTextRemove, gxm_XmTextRemove_w, 1, 0, 0, H_XmTextRemove);
   XM_DEFINE_PROCEDURE(XmTextCopy, gxm_XmTextCopy_w, 2, 0, 0, H_XmTextCopy);
   XM_DEFINE_PROCEDURE(XmTextCut, gxm_XmTextCut_w, 2, 0, 0, H_XmTextCut);
@@ -2536,7 +2536,7 @@ static void define_procedures(void)
 #endif
 #endif
 #if HAVE_XmCreateColumn
-  XM_DEFINE_PROCEDURE(XmCreateColumn, gxm_XmCreateColumn_w, 3, 1, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmCreateColumn, gxm_XmCreateColumn_w, 3, 1, 0, H_XmCreateColumn);
   XM_DEFINE_PROCEDURE(XmIsColumn, gxm_XmIsColumn_w, 1, 0, 0, NULL);
 #if HAVE_XmColumnGetChildLabel
   XM_DEFINE_PROCEDURE(XmColumnGetChildLabel, gxm_XmColumnGetChildLabel_w, 1, 0, 0, NULL);
@@ -2626,7 +2626,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XpmReadFileToPixmap, gxm_XpmReadFileToPixmap_w, 4, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XpmReadFileToXpmImage, gxm_XpmReadFileToXpmImage_w, 1, 0, 0, NULL);
 #if HAVE_XPM_GET_ERROR_STRING
-  XM_DEFINE_PROCEDURE(XpmGetErrorString, gxm_XpmGetErrorString_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XpmGetErrorString, gxm_XpmGetErrorString_w, 1, 0, 0, H_XpmGetErrorString);
 #endif
   XM_DEFINE_PROCEDURE(XpmReadPixmapFile, gxm_XpmReadFileToPixmap_w, 4, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XpmWriteFileFromPixmap, gxm_XpmWriteFileFromPixmap_w, 5, 0, 0, NULL);
@@ -2634,11 +2634,11 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XpmCreatePixmapFromXpmImage, gxm_XpmCreatePixmapFromXpmImage_w, 4, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XpmCreateXpmImageFromPixmap, gxm_XpmCreateXpmImageFromPixmap_w, 4, 0, 0, NULL);
 #endif
-  XM_DEFINE_PROCEDURE(XGetPixel, gxm_XGetPixel_w, 3, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XDestroyImage, gxm_XDestroyImage_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XPutPixel, gxm_XPutPixel_w, 4, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XSubImage, gxm_XSubImage_w, 5, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XAddPixel, gxm_XAddPixel_w, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XGetPixel, gxm_XGetPixel_w, 3, 0, 0, H_XGetPixel);
+  XM_DEFINE_PROCEDURE(XDestroyImage, gxm_XDestroyImage_w, 1, 0, 0, H_XDestroyImage);
+  XM_DEFINE_PROCEDURE(XPutPixel, gxm_XPutPixel_w, 4, 0, 0, H_XPutPixel);
+  XM_DEFINE_PROCEDURE(XSubImage, gxm_XSubImage_w, 5, 0, 0, H_XSubImage);
+  XM_DEFINE_PROCEDURE(XAddPixel, gxm_XAddPixel_w, 2, 0, 0, H_XAddPixel);
 
 #if HAVE_MOTIF
   XM_DEFINE_PROCEDURE(XtAppContext?, XEN_XtAppContext_p_w, 1, 0, 0, NULL);
@@ -3223,7 +3223,7 @@ static void define_structs(void)
   XM_DEFINE_ACCESSOR(x2, gxm_x2_w, set_x2, gxm_set_x2_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(y2, gxm_y2_w, set_y2, gxm_set_y2_w, 1, 0, 2, 0);
   XM_DEFINE_PROCEDURE(XSegment, gxm_XSegment_w, 4, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XRectangle, gxm_XRectangle_w, 4, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XRectangle, gxm_XRectangle_w, 4, 0, 0, H_XRectangle);
   XM_DEFINE_ACCESSOR(dashes, gxm_dashes_w, set_dashes, gxm_set_dashes_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(dash_offset, gxm_dash_offset_w, set_dash_offset, gxm_set_dash_offset_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(clip_mask, gxm_clip_mask_w, set_clip_mask, gxm_set_clip_mask_w, 1, 0, 2, 0);
