@@ -34,8 +34,6 @@
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
 
-;;; TODO: src-channel with envelope tests, perhaps env-channel-with-base, filter-channel with vct
-
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 ;(setlocale LC_ALL "de_DE")
@@ -9358,6 +9356,14 @@ EDITS: 5
 	      (snd-display ";src-channel env: ~A" (channel->vct 0 10 index 1)))
 	  (if (not (vequal (make-vct 10) (channel->vct 0 10 index 0)))
 	      (snd-display ";src-channel env leaks: ~A" (channel->vct 0 10 index 0)))
+	  (revert-sound index)
+	  (vct->channel v 0 10 index 1)
+	  (vct->channel v 10 10 index 1)
+	  (src-channel '(1 1 2 2) 0 20 index 1) ; end is off above -- should be 19 I think
+	  (if (not (vequal (channel->vct 0 10 index 1) (vct 1.000 -0.000 -0.051 0.069 -0.056 0.015 0.042 -0.117 0.320 0.568)))
+	      (snd-display ";src-channel lst: ~A" (channel->vct 0 10 index 1)))
+	  (if (not (vequal (make-vct 10) (channel->vct 0 10 index 0)))
+	      (snd-display ";src-channel lst leaks: ~A" (channel->vct 0 10 index 0)))
 	  (set! (sinc-width) sw)
 	  (close-sound index))
 	
@@ -9710,6 +9716,10 @@ EDITS: 5
 	    (env-sound '(0 .5 1 .75 2 .25) 0 (frames) 32.0)
 	    (check-maxamp ind 0.75 "xramp")
 	    (check-env-vals "xramp" (make-env '(0 .5 1 .75 2 .25) :base 32.0 :end 1000))
+	    (undo)
+	    (env-channel-with-base '(0 .5 1 .75 2 .25) 32.0)
+	    (check-maxamp ind 0.75 "xramp1")
+	    (check-env-vals "xramp1" (make-env '(0 .5 1 .75 2 .25) :base 32.0 :end 1000))
 	    
 	    (close-sound ind))
 	  
@@ -15273,7 +15283,9 @@ EDITS: 5
 				0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.639 0.639 0.639)))
 	      (snd-display ";wt 6 data 900: ~A" (channel->vct 900 30)))
 	  (undo))
-	(close-sound ind))
+	(let ((fname (file-name ind)))
+	  (close-sound ind)
+	  (delete-file fname)))
       
       (let ((gen (make-readin "oboe.snd" 0 1490))
 	    (v0 (make-vct 10))
@@ -17011,7 +17023,9 @@ EDITS: 5
 	      (snd-display ";granf 6 data 820: ~A" (channel->vct 820 30)))
 	  (undo))
 
-	(close-sound ind))
+	(let ((fname (file-name ind)))
+	  (close-sound ind)
+	  (delete-file fname)))
 
       (let* ((v0 (make-vct 32))
 	     (v1 (make-vct 256))
@@ -25249,7 +25263,7 @@ EDITS: 5
 	 (list 0.5 2.0 0.2 5.0))
 	(for-each
 	 (lambda (e f0 f1)
-	   (src-channel (make-env e :end (frames)))
+	   (src-channel e)
 	   (if (fneq (/ (frames ind 0) 10000.0) (src-duration e))
 	       (snd-display ";src-channel (env) ~A: ~A (~A)" 
 			    e (/ (frames ind 0) 10000.0) (src-duration e)))
@@ -31149,6 +31163,26 @@ EDITS: 2
 	    (if (fneq (sample 1050) val) (snd-display ";edit-list->function 14a: ~A ~A" (sample 1050) val)))
 	  (revert-sound ind)
 	  
+	  (reverse-selection)
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 14b: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (reverse-channel 1000 101 snd chn))"))
+		(snd-display ";edit-list->function 14b: ~A" (object->string (procedure-source func))))
+	    (revert-sound ind)
+	    (func ind 0))
+	  (revert-sound ind)
+	  
+	  (delete-selection)
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 14c: ~A" func))
+	    (if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (delete-samples 1000 101 snd chn))"))
+		(snd-display ";edit-list->function 14c: ~A" (object->string (procedure-source func))))
+	    (revert-sound ind)
+	    (func ind 0))
+	  (revert-sound ind)
+
 	  
 	  ;; ---- sticky env end
 	  (env-channel (make-env '(0 0 1 1 2 0) :end 500) 1000 1000)
@@ -32517,6 +32551,10 @@ EDITS: 2
 	(if (not (vequal (channel->vct 5 10) (vct 0.000 0.000 0.000 0.000 0.000 0.500 0.000 0.500 0.000 0.000)))
 	    (snd-display ";filter-sound 1 0 1: ~A" (channel->vct 5 10)))
 	(undo)
+	(filter-channel (vct 1.0 0.0 1.0) 3)
+	(if (not (vequal (channel->vct 5 10) (vct 0.000 0.000 0.000 0.000 0.000 0.500 0.000 0.500 0.000 0.000)))
+	    (snd-display ";filter-channel (v) 1 0 1: ~A" (channel->vct 5 10)))
+	(undo)
 	(filter-sound '(0 1 1 1) 100)
 	(let ((coeffs (make-fir-coeffs 100 (make-vct 100 0.5)))
 	      (data (channel->vct 10 100)))
@@ -33306,7 +33344,7 @@ EDITS: 2
        (if (fneq (mus-frequency sb) 220.0) (snd-display ";sb freq messed up"))
        ))))
 
-(define (ssb-fm-no-gen modsig)
+(define (ssb-fm-no-gen gen modsig)
   (let* ((am0 (oscil (list-ref gen 0)))
 	 (am1 (oscil (list-ref gen 1)))
 	 (mod0 (hilbert-transform (list-ref gen 4) modsig))
@@ -37535,8 +37573,9 @@ EDITS: 2
 
       (let* ((mg (make-oscil 100.0))
 	     (gen (make-ssb-fm 1000))
-	     (ind (new-sound "tmp.snd" mus-next mus-bfloat 22050 1 :size 1000 :comment #f)))
-	(catch #t (lambda () (map-channel (lambda (y) (ssb-fm-no-gen gen (* .02 (oscil mg)))))) (lambda arg arg))
+	     (ind (new-sound "tmp.snd" mus-next mus-bfloat 22050 1)))
+	(pad-channel 0 1000 ind 0)
+	(catch #t (lambda () (map-channel (lambda (y) (ssb-fm-no-gen gen (* .02 (oscil mg)))))) (lambda arg (display arg) arg))
 	(close-sound ind))
 
       (let ((old-opt (optimization)))
@@ -51510,7 +51549,7 @@ EDITS: 2
 	      (check-error-tag 'wrong-type-arg (lambda () (add-mark 123 (list 0))))
 	      (check-error-tag 'no-such-sound (lambda () (filter-channel '(0 0 1 1) 100 #f #f 1234 0)))
 	      (check-error-tag 'no-such-channel (lambda () (filter-channel '(0 0 1 1) 100 #f #f ind 1)))
-	      (check-error-tag 'wrong-type-arg (lambda () (filter-channel (vct 0 0 1 1) 4 #f #f ind 1)))
+	      (check-error-tag 'no-such-channel (lambda () (filter-channel (vct 0 0 1 1) 4 #f #f ind 1)))
 	      (check-error-tag 'out-of-range (lambda () (filter-sound (vct 0 0 1 1) 0)))
 	      (check-error-tag 'out-of-range (lambda () (filter-sound (vct 0 0 1 1) 10)))
 	      (check-error-tag 'wrong-type-arg (lambda () (play 0 #f #f #f #f #f (lambda () #f))))

@@ -2465,7 +2465,7 @@ void cos_smooth(chan_info *cp, off_t beg, off_t num, bool over_selection)
   free_sync_state(sc);
 }
 
-static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edpos)
+static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edpos, const char *origin)
 {
   snd_info *sp;
   file_info *hdr = NULL;
@@ -2520,7 +2520,7 @@ static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edp
       close_temp_file(ofile, ofd, hdr->type, dur * datumb, sp);
       hdr = free_file_info(hdr);
       if (err != -1)
-	file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, S_map_channel, cp->edit_ctr);
+	file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
       if (ofile) 
 	{
 	  FREE(ofile); 
@@ -2533,7 +2533,7 @@ static char *run_channel(chan_info *cp, void *upt, off_t beg, off_t dur, int edp
 	{
 	  for (k = 0; k < dur; k++)
 	    idata[k] = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(upt, read_sample_to_float(sf)));
-	  change_samples(beg, dur, idata, cp, LOCK_MIXES, S_map_channel, cp->edit_ctr);
+	  change_samples(beg, dur, idata, cp, LOCK_MIXES, origin, cp->edit_ctr);
 	}
     }
   update_graph(cp); 
@@ -2612,7 +2612,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	  if (pt)
 	    {
 	      char *err_str;
-	      err_str = run_channel(cp, pt, beg, num, pos);
+	      err_str = run_channel(cp, pt, beg, num, pos, caller);
 	      free_ptree(pt);
 	      if (err_str == NULL)
 		{
@@ -2633,7 +2633,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	}
       rpt4 = MAX_BUFFER_SIZE / 4;
       filename = snd_tempnam();
-      outgen = mus_make_sample_to_file(filename, 1, MUS_OUT_FORMAT, MUS_NEXT);
+      outgen = mus_make_sample_to_file_with_comment(filename, 1, MUS_OUT_FORMAT, MUS_NEXT, "map-channel temp");
       j = 0;
       ss->stopped_explicitly = false;
       for (kp = 0; kp < num; kp++)
@@ -2739,7 +2739,7 @@ static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off
     {
       mus_any *outgen = NULL;
       filename = snd_tempnam();
-      outgen = mus_make_sample_to_file(filename, 1, MUS_OUT_FORMAT, MUS_NEXT);
+      outgen = mus_make_sample_to_file_with_comment(filename, 1, MUS_OUT_FORMAT, MUS_NEXT, "ptree fallback temp");
       if (XEN_PROCEDURE_P(init_func))
 	{
 	  int loc;
@@ -2912,7 +2912,7 @@ at run-time.  See extsnd.html for the gory details."
     {
       if (ptrees_present)
 	{
-	  run_channel(cp, pt, beg, dur, pos);
+	  run_channel(cp, pt, beg, dur, pos, S_ptree_channel);
 	  pt = free_ptree(pt);
 	}
       else ptree_channel(cp, pt, beg, dur, pos, XEN_TRUE_P(env_too), init_func, false, XEN_FALSE);

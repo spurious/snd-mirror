@@ -20,11 +20,12 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 20
-#define XEN_VERSION "1.20"
+#define XEN_MINOR_VERSION 21
+#define XEN_VERSION "1.21"
 
 /* HISTORY:
  *
+ *  7-Oct-04:  keyword changes for new Guile.
  *  28-Sep-04: deprecated *_WITH_CALLER -- these no longer do anything useful in Guile.
  *             NaNs and Infs -> 0 or 0.0 in XEN_TO_C_INT|DOUBLE -- perhaps I should add another set of macros?
  *  23-Aug-04: more Guile name changes.
@@ -555,13 +556,19 @@
 #endif
 
 #define XEN_REQUIRED_ARGS_OK(Func, Args) (XEN_TO_C_INT(XEN_CAR(XEN_ARITY(Func))) == Args)
-#ifdef SCM_CHARP
-  #define XEN_KEYWORD_P(Obj)          (SCM_KEYWORDP(Obj))
+
+#if HAVE_SCM_FROM_LOCALE_KEYWORD
+  #define XEN_KEYWORD_P(Obj)          scm_is_keyword(Obj)
+  #define XEN_MAKE_KEYWORD(Arg)       scm_from_locale_keyword(Arg)
 #else
-  #define XEN_KEYWORD_P(Obj)          XEN_TRUE_P(scm_keyword_p(Obj))
+  #ifdef SCM_CHARP
+    #define XEN_KEYWORD_P(Obj)        (SCM_KEYWORDP(Obj))
+  #else
+    #define XEN_KEYWORD_P(Obj)        XEN_TRUE_P(scm_keyword_p(Obj))
+  #endif
+  #define XEN_MAKE_KEYWORD(Arg)       scm_c_make_keyword(Arg)
 #endif
 #define XEN_KEYWORD_EQ_P(k1, k2)      XEN_EQ_P(k1, k2)
-#define XEN_MAKE_KEYWORD(Arg)         scm_c_make_keyword(Arg)
 #define XEN_YES_WE_HAVE(Feature)      scm_add_feature(Feature)
 #define XEN_PROTECT_FROM_GC(Obj)      scm_permanent_object(Obj)
 #define XEN_LOAD_FILE(File)           scm_primitive_load(C_TO_XEN_STRING(File))
