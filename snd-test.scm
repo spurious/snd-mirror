@@ -26,7 +26,7 @@
 ;;; test 23: with-sound
 ;;; test 24: Snd user-interface
 ;;; test 25: X/Xt/Xm/Xpm
-;;; test 26: Glib/gdk/gdk-pixbuf/pango/gtk
+;;; test 26: Glib/gdk/gtk
 ;;; test 27: openGL
 ;;; test 28: errors
 
@@ -55,7 +55,7 @@
 (set! (with-background-processes) #f)
 (define all-args #f) ; huge arg testing
 (define with-big-file #f)
-(define debugging-device-channels 2)
+(define debugging-device-channels 8)
 
 (define pi 3.141592653589793)
 (define mus-position mus-channels)
@@ -34482,9 +34482,12 @@ EDITS: 2
 		      (attr (XpmAttributes))
 		      (vals (XtGetValues (cadr (main-widgets)) (list XmNcolormap 0 XmNdepth 0)))
 		      (sym (XpmColorSymbol "basiccolor" #f (basic-color))))
+		  (if (not (string=? (.name sym) "basiccolor")) (snd-display ".name colorsymbol: ~A" (.name sym)))
+		  (set! (.name sym) "hiho")
+		  (if (not (string=? (.name sym) "hiho")) (snd-display "set .name colorsymbol: ~A" (.name sym)))
 		  (set! (.visual attr) vis)
 		  (if (not (equal? vis (.visual attr))) (snd-display ";visual xpm attr: ~A" (.visual attr)))
-		  (set! (.colorsymbols attr) sym)
+		  (set! (.colorsymbols attr) (list sym))
 		  (set! (.pixel sym) (basic-color))
 		  (set! (.numsymbols attr) 1)
 		  (if (not (equal? 1 (.numsymbols attr))) (snd-display ";numsymbols xpm attr: ~A" (.numsymbols attr)))
@@ -34545,8 +34548,6 @@ EDITS: 2
 			   (attr (XpmAttributes)))
 		      (if (not (XpmImage? status))
 			  (snd-display "; XpmError ReadFileToXpmImage: ~A" (XpmGetErrorString status)))
-		      (set! (.colorsymbols attr) symb)
-		      (set! (.numsymbols attr) 1)
 		      (set! (.valuemask attr) XpmColorSymbols)
 		      (XpmCreatePixmapFromXpmImage dpy (XRootWindowOfScreen (XtScreen shell)) status attr)
 		      (XpmCreateXpmImageFromPixmap dpy pixmap pixmap1 attr)
@@ -36526,7 +36527,7 @@ EDITS: 2
 			    .event .override_redirect .border_width .parent .minor_code .major_code .drawable .count .key_vector .focus
 			    .detail .mode .is_hint .button .same_screen .keycode .state .y_root .x_root .root .time .subwindow .window
 			    .send_event .serial .type .value .doit .colormap .menuToPost .postIt .valuemask .ncolors .cpp
-			    .numsymbols .colorsymbols .npixels .y_hotspot .x_hotspot))
+			    .numsymbols .colorsymbols .npixels .y_hotspot .x_hotspot .colormap_size))
 		    
 		    (struct-accessor-names 
 		     (list  '.pixel '.red '.green '.blue '.flags '.pad '.x '.y '.width '.height '.angle1 '.angle2 '.ptr
@@ -36556,7 +36557,7 @@ EDITS: 2
 			    '.event '.override_redirect '.border_width '.parent '.minor_code '.major_code '.drawable '.count '.key_vector '.focus
 			    '.detail '.mode '.is_hint '.button '.same_screen '.keycode '.state '.y_root '.x_root '.root '.time '.subwindow '.window
 			    '.send_event '.serial '.type '.value '.doit '.colormap '.menuToPost '.postIt '.valuemask '.ncolors '.cpp
-			    '.numsymbols '.colorsymbols '.npixels '.y_hotspot '.x_hotspot))
+			    '.numsymbols '.colorsymbols '.npixels '.y_hotspot '.x_hotspot '.colormap_size))
 		    (dpy (XtDisplay (cadr (main-widgets))))
 		    (win (XtWindow (cadr (main-widgets)))))
 		
@@ -36608,7 +36609,7 @@ EDITS: 2
 				  (snd-display ";(set ~A ~A) -> ~A" name arg tag))))))
 		    struct-accessors
 		    struct-accessor-names))
-		 (list dpy win '(Atom 0) '(Colormap 0) 1.5 "/hiho" 1234 #f #\c '(Time 0) (make-vector 0))))
+		 (list dpy win '(Atom 0) '(Colormap 0) 1.5 "/hiho" 1234 #f #\c '(Time 0) '(Font 0) (make-vector 0))))
 	      (gc))
 	    ))
       (run-hook after-test-hook 25)

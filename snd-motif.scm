@@ -675,7 +675,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
     (set! (.depth attr) depth)
     (set! (.colormap attr) colormap)
     (set! (.visual attr) (DefaultVisual dpy scr))
-    (set! (.colorsymbols attr) symb)
+    (set! (.colorsymbols attr) (list symb))
     (set! (.numsymbols attr) 1)
     (set! (.valuemask attr) (logior XpmColorSymbols XpmDepth XpmColormap XpmVisual))
     (cadr (XpmCreatePixmapFromData dpy win strs attr))))

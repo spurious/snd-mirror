@@ -261,7 +261,7 @@ static void loadLADSPA() {
   if (!pcLADSPAPath)
     {
       pcLADSPAPath = getenv("LADSPA_PATH");
-      if (!pcLADSPAPath) {
+      if (pcLADSPAPath == NULL) {
 	snd_warning(_("Warning: You have not set ladspa-dir or the environment variable LADSPA_PATH."));
 	return;
       }

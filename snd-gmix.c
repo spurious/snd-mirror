@@ -91,51 +91,8 @@ static void reflect_mix_speed(Float uval, snd_info *sp)
 static GtkWidget **w_amps, **w_amp_labels, **w_amp_numbers, **w_amp_events, **w_amp_forms;
 static GtkObject **w_amp_adjs;
 static Float *current_amps;
-static int chans_allocated = 0;
+#define CHANS_ALLOCATED 8
 static char amp_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
-
-static int allocate_amps(int chans)
-{
-  int i;
-  if (chans > chans_allocated)
-    {
-      if (chans_allocated == 0)
-	{
-	  if (chans < 8)
-	    chans_allocated = 8;
-	  else chans_allocated = chans;
-	  w_amp_numbers = (GtkWidget **)CALLOC(chans_allocated, sizeof(GtkWidget *));
-	  w_amp_labels = (GtkWidget **)CALLOC(chans_allocated, sizeof(GtkWidget *));
-	  w_amps = (GtkWidget **)CALLOC(chans_allocated, sizeof(GtkWidget *));
-	  w_amp_events = (GtkWidget **)CALLOC(chans_allocated, sizeof(GtkWidget *));
-	  w_amp_forms = (GtkWidget **)CALLOC(chans_allocated, sizeof(GtkWidget *));
-	  w_amp_adjs = (GtkObject **)CALLOC(chans_allocated, sizeof(GtkObject *));
-	  current_amps = (Float *)CALLOC(chans_allocated, sizeof(Float));
-	}
-      else
-	{
-	  w_amp_numbers = (GtkWidget **)REALLOC(w_amp_numbers, chans * sizeof(GtkWidget *));
-	  w_amp_labels = (GtkWidget **)REALLOC(w_amp_labels, chans * sizeof(GtkWidget *));
-	  w_amps = (GtkWidget **)REALLOC(w_amps, chans * sizeof(GtkWidget *));
-	  w_amp_events = (GtkWidget **)REALLOC(w_amps, chans * sizeof(GtkWidget *));
-	  w_amp_forms = (GtkWidget **)REALLOC(w_amps, chans * sizeof(GtkWidget *));
-	  w_amp_adjs = (GtkObject **)REALLOC(w_amps, chans * sizeof(GtkObject *));
-	  current_amps = (Float *)REALLOC(current_amps, chans * sizeof(Float));
-	  for (i = chans_allocated; i < chans; i++)
-	    {
-	      w_amp_numbers[i] = NULL;
-	      w_amp_labels[i] = NULL;
-	      w_amps[i] = NULL;
-	      w_amp_events[i] = NULL;
-	      w_amp_forms[i] = NULL;
-	      w_amp_adjs[i] = NULL;
-	      current_amps[i] = 0.0;
-	    }
-	  chans_allocated = chans;
-	}
-    }
-  return(chans_allocated);
-}
 
 static void change_mix_amp(int mix_id, int chan, Float val)
 {
@@ -526,7 +483,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
 {
   GtkWidget *dismiss_button, *help_button, *rc, *apply_button, *mix_frame, *track_frame, *rc_top, *rc1;
   char amplab[LABEL_BUFFER_SIZE];
-  int mix_id, i, chans;
+  int mix_id, i;
   mix_id = current_mix_id(ss);
 
   if (mix_panel == NULL)
@@ -730,8 +687,15 @@ GtkWidget *make_mix_panel(snd_state *ss)
 
 
       /* AMP */
-      chans = allocate_amps(8);
-      for (i = 0; i < chans; i++)
+      w_amp_numbers = (GtkWidget **)CALLOC(CHANS_ALLOCATED, sizeof(GtkWidget *));
+      w_amp_labels = (GtkWidget **)CALLOC(CHANS_ALLOCATED, sizeof(GtkWidget *));
+      w_amps = (GtkWidget **)CALLOC(CHANS_ALLOCATED, sizeof(GtkWidget *));
+      w_amp_events = (GtkWidget **)CALLOC(CHANS_ALLOCATED, sizeof(GtkWidget *));
+      w_amp_forms = (GtkWidget **)CALLOC(CHANS_ALLOCATED, sizeof(GtkWidget *));
+      w_amp_adjs = (GtkObject **)CALLOC(CHANS_ALLOCATED, sizeof(GtkObject *));
+      current_amps = (Float *)CALLOC(CHANS_ALLOCATED, sizeof(Float));
+
+      for (i = 0; i < CHANS_ALLOCATED; i++)
 	{
 	  w_amp_forms[i] = gtk_hbox_new(FALSE, 2);
 	  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_panel)->vbox), w_amp_forms[i], FALSE, FALSE, 0);
@@ -816,7 +780,7 @@ GtkWidget *make_mix_panel(snd_state *ss)
       gtk_widget_show(mix_panel);
       set_dialog_widget(ss, MIX_PANEL_DIALOG, mix_panel);
 
-      for (i = 0; i < chans; i++) spfs[i] = new_env_editor();
+      for (i = 0; i < CHANS_ALLOCATED; i++) spfs[i] = new_env_editor();
       speed_number_buffer[1] = local_decimal_point();
       amp_number_buffer[1] = local_decimal_point();
     }
@@ -880,15 +844,12 @@ static void update_mix_panel(int mix_id)
 	  gtk_widget_show(w_amps[i]);
 	  gtk_widget_show(w_amp_forms[i]);
 	  val = mix_amp_from_id(mix_id, i);
-	  if (val != current_amps[i])
-	    {
-	      GTK_ADJUSTMENT(w_amp_adjs[i])->value = amp_to_scroll(val);
-	      gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_amp_adjs[i]));
-	      current_amps[i] = val;
-	    }
+	  GTK_ADJUSTMENT(w_amp_adjs[i])->value = amp_to_scroll(val);
+	  gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_amp_adjs[i]));
+	  current_amps[i] = val;
 	}
 
-      for (i = chans; i < chans_allocated; i++)
+      for (i = chans; i < CHANS_ALLOCATED; i++)
 	{
 	  gtk_widget_hide(w_amp_labels[i]);	  
 	  gtk_widget_hide(w_amp_numbers[i]);	  

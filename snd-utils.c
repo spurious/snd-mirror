@@ -851,17 +851,19 @@ static XEN g_file_to_string(XEN name)
   char *filename;
   FILE *file;
   int size;
-  char *content;
+  char *content = NULL;
+  XEN val = XEN_FALSE;
   filename = XEN_TO_C_STRING(name);
   if ((file = fopen(filename, "r")) == NULL) return(XEN_FALSE);
   fseek(file, 0, SEEK_END);
   size = ftell(file);
   rewind(file);
   content = (char *)CALLOC(size + 1, sizeof(char));
-  if (content == NULL) return(XEN_FALSE);
   fread(content, 1, size, file);
   fclose(file);
-  return(C_TO_XEN_STRING(content));
+  val = C_TO_XEN_STRING(content);
+  FREE(content);
+  return(val);
 }
 #endif
 

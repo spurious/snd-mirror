@@ -78,42 +78,8 @@ static void speed_valuechanged_callback(Widget w, XtPointer context, XtPointer i
 
 static Widget *w_amp_numbers, *w_amp_labels, *w_amps;
 static Float *current_amps;
-static int chans_allocated = 0;
+#define CHANS_ALLOCATED 8
 static char amp_number_buffer[5] = {'1', STR_decimal, '0', '0', '\0'};
-
-static int allocate_amps(int chans)
-{
-  int i;
-  if (chans > chans_allocated)
-    {
-      if (chans_allocated == 0)
-	{
-	  if (chans < 4)
-	    chans_allocated = 4;
-	  else chans_allocated = chans;
-	  w_amp_numbers = (Widget *)CALLOC(chans_allocated, sizeof(Widget));
-	  w_amp_labels = (Widget *)CALLOC(chans_allocated, sizeof(Widget));
-	  w_amps = (Widget *)CALLOC(chans_allocated, sizeof(Widget));
-	  current_amps = (Float *)CALLOC(chans_allocated, sizeof(Float));
-	}
-      else
-	{
-	  w_amp_numbers = (Widget *)REALLOC(w_amp_numbers, chans * sizeof(Widget));
-	  w_amp_labels = (Widget *)REALLOC(w_amp_labels, chans * sizeof(Widget));
-	  w_amps = (Widget *)REALLOC(w_amps, chans * sizeof(Widget));
-	  current_amps = (Float *)REALLOC(current_amps, chans * sizeof(Float));
-	  for (i = chans_allocated; i < chans; i++)
-	    {
-	      w_amp_numbers[i] = NULL;
-	      w_amp_labels[i] = NULL;
-	      w_amps[i] = NULL;
-	      current_amps[i] = 0.0;
-	    }
-	  chans_allocated = chans;
-	}
-    }
-  return(chans_allocated);
-}
 
 static void change_mix_amp(int mix_id, int chan, Float val)
 {
@@ -511,7 +477,7 @@ Widget make_mix_panel(snd_state *ss)
   Widget mainform, mix_row, track_row, last_label, last_number, mix_frame, track_frame, sep;
   Pixmap speaker_r;
   XmString xdismiss, xhelp, xtitle, s1, xapply;
-  int n, chans, i;
+  int n, i;
   Arg args[20];
   XtCallbackList n1, n2;
   GC gc;
@@ -738,8 +704,12 @@ Widget make_mix_panel(snd_state *ss)
 
       /* now amp scalers */
 
-      chans = allocate_amps(8);
-      for (i = 0; i < chans; i++)
+      w_amp_numbers = (Widget *)CALLOC(CHANS_ALLOCATED, sizeof(Widget));
+      w_amp_labels = (Widget *)CALLOC(CHANS_ALLOCATED, sizeof(Widget));
+      w_amps = (Widget *)CALLOC(CHANS_ALLOCATED, sizeof(Widget));
+      current_amps = (Float *)CALLOC(CHANS_ALLOCATED, sizeof(Float));
+
+      for (i = 0; i < CHANS_ALLOCATED; i++)
 	{
 	  n = 0;
 	  mus_snprintf(amplab, LABEL_BUFFER_SIZE, _("amp %d:"), i);
@@ -839,7 +809,7 @@ Widget make_mix_panel(snd_state *ss)
       XtAddCallback(w_env, XmNresizeCallback, mix_amp_env_resize, ss);
       XtAddCallback(w_env, XmNexposeCallback, mix_amp_env_resize, ss);
 
-      for (i = 0; i < chans; i++) spfs[i] = new_env_editor();
+      for (i = 0; i < CHANS_ALLOCATED; i++) spfs[i] = new_env_editor();
 
       XtAddEventHandler(w_env, ButtonPressMask, FALSE, mix_drawer_button_press, ss);
       XtAddEventHandler(w_env, ButtonMotionMask, FALSE, mix_drawer_button_motion, ss);
@@ -914,14 +884,11 @@ static void update_mix_panel(int mix_id)
 	  if (!(XtIsManaged(w_amp_labels[i]))) XtManageChild(w_amp_labels[i]);
 	  if (!(XtIsManaged(w_amp_numbers[i]))) XtManageChild(w_amp_numbers[i]);
 	  val = mix_amp_from_id(mix_id, i);
-	  if (val != current_amps[i])
-	    {
-	      XtVaSetValues(w_amps[i], XmNvalue, mix_amp_to_int(val, i), NULL);
-	      current_amps[i] = val;
-	    }
+	  XtVaSetValues(w_amps[i], XmNvalue, mix_amp_to_int(val, i), NULL);
+	  current_amps[i] = val;
 	  if (!(XtIsManaged(w_amps[i]))) XtManageChild(w_amps[i]);
 	}
-      for (i = chans; i < chans_allocated; i++)
+      for (i = chans; i < CHANS_ALLOCATED; i++)
 	{
 	  if ((w_amp_labels[i]) && (XtIsManaged(w_amp_labels[i])))
 	    {

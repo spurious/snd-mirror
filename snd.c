@@ -129,7 +129,7 @@ static snd_state *ss = NULL;
 #if HAVE_GSL
   /* if HAVE_GSL and the environment variable GSL_IEEE_MODE exists, use it */
   /* GSL_IEEE_MODE=double-precision,mask-underflow,mask-denormalized */
-  if (getenv("GSL_IEEE_MODE")) 
+  if (getenv("GSL_IEEE_MODE") != NULL) 
     gsl_ieee_env_setup();
   gsl_set_error_handler(snd_gsl_error);
 #endif

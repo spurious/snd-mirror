@@ -1435,7 +1435,7 @@ char *mus_expand_filename(char *utok)
   if (tok[0] != '/')
     {
       file_name_buf[0] = '\0';
-      if (tok[0] == '~')
+      if ((tok[0] == '~') && (getenv("HOME") != NULL))
 	{
 	  strcpy(file_name_buf, getenv("HOME"));
 	  strcat(file_name_buf, ++tok);

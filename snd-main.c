@@ -363,7 +363,7 @@ static FILE *open_restart_file(char *name, int append)
   if (!name) return(NULL);
   buf = (char *)CALLOC(256, sizeof(char));
   str = name;
-  if ((*str) == '~')
+  if (((*str) == '~') && (getenv("HOME") != NULL))
     {
       strcpy(buf, getenv("HOME"));
       strcat(buf, ++str);
