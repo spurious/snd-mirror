@@ -862,14 +862,14 @@ static XEN g_selection_member(XEN snd, XEN chn)
 static XEN g_set_selection_member(XEN on, XEN snd, XEN chn)
 {
   chan_info *cp;
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_1, S_setB S_selection_member, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_selection_member, "a boolean");
   if ((XEN_TRUE_P(snd)) && (XEN_FALSE_P(on)))
     deactivate_selection();
   else
     {
       ASSERT_CHANNEL(S_setB S_selection_member, snd, chn, 2);
       cp = get_cp(snd, chn, S_setB S_selection_member);
-      if ((XEN_NOT_BOUND_P(on)) || (XEN_TRUE_P(on)))
+      if (XEN_TRUE_P(on))
 	{
 	  if (selection_is_active())
 	    cp_set_selection_beg(cp, selection_beg(NULL));

@@ -259,11 +259,11 @@ static XEN g_set_foreground_color(XEN color, XEN snd, XEN chn, XEN ax)
 static XEN g_set_foreground_color_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   if (XEN_NOT_BOUND_P(arg2))
-    return(g_set_foreground_color(arg1, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED)); /* TODO: add test */
+    return(g_set_foreground_color(arg1, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
   else
     {
       if (XEN_NOT_BOUND_P(arg3))
-	return(g_set_foreground_color(arg2, arg1, XEN_UNDEFINED, XEN_UNDEFINED)); /* TODO: add test */
+	return(g_set_foreground_color(arg2, arg1, XEN_UNDEFINED, XEN_UNDEFINED));
       else
 	{
 	  if (XEN_NOT_BOUND_P(arg4))
@@ -366,11 +366,11 @@ static XEN g_set_current_font_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   else
     {
       if (XEN_NOT_BOUND_P(arg3))
-	return(g_set_current_font(arg2, arg1, XEN_UNDEFINED, XEN_UNDEFINED)); /* TODO: add test */
+	return(g_set_current_font(arg2, arg1, XEN_UNDEFINED, XEN_UNDEFINED));
       else
 	{
 	  if (XEN_NOT_BOUND_P(arg4))
-	    return(g_set_current_font(arg3, arg1, arg2, XEN_UNDEFINED)); /* TODO: add test */
+	    return(g_set_current_font(arg3, arg1, arg2, XEN_UNDEFINED));
 	  else return(g_set_current_font(arg4, arg1, arg2, arg3));
 	}
     }
@@ -546,7 +546,7 @@ static XEN g_set_widget_size(XEN wid, XEN wh)
   widget_t w;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ARG_1, S_setB S_widget_size, "a Widget");  
   XEN_ASSERT_TYPE(XEN_LIST_P(wh) && (XEN_LIST_LENGTH(wh) == 2), wh, XEN_ARG_2, S_setB S_widget_size, "a list: (width height)");  
-  w = (widget_t)(XEN_UNWRAP_WIDGET(wid)); /* TODO: add test */
+  w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     set_widget_size(w,
 		    XEN_TO_C_INT(XEN_CAR(wh)),

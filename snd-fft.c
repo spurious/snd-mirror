@@ -1685,7 +1685,7 @@ void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, o
     }
 }
 
-static XEN g_autocorrelate(XEN reals)/* TODO: add test */
+static XEN g_autocorrelate(XEN reals)
 {
   #define H_autocorrelate "(" S_autocorrelate " data): in place autocorrelation of data (a vct)"
   /* assumes length is power of 2 */

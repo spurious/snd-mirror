@@ -304,6 +304,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+28-Mar:  added file arg to save-macros.\n\
 26-Mar:  maxf.scm and maxf.rb from Michael Scholz.\n\
 21-Mar:  snd 6.7.\n\
 19-Mar:  xm-enved.rb and rubber.rb thanks to Michael Scholz.\n\
@@ -1318,7 +1319,7 @@ all refer to the same thing.\n\
   " S_save_controls "     (snd)\n\
   " S_save_edit_history " (file snd chn)\n\
   " S_save_listener "     (filename)\n\
-  " S_save_macros "       ()\n\
+  " S_save_macros "       (filename)\n\
   " S_save_marks "        (snd)\n\
   " S_save_region "       (reg filename format)\n\
   " S_save_selection "    (file header-type data-format srate comment chan)\n\

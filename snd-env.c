@@ -1390,8 +1390,8 @@ static XEN g_set_enved_clip_p(XEN on)
   #define H_enved_clip_p "(" S_enved_clip_p "): envelope editor clip button setting; \
 if clipping, the motion of the mouse is restricted to the current graph bounds."
 
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ONLY_ARG, S_setB S_enved_clip_p, "a boolean");
-  set_enved_clip_p(get_global_state(), XEN_TO_C_BOOLEAN_OR_TRUE(on)); 
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ONLY_ARG, S_setB S_enved_clip_p, "a boolean");
+  set_enved_clip_p(get_global_state(), XEN_TO_C_BOOLEAN(on)); 
   return(C_TO_XEN_BOOLEAN(enved_clip_p(get_global_state())));
 }
 
@@ -1401,8 +1401,8 @@ static XEN g_set_enved_exp_p(XEN val)
   #define H_enved_exp_p "(" S_enved_exp_p "): envelope editor 'exp' and 'lin' buttons; \
 if enved-exping, the connecting segments use exponential curves rather than straight lines."
 
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_enved_exp_p, "a boolean");
-  set_enved_exp_p(get_global_state(), XEN_TO_C_BOOLEAN_OR_TRUE(val)); 
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_enved_exp_p, "a boolean");
+  set_enved_exp_p(get_global_state(), XEN_TO_C_BOOLEAN(val)); 
   return(C_TO_XEN_BOOLEAN(enved_clip_p(get_global_state())));
 }
 
@@ -1410,23 +1410,25 @@ static XEN g_enved_target(void) {return(C_TO_XEN_INT(enved_target(get_global_sta
 static XEN g_set_enved_target(XEN val) 
 {
   int n; 
+  snd_state *ss;
   #define H_enved_target "(" S_enved_target "): where (amplitude, frequency, etc) the envelope is applied in the envelope editor; \
 choices are " S_enved_amplitude ", " S_enved_srate ", and " S_enved_spectrum
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_enved_target, "an integer"); 
-  n = mus_iclamp(ENVED_AMPLITUDE,
-		 XEN_TO_C_INT(val),
-		 ENVED_SRATE); 
-  set_enved_target(get_global_state(), n); 
-  return(C_TO_XEN_INT(enved_target(get_global_state())));
+  n = XEN_TO_C_INT(val);
+  if ((n < ENVED_AMPLITUDE) || (n > ENVED_SRATE))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_enved_target, 1, val, "must be " S_enved_amplitude ", " S_enved_srate ", or " S_enved_spectrum);
+  ss = get_global_state();
+  set_enved_target(ss, n); 
+  return(C_TO_XEN_INT(enved_target(ss)));
 }
 
 static XEN g_enved_wave_p(void) {return(C_TO_XEN_BOOLEAN(enved_wave_p(get_global_state())));}
 static XEN g_set_enved_wave_p(XEN val) 
 {
   #define H_enved_wave_p "(" S_enved_wave_p "): #t if the envelope editor is displaying the waveform to be edited"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_enved_wave_p, "a boolean");
-  set_enved_wave_p(get_global_state(), XEN_TO_C_BOOLEAN_OR_TRUE(val));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_enved_wave_p, "a boolean");
+  set_enved_wave_p(get_global_state(), XEN_TO_C_BOOLEAN(val));
   return(C_TO_XEN_BOOLEAN(enved_wave_p(get_global_state())));
 }
 
@@ -1434,8 +1436,8 @@ static XEN g_enved_in_dB(void) {return(C_TO_XEN_BOOLEAN(enved_in_dB(get_global_s
 static XEN g_set_enved_in_dB(XEN val) 
 {
   #define H_enved_in_dB "(" S_enved_in_dB "): #t if the envelope editor is using dB"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_enved_in_dB, "a boolean");
-  set_enved_in_dB(get_global_state(), XEN_TO_C_BOOLEAN_OR_TRUE(val)); 
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_enved_in_dB, "a boolean");
+  set_enved_in_dB(get_global_state(), XEN_TO_C_BOOLEAN(val)); 
   return(C_TO_XEN_BOOLEAN(enved_in_dB(get_global_state())));
 }
 
@@ -1460,15 +1462,15 @@ XEN_NARGIFY_1(g_set_enved_base_w, g_set_enved_base)
 XEN_NARGIFY_0(g_enved_power_w, g_enved_power)
 XEN_NARGIFY_1(g_set_enved_power_w, g_set_enved_power)
 XEN_NARGIFY_0(g_enved_clip_p_w, g_enved_clip_p)
-XEN_ARGIFY_1(g_set_enved_clip_p_w, g_set_enved_clip_p)
+XEN_NARGIFY_1(g_set_enved_clip_p_w, g_set_enved_clip_p)
 XEN_NARGIFY_0(g_enved_exp_p_w, g_enved_exp_p)
-XEN_ARGIFY_1(g_set_enved_exp_p_w, g_set_enved_exp_p)
+XEN_NARGIFY_1(g_set_enved_exp_p_w, g_set_enved_exp_p)
 XEN_NARGIFY_0(g_enved_target_w, g_enved_target)
 XEN_NARGIFY_1(g_set_enved_target_w, g_set_enved_target)
 XEN_NARGIFY_0(g_enved_wave_p_w, g_enved_wave_p)
-XEN_ARGIFY_1(g_set_enved_wave_p_w, g_set_enved_wave_p)
+XEN_NARGIFY_1(g_set_enved_wave_p_w, g_set_enved_wave_p)
 XEN_NARGIFY_0(g_enved_in_dB_w, g_enved_in_dB)
-XEN_ARGIFY_1(g_set_enved_in_dB_w, g_set_enved_in_dB)
+XEN_NARGIFY_1(g_set_enved_in_dB_w, g_set_enved_in_dB)
 XEN_NARGIFY_0(g_enved_filter_order_w, g_enved_filter_order)
 XEN_NARGIFY_1(g_set_enved_filter_order_w, g_set_enved_filter_order)
 XEN_NARGIFY_0(g_enved_dialog_w, g_enved_dialog)
@@ -1508,11 +1510,11 @@ void g_init_env(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_base,   g_enved_base_w,   H_enved_base,   S_setB S_enved_base,   g_set_enved_base_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_power,  g_enved_power_w,  H_enved_power,  S_setB S_enved_power,  g_set_enved_power_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_clip_p, g_enved_clip_p_w, H_enved_clip_p, S_setB S_enved_clip_p, g_set_enved_clip_p_w,  0, 0, 0, 1);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_exp_p,  g_enved_exp_p_w,  H_enved_exp_p,  S_setB S_enved_exp_p,  g_set_enved_exp_p_w,  0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_clip_p, g_enved_clip_p_w, H_enved_clip_p, S_setB S_enved_clip_p, g_set_enved_clip_p_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_exp_p,  g_enved_exp_p_w,  H_enved_exp_p,  S_setB S_enved_exp_p,  g_set_enved_exp_p_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_target, g_enved_target_w, H_enved_target, S_setB S_enved_target, g_set_enved_target_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_wave_p, g_enved_wave_p_w, H_enved_wave_p, S_setB S_enved_wave_p, g_set_enved_wave_p_w,  0, 0, 0, 1);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_in_dB,  g_enved_in_dB_w,  H_enved_in_dB,  S_setB S_enved_in_dB,  g_set_enved_in_dB_w,  0, 0, 0, 1);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_wave_p, g_enved_wave_p_w, H_enved_wave_p, S_setB S_enved_wave_p, g_set_enved_wave_p_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_in_dB,  g_enved_in_dB_w,  H_enved_in_dB,  S_setB S_enved_in_dB,  g_set_enved_in_dB_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_filter_order, g_enved_filter_order_w, H_enved_filter_order,
 				   S_setB S_enved_filter_order, g_set_enved_filter_order_w,  0, 0, 1, 0);

@@ -2335,8 +2335,8 @@ static XEN g_just_sounds(void)
 static XEN g_set_just_sounds(XEN on) 
 {
   int n;
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_1, S_setB S_just_sounds, "a boolean");
-  n = XEN_TO_C_BOOLEAN_OR_TRUE(on);
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_just_sounds, "a boolean");
+  n = XEN_TO_C_BOOLEAN(on);
   if ((open_dialog) && (open_dialog->just_sounds_button))
     XmToggleButtonSetState(open_dialog->just_sounds_button, n, TRUE);
   if ((mix_dialog) && (mix_dialog->just_sounds_button))
@@ -2347,7 +2347,7 @@ static XEN g_set_just_sounds(XEN on)
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_just_sounds_w, g_just_sounds)
-XEN_ARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
+XEN_NARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
 #else
 #define g_just_sounds_w g_just_sounds
 #define g_set_just_sounds_w g_set_just_sounds
@@ -2367,7 +2367,7 @@ static XEN g_new_file_dialog(void)
 void g_init_gxfile(void)
 {
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds,
-				   S_setB S_just_sounds, g_set_just_sounds_w,  0, 0, 0, 1);
+				   S_setB S_just_sounds, g_set_just_sounds_w,  0, 0, 1, 0);
 
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
 The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \

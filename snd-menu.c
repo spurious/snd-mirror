@@ -750,13 +750,13 @@ static XEN gl_set_menu_sensitive(XEN menu, XEN label, XEN on)
   int val, m;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, XEN_ARG_1, S_setB S_menu_sensitive, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_2, S_setB S_menu_sensitive, "a string");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_3, S_setB S_menu_sensitive, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_3, S_setB S_menu_sensitive, "a boolean");
   m = XEN_TO_C_INT(menu);
   if (m < 0) 
     return(snd_no_such_menu_error(S_setB S_menu_sensitive, menu));
   val = g_set_menu_sensitive(m,
 			     XEN_TO_C_STRING(label), 
-			     XEN_TO_C_BOOLEAN_OR_TRUE(on));
+			     XEN_TO_C_BOOLEAN(on));
   return(C_TO_XEN_BOOLEAN(val));
 }
 

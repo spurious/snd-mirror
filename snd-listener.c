@@ -518,7 +518,7 @@ static XEN g_save_listener(XEN filename)
   return(filename);
 }
 
-static XEN g_clear_listener(void)/* TODO: add test */
+static XEN g_clear_listener(void)
 {
   #define H_clear_listener "(" S_clear_listener "): removes listener text from the beginning to the cursor"
   clear_listener();

@@ -1076,7 +1076,7 @@ void src_marks(chan_info *cp, Float ratio, off_t old_samps, off_t new_samps, off
 		  m = mps[i];
 		  if (ratio > 0.0)
 		    m->samp = (off_t)(m->samp / ratio);
-		  else m->samp = (off_t)((old_samps - 1 - m->samp) / (-ratio)); /* ratio < 0 here */ /* TODO: add test */
+		  else m->samp = (off_t)((old_samps - 1 - m->samp) / (-ratio)); /* ratio < 0 here */
 		}
 	    }
 	  else
@@ -1821,7 +1821,9 @@ static XEN mark_set(XEN mark_n, XEN val, int fld, char *caller)
       update_graph(cp[0]);
       break;
     case MARK_SYNC: 
-      set_mark_sync(m, XEN_TO_C_INT_OR_ELSE_WITH_CALLER(val, 0, caller));
+      if (XEN_INTEGER_P(val))
+	set_mark_sync(m, XEN_TO_C_INT(val));
+      else set_mark_sync(m, XEN_TO_C_BOOLEAN(val));
       break;
     case MARK_NAME:
       if (m->name) FREE(m->name);
@@ -1865,8 +1867,8 @@ static XEN g_mark_sync(XEN mark_n)
 
 static XEN g_set_mark_sync(XEN mark_n, XEN sync_n) 
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ARG_1, S_setB S_mark_sync, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(sync_n), sync_n, XEN_ARG_2, S_setB S_mark_sync, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(mark_n), mark_n, XEN_ARG_1, S_setB S_mark_sync, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(sync_n), sync_n, XEN_ARG_2, S_setB S_mark_sync, "an integer");
   return(mark_set(mark_n, sync_n, MARK_SYNC, S_setB S_mark_sync));
 }
 
@@ -2101,7 +2103,7 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
       }
   else
     {
-      /* all marks */ /* TODO: add test */
+      /* all marks */
       ss = get_global_state();
       for (j = ss->max_sounds - 1; j >= 0; j--)
 	{
@@ -2272,7 +2274,7 @@ void g_init_marks(void)
 				   S_setB S_mark_sample, g_set_mark_sample_w, 0, 2, 1, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_sync, g_mark_sync_w, H_mark_sync,
-				   S_setB S_mark_sync, g_set_mark_sync_w, 0, 1, 1, 1);
+				   S_setB S_mark_sync, g_set_mark_sync_w, 0, 1, 2, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_name, g_mark_name_w, H_mark_name,
 				   S_setB S_mark_name, g_set_mark_name_w, 0, 1, 1, 1);

@@ -1535,7 +1535,7 @@ void set_enved_filter_order(snd_state *ss, int order)
   if ((order > 0) && (order < 2000))
     {
       if (order & 1) 
-	in_set_enved_filter_order(ss, order + 1); /* TODO: add test */
+	in_set_enved_filter_order(ss, order + 1);
       else in_set_enved_filter_order(ss, order);
       if (enved_dialog)
 	{
@@ -1594,7 +1594,7 @@ static int find_named_env(XEN name)
   char *env_name;
   if (XEN_STRING_P(name))
     env_name = XEN_TO_C_STRING(name);
-  else env_name = XEN_SYMBOL_TO_C_STRING(name); /* TODO: add test */
+  else env_name = XEN_SYMBOL_TO_C_STRING(name);
   pos = find_env(env_name);
   if (pos == -1)
     XEN_ERROR(NO_SUCH_ENVELOPE, 

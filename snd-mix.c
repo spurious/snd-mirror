@@ -3603,11 +3603,11 @@ static XEN g_set_mix_locked(XEN n, XEN val)
   int on;
   snd_state *ss;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_locked, "an integer");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ARG_2, S_setB S_mix_locked, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ARG_2, S_setB S_mix_locked, "a boolean");
   md = md_from_id(XEN_TO_C_INT(n));
   if (md == NULL)
     return(snd_no_such_mix_error(S_setB S_mix_locked, n));
-  on = XEN_TO_C_BOOLEAN_OR_TRUE(val);
+  on = XEN_TO_C_BOOLEAN(val);
   cs = md->states[md->curcons];
   cs->locked = on;
   cs = md->current_cs;
@@ -4397,8 +4397,8 @@ static XEN g_set_with_mix_tags(XEN val)
   #define H_with_mix_tags "(" S_with_mix_tags "): #t if Snd should display mixed portions with a draggable tag"
   snd_state *ss;
   ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_with_mix_tags, "a boolean");
-  set_with_mix_tags(ss, XEN_TO_C_BOOLEAN_OR_TRUE(val));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_with_mix_tags, "a boolean");
+  set_with_mix_tags(ss, XEN_TO_C_BOOLEAN(val));
   return(C_TO_XEN_BOOLEAN(with_mix_tags(ss)));
 }
 
@@ -4461,7 +4461,7 @@ XEN_ARGIFY_2(g_set_mix_color_w, g_set_mix_color)
 XEN_NARGIFY_0(g_selected_mix_color_w, g_selected_mix_color)
 XEN_NARGIFY_1(g_set_selected_mix_color_w, g_set_selected_mix_color)
 XEN_NARGIFY_0(g_with_mix_tags_w, g_with_mix_tags)
-XEN_ARGIFY_1(g_set_with_mix_tags_w, g_set_with_mix_tags)
+XEN_NARGIFY_1(g_set_with_mix_tags_w, g_set_with_mix_tags)
 #else
 #define g_make_mix_sample_reader_w g_make_mix_sample_reader
 #define g_next_mix_sample_w g_next_mix_sample
@@ -4605,7 +4605,7 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE(S_mix_vct,      mix_vct_w, 1, 5, 0,        H_mix_vct);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_mix_tags, g_with_mix_tags_w, H_with_mix_tags,
-				   S_setB S_with_mix_tags, g_set_with_mix_tags_w,  0, 0, 0, 1);
+				   S_setB S_with_mix_tags, g_set_with_mix_tags_w,  0, 0, 1, 0);
 
   #define H_multichannel_mix_hook S_multichannel_mix_hook "(ids): called when a multichannel mix happens in a sync'd sound. \
 'ids' is a list of mix id numbers."

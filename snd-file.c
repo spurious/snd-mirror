@@ -1752,7 +1752,7 @@ void make_prevfiles_list_1(snd_state *ss)
     }
 }
 
-static XEN g_previous_files_sort_procedure(void)/* TODO: add test */
+static XEN g_previous_files_sort_procedure(void)
 {
   #define H_previous_files_sort_procedure "(" S_previous_files_sort_procedure "): sort procedure for the current files viewer"
   snd_state *ss;
@@ -1782,7 +1782,7 @@ static XEN g_set_previous_files_sort_procedure(XEN proc)
     }
   else 
     {
-      set_file_sort_sensitive(FALSE);/* TODO: add test */
+      set_file_sort_sensitive(FALSE);
       errstr = C_TO_XEN_STRING(error);
       FREE(error);
       return(snd_bad_arity_error(S_setB S_previous_files_sort_procedure, errstr, proc));
@@ -2342,7 +2342,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
   XEN note = XEN_UNDEFINED; XEN detune = XEN_UNDEFINED;
   ASSERT_SOUND(S_setB S_sound_loop_info, snd, 1);
   XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(vals) || XEN_LIST_P_WITH_LENGTH(vals, len), vals, XEN_ARG_2, S_setB S_sound_loop_info, "a list");
-  if (XEN_NOT_BOUND_P(vals))/* TODO: add test */
+  if (XEN_NOT_BOUND_P(vals))
     {
       vals = snd;
       len = XEN_LIST_LENGTH(vals); 
@@ -2537,12 +2537,14 @@ static XEN g_set_previous_files_sort(XEN val)
 {
   #define H_previous_files_sort "(" S_previous_files_sort "): sort choice in view files (0 = unsorted, 1 = by name, etc)"
   snd_state *ss;
+  int choice;
   ss = get_global_state();
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_previous_files_sort, "an integer"); 
   update_prevlist();
-  set_previous_files_sort(ss, mus_iclamp(0,
-					 XEN_TO_C_INT(val),
-					 5));
+  choice = XEN_TO_C_INT(val);
+  if ((choice < 0) || (choice > 5))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_previous_files_sort, 1, val, "must be 0..5");
+  set_previous_files_sort(ss, choice);
   if (file_dialog_is_active()) 
     make_prevfiles_list(ss);
   return(C_TO_XEN_INT(previous_files_sort(ss)));

@@ -2117,7 +2117,7 @@ and waiting for the play to complete before returning.  'start' can also be a fi
   return(g_play_1(samp_n, snd_n, chn_n, FALSE, TO_C_BOOLEAN_OR_F(syncd), end_n, edpos, S_play_and_wait, 6));
 }
 
-static XEN g_stop_playing(XEN snd_n) /* TODO: add test */
+static XEN g_stop_playing(XEN snd_n)
 {
   #define H_stop_playing "(" S_stop_playing " (snd #f)): stop play in progress"
   snd_info *sp = NULL;
@@ -2336,7 +2336,7 @@ If a play-list is waiting, start it."
   return(XEN_FALSE);
 }
 
-static XEN g_stop_player(XEN snd_chn) /* TODO: add test */
+static XEN g_stop_player(XEN snd_chn)
 {
   #define H_stop_player "(" S_stop_player " player): stop player"
   int index;
@@ -2385,8 +2385,8 @@ That is, if the sound to be played has 4 channels, but the DAC can only handle 2
 variable is #t, the extra channels are mixed into the available ones; otherwise they are ignored."
   snd_state *ss;
   ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_dac_combines_channels, "a boolean");
-  set_dac_combines_channels(ss, XEN_TO_C_BOOLEAN_OR_TRUE(val)); 
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_dac_combines_channels, "a boolean");
+  set_dac_combines_channels(ss, XEN_TO_C_BOOLEAN(val)); 
   return(C_TO_XEN_BOOLEAN(dac_combines_channels(ss)));
 }
 
@@ -2406,7 +2406,7 @@ XEN_NARGIFY_1(g_player_p_w, g_player_p)
 XEN_NARGIFY_0(g_dac_size_w, g_dac_size)
 XEN_ARGIFY_1(g_set_dac_size_w, g_set_dac_size)
 XEN_NARGIFY_0(g_dac_combines_channels_w, g_dac_combines_channels)
-XEN_ARGIFY_1(g_set_dac_combines_channels_w, g_set_dac_combines_channels)
+XEN_NARGIFY_1(g_set_dac_combines_channels_w, g_set_dac_combines_channels)
 XEN_NARGIFY_0(g_disable_play_w, g_disable_play)
 XEN_NARGIFY_0(g_enable_play_w, g_enable_play)
 #else
@@ -2448,7 +2448,7 @@ void g_init_dac(void)
 				   S_setB S_dac_size, g_set_dac_size_w,  0, 0, 0, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_dac_combines_channels, g_dac_combines_channels_w, H_dac_combines_channels,
-				   S_setB S_dac_combines_channels, g_set_dac_combines_channels_w,  0, 0, 0, 1);
+				   S_setB S_dac_combines_channels, g_set_dac_combines_channels_w,  0, 0, 1, 0);
 
   #define H_stop_playing_hook S_stop_playing_hook " (snd): called when a sound finishes playing."
   #define H_stop_playing_channel_hook S_stop_playing_channel_hook " (snd chn): called when a channel finishes playing."

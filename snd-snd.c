@@ -2042,42 +2042,42 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
   switch (fld)
     {
     case SP_SYNC:  
-      if (XEN_NUMBER_P(val))
-	syncb(sp, XEN_TO_C_INT_OR_ELSE_WITH_CALLER(val, 1, caller));
+      if (XEN_INTEGER_P(val))
+	syncb(sp, XEN_TO_C_INT(val));
       else syncb(sp, XEN_TO_C_BOOLEAN(val));
       break;
     case SP_READ_ONLY:
       if (!(IS_PLAYER(sp)))
 	{
-	  sp->read_only = XEN_TO_C_BOOLEAN_OR_TRUE(val); 
+	  sp->read_only = XEN_TO_C_BOOLEAN(val); 
 	  snd_file_lock_icon(sp, sp->read_only); 
 	}
       break;
     case SP_EXPANDING:
-      toggle_expand_button(sp, XEN_TO_C_BOOLEAN_OR_TRUE(val));
+      toggle_expand_button(sp, XEN_TO_C_BOOLEAN(val));
       break;
     case SP_CONTRASTING:
-      toggle_contrast_button(sp, XEN_TO_C_BOOLEAN_OR_TRUE(val));
+      toggle_contrast_button(sp, XEN_TO_C_BOOLEAN(val));
       break;
     case SP_REVERBING:
-      toggle_reverb_button(sp, XEN_TO_C_BOOLEAN_OR_TRUE(val));
+      toggle_reverb_button(sp, XEN_TO_C_BOOLEAN(val));
       break;
     case SP_FILTERING:
-      toggle_filter_button(sp, XEN_TO_C_BOOLEAN_OR_TRUE(val));
+      toggle_filter_button(sp, XEN_TO_C_BOOLEAN(val));
       break;
     case SP_FILTER_DBING:   
-      set_filter_in_dB(sp, XEN_TO_C_BOOLEAN_OR_TRUE(val));
+      set_filter_in_dB(sp, XEN_TO_C_BOOLEAN(val));
       break;
     case SP_FILTER_ORDER:
       set_snd_filter_order(sp, XEN_TO_C_INT(val));
       break;
     case SP_CURSOR_FOLLOWS_PLAY:
-      sp->cursor_follows_play = XEN_TO_C_BOOLEAN_OR_TRUE(val);
+      sp->cursor_follows_play = XEN_TO_C_BOOLEAN(val);
       break;
     case SP_SHOW_CONTROLS:
       if (!(IS_PLAYER(sp))) 
 	{
-	  if (XEN_TO_C_BOOLEAN_OR_TRUE(val))
+	  if (XEN_TO_C_BOOLEAN(val))
 	    sound_show_ctrls(sp); 
 	  else sound_hide_ctrls(sp); 
 	}
@@ -2088,7 +2088,7 @@ static XEN sound_set(XEN snd_n, XEN val, int fld, char *caller)
 	sp->speed_control_tones = DEFAULT_SPEED_CONTROL_TONES;
       break;
     case SP_SPEED_STYLE:
-      sp->speed_control_style = mus_iclamp(0, XEN_TO_C_INT(val), MAX_SPEED_CONTROL_STYLE);
+      sp->speed_control_style = XEN_TO_C_INT(val); /* range checked already */
       break;
     case SP_SRATE:
       if (!(IS_PLAYER(sp))) 
@@ -2375,7 +2375,7 @@ static XEN g_sync(XEN snd_n)
 
 static XEN g_set_sync(XEN on, XEN snd_n) 
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_1, S_setB S_sync, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_sync, "an integer");
   return(sound_set(snd_n, on, SP_SYNC, S_setB S_sync));
 }
 
@@ -2418,12 +2418,10 @@ static XEN g_set_channel_style(XEN style, XEN snd)
 Default is " S_channels_separate ", other values are " S_channels_combined " and " S_channels_superimposed ". \
 As a global (if the 'snd' arg is omitted), it is the default setting for each sound's 'unite' button."
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(style), style, XEN_ARG_1, S_setB S_channel_style, "an integer or boolean"); 
-  if (XEN_INTEGER_P(style))
-    new_style = mus_iclamp(CHANNELS_SEPARATE,
-			   XEN_TO_C_INT(style),
-			   CHANNELS_SUPERIMPOSED);
-  else new_style = ((XEN_TRUE_P(style)) ? CHANNELS_COMBINED : CHANNELS_SEPARATE);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, S_setB S_channel_style, "an integer or boolean"); 
+  new_style = XEN_TO_C_INT(style);
+  if ((new_style < CHANNELS_SEPARATE) || (new_style > CHANNELS_SUPERIMPOSED))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_channel_style, 1, style, "must be " S_channels_separate ", " S_channels_combined ", or " S_channels_superimposed);
   if (XEN_NOT_BOUND_P(snd))
     {
       ss = get_global_state();
@@ -2448,7 +2446,7 @@ static XEN g_read_only(XEN snd_n)
 
 static XEN g_set_read_only(XEN on, XEN snd_n) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_1, S_setB S_read_only, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_read_only, "a boolean");
   return(sound_set(snd_n, on, SP_READ_ONLY, S_setB S_read_only));
 }
 
@@ -2462,7 +2460,7 @@ static XEN g_contrast_control_p(XEN snd_n)
 
 static XEN g_set_contrast_control_p(XEN on, XEN snd_n) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_1, S_setB S_contrast_control_p, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_contrast_control_p, "a boolean");
   return(sound_set(snd_n, on, SP_CONTRASTING, S_setB S_contrast_control_p));
 }
 
@@ -2476,7 +2474,7 @@ static XEN g_expand_control_p(XEN snd_n)
 
 static XEN g_set_expand_control_p(XEN on, XEN snd_n) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_1, S_setB S_expand_control_p, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_expand_control_p, "a boolean");
   return(sound_set(snd_n, on, SP_EXPANDING, S_setB S_expand_control_p));
 }
 
@@ -2490,7 +2488,7 @@ static XEN g_reverb_control_p(XEN snd_n)
 
 static XEN g_set_reverb_control_p(XEN on, XEN snd_n) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_1, S_setB S_reverb_control_p, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_reverb_control_p, "a boolean");
   return(sound_set(snd_n, on, SP_REVERBING, S_setB S_reverb_control_p));
 }
 
@@ -2504,7 +2502,7 @@ static XEN g_filter_control_p(XEN snd_n)
 
 static XEN g_set_filter_control_p(XEN on, XEN snd_n) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_1, S_setB S_filter_control_p, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_filter_control_p, "a boolean");
   return(sound_set(snd_n, on, SP_FILTERING, S_setB S_filter_control_p));
 }
 
@@ -2518,7 +2516,7 @@ static XEN g_filter_control_in_dB(XEN snd_n)
 
 static XEN g_set_filter_control_in_dB(XEN on, XEN snd_n) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_1, S_setB S_filter_control_in_dB, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_filter_control_in_dB, "a boolean");
   return(sound_set(snd_n, on, SP_FILTER_DBING, S_setB S_filter_control_in_dB));
 }
 
@@ -2552,7 +2550,7 @@ static XEN g_cursor_follows_play(XEN snd_n)
 
 static XEN g_set_cursor_follows_play(XEN on, XEN snd_n) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_1, S_setB S_cursor_follows_play, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_cursor_follows_play, "a boolean");
   return(sound_set(snd_n, on, SP_CURSOR_FOLLOWS_PLAY, S_setB S_cursor_follows_play));
 }
 
@@ -2566,7 +2564,7 @@ static XEN g_show_controls(XEN snd_n)
 
 static XEN g_set_show_controls(XEN on, XEN snd_n)
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(on), on, XEN_ARG_1, S_setB S_show_controls, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_show_controls, "a boolean");
   return(sound_set(snd_n, on, SP_SHOW_CONTROLS, S_setB S_show_controls));
 }
 
@@ -2953,15 +2951,19 @@ static XEN g_speed_control_style(XEN snd)
 static XEN g_set_speed_control_style(XEN speed, XEN snd) 
 {
   snd_state *ss;
+  int spd;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(speed), speed, XEN_ARG_1, S_setB S_speed_control_style, "an integer"); 
+  spd = XEN_TO_C_INT(speed);
+  if ((spd < SPEED_CONTROL_AS_FLOAT) || (spd > SPEED_CONTROL_AS_SEMITONE))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_speed_control_style, 
+			   1, speed, 
+			   "must be " S_speed_control_as_float ", " S_speed_control_as_ratio ", or " S_speed_control_as_semitone);
   if (XEN_BOUND_P(snd))
     return(sound_set(snd, speed, SP_SPEED_STYLE, S_setB S_speed_control_style));
   else
     {
       ss = get_global_state();
-      activate_speed_in_menu(ss, mus_iclamp(SPEED_CONTROL_AS_FLOAT,
-					    XEN_TO_C_INT(speed),
-					    SPEED_CONTROL_AS_SEMITONE));
+      activate_speed_in_menu(ss, spd);
       return(C_TO_XEN_INT(speed_control_style(ss)));
     }
 }
@@ -3252,6 +3254,7 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
   snd_info *sp;
   snd_state *ss;
   apply_state *ap;
+  int cur_choice;
   ASSERT_SOUND(S_apply_controls, snd, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(choice), choice, XEN_ARG_2, S_apply_controls, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg), beg, XEN_ARG_3, S_apply_controls, "an integer");
@@ -3262,7 +3265,10 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
       ss = sp->state;
       if (XEN_OFF_T_P(beg)) apply_beg = XEN_TO_C_OFF_T(beg); else apply_beg = 0;
       if (XEN_OFF_T_P(dur)) apply_dur = XEN_TO_C_OFF_T(dur); else apply_dur = 0;
-      ss->apply_choice = mus_iclamp(0, XEN_TO_C_INT_OR_ELSE(choice, 0), 2);
+      cur_choice = XEN_TO_C_INT_OR_ELSE(choice, 0);
+      if ((cur_choice < 0) || (cur_choice > 2))
+	XEN_OUT_OF_RANGE_ERROR(S_apply_controls, 2, choice, "must be 0=sound, 1=channel, or 2=selection");
+      ss->apply_choice = cur_choice;
       sp->applying = TRUE;
       ap = (apply_state *)make_apply_state((void *)sp);
       if (ap)
@@ -3997,17 +4003,17 @@ If it returns #t, the apply is aborted."
 					    S_setB S_filter_control_env, g_set_filter_control_env_w, g_set_filter_control_env_reversed, 0, 1, 0, 2);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_cursor_follows_play, g_cursor_follows_play_w, H_cursor_follows_play,
-					    S_setB S_cursor_follows_play, g_set_cursor_follows_play_w, g_set_cursor_follows_play_reversed, 0, 1, 0, 2);
+					    S_setB S_cursor_follows_play, g_set_cursor_follows_play_w, g_set_cursor_follows_play_reversed, 0, 1, 1, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_controls, g_show_controls_w, H_show_controls,
-					    S_setB S_show_controls, g_set_show_controls_w, g_set_show_controls_reversed, 0, 1, 0, 2);
+					    S_setB S_show_controls, g_set_show_controls_w, g_set_show_controls_reversed, 0, 1, 1, 1);
   
 #if HAVE_GUILE
   XEN_EVAL_C_STRING("(define %sync sync)"); /* protect the original meaning (a Guile/Posix built-in function) */
 #endif
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_sync, g_sync_w, H_sync,
-					    S_setB S_sync, g_set_sync_w, g_set_sync_reversed, 0, 1, 0, 2);
+					    S_setB S_sync, g_set_sync_w, g_set_sync_reversed, 0, 1, 1, 1);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_sound_properties, g_sound_properties_w, H_sound_properties,
 					    S_setB S_sound_properties, g_set_sound_properties_w, g_set_sound_properties_reversed, 0, 1, 0, 2);
@@ -4016,22 +4022,22 @@ If it returns #t, the apply is aborted."
 					    S_setB S_channel_style, g_set_channel_style_w, g_set_channel_style_reversed, 0, 1, 1, 1);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_read_only, g_read_only_w, H_read_only,
-					    S_setB S_read_only, g_set_read_only_w, g_set_read_only_reversed, 0, 1, 0, 2);
+					    S_setB S_read_only, g_set_read_only_w, g_set_read_only_reversed, 0, 1, 1, 1);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_expand_control_p, g_expand_control_p_w, H_expand_control_p,
-					    S_setB S_expand_control_p, g_set_expand_control_p_w, g_set_expand_control_p_reversed, 0, 1, 0, 2);
+					    S_setB S_expand_control_p, g_set_expand_control_p_w, g_set_expand_control_p_reversed, 0, 1, 1, 1);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_contrast_control_p, g_contrast_control_p_w, H_contrast_control_p,
-					    S_setB S_contrast_control_p, g_set_contrast_control_p_w, g_set_contrast_control_p_reversed, 0, 1, 0, 2);
+					    S_setB S_contrast_control_p, g_set_contrast_control_p_w, g_set_contrast_control_p_reversed, 0, 1, 1, 1);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_reverb_control_p, g_reverb_control_p_w, H_reverb_control_p,
-					    S_setB S_reverb_control_p, g_set_reverb_control_p_w, g_set_reverb_control_p_reversed, 0, 1, 0, 2);
+					    S_setB S_reverb_control_p, g_set_reverb_control_p_w, g_set_reverb_control_p_reversed, 0, 1, 1, 1);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_filter_control_p, g_filter_control_p_w, H_filter_control_p,
-					    S_setB S_filter_control_p, g_set_filter_control_p_w, g_set_filter_control_p_reversed, 0, 1, 0, 2);
+					    S_setB S_filter_control_p, g_set_filter_control_p_w, g_set_filter_control_p_reversed, 0, 1, 1, 1);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_filter_control_in_dB, g_filter_control_in_dB_w, H_filter_control_in_dB,
-					    S_setB S_filter_control_in_dB, g_set_filter_control_in_dB_w, g_set_filter_control_in_dB_reversed, 0, 1, 0, 2);
+					    S_setB S_filter_control_in_dB, g_set_filter_control_in_dB_w, g_set_filter_control_in_dB_reversed, 0, 1, 1, 1);
   
   XEN_DEFINE_PROCEDURE(S_filter_control_coeffs, g_filter_control_coeffs_w, 0, 1, 0, H_filter_control_coeffs);
   

@@ -1622,7 +1622,7 @@ static int write_riff_header (int chan, int wsrate, int wchans, int siz, int for
       i = 44;
       for (j = 0; j < len; j++)
 	{
-	  if (i == HDRBUFSIZ) /* TODO: add test */
+	  if (i == HDRBUFSIZ)
 	    {
 	      curend += HDRBUFSIZ;
 	      write(chan, hdrbuf, HDRBUFSIZ);

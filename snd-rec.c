@@ -1467,8 +1467,8 @@ static XEN g_recorder_autoload(void) {return(C_TO_XEN_BOOLEAN(rp->autoload));}
 static XEN g_set_recorder_autoload(XEN val) 
 {
   #define H_recorder_autoload "(" S_recorder_autoload "): #t if newly recorded sound should be loaded into Snd automatically"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_autoload, "a boolean");
-  set_recorder_autoload(rp, XEN_TO_C_BOOLEAN_OR_TRUE(val));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_autoload, "a boolean");
+  set_recorder_autoload(rp, XEN_TO_C_BOOLEAN(val));
   return(C_TO_XEN_BOOLEAN(rp->autoload));
 }
 
@@ -1712,7 +1712,7 @@ static XEN g_set_vu_size(XEN val)
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_recorder_autoload_w, g_recorder_autoload)
-XEN_ARGIFY_1(g_set_recorder_autoload_w, g_set_recorder_autoload)
+XEN_NARGIFY_1(g_set_recorder_autoload_w, g_set_recorder_autoload)
 XEN_NARGIFY_0(g_recorder_buffer_size_w, g_recorder_buffer_size)
 XEN_NARGIFY_1(g_set_recorder_buffer_size_w, g_set_recorder_buffer_size)
 XEN_NARGIFY_0(g_recorder_file_w, g_recorder_file)
@@ -1783,7 +1783,7 @@ XEN_ARGIFY_1(g_set_vu_size_w, g_set_vu_size)
 void g_init_recorder(void)
 {
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_autoload, g_recorder_autoload_w, H_recorder_autoload,
-				   S_setB S_recorder_autoload, g_set_recorder_autoload_w,  0, 0, 0, 1);
+				   S_setB S_recorder_autoload, g_set_recorder_autoload_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_buffer_size, g_recorder_buffer_size_w, H_recorder_buffer_size,
 				   S_setB S_recorder_buffer_size, g_set_recorder_buffer_size_w,  0, 0, 1, 0);

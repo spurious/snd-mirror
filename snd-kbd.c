@@ -123,7 +123,7 @@ static void save_macro_1(named_macro *nm, FILE *fd)
     }
   fprintf(fd, "end\n");
 #else
-  fprintf(fd, "(define (%s)\n", nm->name);/* TODO: add test */
+  fprintf(fd, "(define (%s)\n", nm->name);
   for (i = 0; i < nm->macro_size; i++)
     {
       mc = nm->cmds[i];
@@ -690,7 +690,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	  switch (sp->filing)
 	    {
 	      /* don't free(str) locally in this switch statement without setting it to null as well */
-	    case INPUT_FILING: /* TODO: add test */
+	    case INPUT_FILING:
 	      nsp = snd_open_file(str, ss, FALSE); /* will post error if any */
 	      if (nsp) 
 		{
@@ -1805,20 +1805,23 @@ static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
   return(kbd);
 }
 
-static XEN g_save_macros(void) /* TODO: add test */
+static XEN g_save_macros(XEN file)
 {
-  #define H_save_macros "(" S_save_macros "): save keyboard macros in Snd's init file (~/.snd)"
+  #define H_save_macros "(" S_save_macros " (file \"~/.snd\")): save keyboard macros file"
   FILE *fd = NULL;
   snd_state *ss;
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(file), file, XEN_ONLY_ARG, S_save_macros, "a string");
   ss = get_global_state();
-  fd = open_snd_init_file(ss);
+  if (XEN_STRING_P(file))
+    fd = FOPEN(XEN_TO_C_STRING(file), "a");
+  else fd = open_snd_init_file(ss);
   if (fd) save_macro_state(fd);
   if ((!fd) || (FCLOSE(fd) != 0))
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_save_macros),
-			 C_TO_XEN_STRING(ss->init_file),
+			 file,
 			 C_TO_XEN_STRING(strerror(errno))));
-  return(C_TO_XEN_STRING(ss->init_file));
+  return(file);
 }
 
 static XEN g_prompt_in_minibuffer(XEN msg, XEN callback, XEN snd_n, XEN raw)
@@ -1920,7 +1923,7 @@ XEN_ARGIFY_3(g_key_binding_w, g_key_binding)
 XEN_ARGIFY_5(g_bind_key_w, g_bind_key)
 XEN_ARGIFY_3(g_unbind_key_w, g_unbind_key)
 XEN_ARGIFY_4(g_key_w, g_key)
-XEN_NARGIFY_0(g_save_macros_w, g_save_macros)
+XEN_ARGIFY_1(g_save_macros_w, g_save_macros)
 XEN_NARGIFY_0(g_control_g_x_w, g_control_g_x)
 XEN_ARGIFY_2(g_report_in_minibuffer_w, g_report_in_minibuffer)
 XEN_ARGIFY_4(g_prompt_in_minibuffer_w, g_prompt_in_minibuffer)
@@ -1946,7 +1949,7 @@ void g_init_kbd(void)
   XEN_DEFINE_PROCEDURE(S_bind_key,                g_bind_key_w, 3, 2, 0,                H_bind_key);
   XEN_DEFINE_PROCEDURE(S_unbind_key,              g_unbind_key_w, 2, 1, 0,              H_unbind_key);
   XEN_DEFINE_PROCEDURE(S_key,                     g_key_w, 2, 2, 0,                     H_key);
-  XEN_DEFINE_PROCEDURE(S_save_macros,             g_save_macros_w, 0, 0, 0,             H_save_macros);
+  XEN_DEFINE_PROCEDURE(S_save_macros,             g_save_macros_w, 0, 1, 0,             H_save_macros);
   XEN_DEFINE_PROCEDURE(S_c_g_x,                   g_control_g_x_w, 0, 0, 0,             H_control_g_x);  
 
   XEN_DEFINE_PROCEDURE(S_report_in_minibuffer,    g_report_in_minibuffer_w, 1, 1, 0,    H_report_in_minibuffer);

@@ -230,7 +230,7 @@ static Float region_sample(int reg, int chn, off_t samp)
 	  switch (r->use_temp_file)
 	    {
 	    case REGION_FILE:
-	      sf = init_region_read(samp, reg, chn, READ_FORWARD); /* TODO: add test */
+	      sf = init_region_read(samp, reg, chn, READ_FORWARD);
 	      val = read_sample_to_float(sf);
 	      free_snd_fd(sf);
 	      return(val);
@@ -271,7 +271,7 @@ static void region_samples(int reg, int chn, off_t beg, off_t num, Float *data)
 	      free_snd_fd(sf);
 	      break;
 	    }
-	  if (j < num) /* TODO: add test */
+	  if (j < num)
 	    for (; j < num; j++) 
 	      data[j] = 0.0;
 	}
