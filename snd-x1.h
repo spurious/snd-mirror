@@ -239,6 +239,7 @@ void View_Region_Callback(Widget w, XtPointer clientData, XtPointer callData);
 int region_dialog_is_active(void);
 void allocate_region_rows(snd_state *ss, int n);
 
+void g_init_gxregion(SCM local_doc);
 
 
 /* -------- snd-gxutils -------- */

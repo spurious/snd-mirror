@@ -1,6 +1,6 @@
 ;;; examples of Guile extensions to Snd
 ;;;
-;;; (this file requires guile 1.4 -- it uses the generalized set! and newer optargs support)
+;;; (this file requires guile 1.5 -- it uses the generalized set! and newer optargs support)
 ;;;
 ;;;        contents
 ;;;
@@ -44,8 +44,8 @@
 ;;; convolution (convolve)
 ;;; reverb (all-pass etc)
 ;;; scissor-tailed flycatcher (waveshaping)
-;;; fm-violin (FM and various other generators, #&key args)
-;;; FOF voice synthesis (wave-train, #&optional args)
+;;; fm-violin (FM and various other generators, #:key args)
+;;; FOF voice synthesis (wave-train, #:optional args)
 ;;; phase vocoder
 ;;; mix with envelope
 ;;; time varying FIR filter, notch filter, frequency-response -> FIR coeffs
@@ -1663,7 +1663,7 @@
 (define pi 3.141592653589793)
 
 (define fm-violin 
-  (lambda* (startime dur frequency amplitude #&key
+  (lambda* (startime dur frequency amplitude #:key
 	    (fm-index 1.0)
 	    (amp-env '(0 0  25 1  75 1  100 0))
 	    (periodic-vibrato-rate 5.0) 
@@ -1690,7 +1690,7 @@
 	    (base 1.0)
 	    (reverb-amount 0.01)
 	    (degree #f) (distance 1.0) (degrees #f)
-	    #&allow-other-keys)
+	    #:allow-other-keys)
     (let* ((beg (floor (* startime (srate))))
 	   (len (floor (* dur (srate))))
 	   (end (+ beg len))
@@ -1774,7 +1774,7 @@
 (define two-pi (* 2 3.141592653589793))
 
 (define fofins 
-  (lambda* (beg dur frq amp vib f0 a0 f1 a1 f2 a2 #&optional (ae '(0 0 25 1 75 1 100 0)))
+  (lambda* (beg dur frq amp vib f0 a0 f1 a1 f2 a2 #:optional (ae '(0 0 25 1 75 1 100 0)))
     (let* ((start (floor (* beg (srate))))
 	   (len (floor (* dur (srate))))
 	   (ampf (make-env :envelope ae :scaler amp :duration dur))
@@ -1814,7 +1814,7 @@
 (define pi 3.141592653589793)
 
 (define pvoc
-  (lambda* (#&key
+  (lambda* (#:key
 	   (fftsize 512) (overlap 4) (time 1.0)
 	   (pitch 1.0) (gate 0.0) (hoffset 0.0)
 	   (snd 0) (chn 0))
@@ -2409,7 +2409,7 @@
 ;;;    (with-sound (:srate 44100) (fm-violin 0 1 440 .1))
 
 (defmacro with-sound (args . body) 
-  `((lambda* (#&key (srate 22050)
+  `((lambda* (#:key (srate 22050)
 		    (output "test.snd")
 		    (channels 1)
 		    (explode #f))
@@ -2431,7 +2431,7 @@
 ;;; here's a better version courtesy of Kalle Olavi Niemitalo
 ;;; but it doesn't seem to work in Guile 1.4 (it needs 1.4.1)
 ;;;
-;;;(define* (with-sound-helper thunk #&key (srate 22050) (explode #f))
+;;;(define* (with-sound-helper thunk #:key (srate 22050) (explode #f))
 ;;;  (let ((old-srate (mus-srate)))
 ;;;    (dynamic-wind (lambda () (set! (mus-srate) srate))
 ;;;                  thunk

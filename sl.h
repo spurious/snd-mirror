@@ -40,7 +40,7 @@ SCM scm_return_first(SCM a, ...);
 #define SCM_VELTS(a)    (repv *)(rep_VECT(a)->array)
 #define SCM_NEWSMOB(a, b, c) Qnil
 #define SCM_HOOK_PROCEDURES(a) Qnil
-#define SCM_SETCDR(a, b)
+#define SET_SCM_VALUE(a, b)
 
 #ifdef __cplusplus
   #define SCM_FNC (repv(*)())

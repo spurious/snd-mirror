@@ -605,7 +605,7 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select)
   if (mcf) FREE(mcf);
   if (sp)
     {
-      SCM_SETCDR(memo_sound, TO_SMALL_SCM_INT(sp->index));
+      SET_SCM_VALUE(memo_sound, TO_SMALL_SCM_INT(sp->index));
       sp->write_date = file_write_date(sp->fullname);
       sp->need_update = 0;
       if (ss->viewing) sp->read_only = 1;
@@ -2188,7 +2188,11 @@ void g_init_file(SCM local_doc)
   define_procedure_with_setter(S_sound_loop_info, SCM_FNC g_sound_loop_info, H_sound_loop_info,
 			       "set-" S_sound_loop_info, SCM_FNC g_set_sound_loop_info, local_doc, 0, 1, 1, 1);
 #if HAVE_GUILE
+#if HAVE_SCM_C_DEFINE
+  memo_sound = scm_permanent_object(scm_c_define(S_memo_sound, SCM_BOOL_F));
+#else
   memo_sound = gh_define(S_memo_sound, SCM_BOOL_F);
+#endif
 #endif
 
   #define H_open_hook S_open_hook " (filename) is called each time a file is opened (before the actual open). \

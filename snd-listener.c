@@ -329,15 +329,6 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
 	    }
 	}
     }
-  /* before calling the evaluator we need to clean up all the C strings etc
-   *   the evaluated form may return a continuation to the caller, and at
-   *   some later time, he may invoke it.  That is a long jump into some
-   *   random place in our code with its return at the point of the
-   *   eval_form_wrapper below.  We can't depend on any local pointers
-   *   beyond the "if (BOUND_P(result))" line below, although "w" seems
-   *   to be ok.  This is also why the GUI_UNSET_CURSOR tries not to
-   *   assume that there has been any relevant GUI_SET_CURSOR call preceding it.
-   */
   if (full_str) GUI_FREE(full_str);
   if (str)
     {
@@ -345,12 +336,15 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
 	GUI_LISTENER_TEXT_INSERT(w, GUI_TEXT_END(w), str);
       GUI_SET_CURSOR(w, (ss->sgx)->wait_cursor);
       GUI_UPDATE(w); /* not sure about this... */
+      /*
+       * this read then eval business is probably not needed anymore --
+       *   it is necessary if scm_make_continuation is called anywhere in Snd
+       */
       if ((snd_strlen(str) > 1) || (str[0] != '\n'))
 	form = snd_catch_any(read_str_wrapper, (void *)str, str);  /* needed else #< in input exits Snd! */
       FREE(str);
       str = NULL;
       if (BOUND_P(form))
-	/* to repeat!  we may get here without going through any of the foregoing code */
 	snd_report_result(ss, snd_catch_any(eval_form_wrapper, (void *)form, NULL), NULL, FALSE);
       GUI_UNSET_CURSOR(w, (ss->sgx)->arrow_cursor);
     }

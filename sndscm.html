@@ -2436,12 +2436,14 @@ void inner_main(int argc, char **argv)
   char **buffer = NULL;
   buffer = (char **)calloc(1, sizeof(char *));
   buffer[0] = (char *)calloc(512, sizeof(char));
-  counter = gh_define("counter", gh_int2scm(0));
+  /* counter = gh_define("counter", gh_int2scm(0)); */       /* old style (pre Guile 1.6) */
+  counter = scm_permanent_object(scm_c_define("counter", gh_int2scm(0)));
   while (1)
     {
       getline(buffer, &amp;size, stdin);
       gh_eval_str(buffer[0]);
-      fprintf(stdout, "counter is %d\n", gh_scm2int(gh_cdr(counter)));
+      /* fprintf(stdout, "counter is %d\n", gh_scm2int(gh_cdr(counter))); */ /* old style */
+      fprintf(stdout, "counter is %d\n", gh_scm2int(SCM_VARIABLE_REF(counter)));
     }
 }
 
@@ -2550,7 +2552,121 @@ counter is 123
 counter is 246
 </pre>
 <p>It's not completely ideal, but it's close enough that I don't find it painful to use.
+If you run the program above, you'll be annoyed to discover that any error causes
+it to exit!  Guile's default is to have no error handler installed, so the "throw"
+that an error generates is not "caught", causing the program to exit.  The next
+version of our program adds error handling, a cleaner exit mechanism (you can
+call the exit procedure to exit), and a simple procedure that adds some amount
+to the counter:
 </p>
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;guile/gh.h&gt;
+
+int counter = 0;
+SCM g_counter(void) {return(gh_int2scm(counter));}
+
+SCM g_set_counter(SCM newval)
+{
+  counter = gh_scm2int(newval);
+  return(newval);
+}
+
+/* this code needs the Guile 1.5 or later */
+/* the error handler:  it prints out whatever information the error sent us and returns */
+
+static SCM report_error(void *data, SCM tag, SCM throw_args)
+{
+  if (SCM_EQ_P(tag, scm_str2symbol("quit"))) exit(0);
+  fprintf(stdout, "%s: %s\n", 
+	  SCM_STRING_CHARS(scm_object_to_string(tag, SCM_UNDEFINED)), 
+	  SCM_STRING_CHARS(scm_object_to_string(throw_args, SCM_UNDEFINED)));
+  return(tag);
+}
+
+static SCM add_to_counter(SCM val)
+{
+  SCM_ASSERT_TYPE(SCM_EQ_P(scm_integer_p(val), SCM_BOOL_T), val, SCM_ARGn, "add-to-counter", "an integer");
+  counter += gh_scm2int(val);   /* convert from Scheme to C */
+  return(gh_int2scm(counter));  /* return our new counter value */
+}
+
+static void inner_main(int argc, char **argv)
+{
+  SCM result;
+  int size = 512;
+  char **buffer = NULL;
+  gh_new_procedure("add-to-counter", add_to_counter, 1, 0, 0);
+
+  gh_define("counter",
+    scm_make_procedure_with_setter(
+      gh_new_procedure0_0("",g_counter),
+      gh_new_procedure1_0("",g_set_counter)));
+
+  buffer = (char **)calloc(1, sizeof(char *));
+  buffer[0] = (char *)calloc(512, sizeof(char));
+  while (1)
+    {
+      /* (exit) to exit */
+      fprintf(stdout, "&gt;");
+      getline(buffer, &size, stdin);
+      result = scm_internal_stack_catch(SCM_BOOL_T, /* this is our "catch" */
+					gh_eval_str, 
+					(void *)(buffer[0]), 
+					report_error,
+					buffer[0]);
+      fprintf(stdout, "%s\n",
+	      SCM_STRING_CHARS(scm_object_to_string(result, SCM_UNDEFINED)));
+    }
+}
+
+int main(int argc, char *argv[])
+{
+  gh_enter(argc,argv,inner_main);
+  return(0);
+}
+</pre>
+<p>Now we have our own "read-eval-print" loop:
+</p>
+<pre>
+/home/bil/cl/ g
+&gt;(+ 1 2)
+3
+&gt;counter 
+#&lt;procedure-with-setter&gt;
+&gt;(counter)
+0
+&gt;(add-to-counter 32)
+32
+&gt;(counter)
+32
+&gt;(add-to-counter 1)
+33
+&gt;(counter)
+33
+&gt;(add-to-counter 3.41)
+wrong-type-arg: ("add-to-counter" "Wrong type argument (expecting ~A): ~S" ("an integer" 3.41) #f)
+wrong-type-arg
+&gt;asdf
+unbound-variable: (#f "Unbound variable: ~S" (asdf) #f)
+unbound-variable
+&gt;(exit)
+</pre>
+<p>But now the <i>gh_eval_str</i> use generates a compiler complaint about type
+mismatches (though it works).  We can fix that by:
+</p>
+<pre>
+static SCM eval_str_wrapper(void *data) {return(gh_eval_str((char *)data));}
+
+/* ... */
+
+      result = scm_internal_stack_catch(SCM_BOOL_T,
+					eval_str_wrapper, 
+					(void *)(buffer[0]), 
+					report_error,
+					buffer[0]);
+</pre>
+
 <br>
 
 <span class=box><h2><A NAME="extsndasneededexpl">A Note on "As-Needed" input functions</a></h2></span>

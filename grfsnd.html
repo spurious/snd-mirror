@@ -62,6 +62,7 @@
   <li><a href="#sndandladspa">Snd and LADSPA</a>
   <li><a href="#sndandx">Driving Snd remotely</a>
   <li><a href="#sndandgl">Snd and OpenGL</a>
+  <li><a href="#sndandgdb">Snd and gdb</a>
   </ul>
 <li><a href="index.html#extsndindex">Index</a>
 </ul>
@@ -1876,7 +1877,39 @@ the after-fft hook to write the spectrogram data to the shared file.  To use
 this stuff, build glfft, start Snd, display spectrograms, load <a href="sndscm.html#glfftdoc">glfft.scm</a>,
 and (start-gl).
 </p>
+<br>
 
+<span class=bbox><h3><A NAME="sndandgdb">Snd and gdb</a></h3></span>
+
+<p>Here are a couple gdb functions (for your ~/.gbdinit file) that might
+come in handy:
+</p>
+<pre>
+define gp
+call gdb_print($arg0)
+print gdb_output
+end
+document gp
+Executes (object-&gt;string arg): gp memo_sound =&gt; #f
+end
+
+define ge
+call gdb_read($arg0)
+call gdb_eval(gdb_result)
+call gdb_print(gdb_result)
+print gdb_output
+end
+document ge
+Executes (print (eval (read arg))): ge "(+ 1 2)" =&gt; 3
+end
+</pre>
+<p>If you have a pointer to a CLM generator, you can use:
+</p>
+<pre>
+p mus_describe(arg)  --  show the user-view of arg
+p mus_inspect(arg)  --  show every internal field of arg
+</pre>
+<!-- TODO: help text given name, value given name -->
 <br>
 
 <center>

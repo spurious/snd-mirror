@@ -588,3 +588,17 @@ static regrow *region_row(int n)
   return(NULL);
 }
 
+static SCM g_region_dialog(void) 
+{
+  #define H_region_dialog "(" S_region_dialog ") starts the region dialog"
+  snd_state *ss;
+  ss = get_global_state();
+  if (snd_regions() > 0) 
+    View_Region_Callback(MAIN_PANE(ss), (XtPointer)ss, NULL);
+  return(SND_WRAP(region_dialog));
+}
+
+void g_init_gxregion(SCM local_doc)
+{
+  DEFINE_PROC(S_region_dialog, g_region_dialog, 0, 0, 0,  H_region_dialog);
+}

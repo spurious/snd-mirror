@@ -46,7 +46,7 @@ SCM scm_return_first(SCM a, ...);
 #define SCM_VELTS(a)                     SCHEME_VEC_ELS(a)
 #define SCM_NEWSMOB(a, b, c)
 #define SCM_HOOK_PROCEDURES(a)
-#define SCM_SETCDR(a, b)
+#define SET_SCM_VALUE(a, b)
 
 #define SND_RETURN_NEWSMOB(Tag, Val) 0
 #define SND_VALUE_OF(a) 0

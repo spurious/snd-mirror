@@ -3,14 +3,6 @@
 
 static snd_state *state;
 
-static SCM g_region_dialog(void) 
-{
-  #define H_region_dialog "(" S_region_dialog ") starts the region dialog"
-  if (snd_regions() > 0) 
-    View_Region_Callback(MAIN_PANE(state), (gpointer)state); 
-  return(SCM_BOOL_F);
-}
-
 static gint timed_eval(gpointer in_code)
 {
   CALL0((SCM)in_code, "timed callback func");
@@ -256,7 +248,6 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
 #endif
 #endif
 
-  DEFINE_PROC(S_region_dialog, g_region_dialog, 0, 0, 0,  H_region_dialog);
   DEFINE_PROC(S_in,            g_in, 2, 0, 0,             H_in);
   DEFINE_PROC(S_make_color,    g_make_snd_color, 3, 0, 0, H_make_color);
   DEFINE_PROC(S_colorQ,        g_color_p, 1, 0, 0,        H_color_p);

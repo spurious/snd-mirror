@@ -55,8 +55,8 @@ SCM scm_return_first(SCM a, ...);
 #define SCM_VELTS(a) ((SCM *)a)
 #define SCM_NEWSMOB(a, b, c)
 #define SCM_HOOK_PROCEDURES(a) 0
-#define SCM_SETCDR(a, b)
-
+#define SET_SCM_VALUE(a, b)
+#define SCM_VARIABLE_REF(a) 0
 
 /* this is the sg.h replacement */
 

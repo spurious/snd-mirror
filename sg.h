@@ -32,7 +32,14 @@
 #define SND_VALUE_OF(a) SCM_SMOB_DATA(a)
 /* remember to check the smob type agreement before calling SND_VALUE_OF! */
 #define SND_SET_VALUE_OF(a, b) SCM_SET_SMOB_DATA(a, b)
-#define SND_LOOKUP(a) scm_symbol_value0(a)
+
+#if HAVE_SCM_C_DEFINE
+  #define SET_SCM_VALUE(Var, Val) SCM_VARIABLE_SET(Var, Val)
+  #define SND_LOOKUP(a) SCM_VARIABLE_REF(scm_c_lookup(a))
+#else
+  #define SET_SCM_VALUE(Var, Val) SCM_SETCDR(Var, Val)
+  #define SND_LOOKUP(a) scm_symbol_value0(a)
+#endif
 
 #if HAVE_SCM_REMEMBER_UPTO_HERE
   #define SND_TAG_TYPE scm_bits_t

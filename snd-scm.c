@@ -215,9 +215,15 @@ static SCM snd_catch_scm_error(void *data, SCM tag, SCM throw_args) /* error han
 		  else scm_display(tag, port);
 		  if (show_backtrace(state))
 		    {
+		      /* scm_backtrace sends its output to scm_cur_outp, but we want it posted in the listener window. */
+		      /*   TODO: how to trap scm_cur_outp here?? */
+#if HAVE_SCM_C_DEFINE
+		      stack = scm_fluid_ref(SCM_VARIABLE_REF(scm_the_last_stack_fluid_var));
+#else
 		      stack = scm_fluid_ref(SCM_CDR(scm_the_last_stack_fluid));
+#endif
 		      if (NOT_FALSE_P(stack)) 
-			scm_display_backtrace(stack, port, SCM_BOOL_F, SCM_BOOL_F); 
+			scm_display_backtrace(stack, port, SCM_UNDEFINED, SCM_UNDEFINED);
 		    }
 		}
 	    }
@@ -2862,6 +2868,17 @@ void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_h
 				  int get_req, int get_opt, int set_req, int set_opt)
 {
 #if HAVE_GUILE
+#if HAVE_SCM_C_DEFINE
+  scm_set_object_property_x(
+    scm_permanent_object(
+      scm_c_define(get_name,
+	scm_make_procedure_with_setter(
+          gh_new_procedure("", SCM_FNC get_func, get_req, get_opt, 0),
+	  gh_new_procedure(set_name, SCM_FNC set_func, set_req, set_opt, 0)
+	  ))),
+    local_doc,
+    TO_SCM_STRING(get_help));
+#else
   scm_set_object_property_x(
     SCM_CDR(
       gh_define(get_name,
@@ -2872,6 +2889,7 @@ void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char *get_h
     local_doc,
     TO_SCM_STRING(get_help));
   /* still need to trap help output and send it to the listener */
+#endif
 #endif
 #if HAVE_LIBREP
   DEFINE_PROC(get_name, get_func, get_req, get_opt, 0, get_help);
@@ -2885,6 +2903,19 @@ void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), ch
 					   int get_req, int get_opt, int set_req, int set_opt)
 {
 #if HAVE_GUILE
+#if HAVE_SCM_C_DEFINE
+  scm_set_object_property_x(
+    scm_permanent_object(
+      scm_c_define(get_name,
+	scm_make_procedure_with_setter(
+          gh_new_procedure("", SCM_FNC get_func, get_req, get_opt, 0),
+	  gh_new_procedure("", SCM_FNC reversed_set_func, set_req, set_opt, 0)
+	  ))),
+    local_doc,
+    TO_SCM_STRING(get_help));
+  /* still need to trap help output and send it to the listener */
+  gh_new_procedure(set_name, SCM_FNC set_func, set_req, set_opt, 0);
+#else
   scm_set_object_property_x(
     SCM_CDR(
       gh_define(get_name,
@@ -2896,6 +2927,7 @@ void define_procedure_with_reversed_setter(char *get_name, SCM (*get_func)(), ch
     TO_SCM_STRING(get_help));
   /* still need to trap help output and send it to the listener */
   gh_new_procedure(set_name, SCM_FNC set_func, set_req, set_opt, 0);
+#endif
 #endif
 #if HAVE_LIBREP
   DEFINE_PROC(get_name, get_func, get_req, get_opt, 0, get_help);
@@ -3495,6 +3527,7 @@ If more than one hook function, results are concatenated. If none, the current c
   g_init_gxchn(local_doc);
   g_init_draw(local_doc);
   g_init_gxdrop(local_doc);
+  g_init_gxregion(local_doc);
 #endif
 #if HAVE_GUILE && HAVE_DLFCN_H
   g_init_dl(local_doc);

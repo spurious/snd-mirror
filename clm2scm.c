@@ -89,6 +89,17 @@ static void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char
 					 int get_req, int get_opt, int set_req, int set_opt)
 {
 #if HAVE_GUILE
+#if HAVE_SCM_C_DEFINE
+  scm_set_object_property_x(
+    scm_permanent_object(
+      scm_c_define(get_name,
+	scm_make_procedure_with_setter(
+          gh_new_procedure("", SCM_FNC get_func, get_req, get_opt, 0),
+	  gh_new_procedure(set_name, SCM_FNC set_func, set_req, set_opt, 0)
+	  ))),
+    local_doc,
+    TO_SCM_STRING(get_help));
+#else
   scm_set_object_property_x(
     SCM_CDR(
       gh_define(get_name,
@@ -97,6 +108,7 @@ static void define_procedure_with_setter(char *get_name, SCM (*get_func)(), char
 	  ))),
     local_doc,
     TO_SCM_STRING(get_help));
+#endif
 #endif
 #if HAVE_LIBREP
   DEFINE_PROC(get_name, get_func, get_req, get_opt, 0, get_help);
