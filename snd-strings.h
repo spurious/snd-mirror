@@ -2,6 +2,7 @@
 #define SND_STRINGS_H
 
 #define S_abort                         "abort"
+#define S_add_colormap                  "add-colormap"
 #define S_add_mark                      "add-mark"
 #define S_add_player                    "add-player"
 #define S_add_sound_file_extension      "add-sound-file-extension"
@@ -62,6 +63,8 @@
 #define S_color_p                       "color?"
 #define S_color_scale                   "color-scale"
 #define S_colormap                      "colormap"
+#define S_colormap_ref                  "colormap-ref"
+#define S_colormap_size                 "colormap-size"
 #define S_comment                       "comment"
 #define S_contrast_control              "contrast-control"
 #define S_contrast_control_amp          "contrast-control-amp"
@@ -104,6 +107,7 @@
 #define S_default_output_srate          "default-output-srate"
 #define S_default_output_type           "default-output-type"
 #define S_define_envelope               "define-envelope"
+#define S_delete_colormap               "delete-colormap"
 #define S_delete_mark                   "delete-mark"
 #define S_delete_marks                  "delete-marks"
 #define S_delete_mix                    "delete-mix"

@@ -519,11 +519,14 @@ int select_all(chan_info *cp)
       si = sync_to_chan(cp);
       for (i = 0; i < si->chans; i++)
 	{
-	  reactivate_selection(si->cps[i], 0, CURRENT_SAMPLES(si->cps[i]));
-	  update_graph(si->cps[i]);
+	  if (CURRENT_SAMPLES(si->cps[i]) > 0)
+	    {
+	      reactivate_selection(si->cps[i], 0, CURRENT_SAMPLES(si->cps[i]));
+	      update_graph(si->cps[i]);
+	    }
 	}
       si = free_sync_info(si);
-      if (selection_creates_region(ss)) 
+      if ((selection_is_active()) && (selection_creates_region(ss)))
 	return(make_region_from_selection());
     }
   return(-1);

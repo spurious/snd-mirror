@@ -1341,26 +1341,6 @@ static XEN g_set_show_backtrace(XEN val)
   return(C_TO_XEN_BOOLEAN(show_backtrace(ss)));
 }
 
-static XEN g_colormap(void) {return(C_TO_XEN_INT(color_map(ss)));}
-static XEN g_set_colormap(XEN val) 
-{
-  #define H_colormap "(" S_colormap "): current colormap choice. \
-This should be an integer between -1 and 15.  The maps (from 0 to 15) are: \
-gray, hsv, hot, cool, bone, copper, pink, jet, prism, autumn, winter, \
-spring, summer, colorcube, flag, and lines.  -1 means black and white. \
-These names are defined in rgb.scm."
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_colormap, "an integer"); 
-  set_color_map(mus_iclamp(
-#if USE_GTK
-			   0,
-#else
-			   -1,
-#endif
-			   XEN_TO_C_INT(val),
-			   NUM_COLORMAPS - 1));
-  return(C_TO_XEN_INT(color_map(ss)));
-}
-
 static int snd_access(char *dir, char *caller)
 {
   int err;
@@ -2590,8 +2570,6 @@ XEN_NARGIFY_0(g_show_indices_w, g_show_indices)
 XEN_NARGIFY_1(g_set_show_indices_w, g_set_show_indices)
 XEN_NARGIFY_0(g_show_backtrace_w, g_show_backtrace)
 XEN_NARGIFY_1(g_set_show_backtrace_w, g_set_show_backtrace)
-XEN_NARGIFY_0(g_colormap_w, g_colormap)
-XEN_NARGIFY_1(g_set_colormap_w, g_set_colormap)
 XEN_NARGIFY_0(g_temp_dir_w, g_temp_dir)
 XEN_NARGIFY_1(g_set_temp_dir_w, g_set_temp_dir)
 XEN_NARGIFY_0(g_save_dir_w, g_save_dir)
@@ -2756,8 +2734,6 @@ XEN_NARGIFY_2(g_fmod_w, g_fmod)
 #define g_set_show_indices_w g_set_show_indices
 #define g_show_backtrace_w g_show_backtrace
 #define g_set_show_backtrace_w g_set_show_backtrace
-#define g_colormap_w g_colormap
-#define g_set_colormap_w g_set_colormap
 #define g_temp_dir_w g_temp_dir
 #define g_set_temp_dir_w g_set_temp_dir
 #define g_save_dir_w g_save_dir
@@ -2993,9 +2969,6 @@ void g_initialize_gh(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_backtrace, g_show_backtrace_w, H_show_backtrace,
 				   S_setB S_show_backtrace, g_set_show_backtrace_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_colormap, g_colormap_w, H_colormap,
-				   S_setB S_colormap, g_set_colormap_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_temp_dir, g_temp_dir_w, H_temp_dir,
 				   S_setB S_temp_dir, g_set_temp_dir_w,  0, 0, 1, 0);
@@ -3239,6 +3212,7 @@ If it returns some non-false result, Snd assumes you've sent the text out yourse
   g_init_track();
 #if (!USE_NO_GUI)
   g_init_gxutils();
+  g_init_gxcolormaps();
   g_init_gxen();
   g_init_gxfile();
   g_init_gxdraw();

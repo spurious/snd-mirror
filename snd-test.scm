@@ -322,6 +322,7 @@
 
 ;(define widvardpy (make-variable-display "do-loop" "i*2" 'graph))
 
+
 ;;; ---------------- test 0: constants ----------------
 
 (if (or full-test (= snd-test 0) (and keep-going (<= snd-test 0)))
@@ -29961,6 +29962,16 @@ EDITS: 2
 	    (set! d0 (snd-transform haar-transform (vct -0.483 0.174 -0.880 -0.555 -0.879 0.038 0.696 -0.612)))
 	    (if (not (vequal d0 (vct -0.884 -0.349 0.563 -0.462 -0.465 -0.230 -0.648 0.925)))
 		(snd-display ";haar 3: ~A" d0))
+
+	    ;; from "A Primer on Wavelets"
+	    (let ((sq2 (sqrt 2.0)))
+	      (set! d0 (snd-transform haar-transform (vct 4 6 10 12 8 6 5 5)))
+	      (if (not (vequal d0 (vct (* 14 sq2) (* 2 sq2) -6 2 (- sq2) (- sq2) sq2 0)))
+		  (snd-display ";haar 4: ~A" d0))
+
+	      (set! d0 (snd-transform haar-transform (vct 2 4 6 8 10 12 14 16)))
+	      (if (not (vequal d0 (vct (* 18 sq2) (* -8 sq2) -4 -4 (- sq2) (- sq2) (- sq2) (- sq2))))
+		  (snd-display ";haar 5: ~A" d0)))
 	    
 	    (set! d0 (make-vct 8))
 	    (set! d1 (make-vct 8))
@@ -29971,7 +29982,7 @@ EDITS: 2
 	    (snd-transform haar-transform d0)
 	    (inverse-haar d0)
 	    (if (not (vequal d0 d1))
-		(snd-display ";inverse haar 4: ~A ~A" d0 d1))
+		(snd-display ";inverse haar 6: ~A ~A" d0 d1))
 	    
 	    
 	    ;; --------- wavelet
@@ -31027,7 +31038,7 @@ EDITS: 2
 			    #f)))
 	  (if (fneq diff 0.0) (snd-display ";file->sample->file overall max diff: ~A" diff))
 	  (close-sound ind1)))
-      
+
       (run-hook after-test-hook 21)
       ))
 
@@ -39264,6 +39275,22 @@ EDITS: 2
 		    (let ((new-xs (x-bounds)))
 		      (if (> (abs (- (* 2 (- (cadr new-xs) (car new-xs))) (- (cadr xs) (car xs)))) (/ (- (cadr xs) (car xs)) 3))
 			  (snd-display ";4 xs: ~A -> ~A" xs (x-bounds))))
+		    (close-sound ind))
+
+		  (if (> (length (sounds)) 0) (snd-display ";into zero: ~A" (sounds)))
+		  (let ((ind (open-sound "zero.snd")))
+		    (select-all)
+		    (if (selection?)
+			(snd-display ";select-all zero selected?"))
+		    (for-each
+		     (lambda (m)
+		       (if (XtIsSensitive m)
+			   (snd-display ";select-all zero: ~A?" (XtName m))))
+		     (list (menu-option "Delete Selection")
+			   (menu-option "Insert Selection C-x i")
+			   (menu-option "Play Selection   C-x p")
+			   (menu-option "Mix Selection    C-x q")
+			   (menu-option "Save Selection   C-x w")))
 		    (close-sound ind))
 		  
 		  ))))
@@ -48448,25 +48475,6 @@ EDITS: 2
 
 (display (format #f ";all done!~%~A" original-prompt))
 
-#!
-(display (format #f ";gc: ~A~%" (gc-stats)))
-
-(let ((gc-lst (gc-stats)))
-  (display (format #f ";timings:~%  ~A: total~%  GC: ~A~%~{    ~A~%~})" 
-	       (- (real-time) overall-start-time)
-	       (inexact->exact (round (* 100 (/ (cdr (list-ref gc-lst 0)) internal-time-units-per-second))))
-	       (list (list-ref gc-lst 1) 
-		     (list-ref gc-lst 5)
-		     (if (> (length gc-lst) 9)
-			 (list-ref gc-lst 8)
-			 #f)))))
-!#
-#!
-(if (not (null? times))
-    (for-each (lambda (n)
- 		(display (format #f ";  ~A: ~A~%" (car n) (cadr n))))
- 	      times))
-!#
 (if (number? (vector-ref timings total-tests)) 
     (vector-set! timings total-tests (hundred (- (real-time) (vector-ref timings total-tests)))))
 

@@ -264,6 +264,7 @@ void make_icons_transparent(char *basic_color);
 
 char **colormap_names(void);
 void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b);
+void g_init_gxcolormaps(void);
 
 
 /* -------- snd-xfind.c -------- */

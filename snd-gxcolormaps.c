@@ -1,5 +1,7 @@
 #include "snd.h"
 
+#if (!WITH_NEW_COLORMAPS)
+
 enum {GRAY_COLORMAP, HSV_COLORMAP, HOT_COLORMAP, COOL_COLORMAP, BONE_COLORMAP, COPPER_COLORMAP, PINK_COLORMAP, JET_COLORMAP, PRISM_COLORMAP,
       AUTUMN_COLORMAP, WINTER_COLORMAP, SPRING_COLORMAP, SUMMER_COLORMAP, COLORCUBE_COLORMAP, FLAG_COLORMAP, LINES_COLORMAP};
 
@@ -70,3 +72,618 @@ void get_current_color(int colormap, int nj, unsigned short *r, unsigned short *
     }
 }
 
+#define NO_COLOR -1
+static int skew_color(Float x)
+{
+  Float base, val;
+  int pos;
+  if (x < color_cutoff(ss)) return(NO_COLOR);
+  if (color_inverted(ss))   
+    val = 1.0 - x;
+  else val = x;
+  base = color_scale(ss);
+  if ((base > 0.0) && (base != 1.0))
+    val = (pow(base, val) - 1.0) / (base - 1.0);
+  pos = (int)(val * COLORMAP_SIZE);
+  if (pos > COLORMAP_SIZE) return(COLORMAP_SIZE - 1);
+  if (pos > 0)
+    return(pos - 1);
+  return(0);
+}
+
+static XEN g_colormap_ref(XEN map, XEN pos)
+{
+  #define H_colormap_ref "(" S_colormap_ref " map (pos #f)): (list r g b). map can be a number \
+between 0.0 and 1.0 with pos omitted -- in this case the color_map and so on comes from the color \
+dialog.  Colormap names can be found in rgb.scm"
+  unsigned short r, g, b;
+
+  if (XEN_NOT_BOUND_P(pos))
+    {
+      XEN_ASSERT_TYPE(XEN_NUMBER_P(map), map, XEN_ARG_1, S_colormap_ref, "a number");
+      get_current_color(color_map(ss), skew_color(XEN_TO_C_DOUBLE(map)), &r, &g, &b);
+    }
+  else
+    {
+      XEN_ASSERT_TYPE(XEN_INTEGER_P(map), map, XEN_ARG_1, S_colormap_ref, "an integer");
+      XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, XEN_ARG_2, S_colormap_ref, "an integer");
+      get_current_color(XEN_TO_C_INT(map), XEN_TO_C_INT(pos), &r, &g, &b);
+    }
+  return(XEN_LIST_3(C_TO_XEN_DOUBLE((float)r / 65535.0),
+		    C_TO_XEN_DOUBLE((float)g / 65535.0),
+		    C_TO_XEN_DOUBLE((float)b / 65535.0)));
+}
+
+static XEN g_colormap(void) {return(C_TO_XEN_INT(color_map(ss)));}
+static XEN g_set_colormap(XEN val) 
+{
+  #define H_colormap "(" S_colormap "): current colormap choice. \
+This should be an integer between -1 and 15.  The maps (from 0 to 15) are: \
+gray, hsv, hot, cool, bone, copper, pink, jet, prism, autumn, winter, \
+spring, summer, colorcube, flag, and lines.  -1 means black and white. \
+These names are defined in rgb.scm."
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_colormap, "an integer"); 
+  set_color_map(mus_iclamp(
+#if USE_GTK
+			   0,
+#else
+			   -1,
+#endif
+			   XEN_TO_C_INT(val),
+			   NUM_COLORMAPS - 1));
+  return(C_TO_XEN_INT(color_map(ss)));
+}
+
+
+#ifdef XEN_ARGIFY_1
+XEN_ARGIFY_2(g_colormap_ref_w, g_colormap_ref)
+XEN_NARGIFY_0(g_colormap_w, g_colormap)
+XEN_NARGIFY_1(g_set_colormap_w, g_set_colormap)
+#else
+#define g_colormap_ref_w g_colormap_ref
+#define g_colormap_w g_colormap
+#define g_set_colormap_w g_set_colormap
+#endif
+
+void g_init_gxcolormaps(void)
+{
+  XEN_DEFINE_PROCEDURE(S_colormap_ref, g_colormap_ref_w, 1, 1, 0, H_colormap_ref);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_colormap, g_colormap_w, H_colormap,
+				   S_setB S_colormap, g_set_colormap_w,  0, 0, 1, 0);
+}
+
+#else
+
+/* keep colormap colormap-ref */
+/* add add-colormap colormap-size (DOC TEST) */
+/* drop hsv|lines|colorcube|pink(?) colormaps add rainbow */
+/* add|delete-colormap: name function -> index (for colormap var)
+   function: (lambda (x) -> (list r g b) where x is 0..1 and r|g|b is 0..1
+      does this need to know the size?, or perhaps
+             (lambda (size) -> all vals?
+*/
+/* need to change all COLORMAP_SIZE refs to colormap_size(ss) presumably */
+/* change snd-x|gdraw refs to colormap_names to cmap_size and colormap_name */
+
+typedef struct {
+  int size;
+  char *name;
+  unsigned short *r, *g, *b;
+  XEN lambda;
+  int gc_loc;
+  Float** (*make_rgb)(int size, XEN func);
+} cmap;
+
+static cmap **cmaps = NULL;
+static int cmaps_size = 0;
+
+static cmap *delete_cmap(int index)
+{
+  cmap *c;
+  if ((index < cmaps_size) &&
+      (cmaps[index]))
+    {
+      c = cmaps[index];
+      if (c->r) FREE(c->r);
+      if (c->g) FREE(c->g);
+      if (c->b) FREE(c->b);
+      if (c->name) FREE(c->name);
+      if (XEN_PROCEDURE_P(c->lambda))
+	snd_unprotect_at(c->gc_loc);
+      FREE(c);
+      cmaps[index] = NULL;
+    }
+  return(NULL);
+}
+
+char *colormap_name(int n) 
+{
+  if ((n < cmaps_size) && 
+      (cmaps[n])) 
+    return(cmaps[n]->name); 
+  return(NULL);
+}
+
+int num_colormaps(void)
+{
+  int i;
+  for (i = 0; i < cmaps_size; i++)
+    if (!(cmaps[i])) 
+      return(i - 1);
+  return(0);
+}
+
+/* add size? [colormap_size(ss)] */
+void get_current_color(int colormap, int n, unsigned short *r, unsigned short *g, unsigned short *b)
+{
+  cmap *c;
+  if ((index < cmaps_size) &&
+      (cmaps[index]))
+    {
+      c = cmaps[index];
+      if (n < c->size)
+	{
+	  (*r) = c->r[n];
+	  (*g) = c->g[n];
+	  (*b) = c->b[n];
+	}
+    }
+}
+
+static unsigned short *Floats_to_ushorts(int size, Float *data)
+{
+  int i;
+  unsigned short *new_data;
+  new_data = (unsigned short *)CALLOC(size, sizeof(unsigned short));
+  for (i = 0; i < size; i++)
+    new_data[i] = (unsigned short)round(65535 * data[i]);
+  return(new_data);
+}
+
+static cmap *make_builtin_cmap(int size, const char *name, Float** (*make_rgb)(int size, XEN ignored))
+{
+  Float **rgb;
+  int i;
+  cmap *c = NULL;
+  rgb = make_rgb(size, lambda);
+  if (rgb)
+    {
+      c = (cmap *)CALLOC(1, sizeof(cmap *));
+      c->name = copy_string(name);
+      c->size = size;
+      c->make_rgb = make_rgb;
+      c->lambda = XEN_FALSE;
+      c->gc_loc = -1;
+      c->r = Floats_to_ushorts(size, rgb[0]);
+      c->g = Floats_to_ushorts(size, rgb[1]);
+      c->b = Floats_to_ushorts(size, rgb[2]);
+      for (i = 0; i < 3; i++) FREE(rgb[i]);
+      FREE(rgb);
+    }
+  return(c);
+}
+
+static Float **make_base_rgb(int size)
+{
+  Float **rgb;
+  int i;
+  rgb = (Float **)CALLOC(3, sizeof(Float *));
+  for (i = 0; i < 3; i++) rgb[i] = (Float *)CALLOC(size, sizeof(Float));
+  return(rgb);
+}
+
+static Float **make_xen_colormap(int size, XEN lambda)
+{
+  Float **rgb = NULL;
+  XEN xrgb;
+  vct *xr, *xg, *xb;
+  int i, gc_loc;
+  xrgb = XEN_CALL_1(lambda,
+		    C_TO_XEN_INT(size),
+		    "colormap maker");
+  if (XEN_LIST_P(xrgb))
+    {
+      /* user-defined colormap func returns a list of 3 vcts (r g b) */
+      gc_loc = snd_protect(xrgb);
+      xr = TO_VCT(XEN_LIST_REF(xrgb, 0));
+      xg = TO_VCT(XEN_LIST_REF(xrgb, 1));
+      xb = TO_VCT(XEN_LIST_REF(xrgb, 2));
+      rgb = make_base_rgb(size);
+      for (i = 0; i < size; i++)
+	{
+	  rgb[0][i] = xr->data[i];
+	  rgb[1][i] = xg->data[i];
+	  rgb[2][i] = xb->data[i];
+	}
+      snd_unprotect_at(gc_loc);
+    }
+  return(rgb);
+}
+
+/* make gen case (add-colormap) needs REALLOC check */
+
+static Float **make_black_and_white_colormap(int size, XEN ignored)
+{
+  /* (r 0) (g 0) (b 0) */
+  return(make_base_rgb(size);
+}
+
+/* colormap functions taken mostly from (GPL) octave-forge code written by Kai Habel <kai.habel@gmx.de> */
+
+static Float **make_gray_colormap(int size, XEN ignored)
+{
+  /* (r x) (g x) (b x) */
+  Float **rgb;
+  int i;
+  Float x, incr;
+  rgb = make_base_rgb(size);
+  incr = 1.0 / (Float)size;
+  for (i = 0, x = 0.0; i < size; i++, x += incr)
+    {
+      rgb[0][i] = x;
+      rgb[1][i] = x;
+      rgb[2][i] = x;
+    }
+  return(rgb);
+}
+
+static Float **make_autumn_colormap(int size, XEN ignored)
+{
+  /* (r 1.0) (g x) (b 0.0) */
+  Float **rgb;
+  int i;
+  Float x, incr;
+  rgb = make_base_rgb(size);
+  incr = 1.0 / (Float)size;
+  for (i = 0, x = 0.0; i < size; i++, x += incr)
+    {
+      rgb[0][i] = 1.0;
+      rgb[1][i] = x;
+      rgb[2][i] = 0.0;
+    }
+  return(rgb);
+}
+
+static Float **make_spring_colormap(int size, XEN ignored)
+{
+  /* (r 1.0) (g x) (b (- 1.0 x)) */
+  Float **rgb;
+  int i;
+  Float x, incr;
+  rgb = make_base_rgb(size);
+  incr = 1.0 / (Float)size;
+  for (i = 0, x = 0.0; i < size; i++, x += incr)
+    {
+      rgb[0][i] = 1.0;
+      rgb[1][i] = x;
+      rgb[2][i] = 1.0 - x;
+    }
+  return(rgb);
+}
+
+static Float **make_winter_colormap(int size, XEN ignored)
+{
+  /* (r 0.0) (g x) (b (- 1.0 (/ x 2))) */
+  Float **rgb;
+  int i;
+  Float x, incr;
+  rgb = make_base_rgb(size);
+  incr = 1.0 / (Float)size;
+  for (i = 0, x = 0.0; i < size; i++, x += incr)
+    {
+      rgb[0][i] = 0.0;
+      rgb[1][i] = x;
+      rgb[2][i] = 1.0 - (x * 0.5);
+    }
+  return(rgb);
+}
+
+static Float **make_summer_colormap(int size, XEN ignored)
+{
+  /* (r x) (g (+ 0.5 (/ x 2))) (b 0.4) */
+  Float **rgb;
+  int i;
+  Float x, incr;
+  rgb = make_base_rgb(size);
+  incr = 1.0 / (Float)size;
+  for (i = 0, x = 0.0; i < size; i++, x += incr)
+    {
+      rgb[0][i] = x;
+      rgb[1][i] = 0.5 + (0.5 * x);
+      rgb[2][i] = 0.4;
+    }
+  return(rgb);
+}
+
+static Float **make_cool_colormap(int size, XEN ignored)
+{
+  /* (r x) (g (- 1.0 x)) (b 1.0) */
+  Float **rgb;
+  int i;
+  Float x, incr;
+  rgb = make_base_rgb(size);
+  incr = 1.0 / (Float)size;
+  for (i = 0, x = 0.0; i < size; i++, x += incr)
+    {
+      rgb[0][i] = x;
+      rgb[1][i] = 1.0 - x;
+      rgb[2][i] = 1.0;
+    }
+  return(rgb);
+}
+
+static Float **make_copper_colormap(int size, XEN ignored)
+{
+  /* (r (if (< x 4/5) (* 5/4 x) 1.0)) (g (* 4/5 x)) (b (* 1/2 x)) */
+  Float **rgb;
+  int i;
+  Float x, incr;
+  rgb = make_base_rgb(size);
+  incr = 1.0 / (Float)size;
+  for (i = 0, x = 0.0; i < size; i++, x += incr)
+    {
+      rgb[0][i] = (x < 0.8) ? (1.25 * x) : 1.0;
+      rgb[1][i] = 0.8 * x;
+      rgb[2][i] = 0.5 * x;
+    }
+  return(rgb);
+}
+
+static Float **make_flag_colormap(int size, XEN ignored)
+{
+  /* (r (if (or (= k 0) (= k 1)) 1.0 0.0)) (g (if (= k 1) 1.0 0.0)) (b (if (or (= k 1) (= k 2)) 1.0 0.0)) */
+  Float **rgb;
+  int i, k = 0;
+  rgb = make_base_rgb(size);
+  for (i = 0; i < size; i++)
+    {
+      rgb[0][i] = (k < 2) ? 1.0 : 0.0;
+      rgb[1][i] = (k == 1) ? 1.0 : 0.0;
+      rgb[2][i] = ((k == 1) || (k == 2)) ? 1.0 : 0.0;
+      k++;
+      if (k == 4) k = 0;
+    }
+  return(rgb);
+}
+
+static Float **make_prism_colormap(int size, XEN ignored)
+{
+  /* (r (list-ref (list 1 1 1 0 0 2/3) k)) (g (list-ref (list 0 1/2 1 1 0 0) k)) (b (list-ref (list 0 0 0 0 1 1) k)) */
+  Float **rgb;
+  int i, k = 0;
+  Float rs[6] = {1.0, 1.0, 1.0, 0.0, 0.0, 0.6667};
+  Float gs[6] = {0.0, 0.5, 1.0, 1.0, 0.0, 0.0};
+  Float bs[6] = {0.0, 0.0, 0.0, 0.0, 1.0, 1.0};
+  rgb = make_base_rgb(size);
+  for (i = 0; i < size; i++)
+    {
+      rgb[0][i] = rs[k];
+      rgb[1][i] = gs[k];
+      rgb[2][i] = bs[k];
+      k++;
+      if (k == 6) k = 0;
+    }
+  return(rgb);
+}
+
+static Float **make_bone_colormap(int size, XEN ignored)
+{
+  /* (r (if (< x 3/4) (* 7/8 x) (- (* 11/8 x) 3/8)))
+     (g (if (< x 3/8) (* 7/8 x) (if (< x 3/4) (- (* 29/24 x) 1/8) (+ (* 7/8 x) 1/8))))
+     (b (if (< x 3/8) (* 29/24 x) (+ (* 7/8 x) 1/8)))
+  */
+  Float **rgb;
+  int i;
+  Float x, incr;
+  rgb = make_base_rgb(size);
+  incr = 1.0 / (Float)size;
+  for (i = 0, x = 0.0; i < size; i++, x += incr)
+    {
+      rgb[0][i] = (x < .75) ? (x * .875) : ((x * 11.0 / 8.0) - .375);
+      rgb[1][i] = (x < .375) ? (x * .875) : ((x < .75) ? ((x * 29.0 / 24.0) - .125) : ((x * .875) + .125));
+      rgb[2][i] = (x < .375) ? (x * 29.0 / 24.0) : ((x * .875) + .125);
+    }
+  return(rgb);
+}
+
+static Float **make_hot_colormap(int size, XEN ignored)
+{
+  /* (matlab here, not octave)
+     (r (if (< x 3/8) (* 8/3 x) 1.0))
+     (g (if (< x 3/8) 0.0 (if (< x 3/4) (- (* 8/3 x) 1.0) 1.0)))
+     (b (if (< x 3/4) 0.0 (- (* 4 x) 3)))
+  */
+  Float **rgb;
+  int i;
+  Float x, incr;
+  rgb = make_base_rgb(size);
+  incr = 1.0 / (Float)size;
+  for (i = 0, x = 0.0; i < size; i++, x += incr)
+    {
+      rgb[0][i] = (x < .375) ? (x * 8.0 / 3.0) : 1.0;
+      rgb[1][i] = (x < .375) ? 0.0 : ((x < .75) ? ((x * 8.0 / 3.0) - 1.0) : 1.0);
+      rgb[2][i] = (x < .75) ? 0.0 : ((x * 4.0) - 3.0);
+    }
+  return(rgb);
+}
+
+
+/*
+  jet:
+      (let* ((r (if (< x 3/8)
+		    0.0
+		    (if (< x 5/8)
+			(- (* 4 x) 3/2)
+			(if (< x 7/8)
+			    1.0
+			    (+ (* -4 x) 9/2)))))
+	     (g (if (< x 1/8)
+		    0.0
+		    (if (< x 3/8)
+			(- (* 4 x) 1/2)
+			(if (< x 5/8)
+			    1.0
+			    (if (< x 7/8)
+				(+ (* -4 x) 7/2)
+				0.0)))))
+	     (b (if (< x 1/8)
+		    (+ (* 4 x) 1/2)
+		    (if (< x 3/8)
+			1.0
+			(if (< x 5/8)
+			    (+ (* -4 x) 5/2)
+			    0.0))))
+
+  pink?:
+      (let* ((r (if (< x 3/8)
+		    (* 14/9 x)
+		    (+ (* 2/3 x) 1/3)))
+	     (g (if (< x 3/8)
+		    (* 2/3 x)
+		    (if (< x 3/4)
+			(- (* 14/9 x) 1/3)
+			(+ (* 2/3 x) 1/3))))			
+	     (b (if (< x 3/4)
+		    (* 2/3 x)
+		    (- (* 2 x) 1)))
+
+
+
+  rainbow:
+      (let* ((r (if (< x 2/5)
+		    1.0
+		    (if (< x 3/5)
+			(+ (* -5 x) 3)
+			(if (< x 4/5)
+			    0.0
+			    (- (* 10/3 x) 8/3)))))
+	     ;; r = (x < 2/5) + (x >= 2/5 & x < 3/5) .* (-5 * x + 3) + (x >= 4/5) .* (10/3 * x - 8/3);
+	     (g (if (< x 2/5)
+		    (* 5/2 x)
+		    (if (< x 3/5)
+			1.0
+			(if (< x 4/5)
+			    (+ (* -5 x) 4)
+			    0.0))))
+	     ;; g = (x < 2/5) .* (5/2 * x) + (x >= 2/5 & x < 3/5) + (x >= 3/5 & x < 4/5) .* (-5 * x + 4);
+	     (b (if (< x 3/5)
+		    0.0
+		    (if (< x 4/5)
+			(- (* 5 x) 3)
+			1.0)))
+	     ;; b = (x >= 3/5 & x < 4/5) .* (5 * x - 3) + (x >= 4/5)
+*/
+
+#define NO_COLOR -1
+/* PUT NO_COLOR in snd-0.h */
+
+int skew_color(Float x)
+{
+  Float base, val;
+  int pos;
+  if (x < color_cutoff(ss)) return(NO_COLOR);
+  if (color_inverted(ss))   
+    val = 1.0 - x;
+  else val = x;
+  base = color_scale(ss);
+  if ((base > 0.0) && (base != 1.0))
+    val = (pow(base, val) - 1.0) / (base - 1.0);
+  pos = (int)(val * colormap_size(ss));
+  if (pos > colormap_size(ss)) return(colormap_size(ss) - 1);
+  if (pos > 0)
+    return(pos - 1);
+  return(0);
+}
+
+/* REDOC/check all: change to require map index as well as pos */
+
+static XEN g_colormap_ref(XEN map, XEN pos)
+{
+  #define H_colormap_ref "(" S_colormap_ref " index pos): (list r g b). Index is the colormap \
+index (the value of " S_colormap " for example).  Pos is between 0.0 and 1.0."
+  unsigned short r = 0, g = 0, b = 0;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(map), map, XEN_ARG_1, S_colormap_ref, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, XEN_ARG_2, S_colormap_ref, "an integer");
+  get_current_color(XEN_TO_C_INT(map), XEN_TO_C_INT(pos), &r, &g, &b);
+  return(XEN_LIST_3(C_TO_XEN_DOUBLE((float)r / 65535.0),
+		    C_TO_XEN_DOUBLE((float)g / 65535.0),
+		    C_TO_XEN_DOUBLE((float)b / 65535.0)));
+}
+
+/* REDOC/check all: no notion of -1 as black and white -- make this a colormap */
+/* REDEF rgb.scm|rb colormap names */
+/* REMOVE NUM_COLORMAPS, COLORMAP_SIZE */
+
+/* can't use Colormap -- it's the X type name */
+
+static XEN g_colormap(void) {return(C_TO_XEN_INT(colormap(ss)));}
+static XEN g_set_colormap(XEN val) 
+{
+  #define H_colormap "(" S_colormap "): current colormap choice. \
+This should be an integer between 0 and the current colormap table top (default: 15).  The maps (from 0 to 15) are: \
+black-and-white, gray, hot, cool, bone, copper, pink, jet, prism, autumn, winter, \
+spring, summer, rainbow, and flag.  These names are defined in rgb.scm."
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_colormap, "an integer"); 
+  set_color_map(mus_iclamp(0,
+			   XEN_TO_C_INT(val),
+			   cmaps_size - 1));
+  return(C_TO_XEN_INT(colormap(ss)));
+}
+
+/* doc/test/save-state */
+static XEN g_colormap_size(void) {return(C_TO_XEN_INT(colormap_size(ss)));}
+static XEN g_set_colormap_size(XEN val) 
+{
+  #define H_colormap_size "(" S_colormap_size "): current colormap size; default is 512."
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_colormap_size, "an integer"); 
+  set_colormap_size(XEN_TO_C_INT(val));
+  return(C_TO_XEN_INT(colormap_size(ss)));
+}
+
+
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_2(g_colormap_ref_w, g_colormap_ref)
+XEN_NARGIFY_0(g_colormap_w, g_colormap)
+XEN_NARGIFY_1(g_set_colormap_w, g_set_colormap)
+XEN_NARGIFY_0(g_colormap__sizew, g_colormap_size)
+XEN_NARGIFY_1(g_set_colormap_size_w, g_set_colormap_size)
+#else
+#define g_colormap_ref_w g_colormap_ref
+#define g_colormap_w g_colormap
+#define g_set_colormap_w g_set_colormap
+#define g_colormap__sizew g_colormap_size
+#define g_set_colormap_size_w g_set_colormap_size
+#endif
+
+void g_init_gxcolormaps(void)
+{
+  XEN_DEFINE_PROCEDURE(S_colormap_ref, g_colormap_ref_w, 2, 0, 0, H_colormap_ref);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_colormap, g_colormap_w, H_colormap, S_setB S_colormap, g_set_colormap_w, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_colormap_size, g_colormap_size_w, H_colormap_size, S_setB S_colormap_size, g_set_colormap_size_w, 0, 0, 1, 0);
+}
+
+
+enum {BLACK_AND_WHITE_COLORMAP, GRAY_COLORMAP, HOT_COLORMAP, COOL_COLORMAP, BONE_COLORMAP, COPPER_COLORMAP, PINK_COLORMAP, JET_COLORMAP, PRISM_COLORMAP,
+      AUTUMN_COLORMAP, WINTER_COLORMAP, SPRING_COLORMAP, SUMMER_COLORMAP, RAINBOW_COLORMAP, FLAG_COLORMAP};
+/* REDOC these! */
+
+
+void g_init_gxcolormaps(void)
+{
+  cmaps_size = 16;
+  cmaps = (cmaps **)CALLOC(cmaps_size, sizeof(cmap *));
+  /* these are just place-holders */
+  cmaps[BLACK_AND_WHITE_COLORMAP] = make_builtin_cmap(1, _("black-and-white"), make_black_and_white_colormap); 
+  cmaps[GRAY_COLORMAP] = make_builtin_cmap(1, _("gray"), make_gray_colormap); 
+  cmaps[SPRING_COLORMAP] = make_builtin_cmap(1, _("spring"), make_spring_colormap); 
+  cmaps[WINTER_COLORMAP] = make_builtin_cmap(1, _("winter"), make_winter_colormap); 
+  cmaps[SUMMER_COLORMAP] = make_builtin_cmap(1, _("summer"), make_summer_colormap); 
+  cmaps[COOL_COLORMAP] = make_builtin_cmap(1, _("cool"), make_cool_colormap); 
+  cmaps[COPPER_COLORMAP] = make_builtin_cmap(1, _("copper"), make_copper_colormap); 
+  cmaps[FLAG_COLORMAP] = make_builtin_cmap(1, _("flag"), make_flag_colormap); 
+  cmaps[PRISM_COLORMAP] = make_builtin_cmap(1, _("prism"), make_prism_colormap); 
+  cmaps[BONE_COLORMAP] = make_builtin_cmap(1, _("bone"), make_bone_colormap); 
+  cmaps[HOT_COLORMAP] = make_builtin_cmap(1, _("hot"), make_hot_colormap); 
+}
+
+#endif

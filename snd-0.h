@@ -611,6 +611,10 @@ typedef enum {PLAY_COMPLETE, PLAY_EXIT, PLAY_CLOSE, PLAY_BUTTON_UNSET,
   #define DEFAULT_COLOR_MAP BLACK_AND_WHITE
 #endif
 
+#define color_map_size(ss) ss->Color_Map_Size
+#define set_color_map_size(a) ss->Color_Map_Size = a
+#define DEFAULT_COLOR_MAP_SIZE 512
+
 #define graph_style(ss) ss->Graph_Style
 #define in_set_graph_style(a) ss->Graph_Style = a
 #define DEFAULT_GRAPH_STYLE GRAPH_LINES

@@ -6575,30 +6575,6 @@ If 'data' is a list of numbers, it is treated as an envelope."
   return(xen_return_first(XEN_FALSE, data, ldata, xlabel));
 }
 
-#define S_colormap_ref "colormap-ref"
-static XEN g_colormap_ref(XEN map, XEN pos)
-{
-  #define H_colormap_ref "(" S_colormap_ref " map (pos #f)): (list r g b). map can be a number \
-between 0.0 and 1.0 with pos omitted -- in this case the color_map and so on comes from the color \
-dialog.  Colormap names can be found in rgb.scm"
-  unsigned short r, g, b;
-
-  if (XEN_NOT_BOUND_P(pos))
-    {
-      XEN_ASSERT_TYPE(XEN_NUMBER_P(map), map, XEN_ARG_1, S_colormap_ref, "a number");
-      get_current_color(color_map(ss), skew_color(XEN_TO_C_DOUBLE(map)), &r, &g, &b);
-    }
-  else
-    {
-      XEN_ASSERT_TYPE(XEN_INTEGER_P(map), map, XEN_ARG_1, S_colormap_ref, "an integer");
-      XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, XEN_ARG_2, S_colormap_ref, "an integer");
-      get_current_color(XEN_TO_C_INT(map), XEN_TO_C_INT(pos), &r, &g, &b);
-    }
-  return(XEN_LIST_3(C_TO_XEN_DOUBLE((float)r / 65535.0),
-		    C_TO_XEN_DOUBLE((float)g / 65535.0),
-		    C_TO_XEN_DOUBLE((float)b / 65535.0)));
-}
-
 #if HAVE_GL
 #define S_glSpectrogram "glSpectrogram"
 static XEN g_gl_spectrogram(XEN data, XEN gl_list, XEN cutoff, XEN use_dB, XEN min_dB, XEN scale, XEN br, XEN bg, XEN bb)
@@ -6846,7 +6822,6 @@ XEN_ARGIFY_3(g_set_y_bounds_w, g_set_y_bounds)
 XEN_ARGIFY_2(g_update_time_graph_w, g_update_time_graph)
 XEN_ARGIFY_2(g_update_lisp_graph_w, g_update_lisp_graph)
 XEN_ARGIFY_2(g_update_transform_graph_w, g_update_transform_graph)
-XEN_ARGIFY_2(g_colormap_ref_w, g_colormap_ref)
 #if HAVE_GL
   XEN_NARGIFY_9(g_gl_spectrogram_w, g_gl_spectrogram)
 #endif
@@ -6980,7 +6955,6 @@ XEN_ARGIFY_2(g_colormap_ref_w, g_colormap_ref)
 #define g_update_time_graph_w g_update_time_graph
 #define g_update_lisp_graph_w g_update_lisp_graph
 #define g_update_transform_graph_w g_update_transform_graph
-#define g_colormap_ref_w g_colormap_ref
 #if HAVE_GL
   #define g_gl_spectrogram_w g_gl_spectrogram
 #endif
@@ -7236,7 +7210,6 @@ void g_init_chn(void)
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_y_bounds, g_y_bounds_w, H_y_bounds,
 					    S_setB S_y_bounds, g_set_y_bounds_w, g_set_y_bounds_reversed, 0, 2, 1, 2);
 
-  XEN_DEFINE_PROCEDURE(S_colormap_ref, g_colormap_ref_w, 1, 1, 0, H_colormap_ref);
 #if HAVE_GL
   XEN_DEFINE_PROCEDURE(S_glSpectrogram, g_gl_spectrogram_w, 9, 0, 0, H_glSpectrogram);
 #endif
