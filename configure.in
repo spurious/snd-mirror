@@ -111,6 +111,9 @@ AC_ARG_WITH(gsl,
             if test "`gsl-config --version`" = "0.6"; then
               GSL_LIBS="$GSL_LIBS -lgslblasnative"
             fi
+            if test "`gsl-config --version`" = "0.7"; then
+              GSL_LIBS="$GSL_LIBS -lgslblas"
+            fi
             gsl_version="`gsl-config --version`"
             AC_DEFINE_UNQUOTED(GSL_VERSION,"${gsl_version}")
 	fi)

@@ -256,6 +256,10 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+30-Oct:  added examp.scm soft-port example of redirecting display to Snd's listener.\n\
+         added support for GSL 0.7\n\
+         scale-selection-to bugfix.\n\
+         added selection-creates-region switch, channel-sync.\n\
 25-Oct:  emacs subjob 'read: unexpected \")\"' bugfix, I hope.\n\
 24-Oct:  eps-bottom-margin and eps-left-margin (for Print command).\n\
          menu-hook\n\
@@ -274,8 +278,6 @@ void news_help(snd_state *ss)
 11-Oct:  added delete button in envelope editor.\n\
 10-Oct:  removed scaler arg to mix-region and associated kbd scaler arg.\n\
 9-Oct:   bird.scm.  added origin arg to as-one-edit.\n\
-6-Oct:   removed chans arg to mix-vct.\n\
-4-Oct:   added enved-active-env and enved-selected-env.\n\
 ",
 NULL);
   FREE(info);
@@ -922,6 +924,7 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_bold_button_font "      varies\n\
   " S_button_font "           varies\n\
   " S_channel_style "         " S_channels_separate "\n\
+  " S_channel_sync "          0 (snd #t) (chn #t)\n\
   " S_color_cutoff "          0.003\n\
   " S_color_inverted "        #t\n\
   " S_color_scale "           0.5\n\
@@ -1004,6 +1007,7 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_selected_graph_color "  white\n\
   " S_selected_mix_color "    green2\n\
   " S_selection_color "       lightsteelblue1\n\
+  " S_selection_creates_region " #t\n\
   " S_show_axes "             show-all-axes (snd #t) (chn #t)\n\
   " S_show_fft_peaks "        #f (snd #t) (chn #t)\n\
   " S_show_indices "          #f\n\

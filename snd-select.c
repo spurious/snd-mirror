@@ -80,7 +80,7 @@ static int cp_selection_end(chan_info *cp, void *begptr)
   return(0);
 }
 
-static int selection_end(chan_info *cp)
+int selection_end(chan_info *cp)
 {
   int beg[1];
   beg[0] = 0;
@@ -186,10 +186,21 @@ void reactivate_selection(chan_info *cp, int beg, int end)
 static void update_selection(chan_info *cp, int newend)
 {
   ed_list *ed;
+  int samps;
   ed = cp->edits[cp->edit_ctr];
   if (newend < ed->selection_beg) 
-    ed->selection_beg = newend;
-  else ed->selection_end = newend;
+    {
+      if (newend >= 0)
+	ed->selection_beg = newend;
+      else ed->selection_beg = 0;
+    }
+  else 
+    {
+      samps = current_ed_samples(cp);
+      if (newend < samps)
+	ed->selection_end = newend;
+      else ed->selection_end = samps-1;
+    }
 }
 
 void ripple_selection(ed_list *ed, int beg, int num)
@@ -318,7 +329,8 @@ void paste_selection_from_menu(snd_state *ss)
 void start_selection_creation(chan_info *cp, int samp)
 {  
   int i;
-  if (selection_creation_chans) /* hmmm -- if keyboard selection in progress, then mouse press? */
+  if ((selection_creation_chans) && (selection_creates_region(cp->state)))
+    /* hmmm -- if keyboard selection in progress, then mouse press? */
     make_region_from_selection();
   deactivate_selection();
   selection_creation_chans = sync_to_chan(cp);
@@ -343,9 +355,11 @@ int selection_creation_in_progress(void) {return(selection_creation_chans != NUL
 
 void finish_selection_creation(void)
 {
+  snd_state *ss;
   if (selection_creation_chans)
     {
-      make_region_from_selection();
+      ss = get_global_state();
+      if (selection_creates_region(ss)) make_region_from_selection();
       reflect_edit_with_selection_in_menu();
       selection_creation_chans = free_sync_info(selection_creation_chans);      
     }
@@ -418,7 +432,11 @@ void make_region_from_selection(void)
       /* C-space followed by mouse click causes a bogus selection-creation event */
     }
   if (happy)
-    define_region(si,ends);
+    {
+      if (selection_len() > 10000000) report_in_minibuffer(si->cps[0]->sound,"making region...");
+      define_region(si,ends);
+      if (selection_len() > 10000000) report_in_minibuffer(si->cps[0]->sound," ");
+    }
   si = free_sync_info(si);
 }
 
@@ -436,7 +454,7 @@ void select_all(chan_info *cp)
 	  update_graph(si->cps[i],NULL);
 	}
       si = free_sync_info(si);
-      make_region_from_selection();
+      if (selection_creates_region(cp->state)) make_region_from_selection();
     }
 }
 

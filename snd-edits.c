@@ -2,8 +2,6 @@
 
 /* TODO   undo-hook is not very useful until we can make channel-specific GUI indications
  * TODO   add more general SCM func mechanism? or add a way to extend the pre-parsed cases
- * TODO   cursor_zeros should use the auto-zero business. (what about amp_envs in these cases?)
- * TODO     similarly scale selection etc
  *
  * the latter is under the WITH_PARSE_TREES switch.  ed_list has 2 extra fields:
  *      MUS_SAMPLE_TYPE (*func)(struct chan__info *cp, int pos, struct snd__fd *sf,void *env);
@@ -29,7 +27,6 @@
  *   seg envs could be similar, but add incr (so now + * not just *)
  * reverse could set read-dir and loc based on assumed reverse; if subsequent edit, perform the reverse
  *   or do the reverse as a background op until it's needed (whereupon force completion)
- *
  */
 
 
@@ -66,6 +63,19 @@
 #define FLOAT_AS_INT(X) (*((int *)(&(X))))
 #define UNWRAP_SAMPLE(X,ED) ((X) * (INT_AS_FLOAT(ED)))
 #define UNWRAP_SAMPLE_TO_FLOAT(X,SF) ((X) * (SF->scaler))
+
+/* try to make this code easier to read... */
+#define FRAGMENT_GLOBAL_POSITION(EDLIST,FRAGMENT_NUM)  EDLIST->fragments[FRAGMENT_NUM * ED_SIZE + ED_OUT]
+#define FRAGMENT_LOCAL_POSITION(EDLIST,FRAGMENT_NUM)   EDLIST->fragments[FRAGMENT_NUM * ED_SIZE + ED_BEG]
+#define FRAGMENT_LOCAL_END(EDLIST,FRAGMENT_NUM)        EDLIST->fragments[FRAGMENT_NUM * ED_SIZE + ED_END]
+#define FRAGMENT_SCALER(EDLIST,FRAGMENT_NUM)           EDLIST->fragments[FRAGMENT_NUM * ED_SIZE + ED_SCL]
+#define FRAGMENT_SOUND(EDLIST,FRAGMENT_NUM)            EDLIST->fragments[FRAGMENT_NUM * ED_SIZE + ED_SND]
+
+#define FRAGMENT_GLOBAL_POSITION_OFFSET(EDLIST,OFFSET) EDLIST->fragments[OFFSET + ED_OUT]
+#define FRAGMENT_LOCAL_POSITION_OFFSET(EDLIST,OFFSET)  EDLIST->fragments[OFFSET + ED_BEG]
+#define FRAGMENT_LOCAL_END_OFFSET(EDLIST,OFFSET)       EDLIST->fragments[OFFSET + ED_END]
+#define FRAGMENT_SCALER_OFFSET(EDLIST,OFFSET)          EDLIST->fragments[OFFSET + ED_SCL]
+#define FRAGMENT_SOUND_OFFSET(EDLIST,OFFSET)           EDLIST->fragments[OFFSET + ED_SND]
 
 #define EDIT_LIST_END_MARK -2
 #define EDIT_ALLOC_SIZE 128
@@ -110,11 +120,11 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
   for (j=0;j<len;j++)
     {
       fprintf(outp,"\n   (at %d, cp->sounds[%d][%d:%d, %f])",
-	      ed->fragments[j*ED_SIZE+ED_OUT],
-	      index = ed->fragments[j*ED_SIZE+ED_SND],
-	      ed->fragments[j*ED_SIZE+ED_BEG],
-	      ed->fragments[j*ED_SIZE+ED_END],
-	      INT_AS_FLOAT(ed->fragments[j*ED_SIZE+ED_SCL]));
+	      FRAGMENT_GLOBAL_POSITION(ed,j),
+	      index = FRAGMENT_SOUND(ed,j),
+	      FRAGMENT_LOCAL_POSITION(ed,j),
+	      FRAGMENT_LOCAL_END(ed,j),
+	      INT_AS_FLOAT(FRAGMENT_SCALER(ed,j)));
       if (index != EDIT_LIST_END_MARK)
 	{
 	  sd = cp->sounds[index];
@@ -146,7 +156,7 @@ int no_ed_scalers(chan_info *cp)
     {
       len = ed->size;
       for (i=0;i<len-1;i++)
-	if (INT_AS_FLOAT(ed->fragments[i*ED_SIZE + ED_SCL]) != 1.0)
+	if (INT_AS_FLOAT(FRAGMENT_SCALER(ed,i)) != 1.0)
 	  return(0);
       return(1);
     }
@@ -165,10 +175,10 @@ int edit_changes_begin_at(chan_info *cp)
     min_len = (len*ED_SIZE); 
   else min_len = (old_len*ED_SIZE);
   for (i=0;i<min_len;i+=ED_SIZE)
-    if ((ed->fragments[i+ED_OUT] != old_ed->fragments[i+ED_OUT]) || 
-	(ed->fragments[i+ED_SND] != old_ed->fragments[i+ED_SND]) || 
-	(ed->fragments[i+ED_BEG] != old_ed->fragments[i+ED_BEG]))
-      return(ed->fragments[i+ED_OUT]);
+    if ((FRAGMENT_GLOBAL_POSITION_OFFSET(ed,i) != FRAGMENT_GLOBAL_POSITION_OFFSET(old_ed,i)) || 
+	(FRAGMENT_SOUND_OFFSET(ed,i) != FRAGMENT_SOUND_OFFSET(old_ed,i)) || 
+	(FRAGMENT_LOCAL_POSITION_OFFSET(ed,i) != FRAGMENT_LOCAL_POSITION_OFFSET(old_ed,i)))
+      return(FRAGMENT_GLOBAL_POSITION_OFFSET(ed,i));
   return(0);
 }
 
@@ -180,15 +190,15 @@ int edit_changes_end_at(chan_info *cp)
   ed = cp->edits[cp->edit_ctr];
   old_len = old_ed->size - 1;
   len = ed->size - 1;
-  if (ed->fragments[len*ED_SIZE + ED_SND] == EDIT_LIST_END_MARK) len--;
-  if (old_ed->fragments[old_len*ED_SIZE + ED_SND] == EDIT_LIST_END_MARK) old_len--;
+  if (FRAGMENT_SOUND(ed,len) == EDIT_LIST_END_MARK) len--;
+  if (FRAGMENT_SOUND(old_ed,old_len) == EDIT_LIST_END_MARK) old_len--;
   while ((len>=0) && (old_len>=0))
     {
-      if ((ed->fragments[len*ED_SIZE+ED_SND] == old_ed->fragments[old_len*ED_SIZE+ED_SND]) &&
-	  (ed->fragments[len*ED_SIZE+ED_END] == old_ed->fragments[old_len*ED_SIZE+ED_END]))
+      if ((FRAGMENT_SOUND(ed,len) == FRAGMENT_SOUND(old_ed,old_len)) &&
+	  (FRAGMENT_LOCAL_END(ed,len) == FRAGMENT_LOCAL_END(old_ed,old_len)))
 	{
-	  if (ed->fragments[len*ED_SIZE+ED_BEG] != old_ed->fragments[old_len*ED_SIZE+ED_BEG])
-	    return(cp->samples[cp->edit_ctr - 1] - (ed->fragments[len*ED_SIZE + ED_END] - ed->fragments[len*ED_SIZE + ED_BEG]));
+	  if (FRAGMENT_LOCAL_POSITION(ed,len) != FRAGMENT_LOCAL_POSITION(old_ed,old_len))
+	    return(cp->samples[cp->edit_ctr - 1] - (FRAGMENT_LOCAL_END(ed,len) - FRAGMENT_LOCAL_POSITION(ed,len)));
 	  len--;
 	  old_len--;
 	}
@@ -391,7 +401,8 @@ static ed_list *make_ed_list(int size)
   ed->size = size;
   ed->fragments = (int *)CALLOC(size*ED_SIZE,sizeof(int));
   ed->origin = NULL;
-  ed->maxamp = 0.0;
+  ed->maxamp = -1.0;
+  ed->selection_maxamp = -1.0;
   return(ed);
 }
 
@@ -407,6 +418,20 @@ Float ed_maxamp(chan_info *cp)
   ed_list *ed;
   ed = cp->edits[cp->edit_ctr];
   return(ed->maxamp);
+}
+
+void set_ed_selection_maxamp(chan_info *cp, Float val)
+{
+  ed_list *ed;
+  ed = cp->edits[cp->edit_ctr];
+  ed->selection_maxamp = val;
+}
+
+Float ed_selection_maxamp(chan_info *cp)
+{
+  ed_list *ed;
+  ed = cp->edits[cp->edit_ctr];
+  return(ed->selection_maxamp);
 }
 
 static ed_list *append_ed_list(chan_info *cp, int size)
@@ -503,16 +528,16 @@ static ed_list *initial_ed_list(int beg, int end)
   ed->selection_end = 0;
   ed->sfnum = PACK_EDIT(INITIALIZE_EDIT,0);
   /* origin (channel %s %d) desc channel should be obvious from context */
-  ed->fragments[0*ED_SIZE + ED_BEG] = beg;
-  ed->fragments[0*ED_SIZE + ED_END] = end;
-  ed->fragments[0*ED_SIZE + ED_SND] = 0;
-  ed->fragments[0*ED_SIZE + ED_OUT] = 0;
-  ed->fragments[0*ED_SIZE + ED_SCL] = FLOAT_AS_INT(one);
+  FRAGMENT_LOCAL_POSITION(ed,0) = beg;
+  FRAGMENT_LOCAL_END(ed,0) = end;
+  FRAGMENT_SOUND(ed,0) = 0;
+  FRAGMENT_GLOBAL_POSITION(ed,0) = 0;
+  FRAGMENT_SCALER(ed,0) = FLOAT_AS_INT(one);
   /* second block is our end-of-tree marker */
-  ed->fragments[1*ED_SIZE + ED_BEG] = 0;
-  ed->fragments[1*ED_SIZE + ED_END] = 0;
-  ed->fragments[1*ED_SIZE + ED_SND] = EDIT_LIST_END_MARK;
-  ed->fragments[1*ED_SIZE + ED_OUT] = end+1;
+  FRAGMENT_LOCAL_POSITION(ed,1) = 0;
+  FRAGMENT_LOCAL_END(ed,1) = 0;
+  FRAGMENT_SOUND(ed,1) = EDIT_LIST_END_MARK;
+  FRAGMENT_GLOBAL_POSITION(ed,1) = end+1;
   return(ed);
 }
 
@@ -526,14 +551,68 @@ void set_initial_ed_list(chan_info *cp,int len)
   cp->edits[0] = initial_ed_list(0,len);
 }
 
-static int find_split_loc (chan_info *cp, int samp, ed_list *current_state)
+static int find_split_loc(int samp, ed_list *current_state)
 {
   int i,k;
   for (i=0,k=0;i<current_state->size;i++,k+=ED_SIZE)
-    if (current_state->fragments[k+ED_OUT] >= samp) 
+    if (FRAGMENT_GLOBAL_POSITION_OFFSET(current_state,k) >= samp) 
       return(i);
   return(0); /* make sgi compiler happy */
 }
+
+static ed_list *selected_ed_list(int beg, int end, ed_list *current_state)
+{
+  int bk,ek,new_size,i,k,j,oldk,diff;
+  ed_list *new_ed;
+  bk = find_split_loc(beg,current_state);
+  if (FRAGMENT_GLOBAL_POSITION(current_state,bk) > beg) bk--;
+  ek = find_split_loc(end,current_state) - 1;
+  if (ek < 0) ek = 0;
+  new_size = current_state->size;
+  if (FRAGMENT_GLOBAL_POSITION(current_state,bk) != beg) new_size++;
+  if (FRAGMENT_GLOBAL_POSITION(current_state,(ek+1)) != end+1) new_size++;
+  new_ed = make_ed_list(new_size);
+  new_ed->size = new_size;
+  for (k=0;k<=bk;k++)
+    {
+      j = k*ED_SIZE;
+      for (i=0;i<ED_SIZE;i++)
+	new_ed->fragments[j + i] = current_state->fragments[j + i];
+    }
+  k=bk+1;
+  diff = beg - FRAGMENT_GLOBAL_POSITION(current_state,bk);
+  if (diff != 0)
+    {
+      for (i=0;i<ED_SIZE;i++)
+	new_ed->fragments[k*ED_SIZE + i] = current_state->fragments[bk*ED_SIZE + i];
+      FRAGMENT_LOCAL_END(new_ed,bk) = FRAGMENT_LOCAL_POSITION(new_ed,bk) + diff - 1;
+      FRAGMENT_GLOBAL_POSITION(new_ed,k) = beg;
+      FRAGMENT_LOCAL_POSITION(new_ed,k) = FRAGMENT_LOCAL_END(new_ed,bk) + 1;
+      k++;
+    }
+  for (oldk=bk+1;oldk<=ek;oldk++,k++)
+    {
+      for (i=0;i<ED_SIZE;i++)
+	new_ed->fragments[k*ED_SIZE + i] = current_state->fragments[oldk*ED_SIZE + i];
+    }
+  diff = FRAGMENT_GLOBAL_POSITION(current_state,(ek+1)) - end - 1;
+  if (diff != 0)
+    {
+      for (i=0;i<ED_SIZE;i++)
+	new_ed->fragments[k*ED_SIZE + i] = current_state->fragments[ek*ED_SIZE + i];
+      FRAGMENT_LOCAL_END(new_ed,(k-1)) -= diff;
+      FRAGMENT_LOCAL_POSITION(new_ed,k) = FRAGMENT_LOCAL_END(new_ed,(k-1)) + 1;
+      FRAGMENT_GLOBAL_POSITION(new_ed,k) = end+1; /* 1? */
+      k++;
+    }
+  for (oldk=ek+1;(oldk<=current_state->size) && (k < new_size);oldk++,k++)
+    {
+      for (i=0;i<ED_SIZE;i++)
+	new_ed->fragments[k*ED_SIZE + i] = current_state->fragments[oldk*ED_SIZE + i];
+    }
+  return(new_ed);
+}
+
 
 /* there are a few special-case multi-channel temp files that need a kind of reference count to handle deletion */
 /* this machinery affects only these special cases, not temp files in general */
@@ -1051,10 +1130,10 @@ static void check_for_first_edit(chan_info *cp)
 static void fixup_edlist_endmark(ed_list *new_state, ed_list *current_state, int len)
 {
   int k;
-  if (new_state->fragments[(new_state->size - 1)*ED_SIZE + ED_SND] != EDIT_LIST_END_MARK)
+  if (FRAGMENT_SOUND(new_state,(new_state->size - 1)) != EDIT_LIST_END_MARK)
     {
       for (k = new_state->size-1;k>0;k--)
-	if (new_state->fragments[k*ED_SIZE + ED_SND] == EDIT_LIST_END_MARK) break;
+	if (FRAGMENT_SOUND(new_state,k) == EDIT_LIST_END_MARK) break;
       if (k>0) 
 	new_state->size = k+1;
       else
@@ -1065,11 +1144,11 @@ static void fixup_edlist_endmark(ed_list *new_state, ed_list *current_state, int
 		{
 		  k = new_state->size;
 		  new_state->size += 1;
-		  new_state->fragments[ED_SIZE*new_state->size + ED_SND] = EDIT_LIST_END_MARK;
-		  new_state->fragments[ED_SIZE*new_state->size + ED_BEG] = new_state->fragments[ED_SIZE*k + ED_BEG];
-		  new_state->fragments[ED_SIZE*new_state->size + ED_OUT] = new_state->fragments[ED_SIZE*k + ED_OUT];
-		  new_state->fragments[ED_SIZE*new_state->size + ED_END] = new_state->fragments[ED_SIZE*k + ED_END];
-		  new_state->fragments[ED_SIZE*new_state->size + ED_SCL] = new_state->fragments[ED_SIZE*k + ED_SCL];
+		  FRAGMENT_SOUND(new_state,new_state->size) = EDIT_LIST_END_MARK;
+		  FRAGMENT_LOCAL_POSITION(new_state,new_state->size) = FRAGMENT_LOCAL_POSITION(new_state,k);
+		  FRAGMENT_GLOBAL_POSITION(new_state,new_state->size) = FRAGMENT_GLOBAL_POSITION(new_state,k);
+		  FRAGMENT_LOCAL_END(new_state,new_state->size) = FRAGMENT_LOCAL_END(new_state,k);
+		  FRAGMENT_SCALER(new_state,new_state->size) = FRAGMENT_SCALER(new_state,k);
 		}
 	    }
 	}
@@ -1086,7 +1165,7 @@ static ed_list *insert_samples_1 (int samp, int num, MUS_SAMPLE_TYPE* vals, ed_l
   if (num <= 0) return(NULL);
   len = current_state->size;
   ed = current_state->fragments;
-  k=find_split_loc(cp,samp,current_state);
+  k=find_split_loc(samp,current_state);
   cb = (int *)(ed + k*ED_SIZE);
   if ((k == 0) && (cb[ED_END] == -1))
     {
@@ -1256,7 +1335,7 @@ static ed_list *delete_samples_1(int beg, int num, ed_list *current_state, chan_
   if (num <= 0) return(NULL);
   len=current_state->size;
   len_fixup = -1;
-  k=find_split_loc(cp,beg,current_state);
+  k=find_split_loc(beg,current_state);
   need_to_delete = num;
   start_del = k;
   curbeg = beg;
@@ -1280,7 +1359,7 @@ static ed_list *delete_samples_1(int beg, int num, ed_list *current_state, chan_
     }
   while (need_to_delete > 0)
     {
-      old_out = (current_state->fragments[(cbi+1)*ED_SIZE+ED_OUT]);
+      old_out = FRAGMENT_GLOBAL_POSITION(current_state,(cbi+1));
       need_to_delete -= (old_out-curbeg);
       if (need_to_delete > 0)
 	{
@@ -1314,10 +1393,10 @@ static ed_list *delete_samples_1(int beg, int num, ed_list *current_state, chan_
   check_for_first_edit(cp);
   new_state->size = len+len_fixup; /* don't propogate useless trailing blocks */
   
-  if (new_state->fragments[(new_state->size - 1)*ED_SIZE + ED_SND] != EDIT_LIST_END_MARK)
+  if (FRAGMENT_SOUND(new_state,(new_state->size - 1)) != EDIT_LIST_END_MARK)
     {
       for (k = new_state->size-1;k>0;k--)
-	if (new_state->fragments[k*ED_SIZE + ED_SND] == EDIT_LIST_END_MARK) break;
+	if (FRAGMENT_SOUND(new_state,k) == EDIT_LIST_END_MARK) break;
       if (k>0) 
 	new_state->size = k+1; 
     }
@@ -1326,13 +1405,13 @@ static ed_list *delete_samples_1(int beg, int num, ed_list *current_state, chan_
       /* if cut all, no data remains, so (I think) it is legit to have a one-length fragment = end_mark */
       /* but just to be safe, I'll copy that mark */
       new_state->size = 2;
-      if (new_state->fragments[ED_BEG] < 0) new_state->fragments[ED_BEG] = 0;
-      if (new_state->fragments[ED_OUT] < 0) new_state->fragments[ED_OUT] = 0;
-      new_state->fragments[ED_SIZE + ED_SND] = EDIT_LIST_END_MARK;
-      new_state->fragments[ED_SIZE + ED_BEG] = new_state->fragments[ED_BEG];
-      new_state->fragments[ED_SIZE + ED_OUT] = new_state->fragments[ED_OUT];
-      new_state->fragments[ED_SIZE + ED_END] = new_state->fragments[ED_END];
-      new_state->fragments[ED_SIZE + ED_SCL] = new_state->fragments[ED_SCL];
+      if (FRAGMENT_LOCAL_POSITION(new_state,0) < 0) FRAGMENT_LOCAL_POSITION(new_state,0) = 0;
+      if (FRAGMENT_GLOBAL_POSITION(new_state,0) < 0) FRAGMENT_GLOBAL_POSITION(new_state,0) = 0;
+      FRAGMENT_SOUND(new_state,1) = EDIT_LIST_END_MARK;
+      FRAGMENT_LOCAL_POSITION(new_state,1) = FRAGMENT_LOCAL_POSITION(new_state,0);
+      FRAGMENT_GLOBAL_POSITION(new_state,1) = FRAGMENT_GLOBAL_POSITION(new_state,0);
+      FRAGMENT_LOCAL_END(new_state,1) = FRAGMENT_LOCAL_END(new_state,0);
+      FRAGMENT_SCALER(new_state,1) = FRAGMENT_SCALER(new_state,0);
     }
 
   return(new_state);
@@ -1371,7 +1450,7 @@ static ed_list *change_samples_1(int beg, int num, MUS_SAMPLE_TYPE *vals, ed_lis
   if (num <= 0) return(NULL);
   len = current_state->size;
   len_fixup = -1;
-  k=find_split_loc(cp,beg,current_state);
+  k=find_split_loc(beg,current_state);
   need_to_delete = num - lengthen;
   start_del = k;
   curbeg = beg;
@@ -1396,7 +1475,7 @@ static ed_list *change_samples_1(int beg, int num, MUS_SAMPLE_TYPE *vals, ed_lis
     }
   while (need_to_delete > 0)
     {
-      old_out = (current_state->fragments[(cbi+1)*ED_SIZE+ED_OUT]);
+      old_out = FRAGMENT_GLOBAL_POSITION(current_state,(cbi+1));
       need_to_delete -= (old_out-curbeg);
       if (need_to_delete > 0)
 	{
@@ -1535,7 +1614,7 @@ void file_override_samples(int num, char *tempfile, chan_info *cp, int chan, int
       e->fragments[0 + ED_SND] = add_sound_file_to_edit_list(cp,tempfile,datai,
 							     MUS_SAMPLE_ARRAY(datai[file_state_channel_offset(chan)]),
 							     hdr,auto_delete,chan);
-      e->sfnum = PACK_EDIT(CHANGE_EDIT,e->fragments[0 + ED_SND]);
+      e->sfnum = PACK_EDIT(CHANGE_EDIT,FRAGMENT_SOUND(e,0));
       reflect_edit_history_change(cp);
       reflect_sample_change_in_axis(cp);
       ripple_marks(cp,0,0);
@@ -1581,8 +1660,8 @@ void parse_tree_scale_by(chan_info *cp, Float scl)
   for (i=0;i<new_ed->size * ED_SIZE;i++) new_ed->fragments[i] = old_ed->fragments[i];
   for (i=0;i<new_ed->size;i++) 
     {
-      ed_scl = scl * INT_AS_FLOAT(new_ed->fragments[i*ED_SIZE + ED_SCL]);
-      new_ed->fragments[i*ED_SIZE + ED_SCL] = FLOAT_AS_INT(ed_scl);
+      ed_scl = scl * INT_AS_FLOAT(FRAGMENT_SCALER(new_ed,i));
+      FRAGMENT_SCALER(new_ed,i) = FLOAT_AS_INT(ed_scl);
     }
   new_ed->sfnum = PACK_EDIT(PARSED_EDIT,0);
   new_ed->origin = mus_format("scale-by %.4f",scl);
@@ -1592,6 +1671,41 @@ void parse_tree_scale_by(chan_info *cp, Float scl)
   new_ed->selection_beg = old_ed->selection_beg;
   new_ed->selection_end = old_ed->selection_end;
   check_for_first_edit(cp);
+  lock_affected_mixes(cp,0,len);
+  reflect_edit_history_change(cp);
+}
+
+void parse_tree_selection_scale_by(chan_info *cp, Float scl, int beg, int num)
+{
+  /* copy current ed-list and reset scalers */
+  int len,pos,i;
+  Float ed_scl;
+  ed_list *new_ed,*old_ed;
+  len = current_ed_samples(cp);
+  pos = cp->edit_ctr;
+  old_ed = cp->edits[pos];
+  prepare_edit_list(cp,len);
+  new_ed = selected_ed_list(beg,beg+num-1,old_ed);
+
+  for (i=0;i<new_ed->size;i++) 
+    {
+      if (FRAGMENT_GLOBAL_POSITION(new_ed,i) > (beg+num-1)) break; /* not >= (1 sample selections) */
+      if (FRAGMENT_GLOBAL_POSITION(new_ed,i) >= beg)
+	{
+	  ed_scl = scl * INT_AS_FLOAT(FRAGMENT_SCALER(new_ed,i));
+	  FRAGMENT_SCALER(new_ed,i) = FLOAT_AS_INT(ed_scl);
+	}
+    }
+
+  cp->edits[cp->edit_ctr] = new_ed;
+  new_ed->sfnum = PACK_EDIT(PARSED_EDIT,0);
+  new_ed->origin = mus_format("scale-selection-by %.4f",scl);
+  new_ed->beg = beg;
+  new_ed->len = num;
+  new_ed->selection_beg = old_ed->selection_beg;
+  new_ed->selection_end = old_ed->selection_end;
+  check_for_first_edit(cp);
+  lock_affected_mixes(cp,beg,beg+num);
   reflect_edit_history_change(cp);
 }
 
@@ -2532,10 +2646,14 @@ static SCM equalp_sf(SCM obj1, SCM obj2)
 static scm_sizet free_sf(SCM obj) 
 {
   snd_fd *fd = (snd_fd *)GH_VALUE_OF(obj); 
+  snd_info *sp = NULL;
   if (fd) 
     {
-      if (fd->local_sp) {completely_free_snd_info(fd->local_sp); fd->local_sp = NULL;}
-      free_snd_fd(fd); 
+      /* changed to reflect g_free_sample_reader 29-Oct-00 */
+      sp = fd->local_sp; 
+      fd->local_sp = NULL;
+      free_snd_fd(fd);
+      if (sp) completely_free_snd_info(sp);
     }
   return(0);
 }

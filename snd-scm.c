@@ -4,10 +4,7 @@
 /* TODO: perhaps fit-data-on-open should be fit-data, callable via hooks at open time
  *         but would be much faster if we can wait until the amp-env is computed
  * TODO  mark-moved-hook? selection-creation-hook? sample-color?
- * TODO  need to redirect scheme display output to snd's listener somehow
- *          (define %display display)
- *          (define (display arg) (with-output-to-string (lambda () (%display arg))))
- *          -- this works for display called from top-level in listener
+ * TODO  should snd-out soft-port (examp.scm) be built-in?
  */
 
 #if HAVE_GUILE
@@ -643,9 +640,15 @@ static SCM g_snd_print(SCM msg)
 {
   #define H_snd_print "(" S_snd_print " str) displays str in the lisp listener window"
   char *str=NULL;
-  SCM_ASSERT(gh_string_p(msg),msg,SCM_ARG1,S_snd_print);
+  SCM_ASSERT(gh_string_p(msg) || gh_char_p(msg),msg,SCM_ARG1,S_snd_print);
   state->result_printout = MESSAGE_WITHOUT_CARET;
-  str = gh_scm2newstr(msg,NULL);
+  if (gh_string_p(msg))
+    str = gh_scm2newstr(msg,NULL);
+  else
+    {
+      str = (char *)CALLOC(2,sizeof(char));
+      str[0] = gh_scm2char(msg);
+    }
   snd_append_command(state,str);
 #if DEBUGGING
   fprintf(stderr,"%s\n",str);
@@ -992,6 +995,15 @@ static SCM g_set_movies(SCM val)
   ERRB1(val,"set-" S_movies); 
   set_movies(state,bool_int_or_one(val));
   RTNBOOL(movies(state));
+}
+
+static SCM g_selection_creates_region(void) {RTNBOOL(selection_creates_region(state));}
+static SCM g_set_selection_creates_region(SCM val) 
+{
+  #define H_selection_creates_region "(" S_selection_creates_region ") -> #t if a region should be created each time a selection is made"
+  ERRB1(val,"set-" S_selection_creates_region); 
+  set_selection_creates_region(state,bool_int_or_one(val));
+  RTNBOOL(selection_creates_region(state));
 }
 
 static SCM g_normalize_on_open(void) {RTNBOOL(normalize_on_open(state));}
@@ -3320,6 +3332,9 @@ void g_initialize_gh(snd_state *ss)
   define_procedure_with_setter(S_movies,SCM_FNC g_movies,H_movies,
 			       "set-" S_movies,SCM_FNC g_set_movies,local_doc,0,0,0,1);
 
+  define_procedure_with_setter(S_selection_creates_region,SCM_FNC g_selection_creates_region,H_selection_creates_region,
+			       "set-" S_selection_creates_region,SCM_FNC g_set_selection_creates_region,local_doc,0,0,0,1);
+
   define_procedure_with_setter(S_normalize_on_open,SCM_FNC g_normalize_on_open,H_normalize_on_open,
 			       "set-" S_normalize_on_open,SCM_FNC g_set_normalize_on_open,local_doc,0,0,0,1);
 
@@ -3596,7 +3611,6 @@ the functions html and ? can be used in place of help to go to the HTML descript
                            (object-property func 'documentation))))))");
   /* TODO: should we append apropos results here, or a cf list? */
   /* TODO    to handle (extend) apropos from session.scm, we need to set up the Snd module, I think */
-  /* TODO: how to grab "display" output from scheme and put it in the listener? */
 
   gh_eval_str("(read-set! keywords 'prefix)");
 

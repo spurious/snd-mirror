@@ -1,5 +1,9 @@
 snd change log
 
+  30-Oct:    added examp.scm soft-port example of redirecting display to Snd's listener.
+             added support for GSL 0.7.
+             scale-selection-to bugfix.
+             added selection-creates-region switch.
   25-Oct:    emacs subjob 'read: unexpected ")"' bugfix.
   24-Oct:    eps-bottom-margin and eps-left-margin (for Print command). menu-hook.
   23-Oct:    interface to mixes changed:

@@ -103,6 +103,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->graphs_horizontal = graphs_horizontal(ss);
   cp->dot_size = dot_size(ss);
   cp->show_axes = show_axes(ss);
+  cp->sync = 0;
   cp->waving = 1; /* the default state (button is set when we start) */
   cp->ffting = 0;
   cp->printing = 0;

@@ -423,6 +423,91 @@ void amp_env_scale_by(chan_info *cp, Float scl)
     }
 }
 
+void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num)
+{
+  env_info *old_ep,*new_ep;
+  MUS_SAMPLE_TYPE fmax=MUS_SAMPLE_0,fmin=MUS_SAMPLE_0;
+  int i,cursamp,start,end;
+  old_ep = cp->amp_envs[cp->edit_ctr - 1];
+  if ((old_ep) && (old_ep->completed))
+    {
+      new_ep = cp->amp_envs[cp->edit_ctr];
+      if ((new_ep) && (new_ep->amp_env_size != old_ep->amp_env_size)) new_ep = free_amp_env(cp,cp->edit_ctr);
+      if (new_ep == NULL)
+	{
+	  new_ep = (env_info *)CALLOC(1,sizeof(env_info));
+	  new_ep->data_max = (MUS_SAMPLE_TYPE *)CALLOC(old_ep->amp_env_size,sizeof(MUS_SAMPLE_TYPE));
+	  new_ep->data_min = (MUS_SAMPLE_TYPE *)CALLOC(old_ep->amp_env_size,sizeof(MUS_SAMPLE_TYPE));
+	}
+      new_ep->amp_env_size = old_ep->amp_env_size;
+      new_ep->samps_per_bin = old_ep->samps_per_bin;
+      end = beg+num-1;
+      start = beg - new_ep->samps_per_bin;
+      for (i=0,cursamp=0;i<new_ep->amp_env_size;i++,cursamp+=new_ep->samps_per_bin) 
+	{
+	  if ((cursamp >= end) || (cursamp <= start))
+	    {
+	      new_ep->data_min[i] = old_ep->data_min[i];
+	      new_ep->data_max[i] = old_ep->data_max[i];
+	    }
+	  else
+	    {
+	      /* if segment is entirely in scaled section, just scale it */
+	      if ((cursamp >= beg) && ((cursamp + new_ep->samps_per_bin) <= end))
+		{
+		  if (scl >= 0.0)
+		    {
+		      new_ep->data_max[i] = (MUS_SAMPLE_TYPE)(old_ep->data_max[i] * scl);
+		      new_ep->data_min[i] = (MUS_SAMPLE_TYPE)(old_ep->data_min[i] * scl);
+		    }
+		  else
+		    {
+		      new_ep->data_max[i] = (MUS_SAMPLE_TYPE)(old_ep->data_min[i] * scl);
+		      new_ep->data_min[i] = (MUS_SAMPLE_TYPE)(old_ep->data_max[i] * scl);
+		    }
+		}
+	      else
+		{
+		  snd_fd *sf;
+		  int n,segstart,segend;
+		  MUS_SAMPLE_TYPE val,ymin,ymax;
+		  /* here we have to read the current bin using the current fragments */
+		  segstart = beg - cursamp;
+		  if (segstart < 0) segstart = 0;
+		  segend = cursamp + new_ep->samps_per_bin - end;
+		  if (segend < 0) segend = new_ep->samps_per_bin;
+		  sf = init_sample_read(cursamp,cp,READ_FORWARD);
+		  ymin = MUS_SAMPLE_0;
+		  ymax = MUS_SAMPLE_0;
+		  for (n=0;n<new_ep->samps_per_bin;n++)
+		    {
+		      val = next_sample(sf);
+		      if ((n >= segstart) && (n <= segend)) val = (MUS_SAMPLE_TYPE)(val * scl);
+		      if (ymin > val) 
+			ymin = val; 
+		      else 
+			if (ymax < val) 
+			  ymax = val;
+		    }
+		  new_ep->data_max[i] = ymax;
+		  new_ep->data_min[i] = ymin;
+		  free_snd_fd(sf);
+		}
+	    }
+	  if (fmin > new_ep->data_min[i]) fmin = new_ep->data_min[i];
+	  if (fmax < new_ep->data_max[i]) fmax = new_ep->data_max[i];
+	  fmin = MUS_SAMPLE_0;
+	  fmax = MUS_SAMPLE_0;
+	}
+      new_ep->fmin = fmin;
+      new_ep->fmax = fmax;
+      new_ep->completed = 1;
+      new_ep->bin = old_ep->bin;
+      new_ep->top_bin = old_ep->top_bin;
+      cp->amp_envs[cp->edit_ctr] = new_ep;
+    }
+}
+
 env_info *amp_env_copy(chan_info *cp, int reversed)
 {
   env_info *old_ep,*new_ep=NULL;

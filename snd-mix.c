@@ -3,6 +3,7 @@
 /* 
  * TODO if dragging zy don't constantly redisplay mix waveforms
  * TODO enved waveform for mix is off and draws twice at start?
+ * TODO mix-track should be mix-sync
  */
 
 

@@ -1,7 +1,6 @@
 ;;; examples of Guile extensions to Snd
 ;;;
-;;; (this file uses the generalized set! so guile 1.3 will not work)
-;;; (I'll soon move over to the new optarg syntax, so only guile 1.4 will work)
+;;; (this file requires guile 1.4 -- it uses the generalized set! and newer optargs support)
 ;;;
 ;;;        contents
 ;;;
@@ -61,7 +60,7 @@
 ;;; add date and time to title bar
 ;;; selection-members
 ;;; with-sound for Snd
-
+;;; how to get 'display' to write to Snd's listener
 
 
 ;;; TODO: pitch tracker
@@ -566,6 +565,11 @@
 	(set! str (string-append str (string val))))
       (close-pipe fil)
       str)))
+
+;;; to simply make a system call, you can use the system function
+;;;   (system "ls *.snd")
+;;; but output goes to stdout.
+
 
 
 ;;; -------- translate mpeg input to 16-bit linear and read into Snd
@@ -1714,12 +1718,10 @@
 ;;; CLM version is v.ins, C version is in sndlib.html
 ;;; a version treating the entire violin as a generator is in fmv.scm.
 
-;;; recently (guile 1.4.1), the # syntax was changed to use #: instead (i.e. #:key etc)
-
 (define pi 3.141592653589793)
 
 (define fm-violin 
-  (lambda* (startime dur frequency amplitude #&key
+  (lambda* (startime dur frequency amplitude #:key
 	    (fm-index 1.0)
 	    (amp-env '(0 0  25 1  75 1  100 0))
 	    (periodic-vibrato-rate 5.0) 
@@ -1746,7 +1748,7 @@
 	    (base 1.0)
 	    (reverb-amount 0.01)
 	    (degree #f) (distance 1.0) (degrees #f)
-	    #&allow-other-keys)
+	    #:allow-other-keys)
     (let* ((beg (floor (* startime (srate))))
 	   (len (floor (* dur (srate))))
 	   (end (+ beg len))
@@ -1839,7 +1841,7 @@
 ;      (max-envelope (cddr e) (max mx (abs (cadr e)))))))
 
 (define zipper 
-  (lambda* (beg dur file1 file2 ramp-envelope frame-size #&optional (ramp-envelope-base 1.0) (frame-envelope #f))
+  (lambda* (beg dur file1 file2 ramp-envelope frame-size #:optional (ramp-envelope-base 1.0) (frame-envelope #f))
   ;; pan between file1 and file2 using a "zipper-like" effect
   ;; ramp-env at 0 => all file1, at 1 => all file2, in between a mixture
   ;; frame-size is the basic speed at which the mixture takes place (dependent also on frame-env)
@@ -1940,7 +1942,7 @@
 (define two-pi (* 2 3.141592653589793))
 
 (define fofins 
-  (lambda* (beg dur frq amp vib f0 a0 f1 a1 f2 a2 #&optional (ae '(0 0 25 1 75 1 100 0)))
+  (lambda* (beg dur frq amp vib f0 a0 f1 a1 f2 a2 #:optional (ae '(0 0 25 1 75 1 100 0)))
     (let* ((start (floor (* beg (srate))))
 	   (len (floor (* dur (srate))))
 	   (ampf (make-env :envelope ae :scaler amp :duration dur))
@@ -1980,7 +1982,7 @@
 (define pi 3.141592653589793)
 
 (define pvoc
-  (lambda* (#&key
+  (lambda* (#:key
 	   (fftsize 512) (overlap 4) (time 1.0)
 	   (pitch 1.0) (gate 0.0) (hoffset 0.0)
 	   (snd 0) (chn 0))
@@ -2600,3 +2602,26 @@
 ;;; this could save (current-load-port) somewhere, and if it's not #f, report
 ;;;   port-filename and port-line on it in case of error (since backtrace sometimes
 ;;;   seems to get confused)
+
+
+;;; -------- how to get 'display' to write to Snd's listener
+;;;
+;;; scheme's display function writes to current-output-port which defaults to stdout.
+;;; This is a bit annoying since we'd like everything to go to the listener in many cases
+;;; so, to bring that about we need to define our own "soft-port" as follows:
+
+(define stdout (current-output-port)) ;save it in case we want to go back to it
+(define snd-out
+  (make-soft-port
+   (vector                      ;soft port is a vector of procedures:
+    (lambda (c) (snd-print c))  ;  procedure accepting one character for output 
+    (lambda (s) (snd-print s))  ;  procedure accepting a string for output 
+    (lambda () #f)              ;  thunk for flushing output (not needed here)
+    #f                          ;  thunk for getting one character (also not needed)
+    (lambda () #f))             ;  thunk for closing port -- hmm should this go back to the previous?
+   "w"))
+
+;(set-current-output-port snd-out)
+
+;;; Perhaps this should be built-in, allowing us to merge snd-help and help etc.
+

@@ -149,6 +149,7 @@ static void mus_print2snd(char *msg)
   ss->Vu_Font = DEFAULT_VU_FONT;
   ss->Speed_Style = DEFAULT_SPEED_STYLE;
   ss->Movies = DEFAULT_MOVIES;
+  ss->Selection_Creates_Region = DEFAULT_SELECTION_CREATES_REGION;
   ss->Normalize_Fft = DEFAULT_NORMALIZE_FFT;
   ss->Fit_Data_On_Open = DEFAULT_FIT_DATA_ON_OPEN;
   ss->Zoom_Focus_Style = DEFAULT_ZOOM_FOCUS_STYLE;

@@ -1,5 +1,8 @@
 #include "snd.h" 
 
+/* TODO region creation should happen in the background (and be cancelable)
+ */
+
 #define REGION_ARRAY 0
 #define REGION_FILE 1
 /* region data can be stored either in-core (if less than MAX_BUFFER_SIZE ints), else in a temp file that */

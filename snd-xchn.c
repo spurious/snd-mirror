@@ -580,6 +580,9 @@ void reflect_edit_history_change(chan_info *cp)
 	      while ((eds<(cp->edit_size-1)) && (cp->edits[eds+1])) eds++;
 	      if (eds>=0)
 		{
+		  /* TODO: optimize this somehow -- it's slowing down power-key edits
+		   *       perhaps if key held through C-d or C-o etc, we coalesce edits?
+		   */
 		  sp = cp->sound;
 		  edits = (XmString *)CALLOC(eds+1,sizeof(XmString));
 		  edits[0] = XmStringCreate(sp->fullname,XmFONTLIST_DEFAULT_TAG);

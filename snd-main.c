@@ -268,6 +268,7 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (dot_size(ss) != DEFAULT_DOT_SIZE) pss_sd(fd,S_dot_size,dot_size(ss));
   if (dac_size(ss) != DEFAULT_DAC_SIZE) pss_sd(fd,S_dac_size,dac_size(ss));
   if (movies(ss) != DEFAULT_MOVIES) pss_ss(fd,S_movies,b2s(movies(ss)));
+  if (selection_creates_region(ss) != DEFAULT_SELECTION_CREATES_REGION) pss_ss(fd,S_selection_creates_region,b2s(selection_creates_region(ss)));
   if (fit_data_on_open(ss) != DEFAULT_FIT_DATA_ON_OPEN) pss_ss(fd,S_fit_data_on_open,b2s(fit_data_on_open(ss)));
   if (save_state_on_exit(ss) != DEFAULT_SAVE_STATE_ON_EXIT) pss_ss(fd,S_save_state_on_exit,b2s(save_state_on_exit(ss)));
   if (filter_env_order(ss) != DEFAULT_FILTER_ENV_ORDER) pss_sd(fd,S_filter_env_order,filter_env_order(ss));

@@ -44,7 +44,7 @@ typedef struct {
   char *origin;
   int sfnum;
   int selection_beg, selection_end;    /* added 11-Sep-00: selection needs to follow edit list */
-  Float maxamp;                        /* added 3-Oct-00 */
+  Float maxamp, selection_maxamp;      /* added 3-Oct-00 */
 #if WITH_PARSE_TREES
   /* work-in-progress: embedded edit list fragment (composite) functions */
   MUS_SAMPLE_TYPE (*func)(void *cp, int pos, void *sf,void *env);
@@ -193,7 +193,7 @@ typedef struct chan__info {
 #if HAVE_GUILE
   SCM edit_hook,undo_hook;
 #endif
-  int selection_visible,old_x0,old_x1;
+  int selection_visible,old_x0,old_x1,sync;
 } chan_info;
 
 typedef struct snd__info {
@@ -308,7 +308,7 @@ typedef struct snd__state {
   int Normalize_On_Open,Auto_Resize,Auto_Update,Max_Regions,Max_Fft_Peaks;
   Float Initial_X0,Initial_X1,Initial_Y0,Initial_Y1,Reverb_Decay;
   int Raw_Srate,Raw_Chans,Raw_Format,Use_Raw_Defaults,Audio_Output_Device,Audio_Input_Device;
-  int Print_Length,Dac_Size,Dac_Folding,Previous_Files_Sort,Show_Selection_Transform,With_Mix_Tags;
+  int Print_Length,Dac_Size,Dac_Folding,Previous_Files_Sort,Show_Selection_Transform,With_Mix_Tags,Selection_Creates_Region;
   char *Save_State_File,*Listener_Prompt;
   Float Enved_Base,Enved_Power,Corruption_Time;
   int Enved_Clipping,Enved_Exping,Enved_Target,Enved_Waving,Enved_dBing,Prefix_Arg,Graphs_Horizontal;
@@ -686,9 +686,12 @@ snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize);
 snd_data *free_snd_data(snd_data *sf);
 
 void parse_tree_scale_by(chan_info *cp, Float scl);
+void parse_tree_selection_scale_by(chan_info *cp, Float scl, int beg, int num);
 int no_ed_scalers(chan_info *cp);
 void set_ed_maxamp(chan_info *cp, Float val);
 Float ed_maxamp(chan_info *cp);
+void set_ed_selection_maxamp(chan_info *cp, Float val);
+Float ed_selection_maxamp(chan_info *cp);
 
 
 /* -------- snd-fft.c -------- */
@@ -771,6 +774,7 @@ int selection_is_active(void);
 int selection_is_active_in_channel(chan_info *cp);
 int selection_is_visible_in_channel(chan_info *cp);
 int selection_beg(chan_info *cp);
+int selection_end(chan_info *cp);
 int selection_len(void);
 int selection_chans(void);
 void deactivate_selection(void);
@@ -1037,6 +1041,7 @@ BACKGROUND_TYPE apply_controls(GUI_POINTER xp);
 #endif
 void set_speed_style(snd_state *ss, int val);
 void amp_env_scale_by(chan_info *cp, Float scl);
+void amp_env_scale_selection_by(chan_info *cp, Float scl, int beg, int num);
 env_info *amp_env_copy(chan_info *cp, int reversed);
 
 

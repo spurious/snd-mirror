@@ -656,17 +656,19 @@ hand, refers to the saved (copied) version of (the original form of) that
 data that can be inserted or mixed elsewhere. That is, when a portion is
 initially selected, it is saved as the new region 0; subsequent edits may
 not disable the notion that there's an active selection, but the region 0
-data still reflects the initial data. Regions can be defined by dragging the
-mouse through a portion of the data. If the mouse drags off the end of the
-graph, the x axis moves, in a sense dragging the data along to try to keep
-up with the mouse; the further away the mouse is from the display, the
-faster the axis moves. (One minor caveat: if you drag the mouse too quickly
-off the end of the graph, making a grand sweeping gesture, the last portion
-of the graph may be missed because the mouse updates are coalesced to some
-extent; move deliberately as you near the end of the sound). A region can
-also be defined with keyboard commands, much as in Emacs. C-[space] starts
-the region definition and the various cursor moving commands continue the
-definition.
+data still reflects the initial data. You can disable the region creation by
+setting the variable selection-creates-region to #f (its default is #t, but
+in this can slow down editing of very large sounds). Regions can be defined
+by dragging the mouse through a portion of the data. If the mouse drags off
+the end of the graph, the x axis moves, in a sense dragging the data along
+to try to keep up with the mouse; the further away the mouse is from the
+display, the faster the axis moves. (One minor caveat: if you drag the mouse
+too quickly off the end of the graph, making a grand sweeping gesture, the
+last portion of the graph may be missed because the mouse updates are
+coalesced to some extent; move deliberately as you near the end of the
+sound). A region can also be defined with keyboard commands, much as in
+Emacs. C-[space] starts the region definition and the various cursor moving
+commands continue the definition.
 
 Once defined, the copied selection is added to a stack of currently
 available regions (the stack size is normally 16 -- see max-regions). In
@@ -976,7 +978,8 @@ type C-q several times in succession, you'll hear several simultaneous
 renditions of the sound. The various 'play' buttons scattered around Snd on
 the other hand, interrupt the current play if you click them during a run.
 C-g stops any current playing. If no numeric argument is supplied, C-x p
-plays the currently active selection; to get region 0 use C-u 0 C-x p.
+plays the currently active selection; to get region 0 use C-u 0 C-x p. C-g
+stops any playing in progress.
 
 Mix Files
 

@@ -348,6 +348,8 @@ The main variables affecting Snd's overall behavior are:
 
   save-state-file       "saved-snd.scm" The default saved state file name.
 
+  selection-creates-region #t   If #t, a region is created whenever a selection is made.
+
   show-indices          #f      If #t, each sound's name is preceded by its index.
 
   show-selection-transform #f   If #t, display the transform of the current active selection, if any.
@@ -1312,6 +1314,8 @@ value to val.
                                         (set! (expanding) #t)
                                         (set! (expand) amt)
                                         (call-apply)))
+
+  channel-sync      (snd chn)     sync field local to channel (currently unused).
 
   channels          (snd)         number of channels in snd.
 

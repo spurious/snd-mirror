@@ -420,6 +420,8 @@ when you save a sound via the "save" dialog.</p>
 
   <b><a name="lsavestatefile">save-state-file</a></b>       "saved-snd.scm" The default <a href="snd.html#savedstate">saved state</a> file name.
 
+  <b><a name="selectioncreatesregion">selection-creates-region</a></b> #t   If #t, a region is created whenever a selection is made.
+
   <b><a name="showindices">show-indices</a></b>          #f      If #t, each sound's name is preceded by its index.
 
   <b><a name="lshowselectiontransform">show-selection-transform</a></b> #f   If #t, display the transform of the current active selection, if any.
@@ -1438,6 +1440,8 @@ sets its value to val.
                                         (set! (expand) amt) 
                                         (<em class=red>call-apply</em>)))
 </small>
+  <b><a name="sndchannelsync">channel-sync</a></b>      (<em class=targ>snd chn</em>)     sync field local to channel (currently unused).
+
   <b><a name="channels">channels</a></b>          (<em class=targ>snd</em>)         number of channels in <i>snd</i>.
 
   <b><a name="sndchans">chans</a></b>             (<em class=targ>snd</em>)         same as <i>channels</i> (the forgetful programmer's friend).

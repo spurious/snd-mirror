@@ -18,7 +18,7 @@
   #endif
 #endif
       
-#define NUM_COMMANDS 546
+#define NUM_COMMANDS 548
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_abortQ,S_activate_listener,S_add_mark,S_add_player,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -31,7 +31,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_backward_graph,S_backward_mark,S_backward_mix,S_backward_sample,S_basic_color,S_bind_key,
   S_bold_button_font,S_bomb,S_button_font,
 
-  S_call_apply,S_cepstrum,S_change_menu_label,S_channel_style,S_channels,S_channels_combined,S_channels_separate,
+  S_call_apply,S_cepstrum,S_change_menu_label,S_channel_style,S_channel_sync,S_channels,S_channels_combined,S_channels_separate,
   S_channels_superimposed,S_chans,S_chebyshev_transform,S_clear_audio_inputs,
   S_close_hook,S_close_sound,S_close_sound_file,S_color2list,S_color_cutoff,S_color_dialog,S_color_inverted,S_color_scale,S_colorQ,S_colormap,
   S_comment,S_contrast,S_contrast_amp,S_contrast_func,S_contrasting,
@@ -118,7 +118,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_scan_across_all_chans,S_scan_across_chans,S_scan_across_sound_chans,S_scan_all_chans,S_scan_chan,S_scan_chans,S_scan_sound_chans,
   S_select_all,S_select_region,
   S_selected_channel,S_selected_data_color,S_selected_graph_color,S_selected_mix,S_selected_mix_color,S_selected_sound,
-  S_selection_color,S_selection_length,S_selection_member,S_selection_position,S_selection_to_temp,S_selection_to_temps,S_selectionQ,
+  S_selection_color,S_selection_creates_region,S_selection_length,S_selection_member,S_selection_position,S_selection_to_temp,S_selection_to_temps,S_selectionQ,
 
   S_short_file_name,S_show_all_axes,S_show_axes,S_show_controls,S_show_fft_peaks,S_show_indices,S_show_listener,S_show_marks,
   S_show_mix_waveforms,S_show_no_axes,S_show_selection_transform,S_show_usage_stats,S_show_x_axis,S_show_y_zero,

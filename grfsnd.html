@@ -410,7 +410,7 @@ Then make a file (say "gsl-ex.c"):</p>
 static SCM scm_j0(SCM x)
 { /* calls GSL function gsl_sf_bessel_J0_e */
   gsl_sf_result res;
-  gsl_sf_bessel_J0_e(gh_scm2double(x),&res);
+  gsl_sf_bessel_J0_e(gh_scm2double(x),&amp;res);
   return(gh_double2scm(res.val));
 }
 
@@ -425,15 +425,15 @@ void init_gsl_j0(void)
 /home/bil/snd-4/ ld -shared gsl-ex.o -o gsl-ex.so -lguile
 /home/bil/snd-4/ ./snd
 
-&gt;(define lib (dynamic-link "/home/bil/snd-4/gsl-ex.so"))
-#&lt;unspecified&gt;
-&gt;(dynamic-call "init_gsl_j0" lib)
-#&lt;unspecified&gt;
-&gt;(<em class=red>j0</em> 0.0)
-1.0
-&gt;(<em class=red>j0</em> 2.0)
-0.223890779141236
-&gt;(define (bes-fm dur freq amp ratio index)
+&gt;<em class=typing>(define lib (dynamic-link "/home/bil/snd-4/gsl-ex.so"))</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+&gt;<em class=typing>(dynamic-call "init_gsl_j0" lib)</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+&gt;<em class=typing>(<em class=red>j0</em> 0.0)</em>
+<em class=listener>1.0</em>
+&gt;<em class=typing>(<em class=red>j0</em> 2.0)</em>
+<em class=listener>0.223890779141236</em>
+&gt;<em class=typing>(define (bes-fm dur freq amp ratio index)
  ;; bessel-FM from CLM
    (let* ((car-ph 0.0)
 	  (mod-ph 0.0)
@@ -446,10 +446,33 @@ void init_gsl_j0(void)
        (vct-set! output i (* (env ampenv) (<em class=red>j0</em> car-ph)))
        (set! car-ph (+ car-ph car-incr (* index (<em class=red>j0</em> mod-ph))))
        (set! mod-ph (+ mod-ph mod-incr)))
-     (vct->samples 0 dur output)))
-#&lt;unspecified&gt;
-&gt;(bes-fm 22050 440 10.0 1.0 8.0)
+     (vct->samples 0 dur output)))</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+&gt;<em class=typing>(bes-fm 22050 440 10.0 1.0 8.0)</em>
 </pre>
+<p>It is possible to have the gsl-ex.so library loaded automatically,
+including the dynamic-link.  (This part of Guile's module system
+may change, but they've been saying that for years).  First, include
+this in gsl-ex.c:
+</p>
+<pre>
+void scm_init_gsl_bessel_module ()
+{
+  scm_register_module_xxx ("gsl bessel", init_gsl_j0);
+}
+</pre>
+<p>This tells Guile to call init_gsl_j0 when the module is loaded (thereby
+defining j0 for us).  Now we'll call this module (gsl bessel) just for
+laughs; this means when we type</p>
+<pre>
+&gt;(use-modules (gsl bessel))
+</pre>
+<p>in Snd's listener, the loader will look for gsl/libbessel.so,
+calling scm_init_gsl_bessel_module if possible. So we create
+a subdirectory named gsl, and put gsl-ex.so in it under the name
+libbessel.so.  Then whenever we want to use j0, we simply
+use the <code>use-modules</code> line given above.
+</p>
 
 <p>To acess and edit sound data from such a module, use the
 Snd functions make-sample-reader and loop-samples.  loop-samples
@@ -610,7 +633,8 @@ incorporated at compile time.  In addition, the initialization used in sndlib do
 over to the shared library (this is probably a bug...).  So, you can (set! (mus-srate) 22050),
 and then find that mus_srate is returning 0!  It's probably best to set the shared library's
 mus_srate explicitly when you initialize your module, or build Snd with sndlib.so (I've actually
-never done this...)</p>
+never done this...).  I hope in the future to provide various modules (for the effects menu, for
+example).</p>
 
 <br>
 <span class=bbox><h3><a name="programs">External Programs</a></h3></span>
@@ -1655,13 +1679,13 @@ Once installed, it can be loaded into Snd and used to define filters very easily
 (here I'm typing in Snd's listener and editing the numbers for legibility; the file
 gm.scm is taken nearly verbatim from the gmeteor script):</p>
 <pre><small>
-&gt;(load "gm.scm")
-#&lt;unspecified&gt;
-&gt;(load "../test/gmeteor-0.9/examples/example-1.scm")
-#&lt;unspecified&gt;
-&gt;*coefficients*
-#(0.0197 -0.0406 -0.0739 0.1340 0.4479 0.4479 0.13403 -0.0739 -0.0406 0.0197)
-&gt;(filter-sound (vector-&gt;vct *coefficients*) (vector-length *coefficients*))
+&gt;<em class=typing>(load "gm.scm")</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+&gt;<em class=typing>(load "../test/gmeteor-0.9/examples/example-1.scm")</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+&gt;<em class=typing>*coefficients*</em>
+<em class=listener>#(0.0197 -0.0406 -0.0739 0.1340 0.4479 0.4479 0.13403 -0.0739 -0.0406 0.0197)</em>
+&gt;<em class=typing>(filter-sound (vector-&gt;vct *coefficients*) (vector-length *coefficients*))</em>
 </small></pre>
 <p>There is one small problem: both Snd (CLM) and gmeteor define a function
 named make-filter.  Someday I'll learn enough about the Guile module system to

@@ -298,6 +298,7 @@
 #define S_change_menu_label             "change-menu-label"
 #define S_change_samples_with_origin    "change-samples-with-origin"
 #define S_channel_style                 "channel-style"
+#define S_channel_sync                  "channel-sync"
 #define S_channels                      "channels"
 #define S_channels_combined             "channels-combined"
 #define S_channels_separate             "channels-separate"
@@ -668,6 +669,7 @@
 #define S_selected_sound                "selected-sound"
 #define S_selection_position            "selection-position"
 #define S_selection_color               "selection-col" STR_OR
+#define S_selection_creates_region      "selection-creates-region"
 #define S_selection_length              "selection-length"
 #define S_selection_member              "selection-member?"
 #define S_selection_to_temp             "selection-to-temp"

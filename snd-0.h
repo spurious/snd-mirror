@@ -384,6 +384,10 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define set_movies(ss,a) ss->Movies = a
 #define DEFAULT_MOVIES 1
 
+#define selection_creates_region(ss) ss->Selection_Creates_Region
+#define set_selection_creates_region(ss,a) ss->Selection_Creates_Region = a
+#define DEFAULT_SELECTION_CREATES_REGION 1
+
 #define prefix_arg(ss) ss->Prefix_Arg
 #define set_prefix_arg(ss,a) ss->Prefix_Arg = a
 

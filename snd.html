@@ -1090,7 +1090,9 @@ data that can be inserted or mixed elsewhere.
 That is, when a portion is initially selected, it is saved as the new
 region 0; subsequent edits may not disable the notion that there's
 an active selection, but the region 0 data still reflects the initial
-data.
+data.  You can disable the region creation by setting the variable
+<a href="extsnd.html#selectioncreatesregion">selection-creates-region</a>
+to #f (its default is #t, but in this can slow down editing of very large sounds).
 <a name="mousedefsect">Regions</a> can be defined by dragging the mouse
 through a portion of the data.  If the mouse drags off
 the end of the graph, the x axis moves, in a sense dragging
@@ -1509,7 +1511,7 @@ buttons scattered around Snd on the other hand, interrupt
 the current play if you click them during a run.  C-g stops
 any current playing.  If no numeric argument is supplied,
 C-x p plays the currently active selection; to get region 0
-use C-u 0 C-x p.
+use C-u 0 C-x p.  C-g stops any playing in progress.
 </p>
 
 
