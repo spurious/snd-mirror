@@ -279,7 +279,7 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
   else sp->channel_style = CHANNELS_SEPARATE;
   sp->loading = false;
   sp->marking = 0;
-  sp->filing = 0;
+  sp->filing = NOT_FILING;
   sp->minibuffer_on = MINI_OFF;
   if (filter_env_in_hz(ss))
     sp->filter_control_env_xmax = (Float)(hdr->srate / 2);
@@ -296,6 +296,7 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
   sp->delete_me = NULL;
   sp->name_string = NULL;
   sp->active = true;
+  sp->cursor_follows_play = DONT_FOLLOW;
   return(sp);
 }
 
@@ -336,7 +337,7 @@ void free_snd_info(snd_info *sp)
   sp->searching = 0;
   sp->loading = false;
   sp->marking = 0;
-  sp->filing = 0;
+  sp->filing = NOT_FILING;
   sp->applying = false;
   sp->channel_style = CHANNELS_SEPARATE;
   sp->read_only = false;

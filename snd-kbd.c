@@ -359,8 +359,6 @@ void report_in_minibuffer_and_save(snd_info *sp, char *format, ...)
   /* leave sp->minibuffer off so that keyboard_command doesn't clear it */
 }
 
-enum {NOT_FILING, INPUT_FILING, REGION_FILING, CHANNEL_FILING, TEMP_FILING, CHANGE_FILING, INSERT_FILING, MACRO_FILING};
-
 void clear_minibuffer(snd_info *sp)
 {
   clear_minibuffer_prompt(sp);
@@ -413,14 +411,6 @@ static void prompt_named_mark(chan_info *cp)
   sp->marking = CURSOR(cp) + 1; /*  + 1 so it's not confused with 0 (if (sp->marking)...) */
 }
 
-
-bool use_filename_completer(int filing)
-{
-  return((filing) &&
-	 ((filing == INPUT_FILING) ||  /* C-x C-f */
-	  (filing == CHANGE_FILING) || /* C-x C-q */
-	  (filing == INSERT_FILING)));   /* C-x C-i */
-}
 
 static chan_info *goto_next_graph (chan_info *cp, int count);
 
@@ -665,7 +655,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	  free(str);
 	  return;
 	}
-      if (sp->filing)
+      if (sp->filing != NOT_FILING)
 	{
 	  switch (sp->filing)
 	    {
@@ -743,6 +733,8 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	    case MACRO_FILING: 
 	      name_last_macro(str); 
 	      clear_minibuffer(sp); 
+	      break;
+	    default:
 	      break;
 	    }
 	  sp->filing = NOT_FILING;

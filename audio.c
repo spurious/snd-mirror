@@ -3931,29 +3931,6 @@ static int to_sndlib_device(int dev, int channel) {
 /* set schedulling priority to SCHED_FIFO 
  * this will only work if the program that uses sndlib is run as root or is suid root */
 
-#if (!defined(HAVE_CONFIG_H)) || HAVE_SCHED_H
-#include <sched.h>
-
-static void set_priority() 
-{
-    struct sched_param p;
-    int min, max, priority;
-
-    if (!getuid() || !geteuid()) {
-	min = sched_get_priority_min(SCHED_FIFO);
-	max = sched_get_priority_max(SCHED_FIFO);
-	priority = min+(max-min)/2;
-	p.sched_priority = priority;
-	if (sched_setscheduler(0, SCHED_FIFO, &p) ==-1) {
-	    fprintf(stderr, "\ncould not activate scheduling with priority %d\n", priority);
-	}
-	seteuid(getuid());
-    }
-}
-#else
-static void set_priority() {}
-#endif
-
 /* return the number of cards that are available */
 
 static int alsa_mus_audio_systems(void) 
@@ -4187,10 +4164,6 @@ static int alsa_mus_audio_initialize(void)
     if (audio_initialized) {
 	return(0);
     }
-    /* set the process schedulling policy to real-time SCHED_FIFO */
-
-    /* set_priority(); */
-
     /* allocate various things */
     dev_name = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
     sound_cards = 0;

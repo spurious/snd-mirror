@@ -310,7 +310,6 @@ void edit_find_callback(GtkWidget *w, gpointer info);
 
 bool set_tiny_font(char *font);
 bool set_listener_font(char *font);
-bool set_bold_button_font(char *font);
 bool set_peaks_font(char *font);
 bool set_bold_peaks_font(char *font);
 bool set_axis_label_font(char *font);
@@ -330,7 +329,6 @@ void set_text_background(GtkWidget *w, GdkColor *col);
 void highlight_color(GtkWidget *w);
 void white_color(GtkWidget *w);
 void raise_dialog(GtkWidget *w);
-void set_button_label_bold(GtkWidget *button, const char *str);
 void set_button_label(GtkWidget *label, const char *str);
 void set_label(GtkWidget *label, const char *str);
 void sg_left_justify_button(GtkWidget *button);
@@ -437,9 +435,9 @@ bool control_panel_open(snd_info *sp);
 void show_controls(void);
 void hide_controls(void);
 void sound_check_control_panel(snd_info *sp, int height);
-void start_progress_report(snd_info *sp, bool from_enved);
-void finish_progress_report(snd_info *sp, bool from_enved);
-void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, bool from_enved);
+void start_progress_report(snd_info *sp, enved_progress_t from_enved);
+void finish_progress_report(snd_info *sp, enved_progress_t from_enved);
+void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, enved_progress_t from_enved);
 void set_apply_button(snd_info *sp, bool val);
 void g_init_gxsnd(void);
 

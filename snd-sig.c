@@ -104,7 +104,7 @@ static off_t end_to_sample(XEN end, chan_info *cp, int edpos, const char *caller
 
 
 static sync_state *get_sync_state_1(snd_info *sp, chan_info *cp, off_t beg, bool regexpr, 
-				    int forwards, off_t prebeg, XEN edpos, const char *caller, int arg_pos)
+				    read_direction_t forwards, off_t prebeg, XEN edpos, const char *caller, int arg_pos)
 {
   /* can return NULL if regexpr and no current selection */
   sync_info *si = NULL;
@@ -175,7 +175,7 @@ static sync_state *get_sync_state_1(snd_info *sp, chan_info *cp, off_t beg, bool
 }
 
 static sync_state *get_sync_state(snd_info *sp, chan_info *cp, off_t beg, bool regexpr, 
-				  int forwards, XEN edpos, const char *caller, int arg_pos)
+				  read_direction_t forwards, XEN edpos, const char *caller, int arg_pos)
 {
   return(get_sync_state_1(sp, cp, beg, regexpr, forwards, 0, edpos, caller, arg_pos));
 }
@@ -658,7 +658,7 @@ Float src_input_as_needed(void *arg, int dir)
   sr->sample++;
   if (dir != sr->dir)
     {
-      read_sample_change_direction(sf, dir);
+      read_sample_change_direction(sf, (dir == 1) ? READ_FORWARD : READ_BACKWARD);
       sr->dir = dir;
     }
   return(read_sample_to_float(sf));
@@ -694,7 +694,7 @@ static int off_t_compare(const void *a, const void *b)
 }
 
 static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, Float ratio, mus_any *egen, 
-				    bool from_enved, const char *origin, bool over_selection, int curchan, int chans)
+				    enved_progress_t from_enved, const char *origin, bool over_selection, int curchan, int chans)
 {
   snd_info *sp = NULL;
   bool reporting = false;
@@ -905,7 +905,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 }
 
 void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num, 
-		    bool from_enved, const char *origin, bool over_selection, mus_any *gen, XEN edpos, int arg_pos, Float e_base)
+		    enved_progress_t from_enved, const char *origin, bool over_selection, mus_any *gen, XEN edpos, int arg_pos, Float e_base)
 {
   snd_info *sp = NULL;
   sync_state *sc;
@@ -1172,7 +1172,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
   return(NULL);
 }
 
-static char *apply_filter_or_error(chan_info *ncp, int order, env *e, bool from_enved, 
+static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_progress_t from_enved, 
 				   const char *origin, bool over_selection, Float *ur_a, mus_any *gen, XEN edpos, int arg_pos)
 {
   /* if string returned, needs to be freed */
@@ -1436,7 +1436,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, bool from_
   return(NULL);
 }
 
-void apply_filter(chan_info *ncp, int order, env *e, bool from_enved, 
+void apply_filter(chan_info *ncp, int order, env *e, enved_progress_t from_enved, 
 		  const char *origin, bool over_selection, Float *ur_a, mus_any *gen, XEN edpos, int arg_pos)
 {
   char *error;
@@ -1606,7 +1606,7 @@ static void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int ar
 }
 
 void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr, 
-	       bool from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos, Float e_base)
+	       enved_progress_t from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos, Float e_base)
 {
   /* four cases here: 
    *    if only one Y value in env, use scale_channel
@@ -3860,7 +3860,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope gener
     }
   else check_src_envelope(mus_env_breakpoints(egen), mus_data(egen), S_src_channel);
   sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
-  errmsg = src_channel_with_error(cp, sf, beg, dur, ratio, egen, false, S_src_channel, false, 1, 1);
+  errmsg = src_channel_with_error(cp, sf, beg, dur, ratio, egen, NOT_FROM_ENVED, S_src_channel, false, 1, 1);
   sf = free_snd_fd(sf);
   if (errmsg)
     {

@@ -851,9 +851,9 @@ off_t mus_sound_seek_frame(int tfd, off_t frame)
   return(mus_file_seek_frame(tfd, frame));
 }
 
-enum {SF_CHANS, SF_SRATE, SF_TYPE, SF_FORMAT, SF_LOCATION, SF_SIZE};
+typedef enum {SF_CHANS, SF_SRATE, SF_TYPE, SF_FORMAT, SF_LOCATION, SF_SIZE} sf_field_t;
 
-static int mus_sound_set_field(const char *arg, int field, int val)
+static int mus_sound_set_field(const char *arg, sf_field_t field, int val)
 {
   sound_file *sf; 
   sf = getsf(arg); 
@@ -872,7 +872,7 @@ static int mus_sound_set_field(const char *arg, int field, int val)
   return(MUS_ERROR);
 }
 
-static int mus_sound_set_off_t_field(const char *arg, int field, off_t val)
+static int mus_sound_set_off_t_field(const char *arg, sf_field_t field, off_t val)
 {
   sound_file *sf; 
   sf = getsf(arg); 

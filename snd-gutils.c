@@ -30,20 +30,6 @@ bool set_listener_font(char *font)
   return(false);
 }
 
-bool set_bold_button_font(char *font)
-{
-  PangoFontDescription *fs = NULL;
-  fs = pango_font_description_from_string(font);
-  if (fs)
-    {
-      if (bold_button_font(ss)) FREE(bold_button_font(ss));
-      in_set_bold_button_font(copy_string(font));
-      (ss->sgx)->bold_button_fnt = fs;
-      return(true);
-    }
-  return(false);
-}
-
 bool set_peaks_font(char *font)
 {
   PangoFontDescription *fs = NULL;
@@ -271,12 +257,6 @@ void raise_dialog(GtkWidget *w)
    */
   gtk_widget_show(w);
   gdk_window_raise(w->window);
-}
-
-void set_button_label_bold(GtkWidget *button, const char *str)
-{
-  gtk_widget_modify_font(button, (ss->sgx)->bold_button_fnt);
-  gtk_label_set_text(GTK_LABEL(GTK_BIN(button)->child), str);
 }
 
 void set_button_label(GtkWidget *label, const char *str)

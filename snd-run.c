@@ -6432,6 +6432,7 @@ static void make_sample_reader_r(int *args, ptree *pt)
 {
   chan_info *cp = NULL;
   int pos;
+  read_direction_t direction = READ_FORWARD;
   cp = run_get_cp(2, args, pt->ints);
   if (cp)
     {
@@ -6439,7 +6440,8 @@ static void make_sample_reader_r(int *args, ptree *pt)
 	pos = cp->edit_ctr;
       else pos = INT_ARG_5;
       if (READER_RESULT) free_snd_fd(READER_RESULT);
-      READER_RESULT = init_sample_read_any(INT_ARG_1, cp, INT_ARG_4, pos);
+      if (INT_ARG_4 == -1) direction = READ_BACKWARD;
+      READER_RESULT = init_sample_read_any(INT_ARG_1, cp, direction, pos);
     }
 }
 static xen_value *make_sample_reader_1(ptree *pt, xen_value **args, int num_args)
@@ -6451,7 +6453,7 @@ static xen_value *make_sample_reader_1(ptree *pt, xen_value **args, int num_args
     true_args[5] = make_xen_value(R_INT, add_int_to_ptree(pt, AT_CURRENT_EDIT_POSITION), R_CONSTANT);
   else true_args[5] = args[5];
   if (num_args < 4) 
-    true_args[4] = make_xen_value(R_INT, add_int_to_ptree(pt, READ_FORWARD), R_CONSTANT);
+    true_args[4] = make_xen_value(R_INT, add_int_to_ptree(pt, 1), R_CONSTANT);
   else true_args[4] = args[4];
   run_opt_arg(pt, args, num_args, 2, true_args);
   run_opt_arg(pt, args, num_args, 3, true_args);

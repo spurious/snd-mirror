@@ -93,13 +93,13 @@ static void make_region_labels(file_info *hdr)
   if (hdr == NULL) return;
   str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   mus_snprintf(str, PRINT_BUFFER_SIZE, _("srate: %d"), hdr->srate);
-  set_button_label_bold(reg_srtxt, str);
+  set_label(reg_srtxt, str);
   mus_snprintf(str, PRINT_BUFFER_SIZE, _("chans: %d"), hdr->chans);
-  set_button_label_bold(reg_chntxt, str);
+  set_label(reg_chntxt, str);
   mus_snprintf(str, PRINT_BUFFER_SIZE, _("length: %.3f"), (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)));
-  set_button_label_bold(reg_lentxt, str);
+  set_label(reg_lentxt, str);
   mus_snprintf(str, PRINT_BUFFER_SIZE, _("maxamp: %.3f"), region_maxamp(stack_position_to_id(current_region)));
-  set_button_label_bold(reg_maxtxt, str);
+  set_label(reg_maxtxt, str);
   FREE(str);
 }
 
@@ -115,7 +115,7 @@ void update_region_browser(bool grf_too)
       regrow *r;
       r = region_row(i);
       ASSERT_WIDGET_TYPE(XmIsToggleButton(r->pl), r->pl);
-      set_button_label_bold(r->nm, rs->name[i]);
+      set_button_label(r->nm, rs->name[i]);
       XmToggleButtonSetState(r->pl, false, false);
       XtManageChild(r->rw);
     }
@@ -361,7 +361,6 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XM_FONT_RESOURCE, BOLD_BUTTON_FONT(ss)); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
   reg_srtxt = XtCreateManagedWidget(_("srate:"), xmLabelWidgetClass, wwl->toppane, args, n);
 
@@ -373,7 +372,6 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, reg_srtxt); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XM_FONT_RESOURCE, BOLD_BUTTON_FONT(ss)); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
   reg_chntxt = XtCreateManagedWidget(_("chans:"), xmLabelWidgetClass, wwl->toppane, args, n);
 
@@ -385,7 +383,6 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, reg_chntxt); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XM_FONT_RESOURCE, BOLD_BUTTON_FONT(ss)); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
   reg_lentxt = XtCreateManagedWidget(_("length:"), xmLabelWidgetClass, wwl->toppane, args, n);
 
@@ -397,7 +394,6 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, reg_lentxt); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XM_FONT_RESOURCE, BOLD_BUTTON_FONT(ss)); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
   reg_maxtxt = XtCreateManagedWidget(_("maxamp:"), xmLabelWidgetClass, wwl->toppane, args, n);
 

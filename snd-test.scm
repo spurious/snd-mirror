@@ -822,8 +822,8 @@
 	       (if (or (not (string? (func)))
 		       (not (string=? val (func))))
 		   (snd-display ";set ~A to bogus value: ~A ~A" name val (func)))))
-	   (list axis-label-font axis-numbers-font tiny-font bold-button-font peaks-font bold-peaks-font)
-	   (list 'axis-label-font 'axis-numbers-font 'tiny-font 'bold-button-font 'peaks-font 'bold-peaks-font)))
+	   (list axis-label-font axis-numbers-font tiny-font peaks-font bold-peaks-font)
+	   (list 'axis-label-font 'axis-numbers-font 'tiny-font 'peaks-font 'bold-peaks-font)))
       (run-hook after-test-hook 0)
       ))
 
@@ -30073,6 +30073,53 @@ EDITS: 2
       (let ((ind (find-sound "test.snd")))
 	(if (sound? ind) (close-sound ind)))
 
+      (with-sound (:channels 2) 
+		  (fullmix "4.aiff" 0.0 0.1 36.4 '((0.0 0.0) (0.0 0.0) (1.0 0.0) (0.0 1.0))))
+      (let ((ind (find-sound "test.snd")))
+	(if (fneq (maxamp) 0.664947509765625) (snd-display ";4->2(0) fullmix: ~A" (maxamp)))
+	(close-sound ind))
+
+      (with-sound (:channels 1) 
+		  (fullmix "4.aiff" 0.0 0.1 36.4 '((1.0) (0.0) (0.0) (0.0))))
+      (let ((ind (find-sound "test.snd")))
+	(if (fneq (maxamp) 0.221649169921875) (snd-display "4->1(0) fullmix: ~A" (maxamp)))
+	(close-sound ind))
+
+      (with-sound (:channels 1) 
+		  (fullmix "4.aiff" 0.0 0.1 36.4 '((0.0) (1.0) (0.0) (0.0))))
+      (let ((ind (find-sound "test.snd")))
+	(if (fneq (maxamp) 0.44329833984375) (snd-display ";4->1(1) fullmix: ~A" (maxamp)))
+	(close-sound ind))
+
+      (with-sound (:channels 1) 
+		  (fullmix "4.aiff" 0.0 0.1 36.4 '((0.0) (0.0) (1.0) (0.0))))
+      (let ((ind (find-sound "test.snd")))
+	(if (fneq (maxamp) 0.664947509765625) (snd-display ";4->1(2) fullmix: ~A" (maxamp)))
+	(close-sound ind))
+
+      (with-sound (:channels 1) 
+		  (fullmix "4.aiff" 0.0 0.1 36.4 '((0.0) (0.0) (0.0) (1.0))))
+      (let ((ind (find-sound "test.snd")))
+	(if (fneq (maxamp) 0.8865966796875) (snd-display ";4->1(3) fullmix: ~A" (maxamp)))
+	(close-sound ind))
+
+      (with-sound (:channels 2) 
+		  (fullmix "4.aiff" 0.0 0.1 36.4 '((0.0 0.0) (0.0 0.0) (1.0 0.0) (0.0 1.0))))
+      (let* ((ind (find-sound "test.snd"))
+	     (mxs (maxamp ind #t)))
+	(if (or (fneq (car mxs) 0.664947509765625)
+		(fneq (cadr mxs) 0.8865966796875))
+	    (snd-display ";4->2(1) fullmix: ~A" mxs))
+	(close-sound ind))
+
+      (with-sound (:channels 2) 
+		  (fullmix "4.aiff" 0.0 0.1 36.4 '((0.0 0.0) (0.0 0.0) (0.0 1.0) (1.0 0.0))))
+      (let* ((ind (find-sound "test.snd"))
+	     (mxs (maxamp ind #t)))
+	(if (or (fneq (car mxs) 0.8865966796875)
+		(fneq (cadr mxs) 0.664947509765625))
+	    (snd-display ";4->2(2) fullmix: ~A" mxs))
+	(close-sound ind))
 
       (if (file-exists? "with-mix.snd") (delete-file "with-mix.snd"))
       (with-sound () (with-mix () "with-mix" 0 (fm-violin 0 .1 440 .1)))
@@ -32654,7 +32701,7 @@ EDITS: 2
 			   (rw1 (find-child prevform "rw"))
 			   (pl1 (find-child rw1 "pl"))
 			   (nm1 (find-child rw1 "nm"))
-			   (name (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm1 (list XmNlabelString 0))) "bold_button_font")))
+			   (name (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm1 (list XmNlabelString 0))) XmFONTLIST_DEFAULT_TAG)))
 			   (rw2 (find-child curform "rw"))
 			   (pl2 (find-child rw2 "pl"))
 			   (nm2 (find-child rw2 "nm")))
@@ -32679,7 +32726,7 @@ EDITS: 2
 				     (XmToggleButtonSetState pl2 #f #t))
 				   (lambda args args))
 			    (enter-event nm1) (force-event)
-			    (set! name (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm2 (list XmNlabelString 0))) "bold_button_font")))
+			    (set! name (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm2 (list XmNlabelString 0))) XmFONTLIST_DEFAULT_TAG)))
 			    (close-sound (car (sounds)))
 			    (for-each-child option-holder
 					    (lambda (w)
@@ -32700,7 +32747,7 @@ EDITS: 2
 			(if (XtIsSensitive proc) (XtCallCallbacks entry XmNactivateCallback (snd-global-state)))
 			(XtCallCallbacks name XmNactivateCallback (snd-global-state)))
 		      (click-button (XmMessageBoxGetChild filed XmDIALOG_CANCEL_BUTTON)) (force-event)     ;clear
-		      (set! name (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm2 (list XmNlabelString 0))) "bold_button_font")))
+		      (set! name (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm2 (list XmNlabelString 0))) XmFONTLIST_DEFAULT_TAG)))
 		      (click-button (XmMessageBoxGetChild filed XmDIALOG_OK_BUTTON)) (force-event)
 		      (reset-hook! mouse-enter-label-hook)
 		      (reset-hook! mouse-leave-label-hook)
@@ -33135,12 +33182,12 @@ EDITS: 2
 			 (pl1 (find-child rw1 "pl"))
 			 (nm1 (find-child rw1 "nm"))
 			 (editb (find-child regd "edit"))
-			 (name (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm1 (list XmNlabelString 0))) "bold_button_font"))))
+			 (name (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm1 (list XmNlabelString 0))) XmFONTLIST_DEFAULT_TAG))))
 		    (XmToggleButtonSetState pl1 #t #t)
 		    (XmToggleButtonSetState pl1 #f #t)
 		    (click-button nm1)
 		    (click-button (XmMessageBoxGetChild regd XmDIALOG_CANCEL_BUTTON)) (force-event)		  
-		    (let ((name1 (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm1 (list XmNlabelString 0))) "bold_button_font"))))
+		    (let ((name1 (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm1 (list XmNlabelString 0))) XmFONTLIST_DEFAULT_TAG))))
 		      (if (string=? name1 name)
 			  (snd-display ";delete in region dialog: ~A?" name)))
 		    (click-button prtb) (force-event)
@@ -37595,7 +37642,7 @@ EDITS: 2
 		     add-mark add-player add-sound-file-extension add-to-main-menu add-to-menu add-transform amp-control
 		     as-one-edit ask-before-overwrite audio-input-device audio-output-device
 		     auto-resize auto-update autocorrelate axis-info axis-label-font axis-numbers-font
-		     backward-graph backward-mark backward-mix basic-color bind-key bold-button-font bomb
+		     backward-graph backward-mark backward-mix basic-color bind-key bomb
 		     c-g?  apply-controls change-menu-label change-samples-with-origin channel-style
 		     channel-widgets channels chans peaks-font bold-peaks-font
 		     close-sound ;close-sound-file 
@@ -37717,7 +37764,7 @@ EDITS: 2
       (define set-procs (list 
 			 amp-control ask-before-overwrite audio-input-device audio-output-device auto-resize
 			 auto-update axis-label-font axis-numbers-font ;basic-color 
-			 bold-button-font channel-style peaks-font bold-peaks-font
+			 channel-style peaks-font bold-peaks-font
 			 color-cutoff color-inverted color-scale contrast-control contrast-control-amp
 			 contrast-control? auto-update-interval current-font cursor cursor-color channel-properties
 			 cursor-follows-play cursor-size cursor-style dac-combines-channels dac-size data-clipped data-color
@@ -38393,7 +38440,7 @@ EDITS: 2
 			    (set! ctr (+ ctr 1))))
 			(list enved-filter-order enved-filter filter-env-in-hz filter-waveform-color ask-before-overwrite
 			      auto-resize auto-update axis-label-font axis-numbers-font basic-color bind-key
-			      bold-button-font channel-style color-cutoff color-dialog color-inverted color-scale
+			      channel-style color-cutoff color-dialog color-inverted color-scale
 			      cursor-color dac-combines-channels dac-size data-clipped data-color default-output-chans emacs-style-save-as
 			      default-output-format default-output-srate default-output-type enved-active-env enved-base
 			      enved-clip? enved-in-dB enved-dialog enved-exp?  enved-power enved-selected-env enved-target

@@ -108,7 +108,6 @@ Snd_names_and_urls =
     ["before_transform_hook", "extsnd.html#beforeffthook", "snd-fft.c"],
     ["bigbird", "sndscm.html#bigbird", "bird.rb"],
     ["bind_key", "extsnd.html#sndbindkey", "snd-kbd.c"],
-    ["bold_button_font", "extsnd.html#boldbuttonfont", "snd-xen.c"],
     ["bold_peaks_font", "extsnd.html#boldpeaksfont", "snd-xen.c"],
     ["bomb", "extsnd.html#bomb", "snd-snd.c"],
     ["buffer2frame ", "clm.html#buffer-&gt;frame", "clm2xen.c"],

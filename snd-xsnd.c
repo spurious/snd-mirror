@@ -2931,7 +2931,7 @@ int control_panel_height(snd_info *sp)
  * if no xpm, send a string, else post an hourglass
  */
 
-void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, bool from_enved)
+void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, enved_progress_t from_enved)
 {
   int which;
 #if HAVE_XPM
@@ -2940,7 +2940,7 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
   which = (int)(pct * NUM_GLASSES);
   if (which >= NUM_GLASSES) which = NUM_GLASSES - 1;
   if (which < 0) which = 0;
-  if (from_enved)
+  if (from_enved == FROM_ENVED)
     display_enved_progress(NULL, mini_glasses[which]);
   else snd_file_glasses_icon(sp, true, which);
   if (chans > 1) 
@@ -2956,7 +2956,7 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
   if (chans > 1)
     mus_snprintf(expr_str, PRINT_BUFFER_SIZE, "%s: (%d of %d) %d%%", funcname, curchan, chans, which);
   else mus_snprintf(expr_str, PRINT_BUFFER_SIZE, "%s: %d%%", funcname, which);
-  if (from_enved)
+  if (from_enved == FROM_ENVED)
     display_enved_progress(expr_str, 0);
   else report_in_minibuffer(sp, expr_str);
   FREE(expr_str);
@@ -2964,31 +2964,31 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
   check_for_event();
 }
 
-void finish_progress_report(snd_info *sp, bool from_enved)
+void finish_progress_report(snd_info *sp, enved_progress_t from_enved)
 {
 #if (!HAVE_XPM)
 #endif
   if (sp->inuse != SOUND_NORMAL) return;
 #if HAVE_XPM
-  if (from_enved)
+  if (from_enved == FROM_ENVED)
     display_enved_progress(NULL, blank_pixmap);
   else snd_file_glasses_icon(sp, false, 0);
   clear_minibuffer_prompt(sp);
 #else
 
-  if (from_enved)
+  if (from_enved == FROM_ENVED)
     display_enved_progress((ss->stopped_explicitly) ? _("stopped") : "", 0);
   else report_in_minibuffer(sp, (ss->stopped_explicitly) ? _("stopped") : "");
 #endif
 }
 
-void start_progress_report(snd_info *sp, bool from_enved)
+void start_progress_report(snd_info *sp, enved_progress_t from_enved)
 {
   if (sp->inuse != SOUND_NORMAL) return;
 #if HAVE_XPM
-  if (!(from_enved)) snd_file_glasses_icon(sp, true, 0);
+  if (from_enved == NOT_FROM_ENVED) snd_file_glasses_icon(sp, true, 0);
 #else
-  if (from_enved)
+  if (from_enved == NOT_FROM_ENVED)
     display_enved_progress("", 0);
 #endif
 }

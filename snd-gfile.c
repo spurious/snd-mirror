@@ -897,7 +897,7 @@ void view_curfiles_set_row_name(int pos)
 {
   regrow *r;
   r = cur_name_row[pos];
-  set_button_label_bold(r->nm, view_curfiles_name(r->pos));
+  set_button_label(r->nm, view_curfiles_name(r->pos));
 }
 
 static void view_files_help_callback(GtkWidget *w, gpointer context) 
@@ -1030,7 +1030,7 @@ void make_curfiles_list (void)
 	  r->pos = i;
 	  r->parent = CURRENT_FILE_VIEWER;
 	}
-      set_button_label_bold(r->nm, view_curfiles_name(r->pos));
+      set_button_label(r->nm, view_curfiles_name(r->pos));
       set_toggle_button(r->pl, false, false, (void *)r);
       gtk_widget_show(r->rw);
     }
@@ -1091,7 +1091,7 @@ void make_prevfiles_list (void)
 	      r->pos = i;
 	      r->parent = PREVIOUS_FILE_VIEWER;
 	    }
-	  set_button_label_bold(r->nm, get_prevname(r->pos));
+	  set_button_label(r->nm, get_prevname(r->pos));
 	  set_toggle_button(r->pl, false, false, (void *)r);
 	  gtk_widget_show(r->rw);
 	}

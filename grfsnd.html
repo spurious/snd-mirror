@@ -165,7 +165,6 @@ widget holding the sounds.
 <p>In Gtk2, the (pango) font defaults are:</p>
 <pre>
 tiny-font         "Monospace 8"
-bold-button-font  "Serif Bold 14"
 axis-numbers-font "Monospace 10"
 axis-label-font   "Serif 14"
 help-text-font    "Monospace 14"
@@ -305,7 +304,6 @@ Here's a more elaborate initialization file:
 
 (if (provided? 'snd-motif)          ;if using Motif, set some fonts
     (begin
-      (set! (bold-button-font) "-*-times-bold-r-*-*-14-*-*-*-*-*-*-*")
       (set! (axis-label-font) "-*-times-medium-r-normal-*-18-*-*-*-*-*-*-*")
       (set! (axis-numbers-font) "9x15")))
 

@@ -159,7 +159,6 @@ and if one is found, and the Snd documentation can be found, calls (html-program
     (list "before-transform-hook" "extsnd.html#beforeffthook" "snd-fft.c")
     (list "bigbird" "sndscm.html#bigbird" "snd-test.scm")
     (list "bind-key" "extsnd.html#sndbindkey" "snd-kbd.c")
-    (list "bold-button-font" "extsnd.html#boldbuttonfont" "snd-xen.c")
     (list "bold-peaks-font" "extsnd.html#boldpeaksfont" "snd-xen.c")
     (list "bomb" "extsnd.html#bomb" "snd-snd.c")
     (list "buffer->frame" "clm.html#buffer-&gt;frame" "clm2xen.c")

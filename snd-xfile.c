@@ -1299,8 +1299,6 @@ static void mouse_leave_label_or_enter(regrow *r, XEN hook, const char *caller)
 	      XtVaGetValues(r->nm, XmNlabelString, &s1, NULL);
 	      if (XmStringEmpty(s1)) return;
 	      XmStringGetLtoR(s1, XmFONTLIST_DEFAULT_TAG, &label);
-	      if (label == NULL)
-		XmStringGetLtoR(s1, "bold_button_font", &label);
 	      XmStringFree(s1);
 	    }
 	}
@@ -1368,7 +1366,6 @@ regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callback, Xt
   XtSetArg(args[n], XmNhighlightThickness, 0); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
   XtSetArg(args[n], XmNfillOnArm, false); n++;
-  XtSetArg(args[n], XM_FONT_RESOURCE, BOLD_BUTTON_FONT(ss)); n++;
   XtSetArg(args[n], XmNrecomputeSize, false); n++;
   XtSetArg(args[n], XmNwidth, 300); n++;
   XtSetArg(args[n], XmNactivateCallback, n3 = make_callback_list(name_callback, (XtPointer)r)); n++;
@@ -1420,7 +1417,7 @@ void view_curfiles_set_row_name(int pos)
 {
   regrow *r;
   r = cur_name_row[pos];
-  set_button_label_bold(r->nm, view_curfiles_name(r->pos));
+  set_button_label(r->nm, view_curfiles_name(r->pos));
 }
 
 static void view_files_help_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1553,7 +1550,7 @@ void make_curfiles_list (void)
 	  r->pos = i;
 	  r->parent = CURRENT_FILE_VIEWER;
 	}
-      set_button_label_bold(r->nm, view_curfiles_name(r->pos));
+      set_button_label(r->nm, view_curfiles_name(r->pos));
       XmToggleButtonSetState(r->pl, false, false);
       if (!(XtIsManaged(r->rw))) XtManageChild(r->rw);
       last_row = r->rw;
@@ -1616,7 +1613,7 @@ void make_prevfiles_list (void)
 	      r->pos = i;
 	      r->parent = PREVIOUS_FILE_VIEWER;
 	    }
-	  set_button_label_bold(r->nm, get_prevname(r->pos));
+	  set_button_label(r->nm, get_prevname(r->pos));
 	  XmToggleButtonSetState(r->pl, false, false);
 	  if (!(XtIsManaged(r->rw))) XtManageChild(r->rw);
 	  last_row = r->rw;

@@ -71,22 +71,6 @@ bool set_listener_font(char *font)
   return(false);
 }
 
-bool set_bold_button_font(char *font)
-{
-  XFontStruct *fs = NULL;
-  fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
-  if (fs)
-    {
-      if (bold_button_font(ss)) FREE(bold_button_font(ss));
-      in_set_bold_button_font(copy_string(font));
-      (ss->sgx)->bold_button_fontstruct = fs;
-      if ((ss->sgx)->bold_button_fontlist) XM_FONT_FREE((ss->sgx)->bold_button_fontlist);
-      (ss->sgx)->bold_button_fontlist = get_xm_font((ss->sgx)->bold_button_fontstruct, font, "bold_button_font");
-      return(true);
-    }
-  return(false);
-}
-
 bool set_peaks_font(char *font)
 {
   XFontStruct *fs = NULL;
@@ -251,21 +235,6 @@ void set_main_color_of_widget (Widget w, void *userptr)
 
 void highlight_color(Widget w) {XmChangeColor(w, (ss->sgx)->highlight_color);}
 void white_color(Widget w) {XmChangeColor(w, (ss->sgx)->white);}
-
-void set_button_label_bold(Widget button, const char *str)
-{
-  XmString s1;
-  s1 = XmStringCreate((char *)str, "bold_button_font");
-#if (USE_RENDITIONS)
-  XtVaSetValues(button, 
-		XmNrenderTable, BOLD_BUTTON_FONT(ss), 
-		XmNlabelString, s1,
-		NULL);
-#else
-  XtVaSetValues(button, XmNlabelString, s1, NULL);
-#endif
-  XmStringFree(s1);
-}
 
 void set_label(Widget label, const char *str)
 {

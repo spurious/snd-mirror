@@ -47,7 +47,6 @@
 
 /* we assume later that we can always find these fonts (if resource file gives bogus entry, we fall back on these) */
 
-#define DEFAULT_BOLD_BUTTON_FONT "-*-times-bold-r-*-*-14-*-*-*-*-*-*-*"
 #define DEFAULT_PEAKS_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-*-*"
 #define DEFAULT_BOLD_PEAKS_FONT "-*-times-bold-r-*-*-14-*-*-*-*-*-*-*"
 #define DEFAULT_AXIS_NUMBERS_FONT "-*-courier-medium-r-*-*-14-*-*-*-*-*-*-*"
@@ -109,7 +108,6 @@ typedef struct {
   char *use_schemes;
   char *peaks_font;
   char *listener_font;
-  char *bold_button_font;
   char *bold_peaks_font;
   char *axis_label_font;
   char *axis_numbers_font;
@@ -161,7 +159,6 @@ static XtResource resources[] = {
   {"useSchemes", "UseSchemes", XmRString, sizeof(char *), XtOffset(sndres *, use_schemes), XmRString, (XtPointer)"none"},
   {"peaksFont", "PeaksFont", XmRString, sizeof(char *), XtOffset(sndres *, peaks_font), XmRString, (XtPointer)DEFAULT_PEAKS_FONT},
   {"listenerFont", "ListenerFont", XmRString, sizeof(char *), XtOffset(sndres *, listener_font), XmRString, (XtPointer)NULL},
-  {"boldbuttonFont", "BoldbuttonFont", XmRString, sizeof(char *), XtOffset(sndres *, bold_button_font), XmRString, (XtPointer)DEFAULT_BOLD_BUTTON_FONT},
   {"boldpeaksFont", "BoldPeaksFont", XmRString, sizeof(char *), XtOffset(sndres *, bold_peaks_font), XmRString, (XtPointer)DEFAULT_BOLD_PEAKS_FONT},
   {"axisLabelFont", "AxisLabelFont", XmRString, sizeof(char *), XtOffset(sndres *, axis_label_font), XmRString, (XtPointer)DEFAULT_AXIS_LABEL_FONT},
   {"axisNumbersFont", "AxisNumbersFont", XmRString, sizeof(char *), XtOffset(sndres *, axis_numbers_font), XmRString, (XtPointer)DEFAULT_AXIS_NUMBERS_FONT},
@@ -735,11 +732,6 @@ void snd_doit(int argc, char **argv)
   if ((!(set_tiny_font(TINY_FONT))) &&
       (!(set_tiny_font(FALLBACK_FONT))))
     fprintf(stderr, _("can't find font %s"), TINY_FONT);
-
-  if ((!(set_bold_button_font(snd_rs.bold_button_font))) &&
-      (!(set_bold_button_font(DEFAULT_BOLD_BUTTON_FONT))) &&
-      (!(set_bold_button_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find font %s"), snd_rs.bold_button_font);
 
   if ((!(set_bold_peaks_font(snd_rs.bold_peaks_font))) &&
       (!(set_bold_peaks_font(DEFAULT_BOLD_PEAKS_FONT))) &&

@@ -36,7 +36,6 @@
 #define S_before_apply_hook             "before-apply-hook"
 #define S_before_transform_hook         "before-transform-hook"
 #define S_bind_key                      "bind-key"  
-#define S_bold_button_font              "bold-button-font"
 #define S_bold_peaks_font               "bold-peaks-font"
 #define S_bomb                          "bomb"
 #define S_c_g                           "c-g?"

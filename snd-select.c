@@ -179,7 +179,7 @@ static void cp_delete_selection(chan_info *cp, void *origin)
     }
 }
 
-bool delete_selection(const char *origin, int regraph)
+bool delete_selection(const char *origin, cut_selection_regraph_t regraph)
 {
   if (selection_is_active())
     {

@@ -866,7 +866,7 @@ void sequester_deferred_regions(chan_info *cp, int edit_top)
     }
 }
 
-snd_fd *init_region_read (off_t beg, int n, int chan, int direction)
+snd_fd *init_region_read (off_t beg, int n, int chan, read_direction_t direction)
 {
   /* conjure up a reasonable looking ed list and sound list */
   region *r;

@@ -179,6 +179,13 @@
    (lambda (val)
      #f)))
 
+(define bold-button-font
+  (make-procedure-with-setter
+   (lambda ()
+     #f)
+   (lambda (val)
+     #f)))
+
 (define help-text-font
   (make-procedure-with-setter
    (lambda ()

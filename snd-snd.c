@@ -3433,10 +3433,10 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
   return(name);
 }
 
-enum {PEAK_ENV_NO_ERROR, PEAK_ENV_BAD_HEADER, PEAK_ENV_BAD_FORMAT, PEAK_ENV_BAD_SIZE, PEAK_ENV_NO_FILE, PEAK_ENV_NO_DATA};
+typedef enum {PEAK_ENV_NO_ERROR, PEAK_ENV_BAD_HEADER, PEAK_ENV_BAD_FORMAT, PEAK_ENV_BAD_SIZE, PEAK_ENV_NO_FILE, PEAK_ENV_NO_DATA} peak_env_error_t;
 static char *peak_env_error[6] = {"no error", "bad header", "bad format", "bad size", "no file", "no data in file"};
 
-static env_info *get_peak_env_info(char *fullname, int *error)
+static env_info *get_peak_env_info(char *fullname, peak_env_error_t *error)
 {
   env_info *ep;
   int fd, bytes, hdr = 0;
@@ -3501,7 +3501,7 @@ static XEN g_read_peak_env_info_file(XEN snd, XEN chn, XEN name)
   #define H_read_peak_env_info_file "(" S_read_peak_env_info_file " snd chn name): read stored peak-env info from file"
   /* has to happen in initial_graph_hook to precede add_amp_env */
   chan_info *cp;
-  int err = 0;
+  peak_env_error_t err = PEAK_ENV_NO_ERROR;
   char *fullname;
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_3, S_read_peak_env_info_file, "a string");
   ASSERT_JUST_CHANNEL(S_read_peak_env_info_file, snd, chn, 1);
@@ -3510,7 +3510,7 @@ static XEN g_read_peak_env_info_file(XEN snd, XEN chn, XEN name)
   cp->amp_envs[0] = get_peak_env_info(fullname, &err);
   if (fullname) FREE(fullname);
   if (cp->amp_envs[0] == NULL)
-    mus_misc_error(S_read_peak_env_info_file, peak_env_error[err], name);
+    mus_misc_error(S_read_peak_env_info_file, peak_env_error[(int)err], name);
   /* assume cp->amp_envs already exists (needs change to snd-chn) */
   return(name);
 }
@@ -3623,7 +3623,8 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
   XEN peak = XEN_FALSE;
   env_state *es;
   env_info *ep;
-  int id, err = 0;
+  int id;
+  peak_env_error_t err = PEAK_ENV_NO_ERROR;
   env_tick *et;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename) || XEN_INTEGER_P(filename) || XEN_NOT_BOUND_P(filename), 
 		  filename, XEN_ARG_1, S_channel_amp_envs, "a string or sound index");

@@ -136,7 +136,6 @@ void reflect_region_graph_style(void) {}
 void snd_completion_help(int matches, char **buffer) {}
 bool set_tiny_font(char *font) {ss->Tiny_Font = copy_string(font); return(false);}
 bool set_listener_font(char *font) {ss->Listener_Font = copy_string(font); return(false);}
-bool set_bold_button_font(char *font) {ss->Bold_Button_Font = copy_string(font); return(false);}
 bool set_peaks_font(char *font) {ss->Peaks_Font = copy_string(font); return(false);}
 bool set_bold_peaks_font(char *font) {ss->Bold_Peaks_Font = copy_string(font); return(false);}
 bool set_axis_label_font(char *font) {ss->Axis_Label_Font = copy_string(font); return(false);}
@@ -220,9 +219,9 @@ void equalize_all_panes(void) {}
 void sound_show_ctrls(snd_info *sp) {}
 void sound_hide_ctrls(snd_info *sp) {}
 bool control_panel_open(snd_info *sp) {return(0);}
-void start_progress_report(snd_info *sp, bool from_enved) {}
-void finish_progress_report(snd_info *sp, bool from_enved) {}
-void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, bool from_enved) {}
+void start_progress_report(snd_info *sp, enved_progress_t from_enved) {}
+void finish_progress_report(snd_info *sp, enved_progress_t from_enved) {}
+void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, enved_progress_t from_enved) {}
 char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples) {return(NULL);}
 void alert_new_file(void) {}
 snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, int srate, int chans, char *comment) {return(NULL);}
@@ -492,7 +491,6 @@ void snd_doit(int argc, char **argv)
 #endif
   set_peaks_font(FALLBACK_FONT);
   set_tiny_font(FALLBACK_FONT);
-  set_bold_button_font(FALLBACK_FONT);
   set_bold_peaks_font(FALLBACK_FONT);
   set_axis_label_font(FALLBACK_FONT);
   set_axis_numbers_font(FALLBACK_FONT);

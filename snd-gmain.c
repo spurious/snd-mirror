@@ -41,7 +41,6 @@
 #define NOTEBOOK_BINDING_WIDTH 20
 
 #define TINY_FONT "Monospace 8"
-#define DEFAULT_BOLD_BUTTON_FONT "Serif Bold 14"
 #define DEFAULT_PEAKS_FONT "Serif 10"
 #define DEFAULT_BOLD_PEAKS_FONT "Serif Bold 10"
 #define DEFAULT_AXIS_NUMBERS_FONT "Monospace 10"
@@ -505,10 +504,6 @@ void snd_doit(int argc, char **argv)
   if ((!(set_tiny_font(TINY_FONT))) &&
       (!(set_tiny_font(FALLBACK_FONT))))
     fprintf(stderr, _("can't find font: %s"), TINY_FONT);
-
-  if ((!(set_bold_button_font(DEFAULT_BOLD_BUTTON_FONT))) &&
-      (!(set_bold_button_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find font: %s"), DEFAULT_BOLD_BUTTON_FONT);
 
   if ((!(set_axis_label_font(DEFAULT_AXIS_LABEL_FONT))) &&
       (!(set_axis_label_font(FALLBACK_FONT))))

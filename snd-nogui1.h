@@ -199,7 +199,6 @@ void reflect_region_graph_style(void);
 void goto_window(int text);
 bool set_tiny_font(char *font);
 bool set_listener_font(char *font);
-bool set_bold_button_font(char *font);
 bool set_peaks_font(char *font);
 bool set_bold_peaks_font(char *font);
 bool set_axis_label_font(char *font);
@@ -299,9 +298,9 @@ void equalize_all_panes(void);
 void sound_show_ctrls(snd_info *sp);
 void sound_hide_ctrls(snd_info *sp);
 bool control_panel_open(snd_info *sp);
-void start_progress_report(snd_info *sp, bool from_enved);
-void finish_progress_report(snd_info *sp, bool from_enved);
-void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, bool from_enved);
+void start_progress_report(snd_info *sp, enved_progress_t from_enved);
+void finish_progress_report(snd_info *sp, enved_progress_t from_enved);
+void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, enved_progress_t from_enved);
 void reflect_amp_env_in_progress(snd_info *sp);
 
 

@@ -1572,15 +1572,6 @@ static XEN g_set_listener_font(XEN val)
   return(C_TO_XEN_STRING(listener_font(ss)));
 }
 
-static XEN g_bold_button_font(void) {return(C_TO_XEN_STRING(bold_button_font(ss)));}
-static XEN g_set_bold_button_font(XEN val) 
-{
-  #define H_bold_button_font "(" S_bold_button_font "): font used by some buttons"
-  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_bold_button_font, "a string"); 
-  set_bold_button_font(XEN_TO_C_STRING(val)); 
-  return(C_TO_XEN_STRING(bold_button_font(ss)));
-}
-
 static XEN g_bold_peaks_font(void) {return(C_TO_XEN_STRING(bold_peaks_font(ss)));}
 static XEN g_set_bold_peaks_font(XEN val) 
 {
@@ -2706,8 +2697,6 @@ XEN_NARGIFY_0(g_zoom_focus_style_w, g_zoom_focus_style)
 XEN_NARGIFY_1(g_set_zoom_focus_style_w, g_set_zoom_focus_style)
 XEN_NARGIFY_0(g_tiny_font_w, g_tiny_font)
 XEN_NARGIFY_1(g_set_tiny_font_w, g_set_tiny_font)
-XEN_NARGIFY_0(g_bold_button_font_w, g_bold_button_font)
-XEN_NARGIFY_1(g_set_bold_button_font_w, g_set_bold_button_font)
 XEN_NARGIFY_0(g_peaks_font_w, g_peaks_font)
 XEN_NARGIFY_1(g_set_peaks_font_w, g_set_peaks_font)
 XEN_NARGIFY_0(g_bold_peaks_font_w, g_bold_peaks_font)
@@ -2867,8 +2856,6 @@ XEN_NARGIFY_0(g_snd_global_state_w, g_snd_global_state)
 #define g_set_zoom_focus_style_w g_set_zoom_focus_style
 #define g_tiny_font_w g_tiny_font
 #define g_set_tiny_font_w g_set_tiny_font
-#define g_bold_button_font_w g_bold_button_font
-#define g_set_bold_button_font_w g_set_bold_button_font
 #define g_peaks_font_w g_peaks_font
 #define g_set_peaks_font_w g_set_peaks_font
 #define g_bold_peaks_font_w g_bold_peaks_font
@@ -3129,9 +3116,6 @@ void g_initialize_gh(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_tiny_font, g_tiny_font_w, H_tiny_font,
 				   S_setB S_tiny_font, g_set_tiny_font_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_bold_button_font, g_bold_button_font_w, H_bold_button_font,
-				   S_setB S_bold_button_font, g_set_bold_button_font_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_peaks_font, g_peaks_font_w, H_peaks_font,
 				   S_setB S_peaks_font, g_set_peaks_font_w,  0, 0, 1, 0);

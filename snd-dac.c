@@ -349,12 +349,10 @@ Float *sample_linear_env(env *e, int order)
   return(data);
 }
 
-static dac_info *make_dac_info(chan_info *cp, snd_fd *fd)
+static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd)
 {
-  snd_info *sp;
   dac_info *dp;
   Float *data = NULL;
-  sp = cp->sound;
   dp = (dac_info *)CALLOC(1, sizeof(dac_info));
   dp->region = -1;
   dp->a = NULL;
@@ -414,9 +412,10 @@ static int max_active_slot = -1;
 
 /* -------------------------------- special "hidden" control panel variables -------------------------------- */
 
-enum {DAC_EXPAND, DAC_EXPAND_RAMP, DAC_EXPAND_LENGTH, DAC_EXPAND_HOP, DAC_EXPAND_SCALER, DAC_CONTRAST_AMP, DAC_REVERB_FEEDBACK, DAC_REVERB_LOWPASS};
+typedef enum {DAC_EXPAND, DAC_EXPAND_RAMP, DAC_EXPAND_LENGTH, DAC_EXPAND_HOP, DAC_EXPAND_SCALER, 
+	      DAC_CONTRAST_AMP, DAC_REVERB_FEEDBACK, DAC_REVERB_LOWPASS} dac_field_t;
 
-static void dac_set_field(snd_info *sp, Float newval, int field)
+static void dac_set_field(snd_info *sp, Float newval, dac_field_t field)
 {
   /* if sp == NULL, sets globally */
   int i, val;
@@ -477,6 +476,8 @@ static void dac_set_field(snd_info *sp, Float newval, int field)
 			  break;
 			case DAC_CONTRAST_AMP:
 			  dp->contrast_amp = newval;
+			  break;
+			default:
 			  break;
 			}
 		    }
@@ -688,7 +689,7 @@ static dac_info *init_dp(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, off_
 {
   dac_info *dp;
   play_list_members++;
-  dp = make_dac_info(cp, fd);
+  dp = make_dac_info(cp, sp, fd); /* sp == NULL if region; TODO: fix this region play kludge! */
   dp->end = end;
   if (end != NO_END_SPECIFIED) 
     {
@@ -807,7 +808,8 @@ static dac_info *add_channel_to_play_list(chan_info *cp, off_t start, off_t end,
 {
   /* if not sp, control panel is ignored */
   snd_info *sp;
-  int slot, direction = READ_FORWARD, pos;
+  int slot, pos;
+  read_direction_t direction = READ_FORWARD;
   off_t beg = 0;
   snd_fd *sf;
   sp = cp->sound;

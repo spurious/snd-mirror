@@ -138,8 +138,6 @@ typedef struct {
   Widget soundpane;
   Widget soundpanebox;
   Display *mdpy;
-  xm_font_t bold_button_fontlist;
-  XFontStruct *bold_button_fontstruct; 
   xm_font_t peaks_fontlist;
   XFontStruct *peaks_fontstruct;
   xm_font_t bold_peaks_fontlist;
@@ -217,7 +215,6 @@ typedef struct {
 #define SOUND_PANE_BOX(a) (a->sgx)->soundpanebox
 #define MAIN_APP(a) (a->sgx)->mainapp
 #define MAIN_DISPLAY(a) (a->sgx)->mdpy
-#define BOLD_BUTTON_FONT(a) (a->sgx)->bold_button_fontlist
 #define PEAK_NUMBERS_FONT(a) (a->sgx)->peaks_fontstruct
 #define BOLD_PEAK_NUMBERS_FONT(a) (a->sgx)->bold_peaks_fontstruct
 #define AXIS_NUMBERS_FONT(a) (a->sgx)->axis_numbers_fontstruct

@@ -597,8 +597,6 @@ static XEN g_widget_text(XEN wid)
 	  XtVaGetValues(w, XmNlabelString, &s1, NULL);
 	  if (XmStringEmpty(s1)) return(XEN_FALSE);
 	  XmStringGetLtoR(s1, XmFONTLIST_DEFAULT_TAG, &text);
-	  if (text == NULL)
-	    XmStringGetLtoR(s1, "bold_button_font", &text);
 	  XmStringFree(s1);
 	  res = C_TO_XEN_STRING(text);
 	}

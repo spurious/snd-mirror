@@ -388,6 +388,13 @@ char *filename_completer(char *text)
   return(copy_string(text));
 }
 
+static bool use_filename_completer(sp_filing_t filing)
+{
+  return((filing == INPUT_FILING) ||  /* C-x C-f */
+	 (filing == CHANGE_FILING) || /* C-x C-q */
+	 (filing == INSERT_FILING));   /* C-x C-i */
+}
+
 char *info_completer(char *text)
 {
   snd_info *sp = NULL;

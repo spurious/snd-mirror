@@ -107,7 +107,7 @@ void update_region_browser(bool grf_too)
     {
       regrow *r;
       r = region_row(i);
-      set_button_label_bold(r->nm, rs->name[i]);
+      set_button_label(r->nm, rs->name[i]);
       set_toggle_button(r->pl, false, false, (void *)r);
       gtk_widget_show(r->rw);
     }

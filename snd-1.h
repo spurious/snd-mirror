@@ -101,7 +101,8 @@ typedef struct snd_fd {
   ed_list *current_state;
   void *cb; /* ed_fragment* */
   off_t loc, first, last;
-  int cbi, direction;
+  int cbi;
+  read_direction_t direction;
   bool at_eof;
   mus_sample_t *data;
   snd_data *current_sound;
@@ -259,7 +260,7 @@ typedef struct chan_info {
   bool selection_visible, active;
   Locus old_x0, old_x1;
   Float *amp_control; /* local amp controls in snd-dac; should it be extended to other controls? */
-  int last_search_result;
+  search_result_t last_search_result;
   bool just_zero;
 #if HAVE_GL
   int gl_fft_list;
@@ -305,7 +306,8 @@ typedef struct snd_info {
   bool raw_prompt;
   char *search_expr;
   off_t marking;
-  int searching, filing, amping;
+  int searching, amping;
+  sp_filing_t filing;
   bool prompting, loading, finding_mark, printing, selectioning;
   off_t macroing;
   minibuffer_choice_t minibuffer_on;
@@ -318,7 +320,7 @@ typedef struct snd_info {
   bool need_update;           /* current in-core data does not match actual file (someone wrote it behind our back) */
   channel_style_t channel_style;
   int allocated_chans;        /* snd_info widget tree is never pruned -- can only grow */
-  int cursor_follows_play;
+  tracking_cursor_t cursor_follows_play;
   void *edited_region;
   void *delete_me;
   chan_info *lacp;
@@ -366,7 +368,7 @@ typedef struct snd_state {
   sound_style_t Sound_Style;
   show_axes_t Show_Axes;
   char *Eps_File, *Temp_Dir, *Save_Dir, *Ladspa_Dir;
-  char *Listener_Font, *Axis_Label_Font, *Axis_Numbers_Font, *Bold_Button_Font, *Tiny_Font, *Peaks_Font, *Bold_Peaks_Font;
+  char *Listener_Font, *Axis_Label_Font, *Axis_Numbers_Font, *Tiny_Font, *Peaks_Font, *Bold_Peaks_Font;
   bool Verbose_Cursor, Trap_Segfault;
   int Enved_Filter_Order;
   bool Filter_Env_In_Hz;  /* for spectral envelopes from the envelope editor */
@@ -730,9 +732,9 @@ void ramp_channel(chan_info *cp, Float rmp0, Float rmp1, off_t beg, off_t num, i
 void xramp_channel(chan_info *cp, Float rmp0, Float rmp1, Float scaler, Float offset, 
 		   off_t beg, off_t num, int pos, bool in_as_one_edit, mus_any *e, int e_pos);
 void ptree_channel(chan_info *cp, void *ptree, off_t beg, off_t num, int pos, bool env_it, XEN init_func, bool is_xen);
-snd_fd *init_sample_read(off_t samp, chan_info *cp, int direction);
-snd_fd *init_sample_read_any(off_t samp, chan_info *cp, int direction, int edit_position);
-void read_sample_change_direction(snd_fd *sf, int dir);
+snd_fd *init_sample_read(off_t samp, chan_info *cp, read_direction_t direction);
+snd_fd *init_sample_read_any(off_t samp, chan_info *cp, read_direction_t direction, int edit_position);
+void read_sample_change_direction(snd_fd *sf, read_direction_t dir);
 bool ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, Float base);
 bool ptree_or_sound_fragments_in_use(chan_info *cp, int pos);
 bool ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos, bool is_xen);
@@ -775,7 +777,7 @@ void free_sono_info (chan_info *cp);
 void sono_update(chan_info *cp);
 void set_spectro_cutoff_and_redisplay(Float val);
 void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, off_t filterhdr, int filtersize,
-		 int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, bool from_enved, int ip, int total_chans);
+		 int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, enved_progress_t from_enved, int ip, int total_chans);
 void *make_sonogram_state(chan_info *cp);
 void single_fft(chan_info *cp, bool dpy);
 Cessate sonogram_in_slices(void *sono);
@@ -860,7 +862,7 @@ void start_selection_creation(chan_info *cp, off_t samp);
 void update_possible_selection_in_progress(off_t samp);
 int make_region_from_selection(void);
 void display_selection(chan_info *cp);
-bool delete_selection(const char *origin, int regraph);
+bool delete_selection(const char *origin, cut_selection_regraph_t regraph);
 void move_selection(chan_info *cp, int x);
 void finish_selection_creation(void);
 int select_all(chan_info *cp);
@@ -892,7 +894,7 @@ int save_region(int n, char *ofile, int data_format);
 void paste_region(int n, chan_info *cp, const char *origin);
 void add_region(int n, chan_info *cp, const char *origin);
 int define_region(sync_info *si, off_t *ends);
-snd_fd *init_region_read (off_t beg, int n, int chan, int direction);
+snd_fd *init_region_read (off_t beg, int n, int chan, read_direction_t direction);
 void cleanup_region_temp_files(void);
 int snd_regions(void);
 void save_regions(FILE *fd);
@@ -1306,7 +1308,7 @@ int previous_mix_id(int id);
 
 /* -------- snd-find.c -------- */
 
-char *global_search(int direction);
+char *global_search(read_direction_t direction);
 void cursor_search(chan_info *cp, int count);
 
 void g_init_find(void);
@@ -1351,7 +1353,6 @@ void save_macro_state(FILE *fd);
 void clear_minibuffer(snd_info *sp);
 void clear_minibuffer_prompt(snd_info *sp);
 void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta);
-bool use_filename_completer(int filing);
 void keyboard_command (chan_info *cp, int keysym, int state);
 void control_g(snd_info *sp);
 void g_init_kbd(void);
@@ -1366,11 +1367,11 @@ src_state *make_src(Float srate, snd_fd *sf, Float initial_srate);
 Float src_input_as_needed(void *arg, int dir);
 src_state *free_src(src_state *sr);
 void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num, 
-		    bool from_enved, const char *origin, bool over_selection, mus_any *gen, XEN edpos, int arg_pos, Float e_base);
-void apply_filter(chan_info *ncp, int order, env *e, bool from_enved, const char *origin, 
+		    enved_progress_t from_enved, const char *origin, bool over_selection, mus_any *gen, XEN edpos, int arg_pos, Float e_base);
+void apply_filter(chan_info *ncp, int order, env *e, enved_progress_t from_enved, const char *origin, 
 		  bool over_selection, Float *ur_a, mus_any *gen, XEN edpos, int arg_pos);
 void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr, 
-	       bool from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos, Float e_base);
+	       enved_progress_t from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos, Float e_base);
 void cos_smooth(chan_info *cp, off_t beg, off_t num, bool regexpr, const char *origin);
 void display_frequency_response(env *e, axis_info *ap, axis_context *gax, int order, bool dBing);
 void cursor_delete(chan_info *cp, off_t count, const char *origin);

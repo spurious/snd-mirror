@@ -653,7 +653,7 @@ static char *edit_names[10] = {"insert", "delete", "set", "init", "scale", "zero
 
 static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool with_source)
 {
-  int len, j, type, index;
+  int len, j, index;
   snd_data *sd;
   if (ed == NULL)
     {
@@ -666,8 +666,7 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
       return;
     }
   len = ed->size; /* number of fragments in this list */
-  type = ed->edit_type;
-  switch (type)
+  switch (ed->edit_type)
     {
     case INSERTION_EDIT:  fprintf(outp, "\n (insert " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                        break;
     case DELETION_EDIT:   fprintf(outp, "\n (delete " OFF_TD " " OFF_TD ") ", ed->beg, ed->len);                        break;
@@ -6083,7 +6082,7 @@ static void swap_readers(snd_fd *sf)
   sf->rev_runf = rrunf;
 }
 
-void read_sample_change_direction(snd_fd *sf, int dir1) /* can't use "dir" on Mac */
+void read_sample_change_direction(snd_fd *sf, read_direction_t dir1) /* can't use "dir" on Mac */
 {
   /* direction reversal can happen in dac(speed arrow), src gen, or user can call next/previous independent of initial dir */
   swap_readers(sf);
@@ -7164,7 +7163,7 @@ static void choose_accessor(snd_fd *sf)
 }
 
 
-static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, int direction, int edit_position, int bufsize)
+static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read_direction_t direction, int edit_position, int bufsize)
 {
   snd_fd *sf;
   snd_info *sp;
@@ -7266,12 +7265,12 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, int 
   return(NULL);
 }
 
-snd_fd *init_sample_read_any(off_t samp, chan_info *cp, int direction, int edit_position)
+snd_fd *init_sample_read_any(off_t samp, chan_info *cp, read_direction_t direction, int edit_position)
 {
   return(init_sample_read_any_with_bufsize(samp, cp, direction, edit_position, MIX_FILE_BUFFER_SIZE));
 }
 
-snd_fd *init_sample_read(off_t samp, chan_info *cp, int direction)
+snd_fd *init_sample_read(off_t samp, chan_info *cp, read_direction_t direction)
 {
   return(init_sample_read_any_with_bufsize(samp, cp, direction, cp->edit_ctr, MIX_FILE_BUFFER_SIZE));
 }
@@ -8373,7 +8372,7 @@ beg: " OFF_TD ", at " OFF_TD " [frag_pos: " OFF_TD ", first: " OFF_TD ", last: "
 	       sf->curval,
 	       (sf->cp->sound) ? sf->cp->sound->filename : "no sound",
 	       sf->cp->chan, sf->edit_ctr,
-	       (sf->direction == 1) ? "forward" : "backward",
+	       (sf->direction == READ_FORWARD) ? "forward" : "backward",
 	       (sf->at_eof) ? ", at eof" : "",
 	       sf->initial_samp,
 	       sf->loc, sf->frag_pos, sf->first, sf->last,
@@ -8419,7 +8418,7 @@ forward, -1 = backward), reading the version of the data indicated by edpos whic
 snd can be a filename, a sound index number, or a list with a mix id number."
 
   snd_fd *fd = NULL;
-  int chan, edpos, direction = 1;
+  int chan, edpos, direction = 1; /* in Scheme 1=forward, -1=backward */
   chan_info *cp;
   char *filename;
   snd_info *loc_sp = NULL;
@@ -8448,13 +8447,18 @@ snd can be a filename, a sound index number, or a list with a mix id number."
       cp = get_cp(snd, chn, S_make_sample_reader);
     }
   edpos = to_c_edit_position(cp, pos, S_make_sample_reader, 5);
-  direction = XEN_TO_C_INT_OR_ELSE(dir1, READ_FORWARD);
+  direction = XEN_TO_C_INT_OR_ELSE(dir1, 1);
   beg = beg_to_sample(samp_n, S_make_sample_reader);
-  if ((direction == READ_FORWARD) || (direction == READ_BACKWARD))
-    fd = init_sample_read_any(beg, cp, direction, edpos);
-  else XEN_ERROR(NO_SUCH_DIRECTION,
-		 XEN_LIST_2(C_TO_XEN_STRING(S_make_sample_reader),
-			    dir1));
+  if (direction == 1)
+    fd = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
+  else
+    {
+      if (direction == -1)
+	fd = init_sample_read_any(beg, cp, READ_BACKWARD, edpos);
+      else XEN_ERROR(NO_SUCH_DIRECTION,
+		     XEN_LIST_2(C_TO_XEN_STRING(S_make_sample_reader),
+				dir1));
+    }
   if (fd)
     {
       fd->local_sp = loc_sp;
@@ -8472,6 +8476,7 @@ return a reader ready to access region's channel chn data starting at start-samp
   snd_fd *fd = NULL;
   int reg_n, chn_n;
   off_t beg;
+  int direction = 1;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_make_sample_reader, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(reg), reg, XEN_ARG_2, S_make_sample_reader, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn), chn, XEN_ARG_3, S_make_sample_reader, "an integer");
@@ -8485,10 +8490,17 @@ return a reader ready to access region's channel chn data starting at start-samp
   if ((chn_n < 0) || (chn_n >= region_chans(reg_n)))
     return(snd_no_such_channel_error(S_make_region_sample_reader, XEN_LIST_1(reg), chn));
   beg = beg_to_sample(samp_n, S_make_region_sample_reader);
-  fd = init_region_read(beg,
-			reg_n,
-			chn_n,
-			XEN_TO_C_INT_OR_ELSE(dir1, READ_FORWARD));
+  direction = XEN_TO_C_INT_OR_ELSE(dir1, 1);
+  if (direction == 1)
+    fd = init_region_read(beg, reg_n, chn_n, READ_FORWARD);
+  else
+    {
+      if (direction == -1)
+	fd = init_region_read(beg, reg_n, chn_n, READ_BACKWARD);
+      else XEN_ERROR(NO_SUCH_DIRECTION,
+		     XEN_LIST_2(C_TO_XEN_STRING(S_make_region_sample_reader),
+				dir1));
+    }
   if (fd)
     {
       fd->edit_ctr = -2 - reg_n; /* can't use fd->cp because deferred case is pointer to original (not copied) data */

@@ -25,7 +25,7 @@ search is satisified.  For example, (lambda (n) (> n .1) looks for the next samp
 	   true);
 } 
 
-static void edit_find_find(int direction, GtkWidget *w, gpointer context) 
+static void edit_find_find(read_direction_t direction, GtkWidget *w, gpointer context) 
 { /* "Find" is the label here */
   char *str, *buf = NULL;
   XEN proc;

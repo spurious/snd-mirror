@@ -13,7 +13,7 @@ search is satisified.  For example, (lambda (n) (> n .1)) looks for the next sam
 	   true);
 } 
 
-static void edit_find_ok_callback(int direction, Widget w, XtPointer context, XtPointer info)
+static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointer context, XtPointer info)
 { /* "Find" is the label here */
   char *str, *buf = NULL;
   XmString s1;

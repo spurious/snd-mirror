@@ -2050,31 +2050,31 @@ void sound_check_control_panel(snd_info *sp, int height)
 
 /* -------- PROGRESS REPORT -------- */
 
-void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, bool from_enved)
+void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, enved_progress_t from_enved)
 {
   int which;
   if (sp->inuse != SOUND_NORMAL) return;
   which = (int)(pct * NUM_GLASSES);
   if (which >= NUM_GLASSES) which = NUM_GLASSES - 1;
   if (which < 0) which = 0;
-  if (from_enved)
+  if (from_enved == FROM_ENVED)
     display_enved_progress(NULL, mini_glasses[which]);
   else snd_file_glasses_icon(sp, true, which);
   check_for_event();
 }
 
-void finish_progress_report(snd_info *sp, bool from_enved)
+void finish_progress_report(snd_info *sp, enved_progress_t from_enved)
 {
   if (sp->inuse != SOUND_NORMAL) return;
-  if (from_enved)
+  if (from_enved == FROM_ENVED)
     display_enved_progress(NULL, blank);
   else snd_file_glasses_icon(sp, false, 0);
 }
 
-void start_progress_report(snd_info *sp, bool from_enved)
+void start_progress_report(snd_info *sp, enved_progress_t from_enved)
 {
   if (sp->inuse != SOUND_NORMAL) return;
-  if (!(from_enved)) 
+  if (from_enved == NOT_FROM_ENVED) 
     snd_file_glasses_icon(sp, true, 0);
 }
 

@@ -217,25 +217,17 @@ typedef enum {COLOR_DIALOG, ORIENTATION_DIALOG, ENVED_DIALOG, ERROR_DIALOG, YES_
 #define NUM_DIALOGS 20
 
 typedef enum {SOUND_IDLE, SOUND_NORMAL, SOUND_WRAPPER, SOUND_REGION, SOUND_READER} sound_inuse_t;
+typedef enum {NOT_FILING, INPUT_FILING, REGION_FILING, CHANNEL_FILING, TEMP_FILING, CHANGE_FILING, INSERT_FILING, MACRO_FILING} sp_filing_t;
+
 
 #define NO_REGIONS -2
 #define INVALID_REGION -1
 
-#define READ_FORWARD 1
-#define READ_BACKWARD -1
-
-#define FOLLOW_ALWAYS 1
-#define FOLLOW_ONCE 2
-#define DONT_FOLLOW 0
-
-#define UPDATE_DISPLAY 1
-#define DONT_UPDATE_DISPLAY 0
-
-#define NOT_FROM_ENVED false
-#define FROM_ENVED true
-
-#define SEARCH_OK 0
-#define SEARCH_FAILED -1
+typedef enum {READ_FORWARD, READ_BACKWARD} read_direction_t;
+typedef enum {DONT_FOLLOW, FOLLOW_ALWAYS, FOLLOW_ONCE} tracking_cursor_t;
+typedef enum {DONT_UPDATE_DISPLAY, UPDATE_DISPLAY} cut_selection_regraph_t;
+typedef enum {NOT_FROM_ENVED, FROM_ENVED} enved_progress_t;
+typedef enum {SEARCH_OK, SEARCH_FAILED} search_result_t;
 
 #define REMOVE_FROM_CACHE true
 #define IGNORE_CACHE false
@@ -547,9 +539,6 @@ typedef enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_U
 
 #define tiny_font(ss) ss->Tiny_Font
 #define in_set_tiny_font(a) ss->Tiny_Font = a
-
-#define bold_button_font(ss) ss->Bold_Button_Font
-#define in_set_bold_button_font(a) ss->Bold_Button_Font = a
 
 #define peaks_font(ss) ss->Peaks_Font
 #define in_set_peaks_font(a) ss->Peaks_Font = a

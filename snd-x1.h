@@ -273,7 +273,6 @@ void edit_find_callback(Widget w, XtPointer context, XtPointer info);
 
 bool set_tiny_font(char *font);
 bool set_listener_font(char *font);
-bool set_bold_button_font(char *font);
 bool set_peaks_font(char *font);
 bool set_bold_peaks_font(char *font);
 bool set_axis_label_font(char *font);
@@ -289,7 +288,6 @@ void raise_dialog(Widget w);
 void set_main_color_of_widget (Widget w, void *userptr);
 void highlight_color(Widget w);
 void white_color(Widget w);
-void set_button_label_bold(Widget button, const char *str);
 void set_button_label(Widget label, const char *str);
 void set_label(Widget label, const char *str);
 void set_title(const char *title);
@@ -422,9 +420,9 @@ void sound_hide_ctrls(snd_info *sp);
 bool control_panel_open(snd_info *sp);
 void show_controls(void);
 void hide_controls(void);
-void start_progress_report(snd_info *sp, bool from_enved);
-void finish_progress_report(snd_info *sp, bool from_enved);
-void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, bool from_enved);
+void start_progress_report(snd_info *sp, enved_progress_t from_enved);
+void finish_progress_report(snd_info *sp, enved_progress_t from_enved);
+void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, enved_progress_t from_enved);
 XmString initial_speed_label(void);
 void g_init_gxsnd(void);
 

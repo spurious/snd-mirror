@@ -4,7 +4,7 @@ static bool search_in_progress = false;
 typedef struct 
 {
   int n; 
-  int direction; 
+  read_direction_t direction; 
   int chans; 
   off_t inc; 
   chan_info **cps; 
@@ -16,7 +16,7 @@ typedef struct
 static void prepare_global_search (chan_info *cp, void *g0)
 {
   gfd *g = (gfd *)g0;
-  int direction;
+  read_direction_t direction;
   direction = g->direction;
   g->cps[g->n] = cp;
   g->fds[g->n] = init_sample_read((direction == READ_FORWARD) ? (CURSOR(cp) + 1) : (CURSOR(cp) - 1), cp, direction);
@@ -97,7 +97,7 @@ static int run_global_search (gfd *g)
 
 static char search_message[PRINT_BUFFER_SIZE];
 
-char *global_search(int direction)
+char *global_search(read_direction_t direction)
 {
   /* set up snd_fd for each active channel, 
    * tick each one forward until a match is found, 
