@@ -31,6 +31,9 @@
   #if defined(LINUX) && (!(defined(HAVE_FPU_CONTROL_H)))
     #define HAVE_FPU_CONTROL_H 1
   #endif
+  #if defined(LINUX) && (!(defined(HAVE_SCHED_H)))
+    #define HAVE_SCHED_H 1
+  #endif
   #ifndef NEXT
     #define TRAP_SEGFAULT 1
   #endif

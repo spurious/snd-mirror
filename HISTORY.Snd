@@ -1,5 +1,7 @@
 snd change log
 
+  9-Jun:     bugfixes and improvements from Paul Barton-Davis.
+  8-Jun:     OSS/ALSA choice at run-time (snd-xrec/snd-dac changes).
   7-Jun:     snd-error-hook, snd-warning-hook.
   5-Jun:     snd 4.3.
   30-May:    transform-size for glfft, glfft.scm, glfft.c.

@@ -1655,6 +1655,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+9-Jun:   bugfixes and improvements from Paul Barton-Davis.\n\
+8-Jun:   OSS/ALSA choice at run-time (snd-xrec/snd-dac changes).\n\
 7-Jun:   snd-error-hook, snd-warning-hook.\n\
 5-Jun:   snd 4.3.\n\
 30-May:  transform-size for glfft, glfft.scm, glfft.c.\n\

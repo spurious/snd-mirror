@@ -42,8 +42,8 @@
  *
  * int mus_audio_systems(void) returns number of separate complete audio systems (soundcards essentially)
  * AUDIO_SYSTEM(n) selects the nth card (counting from 0), AUDIO_SYSTEM(0) is always the default
- * char *mus_audio_system_name(int system) returns some user-recognizable (?) name for the given card
- * char *mus_audio_moniker(void) returns some brief description of the overall audio setup.
+ * char *mus_audio_system_name(int system) returns some user-recognizable (?) name for the given card (don't free)
+ * char *mus_audio_moniker(void) returns some brief description of the overall audio setup (don't free return string).
  */
 
 #if defined(HAVE_CONFIG_H)
@@ -1200,7 +1200,8 @@ void mus_audio_restore (void)
 
 /* ------------------------------- OSS ----------------------------------------- */
 
-#if HAVE_OSS
+#if (HAVE_OSS || HAVE_ALSA)
+/* actually it's not impossible that someday we'll have ALSA but not OSS... */
 #define AUDIO_OK
 
 #include <sys/ioctl.h>
@@ -1259,9 +1260,9 @@ static int fragments_locked = 0;
  * cause about a .5 second delay, which is not acceptable in "real-time" situations.
  */
 
-void mus_audio_set_oss_buffers(int num,int size) {FRAGMENTS = num; FRAGMENT_SIZE = size; fragments_locked = 1;}
+static void oss_mus_audio_set_oss_buffers(int num,int size) {FRAGMENTS = num; FRAGMENT_SIZE = size; fragments_locked = 1;}
 
-char *mus_audio_error_name(int err) {return(audio_error_name_1(err));}
+static char *oss_mus_audio_error_name(int err) {return(audio_error_name_1(err));}
 
 #define MAX_SOUNDCARDS 8
 #define MAX_DSPS 8
@@ -1281,7 +1282,7 @@ static int sound_cards = 0;
 static int new_oss_running = 0;
 static char *dev_name = NULL;
 
-int mus_audio_systems(void) 
+static int oss_mus_audio_systems(void) 
 {
   return(sound_cards);
 }
@@ -1315,7 +1316,7 @@ static char *mixer_name(int sys)
   return(DAC_NAME);
 }
 
-char *mus_audio_system_name(int system) 
+static char *oss_mus_audio_system_name(int system) 
 {
 #if HAVE_SAM_9407
   if(system<sound_cards && audio_type[system]==SAM9407_DSP)
@@ -1358,12 +1359,12 @@ char *mus_audio_system_name(int system)
 }
 
 #if HAVE_SAM_9407
-char *mus_audio_moniker(void) {return("Sam 9407");}
+static char *oss_mus_audio_moniker(void) {return("Sam 9407");}
 #else
-char *mus_audio_moniker(void)
+static char *oss_mus_audio_moniker(void)
 {
-  char version[4];
-  if (version_name == NULL) version_name = (char *)CALLOC(16,sizeof(char));
+  char version[8];
+  if (version_name == NULL) version_name = (char *)CALLOC(64,sizeof(char));
   if (SOUND_VERSION < 361)
     {
       sprintf(version,"%d",SOUND_VERSION);
@@ -1446,7 +1447,7 @@ void set_dsp_reset(int val);
 static int dsp_reset = 0; /* trying to find out if DSP_RESET is ever needed */
 void set_dsp_reset(int val) {dsp_reset = val;}
 
-int mus_audio_initialize(void) 
+static int oss_mus_audio_initialize(void) 
 {
   /* here we need to set up the map of /dev/dsp and /dev/mixer to a given system */
   /* since this info is not passed to us by OSS, we have to work at it... */
@@ -1786,7 +1787,7 @@ static char *sonorus_name(int sys, int offset)
   return(sonorus_buf);
 }
 
-int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size)
+static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size)
 {
   /* ur_dev is in general MUS_AUDIO_PACK_SYSTEM(n) | MUS_AUDIO_DEVICE */
   int oss_format,buffer_info,audio_out = -1,sys,dev;
@@ -1887,27 +1888,27 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
   return(audio_out);
 }
 
-int mus_audio_write(int line, char *buf, int bytes)
+static int oss_mus_audio_write(int line, char *buf, int bytes)
 {
   AUDIO_ERROR = MUS_AUDIO_NO_ERROR;
   write(line,buf,bytes);
   return(0);
 }
 
-int mus_audio_close(int line)
+static int oss_mus_audio_close(int line)
 {
   AUDIO_ERROR = MUS_AUDIO_NO_ERROR;
   return(linux_audio_close(line));
 }
 
-int mus_audio_read(int line, char *buf, int bytes)
+static int oss_mus_audio_read(int line, char *buf, int bytes)
 {
   AUDIO_ERROR = MUS_AUDIO_NO_ERROR;
   read(line,buf,bytes);
   return(0);
 }
 
-int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int requested_size)
+static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format, int requested_size)
 {
   /* dev can be MUS_AUDIO_DEFAULT or MUS_AUDIO_DUPLEX_DEFAULT as well as the obvious others */
   int audio_fd = -1,oss_format,buffer_info,sys,dev,srcbit,cursrc,adat_mode = 0,err;
@@ -2030,9 +2031,9 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int reque
 }
 
 
-int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
+static int oss_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 {
-  int fd,amp,channels,err,devmask,stereodevs,ind,formats,sys,dev,srate,adat_mode=0;
+  int fd,amp,channels,err=0,devmask,stereodevs,ind,formats,sys,dev,srate,adat_mode=0;
   AUDIO_ERROR = MUS_AUDIO_NO_ERROR;
   sys = MUS_AUDIO_SYSTEM(ur_dev);
   dev = MUS_AUDIO_DEVICE(ur_dev);
@@ -2335,8 +2336,9 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
           break;
 	case MUS_AUDIO_SRATE:
 	  srate = (int)(val[0]);
-	  if (ioctl(fd,SNDCTL_DSP_SPEED,&srate) == -1) AUDIO_ERROR = MUS_AUDIO_SRATE_NOT_AVAILABLE;
-	  val[0] = (float)srate;
+	  if (ioctl(fd,SNDCTL_DSP_SPEED,&srate) == -1) 
+	    AUDIO_ERROR = MUS_AUDIO_SRATE_NOT_AVAILABLE;
+	  else val[0] = (float)srate;
 	  break;
 	case MUS_AUDIO_DIRECTION:
 	  switch (dev)
@@ -2355,10 +2357,11 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
     }
   linux_audio_close(fd);
   if (err) {AUDIO_ERROR = MUS_AUDIO_READ_ERROR; return(-1);}
-  return(0);
+  if (AUDIO_ERROR == MUS_AUDIO_NO_ERROR) return(0);
+  return(-1);
 }
 
-int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
+static int oss_mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 {
   int fd,err = 0,devmask,vol,sys,dev;
   float amp[1];
@@ -2448,7 +2451,8 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
     }
   linux_audio_close(fd);
   if (err) {AUDIO_ERROR = MUS_AUDIO_WRITE_ERROR; return(-1);}
-  return(0);
+  if (AUDIO_ERROR == MUS_AUDIO_NO_ERROR) return(0);
+  return(-1);
 }
 
 static char *synth_names[] = 
@@ -2495,7 +2499,7 @@ static int set_dsp(int fd, int channels, int bits, int *rate)
   return(0);
 }
 
-static void describe_audio_state_1(void)
+static void oss_describe_audio_state_1(void)
 {
   /* this code taken largely from "Linux Multimedia Guide" by Jeff Tranter, O'Reilly & Associates, Inc 1996 */
   /* it is explicitly released under the GPL, so I think I can use it here without elaborate disguises */
@@ -2805,7 +2809,7 @@ AUDIO_INFO:
     }
 }
 
-void mus_audio_save (void)
+static void oss_mus_audio_save (void)
 {
   int afd,i,devmask,err,level,system,systems;
   systems = mus_audio_systems();
@@ -2831,7 +2835,7 @@ void mus_audio_save (void)
     }
 }
 
-void mus_audio_restore (void)
+static void oss_mus_audio_restore (void)
 {
   int afd,i,level,devmask,system,systems;
   systems = mus_audio_systems();
@@ -2855,7 +2859,7 @@ void mus_audio_restore (void)
     }
 }
 
-void mus_audio_mixer_save(const char *file)
+static void oss_mus_audio_mixer_save(const char *file)
 {
   int fd,systems,i;
   mus_audio_save();
@@ -2869,7 +2873,7 @@ void mus_audio_mixer_save(const char *file)
     }
 }
 
-void mus_audio_mixer_restore(const char *file)
+static void oss_mus_audio_mixer_restore(const char *file)
 {
   int fd,afd,i,level,devmask,system,systems;
   int vals[MAX_SOUNDCARDS][MIXER_SIZE];
@@ -2899,6 +2903,178 @@ void mus_audio_mixer_restore(const char *file)
         }
     }
 }
+
+
+/* ------------------------------- ALSA / OSS ----------------------------------- */
+/* API being used */
+
+static int api = ALSA_API;
+int mus_audio_api(void) {return(api);}
+/* I'd rather not have any extern variables */
+
+/* hopefully first call to sndlib will be this... */
+static int probe_api(void);
+/* static int (*vect_mus_audio_initialize)(void) = probe_api; */
+/* I don't think this fallback will work -- an infinite loop in probe_api */
+static int (*vect_mus_audio_initialize)(void);
+
+/* FIXME: add a suitable default for all other vectors
+   so that a call happening before mus_audio_initialize
+   can be detected */
+/* I don't think this is necessary -- documentation discusses this
+ * (mus_sound_initialize calls mus_audio_initialize)
+ */
+
+/* vectors for the rest of the sndlib api */
+static void  (*vect_mus_audio_set_oss_buffers)(int num, int size);
+static char* (*vect_mus_audio_error_name)(int err);
+static int   (*vect_mus_audio_systems)(void);
+static char* (*vect_mus_audio_system_name)(int system);
+static char* (*vect_mus_audio_moniker)(void);
+static int   (*vect_mus_audio_open_output)(int ur_dev, int srate, int chans, int format, int size);
+static int   (*vect_mus_audio_open_input)(int ur_dev, int srate, int chans, int format, int requested_size);
+static int   (*vect_mus_audio_write)(int id, char *buf, int bytes);
+static int   (*vect_mus_audio_read)(int id, char *buf, int bytes);
+static int   (*vect_mus_audio_close)(int id);
+static int   (*vect_mus_audio_mixer_read)(int ur_dev, int field, int chan, float *val);
+static int   (*vect_mus_audio_mixer_write)(int ur_dev, int field, int chan, float *val);
+static void  (*vect_mus_audio_save)(void);
+static void  (*vect_mus_audio_restore)(void);
+static void  (*vect_mus_audio_mixer_save)(const char* file);
+static void  (*vect_mus_audio_mixer_restore)(const char* file);
+static void  (*vect_describe_audio_state_1)(void);
+
+/* vectors for the rest of the sndlib api */
+int mus_audio_initialize(void) 
+{
+  return(probe_api());
+}
+
+void mus_audio_set_oss_buffers(int num, int size) 
+{
+  return(vect_mus_audio_set_oss_buffers(num, size));
+}
+
+char* mus_audio_error_name(int err) 
+{
+  return(vect_mus_audio_error_name(err));
+}
+
+int mus_audio_systems(void) 
+{
+  return(vect_mus_audio_systems());
+}
+
+char* mus_audio_system_name(int system) 
+{
+  return(vect_mus_audio_system_name(system));
+}
+
+#if HAVE_ALSA 
+static char* alsa_mus_audio_moniker(void);
+#endif
+
+char* mus_audio_moniker(void) 
+{
+#if (HAVE_OSS && HAVE_ALSA)
+  char *both_names;
+  both_names = (char *)CALLOC(128,sizeof(char));
+  /* need to be careful here since these use the same constant buffer */
+  strcpy(both_names,oss_mus_audio_moniker());
+  strcat(both_names,", ");
+  strcat(both_names,alsa_mus_audio_moniker());
+  return(both_names); /* tiny memory leak ... */
+#else
+  return(vect_mus_audio_moniker());
+#endif
+}
+
+int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size) 
+{
+  return(vect_mus_audio_open_output(ur_dev, srate, chans, format, size));
+}
+
+int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int requested_size) 
+{
+  return(vect_mus_audio_open_input(ur_dev, srate, chans, format, requested_size));
+}
+
+int mus_audio_write(int id, char *buf, int bytes) 
+{
+  return(vect_mus_audio_write(id, buf, bytes));
+}
+
+int mus_audio_read(int id, char *buf, int bytes) 
+{
+  return(vect_mus_audio_read(id, buf, bytes));
+}
+
+int mus_audio_close(int id) 
+{
+  return(vect_mus_audio_close(id));
+}
+
+int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val) 
+{
+  return(vect_mus_audio_mixer_read(ur_dev, field, chan, val));
+}
+
+int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val) 
+{
+  return(vect_mus_audio_mixer_write(ur_dev, field, chan, val));
+}
+
+void mus_audio_save(void) 
+{
+  return(vect_mus_audio_save());
+}
+
+void mus_audio_restore(void) 
+{
+  return(vect_mus_audio_restore());
+}
+
+void mus_audio_mixer_save(const char* file) 
+{
+  return(vect_mus_audio_mixer_save(file));
+}
+
+void mus_audio_mixer_restore(const char* file)
+{
+  return(vect_mus_audio_mixer_restore(file));
+}
+
+static void describe_audio_state_1(void) 
+{
+  return(vect_describe_audio_state_1());
+}
+
+#if (!HAVE_ALSA)
+static int probe_api(void) 
+{
+  /* go for the oss api */
+  api = OSS_API;
+  vect_mus_audio_initialize = oss_mus_audio_initialize;
+  vect_mus_audio_set_oss_buffers = oss_mus_audio_set_oss_buffers;
+  vect_mus_audio_error_name = oss_mus_audio_error_name;
+  vect_mus_audio_systems = oss_mus_audio_systems;
+  vect_mus_audio_system_name = oss_mus_audio_system_name;
+  vect_mus_audio_moniker = oss_mus_audio_moniker;
+  vect_mus_audio_open_output = oss_mus_audio_open_output;
+  vect_mus_audio_open_input = oss_mus_audio_open_input;
+  vect_mus_audio_write = oss_mus_audio_write;
+  vect_mus_audio_read = oss_mus_audio_read;
+  vect_mus_audio_close = oss_mus_audio_close;
+  vect_mus_audio_mixer_read = oss_mus_audio_mixer_read;
+  vect_mus_audio_mixer_write = oss_mus_audio_mixer_write;
+  vect_mus_audio_save = oss_mus_audio_save;
+  vect_mus_audio_restore = oss_mus_audio_restore;
+  vect_mus_audio_mixer_save = oss_mus_audio_mixer_save;
+  vect_mus_audio_mixer_restore = oss_mus_audio_mixer_restore;
+  vect_describe_audio_state_1 = oss_describe_audio_state_1;
+  return(vect_mus_audio_initialize());
+}
+#endif
 
 #endif
 
@@ -2934,10 +3110,85 @@ void mus_audio_mixer_restore(const char *file)
 */
 
 #if HAVE_ALSA
+
+#if (!HAVE_OSS)
 #define AUDIO_OK
+#endif
 
 #include <sys/ioctl.h>
 #include <sys/asoundlib.h>
+
+/* prototypes for the alsa sndlib functions */
+static int   alsa_mus_audio_initialize(void);
+static void  alsa_mus_audio_set_oss_buffers(int num, int size);
+static char* alsa_mus_audio_error_name(int err);
+static int   alsa_mus_audio_systems(void);
+static char* alsa_mus_audio_system_name(int system);
+/* static char* alsa_mus_audio_moniker(void); */ /* moved above */
+static int   alsa_mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size);
+static int   alsa_mus_audio_open_input(int ur_dev, int srate, int chans, int format, int requested_size);
+static int   alsa_mus_audio_write(int id, char *buf, int bytes);
+static int   alsa_mus_audio_read(int id, char *buf, int bytes);
+static int   alsa_mus_audio_close(int id);
+static int   alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val);
+static int   alsa_mus_audio_mixer_write(int ur_dev, int field, int chan, float *val);
+static void  alsa_mus_audio_save(void);
+static void  alsa_mus_audio_restore(void);
+static void  alsa_mus_audio_mixer_save(const char* file);
+static void  alsa_mus_audio_mixer_restore(const char* file);
+static void  alsa_describe_audio_state_1(void);
+
+/* decide which api to activate */
+
+static int probe_api(void) 
+{
+    unsigned int mask=snd_cards_mask();
+    if (mask) {
+	/* the alsa library has detected one or more cards */
+	api = ALSA_API;
+	vect_mus_audio_initialize = alsa_mus_audio_initialize;
+	vect_mus_audio_set_oss_buffers = alsa_mus_audio_set_oss_buffers;
+	vect_mus_audio_error_name = alsa_mus_audio_error_name;
+	vect_mus_audio_systems = alsa_mus_audio_systems;
+	vect_mus_audio_system_name = alsa_mus_audio_system_name;
+	vect_mus_audio_moniker = alsa_mus_audio_moniker;
+	vect_mus_audio_open_output = alsa_mus_audio_open_output;
+	vect_mus_audio_open_input = alsa_mus_audio_open_input;
+	vect_mus_audio_write = alsa_mus_audio_write;
+	vect_mus_audio_read = alsa_mus_audio_read;
+	vect_mus_audio_close = alsa_mus_audio_close;
+	vect_mus_audio_mixer_read = alsa_mus_audio_mixer_read;
+	vect_mus_audio_mixer_write = alsa_mus_audio_mixer_write;
+	vect_mus_audio_save = alsa_mus_audio_save;
+	vect_mus_audio_restore = alsa_mus_audio_restore;
+	vect_mus_audio_mixer_save = alsa_mus_audio_mixer_save;
+	vect_mus_audio_mixer_restore = alsa_mus_audio_mixer_restore;
+	vect_describe_audio_state_1 = alsa_describe_audio_state_1;
+    } else {
+	/* go for the oss api */
+        api = OSS_API;
+	vect_mus_audio_initialize = oss_mus_audio_initialize;
+	vect_mus_audio_set_oss_buffers = oss_mus_audio_set_oss_buffers;
+	vect_mus_audio_error_name = oss_mus_audio_error_name;
+	vect_mus_audio_systems = oss_mus_audio_systems;
+	vect_mus_audio_system_name = oss_mus_audio_system_name;
+	vect_mus_audio_moniker = oss_mus_audio_moniker;
+	vect_mus_audio_open_output = oss_mus_audio_open_output;
+	vect_mus_audio_open_input = oss_mus_audio_open_input;
+	vect_mus_audio_write = oss_mus_audio_write;
+	vect_mus_audio_read = oss_mus_audio_read;
+	vect_mus_audio_close = oss_mus_audio_close;
+	vect_mus_audio_mixer_read = oss_mus_audio_mixer_read;
+	vect_mus_audio_mixer_write = oss_mus_audio_mixer_write;
+	vect_mus_audio_save = oss_mus_audio_save;
+	vect_mus_audio_restore = oss_mus_audio_restore;
+	vect_mus_audio_mixer_save = oss_mus_audio_mixer_save;
+	vect_mus_audio_mixer_restore = oss_mus_audio_mixer_restore;
+	vect_describe_audio_state_1 = oss_describe_audio_state_1;
+    }
+    /* will the _real_ mus_audio_initialize please stand up? */
+    return(vect_mus_audio_initialize());
+}
 
 /* size of buffer in number of samples per channel, 
  * at 44100 approximately 5.9mSecs
@@ -2946,14 +3197,14 @@ void mus_audio_mixer_restore(const char *file)
 /* static int samples_per_channel = 512; */
 static int samples_per_channel = 1024;
 
-static char dev_name[64];
+/* static char dev_name[64]; */
 
 /* this should go away as it is oss specific */
 
 static int fragment_size = 512; 
 static int fragments = 4;
 
-void mus_audio_set_oss_buffers (int num, int size) {
+static void alsa_mus_audio_set_oss_buffers (int num, int size) {
     fragments = num; 
     fragment_size = size; 
 #if DEBUGGING
@@ -2961,11 +3212,11 @@ void mus_audio_set_oss_buffers (int num, int size) {
 #endif
 }
 
-char *mus_audio_error_name(int err) {return(audio_error_name_1(err));}
+static char *alsa_mus_audio_error_name(int err) {return(audio_error_name_1(err));}
 
 /* total number of soundcards in our setup, set by initialize_audio */
 
-static int sound_cards = 0;
+/* static int sound_cards = 0; */
 
 /* holds information about one device in a system or soundcard */
 
@@ -3015,19 +3266,20 @@ static device_info_t *device_info[SND_CARDS];
  * format conversion available...
  */
 
-int (*alsa_info)(snd_pcm_t *handle, snd_pcm_channel_info_t *info);
-int (*alsa_params)(snd_pcm_t *handle, snd_pcm_channel_params_t *params);
-int (*alsa_prepare)(snd_pcm_t *handle, int channel);
-int (*alsa_setup)(snd_pcm_t *handle, snd_pcm_channel_setup_t *setup);
-int (*alsa_status)(snd_pcm_t *handle, snd_pcm_channel_status_t *status);
-int (*alsa_flush)(snd_pcm_t *handle, int channel);
-ssize_t (*alsa_write)(snd_pcm_t *handle, const void *buffer, size_t size);
-ssize_t (*alsa_read)(snd_pcm_t *handle, void *buffer, size_t size);
+static int (*alsa_info)(snd_pcm_t *handle, snd_pcm_channel_info_t *info);
+static int (*alsa_params)(snd_pcm_t *handle, snd_pcm_channel_params_t *params);
+static int (*alsa_prepare)(snd_pcm_t *handle, int channel);
+static int (*alsa_setup)(snd_pcm_t *handle, snd_pcm_channel_setup_t *setup);
+static int (*alsa_status)(snd_pcm_t *handle, snd_pcm_channel_status_t *status);
+static int (*alsa_flush)(snd_pcm_t *handle, int channel);
+static ssize_t (*alsa_write)(snd_pcm_t *handle, const void *buffer, size_t size);
+static ssize_t (*alsa_read)(snd_pcm_t *handle, void *buffer, size_t size);
 
 static int use_plugins=0;
 
 static void alsa_initialize_functions()
 {
+#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
     if (use_plugins==0) {
 	alsa_info=snd_pcm_channel_info;
 	alsa_params=snd_pcm_channel_params;
@@ -3047,6 +3299,16 @@ static void alsa_initialize_functions()
 	alsa_write=snd_pcm_plugin_write;
 	alsa_read=snd_pcm_plugin_read;
     }
+#else
+    alsa_info=snd_pcm_channel_info;
+    alsa_params=snd_pcm_channel_params;
+    alsa_prepare=snd_pcm_channel_prepare;
+    alsa_setup=snd_pcm_channel_setup;
+    alsa_status=snd_pcm_channel_status;
+    alsa_flush=snd_pcm_channel_flush;
+    alsa_write=snd_pcm_write;
+    alsa_read=snd_pcm_read;
+#endif
 }
 
 /* what to do on stop 
@@ -3055,8 +3317,12 @@ static void alsa_initialize_functions()
  * behaviors on stop
  */
 
-static int stop_mode=SND_PCM_STOP_ROLLOVER;
-/* static int stop_mode=SND_PCM_STOP_STOP; */
+/* static int stop_mode=SND_PCM_STOP_ROLLOVER;*/
+#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+  static int stop_mode=SND_PCM_STOP_STOP; 
+#else
+  static int stop_mode=SND_PCM_XRUN_FLUSH;
+#endif
 
 /* whether we want to trace calls 
  *
@@ -3152,6 +3418,7 @@ static const char *decode_alsa_format(int format)
 /* set schedulling priority to SCHED_FIFO 
  * this will only work if snd is run as root or is suid root */
 
+#if (!defined(HAVE_CONFIG_H)) || (defined(HAVE_SCHED_H))
 #include <sched.h>
 
 static void set_priority() 
@@ -3170,10 +3437,13 @@ static void set_priority()
 	seteuid(getuid());
     }
 }
+#else
+static void set_priority() {}
+#endif
 
 /* count the soundcards and store their hardware info  */
 
-int mus_audio_initialize(void) 
+static int alsa_mus_audio_initialize(void) 
 {
     device_info_t **dev_info;
     snd_pcm_info_t pcminfo;
@@ -3188,6 +3458,8 @@ int mus_audio_initialize(void)
     set_priority();
     /* initialize function pointers for normal or plugin calls */
     alsa_initialize_functions();
+    /* allocate various things */
+    dev_name = (char *)CALLOC(64,sizeof(char));
     /* scan for soundcards */
     mask=snd_cards_mask();
     if (!mask) {
@@ -3272,14 +3544,14 @@ int mus_audio_initialize(void)
 
 /* return the number of cards that are available */
 
-int mus_audio_systems(void) 
+static int alsa_mus_audio_systems(void) 
 {
     return(sound_cards);
 }
 
 /* return the name of a given system (soundcard) */
 
-char *mus_audio_system_name(int system) 
+static char *alsa_mus_audio_system_name(int system) 
 {
     if (card_info[system].info!=NULL) {
 	return(card_info[system].info->name);
@@ -3290,7 +3562,7 @@ char *mus_audio_system_name(int system)
 
 /* hummm, return the type of driver we're dealing with? */
 
-char *mus_audio_moniker(void)
+static char *alsa_mus_audio_moniker(void)
 {
   if (version_name == NULL) version_name = (char *)CALLOC(64,sizeof(char));
   sprintf(version_name, "ALSA %s", SND_LIB_VERSION_STR);
@@ -3624,7 +3896,7 @@ static int alsa_audio_open(int card, int device)
 
 /* sndlib support for opening output devices */
 
-int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size)
+static int alsa_mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size)
 {
     int alsa_format,card,dev;
     snd_pcm_channel_params_t params;
@@ -3649,14 +3921,31 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
     }
     memset(&params, 0, sizeof(params));
     params.channel=SND_PCM_CHANNEL_PLAYBACK;
-    params.mode=SND_PCM_MODE_BLOCK;
+    if ((handles[id].playback_device->info.flags) & SND_PCM_CHNINFO_BLOCK) 
+        params.mode=SND_PCM_MODE_BLOCK;
+    else {
+	mus_error(MUS_AUDIO_CANT_OPEN, "%s: block mode not available for card %d, device %d",
+		  __FUNCTION__, card, dev);
+	AUDIO_ERROR=MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE;
+	return(-1);
+    }
     params.start_mode=SND_PCM_START_FULL;
+#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
     params.stop_mode=stop_mode; 
     params.buf.block.frag_size=size;
     params.buf.block.frags_max=3;
     params.buf.block.frags_min=1;
-    /* FIXME: we are assuming interleaved samples */
-    params.format.interleave=1;
+#else
+    params.xrun_mode=stop_mode; 
+    params.frag_size = size;
+    params.buffer_size = params.frag_size * 3;
+    params.bytes_xrun_max = ~0U;
+    params.bytes_min=params.frag_size;
+#endif
+    if ((handles[id].playback_device->info.flags) & SND_PCM_CHNINFO_INTERLEAVE) 
+      params.format.interleave=1;
+    if ((handles[id].playback_device->info.flags) & SND_PCM_CHNINFO_NONINTERLEAVE) 
+      params.format.interleave=0;
     params.format.format=alsa_format;
     params.format.rate=srate;
     params.format.voices=chans;
@@ -3684,7 +3973,11 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
 	    mus_error(MUS_AUDIO_CANT_OPEN,"%s: alsa_setup: %s", 
 		      __FUNCTION__,snd_strerror(err));
 	} else {
-	    frags=setup.buf.block.frags;
+#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+ 	    frags=setup.buf.block.frags;
+#else
+	    frags=setup.frags;
+#endif
 	    mus_error(MUS_AUDIO_NO_ERROR,"%s: frags=%d, total size=%d\n", 
 		      __FUNCTION__, frags, frags*size);
 	}
@@ -3707,7 +4000,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
 
 /* sndlib support for opening input devices */
 
-int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int requested_size)
+static int alsa_mus_audio_open_input(int ur_dev, int srate, int chans, int format, int requested_size)
 {
     int alsa_format, card, dev;
     snd_pcm_channel_params_t params;
@@ -3732,13 +4025,31 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int reque
     }
     memset(&params, 0, sizeof(params));
     params.channel=SND_PCM_CHANNEL_CAPTURE;
-    params.mode=SND_PCM_MODE_BLOCK;
+    if ((handles[id].capture_device->info.flags) & SND_PCM_CHNINFO_BLOCK) 
+        params.mode=SND_PCM_MODE_BLOCK;
+    else {
+	mus_error(MUS_AUDIO_CANT_OPEN, "%s: block mode not available for card %d, device %d",
+		  __FUNCTION__, card, dev);
+	AUDIO_ERROR=MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE;
+	return(-1);
+    }
     params.start_mode=SND_PCM_START_DATA;
-    params.stop_mode=SND_PCM_STOP_ROLLOVER; 
+#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+    params.stop_mode=stop_mode;
     params.buf.block.frag_size=requested_size;
     params.buf.block.frags_max=-1;
     params.buf.block.frags_min=1;
-    params.format.interleave=1;
+#else
+    params.xrun_mode=stop_mode; 
+    params.frag_size = requested_size;
+    params.buffer_size = params.frag_size * 3;
+    params.bytes_xrun_max = ~0U;
+    params.bytes_min=params.frag_size;
+#endif
+    if ((handles[id].capture_device->info.flags) & SND_PCM_CHNINFO_INTERLEAVE) 
+      params.format.interleave=1;
+    if ((handles[id].capture_device->info.flags) & SND_PCM_CHNINFO_NONINTERLEAVE) 
+      params.format.interleave=0;
     params.format.format=alsa_format;
     params.format.rate=srate;
     params.format.voices=chans;
@@ -3765,7 +4076,11 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int reque
 	    mus_error(MUS_AUDIO_CANT_OPEN, "%s: setup: %s", 
 		      __FUNCTION__, snd_strerror(err));
 	} else {
-	    frags=setup.buf.block.frags;
+#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+ 	    frags=setup.buf.block.frags;
+#else
+	    frags=setup.frags;
+#endif
 	    mus_error(MUS_AUDIO_NO_ERROR, "%s: frags=%d, total size=%d\n", 
 		      __FUNCTION__, frags, frags*requested_size);
 	}
@@ -3777,43 +4092,46 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int reque
 
 static int underruns = 0;
 
-int mus_audio_write(int id, char *buf, int bytes)
+static int alsa_mus_audio_write(int id, char *buf, int bytes)
 {
-    int done;
+    int done, err;
     snd_pcm_channel_status_t status;
 
     AUDIO_ERROR=MUS_AUDIO_NO_ERROR;
     if ((done=alsa_write(handles[id].handle, buf, bytes))!=bytes) {
-	if (done<0) {
-	    mus_error(MUS_AUDIO_CANT_WRITE, "%s[%d bytes=%d]: %s <%d>", 
-		      __FUNCTION__, id, bytes, snd_strerror(done), done);
+        /* check status to recover from and report underruns */
+        memset(&status, 0, sizeof(status));
+	status.channel=SND_PCM_CHANNEL_PLAYBACK;
+	if ((err=alsa_status(handles[id].handle, &status))<0) {
+	    mus_error(MUS_AUDIO_CANT_WRITE, "%s: status: %s", 
+		      __FUNCTION__, snd_strerror(err));
 	} else {
-	    mus_error(MUS_AUDIO_CANT_WRITE, "%s: wrote only %d out of %d bytes", 
-		      __FUNCTION__,done, bytes);
-	}
-	AUDIO_ERROR=MUS_AUDIO_WRITE_ERROR;
-	return(-1);
-    }
-    /* check status to recover from and report underruns */
-    memset(&status, 0, sizeof(status));
-    status.channel=SND_PCM_CHANNEL_PLAYBACK;
-    if ((done=alsa_status(handles[id].handle, &status))<0) {
-	mus_error(MUS_AUDIO_CANT_WRITE, "%s: status: %s", 
-		  __FUNCTION__, snd_strerror(done));
-    } else {
-	if (stop_mode!=SND_PCM_STOP_ROLLOVER) {
-	    if (status.status==SND_PCM_STATUS_UNDERRUN) {
-		if ((done=alsa_prepare(handles[id].handle, SND_PCM_CHANNEL_PLAYBACK))<0) {
-		    mus_error(MUS_AUDIO_CANT_WRITE, "%s: prepare: %s", 
-			      __FUNCTION__, snd_strerror(done));
+#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+	    if (stop_mode!=SND_PCM_STOP_ROLLOVER) {
+#else
+            if (stop_mode!=SND_PCM_XRUN_FLUSH) {
+#endif
+	        if (status.status==SND_PCM_STATUS_UNDERRUN) {
+		    if ((err=alsa_prepare(handles[id].handle, SND_PCM_CHANNEL_PLAYBACK))<0) {
+		        mus_error(MUS_AUDIO_CANT_WRITE, "%s: prepare: %s", 
+				  __FUNCTION__, snd_strerror(err));
+		    }
 		}
 	    }
-	}
-	if (status.underrun!=0) {
-	    /* I'm sure this WILL catch all underruns */
-	    underruns+=status.underrun;
-	    if (trace_calls) mus_error(MUS_AUDIO_CANT_WRITE, "%s: %d underruns [%d]", 
-				       __FUNCTION__, underruns, status.status);
+#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+ 	    if (status.underrun!=0) {
+#else
+	    if (status.xruns!=0) {
+#endif
+	        /* I'm sure this WILL catch all underruns */
+#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+ 	        underruns+=status.underrun;
+#else
+	        underruns+=status.xruns;
+#endif
+		if (trace_calls) mus_error(MUS_AUDIO_CANT_WRITE, "%s: %d underruns [%d]", 
+					   __FUNCTION__, underruns, status.status);
+	    }
 	}
     }
     return(0);
@@ -3821,42 +4139,50 @@ int mus_audio_write(int id, char *buf, int bytes)
 
 /* read a buffer from an input device */
 
-int mus_audio_read(int id, char *buf, int bytes)
+static int alsa_mus_audio_read(int id, char *buf, int bytes)
 {
-    int done;
+  snd_pcm_channel_status_t status;
+    int done, err;
 
     AUDIO_ERROR=MUS_AUDIO_NO_ERROR;
     if ((done=alsa_read(handles[id].handle, buf, bytes))<0) {
 	if (done==-EPIPE) {
-	    int err;
-	    snd_pcm_channel_status_t status;
 	    memset(&status, 0, sizeof(status));
 	    status.channel=SND_PCM_CHANNEL_CAPTURE;
-	    mus_error(MUS_AUDIO_CANT_READ, "%s[%d bytes=%d]: %s <%d>", 
-		      __FUNCTION__, id, bytes, snd_strerror(done), done);
 	    if ((err=alsa_status(handles[id].handle, &status))<0) {
-		mus_error(MUS_AUDIO_CANT_READ, "%s: alsa_status: %s", 
+		mus_error(MUS_AUDIO_CANT_READ, "%s: status: %s", 
 			  __FUNCTION__, snd_strerror(err));
 		AUDIO_ERROR=MUS_AUDIO_READ_ERROR;
 		return(-1);
 	    }
 	    if (status.status==SND_PCM_STATUS_RUNNING) {
-		mus_error(MUS_AUDIO_CANT_READ,"%s: driver is waiting for data", 
-			  __FUNCTION__);
-		return;
+	        if (trace_calls)
+		    mus_error(MUS_AUDIO_CANT_READ,"%s: driver is waiting for data", 
+			      __FUNCTION__);
+		return(0);
 	    }
 	    if (status.status==SND_PCM_STATUS_OVERRUN) {
 		if (trace_calls) {
 		    mus_error(MUS_AUDIO_NO_ERROR, "%s: overrun at position %u", 
-			      __FUNCTION__, status.scount);
+			      __FUNCTION__,
+#if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
+			      status.scount);
+#else
+			      status.byte_io);
+#endif
 		}
 		if ((err=alsa_prepare(handles[id].handle, SND_PCM_CHANNEL_CAPTURE))<0) {
-		    mus_error(MUS_AUDIO_CANT_READ,"%s: alsa_prepare: %s", 
+		    mus_error(MUS_AUDIO_CANT_READ,"%s: prepare: %s", 
 			      __FUNCTION__, snd_strerror(err));
 		    AUDIO_ERROR=MUS_AUDIO_READ_ERROR;
 		    return(-1);
 		}
+		return(0);
 	    }
+	    mus_error(MUS_AUDIO_CANT_READ, "%s: %s <%d>", 
+		      __FUNCTION__, snd_strerror(done), done);
+	    AUDIO_ERROR=MUS_AUDIO_READ_ERROR;
+	    return(-1);
 	} else {
 	    mus_error(MUS_AUDIO_CANT_READ, "%s[%d bytes=%d]: %s <%d>", 
 		      __FUNCTION__, id, bytes, snd_strerror(done), done);
@@ -3867,7 +4193,7 @@ int mus_audio_read(int id, char *buf, int bytes)
 
 /* sndlib support for closing a device */
 
-int mus_audio_close(int id)
+static int alsa_mus_audio_close(int id)
 {
     int err=0;
     if (trace_calls) mus_error(MUS_AUDIO_NO_ERROR, "%s: %d\n", __FUNCTION__, id); 
@@ -3881,7 +4207,7 @@ int mus_audio_close(int id)
 
 /* read state of the audio hardware */
 
-int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
+static int alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 {
     int card;
     int device;
@@ -4024,29 +4350,29 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
     return(0);
 }
 
-int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
+static int alsa_mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 {
 	AUDIO_ERROR=MUS_AUDIO_NO_ERROR;
 	return(0);
 }
 
-void mus_audio_save (void)
+static void alsa_mus_audio_save (void)
 {
 }
 
-void mus_audio_restore (void)
+static void alsa_mus_audio_restore (void)
 {
 }
 
-void mus_audio_mixer_save(const char* file)
+static void alsa_mus_audio_mixer_save(const char* file)
 {
 }
 
-void mus_audio_mixer_restore(const char* file)
+static void alsa_mus_audio_mixer_restore(const char* file)
 {
 }
 
-static void describe_audio_state_1(void)
+static void alsa_describe_audio_state_1(void)
 {
     snd_ctl_t *handle;
     int card, err, dev, idx, i;
@@ -4218,9 +4544,12 @@ static void describe_audio_state_1(void)
 #include <sound/sounddriver.h>
 #include <sound/snddriver_client.h>
 #include <mach/mach.h>
+
+#if 0
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
+#endif
 
 static int low_water = 48*1024;
 static int high_water = 64*1024;
@@ -4614,8 +4943,10 @@ void mus_audio_restore (void)
 #define AUDIO_OK
 
 #include <sys/types.h>
+#if 0
 #include <unistd.h>
 #include <fcntl.h>
+#endif
 #include <stropts.h>
 #include <sys/filio.h>
 
@@ -7459,8 +7790,10 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 #define AUDIO_OK
 
 /* this code taken from Xanim, esound, and MikMod */
+#if 0
 #include <errno.h>
 #include <fcntl.h>
+#endif
 #include <sys/audio.h>
 #include <stropts.h>
 #include <sys/types.h>

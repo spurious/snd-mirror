@@ -169,7 +169,7 @@
 #endif
 #include "snd-strings.h"
 
-#define SND_VERSION "7-Jun-00"
+#define SND_VERSION "9-Jun-00"
 #define SND_RPM_VERSION "4.3"
 #define SND_MAJOR_VERSION 4
 #define SND_MINOR_VERSION 3

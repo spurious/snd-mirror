@@ -2,7 +2,7 @@
 ;;;
 ;;;        contents
 ;;;
-;;; snd.html examples made harder to break
+;;; documentation examples made harder to break
 ;;; 'info' from extsnd.html using format
 ;;; correlation
 ;;; XEmacs-like "Buffers" menu
@@ -2087,7 +2087,7 @@
 
 (define match-sound-files
   (lambda args
-    "(match-sound-files func &optional dir) applies func to each sound file in dir and returns a list of files for which func returns #t"
+    "(match-sound-files func &optional dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"
     (let* ((func (car args))
 	   (files (sound-files-in-directory (if (null? (cdr args)) "." (cadr args))))
 	   (matches '()))
@@ -2098,4 +2098,12 @@
 	      (set! matches (cons filename matches)))))
       matches)))
   
+;;; we can use Guile's regexp support here to search for all .snd and .wav files:
+;
+;(let ((reg (make-regexp ".wav|.snd$")))
+;  (match-sound-files (lambda (file) (regexp-exec reg file))))
+;
+;;; this argument to make-regexp is looking for *.wav and *.snd
+;;; in fact, we could use regexp's in place of Snd's sound-files-in-directory.
+
 

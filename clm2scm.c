@@ -1182,11 +1182,11 @@ static SCM g_mus_apply(SCM arglist)
 
 static void init_oscil(void)
 {
-  DEFINE_PROC(gh_new_procedure1_0(S_oscil_p,g_oscil_p),H_oscil_p);
+  DEFINE_PROC(gh_new_procedure1_0(S_oscil_p,SCM_FNC g_oscil_p),H_oscil_p);
   DEFINE_PROC(gh_new_procedure(S_make_oscil,SCM_FNC g_make_oscil,0,4,0),H_make_oscil);
-  DEFINE_PROC(gh_new_procedure1_2(S_oscil,g_oscil),H_oscil);
-  DEFINE_PROC(gh_new_procedure2_2(S_oscil_bank,g_oscil_bank),H_oscil_bank);
-  DEFINE_PROC(gh_new_procedure(S_mus_apply,g_mus_apply,0,0,1),H_mus_apply);
+  DEFINE_PROC(gh_new_procedure1_2(S_oscil,SCM_FNC g_oscil),H_oscil);
+  DEFINE_PROC(gh_new_procedure2_2(S_oscil_bank,SCM_FNC g_oscil_bank),H_oscil_bank);
+  DEFINE_PROC(gh_new_procedure(S_mus_apply,SCM_FNC g_mus_apply,0,0,1),H_mus_apply);
 }
 
 
@@ -4954,3 +4954,9 @@ char *CLM_help(void)
 }
 #endif
 
+/*
+void scm_init_sndlib_clm_module ()
+{
+  scm_register_module_xxx("sndlib clm",init_mus2scm_module);
+}
+*/

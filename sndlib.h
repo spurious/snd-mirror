@@ -21,8 +21,8 @@
 
 
 #define SNDLIB_VERSION 10
-#define SNDLIB_REVISION 15
-#define SNDLIB_DATE "25-May-00"
+#define SNDLIB_REVISION 16
+#define SNDLIB_DATE "8-Jun-00"
 
 #ifndef HAVE_SNDLIB
   #define HAVE_SNDLIB 1
@@ -116,6 +116,7 @@
 
 /* others apparently are __QNX__ __bsdi__ __FreeBSD__ */
 
+#ifndef HAVE_OSS
 #ifndef HAVE_ALSA
   #if defined(LINUX) || defined(SCO5) || defined(UW2) || defined(HAVE_SOUNDCARD_H) || defined(HAVE_SYS_SOUNDCARD_H) || defined(HAVE_MACHINE_SOUNDCARD_H) || defined(USR_LIB_OSS) || defined(USR_LOCAL_LIB_OSS) || defined(OPT_OSS)
     #define HAVE_OSS 1
@@ -124,6 +125,7 @@
   #endif
 #else
   #define HAVE_OSS 0
+#endif
 #endif
 
 #if (!defined(M_PI))
@@ -369,6 +371,11 @@ int mus_array_to_file __P((const char *filename, MUS_SAMPLE_TYPE *ddata, int len
 
 /* -------- audio.c -------- */
 
+#if (HAVE_OSS || HAVE_ALSA)
+  #define ALSA_API 0
+  #define OSS_API 1
+#endif
+
 void mus_audio_describe __P((void));
 char *mus_audio_report __P((void));
 int mus_audio_open_output __P((int dev, int srate, int chans, int format, int size));
@@ -395,6 +402,7 @@ char *mus_audio_moniker __P((void));
 #endif
 #if (HAVE_OSS || HAVE_ALSA)
   void mus_audio_set_oss_buffers __P((int num,int size));
+  int mus_audio_api __P((void));
 #endif
 
 void mus_audio_mixer_save __P((const char *file));

@@ -14,20 +14,24 @@ Snd, get the sources from
 
 The configure program has several Snd-related arguments:
 
-   --with-motif         use Motif (the default)
-   --with-gtk           use Gtk+	
-   --with-gdbm          use gdbm for sndlib's sound header data base
-   --with-alsa          use ALSA if possible
-   --with-xmhtml        include the XmHTML library
-   --with-big-colormap  use big colormap
-   --with-snd-conf      look for /etc/snd.conf at startup
-   --without-guile      omit Guile even if it is available
-   --with-snd-as-widget make Snd a loadable widget, not a standalone program
-   --with-doubles       use doubles throughout (default is floats)
-   --with-float-samples represent samples internally as floats
-   --with-gsl           use gsl for ffts and whatnot
-   --enable-snd-debug   include Snd internal debugging stuff
-   --with-ladspa        include LADSPA plugin support (Linux)
+   --with-motif          use Motif (the default)
+   --with-gtk            use Gtk+	
+   --with-gdbm           use gdbm for sndlib's sound header data base
+   --with-alsa           use ALSA if possible
+   --with-xmhtml         include the XmHTML library
+   --with-big-colormap   use big colormap
+   --with-snd-conf       look for /etc/snd.conf at startup
+   --without-guile       omit Guile even if it is available
+   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
+   --with-doubles        use doubles throughout (default is floats)
+   --with-float-samples  represent samples internally as floats
+   --with-gsl            use gsl for ffts and whatnot
+   --enable-snd-debug    include Snd internal debugging stuff
+   --with-ladspa         include LADSPA plugin support (Linux)
+   --with-ardour         compile snd as a widget for use in ardour
+   --with-gtkrc-colors   initial colors set in a GTK rc file
+   --with-sample-width=N use N bits of samples (default = 24)
+
 
 If the configure/make process fails, please send me
 (bil@ccrma.stanford.edu) the files config.h, config.log, and makefile,

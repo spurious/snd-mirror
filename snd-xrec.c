@@ -1,7 +1,6 @@
 /* TODO: split out stuff that is not widget-dependent into snd-rec.c
  *         (there's a trap here -- record_report has different args in g/x)
- *       check merge with snd-grec.c
- *       merge in Fernando's OSS+ALSA run-time changes
+ *       re-merge with snd-grec.c
  */
 
 #include "snd.h"
@@ -135,7 +134,7 @@ static file_data *recdat;
 
 /* on the SGI 1024 is very prone to clicks */
 static char *record_buf[MAX_SOUNDCARDS];           /* incoming data has not yet been converted to sndlib representation */
-#ifdef HAVE_ALSA
+#if (HAVE_ALSA || HAVE_OSS)
 static int monitor_out_format;
 static char *monitor_buf;
 #endif
@@ -148,7 +147,7 @@ static Float max_duration;
 static int overall_in_chans;
 static int input_channels[MAX_SOUNDCARDS];
 
-#ifdef HAVE_ALSA
+#if (HAVE_ALSA || HAVE_OSS)
   static int input_srate[MAX_SOUNDCARDS];
   static int input_format[MAX_SOUNDCARDS];
   static int input_buffer_size[MAX_SOUNDCARDS];
@@ -1252,7 +1251,7 @@ static char *Device_Name(int dev)
     case MUS_AUDIO_DIGITAL_OUT: return(STR_Digital_Out); break;
     case MUS_AUDIO_LINE_OUT:    return(STR_Line_Out); break;
     case MUS_AUDIO_DEFAULT: 
-    case MUS_AUDIO_DAC_OUT:     return(STR_Output); break;
+    case MUS_AUDIO_DAC_OUT:     return(STR_Output); break; /* default here means that linuxppc reports "Output" as analog-in pane name */
     case MUS_AUDIO_DUPLEX_DEFAULT: 
     case MUS_AUDIO_SPEAKERS:    return(STR_Speakers); break;
     case MUS_AUDIO_ADAT_IN:     return(STR_Adat_In); break;
@@ -2297,7 +2296,7 @@ static void Meter_Button_Callback(Widget w,XtPointer clientData,XtPointer callDa
 	{
 	  sprintf(timbuf,"%d",val);
 	  XmTextSetString(recdat->chans_text,timbuf);
-#ifdef HAVE_ALSA
+#if (HAVE_ALSA || HAVE_OSS)
 	  /* FIXME: this apparently is not necessary, we cannot
 	   * change the number of recorded channels on the fly
 	   * (but we can activate or deactivate them in the gui?
@@ -2774,7 +2773,7 @@ static PANE *make_pane(snd_state *ss, Widget paned_window, int device, int syste
   sx = ss->sgx;
   p = (PANE *)CALLOC(1,sizeof(PANE));
   p->device = device;
-#ifdef HAVE_ALSA
+#if (HAVE_ALSA || HAVE_OSS)
   p->system = system;
 #endif
   p->ss = ss;
@@ -3029,41 +3028,44 @@ static PANE *make_pane(snd_state *ss, Widget paned_window, int device, int syste
 	  /* treble and bass are actually stereo -- we'll do both at once */
 	  if (!input)
 	    {
-#ifdef HAVE_ALSA
-	      /* the existing code assumes there are tone controls and that
-	       * a certain device is the output (MUS_AUDIO_DAC_OUT), for now
-	       * no tone controls at all */
-	      wd->chan = 1;
-	      wd->field = MUS_AUDIO_AMP;
-	      wd->device = device;
-	      this_device = device;
-#else
-	      /* count back from speaker 1 0 treble bass */
-	      switch (i)
+	      if (mus_audio_api() == ALSA_API) 
 		{
-		case 0: 
+		  /* the existing code assumes there are tone controls and that
+		   * a certain device is the output (MUS_AUDIO_DAC_OUT), for now
+		   * no tone controls at all */
 		  wd->chan = 1;
 		  wd->field = MUS_AUDIO_AMP;
-		  wd->device = MUS_AUDIO_DAC_OUT;
-		  break;
-		case 1: 
-		  wd->chan = 0;
-		  wd->field = MUS_AUDIO_AMP;
-		  wd->device = MUS_AUDIO_DAC_OUT;
-		  break;
-		case 2: 
-		  wd->chan = 0;
-		  wd->field = MUS_AUDIO_TREBLE;
-		  wd->device = MUS_AUDIO_DAC_FILTER;
-		  break;
-		case 3: 
-		  wd->chan =0;
-		  wd->field = MUS_AUDIO_BASS;
-		  wd->device = MUS_AUDIO_DAC_FILTER;
-		  break;
+		  wd->device = device;
+		  this_device = device;
 		}
-	      if (i>1) this_device = MUS_AUDIO_DAC_FILTER; else this_device = MUS_AUDIO_DAC_OUT;
-#endif
+	      else
+		{
+		  /* count back from speaker 1 0 treble bass */
+		  switch (i)
+		    {
+		    case 0: 
+		      wd->chan = 1;
+		      wd->field = MUS_AUDIO_AMP;
+		      wd->device = MUS_AUDIO_DAC_OUT;
+		      break;
+		    case 1: 
+		      wd->chan = 0;
+		      wd->field = MUS_AUDIO_AMP;
+		      wd->device = MUS_AUDIO_DAC_OUT;
+		      break;
+		    case 2: 
+		      wd->chan = 0;
+		      wd->field = MUS_AUDIO_TREBLE;
+		      wd->device = MUS_AUDIO_DAC_FILTER;
+		      break;
+		    case 3: 
+		      wd->chan =0;
+		      wd->field = MUS_AUDIO_BASS;
+		      wd->device = MUS_AUDIO_DAC_FILTER;
+		      break;
+		    }
+		  if (i>1) this_device = MUS_AUDIO_DAC_FILTER; else this_device = MUS_AUDIO_DAC_OUT;
+		}
 	    }
 	  else
 	    {
@@ -3181,7 +3183,7 @@ static PANE *make_pane(snd_state *ss, Widget paned_window, int device, int syste
 	  XtAddCallback(last_slider,XmNdragCallback,volume_callback,wd);
 	  XtAddCallback(last_slider,XmNhelpCallback,volume_help_callback,wd);
 #if (HAVE_OSS || HAVE_ALSA)
-      last_device = this_device;
+	  last_device = this_device;
 #endif
 	}
       gain_ctr += num_audio_gains;
@@ -3492,7 +3494,7 @@ static PANE *make_pane(snd_state *ss, Widget paned_window, int device, int syste
   return(p);
 }
 
-#ifdef HAVE_ALSA
+#if (HAVE_ALSA || HAVE_OSS)
 
 static BACKGROUND_TYPE read_adc(snd_state *ss) 
 {
@@ -3524,9 +3526,9 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
 	  fbuf = (MUS_SAMPLE_TYPE *)CALLOC(fbuf_size,sizeof(MUS_SAMPLE_TYPE));
 	}
       in_datum_size = mus_data_format_to_bytes_per_sample(input_format[0]);
-      mus_audio_read(record_fd[0],record_buf[0],input_buffer_size[0]*input_channels[0]*in_datum_size);
+      mus_audio_read(record_fd[0],record_buf[0],buffer_size*in_datum_size);
       fbufs[0] = fbuf;
-      mus_file_read_buffer(input_format[0],0,1,input_buffer_size[0]*input_channels[0],fbufs,record_buf[0]);
+      mus_file_read_buffer(input_format[0],0,1,buffer_size,fbufs,record_buf[0]);
     }
   else
     {
@@ -3591,9 +3593,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
       for (out_chan=0;out_chan<ochns;out_chan++)
 	{
 	  val = (MUS_SAMPLE_TYPE)(outvals[out_chan]*rec_out_amps[out_chan]);
-	  /* FIXME: originally this code only executes when recording... */
-	  // if ((recording) && (rec_out_active[out_chan])) obufs[out_chan][out_samp] = val;
-	  if ((rec_out_active[out_chan])) obufs[out_chan][out_samp] = val;
+	  if ((recording) && (rec_out_active[out_chan])) obufs[out_chan][out_samp] = val;
 	  if (val<MUS_SAMPLE_0) val=-val;
 	  if (val>out_max[out_chan]) out_max[out_chan]=val;
 	}
@@ -3608,9 +3608,10 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
       set_vu_val(rec_out_VU[out_chan],MUS_SAMPLE_TO_FLOAT(out_max[out_chan]));
       if ((!triggered) && (MUS_SAMPLE_TO_FLOAT(out_max[out_chan])>trigger)) triggered=1;
     }
-  if ((monitor_open) && (ochns <= audio_out_chans))
+  if ((monitor_open) && (obufs) && (ochns == audio_out_chans)) /* <= ? -- < will cause it to wait I think */
     {
       /* opened in recorder_out_format and audio_out_chans */
+      /* to avoid this, just don't open monitor */
       mus_file_write_buffer(monitor_out_format,0,out_samp-1,audio_out_chans,obufs,monitor_buf,data_clipped(ss));
       mus_audio_write(monitor_fd,monitor_buf,recorder_buffer_size(ss)*audio_out_chans*mus_data_format_to_bytes_per_sample(monitor_out_format));
     }
@@ -3733,7 +3734,7 @@ static BACKGROUND_TYPE read_adc(snd_state *ss)
       if ((!triggered) && (MUS_SAMPLE_TO_FLOAT(out_max[out_chan])>trigger)) triggered=1;
     }
 
-  if ((monitor_open) && (ochns == audio_out_chans))
+  if ((monitor_open) && (obufs) && (ochns == audio_out_chans))
     {
       /* opened in recorder_out_format and audio_out_chans */
       mus_file_write_buffer(recorder_out_format(ss),0,out_samp-1,audio_out_chans,obufs,record_buf[0],data_clipped(ss));
@@ -4174,14 +4175,18 @@ void snd_record_file(snd_state *ss)
 	  cur_devices = (int)(audval[0]);
 	  for (i=0;i<cur_devices;i++)
 	    {
-#ifdef HAVE_ALSA
+#if (HAVE_ALSA || HAVE_OSS)
 	      float direction = 0.0;
-#endif
 	      device = (int)audval[i+1];
-#ifdef HAVE_ALSA
-	      if ((err=mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system)|device,MUS_AUDIO_DIRECTION,0,&direction))==0 &&
-		  (int)direction == 1)
+	      /* FIXME: have not looked to see if oss sndlib supports MUS_AUDIO_DIRECTION */
+	      if ((mus_audio_api() == ALSA_API && 
+		   (err=mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system)|device,MUS_AUDIO_DIRECTION,0,&direction))==0 &&
+		   (int)direction == 1) 
+		  ||
+		  (mus_audio_api() == OSS_API &&
+		   input_device(device)))
 #else
+	      device = (int)audval[i+1];
 	      if (input_device(device))
 #endif
 		{
@@ -4197,27 +4202,35 @@ void snd_record_file(snd_state *ss)
 		}
 	    }
 	}
-#ifdef HAVE_ALSA
-      /* search for output devices, first one wins, previous code
-       * was assuming one particular device existed */
-      for (system=0;system<systems;system++)
+#if (HAVE_ALSA || HAVE_OSS)
+      if (mus_audio_api() == ALSA_API) 
 	{
-	  mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system)|MUS_AUDIO_DEFAULT,MUS_AUDIO_PORT,AUDVAL_SIZE,audval);
-	  cur_devices = (int)(audval[0]);
-	  for (i=0;i<cur_devices;i++)
+	  /* search for output devices, first one wins, previous code
+	   * was assuming one particular device existed */
+	  for (system=0;system<systems;system++)
 	    {
-	      float direction=0.0;
-	      device = (int)audval[i+1];
-	      if ((err=mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system)|device,MUS_AUDIO_DIRECTION,0,&direction))==0) 
+	      mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system)|MUS_AUDIO_DEFAULT,MUS_AUDIO_PORT,AUDVAL_SIZE,audval);
+	      cur_devices = (int)(audval[0]);
+	      for (i=0;i<cur_devices;i++)
 		{
-		  if ((int)direction == 0)
+		  float direction=0.0;
+		  device = (int)audval[i+1];
+		  if ((err=mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system)|device,MUS_AUDIO_DIRECTION,0,&direction))==0) 
 		    {
-		      ordered_devices[k] = device;
-		      ordered_systems[k] = system;
-		      goto done;
+		      if ((int)direction == 0)
+			{
+			  ordered_devices[k] = device;
+			  ordered_systems[k] = system;
+			  goto done;
+			}
 		    }
 		}
 	    }
+	  /* done: */ /* this is illegal in C++ */
+	}
+      else
+	{
+	  if (output_devices) ordered_devices[k] = MUS_AUDIO_DAC_OUT;
 	}
     done:
 #else
@@ -4578,7 +4591,7 @@ static void initialize_recorder(snd_state *ss)
 }
 
 
-#if HAVE_ALSA
+#if (HAVE_ALSA || HAVE_OSS)
 
 static int fire_up_recorder(snd_state *ss)
 {
@@ -4620,145 +4633,215 @@ static int fire_up_recorder(snd_state *ss)
       in_device_chan[i] = i;
     }
 
-  /* Select first input device for each system */
-
-  /* FIXME: there is one srate, format and so on for each system. The current code
-   * is not checking for them being compatible. At least srate and buffer length
-   * have to be shared by all enabled recording devices. The code should check for
-   * that and somehow disable devices that are incompatible. The previous global
-   * state variables are being set with the results of the first system scanned */
-
-  in_count = 0;
-  for (i=0;i<all_panes_size;i++)
+  if (mus_audio_api() == ALSA_API) 
     {
-      p = all_panes[i];
-      sys = p->system;
-      dev = p->device;
-      sysdev = MUS_AUDIO_PACK_SYSTEM(sys)|dev;
-      if ((err=mus_audio_mixer_read(sysdev,MUS_AUDIO_DIRECTION,0,&direction))==0) 
+      /* ALSA_API: Select first input device for each system */
+
+      /* FIXME: there is one srate, format and so on for each system. The current code
+       * is not checking for them being compatible. At least srate and buffer length
+       * have to be shared by all enabled recording devices. The code should check for
+       * that and somehow disable devices that are incompatible. The previous global
+       * state variables are being set with the results of the first system scanned */
+
+      in_count = 0;
+      for (i=0;i<all_panes_size;i++)
 	{
-	  if (input_channels[sys]==0 && (int)direction==1)
+	  p = all_panes[i];
+	  sys = p->system;
+	  dev = p->device;
+	  sysdev = MUS_AUDIO_PACK_SYSTEM(sys)|dev;
+	  if ((err=mus_audio_mixer_read(sysdev,MUS_AUDIO_DIRECTION,0,&direction))==0) 
 	    {
-	      if ((err=mus_audio_mixer_read(sysdev,MUS_AUDIO_CHANNEL,2,val))==0) 
-		input_channels[sys]=(int)val[0];
-	      if ((err=mus_audio_mixer_read(sysdev,MUS_AUDIO_SRATE,2,val))==0)
+	      if (input_channels[sys]==0 && (int)direction==1)
 		{
-		  input_srate[sys]=(int)val[0];
-		  if (i == 0) set_recorder_srate(ss,input_srate[sys]);
-		}
-	      input_format[sys]=mus_audio_compatible_format(sysdev);
-	      if (i == 0) in_set_recorder_in_format(ss,input_format[sys]);
-	      if ((err=mus_audio_mixer_read(sysdev,MUS_AUDIO_SAMPLES_PER_CHANNEL,0,val))==0)
-		{
-		  input_buffer_size[sys]=(int)(val[0]);
-		  if (i == 0) 
+		  if ((err=mus_audio_mixer_read(sysdev,MUS_AUDIO_CHANNEL,2,val))==0) 
+		    input_channels[sys]=(int)val[0];
+		  if ((err=mus_audio_mixer_read(sysdev,MUS_AUDIO_SRATE,2,val))==0)
 		    {
-		      in_set_recorder_buffer_size(ss,input_buffer_size[sys]);
-		      if ((recorder) && (rec_size_text))
+		      input_srate[sys]=(int)val[0];
+		      if (i == 0) set_recorder_srate(ss,input_srate[sys]);
+		    }
+		  input_format[sys]=mus_audio_compatible_format(sysdev);
+		  if (i == 0) in_set_recorder_in_format(ss,input_format[sys]);
+		  if ((err=mus_audio_mixer_read(sysdev,MUS_AUDIO_SAMPLES_PER_CHANNEL,0,val))==0)
+		    {
+		      input_buffer_size[sys]=(int)(val[0]);
+		      if (i == 0) 
 			{
-			  sprintf(timbuf,"%d",recorder_buffer_size(ss));
-			  XmTextSetString(rec_size_text,timbuf);
+			  in_set_recorder_buffer_size(ss,input_buffer_size[sys]);
+			  if ((recorder) && (rec_size_text))
+			    {
+			      sprintf(timbuf,"%d",recorder_buffer_size(ss));
+			      XmTextSetString(rec_size_text,timbuf);
+			    }
+			}
+		      if (!(record_buf[sys]))
+			record_buf[sys] = (char *)CALLOC(input_buffer_size[sys]*input_channels[sys],sizeof(int));
+		    }
+		}
+	      if (input_channels[sys]>0)
+		in_count += input_channels[sys];
+	    }
+	}
+      if (in_count == 0) 
+	{
+	  record_report(messages,"no inputs?: ",mus_audio_error_name(mus_audio_error()),NULL);
+	  return(-1);
+	}
+
+      /* open all input devices */
+      for (i=0;i<all_panes_size;i++) 
+	{
+	  p = all_panes[i];
+	  sys = p->system;
+	  dev = p->device;
+	  sysdev = MUS_AUDIO_PACK_SYSTEM(sys)|dev;
+	  if ((err=mus_audio_mixer_read(sysdev,MUS_AUDIO_DIRECTION,0,&direction))==0) 
+	    {
+	      if ((int)direction == 1)
+		{
+		  size = mus_data_format_to_bytes_per_sample(input_format[sys]);
+		  record_fd[sys] = mus_audio_open_input(sysdev,recorder_srate(ss),input_channels[sys],input_format[sys],
+							input_buffer_size[sys]*input_channels[sys]*size);
+		  if (record_fd[sys] == -1)
+		    {
+		      record_report(messages,"open device[%d:%d]: ",mus_audio_error_name(mus_audio_error()),NULL);
+		      for (j=0;j<all_panes_size;j++)
+			{
+			  sys = all_panes[j]->system;
+			  if (record_fd[sys] != -1)
+			    {
+			      mus_audio_close(record_fd[sys]);
+			      record_fd[sys] = -1;
+			    }
+			}
+		      return(-1);
+		    }
+		}
+	    }
+	}
+      audio_open = 1;
+
+      /* search for output devices for monitoring, first one wins */
+
+      for (i=0;i<all_panes_size;i++) 
+	{
+	  p = all_panes[i];
+	  sys = p->system;
+	  dev = p->device;
+	  sysdev = MUS_AUDIO_PACK_SYSTEM(sys)|dev;
+	  if ((err=mus_audio_mixer_read(sysdev,MUS_AUDIO_DIRECTION,0,&direction))==0) 
+	    {
+	      if ((int)direction == 0)
+		{
+		  /* found the first pane that has an output device (must be the only one) */
+		  if ((err=mus_audio_mixer_read(sysdev,MUS_AUDIO_CHANNEL,2,val))==0) 
+		    {
+		      audio_out_chans=(int)(val[0]);
+		      /* FIXME: what would be the proper value for this? 
+		       * the computer wedges if I don't initialize it, why? */
+		      in_set_recorder_out_chans(ss,audio_out_chans);
+		    }
+		  monitor_out_format = mus_audio_compatible_format(sysdev);
+		  size = mus_data_format_to_bytes_per_sample(monitor_out_format);
+		  monitor_fd = mus_audio_open_output(sysdev,recorder_srate(ss),audio_out_chans,monitor_out_format,
+						     recorder_buffer_size(ss)*audio_out_chans*size);
+		  if (monitor_fd != -1) 
+		    {
+		      if (!obufs)
+			obufs = (MUS_SAMPLE_TYPE **)CALLOC(MAX_OUT_CHANS,sizeof(MUS_SAMPLE_TYPE *));
+		      for (i=0;i<audio_out_chans;i++) 
+			{
+			  if (obufs[i]) FREE(obufs[i]);
+			  obufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(recorder_buffer_size(ss),sizeof(MUS_SAMPLE_TYPE));
+			}
+		      if (!monitor_buf)
+			monitor_buf = (char *)CALLOC(recorder_buffer_size(ss)*audio_out_chans*size,1);
+		      monitor_open = monitor_fd;
+		    }
+		  else
+		    {
+		      record_report(messages,"open output: ",mus_audio_error_name(mus_audio_error()),NULL);
+		      monitor_open = 0;
+		    }
+		  break;
+		}
+	    }
+	}
+    }
+  else
+    {
+      /* OSS_API */
+      for (i=0;i<systems;i++)
+	{
+	  if (!(record_buf[i]))
+	    record_buf[i] = (char *)CALLOC(recorder_buffer_size(ss),sizeof(int)); /* 4 bytes per sample is probably enough?? */
+	  input_format[i] = recorder_in_format(ss);
+	  input_buffer_size[i] = recorder_buffer_size(ss) / recorder_out_chans(ss);
+	}
+      for (i=0;i<systems;i++)
+	{
+	  if (input_channels[i] == 0)
+	    {
+	      input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DEFAULT);
+	      if (input_channels[i] == 0)
+		{
+		  input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_MICROPHONE);
+		  if (input_channels[i] == 0)
+		    {
+		      input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_LINE_IN);
+		      if (input_channels[i] == 0)
+			{
+			  input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_ADAT_IN);
 			}
 		    }
-		  if (!(record_buf[sys]))
-		    record_buf[sys] = (char *)CALLOC(input_buffer_size[sys]*input_channels[sys],sizeof(int));
 		}
 	    }
-	  if (input_channels[sys]>0)
-	    in_count += input_channels[sys];
 	}
-    }
-  if (in_count == 0) 
-    {
-      record_report(messages,"no inputs?: ",mus_audio_error_name(mus_audio_error()),NULL);
-      return(-1);
-    }
-
-  /* open all input devices */
-  for (i=0;i<all_panes_size;i++) 
-    {
-      p = all_panes[i];
-      sys = p->system;
-      dev = p->device;
-      sysdev = MUS_AUDIO_PACK_SYSTEM(sys)|dev;
-      if ((err=mus_audio_mixer_read(sysdev,MUS_AUDIO_DIRECTION,0,&direction))==0) 
+      err = 1;
+      for (i=0;i<systems;i++) if (input_channels[i] > 0) {err = 0; break;}
+      if (err)
 	{
-	  if ((int)direction == 1)
-	    {
-	      size = mus_data_format_to_bytes_per_sample(input_format[sys]);
-	      record_fd[sys] = mus_audio_open_input(sysdev,recorder_srate(ss),input_channels[sys],input_format[sys],
-						    input_buffer_size[sys]*input_channels[sys]*size);
-	      if (record_fd[sys] == -1)
-		{
-		  record_report(messages,"open device[%d:%d]: ",mus_audio_error_name(mus_audio_error()),NULL);
-		  for (j=0;j<all_panes_size;j++)
-		    {
-		      sys = all_panes[j]->system;
-		      if (record_fd[sys]!=-1)
-			{
-			  mus_audio_close(record_fd[sys]);
-			  record_fd[sys] = -1;
-			}
-		    }
-		  return(-1);
-		}
-	    }
+	  record_report(messages,"no inputs?: ",mus_audio_error_name(mus_audio_error()),NULL);
+	  return(-1);
 	}
-    }
-  audio_open = 1;
-
-  /* search for output devices for monitoring, first one wins */
-
-  for (i=0;i<all_panes_size;i++) 
-    {
-      p = all_panes[i];
-      sys = p->system;
-      dev = p->device;
-      sysdev = MUS_AUDIO_PACK_SYSTEM(sys)|dev;
-      if ((err=mus_audio_mixer_read(sysdev,MUS_AUDIO_DIRECTION,0,&direction))==0) 
+      /* if adat, aes etc, make choices about default on/off state, open monitor separately (and write) */
+      for (i=0;i<systems;i++)
 	{
-	  if ((int)direction == 0)
+	  record_fd[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DUPLEX_DEFAULT,recorder_srate(ss),input_channels[i],
+					      recorder_in_format(ss),recorder_buffer_size(ss));
+	  if (record_fd[i] == -1) /* perhaps not full-duplex */
 	    {
-	      /* found the first pane that has an output device (must be the only one) */
-	      if ((err=mus_audio_mixer_read(sysdev,MUS_AUDIO_CHANNEL,2,val))==0) 
-		{
-		  audio_out_chans=(int)(val[0]);
-		  /* FIXME: what would be the proper value for this? 
-		   * the computer wedges if I don't initialize it, why? */
-		  in_set_recorder_out_chans(ss,audio_out_chans);
-		}
-	      monitor_out_format = mus_audio_compatible_format(sysdev);
-	      size = mus_data_format_to_bytes_per_sample(monitor_out_format);
-	      monitor_fd = mus_audio_open_output(sysdev,recorder_srate(ss),audio_out_chans,monitor_out_format,
-						 recorder_buffer_size(ss)*audio_out_chans*size);
-		if (monitor_fd != -1) 
-		  {
-		    if (!obufs)
-		      obufs = (MUS_SAMPLE_TYPE **)CALLOC(MAX_OUT_CHANS,sizeof(MUS_SAMPLE_TYPE *));
-		    for (i=0;i<audio_out_chans;i++) 
-		      {
-			if (obufs[i]) FREE(obufs[i]);
-			obufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(recorder_buffer_size(ss),sizeof(MUS_SAMPLE_TYPE));
-		      }
-		    if (!monitor_buf)
-		      monitor_buf = (char *)CALLOC(recorder_buffer_size(ss)*audio_out_chans*size,1);
-		    monitor_open = monitor_fd;
-		  }
-		else
-		  {
-		    record_report(messages,"open output: ",mus_audio_error_name(mus_audio_error()),NULL);
-		    monitor_open = 0;
-		  }
-		break;
+	      record_fd[i] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_DEFAULT,recorder_srate(ss),input_channels[i],
+						  recorder_in_format(ss),recorder_buffer_size(ss));
 	    }
 	}
-    }
+      if (record_fd[0] == -1)
+	{
+	  record_report(messages,"open device: ",mus_audio_error_name(mus_audio_error()),NULL);
+	  return(-1);
+	}
+      audio_open = 1;
+      monitor_fd = 0;
 
+      /*
+       * if (full_duplex(0))
+       *   monitor_fd = mus_audio_open_output(MUS_AUDIO_DUPLEX_DEFAULT,recorder_srate(ss),audio_out_chans,recorder_out_format(ss),recorder_buffer_size(ss));
+       * else record_report(messages,"Simultaneous input and output is not enabled on this card.",NULL);
+       */
+
+      if (monitor_fd == -1)
+	{
+	  record_report(messages,"open output: ",mus_audio_error_name(mus_audio_error()),NULL);
+	  monitor_open = 0;
+	}
+      else monitor_open = monitor_fd;
+    }
   set_read_in_progress(ss);
   return(0);
 }
 
-#else /* not ALSA */
+#else /* not ALSA or OSS */
 
 static int fire_up_recorder(snd_state *ss)
 {

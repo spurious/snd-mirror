@@ -2,7 +2,7 @@
 
 #include "snd.h"
 
-#if HAVE_ALSA
+#if (HAVE_ALSA || HAVE_OSS)
   #define MAX_DAC_BUFFER_SIZE 65536
 #else
   #define MAX_DAC_BUFFER_SIZE 256
@@ -15,8 +15,8 @@ static int dac_chans = 0;
 static int dac_running = 0;
 static int dac_decay = 0;
 
-#if (HAVE_ALSA)
-static int dac_min_chans = 0;
+#if (HAVE_ALSA || HAVE_OSS)
+/* static int dac_min_chans = 0; */ /* currently unused? */
 #endif
 
 static MUS_SAMPLE_TYPE dac_buffer[MAX_DAC_BUFFER_SIZE];
@@ -1385,13 +1385,11 @@ static int fill_dac(snd_state *ss, int write_ok)
   return(len);
 }
 
-#if HAVE_ALSA
+
+#if (HAVE_ALSA || HAVE_OSS)
 
 #define MAX_ALSA_DEVS (64)
 
-#endif
-
-#if (HAVE_OSS || HAVE_ALSA)
 int mus_audio_compatible_format(int dev) 
 {
   int err, i;
@@ -1417,19 +1415,21 @@ int mus_audio_compatible_format(int dev)
     }
   return(MUS_COMPATIBLE_FORMAT);
 }
-#endif
 
-BACKGROUND_TYPE feed_dac(dac_manager *tm)
+/* Controls behavior of device selection logic below. No amount of logic
+ * can make everybody happy all the time. The [i]logic below cannot always
+ * produce the desired result but deleting it altogether will break the
+ * systems that currently rely on it. Not wise without an external api
+ * in place designed to select whatever the user _reeely_ wants. Till 
+ * then set this to "1" to always send to the first device. */
+
+int feed_first_device = 0;
+
+static int really_start_audio_output (dac_manager *tm)
 {
-  /* return BACKGROUND_QUIT when done */
   int err;
-#if (!HAVE_ALSA)
-  int available_chans = 2;
-  float val[32];
-#endif
   snd_state *ss;
   int i;
-#if HAVE_ALSA
   float direction;
   int samples_per_channel = 256;
   int min_fragment_size = 0;
@@ -1447,231 +1447,326 @@ BACKGROUND_TYPE feed_dac(dac_manager *tm)
   int max_chans_dev=0;
   int alloc_devs=0;
   int alloc_chans=0;
+
+  ss = tm->ss;
+  if (mus_audio_api() == ALSA_API) {
+    /* FIXME: all this initialization block should be moved somewhere else,
+     * where it gets executed just once at snd startup time. A user preference
+     * for output device should have priority over this logic. At this time
+     * we always select the widest device if the requested channels fit into it. 
+     * Otherwise we try to combine devices, if all fails we modify snd settings
+     * so that channel folding takes place. This is inefficient but works for now. 
+     */
+    cards=mus_audio_systems();
+    index=0;
+    /* scan all cards and build a list of available output devices */
+    for (card=0; card<cards; card++) {
+      if ((err=mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(card), MUS_AUDIO_PORT, MAX_ALSA_DEVS, val))!=0) {
+	snd_error("%s[%d] %s: mus_audio_mixer_read: %s ", __FILE__, __LINE__, __FUNCTION__,
+		  mus_audio_error_name(mus_audio_error()));
+      }
+      devs=(int)(val[0]);
+      /* scan all devices in the card */
+      for (d=0; d<devs; d++) {
+	dev=(int)(val[d+1]);
+	if ((err=mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(card)|dev, MUS_AUDIO_DIRECTION, 0, &direction))!=0) {
+	  snd_error("%s: can't read direction, ignoring device %d", __FUNCTION__, dev);
+	  direction=0;
+	} else {
+	  if((int)direction==0) {
+	    /* remember output device */
+	    devices[index++]=MUS_AUDIO_PACK_SYSTEM(card)|dev;
+	    if (index>=MAX_ALSA_DEVS) goto NO_MORE_DEVICES;
+	  }
+	}
+      }
+    }
+  NO_MORE_DEVICES:
+    /* get channel availability for all devices */
+    for (d=0; d<index; d++) {
+      available_chans[d]=min_chans[d]=max_chans[d]=0;
+      if ((err=mus_audio_mixer_read(devices[d], MUS_AUDIO_CHANNEL, 2, val))==0) {
+	available_chans[d]=(int)(val[0]);
+	min_chans[d]=(int)(val[1]);
+	max_chans[d]=(int)(val[2]);
+	if (max_chans[d]>max_chans_value) {
+	  /* remember widest device */
+	  max_chans_value=max_chans[d];
+	  max_chans_dev=d;
+	}
+      }
+    }
+    /* allocate devices for playback */
+    alloc_chans=0;
+    alloc_devs=0;
+    for (d=0; d<MAX_DEV_FD; d++) out_dev[d]=dev_fd[d]=-1;
+    if (feed_first_device == 0) {
+      /* see if widest device can accomodate all channels */
+      if (max_chans_value>=tm->channels) {
+	out_dev[alloc_devs++]=max_chans_dev;
+	alloc_chans+=max_chans_value;
+      }
+      if (alloc_devs==0) {
+	/* try to use several devices */
+	int this_format=-1;
+	int prev_format=-1;
+	for (d=0; d<index; d++) {
+	  this_format=mus_audio_compatible_format(devices[d]);
+	  if (prev_format==-1) {
+	    prev_format=this_format;
+	  }
+	  /* format for all selected devices should match */
+	  if (this_format==prev_format) {
+	    out_dev[alloc_devs++]=d;
+	    alloc_chans+=available_chans[d];
+	    if (alloc_devs>=MAX_DEV_FD ||
+		/* FIXME: limit number of devices to two for now, 
+		 * we have to reimplement fill_dac for more */
+		alloc_devs>1) 
+	      break;
+	  }
+	}
+	if (alloc_devs!=0 && alloc_chans<tm->channels) {
+	  /* not enough available channels, give up */
+	  for (d=0; d<MAX_DEV_FD; d++) out_dev[d]=-1;
+	  alloc_devs=0;
+	  alloc_chans=0;
+	}
+	if (alloc_devs==0) {
+	  /* fold all channels into the first device */
+	  out_dev[alloc_devs++]=0;
+	  alloc_chans+=available_chans[0];
+	}
+      }
+    } else {
+      /* first device on first card is the one */
+      out_dev[alloc_devs++]=0;
+      alloc_chans+=available_chans[0];
+    }
+    compatible_format=mus_audio_compatible_format(devices[out_dev[0]]);
+    if (alloc_devs<2) {
+      /* see if we have a minimum sized frame to fill 
+       * FIXME: could this happen in more than one device? */
+      int c=min_chans[out_dev[0]];
+      if (c>tm->channels) {
+	tm->channels=c;
+      }
+    }
+    /* see if we have to fold channels */
+    if (alloc_chans<tm->channels) {
+      if (dac_folding(ss)) snd_warning("folding %d chans into %d ", tm->channels, alloc_chans);
+      tm->channels=alloc_chans;
+    }
+    /* read the number of samples per channel the device wants buffered */
+    if ((err=mus_audio_mixer_read(devices[out_dev[0]], MUS_AUDIO_SAMPLES_PER_CHANNEL, 2, val))!=-1) {
+      samples_per_channel = (int)(val[0]);
+      min_fragment_size = (int)(val[1]);
+      max_fragment_size = (int)(val[2]);
+    }
+    dac_buffer_size=samples_per_channel*tm->channels;
+    while (dac_buffer_size*sizeof(MUS_SAMPLE_TYPE)>MAX_DAC_BUFFER_SIZE) {
+      samples_per_channel/=2;
+      dac_buffer_size=samples_per_channel*tm->channels;
+    }
+    set_dac_size(ss, dac_buffer_size*mus_data_format_to_bytes_per_sample(compatible_format));
+    /* open all allocated devices */
+    for (d=0; d<alloc_devs; d++) {
+      int channels=available_chans[out_dev[d]];
+      if (alloc_chans<=available_chans[out_dev[d]]) {
+	if (tm->channels<min_chans[out_dev[d]]) {
+	  channels=min_chans[out_dev[d]];
+	} else {
+	  channels=tm->channels;
+	}
+      }
+      /* FIXME: assumes devices are same size... */
+      dev_fd[d]=mus_audio_open_output(devices[out_dev[d]], tm->srate, channels, 
+				      compatible_format, (dac_size(ss))/alloc_devs);
+      
+      if (dev_fd[d]==-1) {
+	/* could not open a device, close all others and quit playback */
+	int i;
+	for (i=0; i<d; i++) {
+	  mus_audio_close(devices[out_dev[i]]);
+	}
+	snd_error("%s: %s", STR_cant_play, mus_audio_error_name(mus_audio_error()));
+	dac_running=0;
+	unlock_recording_audio();
+	if (global_reverb) {free_reverb(global_reverb); global_reverb=NULL;}
+	max_active_slot=-1;
+	FREE(tm); 
+	return(-1);
+      }
+    }
+  #if (!NONINTERLEAVED_AUDIO)
+    /* create buffers, FIXME: assumes two devices max */
+    if (dacbuf) FREE(dacbuf);
+    if (dacbuf1) FREE(dacbuf1);
+    dacbuf=(unsigned char *)CALLOC(dac_buffer_size * mus_data_format_to_bytes_per_sample(compatible_format),sizeof(unsigned char));
+    dacbuf1=(unsigned char *)CALLOC(dac_buffer_size * mus_data_format_to_bytes_per_sample(compatible_format),sizeof(unsigned char));
+  #endif
+  } else {
+    /* api == OSS_API */
+    for (i=0;i<MAX_ALSA_DEVS;i++) available_chans[i]=2;
+    if (tm->channels > 2)
+      {
+	err = mus_audio_mixer_read(audio_output_device(ss),MUS_AUDIO_CHANNEL,0,val);
+	if (err != -1) available_chans[0] = (int)(val[0]);
+      }
+    for (i=0;i<MAX_DEV_FD;i++) dev_fd[i] = -1;
+    /* see if we can play 16 bit output */
+    compatible_format = mus_audio_compatible_format(audio_output_device(ss));
+  #ifndef PPC
+    /* check for chans>def chans, open 2 cards if available */
+    if ((available_chans[0] < tm->channels) && (tm->channels == 4))
+      {
+	if (mus_audio_systems() > 1)
+	  {
+	    dev_fd[0] = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss),tm->srate,2,compatible_format,dac_size(ss));
+	    if (dev_fd[0] != -1) 
+	      dev_fd[1] = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(1) | audio_output_device(ss),tm->srate,2,compatible_format,dac_size(ss));
+	  }
+	else
+	  {
+	    /* there is one special case here: Ensoniq's allow you to play quad
+	     * by sending two channels (non-clock-synchronous with the other two)
+	     * out the line in port, but this possibility confuses LinuxPPC (OSS-Free)
+	     */
+	    dev_fd[0] = mus_audio_open_output(MUS_AUDIO_AUX_OUTPUT,tm->srate,2,compatible_format,dac_size(ss));
+	    if (dev_fd[0] != -1) 
+	      dev_fd[1] = mus_audio_open_output(audio_output_device(ss),tm->srate,2,compatible_format,dac_size(ss));
+	  }
+	if (dev_fd[1] == -1)
+	  {
+	    mus_audio_close(dev_fd[0]);
+	    dev_fd[0] = -1;
+	  }
+	else available_chans[0] = 4;
+      }
+  #endif
+    if (dacbuf) FREE(dacbuf);
+    if (dacbuf1) FREE(dacbuf1);
+    dacbuf = (unsigned char *)CALLOC(dac_buffer_size * mus_data_format_to_bytes_per_sample(compatible_format),sizeof(unsigned char));
+    dacbuf1 = (unsigned char *)CALLOC(dac_buffer_size * mus_data_format_to_bytes_per_sample(compatible_format),sizeof(unsigned char));
+    if (available_chans[0] < tm->channels) 
+      {
+	if (dac_folding(ss)) snd_warning("folding %d chans into %d ",tm->channels,available_chans[0]);
+	tm->channels = available_chans[0];
+      }
+    if (dev_fd[0] == -1)
+      dev_fd[0] = mus_audio_open_output(audio_output_device(ss),tm->srate,tm->channels,compatible_format,dac_size(ss));
+    if (dev_fd[0] == -1)
+      {
+	snd_error("%s: %s",STR_cant_play,mus_audio_error_name(mus_audio_error()));
+	dac_running = 0;
+	unlock_recording_audio();
+	if (global_reverb) {free_reverb(global_reverb); global_reverb=NULL;}
+	max_active_slot = -1;
+	FREE(tm); 
+	return(-1);
+      }
+  }
+  return(0);
+}
+#else /* not ALSA or OSS */
+
+static int really_start_audio_output (dac_manager *tm)
+{
+  int err;
+  snd_state *ss;
+  int i;
+  int available_chans = 2;
+  float val[32];
+
+  ss = tm->ss;
+  if (tm->channels > 2)
+    {
+      err = mus_audio_mixer_read(audio_output_device(ss),MUS_AUDIO_CHANNEL,0,val);
+      if (err != -1) available_chans = (int)(val[0]);
+    }
+  for (i=0;i<MAX_DEV_FD;i++) dev_fd[i] = -1;
+  compatible_format = MUS_COMPATIBLE_FORMAT;
+  if (dacbuf) FREE(dacbuf);
+  if (dacbuf1) FREE(dacbuf1);
+  dacbuf = (unsigned char *)CALLOC(dac_buffer_size * mus_data_format_to_bytes_per_sample(compatible_format),sizeof(unsigned char));
+  dacbuf1 = (unsigned char *)CALLOC(dac_buffer_size * mus_data_format_to_bytes_per_sample(compatible_format),sizeof(unsigned char));
+  if (available_chans < tm->channels) 
+    {
+      if (dac_folding(ss)) snd_warning("folding %d chans into %d ",tm->channels,available_chans);
+      tm->channels = available_chans;
+    }
+  if (dev_fd[0] == -1)
+    dev_fd[0] = mus_audio_open_output(audio_output_device(ss),tm->srate,tm->channels,compatible_format,dac_size(ss));
+  if (dev_fd[0] == -1)
+    {
+      snd_error("%s: %s",STR_cant_play,mus_audio_error_name(mus_audio_error()));
+      dac_running = 0;
+      unlock_recording_audio();
+      if (global_reverb) {free_reverb(global_reverb); global_reverb=NULL;}
+      max_active_slot = -1;
+      FREE(tm); 
+      return(-1);
+    }
+  return(0);
+}
 #endif
+
+static int start_audio_output (dac_manager *tm)
+{
+  snd_state *ss;
+#if NONINTERLEAVED_AUDIO
+  int i;
+#endif
+  ss = tm->ss;
+  cursor_time = 0;
+  lock_recording_audio();
+#if NONINTERLEAVED_AUDIO
+  /* initialize the per-channel buffers */
+  if (dac_buffers == NULL) 
+    {
+      dac_buffers = (MUS_SAMPLE_TYPE **)CALLOC(ss->audio_hw_channels,sizeof(MUS_SAMPLE_TYPE *));
+      for (i = 0; i < ss->audio_hw_channels; i++) 
+	{
+	  dac_buffers[i] = (MUS_SAMPLE_TYPE *)CALLOC(MAX_DAC_BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE));
+	}
+    }
+#endif
+  if (really_start_audio_output(tm)) return(-1);
+  dac_chans = tm->channels;
+  dac_running = 1;
+  fill_dac(ss,1);
+  lock_apply(tm->ss,NULL);
+  return(0);
+}
+ 
+static void stop_audio_output (dac_manager *tm)
+{
+   int i;
+   for (i=0;i<MAX_DEV_FD;i++)
+     if (dev_fd[i] != -1) 
+       {
+	 mus_audio_close(dev_fd[i]);
+	 dev_fd[i] = -1;
+       }
+   dac_running = 0;
+   unlock_recording_audio();
+   dac_pausing = 0;
+   if (global_reverb) {free_reverb(global_reverb); global_reverb=NULL;}
+   max_active_slot = -1;
+   unlock_apply(tm->ss,NULL);
+   FREE(tm);
+}
+
+BACKGROUND_TYPE feed_dac(dac_manager *tm)
+{
+  /* return BACKGROUND_QUIT when done */
+  snd_state *ss;
   ss = tm->ss;
   switch (tm->slice)
     {
     case 0: /* start_dac, get first buffer, goto next step, return BACKGROUND_CONTINUE */
-      cursor_time = 0;
-      lock_recording_audio();
-#if HAVE_ALSA
-      /* FIXME: all this initialization block should be moved somewhere else,
-       * where it gets executed just once at snd startup time. A user preference
-       * for output device should have priority over this logic. At this time
-       * we always select the widest device if the requested channels fit into it. 
-       * Otherwise we try to combine devices, if all fails we modify snd settings
-       * so that channel folding takes place. This is inefficient but works for now. 
-       */
-      cards=mus_audio_systems();
-      index=0;
-      /* scan all cards and build a list of available output devices */
-      for (card=0; card<cards; card++) {
-	  if ((err=mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(card), MUS_AUDIO_PORT, MAX_ALSA_DEVS, val))!=0) {
-	      snd_error("%s[%d] %s: mus_audio_mixer_read: %s ", __FILE__, __LINE__, __FUNCTION__,
-			mus_audio_error_name(mus_audio_error()));
-	  }
-	  devs=(int)(val[0]);
-	  /* scan all devices in the card */
-	  for (d=0; d<devs; d++) {
-	      dev=(int)(val[d+1]);
-	      if ((err=mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(card)|dev, MUS_AUDIO_DIRECTION, 0, &direction))!=0) {
-		  snd_error("%s: can't read direction, ignoring device %d", __FUNCTION__, dev);
-		  direction=0;
-	      } else {
-		  if((int)direction==0) {
-		      /* remember output device */
-		      devices[index++]=MUS_AUDIO_PACK_SYSTEM(card)|dev;
-		      if (index>=MAX_ALSA_DEVS) goto no_more_devices;
-		  }
-	      }
-	  }
-      }
-    no_more_devices:
-      /* get channel availability for all devices */
-      for (d=0; d<index; d++) {
-	  available_chans[d]=min_chans[d]=max_chans[d]=0;
-	  if ((err=mus_audio_mixer_read(devices[d], MUS_AUDIO_CHANNEL, 2, val))==0) {
-	      available_chans[d]=(int)(val[0]);
-	      min_chans[d]=(int)(val[1]);
-	      max_chans[d]=(int)(val[2]);
-	      if (max_chans[d]>max_chans_value) {
-		  /* remember widest device */
-		  max_chans_value=max_chans[d];
-		  max_chans_dev=d;
-	      }
-	  }
-      }
-      /* allocate devices for playback */
-      alloc_chans=0;
-      alloc_devs=0;
-      for (d=0; d<MAX_DEV_FD; d++) out_dev[d]=dev_fd[d]=-1;
-      /* see if widest device can accomodate all channels */
-      if (max_chans_value>=tm->channels) {
-	  out_dev[alloc_devs++]=max_chans_dev;
-	  alloc_chans+=max_chans_value;
-      }
-      if (alloc_devs==0) {
-	  /* try to use several devices */
-	  int this_format=-1;
-	  int prev_format=-1;
-	  for (d=0; d<index; d++) {
-	      this_format=mus_audio_compatible_format(devices[d]);
-	      if (prev_format==-1) {
-		  prev_format=this_format;
-	      }
-	      /* format for all selected devices should match */
-	      if (this_format==prev_format) {
-		  out_dev[alloc_devs++]=d;
-		  alloc_chans+=available_chans[d];
-		  if (alloc_devs>=MAX_DEV_FD ||
-		      /* FIXME: limit number of devices to two for now, 
-		       * we have to reimplement fill_dac for more */
-		      alloc_devs>1) 
-		      break;
-	      }
-	  }
-	  if (alloc_devs!=0 && alloc_chans<tm->channels) {
-	      /* not enough available channels, give up */
-	      for (d=0; d<MAX_DEV_FD; d++) out_dev[d]=-1;
-	      alloc_devs=0;
-	      alloc_chans=0;
-	  }
-	  if (alloc_devs==0) {
-	      /* fold all channels into the first device */
-	      out_dev[alloc_devs++]=0;
-	      alloc_chans+=available_chans[0];
-	  }
-      }
-      compatible_format=mus_audio_compatible_format(devices[out_dev[0]]);
-      if (alloc_devs<2) {
-	  /* see if we have a minimum sized frame to fill 
-	   * FIXME: could this happen in more than one device? */
-	  int c=min_chans[out_dev[0]];
-	  if (c>tm->channels) {
-	      tm->channels=c;
-	  }
-      }
-      /* see if we have to fold channels */
-      if (alloc_chans<tm->channels) {
-	  if (dac_folding(ss)) snd_warning("folding %d chans into %d ", tm->channels, alloc_chans);
-	  tm->channels=alloc_chans;
-      }
-      /* read the number of samples per channel the device wants buffered */
-      if ((err=mus_audio_mixer_read(devices[out_dev[0]], MUS_AUDIO_SAMPLES_PER_CHANNEL, 2, val))!=-1) {
-	  samples_per_channel = (int)(val[0]);
-	  min_fragment_size = (int)(val[1]);
-	  max_fragment_size = (int)(val[2]);
-      }
-      dac_buffer_size=samples_per_channel*tm->channels;
-      while (dac_buffer_size*sizeof(MUS_SAMPLE_TYPE)>MAX_DAC_BUFFER_SIZE) {
-	  samples_per_channel/=2;
-	  dac_buffer_size=samples_per_channel*tm->channels;
-      }
-      set_dac_size(ss, dac_buffer_size*mus_data_format_to_bytes_per_sample(compatible_format));
-      /* open all allocated devices */
-      for (d=0; d<alloc_devs; d++) {
-	  int channels=available_chans[out_dev[d]];
-	  if (alloc_chans<=available_chans[out_dev[d]]) {
-	      if (tm->channels<min_chans[out_dev[d]]) {
-		  channels=min_chans[out_dev[d]];
-	      } else {
-		  channels=tm->channels;
-	      }
-	  }
-	  /* FIXME: assumes devices are same size... */
-	  dev_fd[d]=mus_audio_open_output(devices[out_dev[d]], tm->srate, channels, 
-					  compatible_format, (dac_size(ss))/alloc_devs);
-
-	  if (dev_fd[d]==-1) {
-	      /* could not open a device, close all others and quit playback */
-	      int i;
-	      for (i=0; i<d; i++) {
-		  mus_audio_close(devices[out_dev[i]]);
-	      }
-	      snd_error("%s: %s", STR_cant_play, mus_audio_error_name(mus_audio_error()));
-	      dac_running=0;
-	      unlock_recording_audio();
-	      if (global_reverb) {free_reverb(global_reverb); global_reverb=NULL;}
-	      max_active_slot=-1;
-	      FREE(tm); 
-	      return(BACKGROUND_QUIT);
-	  }
-      }
-      /* create buffers, FIXME: assumes two devices max */
-      if (dacbuf) FREE(dacbuf);
-      if (dacbuf1) FREE(dacbuf1);
-      dacbuf=(unsigned char *)CALLOC(dac_buffer_size * mus_data_format_to_bytes_per_sample(compatible_format),sizeof(unsigned char));
-      dacbuf1=(unsigned char *)CALLOC(dac_buffer_size * mus_data_format_to_bytes_per_sample(compatible_format),sizeof(unsigned char));
-
-#else
-
-      if (tm->channels > 2)
-	{
-	  err = mus_audio_mixer_read(audio_output_device(ss),MUS_AUDIO_CHANNEL,0,val);
-	  if (err != -1) available_chans = (int)(val[0]);
-	}
-      for (i=0;i<MAX_DEV_FD;i++) dev_fd[i] = -1;
-  #if HAVE_OSS
-      /* see if we can play 16 bit output */
-      compatible_format = mus_audio_compatible_format(audio_output_device(ss));
-    #ifndef PPC
-      /* check for chans>def chans, open 2 cards if available */
-      if ((available_chans < tm->channels) && (tm->channels == 4))
-	{
-	  if (mus_audio_systems() > 1)
-	    {
-	      dev_fd[0] = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss),tm->srate,2,compatible_format,dac_size(ss));
-	      if (dev_fd[0] != -1) 
-		dev_fd[1] = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(1) | audio_output_device(ss),tm->srate,2,compatible_format,dac_size(ss));
-	    }
-	  else
-	    {
-	      /* there is one special case here: Ensoniq's allow you to play quad
-	       * by sending two channels (non-clock-synchronous with the other two)
-	       * out the line in port, but this possibility confuses LinuxPPC (OSS-Free)
-	       */
-	      dev_fd[0] = mus_audio_open_output(MUS_AUDIO_AUX_OUTPUT,tm->srate,2,compatible_format,dac_size(ss));
-	      if (dev_fd[0] != -1) 
-		dev_fd[1] = mus_audio_open_output(audio_output_device(ss),tm->srate,2,compatible_format,dac_size(ss));
-	    }
-	  if (dev_fd[1] == -1)
-	    {
-	      mus_audio_close(dev_fd[0]);
-	      dev_fd[0] = -1;
-	    }
-	  else available_chans = 4;
-	}
-    #endif
-  #else
-      compatible_format = MUS_COMPATIBLE_FORMAT;
-  #endif
-      if (dacbuf) FREE(dacbuf);
-      if (dacbuf1) FREE(dacbuf1);
-      dacbuf = (unsigned char *)CALLOC(dac_buffer_size * mus_data_format_to_bytes_per_sample(compatible_format),sizeof(unsigned char));
-      dacbuf1 = (unsigned char *)CALLOC(dac_buffer_size * mus_data_format_to_bytes_per_sample(compatible_format),sizeof(unsigned char));
-      if (available_chans < tm->channels) 
-	{
-	  if (dac_folding(ss)) snd_warning("folding %d chans into %d ",tm->channels,available_chans);
-	  tm->channels = available_chans;
-	}
-      if (dev_fd[0] == -1)
-	dev_fd[0] = mus_audio_open_output(audio_output_device(ss),tm->srate,tm->channels,compatible_format,dac_size(ss));
-      if (dev_fd[0] == -1)
-	{
-	  snd_error("%s: %s",STR_cant_play,mus_audio_error_name(mus_audio_error()));
-	  dac_running = 0;
-	  unlock_recording_audio();
-	  if (global_reverb) {free_reverb(global_reverb); global_reverb=NULL;}
-	  max_active_slot = -1;
-	  FREE(tm); 
-	  return(BACKGROUND_QUIT);
-	}
-#endif
-
-      dac_chans = tm->channels;
-      dac_running = 1;
-      fill_dac(ss,1);
-      lock_apply(tm->ss,NULL);
+      if (start_audio_output(tm)) 
+	return(BACKGROUND_QUIT);
       tm->slice++;
       return(BACKGROUND_CONTINUE);
       break;
@@ -1680,26 +1775,14 @@ BACKGROUND_TYPE feed_dac(dac_manager *tm)
       if ((!global_reverbing) && (play_list_members == 0)) tm->slice++; 
       return(BACKGROUND_CONTINUE);
       break;
-    case 2: /* close dac, clear play_in_progress, unset play buttons? return BACKGROUND_QUIT */
-      for (i=0;i<MAX_DEV_FD;i++)
-	if (dev_fd[i] != -1) 
-	  {
-	    mus_audio_close(dev_fd[i]);
-	    dev_fd[i] = -1;
-	  }
-      dac_running = 0;
-      unlock_recording_audio();
-      dac_pausing = 0;
-      if (global_reverb) {free_reverb(global_reverb); global_reverb=NULL;}
-      max_active_slot = -1;
-      unlock_apply(tm->ss,NULL);
-      FREE(tm);
-      return(BACKGROUND_QUIT);
-      break;
-    }
+     case 2: /* close dac, clear play_in_progress, unset play buttons? return BACKGROUND_QUIT */
+       stop_audio_output(tm);
+       return(BACKGROUND_QUIT);
+       break;
+     }
   return(BACKGROUND_QUIT);
 }
-
+ 
 
 /* ---------------- support for Apply button (snd-apply.c) ---------------- */
 

@@ -15,9 +15,35 @@ AC_CANONICAL_HOST
 AC_CONFIG_HEADER(config.h)
 
 
-AC_ARG_WITH(alsa,
+audio_system="unknown"
+MAKE_TARGET="snd"
+
+AC_ARG_WITH(ardour,
+	[  --with-ardour           compile snd as a widget for use in ardour],
+  	if test "$with_ardour" = y || test "$with_ardour" = yes; then
+	    AC_DEFINE(NONINTERLEAVED_AUDIO)
+	    AC_DEFINE(ARDOUR_AUDIO)
+	    AC_DEFINE(SND_IN_ARDOUR)
+	    AC_DEFINE(SND_AS_WIDGET)
+	    MAKE_TARGET=widget
+	    AC_DEFINE(MUS_SAMPLE_BITS,32)
+	    AC_DEFINE(SNDLIB_USE_FLOATS)
+	    AC_DEFINE(GTKRC_COLORS)
+	    with_gtk="yes"
+	    audio_system="ardour"
+	fi)
+
+AC_ARG_WITH(gtkrc-colors,
+	[  --with-gtkrc-colors	  initial colors set in a GTK rc file],
+  	if test "$with_gtkrc_colors" = y || test "$with_gtkrc_colors" = yes; then
+	    AC_DEFINE(GTKRC_COLORS)
+	fi)
+
+if test $audio_system = unknown && test x$use_alsa = x ; then
+   AC_ARG_WITH(alsa,
     	[  --with-alsa		  use ALSA if possible],
    	use_alsa="$withval",use_alsa=no)
+fi
 
 XMHTML_LIB=""
 AC_ARG_WITH(xmhtml,
@@ -71,6 +97,7 @@ AC_ARG_WITH(snd-as-widget,
 	[  --with-snd-as-widget	  make Snd a loadable widget, not a standalone program],
   	if test "$with_snd_as_widget" = y || test "$with_snd_as_widget" = yes; then
 	    AC_DEFINE(SND_AS_WIDGET)
+	    MAKE_TARGET=widget
 	fi)
 
 AC_ARG_WITH(guile,
@@ -91,6 +118,20 @@ AC_ARG_WITH(float-samples,
   	if test "$with_float_samples" = y || test "$with_float_samples" = yes; then
 	    AC_DEFINE(SNDLIB_USE_FLOATS)
 	fi)
+
+AC_ARG_WITH(sample-width,
+	[  --with-sample-width=N   use N bits of samples (default = 24)],
+	    if test x"$with_sample_width" = x16 ; then
+	    	    AC_DEFINE(MUS_SAMPLE_BITS,16)
+            elif test x"$with_sample_width" = x24 ; then
+		    AC_DEFINE(MUS_SAMPLE_BITS,24)
+	    elif test x"$with_sample_width" = x32 ; then
+		    AC_DEFINE(MUS_SAMPLE_BITS,32)
+            else
+	         AC_MSG_ERROR("Only 16/24/32 bit samples are supported")
+            fi
+	    AC_MSG_RESULT(Using $with_sample_width bit samples)
+	)
 
 AC_ARG_ENABLE(snd-debug,
   [  --enable-snd-debug      include internal Snd debugging functions],
@@ -120,7 +161,7 @@ LIBS=""
 
 AC_HEADER_DIRENT
 AC_HEADER_STDC
-AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h soundcard.h machine/soundcard.h libc.h sys/vfs.h sys/statfs.h sys/mount.h fpu_control.h setjmp.h)
+AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h soundcard.h machine/soundcard.h libc.h sys/vfs.h sys/statfs.h sys/mount.h fpu_control.h setjmp.h sched.h)
 AC_CHECK_HEADER(/usr/local/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LOCAL_LIB_OSS)])
 AC_CHECK_HEADER(/usr/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LIB_OSS)])
 AC_CHECK_HEADER(/opt/oss/include/sys/soundcard.h,[AC_DEFINE(OPT_OSS)])
@@ -452,6 +493,7 @@ dnl   m68k-next-nextstep3  mips-sgi-irix6.2  i386-next-nextstep3  mips-sgi-irix6
 dnl   i686-pc-linux-gnu  powerpc-unknown-linux-gnu   sparc-sun-solaris2.7 i386-pc-cygwin32
 
 
+AC_SUBST(MAKE_TARGET)
 AC_OUTPUT(makefile)
 
 
@@ -461,3 +503,4 @@ dnl add --without-guile-gtk?
 dnl if no motif, search for gtk
 dnl add --without-gui?
 dnl check for ladspa.h? -- it's normally installed in /usr/include
+dnl need to be able to set both HAVE_ALSA and HAVE_OSS?
