@@ -8,11 +8,11 @@ in Windows/Cygwin.
 
 To build Snd, get the sources from
 
-  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-6.tar.gz
+  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz
 
-  gzip -d snd-6.tar.gz
-  tar xf snd-6.tar
-  cd snd-6
+  gzip -d snd-7.tar.gz
+  tar xf snd-7.tar
+  cd snd-7
   ./configure
   make
   make install
@@ -127,7 +127,7 @@ switch).
 
 
 There are RPM packages of Snd available at the ccrma-ftp site
-mentioned above: snd-6-12.i386.rpm and snd-6-12.src.rpm.  These RPM
+mentioned above: snd-7-0.i386.rpm and snd-7.0.src.rpm.  These RPM
 files have been superseded by Fernando Lopez-Lezcano's set available
 at http://www-ccrma.stanford.edu/planetccrma/software/
 
@@ -632,7 +632,7 @@ CCRMA:
   http://ccrma-mail.stanford.edu/mailman/listinfo/planetccrma
 
 Snd:
-  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-6.tar.gz
+  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz
   http://www-ccrma.stanford.edu/software/snd/
   http://sourceforge.net/projects/snd/
 

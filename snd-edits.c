@@ -7,6 +7,8 @@
 #define S_change_samples_with_origin    "change-samples-with-origin"
 #define S_insert_samples_with_origin    "insert-samples-with-origin"
 
+static ed_list *free_ed_list(ed_list *ed, chan_info *cp);
+
 static bool dont_edit(chan_info *cp) 
 {
   XEN res = XEN_FALSE;
@@ -109,7 +111,6 @@ static int add_sound_file_to_edit_list(chan_info *cp, const char *name, snd_io *
   return(cp->sound_ctr);
 }
 
-
 void free_ptree_list(chan_info *cp)
 {
   int i;
@@ -168,8 +169,6 @@ static int add_ptree(chan_info *cp)
   return(cp->ptree_ctr);
 }
 
-
-static ed_list *free_ed_list(ed_list *ed, chan_info *cp);
 static void prune_edits(chan_info *cp, int edpt)
 {
   int i;
@@ -181,6 +180,7 @@ static void prune_edits(chan_info *cp, int edpt)
 	{
 	  cp->edits[i] = free_ed_list(cp->edits[i], cp);
 	  cp->amp_envs[i] = free_amp_env(cp, i);
+	  cp->tracks[i] = free_track_info(cp, i);
 	}
       release_pending_marks(cp, edpt);
       release_pending_mixes(cp, edpt);
@@ -221,10 +221,13 @@ static void prepare_edit_list(chan_info *cp, off_t len, int pos, const char *cal
       else cp->cursors = (off_t *)REALLOC(cp->cursors, cp->edit_size * sizeof(off_t));
       if (!(cp->amp_envs)) cp->amp_envs = (env_info **)CALLOC(cp->edit_size, sizeof(env_info *));
       else cp->amp_envs = (env_info **)REALLOC(cp->amp_envs, cp->edit_size * sizeof(env_info *));
+      if (!(cp->tracks)) cp->tracks = (track_info **)CALLOC(cp->edit_size, sizeof(track_info *));
+      else cp->tracks = (track_info **)REALLOC(cp->tracks, cp->edit_size * sizeof(track_info *));
       for (i = cp->edit_ctr; i < cp->edit_size; i++) 
 	{
 	  cp->edits[i] = NULL; 
 	  cp->amp_envs[i] = NULL; 
+	  cp->tracks[i] = NULL; 
 	  cp->samples[i] = 0;
 	  cp->cursors[i] = 0;
 	}
@@ -234,6 +237,7 @@ static void prepare_edit_list(chan_info *cp, off_t len, int pos, const char *cal
   CURRENT_SAMPLES(cp) = len;
   if (cp->edit_ctr > 0)
     CURSOR(cp) = cp->cursors[cp->edit_ctr - 1];
+  record_initial_track_info(cp);
 }
 
 static void reflect_sample_change_in_axis(chan_info *cp)
@@ -1263,6 +1267,7 @@ ed_list *initial_ed_list(off_t beg, off_t end)
 void allocate_ed_list(chan_info *cp) 
 {
   cp->edits = (ed_list **)CALLOC(cp->edit_size, sizeof(ed_list *));
+  cp->tracks = (track_info **)CALLOC(cp->edit_size, sizeof(track_info *));
 }
 
 static void new_leading_ramp(ed_fragment *new_start, ed_fragment *old_start, off_t samp)
@@ -7921,6 +7926,7 @@ void revert_edits(chan_info *cp, void *ptr)
   if (selection_is_active())
     reflect_edit_with_selection_in_menu(); 
   else reflect_edit_without_selection_in_menu();
+  update_track_lists(cp);
   update_graph(cp);
   reflect_mix_in_menu();
   reflect_mix_in_enved();
@@ -7948,6 +7954,7 @@ void undo_edit(chan_info *cp, int count)
       if (selection_is_active()) 
 	reflect_edit_with_selection_in_menu();
       else reflect_edit_without_selection_in_menu();
+      update_track_lists(cp);
       update_graph(cp);
       reflect_mix_in_menu();
       reflect_mix_in_enved();
@@ -8007,6 +8014,7 @@ void redo_edit(chan_info *cp, int count)
 	  if (selection_is_active()) 
 	    reflect_edit_with_selection_in_menu(); 
 	  else reflect_edit_without_selection_in_menu();
+	  update_track_lists(cp);
 	  update_graph(cp);
 	  reflect_mix_in_menu();
 	  reflect_mix_in_enved();
@@ -8471,10 +8479,10 @@ return a reader ready to access region's channel chn data starting at start-samp
   int reg_n, chn_n;
   off_t beg;
   int direction = 1;
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_make_sample_reader, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(reg), reg, XEN_ARG_2, S_make_sample_reader, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn), chn, XEN_ARG_3, S_make_sample_reader, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(dir1), dir1, XEN_ARG_4, S_make_sample_reader, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_make_region_sample_reader, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(reg), reg, XEN_ARG_2, S_make_region_sample_reader, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn), chn, XEN_ARG_3, S_make_region_sample_reader, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(dir1), dir1, XEN_ARG_4, S_make_region_sample_reader, "an integer");
   reg_n = XEN_TO_C_INT_OR_ELSE(reg, 0);
   if (!(region_ok(reg_n))) 
     XEN_ERROR(NO_SUCH_REGION,

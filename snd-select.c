@@ -301,7 +301,7 @@ sync_info *selection_sync(void)
   return(si);
 }
 
-static int mix_selection(chan_info *cp, off_t beg, const char *origin)
+static int mix_selection(chan_info *cp, off_t beg, const char *origin, int trk)
 {
   char *tempfile = NULL;
   sync_info *si_out;
@@ -311,10 +311,9 @@ static int mix_selection(chan_info *cp, off_t beg, const char *origin)
   if (err == MUS_NO_ERROR)
     {
       si_out = sync_to_chan(cp);
-      /* TODO: mix selection track id arg */
       id = mix(beg, selection_len(), si_out->chans, si_out->cps, tempfile, 
 	       (si_out->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
-	       origin, with_mix_tags(ss), 0);
+	       origin, with_mix_tags(ss), trk);
       free_sync_info(si_out);	      
     }
   if (tempfile) FREE(tempfile);
@@ -326,7 +325,7 @@ void add_selection_or_region(int reg, chan_info *cp, const char *origin)
   if (cp) 
     {
       if ((reg == 0) && (selection_is_active()))
-	mix_selection(cp, CURSOR(cp), origin);
+	mix_selection(cp, CURSOR(cp), origin, 0);
       else add_region(reg, cp, origin);
     }
 }
@@ -632,12 +631,12 @@ int save_selection(char *ofile, int type, int format, int srate, const char *com
 	  int fdi;
 	  char *buffer;
 	  lseek(ofd, oloc, SEEK_SET);
-	  fdi = mus_file_open_read(sp->filename);
+	  fdi = mus_file_open_read(sp->filename); /* this does not read the header */
 	  if (fdi == -1)
 	    snd_error(_("can't read selection's original sound? %s: %s"), sp->filename, strerror(errno));
 	  else
 	    {
-	      iloc = mus_header_data_location();
+	      iloc = mus_sound_data_location(sp->filename);
 	      lseek(fdi, iloc + chans * bps * si->begs[0], SEEK_SET);
 	      buffer = (char *)CALLOC(MAX_BUFFER_SIZE, sizeof(char));
 	      for (j = 0; j < num; j += MAX_BUFFER_SIZE)
@@ -756,18 +755,25 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
   return(snd_no_active_selection_error(S_insert_selection));
 }
 
-static XEN g_mix_selection(XEN beg, XEN snd, XEN chn)
+static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN id)
 {
-  #define H_mix_selection "(" S_mix_selection " (beg 0) (snd #f) (chn #f)): mix the currently selected portion starting at beg"
+  #define H_mix_selection "(" S_mix_selection " (beg 0) (snd #f) (chn #f) (track 0)): mix the currently selected portion starting at beg"
   chan_info *cp;
   off_t obeg;
+  int track_id;
   if (selection_is_active())
     {
       ASSERT_CHANNEL(S_mix_selection, snd, chn, 2);
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_mix_selection, "a number");
+      XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(id), id, XEN_ARG_4, S_mix_selection, "an integer");
       cp = get_cp(snd, chn, S_mix_selection);
       obeg = beg_to_sample(beg, S_mix_selection);
-      return(C_TO_XEN_INT(mix_selection(cp, obeg, S_mix_selection)));
+      track_id = XEN_TO_C_INT_OR_ELSE(id, 0);
+      if ((track_id > 0) && (!(track_p(track_id))))
+	XEN_ERROR(NO_SUCH_TRACK,
+		  XEN_LIST_2(C_TO_XEN_STRING(S_mix_selection),
+			     C_TO_XEN_INT(id)));
+      return(C_TO_XEN_INT(mix_selection(cp, obeg, S_mix_selection, track_id)));
     }
   return(snd_no_active_selection_error(S_mix_selection));
 }
@@ -1018,7 +1024,7 @@ XEN_NARGIFY_0(g_selection_srate_w, g_selection_srate)
 XEN_ARGIFY_2(g_selection_maxamp_w, g_selection_maxamp)
 XEN_NARGIFY_0(g_delete_selection_w, g_delete_selection)
 XEN_ARGIFY_3(g_insert_selection_w, g_insert_selection)
-XEN_ARGIFY_3(g_mix_selection_w, g_mix_selection)
+XEN_ARGIFY_4(g_mix_selection_w, g_mix_selection)
 XEN_ARGIFY_2(g_select_all_w, g_select_all)
 XEN_ARGIFY_6(g_save_selection_w, g_save_selection)
 #else
@@ -1059,7 +1065,7 @@ void g_init_selection(void)
   XEN_DEFINE_PROCEDURE(S_selection_maxamp, g_selection_maxamp_w, 0, 2, 0, H_selection_maxamp);
   XEN_DEFINE_PROCEDURE(S_delete_selection, g_delete_selection_w, 0, 0, 0, H_delete_selection);
   XEN_DEFINE_PROCEDURE(S_insert_selection, g_insert_selection_w, 0, 3, 0, H_insert_selection);
-  XEN_DEFINE_PROCEDURE(S_mix_selection,    g_mix_selection_w, 0, 3, 0,    H_mix_selection);
+  XEN_DEFINE_PROCEDURE(S_mix_selection,    g_mix_selection_w, 0, 4, 0,    H_mix_selection);
   XEN_DEFINE_PROCEDURE(S_select_all,       g_select_all_w, 0, 2, 0,       H_select_all);
   XEN_DEFINE_PROCEDURE(S_save_selection,   g_save_selection_w, 1, 5, 0,   H_save_selection);
 }

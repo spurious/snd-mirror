@@ -179,6 +179,11 @@ typedef struct {
   Float scale;
 } sono_info;
 
+typedef struct {
+  int size;
+  short *ids, *locs;
+} track_info;
+
 typedef struct chan_info {
   int chan;                /* which chan are we */
   off_t *samples;          /* current length */
@@ -250,6 +255,7 @@ typedef struct chan_info {
   Float *amp_control; /* local amp controls in snd-dac; should it be extended to other controls? */
   search_result_t last_search_result;
   bool just_zero;
+  track_info **tracks;
 #if HAVE_GL
   int gl_fft_list;
 #endif
@@ -765,6 +771,7 @@ void set_ed_selection_maxamp(chan_info *cp, Float val);
 Float ed_selection_maxamp(chan_info *cp);
 void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1);
 void reflect_file_change_in_label(chan_info *cp);
+void update_track_lists(chan_info *cp);
 
 bool snd2sample_p(mus_any *ptr);
 bool xen2sample_p(mus_any *ptr);
@@ -1274,7 +1281,7 @@ mix_context *free_mix_context(mix_context *ms);
 void free_mix_list(chan_info *cp);
 void free_mixes(chan_info *cp);
 void mix_complete_file_at_cursor(snd_info *sp, char *str, const char *origin, bool with_tag, int track_id);
-int mix(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, int temp, const char *origin, bool with_tag, int track_id);
+int mix(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, file_delete_t temp, const char *origin, bool with_tag, int track_id);
 void backup_mix_list(chan_info *cp, int edit_ctr);
 bool active_mix_p(chan_info *cp);
 off_t mix_beg(chan_info *cp);
@@ -1321,10 +1328,16 @@ void mix_at_x_y(int data, char *filename, int x, int y);
 int next_mix_id(int id);
 int previous_mix_id(int id);
 void reflect_edit_in_mix_panel_envs(int n);
-#if WITH_BUILTIN_TRACKS
-  void g_init_track(void);
+void g_init_track(void);
+#if 0
+#define track_p(Arg) track_p_1(Arg, __FUNCTION__)
+bool track_p_1(int trk, char *caller);
+#else
+bool track_p(int trk);
 #endif
-
+void free_track_info_list(chan_info *cp);
+track_info *free_track_info(chan_info *cp, int loc);
+void record_initial_track_info(chan_info *cp);
 
 
 /* -------- snd-find.c -------- */

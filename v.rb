@@ -10,7 +10,7 @@
 # If you have the libsndlib.so in your ${LD_LIBRARY_PATH} and if you
 # have compiled Snd with link option -lsndlib, you don't need `require
 # 'sndlib'' (see section `Dynamically loaded modules' in
-# snd-6/grfsnd.html for more information about it).  Set in that case
+# snd-7/grfsnd.html for more information about it).  Set in that case
 # the Ruby variable $HAVE_SNDLIB_SO to true, here or in your startup
 # file (e.g. ~./snd-ruby.rb).
 
@@ -456,7 +456,7 @@ def jc_reverb(startime, dur = nil, *args)
 	:delay1,   0.013
 	:delay2,   0.011
 	:help
-The old Chowning reverberator (see snd-6/examp.scm).
+The old Chowning reverberator (see snd-7/examp.scm).
 Usage: with_sound(:reverb, :jc_reverb) { fm_violin }\n") if startime == :help
   low_pass = get_args(args, :low_pass, 0)
   volume   = get_args(args, :volume, 1.0)

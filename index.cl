@@ -475,7 +475,7 @@
 			   (progn
 			     (setf topic (subseq line (+ compos 11) epos))
 			     (setf state :html)
-			     (let ((filename (concatenate 'string #+clm clm::*clm-source-directory* "help/" topic ".html")))
+			     (let ((filename (substitute #\- #\space (concatenate 'string #+clm clm::*clm-source-directory* "help/" topic ".html"))))
 			       (format t "open ~A" filename)
 			       (setf outf (open filename :direction :output :if-exists :supersede :if-does-not-exist :create))
 			       (format outf "<html>~%<head><title>~A</title></head>~%<body bgcolor=\"#ffffff\">~%" topic))))))))
@@ -542,7 +542,7 @@
 			       (progn
 				 (setf topic (subseq line (+ srcpos 11) epos))
 				 (setf state :html)
-				 (let ((filename (concatenate 'string #+clm clm::*clm-source-directory* "help/" topic ".html")))
+				 (let ((filename (substitute #\- #\space (concatenate 'string #+clm clm::*clm-source-directory* "help/" topic ".html"))))
 				   (format t "open ~A" filename)
 				   (setf outf (open filename :direction :output :if-exists :supersede :if-does-not-exist :create))
 				   (format outf "<html>~%<head><title>~A</title></head>~%<body bgcolor=white>~%" topic))))))

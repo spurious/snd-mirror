@@ -3418,9 +3418,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   g_init_recorder();
   g_init_find();
   g_init_run();
-#if WITH_BUILTIN_TRACKS
   g_init_track();
-#endif
 #if (!USE_NO_GUI)
   g_init_gxutils();
   g_init_gxen();

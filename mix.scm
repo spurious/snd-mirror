@@ -1,53 +1,31 @@
-;;; support for "tracks" in Snd and various mix-related utilities
+;;; this file is being changed to move most of the previous track
+;;;   functions into Snd -- all the previous functionality will be
+;;;   re-implemented eventually.
+
+
+
+;;; various mix and track related utilities
 ;;;
 ;;; (pan-mix file frame envelope) mixes file into current sound starting at frame using envelope to pan (0: all chan 0, 1: all chan 1)
 ;;; (mix->vct id) return mix data in vct
 ;;; (snap-mix-to-beat (at-anchor)) forces dragged mix to end up on a beat
-;;; (delete-mix id) removes mix (can be undone)
 ;;; (delete-all-mixes) removes all mixes
 ;;;
-;;;
-;;; tracks (a "track" is a list of mix id numbers):
-;;;
-;;; (make-track trk mix-list) puts each mix (referenced by its id number) in mix-list into track trk
-;;; (track trk) returns the list of mixes (id numbers) currently in track trk
 ;;; (track->vct track) place track data in vct
 ;;; (save-track track filename) save track data in file
 ;;; (filter-track track coeffs) filter track data
 ;;; (reverse-track track) reverses the mix order
-;;; (delete-track track) deletes all mixes associated with track (sets amps to 0)
 ;;; (delete-all-tracks) removes all mixes that have an associated track (sets all amps to 0)
 ;;; (set-all-tracks new-id) places all mixes in track new-id
 ;;;
-;;; settable:     track-amp, track-speed, track-position, track-color
-;;; not settable: track-frames, track-end
-;;; 
-;;; (set! (track-amp track) new-amp) sets the amp of each mix in track to new-amp
-;;;   (incf-track-amp track change) increments the amp of each mix in track by change
-;;;
-;;; (set! (track-speed track) new-speed) sets the speed (srate) of each mix in track to new-speed
-;;;   (transpose-track track semitones) transposes each mix in track  by semitones
-;;; the mix-speed-changed-hook can be set to respeed-track to have the entire track follow the mix panel's speed slider
-;;;
-;;; (track-position track) returns the begin time of track (the minimum mix begin sample associated with track)
-;;;   (set! (track-position track) new-beg) moves all mixes in track so that the track starts at new-beg
-;;;   (track-end track) returns endpoint (maximum frame in mixes) of track
-;;;   (track-frames track) returns number of samples between track start and end
-;;; 
+;;; (transpose-track track semitones) transposes each mix in track  by semitones
 ;;; (retempo-track track tempo) changes the inter-mix begin times of mixes in track by tempo (> 1.0 is faster)
-;;; (set! (track-color track) color) changes the associated mix colors to color
-;;; (track-color track) returns track color
-;;; (env-track track chan) env) set overall track amp env
-;;;
-;;; (sync-multichannel-mixes) causes multichannel mixes to be placed in a separate track,
-;;;   and subsequent srate or position changes affect all channels in parallel (this makes
-;;;   it easier to mix multichannel files into other multichannel files and keep the mixed
-;;;   channels in sync)
 ;;;
 ;;; mix-property associates a property list with a mix
+;;; track-property associates a property list with a track
 ;;; mix-click-sets-amp sets up hook functions so that mix click zeros amps, then subsequent click resets to the before-zero value
 
-(load-from-path "env.scm") ; multiply-envelope and window-envelope for env-track
+
 
 (define (tree-for-each func tree)
   "(tree-for-each func tree) applies func to every leaf of 'tree'"
@@ -89,17 +67,6 @@
     (let ((val (mix file start #f snd)))
       (set! (sync snd) old-sync)
       val)))
-
-(define (delete-mix id)
-  "(delete-mix id) removes mix (sets amp to 0 -- can be undone)"
-  (if (mix? id)
-      (as-one-edit
-       (lambda ()
-	 (do ((i 0 (1+ i)))
-	     ((= i (mix-chans id)))
-	   (set! (mix-amp id i) 0.0))
-	 (set! (mix-locked id) #t)))
-      (throw 'no-such-mix (list "delete-mix" id))))
 
 (define (delete-all-mixes)
   "(delete-all-mixes) removes all mixes (sets all amps to 0)"
@@ -224,7 +191,7 @@ in the other channel. 'chn' is the start channel for all this (logical channel 0
 			  (set! (mix-func mix0 0) envelope)
 			  (set! (mix-func mix1 0) inverted-envelope)
 			  (if (with-mix-tags)
-			      (let ((trk (unused-track))) ; needed for position and speed changes
+			      (let ((trk (make-track))) ; needed for position and speed changes
 				(set! (mix-track mix0) trk)
 				(set! (mix-track mix1) trk)
 				(set! (mix-property 'pan-mix mix0) (list mix1 0))
@@ -246,7 +213,7 @@ in the other channel. 'chn' is the start channel for all this (logical channel 0
 			  (set! (mix-func mix0 0) envelope)
 			  (set! (mix-func mix1 1) inverted-envelope)
 			  (if (with-mix-tags)
-			      (let ((trk (unused-track)))
+			      (let ((trk (make-track)))
 				(set! (mix-track mix0) trk)
 				(set! (mix-track mix1) trk)
 				(set! (mix-property 'pan-mix mix0) (list mix1 1))
@@ -290,417 +257,6 @@ in the other channel. 'chn' is the start channel for all this (logical channel 0
 			   (max 0 (- lower offset))
 			   (- higher offset)))
 		 #t))))
-
-
-
-;;; ---------------- tracks ----------------
-;;; a track is a list of mix ids
-
-(define (unused-track)
-  "(unused-track) returns a track number that is not currently in use"
-  (let ((ntrack 0))
-    (tree-for-each (lambda (n)
-		     (set! ntrack (max ntrack (mix-track n))))
-		   (mixes))
-    (+ ntrack 1)))
-
-(define (set-all-tracks new-num)
-  "(set-all-tracks new-id) places all mixes in track new-id"
-  (tree-for-each 
-    (lambda (n)
-      (set! (mix-track n) new-num))
-    (mixes)))
-
-
-
-(define (make-track id mixes)
-  "(make-track trk mix-list) puts each mix (referenced by its id number) in mix-list into track trk. (make-track 2 '(2 4 1))"
-  ;; loop through mixes setting mix-track to id, return mixes with #f where not mix?
-  (map (lambda (a)
-	 (if (mix? a)
-	     (begin
-	       (set! (mix-track a) id)
-	       a)
-	     #f))
-       mixes))
-
-(define (track id)
-  "(track trk) returns the list of mixes (mix id numbers) currently in track trk"
-  (let ((trk '()))
-    (tree-for-each (lambda (n)
-		     (if (= id (mix-track n))
-			 (set! trk (cons n trk))))
-		   (mixes))
-    trk))
-	   
-(define (next-mix-in-track id)
-  "(next-mix-in-track trk) selects and returns the id of the next mix in the given track, or #f is there isn't one"
-  (let ((cur-mix (or (selected-mix) -1))
-	(next-is-it (or (not (number? (selected-mix)))
-			(not (= id (mix-track (selected-mix)))))))
-    (call-with-current-continuation
-     (lambda (return)
-       (tree-for-each 
-	(lambda (mix-id)
-	  (if (and next-is-it
-		   (= (mix-track mix-id) id))
-	      (begin
-		(set! (selected-mix) mix-id)
-		(return mix-id))
-	      (if (= mix-id cur-mix)
-		  (set! next-is-it #t))))
-	(mixes))
-       #f))))
-
-(define (previous-mix-in-track id)
-  "(previous-mix-in-track trk) selects and returns the id of the previous mix in the given track, or #f is there isn't one"
-  (let ((cur-mix (or (selected-mix) -1))
-	(next-is-it (or (not (number? (selected-mix)))
-			(not (= id (mix-track (selected-mix)))))))
-    (call-with-current-continuation
-     (lambda (return)
-       (tree-for-each-reversed
-	(lambda (mix-id)
-	  (if (and next-is-it
-		   (= (mix-track mix-id) id))
-	      (begin
-		(set! (selected-mix) mix-id)
-		(return mix-id))
-	      (if (= mix-id cur-mix)
-		  (set! next-is-it #t))))
-	(mixes))
-       #f))))
-
-(define (delete-track track)
-  "(delete-track track) deletes all mixes associated with track (sets amps to 0.0)"
-  (as-one-edit
-    (lambda ()
-      (for-each 
-        (lambda (a) 
-          (delete-mix a))
-        track))))
-
-(define (delete-all-tracks)
-  "(delete-all-tracks) removes all mixes that have an associated track (sets all amps to 0)"
-  (as-one-edit
-    (lambda ()
-      (tree-for-each
-        (lambda (id)
-	  (if (not (= (mix-track id) 0))
-	      (delete-mix id)))
-        (mixes)))))
-
-
-;;; filter-track 
-
-#!
-
-;;; TODO: rewrite filter-track to use mix-sample-reader and lock afterwards 
-
-(define (filter-track track fir-filter-coeffs)
-  "(filter-track track coeffs) filters track data using FIR filter coeffs by appling \
-the filter to the underlying mixes: (filter-track (track 1) '(.1 .2 .3 .3 .2 .1))"
-  (if (some mix? track)
-      (let ((order (length fir-filter-coeffs)))
-	(as-one-edit
-	 (lambda ()
-	   (for-each (lambda (a)
-		       (if (mix? a)
-			   (let ((chans (mix-chans a)))
-			     (do ((chan 0 (1+ chan)))
-				 ((= chan chans))
-			       (let* ((flt (make-fir-filter order (list->vct fir-filter-coeffs)))
-				      (newlen(+ order (mix-frames a)))
-				      (samps (make-vct newlen))
-				      (reader (make-sample-reader 0 (list a) chan)))
-				 (vct-map! samps (lambda ()
-						   (fir-filter flt (next-sample reader))))
-				 (free-sample-reader reader)
-				 (vct->samples 0 newlen samps (list a) chan))))))
-		     track))))
-      (throw 'no-such-track (list "filter-track" track))))
-!#
-
-
-;;; track-position
-
-(define track-position
-  (make-procedure-with-setter
-   (lambda (track)
-     "(track-position track) returns the begin time of track"
-     (letrec ((track-pos
-	       (lambda (trk)
-		 (if (null? trk)
-		     '()
-		     (if (mix? (car trk))
-			 (cons (mix-position (car trk)) (track-pos (cdr trk)))
-			 (track-pos (cdr trk)))))))
-       (let ((pos (track-pos track)))
-	 (if (null? pos)
-	     (throw 'no-such-track (list "track-position" track))
-	     (apply min pos)))))
-   (lambda (track new-position)
-     "(set! (track-position track) new-position) moves all mixes in track so that the track starts at new-position"
-     (let* ((track-beg (track-position track))
-	    (change (- new-position track-beg)))
-       (as-one-edit 
-	(lambda ()
-	  (for-each (lambda (a) 
-		      (if (mix? a)
-			  (set! (mix-position a) (+ change (mix-position a)))))
-		    track)))))))
-
-(define (reverse-track track)
-  "(reverse-track) reverses the order of its mixes (it changes various mix begin times)"
-  (if (some mix? track)
-      (let* ((ids-in-order (sort track
-				 (lambda (a b)
-				   (> (mix-position a)
-				      (mix-position b))))))
-	(as-one-edit
-	 (lambda ()
-	   (for-each (lambda (id pos)
-		       (set! (mix-position id) pos))
-		     ids-in-order
-		     (reverse (map mix-position ids-in-order))))))
-      (throw 'no-such-track (list "reverse-track" track))))
-
-(define (track-end track)
-  "(track-end track) returns endpoint (maximum frame in mixes) of track"
-  (letrec ((track-pos
-	    (lambda (trk)
-	      (if (null? trk)
-		  '()
-		  (if (mix? (car trk))
-		      (cons (+ (mix-position (car trk)) 
-			       (mix-frames (car trk))) 
-			    (track-pos (cdr trk)))
-		      (track-pos (cdr trk)))))))
-    (let ((pos (track-pos track)))
-      (if (null? pos)
-	  (throw 'no-such-track (list "track-end" track))
-	  (apply max pos)))))
-
-(define (track-frames track)
-  "(track-frames track) returns number of samples between track start and end"
-  (- (track-end track) (track-position track)))
-
-
-(define (track->vct track)
-  "(track->vct track) places track data in vct"
-  (vct-map! 
-   (make-vct 
-    (track-frames track)) 
-   (make-track-sample-reader 
-    (mix-track (car track)))))
-
-(define (save-track track filename)
-  "(save-track track filename) saves track data (as floats) in file filename"
-  (let ((v (track->vct track))
-	(fd (open-sound-file filename 1 (srate) ""))) ; chans?
-    (vct->sound-file fd v (vct-length v))
-    (close-sound-file fd (* 4 (vct-length v)))))
-
-
-
-;;; track amplitude 
-
-(define track-amp
-  (make-procedure-with-setter
-   (lambda (track)
-     "(track-amp track) returns the amp associated with track"
-     (if (some mix? track)
-	 (let ((maxamp 0.0))
-	   (for-each
-	    (lambda (id)
-	      (if (mix? id)
-		  (do ((i 0 (1+ i)))
-		      ((= i (mix-chans id)))
-		    (set! maxamp (max maxamp (mix-amp id i))))))
-	    track)
-	   maxamp)
-	 (throw 'no-such-track (list "track-amp" track))))
-   (lambda (track new-amp)
-     (if (some mix? track)
-	 (as-one-edit
-	  (lambda ()
-	    (for-each (lambda (a) 
-			(if (mix? a)
-			    (do ((i 0 (1+ i)))
-				((= i (mix-chans a)))
-			      (set! (mix-amp a i) new-amp)))) ; is this the "right thing" -- maybe leave 0 amps 0 if chans>1?
-		      track)))
-	 (throw 'no-such-track (list "set! track-amp" track new-amp))))))
-
-(define (incf-track-amp track change)
-  "(incf-track-amp track change) increments the amp of each mix in track by change"
-  (if (not (= change 0.0))
-      (if (some mix? track)
-	  (as-one-edit
-	   (lambda ()
-	     (for-each (lambda (a) 
-			 (if (mix? a)
-			     (do ((i 0 (1+ i)))
-				 ((= i (mix-chans a)))
-			       (set! (mix-amp a i) (max 0.0 (+ (mix-amp a i) change))))))
-		       track)))
-	  (throw 'no-such-track (list "incf-track-amp" track change)))))
-
-
-;;; track speed (srate)
-
-(define track-speed
-  (make-procedure-with-setter
-   (lambda (track)
-     "(track-speed track) returns the speed associated with track (presumably the first mix's speed)"
-     (if (some mix? track)
-	 (call-with-current-continuation
-	  (lambda (return)
-	    (for-each
-	     (lambda (id)
-	       (if (mix? id)
-		   (return (mix-speed id))))
-	     track)))
-	 (throw 'no-such-track (list "track-speed" track))))
-   (lambda (track new-speed)
-     (if (not (= new-speed 0.0))
-	 (if (some mix? track)
-	     (as-one-edit
-	      (lambda ()
-		(for-each (lambda (a) 
-			    (if (mix? a)
-				(set! (mix-speed a) new-speed)))
-			  track)))
-	     (throw 'no-such-track (list "set! track-speed" track new-speed)))))))
-
-(define (transpose-track track semitones)
-  "(transpose-track track semitones) transposes each mix in track  by semitones"
-  (let ((mult (expt 2.0 (/ semitones 12.0))))
-    (as-one-edit
-     (lambda ()
-       (for-each (lambda (a)
-		   (if (mix? a)
-		       (set! (mix-speed a) (* mult (mix-speed a)))))
-		 track)))))
-
-
-(define (retempo-track track tempo)
-  "(retempo-track track tempo) changes the inter-mix begin times of mixes in track by tempo (> 1.0 is faster)"
-  (if (and (not (= tempo 1.0)) (not (= tempo 0.0)))
-      (if (some mix? track)
-	  (let ((track-beg (track-position track))
-		(new-tempo (/ 1.0 tempo))) ;make tempo>1.0 go faster
-	    (if track-beg
-		(as-one-edit 
-		 (lambda ()
-		   (for-each (lambda (a) 
-			       (if (mix? a)
-				   (set! (mix-position a) (+ track-beg 
-							     (inexact->exact (floor (* new-tempo 
-										(- (mix-position a) track-beg))))))))
-			     track)))))
-	  (throw 'no-such-track (list "retempo-track" track tempo)))))
-
-;;; (retempo-track '(0 1) 2.0)
-
-
-;;; track color 
-
-(define track-color
-  (make-procedure-with-setter
-   (lambda (track)
-     "(track-color track) returns track color"
-     (if (null? track)
-	 (mix-color)
-	 (some (lambda (id) (and (mix? id) (mix-color id))) track)))
-   (lambda (track new-color)
-     "(set! (track-color track) color) changes the associated mix colors to color"
-     (if (some mix? track)
-	 (for-each (lambda (a) 
-		     (if (mix? a)
-			 (set! (mix-color a) new-color)))
-		   track)
-	 (throw 'no-such-track (list "set! track-color" track new-color))))))
-
-
-
-;;; env-track applies an envelope to a track by enveloping the underlying mix input sounds
-
-(define (env-track track chan env)
-  "(env-track track chan env) sets overall track amplitude envelope"
-  (let ((beg (track-position track))
-	(len (track-frames track)))
-    (as-one-edit
-     (lambda ()
-       (for-each 
-	(lambda (a) 
-	  (if (and (mix? a) (< chan (mix-chans a)))
-	      (set! (mix-amp-env a chan) 
-		    (multiply-envelopes 
-		     (window-envelope (/ (- (mix-position a) beg) len)
-				      (/ (- (+ (mix-position a) (mix-frames a)) beg) len)
-				      env)
-		     (mix-amp-env a chan)))))
-	track)))))
-
-; (env-track (track 1) 0 '(0 0 1 1))
-
-(if (not (defined? 'hook-member))
-    (define (hook-member value hook) 
-      (member value (hook->list hook))))
-
-(define (multichannel-mix-to-track track-id)
-  (if (= track-id 0)
-      (unused-track)
-      track-id))
-
-(define (multichannel-mix-moved id samps-moved)
-  ;; id = mix that moved (via mouse), move all other mixes in its track by the same amount
-  (let ((trk (mix-track id)))
-    (if (> trk 0)
-	(let ((track-mixes (track trk)))
-	  (as-one-edit
-	   (lambda ()
-	     (for-each (lambda (a) 
-			 (if (and (mix? a)
-				  (not (= a id)))
-			     (set! (mix-position a) (+ samps-moved (mix-position a)))))
-		       track-mixes)))))
-    #f))
-
-(define (multichannel-mix-resampled id)
-  (let ((trk (mix-track id)))
-    (if (> trk 0)
-	(let ((track-mixes (track trk))
-	      (new-speed (mix-speed id)))
-	  (set! (track-speed track-mixes) new-speed)
-	  #t)
-	#f)))
-
-(define sync-multichannel-mixes
-  (make-procedure-with-setter
-   (lambda ()
-     (if (not (hook-member multichannel-mix-to-track multichannel-mix-hook))
-	 (add-hook! multichannel-mix-hook multichannel-mix-to-track))
-     (if (not (hook-member multichannel-mix-moved mix-dragged-hook))
-	 (add-hook! mix-dragged-hook multichannel-mix-moved))
-     (if (not (hook-member multichannel-mix-resampled mix-speed-changed-hook))
-	 (add-hook! mix-speed-changed-hook multichannel-mix-resampled)))
-   (lambda (on)
-     (if (and on 
-	      (not (hook-member multichannel-mix-to-track multichannel-mix-hook)))
-	 (add-hook! multichannel-mix-hook multichannel-mix-to-track)
-	 (remove-hook! multichannel-mix-hook multichannel-mix-to-track))
-     (if (and on
-	      (not (hook-member multichannel-mix-moved mix-dragged-hook)))	      
-	 (add-hook! mix-dragged-hook multichannel-mix-moved)
-	 (remove-hook! mix-dragged-hook multichannel-mix-moved))
-     (if (and on
-	      (not (hook-member multichannel-mix-resampled mix-speed-changed-hook)))
-	 (add-hook! mix-speed-changed-hook multichannel-mix-resampled)
-	 (remove-hook! mix-speed-changed-hook multichannel-mix-resampled)))))
-
-
 
 
 ;;; --------------------------------------------------------------------------------
@@ -770,4 +326,112 @@ the filter to the underlying mixes: (filter-track (track 1) '(.1 .2 .3 .3 .2 .1)
 		       (set! (mix-property :zero n) #f)))
 		 #t))))
 
+
+;;; --------------------------------------------------------------------------------
+
+(define (delete-all-tracks)
+  "(delete-all-tracks) removes all mixes that have an associated track (sets all amps to 0)"
+  (as-one-edit
+    (lambda ()
+      (tree-for-each
+        (lambda (id)
+	  (if (not (= (mix-track id) 0))
+	      (delete-mix id)))
+        (mixes)))))
+
+
+(define (reverse-track trk)
+  "(reverse-track) reverses the order of its mixes (it changes various mix begin times)"
+  (if (some mix? (track trk))
+      (let* ((ids-in-order (sort (track trk)
+				 (lambda (a b)
+				   (> (mix-position a)
+				      (mix-position b))))))
+	(as-one-edit
+	 (lambda ()
+	   (for-each (lambda (id pos)
+		       (set! (mix-position id) pos))
+		     ids-in-order
+		     (reverse (map mix-position ids-in-order))))))
+      (throw 'no-such-track (list "reverse-track" trk))))
+
+
+;;; TODO: track->vct and save-track need to handle multichannel tracks
+(define (track->vct trk)
+  "(track->vct track) places track data in vct"
+  (vct-map! 
+   (make-vct 
+    (track-frames trk))
+   (make-track-sample-reader trk)))
+
+(define (save-track trk filename)
+  "(save-track track filename) saves track data (as floats) in file filename"
+  (let ((v (track->vct trk))
+	(fd (open-sound-file filename 1 (srate) ""))) ; chans?
+    (vct->sound-file fd v (vct-length v))
+    (close-sound-file fd (* 4 (vct-length v)))))
+
+
+(define (transpose-track trk semitones)
+  "(transpose-track track semitones) transposes each mix in track  by semitones"
+  (let ((mult (expt 2.0 (/ semitones 12.0))))
+    (set! (track-speed trk) (* (track-speed trk) mult))))
+
+(define (retempo-track trk tempo)
+  "(retempo-track track tempo) changes the inter-mix begin times of mixes in track by tempo (> 1.0 is faster)"
+  (if (and (not (= tempo 1.0)) (not (= tempo 0.0)))
+      (if (some mix? (track trk))
+	  (let ((track-beg (track-position trk))
+		(new-tempo (/ 1.0 tempo))) ;make tempo>1.0 go faster
+	    (if track-beg
+		(as-one-edit 
+		 (lambda ()
+		   (for-each (lambda (a) 
+			       (if (mix? a)
+				   (set! (mix-position a) (+ track-beg 
+							     (inexact->exact (floor (* new-tempo 
+										(- (mix-position a) track-beg))))))))
+			     (track trk))))))
+	  (throw 'no-such-track (list "retempo-track" trk tempo)))))
+
+;;; (retempo-track '(0 1) 2.0)
+
   
+;;; --------------------------------------------------------------------------------
+
+(define all-track-properties '())
+
+(define track-properties
+  (make-procedure-with-setter
+   (lambda (id)
+     (let ((data (assoc id all-track-properties)))
+       (if data
+	   (cdr data)
+           '())))
+   (lambda (id new-val)
+     (let ((old-val (assoc id all-track-properties)))
+       (if old-val
+	   (set-cdr! old-val new-val)
+	   (set! all-track-properties (cons (cons id new-val) all-track-properties)))
+       new-val))))
+     
+(define track-property
+  (make-procedure-with-setter
+   (lambda (key id)
+     "(track-property key id) returns the value associated with 'key' in the given track's property list, or #f"
+     (if (track? id)
+	 (let ((data (assoc key (track-properties id))))
+	   (if data
+	       (cdr data)
+	       #f))
+	 (throw 'no-such-track (list "track-property" id))))
+   (lambda (key id new-val)
+     (if (track? id)
+	 (let ((old-val (assoc key (track-properties id))))
+	   (if old-val
+	       (set-cdr! old-val new-val)
+	       (set! (track-properties id) (cons (cons key new-val) (track-properties id))))
+	   new-val)
+	 (throw 'no-such-track (list "set! track-property" id))))))
+
+;;; TODO: test/doc track-properties

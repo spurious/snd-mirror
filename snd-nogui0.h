@@ -55,7 +55,7 @@ typedef struct {
 } file_data;
 
 typedef struct {
-  int data_color, selected_data_color, mix_color;
+  int data_color, selected_data_color, mix_color, basic_color;
   int white, black, red, yellow, green, light_blue, lighter_blue;
   int fltenv_basic_gc, fltenv_data_gc;
   int basic_gc, selected_basic_gc, combined_basic_gc;        

@@ -45,7 +45,7 @@
     <li><a href="#sndsounddata">Sound-data and Sndlib</a>
     <li><a href="#samplereaders">Sample-readers</a>
     <li><a href="#sndmarks">Marks</a>
-    <li><a href="#sndmixes">Mixes</a>
+    <li><a href="#sndmixes">Mixes and Tracks</a>
     <li><a href="#sndregions">Regions and Selections</a>
     <li><a href="#sndsounds">Sounds and channels</a>
       <ul><li><a href="#customcontrols">the control panel</a></ul>
@@ -1432,8 +1432,6 @@ relative to the lisp graph axis (as if the raw mouse pixel position was passed t
 called when a multichannel sound is mixed.
 <i>track-id</i> is the default track id (usually 0).  The hook function returns the (possibly different) track id used
 by all the mixes.
-<a href="sndscm.html#syncmultichannelmixes">sync-multichannel-mixes</a> in mix.scm uses
-this hook to sync together the members of a multichannel mix. 
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -3089,10 +3087,21 @@ edit-menu.scm (trim from mark, etc), examp.scm (move window to correspond to mar
 </p>
 <br>
 <br>
-<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndmixes">Mixes</a></h3></td></tr></table>
+<table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndmixes">Mixes and Tracks</a></h3></td></tr></table>
+
+<p>Mixing operations have a lot of extra support built into Snd.  In nearly every mixing function, you
+can request a "mix tag" (or set that request globally via <a href="#withmixtags">with-mix-tags</a>).
+If the mix operation is tagged, you can then operate on that data through a number of functions,
+the Mix Panel, various hooks, and various mouse-related actions.  These mixes can be grouped
+into "tracks", which have a very similar set of functions.  
+</p>
+
+
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3>Mixes</h3></td></tr></table>
 
 <p>A mix is an object that represents a channel of a sound mix.
 Each mix object has a unique identifier called its id that identifies it in the following functions.
+A track is a list of mixes that are treated in many ways as a single big mix.
 Say we have a mix whose id is 123:</p>
 <pre>
 &gt;<em class=typing>(mix-chans 123)</em>
@@ -3114,6 +3123,11 @@ sets mix 123's channel 0 amplitude scaler to .5.
 <tr><td width=50><br></td><td>move the cursor back <i>count</i> mix tags (C-x C-j), returning the mix id.
 </td></tr>
 
+<!-- delete-mix -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="snddeletemix">delete-mix</a></em> (mix)</code></span></td></tr>
+<tr><td></td><td>delete mix (set amps to 0.0).
+</td></tr>
+
 <!-- find-mix -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndfindmix">find-mix</a></em> (<i>samp snd chn</i>)</code></span></td></tr>
 <tr><td></td><td>return identifier of mix at sample <i>samp</i> (or anywhere in the given channel if <i>samp</i> is not specified) or #f if no mix is found.
@@ -3124,7 +3138,7 @@ sets mix 123's channel 0 amplitude scaler to .5.
 <tr><td></td><td>move the cursor forward <i>count</i> mix tags (C-x C-j), returning the mix id.
 </td></tr>
 
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmix">mix</a></em> (file <i>samp in-chan snd chn with-mix-tags auto-delet</i>)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmix">mix</a></em> (file <i>samp in-chan snd chn with-mix-tags auto-delete (track 0)</i>)</code></span></td></tr>
 <tr><td></td><td>
 mix <i>file</i>'s channel <i>in-chan</i> starting at <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
 if only the <i>file</i> argument is given, this is equivalent to the File menu's 
@@ -3132,7 +3146,7 @@ Mix option; the mix start sample in this case depends on the cursor location.
 mix returns the id of the first channel's mix (subsequent channels simply 
 increment this number). If sync is off, only the first channel is mixed.
 If <i>with-mix-tags</i> is #f (default is #t), the data is simply
-mixed without creating any mix tags.
+mixed without creating any mix tags.  <i>track</i> is the mix track number.
 </td></tr>
 
 <!-- mixes -->
@@ -3171,7 +3185,7 @@ red; but <code>(set! (mix-color 3) red)</code> sets only mix #3 to be red.
 
 <!-- mix-frames -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixframes">mix-frames</a></em> (<i>mix</i>)</code></span></td></tr>
-<tr><td></td><td>mix's length in samples.
+<tr><td></td><td>mix's length in samples (not settable).
 </td></tr>
 
 <!-- mix-home-->
@@ -3204,7 +3218,7 @@ be used deliberately to remove a mix:
 <tr><td></td><td>position (a sample number) of <i>mix</i>.
 </td></tr>
 
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixregion">mix-region</a></em> (<i>samp reg snd chn</i>)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixregion">mix-region</a></em> (<i>samp reg snd chn track</i>)</code></span></td></tr>
 <tr><td></td><td>
 Mix in region <i>reg</i> at sample <i>samp</i> (defaulting to the cursor sample), 
 in <i>snd</i>'s channel <i>chn</i>.  mix-region returns the id of the first channel's 
@@ -3212,7 +3226,7 @@ mix (subsequent channels simply increment this number).
 </td></tr>
 
 <!-- mix-selection -->
-<tr><td colspan=2><span class=defbox><code><em class=def>mix-selection</em> (<i>beg snd chn</i>)</code></span></td></tr>
+<tr><td colspan=2><span class=defbox><code><em class=def>mix-selection</em> (<i>beg snd chn track</i>)</code></span></td></tr>
 <tr><td></td><td>
 mix (add) selection starting at beg in snd's channel chn.  Return new mix id.
 </td></tr>
@@ -3240,7 +3254,7 @@ mix (add) selection starting at beg in snd's channel chn.  Return new mix id.
 <!-- mix-track -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixtrack">mix-track</a></em> (<i>mix</i>)</code></span></td></tr>
 <tr><td></td><td>mix track (0 = none).
-A "track" is a list of associated mixes (see mix.scm).
+A "track" is a list of associated mixes (see below).
 </td></tr>
 
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixvct">mix-vct</a></em> (vct <i>beg snd chn with-mix-tags</i> origin)</code></span></td></tr>
@@ -3264,12 +3278,6 @@ mixed without creating any mix tags, and without returning a mix id.
 <!-- play-mix -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndplaymix">play-mix</a></em> (<i>mix beg</i>)</code></span></td></tr>
 <tr><td></td><td>play mix <i>mix</i>.  'beg' is where to start playing within the mix.
-</td></tr>
-
-<!-- play-track -->
-<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndplaytrack">play-track</a></em> (<i>track snd chn beg</i>)</code></span></td></tr>
-<tr><td></td><td>play track <i>track</i>. If snd is #t, play all associated mixes, even if in different sounds.
-'beg' is where to start playing within the track.
 </td></tr>
 
 <!-- selected-mix -->
@@ -3297,7 +3305,6 @@ See mix.scm for more mix-related (and track-related) functions including:
 <tr><td><em class=def><a href="sndscm.html#mix2vct">mix-&gt;vct</a></em></td><td>place samples of mix in vct</td></tr>
 <tr><td><em class=def><a href="sndscm.html#panmix">pan-mix</a></em></td><td>pan mix samples via envelope</td></tr>
 <tr><td><em class=def><a href="sndscm.html#snapmixtobeat">snap-mix-to-beat</a></em></td><td>force dragged mix to land on a beat</td></tr>
-<tr><td><em class=def><a href="sndscm.html#deletemix">delete-mix</a></em></td><td>delete mix (set amps to 0 and lock)</td></tr>
 <tr><td><em class=def><a href="sndscm.html#deleteallmixes">delete-all-mixes</a></em></td><td>delete all mixes</td></tr>
 </table>
 
@@ -3324,6 +3331,128 @@ zipper cross-fade: <a href="sndscm.html#zipdoc">zipper.scm</a><br>
 </small></blockquote>
 </td></tr></TABLE>
 <br>
+
+<br>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3>Tracks</h3></td></tr></table>
+
+<p>A track is a list of mixes, each member mix having its track set to the track id.  The <b>make-track</b>
+function takes the initial mixes, returning the track id (an integer).  The
+<b>track</b> function returns the list of mixes that are members of the given track.  The rest of the track functions
+take the track id as their initial argument.  
+</p>
+
+<!-- -------------------------------- TRACK FUNCTION TABLE -------------------------------- -->
+
+<table border=0 cellspacing=10>
+
+<!-- delete-track -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="deletetrack">delete-track</a></em> (track-id)</code></span></td></tr>
+<tr><td></td><td>Delete track <i>track-id</i> (set its amp to 0.0).
+</td></tr>
+
+<!-- free-track -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="freetrack">free-track</a></em> (track-id)</code></span></td></tr>
+<tr><td></td><td>Free track <i>track-id</i>; this frees the memory associated with the track and is not undoable.
+To free all tracks: <code>(for-each <em class=red>free-track</em> (tracks))</code>.
+</td></tr>
+
+<!-- make-track -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="maketrack">make-track</a></em> (<i>mix-ids...</i>)</code></span></td></tr>
+<tr><td width=50><br></td><td>Create new track, returning its id.  You can add a track subsequently using mix-track.
+<code>(make-track 1 3)</code> creates a new track with mixes 1 and 3.
+</td></tr>
+
+<!-- play-track -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="sndplaytrack">play-track</a></em> (<i>track-id snd chn beg</i>)</code></span></td></tr>
+<tr><td></td><td>play track <i>track</i>. If snd is #t, play all associated mixes, even if in different sounds.
+'beg' is where to start playing within the track.
+</td></tr>
+
+<!-- track -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="track">track</a></em> (track-id)</code></span></td></tr>
+<tr><td width=50><br></td><td>Return a list of the mixes currently in track <i>track-id</i>.
+</td></tr>
+
+<!-- tracks -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="tracks">tracks</a></em> (track-id)</code></span></td></tr>
+<tr><td width=50><br></td><td>Return a list of the current tracks that have active mixes.  Old, empty tracks are
+not currently garbage collected; to free one, use <a href="#freetrack">free-track</a>.
+</td></tr>
+
+<!-- track? -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="trackp">track?</a></em> (track-id)</code></span></td></tr>
+<tr><td width=50><br></td><td>Return #t if track-id refers to an active (not deleted) track.
+</td></tr>
+
+<!-- track-amp -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="trackamp">track-amp</a></em> (track-id)</code></span></td></tr>
+<tr><td width=50><br></td><td>Track amp (settable).
+</td></tr>
+
+<!-- track-amp-env -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="trackampenv">track-amp-env</a></em> (track-id)</code></span></td></tr>
+<tr><td width=50><br></td><td>Track amp env (settable); this is a list of breakpoint pairs, not a CLM env generator.
+The amplitude envelope is applied over the entire track;
+each mix's resultant amp env is the result of multiplying its env (if any) by
+the portion of the track env that happens to fall over it.
+</td></tr>
+
+<!-- track-color -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="trackcolor">track-color</a></em> (track-id)</code></span></td></tr>
+<tr><td width=50><br></td><td>
+The track-color refers to the color of the mix waveform (the thing displayed to the right
+of the tag).
+<pre>  
+:<em class=typing>(define hi (make-track 0 1))</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+:<em class=typing>(set! (track-color 1) (make-color 0 0 1))</em>
+<em class=listener>(#&lt;color: (0.00 0.00 1.00)&gt; #&lt;color: (0.00 0.00 1.00)&gt;)</em>
+</pre>
+</td></tr>
+
+<!-- track-frames -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="trackframes">track-frames</a></em> (track-id)</code></span></td></tr>
+<tr><td width=50><br></td><td>Track frames (length in samples).
+</td></tr>
+
+<!-- track-position -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="trackposition">track-position</a></em> (track-id)</code></span></td></tr>
+<tr><td width=50><br></td><td>Track position (minimum member mix position).  If you set track-position, all
+the member mixes are moved by the same amount to make the minimum mix position coincide with the new track-position.
+<br>
+<pre>
+:<em class=typing>(track-position 1)</em>
+<em class=listener>10748</em>
+:<em class=typing>(mix-position 0)</em>
+<em class=listener>10748</em>
+:<em class=typing>(mix-position 1)</em>
+<em class=listener>23287</em>
+:<em class=typing>(set! (track-position 1) 1500)</em>
+<em class=listener>1500</em>
+:<em class=typing>(mix-position 0)</em>
+<em class=listener>1500</em>
+:<em class=typing>(mix-position 1)</em>
+<em class=listener>14039</em>
+</pre>
+</td></tr>
+
+<!-- track-speed -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="trackspeed">track-speed</a></em> (track-id)</code></span></td></tr>
+<tr><td width=50><br></td><td>Track speed (settable).
+</td></tr>
+
+<!-- track-track -->
+<tr><td colspan=2><span class=defbox><code><em class=def><a name="tracktrack">track-track</a></em> (track-id)</code></span></td></tr>
+<tr><td width=50><br></td><td>Track track (settable).  Tracks can be grouped within other tracks and so on.
+</td></tr>
+
+</table>
+<br>
+
+<!-- TODO: doc how nested tracks work, track xref table (also->help snd-xref etc)
+-->
+
+
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndregions">Regions and Selections</a></h3></td></tr></table>
 
 <p>A region is a saved portion of sound data.  There is a dialog, the View:Region browser, to inspect regions.
@@ -4306,8 +4435,8 @@ To delete a file: use the Guile function delete-file or Ruby's File.delete.<br>
 To delete a region: <a href="#forgetregion">forget-region</a><br>
 To delete the currently selected samples: <a href="#snddeleteselection">delete-selection</a><br>
 To delete the selection and smooth the splice: <a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a><br>
-To delete a mix or all mixes: <a href="sndscm.html#deletemix">delete-mix</a><br>
-To delete a track or all tracks: <a href="sndscm.html#deletetrack">delete-track</a><br>
+To delete a mix or all mixes: <a href="extsnd.html#snddeletemix">delete-mix</a><br>
+To delete a track or all tracks: <a href="extsnd.html#deletetrack">delete-track</a><br>
 To delete a mark or all marks: <a href="#snddeletemark">delete-mark</a><br>
 To remove a file from the sound cache: <a href="#soundforget">mus-sound-forget</a><br>
 To remove a menu item: <a href="#sndremovefrommenu">remove-from-menu</a><br>
@@ -4362,7 +4491,7 @@ Peak env files: <a href="sndscm.html#peakenvdoc">peak-env.scm</a><br>
 The envelope editor: <a href="snd.html#editenvelope">Edit or View and Envelope</a><br>
 Panning: place-sound in examp.scm, <a href="snd.html#mixpanel">Mix Dialog</a>, play-panned in enved.scm, <a href="sndscm.html#panmix">pan-mix</a><br>
 Envelope over mix: <a href="sndscm.html#exenvelopedmix">enveloped-mix</a><br>
-Envelope over track (a set of mixes): <a href="sndscm.html#envtrack">env-track</a><br>
+Envelope over track (a set of mixes): <a href="extsnd.html#trackampenv">track-amp-env</a><br>
 Local envelope editor: <a href="sndscm.html#enveddoc">enved.scm</a>, xm-enved.scm<br>
 Read sound indexed through envelope: <a href="sndscm.html#exenvsoundinterp">env-sound-interp</a><br>
 Cosine as envelope: <a href="#cosinechannel">cosine-channel</a>, <a href="#cosinechannelviaptree">cosine-channel-via-ptree</a>, <a href="clm.html#bellcurve">bell-curve</a><br>

@@ -67,7 +67,7 @@
 			       (fm-index 1.0)
 			       (amp-env '(0 0 25 1 75 1 100 0)))
   "(make-rt-violin dur freq amp (fm-index 1.0) (amp-env '(0 0 25 1 75 1
-100 0))) real time simple violin (see snd-6/fm.html)"
+100 0))) real time simple violin (see snd-7/fm.html)"
   (let* ((frq-scl (hz->radians freq))
          (maxdev (* frq-scl fm-index))
          (index1 (* maxdev (/ 5.0 (log freq))))
@@ -230,7 +230,7 @@
 	    (set! len (ceiling (/ (seconds->samples dur) bufsize)))))
       func)))
 
-;; from snd-6/env.scm
+;; from env.scm
 (define* (envelope-interp #:rest args)
   (let ((x (car args))
 	(env (cadr args))

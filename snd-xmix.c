@@ -893,7 +893,7 @@ void reflect_mix_in_mix_panel(int mix_id)
     }
 }
 
-void reflect_undo_in_mix_panel(void)
+void reflect_undo_in_mix_panel(void) /* also redo */
 {
   if ((mix_panel) && 
       (XtIsManaged(mix_panel)))

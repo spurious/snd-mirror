@@ -1,4 +1,4 @@
-/* xm.c: Guile/Ruby bindings for X/Xt/Xpm/Xm/Xp
+/* xm.c: Guile/Ruby bindings for X/Xt/Xpm/Xm/Xp/Xext
  *   needs xen.h
  *   for tests and examples see snd-motif.scm, bess.scm, bess.rb, and snd-test.scm
  */
@@ -11978,7 +11978,7 @@ static XEN gxm_XSetIOErrorHandler(XEN arg1)
 {
   #define H_XSetIOErrorHandler "int (*XSetIOErrorHandler(handler))() sets the fatal I/O error handler. "
   XEN old_val;
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg1), arg1, XEN_ONLY_ARG, "XIOSetErrorHandler", "proc of 1 arg");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg1), arg1, XEN_ONLY_ARG, "XSetIOErrorHandler", "proc of 1 arg");
   xm_protect(arg1);
   old_val = xm_XIOErrorHandler;
   xm_XIOErrorHandler = arg1;

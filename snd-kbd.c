@@ -1710,30 +1710,23 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 }
 
 
-static XEN g_bind_key(XEN key, XEN state, XEN code, XEN cx_extended, XEN origin)
+static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origin, const char *caller)
 {
-  #define H_bind_key "(" S_bind_key " key modifiers func (extended #f) (origin \"user key func\"): \
-causes 'key' (an integer) \
-when typed with 'modifiers' (1:shift, 4:control, 8:meta) (and C-x if extended) to invoke 'func', a function of \
-zero or one arguments. If the function takes one argument, it is passed the preceding C-u number, if any. \
-The function should return one of the cursor choices (e.g. cursor-no-action).  'origin' is \
-the name reported if an error occurs."
-
   int args, k, s;
   bool e;
   char *errstr;
   XEN errmsg;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(key), key, XEN_ARG_1, S_bind_key, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(state), state, XEN_ARG_2, S_bind_key, "an integer");
-  XEN_ASSERT_TYPE((XEN_FALSE_P(code) || XEN_PROCEDURE_P(code)), code, XEN_ARG_3, S_bind_key, "#f or a procedure");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(cx_extended), cx_extended, XEN_ARG_4, S_bind_key, "a boolean");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(key), key, XEN_ARG_1, caller, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(state), state, XEN_ARG_2, caller, "an integer");
+  XEN_ASSERT_TYPE((XEN_FALSE_P(code) || XEN_PROCEDURE_P(code)), code, XEN_ARG_3, caller, "#f or a procedure");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(cx_extended), cx_extended, XEN_ARG_4, caller, "a boolean");
   k = XEN_TO_C_INT(key);
   s = XEN_TO_C_INT(state);
   e = (XEN_TRUE_P(cx_extended));
   if ((k < MIN_KEY_CODE) || (k > MAX_KEY_CODE) ||
       (s < MIN_KEY_STATE) || (s > MAX_KEY_STATE))
     XEN_ERROR(NO_SUCH_KEY,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_bind_key),
+	      XEN_LIST_3(C_TO_XEN_STRING(caller),
 			 C_TO_XEN_STRING("key: ~A, state: ~A"),
 			 XEN_LIST_2(key,
 				    state)));
@@ -1747,17 +1740,29 @@ the name reported if an error occurs."
 	  errstr = mus_format(_("bind-key function arg should take either zero or one args, not %d"), args);
 	  errmsg = C_TO_XEN_STRING(errstr);
 	  FREE(errstr);
-	  return(snd_bad_arity_error(S_bind_key, errmsg, code));
+	  return(snd_bad_arity_error(caller, errmsg, code));
 	}
       set_keymap_entry(k, s, args, code, e, (XEN_STRING_P(origin)) ? XEN_TO_C_STRING(origin) : (char *)("user key func"));
     }
   return(code);
 }
 
+static XEN g_bind_key(XEN key, XEN state, XEN code, XEN cx_extended, XEN origin)
+{
+  #define H_bind_key "(" S_bind_key " key modifiers func (extended #f) (origin \"user key func\"): \
+causes 'key' (an integer) \
+when typed with 'modifiers' (1:shift, 4:control, 8:meta) (and C-x if extended) to invoke 'func', a function of \
+zero or one arguments. If the function takes one argument, it is passed the preceding C-u number, if any. \
+The function should return one of the cursor choices (e.g. cursor-no-action).  'origin' is \
+the name reported if an error occurs."
+  
+  return(g_bind_key_1(key, state, code, cx_extended, origin, S_bind_key));
+}
+
 static XEN g_unbind_key(XEN key, XEN state, XEN cx_extended)
 {
   #define H_unbind_key "(" S_unbind_key " key state (extended #f)): undo the effect of a prior bind-key call."
-  return(g_bind_key(key, state, XEN_FALSE, cx_extended, XEN_UNDEFINED));
+  return(g_bind_key_1(key, state, XEN_FALSE, cx_extended, XEN_UNDEFINED, S_unbind_key));
 }
 
 static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)

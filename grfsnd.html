@@ -1287,7 +1287,7 @@ included with Snd.  'make xm' should create
 a shared library named xm.so; you can load this at any time into Snd:
 </p>
 <pre>
-&gt; <em class=typing>(define hxm (dlopen "/home/bil/snd-6/xm.so"))</em>
+&gt; <em class=typing>(define hxm (dlopen "/home/bil/snd-7/xm.so"))</em>
 <em class=listener>#&lt;unspecified&gt;</em>
 &gt; <em class=typing>(dlinit hxm "init_xm")</em>
 <em class=listener>#t</em>
@@ -1525,7 +1525,7 @@ can treat it as a scripting engine.  For example,
 if you have an executable file with:
 </p>
 <pre>
-#!/home/bil/test/snd-6/snd -l
+#!/home/bil/test/snd-7/snd -l
 !#
 (define a-test 32)
 (display "hiho")
@@ -1534,12 +1534,12 @@ if you have an executable file with:
 <p>it can be executed just like any such script.
 </p>
 <pre>
-/home/bil/test/snd-6/ script
+/home/bil/test/snd-7/ script
 hiho
 :a-test
 32
 :(exit)
-/home/bil/test/snd-6/ 
+/home/bil/test/snd-7/ 
 </pre>
 <p>The difference between this use of Snd, and using guile itself
 for scripts is that Snd uses the -l switch where guile would use -s.
@@ -1549,7 +1549,7 @@ Here's a script that doubles every sample in "oboe.snd" and
 writes the result as "test.snd":
 </p>
 <pre>
-#!/home/bil/test/snd-6/snd -l
+#!/home/bil/test/snd-7/snd -l
 !#
 (open-sound "oboe.snd")
 (scale-by 2.0)
@@ -1565,7 +1565,7 @@ a higher value, Snd will subsequently ignore the intevening arguments
 as it scans the startup arguments (see snd-test.scm).
 </p>
 <pre>
-#!/home/bil/test/snd-6/snd -l
+#!/home/bil/test/snd-7/snd -l
 !#
 (if (= (length (script-args)) 2) ;i.e. ("-l" "script")
   (display "usage: script file-name...\n")

@@ -1414,7 +1414,6 @@ static char *file_name_buf = NULL;
 char *mus_expand_filename(const char *filename)
 {
   /* fill out under-specified library pathnames etc */
-  /* what about "../" and "./" ? these work, but perhaps we should handle them explicitly) */
   char *tok = NULL, *orig = NULL;
   int i, j = 0, len = 0;
   if ((filename) && (*filename)) 
@@ -1426,6 +1425,7 @@ char *mus_expand_filename(const char *filename)
   else file_name_buf[0] = '\0';
   orig = strdup(filename);
   tok = orig;
+  /* get rid of "//" */
   for (i = 0; i < len - 1; i++)
     {
       if ((tok[i] == '/') && 
@@ -1438,6 +1438,7 @@ char *mus_expand_filename(const char *filename)
 	tok[i] = tok[j];
       tok[i] ='\0';
     }
+  /* get rid of "~/" at start */
 #ifdef MACOS
   strcpy(file_name_buf, tok);
 #else
@@ -1462,6 +1463,43 @@ char *mus_expand_filename(const char *filename)
 	}
     }
   else strcpy(file_name_buf, tok);
+  /* get rid of "/../" and "/./" */
+  {
+    int slash_at = -1;
+    bool found_one = true;
+    while (found_one)
+      {
+	found_one = false;
+	len = strlen(file_name_buf);
+	for (i = 0; i < len - 4; i++)
+	  if (file_name_buf[i] == '/')
+	    {
+	      if ((file_name_buf[i + 1] == '.') &&
+		  (file_name_buf[i + 2] == '.') &&
+		  (file_name_buf[i + 3] == '/'))
+		{
+		  i += 4;
+		  for (j = slash_at + 1; i < len; i++, j++)
+		    file_name_buf[j] = file_name_buf[i];
+		  file_name_buf[j] = '\0';
+		  found_one = true;
+		  break;
+		}
+	      else
+		{
+		  if ((file_name_buf[i + 1] == '.') &&
+		      (file_name_buf[i + 2] == '/'))
+		    {
+		      for (j = i + 3, i = i + 1; j < len; i++, j++)
+			file_name_buf[i] = file_name_buf[j];
+		      file_name_buf[i] = '\0';
+		      found_one = true;
+		    }
+		  else slash_at = i;
+		}
+	    }
+      }
+  }
 #endif
 #if defined(MPW_C)
   FREE(orig); /* strdup -> MALLOC in MPW */

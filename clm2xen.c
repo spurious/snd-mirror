@@ -1389,11 +1389,11 @@ static XEN g_make_noi(bool rand_case, XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   keys[0] = all_keys[C_frequency];
   keys[1] = all_keys[C_amplitude];
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4;
-  vals = mus_decode_keywords(S_make_rand, 2, keys, 4, args, orig_arg);
+  vals = mus_decode_keywords((rand_case) ? S_make_rand : S_make_rand_interp, 2, keys, 4, args, orig_arg);
   if (vals > 0)
     {
-      freq = fkeyarg(keys[0], S_make_rand, orig_arg[0] + 1, freq);
-      base = fkeyarg(keys[1], S_make_rand, orig_arg[1] + 1, base);
+      freq = fkeyarg(keys[0], (rand_case) ? S_make_rand : S_make_rand_interp, orig_arg[0] + 1, freq);
+      base = fkeyarg(keys[1], (rand_case) ? S_make_rand : S_make_rand_interp, orig_arg[1] + 1, base);
     }
   if (rand_case)
     ge = mus_make_rand(freq, base);
@@ -1553,7 +1553,7 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(normalize), normalize, XEN_ARG_3, S_phasepartials2wave, "a boolean");
   if (len == 0)
     XEN_ERROR(NO_DATA,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_partials2wave), 
+	      XEN_LIST_3(C_TO_XEN_STRING(S_phasepartials2wave), 
 			 C_TO_XEN_STRING("partials list empty?"),
 			 partials));
   if ((XEN_NOT_BOUND_P(utable)) || (!(VCT_P(utable))))

@@ -130,7 +130,7 @@ Float interp_env(env *e, Float x)
   return(0.0);
 }
 
-#if DEBUGGING
+#if DEBUGGING && HAVE_GUILE
 static XEN g_interp_env(XEN e, XEN val)
 {
   return(C_TO_XEN_DOUBLE(interp_env(xen_to_env(e), XEN_TO_C_DOUBLE(val))));
@@ -215,7 +215,7 @@ env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_d
   return(normalize_x_axis(local_e));
 }
 
-#if DEBUGGING
+#if DEBUGGING && HAVE_GUILE
 static XEN g_window_env(XEN e, XEN b1, XEN d1, XEN b2, XEN d2)
 {
   /* (memleak) */
@@ -274,7 +274,7 @@ env *multiply_envs(env *e1, env *e2, Float maxx)
   return(e);
 }
 
-#if DEBUGGING
+#if DEBUGGING && HAVE_GUILE
 static XEN g_multiply_envs(XEN e1, XEN e2, XEN maxx)
 {
   /* (memleak) */
@@ -1733,9 +1733,10 @@ stretch-envelope from env.scm: \n\
 
   XEN_DEFINE_HOOK(enved_hook, S_enved_hook, 5, H_enved_hook);
 
-#if DEBUGGING
+#if DEBUGGING && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("interp-env", g_interp_env, 2, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE("window-env", g_window_env, 5, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE("multiply-envs", g_multiply_envs, 3, 0, 0, NULL);
+  /* TODO: tests for the env manglers in snd-env */
 #endif
 }

@@ -21,13 +21,19 @@ and if one is found, and the Snd documentation can be found, calls (html-program
 			     (if (and (string? (html-dir))
 				      (file-exists? (string-append (html-dir) "/snd.html")))
 				 (html-dir)
-				 (if (file-exists? "/usr/share/doc/snd-6/snd.html")
-				     "/usr/share/doc/snd-6"
-				     (if (file-exists? "/usr/local/share/doc/snd-6/snd.html")
-					 "/usr/local/share/doc/snd-6"
-					 (if (file-exists? "/usr/doc/snd-6/snd.html")
-					     "/usr/doc/snd-6"
-					     #f)))))))
+				 (if (file-exists? "/usr/share/doc/snd-7/snd.html")
+				     "/usr/share/doc/snd-7"
+				     (if (file-exists? "/usr/local/share/doc/snd-7/snd.html")
+					 "/usr/local/share/doc/snd-7"
+					 (if (file-exists? "/usr/doc/snd-7/snd.html")
+					     "/usr/doc/snd-7"
+					     (if (file-exists? "/usr/share/doc/snd-6/snd.html")
+						 "/usr/share/doc/snd-6"
+						 (if (file-exists? "/usr/local/share/doc/snd-6/snd.html")
+						     "/usr/local/share/doc/snd-6"
+						     (if (file-exists? "/usr/doc/snd-6/snd.html")
+							 "/usr/doc/snd-6"
+							 #f))))))))))
 		(if dir
 		    (if (or (string=? (html-program) "netscape")
 			    (string=? (html-program) "mozilla"))

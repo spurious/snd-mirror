@@ -4844,13 +4844,13 @@ static XEN g_update_time_graph(XEN snd, XEN chn)
 static XEN g_update_transform_graph(XEN snd, XEN chn) 
 {
   #define H_update_transform_graph "(" S_update_transform_graph " (snd #f) (chn #f)): redraw snd channel chn's fft display"
-  return(channel_get(snd, chn, CP_UPDATE_TRANSFORM_GRAPH, S_update_time_graph));
+  return(channel_get(snd, chn, CP_UPDATE_TRANSFORM_GRAPH, S_update_transform_graph));
 }
 
 static XEN g_update_lisp_graph(XEN snd, XEN chn) 
 {
   #define H_update_lisp_graph "(" S_update_lisp_graph " (snd #f) (chn #f)): redraw snd channel chn's lisp graph"
-  return(channel_get(snd, chn, CP_UPDATE_LISP, S_update_time_graph));
+  return(channel_get(snd, chn, CP_UPDATE_LISP, S_update_lisp_graph));
 }
 
 

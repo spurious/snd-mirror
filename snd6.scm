@@ -1,4 +1,4 @@
-;;; backwards compatibility for Snd-6
+;;; backwards compatibility for Snd-7
 
 (define graph-lisp?                    lisp-graph?)
 (define graph-transform?               transform-graph?)
@@ -165,3 +165,6 @@
      #f)))
 
 (define mix-sync mix-track)
+
+;;; unused-track/new-track -> make-track
+;;; env-track -> track-amp-env

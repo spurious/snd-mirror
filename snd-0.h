@@ -106,6 +106,7 @@
 #endif
 
 #define NO_SUCH_MIX      XEN_ERROR_TYPE("no-such-mix")
+#define NO_SUCH_TRACK    XEN_ERROR_TYPE("no-such-track")
 #define NO_SUCH_REGION   XEN_ERROR_TYPE("no-such-region")
 #define NO_SUCH_ENVELOPE XEN_ERROR_TYPE("no-such-envelope")
 #define NO_SUCH_SAMPLE   XEN_ERROR_TYPE("no-such-sample")

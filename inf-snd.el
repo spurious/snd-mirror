@@ -88,7 +88,7 @@
 ;; (setq inf-snd-ruby-program-name "snd-ruby -notebook")
 ;; (setq inf-snd-guile-program-name "snd-guile -separate")
 ;; (setq inf-snd-working-directory "~/Snd/")
-;; (setq inf-snd-index-path "~/Snd/snd-6/")
+;; (setq inf-snd-index-path "~/Snd/snd-7/")
 
 ;; The hook-variables may be used to set new key bindings and menu
 ;; entries etc in your .emacs file, e.g.:
@@ -232,7 +232,7 @@ buffer-local.")
 `inf-snd-help' (\\[inf-snd-help], \\[universal-argument]
 \\[inf-snd-help]) and `snd-help' (\\[snd-help],
 \\[universal-argument] \\[snd-help]), taken from
-snd-6/snd-xref.c.  The user variable `inf-snd-index-path' should
+snd-7/snd-xref.c.  The user variable `inf-snd-index-path' should
 point to the correct path of snd-xref.c.")
 
 (defvar inf-snd-guile-keywords nil
@@ -241,7 +241,7 @@ point to the correct path of snd-xref.c.")
 `inf-snd-help' (\\[inf-snd-help], \\[universal-argument]
 \\[inf-snd-help]) and `snd-help' (\\[snd-help],
 \\[universal-argument] \\[snd-help]), taken from
-snd-6/snd-xref.c.  The user variable `inf-snd-index-path' should
+snd-7/snd-xref.c.  The user variable `inf-snd-index-path' should
 point to the correct path of snd-xref.c.")
 
 (defun inf-snd-set-keywords ()
@@ -448,7 +448,7 @@ Argument STRING is the Snd command and optional arguments."
 
 Snd is a sound editor created by Bill Schottstaedt
 \(bil@ccrma.Stanford.EDU).  You can find it on
-ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-6.tar.gz.
+ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz.
 
 You can type in Ruby commands in inferior Snd process buffer which
 will be sent via `comint-send-string' to the inferior Snd process.
@@ -500,7 +500,7 @@ The following key bindings are defined:
 
 Snd is a sound editor created by Bill Schottstaedt
 \(bil@ccrma.Stanford.EDU).  You can find it on
-ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-6.tar.gz.
+ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz.
 
 You can type in Guile commands in inferior Snd process buffer which
 will be sent via `comint-send-string' to the inferior Snd process.

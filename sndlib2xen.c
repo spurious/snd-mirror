@@ -291,7 +291,7 @@ static XEN g_mus_sound_maxamp_exists(XEN file)
   #define H_mus_sound_maxamp_exists "(" S_mus_sound_maxamp_exists " filename): #t if sound's maxamp data is available \
 in the sound cache; if it isn't, a call on " S_mus_sound_maxamp " has to open and read the data to get the maxamp."
   bool val;
-  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_mus_sound_maxamp, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_mus_sound_maxamp_exists, "a string");
   val = mus_sound_maxamp_exists(local_mus_expand_filename(XEN_TO_C_STRING(file)));
   return(C_TO_XEN_BOOLEAN(val));
 }
@@ -772,7 +772,7 @@ static XEN g_mus_sound_seek_frame(XEN fd, XEN offset)
 to the frame offset"
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ARG_1, S_mus_sound_seek_frame, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(offset), offset, XEN_ARG_2, S_mus_sound_seek_frame, "an integer");
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(offset), offset, XEN_ARG_2, S_mus_sound_seek_frame, "an integer");
   return(C_TO_XEN_OFF_T(mus_sound_seek_frame(XEN_TO_C_INT(fd),
 					     XEN_TO_C_OFF_T(offset))));
 }

@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* TODO: gtk side of transparent icons */
-
 #if HAVE_XPM
   #include <X11/xpm.h>
 #endif

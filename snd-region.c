@@ -581,7 +581,7 @@ int save_region(int n, char *ofile, int data_format)
   return(INVALID_REGION);
 }
 
-static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, const char *origin)
+static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, const char *origin, int trk)
 {
   region *r;
   int i, err = MUS_NO_ERROR, id = -1;
@@ -601,8 +601,7 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, const char 
       err = copy_file(r->filename, newname);
       if (err != MUS_NO_ERROR)
 	snd_error(_("can't save mix temp file (%s: %s)"), newname, strerror(errno));
-      /* TODO: mix region track id arg */
-      else id = mix(beg, r->frames, si->chans, si->cps, newname, DELETE_ME, origin, with_mix_tags(ss), 0);
+      else id = mix(beg, r->frames, si->chans, si->cps, newname, DELETE_ME, origin, with_mix_tags(ss), trk);
       if (newname) FREE(newname);
     }
   else
@@ -635,8 +634,8 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, const char 
   return(id);
 }
 
-void paste_region(int n, chan_info *cp, const char *origin) {paste_region_1(n, cp, false, CURSOR(cp), origin);}
-void add_region(int n, chan_info *cp, const char *origin) {paste_region_1(n, cp, true, CURSOR(cp), origin);}
+void paste_region(int n, chan_info *cp, const char *origin) {paste_region_1(n, cp, false, CURSOR(cp), origin, 0);}
+void add_region(int n, chan_info *cp, const char *origin) {paste_region_1(n, cp, true, CURSOR(cp), origin, 0);}
 
 int define_region(sync_info *si, off_t *ends)
 {
@@ -763,7 +762,7 @@ static void deferred_region_to_temp_file(region *r)
 	    snd_error(_("can't read region's original sound? %s: %s"), sp0->filename, strerror(errno));
 	  else
 	    {
-	      lseek(fdi, 28 + r->chans * datumb * drp->begs[0], SEEK_SET);
+	      lseek(fdi, sp0->hdr->data_location + r->chans * datumb * drp->begs[0], SEEK_SET);
 	      buffer = (char *)CALLOC(MAX_BUFFER_SIZE, sizeof(char));
 	      for (j = 0; j < data_size; j += MAX_BUFFER_SIZE)
 		{
@@ -1107,7 +1106,7 @@ insert region data into snd's channel chn starting at start-samp"
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_insert_region, reg_n));
   samp = beg_to_sample(samp_n, S_insert_region);
-  paste_region_1(rg, cp, false, samp, S_insert_region);
+  paste_region_1(rg, cp, false, samp, S_insert_region, 0);
   update_graph(cp);
   return(reg_n);
 }
@@ -1330,14 +1329,14 @@ using data format (default depends on machine), header type (" S_mus_next " by d
   return(n);
 }
 
-static XEN g_mix_region(XEN chn_samp_n, XEN reg_n, XEN snd_n, XEN chn_n)
+static XEN g_mix_region(XEN chn_samp_n, XEN reg_n, XEN snd_n, XEN chn_n, XEN tid)
 {
-  #define H_mix_region "(" S_mix_region " (chn-samp 0) (region 0) (snd #f) (chn #f)): \
+  #define H_mix_region "(" S_mix_region " (chn-samp 0) (region 0) (snd #f) (chn #f) (track 0)): \
 mix region into snd's channel chn starting at chn-samp; return new mix id."
 
   chan_info *cp;
   off_t samp;
-  int rg, id = -1;
+  int rg, id = -1, track_id = 0;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(chn_samp_n), chn_samp_n, XEN_ARG_1, S_mix_region, "a number");
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(reg_n), reg_n, XEN_ARG_2, S_mix_region, "a region id");
   ASSERT_CHANNEL(S_mix_region, snd_n, chn_n, 3);
@@ -1348,8 +1347,14 @@ mix region into snd's channel chn starting at chn-samp; return new mix id."
   if (XEN_BOUND_P(chn_samp_n))
     samp = beg_to_sample(chn_samp_n, S_mix_region);
   else samp = CURSOR(cp);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(tid), tid, XEN_ARG_5, S_mix_region, "an integer");
+  track_id = XEN_TO_C_INT_OR_ELSE(tid, 0);
+  if ((track_id > 0) && (!(track_p(track_id))))
+    XEN_ERROR(NO_SUCH_TRACK,
+	      XEN_LIST_2(C_TO_XEN_STRING(S_mix_region),
+			 C_TO_XEN_INT(tid)));
   ss->catch_message = NULL;
-  id = paste_region_1(rg, cp, true, samp, S_mix_region);
+  id = paste_region_1(rg, cp, true, samp, S_mix_region, track_id);
   if (id == INVALID_MIX_ID)
     XEN_ERROR(MUS_MISC_ERROR,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_mix_region),
@@ -1425,7 +1430,7 @@ XEN_ARGIFY_5(g_save_region_w, g_save_region)
 XEN_ARGIFY_1(g_forget_region_w, g_forget_region)
 XEN_ARGIFY_2(g_play_region_w, g_play_region)
 XEN_ARGIFY_4(g_make_region_w, g_make_region)
-XEN_ARGIFY_4(g_mix_region_w, g_mix_region)
+XEN_ARGIFY_5(g_mix_region_w, g_mix_region)
 XEN_ARGIFY_3(g_region_sample_w, g_region_sample)
 XEN_ARGIFY_5(g_region_samples2vct_w, g_region_samples2vct)
 XEN_NARGIFY_1(g_region_p_w, g_region_p)
@@ -1464,7 +1469,7 @@ void g_init_regions(void)
   XEN_DEFINE_PROCEDURE(S_forget_region,      g_forget_region_w, 0, 1, 0,      H_forget_region);
   XEN_DEFINE_PROCEDURE(S_play_region,        g_play_region_w, 0, 2, 0,        H_play_region);
   XEN_DEFINE_PROCEDURE(S_make_region,        g_make_region_w, 0, 4, 0,        H_make_region);
-  XEN_DEFINE_PROCEDURE(S_mix_region,         g_mix_region_w, 0, 4, 0,         H_mix_region);
+  XEN_DEFINE_PROCEDURE(S_mix_region,         g_mix_region_w, 0, 5, 0,         H_mix_region);
   XEN_DEFINE_PROCEDURE(S_region_sample,      g_region_sample_w, 0, 3, 0,      H_region_sample);
   XEN_DEFINE_PROCEDURE(S_region_samples2vct, g_region_samples2vct_w, 0, 5, 0, H_region_samples2vct);
   XEN_DEFINE_PROCEDURE(S_region_p,           g_region_p_w, 1, 0, 0,           H_region_p);

@@ -375,6 +375,13 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+24-Oct:  data-location bugfixes in save-region|selection (thanks to Kjetil S. Matheussen).\n\
+21-Oct:  track-property in mix.scm.\n\
+         added (or moved from mix.scm into C): track, tracks, track?, make-track, track-amp,\n\
+           track-position, track-frames, track-speed, track-amp-env, track-track, delete-track,\n\
+           delete-mix, track-color.\n\
+         env-track is now track-amp-env, unused-track and new-track are now make-track.\n\
+         mix-frames is no longer settable.\n\
 13-Oct:  recorder-file-hook to set or modify recorder output file name, recorder-out-type.\n\
          changed multichannel-mix-hook.\n\
 10-Oct:  removed mix-sync (use mix-track).\n\
@@ -387,11 +394,6 @@ void about_snd_help(void)
          removed menu-hook.\n\
 18-Sep:  info-dialog.\n\
 17-Sep:  removed finder.scm, changed index.scm|rb to use snd-xref.c tables.\n\
-15-Sep:  just-sounds support in Gtk.\n\
-12-Sep:  quit-button-color, help-button-color, reset-button-color, \n\
-         doit-button-color, doit-again-button-color.\n\
-8-Sep:   added show-all-axes-unlabelled and show-x-axis-unlabelled.\n\
-         removed parse-rc-file, added support for Snd.gtkrc.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -1566,6 +1568,12 @@ static char *html_directory(void)
       FREE(hd);
       if (happy) return(copy_string(html_dir(ss)));
     }
+  if (mus_file_probe("/usr/share/doc/snd-7/snd.html"))
+    return(copy_string("/usr/share/doc/snd-7"));
+  if (mus_file_probe("/usr/local/share/doc/snd-7/snd.html"))
+    return(copy_string("/usr/local/share/doc/snd-7"));
+  if (mus_file_probe("/usr/doc/snd-7/snd.html"))
+    return(copy_string("/usr/doc/snd-7"));
   if (mus_file_probe("/usr/share/doc/snd-6/snd.html"))
     return(copy_string("/usr/share/doc/snd-6"));
   if (mus_file_probe("/usr/local/share/doc/snd-6/snd.html"))

@@ -1,5 +1,12 @@
 Snd change log
 
+  24-Oct:    data-location bugfixes in save-region|selection (thanks to Kjetil S. Matheussen).
+  21-Oct:    track-property in mix.scm.
+             added (or moved from mix.scm into C): track, tracks, track?, make-track, track-amp,
+               track-position, track-frames, track-speed, track-amp-env, track-track, delete-track, 
+               delete-mix, track-color.
+             env-track is now track-amp-env, unused-track and new-track are now make-track.
+             mix-frames is no longer settable.
   13-Oct:    recorder-file-hook to set or modify recorder output file name, recorder-out-type.
              changed multichannel-mix-hook.
   10-Oct:    removed mix-sync (use mix-track).
@@ -125,7 +132,7 @@ Snd change log
   28-Oct:    peaks-font and bold-peaks-font.
   25-Oct:    -I switch to add dir to load path.
   23-Oct:    origin arg to bind-key, edpos arg to find-mark.
-  16-Oct:    snd-6.2.
+  16-Oct:    snd 6.2.
   14-Oct:    removed max-sounds.
   11-Oct:    add-find-to-listener in snd-motif.scm.
   18-Sep:    show-font-name et al in snd-motif.scm.

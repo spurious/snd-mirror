@@ -34,6 +34,10 @@ end
 def goto_html(url)
   dir = if File.exists?("snd.html")
           Dir.pwd
+        elsif File.exists?("/usr/share/doc/snd-7/snd.html")
+          "/usr/share/doc/snd-7"
+        elsif File.exists?("/usr/doc/snd-7/snd.html")
+          "/usr/doc/snd-7"
         elsif File.exists?("/usr/share/doc/snd-6/snd.html")
           "/usr/share/doc/snd-6"
         elsif File.exists?("/usr/doc/snd-6/snd.html")

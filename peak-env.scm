@@ -20,8 +20,20 @@
 		      (string=? (car n) (file-name snd)))
 		    saved-peak-info))))))
 
+  (define (clean-string str)
+    ;; full file name should be unique, so I think we need only fix it up to look like a flat name
+    (let* ((len (string-length str))
+	   (new-str (make-string len #\.)))
+      (do ((i 0 (1+ i)))
+	  ((= i len) new-str)
+	(let ((c (string-ref str i)))
+	  (if (or (char=? c #\\)
+		  (char=? c #\/))
+	      (string-set! new-str i #\_)
+	      (string-set! new-str i c))))))
+
   (define (peak-env-info-file-name snd chn)	
-    (format #f "~~/peaks/~A-peaks-~D" (short-file-name snd) chn))
+    (format #f "~~/peaks/~A-peaks-~D" (clean-string (file-name snd)) chn))
 
   (define (save-peak-env-info-at-close snd)
     ;; intended as a close-hook function
@@ -60,8 +72,19 @@
 		  (read-peak-env-info-file snd chn peak-file)))))
       #f))
 
+  (add-hook! update-hook
+	     (lambda (snd)
+	       (if save-peak-env-info
+		   (do ((i 0 (1+ i)))
+		       ((= i (chans snd)))
+		     (let ((peak-file (mus-expand-filename (peak-env-info-file-name snd i))))
+		       (if (file-exists? peak-file)
+			   (delete-file peak-file)))))))
+	       
   (add-hook! close-hook save-peak-env-info-at-close)
+
   (add-hook! initial-graph-hook restore-peak-env-info-upon-open)
+
   (add-hook! exit-hook 
 	     (lambda () 
 	       (for-each save-peak-env-info-at-close (sounds)) 

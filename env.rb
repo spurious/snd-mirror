@@ -1,4 +1,4 @@
-# env.rb -- snd-6/env.scm
+# env.rb -- snd-7/env.scm
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Last: Wed Oct 08 01:54:21 CEST 2003

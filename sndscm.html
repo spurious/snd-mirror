@@ -1905,14 +1905,8 @@ Max Mathews.
 
 <A NAME="mixdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>mix.scm</h2></td></tr></table>
 
-<p>mix.scm provides various mix-related utilities, including support for tracks.  The latter were originally
-called groups in Snd, with their own elaborate dialog and what-not. That was jettisoned soon after it
-was written.  The next thing to go were the mix consoles -- originally each mix encapsulated the
-current Mix Panel in a little (but incredibly complicated) widget set that followed the mix around
-in the time domain graph.  This was too hard to implement in Gtk+, and too hard to use in any case.
-The current version has only the tag to drag a mix around, the Mix Panel to set mix amplitudes
-and so on, and a bunch of hooks.  These hooks are used in mix.scm to implement one view of tracks,
-which I assume are groups of related mixes.
+<p>mix.scm provides various mix and track related utilities. 
+
 </p>
 <pre>
   <em class=def><a name="mixsound">mix-sound</a></em> file start
@@ -1921,119 +1915,40 @@ which I assume are groups of related mixes.
   <em class=def><a name="mix2vct">mix-&gt;vct</a></em> id
   <em class=def><a name="panmix">pan-mix</a></em> file (frame 0) (env 1.0) snd
   <em class=def><a name="snapmixtobeat">snap-mix-to-beat</a></em> (at-anchor)
-  <em class=def><a name="deletemix">delete-mix</a></em> id
   <em class=def><A NAME="deleteallmixes">delete-all-mixes</a></em>
-  <em class=def><a name="deletetrack">delete-track</a></em> id
   <em class=def>delete-all-tracks</em>
-  <em class=def>set-all-tracks</em> new-id
+  <em class=def><a name="trackproperty">track-property</a></em> key id
 </pre>
-<p>These are the mix utilities in mix.scm (unrelated to tracks). 
+<p>
 <b>mix-sound</b> mixes <i>file</i> (all chans) into the currently selected sound at <i>start</i>.
 <b>mix-&gt;vct</b> returns the current samples
 of mix <i>id</i> (taking into account its current amplitude an so on). <b>pan-mix</b>
 mixes <i>file</i> into the current sound starting at <i>frame</i> using the envelope <i>env</i>
 to pan the mixed samples (0: all chan 0, 1: all chan 1).
-The resultant mixes (if more than one) are syncd together tand any change to the
+The resultant mixes (if more than one) are syncd together and any change to the
 position, speed, amplitude, or amplitude envelope of one, affects the other(s)
 to keep the notion of panning in effect. 
 <b>snap-mix-to-beat</b> forces a dragged mix to end up on a beat.
 If <i>at-anchor</i> is #t, the anchor point, rather than the mix beginning falls on the beat.
-<b>delete-mix</b> deletes the mix referred to by its argument; this
-operation can be undone (bringing the mix back to life).
 <b>mix-property</b> associates a property list with each mix.
+<b>track-property</b> associates a property list with each track.
 <b>mix-click-sets-amp</b> uses the property lists to keep track of
 whether the next click should set the mix amps to zero, or to the
 pre-zero value.
 </p>
 <center><img src="pan.png" alt="picture of panning"></center>
 <pre>
-  <em class=def><a name="maketrack">make-track</a></em> id mixes
-  <em class=def><a name="track">track</a></em> id
   <em class=def><a name="track2vct">track-&gt;vct</a></em> track
   <em class=def><a name="savetrack">save-track</a></em> track filename
-  <em class=def>next-mix-in-track</em> id
-  <em class=def>previous-mix-in-track</em> id
-
-  <em class=def><a name="trackcolor">track-color</a></em> track [settable]
-  <em class=def><a name="trackamp">track-amp</a></em> track [settable]
-  <em class=def>incf-track-amp</em> track amp-increment
-  <em class=def><a name="trackspeed">track-speed</a></em> track [settable]
   <em class=def><a name="transposetrack">transpose-track</a></em> track semitones
-  <em class=def><a name="trackposition">track-position</a></em> track [settable]
-  <em class=def>track-end</em> track
-  <em class=def><a name="trackframes">track-frames</a></em> track
   <em class=def><a name="retempotrack">retempo-track</a></em> track tempo
-  <em class=def><a name="envtrack">env-track</a></em> track chan env
   <em class=def><a name="reversetrack">reverse-track</a></em> track
   <em class=def><a name="filtertrack">filter-track</a></em> track coeffs
-
-  <em class=def><a name="syncmultichannelmixes">sync-multichannel-mixes</a></em>
 </pre>
-<p>A track is a list of mixes, each member mix having its track set to the track id.  The <b>make-track</b>
-function takes the track id and the list of member mixes, returning the list of mixes.  Thereafter, the
-<b>track</b> function returns the mix list given the track <i>id</i>.  The rest of the track functions
-take the track mix list as their initial argument.  <b>track-&gt;vct</b> places all the mix samples
+<p>
+<b>track-&gt;vct</b> places all the mix samples
 in the track into a vct.  Similarly, <b>save-track</b> places the track's samples into a file.
-</p>
-<p>
-<b>next-mix-in-track</b> selects and returns the id of the next mix in the track (given its id number), or #f is there isn't one;
-<b>previous-mix-in-track</b> is its reverse.  These make it easy to move through the mixes in a given track, or
-all the mixes in track 0 (the "untrack", so to speak) -- just bind some key to:
-</p>
-<pre>
-  (lambda () (next-mix-in-track (if (selected-mix) (mix-track (selected-mix)) 0)))
-</pre>
-<p>
-The track-color refers to the color of the mix waveform (the thing displayed to the right
-of the red tag).  <i>set! (track-color trk)</i> sets this color using Snd <a href="extsnd.html#colors">colors</a>.
-</p>
-<pre>  
-:<em class=typing>(define hi (make-track 1 (list 0 1)))</em>
-<em class=listener>#&lt;unspecified&gt;</em>
-:<em class=typing>(track 1)</em>
-<em class=listener>(0 1)</em>
-:<em class=typing>(mix-track 0)</em>
-<em class=listener>1</em>
-:<em class=typing>(set! (track-color (track 1)) (make-color 0 0 1))</em>
-<em class=listener>(#&lt;color: (0.00 0.00 1.00)&gt; #&lt;color: (0.00 0.00 1.00)&gt;)</em>
-</pre>
-<p>The track-position is the position (begin sample) of the first mix in the track.
-<i>set! (track-position trk)</i> moves all the mixes in the track so that its first sample
-is <i>position</i>:
-</p>
-<pre>
-:<em class=typing>(track-position (track 1))</em>
-<em class=listener>10748</em>
-:<em class=typing>(mix-position 0)</em>
-<em class=listener>10748</em>
-:<em class=typing>(mix-position 1)</em>
-<em class=listener>23287</em>
-:<em class=typing>(set! (track-position (track 1)) 1500)</em>
-<em class=listener>(1500 14039)</em>
-:<em class=typing>(mix-position 0)</em>
-<em class=listener>1500</em>
-:<em class=typing>(mix-position 1)</em>
-<em class=listener>14039</em>
-</pre>
-<p>The track-amp reflects the mix amps (unless you set them individually, but I guess that
-quibble is true of all these settings). <i>set! (track-amp trk)</i> sets each mix channel's <i>chan</i>
-amplitude to <i>amp</i>.  Similarly, <b>incf-track-amp</b> increments each amplitude by
-<i>amp-increment</i>.  The track-speed refers to its mix's speeds: <i>set! (track-speed trk)</i>
-sets all of them to <i>speed</i>, and <b>transpose-track</b> moves them all by <i>semitones</i>.
-<b>track-frames</b> returns the total duration (samples) of the track, <b>track-end</b> returns
-the last sample:
-</p>
-<pre>
-:<em class=typing>(track-frames (track 1))</em>
-<em class=listener>16346</em>
-:<em class=typing>(- (+ (mix-position 1) (mix-frames 1)) (mix-position 0))</em>
-<em class=listener>16346</em>
-:<em class=typing>(track-end (track 1))</em>
-<em class=listener>17846</em>
-:<em class=typing>(max (+ (mix-position 0) (mix-frames 0)) (+ (mix-position 1) (mix-frames 1)))</em>
-<em class=listener>17846</em>
-</pre>
-<p><b>retempo-track</b> affects the time between the successive mix begin points (tempo &gt; 1.0 makes the
+<b>retempo-track</b> affects the time between the successive mix begin points (tempo &gt; 1.0 makes the
 mixes happen more quickly):
 </p>
 <pre>
@@ -2046,9 +1961,7 @@ mixes happen more quickly):
 :<em class=typing>(+ 1500 (* .5 (- 14039 1500))) ; 14039 is the former mix 1 begin time (see above)</em>
 <em class=listener>7769.5</em>
 </pre>
-<p><b>env-track</b> applies an amplitude envelope over the entire track, setting
-each mix's amp env(s) to match the portion of that envelope that happens to fall over them
-(multiplying envelopes if the mix aready has one).
+<p>
 <b>filter-track</b> applies a filter to each mix sound at the pre-mix point (that is, the
 mixed in sound is being edited, then the mix takes place); any kind of edit can follow the
 same sequence.  <b>reverse-track</b> reverses the order in which a track's members occur.

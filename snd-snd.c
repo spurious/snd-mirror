@@ -568,7 +568,7 @@ void amp_env_scale_selection_by(chan_info *cp, Float scl, off_t beg, off_t num, 
 
 env_info *amp_env_section(chan_info *cp, off_t beg, off_t num, int edpos)
 {
-  /* used in snd-region.c to create the region amp env */
+  /* used in snd-region.c to create the region peak amp env */
   env_info *old_ep, *new_ep = NULL;
   mus_sample_t fmax = MUS_SAMPLE_MIN, fmin = MUS_SAMPLE_MAX;
   int i, j;
@@ -586,7 +586,7 @@ env_info *amp_env_section(chan_info *cp, off_t beg, off_t num, int edpos)
     {
       if (cursamp > start)
 	{
-	  /* if segment is entirely in region, just scale it */
+	  /* if segment is entirely in region, just copy it */
 	  if ((cursamp >= beg) && ((cursamp + new_ep->samps_per_bin) <= end))
 	    {
 	      new_ep->data_max[j] = old_ep->data_max[i];
@@ -2951,7 +2951,7 @@ The 'initial-length' argument sets the number of samples (zeros) in the newly cr
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(format), format, XEN_ARG_3, S_new_sound, "an integer (a data format id)");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(srate), srate, XEN_ARG_4, S_new_sound, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chans), chans, XEN_ARG_5, S_new_sound, "an integer");
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(comment), comment, XEN_ARG_6, S_new_sound, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(comment) || XEN_FALSE_P(comment) || XEN_NOT_BOUND_P(comment), comment, XEN_ARG_6, S_new_sound, "a string or #f");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(initial_length), initial_length, XEN_ARG_7, S_new_sound, "an integer");
 
   if (XEN_STRING_P(name))
@@ -3678,8 +3678,8 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
   /* filename is a string from here down */
 
   fullname = mus_expand_filename(XEN_TO_C_STRING(filename));
-  chn = XEN_TO_C_INT(chan);
-  len = XEN_TO_C_INT(pts);
+  chn = XEN_TO_C_INT_OR_ELSE(chan, 0);
+  len = XEN_TO_C_INT_OR_ELSE(pts, 0);
   /* look for sp->filename = fullname
      then peak
      then read direct (via make_sound_readable)
