@@ -147,7 +147,7 @@
 		  (lambda (w)
 		    (if use-gtk
 			(if (and (GTK_IS_BUTTON w)
-				 (string=? name (.label_text (GTK_BUTTON w))))
+				 (string=? name (gtk_button_get_label (GTK_BUTTON w))))
 			    (func (GTK_BUTTON w)))
 			(if (string=? (XtName w) name)
 			    (func w))))))
@@ -277,15 +277,6 @@
 	(add-hook! mouse-click-hook
 		   (lambda (snd chn button state x y axis)
 		     (define myplay play)
-#!
-		     (define (myplay samp)
-		       (let ((chans (chans snd)))
-			 (do ((chan 0 (1+ chan)))
-			     ((= chan chans))
-			   (let ((player (make-player snd chan)))
-			     (add-player player samp)))
-			 (start-playing chans (srate snd))))
-!#
 		     (if (= axis time-graph)
 			 (let ((samp (inexact->exact (* (srate snd) (position->x x snd chn))))
 			       (dasspeed (speed-control)))
@@ -828,12 +819,6 @@
 
 ;; Show the time in the minibuffer when playing
 
-#!
-(add-hook! play-hook
-	   (lambda (samples)
-	     (show-times (cursor))
-	     #f))
-!#
 
 (add-hook! play-hook
 	   (lambda (samples)
@@ -982,7 +967,7 @@
 	      (my-switch-to-buf filename)
 	      #t)
 	    (begin
-	      (display filename)(display "-gakk\n")
+	      ;;(display filename)(display "-gakk\n")
 	      (add-to-menu buffer-menu 
 			   filename 
 			   (lambda () (my-switch-to-buf filename)))
