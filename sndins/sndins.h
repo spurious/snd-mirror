@@ -1,11 +1,11 @@
 /* sndins.h -- Sndins for Snd
  *
- * Copyright (C) 2003--2004 Michael Scholz
+ * Copyright (C) 2003--2005 Michael Scholz
  *
  * Author: Michael Scholz <scholz-micha@gmx.de>
  * Created: Sat Jun 07 02:24:52 CEST 2003
- * Last: Fri Apr 16 15:59:58 CEST 2004
- * Ident: $Id: sndins.h,v 1.13 2004/04/16 14:54:19 mike Exp $
+ * Last: Sun Jan 09 01:22:58 CET 2005
+ * Ident: $Id: sndins.h,v 1.21 2005/01/09 00:23:37 mike Exp $
  * 
  * This file is part of Sndins.
  *
@@ -25,49 +25,21 @@
  * USA
  *
  * Code:
+ * 
  */
 
 #ifndef _SNDINS_H_
 #define _SNDINS_H_
 
-/* libtool-1.5/demo/foo.h */
-/* At some point, cygwin will stop defining __CYGWIN32__, but b19 and
- * earlier do not define __CYGWIN__.  This snippit allows us to check
- * for __CYGWIN__ reliably for both current, old, and (probable) future 
- * releases.
- */
-#ifdef __CYGWIN32__
-#  ifndef __CYGWIN__
-#    define __CYGWIN__
-#  endif
-#endif
-
-/* __BEGIN_DECLS should be used at the beginning of your declarations,
-   so that C++ compilers don't mangle their names.  Use __END_DECLS at
-   the end of C declarations. */
 #undef __BEGIN_DECLS
 #undef __END_DECLS
 #ifdef __cplusplus
 #  define __BEGIN_DECLS extern "C" {
 #  define __END_DECLS }
 #else
-#  define __BEGIN_DECLS /* empty */
-#  define __END_DECLS /* empty */
+#  define __BEGIN_DECLS
+#  define __END_DECLS
 #endif
-
-/* PARAMS is a macro used to wrap function prototypes, so that compilers
-   that don't understand ANSI C prototypes still work, and ANSI C
-   compilers can issue warnings about type mismatches. */
-
-#undef PARAMS
-#if defined(__STDC__) || defined(_AIX) \
-    || (defined(__mips) && defined(_SYSTYPE_SVR4)) \
-    || defined(__CYGWIN__) || defined(__cplusplus)
-#  define PARAMS(protos) protos
-#else
-#  define PARAMS(protos) ()
-#endif
-/* libtool-1.5/demo/foo.h */
 
 #if HAVE_RUBY
 #  define NO_MEMORY              XEN_ERROR_TYPE("memory_allocation")
@@ -95,10 +67,8 @@
 #define SC_delay2         	       	 "delay2"
 #define SC_delay3         	       	 "delay3"
 #define SC_delay4         	       	 "delay4"
-#define SC_double                      	 "double"
-#define SC_verbose       	       	 "verbose"
+#define SC_doubled                       "doubled"
 #define SC_base                        	 "base"
-#define SC_degrees                     	 "degrees"
 #define SC_damping                       "damping"
 #define SC_global                        "global"
 #define SC_predelay                      "predelay"
@@ -190,14 +160,43 @@
 
 __BEGIN_DECLS
 
-mus_any *mus_make_fcomb PARAMS((Float scaler, int size, Float a0, Float a1));
-int mus_fcomb_p PARAMS((mus_any *ptr));
-Float mus_fcomb PARAMS((mus_any *ptr, Float input, Float ignored));
+mus_any *mus_make_fcomb(Float scaler, int size, Float a0, Float a1);
+int mus_fcomb_p(mus_any *ptr);
+Float mus_fcomb(mus_any *ptr, Float input, Float ignored);
+Float mus_fcomb_1(mus_any *ptr, Float input);
 
-void Init_libsndins PARAMS((void));
-void Init_sndins PARAMS((void));
-void init_libsndins PARAMS((void));
-void init_sndins PARAMS((void));
+off_t ins_fm_violin(Float start, Float dur, Float freq, Float amp, Float fm_index,
+		    Float *amp_env, int amp_len,
+		    Float periodic_vibrato_rate, Float periodic_vibrato_amp,
+		    Float random_vibrato_rate, Float random_vibrato_amp,
+		    Float noise_freq, Float noise_amount,
+		    Float ind_noise_freq, Float ind_noise_amount,
+		    Float amp_noise_freq, Float amp_noise_amount,
+		    Float *gliss_env, int gliss_len, Float gliss_amount,
+		    Float *fm1_env, int fm1_len,
+		    Float *fm2_env, int fm2_len,
+		    Float *fm3_env, int fm3_len,
+		    Float fm1_rat, Float fm2_rat, Float fm3_rat,
+		    Float fm1_index, Float fm2_index, Float fm3_index,
+		    Float base, Float degree, Float distance,
+		    Float reverb_amount, int index_type, bool no_waveshaping,
+		    mus_any *out, mus_any *rev, mus_interp_t mode);
+off_t ins_jc_reverb(Float start, Float dur, Float volume, bool low_pass, bool doubled,
+		    Float delay1, Float delay2, Float delay3, Float delay4,
+		    Float *amp_env, int amp_len, mus_any *out, mus_any *rev);
+off_t ins_nrev(Float start, Float dur, Float reverb_factor, Float lp_coeff,
+	       Float lp_out_coeff, Float output_scale, Float volume,
+	       Float *amp_env, int amp_len, mus_any *out, mus_any *rev);
+off_t ins_freeverb(Float start, Float dur, Float room_decay, Float damping, Float global,
+		   Float predelay, Float output_gain, Float scale_room_decay,
+		   Float offset_room_decay, Float scale_damping, Float stereo_spread,
+		   int *combtuning, int comb_len, int *allpasstuning, int all_len,
+		   mus_any *output_mixer, mus_any *out, mus_any *rev);
+
+void Init_libsndins(void);
+void Init_sndins(void);
+void init_libsndins(void);
+void init_sndins(void);
 
 __END_DECLS
 

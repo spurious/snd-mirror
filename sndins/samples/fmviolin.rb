@@ -4,7 +4,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Fri Oct 18 11:29:08 CEST 2002
-# Last: Mon May 10 19:09:03 CEST 2004
+# Last: Sat Dec 11 03:52:33 CET 2004
 
 # This file is part of Sndins.
 
@@ -72,11 +72,10 @@ def restore_fm_violin_defaults
   $fm2_index                  = 0.0
   $fm3_index                  = 0.0
   $base                       = 0.0
-  $reverb_amount              = 0.01
-  $index_type                 = VIOLIN
   $degree                     = 0.0
   $distance                   = 1.0
-  $degrees                    = 0.0
+  $reverb_amount              = 0.01
+  $index_type                 = VIOLIN
   $no_waveshaping             = false
 end
 
@@ -108,11 +107,10 @@ def old_fm_violin(start, dur, freq, amp, *args)
 	    :fm2_index,             get_args(args, :fm2_index, $fm2_index),
 	    :fm3_index,             get_args(args, :fm3_index, $fm3_index),
 	    :base,                  get_args(args, :base, $base),
-	    :reverb_amount,         get_args(args, :reverb_amount, $reverb_amount),
-	    :index_type,            get_args(args, :index_type, $index_type),
 	    :degree,                get_args(args, :degree, $degree),
 	    :distance,              get_args(args, :distance, $distance), 
-	    :degrees,               get_args(args, :degrees, $degrees),
+	    :reverb_amount,         get_args(args, :reverb_amount, $reverb_amount),
+	    :index_type,            get_args(args, :index_type, $index_type),
 	    :no_waveshaping,        get_args(args, :no_waveshaping, $no_waveshaping))
 end
 
@@ -163,12 +161,6 @@ end
 
 def short_example
   with_sound do
-    restore_fm_violin_defaults()
-    $random_vibrato_rate      = 12.0
-    $random_vibrato_amplitude = 0.01
-    $gliss_env                = [0.0, -1.0, 5.0, 0.25, 10.0, 0.0, 100.0, 0.1]
-    $glissando_amount         = 0.01
-    $noise_amount             = 0.002
     violin_new(0, 8.53, 993.323, 0.03,
                :fm_index, 0.75, :reverb_amount, 0.2, :amp_env, [0, 0, 221, 1, 240, 0])
     violin_new(5, 4.53, 993.323 * 5.0 / 6.0, 0.02,
