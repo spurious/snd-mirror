@@ -343,7 +343,11 @@ AC_SUBST(GSL_CFLAGS)
 
 if test "$with_ladspa" != no ; then
   # we also need dlfcn.h and dirent.h here, but presumably this is on Linux
-  AC_CHECK_HEADER(ladspa.h, [AC_DEFINE(HAVE_LADSPA)])
+  AC_CHECK_HEADER(ladspa.h, 
+		  [AC_DEFINE(HAVE_LADSPA)],
+		  if test "$with_ladspa" = yes ; then
+		   AC_MSG_WARN([can't find ladspa.h!])
+		  fi)
 fi
 
 
@@ -509,11 +513,24 @@ else
 	    [AC_LANG_PROGRAM(
         	[#include <Xm/XmAll.h>
                  #include <Xm/ButtonBox.h>],
-		[ Widget w;
+		[ Widget w; int i; i = XmIconTop;
                   w = XmCreateButtonBox(NULL, "button-box", NULL, 0)
                 ])],
             [
  	     AC_DEFINE(HAVE_XmCreateButtonBox)
+	     AC_MSG_RESULT(yes)
+    	    ],
+	    [AC_MSG_RESULT(no)])
+          AC_MSG_CHECKING(for XmTabStack)
+          AC_LINK_IFELSE(
+	    [AC_LANG_PROGRAM(
+        	[#include <Xm/XmAll.h>
+                 #include <Xm/TabStack.h>],
+		[ Widget w; 
+                  w = XmCreateTabStack(NULL, "tab-stack", NULL, 0)
+                ])],
+            [
+ 	     AC_DEFINE(HAVE_XmCreateTabStack)
 	     AC_MSG_RESULT(yes)
     	    ],
 	    [AC_MSG_RESULT(no)])

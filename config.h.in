@@ -132,6 +132,7 @@
 #undef HAVE_XmCreateMultiList
 #undef HAVE_XmCreateDataField
 #undef HAVE_XmCreateButtonBox
+#undef HAVE_XmCreateTabStack
 #undef HAVE_XmCreateDropDown
 #undef HAVE_XmCreateColumn
 #undef HAVE_XmCreateFontSelector

@@ -322,9 +322,14 @@ is equivalent to the -h flag; if 1, sounds are layed out
 horizontally rather than vertically;  if 2, you get a notebook
 widget holding the sounds.
 </p>
-<p>In Gtk, the various default colors and fonts can be found in Snd.gtkrc.
-If you want to change them, you can edit this file, then place it in the
-current directory.  Currently, the simplest way to change the menu label fonts
+<p>In Gtk, the various default colors and fonts are set via the "gtkrc"
+file.  If you are using some global "theme", you probably have ~/.gtkrc-2.0.
+Snd looks for this file first.  If it isn't found, Snd looks on the
+current directory for Snd.gtkrc.  If that isn't found, it looks for
+~/Snd.gtkrc. If that isn't found, it uses a built-in default equivalent
+to the Snd.gtkrc file in the Snd tarball.
+If you want to change the overall appearance of Snd, you can edit any of these rc files.
+Currently, the simplest way to change the menu label fonts
 is to change the "default" or "default_menu" styles in Snd.gtkrc:
 </p>
 <pre>
@@ -334,122 +339,9 @@ style "default"
   ....
 }
 </pre>
-<p>A more elaborate example, thanks to Frank Barknecht, is:</p>
+<p>Frank Barknecht made a more elaborate example using the Xfce-b5 theme:</p>
 <image src="snd-gtkrc.png">
-<p>Here is Frank's explanation of how he did this:
-<blockquote>
-It is using the Xfce-b5 theme
-for Gtk2. I attached my slightly extended current Snd.gtkrc.
-The trick used is, to first include
-some gtkrc according to taste, and then only include those things, you do
-want to have overwritten. In the example, only the button colors are
-active, the rest is from ~/.gtkrc
-<pre>
-include "/home/freak/.gtkrc-2.0"
 
-# This is the same as Snd.gtkrc
-# style "default"
-# {
-#   font_name = "Serif 11"
-# 
-#   fg[NORMAL]      = { 0.0,  0.00, 0.0 }
-#   text[NORMAL]    = { 0.0,  0.0,  0.0 }
-#   bg[NORMAL]      = { 0.93, 0.93, 0.87 }
-#   bg[ACTIVE]      = { 0.80, 0.80, 0.75 }
-#   bg[INSENSITIVE] = { 0.93, 0.93, 0.87 }
-#   base[NORMAL]    = { 1.00, 1.00, 1.00 }
-#   bg[PRELIGHT]    = { 0.70, 0.70, 0.64 }
-#   fg[PRELIGHT]    = { 1.0,  0.0,  0.0}
-# 
-#   GtkPaned::handle_size = 6
-#   GtkButton::default_border = { 0, 0, 0, 0 }
-#   GtkButton::default_outside_border = { 0, 0, 0, 0 }
-# }
-# 
-style "default_button" = "default"
-{
-  bg[ACTIVE]   = { 0.79, 0.88, 1.0 }
-  bg[SELECTED] = { 0.79, 0.88, 1.0 }
-}
-# 
-# style "default_menu" = "default"
-# {
-#   bg[NORMAL] = { 1.0, 1.0, 0.94 }
-# }
-# 
-# style "default_pane" = "default"
-# {
-#   bg[NORMAL] = { 0.56, 0.93, 0.56 }
-#   bg[PRELIGHT] = { 0.26, 0.8, 0.26}
-# }
-# 
-# style "default_entry" = "default"
-# {
-#   base[ACTIVE]      = { 0.93, 0.93, 0.87 }
-#   base[SELECTED]    = { 0.80, 0.80, 0.75 }
-#   base[PRELIGHT]    = { 1.0, 1.0, 1.0}
-#   base[NORMAL]      = { 0.93, 0.93, 0.87 }
-#   base[INSENSITIVE] = { 0.93, 0.93, 0.87 }
-#   bg[ACTIVE]        = { 1.0, 1.0, 1.0 }
-#   bg[SELECTED]      = { 1.0, 1.0, 1.0 }
-#   bg[PRELIGHT]      = { 1.0, 1.0, 1.0 }
-#   text[ACTIVE]      = { 0.0, 0.0, 0.0 }
-#   text[SELECTED]    = { 0.0, 0.0, 0.0 }
-#   text[PRELIGHT]    = { 0.0, 0.0, 0.0 }
-# }
-# 
-# style "default_text" = "default_entry"
-# {
-#   base[NORMAL] = { 1.0, 1.0, 1.0 }
-# }
-# 
-# style "default_slider" = "default"
-# {
-#   bg[NORMAL] = { 0.90, 0.90, 0.85 }
-#   bg[ACTIVE] = { 0.80, 0.80, 0.75 }
-#   bg[PRELIGHT] = { 0.70, 0.70, 0.64 }
-# 
-#   GtkRange::slider_width = 10
-#   GtkRange::stepper_size = 10
-# }
-# 
-# class "GtkWidget" style "default"
- class "GtkButton" style "default_button"
-# class "GtkMenu" style "default_menu"
-# class "GtkMenuBar" style "default_menu"
-# class "GtkEntry" style "default_entry"
-# class "GtkTextView" style "default_text"
-# class "GtkPaned" style "default_pane"
-# class "GtkRange" style "default_slider"
-# 
-# style "zoom_slider" = "default_slider"
-# {
-#   bg[NORMAL] = { 0.70, 0.70, 0.64 }
-#   bg[ACTIVE] = { 0.54, 0.54, 0.51 }
-#   bg[PRELIGHT] = { 0.44, 0.44, 0.36 }
-# 
-#   GtkRange::slider_width = 12
-#   GtkRange::stepper_size = 12
-# }
-# 
-# widget "*.zx_slider" style "zoom_slider"
-# widget "*.zy_slider" style "zoom_slider"
-# widget "*.gzy_slider" style "zoom_slider"
-# widget "*.panel_button" style "zoom_slider"
-# 
-style "listener" = "default"
-{
-  font_name = "Monospace 10"
-
-#  base[NORMAL] = { 0.94, 0.97, 1.0 }
-#  text[NORMAL] = { 0.0, 0.0, 0.0 }
-}
-
-[etc -- the rest is unchanged from Snd.gtkrc]
-
-</pre>
-</blockquote>
-</p>
 
 <hr>
 <p><A NAME="aboutcolors"></a>The Snd-specific X (Motif) color resources are:</p>

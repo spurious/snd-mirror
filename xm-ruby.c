@@ -1174,6 +1174,21 @@
   XEN_NARGIFY_1(gxm_XmIsButtonBox_w, gxm_XmIsButtonBox)
   XEN_ARGIFY_4(gxm_XmCreateButtonBox_w, gxm_XmCreateButtonBox)
 #endif
+#if HAVE_XmCreateMultiList
+  XEN_NARGIFY_1(gxm_XmIsMultiList_w, gxm_XmIsMultiList)
+  XEN_ARGIFY_4(gxm_XmCreateMultiList_w, gxm_XmCreateMultiList)
+  XEN_NARGIFY_1(gxm_XmMultiListDeselectAllItems_w, gxm_XmMultiListDeselectAllItems)
+  XEN_NARGIFY_1(gxm_XmMultiListUnselectAllItems_w, gxm_XmMultiListUnselectAllItems)
+  XEN_NARGIFY_2(gxm_XmMultiListSelectAllItems_w, gxm_XmMultiListSelectAllItems)
+  XEN_NARGIFY_2(gxm_XmMultiListDeselectRow_w, gxm_XmMultiListDeselectRow)
+  XEN_NARGIFY_2(gxm_XmMultiListToggleRow_w, gxm_XmMultiListToggleRow)
+  XEN_NARGIFY_2(gxm_XmMultiListMakeRowVisible_w, gxm_XmMultiListMakeRowVisible)
+  XEN_NARGIFY_3(gxm_XmMultiListSelectRow_w, gxm_XmMultiListSelectRow)
+  XEN_NARGIFY_2(gxm_XmMultiListUnselectItem_w, gxm_XmMultiListUnselectItem)
+  XEN_NARGIFY_2(gxm_XmMultiListDeselectItem_w, gxm_XmMultiListDeselectItem)
+  XEN_NARGIFY_3(gxm_XmMultiListDeselectItems_w, gxm_XmMultiListDeselectItems)
+  XEN_NARGIFY_4(gxm_XmMultiListSelectItems_w, gxm_XmMultiListSelectItems)
+#endif
 #if HAVE_XmCreateDataField
   XEN_NARGIFY_1(gxm_XmIsDataField_w, gxm_XmIsDataField)
   XEN_ARGIFY_4(gxm_XmCreateDataField_w, gxm_XmCreateDataField)
@@ -2528,6 +2543,21 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmDataFieldSetEditable, gxm_XmDataFieldSetEditable_w, 2, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmDataFieldSetInsertionPosition, gxm_XmDataFieldSetInsertionPosition_w, 2, 0, 0, NULL);
 #endif
+#if HAVE_XmCreateMultiList
+  XM_DEFINE_PROCEDURE(XmIsMultiList, gxm_XmIsMultiList_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmCreateMultiList, gxm_XmCreateMultiList_w, 3, 1, 0, H_XmCreateMultiList);
+  XM_DEFINE_PROCEDURE(XmMultiListDeselectAllItems, gxm_XmMultiListDeselectAllItems_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmMultiListUnselectAllItems, gxm_XmMultiListUnselectAllItems_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmMultiListSelectAllItems, gxm_XmMultiListSelectAllItems_w, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmMultiListDeselectRow, gxm_XmMultiListDeselectRow_w, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmMultiListToggleRow, gxm_XmMultiListToggleRow_w, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmMultiListMakeRowVisible, gxm_XmMultiListMakeRowVisible_w, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmMultiListSelectRow, gxm_XmMultiListSelectRow_w, 3, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmMultiListUnselectItem, gxm_XmMultiListUnselectItem_w, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmMultiListDeselectItem, gxm_XmMultiListDeselectItem_w, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmMultiListDeselectItems, gxm_XmMultiListDeselectItems_w, 3, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmMultiListSelectItems, gxm_XmMultiListSelectItems_w, 4, 0, 0, NULL);
+#endif
 #if HAVE_XmCreateColumn
   XM_DEFINE_PROCEDURE(XmIsColumn, gxm_XmIsColumn_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmColumnGetChildLabel, gxm_XmColumnGetChildLabel_w, 1, 0, 0, NULL);
@@ -3155,6 +3185,10 @@ static void define_procedures(void)
   XEN_NARGIFY_1(gxm_postIt_w, gxm_postIt)
   XEN_NARGIFY_2(gxm_set_postIt_w, gxm_set_postIt)
 #endif
+#if HAVE_XmCreateDataField
+  XEN_NARGIFY_1(gxm_w_w, gxm_w)
+  XEN_NARGIFY_1(gxm_accept_w, gxm_accept)
+#endif
 
 #if HAVE_XPM
   XEN_NARGIFY_1(gxm_valuemask_w, gxm_valuemask)
@@ -3406,6 +3440,10 @@ static void define_structs(void)
   XM_DEFINE_READER(text, gxm_text_w, 1, 0, 0);
   XM_DEFINE_ACCESSOR(value, gxm_value_w, set_value, gxm_set_value_w, 1, 0, 2, 0); 
   XM_DEFINE_ACCESSOR(doit, gxm_doit_w, set_doit, gxm_set_doit_w, 1, 0, 2, 0); 
+#if HAVE_XmCreateDataField
+  XM_DEFINE_READER(w, gxm_w_w, 1, 0, 0);
+  XM_DEFINE_READER(accept, gxm_accept_w, 1, 0, 0);
+#endif
 #if HAVE_XPM
   XM_DEFINE_ACCESSOR(valuemask, gxm_valuemask_w, set_valuemask, gxm_set_valuemask_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(ncolors, gxm_ncolors_w, set_ncolors, gxm_set_ncolors_w, 1, 0, 2, 0);

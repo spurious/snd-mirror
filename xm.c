@@ -7,7 +7,7 @@
 #include <config.h>
 #endif
 
-#define XM_DATE "19-Apr-04"
+#define XM_DATE "20-Apr-04"
 
 /* HISTORY: 
  *
@@ -157,6 +157,33 @@
 
 #if HAVE_XPM
   #include <X11/xpm.h>
+#endif
+#if HAVE_XmCreateDataField
+  #include <Xm/DataF.h>
+#endif
+#if HAVE_XmCreateMultiList
+  #include <Xm/MultiList.h>
+#endif
+#if HAVE_XmCreateTabStack
+  #include <Xm/TabStack.h>
+#endif
+#if HAVE_XmCreateButtonBox
+  #include <Xm/ButtonBox.h>
+#endif
+#if HAVE_XmCreateColumn
+  #include <Xm/Column.h>
+#endif
+#if HAVE_XmCreateDropDown
+  #include <Xm/DropDown.h>
+#endif
+#if HAVE_XmCreateFontSelector
+  #include <Xm/FontS.h>
+#endif
+#if HAVE_XmCreateColorSelector
+  #include <Xm/ColorS.h>
+#endif
+#if WITH_EDITRES
+  #include <X11/Xmu/Editres.h>
 #endif
 
 /* prefix for all names */
@@ -543,8 +570,14 @@ XM_TYPE_PTR_NO_p(XmTextVerifyCallbackStruct, XmTextVerifyCallbackStruct *)
 XM_TYPE_PTR_NO_C2X_NO_p(XmTextBlock, XmTextBlock)
 XM_TYPE_PTR_NO_p(XmToggleButtonCallbackStruct, XmToggleButtonCallbackStruct *)
 #if HAVE_XmCreateDataField
-#include <Xm/DataF.h>
 XM_TYPE_PTR_NO_p(XmDataFieldCallbackStruct, XmDataFieldCallbackStruct *)
+#endif
+#if HAVE_XmCreateMultiList
+XM_TYPE_PTR_NO_p(XmMultiListCallbackStruct, XmMultiListCallbackStruct *)
+XM_TYPE_PTR_NO_p(XmMultiListRowInfo, XmMultiListRowInfo *)
+#endif
+#if HAVE_XmCreateTabStack
+XM_TYPE_PTR_NO_p(XmTabStackCallbackStruct, XmTabStackCallbackStruct *)
 #endif
 #if (!XM_DISABLE_DEPRECATED)
   XM_TYPE(XmFontContext, XmFontContext) /* opaque */
@@ -719,6 +752,12 @@ XM_Make(XmDragStartCallbackStruct)
 #if HAVE_XmCreateDataField
 XM_Make(XmDataFieldCallbackStruct)
 #endif
+#if HAVE_XmCreateMultiList
+XM_Make(XmMultiListCallbackStruct)
+#endif
+#if HAVE_XmCreateTabStack
+XM_Make(XmTabStackCallbackStruct)
+#endif
 
 static XEN gxm_XmTextBlock(void) 
 {
@@ -779,6 +818,12 @@ static void define_makes(void)
 #if HAVE_XmCreateDataField
   XM_Declare(XmDataFieldCallbackStruct);
 #endif
+#if HAVE_XmCreateMultiList
+  XM_Declare(XmMultiListCallbackStruct);
+#endif
+#if HAVE_XmCreateTabStack
+  XM_Declare(XmTabStackCallbackStruct);
+#endif
 }
 
 static int its_a_callbackstruct(char *name)
@@ -822,7 +867,7 @@ typedef enum {XM_INT, XM_ULONG, XM_UCHAR, XM_FLOAT, XM_STRING, XM_XMSTRING, XM_S
 	      XM_TRANSFER_CALLBACK, XM_CONVERT_CALLBACK, XM_SEARCH_CALLBACK, XM_ORDER_CALLBACK,
 	      XM_QUALIFY_CALLBACK, XM_ALLOC_COLOR_CALLBACK, XM_POPUP_CALLBACK, XM_SCREEN_COLOR_CALLBACK,
 	      XM_DROP_CALLBACK, XM_TRANSFER_ENTRY_LIST, XM_DRAG_CALLBACK, XM_STRING_OR_XMSTRING, XM_PARSE_CALLBACK,
-	      XM_BOOLEAN_OR_INT, XM_POSITION, XM_SHORT
+	      XM_BOOLEAN_OR_INT, XM_POSITION, XM_SHORT, XM_ROW_INFO
 } xm_resource_t;
 
 static xm_resource_t resource_type(char *resource);
@@ -1948,6 +1993,12 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	  XEN_ASSERT_TYPE(XEN_LIST_P(value), value, XEN_ONLY_ARG, name, "a list of XRectangles");
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_XRectangles(value, XEN_LIST_LENGTH(value))));
 	  break;
+#if HAVE_XmCreateMultiList
+	case XM_ROW_INFO:
+	  XEN_ASSERT_TYPE(XEN_XmMultiListRowInfo_P(value), value, XEN_ONLY_ARG, name, "XmMultiListRowInfo*");
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_XmMultiListRowInfo(value)));
+	  break;
+#endif
 
 	default:
 	  if (XEN_ULONG_P(value))
@@ -2254,6 +2305,7 @@ static XEN C_TO_XEN_ANY(Widget w, Arg arg)
 	return(C_TO_XEN_STRING((char *)(*((char **)(arg.value)))));
       else return(C_TO_XEN_INT((int)(*((int *)(arg.value)))));
       break;
+      /* TODO: get resource XM_ROW_INFO? */
     default:
       break;
     }
@@ -5156,7 +5208,6 @@ static XEN gxm_XmToolTipGetLabel(XEN arg1)
 #endif
 
 #if HAVE_XmCreateMultiList
-#include <Xm/MultiList.h>
 
 #ifndef XmIsMultiList
 #define XmIsMultiList(w) (XtIsSubclass(w, xmMultiListWidgetClass))
@@ -5174,49 +5225,107 @@ static XEN gxm_XmIsMultiList(XEN arg)
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsMultiList", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsMultiList(XEN_TO_C_Widget(arg))));
 }
+
+static XEN gxm_XmMultiListUnselectAllItems(XEN arg)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmMultiListUnselectAllItems", "Widget");
+  XmMultiListUnselectAllItems(XEN_TO_C_Widget(arg));
+  return(XEN_FALSE);
+}
+
+static XEN gxm_XmMultiListDeselectAllItems(XEN arg)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmMultiListDeselectAllItems", "Widget");
+  XmMultiListDeselectAllItems(XEN_TO_C_Widget(arg));
+  return(XEN_FALSE);
+}
+
+static XEN gxm_XmMultiListSelectAllItems(XEN arg, XEN arg1)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmMultiListSelectAllItems", "Widget");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg1), arg1, 2, "XmMultiListSelectAllItems", "boolean");
+  XmMultiListSelectAllItems(XEN_TO_C_Widget(arg), XEN_TO_C_BOOLEAN(arg1));
+  return(XEN_FALSE);
+}
+
+static XEN gxm_XmMultiListDeselectRow(XEN arg, XEN arg1)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmMultiListDeselectRow", "Widget");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 2, "XmMultiListDeselectRow", "int");
+  XmMultiListDeselectRow(XEN_TO_C_Widget(arg), XEN_TO_C_INT(arg1));
+  return(XEN_FALSE);
+}
+
+static XEN gxm_XmMultiListToggleRow(XEN arg, XEN arg1)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmMultiListToggleRow", "Widget");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 2, "XmMultiListToggleRow", "int");
+  XmMultiListToggleRow(XEN_TO_C_Widget(arg), (short)XEN_TO_C_INT(arg1));
+  return(XEN_FALSE);
+}
+
+static XEN gxm_XmMultiListMakeRowVisible(XEN arg, XEN arg1)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmMultiListMakeRowVisible", "Widget");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 2, "XmMultiListMakeRowVisible", "int");
+  XmMultiListMakeRowVisible(XEN_TO_C_Widget(arg), XEN_TO_C_INT(arg1));
+  return(XEN_FALSE);
+}
+
+static XEN gxm_XmMultiListSelectRow(XEN arg, XEN arg1, XEN arg2)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmMultiListSelectRow", "Widget");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 2, "XmMultiListSelectRow", "int");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg2), arg2, 3, "XmMultiListSelectRow", "boolean");
+  XmMultiListSelectRow(XEN_TO_C_Widget(arg), XEN_TO_C_INT(arg1), XEN_TO_C_BOOLEAN(arg2));
+  return(XEN_FALSE);
+}
+
+static XEN gxm_XmMultiListUnselectItem(XEN arg, XEN arg1)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmMultiListUnselectItem", "Widget");
+  XEN_ASSERT_TYPE(XEN_XmMultiListRowInfo_P(arg1), arg1, 2, "XmMultiListUnselectItem", "XmMultiListRowInfo*");
+  XmMultiListUnselectItem(XEN_TO_C_Widget(arg), XEN_TO_C_XmMultiListRowInfo(arg1));
+  return(XEN_FALSE);
+}
+
+static XEN gxm_XmMultiListDeselectItem(XEN arg, XEN arg1)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmMultiListDeselectItem", "Widget");
+  XEN_ASSERT_TYPE(XEN_XmMultiListRowInfo_P(arg1), arg1, 2, "XmMultiListDeselectItem", "XmMultiListRowInfo*");
+  XmMultiListDeselectItem(XEN_TO_C_Widget(arg), XEN_TO_C_XmMultiListRowInfo(arg1));
+  return(XEN_FALSE);
+}
+
+static XEN gxm_XmMultiListDeselectItems(XEN arg, XEN arg1, XEN arg2)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmMultiListDeselectItems", "Widget");
+  XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 2, "XmMultiListDeselectItems", "XmString");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 3, "XmMultiListDeselectItems", "int");
+  XmMultiListDeselectItems(XEN_TO_C_Widget(arg), XEN_TO_C_XmString(arg1), XEN_TO_C_INT(arg2));
+  return(XEN_FALSE);
+}
+
+static XEN gxm_XmMultiListSelectItems(XEN arg, XEN arg1, XEN arg2, XEN arg3)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmMultiListSelectItems", "Widget");
+  XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 2, "XmMultiListSelectItems", "XmString");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 3, "XmMultiListSelectItems", "int");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 4, "XmMultiListSelectItems", "boolean");
+  XmMultiListSelectItems(XEN_TO_C_Widget(arg), XEN_TO_C_XmString(arg1), XEN_TO_C_INT(arg2));
+  return(XEN_FALSE);
+}
+
 #if 0
 /*
-	 rowinfo** XmMultiListGetSelectedRows(w) r=rowinfo
-	 XmMultiListUnselectAllItems(w)
-	 XmMultiListDeselectAllItems(w)
-	 XmMultiListUnselectItem(w,r)
-	 XmMultiListDeselectItem(w,r)
-	 XmMultiListToggleRow(w,n)short
-	 XmMultiListSelectItems(w,i,c,n)xmstring int boolean
-	 XmMultiListDeselectItems(w,i,c)xmstring int
-	 XmMultiListSelectAllItems(w,n)boolean
-	 XmMultiListSelectRow(w,r,n)int boolean
-	 XmMultiListDeselectRow(w,r)int
+	 rowinfo** XmMultiListGetSelectedRows(w) r=rowinfo -> rtn a list of these? (free?)
 	 int* XmMultiListGetSelectedRowArray(w,n)int* [free?]
-	 XmMultiListMakeRowVisible(w,r)int
 
 	 XmMultiListRowInfo: XmString *values
 	                     Pixmap pixmap
 	                     Boolean selected
 	                     short *sort_id(?) XtPointer data
          XmMultiListCallbackStruct reason event string column row
-
-       Name                  Class                Type                Default
-       columnTitles          ColumnTitles         String *            NULL
-       doubleClickCallback   Callback             Callback            NULL
-       entryData             EntryData            Xm18RowInfo*        NULL
-       findLabel             XmString             XmString            Find
-       firstColumn           FirstLocation        short               0
-       firstColumnPixmaps    FirstColumnPixmaps   Boolean             False
-       firstRow              FirstLocation        short               0
-       fontList              FontList             FontList            fixed
-       height                Dimension            VerticalDimension   300
-       numColumns            NumColumns           short               0
-       numRows               NumRows              short               0
-       selectedColumn        SelectedColumn       short               0
-       selectionPolicy       SelectionPolicy      SelectionPolicy     XmEXTENDED_
-                                                                      SELECT
-       showFind              boolean              boolean             True
-       singleSelection       Callback             Callback            NULL
-       sortFunctions         Function             Function            NULL
-       title                 Title                String              name of
-                                                                      widget
-       width                 Dimension            Horizontal          Dimension
 
        All procedures on the Extended List's singleSelectionCallback and  dou-
        bleClickCallback  lists  will have a pointer to a Xm18RowInfo structure
@@ -5233,126 +5342,46 @@ Sort Function
                       ing on whether the first argument is  less  than,  equal
                       to, or greater than the second.
 
-COLUMN:
-       XmNdefaultEntryLabelAlignment Specifies the default XmNentryLabelAlign-
-       ment  to  use  when  a child specifies no significant value.  Resources
-       that specify Alignment have values of XmALIGNMENT_BEGINNING,
-       XmALIGNMENT_CENTER,   XmALIGNMENT_END,   and   XmALIGNMENT_UNSPECIFIED.
-       Valid  string  values  that can be used in a resources file are: align-
-       ment_unspecified, unspecified, alignment_beginning,  beginning,  align-
-       ment_center, center, alignment_end, end.
-       XmNdefaultEntryLabelFontList   Specifies   the  default  XmNentryLabel-
-       FontList to use when a child specifies no significant value. If unspec-
-       ified, uses XmNlabelFontList resource of the XmBulletinBoard.
-       XmNdefaultFillStyle  Specifies  the  default XmNfillStyle to use when a
-       child specifies no significant value.
-       XmNdistribution Specifies whether the spacing between each pair of rows
-       should  be  increased  equally (XmDISTRIBUTE_SPREAD) or remain constant
-       (XmDISTRIBUTE_TIGHT) when the column is resized vertically to be larger
-       than its natural size. This resource has no effect if any child has its
-       XmNstretchable resource set to True. This resource is valid  only  when
-       the orientation is vertical.
-       XmNitemSpacing Specifies the spacing between each pair of rows (in ver-
-       tical orientation) or between pairs of labels and children (in horizon-
-       tal orientation).
-       XmNlabelSpacing Specifies the spacing between the column containing the
-       labels and the column containing the XmColumn's children.
-       XmNentryLabelAlignment  Specifies  justification  of  text  within  the
-       child's associated label. Valid values are the same as those for XmNde-
-       faultEntryLabelAlignment.
-       XmNentryLabelFontList Specifies fontList used to render the text within
-       the child's associated label.
-       XmNentryLabelPixmap Specifies the pixmap used in the child's associated
-       label.
-       XmNentryLabelString Specifies the text used in the  child's  associated
-       label.
-       XmNentryLabelType Specifies whether to display a string (XmSTRING) or a
-       pixmap (XmPIXMAP) in the child's associated label.
-       XmNfillStyle Specifies whether the child should  be  displayed  at  its
-       natural  size  (XmFILL_RAGGED) or stretched to fill the entire width of
-       the column it is displayed within (XmFILL_FLUSH).
-       XmFILL_UNSPECIFIED uses the value  of  the  XmColumn's  XmNdefaultFill-
-       Style.
-       XmNshowEntryLabel Specifies whether or not to display the child's asso-
-       ciated label.
-       XmNstretchable Specifies whether the child should expand in  size  pro-
-
-DROPDOWN
-       |XmNcustomizedCombinationBox | XmCBoolean          | Boolean        | Fal
-se    | CSG    |
-       +----------------------------+---------------------+----------------+----
-------+--------+
-       |XmNeditable                 | XmCBoolean          | Boolean        | Tru
-e     | CSG    |
-       +----------------------------+---------------------+----------------+----
-------+--------+
-       |XmNhorizontalMargin         | XmCMargin           | Dimension      | 2  
-      | CSG    |
-       +----------------------------+---------------------+----------------+----
-------+--------+
-       |XmNitemCount                | list                | int            | 0  
-      | CSG    |
-       +----------------------------+---------------------+----------------+----
-------+--------+
-       |XmNitems                    | list                | XmStringTable  | NUL
-L     | CSG    |
-       +----------------------------+---------------------+----------------+----
-------+--------+
-       |XmNlabelString              | label               | XmString       | la
-bel  | CSG    |
-       +----------------------------+---------------------+----------------+----
-------+--------+
-       |XmNpopupCursor              | XmCCursor           | Cursor         | lef
-t_ptr | CSG    |
-       +----------------------------+---------------------+----------------+----
-------+--------+
-       |XmNpopupOffset              | MxCPopupOffset      | int            | 15 
-      | CSG    |
-       +----------------------------+---------------------+----------------+----
-------+--------+
-       |XmNpopupShellWidget         | XmCWidget           | Widget         | NUL
-L     | CSG    |
-       +----------------------------+---------------------+----------------+----
-------+--------+
-       |XmNshowLabel                | XmCBoolean          | Boolean        | Tru
-e     | CSG    |
-       +----------------------------+---------------------+----------------+----
-------+--------+
-       |XmNupdateShellCallback      | XmCCallback         | XtCallbackList | NUL
-L     | CSG    |
-       +----------------------------+---------------------+----------------+----
-------+--------+
-       |XmNupdateTextCallback       | XmCCallback         | XtCallbackList | NUL
-L     | CSG    |
-       +----------------------------+---------------------+----------------+----
-------+--------+
-       |XmNuseTextField             | XmCUseTextField     | Boolean        | Tru
-e     | CSG    |
-       +----------------------------+---------------------+----------------+----
-------+--------+
-       |XmNvalue                    | text                | String         |  
-      | CSG    |
-       +----------------------------+---------------------+----------------+----
-------+--------+
-       |XmNverify                   | XmCVerify           | Boolean        | Tru
-e     | CSG    |
-       +----------------------------+---------------------+----------------+----
-------+--------+
-       |XmNverifyTextCallback       | XmCCallback         | XtCallbackList | NUL
-L     | CSG    |
-       +----------------------------+---------------------+----------------+----
-------+--------+
-       |XmNverticalMargin           | XmCMargin           | Dimension      | 2  
-      | CSG    |
-       +----------------------------+---------------------+----------------+----
-------+--------+
-       |XmNvisibleItemCount         | XmCVisibleItemCount | int            | 0  
-      | CSG    |
-       +----------------------------+---------------------+----------------+----
 */
 #endif
 
 #endif
+
+#if HAVE_XmCreateTabStack
+
+#ifndef XmIsTabStack
+#define XmIsTabStack(w) (XtIsSubclass(w, xmTabStackWidgetClass))
+#endif
+
+static XEN gxm_XmCreateTabStack(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+{
+  #define H_XmCreateTabStack "Widget XmCreateTabStack(Widget parent, String name, ArgList arglist, Cardinal argcount) \
+The TabStack widget creation function"
+  return(gxm_new_widget("XmCreateTabStack", XmCreateTabStack, arg1, arg2, arg3, arg4));
+}
+
+static XEN gxm_XmIsTabStack(XEN arg)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsTabStack", "Widget");
+  return(C_TO_XEN_BOOLEAN(XmIsTabStack(XEN_TO_C_Widget(arg))));
+}
+
+/*
+	 extern Widget XmTabStackGetSelectedTab(Widget);
+	 extern void XmTabStackSelectTab(Widget, Boolean);
+	 extern Widget XmTabStackIndexToWidget(Widget, int);
+	 extern Widget XmTabStackXYToWidget(Widget, int, int);
+
+    String string;
+    int column;
+    Xm18RowInfo *row;
+    XmExt18ListCallbackStruct;
+
+    Widget      selected_child;
+    XmTabStackCallbackStruct;
+*/
+#endif
+
 
 #if HAVE_XmCreateDataField
 
@@ -5393,72 +5422,72 @@ static XEN gxm_XmDataFieldPaste(XEN arg)
 
 static XEN gxm_XmDataFieldCut(XEN arg, XEN arg1)
 {
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmDataFieldCut", "Widget");
-  XEN_ASSERT_TYPE(XEN_Time_P(arg1), arg1, 1, "XmDataFieldCut", "Time");
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmDataFieldCut", "Widget");
+  XEN_ASSERT_TYPE(XEN_Time_P(arg1), arg1, 2, "XmDataFieldCut", "Time");
   return(C_TO_XEN_BOOLEAN(XmDataFieldCut(XEN_TO_C_Widget(arg), XEN_TO_C_Time(arg1))));
 }
 
 static XEN gxm_XmDataFieldCopy(XEN arg, XEN arg1)
 {
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmDataFieldCopy", "Widget");
-  XEN_ASSERT_TYPE(XEN_Time_P(arg1), arg1, 1, "XmDataFieldCopy", "Time");
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmDataFieldCopy", "Widget");
+  XEN_ASSERT_TYPE(XEN_Time_P(arg1), arg1, 2, "XmDataFieldCopy", "Time");
   return(C_TO_XEN_BOOLEAN(XmDataFieldCopy(XEN_TO_C_Widget(arg), XEN_TO_C_Time(arg1))));
 }
 
 static XEN gxm_XmDataFieldSetString(XEN arg, XEN arg1)
 {
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmDataFieldSetString", "Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmDataFieldSetString", "char*");
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmDataFieldSetString", "Widget");
+  XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 2, "XmDataFieldSetString", "char*");
   XmDataFieldSetString(XEN_TO_C_Widget(arg), XEN_TO_C_STRING(arg1));
   return(XEN_FALSE);
 }
 
 static XEN gxm_XmDataFieldSetEditable(XEN arg, XEN arg1)
 {
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmDataFieldSetEditable", "Widget");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg1), arg1, 1, "XmDataFieldSetEditable", "boolean");
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmDataFieldSetEditable", "Widget");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg1), arg1, 2, "XmDataFieldSetEditable", "boolean");
   XmDataFieldSetEditable(XEN_TO_C_Widget(arg), XEN_TO_C_BOOLEAN(arg1));
   return(XEN_FALSE);
 }
 
 static XEN gxm_XmDataFieldSetAddMode(XEN arg, XEN arg1)
 {
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmDataFieldSetAddMode", "Widget");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg1), arg1, 1, "XmDataFieldSetAddMode", "boolean");
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmDataFieldSetAddMode", "Widget");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg1), arg1, 2, "XmDataFieldSetAddMode", "boolean");
   XmDataFieldSetAddMode(XEN_TO_C_Widget(arg), XEN_TO_C_BOOLEAN(arg1));
   return(XEN_FALSE);
 }
 
 static XEN gxm_XmDataFieldSetInsertionPosition(XEN arg, XEN arg1)
 {
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmDataFieldSetInsertionPosition", "Widget");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 1, "XmDataFieldSetInsertionPosition", "int");
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmDataFieldSetInsertionPosition", "Widget");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 2, "XmDataFieldSetInsertionPosition", "int");
   XmDataFieldSetInsertionPosition(XEN_TO_C_Widget(arg), (XmTextPosition)XEN_TO_C_INT(arg1));
   return(XEN_FALSE);
 }
 
 static XEN gxm_XmDataFieldShowPosition(XEN arg, XEN arg1)
 {
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmDataFieldShowPosition", "Widget");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 1, "XmDataFieldShowPosition", "int");
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmDataFieldShowPosition", "Widget");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 2, "XmDataFieldShowPosition", "int");
   XmDataFieldShowPosition(XEN_TO_C_Widget(arg), (XmTextPosition)XEN_TO_C_INT(arg1));
   return(XEN_FALSE);
 }
 
 static XEN gxm_XmDataFieldXYToPos(XEN arg, XEN arg1, XEN arg2)
 {
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmDataFieldXYToPos", "Widget");
-  XEN_ASSERT_TYPE(XEN_Position_P(arg1), arg1, 1, "XmDataFieldXYToPos", "Position");
-  XEN_ASSERT_TYPE(XEN_Position_P(arg2), arg2, 2, "XmDataFieldXYToPos", "Position");
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmDataFieldXYToPos", "Widget");
+  XEN_ASSERT_TYPE(XEN_Position_P(arg1), arg1, 2, "XmDataFieldXYToPos", "Position");
+  XEN_ASSERT_TYPE(XEN_Position_P(arg2), arg2, 3, "XmDataFieldXYToPos", "Position");
   return(C_TO_XEN_INT((int)(XmDataFieldXYToPos(XEN_TO_C_Widget(arg), XEN_TO_C_Position(arg1), XEN_TO_C_Position(arg2)))));
 }
 
 static XEN gxm_XmDataFieldSetHighlight(XEN arg, XEN arg1, XEN arg2, XEN arg3)
 {
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmDataFieldSetHighlight", "Widget");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 1, "XmDataFieldSetHighlight", "int");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmDataFieldSetHighlight", "int");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg3, 3, "XmDataFieldSetHighlight", "int (highligh mode)");
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmDataFieldSetHighlight", "Widget");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 2, "XmDataFieldSetHighlight", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 3, "XmDataFieldSetHighlight", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg3, 4, "XmDataFieldSetHighlight", "int (highligh mode)");
   XmDataFieldSetHighlight(XEN_TO_C_Widget(arg), (XmTextPosition)XEN_TO_C_INT(arg1), (XmTextPosition)XEN_TO_C_INT(arg2), 
 			  (XmHighlightMode)XEN_TO_C_INT(arg3));
   return(XEN_FALSE);
@@ -5466,10 +5495,10 @@ static XEN gxm_XmDataFieldSetHighlight(XEN arg, XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XmDataFieldSetSelection(XEN arg, XEN arg1, XEN arg2, XEN arg3)
 {
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmDataFieldSetSelection", "Widget");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 1, "XmDataFieldSetSelection", "int");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmDataFieldSetSelection", "int");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg3, 3, "XmDataFieldSetSelection", "Time");
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmDataFieldSetSelection", "Widget");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 2, "XmDataFieldSetSelection", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 3, "XmDataFieldSetSelection", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg3, 4, "XmDataFieldSetSelection", "Time");
   XmDataFieldSetSelection(XEN_TO_C_Widget(arg), (XmTextPosition)XEN_TO_C_INT(arg1), (XmTextPosition)XEN_TO_C_INT(arg2), XEN_TO_C_Time(arg3));
   return(XEN_FALSE);
 }
@@ -5487,7 +5516,6 @@ static XEN gxm_XmDataFieldGetSelectionPosition(XEN arg)
 #endif
 
 #if HAVE_XmCreateButtonBox
-#include <Xm/ButtonBox.h>
 static XEN gxm_XmCreateButtonBox(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateButtonBox "Widget XmCreateButtonBox(Widget parent, String name, ArgList arglist, Cardinal argcount) \
@@ -5504,12 +5532,9 @@ static XEN gxm_XmIsButtonBox(XEN arg)
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsButtonBox", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsButtonBox(XEN_TO_C_Widget(arg))));
 }
-
-/* XmIsTabBox XmIsTabStack XmIsColumn apparently exist already */
 #endif
 
 #if HAVE_XmCreateColumn
-#include <Xm/Column.h>
 static XEN gxm_XmCreateColumn(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateColumn "Widget XmCreateColumn(Widget parent, String name, ArgList arglist, Cardinal argcount) \
@@ -5535,7 +5560,6 @@ static XEN gxm_XmColumnGetChildLabel(XEN arg)
 #endif
 
 #if HAVE_XmCreateDropDown
-#include <Xm/DropDown.h>
 static XEN gxm_XmCreateDropDown(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateDropDown "Widget XmCreateDropDown(Widget parent, String name, ArgList arglist, Cardinal argcount) \
@@ -5585,7 +5609,6 @@ static XEN gxm_XmDropDownGetList(XEN arg)
 #endif
 
 #if HAVE_XmCreateFontSelector
-#include <Xm/FontS.h>
 static XEN gxm_XmCreateFontSelector(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateFontSelector "Widget XmCreateFontSelector(Widget parent, String name, ArgList arglist, Cardinal argcount) \
@@ -5595,7 +5618,6 @@ The FontSelector widget creation function"
 #endif
 
 #if HAVE_XmCreateColorSelector
-#include <Xm/ColorS.h>
 static XEN gxm_XmCreateColorSelector(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateColorSelector "Widget XmCreateColorSelector(Widget parent, String name, ArgList arglist, Cardinal argcount) \
@@ -15976,7 +15998,7 @@ enum {
   GXM_Drawing, GXM_Drawn, GXM_Drop_Finish, GXM_Drop_Proc, GXM_DropSite_Enter, GXM_DropSite_Leave, GXM_Drop_Start,
   GXM_File, GXM_List, GXM_Notebook, GXM_Operation, GXM_Popup, GXM_PushButton, GXM_RowColumn, GXM_Scale,
   GXM_ScrollBar, GXM_Selection, GXM_SpinBox, GXM_ToggleButton, GXM_TopLevel_Enter, GXM_TopLevel_Leave,
-  GXM_Traverse, GXM_Verify, GXM_DataField
+  GXM_Traverse, GXM_Verify, GXM_DataField, GXM_MultiList, GXM_TabStack
 };
 
 static XEN wrap_callback_struct(int type, XtPointer info)
@@ -16026,6 +16048,12 @@ static XEN wrap_callback_struct(int type, XtPointer info)
 #endif
 #if HAVE_XmCreateDataField
     case GXM_DataField: return(C_TO_XEN_XmDataFieldCallbackStruct((XmDataFieldCallbackStruct *)info));
+#endif
+#if HAVE_XmCreateMultiList
+    case GXM_MultiList: return(C_TO_XEN_XmMultiListCallbackStruct((XmMultiListCallbackStruct *)info));
+#endif
+#if HAVE_XmCreateTabStack
+    case GXM_TabStack: return(C_TO_XEN_XmTabStackCallbackStruct((XmTabStackCallbackStruct *)info));
 #endif
     }
   return(XEN_FALSE);
@@ -18448,8 +18476,6 @@ static XEN gxm_set_npixels(XEN ptr, XEN val)
 /* HAVE_XPM */
 
 #if WITH_EDITRES
-#include <X11/Xmu/Editres.h>
-
 static XEN gxm_XEditResCheckMessages(XEN widget, XEN data, XEN event, XEN cont)
 {
   Boolean flag;
@@ -18463,7 +18489,6 @@ static XEN gxm_XEditResCheckMessages(XEN widget, XEN data, XEN event, XEN cont)
 			 &flag);
   return(XEN_FALSE);
 }
-
 #endif
 
 
@@ -19408,6 +19433,20 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmDataFieldSetEditable, gxm_XmDataFieldSetEditable, 2, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmDataFieldSetInsertionPosition, gxm_XmDataFieldSetInsertionPosition, 2, 0, 0, NULL);
 #endif
+#if HAVE_XmCreateMultiList
+  XM_DEFINE_PROCEDURE(XmCreateMultiList, gxm_XmCreateMultiList, 3, 1, 0, H_XmCreateMultiList);
+  XM_DEFINE_PROCEDURE(XmMultiListDeselectAllItems, gxm_XmMultiListDeselectAllItems, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmMultiListUnselectAllItems, gxm_XmMultiListUnselectAllItems, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmMultiListSelectAllItems, gxm_XmMultiListSelectAllItems, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmMultiListDeselectRow, gxm_XmMultiListDeselectRow, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmMultiListToggleRow, gxm_XmMultiListToggleRow, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmMultiListMakeRowVisible, gxm_XmMultiListMakeRowVisible, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmMultiListSelectRow, gxm_XmMultiListSelectRow, 3, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmMultiListUnselectItem, gxm_XmMultiListUnselectItem, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmMultiListDeselectItem, gxm_XmMultiListDeselectItem, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmMultiListDeselectItems, gxm_XmMultiListDeselectItems, 3, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmMultiListSelectItems, gxm_XmMultiListSelectItems, 4, 0, 0, NULL);
+#endif
 #if HAVE_XmCreateColumn
   XM_DEFINE_PROCEDURE(XmCreateColumn, gxm_XmCreateColumn, 3, 1, 0, H_XmCreateColumn);
   XM_DEFINE_PROCEDURE(XmColumnGetChildLabel, gxm_XmColumnGetChildLabel, 1, 0, 0, NULL);
@@ -19640,6 +19679,9 @@ static void define_procedures(void)
 #endif
 #if HAVE_XmCreateMultiList
   XM_DEFINE_PROCEDURE(XmIsMultiList, gxm_XmIsMultiList, 1, 0, 0, NULL);
+#endif
+#if HAVE_XmCreateTabStack
+  XM_DEFINE_PROCEDURE(XmIsTabStack, gxm_XmIsTabStack, 1, 0, 0, NULL);
 #endif
 #if HAVE_XmCreateDataField
   XM_DEFINE_PROCEDURE(XmIsDataField, gxm_XmIsDataField, 1, 0, 0, NULL);
@@ -24602,6 +24644,130 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNpictureErrorCallback, XM_CALLBACK);
   DEFINE_RESOURCE(XmNvalidateCallback, XM_CALLBACK);
 #endif
+#if HAVE_XmCreateColumn
+  #ifndef XmNdefaultEntryLabelAlignment
+    #define XmNdefaultEntryLabelAlignment "defaultEntryLabelAlignment"
+    #define XmNdefaultEntryLabelFontList "defaultEntryLabelFontList"
+    #define XmNdefaultFillStyle "defaultFillStyle"
+    #define XmNdistribution "distribution"
+    #define XmNitemSpacing "itemSpacing"
+    #define XmNlabelSpacing "labelSpacing"
+    #define XmNentryLabelAlignment "entryLabelAlignment"
+    #define XmNentryLabelFontList "entryLabelFontList"
+    #define XmNentryLabelPixmap "entryLabelPixmap"
+    #define XmNentryLabelString "entryLabelString"
+    #define XmNentryLabelType "entryLabelType"
+    #define XmNfillStyle "fillStyle"
+    #define XmNshowEntryLabel "showEntryLabel"
+    #define XmNstretchable "stretchable"
+  #endif
+  DEFINE_RESOURCE(XmNdefaultEntryLabelAlignment, XM_INT);
+  DEFINE_RESOURCE(XmNdefaultEntryLabelFontList, XM_FONTLIST);
+  DEFINE_RESOURCE(XmNdefaultFillStyle, XM_INT);
+  DEFINE_RESOURCE(XmNdistribution, XM_INT);
+  DEFINE_RESOURCE(XmNitemSpacing, XM_INT);
+  DEFINE_RESOURCE(XmNlabelSpacing, XM_INT);
+  DEFINE_RESOURCE(XmNentryLabelAlignment, XM_INT);
+  DEFINE_RESOURCE(XmNentryLabelFontList, XM_FONTLIST);
+  DEFINE_RESOURCE(XmNentryLabelPixmap, XM_PIXMAP);
+  DEFINE_RESOURCE(XmNentryLabelString, XM_XMSTRING); /* ? */
+  DEFINE_RESOURCE(XmNentryLabelType, XM_INT);
+  DEFINE_RESOURCE(XmNfillStyle, XM_INT);
+  DEFINE_RESOURCE(XmNshowEntryLabel, XM_BOOLEAN);
+  DEFINE_RESOURCE(XmNstretchable, XM_BOOLEAN);
+#endif
+#if HAVE_XmCreateDropDown
+  #ifndef XmNpopupCursor
+    #define XmNcustomizedCombinationBox "customizedCombinationBox"
+    #define XmNhorizontalMargin "horizontalMargin"
+    #define XmNpopupCursor "popupCursor"
+    #define XmNpopupOffset "popupOffset"
+    #define XmNpopupShellWidget "popupShellWidget"
+    #define XmNshowLabel "showLabel"
+    #define XmNupdateShellCallback "updateShellCallback"
+    #define XmNupdateTextCallback "updateTextCallback"
+    #define XmNuseTextField "useTextField"
+    #define XmNverify "verify"
+    #define XmNverifyTextCallback "verifyTextCallback"
+    #define XmNverticalMargin "verticalMargin"
+  #endif
+  DEFINE_RESOURCE(XmNcustomizedCombinationBox, XM_BOOLEAN);
+  DEFINE_RESOURCE(XmNhorizontalMargin, XM_DIMENSION);
+  DEFINE_RESOURCE(XmNpopupCursor, Xm_CURSOR);
+  DEFINE_RESOURCE(XmNpopupOffset, XM_INT);
+  DEFINE_RESOURCE(XmNpopupShellWidget, XM_WIDGET);
+  DEFINE_RESOURCE(XmNshowLabel, XM_BOOLEAN);
+  DEFINE_RESOURCE(XmNupdateShellCallback, XM_CALLBACK);
+  DEFINE_RESOURCE(XmNupdateTextCallback, XM_CALLBACK);
+  DEFINE_RESOURCE(XmNuseTextField, XM_BOOLEAN);
+  DEFINE_RESOURCE(XmNverify, XM_BOOLEAN);
+  DEFINE_RESOURCE(XmNverifyTextCallback, XM_CALLBACK);
+  DEFINE_RESOURCE(XmNverticalMargin, XM_DIMENSION);
+#endif
+#if HAVE_XmCreateMultiList
+  #ifndef XmNcolumnTitles
+    #define XmNcolumnTitles "columnTitles"
+    #define XmNdoubleClickCallback "doubleClickCallback"
+    #define XmNentryData "entryData"
+    #define XmNfindLabel "findLabel"
+    #define XmNfirstColumn "firstColumn"
+    #define XmNfirstColumnPixmaps "firstColumnPixmaps"
+    #define XmNfirstRow "firstRow"
+    #define XmNnumColumns "numColumns"
+    #define XmNnumRows "numRows"
+    #define XmNselectedColumn "selectedColumn"
+    #define XmNshowFind "showFind"
+    #define XmNsingleSelection "singleSelection"
+  #endif
+  DEFINE_RESOURCE(XmNcolumnTitles, XM_STRING_TABLE);
+  DEFINE_RESOURCE(XmNdoubleClickCallback, XM_CALLBACK);
+  DEFINE_RESOURCE(XmNentryData, XM_ROW_INFO);
+  DEFINE_RESOURCE(XmNfindLabel, XM_XMSTRING);
+  DEFINE_RESOURCE(XmNfirstColumn, XM_SHORT);
+  DEFINE_RESOURCE(XmNfirstColumnPixmaps, XM_BOOLEAN);
+  DEFINE_RESOURCE(XmNfirstRow, XM_SHORT);
+  DEFINE_RESOURCE(XmNnumColumns, XM_SHORT);
+  DEFINE_RESOURCE(XmNnumRows, XM_SHORT);
+  DEFINE_RESOURCE(XmNselectedColumn, XM_SHORT);
+  DEFINE_RESOURCE(XmNshowFind, XM_BOOLEAN);
+  DEFINE_RESOURCE(XmNsingleSelection, XM_CALLBACK);
+#endif
+#if HAVE_XmCreateTabStack
+  #ifndef XmNstackedEffect
+    #define XmNstackedEffect "stackedEffect"
+    #define XmNtabAutoSelect "tabAutoSelect"
+    #define XmNtabCornerPercent "tabCornerPercent"
+    #define XmNtabLabelSpacing "tabLabelSpacing"
+    #define XmNtabMarginHeight "tabMarginHeight"
+    #define XmNtabMarginWidth "tabMarginWidth"
+    #define XmNtabMode "tabMode"
+    #define XmNtabOffset "tabOffset"
+    #define XmNtabOrientation "tabOrientation"
+    #define XmNtabSelectColor "tabSelectColor"
+    #define XmNtabSelectedCallback "tabSelectedCallback"
+    #define XmNtabSelectPixmap "tabSelectPixmap"
+    #define XmNtabSide "tabSide"
+    #define XmNtabStyle "tabStyle"
+    #define XmNuniformTabSize "uniformTabSize"
+    #define XmNuseImageCache "useImageCache"
+  #endif
+  DEFINE_RESOURCE(XmNstackedEffect, XM_BOOLEAN);
+  DEFINE_RESOURCE(XmNtabAutoSelect, XM_BOOLEAN);
+  DEFINE_RESOURCE(XmNtabCornerPercent, XM_INT);
+  DEFINE_RESOURCE(XmNtabLabelSpacing, XM_DIMENSION);
+  DEFINE_RESOURCE(XmNtabMarginHeight, XM_DIMENSION);
+  DEFINE_RESOURCE(XmNtabMarginWidth, XM_DIMENSION);
+  DEFINE_RESOURCE(XmNtabMode, XM_INT);
+  DEFINE_RESOURCE(XmNtabOffset, XM_DIMENSION);
+  DEFINE_RESOURCE(XmNtabOrientation, XM_INT);
+  DEFINE_RESOURCE(XmNtabSelectColor, XM_PIXEL);
+  DEFINE_RESOURCE(XmNtabSelectedCallback, XM_CALLBACK);
+  DEFINE_RESOURCE(XmNtabSelectPixmap, XM_PIXMAP);
+  DEFINE_RESOURCE(XmNtabSide, XM_INT);
+  DEFINE_RESOURCE(XmNtabStyle, XM_INT);
+  DEFINE_RESOURCE(XmNuniformTabSize, XM_BOOLEAN);
+  DEFINE_RESOURCE(XmNuseImageCache, XM_BOOLEAN);
+#endif             
 
   qsort((void *)xm_hash, hd_ctr, sizeof(hdata *), alphabet_compare);
   {
@@ -26029,10 +26195,6 @@ static void define_integers(void)
   DEFINE_INTEGER(XmSHADOW_ETCHED_OUT_DASH);
   DEFINE_INTEGER(XmINVALID_SEPARATOR_TYPE);
   DEFINE_INTEGER(XmPIXMAP);
-#if HAVE_XmPIXMAP_AND_STRING
-  /* TODO: configure check for XmPIXMAP_AND_STRING */
-  DEFINE_INTEGER(XmPIXMAP_AND_STRING);
-#endif
   DEFINE_INTEGER(XmSTRING);
   DEFINE_INTEGER(XmWINDOW);
   DEFINE_INTEGER(XmCURSOR);
@@ -26301,6 +26463,61 @@ static void define_integers(void)
   DEFINE_INTEGER(XmFillMajor);
   DEFINE_INTEGER(XmFillMinor);
   DEFINE_INTEGER(XmFillAll);
+  DEFINE_INTEGER(XmIconTop);
+  DEFINE_INTEGER(XmIconLeft);
+  DEFINE_INTEGER(XmIconRight);
+  DEFINE_INTEGER(XmIconBottom);
+  DEFINE_INTEGER(XmIconOnly);
+  DEFINE_INTEGER(XmIconNone);
+#endif
+
+#if HAVE_XmCreateColumn
+  DEFINE_INTEGER(XmDISTRIBUTE_SPREAD);
+  DEFINE_INTEGER(XmDISTRIBUTE_TIGHT);
+  DEFINE_INTEGER(XmFILL_RAGGED);
+  DEFINE_INTEGER(XmFILL_FLUSH);
+  DEFINE_INTEGER(XmFILL_UNSPECIFIED);
+
+  /*assume this goes with the others */
+  DEFINE_INTEGER(XmPIXMAP_AND_STRING);
+#endif
+
+#if HAVE_XmTabStack
+  DEFINE_INTEGER(XmTABS_SQUARED);
+  DEFINE_INTEGER(XmTABS_ROUNDED);
+  DEFINE_INTEGER(XmTABS_BEVELED);
+  DEFINE_INTEGER(XmTABS_BASIC);
+  DEFINE_INTEGER(XmTABS_STACKED);
+  DEFINE_INTEGER(XmTABS_STACKED_STATIC);
+  DEFINE_INTEGER(XmTABS_SCROLLED);
+  DEFINE_INTEGER(XmTABS_OVERLAYED);
+  DEFINE_INTEGER(XmTAB_ORIENTATION_DYNAMIC);
+  DEFINE_INTEGER(XmTABS_RIGHT_TO_LEFT);
+  DEFINE_INTEGER(XmTABS_LEFT_TO_RIGHT);
+  DEFINE_INTEGER(XmTABS_TOP_TO_BOTTOM);
+  DEFINE_INTEGER(XmTABS_BOTTOM_TO_TOP);
+  DEFINE_INTEGER(XmTAB_EDGE_TOP_LEFT);
+  DEFINE_INTEGER(XmTAB_EDGE_BOTTOM_RIGHT);
+  DEFINE_INTEGER(XmTAB_ARROWS_ON_RIGHT);
+  DEFINE_INTEGER(XmTAB_ARROWS_ON_LEFT);
+  DEFINE_INTEGER(XmTAB_ARROWS_SPLIT);
+  DEFINE_INTEGER(XmCR_TAB_SELECTED);
+  DEFINE_INTEGER(XmCR_TAB_UNSELECTED);
+  DEFINE_INTEGER(XmTABS_ON_TOP);
+  DEFINE_INTEGER(XmTABS_ON_BOTTOM);
+  DEFINE_INTEGER(XmTABS_ON_RIGHT);
+  DEFINE_INTEGER(XmTABS_ON_LEFT);
+  DEFINE_INTEGER(XmPIXMAP_TOP);
+  DEFINE_INTEGER(XmPIXMAP_BOTTOM);
+  DEFINE_INTEGER(XmPIXMAP_RIGHT);
+  DEFINE_INTEGER(XmPIXMAP_LEFT);
+  DEFINE_INTEGER(XmPIXMAP_NONE);
+  DEFINE_INTEGER(XmPIXMAP_ONLY);
+  DEFINE_INTEGER(XmTAB_VALUE_COPY);
+  DEFINE_INTEGER(XmTAB_VALUE_SHARE);
+  DEFINE_INTEGER(XmTAB_CMP_VISUAL);
+  DEFINE_INTEGER(XmTAB_CMP_SIZE);
+  DEFINE_INTEGER(XmTAB_CMP_EQUAL);
 #endif
 
 }
@@ -26395,11 +26612,12 @@ static void define_pointers(void)
 #if HAVE_XmCreateMultiList
   DEFINE_POINTER(xmMultiListWidgetClass);
 #endif
+#if HAVE_XmCreateTabStack
+  DEFINE_POINTER(xmTabStackWidgetClass);
+#endif
 
   /*
   DEFINE_POINTER(xmHierarchyWidgetClass);
-  DEFINE_POINTER(xmTabBoxWidgetClass);
-  DEFINE_POINTER(xmTabStackWidgetClass);
   */
 
 #if HAVE_XmCreateDropDown
@@ -26596,70 +26814,13 @@ static bool xm_already_inited = false;
 /* end HAVE_EXTENSION_LANGUAGE */
 
 
-/* SOMEDAY: Motif 2.2.3: MultiList, Hierarchy, TabBox, TabStack, Paned?
+/* SOMEDAY: Motif 2.2.3: Hierarchy, Paned?
 
-	 macros/enums (ints):
-	 XmCOLOR_DYNAMIC
-	 XmPIXMAP_DYNAMIC
-	 XmTAB_LAST_POSITION
-	 XmTAB_NOT_FOUND
-	 XmTAB_LABEL_STRING
-	 XmTAB_LABEL_PIXMAP
-	 XmTAB_PIXMAP_PLACEMENT
-	 XmTAB_BACKGROUND
-	 XmTAB_FOREGROUND
-	 XmTAB_VALUE_MODE
-	 XmTAB_LABEL_ALIGNMENT
-	 XmTAB_STRING_DIRECTION
-	 XmTAB_BACKGROUND_PIXMAP
-	 XmTAB_SENSITIVE
-	 XmTAB_ALL_FLAGS
-	 XmTABS_SQUARED XmTABS_ROUNDED XmTABS_BEVELED
-	 XmTABS_BASIC XmTABS_STACKED XmTABS_STACKED_STATIC XmTABS_SCROLLED XmTABS_OVERLAYED
-	 XmTAB_ORIENTATION_DYNAMIC XmTABS_RIGHT_TO_LEFT XmTABS_LEFT_TO_RIGHT XmTABS_TOP_TO_BOTTOM XmTABS_BOTTOM_TO_TOP
-	 XmTAB_EDGE_TOP_LEFT XmTAB_EDGE_BOTTOM_RIGHT
-	 XmTAB_ARROWS_ON_RIGHT XmTAB_ARROWS_ON_LEFT XmTAB_ARROWS_SPLIT
-	 XmCR_TAB_SELECTED XmCR_TAB_UNSELECTED
-
-	 structs:
-	 XmTabStackCallbackStruct: int reason; XEvent *event; Widget selected_child;
-	 XmTabBoxCallbackStruct: int reason; XEvent *event; int tab_index; int old_index;
-
-	 functions:
 	 void XmHierarchyOpenAllAncestors(Widget);
 	 WidgetList XmHierarchyGetChildNodes(Widget);
-	 Widget XmCreateTabBox(Widget, String, ArgList, Cardinal);
-	 int XmTabBoxGetIndex(Widget, int, int);
-	 int XmTabBoxGetNumRows(Widget);
-	 int XmTabBoxGetNumColumns(Widget);
-	 int XmTabBoxGetNumTabs(Widget);
-	 int XmTabBoxGetTabRow(Widget, int);
-	 int XmTabBoxXYToIndex(Widget, int, int);
-	 XmTabbedStackList XmTabbedStackListCreate(void);
-	 XmTabbedStackList XmTabbedStackListCopy(XmTabbedStackList);
-	 void XmTabbedStackListFree(XmTabbedStackList);
-	 void XmTabbedStackListRemove(XmTabbedStackList, int);
-	 int XmTabbedStackListInsert(XmTabbedStackList, int, XtValueMask, XmTabAttributes);
-	 int XmTabbedStackListAppend(XmTabbedStackList, XtValueMask, XmTabAttributes);
-	 void XmTabbedStackListModify(XmTabbedStackList, int, XtValueMask, XmTabAttributes);
-	 void XmTabbedStackListQuery(XmTabbedStackList, int, XmTabAttributes);
-	 int XmTabbedStackListFind(XmTabbedStackList, XmString);
-	 void XmTabbedStackListSimpleRemove(XmTabbedStackList, XmString);
-	 int XmTabbedStackListSimpleInsert(XmTabbedStackList, int, XmString);
-	 int XmTabbedStackListSimpleAppend(XmTabbedStackList, XmString);
-	 void XmTabbedStackListSimpleModify(XmTabbedStackList, int, XmString);
-	 XmString XmTabbedStackListSimpleQuery(XmTabbedStackList, int);
-	 XmTabResult XmTabbedStackListCompare(XmTabbedStackList, XmTabbedStackList);
-	 void XmTabAttibutesFree(XmTabAttributes);
-	 extern Widget XmCreateTabStack(Widget, String, ArgList, Cardinal);
-	 extern Widget XmTabStackGetSelectedTab(Widget);
-	 extern void XmTabStackSelectTab(Widget, Boolean);
-	 extern Widget XmTabStackIndexToWidget(Widget, int);
-	 extern Widget XmTabStackXYToWidget(Widget, int, int);
 
 	 missing: XmCreateHierarchy
 	 Paned is included, but what's the point of it?
-
 */
 
 /* TODO: tests for Motif 2.2.3 additions */

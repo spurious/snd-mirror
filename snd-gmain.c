@@ -426,6 +426,7 @@ GtkWidget *snd_as_widget(int argc, char **argv, GtkWidget *parent, void (*error_
 void snd_doit(int argc, char **argv)
 {
 #endif
+  char *str = NULL;
   GtkWidget *shell;
   int i;
   state_context *sx;
@@ -552,18 +553,22 @@ void snd_doit(int argc, char **argv)
 
   set_color_map(DEFAULT_SPECTROGRAM_COLOR);
 
-
-  if (mus_file_probe("Snd.gtkrc"))
-    gtk_rc_parse("Snd.gtkrc");
+  str = mus_expand_filename("~/.gtkrc-2.0");
+  if (mus_file_probe(str))
+    gtk_rc_parse(str);
   else
     {
-      char *str = NULL;
-      str = mus_expand_filename("~/Snd.gtkrc");
-      if (mus_file_probe(str))
-	gtk_rc_parse(str);
-      else 
+      if (mus_file_probe("Snd.gtkrc"))
+	gtk_rc_parse("Snd.gtkrc");
+      else
 	{
-	  gtk_rc_parse_string("\n\
+	  if (str) FREE(str);
+	  str = mus_expand_filename("~/Snd.gtkrc");
+	  if (mus_file_probe(str))
+	    gtk_rc_parse(str);
+	  else 
+	    {
+	      gtk_rc_parse_string("\n\
 \n\
 # This is the same as Snd.gtkrc\n\
 style \"default\"\n\
@@ -705,9 +710,8 @@ style \"reset\" = \"default_button\"\n\
 \n\
 widget \"*.reset_button\" style \"reset\"\n\
 ");
-        }
-      if (str) FREE(str);
-    }
+      }}}
+  if (str) FREE(str);
 
   MAIN_PANE(ss) = gtk_vbox_new(false, 0); /* not homogenous, spacing 0 */
 
