@@ -1872,7 +1872,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
   if (mus_increment(egen) == 0.0) 
     {
       /* step env -- handled as sequence of scalings */
-      int local_edpos, k, pos, old_squelch;
+      int local_edpos, k, pos;
       off_t segbeg, segnum, segend;
       env *newe;
       char *new_origin; /* need a complete origin since this appears as a scaled-edit in 
@@ -1889,8 +1889,6 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 	  segend = si->begs[i] + dur;
 	  segnum = passes[0] + 1;
 	  local_edpos = si->cps[i]->edit_ctr; /* for as_one_edit backup */
-	  old_squelch = si->cps[i]->squelch_update;
-	  si->cps[i]->squelch_update = 1;
 	  pos = to_c_edit_position(si->cps[i], edpos, origin, arg_pos);
 	  for (k = 0; k < len; k++)
 	    {
@@ -1909,7 +1907,6 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 	      if (segbeg >= segend) break;
 	      segnum = passes[k + 1] - passes[k];
 	    }
-	  si->cps[i]->squelch_update = old_squelch;
 	  newe = make_envelope(mus_data(egen), mus_length(egen) * 2);
 	  new_origin = mus_format("env-channel (make-env %s :base 0 :end " OFF_TD ") " OFF_TD " " OFF_TD,
 				  tmpstr = env_to_string(newe), 
@@ -2081,7 +2078,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
   else
     {
       /* line segment env that is long enough to reward optimization -- handled as sequence of ramps and scalings */
-      int local_edpos, k, m, pos, old_squelch, env_pos;
+      int local_edpos, k, m, pos, env_pos;
       off_t segbeg, segnum, segend;
       Float *data;
       env *newe;
@@ -2100,8 +2097,6 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 	  segend = si->begs[i] + dur;
 	  segnum = passes[0] + 1;
 	  local_edpos = si->cps[i]->edit_ctr; /* for as_one_edit backup */
-	  old_squelch = si->cps[i]->squelch_update;
-	  si->cps[i]->squelch_update = 1;
 	  pos = to_c_edit_position(si->cps[i], edpos, origin, arg_pos);
 	  env_pos = pos;
 	  for (k = 0, m = 1; k < len; k++, m += 2)
@@ -2132,7 +2127,6 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, Float scaler, int re
 	      if ((len < 2) || (abs(dur - passes[len - 2]) < 2))
 		amp_env_env_selection_by(si->cps[i], egen, si->begs[i], dur, env_pos);
 	    }
-	  si->cps[i]->squelch_update = old_squelch;
 	  newe = make_envelope(mus_data(egen), mus_length(egen) * 2);
 	  new_origin = mus_format("env-channel (make-env %s :base 1 :end " OFF_TD ") " OFF_TD " " OFF_TD,
 				  tmpstr = env_to_string(newe), 
@@ -2457,7 +2451,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 
       if (optimization(ss) > 0)
 	{
-	  pt = form_to_ptree_1f2f(proc_and_list);
+	  pt = form_to_ptree_1_f(proc_and_list);
 	  if (pt)
 	    {
 	      char *err_str;
@@ -2575,6 +2569,68 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
   return(res);
 }
 
+static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, off_t beg, off_t num, int pos)
+{ 
+  snd_state *ss;
+  snd_info *sp;
+  snd_fd *sf = NULL;
+  off_t kp, j = 0;
+  int cured;
+  XEN res = XEN_FALSE;
+  char *filename;
+  mus_any *outgen = NULL;
+  XEN v;
+  ss = cp->state;
+  sp = cp->sound;
+  sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
+  if (sf == NULL) return(XEN_TRUE);
+  filename = snd_tempnam(ss);
+  outgen = mus_make_sample2file(filename, 1, MUS_OUT_FORMAT, MUS_NEXT);
+  j = 0;
+  ss->stopped_explicitly = FALSE;
+  v = XEN_CALL_1(init_func,
+		   C_TO_XEN_OFF_T(0),
+		   "ptree-channel fallback init func");
+
+  for (kp = 0; kp < num; kp++)
+    {
+      res = XEN_CALL_3(proc, 
+		       C_TO_XEN_DOUBLE((double)read_sample_to_float(sf)),
+		       v,
+		       XEN_TRUE,
+		       "ptree-channel fallback proc");
+      MUS_OUTA_1(j++, XEN_TO_C_DOUBLE(res), (mus_output *)outgen);
+      if (ss->stopped_explicitly) 
+	break;
+    }
+  if (outgen) mus_free(outgen);
+  if (sf) sf = free_snd_fd(sf);
+  if (ss->stopped_explicitly) 
+    ss->stopped_explicitly = FALSE;
+  else
+    {
+      if (j == num)
+	file_change_samples(beg, j, filename, cp, 0, DELETE_ME, LOCK_MIXES, "ptree-channel fallback", cp->edit_ctr);
+      else
+	{
+	  cured = cp->edit_ctr;
+	  delete_samples(beg, num, cp, "ptree-channel fallback", cp->edit_ctr);
+	  if (j > 0)
+	    {
+	      file_insert_samples(beg, j, filename, cp, 0, DELETE_ME, "ptree-channel fallback", cp->edit_ctr);
+	      backup_edit_list(cp);
+	      if (cp->edit_ctr > cured)
+		backup_edit_list(cp);
+	      ripple_trailing_marks(cp, beg, num, j);
+	    }
+	  else snd_remove(filename, TRUE);
+	}
+      update_graph(cp);
+    }
+  FREE(filename);
+  return(res);
+}
+
 static XEN g_ptree_channel(XEN proc_and_list, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN edpos, XEN env_too, XEN init_func)
 {
   #define H_ptree_channel "(" S_ptree_channel " proc &optional beg dur snd chn edpos peak-env-also init-func) \
@@ -2586,8 +2642,6 @@ has any envelope ramps of previous ptree operations, map-channel is called inste
 data is saved in the normal manner. The optional 'init-func' arg can be used in cases where the \
 edit operation needs state and an indication of where it is in a given edit.  See extsnd.html \
 for the gory details."
-
-  /* TODO: clm struct as closure? -- how to declare it? */
 
   chan_info *cp;
   off_t beg = 0, dur = 0;
@@ -2619,21 +2673,29 @@ for the gory details."
 	XEN_ERROR(BAD_ARITY,
 		  XEN_LIST_2(C_TO_XEN_STRING(S_ptree_channel),
 			     C_TO_XEN_STRING("init-func must take 1 arg")));
-      /* if not optimizable, give up for now (needs to call init-func and pass val to proc) */
-      pt = form_to_ptree_1f1v1b2f(proc_and_list);
+
+      if (XEN_TRUE_P(env_too))
+
+	/* SOMEDAY: ptree-channel with init-func: if env-too, set it up as well */
+	/*   snd-snd.c amp_env_ptree, pass in init_func, call evaluate_ptree_1f1b1b2f etc */
+
+	XEN_ERROR(XEN_ERROR_TYPE("ptree-channel-gives-up"),
+		  XEN_LIST_2(C_TO_XEN_STRING(S_ptree_channel),
+			     C_TO_XEN_STRING("can't optimize peak-envs yet if init-func passed")));
+
+      pt = form_to_ptree_3_f(proc_and_list);
       if ((pt != NULL) && (!(ramp_or_ptree_fragments_in_use(cp, beg, dur, pos))))
 	{
 	  ptree_channel(cp, pt, beg, dur, pos, (XEN_TRUE_P(env_too)) ? pt : NULL, init_func);
 	}
       else
 	{
-	  /* TODO: call map-channel */
+	  g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos);
 	}
-      /* TODO: if env-too, set it up as well */
       return(proc_and_list);
     }
 
-  pt = form_to_ptree_1f2f(proc_and_list);
+  pt = form_to_ptree_1_f(proc_and_list);
   if (pt)
     {
       if (ramp_or_ptree_fragments_in_use(cp, beg, dur, pos))
@@ -2799,7 +2861,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 
   if (optimization(ss) > 0)
     {
-      pt = form_to_ptree_1f2b(proc_and_list);
+      pt = form_to_ptree_1_b(proc_and_list);
       if (pt)
 	{
 	  for (kp = 0; kp < num; kp++)

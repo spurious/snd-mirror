@@ -285,9 +285,9 @@ void clear_listener(void) {}
 int menu_widget(int which_menu) {return(0);}
 void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b) {}
 
-#define NUM_TRANSFORM_TYPES 8
+#define NUM_TRANSFORM_TYPES 7
 static char *TRANSFORM_TYPE_CONSTANTS[NUM_TRANSFORM_TYPES] =
-  {S_fourier_transform, S_wavelet_transform, S_hankel_transform, S_walsh_transform, 
+  {S_fourier_transform, S_wavelet_transform, S_walsh_transform, 
    S_autocorrelation, S_cepstrum, S_hadamard_transform, S_haar_transform};
 char *transform_type_name(int choice) {return(TRANSFORM_TYPE_CONSTANTS[choice]);}
 

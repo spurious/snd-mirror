@@ -604,12 +604,20 @@ things, to re-install OpenMotif and make sure /usr/local/lib/libXm.so.2
 is the new version, not Lesstif's.  If you use mwm, you need
 to get it back as well, which means removing the directory that
 Lesstif put in its place.  The error you will get will be
-some complaint about undefined xmNotebook class. So:
+some complaint about undefined xmNotebook class, or worse,
+Snd will simply become catatonic. I haven't found a foolproof
+way to detect Lesstif at run-time (it is possible to build Snd
+with OpenMotif, then accidentally load Lesstif's version of
+libXm.a or whatever).  ldd snd will tell you which shared
+libraries are being loaded.  In any case, Lesstif should
+be deleted:
+
   rpm -e lesstif-devel
   rpm -e ddd
   rpm -e lesstif
   rpm -i openmotif-<whatever the number is>
   rpm -i openmotif-devel-<whatever the number is>
+
 In RedHat 7.3, you can choose to install openmotif, rather than lesstif.
 
 There appears to be a similar problem in Yellow Dog Linux for the PPC.

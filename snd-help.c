@@ -148,7 +148,8 @@ char *version_info(void)
 #if WITH_MODULES
 	  ", with modules",
 #endif
-	  ")", sndlib_consistency_check(),
+	  ")", 
+	  sndlib_consistency_check(),
 	  "\n    CLM ", snd_itoa(MUS_VERSION), ".", 
 	                snd_itoa(MUS_REVISION), " (", 
                         MUS_DATE, ")",
@@ -268,7 +269,7 @@ void news_help(snd_state *ss)
 	    "\nRecent changes include:\n\
 \n\
 9-Dec:   added init-func arg to ptree-channel.\n\
-1-Dec:   removed Chebyshev transform.\n\
+1-Dec:   removed Chebyshev and Hankel transforms.\n\
          def-clm-struct support in run completed.\n\
          new-sound-hook, sound-let (ws.scm).\n\
          -nostdin switch for CLM/Snd communication.\n\
@@ -669,8 +670,7 @@ data values, to some extent), set the variable\n\
 \n\
 The harmonic analysis function is normally the\n\
 Fourier Transform, but others are available,\n\
-including about 20 wavelet choices, the Hankel and\n\
-and perhaps others.\n\
+including about 20 wavelet choices.\n\
 \n\
 ";
 
@@ -889,7 +889,7 @@ Transform Graph style (the Transform Options Display choice, " S_transform_graph
   " S_graph_once "   " S_graph_as_sonogram "  " S_graph_as_spectrogram "\n\
 \n\
 Transform type (" S_transform_type "):\n\
-  " S_fourier_transform "  " S_wavelet_transform "   " S_hankel_transform "  " S_cepstrum "\n\
+  " S_fourier_transform "  " S_wavelet_transform "   " S_cepstrum "\n\
   " S_autocorrelation "    " S_walsh_transform "  " S_hadamard_transform " " S_haar_transform "\n\
 \n\
 FFT Window type (" S_fft_window "):\n\
@@ -1723,8 +1723,7 @@ any point in the fft to get the associated fft data displayed; if " S_verbose_cu
 drag the mouse through the fft display and the description in the minibuffer will be constantly updated. \
 \n\n\
 The harmonic analysis function is normally the Fourier Transform, but others are available, \
-including about 20 wavelet choices, the Hankel transform, and perhaps others. (The \
-Hankel transform returns the Bessel function spectrum). \
+including about 20 wavelet choices. \
 \n\n\
 The top three buttons in the transform dialog choose between a normal fft, a sonogram, or a \
 spectrogram. The 'peaks' button affects whether peak info is displayed alongside the graph of the \

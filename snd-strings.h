@@ -223,8 +223,6 @@
 #define S_graphs_horizontal             "graphs-horizontal"
 #define S_haar_transform                "haar-transform"
 #define S_hadamard_transform            "hadamard-transform"
-#define S_hankel_jn                     "hankel-jn"
-#define S_hankel_transform              "hankel-transform"
 #define S_header_type                   "header-type"
 #define S_help_dialog                   "help-dialog"
 #define S_help_hook                     "help-hook"

@@ -1,172 +1,13 @@
 #include "snd.h"
 
+/* TODO: re-implement GSL Hankel in scheme (needs C tie-in as well as scheme code) */
+
 /* handling of "beta" changed drastically 28-June-98 
  *   it is now a number between 0 and 1 from ss point of view, and is scaled by the window max before being applied 
  * returned to old wavelet code 18-Apr-01
  * added fftw support and removed fht 6-June-02
- * removed non-GSL Hankel case 7-June-02
  * greatly simplified 8-June-02: no more cached windows, single fft background functions etc, zero pad made sensible
  */
-
-/* -------------------------------- HANKEL TRANSFORM -------------------------------- */
-
-#if HAVE_GSL
-#include <gsl/gsl_dht.h>
-
-/* this code taken from gsl-0.9/dht/dht.c -- we need to insert code into
- *   its inner loop to keep it from bringing the whole system to a halt
- */
-#include <gsl/gsl_errno.h>
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_sf_bessel.h>
-
-static int
-dht_bessel_zeros_1(gsl_dht * t)
-{
-  unsigned int s;
-  gsl_sf_result z;
-  int stat_z = 0;
-  t->j[0] = 0.0;
-  for(s=1; s < t->size + 2; s++) {
-    stat_z += gsl_sf_bessel_zero_Jnu_e(t->nu, s, &z);
-    t->j[s] = z.val;
-  }
-  if(stat_z != 0) {
-    GSL_ERROR("could not compute bessel zeroes", GSL_EFAILED);
-  }
-  else {
-    return GSL_SUCCESS;
-  }
-}
-
-static int
-gsl_dht_init_1(gsl_dht * t, double nu, double xmax)
-{
-  if(xmax <= 0.0) {
-    GSL_ERROR ("xmax is not positive", GSL_EDOM);
-  } else if(nu < 0.0) {
-    GSL_ERROR ("nu is negative", GSL_EDOM);
-  }
-  else {
-    size_t n, m;
-    int stat_bz = GSL_SUCCESS;
-    int stat_J  = 0;
-    double jN;
-
-    if(nu != t->nu) {
-      /* Recalculate Bessel zeros if necessary. */
-      t->nu = nu;
-      stat_bz = dht_bessel_zeros_1(t);
-    }
-
-    jN = t->j[t->size + 1];
-
-    t->xmax = xmax;
-    t->kmax = jN / xmax;
-
-    t->J2[0] = 0.0;
-    for(m=1; m<t->size + 1; m++) {
-      gsl_sf_result J;
-      stat_J += gsl_sf_bessel_Jnu_e(nu + 1.0, t->j[m], &J);
-      t->J2[m] = J.val * J.val;
-    }
-
-    /* J_nu(j[n] j[m] / j[N]) = Jjj[n(n-1)/2 + m - 1], 1 <= n,m <= size
-     */
-
-    /* here are my changes -- add check for X event so user-interface remains responsive,
-     *   and add progress report (i.e. hourglass showing where we are in the computation)
-     */
-    {
-      int prog, reporting = 0;
-      snd_state *ss;
-      snd_info *sp;
-      ss = get_global_state();
-      sp = selected_sound(ss);
-      reporting = ((sp) && (t->size >= 1024));
-      if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
-
-      for(n=1, prog=0; n<t->size+1; n++,prog++) {
-	for(m=1; m<=n; m++) {
-	  double arg = t->j[n] * t->j[m] / jN;
-	  gsl_sf_result J;
-	  stat_J += gsl_sf_bessel_Jnu_e(nu, arg, &J);
-	  t->Jjj[n*(n-1)/2 + m - 1] = J.val;
-	}
-	if (prog > 100)
-	  {
-	    if (with_background_processes(ss))
-	      check_for_event(get_global_state());
-	    prog = 0;
-	    if (reporting) progress_report(sp, "Hankel", 1, 1, (Float)n / (Float)(t->size), NOT_FROM_ENVED);
-	  }
-      }
-      if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
-    }
-    /* end changes */
-
-    if(stat_J != 0) {
-      GSL_ERROR("error computing bessel function", GSL_EFAILED);
-    }
-    else {
-      return stat_bz;
-    }
-  }
-}
-
-static gsl_dht *
-gsl_dht_new_1 (size_t size, double nu, double xmax)
-{
-  int status;
-
-  gsl_dht * dht = gsl_dht_alloc (size);
-
-  if (dht == 0)
-    return 0;
-
-  status = gsl_dht_init_1(dht, nu, xmax);
-  
-  if (status)
-    return 0;
-
-  return dht;
-}
-
-static gsl_dht *dht_t = NULL;
-static int last_dht_size = 0;
-static Float last_dht_jn = 0.0;
-
-static void hankel_transform(int size, Float *input, Float *output, Float Jn)
-{
-  /* args size, bessel limit, xmax */
-  double *in1, *out1;
-  int i;
-  if (size < 2) size = 2; /* GSL dht dies if size = 1 */
-  if ((size != last_dht_size) || (last_dht_jn != Jn))
-    {
-      if (dht_t) 
-	gsl_dht_free(dht_t);
-      dht_t = NULL; /* next line might not return due to gsl_error, so clear for subsequent call */
-      dht_t = gsl_dht_new_1(size / 2, Jn, (double)(size / 2));
-      last_dht_size = size;
-      last_dht_jn = Jn;
-    }
-  if (sizeof(Float) == sizeof(double))
-    gsl_dht_apply(dht_t, (double *)input, (double *)output); /* the casts exist only to squelch dumb compiler complaints */
-  else
-    {
-      in1 = (double *)MALLOC(size * sizeof(double));
-      out1 = (double *)CALLOC(size, sizeof(double));
-      for (i = 0; i < size; i++) in1[i] = (double)input[i];
-      gsl_dht_apply(dht_t, in1, out1);
-      for (i = 0; i < size; i++) output[i] = (Float)out1[i];
-      FREE(in1);
-      FREE(out1);
-    }
-  /* gsl_dht_free(t); */
-}
-#endif
-
 
 /* -------------------------------- WAVELET TRANSFORM -------------------------------- */
 /* 
@@ -765,7 +606,6 @@ static char *spectro_xlabel(chan_info *cp)
       break;
     case WAVELET:         return(wavelet_names[cp->wavelet_type]); break;
     case HAAR:            return("Haar spectrum");                 break;
-    case HANKEL:          return("Hankel spectrum");               break;
     case CEPSTRUM:        return("cepstrum");                      break;
     case WALSH:           return("Sequency");                      break;
     case HADAMARD:        return("Sequency");                      break;
@@ -925,17 +765,6 @@ static void apply_fft(fft_state *fs)
       }
 #endif
       break;
-    case HANKEL:
-#if HAVE_GSL
-      {
-	Float *hwin;
-	hwin = (Float *)CALLOC(fs->size, sizeof(Float));
-	for (i = 0; i < data_len; i++) hwin[i] = read_sample_to_float(sf);
-	hankel_transform(data_len, hwin, fft_data, hankel_jn(ss));
-	FREE(hwin);
-      }
-#endif
-      break;
     case WAVELET:
       for (i = 0; i < data_len; i++) fft_data[i] = read_sample_to_float(sf);
       if (data_len < fs->size) 
@@ -1049,7 +878,7 @@ static void display_fft(fft_state *fs)
 	      min_freq = ((Float)(SND_SRATE(sp)) * 0.5 * cp->spectro_start);
 	    }
 	  break;
-	case WAVELET: case HANKEL: case HADAMARD: case WALSH: case HAAR:
+	case WAVELET: case HADAMARD: case WALSH: case HAAR:
 	  max_freq = fs->size * cp->spectro_cutoff; 
 	  min_freq = fs->size * cp->spectro_start; 
 	  break;
@@ -2009,7 +1838,7 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ARG_1, "snd-transform", "an integer");
   XEN_ASSERT_TYPE(VCT_P(data), data, XEN_ARG_2, "snd-transform", "a vct");
   trf = XEN_TO_SMALL_C_INT(type);
-  if ((trf < 0) || (trf > HANKEL))
+  if ((trf < 0) || (trf > HAAR))
     mus_misc_error("snd-transform", "invalid transform choice", type);
   v = TO_VCT(data);
   switch (trf)
@@ -2042,14 +1871,6 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
 	}
 #endif
       break;
-#if HAVE_GSL
-    case HANKEL:
-      dat = (Float *)CALLOC(v->length, sizeof(Float));
-      hankel_transform(v->length, v->data, dat, hankel_jn(get_global_state()));
-      memcpy((void *)(v->data), (void *)dat, (v->length * sizeof(Float)));
-      FREE(dat);
-      break;
-#endif
     case WAVELET:
       hnt = XEN_TO_SMALL_C_INT(hint);
       if (hnt < NUM_WAVELETS)
@@ -2077,18 +1898,6 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
   return(data);
 }
 
-static XEN g_hankel_jn(void) {return(C_TO_XEN_DOUBLE(hankel_jn(get_global_state())));}
-static XEN g_set_hankel_jn(XEN val) 
-{
-  #define H_hankel_jn "(" S_hankel_jn ") -> Bessel function used in Hankel transform."
-  snd_state *ss;
-  ss = get_global_state();
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, "set! " S_hankel_jn, "a number"); 
-  set_hankel_jn(ss, XEN_TO_C_DOUBLE_WITH_CALLER(val, S_hankel_jn));
-  return(val);
-}
-
-
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_transform_samples_size_w, g_transform_samples_size)
 XEN_ARGIFY_2(g_transform_samples_w, g_transform_samples)
@@ -2097,8 +1906,6 @@ XEN_ARGIFY_3(transform_samples2vct_w, transform_samples2vct)
 XEN_NARGIFY_1(g_autocorrelate_w, g_autocorrelate)
 XEN_NARGIFY_5(g_add_transform_w, g_add_transform)
 XEN_ARGIFY_3(g_snd_transform_w, g_snd_transform)
-XEN_NARGIFY_0(g_hankel_jn_w, g_hankel_jn)
-XEN_ARGIFY_1(g_set_hankel_jn_w, g_set_hankel_jn)
 #else
 #define g_transform_samples_size_w g_transform_samples_size
 #define g_transform_samples_w g_transform_samples
@@ -2107,8 +1914,6 @@ XEN_ARGIFY_1(g_set_hankel_jn_w, g_set_hankel_jn)
 #define g_autocorrelate_w g_autocorrelate
 #define g_add_transform_w g_add_transform
 #define g_snd_transform_w g_snd_transform
-#define g_hankel_jn_w g_hankel_jn
-#define g_set_hankel_jn_w g_set_hankel_jn
 #endif
 
 void g_init_fft(void)
@@ -2129,7 +1934,6 @@ of a moving mark:\n\
 
   #define H_fourier_transform   S_transform_type " value for Fourier transform (sinusoid basis)"
   #define H_wavelet_transform   S_transform_type " value for wavelet transform (" S_wavelet_type " chooses wavelet)"
-  #define H_hankel_transform    S_transform_type " value for Hankel transform (Bessel function basis)"
   #define H_haar_transform      S_transform_type " value for Haar transform"
   #define H_cepstrum            S_transform_type " value for cepstrum (log of power spectrum)"
   #define H_hadamard_transform  S_transform_type " value for Hadamard transform"
@@ -2138,7 +1942,6 @@ of a moving mark:\n\
 
   XEN_DEFINE_CONSTANT(S_fourier_transform,   FOURIER,         H_fourier_transform);
   XEN_DEFINE_CONSTANT(S_wavelet_transform,   WAVELET,         H_wavelet_transform);
-  XEN_DEFINE_CONSTANT(S_hankel_transform,    HANKEL,          H_hankel_transform);
   XEN_DEFINE_CONSTANT(S_haar_transform,      HAAR,            H_haar_transform);
   XEN_DEFINE_CONSTANT(S_cepstrum,            CEPSTRUM,        H_cepstrum);
   XEN_DEFINE_CONSTANT(S_hadamard_transform,  HADAMARD,        H_hadamard_transform);
@@ -2163,6 +1966,5 @@ of a moving mark:\n\
   XEN_DEFINE_PROCEDURE(S_add_transform,         g_add_transform_w, 5, 0, 0,       H_add_transform);
 
   XEN_DEFINE_PROCEDURE("snd-transform",         g_snd_transform_w, 2, 1, 0,       "call transform code directly");
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_hankel_jn, g_hankel_jn_w, H_hankel_jn, "set-" S_hankel_jn, g_set_hankel_jn_w,  0, 0, 1, 0);
 }
 

@@ -24,9 +24,9 @@
  *
  * exported:
  *      (static void *form_to_ptree(XEN code) parse code, returning pointer to tree (a list) or null if code has something we can't handle)
- *   void *form_to_ptree_1f2f(XEN code) -- (1 arg) adds type check that result is Float
- *   void *form_to_ptree_0f2f(XEN code) -- (no args) adds type check that result is Float
- *   void *form_to_ptree_1f2b(XEN code) -- (1 arg) adds type check that result is boolean
+ *   void *form_to_ptree_1_f(XEN code) -- (1 arg) adds type check that result is Float
+ *   void *form_to_ptree_0_f(XEN code) -- (no args) adds type check that result is Float
+ *   void *form_to_ptree_1_b(XEN code) -- (1 arg) adds type check that result is boolean
  *   Float evaluate_ptree_1f2f(void *tree, Float arg)
  *     evaluate ptree passing it the single Float arg, returning a Float result
  *   Float evaluate_ptree_0f2f(void *tree, Float arg)
@@ -1893,8 +1893,8 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, int separ
 		  if (strcmp(type, "function") == 0) arg_type = R_FUNCTION; else
 		  if (strcmp(type, "reader") == 0) arg_type = R_READER; else
 		  if (strcmp(type, "boolean") == 0) arg_type = R_BOOL; else
-		  if (strcmp(type, "char") == 0) arg_type = R_CHAR;
-		  /* TODO: add list here for clm-struct and test it */
+		  if (strcmp(type, "char") == 0) arg_type = R_CHAR; else
+		  if (strcmp(type, "list") == 0) arg_type = R_LIST;
 		}
 	    }
 	  add_var_to_ptree(prog, 
@@ -8104,7 +8104,7 @@ static void *form_to_ptree(XEN code)
 
 /* ---------------- various tree-building wrappers ---------------- */
 
-void *form_to_ptree_1f2f(XEN code)
+void *form_to_ptree_1_f(XEN code)
 {
   ptree *pt;
   pt = (ptree *)form_to_ptree(code);
@@ -8117,7 +8117,7 @@ void *form_to_ptree_1f2f(XEN code)
   return(NULL);
 }
 
-void *form_to_ptree_1f1v1b2f(XEN code)
+void *form_to_ptree_3_f(XEN code)
 {
   ptree *pt;
   pt = (ptree *)form_to_ptree(code);
@@ -8130,7 +8130,7 @@ void *form_to_ptree_1f1v1b2f(XEN code)
   return(NULL);
 }
 
-void *form_to_ptree_0f2f(XEN code)
+void *form_to_ptree_0_f(XEN code)
 {
   ptree *pt;
   pt = (ptree *)form_to_ptree(code);
@@ -8143,7 +8143,7 @@ void *form_to_ptree_0f2f(XEN code)
   return(NULL);
 }
 
-void *form_to_ptree_1f2b(XEN code)
+void *form_to_ptree_1_b(XEN code)
 {
   ptree *pt;
   pt = (ptree *)form_to_ptree(code);
@@ -8156,7 +8156,7 @@ void *form_to_ptree_1f2b(XEN code)
   return(NULL);
 }
 
-void *form_to_ptree_1f2b_without_env(XEN code)
+void *form_to_ptree_1_b_without_env(XEN code)
 {
   ptree *pt;
   pt = (ptree *)form_to_ptree(XEN_LIST_2(code, XEN_FALSE));
@@ -8250,13 +8250,13 @@ static XEN g_run_eval(XEN code, XEN arg)
   return(XEN_FALSE);
 }
 #else
-void *form_to_ptree_1f2b(XEN code) {return(NULL);}
-void *form_to_ptree_1f1v1b2f(XEN code) {return(NULL);}
-void *form_to_ptree_1f2b_without_env(XEN code) {return(NULL);}
-void *form_to_ptree_1f2f(XEN code) {return(NULL);}
+void *form_to_ptree_1_b(XEN code) {return(NULL);}
+void *form_to_ptree_3_f(XEN code) {return(NULL);}
+void *form_to_ptree_1_b_without_env(XEN code) {return(NULL);}
+void *form_to_ptree_1_f(XEN code) {return(NULL);}
 Float evaluate_ptree_1f1v1b2f(void *upt, Float arg, vct *v, int dir) {return(0.0);}
 Float evaluate_ptree_0f2f(void *upt) {return(0.0);}
-void *form_to_ptree_0f2f(XEN code) {return(NULL);}
+void *form_to_ptree_0_f(XEN code) {return(NULL);}
 Float evaluate_ptree_1f2f(void *upt, Float arg) {return(0.0);}
 int evaluate_ptree_1f2b(void *upt, Float arg) {return(0);}
 void *free_ptree(void *upt) {return(NULL);}

@@ -420,11 +420,6 @@ function.  </p>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
-<!-- hankel-jn -->
-<!-- --><tr><td><code><em class=def><a name="hankeljn">hankel-jn</a></em></code></td>
-<!-- --><td>0</td><td>Bessel function to use in Hankel Transform.</td></tr>
-<!-- --><tr><td colspan=3></td></tr>
-<!-- -->
 <!-- ladspa-dir -->
 <!-- --><tr><td valign=top><code><em class=def><a name="ladspadir">ladspa-dir</a></em></code></td>
 <!-- --><td valign=top><code>#f</code></td>
@@ -5062,7 +5057,7 @@ the direction argument between the channel and edit-position:
 <!-- --><span class=defbox><code><em class=def><a name="ptreechannel">ptree-channel</a></em> (proc <i>beg dur snd chn edpos env-too init-func</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- --><b>ptree-channel</b>
+<!-- --><b>ptree-channel</b> (only in Guile currently)
 <!-- -->applies 'proc' as a 'virtual edit'; that is, the effect of 'proc' (a function of one argument, the
 <!-- -->current sample), comes about as an implicit change in the way the data is read. 
 <!-- --><br><br>
@@ -5092,8 +5087,6 @@ the direction argument between the channel and edit-position:
 <!-- -->has any envelope ramps or previous ptree operations, map-channel is called instead and the new
 <!-- -->data is saved in the normal manner (that is, I don't currently try to chain these operations
 <!-- -->together).  
-<!-- -->'proc' must be compatible with (and run through) the optimizer;
-<!-- -->this means the <a href="#optimization">optimization</a> variable must be greater than 0. 
 <!-- --><br><br>
 <!-- -->If no 'init-func' is specified, the editing procedure ('proc') should not assume anything about
 <!-- -->the context in which it is called;  in this case, there's no way for 'proc' to know where it starts, or when it is being restarted,
@@ -5132,7 +5125,7 @@ the direction argument between the channel and edit-position:
 <!-- --></pre></td></tr></table></td></tr>
 <!-- -->
 <!-- --><tr><td></td><td>
-<!-- -->Several things to note; since the ptree-channel function (the first one, 'proc') is optimized
+<!-- -->Several things to note:  since the ptree-channel function (the first one, 'proc') is optimized
 <!-- -->via the run macro, all normal closure references are packaged up into the parse tree and never
 <!-- -->seen again (in this context anyway), so we need a way to pass in the initial value of 'angle'
 <!-- -->each time ptree-channel is run over the segment that owns this operation.  So, the 'init-func'
@@ -5141,13 +5134,27 @@ the direction argument between the channel and edit-position:
 <!-- -->passed the fragment-relative begin time, and the main 'proc' takes the current (sample-wise)
 <!-- -->read direction as well as the vct returned by 'init-func'.  The sequence of operations is:
 <!-- -->a read is requested, 'init-func' is called with the read start point (relative to the
-<!-- -->original segment start -- this is actually complicated to implement since a single
-<!-- -->ptree fragment can itself become arbitrarily fragmented), it returns any state it needs
-<!-- -->to refer to in a vct object, then each time a sample is needed from the current sample
+<!-- -->original segment start),
+<!-- -->it returns in a vct any state that 'proc' may need
+<!-- -->to refer to, then each time a sample is needed from the current sample
 <!-- -->reader, 'proc' is called passing it the current underlying sample, the vct of 'init-func',
 <!-- -->and the read direction.
 <!-- --><br><br>
-<!-- -->The name refers to "parse tree" -- see <a href="#editexpl">Edit Lists</a> and snd-run.c for more details. (ptree-channel does not work in Ruby).
+<!-- -->There are several limitations on ptree-channel with an 'init-func'.  One is that <a href="#sndsavestate">save-state</a>
+<!-- -->currently doesn't know how to save the enclosing environment along with the init-func. So,
+<!-- -->for example,
+<!-- --><br><br><pre>
+  (let ((outer 0.5))
+    (ptree-channel (lambda (y data forward)
+		     (declare (y real) (data vct) (forward boolean))
+		     (* y (vct-ref data 0)))
+		   0 #f ind 0 #f #f
+		   (lambda (pos)
+		     (vct outer))))
+<!-- --></pre><br><br>
+<!-- -->will not save the "outer" declaration in the saved state file.  You can fix this up by hand,
+<!-- -->of course, but it's not very elegant.
+<!-- -->Also, for the moment, 'env-too' must be false if 'init-func' is specified -- this is temporary.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6172,7 +6179,7 @@ This can be
 <!-- --><tr><td></td><td>
 <!-- -->The spectrum transform type (default: <i>fourier-transform</i>).
 <!-- --><pre>
-<!-- -->fourier-transform  wavelet-transform   hankel-transform    haar-transform
+<!-- -->fourier-transform  wavelet-transform   haar-transform
 <!-- -->autocorrelation    walsh-transform     hadamard-transform  cepstrum     
 <!-- --></pre>
 <!-- --></td></tr>
@@ -7867,7 +7874,7 @@ run
 <br>
 <p><b>Transform type</b> (<a href="#ltransformtype">transform-type</a>):</p>
 <pre>
-  <a name="fouriertransform">fourier-transform</a>  wavelet-transform   hankel-transform
+  <a name="fouriertransform">fourier-transform</a>  wavelet-transform
   autocorrelation    walsh-transform     hadamard-transform  cepstrum   haar-transform
 </pre><br>
 

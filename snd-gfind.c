@@ -46,7 +46,7 @@ static void edit_find_find(int direction, GtkWidget *w, gpointer context)
 	  ss->search_proc = proc;
 	  snd_protect(proc);
 	  if (optimization(ss) > 0)
-	    ss->search_tree = form_to_ptree_1f2b_without_env(C_STRING_TO_XEN_FORM(str));
+	    ss->search_tree = form_to_ptree_1_b_without_env(C_STRING_TO_XEN_FORM(str));
 	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
 	  mus_snprintf(buf, PRINT_BUFFER_SIZE, "find: %s", str);
 	  set_label(edit_find_label, buf);

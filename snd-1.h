@@ -82,6 +82,7 @@ typedef struct {
   int edit_type, sound_location, ptree_location;
   off_t selection_beg, selection_end;  /* selection needs to follow edit list */
   Float maxamp, selection_maxamp;
+  int edpos;
 } ed_list;
 
 typedef struct snd__fd {
@@ -382,7 +383,7 @@ typedef struct snd__state {
   Float Enved_Base, Enved_Power, Auto_Update_Interval;
   int Enved_Clip_p, Enved_Exp_p, Enved_Target, Enved_Wave_p, Enved_in_dB, Graphs_Horizontal, With_Background_Processes;
   int Graph_Cursor, Use_Sinc_Interp, Data_Clipped, Show_Indices, Mix_Tag_Width, Mix_Tag_Height, Minibuffer_History_Length;
-  Float min_dB, lin_dB, Hankel_Jn;
+  Float min_dB, lin_dB;
 #if HAVE_HTML
   int HTML_Width, HTML_Height;
   char *HTML_Dir, *HTML_Font_Size_List, *HTML_Fixed_Font_Size_List;
@@ -1353,18 +1354,18 @@ off_t end_to_sample(XEN end, chan_info *cp, int edpos, const char *caller);
 
 /* -------- snd-run.c -------- */
 
-void *form_to_ptree_1f2b(XEN code);
-void *form_to_ptree_1f2b_without_env(XEN code);
-void *form_to_ptree_1f2f(XEN code);
+void *form_to_ptree_1_b(XEN code);
+void *form_to_ptree_1_b_without_env(XEN code);
+void *form_to_ptree_1_f(XEN code);
 Float evaluate_ptree_0f2f(void *upt);
-void *form_to_ptree_0f2f(XEN code);
+void *form_to_ptree_0_f(XEN code);
 Float evaluate_ptree_1f2f(void *upt, Float arg);
 int evaluate_ptree_1f2b(void *upt, Float arg);
 void *free_ptree(void *upt);
 void g_init_run(void);
 XEN ptree_code(void *p);
 Float evaluate_ptree_1f1v1b2f(void *upt, Float arg, vct *v, int dir);
-void *form_to_ptree_1f1v1b2f(XEN code);
+void *form_to_ptree_3_f(XEN code);
 
 
 /* -------- snd-draw.c -------- */

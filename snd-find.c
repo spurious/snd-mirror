@@ -355,7 +355,7 @@ void cursor_search(chan_info *cp, int count)
 	      if (sp->search_tree)
 		sp->search_tree = free_ptree(sp->search_tree);
 	      if (optimization(ss) > 0)
-		sp->search_tree = form_to_ptree_1f2b_without_env(C_STRING_TO_XEN_FORM(sp->search_expr));
+		sp->search_tree = form_to_ptree_1_b_without_env(C_STRING_TO_XEN_FORM(sp->search_expr));
 	      if (sp->search_tree == NULL)
 		{
 		  sp->search_proc = snd_catch_any(eval_str_wrapper, sp->search_expr, sp->search_expr);
@@ -430,7 +430,7 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 	      if (sp->search_tree)
 		sp->search_tree = free_ptree(sp->search_tree);
 	      if (optimization(ss) > 0)
-		sp->search_tree = form_to_ptree_1f2b_without_env(proc);
+		sp->search_tree = form_to_ptree_1_b_without_env(proc);
 	      sp->search_proc = proc;
 	      snd_protect(proc);
 	      if (sp->search_expr) FREE(sp->search_expr);
@@ -459,7 +459,7 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 	  ss->search_expr = NULL;
 	  if (ss->search_tree) ss->search_tree = free_ptree(ss->search_tree);
 	  if (optimization(ss) > 0)
-	    ss->search_tree = form_to_ptree_1f2b_without_env(snd);
+	    ss->search_tree = form_to_ptree_1_b_without_env(snd);
 	  ss->search_proc = snd;
 	  snd_protect(snd);
 	  /* ss->search_expr = copy_string(XEN_AS_STRING(snd)); */

@@ -507,7 +507,7 @@
 	  lst windows))
        every-menu))
 
-    (let ((types (list fourier-transform wavelet-transform autocorrelation cepstrum hankel-transform
+    (let ((types (list fourier-transform wavelet-transform autocorrelation cepstrum
 		       walsh-transform hadamard-transform haar-transform)))
       (make-simple-popdown-menu 
        "Transform type"
@@ -515,7 +515,7 @@
 	      (list name 
 		    (lambda (w c i)
 		      (set! (transform-type graph-popup-snd (choose-chan)) val))))
-	    (list "Fourier" "Wavelet" "Autocorrelate" "Cepstrum" "Hankel" "Walsh" "Hadamard" "Haar")
+	    (list "Fourier" "Wavelet" "Autocorrelate" "Cepstrum" "Walsh" "Hadamard" "Haar")
 	    types)
        fft-popup 
        (lambda (lst)

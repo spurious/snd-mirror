@@ -204,7 +204,7 @@ enum {PRINT_SND, PRINT_ENV};
 #define SND_DATA_BUFFER 0xbeef
 
 enum {SOUNDS_VERTICAL, SOUNDS_HORIZONTAL, SOUNDS_IN_NOTEBOOK, SOUNDS_IN_SEPARATE_WINDOWS};
-enum {FOURIER, WAVELET, WALSH, AUTOCORRELATION, CEPSTRUM, HADAMARD, HAAR, HANKEL};
+enum {FOURIER, WAVELET, WALSH, AUTOCORRELATION, CEPSTRUM, HADAMARD, HAAR};
 #define NUM_FFT_WINDOWS 17
 #define NUM_WAVELETS 20
 
@@ -278,10 +278,6 @@ enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER};
 #else
   #define DEFAULT_DAC_SIZE 1024
 #endif
-
-#define hankel_jn(ss) ss->Hankel_Jn
-#define set_hankel_jn(ss, a) ss->Hankel_Jn = a
-#define DEFAULT_HANKEL_JN 0.0
 
 #define dac_combines_channels(ss) ss->Dac_Combines_Channels
 #define set_dac_combines_channels(ss, a) ss->Dac_Combines_Channels = a

@@ -32,6 +32,7 @@
 
 ;;; TODO: GL tests (test/gl/Mesa-4.0.2/samples/), gtk (xg) tests
 ;;; TODO: test midi.c: mus-midi-|open|close|read|write|describe|device-name
+;;; TODO: test cursor placement after prior delete/insert/set
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
 ;(use-syntax (ice-9 syncase))
@@ -333,7 +334,6 @@
 	'hadamard-transform hadamard-transform 5
 	'haar-transform haar-transform 6
 	'hamming-window hamming-window 5
-	'hankel-transform hankel-transform 7
 	'hanning-window hanning-window 1
 	'kaiser-window kaiser-window 11 
 	'keyboard-no-action keyboard-no-action 4
@@ -587,9 +587,6 @@
       (set! (graphs-horizontal) (graphs-horizontal))
       (IF (not (equal? (graphs-horizontal)  #t)) 
 	  (snd-display ";graphs-horizontal set def: ~A" (graphs-horizontal)))
-      (set! (hankel-jn) (hankel-jn))
-      (IF (fneq (hankel-jn)  0.0)
-	  (snd-display ";hankel-jn set def: ~A" (hankel-jn)))
       (set! (just-sounds) (just-sounds))
       (IF (not (equal? (just-sounds)  #f)) 
 	  (snd-display ";just-sounds set def: ~A" (just-sounds)))
@@ -879,7 +876,6 @@
 	'graph-style (graph-style) graph-lines
 	'lisp-graph? (without-errors (lisp-graph?)) 'no-such-sound
 	'graphs-horizontal (graphs-horizontal) #t
-	'hankel-jn (hankel-jn) 0.0
 	'just-sounds (just-sounds) #f
 	'listener-prompt (listener-prompt) ">" 
 	'max-transform-peaks (max-transform-peaks) 100
@@ -13653,6 +13649,30 @@
      (lambda (frag-beg)
        (vct (+ (* -0.5 pi) (* frag-beg incr)))))))
 
+(define (reversed-read snd chn)
+  (let* ((len (frames snd chn))
+	 (data (make-vct len))
+	 (sf (make-sample-reader (1- len) snd chn -1)))
+    (do ((i (1- len) (1- i)))
+	((< i 0))
+      (vct-set! data i (read-sample sf)))
+    data))
+
+(define (zigzag-read snd chn)
+  (let* ((len (frames snd chn))
+	 (data (make-vct len))
+	 (sf (make-sample-reader 3 snd chn 1)))
+    (do ((i 3 (1+ i)))
+	((= i 6))
+      (vct-set! data i (next-sample sf)))
+    (do ((i 6 (1- i)))
+	((= i 0))
+      (vct-set! data i (previous-sample sf)))
+    (do ((i 0 (1+ i)))
+	((= i len))
+      (vct-set! data i (next-sample sf)))
+    data))
+
 (if (or full-test (= snd-test 16) (and keep-going (<= snd-test 16)))
     (begin
       (if (procedure? test-hook) (test-hook 16))
@@ -14053,6 +14073,29 @@
 	  (close-sound oboe0)
 	  (close-sound oboe1))
 
+	(let ((ind (open-sound "oboe.snd")))
+	  (scale-by .5)
+	  (scale-by .25)
+	  (undo)
+	  (for-each
+	   (lambda (func name)
+	     (let ((tag (catch #t (lambda () (func ind)) (lambda args (car args)))))
+	       (if (not (eq? tag 'no-such-edit))
+		   (snd-display ";~A upon about-to-be-clobbered data: ~A" name tag))))
+	   (list (lambda (n) (scale-channel .5 0 #f n 0 2))
+		 (lambda (n) (env-channel '(0 0 1 1 2 0) 0 #f n 0 2))
+		 (lambda (n) (ptree-channel (lambda (y) y) 0 #f n 0 2 #f))
+		 ;;(lambda (n) (map-channel (lambda (y) y) 0 #f n 0 2)) ; actually will work
+		 (lambda (n) (pad-channel 100 100 n 0 2))
+		 (lambda (n) (delete-sample 100 n 0 2))
+		 (lambda (n) (set! (sample 100 n 0 2) .5))
+		 )
+	   (list "scale" "env" "ptree" 
+		 ;;"map" 
+		 "pad" "delete" "set"
+		 ))
+	  (close-sound ind))
+
 	(let ((ind (new-sound "test.snd")))
 	  (insert-silence 0 1000)
 	  (map-chan (lambda (y) 1.0))
@@ -14061,6 +14104,7 @@
 	  (if (fneq (sample 500) 0.5)
 	      (snd-display ";trailing ptree rmp0 trouble: ~A" (sample 500)))
 	  (revert-sound ind)
+
 	  (insert-silence 0 1000)
 	  (map-chan (lambda (y) 1.0))
 	  (scale-by .5)
@@ -14072,6 +14116,7 @@
 	  (if (fneq (sample 500) 0.5)
 	      (snd-display ";trailing ptree post scaled rmp0 trouble: ~A" (sample 500)))
 	  (revert-sound ind)
+
 	  (insert-silence 0 1000)
 	  (map-chan (lambda (y) 1.0))
 	  (ptree-channel (lambda (y) (* y .5)))
@@ -14081,6 +14126,7 @@
 	  (if (fneq (sample 0) 0.5)
 	      (snd-display ";trailing ptree pre delete rmp0 trouble: ~A" (sample 500)))
 	  (revert-sound ind)
+
 	  (insert-silence 0 1000)
 	  (map-chan (lambda (y) 1.0))
 	  (ptree-channel (lambda (y) (* y .5)))
@@ -14090,6 +14136,7 @@
 	  (if (fneq (sample 0) 0.5)
 	      (snd-display ";trailing ptree pre change rmp0 trouble: ~A" (sample 500)))
 	  (revert-sound ind)
+
 	  (insert-silence 0 1000)
 	  (map-chan (lambda (y) 1.0))
 	  (ptree-channel (lambda (y) (* y .1)))
@@ -14098,6 +14145,90 @@
 	      (snd-display ";trailing ptree post delete(1) loc trouble: ~A" (sample 500)))
 	  (if (fneq (sample 0) 0.1)
 	      (snd-display ";trailing ptree pre delete(1) loc trouble: ~A" (sample 500)))
+
+	  (insert-silence 0 1000)
+	  (map-chan (lambda (y) 1.0))
+	  (scale-by .5)
+	  (ptree-channel (lambda (y) (* y .5)))
+	  (scale-by .5)
+	  (if (fneq (sample 500) 0.125)
+	      (snd-display ";scl-ptree-scl trouble: ~A" (sample 500)))
+	  (revert-sound ind)
+
+	  (insert-silence 0 1000)
+	  (map-chan (lambda (y) 1.0))
+	  (ptree-channel (lambda (y) (* y .5)))
+	  (env-sound '(0 0 1 1 2 0))
+	  (if (or (fneq (sample 0) 0.0)
+		  (fneq (sample 999) 0.0)
+		  (fneq (sample 500) 0.5)
+		  (fneq (sample 250) 0.25)
+		  (fneq (sample 750) 0.25))
+	      (snd-display ";ptree-env trouble: ~A"
+			   (map sample (list 0 999 500 250 750))))
+
+	  (insert-silence 0 1000)
+	  (map-chan (lambda (y) 1.0))
+	  (ptree-channel (lambda (y) (* y .5)))
+	  (make-selection 100 200)
+	  (scale-selection-by .5)
+	  (if (or (fneq (sample 500) 0.5)
+		  (fneq (sample 50) 0.5)
+		  (fneq (sample 150) 0.25))
+	      (snd-display ";ptree-scl-selection trouble: ~A" (map sample (list 500 50 150))))
+	  (revert-sound ind)
+	  (close-sound ind))
+
+	(let ((ind (open-sound "oboe.snd")))
+	  (for-each
+	   (lambda (func val name)
+	     (func ind)
+	     (save-state "s61.scm")
+	     (close-sound ind)
+	     (load "s61.scm")
+	     (set! ind (find-sound "oboe.snd"))
+	     (if (fneq (maxamp ind) val)
+		 (snd-display "saved ~A max: ~A" name (maxamp ind)))
+	     (revert-sound ind))
+	   (list (lambda (ind)
+		   (ptree-channel (lambda (y) (* y .5))))
+		 (lambda (ind)
+		   (ptree-channel (lambda (y data forward)
+				    (declare (y real) (data vct) (forward boolean))
+				    (* y (vct-ref data 0)))
+				  0 #f ind 0 #f #f
+				  (lambda (pos)
+				    (vct 0.5))))
+		 (lambda (ind)
+		   (scale-by 0.0)
+		   (pad-channel 0 10 ind 0 0))
+		 (lambda (ind)
+		   (scale-by 0.0)
+		   (scale-channel 0.5 0 #f ind 0 0))
+		 (lambda (ind)
+		   (scale-by 0.0)
+		   (env-channel '(0 0 1 .5 2 0) 0 #f ind 0 0))
+		 (lambda (ind)
+		   (scale-by 0.0)
+		   (set! (sample 0 ind 0 0) 0.9))
+		 (lambda (ind)
+		   (scale-by 0.0)
+		   (delete-samples 0 100 ind 0 0))
+		 (lambda (ind)
+		   (scale-by 0.0)
+		   (ptree-channel (lambda (y) (* y 0.5)) 0 #f ind 0 0 #f))
+		 (lambda (ind)
+		   (scale-by 0.0)
+		   (ptree-channel (lambda (y data forward)
+				    (declare (y real) (data vct) (forward boolean))
+				    (* y (vct-ref data 0)))
+				  0 #f ind 0 0 #f
+				  (lambda (pos)
+				    (vct 0.5))))
+		 )
+	   (list .0736 .0736 .147 .0736 .0736 0.9 .147 .0736 .0736)
+	   (list "ptree" "ptree with init" "pad edpos" "scl edpos" "env edpos" 
+		 "set edpos" "delete edpos" "ptree edpos" "init ptree edpos"))
 	  (close-sound ind))
 
 	(let ((ind-ptree (new-sound "test1.snd"))
@@ -14122,6 +14253,21 @@
 		 (if (not (vequal ptv vc)) (snd-display ";~A ptree: ~A ~A" name ptv vc))
 		 (if (not (vequal ptc vc)) (snd-display ";~A closure: ~A ~A" name ptc vc))
 		 (if (not (vequal ptm vc)) (snd-display ";~A map: ~A ~A" name ptm vc)))
+	       
+	       (let ((ptv (reversed-read ind-ptree 0))
+		     (ptc (reversed-read ind-closure 0))
+		     (ptm (reversed-read ind-map 0)))
+		 (if (not (vequal ptv vc)) (snd-display ";reversed ~A ptree: ~A ~A" name ptv vc))
+		 (if (not (vequal ptc vc)) (snd-display ";reversed ~A closure: ~A ~A" name ptc vc))
+		 (if (not (vequal ptm vc)) (snd-display ";reversed ~A map: ~A ~A" name ptm vc)))
+	       
+	       (let ((ptv (zigzag-read ind-ptree 0))
+		     (ptc (zigzag-read ind-closure 0))
+		     (ptm (zigzag-read ind-map 0)))
+		 (if (not (vequal ptv vc)) (snd-display ";reversed ~A ptree: ~A ~A" name ptv vc))
+		 (if (not (vequal ptc vc)) (snd-display ";reversed ~A closure: ~A ~A" name ptc vc))
+		 (if (not (vequal ptm vc)) (snd-display ";reversed ~A map: ~A ~A" name ptm vc)))
+	       
 	       (set! (edit-position ind-ptree 0) edpt)
 	       (set! (edit-position ind-closure 0) edcl)
 	       (set! (edit-position ind-map 0) edmp)))
@@ -14166,6 +14312,19 @@
 	      (ptree-channel (lambda (y) (* y 0.5)) 2 #f ind 0 #f #f)
 	      (delete-sample 2 ind 0)
 	      (delete-sample 6 ind 0))
+
+	    (lambda (ind)
+	      ;; forced-fallback
+	      (ptree-channel (let ((sym 'hi)) (lambda (y) (if (eq? sym 'hi) (* y 0.5) y))) 2 3 ind 0 #f #f))
+	    (lambda (ind)
+	      ;; forced-fallback
+	      (ptree-channel (let ((sym 'hi)) (lambda (y) (if (eq? sym 'hi) (* y 0.5) y))) 0 #f ind 0 #f #f))
+
+	    (lambda (ind)
+	      (scale-by 0.0)
+	      (ptree-channel (lambda (y) y) 0 #f ind 0 2 #f)
+	      (scale-by 0.5 ind 0))
+
 	    )
 	   
 	   (list 
@@ -14256,6 +14415,34 @@
 			     (lambda (pos) (vct 0.5)))
 	      (delete-sample 2 ind 0)
 	      (delete-sample 6 ind 0))
+
+	    (lambda (ind)
+	      ;; forced-fallback
+	      (ptree-channel (let ((sym 'hi)) 
+			       (lambda (y data dir)
+				 (declare (y real) (data vct) (dir boolean))
+				 (if (eq? sym 'hi) (* y 0.5) (* y (vct-ref v 0)))))
+			     2 3 ind 0 #f #f
+			     (lambda (pos)
+			       (vct 1.0))))
+	    (lambda (ind)
+	      ;; forced-fallback
+	      (ptree-channel (let ((sym 'hi)) 
+			       (lambda (y data dir)
+				 (declare (y real) (data vct) (dir boolean))
+				 (if (eq? sym 'hi) (* y 0.5) (* y (vct-ref v 0)))))
+			     0 #f ind 0 #f #f
+			     (lambda (pos)
+			       (vct 1.0))))
+	    (lambda (ind) 
+	      (scale-by 0.0)
+	      (ptree-channel (lambda (y data dir) 
+			       (declare (y real) (data vct) (dir boolean))
+			       y) 
+			     0 #f ind 0 2 #f 
+			     (lambda (pos) (vct 0.0)))
+	      (scale-by 0.5 ind 0) )
+
 	    )
 	   
 	   (list 
@@ -14298,6 +14485,18 @@
 	      (map-channel (lambda (y) (* y 0.5)) 2 #f ind 0)
 	      (delete-sample 2 ind 0)
 	      (delete-sample 6 ind 0))
+
+	    (lambda (ind)
+	      ;; forced-fallback
+	      (map-channel (let ((sym 'hi)) (lambda (y) (if (eq? sym 'hi) (* y 0.5) y))) 2 3 ind 0))
+	    (lambda (ind)
+	      ;; forced-fallback
+	      (map-channel (let ((sym 'hi)) (lambda (y) (if (eq? sym 'hi) (* y 0.5) y))) 0 #f ind 0))
+	    (lambda (ind)
+	      (scale-by 0.0)
+	      (map-channel (lambda (y) y) 0 #f ind 0 2)
+	      (scale-by 0.5 ind 0))
+
 	    )
 	   
 	   (list 
@@ -14314,6 +14513,10 @@
 	    (vct 1.0 1.0 0.5 0.5 0.5 0.5 0.5)
 	    (vct 1.0 1.0 0.0 0.0 0.0 0.5 0.5 0.5 0.5 0.5)
 	    (vct 0.0 1.0 1.5 2.0 2.5 3.0 4.0 4.5)
+
+	    (vct 1.0 1.0 0.5 0.5 0.5 1.0 1.0 1.0 1.0 1.0)
+	    (make-vct 10 0.5)
+	    (make-vct 10 0.5)
 	    )
 	   
 	   (list 
@@ -14330,6 +14533,10 @@
 	    "2 2:3 delete"
 	    "2 2:3 change"
 	    "2 step delete"
+
+	    "fallback 1"
+	    "fallback 2"
+	    "edpos"
 	    )
 	   )
 
@@ -14373,28 +14580,28 @@ EDITS: 6
    (at 101, end_mark)
 
  (ptree[0] 0 101) ; ptree 0 0 101 [3:2]:
-   (at 0, cp->sounds[1][0:100, 1.000000, loc: 0, pos: 0, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val))]) [buf: 101] 
+   (at 0, cp->sounds[1][0:100, 1.000000, loc: 0, pos: 0, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg) (vct (+ (* -0.5 pi) (* frag-beg incr))))]) [buf: 101] 
    (at 101, end_mark)
 
  (delete 10 1) ; delete-sample [4:3]:
-   (at 0, cp->sounds[1][0:9, 1.000000, loc: 0, pos: 0, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val))]) [buf: 101] 
-   (at 10, cp->sounds[1][11:100, 1.000000, loc: 0, pos: 11, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val))]) [buf: 101] 
+   (at 0, cp->sounds[1][0:9, 1.000000, loc: 0, pos: 0, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg) (vct (+ (* -0.5 pi) (* frag-beg incr))))]) [buf: 101] 
+   (at 10, cp->sounds[1][11:100, 1.000000, loc: 0, pos: 11, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg) (vct (+ (* -0.5 pi) (* frag-beg incr))))]) [buf: 101] 
    (at 100, end_mark)
 
  (set 20 1) ; set! sample [5:5]:
-   (at 0, cp->sounds[1][0:9, 1.000000, loc: 0, pos: 0, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val))]) [buf: 101] 
-   (at 10, cp->sounds[1][11:20, 1.000000, loc: 0, pos: 11, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val))]) [buf: 101] 
+   (at 0, cp->sounds[1][0:9, 1.000000, loc: 0, pos: 0, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg) (vct (+ (* -0.5 pi) (* frag-beg incr))))]) [buf: 101] 
+   (at 10, cp->sounds[1][11:20, 1.000000, loc: 0, pos: 11, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg) (vct (+ (* -0.5 pi) (* frag-beg incr))))]) [buf: 101] 
    (at 20, cp->sounds[2][0:0, 1.000000]) [buf: 1] 
-   (at 21, cp->sounds[1][22:100, 1.000000, loc: 0, pos: 22, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val))]) [buf: 101] 
+   (at 21, cp->sounds[1][22:100, 1.000000, loc: 0, pos: 22, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg) (vct (+ (* -0.5 pi) (* frag-beg incr))))]) [buf: 101] 
    (at 100, end_mark)
 
  (silence 30 1) ; insert-silence [6:7]:
-   (at 0, cp->sounds[1][0:9, 1.000000, loc: 0, pos: 0, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val))]) [buf: 101] 
-   (at 10, cp->sounds[1][11:20, 1.000000, loc: 0, pos: 11, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val))]) [buf: 101] 
+   (at 0, cp->sounds[1][0:9, 1.000000, loc: 0, pos: 0, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg) (vct (+ (* -0.5 pi) (* frag-beg incr))))]) [buf: 101] 
+   (at 10, cp->sounds[1][11:20, 1.000000, loc: 0, pos: 11, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg) (vct (+ (* -0.5 pi) (* frag-beg incr))))]) [buf: 101] 
    (at 20, cp->sounds[2][0:0, 1.000000]) [buf: 1] 
-   (at 21, cp->sounds[1][22:30, 1.000000, loc: 0, pos: 22, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val))]) [buf: 101] 
+   (at 21, cp->sounds[1][22:30, 1.000000, loc: 0, pos: 22, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg) (vct (+ (* -0.5 pi) (* frag-beg incr))))]) [buf: 101] 
    (at 30, cp->sounds[-1][0:0, 0.000000])
-   (at 31, cp->sounds[1][31:100, 1.000000, loc: 0, pos: 31, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val))]) [buf: 101] 
+   (at 31, cp->sounds[1][31:100, 1.000000, loc: 0, pos: 31, arg: 1.000000, code: (lambda (y data forward) (declare (y real) (data vct) (forward boolean)) (let* ((angle (vct-ref data 0)) (val (* y (cos angle)))) (if forward (vct-set! data 0 (+ angle incr)) (vct-set! data 0 (- angle incr))) val)), init: (lambda (frag-beg) (vct (+ (* -0.5 pi) (* frag-beg incr))))]) [buf: 101] 
    (at 101, end_mark)
 "))
 	      (snd-display ";cosine channel edits: ~A"
@@ -16894,7 +17101,7 @@ EDITS: 2
 	      (set! (transform-size) size)
 	      (update-transform-graph))
 	    (list 8 7 -7 4 3 2 1 0)))
-	 (list fourier-transform  wavelet-transform   hankel-transform 
+	 (list fourier-transform  wavelet-transform   
 	       autocorrelation    walsh-transform     hadamard-transform  cepstrum     haar-transform))
 	(close-sound index))
 
@@ -17208,82 +17415,6 @@ EDITS: 2
 		      (snd-display "~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
 		      (break))))))))
        (list 16 64 256 512))
-
-
-      ;; -------- hankel
-
-      (set! d0 (make-vct 128))
-      (do ((i 0 (1+ i))) 
-	  ((= i 128)) 
-	(vct-set! d0 i (bes-j0 (/ (* i 12 3.14159) 128.0))))
-      (snd-transform hankel-transform d0)
-      (let ((pinfo (peak-at d0)))
-	(IF (not (= (car pinfo) 5))
-	    (snd-display ";hankel 1: ~A ~A?" pinfo d0)))
-
-      (do ((i 0 (1+ i))) 
-	  ((= i 128)) 
-	(vct-set! d0 i (+ (bes-j0 (/ (* i 12 3.14159) 128.0)) 
-			  (bes-j0 (/ (* i 20 3.14159) 128.0)))))
-      (snd-transform hankel-transform d0)
-      (let ((pinfo (peak-at d0)))
-	(IF (and (not (= (car pinfo) 5))
-		 (not (= (car pinfo) 9)))
-	    (snd-display ";hankel 2: ~A ~A?" pinfo d0))
-	(vct-set! d0 (car pinfo) 0.0)
-	(let ((pinfo (peak-at d0)))
-	  (IF (and (not (= (car pinfo) 5))
-		   (not (= (car pinfo) 9)))
-	      (snd-display ";hankel 3: ~A?" pinfo))))
-
-      (do ((i 0 (1+ i))) 
-	  ((= i 128)) 
-	(vct-set! d0 i (+ (bes-j0 (/ (* i 12 3.14159) 128.0)) 
-			  (* 4.0 (bes-j0 (/ (* i 20 3.14159) 128.0))))))
-      (snd-transform hankel-transform d0)
-      (let ((pinfo (peak-at d0)))
-	(IF (not (= (car pinfo) 9))
-	    (snd-display ";hankel 4: ~A?" pinfo))
-	(vct-set! d0 9 0.0)
-	(let ((npinfo (peak-at d0)))
-	  (IF (not (= (car npinfo) 5))
-	      (snd-display ";hankel 5: ~A?" npinfo))
-	  (IF (not (> (cadr pinfo) (cadr npinfo)))
-	      (snd-display ";hankel 6: ~A?" pinfo))))
-
-      (do ((i 0 (1+ i))) 
-	  ((= i 128)) 
-	(vct-set! d0 i (bes-j0 (/ (* i 3.14159) 128.0))))
-      (snd-transform hankel-transform d0)
-      (let ((pinfo (peak-at d0)))
-	(IF (not (= (car pinfo) 0))
-	    (snd-display ";hankel 7: ~A?" pinfo)))
-
-      (set! d0 (make-vct 8))
-      (do ((i 0 (1+ i))) 
-	  ((= i 8)) 
-	(vct-set! d0 i (bes-j0 (/ (* i 3.14159) 8.0))))
-      (snd-transform hankel-transform d0)
-      (IF (< (/ (abs (vct-ref d0 0))
-		(abs (vct-ref d0 1)))
-	     3.0)
-	  (snd-display ";hankel 8: ~A?" d0))
-
-      (set! (hankel-jn) -1.0)
-      (let ((tag (catch #t (lambda () (snd-transform hankel-transform (make-vct 8))) (lambda args args))))
-	(IF (or (vct? tag) (not (eq? (car tag) 'gsl-error))) (snd-display ";hankel bad jn: ~A" tag)))
-
-      (set! (hankel-jn) 1.0)
-      (set! d0 (make-vct 256))
-      (do ((i 0 (1+ i))) 
-	  ((= i 256)) 
-	(vct-set! d0 i (bes-j1 (/ (* i 2 3.14159) 256))))
-      (snd-transform hankel-transform d0)
-      (IF (< (/ (abs (vct-ref d0 0))
-		(abs (vct-ref d0 1)))
-	     3.0)
-	  (snd-display ";hankel (1) 256: ~A?" d0))
-      (set! (hankel-jn) 0.0)
 
 
       ;; -------- walsh
@@ -20522,16 +20653,15 @@ EDITS: 2
 	(let ((r (make-sample-reader 2000))
 	      (v (make-vct 2)))
 	  (vct-map! v (lambda () (next-sample r)))
-	  (IF (or (fneq (vct-ref v 0) .0662) (fneq (vct-ref v 1) .0551)) (snd-display "next-sample ftst: ~A" v))
-	  (previous-sample r)
+	  (if (or (fneq (vct-ref v 0) .0662) (fneq (vct-ref v 1) .0551)) (snd-display "next-sample ftst: ~A" v))
 	  (vct-map! v (lambda () (previous-sample r)))
-	  (IF (or (fneq (vct-ref v 0) .0551) (fneq (vct-ref v 1) .0662)) (snd-display "previous-sample ftst: ~A" v))
+	  (if (or (fneq (vct-ref v 0) .0551) (fneq (vct-ref v 1) .0662)) (snd-display "previous-sample ftst: ~A" v))
+	  (previous-sample r)
 	  (next-sample r)
 	  (vct-map! v (lambda () (read-sample r)))
-	  (IF (or (fneq (vct-ref v 0) .0662) (fneq (vct-ref v 1) .0551)) (snd-display "read-sample ftst: ~A" v))
-	  ;(vct-map! v (lambda () (r)))
-	  ;(if (or (fneq (vct-ref v 0) .039) (fneq (vct-ref v 1) .024)) (snd-display "read-sample apply ftst: ~A" v))
-
+	  (if (or (fneq (vct-ref v 0) .0662) (fneq (vct-ref v 1) .0551)) (snd-display "read-sample ftst: ~A" v))
+	  (vct-map! v (lambda () (r)))
+	  (if (or (fneq (vct-ref v 0) .039) (fneq (vct-ref v 1) .024)) (snd-display "read-sample apply ftst: ~A" v))
 	  (etst '(set! (sample 100) 0.0))
 	  )
 	(close-sound ind))

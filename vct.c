@@ -414,7 +414,7 @@ static XEN vct_mapB(XEN obj, XEN proc)
     void *pt = NULL;
     if ((optimization(get_global_state())) > 0)
       {
-	pt = form_to_ptree_0f2f(proc);
+	pt = form_to_ptree_0_f(proc);
 	if (pt)
 	  {
 	    for (i = 0; i < v->length; i++) 
