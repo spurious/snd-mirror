@@ -2476,7 +2476,7 @@ printout from hook-&gt;list):
   (for-each 
     (lambda (n) 
       (snd-print (format #f "~A~%" n)))
-    (reverse (hook-&gt;list hook))))
+    (reverse (<em class=red>hook-&gt;list</em> hook))))
 </pre></td></tr></table>
 
 <p>For example, say we pile up some random stuff on name-click-hook:
@@ -2678,7 +2678,7 @@ functions:</p>
 <!-- vct->samples -->
 <!-- --><tr><td colspan=2><span class=defbox><code><em class=def><a name="vct2samples">vct-&gt;samples</a></em> (samp samps data <i>snd chn</i>)</code></span></td>
 <!-- --></tr><tr><td></td><td>A synonym for <a href="#sndsetsamples">set-samples</a>, but you can also pass just a vct as the first argument, or a start
-<!-- -->sample and a vct as the second argument.
+<!-- -->sample and a vct as the second argument.  <a href="#vct2channel">vct-&gt;channel</a> is the regularized version.
 <!-- --><pre>(define v (samples-&gt;vct))
 <!-- -->(vct-scale! v 2.0)
 <!-- -->(vct-&gt;samples v)</pre></td></tr>
@@ -2852,10 +2852,10 @@ See play.scm and rtio.scm for example code. The most important Sndlib functions 
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 ;;; here we get the microphone volume, then set it to .5
 (define vals (make-vector 32))
-(mus-audio-mixer-read mus-audio-microphone mus-audio-amp 0 vals)
+(<em class=red>mus-audio-mixer-read</em> mus-audio-microphone mus-audio-amp 0 vals)
 (vector-ref vals 0)
 (vector-set! vals 0 .5)
-(mus-audio-mixer-write mus-audio-microphone mus-audio-amp 0 vals)
+(<em class=red>mus-audio-mixer-write</em> mus-audio-microphone mus-audio-amp 0 vals)
 <!-- --></pre></td></tr></table></td></tr>
 <!-- -->
 <!-- mus-audio-open-input -->
@@ -3343,10 +3343,10 @@ a globally unique id number (returned by <b>find-mark</b> or <b>add-mark</b>, fo
 <!-- --><tr><td colspan=2>
 <!-- --><center><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (how-many-marks-in-channel snd chn)
-  (length (marks snd chn)))
+  (length (<em class=red>marks</em> snd chn)))
 
 (define (how-many-marks-in-sound snd)
-  (apply + (map length (marks snd))))
+  (apply + (map length (<em class=red>marks</em> snd))))
 
 (define (how-many-marks)
   (apply + (map how-many-marks-in-sound (sounds))))
@@ -4270,7 +4270,7 @@ the direction argument between the channel and edit-position.
 (add-hook! after-open-hook 
   (lambda (snd)
     (if (&gt; (chans snd) 4)
-        (set! (channel-style snd) channels-combined))))
+        (set! (<em class=red>channel-style</em> snd) channels-combined))))
 <!-- --></pre></td></tr></table>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
@@ -4886,7 +4886,12 @@ the direction argument between the channel and edit-position.
 <!-- --><span class=defbox><code><em class=def><a name="sndheadertype">header-type</a></em> (<em class=targ>snd</em>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->The header type (e.g. mus-aiff) of the file represented by <i>snd</i>.  Snd can read about 60 header types, and write about 10.
+<!-- -->The header type (e.g. mus-aiff) of the file represented by <i>snd</i>.  Snd can read about 60 header types, and write 7 or so.
+<!-- -->Each header type has its own peculiarities; if in doubt, use mus-next because it is simple,
+<!-- -->and can handle any data format that Snd can write (whereas each of the others is restricted in this regard).
+<!-- -->The writable header types are mus-next (also named mus-sun), mus-nist (NIST Sphere), mus-aiff (rarely needed), mus-aifc, mus-riff (MS wave),
+<!-- -->mus-ircam, and mus-raw (no header -- it's up to you to remember what's in the file).  For descriptions of the headers,
+<!-- -->see headers.c; for examples, see sf.tar.gz and ccrma-ftp.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4896,7 +4901,7 @@ the direction argument between the channel and edit-position.
 <!-- --><span class=defbox><code><em class=def><a name="sndinsertsilence">insert-silence</a></em> (beg num <i>snd chn</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->insert num zeros at beg in <i>snd</i>'s channel <i>chn</i>.
+<!-- -->insert num zeros at beg in <i>snd</i>'s channel <i>chn</i>. <a href="#padchannel">pad-channel</a> is the regularized version. 
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -4908,7 +4913,8 @@ the direction argument between the channel and edit-position.
 <!-- --><tr><td></td><td>
 <!-- -->insert channel <i>in_chan</i> of <i>file</i> at sample <i>beg</i> in <i>snd</i>'s channel <i>chn</i>.
 <!-- -->beg defaults to the cursor position; if in_chan is not given, all 
-<!-- -->channels are inserted. [<em class=error>no-such-file</em>].
+<!-- -->channels are inserted. 
+<!-- -->[<em class=error>no-such-file</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5483,7 +5489,7 @@ the direction argument between the channel and edit-position.
 <!-- -->optimizer makes the parse-tree that represents <code>(lambda (y) (* y 2))</code>, then the
 <!-- -->edit-history accessor function uses that tree every time the data is
 <!-- -->read.<br><br>
-<!-- -->If 'env-too' is #t,
+<!-- -->If the argument 'env-too' is #t,
 <!-- -->the same function is applied to the peak env values to get the new version of the peak env data.  
 <!-- -->The default is #f, and should be #t only if the old max and min values as processed through 'proc'
 <!-- -->will be the new max and min values. 
@@ -5491,7 +5497,7 @@ the direction argument between the channel and edit-position.
 <!-- -->has any envelope ramps or previous ptree operations, map-channel is called instead and the new
 <!-- -->data is saved in the normal manner (that is, I don't currently try to chain these operations
 <!-- -->together).  Also, there's currently no way to inform the 'proc' that
-<!-- -->a new read has begun, so (for now) 'proc' should not have any state or make any assumptions
+<!-- -->a new read has begun, so (for now) 'proc' should not have any state, or randomness, or make any assumptions
 <!-- -->about where it is in the sound.  'proc' must be compatible with (and run through) the optimizer;
 <!-- -->this means the <a href="#optimization">optimization</a> variable must be greater than 0. 
 <!-- -->The name refers to "parse tree" -- see <a href="#editexpl">Edit Lists</a> and snd-run.c for more details. (ptree-channel does not work in Ruby).
@@ -8184,18 +8190,18 @@ run
 <!-- -->
 <!-- --><tr><td></td><td>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
-(bind-key (char-&gt;integer #\a) 4 
+(<em class=red>bind-key</em> (char-&gt;integer #\a) 4 
           (lambda () 
             "C-a prints hi in listener"
             (snd-print \"hi\") 
             cursor-in-view))
 
-(bind-key (char-&gt;integer #\p) 0 
+(<em class=red>bind-key</em> (char-&gt;integer #\p) 0 
           (lambda () 
             "p moves cursor to left edge of window"
             cursor-on-left))
 
-(bind-key (char-&gt;integer #\v) 4
+(<em class=red>bind-key</em> (char-&gt;integer #\v) 4
 	  (lambda ()
             "C-v redefined to behave as in Emacs (move ahead window)
 	    (if (&lt; (right-sample) (frames))
@@ -8674,7 +8680,7 @@ run
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndwarning">snd-warning</a></em> (str)</code></span></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->report warning message <i>str</i>, return <i>str</i>.
+<!-- -->report warning message <i>str</i> (normally by posting it in the minibuffer), return <i>str</i>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -8716,7 +8722,7 @@ run
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="widgetposition">widget-position</a></em> (widget)</code></span></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->return a list giving the widget x and y coordinates.
+<!-- -->return a list giving the widget x and y coordinates (pixels).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -8724,7 +8730,7 @@ run
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="widgetsize">widget-size</a></em> (widget) </code></span></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->return a list giving the widget width and height.
+<!-- -->return a list giving the widget width and height (pixels).
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

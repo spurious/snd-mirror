@@ -34,7 +34,7 @@
 ;;; TODO: [before-]transform-hook? output-name-hook [requires New dialog]?
 ;;; TODO: lisp-graph-hook with forward proc
 ;;; TODO: control-panel apply to channel [apply button with ctrl and no active selection]
-;;; TODO: new data dialog help, delete enved env? ...
+;;; TODO: new data dialog help
 ;;; TODO: activate order text
 
 
@@ -1819,6 +1819,10 @@
 	(let ((ab (open-sound "test.snd")))
 	  (if (and (provided? 'xm) (provided? 'snd-debug))
 	      (|XtCallCallbacks (cadr (sound-widgets ab)) |XmNactivateCallback (snd-sound-pointer ab)))
+	  (if (provided? 'snd-debug)
+	      (begin
+		(if (snd-sound-pointer 12345) (snd-display ";snd-sound-pointer #f: ~A" (snd-sound-pointer 12345)))
+		(if (not (number? (snd-sound-pointer ab))) (snd-display ";snd-sound-pointer ~A: ~A" ab (snd-sound-pointer ab)))))
 	  (IF (not (= (header-type ab) mus-aifc)) 
 	      (snd-display ";save-as aifc -> ~A?" (mus-header-type-name (header-type ab))))
 	  (IF (not (= (mus-sound-header-type "test.snd") mus-aifc)) 
@@ -2739,6 +2743,7 @@
 	      ((= j num-transform-graph-types))
 	    (set! (transform-graph-type index 0) j)
 	    (update-transform index 0))))
+      (set! (transform-type) fourier-transform)
 
       (IF (read-only index) (snd-display ";read-only open-sound: ~A?" (read-only index)))
       (set! (read-only index) #t)
@@ -2845,11 +2850,13 @@
 	(IF (fneq (region-maxamp r0) (maxamp index)) (snd-display ";region-maxamp: ~A?" (region-maxamp r0)))
 	(IF (fneq (selection-maxamp index 0) (maxamp index)) (snd-display ";selection-maxamp: ~A?" (selection-maxamp index 0)))
 	(let ((samps1 (samples->vct 0 50827 index 0))
-	      (samps2 (region-samples->vct r0 50827 0 0))
+	      (samps2 (region-samples->vct 0 50828 r0 0))
 	      (vr (make-sample-reader 0 index 0 1)))
 	  (IF (not (sample-reader? vr)) (snd-display ";~A not sample-reader?" vr))
 	  (IF (not (equal? (sample-reader-home vr) (list index 0))) 
 	      (snd-display ";sample-reader-home: ~A ~A?" (sample-reader-home vr) (list index 0)))
+	  (IF (region-samples->vct -1 1233 r0) (snd-display ";region-samples->vct -1: ~A" (region-samples->vct -1 1233)))
+	  (IF (region-samples->vct 12345678 1 r0) (snd-display ";region-samples->vct inf: ~A" (region-samples->vct 12345678 1)))
 	  (let ((reader-string (format #f "~A" vr)))
 	    (IF (not (string=? (substring reader-string 0 18) "#<sample-reader 0x"))
 		(snd-display ";sample reader actually got: [~S]" (substring reader-string 0 18)))
@@ -3629,10 +3636,10 @@
 	(test-orig (lambda (snd) (map-channel (lambda (n) (* n 2)))) (lambda (snd) (map-channel (lambda (n) (* n 0.5)))) 'map-channel ind1)
 	(test-orig (lambda (snd) (map-channel (lambda (n) (* n 2)) 1234)) (lambda (snd) (map-channel (lambda (n) (* n 0.5)) 1234)) 'map-channel ind1)
 	(test-orig (lambda (snd) (map-channel (lambda (n) (* n 2)) 12005 10)) (lambda (snd) (map-channel (lambda (n) (* n 0.5)) 12005 10)) 'map-channel ind1)
-	(test-orig (lambda (snd) (map-channel (let ((vect (make-vector 1))) (lambda (y) (vector-set! vect 0 (* y 2)) vect))))
+	(test-orig (lambda (snd) (map-channel (let ((vect (make-vector 1 0.0))) (lambda (y) (vector-set! vect 0 (* y 2)) vect))))
 		   (lambda (snd) (map-channel (lambda (y) (list (* y 0.5))))) 'map-channel ind1)
 	(test-orig (lambda (snd) (map-channel 
-				  (let ((vect (make-vector 2))) 
+				  (let ((vect (make-vector 2 0.0))) 
 				    (lambda (y) 
 				      (vector-set! vect 0 (* y 2))
 				      (vector-set! vect 1 (* y 2))
@@ -9700,6 +9707,7 @@
 	(IF (not (eq? tag 'no-such-sample))
 	    (snd-display ";access invalid (slice) transform sample: ~A" tag)))
       (close-sound fd)
+      (set! (transform-type) fourier-transform)
 
       (add-hook! after-open-hook
 		 (lambda (snd)
@@ -11374,6 +11382,7 @@
       )))
       
 (load "rubber.scm")
+(set! (transform-type) fourier-transform)
 
 ;;; ---------------- test 15: chan-local vars ----------------
 
@@ -11989,6 +11998,13 @@
 		(let ((val (next-sample reader)))
 		  (if (fneq val 0.0) (snd-display ";C-z[~D]: ~A?" i val))))
 	      (free-sample-reader reader)))
+	(set! (cursor ind) 0)
+	(key (char->integer #\u) 4 ind)
+	(key (char->integer #\3) 0 ind)
+	(key (char->integer #\.) 0 ind)
+	(key (char->integer #\0) 0 ind)
+	(key (char->integer #\z) 4 ind)
+	(if (fneq (maxamp ind 0) 0.0) (snd-display ";C-z full: ~A" (maxamp)))
 	(revert-sound ind)
 	(set! (cursor ind) 1200)
 	(key (char->integer #\u) 4 ind)
@@ -16604,6 +16620,10 @@ EDITS: 5
       (stst '(let ((str "asdfg")) (string-fill! str #\x) str) "xxxxx")
       (stst '(let ((str "asdf")) (string-set! str 1 #\x) str) "axdf")
       (ctst '(string-ref "asdf" 2) #\d)
+      (etst '(string-ref 123))
+      (etst '(string-ref "hi" "ho"))
+      (etst '(string-set! "hi" 1 "c"))
+      (etst '(string-fill! "hi" "ho"))
       (stst '(make-string 3) "   ")
       (stst '(make-string 3 #\a) "aaa")
 
@@ -16738,6 +16758,9 @@ EDITS: 5
       (stst '(substring "012345" 1 4) "123")
       (set! str-var "012345")
       (stst '(substring str-var 1 4) "123")
+      (etst '(substring "asdfg"))
+      (etst '(substring "asdfg" "hi"))
+      (etst '(substring "asdfg" 0 3 123))
       (ststa '(lambda (y) (substring "012345" 1 4)) 0 "123")
       (ststa '(lambda (y) (substring (make-string 6 (integer->char (inexact->exact y))) 2 4)) 65 "AA")
       (ststa '(lambda (y) (let ((str (make-string 6 (integer->char (inexact->exact y))))) (string-set! str 0 #\b) (substring str 0 2))) 65 "bA")
@@ -16746,6 +16769,8 @@ EDITS: 5
       (stst '(string-append "01" "2" "345") "012345")
       (set! str-var "01")
       (stst '(string-append str-var "2" "345") "012345")
+      (btst '(string? (string-append)) #t)
+      (stst '(string-append str-var) str-var)
       (ststa '(lambda (y) (string-append str-var (string (integer->char (inexact->exact y)) #\1 #\2) "345")) 48 "01012345")
       (etst '(make-string "hi"))
       (etst '(make-string 3 3.14))
@@ -17064,7 +17089,22 @@ EDITS: 5
 		      0.0))
 	(if (or (fneq (vct-ref rdat 3) 16.0)
 		(fneq (vct-ref rdat 4) 0.0))
-	    (snd-display ";run vct fft real[3 or 4]: ~A ~A?" (vct-ref rdat 3) (vct-ref rdat 4))))
+	    (snd-display ";run vct fft real[3 or 4]: ~A ~A?" (vct-ref rdat 3) (vct-ref rdat 4)))
+	(vct-fill! rdat 0.0)
+	(vct-fill! idat 0.0)
+	(vct-set! rdat 3 1.0)
+	(vct-map! v (lambda ()
+		      (mus-fft rdat idat 16)
+		      (mus-fft rdat idat 16 -1)
+		      0.0))
+	(if (or (fneq (vct-ref rdat 3) 16.0)
+		(fneq (vct-ref rdat 4) 0.0))
+	    (snd-display ";run vct fft (2) real[3 or 4]: ~A ~A?" (vct-ref rdat 3) (vct-ref rdat 4))))
+
+      (let ((v0 (make-vct 3)))
+	(etst '(polynomial v0 0.0 123))
+	(etst '(vct-ref v0 "hiho"))
+	(etst '(vct-set! v0 "hiho" 3.1)))
 
       (let ((v0 (make-vct 10))
 	    (v1 (make-vct 10))
@@ -17276,7 +17316,11 @@ EDITS: 5
 	(do ((i 0 (1+ i))) ((= i 10))
 	  (vct-set! v0 i i))
 	(vct-map! v (lambda () (array-interp v0 3.5)))
-	(if (fneq (vct-ref v 0) 3.5) (snd-display ";run array-interp: ~F?" (vct-ref v 0))))
+	(if (fneq (vct-ref v 0) 3.5) (snd-display ";run array-interp: ~F?" (vct-ref v 0)))
+	(vct-map! v (lambda () (array-interp v0 3.5 10)))
+	(if (fneq (vct-ref v 0) 3.5) (snd-display ";run array-interp sized: ~F?" (vct-ref v 0)))
+	(etst '(array-interp v0))
+	(etst '(array-interp v0 3.5 10 123)))
 
       (let ((e (make-env '(0 0 1 1) :end 10))
 	    (v (make-vct 1))
@@ -17418,7 +17462,8 @@ EDITS: 5
 	(do ((i 0 (1+ i)))
 	    ((= i 8)) 
 	  (if (fneq (vct-ref rdat i) 1.0)
-	      (snd-display "run impulse->flat? ~A" rdat))))
+	      (snd-display "run impulse->flat? ~A" rdat)))
+	(etst '(spectrum rdat idat win 17.3)))
 
       (let ((rdat (make-vct 16))
 	    (idat (make-vct 16))
@@ -17554,6 +17599,25 @@ EDITS: 5
 	  ;(if (or (fneq (vct-ref v 0) .039) (fneq (vct-ref v 1) .024)) (snd-display "read-sample apply ftst: ~A" v))
 	  )
 	(close-sound ind))
+
+      (let ((ind (open-sound "oboe.snd")))
+	(let ((v (make-vct 2)))
+	  (vct-map! v (let ((r (make-sample-reader 2000)))
+			(lambda () (next-sample r))))
+	  (if (or (fneq (vct-ref v 0) .0662) (fneq (vct-ref v 1) .0551)) (snd-display "next-sample let ftst: ~A" v))
+	  (vct-map! v (let ((r (make-sample-reader 2000 ind)))
+			(lambda () (next-sample r))))
+	  (if (or (fneq (vct-ref v 0) .0662) (fneq (vct-ref v 1) .0551)) (snd-display "next-sample let snd ftst: ~A" v))
+	  (vct-map! v (let ((r (make-sample-reader 2000 ind 0)))
+			(lambda () (next-sample r))))
+	  (if (or (fneq (vct-ref v 0) .0662) (fneq (vct-ref v 1) .0551)) (snd-display "next-sample let chn ftst: ~A" v))
+	  (vct-map! v (let ((r (make-sample-reader 2000 ind 0 1 (edit-position ind 0))))
+			(lambda () 
+			  (if (not (= (edit-position ind 0) 0))
+			      -123.0
+			      (next-sample r)))))
+	  (if (or (fneq (vct-ref v 0) .0662) (fneq (vct-ref v 1) .0551)) (snd-display "next-sample let edit ftst: ~A" v))
+	  (close-sound ind)))
 
       (define max-optimization 5)
 
@@ -18184,7 +18248,7 @@ EDITS: 5
 		      (let ((m (car (marks ind 0))))
 			(IF (not (= (mark-sample m) (cursor)))
 			    (snd-display ";C-m mark sample: ~A ~A?" (mark-sample m) (cursor)))))
-		  (key-event cwid (char->integer #\-) 4) (force-event)
+		  		  (key-event cwid (char->integer #\x) 4) (force-event)		  
 		  (key-event cwid (char->integer #\m) 4) (force-event)
 		  (IF (mark? (find-mark (cursor)))
 		      (snd-display ";C-- C-m mark: ~A?" (find-mark (cursor))))
@@ -19002,6 +19066,7 @@ EDITS: 5
 			 (src-button (list-ref enved-widgets 16))
 			 (clip-button (list-ref enved-widgets 17))
 			 (dB-button (list-ref enved-widgets 18))
+			 (delete-button (list-ref enved-widgets 19))
 			 (exp-button (list-ref enved-widgets 20))
 			 (lin-button (list-ref enved-widgets 21))
 			 (env-list (list-ref enved-widgets 25))
@@ -19167,6 +19232,10 @@ EDITS: 5
 		      (let ((firB (enved-filter)))
 			(click-button fir-button) (force-event)
 			(if (eq? (enved-filter) firB) (snd-display "fir button had no effect?")))
+
+		      (set! (enved-selected-env) "env1")
+		      (click-button delete-button) (force-event)
+
 		      (click-button dismiss-button) (force-event)
 		      ))
 		  ))
@@ -24347,6 +24416,7 @@ EDITS: 5
 			(list enved-hook 'enved-hook)))
 
 	(check-error-tag 'no-such-envelope (lambda () (set! (enved-active-env) "not-an-env")))
+	(check-error-tag 'no-such-envelope (lambda () (set! (enved-selected-env) "not-an-env")))
 	(check-error-tag 'cannot-save (lambda () (save-envelopes "/bad/baddy")))
 	(check-error-tag 'bad-arity (lambda () (set! (search-procedure) (lambda (a b c) a))))
 	(check-error-tag 'no-such-sound (lambda () (set! (search-procedure 1234) (lambda (a) a))))
@@ -24368,6 +24438,9 @@ EDITS: 5
 	(check-error-tag 'no-such-menu (lambda () (main-menu 111)))
 	(check-error-tag 'no-such-menu (lambda () (change-menu-label -1 "hiho" "hhoo")))
 	(check-error-tag 'mus-error (lambda () (vct-map (lambda () 1.0))))
+	(check-error-tag 'mus-error (lambda () (new-sound "hiho" 123)))
+	(check-error-tag 'mus-error (lambda () (new-sound "hiho" mus-nist 123)))
+	(check-error-tag 'mus-error (lambda () (new-sound "hiho" mus-nist mus-bfloat)))
 	(let ((ind (open-sound "oboe.snd"))) 
 	  (select-all)
 	  (check-error-tag 'no-such-channel (lambda () (mix-selection 0 ind 123)))
@@ -24453,6 +24526,8 @@ EDITS: 5
 	  (check-error-tag 'no-such-direction (lambda () (make-sample-reader 0 ind 0 -2)))
 	  (check-error-tag 'mus-error (lambda () (scale-by (make-vector 0))))
 	  (check-error-tag 'mus-error (lambda () (scale-to '())))
+	  (check-error-tag 'no-such-sample (lambda () (ptree-channel (lambda (y) (+ y .1)) 1234567)))
+	  (check-error-tag 'bad-arity (lambda () (prompt-in-minibuffer "hi" (lambda (x y) (+ x y)))))
 	  (close-sound ind))
 	(check-error-tag 'bad-arity (lambda () (add-transform "hiho" "time" 0 1 (lambda () 1.0))))
 	(check-error-tag 'cannot-save (lambda () (save-options "/bad/baddy")))

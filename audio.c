@@ -9370,7 +9370,10 @@ static void describe_audio_state_1(void)
 	  return;
 	}
       mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "\n    srate: %d, chans: %d, frames: %d, buf: %d",
-		   (int)(desc.mSampleRate), (int)(desc.mChannelsPerFrame), (int)(desc.mFramesPerPacket), buffer_size);
+		   (int)(desc.mSampleRate), 
+		   (int)(desc.mChannelsPerFrame), 
+		   (int)(desc.mFramesPerPacket), 
+		   buffer_size);
       pprint(audio_strbuf);
       if ((int)(desc.mChannelsPerFrame) > 0)
 	{
@@ -9385,7 +9388,8 @@ static void describe_audio_state_1(void)
 		  FREE(devices);
 		  return;
 		}
-	      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, " %.3f", vol); pprint(audio_strbuf); 
+	      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, " %.3f", vol); 
+	      pprint(audio_strbuf); 
 	    }
 	}
       size = 0;
@@ -9407,7 +9411,9 @@ static void describe_audio_state_1(void)
 	  for (k = 0; k < formats; k++)
 	    {
 	      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "\n    srate: %d, chans: %d, frames: %d",
-			   (int)(descs[k].mSampleRate), (int)(descs[k].mChannelsPerFrame), (int)(descs[k].mFramesPerPacket));
+			   (int)(descs[k].mSampleRate), 
+			   (int)(descs[k].mChannelsPerFrame), 
+			   (int)(descs[k].mFramesPerPacket));
 	      pprint(audio_strbuf);
 	    }
 	  FREE(descs);

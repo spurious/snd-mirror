@@ -2432,13 +2432,13 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
   cp = get_cp(snd, chn, caller);
   pos = to_c_edit_position(cp, edpos, caller, 7);
   beg = beg_to_sample(s_beg, caller);
-  if (XEN_FALSE_P(s_dur))
-    end = end_to_sample(s_end, cp, pos, caller);
-  else dur = dur_to_samples(s_dur, beg, cp, pos, 8, caller);
   if (beg > cp->samples[pos])
     XEN_ERROR(NO_SUCH_SAMPLE,
 	      XEN_LIST_2(C_TO_XEN_STRING(caller),
 			 s_beg));
+  if (XEN_FALSE_P(s_dur))
+    end = end_to_sample(s_end, cp, pos, caller);
+  else dur = dur_to_samples(s_dur, beg, cp, pos, 8, caller);
   if (end == 0) 
     {
       if (dur != 0) 
@@ -2593,12 +2593,12 @@ about where it is in the sound."
   cp = get_cp(snd, chn, S_ptree_channel);
   pos = to_c_edit_position(cp, edpos, S_ptree_channel, 6);
   beg = beg_to_sample(s_beg, S_ptree_channel);
-  dur = dur_to_samples(s_dur, beg, cp, pos, 2, S_ptree_channel);
-  clear_minibuffer(cp->sound);
   if (beg > cp->samples[pos])
     XEN_ERROR(NO_SUCH_SAMPLE,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_ptree_channel),
 			 s_beg));
+  dur = dur_to_samples(s_dur, beg, cp, pos, 3, S_ptree_channel);
+  clear_minibuffer(cp->sound);
   pt = form_to_ptree_1f2f(proc_and_list);
   if (pt)
     {
@@ -2646,13 +2646,13 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   cp = get_cp(snd, chn, caller);
   pos = to_c_edit_position(cp, edpos, caller, arg_pos);
   beg = beg_to_sample(s_beg, caller);
-  if (XEN_FALSE_P(s_dur))
-    end = end_to_sample(s_end, cp, pos, caller);
-  else dur = dur_to_samples(s_dur, beg, cp, pos, 3, caller);
   if (beg > cp->samples[pos])
     XEN_ERROR(NO_SUCH_SAMPLE,
 	      XEN_LIST_2(C_TO_XEN_STRING(caller),
 			 s_beg));
+  if (XEN_FALSE_P(s_dur))
+    end = end_to_sample(s_end, cp, pos, caller);
+  else dur = dur_to_samples(s_dur, beg, cp, pos, 3, caller);
   errmsg = procedure_ok(proc, 1, caller, "", 1);
   if (errmsg)
     {

@@ -4331,7 +4331,16 @@ static void display_clm(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s"
 static char *descr_display_clm(int *args, int *ints, Float *dbls) {return(mus_format("display(" PTR_PT ")", args[1], ((mus_any *)(INT_ARG_1))));}
 static void display_vct(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", vct_to_string((vct *)(INT_ARG_1)));}
 static char *descr_display_vct(int *args, int *ints, Float *dbls) {return(mus_format("display(" PTR_PT ")", args[1], ((vct *)(INT_ARG_1))));}
-static void display_int_vct(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", int_vct_to_string((int_vct *)(INT_ARG_1)));}
+static void display_int_vct(int *args, int *ints, Float *dbls) 
+{
+  char *buf = NULL;
+  buf = int_vct_to_string((int_vct *)(INT_ARG_1));
+  if (buf)
+    {
+      fprintf(stderr, "%s", buf);
+      FREE(buf);
+    }
+}
 static char *descr_display_int_vct(int *args, int *ints, Float *dbls) {return(mus_format("display(" PTR_PT ")", args[1], ((int_vct *)(INT_ARG_1))));}
 static void display_rd(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", sf_to_string((snd_fd *)(INT_ARG_1)));}
 static char *descr_display_rd(int *args, int *ints, Float *dbls) {return(mus_format("display(" PTR_PT ")", args[1], ((snd_fd *)(INT_ARG_1))));}
@@ -4745,6 +4754,29 @@ static xen_value *goto_0(ptree *prog, xen_value **args, xen_value *sf)
 }
 
 
+/* ---------------- edit-position ---------------- */
+
+static void edit_position_i(int *args, int *ints, Float *dbls) 
+{
+  snd_state *ss;
+  chan_info *cp; 
+  ss = get_global_state();
+  cp = ss->sounds[INT_ARG_1]->chans[INT_ARG_2];
+  INT_RESULT = cp->edit_ctr;
+}
+static char *descr_edit_position_i(int *args, int *ints, Float *dbls) 
+{
+  return(mus_format( INT_PT " = edit_position(" INT_PT ", " INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
+}
+static xen_value *edit_position_1(ptree *pt, xen_value **args, int num_args)
+{
+  if ((num_args == 2) &&
+      (args[1]->type == R_INT) &&
+      (args[2]->type == R_INT))
+    return(package(pt, R_INT, edit_position_i, descr_edit_position_i, args, 2));
+  return(NULL);
+}
+
 
 /* ---------------- sample-reader stuff ---------------- */
 
@@ -4822,6 +4854,7 @@ static xen_value *make_sample_reader_1(ptree *pt, xen_value **args, int num_args
     {
       if (args[3]->type == R_BOOL)
 	pt->ints[args[3]->addr] = -1;
+      else true_args[3] = args[3];
     }
   if (num_args < 2)
     true_args[2] = make_xen_value(R_INT, add_int_to_ptree(pt, -1), R_CONSTANT);
@@ -4829,6 +4862,7 @@ static xen_value *make_sample_reader_1(ptree *pt, xen_value **args, int num_args
     {
       if (args[2]->type == R_BOOL)
 	pt->ints[args[2]->addr] = -1;
+      else true_args[2] = args[2];
     }
   if (num_args == 0)
     true_args[1] = make_xen_value(R_INT, add_int_to_ptree(pt, 0), R_CONSTANT);
@@ -6850,6 +6884,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       if (clms > 0) return(clean_up(run_warn("clm gen bad arg"), args, num_args));
       /* both of these can be applicable objects, but those are not counted in the arg scan */
       /* no readers or CLM gens from here on */
+      if (strcmp(funcname, "edit-position") == 0) return(clean_up(edit_position_1(prog, args, num_args), args, num_args));
 
       if (vcts > 0)
 	{
@@ -7143,25 +7178,6 @@ int evaluate_ptree_1f2b(void *upt, Float arg)
 
 /* ---------------- internal testing stuff ---------------- */
 
-static XEN g_run(XEN code)
-{
-  ptree *prog;
-  char *msg;
-  current_optimization = 4;
-  prog = make_ptree(8);
-  prog->result = walk(prog, code, TRUE);
-  if (prog->result)
-    {
-      add_triple_to_ptree(prog, make_triple(quit, descr_quit, NULL, 0));
-      msg = describe_ptree(prog);
-      fprintf(stderr, msg);
-      FREE(msg);
-    }
-  else fprintf(stderr,"run can't parse that");
-  free_ptree(prog);
-  return(XEN_FALSE);
-}
-
 static XEN g_run_eval(XEN code, XEN arg)
 {
   ptree *pt;
@@ -7336,7 +7352,6 @@ in multi-channel situations where you want the optimization that vct-map! provid
 void g_init_run(void)
 {
 #if WITH_RUN
-  XEN_DEFINE_PROCEDURE("run", g_run, 1, 0, 0, "run macro testing...");
   XEN_DEFINE_PROCEDURE("run-eval", g_run_eval, 1, 1, 0, "run macro testing...");
   XEN_DEFINE_PROCEDURE("vct-map-2",     g_vct_map, 2, 0, 0,      H_vct_map);
   XEN_EVAL_C_STRING("(defmacro* " S_vct_map " (thunk #:rest args) `(vct-map-2 (list ',thunk ,thunk) (list ,@args)))");

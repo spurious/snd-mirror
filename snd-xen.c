@@ -2212,60 +2212,13 @@ static XEN g_set_oss_buffers(XEN num, XEN size)
   return(XEN_FALSE);
 }
 
+/* this needs to be in Snd (rather than sndlib2xen.c) because it calls snd_help */
 #define S_mus_audio_describe            "mus-audio-describe"
 static XEN g_mus_audio_describe(void) 
 {
   #define H_mus_audio_describe "("  S_mus_audio_describe ") posts a description of the audio hardware state in the Help dialog"
   snd_help(get_global_state(), "Audio State", mus_audio_report()); 
   return(XEN_TRUE);
-}
-
-
-static XEN g_start_progress_report(XEN snd)
-{
-  #define H_start_progress_report "(" S_start_progress_report " &optional snd) posts the hour-glass icon"
-  snd_info *sp;
-  ASSERT_SOUND(S_start_progress_report, snd, 1);
-  sp = get_sp(snd);
-  if (sp == NULL)
-    return(snd_no_such_sound_error(S_start_progress_report, snd));
-  start_progress_report(sp, NOT_FROM_ENVED);
-  return(snd);
-}
-
-static XEN g_finish_progress_report(XEN snd)
-{
-  #define H_finish_progress_report "(" S_finish_progress_report " &optional snd) removes the hour-glass icon"
-  snd_info *sp;
-  ASSERT_SOUND(S_finish_progress_report, snd, 1);
-  sp = get_sp(snd);
-  if (sp == NULL)
-    return(snd_no_such_sound_error(S_finish_progress_report, snd));
-  finish_progress_report(sp, NOT_FROM_ENVED);
-  return(snd); 
-}
-
-static XEN g_progress_report(XEN pct, XEN name, XEN cur_chan, XEN chans, XEN snd)
-{
-  #define H_progress_report "(" S_progress_report " pct &optional name cur-chan chans snd)\n\
-updates an on-going 'progress report' (e. g. an animated hour-glass icon) in snd using pct to indicate how far along we are"
-
-  snd_info *sp;
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(pct), pct, XEN_ARG_1, S_progress_report, "a number");
-  ASSERT_SOUND(S_progress_report, snd, 5);
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name), name, XEN_ARG_2, S_progress_report, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(cur_chan), cur_chan, XEN_ARG_3, S_progress_report, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chans), chans, XEN_ARG_4, S_progress_report, "an integer");
-  sp = get_sp(snd);
-  if (sp == NULL)
-    return(snd_no_such_sound_error(S_progress_report, snd));
-  progress_report(sp,
-		  (XEN_STRING_P(name)) ? XEN_TO_C_STRING(name) : "something useful",
-		  XEN_TO_C_INT_OR_ELSE(cur_chan, 0),
-		  XEN_TO_C_INT_OR_ELSE(chans, sp->nchans),
-		  XEN_TO_C_DOUBLE(pct),
-		  NOT_FROM_ENVED);
-  return(snd);
 }
 
 
@@ -3099,9 +3052,6 @@ XEN_ARGIFY_4(g_open_sound_file_w, g_open_sound_file)
 XEN_NARGIFY_2(g_close_sound_file_w, g_close_sound_file)
 XEN_NARGIFY_3(vct2soundfile_w, vct2soundfile)
 XEN_ARGIFY_7(samples2sound_data_w, samples2sound_data)
-XEN_ARGIFY_1(g_start_progress_report_w, g_start_progress_report)
-XEN_ARGIFY_1(g_finish_progress_report_w, g_finish_progress_report)
-XEN_ARGIFY_5(g_progress_report_w, g_progress_report)
 XEN_NARGIFY_1(g_snd_print_w, g_snd_print)
 XEN_NARGIFY_0(g_mus_audio_describe_w, g_mus_audio_describe)
 XEN_NARGIFY_0(g_little_endian_w, g_little_endian)
@@ -3304,9 +3254,6 @@ XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 #define g_close_sound_file_w g_close_sound_file
 #define vct2soundfile_w vct2soundfile
 #define samples2sound_data_w samples2sound_data
-#define g_start_progress_report_w g_start_progress_report
-#define g_finish_progress_report_w g_finish_progress_report
-#define g_progress_report_w g_progress_report
 #define g_snd_print_w g_snd_print
 #define g_mus_audio_describe_w g_mus_audio_describe
 #define g_little_endian_w g_little_endian
@@ -3344,7 +3291,7 @@ static XEN g_snd_sound_pointer(XEN snd)
   int s;
   ss = get_global_state();
   s = XEN_TO_C_INT(snd);
-  if (ss->sounds[s])
+  if ((s < ss->max_sounds) && (s >= 0) && (ss->sounds[s]))
     return(C_TO_XEN_ULONG((unsigned long)(ss->sounds[s])));
   return(XEN_FALSE);
 }
@@ -3671,9 +3618,6 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE(S_close_sound_file,    g_close_sound_file_w, 2, 0, 0,    H_close_sound_file);
   XEN_DEFINE_PROCEDURE(S_vct2sound_file,      vct2soundfile_w, 3, 0, 0,         H_vct2sound_file);
   XEN_DEFINE_PROCEDURE(S_samples2sound_data,  samples2sound_data_w, 0, 7, 0,    H_samples2sound_data);
-  XEN_DEFINE_PROCEDURE(S_start_progress_report, g_start_progress_report_w, 0, 1, 0, H_start_progress_report);
-  XEN_DEFINE_PROCEDURE(S_finish_progress_report, g_finish_progress_report_w, 0, 1, 0, H_finish_progress_report);
-  XEN_DEFINE_PROCEDURE(S_progress_report,     g_progress_report_w, 1, 4, 0,     H_progress_report);
   XEN_DEFINE_PROCEDURE(S_snd_print,           g_snd_print_w, 1, 0, 0,           H_snd_print);
   XEN_DEFINE_PROCEDURE(S_mus_audio_describe,  g_mus_audio_describe_w, 0, 0, 0,  H_mus_audio_describe);
   XEN_DEFINE_PROCEDURE("little-endian?",      g_little_endian_w, 0, 0, 0,       "return #t if host is little endian");

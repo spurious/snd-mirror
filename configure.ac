@@ -396,7 +396,7 @@ LIBS=$SAVELIBS
 
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME
-AC_CHECK_FUNCS(getcwd strerror readlink setlocale access opendir sleep signal strdup statfs clock vsnprintf snprintf)
+AC_CHECK_FUNCS(getcwd strerror readlink setlocale access opendir sleep signal strdup statfs clock vsnprintf snprintf memmove)
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
 

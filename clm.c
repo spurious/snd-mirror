@@ -5506,8 +5506,13 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
   if (fsx > 0)
     {
       /* realign data, reset srp->x */
+#if (!HAVE_MEMMOVE)
       for (i = fsx, loc = 0; i < lim; i++, loc++) 
 	srp->data[loc] = srp->data[i];
+#else
+      loc = lim - fsx;
+      memmove((void *)(srp->data), (void *)(srp->data + fsx), sizeof(Float) * loc);
+#endif
       for (i = loc; i < lim; i++) 
 	{
 	  if (input)
@@ -5538,17 +5543,18 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
       xsf = zf * (1.0 - srp->x - srp->width);
       xs = (int)xsf;
       for (i = 0; i < lim; i++, xs += xi)
-	sum += (srp->data[i] * srp->sinc_table[abs(xs)]);
-      srp->x += srx;
-      return(sum * factor);
+	sum += (srp->data[i] * srp->sinc_table[(xs >= 0) ? xs : (-xs)]);
     }
-  /* this form twice as slow because of float->int conversions */
-  for (i = 0, x = zf * (1.0 - srp->x - srp->width); i < lim; i++, x += zf)
+  else
     {
-      /* we're moving backwards in the data array, so the sr->x field has to mimic that (hence the '1.0 - srp->x') */
-      if (x < 0) k = (int)(-x); else k = (int)x;
-      sum += (srp->data[i] * srp->sinc_table[k]);
-      /* rather than do a bounds check here, we just padded the sinc_table above with 2 extra 0's */
+      /* this form twice as slow because of float->int conversions */
+      for (i = 0, x = zf * (1.0 - srp->x - srp->width); i < lim; i++, x += zf)
+	{
+	  /* we're moving backwards in the data array, so the sr->x field has to mimic that (hence the '1.0 - srp->x') */
+	  if (x < 0) k = (int)(-x); else k = (int)x;
+	  sum += (srp->data[i] * srp->sinc_table[k]);
+	  /* rather than do a bounds check here, we just padded the sinc_table above with 2 extra 0's */
+	}
     }
   srp->x += srx;
   return(sum * factor);

@@ -1856,6 +1856,9 @@ static XEN g_set_enved_selected_env(XEN name)
       if (enved_dialog)
 	XmListSelectPos(screnvlst, pos + 1, FALSE);
     }
+  else XEN_ERROR(NO_SUCH_ENVELOPE,
+		 XEN_LIST_2(C_TO_XEN_STRING("set-" S_enved_selected_env),
+			    name));
   return(name);
 }
 

@@ -3396,6 +3396,54 @@ If 'filename' is a sound index (an integer), pts is an edit-position, and the cu
   return(xen_return_first(peak, peak_func));
 }
 
+static XEN g_start_progress_report(XEN snd)
+{
+  #define H_start_progress_report "(" S_start_progress_report " &optional snd) posts the hour-glass icon"
+  snd_info *sp;
+  ASSERT_SOUND(S_start_progress_report, snd, 1);
+  sp = get_sp(snd);
+  if (sp == NULL)
+    return(snd_no_such_sound_error(S_start_progress_report, snd));
+  start_progress_report(sp, NOT_FROM_ENVED);
+  return(snd);
+}
+
+static XEN g_finish_progress_report(XEN snd)
+{
+  #define H_finish_progress_report "(" S_finish_progress_report " &optional snd) removes the hour-glass icon"
+  snd_info *sp;
+  ASSERT_SOUND(S_finish_progress_report, snd, 1);
+  sp = get_sp(snd);
+  if (sp == NULL)
+    return(snd_no_such_sound_error(S_finish_progress_report, snd));
+  finish_progress_report(sp, NOT_FROM_ENVED);
+  return(snd); 
+}
+
+static XEN g_progress_report(XEN pct, XEN name, XEN cur_chan, XEN chans, XEN snd)
+{
+  #define H_progress_report "(" S_progress_report " pct &optional name cur-chan chans snd)\n\
+updates an on-going 'progress report' (e. g. an animated hour-glass icon) in snd using pct to indicate how far along we are"
+
+  snd_info *sp;
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(pct), pct, XEN_ARG_1, S_progress_report, "a number");
+  ASSERT_SOUND(S_progress_report, snd, 5);
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name), name, XEN_ARG_2, S_progress_report, "a string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(cur_chan), cur_chan, XEN_ARG_3, S_progress_report, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chans), chans, XEN_ARG_4, S_progress_report, "an integer");
+  sp = get_sp(snd);
+  if (sp == NULL)
+    return(snd_no_such_sound_error(S_progress_report, snd));
+  progress_report(sp,
+		  (XEN_STRING_P(name)) ? XEN_TO_C_STRING(name) : "something useful",
+		  XEN_TO_C_INT_OR_ELSE(cur_chan, 0),
+		  XEN_TO_C_INT_OR_ELSE(chans, sp->nchans),
+		  XEN_TO_C_DOUBLE(pct),
+		  NOT_FROM_ENVED);
+  return(snd);
+}
+
+
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_1(g_sound_p_w, g_sound_p)
@@ -3493,6 +3541,9 @@ XEN_ARGIFY_3(g_peak_env_info_w, g_peak_env_info)
 XEN_NARGIFY_3(g_write_peak_env_info_file_w, g_write_peak_env_info_file)
 XEN_NARGIFY_3(g_read_peak_env_info_file_w, g_read_peak_env_info_file)
 XEN_ARGIFY_5(g_channel_amp_envs_w, g_channel_amp_envs);
+XEN_ARGIFY_1(g_start_progress_report_w, g_start_progress_report)
+XEN_ARGIFY_1(g_finish_progress_report_w, g_finish_progress_report)
+XEN_ARGIFY_5(g_progress_report_w, g_progress_report)
 #else
 #define g_sound_p_w g_sound_p
 #define g_bomb_w g_bomb
@@ -3589,6 +3640,9 @@ XEN_ARGIFY_5(g_channel_amp_envs_w, g_channel_amp_envs);
 #define g_write_peak_env_info_file_w g_write_peak_env_info_file
 #define g_read_peak_env_info_file_w g_read_peak_env_info_file
 #define g_channel_amp_envs_w g_channel_amp_envs
+#define g_start_progress_report_w g_start_progress_report
+#define g_finish_progress_report_w g_finish_progress_report
+#define g_progress_report_w g_progress_report
 #endif
 
 void g_init_snd(void)
@@ -3635,6 +3689,10 @@ If it returns #t, the apply is aborted."
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_channel, g_selected_channel_w, H_selected_channel, "set-" S_selected_channel, g_set_selected_channel_w,  0, 1, 0, 2);
   XEN_DEFINE_PROCEDURE(S_select_sound, g_select_sound_w, 0, 1, 0, H_select_sound);
   XEN_DEFINE_PROCEDURE(S_select_channel, g_select_channel_w, 0, 1, 0, H_select_channel);
+
+  XEN_DEFINE_PROCEDURE(S_start_progress_report, g_start_progress_report_w, 0, 1, 0, H_start_progress_report);
+  XEN_DEFINE_PROCEDURE(S_finish_progress_report, g_finish_progress_report_w, 0, 1, 0, H_finish_progress_report);
+  XEN_DEFINE_PROCEDURE(S_progress_report,      g_progress_report_w, 1, 4, 0,      H_progress_report);
 
   XEN_DEFINE_PROCEDURE(S_close_sound,          g_close_sound_w, 0, 1, 0,          H_close_sound);
   XEN_DEFINE_PROCEDURE(S_update_sound,         g_update_sound_w, 0, 1, 0,         H_update_sound);
