@@ -2811,103 +2811,6 @@ with chans inputs and outputs, initializing the scalars from the rest of the arg
 
 
 
-/* ---------------- buffer ---------------- */
-
-static XEN g_buffer_p(XEN obj) 
-{
-  #define H_buffer_p "(" S_buffer_p " gen): #t if gen is a buffer"
-  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_buffer_p(XEN_TO_MUS_ANY(obj)))));
-}
-
-static XEN g_make_buffer(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
-{
-  #define H_make_buffer "(" S_make_buffer " (:size 512) :fill-time): return a new buffer \
-generator, a FIFO for samples. The size argument sets the size of the buffer (not a delay time), \
-and fill-time sets the time to the next request for more samples.  The intended use is in block \
-processing, normally involving overlap-adds."
-
-  mus_any *ge;
-  XEN args[4]; 
-  XEN keys[2];
-  int orig_arg[2] = {0, 0};
-  int vals;
-  Float *buf;
-  int siz = clm_table_size;
-  Float filltime = 0.0;
-  keys[0] = kw_size;
-  keys[1] = kw_fill_time;
-  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4;
-  vals = mus_optkey_unscramble(S_make_buffer, 2, keys, args, orig_arg);
-  if (vals > 0)
-    {
-      siz = mus_optkey_to_int(keys[0], S_make_buffer, orig_arg[0], siz);
-      filltime = mus_optkey_to_float(keys[1], S_make_buffer, orig_arg[1], 0.0);
-    }
-  if ((siz <= 0) || (siz > MAX_TABLE_SIZE))
-    return(XEN_FALSE);
-  buf = (Float *)CALLOC(siz, sizeof(Float));
-  if (buf == NULL)
-    return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate buffer"));
-  old_error_handler = mus_error_set_handler(local_mus_error); /* currently not needed */
-  ge = mus_make_buffer(buf, siz, filltime);
-  mus_error_set_handler(old_error_handler);
-  if (ge) return(mus_xen_to_object((mus_xen *)_mus_wrap_one_vct(ge)));
-  FREE(buf);
-  return(clm_mus_error(local_error_type, local_error_msg));
-}
-
-static XEN g_buffer_to_sample(XEN obj)
-{
-  #define H_buffer_to_sample "(" S_buffer_to_sample " gen): next sample in buffer, removing it from the buffer"
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_buffer_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ONLY_ARG, S_buffer_to_sample, "a buffer gen");
-  return(C_TO_XEN_DOUBLE(mus_buffer_to_sample(XEN_TO_MUS_ANY(obj))));
-}
-
-static XEN g_buffer_to_frame(XEN obj, XEN fr)
-{
-  #define H_buffer_to_frame "(" S_buffer_to_frame " gen (frame #f)): next frame of samples in buffer, removing them"
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_buffer_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_buffer_to_frame, "a buffer gen");
-  if (XEN_BOUND_P(fr))
-    {XEN_ASSERT_TYPE((MUS_XEN_P(fr)) && (mus_frame_p(XEN_TO_MUS_ANY(fr))), fr, XEN_ARG_2, S_buffer_to_frame, "a frame");}
-  else fr = g_make_frame(XEN_LIST_1(C_TO_XEN_INT(1)));
-  mus_buffer_to_frame((mus_any *)(XEN_TO_MUS_ANY(obj)), (mus_any *)(XEN_TO_MUS_ANY(fr)));
-  return(fr);
-}
-
-static XEN g_buffer_empty_p(XEN obj)
-{
-  #define H_buffer_empty_p "(" S_buffer_empty_p " gen): #t if buffer is in need of more samples"
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_buffer_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ONLY_ARG, S_buffer_empty_p, "a buffer gen");
-  return(C_TO_XEN_BOOLEAN(mus_buffer_empty_p(XEN_TO_MUS_ANY(obj))));
-}
-
-static XEN g_buffer_full_p(XEN obj)
-{
-  #define H_buffer_full_p "(" S_buffer_full_p " gen): #t if buffer has no room for any more samples"
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_buffer_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ONLY_ARG, S_buffer_full_p, "a buffer gen");
-  return(C_TO_XEN_BOOLEAN(mus_buffer_full_p(XEN_TO_MUS_ANY(obj))));
-}
-
-static XEN g_sample_to_buffer(XEN obj, XEN val)
-{
-  #define H_sample_to_buffer "(" S_sample_to_buffer " gen val): append val to current end of data in buffer"
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_buffer_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_sample_to_buffer, "a buffer gen");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_sample_to_buffer, "a number");
-  return(C_TO_XEN_DOUBLE(mus_sample_to_buffer(XEN_TO_MUS_ANY(obj),
-					   XEN_TO_C_DOUBLE(val))));
-}
-
-static XEN g_frame_to_buffer(XEN obj, XEN val)
-{
-  #define H_frame_to_buffer "(" S_frame_to_buffer " gen f): append sample in frame f to end of data in buffer"
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_buffer_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_frame_to_buffer, "a buffer gen");
-  XEN_ASSERT_TYPE((MUS_XEN_P(val)) && (mus_frame_p(XEN_TO_MUS_ANY(val))), val, XEN_ARG_2, S_frame_to_buffer, "a frame");
-  mus_frame_to_buffer(XEN_TO_MUS_ANY(obj), XEN_TO_MUS_ANY(val));
-  return(val);
-}
-
-
-
 /* ---------------- wave-train ---------------- */
 
 static XEN g_make_wave_train(XEN arglist)
@@ -5229,14 +5132,6 @@ XEN_NARGIFY_2(g_frame_to_sample_w, g_frame_to_sample)
 XEN_NARGIFY_1(g_frame_to_list_w, g_frame_to_list)
 XEN_ARGIFY_3(g_frame_to_frame_w, g_frame_to_frame)
 XEN_ARGIFY_3(g_sample_to_frame_w, g_sample_to_frame)
-XEN_ARGIFY_4(g_make_buffer_w, g_make_buffer)
-XEN_NARGIFY_1(g_buffer_p_w, g_buffer_p)
-XEN_NARGIFY_1(g_buffer_empty_p_w, g_buffer_empty_p)
-XEN_NARGIFY_1(g_buffer_full_p_w, g_buffer_full_p)
-XEN_NARGIFY_1(g_buffer_to_sample_w, g_buffer_to_sample)
-XEN_ARGIFY_2(g_buffer_to_frame_w, g_buffer_to_frame)
-XEN_NARGIFY_2(g_sample_to_buffer_w, g_sample_to_buffer)
-XEN_NARGIFY_2(g_frame_to_buffer_w, g_frame_to_buffer)
 XEN_VARGIFY(g_make_wave_train_w, g_make_wave_train)
 XEN_ARGIFY_2(g_wave_train_w, g_wave_train)
 XEN_NARGIFY_1(g_wave_train_p_w, g_wave_train_p)
@@ -5492,14 +5387,6 @@ XEN_NARGIFY_1(g_set_clm_table_size_w, g_set_clm_table_size)
 #define g_frame_to_list_w g_frame_to_list
 #define g_frame_to_frame_w g_frame_to_frame
 #define g_sample_to_frame_w g_sample_to_frame
-#define g_make_buffer_w g_make_buffer
-#define g_buffer_p_w g_buffer_p
-#define g_buffer_empty_p_w g_buffer_empty_p
-#define g_buffer_full_p_w g_buffer_full_p
-#define g_buffer_to_sample_w g_buffer_to_sample
-#define g_buffer_to_frame_w g_buffer_to_frame
-#define g_sample_to_buffer_w g_sample_to_buffer
-#define g_frame_to_buffer_w g_frame_to_buffer
 #define g_make_wave_train_w g_make_wave_train
 #define g_wave_train_w g_wave_train
 #define g_wave_train_p_w g_wave_train_p
@@ -5863,17 +5750,6 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_wave_train,      g_wave_train_w,      1, 1, 0, H_wave_train);
   XEN_DEFINE_PROCEDURE(S_wave_train_p,    g_wave_train_p_w,    1, 0, 0, H_wave_train_p);
 
-
-  XEN_DEFINE_PROCEDURE(S_make_buffer,       g_make_buffer_w,       0, 4, 0, H_make_buffer);
-  XEN_DEFINE_PROCEDURE(S_buffer_p,          g_buffer_p_w,          1, 0, 0, H_buffer_p);
-  XEN_DEFINE_PROCEDURE(S_buffer_empty_p,    g_buffer_empty_p_w,    1, 0, 0, H_buffer_empty_p);
-  XEN_DEFINE_PROCEDURE(S_buffer_full_p,     g_buffer_full_p_w,     1, 0, 0, H_buffer_full_p);
-  XEN_DEFINE_PROCEDURE(S_buffer_to_sample,  g_buffer_to_sample_w,  1, 0, 0, H_buffer_to_sample);
-  XEN_DEFINE_PROCEDURE(S_buffer_to_frame,   g_buffer_to_frame_w,   1, 1, 0, H_buffer_to_frame);
-  XEN_DEFINE_PROCEDURE(S_sample_to_buffer,  g_sample_to_buffer_w,  2, 0, 0, H_sample_to_buffer);
-  XEN_DEFINE_PROCEDURE(S_frame_to_buffer,   g_frame_to_buffer_w,   2, 0, 0, H_frame_to_buffer);
-
-
   XEN_DEFINE_PROCEDURE(S_make_frame,     g_make_frame_w,     0, 0, 1, H_make_frame);
 #if HAVE_GUILE
   XEN_EVAL_C_STRING("(define %frame? frame?)"); /* protect the original meaning */
@@ -6075,11 +5951,6 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_blackman2_window,
 	       S_blackman3_window,
 	       S_blackman4_window,
-	       S_buffer_to_frame,
-	       S_buffer_to_sample,
-	       S_buffer_empty_p,
-	       S_buffer_full_p,
-	       S_buffer_p,
 	       S_cauchy_window,
 	       S_clear_array,
 	       S_clear_sincs,
@@ -6121,7 +5992,6 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_formant,
 	       S_formant_bank,
 	       S_formant_p,
-	       S_frame_to_buffer,
 	       S_frame_to_file,
 	       S_frame_to_file_p,
 	       S_frame_to_frame,
@@ -6157,7 +6027,6 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_make_all_pass,
 	       S_make_average,
 	       S_make_asymmetric_fm,
-	       S_make_buffer,
 	       S_make_comb,
 	       S_make_convolve,
 	       S_make_delay,
@@ -6299,7 +6168,6 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_restart_env,
 	       S_riemann_window,
 	       S_ring_modulate,
-	       S_sample_to_buffer,
 	       S_sample_to_file,
 	       S_sample_to_file_p,
 	       S_sample_to_frame,

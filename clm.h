@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 5
-#define MUS_DATE "6-Sep-04"
+#define MUS_REVISION 6
+#define MUS_DATE "11-Sep-04"
 
 /*
+ * 11-Sep:     removed buffer generator.
  * 6-Sep:      removed mus_oscil_bank, mus_bank.
  * 24-Aug:     removed mus_inspect method -- overlaps mus_describe and is useless given gdb capabilities.
  * 27-July:    mus_granulate_with_editor and mus_phase_vocoder_with_editors.
@@ -451,15 +452,6 @@ Float mus_wave_train_1(mus_any *gen);
 mus_any *mus_make_wave_train(Float freq, Float phase, Float *wave, int wsize, mus_interp_t type);
 bool mus_wave_train_p(mus_any *gen);
 
-Float mus_buffer_to_sample(mus_any *ptr);
-Float mus_sample_to_buffer(mus_any *ptr, Float val);
-mus_any *mus_make_buffer(Float *preloaded_buffer, int size, Float current_file_time);
-bool mus_buffer_p(mus_any *ptr);
-bool mus_buffer_empty_p(mus_any *ptr);
-bool mus_buffer_full_p(mus_any *ptr);
-mus_any *mus_buffer_to_frame(mus_any *rb, mus_any *fr);
-mus_any *mus_frame_to_buffer(mus_any *rb, mus_any *fr);
-
 mus_any *mus_make_waveshape(Float frequency, Float phase, Float *table, int size);
 Float mus_waveshape(mus_any *ptr, Float index, Float fm);
 Float mus_waveshape_1(mus_any *ptr, Float index);
@@ -646,10 +638,6 @@ void *_mus_wrap_one_vct_wrapped(mus_any *ge);
 #define mus_polar2rectangular(Real, Imag, Size) mus_polar_to_rectangular(Real, Imag, Size)
 #define mus_partials2wave(Data, Partials, Table, Size, Normalize) mus_partials_to_wave(Data, Partials, Table, Size, Normalize)
 #define mus_phasepartials2wave(Data, Partials, Table, Size, Normalize) mus_phase_partials_to_wave(Data, Partials, Table, Size, Normalize)
-#define mus_buffer2sample(Ptr) mus_buffer_to_sample(Ptr)
-#define mus_sample2buffer(Ptr, Val) mus_sample_to_buffer(Ptr, Val)
-#define mus_buffer2frame(Rb, Fr) mus_buffer_to_frame(Rb, Fr)
-#define mus_frame2buffer(Rb, Fr) mus_frame_to_buffer(Rb, Fr)
 #define mus_partials2waveshape(Npartials, Partials, Size, Table) mus_partials_to_waveshape(Npartials, Partials, Size, Table)
 #define mus_partials2polynomial(Npartials, Partials, Kind) mus_partials_to_polynomial(Npartials, Partials, Kind)
 #define mus_frame2frame(Fr, In, Out) mus_frame_to_frame(Fr, In, Out)

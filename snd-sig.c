@@ -3772,7 +3772,7 @@ static XEN g_fft(XEN reals, XEN imag, XEN sign)
 If sign is -1, perform inverse fft.  Incoming data is in vcts."
 
   vct *v1 = NULL, *v2 = NULL;
-  int ipow = 0, n = 0, n2 = 0, i, isign = 1;
+  int ipow = 0, n = 0, n2 = 0, isign = 1;
   bool need_free = false;
   Float *rl = NULL, *im = NULL;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(sign), sign, XEN_ARG_3, S_fft, "an integer");
@@ -3797,20 +3797,14 @@ If sign is -1, perform inverse fft.  Incoming data is in vcts."
       rl = (Float *)CALLOC(n2, sizeof(Float));
       im = (Float *)CALLOC(n2, sizeof(Float));
       need_free = true;
-      for (i = 0; i < n; i++)
-	{
-	  rl[i] = v1->data[i];
-	  im[i] = v2->data[i];
-	}
+      memcpy((void *)rl, (void *)(v1->data), n * sizeof(Float));
+      memcpy((void *)im, (void *)(v2->data), n * sizeof(Float));
     }
   mus_fft(rl, im, n2, isign);
   if (need_free)
     {
-      for (i = 0; i < n; i++)
-	{
-	  v1->data[i] = rl[i];
-	  v2->data[i] = im[i];
-	}
+      memcpy((void *)(v1->data), (void *)rl, n * sizeof(Float));
+      memcpy((void *)(v2->data), (void *)im, n * sizeof(Float));
       FREE(rl);
       FREE(im);
     }

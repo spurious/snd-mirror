@@ -54,11 +54,31 @@
   #define TWO_PI (2.0 * M_PI)
 #endif
 
+#if (!HAVE_MEMMOVE)
+/* from libit */
+static void *memmove (char *dest, const char *source, unsigned int length)
+{
+  char *d0 = dest;
+  if (source < dest)
+    /* Moving from low mem to hi mem; start at end.  */
+    for (source += length, dest += length; length; --length)
+      *--dest = *--source;
+  else 
+    if (source != dest)
+      {
+	/* Moving from hi mem to low mem; start at beginning.  */
+	for (; length; --length)
+	  *dest++ = *source++;
+      }
+  return (void *) d0;
+}
+#endif
+
 
 enum {MUS_OSCIL, MUS_SUM_OF_COSINES, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
       MUS_TABLE_LOOKUP, MUS_SQUARE_WAVE, MUS_SAWTOOTH_WAVE, MUS_TRIANGLE_WAVE, MUS_PULSE_TRAIN,
       MUS_RAND, MUS_RAND_INTERP, MUS_ASYMMETRIC_FM, MUS_ONE_ZERO, MUS_ONE_POLE, MUS_TWO_ZERO, MUS_TWO_POLE, MUS_FORMANT,
-      MUS_WAVESHAPE, MUS_SRC, MUS_GRANULATE, MUS_SINE_SUMMATION, MUS_WAVE_TRAIN, MUS_BUFFER,
+      MUS_WAVESHAPE, MUS_SRC, MUS_GRANULATE, MUS_SINE_SUMMATION, MUS_WAVE_TRAIN, 
       MUS_FILTER, MUS_FIR_FILTER, MUS_IIR_FILTER, MUS_CONVOLVE, MUS_ENV, MUS_LOCSIG,
       MUS_FRAME, MUS_READIN, MUS_FILE_TO_SAMPLE, MUS_FILE_TO_FRAME,
       MUS_SAMPLE_TO_FILE, MUS_FRAME_TO_FILE, MUS_MIXER, MUS_PHASE_VOCODER,
@@ -3287,7 +3307,8 @@ Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
       rl = (Float *)CALLOC(fsize, sizeof(Float));
       im = (Float *)CALLOC(fsize, sizeof(Float));
       lim = order / 2;
-      for (i = 0; i < lim; i++) rl[i] = envl[i];
+      memcpy((void *)rl, (void *)envl, lim * sizeof(Float));
+      /* for (i = 0; i < lim; i++) rl[i] = envl[i]; */
       mus_fft(rl, im, fsize, 1);
       scl = 4.0 / fsize;
       offset = -2.0 * envl[0] / fsize;
@@ -3840,7 +3861,8 @@ mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float
       e->original_data = (Float *)clm_calloc(npts * 2, sizeof(Float), "env original data");
       e->data_allocated = true;
     }
-  for (i = 0; i < npts * 2; i++) e->original_data[i] = brkpts[i];
+  memcpy((void *)(e->original_data), (void *)brkpts, npts * 2 *sizeof(Float));
+  /* for (i = 0; i < npts * 2; i++) e->original_data[i] = brkpts[i]; */
   if (base == 0.0)
     {
       e->style = ENV_STEP;
@@ -4482,214 +4504,6 @@ mus_any *mus_mixer_scale(mus_any *uf1, Float scaler, mus_any *ures)
     for (j = 0; j < chans; j++)
       res->vals[i][j] = f1->vals[i][j] * scaler;
   return((mus_any *)res);
-}
-
-
-/* ---------------- buffer ---------------- */
-
-typedef struct {
-  mus_any_class *core;
-  Float *buf;
-  int size;
-  int loc;
-  Float fill_time;
-  bool empty;
-  bool buf_allocated;
-} rblk;
-
-static int mus_free_buffer(mus_any *gen) 
-{
-  rblk *ptr = (rblk *)gen;
-  if (ptr)
-    {
-      if ((ptr->buf) && (ptr->buf_allocated)) FREE(ptr->buf);
-      FREE(ptr);
-    }
-  return(0);
-}
-
-static Float *rblk_data(mus_any *ptr) {return(((rblk *)ptr)->buf);}
-static off_t rblk_length(mus_any *ptr) {return(((rblk *)ptr)->size);}
-static off_t rblk_set_length(mus_any *ptr, off_t new_size) {((rblk *)ptr)->size = (int)new_size; return(new_size);}
-
-bool mus_buffer_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_BUFFER));}
-
-static bool rblk_equalp(mus_any *p1, mus_any *p2) 
-{
-  int i;
-  rblk *b1 = (rblk *)p1;
-  rblk *b2 = (rblk *)p2;
-  if (p1 == p2) return(true);
-  if ((b1) && (b2) &&
-      (b1->core->type == b2->core->type) &&
-      (b1->size == b2->size) &&
-      (b1->loc == b2->loc) &&
-      (b1->fill_time == b2->fill_time) &&
-      (b1->empty == b2->empty))
-    {
-      for (i = 0; i < b1->size; i++)
-	if (b1->buf[i] != b2->buf[i])
-	  return(false);
-      return(true);
-    }
-  return(false);
-}
-
-static Float *rblk_set_data(mus_any *ptr, Float *new_data) 
-{
-  rblk *rb = (rblk *)ptr;
-  if (rb->buf_allocated) {FREE(rb->buf); rb->buf_allocated = false;}
-  rb->buf = new_data; 
-  return(new_data);
-}
-
-#define S_buffer "buffer"
-static char *describe_genbuffer(mus_any *ptr)
-{
-  rblk *gen = (rblk *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       S_buffer ": length: %d, loc: %d, fill: %.3f",
-	       gen->size, gen->loc, gen->fill_time);
-  return(describe_buffer);
-}
-
-Float mus_buffer_to_sample(mus_any *ptr)
-{
-  rblk *gen = (rblk *)ptr;
-  int loc, i, j;
-  Float val;
-  loc = gen->loc;
-  if (loc < gen->size) 
-    val = gen->buf[loc];
-  else val = 0.0;
-  loc++;
-  if ((!(gen->empty)) && ((Float)loc >= gen->fill_time))
-    {
-      i = 0;
-      for (j = loc; j < gen->size; i++, j++) gen->buf[i] = gen->buf[j];
-      for (; i < gen->size; i++) gen->buf[i] = 0.0;
-      gen->fill_time -= (Float)loc;
-      gen->loc = 0;
-      gen->empty = true; 
-    }
-  else gen->loc = loc;
-  return(val);
-}
-
-Float mus_sample_to_buffer(mus_any *ptr, Float val)
-{
-  /* place val at fill_time and increment */
-  int i, j, loc, old_size;
-  Float *tmp;
-  rblk *gen = (rblk *)ptr;
-  if (gen->fill_time >= (Float)(gen->size))
-    {
-      if (gen->loc == 0)
-	{
-	  /* have to make more space */
-	  old_size = gen->size;
-	  gen->size += 256;
-	  /* gotta do realloc by hand -- gen->buf may not belong to us */
-	  tmp = (Float *)clm_calloc(gen->size, sizeof(Float), "buffer space");
-	  for (i = 0; i < old_size; i++) tmp[i] = gen->buf[i];
-	  if (gen->buf_allocated) FREE(gen->buf);
-	  gen->buf = tmp;
-	  gen->buf_allocated = true;
-	}
-      else
-	{
-	  i = 0;
-	  loc = gen->loc;
-	  for (j = loc; j < gen->size; i++, j++) gen->buf[i] = gen->buf[j];
-	  for (; i < gen->size; i++) gen->buf[i] = 0.0;
-	  gen->fill_time -= (Float)loc;
-	  gen->loc = 0;
-	}
-    }
-  gen->buf[(int)(gen->fill_time)] = val;
-  gen->fill_time += 1.0;
-  return(val);
-}
-
-static Float run_buffer (mus_any *ptr, Float unused1, Float unused2) {return(mus_buffer_to_sample(ptr));}
-static Float buffer_increment(mus_any *rd) {return(((rblk *)rd)->fill_time);}
-static Float buffer_set_increment(mus_any *rd, Float val) {((rblk *)rd)->fill_time = val; ((rblk *)rd)->empty = (val == 0.0); return(val);}
-
-static mus_any_class BUFFER_CLASS = {
-  MUS_BUFFER,
-  S_buffer,
-  &mus_free_buffer,
-  &describe_genbuffer,
-  &rblk_equalp,
-  &rblk_data,
-  &rblk_set_data,
-  &rblk_length,
-  &rblk_set_length,
-  0, 0, 0, 0,
-  0, 0,
-  &buffer_increment,
-  &buffer_set_increment,
-  &run_buffer,
-  MUS_NOT_SPECIAL, 
-  NULL, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0,
-  &_mus_wrap_one_vct_wrapped
-};
-
-mus_any *mus_make_buffer(Float *preloaded_buffer, int size, Float current_fill_time)
-{
-  rblk *gen;
-  gen = (rblk *)clm_calloc(1, sizeof(rblk), S_make_buffer);
-  gen->core = &BUFFER_CLASS;
-  if (size <= 0) size = 512;
-  gen->size = size;
-  gen->loc = 0;
-  gen->fill_time = current_fill_time;
-  if (preloaded_buffer)
-    {
-      gen->buf = preloaded_buffer;
-      gen->buf_allocated = false;
-    }
-  else
-    {
-      gen->buf = (Float *)clm_calloc(size, sizeof(Float), "buffer data");
-      gen->buf_allocated = true;
-    }
-  if (current_fill_time == 0) 
-    gen->empty = true; 
-  else gen->empty = false;
-  return((mus_any *)gen);
-}
-
-bool mus_buffer_empty_p(mus_any *ptr) {return(((rblk *)ptr)->empty);}
-
-bool mus_buffer_full_p(mus_any *ptr)
-{
-  rblk *gen = (rblk *)ptr;
-  return((gen->fill_time >= (Float)(gen->size)) && 
-	 (gen->loc == 0));
-}
-
-mus_any *mus_frame_to_buffer(mus_any *rb, mus_any *fr)
-{
-  mus_frame *frm = (mus_frame *)fr;
-  int i;
-  if (fr)
-    for (i = 0; i < frm->chans; i++) 
-      mus_sample_to_buffer(rb, frm->vals[i]);
-  return(fr);
-}
-
-mus_any *mus_buffer_to_frame(mus_any *rb, mus_any *fr)
-{
-  mus_frame *frm = (mus_frame *)fr;
-  int i;
-  if (fr)
-    for (i = 0; i < frm->chans; i++) 
-      frm->vals[i] = mus_buffer_to_sample(rb);
-  return(fr);
 }
 
 
@@ -6163,14 +5977,10 @@ Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int dir
 	    (*sr_input)(srp->closure, (srx >= 0.0) ? 1 : -1);
 	  fsx = lim;
 	}
-#if (!HAVE_MEMMOVE)
-      for (i = fsx, loc = 0; i < lim; i++, loc++) 
-	srp->data[loc] = srp->data[i];
-#else
+      /* TODO: have memmove?? */
       loc = lim - fsx;
       if (loc > 0)
 	memmove((void *)(srp->data), (void *)(srp->data + fsx), sizeof(Float) * loc);
-#endif
       for (i = loc; i < lim; i++) 
 	srp->data[i] = (*sr_input)(srp->closure, (srx >= 0.0) ? 1 : -1);
     }
@@ -6232,13 +6042,8 @@ Float mus_src_20(mus_any *srptr, Float (*input)(void *arg, int direction))
       /* realign data, reset srp->x */
       Float (*sr_input)(void *arg, int direction) = input;
       if (sr_input == NULL) sr_input = srp->feeder;
-#if (!HAVE_MEMMOVE)
-      for (i = 2, loc = 0; i < lim; i++, loc++) 
-	srp->data[loc] = srp->data[i];
-#else
       loc = lim - 2;
       memmove((void *)(srp->data), (void *)(srp->data + 2), sizeof(Float) * loc);
-#endif
       for (i = loc; i < lim; i++) 
 	srp->data[i] = (*sr_input)(srp->closure, 1);
     }
@@ -6265,13 +6070,8 @@ Float mus_src_05(mus_any *srptr, Float (*input)(void *arg, int direction))
     {
       Float (*sr_input)(void *arg, int direction) = input;
       if (sr_input == NULL) sr_input = srp->feeder;
-#if (!HAVE_MEMMOVE)
-      for (i = 1, loc = 0; i < lim; i++, loc++) 
-	srp->data[loc] = srp->data[i];
-#else
       loc = lim - 1;
       memmove((void *)(srp->data), (void *)(srp->data + 1), sizeof(Float) * loc);
-#endif
       for (i = loc; i < lim; i++) 
 	srp->data[i] = (*sr_input)(srp->closure, 1);
       srp->x = 0.0;
@@ -6632,7 +6432,7 @@ void mus_fftw(Float *rl, int n, int dir)
       last_fft_size = n;
     }
   memset((void *)idata, 0, n * sizeof(double));
-  for (i = 0; i < n; i++) {rdata[i] = rl[i];}
+  for (i = 0; i < n; i++) rdata[i] = rl[i];
   if (dir != -1)
     fftw_execute(rplan);
   else fftw_execute(iplan);
@@ -6658,7 +6458,7 @@ void mus_fftw(Float *rl, int n, int dir)
     }
   memset((void *)idata, 0, n * sizeof(fftw_real));
   /* if Float (default float) == fftw_real (default double) we could forego the data copy */
-  for (i = 0; i < n; i++) {rdata[i] = rl[i];}
+  for (i = 0; i < n; i++) rdata[i] = rl[i];
   if (dir != -1)
     rfftw_one(rplan, rdata, idata);
   else rfftw_one(iplan, rdata, idata);
@@ -6789,19 +6589,12 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
    * JOS had slightly different numbers for the Blackman-Harris windows.
    */
   int i, j, midn, midp1;
-  double freq, rate, sr1, angle, expn, expsum, I0beta, cx, angle1;
-#if HAVE_GSL || HAVE_COMPLEX_TRIG
-  Float *rl, *im;
-  Float pk;
-#endif
+  double freq, rate, angle = 0.0, cx;
   if (window == NULL) return(NULL);
   midn = size >> 1;
   midp1 = (size + 1) / 2;
   freq = TWO_PI / (Float)size;
   rate = 1.0 / (Float)midn;
-  angle = 0.0;
-  expn = log(2) / (Float)midn + 1.0;
-  expsum = 1.0;
   switch (type)
     {
     case MUS_RECTANGULAR_WINDOW:
@@ -6849,12 +6642,19 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	}
       break; 
     case MUS_EXPONENTIAL_WINDOW:
-      for (i = 0, j = size - 1; i <= midn; i++, j--) {window[j] = (window[i] = expsum - 1.0); expsum *= expn;}
+      {
+	Float expn, expsum = 1.0;
+	expn = log(2) / (Float)midn + 1.0;
+	for (i = 0, j = size - 1; i <= midn; i++, j--) {window[j] = (window[i] = expsum - 1.0); expsum *= expn;}
+      }
       break;
     case MUS_KAISER_WINDOW:
-      I0beta = mus_bessi0(beta); /* Harris multiplies beta by pi */
-      for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate) 
-	window[j] = (window[i] = mus_bessi0(beta * sqrt(1.0 - sqr(angle))) / I0beta);
+      {
+	Float I0beta;
+	I0beta = mus_bessi0(beta); /* Harris multiplies beta by pi */
+	for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate) 
+	  window[j] = (window[i] = mus_bessi0(beta * sqrt(1.0 - sqr(angle))) / I0beta);
+      }
       break;
     case MUS_CAUCHY_WINDOW:
       for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate) window[j] = (window[i] = 1.0 / (1.0 + sqr(beta * angle)));
@@ -6864,21 +6664,27 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
       break;
     case MUS_HANN_POISSON_WINDOW:
       /* Hann * Poisson -- from JOS */
-      for (i = 0, j = size - 1, angle = 1.0, angle1 = 0.0; i <= midn; i++, j--, angle -= rate, angle1 += freq) 
-	window[j] = (window[i] = (exp((-beta) * angle) * (0.5 - 0.5 * cos(angle1))));
+      {
+	Float angle1;
+	for (i = 0, j = size - 1, angle = 1.0, angle1 = 0.0; i <= midn; i++, j--, angle -= rate, angle1 += freq) 
+	  window[j] = (window[i] = (exp((-beta) * angle) * (0.5 - 0.5 * cos(angle1))));
+      }
       break;
     case MUS_RIEMANN_WINDOW:
-      sr1 = TWO_PI / (Float)size;
-      for (i = 0, j = size - 1; i <= midn; i++, j--) 
-	{
-	  if (i == midn) 
-	    window[j] = (window[i] = 1.0);
-	  else 
-	    {
-	      cx = sr1 * (midn - i);
-	      window[j] = (window[i] = sin(cx) / cx);
-	    }
-	}
+      {
+	Float sr1;
+	sr1 = TWO_PI / (Float)size;
+	for (i = 0, j = size - 1; i <= midn; i++, j--) 
+	  {
+	    if (i == midn) 
+	      window[j] = (window[i] = 1.0);
+	    else 
+	      {
+		cx = sr1 * (midn - i);
+		window[j] = (window[i] = sin(cx) / cx);
+	      }
+	  }
+      }
       break;
     case MUS_GAUSSIAN_WINDOW:
       for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate) window[j] = (window[i] = exp(-.5 * sqr(beta * angle)));
@@ -6895,6 +6701,8 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
     case MUS_DOLPH_CHEBYSHEV_WINDOW:
 #if HAVE_GSL
       {
+	Float *rl, *im;
+	Float pk;
 	gsl_complex val;
 	double den, alpha;
 	freq = M_PI / (Float)size;
@@ -6938,6 +6746,8 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 #else
 #if HAVE_COMPLEX_TRIG
       {
+	Float *rl, *im;
+	Float pk;
 	complex double val;
 	double den, alpha;
 	freq = M_PI / (Float)size;
@@ -7143,7 +6953,8 @@ Float mus_convolve(mus_any *ptr, Float (*input)(void *arg, int direction))
 	  gen->rl2[i] = 0.0;
 	  gen->rl2[j] = 0.0;
 	}
-      for (i = 0; i < gen->filtersize; i++) gen->rl2[i] = gen->filter[i];
+      memcpy((void *)(gen->rl2), (void *)(gen->filter), gen->filtersize * sizeof(Float));
+      /* for (i = 0; i < gen->filtersize; i++) gen->rl2[i] = gen->filter[i]; */
       mus_convolution(gen->rl1, gen->rl2, gen->fftsize);
       for (i = 0, j = gen->fftsize2; i < gen->fftsize2; i++, j++) 
 	{
@@ -8039,3 +7850,4 @@ void init_mus_module(void)
  *   -> [local] mus_class(gen)? (=core)
  *   will this need an added field in mus_any or perhaps mus_xen for the backpointer?
  */
+

@@ -44,7 +44,7 @@ int snd_2pow2(int n)
 
 Float in_dB(Float min_dB, Float lin_dB, Float py)
 {
-  return((py <= lin_dB) ? min_dB : (20.0 * (log10(py))));
+  return((py <= lin_dB) ? min_dB : (ss->dbb * log(py)));
 }
 
 char *copy_string(const char *str)
@@ -424,13 +424,13 @@ static void describe_pointer(void *p)
   fprintf(stderr, "pointer lost??");
 }
 
+static char pad[MEM_PAD_SIZE] = {'W','I','L','L','I','A','M',' ','G','A','R','D','N','E','R',' ','S','C','H','O','T','T','S','T','A','E','D','T',' ','D','M','A'};
 static void set_padding(void *p1, void *p2, int len)
 {
-  int i, j;
   char *ip2;
   ip2 = (char *)p2;
-  for (i = 0; i < MEM_PAD_SIZE; i++) ip2[i] = (char)i;
-  for (i = 0, j = len + MEM_PAD_SIZE; i < MEM_PAD_SIZE; i++, j++) ip2[j] = (char)i;
+  memcpy((void *)ip2, (void *)pad, MEM_PAD_SIZE);
+  memcpy((void *)(ip2 + len + MEM_PAD_SIZE), (void *)pad, MEM_PAD_SIZE);
 }
 
 static void check_padding(void *p1, void *p2, int len, bool refill)
@@ -439,7 +439,7 @@ static void check_padding(void *p1, void *p2, int len, bool refill)
   char *ip2;
   ip2 = (char *)p2;
   for (i = 0; i < MEM_PAD_SIZE; i++) 
-    if (ip2[i] != (char)i)
+    if (ip2[i] != pad[i])
       {
 	fprintf(stderr, "memory clobbered %d bytes before %p (", MEM_PAD_SIZE - i, p1);
 	describe_pointer(p1);
@@ -447,10 +447,9 @@ static void check_padding(void *p1, void *p2, int len, bool refill)
 	abort();
       }
   if (refill)
-    for (i = MEM_PAD_SIZE; i < len + MEM_PAD_SIZE; i++)
-      ip2[i] = 'X';
+    memset((void *)(ip2 + MEM_PAD_SIZE), 'X', len);
   for (i = 0, j = len + MEM_PAD_SIZE; i < MEM_PAD_SIZE; i++, j++) 
-    if (ip2[j] != (char)i)
+    if (ip2[j] != pad[i])
       {
 	fprintf(stderr, "memory clobbered %d bytes after %p (", i, p1);
 	describe_pointer(p1);

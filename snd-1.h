@@ -383,7 +383,7 @@ typedef struct snd_state {
   char *Listener_Font, *Axis_Label_Font, *Axis_Numbers_Font, *Tiny_Font, *Peaks_Font, *Bold_Peaks_Font;
   bool Verbose_Cursor, Trap_Segfault;
   int Enved_Filter_Order;
-  Float Vu_Size, Vu_Font_Size, Eps_Left_Margin, Eps_Bottom_Margin, Eps_Size;
+  Float Vu_Size, Vu_Font_Size, Eps_Left_Margin, Eps_Bottom_Margin, Eps_Size, dB_Base, dbb, Log_Freq_Base, lfb;
   char *Vu_Font;
   Float Spectro_X_Scale, Spectro_Y_Scale, Spectro_Z_Scale, Spectro_Z_Angle, Spectro_X_Angle, Spectro_Y_Angle, Spectro_Cutoff, Spectro_Start;
   int Default_Output_Type, Default_Output_Format, Default_Output_Chans, Default_Output_Srate;
@@ -1080,6 +1080,7 @@ void handle_cursor_with_sync(chan_info *cp, kbd_cursor_t redisplay);
 void chans_field(fcp_t field, Float val);
 void in_set_transform_graph_type(graph_type_t val);
 void in_set_fft_window(mus_fft_window_t val);
+void set_max_transform_peaks(int val);
 void combine_sound(snd_info *sp);
 void separate_sound(snd_info *sp);
 void superimpose_sound(snd_info *sp);

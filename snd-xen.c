@@ -1489,6 +1489,62 @@ static XEN g_set_show_selection_transform(XEN val)
   return(C_TO_XEN_BOOLEAN(show_selection_transform(ss)));
 }
 
+static void update_db_fft_graph(chan_info *cp)
+{
+  if ((!(cp->active)) ||
+      (cp->cgx == NULL) || 
+      (cp->sounds == NULL) || 
+      (cp->sounds[cp->sound_ctr] == NULL) ||
+      (!(cp->graph_transform_p)) ||
+      (!(cp->fft_log_magnitude)) ||
+      (chan_fft_in_progress(cp)))
+    return;
+  calculate_fft(cp);
+}
+
+static XEN g_db_base(void) {return(C_TO_XEN_DOUBLE(db_base(ss)));}
+static XEN g_set_db_base(XEN val) 
+{
+  Float base;
+  #define H_db_base "(" S_db_base "): dB base (default: 10.0)"
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_db_base, "a number");
+  base = XEN_TO_C_DOUBLE(val);
+  if (base <= 0.0)
+    XEN_OUT_OF_RANGE_ERROR(S_db_base, XEN_ONLY_ARG, val, "a number > 0.0");
+  set_db_base(base);
+  ss->dbb = 20.0 / log(base);
+  for_each_chan(update_db_fft_graph);
+  return(C_TO_XEN_DOUBLE(db_base(ss)));
+}
+
+static void update_log_freq_fft_graph(chan_info *cp)
+{
+  if ((!(cp->active)) ||
+      (cp->cgx == NULL) || 
+      (cp->sounds == NULL) || 
+      (cp->sounds[cp->sound_ctr] == NULL) ||
+      (!(cp->graph_transform_p)) ||
+      (!(cp->fft_log_frequency)) ||
+      (chan_fft_in_progress(cp)))
+    return;
+  calculate_fft(cp);
+}
+
+static XEN g_log_freq_base(void) {return(C_TO_XEN_DOUBLE(log_freq_base(ss)));}
+static XEN g_set_log_freq_base(XEN val) 
+{
+  Float base;
+  #define H_log_freq_base "(" S_log_freq_base "): log freq base (default: 25.0)"
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_log_freq_base, "a number");
+  base = XEN_TO_C_DOUBLE(val);
+  if (base <= 0.0)
+    XEN_OUT_OF_RANGE_ERROR(S_log_freq_base, XEN_ONLY_ARG, val, "a number > 0.0");
+  set_log_freq_base(base);
+  ss->lfb = 1.0 / log(base);
+  for_each_chan(update_log_freq_fft_graph);
+  return(C_TO_XEN_DOUBLE(log_freq_base(ss)));
+}
+
 static XEN g_with_gl(void) {return(C_TO_XEN_BOOLEAN(with_gl(ss)));}
 static XEN g_set_with_gl(XEN val) 
 {
@@ -2646,6 +2702,10 @@ XEN_NARGIFY_0(g_ladspa_dir_w, g_ladspa_dir)
 XEN_NARGIFY_1(g_set_ladspa_dir_w, g_set_ladspa_dir)
 XEN_NARGIFY_0(g_trap_segfault_w, g_trap_segfault)
 XEN_NARGIFY_1(g_set_trap_segfault_w, g_set_trap_segfault)
+XEN_NARGIFY_0(g_db_base_w, g_db_base)
+XEN_NARGIFY_1(g_set_db_base_w, g_set_db_base)
+XEN_NARGIFY_0(g_log_freq_base_w, g_log_freq_base)
+XEN_NARGIFY_1(g_set_log_freq_base_w, g_set_log_freq_base)
 XEN_NARGIFY_0(g_show_selection_transform_w, g_show_selection_transform)
 XEN_NARGIFY_1(g_set_show_selection_transform_w, g_set_show_selection_transform)
 XEN_NARGIFY_0(g_with_gl_w, g_with_gl)
@@ -2810,6 +2870,10 @@ XEN_NARGIFY_2(g_fmod_w, g_fmod)
 #define g_set_ladspa_dir_w g_set_ladspa_dir
 #define g_trap_segfault_w g_trap_segfault
 #define g_set_trap_segfault_w g_set_trap_segfault
+#define g_db_base_w g_db_base
+#define g_set_db_base_w g_set_db_base
+#define g_log_freq_base_w g_log_freq_base
+#define g_set_log_freq_base_w g_set_log_freq_base
 #define g_show_selection_transform_w g_show_selection_transform
 #define g_set_show_selection_transform_w g_set_show_selection_transform
 #define g_with_gl_w g_with_gl
@@ -3052,6 +3116,12 @@ void g_initialize_gh(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_trap_segfault, g_trap_segfault_w, H_trap_segfault,
 				   S_setB S_trap_segfault, g_set_trap_segfault_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_db_base, g_db_base_w, H_db_base,
+				   S_setB S_db_base, g_set_db_base_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_log_freq_base, g_log_freq_base_w, H_log_freq_base,
+				   S_setB S_log_freq_base, g_set_log_freq_base_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_selection_transform, g_show_selection_transform_w, H_show_selection_transform,
 				   S_setB S_show_selection_transform, g_set_show_selection_transform_w,  0, 0, 1, 0);

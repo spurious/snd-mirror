@@ -892,6 +892,7 @@ static void set_vu_val (VU *vu, Float val)
    * 1 - logval/min_dB
    *
    * but we also need to label the VU ticks in dB (and prehaps keep maxval in dB?)
+   *   and use db_base now
    */
   {
     #define min_dB -60.0

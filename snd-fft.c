@@ -2,6 +2,10 @@
 
 /* SOMEDAY: fftw error catcher (memerr = exit) (fftw does not yet support this) */
 
+/* TODO: logfreq in spectrogram?
+ * TODO: freq axis label (now 1.0) in spectro/sono if log, also dB?
+ */
+
 #if WITH_SHARED_SNDLIB
 #if HAVE_FFTW3
 #include <fftw3.h>
@@ -22,7 +26,7 @@ void mus_fftw(Float *rl, int n, int dir)
       last_fft_size = n;
     }
   memset((void *)idata, 0, n * sizeof(double));
-  for (i = 0; i < n; i++) {rdata[i] = rl[i];}
+  for (i = 0; i < n; i++) rdata[i] = rl[i];
   if (dir != -1)
     fftw_execute(rplan);
   else fftw_execute(iplan);
@@ -54,7 +58,7 @@ void mus_fftw(Float *rl, int n, int dir)
     }
   memset((void *)idata, 0, n * sizeof(fftw_real));
   /* if Float (default float) == fftw_real (default double) we could forego the data copy */
-  for (i = 0; i < n; i++) {rdata[i] = rl[i];}
+  for (i = 0; i < n; i++) rdata[i] = rl[i];
   if (dir != -1)
     rfftw_one(rplan, rdata, idata);
   else rfftw_one(iplan, rdata, idata);
@@ -104,8 +108,8 @@ static void wavelet_transform(Float *data, int num, Float *cc, int cc_size)
 	      data1[ii + nh] += cr[k] * data[jf];
 	    }
 	}
-      for (i = 0; i < n; i++)
-	data[i] = data1[i];
+      memcpy((void *)data, (void *)data1, n * sizeof(Float));
+      /* for (i = 0; i < n; i++) data[i] = data1[i]; */
     }
   if (data1) FREE(data1);
   if (cr) FREE(cr);
@@ -819,7 +823,8 @@ static void apply_fft(fft_state *fs)
 	  {
 	    v = TO_VCT(res);
 	    len = v->length;
-	    for (i = 0; i < len; i++) fft_data[i] = v->data[i];
+	    memcpy((void *)fft_data, (void *)(v->data), len * sizeof(Float));
+	    /* for (i = 0; i < len; i++) fft_data[i] = v->data[i]; */
 	  }
 	snd_unprotect_at(gc_loc);
 	snd_unprotect_at(sf_loc);

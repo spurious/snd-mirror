@@ -368,6 +368,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+13-Sep:  removed buffer generator.\n\
+         added dB-base and log-freq-base.\n\
 9-Sep:   vct-reverse!\n\
 8-Sep:   create-ssb-dialog in snd-motif.scm.\n\
 6-Sep:   removed vct-convolve! (see snd7.scm).\n\
@@ -375,9 +377,6 @@ void about_snd_help(void)
          removed oscil-bank, mus-bank (snd7.scm)\n\
 2-Sep:   vct|channel|spectral-polynomial in dsp.scm\n\
 23-Aug:  snd 7.6\n\
-16-Aug:  removed built-in Hadamard transform\n\
-         out-chan argument to add-player so that channel data can be sent to any audio channel\n\
-	    (also play, play-and-wait, play-channel)\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

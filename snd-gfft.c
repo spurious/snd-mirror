@@ -49,7 +49,7 @@ int max_transform_type(void) {return(num_transform_types - 1);}
 
 static Float fp_dB(Float py)
 {
-  return((py <= ss->lin_dB) ? 0.0 : (1.0 - ((20.0 * (log10(py))) / ss->min_dB)));
+  return((py <= ss->lin_dB) ? 0.0 : (1.0 - (ss->dbb * log(py) / ss->min_dB)));
 }
 
 static axis_info *axis_ap = NULL;

@@ -47,7 +47,7 @@ int max_transform_type(void) {return(num_transform_types - 1);}
 
 static Float fp_dB(Float py)
 {
-  return((py <= ss->lin_dB) ? 0.0 : (1.0 - ((20.0 * (log10(py))) / ss->min_dB)));
+  return((py <= ss->lin_dB) ? 0.0 : (1.0 - (ss->dbb * log(py) / ss->min_dB)));
 }
 
 static Locus local_grf_x(double val, axis_info *ap)
@@ -372,7 +372,10 @@ static void graph_resize_callback(Widget w, XtPointer context, XtPointer info)
 
 static void dismiss_transform_callback(Widget w, XtPointer context, XtPointer info)
 {
-  XtUnmanageChild(transform_dialog);
+  Widget active_widget;
+  active_widget = XmGetFocusWidget(transform_dialog);
+  if (active_widget == XmMessageBoxGetChild(transform_dialog, XmDIALOG_OK_BUTTON))
+    XtUnmanageChild(transform_dialog);
 }
 
 static void orient_transform_callback(Widget w, XtPointer context, XtPointer info)
@@ -390,6 +393,50 @@ static void help_transform_callback(Widget w, XtPointer context, XtPointer info)
   transform_dialog_help();
 }
 
+static void blue_textfield_unfocus_callback(Widget w, XtPointer context, XtPointer info)
+{
+  if (!(ss->using_schemes)) 
+    XtVaSetValues(w, XmNbackground, (ss->sgx)->lighter_blue, NULL);
+  XtVaSetValues(w, XmNcursorPositionVisible, false, NULL);
+}
+
+static void blue_mouse_leave_text_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+{
+  if (!(ss->using_schemes)) 
+    XtVaSetValues(w, XmNbackground, (ss->sgx)->lighter_blue, NULL);
+  XtVaSetValues(w, XmNcursorPositionVisible, false, NULL);
+}
+
+static void white_mouse_enter_text_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+{
+  if (!(ss->using_schemes)) 
+    XtVaSetValues(w, XmNbackground, (ss->sgx)->text_focus_color, NULL);
+  XtVaSetValues(w, XmNcursorPositionVisible, true, NULL);
+}
+
+static void widget_itoa(Widget w, int val)
+{
+  char *str;
+  str = (char *)CALLOC(8, sizeof(char));
+  mus_snprintf(str, 8, "%d", max_transform_peaks(ss));
+  XmTextFieldSetString(w, str);
+  FREE(str);
+}
+
+static void peaks_activate_callback(Widget w, XtPointer context, XtPointer info)
+{
+  char *str;
+  int new_peaks;
+  str = XmTextFieldGetString(w);
+  if ((str) && (*str))
+    {
+      new_peaks = string_to_int(str);
+      if (new_peaks >= 1)
+	set_max_transform_peaks(new_peaks);
+      else widget_itoa(w, max_transform_peaks(ss));
+    }
+}
+
 static bool need_callback = true;
 Widget fire_up_transform_dialog(bool managed)
 {
@@ -403,12 +450,9 @@ Widget fire_up_transform_dialog(bool managed)
   XtCallbackList n1, n2;
   int size_pos = 1;
   int n, i;
-  Widget mainform, type_frame, type_form, type_label,
-                  size_frame, size_form, size_label,
-                  display_frame, display_form, display_label,
-                  window_frame, window_form, window_label,
-                  wavelet_frame, wavelet_form, wavelet_label,
-                  graph_frame, graph_form, color_button;
+  Widget mainform, type_frame, type_form, type_label, size_frame, size_form, size_label, display_frame, display_form, display_label;
+  Widget window_frame, window_form, window_label, wavelet_frame, wavelet_form, wavelet_label, graph_frame, graph_form, color_button;
+  Widget peak_txt, db_txt, db_base_txt, freq_base_txt;
     
   if (!transform_dialog)
     {
@@ -483,7 +527,8 @@ Widget fire_up_transform_dialog(bool managed)
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
+      XtSetArg(args[n], XmNrightPosition, 30); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNbottomPosition, 50); n++;
@@ -537,7 +582,8 @@ Widget fire_up_transform_dialog(bool managed)
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, type_frame); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
+      XtSetArg(args[n], XmNrightPosition, 60); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
       XtSetArg(args[n], XmNbottomWidget, type_frame); n++;
@@ -673,7 +719,8 @@ Widget fire_up_transform_dialog(bool managed)
 	}
       bstr = XmStringCreate(_("peaks"), XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
+      XtSetArg(args[n], XmNrightPosition, 67); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, spectro_button); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -682,6 +729,28 @@ Widget fire_up_transform_dialog(bool managed)
       peaks_button = make_togglebutton_widget("peaks-button", display_form, args, n);
       XtAddCallback(peaks_button, XmNvalueChangedCallback, peaks_callback, NULL);
       XmStringFree(bstr);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->lighter_blue); n++;}
+      XtSetArg(args[n], XmNresizeWidth, false); n++;
+      XtSetArg(args[n], XmNcolumns, 4); n++;
+      XtSetArg(args[n], XmNrecomputeSize, false); n++;
+      XtSetArg(args[n], XmNmarginHeight, 1); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNleftWidget, peaks_button); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, peaks_button); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
+      XtSetArg(args[n], XmNbottomWidget, peaks_button); n++;
+      peak_txt = make_textfield_widget("max-peaks", display_form, args, n, ACTIVATABLE, NO_COMPLETER);
+      XtRemoveCallback(peak_txt, XmNlosingFocusCallback, textfield_unfocus_callback, NULL);
+      XtAddCallback(peak_txt, XmNlosingFocusCallback, blue_textfield_unfocus_callback, NULL);
+      XtAddEventHandler(peak_txt, LeaveWindowMask, false, blue_mouse_leave_text_callback, NULL); /* TODO: check this -no-init */
+      XtAddEventHandler(peak_txt, EnterWindowMask, false, white_mouse_enter_text_callback, NULL);
+      widget_itoa(peak_txt, max_transform_peaks(ss));
+      XtAddCallback(peak_txt, XmNactivateCallback, peaks_activate_callback, NULL);
+      /* TODO: need reflection, both update_db_fft and from set db-base etc */
 
       n = 0;
       if (!(ss->using_schemes)) 

@@ -102,7 +102,7 @@ static void chans_max_transform_peaks(chan_info *cp, void *ptr)
   cp->max_transform_peaks = (*((int *)ptr)); 
 }
 
-static void set_max_transform_peaks(int val) 
+void set_max_transform_peaks(int val) 
 {
   in_set_max_transform_peaks(val); 
   for_each_chan_1(chans_max_transform_peaks, (void *)(&val));
@@ -1502,9 +1502,6 @@ static char ampstr[LABEL_BUFFER_SIZE];
 #define AMP_ROOM 35
 #define AMP_ROOM_CUTOFF 3.0
 
-#define LOG_FACTOR 25.0
-/* determines how we view the log -- the higher the factor, the more we emphasize the lower octaves (not sure this is a good idea) */
-
 static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler, off_t samps, Float samps_per_pixel, bool fft_data, Float fft_scale)
 {
   int num_peaks, row, col, tens, i, acol, acols;
@@ -1519,8 +1516,8 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
   else 
     if (samps > scaler) 
       tens = 1; 
-    else 
-      if (samps > (scaler/10)) 
+    else
+      if (samps > (scaler / 10)) 
 	tens = 0; 
       else tens = -1;
   num_peaks = (fap->y_axis_y0 - fap->y_axis_y1) / 20;
@@ -1686,9 +1683,9 @@ void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with_hook_t
 	{
 	  if (cp->fft_log_frequency) 
 	    {
-	      ymax = LOG_FACTOR;
-	      incr = ymax / (Float)((double)(hisamp - losamp));
-	      scaler = 1.0 / log(ymax + 1.0);
+	      ymax = log_freq_base(ss);
+	      incr = (ymax - 1.0) / (Float)((double)(hisamp - losamp));
+	      scaler = 1.0 / log(ymax);
 	    }
 	  else scaler = 0.0;
 	  for (i = losamp, x = fap->x0; i < hisamp; i++, x += incr)
@@ -1722,9 +1719,10 @@ void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with_hook_t
       xf = 0.0;     /* samples per pixel counter */
       if (cp->fft_log_frequency) 
 	{
-	  ymax = LOG_FACTOR;
-	  incr = ymax / (Float)((double)(hisamp - losamp));
-	  scaler = 1.0 / log(ymax + 1.0);
+	  ymax = log_freq_base(ss);
+	  incr = (ymax - 1.0) / (Float)((double)(hisamp - losamp));
+	  scaler = 1.0 / log(ymax);
+	  /* TODO: move this block! */
 	}
       else scaler = 0.0;
       ymax = -1.0;
@@ -1960,7 +1958,7 @@ static void make_sonogram(chan_info *cp)
       if (cp->printing) ps_allocate_grf_points();
       allocate_sono_rects(si->total_bins);
       allocate_color_map(color_map(ss));
-      if (cp->fft_log_frequency) scaler = 1.0 / log(LOG_FACTOR + 1.0);
+      if (cp->fft_log_frequency) scaler = 1.0 / log(log_freq_base(ss));
       scl = si->scale; 
       fp = cp->fft;
       fap = fp->axis;
@@ -1978,7 +1976,7 @@ static void make_sonogram(chan_info *cp)
       if (cp->transform_type == FOURIER)
 	{
 	  if (cp->fft_log_frequency)
-	      yfincr = (cp->spectro_cutoff * LOG_FACTOR) / (Float)bins;
+	      yfincr = (cp->spectro_cutoff * (log_freq_base(ss) - 1.0)) / (Float)bins;
 	  else yfincr = cp->spectro_cutoff * (Float)SND_SRATE(cp->sound) * 0.5 / (Float)bins;
 	}
       else yfincr = 1.0;
@@ -2162,7 +2160,7 @@ static void gl_spectrogram(sono_info *si, int gl_fft_list, Float cutoff, bool us
   float x1, y1, inv_scl;
   int **js = NULL;
   inv_scl = 1.0 / si->scale;
-  if (use_dB) lin_dB = pow(10.0, min_dB * 0.05);
+  if (use_dB) lin_dB = pow(db_base(ss), min_dB * 0.05);
   glNewList((GLuint)gl_fft_list, GL_COMPILE);
   bins = (int)(si->target_bins * cutoff);
   if (bins <= 0) bins = 1;
@@ -3637,7 +3635,8 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
   if (ap->x_axis_x1 == ap->x_axis_x0) return(copy_string("?"));
   xf = ap->x0 + (ap->x1 - ap->x0) * (Float)(x - ap->x_axis_x0) / (Float)(ap->x_axis_x1 - ap->x_axis_x0);
   if (cp->fft_log_frequency)                                /* map axis x1 = 1.0 to srate/2 */
-    xf = ((exp(xf * log(LOG_FACTOR + 1.0)) - 1.0) / LOG_FACTOR) * SND_SRATE(cp->sound) * 0.5 * cp->spectro_cutoff; 
+    xf = ((exp(xf * log(log_freq_base(ss))) - 1.0) / (log_freq_base(ss) - 1.0)) * SND_SRATE(cp->sound) * 0.5 * cp->spectro_cutoff; 
+  /* TODO: this doesn't look right! */
   if (cp->transform_graph_type == GRAPH_ONCE)                          /* fp->data[bins] */
     {
       if (cp->transform_type == FOURIER)
@@ -4861,7 +4860,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
       if (curamp < 0.0)
 	{
 	  cp->min_dB = curamp;
-	  cp->lin_dB = pow(10.0, cp->min_dB * 0.05); 
+	  cp->lin_dB = pow(db_base(ss), cp->min_dB * 0.05); 
 	  calculate_fft(cp); 
 	}
       else XEN_OUT_OF_RANGE_ERROR(caller, 1, on, S_min_dB " (~A) must be < 0.0");
@@ -5356,7 +5355,7 @@ static XEN g_set_min_dB(XEN val, XEN snd, XEN chn)
       if (db < 0.0)
 	{
 	  ss->min_dB = db;
-	  ss->lin_dB = pow(10.0, db * 0.05);
+	  ss->lin_dB = pow(db_base(ss), db * 0.05);
 	  channel_set(XEN_TRUE, XEN_TRUE, val, CP_MIN_DB, S_setB S_min_dB);
 	}
       else XEN_OUT_OF_RANGE_ERROR(S_setB S_min_dB, 1, val, S_min_dB " (~A) must be < 0.0");

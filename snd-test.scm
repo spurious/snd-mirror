@@ -706,6 +706,12 @@
       (set! (min-dB) (min-dB))
       (if (fneq (min-dB)  -60.0 )
 	  (snd-display ";min-dB set def: ~A" (min-dB)))
+      (set! (dB-base) (dB-base))
+      (if (fneq (dB-base)  10.0 )
+	  (snd-display ";dB-base set def: ~A" (dB-base)))
+      (set! (log-freq-base) (log-freq-base))
+      (if (fneq (log-freq-base)  25.0 )
+	  (snd-display ";log-freq-base set def: ~A" (log-freq-base)))
       (set! (selection-creates-region) (selection-creates-region))
       (if (not (equal? (selection-creates-region)  #t )) 
 	  (snd-display ";selection-creates-region set def: ~A" (selection-creates-region)))
@@ -985,6 +991,8 @@
 	'max-transform-peaks (max-transform-peaks) 100
 	'max-regions (max-regions) 16 
 	'min-dB (min-dB) -60.0 
+	'dB-base (dB-base) 10.0
+	'log-freq-base (log-freq-base) 25.0
 	'selection-creates-region (selection-creates-region) #t 
 	'transform-normalization (transform-normalization) normalize-by-channel
 	'previous-files-sort (previous-files-sort) 0 
@@ -1557,6 +1565,8 @@
 	  (list 'max-transform-peaks max-transform-peaks 100 10)
 	  (list 'max-regions max-regions 16 6)
 	  (list 'min-dB min-dB -60.0 -90.0)
+	  (list 'dB-base dB-base 10.0 20.0)
+	  (list 'log-freq-base log-freq-base 25.0 10.0)
 	  (list 'mix-waveform-height mix-waveform-height 20 40)
 	  (list 'mix-tag-height mix-tag-height 14 20)
 	  (list 'mix-tag-width mix-tag-width 6 20)
@@ -13129,73 +13139,6 @@ EDITS: 5
 		(fneq (vector-ref results 9) 0.41001))
 	    (snd-display ";oscil-bank: ~A?" results)))
       
-      (let ((amps (make-vector 3))
-	    (oscils (make-vector 3))
-	    (fms (make-vector 3))
-	    (results (make-vector 10)))
-	(do ((i 0 (1+ i))) ((= i 3))
-	  (vector-set! amps i (* (+ i 1) .1))
-	  (vector-set! oscils i (make-oscil :frequency (* (+ i 1) 220.0)))
-	  (vector-set! fms i (* i .05)))
-	(do ((i 0 (1+ i))) ((= i 10))
-	  (vector-set! results i (mus-bank oscils amps fms)))
-	(if (or (fneq (vector-ref results 1) 0.12639)
-		(fneq (vector-ref results 5) 0.48203)
-		(fneq (vector-ref results 9) 0.41001))
-	    (snd-display ";mus-bank: ~A?" results))
-	(do ((i 0 (1+ i))) ((= i 10))
-	  (vector-set! results i (mus-bank oscils amps fms))))
-      (let ((amps (make-vct 3))
-	    (oscils (make-vector 3))
-	    (fms (make-vct 3))
-	    (results (make-vct 10)))
-	(do ((i 0 (1+ i))) ((= i 3))
-	  (vct-set! amps i (* (+ i 1) .1))
-	  (vector-set! oscils i (make-oscil :frequency (* (+ i 1) 220.0)))
-	  (vct-set! fms i (* i .05)))
-	(vct-map! results (lambda () (mus-bank oscils amps fms)))
-	(if (or (fneq (vct-ref results 1) 0.12639)
-		(fneq (vct-ref results 5) 0.48203)
-		(fneq (vct-ref results 9) 0.41001))
-	    (snd-display ";mus-bank (2 run): ~A?" results)))
-      (let ((amps (make-vct 3))
-	    (oscils (make-vector 3))
-	    (fms (make-vct 3))
-	    (fm1s (make-vct 3))
-	    (results (make-vct 10)))
-	(do ((i 0 (1+ i))) ((= i 3))
-	  (vct-set! amps i (* (+ i 1) .1))
-	  (vector-set! oscils i (make-oscil :frequency (* (+ i 1) 220.0)))
-	  (vct-set! fms i (* i .05)))
-	(vct-map! results (lambda () (mus-bank oscils amps fms fm1s)))
-	(if (or (fneq (vct-ref results 1) 0.12639)
-		(fneq (vct-ref results 5) 0.48203)
-		(fneq (vct-ref results 9) 0.41001))
-	    (snd-display ";mus-bank (3 run): ~A?" results)))
-      (let ((amps (make-vct 3))
-	    (oscs (make-vector 3))
-	    (amps1 (make-vct 3))
-	    (oscs1 (make-vector 3))
-	    (v1 (make-vct 10)))
-	(do ((i 0 (1+ i)))
-	    ((= i 3))
-	  (vct-set! amps i (* (1+ i) .1))
-	  (vct-set! amps1 i (* (1+ i) .1))
-	  (vector-set! oscs i (make-oscil :frequency (* (1+ i) 100.0)))
-	  (vector-set! oscs1 i (make-oscil :frequency (* (1+ i) 100.0))))
-	(vct-map! v1 (lambda () (mus-bank oscs amps)))
-	(call-with-current-continuation
-	 (lambda (break)
-	   (do ((i 0 (1+ i)))
-	       ((= i 10))
-	     (let ((val (+ (* (vct-ref amps1 0) (oscil (vector-ref oscs1 0)))
-			   (* (vct-ref amps1 1) (oscil (vector-ref oscs1 1)))
-			   (* (vct-ref amps1 2) (oscil (vector-ref oscs1 2))))))
-	       (if (fneq (vct-ref v1 i) val)
-		   (begin
-		     (snd-display ";opt'd mus-bank ~A: ~A ~A (~A ~A)" i val (vct-ref v1 i) oscs amps)
-		     (break))))))))
-      
       (let ((gen (make-sum-of-cosines 10 440.0))
 	    (v0 (make-vct 10))
 	    (gen1 (make-sum-of-cosines 10 440.0))
@@ -17717,11 +17660,11 @@ EDITS: 5
 			    0.0 0.0 (lambda (dir) 0.0) 0.0 0.0 0.0 0.0
 			    0.0 0.0 0.0 0.0 0.0 (lambda (dir) 0.0) 0.0
 			    0.0 0.0))
-	    (generic-procs (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-bank mus-channel mus-channels mus-cosines mus-data
+	    (generic-procs (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-channel mus-channels mus-cosines mus-data
 				 mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop mus-increment mus-length
 				 mus-location mus-mix mus-order mus-phase mus-ramp mus-random mus-run mus-scaler mus-xcoeffs
 				 mus-ycoeffs))
-	    (generic-names (list 'mus-a0 'mus-a1 'mus-a2 'mus-b1 'mus-b2 'mus-bank 'mus-channel 
+	    (generic-names (list 'mus-a0 'mus-a1 'mus-a2 'mus-b1 'mus-b2 'mus-channel 
 				 'mus-channels 'mus-cosines 'mus-data
 				 'mus-feedback 'mus-feedforward 'mus-formant-radius 'mus-frequency 'mus-hop 'mus-increment 'mus-length
 				 'mus-location 'mus-mix 'mus-order 'mus-phase 'mus-ramp 'mus-random 'mus-run 'mus-scaler 'mus-xcoeffs
@@ -24301,6 +24244,8 @@ EDITS: 5
 		(list 'max-transform-peaks max-transform-peaks #f 1 100)
 		(list 'max-regions max-regions #f 1 32)
 		(list 'min-dB min-dB #f -120.0 -30.0)
+		(list 'dB-base dB-base #f 20.0 5.0)
+		(list 'log-freq-base log-freq-base #f 50.0 5.0)
 		(list 'selection-creates-region selection-creates-region #f #f #t)
 		(list 'transform-normalization transform-normalization #f dont-normalize normalize-globally)
 		(list 'previous-files-sort previous-files-sort #f 0 5)
@@ -24391,21 +24336,24 @@ EDITS: 5
 	(key (char->integer (string-ref ns i)) 0 id)))))
 
 (define funcs (list time-graph-type wavo-hop wavo-trace max-transform-peaks show-transform-peaks zero-pad transform-graph-type fft-window 
-		    verbose-cursor fft-log-frequency fft-log-magnitude min-dB wavelet-type transform-size fft-window-beta transform-type 
+		    verbose-cursor fft-log-frequency fft-log-magnitude min-dB
+		    wavelet-type transform-size fft-window-beta transform-type 
 		    transform-normalization show-mix-waveforms graph-style dot-size show-axes show-y-zero show-grid show-marks
 		    spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
 		    spectro-hop spectro-cutoff spectro-start graphs-horizontal x-axis-style beats-per-minute
 		    cursor-size cursor-style
 		    ))
 (define func-names (list 'time-graph-type 'wavo-hop 'wavo-trace 'max-transform-peaks 'show-transform-peaks 'zero-pad 'transform-graph-type 'fft-window
-			 'verbose-cursor 'fft-log-frequency 'fft-log-magnitude 'min-dB 'wavelet-type 'transform-size 'fft-window-beta 'transform-type
+			 'verbose-cursor 'fft-log-frequency 'fft-log-magnitude 'min-dB
+			 'wavelet-type 'transform-size 'fft-window-beta 'transform-type
 			 'transform-normalization 'show-mix-waveforms 'graph-style 'dot-size 'show-axes 'show-y-zero 'show-grid 'show-marks
 			 'spectro-x-angle 'spectro-x-scale 'spectro-y-angle 'spectro-y-scale 'spectro-z-angle 'spectro-z-scale
 			 'spectro-hop 'spectro-cutoff 'spectro-start 'graphs-horizontal 'x-axis-style 'beats-per-minute
 			 'cursor-size 'cursor-style
 			 ))
 (define new-values (list graph-as-wavogram 12 512 3 #t 32 graph-as-sonogram cauchy-window
-			 #t #t #t -120.0 3 32 .5 autocorrelation
+			 #t #t #t -120.0
+			 3 32 .5 autocorrelation
 			 0 #t graph-lollipops 8 show-no-axes #t #t #f
 			 32.0 .5 32.0 .5 32.0 .5
 			 14 .3 .1 #f x-axis-in-samples 120.0
@@ -36415,14 +36363,6 @@ EDITS: 2
 		  (phases (list->vct '(1.0 0.5 2.0))))
 	      (vct-map! v (lambda () (sine-bank amps phases 3)))
 	      (if (fneq (vct-ref v 0) 1.44989) (snd-display ";run sine-bank (1): ~A?" (vct-ref v 0))))
-	    
-	    (let ((v (make-vct 1))
-		  (amps (list->vct '(1.0)))
-		  (fms (list->vct '(.1)))
-		  (oscs (make-vector 1)))
-	      (vector-set! oscs 0 (make-oscil 440.0 (/ pi 2)))
-	      (vct-map! v (lambda () (oscil-bank amps oscs fms)))
-	      (if (fneq (vct-ref v 0) 1.0) (snd-display ";run oscil-bank: ~A?" (vct-ref v 0))))
 	    
 	    (let ((fr0 (make-frame 2 1.0 1.0))
 		  (fr1 (make-frame 2 0.0 0.0))
@@ -49807,7 +49747,7 @@ EDITS: 2
 		     main-widgets make-color make-graph-data make-mix-sample-reader make-player make-region
 		     make-region-sample-reader make-sample-reader make-track-sample-reader map-chan mark-color mark-name
 		     mark-sample mark-sync mark-sync-max mark-home marks mark?  max-transform-peaks max-regions
-		     maxamp menu-widgets minibuffer-history-length min-dB mix mixes mix-amp mix-amp-env
+		     maxamp menu-widgets minibuffer-history-length min-dB dB-base log-freq-base mix mixes mix-amp mix-amp-env
 		     mix-tag-position mix-chans mix-color mix-track mix-frames mix-locked? mix? view-mixes-dialog mix-position view-tracks-dialog
 		     track-dialog-track mix-dialog-mix mix-inverted?
 		     mix-region mix-sample-reader?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width
@@ -49874,7 +49814,7 @@ EDITS: 2
 		     mus-close mus-cosines mus-data mus-feedback mus-feedforward mus-fft mus-formant-radius mus-frequency
 		     mus-hop mus-increment mus-input? mus-file-name mus-length mus-location mus-mix mus-order mus-output?  mus-phase
 		     mus-ramp mus-random mus-scaler mus-srate mus-xcoeffs mus-ycoeffs notch notch? one-pole one-pole?
-		     one-zero one-zero? oscil oscil-bank oscil? out-any outa outb outc outd partials->polynomial
+		     one-zero one-zero? oscil oscil? out-any outa outb outc outd partials->polynomial
 		     partials->wave partials->waveshape phase-partials->wave polynomial pulse-train pulse-train?
 		     radians->degrees radians->hz rand rand-interp rand-interp?  rand? readin readin?  rectangular->polar
 		     restart-env ring-modulate sample->file sample->file? sample->frame sawtooth-wave
@@ -49889,7 +49829,7 @@ EDITS: 2
 		     snd->sample xen->sample snd->sample? xen->sample? make-snd->sample make-xen->sample make-scalar-mixer
 		     
 		     beats-per-minute channel-amp-envs convolve-files filter-control-coeffs 
-		     locsig-type make-phase-vocoder mus-audio-mixer-read mus-bank 
+		     locsig-type make-phase-vocoder mus-audio-mixer-read
 		     mus-describe mus-error-to-string mus-file-buffer-size mus-name mus-offset mus-out-format
 		     mus-rand-seed mus-width phase-vocoder?
 		     polar->rectangular previous-files-sort-procedure 
@@ -49897,7 +49837,7 @@ EDITS: 2
 		     phase-vocoder-phase-increments phase-vocoder-phases 
 
 		     read-sample reset-listener-cursor goto-listener-end sample-reader-home selection-chans selection-srate snd-gcs
-		     snd-warning sine-bank oscil-bank vct-map make-variable-graph channel-data x-axis-label
+		     snd-warning sine-bank vct-map make-variable-graph channel-data x-axis-label
 		     snd-url snd-urls tempo-control-bounds
 		     quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 
@@ -49952,7 +49892,7 @@ EDITS: 2
 			 filter-control-in-hz filter-control-order filter-control-waveform-color filter-control?  foreground-color
 			 graph-color graph-cursor graph-style lisp-graph? graphs-horizontal highlight-color
 			 just-sounds left-sample listener-color listener-font listener-prompt listener-text-color mark-color
-			 mark-name mark-sample mark-sync max-transform-peaks max-regions min-dB mix-amp
+			 mark-name mark-sample mark-sync max-transform-peaks max-regions min-dB dB-base log-freq-base mix-amp
 			 mix-amp-env mix-tag-position mix-chans mix-color mix-locked? mix-inverted? mix-position
 			 mix-speed mix-tag-height mix-tag-width mix-tag-y mix-waveform-height transform-normalization
 			 equalize-panes position-color recorder-in-device previous-files-sort print-length pushed-button-color
@@ -50025,7 +49965,7 @@ EDITS: 2
       (define procs10 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 10)))) procs))
 
       (define already-warned '("mus-length" "mus-data" "hz->radians" "in-hz" "mus-order" "mus-xcoeffs" "mus-ycoeffs"
-			       "list->vct" "vct" "mus-bank" "formant-bank" "oscil-bank"
+			       "list->vct" "vct" "formant-bank"
 			       ))
 
       (reset-almost-all-hooks)
@@ -50302,11 +50242,11 @@ EDITS: 2
 			    make-iir-filter make-locsig make-notch make-one-pole make-one-zero make-oscil make-phase-vocoder
 			    make-ppolar make-pulse-train make-rand make-rand-interp make-readin make-sawtooth-wave make-average
 			    make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-table-lookup make-triangle-wave
-			    make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* mixer+ mixer-scale multiply-arrays mus-bank
-			    notch one-pole one-zero oscil oscil-bank partials->polynomial partials->wave partials->waveshape
+			    make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* mixer+ mixer-scale multiply-arrays
+			    notch one-pole one-zero oscil partials->polynomial partials->wave partials->waveshape
 			    phase-partials->wave phase-vocoder polynomial pulse-train rand rand-interp rectangular->polar
 			    ring-modulate sample->frame sawtooth-wave sine-summation square-wave src sum-of-cosines sum-of-sines 
-			    sine-bank oscil-bank table-lookup tap triangle-wave two-pole two-zero wave-train waveshape ssb-am make-ssb-am))
+			    sine-bank table-lookup tap triangle-wave two-pole two-zero wave-train waveshape ssb-am make-ssb-am))
 	    
 	    (for-each (lambda (n)
 			(let ((tag
@@ -50316,7 +50256,7 @@ EDITS: 2
 				      (lambda args (car args)))))
 			  (if (not (eq? tag 'wrong-type-arg))
 			      (snd-display ";mus-gen ~A: ~A" n tag))))
-		      (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-bank mus-channel mus-channels mus-cosines mus-data
+		      (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-channel mus-channels mus-cosines mus-data
 			    mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop mus-increment mus-length
 			    mus-location mus-mix mus-order mus-phase mus-ramp mus-random mus-run mus-scaler mus-xcoeffs
 			    mus-ycoeffs))
