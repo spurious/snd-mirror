@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO: check for lingering -1=no-selection/mix !-> #f cases
- */
-
 snd_info *snd_new_file(snd_state *ss, char *newname, int header_type, int data_format, int srate, int chans, char *new_comment)
 {
   int chan, size, err;

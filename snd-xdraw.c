@@ -289,11 +289,8 @@ static void backup_erase_grf_points(mix_context *ms, int nj)
 
 void mix_save_graph(snd_state *ss, mix_context *ms, int j)
 {
-  if (movies(ss))
-    {
-      allocate_erase_grf_points(ms);
-      backup_erase_grf_points(ms, j);
-    }
+  allocate_erase_grf_points(ms);
+  backup_erase_grf_points(ms, j);
 }
 
 void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int nj)

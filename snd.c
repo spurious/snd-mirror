@@ -193,7 +193,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Vu_Font_Size = DEFAULT_VU_FONT_SIZE;
   if (DEFAULT_VU_FONT != (char *)NULL) ss->Vu_Font = copy_string(DEFAULT_VU_FONT); else ss->Vu_Font = NULL;
   ss->Speed_Control_Style = DEFAULT_SPEED_CONTROL_STYLE;
-  ss->Movies = DEFAULT_MOVIES;
   ss->Selection_Creates_Region = DEFAULT_SELECTION_CREATES_REGION;
   ss->Transform_Normalization = DEFAULT_TRANSFORM_NORMALIZATION;
   ss->Zoom_Focus_Style = DEFAULT_ZOOM_FOCUS_STYLE;

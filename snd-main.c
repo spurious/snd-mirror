@@ -280,7 +280,6 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (wavelet_type(ss) != DEFAULT_WAVELET_TYPE) pss_sd(fd, S_wavelet_type, wavelet_type(ss));
   if (dot_size(ss) != DEFAULT_DOT_SIZE) pss_sd(fd, S_dot_size, dot_size(ss));
   if (dac_size(ss) != DEFAULT_DAC_SIZE) pss_sd(fd, S_dac_size, dac_size(ss));
-  if (movies(ss) != DEFAULT_MOVIES) pss_ss(fd, S_movies, b2s(movies(ss)));
   if (selection_creates_region(ss) != DEFAULT_SELECTION_CREATES_REGION) pss_ss(fd, S_selection_creates_region, b2s(selection_creates_region(ss)));
   if (enved_filter_order(ss) != DEFAULT_ENVED_FILTER_ORDER) pss_sd(fd, S_enved_filter_order, enved_filter_order(ss));
   if (filter_env_in_hz(ss) != DEFAULT_FILTER_ENV_IN_HZ) pss_ss(fd, S_filter_env_in_hz, b2s(filter_env_in_hz(ss)));

@@ -426,10 +426,6 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 #define in_set_verbose_cursor(ss, a) ss->Verbose_Cursor = a
 #define DEFAULT_VERBOSE_CURSOR 0
 
-#define movies(ss) ss->Movies
-#define set_movies(ss, a) ss->Movies = a
-#define DEFAULT_MOVIES 1
-
 #define selection_creates_region(ss) ss->Selection_Creates_Region
 #define set_selection_creates_region(ss, a) ss->Selection_Creates_Region = a
 #define DEFAULT_SELECTION_CREATES_REGION 1

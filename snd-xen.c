@@ -3,9 +3,6 @@
 #include "clm2xen.h"
 #include "sndlib-strings.h"
 
-/* TODO: remove movies switch
- */
-
 static snd_state *state = NULL;
 
 /* Snd defines its own exit, delay, and frame? clobbering (presumably) the Guile versions,
@@ -1111,15 +1108,6 @@ static XEN g_set_audio_state_file(XEN val)
   if (audio_state_file(state)) FREE(audio_state_file(state));
   set_audio_state_file(state, copy_string(XEN_TO_C_STRING(val)));
   return(C_TO_XEN_STRING(audio_state_file(state)));
-}
-
-static XEN g_movies(void) {return(C_TO_XEN_BOOLEAN(movies(state)));}
-static XEN g_set_movies(XEN val) 
-{
-  #define H_movies "(" S_movies ") -> #t if mix graphs are update continuously as the mix is dragged (#t)"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(val), val, XEN_ONLY_ARG, "set-" S_movies, "a boolean");
-  set_movies(state, XEN_TO_C_BOOLEAN_OR_TRUE(val));
-  return(C_TO_XEN_BOOLEAN(movies(state)));
 }
 
 static XEN g_selection_creates_region(void) {return(C_TO_XEN_BOOLEAN(selection_creates_region(state)));}
@@ -2785,8 +2773,6 @@ XEN_NARGIFY_0(g_listener_prompt_w, g_listener_prompt)
 XEN_ARGIFY_1(g_set_listener_prompt_w, g_set_listener_prompt)
 XEN_NARGIFY_0(g_audio_state_file_w, g_audio_state_file)
 XEN_ARGIFY_1(g_set_audio_state_file_w, g_set_audio_state_file)
-XEN_NARGIFY_0(g_movies_w, g_movies)
-XEN_ARGIFY_1(g_set_movies_w, g_set_movies)
 XEN_NARGIFY_0(g_selection_creates_region_w, g_selection_creates_region)
 XEN_ARGIFY_1(g_set_selection_creates_region_w, g_set_selection_creates_region)
 XEN_NARGIFY_0(g_print_length_w, g_print_length)
@@ -2987,8 +2973,6 @@ XEN_NARGIFY_1(g_snd_completion_w, g_snd_completion)
 #define g_set_listener_prompt_w g_set_listener_prompt
 #define g_audio_state_file_w g_audio_state_file
 #define g_set_audio_state_file_w g_set_audio_state_file
-#define g_movies_w g_movies
-#define g_set_movies_w g_set_movies
 #define g_selection_creates_region_w g_selection_creates_region
 #define g_set_selection_creates_region_w g_set_selection_creates_region
 #define g_print_length_w g_print_length
@@ -3279,9 +3263,6 @@ void g_initialize_gh(snd_state *ss)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_audio_state_file, g_audio_state_file_w, H_audio_state_file,
 				   "set-" S_audio_state_file, g_set_audio_state_file_w,  0, 0, 0, 1);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_movies, g_movies_w, H_movies,
-				   "set-" S_movies, g_set_movies_w,  0, 0, 0, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selection_creates_region, g_selection_creates_region_w, H_selection_creates_region,
 				   "set-" S_selection_creates_region, g_set_selection_creates_region_w,  0, 0, 0, 1);

@@ -335,7 +335,7 @@ typedef struct snd__state {
   int Transform_Size, Fft_Window, Transform_Graph_Type, Time_Graph_Type, Zero_Pad, Ask_Before_Overwrite, Wavo_Hop, Wavo_Trace;
   Float Fft_Window_Beta, Reverb_Control_Decay;
   Float Color_Scale, Color_Cutoff, Beats_Per_Minute;
-  int Color_Inverted, Speed_Control_Style, Movies, Transform_Normalization, Show_Mix_Waveforms, Mix_Waveform_Height;
+  int Color_Inverted, Speed_Control_Style, Transform_Normalization, Show_Mix_Waveforms, Mix_Waveform_Height;
   int Speed_Control_Tones, Sinc_Width, X_Axis_Style, Zoom_Focus_Style, Graph_Style, Region_Graph_Style;
   int Auto_Resize, Auto_Update, Max_Regions, Max_Transform_Peaks;
   int Audio_Output_Device, Audio_Input_Device, Show_Backtrace, Emacs_Style_Save_As;

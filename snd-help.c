@@ -275,6 +275,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+28-Mar:  removed movies function.\n\
 27-Mar:  selected-mix, selected-sound, and selected-channel return #f if none selected (not -1)\n\
 24-Mar:  removed ALSA 0.5 support.\n\
          cosine-summation, legendre-summation in dsp.scm.\n\
@@ -946,7 +947,6 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_mix_tag_height "        14\n\
   " S_mix_tag_y "             0\n\
   " S_mix_waveform_height "   20\n\
-  " S_movies "                #t\n\
   " S_transform_normalization " " S_normalize_transform_by_channel " (snd #t) (chn #t)\n\
   " S_position_color "        ivory3\n\
   " S_print_length "          12\n\

@@ -670,7 +670,7 @@ static mix_fd *init_mix_read_any(mix_info *md, int old, int type)
   if (type == MIX_INPUT_SOUND)
     {
       if (mf->calc == C_STRAIGHT)
-	/* to include edpos here we'd need to use it also during the mix_input_amp_env_read (movies) business below, so it's non-trivial to add */
+	/* to include edpos here we'd need to use it also during the mix_input_amp_env_read business below, so it's non-trivial to add */
 	mf->sfs[mf->base] = init_sample_read_any(0, add_sp->chans[mf->base], READ_FORWARD, cs->mix_edit_ctr[mf->base]); 
       else
 	{
@@ -1671,7 +1671,6 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, console_state *cs)
   int x_start, x_end;
   double start_time, cur_srate;
   ss = cp->state;
-  if (!(movies(ss))) return;
   /* if fft is being displayed, this does not update it as we drag the mix because the fft-data reader
    * (apply_fft_window in snd-fft.c) reads the current to-be-fft'd data using init_sample_read, and
    * that sees the old data in this case (also if the fft is large enough, it looks for data beyond
