@@ -491,6 +491,21 @@ else
 	     AC_MSG_RESULT(yes)
     	    ],
 	    [AC_MSG_RESULT(no)])
+          AC_MSG_CHECKING(for XmColumn)
+          AC_LINK_IFELSE(
+	    [AC_LANG_PROGRAM(
+        	[#include <Xm/XmAll.h>
+                 #include <Xm/Column.h>],
+		[ Widget w;
+                  w = XmCreateColumn(NULL, "column", NULL, 0);
+                  w = XmColumnGetChildLabel(w)
+                  # some versions of Motif have Column.h and XmCreateColumn but not XmColumnGetChildLabel
+                ])],
+            [
+ 	     AC_DEFINE(HAVE_XmCreateColumn)
+	     AC_MSG_RESULT(yes)
+    	    ],
+	    [AC_MSG_RESULT(no)])
           AC_MSG_CHECKING(for XmDropDown)
           AC_LINK_IFELSE(
 	    [AC_LANG_PROGRAM(

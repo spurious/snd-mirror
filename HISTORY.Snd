@@ -1,5 +1,6 @@
 Snd change log
 
+  13-Apr:    removed forward|backward-graph|mix|mark -- see snd7.scm for Scheme versions.
   12-Apr:    dither-channel.
              goertzel in dsp.scm (faster version of find-sine).
   5-Apr:     snd 7.3.

@@ -721,8 +721,10 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
       end
     end
     entry("Delete all marks") do |snd, chn, w| delete_marks(snd, chn) end
-    entry("To next mark") do |snd, chn, w| forward_mark(1, snd, chn) end
-    entry("To last mark") do |snd, chn, w| backward_mark(1, snd, chn) end
+#    entry("To next mark") do |snd, chn, w| forward_mark(1, snd, chn) end
+#    entry("To last mark") do |snd, chn, w| backward_mark(1, snd, chn) end
+    entry("To next mark") do |snd, chn, w| key(?j, 4, snd, chn) end
+    entry("To last mark") do |snd, chn, w| key(?\-, 4, snd, chn); key(?j, 4, snd, chn) end
     separator(:double)
     entry("Exit") do |snd, chn, w| exit(0) end
     before_popup_hook.add_hook!("graph popup") do |snd, chn, xe|

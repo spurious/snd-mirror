@@ -7,11 +7,11 @@
 #include <config.h>
 #endif
 
-#define XM_DATE "7-Apr-04"
+#define XM_DATE "13-Apr-04"
 
 /* HISTORY: 
  *
- *   12-Apr:    XmDropDown.
+ *   12-Apr:    XmDropDown, XmColumn.
  *   7-Apr:     XmButtonBox.
  *   22-Mar:    added feature 'Xp to indicate that the Xp stuff is included.
  *   8-Mar:     XtAppAddActionHook arity bugfix.
@@ -5171,6 +5171,32 @@ static XEN gxm_XmIsButtonBox(XEN arg)
 #define XmIsMultiList(w) (XtIsSubclass(w, xmMultiListWidgetClass))
 #endif
 
+#endif
+
+#if HAVE_XmCreateColumn
+#include <Xm/Column.h>
+static XEN gxm_XmCreateColumn(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+{
+  #define H_XmCreateColumn "Widget XmCreateColumn(Widget parent, String name, ArgList arglist, Cardinal argcount) \
+The Column widget creation function"
+  return(gxm_new_widget("XmCreateColumn", XmCreateColumn, arg1, arg2, arg3, arg4));
+}
+
+#ifndef XmIsColumn
+#define XmIsColumn(w) (XtIsSubclass(w, xmColumnWidgetClass))
+#endif
+
+static XEN gxm_XmIsColumn(XEN arg)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsColumn", "Widget");
+  return(C_TO_XEN_BOOLEAN(XmIsColumn(XEN_TO_C_Widget(arg))));
+}
+
+static XEN gxm_XmColumnGetChildLabel(XEN arg)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmColumnGetChildLabel", "Widget");
+  return(C_TO_XEN_Widget(XmColumnGetChildLabel(XEN_TO_C_Widget(arg))));
+}
 #endif
 
 #if HAVE_XmCreateDropDown
@@ -19020,6 +19046,10 @@ static void define_procedures(void)
 #if HAVE_XmCreateButtonBox
   XM_DEFINE_PROCEDURE(XmCreateButtonBox, gxm_XmCreateButtonBox, 3, 1, 0, H_XmCreateButtonBox);
 #endif
+#if HAVE_XmCreateColumn
+  XM_DEFINE_PROCEDURE(XmCreateColumn, gxm_XmCreateColumn, 3, 1, 0, H_XmCreateColumn);
+  XM_DEFINE_PROCEDURE(XmColumnGetChildLabel, gxm_XmColumnGetChildLabel, 1, 0, 0, NULL);
+#endif
 #if HAVE_XmCreateDropDown
   XM_DEFINE_PROCEDURE(XmCreateDropDown, gxm_XmCreateDropDown, 3, 1, 0, H_XmCreateDropDown);
   XM_DEFINE_PROCEDURE(XmDropDownGetValue, gxm_XmDropDownGetValue, 1, 0, 0, NULL);
@@ -19248,6 +19278,9 @@ static void define_procedures(void)
 #endif
 #if HAVE_XmCreateDropDown
   XM_DEFINE_PROCEDURE(XmIsDropDown, gxm_XmIsDropDown, 1, 0, 0, NULL);
+#endif
+#if HAVE_XmCreateColumn
+  XM_DEFINE_PROCEDURE(XmIsColumn, gxm_XmIsColumn, 1, 0, 0, NULL);
 #endif
 
 #if (!XM_DISABLE_DEPRECATED)
@@ -19579,12 +19612,8 @@ static XEN gxm_XSegment(XEN x1, XEN y1, XEN x2, XEN y2)
 static XEN gxm_y2(XEN ptr)
 {
   if (XEN_XSegment_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XSegment(ptr))->y2)));
-#if WITH_GTK_AND_X11
-  return(gxg_y2(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "y2", "XSegment");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_y2(XEN ptr, XEN val)
@@ -19598,12 +19627,8 @@ static XEN gxm_set_y2(XEN ptr, XEN val)
 static XEN gxm_x2(XEN ptr)
 {
   if (XEN_XSegment_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XSegment(ptr))->x2)));
-#if WITH_GTK_AND_X11
-  return(gxg_x2(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "x2", "XSegment");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_x2(XEN ptr, XEN val)
@@ -19617,12 +19642,8 @@ static XEN gxm_set_x2(XEN ptr, XEN val)
 static XEN gxm_y1(XEN ptr)
 {
   if (XEN_XSegment_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XSegment(ptr))->y1)));
-#if WITH_GTK_AND_X11
-  return(gxg_y1(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "y1", "XSegment");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_y1(XEN ptr, XEN val)
@@ -19636,12 +19657,8 @@ static XEN gxm_set_y1(XEN ptr, XEN val)
 static XEN gxm_x1(XEN ptr)
 {
   if (XEN_XSegment_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XSegment(ptr))->x1)));
-#if WITH_GTK_AND_X11
-  return(gxg_x1(ptr));
-#else
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "x1", "XSegment");
   return(XEN_FALSE);
-#endif
 }
 
 static XEN gxm_set_x1(XEN ptr, XEN val)
@@ -25966,6 +25983,9 @@ static void define_pointers(void)
 #if HAVE_XmCreateDropDown
   DEFINE_POINTER(xmDropDownWidgetClass);
 #endif
+#if HAVE_XmCreateColumn
+  DEFINE_POINTER(xmColumnWidgetClass);
+#endif
 #if HAVE_XmCreateFontSelector
   DEFINE_POINTER(xmFontSelectorWidgetClass);
 #endif
@@ -26154,7 +26174,7 @@ static bool xm_already_inited = false;
 /* end HAVE_EXTENSION_LANGUAGE */
 
 
-/* SOMEDAY: Motif 2.2.3: MultiList, DataField,  Hierarchy, Paned, TabBox, TabStack, Column, 
+/* SOMEDAY: Motif 2.2.3: MultiList, DataField,  Hierarchy, Paned, TabBox, TabStack
 
          resource names:
 	 XmNbadActionParameters
@@ -26213,8 +26233,6 @@ static bool xm_already_inited = false;
 	 XmTabBoxCallbackStruct: int reason; XEvent *event; int tab_index; int old_index;
 
 	 functions:
-	 Widget XmCreateColumn(Widget, String, ArgList, Cardinal);
-	 Widget XmColumnGetChildLabel(Widget);
 	 Widget XmCreateDataField(Widget, String, ArgList, Cardinal);
 	 void XmDataFieldSetString(Widget, char*);
 	 char *XmDataFieldGetString(Widget);

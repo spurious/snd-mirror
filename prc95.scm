@@ -62,6 +62,7 @@
       (set! output (+ sample (- (* 0.99 output) input)))
       (set! input sample)
       output)))
+;; we could also use a filter generator here: (make-filter 2 (vct 1 -1) (vct 0 -0.99))
 
 (define (dc-block b sample) (b sample))
 

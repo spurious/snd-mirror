@@ -28,8 +28,6 @@
  *    (GdkCursor #:optional type ref_count) -> GdkCursor struct
  *    (GdkPoint #:optional x y) -> GdkPoint struct
  *    (GdkRectangle #:optional x y width height) -> GdkRectangle struct
- *    (GdkSegment #:optional x1 y1 x2 y2) -> GdkSegment struct
- *    (GdkSpan #:optional x y width) -> GdkSpan struct
  *    (GtkStockItem) -> GtkStockItem struct
  *    (GtkTextIter) -> GtkTextIter struct
  *    (GtkTreeIter) -> GtkTreeIter struct
@@ -3593,28 +3591,6 @@ static XEN gxg_gdk_region_xor(XEN source1, XEN source2)
   gdk_region_xor(XEN_TO_C_GdkRegion_(source1), XEN_TO_C_GdkRegion_(source2));
   return(XEN_FALSE);
 }
-static XEN gxg_gdk_region_spans_intersect_foreach(XEN region, XEN spans, XEN n_spans, XEN sorted, XEN func, XEN func_data)
-{
-  #define H_gdk_region_spans_intersect_foreach "void gdk_region_spans_intersect_foreach(GdkRegion* region, \
-GdkSpan* spans, int n_spans, gboolean sorted, GdkSpanFunc func, lambda_data func_data)"
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(region), region, 1, "gdk_region_spans_intersect_foreach", "GdkRegion*");
-  XEN_ASSERT_TYPE(XEN_GdkSpan__P(spans), spans, 2, "gdk_region_spans_intersect_foreach", "GdkSpan*");
-  XEN_ASSERT_TYPE(XEN_int_P(n_spans), n_spans, 3, "gdk_region_spans_intersect_foreach", "int");
-  XEN_ASSERT_TYPE(XEN_gboolean_P(sorted), sorted, 4, "gdk_region_spans_intersect_foreach", "gboolean");
-  XEN_ASSERT_TYPE(XEN_GdkSpanFunc_P(func), func, 5, "gdk_region_spans_intersect_foreach", "GdkSpanFunc");
-  if (XEN_NOT_BOUND_P(func_data)) func_data = XEN_FALSE; 
-  else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 6, "gdk_region_spans_intersect_foreach", "lambda_data");
-  {
-    int loc;
-    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
-    loc = xm_protect(gxg_ptr);
-    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
-    gdk_region_spans_intersect_foreach(XEN_TO_C_GdkRegion_(region), XEN_TO_C_GdkSpan_(spans), XEN_TO_C_int(n_spans), XEN_TO_C_gboolean(sorted), 
-                                   XEN_TO_C_GdkSpanFunc(func), XEN_TO_C_lambda_data(func_data));
-    xm_unprotect_at(loc);
-    return(XEN_FALSE);
-   }
-}
 static XEN gxg_gdk_rgb_find_color(XEN colormap, XEN color)
 {
   #define H_gdk_rgb_find_color "void gdk_rgb_find_color(GdkColormap* colormap, GdkColor* color)"
@@ -3939,11 +3915,6 @@ static XEN gxg_gdk_list_visuals(void)
 {
   #define H_gdk_list_visuals "GList* gdk_list_visuals( void)"
   return(C_TO_XEN_GList_(gdk_list_visuals()));
-}
-static XEN gxg_gdk_window_object_get_type(void)
-{
-  #define H_gdk_window_object_get_type "GType gdk_window_object_get_type( void)"
-  return(C_TO_XEN_GType(gdk_window_object_get_type()));
 }
 static XEN gxg_gdk_window_new(XEN parent, XEN attributes, XEN attributes_mask)
 {
@@ -22935,7 +22906,6 @@ static XEN gxg_GDK_KEYMAP(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Gd
 static XEN gxg_GDK_PIXMAP(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkPixmap_"), XEN_CADR(obj)));}
 static XEN gxg_GDK_VISUAL(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkVisual_"), XEN_CADR(obj)));}
 static XEN gxg_GDK_WINDOW(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkWindow_"), XEN_CADR(obj)));}
-static XEN gxg_GDK_WINDOW_OBJECT(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkWindowObject_"), XEN_CADR(obj)));}
 static XEN gxg_GDK_PIXBUF(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkPixbuf_"), XEN_CADR(obj)));}
 static XEN gxg_GDK_PIXBUF_ANIMATION(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkPixbufAnimation_"), XEN_CADR(obj)));}
 static XEN gxg_GDK_PIXBUF_ANIMATION_ITER(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkPixbufAnimationIter_"), XEN_CADR(obj)));}
@@ -23289,7 +23259,7 @@ static XEN gxg_GTK_IS_ACCEL_MAP(XEN obj) {return(C_TO_XEN_BOOLEAN(XEN_LIST_P(obj
 
 static XEN gxg_vector2GdkPoints(XEN arg1)
 {
-  #define H_vector2GdkPoints "(vector->GdkPoints vect) packages point data in vect as (opaque) array of GdkPoints"
+  #define H_vector2GdkPoints "(vector->GdkPoints vect) packages point data in vect as an (opaque) array of GdkPoints"
   int i, j, len;
   XEN *velts;
   GdkPoint *pt;
@@ -23610,7 +23580,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_region_union, gxg_gdk_region_union, 2, 0, 0, H_gdk_region_union);
   XG_DEFINE_PROCEDURE(gdk_region_subtract, gxg_gdk_region_subtract, 2, 0, 0, H_gdk_region_subtract);
   XG_DEFINE_PROCEDURE(gdk_region_xor, gxg_gdk_region_xor, 2, 0, 0, H_gdk_region_xor);
-  XG_DEFINE_PROCEDURE(gdk_region_spans_intersect_foreach, gxg_gdk_region_spans_intersect_foreach, 5, 1, 0, H_gdk_region_spans_intersect_foreach);
   XG_DEFINE_PROCEDURE(gdk_rgb_find_color, gxg_gdk_rgb_find_color, 2, 0, 0, H_gdk_rgb_find_color);
   XG_DEFINE_PROCEDURE(gdk_draw_rgb_image, gxg_gdk_draw_rgb_image, 9, 0, 0, H_gdk_draw_rgb_image);
   XG_DEFINE_PROCEDURE(gdk_draw_rgb_image_dithalign, gxg_gdk_draw_rgb_image_dithalign, 0, 0, 1, H_gdk_draw_rgb_image_dithalign);
@@ -23642,7 +23611,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_query_depths, gxg_gdk_query_depths, 0, 2, 0, H_gdk_query_depths);
   XG_DEFINE_PROCEDURE(gdk_query_visual_types, gxg_gdk_query_visual_types, 0, 2, 0, H_gdk_query_visual_types);
   XG_DEFINE_PROCEDURE(gdk_list_visuals, gxg_gdk_list_visuals, 0, 0, 0, H_gdk_list_visuals);
-  XG_DEFINE_PROCEDURE(gdk_window_object_get_type, gxg_gdk_window_object_get_type, 0, 0, 0, H_gdk_window_object_get_type);
   XG_DEFINE_PROCEDURE(gdk_window_new, gxg_gdk_window_new, 3, 0, 0, H_gdk_window_new);
   XG_DEFINE_PROCEDURE(gdk_window_destroy, gxg_gdk_window_destroy, 1, 0, 0, H_gdk_window_destroy);
   XG_DEFINE_PROCEDURE(gdk_window_get_window_type, gxg_gdk_window_get_window_type, 1, 0, 0, H_gdk_window_get_window_type);
@@ -26001,7 +25969,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GDK_PIXMAP, gxg_GDK_PIXMAP, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_VISUAL, gxg_GDK_VISUAL, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_WINDOW, gxg_GDK_WINDOW, 1, 0, 0, NULL);
-  XG_DEFINE_PROCEDURE(GDK_WINDOW_OBJECT, gxg_GDK_WINDOW_OBJECT, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_PIXBUF, gxg_GDK_PIXBUF, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_PIXBUF_ANIMATION, gxg_GDK_PIXBUF_ANIMATION, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_PIXBUF_ANIMATION_ITER, gxg_GDK_PIXBUF_ANIMATION_ITER, 1, 0, 0, NULL);
@@ -26877,7 +26844,6 @@ gxg_static XEN gxg_x(XEN ptr)
   if (XEN_GdkEventConfigure__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkEventConfigure_(ptr))->x)));
   if (XEN_GdkPoint__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkPoint_(ptr))->x)));
   if (XEN_GdkRectangle__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkRectangle_(ptr))->x)));
-  if (XEN_GdkSpan__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkSpan_(ptr))->x)));
   if (XEN_GdkWindowAttr__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkWindowAttr_(ptr))->x)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "x", "pointer to struct with x field");
 }
@@ -26891,7 +26857,6 @@ gxg_static XEN gxg_y(XEN ptr)
   if (XEN_GdkEventConfigure__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkEventConfigure_(ptr))->y)));
   if (XEN_GdkPoint__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkPoint_(ptr))->y)));
   if (XEN_GdkRectangle__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkRectangle_(ptr))->y)));
-  if (XEN_GdkSpan__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkSpan_(ptr))->y)));
   if (XEN_GdkWindowAttr__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkWindowAttr_(ptr))->y)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "y", "pointer to struct with y field");
 }
@@ -27018,7 +26983,6 @@ gxg_static XEN gxg_width(XEN ptr)
   if (XEN_GdkEventConfigure__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkEventConfigure_(ptr))->width)));
   if (XEN_GdkImage__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkImage_(ptr))->width)));
   if (XEN_GdkRectangle__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkRectangle_(ptr))->width)));
-  if (XEN_GdkSpan__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkSpan_(ptr))->width)));
   if (XEN_GdkWindowAttr__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkWindowAttr_(ptr))->width)));
   if (XEN_GtkRequisition__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GtkRequisition_(ptr))->width)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "width", "pointer to struct with width field");
@@ -27284,30 +27248,6 @@ static XEN gxg_info_list(XEN ptr)
 {
   XEN_ASSERT_TYPE(XEN_GdkRgbCmap__P(ptr), ptr, XEN_ONLY_ARG, "info_list", "GdkRgbCmap");
   return(C_TO_XEN_GSList_((GSList*)((XEN_TO_C_GdkRgbCmap_(ptr))->info_list)));
-}
-
-gxg_static XEN gxg_x1(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_GdkSegment__P(ptr), ptr, XEN_ONLY_ARG, "x1", "GdkSegment");
-  return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkSegment_(ptr))->x1)));
-}
-
-gxg_static XEN gxg_y1(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_GdkSegment__P(ptr), ptr, XEN_ONLY_ARG, "y1", "GdkSegment");
-  return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkSegment_(ptr))->y1)));
-}
-
-gxg_static XEN gxg_x2(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_GdkSegment__P(ptr), ptr, XEN_ONLY_ARG, "x2", "GdkSegment");
-  return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkSegment_(ptr))->x2)));
-}
-
-gxg_static XEN gxg_y2(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_GdkSegment__P(ptr), ptr, XEN_ONLY_ARG, "y2", "GdkSegment");
-  return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkSegment_(ptr))->y2)));
 }
 
 gxg_static XEN gxg_colormap_size(XEN ptr)
@@ -27897,39 +27837,6 @@ static XEN gxg_make_GdkRectangle(XEN arglist)
   return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkRectangle_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
 }
 
-static XEN gxg_make_GdkSegment(XEN arglist)
-{
-  GdkSegment* result;
-  int i, len;
-  result = (GdkSegment*)CALLOC(1, sizeof(GdkSegment));
-  len = XEN_LIST_LENGTH(arglist);
-  for (i = 0; i < len; i++)
-    switch (i)
-      {
-      case 0: result->x1 = XEN_TO_C_gint(XEN_LIST_REF(arglist, 0));
-      case 1: result->y1 = XEN_TO_C_gint(XEN_LIST_REF(arglist, 1));
-      case 2: result->x2 = XEN_TO_C_gint(XEN_LIST_REF(arglist, 2));
-      case 3: result->y2 = XEN_TO_C_gint(XEN_LIST_REF(arglist, 3));
-      }
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkSegment_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
-}
-
-static XEN gxg_make_GdkSpan(XEN arglist)
-{
-  GdkSpan* result;
-  int i, len;
-  result = (GdkSpan*)CALLOC(1, sizeof(GdkSpan));
-  len = XEN_LIST_LENGTH(arglist);
-  for (i = 0; i < len; i++)
-    switch (i)
-      {
-      case 0: result->x = XEN_TO_C_gint(XEN_LIST_REF(arglist, 0));
-      case 1: result->y = XEN_TO_C_gint(XEN_LIST_REF(arglist, 1));
-      case 2: result->width = XEN_TO_C_gint(XEN_LIST_REF(arglist, 2));
-      }
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkSpan_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
-}
-
 static XEN gxg_make_GtkStockItem(void)
 {
   GtkStockItem* result;
@@ -28084,10 +27991,6 @@ static void define_structs(void)
   XG_DEFINE_READER(red_mask, gxg_red_mask, 1, 0, 0, NULL);
   XG_DEFINE_READER(bits_per_rgb, gxg_bits_per_rgb, 1, 0, 0, NULL);
   XG_DEFINE_READER(colormap_size, gxg_colormap_size, 1, 0, 0, NULL);
-  XG_DEFINE_READER(y2, gxg_y2, 1, 0, 0, NULL);
-  XG_DEFINE_READER(x2, gxg_x2, 1, 0, 0, NULL);
-  XG_DEFINE_READER(y1, gxg_y1, 1, 0, 0, NULL);
-  XG_DEFINE_READER(x1, gxg_x1, 1, 0, 0, NULL);
 #endif
   XG_DEFINE_READER(info_list, gxg_info_list, 1, 0, 0, NULL);
   XG_DEFINE_READER(n_colors, gxg_n_colors, 1, 0, 0, NULL);
@@ -28206,8 +28109,6 @@ static void define_structs(void)
   XG_DEFINE_PROCEDURE(GdkCursor, gxg_make_GdkCursor, 0, 0, 1, NULL);
   XG_DEFINE_PROCEDURE(GdkPoint, gxg_make_GdkPoint, 0, 0, 1, NULL);
   XG_DEFINE_PROCEDURE(GdkRectangle, gxg_make_GdkRectangle, 0, 0, 1, NULL);
-  XG_DEFINE_PROCEDURE(GdkSegment, gxg_make_GdkSegment, 0, 0, 1, NULL);
-  XG_DEFINE_PROCEDURE(GdkSpan, gxg_make_GdkSpan, 0, 0, 1, NULL);
   XG_DEFINE_PROCEDURE(GtkStockItem, gxg_make_GtkStockItem, 0, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GtkTextIter, gxg_make_GtkTextIter, 0, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GtkTreeIter, gxg_make_GtkTreeIter, 0, 0, 0, NULL);
@@ -29778,10 +29679,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"07-Apr-04\")");
+      XEN_EVAL_C_STRING("(define xm-version \"12-Apr-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("07-Apr-04"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("12-Apr-04"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

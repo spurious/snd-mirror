@@ -351,11 +351,12 @@
 	    (list "To next mark"
 		  (lambda (w) (set! next-mark-popup-menu w))
 		  (lambda (w data)
-		    (forward-mark 1 graph-popup-snd graph-popup-chn)))
+		    (key (char->integer #\j) 4 graph-popup-snd graph-popup-chn)))
 	    (list "To last mark"
 		  (lambda (w) (set! last-mark-popup-menu w))
 		  (lambda (w data)
-		    (backward-mark 1 graph-popup-snd graph-popup-chn)))
+		    (key (char->integer #\-) 4 graph-popup-snd graph-popup-chn)
+		    (key (char->integer #\j) 4 graph-popup-snd graph-popup-chn)))
 	    (list #f #f) ; separator
 	    (list "Exit"                every-menu 
 		  (lambda (w data)

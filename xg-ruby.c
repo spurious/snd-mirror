@@ -276,7 +276,6 @@ XEN_NARGIFY_2(gxg_gdk_region_intersect_w, gxg_gdk_region_intersect)
 XEN_NARGIFY_2(gxg_gdk_region_union_w, gxg_gdk_region_union)
 XEN_NARGIFY_2(gxg_gdk_region_subtract_w, gxg_gdk_region_subtract)
 XEN_NARGIFY_2(gxg_gdk_region_xor_w, gxg_gdk_region_xor)
-XEN_ARGIFY_6(gxg_gdk_region_spans_intersect_foreach_w, gxg_gdk_region_spans_intersect_foreach)
 XEN_NARGIFY_2(gxg_gdk_rgb_find_color_w, gxg_gdk_rgb_find_color)
 XEN_NARGIFY_9(gxg_gdk_draw_rgb_image_w, gxg_gdk_draw_rgb_image)
 XEN_VARGIFY(gxg_gdk_draw_rgb_image_dithalign_w, gxg_gdk_draw_rgb_image_dithalign)
@@ -308,7 +307,6 @@ XEN_NARGIFY_2(gxg_gdk_visual_get_best_with_both_w, gxg_gdk_visual_get_best_with_
 XEN_ARGIFY_2(gxg_gdk_query_depths_w, gxg_gdk_query_depths)
 XEN_ARGIFY_2(gxg_gdk_query_visual_types_w, gxg_gdk_query_visual_types)
 XEN_NARGIFY_0(gxg_gdk_list_visuals_w, gxg_gdk_list_visuals)
-XEN_NARGIFY_0(gxg_gdk_window_object_get_type_w, gxg_gdk_window_object_get_type)
 XEN_NARGIFY_3(gxg_gdk_window_new_w, gxg_gdk_window_new)
 XEN_NARGIFY_1(gxg_gdk_window_destroy_w, gxg_gdk_window_destroy)
 XEN_NARGIFY_1(gxg_gdk_window_get_window_type_w, gxg_gdk_window_get_window_type)
@@ -2667,7 +2665,6 @@ XEN_NARGIFY_1(gxg_GDK_KEYMAP_w, gxg_GDK_KEYMAP)
 XEN_NARGIFY_1(gxg_GDK_PIXMAP_w, gxg_GDK_PIXMAP)
 XEN_NARGIFY_1(gxg_GDK_VISUAL_w, gxg_GDK_VISUAL)
 XEN_NARGIFY_1(gxg_GDK_WINDOW_w, gxg_GDK_WINDOW)
-XEN_NARGIFY_1(gxg_GDK_WINDOW_OBJECT_w, gxg_GDK_WINDOW_OBJECT)
 XEN_NARGIFY_1(gxg_GDK_PIXBUF_w, gxg_GDK_PIXBUF)
 XEN_NARGIFY_1(gxg_GDK_PIXBUF_ANIMATION_w, gxg_GDK_PIXBUF_ANIMATION)
 XEN_NARGIFY_1(gxg_GDK_PIXBUF_ANIMATION_ITER_w, gxg_GDK_PIXBUF_ANIMATION_ITER)
@@ -3112,10 +3109,6 @@ XEN_NARGIFY_1(gxg_red_shift_w, gxg_red_shift)
 XEN_NARGIFY_1(gxg_red_mask_w, gxg_red_mask)
 XEN_NARGIFY_1(gxg_bits_per_rgb_w, gxg_bits_per_rgb)
 XEN_NARGIFY_1(gxg_colormap_size_w, gxg_colormap_size)
-XEN_NARGIFY_1(gxg_y2_w, gxg_y2)
-XEN_NARGIFY_1(gxg_x2_w, gxg_x2)
-XEN_NARGIFY_1(gxg_y1_w, gxg_y1)
-XEN_NARGIFY_1(gxg_x1_w, gxg_x1)
 #endif
 XEN_NARGIFY_1(gxg_info_list_w, gxg_info_list)
 XEN_NARGIFY_1(gxg_n_colors_w, gxg_n_colors)
@@ -3241,8 +3234,6 @@ XEN_VARGIFY(gxg_make_GdkColor_w, gxg_make_GdkColor)
 XEN_VARGIFY(gxg_make_GdkCursor_w, gxg_make_GdkCursor)
 XEN_VARGIFY(gxg_make_GdkPoint_w, gxg_make_GdkPoint)
 XEN_VARGIFY(gxg_make_GdkRectangle_w, gxg_make_GdkRectangle)
-XEN_VARGIFY(gxg_make_GdkSegment_w, gxg_make_GdkSegment)
-XEN_VARGIFY(gxg_make_GdkSpan_w, gxg_make_GdkSpan)
 XEN_NARGIFY_0(gxg_make_GtkStockItem_w, gxg_make_GtkStockItem)
 XEN_NARGIFY_0(gxg_make_GtkTextIter_w, gxg_make_GtkTextIter)
 XEN_NARGIFY_0(gxg_make_GtkTreeIter_w, gxg_make_GtkTreeIter)
@@ -3535,7 +3526,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_region_union, gxg_gdk_region_union_w, 2, 0, 0, H_gdk_region_union);
   XG_DEFINE_PROCEDURE(gdk_region_subtract, gxg_gdk_region_subtract_w, 2, 0, 0, H_gdk_region_subtract);
   XG_DEFINE_PROCEDURE(gdk_region_xor, gxg_gdk_region_xor_w, 2, 0, 0, H_gdk_region_xor);
-  XG_DEFINE_PROCEDURE(gdk_region_spans_intersect_foreach, gxg_gdk_region_spans_intersect_foreach_w, 5, 1, 0, H_gdk_region_spans_intersect_foreach);
   XG_DEFINE_PROCEDURE(gdk_rgb_find_color, gxg_gdk_rgb_find_color_w, 2, 0, 0, H_gdk_rgb_find_color);
   XG_DEFINE_PROCEDURE(gdk_draw_rgb_image, gxg_gdk_draw_rgb_image_w, 9, 0, 0, H_gdk_draw_rgb_image);
   XG_DEFINE_PROCEDURE(gdk_draw_rgb_image_dithalign, gxg_gdk_draw_rgb_image_dithalign_w, 0, 0, 1, H_gdk_draw_rgb_image_dithalign);
@@ -3567,7 +3557,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_query_depths, gxg_gdk_query_depths_w, 0, 2, 0, H_gdk_query_depths);
   XG_DEFINE_PROCEDURE(gdk_query_visual_types, gxg_gdk_query_visual_types_w, 0, 2, 0, H_gdk_query_visual_types);
   XG_DEFINE_PROCEDURE(gdk_list_visuals, gxg_gdk_list_visuals_w, 0, 0, 0, H_gdk_list_visuals);
-  XG_DEFINE_PROCEDURE(gdk_window_object_get_type, gxg_gdk_window_object_get_type_w, 0, 0, 0, H_gdk_window_object_get_type);
   XG_DEFINE_PROCEDURE(gdk_window_new, gxg_gdk_window_new_w, 3, 0, 0, H_gdk_window_new);
   XG_DEFINE_PROCEDURE(gdk_window_destroy, gxg_gdk_window_destroy_w, 1, 0, 0, H_gdk_window_destroy);
   XG_DEFINE_PROCEDURE(gdk_window_get_window_type, gxg_gdk_window_get_window_type_w, 1, 0, 0, H_gdk_window_get_window_type);
@@ -5926,7 +5915,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GDK_PIXMAP, gxg_GDK_PIXMAP_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_VISUAL, gxg_GDK_VISUAL_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_WINDOW, gxg_GDK_WINDOW_w, 1, 0, 0, NULL);
-  XG_DEFINE_PROCEDURE(GDK_WINDOW_OBJECT, gxg_GDK_WINDOW_OBJECT_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_PIXBUF, gxg_GDK_PIXBUF_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_PIXBUF_ANIMATION, gxg_GDK_PIXBUF_ANIMATION_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GDK_PIXBUF_ANIMATION_ITER, gxg_GDK_PIXBUF_ANIMATION_ITER_w, 1, 0, 0, NULL);
@@ -6377,10 +6365,6 @@ static void define_structs(void)
   XG_DEFINE_READER(red_mask, gxg_red_mask_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(bits_per_rgb, gxg_bits_per_rgb_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(colormap_size, gxg_colormap_size_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(y2, gxg_y2_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(x2, gxg_x2_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(y1, gxg_y1_w, 1, 0, 0, NULL);
-  XG_DEFINE_READER(x1, gxg_x1_w, 1, 0, 0, NULL);
 #endif
   XG_DEFINE_READER(info_list, gxg_info_list_w, 1, 0, 0, NULL);
   XG_DEFINE_READER(n_colors, gxg_n_colors_w, 1, 0, 0, NULL);
@@ -6499,8 +6483,6 @@ static void define_structs(void)
   XG_DEFINE_PROCEDURE(GdkCursor, gxg_make_GdkCursor_w, 0, 0, 1, NULL);
   XG_DEFINE_PROCEDURE(GdkPoint, gxg_make_GdkPoint_w, 0, 0, 1, NULL);
   XG_DEFINE_PROCEDURE(GdkRectangle, gxg_make_GdkRectangle_w, 0, 0, 1, NULL);
-  XG_DEFINE_PROCEDURE(GdkSegment, gxg_make_GdkSegment_w, 0, 0, 1, NULL);
-  XG_DEFINE_PROCEDURE(GdkSpan, gxg_make_GdkSpan_w, 0, 0, 1, NULL);
   XG_DEFINE_PROCEDURE(GtkStockItem, gxg_make_GtkStockItem_w, 0, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GtkTextIter, gxg_make_GtkTextIter_w, 0, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(GtkTreeIter, gxg_make_GtkTreeIter_w, 0, 0, 0, NULL);

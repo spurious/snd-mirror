@@ -2233,44 +2233,6 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
   return(res1);
 }
 
-static XEN g_forward_mark(XEN count, XEN snd, XEN chn) 
-{
-  #define H_forward_mark "(" S_forward_mark " (count 1) (snd #f) (chn #f)): move the cursor forward by count marks"
-  int val; 
-  chan_info *cp;
-  mark *mp = NULL;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_forward_mark, "an integer");
-  ASSERT_CHANNEL(S_forward_mark, snd, chn, 2);
-  cp = get_cp(snd, chn, S_forward_mark);
-  val = XEN_TO_C_INT_OR_ELSE(count, 1); 
-  if (cp->marks) mp = find_nth_mark(cp, val);
-  if (mp)
-    {
-      cursor_moveto(cp, mp->samp);
-      return(C_TO_XEN_INT(mark_id(mp)));
-    }
-  return(XEN_FALSE);
-}
-
-static XEN g_backward_mark(XEN count, XEN snd, XEN chn) 
-{
-  #define H_backward_mark "(" S_backward_mark " (count 1) (snd #f) (chn #f)): move the cursor back by count marks"
-  int val; 
-  chan_info *cp;
-  mark *mp = NULL;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_backward_mark, "an integer");
-  ASSERT_CHANNEL(S_backward_mark, snd, chn, 2);
-  cp = get_cp(snd, chn, S_backward_mark);
-  val = -(XEN_TO_C_INT_OR_ELSE(count, 1)); 
-  if (cp->marks) mp = find_nth_mark(cp, val);
-  if (mp)
-    {
-      cursor_moveto(cp, mp->samp);
-      return(C_TO_XEN_INT(mark_id(mp)));
-    }
-  return(XEN_FALSE);
-}
-
 static bool find_any_marks (chan_info *cp, void *ptr)
 {
   if (cp->marks) 
@@ -2349,8 +2311,6 @@ XEN_ARGIFY_1(g_delete_mark_w, g_delete_mark)
 XEN_ARGIFY_2(g_delete_marks_w, g_delete_marks)
 XEN_NARGIFY_1(g_syncd_marks_w, g_syncd_marks)
 XEN_ARGIFY_4(g_find_mark_w, g_find_mark)
-XEN_ARGIFY_3(g_forward_mark_w, g_forward_mark)
-XEN_ARGIFY_3(g_backward_mark_w, g_backward_mark)
 XEN_ARGIFY_2(g_save_marks_w, g_save_marks)
 XEN_NARGIFY_1(g_mark_p_w, g_mark_p)
 #else
@@ -2369,8 +2329,6 @@ XEN_NARGIFY_1(g_mark_p_w, g_mark_p)
 #define g_delete_marks_w g_delete_marks
 #define g_syncd_marks_w g_syncd_marks
 #define g_find_mark_w g_find_mark
-#define g_forward_mark_w g_forward_mark
-#define g_backward_mark_w g_backward_mark
 #define g_save_marks_w g_save_marks
 #define g_mark_p_w g_mark_p
 #endif
@@ -2402,8 +2360,6 @@ void g_init_marks(void)
   XEN_DEFINE_PROCEDURE(S_delete_marks,  g_delete_marks_w,  0, 2, 0, H_delete_marks);
   XEN_DEFINE_PROCEDURE(S_syncd_marks,   g_syncd_marks_w,   1, 0, 0, H_syncd_marks);
   XEN_DEFINE_PROCEDURE(S_find_mark,     g_find_mark_w,     1, 3, 0, H_find_mark);
-  XEN_DEFINE_PROCEDURE(S_forward_mark,  g_forward_mark_w,  0, 3, 0, H_forward_mark);
-  XEN_DEFINE_PROCEDURE(S_backward_mark, g_backward_mark_w, 0, 3, 0, H_backward_mark);
   XEN_DEFINE_PROCEDURE(S_save_marks,    g_save_marks_w,    0, 2, 0, H_save_marks);
   XEN_DEFINE_PROCEDURE(S_mark_p,        g_mark_p_w,        1, 0, 0, H_mark_p);
 

@@ -373,6 +373,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+13-Apr:  removed forward|backward-graph|mix|mark -- see snd7.scm for Scheme versions.\n\
 12-Apr:  dither-channel.\n\
          goertzel in dsp.scm (faster version of find-sine)\n\
 5-Apr:   snd 7.3\n\

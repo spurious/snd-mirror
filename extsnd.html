@@ -2936,11 +2936,6 @@ for an overview and key bindings associated with marks.
 add mark at <i>sample</i>, returning mark id.  If <i>sample</i> is out-of-range, <i>add-mark</i> throws 'no-such-sample.
 </td></tr>
 
-<!-- backward-mark -->
-<tr><td colspan=2><code><a class=def name="backwardmark">backward-mark</a> (<i>count snd chn</i>)</code></td></tr>
-<tr><td></td><td>move the cursor back <i>count</i> marks (C-j), returning mark id, or #f if none.
-</td></tr>
-
 <!-- delete-mark -->
 <tr><td colspan=2><code><a class=def name="deletemark">delete-mark</a> (<i>id</i>)</code></td></tr>
 <tr><td></td><td>delete mark <i>id</i> (- C-m).
@@ -2962,11 +2957,6 @@ This identifier is used in calls such as <a href="#marksample">mark-sample</a>. 
 can move around during editing, a unique 'tag' is needed to refer to a 
 particular mark. <i>samp</i> can also be a string; in this case <i>find-mark</i> 
 looks for a mark of that name.  <i>mark-name-&gt;id</i> in marks.scm finds a named mark in any channel (a global version of find-mark).
-</td></tr>
-
-<!-- forward-mark -->
-<tr><td colspan=2><code><a class=def name="forwardmark">forward-mark</a> (<i>count snd chn</i>)</code></td></tr>
-<tr><td></td><td>move the cursor forward <i>count</i> marks (C-j), returning mark id, or #f if none.
 </td></tr>
 
 <tr><td colspan=2><code><em class=emdef><a href="#markclickhook">mark-click-hook</a></em> (id)</code></td></tr>
@@ -3169,11 +3159,6 @@ sets mix 123's channel 0 amplitude scaler to .5.
 
 <table border=0 cellspacing=10>
 
-<!-- backward-mix -->
-<tr><td colspan=2><code><a class=def name="backwardmix">backward-mix</a> (<i>count snd chn</i>)</code></td></tr>
-<tr><td width=50><br></td><td>move the cursor back <i>count</i> mix tags (C-x C-j), returning the mix id.
-</td></tr>
-
 <!-- copy-mix -->
 <tr><td colspan=2><code><a class=def name="copymix">copy-mix</a> (mix <i>beg</i>)</code></td></tr>
 <tr><td></td><td>copy <i>mix</i>, placing the copy at <i>beg</i> which defaults to the copied mix's position.  The new mix's track is set to 0.
@@ -3182,11 +3167,6 @@ sets mix 123's channel 0 amplitude scaler to .5.
 <!-- delete-mix -->
 <tr><td colspan=2><code><a class=def name="deletemix">delete-mix</a> (mix)</code></td></tr>
 <tr><td></td><td>delete mix (set amps to 0.0).
-</td></tr>
-
-<!-- forward-mix -->
-<tr><td colspan=2><code><a class=def name="forwardmix">forward-mix</a> (<i>count snd chn</i>)</code></td></tr>
-<tr><td></td><td>move the cursor forward <i>count</i> mix tags (C-x C-j), returning the mix id.
 </td></tr>
 
 <tr><td colspan=2><code><a class=def name="mix">mix</a> (file <i>samp in-chan snd chn with-mix-tags auto-delete (track 0)</i>)</code></td></tr>
@@ -4052,16 +4032,6 @@ in marks.scm, or <i>start-dac</i> in play.scm.
 <tr><td colspan=2></td></tr>
 
 
-<!-- backward-graph -->
-<tr><td colspan=2>
-<code><a class=def name="backwardgraph">backward-graph</a> (<i>count snd chn</i>)</code>
-</td></tr>
-<tr><td></td><td>
-move the selected channel back (up or left) <i>count</i> graphs (C-x C-o), returning a list of the new sound index and channel number.
-</td></tr>
-<tr><td colspan=2></td></tr>
-
-
 <!-- beats-per-minute -->
 <tr><td colspan=2>
 <code><a class=def name="beatsperminute">beats-per-minute</a> (<em class=narg>snd chn</em>)</code>
@@ -4769,11 +4739,12 @@ CLM filtering to a sound. (The regularized version of this is <a href="#clmchann
 
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(<em class=red>filter-sound</em> '(0 1 1 0) 1024)                       ;FIR filter given frequency response
-(<em class=red>filter-sound</em> (<a class=quiet href="#list2vct">list-&gt;vct</a> '(.1 .2 .3 .3 .2 .1)) 6)    ;FIR filter given actual coefficients
-(<em class=red>filter-sound</em> (<a class=quiet href="clm.html#make-fir-filter">make-fir-filter</a> 6 (<a class=quiet href="#list2vct">list-&gt;vct</a> '(.1 .2 .3 .3 .2 .1)))) ;CLM FIR filter
-(<em class=red>filter-sound</em> (<a class=quiet href="clm.html#make-delay">make-delay</a> 120))                      ;CLM delay (same as insert-silence)
-(<em class=red>filter-sound</em> (<a class=quiet href="clm.html#make-formant">make-formant</a> .99 1200))               ;CLM formant
+(<em class=red>filter-sound</em> '(0 1 1 0) 1024)                             ; FIR filter given frequency response
+(<em class=red>filter-sound</em> (<a class=quiet href="#vct">vct</a> .1 .2 .3 .3 .2 .1) 6)                   ; FIR filter given actual coefficients
+(<em class=red>filter-sound</em> (<a class=quiet href="clm.html#make-fir-filter">make-fir-filter</a> 6 (<a class=quiet href="#vct">vct</a> .1 .2 .3 .3 .2 .1))) ; CLM FIR filter
+(<em class=red>filter-sound</em> (<a class=quiet href="clm.html#make-delay">make-delay</a> 120))                            ; CLM delay (same as insert-silence)
+(<em class=red>filter-sound</em> (<a class=quiet href="clm.html#make-formant">make-formant</a> .99 1200))                     ; CLM formant
+(<em class=red>filter-sound</em> (<a class=quiet href="clm.html#make-filter">make-filter</a> 2 (<a class=quiet href="#vct">vct</a> 1 -1) (<a class=quiet href="#vct">vct</a> 0 -0.99)))    ; remove DC
 </pre></td></tr></table>
 <p>
 If you want to use the cascade filter structure, rather than the canonical
@@ -4801,7 +4772,7 @@ Butterworth filters: make-butter-high-pass, make-butter-low etc in dsp.scm, used
 IIR filters of various orders/kinds: dsp.scm<br>
 Hilbert transform: make-hilbert-transform in dsp.scm<br>
 differentiator: make-differentiator in dsp.scm<br>
-block DC: see dc-block in prc95.scm, also stereo-flute in clm-ins.scm.<br>
+block DC: see example above, dc-block in prc95.scm, or stereo-flute in clm-ins.scm.<br>
 hum elimination: see eliminate-hum and notch-channel in dsp.scm<br>
 hiss elimination: <a href="sndscm.html#notchoutrumbleandhiss">notch-out-rumble-and-hiss</a><br>
 notch-filters: <a href="sndscm.html#notchchannel">notch-channel</a> and <a href="sndscm.html#notchselection">notch-selection</a><br>
@@ -4893,16 +4864,6 @@ See popup.scm, and <i>files-popup-buffer</i>, <i>open-next-file-in-directory</i>
 <tr><td></td><td>
 End an on-going progress report (a visual indication of how far along some time-consuming process is). 
 See <a href="#progressreport">progress-report</a>.
-</td></tr>
-<tr><td colspan=2></td></tr>
-
-
-<!-- forward-graph -->
-<tr><td colspan=2>
-<code><a class=def name="forwardgraph">forward-graph</a> (<i>count snd chn</i>)</code>
-</td></tr>
-<tr><td></td><td>
-move the selected channel forward (down or right) <i>count</i> graphs (C-x C-o), returning a list of the new sound index and channel number.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -10811,8 +10772,6 @@ return the current x axis label (also settable).
 	<!-- I(insert file):L(insert-sound)(insertsound) -->
 	<!-- I(mix file):L(mix)(mix) -->
 	<!-- I(move mixed file):L(mix-position)(mixposition) -->
-	<!-- I(move to mark):L(forward-mark)(forwardmark) -->
- 	<!-- I(move to mix):L(forward-mix)(forwardmix) -->
 	<!-- I(play selection):L(play-selection)(playselection) -->
 	<!-- I(play selection):O(play-region)(playregion) -->
 	<!-- I(update file):L(update)(updatesound) -->

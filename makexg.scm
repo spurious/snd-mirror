@@ -2184,7 +2184,7 @@
 
 (hey "static XEN gxg_vector2GdkPoints(XEN arg1)~%")
 (hey "{~%")
-(hey "  #define H_vector2GdkPoints \"(vector->GdkPoints vect) packages point data in vect as (opaque) array of GdkPoints\"~%")
+(hey "  #define H_vector2GdkPoints \"(vector->GdkPoints vect) packages point data in vect as an (opaque) array of GdkPoints\"~%")
 (hey "  int i, j, len;~%")
 (hey "  XEN *velts;~%")
 (hey "  GdkPoint *pt;~%")

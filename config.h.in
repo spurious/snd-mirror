@@ -131,6 +131,7 @@
 #undef HAVE_XmToolTipGetLabel
 #undef HAVE_XmCreateButtonBox
 #undef HAVE_XmCreateDropDown
+#undef HAVE_XmCreateColumn
 #undef HAVE_XmCreateFontSelector
 #undef HAVE_XmCreateColorSelector
 #undef HAVE_XPM_GET_ERROR_STRING

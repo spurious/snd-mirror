@@ -650,7 +650,7 @@ this can be confusing if fft normalization is on (the default)"
 		    (begin
 		      (add-mark (caddr loops))
 		      (add-mark (cadddr loops)))))))
-	(snd-print (format #f "%s has no loop info" (short-file-name))))))
+	(snd-print (format #f "~S has no loop info" (short-file-name))))))
 		
 	    
 

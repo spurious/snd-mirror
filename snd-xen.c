@@ -3270,7 +3270,7 @@ If it returns some non-false result, Snd assumes you've sent the text out yourse
 	                                            (set! %load-path (cons new-path %load-path))))))))");
   /* the "ice-9" business is to keep us from loading ice-9/debug.scm when we intend our own debug.scm */
   /* load-from-path can still be fooled, but the user will have to work at it. */
-  /* If you load Guile's debug.scm by mistake (set! %load-verbosely #t to see), Snd's names get clobbered! */
+  /* If you load Guile's debug.scm by mistake (set! %load-verbosely #t) to see Snd's names get clobbered! */
 #endif
 #if HAVE_RUBY
   XEN_EVAL_C_STRING("def clm_print(str, *args)\n\

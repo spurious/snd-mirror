@@ -217,86 +217,93 @@ and a CVS <a href="http://snd.sourceforge.net">repository</a>.
 <tr>
 <td><a href="#savefile">Save</a></td>
 <td><a href="#find">Find</a></td>
-<td><a href="#mixdialog">Mix Dialog</a></td>
+<td><a href="#mixdialog">Mixes</a></td>
 <td><a href="#saveoptions">Save options</a></td>
 <td><a href="#controls">Control panel</a></td>
 </tr>
 <tr>
 <td><a href="#savefile">Save as</a></td>
 <td><a href="#editcut">Cut</a></td>
-<td><a href="#regionbrowser">Regions</a></td>
+<td><a href="extsnd.html#trackstuff">Tracks</a></td>
 <td><a href="#savedstate">Save state</a></td>
 <td><a href="#builtinkeys">Key bindings</a></td>
 </tr>
 <tr>
 <td><a href="#revertfile">Revert</a></td>
 <td><a href="#editcut">Paste</a></td>
-<td><a href="#prevfiles">Files</a></td>
+<td><a href="#regionbrowser">Regions</a></td>
 <td></td>
 <td><a href="#recordfile">Record</a></td>
 </tr>
 <tr>
 <td><a href="#mixingfiles">Mix</a></td>
 <td><a href="#editcut">Mix Selection</a></td>
-<td><a href="#colorbrowser">Color</a></td>
+<td><a href="#prevfiles">Files</a></td>
 <td></td>
 <td><a href="#play">Play</a></td>
 </tr>
 <tr>
 <td><a href="#updatefile">Update</a></td>
 <td><a href="#cxp">Play Selection</a></td>
-<td><a href="#orientationbrowser">Orientation</a></td>
+<td><a href="#colorbrowser">Color</a></td>
 <td></td>
 <td><a href="#savefile">Save</a></td>
 </tr>
 <tr>
 <td><a href="#newfile">New</a></td>
 <td><a href="#cxw">Save Selection</a></td>
-<td><a href="#viewdots">Graph style</a></td>
+<td><a href="#orientationbrowser">Orientation</a></td>
 <td></td>
 <td><a href="#mixingfiles">Mix</a></td>
 </tr>
 <tr>
 <td><a href="#recordfile">Record</a></td>
 <td><a href="#selectall">Select all</a></td>
-<td><a href="extsnd.html#verbosecursor">Verbose cursor</a></td>
+<td><a href="#viewdots">Graph style</a></td>
 <td></td>
 <td><a href="#speed">Resample</a></td>
 </tr>
 <tr>
 <td><a href="#openfile">View</a></td>
 <td><a href="#editenvelope">Edit Envelope</a></td>
-<td><a href="#unitebutton">Channel style</a></td>
+<td><a href="extsnd.html#verbosecursor">Verbose cursor</a></td>
 <td></td>
 <td><a href="#viewfft">FFT</a></td>
 </tr>
 <tr>
 <td><a href="#printfile">Print</a></td>
 <td><a href="#editheader">Edit Header</a></td>
-<td><a href="#equalizepanes">Equalize Panes</a></td>
+<td><a href="#unitebutton">Channel style</a></td>
 <td></td>
 <td><a href="#filtercontrol">Filter</a></td>
 </tr>
 <tr>
 <td><a href="#exitfile">Exit</a></td>
 <td></td>
-<td><a href="#viewy0">Show y=0</a></td>
+<td><a href="#equalizepanes">Equalize Panes</a></td>
 <td></td>
 <td><a href="#reverb">Reverb</a></td>
 </tr>
 <tr>
 <td></td>
 <td></td>
-<td><a href="extsnd.html#xaxisstyle">X axis units</a></td>
+<td><a href="#viewy0">Show y=0</a></td>
 <td></td>
 <td><a href="#ampenvs">Envelope</a></td>
 </tr>
 <tr>
 <td></td>
 <td></td>
-<td><a href="#errorhistory">Error History</a></td>
+<td><a href="extsnd.html#xaxisstyle">X axis units</a></td>
 <td></td>
 <td><a href="#marks">Mark</a></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td><a href="#errorhistory">Error History</a></td>
+<td></td>
+<td><a href="#deleteinsert">Insert</a></td>
 </tr>
 <tr>
 <td></td>
@@ -2086,7 +2093,7 @@ all the samples between the cursor and the next mark.</p>
 	 (minx (max 0.0 (- mid-point (* 0.5 range)))))
     (set! (<a class=quiet href="extsnd.html#xbounds">x-bounds</a>) (list minx (+ minx range)))))
 </pre></small></code></td></tr>
-<tr><td>C-x o</td><td>move to next or previous graph</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#forwardgraph">forward-graph</a> arg))</small></code></td></tr>
+<tr><td>C-x o</td><td>move to next or previous graph</td><td><code><small>(lambda (arg) (<a class=quiet href="sndscm.html#forwardgraph">forward-graph</a> arg))</small></code></td></tr>
 <tr><td>C-x p</td><td>play selection or region n</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#playregion">play-region</a> arg)) ;play-selection if no arg</small></code></td></tr>
 <tr><td>C-x q</td><td>mix in region</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#mixregion">mix-region</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) arg)) ;mix-selection if no arg</small></code></td></tr>
 <tr><td>C-x r</td><td>redo last undone edit</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#redo">redo</a> arg))</small></code></td></tr>
@@ -2372,7 +2379,7 @@ panel are:</p>
   <tr><td><a href="#thecursor">move cursor back</a></td><td><br></td><td><a href="#ca"><small>Cb, Cp, Ca</small></a></td><td><a href="extsnd.html#cursor"><small>set cursor</small></a></td><td><small>also &lt;</small></td></tr>
   <tr><td><a href="#mixingfiles">move mixed file</a></td><td><br></td><td><br></td><td><a href="extsnd.html#mixposition"><small>mix-position</small></a></td><td><a href="#mixingfiles"><small>drag mix tag</small></a></td></tr>
   <tr><td><a href="#cj">move to mark</a></td><td><br></td><td><a href="#cj"><small>Cj, Cx j</small></a></td><td><a href="extsnd.html#forwardmark"><small>forward-mark</small></a></td><td><a href="#cxj"><small>Cx j -&gt; named mark</small></a></td></tr>
-  <tr><td><a href="#gotomix">move to mix</a></td><td><br></td><td><a href="#cxcj"><small>Cx Cj</small></a></td><td><a href="extsnd.html#forwardmix"><small>forward-mix</small></a></td><td><br></td></tr>
+  <tr><td><a href="#gotomix">move to mix</a></td><td><br></td><td><a href="#cxcj"><small>Cx Cj</small></a></td><td><a href="sndscm.html#forwardmix"><small>forward-mix</small></a></td><td><br></td></tr>
   <tr><td><a href="#movingwindow">move window ahead</a></td><td><br></td><td><a href="#cxf"><small>[Left], Cx f</small></a></td><td><a href="extsnd.html#rightsample"><small>right-sample</small></a></td><td><small>scroll bars</small></td></tr>
   <tr><td><a href="#movingwindow">move window back</a></td><td><br></td><td><a href="#movewindow"><small>[Right], Cx b</small></a></td><td><a href="extsnd.html#leftsample"><small>left-sample</small></a></td><td><small>scroll bars</small></td></tr>
   <tr><td><a href="#multichannel">multichannel ops</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sync"><small>sync</small></a></td><td><a href="#syncbutton"><small>sync button</small></a></td></tr>

@@ -3212,28 +3212,6 @@ static mix_state *cs_from_id(int n)
   return(NULL);
 }
 
-static int mix_id_from_channel_position(chan_info *cp, off_t pos)
-{
-  int n;
-  mix_info *md;
-  mix_state *cs; 
-  if (cp->mixes)
-    {
-      for (n = 0; n < mix_infos_size; n++)
-	{
-	  md = mix_infos[n];
-	  if ((md) && (md->cp == cp))
-	    {
-	      cs = md->active_mix_state;
-	      if ((cs) && 
-		  ((cs->orig == pos) || (pos == -1)))
-		return(md->id);
-	    }
-	}
-    }
-  return(INVALID_MIX_ID);
-}
-
 off_t mix_frames(int n) 
 {
   mix_state *cs; 
@@ -4693,33 +4671,6 @@ static XEN g_set_with_mix_tags(XEN val)
   return(C_TO_XEN_BOOLEAN(with_mix_tags(ss)));
 }
 
-static XEN g_forward_mix(XEN count, XEN snd, XEN chn) 
-{
-  #define H_forward_mix "(" S_forward_mix " (count 1) (snd #f) (chn #f)): move the cursor forward count mixes, returns mix id if any"
-  int val;
-  chan_info *cp;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_forward_mix, "an integer");
-  ASSERT_CHANNEL(S_forward_mix, snd, chn, 2);
-  cp = get_cp(snd, chn, S_forward_mix);
-  val = XEN_TO_C_INT_OR_ELSE(count, 1); 
-  goto_mix(cp, val);
-  return(C_TO_XEN_INT(mix_id_from_channel_position(cp, CURSOR(cp))));
-}
-
-static XEN g_backward_mix(XEN count, XEN snd, XEN chn) 
-{
-  #define H_backward_mix "(" S_backward_mix " (count 1) (snd #f) (chn #f)): move the cursor back count mixes, returns mix id if any"
-  int val; 
-  chan_info *cp;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_backward_mix, "an integer");
-  ASSERT_CHANNEL(S_backward_mix, snd, chn, 2);
-  cp = get_cp(snd, chn, S_backward_mix);
-  val = -(XEN_TO_C_INT_OR_ELSE(count, 1)); 
-  goto_mix(cp, val);
-  return(C_TO_XEN_INT(mix_id_from_channel_position(cp, CURSOR(cp))));
-}
-
-
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_make_mix_sample_reader_w, g_make_mix_sample_reader)
 XEN_NARGIFY_1(g_read_mix_sample_w, g_read_mix_sample)
@@ -4762,8 +4713,6 @@ XEN_ARGIFY_2(g_set_mix_color_w, g_set_mix_color)
 XEN_NARGIFY_0(g_with_mix_tags_w, g_with_mix_tags)
 XEN_NARGIFY_1(g_set_with_mix_tags_w, g_set_with_mix_tags)
 XEN_NARGIFY_1(g_delete_mix_w, g_delete_mix)
-XEN_ARGIFY_3(g_forward_mix_w, g_forward_mix)
-XEN_ARGIFY_3(g_backward_mix_w, g_backward_mix)
 #else
 #define g_make_mix_sample_reader_w g_make_mix_sample_reader
 #define g_read_mix_sample_w g_read_mix_sample
@@ -4806,8 +4755,6 @@ XEN_ARGIFY_3(g_backward_mix_w, g_backward_mix)
 #define g_with_mix_tags_w g_with_mix_tags
 #define g_set_with_mix_tags_w g_set_with_mix_tags
 #define g_delete_mix_w g_delete_mix
-#define g_forward_mix_w g_forward_mix
-#define g_backward_mix_w g_backward_mix
 #endif
 
 void g_init_mix(void)
@@ -4865,8 +4812,6 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE(S_mixes,        g_mixes_w,        0, 2, 0, H_mixes);
   XEN_DEFINE_PROCEDURE(S_mix,          g_mix_file_w,     1, 7, 0, H_mix_file);
   XEN_DEFINE_PROCEDURE(S_mix_vct,      g_mix_vct_w,      1, 6, 0, H_mix_vct);
-  XEN_DEFINE_PROCEDURE(S_forward_mix,  g_forward_mix_w,  0, 3, 0, H_forward_mix);
-  XEN_DEFINE_PROCEDURE(S_backward_mix, g_backward_mix_w, 0, 3, 0, H_backward_mix);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_mix_tags, g_with_mix_tags_w, H_with_mix_tags,
 				   S_setB S_with_mix_tags, g_set_with_mix_tags_w,  0, 0, 1, 0);

@@ -2514,24 +2514,66 @@ There are a couple example calls at the end of the instrument code.
 <p>These files contain a number of the procedures
 that were removed from or renamed in earlier versions of Snd.  Some of them are:
 </p>
+
 <table border=0 cellspacing=10>
+
+<!-- backward-graph -->
+<tr><td colspan=2>
+<a class=def name="backwardgraph">backward-graph</a> (<i>count snd chn</i>)
+</td></tr>
+<tr><td></td><td>
+move the selected channel back (up or left) <i>count</i> graphs (C-x C-o), returning a list of the new sound index and channel number.
+</td></tr>
+
+<!-- backward-mark -->
+<tr><td colspan=2><a class=def name="backwardmark">backward-mark</a> (<i>count snd chn</i>)</td></tr>
+<tr><td></td><td>move the cursor back <i>count</i> marks (C-j), returning mark id, or #f if none.
+</td></tr>
+
+<!-- backward-mix -->
+<tr><td colspan=2><a class=def name="backwardmix">backward-mix</a> (<i>count snd chn</i>)</td></tr>
+<tr><td width=50><br></td><td>move the cursor back <i>count</i> mix tags (C-x C-j), returning the mix id.
+</td></tr>
+
 <!-- backward-sample -->
 <tr><td colspan=2>
-<em class=emdef>backward-sample</em> (<i>count snd chn</i>)
+<A class=def NAME="backwardsample">backward-sample</a> (<i>count snd chn</i>)
 </td></tr>
 <tr><td></td><td>
 move back <i>count</i> samples (C-b), return new cursor position.
 </td></tr>
-<tr><td colspan=2></td></tr>
+
+<!-- forward-graph -->
+<tr><td colspan=2>
+<a class=def name="forwardgraph">forward-graph</a> (<i>count snd chn</i>)
+</td></tr>
+<tr><td></td><td>
+move the selected channel forward (down or right) <i>count</i> graphs (C-x C-o), returning a list of the new sound index and channel number.
+</td></tr>
+
+<!-- forward-mark -->
+<tr><td colspan=2><a class=def name="forwardmark">forward-mark</a> (<i>count snd chn</i>)</td></tr>
+<tr><td></td><td>move the cursor forward <i>count</i> marks (C-j), returning mark id, or #f if none.
+</td></tr>
+
+	<!-- I(move to mark):L(forward-mark)(forwardmark) -->
+
+<!-- forward-mix -->
+<tr><td colspan=2><a class=def name="forwardmix">forward-mix</a> (<i>count snd chn</i>)</td></tr>
+<tr><td></td><td>move the cursor forward <i>count</i> mix tags (C-x C-j), returning the mix id.
+</td></tr>
+
+ 	<!-- I(move to mix):L(forward-mix)(forwardmix) -->
 
 <!-- forward-sample -->
 <tr><td colspan=2>
-<em class=emdef>forward-sample</em> (<i>count snd chn</i>)
+<A class=def NAME="forwardsample">forward-sample</a> (<i>count snd chn</i>)
 </td></tr>
 <tr><td></td><td>
 move forward <i>count</i> samples (C-f), return new cursor position.
 </td></tr>
 <tr><td colspan=2></td></tr>
+
 </table>
 
 <table border=0 cellspacing=5>
@@ -2571,6 +2613,7 @@ appends <i>msg</i> to whatever is in <i>snd</i>'s minibuffer.
 </p><p><b>mix-name</b> asociates a name with a mix, and
 <b>mix-name-&gt;id</b> returns the id given a mix name.
 </p>
+
 
 
 <A NAME="sndgldoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>snd-gl.scm</h2></td></tr></table>

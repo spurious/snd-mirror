@@ -839,7 +839,7 @@
 (CFNC "void gdk_region_union GdkRegion* source1 GdkRegion* source2")
 (CFNC "void gdk_region_subtract GdkRegion* source1 GdkRegion* source2")
 (CFNC "void gdk_region_xor GdkRegion* source1 GdkRegion* source2")
-(CFNC "void gdk_region_spans_intersect_foreach GdkRegion* region GdkSpan* spans int n_spans gboolean sorted GdkSpanFunc func lambda_data #func_data")
+;(CFNC "void gdk_region_spans_intersect_foreach GdkRegion* region GdkSpan* spans int n_spans gboolean sorted GdkSpanFunc func lambda_data #func_data")
 (CFNC "void gdk_rgb_find_color GdkColormap* colormap GdkColor* color")
 (CINT "GDK_RGB_DITHER_NONE")
 (CINT "GDK_RGB_DITHER_NORMAL")
@@ -996,8 +996,9 @@
 (CINT "GDK_WINDOW_EDGE_SOUTH_EAST" "GdkWindowEdge")
 (CCAST "GDK_WINDOW(object)" "GdkWindow*")
 (CCHK "GDK_IS_WINDOW(object)" "GdkWindow*")
-(CCAST "GDK_WINDOW_OBJECT(object)" "GdkWindowObject*")
-(CFNC "GType gdk_window_object_get_type void")
+;(CCAST "GDK_WINDOW_OBJECT(object)" "GdkWindowObject*")
+;(CFNC "GType gdk_window_object_get_type void")
+;can't find any use for this
 (CFNC "GdkWindow* gdk_window_new GdkWindow* parent GdkWindowAttr* attributes gint attributes_mask")
 (CFNC "void gdk_window_destroy GdkWindow* window")
 (CFNC "GdkWindowType gdk_window_get_window_type GdkWindow* window")
@@ -3866,8 +3867,10 @@
 (STRUCT "GdkRgbCmap guint32* colors gint n_colors GSList* info_list")
 (STRUCT-make "GdkPoint gint x gint y")
 (STRUCT-make "GdkRectangle gint x gint y gint width gint height")
-(STRUCT-make "GdkSegment gint x1 gint y1 gint x2 gint y2")
-(STRUCT-make "GdkSpan gint x gint y gint width")
+;;(STRUCT-make "GdkSegment gint x1 gint y1 gint x2 gint y2")
+;; can't be used in any way -- use GdkPoint + cast
+;(STRUCT-make "GdkSpan gint x gint y gint width")
+;only used in region_spans_foreach
 (STRUCT "GdkVisual GdkVisualType type gint depth GdkByteOrder byte_order gint colormap_size gint bits_per_rgb guint32 red_mask gint red_shift gint red_prec guint32 green_mask gint green_shift gint green_prec guint32 blue_mask gint blue_shift gint blue_prec")
 (STRUCT "GdkWindowAttr gchar* title gint event_mask gint x gint y gint width gint height GdkVisual* visual GdkColormap* colormap GdkWindowType window_type GdkCursor* cursor gchar* wmclass_name gchar* wmclass_class gboolean override_redirect")
 (STRUCT "GdkGeometry gint min_width gint min_height gint max_width gint max_height gint base_width gint base_height gint width_inc gint height_inc gdouble min_aspect gdouble max_aspect GdkGravity win_gravity")

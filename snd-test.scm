@@ -3456,6 +3456,7 @@
 ;;; ---------------- test 5: simple overall checks ----------------
 
 (load "snd4.scm") ; needed for various scan/map extensions
+(load "snd7.scm") ; forward-graph
 (define a-ctr 0)
 
 (define (test-edpos test-func func-name change-thunk ind1)
@@ -15669,9 +15670,8 @@ EDITS: 5
 		(snd-display ";forward-mix ~A ~A ~A?" nid (cursor) (and (mix? nid) (mix-position nid))))
 	    (let ((nid1 (forward-mix 2)))
 	      (if (or (not (mix? nid1))
-		      (= nid nid1)
 		      (not (= (cursor) (mix-position nid1))))
-		  (snd-display ";forward-mix(2) ~A ~A ~A ~A?" nid nid1 (cursor) (and (mix? nid1) (mix-position nid1))))
+		  (snd-display ";forward-mix(2) ~A ~A ~A ~A ~A?" nid nid1 (cursor) (and (mix? nid1) (mix-position nid1)) (mixes)))
 	      (set! nid1 (backward-mix))
 	      (if (or (not (mix? nid1))
 		      (not (= (cursor) (mix-position nid1))))
@@ -42397,7 +42397,6 @@ EDITS: 2
 	      (list gdk_keymap_get_type GDK_TYPE_KEYMAP 'gdk_keymap_get_type)
 	      (list gdk_pixmap_get_type GDK_TYPE_PIXMAP 'gdk_pixmap_get_type)
 	      (list gdk_visual_get_type GDK_TYPE_VISUAL 'gdk_visual_get_type)
-	      (list gdk_window_object_get_type #f 'gdk_window_object_get_type)
 	      (list gdk_pixbuf_get_type GDK_TYPE_PIXBUF 'gdk_pixbuf_get_type)
 	      (list gdk_pixbuf_animation_get_type GDK_TYPE_PIXBUF_ANIMATION 'gdk_pixbuf_animation_get_type)
 	      (list gdk_pixbuf_animation_iter_get_type GDK_TYPE_PIXBUF_ANIMATION_ITER 'gdk_pixbuf_animation_iter_get_type)
@@ -45021,7 +45020,9 @@ EDITS: 2
 		   (zero (g_signal_lookup "activate" G_TYPE_OBJECT))
 		   (_int (gdk_screen_get_monitor_at_point _GdkScreen_ 0 0))
 		   (_int1 (gdk_screen_get_monitor_at_window _GdkScreen_ _GdkWindow_))
-		   (_gint (gdk_drawable_get_depth wn)))
+		   (_gint (gdk_drawable_get_depth wn))
+		   (hi (g_quark_from_string "hiho")))
+	      (if (not (string=? (g_quark_to_string hi) "hiho")) (snd-display ";g quark/string: ~A ~A" hi (g_quark_to_string hi)))
 	      (if (not _gboolean) (snd-display ";gdk colors copy not equal"))
 	      (if (not (string=? _gchar_ "SECONDARY")) (snd-display ";atom name: ~A" _gchar_))
 	      (gdk_colormap_query_color _GdkColormap_ 0 _GdkColor_)
@@ -45039,6 +45040,7 @@ EDITS: 2
 	      (gdk_add_client_message_filter (gdk_atom_intern "SND_MESSAGE" #f) (lambda (xe e d) #f) #f)
 	      (set! pts1 (vector->GdkPoints vect))
 	      (gdk_draw_lines wn gc (list 'GdkPoint_ pts1) 4)
+	      (gdk_draw_segments wn gc (list 'GdkSegment_ pts1) 2)
 	      (gdk_draw_points wn gc (list 'GdkPoint_ pts1) 4)
 	      (gdk_draw_polygon wn gc #f (list 'GdkPoint_ pts1) 4)
 	      (freeGdkPoints pts1)
@@ -45283,10 +45285,8 @@ EDITS: 2
 		     add-mark add-player add-sound-file-extension add-to-main-menu add-to-menu add-transform amp-control
 		     as-one-edit ask-before-overwrite audio-input-device audio-output-device
 		     auto-resize auto-update autocorrelate axis-info axis-label-font axis-numbers-font
-		     backward-graph backward-mark backward-mix basic-color bind-key bomb
-		     c-g? apply-controls change-samples-with-origin channel-style
-		     channel-widgets channels chans peaks-font bold-peaks-font
-		     close-sound ;close-sound-file 
+		     basic-color bind-key bomb c-g? apply-controls change-samples-with-origin channel-style
+		     channel-widgets channels chans peaks-font bold-peaks-font close-sound ;close-sound-file 
 		     color-cutoff color-dialog
 		     color-inverted color-scale color->list colormap color?  comment contrast-control contrast-control-amp
 		     contrast-control? vct-convolve! convolve-selection-with convolve-with channel-properties 
@@ -45305,7 +45305,7 @@ EDITS: 2
 		     transform-graph-type fft-window transform-graph? view-files-dialog mix-file-dialog file-name fill-polygon
 		     fill-rectangle filter-sound filter-control-in-dB filter-control-envelope enved-filter-order enved-filter
 		     filter-control-in-hz filter-control-order filter-selection filter-channel filter-control-waveform-color filter-control? find
-		     find-mark find-sound finish-progress-report foreground-color forward-graph forward-mark forward-mix
+		     find-mark find-sound finish-progress-report foreground-color
 		     frames free-sample-reader graph 
 		     graph-color graph-cursor graph-data graph->ps graph-style lisp-graph?  graphs-horizontal header-type
 		     help-dialog info-dialog highlight-color in insert-region insert-sample insert-samples
@@ -45841,11 +45841,11 @@ EDITS: 2
 			    (if (not (eq? tag 'wrong-type-arg))
 				(snd-display ";~D: chn (no snd) procs ~A: ~A" ctr n tag))
 			    (set! ctr (+ ctr 1))))
-			(list backward-graph backward-mix channel-widgets count-matches cursor channel-properties
+			(list channel-widgets count-matches cursor channel-properties
 			      cursor-follows-play cursor-position cursor-size cursor-style delete-sample display-edits dot-size
 			      draw-dots draw-lines edit-fragment edit-position edit-tree edits fft-window-beta fft-log-frequency
-			      fft-log-magnitude transform-size transform-graph-type fft-window transform-graph? find forward-graph
-			      forward-mark forward-mix graph graph-style lisp-graph? insert-region insert-sound
+			      fft-log-magnitude transform-size transform-graph-type fft-window transform-graph? find
+			      graph graph-style lisp-graph? insert-region insert-sound
 			      time-graph-style lisp-graph-style transform-graph-style
 			      left-sample make-graph-data map-chan max-transform-peaks maxamp min-dB mix-region
 			      transform-normalization peak-env-info peaks play play-and-wait position->x position->y reverse-sound
@@ -45868,10 +45868,10 @@ EDITS: 2
 			    (if (not (eq? tag 'wrong-type-arg))
 				(snd-display ";~D: chn (no chn) procs ~A: ~A" ctr n tag))
 			    (set! ctr (+ ctr 1))))
-			(list backward-graph channel-widgets count-matches cursor channel-properties
+			(list channel-widgets count-matches cursor channel-properties
 			      cursor-position cursor-size cursor-style delete-sample display-edits dot-size draw-dots draw-lines
 			      edit-fragment edit-position edit-tree edits fft-window-beta fft-log-frequency fft-log-magnitude
-			      transform-size transform-graph-type fft-window transform-graph? find forward-graph forward-mark
+			      transform-size transform-graph-type fft-window transform-graph? find 
 			      graph graph-style lisp-graph? insert-region insert-sound left-sample
 			      time-graph-style lisp-graph-style transform-graph-style
 			      make-graph-data map-chan max-transform-peaks maxamp min-dB mix-region transform-normalization
@@ -45894,11 +45894,11 @@ EDITS: 2
 			    (if (not (eq? tag 'no-such-sound))
 				(snd-display ";~D: chn procs ~A: ~A" ctr n tag))
 			    (set! ctr (+ ctr 1))))
-			(list backward-graph backward-mix channel-widgets cursor cursor-follows-play channel-properties
+			(list channel-widgets cursor cursor-follows-play channel-properties
 			      cursor-position cursor-size cursor-style delete-sample display-edits dot-size edit-fragment
 			      edit-position edit-tree edits env-sound fft-window-beta fft-log-frequency fft-log-magnitude
-			      transform-size transform-graph-type fft-window transform-graph? filter-sound forward-graph
-			      forward-mark forward-mix graph-data graph-style lisp-graph? insert-region left-sample
+			      transform-size transform-graph-type fft-window transform-graph? filter-sound
+			      graph-data graph-style lisp-graph? insert-region left-sample
 			      time-graph-style lisp-graph-style transform-graph-style
 			      make-graph-data max-transform-peaks maxamp min-dB transform-normalization peak-env-info play
 			      play-and-wait position->x position->y redo reverse-sound revert-sound right-sample sample
@@ -45920,8 +45920,7 @@ EDITS: 2
 			    (if (not (eq? tag 'no-such-sound))
 				(snd-display ";~D: snd(1) chn procs ~A: ~A" ctr n tag))
 			    (set! ctr (+ ctr 1))))
-			(list backward-graph delete-sample edit-fragment forward-graph forward-mark
-			      graph-data graph-style play play-and-wait position->x position->y redo
+			(list delete-sample edit-fragment graph-data graph-style play play-and-wait position->x position->y redo
 			      time-graph-style lisp-graph-style transform-graph-style
 			      scale-sound-by scale-sound-to scale-by scale-to undo x->position y->position x-axis-label)))
 	    
@@ -45936,8 +45935,7 @@ EDITS: 2
 			    (if (not (eq? tag 'no-such-channel))
 				(snd-display ";~D: snd(1 1234) chn procs ~A: ~A" ctr n tag))
 			    (set! ctr (+ ctr 1))))
-			(list backward-graph delete-sample edit-fragment forward-graph forward-mark
-			      graph-data play play-and-wait position->x position->y redo scale-by
+			(list delete-sample edit-fragment graph-data play play-and-wait position->x position->y redo scale-by
 			      scale-to undo x->position y->position))
 	      (close-sound index))
 	    
@@ -46056,7 +46054,7 @@ EDITS: 2
 			    (if (not (eq? tag 'wrong-type-arg))
 				(snd-display ";~D: mark procs ~A: ~A" ctr n tag))
 			    (set! ctr (+ ctr 1))))
-			(list add-mark backward-mark mark-name mark-sample mark-sync mark-home delete-mark delete-marks find-mark))) 
+			(list add-mark mark-name mark-sample mark-sync mark-home delete-mark delete-marks find-mark))) 
 	    
 	    (let ((ctr 0))
 	      (for-each (lambda (n)

@@ -2061,34 +2061,6 @@ static XEN g_report_in_minibuffer(XEN msg, XEN snd_n)
   return(msg);
 }
 
-static XEN g_forward_graph(XEN count, XEN snd, XEN chn) 
-{
-  #define H_forward_graph "(" S_forward_graph " (count 1) (snd #f) (chn #f)): move the 'selected' graph forward by count"
-  int val;
-  chan_info *cp;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_forward_graph, "an integer");
-  ASSERT_CHANNEL(S_forward_graph, snd, chn, 2);
-  cp = get_cp(snd, chn, S_forward_graph);
-  val = XEN_TO_C_INT_OR_ELSE(count, 1);
-  cp = goto_next_graph(cp, val);
-  return(XEN_LIST_2(C_TO_SMALL_XEN_INT(cp->sound->index),
-		    C_TO_SMALL_XEN_INT(cp->chan)));
-}
-
-static XEN g_backward_graph(XEN count, XEN snd, XEN chn) 
-{
-  #define H_backward_graph "(" S_backward_graph " (count 1) (snd #f) (chn #f)): move the 'selected' graph back by count"
-  int val;
-  chan_info *cp;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(count), count, XEN_ARG_1, S_backward_graph, "an integer");
-  ASSERT_CHANNEL(S_backward_graph, snd, chn, 2);
-  cp = get_cp(snd, chn, S_backward_graph);
-  val = -(XEN_TO_C_INT_OR_ELSE(count, 1));
-  cp = goto_previous_graph(cp, val);
-  return(XEN_LIST_2(C_TO_SMALL_XEN_INT(cp->sound->index),
-		    C_TO_SMALL_XEN_INT(cp->chan)));
-}
-
 static XEN g_control_g_x(void)
 {
   #define H_control_g_x "(" S_c_g_x "): simulate C-g"
@@ -2103,15 +2075,13 @@ static XEN g_snd_simulate_keystroke(XEN snd, XEN chn, XEN key, XEN state)
   chan_info *cp;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(key), key, XEN_ARG_3, S_snd_simulate_keystroke, "key number (int)");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(state), state, XEN_ARG_4, S_snd_simulate_keystroke, "key state (int)");
-  ASSERT_CHANNEL(S_backward_graph, snd, chn, 1);
+  ASSERT_CHANNEL(S_snd_simulate_keystroke, snd, chn, 1);
   cp = get_cp(snd, chn, S_snd_simulate_keystroke);
   keyboard_command(cp, XEN_TO_C_INT(key), XEN_TO_C_INT(state));
   return(key);
 }
 
 #ifdef XEN_ARGIFY_1
-XEN_ARGIFY_3(g_forward_graph_w, g_forward_graph)
-XEN_ARGIFY_3(g_backward_graph_w, g_backward_graph)
 XEN_ARGIFY_3(g_key_binding_w, g_key_binding)
 XEN_ARGIFY_5(g_bind_key_w, g_bind_key)
 XEN_ARGIFY_3(g_unbind_key_w, g_unbind_key)
@@ -2122,8 +2092,6 @@ XEN_ARGIFY_2(g_report_in_minibuffer_w, g_report_in_minibuffer)
 XEN_ARGIFY_4(g_prompt_in_minibuffer_w, g_prompt_in_minibuffer)
 XEN_NARGIFY_4(g_snd_simulate_keystroke_w, g_snd_simulate_keystroke)
 #else
-#define g_forward_graph_w g_forward_graph
-#define g_backward_graph_w g_backward_graph
 #define g_key_binding_w g_key_binding
 #define g_bind_key_w g_bind_key
 #define g_unbind_key_w g_unbind_key
@@ -2157,7 +2125,5 @@ void g_init_kbd(void)
   XEN_DEFINE_PROCEDURE(S_c_g_x,                  g_control_g_x_w,            0, 0, 0, H_control_g_x);  
   XEN_DEFINE_PROCEDURE(S_report_in_minibuffer,   g_report_in_minibuffer_w,   1, 1, 0, H_report_in_minibuffer);
   XEN_DEFINE_PROCEDURE(S_prompt_in_minibuffer,   g_prompt_in_minibuffer_w,   1, 3, 0, H_prompt_in_minibuffer);
-  XEN_DEFINE_PROCEDURE(S_forward_graph,          g_forward_graph_w,          0, 3, 0, H_forward_graph);
-  XEN_DEFINE_PROCEDURE(S_backward_graph,         g_backward_graph_w,         0, 3, 0, H_backward_graph);
   XEN_DEFINE_PROCEDURE(S_snd_simulate_keystroke, g_snd_simulate_keystroke_w, 4, 0, 0, "internal testing function");
 }

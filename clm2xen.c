@@ -1131,7 +1131,13 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	{
 	  initial_contents = keys[keyn];
 	  if (VCT_P(initial_contents))
-	    line = copy_vct_data(TO_VCT(initial_contents));
+	    {
+	      vct *v;
+	      v = TO_VCT(initial_contents);
+	      if (size > v->length)
+		XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[keyn], keys[keyn], "size ~A too large for data");
+	      line = copy_vct_data(v);
+	    }
 	  else
 	    {
 	      if (XEN_LIST_P_WITH_LENGTH(initial_contents, len))
@@ -1141,7 +1147,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 			      XEN_LIST_3(C_TO_XEN_STRING(caller), 
 					 C_TO_XEN_STRING("initial-contents empty?"), 
 					 initial_contents));
-		  line = (Float *)CALLOC(len, sizeof(Float));
+		  line = (Float *)CALLOC((size < len) ? len : size, sizeof(Float));
 		  if (line == NULL)
 		    return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate delay line"));
 		  for (i = 0, lst = XEN_COPY_ARG(initial_contents); (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))

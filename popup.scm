@@ -406,10 +406,11 @@
 		    (delete-mark id)))))
       (list "To next mark"       xmPushButtonWidgetClass every-menu
             (lambda (w c i)
-              (forward-mark 1 graph-popup-snd graph-popup-chn)))
+              (key (char->integer #\j) 4 graph-popup-snd graph-popup-chn)))
       (list "To last mark"       xmPushButtonWidgetClass every-menu
             (lambda (w c i)
-              (backward-mark 1 graph-popup-snd graph-popup-chn)))
+	      (key (char->integer #\-) 4 graph-popup-snd graph-popup-chn)
+	      (key (char->integer #\j) 4 graph-popup-snd graph-popup-chn)))
       (list "sep"                xmSeparatorWidgetClass  every-menu)
       (list "Exit"               xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
