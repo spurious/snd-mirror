@@ -1162,7 +1162,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
   axis_info *ap;
   sync_info *si;
   mark *mk = NULL;
-  /* fprintf(stderr, "(%s %d) ", KEY_TO_NAME(keysym), unmasked_state); */
+  /* fprintf(stderr, "(%s %d%s) ", KEY_TO_NAME(keysym), unmasked_state, (extended_mode) ? " (c-x)" : ""); */
   if ((!cp) || (!(cp->sound)) || (!(cp->active))) return;
   sp = cp->sound;
   ap = cp->axis;
@@ -1892,6 +1892,19 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
     }
 }
 
+char *make_key_name(char *buf, int buf_size, int key, int state, bool extended)
+{
+  mus_snprintf(buf, buf_size, "%s%s%s",
+	       (extended) ? "C-x " : "",
+	       (state & snd_ControlMask) ? ((state & snd_MetaMask) ? "CM-" : "C-") : ((state & snd_MetaMask) ? "M-" : ""),
+	       (key == snd_K_less) ? "<" : 
+	       ((key == snd_K_greater) ? ">" : 
+		((key == snd_K_openparen) ? "(" :
+		 ((key == snd_K_closeparen) ? ")" :
+		  ((key == snd_K_slash) ? "/" :
+		   KEY_TO_NAME(key))))));
+  return(buf);
+}
 
 static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origin, const char *caller)
 {
@@ -1918,6 +1931,7 @@ static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origi
     set_keymap_entry(k, s, 0, XEN_UNDEFINED, e, NULL);
   else 
     {
+      char buf[256];
       args = XEN_REQUIRED_ARGS(code);
       if (args > 1)
 	{
@@ -1926,14 +1940,14 @@ static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origi
 	  FREE(errstr);
 	  return(snd_bad_arity_error(caller, errmsg, code));
 	}
-      set_keymap_entry(k, s, args, code, e, (XEN_STRING_P(origin)) ? XEN_TO_C_STRING(origin) : (char *)("user key func"));
+      set_keymap_entry(k, s, args, code, e, (XEN_STRING_P(origin)) ? XEN_TO_C_STRING(origin) : make_key_name(buf, 256, k, s, e));
     }
   return(code);
 }
 
 static XEN g_bind_key(XEN key, XEN state, XEN code, XEN cx_extended, XEN origin)
 {
-  #define H_bind_key "(" S_bind_key " key modifiers func (extended #f) (origin \"user key func\"): \
+  #define H_bind_key "(" S_bind_key " key modifiers func (extended #f) (origin [key-name]): \
 causes 'key' (an integer) \
 when typed with 'modifiers' (1:shift, 4:control, 8:meta) (and C-x if extended) to invoke 'func', a function of \
 zero or one arguments. If the function takes one argument, it is passed the preceding C-u number, if any. \

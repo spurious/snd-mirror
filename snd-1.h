@@ -1474,6 +1474,7 @@ void clear_minibuffer(snd_info *sp);
 void clear_minibuffer_prompt(snd_info *sp);
 void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta);
 char *key_binding_description(int key, int state, bool cx_extended);
+char *make_key_name(char *buf, int buf_size, int key, int state, bool extended);
 bool map_over_key_bindings(bool (*func)(int, int, bool, XEN, char *));
 void keyboard_command (chan_info *cp, int keysym, int state);
 void control_g(snd_info *sp);

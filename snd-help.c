@@ -843,19 +843,11 @@ static char *key_xrefs[4] = {
 static void show_key_help(int key, int state, bool cx, char *help)
 {
   char buf[1024];
+  char cbuf[256];
   if (help)
     {
-      mus_snprintf(buf, 1024, "\n%s%s%s%s: %s", 
-		   (cx) ? "C-x " : "",
-		   (state & snd_ControlMask) ? "C-" : "",
-		   (state & snd_MetaMask) ? "M-" : "",
-		   (key == snd_K_less) ? "<" : 
-		   ((key == snd_K_greater) ? ">" : 
-		    ((key == snd_K_openparen) ? "(" :
-		     ((key == snd_K_closeparen) ? ")" :
-		      ((key == snd_K_slash) ? "/" :
-		       KEY_TO_NAME(key))))),
-		   help);
+      make_key_name(cbuf, 256, key, state, cx);
+      mus_snprintf(buf, 1024, "\n%s: %s", cbuf, help);
       snd_help_append(buf);
     }
 }

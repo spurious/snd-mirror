@@ -8077,5 +8077,4 @@ void g_init_track(void)
    mix/track stuff:
    TODO: synchronization across mixes ("snap")
    TODO: axis movement stops if track drag motion stops when outside axis?
-   TODO: initial dpy leaves start|end points unerased?
 */

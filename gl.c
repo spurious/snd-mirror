@@ -79,6 +79,8 @@
 #define XL_TYPE_PTR_1(Name, XType) \
   static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
   static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} /* if NULL ok, should be explicit */
+#define XL_TYPE_PTR_2(Name, XType) \
+  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);}
 
 
 /* ---------------------------------------- types ---------------------------------------- */
@@ -114,12 +116,12 @@ XL_TYPE_PTR_1(int_, int*)
 #define XEN_TO_C_char_(Arg) (char*)(XEN_TO_C_STRING(Arg))
 #define XEN_char__P(Arg) XEN_STRING_P(Arg)
 XL_TYPE_PTR(GdkGLConfig_, GdkGLConfig*)
-XL_TYPE(GdkGLConfigMode, GdkGLConfigMode)
+XL_TYPE_1(GdkGLConfigMode, GdkGLConfigMode)
 #define C_TO_XEN_int(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_int(Arg) (int)(XEN_TO_C_INT(Arg))
 #define XEN_int_P(Arg) XEN_INTEGER_P(Arg)
-XL_TYPE_PTR(GdkColormap_, GdkColormap*)
-XL_TYPE_PTR(GdkVisual_, GdkVisual*)
+XL_TYPE_PTR_2(GdkColormap_, GdkColormap*)
+XL_TYPE_PTR_2(GdkVisual_, GdkVisual*)
 #define C_TO_XEN_gint(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_gint(Arg) (gint)(XEN_TO_C_INT(Arg))
 #define XEN_gint_P(Arg) XEN_INTEGER_P(Arg)
@@ -129,9 +131,9 @@ XL_TYPE_PTR(GdkGLPixmap_, GdkGLPixmap*)
 XL_TYPE_PTR(GdkPixmap_, GdkPixmap*)
 XL_TYPE_PTR(GdkGLWindow_, GdkGLWindow*)
 XL_TYPE_PTR(GdkWindow_, GdkWindow*)
-XL_TYPE_PTR(PangoFont_, PangoFont*)
-XL_TYPE_PTR(PangoFontDescription_, PangoFontDescription*)
-XL_TYPE_PTR(GtkWidget_, GtkWidget*)
+XL_TYPE_PTR_2(PangoFont_, PangoFont*)
+XL_TYPE_PTR_1(PangoFontDescription_, PangoFontDescription*)
+XL_TYPE_PTR_1(GtkWidget_, GtkWidget*)
 #endif
 #define C_TO_XEN_GLfloat(Arg) C_TO_XEN_DOUBLE(Arg)
 #define XEN_TO_C_GLfloat(Arg) (GLfloat)(XEN_TO_C_DOUBLE(Arg))
@@ -5182,10 +5184,10 @@ static bool gl_already_inited = false;
       define_functions();
       XEN_YES_WE_HAVE("gl");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define gl-version \"25-Nov-03\")");
+      XEN_EVAL_C_STRING("(define gl-version \"08-Mar-04\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Gl_Version", C_TO_XEN_STRING("25-Nov-03"));
+      rb_define_global_const("Gl_Version", C_TO_XEN_STRING("08-Mar-04"));
 #endif
       gl_already_inited = true;
     }

@@ -327,8 +327,13 @@
 		   (if (has-stars type) "_PTR" "")
 		   (if (member type (list "int*" "Pixmap" "Font" "GLubyte*" 
 					  "GLubyte*" "GLdouble*" "GLfloat*" "GLvoid*" 
-					  "GLuint*" "GLboolean*" "GLint*" "GLshort*"))
-		       "_1" "")
+					  "GLuint*" "GLboolean*" "GLint*" "GLshort*"
+					  "PangoFontDescription*" "GtkWidget*" "GdkGLConfigMode"
+					  ))
+		       "_1" 
+		       (if (member type (list "GdkVisual*" "PangoFont*" "GdkColormap*"))
+			   "_2" 
+			   ""))
 		   (no-stars type)
 		   type)
 	      (if (member type glu-1-2) (hey "#endif~%")))
@@ -514,6 +519,8 @@
 (hey "#define XL_TYPE_PTR_1(Name, XType) \\~%")
 (hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
 (hey "  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} /* if NULL ok, should be explicit */~%")
+(hey "#define XL_TYPE_PTR_2(Name, XType) \\~%")
+(hey "  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);}~%")
 
 (hey "~%~%/* ---------------------------------------- types ---------------------------------------- */~%~%")
 
