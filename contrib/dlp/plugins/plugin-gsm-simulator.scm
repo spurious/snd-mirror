@@ -35,11 +35,11 @@
                                                       "Move sliders to adjust parameters."))
                                        (lambda (w c i)
 				         (set! gsm-simulator-mix .50) 
-					 (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* gsm-simulator-mix 100))))
+					 (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* gsm-simulator-mix 100))))
                                          (set! gsm-simulator-passes 5) 
-					 (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* gsm-simulator-passes 1))))
+					 (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* gsm-simulator-passes 1))))
                                          (set! gsm-simulator-error-rate 10)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* gsm-simulator-error-rate 1)))))))
+                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* gsm-simulator-error-rate 1)))))))
              (set! sliders
                    (add-sliders gsm-simulator-dialog
                                 (list 

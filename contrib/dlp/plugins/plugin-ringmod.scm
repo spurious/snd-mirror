@@ -38,17 +38,17 @@
                                                       "Ring or amplitude modulation with LFO.\n\ Move the sliders to set the ring modulation parameters.\n\ Modulation depth key: 0=none 1=AM 2=RM"))
                                        (lambda (w c i)
                                          (set! ringmod-modulation-depth 0)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* ringmod-modulation-depth 1))))
+                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* ringmod-modulation-depth 1))))
 				         (set! ringmod-frequency 100)
-				         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* ringmod-frequency 1))))
+				         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* ringmod-frequency 1))))
                                          (set! ringmod-sine-level 0)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* ringmod-sine-level 100))))
+                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* ringmod-sine-level 100))))
                                          (set! ringmod-triangle-level 0)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* ringmod-triangle-level 100))))
+                                         (|XtSetValues (list-ref sliders 3) (list |XmNvalue (inexact->exact (* ringmod-triangle-level 100))))
                                          (set! ringmod-sawtooth-level 0)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* ringmod-sawtooth-level 100))))
+                                         (|XtSetValues (list-ref sliders 4) (list |XmNvalue (inexact->exact (* ringmod-sawtooth-level 100))))
                                          (set! ringmod-square-level 0)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* ringmod-square-level 100)))))))
+                                         (|XtSetValues (list-ref sliders 5) (list |XmNvalue (inexact->exact (* ringmod-square-level 100)))))))
              (set! sliders
                    (add-sliders ringmod-dialog
                                 (list (list "modulation depth" 0 0 2

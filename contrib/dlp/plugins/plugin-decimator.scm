@@ -37,9 +37,9 @@
                                                       "Move the slider to adjust decimator parameters."))
                                        (lambda (w c i)
                                          (set! decimator-bit-depth 5)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* decimator-bit-depth 1))))
+                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* decimator-bit-depth 1))))
 				         (set! decimator-sample-rate .5)
-				         (|XtSetValues (cadr sliders) (list |XmNvalue (inexact->exact (* decimator-sample-rate 1000)))))))
+				         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* decimator-sample-rate 1000)))))))
              (set! sliders
                    (add-sliders decimator-dialog
                                 (list (list "bit depth" 1 5 24

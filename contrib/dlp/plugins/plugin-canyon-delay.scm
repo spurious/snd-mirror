@@ -43,15 +43,15 @@
                                                       "This effect works only with stereo soundfiles.\s\ Move the sliders to set the delay parameters."))
                                        (lambda (w c i)
                                          (set! canyon-delay-left-to-right-time .10)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* canyon-delay-left-to-right-time 100))))
+                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* canyon-delay-left-to-right-time 100))))
                                          (set! canyon-delay-left-to-right-feedback 0)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* canyon-delay-left-to-right-feedback 100))))
+                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* canyon-delay-left-to-right-feedback 100))))
                                          (set! canyon-delay-right-to-left-time .10)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* canyon-delay-right-to-left-time 100))))
+                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* canyon-delay-right-to-left-time 100))))
                                          (set! canyon-delay-right-to-left-feedback 0)
-                                         (|XtSetValues (cadr sliders) (list |XmNvalue (inexact->exact (* canyon-delay-right-to-left-feedback 100))))
+                                         (|XtSetValues (list-ref sliders 3) (list |XmNvalue (inexact->exact (* canyon-delay-right-to-left-feedback 100))))
                                          (set! canyon-delay-filter-cutoff 1000)
-                                         (|XtSetValues (cadr sliders) (list |XmNvalue (inexact->exact (* canyon-delay-filter-cutoff 1)))))))
+                                         (|XtSetValues (list-ref sliders 4) (list |XmNvalue (inexact->exact (* canyon-delay-filter-cutoff 1)))))))
              (set! sliders
                    (add-sliders canyon-delay-dialog
                                 (list (list "left to right time (s)" 0.01 .10 .99
@@ -70,7 +70,7 @@
                                             (lambda (w context info)
                                               (set! canyon-delay-right-to-left-feedback (/ (|value info) 100)))
                                             100)
-                                      (list "low-pass filter cutoff (Hz)" 1 1000 5000
+                                      (list "low-pass filter cutoff (Hz)" 1 1000 44100
                                             (lambda (w context info)
                                               (set! canyon-delay-filter-cutoff (/ (|value info) 1)))
                                             1))))))

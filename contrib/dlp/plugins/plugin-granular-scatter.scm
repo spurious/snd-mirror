@@ -35,13 +35,13 @@
                                                       "Move the sliders to set the scatter parameters."))
                                        (lambda (w c i)
                                          (set! gs-density 5)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* gs-density 1))))
+                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* gs-density 1))))
                                          (set! gs-scatter 1)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* gs-scatter 100))))
+                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* gs-scatter 100))))
                                          (set! gs-grain-length 1)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* gs-grain-length 100))))
+                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* gs-grain-length 100))))
                                          (set! gs-grain-attack 1)
-                                         (|XtSetValues (cadr sliders) (list |XmNvalue (inexact->exact (* gs-grain-attack 100)))))))
+                                         (|XtSetValues (list-ref sliders 3) (list |XmNvalue (inexact->exact (* gs-grain-attack 100)))))))
              (set! sliders
                    (add-sliders gs-dialog
                                 (list (list "density (grains/s)" 0 5 100

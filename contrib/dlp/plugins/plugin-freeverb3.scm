@@ -44,15 +44,15 @@
                                                       "Jezar's famous reverb. Move the sliders to set the reverb parameters.\n\ This effect works only with stereo soundfiles!"))
                                        (lambda (w c i)
                                          (set! freeverb-room-size .5)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* freeverb-room-size 100))))
+                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* freeverb-room-size 100))))
                                          (set! freeverb-damping .5)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* freeverb-damping 100))))
+                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* freeverb-damping 100))))
                                          (set! freeverb-wet-level .5)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* freeverb-wet-level 100))))
+                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* freeverb-wet-level 100))))
                                          (set! freeverb-dry-level .5)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* freeverb-dry-level 100))))
+                                         (|XtSetValues (list-ref sliders 3) (list |XmNvalue (inexact->exact (* freeverb-dry-level 100))))
                                          (set! freeverb-width .5)
-                                         (|XtSetValues (cadr sliders) (list |XmNvalue (inexact->exact (* freeverb-width 100)))))))
+                                         (|XtSetValues (list-ref sliders 4) (list |XmNvalue (inexact->exact (* freeverb-width 100)))))))
              (set! sliders
                    (add-sliders freeverb-dialog
                                 (list (list "room size" 0 .5 1

@@ -38,17 +38,17 @@
                                                       "Move the sliders to set the chorus parameters."))
                                        (lambda (w c i)
                                          (set! mvChorus-voices 3)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* mvChorus-voices 1))))
+                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* mvChorus-voices 1))))
                                          (set! mvChorus-delay 10)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* mvChorus-delay 1))))
+                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* mvChorus-delay 1))))
                                          (set! mvChorus-separation 1)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* mvChorus-separation 10))))
+                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* mvChorus-separation 10))))
                                          (set! mvChorus-detune 0)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* mvChorus-detune 1))))
+                                         (|XtSetValues (list-ref sliders 3) (list |XmNvalue (inexact->exact (* mvChorus-detune 1))))
                                          (set! mvChorus-lfo 10)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* mvChorus-lfo 1))))
+                                         (|XtSetValues (list-ref sliders 4) (list |XmNvalue (inexact->exact (* mvChorus-lfo 1))))
          				 (set! mvChorus-attenuation 0)
-				         (|XtSetValues (cadr sliders) (list |XmNvalue (inexact->exact (* mvChorus-attenuation 1)))))))+
+				         (|XtSetValues (list-ref sliders 5) (list |XmNvalue (inexact->exact (* mvChorus-attenuation 1)))))))+
              (set! sliders
                    (add-sliders mvChorus-dialog
                                 (list (list "voices" 1 3 8

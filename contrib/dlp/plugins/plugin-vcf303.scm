@@ -36,13 +36,13 @@
                                                       "Move the sliders to set the parameters."))
                                        (lambda (w c i)
                                          (set! vcf-303-cutoff .5)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* vcf-303-cutoff 100))))
+                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* vcf-303-cutoff 100))))
                                          (set! vcf-303-resonance .5)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* vcf-303-resonance 100))))
+                                         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* vcf-303-resonance 100))))
                                          (set! vcf-303-env-mod .5)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* vcf-303-env-mod 100))))
+                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* vcf-303-env-mod 100))))
                                          (set! vcf-303-decay .5)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* vcf-303-decay 100)))))))
+                                         (|XtSetValues (list-ref sliders 3) (list |XmNvalue (inexact->exact (* vcf-303-decay 100)))))))
              (set! sliders
                    (add-sliders vcf-303-dialog
                                 (list (list "cutoff" 0 .5 1

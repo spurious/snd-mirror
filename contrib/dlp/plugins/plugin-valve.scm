@@ -34,10 +34,10 @@
                                                       "Move the sliders to set the distortion parameters."))
                                        (lambda (w c i)
                                          (set! distortion-level .5)
-                                         (|XtSetValues (car sliders)
+                                         (|XtSetValues (list-ref sliders 0)
                                             (list |XmNvalue (inexact->exact (* distortion-level 100))))
 				         (set! distortion-character .5)
-				         (|XtSetValues (cadr sliders) (list |XmNvalue (inexact->exact (* distortion-character 100)))))))
+				         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* distortion-character 100)))))))
              (set! sliders
                    (add-sliders valve-saturation-dialog
                                 (list (list "distortion level" 0.0 0.5 1.0

@@ -34,10 +34,10 @@
                                                       "Move the slider"))
                                        (lambda (w c i)
                                          (set! delay5s-time .3)
-                                         (|XtSetValues (car sliders)
+                                         (|XtSetValues (list-ref sliders 0)
                                             (list |XmNvalue (inexact->exact (* delay5s-time 100))))
 				         (set! delay5s-balance .5)
-				         (|XtSetValues (cadr sliders) (list |XmNvalue (inexact->exact (* delay5s-balance 100)))))))
+				         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* delay5s-balance 100)))))))
              (set! sliders
                    (add-sliders delay5s-dialog
                                 (list (list "delay time" 0.0 0.3 5.0

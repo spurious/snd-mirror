@@ -36,13 +36,13 @@
                                                       "Move sliders to adjust phaser parameters."))
                                        (lambda (w c i)
 				         (set! lfo-phaser-rate 10) 
-					 (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* lfo-phaser-rate 1))))
+					 (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* lfo-phaser-rate 1))))
                                          (set! lfo-phaser-depth .5) 
-					 (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* lfo-phaser-depth 100))))
+					 (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* lfo-phaser-depth 100))))
                                          (set! lfo-phaser-feedback .5)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* lfo-phaser-feedback 100))))
+                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* lfo-phaser-feedback 100))))
                                          (set! lfo-phaser-spread 1)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* lfo-phaser-spread 1)))))))
+                                         (|XtSetValues (list-ref sliders 3) (list |XmNvalue (inexact->exact (* lfo-phaser-spread 1)))))))
              (set! sliders
                    (add-sliders lfo-phaser-dialog
                                 (list 

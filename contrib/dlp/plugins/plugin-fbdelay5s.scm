@@ -35,11 +35,11 @@
                                                       "Feedback delay with maximum delay time of 5 seconds."))
                                        (lambda (w c i)
                                          (set! fbdelay5s-time 1.0)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* fbdelay5s-time 100))))
+                                         (|XtSetValues (list-ref sliders 0) (list |XmNvalue (inexact->exact (* fbdelay5s-time 100))))
 				         (set! fbdelay5s-balance .5)
-				         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* fbdelay5s-balance 100))))
+				         (|XtSetValues (list-ref sliders 1) (list |XmNvalue (inexact->exact (* fbdelay5s-balance 100))))
                                          (set! fbdelay5s-feedback 0)
-                                         (|XtSetValues (car sliders) (list |XmNvalue (inexact->exact (* fbdelay5s-feedback 100)))))))
+                                         (|XtSetValues (list-ref sliders 2) (list |XmNvalue (inexact->exact (* fbdelay5s-feedback 100)))))))
              (set! sliders
                    (add-sliders fbdelay5s-dialog
                                 (list (list "delay time (s)" 0.0 1.0 5.0
