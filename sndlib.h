@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 19
-#define SNDLIB_REVISION 0
-#define SNDLIB_DATE "29-Mar-04"
+#define SNDLIB_REVISION 1
+#define SNDLIB_DATE "27-Apr-04"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -506,8 +506,10 @@ int mus_audio_compatible_format(int dev);
 
 /* -------- io.c -------- */
 
-int mus_file_set_descriptors(int tfd, const char *arg, int df, int ds, off_t dl, int dc, int dt);
-#define mus_file_open_descriptors(Tfd, Arg, Df, Ds, Dl, Dc, Dt) mus_file_set_descriptors(Tfd, Arg, Df, Ds, Dl, Dc, Dt)
+int mus_file_open_descriptors(int tfd, const char *arg, int df, int ds, off_t dl, int dc, int dt);
+#ifndef SNDLIB_DISABLE_DEPRECATED
+  #define mus_file_set_descriptors(Tfd, Arg, Df, Ds, Dl, Dc, Dt) mus_file_open_descriptors(Tfd, Arg, Df, Ds, Dl, Dc, Dt)
+#endif
 int mus_file_open_read(const char *arg);
 bool mus_file_probe(const char *arg);
 int mus_file_open_write(const char *arg);

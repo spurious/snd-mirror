@@ -4417,19 +4417,20 @@ replaces the normal "+" cursor with an "x":
 <i>snd</i>'s data format (e.g. mus-bshort).  <br><br>If you encounter a file
 with an unknown format, or a header that has the wrong format, 
 you can set this field forcing Snd to interpret the data in any 
-way you like.  Similar remarks apply to the srate, data-location,
-header-type, and channels fields.  There are ambiguities in some header
+way you like.  Similar remarks apply to the <a class=quiet href="#srate">srate</a>, <a class=quiet href="#datalocation">data-location</a>,
+<a class=quiet href="#headertype">header-type</a>, and <a class=quiet href="#channels">channels</a> fields.  There are ambiguities in some header
 specifications, usually involving big/little endian or signed/unsigned data confusion.
 If you encounter a sound that is clipping crazily, try changing these settings.
 Some NeXT/Sun (au) header files using the data format for byte-wide data
 assume the byte is unsigned, whereas most others assume it is signed.  Sndlib
 treats it as signed by default, so to make one of the unsigned-byte files playable,
-<br><br><code>(set! (data-format) <a class=quiet href="#dataformat">mus-ubyte</a>)</code>.<br><br>
+<br><br><code>(set! (<em class=red>data-format</em>) <a class=quiet href="#dataformat">mus-ubyte</a>)</code>.<br><br>
 Float data is another source of confusion;
 there is apparently no agreement on whether the data is between -1.0 and 1.0, or -32768.0 and 32767.0 or anything else.
-In this case, Snd assumes -1.0 to 1.0 (except in one special case involving IRCAM headers), and you may have to set y-bounds to see the actual data.
+In this case, Snd assumes -1.0 to 1.0 (except in one special case involving IRCAM headers), and you may have to 
+set <a class=quiet href="#ybounds">y-bounds</a> to see the actual data.
 Yet another: files with 32-bit integers.  Some programs (Glame, apparently, and perhaps Ardour) assume the fraction is
-31 bits wide, others (Snd) use whatever its sample-width is configured to be; there is no correct or standard
+31 bits wide, others (Snd) use whatever its sample width is configured to be; there is no correct or standard
 placement of the fixed point, but not to worry!  Your data is ok:
 <code>(set! (<a class=quiet href="#ybounds">y-bounds</a>) (list -256.0 256.0))</code>. There are several ways you can handle
 these files automatically in Snd.  Perhaps the simplest is to use one of the open hooks:
@@ -4458,12 +4459,13 @@ or (an alternative that sets the underlying database entry, rather than the curr
 </pre></td></tr></table>
 </td></tr>
 <tr><td></td><td>
-If you set any of these fields, the sound's index may change (there can be an embedded update-sound).
+If you set any of these fields, the sound's index may change (there can be an embedded <a class=quiet href="#updatesound">update-sound</a>).
 To deal with MPEG or OGG files, see examp.scm (<a class=quiet href="sndscm.html#exmpg">mpg</a>) or dlp/misc.scm (mpg123 and ogg123).
 <br><br>
 To turn a data-format number into a string, use <a href="#soundformatname">mus-data-format-name</a>. To get
 the data format of some sound file, use <a href="#sounddataformat">mus-sound-data-format</a>.
-The default output (new-sound, save-sound-as) data-format is <a href="#defaultoutputformat">default-output-format</a>.
+The default output (<a class=quiet href="#newsound">new-sound</a>, 
+<a class=quiet href="#savesoundas">save-sound-as</a>) data-format is <a href="#defaultoutputformat">default-output-format</a>.
 </td></tr>
 
 <tr><td colspan=2></td></tr>
@@ -4954,7 +4956,8 @@ see headers.c; for actual sound files, see sf.tar.gz at ccrma-ftp.
 To turn a type number into a string, use <a href="#soundtypename">mus-header-type-name</a>. To get
 the header type of some sound file, use <a href="#soundheadertype">mus-sound-header-type</a>.
 If you set the header-type, the sound file is rewritten with the new header.  The default output
-(new-sound, save-sound-as) header type is <a href="#defaultoutputtype">default-output-type</a>.
+(<a class=quiet href="#newsound">new-sound</a>, 
+<a class=quiet href="#savesoundas">save-sound-as</a>) header type is <a href="#defaultoutputtype">default-output-type</a>.
 <br><br>
 To read or write your own headers (or some header that isn't built-in),
 I recommend using either <a href="#openhook">open-hook</a> or <a href="#openrawsoundhook">open-raw-sound-hook</a>:
@@ -5275,11 +5278,10 @@ whether it's a good idea -- you may end up with unclosed files and so on).
 If the editing action is not mapping something over the current sound, it is
 safest to write a temp file with the new data, then pass that to set-samples
 with the trunc argument set to #t.  This way you don't assume the new sound
-will fit in memory (as in using vct-&gt;samples for example).
+will fit in memory (as in using <a class=quiet href="#vct_to_samples">vct-&gt;samples</a> for example).
 Use <a href="#sndtempnam">snd-tempnam</a> to get a temporary filename that reflects the current
 temp-dir setting (if any).  The env-sound-interp function in <a href="sndscm.html#exenvsoundinterp">examp.scm</a>
-is an example of this.  snd4.scm has Snd-4 style mapping functions such as
-map-sound-chans, map-all-chans, etc. 
+is an example of this. 
 <br><br>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define* (map-sound-chans proc #:optional (beg 0) end edname snd edpos)
@@ -5336,7 +5338,7 @@ the preceding edit in the list will be the <code>(set! (<a class=quiet href="#sa
 <code><a class=def name="maxamp">maxamp</a> (<em class=narg>snd chn</em> <i>edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-max amp of <i>snd</i>'s channel <i>chn</i>.  Used with set!, this is equivalent to scale-to.
+max amp of <i>snd</i>'s channel <i>chn</i>.  Used with set!, this is equivalent to <a class=quiet href="#scaleto">scale-to</a>.
 <br><br>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (maxamp-all)
@@ -5447,17 +5449,18 @@ and friends if you want to ignore the header).
 </td></tr>
 <tr><td></td><td>
 open <i>name</i> and return its index; this is equivalent to the File:Open option. <a href="#viewsound">view-sound</a>
-opens a sound read-only, or you can set <a href="#readonly">read-only</a> by hand. <a href="#closesound">close-sound</a>
+opens a sound read-only, or you can set <a class=quiet href="#readonly">read-only</a> by hand. <a class=quiet href="#closesound">close-sound</a>
 closes a file opened by open-sound.  There are a variety of hooks that are invoked during the sound opening process:
-<a href="#duringopenhook">during-open-hook</a>, <a href="#openhook">open-hook</a>, <a href="#afteropenhook">after-open-hook</a>,
-<a href="#initialgraphhook">initial-graph-hook</a>, <a href="#openrawsoundhook">open-raw-sound-hook</a>.  There are
-other ways to get at sound file data: <a href="#makesamplereader">make-sample-reader</a> can be given a filename,
+<a class=quiet href="#duringopenhook">during-open-hook</a>, <a class=quiet href="#openhook">open-hook</a>, 
+<a class=quiet href="#afteropenhook">after-open-hook</a>,
+<a class=quiet href="#initialgraphhook">initial-graph-hook</a>, <a class=quiet href="#openrawsoundhook">open-raw-sound-hook</a>.  There are
+other ways to get at sound file data: <a class=quiet href="#makesamplereader">make-sample-reader</a> can be given a filename,
 rather than a sound index; <i>file-&gt;vct</i> in examp.scm; 
-<a href="#mussoundopeninput">mus-sound-open-input</a> and
-<a href="#opensoundfile">open-sound-file</a> are low-level sndlib functions;
+<a class=quiet href="#mussoundopeninput">mus-sound-open-input</a> and
+<a class=quiet href="#opensoundfile">open-sound-file</a> are low-level sndlib functions;
 and there are a variety of CLM-based functions such as
-<a href="clm.html#file-&gt;sample">file-&gt;sample</a> and
-<a href="clm.html#file-&gt;array">file-&gt;array</a>.
+<a class=quiet href="clm.html#file-&gt;sample">file-&gt;sample</a> and
+<a class=quiet href="clm.html#file-&gt;array">file-&gt;array</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 

@@ -496,19 +496,15 @@
 
 ;;; -------- legendre, fejer
 
-;; TODO: legendre test fejer doc/test
-
-(define (fejer angle n)
+(define (fejer-sum angle n)
   ;; from "Trigonometric Series" Zygmund p88
   (let ((val (/ (sin (* 0.5 (+ n 1) angle)) (* 2 (sin (* 0.5 angle))))))
     (* 2 (/ (* val val) (+ n 1)))))
 
-(define (legendre angle n)
+(define (legendre-sum angle n)
   ;; from Andrews, Askey, Roy "Special Functions" p 314
   (let* ((val (/ (sin (* angle (+ n 0.5))) (sin (* 0.5 angle)))))
     (* val val)))
-
-
 
 
 ;;; -------- variations on sum-of-cosines

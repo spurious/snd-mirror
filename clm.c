@@ -911,6 +911,7 @@ static Float sum_of_sines_100 = .733;
 
 static Float sum_of_sines_scaler(int sines)
 {
+  /* doesn't this normalization assume initial-phase = 0? */
   if (sines < 20)
     return(1.0 / sum_of_sines_maxamps[sines]);
   if (sines < 50)
@@ -2044,12 +2045,20 @@ Float mus_rand(mus_any *ptr, Float fm)
 
 Float mus_rand_interp(mus_any *ptr, Float fm)
 {
+  /* fm can change the increment step during a ramp */
   noi *gen = (noi *)ptr;
   gen->output += gen->incr;
+  if (gen->output > gen->base) 
+    gen->output = gen->base;
+  else 
+    {
+      if (gen->output < -gen->base)
+	gen->output = -gen->base;
+    }
   if (gen->phase >= TWO_PI)
     {
       while (gen->phase >= TWO_PI) gen->phase -= TWO_PI;
-      gen->incr = (mus_random(gen->base) - gen->output) * (gen->freq + fm) / TWO_PI;
+      gen->incr = (mus_random(gen->base) - gen->output) / (ceil(TWO_PI / (gen->freq + fm)));
     }
   gen->phase += (gen->freq + fm);
   while (gen->phase < 0.0) gen->phase += TWO_PI;
@@ -2085,20 +2094,22 @@ static bool noi_equalp(mus_any *p1, mus_any *p2)
 
 static char *describe_noi(mus_any *ptr)
 {
+  noi *gen = (noi *)ptr;
   if (mus_rand_p(ptr))
     mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
 		 S_rand " freq: %.3fHz, phase: %.3f, amp: %.3f",
-		 mus_radians_to_hz(((noi *)ptr)->freq), 
-		 ((noi *)ptr)->phase, 
-		 ((noi *)ptr)->base);
+		 mus_radians_to_hz(gen->freq), 
+		 gen->phase, 
+		 gen->base);
   else
     {
       mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		   S_rand_interp " freq: %.3fHz, phase: %.3f, base: %.3f, incr: %.3f",
-		   mus_radians_to_hz(((noi *)ptr)->freq),
-		   ((noi *)ptr)->phase, 
-		   ((noi *)ptr)->base, 
-		   ((noi *)ptr)->incr);
+		   S_rand_interp " freq: %.3fHz, phase: %.3f, amp: %.3f, incr: %.3f, curval: %.3f",
+		   mus_radians_to_hz(gen->freq),
+		   gen->phase, 
+		   gen->base, 
+		   gen->incr,
+		   gen->output);
     }
   return(describe_buffer);
 }
@@ -3359,28 +3370,30 @@ mus_any *mus_make_waveshape(Float frequency, Float phase, Float *table, int size
       gen->table_allocated = true;
     }
   gen->table_size = size;
-  gen->offset = (Float)size / 2.0;
+  gen->offset = (Float)(size - 1) / 2.0;
   return((mus_any *)gen);
 }
 
 Float mus_waveshape(mus_any *ptr, Float index, Float fm)
 {
   ws *gen = (ws *)ptr;
-  Float oscval;
+  Float oscval, table_index;
   oscval = mus_sin(gen->phase);
   gen->phase += (gen->freq + fm);
   if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI);
-  return(mus_array_interp(gen->table, gen->offset * (1.0 + (oscval * index)), gen->table_size));
+  table_index = gen->offset * (1.0 + (oscval * index));
+  return(mus_array_interp(gen->table, table_index, gen->table_size));
 }
 
 Float mus_waveshape_1(mus_any *ptr, Float index)
 {
   ws *gen = (ws *)ptr;
-  Float oscval;
+  Float oscval, table_index;
   oscval = mus_sin(gen->phase);
   gen->phase += gen->freq;
   if ((gen->phase > 100.0) || (gen->phase < -100.0)) gen->phase = fmod(gen->phase, TWO_PI);
-  return(mus_array_interp(gen->table, gen->offset * (1.0 + (oscval * index)), gen->table_size));
+  table_index = gen->offset * (1.0 + (oscval * index));
+  return(mus_array_interp(gen->table, table_index, gen->table_size));
 }
 
 Float *mus_partials_to_waveshape(int npartials, Float *partials, int size, Float *table)
@@ -3402,7 +3415,7 @@ Float *mus_partials_to_waveshape(int npartials, Float *partials, int size, Float
     data = (Float *)clm_calloc(size, sizeof(Float), "waveshape table");
   else data = table;
   if (data == NULL) return(NULL);
-  maxI2 = 2.0 / (Float)size;
+  maxI2 = 2.0 / (Float)(size - 1); /* was size, but mus.lisp was correct?!? */
   for (i = 0, x = -1.0; i < size; i++, x += maxI2)
     {
       sum = 0.0;

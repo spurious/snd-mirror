@@ -594,7 +594,7 @@ int mus_phase_vocoder_set_outctr(mus_any *ptr, int val);
 void mus_clear_sinc_tables(void);
 void *mus_environ(mus_any *rd);
 
-#ifndef USE_SND
+#ifndef CLM_DISABLE_DEPRECATED
 /* backwards compatibility */
 #define mus_radians2hz(Radians) mus_radians_to_hz(Radians)
 #define mus_hz2radians(Hz) mus_hz_to_radians(Hz)

@@ -455,7 +455,7 @@ static int io_fd_size = 0;
 static io_fd **io_fds = NULL;
 #define IO_FD_ALLOC_SIZE 8
 
-int mus_file_set_descriptors(int tfd, const char *name, int format, int size /* datum size */, off_t location, int chans, int type)
+int mus_file_open_descriptors(int tfd, const char *name, int format, int size /* datum size */, off_t location, int chans, int type)
 {
   io_fd *fd;
   int i, lim = -1;

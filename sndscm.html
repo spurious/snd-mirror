@@ -498,7 +498,8 @@ the listener?
   <tr><td><em class=emdef>both forms of asymmetric-fm</em></td><td></td></tr>
   <tr><td><em class=emdef>cosine-summation</em></td><td>sum-of-cosines stuff</td></tr>
   <tr><td><em class=emdef>kosine-summation</em></td><td>more sum-of-cosines stuff</td></tr>
-  <tr><td><em class=emdef>legendre</em></td><td></td></tr>
+  <tr><td><em class=emdef>legendre-sum</em></td><td></td></tr>
+  <tr><td><em class=emdef>fejer-sum</em></td><td></td></tr>
   <tr><td><em class=emdef>brighten-slightly</em> amount</td><td>add harmonics</td></tr>
   <tr><td><em class=emdef>spectrum-&gt;coeffs</em> order spectrum-envelope</td><td>frequency-response envelope -&gt; FIR coeffs</td></tr>
   <tr><td><a class=def name="makehilberttransform">make-hilbert-transform</a> length</td><td>Hilbert transform</td></tr>
@@ -606,8 +607,8 @@ the moving formant idea mentioned in the original article.
 the generating formula is much simpler, but the result is the same.  This
 can also be viewed as a version of the sum-of-cosines generator, giving control
 on the ratio between successive cosines in the sum (i.e. the "r" parameter in
-sine-summation, applied within the sum-of-cosines output).  <b>legendre</b>
-produces a band-limited pulse-train whose
+sine-summation, applied within the sum-of-cosines output).  <b>legendre-sum</b> and <b>fejer-sum</b>
+produce a band-limited pulse-train whose
 cosine components have a decreasing amplitude.
 Three other similar functions are <b>sum-of-n-sines</b>,
 <b>sum-of-n-odd-sines</b>, and <b>sum-of-n-odd-cosines</b>.
@@ -4281,6 +4282,9 @@ But our real interest here is how to do the same thing in CLM-in-C (clm.c).
 The following code implements a comb filter with a one-zero filter on the feedback.
 </p>
 <pre>
+#include &lt;stddef.h&gt;
+#include &lt;math.h&gt;
+#include &lt;stdio.h&gt;
 #include "sndlib.h"
 #include "clm.h"
 #include "xen.h"
@@ -4326,7 +4330,7 @@ static char *describe_fcomb(mus_any *ptr)
 }
 
 static bool fcomb_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
-static int fcomb_length(mus_any *ptr) {return(((fcomb *)ptr)-&gt;size);}
+static off_t fcomb_length(mus_any *ptr) {return(((fcomb *)ptr)-&gt;size);}
 static Float *fcomb_data(mus_any *ptr) {return(((fcomb *)ptr)-&gt;line);}
 static Float fcomb_scaler(mus_any *ptr) {return(((fcomb *)ptr)-&gt;xscl);}
 static Float set_fcomb_scaler(mus_any *ptr, Float val) {((fcomb *)ptr)-&gt;xscl = val; return(val);}
@@ -4378,8 +4382,12 @@ static mus_any_class FCOMB_CLASS = {
   &amp;set_fcomb_scaler,             /* mus_set_scaler */
   0, 0,
   &amp;mus_fcomb,                    /* mus_run: the run-time fcomb function, MUS_RUN(gen) for speed */
-  0,                             /* type extension (normally 0) */
-  NULL, 0                         
+  MUS_NOT_SPECIAL,               /* type extension */
+  NULL,                     
+  0,
+  0, 0, 0, 0, 0, 0, 
+  0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0
 };
 
 /* now a function to make a new generator */

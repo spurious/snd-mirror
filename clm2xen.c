@@ -2965,9 +2965,10 @@ static XEN g_waveshape_p(XEN obj)
 
 static XEN g_partials_to_waveshape(XEN amps, XEN s_size)
 {
-  #define H_partials_to_waveshape "(" S_partials_to_waveshape " partials (size 512)): \
+  #define H_partials_to_waveshape "(" S_partials_to_waveshape " partials (resultant-table-size 512)): \
 produce a waveshaping lookup table (suitable for the " S_waveshape " generator) \
-that will produce the harmonic spectrum given by the partials argument"
+that will produce the harmonic spectrum given by the partials argument. (" S_partials_to_waveshape " '(2 1 3 .5)) \
+returns partial 2 twice as loud as 3."
 
   int npartials, size, len = 0;
   Float *partials, *wave;
