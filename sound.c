@@ -617,7 +617,7 @@ off_t mus_sound_length (const char *arg)        {MUS_SF(arg, sf->true_file_lengt
 int mus_sound_fact_samples (const char *arg)    {MUS_SF(arg, sf->fact_samples);}
 int mus_sound_write_date (const char *arg)      {MUS_SF(arg, (int)(sf->write_date));}
 int mus_sound_type_specifier (const char *arg)  {MUS_SF(arg, sf->type_specifier);}
-int mus_sound_align (const char *arg)           {MUS_SF(arg, sf->block_align);}
+int mus_sound_block_align (const char *arg)     {MUS_SF(arg, sf->block_align);}
 int mus_sound_bits_per_sample (const char *arg) {MUS_SF(arg, sf->bits_per_sample);}
 
 float mus_sound_duration(const char *arg) 

@@ -1897,7 +1897,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr,
 		    amp_env_env(si->cps[i], mus_data(egen), len, pos, base, scaler, offset);
 		  else 
 		    {
-		      if ((len < 2) || (abs(dur - passes[len - 2]) < 2))
+		      if ((len < 2) || (snd_abs_off_t(dur - passes[len - 2]) < 2))
 			amp_env_env_selection_by(si->cps[i], egen, si->begs[i], dur, pos);
 		    }
 
@@ -1995,7 +1995,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool regexpr,
 	    amp_env_env(si->cps[i], mus_data(egen), len, env_pos, base, scaler, offset);
 	  else 
 	    {
-	      if ((len < 2) || (abs(dur - passes[len - 2]) < 2))
+	      if ((len < 2) || (snd_abs_off_t(dur - passes[len - 2]) < 2))
 		amp_env_env_selection_by(si->cps[i], egen, si->begs[i], dur, env_pos);
 	    }
 	  newe = make_envelope(mus_data(egen), mus_env_breakpoints(egen) * 2);

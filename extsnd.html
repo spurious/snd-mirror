@@ -1283,6 +1283,11 @@ See the <i>current-window-location</i> procedures in draw.scm.  Here's a simpler
       #f))
 
 (add-hook! <em class=red>mouse-click-hook</em> click-to-center)
+
+;;; this example disables button 2 -> insert selection
+(add-hook! mouse-click-hook
+  (lambda (snd chn button state x y axis)
+    (and (= axis time-graph) (= button 2))))
 </pre></td></tr></table></td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -2468,7 +2473,7 @@ format by mus-audio-write.</td></tr>
   mus-bshort   mus-lshort   mus-mulaw   mus-alaw   mus-byte  
   mus-lfloat   mus-bint     mus-lint    mus-b24int mus-l24int
   mus-ubshort  mus-ulshort  mus-ubyte   mus-bfloat mus-bdouble 
-  mus-ldouble
+  mus-ldouble  mus-unknown
 </pre></td></tr>
 
 <!-- mus-expand-filename -->
@@ -2492,7 +2497,7 @@ A similar low-level sndlib function is <em class=def>mus-file-data-clipped</em>.
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="soundtypename">mus-header-type-name</a></em> (type)</code></span></td></tr>
 <tr><td></td><td>convert <i>type</i>, an integer, to a string, e.g. "AIFF".  Some of the sndlib header types are:</td></tr>
 <tr><td colspan=2><pre>
-  mus-next  mus-aifc  mus-riff  mus-nist  mus-raw  mus-ircam  mus-aiff mus-bicsf mus-soundfont mus-voc mus-svx
+  mus-next  mus-aifc  mus-riff  mus-nist  mus-raw  mus-ircam  mus-aiff mus-bicsf mus-soundfont mus-voc mus-svx mus-unsupported
 </pre></td></tr>
 
 <!-- mus-sound-chans -->

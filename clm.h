@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 36
-#define MUS_DATE "21-Aug-03"
+#define MUS_REVISION 37
+#define MUS_DATE "24-Aug-03"
 
 /* 
+ * 24-Aug:     changed mus_length|ramp|hop type to off_t.
  * 21-Aug:     export MUS_INPUT and friends (needed for specialized INA handlers).
  * 11-Aug:     int -> bool.
  * 7-Aug:      removed mus_type.
@@ -145,8 +146,8 @@ typedef struct mus__any_class {
   bool (*equalp)(mus_any *gen1, mus_any *gen2);
   Float* (*data)(mus_any *ptr);
   Float* (*set_data)(mus_any *ptr, Float *new_data);
-  int (*length)(mus_any *ptr);
-  int (*set_length)(mus_any *ptr, int new_length);
+  off_t (*length)(mus_any *ptr);
+  off_t (*set_length)(mus_any *ptr, off_t new_length);
   Float (*frequency)(mus_any *ptr);
   Float (*set_frequency)(mus_any *ptr, Float new_freq);
   Float (*phase)(mus_any *ptr); 
@@ -165,10 +166,10 @@ typedef struct mus__any_class {
   Float (*set_width)(mus_any *ptr, Float val);
   Float (*b2)(mus_any *ptr);
   Float (*set_b2)(mus_any *ptr, Float val);
-  int (*hop)(mus_any *ptr);
-  int (*set_hop)(mus_any *ptr, int new_length);
-  int (*ramp)(mus_any *ptr);
-  int (*set_ramp)(mus_any *ptr, int new_length);
+  off_t (*hop)(mus_any *ptr);
+  off_t (*set_hop)(mus_any *ptr, off_t new_length);
+  off_t (*ramp)(mus_any *ptr);
+  off_t (*set_ramp)(mus_any *ptr, off_t new_length);
   Float (*read_sample)(mus_any *ptr, off_t samp, int chan);
   Float (*write_sample)(mus_any *ptr, off_t samp, int chan, Float data);
   char* (*file_name)(mus_any *ptr);
@@ -234,8 +235,8 @@ Float mus_set_phase(mus_any *gen, Float val);
 Float mus_set_frequency(mus_any *gen, Float val);
 Float mus_frequency(mus_any *gen);
 Float mus_run(mus_any *gen, Float arg1, Float arg2);
-int mus_length(mus_any *gen);
-int mus_set_length(mus_any *gen, int len);
+off_t mus_length(mus_any *gen);
+off_t mus_set_length(mus_any *gen, off_t len);
 Float *mus_data(mus_any *gen);
 Float *mus_set_data(mus_any *gen, Float *data);
 char *mus_name(mus_any *ptr);
@@ -526,10 +527,10 @@ Float mus_granulate(mus_any *ptr, Float(*input)(void *arg, int direction));
 mus_any *mus_make_granulate(Float(*input)(void *arg, int direction), 
 				       Float expansion, Float length, Float scaler, 
 				       Float hop, Float ramp, Float jitter, int max_size, void *environ);
-int mus_ramp(mus_any *ptr);
-int mus_set_ramp(mus_any *ptr, int val);
-int mus_hop(mus_any *ptr);
-int mus_set_hop(mus_any *ptr, int val);
+off_t mus_ramp(mus_any *ptr);
+off_t mus_set_ramp(mus_any *ptr, off_t val);
+off_t mus_hop(mus_any *ptr);
+off_t mus_set_hop(mus_any *ptr, off_t val);
 
 int mus_set_file_buffer_size(int size);
 int mus_file_buffer_size(void);

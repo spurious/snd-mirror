@@ -105,13 +105,11 @@ name of the sound file.
   int mus_sound_data_format (const char *arg)      /* data format (alaw etc) */
   int mus_sound_original_format (const char *arg)  /* unmodified data format specifier */
   char *mus_sound_comment (const char *arg)        /* comment if any */
-  int mus_sound_comment_start (const char *arg)    /* comment start (bytes) if any */
-  int mus_sound_comment_end (const char *arg)      /* comment end (bytes) */
+  off_t mus_sound_comment_start (const char *arg)  /* comment start (bytes) if any */
+  off_t mus_sound_comment_end (const char *arg)    /* comment end (bytes) */
   off_t mus_sound_length (const char *arg)         /* true file length (for error checks) */
-  int mus_sound_fact_samples (const char *arg)     /* compression scheme data */
   int mus_sound_write_date (const char *arg)       /* bare (uninterpreted) file write date */
   int mus_sound_type_specifier (const char *arg)   /* original header type identifier */
-  int mus_sound_align (const char *arg)            /* more compression data */
   int mus_sound_bits_per_sample(const char *arg)   /* bits per sample */
   int mus_data_format_to_bytes_per_sample(int format) /* bytes per sample */
   int mus_sound_maxamp(const char *arg, int *vals) /* return list of maxamp sample pairs */

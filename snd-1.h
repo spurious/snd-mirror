@@ -758,6 +758,11 @@ Float ed_selection_maxamp(chan_info *cp);
 void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1);
 void reflect_file_change_in_label(chan_info *cp);
 
+bool snd2sample_p(mus_any *ptr);
+bool xen2sample_p(mus_any *ptr);
+Float xen2sample_read(mus_any *ptr, off_t frame, int chan);
+Float snd2sample_read(mus_any *ptr, off_t frame, int chan);
+
 
 /* -------- snd-fft.c -------- */
 
@@ -1092,7 +1097,7 @@ env_info *make_mix_input_amp_env(chan_info *cp);
 Cessate get_amp_env(Indicium ptr);
 bool amp_env_maxamp_ok(chan_info *cp, int edpos);
 Float amp_env_maxamp(chan_info *cp, int edpos);
-bool amp_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, bool start_new, int edit_pos);
+bool amp_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, bool start_new, int edit_pos, bool finish_env);
 int amp_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int srate);
 char *shortname(snd_info *sp);
 char *shortname_indexed(snd_info *sp);
@@ -1202,6 +1207,7 @@ void initialize_format_lists(void);
 
 int snd_round(double x);
 off_t snd_round_off_t(double x);
+off_t snd_abs_off_t(off_t val);
 int snd_ipow2(int n);
 int snd_2pow2(int n);
 Float in_dB(Float min_dB, Float lin_dB, Float py);

@@ -1602,7 +1602,7 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
     }
   else
     {
-      if (amp_env_usable(cp, samples_per_pixel, ap->hisamp, false, cp->edit_ctr)) 
+      if (amp_env_usable(cp, samples_per_pixel, ap->hisamp, false, cp->edit_ctr, false)) 
 	{
 	  /* needs two sets of pointers and a frame within the amp env:
 	   *   sample given mark edit: i and xk

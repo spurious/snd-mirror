@@ -20,7 +20,7 @@
 	 (all-sums 0.0)
 	 (delA 0.0)
 	 (delB 0.0)
-	 (file-dur (mus-sound-frames (mus-file-name *reverb*)))
+	 (file-dur (mus-length *reverb*))
 	 (decay-dur (mus-srate))
 	 (envA (if amp-env (make-env :envelope amp-env :scaler volume :duration dur) #f))
 	 (scl volume)

@@ -95,6 +95,8 @@ void free_env_state(chan_info *cp)
     }
 }
 
+/* TODO: check this with large file and large region insertion -- does it hang? */
+
 static env_state *make_env_state(chan_info *cp, off_t samples)
 {
   int val, pos, i, j, start_bin, end_bin, old_end_bin;
@@ -133,14 +135,14 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 	       * as-one-edit can mess this up...
 	       */
 	      old_samples = cp->samples[pos - 1];
-	      if (abs(samples - old_samples) < (samples / 2))
+	      if (snd_abs_off_t(samples - old_samples) < (samples / 2))
 		{
 		  start = edit_changes_begin_at(cp);
 		  /* as-one-edit backs up edit records without resetting any beg/len values.
 		   *   but this is tricky stuff -- not worth pushing...
 		   */
 		  end = edit_changes_end_at(cp);
-		  if (abs(end - start) < (samples / 2))
+		  if (snd_abs_off_t(end - start) < (samples / 2))
 		    {
 		      /* here we'll try to take advantage of an existing envelope */
 		      old_ep = cp->amp_envs[pos - 1];
@@ -159,11 +161,16 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 			  if (ep->data_max[i] > ep->fmax) ep->fmax = ep->data_max[i];
 			}
 		      ep->bin = start_bin;
-		      if (end != 0)
+		      if (end != 0) /* TODO: why does this happen? */
 			{
 			  old_end_bin = (int)(end / old_ep->samps_per_bin);
 			  end += (samples - old_samples);
 			  end_bin = (int)(end / ep->samps_per_bin);
+			  if (end_bin <= 0)
+			    {
+			      old_end_bin += (1 - end_bin);
+			      end_bin = 1;
+			    }
 			  for (i = end_bin, j = old_end_bin; (i < ep->amp_env_size) && (j < old_ep->amp_env_size); i++, j++)
 			    {
 			      ep->data_min[i] = old_ep->data_min[j];
@@ -335,7 +342,7 @@ Float amp_env_maxamp(chan_info *cp, int edpos)
   return(MUS_SAMPLE_TO_FLOAT(ymax));
 }
 
-bool amp_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, bool start_new, int edit_pos) 
+bool amp_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, bool start_new, int edit_pos, bool finish_env) 
 {
   env_info *ep;
   int bin;
@@ -352,6 +359,19 @@ bool amp_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, bool s
 	  (bin < ep->bin) || 
 	  ((ep->top_bin != 0) && (bin > ep->top_bin)))
 	return(samples_per_pixel >= (Float)(ep->samps_per_bin));
+    }
+  if ((finish_env) && (cgx->amp_env_in_progress) && (cgx->amp_env_state))
+    {
+      /* caller wants data, but a read is in progress -- finish it as quickly as possible */
+      while (!(tick_amp_env(cp, (env_state *)(cgx->amp_env_state))));
+      free_env_state(cp);
+      reflect_amp_env_completion(cp->sound);
+      if (cp->waiting_to_make_graph) 
+	{
+	  cp->waiting_to_make_graph = false;
+	  update_graph(cp);
+	}
+      return(amp_env_usable(cp, samples_per_pixel, hisamp, start_new, edit_pos, false));
     }
   if ((start_new) &&
       (!(cgx->amp_env_in_progress)) && 

@@ -275,7 +275,7 @@ static const unsigned char I_SDIF[4] = {'S','D','I','F'};  /* IRCAM sdif */
 static const unsigned int I_INRS[NINRS] = {0xcb460020, 0xd0465555, 0xfa460000, 0x1c470040, 0x3b470080, 0x7a470000, 0x9c470040};
 
 static off_t data_location = 0;
-static int srate = 0, chans = 0, header_type = 0, data_format = 0, original_data_format = 0;
+static int srate = 0, chans = 0, header_type = MUS_UNSUPPORTED, data_format = MUS_UNKNOWN, original_data_format = 0;
 static int type_specifier = 0, bits_per_sample = 0, block_align = 0, fact_samples = 0;
 static off_t comment_start = 0, comment_end = 0;
 static off_t true_file_length = 0, data_size = 0;
@@ -448,7 +448,7 @@ const char *mus_header_type_name(int type)
     case MUS_SOUNDFORGE:       return("SoundForge");              break;
     case MUS_TWINVQ:           return("TwinVQ");                  break;
     case MUS_SDIF:             return("IRCAM sdif");              break;
-    default:                   return("unknown");                 break;
+    default:                   return("unsupported");             break;
     }
 }
 
@@ -456,8 +456,6 @@ const char *mus_data_format_name(int format)
 {
   switch (format)
     {
-    case MUS_UNSUPPORTED:      return("unsupported");                              break;
-    case MUS_UNKNOWN:          return("no_snd");                                   break;
     case MUS_BSHORT:           return("big endian short (16 bits)");               break;
     case MUS_MULAW:            return("mulaw (8 bits)");                           break;
     case MUS_BYTE:             return("signed byte (8 bits)");                     break;
@@ -510,7 +508,7 @@ const char *mus_short_data_format_name(int format)
     case MUS_L24INT:           return("mus-l24int");            break;
     case MUS_BINTN:            return("mus-bintn");             break;
     case MUS_LINTN:            return("mus-lintn");             break;
-    default:                   return("unknown format");        break;
+    default:                   return("unknown");               break;
     }
 }
 
@@ -597,7 +595,7 @@ static int read_next_header(int chan)
     case 41: data_format = MUS_LSHORT;      break; 
     case 42: data_format = MUS_L24INT;      break; 
     case 43: data_format = MUS_UBYTE;       break; 
-    default: data_format = MUS_UNSUPPORTED; break;
+    default: data_format = MUS_UNKNOWN;     break;
     }
   srate = mus_char_to_bint((unsigned char *)(hdrbuf + 16));
   chans = mus_char_to_bint((unsigned char *)(hdrbuf + 20));
@@ -883,7 +881,7 @@ static int read_aiff_header (int chan, int overall_offset)
 	  else if (original_data_format == 16) data_format = MUS_BSHORT;
 	  else if (original_data_format == 24) data_format = MUS_B24INT;
 	  else if (original_data_format == 32) data_format = MUS_BINT;
-	  else data_format = MUS_UNSUPPORTED;
+	  else data_format = MUS_UNKNOWN;
 	  srate = (int)ieee_80_to_double((unsigned char *)(hdrbuf + 16));
 	  /* if AIFC, compression type over-rides (possibly bogus) original_data_format */
 	  if (type_specifier == mus_char_to_uninterpreted_int((unsigned const char *)I_AIFC))
@@ -960,7 +958,7 @@ static int read_aiff_header (int chan, int overall_offset)
 							 0x6D730055 -- MPEG Layer 3, CBR only (pre QT4.1)
 							 '.mp3' -- MPEG Layer 3, CBR & VBR (QT4.1 and later)
 						      */
-						      data_format = MUS_UNSUPPORTED;
+						      data_format = MUS_UNKNOWN;
 						    }
 						}
 					    }
@@ -1453,7 +1451,7 @@ static int wave_to_sndlib_format(int osf, int bps, bool little)
     case 0x101: return(MUS_MULAW); break;
     case 0x102: return(MUS_ALAW); break;
     }
-  return(MUS_UNSUPPORTED);
+  return(MUS_UNKNOWN);
 }
 
 static int read_riff_header(int chan)
@@ -1468,7 +1466,7 @@ static int read_riff_header(int chan)
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)(hdrbuf + 8));
   chunkloc = 12;
   offset = 0;
-  data_format = MUS_UNSUPPORTED;
+  data_format = MUS_UNKNOWN;
   srate = 0;
   chans = 0;
   data_location = 0;
@@ -1750,7 +1748,7 @@ static int read_soundforge_header(int chan)
   off_t offset;
   chunkloc = 12 * 2 + 16;
   offset = 0;
-  data_format = MUS_UNSUPPORTED;
+  data_format = MUS_UNKNOWN;
   srate = 0;
   chans = 0;
   data_location = 0;
@@ -1828,7 +1826,7 @@ static int read_avi_header(int chan)
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)(hdrbuf + 8));
   chunkloc = 12;
   offset = 0;
-  data_format = MUS_UNSUPPORTED;
+  data_format = MUS_UNKNOWN;
   srate = 0;
   chans = 1;
   happy = true;
@@ -2187,7 +2185,7 @@ static int read_nist_header(int chan)
 	  if (nm >= MAX_FIELD_LENGTH) 
 	    {
 	      header_type = MUS_RAW; 
-	      data_format = MUS_UNSUPPORTED; 
+	      data_format = MUS_UNKNOWN; 
 	      return(mus_error(MUS_UNSUPPORTED_HEADER_TYPE, "read_nist_header: unreadable field (length = %d)?", nm));
 	    }
 	  name[nm] = 0;
@@ -2218,7 +2216,7 @@ static int read_nist_header(int chan)
   data_size = samples * bytes;
   if (byte_format == MUS_NIST_SHORTPACK)
     {
-      data_format = MUS_UNSUPPORTED;
+      data_format = MUS_UNKNOWN;
       original_data_format = MUS_NIST_SHORTPACK;
     }
   else
@@ -2389,7 +2387,7 @@ static int read_ircam_header(int chan)
   true_file_length = SEEK_FILE_LENGTH(chan);
   data_size = (true_file_length - 1024);
   original_data_format = big_or_little_endian_int((unsigned char *)(hdrbuf + 12), little);
-  data_format = MUS_UNSUPPORTED;
+  data_format = MUS_UNKNOWN;
   if (original_data_format == 2) 
     {
       if (little) 
@@ -2559,7 +2557,7 @@ static int read_8svx_header(int chan, bool bytewise)
 	      srate = mus_char_to_ubshort((unsigned char *)(hdrbuf + 20));
 	      original_data_format = hdrbuf[23];
 	      if (original_data_format != 0) 
-		data_format = MUS_UNSUPPORTED;
+		data_format = MUS_UNKNOWN;
 	    }
 	  else
 	    {
@@ -2630,7 +2628,7 @@ static int read_voc_header(int chan)
 	      original_data_format = hdrbuf[5];
 	      if (hdrbuf[5] == 0) 
 		data_format = MUS_UBYTE; 
-	      else data_format = MUS_UNSUPPORTED;
+	      else data_format = MUS_UNKNOWN;
 	    }
 	  happy = false;
 	}
@@ -2657,7 +2655,7 @@ static int read_voc_header(int chan)
 		      else 
 			{
 			  fprintf(stderr,"VOC 8 code: %d\n", code);
-			  data_format = MUS_UNSUPPORTED; /* various ADPCM cases here? */
+			  data_format = MUS_UNKNOWN; /* various ADPCM cases here? */
 			}
 #else
 		    else data_format = MUS_UBYTE; 
@@ -2671,14 +2669,14 @@ static int read_voc_header(int chan)
 		    if (code != 4)
 		      {
 			fprintf(stderr,"VOC 16 code: %d\n", code);
-			data_format = MUS_UNSUPPORTED;
+			data_format = MUS_UNKNOWN;
 		      }
 		    else data_format = MUS_LSHORT;
 		  }
 #else
 		  data_format = MUS_LSHORT;
 #endif
-		else data_format = MUS_UNSUPPORTED;
+		else data_format = MUS_UNKNOWN;
 	      chans = (int)hdrbuf[9];
 	      if (chans == 0) chans = 1;
 	      happy = false;
@@ -2698,7 +2696,7 @@ static int read_voc_header(int chan)
 			{
 			  srate = (256000000 / (65536 - mus_char_to_lshort((unsigned char *)(hdrbuf + 4))));
 			  if ((int)(hdrbuf[7]) == 0) chans = 1; else chans = 2;
-			  if ((int)(hdrbuf[6]) != 0) data_format = MUS_UNSUPPORTED;
+			  if ((int)(hdrbuf[6]) != 0) data_format = MUS_UNKNOWN;
 			}
 		      /* I'd add loop support here if I had any example sound files to test with */
 		    }
@@ -2737,7 +2735,7 @@ static int read_voc_header(int chan)
 
 static int read_twinvq_header(int chan)
 {
-  data_format = MUS_UNSUPPORTED;
+  data_format = MUS_UNKNOWN;
   data_location = mus_char_to_bint((unsigned char *)(hdrbuf + 12)) + 16 + 8;
   chans = 1 + mus_char_to_bint((unsigned char *)(hdrbuf + 24));
   srate = mus_char_to_bint((unsigned char *)(hdrbuf + 32));
@@ -2998,7 +2996,7 @@ static int read_sppack_header(int chan)
   lseek(chan, 240, SEEK_SET);
   read(chan, hdrbuf, 22);
   typ = mus_char_to_bshort((unsigned char *)hdrbuf);
-  data_format = MUS_UNSUPPORTED;
+  data_format = MUS_UNKNOWN;
   if (typ == 1) 
     {
       if (((hdrbuf[254]) == 252) && ((hdrbuf[255]) == 14)) /* #xfc and #x0e */
@@ -3012,7 +3010,7 @@ static int read_sppack_header(int chan)
 	    case 1: if (bits == 16) data_format = MUS_BSHORT; else data_format = MUS_BYTE; break;
 	    case 2: data_format = MUS_ALAW; break;
 	    case 3: data_format = MUS_MULAW; break;
-	    default: data_format = MUS_UNSUPPORTED; break;
+	    default: data_format = MUS_UNKNOWN; break;
 	    }
 	  data_size = SEEK_FILE_LENGTH(chan);
 	  data_size = mus_bytes_to_samples(data_format, data_size - 512);
@@ -3235,7 +3233,7 @@ static int read_maud_header(int chan)
 		case 0: data_format = MUS_UBYTE; break;
 		case 2: data_format = MUS_ALAW; break;
 		case 3: data_format = MUS_MULAW; break;
-		default: data_format = MUS_UNSUPPORTED; break;
+		default: data_format = MUS_UNKNOWN; break;
 		}
 	    }
 	  else data_format = MUS_BSHORT;
@@ -3646,7 +3644,7 @@ static int read_sbstudio_header(int chan)
 	    {
 	      tmp = mus_char_to_lshort((unsigned char *)(bp + 15));
 	      if ((tmp & 1) ==0) 
-		data_format = MUS_UNSUPPORTED;
+		data_format = MUS_UNKNOWN;
 	      else
 		{
 		  if ((tmp & 2) ==0) data_format = MUS_BYTE;
@@ -3662,7 +3660,7 @@ static int read_sbstudio_header(int chan)
 	}
       if (i >= HDRBUFSIZ)
 	{
-	  data_format = MUS_UNSUPPORTED;
+	  data_format = MUS_UNKNOWN;
 	  happy = false;
 	}
     }
@@ -3758,8 +3756,8 @@ static int read_tx16w_header(int chan)
       else if ((hdrbuf[26] & 0xFE) == 0x10) srate = 50000;
       else if ((hdrbuf[26] & 0xFE) == 0xf6) srate = 16000;
     }
-  original_data_format = MUS_UNSUPPORTED;
-  data_format = MUS_UNSUPPORTED;
+  original_data_format = MUS_UNKNOWN;
+  data_format = MUS_UNKNOWN;
   data_size = (off_t)((double)data_size / 1.5);
   if (hdrbuf[22] == 0x49)
     {
@@ -4036,7 +4034,7 @@ static int read_sample_dump_header(int chan)
   data_size = (true_file_length - data_location);
   if (hdrbuf[0] == 0)
     data_format = MUS_ULSHORT;
-  else data_format = MUS_UNSUPPORTED;
+  else data_format = MUS_UNKNOWN;
   data_size = mus_bytes_to_samples(data_format, data_size);
   return(MUS_NO_ERROR);
 }
@@ -4077,7 +4075,7 @@ static int read_digiplayer_header(int chan)
   data_format = MUS_ULSHORT;
   if (hdrbuf[30] & 2) chans = 2;
   if (hdrbuf[30] & 1) 
-    data_format = MUS_UNSUPPORTED;
+    data_format = MUS_UNKNOWN;
   else
     {
       if (hdrbuf[30] & 4) data_format = MUS_UBYTE; /* may be backwards -- using Convert 1.4 output here */
@@ -4120,7 +4118,7 @@ static int read_adf_header(int chan)
 	data_format = MUS_LSHORT;
       else data_format = MUS_ULSHORT;
     }
-  else data_format = MUS_UNSUPPORTED;
+  else data_format = MUS_UNKNOWN;
   srate = (int)(1000 * mus_char_to_lfloat((unsigned char *)(hdrbuf + 22)));
   data_size = mus_char_to_lint((unsigned char *)(hdrbuf + 8));
   data_location = 512;
@@ -4166,10 +4164,10 @@ static int read_diamondware_header(int chan)
       if (hdrbuf[35] == 8) data_format = MUS_BYTE;
       else data_format = MUS_LSHORT;
     }
-  else data_format = MUS_UNSUPPORTED;
+  else data_format = MUS_UNKNOWN;
   srate = mus_char_to_ulshort((unsigned char *)(hdrbuf + 32));
   data_size = mus_char_to_lint((unsigned char *)(hdrbuf + 38));
-  if (data_format != MUS_UNSUPPORTED)
+  if (data_format != MUS_UNKNOWN)
     data_size = mus_bytes_to_samples(data_format, data_size);
   data_location = mus_char_to_lint((unsigned char *)(hdrbuf + 46));
   true_file_length = SEEK_FILE_LENGTH(chan);
@@ -4194,7 +4192,7 @@ static int read_paf_header(int chan)
   bool little = false;
   lseek(chan, 0, SEEK_SET);
   read(chan, hdrbuf, 32);
-  data_format = MUS_UNSUPPORTED;
+  data_format = MUS_UNKNOWN;
   if (mus_char_to_bint((unsigned char *)(hdrbuf + 8))) little = true;
   if (little)
     {
@@ -4214,7 +4212,7 @@ static int read_paf_header(int chan)
     }
   data_location = 2048;
   true_file_length = SEEK_FILE_LENGTH(chan);
-  if (data_format != MUS_UNSUPPORTED) 
+  if (data_format != MUS_UNKNOWN) 
     data_size = mus_bytes_to_samples(data_format, true_file_length - 2048);
   return(MUS_NO_ERROR);
 }
@@ -4382,7 +4380,7 @@ static int read_asf_header(int chan)
     }
   i = len;
   seek_and_read(chan, (unsigned char *)hdrbuf, i, HDRBUFSIZ);
-  data_format = MUS_UNSUPPORTED;
+  data_format = MUS_UNKNOWN;
   if (((unsigned int)(hdrbuf[1]) == 0x29) && ((unsigned int)(hdrbuf[0]) == 0xd2))
     {
       ilen = mus_char_to_lint((unsigned char *)(hdrbuf + 16));
@@ -4391,7 +4389,7 @@ static int read_asf_header(int chan)
       if (bits == 0) bits = 8; 
       data_format = wave_to_sndlib_format(original_data_format, bits, true);
     }
-  if (data_format != MUS_UNSUPPORTED)
+  if (data_format != MUS_UNKNOWN)
     data_size = mus_bytes_to_samples(data_format, (ilen - data_location));
   return(MUS_NO_ERROR);
 }
@@ -4439,7 +4437,7 @@ static int mus_header_read_with_fd_and_name(int chan, const char *filename)
   int i, loc = 0, bytes;
   bool happy;
   header_type = MUS_UNSUPPORTED;
-  data_format = MUS_UNSUPPORTED;
+  data_format = MUS_UNKNOWN;
   comment_start = 0;
   comment_end = 0;
   data_size = 0;
@@ -5299,7 +5297,7 @@ bool mus_header_writable(int type, int format) /* -2 to ignore format for this c
   switch (type)
     {
     case MUS_NEXT:
-      if ((format == MUS_UNKNOWN) || (format == MUS_UNSUPPORTED)) return(false);
+      if (format == MUS_UNKNOWN) return(false);
       return(true);
       break;
     case MUS_NIST:

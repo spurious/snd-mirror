@@ -118,10 +118,12 @@
 #define S_mus_sound_write               "mus-sound-write"
 #define S_mus_sound_write_date          "mus-sound-write-date"
 #define S_mus_soundfont                 "mus-soundfont"
+#define S_mus_unsupported               "mus-unsupported"
 #define S_mus_svx                       "mus-svx"
 #define S_mus_ubshort                   "mus-ubshort"
 #define S_mus_ubyte                     "mus-ubyte"
 #define S_mus_ulshort                   "mus-ulshort"
+#define S_mus_unknown                   "mus-unknown"
 #define S_mus_voc                       "mus-voc"
 
 #define S_new_sound_hook                "new-sound-hook"

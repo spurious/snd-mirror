@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
 	  type = mus_sound_header_type(argv[ctr]);
 	  header_name = (char *)mus_header_type_name(type);
 	  format = mus_sound_data_format(argv[ctr]);
-	  if (format != MUS_UNSUPPORTED)
+	  if (format != MUS_UNKNOWN)
 	    format_info = (char *)mus_data_format_name(format);
 	  else
 	    {

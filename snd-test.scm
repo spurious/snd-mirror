@@ -407,17 +407,20 @@
 	'selection-context selection-context 2
 	
 	;; sndlib constants
-	'mus-next mus-next 0
-	'mus-aifc mus-aifc 1
-	'mus-riff mus-riff 2
-	'mus-nist mus-nist 4
-	'mus-raw mus-raw 10
-	'mus-ircam mus-ircam 13
-	'mus-aiff mus-aiff 48
-	'mus-bicsf mus-bicsf 3
-	'mus-voc mus-voc 8
-	'mus-svx mus-svx 7
-	'mus-soundfont mus-soundfont 24
+	'mus-unsupported mus-unsupported 0
+	'mus-next mus-next 1
+	'mus-aifc mus-aifc 2
+	'mus-riff mus-riff 3
+	'mus-nist mus-nist 5
+	'mus-raw mus-raw 11
+	'mus-ircam mus-ircam 14
+	'mus-aiff mus-aiff 49
+	'mus-bicsf mus-bicsf 4
+	'mus-voc mus-voc 9
+	'mus-svx mus-svx 8
+	'mus-soundfont mus-soundfont 25
+
+	'mus-unknown mus-unknown 0
 	'mus-bshort mus-bshort 1
 	'mus-lshort mus-lshort 10
 	'mus-mulaw mus-mulaw 2
@@ -528,13 +531,13 @@
       (if (not (equal? (default-output-chans)  1 )) 
 	  (snd-display ";default-output-chans set def: ~A" (default-output-chans)))
       (set! (default-output-format) (default-output-format))
-      (if (not (equal? (default-output-format)  1)) 
+      (if (not (equal? (default-output-format) mus-bshort)) 
 	  (snd-display ";default-output-format set def: ~A" (default-output-format)))
       (set! (default-output-srate) (default-output-srate))
       (if (not (equal? (default-output-srate)  22050 )) 
 	  (snd-display ";default-output-srate set def: ~A" (default-output-srate)))
       (set! (default-output-type) (default-output-type))
-      (if (not (equal? (default-output-type)  0 )) 
+      (if (not (equal? (default-output-type)  mus-next)) 
 	  (snd-display ";default-output-type set def: ~A" (default-output-type)))
       (set! (dot-size) (dot-size))
       (if (not (equal? (dot-size)  1 )) 
@@ -864,9 +867,9 @@
 	'minibuffer-history-length (minibuffer-history-length) 8
 	'data-clipped (data-clipped) #f 
 	'default-output-chans (default-output-chans) 1 
-	'default-output-format (default-output-format) 1
+	'default-output-format (default-output-format) mus-bshort
 	'default-output-srate (default-output-srate) 22050 
-	'default-output-type (default-output-type) 0 
+	'default-output-type (default-output-type) mus-next
 	'dot-size (dot-size) 1 
 	'enved-base (enved-base) 1.0 
 	'enved-clip? (enved-clip?) #f 
@@ -1010,8 +1013,8 @@
 						   (list-ref testf 0)
 						   (mus-sound-duration file) 
 						   (list-ref testf 3)))
-				  (if (and (not (= (mus-sound-data-format file) -1))
-					   (not (= (mus-sound-header-type file) 31)) ; bogus header on test case (comdisco)
+				  (if (and (not (= (mus-sound-data-format file) mus-unknown))
+					   (not (= (mus-sound-header-type file) 27)) ; bogus header on test case (comdisco)
 					   (< (+ (mus-sound-length file) 1)
 					      (* (mus-sound-datum-size file) (mus-sound-duration file)
 						 (mus-sound-srate file) (mus-sound-chans file))))
@@ -1063,8 +1066,8 @@
 	    (list "Ptjunk.aif" 1 8000 0.00112499995157123 "AIFC" "mulaw (8 bits)")
 	    (list "Ptjunk.wav" 1 8000 0.00112499995157123 "RIFF" "mulaw (8 bits)")
 	    (list "SINE24-S.WAV" 2 44100 2.0 "RIFF" "little endian int (24 bits)")
-	    (list "a1.asf" 1 16000 0.0 "asf" "unsupported")
-	    (list "a2.asf" 1 8000 0.0 "asf" "unsupported")
+	    (list "a1.asf" 1 16000 0.0 "asf" "unknown")
+	    (list "a2.asf" 1 8000 0.0 "asf" "unknown")
 	    (list "addf8.afsp" 1 8000 2.9760000705719 "Sun" "big endian short (16 bits)")
 	    (list "addf8.d" 1 8000 2.9760000705719 "SPPACK" "big endian short (16 bits)")
 	    (list "addf8.dwd" 1 8000 2.9760000705719 "DiamondWare" "little endian short (16 bits)")
@@ -1080,10 +1083,10 @@
 	    (list "alaw.aifc" 1 44100 0.0367800444364548 "AIFC" "alaw (8 bits)")
 	    (list "alaw.wav" 1 11025 8.70666694641113 "RIFF" "alaw (8 bits)")
 	    (list "astor_basia.mp2" 2 44100 1.02179133892059 "raw (no header)" "big endian short (16 bits)")
-	    (list "c.asf" 1 8000 0.0 "asf" "unsupported")
-	    (list "ce-c3.w02" 1 33000 3.88848495483398 "TX-16W" "unsupported")
-	    (list "ce-c4.w03" 1 33000 2.91618180274963 "TX-16W" "unsupported")
-	    (list "ce-d2.w01" 1 33000 3.46439385414124 "TX-16W" "unsupported")
+	    (list "c.asf" 1 8000 0.0 "asf" "unknown")
+	    (list "ce-c3.w02" 1 33000 3.88848495483398 "TX-16W" "unknown")
+	    (list "ce-c4.w03" 1 33000 2.91618180274963 "TX-16W" "unknown")
+	    (list "ce-d2.w01" 1 33000 3.46439385414124 "TX-16W" "unknown")
 	    (list "clbonef.wav" 1 22050 2.57832193374634 "RIFF" "little endian float (32 bits)")
 	    (list "cranker.krz" 1 44100 3.48267579078674 "Kurzweil 2000" "big endian short (16 bits)")
 	    (list "d40130.aif" 1 10000 0.100000001490116 "AIFF" "big endian short (16 bits)")
@@ -1092,7 +1095,7 @@
 	    (list "d40130.fsm" 1 8000 0.125249996781349 "Farandole" "little endian short (16 bits)")
 	    (list "d40130.iff" 1 10000 0.100000001490116 "SVX8" "signed byte (8 bits)")
 	    (list "d40130.pat" 1 10000 0.100000001490116 "Gravis Ultrasound patch" "little endian short (16 bits)")
-	    (list "d40130.sds" 1 10000 0.100000001490116 "MIDI sample dump" "unsupported")
+	    (list "d40130.sds" 1 10000 0.100000001490116 "MIDI sample dump" "unknown")
 	    (list "d40130.sdx" 1 10000 0.100000001490116 "Sample dump" "unsigned little endian short (16 bits)")
 	    (list "d40130.sf" 1 10000 0.100000001490116 "IRCAM" "little endian short (16 bits)")
 	    (list "d40130.smp" 1 8000 0.125 "SMP" "little endian short (16 bits)")
@@ -1100,27 +1103,27 @@
 	    (list "d40130.st3" 1 8000 0.125 "Digiplayer ST3" "unsigned little endian short (16 bits)")
 	    (list "d40130.uwf" 1 8000 0.125249996781349 "Ultratracker" "little endian short (16 bits)")
 	    (list "d40130.voc" 1 10000 0.100100003182888 "VOC" "unsigned byte (8 bits)")
-	    (list "d40130.w00" 1 16000 0.0625 "TX-16W" "unsupported")
+	    (list "d40130.w00" 1 16000 0.0625 "TX-16W" "unknown")
 	    (list "d40130.wav" 1 10000 0.100000001490116 "RIFF" "little endian short (16 bits)")
 	    (list "d43.wav" 1 10000 0.100000001490116 "RIFF" "little endian short (16 bits)")
 	    (list "digit0v0.aiff" 1 8000 0.560000002384186 "AIFC" "big endian short (16 bits)")
 	    (list "esps-16.snd" 1 8000 3.09737491607666 "ESPS" "big endian short (16 bits)")
 	    (list "forest.aiff" 2 44100 3.907143 "AIFF" "big endian short (16 bits)" 24981 144332)
-	    (list "g721.au" 1 11025 4.35328817367554 "Sun" "unsupported")
-	    (list "g722.aifc" 1 44100 0.0184353739023209 "AIFC" "unsupported")
+	    (list "g721.au" 1 11025 4.35328817367554 "Sun" "unknown")
+	    (list "g722.aifc" 1 44100 0.0184353739023209 "AIFC" "unknown")
 	    (list "gong.wve" 1 8000 3.96799993515015 "PSION" "alaw (8 bits)")
-	    (list "gsm610.wav" 1 11025 1.7687075138092 "RIFF" "unsupported")
+	    (list "gsm610.wav" 1 11025 1.7687075138092 "RIFF" "unknown")
 	    (list "inrs-16.snd" 1 8000 2.46399998664856 "INRS" "little endian short (16 bits)")
 	    (list "kirk.wve" 1 8000 1.40799999237061 "PSION" "alaw (8 bits)")
 	    (list "loop.aiff" 1 44100 0.0367120169103146 "AIFC" "big endian short (16 bits)" 12 23)
-	    (list "m.asf" 1 8000 0.0 "asf" "unsupported")
+	    (list "m.asf" 1 8000 0.0 "asf" "unknown")
 	    (list "mary-sun4.sig" 1 8000 5.95137500762939 "Comdisco SPW signal" "big endian double (64 bits)")
 	    (list "mocksong.wav" 1 11025 7.86956930160522 "RIFF" "little endian short (16 bits)")
 	    (list "mono24.wav" 1 22050 1.98997735977173 "RIFF" "little endian int (24 bits)")
-	    (list "msadpcm.wav" 1 11025 4.43501138687134 "RIFF" "unsupported")
+	    (list "msadpcm.wav" 1 11025 4.43501138687134 "RIFF" "unknown")
 	    (list "n8.snd" 1 44100 0.0367800444364548 "Sun" "signed byte (8 bits)")
 	    (list "nasahal.aif" 1 11025 9.89841270446777 "AIFF" "signed byte (8 bits)")
-	    (list "nasahal.avi" 1 11025 0.0 "AVI" "unsupported")
+	    (list "nasahal.avi" 1 11025 0.0 "AVI" "unknown")
 	    (list "nasahal.dig" 1 11025 9.89841270446777 "Sound Designer 1" "big endian short (16 bits)")
 	    (list "nasahal.ivc" 2 44100 0.449002265930176 "raw (no header)" "big endian short (16 bits)")
 	    (list "nasahal.pat" 1 11025 3.95410442352295 "Gravis Ultrasound patch" "unsigned byte (8 bits)")
@@ -1141,9 +1144,9 @@
 	    (list "nist-01.wav" 1 16000 2.26912498474121 "NIST" "little endian short (16 bits)")
 	    (list "nist-10.wav" 1 16000 2.26912498474121 "NIST" "big endian short (16 bits)")
 	    (list "nist-16.snd" 1 16000 1.02400004863739 "NIST" "big endian short (16 bits)")
-	    (list "nist-shortpack.wav" 1 16000 4.53824996948242 "NIST" "unsupported")
+	    (list "nist-shortpack.wav" 1 16000 4.53824996948242 "NIST" "unknown")
 	    (list "none.aifc" 1 44100 0.0367800444364548 "AIFC" "big endian short (16 bits)")
-	    (list "nylon2.wav" 2 22050 1.14376413822174 "RIFF" "unsupported")
+	    (list "nylon2.wav" 2 22050 1.14376413822174 "RIFF" "unknown")
 	    (list "o2.adf" 1 44100 0.036780 "CSRE adf" "little endian short (16 bits)")
 	    (list "o2.avr" 1 44100 0.0183900222182274 "AVR" "big endian short (16 bits)")
 	    (list "o2.bicsf" 1 44100 0.0367800444364548 "IRCAM" "big endian short (16 bits)")
@@ -1156,21 +1159,21 @@
 	    (list "o2_12bit.aiff" 1 44100 0.0367800444364548 "AIFF" "big endian short (16 bits)")
 	    (list "o2_18bit.aiff" 1 44100 0.0367800444364548 "AIFF" "big endian int (24 bits)")
 	    (list "o2_711u.wave" 1 44100 0.0367800444364548 "RIFF" "mulaw (8 bits)")
-	    (list "o2_722.snd" 1 44100 0.0183900222182274 "Sun" "unsupported")
-	    (list "o2_726.aiff" 1 8000 0.0367499999701977 "AIFC" "unsupported")
-	    (list "o2_726.snd" 1 44100 0.0230158735066652 "Sun" "unsupported")
-	    (list "o2_728.aiff" 1 8000 0.0367499999701977 "AIFC" "unsupported")
+	    (list "o2_722.snd" 1 44100 0.0183900222182274 "Sun" "unknown")
+	    (list "o2_726.aiff" 1 8000 0.0367499999701977 "AIFC" "unknown")
+	    (list "o2_726.snd" 1 44100 0.0230158735066652 "Sun" "unknown")
+	    (list "o2_728.aiff" 1 8000 0.0367499999701977 "AIFC" "unknown")
 	    (list "o2_8.iff" 1 44100 0.0367800444364548 "SVX8" "signed byte (8 bits)")
 	    (list "o2_8.voc" 1 44100 0.0370294786989689 "VOC" "unsigned byte (8 bits)")
-	    (list "o2_dvi.wave" 1 44100 0.0232199542224407 "RIFF" "unsupported")
+	    (list "o2_dvi.wave" 1 44100 0.0232199542224407 "RIFF" "unknown")
 	    (list "o2_float.bicsf" 1 44100 0.0367800444364548 "IRCAM" "big endian float (32 bits)")
-	    (list "o2_gsm.aiff" 1 8000 0.0367499999701977 "AIFC" "unsupported")
+	    (list "o2_gsm.aiff" 1 8000 0.0367499999701977 "AIFC" "unknown")
 	    (list "o2_u8.avr" 1 44100 0.0367800444364548 "AVR" "unsigned byte (8 bits)")
 	    (list "o2_u8.wave" 1 44100 0.0367800444364548 "RIFF" "unsigned byte (8 bits)")
 	    (list "o28.mpc" 1 44100 0.036780 "AKAI 4" "little endian short (16 bits)")
-	    (list "oboe.g721" 1 22050 1.15287983417511 "Sun" "unsupported")
-	    (list "oboe.g723_24" 1 22050 0.864761888980865 "Sun" "unsupported")
-	    (list "oboe.g723_40" 1 22050 1.44126987457275 "Sun" "unsupported")
+	    (list "oboe.g721" 1 22050 1.15287983417511 "Sun" "unknown")
+	    (list "oboe.g723_24" 1 22050 0.864761888980865 "Sun" "unknown")
+	    (list "oboe.g723_40" 1 22050 1.44126987457275 "Sun" "unknown")
 	    (list "oboe.kts" 1 22050 2.305125 "Korg" "big endian short (16 bits)")
 	    (list "oboe.its" 1 22050 2.305125 "Impulse Tracker" "little endian short (16 bits)")
 	    (list "oboe.sf2" 1 22050 2.30512475967407 "SoundFont" "little endian short (16 bits)")
@@ -1180,19 +1183,19 @@
 	    (list "oboe.nsp" 1 22050 2.305125 "CSL" "little endian short (16 bits)")
 	    (list "oboe.wfp" 1 22050 2.305125 "Turtle Beach" "little endian short (16 bits)")
 	    (list "oki.snd" 2 44100 0.0041950112208724 "raw (no header)" "big endian short (16 bits)")
-	    (list "oki.wav" 1 44100 0.016780 "RIFF" "unsupported")
-	    (list "orv-dvi-adpcm.wav" 1 44100 1.92725622653961 "RIFF" "unsupported")
+	    (list "oki.wav" 1 44100 0.016780 "RIFF" "unknown")
+	    (list "orv-dvi-adpcm.wav" 1 44100 1.92725622653961 "RIFF" "unknown")
 	    (list "riff-16.snd" 1 22050 1.88766443729401 "RIFF" "little endian short (16 bits)")
 	    (list "riff-8-u.snd" 1 11025 0.506848096847534 "RIFF" "unsigned byte (8 bits)")
 	    (list "rooster.wve" 1 8000 2.04800009727478 "PSION" "alaw (8 bits)")
 	    (list "sd1-16.snd" 1 44100 0.400544226169586 "Sound Designer 1" "big endian short (16 bits)")
-	    (list "segfault.snd" 16777216 576061440 1.24986669902682e-7 "Sun" "unsupported")
+	    (list "segfault.snd" 16777216 576061440 1.24986669902682e-7 "Sun" "unknown")
 	    (list "sf-16.snd" 1 22050 1.88766443729401 "IRCAM" "big endian short (16 bits)")
 	    (list "si654.adc" 1 16000 6.71362495422363 "ADC/OGI" "big endian short (16 bits)")
 	    (list "smp-16.snd" 1 8000 5.2028751373291 "SMP" "little endian short (16 bits)")
 	    (list "sound.pat" 1 8000 1.95050001144409 "Gravis Ultrasound patch" "unsigned little endian short (16 bits)")
 	    (list "sound.sap" 1 8000 1.95050001144409 "Goldwave sample" "little endian short (16 bits)")
-	    (list "sound.sds" 1 8000 1.95050001144409 "MIDI sample dump" "unsupported")
+	    (list "sound.sds" 1 8000 1.95050001144409 "MIDI sample dump" "unknown")
 	    (list "sound.sfr" 1 8000 1.95050001144409 "SRFS" "little endian short (16 bits)")
 	    (list "sound.v8" 1 8000 1.95050001144409 "Covox V8" "unsigned byte (8 bits)")
 	    (list "sound.vox" 2 44100 0.044217687100172 "raw (no header)" "big endian short (16 bits)")
@@ -1205,12 +1208,12 @@
 	    (list "sy85.snd" 1 8000 5.05600023269653 "Sy-85" "big endian short (16 bits)")
 	    (list "sy99.snd" 1 8000 4.54400014877319 "Sy-99" "big endian short (16 bits)")
 	    (list "telephone.wav" 1 16000 2.27881240844727 "NIST" "little endian short (16 bits)")
-	    (list "trumps22.adp" 1 22050 3.092880 "RIFF" "unsupported")
-	    (list "truspech.wav" 1 8000 1.1599999666214 "RIFF" "unsupported")
+	    (list "trumps22.adp" 1 22050 3.092880 "RIFF" "unknown")
+	    (list "truspech.wav" 1 8000 1.1599999666214 "RIFF" "unknown")
 	    (list "ulaw.aifc" 1 44100 0.0367800444364548 "AIFC" "mulaw (8 bits)")
 	    (list "voc-8-u.snd" 1 8000 1.49937498569489 "VOC" "unsigned byte (8 bits)")
 	    (list "o28.voc" 1 44100 0.036893 "VOC" "little endian short (16 bits)")
-	    (list "voxware.wav" 1 8000 0.324000000953674 "RIFF" "unsupported")
+	    (list "voxware.wav" 1 8000 0.324000000953674 "RIFF" "unknown")
 	    (list "wd.w00" 1 8000 0.202749997377396 "Sy-99" "big endian short (16 bits)")
 	    (list "wd1.smp" 1 8000 0.202749997377396 "SMP" "little endian short (16 bits)")
 	    (list "wd1.wav" 1 44100 0.0367800444364548 "RIFF" "little endian short (16 bits)")
@@ -1219,22 +1222,22 @@
 	    (list "b16.pvf" 1 44100 0.036803 "Portable Voice Format" "big endian short (16 bits)")
 	    (list "b32.pvf" 1 44100 0.036803 "Portable Voice Format" "big endian int (32 bits)")
 	    (list "wood.dsf" 1 8000 0.202749997377396 "Delusion" "little endian short (16 bits)")
-	    (list "wood.dvi" 1 22100 0.0278733037412167 "RIFF" "unsupported")
+	    (list "wood.dvi" 1 22100 0.0278733037412167 "RIFF" "unknown")
 	    (list "wood.dwd" 1 22100 0.0733936652541161 "DiamondWare" "signed byte (8 bits)")
 	    (list "wood.fsm" 1 8000 0.202999994158745 "Farandole" "little endian short (16 bits)")
-	    (list "wood.mad" 1 22100 0.0372398197650909 "RIFF" "unsupported")
+	    (list "wood.mad" 1 22100 0.0372398197650909 "RIFF" "unknown")
 	    (list "wood.maud" 1 44100 0.0183900222182274 "MAUD" "big endian short (16 bits)")
 	    (list "wood.pat" 1 22100 0.0733936652541161 "Gravis Ultrasound patch" "little endian short (16 bits)")
 	    (list "wood.riff" 1 44100 0.0367800444364548 "RIFF" "little endian short (16 bits)")
 	    (list "wood.rifx" 1 44100 0.0367800444364548 "RIFF" "big endian short (16 bits)")
-	    (list "wood.sds" 1 22100 0.0733936652541161 "MIDI sample dump" "unsupported")
+	    (list "wood.sds" 1 22100 0.0733936652541161 "MIDI sample dump" "unknown")
 	    (list "wood.sdx" 1 22100 0.0733936652541161 "Sample dump" "unsigned little endian short (16 bits)")
 	    (list "wood.sf" 1 44100 0.0367800444364548 "IRCAM" "big endian short (16 bits)")
 	    (list "wood.sndr" 2 44100 0.0092290248721838 "raw (no header)" "big endian short (16 bits)")
 	    (list "wood.sndt" 1 44100 0.0367800444364548 "SNDT" "unsigned byte (8 bits)")
 	    (list "wood.st3" 1 8000 0.202749997377396 "Digiplayer ST3" "unsigned little endian short (16 bits)")
 	    (list "wood.uwf" 1 8000 0.202999994158745 "Ultratracker" "little endian short (16 bits)")
-	    (list "wood.w00" 1 16000 0.101374998688698 "TX-16W" "unsupported")
+	    (list "wood.w00" 1 16000 0.101374998688698 "TX-16W" "unknown")
 	    (list "wood12.aiff" 1 44100 0.0367800444364548 "AIFF" "big endian short (16 bits)")
 	    (list "wood16.dwd" 2 44100 0.0367800444364548 "DiamondWare" "little endian short (16 bits)")
 	    (list "wood16.wav" 2 44100 0.0367800444364548 "RIFF" "little endian short (16 bits)")
@@ -1253,7 +1256,7 @@
 	    (list "M1F1-float64C-AFsp.aif" 2 8000 2.9366 "AIFC" "big endian double (64 bits)")
 	    (list "MacBoing.wav" 1 11127 0.696 "RIFF" "unsigned byte (8 bits)")
 	    (list "t15.aiff" 2 44100 135.00 "AIFC" "little endian short (16 bits)")
-	    (list "zulu_a4.w11" 1 33000 1.21987879276276 "TX-16W" "unsupported" 23342 40042)))
+	    (list "zulu_a4.w11" 1 33000 1.21987879276276 "TX-16W" "unknown" 23342 40042)))
 	  (run-hook after-test-hook 2)
 	  ))
     )
@@ -1402,7 +1405,7 @@
 	  (list 'default-output-chans default-output-chans 1 2)
 	  (list 'default-output-format default-output-format 1 1)
 	  (list 'default-output-srate default-output-srate 22050 44100)
-	  (list 'default-output-type default-output-type 0 1)
+	  (list 'default-output-type default-output-type mus-next mus-aifc)
 	  (list 'dot-size dot-size 1 4)
 	  (list 'enved-base enved-base 1.0  1.5)
 	  (list 'enved-clip? enved-clip? #f #t)
@@ -1938,10 +1941,10 @@
 	      (snd-display ";oboe: file-write-date: ~A?" (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd")))))
 	  (play-sound "oboe.snd")
 	  
-	  (let ((lasth (do ((i 0 (1+ i)))
-			   ((string-=? (mus-header-type-name i) "unknown") i))))
+	  (let ((lasth (do ((i 1 (1+ i)))
+			   ((string-=? (mus-header-type-name i) "unsupported") i))))
 	    (if (< lasth 50) (snd-display ";header-type[~A] = ~A" lasth (mus-header-type-name lasth))))
-	  (let ((lasth (do ((i 0 (1+ i)))
+	  (let ((lasth (do ((i 1 (1+ i)))
 			   ((string-=? (mus-data-format-name i) "unknown") i))))
 	    (if (< lasth 10) (snd-display ";data-format[~A] = ~A" lasth (mus-data-format-name lasth))))
 	  
@@ -14887,7 +14890,7 @@ EDITS: 5
 	  (if (not (= (edit-position ind 1) 2))
 	      (snd-display ";edit-position 1 after stereo mix selection moved: ~A" (edit-position ind 2)))
 	  (if (fneq (maxamp (list (1+ md))) 0.03332)
-	      (snd-display ";maxamp of 2nd sel mix: ~A" (maxamp (list (1+ md)))))
+	      (snd-display ";maxamp of 2nd sel mix: ~A" (maxamp (list (1+ md)) #t)))
 	  (if (fneq (sample 1005 ind 1) 0.011)
 	      (snd-display ";mixed sel samp: ~A" (sample 1005 ind 1)))
 	  (scale-channel .5 0 10000 (list (1+ md)) 1)
@@ -16554,11 +16557,18 @@ EDITS: 5
 	      (if (or (= len 0) (> (random 1.0) .5))
 		  (let* ((choice (inexact->exact (floor (my-random sf-dir-len))))
 			 (name (string-append sf-dir (list-ref sf-dir-files choice)))
-			 (ht (mus-sound-header-type name))
-			 (df (mus-sound-data-format name))
-			 (fd (if (or (= ht mus-raw) (= df -1)) 
+			 (ht (catch #t (lambda () (mus-sound-header-type name)) (lambda args 0)))
+			 (df (catch #t (lambda () (mus-sound-data-format name)) (lambda args 0)))
+			 (fd (if (or (= ht mus-raw)
+				     (= ht mus-unsupported)
+				     (= df mus-unknown))
 				 -1 
-				 (or (view-sound name) -1))))
+				 (or (catch #t
+					    (lambda () (view-sound name))
+					    (lambda args
+					      (snd-display "~A ~A ~A" name ht df)
+					      -1))
+				     -1))))
 		    (if (not (= fd -1))
 			(begin
 			  (set! open-ctr (+ open-ctr 1))
@@ -16570,12 +16580,6 @@ EDITS: 5
 			(set! open-files (remove-if (lambda (a) (= a fd)) open-files)))))))
 	  (if open-files (for-each close-sound open-files))
 	  (if (not (= (length (sounds)) 0)) (snd-display ";active-sounds: ~A ~A?" (sounds) (map short-file-name (sounds))))
-	  (let* ((name (string-append sf-dir (list-ref sf-dir-files 0)))
-		 (index (view-sound name)))
-	    (if index
-		(begin
-		  (if (not (string=? name (file-name index))) (snd-display ";file-name: ~A?" (file-name index)))
-		  (close-sound index))))
 	  (let ((fd (open-raw-sound (string-append sf-dir "addf8.nh") 1 8012 mus-mulaw)))
 	    (if (not (= (data-format fd) mus-mulaw)) (snd-display ";open-raw-sound: ~A?" (mus-data-format-name (data-format fd))))
 	    (close-sound fd))
@@ -23046,7 +23050,7 @@ EDITS: 3
 						 (lambda () (ptree-channel (lambda (y) (+ y .2)) #f #f ind 0 #f #t))
 						 (lambda () (scan-channel (lambda (y) (> y 1.0))))
 						 (lambda () (pad-channel 0 2000))
-						 (lambda () (vct->channel (vct-fill! (make-vct 1000) .1)) 0 1000)
+						 (lambda () (vct->channel (vct-fill! (make-vct 1000) .1) 0 1000))
 						 (lambda () (clm-channel (make-two-zero .5 .5)))
 						 (lambda () (mix "pistol.snd" 12345))
 						 (lambda () (src-channel 2.0))
@@ -23074,6 +23078,9 @@ EDITS: 3
 ;;; oboe:     0.01   0.0  0.01   0.0   0.0   0.0  0.01   0.0  0.01  0.02   0.0
 ;;; storm:    0.01  0.09  0.01  0.23  0.16   0.0   0.0  0.17  0.01  0.57  0.01
 ;;; away:     0.01  1.07  0.04   2.4  1.68   0.0   0.0  1.76  0.03  4.49  0.02
+
+;;; bigger    scl:0.08  env:0.09  ptree:0.24  scn:187.64  del:0.06  pad:0.05  mix:0.11  vct:0.08  insert:20.89 (330Msamps, sel->reg #t)
+;;;          (time (pad-channel 1336909605 297671280))->0.03
 	
 	(if (and with-big-file (file-exists? "/zap/sounds/bigger.snd"))
 	    (begin
@@ -28283,8 +28290,8 @@ EDITS: 2
 	    (itst '(mus-sound-data-location "oboe.snd") 28)
 	    (itst '(mus-sound-chans "oboe.snd") 1)
 	    (itst '(mus-sound-srate "oboe.snd") 22050)
-	    (itst '(mus-sound-header-type "oboe.snd") 0)
-	    (itst '(mus-sound-data-format "oboe.snd") 1)
+	    (itst '(mus-sound-header-type "oboe.snd") mus-next)
+	    (itst '(mus-sound-data-format "oboe.snd") mus-bshort)
 	    (ftst '(mus-sound-duration "oboe.snd") 2.305)
 	    (stst '(mus-sound-comment "4.aiff") ";Written Tue 26-Nov-96 14:55 PST by bil at bill (Silicon Graphics Iris 4D) using Allegro CL, clm of 21-Nov-96")
 	    (itst '(mus-sound-datum-size "oboe.snd") 2)
@@ -28576,7 +28583,7 @@ EDITS: 2
 	    (let ((v (make-vct 3))
 		  (f (make-frame 1)))
 	      (vct-map (lambda () (frame-set! f 0 (+ mus-next 1.0)) f) v) ; force fall-through to Guile
-	      (if (not (vequal v (vct 1.0 1.0 1.0))) (snd-display ";vct-map 1.0 (set): ~A" v)))
+	      (if (not (vequal v (vct 2.0 2.0 2.0))) (snd-display ";vct-map 1.0 (set): ~A" v)))
 	    
 	    (let ((v0 (make-vct 3))
 		  (v1 (make-vct 3))

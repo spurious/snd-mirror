@@ -16,6 +16,11 @@ off_t snd_round_off_t(double x)
   return(i);
 }
 
+off_t snd_abs_off_t(off_t val)
+{
+  return((val < 0) ? -val : val);
+}
+
 #define POW2_SIZE 31
 static int pow2s[POW2_SIZE] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 
 			       512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 

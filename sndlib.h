@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 18
-#define SNDLIB_REVISION 8
-#define SNDLIB_DATE "14-Aug-03"
+#define SNDLIB_REVISION 9
+#define SNDLIB_DATE "24-Aug-03"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -101,7 +101,7 @@
 #if defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
   #define c__FUNCTION__ __func__
 #else
-#if defined(__GNUC__) && defined(__FUNCTION__)
+#ifdef __GNUC__
   #define c__FUNCTION__ __FUNCTION__
 #else
   #define c__FUNCTION__ ""
@@ -200,9 +200,8 @@
 #define MUS_DAC_CHANNEL 252525
 #define MUS_DAC_REVERB 252520
 
-#define MUS_UNSUPPORTED -1
-enum {MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_BICSF, MUS_NIST, MUS_INRS, MUS_ESPS, MUS_SVX, MUS_VOC, MUS_SNDT, MUS_RAW,
-      MUS_SMP, MUS_AVR, MUS_IRCAM, MUS_SD1, MUS_SPPACK, MUS_MUS10, MUS_HCOM, MUS_PSION, MUS_MAUD,
+enum {MUS_UNSUPPORTED, MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_BICSF, MUS_NIST, MUS_INRS, MUS_ESPS, MUS_SVX, MUS_VOC, 
+      MUS_SNDT, MUS_RAW, MUS_SMP, MUS_AVR, MUS_IRCAM, MUS_SD1, MUS_SPPACK, MUS_MUS10, MUS_HCOM, MUS_PSION, MUS_MAUD,
       MUS_IEEE, MUS_MATLAB, MUS_ADC, MUS_MIDI, MUS_SOUNDFONT, MUS_GRAVIS, MUS_COMDISCO, MUS_GOLDWAVE, MUS_SRFS,
       MUS_MIDI_SAMPLE_DUMP, MUS_DIAMONDWARE, MUS_ADF, MUS_SBSTUDIOII, MUS_DELUSION,
       MUS_FARANDOLE, MUS_SAMPLE_DUMP, MUS_ULTRATRACKER, MUS_YAMAHA_SY85, MUS_YAMAHA_TX16W, MUS_DIGIPLAYER,
@@ -396,7 +395,7 @@ off_t mus_sound_length(const char *arg);
 int mus_sound_fact_samples(const char *arg);
 int mus_sound_write_date(const char *arg);
 int mus_sound_type_specifier(const char *arg);
-int mus_sound_align(const char *arg);
+int mus_sound_block_align(const char *arg);
 int mus_sound_bits_per_sample(const char *arg);
 
 int mus_sound_set_chans(const char *arg, int val);

@@ -53,7 +53,7 @@
 #if defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
   #define c__FUNCTION__ __func__
 #else
-#if defined(__GNUC__) && defined(__FUNCTION__)
+#ifdef __GNUC__
   #define c__FUNCTION__ __FUNCTION__
 #else
   #define c__FUNCTION__ ""

@@ -1732,7 +1732,7 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, console_state *cs)
     }
   else
     {
-      if (amp_env_usable(cp, samples_per_pixel, ap->hisamp, true, cp->edit_ctr))
+      if (amp_env_usable(cp, samples_per_pixel, ap->hisamp, true, cp->edit_ctr, false))
 	{
 	  if (mix_input_amp_env_usable(md, samples_per_pixel))
 	    j = make_temporary_amp_env_graph(cp, ap, md, samples_per_pixel, newbeg, newend, oldbeg, oldend);

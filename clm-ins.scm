@@ -1110,7 +1110,7 @@ is a physical model of a flute:\n\
 	(list-set! dly-len i (next-prime val))))
 
     (let* ((volume volume-1)
-	   (len (+ (mus-srate) (mus-sound-frames (mus-file-name *reverb*))))
+	   (len (+ (mus-srate) (mus-length *reverb*)))
 	   (comb1 (make-comb (* .822 reverb-factor) (list-ref dly-len 0)))
 	   (comb2 (make-comb (* .802 reverb-factor) (list-ref dly-len 1)))
 	   (comb3 (make-comb (* .773 reverb-factor) (list-ref dly-len 2)))
@@ -1280,7 +1280,7 @@ is a physical model of a flute:\n\
 	 (delA 0.0)
 	 (delB 0.0)
 	 (decay-dur (mus-srate))
-	 (len (+ decay-dur (mus-sound-frames (mus-file-name *reverb*)))))
+	 (len (+ decay-dur (mus-length *reverb*))))
     (ws-interrupt?)
     (run
      (lambda ()

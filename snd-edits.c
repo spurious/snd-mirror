@@ -9545,6 +9545,7 @@ static bool xen2sample_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
 static int snd2sample_channels(mus_any *ptr) {return(((snd2sample *)ptr)->chans);}
 static off_t snd2sample_location(mus_any *ptr) {return(((snd2sample *)ptr)->samps[0]);}
 static char *snd2sample_file_name(mus_any *ptr) {return(((snd2sample *)ptr)->sp->filename);}
+static off_t snd2sample_length(mus_any *ptr) {return(CURRENT_SAMPLES(((snd2sample *)ptr)->sp->chans[0]));}
 
 static int snd2sample_free(mus_any *ptr)
 {
@@ -9688,7 +9689,7 @@ static mus_any_class SND2SAMPLE_CLASS = {
   &snd2sample_describe,
   &snd2sample_equalp,
   0, 0,
-  0, 0,               /* int length */
+  &snd2sample_length, 0,
   0, 0, 0, 0,
   0, 0,
   0, 0,
@@ -9714,7 +9715,7 @@ static mus_any_class XEN2SAMPLE_CLASS = {
   &xen2sample_describe,
   &xen2sample_equalp,
   0, 0,
-  0, 0,               /* int length */
+  0, 0, 
   0, 0, 0, 0,
   0, 0,
   0, 0,

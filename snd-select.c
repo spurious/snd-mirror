@@ -335,10 +335,12 @@ static int insert_selection(chan_info *cp, off_t beg, const char *origin)
   char *tempfile = NULL;
   sync_info *si_out, *si_in;
   chan_info *cp_in, *cp_out;
-  int i, err = MUS_NO_ERROR;
+  int i, err = MUS_NO_ERROR, out_format = MUS_OUT_FORMAT;
   off_t len;
+  if (mus_header_writable(MUS_NEXT, cp->sound->hdr->format))
+    out_format = cp->sound->hdr->format;
   tempfile = snd_tempnam();
-  err = save_selection(tempfile, MUS_NEXT, MUS_OUT_FORMAT, SND_SRATE(cp->sound), NULL, SAVE_ALL_CHANS);
+  err = save_selection(tempfile, MUS_NEXT, out_format, SND_SRATE(cp->sound), NULL, SAVE_ALL_CHANS);
   if (err == MUS_NO_ERROR)
     {
       si_out = sync_to_chan(cp);
@@ -595,6 +597,8 @@ int save_selection(char *ofile, int type, int format, int srate, const char *com
   ofd = snd_reopen_write(ofile);
   if (sp)
     {
+      bool copy_ok = false;
+
       bps = mus_bytes_per_sample(format);
       num = dur * bps * chans;
       no_space = disk_space_p(sp, num, 0, ofile);
@@ -604,6 +608,52 @@ int save_selection(char *ofile, int type, int format, int srate, const char *com
 	  snd_close(ofd, ofile);
 	  si = free_sync_info(si);
 	  return(MUS_WRITE_ERROR);
+	}
+      copy_ok = ((format == sp->hdr->format) && 
+		 (chans == sp->nchans) &&
+		 (chan == SAVE_ALL_CHANS));
+      if (copy_ok)
+	for (i = 0; i < chans; i++)
+	  if ((sp->chans[i]->edit_ctr != 0) || 
+	      (si->cps[i]->sound != sp) ||
+	      (si->begs[i] != si->begs[0]))
+	    {
+	      copy_ok = false;
+	      break;
+	    }
+      if (copy_ok)
+	{
+	  /* write next header with correct len
+	   * seek loc in sp->filename
+	   * copy len*data-size bytes
+	   * get max from amp envs
+	   */
+	  off_t bytes;
+	  int fdi, iloc;
+	  char *buffer;
+	  lseek(ofd, oloc, SEEK_SET);
+	  fdi = mus_file_open_read(sp->filename);
+	  if (fdi == -1)
+	    snd_error(_("can't read selection's original sound? %s: %s"), sp->filename, strerror(errno));
+	  else
+	    {
+	      iloc = mus_header_data_location();
+	      lseek(fdi, iloc + chans * bps * si->begs[0], SEEK_SET);
+	      buffer = (char *)CALLOC(8192, sizeof(char));
+	      for (j = 0; j < num; j += 8192)
+		{
+		  bytes = num - j;
+		  if (bytes > 8192) bytes = 8192;
+		  read(fdi, buffer, bytes);
+		  write(ofd, buffer, bytes);
+		}
+	      FREE(buffer);
+	      snd_close(fdi, sp->filename);
+	    }
+	  snd_close(ofd, ofile);
+	  si = free_sync_info(si);
+	  alert_new_file();
+	  return(MUS_NO_ERROR);
 	}
     }
   reporting = ((sp) && (dur > REPORTING_SIZE));

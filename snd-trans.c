@@ -851,7 +851,7 @@ static int read_dvi_adpcm(const char *oldname, const char *newname, char *hdr, i
   off_t loc;
   loc = mus_sound_data_location(oldname);
   chans = mus_sound_chans(oldname);
-  blksiz = mus_sound_align(oldname);
+  blksiz = mus_sound_block_align(oldname);
   samps = mus_sound_fact_samples(oldname);
   if ((chans != 1) || (mus_sound_bits_per_sample(oldname) != 4))
     return(mus_error(MUS_UNSUPPORTED_DATA_FORMAT,
@@ -936,7 +936,7 @@ static int read_oki_adpcm(const char *oldname, const char *newname, char *hdr)
 		     _("read_oki_adpcm: can't translate Oki ADPCM file %s: chans: %d\n"),
 		     oldname, chans));
   loc = mus_sound_data_location(oldname);
-  blksiz = mus_sound_align(oldname);
+  blksiz = mus_sound_block_align(oldname);
   if (blksiz == 0) blksiz = 256;
   STARTUP(oldname, newname, blksiz, unsigned char);
   buf1 = (short *)CALLOC(blksiz * 2, sizeof(short));
@@ -1466,7 +1466,7 @@ static const char *any_format_name(const char *name)
 {
   int format;
   format = mus_sound_data_format(name);
-  if (format != MUS_UNSUPPORTED)
+  if (format != MUS_UNKNOWN)
     return(mus_data_format_name(format));
   else return(mus_header_original_format_name(mus_sound_original_format(name),
 					      mus_sound_header_type(name)));
@@ -1535,8 +1535,6 @@ int snd_translate(const char *oldname, const char *newname, int type)
   FREE(hdr);
   if (err == MUS_CANT_TRANSLATE) /* i.e a case we don't even try to handle */
     {
-
-
       if (ss->catch_exists)
 	return(mus_error(MUS_CANT_TRANSLATE,
 			 _("can't translate %s\n  (%s header: %s (0x%x) data format)\n"),

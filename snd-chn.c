@@ -1163,7 +1163,7 @@ static int make_graph_1(chan_info *cp, bool normal)
   else
     {
       /* take min, max */
-      if (amp_env_usable(cp, samples_per_pixel, ap->hisamp, true, cp->edit_ctr)) /* true = start new background amp env process if needed */
+      if (amp_env_usable(cp, samples_per_pixel, ap->hisamp, true, cp->edit_ctr, false)) /* true = start new background amp env process if needed */
 	j = amp_env_graph(cp, ap, samples_per_pixel, (normal) ? ((int)SND_SRATE(sp)) : 1);
       else
 	{
@@ -1295,7 +1295,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
     }
   else
     {
-      if (amp_env_usable(cp, samples_per_pixel, hisamp, false, edit_pos)) 
+      if (amp_env_usable(cp, samples_per_pixel, hisamp, false, edit_pos, true)) 
 	{
 	  double step, xk;
 	  mus_sample_t ymin, ymax;

@@ -2177,8 +2177,7 @@ static XEN C_TO_XEN_ANY(Widget w, Arg arg)
 	return(C_TO_XEN_STRING((char *)(*((char **)(arg.value)))));
       else return(C_TO_XEN_INT((int)(*((int *)(arg.value)))));
       break;
-    case XM_TRANSFER_ENTRY_LIST:
-    case XM_PARSE_CALLBACK:
+    default:
       break;
     }
   return(C_TO_XEN_ULONG((*((unsigned long *)(arg.value))))); /* fallback */
@@ -23495,7 +23494,7 @@ The types are defined in xm.c around line 679.  To add XmNhiho as an integer: \n
 
   XEN_ASSERT_TYPE(XEN_STRING_P(nam), nam, XEN_ARG_1, S_add_resource, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(typ), typ, XEN_ARG_2, S_add_resource, "an integer");
-  hash_resource(XEN_TO_C_STRING(nam), XEN_TO_C_INT(typ));
+  hash_resource(XEN_TO_C_STRING(nam), (xm_resource_t)XEN_TO_C_INT(typ));
   return(nam);
 }
 
