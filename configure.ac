@@ -26,7 +26,6 @@ dnl Process this file with autoconf 2.50 to produce a configure script.
 # still TODO: sndlib configuration
 #             Mac OSX Guile/Gtk searches (Ruby?)
 #             Sgi compiler optimations automated somehow
-#             Gtk 2.0 choice
 #             Lesstif detection and warning
 #
 #--------------------------------------------------------------------------------

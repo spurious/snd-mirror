@@ -50,7 +50,7 @@ created (or updated) by configure.
 
 If you want to customize your version of Snd in some special way, see
 snd.h for a discussion of the various compile-time switches, and fixup
-the relevant makefile:
+the relevant makefile (these are not kept up-to-date):
 
 SGI:                   makefile.sgi
 Unixware 7:            makefile.uw7
@@ -501,7 +501,6 @@ URLS:
 Guile/Scheme:
   http://www.gnu.org/software/guile/guile.html
   http://www.cs.indiana.edu/scheme-repository
-  http://vicarious-existence.mit.edu/scwm/
   http://www.schemers.org/
   http://www.cs.rice.edu/~dorai/t-y-scheme/t-y-scheme.html
   http://www.cs.utexas.edu/users/wilson/schintro/schintro_toc.html
@@ -522,7 +521,6 @@ Snd:
   http://linux.oreillynet.com/pub/a/linux/2001/10/18/snd_parttwo.html
   http://www.saunalahti.fi/~mjkoskin/
   http://www.cosy.sbg.ac.at/~gwesp/mma-sound.html (Mathematica)
-  http://www.linuxpower.com/display_item.phtml?id=139 (Movies)
 
 Motif:
   http://www.opengroup.org/openmotif/

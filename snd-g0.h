@@ -352,7 +352,7 @@ typedef struct {
   #define SG_TEXT_BACKWARD_DELETE(Wid, Num)  
   #define SG_LIST_SELECT_ROW(Widget, Row)    
   #define SG_LIST_MOVETO(Widget, Row)        
-  #define SG_LIST_CLEAR(Widget)              gtk_tree_store_clear(GTK_TREE_STORE(Widget))
+  #define SG_LIST_CLEAR(Widget)              gtk_tree_store_clear(GTK_TREE_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(Widget))))
   #define SG_LIST_APPEND(Widget, Str)        sg_list_append(Widget, Str)
   #define SG_LIST_INSERT(Widget, Pos, Str)   sg_list_insert(Widget, Pos, Str)
   #define SG_LIST_SET_TEXT(Widget, Row, Str) sg_list_set_text(Widget, Row, Str)

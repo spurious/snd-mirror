@@ -14952,6 +14952,7 @@ EDITS: 4
 	      (IF (not (equal? (|XListPixmapFormats dpy) '((1 1 32) (4 8 32) (8 8 32) (15 16 32) (16 16 32) (24 32 32) (32 32 32))))
 		  (snd-display ";XListPixmapFormats: ~A" (|XListPixmapFormats dpy)))
 
+	      (|XWarpPointer dpy (list 'Window |None) (list 'Window |None) 0 0 10 10 100 100)
 	      (let ((cs (|XQueryBestCursor dpy win 10 10)))
 		(IF (not (equal? cs (list 1 32 32))) (snd-display ";XQueryBestCursor: ~A" cs)))
 	      (let ((pt (|XQueryPointer dpy win)))

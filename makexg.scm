@@ -991,7 +991,7 @@
 (hey " * TODO: check out the g_signal handlers (gtk_signal_* is ok)~%")
 (hey " * TODO: GdkEvent casts~%")
 (hey " * TODO: struct print, more struct instance creators(?)~%")
-(hey " * TODO: tie into libxm (configure.ac etc), Snd (snd-motif translation)~%")
+(hey " * TODO: tie into Snd (snd-motif translation)~%")
 (hey " * TODO: add unicode handlers from glib -- anything else?~%")
 (hey " * TODO: unprotect *_remove, unprotect old upon reset callback~%")
 (hey " * TODO: test suite (snd-test 24)~%")

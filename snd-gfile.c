@@ -199,7 +199,11 @@ void alert_new_file(void) {}
 #if HAVE_GTKEXTRA
   static gboolean dialog_select_callback(GtkIconList *iconlist, GtkIconListItem *icon, GdkEvent *event, gpointer context)
 #else
+#if HAVE_GTK2
+  static void dialog_select_callback(GtkTreeSelection *selection, gpointer context)
+#else
   static void dialog_select_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
+#endif
 #endif
 {
   char *filename;
@@ -311,10 +315,15 @@ static file_dialog_info *make_file_dialog(snd_state *ss, int read_only, char *ti
 		     GTK_SIGNAL_FUNC(dialog_select_callback), 
 		     (gpointer)fd);
 #else
+#if HAVE_GTK2
+  g_signal_connect(gtk_tree_view_get_selection(GTK_TREE_VIEW(GTK_FILE_SELECTION(fd->dialog)->file_list)), "changed",
+		   G_CALLBACK (dialog_select_callback), fd);
+#else
   SG_SIGNAL_CONNECT(GTK_OBJECT(GTK_FILE_SELECTION(fd->dialog)->file_list), 
 		     "select_row",
 		     GTK_SIGNAL_FUNC(dialog_select_callback), 
 		     (gpointer)fd);
+#endif
 #endif
 
   fd->playb = gtk_check_button_new_with_label("play selected sound");

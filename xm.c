@@ -30,7 +30,7 @@
  *                XmNwhichButton, XmScrolledWindowSetAreas, XmSetFontUnit, XmSetFontUnits, XmNdefaultFontList, 
  *                XmSetMenuCursor, XmStringByteCompare, XmStringCreateLtoR, XmSTRING_COMPONENT_CHARSET, XmSTRING_COMPONENT_FONTLIST_ELEMENT_TAG,
  *                XmStringCreateSimple, XmStringGetLtoR, XmStringGetNextComponent, XmStringGetNextSegment, XmStringLength, XmStringNConcat
- *                XmStringNCopy, XmStringPeekNextComponent, XmStringSegmentCreate, XmTrackingLocate
+ *                XmStringNCopy, XmStringPeekNextComponent, XmStringSegmentCreate, XmTrackingLocate, XmRemoveFrom|AddTo|PostFromList
  *              added XmWidgetGetDisplayRect inadvertently omitted earlier.
  *   14-Feb:    XUniqueContext added, XExtentsOfFontSet and XGetErrorDatabaseText deleted.
  *              X save-set and X host-address stuff deleted.
@@ -6624,6 +6624,7 @@ The Container creation function"
 }
 #endif
 
+#if (!XM_DISABLE_DEPRECATED)
 static XEN gxm_XmRemoveFromPostFromList(XEN arg1, XEN arg2)
 {
   #define H_XmRemoveFromPostFromList "void XmRemoveFromPostFromList(Widget menu, Widget post_from_widget) \
@@ -6643,6 +6644,7 @@ makes a menu accessible from more than one widget"
   XmAddToPostFromList(XEN_TO_C_Widget(arg1), XEN_TO_C_Widget(arg2));
   return(XEN_FALSE);
 }
+#endif
 
 static XEN gxm_XmGetTearOffControl(XEN arg1)
 {
@@ -8125,7 +8127,7 @@ the X Version 11 format."
 static XEN gxm_XWindowEvent(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XWindowEvent "XWindowEvent(display, w, event_mask) searches the event queue for an event that matches both \
-the specified window and event mask. "
+the specified window and event mask, and removes it or waits until it arrives."
   /* DIFF: XWindowEvent dpy win ev [evrtn] -> (list val evrtn)
    */
   XEvent *e;
@@ -17727,8 +17729,10 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreatePulldownMenu" XM_POSTFIX, gxm_XmCreatePulldownMenu, 3, 1, 0, H_XmCreatePulldownMenu);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetPostedFromWidget" XM_POSTFIX, gxm_XmGetPostedFromWidget, 1, 0, 0, H_XmGetPostedFromWidget);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetTearOffControl" XM_POSTFIX, gxm_XmGetTearOffControl, 1, 0, 0, H_XmGetTearOffControl);
+#if (!XM_DISABLE_DEPRECATED)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmAddToPostFromList" XM_POSTFIX, gxm_XmAddToPostFromList, 2, 0, 0, H_XmAddToPostFromList);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRemoveFromPostFromList" XM_POSTFIX, gxm_XmRemoveFromPostFromList, 2, 0, 0, H_XmRemoveFromPostFromList);
+#endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmScaleSetValue" XM_POSTFIX, gxm_XmScaleSetValue, 2, 0, 0, H_XmScaleSetValue);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmScaleGetValue" XM_POSTFIX, gxm_XmScaleGetValue, 1, 0, 0, H_XmScaleGetValue);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateScale" XM_POSTFIX, gxm_XmCreateScale, 3, 1, 0, H_XmCreateScale);

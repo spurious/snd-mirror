@@ -759,7 +759,7 @@ GtkWidget *sg_make_list(gpointer gp, int num_items, char **items, GtkSignalFunc 
       gtk_tree_store_set(GTK_TREE_STORE(model), &iter, 0, items[i], -1);
     }
   gtk_tree_view_expand_all(GTK_TREE_VIEW(list));
-  gtk_widget_hide(gtk_tree_view_column_get_widget(column));
+  /* gtk_widget_hide(gtk_tree_view_column_get_widget(column)); */
 #else
   char *str;
   list = gtk_clist_new(1);

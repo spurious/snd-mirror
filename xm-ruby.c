@@ -769,8 +769,10 @@
   XEN_ARGIFY_4(gxm_XmCreatePulldownMenu_w, gxm_XmCreatePulldownMenu)
   XEN_NARGIFY_1(gxm_XmGetPostedFromWidget_w, gxm_XmGetPostedFromWidget)
   XEN_NARGIFY_1(gxm_XmGetTearOffControl_w, gxm_XmGetTearOffControl)
+#if (!XM_DISABLE_DEPRECATED)
   XEN_NARGIFY_2(gxm_XmAddToPostFromList_w, gxm_XmAddToPostFromList)
   XEN_NARGIFY_2(gxm_XmRemoveFromPostFromList_w, gxm_XmRemoveFromPostFromList)
+#endif
   XEN_NARGIFY_2(gxm_XmScaleSetValue_w, gxm_XmScaleSetValue)
   XEN_NARGIFY_1(gxm_XmScaleGetValue_w, gxm_XmScaleGetValue)
   XEN_ARGIFY_4(gxm_XmCreateScale_w, gxm_XmCreateScale)
@@ -2001,8 +2003,10 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreatePulldownMenu" XM_POSTFIX, gxm_XmCreatePulldownMenu_w, 3, 1, 0, H_XmCreatePulldownMenu);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetPostedFromWidget" XM_POSTFIX, gxm_XmGetPostedFromWidget_w, 1, 0, 0, H_XmGetPostedFromWidget);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmGetTearOffControl" XM_POSTFIX, gxm_XmGetTearOffControl_w, 1, 0, 0, H_XmGetTearOffControl);
+#if (!XM_DISABLE_DEPRECATED)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmAddToPostFromList" XM_POSTFIX, gxm_XmAddToPostFromList_w, 2, 0, 0, H_XmAddToPostFromList);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmRemoveFromPostFromList" XM_POSTFIX, gxm_XmRemoveFromPostFromList_w, 2, 0, 0, H_XmRemoveFromPostFromList);
+#endif
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmScaleSetValue" XM_POSTFIX, gxm_XmScaleSetValue_w, 2, 0, 0, H_XmScaleSetValue);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmScaleGetValue" XM_POSTFIX, gxm_XmScaleGetValue_w, 1, 0, 0, H_XmScaleGetValue);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XmCreateScale" XM_POSTFIX, gxm_XmCreateScale_w, 3, 1, 0, H_XmCreateScale);

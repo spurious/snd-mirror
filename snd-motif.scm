@@ -2,7 +2,7 @@
 ;;;
 ;;; (install-searcher proc) -- use proc as File Selection Box filter, also install-searcher-with-colors
 ;;; (zync) and (unzync) -- cause y-zoom sliders to move together
-;;; (for-each-child w func) -- apply func to w and all its children
+;;; (for-each-child w func) -- apply func to w and all its children, similarly find-child and display-widget-tree
 ;;; (make-hidden-controls-dialog) -- add Options menu "Hidden controls" item that creates dialog to control these variables
 ;;; (create-fmv-dialog) for "real-time" control of the fm-violin in fmv.scm
 ;;; (make-pixmap strs) turns xpm-style description into pixmap
@@ -68,6 +68,21 @@
 	(if (string=? (|XtName child) name)
 	    (return child))))
      (throw 'no-such-widget (list "find-child" name)))))
+
+(define (display-widget-tree widget)
+  "display hierarchy of widgets beneath 'widget'"
+  (define (display-widget w spaces)
+    (let ((name (|XtName w)))
+      (if (or (not (string? name))
+	      (= (string-length name) 0))
+	  (set! name "<unnamed>"))
+      (display (format #f "~A~A~%" spaces name))
+      (if (|XtIsComposite w)
+	  (for-each 
+	   (lambda (n)
+	     (display-widget n (string-append spaces "  ")))
+	   (cadr (|XtGetValues w (list |XmNchildren 0) 1))))))
+  (display-widget widget ""))
 
 (define (set-main-color-of-widget w)
   "(set-main-color-of-widget w) sets the background color of widget 'w'"
