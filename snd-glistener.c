@@ -113,7 +113,7 @@ static void start_completion_dialog(int num_items, char **items)
     {
       int i;
       GtkTreeIter iter;
-      GtkTreeModel *model;
+      GtkListStore *model;
       model = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(completion_list)));
       gtk_list_store_clear(model);
       for (i = 0; i < num_items; i++) 
@@ -249,34 +249,6 @@ static void command_return_callback(snd_state *ss)
     command_return(listener_text, ss, printout_end);
 }
 
-static char *C_k_str = NULL;
-static void grab_line(snd_state *ss)
-{
-  char *full_str;
-  int current_position, last_position, i, j, k;
-  full_str = sg_get_text(listener_text, 0, -1);
-  current_position = sg_cursor_position(listener_text);
-  last_position = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
-  for (i = current_position; i < last_position; i++)
-    if (full_str[i] == '\n')
-      break;
-  if (C_k_str) FREE(C_k_str);
-  C_k_str = NULL;
-  if (i > current_position)
-    {
-      C_k_str = (char *)CALLOC(i - current_position + 2, sizeof(char));
-      for (j = current_position, k = 0; j < i; j++, k++) 
-	C_k_str[k] = full_str[j];
-    }
-  if (full_str) g_free(full_str);
-}
-
-static void insert_line(snd_state *ss)
-{
-  if (C_k_str)
-    sg_text_insert(listener_text, C_k_str);
-}
-
 static void back_to_start(snd_state *ss)
 {
   char *full_str = NULL, *prompt;
@@ -310,44 +282,14 @@ static void clear_back_to_prompt(GtkWidget *w)
 
 static void listener_help(snd_state *ss)
 {
-  char *source, *prompt, *name;
-  int len, i, j, start_of_name;
-  XEN result;
+  char *source = NULL;
   source = sg_get_text(listener_text, 0, -1);
   if (source)
     {
-      len = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
-      /* look for "(name...)" or "\n>name" */
-      prompt = listener_prompt(ss);
-      for (i = len - 1; i >= 0; i--)
-	{
-	  if ((source[i] == '(') || 
-	      ((source[i] == prompt[0]) && ((i == 0) || (source[i - 1] == '\n'))))
-	    {
-	      start_of_name = i + 1;
-	      /* look forward for a name */
-	      for (j = i + 2; j < len; j++)
-		if (is_separator_char(source[j]))
-		  {
-		    name = (char *)CALLOC(j - i + 1, sizeof(char));
-		    strncpy(name, (char *)(source + i + 1), j - i - 1);
-                    result = g_snd_help(C_TO_XEN_STRING(name), listener_width());
-		    FREE(name);
-		    if (XEN_STRING_P(result))
-		      {
-			listener_append("\n;");
-			listener_append_and_prompt(XEN_TO_C_STRING(result));
-			g_free(source);
-			return;
-		      }
-		  }
-	    }
-	}
+      provide_listener_help(source);
       g_free(source);
     }
 }
-
-static int last_highlight_position = -1;
 
 static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
@@ -355,11 +297,6 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
   chan_info *cp;
   int end;
 
-  if (last_highlight_position != -1)
-    {
-      sg_unselect_text(listener_text);
-      last_highlight_position = -1;
-    }
   /* fprintf(stderr,"got %d %c\n", event->state & snd_ControlMask, event->keyval); */
   if ((ss->sgx)->graph_is_active) 
     {
@@ -386,82 +323,67 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 		}
 	      else
 		{
-		  if (((event->keyval == snd_K_k) || (event->keyval == snd_K_K)) && 
+		  if (((event->keyval == snd_K_a) || (event->keyval == snd_K_A)) && 
 		      (event->state & snd_ControlMask))
 		    {
-		      grab_line(ss);
-		      return(FALSE);
+		      back_to_start(ss);
 		    }
 		  else
 		    {
-		      if (((event->keyval == snd_K_y) || (event->keyval == snd_K_Y)) && 
-			  (event->state & snd_ControlMask))
+		      if (event->keyval == GDK_BackSpace)
 			{
-			  insert_line(ss);
+			  int current_position;
+			  char *fstr;
+			  current_position = sg_cursor_position(listener_text);
+			  if (current_position > 1)
+			    {
+			      fstr = sg_get_text(listener_text, current_position - 2, current_position);
+			      if ((current_position != (printout_end - 2)) && 
+				  (strcmp(fstr, listener_prompt_with_cr(ss)) != 0))
+				{
+				  g_free(fstr);
+				  return(FALSE);
+				}
+			      g_free(fstr);
+			    }
 			}
 		      else
 			{
-			  if (((event->keyval == snd_K_a) || (event->keyval == snd_K_A)) && 
-			      (event->state & snd_ControlMask))
+			  if ((event->keyval == snd_K_greater) && (event->state & snd_MetaMask))
 			    {
-			      back_to_start(ss);
+			      end = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
+			      sg_set_cursor(listener_text, end + 1);
 			    }
 			  else
 			    {
-			      if (event->keyval == GDK_BackSpace)
+			      if ((event->keyval == snd_K_less) && (event->state & snd_MetaMask))
 				{
-				  int current_position;
-				  char *fstr;
-				  current_position = sg_cursor_position(listener_text);
-				  if (current_position > 1)
-				    {
-				      fstr = sg_get_text(listener_text, current_position - 2, current_position);
-				      if ((current_position != (printout_end - 2)) && 
-					  (strcmp(fstr, listener_prompt_with_cr(ss)) != 0))
-					{
-					  g_free(fstr);
-					  return(FALSE);
-					}
-				      g_free(fstr);
-				    }
+				  sg_set_cursor(listener_text, 2);
 				}
-			      else
+			      else 
 				{
-				  if ((event->keyval == snd_K_greater) && (event->state & snd_MetaMask))
+				  if (((event->keyval == snd_K_p) || (event->keyval == snd_K_P)) && (event->state & snd_MetaMask))
 				    {
-				      end = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
-				      sg_set_cursor(listener_text, end + 1);
+				      clear_back_to_prompt(listener_text);
+				      restore_listener_string(TRUE);
 				    }
-				  else
+				  else 
 				    {
-				      if ((event->keyval == snd_K_less) && (event->state & snd_MetaMask))
+				      if (((event->keyval == snd_K_n) || (event->keyval == snd_K_N)) && (event->state & snd_MetaMask))
 					{
-					  sg_set_cursor(listener_text, 2);
+					  clear_back_to_prompt(listener_text);
+					  restore_listener_string(FALSE);
 					}
 				      else 
 					{
-					  if (((event->keyval == snd_K_p) || (event->keyval == snd_K_P)) && (event->state & snd_MetaMask))
+					  if ((event->keyval == GDK_question) && (event->state & snd_ControlMask))
 					    {
-					      clear_back_to_prompt(listener_text);
-					      restore_listener_string(TRUE);
+					      listener_help(ss);
 					    }
-					  else 
+					  else
 					    {
-					      if (((event->keyval == snd_K_n) || (event->keyval == snd_K_N)) && (event->state & snd_MetaMask))
-						{
-						  clear_back_to_prompt(listener_text);
-						  restore_listener_string(FALSE);
-						}
-					      else 
-						{
-						  if ((event->keyval == GDK_question) && (event->state & snd_ControlMask))
-						    {
-						      listener_help(ss);
-						    }
-						  else
-						    {
-						      return(FALSE);
-						    }}}}}}}}}}}}}
+					      return(FALSE);
+					    }}}}}}}}}}}
   g_signal_stop_emission(GTK_OBJECT(w), g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(w))), 0);
   return(FALSE);
 }
@@ -565,6 +487,7 @@ static void make_command_widget(snd_state *ss, int height)
       if (ss->sgx->listener_fnt) gtk_widget_modify_font(listener_text, ss->sgx->listener_fnt);
       {
 	/* sigh... activate Emacs key bindings to some extent */
+	/*   these appear to be set in gtk+-2.1.1/gtk/gtkrc.key.emacs */
 	GtkBindingSet *set;
 	set = gtk_binding_set_by_class(GTK_TEXT_VIEW_GET_CLASS(GTK_TEXT_VIEW(listener_text)));
 
@@ -652,34 +575,37 @@ static void make_command_widget(snd_state *ss, int height)
 				     "delete_from_cursor", 2,
 				     G_TYPE_ENUM, GTK_DELETE_WORD_ENDS,
 				     G_TYPE_INT, 1);
+
 	/* C-k delete to end of line */
 	gtk_binding_entry_remove(set, GDK_k, GDK_CONTROL_MASK);
 	gtk_binding_entry_add_signal(set, GDK_k, GDK_CONTROL_MASK,
 				     "delete_from_cursor", 2,
 				     G_TYPE_ENUM, GTK_DELETE_PARAGRAPH_ENDS,
 				     G_TYPE_INT, 1);
+
 	/* M-delete delete to start of line */
 	gtk_binding_entry_remove(set, GDK_Delete, GDK_MOD1_MASK);
 	gtk_binding_entry_add_signal(set, GDK_Delete, GDK_MOD1_MASK,
 				     "delete_from_cursor", 2,
 				     G_TYPE_ENUM, GTK_DELETE_PARAGRAPH_ENDS,
 				     G_TYPE_INT, -1);
+
+	/* C-w delete region -> clipboard */
+	gtk_binding_entry_remove(set, GDK_w, GDK_CONTROL_MASK);
+	gtk_binding_entry_add_signal(set, GDK_w, GDK_CONTROL_MASK,
+				     "cut_clipboard", 0);
+
+	/* C-y yank <- clipboard */
+	gtk_binding_entry_remove(set, GDK_y, GDK_CONTROL_MASK);
+	gtk_binding_entry_add_signal(set, GDK_y, GDK_CONTROL_MASK,
+				     "paste_clipboard", 0);
+
 	/*
-	  TODO: more emacs keybinds (also Tab completion screws up)
-	Mod1 <Key>c:	    word-upper(c)\n\
-	Ctrl <Key>j:	    newline-and-indent()\n\
-	Ctrl <Key>l:	    redraw-display()\n\
-	Mod1 <Key>l:	    word-upper(l)\n\
-	Ctrl <Key>o:	    newline-and-backup()\n\
-	Ctrl <Key>t:	    text-transpose()\n\
-	Ctrl <Key>u:	    activate-keyboard(u)\n\
-	Mod1 <Key>u:	    word-upper(u)\n\
-	Ctrl <Key>w:	    delete-region()\n\
-	Ctrl <Key>x:	    activate-keyboard(x)\n\
-	Ctrl <Key>z:	    activate()\n\
-	Ctrl <Key>space:    set-anchor()\n\
-	<Key>Tab:	    listener-completion()\n\
-        Ctrl <Key>?:        listener-help()\n\
+	  TODO: more emacs keybinds from gtk+-2.1.1/gtk/gtktextview.c
+	        C-k should place text in clipboard but gtk_clipboard_set_text has no effect
+		Mod1 <Key>c:	    word-upper(c)\n\
+		Ctrl <Key>t:	    text-transpose()\n\
+		Mod1 <Key>u:	    word-upper(u)\n\
 	*/
       }
 

@@ -1202,6 +1202,7 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt);
 char *listener_prompt_with_cr(snd_state *ss);
 int check_balance(char *expr, int start, int end, int in_listener);
 int find_matching_paren(char *str, int parens, int pos, char *prompt, int *highlight_pos);
+XEN provide_listener_help(char *source);
 
 void g_init_listener(void);
 

@@ -527,46 +527,17 @@ void save_listener_text(FILE *fp)
 
 static void Listener_help(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
-  char *source = NULL, *name, *prompt;
-  int end = 0, beg, len, i, j, start_of_name = -1;
-  XEN result;
-  snd_state *ss;
-  end = XmTextGetLastPosition(w);
+  char *source = NULL;
+  int end = 0, beg, len;
+  end = XmTextGetLastPosition(w); /* cursor perhaps? */
   beg = end - 1024;
   if (beg < 0) beg = 0;
   if (beg >= end) return;
   len = end - beg + 1;
   source = (char *)CALLOC(len + 1, sizeof(char));
   XmTextGetSubstring(w, beg, len, len + 1, source);
-  if (source)
-    {
-      /* look for "(name...)" or "\n>name" */
-      ss = get_global_state();
-      prompt = listener_prompt(ss);
-      for (i = len - 1; i >= 0; i--)
-	{
-	  if ((source[i] == '(') || 
-	      ((source[i] == prompt[0]) && ((i == 0) || (source[i - 1] == '\n'))))
-	    {
-	      start_of_name = i + 1;
-	      /* look forward for a name */
-	      for (j = i + 2; j < len; j++)
-		if (is_separator_char(source[j]))
-		  {
-		    name = (char *)CALLOC(j - i + 1, sizeof(char));
-		    strncpy(name, (char *)(source + i + 1), j - i - 1);
-                    result = g_snd_help(C_TO_XEN_STRING(name), listener_width());
-		    FREE(name);
-		    if (XEN_STRING_P(result))
-		      {
-			listener_append("\n;");
-			listener_append_and_prompt(XEN_TO_C_STRING(result));
-			return;
-		      }
-		  }
-	    }
-	}
-    }
+  provide_listener_help(source);
+  FREE(source);
 }
 
 static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *num) 

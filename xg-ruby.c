@@ -2281,6 +2281,12 @@ XEN_NARGIFY_0(gxg_pango_language_get_type_w, gxg_pango_language_get_type)
 XEN_NARGIFY_1(gxg_pango_language_from_string_w, gxg_pango_language_from_string)
 XEN_NARGIFY_2(gxg_pango_language_matches_w, gxg_pango_language_matches)
 XEN_NARGIFY_1(gxg_G_OBJECT_TYPE_w, gxg_G_OBJECT_TYPE)
+XEN_NARGIFY_1(gxg_g_list_free_w, gxg_g_list_free)
+XEN_NARGIFY_1(gxg_g_list_reverse_w, gxg_g_list_reverse)
+XEN_NARGIFY_1(gxg_g_list_copy_w, gxg_g_list_copy)
+XEN_NARGIFY_1(gxg_g_list_last_w, gxg_g_list_last)
+XEN_NARGIFY_1(gxg_g_list_first_w, gxg_g_list_first)
+XEN_NARGIFY_1(gxg_g_list_length_w, gxg_g_list_length)
 #if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
 XEN_NARGIFY_5(gxg_pango_default_break_w, gxg_pango_default_break)
 XEN_NARGIFY_0(gxg_pango_context_new_w, gxg_pango_context_new)
@@ -2356,6 +2362,13 @@ XEN_NARGIFY_2(gxg_gdk_screen_get_monitor_at_window_w, gxg_gdk_screen_get_monitor
 XEN_NARGIFY_2(gxg_gdk_screen_broadcast_client_message_w, gxg_gdk_screen_broadcast_client_message)
 XEN_NARGIFY_0(gxg_gdk_screen_get_default_w, gxg_gdk_screen_get_default)
 XEN_NARGIFY_3(gxg_gdk_screen_get_setting_w, gxg_gdk_screen_get_setting)
+XEN_NARGIFY_2(gxg_gtk_clipboard_get_for_display_w, gxg_gtk_clipboard_get_for_display)
+XEN_NARGIFY_1(gxg_gtk_clipboard_get_display_w, gxg_gtk_clipboard_get_display)
+XEN_NARGIFY_1(gxg_gtk_widget_get_screen_w, gxg_gtk_widget_get_screen)
+XEN_NARGIFY_1(gxg_gtk_widget_has_screen_w, gxg_gtk_widget_has_screen)
+XEN_NARGIFY_1(gxg_gtk_widget_get_display_w, gxg_gtk_widget_get_display)
+XEN_NARGIFY_1(gxg_gtk_widget_get_root_window_w, gxg_gtk_widget_get_root_window)
+XEN_NARGIFY_2(gxg_gtk_widget_get_clipboard_w, gxg_gtk_widget_get_clipboard)
 #endif
 
 XEN_NARGIFY_1(gxg_GDK_COLORMAP_w, gxg_GDK_COLORMAP)
@@ -5569,6 +5582,12 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_language_from_string, gxg_pango_language_from_string_w, 1, 0, 0, H_pango_language_from_string);
   XG_DEFINE_PROCEDURE(pango_language_matches, gxg_pango_language_matches_w, 2, 0, 0, H_pango_language_matches);
   XG_DEFINE_PROCEDURE(G_OBJECT_TYPE, gxg_G_OBJECT_TYPE_w, 1, 0, 0, H_G_OBJECT_TYPE);
+  XG_DEFINE_PROCEDURE(g_list_free, gxg_g_list_free_w, 1, 0, 0, H_g_list_free);
+  XG_DEFINE_PROCEDURE(g_list_reverse, gxg_g_list_reverse_w, 1, 0, 0, H_g_list_reverse);
+  XG_DEFINE_PROCEDURE(g_list_copy, gxg_g_list_copy_w, 1, 0, 0, H_g_list_copy);
+  XG_DEFINE_PROCEDURE(g_list_last, gxg_g_list_last_w, 1, 0, 0, H_g_list_last);
+  XG_DEFINE_PROCEDURE(g_list_first, gxg_g_list_first_w, 1, 0, 0, H_g_list_first);
+  XG_DEFINE_PROCEDURE(g_list_length, gxg_g_list_length_w, 1, 0, 0, H_g_list_length);
 #if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
   XG_DEFINE_PROCEDURE(pango_default_break, gxg_pango_default_break_w, 5, 0, 0, H_pango_default_break);
   XG_DEFINE_PROCEDURE(pango_context_new, gxg_pango_context_new_w, 0, 0, 0, H_pango_context_new);
@@ -5644,6 +5663,13 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_screen_broadcast_client_message, gxg_gdk_screen_broadcast_client_message_w, 2, 0, 0, H_gdk_screen_broadcast_client_message);
   XG_DEFINE_PROCEDURE(gdk_screen_get_default, gxg_gdk_screen_get_default_w, 0, 0, 0, H_gdk_screen_get_default);
   XG_DEFINE_PROCEDURE(gdk_screen_get_setting, gxg_gdk_screen_get_setting_w, 3, 0, 0, H_gdk_screen_get_setting);
+  XG_DEFINE_PROCEDURE(gtk_clipboard_get_for_display, gxg_gtk_clipboard_get_for_display_w, 2, 0, 0, H_gtk_clipboard_get_for_display);
+  XG_DEFINE_PROCEDURE(gtk_clipboard_get_display, gxg_gtk_clipboard_get_display_w, 1, 0, 0, H_gtk_clipboard_get_display);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_screen, gxg_gtk_widget_get_screen_w, 1, 0, 0, H_gtk_widget_get_screen);
+  XG_DEFINE_PROCEDURE(gtk_widget_has_screen, gxg_gtk_widget_has_screen_w, 1, 0, 0, H_gtk_widget_has_screen);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_display, gxg_gtk_widget_get_display_w, 1, 0, 0, H_gtk_widget_get_display);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_root_window, gxg_gtk_widget_get_root_window_w, 1, 0, 0, H_gtk_widget_get_root_window);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_clipboard, gxg_gtk_widget_get_clipboard_w, 2, 0, 0, H_gtk_widget_get_clipboard);
 #endif
 
   XG_DEFINE_PROCEDURE(GDK_COLORMAP, gxg_GDK_COLORMAP_w, 1, 0, 0, NULL);

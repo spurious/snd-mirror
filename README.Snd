@@ -707,7 +707,7 @@ Linux audio:
   http://www.linuxsound.at
 
 GSL:
-  ftp://sourceware.cygnus.com/pub/gsl/
+  ftp://ftp.gnu.org/gnu/gsl
 
 Ruby:
   comp.lang.ruby

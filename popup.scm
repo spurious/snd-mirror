@@ -578,9 +578,9 @@
 		     (if (= ButtonPress (.type e))
 			 (begin
 			   ;; xe is where the mouse-click occurred in the graph window's (local) coordinates
+			   ;;   not the same as (.x e), which appears to be in the outer shell's coordinates
 			   (set! graph-popup-snd snd)
 			   (set! graph-popup-chn chn)
-			   
 			   (if (= (channel-style snd) channels-combined)
 			       (let ((ye (.y e))) ; y axis location of mouse-down
 				 (call-with-current-continuation

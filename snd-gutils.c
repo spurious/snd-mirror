@@ -717,34 +717,6 @@ int sg_cursor_position(GtkWidget *w)
   return(gtk_text_iter_get_offset(&pos));
 }
 
-#if 0
-void sg_select_text(GtkWidget *w, int s0, int s1)
-{
-  /* The currently-selected text in @buffer is the region between the
-   * "selection_bound" and "insert" marks. If "selection_bound" and
-   * "insert" are in the same place, then there is no current selection.
-   */
-  GtkTextIter start, end;
-  GtkTextBuffer *buf;
-  buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
-  gtk_text_iter_set_offset(&start, s0);
-  gtk_text_iter_set_offset(&end, s1);
-  gtk_text_buffer_move_mark_by_name(buf, "selection_bound", &start);
-  gtk_text_buffer_move_mark_by_name(buf, "insert", &end);
-}
-#endif
-
-void sg_unselect_text(GtkWidget *w)
-{
-  int s0;
-  GtkTextIter start;
-  GtkTextBuffer *buf;
-  buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
-  s0 = sg_cursor_position(w);
-  gtk_text_iter_set_offset(&start, s0);
-  gtk_text_buffer_move_mark_by_name(buf, "selection_bound", &start);
-}
-
 GtkWidget *make_scrolled_text(snd_state *ss, GtkWidget *parent, int editable, GtkWidget *boxer, GtkWidget *paner)
 {
   /* returns new text widget */
@@ -816,39 +788,39 @@ GtkWidget *sg_make_list(const char *title, GtkWidget *parent, int paned, gpointe
       gtk_list_store_append(model, &iter);
       gtk_list_store_set(model, &iter, 0, items[i], -1);
     }
-
   return(list);
 }
 
 void sg_list_append(GtkWidget *lst, char *val)
 {
   GtkTreeIter iter;
-  GtkTreeModel *w;
-  w = gtk_tree_view_get_model(GTK_TREE_VIEW(lst));
-  gtk_list_store_append(GTK_LIST_STORE(w), &iter);
-  gtk_list_store_set(GTK_LIST_STORE(w), &iter, 0, val, -1);
+  GtkListStore *w;
+  w = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(lst)));
+  gtk_list_store_append(w, &iter);
+  gtk_list_store_set(w, &iter, 0, val, -1);
 }
 
 void sg_list_insert(GtkWidget *lst, int row, char *val)
 {
   GtkTreeIter iter;
-  GtkTreeModel *w;
-  w = gtk_tree_view_get_model(GTK_TREE_VIEW(lst));
-  gtk_list_store_insert(GTK_LIST_STORE(w), &iter, row);
-  gtk_list_store_set(GTK_LIST_STORE(w), &iter, 0, val, -1);
+  GtkListStore *w;
+  w = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(lst)));
+  gtk_list_store_insert(w, &iter, row);
+  gtk_list_store_set(w, &iter, 0, val, -1);
 }
 
 void sg_list_set_text(GtkWidget *lst, int row, char *val)
 {
   GtkTreeIter iter;
-  GtkTreeModel *w;
-  w = gtk_tree_view_get_model(GTK_TREE_VIEW(lst));
+  GtkListStore *w;
+  w = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(lst)));
   gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(w), &iter, NULL, row);
-  gtk_list_store_set(GTK_LIST_STORE(w), &iter, 0, val, -1);
+  gtk_list_store_set(w, &iter, 0, val, -1);
 }
 
 void sg_list_select(GtkWidget *lst, int row)
 {
+
   GtkTreeIter iter;
   GtkTreeModel *w;
   GtkTreeSelection *tree;
@@ -860,7 +832,6 @@ void sg_list_select(GtkWidget *lst, int row)
 
 void sg_list_moveto(GtkWidget *lst, int row)
 {
-  /* GTK2 bug here -- does not actually scroll */
   GtkTreeIter iter;
   GtkTreeModel *w;
   GtkTreePath *path;

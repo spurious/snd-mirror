@@ -199,7 +199,52 @@ char *listener_prompt_with_cr(snd_state *ss)
   mus_snprintf(listener_prompt_buffer, LABEL_BUFFER_SIZE, "\n%s", listener_prompt(ss));
   return(listener_prompt_buffer);
 }
- 
+
+static XEN provide_listener_help_1(char *source, int start, int end)
+{
+  XEN result = XEN_FALSE;
+  char *name;
+  name = (char *)CALLOC(end - start + 1, sizeof(char));
+  strncpy(name, (char *)(source + start), end - start);
+  /* fprintf(stderr,"%s[%d:%d] -> %s\n", source, start, end, name); */
+  result = g_snd_help(C_TO_XEN_STRING(name), listener_width());
+  FREE(name);
+  if (XEN_STRING_P(result))
+    {
+      listener_append("\n;");
+      listener_append_and_prompt(XEN_TO_C_STRING(result));
+    }
+  return(result);
+}
+
+XEN provide_listener_help(char *source)
+{
+  int i, len, j, start_of_name = -1;
+  snd_state *ss;
+  char *prompt;
+  if (source)
+    {
+      len = snd_strlen(source);
+      /* look for "(name...)" or "\n>name" */
+      ss = get_global_state();
+      prompt = listener_prompt(ss);
+      for (i = len - 1; i >= 0; i--)
+	{
+	  if ((source[i] == '(') || 
+	      ((source[i] == prompt[0]) && ((i == 0) || (source[i - 1] == '\n'))))
+	    {
+	      start_of_name = i + 1;
+	      /* look forward for a name */
+	      for (j = i + 2; j < len; j++)
+		if (is_separator_char(source[j]))
+		  return(provide_listener_help_1(source, start_of_name, j));
+	      return(provide_listener_help_1(source, start_of_name, len)); /* ran off end with no separator (cursor is at end) */
+	    }
+	}
+    }
+  return(XEN_FALSE);
+}
+
 #if (!USE_NO_GUI)
 #if USE_GTK
 #define GUI_TEXT_END(w) gtk_text_buffer_get_char_count(gtk_text_view_get_buffer(GTK_TEXT_VIEW(w)))

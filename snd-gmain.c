@@ -655,11 +655,9 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 
 static XEN g_parse_rc_file(XEN name)
 {
-  snd_state *ss;
   if (XEN_STRING_P(name))
     gtk_rc_parse(XEN_TO_C_STRING(name));
-  ss = get_global_state();
-  return(XEN_FALSE);
+  return(name);
 }
 
 #ifdef XEN_ARGIFY_1

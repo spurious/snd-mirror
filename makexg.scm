@@ -41,7 +41,6 @@
 (define casts '())
 (define checks '())
 (define check-types '())
-(define vars '())
 (define atoms '())
 (define strings '())
 (define structs '())
@@ -573,13 +572,6 @@
 		   (if (or (has-stars type) (string=? type "gpointer")) "_PTR" "")
 		   (no-stars type) 
 		   type))))))
-
-(define (CNAM name alias)
-  (if (assoc name names)
-      (no-way "~A CNAM~%" name)
-      (begin
-	(set! vars (cons (list name alias) vars))
-	(set! names (cons (cons name 'name) names)))))
 
 (define (func-type strs)
   (call-with-current-continuation

@@ -20209,6 +20209,43 @@ static XEN gxg_G_OBJECT_TYPE(XEN object)
   XEN_ASSERT_TYPE(XEN_GtkObject__P(object), object, 1, "G_OBJECT_TYPE", "GtkObject*");
   return(C_TO_XEN_GType(G_OBJECT_TYPE(XEN_TO_C_GtkObject_(object))));
 }
+static XEN gxg_g_list_free(XEN list)
+{
+  #define H_g_list_free "void g_list_free(GList* list)"
+  XEN_ASSERT_TYPE(XEN_GList__P(list), list, 1, "g_list_free", "GList*");
+  g_list_free(XEN_TO_C_GList_(list));
+  return(XEN_FALSE);
+}
+static XEN gxg_g_list_reverse(XEN list)
+{
+  #define H_g_list_reverse "GList* g_list_reverse(GList* list)"
+  XEN_ASSERT_TYPE(XEN_GList__P(list), list, 1, "g_list_reverse", "GList*");
+  return(C_TO_XEN_GList_(g_list_reverse(XEN_TO_C_GList_(list))));
+}
+static XEN gxg_g_list_copy(XEN list)
+{
+  #define H_g_list_copy "GList* g_list_copy(GList* list)"
+  XEN_ASSERT_TYPE(XEN_GList__P(list), list, 1, "g_list_copy", "GList*");
+  return(C_TO_XEN_GList_(g_list_copy(XEN_TO_C_GList_(list))));
+}
+static XEN gxg_g_list_last(XEN list)
+{
+  #define H_g_list_last "GList* g_list_last(GList* list)"
+  XEN_ASSERT_TYPE(XEN_GList__P(list), list, 1, "g_list_last", "GList*");
+  return(C_TO_XEN_GList_(g_list_last(XEN_TO_C_GList_(list))));
+}
+static XEN gxg_g_list_first(XEN list)
+{
+  #define H_g_list_first "GList* g_list_first(GList* list)"
+  XEN_ASSERT_TYPE(XEN_GList__P(list), list, 1, "g_list_first", "GList*");
+  return(C_TO_XEN_GList_(g_list_first(XEN_TO_C_GList_(list))));
+}
+static XEN gxg_g_list_length(XEN list)
+{
+  #define H_g_list_length "guint g_list_length(GList* list)"
+  XEN_ASSERT_TYPE(XEN_GList__P(list), list, 1, "g_list_length", "GList*");
+  return(C_TO_XEN_guint(g_list_length(XEN_TO_C_GList_(list))));
+}
 #if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
 static XEN gxg_pango_default_break(XEN text, XEN length, XEN analysis, XEN attrs, XEN attrs_len)
 {
@@ -20757,6 +20794,51 @@ static XEN gxg_gdk_screen_get_setting(XEN screen, XEN name, XEN value)
   XEN_ASSERT_TYPE(XEN_gchar__P(name), name, 2, "gdk_screen_get_setting", "gchar*");
   XEN_ASSERT_TYPE(XEN_GValue__P(value), value, 3, "gdk_screen_get_setting", "GValue*");
   return(C_TO_XEN_gboolean(gdk_screen_get_setting(XEN_TO_C_GdkScreen_(screen), XEN_TO_C_gchar_(name), XEN_TO_C_GValue_(value))));
+}
+static XEN gxg_gtk_clipboard_get_for_display(XEN display, XEN selection)
+{
+  #define H_gtk_clipboard_get_for_display "GtkClipboard* gtk_clipboard_get_for_display(GdkDisplay* display, \
+GdkAtom selection)"
+  XEN_ASSERT_TYPE(XEN_GdkDisplay__P(display), display, 1, "gtk_clipboard_get_for_display", "GdkDisplay*");
+  XEN_ASSERT_TYPE(XEN_GdkAtom_P(selection), selection, 2, "gtk_clipboard_get_for_display", "GdkAtom");
+  return(C_TO_XEN_GtkClipboard_(gtk_clipboard_get_for_display(XEN_TO_C_GdkDisplay_(display), XEN_TO_C_GdkAtom(selection))));
+}
+static XEN gxg_gtk_clipboard_get_display(XEN clipboard)
+{
+  #define H_gtk_clipboard_get_display "GdkDisplay* gtk_clipboard_get_display(GtkClipboard* clipboard)"
+  XEN_ASSERT_TYPE(XEN_GtkClipboard__P(clipboard), clipboard, 1, "gtk_clipboard_get_display", "GtkClipboard*");
+  return(C_TO_XEN_GdkDisplay_(gtk_clipboard_get_display(XEN_TO_C_GtkClipboard_(clipboard))));
+}
+static XEN gxg_gtk_widget_get_screen(XEN widget)
+{
+  #define H_gtk_widget_get_screen "GdkScreen* gtk_widget_get_screen(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_screen", "GtkWidget*");
+  return(C_TO_XEN_GdkScreen_(gtk_widget_get_screen(XEN_TO_C_GtkWidget_(widget))));
+}
+static XEN gxg_gtk_widget_has_screen(XEN widget)
+{
+  #define H_gtk_widget_has_screen "gboolean gtk_widget_has_screen(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_has_screen", "GtkWidget*");
+  return(C_TO_XEN_gboolean(gtk_widget_has_screen(XEN_TO_C_GtkWidget_(widget))));
+}
+static XEN gxg_gtk_widget_get_display(XEN widget)
+{
+  #define H_gtk_widget_get_display "GdkDisplay* gtk_widget_get_display(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_display", "GtkWidget*");
+  return(C_TO_XEN_GdkDisplay_(gtk_widget_get_display(XEN_TO_C_GtkWidget_(widget))));
+}
+static XEN gxg_gtk_widget_get_root_window(XEN widget)
+{
+  #define H_gtk_widget_get_root_window "GdkWindow* gtk_widget_get_root_window(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_root_window", "GtkWidget*");
+  return(C_TO_XEN_GdkWindow_(gtk_widget_get_root_window(XEN_TO_C_GtkWidget_(widget))));
+}
+static XEN gxg_gtk_widget_get_clipboard(XEN widget, XEN selection)
+{
+  #define H_gtk_widget_get_clipboard "GtkClipboard* gtk_widget_get_clipboard(GtkWidget* widget, GdkAtom selection)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_clipboard", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_GdkAtom_P(selection), selection, 2, "gtk_widget_get_clipboard", "GdkAtom");
+  return(C_TO_XEN_GtkClipboard_(gtk_widget_get_clipboard(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GdkAtom(selection))));
 }
 #endif
 
@@ -23338,6 +23420,12 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_language_from_string, gxg_pango_language_from_string, 1, 0, 0, H_pango_language_from_string);
   XG_DEFINE_PROCEDURE(pango_language_matches, gxg_pango_language_matches, 2, 0, 0, H_pango_language_matches);
   XG_DEFINE_PROCEDURE(G_OBJECT_TYPE, gxg_G_OBJECT_TYPE, 1, 0, 0, H_G_OBJECT_TYPE);
+  XG_DEFINE_PROCEDURE(g_list_free, gxg_g_list_free, 1, 0, 0, H_g_list_free);
+  XG_DEFINE_PROCEDURE(g_list_reverse, gxg_g_list_reverse, 1, 0, 0, H_g_list_reverse);
+  XG_DEFINE_PROCEDURE(g_list_copy, gxg_g_list_copy, 1, 0, 0, H_g_list_copy);
+  XG_DEFINE_PROCEDURE(g_list_last, gxg_g_list_last, 1, 0, 0, H_g_list_last);
+  XG_DEFINE_PROCEDURE(g_list_first, gxg_g_list_first, 1, 0, 0, H_g_list_first);
+  XG_DEFINE_PROCEDURE(g_list_length, gxg_g_list_length, 1, 0, 0, H_g_list_length);
 #if PANGO_ENABLE_ENGINE && PANGO_ENABLE_BACKEND
   XG_DEFINE_PROCEDURE(pango_default_break, gxg_pango_default_break, 5, 0, 0, H_pango_default_break);
   XG_DEFINE_PROCEDURE(pango_context_new, gxg_pango_context_new, 0, 0, 0, H_pango_context_new);
@@ -23413,6 +23501,13 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_screen_broadcast_client_message, gxg_gdk_screen_broadcast_client_message, 2, 0, 0, H_gdk_screen_broadcast_client_message);
   XG_DEFINE_PROCEDURE(gdk_screen_get_default, gxg_gdk_screen_get_default, 0, 0, 0, H_gdk_screen_get_default);
   XG_DEFINE_PROCEDURE(gdk_screen_get_setting, gxg_gdk_screen_get_setting, 3, 0, 0, H_gdk_screen_get_setting);
+  XG_DEFINE_PROCEDURE(gtk_clipboard_get_for_display, gxg_gtk_clipboard_get_for_display, 2, 0, 0, H_gtk_clipboard_get_for_display);
+  XG_DEFINE_PROCEDURE(gtk_clipboard_get_display, gxg_gtk_clipboard_get_display, 1, 0, 0, H_gtk_clipboard_get_display);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_screen, gxg_gtk_widget_get_screen, 1, 0, 0, H_gtk_widget_get_screen);
+  XG_DEFINE_PROCEDURE(gtk_widget_has_screen, gxg_gtk_widget_has_screen, 1, 0, 0, H_gtk_widget_has_screen);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_display, gxg_gtk_widget_get_display, 1, 0, 0, H_gtk_widget_get_display);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_root_window, gxg_gtk_widget_get_root_window, 1, 0, 0, H_gtk_widget_get_root_window);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_clipboard, gxg_gtk_widget_get_clipboard, 2, 0, 0, H_gtk_widget_get_clipboard);
 #endif
 
   XG_DEFINE_PROCEDURE(GDK_COLORMAP, gxg_GDK_COLORMAP, 1, 0, 0, NULL);
@@ -30431,7 +30526,7 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"26-Oct-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"29-Oct-02\")");
 #endif
       xg_already_inited = 1;
     }

@@ -377,7 +377,6 @@ char *sg_get_text(GtkWidget *w, int start, int end);
 void sg_set_cursor(GtkWidget *w, int position);
 void sg_text_insert(GtkWidget *w, char *text);
 int sg_cursor_position(GtkWidget *w);
-void sg_unselect_text(GtkWidget *w);
 void sg_list_append(GtkWidget *w, char *val);
 void sg_list_insert(GtkWidget *w, int row, char *val);
 void sg_list_set_text(GtkWidget *w, int row, char *val);

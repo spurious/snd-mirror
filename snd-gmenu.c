@@ -506,7 +506,6 @@ GtkWidget *add_menu(snd_state *ss)
 
   mw[menu_menu] = gtk_menu_bar_new();
   ml[menu_menu] = NULL;
-  /*  set_background(mw[menu_menu], (ss->sgx)->highlight_color); */
   gtk_box_pack_start(GTK_BOX(MAIN_PANE(ss)), mw[menu_menu], FALSE, TRUE, 0);
   gtk_widget_show(mw[menu_menu]);
 
@@ -1827,11 +1826,24 @@ void create_popup_menu(snd_state *ss, guint button, TIME_TYPE time)
   gtk_menu_popup(GTK_MENU(popup_menu), NULL, NULL, NULL, NULL, button, time);
 }
 
+static XEN gtk_popup_hook = XEN_FALSE;
+
 static gboolean middle_button_press (GtkWidget *widget, GdkEvent *bevent, gpointer data)
 {
+  #define XEN_WRAP_EVENT(Value) ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkEvent_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
   GdkEventButton *event = (GdkEventButton *) bevent; 
+  XEN result;
   if ((event->type == GDK_BUTTON_PRESS) && (event->button == 2))
     {
+      if (XEN_HOOKED(gtk_popup_hook))
+	{
+	  result = run_progn_hook(gtk_popup_hook,
+				  XEN_LIST_3(XEN_WRAP_WIDGET(widget),
+					     XEN_WRAP_EVENT(bevent),
+					     C_TO_XEN_ULONG(data)),
+				  "gtk-popup-hook");
+	  if (XEN_TRUE_P(result)) return(TRUE);
+	}
       create_popup_menu((snd_state *)data, event->button, event->time);
       return(TRUE);
     }
@@ -1871,7 +1883,11 @@ wants to override the default menu action:\n\
           #f)\n\
         #t))) ; #t to make sure other menu items remain active"
 
+  #define H_gtk_popup_hook "gtk-popup-hook (widget event data) is called upon middle button click. \
+If it returns other than #t, the normal Snd popup menu is posted."
+
   XEN_DEFINE_HOOK(menu_hook, S_menu_hook, 2, H_menu_hook);
+  XEN_DEFINE_HOOK(gtk_popup_hook, "gtk-popup-hook", 3, H_gtk_popup_hook);
   XEN_DEFINE_PROCEDURE(S_menu_widgets, g_menu_widgets_w, 0, 0, 0, H_menu_widgets);
 }
 
