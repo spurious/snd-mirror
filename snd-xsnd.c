@@ -1047,7 +1047,7 @@ static void apply_callback(Widget w, XtPointer context, XtPointer info)
     {
       stop_applying(sp);
       if (!(ss->using_schemes)) 
-	XmChangeColor(APPLY_BUTTON(sp), (Pixel)((ss->sgx)->basic_color));
+	XmChangeColor(APPLY_BUTTON(sp), (Pixel)((ss->sgx)->doit_button_color));
       sp->applying = false;
     }
   else
@@ -1091,7 +1091,7 @@ void unlock_apply(snd_info *sp)
 {
   for_each_sound(unlockapply, (void *)sp);
   if ((sp) && (!(ss->using_schemes)) && (sp->index >= 0))
-    XmChangeColor(APPLY_BUTTON(sp), (Pixel)((ss->sgx)->basic_color));
+    XmChangeColor(APPLY_BUTTON(sp), (Pixel)((ss->sgx)->doit_button_color));
 }
 
 #if WITH_RELATIVE_PANES

@@ -858,8 +858,11 @@ void view_color_callback(Widget w, XtPointer context, XtPointer info)
       XmStringFree(xcutoff);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
+      if (!(ss->using_schemes)) 
+	{
+	  XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
+	  XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;
+	}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -1350,8 +1353,11 @@ void view_orientation_callback(Widget w, XtPointer context, XtPointer info)
 
 #if HAVE_GL
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;}
+      if (!(ss->using_schemes)) 
+	{
+	  XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;
+	  XtSetArg(args[n], XmNselectColor, (ss->sgx)->pushed_button_color); n++;
+	}
       XtSetArg(args[n], XmNset, with_gl(ss)); n++;
       glstr = XmStringCreate(_("use OpenGL"), XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNlabelString, glstr); n++;

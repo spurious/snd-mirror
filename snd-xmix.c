@@ -356,7 +356,7 @@ bool mix_play_stopped(void) {return(!mix_playing);}
 
 void reflect_mix_play_stop(void)
 {
-  if (mix_play) 
+  if ((mix_play) && (!(ss->using_schemes)))
     {
       XmChangeColor(mix_play, (ss->sgx)->basic_color);
       XmChangeColor(track_play, (ss->sgx)->basic_color);
@@ -371,7 +371,7 @@ static void mix_panel_play_callback(Widget w, XtPointer context, XtPointer info)
   else
     {
       mix_playing = true;
-      if (mix_play) XmChangeColor(mix_play, (ss->sgx)->pushed_button_color);
+      if ((mix_play) && (!(ss->using_schemes))) XmChangeColor(mix_play, (ss->sgx)->pushed_button_color);
       mix_play_from_id(current_mix_id());
     }
 }
@@ -383,7 +383,7 @@ static void track_panel_play_callback(Widget w, XtPointer context, XtPointer inf
   else
     {
       mix_playing = true;
-      if (track_play) XmChangeColor(track_play, (ss->sgx)->pushed_button_color);
+      if ((track_play) && (!(ss->using_schemes))) XmChangeColor(track_play, (ss->sgx)->pushed_button_color);
       track_play_from_id(current_mix_id());
     }
 }

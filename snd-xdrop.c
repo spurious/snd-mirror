@@ -243,7 +243,7 @@ static void handle_drag(Widget w, XtPointer context, XtPointer info)
 	  new_title = (char *)CALLOC(64, sizeof(char));
 	  sprintf(new_title, "%s: drop to open %s", ss->startup_title, (current_file) ? current_file : "file");
 	  XtVaSetValues(MAIN_SHELL(ss), XmNtitle, (char*)new_title, NULL);
-	  XmChangeColor(w, ss->sgx->pushed_button_color);
+	  if (!(ss->using_schemes)) XmChangeColor(w, ss->sgx->pushed_button_color);
 	  FREE(new_title);
 	}
       else report_mouse_position_as_seconds(w, (current_file) ? current_file : "file", cb->x, cb->y);
@@ -252,7 +252,7 @@ static void handle_drag(Widget w, XtPointer context, XtPointer info)
       if (is_menubar)
 	{
 	  reflect_file_change_in_title();
-	  XmChangeColor(w, ss->sgx->highlight_color);
+	  if (!(ss->using_schemes)) XmChangeColor(w, ss->sgx->highlight_color);
 	}
       else clear_minibuffer_of(w);
       if (current_file)

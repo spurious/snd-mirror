@@ -558,9 +558,10 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title,
     add_completer_to_textfield(wtmp, add_completer_func(filename_completer));
 
   if (!(ss->using_schemes)) 
-    XtVaSetValues(fd->just_sounds_button, XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
-  if (!(ss->using_schemes)) 
-    XtVaSetValues(fd->play_selected_button, XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
+    {
+      XtVaSetValues(fd->just_sounds_button, XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
+      XtVaSetValues(fd->play_selected_button, XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
+    }
   XtVaGetValues(fd->dialog, XmNfileSearchProc, &(fd->default_search_proc), NULL);
   XtAddCallback(fd->dialog, XmNokCallback, file_ok_proc, (XtPointer)fd);
   XtAddCallback(fd->dialog, XmNcancelCallback, file_cancel_callback, (XtPointer)fd);
@@ -794,7 +795,7 @@ file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_
   sep1 = XtCreateManagedWidget("sep1", xmSeparatorWidgetClass, form, args, n);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->doit_button_color); n++;
+  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->doit_button_color); n++;}
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
@@ -838,7 +839,7 @@ file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_
   sep2 = XtCreateManagedWidget("sep2", xmSeparatorWidgetClass, form, args, n);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->help_button_color); n++;
+  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->help_button_color); n++;}
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
@@ -2168,7 +2169,7 @@ snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, 
       form = XtCreateManagedWidget("newfile", xmFormWidgetClass, new_dialog, args, n);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->reset_button_color); n++;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->reset_button_color); n++;}
       XtSetArg(args[n], XmNforeground, ss->sgx->black); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;

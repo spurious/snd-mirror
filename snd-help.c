@@ -298,6 +298,7 @@ void news_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+17-Sep:  removed finder.scm, changed index.scm|rb to use snd-xref.c tables.\n\
 15-Sep:  just-sounds support in Gtk.\n\
 12-Sep:  quit-button-color, help-button-color, reset-button-color, \n\
          doit-button-color, doit-again-button-color.\n\
@@ -1189,6 +1190,102 @@ unsorted) refers to this menu.",
 	   true);	   
 }
 
+#include "snd-xref.c"
+
+#define NUM_TOPICS 60
+static char *topics[120] = {
+  "extsnd.html#sndhooks", "Hooks",
+  "extsnd.html#Vcts", "Vcts",
+  "extsnd.html#samplereaders", "Sample-readers",
+  "extsnd.html#sndmarks", "Marks",
+  "extsnd.html#sndmixes", "Mixes",
+  "extsnd.html#sndregions", "Regions",
+  "extsnd.html#editlists", "Edit Lists",
+  "extsnd.html#sndtransforms", "Transforms",
+  "extsnd.html#snderrors", "Errors",
+  "extsnd.html#colors", "Colors",
+  "extsnd.html#fonts", "Fonts",
+  "extsnd.html#sndgraphics", "Graphics",
+  "extsnd.html#sndwidgets", "Widgets",
+  "grfsnd.html#sndresources", "resources",
+  "grfsnd.html#sndswitches", "invocation flags",
+  "grfsnd.html#sndinitfile", "initialization file",
+  "grfsnd.html#emacssnd", "Emacs subjob",
+  "grfsnd.html#dynamic", "Dynamically loaded modules",
+  "grfsnd.html#programs", "External Programs",
+  "grfsnd.html#sndwithclm", "CLM module",
+  "grfsnd.html#clmfuncs", "CLM functions",
+  "grfsnd.html#sndinstruments", "Instruments",
+  "grfsnd.html#sndwithcm", "Common Music",
+  "grfsnd.html#sndwithmotif", "Motif",
+  "grfsnd.html#sndwithgtk", "Gtk",
+  "grfsnd.html#sndwithnogui", "Scripting",
+  "grfsnd.html#sndandruby", "Ruby",
+  "grfsnd.html#sndandladspa", "LADSPA",
+  "grfsnd.html#sndandgl", "OpenGL",
+  "grfsnd.html#sndandgdb", "gdb",
+  "clm.html#with-sound", "With-sound",
+  "clm.html#mix-and-with-mix", "With-mix",
+  "clm.html#instrument-let", "Sound-let",
+  "sndscm.html#autosavedoc", "auto-save",
+  "sndscm.html#bessdoc", "FM demo",
+  "sndscm.html#bess1doc", "FM violin demo",
+  "sndscm.html#birddoc", "birds",
+  "sndscm.html#clminsdoc", "CLM instruments",
+  "sndscm.html#debugdoc", "debugging",
+  "sndscm.html#dlocsigdoc", "sound movement",
+  "sndscm.html#dspdoc", "DSP",
+  "sndscm.html#effectsdoc", "Effects",
+  "sndscm.html#envdoc", "envelopes",
+  "sndscm.html#enveddoc", "envelope editor",
+  "sndscm.html#fadedoc", "frequency-domain cross-fades",
+  "sndscm.html#freeverbdoc", "freeverb",
+  "sndscm.html#jcrevdoc", "jcrev",
+  "sndscm.html#ladspadoc", "LADSPA previewer.",
+  "sndscm.html#maracadoc", "maraca physical model",
+  "sndscm.html#maxfdoc", "Mathews resonator",
+  "sndscm.html#moogdoc", "Moog filter",
+  "sndscm.html#musglyphs", "Music notation symbols",
+  "sndscm.html#pianodoc", "piano physical model",
+  "sndscm.html#popupdoc", "Popup menu",
+  "sndscm.html#singerdoc", "Cook's vocal-tract physical model",
+  "sndscm.html#sndmotifdoc", "Motif/Gtk module",
+  "sndscm.html#vdoc", "fm-violin",
+  "sndscm.html#wsdoc", "with-sound",
+  "sndscm.html#xmenveddoc", "envelope editor",
+  "libxm.html#xm", "Libxm"};
+
+#define NUM_XREFS 21
+static char *xrefs[NUM_XREFS] = {
+  "Mark", "Mix", "Region", "Selection", "Cursor", "Tracking cursor", "Deletion", "Envelope", "Filter",
+  "Search", "Insertion", "Maxamp", "Play", "Reverse", "Save", "Smooth", "Resample", "FFT", "Reverb",
+  "Src", "Find"};
+
+static char **xref_tables[NUM_XREFS] = {
+  Marking_xrefs, Mixing_xrefs, Regions_xrefs, Selections_xrefs, Cursors_xrefs, Tracking_cursors_xrefs,
+  Deletions_xrefs, Envelopes_xrefs, Filters_xrefs, Searching_xrefs, Insertions_xrefs, Maxamps_xrefs,
+  Playing_xrefs, Reversing_xrefs, Saving_xrefs, Smoothing_xrefs, Resampling_xrefs, FFTs_xrefs, Reverb_xrefs,
+  Resampling_xrefs, Searching_xrefs};
+
+/*
+   includable: CLM ins, CLM gens
+   ?? Plugins (current plugins?)
+   ?? FM, PhysMod, etc
+   ?? Key bindings
+*/
+
+/* TODO: regexp access to help lists, tables */
+/* TODO: regexp to g_snd_url (for index.rb) */
+
+char *snd_url(const char *name)
+{
+  int i;
+  for (i = 0; i < help_names_size; i++)
+    if (strcmp(help_names[i], name) == 0)
+      return(help_urls[i]);
+  return(NULL);
+}
+
 #define GLYPH_WIDTH 11
 
 char* word_wrap(const char *text, int widget_len)
@@ -1474,6 +1571,16 @@ static XEN g_set_html_program(XEN val)
   return(val);
 }
 
+static XEN g_snd_url(XEN name)
+{
+  #define H_snd_url "(" S_snd_url " name): url corresponding to 'name'"
+  /* given Snd entity ('open-sound) as symbol or string return associated url */
+  XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_SYMBOL_P(name), name, XEN_ONLY_ARG, S_snd_url, "a string or symbol");
+  if (XEN_STRING_P(name))
+    return(C_TO_XEN_STRING(snd_url(XEN_TO_C_STRING(name))));
+  return(C_TO_XEN_STRING(snd_url(XEN_SYMBOL_TO_C_STRING(name))));
+}
+
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_listener_help_w, g_listener_help)
@@ -1481,17 +1588,20 @@ XEN_NARGIFY_0(g_html_dir_w, g_html_dir)
 XEN_NARGIFY_1(g_set_html_dir_w, g_set_html_dir)
 XEN_NARGIFY_0(g_html_program_w, g_html_program)
 XEN_NARGIFY_1(g_set_html_program_w, g_set_html_program)
+XEN_NARGIFY_1(g_snd_url_w, g_snd_url)
 #else
 #define g_listener_help_w g_listener_help
 #define g_html_dir_w g_html_dir
 #define g_set_html_dir_w g_set_html_dir
 #define g_html_program_w g_html_program
 #define g_set_html_program_w g_set_html_program
+#define g_snd_url_w g_snd_url
 #endif
 
 void g_init_help(void)
 {
   XEN_DEFINE_PROCEDURE(S_snd_help, g_listener_help_w, 0, 2, 0, H_snd_help);
+  XEN_DEFINE_PROCEDURE(S_snd_url, g_snd_url_w, 1, 0, 0, H_snd_url);
 
   #define H_help_hook S_help_hook "(subject help-string): called from snd-help.  If \
 if returns a string, it replaces 'help-string' (the default help)"

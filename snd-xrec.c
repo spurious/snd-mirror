@@ -2824,7 +2824,7 @@ static void reset_record_callback(Widget w, XtPointer context, XtPointer info)
       rp->recording = false;
       rp->triggered = (!rp->triggering);
       sensitize_control_buttons();
-      XmChangeColor(record_button, (Pixel)(ss->sgx)->basic_color);
+      if (!(ss->using_schemes)) XmChangeColor(record_button, (Pixel)(ss->sgx)->doit_button_color);
       s1 = XmStringCreate(_("Reset"), XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(reset_button, XmNlabelString, s1, NULL);
       XmStringFree(s1);
@@ -2889,7 +2889,7 @@ void finish_recording(recorder_info *rp)
   snd_info *sp;
   Float duration;
   sensitize_control_buttons();
-  XmChangeColor(record_button, (Pixel)(ss->sgx)->basic_color);
+  if (!(ss->using_schemes)) XmChangeColor(record_button, (Pixel)(ss->sgx)->doit_button_color);
   s1 = XmStringCreate(_("Reset"), XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(reset_button, XmNlabelString, s1, NULL);
   XmStringFree(s1);
@@ -3013,7 +3013,7 @@ static void record_button_callback(Widget w, XtPointer context, XtPointer info)
 	      rp->triggered = (!rp->triggering);
 	      return;
 	    }
-	  XmChangeColor(w, (Pixel)(ss->sgx)->red);
+	  if (!(ss->using_schemes)) XmChangeColor(w, (Pixel)(ss->sgx)->red);
 	  s1 = XmStringCreate(_("Cancel"), XmFONTLIST_DEFAULT_TAG);
 	  XtVaSetValues(reset_button, XmNlabelString, s1, NULL);
 	  XmStringFree(s1);

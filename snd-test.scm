@@ -16420,6 +16420,10 @@ EDITS: 5
 	(edit-header-dialog ind)
 	(dismiss-all-dialogs)
 	(close-sound ind))
+      (if (not (string=? (snd-url 'open-sound) "extsnd.html#sndopen"))
+	  (snd-display ";snd-url 'open-sound: ~A" (snd-url 'open-sound)))
+      (if (not (string=? (snd-url "open-sound") "extsnd.html#sndopen"))
+	  (snd-display ";snd-url \"open-sound\": ~A" (snd-url "open-sound")))
       (let ((str1 (snd-help open-sound))
 	    (str2 (snd-help 'open-sound))
 	    (str3 (snd-help "open-sound")))
@@ -37812,7 +37816,7 @@ EDITS: 2
 		     pv-amp-increments pv-amps pv-freqs pv-outctr pv-phase-increments pv-phases 
 		     read-sample reset-listener-cursor sample-reader-home selection-chans selection-srate snd-gcs
 		     snd-warning sum-of-sines vct-map make-variable-graph channel-data x-axis-label
-		     
+		     snd-url
 		     quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 
 		     ))

@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: help extensions on Motif side translated to gtk */
+
 static GtkWidget *help_dialog = NULL;
 
 static void dismiss_help(GtkWidget *w, gpointer context) {gtk_widget_hide(help_dialog);}

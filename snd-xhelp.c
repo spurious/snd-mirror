@@ -117,6 +117,16 @@ static char *help_completer(char *text) {return(NULL);}
 static void new_help(const char *pattern)
 {
 }
+
+static void help_browse_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  int choice;
+  XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
+  ASSERT_WIDGET_TYPE(XmIsList(w), w);
+  choice = cbs->item_position - 1;
+
+}
+  
 #endif
 
 static Widget help_search = NULL;
@@ -181,7 +191,8 @@ static void create_help_monolog(void)
   XtUnmanageChild(XmMessageBoxGetChild(help_dialog, XmDIALOG_HELP_BUTTON));
   XtUnmanageChild(XmMessageBoxGetChild(help_dialog, XmDIALOG_SYMBOL_LABEL));
 
-  XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_MESSAGE_LABEL), XmNbackground, ss->sgx->help_button_color, NULL);
+  if (!(ss->using_schemes))
+    XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_MESSAGE_LABEL), XmNbackground, ss->sgx->help_button_color, NULL);
       
   XmStringFree(titlestr);
 
@@ -220,7 +231,7 @@ static void create_help_monolog(void)
     XmString *strs;
     XmRenderTable rs = NULL;
     
-    /* to display the url-related portion of the text in red, we need to a rendition for it to the rendertable */
+    /* to display the url-related portion of the text in red, we need to a rendition for it in the rendertable */
     /* try to find the current default render table. */
     parent = help_text;
     while ((parent != NULL) && (rs == NULL))
@@ -250,7 +261,7 @@ static void create_help_monolog(void)
     strs[0] = parse_crossref("Max length of region list: {max-regions}");
     strs[1] = parse_crossref("Whether selection {selection-creates-region} creates a region");
     strs[2] = parse_crossref("{stop-playing-region-hook}: play hook");
-    
+
     n = 0;
     XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
     XtSetArg(args[n], XmNtopWidget, XtParent(help_text)); n++;
@@ -319,6 +330,8 @@ static void create_help_monolog(void)
     XtSetArg(args[n], XmNscrollBarDisplayPolicy, XmAS_NEEDED); n++;
     table = XmCreateScrolledList(inner_holder, "help-list", args, n);
     XtManageChild(table);
+    XtAddCallback(table, XmNbrowseSelectionCallback, help_browse_callback, NULL);
+    /* TODO: XmNdefaultActionCallback for double click -- go to html? */
   }
 #endif
   XtManageChild(help_dialog);
