@@ -73,6 +73,8 @@
  *             decided to make mus_inspect return char* like mus_describe.
  */
 
+/* TODO: isn't mus_env_interp backwards? */
+
 /* compile time switches:
  *
  * WITH_SINE_TABLE (default 1)

@@ -500,6 +500,7 @@ void *mem_malloc(size_t len, const char *func, const char *file, int line)
 
 void mem_free(void *ptr, const char *func, const char *file, int line)
 {
+  /* fprintf(stderr,"free %s %s[%d]: %p\n", func, file, line, ptr); */
   forget_pointer(ptr, func, file, line);
   free(ptr);
 }
