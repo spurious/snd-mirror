@@ -260,7 +260,7 @@ and a CVS <a href="http://snd.sourceforge.net">repository</a>.
 <tr>
 <td><a href="#printfile">Print</a></td>
 <td><a href="#editheader">Edit Header</a></td>
-<td><a href="#viewnormalize">Normalize</a></td>
+<td><a href="#viewnormalize">Equalize Panes</a></td>
 <td></td>
 <td><a href="#ampenvs">Envelope</a></td>
 </tr>
@@ -648,15 +648,15 @@ flushed (but see the function unsaved-edits? in <a href="sndscm.html#exampdoc">e
 <tr><td><a href="#unitebutton">Channel style</a></td><td>separate, combined or superimposed channels</td><td></td></tr>
 <tr><td><a href="#viewdots">Graph style</a></td><td>use dots, lines, filled polygons etc in the data displays</td><td></td></tr>
 <tr><td><a href="extsnd.html#verbosecursor">Verbose cursor</a></td><td>describe the current sample every time the cursor moves</td><td></td></tr>
-<tr><td><a href="#viewnormalize">Normalize</a></td><td>cleanup current Snd display</td><td></td></tr>
+<tr><td><a href="#viewnormalize">Equalize Panes</a></td><td>cleanup current Snd display</td><td></td></tr>
 <tr><td><a href="#viewy0">Show y=0</a></td><td>show or hide the y=0 line</td><td></td></tr>
 <tr><td><a href="extsnd.html#xaxisstyle">X axis units</a></td><td>x axis labelled in seconds, samples, percent of total</td><td></td></tr>
 <tr><td><a href="#errorhistory">Error History</a></td><td>saved error messages</td><td></td></tr>
 </table>
 </center>
         <!-- I(control panel):M(View: Show controls)(controls) --><!-- I(control panel):K(C-x C-o, C-x C-c)(cxco) -->
-        <!-- I(normalize display):M(View: Normalize)(viewnormalize) --><!-- I(normalize display):A(viewnormalize) -->
-        <!-- I(normalize display):O(Popup: Normalize) --><!-- I(combine channels):M(View: Channel style)(unitebutton) -->
+        <!-- I(normalize display):M(View: Equalize Panes)(viewnormalize) --><!-- I(normalize display):A(viewnormalize) -->
+        <!-- I(normalize display):O(Popup: Equalize Panes) --><!-- I(combine channels):M(View: Channel style)(unitebutton) -->
         <!-- I(combine channels):A(unitebutton) --><!-- I(describe file):M(Popup: Info)(viewinfo) -->
         <!-- I(describe file):A(viewinfo) --><!-- I(describe file):O(Edit: Edit Header)(viewinfo) -->
         <!-- I(dots or lines):M(View: Dots)(viewdots) --><!-- I(dots or lines):O(dot-size: numberpad '.', '0')(dotsize) -->
@@ -677,7 +677,7 @@ When
 many files are displayed, and the pane buttons have
 been in use, the overall display can become a bit of
 a mess.  <A NAME="viewnormalize"></a>To return to a state where each file and channel
-has a 'normal' amount of space, use the Normalize option.
+has a 'normal' amount of space, use the Equalize Panes option.
 </p>
         <!-- I(dots or lines):A(viewdots) --><!-- I(y=0 line):A(viewy0) -->
 
@@ -1941,14 +1941,14 @@ For example, C-u C-m returns the number of samples between
 the cursor and the next mark, so C-u C-m C-z zeros
 all the samples between the cursor and the next mark.</p>
 
-<p>The predefined commands are (<i>prompt</i> is an abbreviation for prompt-in-minibuffer):</p>
+<p>The predefined commands are (<i>prompt</i> below is an abbreviation for prompt-in-minibuffer, and some of the return values are omitted for simplicity):</p>
 <table border=0 cellpadding=0>
 <!-- TODO: finish these tables of key bindings -->
-<tr><td>[Down]</td><td>zoom out</td><td></td></tr>
-<tr><td>[Up]</td><td>zoom in</td><td></td></tr>
-<tr><td>[Left]</td><td>move window left</td><td></td></tr>
-<tr><td>[Right]</td><td>move window right</td><td></td></tr>
-<tr><td>[Home]</td><td>update current file (re-read data from disk)</td><td><code><small>(lambda () (update-sound))</small></code></td></tr>
+<tr><td>[Down]</td><td>zoom out</td><td><code><small>;algorithm depends on zoom-focus-style choice</small></code></td></tr>
+<tr><td>[Up]</td><td>zoom in</td><td><code><small>;algorithm depends on zoom-focus-style choice</small></code></td></tr>
+<tr><td>[Left]</td><td>move window left</td><td><code><small>(lambda () (set! (left-sample) (max 0 (- (* 1.5 (left-sample)) (* 0.5 (right-sample))))))</small></code>
+<tr><td>[Right]</td><td>move window right</td><td><code><small>(lambda () (set! (left-sample) (* 0.5 (+ (left-sample) (right-sample)))))</small></code>
+<tr><td>[Home]</td><td>update current file from disk</td><td><code><small>(lambda () (update-sound))</small></code></td></tr>
 <tr><td>[Space]</td><td colspan=2>cancel selection; if playing, pause or continue playback</td></tr>
 <tr><td>&lt;</td><td>move cursor to sample 0</td><td><code><small>(lambda () (set! (cursor) 0))</small></code></td></tr>
 <tr><td>&gt;</td><td>move cursor to last sample</td><td><code><small>(lambda () (set! (cursor) (1- (frames))))</small></code></td></tr>
@@ -1960,20 +1960,20 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>C-e</td><td>move cursor to window end</td><td><code><small>(lambda () (set! (cursor) (right-sample)))</small></code></td></tr>
 <tr><td>C-f</td><td>move cursor ahead one sample</td><td><code><small>(lambda (arg) (set! (cursor) (min (1- (frames)) (+ (cursor) arg))))</small></code></td></tr>
 <tr><td>C-g</td><td>abort current command</td><td></td></tr>
-<tr><td>C-h</td><td>delete previous sample</td><td></td></tr>
-<tr><td>C-i</td><td>display cursor info</td><td></td></tr>
-<tr><td>C-j</td><td>go to mark</td><td></td></tr>
+<tr><td>C-h</td><td>delete previous sample</td><td><code><small>(lambda (arg) (delete-samples (- (cursor) arg) arg))</small></code></td></tr>
+<tr><td>C-i</td><td>display cursor info</td><td><code><small>(lambda () (report-in-minibuffer (format #f "cursor at ~A" (sample (cursor)))))</small></code></td></tr>
+<tr><td>C-j</td><td>go to mark</td><td><code><small>(lambda (arg) (forward-mark arg))</small></code></td></tr>
 <tr><td>C-k</td><td>delete one line's worth of samples</td><td><code><small>(lambda (arg) (delete-samples (cursor) (* 128 arg)))</small></code></td></tr>
-<tr><td>C-l</td><td>position window so cursor is in the middle</td><td></td></tr>
-<tr><td>C-m</td><td>place (or remove) mark at cursor location</td><td></td></tr>
+<tr><td>C-l</td><td>position window so cursor is in the middle</td><td><code><small>(lambda () cursor-in-middle)</small></code></td></tr>
+<tr><td>C-m</td><td>place (or remove) mark at cursor location</td><td><code><small>(lambda () (add-mark (cursor)))</small></code></td></tr>
 <tr><td>C-n</td><td>move cursor ahead one 'line'</td><td><code><small>(lambda (arg) (forward-sample (* 128 arg)))</small></code></td></tr>
 <tr><td>C-o</td><td>insert one zero sample at cursor</td><td><code><small>(lambda (arg) (insert-samples (cursor) arg (make-vct arg)))</small></code></td></tr>
 <tr><td>C-p</td><td>move cursor back one 'line'</td><td><code><small>(lambda (arg) (backward-sample (* 128 arg)))</small></code></td></tr>
-<tr><td>C-q</td><td>play current channel(s) starting at cursor</td><td></td></tr>
+<tr><td>C-q</td><td>play current channel(s) starting at cursor</td><td><code><small>(lambda () (play (cursor) (selected-sound) (selected-channel)))</small></code></td></tr>
 <tr><td>C-r</td><td>repeat last search backwards</td><td></td></tr>
 <tr><td>C-s</td><td>search according to an expression</td><td></td></tr>
-<tr><td>C-t</td><td>stop playing</td><td></td></tr>
-<tr><td>C-u</td><td>start count (numerical argument) specification</td><td></td></tr>
+<tr><td>C-t</td><td>stop playing</td><td><code><small>(lambda () (stop-playing))</small></code></td></tr>
+<tr><td>C-u</td><td>start numerical argument</td><td></td></tr>
 <tr><td>C-v</td><td>move cursor to mid-window</td><td></td></tr>
 <tr><td>C-w</td><td>delete current selection</td><td><code><small>(lambda () (delete-selection))</small></code></td></tr>
 <tr><td>C-x</td><td>start extended command (see below)</td><td></td></tr>
@@ -1986,11 +1986,11 @@ all the samples between the cursor and the next mark.</p>
         <!-- I(cut selection):K(C-w)(cw) --><!-- I(define selection):K(C-[space], C-x c)(cxc) -->
 
 <tr><td>C-x a</td><td>apply envelope to selection</td><td><code><small>(lambda () (prompt "env:" env-selection))</small></code></td></tr>
-<tr><td>C-x b</td><td>position window so cursor is on left margin</td><td><code><small>(lambda () (set! (left-sample) (cursor)))</small></code></td></tr>
+<tr><td>C-x b</td><td>position window so cursor is on left margin</td><td><code><small>(lambda () cursor-on-left)</small></code></td></tr>
 <tr><td>C-x c</td><td>define selection from cursor to nth mark</td><td></td></tr>
 <tr><td>C-x d</td><td>get temp dir name</td><td><code><small>(lambda (arg) (prompt "temp dir:" (lambda (val) (set! (temp-dir) val))))</small></code></td></tr>
 <tr><td>C-x e</td><td>execute keyboard macro</td><td></td></tr>
-<tr><td>C-x f</td><td>position window so cursor is on right margin</td><td><code><small>(lambda () (set! (right-sample) (cursor)))</small></code></td></tr>
+<tr><td>C-x f</td><td>position window so cursor is on right margin</td><td><code><small>(lambda () cursor-on-right)</small></code></td></tr>
 <tr><td>C-x i</td><td>insert region</td><td><code><small>(lambda (arg) (insert-region (cursor) arg)) ;insert-selection if no arg</small></code></td></tr>
 <tr><td>C-x j</td><td>go to named mark</td><td></td></tr>
 <tr><td>C-x k</td><td>close file</td><td><code><small>(lambda () (close-sound))</small></code></td></tr>
@@ -2020,7 +2020,7 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>C-x C-f</td><td>open file</td><td><code><small>(lambda () (prompt "file:" open-sound))</small></code></td></tr>
 <tr><td>C-x C-g</td><td>abort command</td><td></td></tr>
 <tr><td>C-x C-i</td><td>insert file</td><td><code><small>(lambda () (prompt "insert file:" (lambda (val) (insert-sound val (cursor)))))</small></code></td></tr>
-<tr><td>C-x C-j</td><td>go to mix </td><td></td></tr>
+<tr><td>C-x C-j</td><td>go to mix </td><td><code><small>(lambda (arg) (forward-mix arg))</small></code></td></tr>
 <tr><td>C-x <A NAME="cxcl">C-l</a></td><td>load scm file</td><td><code><small>(lambda () (prompt "load:" load))</small></code></td></tr>
 <tr><td valign=top>C-x C-m</td><td valign=top>add named mark</td><td><code><small>(lambda () (prompt "mark:" (lambda (val) (set! (mark-name (add-mark (cursor))) val))))</small></code></td></tr>
 <tr><td>C-x C-n</td><td>re-evaluate expression</td><td></td></tr>
@@ -2257,7 +2257,7 @@ panel are:</p>
   <tr><td><a href="#movingwindow">move window ahead</a></td><td><br></td><td><a href="#cxf"><small>[Left], Cx f</small></a></td><td><a href="extsnd.html#sndrightsample"><small>right-sample</small></a></td><td><small>scroll bars</small></td></tr>
   <tr><td><a href="#movingwindow">move window back</a></td><td><br></td><td><a href="#movewindow"><small>[Right], Cx b</small></a></td><td><a href="extsnd.html#sndleftsample"><small>left-sample</small></a></td><td><small>scroll bars</small></td></tr>
   <tr><td><a href="#multichannel">multichannel ops</a></td><td><br></td><td><br></td><td><a href="extsnd.html#sndsyncing"><small>sync</small></a></td><td><a href="#syncbutton"><small>sync button</small></a></td></tr>
-  <tr><td><a href="#viewnormalize">normalize display</a></td><td><small>View: <a href="#viewnormalize">Normalize</a></small></td><td><br></td><td><a href="extsnd.html#sndnormalizeview"><small>normalize-view</small></a></td><td><small>Popup: Normalize</small></td></tr>
+  <tr><td><a href="#viewnormalize">normalize display</a></td><td><small>View: <a href="#viewnormalize">Equalize Panes</a></small></td><td><br></td><td><a href="extsnd.html#sndnormalizeview"><small>normalize-view</small></a></td><td><small>Popup: Equalize Panes</small></td></tr>
   <tr><td><a href="sndscm.html#effectsdoc">normalize sound</a></td><td><small>Effects: <a href="sndscm.html#effectsdoc">Normalize</a></small></td><td><br></td><td><a href="extsnd.html#sndscaleto"><small>scale-to</small></a></td><td><br></td></tr>
   <tr><td><a href="#cu">numeric arguments</a></td><td><br></td><td><a href="#kcu"><small>Cu</small></a></td><td><a href="extsnd.html#prefixarg"><small>prefix-arg</small></a></td><td><a href="#kcu"><small>see marks as args</small></a></td></tr>
   <tr><td><a href="#saveopen">open file</a></td><td><small>File: <a href="#openfile">Open</a></small></td><td><a href="#cxcf"><small>Cx Cf</small></a></td><td><a href="extsnd.html#sndopen"><small>open-sound</small></a></td><td><small>Files dialog: click file</small></td></tr>

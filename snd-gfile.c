@@ -973,7 +973,7 @@ void View_Files_Callback(GtkWidget *w, gpointer context)
 {
   /* fire up a dialog window with a list of currently open files, 
    * currently selected file also selected in list --
-   * if user selects one (browse mode), so does Snd (via normalize_sound etc)
+   * if user selects one (browse mode), so does Snd (via equalize_sound_panes etc)
    * use snd_info label as is (short-form with '*' etc)
    * secondary list of previously edited files (if still in existence) --
    * click here re-opens the file.  (The overall form is similar to the regions browser).

@@ -479,54 +479,59 @@ static SCM g_make_sound_data(SCM chans, SCM frames)
 			 
 }
 
-static SCM sound_data_ref(SCM obj, SCM chan, SCM frame)
+static SCM sound_data_ref(SCM obj, SCM chan, SCM frame_num)
 {
   #define H_sound_data_ref "(" S_sound_data_ref " sd chan i) -> sample in channel chan at location i of sound-data object sd: sd[chan][i]"
   sound_data *v;
   int loc, chn;
   ASSERT_TYPE(SOUND_DATA_P(obj), obj, SCM_ARG1, S_sound_data_ref, "a sound-data object");
   ASSERT_TYPE(INTEGER_P(chan), chan, SCM_ARG2, S_sound_data_ref, "an integer");
-  ASSERT_TYPE(INTEGER_P(frame), frame, SCM_ARG3, S_sound_data_ref, "an integer");
+  ASSERT_TYPE(INTEGER_P(frame_num), frame_num, SCM_ARG3, S_sound_data_ref, "an integer");
   v = (sound_data *)SND_VALUE_OF(obj);
   if (v)
     {
       chn = TO_C_INT(chan);
       if ((chn < 0) || (chn >= v->chans))
 	mus_misc_error(S_sound_data_ref, "invalid channel", SCM_LIST2(obj, chan));
-      loc = TO_C_INT(frame);
+      loc = TO_C_INT(frame_num);
       if ((loc < 0) || (loc >= v->length))
-	mus_misc_error(S_sound_data_ref, "invalid frame", SCM_LIST2(obj, frame));
+	mus_misc_error(S_sound_data_ref, "invalid frame number", SCM_LIST2(obj, frame_num));
       return(TO_SCM_DOUBLE(MUS_SAMPLE_TO_DOUBLE(v->data[chn][loc])));
     }
   else mus_misc_error(S_sound_data_ref, "nil sound-data?", SCM_EOL);
   return(TO_SCM_DOUBLE(0.0));
 }
 
-#if HAVE_APPLICABLE_SMOB
 static SCM sound_data_apply(SCM obj, SCM chan, SCM i)
 {
+#if DEBUGGING
+  /* if an error is signalled by sound_data_ref, our catch is ignored! */
+  if ((INTEGER_P(chan)) && (INTEGER_P(i)))
+    return(sound_data_ref(obj, chan, i));
+  return(INTEGER_ZERO);
+#else
   return(sound_data_ref(obj, chan, i));
-}
 #endif
+}
 
-static SCM sound_data_set(SCM obj, SCM chan, SCM frame, SCM val)
+static SCM sound_data_set(SCM obj, SCM chan, SCM frame_num, SCM val)
 {
   #define H_sound_data_setB "(" S_sound_data_setB " sd chan i val): set sound-data object sd's i-th element in channel chan to val: sd[chan][i] = val"
   sound_data *v;
   int loc, chn;
   ASSERT_TYPE(SOUND_DATA_P(obj), obj, SCM_ARG1, S_sound_data_setB, "a sound-data object");
   ASSERT_TYPE(INTEGER_P(chan), chan, SCM_ARG2, S_sound_data_setB, "an integer");
-  ASSERT_TYPE(INTEGER_P(frame), frame, SCM_ARG3, S_sound_data_setB, "an integer");
+  ASSERT_TYPE(INTEGER_P(frame_num), frame_num, SCM_ARG3, S_sound_data_setB, "an integer");
   ASSERT_TYPE(NUMBER_P(val), val, SCM_ARG4, S_sound_data_setB, "a number");
   v = (sound_data *)SND_VALUE_OF(obj);
   if (v)
     {
       chn = TO_C_INT(chan);
       if ((chn < 0) || (chn >= v->chans))
-	mus_misc_error(S_sound_data_setB, "invalid channel", SCM_LIST3(obj, chan, frame));
-      loc = TO_C_INT(frame);
+	mus_misc_error(S_sound_data_setB, "invalid channel", SCM_LIST3(obj, chan, frame_num));
+      loc = TO_C_INT(frame_num);
       if ((loc < 0) || (loc >= v->length))
-	mus_misc_error(S_sound_data_setB, "invalid frame", SCM_LIST3(obj, chan, frame));
+	mus_misc_error(S_sound_data_setB, "invalid frame number", SCM_LIST3(obj, chan, frame_num));
       v->data[chn][loc] = MUS_DOUBLE_TO_SAMPLE(TO_C_DOUBLE(val));
     }
   else mus_misc_error(S_sound_data_setB, "nil sound-data?", SCM_EOL);

@@ -148,7 +148,6 @@ static repv snd_rep_main(repv arg)
   ss->Default_Output_Srate = DEFAULT_OUTPUT_SRATE;
   ss->Default_Output_Type = DEFAULT_OUTPUT_TYPE;
   ss->Default_Output_Format = DEFAULT_OUTPUT_FORMAT;
-  ss->Normalize_On_Open = DEFAULT_NORMALIZE_ON_OPEN;
   ss->Auto_Resize = DEFAULT_AUTO_RESIZE; 
   ss->Auto_Update = DEFAULT_AUTO_UPDATE; 
   ss->Graphs_Horizontal = DEFAULT_GRAPHS_HORIZONTAL;

@@ -1884,14 +1884,14 @@ void set_apply_button(snd_info *sp, int val)
   gtk_widget_set_sensitive(w_snd_apply(sp), val);
 }
 
-void normalize_sound(snd_state *ss, snd_info *sp, chan_info *ncp)
+void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp)
 {
   return;
 }
 
 /* ---------------- normalize sounds ---------------- */
 
-void normalize_all_sounds(snd_state *ss)
+void equalize_all_panes(snd_state *ss)
 {
   return;
 }

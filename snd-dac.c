@@ -225,13 +225,13 @@ static SCM g_set_reverb_funcs(SCM rev, SCM make_rev, SCM free_rev)
   char *errmsg;
   SCM errstr, bad_func = SCM_BOOL_F;
 
-  errmsg = procedure_ok(rev, 3, 0, "set-" S_reverb_funcs, "reverb", 1);
+  errmsg = procedure_ok(rev, 3, "set-" S_reverb_funcs, "reverb", 1);
   if (errmsg == NULL) 
     {
-      errmsg = procedure_ok(make_rev, 2, 0, "set-" S_reverb_funcs, "make-reverb", 2); 
+      errmsg = procedure_ok(make_rev, 2, "set-" S_reverb_funcs, "make-reverb", 2); 
       if (errmsg == NULL) 
 	{
-	  errmsg = procedure_ok(free_rev, 1, 0, "set-" S_reverb_funcs, "free-reverb", 3); 
+	  errmsg = procedure_ok(free_rev, 1, "set-" S_reverb_funcs, "free-reverb", 3); 
 	  if (errmsg) bad_func = free_rev;
 	}
       else bad_func = make_rev;
@@ -292,7 +292,7 @@ static SCM g_set_contrast_func(SCM func)
   char *errmsg;
   SCM errstr;
 
-  errmsg = procedure_ok(func, 2, 0, "set-" S_contrast_func, "contrast", 1);
+  errmsg = procedure_ok(func, 2, "set-" S_contrast_func, "contrast", 1);
   if (errmsg)
     {
       errstr = TO_SCM_STRING(errmsg);
@@ -2690,6 +2690,24 @@ static void free_player(snd_info *sp)
   FREE(sp);
 }
 
+void clear_players(void)
+{
+  int i, j;
+  snd_info *sp;
+  for (i = 0; i < players_size; i++)
+    {
+      sp = players[i];
+      if (sp)
+	for (j = 0; j < sp->nchans; j++)
+	  if ((sp->chans[j] == NULL) ||
+	      (sp->chans[j]->active != 1) ||
+	      (sp->chans[j]->sound == NULL))
+	    {
+	      free_player(sp);
+	      break;
+	    }
+    }
+}
 
 /* add-player make-player stop-player start-playing */
 

@@ -442,7 +442,7 @@ static BACKGROUND_TYPE startup_funcs(XtPointer context)
 	  select_channel(ss->sounds[0], 0);
 	  if ((ss->active_sounds > 1) &&
 	      ((sound_style(ss) == SOUNDS_VERTICAL) || (sound_style(ss) == SOUNDS_HORIZONTAL)))
-	    normalize_all_sounds(ss);
+	    equalize_all_panes(ss);
 	}
       FREE(tm);
       return(BACKGROUND_QUIT); 

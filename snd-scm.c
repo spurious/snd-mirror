@@ -314,46 +314,41 @@ SCM snd_catch_any(scm_catch_body_t body, void *body_data, const char *caller)
   return(snd_internal_stack_catch(SCM_BOOL_T, body, body_data, snd_catch_scm_error, (void *)caller));
 }
 
-char *procedure_ok(SCM proc, int req_args, int opt_args, const char *caller, const char *arg_name, int argn)
+char *procedure_ok(SCM proc, int args, const char *caller, const char *arg_name, int argn)
 {
   /* if string returned, needs to be freed */
   SCM arity_list;
-  int rargs, oargs;
+  int rargs, oargs, restargs;
 #if TIMING || GCING
   return(NULL);
 #endif
   if (!(PROCEDURE_P(proc)))
     {
       if (NOT_FALSE_P(proc)) /* #f as explicit arg to clear */
-	return(mus_format("%s, arg %d to %s, is not a procedure!", arg_name, argn, caller));
+	return(mus_format("%s (%s arg %d) is not a procedure!", arg_name, caller, argn));
     }
   else
     {
-      /* TODO: in many cases this is too restrictive -- arg could be req or opt or rest */
       arity_list = ARITY(proc);
+      snd_protect(arity_list);
       rargs = TO_SMALL_C_INT(SCM_CAR(arity_list));
       oargs = TO_SMALL_C_INT(SCM_CADR(arity_list));
-      if (rargs != req_args)
-	return(mus_format("%s, arg %d to %s, should take %d required argument%s, but instead takes %d",
-			  arg_name, argn, caller,
-			  req_args, 
-			  (req_args != 1) ? "s" : "", 
-			  rargs));
-      else
-	if (oargs != opt_args)
-	  return(mus_format("%s, arg %d to %s, should take %d optional argument%s, but instead takes %d",
-			    arg_name, argn, caller,
-			    opt_args, 
-			    (opt_args != 1) ? "s" : "", 
-			    oargs));
+      restargs = ((TRUE_P(SCM_CADDR(arity_list))) ? 1 : 0);
+      snd_unprotect(arity_list);
+      if (rargs > args)
+	return(mus_format("%s function (%s arg %d) should take %d argument%s, but instead requires %d",
+			  arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs));
+      if ((restargs == 0) && ((rargs + oargs) < args))
+	return(mus_format("%s function (%s arg %d) should accept at least %d argument%s, but instead accepts only %d",
+			  arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs + oargs));
     }
   return(NULL);
 }
 
-int procedure_ok_with_error(SCM proc, int req_args, int opt_args, const char *caller, const char *arg_name, int argn)
+int procedure_ok_with_error(SCM proc, int req_args, const char *caller, const char *arg_name, int argn)
 {
   char *errmsg;
-  errmsg = procedure_ok(proc, req_args, opt_args, caller, arg_name, argn);
+  errmsg = procedure_ok(proc, req_args, caller, arg_name, argn);
   if (errmsg)
     {
       snd_error(errmsg);
@@ -422,7 +417,6 @@ static SCM eval_file_wrapper(void *data)
 
 static SCM g_call0_1(void *arg)
 {
-  /* the USE_OPT_APPLY code here can get confused about the environment */
   return(scm_apply((SCM)arg, SCM_EOL, SCM_EOL));
 }
 
@@ -433,31 +427,9 @@ SCM g_call0(SCM proc, const char *caller) /* replacement for gh_call0 -- protect
 
 static SCM g_call1_1(void *arg)
 {
-#if USE_OPT_APPLY
-  SCM env, code, obj;
-  code = ((SCM *)arg)[0]; 
-  obj = ((SCM *)arg)[1]; 
-  switch (SCM_TYP7(code))
-    {
-    case scm_tc7_subr_1:
-#ifdef __cplusplus
-      return(((SCM (*)(SCM a))SCM_SUBRF(code))(obj));
-#else
-      return(SCM_SUBRF(code)(obj));
-#endif
-    case scm_tcs_closures:
-      env = SCM_EXTEND_ENV(SCM_CAR(SCM_CODE(code)),
-			   SCM_LIST1(obj),
-			   SCM_ENV(code));
-      return(scm_eval_body(SCM_CDR (SCM_CODE(code)), env));
-    default:
-      return(scm_apply(code, obj, APPLY_EOL)); /* APPLY_EOL, not SCM_EOL!  (the latter causes segfaults here) */
-    }
-#else
   return(scm_apply(((SCM *)arg)[0], 
  		   ((SCM *)arg)[1], 
  		   APPLY_EOL));
-#endif
 }
 
 SCM g_call1(SCM proc, SCM arg, const char *caller)
@@ -485,32 +457,9 @@ SCM g_call_any(SCM proc, SCM arglist, const char *caller)
 
 static SCM g_call2_1(void *arg)
 {
-#if USE_OPT_APPLY
-  SCM env, code, arg1, arg2;
-  code = ((SCM *)arg)[0]; 
-  arg1 = ((SCM *)arg)[1]; 
-  arg2 = ((SCM *)arg)[2]; 
-  switch (SCM_TYP7(code))
-    {
-    case scm_tc7_subr_2:
-#ifdef __cplusplus
-      return(((SCM (*)(SCM a, SCM b))SCM_SUBRF(code))(arg1, arg2));
-#else
-      return(SCM_SUBRF(code)(arg1, arg2));
-#endif
-    case scm_tcs_closures:
-      env = SCM_EXTEND_ENV(SCM_CAR(SCM_CODE(code)),
-			   SCM_LIST2(arg1, arg2),
-			   SCM_ENV(code));
-      return(scm_eval_body(SCM_CDR (SCM_CODE(code)), env));
-    default:
-      return(scm_apply(code, arg1, CONS(arg2, APPLY_EOL)));
-    }
-#else
   return(scm_apply(((SCM *)arg)[0], 
  		   ((SCM *)arg)[1], 
  		   CONS(((SCM *)arg)[2], APPLY_EOL)));
-#endif
 }
 
 SCM g_call2(SCM proc, SCM arg1, SCM arg2, const char *caller)
@@ -524,35 +473,11 @@ SCM g_call2(SCM proc, SCM arg1, SCM arg2, const char *caller)
 
 static SCM g_call3_1(void *arg)
 {
-#if USE_OPT_APPLY
-  SCM env, code, arg1, arg2, arg3;
-  code = ((SCM *)arg)[0]; 
-  arg1 = ((SCM *)arg)[1]; 
-  arg2 = ((SCM *)arg)[2]; 
-  arg3 = ((SCM *)arg)[3]; 
-  switch (SCM_TYP7(code))
-    {
-    case scm_tc7_subr_3:
-#ifdef __cplusplus
-      return(((SCM (*)(SCM a, SCM b, SCM c))SCM_SUBRF(code))(arg1, arg2, arg3));
-#else
-      return(SCM_SUBRF(code)(arg1, arg2, arg3));
-#endif
-    case scm_tcs_closures:
-      env = SCM_EXTEND_ENV(SCM_CAR(SCM_CODE(code)),
-			   SCM_LIST3(arg1, arg2, arg3),
-			   SCM_ENV(code));
-      return(scm_eval_body(SCM_CDR (SCM_CODE(code)), env));
-    default:
-      return(scm_apply(code, arg1, CONS2(arg2, arg3, APPLY_EOL)));
-    }
-#else
   return(scm_apply(((SCM *)arg)[0], 
 		   ((SCM *)arg)[1], 
 		   CONS2(((SCM *)arg)[2], 
 			 ((SCM *)arg)[3], 
 			 APPLY_EOL)));
-#endif
 }
 
 SCM g_call3(SCM proc, SCM arg1, SCM arg2, SCM arg3, const char *caller)
@@ -1009,7 +934,7 @@ static SCM g_set_enved_base(SCM val)
 {
   #define H_enved_base "(" S_enved_base ") -> envelope editor exponential base value (1.0)"
   ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_enved_base, "a number"); 
-  set_enved_base(state, TO_C_DOUBLE(val));
+  set_enved_base(state, mus_fclamp(0.0, TO_C_DOUBLE(val), 300000.0));
   return(TO_SCM_DOUBLE(enved_base(state)));
 }
 
@@ -1018,7 +943,7 @@ static SCM g_set_enved_power(SCM val)
 {
   #define H_enved_power "(" S_enved_power ") -> envelope editor base scale range (9.0^power)"
   ASSERT_TYPE(NUMBER_P(val), val, SCM_ARGn, "set-" S_enved_power, "a number"); 
-  set_enved_power(state, TO_C_DOUBLE(val));
+  set_enved_power(state, mus_fclamp(0.0, TO_C_DOUBLE(val), 10.0));
   return(TO_SCM_DOUBLE(enved_power(state)));
 }
 
@@ -1170,15 +1095,6 @@ static SCM g_set_selection_creates_region(SCM val)
   ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_selection_creates_region, "a boolean");
   set_selection_creates_region(state, TO_C_BOOLEAN_OR_T(val));
   return(TO_SCM_BOOLEAN(selection_creates_region(state)));
-}
-
-static SCM g_normalize_on_open(void) {return(TO_SCM_BOOLEAN(normalize_on_open(state)));}
-static SCM g_set_normalize_on_open(SCM val) 
-{
-  #define H_normalize_on_open "(" S_normalize_on_open ") -> #t if Snd should try to evenly apportion screen space when a sound is opened (#t)"
-  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(val), val, SCM_ARGn, "set-" S_normalize_on_open, "a boolean");
-  set_normalize_on_open(state, TO_C_BOOLEAN_OR_T(val));
-  return(TO_SCM_BOOLEAN(normalize_on_open(state)));
 }
 
 static SCM g_print_length(void) {return(TO_SCM_INT(print_length(state)));}
@@ -1449,10 +1365,20 @@ static SCM g_sounds(void)
   return(result);
 }
 
-static SCM g_normalize_view(void) 
+static SCM g_equalize_panes(SCM snd) 
 {
-  #define H_normalize_view "(" S_normalize_view ") causes Snd to try to give all channels about the same screen space"
-  normalize_all_sounds(state); 
+  #define H_equalize_panes "(" S_equalize_panes " (&optional snd) causes Snd to try to give all channels about the same screen space"
+  snd_info *sp;
+  if (NOT_BOUND_P(snd))
+    equalize_all_panes(state); 
+  else 
+    {
+      sp = get_sp(snd);
+      if (sp)
+	equalize_sound_panes(get_global_state(), 
+			     sp,
+			     sp->chans[0]);
+    }
   return(SCM_BOOL_F);
 }
 
@@ -1672,7 +1598,7 @@ chan_info *get_cp(SCM scm_snd_n, SCM scm_chn_n, const char *caller)
   snd_info *sp;
   int chn_n;
   sp = get_sp(scm_snd_n);
-  if (sp == NULL) 
+  if ((sp == NULL) || (sp->active != 1))
     snd_no_such_sound_error(caller, scm_snd_n); 
   if (INTEGER_P(scm_chn_n))
     chn_n = TO_C_INT(scm_chn_n);
@@ -3222,9 +3148,6 @@ void g_initialize_gh(snd_state *ss)
   define_procedure_with_setter(S_selection_creates_region, SCM_FNC g_selection_creates_region, H_selection_creates_region,
 			       "set-" S_selection_creates_region, SCM_FNC g_set_selection_creates_region, local_doc, 0, 0, 0, 1);
 
-  define_procedure_with_setter(S_normalize_on_open, SCM_FNC g_normalize_on_open, H_normalize_on_open,
-			       "set-" S_normalize_on_open, SCM_FNC g_set_normalize_on_open, local_doc, 0, 0, 0, 1);
-
   define_procedure_with_setter(S_print_length, SCM_FNC g_print_length, H_print_length,
 			       "set-" S_print_length, SCM_FNC g_set_print_length, local_doc, 0, 0, 0, 1);
 
@@ -3419,7 +3342,7 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(S_show_listener,       g_show_listener, 0, 0, 0,       H_show_listener);
   DEFINE_PROC(S_hide_listener,       g_hide_listener, 0, 0, 0,       H_hide_listener);
   DEFINE_PROC(S_activate_listener,   g_activate_listener, 0, 0, 0,   H_activate_listener);
-  DEFINE_PROC(S_normalize_view,      g_normalize_view, 0, 0, 0,      H_normalize_view);
+  DEFINE_PROC(S_equalize_panes,      g_equalize_panes, 0, 0, 0,      H_equalize_panes);
   DEFINE_PROC(S_open_sound_file,     g_open_sound_file, 0, 4, 0,     H_open_sound_file);
   DEFINE_PROC(S_close_sound_file,    g_close_sound_file, 2, 0, 0,    H_close_sound_file);
   DEFINE_PROC(S_vct_sound_file,      vct2soundfile, 3, 0, 0,         H_vct_sound_file);
@@ -3520,9 +3443,12 @@ If more than one hook function, results are concatenated. If none, the current c
   EVAL_STRING("(read-set! keywords 'prefix)");
   EVAL_STRING("(print-enable 'source)");  /* added 13-Feb-01 */
 
-  EVAL_STRING("(define smooth smooth-sound)"); /* backwards compatibility (22-May-01) */
+  /* backwards compatibility (22-May-01) */
+  EVAL_STRING("(define smooth smooth-sound)"); 
   EVAL_STRING("(define cut delete-selection)");
   EVAL_STRING("(define call-apply apply-controls)");
+  EVAL_STRING("(define (open-alternate-sound file) (close-sound) (open-sound file))");
+  EVAL_STRING("(define normalize-view equalize-panes)");
 
   /* from ice-9/r4rs.scm but with output to snd listener */
   EVAL_STRING("(define snd-last-file-loaded #f)");

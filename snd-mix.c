@@ -2811,11 +2811,12 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
   for (i = 0; i < chans; i++)
     {
       fds[i] = init_track_reader(cps[i], track_num, need_free);
-      for (n = 0; n < fds[i]->mixes; n++)
-	{
-	  j = fds[i]->state[n] + fds[i]->len[n];
-	  if (j > samps) samps = j;
-	}
+      if (fds[i]) /* perhaps bad track number? */
+	for (n = 0; n < fds[i]->mixes; n++)
+	  {
+	    j = fds[i]->state[n] + fds[i]->len[n];
+	    if (j > samps) samps = j;
+	  }
     }
   playfd = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), 
 				 SND_SRATE(cps[0]->sound), 
@@ -2825,8 +2826,9 @@ static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num
   for (i = 0; i < samps; i += 256)
     {
       for (k = 0; k < chans; k++)
-	for (j = k; j < 256*chans; j+=chans)
-	  buf[j] = MUS_SAMPLE_TO_SHORT(next_track_sample(fds[k]));
+	if (fds[k])
+	  for (j = k; j < 256 * chans; j += chans)
+	    buf[j] = MUS_SAMPLE_TO_SHORT(next_track_sample(fds[k]));
       mus_audio_write(playfd, (char *)buf, 256 * 2 * chans);
       check_for_event(ss);
       if (ss->stopped_explicitly)

@@ -22,7 +22,7 @@ enum {menu_menu,
             o_speed_float_menu, o_speed_ratio_menu, o_speed_semitone_menu,
           o_stats_menu,
         view_menu, v_cascade_menu,
-          v_normalize_menu, 
+          v_equalize_panes_menu, 
           v_graph_style_menu, v_graph_style_cascade_menu,
             v_lines_menu, v_dots_menu, v_filled_menu, v_dots_and_lines_menu, v_lollipops_menu,
           v_zero_menu, v_cursor_menu, v_ctrls_menu, v_listener_menu,
@@ -40,7 +40,7 @@ enum {menu_menu,
 #define NUM_MENU_WIDGETS 99
 static Widget mw[NUM_MENU_WIDGETS];
 
-enum {W_pop_menu, W_pop_sep, W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_normalize, W_pop_info};
+enum {W_pop_menu, W_pop_sep, W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_equalize_panes, W_pop_info};
 #define NUM_POPUP_CHILDREN 8
 static Widget popup_menu = NULL;
 static Widget popup_children[NUM_POPUP_CHILDREN];
@@ -69,7 +69,7 @@ Widget edit_find_menu(void) {return(mw[e_find_menu]);}
 Widget edit_select_all_menu(void) {return(mw[e_select_all_menu]);}
 Widget edit_header_menu(void) {return(mw[e_header_menu]);}
 
-Widget view_normalize_menu(void) {return(mw[v_normalize_menu]);}
+Widget view_equalize_panes_menu(void) {return(mw[v_equalize_panes_menu]);}
 Widget view_mix_panel_menu(void) {return(mw[v_mix_panel_menu]);}
 Widget view_region_menu(void) {return(mw[v_region_menu]);}
 Widget view_combine_separate_menu(void) {return(mw[v_combine_separate_menu]);}
@@ -102,7 +102,7 @@ Widget popup_play_menu(void) {return(popup_children[W_pop_play]);}
 Widget popup_undo_menu(void) {return(popup_children[W_pop_undo]);}
 Widget popup_redo_menu(void) {return(popup_children[W_pop_redo]);}
 Widget popup_save_menu(void) {return(popup_children[W_pop_save]);}
-Widget popup_normalize_menu(void) {return(popup_children[W_pop_normalize]);}
+Widget popup_equalize_panes_menu(void) {return(popup_children[W_pop_equalize_panes]);}
 Widget popup_info_menu(void) {return(popup_children[W_pop_info]);}
 
 void set_menu_label(Widget w, const char *label) {if (w) set_button_label(w, label);}
@@ -292,9 +292,9 @@ static void View_Superimposed_Callback(Widget w, XtPointer cD, XtPointer mD)
   IF_MENU_HOOK(STR_View, STR_superimposed) set_channel_style((snd_state *)cD, CHANNELS_SUPERIMPOSED);
 }
 
-static void View_Normalize_Callback(Widget w, XtPointer cD, XtPointer mD) 
+static void View_Equalize_Panes_Callback(Widget w, XtPointer cD, XtPointer mD) 
 {
-  IF_MENU_HOOK(STR_View, STR_Normalize) normalize_all_sounds((snd_state *)cD);
+  IF_MENU_HOOK(STR_View, STR_Equalize_Panes) equalize_all_panes((snd_state *)cD);
 }
 
 static void View_Dots_Callback(Widget w, XtPointer cD, XtPointer mD) 
@@ -761,9 +761,9 @@ Widget add_menu(snd_state *ss)
   XtAddCallback(mw[v_combine_superimposed_menu], XmNactivateCallback, View_Superimposed_Callback, ss);  
   if (channel_style(ss) == CHANNELS_SUPERIMPOSED) set_sensitive(mw[v_combine_superimposed_menu], FALSE);
 
-  mw[v_normalize_menu] = XtCreateManagedWidget(STR_Normalize, xmPushButtonWidgetClass, mw[view_menu], in_args, in_n);
-  XtAddCallback(mw[v_normalize_menu], XmNactivateCallback, View_Normalize_Callback, ss);
-  XtVaSetValues(mw[v_normalize_menu], XmNmnemonic, 'N', NULL);
+  mw[v_equalize_panes_menu] = XtCreateManagedWidget(STR_Equalize_Panes, xmPushButtonWidgetClass, mw[view_menu], in_args, in_n);
+  XtAddCallback(mw[v_equalize_panes_menu], XmNactivateCallback, View_Equalize_Panes_Callback, ss);
+  XtVaSetValues(mw[v_equalize_panes_menu], XmNmnemonic, 'N', NULL);
 
   mw[v_zero_menu] = XtCreateManagedWidget(STR_Show_Y0, xmPushButtonWidgetClass, mw[view_menu], main_args, main_n);
   XtAddCallback(mw[v_zero_menu], XmNactivateCallback, View_Zero_Callback, ss);
@@ -1054,7 +1054,7 @@ static int remove_option(int which_menu, char *label)
             if (strcmp(label, STR_Edit_Header) == 0) XtUnmanageChild(mw[e_header_menu]); else return(-1);
             return(1);
             break;
-    case 2: if (strcmp(label, STR_Normalize) == 0) XtUnmanageChild(mw[v_normalize_menu]); else
+    case 2: if (strcmp(label, STR_Equalize_Panes) == 0) XtUnmanageChild(mw[v_equalize_panes_menu]); else
             if (strcmp(label, STR_Show_controls) == 0) XtUnmanageChild(mw[v_ctrls_menu]); else
             if (strcmp(label, STR_Show_listener) == 0) XtUnmanageChild(mw[v_listener_menu]); else
             if (strcmp(label, STR_Mix_Panel) == 0) XtUnmanageChild(mw[v_mix_panel_menu]); else
@@ -1245,9 +1245,9 @@ static void Popup_Redo_Callback(Widget w, XtPointer cD, XtPointer mD)
   IF_MENU_HOOK("Popup", STR_Redo) redo_edit_with_sync(current_channel(ss), 1);
 }
 
-static void Popup_Normalize_Callback(Widget w, XtPointer cD, XtPointer mD) 
+static void Popup_Equalize_Panes_Callback(Widget w, XtPointer cD, XtPointer mD) 
 {
-  IF_MENU_HOOK("Popup", STR_Normalize) normalize_all_sounds((snd_state *)cD);
+  IF_MENU_HOOK("Popup", STR_Equalize_Panes) equalize_all_panes((snd_state *)cD);
 }
 
 static void Popup_Info_Callback(Widget w, XtPointer cD, XtPointer mD) 
@@ -1295,9 +1295,9 @@ void create_popup_menu(snd_state *ss)
       XtAddCallback(popup_children[W_pop_redo], XmNactivateCallback, Popup_Redo_Callback, ss);
       popup_children[W_pop_save] = XtCreateManagedWidget(STR_Save, xmPushButtonWidgetClass, popup_menu, args, n);
       XtAddCallback(popup_children[W_pop_save], XmNactivateCallback, Popup_Save_Callback, ss);
-      popup_children[W_pop_normalize] = XtCreateManagedWidget(STR_Normalize, xmPushButtonWidgetClass, popup_menu, args, n);
-      XtVaSetValues(popup_children[W_pop_normalize], XmNsensitive, FALSE, NULL);
-      XtAddCallback(popup_children[W_pop_normalize], XmNactivateCallback, Popup_Normalize_Callback, ss);
+      popup_children[W_pop_equalize_panes] = XtCreateManagedWidget(STR_Equalize_Panes, xmPushButtonWidgetClass, popup_menu, args, n);
+      XtVaSetValues(popup_children[W_pop_equalize_panes], XmNsensitive, FALSE, NULL);
+      XtAddCallback(popup_children[W_pop_equalize_panes], XmNactivateCallback, Popup_Equalize_Panes_Callback, ss);
       popup_children[W_pop_info] = XtCreateManagedWidget(STR_Info, xmPushButtonWidgetClass, popup_menu, args, n);
       XtVaSetValues(popup_children[W_pop_info], XmNsensitive, FALSE, NULL);
       XtAddCallback(popup_children[W_pop_info], XmNactivateCallback, Popup_Info_Callback, ss);

@@ -552,16 +552,19 @@ list of two vcts (the two sides of the envelope graph). \
 static SCM g_graph_data(SCM data, SCM snd, SCM chn, SCM ax, SCM lo, SCM hi, SCM style)
 {
   #define H_graph_data "(" S_graph_data " snd chn context low high graph-style)\n\
-'graph-data' displays 'data' in the time domain graph of 'snd's channel \
-'chn' using the graphics context 'context' (normally copy-context), placing the \
-data in the recipient's graph between points 'low' and 'high' \
-in the drawing mode 'graphic-style'."
+displays data in the time domain graph of snd's channel \
+chn using the graphics context context (normally copy-context), placing the \
+data in the recipient's graph between points low and high \
+in the drawing mode graphic-style."
 
   chan_info *cp;
   vct *v0, *v1 = NULL;
   SND_ASSERT_CHAN(S_graph_data, snd, chn, 2);
   cp = get_cp(snd, chn, S_graph_data);
-  ASSERT_TYPE(LIST_P(data) || VCT_P(data), data, SCM_ARG1, S_graph_data, "a list or vct");
+  ASSERT_TYPE((LIST_P(data) && 
+              (LIST_LENGTH(data) == 2) &&
+              (VCT_P(SCM_CAR(data))) &&
+              (VCT_P(SCM_CADR(data)))) || VCT_P(data), data, SCM_ARG1, S_graph_data, "a list of 2 vcts or vct");
   ASSERT_TYPE(INTEGER_IF_BOUND_P(ax), ax, SCM_ARG4, S_graph_data, "an integer");
   ASSERT_TYPE(NUMBER_IF_BOUND_P(lo), lo, SCM_ARG5, S_graph_data, "a number");
   ASSERT_TYPE(NUMBER_IF_BOUND_P(hi), hi, SCM_ARG6, S_graph_data, "a number");
@@ -570,9 +573,10 @@ in the drawing mode 'graphic-style'."
     {
       v0 = get_vct(SCM_CAR(data));
       v1 = get_vct(SCM_CADR(data));
+      if ((v0 == NULL) || (v1 == NULL))
+        mus_misc_error(S_graph_data, "null vcts in list?", data);
     }
   else v0 = get_vct(data);
-
   draw_graph_data(cp, 
 		  TO_C_INT_OR_ELSE(lo, -1),
 		  TO_C_INT_OR_ELSE(hi, -1),

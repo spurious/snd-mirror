@@ -138,55 +138,6 @@ char *global_search(snd_state *ss, int direction)
   return(search_no_luck);
 }
 
-#if USE_OPT_APPLY
-typedef struct {
-  int c, i, end;
-  snd_fd *sf;
-  snd_info *sp;
-} find_data;
-
-static SCM find_call_1(void *arg)
-{
-  find_data *ft = (find_data *)arg;
-  snd_state *ss;
-  SCM res = SCM_BOOL_F, code;
-  int i, end, inc;
-  snd_fd *sf;
-  int pass = 0;
-  code = ft->sp->search_proc;
-  ss = get_global_state();
-  i = ft->i;
-  sf = ft->sf;
-  end = ft->end;
-  if (sf->direction == READ_FORWARD) inc = 1; else inc = -1;
-  while ((i != end) && (!(read_sample_eof(sf))))
-    {
-      res = scm_eval_body(SCM_CDR(SCM_CODE(code)), 
-			  SCM_EXTEND_ENV(SCM_CAR(SCM_CODE(code)),
-					 SCM_LIST1(TO_SCM_DOUBLE((inc == 1) ? 
-								 (double)next_sample_to_float(sf) : 
-								 (double)previous_sample_to_float(sf))),
-					 SCM_ENV(code)));
-      if (TRUE_P(res)) 
-	{
-	  ft->c--;
-	  if (ft->c == 0) break;
-	}
-      i += inc;
-      pass++;
-      if (pass > 100)
-	{
-	  check_for_event(ss);
-	  if (!(ft->sp->active)) break;
-	  pass = 0;
-	}
-      if (ss->stopped_explicitly) break;
-    }
-  ft->i = i;
-  return(res);
-}
-#endif
-
 static int cursor_find(snd_info *sp, chan_info *cp, int count, int end_sample)
 {
   /* count > 0 -> search forward, else back */
@@ -222,22 +173,6 @@ static int cursor_find(snd_info *sp, chan_info *cp, int count, int end_sample)
       return(-1);
     }
   if (count > 0) sf->direction = READ_FORWARD; else sf->direction = READ_BACKWARD;
-#if USE_OPT_APPLY
-  if (SCM_CLOSUREP(sp->search_proc))
-    {
-      find_data ft;
-      ft.c = c;
-      ft.sf = sf;
-      ft.i = i;
-      ft.end = end_sample;
-      ft.sp = sp;
-      snd_catch_any(find_call_1, (void *)(&ft), S_find);
-      i = ft.i;
-      c = ft.c;
-    }
-  else
-#endif
-    {
   while ((c > 0) && (i != end_sample) && (!read_sample_eof(sf)))
     {
       if (count > 0)
@@ -259,7 +194,7 @@ static int cursor_find(snd_info *sp, chan_info *cp, int count, int end_sample)
 	  passes = 0;
 	}
       if (ss->stopped_explicitly) break;
-    }}
+    }
   ss->stopped_explicitly = 0;
   free_snd_fd(sf);
   ss->search_in_progress = 0;
@@ -352,7 +287,7 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
 	  if (PROCEDURE_P(sp->search_proc))
 	    snd_unprotect(sp->search_proc);
 	  sp->search_proc = SCM_UNDEFINED;
-	  error = procedure_ok(proc, 1, 0, "find", "find procedure", 1);
+	  error = procedure_ok(proc, 1, "find", "find", 1);
 	  if (error == NULL)
 	    {
 	      sp->search_proc = proc;
@@ -377,7 +312,7 @@ static SCM g_set_search_procedure(SCM snd, SCM proc)
       if (PROCEDURE_P(ss->search_proc))
 	snd_unprotect(ss->search_proc);
       ss->search_proc = SCM_UNDEFINED;
-      error = procedure_ok(snd, 1, 0, "find", "find procedure", 1);
+      error = procedure_ok(snd, 1, "find", "find", 1);
       if (error == NULL)
 	{
 	  ss->search_proc = snd;

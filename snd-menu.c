@@ -11,13 +11,13 @@ void reflect_file_open_in_menu (void)
   set_sensitive(file_mix_menu(), TRUE);
   set_sensitive(file_save_as_menu(), TRUE);
   set_sensitive(file_update_menu(), TRUE);  
-  set_sensitive(view_normalize_menu(), TRUE);  
+  set_sensitive(view_equalize_panes_menu(), TRUE);  
   set_sensitive(edit_header_menu(), TRUE);
   set_sensitive(edit_find_menu(), TRUE);
   set_sensitive(edit_select_all_menu(), TRUE);
   if (popup_menu_exists())
     {
-      set_sensitive(popup_normalize_menu(), TRUE);
+      set_sensitive(popup_equalize_panes_menu(), TRUE);
       set_sensitive(popup_play_menu(), TRUE);
       set_sensitive(popup_info_menu(), TRUE);
     }
@@ -47,7 +47,7 @@ void reflect_file_lack_in_menu (void)
   set_sensitive(file_update_menu(), FALSE);
   set_sensitive(edit_undo_menu(), FALSE);
   set_sensitive(edit_redo_menu(), FALSE);
-  set_sensitive(view_normalize_menu(), FALSE);
+  set_sensitive(view_equalize_panes_menu(), FALSE);
   set_sensitive(edit_header_menu(), FALSE);
   set_sensitive(edit_find_menu(), FALSE);
   set_sensitive(edit_select_all_menu(), FALSE);
@@ -58,7 +58,7 @@ void reflect_file_lack_in_menu (void)
       set_sensitive(popup_save_menu(), FALSE);
       set_sensitive(popup_play_menu(), FALSE);
       set_sensitive(popup_info_menu(), FALSE);
-      set_sensitive(popup_normalize_menu(), FALSE);
+      set_sensitive(popup_equalize_panes_menu(), FALSE);
     }
 }
 
@@ -67,9 +67,9 @@ void reflect_mix_active_in_menu(void)
   set_sensitive(view_mix_panel_menu(), TRUE);
 }
 
-void reflect_normalize_in_menu(int on)
+void reflect_equalize_panes_in_menu(int on)
 {
-  set_sensitive(view_normalize_menu(), on);
+  set_sensitive(view_equalize_panes_menu(), on);
 }
 
 static int find_any_edits (chan_info *cp, void *ignore)
@@ -621,7 +621,7 @@ static SCM gl_add_to_main_menu(SCM label, SCM callback)
   slot = make_callback_slot();
   if (BOUND_P(callback))
     {
-      err = procedure_ok(callback, 0, 0, S_add_to_main_menu, "menu callback", 2);
+      err = procedure_ok(callback, 0, S_add_to_main_menu, "menu callback", 2);
       if (err == NULL)
 	add_callback(slot, callback);
       else 
@@ -648,7 +648,7 @@ menu is the index returned by add-to-main-menu, func should be a function of no 
   ASSERT_TYPE(STRING_P(label), label, SCM_ARG2, S_add_to_menu, "a string");
   ASSERT_TYPE(INTEGER_P(menu), menu, SCM_ARG1, S_add_to_menu, "an integer");
   ASSERT_TYPE(PROCEDURE_P(callback), callback, SCM_ARG3, S_add_to_menu, "a procedure");
-  errmsg = procedure_ok(callback, 0, 0, S_add_to_menu, "menu callback", 3);
+  errmsg = procedure_ok(callback, 0, S_add_to_menu, "menu callback", 3);
   if (errmsg == NULL)
     {
       m = TO_C_INT(menu);

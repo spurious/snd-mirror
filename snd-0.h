@@ -276,10 +276,6 @@ enum {COLOR_POSITION, COLOR_ZOOM};
 #define default_output_format(ss) ss->Default_Output_Format
 #define set_default_output_format(ss, a) ss->Default_Output_Format = a
 
-#define normalize_on_open(ss) ss->Normalize_On_Open
-#define set_normalize_on_open(ss, a) ss->Normalize_On_Open = a
-#define DEFAULT_NORMALIZE_ON_OPEN 1
-
 #define dac_size(ss) ss->Dac_Size
 #define set_dac_size(ss, a) ss->Dac_Size = a
 #if (HAVE_OSS || HAVE_ALSA)

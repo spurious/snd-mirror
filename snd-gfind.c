@@ -42,7 +42,7 @@ static void edit_find_find(int direction, GtkWidget *w, gpointer context)
       if (PROCEDURE_P(ss->search_proc)) snd_unprotect(ss->search_proc);
       ss->search_proc = SCM_UNDEFINED;
       proc = snd_catch_any(eval_str_wrapper, str, str);
-      if (procedure_ok_with_error(proc, 1, 0, "find", "find procedure", 1))
+      if (procedure_ok_with_error(proc, 1, "find", "find", 1))
 	{
 	  ss->search_proc = proc;
 	  snd_protect(proc);

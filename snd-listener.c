@@ -336,12 +336,24 @@ void command_return(GUI_WIDGET w, snd_state *ss, int last_prompt)
 	GUI_LISTENER_TEXT_INSERT(w, GUI_TEXT_END(w), str);
       GUI_SET_CURSOR(w, (ss->sgx)->wait_cursor);
       GUI_UPDATE(w); /* not sure about this... */
-      /*
-       * this read then eval business is probably not needed anymore --
-       *   it is necessary if scm_make_continuation is called anywhere in Snd
+      /* 
+       * the division into a read, a free, then an eval is needed to handle continuations correctly:
+       *   
+       *    (set! (sample (cursor))
+       *      (call-with-current-continuation
+       *       (lambda (rsvp)
+       *	 (prompt-in-minibuffer "sample:" rsvp)
+       *	 (sample (cursor)))))
+       *
+       *   will return ((long)jump) to the eval_form_wrapper below.  If we make any assumptions
+       *   about pointer allocation here (i.e. str not NULL), or cursor style, then the
+       *   global jump will confuse free (i.e. try to free a not-allocated string).  So, 
+       *   eval_str_wrapper can't be used since it assumes the string is still valid.
+       *   I assume the form is ok because the continuation will preserve it somehow.
+       *
        */
       if ((snd_strlen(str) > 1) || (str[0] != '\n'))
-	form = snd_catch_any(read_str_wrapper, (void *)str, str);  /* needed else #< in input exits Snd! */
+	form = snd_catch_any(read_str_wrapper, (void *)str, str);  /* catch needed else #< in input exits Snd! */
       FREE(str);
       str = NULL;
       if (BOUND_P(form))

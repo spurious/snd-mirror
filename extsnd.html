@@ -1087,15 +1087,6 @@ when you save a sound via the "save" dialog.</p>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
-<!-- normalize-on-open -->
-<!-- --><tr><td valign=top><code><em class=def><a name="normalizeonopen">normalize-on-open</a></em></code></td>
-<!-- --><td valign=top><code>#t</code></td>
-<!-- --><td>When a new sound is added to the Snd window, the resultant
-<!-- -->set of graphs can start to dangle off the bottom or end of the screen.
-<!-- -->If <i>normalize-on-open</i> is #t, Snd tries to do something more reasonable.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=3></td></tr>
-<!-- -->
 <!-- save-dir -->
 <!-- --><tr><td valign=top><code><em class=def><a name="savedir">save-dir</a></em></code></td>
 <!-- --><td valign=top><code>""</code></td>
@@ -4705,17 +4696,6 @@ desired edit history position.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- open-alternate-sound -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndopenalternate">open-alternate-sound</a></em> (name)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->close the currently selected file, if any, and open <i>name</i>.
-<!-- -->Returns #f if it can't open <i>name</i>, otherwise the new index. [<em class=error>no-such-file</em>].
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
 <!-- open-raw-sound -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="sndrawopen">open-raw-sound</a></em> (name chans srate format)</code></span>
@@ -7289,7 +7269,8 @@ variable %load-verbosely to #t.
 <!-- --><tr><td></td><td>
 <!-- -->Cause <i>key</i> (an integer) with modifiers <i>state</i> to evaluate <i>code</i>.<br><br>
 <!-- -->
-<!-- --><code>(bind-key (char-&gt;integer #\a) 4 (lambda () (snd-print \"hi\")))</code><br><br>
+<!-- --><code>(bind-key (char-&gt;integer #\a) 4 (lambda () (snd-print \"hi\") cursor-in-view))</code><br>
+<!-- --><code>(bind-key (char->integer #\p) 0 (lambda () cursor-on-left)) ;now (cursor) == (left-sample)</code><br><br>
 <!-- -->
 <!-- -->The modifier state is a combination of shift: 1, control: 4, meta: 8, 
 <!-- -->so this call causes C-a to print "hi" in the lisp listener.  The 
@@ -7349,7 +7330,7 @@ variable %load-verbosely to #t.
 <!-- -->The key codes can usually be found in the X header file X11R6/include/X11/keysymdef.h
 <!-- -->The "Page Up" key is given as 0xFF55, which in Scheme would be #xff55 (65365).
 <!-- --><pre>
-<!-- -->  (bind-key #xff55 0 (lambda () (snd-print "Page up")))
+<!-- -->  (bind-key #xff55 0 (lambda () (snd-print "Page up") keyboard-no-action))
 <!-- --></pre>
 <!-- --></td></tr>
 <!-- -->
@@ -7371,6 +7352,20 @@ variable %load-verbosely to #t.
 <!-- -->As a special dispensation for forgetful users, if rl1 is a file
 <!-- -->name and rl2 is not a vector, <i>convolve-with</i> is called instead.
 <!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- equalize-panes -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndequalizepanes">equalize-panes</a></em> (<i>snd</i>)</code></span></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->equalize Snd panes as in View menu <a href="snd.html#viewnormalize">Equalize Panes</a> option.
+<!-- -->If the <i>snd</i> argument is given, only that sound's panes are affected.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2 align=center>
+<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
+<!-- -->(add-hook! after-open-hook 
+<!-- -->  (lambda (n) (if (&gt; (channels n) 3) (equalize-panes))))
+<!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- exit -->
@@ -7476,19 +7471,6 @@ variable %load-verbosely to #t.
 <!-- -->enough, this is a Scheme variable, unlike all the others -- that is, you
 <!-- -->refer to it directly, not as a procedure call.
 <!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- normalize-view -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndnormalizeview">normalize-view</a></em> ()</code></span></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->normalize Snd display as in View menu <a href="snd.html#viewnormalize">Normalize</a> option.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2 align=center>
-<!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-<!-- -->(add-hook! after-open-hook 
-<!-- -->  (lambda (n) (if (&gt; (channels n) 3) (normalize-view))))
-<!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- preload-directory -->

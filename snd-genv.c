@@ -684,6 +684,7 @@ static void make_base_label(snd_state *ss, Float bval)
   sfs = (char *)CALLOC(len, sizeof(char));
   mus_snprintf(sfs, len, "%f", bval);
   scale_len = (int)(enved_power(ss) + 3);
+  if (scale_len < 32) scale_len = 32;
   buf = (char *)CALLOC(scale_len, sizeof(char));
   for (i = 0; i < scale_len - 1; i++) buf[i] = sfs[i];
   gtk_label_set_text(GTK_LABEL(baseValue), buf);

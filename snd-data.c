@@ -398,6 +398,7 @@ void free_snd_info(snd_info *sp)
   if (sp->edited_region) clear_region_backpointer(sp);
   clear_mini_strings(sp);
   clear_filter_strings(sp);
+  clear_players();
 }
 
 snd_info *completely_free_snd_info(snd_info *sp)

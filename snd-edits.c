@@ -3112,7 +3112,7 @@ static SCM g_as_one_edit(SCM proc, SCM origin)
   SCM result = SCM_BOOL_F;
   char *errmsg;
   SCM errstr;
-  errmsg = procedure_ok(proc, 0, 0, S_as_one_edit, "func", 1);
+  errmsg = procedure_ok(proc, 0, S_as_one_edit, "edit", 1);
   if (errmsg)
     {
       errstr = TO_SCM_STRING(errmsg);

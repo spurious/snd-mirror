@@ -72,7 +72,7 @@ int edit_redo_menu(void) {return(0);}
 int edit_find_menu(void) {return(0);}
 int edit_select_all_menu(void) {return(0);}
 int edit_header_menu(void) {return(0);}
-int view_normalize_menu(void) {return(0);}
+int view_equalize_panes_menu(void) {return(0);}
 int view_mix_panel_menu(void) {return(0);}
 int view_region_menu(void) {return(0);}
 int view_combine_separate_menu(void) {return(0);}
@@ -104,7 +104,7 @@ int popup_play_menu(void) {return(0);}
 int popup_undo_menu(void) {return(0);}
 int popup_redo_menu(void) {return(0);}
 int popup_save_menu(void) {return(0);}
-int popup_normalize_menu(void) {return(0);}
+int popup_equalize_panes_menu(void) {return(0);}
 int popup_info_menu(void) {return(0);}
 int popup_menu_exists(void) {return(0);}
 void set_menu_label(int w, const char *label) {}
@@ -222,9 +222,9 @@ void snd_file_bomb_icon(snd_info *sp, int on) {}
 void x_bomb(snd_info *sp, int on) {}
 void set_sound_pane_file_label(snd_info *sp, char *str) {}
 void unlock_ctrls(snd_info *sp) {}
-void normalize_sound(snd_state *ss, snd_info *sp, chan_info *ncp) {}
+void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp) {}
 void reflect_amp_env_completion(snd_info *sp) {}
-void normalize_all_sounds(snd_state *ss) {}
+void equalize_all_panes(snd_state *ss) {}
 void sound_show_ctrls(snd_info *sp) {}
 void sound_hide_ctrls(snd_info *sp) {}
 int control_panel_open(snd_info *sp) {return(0);}

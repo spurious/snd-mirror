@@ -67,12 +67,14 @@
 #undef HAVE_SYS_FPU_H
 #undef HAVE_SYS_PARAM_H
 
-#define SIZEOF_INT 0
-#define SIZEOF_CHAR 0
-#define SIZEOF_LONG 0
-#define SIZEOF_SHORT 0
-#define SIZEOF_INT_P 0
-#define SIZEOF_FLOAT 0
+#undef SIZEOF_INT
+#undef SIZEOF_CHAR
+#undef SIZEOF_LONG
+#undef SIZEOF_SHORT
+#undef SIZEOF_INT_P
+#undef SIZEOF_FLOAT
+#undef SIZEOF_VOID_P
+#undef SND_VOID_T
 
 #undef LINUX
 #undef SGI
@@ -134,6 +136,7 @@
 #undef HAVE_SCM_NUM2LONG_LONG
 #undef HAVE_SCM_C_MAKE_VECTOR
 #undef HAVE_SCM_C_DEFINE
+#undef HAVE_SCM_UBITS2NUM
 
 #define USE_SND 1
 #endif

@@ -107,7 +107,7 @@ S_vct2sound_data
 static int sndlib_num_commands(void) {return(NUM_SNDLIB_NAMES);}
 static const char **sndlib_commands(void) {return(sndlib_names);}
 
-#define NUM_COMMANDS 550
+#define NUM_COMMANDS 547
 
 static char *snd_commands[NUM_COMMANDS] ={
   S_abort, S_activate_listener, S_add_mark, S_add_player, S_add_sound_file_extension, 
@@ -185,9 +185,9 @@ static char *snd_commands[NUM_COMMANDS] ={
   S_mouse_drag_hook, S_mouse_press_hook, S_mouse_release_hook, S_movies, S_multichannel_mix_hook, S_mus_error_hook,
 
   S_name_click_hook, S_new_sound, S_next_mix_sample, S_next_sample, S_next_track_sample, S_normal_fft,
-  S_normalize_by_channel, S_normalize_by_sound, S_normalize_fft, S_normalize_globally, S_normalize_on_open, S_normalize_view,
+  S_normalize_by_channel, S_normalize_by_sound, S_normalize_fft, S_normalize_globally,
 
-  S_open_alternate_sound, S_open_hook, S_open_raw_sound, S_open_sound, S_open_sound_file, S_orientation_dialog,
+  S_open_hook, S_open_raw_sound, S_open_sound, S_open_sound_file, S_orientation_dialog,
   S_output_comment_hook, S_output_name_hook,
 
   S_peaks, S_play, S_play_and_wait, S_play_hook, S_play_mix, S_play_region, S_play_selection, S_play_track, S_playerQ,

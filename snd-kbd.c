@@ -486,7 +486,7 @@ static void goto_previous_graph (chan_info *cp, int count)
   if (ncp == vcp) return;
   if (!ncp) snd_error("goto previous graph lost!");
   select_channel(ncp->sound, ncp->chan);
-  normalize_sound(ss, ncp->sound, ncp); /* snd-xsnd.c */
+  equalize_sound_panes(ss, ncp->sound, ncp); /* snd-xsnd.c */
   /* goto_graph(ncp); */
 }
 
@@ -546,7 +546,7 @@ static void goto_next_graph (chan_info *cp, int count)
   if (ncp == vcp) return;
   if (!ncp) snd_error("goto next graph lost!");
   select_channel(ncp->sound, ncp->chan);
-  normalize_sound(ss, ncp->sound, ncp);
+  equalize_sound_panes(ss, ncp->sound, ncp);
   /* goto_graph(ncp); */
 }
 
@@ -626,7 +626,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 		snd_unprotect(sp->search_proc);
 	      sp->search_proc = SCM_UNDEFINED;
 	      proc = snd_catch_any(eval_str_wrapper, str, str);
-	      if (procedure_ok_with_error(proc, 1, 0, "find", "find procedure", 1))
+	      if (procedure_ok_with_error(proc, 1, "find", "find", 1))
 		{
 		  sp->search_proc = proc;
 		  snd_protect(proc);
@@ -826,7 +826,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 		snd_unprotect(sp->eval_proc);
 	      sp->eval_proc = SCM_UNDEFINED;
 	      proc = snd_catch_any(eval_str_wrapper, str, str);
-	      if (procedure_ok_with_error(proc, 1, 0, "eval", "eval procedure", 1))
+	      if (procedure_ok_with_error(proc, 1, "eval", "eval", 1))
 		{
 		  sp->eval_proc = proc;
 		  snd_protect(proc);
@@ -1102,6 +1102,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      redisplay = cursor_move(cp, count); 
 	      break;
 	    case snd_K_G: case snd_K_g: 
+	      /* TODO: shouldn't C-g be wrapped up in a command so user can remap it? */
 	      number_ctr = 0; 
 	      counting = 0; 
 	      dot_seen = 0; 
@@ -1245,7 +1246,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      zx_incremented(cp, 1.0 + state_amount(state)); 
 	      break;
 	    case snd_K_Down: 
-	      zx_incremented(cp, 1.0 / (1.0+state_amount(state))); 
+	      zx_incremented(cp, 1.0 / (1.0 + state_amount(state))); 
 	      break;
 	    case snd_K_0: case snd_K_1: case snd_K_2: case snd_K_3: case snd_K_4:
 	    case snd_K_5: case snd_K_6: case snd_K_7: case snd_K_8: case snd_K_9: 
@@ -1399,6 +1400,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      searching = 1; 
 	      break;
 	    case snd_K_N: case snd_K_n: 
+	      /* TODO: this command C-x C-n seems unneeded (or C-x C-x seems pointless) */
 	      eval_expression(cp, sp, ext_count, 0); 
 	      searching = 1; 
 	      redisplay = CURSOR_IN_VIEW; 
@@ -1941,8 +1943,8 @@ static SCM g_prompt_in_minibuffer(SCM msg, SCM callback, SCM snd_n)
 then when the user eventually responds, invokes the function callback with the response"
 
   snd_info *sp;
-  SCM arity_list;
-  int rargs, oargs, restargs;
+  char *errstr;
+  SCM errmsg;
   ASSERT_TYPE(STRING_P(msg), msg, SCM_ARG1, S_prompt_in_minibuffer, "a string");
   ASSERT_TYPE((NOT_BOUND_P(callback)) || (BOOLEAN_P(callback)) || PROCEDURE_P(callback), callback, SCM_ARG2, S_prompt_in_minibuffer, "#f or a procedure");
   SND_ASSERT_SND(S_prompt_in_minibuffer, snd_n, 3);
@@ -1954,16 +1956,15 @@ then when the user eventually responds, invokes the function callback with the r
   sp->prompt_callback = SCM_BOOL_F; /* just in case something goes awry */
   if (PROCEDURE_P(callback))
     {
-      arity_list = ARITY(callback);
-      snd_protect(arity_list);
-      rargs = TO_SMALL_C_INT(SCM_CAR(arity_list));
-      oargs = TO_SMALL_C_INT(SCM_CADR(arity_list));
-      restargs = ((TRUE_P(SCM_CADDR(arity_list))) ? 1 : 0);
-      snd_unprotect(arity_list);
-      if (rargs + oargs + restargs != 1)
-	return(snd_bad_arity_error(S_prompt_in_minibuffer, 
-				   TO_SCM_STRING("callback func should take one arg"), 
-				   callback));
+      errstr = procedure_ok(callback, 1, S_prompt_in_minibuffer, "callback", 2);
+      if (errstr)
+	{
+	  errmsg = TO_SCM_STRING(errstr);
+	  FREE(errstr);
+	  return(snd_bad_arity_error(S_prompt_in_minibuffer, 
+				     errmsg,
+				     callback));
+	}
       snd_protect(callback);  
     }
   sp->prompt_callback = callback;

@@ -267,6 +267,9 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+25-May:  removed open-alternate-sound -- is exactly the same as close-sound + open-sound.\n\
+         removed normalize-on-open (use open-hook and equalize-panes).\n\
+         renamed normalize-view to equalize-panes.\n\
 24-May:  removed line-size, prefix-arg (it's now an optional arg to the key function).\n\
          ignore-prefix arg to bind-key removed, Snd no longer handles prefix itself.\n\
          removed cut (use delete-selection).\n\
@@ -333,10 +336,10 @@ static char view_menu_help_string[] =
   Files: fire up the file browser.\n\
   Color: col" STR_OR " browser for sonogram.\n\
   Orientation: sonogram orientation.\n\
-  Normalize: During editing with multiple\n\
+  Equalize Panes: During editing with multiple\n\
      files and channels, some data may be\n\
      obscured or compressed by changed window\n\
-     sizes.  Normalize returns Snd to a state\n\
+     sizes.  Equalize Panes returns Snd to a state\n\
      where everything is equally compressed.\n\
   Channel style: combine all channels into\n\
      one graph.\n\
@@ -989,7 +992,6 @@ new value via (set! (" S_auto_resize ") #t). \n\
   " S_mix_waveform_height "   20\n\
   " S_movies "                #t\n\
   " S_normalize_fft "         normalize-by-channel (snd #t) (chn #t)\n\
-  " S_normalize_on_open "     #t\n\
   " S_position_color "        ivory3\n\
   " S_print_length "          12\n\
   " S_pushed_button_color "   lightsteelblue1\n\
@@ -1180,6 +1182,7 @@ all refer to the same thing.\n\
   " S_env_selection "     (envelope env-base snd chn)\n\
   " S_env_sound "         (envelope samp samps env-base snd chn)\n\
   " S_enved_dialog "      ()\n\
+  " S_equalize_panes "    (snd)\n\
   " S_exit "              ()\n\
   " S_expand "            (snd)\n\
   " S_expand_hop "        (snd)\n\
@@ -1262,11 +1265,9 @@ all refer to the same thing.\n\
   " S_mixQ "              (id)\n\
   " S_next_sample "       (rd)\n\
   " S_new_sound "         (name type format srate chans)\n\
-  " S_normalize_view "    ()\n\
   " S_open_raw_sound "    (name chans srate format)\n\
   " S_open_sound "        (name)\n\
   " S_open_sound_file "   (name chans srate comment)\n\
-  " S_open_alternate_sound "(name)\n\
   " S_orientation_dialog "()\n\
   " S_peaks "             (file snd chn)\n\
   " S_play "              (samp snd chn sync end)\n\

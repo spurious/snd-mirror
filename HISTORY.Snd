@@ -1,5 +1,10 @@
 snd change log
 
+  25-May:    removed open-alternate-sound -- is exactly the same as close-sound + open-sound.
+             removed earlier scm_apply optimizations ("Rule #1 of optimization: don't do it").
+             removed normalize-on-open (use after-open-hook and equalize-panes):
+               (add-hook after-open-hook (lambda (snd) (equalize-panes snd)))
+             renamed normalize-view to equalize-panes.\n\
   24-May:    removed line-size, prefix-arg (it's now an optional arg to the key function).
              ignore-prefix arg to bind-key removed, Snd no longer handles prefix itself.
              removed cut (use delete-selection).

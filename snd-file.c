@@ -538,7 +538,7 @@ static char *memo_file_name(snd_info *sp)
 
 static void read_memo_file(snd_info *sp)
 {
-  /* sp->fullname + ".scm" = possible memo file */
+  /* sp->fullname + ".scm" = possible memo file (memo-sound set in this file, snd_open_file_1) */
   char *newname;
   newname = memo_file_name(sp);
   if (file_write_date(newname) >= sp->write_date)
@@ -606,7 +606,7 @@ static snd_info *snd_open_file_1 (char *filename, snd_state *ss, int select)
       ss->active_sounds++;
       files = ss->active_sounds;
       if (files == 1) reflect_file_open_in_menu();
-      reflect_normalize_in_menu(active_channels(ss, WITHOUT_VIRTUAL_CHANNELS) > 1);
+      reflect_equalize_panes_in_menu(active_channels(ss, WITHOUT_VIRTUAL_CHANNELS) > 1);
       reflect_file_change_in_title(ss);
       unlock_ctrls(sp);
       greet_me(ss, sp->shortname);
@@ -650,7 +650,7 @@ void snd_close_file(snd_info *sp, snd_state *ss)
   files = ss->active_sounds;
   if (files == 0) reflect_file_lack_in_menu();
   reflect_file_change_in_title(ss);
-  reflect_normalize_in_menu(active_channels(ss, WITHOUT_VIRTUAL_CHANNELS) > 1);
+  reflect_equalize_panes_in_menu(active_channels(ss, WITHOUT_VIRTUAL_CHANNELS) > 1);
   if (!(selection_is_active())) 
     reflect_edit_without_selection_in_menu();
 }
@@ -746,6 +746,7 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
   /* we've already checked that filename exists */
   hdr = make_file_info_1(filename, ss);
   sp = (snd_info *)CALLOC(1, sizeof(snd_info));
+  sp->active = 1;
   sp->nchans = mus_sound_chans(filename);
   sp->allocated_chans = sp->nchans;
   sp->chans = (chan_info **)CALLOC(sp->nchans, sizeof(chan_info *));
@@ -1005,7 +1006,7 @@ void view_curfiles_select(snd_state *ss, int pos)
   if (sp != osp)
     {
       select_channel(sp, 0);
-      normalize_sound(ss, sp, sp->chans[0]);
+      equalize_sound_panes(ss, sp, sp->chans[0]);
       /* goto_graph(sp->chans[0]); */
     }
 }

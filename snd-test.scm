@@ -27,7 +27,7 @@
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs))
 
-(define tests 1)
+(define tests 5)
 (define snd-test -1)
 (define keep-going #f)
 (define full-test (< snd-test 0))
@@ -302,7 +302,6 @@
 	'movies (movies) #t 
 	'selection-creates-region (selection-creates-region) #t 
 	'normalize-fft (normalize-fft) normalize-by-channel
-	'normalize-on-open (normalize-on-open) #t
 	'previous-files-sort (previous-files-sort) 0 
 	'print-length (print-length) 12 
 	'read-only (without-errors (read-only)) 'no-such-sound
@@ -802,7 +801,6 @@
 	  (list 'movies movies #t set-movies #f)
 	  (list 'selection-creates-region selection-creates-region #t set-selection-creates-region #f)
 	  (list 'normalize-fft normalize-fft normalize-by-channel set-normalize-fft dont-normalize)
-	  (list 'normalize-on-open normalize-on-open #t set-normalize-on-open #f)
 	  (list 'previous-files-sort previous-files-sort 0 set-previous-files-sort 1)
 	  (list 'print-length print-length 12 set-print-length 16)
 	  (list 'recorder-autoload recorder-autoload #f set-recorder-autoload #t)
@@ -5674,9 +5672,9 @@
 	      (snd-display (format #f ";sndxtest new: ~A ~A" new-data newer-data)))
 	  (if (not (vequal old-data new-old-data))
 	      (snd-display (format #f ";sndxtest old: ~A ~A" old-data new-old-data)))))
-      (revert-sound fd)
+      (close-sound fd)
 
-      (set! fd (open-alternate-sound "2.snd"))
+      (set! fd (open-sound "2.snd"))
       (set! (selection-position fd 1) 1000)
       (set! (selection-length fd 1) 10)
       (set! (selection-member? fd 1) #t)
@@ -5690,9 +5688,9 @@
 	      (snd-display (format #f ";sndxtest chan 1 hit chan 0? ~A ~A" old0 new0)))
 	  (if (not (vequal new1 old1))
 	      (snd-display (format #f ";sndxtest chan 1 ? ~A ~A" old1 new1)))))
-      (revert-sound fd)
+      (close-sound fd)
       
-      (set! fd (open-alternate-sound "2.snd"))
+      (set! fd (open-sound "2.snd"))
       (let ((fr (frames fd))
 	    (chn (chans fd))
 	    (sr (srate fd))
@@ -5706,9 +5704,9 @@
 		(fneq (* 2.0 mx1) (maxamp fd 1))
 		(fneq sr (srate fd)))
 	    (snd-display (format #f ";sndxtest(snd 2): ~A ~A ~A (~A ~A) (~A ~A)?" (frames fd) (chans fd) (srate fd) mx0 (maxamp fd 0) mx1 (maxamp fd 1)))))
-      (revert-sound fd)
+      (close-sound fd)
 
-      (set! fd (open-alternate-sound "obtest.snd"))
+      (set! fd (open-sound "obtest.snd"))
       (let ((fr (frames fd))
 	    (chn (chans fd))
 	    (sr (srate fd))
@@ -6379,7 +6377,7 @@
 	    (set! (use-sinc-interp) #f)
 	    (scale-to .1 (choose-fd))
 	    (scale-by 2.0 (choose-fd))
-	    (normalize-view)
+	    (equalize-panes)
 	    (save-control-panel)
 	    (set! (amp) .5)
 	    (test-panel amp 'amp)
@@ -6541,68 +6539,66 @@
 		   (if (fneq (sample 1200 cfd) .1) (snd-display (format #f ";insert-sample(looped): ~A?" (sample 1200 cfd))))))
 	      (revert-sound cfd))
 
-	  (let ((cfd (open-sound "oboe.snd")))
+	  (let ((cfd (open-sound "obtest.snd")))
 	    (select-sound cfd)
-	    (let ((cfd1 (open-alternate-sound "obtest.snd")))
-	      (if (and (sound? cfd) (not (= cfd cfd1))) (snd-display (format #f ";open-alternate-sound: ~A ~A?" cfd cfd1)))
-	      (let ((cfd2 (open-sound "pistol.snd")))
-		(select-sound cfd2)
-		;; now run apply a few times
-		(if (rs 0.5) (set! (use-sinc-interp) #t))
-		(set! (amp) .5) 
-		(set! (speed) 2.0) 
-		(test-panel speed 'speed)
-		(apply-controls) 
-		(play-and-wait)
+	    (let ((cfd2 (open-sound "pistol.snd")))
+	      (select-sound cfd2)
+	      ;; now run apply a few times
+	      (if (rs 0.5) (set! (use-sinc-interp) #t))
+	      (set! (amp) .5) 
+	      (set! (speed) 2.0) 
+	      (test-panel speed 'speed)
+	      (apply-controls) 
+	      (play-and-wait)
 
-		(set! (reverbing) #t)
-		(set! (reverb-scale) .2) 
-		(test-panel reverb-scale 'reverb-scale)
-		(test-panel reverb-length 'reverb-length)
-		(test-panel reverb-lowpass 'reverb-lowpass)
-		(test-panel reverb-feedback 'reverb-feedback)
-		(apply-controls) 
-		(play-and-wait)
-		(set! (contrasting) #t)
-		(set! (contrast) .5) 
-		(test-panel contrast 'contrast)
-		(test-panel contrast-amp 'contrast-amp)
-		(apply-controls) 
-		(play-and-wait)
-		(set! (expanding) #t)
-		(set! (expand) 2.5) 
-		(test-panel expand 'expand)
-		(test-panel expand-length 'expand-length)
-		(test-panel expand-hop 'expand-hop)
-		(test-panel expand-ramp 'expand-ramp)
-		(apply-controls) 
-		(play-and-wait)
-		(set! (filtering) #t)
-		(set! (filter-order) 40) 
-		(test-panel filter-order 'filter-order)
-		(set! (filter-env) '(0 0 .1 1 .2 0 1 0)) 
-		(filter-env) 
-		(apply-controls) 
-		(play-and-wait)
-		(set! (amp) 1.5) 
-		(test-panel amp 'amp)
-		(apply-controls) 
-		(play-and-wait)
-		(swap-channels cfd1 0 cfd2 0)
-		(set! (amp #t) .75)
-		(test-panel amp 'amp)
-		(if (> (abs (- (amp cfd2) .75)) .05) (snd-display (format #f ";set-amp .75 #t -> ~A?" (amp cfd2))))
-		(set! (contrast-amp #t) .75)
-		(if (fneq (contrast-amp cfd2) .75) (snd-display (format #f ";set-contrast-amp .75 #t -> ~A?" (contrast-amp cfd2))))
-		(set! (expand-length #t) .025)
-		(if (fneq (expand-length cfd2) .025) (snd-display (format #f ";set-expand-length .025 #t -> ~A?" (expand-length cfd2))))
-		(set! (expand-hop #t) .025)
-		(if (fneq (expand-hop cfd2) .025) (snd-display (format #f ";set-expand-hop .025 #t -> ~A?" (expand-hop cfd2))))
-		(set! (expand-ramp #t) .025)
-		(if (fneq (expand-ramp cfd2) .025) (snd-display (format #f ";set-expand-ramp .025 #t -> ~A?" (expand-ramp cfd2))))
-		(close-sound cfd2)
-		(close-sound cfd1)
-		(set! (use-sinc-interp) #f))))
+	      (set! (reverbing) #t)
+	      (set! (reverb-scale) .2) 
+	      (test-panel reverb-scale 'reverb-scale)
+	      (test-panel reverb-length 'reverb-length)
+	      (test-panel reverb-lowpass 'reverb-lowpass)
+	      (test-panel reverb-feedback 'reverb-feedback)
+	      (apply-controls) 
+	      (play-and-wait)
+	      (set! (contrasting) #t)
+	      (set! (contrast) .5) 
+	      (test-panel contrast 'contrast)
+	      (test-panel contrast-amp 'contrast-amp)
+	      (apply-controls) 
+	      (play-and-wait)
+	      (set! (expanding) #t)
+	      (set! (expand) 2.5) 
+	      (test-panel expand 'expand)
+	      (test-panel expand-length 'expand-length)
+	      (test-panel expand-hop 'expand-hop)
+	      (test-panel expand-ramp 'expand-ramp)
+	      (apply-controls) 
+	      (play-and-wait)
+	      (set! (filtering) #t)
+	      (set! (filter-order) 40) 
+	      (test-panel filter-order 'filter-order)
+	      (set! (filter-env) '(0 0 .1 1 .2 0 1 0)) 
+	      (filter-env) 
+	      (apply-controls) 
+	      (play-and-wait)
+	      (set! (amp) 1.5) 
+	      (test-panel amp 'amp)
+	      (apply-controls) 
+	      (play-and-wait)
+	      (swap-channels cfd 0 cfd2 0)
+	      (set! (amp #t) .75)
+	      (test-panel amp 'amp)
+	      (if (> (abs (- (amp cfd2) .75)) .05) (snd-display (format #f ";set-amp .75 #t -> ~A?" (amp cfd2))))
+	      (set! (contrast-amp #t) .75)
+	      (if (fneq (contrast-amp cfd2) .75) (snd-display (format #f ";set-contrast-amp .75 #t -> ~A?" (contrast-amp cfd2))))
+	      (set! (expand-length #t) .025)
+	      (if (fneq (expand-length cfd2) .025) (snd-display (format #f ";set-expand-length .025 #t -> ~A?" (expand-length cfd2))))
+	      (set! (expand-hop #t) .025)
+	      (if (fneq (expand-hop cfd2) .025) (snd-display (format #f ";set-expand-hop .025 #t -> ~A?" (expand-hop cfd2))))
+	      (set! (expand-ramp #t) .025)
+	      (if (fneq (expand-ramp cfd2) .025) (snd-display (format #f ";set-expand-ramp .025 #t -> ~A?" (expand-ramp cfd2))))
+	      (close-sound cfd2)
+	      (close-sound cfd)
+	      (set! (use-sinc-interp) #f)))
 
 	  (if (and (rs .5) (not rev-funcs-set))
 	      (begin
@@ -6800,7 +6796,6 @@
 		    (list 'movies #f #f set-movies #t)
 		    (list 'selection-creates-region #f #f set-selection-creates-region #t)
 		    (list 'normalize-fft #f dont-normalize set-normalize-fft normalize-globally)
-		    (list 'normalize-on-open #f #f set-normalize-on-open #t)
 		    (list 'previous-files-sort #f 0 set-previous-files-sort 3)
 		    (list 'print-length #f 2 set-print-length 32)
 		    (list 'reverb-decay #f 0.0 set-reverb-decay 2.0)
@@ -7067,13 +7062,13 @@
 
 	(let ((samp100 (sample 1100 obi 0)))
 	  (safe-make-region 1000 2000 obi)
-	  (eval-over-selection (lambda (val) (* 2.0 val)) obi)
+	  (eval-over-selection (lambda (val) (* 2.0 val)))
 	  (let ((nsamp100 (sample 1100 obi 0)))
 	    (if (fneq (* 2.0 samp100) nsamp100) (snd-display (format #f ";eval-over-selection: ~A ~A?" samp100 nsamp100)))
 	    (let ((m2 (add-mark 1000 obi 0))
 		  (m3 (add-mark 2000 obi 0)))
 	      (if (not (equal? (marks obi 0) (list m2 m3))) (snd-display (format #f ";add-mark: ~A ~A?" (marks obi 0) (list m2 m3))))
-	      (eval-between-marks (lambda (val) (* 2.0 val)) obi)
+	      (eval-between-marks (lambda (val) (* 2.0 val)))
 	      (let ((msamp100 (sample 1100 obi 0)))
 		(if (fneq (* 2.0 nsamp100) msamp100) (snd-display (format #f ";eval-between-marks: ~A ~A?" nsamp100 msamp100)))
 		(revert-sound obi)))))
@@ -7898,7 +7893,7 @@ EDITS: 3
 	       max-fft-peaks max-regions max-sounds maxamp menu-sensitive menu-widgets minibuffer-history-length min-dB mix mixes mix-amp mix-amp-env
 	       mix-anchor mix-chans mix-color mix-track mix-length mix-locked mix-name mix? mix-panel mix-position mix-region mix-sample-reader?
 	       mix-selection mix-sound mix-sound-channel mix-sound-index mix-speed mix-tag-height mix-tag-width mix-tag-y mix-vct mix-waveform-height
-	       movies new-sound next-mix-sample next-sample next-track-sample normalize-fft normalize-on-open normalize-view open-alternate-sound
+	       movies new-sound next-mix-sample next-sample next-track-sample normalize-fft equalize-panes
 	       open-raw-sound open-sound open-sound-file orientation-dialog peak-env-info peaks play play-and-wait play-mix play-region play-selection
 	       play-track player? position-color position->x position->y preload-directory preload-file previous-files-sort previous-sample 
 	       print-length progress-report prompt-in-minibuffer  protect-region pushed-button-color read-only
@@ -7961,7 +7956,7 @@ EDITS: 3
 		   graph-style graphing graphs-horizontal help-text-font highlight-color just-sounds left-sample listener-color listener-font
 		   listener-prompt listener-text-color mark-color mark-name mark-sample mark-sync max-fft-peaks max-regions menu-sensitive min-dB mix-amp
 		   mix-amp-env mix-anchor mix-chans mix-color mix-track mix-length mix-locked mix-name mix-position mix-speed mix-tag-height
-		   mix-tag-width mix-tag-y mix-waveform-height movies normalize-fft normalize-on-open normalize-view position-color 
+		   mix-tag-width mix-tag-y mix-waveform-height movies normalize-fft equalize-panes position-color 
 		   previous-files-sort print-length pushed-button-color recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain
 		   recorder-in-amp recorder-in-format recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format recorder-srate
 		   recorder-trigger reverb-decay reverb-feedback reverb-funcs reverb-length reverb-lowpass reverb-scale reverbing sash-color
@@ -8527,7 +8522,7 @@ EDITS: 3
 			  enved-power enved-selected-env enved-target enved-waveform-color enved-waving eps-file eps-left-margin eps-bottom-margin 
 			  fit-data-on-open foreground-color graph-color graph-cursor help-text-font highlight-color just-sounds key-binding listener-color 
 			  listener-font listener-prompt listener-text-color max-regions max-sounds minibuffer-history-length mix-waveform-height 
-			  movies normalize-on-open position-color previous-files-sort print-length pushed-button-color
+			  movies position-color previous-files-sort print-length pushed-button-color
 			  recorder-autoload recorder-buffer-size recorder-file recorder-in-format recorder-max-duration recorder-out-chans recorder-out-format 
 			  recorder-srate recorder-trigger sash-color save-dir save-state-file save-state-on-exit selected-channel selected-data-color 
 			  selected-graph-color selected-mix selected-mix-color selected-sound selection-creates-region show-backtrace show-controls 
@@ -8612,7 +8607,7 @@ EDITS: 3
 	  (check-error-tag 'no-such-graphics-context (lambda () (draw-line 0 0 1 1 ind 0 1234)))
 	  (check-error-tag 'no-such-graphics-context (lambda () (foreground-color ind 0 1234)))
 	  (check-error-tag 'no-such-graphics-context (lambda () (current-font ind 0 1234)))
-	  (check-error-tag 'no-such-graphics-context (lambda () (graph-data (list 0 1) ind 0 1234 0 1 0)))
+	  (check-error-tag 'no-such-graphics-context (lambda () (graph-data (list (make-vct 3) (make-vct 3)) ind 0 1234 0 1 0)))
 	  (check-error-tag 'no-such-axis (lambda () (position->x 100 ind 0 1234)))
 	  (check-error-tag 'no-such-axis (lambda () (position->y 100 ind 0 1234)))
 	  (check-error-tag 'no-such-axis (lambda () (x->position 100 ind 0 1234)))
@@ -8660,7 +8655,6 @@ EDITS: 3
 	(check-error-tag 'wrong-type-arg (lambda () (yes-or-no-p (list 0 1))))
 	(check-error-tag 'no-such-file (lambda () (open-sound "/bad/baddy.snd")))
 	(check-error-tag 'no-such-file (lambda () (open-raw-sound "/bad/baddy.snd" 1 22050 mus-lshort)))
-	(check-error-tag 'no-such-file (lambda () (open-alternate-sound "/bad/baddy.snd")))
 	(check-error-tag 'no-such-file (lambda () (view-sound "/bad/baddy.snd")))
 	(check-error-tag 'no-such-file (lambda () (make-sample-reader 0 "/bad/baddy.snd")))
 	(check-error-tag 'no-such-region (lambda () (make-region-sample-reader 0 1234567)))
@@ -8785,9 +8779,9 @@ EDITS: 3
 				   (lambda () (n arg1 arg2 arg3))
 				   (lambda args (car args))))
 			  procs))
-		       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :start -1 0)))
-		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0))))
-	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0))
+		       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :start -1 0 #f #t '() 12345678901234567890)))
+		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0 #f #t '() 12345678901234567890))))
+	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890))
 	      (gc)
 
 	      ;; ---------------- 4 Args
@@ -8808,10 +8802,10 @@ EDITS: 3
 				      (lambda () (n arg1 arg2 arg3 arg4))
 				      (lambda args (car args))))
 			     procs))
-			  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :wave -1 0)))
-		       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :initial-contents -1 0)))
-		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :srate -1 0))))
-	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :input -1 0))
+			  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :wave -1 0 #f #t '() 12345678901234567890)))
+		       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :initial-contents -1 0 #f #t '() 12345678901234567890)))
+		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :srate -1 0 #f #t '() 12345678901234567890))))
+	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :input -1 0 #f #t '() 12345678901234567890))
 
 	      ;; ---------------- 5 Args
 	      (for-each 
@@ -8832,11 +8826,11 @@ EDITS: 3
 				       (lambda () (n arg1 arg2 arg3 arg4 arg5))
 				       (lambda args (car args))))
 			      procs))
-			   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :wave -1 0 1)))
-			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :initial-contents -1 0 1)))
-		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :srate -1 0 1)))
-		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :input -1 0 1)))
-	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :order -1 0 1))
+			   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :wave -1 0 1 #f #t '() 12345678901234567890)))
+			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :initial-contents -1 0 1 #f #t '() 12345678901234567890)))
+		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :srate -1 0 1 #f #t '() 12345678901234567890)))
+		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :input -1 0 1 #f #t '() 12345678901234567890)))
+	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (sqrt -1.0) (make-delay 32) :order -1 0 1 #f #t '() 12345678901234567890))
 	    (gc)
 	    ))
 
@@ -9505,10 +9499,12 @@ EDITS: 3
 ;;;   forward-mix save-state mus-sound-reopen-output close-sound-file vct->sound-file
 ;;;   save-marks save-region vcts-map! update-sound make-track-sample-reader free-track-sample-reader 
 ;;;   backward-mix peaks cursor-position y->position position->y mix-sound-channel mix-sound-index
+;;;   play-track?
 ;;;   
 ;;;   edpos in sound->temp graph-data
 ;;;   open-raw-sound-hook (data-loc/len)
-;;;   arg to key binding
+;;;   arg to key binding, cursor-on-left et al via key commands
+;;;   (bind-key (char->integer #\p) 0 (lambda () cursor-on-left)) ;now (cursor) == (left-sample)
 
 ;;; need to know before calling this if libguile.so was loaded
 ;;; (system "cc gsl-ex.c -c")
@@ -9519,18 +9515,15 @@ EDITS: 3
 
 ;; TODO: change amp to play-amp or control-amp? (similarly for speed contrast contrast-amp etc)
 ;;       close-sound and close-sound-file (etc) are confusingly similar
-;;       display-edits -> edit-list->string [edit-fragment->string? (edit-tree?]
+;;       display-edits -> edit-list->string [edit-fragment->string? (edit-tree?] edit-history->string?
 ;;       find-sound -> sound-name->index
 ;;       mark->sound -> mark->sound-index?
 ;;       memo-sound -> last-loaded-sound or something (current-sound? or pass as arg somehow -- is it needed at all?)
 ;;       mix-vct -> vct->mix
 ;;       remove movies?
 ;;       mus-set-ran-seed and mus-set-raw-header-defaults should use generalized set
-;;       normalize-on-open and normalize-view are bad names 
-;;       remove open-alternate-sound?
 ;;       ?scale-by|to -> scale-sound-by|to?
 ;;       selection|sound-to-temp should use "->" and maybe "file" not "temp"
-;;       uniting ->unite (as per sync)
 ;;       view-sound -> open-sound-read-only
 ;;  
 ;; also we have mus-sound-srate in sndlib, mus-srate in clm.c, sound-srate and *clm-srate* in clm, mus-sound-srate and srate in snd

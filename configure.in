@@ -267,6 +267,18 @@ if test "$snd_cv_long_longs" = yes; then
   AC_DEFINE(HAVE_LONG_LONGS)
 fi
 
+# this test taken from Guile's configure.in -- we have the same problem (we're wrapping function pointers)
+AC_CHECK_SIZEOF(void *)
+if test "$ac_cv_sizeof_long" -eq "$ac_cv_sizeof_void_p"; then
+  AC_DEFINE(SND_VOID_T, unsigned long)
+elif test \( "$snd_cv_long_longs" = yes \) -a \( "$ac_cv_sizeof_long_long" -eq "$ac_cv_sizeof_void_p" \); then
+  AC_DEFINE(SND_VOID_T, unsigned long long)
+elif test "$ac_cv_sizeof_int" -eq "$ac_cv_sizeof_void_p"; then
+  AC_DEFINE(SND_VOID_T, unsigned int)
+else
+  AC_MSG_ERROR(cannot find an integral type capable of storing a pointer: "$ac_cv_sizeof_void_p" bytes)
+fi
+
 dnl from fftw's configure.in
 AC_MSG_CHECKING([for isnan])
 AC_TRY_LINK([#include <math.h>
@@ -493,6 +505,7 @@ if test $GUILE_CONFIG_works = yes; then
     AC_CHECK_LIB(guile, scm_num2long_long,           [AC_DEFINE(HAVE_SCM_NUM2LONG_LONG)])
     AC_CHECK_LIB(guile, scm_c_make_vector,           [AC_DEFINE(HAVE_SCM_C_MAKE_VECTOR)])
     AC_CHECK_LIB(guile, scm_c_define,                [AC_DEFINE(HAVE_SCM_C_DEFINE)])
+    AC_CHECK_LIB(guile, scm_ubits2num,               [AC_DEFINE(HAVE_SCM_UBITS2NUM)])
     LIBS="$OLD_LIBS"
 
     if test "`guile -c '(display (string<=? (version) "1.3.4"))'`" = "#t"; then

@@ -1,8 +1,8 @@
 # RPM spec file for Snd
 
 %define prefix  /usr
-%define ver     4.12
-%define rel     1
+%define ver     4.13
+%define rel     2
 %define alsaapi 0.5
 
 # these constants define which binary rpm's are going to be generated,
@@ -40,7 +40,14 @@
 #      guile 1.3.4 it does not have guilegtk
 #      so we would have to install that anyway]
 
-%define linux_RedHat_7_0 1
+%define linux_RedHat_7_0 0
+
+# Mandrake 7.2
+#   Additional packages:
+#     openmotif 2.1.30-5mdk (from the Applications 1 cdrom)
+#     used the installed alsa-0.5.9 (driver, lib, utils)
+
+%define linux_Mandrake_7_2 1
 
 # set this to 0 if you want to build the spec file with required libraries
 # and packages automatically discovered by rpm
@@ -135,6 +142,19 @@
   %define req_gtk gtk+ >= 1.2.8 glib >= 1.2.8
   # just require XFree86 libraries, xpm is part of them
   %define req_x XFree86-libs
+%endif
+
+##############
+# Mandrake 7.2
+##############
+
+%if %{linux_Mandrake_7_2}
+  # mdk is based on 2.1
+  %define req_glibc glibc >= 2.1
+  # comes with 1.2.8
+  %define req_gtk gtk+ >= 1.2.8 glib >= 1.2.8
+  # just require XFree86 libraries, xpm is part of them
+  %define req_x XFree86-libs xpm
 %endif
 
 # global requirements, to make life easier latter

@@ -2501,7 +2501,7 @@ snd_info *add_sound_window (char *filename, snd_state *ss)
   if (ss->pending_change)
     report_in_minibuffer(sp, "(translated %s)", old_name);
   if (!(ss->using_schemes)) map_over_children(SOUND_PANE(ss), color_sashes, (void *)ss);
-  if (!(auto_resize(ss))) normalize_all_sounds(ss);
+  if (!(auto_resize(ss))) equalize_all_panes(ss);
   
   if (first_window)
     {
@@ -2585,16 +2585,16 @@ void unlock_ctrls(snd_info *sp) {XtVaSetValues(w_snd_ctrls(sp), XmNpaneMinimum, 
 
 void set_apply_button(snd_info *sp, int val) {XmToggleButtonSetState(w_snd_apply(sp), val, FALSE);}
 
-void normalize_sound(snd_state *ss, snd_info *sp, chan_info *ncp)
+void equalize_sound_panes(snd_state *ss, snd_info *sp, chan_info *ncp)
 {
-  /* make sp look ok, squeezing others if needed; called only if normalize_on_open(ss) */
+  /* make sp look ok, squeezing others if needed */
   /* if there's already enough (i.e. ss->channel_min_height), just return */
   /* this is used in goto_next_graph and goto_previous_graph (snd-chn.c) to open windows that are currently squeezed shut */
   Float low, high;
   Dimension chan_y;
   int *wid;
   chan_info *cp = NULL;
-  if ((!ss) || (!sp) || (!(normalize_on_open(ss))) || (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)) return;
+  if ((!ss) || (!sp) || (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)) return;
   if (sound_style(ss) != SOUNDS_HORIZONTAL)
     {
       /* several attempts to be fancy here just made a mess of the display */
@@ -2724,7 +2724,7 @@ static int sound_unlock_pane(snd_info *sp, void *ptr)
   return(0);
 }
 
-void normalize_all_sounds(snd_state *ss)
+void equalize_all_panes(snd_state *ss)
 {
   /* normalize: get size, #chans, #snds, set pane minima, force remanage(?), unlock */
   int sounds = 0, chans, chan_y, height, width, screen_y, i;

@@ -1347,7 +1347,7 @@ static SCM g_select_sound(SCM snd_n)
       if (snd_ok(sp))
 	{
 	  select_channel(sp, 0);
-	  normalize_sound(ss, sp, sp->chans[0]);
+	  equalize_sound_panes(ss, sp, sp->chans[0]);
 	  map_over_chans(ss, update_graph, NULL);
 	  return(snd_n);
 	}
@@ -2002,29 +2002,6 @@ opens filename assuming the data matches the attributes indicated unless the fil
   /* snd_open_file -> snd_open_file_1 -> add_sound_window -> make_file_info -> raw_data_dialog_to_file_info */
   /*   so here if hooked, we'd need to save the current hook, make it return the current args, open, then restore */
   set_fit_data_on_open(ss, ofit);
-  if (fname) FREE(fname);
-  if (sp) return(TO_SCM_INT(sp->index));
-  return(SCM_BOOL_F);
-}
-
-static SCM g_open_alternate_sound(SCM filename)
-{
-  #define H_open_alternate_sound "(" S_open_alternate_sound " filename) replace currently selected sound with filename"
-  /* returns index of new sound if successful */
-  char *fname = NULL;
-  snd_state *ss;
-  snd_info *sp;
-  ASSERT_TYPE(STRING_P(filename), filename, SCM_ARGn, S_open_alternate_sound, "a string");
-  ss = get_global_state();
-  sp = any_selected_sound(ss);
-  if (sp) snd_close_file(sp, ss); /* should we ask about saving edits here? */
-  fname = mus_expand_filename(TO_C_STRING(filename));
-  if (!(mus_file_probe(fname)))
-    {
-      if (fname) FREE(fname);
-      return(snd_no_such_file_error(S_open_alternate_sound, filename));
-    }
-  sp = snd_open_file(fname, ss);
   if (fname) FREE(fname);
   if (sp) return(TO_SCM_INT(sp->index));
   return(SCM_BOOL_F);
@@ -2830,7 +2807,6 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
   DEFINE_PROC(S_save_sound,           g_save_sound, 0, 1, 0,           H_save_sound);
   DEFINE_PROC(S_open_sound,           g_open_sound, 1, 0, 0,           H_open_sound);
   DEFINE_PROC(S_open_raw_sound,       g_open_raw_sound, 4, 0, 0,       H_open_raw_sound);
-  DEFINE_PROC(S_open_alternate_sound, g_open_alternate_sound, 1, 0, 0, H_open_alternate_sound);
   DEFINE_PROC(S_view_sound,           g_view_sound, 1, 0, 0,           H_view_sound);
   DEFINE_PROC(S_new_sound,            g_new_sound, 0, 6, 0,            H_new_sound);
   DEFINE_PROC(S_revert_sound,         g_revert_sound, 0, 1, 0,         H_revert_sound);

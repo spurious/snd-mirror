@@ -25,7 +25,7 @@ enum {menu_menu,
           o_stats_menu,
         view_menu, v_cascade_menu,
 #if 0
-          v_normalize_menu, 
+          v_equalize_panes_menu, 
 #endif
           v_graph_style_menu, v_graph_style_cascade_menu,
             v_lines_menu, v_dots_menu, v_filled_menu, v_dots_and_lines_menu, v_lollipops_menu,
@@ -73,8 +73,8 @@ GtkWidget *edit_find_menu(void) {return(mw[e_find_menu]);}
 GtkWidget *edit_select_all_menu(void) {return(mw[e_select_all_menu]);}
 GtkWidget *edit_header_menu(void) {return(mw[e_header_menu]);}
 
-/* GtkWidget *view_normalize_menu(void) {return(mw[v_normalize_menu]);} */
-GtkWidget *view_normalize_menu(void) {return(NULL);}
+/* GtkWidget *view_equalize_panes_menu(void) {return(mw[v_equalize_panes_menu]);} */
+GtkWidget *view_equalize_panes_menu(void) {return(NULL);}
 
 GtkWidget *view_mix_panel_menu(void) {return(mw[v_mix_panel_menu]);}
 GtkWidget *view_region_menu(void) {return(mw[v_region_menu]);}
@@ -108,7 +108,7 @@ GtkWidget *popup_play_menu(void) {return(popup_children[W_pop_play]);}
 GtkWidget *popup_undo_menu(void) {return(popup_children[W_pop_undo]);}
 GtkWidget *popup_redo_menu(void) {return(popup_children[W_pop_redo]);}
 GtkWidget *popup_save_menu(void) {return(popup_children[W_pop_save]);}
-GtkWidget *popup_normalize_menu(void) {return(NULL);}
+GtkWidget *popup_equalize_panes_menu(void) {return(NULL);}
 GtkWidget *popup_info_menu(void) {return(popup_children[W_pop_info]);}
 
 void set_menu_label(GtkWidget *w, const char *label) {if (w) set_button_label(w, label);}
@@ -691,12 +691,12 @@ GtkWidget *add_menu(snd_state *ss)
   gtk_signal_connect(GTK_OBJECT(mw[v_ctrls_menu]), "activate", GTK_SIGNAL_FUNC(View_Ctrls_Callback), (gpointer)ss);
 
 #if 0
-  mw[v_normalize_menu] = gtk_menu_item_new_with_label(STR_Normalize);
-  gtk_menu_append(GTK_MENU(mw[v_cascade_menu]), mw[v_normalize_menu]);
-  set_background(mw[v_normalize_menu], (ss->sgx)->basic_color);
-  gtk_widget_show(mw[v_normalize_menu]);
-  set_sensitive(mw[v_normalize_menu], FALSE);
-  gtk_signal_connect(GTK_OBJECT(mw[v_normalize_menu]), "activate", GTK_SIGNAL_FUNC(View_Normalize_Callback), (gpointer)ss);
+  mw[v_equalize_panes_menu] = gtk_menu_item_new_with_label(STR_Equalize_Panes);
+  gtk_menu_append(GTK_MENU(mw[v_cascade_menu]), mw[v_equalize_panes_menu]);
+  set_background(mw[v_equalize_panes_menu], (ss->sgx)->basic_color);
+  gtk_widget_show(mw[v_equalize_panes_menu]);
+  set_sensitive(mw[v_equalize_panes_menu], FALSE);
+  gtk_signal_connect(GTK_OBJECT(mw[v_equalize_panes_menu]), "activate", GTK_SIGNAL_FUNC(View_Equalize_Panes_Callback), (gpointer)ss);
 #endif
 
   mw[v_listener_menu] = gtk_menu_item_new_with_label(STR_Open_listener);
@@ -1223,7 +1223,7 @@ static int remove_option(int which_menu, char *label)
             if (strcmp(label, STR_Edit_Header) == 0) gtk_widget_hide(mw[e_header_menu]); else return(-1);
             return(1);
             break;
-    case 2: /* if (strcmp(label, STR_Normalize) == 0) gtk_widget_hide(mw[v_normalize_menu]); else */
+    case 2: /* if (strcmp(label, STR_Equalize_Panes) == 0) gtk_widget_hide(mw[v_equalize_panes_menu]); else */
             if (strcmp(label, STR_Show_controls) == 0) gtk_widget_hide(mw[v_ctrls_menu]); else
             if (strcmp(label, STR_Show_listener) == 0) gtk_widget_hide(mw[v_listener_menu]); else
             if (strcmp(label, STR_Mix_Panel) == 0) gtk_widget_hide(mw[v_mix_panel_menu]); else

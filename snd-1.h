@@ -309,7 +309,7 @@ typedef struct snd__state {
   Float Color_Scale, Color_Cutoff;
   int Color_Inverted, Speed_Style, Movies, Normalize_Fft, Show_Mix_Waveforms, Mix_Waveform_Height, Fit_Data_On_Open;
   int Speed_Tones, Sinc_Width, X_Axis_Style, Zoom_Focus_Style, Save_State_On_Exit, Graph_Style;
-  int Normalize_On_Open, Auto_Resize, Auto_Update, Max_Regions, Max_Fft_Peaks;
+  int Auto_Resize, Auto_Update, Max_Regions, Max_Fft_Peaks;
   int Audio_Output_Device, Audio_Input_Device, Show_Backtrace;
   int Print_Length, Dac_Size, Dac_Folding, Previous_Files_Sort, Show_Selection_Transform, With_Mix_Tags, Selection_Creates_Region;
   char *Save_State_File, *Listener_Prompt;
@@ -450,7 +450,7 @@ void reflect_file_open_in_menu (void);
 void reflect_file_change_in_menu (void);
 void reflect_file_lack_in_menu (void);
 void reflect_mix_active_in_menu(void);
-void reflect_normalize_in_menu(int on);
+void reflect_equalize_panes_in_menu(int on);
 void reflect_file_revert_in_menu (snd_state *ss);
 void reflect_file_save_in_menu (snd_state *ss);
 void reflect_file_revert_in_label (snd_info *sp);
@@ -749,8 +749,8 @@ SCM g_call1(SCM proc, SCM arg, const char *caller);
 SCM g_call2(SCM proc, SCM arg1, SCM arg2, const char *caller);
 SCM g_call3(SCM proc, SCM arg1, SCM arg2, SCM arg3, const char *caller);
 SCM g_call_any(SCM proc, SCM arglist, const char *caller);
-char *procedure_ok(SCM proc, int req_args, int opt_args, const char *caller, const char *arg_name, int argn);
-int procedure_ok_with_error(SCM proc, int req_args, int opt_args, const char *caller, const char *arg_name, int argn);
+char *procedure_ok(SCM proc, int args, const char *caller, const char *arg_name, int argn);
+int procedure_ok_with_error(SCM proc, int req_args, const char *caller, const char *arg_name, int argn);
 void snd_protect(SCM obj);
 void snd_unprotect(SCM obj);
 int to_c_int_or_else(SCM obj, int fallback, const char *origin);
@@ -926,6 +926,7 @@ int run_apply(int ofd);
 
 void g_init_dac(SCM local_doc);
 snd_info *player(int index);
+void clear_players(void);
 
 void dac_set_expand(snd_info *sp, Float newval);
 void dac_set_expand_length(snd_info *sp, Float newval);

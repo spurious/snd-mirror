@@ -3679,7 +3679,7 @@ static SCM cp_iwrite(SCM snd_n, SCM chn_n, SCM on, int fld, char *caller)
     case CP_CURSOR_STYLE:
       if (PROCEDURE_P(on))
 	{
-	  error = procedure_ok(on, 3, 0, "set-" S_cursor_style, "procedure", 1);
+	  error = procedure_ok(on, 3, "set-" S_cursor_style, "", 1);
 	  if (error == NULL)
 	    {
 	      if ((cp->cursor_style == CURSOR_PROC) &&

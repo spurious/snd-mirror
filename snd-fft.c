@@ -2253,7 +2253,7 @@ to be displayed goes from low to high (normally 0.0 to 1.0)"
 
   char *errmsg;
   SCM errstr;
-  errmsg = procedure_ok(proc, 2, 0, S_add_transform, "func", 5);
+  errmsg = procedure_ok(proc, 2, S_add_transform, "transform", 5);
   if (errmsg)
     {
       errstr = TO_SCM_STRING(errmsg);

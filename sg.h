@@ -83,7 +83,7 @@
 #define TO_SCM_INT(a)         scm_long2num((long)a)
 #define TO_SMALL_SCM_INT(a)   SCM_MAKINUM(a)
 #define TO_SMALL_C_INT(a)     ((int)(SCM_INUM(a)))
-#define TO_C_UNSIGNED_LONG(a) gh_scm2ulong(a)
+#define TO_C_UNSIGNED_LONG(a) scm_num2ulong(a, 0, __FUNCTION__)
 #define TO_SCM_STRING(a)      scm_makfrom0str(a)
 #define TO_NEW_C_STRING(a)    gh_scm2newstr(a, NULL)
 #define TO_SCM_BOOLEAN(a)     ((a) ? SCM_BOOL_T : SCM_BOOL_F)
@@ -100,11 +100,16 @@
   #define SYMBOL_TO_C_STRING(a) gh_symbol2newstr(a, NULL)
 #endif
 
-#define SND_WRAP(a) ((SCM)(gh_ulong2scm((unsigned long)a)))
-#define SND_UNWRAP(a) gh_scm2ulong(a)
+/* (need a way to pass an uninterpreted pointer from C to SCM then back to C) */
+/* TODO: use SND_VOID_T */
+#if HAVE_SCM_UBITS2NUM
+  #define SND_WRAP(a) (scm_ubits2num((scm_ubits_t)(a)))
+  #define SND_UNWRAP(a) (scm_num2ubits((SCM)(a), 0, __FUNCTION__))
+#else
+  #define SND_WRAP(a) ((SCM)(gh_ulong2scm((unsigned long)a)))
+  #define SND_UNWRAP(a) gh_scm2ulong(a)
+#endif
 #define SND_WRAPPED(a) gh_number_p(a)
-/* these work as long as SCM is long */
-/*   (need a way to pass an uninterpreted pointer from C to SCM then back to C) */
 
 #define HOOKED(a) (NOT_NULL_P(SCM_HOOK_PROCEDURES(a)))
 
@@ -288,11 +293,6 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #endif
 
 #define APPLY_EOL scm_listofnull
-
-#ifndef USE_OPT_APPLY
-  #define USE_OPT_APPLY 1
-#endif
-
 #define WRITE_STRING(Str, Prt) scm_puts(Str, Prt)
 
 #endif
