@@ -58,7 +58,7 @@
                                                 "Deletes specified mix."))
                                         (lambda (w c i)
                                           (set! delete-mix-number initial-delete-mix-number)
-                                          (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* delete-mix-number 1)))))))
+                                          (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (round (* delete-mix-number 1))))))))
               (set! sliders
                     (add-sliders delete-mix-dialog
                                  (list (list "mix number" 0 initial-delete-mix-number 250
@@ -341,7 +341,7 @@
                                           (set! set-track-amp-tracknum initial-set-track-amp-tracknum)
                                           (XtSetValues (car sliders) (list XmNvalue (inexact->exact (* set-track-amp-tracknum 1))))
                                           (set! set-track-amp-scaler initial-set-track-amp-scaler)
-                                          (XtSetValues (cadr sliders) (list XmNvalue (inexact->exact (* set-track-amp-scaler 100)))))))
+                                          (XtSetValues (cadr sliders) (list XmNvalue (inexact->exact (round (* set-track-amp-scaler 100))))))))
               (set! sliders
                    (add-sliders set-track-amp-dialog
                                  (list (list "track number" 0 initial-set-track-amp-tracknum 100
@@ -395,7 +395,7 @@
                                           (set! set-track-speed-tracknum initial-set-track-speed-tracknum)
                                           (XtSetValues (car sliders) (list XmNvalue (inexact->exact (* set-track-speed-tracknum 1))))
                                           (set! set-track-speed-scaler initial-set-track-speed-scaler)
-                                          (XtSetValues (cadr sliders) (list XmNvalue (inexact->exact (* set-track-speed-scaler 100)))))))
+                                          (XtSetValues (cadr sliders) (list XmNvalue (inexact->exact (round (* set-track-speed-scaler 100))))))))
               (set! sliders
                    (add-sliders set-track-speed-dialog
                                  (list (list "track number" 0 initial-set-track-speed-tracknum 100
@@ -449,7 +449,7 @@
                                           (set! set-track-tempo-tracknum initial-set-track-tempo-tracknum)
                                           (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* set-track-tempo-tracknum 1))))
                                           (set! set-track-tempo-value initial-set-track-tempo-value)
-                                          (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* set-track-tempo-value 100)))))))
+                                          (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (round (* set-track-tempo-value 100))))))))
               (set! sliders
                     (add-sliders set-track-tempo-dialog
                                  (list (list "track number" 0 initial-set-track-tempo-tracknum 100
@@ -503,7 +503,7 @@
                                           (set! transpose-track-number initial-transpose-track-number)
                                           (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* transpose-track-number 1))))
                                           (set! transpose-track-semitones initial-transpose-track-semitones)
-                                          (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact transpose-track-semitones 1))))))
+                                          (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* transpose-track-semitones 1)))))))
               (set! sliders
                     (add-sliders transpose-track-dialog
                                  (list (list "transpose-track number" 0 initial-transpose-track-number 100

@@ -149,7 +149,7 @@
 
 (define (pad-marks ids secs)
   "(pad-marks ids secs) inserts secs seconds of silence before each mark in ids"
-  (let* ((silence-length (inexact->exact (* secs (srate))))
+  (let* ((silence-length (inexact->exact (floor (* secs (srate)))))
 	 (silence-samps (make-vct silence-length)))
     (as-one-edit
      (lambda ()

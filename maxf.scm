@@ -113,9 +113,9 @@ the desired phase.
    (numf  9)   9 filters
    (numf 12)  12 filters
    (numf 13)  13 filters"
-  (let* ((beg (inexact->exact (* beg (mus-srate))))
+  (let* ((beg (inexact->exact (floor (* beg (mus-srate)))))
 	 (dur (mus-sound-duration file))
-	 (end (+ beg (inexact->exact (* dur (mus-srate)))))
+	 (end (+ beg (inexact->exact (floor (* dur (mus-srate))))))
 	 (rdA (make-readin :file file :channel 0))
 	 (formfil (make-mvm))
 	 (ampf (make-env :envelope amp-env :scaler amplitude :duration dur))

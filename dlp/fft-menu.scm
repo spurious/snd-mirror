@@ -93,7 +93,7 @@
                                                 "Removes all energy below the squelch amount.\n\ This is sometimes useful for noise-reduction."))
                                         (lambda (w c i)
                                           (set! fft-squelch-amount initial-fft-squelch-amount)
-                                          (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* fft-squelch-amount 100)))))))
+                                          (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (round (* fft-squelch-amount 100))))))))
               (set! sliders
                     (add-sliders fft-squelch-dialog
                                  (list (list "squelch amount" 0.0 initial-fft-squelch-amount 1.0

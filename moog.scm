@@ -98,7 +98,7 @@
 	(set! A (min (max -0.95 (+ A st)) 0.95))))
     (let* ((out A))
       (let* ((ix (* fc 99.0))
-	     (ixint (inexact->exact ix))
+	     (ixint (inexact->exact (floor ix)))
 	     (ixfrac (- ix ixint)))
 	(list-set! m 3 (* A
 			  (list-ref m 1)

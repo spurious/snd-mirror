@@ -150,8 +150,8 @@
       (min ay1
 	   (max ay0
 		(inexact->exact
-		 (+ ay0
-		    (* range (- 10.0 y)))))))
+		 (round (+ ay0
+		    (* range (- 10.0 y))))))))
 
     (define (draw-graph)
       (if (and (> ax1 ax0)
@@ -170,7 +170,7 @@
 		 (j 0 (+ j 2))
 		 (xi ax0 (+ xi xincr)))
 		((= i size))
-	      (vector-set! vect j (inexact->exact xi))
+	      (vector-set! vect j (inexact->exact (floor xi)))
 	      (vector-set! vect (+ j 1) (y->grfy (vct-ref gx0 i) diff)))
 	    (if pts1 (freeGdkPoints pts1))
 	    (set! pts0 (vector->GdkPoints vect))
@@ -698,8 +698,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	(gdk_gc_set_foreground dgc black-pixel)
 	(gdk_draw_arc pixwin dgc #f 1 1 14 14 0 (* 64 360))
 	(gdk_draw_line pixwin dgc 8 8 
-		       (+ 8 (inexact->exact (* 7 (sin (* i (/ 3.1416 6.0))))))
-		       (- 8 (inexact->exact (* 7 (cos (* i (/ 3.1416 6.0)))))))))
+		       (+ 8 (inexact->exact (round (* 7 (sin (* i (/ 3.1416 6.0)))))))
+		       (- 8 (inexact->exact (round (* 7 (cos (* i (/ 3.1416 6.0))))))))))
     (gdk_gc_set_foreground dgc (data-color))
     (lambda (snd hour)
       (gdk_draw_drawable (GDK_DRAWABLE (.window (list-ref (sound-widgets snd) 8))) dgc 
@@ -831,13 +831,13 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	 (height (list-ref meter-data 6))
 	 (size (list-ref meter-data 2))
 	 (win (GDK_DRAWABLE (.window meter)))
-	 (major-tick (inexact->exact (floor (/ width 24))))
-	 (minor-tick (inexact->exact (* major-tick .6)))
+	 (major-tick (inexact->exact (round (/ width 24))))
+	 (minor-tick (inexact->exact (round (* major-tick .6))))
 	 (ang0 (* 45 64))
 	 (ang1 (* 90 64))
 	 (wid2 (inexact->exact (floor (/ width 2))))
 	 (gc (car (snd-gcs)))
-	 (top (inexact->exact (/ height 3.2)))) ; distance of label from top of meter
+	 (top (inexact->exact (round (/ height 3.2))))) ; distance of label from top of meter
     (gdk_gc_set_foreground gc white-pixel)
     (gdk_draw_rectangle win gc #t 0 0 width height)
     (gdk_gc_set_foreground gc black-pixel)
@@ -851,10 +851,10 @@ Reverb-feedback sets the scaler on the feedback.\n\
       (let* ((rdeg (degrees->radians (- 45 (* i 22.5))))
 	     (sinr (sin rdeg))
 	     (cosr (cos rdeg))
-	     (x0 (inexact->exact (+ wid2 (* wid2 sinr))))
-	     (y0 (inexact->exact (- (+ wid2 top) (* wid2 cosr))))
-	     (x1 (inexact->exact (+ wid2 (* (+ wid2 major-tick) sinr))))
-	     (y1 (inexact->exact (- (+ wid2 top) (* (+ wid2 major-tick) cosr)))))
+	     (x0 (inexact->exact (round (+ wid2 (* wid2 sinr)))))
+	     (y0 (inexact->exact (round (- (+ wid2 top) (* wid2 cosr)))))
+	     (x1 (inexact->exact (round (+ wid2 (* (+ wid2 major-tick) sinr)))))
+	     (y1 (inexact->exact (round (- (+ wid2 top) (* (+ wid2 major-tick) cosr))))))
 	(gdk_draw_line win gc x0 y0 x1 y1)
 	(gdk_draw_line win gc (+ x0 1) y0 (+ x1 1) y1)
 	(if (< i 4)
@@ -863,10 +863,10 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	      (let* ((rdeg (degrees->radians (- 45 (* i 22.5) (* j (/ 90.0 20.0)))))
 		     (sinr (sin rdeg))
 		     (cosr (cos rdeg))
-		     (x0 (inexact->exact (* wid2 (+ 1.0 sinr))))
-		     (y0 (inexact->exact (- (+ wid2 top) (* wid2 cosr))))
-		     (x1 (inexact->exact (+ wid2 (* (+ wid2 minor-tick) sinr))))
-		     (y1 (inexact->exact (- (+ wid2 top) (* (+ wid2 minor-tick) cosr)))))
+		     (x0 (inexact->exact (round (* wid2 (+ 1.0 sinr)))))
+		     (y0 (inexact->exact (round (- (+ wid2 top) (* wid2 cosr)))))
+		     (x1 (inexact->exact (round (+ wid2 (* (+ wid2 minor-tick) sinr)))))
+		     (y1 (inexact->exact (round (- (+ wid2 top) (* (+ wid2 minor-tick) cosr))))))
 		(gdk_draw_line win gc x0 y0 x1 y1))))))
     (let* ((needle-speed 0.25)
 	   (bubble-speed 0.025)
@@ -874,8 +874,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	   (val (+ (* level needle-speed) (* last-level (- 1.0 needle-speed))))
 	   (deg (- (* val 90.0) 45.0))
 	   (rdeg (degrees->radians deg))
-	   (nx1 (inexact->exact (+ wid2 (* (+ wid2 major-tick) (sin rdeg)))))
-	   (ny1 (inexact->exact (- (+ wid2 top) (* (+ wid2 major-tick) (cos rdeg))))))
+	   (nx1 (inexact->exact (round (+ wid2 (* (+ wid2 major-tick) (sin rdeg))))))
+	   (ny1 (inexact->exact (round (- (+ wid2 top) (* (+ wid2 major-tick) (cos rdeg)))))))
       (gdk_draw_line win gc wid2 (+ top wid2) nx1 ny1)
       (list-set! meter-data 3 val)
       (if (> val red-deg)
@@ -884,7 +884,7 @@ Reverb-feedback sets the scaler on the feedback.\n\
       (if (> (list-ref meter-data 4) .01)
 	  (begin
 	    (gdk_gc_set_foreground gc red-pixel)
-	    (let* ((redx (inexact->exact (* (list-ref meter-data 4) 90 64)))
+	    (let* ((redx (inexact->exact (floor (* (list-ref meter-data 4) 90 64))))
 		   (redy (min redx bubble-size)))
 	      (do ((i 0 (1+ i)))
 		  ((= i 4))

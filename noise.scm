@@ -44,8 +44,8 @@
   ;; whistle, very broad more of a whoosh.  this is basically "simple
   ;; fm", but the modulating signal is white noise.
   
-  (let* ((beg (inexact->exact (* startime (mus-srate))))
-	 (end (+ beg (inexact->exact (* dur (mus-srate)))))
+  (let* ((beg (inexact->exact (floor (* startime (mus-srate)))))
+	 (end (+ beg (inexact->exact (floor (* dur (mus-srate))))))
 	 (carrier (make-oscil :frequency freq0))
 	 (modulator (make-rand :frequency rfreq0 :amplitude 1.0))
 	 (loc (make-locsig :degree degree :distance distance :channels (mus-channels *output*)
@@ -166,7 +166,7 @@
 
 ;; (let* ((beg 0)
 ;;        (dur 9.8)
-;;        (len (+ beg (inexact->exact (* dur (srate)))))
+;;        (len (+ beg (inexact->exact (floor (* dur (srate))))))
 ;;        (chns 4)
 ;;        (outfile "test.snd")
 ;;        (snd (find-sound outfile))
@@ -178,8 +178,8 @@
 ;;   (do ((i 0 (1+ i)))
 ;;       ((= i chns))
 ;;     (mix-vct (vct-scale! (vct-copy data) (locsig-ref loc i)) beg snd i #f))
-;;   (let* ((beg (inexact->exact (* 10 (srate))))
-;; 	 (len (+ beg (inexact->exact (* dur (srate)))))
+;;   (let* ((beg (inexact->exact (floor (* 10 (srate)))))
+;; 	 (len (+ beg (inexact->exact (floor (* dur (srate))))))
 ;; 	 (loc (make-locsig :degree (random 3535.0) :channels chns))
 ;; 	 (data (vct-map! (make-vct len) (make-fm-noise len 200))))
 ;;     (do ((i 0 (1+ i)))

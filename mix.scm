@@ -596,8 +596,8 @@ the filter to the underlying mixes: (filter-track (track 1) '(.1 .2 .3 .3 .2 .1)
 		   (for-each (lambda (a) 
 			       (if (mix? a)
 				   (set! (mix-position a) (+ track-beg 
-							     (inexact->exact (* new-tempo 
-										(- (mix-position a) track-beg)))))))
+							     (inexact->exact (floor (* new-tempo 
+										(- (mix-position a) track-beg))))))))
 			     track)))))
 	  (throw 'no-such-track (list "retempo-track" track tempo)))))
 

@@ -186,13 +186,13 @@
 (define test-pv-3
   (lambda (time)
     (let* ((pv (make-phase-vocoder #f
-				   512 4 (inexact->exact (* 128 time)) 1.0
+				   512 4 (inexact->exact (floor (* 128 time))) 1.0
 				   #f ;no change to analysis
 				   #f ;no change to edits
 				   #f ;no change to synthesis
 				   ))
 	   (reader (make-sample-reader 0))
-	   (len (inexact->exact (* time (frames))))
+	   (len (inexact->exact (floor (* time (frames)))))
 	   (data (make-vct len))
 	   )
       (vct-map! data

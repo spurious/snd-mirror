@@ -117,7 +117,7 @@
 	 (radius (- 1.0 (/ r fsize)))
 	 (spectrum (make-vct freq-inc 1.0))
 	 (ramp-inc (/ 1.0 1024.0))
-	 (trigger (inexact->exact (/ (* dur (mus-srate)) freq-inc)))
+	 (trigger (inexact->exact (floor (/ (* dur (mus-srate)) freq-inc))))
 	 (fs (make-vector freq-inc))
 	 (outa-data (make-vct (- end start)))
 	 (ctr 0))

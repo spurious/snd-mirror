@@ -119,7 +119,7 @@
       (do ((i 0 (1+ i)))
 	  ((= i (length combtuning)))
 	(let* ((tuning (list-ref combtuning i))
-	       (len (inexact->exact (* srate-scale tuning)))
+	       (len (inexact->exact (floor (* srate-scale tuning))))
 	       (dmp (* scale-damping
 		       (if (array? damping)
 			   (array-ref damping i)
@@ -127,7 +127,7 @@
 			       (list-ref damping i)
 			       damping)))))
 	  (if (odd? c)
-	      (set! len (+ len (inexact->exact (* srate-scale stereo-spread)))))
+	      (set! len (+ len (inexact->exact (floor (* srate-scale stereo-spread))))))
 	  (array-set! combs
 		      (make-fcomb :delay (make-delay len)
 				  :feedback room-decay-val
@@ -138,9 +138,9 @@
       (do ((i 0 (1+ i)))
 	  ((= i (length allpasstuning)))
 	(let* ((tuning (list-ref allpasstuning i))
-	       (len (inexact->exact (* srate-scale tuning))))
+	       (len (inexact->exact (floor (* srate-scale tuning)))))
 	  (if (odd? c)
-	      (set! len (+ len (inexact->exact (* srate-scale stereo-spread)))))
+	      (set! len (+ len (floor (inexact->exact (* srate-scale stereo-spread))))))
 	  (array-set! allpasses
 		      (make-all-pass :size len :feedforward -1 :feedback 0.5)
 		      c i))))

@@ -96,9 +96,9 @@
 						"Plays area between specified marks.\n\ Use the sliders to select the boundary marks.\n\ Negative play not supported yet: coming soon !"))
 					(lambda (w c i)
 					  (set! play-between-marks-m1 initial-play-between-marks-m1)
-					  (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* play-between-marks-m1 1))))
+					  (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (round (* play-between-marks-m1 1)))))
 					  (set! play-between-marks-m2 initial-play-between-marks-m2)
-					  (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* play-between-marks-m2 1)))))))
+					  (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (round (* play-between-marks-m2 1))))))))
 	      (set! sliders
 		    (add-sliders play-between-marks-dialog
 				 (list (list "mark one" 0 initial-play-between-marks-m1 25

@@ -78,7 +78,7 @@
 			(selection-position)
 			(car ms))))
 	   (overlap (if decay
-			(inexact->exact (* (srate) decay))
+			(inexact->exact (floor (* (srate) decay)))
 			0)))
       (apply for-each
 	     (lambda (snd chn)
@@ -165,7 +165,7 @@
 	 (log-lo (/ (log (max lo 1.0)) log2))
 	 (log-hi (/ (log hi) log2))
 	 (log-val (/ (log val) log2)))
-    (inexact->exact (* log-scale-ticks (/ (- log-val log-lo) (- log-hi log-lo))))))
+    (inexact->exact (floor (* log-scale-ticks (/ (- log-val log-lo) (- log-hi log-lo)))))))
   
 (define (scale-linear->log lo val hi)
   ;; given user-relative lo..hi and scale-relative val, return user-relative val
@@ -2069,7 +2069,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 		    (make-effect-dialog
 		     "Add silence"
 		     (lambda (w data)
-		       (insert-silence (cursor) (inexact->exact (* (srate) silence-amount))))
+		       (insert-silence (cursor) (inexact->exact (floor (* (srate) silence-amount)))))
 		     (lambda (w data)
 		       (help-dialog "Add silence"
 				    "Move the slider to change the number of seconds of silence added at the cursor position."))

@@ -78,8 +78,8 @@
     (let ((data (make-vct samps))
 	  (x 1.0)
 	  (xinc (/ 1.0 samps))
-	  (sr0 (make-sample-reader (inexact->exact s0)))
-	  (sr1 (make-sample-reader (inexact->exact s1))))
+	  (sr0 (make-sample-reader (inexact->exact (floor s0))))
+	  (sr1 (make-sample-reader (inexact->exact (floor s1)))))
       (run
        (lambda ()
       (do ((i 0 (1+ i)))
@@ -144,7 +144,7 @@
 			 (fftlen (inexact->exact (expt 2 pow2)))
 			 (len4 (/ fftlen 4))
 			 (data (make-vct fftlen))
-			 (reader (make-sample-reader (inexact->exact s0))))
+			 (reader (make-sample-reader (inexact->exact (floor s0)))))
 		    (do ((j 0 (1+ j)))
 			((= j fftlen))
 		      (let ((val (next-sample reader)))
@@ -174,8 +174,8 @@
 		      (let* ((s0 start)
 			     (s1 (vct-ref cross-samples current-mark))
 			     (len autolen)
-			     (sr0 (make-sample-reader (inexact->exact s0)))
-			     (sr1 (make-sample-reader (inexact->exact s1)))
+			     (sr0 (make-sample-reader (inexact->exact (floor s0))))
+			     (sr1 (make-sample-reader (inexact->exact (floor s1))))
 			     (ampsum 0.0)
 			     (diffsum 0.0))
 			(do ((i 0 (1+ i)))
@@ -195,8 +195,8 @@
 			    (let* ((s0 start)
 				   (s1 (vct-ref cross-samples k))
 				   (len autolen)
-				   (sr0 (make-sample-reader (inexact->exact s0)))
-				   (sr1 (make-sample-reader (inexact->exact s1)))
+				   (sr0 (make-sample-reader (inexact->exact (floor s0))))
+				   (sr1 (make-sample-reader (inexact->exact (floor s1))))
 				   (ampsum 0.0)
 				   (diffsum 0.0))
 			      (do ((i 0 (1+ i)))
@@ -227,7 +227,7 @@
 	   ;; now sort weights to scatter the changes as evenly as possible
 	   (let* ((len (frames snd chn))
 		  (adding (> stretch 1.0))
-		  (samps (inexact->exact (* (abs (- stretch 1.0)) len)))
+		  (samps (inexact->exact (floor (* (abs (- stretch 1.0)) len))))
 		  (needed-samps (if adding samps (min len (* samps 2))))
 		  (handled 0)
 		  (mult 1)
@@ -250,7 +250,7 @@
 				  (set! cur i)
 				  (set! curmin (vct-ref cross-weights i)))))
 			  (set! best-mark cur))
-			(set! handled (+ handled (inexact->exact (vct-ref cross-periods best-mark))))
+			(set! handled (+ handled (inexact->exact (floor (vct-ref cross-periods best-mark)))))
 			(if (or (< handled needed-samps)
 				(< (- handled needed-samps) (- needed-samps old-handled)))
 			    (begin
@@ -307,7 +307,7 @@
 	 ;; and return to original srate
 	 (unsample-sound snd chn)
 	 (if show-details
-	     (snd-print (format #f "~A -> ~A (~A)~%" (frames snd chn 0) (frames snd chn) (inexact->exact (* stretch (frames snd chn 0))))))
+	     (snd-print (format #f "~A -> ~A (~A)~%" (frames snd chn 0) (frames snd chn) (inexact->exact (floor (* stretch (frames snd chn 0)))))))
 	 ) ; end of as-one-edit thunk
        (format #f "(rubber-sound ~{~A~^ ~})" args)
        ))))

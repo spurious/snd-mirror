@@ -48,8 +48,8 @@
     (do ((i 0 (1+ i))
 	 (val incr (+ val incr)))
 	((> i n) pts)
-      (vector-set! pts (* i 2) (inexact->exact (+ x0 (* val (+ cx (* val (+ bx (* val ax))))))))
-      (vector-set! pts (+ (* i 2) 1) (inexact->exact (+ y0 (* val (+ cy (* val (+ by (* val ay)))))))))))
+      (vector-set! pts (* i 2) (inexact->exact (floor (+ x0 (* val (+ cx (* val (+ bx (* val ax)))))))))
+      (vector-set! pts (+ (* i 2) 1) (inexact->exact (floor (+ y0 (* val (+ cy (* val (+ by (* val ay))))))))))))
 
 ;; pass our Snd context into the graphics procedures (there's probably a cleaner way)
 (define ps-snd 0)
@@ -65,10 +65,10 @@
 (define ps-size 50)
 (define bezier-segments 50)
 (define (->x x) 
-  (inexact->exact (+ xoff (* ps-size x))))
+  (inexact->exact (floor (+ xoff (* ps-size x)))))
 (define (->y y) 
   ;; Postscript is right side up, X is upside-down
-  (inexact->exact (- yoff (* ps-size y))))
+  (inexact->exact (floor (- yoff (* ps-size y)))))
 
 ;; now functions and macros to make it possible to load the original Common Lisp glyphs directly
 
@@ -129,7 +129,7 @@
 
 (define (circle score x0 y0 rad . rest)
   (draw-dot (->x x0) (->y y0) 
-	    (inexact->exact (* ps-size rad 2))
+	    (inexact->exact (floor (* ps-size rad 2)))
 	    ps-snd ps-chn ps-ax))
 
 (define old-defvar defvar)

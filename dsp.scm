@@ -423,7 +423,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
   "(chorus) tries to produce the chorus sound effect"
   (define (make-flanger)
     (let* ((ri (make-rand-interp :frequency chorus-speed :amplitude chorus-amount))
-	   (len (inexact->exact (random (* 3.0 chorus-time (srate)))))
+	   (len (inexact->exact (floor (random (* 3.0 chorus-time (srate))))))
 	   (gen (make-delay len :max-size (+ len chorus-amount 1))))
       (list gen ri)))
   (define (flanger dly inval)

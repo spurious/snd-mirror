@@ -219,8 +219,8 @@ voice: (vox 0 2 110 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 UH 2
   "(fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 #:optional (ae '(0 0 25 1 75 1 100 0))) produces FOF \
 synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
     (let* ((two-pi (* 2 3.141592653589793))
-	   (start (inexact->exact (* beg (mus-srate))))
-	   (len (inexact->exact (* dur (mus-srate))))
+	   (start (inexact->exact (floor (* beg (mus-srate)))))
+	   (len (inexact->exact (floor (* dur (mus-srate)))))
 	   (end (+ start len))
 	   (vib uvib) ; for the optimizer (it can't find define* args sometimes)
 	   (ampf (make-env :envelope ae :scaler amp :duration dur))
@@ -435,8 +435,8 @@ vocal sounds using phase quadrature waveshaping"
 	  ((>= i len) partials)
 	(list-set! partials i (/ (list-ref partials i) sum)))))
 
-  (let* ((start (inexact->exact (* (mus-srate) beg)))
-	 (samps (inexact->exact (* (mus-srate) dur)))
+  (let* ((start (inexact->exact (floor (* (mus-srate) beg))))
+	 (samps (inexact->exact (floor (* (mus-srate) dur))))
 	 (end (+ start samps))
 	 (car-sin (make-oscil :frequency 0))
 	 (car-cos (make-oscil :frequency 0 :initial-phase (/ pi 2.0)))
@@ -601,8 +601,8 @@ is a physical model of a flute:\n\
 ;;; -------- FM-BELL
 (definstrument (fm-bell startime dur frequency amplitude #:optional amp-env index-env index)
   "(fm-bell startime dur frequency amplitude #:optional amp-env index-env index) mixes in one fm bell note"
-  (let* ((beg (inexact->exact (* startime (mus-srate))))
-	 (len (inexact->exact (* dur (mus-srate))))
+  (let* ((beg (inexact->exact (floor (* startime (mus-srate)))))
+	 (len (inexact->exact (floor (* dur (mus-srate)))))
 	 (end (+ beg len))
 	 (fmInd1 (hz->radians (* 32.0 frequency)))
 	 (fmInd2 (hz->radians (* 4.0 (- 8.0 (/ frequency 50.0)))))
@@ -1321,7 +1321,7 @@ is a physical model of a flute:\n\
     (do ((i 0 (1+ i)))
 	((= i (length telephone-number)))
       (let* ((k (list-ref telephone-number i))
-	     (beg (inexact->exact (* (+ start (* i .4)) (mus-srate))))
+	     (beg (inexact->exact (floor (* (+ start (* i .4)) (mus-srate)))))
 	     (end (floor (+ beg (* .3 (mus-srate)))))
 	     (i (if (number? k)
 		    (if (not (= 0 k))
@@ -1963,8 +1963,8 @@ is a physical model of a flute:\n\
 	 (turntable (list->vct turnaroundlist))
 	 (turn-i 1)
 	 (turns (length turnaroundlist))
-	 (cur-sample (inexact->exact (* (mus-srate) (vct-ref turntable 0))))
-         (turn-sample (inexact->exact (* (mus-srate) (vct-ref turntable turn-i))))
+	 (cur-sample (inexact->exact (floor (* (mus-srate) (vct-ref turntable 0)))))
+         (turn-sample (inexact->exact (floor (* (mus-srate) (vct-ref turntable turn-i)))))
 	 (turning 0)
 	 (last-val 0.0)
 	 (last-val2 0.0)
@@ -1994,7 +1994,7 @@ is a physical model of a flute:\n\
 		     (set! turn-i (1+ turn-i))
 		     (if (< turn-i turns)
 			 (begin
-			   (set! turn-sample (inexact->exact (* (mus-srate) (vct-ref turntable turn-i))))
+			   (set! turn-sample (inexact->exact (floor (* (mus-srate) (vct-ref turntable turn-i)))))
 			   (set! forwards (not forwards))
 			   (set! (mus-increment rd) (- (mus-increment rd)))))
 		     (set! turning 0))))
