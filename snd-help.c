@@ -378,6 +378,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+26-Nov:  rtio.rb thanks to Michael Scholz.\n\
 25-Nov:  copy-sample-reader, region-sample-reader?, read-region-sample.\n\
          removed free-mix|track-sample-reader (use free-sample-reader).\n\
          sample-reader-position|home|at-end? are generic.\n\
@@ -389,20 +390,6 @@ void about_snd_help(void)
 5-Nov:   Jack audio support thanks to Kjetil S. Matheussen.\n\
          mix-anchor -> mix-tag-position.\n\
 4-Nov:   copy-mix, copy-track.\n\
-31-Oct:  removed 'snd' arg to make-track-sample-reader.\n\
-30-Oct:  added Kjetil S. Matheussen's snd_conffile.scm.\n\
-27-Oct:  removed notion of a selected mix (selected-mix, selected-mix-color,\n\
-           select-mix, select-mix-hook).\n\
-         moved find-mix to mix.scm, changed mix-locked to mix-locked?\n\
-         renamed mix-dragged-hook to mix-release-hook.\n\
-         removed mix-amp|speed|amp-env-changed-hooks and multichannel-mix-hook.\n\
-24-Oct:  data-location bugfixes in save-region|selection (thanks to Kjetil S. Matheussen).\n\
-21-Oct:  track-property in mix.scm.\n\
-         added (or moved from mix.scm into C): track, tracks, track?, make-track, track-amp,\n\
-           track-position, track-frames, track-speed, track-amp-env, track-track, delete-track,\n\
-           delete-mix, track-color, lock-track, track-chans.\n\
-         env-track is now track-amp-env, unused-track and new-track are now make-track.\n\
-         mix-frames is no longer settable.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

@@ -2280,6 +2280,20 @@ static void edit_header_cancel_callback(Widget w, XtPointer context, XtPointer i
   XtUnmanageChild(edit_header_dialog);
 }
 
+#if DEBUGGING && HAVE_GUILE
+static XEN g_apply_edit_header(void)
+{
+  if ((edit_header_sp) && (edit_header_sp->active))
+    {
+      if (!(edit_header_sp->read_only))
+	edit_header_callback(edit_header_sp, edit_header_data);
+      else snd_error(_("%s is write-protected"), edit_header_sp->short_filename);
+    }
+  XtUnmanageChild(edit_header_dialog);
+  return(XEN_FALSE);
+}
+#endif
+
 static void edit_header_ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
   if ((edit_header_sp) && (edit_header_sp->active))
@@ -2481,6 +2495,7 @@ See also nb.scm."
 
 #if DEBUGGING && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("new-file-dialog", g_new_file_dialog, 0, 0, 0, "internal testing function");
+  XEN_DEFINE_PROCEDURE("apply-edit-header", g_apply_edit_header, 0, 0, 0, "internal testing function");
 #endif
 }
 

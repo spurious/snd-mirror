@@ -31,7 +31,6 @@
 ;;; test 28: errors
 
 ;;; TODO: recorder-file-hook tests
-;;; TODO: track-tempo tests
 
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 
@@ -15604,14 +15603,15 @@ EDITS: 5
 	  (let* ((mix1 (mix-vct (make-vct 100 .2) 50))
 		 (mix2 (mix-vct (make-vct 100 .2) 250))
 		 (mix3 (mix-vct (make-vct 100 .2) 500))
-		 (edpos (edit-position ind 0))
-		 (track3 (make-track mix1 mix2 mix3)))
+		 (track3 (make-track mix1 mix2 mix3))
+		 (edpos (edit-position ind 0)))
 	    (lock-track track3)
 	    (if (or (not (mix-locked? mix1))
 		    (not (mix-locked? mix2))
 		    (not (mix-locked? mix3)))
 		(snd-display ";lock-track: ~A ~A ~A" (mix-locked? mix1) (mix-locked? mix2) (mix-locked? mix3)))
 	    (if (not (equal? (track track3) '())) (snd-display ";locked track: ~A" (track track3)))
+	    (if (not (= (edit-position ind 0) (1+ edpos))) (snd-display ";lock track not atomic?: ~A ~A" edpos (edit-position ind 0)))
 	    (close-sound ind)
 	    (if (not (equal? (track track3) '())) (snd-display ";close-sound unset track: ~A ~A" (track track3) (map mix? (track track3)))))
 	  ;; stereo track
@@ -33850,8 +33850,7 @@ EDITS: 2
 		      (click-button amp-button) (force-event)
 		      (if (not (= (enved-target) enved-amplitude))
 			  (snd-display ";click flt button but target: ~A" (enved-target)))
-		      (XtSetKeyboardFocus (enved-dialog) apply-button)
-		      (click-button apply-button) (force-event)
+		      (apply-enved)
 		      (if (not (equal? (edits ind) '(1 0)))
 			  (snd-display ";apply amp: ~A?" (edits ind)))
 		      (catch 'no-such-edit
@@ -33866,8 +33865,7 @@ EDITS: 2
 		      (if (not (equal? (edits ind) '(1 0)))
 			  (snd-display ";undo-apply amp: ~A?" (edits ind)))
 		      (click-button flt-button) (force-event)
-		      (XtSetKeyboardFocus (enved-dialog) apply-button)
-		      (click-button apply-button) (force-event)
+		      (apply-enved)
 		      (if (not (equal? (edits ind) '(2 0)))
 			  (snd-display ";apply flt: ~A?" (edits ind)))
 		      (catch 'no-such-edit
@@ -33880,8 +33878,7 @@ EDITS: 2
 		      (widget-string text-widget "'(0 .5 1 .4)") (force-event)
 		      (key-event text-widget snd-return-key 0) (force-event)
 		      (click-button src-button) (force-event)
-		      (XtSetKeyboardFocus (enved-dialog) apply-button)
-		      (click-button apply-button) (force-event)
+		      (apply-enved)
 		      (if (not (equal? (edits ind) '(3 0)))
 			  (snd-display ";apply src: ~A?" (edits ind)))
 		      (catch 'no-such-edit
@@ -34635,7 +34632,7 @@ EDITS: 2
 			   (comtxt (find-child editd "comment-text")))
 		      
 		      (XmTextSetString loctxt "44")
-		      (click-button (XmMessageBoxGetChild editd XmDIALOG_OK_BUTTON)) (force-event)
+		      (apply-edit-header)
 		      (set! ind (find-sound "fmv.snd"))
 		      (if (not (= (data-location ind) 44))
 			  (snd-display ";edit header data location: ~A" (data-location ind)))
@@ -34652,8 +34649,7 @@ EDITS: 2
 		      (XmUpdateDisplay srtxt)
 		      (XmTextSetString loctxt "44")
 		      (XmTextSetString comtxt "saved from edit-header dialog")
-		      (XtSetKeyboardFocus editd (XmMessageBoxGetChild editd XmDIALOG_OK_BUTTON))
-		      (click-button (XmMessageBoxGetChild editd XmDIALOG_OK_BUTTON)) (force-event)
+		      (apply-edit-header)
 		      (set! ind (find-sound "fmv.snd"))
 		      (if (not (= (header-type ind) mus-riff))
 			  (snd-display ";edit-header -> riff? ~A" (mus-header-type-name (header-type ind))))
@@ -34682,13 +34678,13 @@ EDITS: 2
 			       (snd-display ";why isn't the edit header dialog active?"))
 			   (XmListSelectPos types (type->pos typ) #t)
 			   (XmListSelectPos formats (format->pos typ frm) #t)
-			   (click-button (XmMessageBoxGetChild editd XmDIALOG_OK_BUTTON)) (force-event)
+			   (apply-edit-header)
 			   (set! ind (find-sound "test.aiff"))
 			   (if (not (= (header-type ind) typ))
 			       (snd-display ";ledit-header type -> ~A ~A" typ (mus-header-type-name (header-type ind))))
 			   (edit-header-dialog)
 			   (XmTextSetString srtxt (number->string sr))
-			   (click-button (XmMessageBoxGetChild editd XmDIALOG_OK_BUTTON)) (force-event)
+			   (apply-edit-header)
 			   (set! ind (find-sound "test.aiff"))
 			   (if (not (= (data-format ind) frm))
 			       (snd-display ";ledit-header format -> ~A ~A (~A ~A) [~A]" 
@@ -34701,8 +34697,7 @@ EDITS: 2
 			   (edit-header-dialog)
 			   (if com (XmTextSetString comtxt com))
 			   (XmTextSetString chtxt (number->string chns))
-			   (XtSetKeyboardFocus editd (XmMessageBoxGetChild editd XmDIALOG_OK_BUTTON))
-			   (click-button (XmMessageBoxGetChild editd XmDIALOG_OK_BUTTON)) (force-event)
+			   (apply-edit-header)
 			   (set! ind (find-sound "test.aiff"))
 			   (if com
 			       (if (or (not (string? (comment ind)))
@@ -34785,7 +34780,7 @@ EDITS: 2
 			  (click-button dismiss) (force-event)
 			  (close-sound ind)
 			  (if (XtIsManaged findd)
-			      (snd-display ";edit find is still active?")))))
+			      (XtUnmanageChild findd)))))
 		  
 		  ;; ---------------- help dialog ----------------
 		  (help-dialog "Test" "snd-test here")
@@ -34873,7 +34868,8 @@ EDITS: 2
 			(XtSetKeyboardFocus mixd (XmMessageBoxGetChild mixd XmDIALOG_OK_BUTTON))
 			(click-button (XmMessageBoxGetChild mixd XmDIALOG_OK_BUTTON)) (force-event)     ;dismiss
 			(if (XtIsManaged mixd)
-			    (snd-display ";why is mix-dialog dialog alive?"))))
+			    (XtUnmanageChild mixd))
+			))
 		    (XtCallCallbacks (menu-option "Mixes") XmNactivateCallback (snd-global-state))
 		    (let ((mixd (list-ref (dialog-widgets) 16)))
 		      (if (not (XtIsManaged mixd))
@@ -34941,7 +34937,8 @@ EDITS: 2
 			(XtSetKeyboardFocus trackd (XmMessageBoxGetChild trackd XmDIALOG_OK_BUTTON))
 			(click-button (XmMessageBoxGetChild trackd XmDIALOG_OK_BUTTON)) (force-event)     ;dismiss
 			(if (XtIsManaged trackd)
-			    (snd-display ";why is track-dialog dialog alive?"))))
+			    (XtUnmanageChild trackd))
+			))
 		    (XtCallCallbacks (menu-option "Tracks") XmNactivateCallback (snd-global-state))
 		    (let ((trackd (list-ref (dialog-widgets) 21)))
 		      (if (not (XtIsManaged trackd))
@@ -37223,8 +37220,6 @@ EDITS: 2
 		(XDestroyImage before)
 		(XFreePixmap dpy pix)
 		(XVisualIDFromVisual vis)
-		(XLockDisplay dpy)
-		(XUnlockDisplay dpy)
 		(let ((keys (XGetKeyboardMapping dpy (list 'KeyCode 40) 1)))
 		  (if (not (equal? keys (list (list 'KeySym 100) (list 'KeySym 68) (list 'KeySym 0) (list 'KeySym 0))))
 		      (snd-display ";XGetKeyboardMapping: ~A" keys)))
@@ -38024,8 +38019,8 @@ EDITS: 2
 				(snd-display ";clip len: ~A" (XmClipboardInquireLength dpy win "SND_DATA")))
 			    (let ((pend (XmClipboardInquirePendingItems dpy win "SND_DATA")))
 			      (if (not (= (car pend) ClipboardSuccess)) (snd-display ";XmClipboardInquirePendingItems: ~A" pend)))
-			    (let ((formats (XmClipboardInquireCount dpy win)))
-			      (if (= (cadr formats) 0) (snd-display ";XmClipboardInquireCount: ~A" formats))
+			    (let ((formats1 (XmClipboardInquireCount dpy win)))
+			      (if (= (cadr formats1) 0) (snd-display ";XmClipboardInquireCount: ~A" formats1))
 			      (let ((data (XmClipboardInquireFormat dpy win 1 10)))
 				(let ((clip (XmClipboardRetrieve dpy win "SND_DATA" 10)))
 				  (if (not (string=? (cadr clip) "copy this")) (snd-display ";XmClipboardRetrieve: ~A" clip))
@@ -38035,7 +38030,6 @@ EDITS: 2
 		    (XmClipboardUnlock dpy win #t)))
 	      (let ((selbox (XmCreateSelectionBox shell "selbox" '() 0)))
 		(XmSelectionBoxGetChild selbox XmDIALOG_APPLY_BUTTON)))
-	    
 	    
 	    (let* ((frm (add-main-pane "hi" xmFormWidgetClass (list XmNpaneMinimum 120)))
 		   (current-time (list 'Time CurrentTime))
@@ -38131,18 +38125,18 @@ EDITS: 2
 		  (snd-display ";XmCommandGetChild: ~A" (XmCommandGetChild cmd XmDIALOG_COMMAND_TEXT)))
 	      (XmCommandSetValue cmd (XmStringCreateLocalized "hiho"))
 	      
-	      (let ((one (XmStringCreateLocalized "one"))
-		    (two (XmStringCreateLocalized "two"))
-		    (three (XmStringCreateLocalized "three")))
-		(XmComboBoxAddItem cmb one 0 #f)
-		(XmComboBoxAddItem cmb two 0 #f)
-		(XmComboBoxAddItem cmb three 0 #f)
+	      (let ((one1 (XmStringCreateLocalized "one"))
+		    (two1 (XmStringCreateLocalized "two"))
+		    (three1 (XmStringCreateLocalized "three")))
+		(XmComboBoxAddItem cmb one1 0 #f)
+		(XmComboBoxAddItem cmb two1 0 #f)
+		(XmComboBoxAddItem cmb three1 0 #f)
 		(XmComboBoxDeletePos cmb 1)
-		(XmComboBoxSelectItem cmb three)
-		(XmComboBoxSetItem cmb three) ; hunh??
+		(XmComboBoxSelectItem cmb three1)
+		(XmComboBoxSetItem cmb three1) ; hunh??
 		(XmComboBoxUpdate cmb)
 		(let ((vals (cadr (XtGetValues cmb (list XmNitems 0)))))
-		  (if (not (equal? vals (list two three))) (snd-display ";XmComboBox: ~A" vals))))
+		  (if (not (equal? vals (list two1 three1))) (snd-display ";XmComboBox: ~A" vals))))
 	      
 	      (XmContainerCut box current-time)
 	      (XmContainerCopy box current-time)
@@ -38877,9 +38871,9 @@ EDITS: 2
 		     XCreatePixmap XCreateBitmapFromData XCreatePixmapFromBitmapData XCreateSimpleWindow
 		     XGetSelectionOwner XCreateWindow XListInstalledColormaps XListFonts XListFontsWithInfo
 		     XGetFontPath XListExtensions XListProperties XKeycodeToKeysym XLookupKeysym
-		     XGetKeyboardMapping XStringToKeysym
+		     XGetKeyboardMapping ;XStringToKeysym
 		     XDisplayMotionBufferSize XVisualIDFromVisual XMaxRequestSize XExtendedMaxRequestSize
-		     XInitThreads XLockDisplay XUnlockDisplay XRootWindow XDefaultRootWindow XRootWindowOfScreen
+		     XRootWindow XDefaultRootWindow XRootWindowOfScreen
 		     XDefaultVisual XDefaultVisualOfScreen XDefaultGC XDefaultGCOfScreen XBlackPixel XWhitePixel
 		     XAllPlanes XBlackPixelOfScreen XWhitePixelOfScreen XNextRequest XLastKnownRequestProcessed
 		     XServerVendor XDisplayString XDefaultColormap XDefaultColormapOfScreen XDisplayOfScreen
@@ -38929,7 +38923,8 @@ EDITS: 2
 		     XFreeFontSet XFontsOfFontSet XBaseFontNameListOfFontSet XLocaleOfFontSet XContextDependentDrawing
 		     XDirectionalDependentDrawing XContextualDrawing XFilterEvent XAllocIconSize
 		     XAllocStandardColormap XAllocWMHints XClipBox XCreateRegion XDefaultString XDeleteContext
-		     XDestroyRegion XEmptyRegion XEqualRegion XFindContext XGetIconSizes XGetRGBColormaps
+		     XDestroyRegion XEmptyRegion XEqualRegion ;XFindContext 
+		     XGetIconSizes XGetRGBColormaps
 		     XGetStandardColormap XGetVisualInfo XGetWMHints XIntersectRegion XConvertCase XLookupString
 		     XMatchVisualInfo XOffsetRegion XPointInRegion XPolygonRegion XRectInRegion XSaveContext
 		     XSetRGBColormaps XSetWMHints XSetRegion XSetStandardColormap XShrinkRegion XSubtractRegion
@@ -39073,7 +39068,7 @@ EDITS: 2
 		   (xm-procs3 (remove-if (lambda (n) (not (arity-ok n 3))) xm-procs))
 		   (xm-procs4 (remove-if (lambda (n) (not (arity-ok n 4))) xm-procs))
 		   )
-	      
+
 	      ;; ---------------- 0 Args
 	      (for-each 
 	       (lambda (n)
@@ -39082,7 +39077,7 @@ EDITS: 2
 			  (n))
 			(lambda args (car args))))
 	       xm-procs0)
-	      
+
 	      ;; ---------------- 1 Arg
 	      (for-each 
 	       (lambda (arg)
@@ -39094,7 +39089,7 @@ EDITS: 2
 		  xm-procs1))
 	       (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 		     (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() (make-vector 0) 12345678901234567890))
-	      
+
 	      ;; ---------------- 2 Args
 	      (for-each 
 	       (lambda (arg1)
@@ -39247,6 +39242,7 @@ EDITS: 2
 		 (lambda (arg)
 		   (for-each 
 		    (lambda (n name)
+		      (snd-display "~A " name)
 		      (let ((tag 
 			     (catch #t
 				    (lambda () (n arg))
@@ -41136,12 +41132,10 @@ EDITS: 2
 		  (gc))))
 	    
 	    (mus-audio-reinitialize)
+	    (set! (window-y) 10)
+	    (dismiss-all-dialogs)
 	    (run-hook after-test-hook 28)
 	    ))
-      
-      (set! (window-y) 10)
-;(set! (basic-color) (make-color 0.96 0.96 0.86))
-      (dismiss-all-dialogs)
       ))
 
 ;;; -------------------------------- clean up and quit -------------------------------- 
@@ -41163,23 +41157,23 @@ EDITS: 2
 (save-listener "test.output")
 (set! (listener-prompt) original-prompt)
 
-(snd-display ";all done!~%~A" original-prompt)
+(display (format #f ";all done!~%~A" original-prompt))
 
-(snd-display ";gc: ~A~%" (gc-stats))
+(display (format #f ";gc: ~A~%" (gc-stats)))
 
 (let ((gc-lst (gc-stats)))
-  (snd-display ";timings:~%  ~A: total~%  GC: ~A~%~{    ~A~%~})" 
+  (display (format #f ";timings:~%  ~A: total~%  GC: ~A~%~{    ~A~%~})" 
 	       (/ (- (get-internal-real-time) overall-start-time) internal-time-units-per-second) 
 	       (/ (cdr (list-ref gc-lst 0)) internal-time-units-per-second) ; was 1000 -- off by a factor of 10 for years...
 	       (list (list-ref gc-lst 1) 
 		     (list-ref gc-lst 5)
 		     (if (> (length gc-lst) 9)
 			 (list-ref gc-lst 9)
-			 #f))))
+			 #f)))))
 
 (if (not (null? times))
     (for-each (lambda (n)
- 		(snd-display ";  ~A: ~A" (cadr n) (car n)))
+ 		(display (format #f ";  ~A: ~A" (cadr n) (car n))))
  	      times))
 
 (if (number? (vector-ref timings total-tests)) 
@@ -41191,26 +41185,26 @@ EDITS: 2
 
 (if (and (string? test14-file)
 	 (file-exists? test14-file))
-    (snd-display ";~%~A(~D)" test14-file (mus-sound-samples test14-file)))
+    (display (format #f ";~%~A(~D)" test14-file (mus-sound-samples test14-file))))
 
 (show-listener)
 
 (if (file-exists? original-save-dir)
     (begin
-      (snd-display (format #f "ls ~A/snd_* | wc~%" original-save-dir))
+      (display (format #f "ls ~A/snd_* | wc~%" original-save-dir))
       (system (format #f "ls ~A/snd_* | wc" original-save-dir))
       (system (format #f "rm ~A/snd_*" original-save-dir))))
 
 (if (file-exists? original-temp-dir)
     (begin
-      (snd-display (format #f "ls ~A/snd_* | wc~%" original-temp-dir))
+      (display (format #f "ls ~A/snd_* | wc~%" original-temp-dir))
       (system (format #f "ls ~A/snd_* | wc" original-temp-dir))
       (system (format #f "sndinfo ~A/snd_*" original-temp-dir))
       (system (format #f "rm ~A/snd_*" original-temp-dir))))
 
 (if (file-exists? "/tmp")
     (begin ; -noinit possibly
-      (snd-display (format #f "ls /tmp/snd_* | wc~%"))
+      (display (format #f "ls /tmp/snd_* | wc~%"))
       (system "ls /tmp/snd_* | wc")
 					;(system "sndinfo /tmp/snd_*") ; not a bug -- save_dir null will write to /tmp
       (system "rm /tmp/snd_*")

@@ -72,12 +72,10 @@
   <li><a href="#prc95doc">prc95.scm: Perry Cook's physical model examples</a>
   <li><a href="#pvocdoc">pvoc.scm: phase-vocoder</a>
   <li><a href="#rgbdoc">rgb.scm, rgb.rb: colors</a>
-  <li><a href="#rtiodoc">rtio.scm: real-time stuff</a>
+  <li><a href="#rtiodoc">rtio.scm, rtio.rb: real-time stuff</a>
   <li><a href="#rubberdoc">rubber.scm, rubber.rb: rubber-sound</a>
   <li><a href="#singerdoc">singer.scm: Perry Cook's vocal-tract physical model</a>
-  <li><a href="#snd4doc">snd4.scm: Backwards compatibility for version 4</a>
-  <li><a href="#snd5doc">snd5.scm: Backwards compatibility for version 5</a>
-  <li><a href="#snd6doc">snd6.scm: Backwards compatibility for version 6</a>
+  <li><a href="#snd4doc">snd4|5|6|7.scm: Backwards compatibility</a>
   <li><a href="#sndgldoc">snd-gl.scm: OpenGL examples (gl.c)</a>
   <li><a href="#sndmotifdoc">snd-motif.scm, snd-gtk.scm: Motif/Gtk module (xm.c, xg.c)</a>
   <li><a href="#sndtestdoc">snd-test.scm, snd_test.rb, and event.scm: Snd regression tests</a>
@@ -1944,6 +1942,8 @@ To tie this into C-x C-q, in place of the default "mix" function,
           "C-x C-q")
 </pre>
 <p>
+See <a href="#usepanmixinmixmenu">use-pan-mix-in-mix-menu</a> to change the
+File:Mix menu to use pan-mix.
 <b>snap-mix-to-beat</b> forces a dragged mix to end up on a beat.
 If <i>at-anchor</i> is #t, the anchor point, rather than the mix beginning falls on the beat.
 <b>mix-property</b> associates a property list with each mix.
@@ -2300,6 +2300,20 @@ change its amplitude. <b>show-input-fft</b> displays the input data's
 spectrum.  <b>show-draggable-input-fft</b> is the same, but the X axis
 (the frequency axis in this case) is draggable, as in Snd's FFT display.
 </p>
+<p>Here's some info from Michael Scholz about the Ruby version of rtio:
+</p>
+<pre>
+rt = make_rtio
+rt.show_input
+rt.show_input_fft
+rt.chans = 2
+rt.show_drag
+rt.amplify(1.5).in_out(1, 0)
+rt.lp.in_out
+rt.hp(1150).in_out
+rt.close
+</pre>
+<br>
 
 <A NAME="rubberdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>rubber.scm, rubber.rb</h2></td></tr></table>
 
@@ -2343,16 +2357,10 @@ There are a couple example calls at the end of the instrument code.
 </p>
 
 
-<A NAME="snd4doc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>snd4.scm</h2></td></tr></table>
+<A NAME="snd4doc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>snd4|5|6|7.scm</h2></td></tr></table>
 
-<p>The Snd-4 compatibilty file contains a number of the procedures
-that were removed from or renamed in Snd-5.  
-</p>
-
-<A NAME="snd5doc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>snd5.scm</h2></td></tr></table>
-
-<p>The Snd-5 compatibilty file contains a number of the procedures
-that were moved from C to Scheme during Snd-5 development.
+<p>These files contain a number of the procedures
+that were removed from or renamed in earlier versions of Snd.  Some of them are:
 </p>
 <table border=0 cellspacing=10>
 <!-- backward-sample -->
@@ -2399,9 +2407,7 @@ of vcts awaiting values; in the do! case, it takes two arguments, the vct
 number and the current loop index.
 </p>
 
-<A NAME="snd6doc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>snd6.scm</h2></td></tr></table>
-
-<p>As with snd5.scm and snd4.scm, snd6.scm has functions that provide
+<p>snd6.scm has functions that provide
 backwards compatibility within version 6.
 Currently, these are just some old (untypable) constant names,
 and some slightly inconsistent old function names.
@@ -2450,6 +2456,7 @@ waterfall spectrum display of the incoming audio data.  <b>stop-waterfall</b> tu
   <em class=def>make-level-meter</em> parent width height
   <em class=def>show-disk-space</em>
   <em class=def>keep-file-dialog-open-upon-ok</em>
+  <em class=def><A NAME="usepanmixinmixmenu">use-pan-mix-in-mix-menu</a></em>
   <em class=def>add-amp-controls</em>
   <em class=def>add-very-useful-icons</em>
   <em class=def><A NAME="adddeleteoption">add-delete-option, add-rename-option</a></em>
@@ -2541,6 +2548,8 @@ in the respective meter.
 minibuffer area which shows the current amount of disk space available
 on the partition of the associated sound.
 </p><p><b>keep-file-dialog-open-upon-ok</b> changes File:Open so that clicking "ok" does not unmanage (dismiss) the dialog.
+<b>keep-mix-file-dialog-open-upon-ok</b> does the same for the File:Mix dialog.
+<b>use-pan-mix-in-mix-menu</b> changes the File:Mix dialog to use <a href="#panmix">pan-mix</a> rather than <a href="extsnd.html#sndmix">mix<a>.
 </p><p><b>add-amp-controls</b> adds amp sliders to the control panel
 for multi-channel sounds (each channel gets its own amp control slider).
 </p><p><b>add-rename-option</b> adds a "Rename" option to the File menu; similarly

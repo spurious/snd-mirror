@@ -324,6 +324,15 @@ static void save_button_pressed(Widget w, XtPointer context, XtPointer info)
   if (name) XtFree(name);
 }
 
+#if DEBUGGING
+static XEN g_apply_enved(void)
+{
+  apply_enved();
+  last_active_channel = active_channel;
+  return(XEN_FALSE);
+}
+#endif
+
 static void apply_enved_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* apply current envs to currently sync'd channels */
@@ -1705,6 +1714,7 @@ XEN_NARGIFY_1(g_set_enved_selected_env_w, g_set_enved_selected_env)
 #if DEBUGGING
 XEN_NARGIFY_0(g_enved_dialog_widgets_w, g_enved_dialog_widgets)
 XEN_NARGIFY_0(g_enved_axis_info_w, g_enved_axis_info)
+XEN_NARGIFY_0(g_apply_enved_w, g_apply_enved)
 #endif
 #else
 #define g_enved_filter_w g_enved_filter
@@ -1716,6 +1726,7 @@ XEN_NARGIFY_0(g_enved_axis_info_w, g_enved_axis_info)
 #if DEBUGGING
 #define g_enved_dialog_widgets_w g_enved_dialog_widgets
 #define g_enved_axis_info_w g_enved_axis_info
+#define g_apply_enved_w g_apply_enved
 #endif
 #endif
 
@@ -1730,5 +1741,6 @@ void g_init_gxenv(void)
 #if DEBUGGING
   XEN_DEFINE_PROCEDURE("enved-dialog-widgets", g_enved_dialog_widgets_w, 0, 0, 0, "internal testing function");
   XEN_DEFINE_PROCEDURE("enved-axis-info",  g_enved_axis_info_w, 0, 0, 0, "internal testing function");
+  XEN_DEFINE_PROCEDURE("apply-enved",  g_apply_enved_w, 0, 0, 0, "internal testing function");
 #endif
 }

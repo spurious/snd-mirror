@@ -586,6 +586,7 @@
 	  (arg-start 0)
 	  (line-len 0)
 	  (line-max 120)
+	  (protect-arglist #f)
 	  (max-args 10)) ; libguile/gsubr.h:#define SCM_GSUBR_MAX 10
 
      (define (hey-start)
@@ -622,7 +623,9 @@
      (if (= (length args) 0)
 	 (heyc "void")
 	 (if (>= (length args) max-args)
-	     (heyc "XEN arglist")
+	     (begin
+	       (heyc "XEN arglist")
+	       (set! protect-arglist #t))
 	     (let ((previous-arg #f))
 	       (for-each 
 		(lambda (arg)
@@ -733,7 +736,9 @@
 		   (hey "      result = XEN_CONS(C_TO_XEN_~A(~A[i]), result);~%" 
 			(no-stars (deref-type (list-ref args (- (length args) 1))))
 			(deref-name (list-ref args (- (length args) 1))))
-		   (hey "    return(result);~%")
+		   (if protect-arglist
+		       (hey "    return(xen_return_first(result, arglist));~%")
+		       (hey "    return(result);~%"))
 		   (hey "  }~%"))
 		 (begin
 		   (hey "  return(XEN_LIST_~D(" (+ refargs (if using-result 1 0)))
@@ -751,7 +756,9 @@
 	   (if (string=? return-type "void")
 	       (begin
 		 (hey ");~%")
-		 (hey "  return(XEN_FALSE);~%"))
+		 (if protect-arglist
+		     (hey "  return(xen_return_first(XEN_FALSE, arglist));~%")
+		     (hey "  return(XEN_FALSE);~%")))
 	       (hey ")));~%")))
        )
 

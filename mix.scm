@@ -93,6 +93,7 @@ the variable with-tags is #t, the resultant mixes are placed in their own track,
 the track envelope controls the panning. \
 If 'envelope' is a scaler, it is turned into an evelope at that value."
 
+  ;; TODO: if not with-mix-tags, none of this is right: mix->-1 and all envs etc need to be done at mix call time
   (let ((index (or snd (selected-sound) (and (sounds) (car (sounds))))))
     (if (not (sound? index))
 	(throw 'no-such-sound (list "pan-mix" snd)))

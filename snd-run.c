@@ -68,6 +68,7 @@
  * PERHAPS: xen2sample and make-snd2sample
  * SOMEDAY: if not DESCRIBE_PTREE, omit description (debugging) funcs
  * SOMEDAY: throw with 2nd arg
+ * TODO: make-region-sample-reader, read-region-sample
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
  *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)

@@ -294,9 +294,6 @@
   XEN_NARGIFY_1(gxm_XExtendedMaxRequestSize_w, gxm_XExtendedMaxRequestSize)
   XEN_NARGIFY_1(gxm_XDisplayMotionBufferSize_w, gxm_XDisplayMotionBufferSize)
   XEN_NARGIFY_1(gxm_XVisualIDFromVisual_w, gxm_XVisualIDFromVisual)
-  XEN_NARGIFY_0(gxm_XInitThreads_w, gxm_XInitThreads)
-  XEN_NARGIFY_1(gxm_XLockDisplay_w, gxm_XLockDisplay)
-  XEN_NARGIFY_1(gxm_XUnlockDisplay_w, gxm_XUnlockDisplay)
   XEN_NARGIFY_2(gxm_XRootWindow_w, gxm_XRootWindow)
   XEN_NARGIFY_1(gxm_XDefaultRootWindow_w, gxm_XDefaultRootWindow)
   XEN_NARGIFY_1(gxm_XRootWindowOfScreen_w, gxm_XRootWindowOfScreen)
@@ -1594,9 +1591,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XExtendedMaxRequestSize, gxm_XExtendedMaxRequestSize_w, 1, 0, 0, H_XExtendedMaxRequestSize);
   XM_DEFINE_PROCEDURE(XDisplayMotionBufferSize, gxm_XDisplayMotionBufferSize_w, 1, 0, 0, H_XDisplayMotionBufferSize);
   XM_DEFINE_PROCEDURE(XVisualIDFromVisual, gxm_XVisualIDFromVisual_w, 1, 0, 0, H_XVisualIDFromVisual);
-  XM_DEFINE_PROCEDURE(XInitThreads, gxm_XInitThreads_w, 0, 0, 0, H_XInitThreads);
-  XM_DEFINE_PROCEDURE(XLockDisplay, gxm_XLockDisplay_w, 1, 0, 0, H_XLockDisplay);
-  XM_DEFINE_PROCEDURE(XUnlockDisplay, gxm_XUnlockDisplay_w, 1, 0, 0, H_XUnlockDisplay);
   XM_DEFINE_PROCEDURE(XRootWindow, gxm_XRootWindow_w, 2, 0, 0, H_RootWindow);
   XM_DEFINE_PROCEDURE(XDefaultRootWindow, gxm_XDefaultRootWindow_w, 1, 0, 0, H_DefaultRootWindow);
   XM_DEFINE_PROCEDURE(XRootWindowOfScreen, gxm_XRootWindowOfScreen_w, 1, 0, 0, H_RootWindowOfScreen);

@@ -19,6 +19,7 @@
 ;;; (show-disk-space) adds a label to the minibuffer area showing the current free space 
 ;;; (keep-file-dialog-open-upon-ok) changes File:Open so that clicking "ok" does not "unmanage" the dialog
 ;;;   also keep-mix-file-dialog-open-upon-ok
+;;; (use-pan-mix-in-mix-menu) changes the File:Mix menu Ok callback to use pan-mix rather than mix
 ;;; (add-amp-controls) adds amp sliders to the control panel for multi-channel sounds
 ;;; (remove-main-menu menu) removes a top-level menu
 ;;; add delete and rename options to the file menu (add-delete-option) (add-rename-option)
@@ -274,6 +275,24 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 				 (snd-error (format #f "~S is a directory" filename)))
 			     (snd-error (format #f "no such file: ~A" filename))))))
       'ok)))
+
+(define use-pan-mix-in-mix-menu
+  ;; use pan-mix rather than mix in the File:Mix menu
+  (let* ((dialog (let ((m (mix-file-dialog #f)))
+		   (list-ref (dialog-widgets) 11))))
+    (lambda ()
+      (XtRemoveAllCallbacks dialog XmNokCallback) ; remove built-in version
+      (XtAddCallback dialog XmNokCallback
+		     (lambda (widget context info)
+		       ;; same as built-in "ok" callback, but uses pan-mix, not mix
+		       (let ((filename (cadr (XmStringGetLtoR (.value info) XmFONTLIST_DEFAULT_TAG))))
+			 (if (file-exists? filename)
+			     (if (not (file-is-directory? filename))
+				 (pan-mix filename (or (cursor) 0))
+				 (snd-error (format #f "~S is a directory" filename)))
+			     (snd-error (format #f "no such file: ~A" filename))))))
+      'ok)))
+
 
 
 

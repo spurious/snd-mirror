@@ -2968,7 +2968,7 @@ GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, GLdouble* points)"
   XEN_ASSERT_TYPE(XEN_GLdouble__P(points), points, 10, "glMap2d", "GLdouble*");
   glMap2d(XEN_TO_C_GLenum(target), XEN_TO_C_GLdouble(u1), XEN_TO_C_GLdouble(u2), XEN_TO_C_GLint(ustride), XEN_TO_C_GLint(uorder), 
           XEN_TO_C_GLdouble(v1), XEN_TO_C_GLdouble(v2), XEN_TO_C_GLint(vstride), XEN_TO_C_GLint(vorder), XEN_TO_C_GLdouble_(points));
-  return(XEN_FALSE);
+  return(xen_return_first(XEN_FALSE, arglist));
 }
 
 static XEN gxg_glMap2f(XEN arglist)
@@ -2998,7 +2998,7 @@ GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, GLfloat* points)"
   XEN_ASSERT_TYPE(XEN_GLfloat__P(points), points, 10, "glMap2f", "GLfloat*");
   glMap2f(XEN_TO_C_GLenum(target), XEN_TO_C_GLfloat(u1), XEN_TO_C_GLfloat(u2), XEN_TO_C_GLint(ustride), XEN_TO_C_GLint(uorder), 
           XEN_TO_C_GLfloat(v1), XEN_TO_C_GLfloat(v2), XEN_TO_C_GLint(vstride), XEN_TO_C_GLint(vorder), XEN_TO_C_GLfloat_(points));
-  return(XEN_FALSE);
+  return(xen_return_first(XEN_FALSE, arglist));
 }
 
 static XEN gxg_glGetMapdv(XEN target, XEN query, XEN v)
@@ -3269,7 +3269,7 @@ GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, GLvoid*
   XEN_ASSERT_TYPE(XEN_GLvoid__P(pixels), pixels, 10, "glTexImage3D", "GLvoid*");
   glTexImage3D(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(level), XEN_TO_C_GLint(internalFormat), XEN_TO_C_GLsizei(width), XEN_TO_C_GLsizei(height), 
                XEN_TO_C_GLsizei(depth), XEN_TO_C_GLint(border), XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), XEN_TO_C_GLvoid_(pixels));
-  return(XEN_FALSE);
+  return(xen_return_first(XEN_FALSE, arglist));
 }
 
 static XEN gxg_glTexSubImage3D(XEN arglist)
@@ -3302,7 +3302,7 @@ GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLen
   glTexSubImage3D(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(level), XEN_TO_C_GLint(xoffset), XEN_TO_C_GLint(yoffset), XEN_TO_C_GLint(zoffset), 
                   XEN_TO_C_GLsizei(width), XEN_TO_C_GLsizei(height), XEN_TO_C_GLsizei(depth), XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), 
                   XEN_TO_C_GLvoid_(pixels));
-  return(XEN_FALSE);
+  return(xen_return_first(XEN_FALSE, arglist));
 }
 
 static XEN gxg_glCopyTexSubImage3D(XEN target, XEN level, XEN xoffset, XEN yoffset, XEN zoffset, XEN x, XEN y, XEN width, XEN height)
@@ -5182,10 +5182,10 @@ static bool gl_already_inited = false;
       define_functions();
       XEN_YES_WE_HAVE("gl");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define gl-version \"10-Aug-03\")");
+      XEN_EVAL_C_STRING("(define gl-version \"25-Nov-03\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Gl_Version", C_TO_XEN_STRING("10-Aug-03"));
+      rb_define_global_const("Gl_Version", C_TO_XEN_STRING("25-Nov-03"));
 #endif
       gl_already_inited = true;
     }
