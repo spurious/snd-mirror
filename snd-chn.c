@@ -492,7 +492,7 @@ void add_channel_data(char *filename, chan_info *cp, file_info *hdr, snd_state *
   file_info *chdr;
   sp = cp->sound;
   add_channel_data_1(cp, sp, graphed);
-  set_initial_ed_list(cp, (hdr->samples / hdr->chans) - 1);
+  cp->edits[0] = initial_ed_list(0, (hdr->samples / hdr->chans) - 1);
   chdr = copy_header(filename, sp->hdr); /* need one separate from snd_info case */
   chn = cp->chan;
   if (chdr)

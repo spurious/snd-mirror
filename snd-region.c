@@ -377,7 +377,7 @@ static void make_region_readable(region *r)
       cp = make_chan_info(NULL, i, regsp, ss);
       regsp->chans[i] = cp;
       add_channel_data_1(cp, regsp, WITHOUT_GRAPH);
-      set_initial_ed_list(cp, r->frames - 1);
+      cp->edits[0] = initial_ed_list(0, r->frames - 1);
       cp->edit_size = 1;
       cp->sound_size = 1;
       cp->hookable = 0;

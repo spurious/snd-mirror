@@ -68,15 +68,8 @@ typedef struct {
 } snd_data;
 
 typedef struct {
-  off_t out, beg, end;
-  Float scl, rmp0, rmp1, pscl;
-  int snd, typ, ptree_loc;
-  off_t ptree_pos, ptree_dur;
-} ed_fragment;
-
-typedef struct {
   int size, allocated_size;
-  ed_fragment **fragments;
+  void **fragments; /* ed_fragment** */
   off_t beg, len;
   char *origin;
   int edit_type, sound_location, ptree_location;
@@ -89,7 +82,7 @@ typedef struct snd__fd {
   mus_sample_t (*run)(struct snd__fd *sf);
   Float (*runf)(struct snd__fd *sf);
   ed_list *current_state;
-  ed_fragment *cb;
+  void *cb; /* ed_fragment* */
   off_t loc, first, last;
   int cbi, direction, at_eof;
   mus_sample_t *data;
@@ -685,7 +678,7 @@ void g_init_data(void);
 /* -------- snd-edits.c -------- */
 
 void allocate_ed_list(chan_info *cp);
-void set_initial_ed_list(chan_info *cp, off_t len);
+ed_list *initial_ed_list(off_t beg, off_t end);
 off_t edit_changes_begin_at(chan_info *cp);
 off_t edit_changes_end_at(chan_info *cp);
 char *run_save_state_hook(char *filename);

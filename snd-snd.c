@@ -848,7 +848,7 @@ void amp_env_ptree_selection(chan_info *cp, void *pt, off_t beg, off_t num, int 
 		      if (vlo == NULL)
 			{
 			  vlo = c_vct_copy((vct *)(XEN_OBJECT_REF(XEN_CALL_2(init_func,
-									     C_TO_XEN_OFF_T((Float)(cursamp - beg) / (Float)(num)),
+									     C_TO_XEN_OFF_T((off_t)((Float)(cursamp - beg) / (Float)(num))),
 									     C_TO_XEN_OFF_T((off_t)(num / new_ep->samps_per_bin)),
 									     "ptree-channel fallback init func"))));
 			  vhi = c_vct_copy(vlo);

@@ -808,7 +808,7 @@ snd_info *make_sound_readable(snd_state *ss, char *filename, int post_close)
       cp->cgx = NULL;
       sp->chans[i] = cp;
       add_channel_data_1(cp, sp, WITHOUT_GRAPH);
-      set_initial_ed_list(cp, len - 1);
+      cp->edits[0] = initial_ed_list(0, len - 1);
       cp->edit_size = 1;
       cp->sound_size = 1;
       fd = snd_open_read(ss, filename); /* sends the error if any */

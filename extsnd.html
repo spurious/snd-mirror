@@ -4082,7 +4082,7 @@ the direction argument between the channel and edit-position:
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->The location of the sound samples (an offset in bytes) in the file represented by <i>snd</i>.  In a raw (headerless) file,
-<!-- -->this is 0, but normally the data comes after some portion of the header.
+<!-- -->this is 0, but normally the data comes after the header.  
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5094,17 +5094,30 @@ the direction argument between the channel and edit-position:
 <!-- --><br><br>
 <!-- -->If no 'init-func' is specified, the editing procedure ('proc') should not assume anything about
 <!-- -->the context in which it is called;  in this case, there's no way for 'proc' to know where it starts, or when it is being restarted,
-<!-- -->or which direction it is running, so there's no way it can make any use of closures.
-<!-- -->For example, the following call:
+<!-- -->or which direction it is running, so,
+<!-- -->for example, the following call:
 <!-- --><br><br><pre>
    (let ((ctr 0)) 
      (<em class=red>ptree-channel</em> (lambda (y) 
                       (set! ctr (1+ ctr)) 
                       (* ctr .0001))))
 <!-- --></pre>
-<!-- -->will never reset ctr to 0!  So every time the segment is read by Snd, the samples will be
-<!-- -->higher -- this is probably not what you want.  'init-func' provides a way around this
-<!-- -->limitation.  The following example is a ptree-channel version of cosine-channel given under
+<!-- -->will never reset ctr to 0!  Every time a portion of the data is read by Snd, the samples will be
+<!-- -->higher.  But, the notion of an accessor that returns a different thing each time a sample
+<!-- -->is accessed is not foolish; take, for example:
+<!-- --><br><br><pre>
+  (<em class=red>ptree-channel</em> (lambda (y) (+ y (random .01))))
+<!-- --></pre>
+<!-- -->This gives a slightly different take on the sound on each change
+<!-- -->of view or redisplay.  But if the details of the noise don't
+<!-- -->matter, this change is also ok -- you're editing a sort
+<!-- -->of mobile in sound (analogous to mobile sculpture).
+<!-- -->I intend to expand this capability soon to include any
+<!-- -->function at all...
+<!-- --><br><br>
+<!-- -->However, not everyone wants his samples floating around randomly beneath his gaze.
+<!-- -->'init-func' provides a way to include state with the 'proc', as in
+<!-- -->this version of cosine-channel given under
 <!-- --><a href="#mapchannel">map-channel</a>:
 <!-- --></td></tr>
 <!-- -->
@@ -5180,6 +5193,7 @@ the direction argument between the channel and edit-position:
 
 (define* (ptree-xramp r0 r1 ubase #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
   "exponential version of ramp-channel"
+  ;; this is essentially what CLM's exponential envelope generator is doing
   (let* ((base (if (&gt; r0 r1) (/ 1.0 ubase) ubase)))
     (<em class=red>ptree-channel</em>
      (lambda (y data forward)
@@ -5462,6 +5476,17 @@ the direction argument between the channel and edit-position:
     ((= i (frames)))
   ;; don't actually do this! -- it involves a separate edit on each sample
   (set! (sample i) (* 2 (sample i))))
+
+(let ((make-scaler 
+       (lambda (start end)
+	 (letrec ((ctr start)
+		  (us (lambda (them)
+			(set! (sample ctr) (* 2.0 (sample ctr)))
+			(set! ctr (+ ctr 2))
+			(if (&lt;= ctr end)
+			    (them us)))))
+	   us))))
+  ((make-scaler 0 (frames)) (make-scaler 1 (frames))))
 <!-- --></pre></td></tr></table>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
