@@ -1011,10 +1011,6 @@ void play_sound(snd_info *sp, int start, int end, int background)
   start_dac(sp->state,SND_SRATE(sp),sp->nchans,background);
 }
 
-#if DEBUGGING
-  static int in_selection = 0;
-#endif
-
 void play_channels(chan_info **cps, int chans, int *starts, int *ur_ends, int background)
 {
   /* ends can be NULL */
@@ -1035,8 +1031,7 @@ void play_channels(chan_info **cps, int chans, int *starts, int *ur_ends, int ba
       dp = add_channel_to_play_list(cps[i],sp = (cps[i]->sound),starts[i],ends[i]);
 #if DEBUGGING
       dp->desc = (char *)CALLOC(128,sizeof(char));
-      sprintf(dp->desc,"%splay_channels: %s[%d, %d] %d %d %d",
-	      (in_selection) ? "selection " : "",
+      sprintf(dp->desc,"play_channels: %s[%d, %d] %d %d %d",
 	      sp->shortname,i,cps[i]->chan,starts[i],ends[i],background);
 #endif
     }
@@ -1049,6 +1044,7 @@ void play_selection(int background)
   /* just plays the current selection */
   int i;
   int *ends;
+  snd_info *sp;
   sync_info *si = NULL;
   if (selection_is_active())
     {
@@ -1056,14 +1052,14 @@ void play_selection(int background)
       if (si)
 	{
 	  ends = (int *)CALLOC(si->chans,sizeof(int));
-	  for (i=0;i<si->chans;i++) ends[i] = si->begs[i] + selection_len();
-#if DEBUGGING
-	  in_selection = 1;
-#endif
+	  for (i=0;i<si->chans;i++) 
+	    {
+	      sp = si->cps[i]->sound;
+	      if ((sp) && (sp->srate != 1.0) && (sp->srate > 0.0))
+		ends[i] = si->begs[i] + ((Float)selection_len() / sp->srate); /* TODO this should use the src->sample counter instead */
+	      else ends[i] = si->begs[i] + selection_len();
+	    }
 	  play_channels(si->cps,si->chans,si->begs,ends,background);
-#if DEBUGGING
-	  in_selection = 0;
-#endif
 	  si = free_sync_info(si); /* does not free sample readers */
 	  FREE(ends);
 	}
@@ -1866,16 +1862,6 @@ void initialize_apply(snd_info *sp, int chans, int dur)
 {
   int curchan=0;
   snd_state *ss;
-
-#if DEBUGGING
-  int i;
-  if (play_list)
-    {
-      for (i=0;i<=max_active_slot;i++)
-	if (play_list[i]) 
-	  fprintf(stderr,"left over: %s ",describe_dac_info(play_list[i]));
-    }
-#endif
   ss = sp->state;
   stop_playing_all_sounds();
   max_active_slot = -1;

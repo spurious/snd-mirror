@@ -1,9 +1,5 @@
 #include "snd.h"
 
-/* TODO   play selection doesn't take src into account (dp->end needs to be local since user can change src as we play)
- * TODO     this number exists! run_src sets src->sample as counter
- */
-
 /* selection support changed 11-Sep-00 to handle edit list movements */
 
 static int cp_has_selection(chan_info *cp, void *ignore)

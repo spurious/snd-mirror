@@ -1,10 +1,6 @@
 #include "snd.h"
 #include <X11/cursorfont.h>
 
-/* TODO menu-hook into user-added menus (requires saving the top level menu names)
- * TODO remove-from-built-in somehow (dangerous due to reflections)
- */
-
 enum {menu_menu,
         file_menu,f_cascade_menu,
           f_open_menu,f_close_menu,f_save_menu,f_save_as_menu,f_revert_menu,f_exit_menu,f_new_menu,
@@ -901,16 +897,30 @@ static Widget added_menus[MAX_MAIN_MENUS];
 static int new_menu = 4;
 static Widget *added_options = NULL;
 static char **added_options_names = NULL;
+static char *main_menu_names[MAX_MAIN_MENUS];
 static int *added_options_menus = NULL;
 static int added_options_size = 0;
 static int added_options_pos = 0;
+
+static char *main_menu_name(int callb)
+{
+  switch (added_options_menus[callb])
+    {
+    case 0: return(STR_File); break;
+    case 1: return(STR_Edit); break;
+    case 2: return(STR_View); break;
+    case 3: return(STR_Options); break;
+    case 4: return(STR_Help); break;
+    }
+  return(main_menu_names[added_options_menus[callb]]);
+}
 
 static void GH_Callback(Widget w,XtPointer cD,XtPointer mD) 
 {
   int callb;
   XtVaGetValues(w,XmNuserData,&callb,NULL);
-  /* IF_MENU_HOOK(main_menu_names[callb],added_option_names[callb]) */
-  g_snd_callback(callb); /* menu option activate callback */
+  IF_MENU_HOOK(main_menu_name(callb),added_options_names[callb])
+    g_snd_callback(callb); /* menu option activate callback */
 }
 
 static void GHC_Callback(Widget w,XtPointer cD,XtPointer mD) 
@@ -959,6 +969,80 @@ static int remove_option(int which_menu,char *label)
 	  added_options_names[i] = NULL;
 	  return(0);
 	}
+    }
+  switch (which_menu)
+    {
+    case 0: if (strcmp(label,STR_Open) == 0) XtUnmanageChild(mw[f_open_menu]); else
+            if (strcmp(label,STR_Close) == 0) XtUnmanageChild(mw[f_close_menu]); else
+            if (strcmp(label,STR_Save) == 0) XtUnmanageChild(mw[f_save_menu]); else
+            if (strcmp(label,STR_Save_as) == 0) XtUnmanageChild(mw[f_save_as_menu]); else
+            if (strcmp(label,STR_Revert) == 0) XtUnmanageChild(mw[f_revert_menu]); else
+            if (strcmp(label,STR_Mix) == 0) XtUnmanageChild(mw[f_mix_menu]); else
+            if (strcmp(label,STR_Update) == 0) XtUnmanageChild(mw[f_update_menu]); else
+            if (strcmp(label,STR_New) == 0) XtUnmanageChild(mw[f_new_menu]); else
+            if (strcmp(label,STR_Record) == 0) XtUnmanageChild(mw[f_record_menu]); else
+            if (strcmp(label,STR_View) == 0) XtUnmanageChild(mw[f_view_menu]); else
+            if (strcmp(label,STR_Print) == 0) XtUnmanageChild(mw[f_print_menu]); else
+	    if (strcmp(label,STR_Exit) == 0) XtUnmanageChild(mw[f_exit_menu]); else return(-1);
+            return(0);
+            break;
+    case 1: if (strcmp(label,STR_Undo) == 0) XtUnmanageChild(mw[e_undo_menu]); else
+            if (strcmp(label,STR_Redo) == 0) XtUnmanageChild(mw[e_redo_menu]); else
+            if (strcmp(label,STR_Find) == 0) XtUnmanageChild(mw[e_find_menu]); else
+            if (strcmp(label,STR_Delete_Selection) == 0) XtUnmanageChild(mw[e_cut_menu]); else
+            if (strcmp(label,STR_Insert_Selection) == 0) XtUnmanageChild(mw[e_paste_menu]); else
+            if (strcmp(label,STR_Mix_Selection) == 0) XtUnmanageChild(mw[e_mix_menu]); else
+            if (strcmp(label,STR_Play_selection) == 0) XtUnmanageChild(mw[e_play_menu]); else
+            if (strcmp(label,STR_Save_Selection) == 0) XtUnmanageChild(mw[e_save_as_menu]); else
+            if (strcmp(label,STR_Select_all) == 0) XtUnmanageChild(mw[e_select_all_menu]); else
+            if (strcmp(label,STR_Edit_Envelope) == 0) XtUnmanageChild(mw[e_edenv_menu]); else
+            if (strcmp(label,STR_Edit_Header) == 0) XtUnmanageChild(mw[e_header_menu]); else return(-1);
+            return(1);
+            break;
+    case 2: if (strcmp(label,STR_Normalize) == 0) XtUnmanageChild(mw[v_normalize_menu]); else
+            if (strcmp(label,STR_Show_controls) == 0) XtUnmanageChild(mw[v_ctrls_menu]); else
+            if (strcmp(label,STR_Show_listener) == 0) XtUnmanageChild(mw[v_listener_menu]); else
+            if (strcmp(label,STR_Mix_Panel) == 0) XtUnmanageChild(mw[v_mix_panel_menu]); else
+            if (strcmp(label,STR_Regions) == 0) XtUnmanageChild(mw[v_region_menu]); else
+            if (strcmp(label,STR_File) == 0) XtUnmanageChild(mw[v_files_menu]); else
+            if (strcmp(label,STR_Color) == 0) XtUnmanageChild(mw[v_color_menu]); else
+            if (strcmp(label,STR_Orientation) == 0) XtUnmanageChild(mw[v_orientation_menu]); else
+            if (strcmp(label,STR_Graph_style) == 0) XtUnmanageChild(mw[v_graph_style_menu]); else
+            if (strcmp(label,STR_Verbose_cursor) == 0) XtUnmanageChild(mw[v_cursor_menu]); else
+            if (strcmp(label,STR_Channel_style) == 0) XtUnmanageChild(mw[v_combine_menu]); else
+            if (strcmp(label,STR_Show_Y0) == 0) XtUnmanageChild(mw[v_zero_menu]); else
+            if (strcmp(label,STR_X_axis_units) == 0) XtUnmanageChild(mw[v_x_axis_menu]); else
+            if (strcmp(label,STR_Error_History) == 0) XtUnmanageChild(mw[v_error_history_menu]); else return(-1);
+            return(3);
+            break;
+    case 3: if (strcmp(label,STR_Transform_Options) == 0) XtUnmanageChild(mw[o_transform_menu]); else
+            if (strcmp(label,STR_Speed_style) == 0) XtUnmanageChild(mw[o_speed_menu]); else
+            if (strcmp(label,STR_Focus_style) == 0) XtUnmanageChild(mw[o_focus_style_menu]); else
+            if (strcmp(label,STR_Save_options) == 0) XtUnmanageChild(mw[o_save_menu]); else
+            if (strcmp(label,STR_Save_state) == 0) XtUnmanageChild(mw[o_save_state_menu]); else
+            if (strcmp(label,STR_Show_stats) == 0) XtUnmanageChild(mw[o_stats_menu]); else return(-1);
+            return(3);
+            break;
+    case 4: if (strcmp(label,STR_Click_for_help) == 0) XtUnmanageChild(mw[h_click_for_help_menu]); else
+            if (strcmp(label,STR_Overview) == 0) XtUnmanageChild(mw[h_about_snd_menu]); else
+            if (strcmp(label,STR_FFT) == 0) XtUnmanageChild(mw[h_fft_menu]); else
+            if (strcmp(label,STR_Find) == 0) XtUnmanageChild(mw[h_find_menu]); else
+            if (strcmp(label,STR_Undo_and_redo) == 0) XtUnmanageChild(mw[h_undo_menu]); else
+            if (strcmp(label,STR_Sync) == 0) XtUnmanageChild(mw[h_sync_menu]); else
+            if (strcmp(label,STR_Speed) == 0) XtUnmanageChild(mw[h_speed_menu]); else
+            if (strcmp(label,STR_Expand) == 0) XtUnmanageChild(mw[h_expand_menu]); else
+            if (strcmp(label,STR_Reverb) == 0) XtUnmanageChild(mw[h_reverb_menu]); else
+            if (strcmp(label,STR_Contrast) == 0) XtUnmanageChild(mw[h_contrast_menu]); else
+            if (strcmp(label,STR_Envelope) == 0) XtUnmanageChild(mw[h_env_menu]); else
+            if (strcmp(label,STR_Marks) == 0) XtUnmanageChild(mw[h_marks_menu]); else
+            if (strcmp(label,STR_Mixing) == 0) XtUnmanageChild(mw[h_mix_menu]); else
+            if (strcmp(label,STR_Format) == 0) XtUnmanageChild(mw[h_sound_files_menu]); else
+            if (strcmp(label,STR_Customization) == 0) XtUnmanageChild(mw[h_init_file_menu]); else
+            if (strcmp(label,STR_Recording) == 0) XtUnmanageChild(mw[h_recording_menu]); else
+            if (strcmp(label,STR_CLM) == 0) XtUnmanageChild(mw[h_clm_menu]); else
+            if (strcmp(label,STR_News) == 0) XtUnmanageChild(mw[h_news_menu]); else return(-1); 
+            return(4);
+            break;
     }
   return(-1);
 }
@@ -1031,6 +1115,7 @@ int gh_add_to_main_menu(snd_state *ss, char *label, int slot)
   if (new_menu < MAX_MAIN_MENUS)
     {
       added_menus[new_menu] = m;
+      main_menu_names[new_menu] = copy_string(label);
       return(new_menu);
     }
   else return(-1);

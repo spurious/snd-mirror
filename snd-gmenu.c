@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO menu-hook for user-defined menus
- */
-
 static gint middle_button_press (GtkWidget *widget, GdkEvent *bevent, gpointer data);
 
 enum {menu_menu,
@@ -1076,19 +1073,36 @@ GtkWidget *add_menu(snd_state *ss)
   return(mw[menu_menu]);
 }
 
-static void GH_Callback(GtkWidget *w, gpointer cD) 
-{
-  g_snd_callback((int)gtk_object_get_user_data(GTK_OBJECT(w)));
-}
-
 #define MAX_MAIN_MENUS 12
 static GtkWidget *added_menus[MAX_MAIN_MENUS];
 static int new_menu = 4;
 static GtkWidget **added_options = NULL;
 static char **added_options_names = NULL;
+static char *main_menu_names[MAX_MAIN_MENUS];
 static int *added_options_menus = NULL;
 static int added_options_size = 0;
 static int added_options_pos = 0;
+
+static char *main_menu_name(int callb)
+{
+  switch (added_options_menus[callb])
+    {
+    case 0: return(STR_File); break;
+    case 1: return(STR_Edit); break;
+    case 2: return(STR_View); break;
+    case 3: return(STR_Options); break;
+    case 4: return(STR_Help); break;
+    }
+  return(main_menu_names[added_options_menus[callb]]);
+}
+
+static void GH_Callback(GtkWidget *w, gpointer cD) 
+{
+  int callb;
+  callb = (int)gtk_object_get_user_data(GTK_OBJECT(w));
+  IF_MENU_HOOK(main_menu_name(callb),added_options_names[callb])
+    g_snd_callback(callb);
+}
 
 static void add_option(GtkWidget *w,int which_menu,char *label)
 {
@@ -1130,6 +1144,80 @@ static int remove_option(int which_menu,char *label)
 	  added_options_names[i] = NULL;
 	  return(0);
 	}
+    }
+  switch (which_menu)
+    {
+    case 0: if (strcmp(label,STR_Open) == 0) gtk_widget_hide(mw[f_open_menu]); else
+            if (strcmp(label,STR_Close) == 0) gtk_widget_hide(mw[f_close_menu]); else
+            if (strcmp(label,STR_Save) == 0) gtk_widget_hide(mw[f_save_menu]); else
+            if (strcmp(label,STR_Save_as) == 0) gtk_widget_hide(mw[f_save_as_menu]); else
+            if (strcmp(label,STR_Revert) == 0) gtk_widget_hide(mw[f_revert_menu]); else
+            if (strcmp(label,STR_Mix) == 0) gtk_widget_hide(mw[f_mix_menu]); else
+            if (strcmp(label,STR_Update) == 0) gtk_widget_hide(mw[f_update_menu]); else
+            if (strcmp(label,STR_New) == 0) gtk_widget_hide(mw[f_new_menu]); else
+            if (strcmp(label,STR_Record) == 0) gtk_widget_hide(mw[f_record_menu]); else
+            if (strcmp(label,STR_View) == 0) gtk_widget_hide(mw[f_view_menu]); else
+            if (strcmp(label,STR_Print) == 0) gtk_widget_hide(mw[f_print_menu]); else
+	    if (strcmp(label,STR_Exit) == 0) gtk_widget_hide(mw[f_exit_menu]); else return(-1);
+            return(0);
+            break;
+    case 1: if (strcmp(label,STR_Undo) == 0) gtk_widget_hide(mw[e_undo_menu]); else
+            if (strcmp(label,STR_Redo) == 0) gtk_widget_hide(mw[e_redo_menu]); else
+            if (strcmp(label,STR_Find) == 0) gtk_widget_hide(mw[e_find_menu]); else
+            if (strcmp(label,STR_Delete_Selection) == 0) gtk_widget_hide(mw[e_cut_menu]); else
+            if (strcmp(label,STR_Insert_Selection) == 0) gtk_widget_hide(mw[e_paste_menu]); else
+            if (strcmp(label,STR_Mix_Selection) == 0) gtk_widget_hide(mw[e_mix_menu]); else
+            if (strcmp(label,STR_Play_selection) == 0) gtk_widget_hide(mw[e_play_menu]); else
+            if (strcmp(label,STR_Save_Selection) == 0) gtk_widget_hide(mw[e_save_as_menu]); else
+            if (strcmp(label,STR_Select_all) == 0) gtk_widget_hide(mw[e_select_all_menu]); else
+            if (strcmp(label,STR_Edit_Envelope) == 0) gtk_widget_hide(mw[e_edenv_menu]); else
+            if (strcmp(label,STR_Edit_Header) == 0) gtk_widget_hide(mw[e_header_menu]); else return(-1);
+            return(1);
+            break;
+    case 2: /* if (strcmp(label,STR_Normalize) == 0) gtk_widget_hide(mw[v_normalize_menu]); else */
+            if (strcmp(label,STR_Show_controls) == 0) gtk_widget_hide(mw[v_ctrls_menu]); else
+            if (strcmp(label,STR_Show_listener) == 0) gtk_widget_hide(mw[v_listener_menu]); else
+            if (strcmp(label,STR_Mix_Panel) == 0) gtk_widget_hide(mw[v_mix_panel_menu]); else
+            if (strcmp(label,STR_Regions) == 0) gtk_widget_hide(mw[v_region_menu]); else
+            if (strcmp(label,STR_File) == 0) gtk_widget_hide(mw[v_files_menu]); else
+            if (strcmp(label,STR_Color) == 0) gtk_widget_hide(mw[v_color_menu]); else
+            if (strcmp(label,STR_Orientation) == 0) gtk_widget_hide(mw[v_orientation_menu]); else
+            if (strcmp(label,STR_Graph_style) == 0) gtk_widget_hide(mw[v_graph_style_menu]); else
+            if (strcmp(label,STR_Verbose_cursor) == 0) gtk_widget_hide(mw[v_cursor_menu]); else
+            if (strcmp(label,STR_Channel_style) == 0) gtk_widget_hide(mw[v_combine_menu]); else
+            if (strcmp(label,STR_Show_Y0) == 0) gtk_widget_hide(mw[v_zero_menu]); else
+            if (strcmp(label,STR_X_axis_units) == 0) gtk_widget_hide(mw[v_x_axis_menu]); else
+            if (strcmp(label,STR_Error_History) == 0) gtk_widget_hide(mw[v_error_history_menu]); else return(-1);
+            return(3);
+            break;
+    case 3: if (strcmp(label,STR_Transform_Options) == 0) gtk_widget_hide(mw[o_transform_menu]); else
+            if (strcmp(label,STR_Speed_style) == 0) gtk_widget_hide(mw[o_speed_menu]); else
+            if (strcmp(label,STR_Focus_style) == 0) gtk_widget_hide(mw[o_focus_style_menu]); else
+            if (strcmp(label,STR_Save_options) == 0) gtk_widget_hide(mw[o_save_menu]); else
+            if (strcmp(label,STR_Save_state) == 0) gtk_widget_hide(mw[o_save_state_menu]); else
+            if (strcmp(label,STR_Show_stats) == 0) gtk_widget_hide(mw[o_stats_menu]); else return(-1);
+            return(3);
+            break;
+    case 4: /* if (strcmp(label,STR_Click_for_help) == 0) gtk_widget_hide(mw[h_click_for_help_menu]); else */
+            if (strcmp(label,STR_Overview) == 0) gtk_widget_hide(mw[h_about_snd_menu]); else
+            if (strcmp(label,STR_FFT) == 0) gtk_widget_hide(mw[h_fft_menu]); else
+            if (strcmp(label,STR_Find) == 0) gtk_widget_hide(mw[h_find_menu]); else
+            if (strcmp(label,STR_Undo_and_redo) == 0) gtk_widget_hide(mw[h_undo_menu]); else
+            if (strcmp(label,STR_Sync) == 0) gtk_widget_hide(mw[h_sync_menu]); else
+            if (strcmp(label,STR_Speed) == 0) gtk_widget_hide(mw[h_speed_menu]); else
+            if (strcmp(label,STR_Expand) == 0) gtk_widget_hide(mw[h_expand_menu]); else
+            if (strcmp(label,STR_Reverb) == 0) gtk_widget_hide(mw[h_reverb_menu]); else
+            if (strcmp(label,STR_Contrast) == 0) gtk_widget_hide(mw[h_contrast_menu]); else
+            if (strcmp(label,STR_Envelope) == 0) gtk_widget_hide(mw[h_env_menu]); else
+            if (strcmp(label,STR_Marks) == 0) gtk_widget_hide(mw[h_marks_menu]); else
+            if (strcmp(label,STR_Mixing) == 0) gtk_widget_hide(mw[h_mix_menu]); else
+            if (strcmp(label,STR_Format) == 0) gtk_widget_hide(mw[h_sound_files_menu]); else
+            if (strcmp(label,STR_Customization) == 0) gtk_widget_hide(mw[h_init_file_menu]); else
+            if (strcmp(label,STR_Recording) == 0) gtk_widget_hide(mw[h_recording_menu]); else
+            if (strcmp(label,STR_CLM) == 0) gtk_widget_hide(mw[h_clm_menu]); else
+            if (strcmp(label,STR_News) == 0) gtk_widget_hide(mw[h_news_menu]); else return(-1); 
+            return(4);
+            break;
     }
   return(-1);
 }
@@ -1195,6 +1283,7 @@ int gh_add_to_main_menu(snd_state *ss, char *label, int slot)
   if (new_menu < MAX_MAIN_MENUS)
     {
       added_menus[new_menu] = mc;
+      main_menu_names[new_menu] = copy_string(label);
       return(new_menu);
     }
   else return(-1);

@@ -656,7 +656,7 @@ void file_change_samples(int beg, int num, char *tempfile, chan_info *cp, int ch
 void file_override_samples(int num, char *tempfile, chan_info *cp, int chan, int auto_delete, int lock, char *origin);
 Float sample (int samp, chan_info *cp);
 snd_fd *free_snd_fd(snd_fd *sf);
-snd_fd *init_sample_read (int samp, chan_info *cp, int direction);
+snd_fd *init_sample_read(int samp, chan_info *cp, int direction);
 snd_fd *init_sample_read_any (int samp, chan_info *cp, int direction, int edit_position);
 __inline__ MUS_SAMPLE_TYPE next_sample(snd_fd *sf);
 __inline__ MUS_SAMPLE_TYPE previous_sample(snd_fd *sf);
@@ -1137,9 +1137,7 @@ char *copy_string(char *str);
 int snd_strlen(char *str);
 char *filename_without_home_directory(char *name);
 char *just_filename(char *name);
-#ifndef sqr
-  Float sqr(Float a);
-#endif
+Float sqr(Float a);
 Float cube (Float a);
 char *prettyf(Float num, int tens);
 char *shorter_tempnam(char *dir,char *prefix);
@@ -1165,10 +1163,10 @@ mix_context *free_mix_context(mix_context *ms);
 void free_mix_list(chan_info *cp);
 void free_mixes(chan_info *cp);
 int mixes(void);
-int mix_complete_file(snd_info *sp, char *str, char *origin, int with_console);
-int mix_array(int beg, int num, MUS_SAMPLE_TYPE **data, chan_info **out_cps, int in_chans, int out_chans, int nominal_srate, char *origin, int with_console);
-int mix_file_and_delete(int beg, int num, char *file, chan_info **cps, int out_chans, char *origin, int with_console);
-int copy_file_and_mix(int beg, int num, char *file, chan_info **cps, int out_chans, char *origin, int with_console);
+int mix_complete_file(snd_info *sp, char *str, char *origin, int with_tag);
+int mix_array(int beg, int num, MUS_SAMPLE_TYPE **data, chan_info **out_cps, int in_chans, int out_chans, int nominal_srate, char *origin, int with_tag);
+int mix_file_and_delete(int beg, int num, char *file, chan_info **cps, int out_chans, char *origin, int with_tag);
+int copy_file_and_mix(int beg, int num, char *file, chan_info **cps, int out_chans, char *origin, int with_tag);
 void backup_mix_list(chan_info *cp, int edit_ctr);
 int active_mix_p(chan_info *cp);
 int mix_beg(chan_info *cp);

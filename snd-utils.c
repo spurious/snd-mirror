@@ -8,10 +8,27 @@ int round(Float x)
   return(i);
 }
 
-Float fclamp(Float lo, Float val, Float hi) {if (val>hi) return(hi); else if (val<lo) return(lo); else return(val);}
-int iclamp(int lo, int val, int hi) {if (val>hi) return(hi); else if (val<lo) return(lo); else return(val);}
+Float fclamp(Float lo, Float val, Float hi) 
+{
+  if (val>hi) 
+    return(hi); 
+  else 
+    if (val<lo) 
+      return(lo); 
+    else return(val);
+}
 
-char *copy_string (char *str)
+int iclamp(int lo, int val, int hi) 
+{
+  if (val>hi) 
+    return(hi); 
+  else 
+    if (val<lo) 
+      return(lo); 
+    else return(val);
+}
+
+char *copy_string(char *str)
 {
   char *newstr = NULL;
   if (str)
@@ -49,10 +66,7 @@ char *just_filename(char *name)
   return(nodir);
 }
 
-#ifndef sqr
 Float sqr(Float a) {return(a*a);}
-#endif
-
 Float cube (Float a) {return(a*a*a);}
 
 static char prtbuf[256];

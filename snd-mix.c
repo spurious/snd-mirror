@@ -901,7 +901,7 @@ static mix_info *add_mix(chan_info *cp, int chan, int beg, int num,
   return(md);
 }
 
-static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *cp, int chan, int temp, char *origin, int with_console)
+static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *cp, int chan, int temp, char *origin, int with_tag)
 {
   /* open tempfile, current data, write to new temp file mixed, close others, open and use new as change case */
   /* used for clip-region temp file incoming and C-q in snd-chn.c (i.e. mix in file) so sync not relevant */
@@ -998,7 +998,7 @@ static mix_info *file_mix_samples(int beg, int num, char *tempfile, chan_info *c
   free_file_info(ihdr);
   free_file_info(ohdr);
   file_change_samples(beg,num,ofile,cp,0,DELETE_ME,DONT_LOCK_MIXES,origin);
-  if (with_console)
+  if (with_tag)
     return(add_mix(cp,chan,beg,num,tempfile,in_chans,temp));
   else return(NULL);
 }
@@ -1017,7 +1017,7 @@ static void call_multichannel_mix_hook(int *ids, int n);
 void call_multichannel_mix_hook(int *ids, int n) {}
 #endif
 
-static int mix(int beg, int num, int chans, chan_info **cps, char *mixinfile, int temp, char *origin, int with_console)
+static int mix(int beg, int num, int chans, chan_info **cps, char *mixinfile, int temp, char *origin, int with_tag)
 {
   /* loop through out_chans cps writing the new mixed temp files and fixing up the edit trees */
   int i,id=-1,j=0;
@@ -1029,7 +1029,7 @@ static int mix(int beg, int num, int chans, chan_info **cps, char *mixinfile, in
     {
       ids[i]=-1;
       sp = cps[i]->sound;
-      md = file_mix_samples(beg,num,mixinfile,cps[i],i,temp,origin,with_console); /* explode in this file, or mix in snd-clm.c */
+      md = file_mix_samples(beg,num,mixinfile,cps[i],i,temp,origin,with_tag); /* explode in this file, or mix in snd-clm.c */
       if (md) 
 	{
 	  if (id == -1) id = md->id;
@@ -1041,7 +1041,7 @@ static int mix(int beg, int num, int chans, chan_info **cps, char *mixinfile, in
   return(id);
 }
 
-int mix_array(int beg, int num, MUS_SAMPLE_TYPE **data, chan_info **out_cps, int in_chans, int out_chans, int nominal_srate, char *origin, int with_console)
+int mix_array(int beg, int num, MUS_SAMPLE_TYPE **data, chan_info **out_cps, int in_chans, int out_chans, int nominal_srate, char *origin, int with_tag)
 {
   /* always write to tempfile */
   char *newname;
@@ -1050,8 +1050,8 @@ int mix_array(int beg, int num, MUS_SAMPLE_TYPE **data, chan_info **out_cps, int
   newname = save_as_temp_file(data,in_chans,num,nominal_srate);
   if (newname) 
     {
-      id = mix(beg,num,out_chans,out_cps,newname,DELETE_ME,origin,with_console);
-      if (with_console == 0) remove(newname);
+      id = mix(beg,num,out_chans,out_cps,newname,DELETE_ME,origin,with_tag);
+      if (with_tag == 0) remove(newname);
       FREE(newname);
     }
   else
@@ -1059,7 +1059,7 @@ int mix_array(int beg, int num, MUS_SAMPLE_TYPE **data, chan_info **out_cps, int
   return(id);
 }
 
-int copy_file_and_mix(int beg, int num, char *file, chan_info **cps, int out_chans, char *origin, int with_console)
+int copy_file_and_mix(int beg, int num, char *file, chan_info **cps, int out_chans, char *origin, int with_tag)
 {
   /* always write to tempfile (protect section/lisp temps from possible overwrites) */
   char *newname;
@@ -1071,17 +1071,17 @@ int copy_file_and_mix(int beg, int num, char *file, chan_info **cps, int out_cha
   if (err != MUS_NO_ERROR)
     snd_error("can't save mix temp file (%s: %s)",newname,strerror(errno));
   else
-    id = mix(beg,num,out_chans,cps,newname,DELETE_ME,origin,with_console);
+    id = mix(beg,num,out_chans,cps,newname,DELETE_ME,origin,with_tag);
   if (newname) FREE(newname);
   return(id);
 }
 
-int mix_file_and_delete(int beg, int num, char *file, chan_info **cps, int out_chans, char *origin, int with_console)
+int mix_file_and_delete(int beg, int num, char *file, chan_info **cps, int out_chans, char *origin, int with_tag)
 {
-  return(mix(beg,num,out_chans,cps,file,DELETE_ME,origin,with_console));
+  return(mix(beg,num,out_chans,cps,file,DELETE_ME,origin,with_tag));
 }
 
-int mix_complete_file(snd_info *sp, char *str, char *origin, int with_console)
+int mix_complete_file(snd_info *sp, char *str, char *origin, int with_tag)
 {
   /* no need to save as temp here, but we do need sync info (from menu and keyboard) */
   chan_info *cp;
@@ -1109,7 +1109,7 @@ int mix_complete_file(snd_info *sp, char *str, char *origin, int with_console)
 	      cps[0] = cp;
 	      chans = 1;
 	    }
-	  id = mix(cp->cursor,len,chans,cps,fullname,DONT_DELETE_ME,origin,with_console);
+	  id = mix(cp->cursor,len,chans,cps,fullname,DONT_DELETE_ME,origin,with_tag);
 	  if (si) si = free_sync_info(si); else if (cps) FREE(cps);
 	}
       else 

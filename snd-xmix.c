@@ -3,7 +3,6 @@
 /* TODO need amp envs for all channels (make this usable elsewhere -- env display/edit in general)
  * TODO create more amp chans if > 4 chans input
  * TODO some way to see underlying sound's edit history? (or undo it?) (or display it? borrowed from region dialog?)
- * TODO share code where possible with snd-xsnd
  * TODO snd-test somehow
  * TODO display exp envs (e->base)
  */

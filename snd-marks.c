@@ -772,7 +772,7 @@ void ripple_marks(chan_info *cp, int beg, int change)
   /* if change = 0, just set ptr, else copy and fixup with deletions */
   /* this is called after the tree has been pushed forward, so edit_ctr is ahead of us */
   /* but we don't do anything if no marks */
-  int old,noo,end,i;  /* "noo" due to criminal C++ stupidity (can't use "new") */
+  int old,noo,end,i,old_size;  /* "noo" due to criminal C++ stupidity (can't use "new") */
   mark **mps,**mpo;
   mark *mp;
   if ((cp) && (cp->marks))
@@ -782,11 +782,12 @@ void ripple_marks(chan_info *cp, int beg, int change)
       noo = cp->edit_ctr;
       if (noo>=cp->marks_size) /* groan -- we have to realloc the base array of array of pointers! */
 	{
+	  old_size = cp->marks_size;
 	  cp->marks_size += 16;
 	  cp->marks = (mark ***)REALLOC(cp->marks,cp->marks_size * sizeof(mark **));
 	  cp->mark_size = (int *)REALLOC(cp->mark_size,cp->marks_size * sizeof(int));
 	  cp->mark_ctr = (int *)REALLOC(cp->mark_ctr,cp->marks_size * sizeof(int));
-	  for (i=noo;i<cp->marks_size;i++) 
+	  for (i=old_size;i<cp->marks_size;i++) 
 	    {
 	      cp->mark_ctr[i] = -1;
 	      cp->mark_size[i] = 0;
