@@ -303,7 +303,7 @@ Here's a more extended example:
 </p>
 
 <pre>
-(use-modules (ice-9 debug) (ice-9 format))
+(use-modules (ice-9 debug) (ice-9 format) (ice-9 optargs))
 (debug-set! stack 0)                ;turn off Guile's stack-size check
 (set! snd-remember-paths #t)        ;remember paths making "load" smarter
 
@@ -358,7 +358,7 @@ Here's a more extended example:
     (if (&gt; (chans snd) 4)
         (set! (channel-style snd) channels-combined))))
 
-(set! (optimization) 6)             ;turn on full optimization
+(set! (optimization) 6)             ;turn on full optimization (live dangerously...)
 (set! (selection-creates-region) #f) ;turn off automatic region creation
 </pre>
 <p>

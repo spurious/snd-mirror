@@ -68,12 +68,6 @@
  * SOMEDAY: split Scheme from Snd/Clm here and do the latter via an FFI of some sort
  * SOMEDAY: save ptree somehow (local runs make this problematic) -- perhaps definstrument here
  *
- * TODO: it's possible for the env-search to find a shadowed var (if opt>5):
- *       (set! (optimization) 6)
- *       (define hi 3.0)
- *       (let ((hi 0.0)) (every-sample? (lambda (y) (> hi 1.0))))
- *       -> probably when func-as-arg is expanded, we should search its env (closure) -- is this accessible?
- *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
  *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)
  *      some variables (imported from outside our context) cannot be set, in some cases they can't even be found (args to define* for example)
@@ -1976,7 +1970,7 @@ static xen_value *walk_sequence(ptree *prog, XEN body, int need_result, char *na
   return(v);
 }
 
-static xen_value *lambda_form(ptree *prog, XEN form, int separate, xen_value **args, int num_args);
+static xen_value *lambda_form(ptree *prog, XEN form, int separate, xen_value **args, int num_args, XEN local_proc);
 
 static char *define_form(ptree *prog, XEN form)
 {
@@ -1989,7 +1983,7 @@ static char *define_form(ptree *prog, XEN form)
     {
       if (XEN_LIST_P(var))
 	{
-	  v = lambda_form(prog, form, FALSE, NULL, 0);
+	  v = lambda_form(prog, form, FALSE, NULL, 0, XEN_FALSE);
 	  if (v == NULL) return(mus_format("can't handle this define: %s", XEN_AS_STRING(form)));
 	  add_var_to_ptree(prog, XEN_SYMBOL_TO_C_STRING(XEN_CAR(var)), v);
 	  FREE(v);
@@ -2192,7 +2186,7 @@ static xen_value *walk_then_undefine(ptree *prog, XEN form, int need_result, cha
   return(v);
 }
 
-static xen_value *lambda_form(ptree *prog, XEN form, int separate, xen_value **args, int num_args)
+static xen_value *lambda_form(ptree *prog, XEN form, int separate, xen_value **args, int num_args, XEN local_proc)
 {
   /* (lambda (args...) | args etc followed by forms */
   /* as args are declared as vars, put addrs in prog->args list */
@@ -2204,7 +2198,7 @@ static xen_value *lambda_form(ptree *prog, XEN form, int separate, xen_value **a
       ptree *new_tree;
       int outer_locals;
       new_tree = attach_to_ptree(prog);
-      new_tree->code = XEN_FALSE;
+      new_tree->code = local_proc;
       outer_locals = prog->var_ctr;
       err = declare_args(new_tree, form, R_INT, separate, args, num_args);
       if (err)
@@ -7664,7 +7658,7 @@ static xen_value *integer_to_char_1(ptree *prog, xen_value **args, int num_args)
 }
 
 static xen_value *declare_1(ptree *prog, XEN form, int need_result) {return(make_xen_value(R_UNSPECIFIED, -1, TRUE));}
-static xen_value *lambda_preform(ptree *prog, XEN form, int need_result) {return(lambda_form(prog, form, TRUE, NULL, 0));}
+static xen_value *lambda_preform(ptree *prog, XEN form, int need_result) {return(lambda_form(prog, form, TRUE, NULL, 0, XEN_FALSE));}
 static xen_value *quote_form(ptree *prog, XEN form, int need_result) 
 {
   return(unwrap_constant_xen_object(prog, XEN_CADR(form), "quote"));
@@ -8718,7 +8712,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	      int old_got_lambda;
 	      old_got_lambda = got_lambda;
 	      got_lambda = TRUE;
-	      v = lambda_form(prog, func_form, TRUE, args, num_args);
+	      v = lambda_form(prog, func_form, TRUE, args, num_args, rtnval);
 	      got_lambda = old_got_lambda;
 	      if (v) 
 		{

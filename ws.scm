@@ -168,10 +168,12 @@ returning you to the true top-level."
 (define *clm-channels* (default-output-chans))
 (define *clm-data-format* (default-output-format))
 (define *clm-header-type* (default-output-type))
+(define *clm-offset* 0)
 (define *to-snd* #t)
 
 (define *reverb* #f) ; these are sample->file (outa) gens
 (define *output* #f)
+(define *clm-delete-reverb* #f) ; should with-sound clean up reverb stream
 
 (define (seconds->samples secs) (inexact->exact (round (* secs (mus-srate)))))
 (define (times->samples beg dur) (list (seconds->samples beg) (seconds->samples (+ beg dur))))
@@ -254,7 +256,8 @@ returning you to the true top-level."
 	       (mus-close *reverb*)
 	       (set! *reverb* (make-file->sample revfile))
 	       (reverb)
-	       (mus-close *reverb*)))
+	       (mus-close *reverb*)
+	       (if *clm-delete-reverb* (delete-file revfile))))
 	 (mus-close *output*)
 	 (if to-snd
 	     (begin
@@ -309,7 +312,6 @@ returning you to the true top-level."
 ;;; -------- def-clm-struct --------
 ;;; second stab at def-clm-struct
 ;;; TODO: if file with def-clm-struct reloaded, struct defs are not updated
-;;; TODO: tmp27.scm infinite loop if opt=6
 
 (defmacro* def-clm-struct (name #:rest fields)
   ;; (def-clm-struct fd loc (chan 1))

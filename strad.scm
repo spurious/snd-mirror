@@ -132,92 +132,6 @@
       (set! ynn (* -1 ynn))
       (set! ynbt (* -1 ynbt)))
     
-    (define (friedlander vh)
-      (set! aa zslope)
-      (set! bb1 (- (- (+ (* 0.2 zslope) (* 0.3 fb)) (* zslope vb)) (* zslope vh)))
-      (set! cc1 (- (- (+ (* 0.06 fb) (* (* zslope vh) vb)) (* 0.2 zslope vh)) (* 0.3 vb fb)))
-      (set! delta1 (- (* bb1 bb1) (* 4 aa cc1)))
-      (set! bb2 (- (- (- (* -0.2 zslope) (* 0.3 fb)) (* zslope vb)) (* zslope vh)))
-      (set! cc2 (+ (+ (+ (+ (* 0.06 fb) (* zslope vh vb))
-			 (* 0.2 zslope vh)) (* 0.3 vb fb)) (* 0.1 fb)))
-      (set! delta2 (- (* bb2 bb2) (* 4 aa cc2)))
-      (if (or (= vb 0) (= fb 0))
-	  (set! v vh)
-	  (begin
-	    (if (= vh vb)
-		(begin
-		  (set! v vb)
-		  (set! stick 1))
-		(begin
-		  (if (> vh vb)
-		      (begin
-			(set! lhs #f)
-			(set! rhs #t))
-		      (begin
-			(set! rhs #f)
-			(set! lhs #t)))
-		  (if rhs
-		      (begin
-			(if (< delta1 0)
-			    (begin
-			      (set! v vb)
-			      (set! stick 1))
-			    (begin
-			      (if (= stick 1)
-				  (begin
-				    (set! vtemp vb)
-				    (set! f (* (* 2 zslope) (- vtemp vh)))
-				    (if (>= f (* -1 (* mus fb)))
-					(set! v vtemp)
-					(begin
-					  (set! v1 (/ (+ (* -1 bb1 ) (sqrt delta1)) (* 2 aa)))
-					  (set! v2 (/ (- (* -1 bb1) (sqrt delta1)) (* 2 aa)))
-					  (set! v (min v1 v2))
-					  (set! stick 0))))
-				  (begin
-				    (set! v1 (/ (+ (* -1 bb1 ) (sqrt delta1)) (* 2 aa)))
-				    (set! v2 (/ (- (* -1 bb1) (sqrt delta1)) (* 2 aa)))
-				    (set! v (min v1 v2))
-				    (set! stick 0))))))
-		      (if lhs
-			  (begin
-			    (if (< delta2 0)
-				(begin
-				  (set! v vb)
-				  (set! stick 1))
-				(begin
-				  (if (= stick 1)
-				      (begin
-					(set! vtemp vb)
-					(set! f (* zslope (- vtemp vh)))
-					(if (and (<= f (* mus fb)) (> f 0))
-					    (begin
-					      (set! v vtemp))
-					    (begin
-					      (set! v1 (/ (- (* -1 bb2 ) (sqrt delta2)) (* 2 aa)))
-					      (set! v2 (/ (+ (* -1 bb2) (sqrt delta2)) (* 2 aa)))
-					      (set! vtemp (min v1 v2))
-					      (set! stick 0)
-					      (if (> vtemp vb)
-						  (begin
-						    (set! v vb)
-						    (set! stick 1))
-						  (begin
-						    (set! v vtemp)
-						    (set! f (* zslope (- v vh) )))))))
-				      (begin
-					(set! v1 (/ (- (* -1 bb2 ) (sqrt delta2)) (* 2 aa)))
-					(set! v2 (/ (+ (* -1 bb2) (sqrt delta2)) (* 2 aa)))
-					(set! v (min v1 v2))
-					(set! stick 0)))))
-			    (if (> v vb)
-				(begin
-				  (set! v vb)
-				  (set! stick 1))))))))
-	    (set! f (* zslope (- v vh)))
-	    (set! xnn (+ y1nb (/ f (* 2 stringImpedance))))
-	    (set! xnb (+ ynn (/ f (* 2 stringImpedance)))))))
-    
     (if (< samp_rperiod 0) (set! samp_rperiod 0))
     (if (> samp_rperiod (- bufsize 1)) (set! samp_rperiod (- bufsize 1)))
     (if (< samp_lperiod 0) (set! samp_lperiod 0))
@@ -273,7 +187,92 @@
 		       (/ (* (vct-ref vinutt indexrt) (- alphart 1) alphart) 2)))
 	 (bowfilt inharm)
 	 (set! vh (+ (+ ynn y1nb) (+ ynnt ynbt)))
-	 (friedlander  vh)
+
+	 (set! aa zslope)
+	 (set! bb1 (- (- (+ (* 0.2 zslope) (* 0.3 fb)) (* zslope vb)) (* zslope vh)))
+	 (set! cc1 (- (- (+ (* 0.06 fb) (* (* zslope vh) vb)) (* 0.2 zslope vh)) (* 0.3 vb fb)))
+	 (set! delta1 (- (* bb1 bb1) (* 4 aa cc1)))
+	 (set! bb2 (- (- (- (* -0.2 zslope) (* 0.3 fb)) (* zslope vb)) (* zslope vh)))
+	 (set! cc2 (+ (+ (+ (+ (* 0.06 fb) (* zslope vh vb))
+			    (* 0.2 zslope vh)) (* 0.3 vb fb)) (* 0.1 fb)))
+	 (set! delta2 (- (* bb2 bb2) (* 4 aa cc2)))
+	 (if (or (= vb 0) (= fb 0))
+	     (set! v vh)
+	     (begin
+	       (if (= vh vb)
+		   (begin
+		     (set! v vb)
+		     (set! stick 1))
+		   (begin
+		     (if (> vh vb)
+			 (begin
+			   (set! lhs #f)
+			   (set! rhs #t))
+			 (begin
+			   (set! rhs #f)
+			   (set! lhs #t)))
+		     (if rhs
+			 (begin
+			   (if (< delta1 0)
+			       (begin
+				 (set! v vb)
+				 (set! stick 1))
+			       (begin
+				 (if (= stick 1)
+				     (begin
+				       (set! vtemp vb)
+				       (set! f (* (* 2 zslope) (- vtemp vh)))
+				       (if (>= f (* -1 (* mus fb)))
+					   (set! v vtemp)
+					   (begin
+					     (set! v1 (/ (+ (* -1 bb1 ) (sqrt delta1)) (* 2 aa)))
+					     (set! v2 (/ (- (* -1 bb1) (sqrt delta1)) (* 2 aa)))
+					     (set! v (min v1 v2))
+					     (set! stick 0))))
+				     (begin
+				       (set! v1 (/ (+ (* -1 bb1 ) (sqrt delta1)) (* 2 aa)))
+				       (set! v2 (/ (- (* -1 bb1) (sqrt delta1)) (* 2 aa)))
+				       (set! v (min v1 v2))
+				       (set! stick 0))))))
+			 (if lhs
+			     (begin
+			       (if (< delta2 0)
+				   (begin
+				     (set! v vb)
+				     (set! stick 1))
+				   (begin
+				     (if (= stick 1)
+					 (begin
+					   (set! vtemp vb)
+					   (set! f (* zslope (- vtemp vh)))
+					   (if (and (<= f (* mus fb)) (> f 0))
+					       (begin
+						 (set! v vtemp))
+					       (begin
+						 (set! v1 (/ (- (* -1 bb2 ) (sqrt delta2)) (* 2 aa)))
+						 (set! v2 (/ (+ (* -1 bb2) (sqrt delta2)) (* 2 aa)))
+						 (set! vtemp (min v1 v2))
+						 (set! stick 0)
+						 (if (> vtemp vb)
+						     (begin
+						       (set! v vb)
+						       (set! stick 1))
+						     (begin
+						       (set! v vtemp)
+						       (set! f (* zslope (- v vh) )))))))
+					 (begin
+					   (set! v1 (/ (- (* -1 bb2 ) (sqrt delta2)) (* 2 aa)))
+					   (set! v2 (/ (+ (* -1 bb2) (sqrt delta2)) (* 2 aa)))
+					   (set! v (min v1 v2))
+					   (set! stick 0)))))
+			       (if (> v vb)
+				   (begin
+				     (set! v vb)
+				     (set! stick 1))))))))
+	       (set! f (* zslope (- v vh)))
+	       (set! xnn (+ y1nb (/ f (* 2 stringImpedance))))
+	       (set! xnb (+ ynn (/ f (* 2 stringImpedance))))))
+    
 	 (set! f (* zslope (- v vh)))
 	 (set! xnnt (+ ynbt (/ f (* 2 stringImpedancet))))
 	 (set! xnbt (+ ynnt (/ f (* 2 stringImpedancet))))

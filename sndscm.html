@@ -313,6 +313,7 @@ based on Perry Cook's Scrubber.m.
   <em class=def><a name="exsndtrace">snd-trace</a></em>
   <em class=def><a name="exsndbreak">snd-break</a></em> (message #f)
 </pre>
+<!-- INDEX debugdoc:Debugging (break/trace) -->
 
 <p>debug.scm is a package of debugging aids.
 <b>snd-break</b> sets a breakpoint; if it is called, you drop into the Snd debugger.
@@ -342,7 +343,7 @@ The 'returned-value' is the value to return from the original call on snd-break.
 For example, here is a brief session in Snd's listener:
 </p>
 <pre>
-<em class=listener>:</em><em class=typing>(define (test-break a) (let ((b (+ a (<em class=red>snd-break</em> "hiho")))) b))</em>
+<em class=listener>:</em><em class=typing>(define (test-break a) (let ((b (+ a (snd-break "hiho")))) b))</em>
 <em class=listener>#&lt;unspecified&gt;</em>
 <em class=listener>:</em><em class=typing>(define hi 123)</em>
 <em class=listener>#&lt;unspecified&gt;</em>
@@ -379,7 +380,7 @@ Here's how to trace fm-violin calls in a notelist:
 (trace fm-violin)
 (<em class=red>snd-trace</em> (with-sound () (fm-violin 0 1 440 .1)))
 </pre>
-<p>To turn off the trace,</p>
+<p>To turn off the trace</p>
 <pre>
 (untrace fm-violin)
 </pre>
@@ -2420,7 +2421,7 @@ waterfall spectrum display of the incoming audio data.  <b>stop-waterfall</b> tu
   <em class=def><a name="makevariabledisplay">make-variable-display</a></em> page-name variable-name (type 'text) (range (list 0.0 1.0))
   <em class=def><a name="variabledisplay">variable-display</a></em> val widget
 </pre>
-
+<!-- INDEX variabledisplay:Debugging (instruments) -->
 <p>snd-motif.scm has procedures that rely on the Motif module (xm.c).
 Some of these have been translated to Gtk and xg.c -- snd-gtk.scm.
 </p><p>
@@ -3235,8 +3236,6 @@ end
 </pre>
 <br>
 
-<!-- TODO: document with-sound debugger -->
-
 <A NAME="wsdoc"></a><span class=box><h2>ws.scm, ws.rb</h2></span>
 <p>
 <i>with-sound</i> is the primary sound producing macro in CLM (in a sense, it is CLM's user-interface).
@@ -3269,11 +3268,12 @@ The version in ws.scm is simply an amplification of this code.
 The global variables that parallel CLM's *clm-...* are:
 </p>
 <pre>
-  <em class=def>*clm-srate*</em> (default-output-srate)
-  <em class=def>*clm-file-name*</em> "test.snd"
-  <em class=def>*clm-channels*</em> (default-output-chans)
-  <em class=def>*clm-data-format*</em> (default-output-format)
-  <em class=def>*clm-header-type*</em> (default-output-type)
+  <em class=def>*clm-srate*</em> (default-output-srate)        ; default srate
+  <em class=def>*clm-file-name*</em> "test.snd"                ; default output file name
+  <em class=def>*clm-channels*</em> (default-output-chans)     ; default number of output chans
+  <em class=def>*clm-data-format*</em> (default-output-format) ; default output data format
+  <em class=def>*clm-header-type*</em> (default-output-type)   ; default output header type
+  <em class=def>*clm-delete-reverb*</em> #f                    ; should reverb stream be deleted?
 
   <em class=def>with-sound</em>
     #:key (srate *clm-srate*) 
@@ -3299,23 +3299,24 @@ The global variables that parallel CLM's *clm-...* are:
 via make-sample-&gt;file, setting the global variable *output*.  This
 is equivalent to CLM's *output* variable, and can be used the same
 way in outa or locsig.  If <i>reverb</i> is specified, *reverb* is also
-opened (corresponding to CLM's *reverb*).  So the cooperating instrument code should be:
+opened (corresponding to CLM's *reverb*).  So the cooperating instrument code is:
 </p>
 <pre>
-(define (ins args)
+(definstrument (ins args)
   (let ...
+    (ws-interrupt?) ; see below
     (run
       (lambda ()
         (do ((i start (1+ i)))
-            ((= i end)) ; see below for interruptible case
+            ((= i end))
           (outa i ... *output*))))))
 </pre>
-<p>which is the same as in the standard CLM (change the loop statement to a do statement),
+<p>which parallels the Common Lisp CLM (change the loop statement to a do statement,
 add the lambda wrapper (needed by the run macro unfortunately),
-and you're ready to go!  If the run macro can handle the instrument code (and
+and you're ready to go).  If the run macro can handle the instrument code (and
 it can handle anything the CL version can handle, I think), then the Snd with-sound
-should run within a factor of two of the fastest CL-based CLM, even though the
-latter is going through the C intermediate file!  
+should run within a factor of four of the fastest CL-based CLM, even though the
+latter is going through the C intermediate file and the (very good) C compiler!  
 </p>
 <p>To continue adding notes to an existing file, set <i>continue-old-file</i>:
 </p>
@@ -3360,32 +3361,52 @@ split with-sound into two pieces, primarily for Common Music's benefit.
 (with-sound (:scaled-to .5)
   (fm-violin 0 1 440 .1))
 </pre>
-<p>Also defined in ws.scm are the CLM functions <b>seconds-&gt;samples</b> and <b>time-&gt;samples</b>,
-and the saved-state-prettification functions <b>mus-data-format-&gt;string</b> and
-<b>mus-header-type-&gt;string</b>.  The *clm-* variables are saved in the save-state
-file by <b>ws-save-state</b>, which may not be a good idea -- feedback welcome!
-</p>
-<p>
-with-sound establishes a catch named 'with-sound-interrupt that jumps out of the
-with-sound notelist, cleans up output files, and exits with-sound.  If you
-want your instruments to respond to C-g within the sample generating loop, use an outer 'do' loop similar to:
+<!-- INDEX wsdebug:Debugging (notelists) -->
+<A NAME="wqsdebug"></a>
+<p>with-sound establishes a catch for debugging: 'with-sound-interrupt.  If you
+place the macro <b>ws-interrupt?</b> in your instrument, C-g will be caught at
+each such point, and control transferred to the with-sound debugging context.
+Currently, ws-interrupt? is not supported by the run macro, but each of the
+clm-ins.scm instruments includes it just before the run loop.  
+Once in the debugger, you are simply in the standard listener loop, but
+there are several additional functions to help with debugging:
 </p>
 <pre>
-  (do ((i beg (1+ i)))
-      ((or (= i end) 
-           (and (c-g?) 
-                (throw 'with-sound-interrupt))))
-      ...)
+  <em class=def>ws-go</em> (returned-value #f)
+  <em class=def>ws-locals</em> (stack-location 0)
+  <em class=def>ws-local</em> local-var (stack-location 0)
+  <em class=def>ws-backtrace</em> (all #f)
+  <em class=def>ws-help</em>
+  <em class=def>ws-quit</em>
+  <em class=def>ws-quit!</em>
+  <em class=def>ws-stop</em>
+  <em class=def>ws-stop!</em>
 </pre>
-<p>Instruments normally check for C-g just before diving into the run loop; because the
-event check can slow down processing, I don't call it on every sample, but you might
-want to do that while developing a new instrument.
+<i>ws-locals</i> prints out the current instrument's local variables and their values.
+<i>ws-local</i> prints one such variable's value (the <i>local-var</i> argument should be a symbol or a string).
+<i>ws-help</i> prints out help.
+<i>ws-backtrace</i> shows the stack at the point of the interrupt.  The stack trace
+is normally truncated to show just the 5 or so inner frames; to get the full
+backtrace, call ws-backtrace with an argument of #t.
+<i>ws-quit</i> exits with-sound without running the reverb (it does, however, close the current output file).
+<i>ws-quit!</i> exits all interrupt levels (in case you called with-sound while in a previous interrupted one, then
+interrupted that one as well), returning you to the true top-level.
+<i>ws-stop</i> jumps out of the notelist at the interrupted point, but goes ahead and runs any reverb
+before closing the output.
+<i>ws-stop!</i> is similar to ws-stop, but it also makes sure you're back at the top level at the end.
+<p><i>ws-go</i> continues from the point of the interrupt.
+The 'returned-value' is the value to return from the original call on ws-interrupt? (or its equivalent).
 </p>
 <p>Toward the end of ws.scm is an example, <b>with-marked-sound</b>, that is just
 like with-sound except that it adds a mark at the start of each note in the output
 sound; the corresponding code in your instrument sets the mark's :ws property
 to contain any info you might find amusing.  You then click the mark to see
 that info.
+</p>
+<p>Also defined in ws.scm are the CLM functions <b>seconds-&gt;samples</b> and <b>time-&gt;samples</b>,
+and the saved-state-prettification functions <b>mus-data-format-&gt;string</b> and
+<b>mus-header-type-&gt;string</b>.  The *clm-* variables are saved in the save-state
+file by <b>ws-save-state</b>, which may not be a good idea -- feedback welcome!
 </p>
 <br>
 

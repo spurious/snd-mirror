@@ -4,7 +4,6 @@
 ;;; makexg.scm creates the gtk2/gdk/pango/glib bindings using xgdata.scm, writes xg.c and xg-ruby.c
 
 ;;; TODO: rest of settable struct fields
-;;; TODO: gtk_text_buffer_get_iter_at_offset and others need to return the resultant iter
 
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
