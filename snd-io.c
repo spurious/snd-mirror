@@ -328,7 +328,7 @@ void remember_temp(char *filename, int chans)
   tmp->ticks = (int *)CALLOC(chans, sizeof(int));
 }
 
-void forget_temp(char *filename, int chan)
+static void forget_temp(char *filename, int chan)
 {
   int i, j, happy = FALSE;
   tempfile_ctr *tmp;
@@ -374,6 +374,7 @@ static void tick_temp(char *filename, int chan)
 
 void forget_temps(void)
 {
+  /* this should always be a no-op -- probably can be deleted */
   int i;
   for (i = 0; i < tempfiles_size; i++)
     if (tempfiles[i])

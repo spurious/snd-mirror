@@ -534,9 +534,10 @@ static sound_file *fill_sf_record(const char *name, sound_file *sf)
   sf->true_file_length = mus_header_true_length();
   sf->comment_start = mus_header_comment_start();
   sf->comment_end = mus_header_comment_end();
-  if ((sf->header_type == MUS_AIFC) || 
-      (sf->header_type == MUS_AIFF) || 
-      (sf->header_type == MUS_RIFF))
+  if (((sf->header_type == MUS_AIFC) || 
+       (sf->header_type == MUS_AIFF) || 
+       (sf->header_type == MUS_RIFF)) &&
+      (mus_header_aux_comment_start(0) != 0))
 
     {
       sf->aux_comment_start = (int *)CALLOC(4, sizeof(int));
@@ -724,15 +725,18 @@ char *mus_sound_comment(const char *name)
   end = mus_sound_comment_end(name);
   if (end == 0) 
     {
-      if (mus_sound_header_type(name) == MUS_RIFF) 
-	return(mus_header_riff_aux_comment(name, 
-					   sf->aux_comment_start, 
-					   sf->aux_comment_end));
-      if ((mus_sound_header_type(name) == MUS_AIFF) || 
-	  (mus_sound_header_type(name) == MUS_AIFC)) 
-	return(mus_header_aiff_aux_comment(name, 
-					   sf->aux_comment_start, 
-					   sf->aux_comment_end));
+      if (sf->aux_comment_start)
+	{
+	  if (mus_sound_header_type(name) == MUS_RIFF) 
+	    return(mus_header_riff_aux_comment(name, 
+					       sf->aux_comment_start, 
+					       sf->aux_comment_end));
+	  if ((mus_sound_header_type(name) == MUS_AIFF) || 
+	      (mus_sound_header_type(name) == MUS_AIFC)) 
+	    return(mus_header_aiff_aux_comment(name, 
+					       sf->aux_comment_start, 
+					       sf->aux_comment_end));
+	}
       return(NULL);
     }
   len = end - start + 1;
@@ -746,8 +750,9 @@ char *mus_sound_comment(const char *name)
       read(fd, sc, len);
       CLOSE(fd);
 #ifndef MACOS
-      if ((mus_sound_header_type(name) == MUS_AIFF) || 
-	  (mus_sound_header_type(name) == MUS_AIFC)) 
+      if (((mus_sound_header_type(name) == MUS_AIFF) || 
+	   (mus_sound_header_type(name) == MUS_AIFC)) &&
+	  (sf->aux_comment_start))
 	{
 	  auxcom = mus_header_aiff_aux_comment(name, 
 					       sf->aux_comment_start, 

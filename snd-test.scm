@@ -25800,7 +25800,7 @@ EDITS: 2
 		  (if (not (= (frames i1 0) (- len 300)))
 		      (snd-display ";C-u (C-kp)100 C-d: ~A ~A" len (frames i1 0)))
 
-		  (revert-sound ind)
+		  (revert-sound i1)
 		  (set! (cursor) 10)
 		  (key (char->integer #\u) 4 i1)
 		  (key (char->integer #\-) 0 i1)

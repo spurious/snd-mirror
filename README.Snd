@@ -3,7 +3,8 @@ Snd
 Snd is a sound editor.  It currently runs on the SGI, Sun, UnixWare,
 OpenServer, HPUX, DEC Alpha, Linux, LinuxPPC, FreeBSD, Mac OSX (XDarwin),
 and BSD (BSDI 4.2).  And Stefan Schwandter says, "Snd now compiles on mips, 
-mipsel, hppa, ia64, arm, sparc, s390, and m68k."
+mipsel, hppa, ia64, arm, sparc, s390, and m68k."  It compiles and loads
+in Windows/Cygwin.
 
 To build Snd, get the sources from
 

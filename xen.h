@@ -24,6 +24,7 @@
 
 /* HISTORY:
  *  
+ *   20-Jan-03: added Windows case for auto-import loader bugfix.
  *   19-Dec-02: proc arg checks for Ruby (to make sure XEN_[N|V]ARGIFY|DEFINE_PROCEDURE[etc] agree)
  *   29-Jul-02: SCM_WRITABLE_VELTS for current CVS Guile
  *   28-May-02: off_t equivalents in Ruby 1.7

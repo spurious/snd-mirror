@@ -1396,16 +1396,6 @@ void file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
   int fd;
   file_info *hdr;
   snd_state *ss;
-  if (num == 0)
-    {
-#if DEBUGGING
-      fprintf(stderr, "file_insert got 0 dur which should be impossible");
-      abort();
-#endif
-      if ((inserted_file) && (auto_delete == DELETE_ME)) snd_remove(inserted_file, TRUE);
-      if ((inserted_file) && (auto_delete == MULTICHANNEL_DELETION)) forget_temp(inserted_file, chan);
-      return;
-    }
   if (dont_edit(cp)) return;
   len = cp->samples[edpos];
   if (beg >= len)
@@ -1648,16 +1638,6 @@ void file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, in
   int fd;
   file_info *hdr;
   snd_state *ss;
-  if (num <= 0)
-    {
-#if DEBUGGING
-      fprintf(stderr, "file_change got " OFF_TD " dur which should be impossible", num);
-      abort();
-#endif
-      if ((tempfile) && (auto_delete == DELETE_ME)) snd_remove(tempfile, TRUE);
-      if ((tempfile) && (auto_delete == MULTICHANNEL_DELETION)) forget_temp(tempfile, chan);
-      return;
-    }
   if (dont_edit(cp)) return;
   ss = cp->state;
   ss->catch_message = NULL;
@@ -1713,16 +1693,6 @@ void file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, i
   ed_list *e;
   file_info *hdr;
   snd_state *ss;
-  if (num == 0)
-    {
-#if DEBUGGING
-      fprintf(stderr, "file_override got 0 dur which should be impossible");
-      abort();
-#endif
-      if ((tempfile) && (auto_delete == DELETE_ME)) snd_remove(tempfile, TRUE);
-      if ((tempfile) && (auto_delete == MULTICHANNEL_DELETION)) forget_temp(tempfile, chan);
-      return;
-    }
   if (dont_edit(cp)) return;
   ss = cp->state;
   ss->catch_message = NULL;
@@ -8376,7 +8346,8 @@ static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN v
 static XEN g_insert_sound(XEN file, XEN ubeg, XEN file_chn, XEN snd_n, XEN chn_n, XEN edpos)
 {
   #define H_insert_sound "(" S_insert_sound " file &optional beg file-chan snd chn edpos)\n\
-inserts channel 'file-chan' of 'file' (or all chans if file-chan not given) into snd's channel chn at beg or the cursor position"
+inserts channel 'file-chan' of 'file' (or all chans if file-chan not given) into snd's channel chn at beg or the cursor position. \n\
+(insert-sound \"oboe.snd\" 1000) inserts all of oboe.snd starting at sample 1000."
 
   chan_info *cp;
   snd_info *sp;
@@ -8786,13 +8757,51 @@ append the rest?
  */
 
 /* these also seem reasonable...
-      only 2 deep for xramp and ptree, 1 for xen, xramp not above 2, only 1 closure?
 
-      ED_RAMP:    RAMP_XEN_RAMP, RAMP_XEN_RAMP2, RAMP2_XEN_RAMP
-		  RAMP_PTREE2_RAMP, RAMP_PTREE2_RAMP2, RAMP2_PTREE2_RAMP
-      ED_XRAMP:   XRAMP_RAMP_PTREE... RAMP_XRAMP_PTREE... RAMP2_XRAMP_PTREE... XRAMP_RAMP2_PTREE...
-      ED_PTREE:   PTREE_RAMP_XRAMP, PTREE_XRAMP_RAMP, PTREE_RAMP2_XRAMP, PTREE_RAMP_XRAMP_RAMP, PTREE_XRAMP2
-      ED_PTREEC:  PTREEC_RAMP_XRAMP, PTREEC_XRAMP_RAMP, PTREEC_RAMP2_XRAMP, PTREEC_RAMP_XRAMP_RAMP
-      ED_PTREE2:  PTREE2_RAMP2, PTREE2_RAMP3, PTREE_RAMP_PTREE, PTREE_RAMP2_PTREE, PTREE_RAMP3_PTREE
-      ED_PTREE2C: PTREE_PTREEC, PTREE_PTREEC_ZERO, PTREE_PTREEC_RAMP
+      ptree2_ramp2
+      ptree2_ramp3
+      ptree2_xramp
+      ptree_ramp_ptree
+      ptree_ramp2_ptree
+      ptree_xramp_ptree
+      ramp2_ptree2_ramp
+      ramp_ptree2_ramp2
+
+      ramp_xramp_ptree
+      ramp_xramp_ptree_zero
+      ramp2_xramp_ptree
+      ramp2_xramp_ptree_zero
+      xramp_ramp_ptree
+      xramp_ramp_ptree_zero
+      ramp_xramp_ramp_ptree
+      ramp_xramp_ramp_ptree_zero
+      maybe ramp_xramp2_ptree
+      maybe ramp_xramp2_ptree_zero
+      maybe ramp_ptree_xramp2
+
+      ptree_ramp_xramp
+      ptree_ramp2_xramp
+      ptree_xramp_ramp
+      ptree_ramp_xramp_ramp
+      maybe ptree_xramp2 [xramp2_ptree exists]
+      maybe ptree_ramp_xramp2
+
+      ramp_xramp_ptreec
+      ramp_xramp_ptreec_zero
+      ramp2_xramp_ptreec
+      ramp2_xramp_ptreec_zero
+      xramp_ramp_ptreec
+      xramp_ramp_ptreec_zero
+      ramp_xramp_ramp_ptreec
+      ramp_xramp_ramp_ptreec_zero
+
+      ptreec_ramp_xramp
+      ptreec_ramp2_xramp
+      ptreec_xramp_ramp
+      ptreec_ramp_xramp_ramp  
+      maybe ptreec_xramp2   
+      maybe ptreec_ramp_xramp2
+      maybe ramp_xramp2_ptreec
+      maybe ramp_xramp2_ptreec_zero
+      maybe ramp_ptreec_xramp2
 */

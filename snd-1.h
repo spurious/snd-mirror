@@ -427,7 +427,6 @@ int snd_close(int fd, const char *name);
 int snd_fclose(FILE *fd, const char *name);
 void remember_temp(char *filename, int chans);
 void forget_temps(void);
-void forget_temp(char *filename, int chan);
 snd_data *make_snd_data_file(char *name, snd_io *io, file_info *hdr, int temp, int ctr, int temp_chan);
 snd_data *copy_snd_data(snd_data *sd, chan_info *cp, int bufsize);
 snd_data *free_snd_data(snd_data *sf);

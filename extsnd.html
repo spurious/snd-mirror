@@ -489,12 +489,14 @@ the speed-up ratio:<br><br></td></tr>
 <td valign=top><code>#f</code></td>
 <td>Name of directory for saved-state files.  
 <br><br>
-If #f, all saved-state is placed (as text) in the saved-state.scm
-file.  If you've edited a file, this can be unwieldy.  By setting
+If #f, all saved-state is placed (as text) in the saved-snd.scm
+file.  If you've edited a sound file, this can be unwieldy because each
+changed sample is saved as text!  By setting
 save-dir, Snd instead places the necessary intermediate files in
 save-dir, with the file names in the saved-state file.  The assumption
 here is that you won't mess with the save-dir files until you no
-longer want to restart that version of Snd.  <br>
+longer want to restart that version of Snd.  
+<br>
 <code>(set! (save-dir) "/tmp")</code>.
 </td></tr>
 <tr><td colspan=3></td></tr>
@@ -551,7 +553,8 @@ a sine wave at (say) 55 Hz, then <code>(src-sound '(0 3 1 1))</code> with sinc-w
 <!-- temp-dir -->
 <tr><td><code><em class=def><a name="tempdir">temp-dir</a></em></code></td>
 <td><code>#f</code></td>
-<td>Name of directory for temporary files.  #f usually means "/tmp" or "/var/tmp".
+<td>Name of directory for temporary files.  #f usually means "/tmp" or "/var/tmp".  
+See <a href="#sndtempnam">snd-tempnam</a>, and autosave.scm.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1468,7 +1471,10 @@ If it returns a string (a filename), that file is opened instead of the original
 		       aufile)
 		     #f)
 		 #f)))
-</pre></td></tr></table></td></tr>
+</pre></td></tr></table>
+<br>
+See also <a href="sndscm.html#exopenbuffer">open-buffer</a> in examp.scm.
+</td></tr>
 <tr><td colspan=3></td></tr>
 
 <!-- open-raw-sound-hook -->
@@ -1768,7 +1774,7 @@ If it returns #t, snd does not play (see, for example, <i>report-mark-names</i> 
 </td></tr>
 
 <tr><td></td><td colspan=2>
-called upon mus_audio_close (when DAC is turned off).
+called when Snd stops playing and turns off the DAC, normally upon mus_audio_close.  See snd-motif.scm.
 </td></tr><tr><td colspan=3></td></tr>
 
 <!-- stop-playing-channel-hook -->
@@ -1823,7 +1829,7 @@ Here's somewhat brute-force code to play a sound a given number of times.
 <span class=defbox><code><em class=def><a name="stopplayingregionhook">stop-playing-region-hook</a></em> (n)</code></span><td></td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called when a region finishes playing.
+called when a region finishes playing.  See play.scm.
 </td></tr>
 
 <!-- stop-playing-selection-hook -->
@@ -1831,7 +1837,7 @@ called when a region finishes playing.
 <span class=defbox><code><em class=def><a name="stopplayingselectionhook">stop-playing-selection-hook</a></em> ()</code></span><td align=right><b>progn</b></td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called when the current selection finishes playing.
+called when the current selection finishes playing.  See popup.scm.
 </td></tr>
 
 <!-- transform-hook -->
@@ -2197,9 +2203,14 @@ sample and a vct as the second argument.  <a href="#vct2channel">vct-&gt;channel
 <p>Many of the functions described below can take a vct object as an argument; 
 there are also several functions that create and fill vcts with data:</p>
 <pre>
-  <a href="#sndregionsamples2vct">region-samples-&gt;vct</a> (<i>samp samps reg chn v</i>)
-  <a href="#samples2vct">samples-&gt;vct</a> (<i>samp samps snd chn v pos</i>)  
-  <a href="#transformsamples2vct">transform-samples-&gt;vct</a> (<i>snd chn v</i>)
+  <a href="#sndregionsamples2vct">region-samples-&gt;vct</a>
+  <a href="#samples2vct">samples-&gt;vct</a>
+  <a href="#transformsamples2vct">transform-samples-&gt;vct</a>
+  <a href="#channel2vct">channel-&gt;vct</a>
+  <a href="sndscm.html#mix2vct">mix-&gt;vct</a>
+  <a href="#sounddata2vct">sound-data-&gt;vct</a>
+  <a href="sndscm.html#track2vct">track-&gt;vct</a>
+  <a href="#sndvector2vct">vector-&gt;vct</a>
 </pre>
 <p>There is one slightly
 unusual function in this family: <i>vct-map!</i>.
@@ -2522,7 +2533,7 @@ accommodate the read</td></tr>
 
 <!-- mus-sound-samples -->
 <tr><td><span class=defbox><code><em class=def><a name="soundsamples">mus-sound-samples</a></em> (filename)</code></span></td>
-<td>samples of sound according to header (can be incorrect) (settable)</td></tr>
+<td>number of samples in sound according to header (can be incorrect) (settable)</td></tr>
 
 <!-- mus-sound-seek -->
 <tr><td><span class=defbox><code><em class=def><a name="mussoundseek">mus-sound-seek</a></em> (fd offset origin)</code></span></td>
@@ -3325,7 +3336,7 @@ create a <a href="#samplereaders">sample-reader</a> object reading region <i>reg
 
 <tr><td><span class=defbox><code><em class=def><a name="sndplayregion">play-region</a></em> (<i>reg wait</i>)</code></span></td>
 <td>
-play region <i>reg</i>, if wait is #t, play to end before returning.
+play region <i>reg</i>, if wait is #t, play to end before returning. (See play.scm).
 </td></tr>
 
 <!-- protect-region -->
@@ -3408,7 +3419,7 @@ original (nominal) sampling rate of region <i>reg</i>.
 
 <!-- regions -->
 
-<tr><td><span class=defbox><code><em class=def><a name="eregions">regions</a></em> ()</code></span></td>
+<tr><td valign=top><span class=defbox><code><em class=def><a name="eregions">regions</a></em> ()</code></span></td>
 <td>
 list of ids of regions currently active.  The most recently created region is <code>(car (regions))</code>.
 <code>(map region-frames (regions))</code> returns a list of region lengths.
@@ -3416,9 +3427,11 @@ list of ids of regions currently active.  The most recently created region is <c
 
 <!-- region? -->
 
-<tr><td><span class=defbox><code><em class=def><a name="regionok">region?</a></em> (<i>reg</i>)</code></span></td>
+<tr><td valign=top><span class=defbox><code><em class=def><a name="regionok">region?</a></em> (<i>reg</i>)</code></span></td>
 <td>
-#t if region <i>reg</i> exists (has not yet been forgotten).
+#t if region <i>reg</i> exists (has not yet been forgotten).  There is a limit to how many regions Snd tries to
+keep track of (<a href="#maxregions">max-regions</a>); when necessary, the least-recently created region is
+deleted.
 </td></tr>
 
 <!-- save-region -->
@@ -3504,6 +3517,7 @@ reverse data delineated by current selection.
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndsaveselection">save-selection</a></em> (file <i>header-type data-format srate comment chan</i>)</code></span></td>
 </tr><tr><td></td><td>
 save the currently selected data in <i>file</i>.  If <i>chan</i> is given, save only that channel.
+See popup.scm for an example.
 </td></tr>
 <tr><td colspan=2>
 <center><table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
@@ -4212,6 +4226,18 @@ If you set this field (you don't want to do this!), the underlying file is immed
 </td></tr>
 <tr><td></td><td>
 delete sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
+<pre><small><blockquote>
+To delete a file: use the Guile function delete-file
+To delete a region: <a href="#snddeleteregion">forget-region</a>
+To delete the currently selected samples: <a href="#snddeleteselection">delete-selection</a>
+To delete the selection and smooth the splice: <a href="sndscm.html#exdeleteselectionandsmooth">delete-selection-and-smooth</a>
+To delete a mix or all mixes: <a href="sndscm.html#deletemix">delete-mix</a>
+To delete a track or all tracks: <a href="sndscm.html#deletetrack">delete-track</a>
+To delete a mark or all marks: <a href="#snddeletemark">delete-mark</a>
+To remove a file from the sound cache: <a href="#soundforget">mus-sound-forget</a>
+To remove a menu item: <a href="#sndremovefrommenu">remove-from-menu</a>
+To add a 'delete' option to the file selection dialog: <a href="sndscm.html#adddeleteoption">add-delete-option</a>
+</blockquote></small></pre>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4595,6 +4621,14 @@ See examp.scm or contrib/dlp/misc.scm for examples (MPEG and OGG).
 </td></tr>
 <tr><td></td><td>
 insert sample <i>value</i> at sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i> 
+<pre><small><blockquote>
+To insert some portion of a channel: <a href="sndscm.html#insertchannel">insert-channel</a>
+To insert a silence: <a href="#padchannel">pad-channel</a>, <a href="#sndinsertsilence">insert-silence</a>
+To insert a region: <a href="#sndinsertregion">insert-region</a>
+To insert the current selection: <a href="#sndinsertselection">insert-selection</a>
+To insert a vct of samples: <a href="#sndinsertsamples">insert-samples</a>
+To insert a sound: <a href="#sndinsertfile">insert-sound</a>
+</blockquote></small></pre>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4968,7 +5002,7 @@ Header-types are:
 <pre>
 mus-next mus-aifc mus-riff mus-nist mus-raw mus-ircam mus-aiff mus-soundfont mus-bicsf mus-voc mus-svx
 </pre>
-To be informed whenever a new sound is created, use <a href="#newsoundhook">new-sound-hook</a>.
+To be informed whenever a new sound is created, use <a href="#newsoundhook">new-sound-hook</a> (see ws.scm).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4989,6 +5023,7 @@ and friends if you want to ignore the header).
     (system (format #f "mpg123 -s ~A &gt; ~A" mpgfile rawfile))
     (<em class=red>open-raw-sound</em> rawfile 1 44100 (if (little-endian?) mus-lshort mus-bshort))))
 </pre></td></tr></table>
+<br>There's a more elaborate version of this function in examp.scm.  See also <a href="#openrawsoundhook">open-raw-sound-hook</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4998,7 +5033,18 @@ and friends if you want to ignore the header).
 <span class=defbox><code><em class=def><a name="sndopen">open-sound</a></em> (name)</code></span>
 </td></tr>
 <tr><td></td><td>
-open <i>name</i> and return its index; this is equivalent to the File:Open option.
+open <i>name</i> and return its index; this is equivalent to the File:Open option. <a href="#sndview">view-sound</a>
+opens a sound read-only, or you can set <a href="#sndreadonly">read-only</a> by hand. <a href="#sndclose">close-sound</a>
+closes a file opened by open-sound.  There are a variety of hooks that are invoked during the sound opening process:
+<a href="#duringopenhook">during-open-hook</a>, <a href="#openhook">open-hook</a>, <a href="#afteropenhook">after-open-hook</a>,
+<a href="#initialgraphhook">initial-graph-hook</a>, <a href="#openrawsoundhook">open-raw-sound-hook</a>.  There are
+other ways to get at sound file data: <a href="#makesamplereader">make-sample-reader</a> can be given a filename,
+rather than a sound index; <i>file-&gt;vct</i> in examp.scm; 
+<a href="#mussoundopeninput">mus-sound-open-input</a> and
+<a href="#sndopensoundfile">open-sound-file</a> are low-level sndlib functions;
+and there are a variety of CLM-based functions such as
+<a href="clm.html#file-&gt;sample">file-&gt;sample</a> and
+<a href="clm.html#file-&gt;array">file-&gt;array</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5008,9 +5054,21 @@ open <i>name</i> and return its index; this is equivalent to the File:Open optio
 <span class=defbox><code><em class=def><a name="padchannel">pad-channel</a></em> (beg dur <i>snd chn edpos</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
-insert num zeros at beg in <i>snd</i>'s channel <i>chn</i>. This is the <a href="#regularizedargs">regularized</a> 
-version of <a href="#sndinsertsilence">insert-silence</a>.  A similar function for setting to zero might be:
-<code>(define (silence-channel beg dur snd chn edpos) (scale-channel 0.0 beg dur snd chn edpos))</code>
+insert <i>dur</i> zeros at <i>beg</i> in <i>snd</i>'s channel <i>chn</i>. This is the <a href="#regularizedargs">regularized</a> 
+version of <a href="#sndinsertsilence">insert-silence</a>.  To set a block of samples to zero, use 
+<a href="#scalechannel">scale-channel</a> with a scaler of 0.0.
+To insert a block of arbitrary-valued samples:
+<br><br>
+<table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
+(define* (block-channel value #:optional beg dur snd chn edpos)
+  (let ((val value)) ; this for the run macro's benefit
+    (<em class=red>pad-channel</em> beg dur snd chn edpos)
+    (<a href="#ptreechannel">ptree-channel</a> (lambda (y) val) beg dur snd chn)))
+</pre></td></tr></table>
+<br>
+We could also use map-channel here (rather than ptree-channel), but this version
+uses only "virtual" edits, so no matter how big the block of samples we insert,
+no disk space or memory is needed.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5154,6 +5212,7 @@ icons, so there's no point in calling this more often than that).
 start-progress-report posts the initial icon, and finish-progress-report 
 removes it.  If the icons are not available, a message is posted in 
 <i>snd's</i> minibuffer using <i>name</i> and so on to identify itself.
+See new-effects.scm for examples.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5485,6 +5544,11 @@ is not 0, which sometimes means that the channel arg is simply ignored.  The fol
       (set! (edit-position snd chn) (+ (edit-position snd chn) edits))
       (redo edits snd)))
 </pre>  
+<br>
+<i>redo</i> simply moves forward in the edit history list, whereas 
+<a href="#sndundo">undo</a> backs up, and <a href="#sndrevert">revert-sound</a> resets the current
+edit position to the start of the list.
+For more about the edit history list, see <a href="#editlists">Edit Lists</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5494,7 +5558,9 @@ is not 0, which sometimes means that the channel arg is simply ignored.  The fol
 <span class=defbox><code><em class=def><a name="sndreportinminibuffer">report-in-minibuffer</a></em> (msg <i>snd</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
-post <i>msg</i> in <i>snd</i>'s minibuffer.
+post <i>msg</i> in <i>snd</i>'s minibuffer.  This is the text widget between the sound's filename and the buttons
+on the right, beneath the graph.  It is intended to mimic Emacs' minibuffer, being useful mainly for short,
+temporary messages.  C-g clears it.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5623,6 +5689,7 @@ return vct struct with same data as in <i>samples</i> call above.
 If v (a vct object) is provided, it is filled, rather than creating 
 a new vct object. <i>pos</i> is the edit history position to read.
 The "regularized" version of this function is <a href="#channel2vct">channel-&gt;vct</a>.
+There are many examples in examp.scm and dsp.scm.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5632,7 +5699,35 @@ The "regularized" version of this function is <a href="#channel2vct">channel-&gt
 <span class=defbox><code><em class=def><a name="sndsave">save-sound</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-save <i>snd</i>; same as File menu's Save option. To save all sounds: <code>(map save-sound (sounds))</code>.
+save <i>snd</i>; same as File menu's Save option. <a href="#savehook">save-hook</a> is invoked upon save-sound.
+<pre>
+<small><blockquote>
+To save all sounds: <code>(map save-sound (sounds))</code>.
+To save a sound under a different name: <a href="#sndsaveas">save-sound-as</a>
+To extract one channel of a sound: <a href="#sndsaveas">save-sound-as</a>
+To save a sound in a different format or header: <a href="#sndsaveas">save-sound-as</a>
+To backup edits automatically: <a href="sndscm.html#exautosave">autosave</a>
+To check first for unsaved edits: <a href="sndscm.html#exunsavededits">check-for-unsaved-edits</a>
+To save Snd's complete state (unsaved edits and all): <a href="#sndsavestate">save-state</a>, <a href="#savedir">save-dir</a>, <a href="#savestatehook">save-state-hook</a>, <a href="#lsavestatefile">save-state-file</a>
+To save just the current options: <a href="#sndsaveoptions">save-options</a>
+To save the current selection: <a href="#sndsaveselection">save-selection</a>
+To save a region: <a href="#sndsaveregion">save-region</a>
+To save a track: <a href="sndscm.html#savetrack">save-track</a>
+To save the control panel state: <a href="#sndcontrolsave">save-controls</a>
+To save currently defined envelopes (envelope editor): <a href="#sndsaveenvelopes">save-envelopes</a>
+To start the file save dialog: <a href="#sndfilesaveasdialog">file-save-as-dialog</a>
+To start the selection save dialog: <a href="#sndeditsaveasdialog">edit-save-as-dialog</a>
+To use Emacs-style save-as behavior: <a href="#emacssytlesaveas">emacs-style-save-as</a>
+To save the current listener text: <a href="#sndsavelistener">save-listener</a>
+To save keyboard macros: <a href="#sndsavemacros">save-macros</a>
+To save marks: <a href="#sndsavemarks">save-marks</a>
+To save the audio hardware settings: <a href="#musaudiosave">mus-audio-save</a>
+To save just the edit history: <a href="#sndsaveedithistory">save-edit-history</a>
+To save the peak-env data: <a href="sndscm.html#peakenvdoc">save-peak-env-info</a>
+To take some action upon a window manager save-yourself signal: <a href="sndscm.html#uponsaveyourself">upon-save-yourself</a>
+To save the current sound setup for a later reopen: <a href="sndscm.html#exremembersoundstate">remember-sound-state</a>
+</blockquote></small>
+</pre>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5883,7 +5978,7 @@ the current global or sound-local (if <i>snd</i> is specified) search procedure.
 <span class=defbox><code><em class=def><a name="sndselectedchannel">selected-channel</a></em> (<i>snd</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
-selected channel in <i>snd</i> (set it to select a channel).  Returns #f is no channel is selected in snd.
+selected channel in <i>snd</i> (set it to select a channel).  Returns #f is no channel is selected in snd. 
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5893,7 +5988,7 @@ selected channel in <i>snd</i> (set it to select a channel).  Returns #f is no c
 <span class=defbox><code><em class=def><a name="sndselectedsound">selected-sound</a></em> ()</code></span>
 </td></tr>
 <tr><td></td><td>
-selected sound (index) (set it to select a sound). Returns #f is there is no selected sound.
+selected sound (index) (set it to select a sound). Returns #f is there is no selected sound. 
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5903,7 +5998,8 @@ selected sound (index) (set it to select a sound). Returns #f is there is no sel
 <span class=defbox><code><em class=def><a name="sndselectchannel">select-channel</a></em> (<i>chn</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
-select channel <i>chn</i>. This is the same as <code>(set! (selected-channel) chn)</code>.
+select channel <i>chn</i>. This is the same as <code>(set! (selected-channel) chn)</code>. 
+See also <a href="#selectchannelhook">select-channel-hook</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5914,6 +6010,7 @@ select channel <i>chn</i>. This is the same as <code>(set! (selected-channel) ch
 </td></tr>
 <tr><td></td><td>
 select sound <i>snd</i> (an index). This is the same as <code>(set! (selected-sound) snd)</code>.
+See also <a href="#selectsoundhook">select-sound-hook</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6077,7 +6174,7 @@ at the loop points:
 up to 4 points, the first two (start, end) refer to the "sustain" loop,
 the second two to the "release".  The 5th and 6th list entries are the "base note" and "detune" values.
 For historical reasons, the 7th and 8th entries are the sustain and release modes.
-This is similar to mus-sound-loop-info (but it's settable).  See <i>explode-sf2</i> in examp.scm.
+This is similar to <a href="#soundloopinfo">mus-sound-loop-info</a> (but it's settable).  See <i>explode-sf2</i> in examp.scm.
 </td></tr>
 
 <!-- sound-properties -->
@@ -6279,8 +6376,8 @@ be the same as the original sound).
 <span class=defbox><code><em class=def><a name="startplaying">start-playing</a></em> (<i>chans srate background</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
-if a play-list is waiting, start it.  <i>chans</i> defaults to 1, 
-<i>srate</i> defaults to 44100, <i>background</i> defaults to #t.
+if a <a href="#makeplayer">play-list</a> is waiting, start it.  <i>chans</i> defaults to 1, 
+<i>srate</i> defaults to 44100, <i>background</i> defaults to #t. See play.scm or marks.scm.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6311,7 +6408,10 @@ remove <i>player</i> from play-list(see <a href="#makeplayer">make-player</a>).
 </td></tr>
 <tr><td></td><td>
 if <i>snd</i> is playing, stop it.
-If no argument is given, stop all sounds (channels) in progress.
+If no argument is given, stop all sounds (channels) in progress.  See play.scm or popup.scm; also
+<a href="#stopplayinghook">stop-playing-hook</a>, <a href="#stopplayingchannelhook">stop-playing-channel-hook</a>,
+<a href="#stopplayingregionhook">stop-playing-region-hook</a>, and
+<a href="#stopplayingselectionhook">stop-playing-selection-hook</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6321,7 +6421,8 @@ If no argument is given, stop all sounds (channels) in progress.
 <span class=defbox><code><em class=def><a name="swapchannels">swap-channels</a></em> (<i>snd1 chn1 snd2 chn2 beg dur edpos0 edpos1</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
-Swap the indicated channels, between beg and beg+dur.
+Swap the indicated channels, between beg and beg+dur.  See <i>swap-selection-channels</i> in examp.scm.
+In simple cases, this is a "virtual" operation.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6500,7 +6601,8 @@ is not 0, which sometimes means that the channel arg is simply ignored.  The fol
   (if (and snd (not (= (sync snd) 0)) chn)
       (set! (edit-position snd chn) (max 0 (- (edit-position snd chn) edits)))
       (undo edits snd)))
-</pre>  
+</pre>
+See also <a href="#undohook">undo-hook</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7434,6 +7536,17 @@ input data. <i>sgn</i> is 1 for an FFT, -1 for an inverse FFT; (default 1).
 <tr><td><a href="#mindb">min-dB</a></td><td><a href="#spectrozangle">spectro-z-angle</a></td><td><a href="#spectrozscale">spectro-z-scale</a></td></tr>
 </table>
 
+<!-- this is endless and changes daily...
+<br>
+<span class=bbox><h3><A NAME="sndeffects">Effects</a></h3></span>
+
+<p>Most sound effects in Snd are handled through CLM.  A number have been packaged up in various .scm and .rb
+files; many, many more could be added.  Here is at least a partial list of sound effects currently available:
+</p>
+<table cellpadding=0 celspacing=10 border=0>
+</table>
+-->
+
 <!-- Dialogs -->
 <br>
 <span class=bbox><h3><A NAME="snddialogs">Dialogs</a></h3></span>
@@ -7465,7 +7578,7 @@ input data. <i>sgn</i> is 1 for an FFT, -1 for an inverse FFT; (default 1).
 <!-- open-file-dialog -->
 
 <tr><td><span class=defbox><code><em class=def><a name="sndopenfiledialog">open-file-dialog</a></em> (managed)</code></span></td>
-<td>create the File:Open file selection dialog, if necessary, and make it visible if <i>managed</i>.</td></tr>
+<td>create the File:Open file selection dialog, if necessary, and make it visible if <i>managed</i> (see snd-motif.scm).</td></tr>
 
 <!-- previous-files-sort -->
 
@@ -7916,7 +8029,7 @@ As a slightly more elaborate example, the following adds a Delete option to the 
 
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndremovefrommenu">remove-from-menu</a></em> (top-menu menu-label)</code></span></td></tr>
 <tr><td></td><td>
-remove menu <i>menu-label</i> from the top top-level menu whose index is <i>top-menu</i>.
+remove menu <i>menu-label</i> from the top top-level menu whose index is <i>top-menu</i>.  See examp.scm or snd-motif.scm.
 </td></tr>
 
 <!-- menu-sensitive -->
@@ -8769,8 +8882,9 @@ return possible completions of <i>name</i> (a string or a symbol).
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="snderror">snd-error</a></em> (str)</code></span></td></tr>
 <tr><td></td><td>
-report error message <i>str</i> (normally via the Error dialog), save <i>str</i> in the error history list (see View:Error History), 
-and return <i>str</i>.
+report error message <i>str</i> (normally via the Error dialog), save <i>str</i> in the error history list 
+(see <a href="snd.html#errorhistory">View:Error History</a>), 
+and return <i>str</i>.  See also <a href="#muserrorhook">mus-error-hook</a> and <a href="#snderrorhook">snd-error-hook</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -8845,6 +8959,7 @@ Snd version (a string, normally a date). <b>version</b> is a Guile function.
 <span class=defbox><code><em class=def><a name="sndwarning">snd-warning</a></em> (str)</code></span></td></tr>
 <tr><td></td><td>
 report warning message <i>str</i> (normally by posting it in the minibuffer), return <i>str</i>.
+See also <a href="#sndwarninghook">snd-warning-hook</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -8870,7 +8985,8 @@ for example, prints the names of all the stereo AIFC files it finds:
 </pre></td></tr></table></td></tr>
 
 <tr><td></td><td>
-See also map-sound-files in <a href="sndscm.html#snd4doc">snd4.scm</a>.
+See also map-sound-files in <a href="sndscm.html#snd4doc">snd4.scm</a>, and 
+<a href="sndscm.html#exmapsoundfiles">map-sound-files</a> in extensions.scm.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -8895,7 +9011,7 @@ and nb.scm where it uses the current window position to try to find a convenient
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="widgetsize">widget-size</a></em> (widget) </code></span></td></tr>
 <tr><td></td><td>
-return a list giving the widget width and height (pixels).  Can be set.
+return a list giving the widget width and height (pixels).  Can be set. See nb.scm and examp.scm.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
