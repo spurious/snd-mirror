@@ -73,11 +73,11 @@ static GtkWidget *w_snd_name_pix(snd_info *sp) {if ((sp) && (sp->sgx)) return((s
 
 /* -------- PIXMAPS -------- */
 
-static GdkPixmap *mini_lock, *speed_r, *speed_l, *blank;
+static SG_PIXMAP *mini_lock, *speed_r, *speed_l, *blank;
 static int mini_lock_allocated = 0;
-static GdkPixmap *mini_bombs[NUM_BOMBS];
-static GdkPixmap *mini_glasses[NUM_GLASSES];
-static GdkBitmap *lock_mask, *blank_mask, *speed_l_mask, *speed_r_mask, *bomb_mask, *glass_mask;
+static SG_PIXMAP *mini_bombs[NUM_BOMBS];
+static SG_PIXMAP *mini_glasses[NUM_GLASSES];
+static SG_BITMAP *lock_mask, *blank_mask, *speed_l_mask, *speed_r_mask, *bomb_mask, *glass_mask;
 
 void snd_file_lock_icon(snd_info *sp, int on)
 {
@@ -193,14 +193,14 @@ static void make_pixmaps(snd_state *ss)
   if (!mini_lock_allocated)
     { 
       wn = MAIN_WINDOW(ss);
-      mini_lock = gdk_pixmap_create_from_xpm_d(wn, &lock_mask, NULL, mini_lock_bits());
-      blank = gdk_pixmap_create_from_xpm_d(wn, &blank_mask, NULL, blank_bits());
-      speed_r = gdk_pixmap_create_from_xpm_d(wn, &speed_r_mask, NULL, speed_r_bits());
-      speed_l = gdk_pixmap_create_from_xpm_d(wn, &speed_l_mask, NULL, speed_l_bits());
+      mini_lock = SG_XPM_TO_PIXMAP(mini_lock_bits(), lock_mask);
+      blank = SG_XPM_TO_PIXMAP(blank_bits(), blank_mask);
+      speed_r = SG_XPM_TO_PIXMAP(speed_r_bits(), speed_r_mask);
+      speed_l = SG_XPM_TO_PIXMAP(speed_l_bits(), speed_l_mask);
       for (k = 0; k < NUM_BOMBS; k++) 
-	mini_bombs[k] = gdk_pixmap_create_from_xpm_d(wn, &bomb_mask, NULL, mini_bomb_bits(k));
+	mini_bombs[k] = SG_XPM_TO_PIXMAP(mini_bomb_bits(k),  bomb_mask);
       for (k = 0; k < NUM_GLASSES; k++) 
-	mini_glasses[k] = gdk_pixmap_create_from_xpm_d(wn, &glass_mask, NULL, mini_glass_bits(k));
+	mini_glasses[k] = SG_XPM_TO_PIXMAP(mini_glass_bits(k),  glass_mask);
       mini_lock_allocated = 1;
     }
 }
@@ -1359,7 +1359,7 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
 	  SG_MAKE_RESIZABLE(sx->dialog);
 	  gtk_container_add(GTK_CONTAINER(sx->dialog), sw[W_pane]);
 	  gtk_widget_show(sx->dialog);
-	  gtk_signal_connect(GTK_OBJECT(sx->dialog), "delete_event", GTK_SIGNAL_FUNC(close_sound_dialog), (gpointer)sp);
+	  SG_SIGNAL_CONNECT(GTK_OBJECT(sx->dialog), "delete_event", GTK_SIGNAL_FUNC(close_sound_dialog), (gpointer)sp);
 	}
       else
 	{
@@ -1394,8 +1394,8 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       gtk_box_pack_start(GTK_BOX(sw[W_name_form]), sw[W_name_event], FALSE, FALSE, 5);
       gtk_widget_show(sw[W_name_event]);
       set_background(sw[W_name_event], (ss->sgx)->highlight_color);
-      gtk_signal_connect(GTK_OBJECT(sw[W_name_event]), "button_press_event", GTK_SIGNAL_FUNC(name_click_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_name_event]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_name_event]), "button_press_event", GTK_SIGNAL_FUNC(name_click_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_name_event]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
       
       sw[W_name] = gtk_label_new(shortname_indexed(sp));
       gtk_container_add(GTK_CONTAINER(sw[W_name_event]), sw[W_name]);
@@ -1420,11 +1420,11 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       gtk_widget_show(sw[W_info_label]);
       
       sw[W_info] = snd_entry_new(ss, sw[W_name_form], FALSE);
-      gtk_signal_connect(GTK_OBJECT(sw[W_info]), "key_press_event", GTK_SIGNAL_FUNC(minibuffer_key_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_info]), "activate", GTK_SIGNAL_FUNC(minibuffer_activate_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_info]), "key_press_event", GTK_SIGNAL_FUNC(minibuffer_key_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_info]), "activate", GTK_SIGNAL_FUNC(minibuffer_activate_callback), (gpointer)sp);
 
-      gtk_signal_connect(GTK_OBJECT(sw[W_info]), "enter_notify_event", GTK_SIGNAL_FUNC(minibuffer_mouse_enter), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_info]), "leave_notify_event", GTK_SIGNAL_FUNC(minibuffer_mouse_leave), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_info]), "enter_notify_event", GTK_SIGNAL_FUNC(minibuffer_mouse_enter), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_info]), "leave_notify_event", GTK_SIGNAL_FUNC(minibuffer_mouse_leave), (gpointer)sp);
 
       set_background(sw[W_info], (ss->sgx)->basic_color);
       set_text_background(sw[W_info], (ss->sgx)->basic_color);
@@ -1434,24 +1434,24 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       sw[W_play] = gtk_check_button_new_with_label(STR_play);
       gtk_box_pack_end(GTK_BOX(sw[W_name_form]), sw[W_play], FALSE, FALSE, 0);
       set_pushed_button_colors(sw[W_play], ss);
-      gtk_signal_connect(GTK_OBJECT(sw[W_play]), "button_press_event", GTK_SIGNAL_FUNC(play_button_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_play]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
-      gtk_signal_connect(GTK_OBJECT(sw[W_play]), "toggled", GTK_SIGNAL_FUNC(play_button_click_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_play]), "button_press_event", GTK_SIGNAL_FUNC(play_button_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_play]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_play]), "toggled", GTK_SIGNAL_FUNC(play_button_click_callback), (gpointer)sp);
       gtk_widget_show(sw[W_play]);
       
       sw[W_sync] = gtk_check_button_new_with_label(STR_sync);
       gtk_box_pack_end(GTK_BOX(sw[W_name_form]), sw[W_sync], FALSE, FALSE, 0);
-      gtk_signal_connect(GTK_OBJECT(sw[W_sync]), "button_press_event", GTK_SIGNAL_FUNC(sync_button_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_sync]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
-      gtk_signal_connect(GTK_OBJECT(sw[W_sync]), "toggled", GTK_SIGNAL_FUNC(sync_button_click), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_sync]), "button_press_event", GTK_SIGNAL_FUNC(sync_button_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_sync]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_sync]), "toggled", GTK_SIGNAL_FUNC(sync_button_click), (gpointer)sp);
       gtk_widget_show(sw[W_sync]);
       
       sw[W_unite] = gtk_check_button_new_with_label(STR_unite);
       gtk_box_pack_end(GTK_BOX(sw[W_name_form]), sw[W_unite], FALSE, FALSE, 0);
       set_pushed_button_colors(sw[W_unite], ss);
-      gtk_signal_connect(GTK_OBJECT(sw[W_unite]), "button_press_event", GTK_SIGNAL_FUNC(unite_button_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_unite]), "toggled", GTK_SIGNAL_FUNC(unite_button_click), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_unite]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_unite]), "button_press_event", GTK_SIGNAL_FUNC(unite_button_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_unite]), "toggled", GTK_SIGNAL_FUNC(unite_button_click), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_unite]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
       gtk_widget_show(sw[W_unite]);
       
       gtk_widget_show(sw[W_name_form]);
@@ -1471,8 +1471,8 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       sw[W_amp_event] = gtk_event_box_new();
       gtk_box_pack_start(GTK_BOX(sw[W_amp_form]), sw[W_amp_event], FALSE, FALSE, 4);
       gtk_widget_show(sw[W_amp_event]);
-      gtk_signal_connect(GTK_OBJECT(sw[W_amp_event]), "button_press_event", GTK_SIGNAL_FUNC(amp_click_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_amp_event]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_amp_event]), "button_press_event", GTK_SIGNAL_FUNC(amp_click_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_amp_event]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
       set_background(sw[W_amp_event], (ss->sgx)->basic_color);
       
       sw[W_amp_label] = gtk_label_new(STR_amp_p);
@@ -1486,8 +1486,8 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       adjs[W_amp_adj] = gtk_adjustment_new(0.5, 0.0, 1.0, 0.001, 0.01, .1);
       sw[W_amp] = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjs[W_amp_adj]));
       gtk_box_pack_start(GTK_BOX(sw[W_amp_form]), sw[W_amp], TRUE, TRUE, 4);
-      gtk_signal_connect(GTK_OBJECT(adjs[W_amp_adj]), "value_changed", GTK_SIGNAL_FUNC(amp_changed_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_amp]), "button_release_event", GTK_SIGNAL_FUNC(amp_release_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(adjs[W_amp_adj]), "value_changed", GTK_SIGNAL_FUNC(amp_changed_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_amp]), "button_release_event", GTK_SIGNAL_FUNC(amp_release_callback), (gpointer)sp);
       gtk_widget_show(sw[W_amp]);
       
       gtk_widget_show(sw[W_amp_form]);
@@ -1502,8 +1502,8 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       sw[W_srate_event] = gtk_event_box_new();
       gtk_box_pack_start(GTK_BOX(sw[W_srate_form]), sw[W_srate_event], FALSE, FALSE, 4);
       gtk_widget_show(sw[W_srate_event]);
-      gtk_signal_connect(GTK_OBJECT(sw[W_srate_event]), "button_press_event", GTK_SIGNAL_FUNC(srate_click_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_srate_event]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_srate_event]), "button_press_event", GTK_SIGNAL_FUNC(srate_click_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_srate_event]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
       set_background(sw[W_srate_event], (ss->sgx)->basic_color);
       
       sw[W_srate_label] = gtk_label_new(STR_speed);
@@ -1522,16 +1522,16 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       adjs[W_srate_adj] = gtk_adjustment_new(0.45, 0.0, 1.0, 0.001, 0.01, .1);
       sw[W_srate] = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjs[W_srate_adj]));
       gtk_box_pack_start(GTK_BOX(sw[W_srate_form]), sw[W_srate], TRUE, TRUE, 4);
-      gtk_signal_connect(GTK_OBJECT(adjs[W_srate_adj]), "value_changed", GTK_SIGNAL_FUNC(srate_changed_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_srate]), "button_release_event", GTK_SIGNAL_FUNC(srate_release_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(adjs[W_srate_adj]), "value_changed", GTK_SIGNAL_FUNC(srate_changed_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_srate]), "button_release_event", GTK_SIGNAL_FUNC(srate_release_callback), (gpointer)sp);
       gtk_widget_show(sw[W_srate]);
       
       sw[W_srate_arrow] = gtk_button_new();
       gtk_box_pack_start(GTK_BOX(sw[W_srate_form]), sw[W_srate_arrow], FALSE, FALSE, 2);
       gtk_button_set_relief(GTK_BUTTON(sw[W_srate_arrow]), GTK_RELIEF_NONE);
       set_background(sw[W_srate_arrow], (ss->sgx)->basic_color);
-      gtk_signal_connect(GTK_OBJECT(sw[W_srate_arrow]), "clicked", GTK_SIGNAL_FUNC(srate_arrow_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_srate_arrow]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_srate_arrow]), "clicked", GTK_SIGNAL_FUNC(srate_arrow_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_srate_arrow]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
       gtk_widget_show(sw[W_srate_arrow]);
       
       sw[W_srate_pix] = SG_PIXMAP_NEW(speed_r, speed_r_mask);
@@ -1550,8 +1550,8 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       sw[W_expand_event] = gtk_event_box_new();
       gtk_box_pack_start(GTK_BOX(sw[W_expand_form]), sw[W_expand_event], FALSE, FALSE, 4);
       gtk_widget_show(sw[W_expand_event]);
-      gtk_signal_connect(GTK_OBJECT(sw[W_expand_event]), "button_press_event", GTK_SIGNAL_FUNC(expand_click_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_expand_event]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_expand_event]), "button_press_event", GTK_SIGNAL_FUNC(expand_click_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_expand_event]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
       set_background(sw[W_expand_event], (ss->sgx)->basic_color);
       
       sw[W_expand_label] = gtk_label_new(STR_expand);
@@ -1565,14 +1565,14 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       adjs[W_expand_adj] = gtk_adjustment_new(0.45, 0.0, 1.0, 0.001, 0.01, .1);
       sw[W_expand] = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjs[W_expand_adj]));
       gtk_box_pack_start(GTK_BOX(sw[W_expand_form]), sw[W_expand], TRUE, TRUE, 4);
-      gtk_signal_connect(GTK_OBJECT(adjs[W_expand_adj]), "value_changed", GTK_SIGNAL_FUNC(expand_changed_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_expand]), "button_release_event", GTK_SIGNAL_FUNC(expand_release_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(adjs[W_expand_adj]), "value_changed", GTK_SIGNAL_FUNC(expand_changed_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_expand]), "button_release_event", GTK_SIGNAL_FUNC(expand_release_callback), (gpointer)sp);
       gtk_widget_show(sw[W_expand]);
       
       sw[W_expand_button] = gtk_check_button_new();
       gtk_box_pack_start(GTK_BOX(sw[W_expand_form]), sw[W_expand_button], FALSE, FALSE, 0);
-      gtk_signal_connect(GTK_OBJECT(sw[W_expand_button]), "clicked", GTK_SIGNAL_FUNC(expand_button_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_expand_button]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_expand_button]), "clicked", GTK_SIGNAL_FUNC(expand_button_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_expand_button]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
       set_pushed_button_colors(sw[W_expand_button], ss);
       gtk_widget_show(sw[W_expand_button]);
       
@@ -1588,8 +1588,8 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       sw[W_contrast_event] = gtk_event_box_new();
       gtk_box_pack_start(GTK_BOX(sw[W_contrast_form]), sw[W_contrast_event], FALSE, FALSE, 4);
       gtk_widget_show(sw[W_contrast_event]);
-      gtk_signal_connect(GTK_OBJECT(sw[W_contrast_event]), "button_press_event", GTK_SIGNAL_FUNC(contrast_click_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_contrast_event]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_contrast_event]), "button_press_event", GTK_SIGNAL_FUNC(contrast_click_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_contrast_event]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
       set_background(sw[W_contrast_event], (ss->sgx)->basic_color);
       
       sw[W_contrast_label] = gtk_label_new(STR_contrast);
@@ -1603,14 +1603,14 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       adjs[W_contrast_adj] = gtk_adjustment_new(0.0, 0.0, 1.0, 0.001, 0.01, .1);
       sw[W_contrast] = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjs[W_contrast_adj]));
       gtk_box_pack_start(GTK_BOX(sw[W_contrast_form]), sw[W_contrast], TRUE, TRUE, 4);
-      gtk_signal_connect(GTK_OBJECT(adjs[W_contrast_adj]), "value_changed", GTK_SIGNAL_FUNC(contrast_changed_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_contrast]), "button_release_event", GTK_SIGNAL_FUNC(contrast_release_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(adjs[W_contrast_adj]), "value_changed", GTK_SIGNAL_FUNC(contrast_changed_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_contrast]), "button_release_event", GTK_SIGNAL_FUNC(contrast_release_callback), (gpointer)sp);
       gtk_widget_show(sw[W_contrast]);
       
       sw[W_contrast_button] = gtk_check_button_new();
       gtk_box_pack_start(GTK_BOX(sw[W_contrast_form]), sw[W_contrast_button], FALSE, FALSE, 0);
-      gtk_signal_connect(GTK_OBJECT(sw[W_contrast_button]), "clicked", GTK_SIGNAL_FUNC(contrast_button_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_contrast_button]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_contrast_button]), "clicked", GTK_SIGNAL_FUNC(contrast_button_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_contrast_button]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
       set_pushed_button_colors(sw[W_contrast_button], ss);
       gtk_widget_show(sw[W_contrast_button]);
       
@@ -1626,8 +1626,8 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       sw[W_revscl_event] = gtk_event_box_new();
       gtk_box_pack_start(GTK_BOX(sw[W_reverb_form]), sw[W_revscl_event], FALSE, FALSE, 4);
       gtk_widget_show(sw[W_revscl_event]);
-      gtk_signal_connect(GTK_OBJECT(sw[W_revscl_event]), "button_press_event", GTK_SIGNAL_FUNC(revscl_click_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_revscl_event]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_revscl_event]), "button_press_event", GTK_SIGNAL_FUNC(revscl_click_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_revscl_event]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
       set_background(sw[W_revscl_event], (ss->sgx)->basic_color);
       
       sw[W_revscl_label] = gtk_label_new(STR_reverb);
@@ -1641,15 +1641,15 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       adjs[W_revscl_adj] = gtk_adjustment_new(0.0, 0.0, 1.0, 0.001, 0.01, .1);
       sw[W_revscl] = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjs[W_revscl_adj]));
       gtk_box_pack_start(GTK_BOX(sw[W_reverb_form]), sw[W_revscl], TRUE, TRUE, 4);
-      gtk_signal_connect(GTK_OBJECT(adjs[W_revscl_adj]), "value_changed", GTK_SIGNAL_FUNC(revscl_changed_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_revscl]), "button_release_event", GTK_SIGNAL_FUNC(revscl_release_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(adjs[W_revscl_adj]), "value_changed", GTK_SIGNAL_FUNC(revscl_changed_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_revscl]), "button_release_event", GTK_SIGNAL_FUNC(revscl_release_callback), (gpointer)sp);
       gtk_widget_show(sw[W_revscl]);
       
       sw[W_revlen_event] = gtk_event_box_new();
       gtk_box_pack_start(GTK_BOX(sw[W_reverb_form]), sw[W_revlen_event], FALSE, FALSE, 4);
       gtk_widget_show(sw[W_revlen_event]);
-      gtk_signal_connect(GTK_OBJECT(sw[W_revlen_event]), "button_press_event", GTK_SIGNAL_FUNC(revlen_click_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_revlen_event]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_revlen_event]), "button_press_event", GTK_SIGNAL_FUNC(revlen_click_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_revlen_event]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
       set_background(sw[W_revlen_event], (ss->sgx)->basic_color);
       
       sw[W_revlen_label] = gtk_label_new(STR_len);
@@ -1663,14 +1663,14 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       adjs[W_revlen_adj] = gtk_adjustment_new(0.2, 0.0, 1.0, 0.001, 0.01, .1);
       sw[W_revlen] = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjs[W_revlen_adj]));
       gtk_box_pack_start(GTK_BOX(sw[W_reverb_form]), sw[W_revlen], TRUE, TRUE, 4);
-      gtk_signal_connect(GTK_OBJECT(adjs[W_revlen_adj]), "value_changed", GTK_SIGNAL_FUNC(revlen_changed_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_revlen]), "button_release_event", GTK_SIGNAL_FUNC(revlen_release_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(adjs[W_revlen_adj]), "value_changed", GTK_SIGNAL_FUNC(revlen_changed_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_revlen]), "button_release_event", GTK_SIGNAL_FUNC(revlen_release_callback), (gpointer)sp);
       gtk_widget_show(sw[W_revlen]);
       
       sw[W_reverb_button] = gtk_check_button_new();
       gtk_box_pack_start(GTK_BOX(sw[W_reverb_form]), sw[W_reverb_button], FALSE, FALSE, 0);
-      gtk_signal_connect(GTK_OBJECT(sw[W_reverb_button]), "clicked", GTK_SIGNAL_FUNC(reverb_button_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_reverb_button]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_reverb_button]), "clicked", GTK_SIGNAL_FUNC(reverb_button_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_reverb_button]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
       set_pushed_button_colors(sw[W_reverb_button], ss);
       gtk_widget_show(sw[W_reverb_button]);
       
@@ -1691,22 +1691,22 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       sw[W_filter_order] = gtk_spin_button_new(GTK_ADJUSTMENT(adjs[W_filter_adj]), 0.0, 0);
       gtk_box_pack_start(GTK_BOX(sw[W_filter_form]), sw[W_filter_order], FALSE, FALSE, 2);
       gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(sw[W_filter_order]), TRUE);
-      gtk_signal_connect(GTK_OBJECT(adjs[W_filter_adj]), "value_changed", GTK_SIGNAL_FUNC(filter_order_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(adjs[W_filter_adj]), "value_changed", GTK_SIGNAL_FUNC(filter_order_callback), (gpointer)sp);
       gtk_widget_show(sw[W_filter_order]);
       
       sw[W_filter] = snd_entry_new(ss, sw[W_filter_form], FALSE);
-      gtk_signal_connect(GTK_OBJECT(sw[W_filter]), "activate", GTK_SIGNAL_FUNC(filter_activate_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_filter]), "activate", GTK_SIGNAL_FUNC(filter_activate_callback), (gpointer)sp);
 
       sw[W_filter_dB] = gtk_check_button_new_with_label(STR_dB);
       gtk_box_pack_start(GTK_BOX(sw[W_filter_form]), sw[W_filter_dB], FALSE, FALSE, 2);
-      gtk_signal_connect(GTK_OBJECT(sw[W_filter_dB]), "clicked", GTK_SIGNAL_FUNC(filter_db_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_filter_dB]), "clicked", GTK_SIGNAL_FUNC(filter_db_callback), (gpointer)sp);
       set_pushed_button_colors(sw[W_filter_dB], ss);
       gtk_widget_show(sw[W_filter_dB]);
       
       sw[W_filter_button] = gtk_check_button_new();
       gtk_box_pack_start(GTK_BOX(sw[W_filter_form]), sw[W_filter_button], FALSE, FALSE, 0);
-      gtk_signal_connect(GTK_OBJECT(sw[W_filter_button]), "clicked", GTK_SIGNAL_FUNC(filter_button_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_filter_button]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_filter_button]), "clicked", GTK_SIGNAL_FUNC(filter_button_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_filter_button]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
       set_pushed_button_colors(sw[W_filter_button], ss);
       gtk_widget_show(sw[W_filter_button]);
       
@@ -1721,30 +1721,30 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       
       sw[W_apply] = gtk_button_new_with_label(STR_Apply);
       gtk_box_pack_start(GTK_BOX(sw[W_apply_form]), sw[W_apply], TRUE, TRUE, 0);
-      gtk_signal_connect(GTK_OBJECT(sw[W_apply]), "clicked", GTK_SIGNAL_FUNC(apply_button_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_apply]), "button_press_event", GTK_SIGNAL_FUNC(apply_button_press_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_apply]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_apply]), "clicked", GTK_SIGNAL_FUNC(apply_button_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_apply]), "button_press_event", GTK_SIGNAL_FUNC(apply_button_press_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_apply]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
       set_pushed_button_colors(sw[W_apply], ss);
       gtk_widget_show(sw[W_apply]);
       
       sw[W_remember] = gtk_button_new_with_label(STR_Remember);
       gtk_box_pack_start(GTK_BOX(sw[W_apply_form]), sw[W_remember], TRUE, TRUE, 0);
-      gtk_signal_connect(GTK_OBJECT(sw[W_remember]), "clicked", GTK_SIGNAL_FUNC(remember_button_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_remember]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_remember]), "clicked", GTK_SIGNAL_FUNC(remember_button_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_remember]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
       set_pushed_button_colors(sw[W_remember], ss);
       gtk_widget_show(sw[W_remember]);
       
       sw[W_restore] = gtk_button_new_with_label(STR_Restore);
       gtk_box_pack_start(GTK_BOX(sw[W_apply_form]), sw[W_restore], TRUE, TRUE, 0);
-      gtk_signal_connect(GTK_OBJECT(sw[W_restore]), "clicked", GTK_SIGNAL_FUNC(restore_button_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_restore]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_restore]), "clicked", GTK_SIGNAL_FUNC(restore_button_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_restore]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
       set_pushed_button_colors(sw[W_restore], ss);
       gtk_widget_show(sw[W_restore]);
       
       sw[W_reset] = gtk_button_new_with_label(STR_Reset);
       gtk_box_pack_start(GTK_BOX(sw[W_apply_form]), sw[W_reset], TRUE, TRUE, 0);
-      gtk_signal_connect(GTK_OBJECT(sw[W_reset]), "clicked", GTK_SIGNAL_FUNC(reset_button_callback), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_reset]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_reset]), "clicked", GTK_SIGNAL_FUNC(reset_button_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_reset]), "key_press_event", GTK_SIGNAL_FUNC(graph_key_press), (gpointer)(any_selected_channel(sp)));
       set_pushed_button_colors(sw[W_reset], ss);
       gtk_widget_show(sw[W_reset]);
       
@@ -1761,11 +1761,11 @@ snd_info *add_sound_window(char *filename, snd_state *ss, int read_only)
       gtk_container_add(GTK_CONTAINER(sw[W_filter_frame]), sw[W_filter_env]);
       set_background(sw[W_filter_env], (ss->sgx)->basic_color);
       gtk_widget_show(sw[W_filter_env]);
-      gtk_signal_connect(GTK_OBJECT(sw[W_filter_env]), "expose_event", GTK_SIGNAL_FUNC(filter_drawer_expose), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_filter_env]), "configure_event", GTK_SIGNAL_FUNC(filter_drawer_resize), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_filter_env]), "button_press_event", GTK_SIGNAL_FUNC(filter_drawer_button_press), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_filter_env]), "button_release_event", GTK_SIGNAL_FUNC(filter_drawer_button_release), (gpointer)sp);
-      gtk_signal_connect(GTK_OBJECT(sw[W_filter_env]), "motion_notify_event", GTK_SIGNAL_FUNC(filter_drawer_button_motion), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_filter_env]), "expose_event", GTK_SIGNAL_FUNC(filter_drawer_expose), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_filter_env]), "configure_event", GTK_SIGNAL_FUNC(filter_drawer_resize), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_filter_env]), "button_press_event", GTK_SIGNAL_FUNC(filter_drawer_button_press), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_filter_env]), "button_release_event", GTK_SIGNAL_FUNC(filter_drawer_button_release), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(sw[W_filter_env]), "motion_notify_event", GTK_SIGNAL_FUNC(filter_drawer_button_motion), (gpointer)sp);
 
 
       gtk_widget_show(sw[W_filter_frame]);

@@ -325,7 +325,7 @@ static void make_region_dialog(snd_state *ss)
   GtkWidget *infobox, *labels, *labbox;
 
   region_dialog = gtk_dialog_new();
-  gtk_signal_connect(GTK_OBJECT(region_dialog), "delete_event", GTK_SIGNAL_FUNC(region_browser_delete_callback), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(region_dialog), "delete_event", GTK_SIGNAL_FUNC(region_browser_delete_callback), (gpointer)ss);
   gtk_window_set_title(GTK_WINDOW(region_dialog), STR_Regions);
   SG_MAKE_RESIZABLE(region_dialog);
   set_backgrounds(region_dialog, (ss->sgx)->basic_color);
@@ -341,9 +341,9 @@ static void make_region_dialog(snd_state *ss)
   gtk_box_pack_end(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), help_button, TRUE, TRUE, 4);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), delete_button, TRUE, TRUE, 4);
 
-  gtk_signal_connect(GTK_OBJECT(delete_button), "clicked", GTK_SIGNAL_FUNC(region_delete_callback), (gpointer)ss);
-  gtk_signal_connect(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(region_help_callback), (gpointer)ss);
-  gtk_signal_connect(GTK_OBJECT(dismiss_button), "clicked", GTK_SIGNAL_FUNC(region_ok_callback), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(delete_button), "clicked", GTK_SIGNAL_FUNC(region_delete_callback), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(region_help_callback), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(dismiss_button), "clicked", GTK_SIGNAL_FUNC(region_ok_callback), (gpointer)ss);
 
   set_pushed_button_colors(help_button, ss);
   set_pushed_button_colors(delete_button, ss);
@@ -387,7 +387,7 @@ static void make_region_dialog(snd_state *ss)
   set_background(labels, (ss->sgx)->highlight_color);
   gtk_box_pack_start(GTK_BOX(infobox), labels, TRUE, TRUE, 2);
   gtk_widget_show(labels);
-  gtk_signal_connect(GTK_OBJECT(labels), "enter_notify_event", GTK_SIGNAL_FUNC(region_labels_mouse_enter), NULL);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(labels), "enter_notify_event", GTK_SIGNAL_FUNC(region_labels_mouse_enter), NULL);
 
   labbox = gtk_vbox_new(TRUE, 0);
   gtk_container_add(GTK_CONTAINER(labels), labbox);
@@ -415,13 +415,13 @@ static void make_region_dialog(snd_state *ss)
 
   edit_button = gtk_button_new_with_label(STR_edit);
   set_pushed_button_colors(edit_button, ss);
-  gtk_signal_connect(GTK_OBJECT(edit_button), "clicked", GTK_SIGNAL_FUNC(region_edit_callback), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(edit_button), "clicked", GTK_SIGNAL_FUNC(region_edit_callback), (gpointer)ss);
   gtk_box_pack_start(GTK_BOX(infobox), edit_button, TRUE, TRUE, 2);
   gtk_widget_show(edit_button);
 
   print_button = gtk_button_new_with_label(STR_print);
   set_pushed_button_colors(print_button, ss);
-  gtk_signal_connect(GTK_OBJECT(print_button), "clicked", GTK_SIGNAL_FUNC(region_print_callback), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(print_button), "clicked", GTK_SIGNAL_FUNC(region_print_callback), (gpointer)ss);
   gtk_box_pack_start(GTK_BOX(infobox), print_button, TRUE, TRUE, 2);
   gtk_widget_show(print_button);
 
@@ -440,11 +440,11 @@ static void make_region_dialog(snd_state *ss)
   gtk_paned_set_position(GTK_PANED(region_grf), 150);
 
   cp->hookable = 0;
-  gtk_signal_connect(GTK_OBJECT(channel_graph(cp)), "expose_event", GTK_SIGNAL_FUNC(region_resize_callback), (gpointer)cp);
-  gtk_signal_connect(GTK_OBJECT(channel_graph(cp)), "configure_event", GTK_SIGNAL_FUNC(region_expose_callback), (gpointer)cp);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(channel_graph(cp)), "expose_event", GTK_SIGNAL_FUNC(region_resize_callback), (gpointer)cp);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(channel_graph(cp)), "configure_event", GTK_SIGNAL_FUNC(region_expose_callback), (gpointer)cp);
 
-  gtk_signal_connect(GTK_OBJECT(channel_up_arrow(cp)), "button_press_event", GTK_SIGNAL_FUNC(region_up_arrow_callback), (gpointer)ss);
-  gtk_signal_connect(GTK_OBJECT(channel_down_arrow(cp)), "button_press_event", GTK_SIGNAL_FUNC(region_down_arrow_callback), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(channel_up_arrow(cp)), "button_press_event", GTK_SIGNAL_FUNC(region_up_arrow_callback), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(channel_down_arrow(cp)), "button_press_event", GTK_SIGNAL_FUNC(region_down_arrow_callback), (gpointer)ss);
 
   set_sensitive(channel_f(cp), FALSE);
   if (region_chans(stack_position_to_id(0)) > 1) set_sensitive(channel_w(cp), TRUE);

@@ -65,8 +65,12 @@
 
 #if HAVE_GTK2
   #define SG_FONT PangoFontDescription
+  #define SG_PIXMAP GdkPixbuf
+  #define SG_BITMAP GdkPixbuf
 #else
   #define SG_FONT GdkFont
+  #define SG_PIXMAP GdkPixmap
+  #define SG_BITMAP GdkBitmap
 #endif
 
 typedef struct {
@@ -88,8 +92,8 @@ typedef struct {
 } chan_context;
 
 typedef struct {
-  GdkPixmap *file_pix;
-  GdkBitmap *file_mask;
+  SG_PIXMAP *file_pix;
+  SG_BITMAP *file_mask;
   BACKGROUND_FUNCTION_TYPE apply_in_progress;
   GtkWidget **snd_widgets;
   GtkObject **snd_adjs;
@@ -147,12 +151,12 @@ typedef struct {
 } mix_context;
 
 typedef struct {
-  GdkPixmap *off_label;
-  GdkPixmap *on_label;
-  GdkPixmap *clip_label;
-  GdkBitmap *off_label_mask;
-  GdkBitmap *on_label_mask;
-  GdkBitmap *clip_label_mask;
+  SG_PIXMAP *off_label;
+  SG_PIXMAP *on_label;
+  SG_PIXMAP *clip_label;
+  SG_BITMAP *off_label_mask;
+  SG_BITMAP *on_label_mask;
+  SG_BITMAP *clip_label_mask;
   SG_FONT *label_font;
   Float size;
 } vu_label;
@@ -314,24 +318,9 @@ typedef struct {
 #define snd_keypad_8 GDK_KP_8
 #define snd_keypad_9 GDK_KP_9
 
-/* now gtk 2.0 compatibility stuff (work in progress)
- *
- *   besides the usual pointless name changes:
- *    GtkText, pixmap, clist support gone, GdkFont
- *    Text -> TextView and TextBuffer
- *    CList -> TreeView?
- *    gtk_pixmap -> gdk_pixmap?
- *    gdkfont -> pango? 
- *    gdk_color_alloc|free?
- *    gdk_input_add? gdk_color_white|black?
- *    gdk_gc_set_font?
- *
- *    gtk_entry_set_text changed res type
- *    gtk_paned_set_handle_size and gtk_paned_set_gutter_size removed
- *    gtk_drawing_area_size? gdk_draw_string? gdk_text_width|extents
- */
-
 #if HAVE_GTK2
+
+  /* also gtk_object_set|get_data, gtk_pixmap_*, gtk_signal_* */
 
   #define SG_MAKE_RESIZABLE(Widget)          gtk_widget_set_size_request(Widget, 0, 0); gtk_window_set_resizable(GTK_WINDOW(Widget), TRUE)
   #define SG_SET_RESIZABLE(Window, Val)      gtk_window_set_resizable(Window, Val)
@@ -342,27 +331,14 @@ typedef struct {
   #define SG_SET_HANDLE_SIZE(Widget, Size)
   #define SG_SET_DRAWING_AREA_SIZE(Widget, Width, Height)
 
-  #ifndef gdk_window_get_size
-    #define gdk_window_get_size gdk_drawable_get_size
-  #endif
-  #ifndef gdk_draw_pixmap
-    #define gdk_draw_pixmap gdk_draw_drawable
-  #endif
-  #ifndef gtk_menu_append
-    #define gtk_menu_append(Menu, Child) gtk_menu_shell_append((GtkMenuShell *)(Menu), (Child))
-  #endif
-  #ifndef gtk_menu_insert
-    #define gtk_menu_insert(Menu, Child, Pos) gtk_menu_shell_insert((GtkMenuShell *)(Menu), (Child), (Pos))
-  #endif
-  #ifndef gtk_menu_bar_append
-    #define gtk_menu_bar_append(Menu, Child) gtk_menu_shell_append((GtkMenuShell *)(Menu),(Child))
-  #endif
-  #ifndef gtk_menu_item_right_justify
-    #define gtk_menu_item_right_justify(Menu_item) gtk_menu_item_set_right_justified((Menu_item), TRUE)
-  #endif
-  #ifndef gtk_radio_button_group
-    #define gtk_radio_button_group gtk_radio_button_get_group
-  #endif
+  #define SG_WINDOW_SIZE                     gdk_drawable_get_size
+  #define SG_DRAW_PIXMAP                     gdk_draw_drawable
+  #define SG_MENU_APPEND(Menu, Child)        gtk_menu_shell_append(GTK_MENU_SHELL(Menu), Child)
+  #define SG_MENU_INSERT(Menu, Child, Pos)   gtk_menu_shell_insert(GTK_MENU_SHELL(Menu), Child, Pos)
+  #define SG_MENU_BAR_APPEND(Menu, Child)    gtk_menu_shell_append(GTK_MENU_SHELL(Menu), Child)
+  #define SG_MENU_ITEM_RIGHT_JUSTIFY(Item)   gtk_menu_item_set_right_justified(GTK_MENU_ITEM(Item), TRUE)
+  #define SG_RADIO_BUTTON_GROUP(Button)      gtk_radio_button_get_group(GTK_RADIO_BUTTON(Button))
+  #define SG_TOGGLE_BUTTON_SET_STATE(Button, State) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(Button), State)
 
   #define SG_TEXT_LENGTH(Widget)              gtk_text_buffer_get_char_count(gtk_text_view_get_buffer(GTK_TEXT_VIEW(Widget)))
   #define SG_TEXT_CHARS(Widget, Start, End)   sg_get_text(Widget, Start, End)
@@ -371,13 +347,6 @@ typedef struct {
   #define SG_TEXT_FREEZE(Widget)
   #define SG_TEXT_THAW(Widget)
 
-  /* TODO: gtk2 macros for text cursor selection insertion deletion
-     gtk text marks named "insert" and "selection bound"
-     gtk_text_buffer_get_insert(buf) -> gtkTextMark for insertion point
-     ditto               selection_bounds
-       gtk_text_buffer_get_iter_at_mark converts to iter, gtk_text_iter_get_offset -> offset
-  */
-  /* use deprecated forms for testing */
   #define SG_TEXT_SET_POINT(Widget, Point)   sg_set_cursor(Widget, Point)
   #define SG_TEXT_GET_POINT(Widget)          sg_cursor_position(Widget)
   #define SG_TEXT_UNSELECT(Widget)           sg_unselect_text(Widget)
@@ -386,19 +355,37 @@ typedef struct {
   #define SG_TEXT_BACKWARD_DELETE(Wid, Num)  
   #define SG_LIST_SELECT_ROW(Widget, Row)    
   #define SG_LIST_MOVETO(Widget, Row)        
-  #define SG_LIST_CLEAR(Widget)              
+  #define SG_LIST_CLEAR(Widget)              gtk_tree_store_clear(GTK_TREE_STORE(Widget))
   #define SG_LIST_APPEND(Widget, Str)        sg_list_append(Widget, Str)
-  #define SG_LIST_INSERT(Widget, Pos, Str)   
-  #define SG_LIST_SET_TEXT(Widget, Row, Str) 
-  #define SG_PIXMAP_NEW(Map, Mask)           gtk_pixmap_new(Map, Mask)
-  #define SG_PIXMAP_SET(Holder, Map, Mask)   gtk_pixmap_set(GTK_PIXMAP(Holder), Map, Mask)
+  #define SG_LIST_INSERT(Widget, Pos, Str)   sg_list_insert(Widget, Pos, Str)
+  #define SG_LIST_SET_TEXT(Widget, Row, Str) sg_list_set_text(Widget, Row, Str)
+  #define SG_PIXMAP_NEW(Map, Mask)           gdk_pixbuf_new(Map)
+  #define SG_PIXMAP_NEW_XYD(Window, Width, Height, Depth) NULL
+  #define SG_XPM_TO_PIXMAP(Bits, Mask)       gdk_pixbuf_new_from_xpm_data((const char **)Bits)
+  #define SG_PIXMAP_SET(Holder, Map, Mask)   
   #define SG_FONT_LOAD(Font)                 pango_font_description_from_string(Font)
   #define SG_SET_FONT(Gc, Font)              gdk_gc_set_font(Gc, gdk_font_from_description(Font))
   /* should be gtk_widget_modify_font(Widget, Font) or pango_layout_set_font_description */
   #define SG_TEXT_WIDTH(Txt, Font)           gdk_text_width(gdk_font_from_description(Font), (gchar *)Txt, (gint)strlen(Txt))
   #define SG_DRAW_STRING(Ax, Fn, Gc, X, Y, Str) gdk_draw_string(Ax, gdk_font_from_description(Fn), Gc, (gint)X, (gint)Y, (const gchar *)Str)
 
+  #define SG_SIGNAL_CONNECT(Object, Name, Func, Func_Data) \
+	    g_signal_connect_closure_by_id(Object, g_signal_lookup(Name, G_OBJECT_TYPE(Object)), 0, g_cclosure_new(Func, Func_Data, 0), 0)
+  #define SG_SIGNAL_CONNECT_OBJECT(Object, Name, Func, Func_Data) \
+            g_signal_connect_closure_by_id(Object, g_signal_lookup(Name, G_OBJECT_TYPE(Object)), 0, g_cclosure_new_swap(Func, Func_Data, 0), 0)
+  #define SG_SIGNAL_CONNECT_AFTER(Object, Name, Func, Func_Data) \
+	    g_signal_connect_closure_by_id(Object, g_signal_lookup(Name, G_OBJECT_TYPE(Object)), 0, g_cclosure_new(Func, Func_Data, 0), 1)
+
 #else
+
+  #define SG_WINDOW_SIZE                     gdk_window_get_size
+  #define SG_DRAW_PIXMAP                     gdk_draw_pixmap
+  #define SG_MENU_APPEND(Menu, Child)        gtk_menu_append(GTK_MENU(Menu), Child)
+  #define SG_MENU_INSERT(Menu, Child, Pos)   gtk_menu_insert(GTK_MENU(Menu), Child, Pos)
+  #define SG_MENU_BAR_APPEND(Menu, Child)    gtk_menu_bar_append(GTK_MENU_BAR(Menu), Child)
+  #define SG_MENU_ITEM_RIGHT_JUSTIFY(Item)   gtk_menu_item_right_justify(GTK_MENU_ITEM(Item))
+  #define SG_RADIO_BUTTON_GROUP(Button)      gtk_radio_button_group(GTK_RADIO_BUTTON(Button))
+  #define SG_TOGGLE_BUTTON_SET_STATE(Button, State) gtk_toggle_button_set_state(GTK_TOGGLE_BUTTON(Button), State)
 
   #define SG_MAKE_RESIZABLE(Widget)          gtk_window_set_policy(GTK_WINDOW(Widget), TRUE, TRUE, FALSE)
   #define SG_SET_RESIZABLE(Window, Val)      gtk_window_set_policy(Window, TRUE, TRUE, Val)
@@ -426,11 +413,17 @@ typedef struct {
   #define SG_LIST_INSERT(Widget, Pos, Str)   gtk_clist_insert(GTK_CLIST(Widget), Pos, &Str)
   #define SG_LIST_SET_TEXT(Widget, Row, Str) gtk_clist_set_text(GTK_CLIST(Widget), Row, 0, Str)
   #define SG_PIXMAP_NEW(Map, Mask)           gtk_pixmap_new(Map, Mask)
+  #define SG_PIXMAP_NEW_XYD(Window, Width, Height, Depth) gdk_pixmap_new(Window, Width, Height, Depth)
   #define SG_PIXMAP_SET(Holder, Map, Mask)   gtk_pixmap_set(GTK_PIXMAP(Holder), Map, Mask)
+  #define SG_XPM_TO_PIXMAP(Bits, Mask)       gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), &Mask, NULL, Bits)
   #define SG_FONT_LOAD(Font)                 gdk_font_load(Font)
   #define SG_SET_FONT(Gc, Font)              gdk_gc_set_font(Gc, Font)
   #define SG_TEXT_WIDTH(Txt, Font)           gdk_text_width(Font, (gchar *)Txt, (gint)strlen(Txt))
   #define SG_DRAW_STRING(Ax, Fn, Gc, X, Y, Str) gdk_draw_string(Ax, Fn, Gc, (gint)X, (gint)Y, (const gchar *)Str)
+
+  #define SG_SIGNAL_CONNECT(Object, Name, Func, Func_Data) gtk_signal_connect(Object, Name, Func, Func_Data)
+  #define SG_SIGNAL_CONNECT_AFTER(Object, Name, Func, Func_Data) gtk_signal_connect_after(Object, Name, Func, Func_Data)
+  #define SG_SIGNAL_CONNECT_OBJECT(Object, Name, Func, Func_Data) gtk_signal_connect_object(Object, Name, Func, Func_Data)
 #endif
 
 #endif

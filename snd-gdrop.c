@@ -33,7 +33,7 @@ void initialize_drop(snd_state *ss)
 {
   /* called via startup func */
   gtk_drag_dest_set(MAIN_SHELL(ss), GTK_DEST_DEFAULT_DROP, target_table, 3, GDK_ACTION_COPY);
-  gtk_signal_connect(GTK_OBJECT(MAIN_SHELL(ss)), "drag_data_received", GTK_SIGNAL_FUNC(drag_data_received), NULL);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(MAIN_SHELL(ss)), "drag_data_received", GTK_SIGNAL_FUNC(drag_data_received), NULL);
 }
 
 

@@ -475,21 +475,21 @@ int is_sensitive(GtkWidget *wid) {if (wid) return(GTK_WIDGET_IS_SENSITIVE(wid));
 void set_toggle_button(GtkWidget *wid, int val, int passed, void *data) 
 {
   if (!passed) gtk_signal_handler_block_by_data(GTK_OBJECT(wid), (gpointer)data);
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wid), val);
+  SG_TOGGLE_BUTTON_SET_STATE(wid, val);
   if (!passed) gtk_signal_handler_unblock_by_data(GTK_OBJECT(wid), (gpointer)data);
 }
 
 guint16 widget_height(GtkWidget *w)
 {
   gint x, y;
-  gdk_window_get_size(w->window, &x, &y);
+  SG_WINDOW_SIZE(w->window, &x, &y);
   return(y);
 }
 
 guint16 widget_width(GtkWidget *w)
 {
   gint x, y;
-  gdk_window_get_size(w->window, &x, &y);
+  SG_WINDOW_SIZE(w->window, &x, &y);
   return(x);
 }
 
@@ -544,16 +544,49 @@ void fixup_axis_context(axis_context *ax, GtkWidget *w, GdkGC *gc)
   ax->current_font = AXIS_NUMBERS_FONT(ax->ss);
 }
 
-#define OUR_DATA "SndData"
+static GtkObject **our_objects;
+static gpointer *our_data;
+static int our_data_size = 0;
+
 void set_user_data(GtkObject *obj, gpointer data)
 {
-  /* apparently gtk_object_get|set_user_data are used internally in Gtk and aren't considered safe */
-  gtk_object_set_data(obj, OUR_DATA, data);
+  int i, loc, new_size;
+  if (our_data_size == 0)
+    {
+      our_data_size = 256;
+      our_data = (gpointer *)CALLOC(our_data_size, sizeof(gpointer));
+      our_objects = (GtkObject **)CALLOC(our_data_size, sizeof(GtkObject *));
+      loc = 0;
+    }
+  else
+    {
+      loc = -1;
+      for (i = 0; i < our_data_size; i++)
+	if (our_objects[i] == NULL)
+	  {
+	    loc = i;
+	    break;
+	  }
+      if (loc == -1)
+	{
+	  new_size = our_data_size + 256;
+	  our_data = (gpointer *)REALLOC(our_data, our_data_size * sizeof(gpointer));
+	  our_objects = (GtkObject **)REALLOC(our_objects, our_data_size * sizeof(GtkObject *));
+	  loc = our_data_size;
+	  our_data_size = new_size;
+	}
+    }
+  our_data[loc] = data;
+  our_objects[loc] = obj;
 }
 
 gpointer get_user_data(GtkObject *obj)
 {
-  return(gtk_object_get_data(obj, OUR_DATA));
+  int i;
+  for (i = 0; i < our_data_size; i++)
+    if (our_objects[i] == obj)
+      return(our_data[i]);
+  return(NULL);
 }
 
 /* many changes between gtk 1.2 and 1.3, some of which are handled here, others in snd-g0.h */
@@ -743,16 +776,36 @@ GtkWidget *sg_make_list(gpointer gp, int num_items, char **items, GtkSignalFunc 
       str = items[i];
       gtk_clist_append(GTK_CLIST(list), &str);
     }
-  gtk_signal_connect(GTK_OBJECT(list), "select_row", callback, gp);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(list), "select_row", callback, gp);
 #endif
   return(list);
 }
 
 #if HAVE_GTK2
-void sg_list_append(GtkWidget *w, char *val)
+void sg_list_append(GtkWidget *lst, char *val)
 {
   GtkTreeIter iter;
+  GtkTreeModel *w;
+  w = gtk_tree_view_get_model(GTK_TREE_VIEW(lst));
   gtk_tree_store_append(GTK_TREE_STORE(w), &iter, NULL);
+  gtk_tree_store_set(GTK_TREE_STORE(w), &iter, 0, val, -1);
+}
+
+void sg_list_insert(GtkWidget *lst, int row, char *val)
+{
+  GtkTreeIter iter;
+  GtkTreeModel *w;
+  w = gtk_tree_view_get_model(GTK_TREE_VIEW(lst));
+  gtk_tree_store_insert(GTK_TREE_STORE(w), &iter, NULL, row);
+  gtk_tree_store_set(GTK_TREE_STORE(w), &iter, 0, val, -1);
+}
+
+void sg_list_set_text(GtkWidget *lst, int row, char *val)
+{
+  GtkTreeIter iter;
+  GtkTreeModel *w;
+  w = gtk_tree_view_get_model(GTK_TREE_VIEW(lst));
+  gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(w), &iter, NULL, row);
   gtk_tree_store_set(GTK_TREE_STORE(w), &iter, 0, val, -1);
 }
 #endif

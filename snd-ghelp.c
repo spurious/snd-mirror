@@ -34,7 +34,7 @@ static void create_help_monolog(snd_state *ss)
   /* create scrollable but not editable text window */
   GtkWidget *help_button, *ok_button;
   help_dialog = gtk_dialog_new();
-  gtk_signal_connect(GTK_OBJECT(help_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_help), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(help_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_help), (gpointer)ss);
   gtk_window_set_title(GTK_WINDOW(help_dialog), STR_Help);
   SG_MAKE_RESIZABLE(help_dialog);
   set_background(help_dialog, (ss->sgx)->basic_color);
@@ -46,8 +46,8 @@ static void create_help_monolog(snd_state *ss)
   ok_button = gtk_button_new_with_label(STR_Ok);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), ok_button, FALSE, TRUE, 20);
   gtk_box_pack_end(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), help_button, FALSE, TRUE, 20);
-  gtk_signal_connect(GTK_OBJECT(ok_button), "clicked", GTK_SIGNAL_FUNC(dismiss_help), (gpointer)ss);
-  gtk_signal_connect(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(help_help_callback), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(ok_button), "clicked", GTK_SIGNAL_FUNC(dismiss_help), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(help_help_callback), (gpointer)ss);
   set_pushed_button_colors(help_button, ss);
   set_pushed_button_colors(ok_button, ss);
   gtk_widget_show(ok_button);
@@ -94,7 +94,7 @@ static void create_help_monolog(snd_state *ss)
   /* create scrollable but not editable text window */
   GtkWidget *help_button, *ok_button, *back_button, *forward_button;
   help_dialog = gtk_dialog_new();
-  gtk_signal_connect(GTK_OBJECT(help_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_help), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(help_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_help), (gpointer)ss);
   gtk_window_set_title(GTK_WINDOW(help_dialog), STR_Help);
   SG_MAKE_RESIZABLE(help_dialog);
   set_background(help_dialog, (ss->sgx)->basic_color);
@@ -110,10 +110,10 @@ static void create_help_monolog(snd_state *ss)
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), back_button, FALSE, TRUE, 20);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), forward_button, FALSE, TRUE, 20);
   gtk_box_pack_end(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), help_button, FALSE, TRUE, 20);
-  gtk_signal_connect(GTK_OBJECT(ok_button), "clicked", GTK_SIGNAL_FUNC(dismiss_help), (gpointer)ss);
-  gtk_signal_connect(GTK_OBJECT(back_button), "clicked", GTK_SIGNAL_FUNC(go_back), (gpointer)ss);
-  gtk_signal_connect(GTK_OBJECT(forward_button), "clicked", GTK_SIGNAL_FUNC(go_forward), (gpointer)ss);
-  gtk_signal_connect(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(help_help_callback), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(ok_button), "clicked", GTK_SIGNAL_FUNC(dismiss_help), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(back_button), "clicked", GTK_SIGNAL_FUNC(go_back), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(forward_button), "clicked", GTK_SIGNAL_FUNC(go_forward), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(help_help_callback), (gpointer)ss);
   set_pushed_button_colors(help_button, ss);
   set_pushed_button_colors(ok_button, ss);
   set_pushed_button_colors(back_button, ss);

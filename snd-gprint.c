@@ -105,7 +105,7 @@ void file_print_callback(GtkWidget *w, gpointer context)
   if (!file_print_dialog)
     {
       file_print_dialog = gtk_dialog_new();
-      gtk_signal_connect(GTK_OBJECT(file_print_dialog), "delete_event", GTK_SIGNAL_FUNC(file_print_delete_callback), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(file_print_dialog), "delete_event", GTK_SIGNAL_FUNC(file_print_delete_callback), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(file_print_dialog), STR_Print);
       SG_MAKE_RESIZABLE(file_print_dialog);
       set_background(file_print_dialog, (ss->sgx)->basic_color);
@@ -119,9 +119,9 @@ void file_print_callback(GtkWidget *w, gpointer context)
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(file_print_dialog)->action_area), print_button, TRUE, TRUE, 4);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(file_print_dialog)->action_area), dismiss_button, TRUE, TRUE, 4);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(file_print_dialog)->action_area), help_button, TRUE, TRUE, 4);
-      gtk_signal_connect(GTK_OBJECT(dismiss_button), "clicked", GTK_SIGNAL_FUNC(file_print_cancel_callback), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(file_print_help_callback), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(print_button), "clicked", GTK_SIGNAL_FUNC(file_print_ok_callback), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(dismiss_button), "clicked", GTK_SIGNAL_FUNC(file_print_cancel_callback), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(file_print_help_callback), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(print_button), "clicked", GTK_SIGNAL_FUNC(file_print_ok_callback), (gpointer)ss);
       set_pushed_button_colors(help_button, ss);
       set_pushed_button_colors(dismiss_button, ss);
       set_pushed_button_colors(print_button, ss);

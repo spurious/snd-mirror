@@ -258,7 +258,6 @@
   XEN_NARGIFY_3(gxm_XInsertModifiermapEntry_w, gxm_XInsertModifiermapEntry)
   XEN_NARGIFY_1(gxm_XNewModifiermap_w, gxm_XNewModifiermap)
   XEN_VARGIFY(gxm_XCreateImage_w, gxm_XCreateImage)
-  XEN_NARGIFY_1(gxm_XInitImage_w, gxm_XInitImage)
   XEN_NARGIFY_8(gxm_XGetImage_w, gxm_XGetImage)
   XEN_VARGIFY(gxm_XGetSubImage_w, gxm_XGetSubImage)
   XEN_NARGIFY_1(gxm_XOpenDisplay_w, gxm_XOpenDisplay)
@@ -1490,7 +1489,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XInsertModifiermapEntry" XM_POSTFIX, gxm_XInsertModifiermapEntry_w, 3, 0, 0, H_XInsertModifiermapEntry);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XNewModifiermap" XM_POSTFIX, gxm_XNewModifiermap_w, 1, 0, 0, H_XNewModifiermap);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCreateImage" XM_POSTFIX, gxm_XCreateImage_w, 0, 0, 1, H_XCreateImage);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XInitImage" XM_POSTFIX, gxm_XInitImage_w, 1, 0, 0, H_XInitImage);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetImage" XM_POSTFIX, gxm_XGetImage_w, 8, 0, 0, H_XGetImage);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetSubImage" XM_POSTFIX, gxm_XGetSubImage_w, 0, 0, 1, H_XGetSubImage);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XOpenDisplay" XM_POSTFIX, gxm_XOpenDisplay_w, 1, 0, 0, H_XOpenDisplay);

@@ -8208,7 +8208,7 @@ static XEN gxm_XStoreBytes(XEN arg1, XEN arg2, XEN arg3)
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XStoreBytes", "Display*");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XStoreBytes", "char*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XStoreBytes", "int");
-  return(C_TO_XEN_INT(XStoreBytes(XEN_TO_C_Display(arg1), XEN_TO_C_STRING(arg2), XEN_TO_C_INT(arg3))));
+  return(C_TO_XEN_INT(XStoreBytes(XEN_TO_C_Display(arg1), XEN_TO_C_STRING(arg2), XEN_TO_C_INT(arg3) + 1)));
 }
 
 static XEN gxm_XStoreBuffer(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
@@ -8218,7 +8218,7 @@ static XEN gxm_XStoreBuffer(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XStoreBuffer", "char*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XStoreBuffer", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XStoreBuffer", "int");
-  return(C_TO_XEN_INT(XStoreBuffer(XEN_TO_C_Display(arg1), XEN_TO_C_STRING(arg2), XEN_TO_C_INT(arg3), XEN_TO_C_INT(arg4))));
+  return(C_TO_XEN_INT(XStoreBuffer(XEN_TO_C_Display(arg1), XEN_TO_C_STRING(arg2), XEN_TO_C_INT(arg3) + 1, XEN_TO_C_INT(arg4))));
 }
 
 static XEN gxm_XSetWindowColormap(XEN arg1, XEN arg2, XEN arg3)
@@ -12029,42 +12029,39 @@ static XEN gxm_XGetAtomName(XEN arg1, XEN arg2)
   return(C_TO_XEN_STRING(XGetAtomName(XEN_TO_C_Display(arg1), XEN_TO_C_Atom(arg2))));
 }
 
-static XEN gxm_XFetchBuffer(XEN arg1, XEN arg3)
+static XEN gxm_XFetchBuffer(XEN arg1, XEN arg2)
 {
-  #define H_XFetchBuffer "char *XFetchBuffer(display, len) returns zero if there \
-is no data in the buffer or if an invalid buffer is specified."
-  /* DIFF: XFetchBuffer returns list of bytes, omits arg2
-   */
-  int len, i, loc;
+  #define H_XFetchBuffer "char *XFetchBuffer(display, buffer) returns #f if there \
+is no data in the buffer or if an invalid buffer is specified, otherwise a string."
+  int len = 0;
   char *buf;
-  XEN lst = XEN_EMPTY_LIST;
+  XEN lst = XEN_FALSE;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XFetchBuffer", "Display*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 2, "XFetchBuffer", "int");
-  buf = XFetchBuffer(XEN_TO_C_Display(arg1), &len, XEN_TO_C_INT(arg3));
-  loc = xm_protect(lst);
-  for (i = len - 1; i >= 0; i--)
-    lst = XEN_CONS(C_TO_XEN_INT((int)buf[i]), lst);
-  if (len > 0) free(buf);
-  xm_unprotect_at(loc);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XFetchBuffer", "int");
+  buf = XFetchBuffer(XEN_TO_C_Display(arg1), &len, XEN_TO_C_INT(arg2));
+  if (len > 0) 
+    {
+      lst = C_TO_XEN_STRING(buf);
+      free(buf);
+    }
   return(lst);
 }
 
 static XEN gxm_XFetchBytes(XEN arg1)
 {
-  #define H_XFetchBytes "char *XFetchBytes(display) returns the number of bytes, if the buffer \
-contains data."
-  /* DIFF: XFetchBytes returns list of bytes, omits arg2
+  #define H_XFetchBytes "char *XFetchBytes(display) returns the string in cut buffer 0"
+  /* DIFF: XFetchBytes returns string, omits arg2
    */
-  int len, i, loc;
+  int len = 0;
   char *buf;
-  XEN lst = XEN_EMPTY_LIST;
+  XEN lst = XEN_FALSE;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XFetchBytes", "Display*");
   buf = XFetchBytes(XEN_TO_C_Display(arg1), &len);
-  loc = xm_protect(lst);
-  for (i = len - 1; i >= 0; i--)
-    lst = XEN_CONS(C_TO_XEN_INT((int)buf[i]), lst);
-  if (len > 0) free(buf);
-  xm_unprotect_at(loc);
+  if (len > 0) 
+    {
+      lst = C_TO_XEN_STRING(buf);
+      free(buf);
+    }
   return(lst);
 }
 
@@ -12132,14 +12129,6 @@ static XEN gxm_XGetImage(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN a
 				   XEN_TO_C_INT(arg3), XEN_TO_C_INT(arg4), 
 				   XEN_TO_C_ULONG(arg5), XEN_TO_C_ULONG(arg6), 
 				   XEN_TO_C_ULONG(arg7), XEN_TO_C_INT(arg8))));
-}
-
-static XEN gxm_XInitImage(XEN arg1)
-{
-  #define H_XInitImage "Status XInitImage(image) initializes the internal image manipulation routines of an image structure, based on \
-the values of the various structure members."
-  XEN_ASSERT_TYPE(XEN_XImage_P(arg1), arg1, 1, "XInitImage", "XImage*");
-  return(C_TO_XEN_INT(XInitImage(XEN_TO_C_XImage(arg1))));
 }
 
 static XEN gxm_XCreateImage(XEN args)
@@ -17023,7 +17012,6 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XInsertModifiermapEntry" XM_POSTFIX, gxm_XInsertModifiermapEntry, 3, 0, 0, H_XInsertModifiermapEntry);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XNewModifiermap" XM_POSTFIX, gxm_XNewModifiermap, 1, 0, 0, H_XNewModifiermap);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XCreateImage" XM_POSTFIX, gxm_XCreateImage, 0, 0, 1, H_XCreateImage);
-  XEN_DEFINE_PROCEDURE(XM_PREFIX "XInitImage" XM_POSTFIX, gxm_XInitImage, 1, 0, 0, H_XInitImage);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetImage" XM_POSTFIX, gxm_XGetImage, 8, 0, 0, H_XGetImage);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XGetSubImage" XM_POSTFIX, gxm_XGetSubImage, 0, 0, 1, H_XGetSubImage);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XOpenDisplay" XM_POSTFIX, gxm_XOpenDisplay, 1, 0, 0, H_XOpenDisplay);

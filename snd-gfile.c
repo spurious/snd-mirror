@@ -157,9 +157,9 @@ static GtkWidget *snd_gtk_file_selection_new(snd_state *ss, char *title, GtkSign
 #if HAVE_GTKEXTRA
   new_dialog = (GtkWidget *)gtk_icon_file_selection_new(title);
   set_background(new_dialog, (ss->sgx)->basic_color);
-  gtk_signal_connect(GTK_OBJECT(new_dialog), "delete_event", gdelete, (gpointer)ss);
-  gtk_signal_connect(GTK_OBJECT(GTK_ICON_FILESEL(new_dialog)->ok_button), "clicked", ok, (gpointer)ss);
-  gtk_signal_connect_object(GTK_OBJECT(GTK_ICON_FILESEL(new_dialog)->cancel_button), "clicked", cancel, (GtkObject *)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(new_dialog), "delete_event", gdelete, (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(GTK_ICON_FILESEL(new_dialog)->ok_button), "clicked", ok, (gpointer)ss);
+  SG_SIGNAL_CONNECT_OBJECT(GTK_OBJECT(GTK_ICON_FILESEL(new_dialog)->cancel_button), "clicked", cancel, (GtkObject *)ss);
   set_pushed_button_colors(GTK_ICON_FILESEL(new_dialog)->ok_button, ss);
   set_pushed_button_colors(GTK_ICON_FILESEL(new_dialog)->cancel_button, ss);
   #if HAVE_GETCWD
@@ -174,9 +174,9 @@ static GtkWidget *snd_gtk_file_selection_new(snd_state *ss, char *title, GtkSign
 #else
   new_dialog = gtk_file_selection_new(title);
   set_background(new_dialog, (ss->sgx)->basic_color);
-  gtk_signal_connect(GTK_OBJECT(new_dialog), "delete_event", gdelete, (gpointer)ss);
-  gtk_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION(new_dialog)->ok_button), "clicked", ok, (gpointer)ss);
-  gtk_signal_connect_object(GTK_OBJECT(GTK_FILE_SELECTION(new_dialog)->cancel_button), "clicked", cancel, (GtkObject *)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(new_dialog), "delete_event", gdelete, (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(GTK_FILE_SELECTION(new_dialog)->ok_button), "clicked", ok, (gpointer)ss);
+  SG_SIGNAL_CONNECT_OBJECT(GTK_OBJECT(GTK_FILE_SELECTION(new_dialog)->cancel_button), "clicked", cancel, (GtkObject *)ss);
   if (last_filename) gtk_file_selection_set_filename(GTK_FILE_SELECTION(new_dialog), last_filename);
   gtk_file_selection_hide_fileop_buttons(GTK_FILE_SELECTION(new_dialog));
   set_pushed_button_colors(GTK_FILE_SELECTION(new_dialog)->ok_button, ss);
@@ -306,12 +306,12 @@ static file_dialog_info *make_file_dialog(snd_state *ss, int read_only, char *ti
   fd->dialog_info2 = gtk_label_new(NULL);
   gtk_box_pack_start(GTK_BOX(fd->dialog_vbox), fd->dialog_info2, TRUE, TRUE, 2);
 #if HAVE_GTKEXTRA
-  gtk_signal_connect(GTK_OBJECT(GTK_ICON_FILESEL(fd->dialog)->file_list), 
+  SG_SIGNAL_CONNECT(GTK_OBJECT(GTK_ICON_FILESEL(fd->dialog)->file_list), 
 		     "select_icon",
 		     GTK_SIGNAL_FUNC(dialog_select_callback), 
 		     (gpointer)fd);
 #else
-  gtk_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION(fd->dialog)->file_list), 
+  SG_SIGNAL_CONNECT(GTK_OBJECT(GTK_FILE_SELECTION(fd->dialog)->file_list), 
 		     "select_row",
 		     GTK_SIGNAL_FUNC(dialog_select_callback), 
 		     (gpointer)fd);
@@ -320,7 +320,7 @@ static file_dialog_info *make_file_dialog(snd_state *ss, int read_only, char *ti
   fd->playb = gtk_check_button_new_with_label("play selected sound");
   gtk_box_pack_start(GTK_BOX(fd->dialog_vbox), fd->playb, TRUE, TRUE, 2);
   set_pushed_button_colors(fd->playb, ss);
-  gtk_signal_connect(GTK_OBJECT(fd->playb), "toggled", GTK_SIGNAL_FUNC(play_selected_callback), (gpointer)fd);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(fd->playb), "toggled", GTK_SIGNAL_FUNC(play_selected_callback), (gpointer)fd);
 
   set_dialog_widget(ss, which_dialog, fd->dialog);
   return(fd);
@@ -645,12 +645,12 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int save_type, 
        */
       save_as_dialog = gtk_file_selection_new(STR_save_as_p);
       set_background(save_as_dialog, (ss->sgx)->basic_color);
-      gtk_signal_connect(GTK_OBJECT(save_as_dialog), "delete_event", (GtkSignalFunc)save_as_delete_callback, NULL);
-      gtk_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION(save_as_dialog)->ok_button), 
+      SG_SIGNAL_CONNECT(GTK_OBJECT(save_as_dialog), "delete_event", (GtkSignalFunc)save_as_delete_callback, NULL);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(GTK_FILE_SELECTION(save_as_dialog)->ok_button), 
 			 "clicked", 
 			 (GtkSignalFunc)save_as_ok_callback, 
 			 (GtkObject *)ss);
-      gtk_signal_connect_object(GTK_OBJECT(GTK_FILE_SELECTION(save_as_dialog)->cancel_button), 
+      SG_SIGNAL_CONNECT_OBJECT(GTK_OBJECT(GTK_FILE_SELECTION(save_as_dialog)->cancel_button), 
 				"clicked", 
 				(GtkSignalFunc)save_as_cancel_callback, 
 				(GtkObject *)ss);
@@ -786,11 +786,11 @@ ww_info *make_title_row(snd_state *ss, GtkWidget *formw, char *first_str, char *
       wwi->byproc = gtk_menu_item_new_with_label("proc");
       set_background(wwi->byproc, (ss->sgx)->basic_color);
 
-      gtk_menu_append(GTK_MENU(smenu), wwi->byname);
-      gtk_menu_append(GTK_MENU(smenu), wwi->bydate);
-      gtk_menu_append(GTK_MENU(smenu), wwi->bysize);
-      gtk_menu_append(GTK_MENU(smenu), wwi->byentry);
-      gtk_menu_append(GTK_MENU(smenu), wwi->byproc);
+      SG_MENU_APPEND(smenu, wwi->byname);
+      SG_MENU_APPEND(smenu, wwi->bydate);
+      SG_MENU_APPEND(smenu, wwi->bysize);
+      SG_MENU_APPEND(smenu, wwi->byentry);
+      SG_MENU_APPEND(smenu, wwi->byproc);
 
       gtk_widget_show(wwi->byname);
       gtk_widget_show(wwi->bydate);
@@ -803,7 +803,7 @@ ww_info *make_title_row(snd_state *ss, GtkWidget *formw, char *first_str, char *
       set_background(sitem, (ss->sgx)->basic_color);
       gtk_widget_show(sitem);
       gtk_menu_item_set_submenu(GTK_MENU_ITEM(sitem), smenu);
-      gtk_menu_bar_append(GTK_MENU_BAR(sbar), sitem);
+      SG_MENU_BAR_APPEND(sbar, sitem);
     }
 
   wwi->list = gtk_vbox_new(FALSE, 0);
@@ -880,21 +880,21 @@ regrow *make_regrow(snd_state *ss, GtkWidget *ww,
   r->sv = gtk_check_button_new();
   set_backgrounds(r->rw, (ss->sgx)->highlight_color);
   gtk_box_pack_start(GTK_BOX(r->rw), r->sv, FALSE, FALSE, 2);
-  gtk_signal_connect(GTK_OBJECT(r->sv), "toggled", GTK_SIGNAL_FUNC(first_callback), (gpointer)r);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(r->sv), "toggled", GTK_SIGNAL_FUNC(first_callback), (gpointer)r);
   gtk_widget_show(r->sv);
 
   r->pl = gtk_check_button_new();
   set_backgrounds(r->pl, (ss->sgx)->highlight_color);
   gtk_box_pack_start(GTK_BOX(r->rw), r->pl, FALSE, FALSE, 2);
-  gtk_signal_connect(GTK_OBJECT(r->pl), "toggled", GTK_SIGNAL_FUNC(second_callback), (gpointer)r);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(r->pl), "toggled", GTK_SIGNAL_FUNC(second_callback), (gpointer)r);
   gtk_widget_show(r->pl);
 
   r->nm = gtk_button_new_with_label("");
   set_backgrounds(r->nm, (ss->sgx)->highlight_color);
   gtk_box_pack_start(GTK_BOX(r->rw), r->nm, TRUE, TRUE, 2);
-  gtk_signal_connect(GTK_OBJECT(r->nm), "clicked", GTK_SIGNAL_FUNC(third_callback), (gpointer)r);
-  gtk_signal_connect(GTK_OBJECT(r->nm), "enter_notify_event", GTK_SIGNAL_FUNC(label_enter_callback), (gpointer)r);
-  gtk_signal_connect(GTK_OBJECT(r->nm), "leave_notify_event", GTK_SIGNAL_FUNC(label_leave_callback), (gpointer)r);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(r->nm), "clicked", GTK_SIGNAL_FUNC(third_callback), (gpointer)r);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(r->nm), "enter_notify_event", GTK_SIGNAL_FUNC(label_enter_callback), (gpointer)r);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(r->nm), "leave_notify_event", GTK_SIGNAL_FUNC(label_leave_callback), (gpointer)r);
   set_user_data(GTK_OBJECT(r->nm), (gpointer)r);
   gtk_widget_show(r->nm);
 
@@ -1208,7 +1208,7 @@ void view_files_callback(GtkWidget *w, gpointer context)
       vf_selected_file = -1;
 
       view_files_dialog = gtk_dialog_new();
-      gtk_signal_connect(GTK_OBJECT(view_files_dialog), "delete_event", GTK_SIGNAL_FUNC(view_files_delete_callback), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(view_files_dialog), "delete_event", GTK_SIGNAL_FUNC(view_files_delete_callback), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(view_files_dialog), STR_Files);
       SG_MAKE_RESIZABLE(view_files_dialog);
       set_backgrounds(view_files_dialog, (ss->sgx)->basic_color);
@@ -1224,10 +1224,10 @@ void view_files_callback(GtkWidget *w, gpointer context)
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(view_files_dialog)->action_area), updateB, TRUE, TRUE, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(view_files_dialog)->action_area), clearB, TRUE, TRUE, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(view_files_dialog)->action_area), helpB, TRUE, TRUE, 10);
-      gtk_signal_connect(GTK_OBJECT(dismissB), "clicked", GTK_SIGNAL_FUNC(view_files_dismiss_callback), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(helpB), "clicked", GTK_SIGNAL_FUNC(view_files_help_callback), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(updateB), "clicked", GTK_SIGNAL_FUNC(view_files_update_callback), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(clearB), "clicked", GTK_SIGNAL_FUNC(view_files_clear_callback), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(dismissB), "clicked", GTK_SIGNAL_FUNC(view_files_dismiss_callback), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(helpB), "clicked", GTK_SIGNAL_FUNC(view_files_help_callback), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(updateB), "clicked", GTK_SIGNAL_FUNC(view_files_update_callback), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(clearB), "clicked", GTK_SIGNAL_FUNC(view_files_clear_callback), (gpointer)ss);
       set_pushed_button_colors(helpB, ss);
       set_pushed_button_colors(dismissB, ss);
       set_pushed_button_colors(updateB, ss);
@@ -1265,11 +1265,11 @@ void view_files_callback(GtkWidget *w, gpointer context)
       wwl = make_title_row(ss, prevform, STR_unlist, STR_play, STR_previous_files, PAD_TITLE_ON_LEFT, WITH_SORT_BUTTON, WITHOUT_PANED_WINDOW);
       fs3 = wwl->tophbox;
 
-      gtk_signal_connect_object(GTK_OBJECT(wwl->byname), "activate", GTK_SIGNAL_FUNC(sort_prevfiles_by_name), NULL);
-      gtk_signal_connect_object(GTK_OBJECT(wwl->bydate), "activate", GTK_SIGNAL_FUNC(sort_prevfiles_by_date), NULL);
-      gtk_signal_connect_object(GTK_OBJECT(wwl->bysize), "activate", GTK_SIGNAL_FUNC(sort_prevfiles_by_size), NULL);
-      gtk_signal_connect_object(GTK_OBJECT(wwl->byentry), "activate", GTK_SIGNAL_FUNC(sort_prevfiles_by_entry), NULL);
-      gtk_signal_connect_object(GTK_OBJECT(wwl->byproc), "activate", GTK_SIGNAL_FUNC(sort_prevfiles_by_user_procedure), NULL);
+      SG_SIGNAL_CONNECT_OBJECT(GTK_OBJECT(wwl->byname), "activate", GTK_SIGNAL_FUNC(sort_prevfiles_by_name), NULL);
+      SG_SIGNAL_CONNECT_OBJECT(GTK_OBJECT(wwl->bydate), "activate", GTK_SIGNAL_FUNC(sort_prevfiles_by_date), NULL);
+      SG_SIGNAL_CONNECT_OBJECT(GTK_OBJECT(wwl->bysize), "activate", GTK_SIGNAL_FUNC(sort_prevfiles_by_size), NULL);
+      SG_SIGNAL_CONNECT_OBJECT(GTK_OBJECT(wwl->byentry), "activate", GTK_SIGNAL_FUNC(sort_prevfiles_by_entry), NULL);
+      SG_SIGNAL_CONNECT_OBJECT(GTK_OBJECT(wwl->byproc), "activate", GTK_SIGNAL_FUNC(sort_prevfiles_by_user_procedure), NULL);
 
       vf_prevww = wwl->list;
       vf_prevlst = wwl->list;
@@ -1361,7 +1361,7 @@ static void make_raw_data_dialog(snd_state *ss)
   mus_header_raw_defaults(&sr, &oc, &fr);
 
   raw_data_dialog = gtk_dialog_new();
-  gtk_signal_connect(GTK_OBJECT(raw_data_dialog), "delete_event", GTK_SIGNAL_FUNC(raw_data_delete_callback), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(raw_data_dialog), "delete_event", GTK_SIGNAL_FUNC(raw_data_delete_callback), (gpointer)ss);
   gtk_window_set_title(GTK_WINDOW(raw_data_dialog), STR_No_Header_on_File);
   SG_MAKE_RESIZABLE(raw_data_dialog);
   set_background(raw_data_dialog, (ss->sgx)->basic_color);
@@ -1377,10 +1377,10 @@ static void make_raw_data_dialog(snd_state *ss)
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->action_area), defaultB, TRUE, TRUE, 10);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->action_area), cancelB, TRUE, TRUE, 10);
   gtk_box_pack_end(GTK_BOX(GTK_DIALOG(raw_data_dialog)->action_area), helpB, TRUE, TRUE, 10);
-  gtk_signal_connect(GTK_OBJECT(okB), "clicked", GTK_SIGNAL_FUNC(raw_data_ok_callback), (gpointer)ss);
-  gtk_signal_connect(GTK_OBJECT(helpB), "clicked", GTK_SIGNAL_FUNC(raw_data_help_callback), (gpointer)ss);
-  gtk_signal_connect(GTK_OBJECT(defaultB), "clicked", GTK_SIGNAL_FUNC(raw_data_default_callback), (gpointer)ss);
-  gtk_signal_connect(GTK_OBJECT(cancelB), "clicked", GTK_SIGNAL_FUNC(raw_data_cancel_callback), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(okB), "clicked", GTK_SIGNAL_FUNC(raw_data_ok_callback), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(helpB), "clicked", GTK_SIGNAL_FUNC(raw_data_help_callback), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(defaultB), "clicked", GTK_SIGNAL_FUNC(raw_data_default_callback), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(cancelB), "clicked", GTK_SIGNAL_FUNC(raw_data_cancel_callback), (gpointer)ss);
   set_pushed_button_colors(helpB, ss);
   set_pushed_button_colors(okB, ss);
   set_pushed_button_colors(defaultB, ss);
@@ -1521,7 +1521,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
   if (!new_dialog)
     {
       new_dialog = gtk_dialog_new();
-      gtk_signal_connect(GTK_OBJECT(new_dialog), "delete_event", GTK_SIGNAL_FUNC(new_file_delete_callback), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(new_dialog), "delete_event", GTK_SIGNAL_FUNC(new_file_delete_callback), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(new_dialog), title);
       SG_MAKE_RESIZABLE(new_dialog);
       set_background(new_dialog, (ss->sgx)->basic_color);
@@ -1535,9 +1535,9 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(new_dialog)->action_area), ok_button, TRUE, TRUE, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(new_dialog)->action_area), cancel_button, TRUE, TRUE, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(new_dialog)->action_area), help_button, TRUE, TRUE, 10);
-      gtk_signal_connect(GTK_OBJECT(cancel_button), "clicked", GTK_SIGNAL_FUNC(new_file_cancel_callback), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(new_file_help_callback), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(ok_button), "clicked", GTK_SIGNAL_FUNC(new_file_ok_callback), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(cancel_button), "clicked", GTK_SIGNAL_FUNC(new_file_cancel_callback), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(new_file_help_callback), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(ok_button), "clicked", GTK_SIGNAL_FUNC(new_file_ok_callback), (gpointer)ss);
       set_pushed_button_colors(help_button, ss);
       set_pushed_button_colors(cancel_button, ss);
       set_pushed_button_colors(ok_button, ss);
@@ -1634,7 +1634,7 @@ GtkWidget *edit_header(snd_info *sp)
   if (!edit_header_dialog)
     {
       edit_header_dialog = gtk_dialog_new();
-      gtk_signal_connect(GTK_OBJECT(edit_header_dialog), "delete_event", GTK_SIGNAL_FUNC(edit_header_delete_callback), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(edit_header_dialog), "delete_event", GTK_SIGNAL_FUNC(edit_header_delete_callback), (gpointer)ss);
       /* gtk_window_set_title(GTK_WINDOW(edit_header_dialog), STR_Edit_Header); */
       SG_MAKE_RESIZABLE(edit_header_dialog);
       set_background(edit_header_dialog, (ss->sgx)->basic_color);
@@ -1648,9 +1648,9 @@ GtkWidget *edit_header(snd_info *sp)
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_header_dialog)->action_area), cancel_button, TRUE, TRUE, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_header_dialog)->action_area), save_button, TRUE, TRUE, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(edit_header_dialog)->action_area), help_button, TRUE, TRUE, 10);
-      gtk_signal_connect(GTK_OBJECT(cancel_button), "clicked", GTK_SIGNAL_FUNC(edit_header_cancel_callback), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(edit_header_help_callback), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(save_button), "clicked", GTK_SIGNAL_FUNC(edit_header_ok_callback), (gpointer)sp);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(cancel_button), "clicked", GTK_SIGNAL_FUNC(edit_header_cancel_callback), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(edit_header_help_callback), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(save_button), "clicked", GTK_SIGNAL_FUNC(edit_header_ok_callback), (gpointer)sp);
       set_pushed_button_colors(help_button, ss);
       set_pushed_button_colors(cancel_button, ss);
       set_pushed_button_colors(save_button, ss);

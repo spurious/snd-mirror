@@ -17,12 +17,12 @@ typedef struct {
   Float size;
   int light_x, light_y, center_x, center_y;
   snd_state *ss;
-  GdkPixmap *off_label;
-  GdkPixmap *on_label;
-  GdkPixmap *clip_label;
-  GdkBitmap *off_label_mask;
-  GdkBitmap *on_label_mask;
-  GdkBitmap *clip_label_mask;
+  SG_PIXMAP *off_label;
+  SG_PIXMAP *on_label;
+  SG_PIXMAP *clip_label;
+  SG_BITMAP *off_label_mask;
+  SG_BITMAP *on_label_mask;
+  SG_BITMAP *clip_label_mask;
 } VU;
 
 typedef struct {
@@ -143,8 +143,8 @@ void recorder_error(char *msg)
 
 /* -------------------------------- ICONS -------------------------------- */
 
-static GdkPixmap *speaker_pix, *line_in_pix, *mic_pix, *aes_pix, *adat_pix, *digital_in_pix, *cd_pix;
-static GdkBitmap *speaker_mask, *line_in_mask, *mic_mask, *aes_mask, *adat_mask, *digital_in_mask, *cd_mask;
+static SG_PIXMAP *speaker_pix, *line_in_pix, *mic_pix, *aes_pix, *adat_pix, *digital_in_pix, *cd_pix;
+static SG_BITMAP *speaker_mask, *line_in_mask, *mic_mask, *aes_mask, *adat_mask, *digital_in_mask, *cd_mask;
 static int icons_created = 0;
 
 static void make_record_icons(GtkWidget *w, snd_state *ss)
@@ -152,14 +152,14 @@ static void make_record_icons(GtkWidget *w, snd_state *ss)
   GdkWindow *wn;
   icons_created = 1;
   wn = MAIN_WINDOW(ss);
-  speaker_pix = gdk_pixmap_create_from_xpm_d(wn, &speaker_mask, (ss->sgx)->basic_color, speaker_bits());
-  mic_pix = gdk_pixmap_create_from_xpm_d(wn, &mic_mask, (ss->sgx)->basic_color, mic_bits());
-  line_in_pix = gdk_pixmap_create_from_xpm_d(wn, &line_in_mask, (ss->sgx)->basic_color, line_in_bits());
-  cd_pix = gdk_pixmap_create_from_xpm_d(wn, &cd_mask, (ss->sgx)->basic_color, cd_bits());
+  speaker_pix = SG_XPM_TO_PIXMAP(speaker_bits(), speaker_mask);
+  mic_pix = SG_XPM_TO_PIXMAP(mic_bits(), mic_mask);
+  line_in_pix = SG_XPM_TO_PIXMAP(line_in_bits(), line_in_mask);
+  cd_pix = SG_XPM_TO_PIXMAP(cd_bits(), cd_mask);
   /* TODO: digital_in, aes, adat */
 }
 
-static GdkPixmap *device_pix(int device)
+static SG_PIXMAP *device_pix(int device)
 {
   switch (device)
     {
@@ -214,7 +214,7 @@ static void recorder_noop_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpoint
 {
   gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "enter_notify_event");
 }
-/* gtk_signal_connect(GTK_OBJECT(w), "enter_notify_event", GTK_SIGNAL_FUNC(recorder_noop_mouse_enter), NULL); */
+/* SG_SIGNAL_CONNECT(GTK_OBJECT(w), "enter_notify_event", GTK_SIGNAL_FUNC(recorder_noop_mouse_enter), NULL); */
 
 
 /* -------------------------------- VU METER -------------------------------- */
@@ -222,10 +222,14 @@ static void recorder_noop_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpoint
 static void allocate_meter_2(GtkWidget *w, vu_label *vu)
 {
   GdkDrawable *wn;
+#if (!HAVE_GTK2)
+  snd_state *ss;
+  ss = get_global_state(); /* used within the SG_XPM_TO_PIXMAP macro */
+#endif
   wn = w->window;
-  vu->off_label = gdk_pixmap_create_from_xpm_d(wn, &(vu->off_label_mask), NULL, offlabel_bits());
-  vu->on_label = gdk_pixmap_create_from_xpm_d(wn, &(vu->on_label_mask), NULL, onlabel_bits());
-  vu->clip_label = gdk_pixmap_create_from_xpm_d(wn, &(vu->clip_label_mask), NULL, cliplabel_bits());
+  vu->off_label = SG_XPM_TO_PIXMAP(offlabel_bits(), (vu->off_label_mask));
+  vu->on_label = SG_XPM_TO_PIXMAP(onlabel_bits(), (vu->on_label_mask));
+  vu->clip_label = SG_XPM_TO_PIXMAP(cliplabel_bits(), (vu->clip_label_mask));
 }
 
 
@@ -302,7 +306,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
       band = 1;
       if (k == 1)
 	{
-	  vu->clip_label = gdk_pixmap_new(wn, 
+	  vu->clip_label = SG_PIXMAP_NEW_XYD(wn, 
 					  (unsigned int)(CENTER_X * 2 * size), 
 					  (unsigned int)(CENTER_Y * size), 
 					  -1);
@@ -313,7 +317,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 	}
       else 
 	{
-	  vu->on_label = gdk_pixmap_new(wn, 
+	  vu->on_label = SG_PIXMAP_NEW_XYD(wn, 
 					(unsigned int)(CENTER_X * 2 * size), 
 					(unsigned int)(CENTER_Y * size),
 					-1);
@@ -378,7 +382,7 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 	}
     }
 
-  vu->off_label = gdk_pixmap_new(wn, 
+  vu->off_label = SG_PIXMAP_NEW_XYD(wn, 
 				 (unsigned int)(CENTER_X * 2 * size), 
 				 (unsigned int)(CENTER_Y * size),
 				 -1);
@@ -448,8 +452,8 @@ static void display_vu_meter(VU *vu)
 {
   Float deg, rdeg, val;
   int nx0, nx1, ny0, ny1, redx, redy, bub0, bub1, i, j;
-  GdkPixmap *label = 0;
-  GdkBitmap *mask;
+  SG_PIXMAP *label = 0;
+  SG_BITMAP *mask;
   snd_state *ss;
   Float size;
   state_context *sx;
@@ -498,7 +502,7 @@ static void display_vu_meter(VU *vu)
       break;
     }
 
-  if (label) gdk_draw_pixmap(vu->wn, vu_gc, label, 0, 0, 0, 0, vu->center_x * 2, vu->center_y);
+  if (label) SG_DRAW_PIXMAP(vu->wn, vu_gc, label, 0, 0, 0, 0, vu->center_x * 2, vu->center_y);
   val = vu->current_val * VU_NEEDLE_SPEED + (vu->last_val * (1.0 - VU_NEEDLE_SPEED));
   vu->last_val = val;
   deg = -45.0 + val * 90.0;
@@ -935,7 +939,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   gtk_widget_show(ff_sep3);
 
   recdat = make_file_data_panel(ss, left_form, "data-form", TRUE, rp->output_header_type, rp->out_format, FALSE, TRUE);
-  gtk_signal_connect_object(GTK_OBJECT(recdat->srate_text), "activate", GTK_SIGNAL_FUNC(srate_changed_callback), (GtkObject *)ss);
+  SG_SIGNAL_CONNECT_OBJECT(GTK_OBJECT(recdat->srate_text), "activate", GTK_SIGNAL_FUNC(srate_changed_callback), (GtkObject *)ss);
 
 #if defined(SGI)
   err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE, MUS_AUDIO_SRATE, 0, val);
@@ -963,7 +967,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   gtk_widget_show(rec_size_label);
 
   rec_size_text = snd_entry_new(ss, durbox, TRUE);
-  gtk_signal_connect_object(GTK_OBJECT(rec_size_text), "activate", GTK_SIGNAL_FUNC(rec_size_changed_callback), (GtkObject *)ss);
+  SG_SIGNAL_CONNECT_OBJECT(GTK_OBJECT(rec_size_text), "activate", GTK_SIGNAL_FUNC(rec_size_changed_callback), (GtkObject *)ss);
   mus_snprintf(timbuf, TIME_STR_SIZE, "%d", rp->buffer_size);
   gtk_entry_set_text(GTK_ENTRY(rec_size_text), timbuf);
 
@@ -986,7 +990,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   gtk_scale_set_draw_value(GTK_SCALE(trigger_scale), TRUE);
   gtk_scale_set_value_pos(GTK_SCALE(trigger_scale), GTK_POS_LEFT);
   gtk_box_pack_start(GTK_BOX(triggerbox), trigger_scale, TRUE, TRUE, 0);
-  gtk_signal_connect(GTK_OBJECT(trigger_adj), "value_changed", GTK_SIGNAL_FUNC(change_trigger_callback), (GtkObject *)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(trigger_adj), "value_changed", GTK_SIGNAL_FUNC(change_trigger_callback), (GtkObject *)ss);
   gtk_widget_show(trigger_scale);
 
   /* buttons */
@@ -1008,7 +1012,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
       gtk_box_pack_start(GTK_BOX(button_holder), device_buttons[i], TRUE, TRUE, 0);
       gtk_widget_show(device_buttons[i]);
       set_user_data(GTK_OBJECT(device_buttons[i]), (gpointer)i);
-      gtk_signal_connect(GTK_OBJECT(device_buttons[i]), "toggled", GTK_SIGNAL_FUNC(device_button_callback), (gpointer)all_panes[i]);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(device_buttons[i]), "toggled", GTK_SIGNAL_FUNC(device_button_callback), (gpointer)all_panes[i]);
       set_toggle_button(device_buttons[i], TRUE, FALSE, (void *)(all_panes[i]));
     }
 
@@ -1018,13 +1022,13 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, GtkWidget *fil
   device_buttons[ndevs] = autoload_file;
   /* we assume this is last in the device_buttons list in sensitize_control_buttons */
   rp->autoload_button = ndevs;
-  gtk_signal_connect(GTK_OBJECT(autoload_file), "toggled", GTK_SIGNAL_FUNC(autoload_file_callback), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(autoload_file), "toggled", GTK_SIGNAL_FUNC(autoload_file_callback), (gpointer)ss);
   set_toggle_button(autoload_file, rp->autoload, FALSE, (void *)ss); 
 #if (HAVE_OSS || HAVE_ALSA)
   save_audio_settings = gtk_check_button_new_with_label(STR_Save_Audio_Settings);
   gtk_box_pack_start(GTK_BOX(button_holder), save_audio_settings, TRUE, TRUE, 0);
   gtk_widget_show(save_audio_settings);
-  gtk_signal_connect(GTK_OBJECT(save_audio_settings), "toggled", GTK_SIGNAL_FUNC(save_audio_settings_callback), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(save_audio_settings), "toggled", GTK_SIGNAL_FUNC(save_audio_settings_callback), (gpointer)ss);
 #endif
 }
 
@@ -1146,21 +1150,21 @@ static void make_recorder_slider(snd_state *ss, PANE *p, AMP *a, int input)
   gtk_button_set_relief(GTK_BUTTON(a->label), GTK_RELIEF_NONE);
   gtk_box_pack_start(GTK_BOX(hb), a->label, FALSE, FALSE, 0);
   gtk_widget_show(a->label);
-  gtk_signal_connect(GTK_OBJECT(a->label), "button_press_event", GTK_SIGNAL_FUNC(record_amp_click_callback), (gpointer)a);
-  gtk_signal_connect(GTK_OBJECT(a->label), "enter_notify_event", GTK_SIGNAL_FUNC(recorder_noop_mouse_enter), NULL);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(a->label), "button_press_event", GTK_SIGNAL_FUNC(record_amp_click_callback), (gpointer)a);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(a->label), "enter_notify_event", GTK_SIGNAL_FUNC(recorder_noop_mouse_enter), NULL);
 
   a->number = gtk_button_new_with_label(amp_to_string(global_amp(a)));
   gtk_button_set_relief(GTK_BUTTON(a->number), GTK_RELIEF_NONE);
   gtk_box_pack_start(GTK_BOX(hb), a->number, FALSE, FALSE, 0);
   gtk_widget_show(a->number);
-  gtk_signal_connect(GTK_OBJECT(a->number), "button_press_event", GTK_SIGNAL_FUNC(record_amp_click_callback), (gpointer)a);
-  gtk_signal_connect(GTK_OBJECT(a->number), "enter_notify_event", GTK_SIGNAL_FUNC(recorder_noop_mouse_enter), NULL);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(a->number), "button_press_event", GTK_SIGNAL_FUNC(record_amp_click_callback), (gpointer)a);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(a->number), "enter_notify_event", GTK_SIGNAL_FUNC(recorder_noop_mouse_enter), NULL);
 
   a->adj = gtk_adjustment_new(amp_to_slider(global_amp(a)), 0.0, 1.00, 0.001, 0.01, .1);
   a->slider = gtk_hscrollbar_new(GTK_ADJUSTMENT(a->adj));
   gtk_box_pack_start(GTK_BOX(hb), a->slider, TRUE, TRUE, 6);
   set_background(a->slider, (ss->sgx)->position_color);
-  gtk_signal_connect(GTK_OBJECT(a->adj), "value_changed", GTK_SIGNAL_FUNC(record_amp_drag_callback), (gpointer)a);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(a->adj), "value_changed", GTK_SIGNAL_FUNC(record_amp_drag_callback), (gpointer)a);
   gtk_widget_show(a->slider);
 
 }
@@ -1291,7 +1295,7 @@ static GtkWidget *make_button_matrix(snd_state *ss, PANE *p, char *name, GtkWidg
 	else set_backgrounds(mb, (ss->sgx)->basic_color);
 	gtk_table_attach_defaults(GTK_TABLE(buttons), mb, col, col + 1, row, row + 1);
 	gtk_widget_show(mb);
-	gtk_signal_connect(GTK_OBJECT(mb), "clicked", GTK_SIGNAL_FUNC(matrix_button_callback), (gpointer)si);
+	SG_SIGNAL_CONNECT(GTK_OBJECT(mb), "clicked", GTK_SIGNAL_FUNC(matrix_button_callback), (gpointer)si);
 	p->matrix_buttons[row][col] = mb;
       }
   return(outer_frame);
@@ -1477,8 +1481,8 @@ static void make_vu_meters(snd_state *ss, PANE *p, int vu_meters,
 	rec_in_VU[overall_input_ctr + i] = vu;
       else rec_out_VU[i] = vu;
 
-      gtk_signal_connect(GTK_OBJECT(meter), "expose_event", GTK_SIGNAL_FUNC(meter_expose_callback), (gpointer)vu);
-      gtk_signal_connect(GTK_OBJECT(meter), "configure_event", GTK_SIGNAL_FUNC(meter_resize_callback), (gpointer)vu);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(meter), "expose_event", GTK_SIGNAL_FUNC(meter_expose_callback), (gpointer)vu);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(meter), "configure_event", GTK_SIGNAL_FUNC(meter_resize_callback), (gpointer)vu);
 
       if ((i == (columns*(row + 1) - 1)) && 
 	  (vu_meters > (i + 1))) 
@@ -1561,7 +1565,7 @@ static void make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p
       gtk_box_pack_start(GTK_BOX(sbox), wd->wg, TRUE, TRUE, 0);
       set_backgrounds(wd->wg, (ss->sgx)->zoom_color);
       gtk_widget_show(wd->wg);
-      gtk_signal_connect(GTK_OBJECT(wd->adj), "value_changed", GTK_SIGNAL_FUNC(volume_callback), (gpointer)wd);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(wd->adj), "value_changed", GTK_SIGNAL_FUNC(volume_callback), (gpointer)wd);
 #if (HAVE_OSS || HAVE_ALSA)
       last_device = this_device;
 #endif
@@ -1643,7 +1647,7 @@ static GtkWidget *make_button_box(snd_state *ss, recorder_info *rp, PANE *p, Flo
       vu = p->meters[i];
       vu->max_button = max_label;
       vu->max_val = 0.0;
-      gtk_signal_connect(GTK_OBJECT(p->on_buttons[i]), "clicked", GTK_SIGNAL_FUNC(meter_button_callback), (gpointer)wd);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(p->on_buttons[i]), "clicked", GTK_SIGNAL_FUNC(meter_button_callback), (gpointer)wd);
 
       if ((i == (columns*(row + 1) - 1)) && (vu_meters > (i + 1))) 
 	row++;
@@ -1657,7 +1661,7 @@ static void make_reset_button(snd_state *ss, PANE *p, GtkWidget *btab)
   set_background(p->reset_button, (ss->sgx)->basic_color);
   gtk_box_pack_start(GTK_BOX(btab), p->reset_button, TRUE, TRUE, 0);
   gtk_widget_show(p->reset_button);
-  gtk_signal_connect(GTK_OBJECT(p->reset_button), "clicked", GTK_SIGNAL_FUNC(vu_reset_callback), (gpointer)p);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(p->reset_button), "clicked", GTK_SIGNAL_FUNC(vu_reset_callback), (gpointer)p);
 }
 
 static int make_amp_sliders(snd_state *ss, recorder_info *rp, PANE *p, int input, int overall_input_ctr)
@@ -1993,7 +1997,7 @@ void snd_record_file(snd_state *ss)
       small_font = SG_FONT_LOAD((vu_size(ss) < SMALLER_FONT_CUTOFF) ? SMALLER_FONT : SMALL_FONT);
 
       recorder = gtk_dialog_new();
-      gtk_signal_connect(GTK_OBJECT(recorder), "delete_event", GTK_SIGNAL_FUNC(recorder_delete), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(recorder), "delete_event", GTK_SIGNAL_FUNC(recorder_delete), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(recorder), STR_Record);
       SG_MAKE_RESIZABLE(recorder);
       set_background(recorder, (ss->sgx)->basic_color);
@@ -2011,10 +2015,10 @@ void snd_record_file(snd_state *ss)
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(recorder)->action_area), record_button, TRUE, TRUE, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(recorder)->action_area), help_button, TRUE, TRUE, 10);
 
-      gtk_signal_connect(GTK_OBJECT(dismiss_button), "clicked", GTK_SIGNAL_FUNC(dismiss_record_callback), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(help_record_callback), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(reset_button), "clicked", GTK_SIGNAL_FUNC(reset_record_callback), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(record_button), "clicked", GTK_SIGNAL_FUNC(record_button_callback), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(dismiss_button), "clicked", GTK_SIGNAL_FUNC(dismiss_record_callback), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(help_button), "clicked", GTK_SIGNAL_FUNC(help_record_callback), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(reset_button), "clicked", GTK_SIGNAL_FUNC(reset_record_callback), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(record_button), "clicked", GTK_SIGNAL_FUNC(record_button_callback), (gpointer)ss);
       set_pushed_button_colors(help_button, ss);
       set_pushed_button_colors(dismiss_button, ss);
       set_pushed_button_colors(reset_button, ss);
@@ -2083,7 +2087,7 @@ void set_recorder_autoload(recorder_info *rp, int val)
 {
   rp->autoload = val;
   if (recorder) 
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(device_buttons[rp->autoload_button]), val);
+    SG_TOGGLE_BUTTON_SET_STATE(device_buttons[rp->autoload_button], val);
 }
 
 void reflect_recorder_in_amp(int in, int out, Float val)

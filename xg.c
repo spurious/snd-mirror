@@ -35179,6 +35179,8 @@ static void define_integers(void)
   #define DEFINE_ULONG(Name, Value) rb_define_global_const(Name, C_TO_XEN_ULONG(Value))
 #endif
 
+  g_type_init();
+
   DEFINE_INTEGER(XG_PRE "G_SIGNAL_RUN_FIRST" XG_POST,                           G_SIGNAL_RUN_FIRST);
   DEFINE_INTEGER(XG_PRE "G_SIGNAL_RUN_LAST" XG_POST,                            G_SIGNAL_RUN_LAST);
   DEFINE_INTEGER(XG_PRE "G_SIGNAL_RUN_CLEANUP" XG_POST,                         G_SIGNAL_RUN_CLEANUP);
@@ -36509,7 +36511,6 @@ static void define_integers(void)
   DEFINE_ULONG(XG_PRE "GTK_TYPE_TEAROFF_MENU_ITEM" XG_POST,                     GTK_TYPE_TEAROFF_MENU_ITEM);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_TEXT_BUFFER" XG_POST,                           GTK_TYPE_TEXT_BUFFER);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_TEXT_CHILD_ANCHOR" XG_POST,                     GTK_TYPE_TEXT_CHILD_ANCHOR);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TEXT" XG_POST,                                  GTK_TYPE_TEXT);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_TEXT_MARK" XG_POST,                             GTK_TYPE_TEXT_MARK);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_TEXT_TAG" XG_POST,                              GTK_TYPE_TEXT_TAG);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_TEXT_TAG_TABLE" XG_POST,                        GTK_TYPE_TEXT_TAG_TABLE);
@@ -36520,8 +36521,6 @@ static void define_integers(void)
   DEFINE_ULONG(XG_PRE "GTK_TYPE_TOOLTIPS" XG_POST,                              GTK_TYPE_TOOLTIPS);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_DRAG_SOURCE" XG_POST,                      GTK_TYPE_TREE_DRAG_SOURCE);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_DRAG_DEST" XG_POST,                        GTK_TYPE_TREE_DRAG_DEST);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE" XG_POST,                                  GTK_TYPE_TREE);
-  DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_ITEM" XG_POST,                             GTK_TYPE_TREE_ITEM);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_MODEL" XG_POST,                            GTK_TYPE_TREE_MODEL);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_MODEL_SORT" XG_POST,                       GTK_TYPE_TREE_MODEL_SORT);
   DEFINE_ULONG(XG_PRE "GTK_TYPE_TREE_SELECTION" XG_POST,                        GTK_TYPE_TREE_SELECTION);

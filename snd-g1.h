@@ -381,6 +381,8 @@ gpointer get_user_data(GtkObject *obj);
   int sg_cursor_position(GtkWidget *w);
   void sg_select_text(GtkWidget *w, int s0, int s1);
   void sg_list_append(GtkWidget *w, char *val);
+  void sg_list_insert(GtkWidget *w, int row, char *val);
+  void sg_list_set_text(GtkWidget *w, int row, char *val);
 #else
   char *sg_label_text(GtkLabel *w);
 #endif
@@ -474,7 +476,7 @@ void alert_enved_amp_env(snd_info *sp);
 void new_active_channel_alert(snd_state *ss);
 void env_redisplay(snd_state *ss);
 void enved_display_point_label(snd_state *ss, Float x, Float y);
-void display_enved_progress(char *str, GdkPixmap *pix, GdkBitmap *mask);
+void display_enved_progress(char *str, SG_PIXMAP *pix, SG_BITMAP *mask);
 void set_enved_click_to_delete(int n);
 void enved_print(char *name);
 GtkWidget *create_envelope_editor (snd_state *ss);

@@ -284,10 +284,10 @@ static BACKGROUND_TYPE startup_funcs(gpointer context)
 			  strlen(SND_VERSION) + 1);
 #if HAVE_EXTENSION_LANGUAGE
       gtk_widget_add_events (tm->shell, gtk_widget_get_events (tm->shell) | GDK_PROPERTY_CHANGE_MASK);
-      gtk_signal_connect(GTK_OBJECT(tm->shell), "property_notify_event", GTK_SIGNAL_FUNC(who_called), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(tm->shell), "property_notify_event", GTK_SIGNAL_FUNC(who_called), (gpointer)ss);
 #endif
       /* trap outer-level Close for cleanup check */
-      gtk_signal_connect(GTK_OBJECT(tm->shell), "delete_event", GTK_SIGNAL_FUNC(window_close), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(tm->shell), "delete_event", GTK_SIGNAL_FUNC(window_close), (gpointer)ss);
 #endif
 
       (ss->sgx)->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
@@ -359,13 +359,11 @@ static BACKGROUND_TYPE startup_funcs(gpointer context)
 #ifndef SND_AS_WIDGET
 static void SetupIcon(GtkWidget *shell)
 {
-  GdkPixmap *pix;
-  GdkBitmap *mask;
+  SG_PIXMAP *pix;
+  SG_BITMAP *mask;
   snd_state *ss;
   ss = get_global_state();
-  pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), &mask,
-				     (ss->sgx)->white,
-				     snd_icon_bits());
+  pix = SG_XPM_TO_PIXMAP(snd_icon_bits(), mask);
   gdk_window_set_icon(MAIN_WINDOW(ss), NULL, pix, mask);
 }
 #endif
@@ -568,7 +566,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
       gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), SOUND_PANE(ss));
       /* set_background(SOUND_PANE(ss), (ss->sgx)->basic_color); */
       
-      /* gtk_signal_connect(GTK_OBJECT(MAIN_SHELL(ss)), "key_press_event", GTK_SIGNAL_FUNC(shell_key_press), (gpointer)ss); */
+      /* SG_SIGNAL_CONNECT(GTK_OBJECT(MAIN_SHELL(ss)), "key_press_event", GTK_SIGNAL_FUNC(shell_key_press), (gpointer)ss); */
 
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	{

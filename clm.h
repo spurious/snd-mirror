@@ -3,7 +3,7 @@
 
 #define MUS_VERSION 1
 #define MUS_REVISION 60
-#define MUS_DATE "19-Feb-02"
+#define MUS_DATE "20-Feb-02"
 
 /* 
  * 19-Feb:     buffer reallocation redundant free bugfix.

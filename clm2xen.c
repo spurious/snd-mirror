@@ -4590,6 +4590,7 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
   mus_any ***envs1 = NULL;
   char *outfile = NULL, *infile = NULL;
   int in_len = 0, out_len, i, j, ostart = 0, istart = 0, osamps = 0;
+  int in_chans, out_chans, in_size, out_size;  /* mus_mix in clm.c assumes the envs array is large enough */
   XEN *vdata0; XEN *vdata1;
   XEN_ASSERT_TYPE(XEN_STRING_P(out), out, XEN_ARG_1, S_mus_mix, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(in), in, XEN_ARG_2, S_mus_mix, "a string");
@@ -4601,10 +4602,12 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
   if (XEN_BOUND_P(ost)) ostart = XEN_TO_C_INT_OR_ELSE(ost, 0);
   if (XEN_BOUND_P(ist)) istart = XEN_TO_C_INT_OR_ELSE(ist, 0);
   if ((XEN_BOUND_P(mx)) && (MUS_XEN_P(mx))) mx1 = (mus_mixer *)MUS_XEN_TO_CLM(mx);
+  outfile = XEN_TO_C_STRING(out);
+  infile = XEN_TO_C_STRING(in);
+  if (XEN_BOUND_P(olen)) osamps = XEN_TO_C_INT_OR_ELSE(olen, 0); else osamps = mus_sound_frames(infile);
   if (XEN_BOUND_P(envs))
     {
       /* pack into a C-style array of arrays of env pointers */
-      /* TODO: make sure this env array is big enough for mus_mix (in/out chans) */
       in_len = XEN_VECTOR_LENGTH(envs);
       vdata0 = XEN_VECTOR_ELEMENTS(envs);
       for (i = 0; i < in_len; i++)
@@ -4614,19 +4617,20 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
 			       vdata0[i],
 			       C_TO_XEN_STRING("each element of env vector must be a vector of envelopes")));
       out_len = XEN_VECTOR_LENGTH(vdata0[0]);
-      envs1 = (mus_any ***)CALLOC(in_len, sizeof(mus_any **));
+      in_chans = mus_sound_chans(infile);
+      out_chans = mus_sound_chans(outfile);
+      if (in_len < in_chans) in_size = in_chans; else in_size = in_len;
+      if (out_len < out_chans) out_size = out_chans; else out_size = out_len;
+      envs1 = (mus_any ***)CALLOC(in_size, sizeof(mus_any **));
+      for (i = 0; i < in_size; i++) envs1[i] = (mus_any **)CALLOC(out_size, sizeof(mus_any *));
       for (i = 0; i < in_len; i++)
 	{
 	  vdata1 = XEN_VECTOR_ELEMENTS(vdata0[i]);
-	  envs1[i] = (mus_any **)CALLOC(out_len, sizeof(mus_any *));
 	  for (j = 0; j < out_len; j++) 
 	    if (MUS_XEN_P(vdata1[j]))
 	      envs1[i][j] = MUS_XEN_TO_CLM(vdata1[j]);
 	}
     }
-  outfile = XEN_TO_C_STRING(out);
-  infile = XEN_TO_C_STRING(in);
-  if (XEN_BOUND_P(olen)) osamps = XEN_TO_C_INT_OR_ELSE(olen, 0); else osamps = mus_sound_frames(infile);
   mus_mix(outfile, infile, ostart, osamps, istart, mx1, envs1);
   if (envs1) 
     {

@@ -1800,6 +1800,7 @@
 (hey "  #define DEFINE_ULONG(Name, Value) rb_define_global_const(Name, C_TO_XEN_ULONG(Value))~%")
 (hey "#endif~%")
 (hey "~%")
+(hey "  g_type_init();~%~%")
 
 (for-each
  (lambda (val)

@@ -20,7 +20,7 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
   GtkWidget *ok_button;
 
   snd_error_dialog = gtk_dialog_new();
-  gtk_signal_connect(GTK_OBJECT(snd_error_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_snd_error), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(snd_error_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_snd_error), (gpointer)ss);
   gtk_window_set_title(GTK_WINDOW(snd_error_dialog), STR_Error);
   SG_MAKE_RESIZABLE(snd_error_dialog);
   set_background(snd_error_dialog, (ss->sgx)->basic_color);
@@ -30,7 +30,7 @@ static void create_snd_error_dialog(snd_state *ss, int popup)
 
   ok_button = gtk_button_new_with_label(STR_Ok);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(snd_error_dialog)->action_area), ok_button, FALSE, TRUE, 20);
-  gtk_signal_connect(GTK_OBJECT(ok_button), "clicked", GTK_SIGNAL_FUNC(dismiss_snd_error), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(ok_button), "clicked", GTK_SIGNAL_FUNC(dismiss_snd_error), (gpointer)ss);
   set_pushed_button_colors(ok_button, ss);
   gtk_widget_show(ok_button);
   snd_error_history = make_scrolled_text(ss, GTK_DIALOG(snd_error_dialog)->vbox, FALSE, NULL, NULL);
@@ -122,7 +122,7 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
   if (!yes_or_no_dialog)
     {
       yes_or_no_dialog = gtk_dialog_new();
-      gtk_signal_connect(GTK_OBJECT(yes_or_no_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_yes_or_no_dialog), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(yes_or_no_dialog), "delete_event", GTK_SIGNAL_FUNC(delete_yes_or_no_dialog), (gpointer)ss);
       gtk_window_set_title(GTK_WINDOW(yes_or_no_dialog), STR_Big_Trouble);
       SG_MAKE_RESIZABLE(yes_or_no_dialog);
       set_background(yes_or_no_dialog, (ss->sgx)->basic_color);
@@ -134,8 +134,8 @@ int snd_yes_or_no_p(snd_state *ss, const char *format, ...)
       no_button = gtk_button_new_with_label(STR_No);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(yes_or_no_dialog)->action_area), yes_button, FALSE, TRUE, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(yes_or_no_dialog)->action_area), no_button, FALSE, TRUE, 10);
-      gtk_signal_connect(GTK_OBJECT(yes_button), "clicked", GTK_SIGNAL_FUNC(yes_callback), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(no_button), "clicked", GTK_SIGNAL_FUNC(no_callback), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(yes_button), "clicked", GTK_SIGNAL_FUNC(yes_callback), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(no_button), "clicked", GTK_SIGNAL_FUNC(no_callback), (gpointer)ss);
       set_pushed_button_colors(no_button, ss);
       set_pushed_button_colors(yes_button, ss);
       gtk_widget_show(yes_button);

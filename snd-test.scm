@@ -28,7 +28,7 @@
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
 
-;;; redefine if for tracing and so on
+;;; redefine if for tracing and so on (backtrace is sometimes very confused)
 ;(define-syntax IF
 ;  (syntax-rules ()
 ;    ((IF <form1> <form2>) (begin <form2>))
@@ -2440,12 +2440,12 @@
       (set! (graph-time?) #t)
       (graph '(0 0 1 1 2 0))
       (update-lisp-graph)
-      (graph #(0 0 1 1 2 0))
+      (graph '#(0 0 1 1 2 0))
       (do ((i 0 (1+ i))) 
 	  ((= i 32)) 
-	(graph #(0 1 2)) 
-	(graph (list #(0 1 2) #(3 2 1) #(1 2 3)))
-	(graph (list #(0 1 2) #(3 2 1))))
+	(graph '#(0 1 2)) 
+	(graph (list '#(0 1 2) '#(3 2 1) '#(1 2 3)))
+	(graph (list '#(0 1 2) '#(3 2 1))))
       (IF (= (transform-samples-size) 0) (snd-display ";graph-transform? transform-samples-size ~A?" (transform-samples-size)))
       (update-transform)
       (peaks "tmp.peaks")
@@ -4244,7 +4244,7 @@
 	(IF (equal? v4 v1) (snd-display ";len diff vct equal? ~A ~A" v4 v1)))
       (vct-set! vlst 1 .1)
       (IF (not (feql (vct->list vlst) (list 0.0 0.1 0.0))) (snd-display ";vct->list: ~A?" (vct->list vlst)))
-      (let* ((vect #(0 1 2 3))
+      (let* ((vect '#(0 1 2 3))
 	     (v2 (vector->vct vect))
 	     (v3 v2)
 	     (str (format #f "~A" v2)))
@@ -6685,7 +6685,8 @@
 	  (vector-set! vf1 0 e0)
 	  (mus-mix "fmv.snd" "fmv1.snd" 0 12 0 (make-mixer 1 1.0) vf)
 	  (file->array "fmv.snd" 0 0 12 v0)
-	  (IF (or (fneq (vct-ref v0 0) .4) (fneq (vct-ref v0 3) .360) (fneq (vct-ref v0 9) .28)) (snd-display ";mus-mix(env): ~A?" v0)))
+	  (IF (or (fneq (vct-ref v0 0) .4) (fneq (vct-ref v0 3) .360) (fneq (vct-ref v0 9) .28)) (snd-display ";mus-mix(env): ~A?" v0))
+	  (mus-mix "fmv.snd" "fmv2.snd" 0 12 0 (make-mixer 2 1.0 1.0 1.0 1.0) vf)) ; clm2xen should protect us here
 	(let ((vf (make-vector 2))
 	      (vf1 (make-vector 2))
 	      (vf2 (make-vector 2)))
@@ -9802,8 +9803,8 @@
 	  (add-hook! lisp-graph-hook 
 		     (lambda (snd chn) 
 		       (if (> (random 1.0) .5) 
-			   (graph #(0 1 2)) 
-			   (graph (list #(0 1 2) #(3 2 0))))))
+			   (graph '#(0 1 2)) 
+			   (graph (list '#(0 1 2) '#(3 2 0))))))
 
 	  (do ((i 0 (1+ i)))
 	      ((= i (max-sounds)))
@@ -10371,9 +10372,9 @@
 	(IF (fneq (y-zoom-slider id 0) .5) (snd-display ";set y-zoom-slider: ~A?" (y-zoom-slider id 0)))
 	(let ((vals (channel-amp-envs "oboe.snd" 0 10)))
 	  (if (not (equal? vals
-			   (list #(-4.8828125e-4 -0.104156494140625 -0.125213623046875 -0.1356201171875 -0.138916015625 
+			   (list '#(-4.8828125e-4 -0.104156494140625 -0.125213623046875 -0.1356201171875 -0.138916015625 
 				   -0.14093017578125 -0.14093017578125 -0.131439208984375 -0.11248779296875 -0.080047607421875) 
-				 #(0.0 0.10955810546875 0.130706787109375 0.14068603515625 0.141204833984375 0.147247314453125 
+				 '#(0.0 0.10955810546875 0.130706787109375 0.14068603515625 0.141204833984375 0.147247314453125 
                                    0.145904541015625 0.140289306640625 0.126861572265625 0.08172607421875))))
 	      (snd-display ";channel-amp-envs: ~A?" vals)))
 
@@ -11252,7 +11253,7 @@
 	(draw-line 100 100 200 200 ind 0)
 	(draw-dot 300 300 10 ind 0)
 	(draw-string "hiho" 20 20 ind 0)
-	(draw-dots #(25 25 50 50 100 100) 10 ind 0)
+	(draw-dots '#(25 25 50 50 100 100) 10 ind 0)
 	(-> 100 50 10 ind 0)
 	(fill-rectangle 20 20 100 100 ind 0)
 	(make-bezier 0 0 20 20 40 30 60 10 10)
@@ -14784,7 +14785,12 @@ EDITS: 4
 		(IF (or (not (= 0 (car val)))
 			(not (string=? (cadr val) "hiho")))
 		    (snd-display "XFindContext: ~A" val)))
-	      (|XDeleteContext dpy 123 xid))
+	      (|XDeleteContext dpy 123 xid)
+	      (|XStoreBytes dpy "hiho" 4)
+	      (IF (not (string=? (|XFetchBytes dpy) "hiho")) (snd-display ";XStoreBytes: ~A" (|XFetchBytes dpy)))
+	      (|XStoreBuffer dpy "hiho" 4 1)
+	      (IF (not (string=? (|XFetchBuffer dpy 1) "hiho")) (snd-display ";XStoreBuffer: ~A" (|XFetchBuffer dpy)))
+	      )
 
 
 	    ;; ---------------- Xt tests ----------------
@@ -15094,9 +15100,57 @@ EDITS: 4
 		(|XGetPixel before 1 1)
 		(|XPutImage dpy (list 'Window (cadr rotpix)) gc before 0 0 0 0 10 10)
 		(|XAddPixel before 1)
+		(let ((i1 (|XGetImage dpy (list 'Window (cadr pix)) 0 0 10 10 |AllPlanes |XYPixmap))
+		      (attr (|XpmAttributes))
+		      (vals (|XtGetValues (cadr (main-widgets)) (list |XmNcolormap 0 |XmNdepth 0)))
+		      (sym (|XpmColorSymbol "basiccolor" #f (snd-pixel (basic-color)))))
+		  (set! (|visual attr) vis)
+		  (IF (not (equal? vis (|visual attr))) (snd-display ";visual xpm attr: ~A" (|visual attr)))
+		  (set! (|colorsymbols attr) sym)
+		  (set! (|numsymbols attr) 1)
+		  (IF (not (equal? 1 (|numsymbols attr))) (snd-display ";numsymbols xpm attr: ~A" (|numsymbols attr)))
+		  (set! (|depth attr) (list-ref vals 3))
+		  (IF (not (equal? (list-ref vals 3) (|depth attr))) (snd-display ";depth xpm attr: ~A" (|depth attr)))
+		  (set! (|colormap attr) (list-ref vals 1))
+		  (IF (not (equal? (list-ref vals 1) (|colormap attr))) (snd-display ";colormap xpm attr: ~A" (|colormap attr)))
+		  (set! (|valuemask attr) (logior |XpmColorSymbols |XpmDepth |XpmColormap |XpmVisual))
+		  (IF (not (= (|valuemask attr) (logior |XpmColorSymbols |XpmDepth |XpmColormap |XpmVisual)))
+		      (snd-display ";valuemask: ~A" (|valuemask attr)))
+		  (let ((err (|XpmCreatePixmapFromData dpy win 
+						       (list "16 14 6 1"
+							     " 	c None s None"
+							     ".	c gray50"
+							     "X	c black"
+							     "o	c white"
+							     "O	c yellow"
+							     "-      c ivory2 s basiccolor"
+							     "------.XXX.-----"
+							     "-----X.ooo.X----"
+							     "----..oXXXo..---"
+							     "----XoX...XoX---"
+							     "----XoX.--XoX.--"
+							     "----XoX.--XoX.--"
+							     "---XXXXXXXXXXX--"
+							     "---XOOOOOOOOOX.-"
+							     "---XO.......OX.-"
+							     "---XOOOOOOOOOX.-"
+							     "---XO.......OX.-"
+							     "---XOOOOOOOOOX.-"
+							     "---XXXXXXXXXXX.-"
+							     "----...........-")
+						       attr)))
+		    (IF (or (not (= (car err) |XpmSuccess))
+			    (not (|Pixmap? (cadr err))))
+			(snd-display ";XpmCreatePixmapFromData: ~A" err)))
+		  (|XDestroyImage i1))
 		(|XDestroyImage before)
 		(|XFreePixmap dpy pix)
 		(|XVisualIDFromVisual vis)
+		(|XLockDisplay dpy)
+		(|XUnlockDisplay dpy)
+		(let ((keys (|XGetKeyboardMapping dpy 40 1)))
+		  (IF (not (equal? keys (list (list 'KeySym 100) (list 'KeySym 68))))
+		      (snd-display ";XGetKeyboardMapping: ~A" keys)))
 		))
 
 	    (let* ((gc (car (snd-gcs)))
@@ -15451,6 +15505,9 @@ EDITS: 4
 	      (|XmTextCopy txt current-time)
 	      (|XmTextSetInsertionPosition txt 8)
 	      (|XmTextPaste txt)
+	      (let ((dest (|XmGetDestination (|XtDisplay (cadr (main-widgets))))))
+		(IF (not (equal? txt dest)) (snd-display ";XmGetDestination: ~A (~A)" dest txt)))
+	      (|XmRedisplayWidget txt)
 	      (let ((val (|XmTextGetString txt)))
 		(IF (not (string=? val "01234567189")) (snd-display ";XmTextCopy and Paste: ~A" val)))
 	      (|XmTextFieldSetSelection txtf 1 2 current-time)
@@ -15567,6 +15624,12 @@ EDITS: 4
 						      |XmNrightAttachment     |XmATTACH_FORM
 						      |XmNtopAttachment       |XmATTACH_WIDGET
 						      |XmNtopWidget           spn
+						      |XmNbottomAttachment    |XmATTACH_NONE)))
+		   (scl (|XtCreateManagedWidget "scl" |xmScaleWidgetClass frm
+						(list |XmNleftAttachment      |XmATTACH_FORM
+						      |XmNrightAttachment     |XmATTACH_FORM
+						      |XmNtopAttachment       |XmATTACH_WIDGET
+						      |XmNtopWidget           cmd
 						      |XmNbottomAttachment    |XmATTACH_FORM)))
 		   (toggled 0))
 	      (|XmMainWindowSetAreas mnw #f box #f #f spn)
@@ -15603,7 +15666,23 @@ EDITS: 4
 	      
 	      (|XmContainerCut box current-time)
 	      (|XmContainerCopy box current-time)
-	      (|XmContainerPaste box))
+	      (|XmContainerPaste box)
+	      
+	      (|XmScaleSetValue scl 25)
+	      (IF (not (= (|XmScaleGetValue scl) 25)) (snd-display ";XmScaleSetValue: ~A" (|XmScaleGetValue scl)))
+	      (IF (|XmGetTearOffControl (car (menu-widgets))) (snd-display ";XmGetTearOffControl: ~A" (|XmGetTearOffControl (car (menu-widgets)))))
+	      (let ((children (cadr (|XtGetValues scl (list |XmNchildren 0)))))
+		(for-each 
+		 (lambda (w)
+		   (let ((name (|XtName w)))
+		     (if (and (|XmIsSeparatorGadget w)
+			      (or (string=? name "BigTic")
+				  (string=? name "MedTic")
+				  (string=? name "SmallTic")))
+			 (|XtDestroyWidget w))))
+		 children))
+	      (|XmScaleSetTicks scl 5 2 0 10 5 0)
+	      )
 	    
 	    (let* ((shell (cadr (main-widgets)))
 		   (dpy (|XtDisplay shell))
@@ -15863,7 +15942,7 @@ EDITS: 4
 		         |XtIsComposite |XtIsConstraint |XtIsShell |XtIsOverrideShell |XtIsWMShell |XtIsVendorShell
 		         |XtIsTransientShell |XtIsTopLevelShell |XtIsApplicationShell |XtIsSessionShell |XtMapWidget
 		         |XtUnmapWidget |XLoadQueryFont |XQueryFont |XGetMotionEvents |XDeleteModifiermapEntry
-		         |XGetModifierMapping |XInsertModifiermapEntry |XNewModifiermap |XCreateImage |XInitImage |XGetImage
+		         |XGetModifierMapping |XInsertModifiermapEntry |XNewModifiermap |XCreateImage |XGetImage
 		         |XGetSubImage |XOpenDisplay |XFetchBytes |XFetchBuffer |XGetAtomName |XDisplayName |XUniqueContext
 		         |XKeysymToString |XSynchronize |XSetAfterFunction |XInternAtom |XCopyColormapAndFree |XCreateColormap
 		         |XCreatePixmapCursor |XCreateGlyphCursor |XCreateFontCursor |XLoadFont |XCreateGC |XFlushGC
@@ -16087,7 +16166,7 @@ EDITS: 4
 			   (lambda () (n arg))
 			   (lambda args (car args))))
 		  xm-procs1))
-	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  #(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
+	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 		     (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() 12345678901234567890))
 	      
 	      ;; ---------------- 2 Args
@@ -16101,9 +16180,9 @@ EDITS: 4
 			      (lambda () (n arg1 arg2))
 			      (lambda args (car args))))
 		     xm-procs2))
-		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
+		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) '#(0 1) 3/4 
 			(sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() 12345678901234567890)))
-	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
+	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) '#(0 1) 3/4 
 		     (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() 12345678901234567890))
 	      
 	      (if all-args
@@ -16122,9 +16201,9 @@ EDITS: 4
 				       (lambda () (n arg1 arg2 arg3))
 				       (lambda args (car args))))
 			      xm-procs3))
-			   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :start -1 0 #f #t '() 12345678901234567890)))
-			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0 #f #t '() 12345678901234567890)))
-		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890))
+			   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) :start -1 0 #f #t '() 12345678901234567890)))
+			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0 #f #t '() 12345678901234567890)))
+		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890))
 		    
 		    ;; ---------------- 4 Args
 		    (for-each 
@@ -16141,10 +16220,10 @@ EDITS: 4
 					  (lambda () (n arg1 arg2 arg3 arg4))
 					  (lambda args (car args))))
 				 xm-procs4))
-			      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :start -1 0 #f #t '() 12345678901234567890)))
-			   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0 #f #t '() 12345678901234567890)))
-			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890)))
-		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890))
+			      (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) :start -1 0 #f #t '() 12345678901234567890)))
+			   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0 #f #t '() 12345678901234567890)))
+			(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890)))
+		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890))
 		    ))
 	      
 	      (let ((struct-accessors (list  |pixel |red |green |blue |flags |pad |x |y |width |height |angle1 |angle2
@@ -16546,7 +16625,7 @@ EDITS: 4
 				(IF (not (eq? tag 'wrong-type-arg))
 				    (snd-display ";vct 0 wrong-type-arg ~A: ~A ~A" n tag arg))))
 			    (list make-vct vct-copy vct-length vct->list vct-peak)))
-		(list (current-module) "hiho" (sqrt -1.0) 1.5 (list 1 0) #(0 1)))
+		(list (current-module) "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1)))
 
       (for-each (lambda (arg1)
 		  (for-each (lambda (arg2)
@@ -16561,8 +16640,8 @@ EDITS: 4
 							 (eq? tag 'mus-error)))
 						(snd-display ";vct 1 wrong-whatever ~A: ~A ~A ~A" n tag arg1 arg2))))
 					(list vct-add! vct-subtract! vct-multiply! vct-ref vct-scale! vct-fill! vct-do! vcts-do! vct-map! vcts-map!)))
-			    (list (current-module) "hiho" (sqrt -1.0) 1.5 (list 1 0) #(0 1))))
-		  (list (current-module) "hiho" (sqrt -1.0) 1.5 (list 1 0) #(0 1)))
+			    (list (current-module) "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1))))
+		  (list (current-module) "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1)))
 
       (for-each (lambda (arg)
 		  (for-each (lambda (n)
@@ -16574,7 +16653,7 @@ EDITS: 4
 				(IF (not (eq? tag 'wrong-type-arg))
 				    (snd-display ";vct 2 wrong-type-arg ~A: ~A" n tag))))
 			    (list vct-add! vct-subtract! vct-multiply! vct-ref vct-scale! vct-fill! vct-do! vct-map!)))
-		(list (current-module) "hiho" (sqrt -1.0) (list 1 0) #(0 1)))
+		(list (current-module) "hiho" (sqrt -1.0) (list 1 0) '#(0 1)))
 
         (let ((tag
 	       (catch #t
@@ -16608,7 +16687,7 @@ EDITS: 4
 				    sample->file? sawtooth-wave? sine-summation? square-wave? src? sum-of-cosines? table-lookup? 
 				    triangle-wave? two-pole? two-zero? wave-train? waveshape? color? mix-sample-reader? 
 				    sample-reader? track-sample-reader? vct? )))
-		(list (current-module) "hiho" (sqrt -1.0) 1.5 (list 1 0) #(0 1)))
+		(list (current-module) "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1)))
 	(gc)
 
 	(for-each (lambda (n)
@@ -17015,7 +17094,7 @@ EDITS: 4
 				    (set! ctr (+ ctr 1))))
 				(list play-region region-chans region-length region-maxamp region-sample 
 				      region-samples region-samples->vct region-srate forget-region))))
-		  (list (current-module) #(0 1) (sqrt -1.0) "hiho" (list 0 1)))
+		  (list (current-module) '#(0 1) (sqrt -1.0) "hiho" (list 0 1)))
 
         (let ((ctr 0))
 	  (for-each (lambda (n)
@@ -17182,8 +17261,8 @@ EDITS: 4
 	  (check-error-tag 'no-such-channel (lambda () (samples->vct 0 100 ind 1234)))
 	  (check-error-tag 'no-such-sound (lambda () (samples->sound-data 0 100 1234)))
 	  (check-error-tag 'no-such-channel (lambda () (samples->sound-data 0 100 ind 1234)))
-	  (check-error-tag 'no-such-sound (lambda () (graph #(0 1) "hi" 0 1 0 1 1234)))
-	  (check-error-tag 'no-such-channel (lambda () (graph #(0 1) "hi" 0 1 0 1 ind 1234)))
+	  (check-error-tag 'no-such-sound (lambda () (graph '#(0 1) "hi" 0 1 0 1 1234)))
+	  (check-error-tag 'no-such-channel (lambda () (graph '#(0 1) "hi" 0 1 0 1 ind 1234)))
 	  (set! (selection-member? #t) #f)
 	  (check-error-tag 'no-active-selection (lambda () (save-selection "/bad/baddy.snd")))
 	  (check-error-tag 'no-such-region (lambda () (save-region 1234 "/bad/baddy.snd")))
@@ -17302,7 +17381,7 @@ EDITS: 4
 		     (lambda () (n arg))
 		     (lambda args (car args))))
 	    procs1))
-	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  #(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
+	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 	       (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() 12345678901234567890))
 	(gc)
 
@@ -17319,9 +17398,9 @@ EDITS: 4
 		 ;(gc)
 		 )
 	       procs2))
-	    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
+	    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) '#(0 1) 3/4 
 		  (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() 12345678901234567890)))
-	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
+	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) '#(0 1) 3/4 
 	       (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() 12345678901234567890))
 	(gc)
 
@@ -17334,7 +17413,7 @@ EDITS: 4
 		     (lambda () (set! (n) arg))
 		     (lambda args (car args))))
 	    set-procs0))
-	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  #(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
+	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 	       (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() 12345678901234567890))
 	(gc)
 
@@ -17349,9 +17428,9 @@ EDITS: 4
 			(lambda () (set! (n arg1) arg2))
 			(lambda args (car args))))
 	       set-procs1))
-	    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
+	    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) '#(0 1) 3/4 
 		  (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() 12345678901234567890)))
-	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
+	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) '#(0 1) 3/4 
 	       (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() 12345678901234567890))
 	(gc)
 
@@ -17368,11 +17447,11 @@ EDITS: 4
 			   (lambda () (set! (n arg1 arg2) arg3))
 			   (lambda args (car args))))
 		  set-procs2))
-	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
+	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) '#(0 1) 3/4 
 		     (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() 12345678901234567890)))
-	    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
+	    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) '#(0 1) 3/4 
 		  (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() 12345678901234567890)))
-	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) #(0 1) 3/4 
+	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95) '#(0 1) 3/4 
 	       (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() 12345678901234567890))
 	(gc)
 
@@ -17393,9 +17472,9 @@ EDITS: 4
 				   (lambda () (n arg1 arg2 arg3))
 				   (lambda args (car args))))
 			  procs3))
-		       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :start -1 0 #f #t '() 12345678901234567890)))
-		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0 #f #t '() 12345678901234567890))))
-	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890))
+		       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) :start -1 0 #f #t '() 12345678901234567890)))
+		    (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) :phase -1 0 #f #t '() 12345678901234567890))))
+	       (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) :channels -1 0 #f #t '() 12345678901234567890))
 	      (gc)
 
 	      ;; ---------------- set! 3 Args

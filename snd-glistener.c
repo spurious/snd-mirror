@@ -418,8 +418,8 @@ GtkWidget *snd_entry_new(snd_state *ss, GtkWidget *container, int with_white_bac
   gtk_box_pack_start(GTK_BOX(container), text, TRUE, TRUE, 2);
   if (with_white_background) set_background(text, (ss->sgx)->white);
   gtk_widget_show(text);
-  gtk_signal_connect(GTK_OBJECT(text), "enter_notify_event", GTK_SIGNAL_FUNC(mouse_enter_text_callback), (gpointer)ss);
-  gtk_signal_connect(GTK_OBJECT(text), "leave_notify_event", GTK_SIGNAL_FUNC(mouse_leave_text_callback), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(text), "enter_notify_event", GTK_SIGNAL_FUNC(mouse_enter_text_callback), (gpointer)ss);
+  SG_SIGNAL_CONNECT(GTK_OBJECT(text), "leave_notify_event", GTK_SIGNAL_FUNC(mouse_leave_text_callback), (gpointer)ss);
   return(text);
 }
 
@@ -436,12 +436,12 @@ static void make_command_widget(snd_state *ss, int height)
 	gtk_paned_add2(GTK_PANED(SOUND_PANE(ss)), frame);
       else gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), frame);
       listener_text = make_scrolled_text(ss, frame, TRUE, NULL, NULL);
-      gtk_signal_connect(GTK_OBJECT(listener_text), "key_press_event", GTK_SIGNAL_FUNC(listener_key_press), (gpointer)ss);
-      gtk_signal_connect_after(GTK_OBJECT(listener_text), "key_press_event", GTK_SIGNAL_FUNC(check_parens), (gpointer)ss);
-      gtk_signal_connect(GTK_OBJECT(listener_text), "button_press_event", GTK_SIGNAL_FUNC(listener_button_press), (gpointer)ss);
-      /* gtk_signal_connect_after(GTK_OBJECT(listener_text), "button_press_event", GTK_SIGNAL_FUNC(after_listener_button_press), (gpointer)ss); */
-      gtk_signal_connect(GTK_OBJECT(listener_text), "enter_notify_event", GTK_SIGNAL_FUNC(listener_focus_callback), NULL);
-      gtk_signal_connect(GTK_OBJECT(listener_text), "leave_notify_event", GTK_SIGNAL_FUNC(listener_unfocus_callback), NULL);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(listener_text), "key_press_event", GTK_SIGNAL_FUNC(listener_key_press), (gpointer)ss);
+      SG_SIGNAL_CONNECT_AFTER(GTK_OBJECT(listener_text), "key_press_event", GTK_SIGNAL_FUNC(check_parens), (gpointer)ss);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(listener_text), "button_press_event", GTK_SIGNAL_FUNC(listener_button_press), (gpointer)ss);
+      /* SG_SIGNAL_CONNECT_AFTER(GTK_OBJECT(listener_text), "button_press_event", GTK_SIGNAL_FUNC(after_listener_button_press), (gpointer)ss); */
+      SG_SIGNAL_CONNECT(GTK_OBJECT(listener_text), "enter_notify_event", GTK_SIGNAL_FUNC(listener_focus_callback), NULL);
+      SG_SIGNAL_CONNECT(GTK_OBJECT(listener_text), "leave_notify_event", GTK_SIGNAL_FUNC(listener_unfocus_callback), NULL);
       ss->sgx->listener_pane = listener_text;
       SG_TEXT_INSERT(listener_text,
 		     (ss->sgx)->listener_fnt,
