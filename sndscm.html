@@ -272,6 +272,7 @@ instrument: bird { f: start f: dur f: freq f: freq-skew f: amp freq-env amp-enve
   <em class=emdef>zc</em> time dur freq amp length1 length2 feedback
   <em class=emdef>zn</em> time dur freq amp length1 length2 feedforward
   <em class=emdef>za</em> time dur freq amp length1 length2 feedback feedforward
+  <em class=emdef>bes-fm</em> beg dur freq amp ratio index
 </pre>
 <p>
 <b>fofins</b> is an implementation of FOF synthesis, taken originally from
@@ -346,6 +347,11 @@ based on Perry Cook's Scrubber.m.
 <p><b>fullmix</b> is a complicated way to mix stuff.  clm23.scm is a translation of
 the CLM test instruments in ug2.ins and ug3.ins.  It has some comments about
 the differences between the CL and Scheme instruments.
+</p>
+<p>
+<b>bes-fm</b> is J1(J1) essentially -- using the Bessel functions where FM uses sinusoids.
+The Bessel functions I0, Jn, and Yn are built-in; Kn and In are implemented in Scheme in snd-test.scm
+(or in CL in bessel.lisp).
 </p>
 <br>
 

@@ -165,9 +165,9 @@ AC_ARG_WITH(snd-as-widget,
 # standard libraries, header files, functions, OSS special cases
 #--------------------------------------------------------------------------------
 
-AC_CHECK_LIB(m,main)
-AC_CHECK_LIB(c,main)
-AC_CHECK_LIB(dl,main)
+# AC_CHECK_LIB(m,main)
+# AC_CHECK_LIB(c,main)
+# AC_CHECK_LIB(dl,main)
 LIBS=""
 
 AC_HEADER_DIRENT
@@ -218,6 +218,10 @@ AC_LINK_IFELSE(
 
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 
+AC_CHECK_LIB(m, jn, 
+  [AC_CHECK_LIB(m, yn, 
+    [AC_CHECK_LIB(m, lgamma,
+      [AC_CHECK_LIB(m, erf, [AC_DEFINE(HAVE_SPECIAL_FUNCTIONS)])])])])
 
 
 #--------------------------------------------------------------------------------
@@ -277,6 +281,7 @@ if test "$with_gsl" != yes; then
     	],
 	[AC_MSG_RESULT(no)])
 fi
+
 
 
 

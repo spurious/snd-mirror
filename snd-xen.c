@@ -2641,6 +2641,72 @@ static XEN g_fmod(XEN a, XEN b)
   return(C_TO_XEN_DOUBLE(fmod(XEN_TO_C_DOUBLE(a), XEN_TO_C_DOUBLE(b))));
 }
 
+#if HAVE_SPECIAL_FUNCTIONS
+static XEN g_j0(XEN x)
+{
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "j0", " a number");
+  return(C_TO_XEN_DOUBLE(j0(XEN_TO_C_DOUBLE(x))));
+}
+
+static XEN g_j1(XEN x)
+{
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "j1", " a number");
+  return(C_TO_XEN_DOUBLE(j1(XEN_TO_C_DOUBLE(x))));
+}
+
+static XEN g_jn(XEN order, XEN x)
+{
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, XEN_ARG_1, "jn", " an int");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, "jn", " a number");
+  return(C_TO_XEN_DOUBLE(jn(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
+}
+
+static XEN g_y0(XEN x)
+{
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "y0", " a number");
+  return(C_TO_XEN_DOUBLE(y0(XEN_TO_C_DOUBLE(x))));
+}
+
+static XEN g_y1(XEN x)
+{
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "y1", " a number");
+  return(C_TO_XEN_DOUBLE(y1(XEN_TO_C_DOUBLE(x))));
+}
+
+static XEN g_yn(XEN order, XEN x)
+{
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, XEN_ARG_1, "yn", " an int");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, "yn", " a number");
+  return(C_TO_XEN_DOUBLE(yn(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
+}
+
+static XEN g_erf(XEN x)
+{
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "erf", " a number");
+  return(C_TO_XEN_DOUBLE(erf(XEN_TO_C_DOUBLE(x))));
+}
+
+static XEN g_erfc(XEN x)
+{
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "erfc", " a number");
+  return(C_TO_XEN_DOUBLE(erfc(XEN_TO_C_DOUBLE(x))));
+}
+
+static XEN g_lgamma(XEN x)
+{
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "lgamma", " a number");
+  return(C_TO_XEN_DOUBLE(lgamma(XEN_TO_C_DOUBLE(x))));
+}
+
+#endif
+
+static XEN g_i0(XEN x)
+{
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "i0", " a number");
+  return(C_TO_XEN_DOUBLE(mus_bessi0(XEN_TO_C_DOUBLE(x))));
+}
+
+
 
 #ifdef XEN_ARGIFY_1
 #if HAVE_GUILE && HAVE_DLFCN_H
@@ -2808,6 +2874,19 @@ XEN_NARGIFY_2(g_fmod_w, g_fmod)
 XEN_NARGIFY_0(g_gc_off_w, g_gc_off)
 XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 
+#if HAVE_SPECIAL_FUNCTIONS
+XEN_NARGIFY_1(g_j0_w, g_j0)
+XEN_NARGIFY_1(g_j1_w, g_j1)
+XEN_NARGIFY_2(g_jn_w, g_jn)
+XEN_NARGIFY_1(g_y0_w, g_y0)
+XEN_NARGIFY_1(g_y1_w, g_y1)
+XEN_NARGIFY_2(g_yn_w, g_yn)
+XEN_NARGIFY_1(g_erf_w, g_erf)
+XEN_NARGIFY_1(g_erfc_w, g_erfc)
+XEN_NARGIFY_1(g_lgamma_w, g_lgamma)
+#endif
+XEN_NARGIFY_1(g_i0_w, g_i0)
+
 #else
 #if HAVE_GUILE && HAVE_DLFCN_H
 #define g_dlopen_w g_dlopen
@@ -2973,6 +3052,19 @@ XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 #define g_fmod_w g_fmod
 #define g_gc_off_w g_gc_off
 #define g_gc_on_w g_gc_on
+#if HAVE_SPECIAL_FUNCTIONS
+#define g_j0_w g_j0
+#define g_j1_w g_j1
+#define g_jn_w g_jn
+#define g_y0_w g_y0
+#define g_y1_w g_y1
+#define g_yn_w g_yn
+#define g_erf_w g_erf
+#define g_erfc_w g_erfc
+#define g_lgamma_w g_lgamma
+#endif
+#define g_i0_w g_i0
+
 #endif
 
 #if HAVE_STATIC_XM
@@ -3256,6 +3348,19 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE("snd-completion",        g_snd_completion_w,        1, 0, 0, "return completion of arg");
   /* XEN_DEFINE_PROCEDURE(S_clm_print,          g_clm_print,               0, 0, 1, H_clm_print); */
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds, S_setB S_just_sounds, g_set_just_sounds_w,  0, 0, 1, 0);
+
+#if HAVE_SPECIAL_FUNCTIONS
+  XEN_DEFINE_PROCEDURE("bes-j0", g_j0_w,     1, 0, 0, "j0");
+  XEN_DEFINE_PROCEDURE("bes-j1", g_j1_w,     1, 0, 0, "j1");
+  XEN_DEFINE_PROCEDURE("bes-jn", g_jn_w,     2, 0, 0, "jn");
+  XEN_DEFINE_PROCEDURE("bes-y0", g_y0_w,     1, 0, 0, "y0");
+  XEN_DEFINE_PROCEDURE("bes-y1", g_y1_w,     1, 0, 0, "y1");
+  XEN_DEFINE_PROCEDURE("bes-yn", g_yn_w,     2, 0, 0, "yn");
+  XEN_DEFINE_PROCEDURE("erf",    g_erf_w,    1, 0, 0, "erf");
+  XEN_DEFINE_PROCEDURE("erfc",   g_erfc_w,   1, 0, 0, "erfc");
+  XEN_DEFINE_PROCEDURE("lgamma", g_lgamma_w, 1, 0, 0, "lgamma");
+#endif
+  XEN_DEFINE_PROCEDURE("bes-i0", g_i0_w,     1, 0, 0, "i0");
 
 #if HAVE_GUILE
   #define H_during_open_hook S_during_open_hook " (fd name reason): called after file is opened, \

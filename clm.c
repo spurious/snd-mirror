@@ -6827,13 +6827,13 @@ static double mus_bessi0(Float x)
   return(res.val);
 }
 #else
-static double mus_bessi0(Float x)
+double mus_bessi0(Float x)
 { 
   if (x == 0.0) return(1.0);
   if (fabs(x) <= 15.0) 
     {
       Float z, denominator, numerator;
-      z = x*x;
+      z = x * x;
       numerator=(z * (z * (z * (z * (z * (z * (z * (z * (z * (z * (z * (z * (z * (z * 
 										  0.210580722890567e-22 + 0.380715242345326e-19) +
 									     0.479440257548300e-16) + 0.435125971262668e-13) +
@@ -6851,7 +6851,7 @@ static double mus_bessi0(Float x)
 }
 #endif
 
-static Float sqr(Float x) {return(x*x);}
+static Float sqr(Float x) {return(x * x);}
 
 Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float beta, Float *window)
 {

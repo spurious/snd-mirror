@@ -5439,9 +5439,9 @@
 (CFNC-260 "gint gtk_label_get_max_width_chars GtkLabel* label")
 (CFNC-260 "void gtk_list_store_insert_with_values GtkListStore* list_store GtkTreeIter* iter gint position ...")
 (CFNC-260 "void gtk_list_store_insert_with_valuesv GtkListStore* list_store GtkTreeIter* iter gint position gint* columns GValue* values gint n_values")
-;;; (CFNC-260 "void gtk_text_layout_get_iter_at_position GtkTextLayout* layout GtkTextIter* iter gint* trailing gint x gint y")
+;;; (CFNC-260 "void gtk_text_layout_get_iter_at_position GtkTextLayout* layout GtkTextIter* iter gint* [trailing] gint x gint y")
 ;;; apparently buggy
-(CFNC-260 "void gtk_text_view_get_iter_at_position GtkTextView* text_view GtkTextIter* iter gint* trailing gint x gint y")
+(CFNC-260 "void gtk_text_view_get_iter_at_position GtkTextView* text_view GtkTextIter* iter gint* [trailing] gint x gint y")
 
 (CFNC-260 "PangoAttribute* pango_attr_size_new_absolute int size")
 (CFNC-260 "void pango_font_description_set_absolute_size PangoFontDescription* desc double size")

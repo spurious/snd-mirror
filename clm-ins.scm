@@ -2760,3 +2760,21 @@ mjkoskin@sci.fi
     (fullmix "oboe.snd" 1 2 0 (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5)))))
 !#
 
+
+(define (bes-fm beg dur freq amp ratio index)
+  (let* ((st (inexact->exact (floor (* beg (mus-srate)))))
+	 (nd (+ st (inexact->exact (floor (* dur (mus-srate))))))
+	 (car-ph 0.0)
+	 (mod-ph 0.0)
+	 (car-incr (hz->radians freq))
+	 (mod-incr (* ratio car-incr))
+	 (ampenv (make-env :envelope '(0 0 25 1 75 1 100 0) :scaler amp :duration dur)))
+    (run
+     (lambda ()
+       (do ((i st (1+ i)))
+	   ((= i nd))
+	 (outa i (* (env ampenv) (bes-j1 car-ph)) *output*)
+	 (set! car-ph (+ car-ph (+ car-incr (* index (bes-j1 mod-ph)))))
+	 (set! mod-ph (+ mod-ph mod-incr)))))))
+
+;;; (with-sound (:statistics #t) (bes-fm 0 1 440 10.0 1.0 4.0))

@@ -434,7 +434,7 @@
 ;(rotate-phase (lambda (x) (- x))) reverses original (might want to write fftlen samps here)
 
 
-;;; -------- asymmetric FM with the I0 form
+;;; -------- asymmetric FM (bes-i0 case)
 
 (define* (make-asyfm #:key
 		     (frequency 440.0) (initial-phase 0.0)
@@ -483,29 +483,6 @@
 
 ;;; (let ((gen (make-asyfm :frequency 2000 :ratio .1))) (map-channel (lambda (n) (asyfm-J gen 0.0))))
 
-(define (I0 x)
-  (if (< (abs x) 3.75)
-      (let* ((y (expt (/ x 3.75) 2)))
-	(+ 1.0
-	   (* y (+ 3.5156229
-		   (* y (+ 3.0899424
-			   (* y (+ 1.2067492
-				   (* y (+ 0.2659732
-					   (* y (+ 0.360768e-1
-						   (* y 0.45813e-2)))))))))))))
-    (let* ((ax (abs x))
-	   (y (/ 3.75 ax)))
-      (* (/ (exp ax) (sqrt ax)) 
-	 (+ 0.39894228
-	    (* y (+ 0.1328592e-1
-		    (* y (+ 0.225319e-2
-			    (* y (+ -0.157565e-2
-				    (* y (+ 0.916281e-2
-					    (* y (+ -0.2057706e-1
-						    (* y (+ 0.2635537e-1
-							    (* y (+ -0.1647633e-1
-								    (* y 0.392377e-2))))))))))))))))))))
-
 (define (asyfm-I gen input)
   (let* ((freq (list-ref gen 0))
 	 (phase (asyfm-phase gen))
@@ -515,7 +492,7 @@
 	 (index (asyfm-index gen))
 	 (modphase (* ratio phase))
 	 (result (* (exp (- (* 0.5 index (+ r r1) (cos modphase))
-			    (* 0.5 (log (I0 (* index (+ r r1)))))))
+			    (* 0.5 (log (bess-i0 (* index (+ r r1)))))))
 		    (sin (+ phase (* 0.5 index (- r r1) (sin modphase)))))))
     (set! (asyfm-phase gen) (+ phase input freq))
     result))

@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO: gtk listener paren-matching is too subtle, and sometimes an extra paren is inserted at start of line
- */
-
 static GtkWidget *completion_dialog = NULL;
 static bool first_time = true;
 static GtkWidget *listener_text = NULL, *completion_list = NULL;
@@ -439,7 +436,7 @@ static void add_underline(int pos)
   buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text));
   gtk_text_buffer_get_iter_at_offset(buf, &start, pos);
   gtk_text_buffer_get_iter_at_offset(buf, &end, pos + 1);
-  if (!tag) tag = gtk_text_buffer_create_tag(buf, "underline", "underline", PANGO_UNDERLINE_SINGLE, NULL);
+  if (!tag) tag = gtk_text_buffer_create_tag(buf, "underline", "underline", PANGO_UNDERLINE_DOUBLE, NULL);
   gtk_text_buffer_apply_tag(buf, tag, &start, &end);
 }
 
@@ -450,11 +447,11 @@ static void remove_underline(int pos)
   buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text));
   gtk_text_buffer_get_iter_at_offset(buf, &start, pos);
   gtk_text_buffer_get_iter_at_offset(buf, &end, pos + 1);
-  if (!tag) tag = gtk_text_buffer_create_tag(buf, "underline", "underline", PANGO_UNDERLINE_SINGLE, NULL);
+  if (!tag) tag = gtk_text_buffer_create_tag(buf, "underline", "underline", PANGO_UNDERLINE_DOUBLE, NULL);
   gtk_text_buffer_remove_tag(buf, tag, &start, &end);
 }
 
-static gboolean listener_key_release(GtkWidget *w, GdkEventKey *event, gpointer data)
+static void check_parens(void)
 {
   int current_position, parens, pos;
   if (old_pos != -1)
@@ -478,6 +475,10 @@ static gboolean listener_key_release(GtkWidget *w, GdkEventKey *event, gpointer 
 	}
       g_free(fstr);
     }
+}
+static gboolean listener_key_release(GtkWidget *w, GdkEventKey *event, gpointer data)
+{
+  check_parens();
   return(false);
 }
 
@@ -633,6 +634,7 @@ static gboolean listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer
 	       S_listener_click_hook);
   }
   goto_listener();
+  check_parens();
   return(false);
 }
 

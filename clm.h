@@ -278,6 +278,7 @@ void mus_multiply_arrays(Float *data, Float *window, int len);
 void mus_rectangular_to_polar(Float *rl, Float *im, int size);
 void mus_polar_to_rectangular(Float *rl, Float *im, int size);
 Float mus_array_interp(Float *wave, Float phase, int size);
+double mus_bessi0(Float x);
 
 int mus_free(mus_any *ptr);
 char *mus_describe(mus_any *gen);

@@ -44,7 +44,7 @@ rm *.bbg
 rm *.bb
 rm *.da
 
-# gprof snd gmon.out > sndprof
+gprof snd gmon.out > sndprof
 
 make clean
 rm -f makefile

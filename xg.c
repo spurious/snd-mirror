@@ -24979,15 +24979,15 @@ GtkTreeIter* iter, gint position, gint* columns, GValue* values, gint n_values)"
 static XEN gxg_gtk_text_view_get_iter_at_position(XEN text_view, XEN iter, XEN trailing, XEN x, XEN y)
 {
   #define H_gtk_text_view_get_iter_at_position "void gtk_text_view_get_iter_at_position(GtkTextView* text_view, \
-GtkTextIter* iter, gint* trailing, gint x, gint y)"
+GtkTextIter* iter, gint* [trailing], gint x, gint y)"
+  gint ref_trailing;
   XEN_ASSERT_TYPE(XEN_GtkTextView__P(text_view), text_view, 1, "gtk_text_view_get_iter_at_position", "GtkTextView*");
   XEN_ASSERT_TYPE(XEN_GtkTextIter__P(iter), iter, 2, "gtk_text_view_get_iter_at_position", "GtkTextIter*");
-  XEN_ASSERT_TYPE(XEN_gint__P(trailing), trailing, 3, "gtk_text_view_get_iter_at_position", "gint*");
   XEN_ASSERT_TYPE(XEN_gint_P(x), x, 4, "gtk_text_view_get_iter_at_position", "gint");
   XEN_ASSERT_TYPE(XEN_gint_P(y), y, 5, "gtk_text_view_get_iter_at_position", "gint");
-  gtk_text_view_get_iter_at_position(XEN_TO_C_GtkTextView_(text_view), XEN_TO_C_GtkTextIter_(iter), XEN_TO_C_gint_(trailing), 
-                                     XEN_TO_C_gint(x), XEN_TO_C_gint(y));
-  return(XEN_FALSE);
+  gtk_text_view_get_iter_at_position(XEN_TO_C_GtkTextView_(text_view), XEN_TO_C_GtkTextIter_(iter), &ref_trailing, XEN_TO_C_gint(x), 
+                                     XEN_TO_C_gint(y));
+  return(XEN_LIST_1(C_TO_XEN_gint(ref_trailing)));
 }
 static XEN gxg_pango_attr_size_new_absolute(XEN size)
 {
@@ -28368,7 +28368,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_label_get_max_width_chars, gxg_gtk_label_get_max_width_chars, 1, 0, 0, H_gtk_label_get_max_width_chars);
   XG_DEFINE_PROCEDURE(gtk_list_store_insert_with_values, gxg_gtk_list_store_insert_with_values, 3, 0, 0, H_gtk_list_store_insert_with_values);
   XG_DEFINE_PROCEDURE(gtk_list_store_insert_with_valuesv, gxg_gtk_list_store_insert_with_valuesv, 6, 0, 0, H_gtk_list_store_insert_with_valuesv);
-  XG_DEFINE_PROCEDURE(gtk_text_view_get_iter_at_position, gxg_gtk_text_view_get_iter_at_position, 5, 0, 0, H_gtk_text_view_get_iter_at_position);
+  XG_DEFINE_PROCEDURE(gtk_text_view_get_iter_at_position, gxg_gtk_text_view_get_iter_at_position, 4, 1, 0, H_gtk_text_view_get_iter_at_position);
   XG_DEFINE_PROCEDURE(pango_attr_size_new_absolute, gxg_pango_attr_size_new_absolute, 1, 0, 0, H_pango_attr_size_new_absolute);
   XG_DEFINE_PROCEDURE(pango_font_description_set_absolute_size, gxg_pango_font_description_set_absolute_size, 2, 0, 0, H_pango_font_description_set_absolute_size);
   XG_DEFINE_PROCEDURE(pango_layout_get_font_description, gxg_pango_layout_get_font_description, 1, 0, 0, H_pango_layout_get_font_description);
@@ -32390,10 +32390,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"07-Feb-05\")");
+      XEN_EVAL_C_STRING("(define xm-version \"13-Feb-05\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("07-Feb-05"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("13-Feb-05"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

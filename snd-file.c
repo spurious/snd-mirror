@@ -1130,21 +1130,6 @@ static void copy_chan_info(chan_info *ncp, chan_info *ocp)
   if (XEN_BOUND_P(ncp->cursor_proc)) 
     ncp->cursor_proc_loc = snd_protect(ncp->cursor_proc);
   else ncp->cursor_proc_loc = -1;
-  if (XEN_VECTOR_P(ocp->properties))
-    ncp->properties = XEN_VECTOR_REF(ocp->properties, 0);
-  else
-    {
-      if (XEN_LIST_P(ocp->properties))
-	{
-	  if (!(XEN_VECTOR_P(ncp->properties)))
-	    {
-	      ncp->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
-	      ncp->properties_loc = snd_protect(ncp->properties);
-	    }
-	  XEN_VECTOR_SET(ncp->properties, 0, ocp->properties);
-	}
-      else ncp->properties = XEN_FALSE;
-    }
 }
 
 static void copy_snd_info(snd_info *nsp, snd_info *osp)
@@ -1170,21 +1155,6 @@ static void copy_snd_info(snd_info *nsp, snd_info *osp)
   nsp->search_proc = osp->search_proc;
   if (XEN_BOUND_P(nsp->search_proc)) 
     nsp->search_proc_loc = snd_protect(nsp->search_proc);
-  if (XEN_VECTOR_P(osp->properties))
-    nsp->properties = XEN_VECTOR_REF(osp->properties, 0);
-  else
-    {
-      if (XEN_LIST_P(osp->properties))
-	{
-	  if (!(XEN_VECTOR_P(nsp->properties)))
-	    {
-	      nsp->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
-	      nsp->properties_loc = snd_protect(nsp->properties);
-	    }
-	  XEN_VECTOR_SET(nsp->properties, 0, osp->properties);
-	}
-      else nsp->properties = XEN_FALSE;
-    }
 }
 
 static snd_info *sound_store_chan_info(snd_info *sp)

@@ -44,7 +44,7 @@
  *   call-with-current-continuation call/cc
  *   if begin or and not let let* set! cond do define case[int keys]
  *   * + - / > < >= <= = max min 1+ 1-
- *   sin cos tan abs log exp expt acos asin atan sqrt
+ *   sin cos tan abs log exp expt acos asin atan sqrt cosh sinh tanh j0 j1 jn y0 y1 yn i0 erf erfc lgamma asinh acosh atanh
  *   boolean? exact? inexact? integer? real? number? quote
  *   odd? even? zero? positive? negative? eq? eqv? equal? symbol? symbol->string
  *   round truncate floor ceiling exact->inexact inexact->exact
@@ -4832,6 +4832,8 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
   return(package(prog, R_FLOAT, CName ## _f, descr_ ##CName ## _f, args, 1)); \
 }
 
+/* only collapsible funcs here -- if constant arg, constant val (not random!) */
+
 FL_OP(mus_radians_to_hz)
 FL_OP(mus_hz_to_radians)
 FL_OP(mus_degrees_to_radians)
@@ -4841,47 +4843,29 @@ FL_OP(mus_linear_to_db)
 FL_OP(sin)
 FL_OP(cos)
 FL_OP(tan)
-/* only collapsible funcs here -- if constant arg, constant val (not random!) */
+FL_OP(atan)
+FL_OP(asin)
+FL_OP(acos)
+FL_OP(sqrt)
+FL_OP(log)
+FL_OP(exp)
+FL_OP(cosh)
+FL_OP(sinh)
+FL_OP(tanh)
+FL_OP(acosh)
+FL_OP(asinh)
+FL_OP(atanh)
 
-#define FL_OP_C(CName) \
-static void CName ## _f(int *args, ptree *pt) {FLOAT_RESULT = CName(FLOAT_ARG_1);} \
-static char *descr_ ## CName ## _f(int *args, ptree *pt)  \
-{ \
-  return(mus_format( FLT_PT " = " #CName "(" FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1)); \
-} \
-static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
-{ \
-  if (current_optimization < COMPLEX_OK) return(NULL); \
-  if (prog->constants == 1) \
-    { \
-      if (args[1]->type == R_INT) \
-	return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, CName((Double)(prog->ints[args[1]->addr]))), R_CONSTANT)); \
-      else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, CName(prog->dbls[args[1]->addr])), R_CONSTANT)); \
-    } \
-  if (args[1]->type == R_INT) single_to_float(prog, args, 1); \
-  return(package(prog, R_FLOAT, CName ## _f, descr_ ##CName ## _f, args, 1)); \
-}
-
-FL_OP_C(asin)
-FL_OP_C(acos)
-FL_OP_C(sqrt)
-FL_OP_C(log)
-FL_OP_C(exp)
-
-static void atan1_f(int *args, ptree *pt) {FLOAT_RESULT = atan(FLOAT_ARG_1);}
-static char *descr_atan1_f(int *args, ptree *pt) {return(mus_format( FLT_PT " = atan(" FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1));}
-static xen_value *atan1_1(ptree *prog, xen_value **args, int num_args)
-{
-  if (current_optimization < COMPLEX_OK) return(NULL);
-  if (prog->constants == 1)
-    {
-      if (args[1]->type == R_INT)
-	return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, atan((Double)(prog->ints[args[1]->addr]))), R_CONSTANT));
-      else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, atan(prog->dbls[args[1]->addr])), R_CONSTANT));
-    }
-  if (args[1]->type == R_INT) single_to_float(prog, args, 1);
-  return(package(prog, R_FLOAT, atan1_f, descr_atan1_f, args, 1));
-}
+#if HAVE_SPECIAL_FUNCTIONS
+  FL_OP(erf)
+  FL_OP(lgamma)
+  FL_OP(erfc)
+  FL_OP(j0)
+  FL_OP(j1)
+  FL_OP(y0)
+  FL_OP(y1)
+#endif
+FL_OP(mus_bessi0)
 
 static void atan2_f(int *args, ptree *pt) {FLOAT_RESULT = atan2(FLOAT_ARG_1, FLOAT_ARG_2);}
 static char *descr_atan2_f(int *args, ptree *pt) 
@@ -4891,7 +4875,6 @@ static char *descr_atan2_f(int *args, ptree *pt)
 static xen_value *atan2_1(ptree *prog, xen_value **args, int num_args)
 {
   xen_value *temp;
-  if (current_optimization < COMPLEX_OK) return(NULL);
   if (args[1]->type == R_INT)
     {
       temp = args[1];
@@ -4909,6 +4892,44 @@ static xen_value *atan2_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_FLOAT, atan2_f, descr_atan2_f, args, 2));
 }
 
+#if HAVE_SPECIAL_FUNCTIONS
+static void jn_f(int *args, ptree *pt) {FLOAT_RESULT = jn(FLOAT_ARG_1, FLOAT_ARG_2);}
+static char *descr_jn_f(int *args, ptree *pt) 
+{
+  return(mus_format( FLT_PT " = jn(" INT_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2));
+}
+static xen_value *jn_1(ptree *prog, xen_value **args, int num_args)
+{
+  xen_value *temp;
+  if (args[2]->type == R_INT)
+    {
+      temp = args[2];
+      args[2] = convert_int_to_dbl(prog, args[2]);
+      FREE(temp);
+    }
+  if (prog->constants == 2)
+    return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, jn(prog->ints[args[1]->addr], prog->dbls[args[2]->addr])), R_CONSTANT));
+  return(package(prog, R_FLOAT, jn_f, descr_jn_f, args, 2));
+}
+static void yn_f(int *args, ptree *pt) {FLOAT_RESULT = yn(FLOAT_ARG_1, FLOAT_ARG_2);}
+static char *descr_yn_f(int *args, ptree *pt) 
+{
+  return(mus_format( FLT_PT " = yn(" INT_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2));
+}
+static xen_value *yn_1(ptree *prog, xen_value **args, int num_args)
+{
+  xen_value *temp;
+  if (args[2]->type == R_INT)
+    {
+      temp = args[2];
+      args[2] = convert_int_to_dbl(prog, args[2]);
+      FREE(temp);
+    }
+  if (prog->constants == 2)
+    return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, yn(prog->ints[args[1]->addr], prog->dbls[args[2]->addr])), R_CONSTANT));
+  return(package(prog, R_FLOAT, yn_f, descr_yn_f, args, 2));
+}
+#endif
 
 
 /* ---------------- round ---------------- */
@@ -9340,10 +9361,10 @@ static xen_value *null_p_1(ptree *prog, xen_value **args, int num_args)
   return(make_xen_value(R_BOOL, add_int_to_ptree(prog, XEN_NULL_P(get_lst(prog, args))), R_CONSTANT));
 }
 
-static xen_value *atan_1(ptree *prog, xen_value **args, int num_args) 
+static xen_value *atanx_1(ptree *prog, xen_value **args, int num_args) 
 {
   if (num_args == 1)
-    return(atan1_1(prog, args, num_args));
+    return(atan_1(prog, args, num_args));
   return(atan2_1(prog, args, num_args));
 }
 
@@ -10833,7 +10854,7 @@ static void init_walkers(void)
   INIT_WALKER("gcd", make_walker(gcd_1, NULL, NULL, 0, UNLIMITED_ARGS, R_INT, true, 1, -R_NUMBER));
   INIT_WALKER("lcm", make_walker(lcm_1, NULL, NULL, 0, UNLIMITED_ARGS, R_INT, true, 1, -R_NUMBER));
   INIT_WALKER("expt", make_walker(expt_1, NULL, NULL, 2, 2, R_NUMBER, false, 2, R_NUMBER, R_NUMBER));
-  INIT_WALKER("atan", make_walker(atan_1, NULL, NULL, 1, 2, R_NUMBER, false, 2, R_NUMBER, R_NUMBER));
+  INIT_WALKER("atan", make_walker(atanx_1, NULL, NULL, 1, 2, R_NUMBER, false, 2, R_NUMBER, R_NUMBER));
   INIT_WALKER("sin", make_walker(sin_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER("cos", make_walker(cos_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER("tan", make_walker(tan_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
@@ -10844,6 +10865,24 @@ static void init_walkers(void)
   INIT_WALKER("asin", make_walker(asin_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER("acos", make_walker(acos_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER("sqrt", make_walker(sqrt_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("cosh", make_walker(cosh_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("sinh", make_walker(sinh_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("tanh", make_walker(tanh_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("acosh", make_walker(acosh_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("asinh", make_walker(asinh_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("atanh", make_walker(atanh_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("bes-i0", make_walker(mus_bessi0_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+#if HAVE_SPECIAL_FUNCTIONS
+  INIT_WALKER("bes-j0", make_walker(j0_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("bes-j1", make_walker(j1_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("bes-jn", make_walker(jn_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_INT, R_NUMBER));
+  INIT_WALKER("bes-y0", make_walker(y0_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("bes-y1", make_walker(y1_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("bes-yn", make_walker(yn_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_INT, R_NUMBER));
+  INIT_WALKER("erf", make_walker(erf_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("erfc", make_walker(erfc_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("lgamma", make_walker(lgamma_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+#endif
   INIT_WALKER("round", make_walker(round_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER("truncate", make_walker(truncate_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER("floor", make_walker(floor_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
