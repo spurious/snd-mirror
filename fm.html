@@ -362,8 +362,8 @@ sin A (or cos A) then add the two resulting spectra, and the (A + B) parts cance
 example:</p>
 <pre>
 (definstrument fm (beg end freq amp mc-ratio index cr0p cr1p md0p md1p)
-  (let ((cr0 (make-oscil :frequency (* freq mc-ratio) :initial-phase cr0p))
-        (cr1 (make-oscil :frequency (* freq mc-ratio) :initial-phase cr1p))
+  (let ((cr0 (make-oscil :frequency 0 :initial-phase cr0p))
+        (cr1 (make-oscil :frequency 0 :initial-phase cr1p))
         (md0 (make-oscil :frequency (* freq mc-ratio) :initial-phase md0p))
         (md1 (make-oscil :frequency (* freq mc-ratio) :initial-phase md1p))
         (am0 (make-oscil :frequency freq :initial-phase 0))
@@ -374,13 +374,7 @@ example:</p>
         (outa i (* amp (+ (* (oscil am0) (oscil cr0 (* fm-index (oscil md0))))
                           (* (oscil am1) (oscil cr1 (* fm-index (oscil md1)))))))))))
 
-(with-sound () (fm 0 10000 1000 .25 .1 1.0 0 (* .5 pi) (* .5 pi) (* .5 pi)))
-</pre>
-<p>(cr0p = 0 for sin in sin(sin), cr1p=(* .5 pi) for cos in cos(sin), md0p and md1p=(* .5 pi) so that both 
-will be sin upon integration -- we use cos*cos(sin)+sin*sin(sin) to cancel the upper sideband).
-The cancellation is nearly perfect in:</p>
-<pre>
-(with-sound () (fm 0 10000 1000 .25 .1 .1 0 (* .5 pi) (* .5 pi) (* .5 pi)))
+(with-sound () (fm 0 10000 1000 .25 .1 1.0 0 (* .5 pi) (* .5 pi) 0))
 </pre>
 <p>Palamin et al in "A Method of Generating and Controlling Musical Asymmetrical Spectra" started at 
 the same point (the expansion of simple FM), added a factor rn to each sideband, and then worked 

@@ -379,9 +379,10 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+18-Jun:  ssb-fm in dsp.scm.\n\
 10-Jun:  gtk support in fft-menu.scm thanks to Kjetil\n\
          ssb-bank in dsp.scm.\n\
-9-Jun:   ssb-am in dsp.scm.\n\
+9-Jun:   ssb-am in CLM.\n\
 4-Jun:   added add-colormap, delete-colormap, colormap-size, colormap-name, changed colormap-ref\n\
          removed 2 previously built-in colormaps, added rainbow colormap, default colormap is 0\n\
 1-Jun:   read-ascii in examp.scm.\n\
@@ -389,9 +390,6 @@ void about_snd_help(void)
 25-May:  removed stop-playing-region-hook, stop-playing-channel-hook, before-apply-hook\n\
          added stop-function arg to play, play-and-wait, play-selection, play-region, add-player\n\
 21-May:  --with-doc-dir configuration switch.\n\
-16-May:  snd 7.4\n\
-6-May:   mono->stereo, mono-files->stereo, stereo->mono (extensions.scm).\n\
-         channel-variance etc in dsp.scm, taken from J Smith \"Mathematics of the DFT\"\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

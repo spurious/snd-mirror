@@ -31899,6 +31899,16 @@ EDITS: 2
        ;; this should be allowable at parse time
        ))))
 
+(define (ssb-fm-no-gen modsig)
+  (let* ((am0 (oscil (list-ref gen 0)))
+	 (am1 (oscil (list-ref gen 1)))
+	 (mod0 (hilbert-transform (list-ref gen 4) modsig))
+	 (mod1 (delay (list-ref gen 5) modsig))
+	 (car0 (oscil (list-ref gen 2) mod0))
+	 (car1 (oscil (list-ref gen 3) mod1)))
+    (+ (* am0 car0)
+       (* am1 car1))))
+
 (if (or full-test (= snd-test 22) (and keep-going (<= snd-test 22)))
     (begin
       
@@ -34819,7 +34829,7 @@ EDITS: 2
 		      (not (vequal v1 (vct 0.5 0.5 0.5))))
 		  (snd-display ";vct-map 1.0 0.5: ~A ~A" v0 v1)))
 
-	    (if (not (string=? (mus-decribe (make-frame)) "frame[1]: [0.000]")) (snd-display ";make-frame 0 args: ~A" (mus-describe (make-frame))))
+	    (if (not (string=? (mus-describe (make-frame)) "frame[1]: [0.000]")) (snd-display ";make-frame 0 args: ~A" (mus-describe (make-frame))))
 	    
 	    (set! (locsig-type) mus-interp-linear)
 	    (let ((v0 (make-vct 3))
@@ -36054,6 +36064,13 @@ EDITS: 2
 	      (if (not (= (vector-ref ivect 1) 2)) (snd-display ";no global set, ivect: ~A" (vector-ref ivect 1)))
 	      (set! (optimization) old-opt))
 	    ))
+
+      (let* ((mg (make-oscil 100.0))
+	     (gen (make-ssb-fm 1000))
+	     (ind (new-sound "tmp.snd" mus-next mus-bfloat 22050 1 :size 1000 :comment #f)))
+	(catch #t (lambda () (map-channel (lambda (y) (ssb-fm-no-gen gen (* .02 (oscil mg)))))) (lambda arg arg))
+	(close-sound ind))
+
       (run-hook after-test-hook 22)
       ))
 

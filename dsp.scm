@@ -1554,7 +1554,6 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; TODO: should some form of ssb-bank be moved into CLM?
 ;;; TODO: a channel (regularized) version of ssb-bank -- repitch-channel? (+ retime or whatever)
 ;;; TODO: a realtime interface to this -- a slider for pitch/bw etc
-;;; TODO: complex-data freq processing funcs
 ;;; TODO: run support for complex data? (what about generators?)
 
 #!
@@ -1568,3 +1567,23 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
     (src-sound (/ 1.0 factor))))
 !#
 
+
+;;; this might be better named "quasi-ssb-fm" -- cancellations are not perfect
+
+(define* (make-ssb-fm freq)
+  (list (make-oscil freq 0)
+	(make-oscil freq (* 0.5 pi))
+	(make-oscil 0 0)
+	(make-oscil 0 (* 0.5 pi))
+	(make-hilbert-transform 40)
+	(make-delay 40)))
+
+(define (ssb-fm gen modsig)
+  (let* ((am0 (oscil (list-ref gen 0)))
+	 (am1 (oscil (list-ref gen 1)))
+	 (mod0 (hilbert-transform (list-ref gen 4) modsig))
+	 (mod1 (delay (list-ref gen 5) modsig))
+	 (car0 (oscil (list-ref gen 2) mod0))
+	 (car1 (oscil (list-ref gen 3) mod1)))
+    (+ (* am0 car0)
+       (* am1 car1))))

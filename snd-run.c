@@ -2741,6 +2741,8 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
     args = XEN_CADR(form);
   else args = XEN_CDADR(form);
   if (!(XEN_LIST_P(args))) return(mus_format("can't handle non-explicit lambda args: %s", XEN_AS_STRING(args)));
+  if (num_args > XEN_LIST_LENGTH(args))
+    return(mus_format("too many args: %s", XEN_AS_STRING(args)));
   if (num_args == 0)
     {
       declarations = XEN_CADDR(form);
@@ -8858,7 +8860,14 @@ static xen_value *unwrap_constant_xen_object(ptree *prog, XEN form, const char *
   return(unwrap_xen_object_1(prog, form, origin, true));
 }
 
-static XEN get_lst(ptree *prog, xen_value **args) {return(prog->xens[args[1]->addr]);}
+static XEN get_lst(ptree *prog, xen_value **args) 
+{
+  if ((prog->xens) &&
+      (args[1]) &&
+      (args[1]->addr < prog->xen_ctr))
+    return(prog->xens[args[1]->addr]);
+  return(XEN_UNDEFINED);
+}
 
 static xen_value *car_1(ptree *prog, xen_value **args, int num_args) {return(unwrap_xen_object(prog, XEN_CAR(get_lst(prog, args)), "car"));}
 static xen_value *caar_1(ptree *prog, xen_value **args, int num_args) {return(unwrap_xen_object(prog, XEN_CAAR(get_lst(prog, args)), "caar"));}
