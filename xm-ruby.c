@@ -1188,6 +1188,17 @@
   XEN_NARGIFY_2(gxm_XmMultiListDeselectItem_w, gxm_XmMultiListDeselectItem)
   XEN_NARGIFY_3(gxm_XmMultiListDeselectItems_w, gxm_XmMultiListDeselectItems)
   XEN_NARGIFY_4(gxm_XmMultiListSelectItems_w, gxm_XmMultiListSelectItems)
+  XEN_NARGIFY_1(gxm_XmMultiListGetSelectedRows_w, gxm_XmMultiListGetSelectedRows)
+#endif
+#if HAVE_XmCreateTabStack
+  XEN_ARGIFY_4(gxm_XmCreateTabStack_w, gxm_XmCreateTabStack)
+  XEN_NARGIFY_1(gxm_XmIsTabStack_w, gxm_XmIsTabStack)
+  XEN_NARGIFY_1(gxm_XmTabStackGetSelectedTab_w, gxm_XmTabStackGetSelectedTab)
+  XEN_NARGIFY_2(gxm_XmTabStackSelectTab_w, gxm_XmTabStackSelectTab)
+#if HAVE_XmTabStackXYToWidget
+  XEN_NARGIFY_2(gxm_XmTabStackIndexToWidget_w, gxm_XmTabStackIndexToWidget)
+  XEN_NARGIFY_3(gxm_XmTabStackXYToWidget_w, gxm_XmTabStackXYToWidget)
+#endif
 #endif
 #if HAVE_XmCreateDataField
   XEN_NARGIFY_1(gxm_XmIsDataField_w, gxm_XmIsDataField)
@@ -1208,8 +1219,11 @@
   XEN_NARGIFY_2(gxm_XmDataFieldSetInsertionPosition_w, gxm_XmDataFieldSetInsertionPosition)
 #endif
 #if HAVE_XmCreateColumn
+  XEN_ARGIFY_4(gxm_XmCreateColumn_w, gxm_XmCreateColumn)
   XEN_NARGIFY_1(gxm_XmIsColumn_w, gxm_XmIsColumn)
+#if HAVE_XmColumnGetChildLabel
   XEN_NARGIFY_1(gxm_XmColumnGetChildLabel_w, gxm_XmColumnGetChildLabel)
+#endif
 #endif
 #if HAVE_XmCreateDropDown
   XEN_NARGIFY_1(gxm_XmIsDropDown_w, gxm_XmIsDropDown)
@@ -2557,10 +2571,24 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmMultiListDeselectItem, gxm_XmMultiListDeselectItem_w, 2, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmMultiListDeselectItems, gxm_XmMultiListDeselectItems_w, 3, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmMultiListSelectItems, gxm_XmMultiListSelectItems_w, 4, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmMultiListGetSelectedRows, gxm_XmMultiListGetSelectedRows_w, 1, 0, 0, NULL);
+#endif
+#if HAVE_XmCreateTabStack
+  XM_DEFINE_PROCEDURE(XmIsTabStack, gxm_XmIsTabStack_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmTabStackGetSelectedTab, gxm_XmTabStackGetSelectedTab_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmTabStackSelectTab, gxm_XmTabStackSelectTab_w, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmCreateTabStack, gxm_XmCreateTabStack_w, 3, 1, 0, H_XmCreateTabStack);
+#if HAVE_XmTabStackXYToWidget
+  XM_DEFINE_PROCEDURE(XmTabStackIndexToWidget, gxm_XmTabStackIndexToWidget_w, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmTabStackXYToWidget, gxm_XmTabStackXYToWidget_w, 3, 0, 0, NULL);
+#endif
 #endif
 #if HAVE_XmCreateColumn
+  XM_DEFINE_PROCEDURE(XmCreateColumn, gxm_XmCreateColumn_w, 3, 1, 0, NULL);
   XM_DEFINE_PROCEDURE(XmIsColumn, gxm_XmIsColumn_w, 1, 0, 0, NULL);
+#if HAVE_XmColumnGetChildLabel
   XM_DEFINE_PROCEDURE(XmColumnGetChildLabel, gxm_XmColumnGetChildLabel_w, 1, 0, 0, NULL);
+#endif
 #endif
 #if HAVE_XmCreateDropDown
   XM_DEFINE_PROCEDURE(XmIsDropDown, gxm_XmIsDropDown_w, 1, 0, 0, NULL);
@@ -3189,6 +3217,17 @@ static void define_procedures(void)
   XEN_NARGIFY_1(gxm_w_w, gxm_w)
   XEN_NARGIFY_1(gxm_accept_w, gxm_accept)
 #endif
+#if HAVE_XmCreateTabStack
+  XEN_NARGIFY_1(gxm_selected_child_w, gxm_selected_child)
+#endif
+#if HAVE_XmCreateMultiList
+  XEN_NARGIFY_1(gxm_string_w, gxm_string)
+  XEN_NARGIFY_1(gxm_column_w, gxm_column)
+  XEN_NARGIFY_1(gxm_row_w, gxm_row)
+  XEN_NARGIFY_1(gxm_values_w, gxm_values)
+  XEN_NARGIFY_1(gxm_pixmap_w, gxm_pixmap)
+  XEN_NARGIFY_1(gxm_selected_w, gxm_selected)
+#endif
 
 #if HAVE_XPM
   XEN_NARGIFY_1(gxm_valuemask_w, gxm_valuemask)
@@ -3443,6 +3482,17 @@ static void define_structs(void)
 #if HAVE_XmCreateDataField
   XM_DEFINE_READER(w, gxm_w_w, 1, 0, 0);
   XM_DEFINE_READER(accept, gxm_accept_w, 1, 0, 0);
+#endif
+#if HAVE_XmCreateTabStack
+  XM_DEFINE_READER(selected_child, gxm_selected_child_w, 1, 0, 0);
+#endif
+#if HAVE_XmCreateMultiList
+  XM_DEFINE_READER(string, gxm_string_w, 1, 0, 0);
+  XM_DEFINE_READER(column, gxm_column_w, 1, 0, 0);
+  XM_DEFINE_READER(row, gxm_row_w, 1, 0, 0);
+  XM_DEFINE_READER(values, gxm_values_w, 1, 0, 0);
+  XM_DEFINE_READER(pixmap, gxm_pixmap_w, 1, 0, 0);
+  XM_DEFINE_READER(selected, gxm_selected_w, 1, 0, 0);
 #endif
 #if HAVE_XPM
   XM_DEFINE_ACCESSOR(valuemask, gxm_valuemask_w, set_valuemask, gxm_set_valuemask_w, 1, 0, 2, 0);

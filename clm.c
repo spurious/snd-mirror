@@ -757,7 +757,7 @@ static mus_any_class OSCIL_CLASS = {
 mus_any *mus_make_oscil(Float freq, Float phase)
 {
   osc *gen;
-  gen = (osc *)clm_calloc(1, sizeof(osc), "oscil");
+  gen = (osc *)clm_calloc(1, sizeof(osc), S_make_oscil);
   gen->core = &OSCIL_CLASS;
   gen->freq = mus_hz_to_radians(freq);
   gen->phase = phase;
@@ -862,7 +862,7 @@ static mus_any_class SUM_OF_COSINES_CLASS = {
 mus_any *mus_make_sum_of_cosines(int cosines, Float freq, Float phase)
 {
   cosp *gen;
-  gen = (cosp *)clm_calloc(1, sizeof(cosp), "sum_of_cosines");
+  gen = (cosp *)clm_calloc(1, sizeof(cosp), S_make_sum_of_cosines);
   gen->core = &SUM_OF_COSINES_CLASS;
   if (cosines == 0) cosines = 1;
   gen->scaler = 1.0 / (Float)(1 + 2 * cosines);
@@ -1122,7 +1122,7 @@ mus_any *mus_make_delay(int size, Float *preloaded_line, int line_size)
   /* if preloaded_line null, allocated locally */
   /* if size == line_size, normal (non-interpolating) delay */
   dly *gen;
-  gen = (dly *)clm_calloc(1, sizeof(dly), "delay");
+  gen = (dly *)clm_calloc(1, sizeof(dly), S_make_delay);
   gen->core = &DELAY_CLASS;
   gen->loc = 0;
   gen->size = size;
@@ -1529,7 +1529,7 @@ static mus_any_class TABLE_LOOKUP_CLASS = {
 mus_any *mus_make_table_lookup (Float freq, Float phase, Float *table, int table_size)
 {
   tbl *gen;
-  gen = (tbl *)clm_calloc(1, sizeof(tbl), "table_lookup");
+  gen = (tbl *)clm_calloc(1, sizeof(tbl), S_make_table_lookup);
   gen->core = &TABLE_LOOKUP_CLASS;
   gen->table_size = table_size;
   gen->internal_mag = (Float)table_size / TWO_PI;
@@ -1650,7 +1650,7 @@ static mus_any_class SAWTOOTH_WAVE_CLASS = {
 mus_any *mus_make_sawtooth_wave(Float freq, Float amp, Float phase) /* M_PI as initial phase, normally */
 {
   sw *gen;
-  gen = (sw *)clm_calloc(1, sizeof(sw), "sawtooth_wave");
+  gen = (sw *)clm_calloc(1, sizeof(sw), S_make_sawtooth_wave);
   gen->core = &SAWTOOTH_WAVE_CLASS;
   gen->freq = mus_hz_to_radians(freq);
   gen->base = (amp / M_PI);
@@ -1715,7 +1715,7 @@ static mus_any_class SQUARE_WAVE_CLASS = {
 mus_any *mus_make_square_wave(Float freq, Float amp, Float phase)
 {
   sw *gen;
-  gen = (sw *)clm_calloc(1, sizeof(sw), "square_wave");
+  gen = (sw *)clm_calloc(1, sizeof(sw), S_make_square_wave);
   gen->core = &SQUARE_WAVE_CLASS;
   gen->freq = mus_hz_to_radians(freq);
   gen->base = amp;
@@ -1785,7 +1785,7 @@ static mus_any_class TRIANGLE_WAVE_CLASS = {
 mus_any *mus_make_triangle_wave(Float freq, Float amp, Float phase)
 {
   sw *gen;
-  gen = (sw *)clm_calloc(1, sizeof(sw), "triangle_wave");
+  gen = (sw *)clm_calloc(1, sizeof(sw), S_make_triangle_wave);
   gen->core = &TRIANGLE_WAVE_CLASS;
   gen->freq = mus_hz_to_radians(freq);
   gen->base = (2.0 * amp / M_PI);
@@ -1854,7 +1854,7 @@ static mus_any_class PULSE_TRAIN_CLASS = {
 mus_any *mus_make_pulse_train(Float freq, Float amp, Float phase) /* TWO_PI initial phase, normally */
 {
   sw *gen;
-  gen = (sw *)clm_calloc(1, sizeof(sw), "pulse_train");
+  gen = (sw *)clm_calloc(1, sizeof(sw), S_make_pulse_train);
   gen->core = &PULSE_TRAIN_CLASS;
   gen->freq = mus_hz_to_radians(freq);
   gen->base = amp;
@@ -2018,7 +2018,7 @@ static mus_any_class RAND_INTERP_CLASS = {
 mus_any *mus_make_rand_interp(Float freq, Float base)
 {
   noi *gen;
-  gen = (noi *)clm_calloc(1, sizeof(noi), "rand_interp");
+  gen = (noi *)clm_calloc(1, sizeof(noi), S_make_rand_interp);
   gen->core = &RAND_INTERP_CLASS;
   gen->freq = mus_hz_to_radians(freq);
   gen->base = base;
@@ -2052,7 +2052,7 @@ static mus_any_class RAND_CLASS = {
 mus_any *mus_make_rand(Float freq, Float base)
 {
   noi *gen;
-  gen = (noi *)clm_calloc(1, sizeof(noi), "rand");
+  gen = (noi *)clm_calloc(1, sizeof(noi), S_make_rand);
   gen->core = &RAND_CLASS;
   gen->freq = mus_hz_to_radians(freq);
   gen->base = base;
@@ -2177,7 +2177,7 @@ mus_any *mus_make_asymmetric_fm(Float freq, Float phase, Float r, Float ratio) /
    mus_error(MUS_ARG_OUT_OF_RANGE, "r can't be 0.0");
  else
    {
-     gen = (asyfm *)clm_calloc(1, sizeof(asyfm), "asymmetric_fm");
+     gen = (asyfm *)clm_calloc(1, sizeof(asyfm), S_make_asymmetric_fm);
      gen->core = &ASYMMETRIC_FM_CLASS;
      gen->freq = mus_hz_to_radians(freq);
      gen->phase = phase;
@@ -2301,7 +2301,7 @@ static mus_any_class SINE_SUMMATION_CLASS = {
 mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, Float b_ratio)
 {
   sss *gen;
-  gen = (sss *)clm_calloc(1, sizeof(sss), "sine_summation");
+  gen = (sss *)clm_calloc(1, sizeof(sss), S_make_sine_summation);
   gen->core = &SINE_SUMMATION_CLASS;
   gen->freq = mus_hz_to_radians(frequency);
   gen->phase = phase;
@@ -2432,7 +2432,7 @@ static mus_any_class ONE_ZERO_CLASS = {
 mus_any *mus_make_one_zero(Float a0, Float a1)
 {
   smpflt *gen;
-  gen = (smpflt *)clm_calloc(1, sizeof(smpflt), "one_zero");
+  gen = (smpflt *)clm_calloc(1, sizeof(smpflt), S_make_one_zero);
   gen->core = &ONE_ZERO_CLASS;
   gen->a0 = a0;
   gen->a1 = a1;
@@ -2474,7 +2474,7 @@ static mus_any_class ONE_POLE_CLASS = {
 mus_any *mus_make_one_pole(Float a0, Float b1)
 {
   smpflt *gen;
-  gen = (smpflt *)clm_calloc(1, sizeof(smpflt), "one_pole");
+  gen = (smpflt *)clm_calloc(1, sizeof(smpflt), S_make_one_pole);
   gen->core = &ONE_POLE_CLASS;
   gen->a0 = a0;
   gen->b1 = b1;
@@ -2521,7 +2521,7 @@ static mus_any_class TWO_ZERO_CLASS = {
 mus_any *mus_make_two_zero(Float a0, Float a1, Float a2)
 {
   smpflt *gen;
-  gen = (smpflt *)clm_calloc(1, sizeof(smpflt), "two_zero");
+  gen = (smpflt *)clm_calloc(1, sizeof(smpflt), S_make_two_zero);
   gen->core = &TWO_ZERO_CLASS;
   gen->a0 = a0;
   gen->a1 = a1;
@@ -2575,20 +2575,20 @@ mus_any *mus_make_two_pole(Float a0, Float b1, Float b2)
 {
  smpflt *gen;
  if (fabs(b1) >= 2.0) 
-   mus_error(MUS_UNSTABLE_TWO_POLE_ERROR, "make_two_pole: b1 = %.3f", b1);
+   mus_error(MUS_UNSTABLE_TWO_POLE_ERROR, S_make_two_pole ": b1 = %.3f", b1);
  else
    {
      if (fabs(b2) >= 1.0) 
-       mus_error(MUS_UNSTABLE_TWO_POLE_ERROR, "make_two_pole: b2 = %.3f", b2);
+       mus_error(MUS_UNSTABLE_TWO_POLE_ERROR, S_make_two_pole ": b2 = %.3f", b2);
      else
        {
 	 if ( ((b1 * b1) - (b2 * 4.0) >= 0.0) &&
 	      ( ((b1 + b2) >= 1.0) || 
 		((b2 - b1) >= 1.0)))
-	   mus_error(MUS_UNSTABLE_TWO_POLE_ERROR, "make_two_pole: b1 = %.3f, b2 = %.3f", b1, b2);
+	   mus_error(MUS_UNSTABLE_TWO_POLE_ERROR, S_make_two_pole ": b1 = %.3f, b2 = %.3f", b1, b2);
 	 else
 	   {
-	     gen = (smpflt *)clm_calloc(1, sizeof(smpflt), "two_pole");
+	     gen = (smpflt *)clm_calloc(1, sizeof(smpflt), S_make_two_pole);
 	     gen->core = &TWO_POLE_CLASS;
 	     gen->a0 = a0;
 	     gen->b1 = b1;
@@ -2706,7 +2706,7 @@ static mus_any_class FORMANT_CLASS = {
 mus_any *mus_make_formant(Float radius, Float frequency, Float gain)
 {
   smpflt *gen;
-  gen = (smpflt *)clm_calloc(1, sizeof(smpflt), "formant");
+  gen = (smpflt *)clm_calloc(1, sizeof(smpflt), S_make_formant);
   gen->core = &FORMANT_CLASS;
   gen->gain = gain;
   gen->a1 = gain; /* for backwards compatibility */
@@ -3234,7 +3234,7 @@ bool mus_waveshape_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_WA
 mus_any *mus_make_waveshape(Float frequency, Float phase, Float *table, int size)
 {
   ws *gen;
-  gen = (ws *)clm_calloc(1, sizeof(ws), "waveshape");
+  gen = (ws *)clm_calloc(1, sizeof(ws), S_make_waveshape);
   gen->core = &WAVESHAPE_CLASS;
   gen->freq = mus_hz_to_radians(frequency);
   gen->phase = phase;
@@ -3649,7 +3649,7 @@ mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float
 	mus_error(MUS_BAD_ENVELOPE, "mus_make_env: env at breakpoint %d: x axis value %f > %f", i / 2, brkpts[i - 2], brkpts[i]);
 	return(NULL);
       }
-  e = (seg *)clm_calloc(1, sizeof(seg), "env");
+  e = (seg *)clm_calloc(1, sizeof(seg), S_make_env);
   e->core = &ENV_CLASS;
   if (duration != 0.0)
     dur_in_samples = (off_t)(duration * sampling_rate);
@@ -3848,7 +3848,7 @@ static mus_any_class FRAME_CLASS = {
 mus_any *mus_make_empty_frame(int chans)
 {
   mus_frame *nf;
-  nf = (mus_frame *)clm_calloc(1, sizeof(mus_frame), "frame");
+  nf = (mus_frame *)clm_calloc(1, sizeof(mus_frame), S_make_frame);
   nf->core = &FRAME_CLASS;
   nf->chans = chans;
   nf->vals = (Float *)clm_calloc(chans, sizeof(Float), "frame data");
@@ -4016,7 +4016,7 @@ mus_any *mus_make_empty_mixer(int chans)
 {
   mus_mixer *nf;
   int i;
-  nf = (mus_mixer *)clm_calloc(1, sizeof(mus_mixer), "mixer");
+  nf = (mus_mixer *)clm_calloc(1, sizeof(mus_mixer), S_make_mixer);
   nf->core = &MIXER_CLASS;
   nf->chans = chans;
   nf->vals = (Float **)clm_calloc(chans, sizeof(Float *), "mixer data");
@@ -4339,7 +4339,7 @@ static mus_any_class BUFFER_CLASS = {
 mus_any *mus_make_buffer(Float *preloaded_buffer, int size, Float current_fill_time)
 {
   rblk *gen;
-  gen = (rblk *)clm_calloc(1, sizeof(rblk), "buffer");
+  gen = (rblk *)clm_calloc(1, sizeof(rblk), S_make_buffer);
   gen->core = &BUFFER_CLASS;
   if (size <= 0) size = 512;
   gen->size = size;
@@ -4535,7 +4535,7 @@ static mus_any_class WAVE_TRAIN_CLASS = {
 mus_any *mus_make_wave_train(Float freq, Float phase, Float *wave, int wsize)
 {
  wt *gen;
- gen = (wt *)clm_calloc(1, sizeof(wt), "wave_train");
+ gen = (wt *)clm_calloc(1, sizeof(wt), S_make_wave_train);
  gen->core = &WAVE_TRAIN_CLASS;
  gen->freq = freq;
  gen->phase = (wsize * phase) / TWO_PI;
@@ -4760,7 +4760,7 @@ mus_any *mus_make_file_to_sample(const char *filename)
     mus_error(MUS_NO_FILE_NAME_PROVIDED, S_make_file_to_sample " requires a file name");
   else
     {
-      gen = (rdin *)clm_calloc(1, sizeof(rdin), "readin");
+      gen = (rdin *)clm_calloc(1, sizeof(rdin), S_make_readin);
       gen->core = &FILE_TO_SAMPLE_CLASS;
       gen->file_name = (char *)clm_calloc(strlen(filename) + 1, sizeof(char), "readin filename");
       strcpy(gen->file_name, filename);
@@ -5584,7 +5584,7 @@ mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, 
       mus_error(MUS_ARG_OUT_OF_RANGE, "chans: %d", chans);
       return(NULL);
     }
-  gen = (locs *)clm_calloc(1, sizeof(locs), "locsig");
+  gen = (locs *)clm_calloc(1, sizeof(locs), S_make_locsig);
   gen->core = &LOCSIG_CLASS;
   gen->outf = (mus_frame *)mus_make_empty_frame(chans);
   gen->chans = chans;
@@ -5819,7 +5819,7 @@ mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int
 	mus_error(MUS_ARG_OUT_OF_RANGE, S_make_src " width arg invalid: %d", width);
       else
 	{
-	  srp = (sr *)clm_calloc(1, sizeof(sr), "src");
+	  srp = (sr *)clm_calloc(1, sizeof(sr), S_make_src);
 	  if (width == 0) width = SRC_SINC_WIDTH;
 	  if (width < (int)(fabs(srate) * 2))
 	    wid = (int)(ceil(fabs(srate)) * 2); 
@@ -6157,7 +6157,7 @@ mus_any *mus_make_granulate(Float (*input)(void *arg, int direction),
       mus_error(MUS_NO_LENGTH, S_make_granulate " size is %d (hop: %f, segment-length: %f)?", outlen, hop, length);
       return(NULL);
     }
-  spd = (grn_info *)clm_calloc(1, sizeof(grn_info), "granulate");
+  spd = (grn_info *)clm_calloc(1, sizeof(grn_info), S_make_granulate);
   spd->core = &GRANULATE_CLASS;
   spd->cur_out = 0;
   spd->cur_in = 0;
@@ -6636,7 +6636,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 
 Float *mus_make_fft_window(mus_fft_window_t type, int size, Float beta)
 {
-  return(mus_make_fft_window_with_window(type, size, beta, (Float *)clm_calloc(size, sizeof(Float), "fft window")));
+  return(mus_make_fft_window_with_window(type, size, beta, (Float *)clm_calloc(size, sizeof(Float), S_make_fft_window)));
 }
 
 Float *mus_spectrum(Float *rdat, Float *idat, Float *window, int n, int type)
@@ -6835,7 +6835,7 @@ bool mus_convolve_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_CON
 mus_any *mus_make_convolve(Float (*input)(void *arg, int direction), Float *filter, int fftsize, int filtersize, void *closure)
 {
   conv *gen = NULL;
-  gen = (conv *)clm_calloc(1, sizeof(conv), "convolve");
+  gen = (conv *)clm_calloc(1, sizeof(conv), S_make_convolve);
   gen->core = &CONVOLVE_CLASS;
   gen->feeder = input;
   gen->closure = closure;
@@ -7421,7 +7421,7 @@ mus_any *mus_make_phase_vocoder(Float (*input)(void *arg, int direction),
   if (N2 == 0) return(NULL);
   D = fftsize / overlap;
   if (D == 0) return(NULL);
-  pv = (pv_info *)clm_calloc(1, sizeof(pv_info), "phase_vocoder");
+  pv = (pv_info *)clm_calloc(1, sizeof(pv_info), S_make_phase_vocoder);
   pv->core = &PHASE_VOCODER_CLASS;
   pv->N = fftsize;
   pv->D = D;

@@ -7,10 +7,13 @@
 #include <config.h>
 #endif
 
-#define XM_DATE "20-Apr-04"
+/* TODO: tests for Motif 2.4 additions */
+
+#define XM_DATE "21-Apr-04"
 
 /* HISTORY: 
  *
+ *   21-Apr:    XmMultiList, XmTabStack.
  *   19-Apr:    XmDataField.
  *   12-Apr:    XmDropDown, XmColumn.
  *   7-Apr:     XmButtonBox.
@@ -867,7 +870,7 @@ typedef enum {XM_INT, XM_ULONG, XM_UCHAR, XM_FLOAT, XM_STRING, XM_XMSTRING, XM_S
 	      XM_TRANSFER_CALLBACK, XM_CONVERT_CALLBACK, XM_SEARCH_CALLBACK, XM_ORDER_CALLBACK,
 	      XM_QUALIFY_CALLBACK, XM_ALLOC_COLOR_CALLBACK, XM_POPUP_CALLBACK, XM_SCREEN_COLOR_CALLBACK,
 	      XM_DROP_CALLBACK, XM_TRANSFER_ENTRY_LIST, XM_DRAG_CALLBACK, XM_STRING_OR_XMSTRING, XM_PARSE_CALLBACK,
-	      XM_BOOLEAN_OR_INT, XM_POSITION, XM_SHORT, XM_ROW_INFO
+	      XM_BOOLEAN_OR_INT, XM_POSITION, XM_SHORT, XM_ROW_INFO, XM_CURSOR
 } xm_resource_t;
 
 static xm_resource_t resource_type(char *resource);
@@ -993,10 +996,12 @@ static XEN C_TO_XEN_Ints(int *array, int len)
   return(lst);
 }
 
+#if HAVE_GUILE
 static XEN c_to_xen_ints(XEN array, XEN len)
 {
   return(C_TO_XEN_Ints((int *)XEN_TO_C_ULONG(array), XEN_TO_C_INT(len)));
 }
+#endif
 
 static XEN C_TO_XEN_Atoms(Atom *array, int len)
 {
@@ -1012,10 +1017,12 @@ static XEN C_TO_XEN_Atoms(Atom *array, int len)
   return(lst);
 }
 
+#if HAVE_GUILE
 static XEN c_to_xen_atoms(XEN array, XEN len)
 {
   return(C_TO_XEN_Atoms((Atom *)XEN_TO_C_ULONG(array), XEN_TO_C_INT(len)));
 }
+#endif
 
 static XEN C_TO_XEN_Strings(char **array, int len)
 {
@@ -1031,6 +1038,7 @@ static XEN C_TO_XEN_Strings(char **array, int len)
   return(lst);
 }
 
+#if HAVE_GUILE
 static XEN c_to_xen_strings(XEN array, XEN len)
 {
   return(C_TO_XEN_Strings((char **)XEN_TO_C_ULONG(array), XEN_TO_C_INT(len)));
@@ -1040,6 +1048,7 @@ static XEN c_to_xen_string(XEN str)
 {
   return(C_TO_XEN_STRING((char *)XEN_TO_C_ULONG(str)));
 }
+#endif
 
 static XEN copy_xrectangle(XRectangle *old_r)
 {
@@ -1066,10 +1075,12 @@ static XEN C_TO_XEN_XRectangles(XRectangle *array, int len)
   return(lst);
 }
 
+#if HAVE_GUILE
 static XEN c_to_xen_xrectangles(XEN array, XEN len)
 {
   return(C_TO_XEN_XRectangles((XRectangle *)XEN_TO_C_ULONG(array), XEN_TO_C_INT(len)));
 }
+#endif
 
 static XEN C_TO_XEN_KeySyms(KeySym *array, int len)
 {
@@ -1999,6 +2010,10 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_XmMultiListRowInfo(value)));
 	  break;
 #endif
+	case XM_CURSOR:
+	  XEN_ASSERT_TYPE(XEN_Cursor_P(value), value, XEN_ONLY_ARG, name, "a cursor"); 
+	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_Cursor(value)));
+	  break;
 
 	default:
 	  if (XEN_ULONG_P(value))
@@ -5217,7 +5232,12 @@ static XEN gxm_XmCreateMultiList(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateMultiList "Widget XmCreateMultiList(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The MultiList widget creation function"
+  /* see comment under XmCreateDropDown */
+#ifdef _XmExt18List_h
+  return(gxm_new_widget("XmCreateMultiList", XmCreateExtended18List, arg1, arg2, arg3, arg4));
+#else
   return(gxm_new_widget("XmCreateMultiList", XmCreateMultiList, arg1, arg2, arg3, arg4));
+#endif
 }
 
 static XEN gxm_XmIsMultiList(XEN arg)
@@ -5312,39 +5332,26 @@ static XEN gxm_XmMultiListSelectItems(XEN arg, XEN arg1, XEN arg2, XEN arg3)
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 2, "XmMultiListSelectItems", "XmString");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 3, "XmMultiListSelectItems", "int");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 4, "XmMultiListSelectItems", "boolean");
-  XmMultiListSelectItems(XEN_TO_C_Widget(arg), XEN_TO_C_XmString(arg1), XEN_TO_C_INT(arg2));
+  XmMultiListSelectItems(XEN_TO_C_Widget(arg), XEN_TO_C_XmString(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_BOOLEAN(arg3));
   return(XEN_FALSE);
 }
 
-#if 0
-/*
-	 rowinfo** XmMultiListGetSelectedRows(w) r=rowinfo -> rtn a list of these? (free?)
-	 int* XmMultiListGetSelectedRowArray(w,n)int* [free?]
-
-	 XmMultiListRowInfo: XmString *values
-	                     Pixmap pixmap
-	                     Boolean selected
-	                     short *sort_id(?) XtPointer data
-         XmMultiListCallbackStruct reason event string column row
-
-       All procedures on the Extended List's singleSelectionCallback and  dou-
-       bleClickCallback  lists  will have a pointer to a Xm18RowInfo structure
-       passed to them in the call_data field. This structure is defined above.
-
-Sort Function
-       typedef  int  (Xm18SortFunction)  (short  column,  Xm18RowInfo  * row1,
-                           Xm18RowInfo * row2);
-
-       column         the column currently being sorted
-
-       row1, row2     the two rows being compared. The return value must be an
-                      integer  less than, equal to, or greater than 0, depend-
-                      ing on whether the first argument is  less  than,  equal
-                      to, or greater than the second.
-
-*/
-#endif
-
+static XEN gxm_XmMultiListGetSelectedRows(XEN arg)
+{
+  XEN lst = XEN_EMPTY_LIST;
+  int i, len;
+  XmMultiListRowInfo **rows;
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmMultiListGetSelectedRows", "Widget");
+  rows = XmMultiListGetSelectedRows(XEN_TO_C_Widget(arg));
+  if (rows)
+    {
+      for (len = 0; (rows[len]) ;len++);
+      for (i = len - 1; i >= 0; i--)
+	lst = XEN_CONS(C_TO_XEN_XmMultiListRowInfo(rows[i]), lst);
+    }
+  /* free rows? */
+  return(lst);
+}
 #endif
 
 #if HAVE_XmCreateTabStack
@@ -5366,22 +5373,37 @@ static XEN gxm_XmIsTabStack(XEN arg)
   return(C_TO_XEN_BOOLEAN(XmIsTabStack(XEN_TO_C_Widget(arg))));
 }
 
-/*
-	 extern Widget XmTabStackGetSelectedTab(Widget);
-	 extern void XmTabStackSelectTab(Widget, Boolean);
-	 extern Widget XmTabStackIndexToWidget(Widget, int);
-	 extern Widget XmTabStackXYToWidget(Widget, int, int);
+static XEN gxm_XmTabStackGetSelectedTab(XEN arg)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmTabStackGetSelectedTab", "Widget");
+  return(C_TO_XEN_Widget(XmTabStackGetSelectedTab(XEN_TO_C_Widget(arg))));
+}
 
-    String string;
-    int column;
-    Xm18RowInfo *row;
-    XmExt18ListCallbackStruct;
+static XEN gxm_XmTabStackSelectTab(XEN arg, XEN arg1)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmTabStackSelectTab", "Widget");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg1), arg1, 2, "XmTabStackSelectTab", "boolean");
+  XmTabStackSelectTab(XEN_TO_C_Widget(arg), XEN_TO_C_BOOLEAN(arg1));
+  return(XEN_FALSE);
+}
 
-    Widget      selected_child;
-    XmTabStackCallbackStruct;
-*/
+#if HAVE_XmTabStackXYToWidget
+static XEN gxm_XmTabStackIndexToWidget(XEN arg, XEN arg1)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmTabStackIndexToWidget", "Widget");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 2, "XmTabStackIndexToWidget", "int");
+  return(XEN_TO_C_Widget(XmTabStackIndexToWidget(XEN_TO_C_Widget(arg), XEN_TO_C_INT(arg1))));
+}
+
+static XEN gxm_XmTabStackXYToWidget(XEN arg, XEN arg1, XEN arg2)
+{
+  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmTabStackXYToWidget", "Widget");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 2, "XmTabStackXYToWidget", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 3, "XmTabStackXYToWidget", "int");
+  return(XEN_TO_C_Widget(XmTabStackXYToWidget(XEN_TO_C_Widget(arg), XEN_TO_C_INT(arg1), XEN_TO_C_INT(arg2))));
+}
 #endif
-
+#endif
 
 #if HAVE_XmCreateDataField
 
@@ -5552,11 +5574,13 @@ static XEN gxm_XmIsColumn(XEN arg)
   return(C_TO_XEN_BOOLEAN(XmIsColumn(XEN_TO_C_Widget(arg))));
 }
 
+#if HAVE_XmColumnGetChildLabel
 static XEN gxm_XmColumnGetChildLabel(XEN arg)
 {
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmColumnGetChildLabel", "Widget");
   return(C_TO_XEN_Widget(XmColumnGetChildLabel(XEN_TO_C_Widget(arg))));
 }
+#endif
 #endif
 
 #if HAVE_XmCreateDropDown
@@ -5564,7 +5588,15 @@ static XEN gxm_XmCreateDropDown(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateDropDown "Widget XmCreateDropDown(Widget parent, String name, ArgList arglist, Cardinal argcount) \
 The DropDown widget creation function"
+  /* there is a problem here: the XmCreateDropDown macro in DropDown.h does not give us
+     function argument access to the actual function.  Hence a short-term kludge...
+  */
+#ifdef _XmCominationBox2_h
+  /* yes, it actually is spelled that way! */
+return(gxm_new_widget("XmCreateDropDown", XmCreateCombinationBox2, arg1, arg2, arg3, arg4));
+#else
   return(gxm_new_widget("XmCreateDropDown", XmCreateDropDown, arg1, arg2, arg3, arg4));
+#endif
 }
 
 #ifndef XmIsDropDown
@@ -19446,10 +19478,22 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmMultiListDeselectItem, gxm_XmMultiListDeselectItem, 2, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmMultiListDeselectItems, gxm_XmMultiListDeselectItems, 3, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmMultiListSelectItems, gxm_XmMultiListSelectItems, 4, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmMultiListGetSelectedRows, gxm_XmMultiListGetSelectedRows, 1, 0, 0, NULL);
+#endif
+#if HAVE_XmCreateTabStack
+  XM_DEFINE_PROCEDURE(XmTabStackGetSelectedTab, gxm_XmTabStackGetSelectedTab, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmTabStackSelectTab, gxm_XmTabStackSelectTab, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmCreateTabStack, gxm_XmCreateTabStack, 3, 1, 0, H_XmCreateTabStack);
+#if HAVE_XmTabStackXYToWidget
+  XM_DEFINE_PROCEDURE(XmTabStackIndexToWidget, gxm_XmTabStackIndexToWidget, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmTabStackXYToWidget, gxm_XmTabStackXYToWidget, 3, 0, 0, NULL);
+#endif
 #endif
 #if HAVE_XmCreateColumn
   XM_DEFINE_PROCEDURE(XmCreateColumn, gxm_XmCreateColumn, 3, 1, 0, H_XmCreateColumn);
+#if HAVE_XmColumnGetChildLabel
   XM_DEFINE_PROCEDURE(XmColumnGetChildLabel, gxm_XmColumnGetChildLabel, 1, 0, 0, NULL);
+#endif
 #endif
 #if HAVE_XmCreateDropDown
   XM_DEFINE_PROCEDURE(XmCreateDropDown, gxm_XmCreateDropDown, 3, 1, 0, H_XmCreateDropDown);
@@ -22799,6 +22843,9 @@ static XEN gxm_data(XEN ptr)
 #if HAVE_XPM
   if (XEN_XpmImage_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmImage(ptr))->data)));
 #endif
+#if HAVE_XmCreateMultiList
+  if (XEN_XmMultiListRowInfo_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XmMultiListRowInfo(ptr))->data)));
+#endif
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "data", "XpmImage");
   return(XEN_FALSE);
 }
@@ -22851,6 +22898,47 @@ static XEN gxm_w(XEN ptr)
 static XEN gxm_accept(XEN ptr)
 {
   if (XEN_XmDataFieldCallbackStruct_P(ptr)) return(C_TO_XEN_BOOLEAN((XEN_TO_C_XmDataFieldCallbackStruct(ptr))->accept));
+  return(XEN_FALSE);
+}
+#endif
+#if HAVE_XmCreateTabStack
+static XEN gxm_selected_child(XEN ptr)
+{
+  if (XEN_XmTabStackCallbackStruct_P(ptr)) return(C_TO_XEN_Widget((XEN_TO_C_XmTabStackCallbackStruct(ptr))->selected_child));
+  return(XEN_FALSE);
+}
+#endif
+#if HAVE_XmCreateMultiList
+static XEN gxm_string(XEN ptr)
+{
+  if (XEN_XmMultiListCallbackStruct_P(ptr)) return(C_TO_XEN_STRING((XEN_TO_C_XmMultiListCallbackStruct(ptr))->string));
+  return(XEN_FALSE);
+}
+static XEN gxm_column(XEN ptr)
+{
+  if (XEN_XmMultiListCallbackStruct_P(ptr)) return(C_TO_XEN_INT((XEN_TO_C_XmMultiListCallbackStruct(ptr))->column));
+  return(XEN_FALSE);
+}
+static XEN gxm_row(XEN ptr)
+{
+  if (XEN_XmMultiListCallbackStruct_P(ptr)) return(C_TO_XEN_XmMultiListRowInfo((XEN_TO_C_XmMultiListCallbackStruct(ptr))->row));
+  return(XEN_FALSE);
+}
+static XEN gxm_selected(XEN ptr)
+{
+  if (XEN_XmMultiListRowInfo_P(ptr)) return(C_TO_XEN_BOOLEAN((XEN_TO_C_XmMultiListRowInfo(ptr))->selected));
+  return(XEN_FALSE);
+}
+static XEN gxm_pixmap(XEN ptr)
+{
+  if (XEN_XmMultiListRowInfo_P(ptr)) return(C_TO_XEN_Pixmap((XEN_TO_C_XmMultiListRowInfo(ptr))->pixmap));
+  return(XEN_FALSE);
+}
+static XEN gxm_values(XEN ptr)
+{
+/* how to get length?
+  if (XEN_XmMultiListRowInfo_P(ptr)) return(C_TO_XEN_XmStringTable((XEN_TO_C_XmMultiListRowInfo(ptr))->values));
+*/
   return(XEN_FALSE);
 }
 #endif
@@ -23747,6 +23835,17 @@ static void define_structs(void)
 #if HAVE_XmCreateDataField
   XM_DEFINE_READER(w, gxm_w, 1, 0, 0, NULL);
   XM_DEFINE_READER(accept, gxm_accept, 1, 0, 0, NULL);
+#endif
+#if HAVE_XmCreateTabStack
+  XM_DEFINE_READER(selected_child, gxm_selected_child, 1, 0, 0, NULL);
+#endif
+#if HAVE_XmCreateMultiList
+  XM_DEFINE_READER(string, gxm_string, 1, 0, 0, NULL);
+  XM_DEFINE_READER(column, gxm_column, 1, 0, 0, NULL);
+  XM_DEFINE_READER(row, gxm_row, 1, 0, 0, NULL);
+  XM_DEFINE_READER(selected, gxm_selected, 1, 0, 0, NULL);
+  XM_DEFINE_READER(pixmap, gxm_pixmap, 1, 0, 0, NULL);
+  XM_DEFINE_READER(values, gxm_values, 1, 0, 0, NULL);
 #endif
 #if HAVE_XPM
   XM_DEFINE_ACCESSOR(valuemask, gxm_valuemask, gxm_set_valuemask, 1, 0, 2, 0);
@@ -24693,7 +24792,7 @@ static void define_strings(void)
   #endif
   DEFINE_RESOURCE(XmNcustomizedCombinationBox, XM_BOOLEAN);
   DEFINE_RESOURCE(XmNhorizontalMargin, XM_DIMENSION);
-  DEFINE_RESOURCE(XmNpopupCursor, Xm_CURSOR);
+  DEFINE_RESOURCE(XmNpopupCursor, XM_CURSOR);
   DEFINE_RESOURCE(XmNpopupOffset, XM_INT);
   DEFINE_RESOURCE(XmNpopupShellWidget, XM_WIDGET);
   DEFINE_RESOURCE(XmNshowLabel, XM_BOOLEAN);
@@ -24717,7 +24816,7 @@ static void define_strings(void)
     #define XmNnumRows "numRows"
     #define XmNselectedColumn "selectedColumn"
     #define XmNshowFind "showFind"
-    #define XmNsingleSelection "singleSelection"
+  /* #define XmNsingleSelection "singleSelection" */
   #endif
   DEFINE_RESOURCE(XmNcolumnTitles, XM_STRING_TABLE);
   DEFINE_RESOURCE(XmNdoubleClickCallback, XM_CALLBACK);
@@ -24730,7 +24829,7 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNnumRows, XM_SHORT);
   DEFINE_RESOURCE(XmNselectedColumn, XM_SHORT);
   DEFINE_RESOURCE(XmNshowFind, XM_BOOLEAN);
-  DEFINE_RESOURCE(XmNsingleSelection, XM_CALLBACK);
+  /* DEFINE_RESOURCE(XmNsingleSelection, XM_CALLBACK); */
 #endif
 #if HAVE_XmCreateTabStack
   #ifndef XmNstackedEffect
@@ -26479,7 +26578,7 @@ static void define_integers(void)
   DEFINE_INTEGER(XmFILL_UNSPECIFIED);
 
   /*assume this goes with the others */
-  DEFINE_INTEGER(XmPIXMAP_AND_STRING);
+  /* DEFINE_INTEGER(XmPIXMAP_AND_STRING); */
 #endif
 
 #if HAVE_XmTabStack
@@ -26813,14 +26912,3 @@ static bool xm_already_inited = false;
 #endif
 /* end HAVE_EXTENSION_LANGUAGE */
 
-
-/* SOMEDAY: Motif 2.2.3: Hierarchy, Paned?
-
-	 void XmHierarchyOpenAllAncestors(Widget);
-	 WidgetList XmHierarchyGetChildNodes(Widget);
-
-	 missing: XmCreateHierarchy
-	 Paned is included, but what's the point of it?
-*/
-
-/* TODO: tests for Motif 2.2.3 additions */

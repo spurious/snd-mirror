@@ -43,7 +43,7 @@ AC_DEFINE_UNQUOTED(CONFIGURE_ARGS, "$INVOKED_ARGS")
 #   --with-sample-width=N use N bits of samples (default = 24)
 #   --with-esd            use Enlightened Sound Daemon
 #   --with-no-gui         make Snd without any graphics support
-#   --with-motif-prefix   set location of Motif (untested as yet)
+#   --with-motif-prefix   set location of Motif
 #   --with-static-gsl     try to statically load GSL
 #   --with-guile          try to use Guile as the extension language (default=yes)
 #   --with-ruby           try to use Ruby as the extension language
@@ -411,7 +411,7 @@ else
   else
     if test x$motif_prefix != x ; then
       X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -L$motif_prefix/lib -lXm -lXt"
-      XFLAGS="$XFLAGS -I$motif_prefix/include"
+      XFLAGS="-I$motif_prefix/include $XFLAGS"
     else
       X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
     fi
@@ -526,11 +526,27 @@ else
 	    [AC_LANG_PROGRAM(
         	[#include <Xm/XmAll.h>
                  #include <Xm/TabStack.h>],
-		[ Widget w; 
-                  w = XmCreateTabStack(NULL, "tab-stack", NULL, 0)
+		[ Widget w, w1, w2; 
+                  w = XmCreateTabStack(NULL, "tab-stack", NULL, 0);
+                  /* w1 = XmTabStackXYToWidget(w, 0, 0); */
+		  w2 = XmTabStackIndexToWidget(w, 0)
                 ])],
             [
  	     AC_DEFINE(HAVE_XmCreateTabStack)
+	     AC_MSG_RESULT(yes)
+    	    ],
+	    [AC_MSG_RESULT(no)])
+          AC_MSG_CHECKING(for XmTabStackXYToWidget)
+          AC_LINK_IFELSE(
+	    [AC_LANG_PROGRAM(
+        	[#include <Xm/XmAll.h>
+                 #include <Xm/TabStack.h>],
+		[ Widget w, w1, w2; 
+                  w = XmCreateTabStack(NULL, "tab-stack", NULL, 0);
+                  w1 = XmTabStackXYToWidget(w, 0, 0)
+                ])],
+            [
+ 	     AC_DEFINE(HAVE_XmTabStackXYToWidget)
 	     AC_MSG_RESULT(yes)
     	    ],
 	    [AC_MSG_RESULT(no)])
@@ -540,12 +556,25 @@ else
         	[#include <Xm/XmAll.h>
                  #include <Xm/Column.h>],
 		[ Widget w;
-                  w = XmCreateColumn(NULL, "column", NULL, 0);
-                  w = XmColumnGetChildLabel(w)
-                  # some versions of Motif have Column.h and XmCreateColumn but not XmColumnGetChildLabel
+                  w = XmCreateColumn(NULL, "column", NULL, 0)
+                  /* w = XmColumnGetChildLabel(w) */
                 ])],
             [
  	     AC_DEFINE(HAVE_XmCreateColumn)
+	     AC_MSG_RESULT(yes)
+    	    ],
+	    [AC_MSG_RESULT(no)])
+          AC_MSG_CHECKING(for XmColumnGetChildLabel)
+          AC_LINK_IFELSE(
+	    [AC_LANG_PROGRAM(
+        	[#include <Xm/XmAll.h>
+                 #include <Xm/Column.h>],
+		[ Widget w;
+                  w = XmCreateColumn(NULL, "column", NULL, 0);
+                  w = XmColumnGetChildLabel(w)
+                ])],
+            [
+ 	     AC_DEFINE(HAVE_XmColumnGetChildLabel)
 	     AC_MSG_RESULT(yes)
     	    ],
 	    [AC_MSG_RESULT(no)])
