@@ -278,6 +278,7 @@ void make_open_file_dialog(snd_state *ss, int read_only, int managed)
       {
 	open_dialog_frame = gtk_frame_new(NULL);
 	gtk_box_pack_start(GTK_BOX(GTK_FILE_SELECTION(open_dialog)->main_vbox), open_dialog_frame, TRUE, TRUE, 0);
+	/* gtk+extra/gtkiconfilesel.h says action_area as gtk table here? */
 	gtk_frame_set_shadow_type(GTK_FRAME(open_dialog_frame), GTK_SHADOW_ETCHED_IN);
 
 	open_dialog_vbox = gtk_vbox_new(FALSE, 0);

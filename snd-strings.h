@@ -270,6 +270,7 @@
 #define S_after_open_hook               "after-open-hook"
 #define S_amp_control                   "amp-control"
 #define S_append_to_minibuffer          "append-to-minibuffer"
+#define S_apply_hook                    "apply-hook"
 #define S_apply_controls                "apply-controls"
 #define S_as_one_edit                   "as-one-edit"
 #define S_ask_before_overwrite          "ask-before-overwrite"

@@ -1229,6 +1229,10 @@ void mus_sndlib2xen_initialize(void)
   XEN_DEFINE_CONSTANT(S_mus_raw,     MUS_RAW,     "raw (headerless) sound header id");
   XEN_DEFINE_CONSTANT(S_mus_ircam,   MUS_IRCAM,   "IRCAM sound header id");
   XEN_DEFINE_CONSTANT(S_mus_aiff,    MUS_AIFF,    "AIFF (old-style) sound header id");
+  XEN_DEFINE_CONSTANT(S_mus_bicsf,   MUS_BICSF,   "bicsf header id");
+  XEN_DEFINE_CONSTANT(S_mus_voc,     MUS_VOC,     "voc header id");
+  XEN_DEFINE_CONSTANT(S_mus_svx,     MUS_SVX,     "svx (iff) header id");
+  XEN_DEFINE_CONSTANT(S_mus_soundfont, MUS_SOUNDFONT, "soundfont header id");
 
   XEN_DEFINE_CONSTANT(S_mus_bshort,  MUS_BSHORT,  "big-endian short data format id");
   XEN_DEFINE_CONSTANT(S_mus_lshort,  MUS_LSHORT,  "little-endian short data format id");

@@ -1675,92 +1675,6 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;(add-hook! after-open-hook show-disk-space)
 
 
-
-;;; -------- add another amp slider in control panel
-;;;
-;;; just step one of this section
-;;; TODO: after-open callback to reflect current channel number
-;;; TODO: tie new scrollers into Play/Apply (this will require support from Snd)
-;;; TODO: handle n>2 scrollers
-;;; TODO: don't remanage controls unless it's previously open
-
-(define (amp-scroller->amp val)
-  ;; same as Snd's built-in amp scroller callbacks
-  (if (= val 0)
-      0.0
-      (if (< val 15)
-	  (* val 0.011584929) ; linear section
-	  (exp (/ (- val 50) 20.0)))))
-
-(define (amp-callback w c i)
-  (let* ((amp (amp-scroller->amp (|value i)))
-	 (ampstr (|XmStringCreateLocalized (format #f "~,2F" amp))))
-    (|XtSetValues c (list |XmNlabelString ampstr))
-    (|XmStringFree ampstr)))
-
-(define (make-amp-package parent)
-  (let* ((s1 (|XmStringCreateLocalized "amp:"))
-	 (label (|XtCreateManagedWidget "amp-label" |xmPushButtonWidgetClass parent
-	 	  (list |XmNbackground       (|Pixel (snd-pixel (basic-color)))
-			|XmNalignment        |XmALIGNMENT_BEGINNING
-			|XmNtopAttachment    |XmATTACH_FORM
-			|XmNbottomAttachment |XmATTACH_NONE
-			|XmNleftAttachment   |XmATTACH_FORM
-			|XmNrightAttachment  |XmATTACH_NONE
-			|XmNlabelString      s1
-			|XmNmarginHeight     1
-			|XmNrecomputeSize    #f
-			|XmNshadowThickness  0
-			|XmNhighlightThickness 0
-			|XmNfillOnArm        #f)))
-	 (s2 (|XmStringCreateLocalized "1.00"))
-	 (number (|XtCreateManagedWidget "amp-number" |xmLabelWidgetClass parent
-	 	  (list |XmNbackground       (|Pixel (snd-pixel (basic-color)))
-			|XmNalignment        |XmALIGNMENT_BEGINNING
-			|XmNtopAttachment    |XmATTACH_OPPOSITE_WIDGET
-			|XmNtopWidget        label
-			|XmNbottomAttachment |XmATTACH_NONE
-			|XmNleftAttachment   |XmATTACH_WIDGET
-			|XmNleftWidget       label
-			|XmNrightAttachment  |XmATTACH_NONE
-			|XmNlabelString      s2
-			|XmNmarginHeight     1
-			|XmNrecomputeSize    #f)))
-	 (scroll (|XtCreateManagedWidget "amp" |xmScrollBarWidgetClass parent
-	 	  (list |XmNbackground       (|Pixel (snd-pixel (position-color)))
-			|XmNtopAttachment    |XmATTACH_OPPOSITE_WIDGET
-			|XmNtopWidget        label
-			|XmNbottomAttachment |XmATTACH_NONE
-			|XmNheight           16
-			|XmNleftAttachment   |XmATTACH_WIDGET
-			|XmNleftWidget       number
-			|XmNrightAttachment  |XmATTACH_FORM
-			|XmNorientation      |XmHORIZONTAL
-			|XmNmaximum          100
-			|XmNvalue            50
-			|XmNdragCallback     (list amp-callback number)
-			|XmNvalueChangedCallback (list amp-callback number)))))
-	 (|XmStringFree s1)
-	 (|XmStringFree s2)
-	 label
-	 ))
-
-(define (add-amp-control)
-  (let* ((wids (sound-widgets))
-	 (ctrls (|Widget (list-ref wids 2)))
-	 (snd-amp (find-child ctrls "snd-amp"))
-	 (amplabel (find-child snd-amp "amp-label")))
-    (if (|Widget? amplabel)
-	(begin
-	  (|XtUnmanageChild ctrls)
-	  
-	  (let ((new-amp (make-amp-package snd-amp)))
-	    (|XtSetValues amplabel (list |XmNtopAttachment |XmATTACH_WIDGET
-					 |XmNtopWidget new-amp))
-	    (|XtManageChild ctrls))))))
-
-
-
 ;;; -------- add-very-useful-icons adds some very useful icons
 
 (define (add-very-useful-icons)
@@ -1780,6 +1694,174 @@ Reverb-feedback sets the scaler on the feedback.\n\
 		      |XmNheight      32))))
 	 (|XtAddCallback button |XmNactivateCallback (lambda (w c i) (snd-print "aren't icons grand?")))))
      (list burger syringe media tut fortune bob1 caesar xmas1 umbrela chess3 compress xdbx icl8))))
+
+
+
+;;; -------- add another amp slider in control panel
+;;;
+;;; TODO: play tie-in
+
+(define (add-amp-controls)
+  (let ((current-amp-controls '()))
+
+    (define amp-controls
+      (make-procedure-with-setter
+       (lambda (snd)
+	 (define (find-controls snd lst)
+	   (if (null? lst)
+	       1
+	       (if (= (car (car lst)) snd)
+		   (cadr (car lst))
+		   (find-controls snd (cdr lst)))))
+	 (find-controls snd current-amp-controls))
+       (lambda (snd val)
+	 (let ((vals (find-if (lambda (n) (= (car n) snd)) current-amp-controls)))
+	   (if (not vals)
+	       (set! current-amp-controls (cons (list snd val) current-amp-controls))
+	       (list-set! vals 1 val))))))
+
+    (define (amp-scroller->amp val)
+      ;; same as Snd's built-in amp scroller callbacks
+      (if (= val 0)
+	  0.0
+	  (if (< val 15)
+	      (* val 0.011584929) ; linear section
+	      (exp (/ (- val 50) 20.0)))))
+
+    (define (amp-callback w c i)
+      (let* ((amp (amp-scroller->amp (|value i)))
+	     (ampstr (|XmStringCreateLocalized (format #f "~,2F" amp))))
+	(|XtSetValues c (list |XmNlabelString ampstr))
+	(|XmStringFree ampstr)))
+
+    (define (label-name chan) (if (= chan 0) "amp-label" (format #f "amp-label-~D" chan)))
+    (define (number-name chan) (if (= chan 0) "amp-number" (format #f "amp-number-~D" chan)))
+    (define (scroller-name chan) (if (= chan 0) "amp" (format #f "amp-~D" chan)))
+
+    (define (make-amp-control chan parent)
+      (let* ((s1 (|XmStringCreateLocalized "amp:"))
+	     (label (|XtCreateManagedWidget (label-name chan) |xmPushButtonWidgetClass parent
+		      (list |XmNbackground       (|Pixel (snd-pixel (basic-color)))
+			    |XmNalignment        |XmALIGNMENT_BEGINNING
+			    |XmNtopAttachment    |XmATTACH_FORM
+			    |XmNbottomAttachment |XmATTACH_NONE
+			    |XmNleftAttachment   |XmATTACH_FORM
+			    |XmNrightAttachment  |XmATTACH_NONE
+			    |XmNlabelString      s1
+			    |XmNmarginHeight     1
+			    |XmNrecomputeSize    #f
+			    |XmNshadowThickness  0
+			    |XmNhighlightThickness 0
+			    |XmNfillOnArm        #f)))
+	     (s2 (|XmStringCreateLocalized "1.00"))
+	     (number (|XtCreateManagedWidget (number-name chan) |xmLabelWidgetClass parent
+	 	      (list |XmNbackground       (|Pixel (snd-pixel (basic-color)))
+			    |XmNalignment        |XmALIGNMENT_BEGINNING
+			    |XmNtopAttachment    |XmATTACH_OPPOSITE_WIDGET
+			    |XmNtopWidget        label
+			    |XmNbottomAttachment |XmATTACH_NONE
+			    |XmNleftAttachment   |XmATTACH_WIDGET
+			    |XmNleftWidget       label
+			    |XmNrightAttachment  |XmATTACH_NONE
+			    |XmNlabelString      s2
+			    |XmNmarginHeight     1
+			    |XmNrecomputeSize    #f)))
+	     (scroll (|XtCreateManagedWidget (scroller-name chan) |xmScrollBarWidgetClass parent
+	 	      (list |XmNbackground       (|Pixel (snd-pixel (position-color)))
+			    |XmNtopAttachment    |XmATTACH_OPPOSITE_WIDGET
+			    |XmNtopWidget        label
+			    |XmNbottomAttachment |XmATTACH_NONE
+			    |XmNheight           16
+			    |XmNleftAttachment   |XmATTACH_WIDGET
+			    |XmNleftWidget       number
+			    |XmNrightAttachment  |XmATTACH_FORM
+			    |XmNorientation      |XmHORIZONTAL
+			    |XmNmaximum          100
+			    |XmNvalue            50
+			    |XmNdragCallback     (list amp-callback number)
+			    |XmNvalueChangedCallback (list amp-callback number)))))
+	(|XmStringFree s1)
+	(|XmStringFree s2)
+	label))
+
+      (define (amp-controls-reflect-chans snd)
+	(let* ((wids (sound-widgets snd))
+	       (ctrls (|Widget (list-ref wids 2)))
+	       (snd-amp (find-child ctrls "snd-amp"))
+	       (chns (chans snd)))
+
+	  (if (|Widget? snd-amp)
+	      (let ((height (cadr (|XtGetValues ctrls (list |XmNheight 0))))
+		    (panemin (cadr (|XtGetValues ctrls (list |XmNpaneMinimum 0))))
+		    (panemax (cadr (|XtGetValues ctrls (list |XmNpaneMaximum 0)))))
+		(|XtUnmanageChild ctrls)
+		(let ((existing-controls (amp-controls snd)))
+		  (if (< existing-controls chns)
+		      (begin
+			(if (> height 20)
+			    (set! height (+ height (* 18 (- chns existing-controls)))))
+			(do ((i existing-controls (1+ i)))
+			    ((= i chns))
+			  (make-amp-control i snd-amp))
+			(set! (amp-controls snd) chns)
+			(set! existing-controls chns)))
+		  (do ((i 0 (1+ i)))
+		      ((= i existing-controls))
+		    (let ((ampc (find-child snd-amp (label-name i)))
+			  (ampn (find-child snd-amp (number-name i)))
+			  (amp (find-child snd-amp (scroller-name i))))
+		      (|XtUnmanageChild ampc)
+		      (|XtUnmanageChild ampn)
+		      (|XtUnmanageChild amp)))
+		  (do ((i 0 (1+ i)))
+		      ((= i chns))
+		    (let ((ampc (find-child snd-amp (label-name i)))
+			  (ampn (find-child snd-amp (number-name i)))
+			  (amp (find-child snd-amp (scroller-name i)))
+			  (next-amp (if (< i (1- chns))
+					(find-child snd-amp (label-name (1+ i)))
+					#f)))
+		      (|XtSetValues amp (list |XmNvalue 50))
+		      (let ((ampstr (|XmStringCreateLocalized "1.00")))
+			(|XtSetValues ampn (list |XmNlabelString ampstr))
+			(|XmStringFree ampstr))
+		      (if next-amp
+			  (|XtSetValues ampc (list |XmNtopAttachment |XmATTACH_WIDGET
+						   |XmNtopWidget next-amp))
+			  (|XtSetValues ampc (list |XmNtopAttachment |XmATTACH_FORM)))
+		      (|XtManageChild ampc)
+		      (|XtManageChild ampn)
+		      (|XtManageChild amp))))
+
+		(|XtSetValues ctrls (list |XmNpaneMinimum height |XmNpaneMaximum height))
+		(|XtManageChild ctrls)
+		(|XtSetValues ctrls (list |XmNpaneMinimum panemin |XmNpaneMaximum panemax))))))
+
+      (define (apply-reflect-amp-controls snd)
+	(if (> (chans snd) 1)
+	    (let* ((wids (sound-widgets snd))
+		   (ctrls (|Widget (list-ref wids 2)))
+		   (snd-amp (find-child ctrls "snd-amp"))
+		   (top (1- (chans snd))))
+	      (set! (sync snd) #f)
+	      (do ((i 0 (1+ i)))
+		  ((= i (chans snd)))
+		(let ((ampn (find-child snd-amp (number-name i)))
+		      (amp (find-child snd-amp (scroller-name i))))
+		  (scale-by (amp-scroller->amp (cadr (|XtGetValues amp (list |XmNvalue 0)))) snd (- top i))
+		  (|XtSetValues amp (list |XmNvalue 50))
+		  (let ((ampstr (|XmStringCreateLocalized "1.00")))
+		    (|XtSetValues ampn (list |XmNlabelString ampstr))
+		    (|XmStringFree ampstr))))
+	      (set! (amp-control snd) 1.0)))
+	#f)
+
+      (define (play-reflect-amp-controls snd)
+	#f)
+
+      (add-hook! after-open-hook amp-controls-reflect-chans)
+      (add-hook! apply-hook apply-reflect-amp-controls)
+      (add-hook! start-playing-hook play-reflect-amp-controls)))
 
 
 

@@ -237,7 +237,7 @@
 	      (let ((snd graph-popup-snd))
 		(help-dialog 
 		 (format #f "~A info" (file-name snd))
-		 (format #f "~A:~%  chans: ~D~%  srate: ~D~%  header: ~A~%  data format: ~A~%  length: ~1,3F~%  maxamp: ~A~%~A"
+		 (format #f "~A:~%  chans: ~D~%  srate: ~D~%  header: ~A~%  data format: ~A~%  length: ~1,3F~%  maxamp: ~A~%~A~A~A"
 			(short-file-name snd)
 			(chans snd)
 			(srate snd)
@@ -246,7 +246,15 @@
 			(/ (frames snd graph-popup-chn) (srate snd))
 			(maxamp snd #t)
 			(if (comment snd)
-			    (format #f "  comment: ~A~%" (comment snd))))))))
+			    (format #f "  comment: ~A~%" (comment snd))
+			    "")
+			(let ((loops (mus-sound-loop-info (file-name snd))))
+			  (if (not (null? loops))
+			      (format #f "  loop: ~A~%" loops)
+			      ""))
+			(if (= (header-type snd) mus-soundfont)
+			    (format #f "  sounds: ~:{~%     ~S start: ~A, loop: ~A ~A~}" (soundfont-info))
+			    ""))))))
       ))))
 
 (define (edit-graph-popup-menu snd chn)

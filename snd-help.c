@@ -255,7 +255,8 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
-24-Aug:  add-amp-control in snd-motif.scm, add-notes in examp.scm.\n\
+27-Aug:  apply-hook.\n\
+24-Aug:  add-amp-controls in snd-motif.scm, add-notes in examp.scm.\n\
 21-Aug:  added explicit FIR/FFT choice to envelope editor (enved-filter).\n\
          fft-squelch in examp.scm.\n\
 20-Aug:  add-listener-popup, fft-popup in popup.scm.\n\
@@ -1586,66 +1587,67 @@ you'll get a stuttering effect because the output\n\
 (monitor) rate doesn't match the input rate.\n\
 ";
 
-static char envelope_editor_help_string[] = 
-"The Edit Envelope dialog (under the Edit menu)\n\
-fires up a window for viewing and editing\n\
-envelopes. The dialog has a display showing either\n\
-the envelope currently being edited or a panorama\n\
-of all currently loaded envelopes. The current\n\
-envelope can be edited with the mouse: click at\n\
-some spot in the graph to place a new breakpoint,\n\
-drag an existing breakpoint to change its\n\
-position, and click an existing breakpoint to\n\
-delete it. The Undo and Redo buttons can be used\n\
-to move around in the list of envelope edits; the\n\
-current state of the envelope can be saved with\n\
-the 'save' button, or printed with 'print'.\n\
-\n\
-Envelopes can be defined using defvar, and loaded\n\
-from a separate file of envelope definitions via\n\
-the load function.  For example, the file:\n\
-\n\
+void envelope_editor_dialog_help(snd_state *ss)
+{
+  snd_help_with_url_and_wrap(ss, "Envelope Editor", "#editenvelope", 
+"The Edit Envelope dialog (under the Edit menu) \
+fires up a window for viewing and editing \
+envelopes. The dialog has a display showing either \
+the envelope currently being edited or a panorama \
+of all currently loaded envelopes. The current \
+envelope can be edited with the mouse: click at \
+some spot in the graph to place a new breakpoint, \
+drag an existing breakpoint to change its \
+position, and click an existing breakpoint to \
+delete it. The Undo and Redo buttons can be used \
+to move around in the list of envelope edits; the \
+current state of the envelope can be saved with \
+the 'save' button, or printed with 'print'. \
+\n\n\
+Envelopes can be defined using defvar, and loaded \
+from a separate file of envelope definitions via \
+the load function.  For example, the file: \
+\n\n\
   (defvar ramp '(0 0 1 1))\n\
   (defvar pyramid '(0 0 1 1 2 0))\n\
-\n\
-defines two envelopes that can be used in Snd\n\
-wherever an envelope is needed (e.g. C-x C-a). You\n\
-can also define a new envelope in the dialog's\n\
-text field; '(0 0 1 1) followed by return fires up\n\
-a ramp as a new envelope.\n\
-\n\
-In the overall view of envelopes, click an\n\
-envelope, or click its name in the scrolled list\n\
-on the left to select it; click the selected\n\
-envelope to load it into the editor portion,\n\
-clearing out whatever was previously there.  To\n\
-load an exisiting envelope into the editor, you\n\
-can also type its name in the text field; to give\n\
-a name to the envelope as it is currently defined\n\
-in the graph viewer, type its name in this field,\n\
-then either push return or the 'save' button.\n\
-\n\
-Once you have an envelope in the editor, it can be\n\
-applied to the currently active sounds via the\n\
-'Apply' or 'Undo&Apply' buttons; the latter first\n\
-tries to undo the previous edit, then applies the\n\
-envelope. The envelope can be applied to the\n\
-amplitude, the spectrum, or the sampling rate. The\n\
-choice is made via the three buttons marked 'amp',\n\
-'flt', and 'src'. The filter order is the variable\n\
-" S_enved_filter_order " which defaults to 40.\n\
-To apply the changes to the current selection,\n\
-rather than the current sound, set the 'selection'\n\
-button.  To apply it to the currently selected mix,\n\
-set the 'mix' button.\n\
-\n\
-The two toggle buttons at the lower right choose\n\
-whether to show a light-colored version of the\n\
-currently active sound (the 'wave' button), and\n\
-whether to clip mouse movement at the current y\n\
-axis bounds (the 'clip' button).\n\
-";
-
+\n\n\
+defines two envelopes that can be used in Snd \
+wherever an envelope is needed (e.g. C-x C-a). You \
+can also define a new envelope in the dialog's \
+text field; '(0 0 1 1) followed by return fires up \
+a ramp as a new envelope. \
+\n\n\
+In the overall view of envelopes, click an \
+envelope, or click its name in the scrolled list \
+on the left to select it; click the selected \
+envelope to load it into the editor portion, \
+clearing out whatever was previously there.  To \
+load an exisiting envelope into the editor, you \
+can also type its name in the text field; to give \
+a name to the envelope as it is currently defined \
+in the graph viewer, type its name in this field, \
+then either push return or the 'save' button. \
+\n\n\
+Once you have an envelope in the editor, it can be \
+applied to the currently active sounds via the \
+'Apply' or 'Undo&Apply' buttons; the latter first \
+tries to undo the previous edit, then applies the \
+envelope. The envelope can be applied to the \
+amplitude, the spectrum, or the sampling rate. The \
+choice is made via the three buttons marked 'amp', \
+'flt', and 'src'. The filter order is the variable \
+" S_enved_filter_order " which defaults to 40. \
+To apply the changes to the current selection, \
+rather than the current sound, set the 'selection' \
+button.  To apply it to the currently selected mix, \
+set the 'mix' button. \
+\n\n\
+The two toggle buttons at the lower right choose \
+whether to show a light-colored version of the \
+currently active sound (the 'wave' button), and \
+whether to clip mouse movement at the current y \
+axis bounds (the 'clip' button).");
+}
 
 void about_snd_help(snd_state *ss)
 {
@@ -1723,7 +1725,7 @@ void marks_help(snd_state *ss) {snd_help_with_url(ss, STR_Marks, "#marks", mark_
 void mix_help(snd_state *ss) {snd_help_with_url(ss, STR_Mixing, "#mixingfiles", mix_help_string);}
 void sound_files_help(snd_state *ss) {snd_help_with_url(ss, STR_Format, "#formats", sound_files_help_string);}
 void recording_help(snd_state *ss) {snd_help_with_url(ss, STR_Recording, "#recordfile", recording_help_string);}
-void init_file_help(snd_state *ss) {ssnd_help_with_url(ss, STR_Customization, "extsnd.html", init_file_help_string, "\n", resource_help_string, NULL);}
+void init_file_help(snd_state *ss) {ssnd_help_with_url(ss, STR_Customization, "grfsnd.html", init_file_help_string, "\n", resource_help_string, NULL);}
 
 #if HAVE_CLICK_FOR_HELP
 
@@ -1817,8 +1819,6 @@ commands are (c = control):\n\
 \n\
 ",
 graph_help_string,
-"\n",
-mark_help_string,
 NULL);
 }
 
@@ -2129,11 +2129,6 @@ the recorder, press the 'reset' button at\n\
 the bottom of the window.\n\
 ",
 NULL);
-}
-
-void envelope_editor_dialog_help(snd_state *ss)
-{
-  snd_help_with_url(ss, "Envelope Editor", "editenvelope", envelope_editor_help_string);
 }
 
 void region_dialog_help(snd_state *ss)

@@ -154,7 +154,7 @@ each channel containing lists of edits, marks, mixes, etc.
 There are other objects such as colors, vcts (an optimization
 of vectors), and regions; the currently active region is
 called the selection.  I originally presented all the
-various functions and variables in an enormous alphabetical
+functions and variables in an enormous alphabetical
 list, but that finally became unmanageable.  In the following
 sections, each of the basic entities is treated in a separate
 section with cross-references where needed.  The <a href="index.html#extsndindex">index</a>
@@ -1291,6 +1291,16 @@ the hook.
           (set! (channel-style snd) channels-combined)
           (set! (graph-style snd) graph-filled)))
 <!-- --></pre></td></tr></table></td></tr>
+<!-- --><tr><td colspan=3></td></tr>
+<!-- -->
+<!-- apply-hook -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="applyhook">apply-hook</a></em> (snd)</code></span><td align=right><b>or</b></td>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td colspan=2>
+<!-- -->called when 'Apply' is clicked or apply-controls called.
+<!-- -->If it returns #t, the apply is aborted.
+<!-- --></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
 <!-- before-transform-hook -->
@@ -2809,7 +2819,7 @@ The most important Sndlib functions for Snd are:</p>
 <!-- --><tr><td><span class=defbox><code><em class=def><a name="soundtypename">mus-header-type-name</a></em> (type)</code></span></td>
 <!-- --><td>e.g. "AIFF", <i>type</i> is an integer, some of which have names:</td></tr>
 <!-- --><tr><td colspan=2><pre>
-<!-- -->  mus-next  mus-aifc  mus-riff  mus-nist  mus-raw  mus-ircam  mus-aiff
+<!-- -->  mus-next  mus-aifc  mus-riff  mus-nist  mus-raw  mus-ircam  mus-aiff mus-bicsf mus-soundfont mus-voc mus-svx
 <!-- --></pre></td></tr>
 <!-- -->
 <!-- mus-sound-chans -->
@@ -4814,7 +4824,7 @@ desired edit history position.
 <!-- --></pre>
 <!-- -->Header-types are:
 <!-- --><pre>
-<!-- -->mus-next mus-aifc mus-riff mus-nist mus-raw mus-ircam mus-aiff
+<!-- -->mus-next mus-aifc mus-riff mus-nist mus-raw mus-ircam mus-aiff mus-soundfont mus-bicsf mus-voc mus-svx
 <!-- --></pre>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
@@ -7354,6 +7364,7 @@ variable %load-verbosely to #t.
 <p><b>Sndlib</b> (see <a href="sndlib.html#sndlibguile">sndlib.html</a> for a complete list):</p>
 <pre>
   <a name="nextsoundfile">mus-next</a> mus-aifc mus-riff mus-nist mus-raw mus-ircam mus-aiff
+  mus-bicsf mus-soundfont mus-voc mus-svx
 
   <A NAME="localdataformats">mus-bshort</a>  mus-lshort mus-mulaw  mus-alaw   mus-byte   mus-ubyte   mus-bfloat
   mus-lfloat  mus-bint   mus-lint   mus-b24int mus-l24int mus-bdouble mus-ldouble

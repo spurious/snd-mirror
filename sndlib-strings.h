@@ -20,6 +20,11 @@
 #define S_mus_raw                       "mus-raw"
 #define S_mus_ircam                     "mus-ircam"
 #define S_mus_aiff                      "mus-aiff"
+#define S_mus_bicsf                     "mus-bicsf"
+#define S_mus_voc                       "mus-voc"
+#define S_mus_svx                       "mus-svx"
+#define S_mus_soundfont                 "mus-soundfont"
+
 #define S_mus_bshort                    "mus-bshort"
 #define S_mus_lshort                    "mus-lshort"
 #define S_mus_mulaw                     "mus-mulaw"
@@ -38,6 +43,7 @@
 #define S_mus_ldouble                   "mus-ldouble"
 #define S_mus_ubshort                   "mus-ubshort"
 #define S_mus_ulshort                   "mus-ulshort"
+
 #define S_mus_audio_default             "mus-audio-default"
 #define S_mus_audio_duplex_default      "mus-audio-duplex-default"
 #define S_mus_audio_line_out            "mus-audio-line-out"

@@ -5150,7 +5150,7 @@ total requested buffer size is %d frames, minimum allowed is %d, maximum is %d",
     } else {
 	if (r != srate) {
 	    mus_print("%s: %s: could not set rate to exactly %d, set to %d instead",
-		      alsa_name, srate, r);
+		      __FUNCTION__, alsa_name, srate, r);
 	}
     }
     err = snd_pcm_hw_params(handle, hw_params);

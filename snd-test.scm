@@ -254,6 +254,77 @@
 	'copy-context copy-context 0
 	'cursor-context cursor-context 3
 	'selection-context selection-context 2
+
+	;; sndlib constants
+	'mus-next mus-next 0
+	'mus-aifc mus-aifc 1
+	'mus-riff mus-riff 2
+	'mus-nist mus-nist 4
+	'mus-raw mus-raw 10
+	'mus-ircam mus-ircam 14
+	'mus-aiff mus-aiff 56
+	'mus-bicsf mus-bicsf 3
+	'mus-voc mus-voc 8
+	'mus-svx mus-svx 7
+	'mus-soundfont mus-soundfont 31
+	'mus-bshort mus-bshort 1
+	'mus-lshort mus-lshort 10
+	'mus-mulaw mus-mulaw 2
+	'mus-alaw mus-alaw 6
+	'mus-byte mus-byte 3
+	'mus-ubyte mus-ubyte 7
+	'mus-bfloat mus-bfloat 4
+	'mus-lfloat mus-lfloat 12
+	'mus-bint mus-bint 5
+	'mus-lint mus-lint 11
+	'mus-bintn mus-bintn 17
+	'mus-lintn mus-lintn 18
+	'mus-b24int mus-b24int 8
+	'mus-l24int mus-l24int 16
+	'mus-bdouble mus-bdouble 9
+	'mus-ldouble mus-ldouble 13
+	'mus-ubshort mus-ubshort 14
+	'mus-ulshort mus-ulshort 15
+	'mus-audio-default mus-audio-default 0
+	'mus-audio-duplex-default mus-audio-duplex-default 1
+	'mus-audio-line-out mus-audio-line-out 4
+	'mus-audio-line-in mus-audio-line-in 5
+	'mus-audio-microphone mus-audio-microphone 6
+	'mus-audio-speakers mus-audio-speakers 7
+	'mus-audio-dac-out mus-audio-dac-out 10
+	'mus-audio-adat-in mus-audio-adat-in 2
+	'mus-audio-aes-in mus-audio-aes-in 3
+	'mus-audio-digital-in mus-audio-digital-in 8
+	'mus-audio-digital-out mus-audio-digital-out 9
+	'mus-audio-adat-out mus-audio-adat-out 11
+	'mus-audio-aes-out mus-audio-aes-out 12
+	'mus-audio-dac-filter mus-audio-dac-filter 13
+	'mus-audio-mixer mus-audio-mixer 14
+	'mus-audio-line1 mus-audio-line1 15
+	'mus-audio-line2 mus-audio-line2 16
+	'mus-audio-line3 mus-audio-line3 17
+	'mus-audio-aux-input mus-audio-aux-input 18
+	'mus-audio-cd mus-audio-cd 19
+	'mus-audio-aux-output mus-audio-aux-output 20
+	'mus-audio-spdif-in mus-audio-spdif-in 21
+	'mus-audio-spdif-out mus-audio-spdif-out 22
+	'mus-audio-amp mus-audio-amp 23
+	'mus-audio-srate mus-audio-srate 24
+	'mus-audio-channel mus-audio-channel 25
+	'mus-audio-format mus-audio-format 26
+	'mus-audio-port mus-audio-port 37
+	'mus-audio-imix mus-audio-imix 27
+	'mus-audio-igain mus-audio-igain 28
+	'mus-audio-reclev mus-audio-reclev 29
+	'mus-audio-pcm mus-audio-pcm 30
+	'mus-audio-pcm2 mus-audio-pcm2 31
+	'mus-audio-ogain mus-audio-ogain 32
+	'mus-audio-line mus-audio-line 33
+	'mus-audio-synth mus-audio-synth 34
+	'mus-audio-bass mus-audio-bass 35
+	'mus-audio-treble mus-audio-treble 36
+	'mus-audio-direction mus-audio-direction 39
+	'mus-audio-samples-per-channel mus-audio-samples-per-channel 38
 	))
 
       (set! (region-graph-style) (region-graph-style))
@@ -1036,6 +1107,8 @@
 	  (snd-display ";snd-warning-hook: ~A?" snd-warning-hook))
       (if (or (not (hook? name-click-hook)) (not (hook-empty? name-click-hook)))
 	  (snd-display ";name-click-hook: ~A?" name-click-hook))
+      (if (or (not (hook? apply-hook)) (not (hook-empty? apply-hook)))
+	  (snd-display ";apply-hook: ~A?" apply-hook))
       (if (or (not (hook? enved-hook)) (not (hook-empty? enved-hook)))
 	  (snd-display ";enved-hook: ~A?" enved-hook))
       (if (or (not (hook? mouse-enter-label-hook)) (not (hook-empty? mouse-enter-label-hook)))
@@ -6231,6 +6304,7 @@
   (add-hook! mix-amp-changed-hook arg1) (carg1 mix-amp-changed-hook)
   (add-hook! mix-speed-changed-hook arg1) (carg1 mix-speed-changed-hook)
   (add-hook! name-click-hook arg1) (carg1 name-click-hook)
+  (add-hook! apply-hook arg1) (carg1 apply-hook)
   (add-hook! open-hook arg1) (carg1 open-hook)
   (add-hook! output-comment-hook arg1) (carg1 output-comment-hook)
   (add-hook! multichannel-mix-hook arg1) (carg1 multichannel-mix-hook)
@@ -10978,6 +11052,7 @@ EDITS: 3
 			(list mix-amp-changed-hook 'mix-amp-changed-hook)
 			(list mix-speed-changed-hook 'mix-speed-changed-hook)
 			(list name-click-hook 'name-click-hook)
+			(list apply-hook 'apply-hook)
 			(list open-hook 'open-hook)
 			(list output-comment-hook 'output-comment-hook)
 			(list multichannel-mix-hook 'multichannel-mix-hook)

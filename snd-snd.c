@@ -757,7 +757,7 @@ static char *linked_file(char *link_name)
     return("?");
 }
 
-static int dont_babble_info(snd_info *sp);
+static XEN name_click_hook;
 
 void sp_name_click(snd_info *sp)
 {
@@ -766,7 +766,12 @@ void sp_name_click(snd_info *sp)
   int linked = 0;
   if (sp)
     {
-      if (dont_babble_info(sp)) return;
+      /* call name-click-hook (if any) return #t = don't print info in minibuffer */
+      if ((XEN_HOOKED(name_click_hook)) &&
+	  (XEN_TRUE_P(g_c_run_or_hook(name_click_hook, 
+				      XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
+				      S_name_click_hook))))
+	return;
       hdr = sp->hdr;
       if (hdr)
 	{
@@ -1029,14 +1034,23 @@ typedef struct {
   file_info *hdr;
 } apply_state;
 
+static XEN apply_hook;
+
 static void *make_apply_state(void *xp)
 {
   /* set up initial state for apply_controls */
-  apply_state *ap;
+  apply_state *ap = NULL;
+  snd_info *sp = (snd_info *)xp;
+  /* call apply-hook (if any) return #t = don't apply */
+  if ((XEN_HOOKED(apply_hook)) &&
+      (XEN_TRUE_P(g_c_run_or_hook(apply_hook, 
+				  XEN_LIST_1(C_TO_SMALL_XEN_INT(sp->index)),
+				  S_apply_hook))))
+    return(NULL);
   ap = (apply_state *)CALLOC(1, sizeof(apply_state));
   ap->slice = 0;
   ap->hdr = NULL;
-  ap->sp = (snd_info *)xp;
+  ap->sp = sp;
   return((void *)ap);
 }
 
@@ -2667,19 +2681,6 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
   return(snd_no_such_sound_error(S_apply_controls, snd));
 }
 
-static XEN name_click_hook;
-static int dont_babble_info(snd_info *sp)
-{
-  /* call name-click-hook (if any) return #t = don't print info in minibuffer */
-  XEN res = XEN_FALSE; XEN ind;
-  ind = C_TO_SMALL_XEN_INT(sp->index);
-  if (XEN_HOOKED(name_click_hook))
-    res = g_c_run_or_hook(name_click_hook, 
-			  XEN_LIST_1(ind),
-			  S_name_click_hook);
-  return(XEN_TRUE_P(res));
-}
-
 #if (!USE_NO_GUI)
 static XEN g_sound_widgets(XEN snd)
 {
@@ -3216,7 +3217,11 @@ void g_init_snd(void)
   #define H_name_click_hook S_name_click_hook " (snd) is called when sound name clicked. \
 If it returns #t, the usual informative minibuffer babbling is squelched."
 
+  #define H_apply_hook S_apply_hook " (snd) is called when 'Apply' is clicked or apply-controls called. \
+If it returns #t, the apply is aborted."
+
   XEN_DEFINE_HOOK(name_click_hook, S_name_click_hook, 1, H_name_click_hook);       /* args = snd-index */
+  XEN_DEFINE_HOOK(apply_hook,      S_apply_hook,      1, H_apply_hook);            /* args = snd-index */
 
   #define H_channels_separate "The value for " S_channel_style " that causes channel graphs to occupy separate panes"
   #define H_channels_combined "The value for " S_channel_style " that causes channel graphs to occupy one panes (the 'unite' button)"
