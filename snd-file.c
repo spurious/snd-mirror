@@ -326,7 +326,7 @@ file_info *make_file_info(char *fullname, snd_state *ss)
     }
   else
     {
-      snd_error("make_file_info: can't find %s: %s", fullname, strerror(errno));
+      snd_error("can't find %s: %s", fullname, strerror(errno));
       return(NULL);
     }
   return(hdr);

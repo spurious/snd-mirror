@@ -3923,15 +3923,13 @@ static XEN g_backward_mix(XEN count, XEN snd, XEN chn)
 }
 
 
-static XEN g_mix(XEN file, XEN chn_samp_n, XEN file_chn, XEN snd_n, XEN chn_n, XEN console)
+static XEN g_mix(XEN file, XEN chn_samp_n, XEN file_chn, XEN snd_n, XEN chn_n, XEN tag)
 {
   #define H_mix "(" S_mix " file &optional (chn-start 0) (file-chan 0) snd chn with-tag))\n\
 mixes file channel file-chan into snd's channel chn starting at chn-start (or at the cursor location if chn-start \
 is omitted), returning the new mix's id.  if with-tag is #f, the data is mixed (no draggable tag is created). \
 If file_chn is omitted, file's channels are mixed until snd runs out of channels."
 
-  /* TODO: test all these cases!
-   */
   chan_info *cp = NULL;
   char *name = NULL;
   int chans, id = -1, file_channel;
@@ -3943,7 +3941,7 @@ If file_chn is omitted, file's channels are mixed until snd runs out of channels
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(chn_samp_n), chn_samp_n, XEN_ARG_2, S_mix, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(file_chn), file_chn, XEN_ARG_3, S_mix, "an integer");
   ASSERT_CHANNEL(S_mix, snd_n, chn_n, 4);
-  XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(console), console, XEN_ARG_6, S_mix, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(tag), tag, XEN_ARG_6, S_mix, "a number");
   name = mus_expand_filename(XEN_TO_C_STRING(file));
   if (!(mus_file_probe(name)))
     {
@@ -3952,10 +3950,11 @@ If file_chn is omitted, file's channels are mixed until snd runs out of channels
     }
   ss = get_global_state();
   ss->catch_message = NULL;
-  if (XEN_NOT_BOUND_P(console))
+  if (XEN_NOT_BOUND_P(tag))
     with_mixer = with_mix_tags(ss);
-  else with_mixer = XEN_TO_C_BOOLEAN_OR_TRUE(console);
-  beg = XEN_TO_C_OFF_T_OR_ELSE(chn_samp_n, 0);
+  else with_mixer = XEN_TO_C_BOOLEAN_OR_TRUE(tag);
+  cp = get_cp(snd_n, chn_n, S_mix);
+  beg = XEN_TO_C_OFF_T_OR_ELSE(chn_samp_n, cp->cursor);
   if (XEN_NOT_BOUND_P(file_chn))
     {
       id = mix_complete_file(any_selected_sound(ss), beg, name, S_mix, with_mixer);
@@ -3971,7 +3970,6 @@ If file_chn is omitted, file's channels are mixed until snd runs out of channels
     }
   else
     {
-      cp = get_cp(snd_n, chn_n, S_mix);
       chans = mus_sound_chans(name);
       file_channel = XEN_TO_C_INT(file_chn);
       if (file_channel >= chans)
@@ -4384,7 +4382,7 @@ static XEN g_set_mix_color (XEN arg1, XEN arg2)
 
 static XEN g_mix_color(XEN mix_id) 
 {
-  #define H_mix_color "(" S_mix_color ") -> color of mix consoles"
+  #define H_mix_color "(" S_mix_color ") -> color of mix tags"
   snd_state *ss;
   ss = get_global_state();
   if (XEN_INTEGER_P(mix_id))

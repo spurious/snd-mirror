@@ -270,16 +270,15 @@ static gboolean io_invoke(GIOChannel *source, GIOCondition condition, gpointer d
 }
 #endif
 
-typedef struct {int slice; snd_state *ss; GtkWidget *shell;} startup_state;
+static int tm_slice = 0;
 
 static BACKGROUND_TYPE startup_funcs(gpointer context)
 {
-  startup_state *tm = (startup_state *)context;
   snd_state *ss;
   snd_info *sp;
   static int auto_open_ctr = 0;
-  ss = tm->ss;
-  switch (tm->slice)
+  ss = get_global_state();
+  switch (tm_slice)
     {
     case 0:
 #ifndef SND_AS_WIDGET
@@ -300,16 +299,16 @@ static BACKGROUND_TYPE startup_funcs(gpointer context)
 			  (guchar *)(SND_VERSION), 
 			  strlen(SND_VERSION) + 1);
 #if HAVE_EXTENSION_LANGUAGE
-      gtk_widget_add_events (tm->shell, gtk_widget_get_events (tm->shell) | GDK_PROPERTY_CHANGE_MASK);
-      g_signal_connect_closure_by_id(GTK_OBJECT(tm->shell),
-				     g_signal_lookup("property_notify_event", G_OBJECT_TYPE(GTK_OBJECT(tm->shell))),
+      gtk_widget_add_events (MAIN_SHELL(ss), gtk_widget_get_events (MAIN_SHELL(ss)) | GDK_PROPERTY_CHANGE_MASK);
+      g_signal_connect_closure_by_id(GTK_OBJECT(MAIN_SHELL(ss)),
+				     g_signal_lookup("property_notify_event", G_OBJECT_TYPE(GTK_OBJECT(MAIN_SHELL(ss)))),
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(who_called), (gpointer)ss, 0),
 				     0);
 #endif
       /* trap outer-level Close for cleanup check */
-      g_signal_connect_closure_by_id(GTK_OBJECT(tm->shell),
-				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(tm->shell))),
+      g_signal_connect_closure_by_id(GTK_OBJECT(MAIN_SHELL(ss)),
+				     g_signal_lookup("delete_event", G_OBJECT_TYPE(GTK_OBJECT(MAIN_SHELL(ss)))),
 				     0,
 				     g_cclosure_new(GTK_SIGNAL_FUNC(window_close), (gpointer)ss, 0),
 				     0);
@@ -371,11 +370,10 @@ static BACKGROUND_TYPE startup_funcs(gpointer context)
 	      (sp->selected_channel == NO_SELECTION)) /* don't clobber possible select-channel in loaded startup files */
 	    select_channel(sp, 0);
 	}
-      FREE(tm);
       return(BACKGROUND_QUIT); 
       break;
     }
-  tm->slice++;
+  tm_slice++;
   return(BACKGROUND_CONTINUE);
 }
 
@@ -434,7 +432,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   GtkWidget *shell;
   int i;
   state_context *sx;
-  startup_state *tm;
 
 #ifdef SND_AS_WIDGET
   set_snd_error_display (error_func);
@@ -627,13 +624,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   setup_gcs(ss);
 
   if (batch) gtk_widget_hide(MAIN_SHELL(ss));
-
-  tm = (startup_state *)CALLOC(1, sizeof(startup_state));
-  tm->slice = 0;
-  tm->ss = ss;
-  tm->shell = MAIN_SHELL(ss);
-
-  BACKGROUND_ADD(ss, startup_funcs, tm);
+  BACKGROUND_ADD(ss, startup_funcs, NULL);
 
 #if HAVE_SETJMP_H
 #if TRAP_SEGFAULT

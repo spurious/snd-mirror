@@ -3138,7 +3138,7 @@ To mix data in such a way as to create an associated mix object:</p>
 <!-- -->if only the <i>file</i> argument is given, this is equivalent to the File menu's 
 <!-- -->Mix option; the mix start sample in this case depends on the cursor location.
 <!-- -->mix returns the id of the first channel's mix (subsequent channels simply 
-<!-- -->increment this number). id of -1 means some error occurred.
+<!-- -->increment this number). If sync is off, only the first channel is mixed.
 <!-- -->If <i>with-mix-tags</i> is #f (default is #t), the data is simply
 <!-- -->mixed without creating any mix tags [<em class=error>no-such-file</em>].
 <!-- --></td></tr>
@@ -3624,6 +3624,8 @@ The following substitutions can be made:
 <a href="#sndmix">mix</a> file beg filechn s c with-tags              <a href="sndscm.html#mixchannel">mix-channel</a> filedat beg dur s c e
 <a href="#sndmixsound">mix-sound</a> file beg                              <a href="sndscm.html#mixchannel">mix-channel</a> filedat beg dur s c e
 <a href="#sndinsertfile">insert-sound</a> file beg filechn s c e             <a href="sndscm.html#insertchannel">insert-channel</a> filedat beg dur s c e
+<a href="#sndredo">redo</a> edits s c                                  <a href="#redochannel">redo-channel</a> edits s c
+<a href="#sndundo">undo</a> edits s c                                  <a href="#undochannel">undo-channel</a> edits s c
 </pre>
 </small>
 <p><small>An equivalent to map-channel might be:</small></p>
@@ -5105,16 +5107,6 @@ higher -- this is probably not what you want.
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
 <!-- -->
-<!-- redo -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a href="#sndredo">redo</a></em> (<i>edits snd chn</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->redo <i>edits</i> edits (default is 1) in <i>snd</i>'s channel <i>chn</i>.
-<!-- --></td></tr>
-<!-- --><tr><td colspan=2></td></tr>
-<!-- -->
-<!-- -->
 <!-- read-peak-env-info-file -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="readpeakenvinfofile">read-peak-env-info-file</a></em> (snd chn filename)</code></span>
@@ -5124,6 +5116,24 @@ higher -- this is probably not what you want.
 <!-- -->for the given channel.  This should be called only within <a href="#initialgraphhook">initial-graph-hook</a>.  See peak-env.scm.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
+<!-- -->
+<!-- -->
+<!-- redo -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="sndredo">redo</a></em> (<i>edits snd chn</i>)</code></span>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td>
+<!-- -->redo <i>edits</i> edits (default is 1) in <i>snd</i>'s channel <i>chn</i>. Redo follows the sync field if it
+<!-- -->is not 0, which sometimes means that the channel arg is simply ignored.  The following might be a more reasonable redo function:
+<!-- --><br><br><pre>
+(define* (<a name="redochannel">redo-channel</a> #:optional (edits 1) snd chn)
+  (if (and snd (not (= (sync snd) 0)) chn)
+      (set! (edit-position snd chn) (+ (edit-position snd chn) edits))
+      (redo edits snd)))
+<!-- --></pre>  
+<!-- --></td></tr>
+<!-- --><tr><td colspan=2></td></tr>
+<!-- -->
 <!-- -->
 <!-- report-in-minibuffer -->
 <!-- --><tr><td colspan=2>
@@ -6101,10 +6111,18 @@ This can be
 <!-- --></td></tr>
 <!-- -->
 <!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a href="#sndundo">undo</a></em> (<i>edits snd chn</i>)</code></span>
+<!-- --><span class=defbox><code><em class=def><a name="sndundo">undo</a></em> (<i>edits snd chn</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->undo <i>edits</i> edits (default 1) in <i>snd</i>'s channel <i>chn</i>.
+<!-- -->Undo follows the sync field if it
+<!-- -->is not 0, which sometimes means that the channel arg is simply ignored.  The following might be a more reasonable undo function:
+<!-- --><br><br><pre>
+(define* (<a name="undochannel">undo-channel</a> #:optional (edits 1) snd chn)
+  (if (and snd (not (= (sync snd) 0)) chn)
+      (set! (edit-position snd chn) (max 0 (- (edit-position snd chn) edits)))
+      (undo edits snd)))
+<!-- --></pre>  
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -6820,13 +6838,6 @@ The edit list functions are:</p>
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td></td><td></td></tr>
 <!-- -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def>revert-sound</em> (<i>snd</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->revert <i>snd</i> to saved state (undo all edits).
-<!-- --></td></tr>
-<!-- --><tr><td></td><td></td></tr>
 <!-- -->
 <!-- save-edit-history -->
 <!-- -->
@@ -6862,25 +6873,6 @@ The edit list functions are:</p>
     sfile))
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td></td><td></td></tr>
-<!-- -->
-<!-- redo -->
-<!-- -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndredo">redo</a></em> (<i>edits snd chn</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->redo <i>edits</i> edits (default is 1) in <i>snd</i>'s channel <i>chn</i>.
-<!-- --></td></tr>
-<!-- --><tr><td></td><td></td></tr>
-<!-- -->
-<!-- undo -->
-<!-- -->
-<!-- --><tr><td colspan=2>
-<!-- --><span class=defbox><code><em class=def><a name="sndundo">undo</a></em> (<i>edits snd chn</i>)</code></span>
-<!-- --></td></tr>
-<!-- --><tr><td></td><td>
-<!-- -->undo <i>edits</i> edits (default 1) in <i>snd</i>'s channel <i>chn</i>.
-<!-- --></td></tr>
 <!-- -->
 <!-- --></table>
 

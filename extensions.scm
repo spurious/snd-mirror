@@ -14,6 +14,8 @@
 ;;; check-for-unsaved-edits
 ;;; remember-sound-state
 ;;; mix-channel, insert-channel, c-channel
+;;; redo-channel, undo-channel
+
 
 (use-modules (ice-9 common-list) (ice-9 optargs) (ice-9 format))
 
@@ -594,4 +596,16 @@ If 'check' is #f, the hooks are removed."
     (if (> len 0)
 	(loop-samples (make-sample-reader start snd chn 1 edpos) func len "c-channel" call-data))))
 
+
+;;; -------- redo-channel, undo-channel
+
+(define* (redo-channel #:optional (edits 1) snd chn)
+  (if (and snd (not (= (sync snd) 0)) chn)
+      (set! (edit-position snd chn) (+ (edit-position snd chn) edits))
+      (redo edits snd)))
+
+(define* (undo-channel #:optional (edits 1) snd chn)
+  (if (and snd (not (= (sync snd) 0)) chn)
+      (set! (edit-position snd chn) (max 0 (- (edit-position snd chn) edits)))
+      (undo edits snd)))
 

@@ -419,10 +419,11 @@ XEN string_to_form(void *str)
 
 static XEN eval_file_wrapper(void *data)
 {
+  XEN error;
   last_file_loaded = (char *)data;
-  XEN_LOAD_FILE((char *)data);
+  error = XEN_LOAD_FILE((char *)data); /* error only meaningful in Ruby */
   last_file_loaded = NULL;
-  return(XEN_UNDEFINED);
+  return(error);
 }
 
 #if HAVE_GUILE
@@ -748,39 +749,51 @@ void snd_eval_stdin_str(snd_state *ss, char *buf)
     }
 }
 
-/* TODO: if error occurs while loading Ruby init (or -l) error message is not posted */
-void snd_load_init_file(snd_state *ss, int nog, int noi)
+void snd_load_init_file(snd_state *ss, int no_global, int no_init)
 {
   /* look for ".snd" on the home directory */
   /* called only in snd-xmain.c at initialization time */
   int fd;
+  XEN result = XEN_TRUE;
   char *str = NULL;
   #define SND_CONF "/etc/snd.conf"
-  if (nog == 0)
+  if (no_global == 0)
     {
       fd = OPEN(SND_CONF, O_RDONLY, 0);
       if (fd != -1)
 	{
 	  snd_close(fd, SND_CONF);
-	  snd_catch_any(eval_file_wrapper, (void *)SND_CONF, "(load " SND_CONF ")");
+	  result = snd_catch_any(eval_file_wrapper, (void *)SND_CONF, "(load " SND_CONF ")");
 	}
     }
-  if ((ss->init_file) && (noi == 0))
+  if ((ss->init_file) && (no_init == 0))
     {
       str = mus_expand_filename(ss->init_file);
       fd = OPEN(str, O_RDONLY, 0);
       if (fd != -1) 
 	{
 	  snd_close(fd, str);
-	  snd_catch_any(eval_file_wrapper, (void *)str, "(load ~/.snd)");
+	  result = snd_catch_any(eval_file_wrapper, (void *)str, "(load ~/.snd)");
 	}
       if (str) FREE(str);
     }
+#if HAVE_RUBY
+  if (!(XEN_TRUE_P(result)))
+    {
+      str = gl_print(result);
+      if (str)
+	{
+	  snd_error(str);
+	  FREE(str);
+	}
+    }
+#endif
 }
 
 void snd_load_file(char *filename)
 {
   char *str = NULL, *str1 = NULL, *str2 = NULL;
+  XEN result = XEN_TRUE;
   str = mus_expand_filename(filename);
 #if (!HAVE_RUBY)
   str2 = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
@@ -794,12 +807,23 @@ void snd_load_file(char *filename)
       if (!mus_file_probe(str1))
 	snd_error("can't load %s: %s", filename, strerror(errno));
       /* snd_error ok here because all uses of this are user-interface generated (autoload, memo-file, etc) */
-      else snd_catch_any(eval_file_wrapper, (void *)str1, str2);
+      else result = snd_catch_any(eval_file_wrapper, (void *)str1, str2);
       FREE(str1);
     }
-  else snd_catch_any(eval_file_wrapper, (void *)str, str2);
+  else result = snd_catch_any(eval_file_wrapper, (void *)str, str2);
   if (str) FREE(str);
   if (str2) FREE(str2);
+#if HAVE_RUBY
+  if (!(XEN_TRUE_P(result)))
+    {
+      str = gl_print(result);
+      if (str)
+	{
+	  snd_error(str);
+	  FREE(str);
+	}
+    }
+#endif
 }
 
 static XEN g_snd_print(XEN msg)

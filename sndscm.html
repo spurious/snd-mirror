@@ -1324,6 +1324,8 @@ convenient if they were in one file.
   <em class=def><a name="mixchannel">mix-channel</a></em> filedat beg dur snd chn edpos
   <em class=def><a name="insertchannel">insert-channel</a></em> filedat beg dur snd chn edpos
   <em class=def><a name="cchannel">c-channel</a></em> func beg dur snd chn edpos
+  <em class=def>redo-channel</em> edits snd chn
+  <em class=def>undo-channel</em> edits snd chn
 </pre>
 
 <p><i>channel-property</i> returns the value associated with <i>key</i> in the given channel's
@@ -1443,6 +1445,10 @@ start point in the file, and (optionally) the channel of the file to mix.  For e
 </pre>
 <p><i>insert-channel</i> is the same as mix-channel, but inserts the specified data.
 <i>c-channel</i> calls a raw C function, passing it the current sample as a float.
+</p>
+
+<p><i>redo-channel</i> and <i>undo-channel</i> are regularized versions of
+<a href="extsnd.html#sndredo">redo</a> and <a href="extsnd.html#sndundo">undo</a>.
 </p>
 <br><br>
 

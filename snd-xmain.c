@@ -211,19 +211,6 @@ static XtResource resources[] = {
 };
 
 
-typedef struct {int slice; snd_state *ss; Widget shell; Display *dpy;} startup_state;
-
-static startup_state *make_startup_state(snd_state *ss, Widget shell, Display *dpy)
-{
-  startup_state *tm;
-  tm = (startup_state *)CALLOC(1, sizeof(startup_state));
-  tm->slice = 0;
-  tm->ss = ss;
-  tm->shell = shell;
-  tm->dpy = dpy;
-  return(tm);
-}
-
 #ifndef SND_AS_WIDGET
 static void window_close(Widget w, XtPointer context, XtPointer callData)
 {
@@ -390,15 +377,20 @@ static void get_stdin_string (XtPointer context, int *fd, XtInputId *id)
 }
 #endif
 
+static int tm_slice = 0;
+
 static BACKGROUND_TYPE startup_funcs(XtPointer context)
 {
-  startup_state *tm = (startup_state *)context;
   Atom wm_delete_window;
   snd_state *ss;
   snd_info *sp;
   static int auto_open_ctr = 0;
-  ss = tm->ss;
-  switch (tm->slice)
+  Widget shell;
+  Display *dpy;
+  ss = get_global_state();
+  shell = ss->sgx->mainshell;
+  dpy = ss->sgx->mdpy;
+  switch (tm_slice)
     {
     case 0:
       create_popup_menu(ss);
@@ -409,17 +401,17 @@ static BACKGROUND_TYPE startup_funcs(XtPointer context)
 #endif
 #ifndef SND_AS_WIDGET
       /* trap outer-level Close for cleanup check */
-      wm_delete_window = XmInternAtom(tm->dpy, "WM_DELETE_WINDOW", FALSE);
-      XmAddWMProtocolCallback(tm->shell, wm_delete_window, window_close, (XtPointer)ss);
+      wm_delete_window = XmInternAtom(dpy, "WM_DELETE_WINDOW", FALSE);
+      XmAddWMProtocolCallback(shell, wm_delete_window, window_close, (XtPointer)ss);
 
-      snd_v = XInternAtom(tm->dpy, "SND_VERSION", FALSE);
-      snd_c = XInternAtom(tm->dpy, "SND_COMMAND", FALSE);
-      XChangeProperty(tm->dpy, XtWindow(tm->shell), snd_v, XA_STRING, 8, PropModeReplace, 
+      snd_v = XInternAtom(dpy, "SND_VERSION", FALSE);
+      snd_c = XInternAtom(dpy, "SND_COMMAND", FALSE);
+      XChangeProperty(dpy, XtWindow(shell), snd_v, XA_STRING, 8, PropModeReplace, 
 		      (unsigned char *)(SND_VERSION), strlen(SND_VERSION) + 1);
 #if HAVE_EXTENSION_LANGUAGE
-      XtAddEventHandler(tm->shell, PropertyChangeMask, FALSE, who_called, (XtPointer)ss);
+      XtAddEventHandler(shell, PropertyChangeMask, FALSE, who_called, (XtPointer)ss);
 #endif
-      XtAddEventHandler(tm->shell, StructureNotifyMask, FALSE, minify_maxify_window, (XtPointer)ss);
+      XtAddEventHandler(shell, StructureNotifyMask, FALSE, minify_maxify_window, (XtPointer)ss);
 #endif
       (ss->sgx)->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), in_graph_cursor(ss));
       (ss->sgx)->wait_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_watch);
@@ -472,11 +464,10 @@ static BACKGROUND_TYPE startup_funcs(XtPointer context)
       if ((ss->active_sounds > 1) &&
 	  ((sound_style(ss) == SOUNDS_VERTICAL) || (sound_style(ss) == SOUNDS_HORIZONTAL)))
 	equalize_all_panes(ss);
-      FREE(tm);
       return(BACKGROUND_QUIT); 
       break;
     }
-  tm->slice++;
+  tm_slice++;
   return(BACKGROUND_CONTINUE);
 }
 
@@ -1017,7 +1008,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 
   initialize_colormap(ss);
 
-  BACKGROUND_ADD(ss, startup_funcs, make_startup_state(ss, shell, dpy));
+  BACKGROUND_ADD(ss, startup_funcs, NULL);
   /* this complication seems necessary because we might be loading Scheme code files
    *   from the startup args (via -l) and they might contain errors etc -- we want to
    *   be sure the complete interface is running (via the XtAppMainLoop below) when
