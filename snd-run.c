@@ -65,13 +65,15 @@
  * tests in snd-test.scm, test 22
  *
  * SOMEDAY: split Scheme from Snd/Clm here and do the latter via an FFI of some sort
- * TODO: file->array and array->file, comment? convolve-arrays? delete-mark? fft? file-name?
+ * TODO: file->array and array->file, comment? delete-mark? fft? file-name?
+ *        these should be named file->vct etc
  * TODO: left|right-sample? mark-name? mark? mark-sample mark-sync find-mark
  * TODO: optimization? mix/track/region sample readers? region info? selection info? mix info?
- * TODO: samples->vct? samples? access to sound|channel-properties? sound?
- * TODO: in-Hz? xcoeffs? ycoeffs? partial->poly etc?
+ * TODO: samples->vct? access to sound|channel-properties? sound?[g_sound_p in snd-snd.c]
+ * TODO: xcoeffs? ycoeffs? partial->poly etc? 
  * TODO: non-constant lists passed as xenable args (for make-env)
  * TODO: save ptree somehow (local runs make this problematic)
+ * TODO: test run-time vct-convolve!
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
  *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)
@@ -150,12 +152,24 @@ static XEN optimization_hook = XEN_FALSE;
 #define DOUBLE_TO_STRING_WITH_RADIX(a, b)   XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_DOUBLE(a), C_TO_XEN_INT(b)))
 #define XEN_PROCEDURE_SOURCE_TO_C_STRING(a) XEN_AS_STRING(scm_procedure_source(a))
 #define XEN_LIST_REF_WRAPPED(a, b)          scm_list_ref(a, b)
+#define XEN_OBJECT_PROPERTY(Obj, Prop)      scm_object_property(Obj, Prop)
+#define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val) scm_set_object_property_x(Obj, Prop, Val)
+#define XEN_PROCEDURE_PROPERTY(Obj, Prop)   scm_procedure_property(Obj, Prop)
+#define XEN_SET_PROCEDURE_PROPERTY(Obj, Prop, Val) scm_set_procedure_property_x(Obj, Prop, Val)
+#define XEN_PROCEDURE_SOURCE(Proc)          scm_procedure_source(Proc)
+#define XEN_PROCEDURE_WITH_SETTER_P(Proc)   scm_procedure_with_setter_p(Proc)
 
 #define INT_PT  "i%d(%d)"
 #define FLT_PT  "d%d(%.4f)"
 #define PTR_PT  "i%d(%p)"
 #define STR_PT  "i%d(\"%s\")"
 #define CHR_PT  "i%d(#\\%c)"
+#define LST_PT  "i%d(%s)"
+#define KEY_PT  "i%d(%s)"
+#define RD_PT   "i%d(%s)"
+#define CLM_PT  "i%d(%s)"
+#define VCT_PT  "i%d(%s)"
+#define GO_PT   "i%d(continuation)"
 #define BOOL_PT "i%d(%s)"
 #define B2S(Arg) ((Arg) ? "#t" : "#f")
 
@@ -269,7 +283,7 @@ enum {R_UNSPECIFIED, R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_LIST, R_PAIR, R
       R_FLOAT_VECTOR, R_INT_VECTOR, R_VCT_VECTOR, R_CLM_VECTOR, 
       R_NUMBER, R_CONS, R_VECTOR, R_XEN, R_ANY}; /* last 5 for walker arg checks */
 
-static char *type_names[23] = {"unspecified", "int", "float", "bool", "char", "string", "list", "pair", "keyword", "function", "continuation", 
+static char *type_names[23] = {"unspecified", "int", "float", "boolean", "char", "string", "list", "pair", "keyword", "function", "continuation", 
 			       "vct", "reader", "clm", "float-vector", "int-vector", "vct-vector", "clm-vector",
 			       "number", "cons", "vector", "xen", "any"};
 
@@ -750,18 +764,18 @@ static char *describe_xen_value(xen_value *v, int *ints, Float *dbls)
   if (ints == NULL) return(copy_string("null ints???"));
   switch (v->type)
     {
-    case R_BOOL:    buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, "i%d(%s)", v->addr, (ints[v->addr] == 0) ? "#f" : "#t");   break;
-    case R_INT:     buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, INT_PT , v->addr, ints[v->addr]);                          break;
-    case R_CHAR:    buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, CHR_PT , v->addr, (char)(ints[v->addr]));                  break;
-    case R_STRING:  buf = (char *)CALLOC(256, sizeof(char)); mus_snprintf(buf, 256, STR_PT , v->addr, (char *)(ints[v->addr]));              break;
-    case R_FLOAT:   buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, FLT_PT , v->addr, dbls[v->addr]);                          break;
-    case R_KEYWORD: buf = (char *)CALLOC(64, sizeof(char)); mus_snprintf(buf, 64, "i%d(%s)" , v->addr, XEN_AS_STRING((XEN)(ints[v->addr]))); break;
-    case R_GOTO:    buf = mus_format("continuation: " INT_PT , v->addr, ints[v->addr]);                                                      break;
+    case R_BOOL:    buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, BOOL_PT, v->addr, B2S(ints[v->addr]));                   break;
+    case R_INT:     buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, INT_PT , v->addr, ints[v->addr]);                        break;
+    case R_CHAR:    buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, CHR_PT , v->addr, (char)(ints[v->addr]));                break;
+    case R_STRING:  buf = (char *)CALLOC(256, sizeof(char)); mus_snprintf(buf, 256, STR_PT , v->addr, (char *)(ints[v->addr]));            break;
+    case R_FLOAT:   buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, FLT_PT , v->addr, dbls[v->addr]);                        break;
+    case R_KEYWORD: buf = (char *)CALLOC(64, sizeof(char)); mus_snprintf(buf, 64, KEY_PT , v->addr, XEN_AS_STRING((XEN)(ints[v->addr])));  break;
+    case R_GOTO:    buf = mus_format("continuation: " INT_PT , v->addr, ints[v->addr]);                                                    break;
     case R_LIST:
     case R_PAIR:
       buf = (char *)CALLOC(512, sizeof(char)); 
       if (ints[v->addr] != 0)
-	mus_snprintf(buf, 512, "l%d(%s)", v->addr, XEN_AS_STRING((XEN)(ints[v->addr]))); 
+	mus_snprintf(buf, 512, LST_PT, v->addr, XEN_AS_STRING((XEN)(ints[v->addr]))); 
       else sprintf(buf, "non-constant cons");
       break;
     case R_FLOAT_VECTOR:
@@ -769,7 +783,7 @@ static char *describe_xen_value(xen_value *v, int *ints, Float *dbls)
       if (ints[v->addr])
 	{
 	  vstr = vct_to_string((vct *)(ints[v->addr]));
-	  buf = mus_format("v%d(%s)", v->addr, vstr);
+	  buf = mus_format(VCT_PT, v->addr, vstr);
 	  if (vstr) FREE(vstr);
 	}
       else buf = copy_string("null");
@@ -778,14 +792,14 @@ static char *describe_xen_value(xen_value *v, int *ints, Float *dbls)
       if (ints[v->addr])
 	{
 	  vstr = sf_to_string((snd_fd *)(ints[v->addr]));
-	  buf = mus_format("r%d(%s)", v->addr, vstr);
+	  buf = mus_format(RD_PT, v->addr, vstr);
 	  if (vstr) FREE(vstr);
 	}
       else buf = copy_string("null");
       break;
     case R_CLM:
       if (ints[v->addr]) 
-	buf = mus_format("c%d(%s)", v->addr, mus_describe((mus_any *)(ints[v->addr])));  
+	buf = mus_format(CLM_PT, v->addr, mus_describe((mus_any *)(ints[v->addr])));  
       else buf = copy_string("null");
       break;
     case R_FUNCTION: 
@@ -1769,7 +1783,7 @@ static char *descr_jump_indirect(int *args, int *ints, Float *dbls) {return(mus_
 static void jump_if(int *args, int *ints, Float *dbls) {if (ints[args[1]] != 0) PC += ints[args[0]];}
 static char *descr_jump_if(int *args, int *ints, Float *dbls) 
 {
-  return(mus_format("if (i%d(%s)) jump " INT_PT , args[1], (INT_ARG_1) ? "#t" : "#f", args[0], INT_RESULT));
+  return(mus_format("if (" BOOL_PT ") jump " INT_PT , args[1], B2S(INT_ARG_1), args[0], INT_RESULT));
 }
 
 static void jump_if_equal(int *args, int *ints, Float *dbls) {if (ints[args[1]] == ints[args[2]]) PC = ints[args[0]];}
@@ -1781,7 +1795,7 @@ static char *descr_jump_if_equal(int *args, int *ints, Float *dbls)
 static void jump_if_not(int *args, int *ints, Float *dbls) {if (ints[args[1]] == 0) PC += ints[args[0]];}
 static char *descr_jump_if_not(int *args, int *ints, Float *dbls) 
 {
-  return(mus_format("if (!i%d(%s)) jump " INT_PT , args[1], (INT_ARG_1) ? "#t" : "#f", args[0], INT_RESULT));
+  return(mus_format("if (!" BOOL_PT ") jump " INT_PT , args[1], B2S(INT_ARG_1), args[0], INT_RESULT));
 }
 
 static void store_i(int *args, int *ints, Float *dbls) {INT_RESULT = INT_ARG_1;}
@@ -4803,9 +4817,9 @@ static char *descr_display_int(int *args, int *ints, Float *dbls) {return(mus_fo
 static void display_flt(int *args, int *ints, Float *dbls) {fprintf(stderr, "%.6f", FLOAT_ARG_1);}
 static char *descr_display_flt(int *args, int *ints, Float *dbls) {return(mus_format("display(" FLT_PT ")", args[1], FLOAT_ARG_1));}
 static void display_lst(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", (INT_ARG_1) ? (XEN_AS_STRING((XEN)(INT_ARG_1))) : "null");}
-static char *descr_display_lst(int *args, int *ints, Float *dbls) {return(mus_format("display(l%d(%s))", args[1], (INT_ARG_1) ? (XEN_AS_STRING(((XEN)(INT_ARG_1)))) : "null"));}
+static char *descr_display_lst(int *args, int *ints, Float *dbls) {return(mus_format("display(" LST_PT ")", args[1], (INT_ARG_1) ? (XEN_AS_STRING(((XEN)(INT_ARG_1)))) : "null"));}
 static void display_key(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", (INT_ARG_1) ? (XEN_AS_STRING((XEN)(INT_ARG_1))) : "null");}
-static char *descr_display_key(int *args, int *ints, Float *dbls) {return(mus_format("display(k%d(%s))", args[1], (INT_ARG_1) ? (XEN_AS_STRING(((XEN)(INT_ARG_1)))) : "null"));}
+static char *descr_display_key(int *args, int *ints, Float *dbls) {return(mus_format("display(" KEY_PT ")", args[1], (INT_ARG_1) ? (XEN_AS_STRING(((XEN)(INT_ARG_1)))) : "null"));}
 static void display_clm(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", mus_describe((mus_any *)(INT_ARG_1)));}
 static char *descr_display_clm(int *args, int *ints, Float *dbls) {return(mus_format("display(" PTR_PT ")", args[1], ((mus_any *)(INT_ARG_1))));}
 static void display_vct(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", vct_to_string((vct *)(INT_ARG_1)));}
@@ -4825,10 +4839,10 @@ static void display_rd(int *args, int *ints, Float *dbls) {char *buf = NULL; fpr
 static char *descr_display_rd(int *args, int *ints, Float *dbls) {return(mus_format("display(" PTR_PT ")", args[1], ((snd_fd *)(INT_ARG_1))));}
 static void display_chr(int *args, int *ints, Float *dbls) {fprintf(stderr, "%c", (char)(INT_ARG_1));}
 static char *descr_display_chr(int *args, int *ints, Float *dbls) {return(mus_format("display(" CHR_PT ")", args[1], (char)(INT_ARG_1)));}
-static void display_bool(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", (INT_ARG_1) ? "#t" : "#f");}
-static char *descr_display_bool(int *args, int *ints, Float *dbls) {return(mus_format("display(i%d(%s))", args[1], (INT_ARG_1) ? "#t" : "#f"));}
-static void display_con(int *args, int *ints, Float *dbls) {fprintf(stderr, "continuation");}
-static char *descr_display_con(int *args, int *ints, Float *dbls) {return(mus_format("display(i%d(continuation))", args[1]));}
+static void display_bool(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", B2S(INT_ARG_1));}
+static char *descr_display_bool(int *args, int *ints, Float *dbls) {return(mus_format("display(" BOOL_PT ")", args[1], B2S(INT_ARG_1)));}
+static void display_con(int *args, int *ints, Float *dbls) {fprintf(stderr, GO_PT, args[1]);}
+static char *descr_display_con(int *args, int *ints, Float *dbls) {return(mus_format("display(" GO_PT ")", args[1]));}
 static void display_func(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", describe_ptree((ptree *)(INT_ARG_1)));}
 static char *descr_display_func(int *args, int *ints, Float *dbls) {return(mus_format("display(" PTR_PT ")", args[1], (ptree *)(INT_ARG_1)));}
 static xen_value *display_1(ptree *pt, xen_value **args, int num_args)
@@ -5651,7 +5665,7 @@ static xen_value *make_sample_reader_1(ptree *pt, xen_value **args, int num_args
 static void vector_length_i(int *args, int *ints, Float *dbls) {INT_RESULT = ((vct *)(INT_ARG_1))->length;}
 static char *descr_vector_length_i(int *args, int *ints, Float *dbls) 
 {
-  return(mus_format("d%d(%d) = vector_length(" PTR_PT ")", args[0], INT_RESULT, args[1], (vct *)(INT_ARG_1)));
+  return(mus_format( INT_PT " = vector_length(" PTR_PT ")", args[0], INT_RESULT, args[1], (vct *)(INT_ARG_1)));
 }
 static xen_value *vector_length_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -5805,7 +5819,7 @@ static xen_value *vector_fill_1(ptree *prog, xen_value **args, int num_args)
 static void vct_length_i(int *args, int *ints, Float *dbls) {INT_RESULT = ((vct *)(INT_ARG_1))->length;}
 static char *descr_vct_length_i(int *args, int *ints, Float *dbls) 
 {
-  return(mus_format("d%d(%d) = vct_length(" PTR_PT ")", args[0], INT_RESULT, args[1], (vct *)(INT_ARG_1)));
+  return(mus_format( INT_PT " = vct_length(" PTR_PT ")", args[0], INT_RESULT, args[1], (vct *)(INT_ARG_1)));
 }
 static xen_value *vct_length_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -6014,6 +6028,23 @@ static xen_value *vct_ ## CName ## _1(ptree *prog, xen_value **args, int num_arg
 VCT_OP_2(add!, add, +=)
 VCT_OP_2(multiply!, multiply, *=)
 VCT_OP_2(subtract!, subtract, -=)
+
+
+static void vct_convolve_0(int *args, int *ints, Float *dbls)
+{
+  vct *v0 = VCT_ARG_1;
+  vct *v1 = VCT_ARG_2;
+  mus_convolution(v0->data, v1->data, v0->length); /* assuming power of 2 len here and v1 exists and v0 is big enough */
+  VCT_RESULT = v0;
+}
+static char *descr_vct_convolve_0(int *args, int *ints, Float *dbls)
+{
+  return(mus_format("vct_convolve!(" PTR_PT ", " PTR_PT ")", args[1], (vct *)(INT_ARG_1), args[2], (vct *)(INT_ARG_2)));
+}
+static xen_value *vct_convolve_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(package(prog, R_VCT, vct_convolve_0, descr_vct_convolve_0, args, 2));
+}
 
 
 
@@ -7503,7 +7534,7 @@ static XEN g_describe_walk_info(XEN obj)
 {
   XEN walker;
   walk_info *w = NULL;
-  walker = scm_object_property(obj, walk_sym);
+  walker = XEN_OBJECT_PROPERTY(obj, walk_sym);
   if (XEN_ULONG_P(walker))
     {
       w = (walk_info *)(XEN_TO_C_ULONG(walker));
@@ -7574,9 +7605,9 @@ static char *descr_clm_print_s(int *args, int *ints, Float *dbls) {return(descri
 
 static xen_value *clm_print_1(ptree *prog, xen_value **args, int num_args)
 {
-  scm_set_object_property_x(XEN_VAR_NAME_TO_VAR("clm-print"),
-			    walk_sym,
-			    C_TO_XEN_ULONG(make_walker(clm_print_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, FALSE, 1, -R_XEN)));
+  XEN_SET_OBJECT_PROPERTY(XEN_VAR_NAME_TO_VAR("clm-print"),
+			  walk_sym,
+			  C_TO_XEN_ULONG(make_walker(clm_print_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, FALSE, 1, -R_XEN)));
   return(package_n_indirect(prog, R_STRING, clm_print_s, descr_clm_print_s, args, num_args));
 }
 
@@ -7589,9 +7620,9 @@ static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, int
       (XEN_PROCEDURE_P(XEN_VARIABLE_REF(format_var))))
     {
       /* define a walker for format */
-      scm_set_object_property_x(format_var, 
-				walk_sym,
-				C_TO_XEN_ULONG(make_walker(format_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, FALSE, 1, -R_XEN)));
+      XEN_SET_OBJECT_PROPERTY(format_var, 
+			      walk_sym,
+			      C_TO_XEN_ULONG(make_walker(format_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, FALSE, 1, -R_XEN)));
       format_func = XEN_VARIABLE_REF(format_var);
       /* any further formats will be checked in walk, but this one needs explicit check */
       for (i = 1; i <= num_args; i++)
@@ -7945,10 +7976,10 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       function = XEN_CAR(form);
       if (XEN_SYMBOL_P(function))
 	{
-	  walker = scm_object_property(function, walk_sym);
+	  walker = XEN_OBJECT_PROPERTY(function, walk_sym);
 #if WITH_PROCPROP
 	  if ((XEN_FALSE_P(walker)) && (XEN_PROCEDURE_P(XEN_VARIABLE_REF(XEN_SYMBOL_TO_VAR(function)))))
-	    walker = scm_procedure_property(XEN_VARIABLE_REF(XEN_SYMBOL_TO_VAR(function)), walk_sym);
+	    walker = XEN_PROCEDURE_PROPERTY(XEN_VARIABLE_REF(XEN_SYMBOL_TO_VAR(function)), walk_sym);
 #endif
 	  if (XEN_ULONG_P(walker))
 	    {
@@ -7971,10 +8002,7 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 		arg_result = NEED_INT_RESULT;
 	      args[i + 1] = walk(prog, XEN_CAR(all_args), arg_result);
 	      if ((args[i + 1] == NULL) ||
-		  /* need to trap non-constant lists */
-		  ((prog->ints[args[i + 1]->addr] == 0) &&
-		   ((args[i + 1]->type == R_LIST) || 
-		    (args[i + 1]->type == R_PAIR))))
+		  (((args[i + 1]->type == R_LIST) || (args[i + 1]->type == R_PAIR)) && (prog->ints[args[i + 1]->addr] == 0)))
 		return(clean_up(NULL, args, num_args));
 	      if (args[i + 1]->constant == R_CONSTANT) constants++;
 	      if (args[i + 1]->type == R_FLOAT) float_result = TRUE; /* for "*" et al */
@@ -8144,10 +8172,10 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
       if ((v == NULL) && 
 	  (current_optimization >= SOURCE_OK) &&
 	  (XEN_PROCEDURE_P(rtnval)) &&
-	  (XEN_FALSE_P(scm_procedure_with_setter_p(rtnval))))
+	  (XEN_FALSE_P(XEN_PROCEDURE_WITH_SETTER_P(rtnval))))
 	{
 	  XEN func_form;
-	  func_form = scm_procedure_source(rtnval);
+	  func_form = XEN_PROCEDURE_SOURCE(rtnval);
 	  if ((XEN_LIST_P(func_form)) &&
 	      (XEN_SYMBOL_P(XEN_CAR(func_form))) &&
 	      (strcmp("lambda", XEN_SYMBOL_TO_C_STRING(XEN_CAR(func_form))) == 0))
@@ -8199,7 +8227,7 @@ static xen_value *lookup_generalized_set(ptree *prog, XEN acc_form, xen_value *i
   int k, happy = 0;
   XEN walker;
   walk_info *w = NULL;
-  walker = scm_object_property(acc_form, walk_sym);
+  walker = XEN_OBJECT_PROPERTY(acc_form, walk_sym);
   if (XEN_ULONG_P(walker))
     {
       w = (walk_info *)(XEN_TO_C_ULONG(walker));
@@ -8689,10 +8717,10 @@ XEN_NARGIFY_2(g_vct_map_w, g_vct_map)
 
 #if WITH_PROCPROP
 #define INIT_WALKER(Name, Val) \
-  scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(Name), walk_sym, C_TO_XEN_ULONG(Val)); \
-  scm_set_procedure_property_x(XEN_VARIABLE_REF(XEN_VAR_NAME_TO_VAR(Name)), walk_sym, C_TO_XEN_ULONG(Val))
+  XEN_SET_OBJECT_PROPERTY(C_STRING_TO_XEN_SYMBOL(Name), walk_sym, C_TO_XEN_ULONG(Val)); \
+  XEN_SET_PROCEDURE_PROPERTY(XEN_VARIABLE_REF(XEN_VAR_NAME_TO_VAR(Name)), walk_sym, C_TO_XEN_ULONG(Val))
 #else
-#define INIT_WALKER(Name, Val) scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(Name), walk_sym, C_TO_XEN_ULONG(Val))
+#define INIT_WALKER(Name, Val) XEN_SET_OBJECT_PROPERTY(C_STRING_TO_XEN_SYMBOL(Name), walk_sym, C_TO_XEN_ULONG(Val))
 #endif
 
 static void init_walkers(void)
@@ -8702,7 +8730,7 @@ static void init_walkers(void)
   XEN_DEFINE_VARIABLE("declare", declare, XEN_FALSE);
   XEN_DEFINE_VARIABLE("call/cc", call_cc, XEN_FALSE);
   XEN_DEFINE_VARIABLE("mus-position", gmus_position, XEN_FALSE);
-  walk_sym = scm_string_to_symbol(C_TO_XEN_STRING("snd-walk"));
+  walk_sym = C_STRING_TO_XEN_SYMBOL("snd-walk");
   snd_protect(walk_sym);
 
   /* -------- special forms */
@@ -9023,6 +9051,7 @@ static void init_walkers(void)
 
   INIT_WALKER(S_radians_hz, make_walker(mus_radians2hz_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
   INIT_WALKER(S_hz_radians, make_walker(mus_hz2radians_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
+  INIT_WALKER(S_in_hz, make_walker(mus_hz2radians_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
   INIT_WALKER(S_degrees_radians, make_walker(mus_degrees2radians_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
   INIT_WALKER(S_radians_degrees, make_walker(mus_radians2degrees_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
   INIT_WALKER(S_db_linear, make_walker(mus_db2linear_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_NUMBER));
@@ -9101,6 +9130,7 @@ static void init_walkers(void)
   INIT_WALKER(S_vct_peak, make_walker(vct_peak_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_VCT));
   INIT_WALKER(S_vct_setB, make_walker(vct_set_2, NULL, NULL, 3, 3, R_FLOAT, FALSE, 3, R_VCT, R_INT, R_NUMBER));
   INIT_WALKER(S_make_vct, make_walker(make_vct_1, NULL, NULL, 1, 2, R_VCT, FALSE, 2, R_INT, R_FLOAT));
+  INIT_WALKER(S_vct_convolve, make_walker(vct_convolve_1, NULL, NULL, 2, 2, R_VCT, FALSE, 2, R_VCT, R_VCT));
 
   /* -------- snd funcs */
   INIT_WALKER(S_next_sample, make_walker(next_sample_1, NULL, NULL, 1, 1, R_FLOAT, FALSE, 1, R_READER));

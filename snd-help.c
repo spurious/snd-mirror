@@ -272,6 +272,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+21-Feb:  convolve-arrays renamed vct-convolve!.\n\
 20-Feb:  removed transform-samples and region-samples.\n\
 17-Feb:  snd 6.6.\n\
 10-Feb:  removed click-for-help option.\n\
@@ -1117,7 +1118,6 @@ all refer to the same thing.\n\
   " S_contrast_control "  (snd)\n\
   " S_contrast_control_amp " (snd)\n\
   " S_contrast_control_p " (snd)\n\
-  " S_convolve_arrays "   (vect1 vect2)\n\
   " S_convolve_selection_with " (file amp)\n\
   " S_convolve_with "     (file amp snd chn)\n\
   " S_count_matches "     (c-expr start snd chn)\n\
@@ -1344,6 +1344,7 @@ all refer to the same thing.\n\
   " S_widget_size "       (wid)\n\
   " S_vct_p "              (vobj)\n\
   " S_vct_addB "          (vobj1 vobj2)\n\
+  " S_vct_convolve "      (v1 v2)\n\
   " S_vct_copy "          (obj)\n\
   " S_vct_fillB "         (vobj val)\n\
   " S_vct_length "        (vobj)\n\

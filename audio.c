@@ -8176,6 +8176,11 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 
 /* this code based on coreaudio.pdf, HAL/Daisy examples, portaudio pa_mac_core.c */
 
+/* TODO: mac osx: bring srate/channel limitation down to this level
+ * TODO: mac osx: audio input
+ * TODO: mac osx: mixer-read/write with non-built-in device
+ */
+
 #ifdef MAC_OSX
 #define AUDIO_OK 1
 

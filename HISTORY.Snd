@@ -1,5 +1,6 @@
 Snd change log
 
+  21-Feb:    convolve-arrays renamed vct-convolve!.
   20-Feb:    removed transform-samples and region-samples.
   17-Feb:    snd 6.6.
   10-Feb:    removed click-for-help option.

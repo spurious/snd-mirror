@@ -19,5 +19,17 @@
 
 (define (max-sounds) (apply max (sounds)))
 
-(define (transform-samples snd chn) (vct->vector (transform-samples->vct snd chn)))
-(define (region-samples samp samps reg chn) (vct->vector (region-samples->vct samp samps reg chn)))
+(define (transform-samples snd chn) 
+  (vct->vector (transform-samples->vct snd chn)))
+
+(define (region-samples samp samps reg chn) 
+  (vct->vector (region-samples->vct samp samps reg chn)))
+
+(define (convolve-arrays v0 v1)
+  (let ((vc0 (if (vector? v0 (vector->vct v0)) v0))
+	(vc1 (if (vector? v1 (vector->vct v1)) v1)))
+    (vct-convolve! vc0 vc1)
+    (if (vector? v0)
+	(vct->vector vc0)
+	vc0)))
+

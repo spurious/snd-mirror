@@ -9015,6 +9015,10 @@ reading edit version edpos (defaulting to the current version)"
 
 static XEN g_samples(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
 {
+  /* this is now inconsistent with both the set form and the rest of Snd --
+   *   either the set form should be with ->vct, or this should return a vct
+   */
+
   #define H_samples "(" S_samples " &optional (start-samp 0) samps snd chn edit-position)\n\
 returns a vector containing snd channel chn's samples starting a start-samp for samps samples; edit-position is the edit \
 history position to read (defaults to current position)."

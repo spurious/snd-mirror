@@ -3703,8 +3703,8 @@ static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
   int ipow, n, n2, i, isign = 1, need_free = FALSE;
   Float *rl, *im;
   XEN *rvdata; XEN *ivdata;
-  XEN_ASSERT_TYPE(((VCT_P(reals)) || (XEN_VECTOR_P(reals))), reals, XEN_ARG_1, ((use_fft) ? S_fft : S_convolve_arrays), "a vector or a vct");
-  XEN_ASSERT_TYPE(((VCT_P(imag)) || (XEN_VECTOR_P(imag))), imag, XEN_ARG_2, ((use_fft) ? S_fft : S_convolve_arrays), "a vector or a vct");
+  XEN_ASSERT_TYPE(((VCT_P(reals)) || (XEN_VECTOR_P(reals))), reals, XEN_ARG_1, ((use_fft) ? S_fft : S_vct_convolve), "a vct");
+  XEN_ASSERT_TYPE(((VCT_P(imag)) || (XEN_VECTOR_P(imag))), imag, XEN_ARG_2, ((use_fft) ? S_fft : S_vct_convolve), "a vct");
   if (XEN_NUMBER_P(sign)) isign = XEN_TO_C_INT_OR_ELSE(sign, 0);
   if (isign == 0) isign = 1;
   if ((VCT_P(reals)) && (VCT_P(imag)))
@@ -3973,14 +3973,10 @@ convolves the current selection with file; amp is the resultant peak amp"
   return(g_convolve_with_1(file, new_amp, NULL, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), S_convolve_selection_with));
 }
 
-static XEN g_convolve(XEN reals, XEN imag)
+static XEN g_vct_convolve(XEN reals, XEN imag)
 {
-  #define H_convolve "(" S_convolve_arrays " rl1 rl2) convolves vectors or vcts rl1 and rl2, result in rl1 (which needs to be big enough)"
-  /* if reals is a string = filename and imag is a Float (or nada), assume user missppelledd convolve-with */
-  if (XEN_STRING_P(reals))
-    return(g_convolve_with(reals, imag, XEN_FALSE, XEN_FALSE, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION)));
-  /* result in reals (which needs to be big enough and zero padded) */
-  else return(g_fft_1(reals, imag, C_TO_SMALL_XEN_INT(1), FALSE));
+  #define H_vct_convolve "(" S_vct_convolve " rl1 rl2) convolves vcts rl1 and rl2, result in rl1 (which needs to be big enough)"
+  return(g_fft_1(reals, imag, C_TO_SMALL_XEN_INT(1), FALSE));
 }
 
 static Float check_src_envelope(int pts, Float *data, const char *caller)
@@ -4222,7 +4218,7 @@ XEN_ARGIFY_7(g_ramp_channel_w, g_ramp_channel)
 XEN_ARGIFY_8(g_xramp_channel_w, g_xramp_channel)
 XEN_ARGIFY_3(g_fft_w, g_fft)
 XEN_ARGIFY_7(g_snd_spectrum_w, g_snd_spectrum)
-XEN_ARGIFY_2(g_convolve_w, g_convolve)
+XEN_ARGIFY_2(g_vct_convolve_w, g_vct_convolve)
 XEN_ARGIFY_5(g_convolve_with_w, g_convolve_with)
 XEN_ARGIFY_2(g_convolve_selection_with_w, g_convolve_selection_with)
 XEN_ARGIFY_5(g_src_sound_w, g_src_sound)
@@ -4261,7 +4257,7 @@ XEN_ARGIFY_9(g_ptree_channel_w, g_ptree_channel)
 #define g_xramp_channel_w g_xramp_channel
 #define g_fft_w g_fft
 #define g_snd_spectrum_w g_snd_spectrum
-#define g_convolve_w g_convolve
+#define g_vct_convolve_w g_vct_convolve
 #define g_convolve_with_w g_convolve_with
 #define g_convolve_selection_with_w g_convolve_selection_with
 #define g_src_sound_w g_src_sound
@@ -4327,7 +4323,7 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_env_sound,               g_env_sound_w, 1, 6, 0,               H_env_sound);
   XEN_DEFINE_PROCEDURE(S_fft,                     g_fft_w, 2, 1, 0,                     H_fft);
   XEN_DEFINE_PROCEDURE(S_snd_spectrum,            g_snd_spectrum_w, 1, 6, 0,            H_snd_spectrum);
-  XEN_DEFINE_PROCEDURE(S_convolve_arrays,         g_convolve_w, 1, 1, 0,                H_convolve);
+  XEN_DEFINE_PROCEDURE(S_vct_convolve,            g_vct_convolve_w, 1, 1, 0,            H_vct_convolve);
   XEN_DEFINE_PROCEDURE(S_convolve_with,           g_convolve_with_w, 1, 4, 0,           H_convolve_with);
   XEN_DEFINE_PROCEDURE(S_convolve_selection_with, g_convolve_selection_with_w, 1, 1, 0, H_convolve_selection_with);
   XEN_DEFINE_PROCEDURE(S_src_sound,               g_src_sound_w, 1, 4, 0,               H_src_sound);

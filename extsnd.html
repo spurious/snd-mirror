@@ -1857,7 +1857,7 @@ called just after an FFT (or spectrum) is calculated.
            (= (transform-graph-type) graph-once))
       (report-in-minibuffer 
         (number-&gt;string (/ (* 2 (vct-peak (transform-samples-&gt;vct snd chn))) 
-                           (transform-size)))))
+                           (transform-size snd chn)))))
 (add-hook! <em class=red>transform-hook</em> fft-peak)
 </pre></td></tr></table>
 </td></tr><tr><td colspan=3></td></tr>
@@ -3087,7 +3087,7 @@ a particular mix object:</p>
 <!-- mix-frames -->
 
 <tr><td><span class=defbox><code><em class=def><a name="sndmixframes">mix-frames</a></em> (<i>mix</i>)</code></span></td>
-<td>mix's length in samples.  (This was named mix-length originally).
+<td>mix's length in samples.
 </td></tr>
 
 <!-- mix-home-->
@@ -4268,8 +4268,8 @@ apply (in amplitude) <i>envelope</i> to <i>snd</i>'s channel <i>chn</i> starting
 at sample <i>samp</i> for <i>samps</i> samples with connecting segments
 based on <i>env-base</i>.  <i>env-base</i> defaults to 1.0 (line segments).
 <i>samp</i> defaults to 0.  <i>samps</i> defaults to the full duration.
-<i>envelope</i> is a list or vector containing the breakpoint values 
-(as in CLM).<br><br>
+<i>envelope</i> is a list containing the breakpoint values 
+(as in CLM) or an env generator.<br><br>
 <code>(env-sound '(0 0 1 1 2 0))</code>
 <br><br>
 As mentioned in <a href="clm.html#make-env">clm.html</a>, 
@@ -4294,8 +4294,8 @@ curve's exponent and <i>env-base</i>.  Here's a brief restatement:
 </pre></td></tr></table>
 </td></tr>
 <tr><td></td><td>
-<i>envelope</i> can also be a CLM env generator (in this case, <i>env-base</i> 
-is ignored, and it's assumed <i>samps</i> is reflected in the make-env call).
+If <i>envelope</i> is a CLM env generator, <i>env-base</i> 
+is ignored.
 <tr><td colspan=2></td></tr>
 
 
@@ -6845,7 +6845,7 @@ is scaled by the Amp slider's value.  The filter is run next, if
 it's on, and finally the sample is scaled by the reverb slider and
 passed to the reverb, if any, which adds its result to the sample;
 the final result is sent to the speakers.
-The control panel procedures (which are used extensively in new-effects.scm) are:
+The control panel procedures are:
 </p>
 <!-- -------------------------------- CONTROL PANEL -------------------------------- -->
 <table border=0 cellspacing=10>
@@ -6855,7 +6855,7 @@ The control panel procedures (which are used extensively in new-effects.scm) are
 <span class=defbox><code><em class=def><a name="sndamp">amp-control</a></em> (<em class=targ>snd chn</em>)</code></span>
 </td></tr>
 <tr><td><spacer type=horizontal size=40><br></td><td>
-current amp (control panel slider) value.
+The current amp value.
 It is possible to use these controls (in "real-time") in your own functions.
 See amprt in <a href="sndscm.html#exampdoc">examp.scm</a> for a simple example,
 or <i>add-amp-control</i> in snd-motif.scm.
@@ -6871,10 +6871,10 @@ apply button (apply-controls) and playback.
 <span class=defbox><code><em class=def><a name="applycontrols">apply-controls</a></em> (<i>snd target beg dur</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
-equivalent to pushing <i>snd</i>'s 'apply' button.
+The  'apply' button.
 <i>target</i> can be 0=sound, 1=channel, 2=selection.
-<i>beg</i> sets where (in samples) the apply starts; <code>(apply-controls 0 0 (mark-sample m))</code> starts from the given mark.
-<i>dur</i> if given sets how many (original) samples to run the apply process.
+<i>beg</i> sets where in samples the apply starts: <code>(apply-controls 0 0 (mark-sample m))</code> starts from the given mark.
+<i>dur</i>, if given, sets how many samples to run through the apply process.
 apply-controls can be used in conjunction with the various control panel variables:
 </td></tr>
 <tr><td></td><td>
@@ -6895,9 +6895,9 @@ For many examples see new-effects.scm.
 <span class=defbox><code><em class=def><a name="sndcontrast">contrast-control</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-current <a href="snd.html#contrast">contrast</a> (control panel slider) value.
+The <a href="snd.html#contrast">contrast</a> amount.
 The contrast-enhancement algorithm treats this variable as a kind of modulation index (the higher, the brighter),
-where as <i>contrast-control-amp</i> below prescales the in-coming signal to be closer to -1.0 to 1.0
+whereas <i>contrast-control-amp</i> below prescales the in-coming signal to be closer to -1.0 to 1.0
 (the brightening effect works best if it has a full amplitude signal to work with).
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -6908,7 +6908,8 @@ where as <i>contrast-control-amp</i> below prescales the in-coming signal to be 
 <span class=defbox><code><em class=def><a name="sndcontrastamp">contrast-control-amp</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-<i>snd</i>'s <a href="snd.html#contrast">contrast-control-amp</a> (control panel variable).
+The <a href="snd.html#contrast">contrast-control-amp</a> (a prescaler on the contrast-enhancement to get the
+full effect of the compander).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6918,7 +6919,7 @@ where as <i>contrast-control-amp</i> below prescales the in-coming signal to be 
 <span class=defbox><code><em class=def><a name="sndcontrasting">contrast-control?</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-#t if <i>snd</i> has <a href="snd.html#contrast">contrast</a> turned on (control panel).
+The <a href="snd.html#contrast">contrast</a> button.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6928,8 +6929,8 @@ where as <i>contrast-control-amp</i> below prescales the in-coming signal to be 
 <span class=defbox><code><em class=def><a name="sndexpand">expand-control</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-current <a href="snd.html#expand">expansion</a> amount (control panel).  This sets the ratio between the
-output and input spacing between successive grains.  If it is greater than 1.0, the result is longer, etc.
+The <a href="snd.html#expand">expansion</a> amount.  This sets the ratio between the
+output and input grain spacing.  If it is greater than 1.0, the result is longer.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6939,7 +6940,7 @@ output and input spacing between successive grains.  If it is greater than 1.0, 
 <span class=defbox><code><em class=def><a name="sndexpandhop">expand-control-hop</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-<i>snd</i>'s <a href="snd.html#expand">expansion</a> hop amount (seconds).
+The <a href="snd.html#expand">expansion</a> hop amount in seconds.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6949,7 +6950,7 @@ output and input spacing between successive grains.  If it is greater than 1.0, 
 <span class=defbox><code><em class=def><a name="sndexpandlength">expand-control-length</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-<i>snd</i>'s <a href="snd.html#expand">expansion</a> segment (grain) length in seconds.  The longer the grain,
+The <a href="snd.html#expand">expansion</a> segment (grain) length in seconds.  The longer the grain,
 the more "reverberated" or "slurred" the effect.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -6960,7 +6961,7 @@ the more "reverberated" or "slurred" the effect.
 <span class=defbox><code><em class=def><a name="sndexpandramp">expand-control-ramp</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-<i>snd</i>'s <a href="snd.html#expand">expansion</a> ramp amount (between 0 and .5).
+The <a href="snd.html#expand">expansion</a> ramp amount (between 0 and .5).
 This affects the smoothness of the grain overlaps -- .001 gives a 
 rattling effect.
 </td></tr>
@@ -6972,7 +6973,7 @@ rattling effect.
 <span class=defbox><code><em class=def><a name="sndexpanding">expand-control?</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-#t if <i>snd</i>'s expand button is on.
+The expand button.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6982,7 +6983,7 @@ rattling effect.
 <span class=defbox><code><em class=def><a name="sndfiltercoeffs">filter-control-coeffs</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-<i>snd</i>'s control panel <a href="snd.html#filtercontrol">filter</a> coefficients (read-only currently).
+The <a href="snd.html#filtercontrol">filter</a> coefficients (read-only currently).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6992,7 +6993,7 @@ rattling effect.
 <span class=defbox><code><em class=def><a name="sndfilterdbing">filter-control-in-dB</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-<i>snd</i>'s control panel <a href="snd.html#filtercontrol">filter</a> dB button state.  If #t, the filter (frequency) envelope
+The <a href="snd.html#filtercontrol">filter</a> dB button.  If #t, the filter (frequency) envelope
 graph is displayed in dB.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -7003,7 +7004,7 @@ graph is displayed in dB.
 <span class=defbox><code><em class=def><a name="sndfilterenv">filter-control-env</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-<i>snd</i>'s control panel <a href="snd.html#filtercontrol">filter</a> envelope (a list of breakpoints).
+The <a href="snd.html#filtercontrol">filter</a> envelope (a list of breakpoints).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7013,7 +7014,7 @@ graph is displayed in dB.
 <span class=defbox><code><em class=def><a name="sndfilterorder">filter-control-order</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-<i>snd</i>'s control panel <a href="snd.html#filtercontrol">filter</a> order.  This affects how much computing
+The <a href="snd.html#filtercontrol">filter</a> order.  This affects how much computing
 is needed to run the filter, and how close the filter can get to the desired frequency envelope.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -7024,7 +7025,7 @@ is needed to run the filter, and how close the filter can get to the desired fre
 <span class=defbox><code><em class=def><a name="sndfiltering">filter-control?</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-#t if <i>snd</i> is filtering (control panel filter button).
+The control panel filter button.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7034,7 +7035,7 @@ is needed to run the filter, and how close the filter can get to the desired fre
 <span class=defbox><code><em class=def><a name="sndcontrolreset">reset-controls</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-sets the control panel to its default state (see new-effects.scm).
+The 'reset' button.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7044,8 +7045,7 @@ sets the control panel to its default state (see new-effects.scm).
 <span class=defbox><code><em class=def><a name="sndcontrolrestore">restore-controls</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-restores the control panel to its last saved state; the
-same as pushing the control panel '<a href="snd.html#savcontrols">restore</a>' button (see new-effects.scm).
+The '<a href="snd.html#savcontrols">restore</a>' button (see new-effects.scm).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7066,7 +7066,7 @@ finished (default: 1.0).
 <span class=defbox><code><em class=def><a name="sndreverbfeedback">reverb-control-feedback</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-<i>snd</i>'s reverb feedback coefficient.
+The reverb feedback coefficient.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7076,7 +7076,7 @@ finished (default: 1.0).
 <span class=defbox><code><em class=def><a name="sndreverblength">reverb-control-length</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-<a href="snd.html#reverb">reverb</a> delay line length scaler (control panel).
+The <a href="snd.html#reverb">reverb</a> delay line length scaler. 
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7086,7 +7086,7 @@ finished (default: 1.0).
 <span class=defbox><code><em class=def><a name="sndreverblowpass">reverb-control-lowpass</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-reverb low pass filter coefficient.
+The reverb low pass filter coefficient.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7096,7 +7096,7 @@ reverb low pass filter coefficient.
 <span class=defbox><code><em class=def><a name="sndreverbscale">reverb-control-scale</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-<a href="snd.html#reverb">reverb</a> amount (control panel).
+The <a href="snd.html#reverb">reverb</a> amount (the amount of the direct signal sent to the reverb).
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7106,7 +7106,7 @@ reverb low pass filter coefficient.
 <span class=defbox><code><em class=def><a name="sndreverbing">reverb-control?</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-#t if <i>snd</i>'s reverb button is on.
+The control panel's reverb button.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7116,7 +7116,7 @@ reverb low pass filter coefficient.
 <span class=defbox><code><em class=def><a name="sndcontrolsave">save-controls</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-same as pushing the control panel '<a href="snd.html#savcontrols">s</a>' button.
+The control panel '<a href="snd.html#savcontrols">s</a>' button.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7136,7 +7136,7 @@ If set to #t, <i>snd</i>'s control panel is opened, else it is closed.
 <span class=defbox><code><em class=def><a name="sndspeed">speed-control</a></em> (<em class=targ>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-current <a href="snd.html#speed">speed</a> (control panel).
+current <a href="snd.html#speed">speed</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7146,9 +7146,9 @@ current <a href="snd.html#speed">speed</a> (control panel).
 <span class=defbox><code><em class=def><a name="lspeedstyle">speed-control-style</a></em> (<em class=narg>snd</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-In the control panel, the 'speed' control can be interpreted as a 
+The speed control can be interpreted as a 
 float, (<i>speed-control-as-float</i>, the default), as a just-intonation ratio 
-of relatively small integers (<i>speed-control-as-ratio</i>) or as a step in a 
+of relatively small integers (<i>speed-control-as-ratio</i>), or as a step in a 
 microtonal scale (<i>speed-control-as-semitone</i>).  
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -7177,7 +7177,7 @@ happens to any data, despite the fact that the graph no longer shows that sample
 channel, and so on.  Instead, a descriptor is appended to the edit history of that
 channel saying "sample n was deleted".  Undo and redo move around in this list (they simply move the
 pointer to the current edit history position); all the positions are accessible just like the current
-one, and are exposed in many functions described above as the <i>pos</i> argument.
+one, and are exposed in many functions described above via the <i>pos</i> or <i>edpos</i> arguments.
 The edit list functions are:</p>
 
 <!-- -------------------------------- EDIT-LIST TABLE -------------------------------- -->
@@ -7190,8 +7190,8 @@ The edit list functions are:</p>
 <span class=defbox><code><em class=def><a name="asoneedit">as-one-edit</a></em> (func <i>origin</i>)</code></span>
 </td></tr>
 <tr><td width=150></td><td>
-apply <i>func</i> (a function of no arguments), treating it as
-one edit (in all channels) in the edit history mechanism.  Graphics redisplays are currently squelched during as-one-edit.
+apply <i>func</i>, a function of no arguments, treating it as
+one edit (in all channels) in the edit history mechanism.  Graphics redisplays are squelched during as-one-edit.
 </td></tr>
 
 <tr><td></td><td>
@@ -7212,7 +7212,7 @@ See mix.scm for many examples.
 <span class=defbox><code><em class=def><a name="snddisplayedits">display-edits</a></em> (<i>snd chn edpos with-source</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
-returns the current edit list contents (as a string).  If <i>edpos</i> is specified, only that position is described.
+returns the current edit list contents as a string.  If <i>edpos</i> is specified, only that position is described.
 <i>with-source</i> (default #t) determines whether ptree source code is included in the output.
 </td></tr>
 <tr><td></td><td></td></tr>
@@ -7225,8 +7225,8 @@ returns the current edit list contents (as a string).  If <i>edpos</i> is specif
 <tr><td></td><td>
 return a list similar to that displayed in the edit history window giving 
 the origin of the specified edit, its type (delete, insert, etc), its 
-begin sample (given the current edit tree), and the number of samples 
-affected.  If num is omitted, return the last (currently active) 
+begin sample, and the number of samples 
+affected.  If num is omitted, edit-fragment returns the currently active
 edit.
 </td></tr>
 <tr><td></td><td></td></tr>
@@ -7237,7 +7237,7 @@ edit.
 <span class=defbox><code><em class=def><a name="sndeditposition">edit-position</a></em> (<em class=targ>snd chn</em>)</code></span>
 </td></tr>
 <tr><td></td><td>
-current position in edit history list (can be set).  <code>(set! (edit-position) 0)</code> is equivalent
+current position in the edit history list; can be set.  <code>(set! (edit-position) 0)</code> is equivalent
 to <code>(revert-sound)</code>.
 See, for example, <a href="#makesamplereader">make-sample-reader</a>.
 </td></tr>
@@ -7260,7 +7260,7 @@ no redo-able edits, (edits) returns (list 2 0).
 <span class=defbox><code><em class=def><a name="sndedittree">edit-tree</a></em> (<i>snd chn pos</i>)</code></span>
 </td></tr>
 <tr><td></td><td>
-return list of lists completely describing current edit list.
+return a list of lists completely describing current edit list.
 Each inner list has the form 
 <br>
 '(global-position data-number local-position local-end scaler).
@@ -7305,9 +7305,9 @@ this information to highlight the changed portions of a given sound.
 <tr><td></td><td>
 save current edit list(s) in <i>filename</i>.
 If <i>chn</i> is omitted, all <i>snd</i>'s channels are saved; if <i>snd</i> is omitted,
-all edit list are saved.  If the underlying files are not subsequently 
+all edit lists are saved.  If the underlying files are not subsequently 
 changed, you can load this file to restore the current edit list state.
-Returns #t if successful (file opened ok); if something went wrong.
+save-edit-history returns #t if all went well.
 The following function makes an
 exact copy of the state (edit lists and all) of the given sound,
 providing a way to "fork" an edit path (geez, what jargon!).  The idea here
@@ -7404,9 +7404,9 @@ a list of them with cross-references.</p>
 </td></tr>
 <tr><td width=150></td><td>
 add-transform adds a transform to the transform tables.  <i>name</i> is the name
-it will be listed by in the transform dialog. <i>xlabel</i> is the x axis label
+to use in the transform dialog. <i>xlabel</i> is the x axis label
 of the resultant graph.  <i>lo</i> and <i>hi</i> set which portion of the returned data
-is relevant in graphing (normally 0.0 to 1.0).  <i>proc</i> is a function of two 
+to graph (normally 0.0 to 1.0).  <i>proc</i> is a function of two 
 arguments, the length of the desired transform, and a sample-reader that 
 can be used to get the current data.  Do not free the sample-reader!  
 The function should return a vct object containing the transform data.  
@@ -7459,26 +7459,25 @@ or <a href="sndscm.html#rubberdoc">rubber.scm</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
-<!-- convolve-arrays -->
-<tr><td colspan=2>
-<span class=defbox><code><em class=def><a name="sndconvolve">convolve-arrays</a></em> (rl1 rl2)</code></span></td></tr>
-<tr><td></td><td>
-convolve vectors <i>rl1</i> with <i>rl2</i>.  Result returned in rl1.
-rl1 should be large enough to hold the full convolution result.
-As a special dispensation for forgetful users, if rl1 is a file
-name and rl2 is not a vector, <i>convolve-with</i> is called instead.
-</td></tr>
-<tr><td colspan=2></td></tr>
-
 <!-- fft -->
 <tr><td colspan=2>
 <span class=defbox><code><em class=def><a name="sndfft">fft</a></em> (rl im <i>sgn</i>)</code></span></td></tr>
 <tr><td></td><td>
-perform an FFT on <i>rl</i> and <i>im</i> (the real and imaginary parts of the
+perform an FFT on vcts <i>rl</i> and <i>im</i> (the real and imaginary parts of the
 input data). <i>sgn</i> is 1 for an FFT, -1 for an inverse FFT; (default 1).
 </td></tr>
 <tr><td colspan=2></td></tr>
 </table>
+
+<!-- vct-convolve! -->
+<tr><td colspan=2>
+<span class=defbox><code><em class=def><a name="vctconvolve">vct-convolve!</a></em> (rl1 rl2)</code></span></td></tr>
+<tr><td></td><td>
+convolve vct <i>rl1</i> with <i>rl2</i>.  Result returned in rl1.
+rl1 should be large enough to hold the full convolution result.
+This function is basically the same as <a href="clm.html#convolution">convolution</a>.
+</td></tr>
+<tr><td colspan=2></td></tr>
 
 <p>Other related variables and functions:</p>
 <table cellpadding=0 celspacing=10 border=0>
@@ -8135,7 +8134,7 @@ of debugger commands, and so on.
 Here's a real-life example, edited for brevity.  I hit a numerical
 overflow error (actually divide by zero...) in snd-test.scm, a huge
 (33000 line) pile of tests, got a slightly truncated backtrace from
-Snd's default backtrace displayer (not sure why it was truncated, but first things first), so
+Snd's default backtrace displayer (not sure why it is truncated, but first things first), so
 </p>
 <pre>
 &gt; <em class=typing>(debug)</em>
@@ -8235,15 +8234,15 @@ of infinite recursion,
 </p>
 <hr>
 <p>If you hit a bug in Snd's C code, you'll need to use gdb (or dbx on the SGI)
-to track it down (an easier alternative is to simply mail me the gory details);
-if the error was a segfault, it probably left a file named "core" or "core.nnnn" where the number apparently reflects the Snd process id(?)
-on the current directory.  In this case you can:
+to track it down, or mail me the gory details;
+if the error is a segfault, there is probably a file named "core" or "core.nnnn"
+on the current directory:
 </p>
 <pre>
 gdb snd core
 where
 </pre>
-<p>The "where" command should display the stack at the point of the error.
+<p>The "where" command displays the stack at the point of the error.
 "up", and "down" move around in the stack, and "info locals" prints out
 the current frame's variables.  If it's not a segfault, you can
 </p>
@@ -9345,7 +9344,11 @@ draws a dot at (x0 y0) of <i>dot-size</i> pixels diameter in the given graph.  S
 <span class=defbox><code><em class=def><a name="drawdots">draw-dots</a></em> (positions dot-size snd chn context)</code></span></td></tr>
 
 <tr><td></td><td>
-draws dots of size <i>dot-size</i> from the (x y) pairs in the vector <i>positions</i> in the given context.</td></tr>
+draws dots of size <i>dot-size</i> from the (x y) pairs in the vector <i>positions</i> in the given context.
+draw-dots, draw-lines, and fill-polygon take vectors, rather than vcts (which would be more consistent
+with the rest of Snd) because the values passed are supposed to be short ints.  The xm and xg modules
+have made these functions obsolete.
+</td></tr>
 <tr><td colspan=2></td></tr>
 
 <!-- draw-line -->
@@ -9426,7 +9429,7 @@ See draw.scm, snd-motif.scm, or <a href="#showoriginal">show-original</a>.
 <span class=defbox><code><em class=def><a name="fillpolygon">fill-polygon</a></em> (points snd chn context)</code></span></td></tr>
 
 <tr><td></td><td>
-draws a filled polygon whose vertices are in <i>points</i>.</td></tr>
+draws a filled polygon whose vertices are in the vector <i>points</i>.</td></tr>
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define (-&gt; x0 y0 size snd chn)

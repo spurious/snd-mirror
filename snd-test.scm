@@ -129,6 +129,7 @@
    (let ((val (/ (- (get-internal-real-time) start) 100)))
      (set! times (cons (list ',a val) times)))))
 
+;(show-ptree #t)
 (define include-clm #f)
 (define original-prompt (listener-prompt))
 (show-listener)
@@ -9188,9 +9189,9 @@ EDITS: 5
 	(vct-set! xdat 0 1.0)
 	(vct-set! ydat 1 1.0)
 	(let ((v0 (convolution rdat idat 8))
-	      (v1 (convolve-arrays xdat ydat)))
+	      (v1 (vct-convolve! xdat ydat)))
 	  (IF (or (fneq (vct-ref v0 0) 0.0) (fneq (vct-ref v0 1) 1.0)) (snd-display ";convolution: ~A?" v0))
-	  (IF (or (fneq (vct-ref v1 0) 0.0) (fneq (vct-ref v1 1) 1.0)) (snd-display ";convolve-arrays: ~A?" v1))
+	  (IF (or (fneq (vct-ref v1 0) 0.0) (fneq (vct-ref v1 1) 1.0)) (snd-display ";vct-convolve!: ~A?" v1))
 	  (do ((i 0 (1+ i)))
 	      ((= i 8)) 
 	    (IF (fneq (vct-ref v0 i) (vct-ref v1 i))
@@ -33029,7 +33030,7 @@ EDITS: 2
 	       close-sound ;close-sound-file 
 	       color-cutoff color-dialog
 	       color-inverted color-scale color->list colormap color?  comment contrast-control contrast-control-amp
-	       contrast-control?  convolve-arrays convolve-selection-with convolve-with channel-properties
+	       contrast-control? vct-convolve! convolve-selection-with convolve-with channel-properties
 	       auto-update-interval count-matches current-font cursor cursor-color cursor-follows-play cursor-size
 	       cursor-style dac-combines-channels dac-size data-clipped data-color data-format data-location
 	       default-output-chans default-output-format default-output-srate default-output-type define-envelope
